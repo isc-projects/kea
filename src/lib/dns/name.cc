@@ -264,33 +264,13 @@ Name::from_string(const string &namestring)
             labels++;
             //INSIST(labels <= 127);
             offsets_[labels] = nused;
+
+            // added a trailing \0
+            ndata_.push_back('\0');
+            ++labels;
+            ++nused;
+            offsets_[labels] = nused;
         }
-#ifdef notyet
-        if (origin != NULL) {
-            if (nrem < origin.length_)
-                throw ISCNoSpace();
-            pos = 0;
-            n1 = origin.length_;
-            nrem -= n1;
-            while (n1 > 0) {
-                n2 = origin.ndata[pos++];
-                INSIST(n2 <= 63); /* no bitstring support */
-                ndata.push_back(n2);
-                n1 -= n2 + 1;
-                nused += n2 + 1;
-                while (n2 > 0) {
-                    c = origin.ndata[pos++];
-                    ndata.push_back(c);
-                    n2--;
-                }
-                labels++;
-                if (n1 > 0) {
-                    INSIST(labels <= 127);
-                    offsets[labels] = nused;
-                }
-            }
-        }
-#endif
     }
 
     labels_ = labels;

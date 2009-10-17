@@ -595,6 +595,11 @@ ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
 LIBOBJS
+CPPUNIT_LDADD
+CPPUNIT_LDFLAGS
+CPPUNIT_INCLUDES
+HAVE_CPPUNIT_FALSE
+HAVE_CPPUNIT_TRUE
 EGREP
 GREP
 CPP
@@ -686,6 +691,7 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 enable_dependency_tracking
+with_cppunit
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1316,6 +1322,11 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --disable-dependency-tracking  speeds up one-time build
   --enable-dependency-tracking   do not reject slow dependency extractors
+
+Optional Packages:
+  --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
+  --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+  --with-cppunit=PATH     specify a path to CppUnit header files (PATH/include) and library (PATH/lib)
 
 Some influential environment variables:
   CXX         C++ compiler command
@@ -4464,6 +4475,39 @@ _ACEOF
 fi
 
 
+#
+# Check availablity of CppUnit, which will be used for unit tests.
+#
+
+# Check whether --with-cppunit was given.
+if test "${with_cppunit+set}" = set; then :
+  withval=$with_cppunit; cppunit_path="$withval"
+else
+  cppunit_path="no"
+fi
+
+if test "$cppunit_path" != "no"
+then
+	CPPUNIT_INCLUDES="-I${cppunit_path}/include"
+	CPPUNIT_LDFLAGS="-L${cppunit_path}/lib"
+	CPPUNIT_LDADD="-lcppunit"
+else
+	CPPUNIT_INCLUDES=
+	CPPUNIT_LDFLAGS=
+	CPPUNIT_LDADD=
+fi
+ if test $cppunit_path != "no"; then
+  HAVE_CPPUNIT_TRUE=
+  HAVE_CPPUNIT_FALSE='#'
+else
+  HAVE_CPPUNIT_TRUE='#'
+  HAVE_CPPUNIT_FALSE=
+fi
+
+
+
+
+
 # Checks for library functions.
 
 ac_config_files="$ac_config_files Makefile src/Makefile src/lib/Makefile src/lib/dns/Makefile"
@@ -4583,6 +4627,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__fastdepCC_TRUE}" && test -z "${am__fastdepCC_FALSE}"; then
   as_fn_error "conditional \"am__fastdepCC\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_CPPUNIT_TRUE}" && test -z "${HAVE_CPPUNIT_FALSE}"; then
+  as_fn_error "conditional \"HAVE_CPPUNIT\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 
