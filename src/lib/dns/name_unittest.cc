@@ -26,7 +26,7 @@ using ISC::DNS::Name;
 void
 NameTest::get_length()
 {
-    Name name("www.example.cam");
+    Name name("www.example.com");
             //01234567890123456 => length should be 17.
 
     CPPUNIT_ASSERT_EQUAL(17, static_cast<int>(name.get_length()));
