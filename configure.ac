@@ -20,6 +20,27 @@ AC_PROG_RANLIB
 AC_HEADER_STDBOOL
 AC_TYPE_SIZE_T
 
+#
+# Check availablity of CppUnit, which will be used for unit tests.
+#
+AC_ARG_WITH(cppunit,
+[  --with-cppunit=PATH     specify a path to CppUnit header files (PATH/include) and library (PATH/lib)],
+    cppunit_path="$withval", cppunit_path="no")
+if test "$cppunit_path" != "no"
+then
+	CPPUNIT_INCLUDES="-I${cppunit_path}/include"
+	CPPUNIT_LDFLAGS="-L${cppunit_path}/lib"
+	CPPUNIT_LDADD="-lcppunit"
+else
+	CPPUNIT_INCLUDES=
+	CPPUNIT_LDFLAGS=
+	CPPUNIT_LDADD=
+fi
+AM_CONDITIONAL(HAVE_CPPUNIT, test $cppunit_path != "no")
+AC_SUBST(CPPUNIT_INCLUDES)
+AC_SUBST(CPPUNIT_LDFLAGS)
+AC_SUBST(CPPUNIT_LDADD)
+
 # Checks for library functions.
 
 AC_CONFIG_FILES([Makefile
