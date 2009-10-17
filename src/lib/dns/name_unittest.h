@@ -26,7 +26,6 @@ class NameTest : public CppUnit::TestFixture {
 public:
     void get_length();
     void to_text();
-    //static CppUnit::Test* suite();
 
     CPPUNIT_TEST_SUITE(NameTest);
     CPPUNIT_TEST(get_length);
