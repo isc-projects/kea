@@ -32,7 +32,7 @@ main(int argc, char* argv[])
     CppUnit::TestRunner runner;
     CppUnit::TestResult controller;
 
-    // Add a listener that colllects test result
+    // Add a listener that collects test result
     CppUnit::TestResultCollector result;
     controller.addListener( &result );        
 
