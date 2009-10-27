@@ -1,17 +1,15 @@
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib
 
 lib_LIBRARIES = libdns.a
-libdns_a_SOURCES = name.cc name.h
+libdns_a_SOURCES = name.cc buffer.cc name.h buffer.h
 
-if HAVE_CPPUNIT
-TEST_PROGRAM = run_unittests
-else
-TEST_PROGRAM =
+TESTS =
+if HAVE_GTEST
+TESTS += run_unittests
+run_unittests_SOURCES = name_unittest.cc
+run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
+run_unittests_LDFLAGS = $(GTEST_LDFLAGS)
+run_unittests_LDADD = ./libdns.a $(GTEST_LDADD)
 endif
 
-TESTS = $(TEST_PROGRAM)
-noinst_PROGRAMS = $(TEST_PROGRAM)
-run_unittests_SOURCES = name_unittest.cc name_unittest.h run_unittests.cc
-run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_INCLUDES)
-run_unittests_LDFLAGS = $(CPPUNIT_LDFLAGS)
-run_unittests_LDADD = ./libdns.a $(CPPUNIT_LDADD)
+noinst_PROGRAMS = $(TESTS)

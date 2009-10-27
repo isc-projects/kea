@@ -20,11 +20,13 @@
 #include <string>
 #include <vector>
 
+#include <dns/name.h>
+
 namespace ISC {
 namespace DNS {
-class Buffer;
-class NameCompressor;
-class NameDecompressor;
+// Define them as an empty class for rapid prototyping
+class NameCompressor {};
+class NameDecompressor {};
 
 class NameComparisonResult {
 public:
@@ -51,8 +53,7 @@ private:
 class Name {
 public:
     Name() : length_(0), labels_(0) {}
-    explicit Name(const std::string& namestr) : length_(0), labels_(0)
-	{ from_string(namestr); }
+    explicit Name(const std::string& namestr);
     explicit Name(NameDecompressor& decompressor, Buffer& buffer);
     // copy constructor (default cp-ctor should work fine)
     //Name(const Name& orig);
@@ -67,8 +68,8 @@ public:
     Name split(unsigned int first, unsigned int n) const;
     Name concatenate(const Name& suffix) const;
     bool is_wildcard() const;
-    bool operator==(const Name& other) const;
-    bool equals(const Name& other) const; // alias of ==
+    bool equals(const Name& other) const;
+    bool operator==(const Name& other) const { return (this->equals(other)); }
     bool operator!=(const Name& other) const { return (!(*this == other)); }
     bool nequals(const Name& other) const; // alias of !=
     bool operator<=(const Name& other) const;
