@@ -21,6 +21,17 @@ AC_HEADER_STDBOOL
 AC_TYPE_SIZE_T
 
 #
+# Check availablity of boost
+#
+AC_ARG_WITH(boost,
+[  --with-boost=PATH       specify a path to the boost if it's not automatically found],
+    boost_path="$withval", boost_path="no")
+if test "$boost_path" != "no"
+then
+	CPPFLAGS="$CPPFLAGS -I$boost_path"	
+fi
+
+#
 # Check availablity of gtest, which might be used for unit tests.
 #
 AC_ARG_WITH(gtest,

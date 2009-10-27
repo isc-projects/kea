@@ -691,6 +691,7 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 enable_dependency_tracking
+with_boost
 with_gtest
 '
       ac_precious_vars='build_alias
@@ -1326,6 +1327,7 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+  --with-boost=PATH       specify a path to the boost if it's not automatically found
   --with-gtest=PATH       specify a path to Gtest header files (PATH/include) and library (PATH/lib)
 
 Some influential environment variables:
@@ -4474,6 +4476,22 @@ _ACEOF
 
 fi
 
+
+#
+# Check availablity of boost
+#
+
+# Check whether --with-boost was given.
+if test "${with_boost+set}" = set; then :
+  withval=$with_boost; boost_path="$withval"
+else
+  boost_path="no"
+fi
+
+if test "$boost_path" != "no"
+then
+	CPPFLAGS="$CPPFLAGS -I$boost_path"
+fi
 
 #
 # Check availablity of gtest, which might be used for unit tests.

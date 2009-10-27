@@ -266,7 +266,7 @@ Name::Name(const std::string& namestr)
     length_ = nused;
 }
 
-Name::Name(NameDecompressor& decompressor, Buffer& buffer)
+Name::Name(Buffer& buffer, NameDecompressor& decompressor)
 {
     unsigned int nused, labels, n, nmax;
     unsigned int current;
