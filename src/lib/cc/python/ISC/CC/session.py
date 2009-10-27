@@ -20,6 +20,7 @@ import struct
 import Message
 
 class ProtocolError(Exception): pass
+class NetworkError(Exception): pass
 
 class Session:
     def __init__(self):
@@ -69,8 +70,8 @@ class Session:
                 data = self._socket.recv(length)
             except:
                 return None
-            if not data: # server closed connection
-                return None
+            if data == "": # server closed connection
+                raise ProtocolError("Read of 0 bytes: connection closed")
 
             self._recvbuffer += data
             if len(self._recvbuffer) < 4:
@@ -80,7 +81,12 @@ class Session:
 
         length = self._recvlength - len(self._recvbuffer)
         while (length > 0):
-            data = self._socket.recv(length)
+            try:
+                data = self._socket.recv(length)
+            except:
+                return None
+            if data == "": # server closed connection
+                raise ProtocolError("Read of 0 bytes: connection closed")
             self._recvbuffer += data
             length -= len(data)
         data = self._recvbuffer
