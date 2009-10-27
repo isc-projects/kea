@@ -595,11 +595,11 @@ ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
 LIBOBJS
-CPPUNIT_LDADD
-CPPUNIT_LDFLAGS
-CPPUNIT_INCLUDES
-HAVE_CPPUNIT_FALSE
-HAVE_CPPUNIT_TRUE
+GTEST_LDADD
+GTEST_LDFLAGS
+GTEST_INCLUDES
+HAVE_GTEST_FALSE
+HAVE_GTEST_TRUE
 EGREP
 GREP
 CPP
@@ -691,7 +691,7 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 enable_dependency_tracking
-with_cppunit
+with_gtest
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1326,7 +1326,7 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --with-cppunit=PATH     specify a path to CppUnit header files (PATH/include) and library (PATH/lib)
+  --with-gtest=PATH       specify a path to Gtest header files (PATH/include) and library (PATH/lib)
 
 Some influential environment variables:
   CXX         C++ compiler command
@@ -4476,32 +4476,32 @@ fi
 
 
 #
-# Check availablity of CppUnit, which will be used for unit tests.
+# Check availablity of gtest, which might be used for unit tests.
 #
 
-# Check whether --with-cppunit was given.
-if test "${with_cppunit+set}" = set; then :
-  withval=$with_cppunit; cppunit_path="$withval"
+# Check whether --with-gtest was given.
+if test "${with_gtest+set}" = set; then :
+  withval=$with_gtest; gtest_path="$withval"
 else
-  cppunit_path="no"
+  gtest_path="no"
 fi
 
-if test "$cppunit_path" != "no"
+if test "$gtest_path" != "no"
 then
-	CPPUNIT_INCLUDES="-I${cppunit_path}/include"
-	CPPUNIT_LDFLAGS="-L${cppunit_path}/lib"
-	CPPUNIT_LDADD="-lcppunit"
+	GTEST_INCLUDES="-I${gtest_path}/include"
+	GTEST_LDFLAGS="-L${gtest_path}/lib"
+	GTEST_LDADD="-lgtest"
 else
-	CPPUNIT_INCLUDES=
-	CPPUNIT_LDFLAGS=
-	CPPUNIT_LDADD=
+	GTEST_INCLUDES=
+	GTEST_LDFLAGS=
+	GTEST_LDADD=
 fi
- if test $cppunit_path != "no"; then
-  HAVE_CPPUNIT_TRUE=
-  HAVE_CPPUNIT_FALSE='#'
+ if test $gtest_path != "no"; then
+  HAVE_GTEST_TRUE=
+  HAVE_GTEST_FALSE='#'
 else
-  HAVE_CPPUNIT_TRUE='#'
-  HAVE_CPPUNIT_FALSE=
+  HAVE_GTEST_TRUE='#'
+  HAVE_GTEST_FALSE=
 fi
 
 
@@ -4629,8 +4629,8 @@ if test -z "${am__fastdepCC_TRUE}" && test -z "${am__fastdepCC_FALSE}"; then
   as_fn_error "conditional \"am__fastdepCC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${HAVE_CPPUNIT_TRUE}" && test -z "${HAVE_CPPUNIT_FALSE}"; then
-  as_fn_error "conditional \"HAVE_CPPUNIT\" was never defined.
+if test -z "${HAVE_GTEST_TRUE}" && test -z "${HAVE_GTEST_FALSE}"; then
+  as_fn_error "conditional \"HAVE_GTEST\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 

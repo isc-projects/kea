@@ -16,22 +16,11 @@
 
 #include <stdexcept>
 
+#include <dns/buffer.h>
 #include <dns/name.h>
 
 using namespace std;
 using namespace ISC::DNS;
-
-// quick hack exception classes: should be moved to an appropriate place soon.
-class ISCException {};
-class ISCUnexpected : public ISCException {};
-class ISCNoSpace : public ISCException {};
-
-class DNSException {};
-class DNSEmptyLabel : public DNSException {};
-class DNSLabelTooLong : public DNSException {};
-class DNSBadEscape : public DNSException {};
-class DNSBadLabelType : public DNSException {};
-
 
 typedef enum {
     ft_init = 0,
@@ -104,8 +93,8 @@ static unsigned char maptolower[] = {
     0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff
 };
 
-void
-Name::from_string(const string &namestring)
+Name::Name(const std::string& namestr)
+    : length_(0), labels_(0)
 {
     char c;
     ft_state state;
@@ -129,7 +118,7 @@ Name::from_string(const string &namestring)
     // Set up the state machine.
     //
     pos = 0;
-    tlen = namestring.length();
+    tlen = namestr.length();
     tused = 0;
     nrem = 255;
     nused = 0;
@@ -138,7 +127,7 @@ Name::from_string(const string &namestring)
     state = ft_init;
 
     while (nrem > 0 && tlen > 0 && !done) {
-        c = namestring[pos++];
+        c = namestr[pos++];
         tlen--;
         tused++;
 
@@ -277,6 +266,101 @@ Name::from_string(const string &namestring)
     length_ = nused;
 }
 
+Name::Name(NameDecompressor& decompressor, Buffer& buffer)
+{
+    unsigned int nused, labels, n, nmax;
+    unsigned int current;
+    bool done;
+    fw_state state = fw_start;
+    unsigned int c;
+    bool downcase;
+    bool seen_pointer;
+
+    /*
+     * Initialize things to make the compiler happy; they're not required.
+     */
+    n = 0;
+
+    /*
+     * Set up.
+     */
+    labels = 0;
+    done = false;
+    nused = 0;
+
+    /*
+     * Find the maximum number of uncompressed target name
+     * bytes we are willing to generate.  This is the smaller
+     * of the available target buffer length and the
+     * maximum legal domain name length (255).
+     */
+    nmax = MAXWIRE;
+
+    current = buffer.get_current();
+
+    /*
+     * Note:  The following code is not optimized for speed, but
+     * rather for correctness.  Speed will be addressed in the future.
+     */
+    while (current < buffer.get_size() && !done) {
+        c = buffer.read_uint8();
+        current++;
+
+        switch (state) {
+        case fw_start:
+            if (c < 64) {
+                offsets_.push_back(nused);
+                labels++;
+                if (nused + c + 1 > nmax)
+                full:
+                    // The name did not fit even though we had a buffer
+                    // big enough to fit a maximum-length name.
+                    throw DNSNameTooLong();
+                nused += c + 1;
+                ndata_.push_back(c);
+                if (c == 0)
+                    done = true;
+                n = c;
+                state = fw_ordinary;
+            } else if (c >= 128 && c < 192) {
+                /*
+                 * 14 bit local compression pointer.
+                 * Local compression is no longer an
+                 * IETF draft.
+                 */
+                throw DNSBadLabelType();
+            } else if (c >= 192) {
+                /*
+                 * Ordinary 14-bit pointer.
+                 */
+                throw DNSBadLabelType(); // XXX not implemented
+            } else
+                throw DNSBadLabelType();
+            break;
+        case fw_ordinary:
+            if (downcase)
+                c = maptolower[c];
+            /* FALLTHROUGH */
+        case fw_copy:
+            ndata_.push_back(c);
+            n--;
+            if (n == 0)
+                state = fw_start;
+            break;
+        case fw_newcurrent:
+            // XXX not implemented, fall through
+        default:
+            throw ISCUnexpected();
+        }
+    }
+
+    if (!done)
+        throw ISCUnexpected();
+
+    labels_ = labels;
+    length_ = nused;
+}
+
 string
 Name::to_text(bool omit_final_dot) const
 {
@@ -391,9 +475,16 @@ Name::to_text(bool omit_final_dot) const
     return (tdata);
 }
 
+void
+Name::to_wire(Buffer& buffer, NameCompressor& c) const
+{
+    // TBD: very simple version for prototyping; e.g. it omits compression.
+    buffer.write_data(ndata_.c_str(), ndata_.size());
+}
+
 // Are 'this' name and 'other' equal?
 bool
-Name::operator==(const Name& other) const
+Name::equals(const Name& other) const
 {
     unsigned int l;
     unsigned char c, count;

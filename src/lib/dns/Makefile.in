@@ -34,7 +34,8 @@ NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
 TESTS = $(am__EXEEXT_1)
-noinst_PROGRAMS = $(am__EXEEXT_1)
+@HAVE_GTEST_TRUE@am__append_1 = run_unittests
+noinst_PROGRAMS = $(am__EXEEXT_2)
 subdir = src/lib/dns
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -72,15 +73,18 @@ AR = ar
 ARFLAGS = cru
 libdns_a_AR = $(AR) $(ARFLAGS)
 libdns_a_LIBADD =
-am_libdns_a_OBJECTS = name.$(OBJEXT)
+am_libdns_a_OBJECTS = name.$(OBJEXT) buffer.$(OBJEXT)
 libdns_a_OBJECTS = $(am_libdns_a_OBJECTS)
-@HAVE_CPPUNIT_TRUE@am__EXEEXT_1 = run_unittests$(EXEEXT)
+@HAVE_GTEST_TRUE@am__EXEEXT_1 = run_unittests$(EXEEXT)
+am__EXEEXT_2 = $(am__EXEEXT_1)
 PROGRAMS = $(noinst_PROGRAMS)
-am_run_unittests_OBJECTS = run_unittests-name_unittest.$(OBJEXT) \
-	run_unittests-run_unittests.$(OBJEXT)
+am__run_unittests_SOURCES_DIST = name_unittest.cc
+@HAVE_GTEST_TRUE@am_run_unittests_OBJECTS =  \
+@HAVE_GTEST_TRUE@	run_unittests-name_unittest.$(OBJEXT)
 run_unittests_OBJECTS = $(am_run_unittests_OBJECTS)
 am__DEPENDENCIES_1 =
-run_unittests_DEPENDENCIES = ./libdns.a $(am__DEPENDENCIES_1)
+@HAVE_GTEST_TRUE@run_unittests_DEPENDENCIES = ./libdns.a \
+@HAVE_GTEST_TRUE@	$(am__DEPENDENCIES_1)
 run_unittests_LINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(run_unittests_LDFLAGS) $(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
@@ -97,7 +101,7 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(libdns_a_SOURCES) $(run_unittests_SOURCES)
-DIST_SOURCES = $(libdns_a_SOURCES) $(run_unittests_SOURCES)
+DIST_SOURCES = $(libdns_a_SOURCES) $(am__run_unittests_SOURCES_DIST)
 ETAGS = etags
 CTAGS = ctags
 am__tty_colors = \
@@ -114,9 +118,6 @@ CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
-CPPUNIT_INCLUDES = @CPPUNIT_INCLUDES@
-CPPUNIT_LDADD = @CPPUNIT_LDADD@
-CPPUNIT_LDFLAGS = @CPPUNIT_LDFLAGS@
 CXX = @CXX@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
@@ -129,6 +130,9 @@ ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 EXEEXT = @EXEEXT@
 GREP = @GREP@
+GTEST_INCLUDES = @GTEST_INCLUDES@
+GTEST_LDADD = @GTEST_LDADD@
+GTEST_LDFLAGS = @GTEST_LDFLAGS@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -199,13 +203,11 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib
 lib_LIBRARIES = libdns.a
-libdns_a_SOURCES = name.cc name.h
-@HAVE_CPPUNIT_FALSE@TEST_PROGRAM = 
-@HAVE_CPPUNIT_TRUE@TEST_PROGRAM = run_unittests
-run_unittests_SOURCES = name_unittest.cc name_unittest.h run_unittests.cc
-run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_INCLUDES)
-run_unittests_LDFLAGS = $(CPPUNIT_LDFLAGS)
-run_unittests_LDADD = ./libdns.a $(CPPUNIT_LDADD)
+libdns_a_SOURCES = name.cc buffer.cc name.h buffer.h
+@HAVE_GTEST_TRUE@run_unittests_SOURCES = name_unittest.cc
+@HAVE_GTEST_TRUE@run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
+@HAVE_GTEST_TRUE@run_unittests_LDFLAGS = $(GTEST_LDFLAGS)
+@HAVE_GTEST_TRUE@run_unittests_LDADD = ./libdns.a $(GTEST_LDADD)
 all: all-am
 
 .SUFFIXES:
@@ -289,9 +291,9 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/buffer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/name.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/run_unittests-name_unittest.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/run_unittests-run_unittests.Po@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -320,20 +322,6 @@ run_unittests-name_unittest.obj: name_unittest.cc
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='name_unittest.cc' object='run_unittests-name_unittest.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(run_unittests_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o run_unittests-name_unittest.obj `if test -f 'name_unittest.cc'; then $(CYGPATH_W) 'name_unittest.cc'; else $(CYGPATH_W) '$(srcdir)/name_unittest.cc'; fi`
-
-run_unittests-run_unittests.o: run_unittests.cc
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(run_unittests_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT run_unittests-run_unittests.o -MD -MP -MF $(DEPDIR)/run_unittests-run_unittests.Tpo -c -o run_unittests-run_unittests.o `test -f 'run_unittests.cc' || echo '$(srcdir)/'`run_unittests.cc
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/run_unittests-run_unittests.Tpo $(DEPDIR)/run_unittests-run_unittests.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='run_unittests.cc' object='run_unittests-run_unittests.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(run_unittests_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o run_unittests-run_unittests.o `test -f 'run_unittests.cc' || echo '$(srcdir)/'`run_unittests.cc
-
-run_unittests-run_unittests.obj: run_unittests.cc
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(run_unittests_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT run_unittests-run_unittests.obj -MD -MP -MF $(DEPDIR)/run_unittests-run_unittests.Tpo -c -o run_unittests-run_unittests.obj `if test -f 'run_unittests.cc'; then $(CYGPATH_W) 'run_unittests.cc'; else $(CYGPATH_W) '$(srcdir)/run_unittests.cc'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/run_unittests-run_unittests.Tpo $(DEPDIR)/run_unittests-run_unittests.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='run_unittests.cc' object='run_unittests-run_unittests.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(run_unittests_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o run_unittests-run_unittests.obj `if test -f 'run_unittests.cc'; then $(CYGPATH_W) 'run_unittests.cc'; else $(CYGPATH_W) '$(srcdir)/run_unittests.cc'; fi`
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
