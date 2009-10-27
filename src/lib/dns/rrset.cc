@@ -28,6 +28,9 @@
 using ISC::DNS::RRClass;
 using ISC::DNS::RRType;
 using ISC::DNS::TTL;
+using ISC::DNS::Rdata::IN::A;
+using ISC::DNS::Rdata::IN::AAAA;
+using ISC::DNS::Rdata::Generic::NS;
 
 RRClass::RRClass(const std::string& classstr)
 {
@@ -104,88 +107,88 @@ TTL::to_wire(Buffer& buffer) const
     buffer.write_uint32(ttlval_);
 }
 
-#ifdef notyet
-ARdata::ARdata(const std::string& addrstr)
+A::A(const std::string& addrstr)
 {
-    if (inet_pton(AF_INET, addrstr.c_str(), &_addr) != 1)
+    if (inet_pton(AF_INET, addrstr.c_str(), &addr_) != 1)
         throw ISCInvalidAddressString();
 }
 
 void
-ARdata::from_wire(IOBuffer& buffer, NameDecompressor& decompressor)
+A::from_wire(Buffer& buffer, NameDecompressor& decompressor)
 {
     //TBD
 }
 
 void
-ARdata::to_wire(IOBuffer& buffer, NameCompressor& compressor) const
+A::to_wire(Buffer& buffer, NameCompressor& compressor) const
 {
-    buffer.write_uint16(sizeof(_addr));
-    buffer.write_data(&_addr, sizeof(_addr));
+    buffer.write_uint16(sizeof(addr_));
+    buffer.write_data(&addr_, sizeof(addr_));
 }
 
 std::string
-ARdata::to_text() const
+A::to_text() const
 {
     char addrbuf[sizeof("255.255.255.255")];
 
-    if (inet_ntop(AF_INET, &_addr, addrbuf, sizeof(addrbuf)) == NULL)
-        throw runtime_error("unexpected inet_ntop() failure");
+    if (inet_ntop(AF_INET, &addr_, addrbuf, sizeof(addrbuf)) == NULL)
+        throw std::runtime_error("unexpected inet_ntop() failure");
 
     return (std::string(addrbuf));
 }
 
-AAAARdata::AAAARdata(const std::string& addrstr)
+AAAA::AAAA(const std::string& addrstr)
 {
-    if (inet_pton(AF_INET6, addrstr.c_str(), &_addr) != 1)
+    if (inet_pton(AF_INET6, addrstr.c_str(), &addr_) != 1)
         throw ISCInvalidAddressString();
 }
 
 void
-AAAARdata::from_wire(IOBuffer& buffer, NameDecompressor& decompressor)
+AAAA::from_wire(Buffer& buffer, NameDecompressor& decompressor)
 {
     //TBD
 }
 
 void
-AAAARdata::to_wire(IOBuffer& buffer, NameCompressor& compressor) const
+AAAA::to_wire(Buffer& buffer, NameCompressor& compressor) const
 {
-    buffer.write_uint16(sizeof(_addr));
-    buffer.write_data(&_addr, sizeof(_addr));
+    buffer.write_uint16(sizeof(addr_));
+    buffer.write_data(&addr_, sizeof(addr_));
 }
 
 std::string
-AAAARdata::to_text() const
+AAAA::to_text() const
 {
     char addrbuf[sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255")];
 
-    if (inet_ntop(AF_INET6, &_addr, addrbuf, sizeof(addrbuf)) == NULL)
-        throw runtime_error("unexpected inet_ntop() failure");
+    if (inet_ntop(AF_INET6, &addr_, addrbuf, sizeof(addrbuf)) == NULL)
+        throw std::runtime_error("unexpected inet_ntop() failure");
 
     return (std::string(addrbuf));
 }
 
 void
-NSRdata::from_wire(IOBuffer& buffer, NameDecompressor& decompressor)
+NS::from_wire(Buffer& buffer, NameDecompressor& decompressor)
 {
     //TBD
 }
 
 void
-NSRdata::to_wire(IOBuffer& buffer, NameCompressor& compressor) const
+NS::to_wire(Buffer& buffer, NameCompressor& compressor) const
 {
-    // XXX: note that a complete implementation cannot be that simple
+    // XXX: note that a complete implementation cannot be this simple
     // because we need to disable compression for the NS name.
-    buffer.write_uint16(_nsname.get_length());
-    _nsname.to_wire(buffer, compressor);
+    buffer.write_uint16(nsname_.get_length());
+    nsname_.to_wire(buffer, compressor);
 }
 
 std::string
-NSRdata::to_text() const
+NS::to_text() const
 {
-    return (_nsname.to_text());
+    return (nsname_.to_text());
 }
 
+#ifdef notyet
 void
 RdataSet::add_rdata(rdataptr_t rdata)
 {
@@ -247,7 +250,7 @@ RRSet::to_wire(Message& message, section_t section)
     // sort Rdata list based on rrset-order and sortlist, and possible
     // other options.  Details to be considered.
 
-    IOBuffer& b = message.get_iobuffer();
+    Buffer& b = message.get_iobuffer();
     NameCompressor& c = message.get_compressor();
     for (vector<rdataptr_t>::iterator it = _rdatalist.begin();
          it != _rdatalist.end();
@@ -277,7 +280,7 @@ Question::to_text() const
 int
 Question::to_wire(Message& message, section_t section)
 {
-    IOBuffer& b = message.get_iobuffer();
+    Buffer& b = message.get_iobuffer();
     NameCompressor& c = message.get_compressor();
 
     _name.to_wire(b, c);
