@@ -54,7 +54,7 @@ class Name {
 public:
     Name() : length_(0), labels_(0) {}
     explicit Name(const std::string& namestr);
-    explicit Name(NameDecompressor& decompressor, Buffer& buffer);
+    explicit Name(Buffer& buffer, NameDecompressor& decompressor);
     // copy constructor (default cp-ctor should work fine)
     //Name(const Name& orig);
     // destructor (default dtor should work fine)

@@ -79,15 +79,7 @@ TEST_F(NameTest, to_from_wire)
     ISC::DNS::NameDecompressor decompressor;
 
     example_name->to_wire(buffer, compressor);
-
-    Name name2(decompressor, buffer);
-    EXPECT_EQ(true, *example_name == name2);
+    EXPECT_EQ(std::string("www.example.com."),
+              Name(buffer, decompressor).to_text(false));
 }
-}
-
-int
-main(int argc, char* argv[])
-{
-    ::testing::InitGoogleTest(&argc, argv);
-    return (RUN_ALL_TESTS());
 }

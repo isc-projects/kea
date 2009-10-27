@@ -14,49 +14,11 @@
 
 // $Id$
 
-#include <iostream>
-#include <stdexcept>
-
-#include <cppunit/CompilerOutputter.h>
-#include <cppunit/TestCase.h>
-#include <cppunit/TestResult.h>
-#include <cppunit/TestResultCollector.h>
-#include <cppunit/TestRunner.h>
-#include <cppunit/TextTestProgressListener.h>
-
-#include <dns/name_unittest.h>
+#include <gtest/gtest.h>
 
 int
 main(int argc, char* argv[])
 {
-    CppUnit::TestRunner runner;
-    CppUnit::TestResult controller;
-
-    // Add a listener that collects test result
-    CppUnit::TestResultCollector result;
-    controller.addListener( &result );        
-
-    // Add a listener that print dots as test run.
-    CppUnit::TextTestProgressListener progress;
-    controller.addListener(&progress);
-
-    runner.addTest(NameTest::suite());
-
-    try {
-        std::cout << "Running ";
-        runner.run(controller, "");
-
-        std::cerr << std::endl;
-
-        // Print test in a compiler compatible format.
-        CppUnit::CompilerOutputter outputter(&result, std::cerr);
-        outputter.write();                      
-    } catch (std::invalid_argument& e) {  // Test path not resolved
-        std::cerr  <<  std::endl  
-                   <<  "ERROR: "  <<  e.what()
-                   << std::endl;
-        return 0;
-    }
-
-    return (result.wasSuccessful() ? 0 : 1);
+    ::testing::InitGoogleTest(&argc, argv);
+    return (RUN_ALL_TESTS());
 }

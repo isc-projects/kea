@@ -66,7 +66,7 @@ public:
     }
     void write_data(const void *data, size_t len)
     {
-        const uint8_t* cp = static_cast<const uint8_t*>(cp);
+        const uint8_t* cp = static_cast<const uint8_t*>(data);
         buf_.insert(buf_.end(), cp, cp + len);
     }
     void write_uint32(uint32_t data)
