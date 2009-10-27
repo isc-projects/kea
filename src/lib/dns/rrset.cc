@@ -31,6 +31,9 @@ using ISC::DNS::TTL;
 using ISC::DNS::Rdata::IN::A;
 using ISC::DNS::Rdata::IN::AAAA;
 using ISC::DNS::Rdata::Generic::NS;
+using ISC::DNS::RRset;
+using ISC::DNS::Question;
+using ISC::DNS::RR;
 
 RRClass::RRClass(const std::string& classstr)
 {
@@ -188,79 +191,52 @@ NS::to_text() const
     return (nsname_.to_text());
 }
 
-#ifdef notyet
-void
-RdataSet::add_rdata(rdataptr_t rdata)
-{
-    if (rdata->get_type() != _rdtype)
-        throw DNSRdtypeMismatch();
-    _rdatalist.push_back(rdata);
-}
-
 std::string
-RdataSet::to_text() const
+RRset::to_text() const
 {
     std::string s;
 
-    for (vector<rdataptr_t>::const_iterator it = _rdatalist.begin();
-         it != _rdatalist.end();
+    for (std::vector<Rdata::RDATAPTR>::const_iterator it = rdatalist_.begin();
+         it != rdatalist_.end();
          ++it)
     {
         if (!s.empty())
             s.push_back('\n');
-        s += _ttl.to_text() + " " + _rdclass.to_text() + " " +
-            _rdtype.to_text() + " " + (**it).to_text();
-    }
-
-    return (s);
-}
-
-std::string
-RRSet::to_text() const
-{
-    std::string s;
-
-    for (vector<rdataptr_t>::const_iterator it = _rdatalist.begin();
-         it != _rdatalist.end();
-         ++it)
-    {
-        if (!s.empty())
-            s.push_back('\n');
-        s += _name.to_text() + " ";
-        s += _ttl.to_text() + " " + _rdclass.to_text() + " " +
-            _rdtype.to_text() + " " + (**it).to_text();
+        s += name_.to_text() + " ";
+        s += ttl_.to_text() + " " + rdclass_.to_text() + " " +
+            rdtype_.to_text() + " " + (**it).to_text();
     }
 
     return (s);
 }
 
 void
-RRSet::add_rdata(rdataptr_t rdata)
+RRset::add_rdata(Rdata::RDATAPTR rdata)
 {
-    if (rdata->get_type() != _rdtype)
+    if (rdata->get_type() != rdtype_)
         throw DNSRdtypeMismatch();
-    _rdatalist.push_back(rdata);
+    rdatalist_.push_back(rdata);
 }
 
 int
-RRSet::to_wire(Message& message, section_t section)
+RRset::to_wire(Buffer& buffer, NameCompressor& compressor, section_t section)
 {
     int num_rrs = 0;
 
     // sort Rdata list based on rrset-order and sortlist, and possible
     // other options.  Details to be considered.
+    // section is not currently used.  will be, when we implement rrset-order
+    // etc.
 
-    Buffer& b = message.get_iobuffer();
-    NameCompressor& c = message.get_compressor();
-    for (vector<rdataptr_t>::iterator it = _rdatalist.begin();
-         it != _rdatalist.end();
+    for (std::vector<Rdata::RDATAPTR>::iterator it = rdatalist_.begin();
+         it != rdatalist_.end();
          ++it, ++num_rrs)
     {
-        _name.to_wire(b, c);
-        _rdtype.to_wire(b);
-        _rdclass.to_wire(b);
-        _ttl.to_wire(b);
-        (**it).to_wire(b, c);
+        name_.to_wire(buffer, compressor);
+        rdtype_.to_wire(buffer);
+        rdclass_.to_wire(buffer);
+        ttl_.to_wire(buffer);
+        (**it).to_wire(buffer, compressor);
 
         // TBD: handle truncation case
     }
@@ -273,21 +249,35 @@ Question::to_text() const
 {
     // return in dig-style format.  note that in the wire format class follows
     // type.
-    return (_name.to_text() + " " + _rdclass.to_text() + " " +
-            _rdtype.to_text());
+    return (name_.to_text() + " " + rdclass_.to_text() + " " +
+            rdtype_.to_text());
 }
 
 int
-Question::to_wire(Message& message, section_t section)
+Question::to_wire(Buffer& buffer, NameCompressor& compressor, section_t section)
 {
-    Buffer& b = message.get_iobuffer();
-    NameCompressor& c = message.get_compressor();
-
-    _name.to_wire(b, c);
-    _rdtype.to_wire(b);
-    _rdclass.to_wire(b);
+    name_.to_wire(buffer, compressor);
+    rdtype_.to_wire(buffer);
+    rdclass_.to_wire(buffer);
 
     return (1);
 }
 
-#endif  // notyet
+RR::RR(const Name& name, const RRClass& rrclass, const RRType& rrtype,
+       const TTL& ttl, const Rdata::Rdata& rdata) :
+    rrset_(name, rrclass, rrtype, ttl)
+{
+    // XXX: this implementation is BAD.  we took the ugly bad fastest approach
+    // for rapid experiment.  should rewrite it.
+    if (rrtype == RRType::A) {
+        rrset_.add_rdata(Rdata::RDATAPTR(new A(rdata.to_text())));
+    } else if (rrtype == RRType::AAAA) {
+        rrset_.add_rdata(Rdata::RDATAPTR(new AAAA(rdata.to_text())));
+    } else if (rrtype == RRType::NS) {
+        rrset_.add_rdata(Rdata::RDATAPTR(new NS(rdata.to_text())));
+    } else {
+        // XXX
+        throw std::runtime_error("RR constructor encountered "
+                                 "an unsupported type");
+    }
+}

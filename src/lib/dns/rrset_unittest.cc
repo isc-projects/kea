@@ -21,12 +21,17 @@
 
 namespace {
 
+using ISC::DNS::Name;
 using ISC::DNS::RRClass;
 using ISC::DNS::RRType;
 using ISC::DNS::TTL;
+using ISC::DNS::Rdata::RDATAPTR;
 using ISC::DNS::Rdata::IN::A;
 using ISC::DNS::Rdata::IN::AAAA;
 using ISC::DNS::Rdata::Generic::NS;
+using ISC::DNS::RRset;
+using ISC::DNS::RR;
+using ISC::DNS::Question;
 
 // The fixture for testing class RRClass.
 class RRClassTest : public ::testing::Test {
@@ -115,5 +120,81 @@ protected:
 TEST_F(Rdata_Generic_NS_Test, from_to_text)
 {
     EXPECT_EQ("ns.example.com.", rdata.to_text());
+}
+
+// The fixture for testing class RRset
+class RRsetTest : public ::testing::Test {
+protected:
+    RRsetTest() :
+        rrset_a(Name("www.example.com"), RRClass::IN, RRType::A, TTL(3600)),
+        rrset_aaaa(Name("ns.example.net"), RRClass::IN, RRType::AAAA, TTL(60))
+    {
+        rrset_a.add_rdata(RDATAPTR(new A("192.0.2.1")));
+        rrset_a.add_rdata(RDATAPTR(new A("192.0.2.255")));
+        rrset_aaaa.add_rdata(RDATAPTR(new AAAA("2001:db8::1234")));
+    }
+          
+    RRset rrset_a;
+    RRset rrset_aaaa;
+};
+
+TEST_F(RRsetTest, to_text)
+{
+    EXPECT_EQ("www.example.com. 3600 IN A 192.0.2.1\n"
+              "www.example.com. 3600 IN A 192.0.2.255",
+              rrset_a.to_text());
+    EXPECT_EQ("ns.example.net. 60 IN AAAA 2001:db8::1234",
+              rrset_aaaa.to_text());
+}
+
+TEST_F(RRsetTest, count_rdata)
+{
+    EXPECT_EQ(2, rrset_a.count_rdata());
+    EXPECT_EQ(1, rrset_aaaa.count_rdata());
+}
+
+// The fixture for testing class Question
+class QuestionTest : public ::testing::Test {
+protected:
+    QuestionTest() :
+        question_a(Name("www.example.com"), RRClass::IN, RRType::A),
+        question_aaaa(Name("ns.example.net"), RRClass::IN, RRType::AAAA) {}
+    Question question_a;
+    Question question_aaaa;
+};
+
+TEST_F(QuestionTest, to_text)
+{
+    EXPECT_EQ("www.example.com. IN A", question_a.to_text());
+    EXPECT_EQ("ns.example.net. IN AAAA", question_aaaa.to_text());
+}
+
+TEST_F(QuestionTest, count_rdata)
+{
+    EXPECT_EQ(0, question_a.count_rdata());
+    EXPECT_EQ(0, question_aaaa.count_rdata());
+}
+
+// The fixture for testing class RR
+class RRTest : public ::testing::Test {
+protected:
+    RRTest() :
+        rr_a(Name("www.example.com"), RRClass::IN, RRType::A, TTL(3600),
+             A("192.0.2.1")),
+        rr_aaaa(Name("ns.example.net"), RRClass::IN, RRType::AAAA, TTL(60),
+                AAAA("2001:db8::1234")),
+        rr_ns(Name("example.net"), RRClass::IN, RRType::NS, TTL(1800),
+              NS("ns.example.net"))
+    {}
+    RR rr_a;
+    RR rr_aaaa;
+    RR rr_ns;
+};
+
+TEST_F(RRTest, to_text)
+{
+    EXPECT_EQ("www.example.com. 3600 IN A 192.0.2.1", rr_a.to_text());
+    EXPECT_EQ("ns.example.net. 60 IN AAAA 2001:db8::1234", rr_aaaa.to_text());
+    EXPECT_EQ("example.net. 1800 IN NS ns.example.net.", rr_ns.to_text());
 }
 }
