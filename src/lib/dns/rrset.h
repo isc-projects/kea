@@ -110,10 +110,10 @@ namespace Rdata {
 // if we worry about data copy, we may have to use
 // shared pointers at the cost of depending on boost.
 class Rdata;
-typedef boost::shared_ptr<Rdata> rdataptr_t;
+typedef boost::shared_ptr<Rdata> RDATAPTR;
 // if we want to avoid the dependency, use this; but we'll have
 // to care much more about resource leak.
-//typedef Rdata * rdataptr_t;
+//typedef Rdata * RDATAPTR;
 
 // Abstract RDATA class
 class Rdata {
@@ -195,8 +195,8 @@ private:
 }
 }
 
-// An RRSet.  Conceptually it's a named RdataSet.  A (section
-// of) DNS message would consist of a list of RRSets.
+// An RRset.  Conceptually it's a named RdataSet.  A (section
+// of) DNS message would consist of a list of RRsets.
 // This is a primary class internally used in our major software such as name
 // servers.
 //
@@ -211,28 +211,29 @@ private:
 //     by one)?  ldns has ldns_rr_list_compare(), which takes
 //     the latter approach (assuming the caller sorts the lists
 //     beforehand?).
-class AbstractRRSet {
+class AbstractRRset {
 public:
-    virtual ~AbstractRRSet() {}
+    virtual ~AbstractRRset() {}
     virtual std::string to_text() const = 0;
-    virtual int to_wire(Message& message, section_t section) = 0;
+    virtual int to_wire(Buffer& buffer, NameCompressor& compressor,
+                        section_t section) = 0;
     virtual unsigned int count_rdata() const = 0;
     virtual const Name& get_name() const = 0;
     virtual const RRClass& get_class() const = 0;
     virtual const RRType& get_type() const = 0;
 };
 
-class RRSet : public AbstractRRSet {
+class RRset : public AbstractRRset {
 public:
-    RRSet() {}
-    explicit RRSet(const Name &name, const RRClass &rdclass,
+    RRset() {}
+    explicit RRset(const Name &name, const RRClass &rdclass,
                    const RRType &rdtype, const TTL &ttl) :
         name_(name), rdclass_(rdclass), rdtype_(rdtype), ttl_(ttl) {}
     unsigned int count_rdata() const { return (rdatalist_.size()); }
-    void add_rdata(Rdata::rdataptr_t rdata);
+    void add_rdata(Rdata::RDATAPTR rdata);
     void remove_rdata(const Rdata::Rdata& rdata);
     std::string to_text() const;
-    int to_wire(Message& message, section_t section);
+    int to_wire(Buffer& buffer, NameCompressor& compressor, section_t section);
     const Name& get_name() const { return (name_); } 
     const RRClass& get_class() const { return (rdclass_); }
     const RRType& get_type() const { return (rdtype_); }
@@ -243,24 +244,23 @@ private:
     RRClass rdclass_;
     RRType rdtype_;
     TTL ttl_;
-    std::vector<Rdata::rdataptr_t> rdatalist_;
+    std::vector<Rdata::RDATAPTR> rdatalist_;
 };
 
 //
 // Generic Question section entry
 //
-class Question : public AbstractRRSet {
+class Question : public AbstractRRset {
 public:
     explicit Question(const Name& name, const RRClass& rdclass,
              const RRType& rdtype) :
         name_(name), rdclass_(rdclass), rdtype_(rdtype) {}
     std::string to_text() const;
-    int to_wire(Message& message, section_t section);
+    int to_wire(Buffer& buffer, NameCompressor& compressor, section_t section);
     unsigned int count_rdata() const { return (0); }
     const Name& get_name() const { return (name_); } 
     const RRClass& get_class() const { return (rdclass_); }
     const RRType& get_type() const { return (rdtype_); }
-    
 private:
     Name name_;
     RRClass rdclass_;
@@ -270,9 +270,9 @@ private:
 // TBD: this interface should be revisited.
 template <typename T>
 void
-RRSet::get_rdatalist(std::vector<T>& v) const
+RRset::get_rdatalist(std::vector<T>& v) const
 {
-    std::vector<Rdata::rdataptr_t>::const_iterator it;
+    std::vector<Rdata::RDATAPTR>::const_iterator it;
     for (it = rdatalist_.begin(); it != rdatalist_.end(); ++it) {
         const T& concreteRdata = static_cast<const T&>(**it); // XXX
         if (T::get_type_static() != (**it).get_type()) {
@@ -291,18 +291,18 @@ class RR {
 public:
     RR() {}
     explicit RR(const std::string& rrstr);
-    explicit RR(const Name &name, const RRClass &rdclass,
-                const RRType &rdtype, const TTL &ttl,
-                const Rdata::Rdata &rdata);
+    explicit RR(const Name& name, const RRClass& rdclass,
+                const RRType& rdtype, const TTL& ttl,
+                const Rdata::Rdata& rdata);
     std::string to_text() const { return (rrset_.to_text()); }
     const Name& get_name() const { return (rrset_.get_name()); }
     const RRClass& get_class() const { return (rrset_.get_class()); }
     const RRType& get_type() const { return (rrset_.get_type()); }
     const TTL& get_ttl() const { return (rrset_.get_ttl()); }
 private:
-    // An RR is (could be) actually implemented as an RRSet
-    // containing at most one RR.
-    RRSet rrset_;
+    // An RR is (could be) actually implemented as an RRset containing at most
+    // one RR.
+    RRset rrset_;
 };
 }
 }
