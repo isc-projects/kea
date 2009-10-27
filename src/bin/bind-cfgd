@@ -1,7 +1,0 @@
-# use build time srcdir for now
-BINPATH=/home/jelte/repos/bind10/branches/f2f200910/src/lib/bind-cfgd
-LIBPATH=/home/jelte/repos/bind10/branches/f2f200910/src/lib
-PYTHONPATH=${LIBPATH}:${PYTHONPATH}
-
-python ${BINPATH}/bind-cfgd.py
-
