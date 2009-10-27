@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.64])
+AC_PREREQ([2.61])
 AC_INIT(bind, 10.0.0, bind10-bugs@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
@@ -57,5 +57,7 @@ AC_SUBST(GTEST_LDADD)
 AC_CONFIG_FILES([Makefile
                  src/Makefile
                  src/lib/Makefile
-                 src/lib/dns/Makefile])
+                 src/lib/dns/Makefile
+               ])
+AC_OUTPUT([src/bin/bind-cfgd])
 AC_OUTPUT
