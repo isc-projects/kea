@@ -14,7 +14,10 @@ class ConfigManager:
     def __init__(self):
         self.cc = ISC.CC.Session()
         self.cc.group_subscribe("ConfigManager")
-        self.config
+        self.config = ConfigData()
+
+    def notify_boss(self):
+        self.cc.group_sendmsg({"Running": "ConfigManager"}, "Boss")
 
     def read_config(self, filename):
         pass
@@ -33,6 +36,8 @@ if __name__ == "__main__":
     print "Hello, BIND10 world!"
     try:
         cm = ConfigManager()
+        # do loading here if necessary
+        cm.notify_boss()
         cm.run()
     except ISC.CC.SessionError, se:
         print "Error creating config manager, "\
