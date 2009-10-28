@@ -114,15 +114,17 @@ class Session:
         })
 
     def group_sendmsg(self, msg, group, instance = "*", to = "*"):
+        seq = self._next_sequence()
         self.sendmsg({
             "type": "send",
             "from": self._lname,
             "to": to,
             "group": group,
             "instance": instance,
-            "seq": self._next_sequence(),
+            "seq": seq,
             "msg": Message.to_wire(msg),
         })
+        return seq
 
     def group_recvmsg(self, nonblock = True):
         msg = self.recvmsg(nonblock)
@@ -130,6 +132,20 @@ class Session:
             return None
         data = Message.from_wire(msg["msg"])
         return (data, msg)
+
+    def group_reply(self, routing, msg):
+        seq = self._next_sequence()
+        self.sendmsg({
+            "type": "send",
+            "from": self._lname,
+            "to": routing["from"],
+            "group": routing["group"],
+            "instance": routing["instance"],
+            "seq": seq,
+            "reply": routing["seq"],
+            "msg": Message.to_wire(msg),
+        })
+        return seq
 
 if __name__ == "__main__":
     import doctest
