@@ -296,14 +296,14 @@ Name::Name(Buffer& buffer, NameDecompressor& decompressor)
      */
     nmax = MAXWIRE;
 
-    current = buffer.get_current();
+    current = buffer.getCurrent();
 
     /*
      * Note:  The following code is not optimized for speed, but
      * rather for correctness.  Speed will be addressed in the future.
      */
-    while (current < buffer.get_size() && !done) {
-        c = buffer.read_uint8();
+    while (current < buffer.getSize() && !done) {
+        c = buffer.readUint8();
         current++;
 
         switch (state) {
@@ -362,7 +362,7 @@ Name::Name(Buffer& buffer, NameDecompressor& decompressor)
 }
 
 string
-Name::to_text(bool omit_final_dot) const
+Name::toText(bool omit_final_dot) const
 {
     string tdata;
     unsigned int nlen;
@@ -476,10 +476,10 @@ Name::to_text(bool omit_final_dot) const
 }
 
 void
-Name::to_wire(Buffer& buffer, NameCompressor& c) const
+Name::toWire(Buffer& buffer, NameCompressor& c) const
 {
     // TBD: very simple version for prototyping; e.g. it omits compression.
-    buffer.write_data(ndata_.c_str(), ndata_.size());
+    buffer.writeData(ndata_.c_str(), ndata_.size());
 }
 
 // Are 'this' name and 'other' equal?
@@ -520,6 +520,6 @@ Name::equals(const Name& other) const
 ostream&
 operator<<(ostream& os, const Name& name)
 {
-    os << name.to_text();
+    os << name.toText();
     return (os);
 }
