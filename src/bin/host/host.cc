@@ -21,16 +21,18 @@ main(int argc, char* argv[])
 {
     Message msg;
 
-    if (argc) {
+    if (argc < 2) {
+        cout << "Usage: host _hostname_\n";
+    }
+    else {
 
-        cout << argv[0]; 
-
+        cout << argv[1] << "\n";
         msg.setQid(0); // does this matter?
 
 // TODO: add switch for this
           msg.setRD(true);    // set recursive bit
 
-        msg.addQuestion(Name(argv[0]),
+        msg.addQuestion(Name(argv[1]),
             RRClass::IN,    // IN class only for now
             RRType(dns_type));
 
@@ -46,8 +48,8 @@ main(int argc, char* argv[])
         char* sin_addr;
         inet_pton(AF_INET, "127.0.0.1", sin_addr);
         int size = sizeof(sin_addr);
-        
-        msg.SingleBuffer().sendTo(s, sin_addr, size);
+
+//        msg.SingleBuffer().sendTo(s, sin_addr, size);
 
     }
 }
