@@ -20,7 +20,7 @@
 #include <dns/name.h>
 
 using namespace std;
-using namespace ISC::DNS;
+using namespace isc::dns;
 
 typedef enum {
     ft_init = 0,

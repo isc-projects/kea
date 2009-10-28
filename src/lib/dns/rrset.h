@@ -29,8 +29,8 @@
 #include <dns/buffer.h>
 #include <dns/name.h>
 
-namespace ISC {
-namespace DNS {
+namespace isc {
+namespace dns {
 class Message;
 class NameCompressor;
 

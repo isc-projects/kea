@@ -22,19 +22,19 @@
 
 namespace {
 
-using ISC::DNS::Name;
-using ISC::DNS::RRClass;
-using ISC::DNS::RRType;
-using ISC::DNS::TTL;
-using ISC::DNS::Rdata::IN::A;
-using ISC::DNS::RRset;
-using ISC::DNS::RRsetPtr;
-using ISC::DNS::RR;
-using ISC::DNS::Message;
-using ISC::DNS::SECTION_QUESTION;
-using ISC::DNS::SECTION_ANSWER;
-using ISC::DNS::SECTION_AUTHORITY;
-using ISC::DNS::SECTION_ADDITIONAL;
+using isc::dns::Name;
+using isc::dns::RRClass;
+using isc::dns::RRType;
+using isc::dns::TTL;
+using isc::dns::Rdata::IN::A;
+using isc::dns::RRset;
+using isc::dns::RRsetPtr;
+using isc::dns::RR;
+using isc::dns::Message;
+using isc::dns::SECTION_QUESTION;
+using isc::dns::SECTION_ANSWER;
+using isc::dns::SECTION_AUTHORITY;
+using isc::dns::SECTION_ADDITIONAL;
 
 // The fixture for testing class RRClass.
 class MessageTest : public ::testing::Test {

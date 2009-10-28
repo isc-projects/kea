@@ -25,16 +25,16 @@
 #include <dns/buffer.h>
 #include <dns/rrset.h>
 
-using ISC::DNS::RRClass;
-using ISC::DNS::RRType;
-using ISC::DNS::TTL;
-using ISC::DNS::Rdata::IN::A;
-using ISC::DNS::Rdata::IN::AAAA;
-using ISC::DNS::Rdata::Generic::NS;
-using ISC::DNS::RRset;
-using ISC::DNS::Rdata::Rdata;
-using ISC::DNS::Question;
-using ISC::DNS::RR;
+using isc::dns::RRClass;
+using isc::dns::RRType;
+using isc::dns::TTL;
+using isc::dns::Rdata::IN::A;
+using isc::dns::Rdata::IN::AAAA;
+using isc::dns::Rdata::Generic::NS;
+using isc::dns::RRset;
+using isc::dns::Rdata::Rdata;
+using isc::dns::Question;
+using isc::dns::RR;
 
 RRClass::RRClass(const std::string& classstr)
 {
@@ -60,7 +60,7 @@ RRClass::to_text() const
 }
 
 void
-RRClass::to_wire(ISC::Buffer& b) const
+RRClass::to_wire(isc::Buffer& b) const
 {
     b.write_uint16(classval_);
 }

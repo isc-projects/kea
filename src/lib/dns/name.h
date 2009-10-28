@@ -22,8 +22,8 @@
 
 #include <dns/name.h>
 
-namespace ISC {
-namespace DNS {
+namespace isc {
+namespace dns {
 // Define them as an empty class for rapid prototyping
 class NameCompressor {};
 class NameDecompressor {};
