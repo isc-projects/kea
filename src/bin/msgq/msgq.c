@@ -152,7 +152,7 @@ isc_timermgr_t *timermgr;
 
 unsigned int connection_counter = 0;
 
-int con_log_level = LOG_NOTICE;
+int con_log_level = LOG_DEBUG;
 
 static void recv_len(isc_task_t *, isc_event_t *);
 static void recv_data(isc_task_t *, isc_event_t *);
