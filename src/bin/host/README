@@ -1,0 +1,8 @@
+Rewriting host(1) in C++ from scratch using BIND 10's libdns.
+
+Initial functionality:
+
+  host _hostname_ [server]
+
+  -r	 	disable recursive processing
+  -t _type_	specific query type 
