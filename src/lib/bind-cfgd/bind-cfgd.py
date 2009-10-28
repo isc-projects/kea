@@ -3,6 +3,7 @@ import ISC
 class ConfigManager:
     def __init__(self):
         self.cc = ISC.CC.Session()
+        self.cc.group_subscribe("ConfigManager")
 
     def read_config(self, filename):
         pass
@@ -12,6 +13,9 @@ class ConfigManager:
 
     def run(self):
         while (True):
+            env, msg = self.cc.group_recvmsg(False)
+            print "message: "
+            print msg
             pass
 
 if __name__ == "__main__":
