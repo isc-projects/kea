@@ -37,14 +37,15 @@ class DNSBadEscape : public DNSException {};
 class DNSBadLabelType : public DNSException {};
 class DNSInvalidRRClass : public DNSException {};
 class DNSInvalidRRType : public DNSException {};
-class DNSRdtypeMismatch : public DNSException {};
+class DNSRRtypeMismatch : public DNSException {};
 class DNSInvalidWireRdata : public DNSException {};
-class DNSNoMessageIOBuffer : public DNSException {};
+class DNSNoMessageBuffer : public DNSException {};
 class DNSNoNameCompressor : public DNSException {};
 class DNSNoNameDecompressor : public DNSException {};
 class DNSNoMessageParser : public DNSException {};
 class DNSInvalidMessageSection : public DNSException {};
 class DNSInvalidRendererPosition : public DNSException {};
+class DNSMessageTooShort : public DNSException {};
 }
 }
 #endif  // __EXCEPTIONS_HH
