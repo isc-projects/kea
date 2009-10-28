@@ -19,6 +19,6 @@ if __name__ == "__main__":
     try:
         cm = ConfigManager()
         cm.run()
-    except socket.error:
+    except ISC.CC.SessionError, se:
         print "Error creating config manager, "\
               "is the command channel daemon running?"

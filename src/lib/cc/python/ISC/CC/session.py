@@ -20,6 +20,7 @@ import struct
 import Message
 
 class ProtocolError(Exception): pass
+class SessionError(Exception): pass
 
 class Session:
     def __init__(self):
@@ -30,14 +31,17 @@ class Session:
         self._sendbuffer = ""
         self._sequence = 1
 
-        self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._socket.connect(tuple(['127.0.0.1', 9912]))
+        try:
+            self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self._socket.connect(tuple(['127.0.0.1', 9912]))
 
-        self.sendmsg({ "type": "getlname" })
-        msg = self.recvmsg(False)
-        self._lname = msg["lname"]
-        if not self._lname:
-            raise ProtocolError("Could not get local name")
+            self.sendmsg({ "type": "getlname" })
+            msg = self.recvmsg(False)
+            self._lname = msg["lname"]
+            if not self._lname:
+                raise ProtocolError("Could not get local name")
+        except socket.error, se:
+                raise SessionError(se)
 
     @property
     def lname(self):
