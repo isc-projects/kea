@@ -26,7 +26,9 @@
 #include <dns/rrset.h>
 #include <dns/message.h>
 
-using namespace std;
+using std::string;
+using std::pair;
+
 using isc::dns::RRset;
 using isc::dns::Name;
 using isc::dns::TTL;
@@ -46,7 +48,7 @@ start_server(int s, const struct addrinfo *res)
 
     // Create Database
     typedef pair<string, string> dnskey_t;
-    std::map<dnskey_t, string> dnsdb;
+    std::map<dnskey_t, std::string> dnsdb;
     dnsdb.insert(pair<dnskey_t, string>(dnskey_t("www.jinmei.org", "A"),
                                         "149.20.54.162"));
     dnsdb.insert(pair<dnskey_t, string>(dnskey_t("www.jinmei.org", "AAAA"),
@@ -73,11 +75,11 @@ start_server(int s, const struct addrinfo *res)
             try {
                 msg.fromWire();
             } catch (...) {
-                cerr << "parse failed" << endl;
+                std::cerr << "parse failed" << std::endl;
                 continue;
             }
 
-            cout << "received a message:\n" << msg.toText() << endl;
+            std::cout << "received a message:\n" << msg.toText() << std::endl;
             if (msg.getSection(isc::dns::SECTION_QUESTION).size() != 1)
                 continue;
 
@@ -85,7 +87,7 @@ start_server(int s, const struct addrinfo *res)
             msg.setAA(true);
 
             RRsetPtr query = msg.getSection(isc::dns::SECTION_QUESTION)[0];
-            map<dnskey_t, string>::const_iterator it;
+            std::map<dnskey_t, string>::const_iterator it;
             isc::dns::Rdata::RDATAPTR rdatap;
 
             it = dnsdb.find(dnskey_t(query->getName().toText(true),
@@ -112,9 +114,9 @@ start_server(int s, const struct addrinfo *res)
             }
 
             msg.toWire();
-            cout << "sending a response (" <<
+            std::cout << "sending a response (" <<
                 boost::lexical_cast<string>(msg.getBuffer().getSize())
-                 << " bytes):\n" << msg.toText() << endl;
+                      << " bytes):\n" << msg.toText() << std::endl;
             msg.getBuffer().sendTo(s, *sa, sa_len);
         }
     }
@@ -151,8 +153,9 @@ main(int argc, char* argv[])
     argv += optind;
 
     if (argc < 1 && !receive_mode) {
-        cerr << "usage: dnsmessage-test [-s server_address] [-t qtype] qname\n"
-             << endl;
+        std::cerr << "usage: "
+            "dnsmessage-test [-s server_address] [-t qtype] qname\n"
+                  << std::endl;
         return (1);
     }
 
@@ -164,13 +167,13 @@ main(int argc, char* argv[])
     hints.ai_flags = receive_mode ? AI_PASSIVE : 0;
     e = getaddrinfo(server_address, port, &hints, &res);
     if (e != 0) {
-        cerr << "getaddrinfo failed: " << gai_strerror(e) << endl;
+        std::cerr << "getaddrinfo failed: " << gai_strerror(e) << std::endl;
         return (1);
     }
 
     int s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
     if (s < 0) {
-        cerr << "failed to open socket" << endl;
+        std::cerr << "failed to open socket" << std::endl;
         return (1);
     }
 
@@ -181,9 +184,9 @@ main(int argc, char* argv[])
         msg.setRD(true);
         msg.addQuestion(Name(argv[0]), RRClass::IN, RRType(type_name));
         msg.toWire();
-        cout << "sending a query (" <<
+        std::cout << "sending a query (" <<
             boost::lexical_cast<string>(msg.getBuffer().getSize())
-             << " bytes):\n" << msg.toText() << endl;
+                  << " bytes):\n" << msg.toText() << std::endl;
         msg.getBuffer().sendTo(s, *res->ai_addr, res->ai_addrlen);
 
         Message rmsg;
@@ -196,11 +199,11 @@ main(int argc, char* argv[])
         if (rmsg.getBuffer().recvFrom(s, sa, &sa_len) > 0) {
             try {
                 rmsg.fromWire();
-                cout << "received a response (" <<
+                std::cout << "received a response (" <<
                     boost::lexical_cast<string>(rmsg.getBuffer().getSize())
-                     << " bytes):\n" << rmsg.toText() << endl;
+                          << " bytes):\n" << rmsg.toText() << std::endl;
             } catch (...) {
-                cerr << "parse failed" << endl;
+                std::cerr << "parse failed" << std::endl;
             }
         }
     }
