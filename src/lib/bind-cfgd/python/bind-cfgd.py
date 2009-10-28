@@ -1,9 +1,20 @@
 import ISC
 
+class ConfigData:
+    def __init__(self):
+        self.zones = {}
+
+    def add_zone(self, zone_name, zone_file):
+        self.zones[zone_name] = zone_file
+
+    def remove_zone(self, zone_name):
+        del self.zones[zone_name]
+
 class ConfigManager:
     def __init__(self):
         self.cc = ISC.CC.Session()
         self.cc.group_subscribe("ConfigManager")
+        self.config
 
     def read_config(self, filename):
         pass
