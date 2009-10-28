@@ -59,5 +59,5 @@ AC_CONFIG_FILES([Makefile
                  src/lib/Makefile
                  src/lib/dns/Makefile
                ])
-AC_OUTPUT([src/bin/bind-cfgd])
+AC_OUTPUT([src/bin/bind-cfgd/bind-cfgd])
 AC_OUTPUT
