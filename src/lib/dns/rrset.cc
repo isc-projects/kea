@@ -32,6 +32,7 @@ using ISC::DNS::Rdata::IN::A;
 using ISC::DNS::Rdata::IN::AAAA;
 using ISC::DNS::Rdata::Generic::NS;
 using ISC::DNS::RRset;
+using ISC::DNS::Rdata::Rdata;
 using ISC::DNS::Question;
 using ISC::DNS::RR;
 
@@ -140,6 +141,12 @@ A::to_text() const
     return (std::string(addrbuf));
 }
 
+Rdata*
+A::copy() const
+{
+    return (new A(to_text()));
+}
+
 AAAA::AAAA(const std::string& addrstr)
 {
     if (inet_pton(AF_INET6, addrstr.c_str(), &addr_) != 1)
@@ -170,6 +177,12 @@ AAAA::to_text() const
     return (std::string(addrbuf));
 }
 
+Rdata*
+AAAA::copy() const
+{
+    return (new AAAA(to_text()));
+}
+
 void
 NS::from_wire(Buffer& buffer, NameDecompressor& decompressor)
 {
@@ -191,6 +204,12 @@ NS::to_text() const
     return (nsname_.to_text());
 }
 
+Rdata*
+NS::copy() const
+{
+    return (new NS(to_text()));
+}
+
 std::string
 RRset::to_text() const
 {
@@ -203,8 +222,8 @@ RRset::to_text() const
         if (!s.empty())
             s.push_back('\n');
         s += name_.to_text() + " ";
-        s += ttl_.to_text() + " " + rdclass_.to_text() + " " +
-            rdtype_.to_text() + " " + (**it).to_text();
+        s += ttl_.to_text() + " " + rrclass_.to_text() + " " +
+            rrtype_.to_text() + " " + (**it).to_text();
     }
 
     return (s);
@@ -213,8 +232,8 @@ RRset::to_text() const
 void
 RRset::add_rdata(Rdata::RDATAPTR rdata)
 {
-    if (rdata->get_type() != rdtype_)
-        throw DNSRdtypeMismatch();
+    if (rdata->get_type() != rrtype_)
+        throw DNSRRtypeMismatch();
     rdatalist_.push_back(rdata);
 }
 
@@ -233,8 +252,8 @@ RRset::to_wire(Buffer& buffer, NameCompressor& compressor, section_t section)
          ++it, ++num_rrs)
     {
         name_.to_wire(buffer, compressor);
-        rdtype_.to_wire(buffer);
-        rdclass_.to_wire(buffer);
+        rrtype_.to_wire(buffer);
+        rrclass_.to_wire(buffer);
         ttl_.to_wire(buffer);
         (**it).to_wire(buffer, compressor);
 
@@ -249,16 +268,16 @@ Question::to_text() const
 {
     // return in dig-style format.  note that in the wire format class follows
     // type.
-    return (name_.to_text() + " " + rdclass_.to_text() + " " +
-            rdtype_.to_text());
+    return (name_.to_text() + " " + rrclass_.to_text() + " " +
+            rrtype_.to_text());
 }
 
 int
 Question::to_wire(Buffer& buffer, NameCompressor& compressor, section_t section)
 {
     name_.to_wire(buffer, compressor);
-    rdtype_.to_wire(buffer);
-    rdclass_.to_wire(buffer);
+    rrtype_.to_wire(buffer);
+    rrclass_.to_wire(buffer);
 
     return (1);
 }

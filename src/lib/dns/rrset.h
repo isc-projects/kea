@@ -54,7 +54,7 @@ public:
     bool operator!=(const RRClass& other) const
     { return (classval_ != other.classval_); }
 
-    // (Some) well-known Rdclass constants
+    // (Some) well-known RRclass constants
     static const RRClass IN;
     static const RRClass CH;
 private:
@@ -74,7 +74,7 @@ public:
     bool operator!=(const RRType& other) const
     { return (typeval_ != other.typeval_); }
 
-    // (Some) Well-known Rdtype constants
+    // (Some) Well-known RRtype constants
     static const RRType A;
     static const RRType NS;
     static const RRType AAAA;
@@ -96,11 +96,14 @@ public:
     { return (ttlval_ == other.ttlval_); }
     bool operator!=(const TTL& other) const
     { return (ttlval_ != other.ttlval_); }
-    // define the following using serial number arithmetic:
-    bool operator<=(const TTL &other) const;
-    bool operator>=(const TTL &other) const;
-    bool operator<(const TTL &other) const;
-    bool operator>(const TTL &other) const;
+    bool operator<=(const TTL &other) const
+    { return (ttlval_ <= other.ttlval_); }
+    bool operator>=(const TTL &other) const
+    { return (ttlval_ >= other.ttlval_); }
+    bool operator<(const TTL &other) const
+    { return (ttlval_ < other.ttlval_); }
+    bool operator>(const TTL &other) const
+    { return (ttlval_ > other.ttlval_); }
 private:
     uint32_t ttlval_;
 };
@@ -126,6 +129,9 @@ public:
     virtual void to_wire(Buffer& b, NameCompressor& c) const = 0;
     // need generic method for getting n-th field? c.f. ldns
     // e.g. string getField(int n);
+
+    // polymorphic copy constructor (XXX should revisit it)
+    virtual Rdata* copy() const = 0;
 };
 
 namespace Generic {
@@ -144,6 +150,7 @@ public:
     bool operator==(const NS &other) const
     { return (nsname_ == other.nsname_); }
     virtual bool operator!=(const NS &other) const { return !(*this == other); }
+    virtual Rdata* copy() const;
 private:
     Name nsname_;
 };
@@ -167,6 +174,7 @@ public:
     { return (addr_.s_addr == other.addr_.s_addr); }
     virtual bool operator!=(const A &other) const
     { return !(*this == other); }
+    virtual Rdata* copy() const;
 private:
     // XXX: should probably define an "address class" and use it.
     struct in_addr addr_;
@@ -188,6 +196,7 @@ public:
     { return (IN6_ARE_ADDR_EQUAL(&addr_, &other.addr_)); }
     virtual bool operator!=(const AAAA &other) const
     { return !(*this == other); }
+    virtual Rdata* copy() const;
 private:
     // XXX: should probably define an "address class" and use it.
     struct in6_addr addr_;
@@ -199,6 +208,12 @@ private:
 // of) DNS message would consist of a list of RRsets.
 // This is a primary class internally used in our major software such as name
 // servers.
+//
+// Note about terminology: there has been a discussion at the IETF namedroppers
+// ML about RRset vs RRSet (case of "s").  While RFC2181 uses the latter,
+// many other RFCs use the former, and most of the list members who showed
+// their opinion seem to prefer RRset.  We follow that preference in this
+// implementation.
 //
 // Open Issues:
 //   - add more set-like operations, e.g, merge?
@@ -217,54 +232,67 @@ public:
     virtual std::string to_text() const = 0;
     virtual int to_wire(Buffer& buffer, NameCompressor& compressor,
                         section_t section) = 0;
+    virtual void add_rdata(Rdata::RDATAPTR rdata) = 0;
     virtual unsigned int count_rdata() const = 0;
     virtual const Name& get_name() const = 0;
     virtual const RRClass& get_class() const = 0;
     virtual const RRType& get_type() const = 0;
+    virtual const TTL& get_ttl() const = 0;
+    virtual void set_ttl(const TTL& ttl) = 0;
 };
 
 class RRset : public AbstractRRset {
 public:
     RRset() {}
-    explicit RRset(const Name &name, const RRClass &rdclass,
-                   const RRType &rdtype, const TTL &ttl) :
-        name_(name), rdclass_(rdclass), rdtype_(rdtype), ttl_(ttl) {}
+    explicit RRset(const Name &name, const RRClass &rrclass,
+                   const RRType &rrtype, const TTL &ttl) :
+        name_(name), rrclass_(rrclass), rrtype_(rrtype), ttl_(ttl) {}
     unsigned int count_rdata() const { return (rdatalist_.size()); }
     void add_rdata(Rdata::RDATAPTR rdata);
     void remove_rdata(const Rdata::Rdata& rdata);
     std::string to_text() const;
     int to_wire(Buffer& buffer, NameCompressor& compressor, section_t section);
     const Name& get_name() const { return (name_); } 
-    const RRClass& get_class() const { return (rdclass_); }
-    const RRType& get_type() const { return (rdtype_); }
+    const RRClass& get_class() const { return (rrclass_); }
+    const RRType& get_type() const { return (rrtype_); }
     const TTL& get_ttl() const { return (ttl_); }
+    // once constructed, only TTL and rdatalist can be modified.
+    void set_ttl(const TTL& ttl) { ttl_ = ttl; }
+    const std::vector<Rdata::RDATAPTR>& get_rdatalist() const
+    { return (rdatalist_); }
     template <typename T> void get_rdatalist(std::vector<T>&) const;
 private:
     Name name_;
-    RRClass rdclass_;
-    RRType rdtype_;
+    RRClass rrclass_;
+    RRType rrtype_;
     TTL ttl_;
     std::vector<Rdata::RDATAPTR> rdatalist_;
 };
 
 //
 // Generic Question section entry
+// XXX: it seems to be not a good idea to inherit from RRset.  We should
+// probably re-define it as a separate class.
 //
 class Question : public AbstractRRset {
 public:
-    explicit Question(const Name& name, const RRClass& rdclass,
-             const RRType& rdtype) :
-        name_(name), rdclass_(rdclass), rdtype_(rdtype) {}
+    explicit Question(const Name& name, const RRClass& rrclass,
+             const RRType& rrtype) :
+        name_(name), rrclass_(rrclass), rrtype_(rrtype), ttl_(0) {}
     std::string to_text() const;
     int to_wire(Buffer& buffer, NameCompressor& compressor, section_t section);
     unsigned int count_rdata() const { return (0); }
-    const Name& get_name() const { return (name_); } 
-    const RRClass& get_class() const { return (rdclass_); }
-    const RRType& get_type() const { return (rdtype_); }
+    const Name& get_name() const { return (name_); }
+    const RRClass& get_class() const { return (rrclass_); }
+    const RRType& get_type() const { return (rrtype_); }
+    const TTL& get_ttl() const { return (ttl_); } // XXX
+    void set_ttl(const TTL& ttl) {}              // XXX
+    void add_rdata(Rdata::RDATAPTR rdata) {}     // XXX
 private:
     Name name_;
-    RRClass rdclass_;
-    RRType rdtype_;
+    RRClass rrclass_;
+    RRType rrtype_;
+    TTL ttl_;
 };
 
 // TBD: this interface should be revisited.
@@ -276,7 +304,7 @@ RRset::get_rdatalist(std::vector<T>& v) const
     for (it = rdatalist_.begin(); it != rdatalist_.end(); ++it) {
         const T& concreteRdata = static_cast<const T&>(**it); // XXX
         if (T::get_type_static() != (**it).get_type()) {
-            throw DNSRdtypeMismatch();
+            throw DNSRRtypeMismatch();
         }
         v.push_back(concreteRdata);
     }
@@ -291,14 +319,17 @@ class RR {
 public:
     RR() {}
     explicit RR(const std::string& rrstr);
-    explicit RR(const Name& name, const RRClass& rdclass,
-                const RRType& rdtype, const TTL& ttl,
+    explicit RR(const Name& name, const RRClass& rrclass,
+                const RRType& rrtype, const TTL& ttl,
                 const Rdata::Rdata& rdata);
     std::string to_text() const { return (rrset_.to_text()); }
     const Name& get_name() const { return (rrset_.get_name()); }
     const RRClass& get_class() const { return (rrset_.get_class()); }
     const RRType& get_type() const { return (rrset_.get_type()); }
     const TTL& get_ttl() const { return (rrset_.get_ttl()); }
+    const Rdata::RDATAPTR get_rdata() const
+    { return (*rrset_.get_rdatalist().begin()); }
+    void set_ttl(const TTL& ttl) { rrset_.set_ttl(ttl); }
 private:
     // An RR is (could be) actually implemented as an RRset containing at most
     // one RR.
@@ -311,4 +342,3 @@ private:
 // Local Variables: 
 // mode: c++
 // End: 
-

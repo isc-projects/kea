@@ -19,7 +19,7 @@
 
 #include <dns/buffer.h>
 
-using namespace ISC;
+using ISC::SingleBuffer;
 
 // The interface should be revisited.
 int
@@ -48,4 +48,3 @@ SingleBuffer::recv_from(int s, struct sockaddr* from, socklen_t* from_len)
 
     return (cc);
 }
-
