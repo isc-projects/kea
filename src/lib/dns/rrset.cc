@@ -49,7 +49,7 @@ RRClass::RRClass(const std::string& classstr)
 }
 
 const std::string
-RRClass::to_text() const
+RRClass::toText() const
 {
     // XXX: quick hack
     if (classval_ == 1)
@@ -60,9 +60,9 @@ RRClass::to_text() const
 }
 
 void
-RRClass::to_wire(isc::Buffer& b) const
+RRClass::toWire(isc::Buffer& b) const
 {
-    b.write_uint16(classval_);
+    b.writeUint16(classval_);
 }
 
 const RRClass RRClass::IN("IN");
@@ -83,7 +83,7 @@ RRType::RRType(const std::string& typestr)
 }
 
 const std::string
-RRType::to_text() const
+RRType::toText() const
 {
     if (typeval_ == 1)
         return ("A");
@@ -95,9 +95,9 @@ RRType::to_text() const
 }
 
 void
-RRType::to_wire(Buffer& buffer) const
+RRType::toWire(Buffer& buffer) const
 {
-    buffer.write_uint16(typeval_);
+    buffer.writeUint16(typeval_);
 }
 
 const RRType RRType::A("A");
@@ -106,9 +106,9 @@ const RRType RRType::AAAA("AAAA");
 // ...more to follow
 
 void
-TTL::to_wire(Buffer& buffer) const
+TTL::toWire(Buffer& buffer) const
 {
-    buffer.write_uint32(ttlval_);
+    buffer.writeUint32(ttlval_);
 }
 
 A::A(const std::string& addrstr)
@@ -118,20 +118,20 @@ A::A(const std::string& addrstr)
 }
 
 void
-A::from_wire(Buffer& buffer, NameDecompressor& decompressor)
+A::fromWire(Buffer& buffer, NameDecompressor& decompressor)
 {
     //TBD
 }
 
 void
-A::to_wire(Buffer& buffer, NameCompressor& compressor) const
+A::toWire(Buffer& buffer, NameCompressor& compressor) const
 {
-    buffer.write_uint16(sizeof(addr_));
-    buffer.write_data(&addr_, sizeof(addr_));
+    buffer.writeUint16(sizeof(addr_));
+    buffer.writeData(&addr_, sizeof(addr_));
 }
 
 std::string
-A::to_text() const
+A::toText() const
 {
     char addrbuf[sizeof("255.255.255.255")];
 
@@ -144,7 +144,7 @@ A::to_text() const
 Rdata*
 A::copy() const
 {
-    return (new A(to_text()));
+    return (new A(toText()));
 }
 
 AAAA::AAAA(const std::string& addrstr)
@@ -154,20 +154,20 @@ AAAA::AAAA(const std::string& addrstr)
 }
 
 void
-AAAA::from_wire(Buffer& buffer, NameDecompressor& decompressor)
+AAAA::fromWire(Buffer& buffer, NameDecompressor& decompressor)
 {
     //TBD
 }
 
 void
-AAAA::to_wire(Buffer& buffer, NameCompressor& compressor) const
+AAAA::toWire(Buffer& buffer, NameCompressor& compressor) const
 {
-    buffer.write_uint16(sizeof(addr_));
-    buffer.write_data(&addr_, sizeof(addr_));
+    buffer.writeUint16(sizeof(addr_));
+    buffer.writeData(&addr_, sizeof(addr_));
 }
 
 std::string
-AAAA::to_text() const
+AAAA::toText() const
 {
     char addrbuf[sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255")];
 
@@ -180,38 +180,38 @@ AAAA::to_text() const
 Rdata*
 AAAA::copy() const
 {
-    return (new AAAA(to_text()));
+    return (new AAAA(toText()));
 }
 
 void
-NS::from_wire(Buffer& buffer, NameDecompressor& decompressor)
+NS::fromWire(Buffer& buffer, NameDecompressor& decompressor)
 {
     //TBD
 }
 
 void
-NS::to_wire(Buffer& buffer, NameCompressor& compressor) const
+NS::toWire(Buffer& buffer, NameCompressor& compressor) const
 {
     // XXX: note that a complete implementation cannot be this simple
     // because we need to disable compression for the NS name.
-    buffer.write_uint16(nsname_.get_length());
-    nsname_.to_wire(buffer, compressor);
+    buffer.writeUint16(nsname_.getLength());
+    nsname_.toWire(buffer, compressor);
 }
 
 std::string
-NS::to_text() const
+NS::toText() const
 {
-    return (nsname_.to_text());
+    return (nsname_.toText());
 }
 
 Rdata*
 NS::copy() const
 {
-    return (new NS(to_text()));
+    return (new NS(toText()));
 }
 
 std::string
-RRset::to_text() const
+RRset::toText() const
 {
     std::string s;
 
@@ -221,24 +221,24 @@ RRset::to_text() const
     {
         if (!s.empty())
             s.push_back('\n');
-        s += name_.to_text() + " ";
-        s += ttl_.to_text() + " " + rrclass_.to_text() + " " +
-            rrtype_.to_text() + " " + (**it).to_text();
+        s += name_.toText() + " ";
+        s += ttl_.toText() + " " + rrclass_.toText() + " " +
+            rrtype_.toText() + " " + (**it).toText();
     }
 
     return (s);
 }
 
 void
-RRset::add_rdata(Rdata::RDATAPTR rdata)
+RRset::addRdata(Rdata::RDATAPTR rdata)
 {
-    if (rdata->get_type() != rrtype_)
+    if (rdata->getType() != rrtype_)
         throw DNSRRtypeMismatch();
     rdatalist_.push_back(rdata);
 }
 
 int
-RRset::to_wire(Buffer& buffer, NameCompressor& compressor, section_t section)
+RRset::toWire(Buffer& buffer, NameCompressor& compressor, section_t section)
 {
     int num_rrs = 0;
 
@@ -251,11 +251,11 @@ RRset::to_wire(Buffer& buffer, NameCompressor& compressor, section_t section)
          it != rdatalist_.end();
          ++it, ++num_rrs)
     {
-        name_.to_wire(buffer, compressor);
-        rrtype_.to_wire(buffer);
-        rrclass_.to_wire(buffer);
-        ttl_.to_wire(buffer);
-        (**it).to_wire(buffer, compressor);
+        name_.toWire(buffer, compressor);
+        rrtype_.toWire(buffer);
+        rrclass_.toWire(buffer);
+        ttl_.toWire(buffer);
+        (**it).toWire(buffer, compressor);
 
         // TBD: handle truncation case
     }
@@ -264,20 +264,20 @@ RRset::to_wire(Buffer& buffer, NameCompressor& compressor, section_t section)
 }
 
 std::string
-Question::to_text() const
+Question::toText() const
 {
     // return in dig-style format.  note that in the wire format class follows
     // type.
-    return (name_.to_text() + " " + rrclass_.to_text() + " " +
-            rrtype_.to_text());
+    return (name_.toText() + " " + rrclass_.toText() + " " +
+            rrtype_.toText());
 }
 
 int
-Question::to_wire(Buffer& buffer, NameCompressor& compressor, section_t section)
+Question::toWire(Buffer& buffer, NameCompressor& compressor, section_t section)
 {
-    name_.to_wire(buffer, compressor);
-    rrtype_.to_wire(buffer);
-    rrclass_.to_wire(buffer);
+    name_.toWire(buffer, compressor);
+    rrtype_.toWire(buffer);
+    rrclass_.toWire(buffer);
 
     return (1);
 }
@@ -289,11 +289,11 @@ RR::RR(const Name& name, const RRClass& rrclass, const RRType& rrtype,
     // XXX: this implementation is BAD.  we took the ugly bad fastest approach
     // for rapid experiment.  should rewrite it.
     if (rrtype == RRType::A) {
-        rrset_.add_rdata(Rdata::RDATAPTR(new A(rdata.to_text())));
+        rrset_.addRdata(Rdata::RDATAPTR(new A(rdata.toText())));
     } else if (rrtype == RRType::AAAA) {
-        rrset_.add_rdata(Rdata::RDATAPTR(new AAAA(rdata.to_text())));
+        rrset_.addRdata(Rdata::RDATAPTR(new AAAA(rdata.toText())));
     } else if (rrtype == RRType::NS) {
-        rrset_.add_rdata(Rdata::RDATAPTR(new NS(rdata.to_text())));
+        rrset_.addRdata(Rdata::RDATAPTR(new NS(rdata.toText())));
     } else {
         // XXX
         throw std::runtime_error("RR constructor encountered "

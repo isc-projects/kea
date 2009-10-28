@@ -46,10 +46,10 @@ public:
     void sort(Message& message, section_t section) {} // dummy for now.
 };
 
-#define get_msgflg(flg, capflg) \
-bool get_ ## flg() const { return ((flags_ & FLAG_ ## capflg) != 0); }
-#define set_msgflg(flg, capflg) \
-bool set_ ## flg(bool on) { \
+#define getMsgFlg(flg, capflg) \
+bool get ## flg() const { return ((flags_ & FLAG_ ## capflg) != 0); }
+#define setMsgFlg(flg, capflg) \
+bool set ## flg(bool on) { \
         if (on) \
             flags_ |= FLAG_ ## capflg; \
         else \
@@ -60,27 +60,27 @@ class Message {
 public:
     Message();
     ~Message();
-    qid_t get_qid() const { return (qid_); }
-    void set_qid(qid_t qid) { qid_ = qid; }
-    get_msgflg(rd, RD)
-    set_msgflg(rd, RD)
-    get_msgflg(aa, AA)
-    set_msgflg(aa, AA)
-    get_msgflg(qr, QR)
-    set_msgflg(qr, QR)
-    get_msgflg(tc, TC)
-    set_msgflg(tc, TC)
-    get_msgflg(ra, RA)
-    set_msgflg(ra, RA)
-    get_msgflg(ad, AD)
-    set_msgflg(ad, AD)
-    get_msgflg(cd, CD)
-    set_msgflg(cd, CD)
-    rcode_t get_rcode() const { return (rcode_); }
-    void set_rcode(rcode_t rcode) { rcode_ = rcode; }
-    opcode_t get_opcode() const { return (opcode_); }
-    void set_opcode(opcode_t opcode) { opcode_ = opcode; }
-    std::string to_text() const;
+    qid_t getQid() const { return (qid_); }
+    void setQid(qid_t qid) { qid_ = qid; }
+    getMsgFlg(Rd, RD)
+    setMsgFlg(Rd, RD)
+    getMsgFlg(Aa, AA)
+    setMsgFlg(Aa, AA)
+    getMsgFlg(Qr, QR)
+    setMsgFlg(Qr, QR)
+    getMsgFlg(Tc, TC)
+    setMsgFlg(Tc, TC)
+    getMsgFlg(Ra, RA)
+    setMsgFlg(Ra, RA)
+    getMsgFlg(Ad, AD)
+    setMsgFlg(Ad, AD)
+    getMsgFlg(Cd, CD)
+    setMsgFlg(Cd, CD)
+    rcode_t getRcode() const { return (rcode_); }
+    void setRcode(rcode_t rcode) { rcode_ = rcode; }
+    opcode_t getOpcode() const { return (opcode_); }
+    void setOpcode(opcode_t opcode) { opcode_ = opcode; }
+    std::string toText() const;
 
     // we don't provide accessors to QD/AN/NS/AR counters as this information
     // is included in the corresponding RRsets.
@@ -89,16 +89,16 @@ public:
     //   - may want to provide an "iterator" for all RRsets/RRs
     //   - may want to provide a "find" method for a specified type
     //     of RR in the message
-    const std::vector<RRsetPtr>& get_section(section_t section) const
+    const std::vector<RRsetPtr>& getSection(section_t section) const
     { return (sections_[section]); }
-    void add_rrset(section_t section, RRsetPtr rrset);
-    // add_question() is redundant in that it's a special case of add_rrset,
+    void addRrset(section_t section, RRsetPtr rrset);
+    // addQuestion() is redundant in that it's a special case of add_rrset,
     // but it'd be convenient for general purpose applications.
-    void add_question(const Name& qname, const RRClass& qclass,
-                      const RRType& qtype);
-    void remove_rrset(section_t section, RRsetPtr rrset);
-    void add_rr(section_t section, const RR& rr);
-    void remove_rr(section_t section, const RR& rr);
+    void addQuestion(const Name& qname, const RRClass& qclass,
+                     const RRType& qtype);
+    void removeRrset(section_t section, RRsetPtr rrset);
+    void addRr(section_t section, const RR& rr);
+    void removeRr(section_t section, const RR& rr);
 
     // should we separate methods for different EDNS0-related
     // parameters/options?  it would probably be better to have a
@@ -106,33 +106,33 @@ public:
     // on the other hand, considering we're going to use EDNS0 pretty
     // ubiquitously, perhaps we should include currently-defined EDNS0
     // parameters and options by default.
-    void set_edns(EDNS* edns);    // TBD
-    const EDNS* get_edns() const; // TBD
+    void setEdns(EDNS* edns);    // TBD
+    const EDNS* getEdns() const; // TBD
 
     // prepare for making a response from a request.  This will clear the
     // DNS header except those fields that should be kept for the response,
     // and clear answer and the following sections.
     // see also dns_message_reply() of BIND9.
-    void make_response();
+    void makeResponse();
 
     // Render message
-    void to_wire();      // should probably return some result code?
+    void toWire();      // should probably return some result code?
 
-    Buffer& get_buffer()
+    Buffer& getBuffer()
     {
         if (buffer_ == NULL)
             throw DNSNoMessageBuffer();
         return (*buffer_);
     }
 
-    NameCompressor& get_compressor()
+    NameCompressor& getCompressor()
     {
         if (compressor_ == NULL)
             throw DNSNoNameCompressor();
         return (*compressor_);
     }
 
-    NameDecompressor& get_decompressor()
+    NameDecompressor& getDecompressor()
     {
         if (decompressor_ == NULL)
             throw DNSNoNameDecompressor();
@@ -141,7 +141,7 @@ public:
 
     // Parse message:
     // This function may throw exceptions.  We may revisit this design.
-    void from_wire();
+    void fromWire();
 
 public:
     // public protocol constants

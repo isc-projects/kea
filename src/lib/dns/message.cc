@@ -77,7 +77,7 @@ Message::initialize()
 }
 
 void
-Message::add_rrset(section_t section, RRsetPtr rrsetp)
+Message::addRrset(section_t section, RRsetPtr rrsetp)
 {
     if (section >= SECTION_MAX)
         throw DNSInvalidMessageSection();
@@ -87,14 +87,14 @@ Message::add_rrset(section_t section, RRsetPtr rrsetp)
 }
 
 void
-Message::add_question(const Name& qname, const RRClass& qclass,
+Message::addQuestion(const Name& qname, const RRClass& qclass,
                       const RRType& qtype)
 {
-    add_rrset(SECTION_QUESTION, RRsetPtr(new Question(qname, qclass, qtype)));
+    addRrset(SECTION_QUESTION, RRsetPtr(new Question(qname, qclass, qtype)));
 }
 
 void
-Message::to_wire()
+Message::toWire()
 {
     uint16_t codes_and_flags;
 
@@ -109,12 +109,12 @@ Message::to_wire()
             sorter_->sort(*this, (section_t)section); //TBD
         counts_[section] = 0;
         for (std::vector<RRsetPtr>::const_iterator it =
-                 get_section((section_t)section).begin();
-             it != get_section((section_t)section).end();
+                 getSection((section_t)section).begin();
+             it != getSection((section_t)section).end();
              ++it)
         {
-            int counter = (*it)->to_wire(*buffer_, get_compressor(),
-                                         (section_t)section);
+            int counter = (*it)->toWire(*buffer_, getCompressor(),
+                                        (section_t)section);
 
             // TBD: if truncation is necessary, do something special.
             // throw an exception, return an error code (in which case the
@@ -128,37 +128,37 @@ Message::to_wire()
 
     // fill in the header
     size_t header_pos = 0;
-    buffer_->write_uint16_at(qid_, header_pos);
+    buffer_->writeUint16At(qid_, header_pos);
     header_pos += sizeof(uint16_t);
     codes_and_flags = (opcode_ << OPCODE_SHIFT) & OPCODE_MASK;
     codes_and_flags |= (rcode_ & RCODE_MASK);
     codes_and_flags |= (flags_ & FLAG_MASK);
-    buffer_->write_uint16_at(codes_and_flags, header_pos);
+    buffer_->writeUint16At(codes_and_flags, header_pos);
     header_pos += sizeof(uint16_t);
     for (int section = SECTION_QUESTION; section < SECTION_MAX; ++section) {
-        buffer_->write_uint16_at(counts_[section], header_pos);
+        buffer_->writeUint16At(counts_[section], header_pos);
         header_pos += sizeof(uint16_t);
     }
 }
 
 void
-Message::from_wire()
+Message::fromWire()
 {
     if (buffer_ == NULL)
         throw DNSNoMessageBuffer();
 
-    if (buffer_->get_space() < HEADERLEN)
+    if (buffer_->getSpace() < HEADERLEN)
         throw DNSMessageTooShort();
 
-    qid_ = buffer_->read_uint16();
-    uint16_t codes_and_flags = buffer_->read_uint16();
+    qid_ = buffer_->readUint16();
+    uint16_t codes_and_flags = buffer_->readUint16();
     opcode_ = ((codes_and_flags & OPCODE_MASK) >> OPCODE_SHIFT);
     rcode_ = (codes_and_flags & RCODE_MASK);
     flags_ = (codes_and_flags & FLAG_MASK);
-    counts_[SECTION_QUESTION] = buffer_->read_uint16();
-    counts_[SECTION_ANSWER] = buffer_->read_uint16();
-    counts_[SECTION_AUTHORITY] = buffer_->read_uint16();
-    counts_[SECTION_ADDITIONAL] = buffer_->read_uint16();
+    counts_[SECTION_QUESTION] = buffer_->readUint16();
+    counts_[SECTION_ANSWER] = buffer_->readUint16();
+    counts_[SECTION_AUTHORITY] = buffer_->readUint16();
+    counts_[SECTION_ADDITIONAL] = buffer_->readUint16();
 
     parse_question();
     // parse other sections (TBD)
@@ -173,20 +173,20 @@ Message::parse_question()
         throw DNSNoMessageBuffer();
 
     for (int count = 0; count < this->counts_[SECTION_QUESTION]; count++) {
-        Name name(*buffer_, get_decompressor());
+        Name name(*buffer_, getDecompressor());
 
         // Get type and class
-        if (buffer_->get_space() < 2 * sizeof(uint16_t))
+        if (buffer_->getSpace() < 2 * sizeof(uint16_t))
             throw DNSMessageTooShort();
 
         // XXX: need a duplicate check.  We might also want to have an optimized
         // algorithm that requires the question section contain exactly one
         // RR.
 
-        RRType rrtype(buffer_->read_uint16());
-        RRClass rrclass(buffer_->read_uint16());
-        add_rrset(SECTION_QUESTION,
-                  RRsetPtr(new Question(name, rrclass, rrtype))); 
+        RRType rrtype(buffer_->readUint16());
+        RRClass rrclass(buffer_->readUint16());
+        addRrset(SECTION_QUESTION,
+                 RRsetPtr(new Question(name, rrclass, rrtype))); 
     }
 }
 
@@ -236,7 +236,7 @@ static const char *sectiontext[] = {
 };
 
 std::string
-Message::to_text() const
+Message::toText() const
 {
     std::string s;
 
@@ -245,19 +245,19 @@ Message::to_text() const
     s += ", status: " + std::string(rcodetext[rcode_]);
     s += ", id: " + boost::lexical_cast<std::string>(qid_);
     s += "\n;; flags: ";
-    if (get_qr())
+    if (getQr())
         s += "qr ";
-    if (get_aa())
+    if (getAa())
         s += "aa ";
-    if (get_tc())
+    if (getTc())
         s += "tc ";
-    if (get_rd())
+    if (getRd())
         s += "rd ";
-    if (get_ra())
+    if (getRa())
         s += "ra ";
-    if (get_ad())
+    if (getAd())
         s += "ad ";
-    if (get_cd())
+    if (getCd())
         s += "cd ";
 
     // for simply, don't consider the update case
@@ -283,7 +283,7 @@ Message::to_text() const
         {
             if (section == SECTION_QUESTION)
                 s += ";";
-            s += (**it).to_text() + "\n";
+            s += (**it).toText() + "\n";
         }
     }
 
@@ -293,34 +293,34 @@ Message::to_text() const
 struct MatchRR : public std::binary_function<RRsetPtr, RR, bool> {
     bool operator()(const RRsetPtr& rrset, const RR& rr) const
     {
-        return (rrset->get_type() == rr.get_type() &&
-                rrset->get_class() == rr.get_class() &&
-                rrset->get_name() == rr.get_name());
+        return (rrset->getType() == rr.getType() &&
+                rrset->getClass() == rr.getClass() &&
+                rrset->getName() == rr.getName());
     }
 };
 
 void
-Message::add_rr(section_t section, const RR& rr)
+Message::addRr(section_t section, const RR& rr)
 {
     std::vector<RRsetPtr>::iterator it;
     it = find_if(sections_[section].begin(), sections_[section].end(),
                  std::bind2nd(MatchRR(), rr));
     if (it != sections_[section].end()) {
-        (*it)->set_ttl(std::min((*it)->get_ttl(), rr.get_ttl()));
-        (*it)->add_rdata(Rdata::RDATAPTR(rr.get_rdata()->copy()));
+        (*it)->setTtl(std::min((*it)->getTtl(), rr.getTtl()));
+        (*it)->addRdata(Rdata::RDATAPTR(rr.getRdata()->copy()));
     } else {
-        RRset *rrset = new RRset(rr.get_name(), rr.get_class(), rr.get_type(),
-                                 rr.get_ttl());
-        rrset->add_rdata(Rdata::RDATAPTR(rr.get_rdata()->copy()));
+        RRset *rrset = new RRset(rr.getName(), rr.getClass(), rr.getType(),
+                                 rr.getTtl());
+        rrset->addRdata(Rdata::RDATAPTR(rr.getRdata()->copy()));
         sections_[section].push_back(RRsetPtr(rrset));
     }
 }
 
 void
-Message::make_response()
+Message::makeResponse()
 {
     flags_ &= MESSAGE_REPLYPRESERVE;
-    set_qr(true);
+    setQr(true);
 
     for (int section = SECTION_ANSWER; section < SECTION_MAX; ++section) {
         sections_[section].clear();

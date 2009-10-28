@@ -39,20 +39,20 @@ class Buffer {
 public:
     virtual ~Buffer() {}
     virtual void reserve(size_t len) = 0;
-    virtual void write_data(const void *cp, size_t len) = 0;
-    virtual void write_uint32(uint32_t data) = 0;
-    virtual void write_uint16(uint16_t data) = 0;
-    virtual void write_uint16_at(uint16_t data, size_t pos) = 0;
-    virtual void write_uint8(uint8_t data) = 0;
-    virtual int send_to(int s, const struct sockaddr& to, socklen_t to_len) = 0;
+    virtual void writeData(const void *cp, size_t len) = 0;
+    virtual void writeUint32(uint32_t data) = 0;
+    virtual void writeUint16(uint16_t data) = 0;
+    virtual void writeUint16At(uint16_t data, size_t pos) = 0;
+    virtual void writeUint8(uint8_t data) = 0;
+    virtual int sendTo(int s, const struct sockaddr& to, socklen_t to_len) = 0;
 
-    virtual size_t get_size() const = 0;
-    virtual size_t get_space() const = 0;
-    virtual size_t get_current() const = 0;
-    virtual uint8_t read_uint8() = 0;
-    virtual uint16_t read_uint16() = 0;
-    virtual int recv_from(int s, struct sockaddr *from,
-                          socklen_t *from_len) = 0;
+    virtual size_t getSize() const = 0;
+    virtual size_t getSpace() const = 0;
+    virtual size_t getCurrent() const = 0;
+    virtual uint8_t readUint8() = 0;
+    virtual uint16_t readUint16() = 0;
+    virtual int recvFrom(int s, struct sockaddr *from,
+                         socklen_t *from_len) = 0;
 };
 
 // I/O Buffer with a single array-style storage
@@ -64,24 +64,24 @@ public:
     {
         buf_.resize(len);
     }
-    void write_data(const void *data, size_t len)
+    void writeData(const void *data, size_t len)
     {
         const uint8_t* cp = static_cast<const uint8_t*>(data);
         buf_.insert(buf_.end(), cp, cp + len);
     }
-    void write_uint32(uint32_t data)
+    void writeUint32(uint32_t data)
     {
         data = htonl(data);
         uint8_t* cp =  static_cast<uint8_t*>((void*)&data);
         buf_.insert(buf_.end(), cp, cp + sizeof(uint32_t));
     }
-    void write_uint16(uint16_t data)
+    void writeUint16(uint16_t data)
     {
         data = htons(data);
         uint8_t* cp =  static_cast<uint8_t*>((void*)&data);
         buf_.insert(buf_.end(), cp, cp + sizeof(uint16_t));
     }
-    void write_uint16_at(uint16_t data, size_t pos)
+    void writeUint16At(uint16_t data, size_t pos)
     {
         if (pos + sizeof(data) >= buf_.size())
             throw isc::ISCBufferInvalidPosition();
@@ -90,18 +90,18 @@ public:
         uint8_t* cp =  static_cast<uint8_t*>((void*)&data);
         copy(cp, cp + sizeof(uint16_t), buf_.begin() + pos);
     }
-    void write_uint8(uint8_t data)
+    void writeUint8(uint8_t data)
     {
         buf_.push_back(data);
     }
-    int send_to(int s, const struct sockaddr& to, socklen_t to_len);
+    int sendTo(int s, const struct sockaddr& to, socklen_t to_len);
 
-    size_t get_size() const { return (buf_.size()); }
-    size_t get_space() const { return (buf_.size() - _readpos); }
-    size_t get_current() const { return (_readpos); }
-    uint8_t read_uint8();
-    uint16_t read_uint16();
-    int recv_from(int s, struct sockaddr* from, socklen_t* from_len);
+    size_t getSize() const { return (buf_.size()); }
+    size_t getSpace() const { return (buf_.size() - _readpos); }
+    size_t getCurrent() const { return (_readpos); }
+    uint8_t readUint8();
+    uint16_t readUint16();
+    int recvFrom(int s, struct sockaddr* from, socklen_t* from_len);
 
 private:
     size_t _readpos;
@@ -109,7 +109,7 @@ private:
 };
 
 inline uint8_t
-SingleBuffer::read_uint8()
+SingleBuffer::readUint8()
 {
     if (_readpos + sizeof(uint8_t) > buf_.size())
         throw ISCBufferInvalidPosition();
@@ -118,7 +118,7 @@ SingleBuffer::read_uint8()
 }
 
 inline uint16_t
-SingleBuffer::read_uint16()
+SingleBuffer::readUint16()
 {
     uint16_t data;
 

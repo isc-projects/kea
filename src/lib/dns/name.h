@@ -41,9 +41,9 @@ public:
     explicit NameComparisonResult(int order, int nlabels,
                                   NameRelation relation) :
         order_(order), nlabels_(nlabels), relation_(relation) {}
-    int get_order() const { return (order_); }
-    int get_common_labels() const { return (nlabels_); }
-    NameRelation get_relation() const { return (relation_); }
+    int getOrder() const { return (order_); }
+    int getCommonLabels() const { return (nlabels_); }
+    NameRelation getRelation() const { return (relation_); }
 private:
     int order_;
     int nlabels_;
@@ -60,14 +60,14 @@ public:
     // destructor (default dtor should work fine)
     //~Name();
 
-    std::string to_text(bool omit_final_dot = false) const;
-    void to_wire(Buffer& buffer, NameCompressor& compressor) const;
-    size_t get_length() const { return (length_); }
-    unsigned int get_labels() const { return (labels_); }
+    std::string toText(bool omit_final_dot = false) const;
+    void toWire(Buffer& buffer, NameCompressor& compressor) const;
+    size_t getLength() const { return (length_); }
+    unsigned int getLabels() const { return (labels_); }
     NameComparisonResult compare(const Name& other) const;
     Name split(unsigned int first, unsigned int n) const;
     Name concatenate(const Name& suffix) const;
-    bool is_wildcard() const;
+    bool isWildcard() const;
     bool equals(const Name& other) const;
     bool operator==(const Name& other) const { return (this->equals(other)); }
     bool operator!=(const Name& other) const { return (!(*this == other)); }
@@ -88,8 +88,6 @@ private:
     std::vector<char> offsets_;
     unsigned int length_;
     unsigned int labels_;
-
-    void from_string(const std::string& namestr);
 };
 
 std::ostream& operator<<(std::ostream& os, const Name& name);

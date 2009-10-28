@@ -42,15 +42,15 @@ protected:
     isc::dns::Name *example_name;
 };
 
-TEST_F(NameTest, get_length)
+TEST_F(NameTest, getLength)
 {
-    EXPECT_EQ(17, static_cast<int>(example_name->get_length()));
+    EXPECT_EQ(17, static_cast<int>(example_name->getLength()));
 }
 
-TEST_F(NameTest, to_text)
+TEST_F(NameTest, toText)
 {
-    EXPECT_EQ(std::string("www.example.com"), example_name->to_text(true));
-    EXPECT_EQ(std::string("www.example.com."), example_name->to_text(false));
+    EXPECT_EQ(std::string("www.example.com"), example_name->toText(true));
+    EXPECT_EQ(std::string("www.example.com."), example_name->toText(false));
 }
 
 TEST_F(NameTest, invalid_label)
@@ -72,14 +72,14 @@ TEST_F(NameTest, operator_equals)
     EXPECT_EQ(true, *example_name == Name("www.example.com."));
 }
 
-TEST_F(NameTest, to_from_wire)
+TEST_F(NameTest, toFromWire)
 {
     isc::SingleBuffer buffer;
     isc::dns::NameCompressor compressor;
     isc::dns::NameDecompressor decompressor;
 
-    example_name->to_wire(buffer, compressor);
+    example_name->toWire(buffer, compressor);
     EXPECT_EQ(std::string("www.example.com."),
-              Name(buffer, decompressor).to_text(false));
+              Name(buffer, decompressor).toText(false));
 }
 }

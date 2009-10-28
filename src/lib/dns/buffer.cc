@@ -23,7 +23,7 @@ using isc::SingleBuffer;
 
 // The interface should be revisited.
 int
-SingleBuffer::send_to(int s, const struct sockaddr& to, socklen_t to_len)
+SingleBuffer::sendTo(int s, const struct sockaddr& to, socklen_t to_len)
 {
     int cc;
 
@@ -32,7 +32,7 @@ SingleBuffer::send_to(int s, const struct sockaddr& to, socklen_t to_len)
 }
 
 int
-SingleBuffer::recv_from(int s, struct sockaddr* from, socklen_t* from_len)
+SingleBuffer::recvFrom(int s, struct sockaddr* from, socklen_t* from_len)
 {
     int cc;
 

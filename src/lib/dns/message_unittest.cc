@@ -41,7 +41,7 @@ class MessageTest : public ::testing::Test {
 protected:
     MessageTest()
     {
-        query.add_question(Name("www.example.com"), RRClass::IN, RRType::A);
+        query.addQuestion(Name("www.example.com"), RRClass::IN, RRType::A);
     }
     Message query;
     Message response;
@@ -49,76 +49,76 @@ protected:
 
 TEST_F(MessageTest, check_flags)
 {
-    EXPECT_EQ(false, query.get_qr());
-    query.set_qr(true);
-    EXPECT_EQ(true, query.get_qr());
+    EXPECT_EQ(false, query.getQr());
+    query.setQr(true);
+    EXPECT_EQ(true, query.getQr());
 
-    EXPECT_EQ(false, query.get_aa());
-    query.set_aa(true);
-    EXPECT_EQ(true, query.get_aa());
+    EXPECT_EQ(false, query.getAa());
+    query.setAa(true);
+    EXPECT_EQ(true, query.getAa());
 
-    EXPECT_EQ(false, query.get_tc());
-    query.set_tc(true);
-    EXPECT_EQ(true, query.get_tc());
+    EXPECT_EQ(false, query.getTc());
+    query.setTc(true);
+    EXPECT_EQ(true, query.getTc());
 
-    EXPECT_EQ(false, query.get_rd());
-    query.set_rd(true);
-    EXPECT_EQ(true, query.get_rd());
+    EXPECT_EQ(false, query.getRd());
+    query.setRd(true);
+    EXPECT_EQ(true, query.getRd());
 
-    EXPECT_EQ(false, query.get_ra());
-    query.set_ra(true);
-    EXPECT_EQ(true, query.get_ra());
+    EXPECT_EQ(false, query.getRa());
+    query.setRa(true);
+    EXPECT_EQ(true, query.getRa());
 
-    EXPECT_EQ(false, query.get_ad());
-    query.set_ad(true);
-    EXPECT_EQ(true, query.get_ad());
+    EXPECT_EQ(false, query.getAd());
+    query.setAd(true);
+    EXPECT_EQ(true, query.getAd());
 
-    EXPECT_EQ(false, query.get_cd());
-    query.set_cd(true);
-    EXPECT_EQ(true, query.get_cd());
+    EXPECT_EQ(false, query.getCd());
+    query.setCd(true);
+    EXPECT_EQ(true, query.getCd());
 }
 
-TEST_F(MessageTest, get_question)
+TEST_F(MessageTest, getQuestion)
 {
-    const std::vector<RRsetPtr>& question = query.get_section(SECTION_QUESTION);
+    const std::vector<RRsetPtr>& question = query.getSection(SECTION_QUESTION);
     EXPECT_EQ(1, question.size());
-    EXPECT_EQ("www.example.com. IN A", (**question.begin()).to_text());
+    EXPECT_EQ("www.example.com. IN A", (**question.begin()).toText());
 }
 
-TEST_F(MessageTest, make_response)
+TEST_F(MessageTest, makeResponse)
 {
-    query.make_response();
-    EXPECT_EQ(true, query.get_qr());
+    query.makeResponse();
+    EXPECT_EQ(true, query.getQr());
     EXPECT_EQ("www.example.com. IN A",
-              (**query.get_section(SECTION_QUESTION).begin()).to_text());
-    EXPECT_EQ(0, query.get_section(SECTION_ANSWER).size());
-    EXPECT_EQ(0, query.get_section(SECTION_AUTHORITY).size());
-    EXPECT_EQ(0, query.get_section(SECTION_ADDITIONAL).size());
+              (**query.getSection(SECTION_QUESTION).begin()).toText());
+    EXPECT_EQ(0, query.getSection(SECTION_ANSWER).size());
+    EXPECT_EQ(0, query.getSection(SECTION_AUTHORITY).size());
+    EXPECT_EQ(0, query.getSection(SECTION_ADDITIONAL).size());
 }
 
-TEST_F(MessageTest, add_rr)
+TEST_F(MessageTest, addRr)
 {
     // Add one RR to the answer section.
-    response.add_rr(SECTION_ANSWER, RR(Name("www.example.com"), RRClass::IN,
+    response.addRr(SECTION_ANSWER, RR(Name("www.example.com"), RRClass::IN,
                                        RRType::A, TTL(3600), A("192.0.2.1")));
     EXPECT_EQ("www.example.com. 3600 IN A 192.0.2.1",
-              (**response.get_section(SECTION_ANSWER).begin()).to_text());
+              (**response.getSection(SECTION_ANSWER).begin()).toText());
 
     // Add another RR of the same RRset with a larger TTL.  The original
     // (smaller) TTL should remain.
-    response.add_rr(SECTION_ANSWER, RR(Name("www.example.com"), RRClass::IN,
+    response.addRr(SECTION_ANSWER, RR(Name("www.example.com"), RRClass::IN,
                                        RRType::A, TTL(7200), A("192.0.2.2")));
     EXPECT_EQ("www.example.com. 3600 IN A 192.0.2.1\n"
               "www.example.com. 3600 IN A 192.0.2.2",
-              (**response.get_section(SECTION_ANSWER).begin()).to_text());
+              (**response.getSection(SECTION_ANSWER).begin()).toText());
 
     // Add one more RR of the same RRset with a smaller TTL.  The new (smaller)
     // TTL should replace with the old one.
-    response.add_rr(SECTION_ANSWER, RR(Name("www.example.com"), RRClass::IN,
+    response.addRr(SECTION_ANSWER, RR(Name("www.example.com"), RRClass::IN,
                                        RRType::A, TTL(1800), A("192.0.2.3")));
     EXPECT_EQ("www.example.com. 1800 IN A 192.0.2.1\n"
               "www.example.com. 1800 IN A 192.0.2.2\n"
               "www.example.com. 1800 IN A 192.0.2.3",
-              (**response.get_section(SECTION_ANSWER).begin()).to_text());
+              (**response.getSection(SECTION_ANSWER).begin()).toText());
 }
 }
