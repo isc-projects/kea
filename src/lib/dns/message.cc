@@ -27,19 +27,19 @@
 #include <dns/rrset.h>
 #include <dns/message.h>
 
-using ISC::DNS::Name;
-using ISC::DNS::Message;
-using ISC::DNS::RRType;
-using ISC::DNS::RRClass;
-using ISC::DNS::RRsetPtr;
-using ISC::DNS::RR;
-using ISC::DNS::TTL;
+using isc::dns::Name;
+using isc::dns::Message;
+using isc::dns::RRType;
+using isc::dns::RRClass;
+using isc::dns::RRsetPtr;
+using isc::dns::RR;
+using isc::dns::TTL;
 
 Message::Message()
 {
     initialize();
 
-    default_buffer_ = new ISC::SingleBuffer;
+    default_buffer_ = new isc::SingleBuffer;
     buffer_ = default_buffer_;
 
     default_compressor_ = new NameCompressor;

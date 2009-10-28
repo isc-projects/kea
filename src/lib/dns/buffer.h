@@ -31,7 +31,7 @@
 
 #include <dns/exceptions.h>
 
-namespace ISC {
+namespace isc {
 // Abstraction of buffers for socket I/O.  This is a tentative idea and should
 // be revisited.
 
@@ -84,7 +84,7 @@ public:
     void write_uint16_at(uint16_t data, size_t pos)
     {
         if (pos + sizeof(data) >= buf_.size())
-            throw ISC::ISCBufferInvalidPosition();
+            throw isc::ISCBufferInvalidPosition();
 
         data = htons(data);
         uint8_t* cp =  static_cast<uint8_t*>((void*)&data);

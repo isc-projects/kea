@@ -21,17 +21,17 @@
 
 namespace {
 
-using ISC::DNS::Name;
-using ISC::DNS::RRClass;
-using ISC::DNS::RRType;
-using ISC::DNS::TTL;
-using ISC::DNS::Rdata::RDATAPTR;
-using ISC::DNS::Rdata::IN::A;
-using ISC::DNS::Rdata::IN::AAAA;
-using ISC::DNS::Rdata::Generic::NS;
-using ISC::DNS::RRset;
-using ISC::DNS::RR;
-using ISC::DNS::Question;
+using isc::dns::Name;
+using isc::dns::RRClass;
+using isc::dns::RRType;
+using isc::dns::TTL;
+using isc::dns::Rdata::RDATAPTR;
+using isc::dns::Rdata::IN::A;
+using isc::dns::Rdata::IN::AAAA;
+using isc::dns::Rdata::Generic::NS;
+using isc::dns::RRset;
+using isc::dns::RR;
+using isc::dns::Question;
 
 // The fixture for testing class RRClass.
 class RRClassTest : public ::testing::Test {
@@ -94,7 +94,7 @@ protected:
 TEST_F(Rdata_IN_A_Test, from_to_text)
 {
     EXPECT_EQ("192.0.2.1", rdata.to_text());
-    EXPECT_THROW(A("2001:db8::1234"), ISC::ISCInvalidAddressString);
+    EXPECT_THROW(A("2001:db8::1234"), isc::ISCInvalidAddressString);
 }
 
 // The fixture for testing class IN/AAAA Rdata
@@ -107,7 +107,7 @@ protected:
 TEST_F(Rdata_IN_AAAA_Test, from_to_text)
 {
     EXPECT_EQ("2001:db8::abcd", rdata.to_text());
-    EXPECT_THROW(AAAA("192.0.2.255"), ISC::ISCInvalidAddressString);
+    EXPECT_THROW(AAAA("192.0.2.255"), isc::ISCInvalidAddressString);
 }
 
 // The fixture for testing class Generic/NS Rdata

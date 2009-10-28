@@ -21,14 +21,14 @@
 // Quick hack exception classes for rapid prototyping.  This shouldn't belong
 // here.  Also, exceptions should inherit from standard exception classes.
 
-namespace ISC {
+namespace isc {
 class ISCException {};
 class ISCUnexpected : public ISCException {};
 class ISCNoSpace : public ISCException {};
 class ISCInvalidAddressString : public ISCException {};
 class ISCBufferInvalidPosition : public ISCException {};
 
-namespace DNS {
+namespace dns {
 class DNSException {};
 class DNSEmptyLabel : public DNSException {};
 class DNSNameTooLong : public DNSException {};

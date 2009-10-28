@@ -22,8 +22,8 @@
 
 namespace {
 
-using ISC::DNS::Name;
-using ISC::DNS::DNSLabelTooLong;
+using isc::dns::Name;
+using isc::dns::DNSLabelTooLong;
 
 // The fixture for testing class Name.
 class NameTest : public ::testing::Test {
@@ -31,7 +31,7 @@ protected:
     NameTest()
     {
         example_name =
-            new ISC::DNS::Name("www.example.com");
+            new isc::dns::Name("www.example.com");
                              //01234567890123456 => length should be 17.
     }
     virtual ~NameTest()
@@ -39,7 +39,7 @@ protected:
         delete example_name;
     }
 
-    ISC::DNS::Name *example_name;
+    isc::dns::Name *example_name;
 };
 
 TEST_F(NameTest, get_length)
@@ -74,9 +74,9 @@ TEST_F(NameTest, operator_equals)
 
 TEST_F(NameTest, to_from_wire)
 {
-    ISC::SingleBuffer buffer;
-    ISC::DNS::NameCompressor compressor;
-    ISC::DNS::NameDecompressor decompressor;
+    isc::SingleBuffer buffer;
+    isc::dns::NameCompressor compressor;
+    isc::dns::NameDecompressor decompressor;
 
     example_name->to_wire(buffer, compressor);
     EXPECT_EQ(std::string("www.example.com."),

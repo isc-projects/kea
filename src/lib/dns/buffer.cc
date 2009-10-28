@@ -19,7 +19,7 @@
 
 #include <dns/buffer.h>
 
-using ISC::SingleBuffer;
+using isc::SingleBuffer;
 
 // The interface should be revisited.
 int
@@ -37,7 +37,7 @@ SingleBuffer::recv_from(int s, struct sockaddr* from, socklen_t* from_len)
     int cc;
 
     if (!buf_.empty())
-        throw ISC::ISCBufferInvalidPosition();
+        throw isc::ISCBufferInvalidPosition();
 
     buf_.resize(buf_.capacity());
     cc = recvfrom(s, &buf_[0], buf_.size(), 0, from, from_len);

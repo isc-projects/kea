@@ -29,8 +29,8 @@
 #include <dns/name.h>
 #include <dns/rrset.h>
 
-namespace ISC {
-namespace DNS {
+namespace isc {
+namespace dns {
 typedef uint8_t rcode_t; // we actually only need 4 bits of it
 typedef uint8_t opcode_t; // we actually only need 4 bits of it
 typedef uint16_t flags_t;
