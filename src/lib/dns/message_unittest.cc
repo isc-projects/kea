@@ -49,33 +49,33 @@ protected:
 
 TEST_F(MessageTest, check_flags)
 {
-    EXPECT_EQ(false, query.getQr());
-    query.setQr(true);
-    EXPECT_EQ(true, query.getQr());
+    EXPECT_EQ(false, query.getQR());
+    query.setQR(true);
+    EXPECT_EQ(true, query.getQR());
 
-    EXPECT_EQ(false, query.getAa());
-    query.setAa(true);
-    EXPECT_EQ(true, query.getAa());
+    EXPECT_EQ(false, query.getAA());
+    query.setAA(true);
+    EXPECT_EQ(true, query.getAA());
 
-    EXPECT_EQ(false, query.getTc());
-    query.setTc(true);
-    EXPECT_EQ(true, query.getTc());
+    EXPECT_EQ(false, query.getTC());
+    query.setTC(true);
+    EXPECT_EQ(true, query.getTC());
 
-    EXPECT_EQ(false, query.getRd());
-    query.setRd(true);
-    EXPECT_EQ(true, query.getRd());
+    EXPECT_EQ(false, query.getRD());
+    query.setRD(true);
+    EXPECT_EQ(true, query.getRD());
 
-    EXPECT_EQ(false, query.getRa());
-    query.setRa(true);
-    EXPECT_EQ(true, query.getRa());
+    EXPECT_EQ(false, query.getRA());
+    query.setRA(true);
+    EXPECT_EQ(true, query.getRA());
 
-    EXPECT_EQ(false, query.getAd());
-    query.setAd(true);
-    EXPECT_EQ(true, query.getAd());
+    EXPECT_EQ(false, query.getAD());
+    query.setAD(true);
+    EXPECT_EQ(true, query.getAD());
 
-    EXPECT_EQ(false, query.getCd());
-    query.setCd(true);
-    EXPECT_EQ(true, query.getCd());
+    EXPECT_EQ(false, query.getCD());
+    query.setCD(true);
+    EXPECT_EQ(true, query.getCD());
 }
 
 TEST_F(MessageTest, getQuestion)
@@ -88,7 +88,7 @@ TEST_F(MessageTest, getQuestion)
 TEST_F(MessageTest, makeResponse)
 {
     query.makeResponse();
-    EXPECT_EQ(true, query.getQr());
+    EXPECT_EQ(true, query.getQR());
     EXPECT_EQ("www.example.com. IN A",
               (**query.getSection(SECTION_QUESTION).begin()).toText());
     EXPECT_EQ(0, query.getSection(SECTION_ANSWER).size());

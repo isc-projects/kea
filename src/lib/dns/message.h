@@ -46,14 +46,14 @@ public:
     void sort(Message& message, section_t section) {} // dummy for now.
 };
 
-#define getMsgFlg(flg, capflg) \
-bool get ## flg() const { return ((flags_ & FLAG_ ## capflg) != 0); }
-#define setMsgFlg(flg, capflg) \
-bool set ## flg(bool on) { \
+#define getMsgFlg(flag) \
+bool get ## flag() const { return ((flags_ & FLAG_ ## flag) != 0); }
+#define setMsgFlg(flag) \
+bool set ## flag(bool on) { \
         if (on) \
-            flags_ |= FLAG_ ## capflg; \
+            flags_ |= FLAG_ ## flag; \
         else \
-            flags_ &= ~FLAG_ ## capflg; \
+            flags_ &= ~FLAG_ ## flag; \
     }
 
 class Message {
@@ -62,20 +62,20 @@ public:
     ~Message();
     qid_t getQid() const { return (qid_); }
     void setQid(qid_t qid) { qid_ = qid; }
-    getMsgFlg(Rd, RD)
-    setMsgFlg(Rd, RD)
-    getMsgFlg(Aa, AA)
-    setMsgFlg(Aa, AA)
-    getMsgFlg(Qr, QR)
-    setMsgFlg(Qr, QR)
-    getMsgFlg(Tc, TC)
-    setMsgFlg(Tc, TC)
-    getMsgFlg(Ra, RA)
-    setMsgFlg(Ra, RA)
-    getMsgFlg(Ad, AD)
-    setMsgFlg(Ad, AD)
-    getMsgFlg(Cd, CD)
-    setMsgFlg(Cd, CD)
+    getMsgFlg(RD)
+    setMsgFlg(RD)
+    getMsgFlg(AA)
+    setMsgFlg(AA)
+    getMsgFlg(QR)
+    setMsgFlg(QR)
+    getMsgFlg(TC)
+    setMsgFlg(TC)
+    getMsgFlg(RA)
+    setMsgFlg(RA)
+    getMsgFlg(AD)
+    setMsgFlg(AD)
+    getMsgFlg(CD)
+    setMsgFlg(CD)
     rcode_t getRcode() const { return (rcode_); }
     void setRcode(rcode_t rcode) { rcode_ = rcode; }
     opcode_t getOpcode() const { return (opcode_); }

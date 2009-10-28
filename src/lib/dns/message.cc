@@ -245,19 +245,19 @@ Message::toText() const
     s += ", status: " + std::string(rcodetext[rcode_]);
     s += ", id: " + boost::lexical_cast<std::string>(qid_);
     s += "\n;; flags: ";
-    if (getQr())
+    if (getQR())
         s += "qr ";
-    if (getAa())
+    if (getAA())
         s += "aa ";
-    if (getTc())
+    if (getTC())
         s += "tc ";
-    if (getRd())
+    if (getRD())
         s += "rd ";
-    if (getRa())
+    if (getRA())
         s += "ra ";
-    if (getAd())
+    if (getAD())
         s += "ad ";
-    if (getCd())
+    if (getCD())
         s += "cd ";
 
     // for simply, don't consider the update case
@@ -320,7 +320,7 @@ void
 Message::makeResponse()
 {
     flags_ &= MESSAGE_REPLYPRESERVE;
-    setQr(true);
+    setQR(true);
 
     for (int section = SECTION_ANSWER; section < SECTION_MAX; ++section) {
         sections_[section].clear();
