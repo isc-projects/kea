@@ -88,6 +88,8 @@ host_lookup(char* name, char* type)
                 gettimeofday(&after_time, NULL);
             }
 
+// This is for verbose too
+// no check yet until non-verbose way is done
             // HEADER and QUESTION SECTION:
             std::cout << rmsg.toText() << std::endl;
 // ;; ANSWER SECTION:
@@ -113,7 +115,7 @@ host_lookup(char* name, char* type)
                 " bytes in " << elapsed_time << " ms\n";
 // TODO: " bytes from 127.0.0.1#53 in 0 ms
         } catch (...) {
-            std::cerr << "parse failed" << std::endl;
+            std::cerr << "parse failed for " << type << std::endl;
         }
     }
 
