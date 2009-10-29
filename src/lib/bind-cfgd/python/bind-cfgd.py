@@ -44,14 +44,14 @@ class ConfigManager:
                 if cmd[0] == "zone" and cmd[1] == "add":
                     self.add_zone(cmd[2])
                     answer["result"] = [ 0 ]
-                elif cmd[0] == "zone" and cmd[1] == "del":
+                elif cmd[0] == "zone" and cmd[1] == "remove":
                     self.remove_zone(cmd[2])
                     answer["result"] = [ 0 ]
-                elif cmd[o] == "zone" and cmd[1] == "list":
-                    answer["result"] = self.zones.keys()
+                elif cmd[0] == "zone" and cmd[1] == "list":
+                    answer["result"] = self.config.zones.keys()
                 else:
-                    print "unknown command: " + cmd
-                    answer["result"] = [ 1, "Unknown command: " + cmd ]
+                    print "unknown command: " + str(cmd)
+                    answer["result"] = [ 1, "Unknown command: " + str(cmd) ]
         except KeyError, ke:
             print "unknown module: " + str(msg)
             answer["result"] = [ 1, "Unknown module: " + str(msg) ]
