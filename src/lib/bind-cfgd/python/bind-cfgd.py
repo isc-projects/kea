@@ -16,6 +16,7 @@ class ConfigManager:
     def __init__(self):
         self.cc = ISC.CC.Session()
         self.cc.group_subscribe("ConfigManager")
+        self.cc.group_subscribe("Boss")
         self.config = ConfigData()
         self.running = False
 
@@ -50,9 +51,9 @@ class ConfigManager:
     def handle_msg(self, msg):
         """return answer message"""
         answer = {}
-        try:
+        if "command" in msg:
             cmd = msg["command"]
-            if cmd:
+            try:
                 if cmd[0] == "zone" and cmd[1] == "add":
                     self.add_zone(cmd[2])
                     answer["result"] = [ 0 ]
@@ -60,16 +61,18 @@ class ConfigManager:
                     self.remove_zone(cmd[2])
                     answer["result"] = [ 0 ]
                 elif cmd[0] == "zone" and cmd[1] == "list":
-                    answer["result"] = list(self.config.zones.keys())
+                    answer["result"]     = list(self.config.zones.keys())
                 else:
                     print("unknown command: " + str(cmd))
                     answer["result"] = [ 1, "Unknown command: " + str(cmd) ]
-        except KeyError as ke:
-            print("unknown module: " + str(msg))
+            except IndexError as ie:
+                print("missing argument")
+                answer["result"] = [ 1, "Missing argument in command" ]
+        elif "shutdown" in msg:
+            self.running = False
+        else:
+            print("unknown message: " + str(msg))
             answer["result"] = [ 1, "Unknown module: " + str(msg) ]
-        except IndexError as ie:
-            print("missing argument")
-            answer["result"] = [ 1, "Missing argument in command" ]
         return answer
         
     def run(self):
