@@ -110,10 +110,11 @@ class BoB:
 
         # start the parking lot
         # XXX: this must be read from the configuration manager in the future
+        # XXX: we hardcode port 5300
         if self.verbose:
             sys.stdout.write("Starting parkinglot\n")
         try:
-            parkinglot = subprocess.Popen("parkinglot",
+            parkinglot = subprocess.Popen(["parkinglot", "-p", "5300",],
                                           stdin=dev_null,
                                           stdout=dev_null,
                                           stderr=dev_null,
@@ -153,7 +154,7 @@ class BoB:
                 pass
         time.sleep(0.1)  # XXX: some delay probably useful... how much is uncertain
         # next try sending a SIGTERM
-        processes_to_stop = list(self.processes)
+        processes_to_stop = list(self.processes.values())
         unstopped_processes = []
         for process in processes_to_stop:
             if self.verbose:
@@ -187,6 +188,9 @@ class BoB:
         """The process specified by pid has exited with the value
         exit_status, so perform any action necessary (cleanup,
         restart, and so on).
+  
+        Returns True if everything is okay, or False if a fatal error
+        has been detected and the program should exit.
         """
         process = self.processes.pop(pid)
         self.dead_processes[process.pid] = process
