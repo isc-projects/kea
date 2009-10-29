@@ -26,51 +26,68 @@
 #include <dns/rrset.h>
 #include <dns/message.h>
 
+#include "common.h"
+
 using std::string;
 using std::pair;
 
-using isc::dns::RRset;
-using isc::dns::Name;
-using isc::dns::TTL;
-using isc::dns::RRsetPtr;
-using isc::dns::RRType;
-using isc::dns::RRClass;
-using isc::dns::Message;
+using namespace isc::dns;
 using isc::dns::Rdata::IN::A;
 using isc::dns::Rdata::IN::AAAA;
 using isc::dns::Rdata::Generic::NS;
 
+const string PROGRAM = "parkinglot";
+const int DNSPORT = 53;
+
 static void
-start_server(int s, const struct addrinfo *res)
-{
-    if (bind(s, res->ai_addr, res->ai_addrlen) < 0)
-        return;
+usage() {
+        std::cerr << "Usage: parkinglot [-p port]" << std::endl;
+        exit(1);
+}
 
-    // Create Database
-    typedef pair<string, string> dnskey_t;
-    std::map<dnskey_t, std::string> dnsdb;
-    dnsdb.insert(pair<dnskey_t, string>(dnskey_t("www.jinmei.org", "A"),
-                                        "149.20.54.162"));
-    dnsdb.insert(pair<dnskey_t, string>(dnskey_t("www.jinmei.org", "AAAA"),
-                                        "2001:4f8:3:36::162"));
-    dnsdb.insert(pair<dnskey_t, string>(dnskey_t("www.isc.org", "A"),
-                                        "149.20.64.42"));
-    dnsdb.insert(pair<dnskey_t, string>(dnskey_t("www.isc.org", "AAAA"),
-                                        "2001:4f8:0:2::d"));
-    dnsdb.insert(pair<dnskey_t, string>(dnskey_t("isc.org", "NS"),
-                                        "sfba.sns-pb.isc.org."));
+typedef pair<string, string> Key;
+typedef pair<Key, string> Record;
+typedef std::map<Key, string> DnsDB;
+DnsDB dnsdb;
 
-    int cc;
-    struct sockaddr_storage ss;
-    struct sockaddr* sa;
-    socklen_t sa_len;
+static void
+init_db() {
+    // populate database
+    dnsdb.insert(Record(Key("www.jinmei.org", "A"), "149.20.54.162"));
+    dnsdb.insert(Record(Key("www.jinmei.org", "AAAA"), "2001:4f8:3:36::162"));
+    dnsdb.insert(Record(Key("www.isc.org", "A"), "149.20.64.42"));
+    dnsdb.insert(Record(Key("www.isc.org", "AAAA"), "2001:4f8:0:2::d"));
+    dnsdb.insert(Record(Key("isc.org", "NS"), "sfba.sns-pb.isc.org."));
+}
 
-    while (1) {
+static int
+start_server(int port) {
+    int s = socket(AF_INET, SOCK_DGRAM, 0);
+    if (s < 0)
+        fatal("failed to open socket");
+
+    struct sockaddr_in sin;
+    sin.sin_family = AF_INET;
+    sin.sin_addr.s_addr = INADDR_ANY;
+    sin.sin_port = htons(port);
+
+    socklen_t sa_len = sizeof(sin);
+    struct sockaddr* sa = static_cast<struct sockaddr*>((void*)&sin);
+
+    if (bind(s, sa, sa_len) < 0)
+        return (-1);
+
+    return (s);
+}
+
+static void
+run_server(int s) {
+    while (true) {
         Message msg;
-
-        sa_len = sizeof(ss);
-        sa = static_cast<struct sockaddr*>((void*)&ss);
-        cc = msg.getBuffer().recvFrom(s, sa, &sa_len);
+        struct sockaddr_storage ss;
+        socklen_t sa_len = sizeof(ss);
+        struct sockaddr* sa = static_cast<struct sockaddr*>((void*)&ss);
+        int cc = msg.getBuffer().recvFrom(s, sa, &sa_len);
         if (cc > 0) {
             try {
                 msg.fromWire();
@@ -87,19 +104,19 @@ start_server(int s, const struct addrinfo *res)
             msg.setAA(true);
 
             RRsetPtr query = msg.getSection(isc::dns::SECTION_QUESTION)[0];
-            std::map<dnskey_t, string>::const_iterator it;
-            isc::dns::Rdata::RDATAPTR rdatap;
+            DnsDB::const_iterator it;
+            isc::dns::Rdata::RdataPtr rdatap;
 
-            it = dnsdb.find(dnskey_t(query->getName().toText(true),
-                                     query->getType().toText()));
+            it = dnsdb.find(Key(query->getName().toText(true),
+                                query->getType().toText()));
             if (it != dnsdb.end()) {
                 // XXX: this code logic is NOT clean.  should revisit API.
                 if (query->getType() == RRType::A) {
-                    rdatap = isc::dns::Rdata::RDATAPTR(new A(it->second));
+                    rdatap = isc::dns::Rdata::RdataPtr(new A(it->second));
                 } else if (query->getType() == RRType::AAAA) {
-                    rdatap = isc::dns::Rdata::RDATAPTR(new AAAA(it->second));
+                    rdatap = isc::dns::Rdata::RdataPtr(new AAAA(it->second));
                 } else if (query->getType() == RRType::NS) {
-                    rdatap = isc::dns::Rdata::RDATAPTR(new NS(it->second));
+                    rdatap = isc::dns::Rdata::RdataPtr(new NS(it->second));
                 }
 
                 msg.setRcode(Message::RCODE_NOERROR);
@@ -107,7 +124,7 @@ start_server(int s, const struct addrinfo *res)
                 RRset* rrset = new RRset(query->getName(), query->getClass(),
                                          query->getType(), TTL(3600));
                 rrset->addRdata(rdatap);
-                msg.addRrset(isc::dns::SECTION_ANSWER, RRsetPtr(rrset));
+                msg.addRRset(isc::dns::SECTION_ANSWER, RRsetPtr(rrset));
             } else {
                 msg.setRcode(Message::RCODE_NXDOMAIN);
                 // should add SOA to the authority section, but not implemented.
@@ -127,88 +144,31 @@ main(int argc, char* argv[])
 {
     Message msg;
     int ch;
-    const char* server_address = "127.0.0.1";
-    const char* type_name = "A";
-    const char* port = "53";
-    bool receive_mode = false;
+    int port = DNSPORT;
+    bool err = false;
 
-    while ((ch = getopt(argc, argv, "p:rs:t:")) != -1) {
+    while ((ch = getopt(argc, argv, "p:")) != -1) {
         switch (ch) {
         case 'p':
-            port = optarg;
+            port = atoi(optarg);
             break;
-        case 'r':
-            receive_mode = true;
-            break;
-        case 's':
-            server_address = optarg;
-            break;
-        case 't':
-            type_name = optarg;
-            break;
+        case '?':
+        default:
+            err = true;
         }
     }
 
-    argc -= optind;
-    argv += optind;
+    if (err || (argc - optind) > 0)
+        usage();
 
-    if (argc < 1 && !receive_mode) {
-        std::cerr << "usage: "
-            "dnsmessage-test [-s server_address] [-t qtype] qname\n"
-                  << std::endl;
-        return (1);
-    }
+    // initialize DNS database
+    init_db();
 
-    struct addrinfo hints, *res;
-    int e;
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_DGRAM;
-    hints.ai_flags = receive_mode ? AI_PASSIVE : 0;
-    e = getaddrinfo(server_address, port, &hints, &res);
-    if (e != 0) {
-        std::cerr << "getaddrinfo failed: " << gai_strerror(e) << std::endl;
-        return (1);
-    }
+    // start the server
+    int s = start_server(port);
 
-    int s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-    if (s < 0) {
-        std::cerr << "failed to open socket" << std::endl;
-        return (1);
-    }
-
-    if (receive_mode) {
-        start_server(s, res);
-    } else {
-        msg.setQid(42);            // can be omitted, then QID will be 0
-        msg.setRD(true);
-        msg.addQuestion(Name(argv[0]), RRClass::IN, RRType(type_name));
-        msg.toWire();
-        std::cout << "sending a query (" <<
-            boost::lexical_cast<string>(msg.getBuffer().getSize())
-                  << " bytes):\n" << msg.toText() << std::endl;
-        msg.getBuffer().sendTo(s, *res->ai_addr, res->ai_addrlen);
-
-        Message rmsg;
-        struct sockaddr_storage ss;
-        struct sockaddr* sa;
-        socklen_t sa_len;
-
-        sa_len = sizeof(ss);
-        sa = static_cast<struct sockaddr*>((void*)&ss);
-        if (rmsg.getBuffer().recvFrom(s, sa, &sa_len) > 0) {
-            try {
-                rmsg.fromWire();
-                std::cout << "received a response (" <<
-                    boost::lexical_cast<string>(rmsg.getBuffer().getSize())
-                          << " bytes):\n" << rmsg.toText() << std::endl;
-            } catch (...) {
-                std::cerr << "parse failed" << std::endl;
-            }
-        }
-    }
-
-    freeaddrinfo(res);
+    // main server loop
+    run_server(s);
 
     return (0);
 }
