@@ -18,7 +18,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-#include <map>
+#include <set>
 #include <iostream>
 
 #include <dns/buffer.h>
@@ -45,19 +45,22 @@ usage() {
         exit(1);
 }
 
-typedef pair<string, string> Key;
-typedef pair<Key, string> Record;
-typedef std::map<Key, string> DnsDB;
-DnsDB dnsdb;
+typedef pair<string, void*> Record;
+typedef std::set<string> ZoneSet;
+ZoneSet zones;
+
+static void
+serve(string zone) {
+    zones.insert(zone);
+}
 
 static void
 init_db() {
-    // populate database
-    dnsdb.insert(Record(Key("www.jinmei.org", "A"), "149.20.54.162"));
-    dnsdb.insert(Record(Key("www.jinmei.org", "AAAA"), "2001:4f8:3:36::162"));
-    dnsdb.insert(Record(Key("www.isc.org", "A"), "149.20.64.42"));
-    dnsdb.insert(Record(Key("www.isc.org", "AAAA"), "2001:4f8:0:2::d"));
-    dnsdb.insert(Record(Key("isc.org", "NS"), "sfba.sns-pb.isc.org."));
+    serve("jinmei.org");
+    serve("nuthaven.org");
+    serve("isc.org");
+    serve("sisotowbell.org");
+    serve("flame.org");
 }
 
 static int
@@ -97,6 +100,7 @@ run_server(int s) {
             }
 
             std::cout << "received a message:\n" << msg.toText() << std::endl;
+
             if (msg.getSection(isc::dns::SECTION_QUESTION).size() != 1)
                 continue;
 
@@ -104,27 +108,40 @@ run_server(int s) {
             msg.setAA(true);
 
             RRsetPtr query = msg.getSection(isc::dns::SECTION_QUESTION)[0];
-            DnsDB::const_iterator it;
-            isc::dns::Rdata::RdataPtr rdatap;
 
-            it = dnsdb.find(Key(query->getName().toText(true),
-                                query->getType().toText()));
-            if (it != dnsdb.end()) {
-                // XXX: this code logic is NOT clean.  should revisit API.
-                if (query->getType() == RRType::A) {
-                    rdatap = isc::dns::Rdata::RdataPtr(new A(it->second));
-                } else if (query->getType() == RRType::AAAA) {
-                    rdatap = isc::dns::Rdata::RdataPtr(new AAAA(it->second));
-                } else if (query->getType() == RRType::NS) {
-                    rdatap = isc::dns::Rdata::RdataPtr(new NS(it->second));
-                }
+            if (zones.find(query->getName().toText(true)) != zones.end()) {
+                isc::dns::Rdata::RdataPtr ns1, ns2, ns3;
+                ns1 = isc::dns::Rdata::RdataPtr(new NS("ns1.parking.com"));
+                ns2 = isc::dns::Rdata::RdataPtr(new NS("ns2.parking.com"));
+                ns3 = isc::dns::Rdata::RdataPtr(new NS("ns3.parking.com"));
 
                 msg.setRcode(Message::RCODE_NOERROR);
+                RRset* nsset = new RRset(query->getName(), query->getClass(),
+                                         RRType::NS, TTL(3600));
 
-                RRset* rrset = new RRset(query->getName(), query->getClass(),
-                                         query->getType(), TTL(3600));
-                rrset->addRdata(rdatap);
-                msg.addRRset(isc::dns::SECTION_ANSWER, RRsetPtr(rrset));
+                nsset->addRdata(ns1);
+                nsset->addRdata(ns2);
+                nsset->addRdata(ns3);
+
+                if (query->getType() == RRType::NS) {
+                    msg.addRRset(isc::dns::SECTION_ANSWER, RRsetPtr(nsset));
+                } else {
+                    msg.addRRset(isc::dns::SECTION_AUTHORITY, RRsetPtr(nsset));
+                }
+
+                RRset* answer = new RRset(query->getName(), query->getClass(),
+                                          query->getType(), TTL(3600));
+                if (query->getType() == RRType::A) {
+                    isc::dns::Rdata::RdataPtr a;
+                    a = isc::dns::Rdata::RdataPtr(new A("127.0.0.1"));
+                    answer->addRdata(a);
+                } else if (query->getType() == RRType::AAAA) {
+                    isc::dns::Rdata::RdataPtr aaaa;
+                    aaaa = isc::dns::Rdata::RdataPtr(new AAAA("::1"));
+                    answer->addRdata(aaaa);
+                } else {
+                }
+                msg.addRRset(isc::dns::SECTION_ANSWER, RRsetPtr(answer));
             } else {
                 msg.setRcode(Message::RCODE_NXDOMAIN);
                 // should add SOA to the authority section, but not implemented.

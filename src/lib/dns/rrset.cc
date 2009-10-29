@@ -19,6 +19,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <iostream>
 #include <stdexcept>
 //#include <cstring>
 #include <utility>
@@ -101,7 +102,11 @@ RRType::toText() const
         return ("TXT");
     else if (typeval_ == 28)
         return ("AAAA");
-    throw std::runtime_error("unexpected type");
+    else {
+        std::stringstream ss;
+        ss << "TYPE" << typeval_;
+        return (ss.str());
+    }
 }
 
 void
