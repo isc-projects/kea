@@ -99,14 +99,14 @@ TEST_F(MessageTest, makeResponse)
 TEST_F(MessageTest, addRr)
 {
     // Add one RR to the answer section.
-    response.addRr(SECTION_ANSWER, RR(Name("www.example.com"), RRClass::IN,
+    response.addRR(SECTION_ANSWER, RR(Name("www.example.com"), RRClass::IN,
                                        RRType::A, TTL(3600), A("192.0.2.1")));
     EXPECT_EQ("www.example.com. 3600 IN A 192.0.2.1",
               (**response.getSection(SECTION_ANSWER).begin()).toText());
 
     // Add another RR of the same RRset with a larger TTL.  The original
     // (smaller) TTL should remain.
-    response.addRr(SECTION_ANSWER, RR(Name("www.example.com"), RRClass::IN,
+    response.addRR(SECTION_ANSWER, RR(Name("www.example.com"), RRClass::IN,
                                        RRType::A, TTL(7200), A("192.0.2.2")));
     EXPECT_EQ("www.example.com. 3600 IN A 192.0.2.1\n"
               "www.example.com. 3600 IN A 192.0.2.2",
@@ -114,7 +114,7 @@ TEST_F(MessageTest, addRr)
 
     // Add one more RR of the same RRset with a smaller TTL.  The new (smaller)
     // TTL should replace with the old one.
-    response.addRr(SECTION_ANSWER, RR(Name("www.example.com"), RRClass::IN,
+    response.addRR(SECTION_ANSWER, RR(Name("www.example.com"), RRClass::IN,
                                        RRType::A, TTL(1800), A("192.0.2.3")));
     EXPECT_EQ("www.example.com. 1800 IN A 192.0.2.1\n"
               "www.example.com. 1800 IN A 192.0.2.2\n"

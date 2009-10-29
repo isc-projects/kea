@@ -53,6 +53,8 @@ public:
     { return (classval_ == other.classval_); }
     bool operator!=(const RRClass& other) const
     { return (classval_ != other.classval_); }
+    bool operator<(const RRClass& other) const
+    { return (classval_ < other.classval_); }
 
     // (Some) well-known RRclass constants
     static const RRClass IN;
@@ -73,6 +75,8 @@ public:
     { return (typeval_ == other.typeval_); }
     bool operator!=(const RRType& other) const
     { return (typeval_ != other.typeval_); }
+    bool operator<(const RRType& other) const
+    { return (typeval_ < other.typeval_); }
 
     // (Some) Well-known RRtype constants
     static const RRType A;
@@ -113,10 +117,11 @@ namespace Rdata {
 // if we worry about data copy, we may have to use
 // shared pointers at the cost of depending on boost.
 class Rdata;
-typedef boost::shared_ptr<Rdata> RDATAPTR;
+typedef boost::shared_ptr<Rdata> RDATAPTR; // for compatibility
+typedef boost::shared_ptr<Rdata> RdataPtr;
 // if we want to avoid the dependency, use this; but we'll have
 // to care much more about resource leak.
-//typedef Rdata * RDATAPTR;
+//typedef Rdata * RdataPtr;
 
 // Abstract RDATA class
 class Rdata {
@@ -129,6 +134,10 @@ public:
     virtual void toWire(Buffer& b, NameCompressor& c) const = 0;
     // need generic method for getting n-th field? c.f. ldns
     // e.g. string getField(int n);
+
+    // A semi polymorphic factory.
+    static Rdata* fromText(const RRClass& rrclass, const RRType& rrtype,
+                           const std::string& text_rdata);
 
     // polymorphic copy constructor (XXX should revisit it)
     virtual Rdata* copy() const = 0;
@@ -232,7 +241,7 @@ public:
     virtual std::string toText() const = 0;
     virtual int toWire(Buffer& buffer, NameCompressor& compressor,
                         section_t section) = 0;
-    virtual void addRdata(Rdata::RDATAPTR rdata) = 0;
+    virtual void addRdata(Rdata::RdataPtr rdata) = 0;
     virtual unsigned int countRdata() const = 0;
     virtual const Name& getName() const = 0;
     virtual const RRClass& getClass() const = 0;
@@ -248,7 +257,7 @@ public:
                    const RRType &rrtype, const TTL &ttl) :
         name_(name), rrclass_(rrclass), rrtype_(rrtype), ttl_(ttl) {}
     unsigned int countRdata() const { return (rdatalist_.size()); }
-    void addRdata(Rdata::RDATAPTR rdata);
+    void addRdata(Rdata::RdataPtr rdata);
     void removeRdata(const Rdata::Rdata& rdata);
     std::string toText() const;
     int toWire(Buffer& buffer, NameCompressor& compressor, section_t section);
@@ -258,7 +267,7 @@ public:
     const TTL& getTtl() const { return (ttl_); }
     // once constructed, only TTL and rdatalist can be modified.
     void setTtl(const TTL& ttl) { ttl_ = ttl; }
-    const std::vector<Rdata::RDATAPTR>& getRdatalist() const
+    const std::vector<Rdata::RdataPtr>& getRdatalist() const
     { return (rdatalist_); }
     template <typename T> void getRdatalist(std::vector<T>&) const;
 private:
@@ -266,7 +275,7 @@ private:
     RRClass rrclass_;
     RRType rrtype_;
     TTL ttl_;
-    std::vector<Rdata::RDATAPTR> rdatalist_;
+    std::vector<Rdata::RdataPtr> rdatalist_;
 };
 
 //
@@ -287,7 +296,7 @@ public:
     const RRType& getType() const { return (rrtype_); }
     const TTL& getTtl() const { return (ttl_); } // XXX
     void setTtl(const TTL& ttl) {}              // XXX
-    void addRdata(Rdata::RDATAPTR rdata) {}     // XXX
+    void addRdata(Rdata::RdataPtr rdata) {}     // XXX
 private:
     Name name_;
     RRClass rrclass_;
@@ -300,7 +309,7 @@ template <typename T>
 void
 RRset::getRdatalist(std::vector<T>& v) const
 {
-    std::vector<Rdata::RDATAPTR>::const_iterator it;
+    std::vector<Rdata::RdataPtr>::const_iterator it;
     for (it = rdatalist_.begin(); it != rdatalist_.end(); ++it) {
         const T& concreteRdata = static_cast<const T&>(**it); // XXX
         if (T::getTypeStatic() != (**it).getType()) {
@@ -322,12 +331,15 @@ public:
     explicit RR(const Name& name, const RRClass& rrclass,
                 const RRType& rrtype, const TTL& ttl,
                 const Rdata::Rdata& rdata);
+    explicit RR(const Name& name, const RRClass& rrclass,
+                const RRType& rrtype, const TTL& ttl,
+                Rdata::RdataPtr rdata);
     std::string toText() const { return (rrset_.toText()); }
     const Name& getName() const { return (rrset_.getName()); }
     const RRClass& getClass() const { return (rrset_.getClass()); }
     const RRType& getType() const { return (rrset_.getType()); }
     const TTL& getTtl() const { return (rrset_.getTtl()); }
-    const Rdata::RDATAPTR getRdata() const
+    const Rdata::RdataPtr getRdata() const
     { return (*rrset_.getRdatalist().begin()); }
     void setTtl(const TTL& ttl) { rrset_.setTtl(ttl); }
 private:

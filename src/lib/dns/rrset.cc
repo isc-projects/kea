@@ -20,10 +20,15 @@
 #include <arpa/inet.h>
 
 #include <stdexcept>
-#include <cstring>
+//#include <cstring>
+#include <utility>
+#include <map>
 
 #include <dns/buffer.h>
 #include <dns/rrset.h>
+
+using std::pair;
+using std::map;
 
 using isc::dns::RRClass;
 using isc::dns::RRType;
@@ -109,6 +114,64 @@ void
 TTL::toWire(Buffer& buffer) const
 {
     buffer.writeUint32(ttlval_);
+}
+
+typedef Rdata* (*RdataFactory)(const std::string& text_rdata);
+typedef pair<RRClass, RRType> RRClassTypePair;
+static map<RRClassTypePair, RdataFactory> rdata_factory_repository;
+
+struct RdataFactoryRegister {
+public:
+    RdataFactoryRegister();
+    ~RdataFactoryRegister() {}
+private:
+};
+
+static RdataFactoryRegister rdata_factory;
+
+Rdata *
+createADataFromText(const std::string& text_rdata)
+{
+    return (new A(text_rdata));
+}
+
+Rdata *
+createAAAADataFromText(const std::string& text_rdata)
+{
+    return (new AAAA(text_rdata));
+}
+
+Rdata *
+createNSDataFromText(const std::string& text_rdata)
+{
+    return (new NS(text_rdata));
+}
+
+RdataFactoryRegister::RdataFactoryRegister()
+{
+    rdata_factory_repository.insert(pair<RRClassTypePair, RdataFactory>
+                                    (RRClassTypePair(RRClass::IN, RRType::A),
+                                     createADataFromText));
+    rdata_factory_repository.insert(pair<RRClassTypePair, RdataFactory>
+                                    (RRClassTypePair(RRClass::IN, RRType::AAAA),
+                                     createAAAADataFromText));
+    //XXX: NS belongs to the 'generic' class.  should revisit it.
+    rdata_factory_repository.insert(pair<RRClassTypePair, RdataFactory>
+                                    (RRClassTypePair(RRClass::IN, RRType::NS),
+                                     createNSDataFromText));
+}
+
+Rdata *
+Rdata::fromText(const RRClass& rrclass, const RRType& rrtype,
+                const std::string& text_rdata)
+{
+    map<RRClassTypePair, RdataFactory>::const_iterator entry;
+    entry = rdata_factory_repository.find(RRClassTypePair(rrclass, rrtype));
+    if (entry != rdata_factory_repository.end()) {
+        return (entry->second(text_rdata));
+    }
+
+    throw DNSInvalidRRType();
 }
 
 A::A(const std::string& addrstr)
@@ -215,7 +278,7 @@ RRset::toText() const
 {
     std::string s;
 
-    for (std::vector<Rdata::RDATAPTR>::const_iterator it = rdatalist_.begin();
+    for (std::vector<Rdata::RdataPtr>::const_iterator it = rdatalist_.begin();
          it != rdatalist_.end();
          ++it)
     {
@@ -230,7 +293,7 @@ RRset::toText() const
 }
 
 void
-RRset::addRdata(Rdata::RDATAPTR rdata)
+RRset::addRdata(Rdata::RdataPtr rdata)
 {
     if (rdata->getType() != rrtype_)
         throw DNSRRtypeMismatch();
@@ -247,7 +310,7 @@ RRset::toWire(Buffer& buffer, NameCompressor& compressor, section_t section)
     // section is not currently used.  will be, when we implement rrset-order
     // etc.
 
-    for (std::vector<Rdata::RDATAPTR>::iterator it = rdatalist_.begin();
+    for (std::vector<Rdata::RdataPtr>::iterator it = rdatalist_.begin();
          it != rdatalist_.end();
          ++it, ++num_rrs)
     {
@@ -286,17 +349,12 @@ RR::RR(const Name& name, const RRClass& rrclass, const RRType& rrtype,
        const TTL& ttl, const Rdata::Rdata& rdata) :
     rrset_(name, rrclass, rrtype, ttl)
 {
-    // XXX: this implementation is BAD.  we took the ugly bad fastest approach
-    // for rapid experiment.  should rewrite it.
-    if (rrtype == RRType::A) {
-        rrset_.addRdata(Rdata::RDATAPTR(new A(rdata.toText())));
-    } else if (rrtype == RRType::AAAA) {
-        rrset_.addRdata(Rdata::RDATAPTR(new AAAA(rdata.toText())));
-    } else if (rrtype == RRType::NS) {
-        rrset_.addRdata(Rdata::RDATAPTR(new NS(rdata.toText())));
-    } else {
-        // XXX
-        throw std::runtime_error("RR constructor encountered "
-                                 "an unsupported type");
-    }
+    rrset_.addRdata(Rdata::RdataPtr(rdata.copy()));
+}
+
+RR::RR(const Name& name, const RRClass& rrclass, const RRType& rrtype,
+       const TTL& ttl, Rdata::RdataPtr rdata) :
+    rrset_(name, rrclass, rrtype, ttl)
+{
+    rrset_.addRdata(rdata);
 }

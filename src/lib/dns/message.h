@@ -91,14 +91,14 @@ public:
     //     of RR in the message
     const std::vector<RRsetPtr>& getSection(section_t section) const
     { return (sections_[section]); }
-    void addRrset(section_t section, RRsetPtr rrset);
+    void addRRset(section_t section, RRsetPtr rrset);
     // addQuestion() is redundant in that it's a special case of add_rrset,
     // but it'd be convenient for general purpose applications.
     void addQuestion(const Name& qname, const RRClass& qclass,
                      const RRType& qtype);
-    void removeRrset(section_t section, RRsetPtr rrset);
-    void addRr(section_t section, const RR& rr);
-    void removeRr(section_t section, const RR& rr);
+    void removeRRset(section_t section, RRsetPtr rrset);
+    void addRR(section_t section, const RR& rr);
+    void removeRR(section_t section, const RR& rr);
 
     // should we separate methods for different EDNS0-related
     // parameters/options?  it would probably be better to have a

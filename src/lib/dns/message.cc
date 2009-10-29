@@ -77,7 +77,7 @@ Message::initialize()
 }
 
 void
-Message::addRrset(section_t section, RRsetPtr rrsetp)
+Message::addRRset(section_t section, RRsetPtr rrsetp)
 {
     if (section >= SECTION_MAX)
         throw DNSInvalidMessageSection();
@@ -90,7 +90,7 @@ void
 Message::addQuestion(const Name& qname, const RRClass& qclass,
                       const RRType& qtype)
 {
-    addRrset(SECTION_QUESTION, RRsetPtr(new Question(qname, qclass, qtype)));
+    addRRset(SECTION_QUESTION, RRsetPtr(new Question(qname, qclass, qtype)));
 }
 
 void
@@ -185,7 +185,7 @@ Message::parse_question()
 
         RRType rrtype(buffer_->readUint16());
         RRClass rrclass(buffer_->readUint16());
-        addRrset(SECTION_QUESTION,
+        addRRset(SECTION_QUESTION,
                  RRsetPtr(new Question(name, rrclass, rrtype))); 
     }
 }
@@ -300,7 +300,7 @@ struct MatchRR : public std::binary_function<RRsetPtr, RR, bool> {
 };
 
 void
-Message::addRr(section_t section, const RR& rr)
+Message::addRR(section_t section, const RR& rr)
 {
     std::vector<RRsetPtr>::iterator it;
     it = find_if(sections_[section].begin(), sections_[section].end(),
