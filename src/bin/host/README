@@ -11,3 +11,6 @@ NO SWITCHES ARE IMPLEMENTED YET.
 
   -r	 	disable recursive processing
   -t _type_	specific query type 
+
+NOTE: the ANSWER, AUTHORITATIVE, and ADDITIONAL sections have
+no output yet -- waiting on libdns support for that.
