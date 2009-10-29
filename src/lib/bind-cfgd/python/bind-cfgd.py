@@ -1,5 +1,6 @@
 import ISC
 import pickle
+import signal
     
 class ConfigData:
     def __init__(self):
@@ -16,6 +17,7 @@ class ConfigManager:
         self.cc = ISC.CC.Session()
         self.cc.group_subscribe("ConfigManager")
         self.config = ConfigData()
+        self.running = False
 
     def notify_boss(self):
         self.cc.group_sendmsg({"running": "configmanager"}, "Boss")
@@ -71,8 +73,8 @@ class ConfigManager:
         return answer
         
     def run(self):
-        msg = 1
-        while (msg):
+        self.running = True
+        while (self.running):
             msg, env = self.cc.group_recvmsg(False)
             if msg:
                 print("received message: ")
@@ -82,13 +84,23 @@ class ConfigManager:
                 print(answer)
                 self.cc.group_reply(env, answer)
                 print("answer sent")
-            
-                
+            else:
+                self.running = False
+
+cm = None
+
+def signal_handler(signal, frame):
+    global cm
+    if cm:
+        cm.running = False
+
 if __name__ == "__main__":
     print("Hello, BIND10 world!")
     db_file = "/tmp/parkinglot.db"
     try:
         cm = ConfigManager()
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGTERM, signal_handler)
         cm.read_config(db_file)
         # do loading here if necessary
         cm.notify_boss()
