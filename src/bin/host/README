@@ -4,5 +4,10 @@ Initial functionality:
 
   host _hostname_ [server]
 
+Note it doesn't use /etc/resolv.conf at this time.
+Default name server used is 127.0.0.1.
+
+NO SWITCHES ARE IMPLEMENTED YET.
+
   -r	 	disable recursive processing
   -t _type_	specific query type 
