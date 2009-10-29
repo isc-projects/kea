@@ -138,7 +138,7 @@ class Session:
         env = self.recvmsg(nonblock)
         if env == None:
             return None
-        msg = Message.from_wire(env["msg"])
+        msg = Message.from_wire(env["msg"].encode('ascii'))
         return (msg, env)
 
     def group_reply(self, routing, msg):
