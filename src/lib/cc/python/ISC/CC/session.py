@@ -41,7 +41,7 @@ class Session:
             self._lname = msg["lname"]
             if not self._lname:
                 raise ProtocolError("Could not get local name")
-        except socket.error, se:
+        except socket.error as se:
                 raise SessionError(se)
 
     @property
