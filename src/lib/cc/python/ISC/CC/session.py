@@ -17,7 +17,7 @@ import sys
 import socket
 import struct
 
-import Message
+from ISC.CC import Message
 
 class ProtocolError(Exception): pass
 class NetworkError(Exception): pass

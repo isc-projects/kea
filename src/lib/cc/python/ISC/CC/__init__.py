@@ -1,2 +1,2 @@
-import Message
-from session import *
+import ISC.CC.Message
+from ISC.CC.session import *
