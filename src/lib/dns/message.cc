@@ -24,16 +24,19 @@
 #include <boost/lexical_cast.hpp>
 
 #include <dns/buffer.h>
+#include <dns/name.h>
 #include <dns/rrset.h>
 #include <dns/message.h>
 
 using isc::dns::Name;
-using isc::dns::Message;
 using isc::dns::RRType;
 using isc::dns::RRClass;
+using isc::dns::TTL;
+using isc::dns::Message;
+using isc::dns::Rdata::Rdata;
+using isc::dns::Rdata::RdataPtr;
 using isc::dns::RRsetPtr;
 using isc::dns::RR;
-using isc::dns::TTL;
 
 Message::Message()
 {
@@ -161,7 +164,9 @@ Message::fromWire()
     counts_[SECTION_ADDITIONAL] = buffer_->readUint16();
 
     parse_question();
-    // parse other sections (TBD)
+    for (int section = SECTION_ANSWER; section < SECTION_MAX; ++section) {
+        parse_section(static_cast<section_t>(section)); // XXX cast
+    }
 }
 
 void
@@ -187,6 +192,30 @@ Message::parse_question()
         RRClass rrclass(buffer_->readUint16());
         addRRset(SECTION_QUESTION,
                  RRsetPtr(new Question(name, rrclass, rrtype))); 
+    }
+}
+
+void
+Message::parse_section(section_t section)
+{
+    if (buffer_ == NULL)
+        throw DNSNoMessageBuffer();
+
+    for (int count = 0; count < this->counts_[section]; count++) {
+        Name name(*buffer_, getDecompressor());
+
+        // Get type, class, TTL
+        if (buffer_->getSpace() < 2 * sizeof(uint16_t) + sizeof(uint32_t))
+            throw DNSMessageTooShort();
+
+        RRType rrtype(buffer_->readUint16());
+        RRClass rrclass(buffer_->readUint16());
+        TTL ttl(buffer_->readUint32());
+        addRR(section, RR(name, rrclass, rrtype, ttl,
+                          RdataPtr(isc::dns::Rdata::Rdata::fromWire(rrclass,
+                                                                    rrtype,
+                                                                    *buffer_,
+                                                                    getDecompressor()))));
     }
 }
 

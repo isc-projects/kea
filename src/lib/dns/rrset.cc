@@ -31,6 +31,8 @@
 using std::pair;
 using std::map;
 
+using isc::Buffer;
+using isc::dns::NameDecompressor;
 using isc::dns::RRClass;
 using isc::dns::RRType;
 using isc::dns::TTL;
@@ -127,9 +129,12 @@ TTL::toWire(Buffer& buffer) const
     buffer.writeUint32(ttlval_);
 }
 
-typedef Rdata* (*RdataFactory)(const std::string& text_rdata);
+typedef Rdata* (*TextRdataFactory)(const std::string& text_rdata);
+typedef Rdata* (*WireRdataFactory)(Buffer& buffer,
+                                   NameDecompressor& decompressor);
 typedef pair<RRClass, RRType> RRClassTypePair;
-static map<RRClassTypePair, RdataFactory> rdata_factory_repository;
+static map<RRClassTypePair, TextRdataFactory> text_rdata_factory_repository;
+static map<RRClassTypePair, WireRdataFactory> wire_rdata_factory_repository;
 
 struct RdataFactoryRegister {
 public:
@@ -140,58 +145,74 @@ private:
 
 static RdataFactoryRegister rdata_factory;
 
-Rdata *
-createADataFromText(const std::string& text_rdata)
+template <typename T>
+Rdata*
+createDataFromText(const std::string& text_rdata)
 {
-    return (new A(text_rdata));
+    return (new T(text_rdata));
 }
 
-Rdata *
-createAAAADataFromText(const std::string& text_rdata)
+template <typename T>
+Rdata*
+createDataFromWire(Buffer& buffer, NameDecompressor& decompressor)
 {
-    return (new AAAA(text_rdata));
-}
-
-Rdata *
-createNSDataFromText(const std::string& text_rdata)
-{
-    return (new NS(text_rdata));
-}
-
-Rdata *
-createTXTDataFromText(const std::string& text_rdata)
-{
-    return (new TXT(text_rdata));
+    return (new T(buffer, decompressor));
 }
 
 RdataFactoryRegister::RdataFactoryRegister()
 {
-    rdata_factory_repository.insert(pair<RRClassTypePair, RdataFactory>
-                                    (RRClassTypePair(RRClass::IN, RRType::A),
-                                     createADataFromText));
-    rdata_factory_repository.insert(pair<RRClassTypePair, RdataFactory>
-                                    (RRClassTypePair(RRClass::IN, RRType::AAAA),
-                                     createAAAADataFromText));
+    text_rdata_factory_repository.insert(pair<RRClassTypePair, TextRdataFactory>
+                             (RRClassTypePair(RRClass::IN, RRType::A),
+                              createDataFromText<isc::dns::Rdata::IN::A>));
+    text_rdata_factory_repository.insert(pair<RRClassTypePair, TextRdataFactory>
+                             (RRClassTypePair(RRClass::IN, RRType::AAAA),
+                              createDataFromText<isc::dns::Rdata::IN::AAAA>));
     //XXX: NS/TXT belongs to the 'generic' class.  should revisit it.
-    rdata_factory_repository.insert(pair<RRClassTypePair, RdataFactory>
-                                    (RRClassTypePair(RRClass::IN, RRType::NS),
-                                     createNSDataFromText));
-    rdata_factory_repository.insert(pair<RRClassTypePair, RdataFactory>
-                                    (RRClassTypePair(RRClass::IN, RRType::TXT),
-                                     createTXTDataFromText));
+    text_rdata_factory_repository.insert(pair<RRClassTypePair, TextRdataFactory>
+                             (RRClassTypePair(RRClass::IN, RRType::NS),
+                              createDataFromText<isc::dns::Rdata::Generic::NS>));
+    text_rdata_factory_repository.insert(pair<RRClassTypePair, TextRdataFactory>
+                             (RRClassTypePair(RRClass::IN, RRType::TXT),
+                              createDataFromText<isc::dns::Rdata::Generic::TXT>));
     // XXX: we should treat class-agnostic type accordingly.
-    rdata_factory_repository.insert(pair<RRClassTypePair, RdataFactory>
-                                    (RRClassTypePair(RRClass::CH, RRType::TXT),
-                                     createTXTDataFromText));}
+    text_rdata_factory_repository.insert(pair<RRClassTypePair, TextRdataFactory>
+                             (RRClassTypePair(RRClass::CH, RRType::TXT),
+                              createDataFromText<isc::dns::Rdata::Generic::TXT>));
+
+    wire_rdata_factory_repository.insert(pair<RRClassTypePair, WireRdataFactory>
+                             (RRClassTypePair(RRClass::IN, RRType::A),
+                              createDataFromWire<isc::dns::Rdata::IN::A>));
+    wire_rdata_factory_repository.insert(pair<RRClassTypePair, WireRdataFactory>
+                             (RRClassTypePair(RRClass::IN, RRType::AAAA),
+                              createDataFromWire<isc::dns::Rdata::IN::AAAA>));
+    wire_rdata_factory_repository.insert(pair<RRClassTypePair, WireRdataFactory>
+                             (RRClassTypePair(RRClass::IN, RRType::NS),
+                              createDataFromWire<isc::dns::Rdata::Generic::NS>));
+}
 
 Rdata *
 Rdata::fromText(const RRClass& rrclass, const RRType& rrtype,
                 const std::string& text_rdata)
 {
-    map<RRClassTypePair, RdataFactory>::const_iterator entry;
-    entry = rdata_factory_repository.find(RRClassTypePair(rrclass, rrtype));
-    if (entry != rdata_factory_repository.end()) {
+    map<RRClassTypePair, TextRdataFactory>::const_iterator entry;
+    entry = text_rdata_factory_repository.find(RRClassTypePair(rrclass,
+                                                               rrtype));
+    if (entry != text_rdata_factory_repository.end()) {
         return (entry->second(text_rdata));
+    }
+
+    throw DNSInvalidRRType();
+}
+
+Rdata *
+Rdata::fromWire(const RRClass& rrclass, const RRType& rrtype,
+                Buffer& buffer, NameDecompressor& decompressor)
+{
+    map<RRClassTypePair, WireRdataFactory>::const_iterator entry;
+    entry = wire_rdata_factory_repository.find(RRClassTypePair(rrclass,
+                                                               rrtype));
+    if (entry != wire_rdata_factory_repository.end()) {
+        return (entry->second(buffer, decompressor));
     }
 
     throw DNSInvalidRRType();
@@ -203,10 +224,12 @@ A::A(const std::string& addrstr)
         throw ISCInvalidAddressString();
 }
 
-void
-A::fromWire(Buffer& buffer, NameDecompressor& decompressor)
+A::A(Buffer& buffer, NameDecompressor& decompressor)
 {
-    //TBD
+    size_t len = buffer.readUint16();
+    if (len != sizeof(addr_))
+        throw DNSInvalidRdata();
+    buffer.readData(&addr_, sizeof(addr_));
 }
 
 void
@@ -239,10 +262,11 @@ AAAA::AAAA(const std::string& addrstr)
         throw ISCInvalidAddressString();
 }
 
-void
-AAAA::fromWire(Buffer& buffer, NameDecompressor& decompressor)
+AAAA::AAAA(Buffer& buffer, NameDecompressor& decompressor)
 {
-    //TBD
+    if (buffer.readUint16() != sizeof(addr_))
+        throw DNSInvalidRdata();
+    buffer.readData(&addr_, sizeof(addr_));
 }
 
 void
@@ -269,10 +293,12 @@ AAAA::copy() const
     return (new AAAA(toText()));
 }
 
-void
-NS::fromWire(Buffer& buffer, NameDecompressor& decompressor)
+NS::NS(Buffer& buffer, NameDecompressor& decompressor)
 {
-    //TBD
+    size_t len = buffer.readUint16();
+    nsname_ = Name(buffer, decompressor);
+    if (nsname_.getLength() < len)
+        throw DNSInvalidRdata();
 }
 
 void

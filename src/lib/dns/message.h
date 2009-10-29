@@ -162,6 +162,7 @@ public:
 private:
     void initialize();
     void parse_question();
+    void parse_section(section_t section);
 
 private:
     // Open issues: should we rather have a header in wire-format

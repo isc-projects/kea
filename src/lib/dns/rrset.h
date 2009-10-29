@@ -131,14 +131,15 @@ public:
     virtual unsigned int count() const = 0;
     virtual const RRType& getType() const = 0;
     virtual std::string toText() const = 0;
-    virtual void fromWire(Buffer& b, NameDecompressor& c) = 0;
     virtual void toWire(Buffer& b, NameCompressor& c) const = 0;
     // need generic method for getting n-th field? c.f. ldns
     // e.g. string getField(int n);
 
-    // A semi polymorphic factory.
+    // semi-polymorphic factories.
     static Rdata* fromText(const RRClass& rrclass, const RRType& rrtype,
                            const std::string& text_rdata);
+    static Rdata* fromWire(const RRClass& rrclass, const RRType& rrtype,
+                           Buffer& b, NameDecompressor& d);
 
     // polymorphic copy constructor (XXX should revisit it)
     virtual Rdata* copy() const = 0;
@@ -150,11 +151,11 @@ public:
     NS() {}
     explicit NS(const std::string& namestr) : nsname_(namestr) {}
     explicit NS(const Name& nsname) : nsname_(nsname) {}
+    explicit NS(Buffer& buffer, NameDecompressor& decompressor);
     unsigned int count() const { return (1); }
     const RRType& getType() const { return (RRType::NS); }
     static const RRType& getTypeStatic() { return (RRType::NS); }
     std::string toText() const;
-    void fromWire(Buffer& b, NameDecompressor& c);
     void toWire(Buffer& b, NameCompressor& c) const;
     const std::string getNsname() const { return (nsname_.toText(false)); }
     bool operator==(const NS &other) const
@@ -194,11 +195,11 @@ public:
     A() {}
     // constructor from a textual IPv4 address
     explicit A(const std::string& addrstr);
+    explicit A(Buffer& buffer, NameDecompressor& decompressor);
     unsigned int count() const { return (1); }
     const RRType& getType() const { return (RRType::A); }
     static const RRType& getTypeStatic() { return (RRType::A); }
     std::string toText() const;
-    void fromWire(Buffer& b, NameDecompressor& c);
     void toWire(Buffer& b, NameCompressor& c) const;
     const struct in_addr& getAddress() const { return (addr_); }
     bool operator==(const A &other) const
@@ -216,11 +217,11 @@ public:
     AAAA() {}
     // constructor from a textual IPv6 address
     explicit AAAA(const std::string& addrstr);
+    explicit AAAA(Buffer& buffer, NameDecompressor& decompressor);
     unsigned int count() const { return (1); }
     std::string toText() const;
     const RRType& getType() const { return (RRType::AAAA); }
     static const RRType& getTypeStatic() { return (RRType::AAAA); }
-    void fromWire(Buffer& b, NameDecompressor& c);
     void toWire(Buffer& b, NameCompressor& c) const;
     const struct in6_addr& getAddress() const { return (addr_); }
     bool operator==(const AAAA &other) const
