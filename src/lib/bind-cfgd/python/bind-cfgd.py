@@ -1,5 +1,6 @@
 import ISC
-
+import pickle
+    
 class ConfigData:
     def __init__(self):
         self.zones = {}
@@ -32,14 +33,16 @@ class ConfigManager:
     def read_config(self, filename):
         print("Reading config")
         try:
-            file = open(filename, 'r');
+            file = open(filename, 'rb');
             self.config = pickle.load(file)
         except IOError as ioe:
             print("No config file found, starting with empty config")
+        except EOFError as eofe:
+            print("Config file empty, starting with empty config")
 
     def write_config(self, filename):
         print("Writing config")
-        file = open(filename, 'w');
+        file = open(filename, 'wb');
         pickle.dump(self.config, file)
 
     def handle_msg(self, msg):
@@ -68,30 +71,34 @@ class ConfigManager:
         return answer
         
     def run(self):
-        while (True):
+        msg = 1
+        while (msg):
             msg, env = self.cc.group_recvmsg(False)
-            print("received message: ")
-            print(msg)
-            answer = self.handle_msg(msg);
-            print("sending answer: ")
-            print(answer)
-            self.cc.group_reply(env, answer)
-            print("answer sent")
-            pass
-
+            if msg:
+                print("received message: ")
+                print(msg)
+                answer = self.handle_msg(msg);
+                print("sending answer: ")
+                print(answer)
+                self.cc.group_reply(env, answer)
+                print("answer sent")
+            
+                
 if __name__ == "__main__":
     print("Hello, BIND10 world!")
+    db_file = "/tmp/parkinglot.db"
     try:
         cm = ConfigManager()
-        cm.read_config("/tmp/a")
+        cm.read_config(db_file)
         # do loading here if necessary
         cm.notify_boss()
         cm.run()
+        cm.write_config(db_file)
     except ISC.CC.SessionError as se:
         print("Error creating config manager, "
               "is the command channel daemon running?")
     except KeyboardInterrupt as kie:
         print("Got ctrl-c, save config and exit")
-        cm.write_config("/tmp/a")
-
+        cm.write_config(db_file)
+    
         
