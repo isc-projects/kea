@@ -1,1 +1,1 @@
-SUBDIRS = parkinglot
+SUBDIRS = parkinglot host
