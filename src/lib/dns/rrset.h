@@ -81,6 +81,7 @@ public:
     // (Some) Well-known RRtype constants
     static const RRType A;
     static const RRType NS;
+    static const RRType TXT;
     static const RRType AAAA;
     // more to follow...
 
@@ -162,6 +163,27 @@ public:
     virtual Rdata* copy() const;
 private:
     Name nsname_;
+};
+
+// A quick hack implementation of TXT RR.  It currently supports only one
+// "character-string".
+class TXT : public Rdata::Rdata {
+public:
+    TXT() {}
+    explicit TXT(const std::string& text_data);
+    unsigned int count() const { return (string_list.size()); }
+    const RRType& getType() const { return (RRType::TXT); }
+    static const RRType& getTypeStatic() { return (RRType::TXT); }
+    std::string toText() const;
+    void fromWire(Buffer& b, NameDecompressor& c);
+    void toWire(Buffer& b, NameCompressor& c) const;
+    bool operator==(const TXT &other) const;
+    virtual bool operator!=(const TXT &other) const
+    { return !(*this == other); }
+    virtual Rdata* copy() const;
+private:
+    static const unsigned int MAX_CHARACTER_STRING = 255;
+    std::vector<std::string> string_list;
 };
 // add MXRdata, etc...
 }
