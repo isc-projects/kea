@@ -15,6 +15,7 @@
 // $Id$
 
 #include <iostream>
+#include <stdarg.h>
 
 #include "common.h"
 
