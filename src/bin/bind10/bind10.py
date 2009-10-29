@@ -71,10 +71,9 @@ class BoB:
                                          stderr=dev_null,
                                          close_fds=True,
                                          env=c_channel_env,)
-        except OSError:
+        except:
             return "Unable to start msgq"
         self.processes[c_channel.pid] = c_channel
-        self.cc_process = c_channel
         if self.verbose:
             sys.stdout.write("Started msgq with PID %d\n" % c_channel.pid)
 
@@ -108,8 +107,34 @@ class BoB:
         self.processes[bind_cfgd.pid] = bind_cfgd
         if self.verbose:
             sys.stdout.write("Started bind-cfgd with PID %d\n" % bind_cfgd.pid)
+
+        # start the parking lot
+        # XXX: this must be read from the configuration manager in the future
+        if self.verbose:
+            sys.stdout.write("Starting parkinglot\n")
+        try:
+            parkinglot = subprocess.Popen("parkinglot",
+                                          stdin=dev_null,
+                                          stdout=dev_null,
+                                          stderr=dev_null,
+                                          close_fds=True,
+                                          env={},)
+        except:
+            c_channel.kill()
+            bind_cfgd.kill()
+            return "Unable to start parkinglot"
+        self.processes[parkinglot.pid] = parkinglot
+        if self.verbose:
+            sys.stdout.write("Started parkinglot with PID %d\n" % parkinglot.pid)
+
+        # remember our super-important process
+        self.cc_process = c_channel
         
         return None
+
+    def stop_all_processes(self):
+        """Stop all processes."""
+        self.cc_session.group_sendmsg({ "shutdown": True }, "Boss")
 
     def stop_process(self, process):
         """Stop the given process, friendly-like."""
@@ -121,12 +146,14 @@ class BoB:
         if self.verbose:
             sys.stdout.write("Stopping the server.\n")
         # first try using the BIND 10 request to stop
-        unstopped_processes = []
-        for process in self.processes.values():
-            if not self.stop_process(process):
-                unstopped_processes.append(process)
+        if self.cc_session:
+            try:
+                self.stop_all_processes()
+            except:
+                pass
+        time.sleep(0.1)  # XXX: some delay probably useful... how much is uncertain
         # next try sending a SIGTERM
-        processes_to_stop = unstopped_processes
+        processes_to_stop = list(self.processes)
         unstopped_processes = []
         for process in processes_to_stop:
             if self.verbose:
@@ -155,7 +182,6 @@ class BoB:
                 pass
         if self.verbose:
             sys.stdout.write("All processes ended, server done.\n")
-        sys.exit(0)
 
     def reap(self, pid, exit_status):
         """The process specified by pid has exited with the value
@@ -166,10 +192,12 @@ class BoB:
         self.dead_processes[process.pid] = process
         if self.verbose:
             sys.stdout.write("Process %d died.\n" % pid)
-        if pid == self.cc_process.pid:
+        if self.cc_process and (pid == self.cc_process.pid):
             if self.verbose:
                 sys.stdout.write("The msgq process died, shutting down.\n")
-            self.shutdown()
+            return False
+        else:
+            return True
 
 if __name__ == "__main__":
     def reaper(signal_number, stack_frame):
@@ -182,7 +210,12 @@ if __name__ == "__main__":
                 if o.errno == errno.ECHILD: break
                 raise
             if pid == 0: break
-            boss_of_bind.reap(pid, exit_status)
+            if not boss_of_bind.reap(pid, exit_status):
+                signal.signal(signal.SIGCHLD, signal.SIG_DFL)
+                boss_of_bind.shutdown()
+                sys.exit(0)
+                   
+                
 
     def get_signame(signal_number):
         """Return the symbolic name for a signal."""
