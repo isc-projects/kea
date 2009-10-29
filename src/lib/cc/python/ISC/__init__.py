@@ -1,2 +1,2 @@
-import CC
-import Util
+import ISC.CC
+import ISC.Util
