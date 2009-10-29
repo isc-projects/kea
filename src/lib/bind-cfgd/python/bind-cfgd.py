@@ -30,10 +30,17 @@ class ConfigManager:
         self.cc.group_sendmsg({"zone_deleted": zone_name }, "ParkingLot")
 
     def read_config(self, filename):
-        pass
+        print("Reading config")
+        try:
+            file = open(filename, 'r');
+            self.config = pickle.load(file)
+        except IOError as ioe:
+            print("No config file found, starting with empty config")
 
     def write_config(self, filename):
-        pass
+        print("Writing config")
+        file = open(filename, 'w');
+        pickle.dump(self.config, file)
 
     def handle_msg(self, msg):
         """return answer message"""
@@ -48,7 +55,7 @@ class ConfigManager:
                     self.remove_zone(cmd[2])
                     answer["result"] = [ 0 ]
                 elif cmd[0] == "zone" and cmd[1] == "list":
-                    answer["result"] = self.config.zones.keys()
+                    answer["result"] = list(self.config.zones.keys())
                 else:
                     print("unknown command: " + str(cmd))
                     answer["result"] = [ 1, "Unknown command: " + str(cmd) ]
@@ -76,9 +83,15 @@ if __name__ == "__main__":
     print("Hello, BIND10 world!")
     try:
         cm = ConfigManager()
+        cm.read_config("/tmp/a")
         # do loading here if necessary
         cm.notify_boss()
         cm.run()
     except ISC.CC.SessionError as se:
         print("Error creating config manager, "
               "is the command channel daemon running?")
+    except KeyboardInterrupt as kie:
+        print("Got ctrl-c, save config and exit")
+        cm.write_config("/tmp/a")
+
+        
