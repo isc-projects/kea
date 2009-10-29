@@ -20,6 +20,7 @@ import struct
 import Message
 
 class ProtocolError(Exception): pass
+class NetworkError(Exception): pass
 class SessionError(Exception): pass
 
 class Session:
@@ -73,8 +74,8 @@ class Session:
                 data = self._socket.recv(length)
             except:
                 return None
-            if not data: # server closed connection
-                return None
+            if data == "": # server closed connection
+                raise ProtocolError("Read of 0 bytes: connection closed")
 
             self._recvbuffer += data
             if len(self._recvbuffer) < 4:
@@ -84,7 +85,12 @@ class Session:
 
         length = self._recvlength - len(self._recvbuffer)
         while (length > 0):
-            data = self._socket.recv(length)
+            try:
+                data = self._socket.recv(length)
+            except:
+                return None
+            if data == "": # server closed connection
+                raise ProtocolError("Read of 0 bytes: connection closed")
             self._recvbuffer += data
             length -= len(data)
         data = self._recvbuffer
@@ -112,15 +118,17 @@ class Session:
         })
 
     def group_sendmsg(self, msg, group, instance = "*", to = "*"):
+        seq = self._next_sequence()
         self.sendmsg({
             "type": "send",
             "from": self._lname,
             "to": to,
             "group": group,
             "instance": instance,
-            "seq": self._next_sequence(),
+            "seq": seq,
             "msg": Message.to_wire(msg),
         })
+        return seq
 
     def group_recvmsg(self, nonblock = True):
         msg = self.recvmsg(nonblock)
@@ -128,6 +136,20 @@ class Session:
             return None
         data = Message.from_wire(msg["msg"])
         return (data, msg)
+
+    def group_reply(self, routing, msg):
+        seq = self._next_sequence()
+        self.sendmsg({
+            "type": "send",
+            "from": self._lname,
+            "to": routing["from"],
+            "group": routing["group"],
+            "instance": routing["instance"],
+            "seq": seq,
+            "reply": routing["seq"],
+            "msg": Message.to_wire(msg),
+        })
+        return seq
 
 if __name__ == "__main__":
     import doctest
