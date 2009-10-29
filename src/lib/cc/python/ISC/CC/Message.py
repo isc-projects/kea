@@ -160,7 +160,7 @@ def _decode_item(data):
         data = data[length:]
 
     if item_type == _ITEM_DATA:
-        value = item
+        value = item.decode()
     elif item_type == _ITEM_HASH:
         value = _decode_hash(item)
     elif item_type == _ITEM_LIST:
