@@ -25,7 +25,8 @@ using isc::dns::Name;
 using isc::dns::RRClass;
 using isc::dns::RRType;
 using isc::dns::TTL;
-using isc::dns::Rdata::RDATAPTR;
+using isc::dns::Rdata::RdataPtr;
+using isc::dns::Rdata::Rdata;
 using isc::dns::Rdata::IN::A;
 using isc::dns::Rdata::IN::AAAA;
 using isc::dns::Rdata::Generic::NS;
@@ -84,6 +85,18 @@ TEST_F(TTLTest, getValue)
     EXPECT_EQ(0, ttl0.getValue());
 }
 
+// The fixture for testing generic Rdata class
+class RdataTest : public ::testing::Test {
+protected:
+    RdataTest() {}
+};
+
+TEST_F(RdataTest, fromToText)
+{
+    EXPECT_EQ("192.0.2.1",
+              Rdata::fromText(RRClass::IN, RRType::A, "192.0.2.1")->toText());
+}
+
 // The fixture for testing class IN/A Rdata
 class Rdata_IN_A_Test : public ::testing::Test {
 protected:
@@ -129,9 +142,9 @@ protected:
         rrset_a(Name("www.example.com"), RRClass::IN, RRType::A, TTL(3600)),
         rrset_aaaa(Name("ns.example.net"), RRClass::IN, RRType::AAAA, TTL(60))
     {
-        rrset_a.addRdata(RDATAPTR(new A("192.0.2.1")));
-        rrset_a.addRdata(RDATAPTR(new A("192.0.2.255")));
-        rrset_aaaa.addRdata(RDATAPTR(new AAAA("2001:db8::1234")));
+        rrset_a.addRdata(RdataPtr(new A("192.0.2.1")));
+        rrset_a.addRdata(RdataPtr(new A("192.0.2.255")));
+        rrset_aaaa.addRdata(RdataPtr(new AAAA("2001:db8::1234")));
     }
           
     RRset rrset_a;
@@ -196,5 +209,12 @@ TEST_F(RRTest, toText)
     EXPECT_EQ("www.example.com. 3600 IN A 192.0.2.1", rr_a.toText());
     EXPECT_EQ("ns.example.net. 60 IN AAAA 2001:db8::1234", rr_aaaa.toText());
     EXPECT_EQ("example.net. 1800 IN NS ns.example.net.", rr_ns.toText());
+}
+
+TEST_F(RRTest, construtFromRdataPtr)
+{
+    EXPECT_EQ("www.example.com. 3600 IN A 192.0.2.1",
+              RR(Name("www.example.com"), RRClass::IN, RRType::A, TTL(3600),
+                 RdataPtr(new A("192.0.2.1"))).toText());
 }
 }
