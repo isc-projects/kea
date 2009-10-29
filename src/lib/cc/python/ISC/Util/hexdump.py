@@ -10,4 +10,4 @@ def hexdump(src, length=16):
         printable = s.translate(_FILTER)
         item = "%08X   %-*s   %s\n" % (i, length * 3, hexa, printable)
         result.append(item[0:34] + ' ' + item[34:])
-    print ''.join(result)
+    print(''.join(result))
