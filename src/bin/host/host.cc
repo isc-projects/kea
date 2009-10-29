@@ -6,8 +6,8 @@
 #include <iostream>
 using namespace std;    // I don't understand why this is needed for cout
 
-#include "rrset.h"
-#include "message.h"
+#include "dns/rrset.h"
+#include "dns/message.h"
 
 using namespace isc::dns;
 
