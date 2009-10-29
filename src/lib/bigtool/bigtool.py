@@ -39,7 +39,7 @@ class BigTool(Cmd):
             self.cc.group_subscribe("ConfigManager")
         except ISC.CC.SessionError:
             print("Failed to create cchannel session")
-            return
+            exit()
 
     def validate_cmd(self, cmd):
         if not cmd.module in self.modules:
