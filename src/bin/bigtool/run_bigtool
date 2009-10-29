@@ -1,0 +1,10 @@
+#! /bin/sh
+
+PYTHON_EXEC=/usr/bin/python3
+BIGTOOL_PATH=.
+
+PYTHONPATH=../../lib/cc/python:../../lib/cc/python/ISC:../../lib/cc/python/ISC/CC:../../lib/cc/python/ISC/Util:../../lib/bigtool/
+export PYTHONPATH
+
+cd ${BIGTOOL_PATH}
+exec ${PYTHON_EXEC} -O run_bigtool.py $*
