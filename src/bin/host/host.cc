@@ -103,6 +103,10 @@ host_lookup(char* name, char* type)
                 (after_time.tv_sec - before_time.tv_sec)
                 + ((after_time.tv_usec - before_time.tv_usec))/1000;
 
+// TODO: if NXDOMAIN, host(1) doesn't show HEADER
+// Host hsdjkfhksjhdfkj not found: 3(NXDOMAIN)
+// TODO: figure out the new libdns way to test if NXDOMAIN
+
             std::cout << "\nReceived " <<
                 boost::lexical_cast<string>(rmsg.getBuffer().getSize()) <<
                 " bytes in " << elapsed_time << " ms\n";
@@ -131,6 +135,7 @@ main(int argc, char* argv[])
 
         if (!dns_type) {
             host_lookup(argv[1], "A");
+// TODO: don't do next if doesn't exist
             host_lookup(argv[1], "AAAA");
 //          host_lookup(argv[1], "MX");
 // No MX yet
