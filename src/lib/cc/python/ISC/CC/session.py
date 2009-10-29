@@ -137,7 +137,9 @@ class Session:
     def group_recvmsg(self, nonblock = True):
         env = self.recvmsg(nonblock)
         if env == None:
-            return None
+            # return none twice to match normal return value
+            # (so caller won't get a type error on no data)
+            return (None, None)
         msg = Message.from_wire(env["msg"].encode('ascii'))
         return (msg, env)
 
