@@ -36,6 +36,7 @@ using isc::dns::TTL;
 using isc::dns::Rdata::IN::A;
 using isc::dns::Rdata::IN::AAAA;
 using isc::dns::Rdata::Generic::NS;
+using isc::dns::Rdata::Generic::TXT;
 using isc::dns::RRset;
 using isc::dns::Rdata::Rdata;
 using isc::dns::Question;
@@ -81,6 +82,8 @@ RRType::RRType(const std::string& typestr)
         typeval_ = 1;
     else if (typestr == "NS")
         typeval_ = 2;
+    else if (typestr == "TXT")
+        typeval_ = 16;
     else if (typestr == "AAAA")
         typeval_ = 28;
     else
@@ -94,6 +97,8 @@ RRType::toText() const
         return ("A");
     else if (typeval_ == 2)
         return ("NS");
+    else if (typeval_ == 16)
+        return ("TXT");
     else if (typeval_ == 28)
         return ("AAAA");
     throw std::runtime_error("unexpected type");
@@ -107,6 +112,7 @@ RRType::toWire(Buffer& buffer) const
 
 const RRType RRType::A("A");
 const RRType RRType::NS("NS");
+const RRType RRType::TXT("TXT");
 const RRType RRType::AAAA("AAAA");
 // ...more to follow
 
@@ -147,6 +153,12 @@ createNSDataFromText(const std::string& text_rdata)
     return (new NS(text_rdata));
 }
 
+Rdata *
+createTXTDataFromText(const std::string& text_rdata)
+{
+    return (new TXT(text_rdata));
+}
+
 RdataFactoryRegister::RdataFactoryRegister()
 {
     rdata_factory_repository.insert(pair<RRClassTypePair, RdataFactory>
@@ -155,11 +167,17 @@ RdataFactoryRegister::RdataFactoryRegister()
     rdata_factory_repository.insert(pair<RRClassTypePair, RdataFactory>
                                     (RRClassTypePair(RRClass::IN, RRType::AAAA),
                                      createAAAADataFromText));
-    //XXX: NS belongs to the 'generic' class.  should revisit it.
+    //XXX: NS/TXT belongs to the 'generic' class.  should revisit it.
     rdata_factory_repository.insert(pair<RRClassTypePair, RdataFactory>
                                     (RRClassTypePair(RRClass::IN, RRType::NS),
                                      createNSDataFromText));
-}
+    rdata_factory_repository.insert(pair<RRClassTypePair, RdataFactory>
+                                    (RRClassTypePair(RRClass::IN, RRType::TXT),
+                                     createTXTDataFromText));
+    // XXX: we should treat class-agnostic type accordingly.
+    rdata_factory_repository.insert(pair<RRClassTypePair, RdataFactory>
+                                    (RRClassTypePair(RRClass::CH, RRType::TXT),
+                                     createTXTDataFromText));}
 
 Rdata *
 Rdata::fromText(const RRClass& rrclass, const RRType& rrtype,
@@ -271,6 +289,90 @@ Rdata*
 NS::copy() const
 {
     return (new NS(toText()));
+}
+
+TXT::TXT(const std::string& text_data)
+{
+    size_t length = text_data.size();
+    size_t pos_begin = 0;
+
+    if (length > 1 && text_data[0] == '"' && text_data[length - 1] == '"') {
+        pos_begin = 1;
+        length -= 2;
+    }
+    if (text_data.size() > MAX_CHARACTER_STRING)
+        throw DNSCharStringTooLong();
+    string_list.push_back(text_data.substr(pos_begin, length));
+}
+
+bool
+TXT::operator==(const TXT& other) const
+{
+    std::vector<std::string>::const_iterator lit, rit;
+
+    if (count() != other.count())
+        return (false);
+
+    lit = string_list.begin();
+    rit = other.string_list.begin();
+    while (lit != string_list.end()) {
+        if (*lit != *rit)
+            return (false);
+        ++lit;
+        ++rit;
+    }
+
+    return (true);
+}
+
+void
+TXT::fromWire(Buffer& buffer, NameDecompressor& decompressor)
+{
+    //TBD
+}
+
+void
+TXT::toWire(Buffer& buffer, NameCompressor& compressor) const
+{
+    std::vector<std::string>::const_iterator it;
+    size_t total_length = 0;
+    size_t length_pos;
+
+    length_pos = buffer.getSize();
+    buffer.writeUint16(0);      // dummy data.  filled in later
+
+    for (it = string_list.begin(); it != string_list.end(); ++it) {
+        buffer.writeUint8((*it).size());
+        buffer.writeData((*it).c_str(), (*it).size());
+        total_length += (*it).size() + 1;
+    }
+
+    buffer.writeUint16At(total_length, length_pos);
+}
+
+std::string
+TXT::toText() const
+{
+    std::vector<std::string>::const_iterator it;
+    std::string s;
+
+    // XXX: this implementation is not entirely correct.  for example, it
+    // should escape double-quotes if they appear in the character string.
+    for (it = string_list.begin(); it != string_list.end(); ++it) {
+        if (!s.empty())
+            s.push_back(' ');
+        s.push_back('"');
+        s += *it;
+        s.push_back('"');
+    }
+
+    return (s);
+}
+
+Rdata*
+TXT::copy() const
+{
+    return (new TXT(toText()));
 }
 
 std::string

@@ -307,11 +307,11 @@ Message::addRR(section_t section, const RR& rr)
                  std::bind2nd(MatchRR(), rr));
     if (it != sections_[section].end()) {
         (*it)->setTtl(std::min((*it)->getTtl(), rr.getTtl()));
-        (*it)->addRdata(Rdata::RDATAPTR(rr.getRdata()->copy()));
+        (*it)->addRdata(Rdata::RdataPtr(rr.getRdata()->copy()));
     } else {
         RRset *rrset = new RRset(rr.getName(), rr.getClass(), rr.getType(),
                                  rr.getTtl());
-        rrset->addRdata(Rdata::RDATAPTR(rr.getRdata()->copy()));
+        rrset->addRdata(Rdata::RdataPtr(rr.getRdata()->copy()));
         sections_[section].push_back(RRsetPtr(rrset));
     }
 }

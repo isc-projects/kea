@@ -30,6 +30,7 @@ using isc::dns::Rdata::Rdata;
 using isc::dns::Rdata::IN::A;
 using isc::dns::Rdata::IN::AAAA;
 using isc::dns::Rdata::Generic::NS;
+using isc::dns::Rdata::Generic::TXT;
 using isc::dns::RRset;
 using isc::dns::RR;
 using isc::dns::Question;
@@ -52,10 +53,12 @@ TEST_F(RRClassTest, fromToText)
 class RRTypeTest : public ::testing::Test {
 protected:
     RRTypeTest() :
-        rrtype_a("A"), rrtype_aaaa("AAAA"), rrtype_ns("NS") {}
+        rrtype_a("A"), rrtype_aaaa("AAAA"), rrtype_ns("NS"), rrtype_txt("TXT")
+    {}
     RRType rrtype_a;
     RRType rrtype_aaaa;
     RRType rrtype_ns;
+    RRType rrtype_txt;
 };
 
 TEST_F(RRTypeTest, fromToText)
@@ -63,6 +66,7 @@ TEST_F(RRTypeTest, fromToText)
     EXPECT_EQ("A", rrtype_a.toText());
     EXPECT_EQ("AAAA", rrtype_aaaa.toText());
     EXPECT_EQ("NS", rrtype_ns.toText());
+    EXPECT_EQ("TXT", rrtype_txt.toText());
 }
 
 // The fixture for testing class TTL.
@@ -133,6 +137,29 @@ protected:
 TEST_F(Rdata_Generic_NS_Test, fromToText)
 {
     EXPECT_EQ("ns.example.com.", rdata.toText());
+}
+
+// The fixture for testing Generic/TXT Rdata class
+class Rdata_Generic_TXT_Test : public ::testing::Test {
+protected:
+    Rdata_Generic_TXT_Test() : rdata("this is a test string") {}
+    TXT rdata;
+};
+
+TEST_F(Rdata_Generic_TXT_Test, longCharString)
+{
+    EXPECT_THROW(TXT("0123456789abcdef0123456789abcdef0123456789abcdef"
+                     "0123456789abcdef0123456789abcdef0123456789abcdef"
+                     "0123456789abcdef0123456789abcdef0123456789abcdef"
+                     "0123456789abcdef0123456789abcdef0123456789abcdef"
+                     "0123456789abcdef0123456789abcdef0123456789abcdef"
+                     "0123456789abcdef"),
+                 isc::dns::DNSCharStringTooLong);
+}
+
+TEST_F(Rdata_Generic_TXT_Test, fromToText)
+{
+    EXPECT_EQ("\"this is a test string\"", rdata.toText());
 }
 
 // The fixture for testing class RRset
