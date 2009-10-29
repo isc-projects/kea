@@ -110,7 +110,7 @@ host_lookup(char* name, char* type)
 // Host hsdjkfhksjhdfkj not found: 3(NXDOMAIN)
 // TODO: figure out the new libdns way to test if NXDOMAIN
 
-            std::cout << "\nReceived " <<
+            std::cout << "Received " <<
                 boost::lexical_cast<string>(rmsg.getBuffer().getSize()) <<
                 " bytes in " << elapsed_time << " ms\n";
 // TODO: " bytes from 127.0.0.1#53 in 0 ms
@@ -138,9 +138,10 @@ main(int argc, char* argv[])
 
         if (!dns_type) {
             host_lookup(argv[1], "A");
-// TODO: don't do next if doesn't exist
+// TODO: don't do next if A doesn't exist
             host_lookup(argv[1], "AAAA");
-//          host_lookup(argv[1], "MX");
+cout << "THE FOLLOWING 'MX' WILL FAIL UNTIL SUPPORTED. KEEPING HERE FOR TESTING.\n";
+            host_lookup(argv[1], "MX");
 // No MX yet
 // terminate called after throwing an instance of 'isc::dns::DNSInvalidRRType'
         }
