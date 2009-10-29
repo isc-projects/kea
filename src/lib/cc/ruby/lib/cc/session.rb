@@ -115,14 +115,30 @@ class Session
   end
 
   def group_sendmsg(msg, group, instance = "*", to = "*")
+    seq = next_sequence
     sendmsg({ :type => "send",
               :from => @lname,
               :to => to,
               :group => group,
               :instance => instance,
-              :seq => next_sequence,
+              :seq => seq,
               :msg => CC::Message.to_wire(msg),
             })
+    seq
+  end
+
+  def group_sendmsg(routing, msg)
+    seq = next_sequence
+    sendmsg({ :type => "send",
+              :from => @lname,
+              :to => routing["from"],
+              :group => routing["group"],
+              :instance => routing["instance"],
+              :seq => seq,
+              :reply => fouring["seq"],
+              :msg => CC::Message.to_wire(msg),
+            })
+    seq
   end
 
   def group_recvmsg(nonblock = true)
