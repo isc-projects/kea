@@ -1,0 +1,7 @@
+#! /bin/sh
+
+PYTHON_EXEC=/usr/bin/python3.0
+BIND10_PATH=.
+
+cd ${BIND10_PATH}
+exec ${PYTHON_EXEC} -O bind10.py $*
