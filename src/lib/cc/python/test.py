@@ -8,10 +8,10 @@ ss = { "list": [ 1, 2, 3 ],
 s = ISC.CC.Message.to_wire(ss)
 ISC.Util.hexdump(s)
 
-print ISC.CC.Message.from_wire(s)
+print(ISC.CC.Message.from_wire(s))
 
 tcp = ISC.CC.Session()
-print tcp.lname
+print(tcp.lname)
 
 tcp.group_subscribe("test")
 
