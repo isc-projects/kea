@@ -37,7 +37,7 @@ __version__ = "v20091028 (Paving the DNS Parking Lot)"
 
 class BoB:
     """Boss of BIND class."""
-    def __init__(self, c_channel_port="9912", verbose=False):
+    def __init__(self, c_channel_port=9912, verbose=False):
         """Initialize the Boss of BIND. This is a singleton (only one
         can run).
         
@@ -45,11 +45,13 @@ class BoB:
         process listens on. If verbose is True, then the boss reports
         what it is doing.
         """
+        self.verbose = True
         self.c_channel_port = c_channel_port
+        self.cc_process = None
+        self.cc_session = None
         self.processes = {}
         self.dead_processes = {}
         self.component_processes = {}
-        self.verbose = True
 
     def startup(self):
         """Start the BoB instance.
@@ -57,21 +59,56 @@ class BoB:
         Returns None if successful, otherwise an string describing the
         problem.
         """
+        dev_null = open("/dev/null", "w")
+        # start the c-channel daemon
         if self.verbose:
-            sys.stdout.write("Starting msgq using port %s\n" % self.c_channel_port)
-        c_channel_env = { "ISC_MSGQ_PORT": self.c_channel_port, }
+            sys.stdout.write("Starting msgq using port %d\n" % self.c_channel_port)
+        c_channel_env = { "ISC_MSGQ_PORT": str(self.c_channel_port), }
         try:
             c_channel = subprocess.Popen("msgq",
                                          stdin=subprocess.PIPE,
-                                         stdout=subprocess.PIPE,
-                                         stderr=subprocess.PIPE,
+                                         stdout=dev_null,
+                                         stderr=dev_null,
                                          close_fds=True,
                                          env=c_channel_env,)
-        except:
+        except OSError:
             return "Unable to start msgq"
         self.processes[c_channel.pid] = c_channel
+        self.cc_process = c_channel
         if self.verbose:
             sys.stdout.write("Started msgq with PID %d\n" % c_channel.pid)
+
+        # now connect to the c-channel
+        cc_connect_start = time.time()
+        while self.cc_session is None:
+            # if we have been trying for "a while" give up
+            if (time.time() - cc_connect_start) > 5:
+                c_channel.kill()
+                return "Unable to connect to c-channel after 5 seconds"
+            # try to connect, and if we can't wait a short while
+            try:
+                self.cc_session = ISC.CC.Session(self.c_channel_port)
+            except ISC.CC.session.SessionError:
+                time.sleep(0.1)
+        self.cc_session.group_subscribe("Boss")
+
+        # start the configuration manager
+        if self.verbose:
+            sys.stdout.write("Starting bind-cfgd\n")
+        try:
+            bind_cfgd = subprocess.Popen("bind-cfgd",
+                                         stdin=dev_null,
+                                         stdout=dev_null,
+                                         stderr=dev_null,
+                                         close_fds=True,
+                                         env={},)
+        except:
+            c_channel.kill()
+            return "Unable to start bind-cfgd"
+        self.processes[bind_cfgd.pid] = bind_cfgd
+        if self.verbose:
+            sys.stdout.write("Started bind-cfgd with PID %d\n" % bind_cfgd.pid)
+        
         return None
 
     def stop_process(self, process):
@@ -118,6 +155,7 @@ class BoB:
                 pass
         if self.verbose:
             sys.stdout.write("All processes ended, server done.\n")
+        sys.exit(0)
 
     def reap(self, pid, exit_status):
         """The process specified by pid has exited with the value
@@ -128,6 +166,10 @@ class BoB:
         self.dead_processes[process.pid] = process
         if self.verbose:
             sys.stdout.write("Process %d died.\n" % pid)
+        if pid == self.cc_process.pid:
+            if self.verbose:
+                sys.stdout.write("The msgq process died, shutting down.\n")
+            self.shutdown()
 
 if __name__ == "__main__":
     def reaper(signal_number, stack_frame):
@@ -150,6 +192,7 @@ if __name__ == "__main__":
                     return sig
         return "Unknown signal %d" % signal_number
 
+    # XXX: perhaps register atexit() function and invoke that instead
     def fatal_signal(signal_number, stack_frame):
         """We need to exit (SIGINT or SIGTERM received)."""
         global boss_of_bind
@@ -193,7 +236,7 @@ if __name__ == "__main__":
     signal.signal(signal.SIGTERM, fatal_signal)
 
     # Go bob!
-    boss_of_bind = BoB(options.msgq_port, options.verbose)
+    boss_of_bind = BoB(int(options.msgq_port), options.verbose)
     startup_result = boss_of_bind.startup()
     if startup_result:
         sys.stderr.write("Error on startup: %s\n" % startup_result)
