@@ -15,6 +15,7 @@ char* dns_type = NULL;    // not set, so A, AAAA, MX
 char* server = "127.0.0.1";
 int   verbose = 1;       // later make this an option and default to 0
 int   first_time = 1;
+struct timeval before_time, after_time;
 
 int
 host_lookup(char* name, char* type)
@@ -65,6 +66,10 @@ host_lookup(char* name, char* type)
         return (1);
     }
 
+    if (verbose) {
+        gettimeofday(&before_time, NULL);
+    }
+
     msg.getBuffer().sendTo(s, *res->ai_addr, res->ai_addrlen);
 
     Message rmsg;
@@ -77,6 +82,11 @@ host_lookup(char* name, char* type)
     if (rmsg.getBuffer().recvFrom(s, sa, &sa_len) > 0) {
         try {
             rmsg.fromWire();
+
+            if (verbose) {
+                gettimeofday(&after_time, NULL);
+            }
+
             // HEADER and QUESTION SECTION:
             std::cout << rmsg.toText() << std::endl;
 // ;; ANSWER SECTION:
@@ -84,9 +94,18 @@ host_lookup(char* name, char* type)
 // SECTION_AUTHORITY
 // SECTION_ADDITIONAL
 
+            if (before_time.tv_usec > after_time.tv_usec) {
+                after_time.tv_usec += 1000000;
+                --after_time.tv_sec;
+            }
+
+            int elapsed_time =
+                (after_time.tv_sec - before_time.tv_sec)
+                + ((after_time.tv_usec - before_time.tv_usec))/1000;
+
             std::cout << "\nReceived " <<
                 boost::lexical_cast<string>(rmsg.getBuffer().getSize()) <<
-                " bytes\n";
+                " bytes in " << elapsed_time << " ms\n";
 // TODO: " bytes from 127.0.0.1#53 in 0 ms
         } catch (...) {
             std::cerr << "parse failed" << std::endl;
@@ -102,7 +121,7 @@ main(int argc, char* argv[])
 {
 
     if (argc < 2) {
-        cout << "Usage: host _hostname_\n";
+        cout << "Usage: host hostname [server]\n";
     }
     else {
 
