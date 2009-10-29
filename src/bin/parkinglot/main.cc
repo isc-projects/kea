@@ -101,19 +101,19 @@ run_server(int s) {
 
             std::cout << "received a message:\n" << msg.toText() << std::endl;
 
-            if (msg.getSection(isc::dns::SECTION_QUESTION).size() != 1)
+            if (msg.getSection(SECTION_QUESTION).size() != 1)
                 continue;
 
             msg.makeResponse();
             msg.setAA(true);
 
-            RRsetPtr query = msg.getSection(isc::dns::SECTION_QUESTION)[0];
+            RRsetPtr query = msg.getSection(SECTION_QUESTION)[0];
 
             if (zones.find(query->getName().toText(true)) != zones.end()) {
-                isc::dns::Rdata::RdataPtr ns1, ns2, ns3;
-                ns1 = isc::dns::Rdata::RdataPtr(new NS("ns1.parking.com"));
-                ns2 = isc::dns::Rdata::RdataPtr(new NS("ns2.parking.com"));
-                ns3 = isc::dns::Rdata::RdataPtr(new NS("ns3.parking.com"));
+                Rdata::RdataPtr ns1, ns2, ns3;
+                ns1 = Rdata::RdataPtr(new NS("ns1.parking.com"));
+                ns2 = Rdata::RdataPtr(new NS("ns2.parking.com"));
+                ns3 = Rdata::RdataPtr(new NS("ns3.parking.com"));
 
                 msg.setRcode(Message::RCODE_NOERROR);
                 RRset* nsset = new RRset(query->getName(), query->getClass(),
@@ -123,25 +123,25 @@ run_server(int s) {
                 nsset->addRdata(ns2);
                 nsset->addRdata(ns3);
 
-                if (query->getType() == RRType::NS) {
-                    msg.addRRset(isc::dns::SECTION_ANSWER, RRsetPtr(nsset));
-                } else {
-                    msg.addRRset(isc::dns::SECTION_AUTHORITY, RRsetPtr(nsset));
-                }
+                section_t section;
+                if (query->getType() == RRType::NS)
+                    section = SECTION_ANSWER;
+                else
+                    section = SECTION_AUTHORITY;
+                
+                msg.addRRset(section, RRsetPtr(nsset));
 
-                RRset* answer = new RRset(query->getName(), query->getClass(),
-                                          query->getType(), TTL(3600));
                 if (query->getType() == RRType::A) {
-                    isc::dns::Rdata::RdataPtr a;
-                    a = isc::dns::Rdata::RdataPtr(new A("127.0.0.1"));
-                    answer->addRdata(a);
+                    msg.addRR(SECTION_ANSWER,
+                             RR(query->getName(), query->getClass(),
+                                RRType::A, TTL(3600),
+                                Rdata::RdataPtr(new A("127.0.0.1"))));
                 } else if (query->getType() == RRType::AAAA) {
-                    isc::dns::Rdata::RdataPtr aaaa;
-                    aaaa = isc::dns::Rdata::RdataPtr(new AAAA("::1"));
-                    answer->addRdata(aaaa);
-                } else {
+                    msg.addRR(SECTION_ANSWER,
+                             RR(query->getName(), query->getClass(),
+                                RRType::AAAA, TTL(3600),
+                                Rdata::RdataPtr(new AAAA("::1"))));
                 }
-                msg.addRRset(isc::dns::SECTION_ANSWER, RRsetPtr(answer));
             } else {
                 msg.setRcode(Message::RCODE_NXDOMAIN);
                 // should add SOA to the authority section, but not implemented.
