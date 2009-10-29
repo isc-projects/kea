@@ -131,11 +131,11 @@ class Session:
         return seq
 
     def group_recvmsg(self, nonblock = True):
-        msg = self.recvmsg(nonblock)
-        if msg == None:
+        env = self.recvmsg(nonblock)
+        if env == None:
             return None
-        data = Message.from_wire(msg["msg"])
-        return (data, msg)
+        msg = Message.from_wire(env["msg"])
+        return (msg, env)
 
     def group_reply(self, routing, msg):
         seq = self._next_sequence()

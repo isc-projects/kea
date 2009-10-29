@@ -17,7 +17,17 @@ class ConfigManager:
         self.config = ConfigData()
 
     def notify_boss(self):
-        self.cc.group_sendmsg({"Running": "ConfigManager"}, "Boss")
+        self.cc.group_sendmsg({"running": "configmanager"}, "Boss")
+
+    def add_zone(self, zone_name):
+        self.config.add_zone(zone_name, "todo")
+        print "sending update zone add"
+        self.cc.group_sendmsg({"zone_added": zone_name }, "ParkingLot")
+
+    def remove_zone(self, zone_name):
+        self.config.remove_zone(zone_name)
+        print "sending update zone del"
+        self.cc.group_sendmsg({"zone_deleted": zone_name }, "ParkingLot")
 
     def read_config(self, filename):
         pass
@@ -25,11 +35,41 @@ class ConfigManager:
     def write_config(self, filename):
         pass
 
+    def handle_msg(self, msg):
+        """return answer message"""
+        answer = {}
+        try:
+            cmd = msg["command"]
+            if cmd:
+                if cmd[0] == "zone" and cmd[1] == "add":
+                    self.add_zone(cmd[2])
+                    answer["result"] = [ 0 ]
+                elif cmd[0] == "zone" and cmd[1] == "del":
+                    self.remove_zone(cmd[2])
+                    answer["result"] = [ 0 ]
+                elif cmd[o] == "zone" and cmd[1] == "list":
+                    answer["result"] = self.zones.keys()
+                else:
+                    print "unknown command: " + cmd
+                    answer["result"] = [ 1, "Unknown command: " + cmd ]
+        except KeyError, ke:
+            print "unknown module: " + str(msg)
+            answer["result"] = [ 1, "Unknown module: " + str(msg) ]
+        except IndexError, ie:
+            print "missing argument"
+            answer["result"] = [ 1, "Missing argument in command" ]
+        return answer
+        
     def run(self):
         while (True):
-            env, msg = self.cc.group_recvmsg(False)
-            print "message: "
+            msg, env = self.cc.group_recvmsg(False)
+            print "received message: "
             print msg
+            answer = self.handle_msg(msg);
+            print "sending answer: "
+            print answer
+            self.cc.group_reply(env, answer)
+            print "answer sent"
             pass
 
 if __name__ == "__main__":
