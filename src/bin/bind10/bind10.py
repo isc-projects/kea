@@ -27,10 +27,13 @@ import errno
 import time
 from optparse import OptionParser, OptionValueError
 
-#import ISC
+import ISC.CC
 
 # This is the version that gets displayed to the user.
 __version__ = "v20091028 (Paving the DNS Parking Lot)"
+
+# Nothing at all to do with the 1990-12-10 article here:
+# http://www.subgenius.com/subg-digest/v2/0056.html
 
 class BoB:
     """Boss of BIND class."""
@@ -61,6 +64,7 @@ class BoB:
             c_channel = subprocess.Popen("msgq",
                                          stdin=subprocess.PIPE,
                                          stdout=subprocess.PIPE,
+                                         stderr=subprocess.PIPE,
                                          close_fds=True,
                                          env=c_channel_env,)
         except:
@@ -158,10 +162,13 @@ if __name__ == "__main__":
         sys.exit(0)
 
     def check_port(option, opt_str, value, parser):
+        """Function to insure that the port we are passed is actually 
+        a valid port number. Used by OptionParser() on startup."""
         if not re.match('^(6553[0-5]|655[0-2]\d|65[0-4]\d\d|6[0-4]\d{3}|[1-5]\d{4}|[1-9]\d{0,3}|0)$', value):
             raise OptionValueError("%s requires a port number (0-65535)" % opt_str)
         parser.values.msgq_port = value
 
+    # Parse any command-line options.
     parser = OptionParser(version=__version__)
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
                       help="display more about what is going on")
@@ -169,6 +176,8 @@ if __name__ == "__main__":
                       action="callback", callback=check_port, default="9912",
                       help="port the msgq daemon will use")
     (options, args) = parser.parse_args()
+
+    # Announce startup.
     if options.verbose:
         sys.stdout.write("BIND 10 %s\n" % __version__)
 
@@ -176,11 +185,14 @@ if __name__ == "__main__":
     #       http://code.google.com/p/procname/
     #       http://github.com/lericson/procname/
 
+    # Set signal handlers for catching child termination, as well
+    # as our own demise.
     signal.signal(signal.SIGCHLD, reaper)
     signal.siginterrupt(signal.SIGCHLD, False)
     signal.signal(signal.SIGINT, fatal_signal)
     signal.signal(signal.SIGTERM, fatal_signal)
 
+    # Go bob!
     boss_of_bind = BoB(options.msgq_port, options.verbose)
     startup_result = boss_of_bind.startup()
     if startup_result:
