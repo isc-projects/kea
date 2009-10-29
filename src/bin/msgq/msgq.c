@@ -1145,7 +1145,7 @@ lsock_open(void)
 						PF_INET, isc_sockettype_tcp,
 						&sock) == ISC_R_SUCCESS);
 		RUNTIME_CHECK(sock != NULL);
-		result = isc_socket_bind(sock, &sa, 0);
+		result = isc_socket_bind(sock, &sa, ISC_SOCKET_REUSEADDRESS);
 		RUNTIME_CHECK(result == ISC_R_SUCCESS);
 
 		RUNTIME_CHECK(isc_socket_listen(sock, 0) == ISC_R_SUCCESS);
