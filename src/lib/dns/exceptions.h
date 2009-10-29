@@ -47,6 +47,9 @@ class DNSInvalidMessageSection : public DNSException {};
 class DNSInvalidRendererPosition : public DNSException {};
 class DNSMessageTooShort : public DNSException {};
 class DNSCharStringTooLong : public DNSException {};
+class DNSNameDecompressionProhibited : public DNSException {};
+class DNSNameBadPointer : public DNSException {};
+class DNSInvalidRdata : public DNSException {};
 }
 }
 #endif  // __EXCEPTIONS_HH

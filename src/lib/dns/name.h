@@ -24,9 +24,13 @@
 
 namespace isc {
 namespace dns {
-// Define them as an empty class for rapid prototyping
+// Define it as an empty class for rapid prototyping
 class NameCompressor {};
-class NameDecompressor {};
+// Define it as an almost-empty class for rapid prototyping
+class NameDecompressor {
+public:
+    bool isAllowed() { return (true); }
+};
 
 class NameComparisonResult {
 public:

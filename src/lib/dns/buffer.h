@@ -49,8 +49,11 @@ public:
     virtual size_t getSize() const = 0;
     virtual size_t getSpace() const = 0;
     virtual size_t getCurrent() const = 0;
+    virtual void setCurrent(size_t pos) = 0;
     virtual uint8_t readUint8() = 0;
     virtual uint16_t readUint16() = 0;
+    virtual uint32_t readUint32() = 0;
+    virtual void readData(void* data, size_t len) = 0;
     virtual int recvFrom(int s, struct sockaddr *from,
                          socklen_t *from_len) = 0;
 };
@@ -99,8 +102,16 @@ public:
     size_t getSize() const { return (buf_.size()); }
     size_t getSpace() const { return (buf_.size() - _readpos); }
     size_t getCurrent() const { return (_readpos); }
+    void setCurrent(size_t pos)
+    {
+        if (pos >= buf_.size())
+            throw isc::ISCBufferInvalidPosition();
+        _readpos = pos;
+    }
     uint8_t readUint8();
     uint16_t readUint16();
+    uint32_t readUint32();
+    void readData(void* data, size_t len);
     int recvFrom(int s, struct sockaddr* from, socklen_t* from_len);
 
 private:
@@ -129,6 +140,30 @@ SingleBuffer::readUint16()
     _readpos += sizeof(data);
 
     return (ntohs(data));
+}
+
+inline uint32_t
+SingleBuffer::readUint32()
+{
+    uint32_t data;
+
+    if (_readpos + sizeof(data) > buf_.size())
+        throw ISCBufferInvalidPosition();
+
+    memcpy((void*)&data, &buf_[_readpos], sizeof(data));
+    _readpos += sizeof(data);
+
+    return (ntohl(data));
+}
+
+inline void
+SingleBuffer::readData(void *data, size_t len)
+{
+    if (_readpos + len > buf_.size())
+        throw ISCBufferInvalidPosition();
+
+    memcpy(data, &buf_[_readpos], len);
+    _readpos += len;
 }
 }
 #endif  // __BUFFER_HH

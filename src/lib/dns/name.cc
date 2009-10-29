@@ -269,7 +269,8 @@ Name::Name(const std::string& namestr)
 Name::Name(Buffer& buffer, NameDecompressor& decompressor)
 {
     unsigned int nused, labels, n, nmax;
-    unsigned int current;
+    unsigned int cused; /* Bytes of compressed name data used */
+    unsigned int current, new_current, biggest_pointer, pos_begin;
     bool done;
     fw_state state = fw_start;
     unsigned int c;
@@ -287,6 +288,7 @@ Name::Name(Buffer& buffer, NameDecompressor& decompressor)
     labels = 0;
     done = false;
     nused = 0;
+    seen_pointer = false;
 
     /*
      * Find the maximum number of uncompressed target name
@@ -296,7 +298,10 @@ Name::Name(Buffer& buffer, NameDecompressor& decompressor)
      */
     nmax = MAXWIRE;
 
+    cused = 0;
     current = buffer.getCurrent();
+    pos_begin = current;
+    biggest_pointer = current;
 
     /*
      * Note:  The following code is not optimized for speed, but
@@ -305,6 +310,8 @@ Name::Name(Buffer& buffer, NameDecompressor& decompressor)
     while (current < buffer.getSize() && !done) {
         c = buffer.readUint8();
         current++;
+        if (!seen_pointer)
+            cused++;
 
         switch (state) {
         case fw_start:
@@ -333,7 +340,11 @@ Name::Name(Buffer& buffer, NameDecompressor& decompressor)
                 /*
                  * Ordinary 14-bit pointer.
                  */
-                throw DNSBadLabelType(); // XXX not implemented
+                if (!decompressor.isAllowed())
+                    throw DNSNameDecompressionProhibited();
+                new_current = c & 0x3F;
+                n = 1;
+                state = fw_newcurrent;
             } else
                 throw DNSBadLabelType();
             break;
@@ -348,6 +359,21 @@ Name::Name(Buffer& buffer, NameDecompressor& decompressor)
                 state = fw_start;
             break;
         case fw_newcurrent:
+            new_current *= 256;
+            new_current += c;
+            n--;
+            if (n != 0)
+                break;
+            if (new_current >= biggest_pointer)
+                throw DNSNameBadPointer();
+            biggest_pointer = new_current;
+            current = new_current;
+            buffer.setCurrent(current);
+            seen_pointer = true;
+            state = fw_start;
+            break;
+
+
             // XXX not implemented, fall through
         default:
             throw ISCUnexpected();
@@ -359,6 +385,7 @@ Name::Name(Buffer& buffer, NameDecompressor& decompressor)
 
     labels_ = labels;
     length_ = nused;
+    buffer.setCurrent(pos_begin + cused);
 }
 
 string
