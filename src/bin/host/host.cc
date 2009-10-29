@@ -2,6 +2,7 @@
 
 #include <arpa/inet.h>
 #include <netdb.h>          // for getaddrinfo
+#include <sys/time.h>       // for gettimeofday
 
 #include <iostream>
 using namespace std;    // I don't understand why this is needed for cout
