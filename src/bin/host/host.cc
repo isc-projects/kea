@@ -13,13 +13,13 @@ using namespace std;    // I don't understand why this is needed for cout
 using namespace isc::dns;
 
 char* dns_type = NULL;    // not set, so A, AAAA, MX
-char* server = "127.0.0.1";
+std::string server = "127.0.0.1";
 int   verbose = 1;       // later make this an option and default to 0
 int   first_time = 1;
 struct timeval before_time, after_time;
 
 int
-host_lookup(char* name, char* type)
+host_lookup(char* name, std::string type)
 {
 
     Message msg;
@@ -44,7 +44,7 @@ host_lookup(char* name, char* type)
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = 0; // not using AI_NUMERICHOST in case to bootstrap
-    e = getaddrinfo(server, "53", &hints, &res);
+    e = getaddrinfo(server.c_str(), "53", &hints, &res);
 
     if (verbose) {
         cout << "Trying \"" << name << "\"\n";
