@@ -13,6 +13,9 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+# XXX
+from ISC.Util import hexdump
+
 import sys
 import struct
 
@@ -35,16 +38,13 @@ def to_wire(items):
     """Encode a dict into wire format.
     >>> wire_format = Message.to_wire({"a": "b"})
     """
-    ret = []
-    ret.append(struct.pack(">I", PROTOCOL_VERSION))
-    ret.append(_encode_hash(items))
-    return (''.join(ret))
+    return struct.pack(">I", PROTOCOL_VERSION) + _encode_hash(items)
 
 def _encode_tag(tag):
     """Encode a single UTF-8 tag.
     ... wire_partial = Message._encode_tag('this')
     """
-    return(struct.pack(">B", len(str(tag))) + str(tag))
+    return(struct.pack(">B", len(tag)) + bytearray(tag, 'utf-8'))
 
 def _encode_length_and_type(data, datatype):
     """Helper method to handle the length encoding in one place."""
@@ -52,22 +52,19 @@ def _encode_length_and_type(data, datatype):
         return(struct.pack(">B", _ITEM_NULL))
     length = len(data)
     if length < 0x0000100:
-        return(struct.pack(">B B", datatype | _ITEM_LENGTH_8, length)
-               + data)
+        return(struct.pack(">B B", datatype | _ITEM_LENGTH_8, length) + data)
     elif length < 0x00010000:
-        return(struct.pack(">B H", datatype | _ITEM_LENGTH_16, length)
-               + data)
+        return(struct.pack(">B H", datatype | _ITEM_LENGTH_16, length) + data)
     else:
         return(struct.pack(">B I", datatype, length) + data)
 
 def _pack_string(item):
     """Pack a string (data) and its type/length prefix."""
-    return (_encode_length_and_type(item, _ITEM_DATA))
+    return (_encode_length_and_type(bytearray(item, 'utf-8'), _ITEM_DATA))
 
 def _pack_array(item):
     """Pack a list (array) and its type/length prefix."""
-    return (_encode_length_and_type(_encode_array(item),
-                                         _ITEM_LIST))
+    return (_encode_length_and_type(_encode_array(item), _ITEM_LIST))
 
 def _pack_hash(item):
     """Pack a dict (hash) and its type/length prefix."""
@@ -90,24 +87,26 @@ def _encode_item(item):
         return (_pack_hash(item))
     elif type(item) == list:
         return (_pack_array(item))
+    elif type(item) in (bytearray, bytes):
+        return (_pack_string(item.decode()))
     else:
         return (_pack_string(str(item)))
 
 def _encode_array(item):
     """Encode an array, where each value is encoded recursively"""
-    ret = []
+    ret = bytearray()
     for i in item:
-        ret.append(_encode_item(i))
-    return (''.join(ret))
+        ret += _encode_item(i)
+    return ret
 
 def _encode_hash(item):
     """Encode a hash, where each value is encoded recursively"""
 
-    ret = []
+    ret = bytearray()
     for key, value in item.items():
-        ret.append(_encode_tag(key))
-        ret.append(_encode_item(value))
-    return (''.join(ret))
+        ret += _encode_tag(key)
+        ret += _encode_item(value)
+    return ret
 
 #
 # decode methods
@@ -125,15 +124,15 @@ def from_wire(data):
 def _decode_tag(data):
     if len(data) < 1:
         raise DecodeError("Data underrun while decoding")
-    length = struct.unpack(">B", data[0])[0]
+    length = data[0]
     if len(data) - 1 < length:
         raise DecodeError("Data underrun while decoding")
-    return [data[1:length + 1], data[length + 1:]]
+    return [data[1:length + 1].decode(), data[length + 1:]]
 
 def _decode_item(data):
     if len(data) < 1:
         raise DecodeError("Data underrun while decoding")
-    type_and_length_format = struct.unpack(">B", data[0])[0]
+    type_and_length_format = data[0]
     item_type = type_and_length_format & _ITEM_MASK
     length_format = type_and_length_format & _ITEM_LENGTH_MASK
 
@@ -143,7 +142,7 @@ def _decode_item(data):
         if length_format == _ITEM_LENGTH_8:
             if len(data) - 1 < 1:
                 raise DecodeError("Data underrun while decoding")
-            length = struct.unpack(">B", data[1])[0]
+            length = data[1]
             data = data[2:]
         elif length_format == _ITEM_LENGTH_16:
             if len(data) - 1 < 2:

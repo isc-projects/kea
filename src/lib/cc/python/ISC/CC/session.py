@@ -13,6 +13,10 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+# XXX
+import pprint
+from ISC.Util import hexdump
+
 import sys
 import socket
 import struct
@@ -27,9 +31,9 @@ class Session:
     def __init__(self):
         self._socket = None
         self._lname = None
-        self._recvbuffer = ""
+        self._recvbuffer = bytearray()
         self._recvlength = None
-        self._sendbuffer = ""
+        self._sendbuffer = bytearray()
         self._sequence = 1
 
         try:
@@ -81,7 +85,7 @@ class Session:
             if len(self._recvbuffer) < 4:
                 return None
             self._recvlength = struct.unpack('>I', self._recvbuffer)[0]
-            self._recvbuffer = ""
+            self._recvbuffer = bytearray()
 
         length = self._recvlength - len(self._recvbuffer)
         while (length > 0):
@@ -94,7 +98,7 @@ class Session:
             self._recvbuffer += data
             length -= len(data)
         data = self._recvbuffer
-        self._recvbuffer = ""
+        self._recvbuffer = bytearray()
         self._recvlength = None
         return (data)
 
