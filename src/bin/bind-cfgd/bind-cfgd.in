@@ -3,5 +3,7 @@
 BINPATH=@abs_top_srcdir@/src/lib/bind-cfgd/python
 LIBPATH=@abs_top_srcdir@/src/lib/cc/python
 
-PYTHONPATH=${LIBPATH}:${PYTHONPATH} python3 ${BINPATH}/bind-cfgd.py
+PYTHON_EXEC=${PYTHON_EXEC:-/usr/bin/python3.0}
+
+PYTHONPATH=${LIBPATH}:${PYTHONPATH} ${PYTHON_EXEC} ${BINPATH}/bind-cfgd.py
 
