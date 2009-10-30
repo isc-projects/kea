@@ -32,6 +32,7 @@ if __name__ == '__main__':
         cc = ISC.CC.Session()
         cc.group_subscribe("BigTool")
         cc.group_subscribe("ConfigManager")
+        cc.group_subscribe("Boss")
 
         tool = BigTool(cc)
         _prepare_fake_data(tool)   

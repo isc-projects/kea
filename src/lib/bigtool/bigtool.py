@@ -223,7 +223,8 @@ class BigTool(Cmd):
     def apply_cmd(self, cmd):
         if not self.cc:
             return
-
+        
+        groupName = (cmd.module == "boss") and "Boss" or "ConfigManager"
         try:
            content = [cmd.module, cmd.command]
            values = cmd.params.values()
@@ -233,13 +234,13 @@ class BigTool(Cmd):
            msg = {"command":content}
            print("begin to send the message...")
            
-           self.cc.group_sendmsg(msg, "ConfigManager")
-           print("waiting for configure manager reply...")
+           self.cc.group_sendmsg(msg, groupName)
+           print("waiting for %s reply..." % groupName)
 
            reply, env = self.cc.group_recvmsg(False)
            print("received reply:", reply)
         except ISC.CC.SessionError:
-            print("Error commucation with configure manager")
+            print("Error communication with %s" % groupName)
 
 
 
