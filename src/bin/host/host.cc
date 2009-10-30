@@ -98,8 +98,9 @@ host_lookup(char* name, std::string type)
                       for (ait = (*it)->getRdatalist().begin();
                            ait != (*it)->getRdatalist().end();
                            ++ait) {
-                          // this should be in_addr of the address
-                          static_cast<const Rdata::IN::A&>(**ait).getAddress();
+                          // instead of using my name, maybe use returned label?
+                          cout << name << " has address " <<
+                              inet_ntoa(static_cast<const Rdata::IN::A&>(**ait).getAddress()) << "\n";
                       }
                   }
             } else {
