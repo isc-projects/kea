@@ -28,6 +28,7 @@
 #include <dns/message.h>
 
 #include "common.h"
+#include "zoneset.h"
 
 using namespace std;
 
@@ -38,28 +39,15 @@ using namespace isc::dns::Rdata::Generic;
 const string PROGRAM = "parkinglot";
 const int DNSPORT = 53;
 
-static void
-usage() {
-        cerr << "Usage: parkinglot [-p port]" << endl;
-        exit(1);
-}
-
-typedef pair<string, void*> Record;
-typedef set<string> ZoneSet;
 ZoneSet zones;
 
 static void
-serve(string zone) {
-    zones.insert(zone);
-}
-
-static void
 init_db() {
-    serve("jinmei.org");
-    serve("nuthaven.org");
-    serve("isc.org");
-    serve("sisotowbell.org");
-    serve("flame.org");
+    zones.serve("jinmei.org");
+    zones.serve("nuthaven.org");
+    zones.serve("isc.org");
+    zones.serve("sisotowbell.org");
+    zones.serve("flame.org");
 }
 
 static int
@@ -113,7 +101,8 @@ run_server(int s) {
 
             RRsetPtr query = msg.getSection(SECTION_QUESTION)[0];
 
-            if (zones.find(query->getName().toText(true)) != zones.end()) {
+            string name = query->getName().toText(true);
+            if (zones.contains(name)) {
                 msg.setRcode(Message::RCODE_NOERROR);
                 RRset* nsset = new RRset(query->getName(), query->getClass(),
                                          RRType::NS, TTL(3600));
@@ -172,8 +161,10 @@ main(int argc, char* argv[])
         }
     }
 
-    if (err || (argc - optind) > 0)
-        usage();
+    if (err || (argc - optind) > 0) {
+        cerr << "Usage: parkinglot [-p port]" << endl;
+        exit(1);
+    }
 
     // initialize DNS database
     init_db();
