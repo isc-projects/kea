@@ -58,3 +58,21 @@ CommandSession::getCommand() {
 
     return std::pair<string, string>("unknown", "");
 }
+
+void
+handleStatRequest()
+{
+    ISC::Data::ElementPtr ep, routing, data;
+
+    session.group_recvmsg(routing, data, false);
+    ep = data->get("command");
+    if (ep != NULL && ep->string_value() == "getstat") {
+        struct timeval now;
+        ElementPtr resp = Element::create(std::map<std::string, ElementPtr>());
+        gettimeofday(&now, NULL);
+        resp->set("sent", Element::create(now.tv_sec +
+                                         (double)now.tv_usec / 1000000));
+        resp->set("counter", Element::create(++counter));
+        session.group_sendmsg(resp, "statistics");
+    }
+}
