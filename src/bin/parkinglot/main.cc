@@ -79,12 +79,12 @@ main(int argc, char* argv[]) {
     int ss = session.getSocket();
     int nfds = max(ps, ss) + 1;
 
-    FD_ZERO(&fds);
-    FD_SET(ps, &fds);
-    FD_SET(ss, &fds);
-
     cout << "server running" << endl;
     while (true) {
+        FD_ZERO(&fds);
+        FD_SET(ps, &fds);
+        FD_SET(ss, &fds);
+
         int n = select(nfds, &fds, NULL, NULL, NULL);
         if (n < 0)
             throw FatalError("select error");
