@@ -16,7 +16,7 @@ class ConfigManager:
     def __init__(self):
         self.cc = ISC.CC.Session()
         self.cc.group_subscribe("ConfigManager")
-        self.cc.group_subscribe("Boss")
+        self.cc.group_subscribe("Boss", "ConfigManager")
         self.config = ConfigData()
         self.db_filename = "/tmp/parkinglot.db"
         self.running = False
@@ -69,14 +69,15 @@ class ConfigManager:
                     answer["result"] = [ 0 ]
                 elif cmd[0] == "zone" and cmd[1] == "list":
                     answer["result"]     = list(self.config.zones.keys())
+                elif len(cmd) > 1 and cmd[1] == "shutdown":
+                    print("Received shutdown command")
+                    self.running = False
                 else:
                     print("unknown command: " + str(cmd))
                     answer["result"] = [ 1, "Unknown command: " + str(cmd) ]
             except IndexError as ie:
                 print("missing argument")
                 answer["result"] = [ 1, "Missing argument in command" ]
-        elif "shutdown" in msg:
-            self.running = False
         else:
             print("unknown message: " + str(msg))
             answer["result"] = [ 1, "Unknown module: " + str(msg) ]
