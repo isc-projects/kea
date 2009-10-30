@@ -16,14 +16,20 @@
 # add files to list 'ere
 FILES="
 boost/*.hpp
+boost/algorithm
 boost/asio
+boost/bind
 boost/config
+boost/concept
 boost/detail
 boost/exception
+boost/function
 boost/mpl
 boost/preprocessor
+boost/range
 boost/smart_ptr
 boost/type_traits
+boost/utility
 "
 
 TARGET="ext"
