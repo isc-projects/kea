@@ -1,9 +1,9 @@
 #! /bin/sh
 
-PYTHON_EXEC=/usr/bin/python3
+PYTHON_EXEC=python3
 BIGTOOL_PATH=.
 
-PYTHONPATH=../../lib/cc/python:../../lib/cc/python/ISC:../../lib/cc/python/ISC/CC:../../lib/cc/python/ISC/Util:../../lib/bigtool/
+PYTHONPATH=../../lib/cc/python:../../lib/bigtool/
 export PYTHONPATH
 
 cd ${BIGTOOL_PATH}
