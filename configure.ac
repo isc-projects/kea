@@ -62,5 +62,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/cc/cpp/Makefile
                  src/lib/dns/Makefile
                ])
-AC_OUTPUT([src/bin/bind-cfgd/bind-cfgd])
+AC_OUTPUT([src/bin/bind-cfgd/bind-cfgd
+           src/bin/bind10/bind10
+          ])
 AC_OUTPUT
