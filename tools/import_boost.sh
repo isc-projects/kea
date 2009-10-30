@@ -3,6 +3,8 @@
 # given a directory, copy all needed parts from boost into the
 # current branch
 
+# only run this to update boost! (i.e. almost never)
+
 # usage example:
 # cd /tmp
 # tar xzvf /location/of/boost/tarball
@@ -13,25 +15,14 @@
 # need new boost stuff?
 # add files to list 'ere
 FILES="
-boost/assert.hpp
-boost/call_traits.hpp
-boost/checked_delete.hpp
+boost/*.hpp
+boost/asio
 boost/config
-boost/config.hpp
-boost/current_function.hpp
-boost/detail/*.hpp
+boost/detail
 boost/exception
-boost/integer_traits.hpp
-boost/lexical_cast.hpp
-boost/limits.hpp
-boost/memory_order.hpp
 boost/mpl
 boost/preprocessor
-boost/shared_ptr.hpp
 boost/smart_ptr
-boost/smart_ptr.hpp
-boost/static_assert.hpp
-boost/throw_exception.hpp
 boost/type_traits
 "
 
