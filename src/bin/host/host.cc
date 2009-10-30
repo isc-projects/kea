@@ -94,16 +94,14 @@ host_lookup(char* name, std::string type)
                       if ((*it)->getType() != RRType::A) {
                           continue;
                       }
-                      vector<Rdata::IN::A> addresses;
-//                      (*it)->getRdatalist<Rdata::IN::A>(addresses);
-//                      for (vector<Rdata::IN::A>::const_iterator ait =
-//
-//                          addresses.begin(); ait != addresses.end(); ++ait) {
-//
-//                          ait->getAddress();  //this should return in_addr&
-//                      }
+                      std::vector<Rdata::RdataPtr>::const_iterator ait;
+                      for (ait = (*it)->getRdatalist().begin();
+                           ait != (*it)->getRdatalist().end();
+                           ++ait) {
+                          // this should be in_addr of the address
+                          static_cast<const Rdata::IN::A&>(**ait).getAddress();
+                      }
                   }
-
             } else {
                 gettimeofday(&after_time, NULL);
 
