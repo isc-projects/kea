@@ -239,7 +239,7 @@ class BigTool(Cmd):
 
            reply, env = self.cc.group_recvmsg(False)
            print("received reply:", reply)
-        except ISC.CC.SessionError:
+        except:
             print("Error communication with %s" % groupName)
 
 
