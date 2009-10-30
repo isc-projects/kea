@@ -27,19 +27,14 @@ CONST_COMMAND_NODE = "command"
 class BigTool(Cmd):
     """simple bigtool example."""    
 
-    def __init__(self):
+    def __init__(self, session = None):
         Cmd.__init__(self)
         self.prompt = '> '
         self.ruler = '-'
         self.modules = OrderedDict()
         self.add_module_info(ModuleInfo("help", desc = "Get help for bigtool"))
-        try:
-            self.cc = ISC.CC.Session()
-            self.cc.group_subscribe("BigTool")
-            self.cc.group_subscribe("ConfigManager")
-        except ISC.CC.SessionError:
-            print("Failed to create cchannel session")
-            exit()
+        self.cc = session
+
 
     def validate_cmd(self, cmd):
         if not cmd.module in self.modules:
@@ -226,15 +221,23 @@ class BigTool(Cmd):
 
             
     def apply_cmd(self, cmd):
-        try:
-            msg ={"command": [cmd.module, cmd.command, list(cmd.params.values())[0]]}
-            print("begin to send the message...")
-           
-            self.cc.group_sendmsg(msg, "ConfigManager")
-            print("waiting for configure manager reply...")
+        if not self.cc:
+            return
 
-            reply, env = self.cc.group_recvmsg(False)
-            print("received reply:", reply)
+        try:
+           content = [cmd.module, cmd.command]
+           values = cmd.params.values()
+           if len(values) > 0:
+               content.append(list(values)[0])
+
+           msg = {"command":content}
+           print("begin to send the message...")
+           
+           self.cc.group_sendmsg(msg, "ConfigManager")
+           print("waiting for configure manager reply...")
+
+           reply, env = self.cc.group_recvmsg(False)
+           print("received reply:", reply)
         except ISC.CC.SessionError:
             print("Error commucation with configure manager")
 
