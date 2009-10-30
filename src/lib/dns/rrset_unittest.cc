@@ -169,6 +169,12 @@ TEST_F(Rdata_Generic_MX_Test, fromToText)
     EXPECT_EQ("10 mail.example.com.", rdata.toText());
 }
 
+TEST_F(Rdata_Generic_MX_Test, getFields)
+{
+    EXPECT_EQ(10, rdata.getPreference());
+    EXPECT_EQ("mail.example.com.", rdata.getMXName().toText());
+}
+
 // The fixture for testing Generic/TXT Rdata class
 class Rdata_Generic_TXT_Test : public ::testing::Test {
 protected:

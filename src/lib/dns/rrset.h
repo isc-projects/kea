@@ -177,6 +177,8 @@ public:
     unsigned int count() const { return (1); }
     const RRType& getType() const { return (RRType::MX); }
     static const RRType& getTypeStatic() { return (RRType::MX); }
+    uint16_t getPreference() const { return (preference_); }
+    const Name getMXName() const { return (mxname_); }
     std::string toText() const;
     void toWire(Buffer& buffer, NameCompressor& compressor) const;
     bool operator==(const MX& other) const
