@@ -125,9 +125,7 @@ process_message(int s) {
             msg.addRR(SECTION_AUTHORITY, RR(authors_name, RRClass::CH,
                                             RRType::NS, TTL(0),
                                             NS("authors.bind")));
-        }
-
-        if (zones.contains(name)) {
+        } else if (zones.contains(name)) {
             msg.setRcode(Message::RCODE_NOERROR);
             RRset* nsset = new RRset(query->getName(), RRClass::IN,
                                      RRType::NS, TTL(3600));
