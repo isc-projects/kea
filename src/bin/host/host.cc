@@ -95,12 +95,13 @@ host_lookup(char* name, std::string type)
                           continue;
                       }
                       vector<Rdata::IN::A> addresses;
-                      (*it)->getRdatalist<Rdata::IN::A>(addresses);
-                      for (vector<Rdata::IN::A>::const_iterator ait =
-                          addresses.begin(); ait != addresses.end(); ++ait) {
-
-                          ait->getAddress();  //this should return in_addr&
-                      }
+//                      (*it)->getRdatalist<Rdata::IN::A>(addresses);
+//                      for (vector<Rdata::IN::A>::const_iterator ait =
+//
+//                          addresses.begin(); ait != addresses.end(); ++ait) {
+//
+//                          ait->getAddress();  //this should return in_addr&
+//                      }
                   }
 
             } else {
