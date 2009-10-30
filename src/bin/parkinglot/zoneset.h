@@ -14,8 +14,10 @@
 
 // $Id$
 
-#ifndef __ZONELIST_H
-#define __ZONELIST_H 1
+#ifndef __ZONESET_H
+#define __ZONESET_H 1
+
+#include <set>
 
 class ZoneSet : std::set<std::string> {
     public:
@@ -25,7 +27,7 @@ class ZoneSet : std::set<std::string> {
         }
 };
 
-#endif // __ZONELIST_H
+#endif // __ZONESET_H
 
 // Local Variables:
 // mode: c++
