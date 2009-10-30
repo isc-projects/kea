@@ -39,10 +39,20 @@ using namespace isc::dns::Rdata::Generic;
 const string PROGRAM = "parkinglot";
 const int DNSPORT = 53;
 
-ZoneSet zones;
+class ParkingLot {
+    public:
+        explicit ParkingLot(int port);
+        virtual ~ParkingLot() {};
+        int getSocket() { return(sock); }
+        void processMessage();
+        
+    private:
+        Rdata::RdataPtr ns1, ns2, ns3, a, aaaa, soa;
+        ZoneSet zones;
+        int sock;
+};
 
-static void
-init_db() {
+static void init_zones(ZoneSet& zones) {
     zones.serve("jinmei.org");
     zones.serve("nuthaven.org");
     zones.serve("isc.org");
@@ -50,21 +60,17 @@ init_db() {
     zones.serve("flame.org");
 }
 
-Rdata::RdataPtr ns1, ns2, ns3, a, aaaa, soa;
+ParkingLot::ParkingLot(int port) {
+    init_zones(zones);
 
-static void
-init_server() {
     ns1 = Rdata::RdataPtr(new NS("ns1.parking.com"));
     ns2 = Rdata::RdataPtr(new NS("ns2.parking.com"));
     ns3 = Rdata::RdataPtr(new NS("ns3.parking.com"));
     a = Rdata::RdataPtr(new A("127.0.0.1"));
     aaaa = Rdata::RdataPtr(new AAAA("::1"));
     soa = Rdata::RdataPtr(new SOA("parking.com", "noc.parking.com",
-                                  1, 1800, 900, 604800, TTL(86400)));
-}
+                                        1, 1800, 900, 604800, TTL(86400)));
 
-static int
-start_server(int port) {
     int s = socket(AF_INET, SOCK_DGRAM, 0);
     if (s < 0)
         throw FatalError("failed to open socket");
@@ -75,20 +81,23 @@ start_server(int port) {
     sin.sin_port = htons(port);
 
     socklen_t sa_len = sizeof(sin);
-    struct sockaddr* sa = static_cast<struct sockaddr*>((void*)&sin);
+#ifdef HAVE_SIN_LEN
+    sin.sin_len = sa_len;
+#endif
 
-    if (bind(s, sa, sa_len) < 0)
-        return (-1);
+    if (bind(s, (struct sockaddr *)&sin, sa_len) < 0)
+        throw FatalError("could not bind socket");
 
-    return (s);
+    sock = s;
 }
 
-static void
-process_message(int s) {
+void
+ParkingLot::processMessage() {
     Message msg;
     struct sockaddr_storage ss;
     socklen_t sa_len = sizeof(ss);
     struct sockaddr* sa = static_cast<struct sockaddr*>((void*)&ss);
+    int s = sock;
     Name authors_name("authors.bind");
 
     if (msg.getBuffer().recvFrom(s, sa, &sa_len) > 0) {
@@ -164,10 +173,9 @@ process_message(int s) {
 }
 
 static void
-run_server(int s) {
-    while (true) {
-        process_message(s);
-    }
+usage() {
+    cerr << "Usage: parkinglot [-p port]" << endl;
+    exit(1);
 }
 
 int
@@ -175,7 +183,6 @@ main(int argc, char* argv[]) {
     Message msg;
     int ch;
     int port = DNSPORT;
-    bool err = false;
 
     while ((ch = getopt(argc, argv, "p:")) != -1) {
         switch (ch) {
@@ -184,27 +191,25 @@ main(int argc, char* argv[]) {
             break;
         case '?':
         default:
-            err = true;
+            usage();
         }
     }
 
-    if (err || (argc - optind) > 0) {
-        cerr << "Usage: parkinglot [-p port]" << endl;
-        exit(1);
-    }
+    if (argc - optind > 0)
+        usage();
 
-    // initialize
-    init_db();
-    init_server();
+    // initialize parking lot
+    ParkingLot plot(port);
 
-    // start the server
-    int s = start_server(port);
-    if (s < 0)
-        throw FatalError("unable to start the server");
+    // initialize command channel
+    // ISC::CC::Session session;
+    // session.establish();
+    // session.subscribe("parkinglot");
 
     // main server loop
     cout << "server running" << endl;
-    run_server(s);
+    while (true)
+        plot.processMessage();
 
     return (0);
 }
