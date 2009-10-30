@@ -32,6 +32,7 @@
 
 #include "zoneset.h"
 #include "parkinglot.h"
+#include "ccsession.h"
 
 #include "common.h"
 
@@ -69,17 +70,15 @@ main(int argc, char* argv[]) {
     ParkingLot plot(port);
 
     // initialize command channel
-    ISC::CC::Session session;
-    session.establish();
-    session.subscribe("parkinglot");
+    CommandSession cs;
 
     // main server loop
     fd_set fds;
     int ps = plot.getSocket();
-    int ss = session.getSocket();
+    int ss = cs.getSocket();
     int nfds = max(ps, ss) + 1;
 
-    cout << "server running" << endl;
+    cout << "Server started." << endl;
     while (true) {
         FD_ZERO(&fds);
         FD_SET(ps, &fds);
@@ -89,8 +88,13 @@ main(int argc, char* argv[]) {
         if (n < 0)
             throw FatalError("select error");
         
-        if (n != 0 && FD_ISSET(ps, &fds))
+        if (FD_ISSET(ps, &fds))
             plot.processMessage();
+
+        if (FD_ISSET(ss, &fds)) {
+            pair<string,string> cmd = cs.getCommand();
+            plot.command(cmd);
+        }
     }
 
     return (0);

@@ -156,3 +156,13 @@ ParkingLot::processMessage() {
         msg.getBuffer().sendTo(s, *sa, sa_len);
     }
 }
+
+void
+ParkingLot::command(pair<string,string> cmd) {
+    if (cmd.first == "addzone")
+        zones.serve(cmd.second);
+    else if (cmd.first == "delzone")
+        zones.forget(cmd.second);
+    else if (cmd.first == "shutdown")
+        exit(0);
+}

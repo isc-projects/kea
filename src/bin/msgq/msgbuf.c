@@ -25,6 +25,7 @@
 #include <isc/util.h>
 
 #include "msgbuf.h"
+#include "cc.h"
 
 msgbuf_t *
 msgbuf_create(isc_mem_t *mctx, unsigned int length)
