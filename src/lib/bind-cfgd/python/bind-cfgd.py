@@ -18,6 +18,7 @@ class ConfigManager:
         self.cc.group_subscribe("ConfigManager")
         self.cc.group_subscribe("Boss")
         self.config = ConfigData()
+        self.db_filename = "/tmp/parkinglot.db"
         self.running = False
 
     def notify_boss(self):
@@ -25,6 +26,7 @@ class ConfigManager:
 
     def add_zone(self, zone_name):
         self.config.add_zone(zone_name, "todo")
+        self.write_config()
         print("sending update zone add")
         self.cc.group_sendmsg({"zone_added": zone_name }, "ParkingLot")
 
@@ -33,20 +35,25 @@ class ConfigManager:
         print("sending update zone del")
         self.cc.group_sendmsg({"zone_deleted": zone_name }, "ParkingLot")
 
-    def read_config(self, filename):
+    def read_config(self):
         print("Reading config")
         try:
-            file = open(filename, 'rb');
+            file = open(self.db_filename, 'rb');
             self.config = pickle.load(file)
+            file.close()
         except IOError as ioe:
             print("No config file found, starting with empty config")
         except EOFError as eofe:
             print("Config file empty, starting with empty config")
 
-    def write_config(self, filename):
+    def write_config(self):
         print("Writing config")
-        file = open(filename, 'wb');
-        pickle.dump(self.config, file)
+        try:
+            file = open(self.db_filename, 'wb');
+            pickle.dump(self.config, file)
+            file.close()
+        except IOError as ioe:
+            print("Unable to write config file; configuration not stored")
 
     def handle_msg(self, msg):
         """return answer message"""
@@ -99,21 +106,20 @@ def signal_handler(signal, frame):
 
 if __name__ == "__main__":
     print("Hello, BIND10 world!")
-    db_file = "/tmp/parkinglot.db"
     try:
         cm = ConfigManager()
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
-        cm.read_config(db_file)
+        cm.read_config()
         # do loading here if necessary
         cm.notify_boss()
         cm.run()
-        cm.write_config(db_file)
+        cm.write_config()
     except ISC.CC.SessionError as se:
         print("Error creating config manager, "
               "is the command channel daemon running?")
     except KeyboardInterrupt as kie:
         print("Got ctrl-c, save config and exit")
-        cm.write_config(db_file)
+        cm.write_config()
     
         
