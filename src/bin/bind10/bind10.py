@@ -19,6 +19,8 @@ signal handling outside of that class, in the code running for
 __main__.
 """
 
+# TODO: start up statistics thingy
+
 import subprocess
 import signal
 import os
@@ -44,12 +46,14 @@ class ProcessInfo:
     dev_null = open("/dev/null", "w")
 
     def _spawn(self):
+        spawn_env = self.env
+        spawn_env['PATH'] = os.environ['PATH']
         self.process = subprocess.Popen(self.args,
                                         stdin=subprocess.PIPE,
                                         stdout=self.dev_null,
                                         stderr=self.dev_null,
                                         close_fds=True,
-                                        env=self.env,)
+                                        env=spawn_env,)
         self.pid = self.process.pid
 
     def __init__(self, name, args, env={}):
@@ -86,12 +90,13 @@ class BoB:
         """
         # start the c-channel daemon
         if self.verbose:
-            sys.stdout.write("Starting msgq using port %d\n" % self.c_channel_port)
+            sys.stdout.write("Starting msgq using port %d\n" % 
+                             self.c_channel_port)
         c_channel_env = { "ISC_MSGQ_PORT": str(self.c_channel_port), }
         try:
             c_channel = ProcessInfo("msgq", "msgq", c_channel_env)
-        except:
-            return "Unable to start msgq"
+        except Exception as e:
+            return "Unable to start msgq; " + str(e)
         self.processes[c_channel.pid] = c_channel
         if self.verbose:
             sys.stdout.write("Started msgq (PID %d)\n" % c_channel.pid)
@@ -115,9 +120,9 @@ class BoB:
             sys.stdout.write("Starting bind-cfgd\n")
         try:
             bind_cfgd = ProcessInfo("bind-cfgd", "bind-cfgd")
-        except:
+        except Exception as e:
             c_channel.process.kill()
-            return "Unable to start bind-cfgd"
+            return "Unable to start bind-cfgd; " + str(e)
         self.processes[bind_cfgd.pid] = bind_cfgd
         if self.verbose:
             sys.stdout.write("Started bind-cfgd (PID %d)\n" % bind_cfgd.pid)
@@ -129,10 +134,10 @@ class BoB:
             sys.stdout.write("Starting parkinglot on port 5300\n")
         try:
             parkinglot = ProcessInfo("parkinglot", ["parkinglot", "-p", "5300"])
-        except:
+        except Exception as e:
             c_channel.kill()
             bind_cfgd.kill()
-            return "Unable to start parkinglot"
+            return "Unable to start parkinglot; " + str(e)
         self.processes[parkinglot.pid] = parkinglot
         if self.verbose:
             sys.stdout.write("Started parkinglot (PID %d)\n" % parkinglot.pid)
@@ -159,7 +164,8 @@ class BoB:
             self.stop_all_processes()
         except:
             pass
-        time.sleep(0.1)  # XXX: some delay probably useful... how much is uncertain
+        # XXX: some delay probably useful... how much is uncertain
+        time.sleep(0.1)  
         # next try sending a SIGTERM
         processes_to_stop = list(self.processes.values())
         unstopped_processes = []
@@ -173,7 +179,8 @@ class BoB:
                 # ignore these (usually ESRCH because the child
                 # finally exited)
                 pass
-        time.sleep(0.1)  # XXX: some delay probably useful... how much is uncertain
+        # XXX: some delay probably useful... how much is uncertain
+        time.sleep(0.1)  
         for proc_info in processes_to_stop:
             (pid, exit_status) = os.waitpid(proc_info.pid, os.WNOHANG)
             if pid == 0:
@@ -201,6 +208,9 @@ class BoB:
         Returns True if everything is okay, or False if a fatal error
         has been detected and the program should exit.
         """
+        if not pid in self.processes:
+            sys.stdout.write("Unknown child pid %d exited.\n" % pid)
+            return
         proc_info = self.processes.pop(pid)
         self.dead_processes[proc_info.pid] = proc_info
         if self.verbose:
@@ -219,8 +229,6 @@ class BoB:
         msg, data = self.cc_session.group_recvmsg(False)
         if msg is None:
             return
-        pprint.pprint(msg)
-        pprint.pprint(data)
         msg_from = data.get('from', '')
         if (type(msg) is dict) and (type(data) is dict):
             if "command" in msg:
