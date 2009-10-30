@@ -49,6 +49,8 @@ AC_CONFIG_FILES([Makefile
                  src/bin/host/Makefile
                  src/bin/parkinglot/Makefile
                  src/lib/Makefile
+                 src/lib/cc/Makefile
+                 src/lib/cc/cpp/Makefile
                  src/lib/dns/Makefile
                ])
 AC_OUTPUT([src/bin/bind-cfgd/bind-cfgd])
