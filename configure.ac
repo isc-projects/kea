@@ -20,6 +20,15 @@ AC_PROG_RANLIB
 AC_HEADER_STDBOOL
 AC_TYPE_SIZE_T
 
+AC_MSG_CHECKING(for sa_len in struct sockaddr)
+AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <sys/socket.h>],
+[struct sockaddr sa; sa.sa_len = 0; return (0);],
+        [AC_MSG_RESULT(yes)
+        AC_DEFINE(HAVE_SIN_LEN, 1, Define to 1 if sockaddr_in has a sin_len member)],
+        AC_MSG_RESULT(no))
+
 #
 # Check availablity of gtest, which might be used for unit tests.
 #

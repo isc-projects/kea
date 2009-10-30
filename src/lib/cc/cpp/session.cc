@@ -36,10 +36,14 @@ Session::establish()
     if (sock < -1)
         throw SessionError("socket() failed");
 
-    sin.sin_len = sizeof(struct sockaddr_in);
     sin.sin_family = AF_INET;
     sin.sin_port = htons(9912);
     sin.sin_addr.s_addr = INADDR_ANY;
+
+#ifdef HAVE_SIN_LEN
+    sin.sin_len = sizeof(struct sockaddr_in);
+#endif
+
     ret = connect(sock, (struct sockaddr *)&sin, sizeof(sin));
     if (ret < 0)
         throw SessionError("connect() failed");
