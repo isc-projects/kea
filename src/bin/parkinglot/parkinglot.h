@@ -25,6 +25,7 @@ class ParkingLot {
         virtual ~ParkingLot() {};
         int getSocket() { return(sock); }
         void processMessage();
+        void command(std::pair<std::string,std::string>);
         
     private:
         isc::dns::Rdata::RdataPtr ns1, ns2, ns3, a, aaaa, soa;

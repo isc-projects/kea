@@ -15,48 +15,46 @@
 // $Id$
 
 #include <stdexcept>
+#include <stdlib.h>
 #include <string.h>
+
+#include <iostream>
 
 #include <cc/cpp/data.h>
 #include <cc/cpp/session.h>
 
-using std::string;
+#include "common.h"
+#include "ccsession.h"
 
-class SessionManager {
-public:
-    SessionManager();
-private:
-    ISC::CC::Session session_;
-};
+using namespace std;
 
-SessionManager::SessionManager() :
-    session_(ISC::CC::Session())
-{
+CommandSession::CommandSession() : session_(ISC::CC::Session()) {
     try {
         session_.establish();
         session_.subscribe("ParkingLot");
         session_.subscribe("Boss");
     } catch (...) {
-        throw std::runtime_error("SessionManager: failed to open sessions");
+        throw std::runtime_error("CommandSession: failed to open sessions");
     }
 }
 
-std::pair<string, string>
-getCommand(ISC::CC::Session& session)
-{
-    ISC::Data::ElementPtr ep, routing, data;
+std::pair<std::string, std::string>
+CommandSession::getCommand() {
+    ISC::Data::ElementPtr cmd, routing, data, ep;
+    string s;
 
-    session.group_recvmsg(routing, data, false);
-    ep = data->get("zone_added");
-    if (ep != NULL) {
-        return std::pair<string, string>("zone_added", ep->string_value());
+    session_.group_recvmsg(routing, data, false);
+    cmd = data->get("command");
+
+    ep = cmd->get(0);
+    s = ep->string_value();
+    if (s == "addzone" || s == "delzone") {
+        return std::pair<string, string>(s, cmd->get(1)->string_value());
     }
-    ep = data->get("zone_deleted");
+
     if (ep != NULL) {
-        return std::pair<string, string>("zone_deleted", ep->string_value());
+        return std::pair<string, string>(s, "");
     }
-    ep = data->get("shutdown");
-    if (ep != NULL) {
-        return std::pair<string, string>("shutdown", "");
-    }
+
+    return std::pair<string, string>("unknown", "");
 }
