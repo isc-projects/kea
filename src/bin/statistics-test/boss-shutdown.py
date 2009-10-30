@@ -3,4 +3,4 @@
 import ISC
 cc = ISC.CC.Session()
 cc.group_subscribe("Boss")
-cc.group_sendmsg({ "command":"shutdown"},"Boss")
+cc.group_sendmsg({ "shutdown":None},"Boss")
