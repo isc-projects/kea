@@ -79,6 +79,7 @@ TEST_F(NameTest, toFromWire)
     isc::dns::NameDecompressor decompressor;
 
     example_name->toWire(buffer, compressor);
+    buffer.setCurrent(0);
     EXPECT_EQ(std::string("www.example.com."),
               Name(buffer, decompressor).toText(false));
 }

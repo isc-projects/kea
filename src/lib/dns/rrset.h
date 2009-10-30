@@ -81,6 +81,7 @@ public:
     // (Some) Well-known RRtype constants
     static const RRType A;
     static const RRType NS;
+    static const RRType SOA;
     static const RRType TXT;
     static const RRType AAAA;
     // more to follow...
@@ -165,6 +166,43 @@ public:
 private:
     Name nsname_;
 };
+
+class SOA : public Rdata::Rdata {
+public:
+    SOA() {}
+    explicit SOA(const std::string& mname, const std::string& rname,
+                 uint32_t serial, uint32_t refresh, uint32_t retry,
+                 uint32_t expire, const TTL& ttl) :
+        mname_(mname), rname_(rname), serial_(serial), refresh_(refresh),
+        retry_(retry), expire_(expire), ttl_(ttl) {}
+    explicit SOA(Buffer& buffer, NameDecompressor& decompressor);
+    unsigned int count() const { return (1); }
+    const RRType& getType() const { return (RRType::SOA); }
+    static const RRType& getTypeStatic() { return (RRType::SOA); }
+    std::string toText() const;
+    void toWire(Buffer& buffer, NameCompressor& compressor) const;
+    bool operator==(const SOA &other) const;
+    virtual bool operator!=(const SOA &other) const
+    { return !(*this == other); }
+    virtual Rdata* copy() const;
+private:
+    Name mname_;
+    Name rname_;
+    uint32_t serial_;
+    uint32_t refresh_;
+    uint32_t retry_;
+    uint32_t expire_;
+    TTL ttl_;
+};
+
+inline bool
+SOA::operator==(const SOA& other) const
+{
+    return (mname_ == other.mname_ && rname_ == other.rname_ &&
+            serial_ == other.serial_ && refresh_ == other.refresh_ &&
+            retry_ == other.retry_ && expire_ == other.expire_ &&
+            ttl_ == other.ttl_);
+}
 
 // A quick hack implementation of TXT RR.  It currently supports only one
 // "character-string".
