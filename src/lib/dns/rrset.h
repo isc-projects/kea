@@ -332,6 +332,7 @@ public:
     virtual const RRType& getType() const = 0;
     virtual const TTL& getTtl() const = 0;
     virtual void setTtl(const TTL& ttl) = 0;
+    virtual const std::vector<Rdata::RdataPtr>& getRdatalist() const = 0;
 };
 
 class RRset : public AbstractRRset {
@@ -381,6 +382,7 @@ public:
     const TTL& getTtl() const { return (ttl_); } // XXX
     void setTtl(const TTL& ttl) {}              // XXX
     void addRdata(Rdata::RdataPtr rdata) {}     // XXX
+    const std::vector<Rdata::RdataPtr>& getRdatalist() const {} // XXX
 private:
     Name name_;
     RRClass rrclass_;
