@@ -85,7 +85,25 @@ host_lookup(char* name, std::string type)
         try {
             rmsg.fromWire();
 
-            if (verbose) {
+            if (!verbose) {
+
+                  std::vector<RRsetPtr>answers =
+                     rmsg.getSection(SECTION_ANSWER);
+                  std::vector<RRsetPtr>::const_iterator it;
+                  for (it = answers.begin(); it != answers.end(); ++it) {
+                      if ((*it)->getType() != RRType::A) {
+                          continue;
+                      }
+                      vector<Rdata::IN::A> addresses;
+                      (*it)->getRdatalist<Rdata::IN::A>(addresses);
+                      for (vector<Rdata::IN::A>::const_iterator ait =
+                          addresses.begin(); ait != addresses.end(); ++ait) {
+
+                          ait->getAddress();  //this should return in_addr&
+                      }
+                  }
+
+            } else {
                 gettimeofday(&after_time, NULL);
 
                 // HEADER and QUESTION, ANSWER, AUTHORITY, and ADDITIONAL
