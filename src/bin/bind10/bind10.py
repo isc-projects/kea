@@ -46,20 +46,25 @@ class ProcessInfo:
     dev_null = open("/dev/null", "w")
 
     def _spawn(self):
+        if self.dev_null_stdout:
+            spawn_stdout = self.dev_null
+        else:
+            spawn_stdout = None
         spawn_env = self.env
         spawn_env['PATH'] = os.environ['PATH']
         self.process = subprocess.Popen(self.args,
                                         stdin=subprocess.PIPE,
-                                        stdout=self.dev_null,
-                                        stderr=self.dev_null,
+                                        stdout=spawn_stdout,
+                                        stderr=spawn_stdout,
                                         close_fds=True,
                                         env=spawn_env,)
         self.pid = self.process.pid
 
-    def __init__(self, name, args, env={}):
+    def __init__(self, name, args, env={}, dev_null_stdout=False):
         self.name = name 
         self.args = args
         self.env = env
+        self.dev_null_stdout = dev_null_stdout
         self._spawn()
 
     def respawn(self):
@@ -94,7 +99,7 @@ class BoB:
                              self.c_channel_port)
         c_channel_env = { "ISC_MSGQ_PORT": str(self.c_channel_port), }
         try:
-            c_channel = ProcessInfo("msgq", "msgq", c_channel_env)
+            c_channel = ProcessInfo("msgq", "msgq", c_channel_env, True)
         except Exception as e:
             return "Unable to start msgq; " + str(e)
         self.processes[c_channel.pid] = c_channel
