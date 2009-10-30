@@ -14,25 +14,25 @@
 
 // $Id$
 
-#ifndef __COMMON_H
-#define __COMMON_H 1
+#ifndef __PARKINGLOT_H
+#define __PARKINGLOT_H 1
 
-#include <stdlib.h>
+#include "zoneset.h"
 
-class FatalError : public std::exception {
+class ParkingLot {
     public:
-        FatalError(std::string m = "fatal error") {
-            msg = m;
-            std::cerr << msg << std::endl;
-            exit(1);
-        }
-        ~FatalError() throw() {}
-        const char* what() const throw() { return msg.c_str(); }
+        explicit ParkingLot(int port);
+        virtual ~ParkingLot() {};
+        int getSocket() { return(sock); }
+        void processMessage();
+        
     private:
-        std::string msg;
+        isc::dns::Rdata::RdataPtr ns1, ns2, ns3, a, aaaa, soa;
+        ZoneSet zones;
+        int sock;
 };
 
-#endif // __COMMON_H
+#endif // __PARKINGLOT_H
 
 // Local Variables:
 // mode: c++
