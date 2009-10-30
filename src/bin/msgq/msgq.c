@@ -1146,6 +1146,10 @@ lsock_open(void)
 						&sock) == ISC_R_SUCCESS);
 		RUNTIME_CHECK(sock != NULL);
 		result = isc_socket_bind(sock, &sa, ISC_SOCKET_REUSEADDRESS);
+		if (result != ISC_R_SUCCESS) {
+			fprintf(stderr, "socket bind failed: %s\n",
+				isc_result_totext(result));
+		}
 		RUNTIME_CHECK(result == ISC_R_SUCCESS);
 
 		RUNTIME_CHECK(isc_socket_listen(sock, 0) == ISC_R_SUCCESS);
