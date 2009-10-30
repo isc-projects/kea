@@ -14,8 +14,9 @@ using namespace isc::dns;
 
 char* dns_type = NULL;    // not set, so A, AAAA, MX
 std::string server = "127.0.0.1";
-int   verbose = 1;       // later make this an option and default to 0
+int   verbose = 0;
 int   first_time = 1;
+bool  recursive_bit = true;
 struct timeval before_time, after_time;
 
 int
@@ -27,7 +28,7 @@ host_lookup(char* name, std::string type)
     msg.setQid(0); // does this matter?
 
 // TODO: add switch for this
-    msg.setRD(true);    // set recursive bit
+    msg.setRD(recursive_bit);    // set recursive bit
 
     msg.addQuestion(Name(name),
     RRClass::IN,    // IN class only for now
@@ -86,34 +87,30 @@ host_lookup(char* name, std::string type)
 
             if (verbose) {
                 gettimeofday(&after_time, NULL);
-            }
 
-// This is for verbose too
-// no check yet until non-verbose way is done
-            // HEADER and QUESTION SECTION:
-            std::cout << rmsg.toText() << std::endl;
-// ;; ANSWER SECTION:
-//        std::cout << rmsg.getBuffer().getSection(SECTION_ANSWER).toText();
-// SECTION_AUTHORITY
-// SECTION_ADDITIONAL
+                // HEADER and QUESTION, ANSWER, AUTHORITY, and ADDITIONAL
+                std::cout << rmsg.toText() << std::endl;
 
-            if (before_time.tv_usec > after_time.tv_usec) {
-                after_time.tv_usec += 1000000;
-                --after_time.tv_sec;
-            }
+                if (before_time.tv_usec > after_time.tv_usec) {
+                    after_time.tv_usec += 1000000;
+                    --after_time.tv_sec;
+                }
 
-            int elapsed_time =
-                (after_time.tv_sec - before_time.tv_sec)
-                + ((after_time.tv_usec - before_time.tv_usec))/1000;
+                int elapsed_time =
+                    (after_time.tv_sec - before_time.tv_sec)
+                    + ((after_time.tv_usec - before_time.tv_usec))/1000;
 
 // TODO: if NXDOMAIN, host(1) doesn't show HEADER
 // Host hsdjkfhksjhdfkj not found: 3(NXDOMAIN)
 // TODO: figure out the new libdns way to test if NXDOMAIN
 
-            std::cout << "Received " <<
-                boost::lexical_cast<string>(rmsg.getBuffer().getSize()) <<
-                " bytes in " << elapsed_time << " ms\n";
-// TODO: " bytes from 127.0.0.1#53 in 0 ms
+                std::cout << "Received " <<
+                    boost::lexical_cast<string>(rmsg.getBuffer().getSize()) <<
+                    " bytes in " << elapsed_time << " ms\n";
+                // TODO: " bytes from 127.0.0.1#53 in 0 ms
+
+            } //verbose
+
         } catch (...) {
             std::cerr << "parse failed for " << type << std::endl;
         }
@@ -127,24 +124,42 @@ int
 main(int argc, char* argv[])
 {
 
-    if (argc < 2) {
-        cout << "Usage: host hostname [server]\n";
+    int c;
+
+    while ((c = getopt(argc, argv, "rt:v")) != -1)
+        switch (c) {
+
+        case 'r':
+            recursive_bit = false;
+            break;
+        case 't':
+            dns_type = optarg;
+            break;
+        case 'v':
+            verbose = 1;
+            break;
+
     }
-    else {
+    argc -= optind;
+    argv += optind;
 
-        if (argc >= 3) {
-          server = argv[2];
-        }
+    if (argc < 1) {
+        cout << "Usage: host [-vr] [-t type] hostname [server]\n";
+        exit(1);
+    }
 
-        if (!dns_type) {
-            host_lookup(argv[1], "A");
+    if (argc >= 2) {
+      server = argv[1];
+    }
+
+    if (!dns_type) {
+        host_lookup(argv[0], "A");
 // TODO: don't do next if A doesn't exist
-            host_lookup(argv[1], "AAAA");
-            host_lookup(argv[1], "MX");
-        }
-
+        host_lookup(argv[0], "AAAA");
+        host_lookup(argv[0], "MX");
+    } else {
+        host_lookup(argv[0], dns_type); 
     }
-
     return (0);
 }
 

@@ -4,10 +4,11 @@ Initial functionality:
 
   host _hostname_ [server]
 
-Note it doesn't use /etc/resolv.conf at this time.
-Default name server used is 127.0.0.1.
+By default, it looks up the A, AAAA, and MX record sets.
 
-NO SWITCHES ARE IMPLEMENTED YET.
+Note it doesn't use /etc/resolv.conf at this time.
+The default name server used is 127.0.0.1.
 
   -r	 	disable recursive processing
   -t _type_	specific query type 
+  -v		enable verbose output mode, including elapsed time
