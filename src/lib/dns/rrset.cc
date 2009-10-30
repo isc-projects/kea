@@ -180,7 +180,7 @@ RdataFactoryRegister::RdataFactoryRegister()
     text_rdata_factory_repository.insert(pair<RRClassTypePair, TextRdataFactory>
                              (RRClassTypePair(RRClass::IN, RRType::AAAA),
                               createDataFromText<isc::dns::Rdata::IN::AAAA>));
-    //XXX: NS/TXT/SOA?MX belongs to the 'generic' class.  should revisit it.
+    //XXX: NS/TXT/SOA/MX belongs to the 'generic' class.  should revisit it.
     text_rdata_factory_repository.insert(pair<RRClassTypePair, TextRdataFactory>
                              (RRClassTypePair(RRClass::IN, RRType::NS),
                               createDataFromText<isc::dns::Rdata::Generic::NS>));

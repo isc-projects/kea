@@ -50,7 +50,7 @@ init_db() {
     zones.serve("flame.org");
 }
 
-Rdata::RdataPtr ns1, ns2, ns3, a, aaaa;
+Rdata::RdataPtr ns1, ns2, ns3, a, aaaa, soa;
 
 static void
 init_server() {
@@ -59,6 +59,8 @@ init_server() {
     ns3 = Rdata::RdataPtr(new NS("ns3.parking.com"));
     a = Rdata::RdataPtr(new A("127.0.0.1"));
     aaaa = Rdata::RdataPtr(new AAAA("::1"));
+    soa == Rdata::RdataPtr(new SOA("parking.com", "noc.parking.com",
+                                   1, 1800, 900, 604800, TTL(86400)));
 }
 
 static int
@@ -115,12 +117,17 @@ process_message(int s) {
             msg.addRR(SECTION_ANSWER, RR(authors_name, RRClass::CH,
                                          RRType::TXT, TTL(0),
                                          TXT("JINMEI Tatuya")));
+            msg.addRR(SECTION_ANSWER, RR(authors_name, RRClass::CH,
+                                         RRType::TXT, TTL(0),
+                                         TXT("Evan Hunt")));
             // add others name here!!
 
             msg.addRR(SECTION_AUTHORITY, RR(authors_name, RRClass::CH,
                                             RRType::NS, TTL(0),
                                             NS("authors.bind")));
-        } if (zones.contains(name)) {
+        }
+
+        if (zones.contains(name)) {
             msg.setRcode(Message::RCODE_NOERROR);
             RRset* nsset = new RRset(query->getName(), RRClass::IN,
                                      RRType::NS, TTL(3600));
@@ -131,21 +138,23 @@ process_message(int s) {
 
             if (query->getType() == RRType::NS)
                 msg.addRRset(SECTION_ANSWER, RRsetPtr(nsset));
-            else
+            else if (query->getType() == RRType::A) {
                 msg.addRRset(SECTION_AUTHORITY, RRsetPtr(nsset));
-
-            if (query->getType() == RRType::A) {
                 RR arr(query->getName(), RRClass::IN, RRType::A, TTL(3600), a);
 
                 msg.addRR(SECTION_ANSWER, arr);
             } else if (query->getType() == RRType::AAAA) {
+                msg.addRRset(SECTION_AUTHORITY, RRsetPtr(nsset));
                 RR aaaarr(query->getName(), RRClass::IN, RRType::AAAA,
                           TTL(3600), aaaa);
                 msg.addRR(SECTION_ANSWER, aaaarr);
+            } else {
+                RR soarr(query->getName(), RRClass::IN, RRType::SOA,
+                         TTL(3600), soa);
+                msg.addRR(SECTION_AUTHORITY, soarr);
             }
         } else {
             msg.setRcode(Message::RCODE_NXDOMAIN);
-            // should add SOA to the authority section, but not implemented.
         }
 
         msg.toWire();
