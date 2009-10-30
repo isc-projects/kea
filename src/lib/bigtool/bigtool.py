@@ -224,22 +224,17 @@ class BigTool(Cmd):
         if not self.cc:
             return
         
-        instance = '*'
+        groupName = (cmd.module == 'boss') and 'Boss' or 'ConfigManager'
         content = [cmd.module, cmd.command]
-        groupName = 'ConfigManager'
         values = cmd.params.values()
-        if cmd.module == 'boss':
-            groupName = "Boss"
-            instance = list(values)[0]
-        else:
-            if len(values) > 0:
-                content.append(list(values)[0])
+        if len(values) > 0:
+            content.append(list(values)[0])
 
         msg = {"command":content}
         print("begin to send the message...")
         
         try:   
-            self.cc.group_sendmsg(msg, groupName, instance)
+            self.cc.group_sendmsg(msg, groupName, instance = 'boss')
             print("waiting for %s reply..." % groupName)
 
             reply, env = self.cc.group_recvmsg(False)
