@@ -2,7 +2,8 @@
 This file implements the Boss of Bind (BoB, or bob) program.
 
 It's purpose is to start up the BIND 10 system, and then manage the
-processes, by starting, stopping, and restarting processes that exit.
+processes, by starting and stopping processes, plus restarting
+processes that exit.
 
 To start the system, it first runs the c-channel program (msgq), then
 connects to that. It then runs the configuration manager, and reads
@@ -26,6 +27,7 @@ import re
 import errno
 import time
 import select
+import pprint
 from optparse import OptionParser, OptionValueError
 
 import ISC.CC
@@ -106,7 +108,7 @@ class BoB:
                 self.cc_session = ISC.CC.Session(self.c_channel_port)
             except ISC.CC.session.SessionError:
                 time.sleep(0.1)
-        self.cc_session.group_subscribe("Boss")
+        self.cc_session.group_subscribe("Boss", "boss")
 
         # start the configuration manager
         if self.verbose:
@@ -140,7 +142,8 @@ class BoB:
 
     def stop_all_processes(self):
         """Stop all processes."""
-        self.cc_session.group_sendmsg({ "shutdown": True }, "Boss")
+        cmd = { "command": "shutdown" }
+        self.cc_session.group_sendmsg(cmd, "Boss", "*")
 
     def stop_process(self, process):
         """Stop the given process, friendly-like."""
@@ -211,9 +214,33 @@ class BoB:
     def recv_and_process_cc_msg(self):
         """Receive and process the next message on the c-channel,
         if any."""
-        routing, data = self.cc_session.group_recvmsg(False)
-        print("routing", routing)
-        print("data", data)
+        # XXX: this needs to be made more robust for handling
+        #      badly formatted messages
+        msg, data = self.cc_session.group_recvmsg(False)
+        if msg is None:
+            return
+        pprint.pprint(msg)
+        pprint.pprint(data)
+        msg_from = data.get('from', '')
+        if (type(msg) is dict) and (type(data) is dict):
+            if "command" in msg:
+                cmd = msg['command']
+                if (cmd[0] == "boss") and (cmd[1] == "shutdown"):
+                    if self.verbose:
+                        sys.stdout.write("Shutdown command received\n")
+                    self.runnable = False
+                else:
+                    if self.verbose:
+                        sys.stdout.write("Unknown command %s\n" % str(cmd))
+            else:
+                if self.verbose:
+                    del data['msg']
+                    sys.stdout.write("Unknown message received\n")
+                    sys.stdout.write(pprint.pformat(data) + "\n")
+                    sys.stdout.write(pprint.pformat(msg) + "\n")
+        else:
+            if self.verbose:
+                sys.stdout.write("Non-dictionary message\n")
 
     def restart_processes(self):
         """Restart any dead processes."""
