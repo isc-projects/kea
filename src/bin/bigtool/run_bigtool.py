@@ -18,8 +18,10 @@ def _prepare_fake_data(bigtool):
     zone_module.add_command(remove_cmd)
     zone_module.add_command(list_cmd)
 
+    shutdown_param = ParamInfo(name = "module_name", desc = "the name of module")
     shutdown_cmd = CommandInfo(name = 'shutdown', desc = "stop bind10",
                                need_inst_param = False)
+    shutdown_cmd.add_param(shutdown_param)
     boss_module = ModuleInfo(name = "boss", desc = "boss of bind10")
     boss_module.add_command(shutdown_cmd)               
 

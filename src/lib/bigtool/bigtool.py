@@ -219,26 +219,31 @@ class BigTool(Cmd):
         else:
             self.modules[cmd.module].command_help(cmd.command)
 
-            
+
     def apply_cmd(self, cmd):
         if not self.cc:
             return
         
-        groupName = (cmd.module == "boss") and "Boss" or "ConfigManager"
-        try:
-           content = [cmd.module, cmd.command]
-           values = cmd.params.values()
-           if len(values) > 0:
-               content.append(list(values)[0])
+        instance = '*'
+        content = [cmd.module, cmd.command]
+        groupName = 'ConfigManager'
+        values = cmd.params.values()
+        if cmd.module == 'boss':
+            groupName = "Boss"
+            instance = list(values)[0]
+        else:
+            if len(values) > 0:
+                content.append(list(values)[0])
 
-           msg = {"command":content}
-           print("begin to send the message...")
-           
-           self.cc.group_sendmsg(msg, groupName)
-           print("waiting for %s reply..." % groupName)
+        msg = {"command":content}
+        print("begin to send the message...")
+        
+        try:   
+            self.cc.group_sendmsg(msg, groupName, instance)
+            print("waiting for %s reply..." % groupName)
 
-           reply, env = self.cc.group_recvmsg(False)
-           print("received reply:", reply)
+            reply, env = self.cc.group_recvmsg(False)
+            print("received reply:", reply)
         except:
             print("Error communication with %s" % groupName)
 
