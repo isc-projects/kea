@@ -40,6 +40,7 @@ using isc::dns::TTL;
 using isc::dns::Rdata::IN::A;
 using isc::dns::Rdata::IN::AAAA;
 using isc::dns::Rdata::Generic::NS;
+using isc::dns::Rdata::Generic::MX;
 using isc::dns::Rdata::Generic::SOA;
 using isc::dns::Rdata::Generic::TXT;
 using isc::dns::RRset;
@@ -89,6 +90,8 @@ RRType::RRType(const std::string& typestr)
         typeval_ = 2;
     else if (typestr == "SOA")
         typeval_ = 6;
+    else if (typestr == "MX")
+        typeval_ = 15;
     else if (typestr == "TXT")
         typeval_ = 16;
     else if (typestr == "AAAA")
@@ -106,6 +109,8 @@ RRType::toText() const
         return ("NS");
     else if (typeval_ == 6)
         return ("SOA");
+    else if (typeval_ == 15)
+        return ("MX");
     else if (typeval_ == 16)
         return ("TXT");
     else if (typeval_ == 28)
@@ -126,6 +131,7 @@ RRType::toWire(Buffer& buffer) const
 const RRType RRType::A("A");
 const RRType RRType::NS("NS");
 const RRType RRType::SOA("SOA");
+const RRType RRType::MX("MX");
 const RRType RRType::TXT("TXT");
 const RRType RRType::AAAA("AAAA");
 // ...more to follow
@@ -174,7 +180,7 @@ RdataFactoryRegister::RdataFactoryRegister()
     text_rdata_factory_repository.insert(pair<RRClassTypePair, TextRdataFactory>
                              (RRClassTypePair(RRClass::IN, RRType::AAAA),
                               createDataFromText<isc::dns::Rdata::IN::AAAA>));
-    //XXX: NS/TXT/SOA belongs to the 'generic' class.  should revisit it.
+    //XXX: NS/TXT/SOA?MX belongs to the 'generic' class.  should revisit it.
     text_rdata_factory_repository.insert(pair<RRClassTypePair, TextRdataFactory>
                              (RRClassTypePair(RRClass::IN, RRType::NS),
                               createDataFromText<isc::dns::Rdata::Generic::NS>));
@@ -182,7 +188,7 @@ RdataFactoryRegister::RdataFactoryRegister()
                              (RRClassTypePair(RRClass::IN, RRType::TXT),
                               createDataFromText<isc::dns::Rdata::Generic::TXT>));
 
-    // "fromText" for SOA is not yet implemented: parsing multi-field RDATA
+    // "fromText" for SOA/MX is not yet implemented: parsing multi-field RDATA
     // is not trivial.
 
     // XXX: we should treat class-agnostic type accordingly.
@@ -199,6 +205,9 @@ RdataFactoryRegister::RdataFactoryRegister()
     wire_rdata_factory_repository.insert(pair<RRClassTypePair, WireRdataFactory>
                              (RRClassTypePair(RRClass::IN, RRType::NS),
                               createDataFromWire<isc::dns::Rdata::Generic::NS>));
+    wire_rdata_factory_repository.insert(pair<RRClassTypePair, WireRdataFactory>
+                             (RRClassTypePair(RRClass::IN, RRType::MX),
+                              createDataFromWire<isc::dns::Rdata::Generic::MX>));
     wire_rdata_factory_repository.insert(pair<RRClassTypePair, WireRdataFactory>
                              (RRClassTypePair(RRClass::IN, RRType::SOA),
                               createDataFromWire<isc::dns::Rdata::Generic::SOA>));
@@ -380,6 +389,36 @@ SOA::copy() const
 {
     return (new SOA(mname_.toText(), rname_.toText(), serial_, refresh_, retry_,
                     expire_, ttl_));
+}
+
+MX::MX(Buffer& buffer, NameDecompressor& decompressor)
+{
+    size_t len = buffer.readUint16();
+    preference_ = buffer.readUint16();
+    mxname_ = Name(buffer, decompressor);
+}
+
+void
+MX::toWire(Buffer& buffer, NameCompressor& compressor) const
+{
+    // XXX: note that a complete implementation cannot be this simple
+    // because we need to disable compression for the NS name.
+    buffer.writeUint16(mxname_.getLength() + sizeof(preference_));
+    buffer.writeUint16(preference_);
+    mxname_.toWire(buffer, compressor);
+}
+
+std::string
+MX::toText() const
+{
+    return (boost::lexical_cast<std::string>(preference_) + " " +
+            mxname_.toText());
+}
+
+Rdata*
+MX::copy() const
+{
+    return (new MX(preference_, mxname_.toText()));
 }
 
 TXT::TXT(const std::string& text_data)
