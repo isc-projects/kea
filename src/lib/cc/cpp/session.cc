@@ -46,7 +46,7 @@ Session::establish()
 
     ret = connect(sock, (struct sockaddr *)&sin, sizeof(sin));
     if (ret < 0)
-        throw SessionError("connect() failed");
+        throw SessionError("Unable to connect to message queue");
 
     //
     // send a request for our local name, and wait for a response
