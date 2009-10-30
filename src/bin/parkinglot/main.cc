@@ -87,6 +87,7 @@ process_message(int s) {
     struct sockaddr_storage ss;
     socklen_t sa_len = sizeof(ss);
     struct sockaddr* sa = static_cast<struct sockaddr*>((void*)&ss);
+    Name authors_name("authors.bind");
 
     if (msg.getBuffer().recvFrom(s, sa, &sa_len) > 0) {
         try {
@@ -107,7 +108,19 @@ process_message(int s) {
         RRsetPtr query = msg.getSection(SECTION_QUESTION)[0];
 
         string name = query->getName().toText(true);
-        if (zones.contains(name)) {
+        if (query->getName() == authors_name &&
+            query->getClass() == RRClass::CH,
+            query->getType() == RRType::TXT) {
+            msg.setRcode(Message::RCODE_NOERROR);
+            msg.addRR(SECTION_ANSWER, RR(authors_name, RRClass::CH,
+                                         RRType::TXT, TTL(0),
+                                         TXT("JINMEI Tatuya")));
+            // add others name here!!
+
+            msg.addRR(SECTION_AUTHORITY, RR(authors_name, RRClass::CH,
+                                            RRType::NS, TTL(0),
+                                            NS("authors.bind")));
+        } if (zones.contains(name)) {
             msg.setRcode(Message::RCODE_NOERROR);
             RRset* nsset = new RRset(query->getName(), RRClass::IN,
                                      RRType::NS, TTL(3600));
