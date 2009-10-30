@@ -43,6 +43,8 @@ CommandSession::getCommand() {
     ISC::Data::ElementPtr cmd, routing, data, ep;
     string s;
 
+    session.subscribe("statistics");
+
     session_.group_recvmsg(routing, data, false);
     cmd = data->get("command");
 
