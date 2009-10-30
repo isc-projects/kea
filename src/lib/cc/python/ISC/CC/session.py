@@ -13,10 +13,6 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# XXX
-import pprint
-from ISC.Util import hexdump
-
 import sys
 import socket
 import struct
@@ -28,7 +24,7 @@ class NetworkError(Exception): pass
 class SessionError(Exception): pass
 
 class Session:
-    def __init__(self):
+    def __init__(self, port=9912):
         self._socket = None
         self._lname = None
         self._recvbuffer = bytearray()
@@ -38,7 +34,7 @@ class Session:
 
         try:
             self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self._socket.connect(tuple(['127.0.0.1', 9912]))
+            self._socket.connect(tuple(['127.0.0.1', port]))
 
             self.sendmsg({ "type": "getlname" })
             msg = self.recvmsg(False)
