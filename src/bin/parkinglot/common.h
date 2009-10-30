@@ -14,5 +14,17 @@
 
 // $Id$
 
-void
-fatal(const char* format, ...);
+#include <stdlib.h>
+
+class FatalError : public std::exception {
+    public:
+        FatalError(std::string m = "fatal error") {
+            msg = m;
+            std::cerr << msg << std::endl;
+            exit(1);
+        }
+        ~FatalError() throw() {}
+        const char* what() const throw() { return msg.c_str(); }
+    private:
+        std::string msg;
+};

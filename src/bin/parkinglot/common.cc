@@ -14,20 +14,3 @@
 
 // $Id$
 
-#include <iostream>
-#include <stdarg.h>
-
-#include "common.h"
-
-extern const std::string PROGRAM;
-
-void
-fatal(const char* format, ...) {
-    va_list args;
-    fprintf(stderr, "%s: fatal: ", PROGRAM);
-    va_start(args, format);
-    vfprintf(stderr, format, args);
-    va_end(args);
-    putc('\n', stderr);
-    exit(1);
-}
