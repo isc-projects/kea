@@ -21,9 +21,10 @@
 
 #include <iostream>
 #include <stdexcept>
-//#include <cstring>
 #include <utility>
 #include <map>
+
+#include <boost/shared_ptr.hpp>
 
 #include <dns/buffer.h>
 #include <dns/rrset.h>
@@ -39,6 +40,7 @@ using isc::dns::TTL;
 using isc::dns::Rdata::IN::A;
 using isc::dns::Rdata::IN::AAAA;
 using isc::dns::Rdata::Generic::NS;
+using isc::dns::Rdata::Generic::SOA;
 using isc::dns::Rdata::Generic::TXT;
 using isc::dns::RRset;
 using isc::dns::Rdata::Rdata;
@@ -85,6 +87,8 @@ RRType::RRType(const std::string& typestr)
         typeval_ = 1;
     else if (typestr == "NS")
         typeval_ = 2;
+    else if (typestr == "SOA")
+        typeval_ = 6;
     else if (typestr == "TXT")
         typeval_ = 16;
     else if (typestr == "AAAA")
@@ -100,6 +104,8 @@ RRType::toText() const
         return ("A");
     else if (typeval_ == 2)
         return ("NS");
+    else if (typeval_ == 6)
+        return ("SOA");
     else if (typeval_ == 16)
         return ("TXT");
     else if (typeval_ == 28)
@@ -119,6 +125,7 @@ RRType::toWire(Buffer& buffer) const
 
 const RRType RRType::A("A");
 const RRType RRType::NS("NS");
+const RRType RRType::SOA("SOA");
 const RRType RRType::TXT("TXT");
 const RRType RRType::AAAA("AAAA");
 // ...more to follow
@@ -167,13 +174,17 @@ RdataFactoryRegister::RdataFactoryRegister()
     text_rdata_factory_repository.insert(pair<RRClassTypePair, TextRdataFactory>
                              (RRClassTypePair(RRClass::IN, RRType::AAAA),
                               createDataFromText<isc::dns::Rdata::IN::AAAA>));
-    //XXX: NS/TXT belongs to the 'generic' class.  should revisit it.
+    //XXX: NS/TXT/SOA belongs to the 'generic' class.  should revisit it.
     text_rdata_factory_repository.insert(pair<RRClassTypePair, TextRdataFactory>
                              (RRClassTypePair(RRClass::IN, RRType::NS),
                               createDataFromText<isc::dns::Rdata::Generic::NS>));
     text_rdata_factory_repository.insert(pair<RRClassTypePair, TextRdataFactory>
                              (RRClassTypePair(RRClass::IN, RRType::TXT),
                               createDataFromText<isc::dns::Rdata::Generic::TXT>));
+
+    // "fromText" for SOA is not yet implemented: parsing multi-field RDATA
+    // is not trivial.
+
     // XXX: we should treat class-agnostic type accordingly.
     text_rdata_factory_repository.insert(pair<RRClassTypePair, TextRdataFactory>
                              (RRClassTypePair(RRClass::CH, RRType::TXT),
@@ -188,6 +199,9 @@ RdataFactoryRegister::RdataFactoryRegister()
     wire_rdata_factory_repository.insert(pair<RRClassTypePair, WireRdataFactory>
                              (RRClassTypePair(RRClass::IN, RRType::NS),
                               createDataFromWire<isc::dns::Rdata::Generic::NS>));
+    wire_rdata_factory_repository.insert(pair<RRClassTypePair, WireRdataFactory>
+                             (RRClassTypePair(RRClass::IN, RRType::SOA),
+                              createDataFromWire<isc::dns::Rdata::Generic::SOA>));
 }
 
 Rdata *
@@ -320,6 +334,52 @@ Rdata*
 NS::copy() const
 {
     return (new NS(toText()));
+}
+
+SOA::SOA(Buffer& buffer, NameDecompressor& decompressor)
+{
+    size_t len = buffer.readUint16();
+    mname_ = Name(buffer, decompressor);
+    rname_ = Name(buffer, decompressor);
+    serial_ = buffer.readUint32();
+    refresh_ = buffer.readUint32();
+    retry_ = buffer.readUint32();
+    expire_ = buffer.readUint32();
+    ttl_ = TTL(buffer.readUint32());
+}
+
+void
+SOA::toWire(Buffer& buffer, NameCompressor& compressor) const
+{
+    // XXX: note that a complete implementation cannot be this simple
+    // because we need to disable compression for the NS name.
+    buffer.writeUint16(mname_.getLength() + rname_.getLength() +
+                       5 * sizeof(uint32_t));
+    mname_.toWire(buffer, compressor);
+    rname_.toWire(buffer, compressor);
+    buffer.writeUint32(serial_);
+    buffer.writeUint32(refresh_);
+    buffer.writeUint32(retry_);
+    buffer.writeUint32(expire_);
+    ttl_.toWire(buffer);
+}
+
+std::string
+SOA::toText() const
+{
+    return (mname_.toText() + " " + rname_.toText() + " " +
+            boost::lexical_cast<std::string>(serial_) + " " +
+            boost::lexical_cast<std::string>(refresh_) + " " +
+            boost::lexical_cast<std::string>(retry_) + " " +
+            boost::lexical_cast<std::string>(expire_) + " " +
+            ttl_.toText());
+}
+
+Rdata*
+SOA::copy() const
+{
+    return (new SOA(mname_.toText(), rname_.toText(), serial_, refresh_, retry_,
+                    expire_, ttl_));
 }
 
 TXT::TXT(const std::string& text_data)

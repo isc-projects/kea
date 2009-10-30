@@ -104,7 +104,7 @@ public:
     size_t getCurrent() const { return (_readpos); }
     void setCurrent(size_t pos)
     {
-        if (pos >= buf_.size())
+        if (pos > buf_.size())
             throw isc::ISCBufferInvalidPosition();
         _readpos = pos;
     }

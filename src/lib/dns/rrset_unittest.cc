@@ -30,6 +30,7 @@ using isc::dns::Rdata::Rdata;
 using isc::dns::Rdata::IN::A;
 using isc::dns::Rdata::IN::AAAA;
 using isc::dns::Rdata::Generic::NS;
+using isc::dns::Rdata::Generic::SOA;
 using isc::dns::Rdata::Generic::TXT;
 using isc::dns::RRset;
 using isc::dns::RR;
@@ -114,7 +115,7 @@ TEST_F(Rdata_IN_A_Test, fromToText)
     EXPECT_THROW(A("2001:db8::1234"), isc::ISCInvalidAddressString);
 }
 
-// The fixture for testing class IN/AAAA Rdata
+// The fixture for testing IN/AAAA Rdata class
 class Rdata_IN_AAAA_Test : public ::testing::Test {
 protected:
     Rdata_IN_AAAA_Test() : rdata("2001:db8::abcd") {}
@@ -137,6 +138,22 @@ protected:
 TEST_F(Rdata_Generic_NS_Test, fromToText)
 {
     EXPECT_EQ("ns.example.com.", rdata.toText());
+}
+
+// The fixture for testing class Generic/SOA Rdata
+class Rdata_Generic_SOA_Test : public ::testing::Test {
+protected:
+    Rdata_Generic_SOA_Test()
+    {
+        rdata = SOA("ns.example.com", "root.example.com", 2009102700, 7200,
+                    3600, 24796800, TTL(1200));
+    }
+    SOA rdata;
+};
+
+TEST_F(Rdata_Generic_SOA_Test, fromToText)
+{
+    EXPECT_EQ("ns.example.com. root.example.com. 2009102700 7200 3600 24796800 1200", rdata.toText());
 }
 
 // The fixture for testing Generic/TXT Rdata class
