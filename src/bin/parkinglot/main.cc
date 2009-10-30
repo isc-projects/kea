@@ -50,6 +50,17 @@ init_db() {
     zones.serve("flame.org");
 }
 
+Rdata::RdataPtr ns1, ns2, ns3, a, aaaa;
+
+static void
+init_server() {
+    ns1 = Rdata::RdataPtr(new NS("ns1.parking.com"));
+    ns2 = Rdata::RdataPtr(new NS("ns2.parking.com"));
+    ns3 = Rdata::RdataPtr(new NS("ns3.parking.com"));
+    a = Rdata::RdataPtr(new A("127.0.0.1"));
+    aaaa = Rdata::RdataPtr(new AAAA("::1"));
+}
+
 static int
 start_server(int port) {
     int s = socket(AF_INET, SOCK_DGRAM, 0);
@@ -71,80 +82,76 @@ start_server(int port) {
 }
 
 static void
-run_server(int s) {
-    Rdata::RdataPtr ns1, ns2, ns3;
-    ns1 = Rdata::RdataPtr(new NS("ns1.parking.com"));
-    ns2 = Rdata::RdataPtr(new NS("ns2.parking.com"));
-    ns3 = Rdata::RdataPtr(new NS("ns3.parking.com"));
-
+process_message(int s) {
+    Message msg;
     struct sockaddr_storage ss;
     socklen_t sa_len = sizeof(ss);
     struct sockaddr* sa = static_cast<struct sockaddr*>((void*)&ss);
 
-    while (true) {
-        Message msg;
-        if (msg.getBuffer().recvFrom(s, sa, &sa_len) > 0) {
-            try {
-                msg.fromWire();
-            } catch (...) {
-                cerr << "parse failed" << endl;
-                continue;
-            }
-
-            cout << "received a message:\n" << msg.toText() << endl;
-
-            if (msg.getSection(SECTION_QUESTION).size() != 1)
-                continue;
-
-            msg.makeResponse();
-            msg.setAA(true);
-
-            RRsetPtr query = msg.getSection(SECTION_QUESTION)[0];
-
-            string name = query->getName().toText(true);
-            if (zones.contains(name)) {
-                msg.setRcode(Message::RCODE_NOERROR);
-                RRset* nsset = new RRset(query->getName(), query->getClass(),
-                                         RRType::NS, TTL(3600));
-
-                nsset->addRdata(ns1);
-                nsset->addRdata(ns2);
-                nsset->addRdata(ns3);
-
-                if (query->getType() == RRType::NS)
-                    msg.addRRset(SECTION_ANSWER, RRsetPtr(nsset));
-                else
-                    msg.addRRset(SECTION_AUTHORITY, RRsetPtr(nsset));
-
-                if (query->getType() == RRType::A) {
-                    RR arr(query->getName(), query->getClass(),
-                           RRType::A, TTL(3600),
-                           Rdata::RdataPtr(new A("127.0.0.1")));
-
-                    msg.addRR(SECTION_ANSWER, arr);
-                } else if (query->getType() == RRType::AAAA) {
-                    RR aaaarr(query->getName(), query->getClass(),
-                              RRType::AAAA, TTL(3600),
-                              Rdata::RdataPtr(new AAAA("::1")));
-                    msg.addRR(SECTION_ANSWER, aaaarr);
-                }
-            } else {
-                msg.setRcode(Message::RCODE_NXDOMAIN);
-                // should add SOA to the authority section, but not implemented.
-            }
-
-            msg.toWire();
-            cout << "sending a response (" <<
-                boost::lexical_cast<string>(msg.getBuffer().getSize())
-                      << " bytes):\n" << msg.toText() << endl;
-            msg.getBuffer().sendTo(s, *sa, sa_len);
+    if (msg.getBuffer().recvFrom(s, sa, &sa_len) > 0) {
+        try {
+            msg.fromWire();
+        } catch (...) {
+            cerr << "parse failed" << endl;
+            return;
         }
+
+        cout << "received a message:\n" << msg.toText() << endl;
+
+        if (msg.getSection(SECTION_QUESTION).size() != 1)
+            return;
+
+        msg.makeResponse();
+        msg.setAA(true);
+
+        RRsetPtr query = msg.getSection(SECTION_QUESTION)[0];
+
+        string name = query->getName().toText(true);
+        if (zones.contains(name)) {
+            msg.setRcode(Message::RCODE_NOERROR);
+            RRset* nsset = new RRset(query->getName(), RRClass::IN,
+                                     RRType::NS, TTL(3600));
+
+            nsset->addRdata(ns1);
+            nsset->addRdata(ns2);
+            nsset->addRdata(ns3);
+
+            if (query->getType() == RRType::NS)
+                msg.addRRset(SECTION_ANSWER, RRsetPtr(nsset));
+            else
+                msg.addRRset(SECTION_AUTHORITY, RRsetPtr(nsset));
+
+            if (query->getType() == RRType::A) {
+                RR arr(query->getName(), RRClass::IN, RRType::A, TTL(3600), a);
+
+                msg.addRR(SECTION_ANSWER, arr);
+            } else if (query->getType() == RRType::AAAA) {
+                RR aaaarr(query->getName(), RRClass::IN, RRType::AAAA,
+                          TTL(3600), aaaa);
+                msg.addRR(SECTION_ANSWER, aaaarr);
+            }
+        } else {
+            msg.setRcode(Message::RCODE_NXDOMAIN);
+            // should add SOA to the authority section, but not implemented.
+        }
+
+        msg.toWire();
+        cout << "sending a response (" <<
+            boost::lexical_cast<string>(msg.getBuffer().getSize())
+                  << " bytes):\n" << msg.toText() << endl;
+        msg.getBuffer().sendTo(s, *sa, sa_len);
+    }
+}
+
+static void
+run_server(int s) {
+    while (true) {
+        process_message(s);
     }
 }
 
 int
-main(int argc, char* argv[])
-{
+main(int argc, char* argv[]) {
     Message msg;
     int ch;
     int port = DNSPORT;
@@ -166,8 +173,9 @@ main(int argc, char* argv[])
         exit(1);
     }
 
-    // initialize DNS database
+    // initialize
     init_db();
+    init_server();
 
     // start the server
     int s = start_server(port);
