@@ -1,6 +1,6 @@
 #! /bin/sh
 
-PYTHON_EXEC=/usr/bin/python3.0
+PYTHON_EXEC={$PYTHON_EXEC:-/usr/bin/python3.0}
 BIND10_PATH=@abs_top_srcdir@/src/bin/bind10
 
 PATH=@abs_top_srcdir@/src/bin/msgq:@abs_top_srcdir@/src/bin/parkinglot:@abs_top_srcdir@/src/bin/bind-cfgd:$PATH
