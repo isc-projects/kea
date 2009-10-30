@@ -30,6 +30,9 @@ namespace ISC {
 
             Session();
 
+	    // XXX: quick hack to allow the user to watch the socket directly.
+	    int getSocket() const { return (sock); }
+
             void establish();
             void disconnect();
             void sendmsg(ISC::Data::ElementPtr& msg);
