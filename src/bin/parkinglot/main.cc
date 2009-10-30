@@ -129,6 +129,9 @@ ParkingLot::processMessage() {
             msg.addRR(SECTION_ANSWER, RR(authors_name, RRClass::CH,
                                          RRType::TXT, TTL(0),
                                          TXT("Evan Hunt")));
+            msg.addRR(SECTION_ANSWER, RR(authors_name, RRClass::CH,
+                                         RRType::TXT, TTL(0),
+                                         TXT("Jeremy C. Reed")));
             // add others name here!!
 
             msg.addRR(SECTION_AUTHORITY, RR(authors_name, RRClass::CH,
