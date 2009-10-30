@@ -103,6 +103,7 @@ class Session:
         return self._sequence
 
     def group_subscribe(self, group, instance = "*", subtype = "normal"):
+        """subtype can be 'normal' or 'meonly'"""
         self.sendmsg({
             "type": "subscribe",
             "group": group,
