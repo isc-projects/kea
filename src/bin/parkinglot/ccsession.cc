@@ -28,22 +28,28 @@
 
 using namespace std;
 
-CommandSession::CommandSession() : session_(ISC::CC::Session()) {
+CommandSession::CommandSession() :
+    session_(ISC::CC::Session())
+{
     try {
         session_.establish();
         session_.subscribe("ParkingLot");
         session_.subscribe("Boss");
     } catch (...) {
-        throw std::runtime_error("CommandSession: failed to open sessions");
+        throw std::runtime_error("SessionManager: failed to open sessions");
     }
+}
+
+int
+CommandSession::getSocket()
+{
+    return (session_.getSocket());
 }
 
 std::pair<std::string, std::string>
 CommandSession::getCommand() {
     ISC::Data::ElementPtr cmd, routing, data, ep;
     string s;
-
-    session.subscribe("statistics");
 
     session_.group_recvmsg(routing, data, false);
     cmd = data->get("command");
@@ -61,6 +67,7 @@ CommandSession::getCommand() {
     return std::pair<string, string>("unknown", "");
 }
 
+#ifdef samplecode
 void
 handleStatRequest()
 {
@@ -78,3 +85,4 @@ handleStatRequest()
         session.group_sendmsg(resp, "statistics");
     }
 }
+#endif
