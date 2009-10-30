@@ -87,7 +87,7 @@ main(int argc, char* argv[]) {
         int n = select(nfds, &fds, NULL, NULL, NULL);
         if (n < 0)
             throw FatalError("select error");
-        
+
         if (FD_ISSET(ps, &fds))
             plot.processMessage();
 

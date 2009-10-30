@@ -21,8 +21,14 @@
 
 class ZoneSet : std::set<std::string> {
     public:
-        void serve(std::string s) { this->insert(s); }
-        void forget(std::string s) { this->erase(s); }
+        void serve(std::string s) {
+            std::cout << "now serving: " << s << std::endl;
+            this->insert(s);
+        }
+        void forget(std::string s) {
+            std::cout << "no longer serving: " << s << std::endl;
+            this->erase(s);
+        }
         bool contains(std::string s) {
             return (this->find(s) != this->end());
         }
