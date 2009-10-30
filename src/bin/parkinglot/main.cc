@@ -59,8 +59,8 @@ init_server() {
     ns3 = Rdata::RdataPtr(new NS("ns3.parking.com"));
     a = Rdata::RdataPtr(new A("127.0.0.1"));
     aaaa = Rdata::RdataPtr(new AAAA("::1"));
-    soa == Rdata::RdataPtr(new SOA("parking.com", "noc.parking.com",
-                                   1, 1800, 900, 604800, TTL(86400)));
+    soa = Rdata::RdataPtr(new SOA("parking.com", "noc.parking.com",
+                                  1, 1800, 900, 604800, TTL(86400)));
 }
 
 static int
