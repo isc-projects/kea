@@ -31,6 +31,7 @@ using isc::dns::Rdata::IN::A;
 using isc::dns::Rdata::IN::AAAA;
 using isc::dns::Rdata::Generic::NS;
 using isc::dns::Rdata::Generic::SOA;
+using isc::dns::Rdata::Generic::MX;
 using isc::dns::Rdata::Generic::TXT;
 using isc::dns::RRset;
 using isc::dns::RR;
@@ -154,6 +155,18 @@ protected:
 TEST_F(Rdata_Generic_SOA_Test, fromToText)
 {
     EXPECT_EQ("ns.example.com. root.example.com. 2009102700 7200 3600 24796800 1200", rdata.toText());
+}
+
+// The fixture for testing class Generic/MX Rdata
+class Rdata_Generic_MX_Test : public ::testing::Test {
+protected:
+    Rdata_Generic_MX_Test() { rdata = MX(10, "mail.example.com"); }
+    MX rdata;
+};
+
+TEST_F(Rdata_Generic_MX_Test, fromToText)
+{
+    EXPECT_EQ("10 mail.example.com.", rdata.toText());
 }
 
 // The fixture for testing Generic/TXT Rdata class

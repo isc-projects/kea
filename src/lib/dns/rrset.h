@@ -82,6 +82,7 @@ public:
     static const RRType A;
     static const RRType NS;
     static const RRType SOA;
+    static const RRType MX;
     static const RRType TXT;
     static const RRType AAAA;
     // more to follow...
@@ -165,6 +166,26 @@ public:
     virtual Rdata* copy() const;
 private:
     Name nsname_;
+};
+
+class MX : public Rdata::Rdata {
+public:
+    MX() {}
+    explicit MX(uint16_t preference, const std::string& namestr) :
+        preference_(preference), mxname_(namestr) {}
+    explicit MX(Buffer& buffer, NameDecompressor& decompressor);
+    unsigned int count() const { return (1); }
+    const RRType& getType() const { return (RRType::MX); }
+    static const RRType& getTypeStatic() { return (RRType::MX); }
+    std::string toText() const;
+    void toWire(Buffer& buffer, NameCompressor& compressor) const;
+    bool operator==(const MX& other) const
+    { return (preference_ == other.preference_ && mxname_ == other.mxname_); }
+    virtual bool operator!=(const MX &other) const { return !(*this == other); }
+    virtual Rdata* copy() const;
+private:
+    uint16_t preference_;
+    Name mxname_;
 };
 
 class SOA : public Rdata::Rdata {
