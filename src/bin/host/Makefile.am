@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I$(top_srcdir)/src/lib
+AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_srcdir)/ext
 
 bin_PROGRAMS = host
 host_SOURCES = host.cc
