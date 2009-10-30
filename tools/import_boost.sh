@@ -24,6 +24,7 @@ boost/concept
 boost/detail
 boost/exception
 boost/function
+boost/iterator
 boost/mpl
 boost/preprocessor
 boost/range
