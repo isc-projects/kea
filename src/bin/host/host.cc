@@ -140,10 +140,7 @@ main(int argc, char* argv[])
             host_lookup(argv[1], "A");
 // TODO: don't do next if A doesn't exist
             host_lookup(argv[1], "AAAA");
-cout << "THE FOLLOWING 'MX' WILL FAIL UNTIL SUPPORTED. KEEPING HERE FOR TESTING.\n";
             host_lookup(argv[1], "MX");
-// No MX yet
-// terminate called after throwing an instance of 'isc::dns::DNSInvalidRRType'
         }
 
     }
