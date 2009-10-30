@@ -6,14 +6,19 @@
 import ISC
 import time
 import select
+import sys
+import os
 
 step_time = 1
 statgroup = "statistics"
 
 cc = ISC.CC.Session()
-print (cc.lname)
+# print (cc.lname)
 cc.group_subscribe(statgroup)
 cc.group_subscribe("Boss")
+
+f = open('statistics.out', 'a')
+sys.stdout = f
 
 server_by_name = {}
 server_by_id = []
@@ -33,7 +38,7 @@ while 1:
     if wait <= 0:
         sent = time.time();
         command = { "command": "getstat", "sent":time.time() }
-        print ("loop=", loop, "    SEND: ", command)
+        #print ("loop=", loop, "    SEND: ", command)
         cc.group_sendmsg(command, "statistics")
         wait = last_sent + step_time - time.time()
         if wait < 0:
@@ -56,6 +61,7 @@ while 1:
                     print ("server",id,"  time=",data["sent"], end=" "),
                     print ("counter=", data["counter"], end=" ")
                     print ("dT=", delta_t, "  dC=", delta_c)
+                    sys.stdout.flush()
                     timestamp[id] = data["sent"]
                     counter[id] = data["counter"]
 #
