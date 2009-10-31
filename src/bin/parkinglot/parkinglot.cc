@@ -48,12 +48,12 @@ static void init_zones(ZoneSet& zones) {
 ParkingLot::ParkingLot(int port) {
     init_zones(zones);
 
-    ns1 = Rdata::RdataPtr(new NS("ns1.parking.com"));
-    ns2 = Rdata::RdataPtr(new NS("ns2.parking.com"));
-    ns3 = Rdata::RdataPtr(new NS("ns3.parking.com"));
+    ns1 = Rdata::RdataPtr(new NS("ns1.parking.example"));
+    ns2 = Rdata::RdataPtr(new NS("ns2.parking.example"));
+    ns3 = Rdata::RdataPtr(new NS("ns3.parking.example"));
     a = Rdata::RdataPtr(new A("127.0.0.1"));
     aaaa = Rdata::RdataPtr(new AAAA("::1"));
-    soa = Rdata::RdataPtr(new SOA("parking.com", "noc.parking.com",
+    soa = Rdata::RdataPtr(new SOA("parking.example", "noc.parking.example",
                                         1, 1800, 900, 604800, TTL(86400)));
 
     int s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
