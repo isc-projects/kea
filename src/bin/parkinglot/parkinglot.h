@@ -20,17 +20,17 @@
 #include "zoneset.h"
 
 class ParkingLot {
-    public:
-        explicit ParkingLot(int port);
-        virtual ~ParkingLot() {};
-        int getSocket() { return(sock); }
-        void processMessage();
-        void command(std::pair<std::string,std::string>);
+public:
+    explicit ParkingLot(int port);
+    virtual ~ParkingLot() {};
+    int getSocket() { return(sock); }
+    void processMessage();
+    void command(std::pair<std::string,std::string>);
         
-    private:
-        isc::dns::Rdata::RdataPtr ns1, ns2, ns3, a, aaaa, soa;
-        ZoneSet zones;
-        int sock;
+private:
+    isc::dns::Rdata::RdataPtr ns1, ns2, ns3, a, aaaa, soa;
+    ZoneSet zones;
+    int sock;
 };
 
 #endif // __PARKINGLOT_H
