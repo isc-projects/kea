@@ -1136,9 +1136,10 @@ lsock_open(void)
 		isc_socket_t *sock;
 		isc_sockaddr_t sa;
 		isc_result_t result;
+		struct in_addr ina;
 
-		isc_sockaddr_any(&sa);
-		isc_sockaddr_setport(&sa, msgq_port);
+		RUNTIME_CHECK(inet_pton(AF_INET, addrs[i], &ina) == 1);
+		isc_sockaddr_fromin(&sa, &ina, msgq_port);
 
 		sock = NULL;
 		RUNTIME_CHECK(isc_socket_create(socketmgr,
