@@ -79,6 +79,7 @@ ParkingLot::ParkingLot(int port) {
 void
 ParkingLot::processMessage() {
     Name authors_name("authors.bind");
+    Name version_name("version.bind");
     struct sockaddr_storage ss;
     socklen_t sa_len = sizeof(ss);
     struct sockaddr* sa = static_cast<struct sockaddr*>((void*)&ss);
@@ -104,9 +105,9 @@ ParkingLot::processMessage() {
         RRsetPtr query = msg.getSection(SECTION_QUESTION)[0];
 
         string name = query->getName().toText(true);
-        if (query->getName() == authors_name &&
-            query->getClass() == RRClass::CH,
-            query->getType() == RRType::TXT) {
+        if (query->getClass() == RRClass::CH &&
+            query->getType() == RRType::TXT &&
+            query->getName() == authors_name) {
             msg.setRcode(Message::RCODE_NOERROR);
             msg.addRR(SECTION_ANSWER, RR(authors_name, RRClass::CH,
                                          RRType::TXT, TTL(0),
@@ -122,6 +123,16 @@ ParkingLot::processMessage() {
             msg.addRR(SECTION_AUTHORITY, RR(authors_name, RRClass::CH,
                                             RRType::NS, TTL(0),
                                             NS("authors.bind")));
+        } else if (query->getClass() == RRClass::CH &&
+                   query->getType() == RRType::TXT &&
+                   query->getName() == version_name) {            
+            msg.setRcode(Message::RCODE_NOERROR);
+            msg.addRR(SECTION_ANSWER, RR(version_name, RRClass::CH,
+                                         RRType::TXT, TTL(0),
+                                         TXT("10.0.0s20091030")));
+            msg.addRR(SECTION_AUTHORITY, RR(version_name, RRClass::CH,
+                                            RRType::NS, TTL(0),
+                                            NS("version.bind")));
         } else if (zones.contains(name)) {
             msg.setRcode(Message::RCODE_NOERROR);
             RRset* nsset = new RRset(query->getName(), RRClass::IN,
