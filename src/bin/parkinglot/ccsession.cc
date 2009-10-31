@@ -72,17 +72,12 @@ CommandSession::getCommand(int counter) {
             session_.group_sendmsg(resp, "statistics");
         }
     } else {
-        cmd = data->get("command");
+        cmd = data->get("zone_added");
+        if (cmd != NULL)
+            return std::pair<string, string>("addzone", cmd->string_value());
+        cmd = data->get("zone_deleted");
         if (cmd != NULL) {
-            ep = cmd->get(0);
-            if (ep != NULL) {
-                s = ep->string_value();
-                if (s == "addzone" || s == "delzone") {
-                    return std::pair<string, string>(s,
-                                                     cmd->get(1)->string_value());
-                }
-                return std::pair<string, string>(s, "");
-            }
+            return std::pair<string, string>("delzone", cmd->string_value());
         }
     }
 
