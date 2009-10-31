@@ -22,8 +22,8 @@
 class ParkingLot {
 public:
     explicit ParkingLot(int port);
-    virtual ~ParkingLot() {};
-    int getSocket() { return(sock); }
+    virtual ~ParkingLot() {}
+    int getSocket() { return (sock); }
     void processMessage();
     void command(std::pair<std::string,std::string>);
         
