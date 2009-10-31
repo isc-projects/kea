@@ -109,17 +109,39 @@ ParkingLot::processMessage() {
             query->getType() == RRType::TXT &&
             query->getName() == authors_name) {
             msg.setRcode(Message::RCODE_NOERROR);
-            msg.addRR(SECTION_ANSWER, RR(authors_name, RRClass::CH,
-                                         RRType::TXT, TTL(0),
-                                         TXT("JINMEI Tatuya")));
+            msg.addRR(SECTION_ANSWER, RR(authors_name, RRClass::CH, 
+                                         RRType::TXT, TTL(0), 
+                                         TXT("Han Feng")));
+            msg.addRR(SECTION_ANSWER, RR(authors_name, RRClass::CH, 
+                                         RRType::TXT, TTL(0), 
+                                         TXT("Kazunori Fujiwara")));
+            msg.addRR(SECTION_ANSWER, RR(authors_name, RRClass::CH, 
+                                         RRType::TXT, TTL(0), 
+                                         TXT("Michael Graff")));
             msg.addRR(SECTION_ANSWER, RR(authors_name, RRClass::CH,
                                          RRType::TXT, TTL(0),
                                          TXT("Evan Hunt")));
+            msg.addRR(SECTION_ANSWER, RR(authors_name, RRClass::CH,
+                                         RRType::TXT, TTL(0),
+                                         TXT("Jelte Jansen")));
+            msg.addRR(SECTION_ANSWER, RR(authors_name, RRClass::CH, 
+                                         RRType::TXT, TTL(0), 
+                                         TXT("Jin Jian")));
+            msg.addRR(SECTION_ANSWER, RR(authors_name, RRClass::CH,
+                                         RRType::TXT, TTL(0),
+                                         TXT("JINMEI Tatuya")));
+            msg.addRR(SECTION_ANSWER, RR(authors_name, RRClass::CH, 
+                                         RRType::TXT, TTL(0), 
+                                         TXT("Naoki Kambe")));
+            msg.addRR(SECTION_ANSWER, RR(authors_name, RRClass::CH, 
+                                         RRType::TXT, TTL(0), 
+                                         TXT("Shane Kerr"))); 
+            msg.addRR(SECTION_ANSWER, RR(authors_name, RRClass::CH, 
+                                         RRType::TXT, TTL(0), 
+                                         TXT("Zhang Likun")));
             msg.addRR(SECTION_ANSWER, RR(authors_name, RRClass::CH, 
                                          RRType::TXT, TTL(0), 
                                          TXT("Jeremy C. Reed"))); 
-            // add others name here!!
-
             msg.addRR(SECTION_AUTHORITY, RR(authors_name, RRClass::CH,
                                             RRType::NS, TTL(0),
                                             NS("authors.bind")));
