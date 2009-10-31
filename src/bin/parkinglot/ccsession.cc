@@ -28,6 +28,9 @@
 
 using namespace std;
 
+using ISC::Data::Element;
+using ISC::Data::ElementPtr;
+
 CommandSession::CommandSession() :
     session_(ISC::CC::Session())
 {
@@ -35,6 +38,7 @@ CommandSession::CommandSession() :
         session_.establish();
         session_.subscribe("ParkingLot");
         session_.subscribe("Boss");
+        session_.subscribe("statistics");
     } catch (...) {
         throw std::runtime_error("SessionManager: failed to open sessions");
     }
@@ -47,44 +51,40 @@ CommandSession::getSocket()
 }
 
 std::pair<std::string, std::string>
-CommandSession::getCommand() {
-    ISC::Data::ElementPtr cmd, routing, data, ep;
+CommandSession::getCommand(int counter) {
+    ElementPtr cmd, routing, data, ep;
     string s;
 
     session_.group_recvmsg(routing, data, false);
-    cmd = data->get("command");
+    string channel = routing->get("group")->string_value();
 
-    if (cmd != NULL) {
-        ep = cmd->get(0);
-        if (ep != NULL) {
-            s = ep->string_value();
-            if (s == "addzone" || s == "delzone") {
-                return std::pair<string, string>(s,
-                                                 cmd->get(1)->string_value());
+    if (channel == "statistics") {
+        cmd = data->get("command");
+        if (cmd != NULL && cmd->string_value() == "getstat") {
+            struct timeval now;
+            ElementPtr resp = Element::create(std::map<std::string,
+                                              ElementPtr>());
+            gettimeofday(&now, NULL);
+            resp->set("sent", Element::create(now.tv_sec +
+                                              (double)now.tv_usec /
+                                              1000000));
+            resp->set("counter", Element::create(counter));
+            session_.group_sendmsg(resp, "statistics");
+        }
+    } else {
+        cmd = data->get("command");
+        if (cmd != NULL) {
+            ep = cmd->get(0);
+            if (ep != NULL) {
+                s = ep->string_value();
+                if (s == "addzone" || s == "delzone") {
+                    return std::pair<string, string>(s,
+                                                     cmd->get(1)->string_value());
+                }
+                return std::pair<string, string>(s, "");
             }
-            return std::pair<string, string>(s, "");
         }
     }
 
     return std::pair<string, string>("unknown", "");
 }
-
-#ifdef samplecode
-void
-handleStatRequest()
-{
-    ISC::Data::ElementPtr ep, routing, data;
-
-    session.group_recvmsg(routing, data, false);
-    ep = data->get("command");
-    if (ep != NULL && ep->string_value() == "getstat") {
-        struct timeval now;
-        ElementPtr resp = Element::create(std::map<std::string, ElementPtr>());
-        gettimeofday(&now, NULL);
-        resp->set("sent", Element::create(now.tv_sec +
-                                         (double)now.tv_usec / 1000000));
-        resp->set("counter", Element::create(++counter));
-        session.group_sendmsg(resp, "statistics");
-    }
-}
-#endif
