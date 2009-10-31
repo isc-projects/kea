@@ -24,6 +24,8 @@ CFLAGS += `isc-config.sh --cflags isc`
 
 ISC_LIBS += `isc-config.sh --libs isc`
 
+all:	msgq
+
 msgq: ${OBJS}
 	${CC} -o msgq ${OBJS} ${ISC_LIBS}
 
