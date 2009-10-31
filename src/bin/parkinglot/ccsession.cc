@@ -54,14 +54,16 @@ CommandSession::getCommand() {
     session_.group_recvmsg(routing, data, false);
     cmd = data->get("command");
 
-    ep = cmd->get(0);
-    s = ep->string_value();
-    if (s == "addzone" || s == "delzone") {
-        return std::pair<string, string>(s, cmd->get(1)->string_value());
-    }
-
-    if (ep != NULL) {
-        return std::pair<string, string>(s, "");
+    if (cmd != NULL) {
+        ep = cmd->get(0);
+        if (ep != NULL) {
+            s = ep->string_value();
+            if (s == "addzone" || s == "delzone") {
+                return std::pair<string, string>(s,
+                                                 cmd->get(1)->string_value());
+            }
+            return std::pair<string, string>(s, "");
+        }
     }
 
     return std::pair<string, string>("unknown", "");
