@@ -77,6 +77,7 @@ main(int argc, char* argv[]) {
     int ps = plot.getSocket();
     int ss = cs.getSocket();
     int nfds = max(ps, ss) + 1;
+    int counter = 0;
 
     cout << "Server started." << endl;
     while (true) {
@@ -88,11 +89,13 @@ main(int argc, char* argv[]) {
         if (n < 0)
             throw FatalError("select error");
 
-        if (FD_ISSET(ps, &fds))
+        if (FD_ISSET(ps, &fds)) {
+            ++counter;
             plot.processMessage();
+        }
 
         if (FD_ISSET(ss, &fds)) {
-            pair<string,string> cmd = cs.getCommand();
+            pair<string,string> cmd = cs.getCommand(counter);
             plot.command(cmd);
         }
     }

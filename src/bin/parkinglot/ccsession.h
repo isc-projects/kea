@@ -25,7 +25,7 @@ class CommandSession {
 public:
     CommandSession();
     int getSocket();
-    std::pair<std::string, std::string> getCommand();
+    std::pair<std::string, std::string> getCommand(int counter);
 private:
     ISC::CC::Session session_;
 };
