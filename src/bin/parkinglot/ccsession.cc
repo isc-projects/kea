@@ -17,6 +17,7 @@
 #include <stdexcept>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
 
 #include <iostream>
 
@@ -66,8 +67,7 @@ CommandSession::getCommand(int counter) {
                                               ElementPtr>());
             gettimeofday(&now, NULL);
             resp->set("sent", Element::create(now.tv_sec +
-                                              (double)now.tv_usec /
-                                              1000000));
+                                              (double)now.tv_usec / 1000000));
             resp->set("counter", Element::create(counter));
             session_.group_sendmsg(resp, "statistics");
         }
