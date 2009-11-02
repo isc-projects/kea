@@ -37,17 +37,7 @@ using namespace isc::dns;
 using namespace isc::dns::Rdata::IN;
 using namespace isc::dns::Rdata::Generic;
 
-static void init_zones(ZoneSet& zones) {
-    zones.serve("jinmei.org");
-    zones.serve("nuthaven.org");
-    zones.serve("isc.org");
-    zones.serve("sisotowbell.org");
-    zones.serve("flame.org");
-}
-
 ParkingLot::ParkingLot(int port) {
-    init_zones(zones);
-
     ns1 = Rdata::RdataPtr(new NS("ns1.parking.example"));
     ns2 = Rdata::RdataPtr(new NS("ns2.parking.example"));
     ns3 = Rdata::RdataPtr(new NS("ns3.parking.example"));
@@ -196,9 +186,14 @@ ParkingLot::processMessage() {
 void
 ParkingLot::command(pair<string,string> cmd) {
     if (cmd.first == "addzone")
-        zones.serve(cmd.second);
+        serve(cmd.second);
     else if (cmd.first == "delzone")
         zones.forget(cmd.second);
     else if (cmd.first == "shutdown")
         exit(0);
+}
+
+void
+ParkingLot::serve(std::string zone_name) {
+    zones.serve(zone_name);
 }

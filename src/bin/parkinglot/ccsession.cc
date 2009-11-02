@@ -20,6 +20,9 @@
 #include <sys/time.h>
 
 #include <iostream>
+#include <sstream>
+
+#include <boost/foreach.hpp>
 
 #include <cc/cpp/data.h>
 #include <cc/cpp/session.h>
@@ -37,9 +40,10 @@ CommandSession::CommandSession() :
 {
     try {
         session_.establish();
-        session_.subscribe("ParkingLot");
-        session_.subscribe("Boss");
-        session_.subscribe("statistics");
+        session_.subscribe("ParkingLot", "*", "meonly");
+        session_.subscribe("Boss", "*", "meonly");
+        session_.subscribe("ConfigManager", "*", "meonly");
+        session_.subscribe("statistics", "*", "meonly");
     } catch (...) {
         throw std::runtime_error("SessionManager: failed to open sessions");
     }
@@ -82,4 +86,20 @@ CommandSession::getCommand(int counter) {
     }
 
     return std::pair<string, string>("unknown", "");
+}
+
+std::vector<std::string>
+CommandSession::getZones() {
+    ElementPtr cmd, result, env;
+    std::vector<std::string> zone_names;
+    std::stringstream cmd_string;
+    cmd_string << "{ \"command\": [ \"zone\", \"list\" ] }";
+    cmd = Element::create_from_string(cmd_string);
+    sleep(1);
+    session_.group_sendmsg(cmd, "ConfigManager");
+    session_.group_recvmsg(env, result, false);
+    BOOST_FOREACH(ElementPtr zone_name, result->get("result")->list_value()) {
+        zone_names.push_back(zone_name->string_value());
+    }
+    return zone_names;
 }
