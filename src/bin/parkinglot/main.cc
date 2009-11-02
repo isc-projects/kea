@@ -23,6 +23,8 @@
 #include <set>
 #include <iostream>
 
+#include <boost/foreach.hpp>
+
 #include <dns/buffer.h>
 #include <dns/name.h>
 #include <dns/rrset.h>
@@ -76,6 +78,9 @@ main(int argc, char* argv[]) {
     fd_set fds;
     int ps = plot.getSocket();
     int ss = cs.getSocket();
+    BOOST_FOREACH(std::string zone, cs.getZones()) {
+        plot.serve(zone);
+    }
     int nfds = max(ps, ss) + 1;
     int counter = 0;
 

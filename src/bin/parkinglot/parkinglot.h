@@ -26,7 +26,8 @@ public:
     int getSocket() { return (sock); }
     void processMessage();
     void command(std::pair<std::string,std::string>);
-        
+    void serve(std::string zone_name);
+    
 private:
     isc::dns::Rdata::RdataPtr ns1, ns2, ns3, a, aaaa, soa;
     ZoneSet zones;

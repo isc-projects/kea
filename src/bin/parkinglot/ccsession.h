@@ -26,6 +26,7 @@ public:
     CommandSession();
     int getSocket();
     std::pair<std::string, std::string> getCommand(int counter);
+    std::vector<std::string> getZones();
 private:
     ISC::CC::Session session_;
 };
