@@ -52,6 +52,7 @@ class ProcessInfo:
             spawn_stdout = None
         spawn_env = self.env
         spawn_env['PATH'] = os.environ['PATH']
+        spawn_env['PYTHON_EXEC'] = os.environ['PYTHON_EXEC']
         self.process = subprocess.Popen(self.args,
                                         stdin=subprocess.PIPE,
                                         stdout=spawn_stdout,
