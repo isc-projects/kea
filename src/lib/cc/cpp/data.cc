@@ -321,6 +321,13 @@ Element::create_from_string(std::stringstream &in)
     }
 }
 
+ElementPtr
+Element::create_from_string(const std::string &in)
+{
+    std::stringstream ss;
+    ss << in;
+    return create_from_string(ss);
+}
 //
 // a general to_str() function
 //

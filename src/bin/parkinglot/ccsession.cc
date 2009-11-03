@@ -92,9 +92,7 @@ std::vector<std::string>
 CommandSession::getZones() {
     ElementPtr cmd, result, env;
     std::vector<std::string> zone_names;
-    std::stringstream cmd_string;
-    cmd_string << "{ \"command\": [ \"zone\", \"list\" ] }";
-    cmd = Element::create_from_string(cmd_string);
+    cmd = Element::create_from_string("{ \"command\": [ \"zone\", \"list\" ] }");
     sleep(1);
     session_.group_sendmsg(cmd, "ConfigManager");
     session_.group_recvmsg(env, result, false);

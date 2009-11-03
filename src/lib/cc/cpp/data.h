@@ -48,19 +48,32 @@ namespace ISC { namespace Data {
         // base class; make dtor virtual
         virtual ~Element() {};
 
+        // returns the type of this element
         int get_type() { return type; };
+        
         // pure virtuals, every derived class must implement these
+
+        // returns a string representing the Element and all its
+        // child elements; note that this is different from string_value(),
+        // which only returns the single value of a StringElement
+        // A MapElement will be represented as { "name1": <value1>, "name2", <value2>, .. }
+        // A ListElement will be represented as [ <item1>, <item2>, .. ]
+        // All other elements will be represented directly
         virtual std::string str() = 0;
+
+        // returns an xml representation for the Element and all its
+        // child elements
         virtual std::string str_xml(size_t prefix = 0) = 0;
+
+        // returns the wireformat for the Element and all its child
+        // elements
         virtual std::string to_wire(int omit_length = 1) = 0;
 
-        // virtual function templates must match, so we
-        // need separate getters for all subclassed types
-        // since all derived types only implement their own specific
-        // ones, we provide a default implementation
-        // These should probably throw an exception
-        // These could also be removed if we want to force the user
-        // to use get_value()
+        // Specific getters for each type. These functions only
+        // work on their corresponding Element type. For all other
+        // types, a TypeError is thrown.
+        // If you want an exception-safe getter method, use
+        // get_value() below
         virtual int int_value() { throw TypeError(); };
         virtual double double_value() { throw TypeError(); };
         virtual bool bool_value() { throw TypeError(); };
@@ -68,18 +81,15 @@ namespace ISC { namespace Data {
         virtual const std::vector<boost::shared_ptr<Element> >& list_value() { throw TypeError(); }; // replace with real exception or empty vector?
         virtual const std::map<std::string, boost::shared_ptr<Element> >& map_value() { throw TypeError(); }; // replace with real exception or empty map?
 
-        // hmm, these are only for specific subtypes, but we would
-        // like to call them on the ElementPtr...
+        // Other functions for specific subtypes
 
         // for lists
-        // TODO: what to do as default implementation (ie. when element of wrong type)?
         virtual ElementPtr get(const int i) { throw TypeError(); };
         virtual void set(const int i, ElementPtr element) { throw TypeError(); };
         virtual void add(ElementPtr element) { throw TypeError(); };
         virtual void remove(ElementPtr element) { throw TypeError(); };
 
         // for maps
-        // TODO: what to do as default implementation (ie. when element of wrong type)?
         virtual ElementPtr get(const std::string& name) { throw TypeError(); } ;
         virtual void set(const std::string& name, ElementPtr element) { throw TypeError(); };
         virtual void remove(const std::string& name) { throw TypeError(); };
@@ -100,6 +110,11 @@ namespace ISC { namespace Data {
         virtual bool get_value(std::vector<ElementPtr>& t) { return false; };
         virtual bool get_value(std::map<std::string, ElementPtr>& t) { return false; };
 
+        //
+        // Exception-safe setters. Return false if the Element is not
+        // the right type. Set the value and return true if the Elements
+        // is of the correct type
+        //
         virtual bool set_value(const int v) { return false; };
         virtual bool set_value(const double v) { return false; };
         virtual bool set_value(const bool t) { return false; };
@@ -128,9 +143,14 @@ namespace ISC { namespace Data {
         // compound factory functions
         // return a NULL ElementPtr if there is a parse error or
         // the memory could not be allocated
+        // example:
+        // ElementPtr my_element = Element::create_from_string("{\"foo\": [ 1, 2, false ] }");
         static ElementPtr create_from_string(std::stringstream& in);
+        static ElementPtr create_from_string(const std::string& in);
+        
         //static ElementPtr create_from_xml(std::stringstream& in);
 
+        // factory functions for wireformat
         static ElementPtr from_wire(std::stringstream& in, int length);
         static ElementPtr from_wire(const std::string& s);
     };
@@ -163,7 +183,7 @@ namespace ISC { namespace Data {
 
     class BoolElement : public Element {
         bool b;
-		
+
     public:
         BoolElement(const bool v) : Element(boolean), b(v) {};
         bool bool_value() { return b; }
@@ -173,7 +193,7 @@ namespace ISC { namespace Data {
         std::string str_xml(size_t prefix = 0);
         std::string to_wire(int omit_length = 1);
     };
-	
+    
     class StringElement : public Element {
         std::string s;
 
@@ -221,7 +241,7 @@ namespace ISC { namespace Data {
         //
         // Encode into the CC wire format.
         //
-	void to_wire(std::ostream& ss);
+        void to_wire(std::ostream& ss);
 
         // we should name the two finds better...
         // find the element at id; raises TypeError if one of the
