@@ -20,6 +20,17 @@ namespace ISC { namespace Data {
         std::string msg;
     };
 
+    class ParseError : public std::exception {
+    public:
+        ParseError(std::string m = "Parse error in element data", int l = 0, int p = 0) : msg(m), line(l), pos(p) {}
+        ~ParseError() throw() {}
+        const char* what() const throw();
+    private:
+        std::string msg;
+        int line;
+        int pos;
+    };
+
     class DecodeError : public std::exception {
     public:
         DecodeError(std::string m = "Wire-format data is invalid") : msg(m) {}
@@ -145,8 +156,11 @@ namespace ISC { namespace Data {
         // the memory could not be allocated
         // example:
         // ElementPtr my_element = Element::create_from_string("{\"foo\": [ 1, 2, false ] }");
-        static ElementPtr create_from_string(std::stringstream& in);
+        //static ElementPtr create_from_string(std::stringstream& in);
         static ElementPtr create_from_string(const std::string& in);
+        static ElementPtr create_from_string(std::istream& in) throw(ParseError);
+        // make this one private?
+        static ElementPtr create_from_string(std::istream& in, int& line, int &pos) throw(ParseError);
         
         //static ElementPtr create_from_xml(std::stringstream& in);
 
