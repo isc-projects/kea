@@ -104,6 +104,7 @@ namespace ISC { namespace Data {
         virtual ElementPtr get(const std::string& name) { throw TypeError(); } ;
         virtual void set(const std::string& name, ElementPtr element) { throw TypeError(); };
         virtual void remove(const std::string& name) { throw TypeError(); };
+        virtual bool contains(const std::string& s) { throw TypeError(); }
         virtual ElementPtr find(const std::string& identifier) { throw TypeError(); };
         virtual bool find(const std::string& id, ElementPtr& t) { return false; };
 
@@ -248,6 +249,7 @@ namespace ISC { namespace Data {
         ElementPtr get(const std::string& s) { return m[s]; };
         void set(const std::string& s, ElementPtr p) { m[s] = p; };
         void remove(const std::string& s) { m.erase(s); }
+        bool contains(const std::string& s) { return m.find(s) != m.end(); }
         std::string str();
         std::string str_xml(size_t prefix = 0);
         std::string to_wire(int omit_length = 1);
