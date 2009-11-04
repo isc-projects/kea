@@ -65,8 +65,13 @@ class ConfigManager:
                     self.add_zone(cmd[2])
                     answer["result"] = [ 0 ]
                 elif cmd[0] == "zone" and cmd[1] == "remove":
-                    self.remove_zone(cmd[2])
-                    answer["result"] = [ 0 ]
+                    try:
+                        self.remove_zone(cmd[2])
+                        answer["result"] = [ 0 ]
+                    except KeyError:
+                        # zone wasn't there, should we make
+                        # a separate exception for that?
+                        answer["result"] = [ 1, "Unknown zone" ]
                 elif cmd[0] == "zone" and cmd[1] == "list":
                     answer["result"]     = list(self.config.zones.keys())
                 elif len(cmd) > 1 and cmd[1] == "shutdown":
