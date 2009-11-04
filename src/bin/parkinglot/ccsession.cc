@@ -40,7 +40,7 @@ CommandSession::CommandSession() :
 {
     try {
         session_.establish();
-        session_.subscribe("ParkingLot", "*", "meonly");
+        session_.subscribe("ParkingLot", "*");
         session_.subscribe("Boss", "*", "meonly");
         session_.subscribe("ConfigManager", "*", "meonly");
         session_.subscribe("statistics", "*", "meonly");
