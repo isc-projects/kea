@@ -289,7 +289,9 @@ from_stringstream_map(std::istream &in, int& line, int& pos)
         in.get();
         pos++;
         p.second = Element::create_from_string(in, line, pos);
-        if (!p.second) { return ElementPtr(); };
+        if (!p.second) {
+            throw ParseError(std::string("missing map value for ") + p.first, line, pos);
+        };
         m.insert(p);
         skip_to(in, line, pos, ",}", " \t\n");
         c = in.get();
@@ -298,8 +300,6 @@ from_stringstream_map(std::istream &in, int& line, int& pos)
     return Element::create(m);
 }
 
-//ElementPtr
-//Element::create_from_string(std::stringstream &in)
 ElementPtr
 Element::create_from_string(std::istream &in) throw(ParseError)
 {
@@ -364,7 +364,6 @@ Element::create_from_string(std::istream &in, int& line, int& pos) throw(ParseEr
     if (el_read) {
         return element;
     } else {
-        // throw exception?
         throw ParseError("nothing read");
     }
 }
