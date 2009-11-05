@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.61])
+AC_PREREQ([2.59])
 AC_INIT(bind, 10.0.0, bind10-bugs@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
