@@ -7,11 +7,22 @@
 
 namespace ISC { namespace Data {
 
+    class DataDefinitionError : public std::exception {
+    public:
+        DataDefinitionError(std::string m = "Data definition is invalid") : msg(m) {}
+        ~DataDefinitionError() throw() {}
+        const char* what() const throw() { return msg.c_str(); }
+    private:
+        std::string msg;
+    };
+
     class DataDefinition {
     public:
         explicit DataDefinition() {};
         explicit DataDefinition(ElementPtr e) : definition(e) {};
-        explicit DataDefinition(std::istream& in) throw(ParseError);
+        // todo: make check default false, or leave out option completely and always check?
+        explicit DataDefinition(std::istream& in, const bool check = true)
+                                throw(ParseError, DataDefinitionError);
 
         const ElementPtr getDefinition() { return definition; };
         // returns true if the given element conforms to this data

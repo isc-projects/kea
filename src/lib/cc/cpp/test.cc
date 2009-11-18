@@ -27,6 +27,9 @@ main(int argc, char **argv) {
     } catch (ParseError pe) {
         cout << "Error parsing definition file: " << pe.what() << endl;
         return 1;
+    } catch (DataDefinitionError dde) {
+        cout << "Error reading definition file: " << dde.what() << endl;
+        return 1;
     }
     file.close();
 

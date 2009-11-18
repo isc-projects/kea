@@ -20,6 +20,8 @@
 #include <string>
 
 #include <cc/cpp/session.h>
+#include <cc/cpp/data_def.h>
+#include <cc/cpp/data.h>
 
 class CommandSession {
 public:
@@ -28,7 +30,11 @@ public:
     std::pair<std::string, std::string> getCommand(int counter);
     std::vector<std::string> getZones();
 private:
+	void read_data_definition(const std::string& filename);
+	
     ISC::CC::Session session_;
+    ISC::Data::DataDefinition data_definition_;
+    ISC::Data::ElementPtr config_;
 };
 
 #endif // __CCSESSION_H
