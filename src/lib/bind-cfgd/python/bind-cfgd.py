@@ -112,7 +112,6 @@ if __name__ == "__main__":
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
         cm.read_config()
-        # do loading here if necessary
         cm.notify_boss()
         cm.run()
         cm.write_config()

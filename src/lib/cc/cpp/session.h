@@ -43,7 +43,7 @@ namespace ISC {
                            std::string subtype = "normal");
             void unsubscribe(std::string group,
                              std::string instance = "*");
-            unsigned int group_sendmsg(ISC::Data::ElementPtr& msg,
+            unsigned int group_sendmsg(const ISC::Data::ElementPtr& msg,
                                        std::string group,
                                        std::string instance = "*",
                                        std::string to = "*");

@@ -5,14 +5,150 @@
 
 #include <boost/foreach.hpp>
 
+// todo: add more context to thrown DataDefinitionErrors?
 
 using namespace ISC::Data;
 
-DataDefinition::DataDefinition(std::istream& in) throw(ParseError) {
+// todo: is there a direct way to get a std::string from an enum label?
+static std::string
+get_type_string(Element::types type)
+{
+    switch(type) {
+    case Element::integer:
+        return std::string("integer");
+    case Element::real:
+        return std::string("real");
+    case Element::boolean:
+        return std::string("boolean");
+    case Element::string:
+        return std::string("string");
+    case Element::list:
+        return std::string("list");
+    case Element::map:
+        return std::string("map");
+    default:
+        return std::string("unknown");
+    }
+}
+
+static Element::types
+get_type_value(const std::string& type_name) {
+    if (type_name == "integer") {
+        return Element::integer;
+    } else if (type_name == "real") {
+        return Element::real;
+    } else if (type_name == "boolean") {
+        return Element::boolean;
+    } else if (type_name == "string") {
+        return Element::string;
+    } else if (type_name == "list") {
+        return Element::list;
+    } else if (type_name == "map") {
+        return Element::map;
+    } else {
+        throw DataDefinitionError(type_name + " is not a valid type name");
+    }
+}
+
+static void
+check_leaf_item(const ElementPtr& spec, const std::string& name, Element::types type, bool mandatory)
+{
+    if (spec->contains(name)) {
+        if (spec->get(name)->get_type() == type) {
+            return;
+        } else {
+            throw DataDefinitionError(name + " not of type " + get_type_string(type));
+        }
+    } else if (mandatory) {
+        // todo: want parent item name, and perhaps some info about location
+        // in list? or just catch and throw new...
+        // or make this part non-throwing and check return value...
+        throw DataDefinitionError(name + " missing in " + spec->str());
+    }
+}
+
+static void check_config_item_list(const ElementPtr& spec);
+
+static void
+check_config_item(const ElementPtr& spec) {
+    check_leaf_item(spec, "item_name", Element::string, true);
+    check_leaf_item(spec, "item_type", Element::string, true);
+    check_leaf_item(spec, "item_optional", Element::boolean, true);
+    check_leaf_item(spec, "item_default",
+                    get_type_value(spec->get("item_type")->string_value()),
+                    !spec->get("item_optional")->bool_value()
+                   );
+
+    // if list, check the list definition
+    if (get_type_value(spec->get("item_type")->string_value()) == Element::list) {
+        check_leaf_item(spec, "list_item_spec", Element::map, true);
+        check_config_item(spec->get("list_item_spec"));
+    }
+    // todo: add stuff for type map
+    if (get_type_value(spec->get("item_type")->string_value()) == Element::map) {
+        check_leaf_item(spec, "map_item_spec", Element::list, true);
+        check_config_item_list(spec);
+    }
+}
+
+static void
+check_config_item_list(const ElementPtr& spec) {
+    if (spec->get_type() != Element::list) {
+        throw DataDefinitionError("config_data is not a list of elements");
+    }
+    BOOST_FOREACH(ElementPtr item, spec->list_value()) {
+        check_config_item(item);
+    }
+}
+
+static void
+check_command(const ElementPtr& spec) {
+    check_leaf_item(spec, "command_name", Element::string, true);
+    check_leaf_item(spec, "command_args", Element::list, true);
+    check_config_item_list(spec->get("command_args"));
+}
+
+static void
+check_command_list(const ElementPtr& spec) {
+    if (spec->get_type() != Element::list) {
+        throw DataDefinitionError("commands is not a list of elements");
+    }
+    BOOST_FOREACH(ElementPtr item, spec->list_value()) {
+        check_command(item);
+    }
+}
+
+static void
+check_data_specification(const ElementPtr& spec) {
+    check_leaf_item(spec, "module_name", Element::string, true);
+    // not mandatory; module could just define commands and have
+    // no config
+    if (spec->contains("config_data")) {
+        check_config_item_list(spec->get("config_data"));
+    }
+    if (spec->contains("commands")) {
+        check_command_list(spec->get("commands"));
+    }
+}
+
+// checks whether the given element is a valid data definition
+// throws a DataDefinitionError if the specification is bad
+static void
+check_definition(const ElementPtr& def)
+{
+    if (!def->contains("data_specification")) {
+        throw DataDefinitionError("Data specification does not contain data_specification element");
+    } else {
+        check_data_specification(def->get("data_specification"));
+    }    
+}
+
+DataDefinition::DataDefinition(std::istream& in, const bool check)
+                               throw(ParseError, DataDefinitionError) {
     definition = Element::create_from_string(in);
-    // TODO, make sure the whole structure is complete and valid
-    if (!definition->contains("data_specification")) {
-        throw ParseError("Data specification does not contain data_specification element");
+    // make sure the whole structure is complete and valid
+    if (check) {
+        check_definition(definition);
     }
 }
 
@@ -100,7 +236,6 @@ bool
 DataDefinition::validate_spec_list(const ElementPtr spec, const ElementPtr data) {
     ElementPtr cur_data_el;
     std::string cur_item_name;
-    bool optional;
     BOOST_FOREACH(ElementPtr cur_spec_el, spec->list_value()) {
         if (!validate_spec(cur_spec_el, data)) {
             return false;

@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I$(top_srcdir)/src/lib/cc/cpp -I$(top_srcdir)/ext
+AM_CPPFLAGS = -I$(top_srcdir)/src/lib/cc/cpp -I$(top_srcdir)/ext -Wall -Werror
 
 bin_PROGRAMS = test
 test_SOURCES = test.cc

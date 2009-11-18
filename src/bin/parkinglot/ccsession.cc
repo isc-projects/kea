@@ -14,17 +14,26 @@
 
 // $Id$
 
+// 
+// todo: generalize this and make it into a specific API for all modules
+//       to use (i.e. connect to cc, send config and commands, get config,
+//               react on config change announcements)
+//
+
+
 #include <stdexcept>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
 
 #include <iostream>
+#include <fstream>
 #include <sstream>
 
 #include <boost/foreach.hpp>
 
 #include <cc/cpp/data.h>
+#include <cc/cpp/data_def.h>
 #include <cc/cpp/session.h>
 
 #include "common.h"
@@ -34,16 +43,53 @@ using namespace std;
 
 using ISC::Data::Element;
 using ISC::Data::ElementPtr;
+using ISC::Data::DataDefinition;
+using ISC::Data::ParseError;
+using ISC::Data::DataDefinitionError;
+
+void
+CommandSession::read_data_definition(const std::string& filename) {
+    std::ifstream file;
+
+    // this file should be declared in a @something@ directive
+    file.open("parkinglot.spec");
+    if (!file) {
+        cout << "error opening parkinglot.spec" << endl;
+        exit(1);
+    }
+
+    try {
+        data_definition_ = DataDefinition(file, true);
+        cout << "Definition: " << endl;
+        cout << data_definition_.getDefinition() << endl;
+    } catch (ParseError pe) {
+        cout << "Error parsing definition file: " << pe.what() << endl;
+        exit(1);
+    } catch (DataDefinitionError dde) {
+        cout << "Error reading definition file: " << dde.what() << endl;
+        exit(1);
+    }
+    file.close();
+}
 
 CommandSession::CommandSession() :
     session_(ISC::CC::Session())
 {
     try {
+        // todo: workaround, let boss wait until msgq is started
+        // and remove sleep here
+        sleep(1);
         session_.establish();
         session_.subscribe("ParkingLot", "*", "meonly");
         session_.subscribe("Boss", "*", "meonly");
         session_.subscribe("ConfigManager", "*", "meonly");
         session_.subscribe("statistics", "*", "meonly");
+        read_data_definition("parkinglot.spec");
+        sleep(1);
+        ElementPtr cmd = Element::create_from_string("{ \"config_manager\": 1}");
+        // why does the msgq seem to kill this msg?
+        session_.group_sendmsg(data_definition_.getDefinition(), "ConfigManager");
+        cout << "def sent" << endl;
     } catch (...) {
         throw std::runtime_error("SessionManager: failed to open sessions");
     }
@@ -88,12 +134,12 @@ CommandSession::getCommand(int counter) {
     return std::pair<string, string>("unknown", "");
 }
 
+// should be replaced by the general config-getter in cc setup
 std::vector<std::string>
 CommandSession::getZones() {
     ElementPtr cmd, result, env;
     std::vector<std::string> zone_names;
     cmd = Element::create_from_string("{ \"command\": [ \"zone\", \"list\" ] }");
-    sleep(1);
     session_.group_sendmsg(cmd, "ConfigManager");
     session_.group_recvmsg(env, result, false);
     BOOST_FOREACH(ElementPtr zone_name, result->get("result")->list_value()) {

@@ -1,6 +1,6 @@
 {
   "data_specification": {
-    "module_name": "parkinglot",
+    "module_name": "ParkingLot",
     "config_data": [
       {
         "item_name": "port",
@@ -24,21 +24,21 @@
     "commands": [
       {
         "command_name": "zone_add",
-        "command_args": {
+        "command_args": [ {
           "item_name": "zone_name",
           "item_type": "string",
           "item_optional": false,
           "item_default": ""
-        }
+        } ]
       },
       {
         "command_name": "zone_delete",
-        "command_args": {
+        "command_args": [ {
           "item_name": "zone_name",
           "item_type": "string",
           "item_optional": false,
           "item_default": ""
-        }
+        } ]
       }
     ]
   }

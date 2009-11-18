@@ -138,7 +138,8 @@ Session::unsubscribe(std::string group, std::string instance)
 }
 
 unsigned int
-Session::group_sendmsg(ElementPtr& msg, std::string group, std::string instance, std::string to)
+Session::group_sendmsg(const ElementPtr& msg, std::string group,
+                       std::string instance, std::string to)
 {
     ElementPtr env = Element::create(std::map<std::string, ElementPtr>());
 
