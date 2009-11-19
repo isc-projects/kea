@@ -12,17 +12,39 @@ class ConfigData:
     def remove_zone(self, zone_name):
         del self.zones[zone_name]
 
+    def set_data_definition(self, module_name, module_data_definition):
+        print ("[XX] set datadef for module " + module_name)
+        print ("[XX]")
+        print (self.zones)
+        self.zones[module_name] = module_data_definition
+        print (self.data_definitions)
+        self.data_definitions[module_name] = module_data_definition
+
 class ConfigManager:
     def __init__(self):
+        self.commands = {}
+        self.data_definitions = {}
+        self.config = ConfigData()
         self.cc = ISC.CC.Session()
         self.cc.group_subscribe("ConfigManager")
         self.cc.group_subscribe("Boss", "ConfigManager")
-        self.config = ConfigData()
         self.db_filename = "/tmp/parkinglot.db"
         self.running = False
 
     def notify_boss(self):
         self.cc.group_sendmsg({"running": "configmanager"}, "Boss")
+
+    def set_config(self, module_name, data_specification):
+        self.data_definitions[module_name] = data_specification
+        
+    def remove_config(self, module_name):
+        self.data_definitions[module_name]
+
+    def set_commands(self, module_name, commands):
+        self.commands[module_name] = commands
+
+    def remove_commands(self, module_name):
+        del self.commands[module_name]
 
     def add_zone(self, zone_name):
         self.config.add_zone(zone_name, "todo")
@@ -61,6 +83,8 @@ class ConfigManager:
         if "command" in msg:
             cmd = msg["command"]
             try:
+                if cmd[0] == "get_commands":
+                    answer["result"] = self.commands
                 if cmd[0] == "zone" and cmd[1] == "add":
                     self.add_zone(cmd[2])
                     answer["result"] = [ 0 ]
@@ -78,6 +102,14 @@ class ConfigManager:
             except IndexError as ie:
                 print("missing argument")
                 answer["result"] = [ 1, "Missing argument in command" ]
+        elif "data_specification" in msg:
+            # todo: validate? (no direct access to spec as
+            spec = msg["data_specification"]
+            if "config_data" in spec:
+                self.set_config(spec["module_name"], spec["config_data"])
+            if "commands" in spec:
+                self.set_commands(spec["module_name"], spec["commands"])
+            answer["result"] = [ 0 ]
         else:
             print("unknown message: " + str(msg))
             answer["result"] = [ 1, "Unknown module: " + str(msg) ]
