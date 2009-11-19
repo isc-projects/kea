@@ -51,6 +51,9 @@ def _encode_length_and_type(data, datatype):
     if data == None:
         return(struct.pack(">B", _ITEM_NULL))
     length = len(data)
+    if type(data) == str:
+        #print("[XX] data is still string, converting to bytearray...");
+        data = bytearray(data, 'utf-8')
     if length < 0x0000100:
         return(struct.pack(">B B", datatype | _ITEM_LENGTH_8, length) + data)
     elif length < 0x00010000:
@@ -60,7 +63,7 @@ def _encode_length_and_type(data, datatype):
 
 def _pack_string(item):
     """Pack a string (data) and its type/length prefix."""
-    return (_encode_length_and_type(bytearray(item, 'utf-8'), _ITEM_DATA))
+    return (_encode_length_and_type(item, _ITEM_DATA))
 
 def _pack_array(item):
     """Pack a list (array) and its type/length prefix."""
@@ -88,7 +91,7 @@ def _encode_item(item):
     elif type(item) == list:
         return (_pack_array(item))
     elif type(item) in (bytearray, bytes):
-        return (_pack_string(item.decode()))
+        return (_pack_string(item))
     else:
         return (_pack_string(str(item)))
 
@@ -116,6 +119,9 @@ def from_wire(data):
     if len(data) < 5:
         raise DecodeError("Data is too short to decode")
     wire_version, data = data[0:4], data[4:]
+    if (type(wire_version) == str):
+        wire_version = bytearray(wire_version, 'utf-8')
+    #wire_version = struct.unpack(">I", wire_version)[0]
     wire_version = struct.unpack(">I", wire_version)[0]
     if wire_version != PROTOCOL_VERSION:
         raise DecodeError("Incorrect protocol version")
@@ -124,10 +130,12 @@ def from_wire(data):
 def _decode_tag(data):
     if len(data) < 1:
         raise DecodeError("Data underrun while decoding")
+    if (type(data) == str):
+        data = bytearray(data, 'utf-8')
     length = data[0]
     if len(data) - 1 < length:
         raise DecodeError("Data underrun while decoding")
-    return [data[1:length + 1].decode(), data[length + 1:]]
+    return [data[1:length + 1], data[length + 1:]]
 
 def _decode_item(data):
     if len(data) < 1:
@@ -160,7 +168,7 @@ def _decode_item(data):
         data = data[length:]
 
     if item_type == _ITEM_DATA:
-        value = item.decode()
+        value = item
     elif item_type == _ITEM_HASH:
         value = _decode_hash(item)
     elif item_type == _ITEM_LIST:
@@ -177,6 +185,15 @@ def _decode_hash(data):
     while len(data) > 0:
         tag, data = _decode_tag(data)
         value, data = _decode_item(data)
+        if type(value) == bytearray:
+            # hack! just try it in case it is really a string
+            try:
+                value = value.decode('utf-8')
+            except UnicodeDecodeError as ude:
+                # apparently not a final item, leave it a bytearray
+                pass
+        if type(tag) == bytearray:
+            tag = tag.decode('utf-8')
         ret[tag] = value
     return ret
 
@@ -184,6 +201,8 @@ def _decode_array(data):
     ret = []
     while len(data) > 0:
         value, data = _decode_item(data)
+        if (type(value) == bytearray):
+            value = value.decode('utf-8')
         ret.append(value)
     return ret
 
