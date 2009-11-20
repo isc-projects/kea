@@ -27,6 +27,7 @@ _ITEM_BLOB = 0x01
 _ITEM_HASH = 0x02
 _ITEM_LIST = 0x03
 _ITEM_NULL = 0x04
+_ITEM_BOOL = 0x05
 _ITEM_UTF8 = 0x08
 _ITEM_MASK = 0x0f
 
@@ -68,6 +69,10 @@ def _pack_blob(item):
     """Pack a blob (binary data) and its type/length prefix."""
     return (_encode_length_and_type(item, _ITEM_BLOB))
 
+def _pack_bool(item):
+    """Pack a bool and its type/length prefix."""
+    return (_encode_length_and_type(_encode_bool(item), _ITEM_BOOL))
+
 def _pack_array(item):
     """Pack a list (array) and its type/length prefix."""
     return (_encode_length_and_type(_encode_array(item), _ITEM_LIST))
@@ -93,6 +98,8 @@ def _encode_item(item):
     """Encode each item depending on its type"""
     if item == None:
         return (_pack_nil())
+    elif type(item) == bool:
+        return (_pack_bool(item))
     elif type(item) == dict:
         return (_pack_hash(item))
     elif type(item) == list:
@@ -101,6 +108,13 @@ def _encode_item(item):
         return (_pack_blob(item))
     else:
         return (_pack_utf8(str(item)))
+
+def _encode_bool(item):
+    """Encode a boolean value into a bytearray of one byte (0=false)"""
+    if item:
+        return b'\x01'
+    else:
+        return b'\x00'
 
 def _encode_array(item):
     """Encode an array, where each value is encoded recursively"""
@@ -170,6 +184,8 @@ def _decode_item(data):
 
     if item_type == _ITEM_BLOB:
         value = item
+    elif item_type == _ITEM_BOOL:
+        value = _decode_bool(item)
     elif item_type == _ITEM_UTF8:
         value = str(item, 'utf-8')
     elif item_type == _ITEM_HASH:
@@ -182,6 +198,9 @@ def _decode_item(data):
         raise DecodeError("Unknown item type in decode: %02x" % item_type)
 
     return (value, data)
+
+def _decode_bool(data):
+    return data == b'0x01'
 
 def _decode_hash(data):
     ret = {}
