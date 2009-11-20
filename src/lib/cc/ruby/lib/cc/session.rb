@@ -127,7 +127,7 @@ class Session
     seq
   end
 
-  def group_sendmsg(routing, msg)
+  def group_replymsg(routing, msg)
     seq = next_sequence
     sendmsg({ :type => "send",
               :from => @lname,
@@ -135,7 +135,7 @@ class Session
               :group => routing["group"],
               :instance => routing["instance"],
               :seq => seq,
-              :reply => fouring["seq"],
+              :reply => routing["seq"],
               :msg => CC::Message.to_wire(msg),
             })
     seq
