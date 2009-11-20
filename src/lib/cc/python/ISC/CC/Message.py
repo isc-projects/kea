@@ -44,7 +44,7 @@ def _encode_tag(tag):
     """Encode a single UTF-8 tag.
     ... wire_partial = Message._encode_tag('this')
     """
-    return(struct.pack(">B", len(tag)) + bytearray(tag, 'utf-8'))
+    return(struct.pack(">B", len(bytearray(tag, 'utf-8'))) + bytearray(tag, 'utf-8'))
 
 def _encode_length_and_type(data, datatype):
     """Helper method to handle the length encoding in one place."""
