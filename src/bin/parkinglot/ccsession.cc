@@ -41,7 +41,7 @@ CommandSession::CommandSession() :
     try {
         session_.establish();
         session_.subscribe("ParkingLot", "*");
-        session_.subscribe("Boss", "*", "meonly");
+        session_.subscribe("Boss", "ParkingLot");
         session_.subscribe("ConfigManager", "*", "meonly");
         session_.subscribe("statistics", "*", "meonly");
     } catch (...) {
@@ -82,6 +82,12 @@ CommandSession::getCommand(int counter) {
         cmd = data->get("zone_deleted");
         if (cmd != NULL) {
             return std::pair<string, string>("delzone", cmd->string_value());
+        }
+        cmd = data->get("command");
+        if (cmd != NULL) {
+            if (cmd->get_type() == Element::string && cmd->string_value() == "shutdown") {
+                return std::pair<string, string>("shutdown", "");
+            }
         }
     }
 
