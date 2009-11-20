@@ -1,3 +1,5 @@
+// XXXMLG UTF-8 and binary are all encoded as UTF-8, and decoded as UTF-8.
+// XXXMLG This will cause issues down the road, but for today it works.
 
 #include "data.h"
 
@@ -12,10 +14,11 @@ using namespace ISC::Data;
 
 const unsigned char PROTOCOL_VERSION[4] = { 0x53, 0x6b, 0x61, 0x6e };
 
-const unsigned char ITEM_DATA = 0x01;
+const unsigned char ITEM_BLOB = 0x01;
 const unsigned char ITEM_HASH = 0x02;
 const unsigned char ITEM_LIST = 0x03;
 const unsigned char ITEM_NULL = 0x04;
+const unsigned char ITEM_UTF8 = 0x08;
 const unsigned char ITEM_MASK = 0x0f;
 
 const unsigned char ITEM_LENGTH_32   = 0x00;
@@ -551,7 +554,26 @@ decode_tag(std::stringstream& in, int& item_length)
 }
 
 ElementPtr
-decode_data(std::stringstream& in, int& item_length)
+decode_blob(std::stringstream& in, int& item_length)
+{
+    char *buf = new char[item_length + 1];
+
+    in.read(buf, item_length);
+    if (in.fail()) {
+        throw DecodeError();
+    }
+    buf[item_length] = 0;
+
+    std::string s = std::string(buf, item_length);
+    item_length -= item_length;
+
+    delete [] buf;
+    return Element::create(s);
+}
+
+// XXXMLG currently identical to decode_blob
+ElementPtr
+decode_utf8(std::stringstream& in, int& item_length)
 {
     char *buf = new char[item_length + 1];
 
@@ -630,8 +652,11 @@ decode_element(std::stringstream& in, int& in_length)
     in_length -= item_length;
 
     switch (type) {
-    case ITEM_DATA:
-        element = decode_data(in, item_length);
+    case ITEM_BLOB:
+        element = decode_blob(in, item_length);
+        break;
+    case ITEM_UTF8:
+        element = decode_utf8(in, item_length);
         break;
     case ITEM_HASH:
         element = decode_hash(in, item_length);
@@ -711,7 +736,7 @@ StringElement::to_wire(int omit_length)
     std::stringstream ss;
 
     int length = string_value().length();
-    ss << encode_length(length, ITEM_DATA) << string_value();
+    ss << encode_length(length, ITEM_UTF8) << string_value();
 
     return ss.str();
 }
@@ -724,7 +749,7 @@ IntElement::to_wire(int omit_length)
 
     text << str();
     int length = text.str().length();
-    ss << encode_length(length, ITEM_DATA) << text.str();
+    ss << encode_length(length, ITEM_UTF8) << text.str();
 
     return ss.str();
 }
@@ -737,7 +762,7 @@ BoolElement::to_wire(int omit_length)
 
     text << str();
     int length = text.str().length();
-    ss << encode_length(length, ITEM_DATA) << text.str();
+    ss << encode_length(length, ITEM_UTF8) << text.str();
 
     return ss.str();
 }
@@ -750,7 +775,7 @@ DoubleElement::to_wire(int omit_length)
 
     text << str();
     int length = text.str().length();
-    ss << encode_length(length, ITEM_DATA) << text.str();
+    ss << encode_length(length, ITEM_UTF8) << text.str();
 
     return ss.str();
 }
