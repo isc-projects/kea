@@ -192,10 +192,8 @@ def _decode_hash(data):
                 value = value.decode('utf-8')
                 # if the item is a bool, we need to convert it
                 if value.lower() == "true":
-                    print("[XX] item is a bool (true)")
                     value = True
                 elif value.lower() == "false":
-                    print("[XX] item is a bool (false)")
                     value = False
             except UnicodeDecodeError as ude:
                 # apparently not a final item, leave it a bytearray
