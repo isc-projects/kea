@@ -76,5 +76,23 @@ class TestCCWireEncoding(unittest.TestCase):
         decoded = ISC.CC.Message.from_wire(wire)
         self.assertEqual(decoded["せんせい"], "string")
 
+    def test_to_wire_of_bool_true(self):
+        wire = ISC.CC.Message.to_wire({ "bool": True })
+        self.assertEqual(wire, b'Skan\x04bool%\x01\x01')
+
+    def test_to_wire_of_bool_false(self):
+        wire = ISC.CC.Message.to_wire({ "bool": False })
+        self.assertEqual(wire, b'Skan\x04bool%\x01\x00')
+
+    def test_from_wire_of_bool_true(self):
+        wire = b'Skan\x04bool%\x01\x01'
+        decoded = ISC.CC.Message.from_wire(wire)
+        self.assertEqual(decoded["bool"], True)
+
+    def test_from_wire_of_bool_true(self):
+        wire = b'Skan\x04bool%\x01\x00'
+        decoded = ISC.CC.Message.from_wire(wire)
+        self.assertEqual(decoded["bool"], False)
+
 if __name__ == '__main__':
     unittest.main()
