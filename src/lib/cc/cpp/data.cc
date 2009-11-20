@@ -18,6 +18,7 @@ const unsigned char ITEM_BLOB = 0x01;
 const unsigned char ITEM_HASH = 0x02;
 const unsigned char ITEM_LIST = 0x03;
 const unsigned char ITEM_NULL = 0x04;
+const unsigned char ITEM_BOOL = 0x05;
 const unsigned char ITEM_UTF8 = 0x08;
 const unsigned char ITEM_MASK = 0x0f;
 
@@ -554,6 +555,18 @@ decode_tag(std::stringstream& in, int& item_length)
 }
 
 ElementPtr
+decode_bool(std::stringstream& in, int& item_length)
+{
+    char c;
+    c = in.get();
+    if (c == 0x01) {
+        return Element::create(true);
+    } else {
+        return Element::create(false);
+    }
+}
+
+ElementPtr
 decode_blob(std::stringstream& in, int& item_length)
 {
     char *buf = new char[item_length + 1];
@@ -652,6 +665,9 @@ decode_element(std::stringstream& in, int& in_length)
     in_length -= item_length;
 
     switch (type) {
+    case ITEM_BOOL:
+        element = decode_bool(in, item_length);
+        break;
     case ITEM_BLOB:
         element = decode_blob(in, item_length);
         break;
@@ -761,8 +777,13 @@ BoolElement::to_wire(int omit_length)
     std::stringstream text;
 
     text << str();
-    int length = text.str().length();
-    ss << encode_length(length, ITEM_UTF8) << text.str();
+    int length = 1;
+    ss << encode_length(length, ITEM_BOOL);
+    if (bool_value()) {
+        ss << 0x01;
+    } else {
+        ss << 0x00;
+    }
 
     return ss.str();
 }
