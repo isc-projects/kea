@@ -25,6 +25,7 @@ class Message
   ITEM_HASH = 0x02
   ITEM_LIST = 0x03
   ITEM_NULL = 0x04
+  ITEM_BOOL = 0x05
   ITEM_UTF8 = 0x08
   ITEM_MASK = 0x0f
 
@@ -107,6 +108,10 @@ class Message
     encode_length_and_type(str.to_s.encode('binary'), ITEM_UTF8)
   end
 
+  def self.pack_bool(bool)
+    encode_length_and_type(encode_bool(bool), ITEM_BOOL)
+  end
+
   def self.pack_blob(str)
     encode_length_and_type(str.to_s, ITEM_BLOB)
   end
@@ -145,6 +150,10 @@ class Message
       else
         ret = pack_blob(item)
       end
+    when false
+      ret = pack_bool(item)
+    when true
+      ret = pack_bool(item)
     else
       ret = pack_blob(item.to_s)
     end
@@ -163,6 +172,18 @@ class Message
     end
     buffer
   end
+
+  def self.encode_bool(msg)
+    unless msg.class == FalseClass or msg.class == TrueClass
+      raise ArgumentError, "Should be a true or false"
+    end
+    if msg
+      [0x01].pack("C")
+    else
+      [0x00].pack("C")
+    end
+  end
+    
 
   def self.encode_array(msg)
     unless msg.is_a?Array
@@ -226,6 +247,8 @@ class Message
       value = item
     when ITEM_UTF8
       value = item.encode('utf-8')
+    when ITEM_BOOL
+      value = decode_bool(item)
     when ITEM_HASH
       value = decode_hash(item)
     when ITEM_LIST
@@ -239,6 +262,10 @@ class Message
     [value, msg]
   end
 
+  def self.decode_bool(msg)
+    return msg == [0x01].pack("C")
+  end
+    
   def self.decode_hash(msg)
     ret = {}
     while msg.length > 0
@@ -269,7 +296,7 @@ if $0 == __FILE__
     "to" => "recipient@host",
     "seq" => 1234,
     "data" => {
-      "list" => [ 1, 2, nil, "this" ],
+      "list" => [ 1, 2, nil, true, false, "this" ],
       "description" => "Fun for all",
     },
   }
