@@ -150,9 +150,9 @@ class Message
       else
         ret = pack_blob(item)
       end
-    when false
+    when FalseClass
       ret = pack_bool(item)
-    when true
+    when TrueClass
       ret = pack_bool(item)
     else
       ret = pack_blob(item.to_s)
@@ -175,7 +175,7 @@ class Message
 
   def self.encode_bool(msg)
     unless msg.class == FalseClass or msg.class == TrueClass
-      raise ArgumentError, "Should be a true or false"
+      raise ArgumentError, "Should be true or false"
     end
     if msg
       [0x01].pack("C")
