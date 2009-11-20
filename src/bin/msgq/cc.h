@@ -27,10 +27,11 @@
  * Item types and data lengths.
  */
 #define ITEM_UNDEFINED	0x00
-#define ITEM_DATA	0x01
+#define ITEM_BLOB	0x01
 #define ITEM_HASH	0x02
 #define ITEM_LIST	0x03
 #define ITEM_NULL	0x04
+#define ITEM_UTF8   0x08
 #define ITEM_MASK	0x0f
 
 #define LENGTH_32	0x00
