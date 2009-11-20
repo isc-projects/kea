@@ -188,7 +188,15 @@ def _decode_hash(data):
         if type(value) == bytearray:
             # hack! just try it in case it is really a string
             try:
+                # now we have a 'final' item and can decode
                 value = value.decode('utf-8')
+                # if the item is a bool, we need to convert it
+                if value.lower() == "true":
+                    print("[XX] item is a bool (true)")
+                    value = True
+                elif value.lower() == "false":
+                    print("[XX] item is a bool (false)")
+                    value = False
             except UnicodeDecodeError as ude:
                 # apparently not a final item, leave it a bytearray
                 pass
@@ -202,7 +210,13 @@ def _decode_array(data):
     while len(data) > 0:
         value, data = _decode_item(data)
         if (type(value) == bytearray):
+            # now we have a 'final' item and can decode
             value = value.decode('utf-8')
+            # if the item is a bool, we need to convert it
+            if value.lower() == "true":
+                value = True
+            elif value.lower() == "false":
+                value = False
         ret.append(value)
     return ret
 
