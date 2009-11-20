@@ -74,7 +74,7 @@ class ConfigManager:
                         answer["result"] = [ 1, "Unknown zone" ]
                 elif cmd[0] == "zone" and cmd[1] == "list":
                     answer["result"]     = list(self.config.zones.keys())
-                elif len(cmd) > 1 and cmd[1] == "shutdown":
+                elif cmd == "shutdown":
                     print("Received shutdown command")
                     self.running = False
                 else:
