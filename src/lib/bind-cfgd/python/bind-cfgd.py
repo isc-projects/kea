@@ -75,16 +75,16 @@ class ConfigManager:
                 elif cmd[0] == "zone" and cmd[1] == "list":
                     answer["result"]     = list(self.config.zones.keys())
                 elif cmd == "shutdown":
-                    print("Received shutdown command")
+                    print("[bind-cfgd] Received shutdown command")
                     self.running = False
                 else:
-                    print("unknown command: " + str(cmd))
+                    print("[bind-cfgd] unknown command: " + str(cmd))
                     answer["result"] = [ 1, "Unknown command: " + str(cmd) ]
             except IndexError as ie:
-                print("missing argument")
+                print("[bind-cfgd] missing argument")
                 answer["result"] = [ 1, "Missing argument in command" ]
         else:
-            print("unknown message: " + str(msg))
+            print("[bind-cfgd] unknown message: " + str(msg))
             answer["result"] = [ 1, "Unknown module: " + str(msg) ]
         return answer
         
@@ -93,13 +93,13 @@ class ConfigManager:
         while (self.running):
             msg, env = self.cc.group_recvmsg(False)
             if msg:
-                print("received message: ")
+                print("[bind-cfgd] received message: ")
                 print(msg)
                 answer = self.handle_msg(msg);
-                print("sending answer: ")
+                print("[bind-cfgd] sending answer: ")
                 print(answer)
                 self.cc.group_reply(env, answer)
-                print("answer sent")
+                print("[bind-cfgd] answer sent")
             else:
                 self.running = False
 
@@ -111,7 +111,6 @@ def signal_handler(signal, frame):
         cm.running = False
 
 if __name__ == "__main__":
-    print("Hello, BIND10 world!")
     try:
         cm = ConfigManager()
         signal.signal(signal.SIGINT, signal_handler)
@@ -122,7 +121,7 @@ if __name__ == "__main__":
         cm.run()
         cm.write_config()
     except ISC.CC.SessionError as se:
-        print("Error creating config manager, "
+        print("[bind-cfgd] Error creating config manager, "
               "is the command channel daemon running?")
     except KeyboardInterrupt as kie:
         print("Got ctrl-c, save config and exit")
