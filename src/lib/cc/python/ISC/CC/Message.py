@@ -23,10 +23,11 @@ class DecodeError(Exception): pass
 
 PROTOCOL_VERSION = 0x536b616e
 
-_ITEM_DATA = 0x01
+_ITEM_BLOB = 0x01
 _ITEM_HASH = 0x02
 _ITEM_LIST = 0x03
 _ITEM_NULL = 0x04
+_ITEM_UTF8 = 0x08
 _ITEM_MASK = 0x0f
 
 _ITEM_LENGTH_32   = 0x00
@@ -44,7 +45,8 @@ def _encode_tag(tag):
     """Encode a single UTF-8 tag.
     ... wire_partial = Message._encode_tag('this')
     """
-    return(struct.pack(">B", len(bytearray(tag, 'utf-8'))) + bytearray(tag, 'utf-8'))
+    binary = bytes(tag, 'utf-8')
+    return(struct.pack(">B", len(binary))) + binary
 
 def _encode_length_and_type(data, datatype):
     """Helper method to handle the length encoding in one place."""
@@ -58,9 +60,13 @@ def _encode_length_and_type(data, datatype):
     else:
         return(struct.pack(">B I", datatype, length) + data)
 
-def _pack_string(item):
-    """Pack a string (data) and its type/length prefix."""
-    return (_encode_length_and_type(bytearray(item, 'utf-8'), _ITEM_DATA))
+def _pack_utf8(item):
+    """Pack a string (utf-8) and its type/length prefix."""
+    return (_encode_length_and_type(bytes(item, 'utf-8'), _ITEM_UTF8))
+
+def _pack_blob(item):
+    """Pack a blob (binary data) and its type/length prefix."""
+    return (_encode_length_and_type(item, _ITEM_BLOB))
 
 def _pack_array(item):
     """Pack a list (array) and its type/length prefix."""
@@ -71,8 +77,12 @@ def _pack_hash(item):
     data = _encode_hash(item)
     return (_encode_length_and_type(data, _ITEM_HASH))
 
-def _encode_string(item):
-    """Encode a string.  More or less identity."""
+def _encode_utf8(item):
+    """Encode a string (utf-8).  More or less identity."""
+    return (item)
+
+def _encode_blob(item):
+    """Encode a blob (data).  More or less identity."""
     return (item)
 
 def _pack_nil():
@@ -87,22 +97,21 @@ def _encode_item(item):
         return (_pack_hash(item))
     elif type(item) == list:
         return (_pack_array(item))
-    elif type(item) in (bytearray, bytes):
-        return (_pack_string(item.decode()))
+    elif type(item) in (bytes, bytearray):
+        return (_pack_blob(item))
     else:
-        return (_pack_string(str(item)))
+        return (_pack_utf8(str(item)))
 
 def _encode_array(item):
     """Encode an array, where each value is encoded recursively"""
-    ret = bytearray()
+    ret = bytes()
     for i in item:
         ret += _encode_item(i)
     return ret
 
 def _encode_hash(item):
     """Encode a hash, where each value is encoded recursively"""
-
-    ret = bytearray()
+    ret = bytes()
     for key, value in item.items():
         ret += _encode_tag(key)
         ret += _encode_item(value)
@@ -159,8 +168,10 @@ def _decode_item(data):
         item = data[0:length]
         data = data[length:]
 
-    if item_type == _ITEM_DATA:
-        value = item.decode()
+    if item_type == _ITEM_BLOB:
+        value = item
+    elif item_type == _ITEM_UTF8:
+        value = str(item, 'utf-8')
     elif item_type == _ITEM_HASH:
         value = _decode_hash(item)
     elif item_type == _ITEM_LIST:
