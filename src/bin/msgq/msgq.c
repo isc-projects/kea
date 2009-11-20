@@ -392,9 +392,9 @@ handle_subscribe(connection_t *con, msgbuf_t *msgb, ccsearch_t *c)
 		return;
 	}
 
-	if (group->type != ITEM_DATA
-	    || instance->type != ITEM_DATA
-	    || subtype->type != ITEM_DATA) {
+	if (group->type != ITEM_UTF8
+	    || instance->type != ITEM_UTF8
+	    || subtype->type != ITEM_UTF8) {
 		con_log(con, LOG_NOTICE,
 			"Bad subscribe, incorrect data types");
 		return;
@@ -421,8 +421,8 @@ handle_unsubscribe(connection_t *con, msgbuf_t *msgb, ccsearch_t *c)
 		return;
 	}
 
-	if (group->type != ITEM_DATA
-	    || instance->type != ITEM_DATA) {
+	if (group->type != ITEM_UTF8
+	    || instance->type != ITEM_UTF8) {
 		con_log(con, LOG_NOTICE,
 			"Bad subscribe, incorrect data types");
 		return;
@@ -450,13 +450,13 @@ handle_send(connection_t *con, msgbuf_t *msgb, ccsearch_t *c)
 		return;
 	}
 
-	if (group->type != ITEM_DATA
-	    || instance->type != ITEM_DATA) {
+	if (group->type != ITEM_UTF8
+	    || instance->type != ITEM_UTF8) {
 		con_log(con, LOG_NOTICE, "Bad send, incorrect data types");
 		return;
 	}
 
-	if (to->type != ITEM_DATA) {
+	if (to->type != ITEM_UTF8) {
 		con_log(con, LOG_NOTICE, "Bad send, incorrect data types");
 		return;
 	}
@@ -566,8 +566,8 @@ handle_lname(connection_t *con, msgbuf_t *msgb, ccsearch_t *c)
 	isc_buffer_t b;
 
 	ccmsg_init(&msg, buf, sizeof(buf));
-	ccmsg_add(&msg, ITEM_DATA, "lname", 5, con->lname, con->lnamelen);
-	ccmsg_add(&msg, ITEM_DATA, "type", 4, "getlname", 8);
+	ccmsg_add(&msg, ITEM_UTF8, "lname", 5, con->lname, con->lnamelen);
+	ccmsg_add(&msg, ITEM_UTF8, "type", 4, "getlname", 8);
 	len = ccmsg_render(&msg);
 
 	mb = msgbuf_create(mctx, len + 4);
@@ -625,13 +625,13 @@ process_packet(connection_t *con)
 
 	c = cc_findtag(cc, "type", 4);
 
-	if (cc_matchdata(c, ITEM_DATA, "send", 4)) {
+	if (cc_matchdata(c, ITEM_UTF8, "send", 4)) {
 		handle_send(con, mb, cc);
-	} else if (cc_matchdata(c, ITEM_DATA, "getlname", 8)) {
+	} else if (cc_matchdata(c, ITEM_UTF8, "getlname", 8)) {
 		handle_lname(con, mb, cc);
-	} else if (cc_matchdata(c, ITEM_DATA, "subscribe", 9)) {
+	} else if (cc_matchdata(c, ITEM_UTF8, "subscribe", 9)) {
 		handle_subscribe(con, mb, cc);
-	} else if (cc_matchdata(c, ITEM_DATA, "unsubscribe", 9)) {
+	} else if (cc_matchdata(c, ITEM_UTF8, "unsubscribe", 9)) {
 		handle_unsubscribe(con, mb, cc);
 	}
 }
