@@ -21,25 +21,25 @@ AC_HEADER_STDBOOL
 AC_TYPE_SIZE_T
 
 #
-# Check availablity of CppUnit, which will be used for unit tests.
+# Check availablity of gtest, which will be used for unit tests.
 #
-AC_ARG_WITH(cppunit,
-[  --with-cppunit=PATH     specify a path to CppUnit header files (PATH/include) and library (PATH/lib)],
-    cppunit_path="$withval", cppunit_path="no")
-if test "$cppunit_path" != "no"
+AC_ARG_WITH(gtest,
+[  --with-gtest=PATH       specify a path to gtest header files (PATH/include) and library (PATH/lib)],
+    gtest_path="$withval", gtest_path="no")
+if test "$gtest_path" != "no"
 then
-	CPPUNIT_INCLUDES="-I${cppunit_path}/include"
-	CPPUNIT_LDFLAGS="-L${cppunit_path}/lib"
-	CPPUNIT_LDADD="-lcppunit"
+	GTEST_INCLUDES="-I${gtest_path}/include"
+	GTEST_LDFLAGS="-L${gtest_path}/lib"
+	GTEST_LDADD="-lgtest"
 else
-	CPPUNIT_INCLUDES=
-	CPPUNIT_LDFLAGS=
-	CPPUNIT_LDADD=
+	GTEST_INCLUDES=
+	GTEST_LDFLAGS=
+	GTEST_LDADD=
 fi
-AM_CONDITIONAL(HAVE_CPPUNIT, test $cppunit_path != "no")
-AC_SUBST(CPPUNIT_INCLUDES)
-AC_SUBST(CPPUNIT_LDFLAGS)
-AC_SUBST(CPPUNIT_LDADD)
+AM_CONDITIONAL(HAVE_GTEST, test $gtest_path != "no")
+AC_SUBST(GTEST_INCLUDES)
+AC_SUBST(GTEST_LDFLAGS)
+AC_SUBST(GTEST_LDADD)
 
 # Checks for library functions.
 
