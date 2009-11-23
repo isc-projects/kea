@@ -739,17 +739,19 @@ encode_length(unsigned int length, unsigned char type)
         type |= ITEM_LENGTH_8;
         ss << type << val;
     } else if (length <= 0x0000ffff) {
-        unsigned char val[2];
+        unsigned char val[3];
         val[0] = (length & 0x0000ff00) >> 8;
         val[1] = (length & 0x000000ff);
+        val[2] = 0;
         type |= ITEM_LENGTH_16;
         ss << type << val;
     } else {
-        unsigned char val[4];
+        unsigned char val[5];
         val[0] = (length & 0xff000000) >> 24;
         val[1] = (length & 0x00ff0000) >> 16;
         val[2] = (length & 0x0000ff00) >> 8;
         val[3] = (length & 0x000000ff);
+        val[4] = 0;
         type |= ITEM_LENGTH_32;
         ss << type << val;
     }
