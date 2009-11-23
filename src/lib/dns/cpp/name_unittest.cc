@@ -18,8 +18,8 @@
 
 #include <cppunit/TestAssert.h>
 
-#include <dns/name.h>
-#include <dns/name_unittest.h>
+#include "name.h"
+#include "name_unittest.h"
 
 using ISC::DNS::Name;
 

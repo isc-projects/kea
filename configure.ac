@@ -46,5 +46,6 @@ AC_SUBST(CPPUNIT_LDADD)
 AC_CONFIG_FILES([Makefile
                  src/Makefile
                  src/lib/Makefile
-                 src/lib/dns/Makefile])
+                 src/lib/dns/Makefile
+                 src/lib/dns/cpp/Makefile])
 AC_OUTPUT

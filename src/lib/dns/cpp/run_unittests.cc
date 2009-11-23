@@ -24,7 +24,7 @@
 #include <cppunit/TestRunner.h>
 #include <cppunit/TextTestProgressListener.h>
 
-#include <dns/name_unittest.h>
+#include "name_unittest.h"
 
 int
 main(int argc, char* argv[])
