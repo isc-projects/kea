@@ -16,7 +16,7 @@
 
 #include <stdexcept>
 
-#include <dns/name.h>
+#include "name.h"
 
 using namespace std;
 using namespace ISC::DNS;
