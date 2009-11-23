@@ -26,6 +26,7 @@ class Message
   ITEM_LIST = 0x03
   ITEM_NULL = 0x04
   ITEM_BOOL = 0x05
+  ITEM_INT  = 0x06
   ITEM_UTF8 = 0x08
   ITEM_MASK = 0x0f
 
@@ -112,6 +113,10 @@ class Message
     encode_length_and_type(encode_bool(bool), ITEM_BOOL)
   end
 
+  def self.pack_int(int)
+    encode_length_and_type(encode_int(int), ITEM_INT)
+  end
+
   def self.pack_blob(str)
     encode_length_and_type(str.to_s, ITEM_BLOB)
   end
@@ -154,6 +159,8 @@ class Message
       ret = pack_bool(item)
     when TrueClass
       ret = pack_bool(item)
+    when Integer
+      ret = pack_int(item)
     else
       ret = pack_blob(item.to_s)
     end
@@ -183,7 +190,10 @@ class Message
       [0x00].pack("C")
     end
   end
-    
+
+  def self.encode_int(int)
+    int.to_s.encode('binary')
+  end
 
   def self.encode_array(msg)
     unless msg.is_a?Array
@@ -249,6 +259,8 @@ class Message
       value = item.encode('utf-8')
     when ITEM_BOOL
       value = decode_bool(item)
+    when ITEM_INT
+      value = decode_int(item)
     when ITEM_HASH
       value = decode_hash(item)
     when ITEM_LIST
@@ -265,7 +277,11 @@ class Message
   def self.decode_bool(msg)
     return msg == [0x01].pack("C")
   end
-    
+
+  def self.decode_int(msg)
+    return Integer(msg.encode('utf-8'))
+  end
+  
   def self.decode_hash(msg)
     ret = {}
     while msg.length > 0

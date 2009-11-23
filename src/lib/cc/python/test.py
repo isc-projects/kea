@@ -33,7 +33,7 @@ class TestCCWireEncoding(unittest.TestCase):
 
     def test_to_wire_of_hash(self):
         wire = ISC.CC.Message.to_wire({ "simple" : { "string" : 1 }})
-        self.assertEqual(wire, b'Skan\x06simple"\n\x06string(\x011')
+        self.assertEqual(wire, b'Skan\x06simple"\n\x06string&\x011')
 
     def test_from_wire_of_hash(self):
         wire = b'Skan\x06simple"\n\x06string(\x011'
@@ -94,5 +94,14 @@ class TestCCWireEncoding(unittest.TestCase):
         decoded = ISC.CC.Message.from_wire(wire)
         self.assertEqual(decoded["bool"], False)
 
+    def test_to_wire_of_int(self):
+        wire = ISC.CC.Message.to_wire({ "number": 123 })
+        self.assertEqual(wire, b'Skan\x06number&\x03123')
+
+    def test_from_wire_of_int(self):
+        wire = b'Skan\x06number&\x03123'
+        decoded = ISC.CC.Message.from_wire(wire)
+        self.assertEqual(decoded["number"], 123)
+    
 if __name__ == '__main__':
     unittest.main()
