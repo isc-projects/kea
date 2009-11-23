@@ -19,6 +19,7 @@ const unsigned char ITEM_HASH = 0x02;
 const unsigned char ITEM_LIST = 0x03;
 const unsigned char ITEM_NULL = 0x04;
 const unsigned char ITEM_BOOL = 0x05;
+const unsigned char ITEM_INT  = 0x06;
 const unsigned char ITEM_UTF8 = 0x08;
 const unsigned char ITEM_MASK = 0x0f;
 
@@ -567,6 +568,12 @@ decode_bool(std::stringstream& in, int& item_length)
 }
 
 ElementPtr
+decode_int(std::stringstream& in, int& item_length)
+{
+    return from_stringstream_int_or_double(in);
+}
+
+ElementPtr
 decode_blob(std::stringstream& in, int& item_length)
 {
     char *buf = new char[item_length + 1];
@@ -668,6 +675,9 @@ decode_element(std::stringstream& in, int& in_length)
     case ITEM_BOOL:
         element = decode_bool(in, item_length);
         break;
+    case ITEM_INT:
+        element = decode_int(in, item_length);
+        break;
     case ITEM_BLOB:
         element = decode_blob(in, item_length);
         break;
@@ -765,7 +775,7 @@ IntElement::to_wire(int omit_length)
 
     text << str();
     int length = text.str().length();
-    ss << encode_length(length, ITEM_UTF8) << text.str();
+    ss << encode_length(length, ITEM_INT) << text.str();
 
     return ss.str();
 }
