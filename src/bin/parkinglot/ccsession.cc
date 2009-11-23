@@ -38,6 +38,7 @@
 
 #include "common.h"
 #include "ccsession.h"
+#include "config.h"
 
 using namespace std;
 
@@ -52,9 +53,9 @@ CommandSession::read_data_definition(const std::string& filename) {
     std::ifstream file;
 
     // this file should be declared in a @something@ directive
-    file.open("parkinglot.spec");
+    file.open(PARKINGLOT_SPECFILE_LOCATION);
     if (!file) {
-        cout << "error opening parkinglot.spec" << endl;
+        cout << "error opening " << PARKINGLOT_SPECFILE_LOCATION << endl;
         exit(1);
     }
 

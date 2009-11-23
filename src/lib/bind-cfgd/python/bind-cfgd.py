@@ -85,7 +85,7 @@ class ConfigManager:
             try:
                 if cmd[0] == "get_commands":
                     answer["result"] = self.commands
-                if cmd[0] == "zone" and cmd[1] == "add":
+                elif cmd[0] == "zone" and cmd[1] == "add":
                     self.add_zone(cmd[2])
                     answer["result"] = [ 0 ]
                 elif cmd[0] == "zone" and cmd[1] == "remove":
