@@ -137,7 +137,10 @@ class Session:
             # return none twice to match normal return value
             # (so caller won't get a type error on no data)
             return (None, None)
-        msg = Message.from_wire(env["msg"].encode('ascii'))
+        if type(env["msg"]) != bytearray:
+            msg = Message.from_wire(env["msg"].encode('ascii'))
+        else:
+            msg = Message.from_wire(env["msg"])
         return (msg, env)
 
     def group_reply(self, routing, msg):
