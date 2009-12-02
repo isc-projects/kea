@@ -74,7 +74,7 @@ public:
 /// in it.  This is also a bad design, however, in that we would effectively
 /// break the abstraction employed in the class, and do so by publishing
 /// "read-only" stuff as a writable memory region.  Since there doesn't seem to
-/// be a perfect solution, we have adopted what we though a "least bad" one.
+/// be a perfect solution, we have adopted what we thought a "least bad" one.
 ///
 /// Methods for reading data from the buffer generally work like an input
 /// stream: it begins with the head of the data, and once some length of data
