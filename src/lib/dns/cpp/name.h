@@ -22,7 +22,8 @@
 
 namespace ISC {
 namespace DNS {
-class Buffer;
+class InputBuffer;
+class OutputBuffer;
 class NameCompressor;
 class NameDecompressor;
 
@@ -53,20 +54,20 @@ public:
     Name() : length_(0), labels_(0) {}
     explicit Name(const std::string& namestr) : length_(0), labels_(0)
 	{ from_string(namestr); }
-    explicit Name(NameDecompressor& decompressor, Buffer& buffer);
+    explicit Name(NameDecompressor& decompressor, InputBuffer& buffer);
     // copy constructor (default cp-ctor should work fine)
     //Name(const Name& orig);
     // destructor (default dtor should work fine)
     //~Name();
 
-    std::string to_text(bool omit_final_dot = false) const;
-    void to_wire(Buffer& buffer, NameCompressor& compressor) const;
-    size_t get_length() const { return (length_); }
-    unsigned int get_labels() const { return (labels_); }
+    std::string toText(bool omit_final_dot = false) const;
+    void toWire(OutputBuffer& buffer, NameCompressor& compressor) const;
+    size_t getLength() const { return (length_); }
+    unsigned int getLabels() const { return (labels_); }
     NameComparisonResult compare(const Name& other) const;
     Name split(unsigned int first, unsigned int n) const;
     Name concatenate(const Name& suffix) const;
-    bool is_wildcard() const;
+    bool isWildcard() const;
     bool operator==(const Name& other) const;
     bool equals(const Name& other) const; // alias of ==
     bool operator!=(const Name& other) const { return (!(*this == other)); }

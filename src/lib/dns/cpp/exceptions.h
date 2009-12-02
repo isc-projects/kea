@@ -41,7 +41,7 @@ public:
     /// @param file the file name where the exception was thrown.
     /// @param line the line in @ref file where the exception was thrown.
     /// @param what a description (type) of the exception.
-    Exception(const char* const file, size_t line, const char* what) :
+    Exception(const char* file, size_t line, const char* what) :
         file_(file), line_(line), what_(what) {}
     /// The destructor
     virtual ~Exception() {}

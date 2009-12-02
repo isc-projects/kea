@@ -16,6 +16,7 @@
 
 #include <stdexcept>
 
+#include "buffer.h"
 #include "name.h"
 
 using namespace std;
@@ -278,7 +279,7 @@ Name::from_string(const string &namestring)
 }
 
 string
-Name::to_text(bool omit_final_dot) const
+Name::toText(bool omit_final_dot) const
 {
     string tdata;
     unsigned int nlen;
@@ -429,6 +430,6 @@ Name::operator==(const Name& other) const
 ostream&
 operator<<(ostream& os, const Name& name)
 {
-    os << name.to_text();
+    os << name.toText();
     return (os);
 }
