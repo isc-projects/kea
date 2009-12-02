@@ -64,8 +64,10 @@ AC_CONFIG_FILES([Makefile
                ])
 AC_OUTPUT([src/bin/bind-cfgd/bind-cfgd
            src/bin/bind10/bind10
+	   src/bin/pymsgq/msgq
           ], [
            chmod +x src/bin/bind-cfgd/bind-cfgd
            chmod +x src/bin/bind10/bind10
+           chmod +x src/bin/pymsgq/msgq
           ])
 AC_OUTPUT
