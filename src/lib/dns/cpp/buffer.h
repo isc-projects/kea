@@ -317,7 +317,7 @@ public:
     /// given position, that is, <code>pos + 2 < getLength()</code>;
     /// otherwise an exception of class \c isc::dns::InvalidBufferPosition will
     /// be thrown.
-    /// Note also that this method never extend the buffer.
+    /// Note also that this method never extends the buffer.
     ///
     /// \param data The 16-bit integer to be written into the buffer.
     /// \param pos The beginning position in the buffer to write the data.
