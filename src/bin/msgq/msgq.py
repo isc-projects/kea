@@ -250,7 +250,10 @@ class MsgQ:
         if to == "*":
             sockets = self.subs.find(group, instance)
         else:
-            sockets = [ self.lnames[to] ]
+            if to in self.lnames:
+                sockets = [ self.lnames[to] ]
+            else:
+                return # recipient doesn't exist
 
         msg = self.preparemsg(routing, data)
 
