@@ -130,6 +130,13 @@ def spec_name_list(spec, prefix="", recurse=False):
 
     return result
 
+def parse_value_str(value_str):
+    try:
+        return ast.literal_eval(value_str)
+    except ValueError as ve:
+        # simply return the string itself
+        return value_str
+
 class ConfigData:
     def __init__(self, specification):
         self.specification = specification
@@ -287,7 +294,7 @@ class UIConfigData():
 
     def add(self, identifier, value_str):
         data_spec = find_spec(self.config.specification, identifier)
-        value = ast.literal_eval(value_str)
+        value = parse_value_str(value_str)
         check_type(data_spec, [value])
         cur_list = find_no_exc(self.config_changes, identifier)
         if not cur_list:
@@ -300,7 +307,7 @@ class UIConfigData():
 
     def remove(self, identifier, value_str):
         data_spec = find_spec(self.config.specification, identifier)
-        value = ast.literal_eval(value_str)
+        value = parse_value_str(value_str)
         check_type(data_spec, [value])
         cur_list = find_no_exc(self.config_changes, identifier)
         if not cur_list:
@@ -313,7 +320,7 @@ class UIConfigData():
 
     def set(self, identifier, value_str):
         data_spec = find_spec(self.config.specification, identifier)
-        value = ast.literal_eval(value_str)
+        value = parse_value_str(value_str)
         check_type(data_spec, value)
         set(self.config_changes, identifier, value)
 
