@@ -15,6 +15,10 @@ class TestCCWireEncoding(unittest.TestCase):
         self.s1 = ISC.CC.Session()
         self.s2 = ISC.CC.Session()
 
+    def tearDown(self):
+        self.s1.close()
+        self.s2.close()
+
     def test_lname(self):
         self.assertTrue(self.s1.lname)
         self.assertTrue(self.s2.lname)
@@ -39,6 +43,18 @@ class TestCCWireEncoding(unittest.TestCase):
         time.sleep(0.5)
         msg, env = self.s2.group_recvmsg()
         self.assertFalse(env)
+
+    def test_directed_recipient(self):
+        self.s1.group_subscribe("g1", "i1")
+        time.sleep(0.5)
+        outmsg = { "data" : "foo" }
+        self.s1.group_sendmsg(outmsg, "g4", "i4", self.s2.lname)
+        time.sleep(0.5)
+        msg, env = self.s2.group_recvmsg()
+        self.assertEqual(env["from"], self.s1.lname)
+        self.assertEqual(env["to"], self.s2.lname)
+        self.assertEqual(env["group"], "g4")
+        self.assertEqual(env["instance"], "i4")
 
 if __name__ == '__main__':
     unittest.main()

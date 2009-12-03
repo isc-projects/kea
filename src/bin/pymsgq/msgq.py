@@ -87,6 +87,7 @@ class MsgQ:
         self.connection_counter = random.random()
         self.hostname = socket.gethostname()
         self.subs = SubscriptionManager()
+        self.lnames = {}
 
     def setup_poller(self):
         """Set up the poll thing.  Internal function."""
@@ -117,6 +118,8 @@ class MsgQ:
         newsocket, ipaddr = self.listen_socket.accept()
         sys.stderr.write("Connection\n")
         self.sockets[newsocket.fileno()] = newsocket
+        lname = self.newlname()
+        self.lnames[lname] = newsocket
         self.poller.register(newsocket, select.POLLIN)
 
     def process_socket(self, fd):
@@ -132,6 +135,8 @@ class MsgQ:
         """Fully close down the socket."""
         self.poller.unregister(sock)
         self.subs.unsubscribe_all(sock)
+        lname = [ k for k, v in self.lnames.items() if v == sock ][0]
+        del self.lnames[lname]
         sock.close()
         self.sockets[fd] = None
         sys.stderr.write("Closing socket fd %d\n" % fd)
@@ -232,16 +237,20 @@ class MsgQ:
         return "%x_%x@%s" % (time.time(), self.connection_counter, self.hostname)
 
     def process_command_getlname(self, sock, routing, data):
-        env = { "type" : "getlname" }
-        reply = { "lname" : self.newlname() }
-        self.sendmsg(sock, env, reply)
+        lname = [ k for k, v in self.lnames.items() if v == sock ][0]
+        self.sendmsg(sock, { "type" : "getlname" }, { "lname" : lname })
 
     def process_command_send(self, sock, routing, data):
         group = routing["group"]
         instance = routing["instance"]
+        to = routing["to"]
         if group == None or instance == None:
             return  # ignore invalid packets entirely
-        sockets = self.subs.find(group, instance)
+
+        if to == "*":
+            sockets = self.subs.find(group, instance)
+        else:
+            sockets = [ self.lnames[to] ]
 
         msg = self.preparemsg(routing, data)
 
@@ -253,8 +262,7 @@ class MsgQ:
     def process_command_subscribe(self, sock, routing, data):
         group = routing["group"]
         instance = routing["instance"]
-        subtype = routing["subtype"]
-        if group == None or instance == None or subtype == None:
+        if group == None or instance == None:
             return  # ignore invalid packets entirely
         self.subs.subscribe(group, instance, sock)
 
