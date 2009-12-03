@@ -1,1 +1,1 @@
-SUBDIRS = parkinglot host msgq
+SUBDIRS = parkinglot host
