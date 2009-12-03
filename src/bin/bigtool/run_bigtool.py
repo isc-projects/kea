@@ -28,7 +28,7 @@ def _prepare_fake_data(bigtool):
     bigtool.add_module_info(zone_module)
     bigtool.add_module_info(boss_module)
 
-def prepare_data_module(bigtool, module_name, module_commands):
+def prepare_module_commands(bigtool, module_name, module_commands):
     module = ModuleInfo(name = module_name,
                         desc = "same here")
     for command in module_commands:
@@ -45,10 +45,52 @@ def prepare_data_module(bigtool, module_name, module_commands):
         module.add_command(cmd)
     bigtool.add_module_info(module)
 
-def prepare_data(bigtool, command_spec):
+def prepare_commands(bigtool, command_spec):
     for module_name in command_spec.keys():
-        prepare_data_module(bigtool, module_name, command_spec[module_name])
+        prepare_module_commands(bigtool, module_name, command_spec[module_name])
+
+def prepare_config_commands(bigtool):
+    module = ModuleInfo(name = "config", desc = "Configuration commands")
+    cmd = CommandInfo(name = "show", desc = "Show configuration", need_inst_param = False)
+    param = ParamInfo(name = "identifier", type = "string", optional=True)
+    cmd.add_param(param)
+    module.add_command(cmd)
+
+    cmd = CommandInfo(name = "add", desc = "Add entry to configuration list", need_inst_param = False)
+    param = ParamInfo(name = "identifier", type = "string", optional=True)
+    cmd.add_param(param)
+    param = ParamInfo(name = "value", type = "string", optional=True)
+    cmd.add_param(param)
+    module.add_command(cmd)
+
+    cmd = CommandInfo(name = "remove", desc = "Remove entry from configuration list", need_inst_param = False)
+    param = ParamInfo(name = "identifier", type = "string", optional=True)
+    cmd.add_param(param)
+    param = ParamInfo(name = "value", type = "string", optional=True)
+    cmd.add_param(param)
+    module.add_command(cmd)
+
+    cmd = CommandInfo(name = "set", desc = "Set a configuration value", need_inst_param = False)
+    param = ParamInfo(name = "identifier", type = "string", optional=True)
+    cmd.add_param(param)
+    param = ParamInfo(name = "value", type = "string", optional=True)
+    cmd.add_param(param)
+    module.add_command(cmd)
+
+    cmd = CommandInfo(name = "unset", desc = "Unset a configuration value", need_inst_param = False)
+    param = ParamInfo(name = "identifier", type = "string", optional=True)
+    cmd.add_param(param)
+    module.add_command(cmd)
+
+    cmd = CommandInfo(name = "revert", desc = "Revert all local changes", need_inst_param = False)
+    module.add_command(cmd)
+
+    cmd = CommandInfo(name = "commit", desc = "Commit all local changes", need_inst_param = False)
+    module.add_command(cmd)
+
+    bigtool.add_module_info(module)
     
+
 if __name__ == '__main__':
     try:
         cc = ISC.CC.Session()
@@ -59,7 +101,8 @@ if __name__ == '__main__':
         tool = BigTool(cc)
         cc.group_sendmsg({ "command": ["get_commands"] }, "ConfigManager")
         command_spec, env =  cc.group_recvmsg(False)
-        prepare_data(tool, command_spec["result"])
+        prepare_commands(tool, command_spec["result"])
+        prepare_config_commands(tool)
         _prepare_fake_data(tool)   
         tool.cmdloop()
     except ISC.CC.SessionError:
