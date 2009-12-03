@@ -37,7 +37,7 @@ class Session:
             self._socket.connect(tuple(['127.0.0.1', port]))
 
             self.sendmsg({ "type": "getlname" })
-            msg = self.recvmsg(False)
+            env, msg = self.recvmsg(False)
             self._lname = msg["lname"]
             if not self._lname:
                 raise ProtocolError("Could not get local name")
@@ -48,18 +48,31 @@ class Session:
     def lname(self):
         return self._lname
 
-    def sendmsg(self, msg):
+    def sendmsg(self, env, msg = None):
+        if type(env) == dict:
+            env = Message.to_wire(env)
         if type(msg) == dict:
             msg = Message.to_wire(msg)
         self._socket.setblocking(1)
-        self._socket.send(struct.pack("!I", len(msg)))
-        self._socket.send(msg)
+        length = 2 + len(env);
+        if msg:
+            length += len(msg)
+        self._socket.send(struct.pack("!I", length))
+        self._socket.send(struct.pack("!H", len(env)))
+        self._socket.send(env)
+        if msg:
+            self._socket.send(msg)
 
     def recvmsg(self, nonblock = True):
         data = self._receive_full_buffer(nonblock)
-        if data:
-            return Message.from_wire(data)
-        return None
+        if data and len(data) > 2:
+            header_length = struct.unpack('>H', data[0:2])[0]
+            data_length = len(data) - 2 - header_length
+            if data_length > 0:
+                return Message.from_wire(data[2:header_length+2]), Message.from_wire(data[header_length + 2:])
+            else:
+                return Message.from_wire(data[2:header_length+2]), None
+        return None, None
 
     def _receive_full_buffer(self, nonblock):
         if nonblock:
@@ -127,20 +140,15 @@ class Session:
             "group": group,
             "instance": instance,
             "seq": seq,
-            "msg": Message.to_wire(msg),
-        })
+        }, Message.to_wire(msg))
         return seq
 
     def group_recvmsg(self, nonblock = True):
-        env = self.recvmsg(nonblock)
+        env, msg  = self.recvmsg(nonblock)
         if env == None:
             # return none twice to match normal return value
             # (so caller won't get a type error on no data)
             return (None, None)
-        if type(env["msg"]) != bytearray:
-            msg = Message.from_wire(env["msg"].encode('ascii'))
-        else:
-            msg = Message.from_wire(env["msg"])
         return (msg, env)
 
     def group_reply(self, routing, msg):
@@ -153,8 +161,7 @@ class Session:
             "instance": routing["instance"],
             "seq": seq,
             "reply": routing["seq"],
-            "msg": Message.to_wire(msg),
-        })
+        }, Message.to_wire(msg))
         return seq
 
 if __name__ == "__main__":

@@ -73,13 +73,45 @@ Session::sendmsg(ElementPtr& msg)
     std::string wire = msg->to_wire();
     unsigned int length = wire.length();
     unsigned int length_net = htonl(length);
+    unsigned short header_length_net = htons(length);
     unsigned int ret;
 
     ret = write(sock, &length_net, 4);
     if (ret != 4)
         throw SessionError("Short write");
 
+    ret = write(sock, &header_length_net, 2);
+    if (ret != 2)
+        throw SessionError("Short write");
+
     ret = write(sock, wire.c_str(), length);
+    if (ret != length)
+        throw SessionError("Short write");
+}
+
+void
+Session::sendmsg(ElementPtr& env, ElementPtr& msg)
+{
+    std::string header_wire = env->to_wire();
+    std::string body_wire = msg->to_wire();
+    unsigned int length = 2 + header_wire.length() + body_wire.length();
+    unsigned int length_net = htonl(length);
+    unsigned short header_length = header_wire.length();
+    unsigned short header_length_net = htons(header_length);
+    unsigned int ret;
+
+    ret = write(sock, &length_net, 4);
+    if (ret != 4)
+        throw SessionError("Short write");
+
+    ret = write(sock, &header_length_net, 2);
+    if (ret != 2)
+        throw SessionError("Short write");
+
+    std::cout << "[XX] Header length sending: " << header_length << std::endl;
+
+    ret = write(sock, header_wire.c_str(), header_length);
+    ret = write(sock, body_wire.c_str(), body_wire.length());
     if (ret != length)
         throw SessionError("Short write");
 }
@@ -88,13 +120,23 @@ bool
 Session::recvmsg(ElementPtr& msg, bool nonblock)
 {
     unsigned int length_net;
+    unsigned short header_length_net;
     unsigned int ret;
 
     ret = read(sock, &length_net, 4);
     if (ret != 4)
         throw SessionError("Short read");
 
-    unsigned int length = ntohl(length_net);
+    ret = read(sock, &header_length_net, 2);
+    if (ret != 2)
+        throw SessionError("Short read");
+
+    unsigned int length = ntohl(length_net) - 2;
+    unsigned short header_length = ntohs(header_length_net);
+    if (header_length != length) {
+        throw SessionError("Received non-empty body where only a header expected");
+    }
+    
     char *buffer = new char[length];
     ret = read(sock, buffer, length);
     if (ret != length)
@@ -107,6 +149,48 @@ Session::recvmsg(ElementPtr& msg, bool nonblock)
     wire_stream <<wire;
 
     msg = Element::from_wire(wire_stream, length);
+
+    return (true);
+    // XXXMLG handle non-block here, and return false for short reads
+}
+
+bool
+Session::recvmsg(ElementPtr& env, ElementPtr& msg, bool nonblock)
+{
+    unsigned int length_net;
+    unsigned short header_length_net;
+    unsigned int ret;
+
+    ret = read(sock, &length_net, 4);
+    if (ret != 4)
+        throw SessionError("Short read");
+
+    ret = read(sock, &header_length_net, 2);
+    if (ret != 2)
+        throw SessionError("Short read");
+
+    unsigned int length = ntohl(length_net);
+    unsigned short header_length = ntohs(header_length_net);
+
+    if (header_length > length)
+        throw SessionError("Bad header length");
+    
+    char *buffer = new char[length];
+    ret = read(sock, buffer, length);
+    if (ret != length)
+        throw SessionError("Short read");
+
+    std::string header_wire = std::string(buffer, header_length);
+    std::string body_wire = std::string(buffer, length - header_length);
+    delete [] buffer;
+
+    std::stringstream header_wire_stream;
+    header_wire_stream << header_wire;
+    env = Element::from_wire(header_wire_stream, length);
+
+    std::stringstream body_wire_stream;
+    body_wire_stream << body_wire;
+    msg = Element::from_wire(body_wire_stream, length - header_length);
 
     return (true);
     // XXXMLG handle non-block here, and return false for short reads
@@ -148,9 +232,9 @@ Session::group_sendmsg(ElementPtr& msg, std::string group, std::string instance,
     env->set("group", Element::create(group));
     env->set("instance", Element::create(instance));
     env->set("seq", Element::create(sequence));
-    env->set("msg", Element::create(msg->to_wire()));
+    //env->set("msg", Element::create(msg->to_wire()));
 
-    sendmsg(env);
+    sendmsg(env, msg);
 
     return (sequence++);
 }
@@ -158,13 +242,10 @@ Session::group_sendmsg(ElementPtr& msg, std::string group, std::string instance,
 bool
 Session::group_recvmsg(ElementPtr& envelope, ElementPtr& msg, bool nonblock)
 {
-    bool got_message = recvmsg(envelope, nonblock);
+    bool got_message = recvmsg(envelope, msg, nonblock);
     if (!got_message) {
         return false;
     }
-
-    msg = Element::from_wire(envelope->get("msg")->string_value());
-    envelope->remove("msg");
 
     return (true);
 }
@@ -180,10 +261,9 @@ Session::reply(ElementPtr& envelope, ElementPtr& newmsg)
     env->set("group", Element::create(envelope->get("group")->string_value()));
     env->set("instance", Element::create(envelope->get("instance")->string_value()));
     env->set("seq", Element::create(sequence));
-    env->set("msg", Element::create(newmsg->to_wire()));
     env->set("reply", Element::create(envelope->get("seq")->string_value()));
 
-    sendmsg(env);
+    sendmsg(env, newmsg);
 
     return (sequence++);
 }

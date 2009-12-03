@@ -36,7 +36,11 @@ namespace ISC {
             void establish();
             void disconnect();
             void sendmsg(ISC::Data::ElementPtr& msg);
+            void sendmsg(ISC::Data::ElementPtr& env, ISC::Data::ElementPtr& msg);
             bool recvmsg(ISC::Data::ElementPtr& msg,
+                         bool nonblock = true);
+            bool recvmsg(ISC::Data::ElementPtr& env,
+                         ISC::Data::ElementPtr& msg,
                          bool nonblock = true);
             void subscribe(std::string group,
                            std::string instance = "*",
