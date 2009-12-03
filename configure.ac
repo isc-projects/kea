@@ -69,10 +69,12 @@ AC_OUTPUT([src/bin/bind-cfgd/bind-cfgd
            src/bin/bigtool/run_bigtool
            src/bin/bind10/bind10
 	   src/bin/pymsgq/msgq
+	   src/bin/pymsgq/msgq_test
           ], [
            chmod +x src/bin/bind-cfgd/bind-cfgd
            chmod +x src/bin/bigtool/run_bigtool
            chmod +x src/bin/bind10/bind10
            chmod +x src/bin/pymsgq/msgq
+           chmod +x src/bin/pymsgq/msgq_test
           ])
 AC_OUTPUT
