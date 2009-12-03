@@ -30,12 +30,18 @@ class BigTool(Cmd):
 
     def __init__(self, session = None):
         Cmd.__init__(self)
-        self.prompt = '> '
+        self.location = ""
+        self.prompt_end = '> '
+        self.prompt = self.prompt_end
         self.ruler = '-'
         self.modules = OrderedDict()
         self.add_module_info(ModuleInfo("help", desc = "Get help for bigtool"))
         self.cc = session
         self.config_data = ISC.CC.data.UIConfigData("", session)
+
+    def postcmd(self, stop, line):
+        self.prompt = self.location + self.prompt_end
+        return stop
 
     def validate_cmd(self, cmd):
         if not cmd.module in self.modules:
@@ -124,7 +130,7 @@ class BigTool(Cmd):
                 
     
     def onecmd(self, line):
-        if line == 'EOF'or line.lower() == "quit":
+        if line == 'EOF' or line.lower() == "quit":
             return True
             
         if line == 'h':
@@ -146,7 +152,7 @@ class BigTool(Cmd):
                                                        text)
                     if cmd.module == "config":
                         # grm text has been stripped of slashes...
-                        my_text = cur_line.rpartition(" ")[2]
+                        my_text = self.location + "/" + cur_line.rpartition(" ")[2]
                         list = self.config_data.config.get_item_list(my_text.rpartition("/")[0])
                         hints.extend([val for val in list if val.startswith(text)])
             except CmdModuleNameFormatError:
@@ -249,10 +255,15 @@ class BigTool(Cmd):
 
 
     def apply_config_cmd(self, cmd):
-        identifier = ""
+        identifier = self.location
         try:
             if 'identifier' in cmd.params:
-                identifier = cmd.params['identifier']
+                if not identifier.endswith("/"):
+                    identifier += "/"
+                if cmd.params['identifier'].startswith("/"):
+                    identifier = cmd.params['identifier']
+                else:
+                    identifier += cmd.params['identifier']
             if cmd.command == "show":
                 values = self.config_data.get_value_maps(identifier)
                 for value_map in values:
@@ -280,10 +291,25 @@ class BigTool(Cmd):
                 self.config_data.revert()
             elif cmd.command == "commit":
                 self.config_data.commit(self.cc)
+            elif cmd.command == "go":
+                self.go(identifier)
         except ISC.CC.data.DataTypeError as dte:
             print("Error: " + str(dte))
         except ISC.CC.data.DataNotFoundError as dnfe:
             print("Error: " + identifier + " not found")
+        except KeyError as ke:
+            print("Error: missing " + str(ke))
+
+    def go(self, identifier):
+        # just to see if it exists
+        self.config_data.get_value(identifier)
+        # some sanitizing
+        identifier = identifier.replace("//", "/")
+        if not identifier.startswith("/"):
+            identifier = "/" + identifier
+        if identifier.endswith("/"):
+            identifier = identifier[:-1]
+        self.location = identifier
 
     def apply_cmd(self, cmd):
         if not self.cc:
