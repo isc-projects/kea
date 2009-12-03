@@ -10,7 +10,7 @@ import signal
 import os
 import socket
 import sys
-import re
+import struct
 import errno
 import time
 import select
@@ -18,6 +18,8 @@ import pprint
 from optparse import OptionParser, OptionValueError
 
 import ISC.CC
+
+class MsgQReceiveError(Exception): pass
 
 # This is the version that gets displayed to the user.
 __version__ = "v20091030 (Paving the DNS Parking Lot)"
@@ -63,12 +65,14 @@ class MsgQ:
         self.runnable = True
 
     def process_accept(self):
+        """Process an accept on the listening socket."""
         newsocket, ipaddr = self.listen_socket.accept()
         sys.stderr.write("Connection\n")
         self.sockets[newsocket.fileno()] = newsocket
         self.poller.register(newsocket, select.POLLIN)
 
     def process_socket(self, fd):
+        """Process a read on a socket."""
         sock = self.sockets[fd]
         if sock == None:
             sys.stderr.write("Got read on Strange Socket fd %d\n" % fd)
@@ -76,19 +80,98 @@ class MsgQ:
         sys.stderr.write("Got read on fd %d\n" %fd)
         self.process_packet(fd, sock)
 
+    def kill_socket(self, fd, sock):
+        """Fully close down the socket."""
+        self.poller.unregister(sock)
+        sock.close()
+        self.sockets[fd] = None
+        sys.stderr.write("Closing socket fd %d\n" % fd)
+
+    def getbytes(self, fd, sock, length):
+        """Get exactly the requested bytes, or raise an exception if
+           EOF."""
+        received = b''
+        while len(received) < length:
+            data = sock.recv(length - len(received))
+            if len(data) == 0:
+                raise MsgQReceiveError("EOF")
+            received += data
+        return received
+
+    def read_packet(self, fd, sock):
+        """Read a correctly formatted packet.  Will raise exceptions if
+           something fails."""
+        lengths = self.getbytes(fd, sock, 6)
+        overall_length, routing_length = struct.unpack(">IH", lengths)
+        if overall_length < 2:
+            raise MsgQReceiveError("overall_length < 2")
+        overall_length -= 2
+        sys.stderr.write("overall length: %d, routing_length %d\n"
+                         % (overall_length, routing_length))
+        if routing_length > overall_length:
+            raise MsgQReceiveError("routing_length > overall_length")
+        if routing_length == 0:
+            raise MsgQReceiveError("routing_length == 0")
+        data_length = overall_length - routing_length
+        # probably need to sanity check lengths here...
+        routing = self.getbytes(fd, sock, routing_length)
+        if data_length > 0:
+            data = self.getbytes(fd, sock, data_length)
+        else:
+            data = None
+        return (routing, data)
+
     def process_packet(self, fd, sock):
-        data = sock.recv(4)
-        if len(data) == 0:
-            self.poller.unregister(sock)
-            sock.close()
-            self.sockets[fd] = None
-            sys.stderr.write("Closing socket fd %d\n" % fd)
+        """Process one packet."""
+        try:
+            routing, data = self.read_packet(fd, sock)
+        except MsgQReceiveError as err:
+            self.kill_socket(fd, sock)
+            sys.stderr.write("Receive error: %s\n" % err)
             return
-        sys.stderr.write("Got data: %s\n" % data)
+
+        try:
+            routingmsg = ISC.CC.Message.from_wire(routing)
+        except DecodeError as err:
+            self.kill_socket(fd, sock)
+            sys.stderr.write("Routing decode error: %s\n" % err)
+            return
+
+        sys.stdout.write("\t" + pprint.pformat(routingmsg) + "\n")
+        sys.stdout.write("\t" + pprint.pformat(data) + "\n")
+
+        self.process_command(fd, sock, routingmsg, data)
+
+    def process_command(self, fd, sock, routing, data):
+        """Process a single command.  This will split out into one of the
+           other functions, above."""
+        cmd = routing["type"]
+        if cmd == 'getlname':
+            self.process_command_getlname(sock, routing, data)
+        elif cmd == 'send':
+            self.process_command_send(sock, routing, data)
+        else:
+            sys.stderr.write("Invalid command: %s\n" % cmd)
+
+    def sendmsg(self, sock, env, msg = None):
+        if type(env) == dict:
+            env = ISC.CC.Message.to_wire(env)
+        if type(msg) == dict:
+            msg = ISC.CC.Message.to_wire(msg)
+        sock.setblocking(1)
+        length = 2 + len(env);
+        if msg:
+            length += len(msg)
+        sock.send(struct.pack("!IH", length, len(env)))
+        sock.send(env)
+        if msg:
+            sock.send(msg)
+
+    def process_command_getlname(self, sock, routing, data):
+        self.sendmsg(sock, { "type" : "getlname" }, { "lname" : "staticlname" })
 
     def run(self):
         """Process messages.  Forever.  Mostly."""
-
         while True:
             try:
                 events = self.poller.poll()
