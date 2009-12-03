@@ -31,6 +31,7 @@ class Session:
         self._recvlength = None
         self._sendbuffer = bytearray()
         self._sequence = 1
+        self._closed = False
 
         try:
             self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -48,7 +49,14 @@ class Session:
     def lname(self):
         return self._lname
 
+    def close(self):
+        self._socket.close()
+        self._lname = None
+        self._closed = True
+
     def sendmsg(self, env, msg = None):
+        if self._closed:
+            raise SessionError("Session has been closed.")
         if type(env) == dict:
             env = Message.to_wire(env)
         if type(msg) == dict:
@@ -64,6 +72,8 @@ class Session:
             self._socket.send(msg)
 
     def recvmsg(self, nonblock = True):
+        if self._closed:
+            raise SessionError("Session has been closed.")
         data = self._receive_full_buffer(nonblock)
         if data and len(data) > 2:
             header_length = struct.unpack('>H', data[0:2])[0]
