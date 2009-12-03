@@ -1,6 +1,6 @@
 #! /bin/sh
 
-PYTHON_EXEC=${PYTHON_EXEC:-/usr/bin/python3.0}
+PYTHON_EXEC=${PYTHON_EXEC:-@PYTHON@}
 export PYTHON_EXEC
 
 BIND10_PATH=@abs_top_srcdir@/src/bin/bind10

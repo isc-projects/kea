@@ -12,6 +12,9 @@ AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_RANLIB
 
+m4_define([_AM_PYTHON_INTERPRETER_LIST], [python python3 python3.1])
+AM_PATH_PYTHON([3.1])
+
 # Checks for libraries.
 
 # Checks for header files.
@@ -63,10 +66,12 @@ AC_CONFIG_FILES([Makefile
                  src/lib/dns/Makefile
                ])
 AC_OUTPUT([src/bin/bind-cfgd/bind-cfgd
+           src/bin/bigtool/run_bigtool
            src/bin/bind10/bind10
 	   src/bin/pymsgq/msgq
           ], [
            chmod +x src/bin/bind-cfgd/bind-cfgd
+           chmod +x src/bin/bigtool/run_bigtool
            chmod +x src/bin/bind10/bind10
            chmod +x src/bin/pymsgq/msgq
           ])
