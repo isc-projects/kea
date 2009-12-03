@@ -59,7 +59,7 @@ def prepare_config_commands(bigtool):
     cmd = CommandInfo(name = "add", desc = "Add entry to configuration list", need_inst_param = False)
     param = ParamInfo(name = "identifier", type = "string", optional=True)
     cmd.add_param(param)
-    param = ParamInfo(name = "value", type = "string", optional=True)
+    param = ParamInfo(name = "value", type = "string", optional=False)
     cmd.add_param(param)
     module.add_command(cmd)
 
@@ -86,6 +86,11 @@ def prepare_config_commands(bigtool):
     module.add_command(cmd)
 
     cmd = CommandInfo(name = "commit", desc = "Commit all local changes", need_inst_param = False)
+    module.add_command(cmd)
+
+    cmd = CommandInfo(name = "go", desc = "Go to a specific configuration part", need_inst_param = False)
+    param = ParamInfo(name = "identifier", type="string", optional=False)
+    cmd.add_param(param)
     module.add_command(cmd)
 
     bigtool.add_module_info(module)
