@@ -1,6 +1,6 @@
 #! /bin/sh
 
-PYTHON_EXEC=${PYTHON_EXEC:-python3}
+PYTHON_EXEC=${PYTHON_EXEC:-@PYTHON@}
 BIGTOOL_PATH=.
 
 PYTHONPATH=../../lib/cc/python:../../lib/bigtool/
