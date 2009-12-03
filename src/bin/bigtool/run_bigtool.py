@@ -32,9 +32,9 @@ def _prepare_fake_data(bigtool):
 if __name__ == '__main__':
     try:
         cc = ISC.CC.Session()
-        cc.group_subscribe("BigTool", "*", "meonly")
-        cc.group_subscribe("ConfigManager", "*", "meonly")
-        cc.group_subscribe("Boss", "*", "meonly")
+        #cc.group_subscribe("BigTool", "*", "meonly")
+        #cc.group_subscribe("ConfigManager", "*", "meonly")
+        #cc.group_subscribe("Boss", "*", "meonly")
 
         tool = BigTool(cc)
         _prepare_fake_data(tool)   
