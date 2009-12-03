@@ -60,13 +60,33 @@ class BigTool(Cmd):
             raise CmdUnknownParamSyntaxError(cmd.module, cmd.command, 
                                              list(params.keys())[0])
         elif params:
+            param_name = None
             for name in params:
-                if not name in all_params:
+                # either the name of the parameter must be known, or
+                # the 'name' must be an integer (ie. the position of
+                # an unnamed argument
+                if type(name) == int:
+                    # (-1, help is always in the all_params list)
+                    if name >= len(all_params) - 1:
+                        # add to last known param
+                        if param_name:
+                            cmd.params[param_name] += cmd.params[name]
+                        else:
+                            raise CmdUnknownParamSyntaxError(cmd.module, cmd.command, cmd.params[name])
+                    else:
+                        # replace the numbered items by named items
+                        param_name = command_info.get_param_name_by_position(name+1)
+                        cmd.params[param_name] = cmd.params[name]
+                        del cmd.params[name]
+                        
+                elif not name in all_params:
                     raise CmdUnknownParamSyntaxError(cmd.module, cmd.command, name)
+            param_nr = 0
             for name in manda_params:
-                if not name in params:
+                if not name in params and not param_nr in params:
                     raise CmdMissParamSyntaxError(cmd.module, cmd.command, name)
                               
+                param_nr += 1
 
     def _handle_cmd(self, cmd):
         #to do, consist xml package and send to bind10

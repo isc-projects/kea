@@ -81,7 +81,17 @@ class CommandInfo:
         return [name for name in all_names 
                 if not self.params[name].is_optional]        
         
-        
+    def get_param_name_by_position(self, pos):
+        if type(pos) == int:
+            i = 0
+            for k in self.params.keys():
+                if i == pos:
+                    return k
+                i += 1
+            raise KeyError(str(pos) + " out of range")
+        else:
+            raise KeyError(str(pos) + " is not an integer")
+    
     def need_instance_param(self):
         return self.need_inst_param
 
