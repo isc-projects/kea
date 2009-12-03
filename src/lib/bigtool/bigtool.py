@@ -7,6 +7,7 @@ from moduleinfo import ParamInfo
 from command import BigToolCmd
 from xml.dom import minidom
 import ISC
+import ISC.CC.data
 
 try:
     from collections import OrderedDict
@@ -34,7 +35,7 @@ class BigTool(Cmd):
         self.modules = OrderedDict()
         self.add_module_info(ModuleInfo("help", desc = "Get help for bigtool"))
         self.cc = session
-
+        self.config_data = ISC.CC.data.UIConfigData("", session)
 
     def validate_cmd(self, cmd):
         if not cmd.module in self.modules:
@@ -85,13 +86,15 @@ class BigTool(Cmd):
             for name in manda_params:
                 if not name in params and not param_nr in params:
                     raise CmdMissParamSyntaxError(cmd.module, cmd.command, name)
-                              
+                
                 param_nr += 1
 
     def _handle_cmd(self, cmd):
         #to do, consist xml package and send to bind10
         if cmd.command == "help" or ("help" in cmd.params.keys()):
             self._handle_help(cmd)
+        elif cmd.module == "config":
+            self.apply_config_cmd(cmd)
         else:
             self.apply_cmd(cmd)
 
@@ -141,6 +144,11 @@ class BigTool(Cmd):
                 else:                       
                     hints = self._get_param_startswith(cmd.module, cmd.command,
                                                        text)
+                    if cmd.module == "config":
+                        # grm text has been stripped of slashes...
+                        my_text = cur_line.rpartition(" ")[2]
+                        list = self.config_data.config.get_item_list(my_text.rpartition("/")[0])
+                        hints.extend([val for val in list if val.startswith(text)])
             except CmdModuleNameFormatError:
                 if not text:
                     hints = list(self.modules.keys())
@@ -160,9 +168,9 @@ class BigTool(Cmd):
 
             except BigToolException:
                 hints = []
-            
+
             self.hint = hints
-            self._append_space_to_hint()
+            #self._append_space_to_hint()
 
         if state < len(self.hint):
             return self.hint[state]
@@ -239,6 +247,43 @@ class BigTool(Cmd):
         else:
             self.modules[cmd.module].command_help(cmd.command)
 
+
+    def apply_config_cmd(self, cmd):
+        identifier = ""
+        try:
+            if 'identifier' in cmd.params:
+                identifier = cmd.params['identifier']
+            if cmd.command == "show":
+                values = self.config_data.get_value_maps(identifier)
+                for value_map in values:
+                    line = value_map['name']
+                    if value_map['type'] in [ 'module', 'map', 'list' ]:
+                        line += "/"
+                    else:
+                        line += ":\t" + str(value_map['value'])
+                    line += "\t" + value_map['type']
+                    line += "\t"
+                    if value_map['default']:
+                        line += "(default)"
+                    if value_map['modified']:
+                        line += "(modified)"
+                    print(line)
+            elif cmd.command == "add":
+                self.config_data.add(identifier, cmd.params['value'])
+            elif cmd.command == "remove":
+                self.config_data.remove(identifier, cmd.params['value'])
+            elif cmd.command == "set":
+                self.config_data.set(identifier, cmd.params['value'])
+            elif cmd.command == "unset":
+                self.config_data.unset(identifier)
+            elif cmd.command == "revert":
+                self.config_data.revert()
+            elif cmd.command == "commit":
+                self.config_data.commit(self.cc)
+        except ISC.CC.data.DataTypeError as dte:
+            print("Error: " + str(dte))
+        except ISC.CC.data.DataNotFoundError as dnfe:
+            print("Error: " + identifier + " not found")
 
     def apply_cmd(self, cmd):
         if not self.cc:

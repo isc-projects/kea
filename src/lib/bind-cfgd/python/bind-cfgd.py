@@ -1,10 +1,12 @@
 import ISC
 import pickle
 import signal
-    
+from ISC.CC import data
+
 class ConfigData:
     def __init__(self):
         self.zones = {}
+        self.data = {}
 
     def add_zone(self, zone_name, zone_file):
         self.zones[zone_name] = zone_file
@@ -85,6 +87,47 @@ class ConfigManager:
             try:
                 if cmd[0] == "get_commands":
                     answer["result"] = self.commands
+                elif cmd[0] == "get_data_spec":
+                    if len(cmd) > 1 and cmd[1] != "":
+                        try:
+                            answer["result"] = [0, self.data_definitions[cmd[1]]]
+                        except KeyError as ke:
+                            answer["result"] = [1, "No specification for module " + cmd[1]]
+                    else:
+                        answer["result"] = [0, self.data_definitions]
+                elif cmd[0] == "get_config":
+                    # we may not have any configuration here
+                    conf_part = None
+                    if len(cmd) > 1:
+                        try:
+                            conf_part = data.find(self.config.data, cmd[1])
+                        except data.DataNotFoundError as dnfe:
+                            pass
+                    else:
+                        conf_part = self.config.data
+                    answer["result"] = [ 0, conf_part ]
+                elif cmd[0] == "set_config":
+                    print("[XX] cmd len: " + str(len(cmd)))
+                    print("[XX] cmd 0: " + str(cmd[0]))
+                    print("[XX] cmd 1: " + str(cmd[1]))
+                    print("[XX] cmd 2: " + str(cmd[2]))
+                    if len(cmd) == 3:
+                        # todo: use api (and check types?)
+                        if cmd[1] != "":
+                            conf_part = data.find_no_exc(self.config.data, cmd[1])
+                            if not conf_part:
+                                conf_part = data.set(self.config.data, cmd[1], "")
+                        else:
+                            conf_part = self.config.data
+                        conf_part.update(cmd[2])
+                        # send out changed info
+                        answer["result"] = [ 0 ]
+                    elif len(cmd) == 2:
+                        self.config.data.update(cmd[1])
+                        # send out changed info
+                        answer["result"] = [ 0 ]
+                    else:
+                        answer["result"] = [ 1, "Wrong number of arguments" ]
                 elif cmd[0] == "zone" and cmd[1] == "add":
                     self.add_zone(cmd[2])
                     answer["result"] = [ 0 ]
@@ -101,7 +144,7 @@ class ConfigManager:
                     answer["result"] = [ 1, "Unknown command: " + str(cmd) ]
             except IndexError as ie:
                 print("missing argument")
-                answer["result"] = [ 1, "Missing argument in command" ]
+                answer["result"] = [ 1, "Missing argument in command: " + str(ie) ]
         elif "data_specification" in msg:
             # todo: validate? (no direct access to spec as
             spec = msg["data_specification"]
