@@ -197,14 +197,13 @@ Session::recvmsg(ElementPtr& env, ElementPtr& msg, bool nonblock)
 }
 
 void
-Session::subscribe(std::string group, std::string instance, std::string subtype)
+Session::subscribe(std::string group, std::string instance)
 {
     ElementPtr env = Element::create(std::map<std::string, ElementPtr>());
 
     env->set("type", Element::create("subscribe"));
     env->set("group", Element::create(group));
     env->set("instance", Element::create(instance));
-    env->set("subtype", Element::create(subtype));
 
     sendmsg(env);
 }

@@ -43,8 +43,7 @@ namespace ISC {
                          ISC::Data::ElementPtr& msg,
                          bool nonblock = true);
             void subscribe(std::string group,
-                           std::string instance = "*",
-                           std::string subtype = "normal");
+                           std::string instance = "*");
             void unsubscribe(std::string group,
                              std::string instance = "*");
             unsigned int group_sendmsg(ISC::Data::ElementPtr& msg,

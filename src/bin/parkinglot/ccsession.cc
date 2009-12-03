@@ -42,8 +42,8 @@ CommandSession::CommandSession() :
         session_.establish();
         session_.subscribe("ParkingLot", "*");
         session_.subscribe("Boss", "ParkingLot");
-        session_.subscribe("ConfigManager", "*", "meonly");
-        session_.subscribe("statistics", "*", "meonly");
+        //session_.subscribe("ConfigManager", "*", "meonly");
+        //session_.subscribe("statistics", "*", "meonly");
     } catch (...) {
         throw std::runtime_error("SessionManager: failed to open sessions");
     }
