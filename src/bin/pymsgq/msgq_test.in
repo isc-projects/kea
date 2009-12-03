@@ -1,0 +1,13 @@
+#! /bin/sh
+
+PYTHON_EXEC=${PYTHON_EXEC:-@PYTHON@}
+export PYTHON_EXEC
+
+MYPATH_PATH=@abs_top_srcdir@/src/bin/pymsgq
+
+PYTHONPATH=@abs_top_srcdir@/src/lib/cc/python:${abs_top_src_dir}/lib/cc/python/ISC
+
+export PYTHONPATH
+
+cd ${MYPATH_PATH}
+exec ${PYTHON_EXEC} -O msgq_test.py $*
