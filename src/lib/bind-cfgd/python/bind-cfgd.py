@@ -15,11 +15,7 @@ class ConfigData:
         del self.zones[zone_name]
 
     def set_data_definition(self, module_name, module_data_definition):
-        print ("[XX] set datadef for module " + module_name)
-        print ("[XX]")
-        print (self.zones)
         self.zones[module_name] = module_data_definition
-        print (self.data_definitions)
         self.data_definitions[module_name] = module_data_definition
 
 class ConfigManager:
@@ -117,15 +113,12 @@ class ConfigManager:
                             conf_part = self.config.data
                         conf_part.update(cmd[2])
                         # send out changed info
-                        print("[XX][bind-cfgd] send update of part: " + cmd[1])
                         self.cc.group_sendmsg({ "config_update": conf_part }, cmd[1])
                         answer["result"] = [ 0 ]
                     elif len(cmd) == 2:
                         self.config.data.update(cmd[1])
                         # send out changed info
-                        print("[XX][bind-cfgd] send update of all")
                         for module in self.config.data:
-                            print("[XX][bind-cfgd] send update of part: " + module)
                             self.cc.group_sendmsg({ "config_update": self.config.data[module] }, module)
                         answer["result"] = [ 0 ]
                     else:
@@ -166,13 +159,8 @@ class ConfigManager:
         while (self.running):
             msg, env = self.cc.group_recvmsg(False)
             if msg:
-                print("received message: ")
-                print(msg)
                 answer = self.handle_msg(msg);
-                print("sending answer: ")
-                print(answer)
                 self.cc.group_reply(env, answer)
-                print("answer sent")
             else:
                 self.running = False
 

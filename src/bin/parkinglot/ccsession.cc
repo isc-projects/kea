@@ -61,8 +61,6 @@ CommandSession::read_data_definition(const std::string& filename) {
 
     try {
         data_definition_ = DataDefinition(file, true);
-        cout << "Definition: " << endl;
-        cout << data_definition_.getDefinition() << endl;
     } catch (ParseError pe) {
         cout << "Error parsing definition file: " << pe.what() << endl;
         exit(1);
@@ -90,7 +88,6 @@ CommandSession::CommandSession() :
         ElementPtr cmd = Element::create_from_string("{ \"config_manager\": 1}");
         // why does the msgq seem to kill this msg?
         session_.group_sendmsg(data_definition_.getDefinition(), "ConfigManager");
-        cout << "def sent" << endl;
     } catch (...) {
         throw std::runtime_error("SessionManager: failed to open sessions");
     }
@@ -106,7 +103,6 @@ std::pair<std::string, ElementPtr>
 CommandSession::getCommand(int counter) {
     ElementPtr cmd, routing, data, ep;
     string s;
-    cout << "[XX] PARKINGLOT GOT MESSAGE" << endl;
     session_.group_recvmsg(routing, data, false);
     string channel = routing->get("group")->string_value();
 
@@ -138,9 +134,7 @@ CommandSession::getCommand(int counter) {
         if (cmd != NULL && cmd->get(1)->string_value() == "print_message") {
             cout << "[parkinglot] " << cmd->get(2)->string_value() << endl;
             ElementPtr answer = Element::create_from_string("{ \"result\": [0] }");
-            cout << "[XX] sending reply: " << answer << endl;
             session_.reply(routing, answer);
-            cout << "[XX] reply sent" << endl;
         }
     }
 
@@ -156,7 +150,6 @@ CommandSession::getZones() {
     session_.group_sendmsg(cmd, "ConfigManager");
     session_.group_recvmsg(env, result, false);
     BOOST_FOREACH(ElementPtr zone_name, result->get("result")->list_value()) {
-        cout << "[XX] add zone: " << zone_name->string_value() << endl;
         zone_names.push_back(zone_name->string_value());
     }
     return zone_names;
