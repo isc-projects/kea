@@ -100,7 +100,8 @@ class BoB:
                              self.c_channel_port)
         c_channel_env = { "ISC_MSGQ_PORT": str(self.c_channel_port), }
         try:
-            c_channel = ProcessInfo("msgq", "msgq", c_channel_env, True)
+            #c_channel = ProcessInfo("msgq", "msgq", c_channel_env, True)
+            c_channel = ProcessInfo("msgq", "msgq", c_channel_env)
         except Exception as e:
             return "Unable to start msgq; " + str(e)
         self.processes[c_channel.pid] = c_channel
