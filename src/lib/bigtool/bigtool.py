@@ -2,8 +2,7 @@ import sys
 import readline
 from cmd import Cmd
 from exception import *
-from moduleinfo import ModuleInfo
-from moduleinfo import ParamInfo
+from moduleinfo import *
 from command import BigToolCmd
 from xml.dom import minidom
 import ISC
@@ -130,6 +129,8 @@ class BigTool(Cmd):
                 
     
     def onecmd(self, line):
+        # check if there's anything on the cc first
+        self.check_cc_messages()
         if line == 'EOF' or line.lower() == "quit":
             return True
             
@@ -218,8 +219,35 @@ class BigTool(Cmd):
 
         return []
         
+    def prepare_module_commands(self, module_name, module_commands):
+        module = ModuleInfo(name = module_name,
+                            desc = "same here")
+        for command in module_commands:
+            cmd = CommandInfo(name = command["command_name"],
+                              desc = command["command_description"],
+                              need_inst_param = False)
+            for arg in command["command_args"]:
+                param = ParamInfo(name = arg["item_name"],
+                                  type = arg["item_type"],
+                                  optional = bool(arg["item_optional"]))
+                if ("item_default" in arg):
+                    param.default = arg["item_default"]
+                cmd.add_param(param)
+            module.add_command(cmd)
+        self.add_module_info(module)
+
+    def check_cc_messages(self):
+        (message, env) = self.cc.group_recvmsg(True)
+        while message:
+            if 'commands_update' in message:
+                self.prepare_module_commands(message['commands_update'][0], message['commands_update'][1])
+            elif 'specification_update' in message:
+                self.config_data.config.specification[message['specification_update'][0]] = message['specification_update'][1]
+            (message, env) = self.cc.group_recvmsg(True)
 
     def _parse_cmd(self, line):
+        # check if there's anything on the cc first
+        self.check_cc_messages()
         try:
             cmd = BigToolCmd(line)
             self.validate_cmd(cmd)

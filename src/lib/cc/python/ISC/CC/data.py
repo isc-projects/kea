@@ -163,7 +163,7 @@ class ConfigData:
 class UIConfigData():
     def __init__(self, name, cc):
         self.module_name = name
-        data_spec = self.get_data_specification(cc)
+        data_spec = sel f.get_data_specification(cc)
         self.config = ConfigData(data_spec)
         self.get_config_data(cc)
         self.config_changes = {}

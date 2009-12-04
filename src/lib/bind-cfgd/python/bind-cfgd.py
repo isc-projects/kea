@@ -74,17 +74,6 @@ class ConfigManager:
     def remove_commands(self, module_name):
         del self.commands[module_name]
 
-    def add_zone(self, zone_name):
-        self.config.add_zone(zone_name, "todo")
-        self.write_config()
-        print("sending update zone add")
-        self.cc.group_sendmsg({"zone_added": zone_name }, "ParkingLot")
-
-    def remove_zone(self, zone_name):
-        self.config.remove_zone(zone_name)
-        print("sending update zone del")
-        self.cc.group_sendmsg({"zone_deleted": zone_name }, "ParkingLot")
-
     def read_config(self):
         print("Reading config")
         self.config = ConfigManagerData.read_from_file()
@@ -164,8 +153,11 @@ class ConfigManager:
             spec = msg["data_specification"]
             if "config_data" in spec:
                 self.set_config(spec["module_name"], spec["config_data"])
+                self.cc.group_sendmsg({ "specification_update": [ spec["module_name"], spec["config_data"] ] }, "BigTool")
+                print("[XX] sent spec_update")
             if "commands" in spec:
                 self.set_commands(spec["module_name"], spec["commands"])
+                self.cc.group_sendmsg({ "commands_update": [ spec["module_name"], spec["commands"] ] }, "BigTool")
             answer["result"] = [ 0 ]
         else:
             print("unknown message: " + str(msg))
