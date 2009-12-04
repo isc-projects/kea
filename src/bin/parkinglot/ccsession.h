@@ -27,7 +27,7 @@ class CommandSession {
 public:
     CommandSession();
     int getSocket();
-    std::pair<std::string, std::string> getCommand(int counter);
+    std::pair<std::string, ISC::Data::ElementPtr> getCommand(int counter);
     std::vector<std::string> getZones();
 private:
 	void read_data_definition(const std::string& filename);

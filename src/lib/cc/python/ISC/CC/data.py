@@ -187,7 +187,10 @@ class UIConfigData():
         """Sends the changes configuration values to the config manager.
            If the command succeeds, the changes are re-requested and
            the changed list is reset"""
-        cc.group_sendmsg({ "command": [ "set_config", self.module_name, self.config_changes ]}, "ConfigManager")
+        if self.module_name and self.module_name != "":
+            cc.group_sendmsg({ "command": [ "set_config", self.module_name, self.config_changes ]}, "ConfigManager")
+        else:
+            cc.group_sendmsg({ "command": [ "set_config", self.config_changes ]}, "ConfigManager")
         answer, env = cc.group_recvmsg(False)
         if 'result' in answer and type(answer['result']) == list:
             # TODO: with the new cc implementation, replace "0" by 0

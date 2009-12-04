@@ -106,7 +106,7 @@ if __name__ == '__main__':
         tool = BigTool(cc)
         cc.group_sendmsg({ "command": ["get_commands"] }, "ConfigManager")
         command_spec, env =  cc.group_recvmsg(False)
-        prepare_commands(tool, command_spec["result"])
+        prepare_commands(tool, command_spec["result"][1])
         prepare_config_commands(tool)
         _prepare_fake_data(tool)   
         tool.cmdloop()

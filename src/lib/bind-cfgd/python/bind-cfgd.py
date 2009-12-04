@@ -86,7 +86,7 @@ class ConfigManager:
             cmd = msg["command"]
             try:
                 if cmd[0] == "get_commands":
-                    answer["result"] = self.commands
+                    answer["result"] = [ 0, self.commands ]
                 elif cmd[0] == "get_data_spec":
                     if len(cmd) > 1 and cmd[1] != "":
                         try:
@@ -107,10 +107,6 @@ class ConfigManager:
                         conf_part = self.config.data
                     answer["result"] = [ 0, conf_part ]
                 elif cmd[0] == "set_config":
-                    print("[XX] cmd len: " + str(len(cmd)))
-                    print("[XX] cmd 0: " + str(cmd[0]))
-                    print("[XX] cmd 1: " + str(cmd[1]))
-                    print("[XX] cmd 2: " + str(cmd[2]))
                     if len(cmd) == 3:
                         # todo: use api (and check types?)
                         if cmd[1] != "":
@@ -121,10 +117,16 @@ class ConfigManager:
                             conf_part = self.config.data
                         conf_part.update(cmd[2])
                         # send out changed info
+                        print("[XX][bind-cfgd] send update of part: " + cmd[1])
+                        self.cc.group_sendmsg({ "config_update": conf_part }, cmd[1])
                         answer["result"] = [ 0 ]
                     elif len(cmd) == 2:
                         self.config.data.update(cmd[1])
                         # send out changed info
+                        print("[XX][bind-cfgd] send update of all")
+                        for module in self.config.data:
+                            print("[XX][bind-cfgd] send update of part: " + module)
+                            self.cc.group_sendmsg({ "config_update": self.config.data[module] }, module)
                         answer["result"] = [ 0 ]
                     else:
                         answer["result"] = [ 1, "Wrong number of arguments" ]
@@ -145,6 +147,7 @@ class ConfigManager:
             except IndexError as ie:
                 print("missing argument")
                 answer["result"] = [ 1, "Missing argument in command: " + str(ie) ]
+                raise ie
         elif "data_specification" in msg:
             # todo: validate? (no direct access to spec as
             spec = msg["data_specification"]

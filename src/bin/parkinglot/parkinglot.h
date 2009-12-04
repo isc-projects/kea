@@ -18,6 +18,7 @@
 #define __PARKINGLOT_H 1
 
 #include "zoneset.h"
+#include <cc/cpp/data.h>
 
 class ParkingLot {
 public:
@@ -25,7 +26,7 @@ public:
     virtual ~ParkingLot() {}
     int getSocket() { return (sock); }
     void processMessage();
-    void command(std::pair<std::string,std::string>);
+    void command(std::pair<std::string,ISC::Data::ElementPtr>);
     void serve(std::string zone_name);
     
 private:

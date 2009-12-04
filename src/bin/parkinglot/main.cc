@@ -31,6 +31,7 @@
 #include <dns/message.h>
 
 #include <cc/cpp/session.h>
+#include <cc/cpp/data.h>
 
 #include "zoneset.h"
 #include "parkinglot.h"
@@ -100,7 +101,7 @@ main(int argc, char* argv[]) {
         }
 
         if (FD_ISSET(ss, &fds)) {
-            pair<string,string> cmd = cs.getCommand(counter);
+            pair<string, ISC::Data::ElementPtr> cmd = cs.getCommand(counter);
             plot.command(cmd);
         }
     }
