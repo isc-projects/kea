@@ -1,32 +1,62 @@
 import ISC
-import pickle
 import signal
+import ast
+import pprint
+import os
 from ISC.CC import data
 
-class ConfigData:
+class ConfigManagerData:
+    CONFIG_VERSION = 1
+    DB_FILENAME = "/tmp/parkinglot.db"
+    
     def __init__(self):
-        self.zones = {}
         self.data = {}
-
-    def add_zone(self, zone_name, zone_file):
-        self.zones[zone_name] = zone_file
-
-    def remove_zone(self, zone_name):
-        del self.zones[zone_name]
+        self.data['version'] = ConfigManagerData.CONFIG_VERSION
 
     def set_data_definition(self, module_name, module_data_definition):
         self.zones[module_name] = module_data_definition
         self.data_definitions[module_name] = module_data_definition
 
+    def read_from_file():
+        config = ConfigManagerData()
+        try:
+            file = open(ConfigManagerData.DB_FILENAME, 'r')
+            file_config = ast.literal_eval(file.read())
+            if 'version' in file_config and \
+                file_config['version'] == ConfigManagerData.CONFIG_VERSION:
+                config.data = file_config
+            else:
+                # of course we can put in a migration path here for old data
+                print("[bind-cfgd] Old version of data found, starting with empty configuration")
+            file.close()
+        except IOError as ioe:
+            print("No config file found, starting with empty config")
+        except EOFError as eofe:
+            print("Config file empty, starting with empty config")
+
+        return config
+        
+    def write_to_file(self):
+        try:
+            tmp_filename = self.DB_FILENAME + ".tmp"
+            file = open(tmp_filename, 'w');
+            pp = pprint.PrettyPrinter(indent=4)
+            s = pp.pformat(self.data)
+            file.write(s)
+            file.write("\n")
+            file.close()
+            os.rename(tmp_filename, self.DB_FILENAME)
+        except IOError as ioe:
+            print("Unable to write config file; configuration not stored")
+
 class ConfigManager:
     def __init__(self):
         self.commands = {}
         self.data_definitions = {}
-        self.config = ConfigData()
+        self.config = ConfigManagerData()
         self.cc = ISC.CC.Session()
         self.cc.group_subscribe("ConfigManager")
         self.cc.group_subscribe("Boss", "ConfigManager")
-        self.db_filename = "/tmp/parkinglot.db"
         self.running = False
 
     def notify_boss(self):
@@ -57,23 +87,11 @@ class ConfigManager:
 
     def read_config(self):
         print("Reading config")
-        try:
-            file = open(self.db_filename, 'rb');
-            self.config = pickle.load(file)
-            file.close()
-        except IOError as ioe:
-            print("No config file found, starting with empty config")
-        except EOFError as eofe:
-            print("Config file empty, starting with empty config")
-
+        self.config = ConfigManagerData.read_from_file()
+        
     def write_config(self):
         print("Writing config")
-        try:
-            file = open(self.db_filename, 'wb');
-            pickle.dump(self.config, file)
-            file.close()
-        except IOError as ioe:
-            print("Unable to write config file; configuration not stored")
+        self.config.write_to_file()
 
     def handle_msg(self, msg):
         """return answer message"""
@@ -130,7 +148,7 @@ class ConfigManager:
                     self.remove_zone(cmd[2])
                     answer["result"] = [ 0 ]
                 elif cmd[0] == "zone" and cmd[1] == "list":
-                    answer["result"]     = list(self.config.zones.keys())
+                    answer["result"]     = []#list(self.config.zones.keys())
                 elif len(cmd) > 1 and cmd[1] == "shutdown":
                     print("Received shutdown command")
                     self.running = False
