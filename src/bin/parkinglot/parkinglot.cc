@@ -190,11 +190,7 @@ ParkingLot::processMessage() {
 
 void
 ParkingLot::command(pair<string,ElementPtr> cmd) {
-    if (cmd.first == "addzone")
-        serve(cmd.second->string_value());
-    else if (cmd.first == "delzone")
-        zones.forget(cmd.second->string_value());
-    else if (cmd.first == "shutdown")
+    if (cmd.first == "shutdown")
         exit(0);
     else if (cmd.first == "config_update") {
         // what to do with port settings?
