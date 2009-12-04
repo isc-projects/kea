@@ -124,13 +124,6 @@ CommandSession::getCommand(int counter) {
         }
     } else {
         cout << "[parkinglot] saw message: " << data << endl;
-        cmd = data->get("zone_added");
-        if (cmd != NULL)
-            return std::pair<string, ElementPtr>("addzone", cmd);
-        cmd = data->get("zone_deleted");
-        if (cmd != NULL) {
-            return std::pair<string, ElementPtr>("delzone", cmd);
-        }
         // todo: common interface for config updates?
         cmd = data->get("config_update");
         if (cmd != NULL) {
