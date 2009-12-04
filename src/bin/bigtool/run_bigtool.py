@@ -13,26 +13,9 @@ def _prepare_fake_data(bigtool):
 
     bigtool.add_module_info(boss_module)
 
-def prepare_module_commands(bigtool, module_name, module_commands):
-    module = ModuleInfo(name = module_name,
-                        desc = "same here")
-    for command in module_commands:
-        cmd = CommandInfo(name = command["command_name"],
-                          desc = command["command_description"],
-                          need_inst_param = False)
-        for arg in command["command_args"]:
-            param = ParamInfo(name = arg["item_name"],
-                              type = arg["item_type"],
-                              optional = bool(arg["item_optional"]))
-            if ("item_default" in arg):
-                param.default = arg["item_default"]
-            cmd.add_param(param)
-        module.add_command(cmd)
-    bigtool.add_module_info(module)
-
 def prepare_commands(bigtool, command_spec):
     for module_name in command_spec.keys():
-        prepare_module_commands(bigtool, module_name, command_spec[module_name])
+        bigtool.prepare_module_commands(module_name, command_spec[module_name])
 
 def prepare_config_commands(bigtool):
     module = ModuleInfo(name = "config", desc = "Configuration commands")
@@ -84,7 +67,7 @@ def prepare_config_commands(bigtool):
 if __name__ == '__main__':
     try:
         cc = ISC.CC.Session()
-        cc.group_subscribe("BigTool", "*", "meonly")
+        cc.group_subscribe("BigTool", "*")
         cc.group_subscribe("ConfigManager", "*", "meonly")
         cc.group_subscribe("Boss", "*", "meonly")
 
