@@ -33,7 +33,7 @@ def prepare_module_commands(bigtool, module_name, module_commands):
                         desc = "same here")
     for command in module_commands:
         cmd = CommandInfo(name = command["command_name"],
-                          desc = "todo2",
+                          desc = command["command_description"],
                           need_inst_param = False)
         for arg in command["command_args"]:
             param = ParamInfo(name = arg["item_name"],

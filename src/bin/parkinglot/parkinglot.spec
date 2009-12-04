@@ -23,18 +23,10 @@
     ],
     "commands": [
       {
-        "command_name": "zone_add",
+        "command_name": "print_message",
+        "command_description": "Print the given message to stdout",
         "command_args": [ {
-          "item_name": "zone_name",
-          "item_type": "string",
-          "item_optional": False,
-          "item_default": ""
-        } ]
-      },
-      {
-        "command_name": "zone_delete",
-        "command_args": [ {
-          "item_name": "zone_name",
+          "item_name": "message",
           "item_type": "string",
           "item_optional": False,
           "item_default": ""

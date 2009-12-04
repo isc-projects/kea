@@ -315,7 +315,7 @@ class BigTool(Cmd):
         if not self.cc:
             return
         
-        groupName = (cmd.module == 'boss') and 'Boss' or 'ConfigManager'
+        groupName = cmd.module
         content = [cmd.module, cmd.command]
         values = cmd.params.values()
         if len(values) > 0:
@@ -323,15 +323,19 @@ class BigTool(Cmd):
 
         msg = {"command":content}
         print("begin to send the message...")
+
+        # XXTODO: remove this with new msgq
+        self.cc.group_subscribe(groupName)
         
         try:   
-            self.cc.group_sendmsg(msg, groupName, instance = 'boss')
+            self.cc.group_sendmsg(msg, groupName)
             print("waiting for %s reply..." % groupName)
 
             reply, env = self.cc.group_recvmsg(False)
             print("received reply:", reply)
         except:
             print("Error communication with %s" % groupName)
+
 
 
 

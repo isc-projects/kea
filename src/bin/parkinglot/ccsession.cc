@@ -131,9 +131,23 @@ CommandSession::getCommand(int counter) {
         if (cmd != NULL) {
             return std::pair<string, ElementPtr>("delzone", cmd);
         }
+        // todo: common interface for config updates?
         cmd = data->get("config_update");
         if (cmd != NULL) {
             return std::pair<string, ElementPtr>("config_update", cmd);
+        }
+        // todo: common interface for command handling
+        cmd = data->get("command");
+        // the format is defined partly by convention;
+        // { "command": [ "module", "command", args... ]
+        // args is defined in the .spec file
+        // we could do checking here as well if we want
+        if (cmd != NULL && cmd->get(1)->string_value() == "print_message") {
+            cout << "[parkinglot] " << cmd->get(2)->string_value() << endl;
+            ElementPtr answer = Element::create_from_string("{ \"result\": [0] }");
+            cout << "[XX] sending reply: " << answer << endl;
+            session_.reply(routing, answer);
+            cout << "[XX] reply sent" << endl;
         }
     }
 
