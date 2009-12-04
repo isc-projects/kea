@@ -81,7 +81,7 @@ CommandSession::CommandSession() :
         // and remove sleep here
         sleep(1);
         session_.establish();
-        session_.subscribe("ParkingLot", "*", "meonly");
+        session_.subscribe("ParkingLot", "*");
         session_.subscribe("Boss", "*", "meonly");
         session_.subscribe("ConfigManager", "*", "meonly");
         session_.subscribe("statistics", "*", "meonly");
@@ -102,11 +102,11 @@ CommandSession::getSocket()
     return (session_.getSocket());
 }
 
-std::pair<std::string, std::string>
+std::pair<std::string, ElementPtr>
 CommandSession::getCommand(int counter) {
     ElementPtr cmd, routing, data, ep;
     string s;
-
+    cout << "[XX] PARKINGLOT GOT MESSAGE" << endl;
     session_.group_recvmsg(routing, data, false);
     string channel = routing->get("group")->string_value();
 
@@ -123,16 +123,21 @@ CommandSession::getCommand(int counter) {
             session_.group_sendmsg(resp, "statistics");
         }
     } else {
+        cout << "[parkinglot] saw message: " << data << endl;
         cmd = data->get("zone_added");
         if (cmd != NULL)
-            return std::pair<string, string>("addzone", cmd->string_value());
+            return std::pair<string, ElementPtr>("addzone", cmd);
         cmd = data->get("zone_deleted");
         if (cmd != NULL) {
-            return std::pair<string, string>("delzone", cmd->string_value());
+            return std::pair<string, ElementPtr>("delzone", cmd);
+        }
+        cmd = data->get("config_update");
+        if (cmd != NULL) {
+            return std::pair<string, ElementPtr>("config_update", cmd);
         }
     }
 
-    return std::pair<string, string>("unknown", "");
+    return std::pair<string, ElementPtr>("unknown", ElementPtr());
 }
 
 // should be replaced by the general config-getter in cc setup
@@ -144,6 +149,7 @@ CommandSession::getZones() {
     session_.group_sendmsg(cmd, "ConfigManager");
     session_.group_recvmsg(env, result, false);
     BOOST_FOREACH(ElementPtr zone_name, result->get("result")->list_value()) {
+        cout << "[XX] add zone: " << zone_name->string_value() << endl;
         zone_names.push_back(zone_name->string_value());
     }
     return zone_names;

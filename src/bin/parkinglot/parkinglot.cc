@@ -28,14 +28,19 @@
 #include <dns/rrset.h>
 #include <dns/message.h>
 
+#include <cc/cpp/data.h>
+
 #include "common.h"
 #include "parkinglot.h"
+
+#include <boost/foreach.hpp>
 
 using namespace std;
 
 using namespace isc::dns;
 using namespace isc::dns::Rdata::IN;
 using namespace isc::dns::Rdata::Generic;
+using namespace ISC::Data;
 
 ParkingLot::ParkingLot(int port) {
     ns1 = Rdata::RdataPtr(new NS("ns1.parking.example"));
@@ -184,13 +189,23 @@ ParkingLot::processMessage() {
 }
 
 void
-ParkingLot::command(pair<string,string> cmd) {
+ParkingLot::command(pair<string,ElementPtr> cmd) {
     if (cmd.first == "addzone")
-        serve(cmd.second);
+        serve(cmd.second->string_value());
     else if (cmd.first == "delzone")
-        zones.forget(cmd.second);
+        zones.forget(cmd.second->string_value());
     else if (cmd.first == "shutdown")
         exit(0);
+    else if (cmd.first == "config_update") {
+        // what to do with port settings?
+        ElementPtr zonelist_el = (cmd.second)->get("zones");
+        // We could walk through both lists and remove and serve
+        // accordingly, or simply clear all and add everything
+        zones.clear_zones();
+        BOOST_FOREACH(ElementPtr zone, zonelist_el->list_value()) {
+            zones.serve(zone->string_value());
+        }
+    }
 }
 
 void
