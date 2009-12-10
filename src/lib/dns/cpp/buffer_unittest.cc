@@ -148,4 +148,20 @@ TEST_F(BufferTest, output_buffer_skip)
     obuffer.skip(2);
     EXPECT_EQ(6, obuffer.getLength());
 }
+
+TEST_F(BufferTest, output_buffer_readat)
+{
+    obuffer.writeData(testdata, sizeof(testdata));
+    for (int i = 0; i < sizeof(testdata); i ++) {
+        EXPECT_EQ(testdata[i], obuffer[i]);
+    }
+    EXPECT_THROW(obuffer[sizeof(testdata)], isc::dns::InvalidBufferPosition);
+}
+
+TEST_F(BufferTest, output_buffer_clear)
+{
+    obuffer.writeData(testdata, sizeof(testdata));
+    obuffer.clear();
+    EXPECT_EQ(0, obuffer.getLength());
+}
 }

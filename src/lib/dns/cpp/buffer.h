@@ -283,6 +283,19 @@ public:
     const void* getData() const { return (&data_[0]); }
     /// \brief Return the length of data written in the buffer.
     size_t getLength() const { return (data_.size()); }
+    /// \brief Return the value of the buffer at the specified position.
+    ///
+    /// \c pos must specify the valid position of the buffer; otherwise an
+    /// exception class of \c InvalidBufferPosition will be thrown.
+    ///
+    /// \param pos The position in the buffer to be returned.
+    uint8_t operator[](size_t pos) const
+    {
+        if (pos >= data_.size()) {
+            dns_throw(InvalidBufferPosition, "read at invalid position");
+        }
+        return (data_[pos]);
+    }
     //@}
 
     ///
@@ -296,6 +309,11 @@ public:
     /// that is to be filled in later, e.g, by \ref writeUint16At().
     /// \param len The length of the gap to be inserted in bytes.
     void skip(size_t len) { data_.insert(data_.end(), len, 0); }
+    /// \brief Clear buffer content.
+    ///
+    /// This method can be used to re-initialize and reuse the buffer without
+    /// constructing a new one.
+    void clear() { data_.clear(); }
     /// \brief Write an unsigned 8-bit integer into the buffer.
     ///
     /// \param data The 8-bit integer to be written into the buffer.
