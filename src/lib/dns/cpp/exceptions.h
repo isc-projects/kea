@@ -79,6 +79,16 @@ private:
 };
 
 ///
+/// \brief A standard DNS module exception that is thrown if a parameter give
+/// to a method would refer to or modify out-of-range data.
+///
+class OutOfRange : public Exception {
+public:
+    OutOfRange(const char* file, size_t line, const char* what) :
+        isc::dns::Exception(file, line, what) {}
+};
+
+///
 /// A shortcut macro to insert known values into exception arguments.
 ///
 #define dns_throw(type, args...) throw type(__FILE__, __LINE__, args)

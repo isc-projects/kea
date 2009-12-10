@@ -1,0 +1,14 @@
+#
+# Rendering names including one explicitly uncompressed.
+# [x] means a compression pointer pointing to offset 'x'.
+#
+# 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 (bytes)
+#(1) a (7) e  x  a  m  p  l  e (3) c  o  m  .
+ 01 61 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00
+
+#15                                        29 (bytes)
+#(1) b(7)  e  x  a  m  p  l  e (3) c  o  m  .; specified not compressed, but
+#                                              can be pointed to from others
+ 01 62 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00
+#[0f]
+ c0 0f

@@ -14,25 +14,55 @@
 
 // $Id$
 
-#include <stdexcept>
+#include <cctype>
+#include <cassert>
 
 #include "buffer.h"
 #include "name.h"
+#include "messagerenderer.h"
 
-using namespace std;
-using namespace ISC::DNS;
+using namespace isc::dns;
 
-// quick hack exception classes: should be moved to an appropriate place soon.
-class ISCException {};
-class ISCUnexpected : public ISCException {};
-class ISCNoSpace : public ISCException {};
+using isc::dns::NameComparisonResult;
+using isc::dns::MessageRenderer;
 
-class DNSException {};
-class DNSEmptyLabel : public DNSException {};
-class DNSLabelTooLong : public DNSException {};
-class DNSBadEscape : public DNSException {};
-class DNSBadLabelType : public DNSException {};
+namespace isc {
+namespace dns {
 
+namespace {
+///
+/// These are shortcut arrays for efficient character conversion.
+/// digitvalue converts a digit character to the corresponding integer.
+/// maptolower convert uppercase alphabets to their lowercase counterparts.
+/// A helper class and its only instance will initialize the arrays at startup
+/// time.
+///
+static char digitvalue[256];
+static unsigned char maptolower[256];
+
+class Initializer {
+public:
+    Initializer()
+    {
+        for (unsigned int i = 0; i < 256; i++) {
+            if (i >= '0' && i<= '9') {
+                digitvalue[i] = i - '0';
+            } else {
+                digitvalue[i] = -1;
+            }
+        }
+        for (unsigned int i = 0; i < 256; i++) {
+            if (i >= 'A' && i <= 'Z') {
+                maptolower[i] = i - ('A' - 'a');
+            } else {
+                maptolower[i] = i;
+            }
+        }
+    }
+};
+/// This object is defined only to call its constructor.
+static Initializer initialier; 
+}
 
 typedef enum {
     ft_init = 0,
@@ -44,352 +74,423 @@ typedef enum {
     ft_at
 } ft_state;
 
-typedef enum {
-    fw_start = 0,
-    fw_ordinary,
-    fw_copy,
-    fw_newcurrent
-} fw_state;
-
-static char digitvalue[256] = {
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // 16
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /*32*/
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /*48*/
-    0,  1,  2,  3,  4,  5,  6,  7,  8,  9, -1, -1, -1, -1, -1, -1, /*64*/
-    -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1, /*80*/
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /*96*/
-    -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1, /*112*/
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /*128*/
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /*256*/
-};
-
-static unsigned char maptolower[] = {
-    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-    0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
-    0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
-    0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
-    0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27,
-    0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f,
-    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
-    0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f,
-    0x40, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67,
-    0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f,
-    0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77,
-    0x78, 0x79, 0x7a, 0x5b, 0x5c, 0x5d, 0x5e, 0x5f,
-    0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67,
-    0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f,
-    0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77,
-    0x78, 0x79, 0x7a, 0x7b, 0x7c, 0x7d, 0x7e, 0x7f,
-    0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87,
-    0x88, 0x89, 0x8a, 0x8b, 0x8c, 0x8d, 0x8e, 0x8f,
-    0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97,
-    0x98, 0x99, 0x9a, 0x9b, 0x9c, 0x9d, 0x9e, 0x9f,
-    0xa0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6, 0xa7,
-    0xa8, 0xa9, 0xaa, 0xab, 0xac, 0xad, 0xae, 0xaf,
-    0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7,
-    0xb8, 0xb9, 0xba, 0xbb, 0xbc, 0xbd, 0xbe, 0xbf,
-    0xc0, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7,
-    0xc8, 0xc9, 0xca, 0xcb, 0xcc, 0xcd, 0xce, 0xcf,
-    0xd0, 0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6, 0xd7,
-    0xd8, 0xd9, 0xda, 0xdb, 0xdc, 0xdd, 0xde, 0xdf,
-    0xe0, 0xe1, 0xe2, 0xe3, 0xe4, 0xe5, 0xe6, 0xe7,
-    0xe8, 0xe9, 0xea, 0xeb, 0xec, 0xed, 0xee, 0xef,
-    0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7,
-    0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff
-};
-
-void
-Name::from_string(const string &namestring)
+Name::Name(const std::string &namestring, bool downcase)
 {
     char c;
-    ft_state state;
-    unsigned int value, count, pos, lpos;
-    unsigned int n1, n2, tlen, nrem, nused, digits, labels, tused;
-    bool done;
-
-    offsets_.reserve(128);
-    offsets_[0] = 0;
+    std::vector<char> offsets;
+    offsets.reserve(128);
+    offsets.push_back(0);
 
     //
     // Initialize things to make the compiler happy; they're not required.
     //
-    n1 = 0;
-    n2 = 0;
-    digits = 0;
-    value = 0;
-    count = 0;
+    unsigned int digits = 0;
+    unsigned int value = 0;
+    unsigned int count = 0;
 
     //
     // Set up the state machine.
     //
-    pos = 0;
-    tlen = namestring.length();
-    tused = 0;
-    nrem = 255;
-    nused = 0;
-    labels = 0;
-    done = false;
-    state = ft_init;
+    std::string::const_iterator s = namestring.begin();
+    std::string::const_iterator send = namestring.end();
+    bool done = false;
+    bool is_root = false;
+    ft_state state = ft_init;
 
-    while (nrem > 0 && tlen > 0 && !done) {
-        c = namestring[pos++];
-        tlen--;
-        tused++;
+    // should we refactor this code using, e.g, the state pattern?  Probably
+    // not at this point, as this is based on proved code (derived from BIND9)
+    // and it's less likely that we'll have more variations in the domain name
+    // syntax.  If this ever happens next time, we should consider refactor
+    // the code, rather than adding more states and cases below.
+    while (ndata_.size() < Name::MAX_WIRE && s != send && !done) {
+        c = *s++;
 
         switch (state) {
         case ft_init:
-            /*
-             * Is this the root name?
-             */
+            //
+            // Is this the root name?
+            //
             if (c == '.') {
-                if (tlen != 0)
-                    throw DNSEmptyLabel();
-                labels++;
+                if (s != send) {
+                    dns_throw(EmptyLabel, "non terminating empty label");
+                }
+                is_root = true;
+            } else if (c == '@' && s == send) {
+                // handle a single '@' as the root name.
+                is_root = true;
+            }
+
+            if (is_root) {
                 ndata_.push_back(0);
-                nrem--;
-                nused++;
                 done = true;
                 break;
             }
-            if (c == '@' && tlen == 0) {
-                state = ft_at;
-                break;
-            }
 
-            /* FALLTHROUGH */
-        case ft_start:
-            ndata_.push_back(0); // dummy data
-            nrem--;
-            lpos = nused;
-            nused++;
+            // FALLTHROUGH
+        case ft_start:           // begin of a label
+            ndata_.push_back(0); // placeholder for the label length field
             count = 0;
             if (c == '\\') {
                 state = ft_initialescape;
                 break;
             }
             state = ft_ordinary;
-            if (nrem == 0)
-                throw ISCNoSpace();
-            /* FALLTHROUGH */
-        case ft_ordinary:
+            assert(ndata_.size() < Name::MAX_WIRE);
+            // FALLTHROUGH
+        case ft_ordinary:       // parsing a normal label
             if (c == '.') {
-                if (count == 0)
-                    throw DNSEmptyLabel();
-                ndata_[lpos] = count;
-                labels++;
-                //INSIST(labels <= 127);
-                offsets_[labels] = nused;
-                if (tlen == 0) {
-                    labels++;
+                if (count == 0) {
+                    dns_throw(EmptyLabel, "duplicate period");
+                }
+                ndata_[offsets.back()] = count;
+                offsets.push_back(ndata_.size());
+                if (s == send) {
                     ndata_.push_back(0);
-                    nrem--;
-                    nused++;
                     done = true;
                 }
                 state = ft_start;
             } else if (c == '\\') {
                 state = ft_escape;
             } else {
-                if (count >= 63)
-                    throw DNSLabelTooLong();
-                count++;
-                ndata_.push_back(c);
-                nrem--;
-                nused++;
+                if (++count > Name::MAX_LABELLEN) {
+                    dns_throw(TooLongLabel, "label is too long");
+                }
+                ndata_.push_back(downcase ? maptolower[c] : c);
             }
             break;
-        case ft_initialescape:
+        case ft_initialescape:  // just found '\'
             if (c == '[') {
-                /*
-                 * This looks like a bitstring label, which
-                 * was deprecated.  Intentionally drop it.
-                 */
-                throw DNSBadLabelType();
+                // This looks like a bitstring label, which was deprecated.
+                // Intentionally drop it.
+                dns_throw(BadLabelType, "invalid label type");
             }
             state = ft_escape;
-            /* FALLTHROUGH */
-        case ft_escape:
+            // FALLTHROUGH
+        case ft_escape:         // begin of handling a '\'-escaped sequence
             if (!isdigit(c & 0xff)) {
-                if (count >= 63)
-                    throw DNSLabelTooLong();
-                count++;
-                ndata_.push_back(c);
-                nrem--;
-                nused++;
+                if (++count > Name::MAX_LABELLEN) {
+                    dns_throw(TooLongLabel, "label is too long");
+                }
+                ndata_.push_back(downcase ? maptolower[c] : c);
                 state = ft_ordinary;
                 break;
             }
             digits = 0;
             value = 0;
             state = ft_escdecimal;
-            /* FALLTHROUGH */
-        case ft_escdecimal:
-            if (!isdigit(c & 0xff))
-                throw DNSBadEscape();
+            // FALLTHROUGH
+        case ft_escdecimal:     // parsing a '\DDD' octet.
+            if (!isdigit(c & 0xff)) {
+                dns_throw(BadEscape, "mixture of escaped digit and non-digit");
+            }
             value *= 10;
-            value += digitvalue[(int)c];
+            value += digitvalue[c];
             digits++;
             if (digits == 3) {
-                if (value > 255)
-                    throw DNSBadEscape();
-                if (count >= 63)
-                    throw DNSLabelTooLong();
-                count++;
-                ndata_.push_back(value);
-                nrem--;
-                nused++;
+                if (value > 255) {
+                    dns_throw(BadEscape, "escaped decimal is too large");
+                }
+                if (++count > Name::MAX_LABELLEN) {
+                    dns_throw(TooLongLabel, "label is too long");
+                }
+                ndata_.push_back(downcase ? maptolower[value] : value);
                 state = ft_ordinary;
             }
             break;
         default:
-            throw runtime_error("Unexpected state " + state);
+            // impossible case
+            assert(false);
+        }
+    }
+
+    if (!done) {                // no trailing '.' was found.
+        if (ndata_.size() == Name::MAX_WIRE) {
+            dns_throw(TooLongName, "name is too long for termination");
+        }
+        assert(s == send);
+        if (state != ft_ordinary && state != ft_at) {
+            dns_throw(BadLabelType, "incomplete label");
+        }
+        if (state == ft_ordinary) {
+            assert(count != 0);
+            ndata_[offsets.back()] = count;
+            
+            offsets.push_back(ndata_.size());
+            // add a trailing \0
+            ndata_.push_back('\0');
+        }
+    }
+
+    labels_ = offsets.size();
+    assert(labels_ <= 127);
+    length_ = ndata_.size();
+    offsets_.assign(offsets.begin(), offsets.end());
+}
+
+typedef enum {
+    fw_start = 0,
+    fw_ordinary,
+    fw_newcurrent
+} fw_state;
+
+Name::Name(InputBuffer& buffer, bool downcase)
+{
+    unsigned int new_current;
+    std::vector<char> offsets;
+    offsets.reserve(128);
+
+    /*
+     * Initialize things to make the compiler happy; they're not required.
+     */
+    unsigned int n = 0;
+
+    //
+    // Set up.
+    //
+    bool done = false;
+    unsigned int nused = 0;
+    bool seen_pointer = false;
+    fw_state state = fw_start;
+
+    unsigned int cused = 0;     // Bytes of compressed name data used
+    unsigned int current = buffer.getPosition();
+    unsigned int pos_begin = current;
+    unsigned int biggest_pointer = current;
+
+    //
+    // Note:  The following code is not optimized for speed, but
+    // rather for correctness.  Speed will be addressed in the future.
+    //
+    while (current < buffer.getLength() && !done) {
+        unsigned int c = buffer.readUint8();
+        current++;
+        if (!seen_pointer) {
+            cused++;
+        }
+
+        switch (state) {
+        case fw_start:
+            if (c < 64) {
+                offsets.push_back(nused);
+                if (nused + c + 1 > Name::MAX_WIRE) {
+                    dns_throw(TooLongName, "wire name is too long");
+                }
+                nused += c + 1;
+                ndata_.push_back(c);
+                if (c == 0) {
+                    done = true;
+                }
+                n = c;
+                state = fw_ordinary;
+            } else if (c >= 192) {
+                //
+                // Ordinary 14-bit pointer.
+                //
+                new_current = c & 0x3F;
+                n = 1;
+                state = fw_newcurrent;
+            } else {
+                // this case includes local compression pointer, which hasn't
+                // been standardized.
+                dns_throw(BadLabelType, "unknown label character");
+            }
+            break;
+        case fw_ordinary:
+            if (downcase) {
+                c = maptolower[c];
+            }
+            ndata_.push_back(c);
+            if (--n == 0) {
+                state = fw_start;
+            }
+            break;
+        case fw_newcurrent:
+            new_current *= 256;
+            new_current += c;
+            if (--n != 0) {
+                break;
+            }
+            if (new_current >= biggest_pointer) {
+                dns_throw(BadPointer, "bad compression pointer: out of range");
+            }
+            biggest_pointer = new_current;
+            current = new_current;
+            buffer.setPosition(current);
+            seen_pointer = true;
+            state = fw_start;
+            break;
+        default:
+            assert(false);
         }
     }
 
     if (!done) {
-        if (nrem == 0)
-            throw ISCNoSpace();
-        //INSIST(tlen == 0);
-        if (state != ft_ordinary && state != ft_at)
-            throw runtime_error("Unexpected state " + state);
-        if (state == ft_ordinary) {
-            //INSIST(count != 0);
-            ndata_[lpos] = count;
-            labels++;
-            //INSIST(labels <= 127);
-            offsets_[labels] = nused;
-
-            // added a trailing \0
-            ndata_.push_back('\0');
-            ++labels;
-            ++nused;
-            offsets_[labels] = nused;
-        }
+        dns_throw(IncompleteName, "incomplete wire-format name");
     }
 
-    labels_ = labels;
+    labels_ = offsets.size();
     length_ = nused;
+    offsets_.assign(offsets.begin(), offsets.end());
+    buffer.setPosition(pos_begin + cused);
 }
 
-string
+void
+Name::toWire(OutputBuffer& buffer) const
+{
+    buffer.writeData(ndata_.data(), ndata_.size());
+}
+
+void
+Name::toWire(MessageRenderer& renderer) const
+{
+    renderer.writeName(*this);
+}
+
+std::string
 Name::toText(bool omit_final_dot) const
 {
-    string tdata;
-    unsigned int nlen;
-    unsigned char c;
-    unsigned int count;
-    unsigned int labels;
-    bool saw_root = false;
-    string::const_iterator iter_ndata;
-
-    /*
-     * This function assumes the name is in proper uncompressed
-     * wire format.
-     */
-    iter_ndata = ndata_.begin();
-    nlen = length_;
-    labels = labels_;
-
-    if (labels == 0 && nlen == 0) {
-        /*
-         * Special handling for an empty name.
-         */
-
-        /*
-         * The names of these booleans are misleading in this case.
-         * This empty name is not necessarily from the root node of
-         * the DNS root zone, nor is a final dot going to be included.
-         * They need to be set this way, though, to keep the "@"
-         * from being trounced.
-         */
-        saw_root = true;
-        omit_final_dot = false;
-        tdata.push_back('@');
-
-        /*
-         * Skip the while() loop.
-         */
-        nlen = 0;
-    } else if (nlen == 1 && labels == 1 && *iter_ndata == '\0') {
-        /*
-         * Special handling for the root label.
-         */
-        saw_root = true;
-        omit_final_dot = false;
-        tdata.push_back('.');
-
-        /*
-         * Skip the while() loop.
-         */
-        nlen = 0;
+    if (length_ == 1) {
+        //
+        // Special handling for the root label.  We ignore omit_final_dot.
+        //
+        assert(labels_ == 1 && ndata_[0] == '\0');
+        return (".");
     }
 
-    while (labels > 0 && nlen > 0) {
+    unsigned int count;
+    std::string::const_iterator np = ndata_.begin();
+    std::string::const_iterator np_end = ndata_.end();
+    unsigned int labels = labels_; // use for integrity check
+
+    // result string: it will roughly have the same length as the wire format
+    // name data.  reserve that length to minimize reallocation.
+    std::string result;
+    result.reserve(length_);
+
+    while (np != np_end) {
         labels--;
-        count = *iter_ndata++;
-        nlen--;
+        count = *np++;
+
         if (count == 0) {
-            saw_root = true;
+            if (!omit_final_dot) {
+                result.push_back('.');
+            }
             break;
         }
-        if (count < 64) {
-            //INSIST(nlen >= count);
-            while (count > 0) {
-                c = *iter_ndata;
+            
+        if (count <= Name::MAX_LABELLEN) {
+            assert(np_end - np >= count);
+
+            if (!result.empty()) {
+                // just after a non-empty label.  add a separating dot.
+                result.push_back('.');
+            }
+
+            while (count-- > 0) {
+                unsigned char c = *np++;
                 switch (c) {
-                case 0x22: /* '"' */
-                case 0x28: /* '(' */
-                case 0x29: /* ')' */
-                case 0x2E: /* '.' */
-                case 0x3B: /* ';' */
-                case 0x5C: /* '\\' */
-                    /* Special modifiers in zone files. */
-                case 0x40: /* '@' */
-                case 0x24: /* '$' */
-                    tdata.push_back('\\');
-                    tdata.push_back(c);
-                    iter_ndata++;
-                    nlen--;
+                case 0x22: // '"'
+                case 0x28: // '('
+                case 0x29: // ')'
+                case 0x2E: // '.'
+                case 0x3B: // ';'
+                case 0x5C: // '\\'
+                    // Special modifiers in zone files.
+                case 0x40: // '@'
+                case 0x24: // '$'
+                    result.push_back('\\');
+                    result.push_back(c);
                     break;
                 default:
                     if (c > 0x20 && c < 0x7f) {
-                        tdata.push_back(c);
-                        iter_ndata++;
-                        nlen--;
+                        // append printable characters intact
+                        result.push_back(c);
                     } else {
-                        tdata.push_back(0x5c);
-                        tdata.push_back(0x30 + ((c / 100) % 10));
-                        tdata.push_back(0x30 + ((c / 10) % 10));
-                        tdata.push_back(0x30 + (c % 10));
-                        iter_ndata++;
-                        nlen--;
+                        // encode non-printable characters in the form of \DDD
+                        result.push_back(0x5c);
+                        result.push_back(0x30 + ((c / 100) % 10));
+                        result.push_back(0x30 + ((c / 10) % 10));
+                        result.push_back(0x30 + (c % 10));
                     }
                 }
-                count--;
             }
-        } else
-            throw runtime_error("Unexpected label type " + count);
-        // The following assumes names are absolute.  If not, we
-        // fix things up later.  Note that this means that in some
-        // cases one more byte of text buffer is required than is
-        // needed in the final output.
-        tdata.push_back('.');
+        } else {
+            dns_throw(BadLabelType, "unknown label type in name data");
+        }
     }
 
-    if (nlen != 0)
-        throw ISCNoSpace();
+    assert(labels == 0);
+    assert(count == 0);         // a valid name must end with a 'dot'.
 
-    if (!saw_root || omit_final_dot)
-        tdata.erase(tdata.end() - 1);
+    return (result);
+}
 
-    return (tdata);
+NameComparisonResult
+Name::compare(const Name& other) const
+{
+    unsigned int count1, count2, count;
+    int cdiff, chdiff;
+    unsigned char label1, label2;
+    size_t pos1, pos2;
+    NameComparisonResult::NameRelation namereln;
+
+    // Determine the relative ordering under the DNSSEC order relation of
+    // 'this' and 'other', and also determine the hierarchical relationship
+    // of the names.
+
+    unsigned int nlabels = 0;
+    unsigned int l1 = labels_;
+    unsigned int l2 = other.labels_;
+    int ldiff = (int)l1 - (int)l2;
+    unsigned int l = (ldiff < 0) ? l1 : l2;
+
+    while (l > 0) {
+        --l;
+        --l1;
+        --l2;
+        pos1 = offsets_[l1];
+        pos2 = other.offsets_[l2];
+        count1 = ndata_[pos1++];
+        count2 = other.ndata_[pos2++];
+        label1 = ndata_[pos1];
+        label2 = other.ndata_[pos2];
+
+        // We don't support any extended label types including now-obsolete
+        // bitstring labels.
+        assert(count1 <= Name::MAX_LABELLEN && count2 <= Name::MAX_LABELLEN);
+
+        cdiff = (int)count1 - (int)count2;
+        if (cdiff < 0)
+            count = count1;
+        else
+            count = count2;
+
+        while (count > 0) {
+            chdiff = (int)maptolower[label1] - (int)maptolower[label2];
+            if (chdiff != 0) {
+                return (NameComparisonResult(chdiff, nlabels,
+                                         NameComparisonResult::COMMONANCESTOR));
+            }
+            --count;
+            label1 = ndata_[++pos1];
+            label2 = other.ndata_[++pos2];
+        }
+        if (cdiff != 0) {
+                return (NameComparisonResult(cdiff, nlabels,
+                                         NameComparisonResult::COMMONANCESTOR));
+        }
+        ++nlabels;
+    }
+
+    if (ldiff < 0) {
+        return (NameComparisonResult(ldiff, nlabels,
+                                     NameComparisonResult::SUPERDOMAIN));
+    } else if (ldiff > 0) {
+        return (NameComparisonResult(ldiff, nlabels,
+                                     NameComparisonResult::SUBDOMAIN));
+    }
+
+    return (NameComparisonResult(ldiff, nlabels, NameComparisonResult::EQUAL));
 }
 
 // Are 'this' name and 'other' equal?
@@ -398,26 +499,23 @@ Name::operator==(const Name& other) const
 {
     unsigned int l;
     unsigned char c, count;
-    string::const_iterator label1, label2;
+    std::string::const_iterator label1, label2;
 
-    if (length_ != other.length_)
+    if (length_ != other.length_ || labels_ != other.labels_) {
         return (false);
+    }
 
     l = labels_;
-
-    if (l != other.labels_)
-        return (false);
-
     label1 = ndata_.begin();
     label2 = other.ndata_.begin();
     while (l > 0) {
         l--;
         count = *label1++;
-        if (count != *label2++)
+        if (count != *label2++) {
             return (false);
+        }
 
-        while (count > 0) {
-            count--;
+        while (count-- > 0) {
             c = maptolower[(unsigned char)*label1++]; // XXX should avoid cast
             if (c != maptolower[(unsigned char)*label2++])
                 return (false);
@@ -427,9 +525,18 @@ Name::operator==(const Name& other) const
     return (true);
 }
 
-ostream&
-operator<<(ostream& os, const Name& name)
+bool
+Name::isWildcard() const
+{
+    return (length_ >= 2 && ndata_[0] == 1 && ndata_[1] == '*'); 
+}
+
+std::ostream&
+operator<<(std::ostream& os, const Name& name)
 {
     os << name.toText();
     return (os);
+}
+
+}
 }
