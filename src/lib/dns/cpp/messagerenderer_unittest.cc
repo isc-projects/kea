@@ -44,8 +44,8 @@ TEST_F(MessageRendererTest, toWire)
     renderer.writeName(Name("a.example.com."));
     renderer.writeName(Name("b.example.com."));
     renderer.writeName(Name("a.example.org."));
-    EXPECT_EQ(true, buffer.getLength() == data.size() &&
-              memcmp(buffer.getData(), &data[0], data.size()) == 0);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
+                        buffer.getLength(), &data[0], data.size());
 }
 
 TEST_F(MessageRendererTest, toWireInLargeBuffer)
@@ -57,17 +57,29 @@ TEST_F(MessageRendererTest, toWireInLargeBuffer)
     renderer.writeName(Name("a.example.com."));
     renderer.writeName(Name("a.example.com."));
     renderer.writeName(Name("b.example.com."));
-    EXPECT_EQ(true, buffer.getLength() == data.size() + offset &&
-              memcmp(static_cast<const uint8_t*>(buffer.getData()) + offset,
-                     &data[0], data.size()) == 0);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        static_cast<const uint8_t*>(buffer.getData()) + offset,
+                        buffer.getLength() - offset,
+                        &data[0], data.size());
 }
 
-TEST_F(MessageRendererTest, toWireTBD)
+TEST_F(MessageRendererTest, toWireWithUncompressed)
 {
     UnitTestUtil::readWireData("testdata/name_toWire3", data);
     renderer.writeName(Name("a.example.com."));
     renderer.writeName(Name("b.example.com."), false);
     renderer.writeName(Name("b.example.com."));
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
+                        buffer.getLength(), &data[0], data.size());
+}
+
+TEST_F(MessageRendererTest, toWireCaseCompress)
+{
+    UnitTestUtil::readWireData("testdata/name_toWire1", data);
+    renderer.writeName(Name("a.example.com."));
+    // this should match the first name in terms of compression:
+    renderer.writeName(Name("b.exAmple.CoM."));
+    renderer.writeName(Name("a.example.org."));
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
                         buffer.getLength(), &data[0], data.size());
 }
