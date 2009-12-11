@@ -68,7 +68,7 @@ TEST_F(MessageRendererTest, toWireTBD)
     renderer.writeName(Name("a.example.com."));
     renderer.writeName(Name("b.example.com."), false);
     renderer.writeName(Name("b.example.com."));
-    EXPECT_EQ(true, buffer.getLength() == data.size() &&
-              memcmp(buffer.getData(), &data[0], data.size()) == 0);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
+                        buffer.getLength(), &data[0], data.size());
 }
 }
