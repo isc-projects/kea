@@ -154,8 +154,8 @@ public:
         }
 
         cp = &data_[position_];
-	data = ((unsigned int)(cp[0])) << 8;
-	data |= ((unsigned int)(cp[1]));
+        data = ((unsigned int)(cp[0])) << 8;
+        data |= ((unsigned int)(cp[1]));
         position_ += sizeof(data);
 
         return (data);
@@ -175,10 +175,10 @@ public:
         }
 
         cp = &data_[position_];
-	data = ((unsigned int)(cp[0])) << 24;
-	data |= ((unsigned int)(cp[1])) << 16;
-	data |= ((unsigned int)(cp[2])) << 8;
-	data |= ((unsigned int)(cp[3]));
+        data = ((unsigned int)(cp[0])) << 24;
+        data |= ((unsigned int)(cp[1])) << 16;
+        data |= ((unsigned int)(cp[2])) << 8;
+        data |= ((unsigned int)(cp[3]));
         position_ += sizeof(data);
 
         return (data);
