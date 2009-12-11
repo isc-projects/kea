@@ -85,14 +85,12 @@ UnitTestUtil::matchWireData(const char* dataexp1, const char* lenexp1,
     size_t cmplen = std::min(len1, len2);
 
     for (int i = 0; i < cmplen; i++) {
-        uint8_t ch1 = static_cast<const uint8_t*>(data1)[i];
-        uint8_t ch2 = static_cast<const uint8_t*>(data2)[i];
+        int ch1 = static_cast<const uint8_t*>(data1)[i];
+        int ch2 = static_cast<const uint8_t*>(data2)[i];
         if (ch1 != ch2) {
             msg << "Wire data mismatch at " << i << "th byte\n"
-                << "  Actual: " << std::dec <<
-                static_cast<int>(ch1) << "\n"
-                << "Expected: " << std::dec <<
-                static_cast<int>(ch2) << "\n";
+                << "  Actual: " << ch1 << "\n"
+                << "Expected: " << ch2 << "\n";
             return (::testing::AssertionFailure(msg));
         }
     }
