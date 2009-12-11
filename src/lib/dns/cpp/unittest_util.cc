@@ -21,6 +21,8 @@
 #include <vector>
 #include <string>
 
+#include <gtest/gtest.h>
+
 #include "unittest_util.h"
 
 using isc::UnitTestUtil;
@@ -71,4 +73,34 @@ UnitTestUtil::readWireData(const std::string& datastr,
             data.push_back(static_cast<unsigned char>(ch));
         }
     } while (!iss.eof());
+}
+
+::testing::AssertionResult
+UnitTestUtil::matchWireData(const char* dataexp1, const char* lenexp1,
+                            const char* dataexp2, const char* lenexp2,
+                            const void* data1, size_t len1,
+                            const void* data2, size_t len2)
+{
+    ::testing::Message msg;
+    size_t cmplen = std::min(len1, len2);
+
+    for (int i = 0; i < cmplen; i++) {
+        uint8_t ch1 = static_cast<const uint8_t*>(data1)[i];
+        uint8_t ch2 = static_cast<const uint8_t*>(data2)[i];
+        if (ch1 != ch2) {
+            msg << "Wire data mismatch at " << i << "th byte\n"
+                << "  Actual: " << std::dec <<
+                static_cast<int>(ch1) << "\n"
+                << "Expected: " << std::dec <<
+                static_cast<int>(ch2) << "\n";
+            return (::testing::AssertionFailure(msg));
+        }
+    }
+    if (len1 != len2) {
+        msg << "Wire data mismatch in length:\n"
+            << "  Actual: " << len1 << "\n"
+            << "Expected: " << len2 << "\n";
+        return (::testing::AssertionFailure(msg));
+    }
+    return ::testing::AssertionSuccess();
 }

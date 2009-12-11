@@ -20,6 +20,8 @@
 #include <vector>
 #include <string>
 
+#include <gtest/gtest.h>
+
 namespace isc {
 
 class UnitTestUtil {
@@ -36,6 +38,27 @@ public:
     ///
     static void readWireData(const std::string& datastr,
                              std::vector<unsigned char>& data);
+
+    ///
+    /// Compare len1 bytes of data1 with len2 bytes of data2 as binary data.
+    /// If they don't match report the point of mismatch in the google test
+    /// format.  This method is expected to be used from the EXPECT_PRED_FORMAT4
+    /// macro of google test as follows:
+    /// \code EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+    ///                           actual_data, actual_data_len,
+    ///                           expected_data, expected_data_len); \endcode
+    /// Parameters from dataexp1 to lenexp2 are passed via the macro but will
+    /// be ignored by this method.
+    /// Note: newer versions of google test supports the direct use of
+    /// AssertionResult with the EXPECT_TRUE macro, which would be more
+    /// intuitive, but to be as compatible as possible we use the more primitive
+    /// macro, i.e., EXPECT_PRED_FORMAT4.
+    ///
+    static ::testing::AssertionResult
+    matchWireData(const char* dataexp1, const char* lenexp1,
+                  const char* dataexp2, const char* lenexp2,
+                  const void* data1, size_t len1,
+                  const void* data2, size_t len2);
 };
 
 }
