@@ -16,6 +16,7 @@
 
 #include <cctype>
 #include <cassert>
+#include <iterator>
 
 #include "buffer.h"
 #include "name.h"
@@ -76,11 +77,6 @@ typedef enum {
 
 Name::Name(const std::string &namestring, bool downcase)
 {
-    char c;
-    std::vector<char> offsets;
-    offsets.reserve(128);
-    offsets.push_back(0);
-
     //
     // Initialize things to make the compiler happy; they're not required.
     //
@@ -97,13 +93,20 @@ Name::Name(const std::string &namestring, bool downcase)
     bool is_root = false;
     ft_state state = ft_init;
 
+    std::vector<unsigned char> offsets;
+    offsets.reserve(128);
+    offsets.push_back(0);
+
+    std::string ndata;
+    ndata.reserve(Name::MAX_WIRE);
+
     // should we refactor this code using, e.g, the state pattern?  Probably
     // not at this point, as this is based on proved code (derived from BIND9)
     // and it's less likely that we'll have more variations in the domain name
     // syntax.  If this ever happens next time, we should consider refactor
     // the code, rather than adding more states and cases below.
-    while (ndata_.size() < Name::MAX_WIRE && s != send && !done) {
-        c = *s++;
+    while (ndata.size() < Name::MAX_WIRE && s != send && !done) {
+        char c = *s++;
 
         switch (state) {
         case ft_init:
@@ -121,31 +124,31 @@ Name::Name(const std::string &namestring, bool downcase)
             }
 
             if (is_root) {
-                ndata_.push_back(0);
+                ndata.push_back(0);
                 done = true;
                 break;
             }
 
             // FALLTHROUGH
         case ft_start:           // begin of a label
-            ndata_.push_back(0); // placeholder for the label length field
+            ndata.push_back(0); // placeholder for the label length field
             count = 0;
             if (c == '\\') {
                 state = ft_initialescape;
                 break;
             }
             state = ft_ordinary;
-            assert(ndata_.size() < Name::MAX_WIRE);
+            assert(ndata.size() < Name::MAX_WIRE);
             // FALLTHROUGH
         case ft_ordinary:       // parsing a normal label
             if (c == '.') {
                 if (count == 0) {
                     dns_throw(EmptyLabel, "duplicate period");
                 }
-                ndata_[offsets.back()] = count;
-                offsets.push_back(ndata_.size());
+                ndata.at(offsets.back()) = count;
+                offsets.push_back(ndata.size());
                 if (s == send) {
-                    ndata_.push_back(0);
+                    ndata.push_back(0);
                     done = true;
                 }
                 state = ft_start;
@@ -155,7 +158,7 @@ Name::Name(const std::string &namestring, bool downcase)
                 if (++count > Name::MAX_LABELLEN) {
                     dns_throw(TooLongLabel, "label is too long");
                 }
-                ndata_.push_back(downcase ? maptolower[c] : c);
+                ndata.push_back(downcase ? maptolower[c] : c);
             }
             break;
         case ft_initialescape:  // just found '\'
@@ -171,7 +174,7 @@ Name::Name(const std::string &namestring, bool downcase)
                 if (++count > Name::MAX_LABELLEN) {
                     dns_throw(TooLongLabel, "label is too long");
                 }
-                ndata_.push_back(downcase ? maptolower[c] : c);
+                ndata.push_back(downcase ? maptolower[c] : c);
                 state = ft_ordinary;
                 break;
             }
@@ -193,7 +196,7 @@ Name::Name(const std::string &namestring, bool downcase)
                 if (++count > Name::MAX_LABELLEN) {
                     dns_throw(TooLongLabel, "label is too long");
                 }
-                ndata_.push_back(downcase ? maptolower[value] : value);
+                ndata.push_back(downcase ? maptolower[value] : value);
                 state = ft_ordinary;
             }
             break;
@@ -204,7 +207,7 @@ Name::Name(const std::string &namestring, bool downcase)
     }
 
     if (!done) {                // no trailing '.' was found.
-        if (ndata_.size() == Name::MAX_WIRE) {
+        if (ndata.size() == Name::MAX_WIRE) {
             dns_throw(TooLongName, "name is too long for termination");
         }
         assert(s == send);
@@ -213,16 +216,17 @@ Name::Name(const std::string &namestring, bool downcase)
         }
         if (state == ft_ordinary) {
             assert(count != 0);
-            ndata_[offsets.back()] = count;
+            ndata.at(offsets.back()) = count;
             
-            offsets.push_back(ndata_.size());
+            offsets.push_back(ndata.size());
             // add a trailing \0
-            ndata_.push_back('\0');
+            ndata.push_back('\0');
         }
     }
 
     labels_ = offsets.size();
-    assert(labels_ <= 127);
+    assert(labels_ > 0 && labels_ <= Name::MAX_LABELS);
+    ndata_.assign(ndata.data(), ndata.size());
     length_ = ndata_.size();
     offsets_.assign(offsets.begin(), offsets.end());
 }
@@ -236,8 +240,8 @@ typedef enum {
 Name::Name(InputBuffer& buffer, bool downcase)
 {
     unsigned int new_current;
-    std::vector<char> offsets;
-    offsets.reserve(128);
+    std::vector<unsigned char> offsets;
+    offsets.reserve(Name::MAX_WIRE / 2);
 
     /*
      * Initialize things to make the compiler happy; they're not required.
@@ -357,10 +361,11 @@ Name::toText(bool omit_final_dot) const
         return (".");
     }
 
-    unsigned int count;
     std::string::const_iterator np = ndata_.begin();
     std::string::const_iterator np_end = ndata_.end();
     unsigned int labels = labels_; // use for integrity check
+    // init with an impossible value to catch error cases in the end:
+    unsigned int count = Name::MAX_LABELLEN + 1;
 
     // result string: it will roughly have the same length as the wire format
     // name data.  reserve that length to minimize reallocation.
@@ -428,12 +433,6 @@ Name::toText(bool omit_final_dot) const
 NameComparisonResult
 Name::compare(const Name& other) const
 {
-    unsigned int count1, count2, count;
-    int cdiff, chdiff;
-    unsigned char label1, label2;
-    size_t pos1, pos2;
-    NameComparisonResult::NameRelation namereln;
-
     // Determine the relative ordering under the DNSSEC order relation of
     // 'this' and 'other', and also determine the hierarchical relationship
     // of the names.
@@ -448,32 +447,30 @@ Name::compare(const Name& other) const
         --l;
         --l1;
         --l2;
-        pos1 = offsets_[l1];
-        pos2 = other.offsets_[l2];
-        count1 = ndata_[pos1++];
-        count2 = other.ndata_[pos2++];
-        label1 = ndata_[pos1];
-        label2 = other.ndata_[pos2];
+        size_t pos1 = offsets_[l1];
+        size_t pos2 = other.offsets_[l2];
+        unsigned int count1 = ndata_[pos1++];
+        unsigned int count2 = other.ndata_[pos2++];
 
         // We don't support any extended label types including now-obsolete
         // bitstring labels.
         assert(count1 <= Name::MAX_LABELLEN && count2 <= Name::MAX_LABELLEN);
 
-        cdiff = (int)count1 - (int)count2;
-        if (cdiff < 0)
-            count = count1;
-        else
-            count = count2;
+        int cdiff = (int)count1 - (int)count2;
+        unsigned int count = (cdiff < 0) ? count1 : count2;
 
         while (count > 0) {
-            chdiff = (int)maptolower[label1] - (int)maptolower[label2];
+            unsigned char label1 = ndata_[pos1];
+            unsigned char label2 = other.ndata_[pos2];
+
+            int chdiff = (int)maptolower[label1] - (int)maptolower[label2];
             if (chdiff != 0) {
                 return (NameComparisonResult(chdiff, nlabels,
                                          NameComparisonResult::COMMONANCESTOR));
             }
             --count;
-            label1 = ndata_[++pos1];
-            label2 = other.ndata_[++pos2];
+            ++pos1;
+            ++pos2;
         }
         if (cdiff != 0) {
                 return (NameComparisonResult(cdiff, nlabels,
@@ -493,32 +490,28 @@ Name::compare(const Name& other) const
     return (NameComparisonResult(ldiff, nlabels, NameComparisonResult::EQUAL));
 }
 
-// Are 'this' name and 'other' equal?
 bool
-Name::operator==(const Name& other) const
+Name::equals(const Name& other) const
 {
-    unsigned int l;
-    unsigned char c, count;
-    std::string::const_iterator label1, label2;
-
     if (length_ != other.length_ || labels_ != other.labels_) {
         return (false);
     }
 
-    l = labels_;
-    label1 = ndata_.begin();
-    label2 = other.ndata_.begin();
-    while (l > 0) {
-        l--;
-        count = *label1++;
-        if (count != *label2++) {
+    for (unsigned int l = labels_, pos = 0; l > 0; --l) {
+        unsigned char count = ndata_[pos];
+        if (count != other.ndata_[pos]) {
             return (false);
         }
+        ++pos;
 
         while (count-- > 0) {
-            c = maptolower[(unsigned char)*label1++]; // XXX should avoid cast
-            if (c != maptolower[(unsigned char)*label2++])
+            unsigned char label1 = ndata_[pos];
+            unsigned char label2 = other.ndata_[pos];
+
+            if (maptolower[label1] != maptolower[label2]) {
                 return (false);
+            }
+            ++pos;
         }
     }
 
@@ -529,6 +522,51 @@ bool
 Name::isWildcard() const
 {
     return (length_ >= 2 && ndata_[0] == 1 && ndata_[1] == '*'); 
+}
+
+namespace {                     // hide the local class
+struct OffsetAdjuster : public std::binary_function<unsigned char,
+                                                    unsigned int,
+                                                    unsigned char> {
+    unsigned char operator()(unsigned char ch, unsigned int offset) const
+    {
+        return (ch + offset);
+    }
+};
+}
+
+Name
+Name::concatenate(const Name& suffix) const
+{
+    assert(this->length_ > 0 && suffix.length_ > 0);
+    assert(this->labels_ > 0 && suffix.labels_ > 0);
+
+    unsigned int length = this->length_ + suffix.length_ - 1;
+    if (length > Name::MAX_WIRE) {
+        dns_throw(TooLongName, "names are too long to concatenate");
+    }
+
+    Name retname;
+    retname.ndata_.reserve(length);
+    retname.ndata_.assign(this->ndata_, 0, this->length_ - 1);
+    retname.ndata_.insert(retname.ndata_.end(),
+                          suffix.ndata_.begin(), suffix.ndata_.end());
+    assert(retname.ndata_.size() == length);
+    retname.length_ = length;
+
+    unsigned int labels = this->labels_ + suffix.labels_ - 1;
+    assert(labels <= Name::MAX_LABELS);
+    retname.offsets_.reserve(labels);
+    retname.offsets_.assign(&this->offsets_[0],
+                            &this->offsets_[0] + this->labels_ - 1);
+    transform(suffix.offsets_.begin(), suffix.offsets_.end(),
+              back_inserter(retname.offsets_),
+              bind2nd(OffsetAdjuster(), this->length_ - 1));
+    assert(retname.offsets_.back() == retname.length_ - 1);
+    assert(retname.offsets_.size() == labels);
+    retname.labels_ = labels;
+
+    return (retname);
 }
 
 std::ostream&
