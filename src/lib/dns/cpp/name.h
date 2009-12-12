@@ -185,13 +185,14 @@ private:
 /// names as a special case.
 ///
 class Name {
-public:
     ///
     /// \name Constructors and Destructor
     ///
     //@{
+private:
     /// The default constructor
     Name() : length_(0), labels_(0) {}
+public:
     /// Constructor from a string
     ///
     /// \param namestr A string representation of the name to be constructed.
@@ -275,7 +276,7 @@ public:
     /// returns the result in the form of a <code>NameComparisonResult</code>
     /// object.
     ///
-    /// Note that this is a case-insensitive comparison.
+    /// Note that this is case-insensitive comparison.
     ///
     /// \param other the right-hand operand to compare against.
     /// \return a <code>NameComparisonResult</code> object representing the
@@ -284,29 +285,33 @@ public:
 
     /// \brief Return true iff two names are equal.
     ///
-    /// The comparison is based on the result of the compare() method.
+    /// Semantically this could be implemented based on the result of the
+    /// \c compare() method, but the actual implementation uses different code
+    /// that simply performs character-by-character comparison (case
+    /// insensitive for the name label parts) on the two names.  This is because
+    /// it would be much faster and the simple equality check would be pretty
+    /// common.
+    ///
     /// \param other the <code>Name</code> object to compare against.
-    /// \return true if <code>compare(other).get_order()</code> is 0;
-    /// otherwise false.
+    /// \return true if the two names are equal; otherwise false.
     bool equals(const Name& other) const;
 
     /// Same as equals()
-    bool operator==(const Name& other) const;
+    bool operator==(const Name& other) const { return (this->equals(other)); }
 
     /// \brief Return true iff two names are not equal.
     ///
-    /// The comparison is based on the result of the compare() method.
-    /// \param other the <code>Name</code> object to compare against.
-    /// \return true if <code>compare(other).get_order()</code> is non 0;
-    /// otherwise false.
-    bool nequals(const Name& other) const;
+    /// This method simply negates the result of \c equal() method, and in that
+    /// sense it's redundant.  The separate method is provided just for
+    /// convenience.
+    bool nequals(const Name& other) const { return !(this->equals(other)); }
 
     /// Same as nequals()
-    bool operator!=(const Name& other) const { return (!(*this == other)); }
+    bool operator!=(const Name& other) const { return (this->nequals(other)); }
 
     /// \brief Less-than or equal comparison for Name against <code>other</code>
     ///
-    /// The comparison is based on the result of the compare() method.
+    /// The comparison is based on the result of the \c compare() method.
     /// \param other the <code>Name</code> object to compare against.
     /// \return true if <code>compare(other).get_order() <= 0</code>;
     /// otherwise false.
@@ -318,7 +323,7 @@ public:
     /// \brief Greater-than or equal comparison for Name against
     /// <code>other</code>
     ///
-    /// The comparison is based on the result of the compare() method.
+    /// The comparison is based on the result of the \c compare() method.
     /// \param other the <code>Name</code> object to compare against.
     /// \return true if <code>compare(other).get_order() >= 0</code>;
     /// otherwise false.
@@ -329,7 +334,7 @@ public:
 
     /// \brief Less-than comparison for Name against <code>other</code>
     ///
-    /// The comparison is based on the result of the compare() method.
+    /// The comparison is based on the result of the \c compare() method.
     /// \param other the <code>Name</code> object to compare against.
     /// \return true if <code>compare(other).get_order() < 0</code>;
     /// otherwise false.
@@ -340,7 +345,7 @@ public:
 
     /// \brief Greater-than comparison for Name against <code>other</code>
     ///
-    /// The comparison is based on the result of the compare() method.
+    /// The comparison is based on the result of the \c compare() method.
     /// \param other the <code>Name</code> object to compare against.
     /// \return true if <code>compare(other).get_order() > 0</code>;
     /// otherwise false.
@@ -393,13 +398,19 @@ public:
     /// \brief Max allowable length of domain names.
     static const size_t MAX_WIRE = 255;
 
+    /// \brief Max allowable labels of domain names.
+    ///
+    /// This is <code>ceil(MAX_WIRE / 2)</code>, and is equal to the number of
+    /// labels of name "a.a.a.a....a." (127 "a"'s and trailing dot).
+    static const size_t MAX_LABELS = 128;
+
     /// \brief Max allowable length of labels of a domain name.
     static const size_t MAX_LABELLEN = 63;
     //@}
 
 private:
     std::string ndata_;
-    std::vector<char> offsets_;
+    std::vector<unsigned char> offsets_;
     unsigned int length_;
     unsigned int labels_;
 

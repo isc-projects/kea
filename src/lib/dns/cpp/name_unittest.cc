@@ -38,6 +38,7 @@ protected:
     NameTest() : example_name("www.example.com") {}
     Name example_name;
 
+    static const size_t MAX_LABELS = Name::MAX_LABELS;
     //
     // helper methods
     //
@@ -128,6 +129,17 @@ TEST_F(NameTest, fromText)
                          "123"));
     // \DDD must consist of 3 digits.
     EXPECT_THROW(Name("\\12"), isc::dns::BadLabelType);
+
+    // a name with the max number of labels.  should be constructed without
+    // an error, and its length should be the max value.
+    Name maxlabels = Name("0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9." // 40
+                          "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9." // 80
+                          "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9." // 120
+                          "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9." // 160
+                          "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9." // 200
+                          "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9." // 240
+                          "0.1.2.3.4.5.6.");
+    EXPECT_EQ(MAX_LABELS, maxlabels.getLabels());
 }
 
 TEST_F(NameTest, fromWire)
@@ -250,10 +262,31 @@ TEST_F(NameTest, compare)
     }
 }
 
+TEST_F(NameTest, equal)
+{
+    EXPECT_TRUE(example_name == Name("WWW.EXAMPLE.COM."));
+    EXPECT_TRUE(example_name.equals(Name("WWW.EXAMPLE.COM.")));
+    EXPECT_TRUE(example_name != Name("www.example.org."));
+    EXPECT_TRUE(example_name.nequals(Name("www.example.org.")));
+}
+
 TEST_F(NameTest, isWildcard)
 {
     EXPECT_EQ(false, example_name.isWildcard());
     EXPECT_EQ(true, Name("*.a.example.com").isWildcard());
     EXPECT_EQ(false, Name("a.*.example.com").isWildcard());
+}
+
+TEST_F(NameTest, concatenate)
+{
+    NameComparisonResult result =
+        Name("aaa.www.example.com.").compare(Name("aaa").concatenate(example_name));
+    EXPECT_EQ(NameComparisonResult::EQUAL, result.getRelation());
+
+    result = example_name.compare(Name(".").concatenate(example_name));
+    EXPECT_EQ(NameComparisonResult::EQUAL, result.getRelation());
+
+    result = example_name.compare(example_name.concatenate(Name(".")));
+    EXPECT_EQ(NameComparisonResult::EQUAL, result.getRelation());
 }
 }
