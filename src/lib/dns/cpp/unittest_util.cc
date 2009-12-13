@@ -33,7 +33,7 @@ UnitTestUtil::readWireData(const char* datafile,
 {
     std::ifstream ifs;
  
-   ifs.open(datafile, std::ios_base::in);
+    ifs.open(datafile, std::ios_base::in);
     if ((ifs.rdstate() & std::istream::failbit) != 0) {
         throw std::runtime_error("failed to open data file: " +
                                  std::string(datafile));
