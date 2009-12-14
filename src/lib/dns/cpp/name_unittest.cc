@@ -38,6 +38,7 @@ protected:
     NameTest() : example_name("www.example.com") {}
     Name example_name;
 
+    static const size_t MAX_WIRE = Name::MAX_WIRE;
     static const size_t MAX_LABELS = Name::MAX_LABELS;
     //
     // helper methods
@@ -175,6 +176,24 @@ TEST_F(NameTest, fromWire)
     // many hops of compression but valid.  should succeed.
     EXPECT_EQ(true, nameFactoryFromWire("testdata/name_fromWire8", 383) ==
               Name("vix.com"));
+
+    //
+    // Additional test cases
+    //
+
+    // large names, a long but valid one, and invalid (too long) one.
+    EXPECT_EQ(MAX_WIRE,
+              nameFactoryFromWire("testdata/name_fromWire9", 0).getLength());
+    EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire10", 0).getLength(),
+                 isc::dns::TooLongName);
+
+    // A name with possible maximum number of labels; awkward but valid
+    EXPECT_EQ(nameFactoryFromWire("testdata/name_fromWire11", 0).getLabels(),
+              MAX_LABELS);
+
+    // Wire format including an invalid label length
+    EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire12", 0),
+                 isc::dns::BadLabelType);
 
     // converting upper-case letters to down-case
     EXPECT_EQ("vix.com.", nameFactoryFromWire("testdata/name_fromWire1",

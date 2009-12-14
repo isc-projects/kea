@@ -241,7 +241,7 @@ Name::Name(InputBuffer& buffer, bool downcase)
 {
     unsigned int new_current;
     std::vector<unsigned char> offsets;
-    offsets.reserve(Name::MAX_WIRE / 2);
+    offsets.reserve(Name::MAX_LABELS);
 
     /*
      * Initialize things to make the compiler happy; they're not required.
@@ -562,7 +562,6 @@ Name::concatenate(const Name& suffix) const
     transform(suffix.offsets_.begin(), suffix.offsets_.end(),
               back_inserter(retname.offsets_),
               bind2nd(OffsetAdjuster(), this->length_ - 1));
-    assert(retname.offsets_.back() == retname.length_ - 1);
     assert(retname.offsets_.size() == labels);
     retname.labels_ = labels;
 
