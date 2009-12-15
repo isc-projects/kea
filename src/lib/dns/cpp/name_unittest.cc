@@ -72,11 +72,11 @@ TEST_F(NameTest, fromText)
 
     std::vector<std::string>::const_iterator it;
     for (it = strnames.begin(); it != strnames.end(); ++it) {
-        EXPECT_EQ(true, example_name == Name(*it));
+        EXPECT_PRED_FORMAT2(UnitTestUtil::matchName, example_name, Name(*it));
     }
 
     // root names
-    EXPECT_EQ(true, Name("@") == Name("."));
+    EXPECT_PRED_FORMAT2(UnitTestUtil::matchName, Name("@"), Name("."));
 
     // downcase
     EXPECT_EQ(Name("Www.eXample.coM", true).toText(), example_name.toText());
@@ -149,8 +149,9 @@ TEST_F(NameTest, fromWire)
     // test cases derived from BIND9 tests.
     //
     // normal case with a compression pointer
-    EXPECT_EQ(true, nameFactoryFromWire("testdata/name_fromWire1", 25) ==
-              Name("vix.com"));
+    EXPECT_PRED_FORMAT2(UnitTestUtil::matchName,
+                        nameFactoryFromWire("testdata/name_fromWire1", 25),
+                        Name("vix.com"));
     // bogus label character (looks like a local compression pointer)
     EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire2", 25),
                  isc::dns::BadLabelType);
@@ -174,8 +175,9 @@ TEST_F(NameTest, fromWire)
     EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire7", 25),
                  isc::dns::IncompleteName);
     // many hops of compression but valid.  should succeed.
-    EXPECT_EQ(true, nameFactoryFromWire("testdata/name_fromWire8", 383) ==
-              Name("vix.com"));
+    EXPECT_PRED_FORMAT2(UnitTestUtil::matchName,
+                        nameFactoryFromWire("testdata/name_fromWire8", 383),
+                        Name("vix.com"));
 
     //
     // Additional test cases
@@ -307,5 +309,31 @@ TEST_F(NameTest, concatenate)
 
     result = example_name.compare(example_name.concatenate(Name(".")));
     EXPECT_EQ(NameComparisonResult::EQUAL, result.getRelation());
+
+    // concatenating two valid names would result in too long a name.
+    Name n1("123456789.123456789.123456789.123456789.123456789."
+            "123456789.123456789.123456789.123456789.123456789."
+            "123456789.123456789.123456789.123456789.123456789.");
+    Name n2("123456789.123456789.123456789.123456789.123456789."
+            "123456789.123456789.123456789.123456789.123456789."
+            "1234.");
+    EXPECT_THROW(n1.concatenate(n2), isc::dns::TooLongName);
+}
+
+TEST_F(NameTest, split)
+{
+    // normal cases with or without explicitly specifying the trailing dot.
+    EXPECT_PRED_FORMAT2(UnitTestUtil::matchName, example_name.split(1, 2),
+                        Name("example.com."));
+    EXPECT_PRED_FORMAT2(UnitTestUtil::matchName, example_name.split(1, 3),
+                        Name("example.com."));
+    // edge cases: only the first or last label.
+    EXPECT_PRED_FORMAT2(UnitTestUtil::matchName, example_name.split(0, 1),
+                        Name("www."));
+    EXPECT_PRED_FORMAT2(UnitTestUtil::matchName, example_name.split(3, 1),
+                        Name("."));
+    // invalid range: an exception should be thrown.
+    EXPECT_THROW(example_name.split(1, 0), isc::dns::OutOfRange);
+    EXPECT_THROW(example_name.split(2, 3), isc::dns::OutOfRange);
 }
 }
