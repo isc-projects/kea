@@ -114,7 +114,7 @@ public:
     ///
     /// The new position must be in the valid range of the buffer; otherwise
     /// an exception of class \c isc::dns::InvalidBufferPosition will be thrown.
-    /// \param Position The new position (offset from the beginning of the
+    /// \param position The new position (offset from the beginning of the
     /// buffer).
     void setPosition(size_t position)
     {
