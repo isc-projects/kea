@@ -17,6 +17,7 @@
 #include <cctype>
 #include <cassert>
 #include <iterator>
+#include <functional>
 
 #include "buffer.h"
 #include "name.h"
@@ -525,10 +526,12 @@ Name::isWildcard() const
 }
 
 namespace {                     // hide the local class
+///
+/// A helper functor class to add an additional offset to an offset vector.
+///
 struct OffsetAdjuster : public std::binary_function<unsigned char,
-                                                    unsigned int,
-                                                    unsigned char> {
-    unsigned char operator()(unsigned char ch, unsigned int offset) const
+                                                    int, unsigned char> {
+    unsigned char operator()(unsigned char ch, int offset) const
     {
         return (ch + offset);
     }
@@ -554,6 +557,11 @@ Name::concatenate(const Name& suffix) const
     assert(retname.ndata_.size() == length);
     retname.length_ = length;
 
+    //
+    // Setup the offsets vector.  Copy the offsets of this (prefix) name,
+    // excluding that for the trailing dot, and append the offsets of the
+    // suffix name with the additional offset of the length of the prefix.
+    //
     unsigned int labels = this->labels_ + suffix.labels_ - 1;
     assert(labels <= Name::MAX_LABELS);
     retname.offsets_.reserve(labels);
@@ -568,12 +576,38 @@ Name::concatenate(const Name& suffix) const
     return (retname);
 }
 
+Name
+Name::split(unsigned int first, unsigned int n) const
+{
+    if (n == 0 || first + n > labels_) {
+        dns_throw(OutOfRange, "Name::split: invalid split range");
+    }
+
+    Name retname;
+    unsigned int newlabels = (first + n == labels_) ? n : n + 1;
+
+    retname.offsets_.reserve(newlabels);
+    transform(offsets_.begin() + first, offsets_.begin() + first + newlabels,
+              back_inserter(retname.offsets_),
+              bind2nd(OffsetAdjuster(), -offsets_[first]));
+
+    retname.ndata_.reserve(retname.offsets_.back() + 1);
+    retname.ndata_.assign(ndata_, offsets_[first], retname.offsets_.back());
+    // add a trailing dot
+    retname.ndata_.push_back(0);
+
+    retname.length_ = retname.ndata_.size();
+    retname.labels_ = retname.offsets_.size();
+    assert(retname.labels_ == newlabels);
+
+    return (retname);
+}
+}
+}
+
 std::ostream&
-operator<<(std::ostream& os, const Name& name)
+operator<<(std::ostream& os, const isc::dns::Name& name)
 {
     os << name.toText();
     return (os);
-}
-
-}
 }

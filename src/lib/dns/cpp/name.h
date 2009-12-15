@@ -244,7 +244,7 @@ public:
     ///
     /// This function assumes the name is in proper uncompressed wire format.
     /// If it finds an unexpected label character including compression pointer,
-    /// an exception of class \c isc::dns::BadLabelType will be thrown.
+    /// an exception of class \c BadLabelType will be thrown.
     //
     /// \param omit_final_dot whether to omit the trailing dot in the output.
     /// \return a string representation of the <code>Name</code>.
@@ -361,19 +361,43 @@ public:
     //@{
     /// \brief Extract a specified subpart of Name.
     ///
-    /// Note: we may want to have different versions (signatures) of this
-    /// method.  For example, we want to split the Name based on a given suffix
-    /// name.
+    /// <code>name.split(first, n)</code> constructs a new name starting from
+    /// the <code>first</code>-th label of the \c name, and subsequent \c n
+    /// labels including the \c first one.  Since names in this current
+    /// implementation are always "absolute", if the specified range doesn't
+    /// contain the trailing dot of the original \c name, then a dot will be
+    /// appended to the resulting name.  As a result, the number of labels
+    /// will be <code>n + 1</code>, rather than \c n.  For example,
+    /// when \c n is <code>Name("www.example.com")</code>,
+    /// both <code>n.split(1, 2)</code> and <code>n.split(1, 3)</code>
+    /// will produce a name corresponding to "example.com.", which has 3 labels.
+    /// Note also that labels are counted from 0, and so <code>first = 1</code>
+    /// in this example specified the label "example", not "www".
     ///
-    /// \param first the start position of the extracted name
-    /// \param n number of labels of the extracted name
-    /// \return a new Name object based on the Name containing <code>n</code>
+    /// Parameter \c n must be larger than 0, and the range specified by
+    /// \c first and \c n must not exceed the valid range of the original name;
+    /// otherwise, an exception of class \c OutOfRange will be thrown.
+    ///
+    /// Note to developers: we may want to have different versions (signatures)
+    /// of this method.  For example, we want to split the Name based on a given
+    /// suffix name.
+    ///
+    /// \param first The start position (in labels) of the extracted name
+    /// \param n Number of labels of the extracted name
+    /// \return A new Name object based on the Name containing <code>n</code>
     /// labels including and following the <code>first</code> label.  
     Name split(unsigned int first, unsigned int n) const;
 
-    /// \brief Concatenate two names
+    /// \brief Concatenate two names.
     ///
-    /// This method appends \c suffix to \c this Name.
+    /// This method appends \c suffix to \c this Name.  The trailing dot of
+    /// \c this Name will be removed.  For example, if \c this is "www."
+    /// and \c suffix is "example.com.", a successful return of this method
+    /// will be a name of "www.example.com."
+    ///
+    ///The resulting length of the concatenated name must not exceed
+    /// \c Name::MAX_WIRE; otherwise an exception of class
+    /// \c TooLongName will be thrown.
     ///
     /// \param suffix a Name object to be appended to the Name.
     /// \return a new Name object concatenating \c suffix to \c this Name.
@@ -416,10 +440,10 @@ private:
 
     void fromString(const std::string& namestr);
 };
+}
+}
 
-std::ostream& operator<<(std::ostream& os, const Name& name);
-}
-}
+std::ostream& operator<<(std::ostream& os, const isc::dns::Name& name);
 #endif // __NAME_H
 
 // Local Variables: 
