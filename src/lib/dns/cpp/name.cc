@@ -584,16 +584,27 @@ Name::split(unsigned int first, unsigned int n) const
     }
 
     Name retname;
+    // If the specified range doesn't include the trailing dot, we need one
+    // more label for that.
     unsigned int newlabels = (first + n == labels_) ? n : n + 1;
 
+    //
+    // Set up offsets: copy the corresponding range of the original offsets
+    // with subtracting an offset of the prefix length.
+    //
     retname.offsets_.reserve(newlabels);
     transform(offsets_.begin() + first, offsets_.begin() + first + newlabels,
               back_inserter(retname.offsets_),
               bind2nd(OffsetAdjuster(), -offsets_[first]));
 
+    //
+    // Set up the new name.  At this point the tail of the new offsets specifies
+    // the position of the trailing dot, which should be equal to the length of
+    // the extracted portion excluding the dot.  First copy that part from the
+    // original name, and append the trailing dot explicitly.
+    //
     retname.ndata_.reserve(retname.offsets_.back() + 1);
     retname.ndata_.assign(ndata_, offsets_[first], retname.offsets_.back());
-    // add a trailing dot
     retname.ndata_.push_back(0);
 
     retname.length_ = retname.ndata_.size();
