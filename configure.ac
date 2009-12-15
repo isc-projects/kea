@@ -58,7 +58,10 @@ AC_SUBST(GTEST_LDADD)
 AC_CONFIG_FILES([Makefile
                  src/Makefile
                  src/bin/Makefile
+                 src/bin/bigtool/Makefile
+                 src/bin/bind10/Makefile
                  src/bin/host/Makefile
+                 src/bin/msgq/Makefile
                  src/bin/parkinglot/Makefile
                  src/lib/Makefile
                  src/lib/cc/Makefile
