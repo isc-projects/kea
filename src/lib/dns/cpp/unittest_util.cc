@@ -23,9 +23,11 @@
 
 #include <gtest/gtest.h>
 
+#include "name.h"
 #include "unittest_util.h"
 
 using isc::UnitTestUtil;
+using isc::dns::NameComparisonResult;
 
 void
 UnitTestUtil::readWireData(const char* datafile,
@@ -98,6 +100,24 @@ UnitTestUtil::matchWireData(const char* dataexp1, const char* lenexp1,
         msg << "Wire data mismatch in length:\n"
             << "  Actual: " << len1 << "\n"
             << "Expected: " << len2 << "\n";
+        return (::testing::AssertionFailure(msg));
+    }
+    return ::testing::AssertionSuccess();
+}
+
+::testing::AssertionResult
+UnitTestUtil::matchName(const char* nameexp1, const char* nameexp2,
+                        const isc::dns::Name& name1,
+                        const isc::dns::Name& name2)
+{
+    ::testing::Message msg;
+
+    NameComparisonResult cmpresult = name1.compare(name2);
+    if (cmpresult.getOrder() != 0 ||
+        cmpresult.getRelation() != NameComparisonResult::EQUAL) {
+        msg << "Two names are expected to be equal but not:\n"
+            << "  One: " << name1 << "\n"
+            << "Other: " << name2 << "\n";
         return (::testing::AssertionFailure(msg));
     }
     return ::testing::AssertionSuccess();
