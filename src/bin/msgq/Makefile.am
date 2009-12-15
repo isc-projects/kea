@@ -1,1 +1,1 @@
-bin_SCRIPTS = msgq.py
+bin_SCRIPTS = msgq msgq.py
