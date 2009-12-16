@@ -94,7 +94,7 @@ public:
     /// \param data A pointer to the data stored in the buffer.
     /// \param len The length of the data in bytes.
     InputBuffer(const void* data, size_t len) :
-        position_(0), len_(len), data_(static_cast<const uint8_t*>(data)) {}
+        position_(0), data_(static_cast<const uint8_t*>(data)), len_(len) {}
     //@}
 
     ///
