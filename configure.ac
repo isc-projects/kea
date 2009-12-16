@@ -10,6 +10,7 @@ AC_CONFIG_HEADERS([config.h])
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_CC
+AM_CONDITIONAL(GCC, test "$GCC" = yes)
 AC_PROG_RANLIB
 
 AC_PROG_LIBTOOL
@@ -21,6 +22,12 @@ AC_PROG_LIBTOOL
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
 AC_TYPE_SIZE_T
+
+# default compiler warning settings
+if test "X$GCC" = "Xyes"; then
+CXXFLAGS="-Wall -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
+fi
+AC_SUBST(CXXFLAGS)
 
 #
 # Check availablity of gtest, which will be used for unit tests.
