@@ -12,6 +12,8 @@ AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_RANLIB
 
+AC_PROG_LIBTOOL
+
 # Checks for libraries.
 
 # Checks for header files.
