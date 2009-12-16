@@ -107,7 +107,7 @@ Name::Name(const std::string &namestring, bool downcase)
     // syntax.  If this ever happens next time, we should consider refactor
     // the code, rather than adding more states and cases below.
     while (ndata.size() < Name::MAX_WIRE && s != send && !done) {
-        char c = *s++;
+        unsigned char c = *s++;
 
         switch (state) {
         case ft_init:
