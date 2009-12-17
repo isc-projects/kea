@@ -16,6 +16,8 @@
 
 #include <vector>
 #include <string>
+#include <sstream>
+#include <iomanip>
 #include <stdexcept>
 
 #include "buffer.h"
@@ -35,16 +37,26 @@ using isc::dns::NameComparisonResult;
 namespace {
 class NameTest : public ::testing::Test {
 protected:
-    NameTest() : example_name("www.example.com") {}
+    NameTest() : example_name("www.example.com"),
+                 example_name_upper("WWW.EXAMPLE.COM"),
+                 buffer_actual(0), buffer_expected(0)
+    {}
+
     Name example_name;
+    Name example_name_upper;
+    OutputBuffer buffer_actual, buffer_expected;
 
     static const size_t MAX_WIRE = Name::MAX_WIRE;
     static const size_t MAX_LABELS = Name::MAX_LABELS;
     //
     // helper methods
     //
-    Name nameFactoryFromWire(const char* datafile, size_t position,
-                             bool downcase = false);
+    static Name nameFactoryFromWire(const char* datafile, size_t position,
+                                    bool downcase = false);
+    // construct a name including all non-upper-case-alphabet characters.
+    static Name nameFactoryLowerCase();
+    void compareInWireFormat(const Name& name_actual,
+                             const Name& name_expected);
 };
 
 Name
@@ -58,6 +70,47 @@ NameTest::nameFactoryFromWire(const char* datafile, size_t position,
     buffer.setPosition(position);
 
     return (Name(buffer, downcase));
+}
+
+Name
+NameTest::nameFactoryLowerCase()
+{
+    std::string lowercase_namestr;
+    lowercase_namestr.reserve(Name::MAX_WIRE);
+
+    unsigned int ch = 0;
+    unsigned int labelcount = 0;
+    do {
+        if (ch < 'A' || ch > 'Z') {
+            std::ostringstream ss;
+            ss.setf(std::ios_base::right, std::ios_base::adjustfield);
+            ss.width(3);
+            ss << std::setfill('0') << ch;
+            lowercase_namestr += '\\' + ss.str();
+
+            if (++labelcount == Name::MAX_LABELLEN) {
+                lowercase_namestr.push_back('.');
+                labelcount = 0;
+            }
+        }
+    } while (++ch <= Name::MAX_WIRE);
+
+    return (Name(lowercase_namestr));
+}
+
+void
+NameTest::compareInWireFormat(const Name& name_actual,
+                              const Name& name_expected)
+{
+    buffer_actual.clear();
+    buffer_expected.clear();
+
+    name_actual.toWire(buffer_actual);
+    name_expected.toWire(buffer_expected);
+
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        buffer_actual.getData(), buffer_actual.getLength(),
+                        buffer_expected.getData(), buffer_expected.getLength());
 }
 
 TEST_F(NameTest, fromText)
@@ -335,5 +388,21 @@ TEST_F(NameTest, split)
     // invalid range: an exception should be thrown.
     EXPECT_THROW(example_name.split(1, 0), isc::dns::OutOfRange);
     EXPECT_THROW(example_name.split(2, 3), isc::dns::OutOfRange);
+}
+
+TEST_F(NameTest, downcase)
+{
+    compareInWireFormat(example_name_upper.downcase(), example_name);
+    compareInWireFormat(nameFactoryLowerCase().downcase(),
+                        nameFactoryLowerCase());
+}
+
+TEST_F(NameTest, copyAndDowncase)
+{
+    Name name_lowercased = example_name_upper.downcase();
+    compareInWireFormat(name_lowercased, example_name);
+
+    name_lowercased = nameFactoryLowerCase().downcase();
+    compareInWireFormat(name_lowercased, nameFactoryLowerCase());
 }
 }

@@ -613,6 +613,44 @@ Name::split(unsigned int first, unsigned int n) const
 
     return (retname);
 }
+
+Name&
+Name::downcase()
+{
+    unsigned int nlen = length_;
+    unsigned int labels = labels_;
+    unsigned int pos = 0;
+
+    while (labels > 0 && nlen > 0) {
+        --labels;
+        --nlen;
+
+        // we assume a valid name, and do abort() if the assumption fails
+        // rather than throwing an exception.
+        unsigned int count = ndata_.at(pos++);
+        assert(count <= Name::MAX_LABELLEN);
+        assert(nlen >= count);
+
+        while (count > 0) {
+            ndata_.at(pos) =
+                maptolower[static_cast<unsigned char>(ndata_.at(pos))];
+            ++pos;
+            --nlen;
+            --count;
+        }
+    }
+
+    return (*this);
+}
+
+Name
+Name::downcase() const
+{
+    Name newname = *this;
+
+    return (newname.downcase());
+}
+
 }
 }
 

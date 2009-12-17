@@ -402,6 +402,32 @@ public:
     /// \param suffix a Name object to be appended to the Name.
     /// \return a new Name object concatenating \c suffix to \c this Name.
     Name concatenate(const Name& suffix) const;
+
+    /// \brief Downcase all upper case alphabet characters in the name.
+    ///
+    /// We have two different versions of the \c downcase() method.  This
+    /// version modifies \this name class object.  Since this method doesn't
+    /// create a new object, it should be faster than the other version, and
+    /// it's exception free.  If the caller can allow the original object to be
+    /// modified, this version would therefore be preferred.
+    ///
+    /// \return A reference to the calling object with being downcased.
+    Name& downcase();
+
+    /// \brief Downcase all upper case alphabet characters in a newly created
+    /// copy of the name.
+    ///
+    /// We have two different versions of the \c downcase() method.  This
+    /// version makes a copy of the calling object and downcase the upper case
+    /// characters of the copy.  The calling object will be intact.  This
+    /// version will be slower than the other version due to the additional
+    /// overhead, and may throw an exception if memory allocation fails.
+    /// However, if the original object cannot be modified this version must be
+    /// the choice.
+    ///
+    /// \return A new \c Name class object where upper case characters of the
+    /// calling object are downcased.
+    Name downcase() const;
     //@}
 
     ///
