@@ -27,6 +27,12 @@ AC_TYPE_SIZE_T
 if test "X$GCC" = "Xyes"; then
 CXXFLAGS="-Wall -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
 fi
+
+# produce PIC unless we disable share libraries.  need this for python bindings.
+if test $enable_shared != "no" -a "X$GCC" = "Xyes"; then
+   CXXFLAGS="$CXXFLAGS -fPIC"
+fi
+
 AC_SUBST(CXXFLAGS)
 
 #
