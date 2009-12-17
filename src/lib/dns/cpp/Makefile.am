@@ -11,7 +11,7 @@ run_unittests_SOURCES += messagerenderer_unittest.cc exceptions_unittest.cc
 run_unittests_SOURCES += run_unittests.cc
 run_unittests_CPPFLAGS = $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(GTEST_LDFLAGS)
-run_unittests_LDADD = ./libdns.a $(GTEST_LDADD)
+run_unittests_LDADD = .libs/libdns.a $(GTEST_LDADD)
 endif
 
 noinst_PROGRAMS = $(TESTS)
