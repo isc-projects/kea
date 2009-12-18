@@ -87,7 +87,7 @@ namespace ISC { namespace Data {
         virtual ElementPtr get(const int i) { throw TypeError(); };
         virtual void set(const int i, ElementPtr element) { throw TypeError(); };
         virtual void add(ElementPtr element) { throw TypeError(); };
-        virtual void remove(ElementPtr element) { throw TypeError(); };
+        virtual void remove(const int i) { throw TypeError(); };
 
         // for maps
         virtual ElementPtr get(const std::string& name) { throw TypeError(); } ;
@@ -215,9 +215,10 @@ namespace ISC { namespace Data {
         const std::vector<ElementPtr>& list_value() { return l; }
         bool get_value(std::vector<ElementPtr>& t) { t = l; return true; };
         bool set_value(const std::vector<ElementPtr>& v) { l = v; return true; };
-        ElementPtr get(int i) { return l[i]; };
+        ElementPtr get(int i) { return l.at(i); };
         void set(int i, ElementPtr e) { l[i] = e; };
         void add(ElementPtr e) { l.push_back(e); };
+        void remove(int i) { l.erase(l.begin() + i); };
         std::string str();
         std::string str_xml(size_t prefix = 0);
         std::string to_wire(int omit_length = 1);
@@ -257,6 +258,7 @@ namespace ISC { namespace Data {
         bool find(const std::string& id, ElementPtr& t);
     };
 
+    bool is_null(ElementPtr p);
 } }
 
 // add a << operator for output streams so we can do

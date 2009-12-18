@@ -69,7 +69,6 @@ ElementPtr
 Element::create(const bool b)
 {
     try {
-        cout << "creating boolelement" << endl;
         return ElementPtr(new BoolElement(b));
     } catch (std::bad_alloc) {
         return ElementPtr();
@@ -513,7 +512,12 @@ MapElement::find(const std::string& id)
     } else {
         ElementPtr ce = get(id.substr(0, sep));
         if (ce) {
-            return ce->find(id.substr(sep+1));
+            // ignore trailing slash
+            if  (sep+1 != id.size()) {
+                return ce->find(id.substr(sep+1));
+            } else {
+                return ce;
+            }
         } else {
             return ElementPtr();
         }
@@ -894,3 +898,10 @@ MapElement::find(const std::string& id, ElementPtr& t) {
     }
     return false;
 }
+
+bool
+ISC::Data::is_null(ElementPtr p)
+{
+    return !p;
+}
+
