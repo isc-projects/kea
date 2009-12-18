@@ -67,6 +67,8 @@ class BigTool(Cmd):
                                              list(params.keys())[0])
         elif params:
             param_name = None
+            index = 0
+            param_count = len(params)
             for name in params:
                 # either the name of the parameter must be known, or
                 # the 'name' must be an integer (ie. the position of
@@ -81,7 +83,14 @@ class BigTool(Cmd):
                             raise CmdUnknownParamSyntaxError(cmd.module, cmd.command, cmd.params[name])
                     else:
                         # replace the numbered items by named items
-                        param_name = command_info.get_param_name_by_position(name+1)
+                        # if a parameter is optional, and subsequent ones
+                        # are not, we have to mix and match a little;
+                        # 1: optional
+                        # 2: mandatory
+                        # 3: optional
+                        # 3 given: 1,2,3. 2 given: 1 and 2. 1 given: 2
+                        #param_name = command_info.get_param_name_by_position(name+1)
+                        param_name = command_info.get_param_name_by_position2(name+1, index, param_count)
                         cmd.params[param_name] = cmd.params[name]
                         del cmd.params[name]
                         
@@ -327,6 +336,7 @@ class BigTool(Cmd):
             print("Error: " + identifier + " not found")
         except KeyError as ke:
             print("Error: missing " + str(ke))
+            raise ke
 
     def go(self, identifier):
         # just to see if it exists

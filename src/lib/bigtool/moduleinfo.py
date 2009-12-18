@@ -34,7 +34,7 @@ class ParamInfo:
         node = xmldoc.createElement(PARAM_NODE_NAME)
         node.setAttribute('name', name)
         node.setAttribute('value', value)                             
-        return node                                              
+        return node
 
 class CommandInfo:
     """One command which provide by one bind10 module, it has zero or 
@@ -81,6 +81,49 @@ class CommandInfo:
         return [name for name in all_names 
                 if not self.params[name].is_optional]        
         
+    def get_param_name_by_position2(self, pos, index, param_count):
+        # count mandatories back from the last
+        # from the last mandatory; see the number of mandatories before it
+        # and compare that to the number of positional arguments left to do
+        # if the number of lefts is higher than the number of mandatories,
+        # use the first optional. Otherwise, use the first unhandled mandatory
+        # (and update the location accordingly?)
+        # (can this be done in all cases? this is certainly not the most efficient method;
+        # one way to make the whole of this more consistent is to always set mandatories first, but
+        # that would make some commands less nice to use ("config set value location" instead of "config set location value")
+        if type(pos) == int:
+            if param_count == len(self.params) - 1:
+                i = 0
+                for k in self.params.keys():
+                    if i == pos:
+                        return k
+                    i += 1
+                raise KeyError(str(pos) + " out of range")
+            elif param_count <= len(self.params):
+                mandatory_count = 0
+                for k in self.params.keys():
+                    if not self.params[k].is_optional:
+                        mandatory_count += 1
+                if param_count == mandatory_count:
+                    # return the first mandatory from pos
+                    i = 0
+                    for k in self.params.keys():
+                        if i >= pos and not self.params[k].is_optional:
+                            return k
+                        i += 1
+                    raise KeyError(str(pos) + " out of range")
+                else:
+                    i = 0
+                    for k in self.params.keys():
+                        if i == pos:
+                            return k
+                        i += 1
+                    raise KeyError(str(pos) + " out of range")
+            else:
+                raise KeyError("Too many parameters")
+        else:
+            raise KeyError(str(pos) + " is not an integer")
+    
     def get_param_name_by_position(self, pos):
         if type(pos) == int:
             i = 0
