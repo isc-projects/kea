@@ -467,8 +467,6 @@ private:
 
     void fromString(const std::string& namestr);
 };
-}
-}
 
 ///
 /// \brief Insert the name as a string into stream.
@@ -485,7 +483,9 @@ private:
 /// \return A reference to the same \c std::ostream object referenced by
 /// parameter \c os after the insertion operation.
 std::ostream&
-operator<<(std::ostream& os, const isc::dns::Name& name);
+operator<<(std::ostream& os, const Name& name);
+}
+}
 #endif // __NAME_H
 
 // Local Variables: 
