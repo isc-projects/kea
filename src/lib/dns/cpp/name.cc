@@ -666,12 +666,12 @@ Name::downcase()
 
     return (*this);
 }
-}
-}
 
 std::ostream&
-operator<<(std::ostream& os, const isc::dns::Name& name)
+operator<<(std::ostream& os, const Name& name)
 {
     os << name.toText();
     return (os);
+}
+}
 }
