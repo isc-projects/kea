@@ -466,7 +466,22 @@ private:
 }
 }
 
-std::ostream& operator<<(std::ostream& os, const isc::dns::Name& name);
+///
+/// \brief Insert the name as a string into stream.
+///
+/// This method convert the \c name into a string and inserts it into the
+/// output stream \c os.
+///
+/// This function overloads the global operator<< to behave as described in
+/// ostream::operator<< but applied to \c Name objects.
+///
+/// \param os A \c std::ostream object on which the insertion operation is
+/// performed.
+/// \param name The \c Name object output by the operation.
+/// \return A reference to the same \c std::ostream object referenced by
+/// parameter \c os after the insertion operation.
+std::ostream&
+operator<<(std::ostream& os, const isc::dns::Name& name);
 #endif // __NAME_H
 
 // Local Variables: 
