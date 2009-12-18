@@ -392,8 +392,14 @@ TEST_F(NameTest, split)
 
 TEST_F(NameTest, downcase)
 {
+    // usual case: all-upper case name to all-lower case
     compareInWireFormat(example_name_upper.downcase(), example_name);
+    // confirm that non upper-case characters are intact
     compareInWireFormat(nameFactoryLowerCase().downcase(),
                         nameFactoryLowerCase());
+    // confirm the calling object is actually modified
+    example_name_upper.downcase();
+    compareInWireFormat(example_name_upper, example_name);
+    
 }
 }
