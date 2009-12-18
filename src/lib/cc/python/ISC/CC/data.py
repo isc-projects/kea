@@ -239,7 +239,22 @@ class UIConfigData():
             return value, default, False
         return None, False, False
 
+    def get_value_map_single(self, identifier, entry):
+        """Returns a single entry for a value_map, where the value is
+           not a part of a bigger map"""
+        result_part = {}
+        result_part['name'] = entry['item_name']
+        result_part['type'] = entry['item_type']
+        value, default, modified = self.get_value(identifier)
+        # should we check type and only set int, double, bool and string here?
+        result_part['value'] = value
+        result_part['default'] = default
+        result_part['modified'] = modified
+        return result_part
+
     def get_value_map(self, identifier, entry):
+        """Returns a single entry for a value_map, where the value is
+           a part of a bigger map"""
         result_part = {}
         result_part['name'] = entry['item_name']
         result_part['type'] = entry['item_type']
@@ -264,7 +279,7 @@ class UIConfigData():
         if type(spec) == dict:
             # either the top-level list of modules or a spec map
             if 'item_name' in spec:
-                result_part = self.get_value_map(identifier, spec)
+                result_part = self.get_value_map_single(identifier, spec)
                 if result_part['type'] == "list":
                     values = self.get_value(identifier)[0]
                     if values:

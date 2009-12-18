@@ -34,19 +34,19 @@ def prepare_config_commands(bigtool):
     cmd = CommandInfo(name = "remove", desc = "Remove entry from configuration list", need_inst_param = False)
     param = ParamInfo(name = "identifier", type = "string", optional=True)
     cmd.add_param(param)
-    param = ParamInfo(name = "value", type = "string", optional=True)
+    param = ParamInfo(name = "value", type = "string", optional=False)
     cmd.add_param(param)
     module.add_command(cmd)
 
     cmd = CommandInfo(name = "set", desc = "Set a configuration value", need_inst_param = False)
     param = ParamInfo(name = "identifier", type = "string", optional=True)
     cmd.add_param(param)
-    param = ParamInfo(name = "value", type = "string", optional=True)
+    param = ParamInfo(name = "value", type = "string", optional=False)
     cmd.add_param(param)
     module.add_command(cmd)
 
     cmd = CommandInfo(name = "unset", desc = "Unset a configuration value", need_inst_param = False)
-    param = ParamInfo(name = "identifier", type = "string", optional=True)
+    param = ParamInfo(name = "identifier", type = "string", optional=False)
     cmd.add_param(param)
     module.add_command(cmd)
 
