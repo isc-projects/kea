@@ -405,29 +405,26 @@ public:
 
     /// \brief Downcase all upper case alphabet characters in the name.
     ///
-    /// We have two different versions of the \c downcase() method.  This
-    /// version modifies \this name class object.  Since this method doesn't
-    /// create a new object, it should be faster than the other version, and
-    /// it's exception free.  If the caller can allow the original object to be
-    /// modified, this version would therefore be preferred.
+    /// This method modifies the calling object so that it can perform the
+    /// conversion as fast as possible and can be exception free.
+    ///
+    /// The return value of this version of \c downcase() is a reference to
+    /// the calling object (i.e., \c *this) so that the caller can use the
+    /// result of downcasing in a single line.  For example, if variable
+    /// \c n is a \c Name class object possibly containing upper case
+    /// characters, and \c b is an \c OutpubBuffer class object, then the
+    /// following code will dump the name in wire format to \c b with
+    /// downcasing upper case characters:
+    ///
+    /// \code n.downcase().toWire(b); \endcode
+    ///
+    /// Since this method modifies the calling object, a \c const name object
+    /// cannot call it.  If \c n is a \c const Name class object, it must first
+    /// be copied to a different object and the latter must be used for the
+    /// downcase modification.
     ///
     /// \return A reference to the calling object with being downcased.
     Name& downcase();
-
-    /// \brief Downcase all upper case alphabet characters in a newly created
-    /// copy of the name.
-    ///
-    /// We have two different versions of the \c downcase() method.  This
-    /// version makes a copy of the calling object and downcase the upper case
-    /// characters of the copy.  The calling object will be intact.  This
-    /// version will be slower than the other version due to the additional
-    /// overhead, and may throw an exception if memory allocation fails.
-    /// However, if the original object cannot be modified this version must be
-    /// the choice.
-    ///
-    /// \return A new \c Name class object where upper case characters of the
-    /// calling object are downcased.
-    Name downcase() const;
     //@}
 
     ///

@@ -396,13 +396,4 @@ TEST_F(NameTest, downcase)
     compareInWireFormat(nameFactoryLowerCase().downcase(),
                         nameFactoryLowerCase());
 }
-
-TEST_F(NameTest, copyAndDowncase)
-{
-    Name name_lowercased = example_name_upper.downcase();
-    compareInWireFormat(name_lowercased, example_name);
-
-    name_lowercased = nameFactoryLowerCase().downcase();
-    compareInWireFormat(name_lowercased, nameFactoryLowerCase());
-}
 }
