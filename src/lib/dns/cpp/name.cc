@@ -520,6 +520,30 @@ Name::equals(const Name& other) const
 }
 
 bool
+Name::leq(const Name& other) const
+{
+    return (compare(other).getOrder() <= 0);
+}
+
+bool
+Name::geq(const Name& other) const
+{
+    return (compare(other).getOrder() >= 0);
+}
+
+bool
+Name::lthan(const Name& other) const
+{
+    return (compare(other).getOrder() < 0);
+}
+
+bool
+Name::gthan(const Name& other) const
+{
+    return (compare(other).getOrder() > 0);
+}
+
+bool
 Name::isWildcard() const
 {
     return (length_ >= 2 && ndata_[0] == 1 && ndata_[1] == '*'); 

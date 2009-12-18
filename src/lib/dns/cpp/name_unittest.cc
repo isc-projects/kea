@@ -39,11 +39,15 @@ class NameTest : public ::testing::Test {
 protected:
     NameTest() : example_name("www.example.com"),
                  example_name_upper("WWW.EXAMPLE.COM"),
+                 small_name("aaa.example.com"),
+                 large_name("zzz.example.com"),
                  buffer_actual(0), buffer_expected(0)
     {}
 
-    Name example_name;
-    Name example_name_upper;
+    const Name example_name;
+    Name example_name_upper;    // this will be modified and cannot be const
+    const Name small_name;
+    const Name large_name;
     OutputBuffer buffer_actual, buffer_expected;
 
     static const size_t MAX_WIRE = Name::MAX_WIRE;
@@ -401,5 +405,61 @@ TEST_F(NameTest, downcase)
     example_name_upper.downcase();
     compareInWireFormat(example_name_upper, example_name);
     
+}
+
+//
+// The following set of tests confirm the result of <=, <, >=, >
+// The test logic is simple, and all tests are just straightforward variations
+// of the first one.
+//
+TEST_F(NameTest, leq)
+{
+    // small <= large is true
+    EXPECT_TRUE(small_name.leq(large_name));
+    EXPECT_TRUE(small_name <= large_name);
+
+    // small <= small is true
+    EXPECT_TRUE(small_name.leq(small_name));
+    EXPECT_TRUE(small_name <= small_name);
+
+    // large <= small is false
+    EXPECT_FALSE(large_name.leq(small_name));
+    EXPECT_FALSE(large_name <= small_name);
+}
+
+TEST_F(NameTest, geq)
+{
+    EXPECT_TRUE(large_name.geq(small_name));
+    EXPECT_TRUE(large_name >= small_name);
+
+    EXPECT_TRUE(large_name.geq(large_name));
+    EXPECT_TRUE(large_name >= large_name);
+
+    EXPECT_FALSE(small_name.geq(large_name));
+    EXPECT_FALSE(small_name >= large_name);
+}
+
+TEST_F(NameTest, lthan)
+{
+    EXPECT_TRUE(small_name.lthan(large_name));
+    EXPECT_TRUE(small_name < large_name);
+
+    EXPECT_FALSE(small_name.lthan(small_name));
+    EXPECT_FALSE(small_name < small_name);
+
+    EXPECT_FALSE(large_name.lthan(small_name));
+    EXPECT_FALSE(large_name < small_name);
+}
+
+TEST_F(NameTest, gthan)
+{
+    EXPECT_TRUE(large_name.gthan(small_name));
+    EXPECT_TRUE(large_name > small_name);
+
+    EXPECT_FALSE(large_name.gthan(large_name));
+    EXPECT_FALSE(large_name > large_name);
+
+    EXPECT_FALSE(small_name.gthan(large_name));
+    EXPECT_FALSE(small_name > large_name);
 }
 }
