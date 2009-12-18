@@ -642,15 +642,6 @@ Name::downcase()
 
     return (*this);
 }
-
-Name
-Name::downcase() const
-{
-    Name newname = *this;
-
-    return (newname.downcase());
-}
-
 }
 }
 
