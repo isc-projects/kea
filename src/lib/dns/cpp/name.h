@@ -412,7 +412,7 @@ public:
     /// the calling object (i.e., \c *this) so that the caller can use the
     /// result of downcasing in a single line.  For example, if variable
     /// \c n is a \c Name class object possibly containing upper case
-    /// characters, and \c b is an \c OutpubBuffer class object, then the
+    /// characters, and \c b is an \c OutputBuffer class object, then the
     /// following code will dump the name in wire format to \c b with
     /// downcasing upper case characters:
     ///
