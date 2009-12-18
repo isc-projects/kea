@@ -190,6 +190,11 @@ class Name {
     //@{
 private:
     /// The default constructor
+    ///
+    /// This is used internally in the class implementation, but at least at
+    /// the moment defined as private because it will construct an incomplete
+    /// object in that it doesn't have any labels.  We may reconsider this
+    /// design choice as we see more applications of the class.
     Name() : length_(0), labels_(0) {}
 public:
     /// Constructor from a string
