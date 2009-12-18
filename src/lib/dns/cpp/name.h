@@ -27,7 +27,6 @@ namespace dns {
 class InputBuffer;
 class OutputBuffer;
 class MessageRenderer;
-class NameDecompressor;
 
 ///
 /// \brief A standard DNS module exception that is thrown if the name parser
