@@ -313,46 +313,46 @@ public:
     ///
     /// The comparison is based on the result of the \c compare() method.
     /// \param other the <code>Name</code> object to compare against.
-    /// \return true if <code>compare(other).get_order() <= 0</code>;
+    /// \return true if <code>compare(other).getOrder() <= 0</code>;
     /// otherwise false.
     bool leq(const Name& other) const;
 
     /// Same as leq()
-    bool operator<=(const Name& other) const;
+    bool operator<=(const Name& other) const { return (leq(other)); }
 
     /// \brief Greater-than or equal comparison for Name against
     /// <code>other</code>
     ///
     /// The comparison is based on the result of the \c compare() method.
     /// \param other the <code>Name</code> object to compare against.
-    /// \return true if <code>compare(other).get_order() >= 0</code>;
+    /// \return true if <code>compare(other).getOrder() >= 0</code>;
     /// otherwise false.
     bool geq(const Name& other) const;
 
     /// Same as geq()
-    bool operator>=(const Name& other) const;
+    bool operator>=(const Name& other) const { return (geq(other)); }
 
     /// \brief Less-than comparison for Name against <code>other</code>
     ///
     /// The comparison is based on the result of the \c compare() method.
     /// \param other the <code>Name</code> object to compare against.
-    /// \return true if <code>compare(other).get_order() < 0</code>;
+    /// \return true if <code>compare(other).getOrder() < 0</code>;
     /// otherwise false.
     bool lthan(const Name& other) const;
 
     /// Same as lthan()
-    bool operator<(const Name& other) const;
+    bool operator<(const Name& other) const { return (lthan(other)); }
 
     /// \brief Greater-than comparison for Name against <code>other</code>
     ///
     /// The comparison is based on the result of the \c compare() method.
     /// \param other the <code>Name</code> object to compare against.
-    /// \return true if <code>compare(other).get_order() > 0</code>;
+    /// \return true if <code>compare(other).getOrder() > 0</code>;
     /// otherwise false.
     bool gthan(const Name& other) const;
 
     /// Same as gthan()
-    bool operator>(const Name& other) const;
+    bool operator>(const Name& other) const { return (gthan(other)); }
     //@}
 
     ///
