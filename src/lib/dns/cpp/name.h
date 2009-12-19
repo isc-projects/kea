@@ -457,6 +457,17 @@ public:
 
     /// \brief Max allowable length of labels of a domain name.
     static const size_t MAX_LABELLEN = 63;
+
+    /// \brief Max possible pointer value for name compression.
+    ///
+    /// This is the highest number of 14-bit unsigned integer.  Name compression
+    /// pointers are identified as a 2-byte value starting with the upper two
+    /// bit being 11.
+    static const uint16_t MAX_COMPRESS_POINTER = 0x3fff;
+    /// \brief A 8-bit masked value indicating a start of compression pointer.
+    static const uint16_t COMPRESS_POINTER_MARK8 = 0xc0;
+    /// \brief A 16-bit masked value indicating a start of compression pointer.
+    static const uint16_t COMPRESS_POINTER_MARK16 = 0xc000;
     //@}
 
 private:
