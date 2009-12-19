@@ -67,14 +67,20 @@ static Initializer initialier;
 }
 
 namespace {
+///
+/// Textual name parser states.
+///
 typedef enum {
-    ft_init = 0,
-    ft_start,
-    ft_ordinary,
-    ft_initialescape,
-    ft_escape,
-    ft_escdecimal,
-    ft_at
+    ft_init = 0,                // begin of the name
+    ft_start,                   // begin of a label
+    ft_ordinary,                // parsing an ordinary label
+    ft_initialescape,           // just found '\'
+    ft_escape,                  // begin of handling a '\'-escaped sequence
+    ft_escdecimal,              // parsing a '\DDD' octet.
+
+    // Unused at this moment.  We'll revisit this when we support master file
+    // parser where @ is used to mean an origin name.
+    ft_at                  
 } ft_state;
 }
 
@@ -133,7 +139,7 @@ Name::Name(const std::string &namestring, bool downcase)
             }
 
             // FALLTHROUGH
-        case ft_start:           // begin of a label
+        case ft_start:
             ndata.push_back(0); // placeholder for the label length field
             count = 0;
             if (c == '\\') {
@@ -143,7 +149,7 @@ Name::Name(const std::string &namestring, bool downcase)
             state = ft_ordinary;
             assert(ndata.size() < Name::MAX_WIRE);
             // FALLTHROUGH
-        case ft_ordinary:       // parsing a normal label
+        case ft_ordinary:
             if (c == '.') {
                 if (count == 0) {
                     dns_throw(EmptyLabel, "duplicate period");
@@ -164,7 +170,7 @@ Name::Name(const std::string &namestring, bool downcase)
                 ndata.push_back(downcase ? maptolower[c] : c);
             }
             break;
-        case ft_initialescape:  // just found '\'
+        case ft_initialescape:
             if (c == '[') {
                 // This looks like a bitstring label, which was deprecated.
                 // Intentionally drop it.
@@ -172,7 +178,7 @@ Name::Name(const std::string &namestring, bool downcase)
             }
             state = ft_escape;
             // FALLTHROUGH
-        case ft_escape:         // begin of handling a '\'-escaped sequence
+        case ft_escape:
             if (!isdigit(c & 0xff)) {
                 if (++count > MAX_LABELLEN) {
                     dns_throw(TooLongLabel, "label is too long");
@@ -185,7 +191,7 @@ Name::Name(const std::string &namestring, bool downcase)
             value = 0;
             state = ft_escdecimal;
             // FALLTHROUGH
-        case ft_escdecimal:     // parsing a '\DDD' octet.
+        case ft_escdecimal:
             if (!isdigit(c & 0xff)) {
                 dns_throw(BadEscape, "mixture of escaped digit and non-digit");
             }
@@ -234,11 +240,16 @@ Name::Name(const std::string &namestring, bool downcase)
     offsets_.assign(offsets.begin(), offsets.end());
 }
 
+namespace {
+///
+/// Wire-format name parser states.
+///
 typedef enum {
-    fw_start = 0,
-    fw_ordinary,
-    fw_newcurrent
+    fw_start = 0,               // beginning of a label
+    fw_ordinary,                // inside an ordinary (non compressed) label
+    fw_newcurrent               // beginning of a compression pointer
 } fw_state;
+}
 
 Name::Name(InputBuffer& buffer, bool downcase)
 {

@@ -91,8 +91,11 @@ public:
 };
 
 ///
-/// \brief A standard DNS module exception that is thrown if the wire-format
-/// name is not a complete domain name.
+/// \brief A standard DNS module exception that is thrown if the name parser
+/// finds the input (string or wire-format data) is incomplete.
+///
+/// An attempt of constructing a name from an empty string will trigger this
+/// exception.
 ///
 class IncompleteName : public Exception {
 public:
@@ -164,11 +167,34 @@ private:
 };
 
 ///
-/// The \c Name class encapsulates DNS names. It provides interfaces
-/// to construct a name from string or wire-format data, transform a name into
-/// a string or wire-format data, compare two names, get access to attributes.
+/// The \c Name class encapsulates DNS names.
 ///
-/// Note that while many other DNS APIs introduce an "absolute or relative"
+/// It provides interfaces to construct a name from string or wire-format data,
+/// transform a name into a string or wire-format data, compare two names, get
+/// access to various properties of a name, etc.
+///
+/// Notes to developers: Internally, a name object maintains the name data
+/// in wire format as an instance of \c std::string.  Since many string
+/// implementations adopt copy-on-write data sharing, we expect this approach
+/// will make copying a name less expensive in typical cases.  If this is
+/// found to be a significant performance bottleneck later, we may reconsider
+/// the internal representation or perhaps the API.
+///
+/// A name object also maintains a vector of offsets (\c offsets_ member),
+/// each of which is the offset to a label of the name: The n-th element of
+/// the vector specifies the offset to the n-th label.  For example, if the
+/// object represents "www.example.com", the elements of the offsets vector
+/// are 0, 4, 12, and 16.  Note that the offset to the trailing dot (16) is
+/// included.  In the BIND9 DNS library from which this implementation is
+/// derived, the offsets are optional, probably due to performance
+/// considerations (in fact, offsets can always be calculated from the name
+/// data, and in that sense are redundant).  In our implementation, however,
+/// we always build and maintain the offsets.  We believe we need more low
+/// level, specialized data structure and interface where we really need to
+/// pursue performance, and would rather keep this generic API and
+/// implementation simpler.
+///
+/// While many other DNS APIs introduce an "absolute or relative"
 /// attribute of names as defined in RFC1035, names are always "absolute" in
 /// the initial design of this API.
 /// In fact, separating absolute and relative would confuse API users
@@ -199,6 +225,12 @@ private:
 public:
     /// Constructor from a string
     ///
+    /// If the given string does not represent a valid DNS name, an exception
+    /// of class \c EmptyLabel, \c TooLongLabel, \c BadLabelType, \c BadEscape,
+    /// \c TooLongName, or \c IncompleteName will be thrown.
+    /// In addition, if resource allocation for the new name fails, a
+    /// corresponding standard exception will be thrown.
+    ///
     /// \param namestr A string representation of the name to be constructed.
     /// \param downcase Whether to convert upper case alphabets to lower case.
     explicit Name(const std::string& namestr, bool downcase = false);
@@ -211,6 +243,12 @@ public:
     /// The input data may or may not be compressed; if it's compressed, this
     /// method will automatically decompress it.
     ///
+    /// If the given data does not represent a valid DNS name, an exception
+    /// of class \c TooLongName, \c BadLabelType, \c BadPointer, or
+    /// \c IncompleteName will be thrown.
+    /// In addition, if resource allocation for the new name fails, a
+    /// corresponding standard exception will be thrown.
+    ///
     /// \param buffer A buffer storing the wire format data.
     /// \param downcase Whether to convert upper case alphabets to lower case.
     explicit Name(InputBuffer& buffer, bool downcase = false);
@@ -222,6 +260,8 @@ public:
     //@{
     /// \brief Gets the length of the <code>Name</code> in its wire format.
     ///
+    /// This method never throws an exception.
+    ///
     /// \return the length of the <code>Name</code>
     size_t getLength() const { return (length_); }
 
@@ -229,6 +269,8 @@ public:
     ///
     /// Note that an empty label (corresponding to a trailing '.') is counted
     /// as a single label, so the return value of this method must be >0.
+    ///
+    /// This method never throws an exception.
     ///
     /// \return the number of labels
     unsigned int getLabels() const { return (labels_); }
@@ -249,6 +291,8 @@ public:
     /// This function assumes the name is in proper uncompressed wire format.
     /// If it finds an unexpected label character including compression pointer,
     /// an exception of class \c BadLabelType will be thrown.
+    /// In addition, if resource allocation for the result string fails, a
+    /// corresponding standard exception will be thrown.
     //
     /// \param omit_final_dot whether to omit the trailing dot in the output.
     /// \return a string representation of the <code>Name</code>.
@@ -260,12 +304,21 @@ public:
     /// which encapsulates output buffer and name compression algorithm to
     /// render the name.
     ///
+    /// If resource allocation in rendering process fails, a corresponding
+    /// standard exception will be thrown.
+    ///
     /// \param renderer DNS message rendering context that encapsulates the
     /// output buffer and name compression information.
     void toWire(MessageRenderer& renderer) const;
 
     /// \brief Render the <code>Name</code> in the wire format without
     /// compression.
+    ///
+    /// If resource allocation in rendering process fails, a corresponding
+    /// standard exception will be thrown.  This can be avoided by preallocating
+    /// a sufficient size of \c buffer.  Specifically, if
+    /// <code>buffer.getCapacity() - buffer.getLength() >= Name::MAX_WIRE</code>
+    /// then this method should not throw an exception.
     ///
     void toWire(OutputBuffer& buffer) const;
     //@}
@@ -282,6 +335,8 @@ public:
     ///
     /// Note that this is case-insensitive comparison.
     ///
+    /// This method never throws an exception.
+    ///
     /// \param other the right-hand operand to compare against.
     /// \return a <code>NameComparisonResult</code> object representing the
     /// comparison result.
@@ -295,6 +350,8 @@ public:
     /// insensitive for the name label parts) on the two names.  This is because
     /// it would be much faster and the simple equality check would be pretty
     /// common.
+    ///
+    /// This method never throws an exception.
     ///
     /// \param other the <code>Name</code> object to compare against.
     /// \return true if the two names are equal; otherwise false.
@@ -316,6 +373,9 @@ public:
     /// \brief Less-than or equal comparison for Name against <code>other</code>
     ///
     /// The comparison is based on the result of the \c compare() method.
+    ///
+    /// This method never throws an exception.
+    ///
     /// \param other the <code>Name</code> object to compare against.
     /// \return true if <code>compare(other).getOrder() <= 0</code>;
     /// otherwise false.
@@ -328,6 +388,9 @@ public:
     /// <code>other</code>
     ///
     /// The comparison is based on the result of the \c compare() method.
+    ///
+    /// This method never throws an exception.
+    ///
     /// \param other the <code>Name</code> object to compare against.
     /// \return true if <code>compare(other).getOrder() >= 0</code>;
     /// otherwise false.
@@ -339,6 +402,9 @@ public:
     /// \brief Less-than comparison for Name against <code>other</code>
     ///
     /// The comparison is based on the result of the \c compare() method.
+    ///
+    /// This method never throws an exception.
+    ///
     /// \param other the <code>Name</code> object to compare against.
     /// \return true if <code>compare(other).getOrder() < 0</code>;
     /// otherwise false.
@@ -350,6 +416,9 @@ public:
     /// \brief Greater-than comparison for Name against <code>other</code>
     ///
     /// The comparison is based on the result of the \c compare() method.
+    ////
+    /// This method never throws an exception.
+    ///
     /// \param other the <code>Name</code> object to compare against.
     /// \return true if <code>compare(other).getOrder() > 0</code>;
     /// otherwise false.
@@ -475,8 +544,6 @@ private:
     std::vector<unsigned char> offsets_;
     unsigned int length_;
     unsigned int labels_;
-
-    void fromString(const std::string& namestr);
 };
 
 ///
