@@ -66,6 +66,7 @@ public:
 static Initializer initialier; 
 }
 
+namespace {
 typedef enum {
     ft_init = 0,
     ft_start,
@@ -75,6 +76,7 @@ typedef enum {
     ft_escdecimal,
     ft_at
 } ft_state;
+}
 
 Name::Name(const std::string &namestring, bool downcase)
 {
@@ -213,7 +215,7 @@ Name::Name(const std::string &namestring, bool downcase)
         }
         assert(s == send);
         if (state != ft_ordinary && state != ft_at) {
-            dns_throw(BadLabelType, "incomplete label");
+            dns_throw(IncompleteName, "incomplete textual name");
         }
         if (state == ft_ordinary) {
             assert(count != 0);
