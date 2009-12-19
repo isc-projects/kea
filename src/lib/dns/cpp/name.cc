@@ -156,7 +156,7 @@ Name::Name(const std::string &namestring, bool downcase)
             } else if (c == '\\') {
                 state = ft_escape;
             } else {
-                if (++count > Name::MAX_LABELLEN) {
+                if (++count > MAX_LABELLEN) {
                     dns_throw(TooLongLabel, "label is too long");
                 }
                 ndata.push_back(downcase ? maptolower[c] : c);
@@ -172,7 +172,7 @@ Name::Name(const std::string &namestring, bool downcase)
             // FALLTHROUGH
         case ft_escape:         // begin of handling a '\'-escaped sequence
             if (!isdigit(c & 0xff)) {
-                if (++count > Name::MAX_LABELLEN) {
+                if (++count > MAX_LABELLEN) {
                     dns_throw(TooLongLabel, "label is too long");
                 }
                 ndata.push_back(downcase ? maptolower[c] : c);
@@ -194,7 +194,7 @@ Name::Name(const std::string &namestring, bool downcase)
                 if (value > 255) {
                     dns_throw(BadEscape, "escaped decimal is too large");
                 }
-                if (++count > Name::MAX_LABELLEN) {
+                if (++count > MAX_LABELLEN) {
                     dns_throw(TooLongLabel, "label is too long");
                 }
                 ndata.push_back(downcase ? maptolower[value] : value);
@@ -275,7 +275,7 @@ Name::Name(InputBuffer& buffer, bool downcase)
 
         switch (state) {
         case fw_start:
-            if (c < 64) {
+            if (c <= MAX_LABELLEN) {
                 offsets.push_back(nused);
                 if (nused + c + 1 > Name::MAX_WIRE) {
                     dns_throw(TooLongName, "wire name is too long");
@@ -287,11 +287,11 @@ Name::Name(InputBuffer& buffer, bool downcase)
                 }
                 n = c;
                 state = fw_ordinary;
-            } else if (c >= 192) {
+            } else if ((c & COMPRESS_POINTER_MARK8) == COMPRESS_POINTER_MARK8) {
                 //
                 // Ordinary 14-bit pointer.
                 //
-                new_current = c & 0x3F;
+                new_current = c & ~COMPRESS_POINTER_MARK8;
                 n = 1;
                 state = fw_newcurrent;
             } else {
@@ -366,7 +366,7 @@ Name::toText(bool omit_final_dot) const
     std::string::const_iterator np_end = ndata_.end();
     unsigned int labels = labels_; // use for integrity check
     // init with an impossible value to catch error cases in the end:
-    unsigned int count = Name::MAX_LABELLEN + 1;
+    unsigned int count = MAX_LABELLEN + 1;
 
     // result string: it will roughly have the same length as the wire format
     // name data.  reserve that length to minimize reallocation.
@@ -384,7 +384,7 @@ Name::toText(bool omit_final_dot) const
             break;
         }
             
-        if (count <= Name::MAX_LABELLEN) {
+        if (count <= MAX_LABELLEN) {
             assert(np_end - np >= count);
 
             if (!result.empty()) {
@@ -455,7 +455,7 @@ Name::compare(const Name& other) const
 
         // We don't support any extended label types including now-obsolete
         // bitstring labels.
-        assert(count1 <= Name::MAX_LABELLEN && count2 <= Name::MAX_LABELLEN);
+        assert(count1 <= MAX_LABELLEN && count2 <= MAX_LABELLEN);
 
         int cdiff = (int)count1 - (int)count2;
         unsigned int count = (cdiff < 0) ? count1 : count2;
@@ -652,7 +652,7 @@ Name::downcase()
         // we assume a valid name, and do abort() if the assumption fails
         // rather than throwing an exception.
         unsigned int count = ndata_.at(pos++);
-        assert(count <= Name::MAX_LABELLEN);
+        assert(count <= MAX_LABELLEN);
         assert(nlen >= count);
 
         while (count > 0) {
