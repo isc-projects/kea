@@ -186,7 +186,7 @@ TEST_F(NameTest, fromText)
                          "123456789.123456789.123456789.123456789.123456789."
                          "123"));
     // \DDD must consist of 3 digits.
-    EXPECT_THROW(Name("\\12"), isc::dns::BadLabelType);
+    EXPECT_THROW(Name("\\12"), isc::dns::IncompleteName);
 
     // a name with the max number of labels.  should be constructed without
     // an error, and its length should be the max value.
