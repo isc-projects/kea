@@ -34,6 +34,13 @@ using isc::dns::OutputBuffer;
 using isc::dns::Name;
 using isc::dns::NameComparisonResult;
 
+//
+// XXX: these are defined as class static constants, but some compilers
+// seemingly cannot find the symbols when used in the EXPECT_xxx macros.
+//
+const size_t isc::dns::Name::MAX_WIRE;
+const size_t isc::dns::Name::MAX_LABELS;
+
 namespace {
 class NameTest : public ::testing::Test {
 protected:
@@ -50,8 +57,6 @@ protected:
     const Name large_name;
     OutputBuffer buffer_actual, buffer_expected;
 
-    static const size_t MAX_WIRE = Name::MAX_WIRE;
-    static const size_t MAX_LABELS = Name::MAX_LABELS;
     //
     // helper methods
     //
@@ -197,7 +202,7 @@ TEST_F(NameTest, fromText)
                           "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9." // 200
                           "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9." // 240
                           "0.1.2.3.4.5.6.");
-    EXPECT_EQ(MAX_LABELS, maxlabels.getLabels());
+    EXPECT_EQ(Name::MAX_LABELS, maxlabels.getLabels());
 }
 
 TEST_F(NameTest, fromWire)
@@ -241,14 +246,14 @@ TEST_F(NameTest, fromWire)
     //
 
     // large names, a long but valid one, and invalid (too long) one.
-    EXPECT_EQ(MAX_WIRE,
+    EXPECT_EQ(Name::MAX_WIRE,
               nameFactoryFromWire("testdata/name_fromWire9", 0).getLength());
     EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire10", 0).getLength(),
                  isc::dns::TooLongName);
 
     // A name with possible maximum number of labels; awkward but valid
     EXPECT_EQ(nameFactoryFromWire("testdata/name_fromWire11", 0).getLabels(),
-              MAX_LABELS);
+              Name::MAX_LABELS);
 
     // Wire format including an invalid label length
     EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire12", 0),
