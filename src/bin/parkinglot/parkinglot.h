@@ -29,9 +29,22 @@ public:
     void command(std::pair<std::string,ISC::Data::ElementPtr>);
     void serve(std::string zone_name);
     void clear_zones() { zones.clear_zones(); };
-    
+
+    void clearARecords() { a_records.clear(); };
+    void clearAAAARecords() { aaaa_records.clear(); };
+    void clearNSRecords() { ns_records.clear(); };
+
+    void addARecord(std::string data);
+    void addAAAARecord(std::string data);
+    void addNSRecord(std::string data);
+
+    void setSOARecord(isc::dns::Rdata::RdataPtr soa_record);
+
 private:
-    isc::dns::Rdata::RdataPtr ns1, ns2, ns3, a, aaaa, soa;
+    void setDefaultZoneData();
+
+    std::vector<isc::dns::Rdata::RdataPtr> a_records, aaaa_records, ns_records;
+    isc::dns::Rdata::RdataPtr soa;
     ZoneSet zones;
     int sock;
 };

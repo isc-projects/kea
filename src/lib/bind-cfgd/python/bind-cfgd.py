@@ -118,12 +118,20 @@ class ConfigManager:
                                 conf_part = data.set(self.config.data, cmd[1], "")
                         else:
                             conf_part = self.config.data
-                        conf_part.update(cmd[2])
+                        data.merge(conf_part, cmd[2])
+                        print("[XX bind-cfgd] new config (part):")
+                        print(conf_part)
                         # send out changed info
                         self.cc.group_sendmsg({ "config_update": conf_part }, cmd[1])
                         answer["result"] = [ 0 ]
                     elif len(cmd) == 2:
-                        self.config.data.update(cmd[1])
+                        print("[XX bind-cfgd] old config:")
+                        print(self.config.data)
+                        print("[XX bind-cfgd] updating with:")
+                        print(cmd[1])
+                        data.merge(self.config.data, cmd[1])
+                        print("[XX bind-cfgd] new config:")
+                        print(self.config.data)
                         # send out changed info
                         for module in self.config.data:
                             self.cc.group_sendmsg({ "config_update": self.config.data[module] }, module)
