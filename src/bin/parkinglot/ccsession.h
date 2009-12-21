@@ -25,16 +25,61 @@
 
 class CommandSession {
 public:
-    CommandSession();
+    /**
+     * Initialize a config/command session
+     * @param module_name: The name of this module. This is not a
+     *                     reference because we expect static strings
+     *                     to be passed here.
+     * @param spec_file_name: The name of the file containing the data
+     *                        definition.
+     */
+    CommandSession(std::string module_name, std::string spec_file_name,
+                   ISC::Data::ElementPtr(*config_handler)(ISC::Data::ElementPtr new_config) = NULL,
+                   ISC::Data::ElementPtr(*command_handler)(ISC::Data::ElementPtr command) = NULL
+                  );
     int getSocket();
-    std::pair<std::string, ISC::Data::ElementPtr> getCommand(int counter);
-    std::vector<std::string> getZones();
+
+    /**
+     * Check if there is a command or config change on the command
+     * session. If so, the appropriate handler is called if set.
+     * If not set, a default answer is returned.
+     * This is a non-blocking read; if there is nothing this function
+     * will return 0.
+     */
+    int check_command();
+
+    /**
+     * The config handler function should expect an ElementPtr containing
+     * the full configuration where non-default values have been set.
+     * Later we might want to think about more granular control
+     * (i.e. this does not scale to for instance lists containing
+     * 100000 zones, where the whole list is passed every time a single
+     * thing changes)
+     */
+    void set_config_handler(ISC::Data::ElementPtr(*config_handler)(ISC::Data::ElementPtr new_config)) { config_handler_ = config_handler; };
+
+    /**
+     * Set a command handler; the function that is passed takes an
+     * ElementPtr, pointing to a list element, containing
+     * [ module_name, command_name, arg1, arg2, ... ]
+     * The returned ElementPtr should look like
+     * { "result": [ return_value, result_value ] }
+     * result value here is optional and depends on the command
+     *
+     * This protocol is very likely to change.
+     */
+    void set_command_handler(ISC::Data::ElementPtr(*command_handler)(ISC::Data::ElementPtr command)) { command_handler_ = command_handler; };
+    
 private:
-	void read_data_definition(const std::string& filename);
-	
+    void read_data_definition(const std::string& filename);
+    
+    std::string module_name_;
     ISC::CC::Session session_;
     ISC::Data::DataDefinition data_definition_;
     ISC::Data::ElementPtr config_;
+
+    ISC::Data::ElementPtr(*config_handler_)(ISC::Data::ElementPtr new_config);
+    ISC::Data::ElementPtr(*command_handler_)(ISC::Data::ElementPtr command);
 };
 
 #endif // __CCSESSION_H
