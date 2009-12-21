@@ -28,6 +28,7 @@ public:
     void processMessage();
     void command(std::pair<std::string,ISC::Data::ElementPtr>);
     void serve(std::string zone_name);
+    void clear_zones() { zones.clear_zones(); };
     
 private:
     isc::dns::Rdata::RdataPtr ns1, ns2, ns3, a, aaaa, soa;

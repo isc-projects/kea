@@ -39,15 +39,55 @@
 
 #include "common.h"
 
+#include <boost/foreach.hpp>
+
 using namespace std;
 
-const string PROGRAM = "parkinglot";
-const int DNSPORT = 53;
+const string PROGRAM = "ParkingLot";
+const string SPECFILE = "parkinglot.spec";
+const int DNSPORT = 5300;
+
+/* need global var for config/command handlers.
+ * todo: turn this around, and put handlers in the parkinglot
+ * class itself */
+ParkingLot plot = ParkingLot(DNSPORT);
 
 static void
 usage() {
     cerr << "Usage: parkinglot [-p port]" << endl;
     exit(1);
+}
+
+ISC::Data::ElementPtr
+my_config_handler(ISC::Data::ElementPtr config)
+{
+    cout << "[XX] Handle config: " << endl << config->str() << endl;
+    if (config->contains("zones")) {
+        plot.clear_zones();
+        BOOST_FOREACH(ISC::Data::ElementPtr zone_el, config->get("zones")->list_value()) {
+            plot.serve(zone_el->string_value());
+        }
+    }
+    if (config->contains("port")) {
+        // todo: what to do with port change. restart automatically?
+        // ignore atm
+    }
+    return ISC::Data::Element::create_from_string("{ \"result\": [0] }");
+}
+
+ISC::Data::ElementPtr
+my_command_handler(ISC::Data::ElementPtr command)
+{
+    ISC::Data::ElementPtr answer = ISC::Data::Element::create_from_string("{ \"result\": [0] }");
+
+    cout << "[XX] Handle command: " << endl << command->str() << endl;
+    if (command->get(1)->string_value() == "print_message") {
+        cout << command->get(2)->string_value() << endl;
+        /* let's add that message to our answer as well */
+        answer->get("result")->add(command->get(2));
+    }
+
+    return answer;
 }
 
 int
@@ -70,18 +110,20 @@ main(int argc, char* argv[]) {
         usage();
 
     // initialize parking lot
-    ParkingLot plot(port);
+    //plot = ParkingLot(port);
 
     // initialize command channel
-    CommandSession cs;
-
+    CommandSession cs = CommandSession(PROGRAM, SPECFILE, my_config_handler, my_command_handler);
+    //cs.set_config_handler(my_config_handler);
+    //cs.set_command_handler(my_command_handler);
+    
     // main server loop
     fd_set fds;
     int ps = plot.getSocket();
     int ss = cs.getSocket();
-    BOOST_FOREACH(std::string zone, cs.getZones()) {
+    /*BOOST_FOREACH(std::string zone, cs.getZones()) {
         plot.serve(zone);
-    }
+    }*/
     int nfds = max(ps, ss) + 1;
     int counter = 0;
 
@@ -100,9 +142,11 @@ main(int argc, char* argv[]) {
             plot.processMessage();
         }
 
+        /* isset not really necessary, but keep it for now */
         if (FD_ISSET(ss, &fds)) {
-            pair<string, ISC::Data::ElementPtr> cmd = cs.getCommand(counter);
-            plot.command(cmd);
+            cs.check_command();
+            //pair<string, ISC::Data::ElementPtr> cmd = cs.getCommand(counter);
+            //plot.command(cmd);
         }
     }
 

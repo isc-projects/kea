@@ -71,23 +71,48 @@ CommandSession::read_data_definition(const std::string& filename) {
     file.close();
 }
 
-CommandSession::CommandSession() :
+CommandSession::CommandSession(std::string module_name,
+                               std::string spec_file_name,
+                               ISC::Data::ElementPtr(*config_handler)(ISC::Data::ElementPtr new_config),
+                               ISC::Data::ElementPtr(*command_handler)(ISC::Data::ElementPtr command)
+                              ) :
+    module_name_(module_name),
     session_(ISC::CC::Session())
 {
+    config_handler_ = config_handler;
+    command_handler_ = command_handler;
+
     try {
         // todo: workaround, let boss wait until msgq is started
         // and remove sleep here
         sleep(1);
+
+        ElementPtr answer, env;
+
         session_.establish();
-        session_.subscribe("ParkingLot", "*");
+        session_.subscribe(module_name, "*");
         session_.subscribe("Boss", "*", "meonly");
         session_.subscribe("ConfigManager", "*", "meonly");
         session_.subscribe("statistics", "*", "meonly");
-        read_data_definition("parkinglot.spec");
+        read_data_definition(spec_file_name);
         sleep(1);
-        ElementPtr cmd = Element::create_from_string("{ \"config_manager\": 1}");
-        // why does the msgq seem to kill this msg?
+        // send the data specification
         session_.group_sendmsg(data_definition_.getDefinition(), "ConfigManager");
+        session_.group_recvmsg(env, answer, false);
+        
+        // get any stored configuration from the manager
+        if (config_handler_) {
+            ElementPtr cmd = Element::create_from_string("{ \"command\": [ \"get_config\", \"" + module_name + "\" ] }");
+            session_.group_sendmsg(cmd, "ConfigManager");
+            session_.group_recvmsg(env, answer, false);
+            cout << "[XX] got config: " << endl << answer->str() << endl;
+            // replace string_value and "0" with int_value and 0 with new cc after merge */
+            if (answer->contains("result") && answer->get("result")->get(0)->string_value() == "0") {
+                config_handler(answer->get("result")->get(1));
+            } else {
+                cout << "[XX] no result in answer" << endl;
+            }
+        }
     } catch (...) {
         throw std::runtime_error("SessionManager: failed to open sessions");
     }
@@ -99,58 +124,37 @@ CommandSession::getSocket()
     return (session_.getSocket());
 }
 
-std::pair<std::string, ElementPtr>
-CommandSession::getCommand(int counter) {
-    ElementPtr cmd, routing, data, ep;
-    string s;
-    session_.group_recvmsg(routing, data, false);
-    string channel = routing->get("group")->string_value();
-
-    if (channel == "statistics") {
-        cmd = data->get("command");
-        if (cmd != NULL && cmd->string_value() == "getstat") {
-            struct timeval now;
-            ElementPtr resp = Element::create(std::map<std::string,
-                                              ElementPtr>());
-            gettimeofday(&now, NULL);
-            resp->set("sent", Element::create(now.tv_sec +
-                                              (double)now.tv_usec / 1000000));
-            resp->set("counter", Element::create(counter));
-            session_.group_sendmsg(resp, "statistics");
+int
+CommandSession::check_command()
+{
+    cout << "[XX] check for command" << endl;
+    ElementPtr cmd, routing, data;
+    if (session_.group_recvmsg(routing, data, true)) {
+        /* ignore result messages (in case we're out of sync, to prevent
+         * pingpongs */
+        if (!data->get_type() == Element::map || data->contains("result")) {
+            return 0;
         }
-    } else {
-        cout << "[parkinglot] saw message: " << data << endl;
-        // todo: common interface for config updates?
-        cmd = data->get("config_update");
-        if (cmd != NULL) {
-            return std::pair<string, ElementPtr>("config_update", cmd);
+        cout << "[XX] got something!" << endl << data->str() << endl;
+        ElementPtr answer;
+        if (data->contains("config_update")) {
+            if (config_handler_) {
+                // handle config update
+                answer = config_handler_(data->get("config_update"));
+            } else {
+                answer = Element::create_from_string("{ \"result\": [0] }");
+            }
         }
-        // todo: common interface for command handling
-        cmd = data->get("command");
-        // the format is defined partly by convention;
-        // { "command": [ "module", "command", args... ]
-        // args is defined in the .spec file
-        // we could do checking here as well if we want
-        if (cmd != NULL && cmd->get(1)->string_value() == "print_message") {
-            cout << "[parkinglot] " << cmd->get(2)->string_value() << endl;
-            ElementPtr answer = Element::create_from_string("{ \"result\": [0] }");
-            session_.reply(routing, answer);
+        if (data->contains("command")) {
+            if (command_handler_) {
+                answer = command_handler_(data->get("command"));
+            } else {
+                answer = Element::create_from_string("{ \"result\": [0] }");
+            }
         }
+        session_.reply(routing, answer);
     }
-
-    return std::pair<string, ElementPtr>("unknown", ElementPtr());
+    
+    return 0;
 }
 
-// should be replaced by the general config-getter in cc setup
-std::vector<std::string>
-CommandSession::getZones() {
-    ElementPtr cmd, result, env;
-    std::vector<std::string> zone_names;
-    cmd = Element::create_from_string("{ \"command\": [ \"zone\", \"list\" ] }");
-    session_.group_sendmsg(cmd, "ConfigManager");
-    session_.group_recvmsg(env, result, false);
-    BOOST_FOREACH(ElementPtr zone_name, result->get("result")->list_value()) {
-        zone_names.push_back(zone_name->string_value());
-    }
-    return zone_names;
-}
