@@ -5,6 +5,22 @@ import ast
 class DataNotFoundError(Exception): pass
 class DataTypeError(Exception): pass
 
+def merge(orig, new):
+    """Merges the contents of new into orig, think recursive update()
+       orig and new must both be dicts. If an element value is None in
+       new it will be removed in orig."""
+    for kn in new.keys():
+        if kn in orig:
+            if new[kn]:
+                if type(new[kn]) == dict:
+                    merge(orig[kn], new[kn])
+                else:
+                    orig[kn] = new[kn]
+            else:
+                orig.remove(kn)
+        else:
+            orig[kn] = new[kn]
+
 def find(element, identifier):
     """Returns the subelement in the given data element, raises DataNotFoundError if not found"""
     id_parts = identifier.split("/")

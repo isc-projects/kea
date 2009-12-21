@@ -19,6 +19,42 @@
           "item_optional": false,
           "item_default": ""
         }
+      },
+      {
+        "item_name": "a_records",
+        "item_type": "list",
+        "item_optional": false,
+        "item_default": [ "127.0.0.1" ],
+        "list_item_spec": {
+          "item_name": "address",
+          "item_type": "string",
+          "item_optional": false,
+          "item_default": ""
+        }
+      },
+      {
+        "item_name": "aaaa_records",
+        "item_type": "list",
+        "item_optional": false,
+        "item_default": [ "::1" ],
+        "list_item_spec": {
+          "item_name": "address",
+          "item_type": "string",
+          "item_optional": false,
+          "item_default": ""
+        }
+      },
+      {
+        "item_name": "ns_records",
+        "item_type": "list",
+        "item_optional": false,
+        "item_default": [ "ns1.parking.example", "ns2.parking.example" ],
+        "list_item_spec": {
+          "item_name": "address",
+          "item_type": "string",
+          "item_optional": false,
+          "item_default": ""
+        }
       }
     ],
     "commands": [

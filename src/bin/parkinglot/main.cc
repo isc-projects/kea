@@ -49,7 +49,7 @@ const int DNSPORT = 5300;
 
 /* need global var for config/command handlers.
  * todo: turn this around, and put handlers in the parkinglot
- * class itself */
+ * class itself? */
 ParkingLot plot = ParkingLot(DNSPORT);
 
 static void
@@ -71,6 +71,24 @@ my_config_handler(ISC::Data::ElementPtr config)
     if (config->contains("port")) {
         // todo: what to do with port change. restart automatically?
         // ignore atm
+    }
+    if (config->contains("a_records")) {
+        plot.clearARecords();
+        BOOST_FOREACH(ISC::Data::ElementPtr rel, config->get("a_records")->list_value()) {
+            plot.addARecord(rel->string_value());
+        }
+    }
+    if (config->contains("aaaa_records")) {
+        plot.clearAAAARecords();
+        BOOST_FOREACH(ISC::Data::ElementPtr rel, config->get("aaaa_records")->list_value()) {
+            plot.addAAAARecord(rel->string_value());
+        }
+    }
+    if (config->contains("ns_records")) {
+        plot.clearNSRecords();
+        BOOST_FOREACH(ISC::Data::ElementPtr rel, config->get("ns_records")->list_value()) {
+            plot.addNSRecord(rel->string_value());
+        }
     }
     return ISC::Data::Element::create_from_string("{ \"result\": [0] }");
 }
@@ -114,16 +132,11 @@ main(int argc, char* argv[]) {
 
     // initialize command channel
     CommandSession cs = CommandSession(PROGRAM, SPECFILE, my_config_handler, my_command_handler);
-    //cs.set_config_handler(my_config_handler);
-    //cs.set_command_handler(my_command_handler);
     
     // main server loop
     fd_set fds;
     int ps = plot.getSocket();
     int ss = cs.getSocket();
-    /*BOOST_FOREACH(std::string zone, cs.getZones()) {
-        plot.serve(zone);
-    }*/
     int nfds = max(ps, ss) + 1;
     int counter = 0;
 
@@ -145,8 +158,6 @@ main(int argc, char* argv[]) {
         /* isset not really necessary, but keep it for now */
         if (FD_ISSET(ss, &fds)) {
             cs.check_command();
-            //pair<string, ISC::Data::ElementPtr> cmd = cs.getCommand(counter);
-            //plot.command(cmd);
         }
     }
 
