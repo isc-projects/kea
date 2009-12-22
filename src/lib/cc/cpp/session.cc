@@ -57,8 +57,8 @@ Session::establish()
     ElementPtr get_lname_msg = Element::create_from_string(get_lname_stream);
     sendmsg(get_lname_msg);
 
-    ElementPtr msg;
-    recvmsg(msg, false);
+    ElementPtr routing, msg;
+    recvmsg(routing, msg, false);
 
     lname = msg->get("lname")->string_value();
     cout << "My local name is:  " << lname << endl;
@@ -70,10 +70,11 @@ Session::establish()
 void
 Session::sendmsg(ElementPtr& msg)
 {
-    std::string wire = msg->to_wire();
-    unsigned int length = wire.length();
+    std::string header_wire = msg->to_wire();
+    unsigned int length = 2 + header_wire.length();
     unsigned int length_net = htonl(length);
-    unsigned short header_length_net = htons(length);
+    unsigned short header_length = header_wire.length();
+    unsigned short header_length_net = htons(header_length);
     unsigned int ret;
 
     ret = write(sock, &length_net, 4);
@@ -84,9 +85,10 @@ Session::sendmsg(ElementPtr& msg)
     if (ret != 2)
         throw SessionError("Short write");
 
-    ret = write(sock, wire.c_str(), length);
-    if (ret != length)
+    ret = write(sock, header_wire.c_str(), header_length);
+    if (ret != header_length) {
         throw SessionError("Short write");
+    }
 }
 
 void
@@ -108,12 +110,14 @@ Session::sendmsg(ElementPtr& env, ElementPtr& msg)
     if (ret != 2)
         throw SessionError("Short write");
 
-    std::cout << "[XX] Header length sending: " << header_length << std::endl;
-
     ret = write(sock, header_wire.c_str(), header_length);
-    ret = write(sock, body_wire.c_str(), body_wire.length());
-    if (ret != length)
+    if (ret != header_length) {
         throw SessionError("Short write");
+    }
+    ret = write(sock, body_wire.c_str(), body_wire.length());
+    if (ret != body_wire.length()) {
+        throw SessionError("Short write");
+    }
 }
 
 bool
@@ -171,23 +175,24 @@ Session::recvmsg(ElementPtr& env, ElementPtr& msg, bool nonblock)
 
     unsigned int length = ntohl(length_net);
     unsigned short header_length = ntohs(header_length_net);
-
     if (header_length > length)
         throw SessionError("Bad header length");
-    
+
+    // remove the header-length bytes from the total length
+    length -= 2;
     char *buffer = new char[length];
     ret = read(sock, buffer, length);
     if (ret != length)
         throw SessionError("Short read");
 
     std::string header_wire = std::string(buffer, header_length);
-    std::string body_wire = std::string(buffer, length - header_length);
+    std::string body_wire = std::string(buffer + header_length, length - header_length);
     delete [] buffer;
 
     std::stringstream header_wire_stream;
     header_wire_stream << header_wire;
-    env = Element::from_wire(header_wire_stream, length);
-
+    env = Element::from_wire(header_wire_stream, header_length);
+    
     std::stringstream body_wire_stream;
     body_wire_stream << body_wire;
     msg = Element::from_wire(body_wire_stream, length - header_length);
