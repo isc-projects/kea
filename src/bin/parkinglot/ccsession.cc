@@ -82,39 +82,37 @@ CommandSession::CommandSession(std::string module_name,
     config_handler_ = config_handler;
     command_handler_ = command_handler;
 
-    try {
-        // todo: workaround, let boss wait until msgq is started
-        // and remove sleep here
-        sleep(1);
+    // todo: workaround, let boss wait until msgq is started
+    // and remove sleep here
+    sleep(1);
 
-        ElementPtr answer, env;
+    ElementPtr answer, env;
 
-        session_.establish();
-        session_.subscribe(module_name, "*");
-        session_.subscribe("Boss", "*", "meonly");
-        session_.subscribe("ConfigManager", "*", "meonly");
-        session_.subscribe("statistics", "*", "meonly");
-        read_data_definition(spec_file_name);
-        sleep(1);
-        // send the data specification
-        session_.group_sendmsg(data_definition_.getDefinition(), "ConfigManager");
+    session_.establish();
+    session_.subscribe(module_name, "*");
+    session_.subscribe("Boss", "*", "meonly");
+    session_.subscribe("ConfigManager", "*", "meonly");
+    session_.subscribe("statistics", "*", "meonly");
+    read_data_definition(spec_file_name);
+    sleep(1);
+    // send the data specification
+    session_.group_sendmsg(data_definition_.getDefinition(), "ConfigManager");
+    session_.group_recvmsg(env, answer, false);
+    
+    // get any stored configuration from the manager
+    if (config_handler_) {
+        ElementPtr cmd = Element::create_from_string("{ \"command\": [ \"get_config\", \"" + module_name + "\" ] }");
+        session_.group_sendmsg(cmd, "ConfigManager");
         session_.group_recvmsg(env, answer, false);
-        
-        // get any stored configuration from the manager
-        if (config_handler_) {
-            ElementPtr cmd = Element::create_from_string("{ \"command\": [ \"get_config\", \"" + module_name + "\" ] }");
-            session_.group_sendmsg(cmd, "ConfigManager");
-            session_.group_recvmsg(env, answer, false);
-            cout << "[XX] got config: " << endl << answer->str() << endl;
-            // replace string_value and "0" with int_value and 0 with new cc after merge */
-            if (answer->contains("result") && answer->get("result")->get(0)->string_value() == "0") {
-                config_handler(answer->get("result")->get(1));
-            } else {
-                cout << "[XX] no result in answer" << endl;
-            }
+        cout << "[XX] got config: " << endl << answer->str() << endl;
+        // replace string_value and "0" with int_value and 0 with new cc after merge */
+        if (answer->contains("result") &&
+            answer->get("result")->get(0)->string_value() == "0" &&
+            answer->get("result")->size() > 1) {
+            config_handler(answer->get("result")->get(1));
+        } else {
+            cout << "[XX] no result in answer" << endl;
         }
-    } catch (...) {
-        throw std::runtime_error("SessionManager: failed to open sessions");
     }
 }
 

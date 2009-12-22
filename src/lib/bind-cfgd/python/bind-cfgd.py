@@ -108,7 +108,10 @@ class ConfigManager:
                             pass
                     else:
                         conf_part = self.config.data
-                    answer["result"] = [ 0, conf_part ]
+                    if conf_part:
+                        answer["result"] = [ 0, conf_part ]
+                    else:
+                        answer["result"] = [ 0 ]
                 elif cmd[0] == "set_config":
                     if len(cmd) == 3:
                         # todo: use api (and check types?)
@@ -162,7 +165,6 @@ class ConfigManager:
             if "config_data" in spec:
                 self.set_config(spec["module_name"], spec["config_data"])
                 self.cc.group_sendmsg({ "specification_update": [ spec["module_name"], spec["config_data"] ] }, "BigTool")
-                print("[XX] sent spec_update")
             if "commands" in spec:
                 self.set_commands(spec["module_name"], spec["commands"])
                 self.cc.group_sendmsg({ "commands_update": [ spec["module_name"], spec["commands"] ] }, "BigTool")
