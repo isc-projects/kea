@@ -253,7 +253,6 @@ typedef enum {
 
 Name::Name(InputBuffer& buffer, bool downcase)
 {
-    unsigned int new_current;
     std::vector<unsigned char> offsets;
     offsets.reserve(Name::MAX_LABELS);
 
@@ -274,6 +273,11 @@ Name::Name(InputBuffer& buffer, bool downcase)
     unsigned int current = buffer.getPosition();
     unsigned int pos_begin = current;
     unsigned int biggest_pointer = current;
+
+    // Make the compiler happy; this is not required.
+    // XXX: bad style in that we initialize it with a dummy value and define
+    // it far from where it's used.  But alternatives seemed even worse.
+    unsigned int new_current = 0;
 
     //
     // Note:  The following code is not optimized for speed, but
