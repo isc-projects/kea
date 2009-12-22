@@ -99,6 +99,7 @@ namespace ISC { namespace Data {
         virtual void set(const int i, ElementPtr element) { throw TypeError(); };
         virtual void add(ElementPtr element) { throw TypeError(); };
         virtual void remove(ElementPtr element) { throw TypeError(); };
+        virtual size_t size() { throw TypeError(); };
 
         // for maps
         virtual ElementPtr get(const std::string& name) { throw TypeError(); } ;
@@ -236,6 +237,7 @@ namespace ISC { namespace Data {
         std::string str();
         std::string str_xml(size_t prefix = 0);
         std::string to_wire(int omit_length = 1);
+        size_t size() { return l.size(); }
     };
 
     class MapElement : public Element {
