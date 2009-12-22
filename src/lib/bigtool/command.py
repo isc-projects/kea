@@ -72,7 +72,7 @@ class BigToolCmd:
         if param and param.group('name') == "help":
             self.params["help"] = "help"
             return
-        
+
         while True:
             if not param_text.strip():
                 break
@@ -80,9 +80,15 @@ class BigToolCmd:
             groups = PARAM_PATTERN.match(param_text) or \
                      PARAM_WITH_QUOTA_PATTERN.match(param_text)
             
-            if not groups:                
-                raise CmdParamFormatError(self.module, self.command)
-            else:                
+            if not groups:
+                # ok, fill in the params in the order entered
+                params = re.findall("([^\" ]+|\".*\")", param_text)
+                i = 0
+                for p in params:
+                    self.params[i] = p
+                    i += 1
+                break
+            else:
                 self.params[groups.group('param_name')] = groups.group('param_value')
                 param_text = groups.group('next_params')
                 if not param_text or (not param_text.strip()):
