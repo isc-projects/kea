@@ -60,13 +60,35 @@ class BigTool(Cmd):
             raise CmdUnknownParamSyntaxError(cmd.module, cmd.command, 
                                              list(params.keys())[0])
         elif params:
+            param_name = None
+            index = 0
+            param_count = len(params)
             for name in params:
-                if not name in all_params:
+                # either the name of the parameter must be known, or
+                # the 'name' must be an integer (ie. the position of
+                # an unnamed argument
+                if type(name) == int:
+                    # (-1, help is always in the all_params list)
+                    if name >= len(all_params) - 1:
+                        # add to last known param
+                        if param_name:
+                            cmd.params[param_name] += cmd.params[name]
+                        else:
+                            raise CmdUnknownParamSyntaxError(cmd.module, cmd.command, cmd.params[name])
+                    else:
+                        # replace the numbered items by named items
+                        param_name = command_info.get_param_name_by_position(name+1, index, param_count)
+                        cmd.params[param_name] = cmd.params[name]
+                        del cmd.params[name]
+                        
+                elif not name in all_params:
                     raise CmdUnknownParamSyntaxError(cmd.module, cmd.command, name)
+            param_nr = 0
             for name in manda_params:
-                if not name in params:
+                if not name in params and not param_nr in params:
                     raise CmdMissParamSyntaxError(cmd.module, cmd.command, name)
                               
+                param_nr += 1
 
     def _handle_cmd(self, cmd):
         #to do, consist xml package and send to bind10
@@ -219,6 +241,64 @@ class BigTool(Cmd):
         else:
             self.modules[cmd.module].command_help(cmd.command)
 
+
+    def apply_config_cmd(self, cmd):
+        identifier = self.location
+        try:
+            if 'identifier' in cmd.params:
+                if not identifier.endswith("/"):
+                    identifier += "/"
+                if cmd.params['identifier'].startswith("/"):
+                    identifier = cmd.params['identifier']
+                else:
+                    identifier += cmd.params['identifier']
+            if cmd.command == "show":
+                values = self.config_data.get_value_maps(identifier)
+                for value_map in values:
+                    line = value_map['name']
+                    if value_map['type'] in [ 'module', 'map', 'list' ]:
+                        line += "/"
+                    else:
+                        line += ":\t" + str(value_map['value'])
+                    line += "\t" + value_map['type']
+                    line += "\t"
+                    if value_map['default']:
+                        line += "(default)"
+                    if value_map['modified']:
+                        line += "(modified)"
+                    print(line)
+            elif cmd.command == "add":
+                self.config_data.add(identifier, cmd.params['value'])
+            elif cmd.command == "remove":
+                self.config_data.remove(identifier, cmd.params['value'])
+            elif cmd.command == "set":
+                self.config_data.set(identifier, cmd.params['value'])
+            elif cmd.command == "unset":
+                self.config_data.unset(identifier)
+            elif cmd.command == "revert":
+                self.config_data.revert()
+            elif cmd.command == "commit":
+                self.config_data.commit(self.cc)
+            elif cmd.command == "go":
+                self.go(identifier)
+        except ISC.CC.data.DataTypeError as dte:
+            print("Error: " + str(dte))
+        except ISC.CC.data.DataNotFoundError as dnfe:
+            print("Error: " + identifier + " not found")
+        except KeyError as ke:
+            print("Error: missing " + str(ke))
+            raise ke
+
+    def go(self, identifier):
+        # just to see if it exists
+        self.config_data.get_value(identifier)
+        # some sanitizing
+        identifier = identifier.replace("//", "/")
+        if not identifier.startswith("/"):
+            identifier = "/" + identifier
+        if identifier.endswith("/"):
+            identifier = identifier[:-1]
+        self.location = identifier
 
     def apply_cmd(self, cmd):
         if not self.cc:
