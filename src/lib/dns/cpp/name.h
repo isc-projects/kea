@@ -17,6 +17,8 @@
 #ifndef __NAME_H
 #define __NAME_H 1
 
+#include <stdint.h>
+
 #include <string>
 #include <vector>
 

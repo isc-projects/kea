@@ -19,6 +19,10 @@
 
 #include <vector>
 
+#include <string.h>
+
+#include <stdint.h>
+
 #include "exceptions.h"
 
 namespace isc {
