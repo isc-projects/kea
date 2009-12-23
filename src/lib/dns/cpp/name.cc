@@ -19,6 +19,8 @@
 #include <iterator>
 #include <functional>
 
+#include <algorithm>
+
 #include "buffer.h"
 #include "name.h"
 #include "messagerenderer.h"

@@ -43,9 +43,17 @@ AC_ARG_WITH(gtest,
     gtest_path="$withval", gtest_path="no")
 if test "$gtest_path" != "no"
 then
-	GTEST_INCLUDES="-I${gtest_path}/include"
-	GTEST_LDFLAGS="-L${gtest_path}/lib"
-	GTEST_LDADD="-lgtest"
+	if test "$gtest_path" != "yes"
+	then
+		GTEST_INCLUDES="-I${gtest_path}/include"
+		GTEST_LDFLAGS="-L${gtest_path}/lib"
+		GTEST_LDADD="-lgtest"
+	else
+		# todo: check for default paths (/usr and /usr/local?)
+		GTEST_INCLUDE="-I/usr/include"
+		GTEST_LDFLAGS="-L/usr/lib"
+		GTEST_LDADD="-lgtest"
+	fi
 else
 	GTEST_INCLUDES=
 	GTEST_LDFLAGS=
