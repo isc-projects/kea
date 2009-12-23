@@ -73,6 +73,16 @@ TEST_F(MessageRendererTest, toWireWithUncompressed)
                         buffer.getLength(), &data[0], data.size());
 }
 
+TEST_F(MessageRendererTest, toWirePointerChain)
+{
+    UnitTestUtil::readWireData("testdata/name_toWire4", data);
+    renderer.writeName(Name("a.example.com."));
+    renderer.writeName(Name("b.example.com."));
+    renderer.writeName(Name("b.example.com."));
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
+                        buffer.getLength(), &data[0], data.size());
+}
+
 TEST_F(MessageRendererTest, toWireCaseCompress)
 {
     UnitTestUtil::readWireData("testdata/name_toWire1", data);

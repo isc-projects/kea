@@ -18,8 +18,6 @@
 #include <cassert>
 #include <set>
 
-#include <iostream>
-
 #include "buffer.h"
 #include "name.h"
 #include "messagerenderer.h"
@@ -102,6 +100,7 @@ private:
     {
         if (llen == 0) {
             int i = 0;
+
             while ((buffer[pos] & Name::COMPRESS_POINTER_MARK8) ==
                    Name::COMPRESS_POINTER_MARK8) {
                 pos = (buffer[pos] & ~Name::COMPRESS_POINTER_MARK8) *
@@ -115,8 +114,9 @@ private:
                 assert(i < Name::MAX_WIRE);
             }
             llen = buffer[pos];
-        } else
+        } else {
             --llen;
+        }
         return (pos);
     }
 };
