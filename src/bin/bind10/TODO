@@ -1,0 +1,14 @@
+- Move child cleanup & restart out of signal handler
+- Read msgq configuration from configuration manager
+- Provide more administrator options:
+  - Get process list
+  - Get information on a process (returns list of times started & stopped, 
+    plus current information such as PID)
+  - Add a component (not necessary for parking lot, but...)
+  - Stop a component
+  - Force-stop a component
+- Mechanism to wait for child to start before continuing
+- Way to ask a child to die politely 
+- Back-off mechanism for restarting failed processes
+- Start statistics daemon
+- Statistics interaction (?)
