@@ -197,6 +197,8 @@ class MsgQ:
     def process_command(self, fd, sock, routing, data):
         """Process a single command.  This will split out into one of the
            other functions, above."""
+        print("[XX] got command: ")
+        print(routing)
         cmd = routing["type"]
         if cmd == 'send':
             self.process_command_send(sock, routing, data)

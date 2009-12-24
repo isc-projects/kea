@@ -1,0 +1,89 @@
+
+BUILDING
+
+Simple build instructions:
+
+autoreconf
+./configure
+make
+
+
+RUNNING
+
+At the moment there is no install yet, you can run the bind10 parkinglot
+server from the source tree:
+./src/bin/bind10/bind10
+
+The server will listen on port 5300 for DNS requests.
+
+
+CONFIGURATION
+
+Commands can be given through the tool bigtool;
+cd src/bin/bigtool
+sh run_bigtool
+
+The server must be running for bigtool to work.
+
+The following configuration commands are available
+
+help: show the different command modules
+<module> help: show the commands for module
+<module> <command> help: show info for the command
+
+
+config show [identifier]: Show the currently set values. If no identifier is
+                          given, the current location is used. If a config
+                          option is a list or a map, the value is not
+                          shown directly, but must be requested separately.
+config go [identifier]:   Go to the given location within the configuration.
+config set [identifier] <value>: Set a configuration value.
+config unset [identifier]: Remove a value (reverts to default if the option
+                           is mandatory).
+config add [identifier] <value>: add a value to a list
+config remove [identifier] <value>: remove a value from a list 
+config revert:	Revert all changes that have not been committed
+config commit: Commit all changes
+
+
+EXAMPLE SESSION
+
+~> sh run_bigtool
+> config show
+ParkingLot/	module	
+> config show ParkingLot/
+port:	5300	integer	(default)
+zones/	list	
+a_records/	list	(default)
+aaaa_records/	list	(default)
+ns_records/	list	(default)
+> config go ParkingLot/
+/ParkingLot> config show
+port:	5300	integer	(default)
+zones/	list	
+a_records/	list	(default)
+aaaa_records/	list	(default)
+ns_records/	list	(default)
+/ParkingLot> config show zones
+/ParkingLot> config add zone tjeb.nl
+Error: /ParkingLot/zone not found
+/ParkingLot> config add zones tjeb.nl
+/ParkingLot> config show zones
+zone_name:	tjeb.nl	string	
+/ParkingLot> config show
+port:	5300	integer	(default)
+zones/	list	(modified)
+a_records/	list	(default)
+aaaa_records/	list	(default)
+ns_records/	list	(default)
+/ParkingLot> config go /
+> config show ParkingLot/port
+port:	5300	integer	(default)
+> config go ParkingLot/a_records/
+/ParkingLot/a_records> config show
+address:	127.0.0.1	string	
+/ParkingLot/a_records> config add "127.0.0.2"
+/ParkingLot/a_records> config show
+address:	127.0.0.2	string	
+/ParkingLot/a_records> 
+

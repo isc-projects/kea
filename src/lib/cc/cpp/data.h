@@ -20,6 +20,17 @@ namespace ISC { namespace Data {
         std::string msg;
     };
 
+    class ParseError : public std::exception {
+    public:
+        ParseError(std::string m = "Parse error in element data", int l = 0, int p = 0) : msg(m), line(l), pos(p) {}
+        ~ParseError() throw() {}
+        const char* what() const throw();
+    private:
+        std::string msg;
+        int line;
+        int pos;
+    };
+
     class DecodeError : public std::exception {
     public:
         DecodeError(std::string m = "Wire-format data is invalid") : msg(m) {}
@@ -88,11 +99,13 @@ namespace ISC { namespace Data {
         virtual void set(const int i, ElementPtr element) { throw TypeError(); };
         virtual void add(ElementPtr element) { throw TypeError(); };
         virtual void remove(const int i) { throw TypeError(); };
+        virtual size_t size() { throw TypeError(); };
 
         // for maps
         virtual ElementPtr get(const std::string& name) { throw TypeError(); } ;
         virtual void set(const std::string& name, ElementPtr element) { throw TypeError(); };
         virtual void remove(const std::string& name) { throw TypeError(); };
+        virtual bool contains(const std::string& s) { throw TypeError(); }
         virtual ElementPtr find(const std::string& identifier) { throw TypeError(); };
         virtual bool find(const std::string& id, ElementPtr& t) { return false; };
 
@@ -145,8 +158,11 @@ namespace ISC { namespace Data {
         // the memory could not be allocated
         // example:
         // ElementPtr my_element = Element::create_from_string("{\"foo\": [ 1, 2, false ] }");
-        static ElementPtr create_from_string(std::stringstream& in);
+        //static ElementPtr create_from_string(std::stringstream& in);
         static ElementPtr create_from_string(const std::string& in);
+        static ElementPtr create_from_string(std::istream& in) throw(ParseError);
+        // make this one private?
+        static ElementPtr create_from_string(std::istream& in, int& line, int &pos) throw(ParseError);
         
         //static ElementPtr create_from_xml(std::stringstream& in);
 
@@ -222,6 +238,7 @@ namespace ISC { namespace Data {
         std::string str();
         std::string str_xml(size_t prefix = 0);
         std::string to_wire(int omit_length = 1);
+        size_t size() { return l.size(); }
     };
 
     class MapElement : public Element {
@@ -235,6 +252,7 @@ namespace ISC { namespace Data {
         ElementPtr get(const std::string& s) { return m[s]; };
         void set(const std::string& s, ElementPtr p) { m[s] = p; };
         void remove(const std::string& s) { m.erase(s); }
+        bool contains(const std::string& s) { return m.find(s) != m.end(); }
         std::string str();
         std::string str_xml(size_t prefix = 0);
         std::string to_wire(int omit_length = 1);

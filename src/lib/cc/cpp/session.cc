@@ -226,7 +226,8 @@ Session::unsubscribe(std::string group, std::string instance)
 }
 
 unsigned int
-Session::group_sendmsg(ElementPtr& msg, std::string group, std::string instance, std::string to)
+Session::group_sendmsg(ElementPtr msg, std::string group,
+                       std::string instance, std::string to)
 {
     ElementPtr env = Element::create(std::map<std::string, ElementPtr>());
 
@@ -265,7 +266,7 @@ Session::reply(ElementPtr& envelope, ElementPtr& newmsg)
     env->set("group", Element::create(envelope->get("group")->string_value()));
     env->set("instance", Element::create(envelope->get("instance")->string_value()));
     env->set("seq", Element::create(sequence));
-    env->set("reply", Element::create(envelope->get("seq")->string_value()));
+    env->set("reply", Element::create(envelope->get("seq")->int_value()));
 
     sendmsg(env, newmsg);
 

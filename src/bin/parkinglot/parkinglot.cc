@@ -28,21 +28,60 @@
 #include <dns/rrset.h>
 #include <dns/message.h>
 
+#include <cc/cpp/data.h>
+
 #include "common.h"
 #include "parkinglot.h"
+
+#include <boost/foreach.hpp>
 
 using namespace std;
 
 using namespace isc::dns;
 using namespace isc::dns::Rdata::IN;
 using namespace isc::dns::Rdata::Generic;
+using namespace ISC::Data;
+
+void
+ParkingLot::addARecord(std::string data) {
+    a_records.push_back(Rdata::RdataPtr(new A(data)));
+}
+
+void
+ParkingLot::addAAAARecord(std::string data) {
+    aaaa_records.push_back(Rdata::RdataPtr(new AAAA(data)));
+}
+
+void
+ParkingLot::addNSRecord(std::string data) {
+    ns_records.push_back(Rdata::RdataPtr(new NS(data)));
+}
+
+void
+ParkingLot::setSOARecord(isc::dns::Rdata::RdataPtr soa_record) {
+}
+
+void
+ParkingLot::setDefaultZoneData() {
+    clearARecords();
+    clearAAAARecords();
+    clearNSRecords();
+
+    addARecord("127.0.0.1");
+    addAAAARecord("::1");
+    addNSRecord("ns1.parking.example");
+    addNSRecord("ns2.parking.example");
+    addNSRecord("ns3.parking.example");
+}
 
 ParkingLot::ParkingLot(int port) {
-    ns1 = Rdata::RdataPtr(new NS("ns1.parking.example"));
+    setDefaultZoneData();
+    /*ns1 = Rdata::RdataPtr(new NS("ns1.parking.example"));
     ns2 = Rdata::RdataPtr(new NS("ns2.parking.example"));
     ns3 = Rdata::RdataPtr(new NS("ns3.parking.example"));
     a = Rdata::RdataPtr(new A("127.0.0.1"));
     aaaa = Rdata::RdataPtr(new AAAA("::1"));
+    */
     soa = Rdata::RdataPtr(new SOA("parking.example", "noc.parking.example",
                                         1, 1800, 900, 604800, TTL(86400)));
 
@@ -149,23 +188,26 @@ ParkingLot::processMessage() {
             msg.setRcode(Message::RCODE_NOERROR);
             RRset* nsset = new RRset(query->getName(), RRClass::IN,
                                      RRType::NS, TTL(3600));
-
-            nsset->addRdata(ns1);
-            nsset->addRdata(ns2);
-            nsset->addRdata(ns3);
+            BOOST_FOREACH(isc::dns::Rdata::RdataPtr ns, ns_records) {
+                nsset->addRdata(ns);
+            }
 
             if (query->getType() == RRType::NS)
                 msg.addRRset(SECTION_ANSWER, RRsetPtr(nsset));
             else if (query->getType() == RRType::A) {
                 msg.addRRset(SECTION_AUTHORITY, RRsetPtr(nsset));
-                RR arr(query->getName(), RRClass::IN, RRType::A, TTL(3600), a);
 
-                msg.addRR(SECTION_ANSWER, arr);
+                BOOST_FOREACH(isc::dns::Rdata::RdataPtr a, a_records) {
+                    RR arr(query->getName(), RRClass::IN, RRType::A, TTL(3600), a);
+                    msg.addRR(SECTION_ANSWER, arr);
+                }
             } else if (query->getType() == RRType::AAAA) {
                 msg.addRRset(SECTION_AUTHORITY, RRsetPtr(nsset));
-                RR aaaarr(query->getName(), RRClass::IN, RRType::AAAA,
-                          TTL(3600), aaaa);
-                msg.addRR(SECTION_ANSWER, aaaarr);
+                BOOST_FOREACH(isc::dns::Rdata::RdataPtr aaaa, aaaa_records) {
+                    RR aaaarr(query->getName(), RRClass::IN, RRType::AAAA,
+                              TTL(3600), aaaa);
+                    msg.addRR(SECTION_ANSWER, aaaarr);
+                }
             } else {
                 RR soarr(query->getName(), RRClass::IN, RRType::SOA,
                          TTL(3600), soa);
@@ -184,13 +226,19 @@ ParkingLot::processMessage() {
 }
 
 void
-ParkingLot::command(pair<string,string> cmd) {
-    if (cmd.first == "addzone")
-        serve(cmd.second);
-    else if (cmd.first == "delzone")
-        zones.forget(cmd.second);
-    else if (cmd.first == "shutdown")
+ParkingLot::command(pair<string,ElementPtr> cmd) {
+    if (cmd.first == "shutdown")
         exit(0);
+    else if (cmd.first == "config_update") {
+        // what to do with port settings?
+        ElementPtr zonelist_el = (cmd.second)->get("zones");
+        // We could walk through both lists and remove and serve
+        // accordingly, or simply clear all and add everything
+        zones.clear_zones();
+        BOOST_FOREACH(ElementPtr zone, zonelist_el->list_value()) {
+            zones.serve(zone->string_value());
+        }
+    }
 }
 
 void

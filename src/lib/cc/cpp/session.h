@@ -30,8 +30,8 @@ namespace ISC {
 
             Session();
 
-	    // XXX: quick hack to allow the user to watch the socket directly.
-	    int getSocket() const { return (sock); }
+            // XXX: quick hack to allow the user to watch the socket directly.
+            int getSocket() const { return (sock); }
 
             void establish();
             void disconnect();
@@ -46,7 +46,7 @@ namespace ISC {
                            std::string instance = "*");
             void unsubscribe(std::string group,
                              std::string instance = "*");
-            unsigned int group_sendmsg(ISC::Data::ElementPtr& msg,
+            unsigned int group_sendmsg(ISC::Data::ElementPtr msg,
                                        std::string group,
                                        std::string instance = "*",
                                        std::string to = "*");

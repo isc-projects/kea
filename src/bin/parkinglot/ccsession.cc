@@ -14,38 +14,103 @@
 
 // $Id$
 
+// 
+// todo: generalize this and make it into a specific API for all modules
+//       to use (i.e. connect to cc, send config and commands, get config,
+//               react on config change announcements)
+//
+
+
 #include <stdexcept>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
 
 #include <iostream>
+#include <fstream>
 #include <sstream>
 
 #include <boost/foreach.hpp>
 
 #include <cc/cpp/data.h>
+#include <cc/cpp/data_def.h>
 #include <cc/cpp/session.h>
 
 #include "common.h"
 #include "ccsession.h"
+#include "config.h"
 
 using namespace std;
 
 using ISC::Data::Element;
 using ISC::Data::ElementPtr;
+using ISC::Data::DataDefinition;
+using ISC::Data::ParseError;
+using ISC::Data::DataDefinitionError;
 
-CommandSession::CommandSession() :
+void
+CommandSession::read_data_definition(const std::string& filename) {
+    std::ifstream file;
+
+    // this file should be declared in a @something@ directive
+    file.open(PARKINGLOT_SPECFILE_LOCATION);
+    if (!file) {
+        cout << "error opening " << PARKINGLOT_SPECFILE_LOCATION << endl;
+        exit(1);
+    }
+
+    try {
+        data_definition_ = DataDefinition(file, true);
+    } catch (ParseError pe) {
+        cout << "Error parsing definition file: " << pe.what() << endl;
+        exit(1);
+    } catch (DataDefinitionError dde) {
+        cout << "Error reading definition file: " << dde.what() << endl;
+        exit(1);
+    }
+    file.close();
+}
+
+CommandSession::CommandSession(std::string module_name,
+                               std::string spec_file_name,
+                               ISC::Data::ElementPtr(*config_handler)(ISC::Data::ElementPtr new_config),
+                               ISC::Data::ElementPtr(*command_handler)(ISC::Data::ElementPtr command)
+                              ) :
+    module_name_(module_name),
     session_(ISC::CC::Session())
 {
-    try {
-        session_.establish();
-        session_.subscribe("ParkingLot", "*");
-        session_.subscribe("Boss", "ParkingLot");
-        //session_.subscribe("ConfigManager", "*", "meonly");
-        //session_.subscribe("statistics", "*", "meonly");
-    } catch (...) {
-        throw std::runtime_error("SessionManager: failed to open sessions");
+    config_handler_ = config_handler;
+    command_handler_ = command_handler;
+
+    // todo: workaround, let boss wait until msgq is started
+    // and remove sleep here
+    sleep(1);
+
+    ElementPtr answer, env;
+
+    session_.establish();
+    session_.subscribe(module_name, "*");
+    session_.subscribe("Boss", "*");
+    session_.subscribe("statistics", "*");
+    read_data_definition(spec_file_name);
+    sleep(1);
+    // send the data specification
+    session_.group_sendmsg(data_definition_.getDefinition(), "ConfigManager");
+    session_.group_recvmsg(env, answer, false);
+    
+    // get any stored configuration from the manager
+    if (config_handler_) {
+        ElementPtr cmd = Element::create_from_string("{ \"command\": [ \"get_config\", \"" + module_name + "\" ] }");
+        session_.group_sendmsg(cmd, "ConfigManager");
+        session_.group_recvmsg(env, answer, false);
+        cout << "[XX] got config: " << endl << answer->str() << endl;
+        if (answer->contains("result") &&
+            answer->get("result")->get(0)->int_value() == 0 &&
+            answer->get("result")->size() > 1) {
+            config_handler(answer->get("result")->get(1));
+        } else {
+            cout << "[XX] no result in answer" << endl;
+        }
     }
 }
 
@@ -55,55 +120,37 @@ CommandSession::getSocket()
     return (session_.getSocket());
 }
 
-std::pair<std::string, std::string>
-CommandSession::getCommand(int counter) {
-    ElementPtr cmd, routing, data, ep;
-    string s;
-
-    session_.group_recvmsg(routing, data, false);
-    string channel = routing->get("group")->string_value();
-
-    if (channel == "statistics") {
-        cmd = data->get("command");
-        if (cmd != NULL && cmd->string_value() == "getstat") {
-            struct timeval now;
-            ElementPtr resp = Element::create(std::map<std::string,
-                                              ElementPtr>());
-            gettimeofday(&now, NULL);
-            resp->set("sent", Element::create(now.tv_sec +
-                                              (double)now.tv_usec / 1000000));
-            resp->set("counter", Element::create(counter));
-            session_.group_sendmsg(resp, "statistics");
+int
+CommandSession::check_command()
+{
+    cout << "[XX] check for command" << endl;
+    ElementPtr cmd, routing, data;
+    if (session_.group_recvmsg(routing, data, true)) {
+        /* ignore result messages (in case we're out of sync, to prevent
+         * pingpongs */
+        if (!data->get_type() == Element::map || data->contains("result")) {
+            return 0;
         }
-    } else {
-        cmd = data->get("zone_added");
-        if (cmd != NULL)
-            return std::pair<string, string>("addzone", cmd->string_value());
-        cmd = data->get("zone_deleted");
-        if (cmd != NULL) {
-            return std::pair<string, string>("delzone", cmd->string_value());
-        }
-        cmd = data->get("command");
-        if (cmd != NULL) {
-            if (cmd->get_type() == Element::string && cmd->string_value() == "shutdown") {
-                return std::pair<string, string>("shutdown", "");
+        cout << "[XX] got something!" << endl << data->str() << endl;
+        ElementPtr answer;
+        if (data->contains("config_update")) {
+            if (config_handler_) {
+                // handle config update
+                answer = config_handler_(data->get("config_update"));
+            } else {
+                answer = Element::create_from_string("{ \"result\": [0] }");
             }
         }
+        if (data->contains("command")) {
+            if (command_handler_) {
+                answer = command_handler_(data->get("command"));
+            } else {
+                answer = Element::create_from_string("{ \"result\": [0] }");
+            }
+        }
+        session_.reply(routing, answer);
     }
-
-    return std::pair<string, string>("unknown", "");
+    
+    return 0;
 }
 
-std::vector<std::string>
-CommandSession::getZones() {
-    ElementPtr cmd, result, env;
-    std::vector<std::string> zone_names;
-    cmd = Element::create_from_string("{ \"command\": [ \"zone\", \"list\" ] }");
-    sleep(1);
-    session_.group_sendmsg(cmd, "ConfigManager");
-    session_.group_recvmsg(env, result, false);
-    BOOST_FOREACH(ElementPtr zone_name, result->get("result")->list_value()) {
-        zone_names.push_back(zone_name->string_value());
-    }
-    return zone_names;
-}

@@ -29,6 +29,9 @@ class ZoneSet : std::set<std::string> {
             std::cout << "no longer serving: " << s << std::endl;
             this->erase(s);
         }
+        void clear_zones() {
+            this->clear();
+        }
         bool contains(std::string s) {
             return (this->find(s) != this->end());
         }
