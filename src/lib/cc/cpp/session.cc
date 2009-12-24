@@ -54,13 +54,13 @@ Session::establish()
     std::string get_lname_str = "{ \"type\": \"getlname\" }";
     std::stringstream get_lname_stream;
     get_lname_stream.str(get_lname_str);
-    ElementPtr get_lname_msg = Element::create_from_string(get_lname_stream);
+    ElementPtr get_lname_msg = Element::createFromString(get_lname_stream);
     sendmsg(get_lname_msg);
 
     ElementPtr routing, msg;
     recvmsg(routing, msg, false);
 
-    lname = msg->get("lname")->string_value();
+    lname = msg->get("lname")->stringValue();
     cout << "My local name is:  " << lname << endl;
 }
 
@@ -70,7 +70,7 @@ Session::establish()
 void
 Session::sendmsg(ElementPtr& msg)
 {
-    std::string header_wire = msg->to_wire();
+    std::string header_wire = msg->toWire();
     unsigned int length = 2 + header_wire.length();
     unsigned int length_net = htonl(length);
     unsigned short header_length = header_wire.length();
@@ -94,8 +94,8 @@ Session::sendmsg(ElementPtr& msg)
 void
 Session::sendmsg(ElementPtr& env, ElementPtr& msg)
 {
-    std::string header_wire = env->to_wire();
-    std::string body_wire = msg->to_wire();
+    std::string header_wire = env->toWire();
+    std::string body_wire = msg->toWire();
     unsigned int length = 2 + header_wire.length() + body_wire.length();
     unsigned int length_net = htonl(length);
     unsigned short header_length = header_wire.length();
@@ -152,7 +152,7 @@ Session::recvmsg(ElementPtr& msg, bool nonblock)
     std::stringstream wire_stream;
     wire_stream <<wire;
 
-    msg = Element::from_wire(wire_stream, length);
+    msg = Element::fromWire(wire_stream, length);
 
     return (true);
     // XXXMLG handle non-block here, and return false for short reads
@@ -191,11 +191,11 @@ Session::recvmsg(ElementPtr& env, ElementPtr& msg, bool nonblock)
 
     std::stringstream header_wire_stream;
     header_wire_stream << header_wire;
-    env = Element::from_wire(header_wire_stream, header_length);
+    env = Element::fromWire(header_wire_stream, header_length);
     
     std::stringstream body_wire_stream;
     body_wire_stream << body_wire;
-    msg = Element::from_wire(body_wire_stream, length - header_length);
+    msg = Element::fromWire(body_wire_stream, length - header_length);
 
     return (true);
     // XXXMLG handle non-block here, and return false for short reads
@@ -237,7 +237,7 @@ Session::group_sendmsg(ElementPtr msg, std::string group,
     env->set("group", Element::create(group));
     env->set("instance", Element::create(instance));
     env->set("seq", Element::create(sequence));
-    //env->set("msg", Element::create(msg->to_wire()));
+    //env->set("msg", Element::create(msg->toWire()));
 
     sendmsg(env, msg);
 
@@ -262,11 +262,11 @@ Session::reply(ElementPtr& envelope, ElementPtr& newmsg)
 
     env->set("type", Element::create("send"));
     env->set("from", Element::create(lname));
-    env->set("to", Element::create(envelope->get("from")->string_value()));
-    env->set("group", Element::create(envelope->get("group")->string_value()));
-    env->set("instance", Element::create(envelope->get("instance")->string_value()));
+    env->set("to", Element::create(envelope->get("from")->stringValue()));
+    env->set("group", Element::create(envelope->get("group")->stringValue()));
+    env->set("instance", Element::create(envelope->get("instance")->stringValue()));
     env->set("seq", Element::create(sequence));
-    env->set("reply", Element::create(envelope->get("seq")->int_value()));
+    env->set("reply", Element::create(envelope->get("seq")->intValue()));
 
     sendmsg(env, newmsg);
 

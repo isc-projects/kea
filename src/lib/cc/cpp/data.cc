@@ -104,7 +104,7 @@ Element::create(const std::map<std::string, ElementPtr>& m)
 
 
 //
-// helper functions for create_from_string factory
+// helper functions for createFromString factory
 // these should probably also be moved to member functions
 //
 
@@ -268,7 +268,7 @@ from_stringstream_list(std::istream &in, int& line, int& pos)
     while (c != EOF && c != ']') {
         //cout << "at line " << line << " pos " << pos << " cur c: " << c << " next c: " << char(in.peek()) << endl;
         if (in.peek() != ']') {
-            cur_list_element = Element::create_from_string(in, line, pos);
+            cur_list_element = Element::createFromString(in, line, pos);
             v.push_back(cur_list_element);
             skip_to(in, line, pos, ",]", " \t\n");
         }
@@ -293,7 +293,7 @@ from_stringstream_map(std::istream &in, int& line, int& pos)
         // skip the :
         in.get();
         pos++;
-        p.second = Element::create_from_string(in, line, pos);
+        p.second = Element::createFromString(in, line, pos);
         if (!p.second) {
             throw ParseError(std::string("missing map value for ") + p.first, line, pos);
         };
@@ -306,14 +306,14 @@ from_stringstream_map(std::istream &in, int& line, int& pos)
 }
 
 ElementPtr
-Element::create_from_string(std::istream &in) throw(ParseError)
+Element::createFromString(std::istream &in) throw(ParseError)
 {
     int line = 1, pos = 1;
-    return create_from_string(in, line, pos);
+    return createFromString(in, line, pos);
 }
 
 ElementPtr
-Element::create_from_string(std::istream &in, int& line, int& pos) throw(ParseError)
+Element::createFromString(std::istream &in, int& line, int& pos) throw(ParseError)
 {
     char c = 0;
     ElementPtr element;
@@ -374,11 +374,11 @@ Element::create_from_string(std::istream &in, int& line, int& pos) throw(ParseEr
 }
 
 ElementPtr
-Element::create_from_string(const std::string &in)
+Element::createFromString(const std::string &in)
 {
     std::stringstream ss;
     ss << in;
-    return create_from_string(ss);
+    return createFromString(ss);
 }
 //
 // a general to_str() function
@@ -387,7 +387,7 @@ std::string
 IntElement::str()
 {
     std::stringstream ss;
-    ss << int_value();
+    ss << intValue();
     return ss.str();
 }
 
@@ -395,7 +395,7 @@ std::string
 DoubleElement::str()
 {
     std::stringstream ss;
-    ss << double_value();
+    ss << doubleValue();
     return ss.str();
 }
 
@@ -414,7 +414,7 @@ StringElement::str()
 {
     std::stringstream ss;
     ss << "\"";
-    ss << string_value();
+    ss << stringValue();
     ss << "\"";
     return ss.str();
 }
@@ -425,7 +425,7 @@ ListElement::str()
     std::stringstream ss;
     std::vector<ElementPtr> v;
     ss << "[ ";
-    v = list_value();
+    v = listValue();
     for (std::vector<ElementPtr>::iterator it = v.begin(); it != v.end(); ++it) {
         if (it != v.begin()) {
             ss << ", ";
@@ -442,7 +442,7 @@ MapElement::str()
     std::stringstream ss;
     std::map<std::string, ElementPtr> m;
     ss << "{";
-    m = map_value();
+    m = mapValue();
     for (std::map<std::string, ElementPtr>::iterator it = m.begin(); it != m.end(); ++it) {
         if (it != m.begin()) {
             ss << ", ";
@@ -455,7 +455,7 @@ MapElement::str()
 }
 
 //
-// helpers for str_xml() functions
+// helpers for strXML() functions
 //
 
 // prefix with 'prefix' number of spaces
@@ -468,7 +468,7 @@ pre(std::ostream &out, size_t prefix)
 }
 
 std::string
-IntElement::str_xml(size_t prefix)
+IntElement::strXML(size_t prefix)
 {
     std::stringstream ss;
     pre(ss, prefix);
@@ -477,7 +477,7 @@ IntElement::str_xml(size_t prefix)
 }
 
 std::string
-DoubleElement::str_xml(size_t prefix)
+DoubleElement::strXML(size_t prefix)
 {
     std::stringstream ss;
     pre(ss, prefix);
@@ -486,7 +486,7 @@ DoubleElement::str_xml(size_t prefix)
 }
 
 std::string
-BoolElement::str_xml(size_t prefix)
+BoolElement::strXML(size_t prefix)
 {
     std::stringstream ss;
     pre(ss, prefix);
@@ -495,26 +495,26 @@ BoolElement::str_xml(size_t prefix)
 }
 
 std::string
-StringElement::str_xml(size_t prefix)
+StringElement::strXML(size_t prefix)
 {
     std::stringstream ss;
     pre(ss, prefix);
-    ss << string_value();
+    ss << stringValue();
     return ss.str();
 }
 
 std::string
-ListElement::str_xml(size_t prefix)
+ListElement::strXML(size_t prefix)
 {
     std::stringstream ss;
     std::vector<ElementPtr> v;
     pre(ss, prefix);
     ss << "<list>" << endl;;
-    v = list_value();
+    v = listValue();
     for (std::vector<ElementPtr>::iterator it = v.begin(); it != v.end(); ++it) {
         pre(ss, prefix + 4);
         ss << "<listitem>" << endl;
-        ss << (*it)->str_xml(prefix + 8) << endl;
+        ss << (*it)->strXML(prefix + 8) << endl;
         pre(ss, prefix + 4);
         ss << "</listitem>" << endl;
     }
@@ -524,18 +524,18 @@ ListElement::str_xml(size_t prefix)
 }
 
 std::string
-MapElement::str_xml(size_t prefix)
+MapElement::strXML(size_t prefix)
 {
     std::stringstream ss;
     std::map<std::string, ElementPtr> m;
-    m = map_value();
+    m = mapValue();
     pre(ss, prefix);
     ss << "<map>" << endl;
     for (std::map<std::string, ElementPtr>::iterator it = m.begin(); it != m.end(); ++it) {
         pre(ss, prefix + 4);
         ss << "<mapitem name=\"" << (*it).first << "\">" << endl;
         pre(ss, prefix);
-        ss << (*it).second->str_xml(prefix+8) << endl;
+        ss << (*it).second->strXML(prefix+8) << endl;
         pre(ss, prefix + 4);
         ss << "</mapitem>" << endl;
     }
@@ -551,7 +551,7 @@ MapElement::str_xml(size_t prefix)
 ElementPtr
 MapElement::find(const std::string& id)
 {
-    if (get_type() != map) {
+    if (getType() != map) {
         throw TypeError();
     }
     size_t sep = id.find('/');
@@ -752,15 +752,15 @@ decode_element(std::stringstream& in, int& in_length)
 }
 
 ElementPtr
-Element::from_wire(const std::string& s)
+Element::fromWire(const std::string& s)
 {
     std::stringstream ss;
     ss << s;
-    return from_wire(ss, s.length());
+    return fromWire(ss, s.length());
 }
 
 ElementPtr
-Element::from_wire(std::stringstream& in, int length)
+Element::fromWire(std::stringstream& in, int length)
 {
     //
     // Check protocol version
@@ -812,18 +812,18 @@ encode_length(unsigned int length, unsigned char type)
 }
 
 std::string
-StringElement::to_wire(int omit_length)
+StringElement::toWire(int omit_length)
 {
     std::stringstream ss;
 
-    int length = string_value().length();
-    ss << encode_length(length, ITEM_UTF8) << string_value();
+    int length = stringValue().length();
+    ss << encode_length(length, ITEM_UTF8) << stringValue();
 
     return ss.str();
 }
 
 std::string
-IntElement::to_wire(int omit_length)
+IntElement::toWire(int omit_length)
 {
     std::stringstream ss;
     std::stringstream text;
@@ -836,7 +836,7 @@ IntElement::to_wire(int omit_length)
 }
 
 std::string
-BoolElement::to_wire(int omit_length)
+BoolElement::toWire(int omit_length)
 {
     std::stringstream ss;
     std::stringstream text;
@@ -844,7 +844,7 @@ BoolElement::to_wire(int omit_length)
     text << str();
     int length = 1;
     ss << encode_length(length, ITEM_BOOL);
-    if (bool_value()) {
+    if (boolValue()) {
         ss << 0x01;
     } else {
         ss << 0x00;
@@ -854,7 +854,7 @@ BoolElement::to_wire(int omit_length)
 }
 
 std::string
-DoubleElement::to_wire(int omit_length)
+DoubleElement::toWire(int omit_length)
 {
     std::stringstream ss;
     std::stringstream text;
@@ -867,14 +867,14 @@ DoubleElement::to_wire(int omit_length)
 }
 
 std::string
-ListElement::to_wire(int omit_length)
+ListElement::toWire(int omit_length)
 {
     std::stringstream ss;
     std::vector<ElementPtr> v;
-    v = list_value();
+    v = listValue();
     for (std::vector<ElementPtr>::iterator it = v.begin() ;
          it != v.end() ; ++it) {
-        ss << (*it)->to_wire(0);
+        ss << (*it)->toWire(0);
     }
 
     if (omit_length) {
@@ -900,7 +900,7 @@ encode_tag(const std::string &s)
 }
 
 std::string
-MapElement::to_wire(int omit_length)
+MapElement::toWire(int omit_length)
 {
     std::stringstream ss;
     std::map<std::string, ElementPtr> m;
@@ -913,11 +913,11 @@ MapElement::to_wire(int omit_length)
         ss << PROTOCOL_VERSION[2] << PROTOCOL_VERSION[3];
     }
 
-    m = map_value();
+    m = mapValue();
     for (std::map<std::string, ElementPtr>::iterator it = m.begin() ;
          it != m.end() ; ++it) {
         ss << encode_tag((*it).first);
-        ss << (*it).second->to_wire(0);
+        ss << (*it).second->toWire(0);
     }
 
     //
@@ -949,7 +949,7 @@ MapElement::find(const std::string& id, ElementPtr& t) {
 }
 
 bool
-isc::data::is_null(ElementPtr p)
+isc::data::isNull(ElementPtr p)
 {
     return !p;
 }

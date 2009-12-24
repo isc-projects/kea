@@ -11,7 +11,7 @@ using namespace isc::data;
 
 // todo: is there a direct way to get a std::string from an enum label?
 static std::string
-get_type_string(Element::types type)
+getType_string(Element::types type)
 {
     switch(type) {
     case Element::integer:
@@ -32,7 +32,7 @@ get_type_string(Element::types type)
 }
 
 static Element::types
-get_type_value(const std::string& type_name) {
+getType_value(const std::string& type_name) {
     if (type_name == "integer") {
         return Element::integer;
     } else if (type_name == "real") {
@@ -54,10 +54,10 @@ static void
 check_leaf_item(const ElementPtr& spec, const std::string& name, Element::types type, bool mandatory)
 {
     if (spec->contains(name)) {
-        if (spec->get(name)->get_type() == type) {
+        if (spec->get(name)->getType() == type) {
             return;
         } else {
-            throw DataDefinitionError(name + " not of type " + get_type_string(type));
+            throw DataDefinitionError(name + " not of type " + getType_string(type));
         }
     } else if (mandatory) {
         // todo: want parent item name, and perhaps some info about location
@@ -75,17 +75,17 @@ check_config_item(const ElementPtr& spec) {
     check_leaf_item(spec, "item_type", Element::string, true);
     check_leaf_item(spec, "item_optional", Element::boolean, true);
     check_leaf_item(spec, "item_default",
-                    get_type_value(spec->get("item_type")->string_value()),
-                    !spec->get("item_optional")->bool_value()
+                    getType_value(spec->get("item_type")->stringValue()),
+                    !spec->get("item_optional")->boolValue()
                    );
 
     // if list, check the list definition
-    if (get_type_value(spec->get("item_type")->string_value()) == Element::list) {
+    if (getType_value(spec->get("item_type")->stringValue()) == Element::list) {
         check_leaf_item(spec, "list_item_spec", Element::map, true);
         check_config_item(spec->get("list_item_spec"));
     }
     // todo: add stuff for type map
-    if (get_type_value(spec->get("item_type")->string_value()) == Element::map) {
+    if (getType_value(spec->get("item_type")->stringValue()) == Element::map) {
         check_leaf_item(spec, "map_item_spec", Element::list, true);
         check_config_item_list(spec);
     }
@@ -93,10 +93,10 @@ check_config_item(const ElementPtr& spec) {
 
 static void
 check_config_item_list(const ElementPtr& spec) {
-    if (spec->get_type() != Element::list) {
+    if (spec->getType() != Element::list) {
         throw DataDefinitionError("config_data is not a list of elements");
     }
-    BOOST_FOREACH(ElementPtr item, spec->list_value()) {
+    BOOST_FOREACH(ElementPtr item, spec->listValue()) {
         check_config_item(item);
     }
 }
@@ -110,10 +110,10 @@ check_command(const ElementPtr& spec) {
 
 static void
 check_command_list(const ElementPtr& spec) {
-    if (spec->get_type() != Element::list) {
+    if (spec->getType() != Element::list) {
         throw DataDefinitionError("commands is not a list of elements");
     }
-    BOOST_FOREACH(ElementPtr item, spec->list_value()) {
+    BOOST_FOREACH(ElementPtr item, spec->listValue()) {
         check_command(item);
     }
 }
@@ -145,7 +145,7 @@ check_definition(const ElementPtr& def)
 
 DataDefinition::DataDefinition(std::istream& in, const bool check)
                                throw(ParseError, DataDefinitionError) {
-    definition = Element::create_from_string(in);
+    definition = Element::createFromString(in);
     // make sure the whole structure is complete and valid
     if (check) {
         check_definition(definition);
@@ -159,11 +159,11 @@ static bool
 check_type(ElementPtr spec, ElementPtr element)
 {
     std::string cur_item_type;
-    cur_item_type = spec->get("item_type")->string_value();
+    cur_item_type = spec->get("item_type")->stringValue();
     if (cur_item_type == "any") {
         return true;
     }
-    switch (element->get_type()) {
+    switch (element->getType()) {
         case Element::integer:
             return cur_item_type == "integer";
             break;
@@ -194,14 +194,14 @@ DataDefinition::validate_item(const ElementPtr spec, const ElementPtr data) {
         std::cout << spec << std::endl;
         return false;
     }
-    if (data->get_type() == Element::list) {
-        BOOST_FOREACH(ElementPtr list_el, data->list_value()) {
+    if (data->getType() == Element::list) {
+        BOOST_FOREACH(ElementPtr list_el, data->listValue()) {
             if (!validate_spec(spec->get("list_item_spec"), list_el)) {
                 return false;
             }
         }
     }
-    if (data->get_type() == Element::map) {
+    if (data->getType() == Element::map) {
         if (!validate_spec_list(spec->get("map_item_spec"), data)) {
             return false;
         }
@@ -212,8 +212,8 @@ DataDefinition::validate_item(const ElementPtr spec, const ElementPtr data) {
 // spec is a map with item_name etc, data is a map
 bool
 DataDefinition::validate_spec(const ElementPtr spec, const ElementPtr data) {
-    std::string item_name = spec->get("item_name")->string_value();
-    bool optional = spec->get("item_optional")->bool_value();
+    std::string item_name = spec->get("item_name")->stringValue();
+    bool optional = spec->get("item_optional")->boolValue();
     ElementPtr data_el;
     
     std::cout << "check for item with name " << item_name << std::endl;
@@ -236,7 +236,7 @@ bool
 DataDefinition::validate_spec_list(const ElementPtr spec, const ElementPtr data) {
     ElementPtr cur_data_el;
     std::string cur_item_name;
-    BOOST_FOREACH(ElementPtr cur_spec_el, spec->list_value()) {
+    BOOST_FOREACH(ElementPtr cur_spec_el, spec->listValue()) {
         if (!validate_spec(cur_spec_el, data)) {
             return false;
         }

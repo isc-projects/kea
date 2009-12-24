@@ -64,8 +64,8 @@ my_config_handler(isc::data::ElementPtr config)
     cout << "[XX] Handle config: " << endl << config->str() << endl;
     if (config->contains("zones")) {
         plot.clear_zones();
-        BOOST_FOREACH(isc::data::ElementPtr zone_el, config->get("zones")->list_value()) {
-            plot.serve(zone_el->string_value());
+        BOOST_FOREACH(isc::data::ElementPtr zone_el, config->get("zones")->listValue()) {
+            plot.serve(zone_el->stringValue());
         }
     }
     if (config->contains("port")) {
@@ -74,33 +74,33 @@ my_config_handler(isc::data::ElementPtr config)
     }
     if (config->contains("a_records")) {
         plot.clearARecords();
-        BOOST_FOREACH(isc::data::ElementPtr rel, config->get("a_records")->list_value()) {
-            plot.addARecord(rel->string_value());
+        BOOST_FOREACH(isc::data::ElementPtr rel, config->get("a_records")->listValue()) {
+            plot.addARecord(rel->stringValue());
         }
     }
     if (config->contains("aaaa_records")) {
         plot.clearAAAARecords();
-        BOOST_FOREACH(isc::data::ElementPtr rel, config->get("aaaa_records")->list_value()) {
-            plot.addAAAARecord(rel->string_value());
+        BOOST_FOREACH(isc::data::ElementPtr rel, config->get("aaaa_records")->listValue()) {
+            plot.addAAAARecord(rel->stringValue());
         }
     }
     if (config->contains("ns_records")) {
         plot.clearNSRecords();
-        BOOST_FOREACH(isc::data::ElementPtr rel, config->get("ns_records")->list_value()) {
-            plot.addNSRecord(rel->string_value());
+        BOOST_FOREACH(isc::data::ElementPtr rel, config->get("ns_records")->listValue()) {
+            plot.addNSRecord(rel->stringValue());
         }
     }
-    return isc::data::Element::create_from_string("{ \"result\": [0] }");
+    return isc::data::Element::createFromString("{ \"result\": [0] }");
 }
 
 isc::data::ElementPtr
 my_command_handler(isc::data::ElementPtr command)
 {
-    isc::data::ElementPtr answer = isc::data::Element::create_from_string("{ \"result\": [0] }");
+    isc::data::ElementPtr answer = isc::data::Element::createFromString("{ \"result\": [0] }");
 
     cout << "[XX] Handle command: " << endl << command->str() << endl;
-    if (command->get(1)->string_value() == "print_message") {
-        cout << command->get(2)->string_value() << endl;
+    if (command->get(1)->stringValue() == "print_message") {
+        cout << command->get(2)->stringValue() << endl;
         /* let's add that message to our answer as well */
         cout << "[XX] answer was: " << answer->str() << endl;
         answer->get("result")->add(command->get(2));
