@@ -32,6 +32,13 @@ std::ostream& operator <<(std::ostream &out, const ISC::Data::ElementPtr& e) {
     return out << e->str();
 }
 
+const char*
+ParseError::what() const throw() {
+    stringstream ss;
+    ss << msg << " line " << line << " pos " << pos;
+    return ss.str().c_str();
+}
+
 //
 // factory functions
 //
@@ -113,83 +120,113 @@ char_in(char c, const char *chars)
 }
 
 static void
-skip_chars(std::stringstream &in, const char *chars)
+skip_chars(std::istream &in, const char *chars, int& line, int& pos)
 {
     char c = in.peek();
     while (char_in(c, chars) && c != EOF) {
+        if (c == '\n') {
+            line++;
+            pos = 1;
+        } else {
+            pos++;
+        }
         in.get();
         c = in.peek();
     }
 }
+/*static void
+skip_chars(std::istream &in, const char *chars)
+{
+    int l = 0, p = 0;
+    skip_chars(in, chars, l, p);
+}*/
 
 // skip on the input stream to one of the characters in chars
 // if another character is found this function returns false
 // unles that character is specified in the optional may_skip
 //
 // the character found is left on the stream
-static bool
-skip_to(std::stringstream &in, const char *chars, const char *may_skip="")
+static void
+skip_to(std::istream &in, int& line, int& pos, const char* chars, const char* may_skip="")
 {
     char c = in.get();
+    pos++;
     while (c != EOF) {
+        if (c == '\n') {
+            pos = 1;
+            line++;
+        }
         if (char_in(c, may_skip)) {
             c = in.get();
+            pos++;
         } else if (char_in(c, chars)) {
             while(char_in(in.peek(), may_skip)) {
+                if (in.peek() == '\n') {
+                    pos = 1;
+                    line++;
+                }
                 in.get();
+                pos++;
             }
             in.putback(c);
-            return true;
+            pos--;
+            return;
         } else {
-            // TODO: provide feeback mechanism?
-            cout << "error, '" << c << "' read; one of \"" << chars << "\" expected" << endl;
-            in.putback(c);
-            return false;
+            throw ParseError(std::string("'") + c + "' read, one of \"" + chars + "\" expected", line, pos);
         }
     }
-    // TODO: provide feeback mechanism?
-    cout << "error, EOF read; one of \"" << chars << "\" expected" << endl;
-            in.putback(c);
-    return false;
+    throw ParseError(std::string("EOF read, one of \"") + chars + "\" expected", line, pos);
 }
 
+/*static bool
+skip_to(std::istream &in, const char *chars, const char *may_skip="") {
+    int line = 0, pos = 0;
+    return skip_to(in, line, pos, chars, may_skip);
+}*/
+
 static std::string
-str_from_stringstream(std::stringstream &in)
+str_from_stringstream(std::istream &in, int& line, int& pos) throw (ParseError)
 {
     char c = 0;
     std::stringstream ss;
     c = in.get();
+    pos++;
     if (c == '"') {
         c = in.get();
+        pos++;
     } else {
-        return "badstring";
+        throw ParseError("String expected", line, pos);
     }
     while (c != EOF && c != '"') {
         ss << c;
         if (c == '\\' && in.peek() == '"') {
             ss << in.get();
+            pos++;
         }
         c = in.get();
+        pos++;
     }
     return ss.str();
 }
 
 static std::string
-word_from_stringstream(std::stringstream &in)
+word_from_stringstream(std::istream &in, int& line, int& pos)
 {
     std::stringstream ss;
     while (isalpha(in.peek())) {
         ss << (char) in.get();
     }
+    pos += ss.str().size();
     return ss.str();
 }
 
 
 static ElementPtr
-from_stringstream_int_or_double(std::stringstream &in)
+from_stringstream_int_or_double(std::istream &in, int &line, int &pos)
 {
     int i;
     in >> i;
+    // TODO count pos
     if (in.peek() == '.') {
         double d;
         in >> d;
@@ -201,9 +238,9 @@ from_stringstream_int_or_double(std::stringstream &in)
 }
 
 static ElementPtr
-from_stringstream_bool(std::stringstream &in)
+from_stringstream_bool(std::istream &in, int& line, int& pos)
 {
-    std::string word = word_from_stringstream(in);
+    std::string word = word_from_stringstream(in, line, pos);
     if (boost::iequals(word, "True")) {
         return Element::create(true);
     } else if (boost::iequals(word, "False")) {
@@ -214,65 +251,78 @@ from_stringstream_bool(std::stringstream &in)
 }
 
 static ElementPtr
-from_stringstream_string(std::stringstream &in)
+from_stringstream_string(std::istream &in, int& line, int& pos)
 {
-    return Element::create(str_from_stringstream(in));
+    return Element::create(str_from_stringstream(in, line, pos));
 }
 
 static ElementPtr
-from_stringstream_list(std::stringstream &in)
+from_stringstream_list(std::istream &in, int& line, int& pos)
 {
     char c = 0;
     std::vector<ElementPtr> v;
     ElementPtr cur_list_element;
+    //cout << "reading list at line " << line << " pos " << pos << endl;
 
-    skip_chars(in, " \t\n");
+    skip_chars(in, " \t\n", line, pos);
     while (c != EOF && c != ']') {
-        cur_list_element = Element::create_from_string(in);
-        v.push_back(cur_list_element);
-        if (!skip_to(in, ",]", " \t\n")) {
-            return ElementPtr();
+        //cout << "at line " << line << " pos " << pos << " cur c: " << c << " next c: " << char(in.peek()) << endl;
+        if (in.peek() != ']') {
+            cur_list_element = Element::create_from_string(in, line, pos);
+            v.push_back(cur_list_element);
+            skip_to(in, line, pos, ",]", " \t\n");
         }
         c = in.get();
+        pos++;
     }
     return Element::create(v);
 }
 
 static ElementPtr
-from_stringstream_map(std::stringstream &in)
+from_stringstream_map(std::istream &in, int& line, int& pos)
 {
     char c = 0;
     std::map<std::string, ElementPtr> m;
     std::pair<std::string, ElementPtr> p;
     std::string cur_map_key;
     ElementPtr cur_map_element;
-    skip_chars(in, " \t\n");
+    skip_chars(in, " \t\n", line, pos);
     while (c != EOF && c != '}') {
-        p.first = str_from_stringstream(in);
-        if (!skip_to(in, ":", " \t\n")) {
-            return ElementPtr();
-        } else {
-            // skip the :
-            in.get();
-        }
-        p.second = Element::create_from_string(in);
-        if (!p.second) { return ElementPtr(); };
+        p.first = str_from_stringstream(in, line, pos);
+        skip_to(in, line, pos, ":", " \t\n");
+        // skip the :
+        in.get();
+        pos++;
+        p.second = Element::create_from_string(in, line, pos);
+        if (!p.second) {
+            throw ParseError(std::string("missing map value for ") + p.first, line, pos);
+        };
         m.insert(p);
-        skip_to(in, ",}", " \t\n");
+        skip_to(in, line, pos, ",}", " \t\n");
         c = in.get();
+        pos++;
     }
     return Element::create(m);
 }
 
 ElementPtr
-Element::create_from_string(std::stringstream &in)
+Element::create_from_string(std::istream &in) throw(ParseError)
+{
+    int line = 1, pos = 1;
+    return create_from_string(in, line, pos);
+}
+
+ElementPtr
+Element::create_from_string(std::istream &in, int& line, int& pos) throw(ParseError)
 {
     char c = 0;
     ElementPtr element;
     bool el_read = false;
-    skip_chars(in, " \n\t");
+    skip_chars(in, " \n\t", line, pos);
     while (c != EOF && !el_read) {
         c = in.get();
+        pos++;
+        //std::cout << c << std::endl;
         switch(c) {
             case '1':
             case '2':
@@ -285,7 +335,7 @@ Element::create_from_string(std::stringstream &in)
             case '9':
             case '0':
                 in.putback(c);
-                element = from_stringstream_int_or_double(in);
+                element = from_stringstream_int_or_double(in, line, pos);
                 el_read = true;
                 break;
             case 't':
@@ -293,35 +343,33 @@ Element::create_from_string(std::stringstream &in)
             case 'f':
             case 'F':
                 in.putback(c);
-                element = from_stringstream_bool(in);
+                element = from_stringstream_bool(in, line, pos);
                 el_read = true;
                 break;
             case '"':
                 in.putback('"');
-                element = from_stringstream_string(in);
+                element = from_stringstream_string(in, line, pos);
                 el_read = true;
                 break;
             case '[':
-                element = from_stringstream_list(in);
+                element = from_stringstream_list(in, line, pos);
                 el_read = true;
                 break;
             case '{':
-                element = from_stringstream_map(in);
+                element = from_stringstream_map(in, line, pos);
                 el_read = true;
                 break;
+            case EOF:
+                break;
             default:
-                // TODO this might not be a fatal error
-                // provide feedback mechanism?
-                cout << "error: unexpected '" << c << "'" << endl;
-                return ElementPtr();
+                throw ParseError(std::string("error: unexpected character ") + c, line, pos);
                 break;
         }
     }
     if (el_read) {
         return element;
     } else {
-        // throw exception?
-        return ElementPtr();
+        throw ParseError("nothing read");
     }
 }
 
@@ -574,7 +622,8 @@ decode_bool(std::stringstream& in, int& item_length)
 ElementPtr
 decode_int(std::stringstream& in, int& item_length)
 {
-    return from_stringstream_int_or_double(in);
+    int skip, me;
+    return from_stringstream_int_or_double(in, skip, me);
 }
 
 ElementPtr

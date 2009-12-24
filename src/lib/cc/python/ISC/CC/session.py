@@ -39,6 +39,8 @@ class Session:
 
             self.sendmsg({ "type": "getlname" })
             env, msg = self.recvmsg(False)
+            if not env:
+                raise ProtocolError("Could not get local name")
             self._lname = msg["lname"]
             if not self._lname:
                 raise ProtocolError("Could not get local name")
@@ -55,6 +57,8 @@ class Session:
         self._closed = True
 
     def sendmsg(self, env, msg = None):
+        XXmsg = msg
+        XXenv = env
         if self._closed:
             raise SessionError("Session has been closed.")
         if type(env) == dict:

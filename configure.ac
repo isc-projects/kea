@@ -73,6 +73,7 @@ AC_OUTPUT([src/bin/bind-cfgd/bind-cfgd
            src/bin/bind10/bind10
 	   src/bin/msgq/msgq
 	   src/bin/msgq/msgq_test
+           src/bin/parkinglot/config.h
           ], [
            chmod +x src/bin/bind-cfgd/bind-cfgd
            chmod +x src/bin/bigtool/run_bigtool

@@ -124,6 +124,7 @@ class CommandInfo:
         else:
             raise KeyError(str(pos) + " is not an integer")
     
+
     def need_instance_param(self):
         return self.need_inst_param
 

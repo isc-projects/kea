@@ -2,11 +2,11 @@ import sys
 import readline
 from cmd import Cmd
 from exception import *
-from moduleinfo import ModuleInfo
-from moduleinfo import ParamInfo
+from moduleinfo import *
 from command import BigToolCmd
 from xml.dom import minidom
 import ISC
+import ISC.CC.data
 
 try:
     from collections import OrderedDict
@@ -29,12 +29,18 @@ class BigTool(Cmd):
 
     def __init__(self, session = None):
         Cmd.__init__(self)
-        self.prompt = '> '
+        self.location = ""
+        self.prompt_end = '> '
+        self.prompt = self.prompt_end
         self.ruler = '-'
         self.modules = OrderedDict()
         self.add_module_info(ModuleInfo("help", desc = "Get help for bigtool"))
         self.cc = session
+        self.config_data = ISC.CC.data.UIConfigData("", session)
 
+    def postcmd(self, stop, line):
+        self.prompt = self.location + self.prompt_end
+        return stop
 
     def validate_cmd(self, cmd):
         if not cmd.module in self.modules:
@@ -68,6 +74,15 @@ class BigTool(Cmd):
                 # the 'name' must be an integer (ie. the position of
                 # an unnamed argument
                 if type(name) == int:
+                    # lump all extraneous arguments together as one big final one
+                    # todo: check if last param type is a string?
+                    if (param_count > 2):
+                        while (param_count > len(command_info.params) - 1):
+                            params[param_count - 2] += params[param_count - 1]
+                            del(params[param_count - 1])
+                            param_count = len(params)
+                            cmd.params = params.copy()
+
                     # (-1, help is always in the all_params list)
                     if name >= len(all_params) - 1:
                         # add to last known param
@@ -87,13 +102,16 @@ class BigTool(Cmd):
             for name in manda_params:
                 if not name in params and not param_nr in params:
                     raise CmdMissParamSyntaxError(cmd.module, cmd.command, name)
-                              
+                
+                param_nr += 1
                 param_nr += 1
 
     def _handle_cmd(self, cmd):
         #to do, consist xml package and send to bind10
         if cmd.command == "help" or ("help" in cmd.params.keys()):
             self._handle_help(cmd)
+        elif cmd.module == "config":
+            self.apply_config_cmd(cmd)
         else:
             self.apply_cmd(cmd)
 
@@ -123,7 +141,9 @@ class BigTool(Cmd):
                 
     
     def onecmd(self, line):
-        if line == 'EOF'or line.lower() == "quit":
+        # check if there's anything on the cc first
+        self.check_cc_messages()
+        if line == 'EOF' or line.lower() == "quit":
             return True
             
         if line == 'h':
@@ -143,6 +163,11 @@ class BigTool(Cmd):
                 else:                       
                     hints = self._get_param_startswith(cmd.module, cmd.command,
                                                        text)
+                    if cmd.module == "config":
+                        # grm text has been stripped of slashes...
+                        my_text = self.location + "/" + cur_line.rpartition(" ")[2]
+                        list = self.config_data.config.get_item_list(my_text.rpartition("/")[0])
+                        hints.extend([val for val in list if val.startswith(text)])
             except CmdModuleNameFormatError:
                 if not text:
                     hints = list(self.modules.keys())
@@ -162,9 +187,9 @@ class BigTool(Cmd):
 
             except BigToolException:
                 hints = []
-            
+
             self.hint = hints
-            self._append_space_to_hint()
+            #self._append_space_to_hint()
 
         if state < len(self.hint):
             return self.hint[state]
@@ -206,8 +231,35 @@ class BigTool(Cmd):
 
         return []
         
+    def prepare_module_commands(self, module_name, module_commands):
+        module = ModuleInfo(name = module_name,
+                            desc = "same here")
+        for command in module_commands:
+            cmd = CommandInfo(name = command["command_name"],
+                              desc = command["command_description"],
+                              need_inst_param = False)
+            for arg in command["command_args"]:
+                param = ParamInfo(name = arg["item_name"],
+                                  type = arg["item_type"],
+                                  optional = bool(arg["item_optional"]))
+                if ("item_default" in arg):
+                    param.default = arg["item_default"]
+                cmd.add_param(param)
+            module.add_command(cmd)
+        self.add_module_info(module)
+
+    def check_cc_messages(self):
+        (message, env) = self.cc.group_recvmsg(True)
+        while message:
+            if 'commands_update' in message:
+                self.prepare_module_commands(message['commands_update'][0], message['commands_update'][1])
+            elif 'specification_update' in message:
+                self.config_data.config.specification[message['specification_update'][0]] = message['specification_update'][1]
+            (message, env) = self.cc.group_recvmsg(True)
 
     def _parse_cmd(self, line):
+        # check if there's anything on the cc first
+        self.check_cc_messages()
         try:
             cmd = BigToolCmd(line)
             self.validate_cmd(cmd)
@@ -304,7 +356,7 @@ class BigTool(Cmd):
         if not self.cc:
             return
         
-        groupName = (cmd.module == 'boss') and 'Boss' or 'ConfigManager'
+        groupName = cmd.module
         content = [cmd.module, cmd.command]
         values = cmd.params.values()
         if len(values) > 0:
@@ -312,15 +364,19 @@ class BigTool(Cmd):
 
         msg = {"command":content}
         print("begin to send the message...")
+
+        # XXTODO: remove this with new msgq
+        #self.cc.group_subscribe(groupName)
         
         try:   
-            self.cc.group_sendmsg(msg, groupName, instance = 'boss')
+            self.cc.group_sendmsg(msg, groupName)
             print("waiting for %s reply..." % groupName)
 
             reply, env = self.cc.group_recvmsg(False)
             print("received reply:", reply)
         except:
             print("Error communication with %s" % groupName)
+
 
 
 
