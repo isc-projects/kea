@@ -8,7 +8,7 @@
 
 #include <iostream>
 
-namespace ISC { namespace Data {
+namespace isc { namespace data {
 
     // todo: include types and called function in the exception
     class TypeError : public std::exception {
@@ -282,6 +282,6 @@ namespace ISC { namespace Data {
 // add a << operator for output streams so we can do
 // ElementPtr foo = ...
 // cout << "Element: " << foo;
-std::ostream& operator <<(std::ostream &out, const ISC::Data::ElementPtr& e);
+std::ostream& operator <<(std::ostream &out, const isc::data::ElementPtr& e);
 
 #endif // _ISC_DATA_H

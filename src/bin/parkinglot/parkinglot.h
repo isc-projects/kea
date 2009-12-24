@@ -26,7 +26,7 @@ public:
     virtual ~ParkingLot() {}
     int getSocket() { return (sock); }
     void processMessage();
-    void command(std::pair<std::string,ISC::Data::ElementPtr>);
+    void command(std::pair<std::string,isc::data::ElementPtr>);
     void serve(std::string zone_name);
     void clear_zones() { zones.clear_zones(); };
 

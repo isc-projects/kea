@@ -5,7 +5,7 @@
 #include <fstream>
 
 using namespace std;
-using namespace ISC::Data;
+using namespace isc::data;
 
 int
 main(int argc, char **argv) {

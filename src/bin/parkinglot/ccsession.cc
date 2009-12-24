@@ -42,11 +42,11 @@
 
 using namespace std;
 
-using ISC::Data::Element;
-using ISC::Data::ElementPtr;
-using ISC::Data::DataDefinition;
-using ISC::Data::ParseError;
-using ISC::Data::DataDefinitionError;
+using isc::data::Element;
+using isc::data::ElementPtr;
+using isc::data::DataDefinition;
+using isc::data::ParseError;
+using isc::data::DataDefinitionError;
 
 void
 CommandSession::read_data_definition(const std::string& filename) {
@@ -73,11 +73,11 @@ CommandSession::read_data_definition(const std::string& filename) {
 
 CommandSession::CommandSession(std::string module_name,
                                std::string spec_file_name,
-                               ISC::Data::ElementPtr(*config_handler)(ISC::Data::ElementPtr new_config),
-                               ISC::Data::ElementPtr(*command_handler)(ISC::Data::ElementPtr command)
+                               isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config),
+                               isc::data::ElementPtr(*command_handler)(isc::data::ElementPtr command)
                               ) :
     module_name_(module_name),
-    session_(ISC::CC::Session())
+    session_(isc::cc::Session())
 {
     config_handler_ = config_handler;
     command_handler_ = command_handler;

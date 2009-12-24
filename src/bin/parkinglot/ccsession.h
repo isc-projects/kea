@@ -34,8 +34,8 @@ public:
      *                        definition.
      */
     CommandSession(std::string module_name, std::string spec_file_name,
-                   ISC::Data::ElementPtr(*config_handler)(ISC::Data::ElementPtr new_config) = NULL,
-                   ISC::Data::ElementPtr(*command_handler)(ISC::Data::ElementPtr command) = NULL
+                   isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config) = NULL,
+                   isc::data::ElementPtr(*command_handler)(isc::data::ElementPtr command) = NULL
                   );
     int getSocket();
 
@@ -56,7 +56,7 @@ public:
      * 100000 zones, where the whole list is passed every time a single
      * thing changes)
      */
-    void set_config_handler(ISC::Data::ElementPtr(*config_handler)(ISC::Data::ElementPtr new_config)) { config_handler_ = config_handler; };
+    void set_config_handler(isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config)) { config_handler_ = config_handler; };
 
     /**
      * Set a command handler; the function that is passed takes an
@@ -68,18 +68,18 @@ public:
      *
      * This protocol is very likely to change.
      */
-    void set_command_handler(ISC::Data::ElementPtr(*command_handler)(ISC::Data::ElementPtr command)) { command_handler_ = command_handler; };
+    void set_command_handler(isc::data::ElementPtr(*command_handler)(isc::data::ElementPtr command)) { command_handler_ = command_handler; };
     
 private:
     void read_data_definition(const std::string& filename);
     
     std::string module_name_;
-    ISC::CC::Session session_;
-    ISC::Data::DataDefinition data_definition_;
-    ISC::Data::ElementPtr config_;
+    isc::cc::Session session_;
+    isc::data::DataDefinition data_definition_;
+    isc::data::ElementPtr config_;
 
-    ISC::Data::ElementPtr(*config_handler_)(ISC::Data::ElementPtr new_config);
-    ISC::Data::ElementPtr(*command_handler_)(ISC::Data::ElementPtr command);
+    isc::data::ElementPtr(*config_handler_)(isc::data::ElementPtr new_config);
+    isc::data::ElementPtr(*command_handler_)(isc::data::ElementPtr command);
 };
 
 #endif // __CCSESSION_H

@@ -58,13 +58,13 @@ usage() {
     exit(1);
 }
 
-ISC::Data::ElementPtr
-my_config_handler(ISC::Data::ElementPtr config)
+isc::data::ElementPtr
+my_config_handler(isc::data::ElementPtr config)
 {
     cout << "[XX] Handle config: " << endl << config->str() << endl;
     if (config->contains("zones")) {
         plot.clear_zones();
-        BOOST_FOREACH(ISC::Data::ElementPtr zone_el, config->get("zones")->list_value()) {
+        BOOST_FOREACH(isc::data::ElementPtr zone_el, config->get("zones")->list_value()) {
             plot.serve(zone_el->string_value());
         }
     }
@@ -74,29 +74,29 @@ my_config_handler(ISC::Data::ElementPtr config)
     }
     if (config->contains("a_records")) {
         plot.clearARecords();
-        BOOST_FOREACH(ISC::Data::ElementPtr rel, config->get("a_records")->list_value()) {
+        BOOST_FOREACH(isc::data::ElementPtr rel, config->get("a_records")->list_value()) {
             plot.addARecord(rel->string_value());
         }
     }
     if (config->contains("aaaa_records")) {
         plot.clearAAAARecords();
-        BOOST_FOREACH(ISC::Data::ElementPtr rel, config->get("aaaa_records")->list_value()) {
+        BOOST_FOREACH(isc::data::ElementPtr rel, config->get("aaaa_records")->list_value()) {
             plot.addAAAARecord(rel->string_value());
         }
     }
     if (config->contains("ns_records")) {
         plot.clearNSRecords();
-        BOOST_FOREACH(ISC::Data::ElementPtr rel, config->get("ns_records")->list_value()) {
+        BOOST_FOREACH(isc::data::ElementPtr rel, config->get("ns_records")->list_value()) {
             plot.addNSRecord(rel->string_value());
         }
     }
-    return ISC::Data::Element::create_from_string("{ \"result\": [0] }");
+    return isc::data::Element::create_from_string("{ \"result\": [0] }");
 }
 
-ISC::Data::ElementPtr
-my_command_handler(ISC::Data::ElementPtr command)
+isc::data::ElementPtr
+my_command_handler(isc::data::ElementPtr command)
 {
-    ISC::Data::ElementPtr answer = ISC::Data::Element::create_from_string("{ \"result\": [0] }");
+    isc::data::ElementPtr answer = isc::data::Element::create_from_string("{ \"result\": [0] }");
 
     cout << "[XX] Handle command: " << endl << command->str() << endl;
     if (command->get(1)->string_value() == "print_message") {
