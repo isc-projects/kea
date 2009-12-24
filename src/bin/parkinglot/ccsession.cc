@@ -100,12 +100,12 @@ CommandSession::CommandSession(std::string module_name,
     
     // get any stored configuration from the manager
     if (config_handler_) {
-        ElementPtr cmd = Element::create_from_string("{ \"command\": [ \"get_config\", \"" + module_name + "\" ] }");
+        ElementPtr cmd = Element::createFromString("{ \"command\": [ \"get_config\", \"" + module_name + "\" ] }");
         session_.group_sendmsg(cmd, "ConfigManager");
         session_.group_recvmsg(env, answer, false);
         cout << "[XX] got config: " << endl << answer->str() << endl;
         if (answer->contains("result") &&
-            answer->get("result")->get(0)->int_value() == 0 &&
+            answer->get("result")->get(0)->intValue() == 0 &&
             answer->get("result")->size() > 1) {
             config_handler(answer->get("result")->get(1));
         } else {
@@ -128,7 +128,7 @@ CommandSession::check_command()
     if (session_.group_recvmsg(routing, data, true)) {
         /* ignore result messages (in case we're out of sync, to prevent
          * pingpongs */
-        if (!data->get_type() == Element::map || data->contains("result")) {
+        if (!data->getType() == Element::map || data->contains("result")) {
             return 0;
         }
         cout << "[XX] got something!" << endl << data->str() << endl;
@@ -138,14 +138,14 @@ CommandSession::check_command()
                 // handle config update
                 answer = config_handler_(data->get("config_update"));
             } else {
-                answer = Element::create_from_string("{ \"result\": [0] }");
+                answer = Element::createFromString("{ \"result\": [0] }");
             }
         }
         if (data->contains("command")) {
             if (command_handler_) {
                 answer = command_handler_(data->get("command"));
             } else {
-                answer = Element::create_from_string("{ \"result\": [0] }");
+                answer = Element::createFromString("{ \"result\": [0] }");
             }
         }
         session_.reply(routing, answer);

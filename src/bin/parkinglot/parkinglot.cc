@@ -235,8 +235,8 @@ ParkingLot::command(pair<string,ElementPtr> cmd) {
         // We could walk through both lists and remove and serve
         // accordingly, or simply clear all and add everything
         zones.clear_zones();
-        BOOST_FOREACH(ElementPtr zone, zonelist_el->list_value()) {
-            zones.serve(zone->string_value());
+        BOOST_FOREACH(ElementPtr zone, zonelist_el->listValue()) {
+            zones.serve(zone->stringValue());
         }
     }
 }

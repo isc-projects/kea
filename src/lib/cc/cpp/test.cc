@@ -39,7 +39,7 @@ main(int argc, char **argv) {
         return 1;
     }
     try {
-        data = Element::create_from_string(file);
+        data = Element::createFromString(file);
         cout << "Data: " << endl;
         cout << data << endl;
     } catch (ParseError pe) {
