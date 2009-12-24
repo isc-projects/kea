@@ -5,7 +5,7 @@
 
 #include <sstream>
 
-namespace ISC { namespace Data {
+namespace isc { namespace data {
 
     class DataDefinitionError : public std::exception {
     public:

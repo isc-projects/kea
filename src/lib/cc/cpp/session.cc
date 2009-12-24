@@ -7,8 +7,8 @@
 #include <sstream>
 
 using namespace std;
-using namespace ISC::CC;
-using namespace ISC::Data;
+using namespace isc::cc;
+using namespace isc::data;
 
 #include <sys/types.h>
 #include <sys/socket.h>

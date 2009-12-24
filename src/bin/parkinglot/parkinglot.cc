@@ -40,7 +40,7 @@ using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::Rdata::IN;
 using namespace isc::dns::Rdata::Generic;
-using namespace ISC::Data;
+using namespace isc::data;
 
 void
 ParkingLot::addARecord(std::string data) {

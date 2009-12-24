@@ -20,7 +20,7 @@
 
 #include <data.h>
 
-using namespace ISC::Data;
+using namespace isc::data;
 
 TEST(Element, type) {
     // this tests checks whether the get_type() function returns the

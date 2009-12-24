@@ -10,7 +10,7 @@
 #include <boost/algorithm/string.hpp>
 
 using namespace std;
-using namespace ISC::Data;
+using namespace isc::data;
 
 const unsigned char PROTOCOL_VERSION[4] = { 0x53, 0x6b, 0x61, 0x6e };
 
@@ -28,7 +28,7 @@ const unsigned char ITEM_LENGTH_16   = 0x10;
 const unsigned char ITEM_LENGTH_8    = 0x20;
 const unsigned char ITEM_LENGTH_MASK = 0x30;
 
-std::ostream& operator <<(std::ostream &out, const ISC::Data::ElementPtr& e) {
+std::ostream& operator <<(std::ostream &out, const isc::data::ElementPtr& e) {
     return out << e->str();
 }
 
@@ -949,7 +949,7 @@ MapElement::find(const std::string& id, ElementPtr& t) {
 }
 
 bool
-ISC::Data::is_null(ElementPtr p)
+isc::data::is_null(ElementPtr p)
 {
     return !p;
 }

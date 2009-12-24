@@ -7,7 +7,7 @@
 
 // todo: add more context to thrown DataDefinitionErrors?
 
-using namespace ISC::Data;
+using namespace isc::data;
 
 // todo: is there a direct way to get a std::string from an enum label?
 static std::string
