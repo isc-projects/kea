@@ -32,6 +32,7 @@ using isc::UnitTestUtil;
 using isc::dns::InputBuffer;
 using isc::dns::OutputBuffer;
 using isc::dns::Name;
+using isc::dns::MessageRenderer;
 using isc::dns::NameComparisonResult;
 
 //
@@ -280,6 +281,38 @@ TEST_F(NameTest, toText)
 
     // the root name is a special case: omit_final_dot will be ignored.
     EXPECT_EQ(".", Name(".").toText(true));
+
+    // test all printable characters to see whether special characters are
+    // escaped while the others are intact.  note that the conversion is
+    // implementation specific; for example, it's not invalid to escape a
+    // "normal" character such as 'a' with regard to the standard.
+    std::string all_printable("!\\\"#\\$%&'\\(\\)*+,-\\./0123456789:\\;<=>?\\@"
+                              "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                              "[\\\\]^_.`abcdefghijklmnopqrstuvwxyz{|}~.");
+    EXPECT_EQ(all_printable,
+              nameFactoryFromWire("testdata/name_fromWire13", 0).toText());
+
+    std::string all_nonprintable(
+        "\\000\\001\\002\\003\\004\\005\\006\\007\\008\\009"
+        "\\010\\011\\012\\013\\014\\015\\016\\017\\018\\019"
+        "\\020\\021\\022\\023\\024\\025\\026\\027\\028\\029"
+        "\\030\\031\\032\\127\\128\\129"
+        "\\130\\131\\132\\133\\134\\135\\136\\137\\138\\139"
+        "\\140\\141\\142\\143\\144\\145\\146\\147\\148\\149"
+        "\\150\\151\\152\\153\\154\\155\\156."
+        "\\157\\158\\159"
+        "\\160\\161\\162\\163\\164\\165\\166\\167\\168\\169"
+        "\\170\\171\\172\\173\\174\\175\\176\\177\\178\\179"
+        "\\180\\181\\182\\183\\184\\185\\186\\187\\188\\189"
+        "\\190\\191\\192\\193\\194\\195\\196\\197\\198\\199"
+        "\\200\\201\\202\\203\\204\\205\\206\\207\\208\\209"
+        "\\210\\211\\212\\213\\214\\215\\216\\217\\218\\219."
+        "\\220\\221\\222\\223\\224\\225\\226\\227\\228\\229"
+        "\\230\\231\\232\\233\\234\\235\\236\\237\\238\\239"
+        "\\240\\241\\242\\243\\244\\245\\246\\247\\248\\249"
+        "\\250\\251\\252\\253\\254\\255.");
+    EXPECT_EQ(all_nonprintable,
+              nameFactoryFromWire("testdata/name_fromWire14", 0).toText());
 }
 
 TEST_F(NameTest, toWireBuffer)
@@ -289,6 +322,22 @@ TEST_F(NameTest, toWireBuffer)
 
     UnitTestUtil::readWireData(std::string("01610376697803636f6d00"), data);
     Name("a.vix.com.").toWire(buffer);
+    EXPECT_EQ(true, buffer.getLength() == data.size() &&
+              memcmp(buffer.getData(), &data[0], data.size()) == 0);
+}
+
+//
+// We test various corner cases in Renderer tests, but add this test case
+// to fill the code coverage gap.
+//
+TEST_F(NameTest, toWireRenderer)
+{
+    std::vector<unsigned char> data;
+    OutputBuffer buffer(0);
+    MessageRenderer renderer(buffer);
+
+    UnitTestUtil::readWireData(std::string("01610376697803636f6d00"), data);
+    Name("a.vix.com.").toWire(renderer);
     EXPECT_EQ(true, buffer.getLength() == data.size() &&
               memcmp(buffer.getData(), &data[0], data.size()) == 0);
 }
@@ -351,6 +400,14 @@ TEST_F(NameTest, equal)
     EXPECT_TRUE(example_name.equals(Name("WWW.EXAMPLE.COM.")));
     EXPECT_TRUE(example_name != Name("www.example.org."));
     EXPECT_TRUE(example_name.nequals(Name("www.example.org.")));
+    // lengths don't match
+    EXPECT_TRUE(example_name != Name("www2.example.com."));
+    EXPECT_TRUE(example_name.nequals(Name("www2.example.com.")));
+    // lengths are equqal, but # of labels don't match (first test checks the
+    // prerequisite).
+    EXPECT_EQ(example_name.getLength(), Name("www\\.example.com.").getLength());
+    EXPECT_TRUE(example_name != Name("www\\.example.com."));
+    EXPECT_TRUE(example_name.nequals(Name("www\\.example.com.")));
 }
 
 TEST_F(NameTest, isWildcard)
@@ -466,5 +523,13 @@ TEST_F(NameTest, gthan)
 
     EXPECT_FALSE(small_name.gthan(large_name));
     EXPECT_FALSE(small_name > large_name);
+}
+
+// test operator<<.  We simply confirm it appends the result of toText().
+TEST_F(NameTest, LeftShiftOperator)
+{
+    std::ostringstream oss;
+    oss << example_name;
+    EXPECT_EQ(example_name.toText(), oss.str());
 }
 }
