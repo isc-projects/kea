@@ -403,7 +403,7 @@ TEST_F(NameTest, equal)
     // lengths don't match
     EXPECT_TRUE(example_name != Name("www2.example.com."));
     EXPECT_TRUE(example_name.nequals(Name("www2.example.com.")));
-    // lengths are equqal, but # of labels don't match (first test checks the
+    // lengths are equal, but # of labels don't match (first test checks the
     // prerequisite).
     EXPECT_EQ(example_name.getLength(), Name("www\\.example.com.").getLength());
     EXPECT_TRUE(example_name != Name("www\\.example.com."));
