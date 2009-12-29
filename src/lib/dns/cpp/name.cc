@@ -25,8 +25,6 @@
 #include "name.h"
 #include "messagerenderer.h"
 
-using namespace isc::dns;
-
 using isc::dns::NameComparisonResult;
 using isc::dns::MessageRenderer;
 
