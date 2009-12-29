@@ -32,12 +32,51 @@ AC_TRY_COMPILE([
         AC_DEFINE(HAVE_SIN_LEN, 1, Define to 1 if sockaddr_in has a sin_len member)],
         AC_MSG_RESULT(no))
 
-#
-# Check availablity of gtest, which will be used for unit tests.
-#
+AC_ARG_WITH(lcov,
+[  --with-lcov         enable gtest and coverage target using the specified lcov], lcov="yes", lcov="no")
+
 AC_ARG_WITH(gtest,
 [  --with-gtest=PATH       specify a path to gtest header files (PATH/include) and library (PATH/lib)],
     gtest_path="$withval", gtest_path="no")
+
+
+USE_LCOV="no"
+if test "$lcov" != "no"; then
+	# force gtest if not set
+	if test "$gtest_path" = "no"; then
+		gtest_path="yes"
+	fi
+	if test "$lcov" != "yes"; then
+		LCOV_PATHS=$lcov
+	else
+		LCOV_PATHS="/usr/bin/lcov /usr/local/bin/lcov"
+	fi
+	for f in $LCOV_PATHS; do
+		if test -x "$f"; then
+			USE_LCOV="yes"
+			LCOV=$f
+		fi
+	done
+	if test $USE_LCOV != "yes"; then
+		AC_MSG_ERROR([Cannot find lcov in: $LCOV_PATHS])
+	fi
+	# is genhtml always in the same directory?
+	GENHTML=`echo "$LCOV" | sed s/lcov$/genhtml/`
+	if test ! -x $GENHTML; then
+		AC_MSG_ERROR([genhtml not found, needed for lcov])
+	fi
+	CPPFLAGS="$(CPPFLAGS) -fprofile-arcs -ftest-coverage"
+	LIBS=" $(LIBS) -lgcov"
+	AC_SUBST(CPPFLAGS)
+	AC_SUBST(LIBS)
+	AC_SUBST(LCOV)
+	AC_SUBST(GENHTML)
+fi
+AC_SUBST(USE_LCOV)
+
+#
+# Check availablity of gtest, which will be used for unit tests.
+#
 if test "$gtest_path" != "no"
 then
 	if test "$gtest_path" != "yes"; then
