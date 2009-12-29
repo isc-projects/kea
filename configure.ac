@@ -33,16 +33,31 @@ AC_TRY_COMPILE([
         AC_MSG_RESULT(no))
 
 #
-# Check availablity of gtest, which might be used for unit tests.
+# Check availablity of gtest, which will be used for unit tests.
 #
 AC_ARG_WITH(gtest,
-[  --with-gtest=PATH       specify a path to Gtest header files (PATH/include) and library (PATH/lib)],
+[  --with-gtest=PATH       specify a path to gtest header files (PATH/include) and library (PATH/lib)],
     gtest_path="$withval", gtest_path="no")
 if test "$gtest_path" != "no"
 then
-	GTEST_INCLUDES="-I${gtest_path}/include"
-	GTEST_LDFLAGS="-L${gtest_path}/lib"
-	GTEST_LDADD="-lgtest"
+	if test "$gtest_path" != "yes"; then
+		GTEST_PATHS=$gtest_path
+	else
+		GTEST_PATHS="/usr /usr/local"
+	fi
+
+	GTEST_FOUND="false"
+	for dir in $GTEST_PATHS; do
+		if test -f "$dir/include/gtest/gtest.h"; then
+			GTEST_INCLUDES="-I$dir/include"
+			GTEST_LDFLAGS="-L$dir/lib"
+			GTEST_LDADD="-lgtest"
+			GTEST_FOUND="true"
+		fi
+	done
+	if test $GTEST_FOUND != "true"; then
+		AC_MSG_ERROR([Cannot find gtest in: $GTEST_PATHS])
+	fi
 else
 	GTEST_INCLUDES=
 	GTEST_LDFLAGS=
