@@ -233,8 +233,8 @@ Name::Name(const std::string &namestring, bool downcase)
         }
     }
 
-    labels_ = offsets.size();
-    assert(labels_ > 0 && labels_ <= Name::MAX_LABELS);
+    labelcount_ = offsets.size();
+    assert(labelcount_ > 0 && labelcount_ <= Name::MAX_LABELS);
     ndata_.assign(ndata.data(), ndata.size());
     length_ = ndata_.size();
     offsets_.assign(offsets.begin(), offsets.end());
@@ -350,7 +350,7 @@ Name::Name(InputBuffer& buffer, bool downcase)
         dns_throw(IncompleteName, "incomplete wire-format name");
     }
 
-    labels_ = offsets.size();
+    labelcount_ = offsets.size();
     length_ = nused;
     offsets_.assign(offsets.begin(), offsets.end());
     buffer.setPosition(pos_begin + cused);
@@ -375,13 +375,13 @@ Name::toText(bool omit_final_dot) const
         //
         // Special handling for the root label.  We ignore omit_final_dot.
         //
-        assert(labels_ == 1 && ndata_[0] == '\0');
+        assert(labelcount_ == 1 && ndata_[0] == '\0');
         return (".");
     }
 
     std::string::const_iterator np = ndata_.begin();
     std::string::const_iterator np_end = ndata_.end();
-    unsigned int labels = labels_; // use for integrity check
+    unsigned int labels = labelcount_; // use for integrity check
     // init with an impossible value to catch error cases in the end:
     unsigned int count = MAX_LABELLEN + 1;
 
@@ -456,8 +456,8 @@ Name::compare(const Name& other) const
     // of the names.
 
     unsigned int nlabels = 0;
-    unsigned int l1 = labels_;
-    unsigned int l2 = other.labels_;
+    unsigned int l1 = labelcount_;
+    unsigned int l2 = other.labelcount_;
     int ldiff = (int)l1 - (int)l2;
     unsigned int l = (ldiff < 0) ? l1 : l2;
 
@@ -511,11 +511,11 @@ Name::compare(const Name& other) const
 bool
 Name::equals(const Name& other) const
 {
-    if (length_ != other.length_ || labels_ != other.labels_) {
+    if (length_ != other.length_ || labelcount_ != other.labelcount_) {
         return (false);
     }
 
-    for (unsigned int l = labels_, pos = 0; l > 0; --l) {
+    for (unsigned int l = labelcount_, pos = 0; l > 0; --l) {
         unsigned char count = ndata_[pos];
         if (count != other.ndata_[pos]) {
             return (false);
@@ -583,7 +583,7 @@ Name
 Name::concatenate(const Name& suffix) const
 {
     assert(this->length_ > 0 && suffix.length_ > 0);
-    assert(this->labels_ > 0 && suffix.labels_ > 0);
+    assert(this->labelcount_ > 0 && suffix.labelcount_ > 0);
 
     unsigned int length = this->length_ + suffix.length_ - 1;
     if (length > Name::MAX_WIRE) {
@@ -603,16 +603,16 @@ Name::concatenate(const Name& suffix) const
     // excluding that for the trailing dot, and append the offsets of the
     // suffix name with the additional offset of the length of the prefix.
     //
-    unsigned int labels = this->labels_ + suffix.labels_ - 1;
+    unsigned int labels = this->labelcount_ + suffix.labelcount_ - 1;
     assert(labels <= Name::MAX_LABELS);
     retname.offsets_.reserve(labels);
     retname.offsets_.assign(&this->offsets_[0],
-                            &this->offsets_[0] + this->labels_ - 1);
+                            &this->offsets_[0] + this->labelcount_ - 1);
     transform(suffix.offsets_.begin(), suffix.offsets_.end(),
               back_inserter(retname.offsets_),
               bind2nd(OffsetAdjuster(), this->length_ - 1));
     assert(retname.offsets_.size() == labels);
-    retname.labels_ = labels;
+    retname.labelcount_ = labels;
 
     return (retname);
 }
@@ -620,14 +620,14 @@ Name::concatenate(const Name& suffix) const
 Name
 Name::split(unsigned int first, unsigned int n) const
 {
-    if (n == 0 || first + n > labels_) {
+    if (n == 0 || first + n > labelcount_) {
         dns_throw(OutOfRange, "Name::split: invalid split range");
     }
 
     Name retname;
     // If the specified range doesn't include the trailing dot, we need one
     // more label for that.
-    unsigned int newlabels = (first + n == labels_) ? n : n + 1;
+    unsigned int newlabels = (first + n == labelcount_) ? n : n + 1;
 
     //
     // Set up offsets: copy the corresponding range of the original offsets
@@ -649,8 +649,8 @@ Name::split(unsigned int first, unsigned int n) const
     retname.ndata_.push_back(0);
 
     retname.length_ = retname.ndata_.size();
-    retname.labels_ = retname.offsets_.size();
-    assert(retname.labels_ == newlabels);
+    retname.labelcount_ = retname.offsets_.size();
+    assert(retname.labelcount_ == newlabels);
 
     return (retname);
 }
@@ -659,7 +659,7 @@ Name&
 Name::downcase()
 {
     unsigned int nlen = length_;
-    unsigned int labels = labels_;
+    unsigned int labels = labelcount_;
     unsigned int pos = 0;
 
     while (labels > 0 && nlen > 0) {

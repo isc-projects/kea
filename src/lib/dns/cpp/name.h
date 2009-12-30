@@ -223,7 +223,7 @@ private:
     /// the moment defined as private because it will construct an incomplete
     /// object in that it doesn't have any labels.  We may reconsider this
     /// design choice as we see more applications of the class.
-    Name() : length_(0), labels_(0) {}
+    Name() : length_(0), labelcount_(0) {}
 public:
     /// Constructor from a string
     ///
@@ -264,7 +264,8 @@ public:
     ///
     /// This method never throws an exception.
     ///
-    /// \return the length of the <code>Name</code>
+    /// \return the length (the number of octets in wire format) of the
+    /// <code>Name</code>
     size_t getLength() const { return (length_); }
 
     /// \brief Returns the number of labels contained in the <code>Name</code>.
@@ -275,7 +276,7 @@ public:
     /// This method never throws an exception.
     ///
     /// \return the number of labels
-    unsigned int getLabels() const { return (labels_); }
+    unsigned int getLabelCount() const { return (labelcount_); }
     //@}
 
     ///
@@ -545,7 +546,7 @@ private:
     std::string ndata_;
     std::vector<unsigned char> offsets_;
     unsigned int length_;
-    unsigned int labels_;
+    unsigned int labelcount_;
 };
 
 ///
