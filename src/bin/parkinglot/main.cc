@@ -133,35 +133,40 @@ main(int argc, char* argv[]) {
     //plot = ParkingLot(port);
 
     // initialize command channel
-    CommandSession cs = CommandSession(PROGRAM, SPECFILE, my_config_handler, my_command_handler);
+    try {
+        CommandSession cs = CommandSession(PROGRAM, SPECFILE, my_config_handler, my_command_handler);
     
-    // main server loop
-    fd_set fds;
-    int ps = plot.getSocket();
-    int ss = cs.getSocket();
-    int nfds = max(ps, ss) + 1;
-    int counter = 0;
-
-    cout << "Server started." << endl;
-    while (true) {
-        FD_ZERO(&fds);
-        FD_SET(ps, &fds);
-        FD_SET(ss, &fds);
-
-        int n = select(nfds, &fds, NULL, NULL, NULL);
-        if (n < 0)
-            throw FatalError("select error");
-
-        if (FD_ISSET(ps, &fds)) {
-            ++counter;
-            plot.processMessage();
+        // main server loop
+        fd_set fds;
+        int ps = plot.getSocket();
+        int ss = cs.getSocket();
+        int nfds = max(ps, ss) + 1;
+        int counter = 0;
+    
+        cout << "Server started." << endl;
+        while (true) {
+            FD_ZERO(&fds);
+            FD_SET(ps, &fds);
+            FD_SET(ss, &fds);
+    
+            int n = select(nfds, &fds, NULL, NULL, NULL);
+            if (n < 0)
+                throw FatalError("select error");
+    
+            if (FD_ISSET(ps, &fds)) {
+                ++counter;
+                plot.processMessage();
+            }
+    
+            /* isset not really necessary, but keep it for now */
+            if (FD_ISSET(ss, &fds)) {
+                cs.check_command();
+            }
         }
-
-        /* isset not really necessary, but keep it for now */
-        if (FD_ISSET(ss, &fds)) {
-            cs.check_command();
-        }
+    } catch (isc::cc::SessionError se) {
+        cout << se.what() << endl;
+        exit(1);
     }
-
+    
     return (0);
 }

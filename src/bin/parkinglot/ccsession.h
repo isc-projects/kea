@@ -36,7 +36,7 @@ public:
     CommandSession(std::string module_name, std::string spec_file_name,
                    isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config) = NULL,
                    isc::data::ElementPtr(*command_handler)(isc::data::ElementPtr command) = NULL
-                  );
+                  ) throw (isc::cc::SessionError);
     int getSocket();
 
     /**
