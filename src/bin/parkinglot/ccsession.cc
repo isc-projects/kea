@@ -75,7 +75,7 @@ CommandSession::CommandSession(std::string module_name,
                                std::string spec_file_name,
                                isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config),
                                isc::data::ElementPtr(*command_handler)(isc::data::ElementPtr command)
-                              ) :
+                              ) throw (isc::cc::SessionError):
     module_name_(module_name),
     session_(isc::cc::Session())
 {
