@@ -49,6 +49,7 @@ main(int argc, char **argv) {
 
     if (def.validate(data)) {
         cout << "Data validated" << endl;
+        cout << data << endl;
     } else {
         cout << "Error in data validation" << endl;
     }
