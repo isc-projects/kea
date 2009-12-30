@@ -103,7 +103,7 @@ Name::Name(const std::string &namestring, bool downcase)
     ft_state state = ft_init;
 
     std::vector<unsigned char> offsets;
-    offsets.reserve(128);
+    offsets.reserve(Name::MAX_LABELS);
     offsets.push_back(0);
 
     std::string ndata;
