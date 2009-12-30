@@ -259,6 +259,18 @@ private:
 /// multi-GB data, a separate exception (e.g., \c std::bad_alloc) may be thrown
 /// by the system.  This also applies to the constructor with a very large
 /// initial size.
+///
+/// Note to developers: it may make more sense to introduce an abstract base
+/// class for the \c OutputBuffer and define the simple implementation as a
+/// a concrete derived class.  That way we can provide flexibility for future
+/// extension such as more efficient buffer implementation or allowing users
+/// to have their own customized version without modifying the source code.
+/// We in fact considered that option, but at the moment chose the simpler
+/// approach with a single concrete class because it may make the
+/// implementation unnecessarily complicated while we were still not certain
+/// if we really want that flexibility.  We may revisit the class design as
+/// we see more applications of the class.  The same considerations apply to
+/// the \c InputBuffer and \c MessageRenderer classes.
 class OutputBuffer {
 public:
     ///
