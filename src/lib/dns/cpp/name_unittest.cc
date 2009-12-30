@@ -203,7 +203,7 @@ TEST_F(NameTest, fromText)
                           "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9." // 200
                           "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9." // 240
                           "0.1.2.3.4.5.6.");
-    EXPECT_EQ(Name::MAX_LABELS, maxlabels.getLabels());
+    EXPECT_EQ(Name::MAX_LABELS, maxlabels.getLabelCount());
 }
 
 TEST_F(NameTest, fromWire)
@@ -253,7 +253,8 @@ TEST_F(NameTest, fromWire)
                  isc::dns::TooLongName);
 
     // A name with possible maximum number of labels; awkward but valid
-    EXPECT_EQ(nameFactoryFromWire("testdata/name_fromWire11", 0).getLabels(),
+    EXPECT_EQ(nameFactoryFromWire("testdata/name_fromWire11",
+                                  0).getLabelCount(),
               Name::MAX_LABELS);
 
     // Wire format including an invalid label length
@@ -264,7 +265,8 @@ TEST_F(NameTest, fromWire)
     EXPECT_EQ("vix.com.", nameFactoryFromWire("testdata/name_fromWire1",
                                               25, true).toText());
     EXPECT_EQ(3,
-              nameFactoryFromWire("testdata/name_fromWire1", 25).getLabels());
+              nameFactoryFromWire("testdata/name_fromWire1",
+                                  25).getLabelCount());
 }
 
 TEST_F(NameTest, toText)
