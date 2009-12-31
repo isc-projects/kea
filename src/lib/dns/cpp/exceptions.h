@@ -17,6 +17,7 @@
 #ifndef __EXCEPTIONS_H
 #define __EXCEPTIONS_H 1
 
+#include <stdexcept>
 #include <string>
 
 namespace isc {
@@ -29,7 +30,7 @@ namespace dns {
 /// exception such as the file name and line number where the exception is
 /// triggered.
 ///
-class Exception {
+class Exception : public std::exception {
 public:
     ///
     /// \name Constructors and Destructor
@@ -44,7 +45,7 @@ public:
     Exception(const char* file, size_t line, const char* what) :
         file_(file), line_(line), what_(what) {}
     /// The destructor
-    virtual ~Exception() {}
+    virtual ~Exception() throw() {}
     //@}
 private:
     ///
@@ -53,6 +54,19 @@ private:
     void operator=(const Exception& src);
 
 public:
+    ///
+    /// \name Methods Reimplemented against the Standard Exception Class
+    ///
+    //@{
+    /// \brief Returns a C-style character string of the cause of the exception.
+    ///
+    /// Note: we normally don't use exception specifications, but this is an
+    /// "exception" to that policy as it's enforced by the base class.
+    ///
+    /// @return A C-style character string of the exception cause.
+    virtual const char* what() const throw();
+    //@}
+
     ///
     /// \name Getter Methods
     ///
@@ -71,6 +85,7 @@ public:
     ///
     /// @return an integer specifying the line number.
     size_t getLine() const { return (line_); }
+    //@}
 
 private:
     const char* const file_;

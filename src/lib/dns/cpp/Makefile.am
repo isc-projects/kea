@@ -1,6 +1,6 @@
 lib_LTLIBRARIES = libdns.la
 libdns_la_SOURCES = buffer.h name.cc name.h messagerenderer.h messagerenderer.cc
-libdns_la_SOURCES += exceptions.h
+libdns_la_SOURCES += exceptions.h exceptions.cc
 
 TESTS =
 if HAVE_GTEST
