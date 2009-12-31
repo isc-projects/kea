@@ -17,7 +17,11 @@ perform-coverage: check
 report-coverage:
 	$(LCOV) --capture --directory . --output-file all.info
 	$(LCOV) --remove all.info \
-			c++/4.4/\* \
+			c++/4.4\*/\* \
+			c++/4.4\*/backward/\* \
+			c++/4.4\*/bits/\* \
+			c++/4.4\*/ext/\* \
+			c++/4.4\*/\*-\*/bits/\* \
 			boost/\* \
 			gtest/\* \
 			usr/include/\* \
