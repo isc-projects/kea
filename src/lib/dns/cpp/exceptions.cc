@@ -14,39 +14,32 @@
 
 // $Id$
 
-#include <stdexcept>
 #include <string>
 
 #include "exceptions.h"
 
-#include <gtest/gtest.h>
-
 using isc::dns::Exception;
 
-namespace {
+namespace isc {
+namespace dns {
 
-class ExceptionTest : public ::testing::Test {
-protected:
-    ExceptionTest() : teststring("test") {}
-    const char* teststring;
-};
+const char*
+Exception::what() const throw()
+{
+    const char* whatstr = "isc::dns::Exception";
 
-TEST_F(ExceptionTest, BasicMethods) {
+    // XXX: even though it's very unlikely that c_str() throws an exception,
+    // it's still not 100% guaranteed.  To meet the exception specification
+    // of this function, we catch any unexpected exception and fall back to
+    // the pre-defined constant.
     try {
-        dns_throw(Exception, teststring);
-    } catch (Exception& ex) {
-        EXPECT_EQ(ex.getMessage(), std::string(teststring));
-        EXPECT_EQ(ex.getFile(), std::string(__FILE__));
-        EXPECT_EQ(ex.getLine(), __LINE__ - 4);
+        whatstr = what_.c_str();
+    } catch (...) {
+        // no exception handling is necessary.  just have to catch exceptions.
     }
+
+    return (whatstr);
 }
 
-// Test to see if it works as a proper derived class of std::exception.
-TEST_F(ExceptionTest, StdInheritance) {
-    try {
-        dns_throw(Exception, teststring);
-    } catch (std::exception& ex) {
-        EXPECT_EQ(std::string(ex.what()), std::string(teststring));
-    }
 }
 }
