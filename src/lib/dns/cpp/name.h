@@ -130,7 +130,14 @@ public:
     /// relationship between any two names since all names are absolute and
     /// they at least share the trailing empty label.
     /// So, for example, the relationship between "com." and "net." is
-    /// "commonancestor", even though it may be counter intuitive.
+    /// "commonancestor".  This may be counter intuitive and inconvenient, but
+    /// we'll keep this design at the moment until we decide whether and how to
+    /// handle "non absolute" names (see the description of the \c Name class).
+    /// If we want to (re)introduce the notion of non absolute names, we'll
+    /// want to distinguish "com" and "com.", and the current definition would
+    /// be more compatible for that purpose.
+    /// If, on the other hand, we finally decide we really don't need that
+    /// notion, we'll probably reconsider the design here, too. 
     enum NameRelation {
         SUPERDOMAIN = 0,
         SUBDOMAIN = 1,
