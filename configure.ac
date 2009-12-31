@@ -33,7 +33,7 @@ AC_TRY_COMPILE([
         AC_MSG_RESULT(no))
 
 AC_ARG_WITH(lcov,
-[  --with-lcov         enable gtest and coverage target using the specified lcov], lcov="yes", lcov="no")
+[  --with-lcov[=PROGRAM]         enable gtest and coverage target using the specified lcov], lcov="$withval", lcov="no")
 
 AC_ARG_WITH(gtest,
 [  --with-gtest=PATH       specify a path to gtest header files (PATH/include) and library (PATH/lib)],
@@ -65,8 +65,9 @@ if test "$lcov" != "no"; then
 	if test ! -x $GENHTML; then
 		AC_MSG_ERROR([genhtml not found, needed for lcov])
 	fi
-	CPPFLAGS="$(CPPFLAGS) -fprofile-arcs -ftest-coverage"
-	LIBS=" $(LIBS) -lgcov"
+	# GCC specific?
+	CPPFLAGS="$CPPFLAGS -fprofile-arcs -ftest-coverage"
+	LIBS=" $LIBS -lgcov"
 	AC_SUBST(CPPFLAGS)
 	AC_SUBST(LIBS)
 	AC_SUBST(LCOV)
