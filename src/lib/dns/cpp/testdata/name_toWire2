@@ -1,0 +1,14 @@
+#
+# Rendering names in a large buffer.  [x] means a compression pointer pointing
+# to offset 'x'.
+#
+#bytes:
+#3f 40
+#ff 00
+#(1) a (7) e  x  a  m  p  l  e (3) c  o  m  .
+ 01 61 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00
+#[3fff] = a.example.com: can be compressed
+ ffff
+#(1) b(7)  e  x  a  m  p  l  e (3) c  o  m  .; cannot compress as the pointer
+#                                            (0x4001) would exceed 0x4000
+ 01 62 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00
