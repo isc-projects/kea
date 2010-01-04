@@ -22,6 +22,13 @@
 
 using namespace isc::data;
 
+#include <iostream>
+using std::oct;
+#include <iomanip>
+using std::setfill;
+using std::setw;
+
+
 TEST(Element, type) {
     // this tests checks whether the getType() function returns the
     // correct type
@@ -41,7 +48,7 @@ TEST(Element, type) {
     EXPECT_EQ(map_el.getType(), Element::map);
 }
 
-TEST(Element, str) {
+TEST(Element, from_and_to_str) {
     // this test checks whether the str() method returns the same
     // string that was used for creation
     ElementPtr el;
@@ -56,9 +63,35 @@ TEST(Element, str) {
     sv.push_back("{\"name\": \"foo\", \"value\": 47806}");
 
     BOOST_FOREACH(std::string s, sv) {
+        // also test << operator, which uses Element::str()
+        std::ostringstream stream;
         el = Element::createFromString(s);
-        EXPECT_EQ(el->str(), s);
+        stream << el;
+        EXPECT_EQ(stream.str(), s);
     }
+
+    // some parse errors
+    try {
+        Element::createFromString("{1}");
+    } catch (isc::data::ParseError pe) {
+        std::string s = std::string(pe.what());
+        EXPECT_EQ(s, "String expected line 1 pos 3");
+    }
+    
+    sv.clear();
+    sv.push_back("{1}");
+    //ElementPtr ep = Element::createFromString("\"aaa\nbbb\"err");
+    //std::cout << ep << std::endl;
+    sv.push_back("\n\nTru");
+    sv.push_back("{ \n \"aaa\nbbb\"err:");
+    sv.push_back("{ \t\n \"aaa\nbbb\"\t\n\n:\n True, \"\\\"");
+    sv.push_back("{ \"a\": None}");
+    sv.push_back("");
+    BOOST_FOREACH(std::string s, sv) {
+        
+        EXPECT_THROW(el = Element::createFromString(s), isc::data::ParseError);
+    }
+
 }
 
 TEST(Element, create_and_value_throws) {
@@ -139,7 +172,8 @@ TEST(Element, ListElement) {
 TEST(Element, MapElement) {
     // this function checks the specific functions for ListElements
     ElementPtr el = Element::createFromString("{ \"name\": \"foo\", \"value1\": \"bar\", \"value2\": { \"number\": 42 } }");
-
+    ElementPtr el2;
+    
     EXPECT_EQ(el->get("name")->stringValue(), "foo");
     EXPECT_EQ(el->get("value2")->getType(), Element::map);
 
@@ -152,8 +186,96 @@ TEST(Element, MapElement) {
     EXPECT_TRUE(isNull(el->get("value3")));
 
     EXPECT_EQ(el->find("value2/number")->intValue(), 42);
+    EXPECT_TRUE(isNull(el->find("value2/nothing/")));
    
     EXPECT_EQ(el->find("value1")->stringValue(), "bar");
     EXPECT_EQ(el->find("value1/")->stringValue(), "bar");
+    
+    EXPECT_TRUE(el->find("value1", el2));
+    EXPECT_FALSE(el->find("name/error", el2));
+}
+
+void my_print(std::string &s) {
+    int i;
+    for (i = 0; i < s.size(); i++) {
+        if (isalnum(s.at(i))) {
+            std::cout << s.at(i);
+        } else {
+            std::cout << "\\" << setfill('0') << setw(3) << oct << int(s.at(i));
+        }
+    }
+    std::cout << std::endl;
+}
+
+TEST(Element, to_and_from_wire) {
+    ElementPtr el, decoded_el;
+    std::string wire;
+    std::vector<std::string> sv;
+    std::vector<std::string> sw;
+    std::stringstream bigstring, bigstring2;
+    std::stringstream bigwire, bigwire2;
+
+    sv.push_back("{\"name\": \"foo\"}");
+    sw.push_back("Skan\004name\050\003foo");
+    sv.push_back("{\"value2\": {\"number\": 42}}");
+    sw.push_back("Skan\006value2\042\013\006number\046\00242");
+    sv.push_back("{\"bool\": False, \"bool2\": True, \"real\": 2.34, \"string\": \"foo\"}");
+    sw.push_back("Skan\004bool\045\0010\005bool2\045\0011\004real\047\0042\05634\006string\050\003foo");
+    sv.push_back("{\"list\": [ 1, 2, 3, 4 ]}");
+    sw.push_back("Skan\004list\043\014\046\0011\046\0012\046\0013\046\0014");
+
+    // some big ones
+
+    bigstring << "{\"bigstring\": \"";
+    bigwire << "Skan\011bigstring\030\001\001";
+    for (size_t i = 0; i < 257; i++) {
+        bigstring << "x";
+        bigwire << "x";
+    }
+    bigstring << "\"}";
+    sv.push_back(bigstring.str());
+    sw.push_back(bigwire.str());
+
+
+    bigstring2 << "{\"bigstring2\": \"";
+    bigwire2 << "Skan\012bigstring2\010";
+    bigwire2 << '\000' << '\001' << '\000' << '\001';
+    for (size_t i = 0; i < 65537; i++) {
+        bigstring2 << "x";
+        bigwire2 << "x";
+    }
+    bigstring2 << "\"}";
+    sv.push_back(bigstring2.str());
+    sw.push_back(bigwire2.str());
+
+
+    BOOST_FOREACH(std::string s, sv) {
+        // also test << operator, which uses Element::str()
+        el = Element::createFromString(s);
+        EXPECT_EQ(s, el->str());
+        wire = el->toWire();
+        /*
+        std::cout << "Encoded wire format:" << std::endl;
+        my_print(wire);
+        std::cout << "Expecting:" << std::endl;
+        my_print(sw.at(0));
+        */
+        EXPECT_EQ(sw.at(0), wire);
+        sw.erase(sw.begin());
+        decoded_el = Element::fromWire(wire);
+        EXPECT_EQ(s, decoded_el->str());
+    }
+    
+    //EXPECT_THROW(Element::fromWire("Skan\004name\050\003foo"), DecodeError);
+    EXPECT_THROW(Element::fromWire("Skan\004name\050"), DecodeError);
+    EXPECT_THROW(Element::fromWire("Skan\004na"), DecodeError);
+    EXPECT_THROW(Element::fromWire("Skan\004name\050\003fo"), DecodeError);
+    EXPECT_NO_THROW(Element::fromWire("Skan\004name\041\003foo"));
+    EXPECT_THROW(Element::fromWire("Skan\004name\041\003fo"), DecodeError);
+    EXPECT_NO_THROW(Element::fromWire("Skan\004name\044\001a"));
+    EXPECT_THROW(Element::fromWire("Skab\004name\050\003foo"), DecodeError);
+
+    //EXPECT_EQ("\047\0031.2", Element::create(1.2)->toWire(0));
+    EXPECT_EQ("\046\0011", Element::createFromString("[ 1 ]")->toWire(1));
 }
 
