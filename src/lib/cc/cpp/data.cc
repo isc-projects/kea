@@ -20,6 +20,7 @@ const unsigned char ITEM_LIST = 0x03;
 const unsigned char ITEM_NULL = 0x04;
 const unsigned char ITEM_BOOL = 0x05;
 const unsigned char ITEM_INT  = 0x06;
+const unsigned char ITEM_REAL = 0x07;
 const unsigned char ITEM_UTF8 = 0x08;
 const unsigned char ITEM_MASK = 0x0f;
 
@@ -246,7 +247,7 @@ from_stringstream_bool(std::istream &in, int& line, int& pos)
     } else if (boost::iequals(word, "False")) {
         return Element::create(false);
     } else {
-        return ElementPtr();
+        throw ParseError(std::string("Bad boolean value: ") + word, line, pos);
     }
 }
 
@@ -294,9 +295,6 @@ from_stringstream_map(std::istream &in, int& line, int& pos)
         in.get();
         pos++;
         p.second = Element::createFromString(in, line, pos);
-        if (!p.second) {
-            throw ParseError(std::string("missing map value for ") + p.first, line, pos);
-        };
         m.insert(p);
         skip_to(in, line, pos, ",}", " \t\n");
         c = in.get();
@@ -544,16 +542,13 @@ MapElement::strXML(size_t prefix)
     return ss.str();
 }
 
-// currently throws when one of the types in the path (except the one
+// throws when one of the types in the path (except the one
 // we're looking for) is not a MapElement
 // returns 0 if it could simply not be found
 // should that also be an exception?
 ElementPtr
 MapElement::find(const std::string& id)
 {
-    if (getType() != map) {
-        throw TypeError();
-    }
     size_t sep = id.find('/');
     if (sep == std::string::npos) {
         return get(id);
@@ -612,7 +607,8 @@ decode_bool(std::stringstream& in, int& item_length)
 {
     char c;
     c = in.get();
-    if (c == 0x01) {
+    
+    if (c == '1') {
         return Element::create(true);
     } else {
         return Element::create(false);
@@ -621,6 +617,13 @@ decode_bool(std::stringstream& in, int& item_length)
 
 ElementPtr
 decode_int(std::stringstream& in, int& item_length)
+{
+    int skip, me;
+    return from_stringstream_int_or_double(in, skip, me);
+}
+
+ElementPtr
+decode_real(std::stringstream& in, int& item_length)
 {
     int skip, me;
     return from_stringstream_int_or_double(in, skip, me);
@@ -731,6 +734,9 @@ decode_element(std::stringstream& in, int& in_length)
     case ITEM_INT:
         element = decode_int(in, item_length);
         break;
+    case ITEM_REAL:
+        element = decode_real(in, item_length);
+        break;
     case ITEM_BLOB:
         element = decode_blob(in, item_length);
         break;
@@ -792,21 +798,19 @@ encode_length(unsigned int length, unsigned char type)
         type |= ITEM_LENGTH_8;
         ss << type << val;
     } else if (length <= 0x0000ffff) {
-        unsigned char val[3];
+        unsigned char val[2];
         val[0] = (length & 0x0000ff00) >> 8;
         val[1] = (length & 0x000000ff);
-        val[2] = 0;
         type |= ITEM_LENGTH_16;
-        ss << type << val;
+        ss << type << val[0] << val[1];
     } else {
-        unsigned char val[5];
+        unsigned char val[4];
         val[0] = (length & 0xff000000) >> 24;
         val[1] = (length & 0x00ff0000) >> 16;
         val[2] = (length & 0x0000ff00) >> 8;
         val[3] = (length & 0x000000ff);
-        val[4] = 0;
         type |= ITEM_LENGTH_32;
-        ss << type << val;
+        ss << type << val[0] << val[1] << val[2] << val[3];
     }
     return ss.str();
 }
@@ -816,7 +820,7 @@ StringElement::toWire(int omit_length)
 {
     std::stringstream ss;
 
-    int length = stringValue().length();
+    unsigned int length = stringValue().length();
     ss << encode_length(length, ITEM_UTF8) << stringValue();
 
     return ss.str();
@@ -861,7 +865,7 @@ DoubleElement::toWire(int omit_length)
 
     text << str();
     int length = text.str().length();
-    ss << encode_length(length, ITEM_UTF8) << text.str();
+    ss << encode_length(length, ITEM_REAL) << text.str();
 
     return ss.str();
 }
