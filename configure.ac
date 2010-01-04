@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.64])
+AC_PREREQ([2.59])
 AC_INIT(bind, 10.0.0, bind10-bugs@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
@@ -10,7 +10,10 @@ AC_CONFIG_HEADERS([config.h])
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_CC
+AM_CONDITIONAL(GCC, test "$GCC" = yes)
 AC_PROG_RANLIB
+
+AC_PROG_LIBTOOL
 
 # Checks for libraries.
 
@@ -20,6 +23,18 @@ AC_PROG_RANLIB
 AC_HEADER_STDBOOL
 AC_TYPE_SIZE_T
 
+# default compiler warning settings
+if test "X$GCC" = "Xyes"; then
+CXXFLAGS="-g -Wall -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
+fi
+
+# produce PIC unless we disable share libraries.  need this for python bindings.
+if test $enable_shared != "no" -a "X$GCC" = "Xyes"; then
+   CXXFLAGS="$CXXFLAGS -fPIC"
+fi
+
+AC_SUBST(CXXFLAGS)
+
 #
 # Check availablity of gtest, which will be used for unit tests.
 #
@@ -28,9 +43,17 @@ AC_ARG_WITH(gtest,
     gtest_path="$withval", gtest_path="no")
 if test "$gtest_path" != "no"
 then
-	GTEST_INCLUDES="-I${gtest_path}/include"
-	GTEST_LDFLAGS="-L${gtest_path}/lib"
-	GTEST_LDADD="-lgtest"
+	if test "$gtest_path" != "yes"
+	then
+		GTEST_INCLUDES="-I${gtest_path}/include"
+		GTEST_LDFLAGS="-L${gtest_path}/lib"
+		GTEST_LDADD="-lgtest"
+	else
+		# todo: check for default paths (/usr and /usr/local?)
+		GTEST_INCLUDE="-I/usr/include"
+		GTEST_LDFLAGS="-L/usr/lib"
+		GTEST_LDADD="-lgtest"
+	fi
 else
 	GTEST_INCLUDES=
 	GTEST_LDFLAGS=
