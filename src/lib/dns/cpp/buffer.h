@@ -238,7 +238,8 @@ private:
 /// expensive data copy if we want to use this object with a legacy API such as
 /// a BSD socket interface.  And, indeed, this is one major purpose for this
 /// object.  Applications should use this method only under such a special
-/// circumstance.
+/// circumstance.  It should also be noted that the memory region returned by
+/// \c getData() may be invalidated after a subsequent write operation.
 ///
 /// An \c OutputBuffer class object automatically extends its memory region when
 /// data is written beyond the end of the current buffer.  However, it will
