@@ -28,7 +28,7 @@ if test "X$GCC" = "Xyes"; then
 CXXFLAGS="-g -Wall -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
 fi
 
-# produce PIC unless we disable share libraries.  need this for python bindings.
+# produce PIC unless we disable shared libraries. need this for python bindings.
 if test $enable_shared != "no" -a "X$GCC" = "Xyes"; then
    CXXFLAGS="$CXXFLAGS -fPIC"
 fi
