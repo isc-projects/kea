@@ -301,6 +301,15 @@ class MsgQ:
             sys.stdout.write("Stopping the server.\n")
         self.listen_socket.close()
 
+# can signal handling and calling a destructor be done without a
+# global variable?
+msgq = None
+
+def signal_handler(signal, frame):
+    if msgq:
+        msgq.shutdown()
+    sys.exit(0)
+
 if __name__ == "__main__":
     def check_port(option, opt_str, value, parser):
         """Function to insure that the port we are passed is actually 
@@ -319,6 +328,8 @@ if __name__ == "__main__":
                       help="port the msgq daemon will use")
     (options, args) = parser.parse_args()
 
+    signal.signal(signal.SIGTERM, signal_handler)
+
     # Announce startup.
     if options.verbose:
         sys.stdout.write("MsgQ %s\n" % __version__)
@@ -330,6 +341,9 @@ if __name__ == "__main__":
         sys.stderr.write("Error on startup: %s\n" % setup_result)
         sys.exit(1)
 
-    msgq.run()
+    try:
+        msgq.run()
+    except KeyboardInterrupt:
+        pass
 
     msgq.shutdown()
