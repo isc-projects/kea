@@ -112,7 +112,7 @@ class BoB:
         while self.cc_session is None:
             # if we have been trying for "a while" give up
             if (time.time() - cc_connect_start) > 5:
-                c_channel.kill()
+                c_channel.process.kill()
                 return "Unable to connect to c-channel after 5 seconds"
             # try to connect, and if we can't wait a short while
             try:
@@ -279,16 +279,10 @@ class BoB:
 if __name__ == "__main__":
     def reaper(signal_number, stack_frame):
         """A child process has died (SIGCHLD received)."""
-        global boss_of_bind
-        while True:
-            try:
-                (pid, exit_status) = os.waitpid(-1, os.WNOHANG)
-            except OSError as o:
-                if o.errno == errno.ECHILD: break
-                raise
-            if pid == 0: break
-            if boss_of_bind:
-                boss_of_bind.reap(pid, exit_status)
+        # don't do anything... 
+        # the Python signal handler has been set up to write
+        # down a pipe, waking up our select() bit
+        pass
                    
     def get_signame(signal_number):
         """Return the symbolic name for a signal."""
@@ -376,6 +370,17 @@ if __name__ == "__main__":
                 boss_of_bind.recv_and_process_cc_msg()
             elif fd == wakeup_fd:
                 os.read(wakeup_fd, 32)
+
+        # clean up any processes that exited
+        while True:
+            try:
+                (pid, exit_status) = os.waitpid(-1, os.WNOHANG)
+            except OSError as o:
+                if o.errno == errno.ECHILD: break
+                # XXX: should be impossible to get any other error here
+                raise
+            if pid == 0: break
+            boss_of_bind.reap(pid, exit_status)
 
         boss_of_bind.restart_processes()
 

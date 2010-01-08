@@ -1,4 +1,3 @@
-- Move child cleanup & restart out of signal handler
 - Read msgq configuration from configuration manager
 - Provide more administrator options:
   - Get process list
@@ -12,3 +11,4 @@
 - Back-off mechanism for restarting failed processes
 - Start statistics daemon
 - Statistics interaction (?)
+- Stop using poll(), as primitive operating systems (OS X) don't support it
