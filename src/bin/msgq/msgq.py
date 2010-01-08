@@ -96,9 +96,9 @@ class MsgQ:
     def setup_listener(self):
         """Set up the listener socket.  Internal function."""
         self.listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.listen_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.listen_socket.bind(("127.0.0.1", self.c_channel_port))
         self.listen_socket.listen(1024)
-        self.listen_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
         self.poller.register(self.listen_socket, select.POLLIN)
 
