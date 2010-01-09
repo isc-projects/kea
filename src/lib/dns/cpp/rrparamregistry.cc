@@ -22,8 +22,6 @@
 #include <sstream>
 #include <utility>
 
-#include <iostream>             // for testing
-
 #include <stdint.h>
 
 #include <boost/shared_ptr.hpp>
