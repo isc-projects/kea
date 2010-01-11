@@ -73,10 +73,10 @@ struct CIStringLess :
 };
 
 struct RRTypeParam {
-    RRTypeParam(const string& type_string, uint16_t type_code) :
-        type_string_(type_string), type_code_(type_code) {}
-    string type_string_;
-    uint16_t type_code_;
+    RRTypeParam(const string& code_string, uint16_t code) :
+        code_string_(code_string), code_(code) {}
+    string code_string_;
+    uint16_t code_;
 
     /// magic constants
     static const unsigned int MAX_CODE = 0xffff;
@@ -87,8 +87,6 @@ struct RRTypeParam {
 };
 
 typedef shared_ptr<RRTypeParam> RRTypeParamPtr;
-typedef pair<string, RRTypeParamPtr> StrRRTypePair;
-typedef pair<uint16_t, RRTypeParamPtr> CodeRRTypePair;
 typedef map<string, RRTypeParamPtr, CIStringLess> StrRRTypeMap;
 typedef map<uint16_t, RRTypeParamPtr> CodeRRTypeMap;
 
@@ -100,10 +98,10 @@ const size_t RRTypeParam::UNKNOWN_MAXLEN =
     RRTypeParam::UNKNOWN_MAX.size();
 
 struct RRClassParam {
-    RRClassParam(const string& class_string, uint16_t class_code) :
-        class_string_(class_string), class_code_(class_code) {}
-    string class_string_;
-    uint16_t class_code_;
+    RRClassParam(const string& code_string, uint16_t code) :
+        code_string_(code_string), code_(code) {}
+    string code_string_;
+    uint16_t code_;
 
     /// magic constants
     static const unsigned int MAX_CODE = 0xffff;
@@ -114,8 +112,6 @@ struct RRClassParam {
 };
 
 typedef shared_ptr<RRClassParam> RRClassParamPtr;
-typedef pair<string, RRClassParamPtr> StrRRClassPair;
-typedef pair<uint16_t, RRClassParamPtr> CodeRRClassPair;
 typedef map<string, RRClassParamPtr, CIStringLess> StrRRClassMap;
 typedef map<uint16_t, RRClassParamPtr> CodeRRClassMap;
 
@@ -166,72 +162,87 @@ RRParamRegistry::getRegistry()
 }
 
 void
-RRParamRegistry::add(const string& class_string, uint16_t class_code,
-                     const string& type_string, uint16_t type_code
+RRParamRegistry::add(const string& classcode_string, uint16_t classcode,
+                     const string& typecode_string, uint16_t typecode
                      /* rdata_factory (notyet) */)
 {
     // XXX: rollback logic on failure is complicated.
     bool add_type = false;
     bool add_class = false;
 
-    if (impl_->code2typemap.find(type_code) == impl_->code2typemap.end()) {
+    if (impl_->code2typemap.find(typecode) == impl_->code2typemap.end()) {
         add_type = true;
     }
-    if (impl_->code2classmap.find(class_code) == impl_->code2classmap.end()) {
+    if (impl_->code2classmap.find(classcode) == impl_->code2classmap.end()) {
         add_class = true;
     }
 
     try {
-        addType(type_string, type_code);
-        addClass(class_string, class_code);
+        addType(typecode_string, typecode);
+        addClass(classcode_string, classcode);
     } catch (...) {
         if (add_type) {
-            removeType(type_code);
+            removeType(typecode);
         }
         if (add_class) {
-            removeClass(class_code);
+            removeClass(classcode);
         }
         throw;
     }
 }
 
-void
-RRParamRegistry::addClass(const string& class_string, uint16_t class_code)
+namespace {
+/// Code logic for RRTypes and RRClasses is mostly common except (C++) type and
+/// member names.  So we define type-independent templates to describe the
+/// common logic and let concrete classes to avoid code duplicates.
+/// The following summarize template parameters used in the set of template
+/// functions:
+/// PT: parameter type, either RRTypeParam or RRClassParam
+/// MC: type of mapping class from code: either CodeRRTypeMap or CodeRRClassMap
+/// MS: type of mapping class from string: either StrRRTypeMap or StrRRClassMap
+/// ET: exception type for error handling: either InvalidRRType or
+///     InvalidRRClass
+template <typename PT, typename MC, typename MS>
+inline void
+addParam(const string& code_string, uint16_t code, MC& codemap, MS& stringmap)
 {
     // Duplicate type check
-    CodeRRClassMap::const_iterator found =
-        impl_->code2classmap.find(class_code);
-    if (found != impl_->code2classmap.end()) {
-        if (found->second->class_string_ != class_string) {
-            dns_throw(RRClassExist, "Duplicate RR class registration");
+    typename MC::const_iterator found = codemap.find(code);
+    if (codemap.find(code) != codemap.end()) {
+        if (codemap.find(code)->second->code_string_ != code_string) {
+            dns_throw(RRClassExist, "Duplicate RR parameter registration");
         }
         return;
     }
 
-    RRClassParamPtr class_param = RRClassParamPtr(new RRClassParam(class_string,
-                                                               class_code));
+    typedef shared_ptr<PT> ParamPtr;
+    typedef pair<string, ParamPtr> StrParamPair;
+    typedef pair<uint16_t, ParamPtr> CodeParamPair;
+    ParamPtr param = ParamPtr(new PT(code_string, code));
     try {
-        impl_->str2classmap.insert(StrRRClassPair(class_string, class_param));
-        impl_->code2classmap.insert(CodeRRClassPair(class_code, class_param));
+        stringmap.insert(StrParamPair(code_string, param));
+        codemap.insert(CodeParamPair(code, param));
     } catch (...) {
         // Rollback to the previous state: not all of the erase operations will
         // find the entry, but we don't care.
-        impl_->str2classmap.erase(class_string);
-        impl_->code2classmap.erase(class_code);
+        stringmap.erase(code_string);
+        codemap.erase(code);
         throw;
     }
 }
 
-bool
-RRParamRegistry::removeClass(uint16_t class_code)
+template <typename MC, typename MS>
+inline bool
+removeParam(uint16_t code, MC& codemap, MS& stringmap)
 {
-    CodeRRClassMap::iterator found = impl_->code2classmap.find(class_code);
-    if (found != impl_->code2classmap.end()) {
-        size_t erased = impl_->str2classmap.erase(found->second->class_string_);
+    typename MC::iterator found = codemap.find(code);
+
+    if (found != codemap.end()) {
+        size_t erased = stringmap.erase(found->second->code_string_);
         // We must have a corresponding entry of the str2 map exists
         assert(erased == 1);
 
-        impl_->code2classmap.erase(found);
+        codemap.erase(found);
 
         return (true);
     }
@@ -239,131 +250,104 @@ RRParamRegistry::removeClass(uint16_t class_code)
     return (false);
 }
 
-uint16_t
-RRParamRegistry::getClassCode(const string& class_str) const
+template <typename PT, typename MS, typename ET>
+inline uint16_t
+getCode(const string& code_str, MS& stringmap)
 {
-    StrRRClassMap::const_iterator found;
+    typename MS::const_iterator found;
 
-    found = impl_->str2classmap.find(class_str);
-    if (found != impl_->str2classmap.end()) {
-        return (found->second->class_code_);
+    found = stringmap.find(code_str);
+    if (found != stringmap.end()) {
+        return (found->second->code_);
     }
 
-    size_t l = class_str.size();
-    if (l > RRClassParam::UNKNOWN_PREFIXLEN &&
-        l <= RRClassParam::UNKNOWN_MAXLEN &&
-        caseStringEqual(class_str, RRClassParam::UNKNOWN_PREFIX,
-                        RRClassParam::UNKNOWN_PREFIXLEN)) {
+    size_t l = code_str.size();
+    if (l > PT::UNKNOWN_PREFIXLEN &&
+        l <= PT::UNKNOWN_MAXLEN &&
+        caseStringEqual(code_str, PT::UNKNOWN_PREFIX, PT::UNKNOWN_PREFIXLEN)) {
         unsigned int code;
-        istringstream iss(class_str.substr(RRClassParam::UNKNOWN_PREFIXLEN,
-                                           l -
-                                           RRClassParam::UNKNOWN_PREFIXLEN));
+        istringstream iss(code_str.substr(PT::UNKNOWN_PREFIXLEN,
+                                           l - PT::UNKNOWN_PREFIXLEN));
         iss >> dec >> code;
-        if (iss.rdstate() == ios::eofbit && code <= RRClassParam::MAX_CODE) {
+        if (iss.rdstate() == ios::eofbit && code <= PT::MAX_CODE) {
             return (code);
         }
     }
-    dns_throw(InvalidRRClass, "Unrecognized RR Class string");
+    dns_throw(ET, "Unrecognized RR parameter string");
 }
 
-string
-RRParamRegistry::getClassText(uint16_t class_code) const
+template <typename PT, typename MC>
+inline string
+getText(uint16_t code, MC& codemap)
 {
-    CodeRRClassMap::const_iterator found;
+    typename MC::const_iterator found;
 
-    found = impl_->code2classmap.find(class_code);
-    if (found != impl_->code2classmap.end()) {
-        return (found->second->class_string_);
+    found = codemap.find(code);
+    if (found != codemap.end()) {
+        return (found->second->code_string_);
     }
 
     ostringstream ss;
-    ss << class_code;
-    return (RRClassParam::UNKNOWN_PREFIX + ss.str());
+    ss << code;
+    return (PT::UNKNOWN_PREFIX + ss.str());
+}
 }
 
-///
-/// The code logic is same as addClass(), but we only have these two variations
-/// we live with duplicate rather than trying to unify them.
-///
 void
-RRParamRegistry::addType(const string& type_string, uint16_t type_code)
+RRParamRegistry::addType(const string& type_string, uint16_t code)
 {
-    CodeRRTypeMap::const_iterator found = impl_->code2typemap.find(type_code);
-    if (found != impl_->code2typemap.end()) {
-        if (found->second->type_string_ != type_string) {
-            dns_throw(RRTypeExist, "Duplicate RR type registration");
-        }
-        return;
-    }
-
-    RRTypeParamPtr type_param = RRTypeParamPtr(new RRTypeParam(type_string,
-                                                               type_code));
-    try {
-        impl_->str2typemap.insert(StrRRTypePair(type_string, type_param));
-        impl_->code2typemap.insert(CodeRRTypePair(type_code, type_param));
-    } catch (...) {
-        impl_->str2typemap.erase(type_string);
-        impl_->code2typemap.erase(type_code);
-        throw;
-    }
+    addParam<RRTypeParam, CodeRRTypeMap, StrRRTypeMap>(type_string, code,
+                                                       impl_->code2typemap,
+                                                       impl_->str2typemap);
 }
 
 bool
-RRParamRegistry::removeType(uint16_t type_code)
+RRParamRegistry::removeType(uint16_t code)
 {
-    CodeRRTypeMap::iterator found = impl_->code2typemap.find(type_code);
-    if (found != impl_->code2typemap.end()) {
-        size_t erased = impl_->str2typemap.erase(found->second->type_string_);
-        // We must have a corresponding entry of the str2 map exists
-        assert(erased == 1);
-
-        impl_->code2typemap.erase(found);
-
-        return (true);
-    }
-
-    return (false);
+    return (removeParam<CodeRRTypeMap, StrRRTypeMap>(code, impl_->code2typemap,
+                                                     impl_->str2typemap));
 }
 
 uint16_t
 RRParamRegistry::getTypeCode(const string& type_str) const
 {
-    StrRRTypeMap::const_iterator found;
-
-    found = impl_->str2typemap.find(type_str);
-    if (found != impl_->str2typemap.end()) {
-        return (found->second->type_code_);
-    }
-
-    size_t l = type_str.size();
-    if (l > RRTypeParam::UNKNOWN_PREFIXLEN &&
-        l <= RRTypeParam::UNKNOWN_MAXLEN &&
-        caseStringEqual(type_str, RRTypeParam::UNKNOWN_PREFIX,
-                        RRTypeParam::UNKNOWN_PREFIXLEN)) {
-        unsigned int code;
-        istringstream iss(type_str.substr(RRTypeParam::UNKNOWN_PREFIXLEN,
-                                          l - RRTypeParam::UNKNOWN_PREFIXLEN));
-        iss >> dec >> code;
-        if (iss.rdstate() == ios::eofbit && code <= RRTypeParam::MAX_CODE) {
-            return (code);
-        }
-    }
-    dns_throw(InvalidRRType, "Unrecognized RR Type string");
+    return (getCode<RRTypeParam, StrRRTypeMap,
+            InvalidRRType>(type_str, impl_->str2typemap));
 }
 
 string
-RRParamRegistry::getTypeText(uint16_t type_code) const
+RRParamRegistry::getTypeText(uint16_t code) const
 {
-    CodeRRTypeMap::const_iterator found;
+    return (getText<RRTypeParam, CodeRRTypeMap>(code, impl_->code2typemap));
+}
 
-    found = impl_->code2typemap.find(type_code);
-    if (found != impl_->code2typemap.end()) {
-        return (found->second->type_string_);
-    }
+void
+RRParamRegistry::addClass(const string& class_string, uint16_t code)
+{
+    addParam<RRClassParam, CodeRRClassMap, StrRRClassMap>(class_string, code,
+                                                          impl_->code2classmap,
+                                                          impl_->str2classmap);
+}
 
-    ostringstream ss;
-    ss << type_code;
-    return (RRTypeParam::UNKNOWN_PREFIX + ss.str());
+bool
+RRParamRegistry::removeClass(uint16_t code)
+{
+    return (removeParam<CodeRRClassMap, StrRRClassMap>(code,
+                                                       impl_->code2classmap,
+                                                       impl_->str2classmap));
+}
+
+uint16_t
+RRParamRegistry::getClassCode(const string& class_str) const
+{
+    return (getCode<RRClassParam, StrRRClassMap,
+            InvalidRRClass>(class_str, impl_->str2classmap));
+}
+
+string
+RRParamRegistry::getClassText(uint16_t code) const
+{
+    return (getText<RRClassParam, CodeRRClassMap>(code, impl_->code2classmap));
 }
 }
 }

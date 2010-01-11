@@ -35,6 +35,7 @@ TEST_F(RRTypeTest, construct)
 
     // bogus TYPEnnn representations: should trigger an exception
     EXPECT_THROW(RRType("TYPE"), isc::dns::InvalidRRType);
+    EXPECT_THROW(RRType("TYPE-1"), isc::dns::InvalidRRType);
     EXPECT_THROW(RRType("TYPExxx"), isc::dns::InvalidRRType);
     EXPECT_THROW(RRType("TYPE65536"), isc::dns::InvalidRRType);
     EXPECT_THROW(RRType("TYPE6500x"), isc::dns::InvalidRRType);
