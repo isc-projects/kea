@@ -19,6 +19,7 @@
 #include "rrparamregistry.h"
 #include "rrtype.h"
 
+using namespace std;
 using isc::dns::RRType;
 
 namespace {
@@ -32,6 +33,14 @@ TEST_F(RRTypeTest, construct)
     EXPECT_EQ("NS", RRType("NS").toText());
 
     EXPECT_EQ("TYPE65535", RRType("TYPE65535").toText());
+
+    // something unusual, but existing implementations accept this form,
+    // so do we.
+    EXPECT_EQ(53, RRType("TYPE00053").getCode());
+    // again, unusual, and the majority of other implementations reject it.
+    // In any case, there should be no reasonable reason to accept such a
+    // ridiculously long input.
+    EXPECT_THROW(RRType("TYPE000053"), isc::dns::InvalidRRType);
 
     // bogus TYPEnnn representations: should trigger an exception
     EXPECT_THROW(RRType("TYPE"), isc::dns::InvalidRRType);
@@ -69,5 +78,13 @@ TEST_F(RRTypeTest, compare)
 
     EXPECT_TRUE(RRType("A") < RRType("NS"));
     EXPECT_TRUE(RRType(100) < RRType(65535));
+}
+
+// test operator<<.  We simply confirm it appends the result of toText().
+TEST_F(RRTypeTest, LeftShiftOperator)
+{
+    ostringstream oss;
+    oss << RRType::A();
+    EXPECT_EQ(RRType::A().toText(), oss.str());
 }
 }

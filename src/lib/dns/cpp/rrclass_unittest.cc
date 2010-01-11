@@ -19,6 +19,7 @@
 #include "rrparamregistry.h"
 #include "rrclass.h"
 
+using namespace std;
 using isc::dns::RRClass;
 
 namespace {
@@ -33,8 +34,13 @@ TEST_F(RRClassTest, construct)
 
     EXPECT_EQ("CLASS65535", RRClass("CLASS65535").toText());
 
+    // some uncommon cases: see the corresponding RRType tests.
+    EXPECT_EQ(53, RRClass("CLASS00053").getCode());
+    EXPECT_THROW(RRClass("CLASS000053"), isc::dns::InvalidRRClass);
+
     // bogus CLASSnnn representations: should trigger an exception
     EXPECT_THROW(RRClass("CLASS"), isc::dns::InvalidRRClass);
+    EXPECT_THROW(RRClass("CLASS-1"), isc::dns::InvalidRRClass);
     EXPECT_THROW(RRClass("CLASSxxx"), isc::dns::InvalidRRClass);
     EXPECT_THROW(RRClass("CLASS65536"), isc::dns::InvalidRRClass);
     EXPECT_THROW(RRClass("CLASS6500x"), isc::dns::InvalidRRClass);
@@ -67,5 +73,13 @@ TEST_F(RRClassTest, compare)
 
     EXPECT_TRUE(RRClass("IN") < RRClass("CH"));
     EXPECT_TRUE(RRClass(100) < RRClass(65535));
+}
+
+// test operator<<.  We simply confirm it appends the result of toText().
+TEST_F(RRClassTest, LeftShiftOperator)
+{
+    ostringstream oss;
+    oss << RRClass::IN();
+    EXPECT_EQ(RRClass::IN().toText(), oss.str());
 }
 }

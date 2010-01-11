@@ -45,5 +45,11 @@ RRType::toWire(OutputBuffer& buffer) const
     buffer.writeUint16(typecode_);
 }
 
+ostream&
+operator<<(ostream& os, const RRType& rrtype)
+{
+    os << rrtype.toText();
+    return (os);
+}
 }
 }
