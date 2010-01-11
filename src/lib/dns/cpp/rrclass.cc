@@ -44,5 +44,11 @@ RRClass::toWire(OutputBuffer& buffer) const
     buffer.writeUint16(classcode_);
 }
 
+ostream&
+operator<<(ostream& os, const RRClass& rrclass)
+{
+    os << rrclass.toText();
+    return (os);
+}
 }
 }
