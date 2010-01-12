@@ -21,6 +21,8 @@
 #include <functional>
 #include <algorithm>
 
+#include <iostream>
+
 #include <boost/lexical_cast.hpp>
 
 #include <dns/buffer.h>

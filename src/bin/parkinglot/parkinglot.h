@@ -19,6 +19,7 @@
 
 #include "zoneset.h"
 #include <cc/cpp/data.h>
+#include "data_source_plot.h"
 
 class ParkingLot {
 public:
@@ -28,24 +29,11 @@ public:
     void processMessage();
     void command(std::pair<std::string,isc::data::ElementPtr>);
     void serve(std::string zone_name);
-    void clear_zones() { zones.clear_zones(); };
 
-    void clearARecords() { a_records.clear(); };
-    void clearAAAARecords() { aaaa_records.clear(); };
-    void clearNSRecords() { ns_records.clear(); };
-
-    void addARecord(std::string data);
-    void addAAAARecord(std::string data);
-    void addNSRecord(std::string data);
-
-    void setSOARecord(isc::dns::Rdata::RdataPtr soa_record);
-
+    isc::data::ElementPtr updateConfig(isc::data::ElementPtr config);
 private:
-    void setDefaultZoneData();
 
-    std::vector<isc::dns::Rdata::RdataPtr> a_records, aaaa_records, ns_records;
-    isc::dns::Rdata::RdataPtr soa;
-    ZoneSet zones;
+    isc::dns::DataSourceParkingLot data_source;
     int sock;
 };
 
