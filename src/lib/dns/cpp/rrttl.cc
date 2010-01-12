@@ -16,6 +16,8 @@
 
 #include <sstream>
 
+#include <stdint.h>
+
 #include "buffer.h"
 #include "messagerenderer.h"
 #include "rrttl.h"

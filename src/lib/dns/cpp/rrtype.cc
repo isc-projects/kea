@@ -16,6 +16,8 @@
 
 #include <string>
 
+#include <stdint.h>
+
 #include "buffer.h"
 #include "exceptions.h"
 #include "messagerenderer.h"
