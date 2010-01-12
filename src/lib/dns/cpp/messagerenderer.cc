@@ -162,6 +162,12 @@ MessageRenderer::writeUint16(uint16_t data)
     impl_->buffer_.writeUint16(data);
 }
 
+void
+MessageRenderer::writeUint32(uint32_t data)
+{
+    impl_->buffer_.writeUint32(data);
+}
+
 const void*
 MessageRenderer::getData() const
 {

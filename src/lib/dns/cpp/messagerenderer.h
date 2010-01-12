@@ -102,7 +102,7 @@ public:
     //@}
 
     ///
-    /// \name Methods for writing data into the buffer.
+    /// \name Methods for writing data into the internal buffer.
     ///
     //@{
     /// \brief Write an unsigned 16-bit integer in host byte order into the
@@ -110,6 +110,11 @@ public:
     ///
     /// \param data The 16-bit integer to be written into the buffer.
     void writeUint16(uint16_t data);
+    /// \brief Write an unsigned 32-bit integer in host byte order into the
+    /// internal buffer in network byte order.
+    ///
+    /// \param data The 32-bit integer to be written into the buffer.
+    void writeUint32(uint32_t data);
     //@}
 
     ///
