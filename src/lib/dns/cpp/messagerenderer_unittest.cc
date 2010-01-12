@@ -32,13 +32,33 @@ using isc::dns::MessageRenderer;
 namespace {
 class MessageRendererTest : public ::testing::Test {
 protected:
-    MessageRendererTest() : buffer(0), renderer(buffer) {}
+    MessageRendererTest() : expected_size(0), buffer(0), renderer(buffer)
+    {
+        data16 = (2 << 8) | 3;
+        data32 = (4 << 24) | (5 << 16) | (6 << 8) | 7;
+    }
+    size_t expected_size;
+    uint16_t data16;
+    uint32_t data32;
     OutputBuffer buffer;
     MessageRenderer renderer;
     std::vector<unsigned char> data;
+    static const uint8_t testdata[5];
 };
 
-TEST_F(MessageRendererTest, toWire)
+const uint8_t MessageRendererTest::testdata[5] = {1, 2, 3, 4, 5};
+
+// The test cases are borrowed from those for the OutputBuffer class.
+TEST_F(MessageRendererTest, writeIntger)
+{
+    renderer.writeUint16(data16);
+    expected_size += sizeof(data16);
+
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
+                        renderer.getLength(), &testdata[1], sizeof(data16));
+}
+
+TEST_F(MessageRendererTest, writeName)
 {
     UnitTestUtil::readWireData("testdata/name_toWire1", data);
     renderer.writeName(Name("a.example.com."));
@@ -48,7 +68,7 @@ TEST_F(MessageRendererTest, toWire)
                         buffer.getLength(), &data[0], data.size());
 }
 
-TEST_F(MessageRendererTest, toWireInLargeBuffer)
+TEST_F(MessageRendererTest, writeNameInLargeBuffer)
 {
     size_t offset = 0x3fff;
     buffer.skip(offset);
@@ -63,7 +83,7 @@ TEST_F(MessageRendererTest, toWireInLargeBuffer)
                         &data[0], data.size());
 }
 
-TEST_F(MessageRendererTest, toWireWithUncompressed)
+TEST_F(MessageRendererTest, writeNameWithUncompressed)
 {
     UnitTestUtil::readWireData("testdata/name_toWire3", data);
     renderer.writeName(Name("a.example.com."));
@@ -73,7 +93,7 @@ TEST_F(MessageRendererTest, toWireWithUncompressed)
                         buffer.getLength(), &data[0], data.size());
 }
 
-TEST_F(MessageRendererTest, toWirePointerChain)
+TEST_F(MessageRendererTest, writeNamePointerChain)
 {
     UnitTestUtil::readWireData("testdata/name_toWire4", data);
     renderer.writeName(Name("a.example.com."));
@@ -83,7 +103,7 @@ TEST_F(MessageRendererTest, toWirePointerChain)
                         buffer.getLength(), &data[0], data.size());
 }
 
-TEST_F(MessageRendererTest, toWireCaseCompress)
+TEST_F(MessageRendererTest, writeNameCaseCompress)
 {
     UnitTestUtil::readWireData("testdata/name_toWire1", data);
     renderer.writeName(Name("a.example.com."));

@@ -18,6 +18,7 @@
 
 #include "buffer.h"
 #include "exceptions.h"
+#include "messagerenderer.h"
 #include "rrparamregistry.h"
 #include "rrclass.h"
 
@@ -50,6 +51,12 @@ void
 RRClass::toWire(OutputBuffer& buffer) const
 {
     buffer.writeUint16(classcode_);
+}
+
+void
+RRClass::toWire(MessageRenderer& renderer) const
+{
+    renderer.writeUint16(classcode_);
 }
 
 ostream&

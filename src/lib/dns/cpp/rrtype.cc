@@ -18,6 +18,7 @@
 
 #include "buffer.h"
 #include "exceptions.h"
+#include "messagerenderer.h"
 #include "rrparamregistry.h"
 #include "rrtype.h"
 
@@ -51,6 +52,12 @@ void
 RRType::toWire(OutputBuffer& buffer) const
 {
     buffer.writeUint16(typecode_);
+}
+
+void
+RRType::toWire(MessageRenderer& renderer) const
+{
+    renderer.writeUint16(typecode_);
 }
 
 ostream&

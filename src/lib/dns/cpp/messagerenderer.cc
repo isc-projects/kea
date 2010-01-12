@@ -157,6 +157,24 @@ MessageRenderer::~MessageRenderer()
 }
 
 void
+MessageRenderer::writeUint16(uint16_t data)
+{
+    impl_->buffer_.writeUint16(data);
+}
+
+const void*
+MessageRenderer::getData() const
+{
+    return (impl_->buffer_.getData());
+}
+
+size_t
+MessageRenderer::getLength() const
+{
+    return (impl_->buffer_.getLength());
+}
+
+void
 MessageRenderer::writeName(const Name& name, bool compress)
 {
     impl_->nbuffer_.clear();

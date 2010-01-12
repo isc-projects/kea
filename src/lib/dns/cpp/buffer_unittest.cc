@@ -43,7 +43,7 @@ protected:
 
 const uint8_t BufferTest::testdata[5] = {1, 2, 3, 4, 5};
 
-TEST_F(BufferTest, input_buffer_read)
+TEST_F(BufferTest, inputBufferRead)
 {
     EXPECT_EQ(5, ibuffer.getLength());
     EXPECT_EQ(1, ibuffer.readUint8());
@@ -61,7 +61,7 @@ TEST_F(BufferTest, input_buffer_read)
     EXPECT_EQ(0, memcmp(vdata, testdata, sizeof(testdata)));
 }
 
-TEST_F(BufferTest, input_buffer_exception)
+TEST_F(BufferTest, inputBufferException)
 {
     EXPECT_THROW(ibuffer.setPosition(6), isc::dns::InvalidBufferPosition);
 
@@ -79,7 +79,7 @@ TEST_F(BufferTest, input_buffer_exception)
                  isc::dns::InvalidBufferPosition);
 }
 
-TEST_F(BufferTest, output_buffer_extend)
+TEST_F(BufferTest, outputBufferExtend)
 {
     EXPECT_EQ(0, obuffer.getCapacity());
     EXPECT_EQ(0, obuffer.getLength());
@@ -88,7 +88,7 @@ TEST_F(BufferTest, output_buffer_extend)
     EXPECT_EQ(1, obuffer.getLength());
 }
 
-TEST_F(BufferTest, output_buffer_write)
+TEST_F(BufferTest, outputBufferWrite)
 {
     const uint8_t* cp;
 
@@ -121,7 +121,7 @@ TEST_F(BufferTest, output_buffer_write)
     EXPECT_EQ(0, memcmp(cp + 7, testdata, sizeof(testdata)));
 }
 
-TEST_F(BufferTest, output_buffer_writeat)
+TEST_F(BufferTest, outputBufferWriteat)
 {
     obuffer.writeUint32(data32);
     expected_size += sizeof(data32);
@@ -140,7 +140,7 @@ TEST_F(BufferTest, output_buffer_writeat)
                  isc::dns::InvalidBufferPosition);
 }
 
-TEST_F(BufferTest, output_buffer_skip)
+TEST_F(BufferTest, outputBufferSkip)
 {
     obuffer.skip(4);
     EXPECT_EQ(4, obuffer.getLength());
@@ -149,7 +149,7 @@ TEST_F(BufferTest, output_buffer_skip)
     EXPECT_EQ(6, obuffer.getLength());
 }
 
-TEST_F(BufferTest, output_buffer_readat)
+TEST_F(BufferTest, outputBufferReadat)
 {
     obuffer.writeData(testdata, sizeof(testdata));
     for (int i = 0; i < sizeof(testdata); i ++) {
@@ -158,7 +158,7 @@ TEST_F(BufferTest, output_buffer_readat)
     EXPECT_THROW(obuffer[sizeof(testdata)], isc::dns::InvalidBufferPosition);
 }
 
-TEST_F(BufferTest, output_buffer_clear)
+TEST_F(BufferTest, outputBufferClear)
 {
     obuffer.writeData(testdata, sizeof(testdata));
     obuffer.clear();
