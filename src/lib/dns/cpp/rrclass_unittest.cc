@@ -16,18 +16,34 @@
 
 #include <gtest/gtest.h>
 
+#include "buffer.h"
 #include "rrparamregistry.h"
 #include "rrclass.h"
 
+#include "unittest_util.h"
+
 using namespace std;
-using isc::dns::RRClass;
+using namespace isc;
+using namespace isc::dns;
 
 namespace {
 class RRClassTest : public ::testing::Test {
 protected:
+    static RRClass rrclassFactoryFromWire(const char* datafile);
 };
 
-TEST_F(RRClassTest, construct)
+RRClass
+RRClassTest::rrclassFactoryFromWire(const char* datafile)
+{
+    std::vector<unsigned char> data;
+    UnitTestUtil::readWireData(datafile, data);
+
+    InputBuffer buffer(&data[0], data.size());
+
+    return (RRClass(buffer));
+}
+
+TEST_F(RRClassTest, fromText)
 {
     EXPECT_EQ("IN", RRClass("IN").toText());
     EXPECT_EQ("CH", RRClass("CH").toText());
@@ -36,15 +52,23 @@ TEST_F(RRClassTest, construct)
 
     // some uncommon cases: see the corresponding RRType tests.
     EXPECT_EQ(53, RRClass("CLASS00053").getCode());
-    EXPECT_THROW(RRClass("CLASS000053"), isc::dns::InvalidRRClass);
+    EXPECT_THROW(RRClass("CLASS000053"), InvalidRRClass);
 
     // bogus CLASSnnn representations: should trigger an exception
-    EXPECT_THROW(RRClass("CLASS"), isc::dns::InvalidRRClass);
-    EXPECT_THROW(RRClass("CLASS-1"), isc::dns::InvalidRRClass);
-    EXPECT_THROW(RRClass("CLASSxxx"), isc::dns::InvalidRRClass);
-    EXPECT_THROW(RRClass("CLASS65536"), isc::dns::InvalidRRClass);
-    EXPECT_THROW(RRClass("CLASS6500x"), isc::dns::InvalidRRClass);
-    EXPECT_THROW(RRClass("CLASS65000 "), isc::dns::InvalidRRClass);
+    EXPECT_THROW(RRClass("CLASS"), InvalidRRClass);
+    EXPECT_THROW(RRClass("CLASS-1"), InvalidRRClass);
+    EXPECT_THROW(RRClass("CLASSxxx"), InvalidRRClass);
+    EXPECT_THROW(RRClass("CLASS65536"), InvalidRRClass);
+    EXPECT_THROW(RRClass("CLASS6500x"), InvalidRRClass);
+    EXPECT_THROW(RRClass("CLASS65000 "), InvalidRRClass);
+}
+
+TEST_F(RRClassTest, fromWire)
+{
+    EXPECT_EQ(0x1234,
+              rrclassFactoryFromWire("testdata/rrcode16_fromWire1").getCode());
+    EXPECT_THROW(rrclassFactoryFromWire("testdata/rrcode16_fromWire2"),
+                 IncompleteRRClass);
 }
 
 TEST_F(RRClassTest, caseConstruct)
