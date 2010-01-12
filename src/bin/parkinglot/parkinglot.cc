@@ -42,48 +42,13 @@ using namespace isc::dns::Rdata::IN;
 using namespace isc::dns::Rdata::Generic;
 using namespace isc::data;
 
-void
-ParkingLot::addARecord(std::string data) {
-    a_records.push_back(Rdata::RdataPtr(new A(data)));
-}
-
-void
-ParkingLot::addAAAARecord(std::string data) {
-    aaaa_records.push_back(Rdata::RdataPtr(new AAAA(data)));
-}
-
-void
-ParkingLot::addNSRecord(std::string data) {
-    ns_records.push_back(Rdata::RdataPtr(new NS(data)));
-}
-
-void
-ParkingLot::setSOARecord(isc::dns::Rdata::RdataPtr soa_record) {
-}
-
-void
-ParkingLot::setDefaultZoneData() {
-    clearARecords();
-    clearAAAARecords();
-    clearNSRecords();
-
-    addARecord("127.0.0.1");
-    addAAAARecord("::1");
-    addNSRecord("ns1.parking.example");
-    addNSRecord("ns2.parking.example");
-    addNSRecord("ns3.parking.example");
-}
-
 ParkingLot::ParkingLot(int port) {
-    setDefaultZoneData();
     /*ns1 = Rdata::RdataPtr(new NS("ns1.parking.example"));
     ns2 = Rdata::RdataPtr(new NS("ns2.parking.example"));
     ns3 = Rdata::RdataPtr(new NS("ns3.parking.example"));
     a = Rdata::RdataPtr(new A("127.0.0.1"));
     aaaa = Rdata::RdataPtr(new AAAA("::1"));
     */
-    soa = Rdata::RdataPtr(new SOA("parking.example", "noc.parking.example",
-                                        1, 1800, 900, 604800, TTL(86400)));
 
     int s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (s < 0)
@@ -107,6 +72,68 @@ ParkingLot::ParkingLot(int port) {
 
 void
 ParkingLot::processMessage() {
+    struct sockaddr_storage ss;
+    socklen_t sa_len = sizeof(ss);
+    struct sockaddr* sa = static_cast<struct sockaddr*>((void*)&ss);
+    int s = sock;
+    Message msg;
+
+    if (msg.getBuffer().recvFrom(s, sa, &sa_len) > 0) {
+        try {
+            msg.fromWire();
+        } catch (...) {
+            cerr << "parse failed" << endl;
+            return;
+        }
+
+        cout << "received a message:\n" << msg.toText() << endl;
+
+        if (msg.getSection(SECTION_QUESTION).size() != 1)
+            return;
+
+        msg.makeResponse();
+        msg.setAA(true);
+
+        RRsetPtr query = msg.getSection(SECTION_QUESTION)[0];
+
+        DataSource::result result;
+
+        msg.makeResponse();
+        msg.setAA(true);
+        TTL default_ttl = TTL(3600);
+
+        // ok this part of the api needs improvenemt
+        RRset *rrset = new RRset(query->getName(), query->getClass(), query->getType(), default_ttl);
+        RRsetPtr answer = RRsetPtr(rrset);
+        RRset *ns_rrset = new RRset(query->getName(), query->getClass(), RRType::NS, default_ttl);
+        RRsetPtr ns_answer = RRsetPtr(ns_rrset);
+        RRset *soa_rrset = new RRset(query->getName(), query->getClass(), RRType::SOA, default_ttl);
+        RRsetPtr soa_answer = RRsetPtr(soa_rrset);
+        
+        result = data_source.findRRset(answer, query->getName(), query->getClass(), query->getType());
+        switch (result) {
+        case DataSource::success:
+            msg.addRRset(SECTION_ANSWER, answer);
+            if (data_source.findRRset(ns_answer, query->getName(), query->getClass(), RRType::NS) == DataSource::success) {
+                msg.addRRset(SECTION_AUTHORITY, ns_answer);
+            }
+            break;
+        case DataSource::zone_not_found:
+            msg.setRcode(Message::RCODE_NXDOMAIN);
+            break;
+        case DataSource::name_not_found:
+            if (data_source.findRRset(soa_answer, query->getName(), query->getClass(), RRType::SOA) == DataSource::success) {
+                msg.addRRset(SECTION_AUTHORITY, soa_answer);
+            }
+            break;
+        }
+        msg.toWire();
+        cout << "sending a response (" <<
+            boost::lexical_cast<string>(msg.getBuffer().getSize())
+                  << " bytes):\n" << msg.toText() << endl;
+        msg.getBuffer().sendTo(s, *sa, sa_len);
+    }
+/*
     Name authors_name("authors.bind");
     Name version_name("version.bind");
     struct sockaddr_storage ss;
@@ -223,6 +250,7 @@ ParkingLot::processMessage() {
                   << " bytes):\n" << msg.toText() << endl;
         msg.getBuffer().sendTo(s, *sa, sa_len);
     }
+*/
 }
 
 void
@@ -234,14 +262,44 @@ ParkingLot::command(pair<string,ElementPtr> cmd) {
         ElementPtr zonelist_el = (cmd.second)->get("zones");
         // We could walk through both lists and remove and serve
         // accordingly, or simply clear all and add everything
-        zones.clear_zones();
+        //zones.clear_zones();
         BOOST_FOREACH(ElementPtr zone, zonelist_el->listValue()) {
-            zones.serve(zone->stringValue());
+            //zones.serve(zone->stringValue());
         }
     }
 }
 
-void
-ParkingLot::serve(std::string zone_name) {
-    zones.serve(zone_name);
+ElementPtr
+ParkingLot::updateConfig(isc::data::ElementPtr config) {
+    if (config->contains("zones")) {
+        data_source.clear_zones();
+        BOOST_FOREACH(isc::data::ElementPtr zone_el, config->get("zones")->listValue()) {
+            data_source.serve(zone_el->stringValue());
+        }
+    }
+    if (config->contains("port")) {
+        // todo: what to do with port change. restart automatically?
+        // ignore atm
+    }
+    if (config->contains("a_records")) {
+        data_source.clearARecords();
+        BOOST_FOREACH(isc::data::ElementPtr rel, config->get("a_records")->listValue()) {
+            data_source.addARecord(rel->stringValue());
+        }
+    }
+    if (config->contains("aaaa_records")) {
+        data_source.clearAAAARecords();
+        BOOST_FOREACH(isc::data::ElementPtr rel, config->get("aaaa_records")->listValue()) {
+            data_source.addAAAARecord(rel->stringValue());
+        }
+    }
+    if (config->contains("ns_records")) {
+        data_source.clearNSRecords();
+        BOOST_FOREACH(isc::data::ElementPtr rel, config->get("ns_records")->listValue()) {
+            data_source.addNSRecord(rel->stringValue());
+        }
+    }
+    return isc::data::Element::createFromString("{ \"result\": [0] }");
 }
+
+
