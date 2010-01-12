@@ -25,6 +25,7 @@
 #include "name.h"
 #include "messagerenderer.h"
 
+using namespace std;
 using isc::dns::NameComparisonResult;
 using isc::dns::MessageRenderer;
 
@@ -566,19 +567,6 @@ Name::isWildcard() const
     return (length_ >= 2 && ndata_[0] == 1 && ndata_[1] == '*'); 
 }
 
-namespace {                     // hide the local class
-///
-/// A helper functor class to add an additional offset to an offset vector.
-///
-struct OffsetAdjuster : public std::binary_function<unsigned char,
-                                                    int, unsigned char> {
-    unsigned char operator()(unsigned char ch, int offset) const
-    {
-        return (ch + offset);
-    }
-};
-}
-
 Name
 Name::concatenate(const Name& suffix) const
 {
@@ -610,7 +598,7 @@ Name::concatenate(const Name& suffix) const
                             &this->offsets_[0] + this->labelcount_ - 1);
     transform(suffix.offsets_.begin(), suffix.offsets_.end(),
               back_inserter(retname.offsets_),
-              bind2nd(OffsetAdjuster(), this->length_ - 1));
+              bind2nd(plus<char>(), this->length_ - 1));
     assert(retname.offsets_.size() == labels);
     retname.labelcount_ = labels;
 
@@ -636,7 +624,7 @@ Name::split(unsigned int first, unsigned int n) const
     retname.offsets_.reserve(newlabels);
     transform(offsets_.begin() + first, offsets_.begin() + first + newlabels,
               back_inserter(retname.offsets_),
-              bind2nd(OffsetAdjuster(), -offsets_[first]));
+              bind2nd(plus<char>(), -offsets_[first]));
 
     //
     // Set up the new name.  At this point the tail of the new offsets specifies
