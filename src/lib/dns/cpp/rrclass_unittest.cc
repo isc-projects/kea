@@ -17,6 +17,7 @@
 #include <gtest/gtest.h>
 
 #include "buffer.h"
+#include "messagerenderer.h"
 #include "rrparamregistry.h"
 #include "rrclass.h"
 
@@ -29,8 +30,26 @@ using namespace isc::dns;
 namespace {
 class RRClassTest : public ::testing::Test {
 protected:
+    RRClassTest() : obuffer(0), renderer(obuffer) {}
+
+    OutputBuffer obuffer;
+    MessageRenderer renderer;
+
     static RRClass rrclassFactoryFromWire(const char* datafile);
+    static const RRClass rrclass_1, rrclass_0x80, rrclass_0x800,
+        rrclass_0x8000, rrclass_max;
+    static const uint8_t wiredata[10];
 };
+
+const RRClass RRClassTest::rrclass_1(1);
+const RRClass RRClassTest::rrclass_0x80(0x80);
+const RRClass RRClassTest::rrclass_0x800(0x800);
+const RRClass RRClassTest::rrclass_0x8000(0x8000);
+const RRClass RRClassTest::rrclass_max(0xffff);
+// This is wire-format data for the above sample RRClasss rendered in the
+// appearing order.
+const uint8_t RRClassTest::wiredata[10] = { 0x00, 0x01, 0x00, 0x80, 0x08,
+                                           0x00, 0x80, 0x00, 0xff, 0xff };
 
 RRClass
 RRClassTest::rrclassFactoryFromWire(const char* datafile)
@@ -82,6 +101,32 @@ TEST_F(RRClassTest, toText)
 {
     EXPECT_EQ("IN", RRClass(1).toText());
     EXPECT_EQ("CLASS65000", RRClass(65000).toText());
+}
+
+TEST_F(RRClassTest, toWireBuffer)
+{
+    rrclass_1.toWire(obuffer);
+    rrclass_0x80.toWire(obuffer);
+    rrclass_0x800.toWire(obuffer);
+    rrclass_0x8000.toWire(obuffer);
+    rrclass_max.toWire(obuffer);
+
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        obuffer.getData(), obuffer.getLength(),
+                        wiredata, sizeof(wiredata));
+}
+
+TEST_F(RRClassTest, toWireRenderer)
+{
+    rrclass_1.toWire(renderer);
+    rrclass_0x80.toWire(renderer);
+    rrclass_0x800.toWire(renderer);
+    rrclass_0x8000.toWire(renderer);
+    rrclass_max.toWire(renderer);
+
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        obuffer.getData(), obuffer.getLength(),
+                        wiredata, sizeof(wiredata));
 }
 
 TEST_F(RRClassTest, wellKnownClasss)

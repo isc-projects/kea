@@ -17,6 +17,7 @@
 #include <gtest/gtest.h>
 
 #include "buffer.h"
+#include "messagerenderer.h"
 #include "rrparamregistry.h"
 #include "rrtype.h"
 
@@ -29,8 +30,26 @@ using namespace isc::dns;
 namespace {
 class RRTypeTest : public ::testing::Test {
 protected:
+    RRTypeTest() : obuffer(0), renderer(obuffer) {}       
+
+    OutputBuffer obuffer;
+    MessageRenderer renderer;
+
     static RRType rrtypeFactoryFromWire(const char* datafile);
+    static const RRType rrtype_1, rrtype_0x80, rrtype_0x800, rrtype_0x8000,
+        rrtype_max;
+    static const uint8_t wiredata[10];
 };
+
+const RRType RRTypeTest::rrtype_1(1);
+const RRType RRTypeTest::rrtype_0x80(0x80);
+const RRType RRTypeTest::rrtype_0x800(0x800);
+const RRType RRTypeTest::rrtype_0x8000(0x8000);
+const RRType RRTypeTest::rrtype_max(0xffff);
+// This is wire-format data for the above sample RRTypes rendered in the
+// appearing order.
+const uint8_t RRTypeTest::wiredata[10] = { 0x00, 0x01, 0x00, 0x80, 0x08,
+                                           0x00, 0x80, 0x00, 0xff, 0xff };
 
 RRType
 RRTypeTest::rrtypeFactoryFromWire(const char* datafile)
@@ -87,6 +106,32 @@ TEST_F(RRTypeTest, toText)
 {
     EXPECT_EQ("A", RRType(1).toText());
     EXPECT_EQ("TYPE65000", RRType(65000).toText());
+}
+
+TEST_F(RRTypeTest, toWireBuffer)
+{
+    rrtype_1.toWire(obuffer);
+    rrtype_0x80.toWire(obuffer);
+    rrtype_0x800.toWire(obuffer);
+    rrtype_0x8000.toWire(obuffer);
+    rrtype_max.toWire(obuffer);
+
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        obuffer.getData(), obuffer.getLength(),
+                        wiredata, sizeof(wiredata));
+}
+
+TEST_F(RRTypeTest, toWireRenderer)
+{
+    rrtype_1.toWire(renderer);
+    rrtype_0x80.toWire(renderer);
+    rrtype_0x800.toWire(renderer);
+    rrtype_0x8000.toWire(renderer);
+    rrtype_max.toWire(renderer);
+
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        obuffer.getData(), obuffer.getLength(),
+                        wiredata, sizeof(wiredata));
 }
 
 TEST_F(RRTypeTest, wellKnownTypes)
