@@ -36,6 +36,21 @@ fi
 AC_SUBST(CXXFLAGS)
 
 #
+# Check availablity of boost: 
+#
+AC_ARG_WITH(boost,
+[  --with-boost=PATH       specify a path to the boost if it's not automatically found],
+    boost_path="$withval", boost_path="no")
+if test "$boost_path" != "no"
+then
+	BOOST_INCLUDES="-I$boost_path/include"
+else
+	BOOST_INCLUDES=
+fi
+
+AC_SUBST(BOOST_INCLUDES)
+
+#
 # Check availablity of gtest, which will be used for unit tests.
 #
 AC_ARG_WITH(gtest,
