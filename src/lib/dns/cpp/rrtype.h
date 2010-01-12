@@ -23,6 +23,7 @@ namespace isc {
 namespace dns {
 
 // forward declarations
+class InputBuffer;
 class OutputBuffer;
 class MessageRenderer;
 
@@ -35,14 +36,39 @@ public:
         isc::dns::Exception(file, line, what) {}
 };
 
+///
+/// \brief A standard DNS module exception that is thrown if an RRType object
+/// is being constructed from a incomplete (too short) wire-format data.
+///
+class IncompleteRRType : public Exception {
+public:
+    IncompleteRRType(const char* file, size_t line, const char* what) :
+        isc::dns::Exception(file, line, what) {}
+};
+
 class RRType {
 public:
     ///
     /// \name Constructors and Destructor
     ///
     //@{
+    /// Constructor from an integer type code.
+    ///
     explicit RRType(uint16_t typecode) : typecode_(typecode) {}
+    /// Constructor from a string.
+    ///
     explicit RRType(const std::string& typestr);
+    /// Constructor from wire-format data.
+    ///
+    /// The \c buffer parameter normally stores a complete DNS message
+    /// containing the RRType to be constructed.  The current read position of
+    /// the buffer points to the head of the type.
+    ///
+    /// If the given data does not large enough to contain a 16-bit integer,
+    /// an exception of class \c IncompleteRRType will be thrown.
+    ///
+    /// \param buffer A buffer storing the wire format data.
+    explicit RRType(InputBuffer& buffer);
     ///
     /// We use the default copy constructor intentionally.
     //@}

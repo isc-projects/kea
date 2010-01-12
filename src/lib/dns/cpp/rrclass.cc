@@ -32,6 +32,14 @@ RRClass::RRClass(const string& classstr)
     classcode_ = RRParamRegistry::getRegistry().getClassCode(classstr);
 }
 
+RRClass::RRClass(InputBuffer& buffer)
+{
+    if (buffer.getLength() - buffer.getPosition() < sizeof(uint16_t)) {
+        dns_throw(IncompleteRRClass, "incomplete wire-format RR class");
+    }
+    classcode_ = buffer.readUint16();
+}
+
 const string
 RRClass::toText() const
 {

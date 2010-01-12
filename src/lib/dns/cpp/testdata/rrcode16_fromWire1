@@ -1,0 +1,4 @@
+#
+# a 16 bit wire-format data (network byte order)
+#
+1234

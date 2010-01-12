@@ -33,6 +33,14 @@ RRType::RRType(const string& typestr)
     typecode_ = RRParamRegistry::getRegistry().getTypeCode(typestr);
 }
 
+RRType::RRType(InputBuffer& buffer)
+{
+    if (buffer.getLength() - buffer.getPosition() < sizeof(uint16_t)) {
+        dns_throw(IncompleteRRType, "incomplete wire-format RR type");
+    }
+    typecode_ = buffer.readUint16();
+}
+
 const string
 RRType::toText() const
 {
