@@ -28,7 +28,8 @@ class OutputBuffer;
 class MessageRenderer;
 
 ///
-/// \brief TBD
+/// \brief A standard DNS module exception that is thrown if an RRType object
+/// is being constructed from an unrecognized string.
 ///
 class InvalidRRType : public Exception {
 public:
@@ -46,6 +47,47 @@ public:
         isc::dns::Exception(file, line, what) {}
 };
 
+///
+/// The \c RRType class encapsulates DNS resource record types.
+///
+/// This class manages the 16-bit integer type codes in quite a straightforward
+/// way.  The only non trivial task is to handle textual representations of
+/// RR types, such as "A", "AAAA", or "TYPE65534".
+///
+/// This class consults a helper \c RRParamRegistry class, which is a registry
+/// of RR related parameters and has the singleton object.  This registry
+/// provides a mapping between RR type codes and their "well-known" textual
+/// representations.
+/// Parameters of RR types defined by DNS protocol standards are automatically
+/// registered at initialization time and are ensured to be always available for
+/// applications unless the application explicitly modifies the registry.
+///
+/// For convenience, this class defines constant class objects corresponding to
+/// standard RR types.  These are generally referred to as the form of
+/// <code>RRType::{type-text}()</code>.
+/// For example, \c RRType::NS() is an \c RRType object corresponding to the NS
+/// resource record (type code 2).
+/// Note that these constants are used through a "proxy" function.
+/// This is because they may be used to initialize another non-local (e.g.
+/// global or namespace-scope) static object as follows:
+///
+/// \code
+/// namespace foo {
+/// const RRType default_type = RRType::A();
+/// } \endcode
+///
+/// In order to ensure that the constant RRType object has been initialized
+/// by the initialization for \c default_type is performed, we need help from
+/// the proxy function.
+///
+/// Note to developers: since it's expected that some of these constant
+/// \c RRType objects are frequently used in a performance sensitive path,
+/// we define these proxy functions as inline.  This makes sense only when
+/// the corresponding static objects are defined only once even if they used
+/// in different source files.  Sufficiently modern compilers should meet
+/// this assumption, but if we encounter memory bloat due to this problem with
+/// particular compilers we need to revisit the design or think about
+/// workaround.
 class RRType {
 public:
     ///
@@ -54,9 +96,36 @@ public:
     //@{
     /// Constructor from an integer type code.
     ///
+    /// This constructor never throws an exception.
+    ///
+    /// \param typecode An 16-bit integer code corresponding to the RRType.
     explicit RRType(uint16_t typecode) : typecode_(typecode) {}
     /// Constructor from a string.
     ///
+    /// A valid string is one of "well known" textual type representations
+    /// such as "A", "AAAA", or "NS", or in the standard format for "unknown"
+    /// RR types as defined in RFC3597, i.e., "TYPEnnnn".
+    ///
+    /// More precisely, the "well-known" representations are the ones stored
+    /// in the \c RRParamRegistry registry (see the class description).
+    ///
+    /// As for the format of "TYPEnnnn", "nnnn" must represent a valid 16-bit
+    /// unsigned integer, which may contain leading 0's as long as it consists
+    /// of at most 5 characters (exclusive).
+    /// For example, "TYPE1" and "TYPE001" are valid and represent the same
+    /// RR type, but "TYPE65536" and "TYPE000001" are invalid.
+    /// A "TYPEnnnn" representation is valid even if the corresponding type code
+    /// is registered in the \c RRParamRegistry object.  For example, both
+    /// "A" and "TYPE1" are valid and represent the same RR type.
+    ///
+    /// All of these representations are case insensitive; "NS" and "ns", and
+    /// "TYPE1" and "type1" are all valid and represent the same RR types,
+    /// respectively.
+    ///
+    /// If the given string is not recognized as a valid representation of
+    /// an RR type, an exception of class \c InvalidRRType will be thrown.
+    ///
+    /// \param typestr A string representation of the \c RRType
     explicit RRType(const std::string& typestr);
     /// Constructor from wire-format data.
     ///
@@ -74,27 +143,105 @@ public:
     //@}
     /// We use the default copy assignment operator intentionally.
     ///
+
+    ///
+    /// \name Converter methods
+    ///
+    //@{
+    /// \brief Convert the \c RRType to a string.
+    ///
+    /// If a "well known" textual representation for the type code is registered
+    /// in the RR parameter registry (see the class description), that will be
+    /// used as the return value of this method.  Otherwise, this method creates
+    /// a new string for an "unknown" RR type in the format defined in RFC3597,
+    /// i.e., "TYPEnnnn", and returns it.
+    ///
+    /// If resource allocation for the string fails, a corresponding standard
+    /// exception will be thrown.
+    ///
+    /// \return A string representation of the \c RRType.
     const std::string toText() const;
+    /// \brief Render the \c RRType in the wire format.
+    ///
+    /// This method renders the type code in network byte order via \c renderer,
+    /// which encapsulates output buffer and other rendering contexts.
+    ///
+    /// If resource allocation in rendering process fails, a corresponding
+    /// standard exception will be thrown.
+    ///
+    /// \param buffer An output buffer to store the wire data.
     void toWire(OutputBuffer& buffer) const;
+    /// \brief Render the \c RRType in the wire format.
+    ///
+    /// This method renders the type code in network byte order into the
+    /// \c buffer.
+    ///
+    /// If resource allocation in rendering process fails, a corresponding
+    /// standard exception will be thrown.
+    ///
+    /// \param renderer DNS message rendering context that encapsulates the
+    /// output buffer in which the RRType is to be stored.
     void toWire(MessageRenderer& renderer) const;
+    //@}
+
+    ///
+    /// \name Getter Methods
+    ///
+    //@{
+    /// \brief Returns the RR type code as a 16-bit unsigned integer.
+    ///
+    /// This method never throws an exception.
+    ///
+    /// \return An 16-bit integer code corresponding to the RRType.
     uint16_t getCode() const { return (typecode_); }
+    //@}
+
+    ///
+    /// \name Comparison methods
+    ///
+    //@{
+    /// \brief Return true iff two RRTypes are equal.
+    ///
+    /// Two RRTypes are equal iff their type codes are equal.
+    ///
+    /// This method never throws an exception.
+    ///
+    /// \param other the \c RRType object to compare against.
+    /// \return true if the two RRTypes are equal; otherwise false.
     bool operator==(const RRType& other) const
     { return (typecode_ == other.typecode_); }
+    /// \brief Return true iff two RRTypes are equal.
+    ///
+    /// This method never throws an exception.
+    ///
+    /// \param other the \c RRType object to compare against.
+    /// \return true if the two RRTypes are not equal; otherwise false.
     bool operator!=(const RRType& other) const
     { return (typecode_ != other.typecode_); }
+    /// \brief Less-than comparison for RRType against \c other
     ///
-    /// We define this so that RRTypes can be stored in STL containers.
+    /// We define the less-than relationship based on their type codes;
+    /// one RRType is less than the other iff the code of the former is less
+    /// than that of the other as unsigned integers.
+    /// The relationship is meaningless in terms of DNS protocol; the only
+    /// reason we define this method is that RRType objects can be stored in
+    /// STL containers without requiring user-defined less-than relationship.
+    /// We therefore don't define other comparison operators.
     ///
+    /// This method never throws an exception.
+    ///
+    /// \param other the \c RRType object to compare against.
+    /// \return true if \c this RRType is less than the \c other; otherwise
+    /// false.
     bool operator<(const RRType& other) const
     { return (typecode_ < other.typecode_); }
+    //@}
 
-    // (Some) Well-known RRtype constants
+    // (Some) Well-known RRtype "constants"
+    // Note: we'll auto-generate these in a near future version.  These are
+    // hard-coded for a proof of concept.
     static const RRType& A();
     static const RRType& NS();
-    static const RRType& SOA();
-    static const RRType& MX();
-    static const RRType& TXT();
-    static const RRType& AAAA();
 
 private:
     uint16_t typecode_;
@@ -102,6 +249,7 @@ private:
 
 // We'll probably auto generate this code.  But in this preliminary version
 // we simply hard code some selected types.
+// Describing these will be deferred until that point.
 inline const RRType&
 RRType::A()
 {
@@ -110,6 +258,28 @@ RRType::A()
     return (rrtype);
 }
 
+inline const RRType&
+RRType::NS()
+{
+    static RRType rrtype(2);
+
+    return (rrtype);
+}
+
+///
+/// \brief Insert the \c RRType as a string into stream.
+///
+/// This method convert the \c rrtype into a string and inserts it into the
+/// output stream \c os.
+///
+/// This function overloads the global operator<< to behave as described in
+/// ostream::operator<< but applied to \c RRType objects.
+///
+/// \param os A \c std::ostream object on which the insertion operation is
+/// performed.
+/// \param rrtype The \c RRType object output by the operation.
+/// \return A reference to the same \c std::ostream object referenced by
+/// parameter \c os after the insertion operation.
 std::ostream&
 operator<<(std::ostream& os, const RRType& rrtype);
 }
