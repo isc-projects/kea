@@ -14,6 +14,7 @@ run_unittests_SOURCES += buffer_unittest.cc name_unittest.cc
 run_unittests_SOURCES += messagerenderer_unittest.cc exceptions_unittest.cc
 run_unittests_SOURCES += rrclass_unittest.cc rrtype_unittest.cc
 run_unittests_SOURCES += rrttl_unittest.cc
+run_unittests_SOURCES += rrparamregistry_unittest.cc
 run_unittests_SOURCES += run_unittests.cc
 run_unittests_CPPFLAGS = $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(GTEST_LDFLAGS)

@@ -75,7 +75,7 @@ public:
     /// Convert type code into its textual representation.
     std::string getTypeText(uint16_t type_code) const;
 
-    static const RRParamRegistry& getRegistry();
+    static RRParamRegistry& getRegistry();
 private:
     RRParamRegistryImpl* impl_;
 };
