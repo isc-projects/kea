@@ -201,16 +201,22 @@ public:
     ///
     /// \param other the \c RRClass object to compare against.
     /// \return true if the two RRClasses are equal; otherwise false.
-    bool operator==(const RRClass& other) const
+    bool equals(const RRClass& other) const
     { return (classcode_ == other.classcode_); }
+    /// \brief Same as \c equals().
+    bool operator==(const RRClass& other) const { return (equals(other)); }
+
     /// \brief Return true iff two RRClasses are equal.
     ///
     /// This method never throws an exception.
     ///
     /// \param other the \c RRClass object to compare against.
     /// \return true if the two RRClasses are not equal; otherwise false.
-    bool operator!=(const RRClass& other) const
+    bool nequals(const RRClass& other) const
     { return (classcode_ != other.classcode_); }
+    /// \brief Same as \c nequals().
+    bool operator!=(const RRClass& other) const { return (nequals(other)); } 
+
     /// \brief Less-than comparison for RRClass against \c other
     ///
     /// We define the less-than relationship based on their class codes;
