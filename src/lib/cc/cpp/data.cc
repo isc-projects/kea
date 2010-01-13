@@ -135,12 +135,6 @@ skip_chars(std::istream &in, const char *chars, int& line, int& pos)
         c = in.peek();
     }
 }
-/*static void
-skip_chars(std::istream &in, const char *chars)
-{
-    int l = 0, p = 0;
-    skip_chars(in, chars, l, p);
-}*/
 
 // skip on the input stream to one of the characters in chars
 // if another character is found this function returns false
@@ -179,12 +173,6 @@ skip_to(std::istream &in, int& line, int& pos, const char* chars, const char* ma
     throw ParseError(std::string("EOF read, one of \"") + chars + "\" expected", line, pos);
 }
 
-/*static bool
-skip_to(std::istream &in, const char *chars, const char *may_skip="") {
-    int line = 0, pos = 0;
-    return skip_to(in, line, pos, chars, may_skip);
-}*/
-
 static std::string
 str_from_stringstream(std::istream &in, int& line, int& pos) throw (ParseError)
 {
@@ -221,16 +209,38 @@ word_from_stringstream(std::istream &in, int& line, int& pos)
     return ss.str();
 }
 
+static inline int
+count_chars_i(int i)
+{
+    int result = 1;
+    while (i > 10) {
+        result++;
+        i=i/10;
+    }
+    return result;
+}
+
+static inline int
+count_chars_d(double d)
+{
+    int result = 1;
+    while(d < 1.0) {
+        result++;
+        d = d * 10;
+    }
+    return result;
+}
 
 static ElementPtr
 from_stringstream_int_or_double(std::istream &in, int &line, int &pos)
 {
     int i;
     in >> i;
-    // TODO count pos
+    pos += count_chars_i(i);
     if (in.peek() == '.') {
         double d;
         in >> d;
+        pos += count_chars_d(i);
         d += i;
         return Element::create(d);
     } else {
@@ -263,11 +273,9 @@ from_stringstream_list(std::istream &in, int& line, int& pos)
     char c = 0;
     std::vector<ElementPtr> v;
     ElementPtr cur_list_element;
-    //cout << "reading list at line " << line << " pos " << pos << endl;
 
     skip_chars(in, " \t\n", line, pos);
     while (c != EOF && c != ']') {
-        //cout << "at line " << line << " pos " << pos << " cur c: " << c << " next c: " << char(in.peek()) << endl;
         if (in.peek() != ']') {
             cur_list_element = Element::createFromString(in, line, pos);
             v.push_back(cur_list_element);
@@ -320,7 +328,6 @@ Element::createFromString(std::istream &in, int& line, int& pos) throw(ParseErro
     while (c != EOF && !el_read) {
         c = in.get();
         pos++;
-        //std::cout << c << std::endl;
         switch(c) {
             case '1':
             case '2':
@@ -378,6 +385,7 @@ Element::createFromString(const std::string &in)
     ss << in;
     return createFromString(ss);
 }
+
 //
 // a general to_str() function
 //
