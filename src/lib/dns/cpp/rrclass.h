@@ -87,7 +87,7 @@ public:
     /// \name Constructors and Destructor
     ///
     //@{
-    /// Constructor from an integer type code.
+    /// Constructor from an integer class code.
     ///
     /// This constructor never throws an exception.
     ///
