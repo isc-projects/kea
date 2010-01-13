@@ -170,7 +170,7 @@ public:
     /// standard exception will be thrown.
     ///
     /// \param buffer An output buffer to store the wire data.
-    void toWire(OutputBuffer& buffer) const;
+    void toWire(MessageRenderer& renderer) const;
     /// \brief Render the \c RRType in the wire format.
     ///
     /// This method renders the type code in network byte order into the
@@ -181,7 +181,7 @@ public:
     ///
     /// \param renderer DNS message rendering context that encapsulates the
     /// output buffer in which the RRType is to be stored.
-    void toWire(MessageRenderer& renderer) const;
+    void toWire(OutputBuffer& buffer) const;
     //@}
 
     ///
