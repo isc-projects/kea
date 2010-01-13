@@ -153,7 +153,7 @@ RRParamRegistry::~RRParamRegistry()
     delete impl_;
 }
 
-const RRParamRegistry&
+RRParamRegistry&
 RRParamRegistry::getRegistry()
 {
     static RRParamRegistry registry;
@@ -166,25 +166,34 @@ RRParamRegistry::add(const string& classcode_string, uint16_t classcode,
                      const string& typecode_string, uint16_t typecode
                      /* rdata_factory (notyet) */)
 {
-    // XXX: rollback logic on failure is complicated.
-    bool add_type = false;
-    bool add_class = false;
+    // Rollback logic on failure is complicated.  If adding the new type or
+    // class fails, we should revert to the original state, cleaning up
+    // intermediate state.  But we need to make sure that we don't remove
+    // existing data.  addType()/AddClass() will simply ignore an attempt to
+    // add the same data, so the cleanup should be performed only when we add
+    // something new but we fail in other part of the process.
+    bool will_add_type = false;
+    bool type_added = false;
+    bool will_add_class = false;
+    bool class_added = false;
 
     if (impl_->code2typemap.find(typecode) == impl_->code2typemap.end()) {
-        add_type = true;
+        will_add_type = true;
     }
     if (impl_->code2classmap.find(classcode) == impl_->code2classmap.end()) {
-        add_class = true;
+        will_add_class = true;
     }
 
     try {
         addType(typecode_string, typecode);
+        type_added = true;
         addClass(classcode_string, classcode);
+        class_added = true;
     } catch (...) {
-        if (add_type) {
+        if (will_add_type && type_added) {
             removeType(typecode);
         }
-        if (add_class) {
+        if (will_add_class && class_added) {
             removeClass(classcode);
         }
         throw;
@@ -202,15 +211,15 @@ namespace {
 /// MS: type of mapping class from string: either StrRRTypeMap or StrRRClassMap
 /// ET: exception type for error handling: either InvalidRRType or
 ///     InvalidRRClass
-template <typename PT, typename MC, typename MS>
+template <typename PT, typename MC, typename MS, typename ET>
 inline void
 addParam(const string& code_string, uint16_t code, MC& codemap, MS& stringmap)
 {
     // Duplicate type check
     typename MC::const_iterator found = codemap.find(code);
-    if (codemap.find(code) != codemap.end()) {
-        if (codemap.find(code)->second->code_string_ != code_string) {
-            dns_throw(RRClassExist, "Duplicate RR parameter registration");
+    if (found != codemap.end()) {
+        if (found->second->code_string_ != code_string) {
+            dns_throw(ET, "Duplicate RR parameter registration");
         }
         return;
     }
@@ -296,9 +305,8 @@ getText(uint16_t code, MC& codemap)
 void
 RRParamRegistry::addType(const string& type_string, uint16_t code)
 {
-    addParam<RRTypeParam, CodeRRTypeMap, StrRRTypeMap>(type_string, code,
-                                                       impl_->code2typemap,
-                                                       impl_->str2typemap);
+    addParam<RRTypeParam, CodeRRTypeMap, StrRRTypeMap, RRTypeExist>
+        (type_string, code, impl_->code2typemap, impl_->str2typemap);
 }
 
 bool
@@ -324,9 +332,8 @@ RRParamRegistry::getTypeText(uint16_t code) const
 void
 RRParamRegistry::addClass(const string& class_string, uint16_t code)
 {
-    addParam<RRClassParam, CodeRRClassMap, StrRRClassMap>(class_string, code,
-                                                          impl_->code2classmap,
-                                                          impl_->str2classmap);
+    addParam<RRClassParam, CodeRRClassMap, StrRRClassMap, RRClassExist>
+        (class_string, code, impl_->code2classmap, impl_->str2classmap);
 }
 
 bool
