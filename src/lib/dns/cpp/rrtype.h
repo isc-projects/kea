@@ -77,7 +77,7 @@ public:
 /// } \endcode
 ///
 /// In order to ensure that the constant RRType object has been initialized
-/// by the initialization for \c default_type is performed, we need help from
+/// before the initialization for \c default_type, we need help from
 /// the proxy function.
 ///
 /// Note to developers: since it's expected that some of these constant
