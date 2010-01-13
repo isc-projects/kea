@@ -102,7 +102,7 @@ public:
     explicit RRType(uint16_t typecode) : typecode_(typecode) {}
     /// Constructor from a string.
     ///
-    /// A valid string is one of "well known" textual type representations
+    /// A valid string is one of "well-known" textual type representations
     /// such as "A", "AAAA", or "NS", or in the standard format for "unknown"
     /// RR types as defined in RFC3597, i.e., "TYPEnnnn".
     ///
@@ -111,7 +111,7 @@ public:
     ///
     /// As for the format of "TYPEnnnn", "nnnn" must represent a valid 16-bit
     /// unsigned integer, which may contain leading 0's as long as it consists
-    /// of at most 5 characters (exclusive).
+    /// of at most 5 characters (inclusive).
     /// For example, "TYPE1" and "TYPE001" are valid and represent the same
     /// RR type, but "TYPE65536" and "TYPE000001" are invalid.
     /// A "TYPEnnnn" representation is valid even if the corresponding type code

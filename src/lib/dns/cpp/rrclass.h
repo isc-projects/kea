@@ -94,7 +94,7 @@ public:
     /// \param classcode An 16-bit integer code corresponding to the RRClass.
     explicit RRClass(uint16_t classcode) : classcode_(classcode) {}
     ///
-    /// A valid string is one of "well known" textual class representations
+    /// A valid string is one of "well-known" textual class representations
     /// such as "IN" or "CH", or in the standard format for "unknown"
     /// classes as defined in RFC3597, i.e., "CLASSnnnn".
     ///
@@ -103,7 +103,7 @@ public:
     ///
     /// As for the format of "CLASSnnnn", "nnnn" must represent a valid 16-bit
     /// unsigned integer, which may contain leading 0's as long as it consists
-    /// of at most 5 characters (exclusive).
+    /// of at most 5 characters (inclusive).
     /// For example, "CLASS1" and "CLASSS001" are valid and represent the same
     /// class, but "CLASS65536" and "CLASS000001" are invalid.
     /// A "CLASSnnnn" representation is valid even if the corresponding class
