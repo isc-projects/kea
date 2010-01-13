@@ -208,16 +208,22 @@ public:
     ///
     /// \param other the \c RRType object to compare against.
     /// \return true if the two RRTypes are equal; otherwise false.
-    bool operator==(const RRType& other) const
+    bool equals(const RRType& other) const
     { return (typecode_ == other.typecode_); }
+    /// \brief Same as \c equals().
+    bool operator==(const RRType& other) const { return equals(other); }
+
     /// \brief Return true iff two RRTypes are equal.
     ///
     /// This method never throws an exception.
     ///
     /// \param other the \c RRType object to compare against.
     /// \return true if the two RRTypes are not equal; otherwise false.
-    bool operator!=(const RRType& other) const
+    bool nequals(const RRType& other) const 
     { return (typecode_ != other.typecode_); }
+    /// \brief Same as \c nequals().
+    bool operator!=(const RRType& other) const { return nequals(other); }
+ 
     /// \brief Less-than comparison for RRType against \c other
     ///
     /// We define the less-than relationship based on their type codes;

@@ -143,7 +143,9 @@ TEST_F(RRTypeTest, wellKnownTypes)
 TEST_F(RRTypeTest, compare)
 {
     EXPECT_TRUE(RRType(1) == RRType("A"));
+    EXPECT_TRUE(RRType(1).equals(RRType("A")));
     EXPECT_TRUE(RRType(0) != RRType("A"));
+    EXPECT_TRUE(RRType(0).nequals(RRType("A")));
 
     EXPECT_TRUE(RRType("A") < RRType("NS"));
     EXPECT_TRUE(RRType(100) < RRType(65535));

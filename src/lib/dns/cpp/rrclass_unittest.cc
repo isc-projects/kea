@@ -138,7 +138,8 @@ TEST_F(RRClassTest, wellKnownClasss)
 TEST_F(RRClassTest, compare)
 {
     EXPECT_TRUE(RRClass(1) == RRClass("IN"));
-    EXPECT_TRUE(RRClass(0) != RRClass("IN"));
+    EXPECT_TRUE(RRClass(1).equals(RRClass("IN")));
+    EXPECT_TRUE(RRClass(0).nequals(RRClass("IN")));
 
     EXPECT_TRUE(RRClass("IN") < RRClass("CH"));
     EXPECT_TRUE(RRClass(100) < RRClass(65535));
