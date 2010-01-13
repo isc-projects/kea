@@ -30,7 +30,7 @@ using namespace isc::dns;
 namespace {
 class RRTypeTest : public ::testing::Test {
 protected:
-    RRTypeTest() : obuffer(0), renderer(obuffer) {}       
+    RRTypeTest() : obuffer(0), renderer(obuffer) {}
 
     OutputBuffer obuffer;
     MessageRenderer renderer;
