@@ -77,7 +77,7 @@ public:
 /// } \endcode
 ///
 /// In order to ensure that the constant RRClass object has been initialized
-/// by the initialization for \c default_class is performed, we need help from
+/// before the initialization for \c default_class, we need help from
 /// the proxy function.
 ///
 /// Note to developers: same note as \c RRType applies.
