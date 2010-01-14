@@ -33,7 +33,7 @@ namespace dns {
 
 RRType::RRType(const string& typestr)
 {
-    typecode_ = RRParamRegistry::getRegistry().getTypeCode(typestr);
+    typecode_ = RRParamRegistry::getRegistry().textToTypeCode(typestr);
 }
 
 RRType::RRType(InputBuffer& buffer)
@@ -47,7 +47,7 @@ RRType::RRType(InputBuffer& buffer)
 const string
 RRType::toText() const
 {
-    return (RRParamRegistry::getRegistry().getTypeText(typecode_));
+    return (RRParamRegistry::getRegistry().codeToTypeText(typecode_));
 }
 
 void

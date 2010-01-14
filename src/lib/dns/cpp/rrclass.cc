@@ -32,7 +32,7 @@ namespace dns {
 
 RRClass::RRClass(const string& classstr)
 {
-    classcode_ = RRParamRegistry::getRegistry().getClassCode(classstr);
+    classcode_ = RRParamRegistry::getRegistry().textToClassCode(classstr);
 }
 
 RRClass::RRClass(InputBuffer& buffer)
@@ -46,7 +46,7 @@ RRClass::RRClass(InputBuffer& buffer)
 const string
 RRClass::toText() const
 {
-    return (RRParamRegistry::getRegistry().getClassText(classcode_));
+    return (RRParamRegistry::getRegistry().codeToClassText(classcode_));
 }
 
 void

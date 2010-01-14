@@ -38,23 +38,11 @@ namespace isc {
 namespace dns {
 
 namespace {
-bool CICharEqual(char c1, char c2)
-{
-    return (tolower(static_cast<unsigned char>(c1)) ==
-            tolower(static_cast<unsigned char>(c2)));
-}
-
-bool
-caseStringEqual(const string& s1, const string& s2, size_t n)
-{
-    if (s1.size() < n || s2.size() < n) {
-        return (false);
-    }
-
-    return (mismatch(s1.begin(), s1.begin() + n, s2.begin(), CICharEqual).first
-            == s1.begin() + n);
-}
-
+///
+/// The following function and class are a helper to define case-insensitive
+/// equivalence relationship on strings.  They are used in the mapping
+/// containers below.
+///
 bool
 CICharLess(char c1, char c2)
 {
@@ -123,11 +111,22 @@ const size_t RRClassParam::UNKNOWN_MAXLEN =
     RRClassParam::UNKNOWN_MAX.size();
 }
 
+///
+/// \brief The \c RRParamRegistryImpl class is the actual implementation of
+/// \c RRParamRegistry.
+///
+/// The implementation is hidden from applications.  We can refer to specific
+/// members of this class only within the implementation source file.
+///
 struct RRParamRegistryImpl {
-    StrRRClassMap str2classmap;
-    CodeRRClassMap code2classmap;
+    /// Mappings from RR type codes to textual representations.
     StrRRTypeMap str2typemap;
+    /// Mappings from textual representations of RR types to integer codes.
     CodeRRTypeMap code2typemap;
+    /// Mappings from RR class codes to textual representations.
+    StrRRClassMap str2classmap;
+    /// Mappings from textual representations of RR classes to integer codes.
+    CodeRRClassMap code2classmap;
 };
 
 RRParamRegistry::RRParamRegistry()
@@ -137,10 +136,10 @@ RRParamRegistry::RRParamRegistry()
     // set up parameters for well-known RRs
     // XXX: this should eventually be more automatic.
     try {
-        add("IN", 1, "A", 1);
-        add("IN", 1, "NS", 2);
+        add("A", 1, "IN", 1);
+        add("NS", 2, "IN", 1);
 
-        add("CH", 3, "A", 1);
+        add("A", 1, "CH", 3);
     } catch (...) {
         delete impl_;
         throw;
@@ -162,8 +161,8 @@ RRParamRegistry::getRegistry()
 }
 
 void
-RRParamRegistry::add(const string& classcode_string, uint16_t classcode,
-                     const string& typecode_string, uint16_t typecode
+RRParamRegistry::add(const string& typecode_string, uint16_t typecode,
+                     const string& classcode_string, uint16_t classcode
                      /* rdata_factory (notyet) */)
 {
     // Rollback logic on failure is complicated.  If adding the new type or
@@ -185,10 +184,8 @@ RRParamRegistry::add(const string& classcode_string, uint16_t classcode,
     }
 
     try {
-        addType(typecode_string, typecode);
-        type_added = true;
-        addClass(classcode_string, classcode);
-        class_added = true;
+        type_added = addType(typecode_string, typecode);
+        class_added = addClass(classcode_string, classcode);
     } catch (...) {
         if (will_add_type && type_added) {
             removeType(typecode);
@@ -201,6 +198,29 @@ RRParamRegistry::add(const string& classcode_string, uint16_t classcode,
 }
 
 namespace {
+///
+/// These are helper functions to implement case-insensitive string comparison.
+/// This could be simplified using strncasecmp(), but unfortunately it's not
+/// included in <cstring>.  To be as much as portable within the C++ standard
+/// we take the "in house" approach here.
+/// 
+bool CICharEqual(char c1, char c2)
+{
+    return (tolower(static_cast<unsigned char>(c1)) ==
+            tolower(static_cast<unsigned char>(c2)));
+}
+
+bool
+caseStringEqual(const string& s1, const string& s2, size_t n)
+{
+    if (s1.size() < n || s2.size() < n) {
+        return (false);
+    }
+
+    return (mismatch(s1.begin(), s1.begin() + n, s2.begin(), CICharEqual).first
+            == s1.begin() + n);
+}
+
 /// Code logic for RRTypes and RRClasses is mostly common except (C++) type and
 /// member names.  So we define type-independent templates to describe the
 /// common logic and let concrete classes to avoid code duplicates.
@@ -212,7 +232,7 @@ namespace {
 /// ET: exception type for error handling: either InvalidRRType or
 ///     InvalidRRClass
 template <typename PT, typename MC, typename MS, typename ET>
-inline void
+inline bool
 addParam(const string& code_string, uint16_t code, MC& codemap, MS& stringmap)
 {
     // Duplicate type check
@@ -221,7 +241,7 @@ addParam(const string& code_string, uint16_t code, MC& codemap, MS& stringmap)
         if (found->second->code_string_ != code_string) {
             dns_throw(ET, "Duplicate RR parameter registration");
         }
-        return;
+        return (false);
     }
 
     typedef shared_ptr<PT> ParamPtr;
@@ -238,6 +258,8 @@ addParam(const string& code_string, uint16_t code, MC& codemap, MS& stringmap)
         codemap.erase(code);
         throw;
     }
+
+    return (true);
 }
 
 template <typename MC, typename MS>
@@ -261,7 +283,7 @@ removeParam(uint16_t code, MC& codemap, MS& stringmap)
 
 template <typename PT, typename MS, typename ET>
 inline uint16_t
-getCode(const string& code_str, MS& stringmap)
+textToCode(const string& code_str, MS& stringmap)
 {
     typename MS::const_iterator found;
 
@@ -287,7 +309,7 @@ getCode(const string& code_str, MS& stringmap)
 
 template <typename PT, typename MC>
 inline string
-getText(uint16_t code, MC& codemap)
+codeToText(uint16_t code, MC& codemap)
 {
     typename MC::const_iterator found;
 
@@ -302,11 +324,11 @@ getText(uint16_t code, MC& codemap)
 }
 }
 
-void
+bool
 RRParamRegistry::addType(const string& type_string, uint16_t code)
 {
-    addParam<RRTypeParam, CodeRRTypeMap, StrRRTypeMap, RRTypeExist>
-        (type_string, code, impl_->code2typemap, impl_->str2typemap);
+    return (addParam<RRTypeParam, CodeRRTypeMap, StrRRTypeMap, RRTypeExist>
+            (type_string, code, impl_->code2typemap, impl_->str2typemap));
 }
 
 bool
@@ -317,23 +339,23 @@ RRParamRegistry::removeType(uint16_t code)
 }
 
 uint16_t
-RRParamRegistry::getTypeCode(const string& type_str) const
+RRParamRegistry::textToTypeCode(const string& type_string) const
 {
-    return (getCode<RRTypeParam, StrRRTypeMap,
-            InvalidRRType>(type_str, impl_->str2typemap));
+    return (textToCode<RRTypeParam, StrRRTypeMap,
+            InvalidRRType>(type_string, impl_->str2typemap));
 }
 
 string
-RRParamRegistry::getTypeText(uint16_t code) const
+RRParamRegistry::codeToTypeText(uint16_t code) const
 {
-    return (getText<RRTypeParam, CodeRRTypeMap>(code, impl_->code2typemap));
+    return (codeToText<RRTypeParam, CodeRRTypeMap>(code, impl_->code2typemap));
 }
 
-void
+bool
 RRParamRegistry::addClass(const string& class_string, uint16_t code)
 {
-    addParam<RRClassParam, CodeRRClassMap, StrRRClassMap, RRClassExist>
-        (class_string, code, impl_->code2classmap, impl_->str2classmap);
+    return (addParam<RRClassParam, CodeRRClassMap, StrRRClassMap, RRClassExist>
+            (class_string, code, impl_->code2classmap, impl_->str2classmap));
 }
 
 bool
@@ -345,16 +367,16 @@ RRParamRegistry::removeClass(uint16_t code)
 }
 
 uint16_t
-RRParamRegistry::getClassCode(const string& class_str) const
+RRParamRegistry::textToClassCode(const string& class_string) const
 {
-    return (getCode<RRClassParam, StrRRClassMap,
-            InvalidRRClass>(class_str, impl_->str2classmap));
+    return (textToCode<RRClassParam, StrRRClassMap,
+            InvalidRRClass>(class_string, impl_->str2classmap));
 }
 
 string
-RRParamRegistry::getClassText(uint16_t code) const
+RRParamRegistry::codeToClassText(uint16_t code) const
 {
-    return (getText<RRClassParam, CodeRRClassMap>(code, impl_->code2classmap));
+    return (codeToText<RRClassParam, CodeRRClassMap>(code, impl_->code2classmap));
 }
 }
 }
