@@ -1,5 +1,7 @@
 AM_CPPFLAGS = $(BOOST_INCLUDES)
 
+CLEANFILES = *.gcno *.gcda
+
 lib_LTLIBRARIES = libdns.la
 libdns_la_SOURCES = buffer.h name.cc name.h messagerenderer.h messagerenderer.cc
 libdns_la_SOURCES += rrparamregistry.h rrparamregistry.cc

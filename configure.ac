@@ -33,8 +33,6 @@ if test $enable_shared != "no" -a "X$GCC" = "Xyes"; then
    CXXFLAGS="$CXXFLAGS -fPIC"
 fi
 
-AC_SUBST(CXXFLAGS)
-
 #
 # Check availablity of boost: 
 #
@@ -78,6 +76,42 @@ AM_CONDITIONAL(HAVE_GTEST, test $gtest_path != "no")
 AC_SUBST(GTEST_INCLUDES)
 AC_SUBST(GTEST_LDFLAGS)
 AC_SUBST(GTEST_LDADD)
+
+AC_ARG_WITH(lcov,
+[  --with-lcov[=PROGRAM]     enable gtest and coverage target using the specified lcov], lcov="$withval", lcov="no")
+
+USE_LCOV="no"
+if test "$lcov" != "no"; then
+	# force gtest if not set
+	if test "$gtest_path" = "no"; then
+		gtest_path="yes"
+	fi
+	if test "$lcov" != "yes"; then
+		LCOV_PATHS=$lcov
+	else
+		LCOV_PATHS="/usr/bin/lcov /usr/local/bin/lcov"
+	fi
+	for f in $LCOV_PATHS; do
+		if test -x "$f"; then
+			USE_LCOV="yes"
+			LCOV=$f
+		fi
+	done
+	if test $USE_LCOV != "yes"; then
+		AC_MSG_ERROR([Cannot find lcov in: $LCOV_PATHS])
+	fi
+	# is genhtml always in the same directory?
+	GENHTML=`echo "$LCOV" | sed s/lcov$/genhtml/`
+	if test ! -x $GENHTML; then
+		AC_MSG_ERROR([genhtml not found, needed for lcov])
+	fi
+	# GCC specific?
+	CXXFLAGS="$CXXFLAGS -fprofile-arcs -ftest-coverage"
+	LIBS=" $LIBS -lgcov"
+fi
+
+AC_SUBST(CXXFLAGS)
+AC_SUBST(LIBS)
 
 # Checks for library functions.
 
