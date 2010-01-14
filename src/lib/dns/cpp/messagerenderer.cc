@@ -127,7 +127,7 @@ private:
 /// \c MessageRenderer.
 ///
 /// The implementation is hidden from applications.  We can refer to specific
-/// members of this class only within this file.
+/// members of this class only within the implementation source file.
 ///
 struct MessageRendererImpl {
     /// \brief Constructor from an output buffer.

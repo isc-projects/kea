@@ -57,8 +57,8 @@ const string RRParamRegistryTest::test_type_str("TESTTYPE");
 
 TEST_F(RRParamRegistryTest, addRemove)
 {
-    RRParamRegistry::getRegistry().add(test_class_str, test_class_code,
-                                       test_type_str, test_type_code);
+    RRParamRegistry::getRegistry().add(test_type_str, test_type_code,
+                                       test_class_str, test_class_code);
     EXPECT_EQ(65533, RRClass("TESTCLASS").getCode());
     EXPECT_EQ(65534, RRType("TESTTYPE").getCode());
 
@@ -72,16 +72,16 @@ TEST_F(RRParamRegistryTest, addError)
 {
     // An attempt to override a pre-registered class should fail with an
     // exception, and the pre-registered one should remain in the registry.
-    EXPECT_THROW(RRParamRegistry::getRegistry().add(test_class_str, 1,
-                                                    test_type_str,
-                                                    test_type_code),
+    EXPECT_THROW(RRParamRegistry::getRegistry().add(test_type_str,
+                                                    test_type_code,
+                                                    test_class_str, 1),
                  RRClassExist);
     EXPECT_EQ("IN", RRClass(1).toText());
 
     // Same for RRType
-    EXPECT_THROW(RRParamRegistry::getRegistry().add(test_class_str,
-                                                    test_class_code,
-                                                    test_type_str, 1),
+    EXPECT_THROW(RRParamRegistry::getRegistry().add(test_type_str, 1,
+                                                    test_class_str,
+                                                    test_class_code),
                  RRTypeExist);
     EXPECT_EQ("A", RRType(1).toText());
 }
