@@ -62,10 +62,17 @@ TEST_F(RRParamRegistryTest, addRemove)
     EXPECT_EQ(65533, RRClass("TESTCLASS").getCode());
     EXPECT_EQ(65534, RRType("TESTTYPE").getCode());
 
+    // the first removal attempt should succeed
+    EXPECT_TRUE(RRParamRegistry::getRegistry().removeType(65534));
+    // then toText() should treat it as an "unknown" 
+    EXPECT_EQ(test_type_unknown_str, RRType(test_type_code).toText());
+    // attempt of removing non-existent mapping should result in 'false'
+    EXPECT_FALSE(RRParamRegistry::getRegistry().removeType(65534));
+
+    // same set of tests for RR class.
     EXPECT_TRUE(RRParamRegistry::getRegistry().removeClass(65533));
     EXPECT_EQ(test_class_unknown_str, RRClass(test_class_code).toText());
-    EXPECT_TRUE(RRParamRegistry::getRegistry().removeType(65534));
-    EXPECT_EQ(test_type_unknown_str, RRType(test_type_code).toText());
+    EXPECT_FALSE(RRParamRegistry::getRegistry().removeClass(65533));
 }
 
 TEST_F(RRParamRegistryTest, addError)

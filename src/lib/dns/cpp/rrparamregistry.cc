@@ -14,6 +14,7 @@
 
 // $Id$
 
+#include <cassert>
 #include <algorithm>
 #include <cctype>
 #include <functional>
@@ -213,9 +214,7 @@ bool CICharEqual(char c1, char c2)
 bool
 caseStringEqual(const string& s1, const string& s2, size_t n)
 {
-    if (s1.size() < n || s2.size() < n) {
-        return (false);
-    }
+    assert(s1.size() >= n && s2.size() >= n);
 
     return (mismatch(s1.begin(), s1.begin() + n, s2.begin(), CICharEqual).first
             == s1.begin() + n);
