@@ -84,6 +84,7 @@ class RRParamRegistry {
     //@{
 private:
     RRParamRegistry();
+    RRParamRegistry(const RRParamRegistry& orig);
     ~RRParamRegistry();
     //@}
 public:
