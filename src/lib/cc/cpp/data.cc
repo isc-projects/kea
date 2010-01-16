@@ -138,7 +138,7 @@ skip_chars(std::istream &in, const char *chars, int& line, int& pos)
 
 // skip on the input stream to one of the characters in chars
 // if another character is found this function returns false
-// unles that character is specified in the optional may_skip
+// unless that character is specified in the optional may_skip
 //
 // the character found is left on the stream
 static void
