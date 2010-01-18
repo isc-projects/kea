@@ -20,6 +20,7 @@ or via the interactive command interpreter.
 .Pp
 .Nm
 must communicate over a
+.Xr msgq 8
 C-Channel
 connection.
 If this connection is not established,
@@ -28,8 +29,50 @@ will exit.
 .\" TODO: what if msgq is running but no BigTool or Boss groups?
 .Pp
 The command-line prompt shows
-TODO.
-The following commands are recognized by
+.Dq "\*[Gt] " .
+The options are based on the module in use.
+The command-line usage is:
+.Pp
+.Ic module Ic command Op Ar "param1 = value1" Op Ar ", param2 = value2"
+.Pp
+.Nm Ap s
+interactive interface provides command-line completion and hints.
+Press the
+.Li Tab
+key to get a hint for the module, command, and/or parameters.
+.\" TODO: no hints at a blank line though
+The arrow keys and Emacs-style editing keys may be used to edit
+and recall previous lines.
+.\" TODO:  all Emacs-style editing keys?
+.Pp
+You can use the
+.Ic help
+keyword to receive usage assistance for a module or a module's
+command.
+.Pp
+The following modules are available:
+.Pp
+.Bl -tag -width ".Li ParkingLot" -compact -offset indent
+.\" TODO parkinglot?
+.It Ic boss
+Control BIND 10 services.
+.It Ic config
+Configuration commands.
+.It Ic ParkingLot
+TODO
+.El
+.Sh BOSS COMMANDS
+.Bl -tag -width Ic
+.It Ic help
+Get help for the
+.Em boss
+module.
+.It Ic shutdown Op Ar module_name
+Stop the BIND 10 processes.
+.El
+.Sh CONFIGURATION COMMANDS
+.\" add     commit  go      help    remove  revert  set     show    unset
+The following configuration commands are recognized by
 .Nm :
 .Bl -tag -width Ic
 .It Ic add Ar identifier Ar value
@@ -38,10 +81,12 @@ Add entry to configuration.
 .It Ic commit
 Commit all local changes.
 TODO: what does this do?
-.It Ic config
-TODO
 .It Ic go Ar identifier
 Go to the specified configuration. TODO
+.It Ic help
+Get help for the
+.Em config
+module.
 .It Ic remove Ar identifier Ar value
 Remove entry from configuration.
 .\" TODO: why the value?
@@ -54,13 +99,20 @@ TODO
 .It Ic show
 TODO
 Show configuration.
-.It Ic shutdown Op Ar module_name TODO
-Stop the BIND 10 processes.
 .It Ic unset Ar identifier
 Unset a configuration value.
 TODO
 .El
-.Pp
+.Sh PARKINGLOT COMMANDS
+.Bl -tag -width Ic
+.It Ic help
+Get help for the
+.Em ParkingLot
+module.
+.It Ic print_message Ar string
+Print the given message to stdout.
+.El
+.\"
 .\" TODO: Command arguments which have embedded spaces may be quoted with
 .\" quote
 .\" .Sq \&"
