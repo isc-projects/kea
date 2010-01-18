@@ -96,176 +96,60 @@ ParkingLot::processMessage() {
 
         RRsetPtr query = msg.getSection(SECTION_QUESTION)[0];
 
-        DataSource::result result;
-
         msg.makeResponse();
         msg.setAA(true);
         TTL default_ttl = TTL(3600);
 
-        // ok this part of the api needs improvenemt
-        RRset *rrset = new RRset(query->getName(), query->getClass(), query->getType(), default_ttl);
-        RRsetPtr answer = RRsetPtr(rrset);
-        RRset *ns_rrset = new RRset(query->getName(), query->getClass(), RRType::NS, default_ttl);
-        RRsetPtr ns_answer = RRsetPtr(ns_rrset);
-        RRset *soa_rrset = new RRset(query->getName(), query->getClass(), RRType::SOA, default_ttl);
-        RRsetPtr soa_answer = RRsetPtr(soa_rrset);
-        
-        result = data_source.findRRset(answer, query->getName(), query->getClass(), query->getType());
-        switch (result) {
-        case DataSource::success:
-            msg.addRRset(SECTION_ANSWER, answer);
-            if (data_source.findRRset(ns_answer, query->getName(), query->getClass(), RRType::NS) == DataSource::success) {
-                msg.addRRset(SECTION_AUTHORITY, ns_answer);
-            }
-            break;
-        case DataSource::zone_not_found:
-            msg.setRcode(Message::RCODE_NXDOMAIN);
-            break;
-        case DataSource::name_not_found:
-            if (data_source.findRRset(soa_answer, query->getName(), query->getClass(), RRType::SOA) == DataSource::success) {
-                msg.addRRset(SECTION_AUTHORITY, soa_answer);
-            }
-            break;
-        }
-        msg.toWire();
-        cout << "sending a response (" <<
-            boost::lexical_cast<string>(msg.getBuffer().getSize())
-                  << " bytes):\n" << msg.toText() << endl;
-        msg.getBuffer().sendTo(s, *sa, sa_len);
-    }
-/*
-    Name authors_name("authors.bind");
-    Name version_name("version.bind");
-    struct sockaddr_storage ss;
-    socklen_t sa_len = sizeof(ss);
-    struct sockaddr* sa = static_cast<struct sockaddr*>((void*)&ss);
-    int s = sock;
-    Message msg;
-
-    if (msg.getBuffer().recvFrom(s, sa, &sa_len) > 0) {
-        try {
-            msg.fromWire();
-        } catch (...) {
-            cerr << "parse failed" << endl;
-            return;
-        }
-
-        cout << "received a message:\n" << msg.toText() << endl;
-
-        if (msg.getSection(SECTION_QUESTION).size() != 1)
-            return;
-
-        msg.makeResponse();
-        msg.setAA(true);
-
-        RRsetPtr query = msg.getSection(SECTION_QUESTION)[0];
-
-        string name = query->getName().toText(true);
-        if (query->getClass() == RRClass::CH &&
-            query->getType() == RRType::TXT &&
-            query->getName() == authors_name) {
-            msg.setRcode(Message::RCODE_NOERROR);
-            msg.addRR(SECTION_ANSWER, RR(authors_name, RRClass::CH, 
-                                         RRType::TXT, TTL(0), 
-                                         TXT("Han Feng")));
-            msg.addRR(SECTION_ANSWER, RR(authors_name, RRClass::CH, 
-                                         RRType::TXT, TTL(0), 
-                                         TXT("Kazunori Fujiwara")));
-            msg.addRR(SECTION_ANSWER, RR(authors_name, RRClass::CH, 
-                                         RRType::TXT, TTL(0), 
-                                         TXT("Michael Graff")));
-            msg.addRR(SECTION_ANSWER, RR(authors_name, RRClass::CH,
-                                         RRType::TXT, TTL(0),
-                                         TXT("Evan Hunt")));
-            msg.addRR(SECTION_ANSWER, RR(authors_name, RRClass::CH,
-                                         RRType::TXT, TTL(0),
-                                         TXT("Jelte Jansen")));
-            msg.addRR(SECTION_ANSWER, RR(authors_name, RRClass::CH, 
-                                         RRType::TXT, TTL(0), 
-                                         TXT("Jin Jian")));
-            msg.addRR(SECTION_ANSWER, RR(authors_name, RRClass::CH,
-                                         RRType::TXT, TTL(0),
-                                         TXT("JINMEI Tatuya")));
-            msg.addRR(SECTION_ANSWER, RR(authors_name, RRClass::CH, 
-                                         RRType::TXT, TTL(0), 
-                                         TXT("Naoki Kambe")));
-            msg.addRR(SECTION_ANSWER, RR(authors_name, RRClass::CH, 
-                                         RRType::TXT, TTL(0), 
-                                         TXT("Shane Kerr"))); 
-            msg.addRR(SECTION_ANSWER, RR(authors_name, RRClass::CH, 
-                                         RRType::TXT, TTL(0), 
-                                         TXT("Zhang Likun")));
-            msg.addRR(SECTION_ANSWER, RR(authors_name, RRClass::CH, 
-                                         RRType::TXT, TTL(0), 
-                                         TXT("Jeremy C. Reed"))); 
-            msg.addRR(SECTION_AUTHORITY, RR(authors_name, RRClass::CH,
-                                            RRType::NS, TTL(0),
-                                            NS("authors.bind")));
-        } else if (query->getClass() == RRClass::CH &&
-                   query->getType() == RRType::TXT &&
-                   query->getName() == version_name) {            
-            msg.setRcode(Message::RCODE_NOERROR);
-            msg.addRR(SECTION_ANSWER, RR(version_name, RRClass::CH,
-                                         RRType::TXT, TTL(0),
-                                         TXT("10.0.0s20091030")));
-            msg.addRR(SECTION_AUTHORITY, RR(version_name, RRClass::CH,
-                                            RRType::NS, TTL(0),
-                                            NS("version.bind")));
-        } else if (zones.contains(name)) {
-            msg.setRcode(Message::RCODE_NOERROR);
-            RRset* nsset = new RRset(query->getName(), RRClass::IN,
-                                     RRType::NS, TTL(3600));
-            BOOST_FOREACH(isc::dns::Rdata::RdataPtr ns, ns_records) {
-                nsset->addRdata(ns);
-            }
-
-            if (query->getType() == RRType::NS)
-                msg.addRRset(SECTION_ANSWER, RRsetPtr(nsset));
-            else if (query->getType() == RRType::A) {
-                msg.addRRset(SECTION_AUTHORITY, RRsetPtr(nsset));
-
-                BOOST_FOREACH(isc::dns::Rdata::RdataPtr a, a_records) {
-                    RR arr(query->getName(), RRClass::IN, RRType::A, TTL(3600), a);
-                    msg.addRR(SECTION_ANSWER, arr);
-                }
-            } else if (query->getType() == RRType::AAAA) {
-                msg.addRRset(SECTION_AUTHORITY, RRsetPtr(nsset));
-                BOOST_FOREACH(isc::dns::Rdata::RdataPtr aaaa, aaaa_records) {
-                    RR aaaarr(query->getName(), RRClass::IN, RRType::AAAA,
-                              TTL(3600), aaaa);
-                    msg.addRR(SECTION_ANSWER, aaaarr);
+        Name zname;
+        Name name = query->getName();
+        RRClass qclass = query->getClass();
+        RRType qtype = query->getType();
+        SearchResult::status_type status;
+        bool included_ns = false;
+        if (data_source.hasZoneFor(query->getName(), zname)) {
+            status = data_source.addToMessage(msg, SECTION_ANSWER, zname, name, qclass, qtype);
+            // rcode is based on this result?
+            if (status == SearchResult::name_not_found) {
+                if (qtype != RRType::NS) {
+                    status = data_source.addToMessage(msg, SECTION_AUTHORITY, zname, zname, qclass, RRType::SOA);
                 }
             } else {
-                RR soarr(query->getName(), RRClass::IN, RRType::SOA,
-                         TTL(3600), soa);
-                msg.addRR(SECTION_AUTHORITY, soarr);
+                if (qtype != RRType::NS) {
+                    status = data_source.addToMessage(msg, SECTION_AUTHORITY, zname, zname, qclass, RRType::NS);
+                }
+                included_ns = true;
+            }
+            // If we included NS records, and their target falls below the zone, add glue
+            if (included_ns) {
+                BOOST_FOREACH(RRsetPtr rrset, msg.getSection(SECTION_ANSWER)) {
+                    if (rrset->getType() == RRType::NS) {
+                        BOOST_FOREACH(Rdata::RdataPtr rdata, rrset->getRdatalist()) {
+                            /* no direct way to get the Name from the rdata fields? */
+                            Name ns_name = Name(rdata->toText());
+                            data_source.addToMessage(msg, SECTION_ADDITIONAL, zname, ns_name, qclass, RRType::A);
+                            data_source.addToMessage(msg, SECTION_ADDITIONAL, zname, ns_name, qclass, RRType::AAAA);
+                        }
+                    }
+                }
+                BOOST_FOREACH(RRsetPtr rrset, msg.getSection(SECTION_AUTHORITY)) {
+                    if (rrset->getType() == RRType::NS) {
+                        BOOST_FOREACH(Rdata::RdataPtr rdata, rrset->getRdatalist()) {
+                            /* no direct way to get the Name from the rdata fields? */
+                            Name ns_name = Name(rdata->toText());
+                            data_source.addToMessage(msg, SECTION_ADDITIONAL, zname, ns_name, qclass, RRType::A);
+                            data_source.addToMessage(msg, SECTION_ADDITIONAL, zname, ns_name, qclass, RRType::AAAA);
+                        }
+                    }
+                }
             }
         } else {
-            msg.setRcode(Message::RCODE_NXDOMAIN);
+            msg.setRcode(Message::RCODE_SERVFAIL);
         }
-
         msg.toWire();
         cout << "sending a response (" <<
             boost::lexical_cast<string>(msg.getBuffer().getSize())
                   << " bytes):\n" << msg.toText() << endl;
         msg.getBuffer().sendTo(s, *sa, sa_len);
-    }
-*/
-}
-
-void
-ParkingLot::command(pair<string,ElementPtr> cmd) {
-    if (cmd.first == "shutdown")
-        exit(0);
-    else if (cmd.first == "config_update") {
-        // what to do with port settings?
-        ElementPtr zonelist_el = (cmd.second)->get("zones");
-        // We could walk through both lists and remove and serve
-        // accordingly, or simply clear all and add everything
-        //zones.clear_zones();
-        BOOST_FOREACH(ElementPtr zone, zonelist_el->listValue()) {
-            //zones.serve(zone->stringValue());
-        }
     }
 }
 

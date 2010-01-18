@@ -12,10 +12,10 @@
 namespace isc {
 namespace dns {
 
-DataSource::result
+void
 DataSource::getData(isc::dns::RRsetPtr query, isc::dns::Message& answer)
 {
-    return DataSource::not_implemented;
+    return;
 }
 
 }
