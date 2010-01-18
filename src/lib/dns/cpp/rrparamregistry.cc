@@ -169,29 +169,20 @@ RRParamRegistry::add(const string& typecode_string, uint16_t typecode,
     // Rollback logic on failure is complicated.  If adding the new type or
     // class fails, we should revert to the original state, cleaning up
     // intermediate state.  But we need to make sure that we don't remove
-    // existing data.  addType()/AddClass() will simply ignore an attempt to
+    // existing data.  addType()/addClass() will simply ignore an attempt to
     // add the same data, so the cleanup should be performed only when we add
     // something new but we fail in other part of the process.
-    bool will_add_type = false;
     bool type_added = false;
-    bool will_add_class = false;
     bool class_added = false;
-
-    if (impl_->code2typemap.find(typecode) == impl_->code2typemap.end()) {
-        will_add_type = true;
-    }
-    if (impl_->code2classmap.find(classcode) == impl_->code2classmap.end()) {
-        will_add_class = true;
-    }
 
     try {
         type_added = addType(typecode_string, typecode);
         class_added = addClass(classcode_string, classcode);
     } catch (...) {
-        if (will_add_type && type_added) {
+        if (type_added) {
             removeType(typecode);
         }
-        if (will_add_class && class_added) {
+        if (class_added) {
             removeClass(classcode);
         }
         throw;
@@ -222,7 +213,7 @@ caseStringEqual(const string& s1, const string& s2, size_t n)
 
 /// Code logic for RRTypes and RRClasses is mostly common except (C++) type and
 /// member names.  So we define type-independent templates to describe the
-/// common logic and let concrete classes to avoid code duplicates.
+/// common logic and let concrete classes use it to avoid code duplicates.
 /// The following summarize template parameters used in the set of template
 /// functions:
 /// PT: parameter type, either RRTypeParam or RRClassParam
@@ -326,7 +317,7 @@ codeToText(uint16_t code, MC& codemap)
 bool
 RRParamRegistry::addType(const string& type_string, uint16_t code)
 {
-    return (addParam<RRTypeParam, CodeRRTypeMap, StrRRTypeMap, RRTypeExist>
+    return (addParam<RRTypeParam, CodeRRTypeMap, StrRRTypeMap, RRTypeExists>
             (type_string, code, impl_->code2typemap, impl_->str2typemap));
 }
 
@@ -353,7 +344,7 @@ RRParamRegistry::codeToTypeText(uint16_t code) const
 bool
 RRParamRegistry::addClass(const string& class_string, uint16_t code)
 {
-    return (addParam<RRClassParam, CodeRRClassMap, StrRRClassMap, RRClassExist>
+    return (addParam<RRClassParam, CodeRRClassMap, StrRRClassMap, RRClassExists>
             (class_string, code, impl_->code2classmap, impl_->str2classmap));
 }
 
@@ -375,7 +366,8 @@ RRParamRegistry::textToClassCode(const string& class_string) const
 string
 RRParamRegistry::codeToClassText(uint16_t code) const
 {
-    return (codeToText<RRClassParam, CodeRRClassMap>(code, impl_->code2classmap));
+    return (codeToText<RRClassParam, CodeRRClassMap>(code,
+                                                     impl_->code2classmap));
 }
 }
 }

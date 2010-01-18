@@ -80,6 +80,11 @@ public:
 /// before the initialization for \c default_type, we need help from
 /// the proxy function.
 ///
+/// In the current implementation, the initialization of the well-known
+/// static objects is not thread safe.  The same consideration as the
+/// \c RRParamRegistry class applies.  We may extend the implementation so
+/// that the initialization is ensured to be thread safe in a future version.
+///
 /// Note to developers: since it's expected that some of these constant
 /// \c RRType objects are frequently used in a performance sensitive path,
 /// we define these proxy functions as inline.  This makes sense only when
