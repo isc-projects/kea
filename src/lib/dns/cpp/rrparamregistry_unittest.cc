@@ -82,14 +82,14 @@ TEST_F(RRParamRegistryTest, addError)
     EXPECT_THROW(RRParamRegistry::getRegistry().add(test_type_str,
                                                     test_type_code,
                                                     test_class_str, 1),
-                 RRClassExist);
+                 RRClassExists);
     EXPECT_EQ("IN", RRClass(1).toText());
 
     // Same for RRType
     EXPECT_THROW(RRParamRegistry::getRegistry().add(test_type_str, 1,
                                                     test_class_str,
                                                     test_class_code),
-                 RRTypeExist);
+                 RRTypeExists);
     EXPECT_EQ("A", RRType(1).toText());
 }
 }

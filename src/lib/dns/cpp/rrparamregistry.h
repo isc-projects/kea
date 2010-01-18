@@ -30,22 +30,22 @@ namespace dns {
 struct RRParamRegistryImpl;
 
 ///
-/// \brief A standard DNS module exception that is thrown if a new RR class is
+/// \brief A standard DNS module exception that is thrown if a new RR type is
 /// being registered with a different type string.
 ///
-class RRClassExist : public Exception {
+class RRTypeExists : public Exception {
 public:
-    RRClassExist(const char* file, size_t line, const char* what) :
+    RRTypeExists(const char* file, size_t line, const char* what) :
         isc::dns::Exception(file, line, what) {}
 };
 
 ///
-/// \brief A standard DNS module exception that is thrown if a new RR type is
+/// \brief A standard DNS module exception that is thrown if a new RR class is
 /// being registered with a different type string.
 ///
-class RRTypeExist : public Exception {
+class RRClassExists : public Exception {
 public:
-    RRTypeExist(const char* file, size_t line, const char* what) :
+    RRClassExists(const char* file, size_t line, const char* what) :
         isc::dns::Exception(file, line, what) {}
 };
 
@@ -73,6 +73,17 @@ public:
 /// constructor is intentionally private, and applications must get access to
 /// the single instance via the \c getRegistry() static member function.
 ///
+/// In the current implementation, access to the singleton \c RRParamRegistry
+/// object is not thread safe.
+/// The application should ensure that multiple threads don't race in the
+/// first invocation of \c getRegistry(), and, if the registry needs to
+/// be changed dynamically, read and write operations are performed
+/// exclusively.
+/// Since this class should be static in common usage this restriction would
+/// be acceptable in practice.
+/// In the future, we may extend the implementation so that multiple threads can
+/// get access to the registry fully concurrently without any restriction.
+///
 /// Note: the implementation of this class is incomplete: we should at least
 /// add RDATA related parameters.  This will be done in a near future version,
 /// at which point some of method signatures will be changed.
@@ -88,6 +99,24 @@ private:
     ~RRParamRegistry();
     //@}
 public:
+    ///
+    /// \brief Return the singleton instance of \c RRParamRegistry.
+    ///
+    /// This method is a unified access point to the singleton instance of
+    /// the RR parameter registry (\c RRParamRegistry).
+    /// On first invocation it internally constructs an instance of the
+    /// \c RRParamRegistry class and returns a reference to it.
+    /// This is a static object inside this method and will remain valid
+    /// throughout the rest of the application lifetime.
+    /// On subsequent calls this method simply returns a reference to the
+    /// singleton object.
+    ///
+    /// If resource allocation fails in the first invocation,
+    /// a corresponding standard exception will be thrown.
+    /// This method never fails otherwise.  In particular, this method
+    /// doesn't throw an exception once the singleton instance is constructed.
+    ///
+    /// \return A reference to the singleton instance of \c RRParamRegistry.
     static RRParamRegistry& getRegistry();
 
     ///
