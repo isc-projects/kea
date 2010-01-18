@@ -41,15 +41,16 @@ public:
     
     void init() {};
     void close() {};
-    result findRRset(isc::dns::RRsetPtr& target, isc::dns::Name name,
-                 isc::dns::RRClass clas, isc::dns::RRType type);
-
+    bool hasZoneFor(const Name& name, Name &zone_name);
+    SearchResult findRRsets(const isc::dns::Name& zone_name,
+                            const isc::dns::Name& name,
+                            const isc::dns::RRClass& clas,
+                            const isc::dns::RRType& type);
 
     /* move these to private (or to zoneset) and the calling functions
      * from parkinglot to here? */
     void serve(std::string zone_name);
     void clear_zones() { zones.clear_zones(); };
-    bool has_zone(const std::string& zone_name) { return zones.contains(zone_name); };
 
     void clearARecords() { a_records.clear(); };
     void clearAAAARecords() { aaaa_records.clear(); };
@@ -61,6 +62,17 @@ public:
 
     void setSOARecord(isc::dns::Rdata::RdataPtr soa_record);
 
+    /// Do direct 'search' in database, no extra processing,
+    /// and add the resulting rrsets to the specified section
+    /// in the given message
+    /// Once the dns logic is moved from parkinglot to this class,
+    /// we should probably make this private
+    SearchResult::status_type addToMessage(Message& msg,
+                 section_t section,
+                 const Name& zone_name,
+                 const Name& name,
+                 const isc::dns::RRClass& clas,
+                 const isc::dns::RRType& type);
 
 private:
     //

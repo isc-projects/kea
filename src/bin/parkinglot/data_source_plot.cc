@@ -57,65 +57,113 @@ DataSourceParkingLot::DataSourceParkingLot() {
                                         1, 1800, 900, 604800, TTL(86400)));
 }
 
-isc::dns::DataSource::result
-DataSourceParkingLot:: findRRset(isc::dns::RRsetPtr& target, isc::dns::Name name,
-                                isc::dns::RRClass clas, isc::dns::RRType type) {
+bool
+DataSourceParkingLot::hasZoneFor(const Name& name, Name &zone_name)
+{
+    if (zones.contains(name.toText(true))) {
+        zone_name = Name(name);
+        return true;
+    } else {
+        /* try 1 level higher? i.e. www.asdf.nl? */
+        return false;
+    }
+}
+
+SearchResult
+DataSourceParkingLot:: findRRsets(const isc::dns::Name& zone_name,
+                                  const isc::dns::Name& name,
+                                  const isc::dns::RRClass& clas,
+                                  const isc::dns::RRType& type) {
+    SearchResult result;
     Name authors_name("authors.bind");
     Name version_name("version.bind");
-
+    
     std::cout << "findRRset()" << std::endl;
     if (clas == RRClass::CH) {
         if (type == RRType::TXT) {
             if (name == authors_name) {
-                target->addRdata(Rdata::RdataPtr(TXT("JINMEI Tatuya").copy()));
+                RRsetPtr rrset = RRsetPtr(new RRset(authors_name, RRClass::CH, RRType::TXT, TTL(3600)));
+                rrset->addRdata(Rdata::RdataPtr(TXT("JINMEI Tatuya").copy()));
+                rrset->addRdata(Rdata::RdataPtr(TXT("Han Feng").copy()));
+                rrset->addRdata(Rdata::RdataPtr(TXT("Kazunori Fujiwara").copy()));
+                rrset->addRdata(Rdata::RdataPtr(TXT("Michael Graff").copy()));
+                rrset->addRdata(Rdata::RdataPtr(TXT("Evan Hunt").copy()));
+                rrset->addRdata(Rdata::RdataPtr(TXT("Jelte Jansen").copy()));
+                rrset->addRdata(Rdata::RdataPtr(TXT("Jin Jian").copy()));
+                rrset->addRdata(Rdata::RdataPtr(TXT("JINMEI Tatuya").copy()));
+                rrset->addRdata(Rdata::RdataPtr(TXT("Naoki Kambe").copy()));
+                rrset->addRdata(Rdata::RdataPtr(TXT("Shane Kerr").copy())); 
+                rrset->addRdata(Rdata::RdataPtr(TXT("Zhang Likun").copy()));
+                rrset->addRdata(Rdata::RdataPtr(TXT("Jeremy C. Reed").copy())); 
+
+                result.addRRset(rrset);
+                result.setStatus(SearchResult::success);
             } else if (name == version_name) {
-                target->addRdata(Rdata::RdataPtr(TXT("BIND10 0.0.1").copy()));
+                RRsetPtr rrset = RRsetPtr(new RRset(version_name, RRClass::CH, RRType::TXT, TTL(3600)));
+                rrset->addRdata(Rdata::RdataPtr(TXT("BIND10 0.0.1").copy()));
+                result.addRRset(rrset);
+                result.setStatus(SearchResult::success);
             } else {
                 std::cout << "ch txt but unknown name" << std::endl;
-                return DataSource::name_not_found;
+                result.setStatus(SearchResult::name_not_found);
             }
-            return DataSource::success;
         } else {
-            std::cout << "ch but not txt" << std::endl;
-            return DataSource::name_not_found;
+            result.setStatus(SearchResult::name_not_found);
         }
     } else if (clas == RRClass::IN) {
         // make zoneset contain Name instead of string?
         std::cout << "Finding zone for " << name.toText() << std::endl;
         if (zones.contains(name.toText(true))) {
+            RRsetPtr rrset = RRsetPtr(new RRset(name, clas, type, TTL(3600)));
+            result.setStatus(SearchResult::success);
             if (type == RRType::A) {
                 BOOST_FOREACH(isc::dns::Rdata::RdataPtr a, a_records) {
-                    target->addRdata(a);
+                    rrset->addRdata(a);
                 }
             } else if (type == RRType::AAAA) {
                 BOOST_FOREACH(isc::dns::Rdata::RdataPtr aaaa, aaaa_records) {
-                    target->addRdata(aaaa);
+                    rrset->addRdata(aaaa);
                 }
             } else if (type == RRType::NS) {
                 BOOST_FOREACH(isc::dns::Rdata::RdataPtr ns, ns_records) {
-                    target->addRdata(ns);
+                    rrset->addRdata(ns);
                 }
             } else if (type == RRType::SOA) {
-                target->addRdata(soa);
-            } else {
-                std::cout << "type not supported" << std::endl;
-                return name_not_found;
+                rrset->addRdata(soa);
             }
-            std::cout << "rrset: " << target->toText() << std::endl;
-            
-            std::cout << "success" << std::endl;
-            return success;
+            result.addRRset(rrset);
         } else {
             std::cout << "zone not in zoneset" << std::endl;
-            return DataSource::zone_not_found;
+            result.setStatus(SearchResult::zone_not_found);
         }
     } else {
         std::cout << "not ch or in" << std::endl;
-        return DataSource::zone_not_found;
+        result.setStatus(SearchResult::zone_not_found);
     }
-    // no match at all, error?
-    return DataSource::error;
+    return result;
 }
+
+/// Do direct 'search' in database, no extra processing,
+/// and add the resulting rrsets to the specified section
+/// in the given message
+/// returns the status code of the searchresult
+/// Once the dns logic is moved from parkinglot to this class,
+/// we should probably make this private
+SearchResult::status_type
+DataSourceParkingLot::addToMessage(Message& msg,
+             section_t section,
+             const Name& zone_name,
+             const Name& name,
+             const isc::dns::RRClass& clas,
+             const isc::dns::RRType& type)
+{
+    SearchResult result = findRRsets(zone_name, name, clas, type);
+    BOOST_FOREACH(RRsetPtr rrset, result) {
+        msg.addRRset(section, rrset);
+    }
+    return result.getStatus();
+}
+
 
 }
 }
