@@ -1,0 +1,85 @@
+.\" Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+.Dd January 18, 2009
+.Dt BINDCTL 1
+.Os
+.Sh NAME
+.Nm bindctl
+.Nd control and configure BIND 10
+.Sh SYNOPSIS
+.\" TODO: option to choose the command channel?
+.Nm
+.Sh DESCRIPTION
+The
+.Nm
+tool is a user interface to the BIND 10 services.
+The program can be used to control the components
+and configure the BIND 10 options.
+The options may be specified as command-line arguments,
+or via the interactive command interpreter.
+.\" TODO: command-line arguments?
+.Pp
+.Nm
+must communicate over a
+C-Channel
+connection.
+If this connection is not established,
+.Nm
+will exit.
+.\" TODO: what if msgq is running but no BigTool or Boss groups?
+.Pp
+The command-line prompt shows
+TODO.
+The following commands are recognized by
+.Nm :
+.Bl -tag -width Ic
+.It Ic add Ar identifier Ar value
+Add entry to configuration.
+.\" TODO: why the value?
+.It Ic commit
+Commit all local changes.
+TODO: what does this do?
+.It Ic config
+TODO
+.It Ic go Ar identifier
+Go to the specified configuration. TODO
+.It Ic remove Ar identifier Ar value
+Remove entry from configuration.
+.\" TODO: why the value?
+.It Ic revert
+Revert all local changes.
+TODO: what does this do?
+.It Ic set Ar identifier Ar value
+Set a configuration value.
+TODO
+.It Ic show
+TODO
+Show configuration.
+.It Ic shutdown Op Ar module_name TODO
+Stop the BIND 10 processes.
+.It Ic unset Ar identifier
+Unset a configuration value.
+TODO
+.El
+.Pp
+.\" TODO: Command arguments which have embedded spaces may be quoted with
+.\" quote
+.\" .Sq \&"
+.\" marks.
+.Pp
+.Pp command-line editing?
+.Pp
+.Sh EXAMPLES
+.Sh SEE ALSO
+.\" complete this info later
+.\" .Sh STANDARDS
+.Sh HISTORY
+The initial version (with internal name of
+.Dq BigTool )
+was started in October 2009.
+.Sh AUTHORS
+The
+.Nm
+tool and library were initially coded by Zhang Likun of CNNIC
+for the BIND 10 project.
+The initial manual page was written by Jeremy C. Reed of ISC.
+.\" .Sh BUGS
