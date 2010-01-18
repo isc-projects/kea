@@ -50,6 +50,12 @@ You can use the
 keyword to receive usage assistance for a module or a module's
 command.
 .Pp
+The
+.Ic quit
+command is used to exit
+.Nm
+(and doesn't stop the BIND 10 services).
+.Pp
 The following modules are available:
 .Pp
 .Bl -tag -width ".Li ParkingLot" -compact -offset indent
@@ -59,7 +65,7 @@ Control BIND 10 services.
 .It Ic config
 Configuration commands.
 .It Ic ParkingLot
-TODO
+.\" TODO
 .El
 .Sh BOSS COMMANDS
 .Bl -tag -width Ic
@@ -76,32 +82,44 @@ The following configuration commands are recognized by
 .Nm :
 .Bl -tag -width Ic
 .It Ic add Ar identifier Ar value
-Add entry to configuration.
+Add a value to a list.
+.\" TODO: explain better
+.\" TODO: define list, map, others ...
 .\" TODO: why the value?
 .It Ic commit
 Commit all local changes.
-TODO: what does this do?
+.\" TODO: what does this do?
 .It Ic go Ar identifier
-Go to the specified configuration. TODO
+Go to the specified location within the configuration.
+.\" TODO: explain this
 .It Ic help
 Get help for the
 .Em config
 module.
 .It Ic remove Ar identifier Ar value
-Remove entry from configuration.
+Remove a value from a list.
 .\" TODO: why the value?
 .It Ic revert
-Revert all local changes.
-TODO: what does this do?
+Revert all local changes (that have not been committed).
+.\" TODO: what does this do?
 .It Ic set Ar identifier Ar value
 Set a configuration value.
-TODO
-.It Ic show
-TODO
-Show configuration.
+.\" TODO
+.It Ic show Op Ar identifier.
+.\" TODO
+Show the currently set configuration values.
+If no
+.Ar identifier
+is given, the current location is used (as set by the
+.Ic go
+command).
+If a config option is a list or a map, the value is not
+shown directly, but must be requested separately.
+.\" TODO: example of this list or map
 .It Ic unset Ar identifier
-Unset a configuration value.
-TODO
+Remove a configuration value.
+If the option is mandatory, it will reset to the default value.
+.\" TODO: how to know default values before?
 .El
 .Sh PARKINGLOT COMMANDS
 .Bl -tag -width Ic
@@ -121,7 +139,23 @@ Print the given message to stdout.
 .Pp command-line editing?
 .Pp
 .Sh EXAMPLES
+The following are some
+.Nm
+examples:
+.Bl -tag -width abcde
+.It Ic "config help"
+Show the commands for the
+.Em config
+module.
+.It Ic "config go ParkingLot/"
+Go to the
+.Dq ParkingLot/
+configuration location.
+.\" TODO: why the trailing slash?
+.El
 .Sh SEE ALSO
+.Xr msgq 8
+.\" TODO: write msgq manual page
 .\" complete this info later
 .\" .Sh STANDARDS
 .Sh HISTORY
