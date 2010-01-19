@@ -7,6 +7,24 @@ autoreconf
 ./configure
 make
 
+Requires autoconf 2.59 or newer.
+
+Use automake-1.11 or better for working Python 3.1 tests.
+
+Doing code coverage tests:
+
+make coverage
+	Does the following:
+
+make clean-coverage
+	Zeroes the lcov code coverage counters and removes the coverage HTML.
+
+make perform-coverage
+	Runs the C++ tests (using googletests framework).
+
+make report-coverage
+	Generates the coverage HTML, excludes some unrelated headers.
+	The HTML reports are places in a directory called coverage/.
 
 RUNNING
 
