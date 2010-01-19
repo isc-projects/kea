@@ -260,6 +260,10 @@ class BoB:
     def restart_processes(self):
         """Restart any dead processes."""
         # XXX: this needs a back-off algorithm
+        # if we're shutting down, then don't restart
+        if not self.runnable:
+            return
+        # otherwise look through each dead process and try to restart
         still_dead = {}
         for proc_info in self.dead_processes.values():
             if self.verbose:
