@@ -126,6 +126,7 @@ AC_CONFIG_FILES([Makefile
 AC_OUTPUT([src/bin/bind-cfgd/bind-cfgd
            src/bin/bigtool/run_bigtool
            src/bin/bind10/bind10
+           src/bin/bind10/bind10_test
 	   src/bin/msgq/msgq
 	   src/bin/msgq/msgq_test
            src/bin/parkinglot/config.h
