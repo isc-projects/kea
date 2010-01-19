@@ -23,8 +23,8 @@ make perform-coverage
 	Runs the C++ tests (using googletests framework).
 
 make report-coverage
-	Generates the coverage HTML, excludes some unrelated headers.
-	The HTML reports are places in a directory called coverage/.
+	Generates the coverage HTML, excluding some unrelated headers.
+	The HTML reports are placed in a directory called coverage/.
 
 RUNNING
 
