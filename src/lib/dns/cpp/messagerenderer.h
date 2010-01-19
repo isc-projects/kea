@@ -88,6 +88,36 @@ public:
     //@}
 
     ///
+    /// \name Getter Methods
+    ///
+    //@{
+    /// \brief Return a pointer to the head of the data stored in the internal
+    /// buffer.
+    ///
+    /// This method works exactly same as the same method of the \c OutputBuffer
+    /// class; all notes for \c OutputBuffer apply.
+    const void* getData() const;
+    /// \brief Return the length of data written in the internal buffer.
+    size_t getLength() const;
+    //@}
+
+    ///
+    /// \name Methods for writing data into the internal buffer.
+    ///
+    //@{
+    /// \brief Write an unsigned 16-bit integer in host byte order into the
+    /// internal buffer in network byte order.
+    ///
+    /// \param data The 16-bit integer to be written into the buffer.
+    void writeUint16(uint16_t data);
+    /// \brief Write an unsigned 32-bit integer in host byte order into the
+    /// internal buffer in network byte order.
+    ///
+    /// \param data The 32-bit integer to be written into the buffer.
+    void writeUint32(uint32_t data);
+    //@}
+
+    ///
     /// \name Rendering Methods
     ///
     //@{

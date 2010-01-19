@@ -330,6 +330,7 @@ public:
     /// <code>buffer.getCapacity() - buffer.getLength() >= Name::MAX_WIRE</code>
     /// then this method should not throw an exception.
     ///
+    /// \param buffer An output buffer to store the wire data.
     void toWire(OutputBuffer& buffer) const;
     //@}
 
@@ -368,17 +369,17 @@ public:
     bool equals(const Name& other) const;
 
     /// Same as equals()
-    bool operator==(const Name& other) const { return (this->equals(other)); }
+    bool operator==(const Name& other) const { return (equals(other)); }
 
     /// \brief Return true iff two names are not equal.
     ///
     /// This method simply negates the result of \c equal() method, and in that
     /// sense it's redundant.  The separate method is provided just for
     /// convenience.
-    bool nequals(const Name& other) const { return !(this->equals(other)); }
+    bool nequals(const Name& other) const { return !(equals(other)); }
 
     /// Same as nequals()
-    bool operator!=(const Name& other) const { return (this->nequals(other)); }
+    bool operator!=(const Name& other) const { return (nequals(other)); }
 
     /// \brief Less-than or equal comparison for Name against <code>other</code>
     ///
