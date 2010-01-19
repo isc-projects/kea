@@ -31,7 +31,7 @@ protected:
     const char* teststring;
 };
 
-TEST_F(ExceptionTest, BasicMethods) {
+TEST_F(ExceptionTest, basicMethods) {
     try {
         dns_throw(Exception, teststring);
     } catch (Exception& ex) {
@@ -42,7 +42,7 @@ TEST_F(ExceptionTest, BasicMethods) {
 }
 
 // Test to see if it works as a proper derived class of std::exception.
-TEST_F(ExceptionTest, StdInheritance) {
+TEST_F(ExceptionTest, stdInheritance) {
     try {
         dns_throw(Exception, teststring);
     } catch (std::exception& ex) {

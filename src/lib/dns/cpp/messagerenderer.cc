@@ -127,7 +127,7 @@ private:
 /// \c MessageRenderer.
 ///
 /// The implementation is hidden from applications.  We can refer to specific
-/// members of this class only within this file.
+/// members of this class only within the implementation source file.
 ///
 struct MessageRendererImpl {
     /// \brief Constructor from an output buffer.
@@ -154,6 +154,30 @@ MessageRenderer::MessageRenderer(OutputBuffer& buffer) :
 MessageRenderer::~MessageRenderer()
 {
     delete impl_;
+}
+
+void
+MessageRenderer::writeUint16(uint16_t data)
+{
+    impl_->buffer_.writeUint16(data);
+}
+
+void
+MessageRenderer::writeUint32(uint32_t data)
+{
+    impl_->buffer_.writeUint32(data);
+}
+
+const void*
+MessageRenderer::getData() const
+{
+    return (impl_->buffer_.getData());
+}
+
+size_t
+MessageRenderer::getLength() const
+{
+    return (impl_->buffer_.getLength());
 }
 
 void
