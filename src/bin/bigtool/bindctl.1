@@ -1,5 +1,5 @@
 .\" Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
-.Dd January 18, 2009
+.Dd January 19, 2009
 .Dt BINDCTL 1
 .Os
 .Sh NAME
@@ -30,6 +30,7 @@ will exit.
 .Pp
 The command-line prompt shows
 .Dq "\*[Gt] " .
+The prompt will also display the location if changed.
 The options are based on the module in use.
 The command-line usage is:
 .Pp
@@ -56,17 +57,17 @@ command is used to exit
 .Nm
 (and doesn't stop the BIND 10 services).
 .Pp
-The following modules are available:
+The following modules are available by default:
 .Pp
-.Bl -tag -width ".Li ParkingLot" -compact -offset indent
-.\" TODO parkinglot?
+.Bl -tag -width ".Li config" -compact -offset indent
 .It Ic boss
 Control BIND 10 services.
 .It Ic config
 Configuration commands.
-.It Ic ParkingLot
-.\" TODO
 .El
+Additional modules may be available, such as
+.Ic ParkingLot .
+.\" TODO
 .Sh BOSS COMMANDS
 .Bl -tag -width Ic
 .It Ic help
@@ -74,10 +75,15 @@ Get help for the
 .Em boss
 module.
 .It Ic shutdown Op Ar module_name
-Stop the BIND 10 processes.
+Stop the defined BIND 10 process.
+If
+.Ar module_name
+is not provided, then tell the
+.\" TODO: write this manual page
+.Xr boss 8
+process to stop all the BIND 10 processes.
 .El
 .Sh CONFIGURATION COMMANDS
-.\" add     commit  go      help    remove  revert  set     show    unset
 The following configuration commands are recognized by
 .Nm :
 .Bl -tag -width Ic
@@ -121,15 +127,16 @@ Remove a configuration value.
 If the option is mandatory, it will reset to the default value.
 .\" TODO: how to know default values before?
 .El
-.Sh PARKINGLOT COMMANDS
-.Bl -tag -width Ic
-.It Ic help
-Get help for the
-.Em ParkingLot
-module.
-.It Ic print_message Ar string
-Print the given message to stdout.
-.El
+.\" This manual page only covers builtin commands.
+.\" .Sh PARKINGLOT COMMANDS
+.\" .Bl -tag -width Ic
+.\" .It Ic help
+.\" Get help for the
+.\" .Em ParkingLot
+.\" module.
+.\" .It Ic print_message Ar string
+.\" Print the given message to stdout.
+.\" .El
 .\"
 .\" TODO: Command arguments which have embedded spaces may be quoted with
 .\" quote
@@ -151,12 +158,18 @@ module.
 Go to the
 .Dq ParkingLot/
 configuration location.
+.It Ic "ParkingLot print_message help"
+Show the one-line description and parameter for the
+.Dq print_message
+command available from the external
+.Dq ParkingLot
+module.
 .\" TODO: why the trailing slash?
 .El
 .Sh SEE ALSO
+.Xr boss 8 ,
 .Xr msgq 8
-.\" TODO: write msgq manual page
-.\" complete this info later
+.\" TODO: write boss and msgq manual pages
 .\" .Sh STANDARDS
 .Sh HISTORY
 The initial version (with internal name of
