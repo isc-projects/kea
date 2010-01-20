@@ -20,7 +20,7 @@ NAME_PATTERN = re.compile("^\s*(?P<name>[\w]+)(?P<blank>\s*)(?P<others>.*)$")
 
 class BindCtlCmd:
     """ This class will parse the command line usr input into three part
-    module name, cmmand, parameters
+    module name, command, parameters
     the first two parts are strings and parameter is one hash, 
     parameter part is optional
     
