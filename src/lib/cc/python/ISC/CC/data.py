@@ -330,6 +330,8 @@ class UIConfigData():
 
     def add(self, identifier, value_str):
         data_spec = find_spec(self.config.specification, identifier)
+        if (type(data_spec) != dict or "list_item_spec" not in data_spec):
+            raise DataTypeError(identifier + " is not a list")
         value = parse_value_str(value_str)
         check_type(data_spec, [value])
         cur_list = find_no_exc(self.config_changes, identifier)
@@ -343,6 +345,8 @@ class UIConfigData():
 
     def remove(self, identifier, value_str):
         data_spec = find_spec(self.config.specification, identifier)
+        if (type(data_spec) != dict or "list_item_spec" not in data_spec):
+            raise DataTypeError(identifier + " is not a list")
         value = parse_value_str(value_str)
         check_type(data_spec, [value])
         cur_list = find_no_exc(self.config_changes, identifier)
