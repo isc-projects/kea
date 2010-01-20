@@ -1,0 +1,10 @@
+#! /bin/sh
+
+PYTHON_EXEC=${PYTHON_EXEC:-@PYTHON@}
+BINDCTL_PATH=.
+
+PYTHONPATH=../../lib/cc/python:../../lib/bindctl/
+export PYTHONPATH
+
+cd ${BINDCTL_PATH}
+exec ${PYTHON_EXEC} -O run_bindctl.py $*

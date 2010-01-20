@@ -1,11 +1,11 @@
-class BigToolException(Exception):
-    """Abstract base class shared by all bigtool exceptions"""
+class BindCtlException(Exception):
+    """Abstract base class shared by all bindctl exceptions"""
     def __str__(self):
         return "Big tool has problem"
 
 # Begin define Format exception
 
-class CmdFormatError(BigToolException):
+class CmdFormatError(BindCtlException):
     """Command is malformed"""
     def __str__(self):
         return "Command is malformed"
@@ -50,7 +50,7 @@ class CmdParamFormatError(CmdFormatError):
         
 # Begin define the exception for syntax
 
-class CmdSyntaxError(BigToolException):
+class CmdSyntaxError(BindCtlException):
     """Command line has syntax error"""
     
     def __str__(self):

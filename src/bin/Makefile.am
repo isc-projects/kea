@@ -1,1 +1,1 @@
-SUBDIRS = bigtool bind10 msgq parkinglot host
+SUBDIRS = bind10 bindctl msgq parkinglot host

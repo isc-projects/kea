@@ -171,10 +171,10 @@ class ConfigManager:
             spec = msg["data_specification"]
             if "config_data" in spec:
                 self.set_config(spec["module_name"], spec["config_data"])
-                self.cc.group_sendmsg({ "specification_update": [ spec["module_name"], spec["config_data"] ] }, "BigTool")
+                self.cc.group_sendmsg({ "specification_update": [ spec["module_name"], spec["config_data"] ] }, "BindCtl")
             if "commands" in spec:
                 self.set_commands(spec["module_name"], spec["commands"])
-                self.cc.group_sendmsg({ "commands_update": [ spec["module_name"], spec["commands"] ] }, "BigTool")
+                self.cc.group_sendmsg({ "commands_update": [ spec["module_name"], spec["commands"] ] }, "BindCtl")
             answer["result"] = [ 0 ]
         else:
             print("[bind-cfgd] unknown message: " + str(msg))

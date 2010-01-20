@@ -1,9 +1,9 @@
 from moduleinfo  import *
-from bigtool import *
+from bindctl import *
 import ISC
 
 
-def _prepare_fake_data(bigtool):
+def _prepare_fake_data(bindctl):
     shutdown_param = ParamInfo(name = "module_name", desc = "the name of module")
     shutdown_cmd = CommandInfo(name = 'shutdown', desc = "stop bind10",
                                need_inst_param = False)
@@ -11,13 +11,13 @@ def _prepare_fake_data(bigtool):
     boss_module = ModuleInfo(name = "boss", desc = "boss of bind10")
     boss_module.add_command(shutdown_cmd)               
 
-    bigtool.add_module_info(boss_module)
+    bindctl.add_module_info(boss_module)
 
-def prepare_commands(bigtool, command_spec):
+def prepare_commands(bindctl, command_spec):
     for module_name in command_spec.keys():
-        bigtool.prepare_module_commands(module_name, command_spec[module_name])
+        bindctl.prepare_module_commands(module_name, command_spec[module_name])
 
-def prepare_config_commands(bigtool):
+def prepare_config_commands(bindctl):
     module = ModuleInfo(name = "config", desc = "Configuration commands")
     cmd = CommandInfo(name = "show", desc = "Show configuration", need_inst_param = False)
     param = ParamInfo(name = "identifier", type = "string", optional=True)
@@ -61,16 +61,16 @@ def prepare_config_commands(bigtool):
     cmd.add_param(param)
     module.add_command(cmd)
 
-    bigtool.add_module_info(module)
+    bindctl.add_module_info(module)
     
 
 if __name__ == '__main__':
     try:
         cc = ISC.CC.Session()
-        cc.group_subscribe("BigTool", "*")
+        cc.group_subscribe("BindCtl", "*")
         cc.group_subscribe("Boss", "*")
 
-        tool = BigTool(cc)
+        tool = BindCtl(cc)
         cc.group_sendmsg({ "command": ["get_commands"] }, "ConfigManager")
         command_spec, env =  cc.group_recvmsg(False)
         prepare_commands(tool, command_spec["result"][1])
