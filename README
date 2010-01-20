@@ -37,11 +37,11 @@ The server will listen on port 5300 for DNS requests.
 
 CONFIGURATION
 
-Commands can be given through the tool bigtool;
-cd src/bin/bigtool
-sh run_bigtool
+Commands can be given through the tool bindctl;
+cd src/bin/bindctl
+sh run_bindctl
 
-The server must be running for bigtool to work.
+The server must be running for bindctl to work.
 
 The following configuration commands are available
 
@@ -66,7 +66,7 @@ config commit: Commit all changes
 
 EXAMPLE SESSION
 
-~> sh run_bigtool
+~> sh run_bindctl
 > config show
 ParkingLot/	module	
 > config show ParkingLot/

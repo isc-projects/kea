@@ -1,6 +1,6 @@
 import unittest
 import command
-import bigtool
+import bindctl
 from moduleinfo import *
 from exception import *    
 try:
@@ -11,11 +11,11 @@ except ImportError:
 class TestCmdLex(unittest.TestCase):
     
     def my_assert_raise(self, exception_type, cmd_line):
-        self.assertRaises(exception_type, command.BigToolCmd, cmd_line)
+        self.assertRaises(exception_type, command.BindCtlCmd, cmd_line)
 
 
     def testCommandWithoutParameter(self):
-        cmd = command.BigToolCmd("zone add")
+        cmd = command.BindCtlCmd("zone add")
         assert cmd.module == "zone"
         assert cmd.command == "add"
         self.assertEqual(len(cmd.params), 0)
@@ -27,7 +27,7 @@ class TestCmdLex(unittest.TestCase):
                  "zone add zone_name = 'cnnic.cn\", file ='cnnic.cn.file' master=1.1.1.1, " }
         
         for cmd_line in lines:
-            cmd = command.BigToolCmd(cmd_line)
+            cmd = command.BindCtlCmd(cmd_line)
             assert cmd.module == "zone"
             assert cmd.command == "add"
             assert cmd.params["zone_name"] == "cnnic.cn"
@@ -36,15 +36,15 @@ class TestCmdLex(unittest.TestCase):
             
             
     def testCommandWithListParam(self):
-            cmd = command.BigToolCmd("zone set zone_name='cnnic.cn', master='1.1.1.1, 2.2.2.2'")
+            cmd = command.BindCtlCmd("zone set zone_name='cnnic.cn', master='1.1.1.1, 2.2.2.2'")
             assert cmd.params["master"] == '1.1.1.1, 2.2.2.2'            
         
         
     def testCommandWithHelpParam(self):
-        cmd = command.BigToolCmd("zone add help")
+        cmd = command.BindCtlCmd("zone add help")
         assert cmd.params["help"] == "help"
         
-        cmd = command.BigToolCmd("zone add help *&)&)*&&$#$^%")
+        cmd = command.BindCtlCmd("zone add help *&)&)*&&$#$^%")
         assert cmd.params["help"] == "help"
         self.assertEqual(len(cmd.params), 1)
         
@@ -82,10 +82,10 @@ class TestCmdLex(unittest.TestCase):
 
 class TestCmdSyntax(unittest.TestCase):
     
-    def _create_bigtool(self):
-        """Create one bigtool"""
+    def _create_bindctl(self):
+        """Create one bindctl"""
         
-        tool = bigtool.BigTool()        
+        tool = bindctl.BindCtl()        
         zone_file_param = ParamInfo(name = "zone_file")
         load_cmd = CommandInfo(name = "load")
         load_cmd.add_param(zone_file_param)
@@ -108,17 +108,17 @@ class TestCmdSyntax(unittest.TestCase):
         
         
     def setUp(self):
-        self.bigtool = self._create_bigtool()
+        self.bindctl = self._create_bindctl()
         
         
     def no_assert_raise(self, cmd_line):
-        cmd = command.BigToolCmd(cmd_line)
-        self.bigtool.validate_cmd(cmd) 
+        cmd = command.BindCtlCmd(cmd_line)
+        self.bindctl.validate_cmd(cmd) 
         
         
     def my_assert_raise(self, exception_type, cmd_line):
-        cmd = command.BigToolCmd(cmd_line)
-        self.assertRaises(exception_type, self.bigtool.validate_cmd, cmd)  
+        cmd = command.BindCtlCmd(cmd_line)
+        self.assertRaises(exception_type, self.bindctl.validate_cmd, cmd)  
         
         
     def testValidateSuccess(self):
@@ -156,12 +156,12 @@ class TestNameSequence(unittest.TestCase):
     Test if the module/command/parameters is saved in the order creation
     """
     
-    def _create_bigtool(self):
-        """Create one bigtool"""     
+    def _create_bindctl(self):
+        """Create one bindctl"""     
         
         self._cmd = CommandInfo(name = "load")
         self.module = ModuleInfo(name = "zone")
-        self.tool = bigtool.BigTool()        
+        self.tool = bindctl.BindCtl()        
         for random_str in self.random_names:
             self._cmd.add_param(ParamInfo(name = random_str))
             self.module.add_command(CommandInfo(name = random_str))
@@ -169,7 +169,7 @@ class TestNameSequence(unittest.TestCase):
         
     def setUp(self):
         self.random_names = ['1erdfeDDWsd', '3fe', '2009erd', 'Fe231', 'tere142', 'rei8WD']
-        self._create_bigtool()
+        self._create_bindctl()
         
     def testSequence(self):        
         param_names = self._cmd.get_param_names()

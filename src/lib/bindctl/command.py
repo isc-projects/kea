@@ -18,7 +18,7 @@ PARAM_PATTERN = re.compile(param_name_str + param_value_str + next_params_str)
 # Used for module and command name
 NAME_PATTERN = re.compile("^\s*(?P<name>[\w]+)(?P<blank>\s*)(?P<others>.*)$")
 
-class BigToolCmd:
+class BindCtlCmd:
     """ This class will parse the command line usr input into three part
     module name, cmmand, parameters
     the first two parts are strings and parameter is one hash, 

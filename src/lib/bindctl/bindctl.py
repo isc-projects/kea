@@ -3,7 +3,7 @@ import readline
 from cmd import Cmd
 from exception import *
 from moduleinfo import *
-from command import BigToolCmd
+from command import BindCtlCmd
 from xml.dom import minidom
 import ISC
 import ISC.CC.data
@@ -14,18 +14,18 @@ except ImportError:
     from mycollections import OrderedDict
 
 
-CONST_BIGTOOL_HELP = """Bigtool, verstion 0.1
+CONST_BINDCTL_HELP = """BindCtl, verstion 0.1
 usage: <module name> <command name> [param1 = value1 [, param2 = value2]]
 Type Tab character to get the hint of module/command/paramters.
-Type \"help(? h)\" for help on bigtool.
+Type \"help(? h)\" for help on bindctl.
 Type \"<module_name> help\" for help on the specific module.
 Type \"<module_name> <command_name> help\" for help on the specific command.
 \nAvailable module names: """
 
 CONST_COMMAND_NODE = "command"
 
-class BigTool(Cmd):
-    """simple bigtool example."""    
+class BindCtl(Cmd):
+    """simple bindctl example."""    
 
     def __init__(self, session = None):
         Cmd.__init__(self)
@@ -34,7 +34,7 @@ class BigTool(Cmd):
         self.prompt = self.prompt_end
         self.ruler = '-'
         self.modules = OrderedDict()
-        self.add_module_info(ModuleInfo("help", desc = "Get help for bigtool"))
+        self.add_module_info(ModuleInfo("help", desc = "Get help for bindctl"))
         self.cc = session
         self.config_data = ISC.CC.data.UIConfigData("", session)
 
@@ -135,7 +135,7 @@ class BigTool(Cmd):
             return True
             
     def do_help(self, name):
-        print(CONST_BIGTOOL_HELP)
+        print(CONST_BINDCTL_HELP)
         for k in self.modules.keys():
             print("\t", self.modules[k])
                 
@@ -157,7 +157,7 @@ class BigTool(Cmd):
             hints = []
             cur_line = readline.get_line_buffer()            
             try:
-                cmd = BigToolCmd(cur_line)
+                cmd = BindCtlCmd(cur_line)
                 if not cmd.params and text:
                     hints = self._get_command_startswith(cmd.module, text)
                 else:                       
@@ -185,7 +185,7 @@ class BigTool(Cmd):
             except CmdParamFormatError as e:
                 hints = self._get_param_startswith(e.module, e.command, text)
 
-            except BigToolException:
+            except BindCtlException:
                 hints = []
 
             self.hint = hints
@@ -261,10 +261,10 @@ class BigTool(Cmd):
         # check if there's anything on the cc first
         self.check_cc_messages()
         try:
-            cmd = BigToolCmd(line)
+            cmd = BindCtlCmd(line)
             self.validate_cmd(cmd)
             self._handle_cmd(cmd)
-        except BigToolException as e:
+        except BindCtlException as e:
             print("Error! ", e)
             self._print_correct_usage(e)
             
