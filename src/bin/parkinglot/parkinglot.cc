@@ -110,6 +110,7 @@ ParkingLot::processMessage() {
             status = data_source.addToMessage(msg, SECTION_ANSWER, zname, name, qclass, qtype);
             // rcode is based on this result?
             if (status == SearchResult::name_not_found) {
+                msg.setRcode(Message::RCODE_NXDOMAIN);
                 if (qtype != RRType::NS) {
                     status = data_source.addToMessage(msg, SECTION_AUTHORITY, zname, zname, qclass, RRType::SOA);
                 }

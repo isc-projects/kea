@@ -550,3 +550,15 @@ operator<<(ostream& os, const Name& name)
     os << name.toText();
     return (os);
 }
+
+// temp (bad) comparison, compare not merged yet; needed for zoneset
+// in parkinglot, real version is in trunk, but currently incompatible
+// with this branch
+bool
+Name::operator<(const Name&other) const
+{
+    std::string a = toText();
+    std::string b = other.toText();
+    return a.compare(b);
+}
+
