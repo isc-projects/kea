@@ -60,13 +60,7 @@ DataSourceParkingLot::DataSourceParkingLot() {
 bool
 DataSourceParkingLot::hasZoneFor(const Name& name, Name &zone_name)
 {
-    if (zones.contains(name.toText(true))) {
-        zone_name = Name(name);
-        return true;
-    } else {
-        /* try 1 level higher? i.e. www.asdf.nl? */
-        return false;
-    }
+    return zones.findClosest(name, zone_name);
 }
 
 SearchResult
@@ -78,7 +72,6 @@ DataSourceParkingLot:: findRRsets(const isc::dns::Name& zone_name,
     Name authors_name("authors.bind");
     Name version_name("version.bind");
     
-    std::cout << "findRRset()" << std::endl;
     if (clas == RRClass::CH) {
         if (type == RRType::TXT) {
             if (name == authors_name) {
@@ -104,16 +97,13 @@ DataSourceParkingLot:: findRRsets(const isc::dns::Name& zone_name,
                 result.addRRset(rrset);
                 result.setStatus(SearchResult::success);
             } else {
-                std::cout << "ch txt but unknown name" << std::endl;
                 result.setStatus(SearchResult::name_not_found);
             }
         } else {
             result.setStatus(SearchResult::name_not_found);
         }
     } else if (clas == RRClass::IN) {
-        // make zoneset contain Name instead of string?
-        std::cout << "Finding zone for " << name.toText() << std::endl;
-        if (zones.contains(name.toText(true))) {
+        if (zones.contains(name)) {
             RRsetPtr rrset = RRsetPtr(new RRset(name, clas, type, TTL(3600)));
             result.setStatus(SearchResult::success);
             if (type == RRType::A) {
@@ -133,11 +123,14 @@ DataSourceParkingLot:: findRRsets(const isc::dns::Name& zone_name,
             }
             result.addRRset(rrset);
         } else {
-            std::cout << "zone not in zoneset" << std::endl;
-            result.setStatus(SearchResult::zone_not_found);
+            // we don't have the name itself. Do we have the zone?
+            if (zones.contains(zone_name)) {
+                result.setStatus(SearchResult::name_not_found);
+            } else {
+                result.setStatus(SearchResult::zone_not_found);
+            }
         }
     } else {
-        std::cout << "not ch or in" << std::endl;
         result.setStatus(SearchResult::zone_not_found);
     }
     return result;
