@@ -17,7 +17,7 @@ def merge(orig, new):
                 else:
                     orig[kn] = new[kn]
             else:
-                orig.remove(kn)
+                del orig[kn]
         else:
             orig[kn] = new[kn]
 
@@ -180,63 +180,24 @@ class ConfigData:
         return None, False
 
 class UIConfigData():
-    def __init__(self, name, cc):
+    def __init__(self, conn, name = ''):
         self.module_name = name
-        data_spec = self.get_data_specification(cc)
+        data_spec = self.get_data_specification(conn)
         self.config = ConfigData(data_spec)
-        self.get_config_data(cc)
+        self.get_config_data(conn)
         self.config_changes = {}
     
-    def get_config_data(self, cc):
-        cc.group_sendmsg({ "command": ["get_config", self.module_name] }, "ConfigManager")
-        answer, env = cc.group_recvmsg(False)
-        if 'result' in answer.keys() and type(answer['result']) == list:
-            # TODO: with the new cc implementation, replace "1" by 1
-            if answer['result'][0] == "1":
-                # todo: exception
-                print("Error: " + str(answer['result'][1]))
-            else:
-                self.config.data = answer['result'][1]
-        else:
-            # XX todo: raise exc
-            print("Error: unexpected answer from config manager:")
-            print(answer)
+    def get_config_data(self, conn):
+        self.config.data = conn.send_GET('/config_data') 
 
-    def send_changes(self, cc):
-        """Sends the changes configuration values to the config manager.
-           If the command succeeds, the changes are re-requested and
-           the changed list is reset"""
-        if self.module_name and self.module_name != "":
-            cc.group_sendmsg({ "command": [ "set_config", self.module_name, self.config_changes ]}, "ConfigManager")
-        else:
-            cc.group_sendmsg({ "command": [ "set_config", self.config_changes ]}, "ConfigManager")
-        answer, env = cc.group_recvmsg(False)
-        if 'result' in answer and type(answer['result']) == list:
-            if answer['result'][0] == 0:
-                # ok
-                self.get_config_data(cc)
-                self.config_changes = {}
-            else:
-                print("Error committing changes: " + answer['result'][1])
-        else:
-            print("Error: unexpected answer: " + str(answer))
+    def send_changes(self, conn):
+        conn.send_POST('/ConfigManager/set_config', self.config_changes)
+        # Get latest config data
+        self.get_config_data(conn)
+        self.config_changes = {}
     
-    def get_data_specification(self, cc):
-        cc.group_sendmsg({ "command": ["get_data_spec", self.module_name] }, "ConfigManager")
-        answer, env = cc.group_recvmsg(False)
-        if 'result' in answer.keys() and type(answer['result']) == list:
-            # TODO: with the new cc implementation, replace "1" by 1
-            if answer['result'][0] == "1":
-                # todo: exception
-                print("Error: " + str(answer['result'][1]))
-                return None
-            else:
-                return answer['result'][1]
-        else:
-            # XX todo: raise exc
-            print("Error: unexpected answer from config manager:")
-            print(answer)
-        return None
+    def get_data_specification(self, conn):
+        return conn.send_GET('/config_spec') 
 
     def set(self, identifier, value):
         # check against definition
@@ -371,5 +332,5 @@ class UIConfigData():
     def revert(self):
         self.config_changes = {}
 
-    def commit(self, cc):
-        self.send_changes(cc)
+    def commit(self, conn):
+        self.send_changes(conn)

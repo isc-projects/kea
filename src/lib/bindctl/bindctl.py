@@ -7,6 +7,13 @@ from command import BindCtlCmd
 from xml.dom import minidom
 import ISC
 import ISC.CC.data
+import http.client
+import json
+import inspect
+import pprint
+import ssl, socket
+import os, time, random, re
+from hashlib import sha1
 
 try:
     from collections import OrderedDict
@@ -27,7 +34,7 @@ CONST_COMMAND_NODE = "command"
 class BindCtl(Cmd):
     """simple bindctl example."""    
 
-    def __init__(self, session = None):
+    def __init__(self, server_port = 'localhost:8080'):
         Cmd.__init__(self)
         self.location = ""
         self.prompt_end = '> '
@@ -35,12 +42,104 @@ class BindCtl(Cmd):
         self.ruler = '-'
         self.modules = OrderedDict()
         self.add_module_info(ModuleInfo("help", desc = "Get help for bindctl"))
-        self.cc = session
-        self.config_data = ISC.CC.data.UIConfigData("", session)
+        self.server_port = server_port
+        self.connect_to_cmd_ctrld()
+        self.session_id = self._get_session_id()
+
+    def connect_to_cmd_ctrld(self):
+        try:
+            self.conn = http.client.HTTPSConnection(self.server_port, cert_file='create_your_cert.pem')
+        except  Exception as e:
+            print(e)
+            print("can't connect to %s, please make sure cmd-ctrld is running" % self.server_port)
+
+    def _get_session_id(self):
+        rand = os.urandom(16)
+        now = time.time()
+        ip = socket.gethostbyname(socket.gethostname())
+        session_id = sha1(("%s%s%s" %(rand, now, ip)).encode())
+        session_id = session_id.hexdigest()
+        return session_id
+
+    def run(self):
+        count = 0
+        print("[TEMP MESSAGE]: username :root  password :bind10")
+        try:
+            while count < 3:
+                count = count + 1
+                username = input("username:")
+                passwd = input("password:")
+                param = {'username': username, 'password' : passwd}
+                response = self.send_POST('/', param)
+                data = response.read().decode()
+                print(data)
+            
+                if response.status == http.client.OK:
+                    break
+                if count == 3:
+                    print("Too many authentication failures")
+                    return True
+
+            # Get all module information from cmd-ctrld
+            self.config_data = ISC.CC.data.UIConfigData(self)
+            self.update_commands()
+            self.cmdloop()
+        except KeyboardInterrupt:
+            return True
+
+
+    def update_commands(self):
+        cmd_spec = self.send_GET('/command_spec')
+        if (len(cmd_spec) == 0):
+            print('can\'t get any command specification')
+        for module_name in cmd_spec.keys():
+            self.prepare_module_commands(module_name, cmd_spec[module_name])
+
+    def send_GET(self, url, body = None):
+        headers = {"cookie" : self.session_id}
+        self.conn.request('GET', url, body, headers)
+        res = self.conn.getresponse()
+        reply_msg = res.read()
+        if reply_msg:
+           return json.loads(reply_msg.decode())
+        else:
+            return None
+       
+
+    def send_POST(self, url, post_param = None): 
+        '''
+        Format: /module_name/command_name
+        parameters of command is encoded as a map
+        '''
+        param = None
+        if (len(post_param) != 0):
+            param = json.dumps(post_param)
+
+        headers = {"cookie" : self.session_id}
+        self.conn.request('POST', url, param, headers)
+        return self.conn.getresponse()
+        
 
     def postcmd(self, stop, line):
         self.prompt = self.location + self.prompt_end
         return stop
+
+    def prepare_module_commands(self, module_name, module_commands):
+        module = ModuleInfo(name = module_name,
+                            desc = "same here")
+        for command in module_commands:
+            cmd = CommandInfo(name = command["command_name"],
+                              desc = command["command_description"],
+                              need_inst_param = False)
+            for arg in command["command_args"]:
+                param = ParamInfo(name = arg["item_name"],
+                                  type = arg["item_type"],
+                                  optional = bool(arg["item_optional"]))
+                if ("item_default" in arg):
+                    param.default = arg["item_default"]
+                cmd.add_param(param)
+            module.add_command(cmd)
+        self.add_module_info(module)
 
     def validate_cmd(self, cmd):
         if not cmd.module in self.modules:
@@ -127,13 +226,7 @@ class BindCtl(Cmd):
 
     def emptyline(self):
         pass
-    
-    def cmdloop(self):
-        try:
-            Cmd.cmdloop(self)
-        except KeyboardInterrupt:
-            return True
-            
+
     def do_help(self, name):
         print(CONST_BINDCTL_HELP)
         for k in self.modules.keys():
@@ -141,9 +234,8 @@ class BindCtl(Cmd):
                 
     
     def onecmd(self, line):
-        # check if there's anything on the cc first
-        self.check_cc_messages()
         if line == 'EOF' or line.lower() == "quit":
+            self.conn.close()
             return True
             
         if line == 'h':
@@ -170,8 +262,8 @@ class BindCtl(Cmd):
                         hints.extend([val for val in list if val.startswith(text)])
             except CmdModuleNameFormatError:
                 if not text:
-                    hints = list(self.modules.keys())
-                    
+                    hints = self.get_module_names()
+
             except CmdMissCommandNameFormatError as e:
                 if not text.strip(): # command name is empty
                     hints = self.modules[e.module].get_command_names()                    
@@ -230,36 +322,8 @@ class BindCtl(Cmd):
                 return hint
 
         return []
-        
-    def prepare_module_commands(self, module_name, module_commands):
-        module = ModuleInfo(name = module_name,
-                            desc = "same here")
-        for command in module_commands:
-            cmd = CommandInfo(name = command["command_name"],
-                              desc = command["command_description"],
-                              need_inst_param = False)
-            for arg in command["command_args"]:
-                param = ParamInfo(name = arg["item_name"],
-                                  type = arg["item_type"],
-                                  optional = bool(arg["item_optional"]))
-                if ("item_default" in arg):
-                    param.default = arg["item_default"]
-                cmd.add_param(param)
-            module.add_command(cmd)
-        self.add_module_info(module)
-
-    def check_cc_messages(self):
-        (message, env) = self.cc.group_recvmsg(True)
-        while message:
-            if 'commands_update' in message:
-                self.prepare_module_commands(message['commands_update'][0], message['commands_update'][1])
-            elif 'specification_update' in message:
-                self.config_data.config.specification[message['specification_update'][0]] = message['specification_update'][1]
-            (message, env) = self.cc.group_recvmsg(True)
 
     def _parse_cmd(self, line):
-        # check if there's anything on the cc first
-        self.check_cc_messages()
         try:
             cmd = BindCtlCmd(line)
             self.validate_cmd(cmd)
@@ -283,7 +347,6 @@ class BindCtl(Cmd):
                 
     def _append_space_to_hint(self):
         """Append one space at the end of complete hint."""
-        
         self.hint = [(val + " ") for val in self.hint]
             
             
@@ -330,7 +393,7 @@ class BindCtl(Cmd):
             elif cmd.command == "revert":
                 self.config_data.revert()
             elif cmd.command == "commit":
-                self.config_data.commit(self.cc)
+                self.config_data.commit(self)
             elif cmd.command == "go":
                 self.go(identifier)
         except ISC.CC.data.DataTypeError as dte:
@@ -353,29 +416,15 @@ class BindCtl(Cmd):
         self.location = identifier
 
     def apply_cmd(self, cmd):
-        if not self.cc:
-            return
-        
-        groupName = cmd.module
-        content = [cmd.module, cmd.command]
-        values = cmd.params.values()
-        if len(values) > 0:
-            content.append(list(values)[0])
+        url = '/' + cmd.module + '/' + cmd.command
+        cmd_params = None
+        if (len(cmd.params) != 0):
+            cmd_params = json.dumps(cmd.params)
 
-        msg = {"command":content}
-        print("begin to send the message...")
-
-        # XXTODO: remove this with new msgq
-        #self.cc.group_subscribe(groupName)
-        
-        try:   
-            self.cc.group_sendmsg(msg, groupName)
-            print("waiting for %s reply..." % groupName)
-
-            reply, env = self.cc.group_recvmsg(False)
-            print("received reply:", reply)
-        except:
-            print("Error communication with %s" % groupName)
+        print("send the message to cmd-ctrld")        
+        reply = self.send_POST(url, cmd.params)
+        data = reply.read().decode()
+        print("received reply:", data)
 
 
 
