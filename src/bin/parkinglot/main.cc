@@ -99,11 +99,12 @@ my_command_handler(isc::data::ElementPtr command)
     isc::data::ElementPtr answer = isc::data::Element::createFromString("{ \"result\": [0] }");
 
     cout << "[XX] Handle command: " << endl << command->str() << endl;
-    if (command->get(1)->stringValue() == "print_message") {
-        cout << command->get(2)->stringValue() << endl;
+    if (command->get(0)->stringValue() == "print_message") 
+    {
+        cout << command->get(1)->get("message") << endl;
         /* let's add that message to our answer as well */
         cout << "[XX] answer was: " << answer->str() << endl;
-        answer->get("result")->add(command->get(2));
+        answer->get("result")->add(command->get(1));
         cout << "[XX] answer now: " << answer->str() << endl;
     }
 

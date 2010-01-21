@@ -100,7 +100,7 @@ CommandSession::CommandSession(std::string module_name,
     
     // get any stored configuration from the manager
     if (config_handler_) {
-        ElementPtr cmd = Element::createFromString("{ \"command\": [ \"get_config\", \"" + module_name + "\" ] }");
+        ElementPtr cmd = Element::createFromString("{ \"command\": [\"get_config\", {\"module_name\":\"" + module_name + "\"} ] }");
         session_.group_sendmsg(cmd, "ConfigManager");
         session_.group_recvmsg(env, answer, false);
         cout << "[XX] got config: " << endl << answer->str() << endl;
