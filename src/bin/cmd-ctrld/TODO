@@ -1,0 +1,4 @@
+1. Refine code for cmd-ctrld and bindctl
+2. Add value type check.
+3. Make code be robust.
+4. Add ssl support.
