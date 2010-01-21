@@ -93,11 +93,12 @@ class ConfigManager:
                 if cmd[0] == "get_commands":
                     answer["result"] = [ 0, self.commands ]
                 elif cmd[0] == "get_data_spec":
-                    if len(cmd) > 1 and cmd[1] != "":
+                    if len(cmd) > 1 and cmd[1]['module_name'] != '':
+                        module_name = cmd[1]['module_name']
                         try:
-                            answer["result"] = [0, self.data_definitions[cmd[1]]]
+                            answer["result"] = [0, self.data_definitions[module_name]]
                         except KeyError as ke:
-                            answer["result"] = [1, "No specification for module " + cmd[1]]
+                            answer["result"] = [1, "No specification for module " + module_name]
                     else:
                         answer["result"] = [0, self.data_definitions]
                 elif cmd[0] == "get_config":
@@ -105,7 +106,7 @@ class ConfigManager:
                     conf_part = None
                     if len(cmd) > 1:
                         try:
-                            conf_part = data.find(self.config.data, cmd[1])
+                            conf_part = data.find(self.config.data, cmd[1]['module_name'])
                         except data.DataNotFoundError as dnfe:
                             pass
                     else:
@@ -114,6 +115,7 @@ class ConfigManager:
                         answer["result"] = [ 0, conf_part ]
                     else:
                         answer["result"] = [ 0 ]
+
                 elif cmd[0] == "set_config":
                     if len(cmd) == 3:
                         # todo: use api (and check types?)
@@ -143,20 +145,8 @@ class ConfigManager:
                         answer["result"] = [ 0 ]
                     else:
                         answer["result"] = [ 1, "Wrong number of arguments" ]
-                elif cmd[0] == "zone" and cmd[1] == "add":
-                    self.add_zone(cmd[2])
-                    answer["result"] = [ 0 ]
-                elif cmd[0] == "zone" and cmd[1] == "remove":
-                    try:
-                        self.remove_zone(cmd[2])
-                        answer["result"] = [ 0 ]
-                    except KeyError:
-                        # zone wasn't there, should we make
-                        # a separate exception for that?
-                        answer["result"] = [ 1, "Unknown zone" ]
-                elif cmd[0] == "zone" and cmd[1] == "list":
-                    answer["result"]     = []#list(self.config.zones.keys())
-                elif cmd == "shutdown":
+
+                elif cmd[0] == "shutdown":
                     print("[bind-cfgd] Received shutdown command")
                     self.running = False
                 else:
@@ -171,11 +161,13 @@ class ConfigManager:
             spec = msg["data_specification"]
             if "config_data" in spec:
                 self.set_config(spec["module_name"], spec["config_data"])
-                self.cc.group_sendmsg({ "specification_update": [ spec["module_name"], spec["config_data"] ] }, "BindCtl")
+                self.cc.group_sendmsg({ "specification_update": [ spec["module_name"], spec["config_data"] ] }, "Cmd-Ctrld")
             if "commands" in spec:
                 self.set_commands(spec["module_name"], spec["commands"])
-                self.cc.group_sendmsg({ "commands_update": [ spec["module_name"], spec["commands"] ] }, "BindCtl")
+                self.cc.group_sendmsg({ "commands_update": [ spec["module_name"], spec["commands"] ] }, "Cmd-Ctrld")
             answer["result"] = [ 0 ]
+        elif 'result' in msg:
+            answer['result'] = [0]
         else:
             print("[bind-cfgd] unknown message: " + str(msg))
             answer["result"] = [ 1, "Unknown module: " + str(msg) ]
