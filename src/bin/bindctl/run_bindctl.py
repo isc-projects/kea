@@ -1,21 +1,8 @@
 from moduleinfo  import *
 from bindctl import *
 import ISC
+import pprint
 
-
-def _prepare_fake_data(bindctl):
-    shutdown_param = ParamInfo(name = "module_name", desc = "the name of module")
-    shutdown_cmd = CommandInfo(name = 'shutdown', desc = "stop bind10",
-                               need_inst_param = False)
-    shutdown_cmd.add_param(shutdown_param)
-    boss_module = ModuleInfo(name = "boss", desc = "boss of bind10")
-    boss_module.add_command(shutdown_cmd)               
-
-    bindctl.add_module_info(boss_module)
-
-def prepare_commands(bindctl, command_spec):
-    for module_name in command_spec.keys():
-        bindctl.prepare_module_commands(module_name, command_spec[module_name])
 
 def prepare_config_commands(bindctl):
     module = ModuleInfo(name = "config", desc = "Configuration commands")
@@ -63,22 +50,24 @@ def prepare_config_commands(bindctl):
 
     bindctl.add_module_info(module)
     
+def prepare_boss_command(tool):
+    # Prepare the command 'shutdown' for Boss, this is one 'hardcode' exception.
+    shutdown_cmd = CommandInfo(name = 'shutdown', desc = "stop one module",
+                               need_inst_param = False)
+    boss_module = ModuleInfo(name = "Boss", desc = "boss of bind10")
+    boss_module.add_command(shutdown_cmd)               
+    tool.add_module_info(boss_module)
+
+
 
 if __name__ == '__main__':
     try:
-        cc = ISC.CC.Session()
-        cc.group_subscribe("BindCtl", "*")
-        cc.group_subscribe("Boss", "*")
-
-        tool = BindCtl(cc)
-        cc.group_sendmsg({ "command": ["get_commands"] }, "ConfigManager")
-        command_spec, env =  cc.group_recvmsg(False)
-        prepare_commands(tool, command_spec["result"][1])
+        tool = BindCtl("localhost:8080")
         prepare_config_commands(tool)
-        _prepare_fake_data(tool)   
-        tool.cmdloop()
-    except ISC.CC.SessionError:
-        print("Failed to create cchannel session, "
-              "is the command channel daemon running?")
+        prepare_boss_command(tool)
+        tool.run()
+    except Exception as e:
+        print(e)
+        print("Failed to connect with cmd-ctrld module, is it running?")
 
 

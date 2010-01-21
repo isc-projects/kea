@@ -141,19 +141,35 @@ class BoB:
         try:
             parkinglot = ProcessInfo("parkinglot", ["parkinglot", "-p", "5300"])
         except Exception as e:
-            c_channel.kill()
-            bind_cfgd.kill()
+            c_channel.process.kill()
+            bind_cfgd.process.kill()
             return "Unable to start parkinglot; " + str(e)
         self.processes[parkinglot.pid] = parkinglot
         if self.verbose:
             sys.stdout.write("Started parkinglot (PID %d)\n" % parkinglot.pid)
+
+        # start the cmd-ctrld
+        # XXX: we hardcode port 8080
+        if self.verbose:
+            sys.stdout.write("Starting cmd-ctrld on port 8080\n")
+        try:
+            cmd_ctrld = ProcessInfo("cmd-ctrld", 'cmd-ctrld')
+        except Exception as e:
+            c_channel.process.kill()
+            bind_cfgd.process.kill()
+            parkinglot.process.kill()
+            return "Unable to start cmd-ctrld; " + str(e)
+        self.processes[cmd_ctrld.pid] = cmd_ctrld
+        if self.verbose:
+            sys.stdout.write("Started cmd-ctrld (PID %d)\n" % cmd_ctrld.pid)
 
         self.runnable = True
         return None
 
     def stop_all_processes(self):
         """Stop all processes."""
-        cmd = { "command": "shutdown" }
+        cmd = { "command": ['shutdown']}
+        self.cc_session.group_sendmsg(cmd, 'Boss', 'Cmd-Ctrld')
         self.cc_session.group_sendmsg(cmd, "Boss", "ConfigManager")
         self.cc_session.group_sendmsg(cmd, "Boss", "ParkingLot")
 
@@ -237,10 +253,11 @@ class BoB:
         if msg is None:
             return
         msg_from = data.get('from', '')
+
         if (type(msg) is dict) and (type(data) is dict):
             if "command" in msg:
                 cmd = msg['command']
-                if (cmd[0] == "boss") and (cmd[1] == "shutdown"):
+                if cmd[0] == "shutdown":
                     if self.verbose:
                         sys.stdout.write("Shutdown command received\n")
                     self.runnable = False
@@ -385,7 +402,7 @@ if __name__ == "__main__":
                 raise
             if pid == 0: break
             boss_of_bind.reap(pid, exit_status)
-
+        
         boss_of_bind.restart_processes()
 
     # shutdown
