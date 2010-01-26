@@ -19,7 +19,11 @@ AM_PATH_PYTHON([3.1])
 
 # default compiler warning settings
 if test "X$GCC" = "Xyes"; then
-CXXFLAGS="-g -Wall -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
+#-Woverloaded-virtual will produce so many warnings.  Suppress them for rapid
+# prototyping, but we should soon fix the code, rather than ignoring the
+# warnings!!
+#CXXFLAGS="-g -Wall -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
+CXXFLAGS="-g -Wall -Wwrite-strings -Wno-sign-compare"
 fi
 
 # produce PIC unless we disable shared libraries. need this for python bindings.
