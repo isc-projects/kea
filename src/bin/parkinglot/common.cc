@@ -13,4 +13,11 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 // $Id$
+#include "common.h"
+#include <iostream>
 
+FatalError::FatalError(std::string m) {
+    msg = m;
+    std::cerr << msg << std::endl;
+    exit(1);
+}

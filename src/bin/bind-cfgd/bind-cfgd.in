@@ -1,6 +1,6 @@
 #!/bin/sh
 # use build time srcdir for now
-BINPATH=@abs_top_srcdir@/src/lib/bind-cfgd/python
+BINPATH=@abs_top_srcdir@/src/lib/config/python
 LIBPATH=@abs_top_srcdir@/src/lib/cc/python
 
 PYTHON_EXEC=${PYTHON_EXEC:-@PYTHON@}

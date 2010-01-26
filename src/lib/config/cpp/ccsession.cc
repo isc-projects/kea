@@ -33,10 +33,10 @@
 #include <boost/foreach.hpp>
 
 #include <cc/cpp/data.h>
-#include <cc/cpp/data_def.h>
+#include <data_def.h>
 #include <cc/cpp/session.h>
 
-#include "common.h"
+//#include "common.h"
 #include "ccsession.h"
 #include "config.h"
 
@@ -53,9 +53,9 @@ CommandSession::read_data_definition(const std::string& filename) {
     std::ifstream file;
 
     // this file should be declared in a @something@ directive
-    file.open(PARKINGLOT_SPECFILE_LOCATION);
+    file.open(filename.c_str());
     if (!file) {
-        cout << "error opening " << PARKINGLOT_SPECFILE_LOCATION << endl;
+        cout << "error opening " << filename << endl;
         exit(1);
     }
 
