@@ -113,6 +113,7 @@ ParkingLot::processMessage() {
         RRType qtype = query->getType();
         SearchResult::status_type status;
         bool included_ns = false;
+        msg.setRcode(Rcode::NOERROR());
         if (data_source.hasZoneFor(query->getName(), zname)) {
             status = data_source.addToMessage(msg, Section::ANSWER(), zname,
                                               name, qclass, qtype);
