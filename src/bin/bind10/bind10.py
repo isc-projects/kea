@@ -189,6 +189,7 @@ class BoB:
             pass
         # XXX: some delay probably useful... how much is uncertain
         time.sleep(0.1)  
+        self.reap_children()
         # next try sending a SIGTERM
         processes_to_stop = list(self.processes.values())
         unstopped_processes = []
@@ -204,10 +205,7 @@ class BoB:
                 pass
         # XXX: some delay probably useful... how much is uncertain
         time.sleep(0.1)  
-        for proc_info in processes_to_stop:
-            (pid, exit_status) = os.waitpid(proc_info.pid, os.WNOHANG)
-            if pid == 0:
-                unstopped_processes.append(proc_info)
+        self.reap_children()
         # finally, send a SIGKILL (unmaskable termination)
         processes_to_stop = unstopped_processes
         for proc_info in processes_to_stop:
@@ -223,26 +221,31 @@ class BoB:
         if self.verbose:
             sys.stdout.write("All processes ended, server done.\n")
 
-    def reap(self, pid, exit_status):
-        """The process specified by pid has exited with the value
-        exit_status, so perform any action necessary (cleanup,
-        restart, and so on).
-  
-        Returns True if everything is okay, or False if a fatal error
-        has been detected and the program should exit.
+    def reap_children(self):
+        """Check to see if any of our child processes have exited, 
+        and note this for later handling. 
         """
-        if not pid in self.processes:
-            sys.stdout.write("Unknown child pid %d exited.\n" % pid)
-            return
-        proc_info = self.processes.pop(pid)
-        self.dead_processes[proc_info.pid] = proc_info
-        if self.verbose:
-            sys.stdout.write("Process %s (PID %d) died.\n" % 
-                             (proc_info.name, proc_info.pid))
-        if proc_info.name == "msgq":
-            if self.verbose:
-                sys.stdout.write("The msgq process died, shutting down.\n")
-            self.runnable = False
+        while True:
+            try:
+                (pid, exit_status) = os.waitpid(-1, os.WNOHANG)
+            except OSError as o:
+                if o.errno == errno.ECHILD: break
+                # XXX: should be impossible to get any other error here
+                raise
+            if pid == 0: break
+            if pid in self.processes:
+                proc_info = self.processes.pop(pid)
+                self.dead_processes[proc_info.pid] = proc_info
+                if self.verbose:
+                    sys.stdout.write("Process %s (PID %d) died.\n" % 
+                                     (proc_info.name, proc_info.pid))
+                if proc_info.name == "msgq":
+                    if self.verbose:
+                        sys.stdout.write(
+                                     "The msgq process died, shutting down.\n")
+                    self.runnable = False
+            else:
+                sys.stdout.write("Unknown child pid %d exited.\n" % pid)
 
     def recv_and_process_cc_msg(self):
         """Receive and process the next message on the c-channel,
@@ -268,20 +271,14 @@ class BoB:
             if self.verbose:
                 sys.stdout.write("Non-list command\n")
             return
-        if len(cmd) < 2:
-            if self.verbose:
-                sys.stdout.write("Command too short\n")
-            return
-        if cmd[0] != "boss":
-            return
 
         # done checking and extracting... time to execute the command
-        if cmd[1] == "shutdown":
+        if cmd[0] == "shutdown":
             if self.verbose:
                 sys.stdout.write("shutdown command received\n")
             self.runnable = False
             # XXX: reply here?
-        elif cmd[1] == "getProcessList":
+        elif cmd[0] == "getProcessList":
             if self.verbose:
                 sys.stdout.write("getProcessList command received\n")
             live_processes = [ ]
@@ -420,16 +417,7 @@ def main():
                 os.read(wakeup_fd, 32)
 
         # clean up any processes that exited
-        while True:
-            try:
-                (pid, exit_status) = os.waitpid(-1, os.WNOHANG)
-            except OSError as o:
-                if o.errno == errno.ECHILD: break
-                # XXX: should be impossible to get any other error here
-                raise
-            if pid == 0: break
-            boss_of_bind.reap(pid, exit_status)
-
+        boss_of_bind.reap_children()
         boss_of_bind.restart_processes()
 
     # shutdown
