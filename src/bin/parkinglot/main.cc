@@ -61,36 +61,7 @@ usage() {
 isc::data::ElementPtr
 my_config_handler(isc::data::ElementPtr config)
 {
-    cout << "[XX] Handle config: " << endl << config->str() << endl;
-    if (config->contains("zones")) {
-        plot.clear_zones();
-        BOOST_FOREACH(isc::data::ElementPtr zone_el, config->get("zones")->listValue()) {
-            plot.serve(zone_el->stringValue());
-        }
-    }
-    if (config->contains("port")) {
-        // todo: what to do with port change. restart automatically?
-        // ignore atm
-    }
-    if (config->contains("a_records")) {
-        plot.clearARecords();
-        BOOST_FOREACH(isc::data::ElementPtr rel, config->get("a_records")->listValue()) {
-            plot.addARecord(rel->stringValue());
-        }
-    }
-    if (config->contains("aaaa_records")) {
-        plot.clearAAAARecords();
-        BOOST_FOREACH(isc::data::ElementPtr rel, config->get("aaaa_records")->listValue()) {
-            plot.addAAAARecord(rel->stringValue());
-        }
-    }
-    if (config->contains("ns_records")) {
-        plot.clearNSRecords();
-        BOOST_FOREACH(isc::data::ElementPtr rel, config->get("ns_records")->listValue()) {
-            plot.addNSRecord(rel->stringValue());
-        }
-    }
-    return isc::data::Element::createFromString("{ \"result\": [0] }");
+    return plot.updateConfig(config);
 }
 
 isc::data::ElementPtr

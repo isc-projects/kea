@@ -18,23 +18,43 @@
 #define __ZONESET_H 1
 
 #include <set>
+#include <dns/buffer.h>
+#include <dns/name.h>
 
-class ZoneSet : std::set<std::string> {
-    public:
-        void serve(std::string s) {
-            std::cout << "now serving: " << s << std::endl;
-            this->insert(s);
-        }
-        void forget(std::string s) {
-            std::cout << "no longer serving: " << s << std::endl;
-            this->erase(s);
-        }
-        void clear_zones() {
-            this->clear();
-        }
-        bool contains(std::string s) {
-            return (this->find(s) != this->end());
-        }
+class ZoneSet {
+public:
+    void serve(const std::string& s) {
+        serve(isc::dns::Name(s));
+    }
+
+    void serve(const isc::dns::Name& n) {
+        elements.insert(n);
+    }
+    
+    void forget(const std::string& s) {
+        forget(isc::dns::Name(s));
+    }
+
+    void forget(const isc::dns::Name& n) {
+        elements.erase(n);
+    }
+
+    void clear_zones() {
+        elements.clear();
+    }
+
+    bool contains(const std::string& s) {
+        return contains(isc::dns::Name(s));
+    }
+
+    bool contains(const isc::dns::Name& n) {
+        return (elements.find(n) != elements.end());
+    }
+
+    bool findClosest(const isc::dns::Name& n, isc::dns::Name& closest);
+
+private:
+    std::set<isc::dns::Name> elements;
 };
 
 #endif // __ZONESET_H
