@@ -4,12 +4,19 @@
 #include <netdb.h>          // for getaddrinfo
 #include <sys/time.h>       // for gettimeofday
 
+#include <string>
 #include <iostream>
-using namespace std;    // I don't understand why this is needed for cout
 
-#include "dns/rrset.h"
-#include "dns/message.h"
+#include "dns/cpp/buffer.h"
+#include "dns/cpp/name.h"
+#include "dns/cpp/message.h"
+#include "dns/cpp/messagerenderer.h"
+#include "dns/cpp/rrclass.h"
+#include "dns/cpp/rrtype.h"
+#include "dns/cpp/rrset.h"
+#include "dns/cpp/message.h"
 
+using namespace std;
 using namespace isc::dns;
 
 char* dns_type = NULL;    // not set, so A, AAAA, MX
@@ -28,16 +35,21 @@ host_lookup(char* name, std::string type)
     msg.setQid(0); // does this matter?
 
 // TODO: add switch for this
-    msg.setRD(recursive_bit);    // set recursive bit
+    msg.setOpcode(Opcode::QUERY());
+    msg.setRcode(Rcode::NOERROR());
+    if (recursive_bit) {
+        msg.setHeaderFlag(MessageFlag::RD());    // set recursive bit
+    }
 
-    msg.addQuestion(Name(name),
-    RRClass::IN,    // IN class only for now
-    RRType(type));  // if NULL then:
+    msg.addQuestion(Question(Name(name),
+                             RRClass::IN(),    // IN class only for now
+                             RRType(type)));  // if NULL then:
 // terminate called after throwing an instance of 'std::logic_error'
 //  what():  basic_string::_S_construct NULL not valid
 
-
-    msg.toWire();
+    OutputBuffer obuffer(512);
+    MessageRenderer renderer(obuffer);
+    msg.toWire(renderer);
 
     struct addrinfo hints, *res;
     int e;
@@ -72,35 +84,36 @@ host_lookup(char* name, std::string type)
         gettimeofday(&before_time, NULL);
     }
 
-    msg.getBuffer().sendTo(s, *res->ai_addr, res->ai_addrlen);
+    sendto(s, obuffer.getData(), obuffer.getLength(), 0, res->ai_addr,
+           res->ai_addrlen);
 
-    Message rmsg;
     struct sockaddr_storage ss;
     struct sockaddr* sa;
     socklen_t sa_len;
 
     sa_len = sizeof(ss);
     sa = static_cast<struct sockaddr*>((void*)&ss);
-    if (rmsg.getBuffer().recvFrom(s, sa, &sa_len) > 0) {
+
+    char recvbuf[4096];
+    int cc;
+    if ((cc = recvfrom(s, recvbuf, sizeof(recvbuf), 0, sa, &sa_len)) > 0) {
+        Message rmsg;
+        InputBuffer ibuffer(recvbuf, cc);
         try {
-            rmsg.fromWire();
-
+            rmsg.fromWire(ibuffer);
             if (!verbose) {
-
-                  std::vector<RRsetPtr>answers =
-                     rmsg.getSection(SECTION_ANSWER);
-                  std::vector<RRsetPtr>::const_iterator it;
-                  for (it = answers.begin(); it != answers.end(); ++it) {
-                      if ((*it)->getType() != RRType::A) {
+                  for (RRsetIterator it = rmsg.beginSection(Section::ANSWER());
+                       it != rmsg.endSection(Section::ANSWER());
+                       ++it) {
+                      if ((*it)->getType() != RRType::A()) {
                           continue;
                       }
-                      std::vector<Rdata::RdataPtr>::const_iterator ait;
-                      for (ait = (*it)->getRdatalist().begin();
-                           ait != (*it)->getRdatalist().end();
-                           ++ait) {
+
+                      RdataIteratorPtr rit = (*it)->getRdataIterator();
+                      for (rit->first(); !rit->isLast(); rit->next()) {
                           // instead of using my name, maybe use returned label?
                           cout << name << " has address " <<
-                              inet_ntoa(static_cast<const Rdata::IN::A&>(**ait).getAddress()) << "\n";
+                              (*rit).getCurrent().toText() << endl;
                       }
                   }
             } else {
@@ -122,20 +135,22 @@ host_lookup(char* name, std::string type)
 // Host hsdjkfhksjhdfkj not found: 3(NXDOMAIN)
 // TODO: figure out the new libdns way to test if NXDOMAIN
 
-                std::cout << "Received " <<
-                    boost::lexical_cast<string>(rmsg.getBuffer().getSize()) <<
+                std::cout << "Received " << cc <<
                     " bytes in " << elapsed_time << " ms\n";
                 // TODO: " bytes from 127.0.0.1#53 in 0 ms
 
             } //verbose
-
+        } catch (const exception& ex) {
+            std::cerr << "parse failed for " <<
+                string(name) << "/" << type << ": " << ex.what() << std::endl;
         } catch (...) {
-            std::cerr << "parse failed for " << type << std::endl;
+            std::cerr << "parse failed for " << string(name) << "/" << type;
         }
     }
 
     freeaddrinfo(res);
 
+    return (0);
 } // host_lookup()
 
 int
