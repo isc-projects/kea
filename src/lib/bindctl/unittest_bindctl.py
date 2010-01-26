@@ -1,6 +1,6 @@
 import unittest
-import command
-import bindctl
+import cmdparse
+import bindcmd
 from moduleinfo import *
 from exception import *    
 try:
@@ -11,11 +11,11 @@ except ImportError:
 class TestCmdLex(unittest.TestCase):
     
     def my_assert_raise(self, exception_type, cmd_line):
-        self.assertRaises(exception_type, command.BindCtlCmd, cmd_line)
+        self.assertRaises(exception_type, cmdparse.BindCmdParse, cmd_line)
 
 
     def testCommandWithoutParameter(self):
-        cmd = command.BindCtlCmd("zone add")
+        cmd = cmdparse.BindCmdParse("zone add")
         assert cmd.module == "zone"
         assert cmd.command == "add"
         self.assertEqual(len(cmd.params), 0)
@@ -27,7 +27,7 @@ class TestCmdLex(unittest.TestCase):
                  "zone add zone_name = 'cnnic.cn\", file ='cnnic.cn.file' master=1.1.1.1, " }
         
         for cmd_line in lines:
-            cmd = command.BindCtlCmd(cmd_line)
+            cmd = cmdparse.BindCmdParse(cmd_line)
             assert cmd.module == "zone"
             assert cmd.command == "add"
             assert cmd.params["zone_name"] == "cnnic.cn"
@@ -36,15 +36,15 @@ class TestCmdLex(unittest.TestCase):
             
             
     def testCommandWithListParam(self):
-            cmd = command.BindCtlCmd("zone set zone_name='cnnic.cn', master='1.1.1.1, 2.2.2.2'")
+            cmd = cmdparse.BindCmdParse("zone set zone_name='cnnic.cn', master='1.1.1.1, 2.2.2.2'")
             assert cmd.params["master"] == '1.1.1.1, 2.2.2.2'            
         
         
     def testCommandWithHelpParam(self):
-        cmd = command.BindCtlCmd("zone add help")
+        cmd = cmdparse.BindCmdParse("zone add help")
         assert cmd.params["help"] == "help"
         
-        cmd = command.BindCtlCmd("zone add help *&)&)*&&$#$^%")
+        cmd = cmdparse.BindCmdParse("zone add help *&)&)*&&$#$^%")
         assert cmd.params["help"] == "help"
         self.assertEqual(len(cmd.params), 1)
         
@@ -82,10 +82,10 @@ class TestCmdLex(unittest.TestCase):
 
 class TestCmdSyntax(unittest.TestCase):
     
-    def _create_bindctl(self):
-        """Create one bindctl"""
+    def _create_bindcmd(self):
+        """Create one bindcmd"""
         
-        tool = bindctl.BindCtl()        
+        tool = bindcmd.BindCmdInterpreter()        
         zone_file_param = ParamInfo(name = "zone_file")
         load_cmd = CommandInfo(name = "load")
         load_cmd.add_param(zone_file_param)
@@ -108,17 +108,17 @@ class TestCmdSyntax(unittest.TestCase):
         
         
     def setUp(self):
-        self.bindctl = self._create_bindctl()
+        self.bindcmd = self._create_bindcmd()
         
         
     def no_assert_raise(self, cmd_line):
-        cmd = command.BindCtlCmd(cmd_line)
-        self.bindctl.validate_cmd(cmd) 
+        cmd = cmdparse.BindCmdParse(cmd_line)
+        self.bindcmd.validate_cmd(cmd) 
         
         
     def my_assert_raise(self, exception_type, cmd_line):
-        cmd = command.BindCtlCmd(cmd_line)
-        self.assertRaises(exception_type, self.bindctl.validate_cmd, cmd)  
+        cmd = cmdparse.BindCmdParse(cmd_line)
+        self.assertRaises(exception_type, self.bindcmd.validate_cmd, cmd)  
         
         
     def testValidateSuccess(self):
@@ -156,12 +156,12 @@ class TestNameSequence(unittest.TestCase):
     Test if the module/command/parameters is saved in the order creation
     """
     
-    def _create_bindctl(self):
-        """Create one bindctl"""     
+    def _create_bindcmd(self):
+        """Create one bindcmd"""     
         
         self._cmd = CommandInfo(name = "load")
         self.module = ModuleInfo(name = "zone")
-        self.tool = bindctl.BindCtl()        
+        self.tool = bindcmd.BindCmdInterpreter()        
         for random_str in self.random_names:
             self._cmd.add_param(ParamInfo(name = random_str))
             self.module.add_command(CommandInfo(name = random_str))
@@ -169,7 +169,7 @@ class TestNameSequence(unittest.TestCase):
         
     def setUp(self):
         self.random_names = ['1erdfeDDWsd', '3fe', '2009erd', 'Fe231', 'tere142', 'rei8WD']
-        self._create_bindctl()
+        self._create_bindcmd()
         
     def testSequence(self):        
         param_names = self._cmd.get_param_names()

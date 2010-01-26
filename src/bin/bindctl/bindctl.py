@@ -1,10 +1,10 @@
 from moduleinfo  import *
-from bindctl import *
+from bindcmd import *
 import ISC
 import pprint
 
 
-def prepare_config_commands(bindctl):
+def prepare_config_commands(tool):
     module = ModuleInfo(name = "config", desc = "Configuration commands")
     cmd = CommandInfo(name = "show", desc = "Show configuration", need_inst_param = False)
     param = ParamInfo(name = "identifier", type = "string", optional=True)
@@ -48,7 +48,7 @@ def prepare_config_commands(bindctl):
     cmd.add_param(param)
     module.add_command(cmd)
 
-    bindctl.add_module_info(module)
+    tool.add_module_info(module)
     
 def prepare_boss_command(tool):
     # Prepare the command 'shutdown' for Boss, this is one 'hardcode' exception.
@@ -62,7 +62,7 @@ def prepare_boss_command(tool):
 
 if __name__ == '__main__':
     try:
-        tool = BindCtl("localhost:8080")
+        tool = BindCmdInterpreter("localhost:8080")
         prepare_config_commands(tool)
         prepare_boss_command(tool)
         tool.run()

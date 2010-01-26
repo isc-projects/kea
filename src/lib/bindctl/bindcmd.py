@@ -3,7 +3,7 @@ import readline
 from cmd import Cmd
 from exception import *
 from moduleinfo import *
-from command import BindCtlCmd
+from cmdparse import BindCmdParse
 from xml.dom import minidom
 import ISC
 import ISC.CC.data
@@ -31,7 +31,7 @@ Type \"<module_name> <command_name> help\" for help on the specific command.
 
 CONST_COMMAND_NODE = "command"
 
-class BindCtl(Cmd):
+class BindCmdInterpreter(Cmd):
     """simple bindctl example."""    
 
     def __init__(self, server_port = 'localhost:8080'):
@@ -249,7 +249,7 @@ class BindCtl(Cmd):
             hints = []
             cur_line = readline.get_line_buffer()            
             try:
-                cmd = BindCtlCmd(cur_line)
+                cmd = BindCmdParse(cur_line)
                 if not cmd.params and text:
                     hints = self._get_command_startswith(cmd.module, text)
                 else:                       
@@ -325,7 +325,7 @@ class BindCtl(Cmd):
 
     def _parse_cmd(self, line):
         try:
-            cmd = BindCtlCmd(line)
+            cmd = BindCmdParse(line)
             self.validate_cmd(cmd)
             self._handle_cmd(cmd)
         except BindCtlException as e:
