@@ -1,0 +1,15 @@
+#
+# various kinds of MX RDATA stored in an input buffer
+#
+# Valid RDATA for "10 mail.example.com"
+#
+# RDLENGHT=18 bytes
+# 0  1
+ 00 12
+#  2  3
+# PREFERENCE: 10
+  00 0a
+# EXCHANGE: non compressed
+# 4  5  6  7  8  9 10  1  2  3  4  5  6  7  8  9 (bytes)
+#(4) m  x (7) e  x  a  m  p  l  e (3) c  o  m  .
+ 02 6d 78 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00

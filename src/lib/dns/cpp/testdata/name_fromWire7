@@ -1,0 +1,6 @@
+#
+# input ends unexpectedly
+#
+000a85800001000300000003
+# parser will start at the ending 'c0', which is an incomplete sequence.
+0376697803636f6d0000020001 c0
