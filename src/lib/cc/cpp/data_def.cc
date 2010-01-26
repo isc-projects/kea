@@ -2,6 +2,7 @@
 #include "data_def.h"
 
 #include <sstream>
+#include <iostream>
 
 #include <boost/foreach.hpp>
 

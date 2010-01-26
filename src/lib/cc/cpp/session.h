@@ -5,8 +5,6 @@
 #include <vector>
 #include <map>
 
-#include <iostream>
-
 #include "data.h"
 
 namespace isc {
