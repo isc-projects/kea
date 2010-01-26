@@ -44,21 +44,19 @@ USE_LCOV="no"
 if test "$lcov" != "no"; then
 	# force gtest if not set
 	if test "$gtest_path" = "no"; then
+#		AC_MSG_ERROR("lcov needs gtest for test coverage report")
+		AC_MSG_NOTICE([gtest support is now enabled, because used by coverage tests])
 		gtest_path="yes"
 	fi
 	if test "$lcov" != "yes"; then
-		LCOV_PATHS=$lcov
+		LCOV=$lcov
 	else
-		LCOV_PATHS="/usr/bin/lcov /usr/local/bin/lcov"
+		AC_PATH_PROG([LCOV], [lcov])
 	fi
-	for f in $LCOV_PATHS; do
-		if test -x "$f"; then
-			USE_LCOV="yes"
-			LCOV=$f
-		fi
-	done
-	if test $USE_LCOV != "yes"; then
-		AC_MSG_ERROR([Cannot find lcov in: $LCOV_PATHS])
+	if test -x "${LCOV}"; then
+		USE_LCOV="yes"
+	else
+		AC_MSG_ERROR([Cannot find lcov.])
 	fi
 	# is genhtml always in the same directory?
 	GENHTML=`echo "$LCOV" | sed s/lcov$/genhtml/`
@@ -66,7 +64,7 @@ if test "$lcov" != "no"; then
 		AC_MSG_ERROR([genhtml not found, needed for lcov])
 	fi
 	# GCC specific?
-	CPPFLAGS="$CPPFLAGS -fprofile-arcs -ftest-coverage"
+	CXXFLAGS="$CXXFLAGS -fprofile-arcs -ftest-coverage"
 	LIBS=" $LIBS -lgcov"
 	AC_SUBST(CPPFLAGS)
 	AC_SUBST(LIBS)
@@ -76,26 +74,44 @@ fi
 AC_SUBST(USE_LCOV)
 
 #
-# Check availablity of gtest, which will be used for unit tests.
+# Check availability of gtest, which will be used for unit tests.
 #
 if test "$gtest_path" != "no"
 then
 	if test "$gtest_path" != "yes"; then
 		GTEST_PATHS=$gtest_path
-	else
-		GTEST_PATHS="/usr /usr/local"
-	fi
-
-	GTEST_FOUND="false"
-	for dir in $GTEST_PATHS; do
-		if test -f "$dir/include/gtest/gtest.h"; then
-			GTEST_INCLUDES="-I$dir/include"
-			GTEST_LDFLAGS="-L$dir/lib"
-			GTEST_LDADD="-lgtest"
-			GTEST_FOUND="true"
+		if test -x "${gtest_path}/bin/gtest-config" ; then
+			GTEST_CONFIG="${gtest_path}/bin/gtest-config"
 		fi
-	done
-	if test $GTEST_FOUND != "true"; then
+	else
+		AC_PATH_PROG([GTEST_CONFIG], [gtest-config])
+	fi
+	if test -x "${GTEST_CONFIG}" ; then :
+		# using cppflags instead of cxxflags
+		GTEST_INCLUDES=`${GTEST_CONFIG} --cppflags`
+		GTEST_LDFLAGS=`${GTEST_CONFIG} --ldflags`
+		GTEST_LDADD=`${GTEST_CONFIG} --libs`
+		GTEST_FOUND="true"
+	else
+		AC_MSG_WARN([Unable to locate Google Test gtest-config.])
+		if test -z "${GTEST_PATHS}" ; then
+			GTEST_PATHS="/usr /usr/local"
+		fi
+		GTEST_FOUND="false"
+	fi
+	if test "${GTEST_FOUND}" != "true"; then
+		GTEST_FOUND="false"
+		for dir in $GTEST_PATHS; do
+			if test -f "$dir/include/gtest/gtest.h"; then
+				GTEST_INCLUDES="-I$dir/include"
+				GTEST_LDFLAGS="-L$dir/lib"
+				GTEST_LDADD="-lgtest"
+				GTEST_FOUND="true"
+				break
+			fi
+		done
+	fi
+	if test "${GTEST_FOUND}" != "true"; then
 		AC_MSG_ERROR([Cannot find gtest in: $GTEST_PATHS])
 	fi
 else
