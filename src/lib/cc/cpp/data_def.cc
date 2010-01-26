@@ -121,8 +121,8 @@ check_command_list(const ElementPtr& spec) {
 static void
 check_data_specification(const ElementPtr& spec) {
     check_leaf_item(spec, "module_name", Element::string, true);
-    // not mandatory; module could just define commands and have
-    // no config
+    // config_data is not mandatory; module could just define
+    // commands and have no config
     if (spec->contains("config_data")) {
         check_config_item_list(spec->get("config_data"));
     }
@@ -140,7 +140,7 @@ check_definition(const ElementPtr& def)
         throw DataDefinitionError("Data specification does not contain data_specification element");
     } else {
         check_data_specification(def->get("data_specification"));
-    }    
+    }
 }
 
 DataDefinition::DataDefinition(std::istream& in, const bool check)
