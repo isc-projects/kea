@@ -32,19 +32,20 @@
 
 #include <cc/cpp/session.h>
 #include <cc/cpp/data.h>
+#include <config/cpp/ccsession.h>
 
 #include "zoneset.h"
 #include "parkinglot.h"
-#include "ccsession.h"
 
 #include "common.h"
 
 #include <boost/foreach.hpp>
 
+#include "config.h"
+
 using namespace std;
 
 const string PROGRAM = "ParkingLot";
-const string SPECFILE = "parkinglot.spec";
 const int DNSPORT = 5300;
 
 /* need global var for config/command handlers.
@@ -106,7 +107,7 @@ main(int argc, char* argv[]) {
 
     // initialize command channel
     try {
-        CommandSession cs = CommandSession(PROGRAM, SPECFILE, my_config_handler, my_command_handler);
+        CommandSession cs = CommandSession(PROGRAM, PARKINGLOT_SPECFILE_LOCATION, my_config_handler, my_command_handler);
     
         // main server loop
         fd_set fds;

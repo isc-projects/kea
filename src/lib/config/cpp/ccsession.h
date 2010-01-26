@@ -19,8 +19,8 @@
 
 #include <string>
 
+#include <config/cpp/data_def.h>
 #include <cc/cpp/session.h>
-#include <cc/cpp/data_def.h>
 #include <cc/cpp/data.h>
 
 class CommandSession {

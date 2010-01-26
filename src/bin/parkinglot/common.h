@@ -18,18 +18,15 @@
 #define __COMMON_H 1
 
 #include <stdlib.h>
+#include <string>
 
 class FatalError : public std::exception {
-    public:
-        FatalError(std::string m = "fatal error") {
-            msg = m;
-            std::cerr << msg << std::endl;
-            exit(1);
-        }
-        ~FatalError() throw() {}
-        const char* what() const throw() { return msg.c_str(); }
-    private:
-        std::string msg;
+public:
+    FatalError(std::string m = "fatal error");
+    ~FatalError() throw() {}
+    const char* what() const throw() { return msg.c_str(); }
+private:
+    std::string msg;
 };
 
 #endif // __COMMON_H
