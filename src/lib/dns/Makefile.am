@@ -2,7 +2,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_srcdir)/ext
 
 lib_LIBRARIES = libdns.a
 libdns_a_SOURCES = name.cc buffer.cc rrset.cc message.cc \
-	name.h buffer.h rrset.h message.h
+	name.h buffer.h rrset.h message.h data_source.cc data_source.h
 
 TESTS =
 if HAVE_GTEST
