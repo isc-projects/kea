@@ -23,8 +23,6 @@
 #include <boost/shared_ptr.hpp>
 #include <stdexcept>
 
-#include <iostream>
-
 namespace isc { namespace data {
 
 class Element;
