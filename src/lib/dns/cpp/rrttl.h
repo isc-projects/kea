@@ -17,6 +17,8 @@
 #ifndef __RRTTL_H
 #define __RRTTL_H 1
 
+#include <stdint.h>
+
 #include "exceptions.h"
 
 namespace isc {
