@@ -253,6 +253,10 @@ public:
     // hard-coded for a proof of concept.
     static const RRType& A();
     static const RRType& NS();
+    static const RRType& MX();
+    static const RRType& SOA();
+    static const RRType& TXT();
+    static const RRType& AAAA();
 
 private:
     uint16_t typecode_;
@@ -273,6 +277,38 @@ inline const RRType&
 RRType::NS()
 {
     static RRType rrtype(2);
+
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::SOA()
+{
+    static RRType rrtype(6);
+
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::MX()
+{
+    static RRType rrtype(15);
+
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::TXT()
+{
+    static RRType rrtype(16);
+
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::AAAA()
+{
+    static RRType rrtype(28);
 
     return (rrtype);
 }
