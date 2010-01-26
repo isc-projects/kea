@@ -23,23 +23,27 @@
 #include <set>
 #include <iostream>
 
-#include <dns/buffer.h>
-#include <dns/name.h>
-#include <dns/rrset.h>
-#include <dns/message.h>
+#include <dns/cpp/buffer.h>
+#include <dns/cpp/messagerenderer.h>
+#include <dns/cpp/name.h>
+#include <dns/cpp/question.h>
+#include <dns/cpp/rrset.h>
+#include <dns/cpp/rrttl.h>
+#include <dns/cpp/message.h>
 
 #include <cc/cpp/data.h>
 
 #include "common.h"
 #include "parkinglot.h"
 
+#include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
 
 using namespace std;
 
 using namespace isc::dns;
-using namespace isc::dns::Rdata::IN;
-using namespace isc::dns::Rdata::Generic;
+using namespace isc::dns::rdata::in;
+using namespace isc::dns::rdata::generic;
 using namespace isc::data;
 
 ParkingLot::ParkingLot(int port) {
@@ -77,10 +81,13 @@ ParkingLot::processMessage() {
     struct sockaddr* sa = static_cast<struct sockaddr*>((void*)&ss);
     int s = sock;
     Message msg;
+    char recvbuf[4096];
+    int cc;
 
-    if (msg.getBuffer().recvFrom(s, sa, &sa_len) > 0) {
+    if ((cc = recvfrom(s, recvbuf, sizeof(recvbuf), 0, sa, &sa_len)) > 0) {
+        InputBuffer buffer(recvbuf, cc);
         try {
-            msg.fromWire();
+            msg.fromWire(buffer);
         } catch (...) {
             cerr << "parse failed" << endl;
             return;
@@ -88,69 +95,99 @@ ParkingLot::processMessage() {
 
         cout << "received a message:\n" << msg.toText() << endl;
 
-        if (msg.getSection(SECTION_QUESTION).size() != 1)
+        QuestionIterator qid = msg.beginQuestion();
+        qid++;                  // XXX: should revise this code
+        if (qid != msg.endQuestion()) {
             return;
+        }
+
+        QuestionPtr query = *msg.beginQuestion();
 
         msg.makeResponse();
-        msg.setAA(true);
+        msg.setHeaderFlag(MessageFlag::AA());
+        RRTTL default_ttl = RRTTL(3600);
 
-        RRsetPtr query = msg.getSection(SECTION_QUESTION)[0];
-
-        msg.makeResponse();
-        msg.setAA(true);
-        TTL default_ttl = TTL(3600);
-
-        Name zname;
+        Name zname(".");        // ugly, but should work for now
         Name name = query->getName();
         RRClass qclass = query->getClass();
         RRType qtype = query->getType();
         SearchResult::status_type status;
         bool included_ns = false;
         if (data_source.hasZoneFor(query->getName(), zname)) {
-            status = data_source.addToMessage(msg, SECTION_ANSWER, zname, name, qclass, qtype);
+            status = data_source.addToMessage(msg, Section::ANSWER(), zname,
+                                              name, qclass, qtype);
             // rcode is based on this result?
             if (status == SearchResult::name_not_found) {
-                msg.setRcode(Message::RCODE_NXDOMAIN);
-                if (qtype != RRType::NS) {
-                    status = data_source.addToMessage(msg, SECTION_AUTHORITY, zname, zname, qclass, RRType::SOA);
+                msg.setRcode(Rcode::NXDOMAIN());
+                if (qtype != RRType::NS()) {
+                    status = data_source.addToMessage(msg, Section::AUTHORITY(),
+                                                      zname, zname, qclass,
+                                                      RRType::SOA());
                 }
             } else {
-                if (qtype != RRType::NS) {
-                    status = data_source.addToMessage(msg, SECTION_AUTHORITY, zname, zname, qclass, RRType::NS);
+                if (qtype != RRType::NS()) {
+                    status = data_source.addToMessage(msg, Section::AUTHORITY(),
+                                                      zname, zname, qclass,
+                                                      RRType::NS());
                 }
                 included_ns = true;
             }
             // If we included NS records, and their target falls below the zone, add glue
             if (included_ns) {
-                BOOST_FOREACH(RRsetPtr rrset, msg.getSection(SECTION_ANSWER)) {
-                    if (rrset->getType() == RRType::NS) {
-                        BOOST_FOREACH(Rdata::RdataPtr rdata, rrset->getRdatalist()) {
+                for (RRsetIterator it = msg.beginSection(Section::ANSWER());
+                     it != msg.endSection(Section::ANSWER());
+                     ++it) {
+                    RRsetPtr rrset = (*it);
+                    if (rrset->getType() == RRType::NS()) {
+                        RdataIteratorPtr rrsetit = rrset->getRdataIterator();
+                        for (rrsetit->first();
+                             !rrsetit->isLast();
+                             rrsetit->next()) {
+                            const rdata::Rdata& rdata = rrsetit->getCurrent();
                             /* no direct way to get the Name from the rdata fields? */
-                            Name ns_name = Name(rdata->toText());
-                            data_source.addToMessage(msg, SECTION_ADDITIONAL, zname, ns_name, qclass, RRType::A);
-                            data_source.addToMessage(msg, SECTION_ADDITIONAL, zname, ns_name, qclass, RRType::AAAA);
+                            Name ns_name = Name(rdata.toText());
+                            data_source.addToMessage(msg, Section::ADDITIONAL(),
+                                                     zname, ns_name, qclass,
+                                                     RRType::A());
+                            data_source.addToMessage(msg, Section::ADDITIONAL(),
+                                                     zname, ns_name, qclass,
+                                                     RRType::AAAA());
                         }
                     }
                 }
-                BOOST_FOREACH(RRsetPtr rrset, msg.getSection(SECTION_AUTHORITY)) {
-                    if (rrset->getType() == RRType::NS) {
-                        BOOST_FOREACH(Rdata::RdataPtr rdata, rrset->getRdatalist()) {
+                for (RRsetIterator it = msg.beginSection(Section::ANSWER());
+                     it != msg.endSection(Section::ANSWER());
+                     ++it) {
+                    RRsetPtr rrset = (*it);
+                    if (rrset->getType() == RRType::NS()) {
+                        RdataIteratorPtr rrsetit = rrset->getRdataIterator();
+                        for (rrsetit->first();
+                             !rrsetit->isLast();
+                             rrsetit->next()) {
+                            const rdata::Rdata& rdata = rrsetit->getCurrent();
                             /* no direct way to get the Name from the rdata fields? */
-                            Name ns_name = Name(rdata->toText());
-                            data_source.addToMessage(msg, SECTION_ADDITIONAL, zname, ns_name, qclass, RRType::A);
-                            data_source.addToMessage(msg, SECTION_ADDITIONAL, zname, ns_name, qclass, RRType::AAAA);
+                            Name ns_name = Name(rdata.toText());
+                            data_source.addToMessage(msg, Section::ADDITIONAL(),
+                                                     zname, ns_name, qclass,
+                                                     RRType::A());
+                            data_source.addToMessage(msg, Section::ADDITIONAL(),
+                                                     zname, ns_name, qclass,
+                                                     RRType::AAAA());
                         }
                     }
                 }
             }
         } else {
-            msg.setRcode(Message::RCODE_SERVFAIL);
+            msg.setRcode(Rcode::SERVFAIL());
         }
-        msg.toWire();
+
+        OutputBuffer obuffer(4096);
+        MessageRenderer renderer(obuffer);
+        msg.toWire(renderer);
         cout << "sending a response (" <<
-            boost::lexical_cast<string>(msg.getBuffer().getSize())
+            boost::lexical_cast<string>(obuffer.getLength())
                   << " bytes):\n" << msg.toText() << endl;
-        msg.getBuffer().sendTo(s, *sa, sa_len);
+        sendto(s, obuffer.getData(), obuffer.getLength(), 0, sa, sa_len);
     }
 }
 

@@ -1,6 +1,8 @@
 
 #include <boost/foreach.hpp>
 
+#include <dns/cpp/rrttl.h>
+
 #include "data_source_plot.h"
 
 namespace isc {
@@ -10,8 +12,7 @@ namespace dns {
 // and does not allow update statements
 
 using namespace isc::dns;
-using namespace isc::dns::Rdata::IN;
-using namespace isc::dns::Rdata::Generic;
+using namespace isc::dns::rdata;
 using namespace isc::data;
 
 void
@@ -21,21 +22,21 @@ DataSourceParkingLot::serve(std::string zone_name) {
 
 void
 DataSourceParkingLot::addARecord(std::string data) {
-    a_records.push_back(Rdata::RdataPtr(new A(data)));
+    a_records.push_back(RdataPtr(new in::A(data)));
 }
 
 void
 DataSourceParkingLot::addAAAARecord(std::string data) {
-    aaaa_records.push_back(Rdata::RdataPtr(new AAAA(data)));
+    aaaa_records.push_back(RdataPtr(new in::AAAA(data)));
 }
 
 void
 DataSourceParkingLot::addNSRecord(std::string data) {
-    ns_records.push_back(Rdata::RdataPtr(new NS(data)));
+    ns_records.push_back(RdataPtr(new generic::NS(data)));
 }
 
 void
-DataSourceParkingLot::setSOARecord(isc::dns::Rdata::RdataPtr soa_record) {
+DataSourceParkingLot::setSOARecord(RdataPtr soa_record) {
 }
 
 void
@@ -53,8 +54,9 @@ DataSourceParkingLot::setDefaultZoneData() {
 
 DataSourceParkingLot::DataSourceParkingLot() {
     setDefaultZoneData();
-    soa = Rdata::RdataPtr(new SOA("parking.example", "noc.parking.example",
-                                        1, 1800, 900, 604800, TTL(86400)));
+    soa = RdataPtr(new generic::SOA(Name("parking.example"),
+                                    Name("noc.parking.example"),
+                                    1, 1800, 900, 604800, 86400));
 }
 
 bool
@@ -72,28 +74,32 @@ DataSourceParkingLot:: findRRsets(const isc::dns::Name& zone_name,
     Name authors_name("authors.bind");
     Name version_name("version.bind");
     
-    if (clas == RRClass::CH) {
-        if (type == RRType::TXT) {
+    if (clas == RRClass::CH()) {
+        if (type == RRType::TXT()) {
             if (name == authors_name) {
-                RRsetPtr rrset = RRsetPtr(new RRset(authors_name, RRClass::CH, RRType::TXT, TTL(3600)));
-                rrset->addRdata(Rdata::RdataPtr(TXT("JINMEI Tatuya").copy()));
-                rrset->addRdata(Rdata::RdataPtr(TXT("Han Feng").copy()));
-                rrset->addRdata(Rdata::RdataPtr(TXT("Kazunori Fujiwara").copy()));
-                rrset->addRdata(Rdata::RdataPtr(TXT("Michael Graff").copy()));
-                rrset->addRdata(Rdata::RdataPtr(TXT("Evan Hunt").copy()));
-                rrset->addRdata(Rdata::RdataPtr(TXT("Jelte Jansen").copy()));
-                rrset->addRdata(Rdata::RdataPtr(TXT("Jin Jian").copy()));
-                rrset->addRdata(Rdata::RdataPtr(TXT("JINMEI Tatuya").copy()));
-                rrset->addRdata(Rdata::RdataPtr(TXT("Naoki Kambe").copy()));
-                rrset->addRdata(Rdata::RdataPtr(TXT("Shane Kerr").copy())); 
-                rrset->addRdata(Rdata::RdataPtr(TXT("Zhang Likun").copy()));
-                rrset->addRdata(Rdata::RdataPtr(TXT("Jeremy C. Reed").copy())); 
+                RRsetPtr rrset = RRsetPtr(new RRset(authors_name, RRClass::CH(),
+                                                    RRType::TXT(),
+                                                    RRTTL(3600)));
+                rrset->addRdata(generic::TXT("JINMEI Tatuya"));
+                rrset->addRdata(generic::TXT("Han Feng"));
+                rrset->addRdata(generic::TXT("Kazunori Fujiwara"));
+                rrset->addRdata(generic::TXT("Michael Graff"));
+                rrset->addRdata(generic::TXT("Evan Hunt"));
+                rrset->addRdata(generic::TXT("Jelte Jansen"));
+                rrset->addRdata(generic::TXT("Jin Jian"));
+                rrset->addRdata(generic::TXT("JINMEI Tatuya"));
+                rrset->addRdata(generic::TXT("Naoki Kambe"));
+                rrset->addRdata(generic::TXT("Shane Kerr")); 
+                rrset->addRdata(generic::TXT("Zhang Likun"));
+                rrset->addRdata(generic::TXT("Jeremy C. Reed")); 
 
                 result.addRRset(rrset);
                 result.setStatus(SearchResult::success);
             } else if (name == version_name) {
-                RRsetPtr rrset = RRsetPtr(new RRset(version_name, RRClass::CH, RRType::TXT, TTL(3600)));
-                rrset->addRdata(Rdata::RdataPtr(TXT("BIND10 0.0.1").copy()));
+                RRsetPtr rrset = RRsetPtr(new RRset(version_name, RRClass::CH(),
+                                                    RRType::TXT(),
+                                                    RRTTL(3600)));
+                rrset->addRdata(generic::TXT("BIND10 0.0.1"));
                 result.addRRset(rrset);
                 result.setStatus(SearchResult::success);
             } else {
@@ -102,23 +108,23 @@ DataSourceParkingLot:: findRRsets(const isc::dns::Name& zone_name,
         } else {
             result.setStatus(SearchResult::name_not_found);
         }
-    } else if (clas == RRClass::IN) {
+    } else if (clas == RRClass::IN()) {
         if (zones.contains(name)) {
-            RRsetPtr rrset = RRsetPtr(new RRset(name, clas, type, TTL(3600)));
+            RRsetPtr rrset = RRsetPtr(new RRset(name, clas, type, RRTTL(3600)));
             result.setStatus(SearchResult::success);
-            if (type == RRType::A) {
-                BOOST_FOREACH(isc::dns::Rdata::RdataPtr a, a_records) {
+            if (type == RRType::A()) {
+                BOOST_FOREACH(RdataPtr a, a_records) {
                     rrset->addRdata(a);
                 }
-            } else if (type == RRType::AAAA) {
-                BOOST_FOREACH(isc::dns::Rdata::RdataPtr aaaa, aaaa_records) {
+            } else if (type == RRType::AAAA()) {
+                BOOST_FOREACH(RdataPtr aaaa, aaaa_records) {
                     rrset->addRdata(aaaa);
                 }
-            } else if (type == RRType::NS) {
-                BOOST_FOREACH(isc::dns::Rdata::RdataPtr ns, ns_records) {
+            } else if (type == RRType::NS()) {
+                BOOST_FOREACH(RdataPtr ns, ns_records) {
                     rrset->addRdata(ns);
                 }
-            } else if (type == RRType::SOA) {
+            } else if (type == RRType::SOA()) {
                 rrset->addRdata(soa);
             }
             result.addRRset(rrset);
@@ -144,11 +150,11 @@ DataSourceParkingLot:: findRRsets(const isc::dns::Name& zone_name,
 /// we should probably make this private
 SearchResult::status_type
 DataSourceParkingLot::addToMessage(Message& msg,
-             section_t section,
+             const Section& section,
              const Name& zone_name,
              const Name& name,
-             const isc::dns::RRClass& clas,
-             const isc::dns::RRType& type)
+             const RRClass& clas,
+             const RRType& type)
 {
     SearchResult result = findRRsets(zone_name, name, clas, type);
     BOOST_FOREACH(RRsetPtr rrset, result) {

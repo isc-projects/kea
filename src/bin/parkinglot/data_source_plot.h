@@ -18,17 +18,19 @@
 #ifndef __DATA_SOURCE_SIMPLE_H
 #define __DATA_SOURCE_SIMPLE_H
 
-#include <dns/buffer.h>
-#include <dns/name.h>
-#include <dns/rrset.h>
-#include <dns/message.h>
+#include <dns/cpp/buffer.h>
+#include <dns/cpp/name.h>
+#include <dns/cpp/rdata.h>
+#include <dns/cpp/rrclass.h>
+#include <dns/cpp/rrtype.h>
+#include <dns/cpp/rrset.h>
+#include <dns/cpp/message.h>
 
 #include <cc/cpp/data.h>
 
 #include "common.h"
 
-#include "dns/data_source.h"
-#include "dns/rrset.h"
+#include "data_source.h"
 
 #include "zoneset.h"
 
@@ -60,7 +62,7 @@ public:
     void addAAAARecord(std::string data);
     void addNSRecord(std::string data);
 
-    void setSOARecord(isc::dns::Rdata::RdataPtr soa_record);
+    void setSOARecord(isc::dns::rdata::RdataPtr soa_record);
 
     /// Do direct 'search' in database, no extra processing,
     /// and add the resulting rrsets to the specified section
@@ -68,18 +70,18 @@ public:
     /// Once the dns logic is moved from parkinglot to this class,
     /// we should probably make this private
     SearchResult::status_type addToMessage(Message& msg,
-                 section_t section,
-                 const Name& zone_name,
-                 const Name& name,
-                 const isc::dns::RRClass& clas,
-                 const isc::dns::RRType& type);
+                                           const isc::dns::Section& section,
+                                           const isc::dns::Name& zone_name,
+                                           const isc::dns::Name& name,
+                                           const isc::dns::RRClass& clas,
+                                           const isc::dns::RRType& type);
 
 private:
     //
     void setDefaultZoneData();
 
-    std::vector<isc::dns::Rdata::RdataPtr> a_records, aaaa_records, ns_records;
-    isc::dns::Rdata::RdataPtr soa;
+    std::vector<isc::dns::rdata::RdataPtr> a_records, aaaa_records, ns_records;
+    isc::dns::rdata::RdataPtr soa;
     ZoneSet zones;
 
 };
@@ -88,3 +90,7 @@ private:
 }
 
 #endif
+
+// Local Variables: 
+// mode: c++
+// End: 
