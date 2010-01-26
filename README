@@ -7,26 +7,29 @@ BUILDING
 
 Simple build instructions:
 
-autoreconf
-./configure
-make
+  autoreconf
+  ./configure
+  make
 
 Requires autoconf 2.59 or newer.
 
 Use automake-1.11 or better for working Python 3.1 tests.
 
+
+TEST COVERAGE
+
 Doing code coverage tests:
 
-make coverage
+  make coverage
 	Does the following:
 
-make clean-coverage
+  make clean-coverage
 	Zeroes the lcov code coverage counters and removes the coverage HTML.
 
-make perform-coverage
+  make perform-coverage
 	Runs the C++ tests (using googletests framework).
 
-make report-coverage
+  make report-coverage
 	Generates the coverage HTML, excluding some unrelated headers.
 	The HTML reports are placed in a directory called coverage/.
 
