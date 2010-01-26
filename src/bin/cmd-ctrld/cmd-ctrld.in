@@ -8,5 +8,5 @@ PYTHONPATH=@abs_top_srcdir@/src/lib/cc/python:${abs_top_src_dir}/lib/cc/python/I
 export PYTHONPATH
 
 cd ${CMD_CTRLD_PATH}
-python  cmd-ctrld.py
+${PYTHON_EXEC} cmd-ctrld.py
 
