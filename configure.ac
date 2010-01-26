@@ -146,7 +146,7 @@ AC_OUTPUT([src/bin/bind-cfgd/bind-cfgd
            src/bin/cmd-ctrld/cmd-ctrld
            src/bin/bind10/bind10
            src/bin/bind10/bind10_test
-           src/bin/bindctl/run_bindctl
+           src/bin/bindctl/bindctl
            src/bin/msgq/msgq
            src/bin/msgq/msgq_test
            src/bin/parkinglot/config.h
@@ -154,7 +154,7 @@ AC_OUTPUT([src/bin/bind-cfgd/bind-cfgd
            chmod +x src/bin/bind-cfgd/bind-cfgd
            chmod +x src/bin/cmd-ctrld/cmd-ctrld
            chmod +x src/bin/bind10/bind10
-           chmod +x src/bin/bindctl/run_bindctl
+           chmod +x src/bin/bindctl/bindctl
            chmod +x src/bin/msgq/msgq
            chmod +x src/bin/msgq/msgq_test
           ])

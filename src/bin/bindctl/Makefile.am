@@ -1,2 +1,2 @@
-bin_SCRIPTS = run_bindctl run_bindctl.py
+bin_SCRIPTS = bindctl bindctl.py
 man_MANS = bindctl.1
