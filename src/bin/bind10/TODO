@@ -11,5 +11,7 @@
 - Back-off mechanism for restarting failed processes
 - Start statistics daemon
 - Statistics interaction (?)
-- Stop using poll(), as primitive operating systems (OS X) don't support it
 - Use .spec file to define comands
+- Rename "c-channel" stuff to msgq for clarity
+- Use logger
+- Reply to shutdown message?
