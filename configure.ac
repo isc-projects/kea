@@ -12,8 +12,20 @@ AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_RANLIB
 
+AC_PROG_LIBTOOL
+
 m4_define([_AM_PYTHON_INTERPRETER_LIST], [python python3 python3.1])
 AM_PATH_PYTHON([3.1])
+
+# default compiler warning settings
+if test "X$GCC" = "Xyes"; then
+CXXFLAGS="-g -Wall -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
+fi
+
+# produce PIC unless we disable shared libraries. need this for python bindings.
+if test $enable_shared != "no" -a "X$GCC" = "Xyes"; then
+   CXXFLAGS="$CXXFLAGS -fPIC"
+fi
 
 # Checks for libraries.
 
@@ -141,6 +153,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/config/Makefile
                  src/lib/config/cpp/Makefile
                  src/lib/dns/Makefile
+                 src/lib/dns/cpp/Makefile
                ])
 AC_OUTPUT([src/bin/bind-cfgd/bind-cfgd
            src/bin/cmd-ctrld/cmd-ctrld

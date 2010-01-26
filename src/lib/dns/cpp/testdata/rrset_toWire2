@@ -1,0 +1,38 @@
+#
+# Rendering an IN/A RRset and NS RRset as follows:
+# test.example.com. 3600 IN A 192.0.2.1
+# test.example.com. 3600 IN A 192.0.2.2
+# example.com. 1D IN NS ns.example.com.
+# Names will be compressed when possible.
+#
+# 0  1  2  3  4  5
+#(4) t  e  s  t (7) e  x  a  m  p  l  e (3) c  o  m  .
+ 04 74 65 73 74 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00
+# type/class: A = 1, IN = 1
+00 01 00 01
+# TTL: 3600
+00 00 0e 10
+#6  7
+# RDLENGTH: 4
+00 04
+# RDATA: 192.0.2.1
+c0 00 02 01
+#
+# 2nd RR: the owner name is compresed
+c0 00
+00 01 00 01
+00 00 0e 10
+00 04
+c0 00 02 02
+# 3rd RR: the owner name and NS name are compressed
+# pointing to the 5th octet of the owner name of the 1st RR
+c0 05
+# type/class: NS = 2, IN = 1
+00 02 00 01
+# TTL: 1D = 86400sec = 0x15180
+00 01 51 80
+# RDLENGTH: 5 octets
+00 05
+# NSDNAME: "ns." + compression pointer
+#(2) n  s
+ 02 6e 73 c0 05
