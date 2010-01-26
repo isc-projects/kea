@@ -130,18 +130,21 @@ class ConfigManager:
                         print(conf_part)
                         # send out changed info
                         self.cc.group_sendmsg({ "config_update": conf_part }, cmd[1])
+                        self.write_config()
                         answer["result"] = [ 0 ]
                     elif len(cmd) == 2:
                         print("[XX bind-cfgd] old config:")
                         print(self.config.data)
                         print("[XX bind-cfgd] updating with:")
                         print(cmd[1])
+                        # TODO: ask module to check the config first...
                         data.merge(self.config.data, cmd[1])
                         print("[XX bind-cfgd] new config:")
                         print(self.config.data)
                         # send out changed info
                         for module in self.config.data:
                             self.cc.group_sendmsg({ "config_update": self.config.data[module] }, module)
+                        self.write_config()
                         answer["result"] = [ 0 ]
                     else:
                         answer["result"] = [ 1, "Wrong number of arguments" ]
@@ -198,7 +201,6 @@ if __name__ == "__main__":
         cm.read_config()
         cm.notify_boss()
         cm.run()
-        cm.write_config()
     except ISC.CC.SessionError as se:
         print("[bind-cfgd] Error creating config manager, "
               "is the command channel daemon running?")
