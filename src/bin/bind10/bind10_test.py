@@ -1,4 +1,4 @@
-from bind10 import ProcessInfo
+from bind10 import ProcessInfo, BoB
 
 import unittest
 import sys
@@ -67,6 +67,27 @@ class TestProcessInfo(unittest.TestCase):
         self.assertNotEqual(pi.process, None)
         self.assertTrue(type(pi.pid) is int)
         self.assertNotEqual(pi.pid, old_pid)
+
+class TestBoB(unittest.TestCase):
+    def test_init(self):
+        bob = BoB()
+        self.assertEqual(bob.verbose, False)
+        self.assertEqual(bob.c_channel_port, 9912)
+        self.assertEqual(bob.cc_session, None)
+        self.assertEqual(bob.processes, {})
+        self.assertEqual(bob.dead_processes, {})
+        self.assertEqual(bob.runnable, False)
+
+    def test_init_alternate_port(self):
+        bob = BoB(2199)
+        self.assertEqual(bob.verbose, False)
+        self.assertEqual(bob.c_channel_port, 2199)
+        self.assertEqual(bob.cc_session, None)
+        self.assertEqual(bob.processes, {})
+        self.assertEqual(bob.dead_processes, {})
+        self.assertEqual(bob.runnable, False)
+
+    # verbose testing...
 
 if __name__ == '__main__':
     unittest.main()
