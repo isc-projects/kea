@@ -47,7 +47,7 @@ CONFIGURATION
 
 Commands can be given through the tool bindctl;
 cd src/bin/bindctl
-sh run_bindctl
+sh bindctl
 
 The server must be running for bindctl to work.
 
@@ -74,7 +74,7 @@ config commit: Commit all changes
 
 EXAMPLE SESSION
 
-~> sh run_bindctl
+~> sh bindctl
 > config show
 ParkingLot/	module	
 > config show ParkingLot/
