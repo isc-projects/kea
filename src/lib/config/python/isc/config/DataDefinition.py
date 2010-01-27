@@ -62,17 +62,95 @@ class DataDefinition:
         return self._data_spec
 
 def _check(data_spec):
+    if type(data_spec) != dict:
+        raise DataDefinitionError("data specification not a dict")
     if "data_specification" not in data_spec:
         raise DataDefinitionError("no data_specification element in specification")
+    data_spec = data_spec["data_specification"]
+    if "module_name" not in data_spec:
+        raise DataDefinitionError("no module_name in data_specification")
     if "config_data" in data_spec:
-        _check_config_spec(data_spec["config_data"])
+        _checkConfigSpec(data_spec["config_data"])
     if "commands" in data_spec:
-        _check_config_spec(data_spec["commands"])
+        _checkCommandSpec(data_spec["commands"])
 
 def _checkConfigSpec(config_data):
-    # TODO
-    pass
+    # config data is a list of items represented by dicts that contain
+    # things like "item_name", depending on the type they can have
+    # specific subitems
+    if type(config_data) != list:
+        raise DataDefinitionError("config_data is not a list of items")
+    for config_item in config_data:
+        _checkItemSpec(config_item)
 
 def _checkCommandSpec(commands):
-    # TODO
+    if type(commands) != list:
+        raise DataDefinitionError("commands is not a list of commands")
+    for command in commands:
+        if type(command) != dict:
+            raise DataDefinitionError("command in commands list is not a dict")
+        if "command_name" not in command:
+            raise DataDefitionError("no command_name in command item")
+        command_name = command["command_name"]
+        if type(command_name) != str:
+            raise DataDefinitionError("command_name not a string: " + str(type(command_name)))
+        if "command_description" in command:
+            if type(command["command_description"]) != str:
+                raise DataDefitionError("command_description not a string in " + command_name)
+        if "command_args" in command:
+            if type(command["command_args"]) != list:
+                raise DataDefitionError("command_args is not a list in " + command_name)
+            for command_arg in command["command_args"]:
+                if type(command_arg) != dict:
+                    raise DataDefinitionError("command argument not a dict in " + command_name)
+                _checkItemSpec(command_arg)
     pass
+
+def _checkItemSpec(config_item):
+    # checks the dict that defines one config item
+    # (i.e. containing "item_name", "item_type", etc
+    if type(config_item) != dict:
+        raise DataDefinitionError("item spec not a dict")
+    if "item_name" not in config_item:
+        raise DataDefinitionError("no item_name in config item")
+    if type(config_item["item_name"]) != str:
+        raise DataDefinitionError("item_name is not a string: " + str(config_item["item_name"]))
+    item_name = config_item["item_name"]
+    if "item_type" not in config_item:
+        raise DataDefinitionError("no item_type in config item")
+    item_type = config_item["item_type"]
+    if type(item_type) != str:
+        raise DataDefinitionError("item_type in " + item_name + " is not a string: " + str(type(item_type)))
+    if item_type not in ["integer", "real", "boolean", "string", "list", "map"]:
+        raise DataDefinitionError("unknown item_type in " + item_name + ": " + item_type)
+    if "item_optional" in config_item:
+        if type(config_item["item_optional"]) != bool:
+            raise DataDefinitionError("item_default in " + item_name + " is not a boolean")
+        if not config_item["item_optional"] and "item_default" not in config_item:
+            raise DataDefinitionError("no default value for non-optional item " + item_name)
+    if "item_default" in config_item:
+        item_default = config_item["item_default"]
+        if (item_type == "int" and type(item_default) != int) or \
+           (item_type == "real" and type(item_default) != double) or \
+           (item_type == "boolean" and type(item_default) != bool) or \
+           (item_type == "string" and type(item_default) != str) or \
+           (item_type == "list" and type(item_default) != list) or \
+           (item_type == "map" and type(item_default) != dict):
+            raise DataDefinitionError("Wrong type for item_default in " + item_name)
+    # TODO: once we have check_type, run the item default through that with the list|map_item_spec
+    if item_type == "list":
+        if "list_item_spec" not in config_item:
+            raise DataDefinitionError("no list_item_spec in list item " + item_name)
+        if type(config_item["list_item_spec"]) != dict:
+            raise DataDefinitionError("list_item_spec in " + item_name + " is not a dict")
+        _checkItemSpec(config_item["list_item_spec"])
+    if item_type == "map":
+        if "map_item_spec" not in config_item:
+            raise DataDefinitionError("no map_item_sepc in map item " + item_name)
+        if type(config_item["map_item_spec"]) != list:
+            raise DataDefinitionError("map_item_spec in " + item_name + " is not a list")
+        for map_item in config_item["map_item_spec"]:
+            if type(map_item) != dict:
+                raise DataDefinitionError("map_item_spec element is not a dict")
+            _checkItemSpec(map_item)
+
