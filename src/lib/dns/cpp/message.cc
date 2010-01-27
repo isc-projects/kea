@@ -447,12 +447,10 @@ struct SectionFormatter
         section_(section), output_(output) {}
     void operator()(const T& entry)
     {
-        output_ += ";; " + string(sectiontext[section_.getCode()]) +
-            " SECTION:\n";
         if (section_ == Section::QUESTION()) {
             output_ += ";";
         }
-        output_ += entry->toText() + "\n";
+        output_ += entry->toText();
     }
     const Section& section_;
     string& output_;
@@ -493,23 +491,32 @@ Message::toText() const
         lexical_cast<string>(impl_->counts_[Section::AUTHORITY().getCode()]);
     s += ", ADDITIONAL: " +
         lexical_cast<string>(impl_->counts_[Section::ADDITIONAL().getCode()])
-        + "\n\n";
+        + "\n";
 
     if (!impl_->questions_.empty()) {
+        s += "\n;; " +
+            string(sectiontext[Section::QUESTION().getCode()]) + " SECTION:\n";
         for_each(impl_->questions_.begin(), impl_->questions_.end(),
                  SectionFormatter<QuestionPtr>(Section::QUESTION(), s));
     }
     if (!impl_->rrsets_[sectionCodeToId(Section::ANSWER())].empty()) {
+        s += "\n;; " +
+            string(sectiontext[Section::ANSWER().getCode()]) + " SECTION:\n";
         for_each(impl_->rrsets_[sectionCodeToId(Section::ANSWER())].begin(),
                  impl_->rrsets_[sectionCodeToId(Section::ANSWER())].end(),
                  SectionFormatter<RRsetPtr>(Section::ANSWER(), s));
     }
     if (!impl_->rrsets_[sectionCodeToId(Section::AUTHORITY())].empty()) {
+        s += "\n;; " +
+            string(sectiontext[Section::AUTHORITY().getCode()]) + " SECTION:\n";
         for_each(impl_->rrsets_[sectionCodeToId(Section::AUTHORITY())].begin(),
                  impl_->rrsets_[sectionCodeToId(Section::AUTHORITY())].end(),
                  SectionFormatter<RRsetPtr>(Section::AUTHORITY(), s));
     }
     if (!impl_->rrsets_[sectionCodeToId(Section::ADDITIONAL())].empty()) {
+        s += "\n;; " +
+            string(sectiontext[Section::ADDITIONAL().getCode()]) +
+            " SECTION:\n";
         for_each(impl_->rrsets_[sectionCodeToId(Section::ADDITIONAL())].begin(),
                  impl_->rrsets_[sectionCodeToId(Section::ADDITIONAL())].end(),
                  SectionFormatter<RRsetPtr>(Section::ADDITIONAL(), s));
