@@ -15,6 +15,11 @@ using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::data;
 
+namespace {
+const Name authors_name("authors.bind");
+const Name version_name("version.bind");
+}
+
 void
 DataSourceParkingLot::serve(std::string zone_name) {
     zones.serve(zone_name);
@@ -62,6 +67,13 @@ DataSourceParkingLot::DataSourceParkingLot() {
 bool
 DataSourceParkingLot::hasZoneFor(const Name& name, Name &zone_name)
 {
+    if (name == authors_name) {
+        zone_name = authors_name;
+        return (true);
+    } else if (name == version_name) {
+        zone_name = version_name;
+        return (true);
+    }
     return zones.findClosest(name, zone_name);
 }
 
@@ -72,15 +84,12 @@ DataSourceParkingLot::findRRsets(const isc::dns::Name& zone_name,
                                  const isc::dns::RRType& type) const
 {
     SearchResult result;
-    Name authors_name("authors.bind");
-    Name version_name("version.bind");
     
     if (clas == RRClass::CH()) {
         if (type == RRType::TXT()) {
             if (name == authors_name) {
                 RRsetPtr rrset = RRsetPtr(new RRset(authors_name, RRClass::CH(),
-                                                    RRType::TXT(),
-                                                    RRTTL(3600)));
+                                                    RRType::TXT(), RRTTL(0)));
                 rrset->addRdata(generic::TXT("Han Feng"));
                 rrset->addRdata(generic::TXT("Kazunori Fujiwara"));
                 rrset->addRdata(generic::TXT("Michael Graff"));
@@ -97,9 +106,19 @@ DataSourceParkingLot::findRRsets(const isc::dns::Name& zone_name,
                 result.setStatus(SearchResult::success);
             } else if (name == version_name) {
                 RRsetPtr rrset = RRsetPtr(new RRset(version_name, RRClass::CH(),
-                                                    RRType::TXT(),
-                                                    RRTTL(3600)));
+                                                    RRType::TXT(), RRTTL(0)));
                 rrset->addRdata(generic::TXT("BIND10 0.0.1"));
+                result.addRRset(rrset);
+                result.setStatus(SearchResult::success);
+            } else {
+                result.setStatus(SearchResult::name_not_found);
+            }
+        } else if (type == RRType::NS()) {
+            if (name == authors_name || name == version_name) {
+                RRsetPtr rrset = RRsetPtr(new RRset(name, RRClass::CH(),
+                                                    RRType::NS(),
+                                                    RRTTL(0)));
+                rrset->addRdata(generic::NS(name));
                 result.addRRset(rrset);
                 result.setStatus(SearchResult::success);
             } else {
