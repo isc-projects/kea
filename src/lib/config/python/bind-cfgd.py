@@ -104,6 +104,8 @@ class ConfigManager:
                 elif cmd[0] == "get_config":
                     # we may not have any configuration here
                     conf_part = None
+                    print("[XX] bind-cfgd got command:")
+                    print(cmd)
                     if len(cmd) > 1:
                         try:
                             conf_part = data.find(self.config.data, cmd[1]['module_name'])

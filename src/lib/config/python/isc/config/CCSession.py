@@ -23,16 +23,42 @@
 # made there as well
 
 from ISC.CC import Session
+import isc
 
 class CCSession:
-    def __init__(self, module_name, spec_file_name):
+    def __init__(self, module_name, spec_file_name,
+                 config_handler, command_handler):
         self._module_name = module_name
-        self._spec_file_name = spec_file_name
+        #self._spec_file_name = spec_file_name
+        self._config_handler = config_handler
+        self._command_handler = command_handler
+        self._data_definition = isc.config.DataDefinition(spec_file_name)
         self._session = Session()
+        self._session.group_subscribe(module_name, "*")
+        self._session.group_sendmsg(self._data_definition.getDefinition(), "ConfigManager")
+        answer, env = self._session.group_recvmsg(False)
+        self._session.group_sendmsg({ "command": [ "get_config", { "module_name": module_name } ] }, "ConfigManager")
+        answer, env = self._session.group_recvmsg(False)
+        if self._config_handler:
+            self._config_handler(answer["result"])
+        print(answer)
+
     #do we need getSocket()?
 
-    def check_command():
-        pass
+    def checkCommand():
+        """Check whether there is a command on the channel.
+           Call the command callback function if so"""
+        msg, env = self._session.group_recvmsg(False)
+        answer = None
+        if msg:
+            if "config_update" in msg and self._config_handler:
+                self._config_handler(msg["config_update"])
+                answer = { "result": [ 0 ] }
+            if "command" in msg and self._command_handler:
+                answer = self._command_handler(msg["command"])
+        if answer:
+            self._session.group_reply(env, answer)
 
+    
     
     
