@@ -98,7 +98,16 @@ class BoB:
         if self.verbose:
             print("[XX] Boss got command:")
             print(command)
-        return None
+        answer = None
+        if "command" in command:
+            cmd = command["command"]
+            if cmd == "shutdown":
+                self.shutdown()
+            else:
+                answer = { "result": [ 1, "unknown command: " + cmd ] }
+        else:
+            answer = { "result": [ 1, "bad command" ] }
+        return answer
     
     def startup(self):
         """Start the BoB instance.
