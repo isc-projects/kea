@@ -157,8 +157,8 @@ ParkingLot::processMessage() {
                         }
                     }
                 }
-                for (RRsetIterator it = msg.beginSection(Section::ANSWER());
-                     it != msg.endSection(Section::ANSWER());
+                for (RRsetIterator it = msg.beginSection(Section::AUTHORITY());
+                     it != msg.endSection(Section::AUTHORITY());
                      ++it) {
                     if ((*it)->getType() == RRType::NS()) {
                         RdataIteratorPtr rrsetit = (*it)->getRdataIterator();
