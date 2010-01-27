@@ -176,6 +176,8 @@ class CommandControl():
 
 
 class SecureHTTPServer(http.server.HTTPServer):
+    '''Make the server address can be reused.'''
+    allow_reuse_address = True
 
     def __init__(self, server_address, RequestHandlerClass):
         http.server.HTTPServer.__init__(self, server_address, RequestHandlerClass)
