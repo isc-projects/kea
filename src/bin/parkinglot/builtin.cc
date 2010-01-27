@@ -203,9 +203,9 @@ BuiltinRRsets::getAuthority() const
 const BuiltinRRsets&
 getBuiltinAuthors()
 {
-    static BuiltinRRsets builtin_version(authors_name, authors,
+    static BuiltinRRsets builtin_authors(authors_name, authors,
                                          author_authorities);
-    return (builtin_version);
+    return (builtin_authors);
 }
 
 const BuiltinRRsets&
