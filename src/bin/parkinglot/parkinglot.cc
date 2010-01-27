@@ -43,8 +43,9 @@
 using namespace std;
 
 using namespace isc::dns;
-using namespace isc::dns::rdata::in;
-using namespace isc::dns::rdata::generic;
+using namespace isc::dns::rdata;
+//using namespace isc::dns::rdata::in;
+//using namespace isc::dns::rdata::generic;
 using namespace isc::data;
 
 ParkingLot::ParkingLot(int port) {
@@ -145,15 +146,15 @@ ParkingLot::processMessage() {
                         for (rrsetit->first();
                              !rrsetit->isLast();
                              rrsetit->next()) {
-                            const rdata::Rdata& rdata = rrsetit->getCurrent();
-                            /* no direct way to get the Name from the rdata fields? */
-                            Name ns_name = Name(rdata.toText());
+                            const generic::NS& nsrdata =
+                                dynamic_cast<const generic::NS&>(
+                                    rrsetit->getCurrent());
                             data_source.addToMessage(msg, Section::ADDITIONAL(),
-                                                     zname, ns_name, qclass,
-                                                     RRType::A());
+                                                     zname, nsrdata.getNSName(),
+                                                     qclass, RRType::A());
                             data_source.addToMessage(msg, Section::ADDITIONAL(),
-                                                     zname, ns_name, qclass,
-                                                     RRType::AAAA());
+                                                     zname, nsrdata.getNSName(),
+                                                     qclass, RRType::AAAA());
                         }
                     }
                 }
@@ -166,15 +167,16 @@ ParkingLot::processMessage() {
                         for (rrsetit->first();
                              !rrsetit->isLast();
                              rrsetit->next()) {
-                            const rdata::Rdata& rdata = rrsetit->getCurrent();
-                            /* no direct way to get the Name from the rdata fields? */
-                            Name ns_name = Name(rdata.toText());
+                            const generic::NS& nsrdata =
+                                dynamic_cast<const generic::NS&>(
+                                    rrsetit->getCurrent());
                             data_source.addToMessage(msg, Section::ADDITIONAL(),
-                                                     zname, ns_name, qclass,
-                                                     RRType::A());
+                                                     zname, nsrdata.getNSName(),
+                                                     qclass, RRType::A());
                             data_source.addToMessage(msg, Section::ADDITIONAL(),
-                                                     zname, ns_name, qclass,
-                                                     RRType::AAAA());
+                                                     zname,
+                                                     nsrdata.getNSName(),
+                                                     qclass, RRType::AAAA());
                         }
                     }
                 }
