@@ -33,6 +33,7 @@ import pprint
 from optparse import OptionParser, OptionValueError
 
 import ISC.CC
+import isc
 
 # This is the version that gets displayed to the user.
 __version__ = "v20091030 (Paving the DNS Parking Lot)"
@@ -88,6 +89,17 @@ class BoB:
         self.dead_processes = {}
         self.runnable = False
 
+    def config_handler(self, new_config):
+        if self.verbose:
+            print("[XX] handling new config:")
+            print(new_config)
+
+    def command_handler(self, command):
+        if self.verbose:
+            print("[XX] Boss got command:")
+            print(command)
+        return None
+    
     def startup(self):
         """Start the BoB instance.
  
@@ -133,6 +145,17 @@ class BoB:
         if self.verbose:
             sys.stdout.write("Started bind-cfgd (PID %d)\n" % bind_cfgd.pid)
 
+        # TODO: once this interface is done, replace self.cc_session
+        # by this one
+        # sleep until bind-cfgd is fully up and running, this is a good place
+        # to have a (short) timeout on synchronized groupsend/receive
+        time.sleep(1)
+        if self.verbose:
+            print("[XX] starting ccsession")
+        self.ccs = isc.config.CCSession("bob", "bob.spec", self.config_handler, self.command_handler)
+        if self.verbose:
+            print("[XX] ccsession started")
+
         # start the parking lot
         # XXX: this must be read from the configuration manager in the future
         # XXX: we hardcode port 5300
@@ -164,6 +187,7 @@ class BoB:
             sys.stdout.write("Started cmd-ctrld (PID %d)\n" % cmd_ctrld.pid)
 
         self.runnable = True
+
         return None
 
     def stop_all_processes(self):
