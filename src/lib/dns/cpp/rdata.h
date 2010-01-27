@@ -145,6 +145,10 @@ public:
     virtual void toWire(OutputBuffer& buffer) const;
     virtual void toWire(MessageRenderer& buffer) const;
     virtual int compare(const Rdata& other) const;
+    ///
+    /// Specialized methods
+    ///
+    const Name& getNSName() const;
 private:
     Name nsname_;
 };

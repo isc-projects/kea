@@ -180,6 +180,12 @@ NS::compare(const Rdata& other) const
     return (compareNames(nsname_, other_ns.nsname_));
 }
 
+const Name&
+NS::getNSName() const
+{
+    return (nsname_);
+}
+
 SOA::SOA(InputBuffer& buffer, size_t rdata_len) :
     mname_(buffer), rname_(buffer)
 {
