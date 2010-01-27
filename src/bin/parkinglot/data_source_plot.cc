@@ -80,7 +80,6 @@ DataSourceParkingLot:: findRRsets(const isc::dns::Name& zone_name,
                 RRsetPtr rrset = RRsetPtr(new RRset(authors_name, RRClass::CH(),
                                                     RRType::TXT(),
                                                     RRTTL(3600)));
-                rrset->addRdata(generic::TXT("JINMEI Tatuya"));
                 rrset->addRdata(generic::TXT("Han Feng"));
                 rrset->addRdata(generic::TXT("Kazunori Fujiwara"));
                 rrset->addRdata(generic::TXT("Michael Graff"));
