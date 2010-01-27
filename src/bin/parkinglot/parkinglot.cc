@@ -21,6 +21,7 @@
 #include <netdb.h>
 #include <stdlib.h>
 
+#include <algorithm>
 #include <set>
 #include <iostream>
 
@@ -44,8 +45,6 @@ using namespace std;
 
 using namespace isc::dns;
 using namespace isc::dns::rdata;
-//using namespace isc::dns::rdata::in;
-//using namespace isc::dns::rdata::generic;
 using namespace isc::data;
 
 ParkingLot::ParkingLot(int port) {
@@ -74,6 +73,37 @@ ParkingLot::ParkingLot(int port) {
         throw FatalError("could not bind socket");
 
     sock = s;
+}
+
+namespace {
+struct GlueInserter {
+    GlueInserter(const DataSourceParkingLot& data_source,
+                 const Name& zname, const RRClass& qclass,
+                 Message& msg) :
+        data_source_(&data_source), zname_(&zname), qclass_(&qclass),
+        msg_(&msg)
+    {}
+    void operator()(const RRsetPtr rrset)
+    {
+        if (rrset->getType() == RRType::NS()) {
+            RdataIteratorPtr it = rrset->getRdataIterator();
+            for (it->first(); !it->isLast(); it->next()) {
+                const generic::NS& nsrdata =
+                    dynamic_cast<const generic::NS&>(it->getCurrent());
+                data_source_->addToMessage(*msg_, Section::ADDITIONAL(),
+                                           *zname_, nsrdata.getNSName(),
+                                           *qclass_, RRType::A());
+                data_source_->addToMessage(*msg_, Section::ADDITIONAL(),
+                                           *zname_, nsrdata.getNSName(),
+                                           *qclass_, RRType::AAAA());
+            }
+        }
+    }
+    const DataSourceParkingLot* data_source_;
+    const Name* zname_;
+    const RRClass* qclass_;
+    Message* msg_;
+};
 }
 
 void
@@ -137,47 +167,12 @@ ParkingLot::processMessage() {
             }
             // If we included NS records, and their target falls below the zone, add glue
             if (included_ns) {
-                for (RRsetIterator it = msg.beginSection(Section::ANSWER());
-                     it != msg.endSection(Section::ANSWER());
-                     ++it) {
-                    if ((*it)->getType() == RRType::NS()) {
-                        RdataIteratorPtr rrsetit = (*it)->getRdataIterator();
-                        for (rrsetit->first();
-                             !rrsetit->isLast();
-                             rrsetit->next()) {
-                            const generic::NS& nsrdata =
-                                dynamic_cast<const generic::NS&>(
-                                    rrsetit->getCurrent());
-                            data_source.addToMessage(msg, Section::ADDITIONAL(),
-                                                     zname, nsrdata.getNSName(),
-                                                     qclass, RRType::A());
-                            data_source.addToMessage(msg, Section::ADDITIONAL(),
-                                                     zname, nsrdata.getNSName(),
-                                                     qclass, RRType::AAAA());
-                        }
-                    }
-                }
-                for (RRsetIterator it = msg.beginSection(Section::AUTHORITY());
-                     it != msg.endSection(Section::AUTHORITY());
-                     ++it) {
-                    if ((*it)->getType() == RRType::NS()) {
-                        RdataIteratorPtr rrsetit = (*it)->getRdataIterator();
-                        for (rrsetit->first();
-                             !rrsetit->isLast();
-                             rrsetit->next()) {
-                            const generic::NS& nsrdata =
-                                dynamic_cast<const generic::NS&>(
-                                    rrsetit->getCurrent());
-                            data_source.addToMessage(msg, Section::ADDITIONAL(),
-                                                     zname, nsrdata.getNSName(),
-                                                     qclass, RRType::A());
-                            data_source.addToMessage(msg, Section::ADDITIONAL(),
-                                                     zname,
-                                                     nsrdata.getNSName(),
-                                                     qclass, RRType::AAAA());
-                        }
-                    }
-                }
+                for_each(msg.beginSection(Section::ANSWER()),
+                         msg.endSection(Section::ANSWER()),
+                         GlueInserter(data_source, zname, qclass, msg));
+                for_each(msg.beginSection(Section::AUTHORITY()),
+                         msg.endSection(Section::AUTHORITY()),
+                         GlueInserter(data_source, zname, qclass, msg));
             }
         } else {
             msg.setRcode(Rcode::SERVFAIL());
@@ -225,5 +220,3 @@ ParkingLot::updateConfig(isc::data::ElementPtr config) {
     }
     return isc::data::Element::createFromString("{ \"result\": [0] }");
 }
-
-
