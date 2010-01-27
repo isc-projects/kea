@@ -53,7 +53,7 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         else :
             id = self.headers.get('cookie')
             self.server.session[id]['username'] = user_info['username']
-            return ["login sucess !"], http.client.OK
+            return ["login success !"], http.client.OK
 
 
     def do_GET(self):
