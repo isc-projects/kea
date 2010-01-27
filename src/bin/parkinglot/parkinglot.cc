@@ -133,9 +133,7 @@ ParkingLot::processMessage() {
 
         cout << "received a message:\n" << msg.toText() << endl;
 
-        QuestionIterator qid = msg.beginQuestion();
-        qid++;                  // XXX: should revise this code
-        if (qid != msg.endQuestion()) {
+        if (msg.getRRCount(Section::QUESTION()) != 1) {
             return;
         }
 
