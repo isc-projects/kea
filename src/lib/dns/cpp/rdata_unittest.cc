@@ -304,6 +304,11 @@ TEST_F(RdataTest, compare_NS)
     EXPECT_GT(0, small.compare(large));
 }
 
+TEST_F(RdataTest, getNSName)
+{
+    EXPECT_EQ(Name("ns.example.com"), rdata_ns.getNSName());
+}
+
 TEST_F(RdataTest, createFromText_SOA)
 {
     //TBD
