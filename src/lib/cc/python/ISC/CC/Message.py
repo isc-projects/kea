@@ -48,6 +48,8 @@ def _encode_tag(tag):
     ... wire_partial = Message._encode_tag('this')
     """
     binary = bytes(tag, 'utf-8')
+    if len(binary) > 255:
+        raise ArgumentError("tag is too long (max 255 encoded bytes)")
     return(struct.pack(">B", len(binary))) + binary
 
 def _encode_length_and_type(data, datatype):
@@ -86,14 +88,6 @@ def _pack_hash(item):
     """Pack a dict (hash) and its type/length prefix."""
     data = _encode_hash(item)
     return (_encode_length_and_type(data, _ITEM_HASH))
-
-def _encode_utf8(item):
-    """Encode a string (utf-8).  More or less identity."""
-    return (item)
-
-def _encode_blob(item):
-    """Encode a blob (data).  More or less identity."""
-    return (item)
 
 def _pack_nil():
     """Encode a nil (NULL, None) item."""

@@ -28,8 +28,7 @@ class Session:
         self._socket = None
         self._lname = None
         self._recvbuffer = bytearray()
-        self._recvlength = None
-        self._sendbuffer = bytearray()
+        self._recvlength = 0
         self._sequence = 1
         self._closed = False
 
@@ -94,7 +93,7 @@ class Session:
         else:
             self._socket.setblocking(1)
 
-        if self._recvlength == None:
+        if self._recvlength == 0:
             length = 4
             length -= len(self._recvbuffer)
             try:
@@ -122,7 +121,7 @@ class Session:
             length -= len(data)
         data = self._recvbuffer
         self._recvbuffer = bytearray()
-        self._recvlength = None
+        self._recvlength = 0
         return (data)
 
     def _next_sequence(self):
