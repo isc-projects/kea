@@ -69,7 +69,8 @@ SearchResult
 DataSourceParkingLot::findRRsets(const isc::dns::Name& zone_name,
                                  const isc::dns::Name& name,
                                  const isc::dns::RRClass& clas,
-                                 const isc::dns::RRType& type) {
+                                 const isc::dns::RRType& type) const
+{
     SearchResult result;
     Name authors_name("authors.bind");
     Name version_name("version.bind");
@@ -153,7 +154,7 @@ DataSourceParkingLot::addToMessage(Message& msg,
              const Name& zone_name,
              const Name& name,
              const RRClass& clas,
-             const RRType& type)
+             const RRType& type) const
 {
     SearchResult result = findRRsets(zone_name, name, clas, type);
     BOOST_FOREACH(RRsetPtr rrset, result) {

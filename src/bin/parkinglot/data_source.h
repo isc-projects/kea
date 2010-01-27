@@ -91,7 +91,7 @@ public:
     virtual SearchResult findRRsets(const Name& zone_name,
                                     const Name& name,
                                     const RRClass& clas,
-                                    const RRType& type) = 0;
+                                    const RRType& type) const = 0;
 
     //
     // optional 'low-level' methods, an implementation may overwrite these,

@@ -43,11 +43,11 @@ public:
         elements.clear();
     }
 
-    bool contains(const std::string& s) {
+    bool contains(const std::string& s) const {
         return contains(isc::dns::Name(s));
     }
 
-    bool contains(const isc::dns::Name& n) {
+    bool contains(const isc::dns::Name& n) const {
         return (elements.find(n) != elements.end());
     }
 
