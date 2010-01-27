@@ -1,4 +1,0 @@
-#define the message format between different modules
-'command' : [module_name, command_name, {param1 = value1, param2 = value2}]
-
-
