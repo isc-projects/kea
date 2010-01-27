@@ -66,10 +66,10 @@ DataSourceParkingLot::hasZoneFor(const Name& name, Name &zone_name)
 }
 
 SearchResult
-DataSourceParkingLot:: findRRsets(const isc::dns::Name& zone_name,
-                                  const isc::dns::Name& name,
-                                  const isc::dns::RRClass& clas,
-                                  const isc::dns::RRType& type) {
+DataSourceParkingLot::findRRsets(const isc::dns::Name& zone_name,
+                                 const isc::dns::Name& name,
+                                 const isc::dns::RRClass& clas,
+                                 const isc::dns::RRType& type) {
     SearchResult result;
     Name authors_name("authors.bind");
     Name version_name("version.bind");
