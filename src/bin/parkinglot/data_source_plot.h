@@ -47,7 +47,7 @@ public:
     SearchResult findRRsets(const isc::dns::Name& zone_name,
                             const isc::dns::Name& name,
                             const isc::dns::RRClass& clas,
-                            const isc::dns::RRType& type);
+                            const isc::dns::RRType& type) const;
 
     /* move these to private (or to zoneset) and the calling functions
      * from parkinglot to here? */
@@ -74,7 +74,7 @@ public:
                                            const isc::dns::Name& zone_name,
                                            const isc::dns::Name& name,
                                            const isc::dns::RRClass& clas,
-                                           const isc::dns::RRType& type);
+                                           const isc::dns::RRType& type) const;
 
 private:
     //
