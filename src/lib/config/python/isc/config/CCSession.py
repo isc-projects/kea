@@ -82,6 +82,11 @@ class CCSession:
         """Asks the configuration manager for the current configuration, and call the config handler if set"""
         self._session.group_sendmsg({ "command": [ "get_config", { "module_name": self._module_name } ] }, "ConfigManager")
         answer, env = self._session.group_recvmsg(False)
-        if self._config_handler:
-            self._config_handler(answer["result"])
+        if "result" in answer:
+            if answer["result"][0] == 0 and len(answer["result"]) > 1:
+                new_config = answer["result"][1]
+                if self._data_definition.validate(new_config):
+                    self._config = new_config;
+                    if self._config_handler:
+                        self._config_handler(answer["result"])
     
