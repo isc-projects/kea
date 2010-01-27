@@ -1,8 +1,6 @@
 """\
-This code implements a Python version of the msgq daemon.
+This code implements the msgq daemon.
 
-This replaces the C version, which relied upon the BIND 9 "libisc"
-libraries.
 """
 
 import subprocess
