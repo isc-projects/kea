@@ -252,23 +252,31 @@ Message::setOpcode(const Opcode& opcode)
     impl_->opcode_ = &opcode;
 }
 
+unsigned int
+Message::getRRCount(const Section& section) const
+{
+    return (impl_->counts_[section.getCode()]);
+}
+
 void
 Message::addRRset(const Section& section, RRsetPtr rrset)
 {
     // Note: should check duplicate (TBD)
     impl_->rrsets_[sectionCodeToId(section)].push_back(rrset);
+    impl_->counts_[section.getCode()] += rrset->getRdataCount();
 }
 
 void
 Message::addQuestion(const QuestionPtr question)
 {
     impl_->questions_.push_back(question);
+    impl_->counts_[Section::QUESTION().getCode()]++;
 }
 
 void
 Message::addQuestion(const Question& question)
 {
-    impl_->questions_.push_back(QuestionPtr(new Question(question)));
+    addQuestion(QuestionPtr(new Question(question)));
 }
 
 namespace {

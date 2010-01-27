@@ -98,6 +98,12 @@ TEST_F(MessageTest, toWire)
     rrset->addRdata(in::A("192.0.2.1"));
     rrset->addRdata(in::A("192.0.2.2"));
     message.addRRset(Section::ANSWER(), rrset);
+
+    EXPECT_EQ(1, message.getRRCount(Section::QUESTION()));
+    EXPECT_EQ(2, message.getRRCount(Section::ANSWER()));
+    EXPECT_EQ(0, message.getRRCount(Section::AUTHORITY()));
+    EXPECT_EQ(0, message.getRRCount(Section::ADDITIONAL()));
+
     message.toWire(renderer);
     vector<unsigned char> data;
     UnitTestUtil::readWireData("testdata/message_toWire1", data);
