@@ -34,7 +34,8 @@ class SubscriptionManager:
         target = ( group, instance )
         if target in self.subscriptions:
             print("Appending to existing target")
-            self.subscriptions[target].append(socket)
+            if socket not in self.subscriptions[target]:
+                self.subscriptions[target].append(socket)
         else:
             print("Creating new target")
             self.subscriptions[target] = [ socket ]
@@ -78,7 +79,7 @@ class MsgQ:
         process listens on. If verbose is True, then the MsgQ reports
         what it is doing.
         """
-        self.verbose = True
+        self.verbose = verbose
         self.c_channel_port = c_channel_port
         self.poller = None
         self.kqueue = None
