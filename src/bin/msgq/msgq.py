@@ -1,7 +1,4 @@
-"""\
-This code implements the msgq daemon.
-
-"""
+"""This code implements the msgq daemon."""
 
 import subprocess
 import signal
