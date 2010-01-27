@@ -476,6 +476,8 @@ public:
     const Opcode& getOpcode() const;
     void setOpcode(const Opcode& opcode);
     std::string toText() const;
+    /// \brief Returns the number of RRs contained in the given section.
+    unsigned int getRRCount(const Section& section) const;
 
     // we don't provide accessors to QD/AN/NS/AR counters as this information
     // is included in the corresponding RRsets.
