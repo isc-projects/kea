@@ -8,7 +8,7 @@ BIND10_PATH=@abs_top_srcdir@/src/bin/bind10
 PATH=@abs_top_srcdir@/src/bin/msgq:@abs_top_srcdir@/src/bin/parkinglot:@abs_top_srcdir@/src/bin/bind-cfgd:@abs_top_srcdir@/src/bin/cmd-ctrld:$PATH
 export PATH
 
-PYTHONPATH=@abs_top_srcdir@/src/lib/cc/python:${abs_top_src_dir}/lib/cc/python/ISC
+PYTHONPATH=@abs_top_srcdir@/src/lib/cc/python:@abs_top_srcdir@/src/lib/config/python
 export PYTHONPATH
 
 cd ${BIND10_PATH}
