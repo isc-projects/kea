@@ -435,7 +435,7 @@ Section::AUTHORITY()
 inline const Section&
 Section::ADDITIONAL()
 {
-    static Section s(2);
+    static Section s(3);
     return (s);
 }
 
