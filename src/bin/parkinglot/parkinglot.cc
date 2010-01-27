@@ -140,9 +140,8 @@ ParkingLot::processMessage() {
                 for (RRsetIterator it = msg.beginSection(Section::ANSWER());
                      it != msg.endSection(Section::ANSWER());
                      ++it) {
-                    RRsetPtr rrset = (*it);
-                    if (rrset->getType() == RRType::NS()) {
-                        RdataIteratorPtr rrsetit = rrset->getRdataIterator();
+                    if ((*it)->getType() == RRType::NS()) {
+                        RdataIteratorPtr rrsetit = (*it)->getRdataIterator();
                         for (rrsetit->first();
                              !rrsetit->isLast();
                              rrsetit->next()) {
@@ -161,9 +160,8 @@ ParkingLot::processMessage() {
                 for (RRsetIterator it = msg.beginSection(Section::ANSWER());
                      it != msg.endSection(Section::ANSWER());
                      ++it) {
-                    RRsetPtr rrset = (*it);
-                    if (rrset->getType() == RRType::NS()) {
-                        RdataIteratorPtr rrsetit = rrset->getRdataIterator();
+                    if ((*it)->getType() == RRType::NS()) {
+                        RdataIteratorPtr rrsetit = (*it)->getRdataIterator();
                         for (rrsetit->first();
                              !rrsetit->isLast();
                              rrsetit->next()) {
