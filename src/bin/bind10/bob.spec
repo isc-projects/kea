@@ -19,6 +19,11 @@
           "item_optional": False,
           "item_default": ""
         } ]
+      },
+      {
+        "command_name": "shutdown",
+        "command_description": "Shut down BIND 10",
+        "command_args": []
       }
     ]
   }
