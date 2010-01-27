@@ -143,40 +143,41 @@ ParkingLot::processMessage() {
 
         msg.makeResponse();
         msg.setHeaderFlag(MessageFlag::AA());
-        RRTTL default_ttl = RRTTL(3600);
-
         Name zname(".");        // ugly, but should work for now
-        Name name = query->getName();
-        RRClass qclass = query->getClass();
-        RRType qtype = query->getType();
-        SearchResult::status_type status;
-        bool included_ns = false;
         msg.setRcode(Rcode::NOERROR());
-        if (qtype == RRType::TXT() && qclass == RRClass::CH() &&
-            name == authors_name) {
+        if (query->getType() == RRType::TXT() &&
+            query->getClass() == RRClass::CH() &&
+            query->getName() == authors_name) {
             msg.addRRset(Section::ANSWER(), getBuiltinAuthors().getAnswer());
             msg.addRRset(Section::AUTHORITY(),
                          getBuiltinAuthors().getAuthority());
-        } else if (qtype == RRType::TXT() && qclass == RRClass::CH() &&
-            name == version_name) {
+        } else if (query->getType() == RRType::TXT() &&
+                   query->getClass() == RRClass::CH() &&
+            query->getName() == version_name) {
             msg.addRRset(Section::ANSWER(), getBuiltinVersion().getAnswer());
             msg.addRRset(Section::AUTHORITY(),
                          getBuiltinVersion().getAuthority());
         } else if (data_source.hasZoneFor(query->getName(), zname)) {
-            status = data_source.addToMessage(msg, Section::ANSWER(), zname,
-                                              name, qclass, qtype);
+            SearchResult::status_type status =
+                data_source.addToMessage(msg, Section::ANSWER(), zname,
+                                         query->getName(), query->getClass(),
+                                         query->getType());
+            bool included_ns = false;
+
             // rcode is based on this result?
             if (status == SearchResult::name_not_found) {
                 msg.setRcode(Rcode::NXDOMAIN());
-                if (qtype != RRType::NS()) {
+                if (query->getType() != RRType::NS()) {
                     status = data_source.addToMessage(msg, Section::AUTHORITY(),
-                                                      zname, zname, qclass,
+                                                      zname, zname,
+                                                      query->getClass(),
                                                       RRType::SOA());
                 }
             } else {
-                if (qtype != RRType::NS()) {
+                if (query->getType() != RRType::NS()) {
                     status = data_source.addToMessage(msg, Section::AUTHORITY(),
-                                                      zname, zname, qclass,
+                                                      zname, zname,
+                                                      query->getClass(),
                                                       RRType::NS());
                 }
                 included_ns = true;
@@ -185,10 +186,12 @@ ParkingLot::processMessage() {
             if (included_ns) {
                 for_each(msg.beginSection(Section::ANSWER()),
                          msg.endSection(Section::ANSWER()),
-                         GlueInserter(data_source, zname, qclass, msg));
+                         GlueInserter(data_source, zname, query->getClass(),
+                                      msg));
                 for_each(msg.beginSection(Section::AUTHORITY()),
                          msg.endSection(Section::AUTHORITY()),
-                         GlueInserter(data_source, zname, qclass, msg));
+                         GlueInserter(data_source, zname, query->getClass(),
+                                      msg));
             }
         } else {
             msg.setRcode(Rcode::SERVFAIL());
