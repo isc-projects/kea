@@ -30,18 +30,16 @@ class CCSession:
                  config_handler, command_handler):
         self._module_name = module_name
         #self._spec_file_name = spec_file_name
-        self._config_handler = config_handler
-        self._command_handler = command_handler
+        self.setConfigHandler(config_handler)
+        self.setCommandHandler(command_handler)
+
         self._data_definition = isc.config.DataDefinition(spec_file_name)
+
         self._session = Session()
         self._session.group_subscribe(module_name, "*")
-        self._session.group_sendmsg(self._data_definition.getDefinition(), "ConfigManager")
-        answer, env = self._session.group_recvmsg(False)
-        self._session.group_sendmsg({ "command": [ "get_config", { "module_name": module_name } ] }, "ConfigManager")
-        answer, env = self._session.group_recvmsg(False)
-        if self._config_handler:
-            self._config_handler(answer["result"])
-        print(answer)
+
+        self.__sendSpec()
+        self.__getFullConfig()
 
     #do we need getSocket()?
 
@@ -60,5 +58,30 @@ class CCSession:
             self._session.group_reply(env, answer)
 
     
-    
+    def setConfigHandler(self, config_handler):
+        """Set the config handler for this module. The handler is a
+           function that takes the full configuration and handles it.
+           It should return either { "result": [ 0 ] } or
+           { "result": [ <error_number>, "error message" ] }"""
+        self._config_handler = config_handler
+        # should we run this right now since we've changed the handler?
+
+    def setCommandHandler(self, command_handler):
+        """Set the command handler for this module. The handler is a
+           function that takes a command as defined in the .spec file
+           and return either { "result": [ 0, (result) ] } or
+           { "result": [ <error_number>. "error message" ] }"""
+        self._command_handler = command_handler
+
+    def __sendSpec(self):
+        """Sends the data specification to the configuration manager"""
+        self._session.group_sendmsg(self._data_definition.getDefinition(), "ConfigManager")
+        answer, env = self._session.group_recvmsg(False)
+        
+    def __getFullConfig(self):
+        """Asks the configuration manager for the current configuration, and call the config handler if set"""
+        self._session.group_sendmsg({ "command": [ "get_config", { "module_name": self._module_name } ] }, "ConfigManager")
+        answer, env = self._session.group_recvmsg(False)
+        if self._config_handler:
+            self._config_handler(answer["result"])
     
