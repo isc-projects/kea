@@ -13,6 +13,7 @@ import inspect
 import pprint
 import ssl, socket
 import os, time, random, re
+import getpass
 from hashlib import sha1
 
 try:
@@ -67,10 +68,10 @@ class BindCmdInterpreter(Cmd):
         try:
             while count < 3:
                 count = count + 1
-                username = input("username:")
-                passwd = input("password:")
+                username = input("Username:")
+                passwd = getpass.getpass()
                 param = {'username': username, 'password' : passwd}
-                response = self.send_POST('/', param)
+                response = self.send_POST('/login', param)
                 data = response.read().decode()
                 print(data)
             

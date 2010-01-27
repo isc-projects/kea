@@ -83,7 +83,7 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
         reply_msg = []
         rcode = 200
-        if self.path == '/':
+        if self.path == '/login':
             reply_msg, rcode = self.check()
         elif "username" not in self.server.session[id]:
             reply_msg, rcode = ["please login!"], http.client.UNAUTHORIZED

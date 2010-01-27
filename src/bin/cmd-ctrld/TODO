@@ -4,4 +4,5 @@
 4. RESTful API document for cmd-ctrld.
 5. Unit tests for cmd-ctrld.
 6. Man page for cmd-ctrld?
+7. Support 'make install', Save user information and ssl certificate file to configmanager.
 
