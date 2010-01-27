@@ -36,6 +36,7 @@
 #include <cc/cpp/data.h>
 
 #include "common.h"
+#include "builtin.h"
 #include "parkinglot.h"
 
 #include <boost/lexical_cast.hpp>
@@ -106,6 +107,11 @@ struct GlueInserter {
 };
 }
 
+namespace {
+const Name authors_name("authors.bind");
+const Name version_name("version.bind");
+}
+
 void
 ParkingLot::processMessage() {
     struct sockaddr_storage ss;
@@ -146,7 +152,17 @@ ParkingLot::processMessage() {
         SearchResult::status_type status;
         bool included_ns = false;
         msg.setRcode(Rcode::NOERROR());
-        if (data_source.hasZoneFor(query->getName(), zname)) {
+        if (qtype == RRType::TXT() && qclass == RRClass::CH() &&
+            name == authors_name) {
+            msg.addRRset(Section::ANSWER(), getBuiltinAuthors().getAnswer());
+            msg.addRRset(Section::AUTHORITY(),
+                         getBuiltinAuthors().getAuthority());
+        } else if (qtype == RRType::TXT() && qclass == RRClass::CH() &&
+            name == version_name) {
+            msg.addRRset(Section::ANSWER(), getBuiltinVersion().getAnswer());
+            msg.addRRset(Section::AUTHORITY(),
+                         getBuiltinVersion().getAuthority());
+        } else if (data_source.hasZoneFor(query->getName(), zname)) {
             status = data_source.addToMessage(msg, Section::ANSWER(), zname,
                                               name, qclass, qtype);
             // rcode is based on this result?
