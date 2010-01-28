@@ -62,7 +62,7 @@ def _encode_length_and_type(data, datatype):
     elif length < 0x00010000:
         return(struct.pack(">B H", datatype | _ITEM_LENGTH_16, length) + data)
     else:
-        return(struct.pack(">B I", datatype, length) + data)
+        return(struct.pack(">B I", datatype | _ITEM_LENGTH_32, length) + data)
 
 def _pack_utf8(item):
     """Pack a string (utf-8) and its type/length prefix."""

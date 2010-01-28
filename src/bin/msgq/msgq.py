@@ -39,13 +39,13 @@ class SubscriptionManager:
         """Remove the socket from the one specific subscription."""
         target = ( group, instance )
         if target in self.subscriptions:
-            while socket in self.subscriptions[target]:
+            if socket in self.subscriptions[target]:
                 self.subscriptions[target].remove(socket)
 
     def unsubscribe_all(self, socket):
         """Remove the socket from all subscriptions."""
         for socklist in self.subscriptions.values():
-            while socket in socklist:
+            if socket in socklist:
                 socklist.remove(socket)
 
     def find_sub(self, group, instance):
