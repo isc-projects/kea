@@ -169,7 +169,7 @@ class BoB:
         time.sleep(1)
         if self.verbose:
             print("[XX] starting ccsession")
-        self.ccs = isc.config.CCSession("Boss", "bob.spec", self.config_handler, self.command_handler)
+        self.ccs = isc.config.CCSession("bob.spec", self.config_handler, self.command_handler)
         if self.verbose:
             print("[XX] ccsession started")
 
