@@ -177,16 +177,16 @@ class BoB:
         # XXX: this must be read from the configuration manager in the future
         # XXX: we hardcode port 5300
         if self.verbose:
-            sys.stdout.write("Starting parkinglot on port 5300\n")
+            sys.stdout.write("Starting b10-parkinglot on port 5300\n")
         try:
-            parkinglot = ProcessInfo("parkinglot", ["parkinglot", "-p", "5300"])
+            parkinglot = ProcessInfo("b10-parkinglot", ["b10-parkinglot", "-p", "5300"])
         except Exception as e:
             c_channel.process.kill()
             bind_cfgd.process.kill()
-            return "Unable to start parkinglot; " + str(e)
+            return "Unable to start b10-parkinglot; " + str(e)
         self.processes[parkinglot.pid] = parkinglot
         if self.verbose:
-            sys.stdout.write("Started parkinglot (PID %d)\n" % parkinglot.pid)
+            sys.stdout.write("Started b10-parkinglot (PID %d)\n" % parkinglot.pid)
 
         # start the b10-cmdctl
         # XXX: we hardcode port 8080
