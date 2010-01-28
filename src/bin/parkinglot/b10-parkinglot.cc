@@ -37,7 +37,7 @@
 
 #include "common.h"
 #include "builtin.h"
-#include "parkinglot.h"
+#include "b10-parkinglot.h"
 
 #include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>

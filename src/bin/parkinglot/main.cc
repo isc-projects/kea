@@ -35,7 +35,7 @@
 #include <config/cpp/ccsession.h>
 
 #include "zoneset.h"
-#include "parkinglot.h"
+#include "b10-parkinglot.h"
 
 #include "common.h"
 

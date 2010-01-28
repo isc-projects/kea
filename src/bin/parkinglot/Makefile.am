@@ -2,16 +2,16 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_srcdir)/ext
 
 pkglibexecdir = $(libexecdir)/@PACKAGE@
 
-pkglibexec_PROGRAMS = parkinglot
+pkglibexec_PROGRAMS = b10-parkinglot
 
-parkinglot_SOURCES = common.cc common.h zoneset.h zoneset.cc parkinglot.cc
-parkinglot_SOURCES += parkinglot.h main.cc
-parkinglot_SOURCES += data_source_plot.h data_source_plot.cc
-parkinglot_SOURCES += data_source.h data_source.cc
-parkinglot_SOURCES += builtin.h builtin.cc
-parkinglot_LDADD =  $(top_builddir)/src/lib/dns/cpp/.libs/libdns.a
-parkinglot_LDADD += $(top_builddir)/src/lib/config/cpp/libclient.a
-parkinglot_LDADD += $(top_builddir)/src/lib/cc/cpp/libcc.a
+b10_parkinglot_SOURCES = b10-parkinglot.cc b10-parkinglot.h
+b10_parkinglot_SOURCES += common.cc common.h zoneset.h zoneset.cc main.cc
+b10_parkinglot_SOURCES += data_source_plot.h data_source_plot.cc
+b10_parkinglot_SOURCES += data_source.h data_source.cc
+b10_parkinglot_SOURCES += builtin.h builtin.cc
+b10_parkinglot_LDADD =  $(top_builddir)/src/lib/dns/cpp/.libs/libdns.a
+b10_parkinglot_LDADD += $(top_builddir)/src/lib/config/cpp/libclient.a
+b10_parkinglot_LDADD += $(top_builddir)/src/lib/cc/cpp/libcc.a
 
 # TODO: don't install this here
 bin_PROGRAMS = builtin_bench
