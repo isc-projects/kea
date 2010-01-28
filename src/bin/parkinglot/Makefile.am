@@ -9,3 +9,7 @@ parkinglot_SOURCES += builtin.h builtin.cc
 parkinglot_LDADD =  $(top_srcdir)/src/lib/dns/cpp/.libs/libdns.a
 parkinglot_LDADD += $(top_srcdir)/src/lib/config/cpp/libclient.a
 parkinglot_LDADD += $(top_srcdir)/src/lib/cc/cpp/libcc.a
+
+bin_PROGRAMS += builtin_bench
+builtin_bench_SOURCES = builtin_bench.cc builtin.h builtin.cc
+builtin_bench_LDADD = $(top_srcdir)/src/lib/dns/cpp/.libs/libdns.a
