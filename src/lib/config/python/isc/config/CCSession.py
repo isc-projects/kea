@@ -41,9 +41,16 @@ class CCSession:
         self.__sendSpec()
         self.__getFullConfig()
 
-    #do we need getSocket()?
-
-    def checkCommand():
+    def getSocket(self):
+        """Returns the socket from the command channel session"""
+        return self._session._socket
+    
+    def getSession(self):
+        """Returns the command-channel session that is used, so the
+           application can use it directly"""
+        return self._session
+    
+    def checkCommand(self):
         """Check whether there is a command on the channel.
            Call the command callback function if so"""
         msg, env = self._session.group_recvmsg(False)

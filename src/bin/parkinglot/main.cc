@@ -70,7 +70,7 @@ my_command_handler(isc::data::ElementPtr command)
 {
     isc::data::ElementPtr answer = isc::data::Element::createFromString("{ \"result\": [0] }");
 
-    cout << "[XX] Handle command: " << endl << command->str() << endl;
+    cout << "[XX] Parkinglot handle command: " << endl << command->str() << endl;
     if (command->get(0)->stringValue() == "print_message") 
     {
         cout << command->get(1)->get("message") << endl;

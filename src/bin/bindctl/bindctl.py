@@ -49,22 +49,11 @@ def prepare_config_commands(tool):
     module.add_command(cmd)
 
     tool.add_module_info(module)
-    
-def prepare_boss_command(tool):
-    # Prepare the command 'shutdown' for Boss, this is one 'hardcode' exception.
-    shutdown_cmd = CommandInfo(name = 'shutdown', desc = "stop one module",
-                               need_inst_param = False)
-    boss_module = ModuleInfo(name = "Boss", desc = "boss of bind10")
-    boss_module.add_command(shutdown_cmd)               
-    tool.add_module_info(boss_module)
-
-
 
 if __name__ == '__main__':
     try:
         tool = BindCmdInterpreter("localhost:8080")
         prepare_config_commands(tool)
-        prepare_boss_command(tool)
         tool.run()
     except Exception as e:
         print(e)

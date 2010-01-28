@@ -91,6 +91,9 @@ class ConfigManager:
             cmd = msg["command"]
             try:
                 if cmd[0] == "get_commands":
+                    print("[XX] bind-cfgd got get_commands");
+                    print("[XX] sending:")
+                    print(self.commands)
                     answer["result"] = [ 0, self.commands ]
                 elif cmd[0] == "get_data_spec":
                     if len(cmd) > 1 and cmd[1]['module_name'] != '':
@@ -163,6 +166,9 @@ class ConfigManager:
                 raise ie
         elif "data_specification" in msg:
             # todo: validate? (no direct access to spec as
+            # todo: use DataDefinition class?
+            print("[XX] bind-cfgd got specification:")
+            print(msg["data_specification"])
             spec = msg["data_specification"]
             if "config_data" in spec:
                 self.set_config(spec["module_name"], spec["config_data"])
