@@ -108,7 +108,7 @@ class CommandControl():
     def __init__(self):
         self.cc = ISC.CC.Session()
         self.cc.group_subscribe('Cmd-Ctrld')
-        self.cc.group_subscribe('Boss', 'Cmd-Ctrld')
+        #self.cc.group_subscribe('Boss', 'Cmd-Ctrld')
         self.command_spec = self.get_cmd_specification()
         self.config_spec = self.get_data_specification()
         self.config_data = self.get_config_data()
@@ -149,11 +149,6 @@ class CommandControl():
         msg = {'command' : content}
         print('cmd-ctrld send command \'%s\' to %s' %(command_name, module_name))
         try:
-            # Do special for Boss shutdown. TODO, avoid specicialism
-            if module_name == 'Boss' and command_name == 'shutdown':
-                self.cc.group_sendmsg(msg, module_name, 'boss')
-                return {}
-
             self.cc.group_sendmsg(msg, module_name)
             answer, env = self.cc.group_recvmsg(False)
             if answer and 'result' in answer.keys() and type(answer['result']) == list:

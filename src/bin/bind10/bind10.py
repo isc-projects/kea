@@ -93,20 +93,28 @@ class BoB:
         if self.verbose:
             print("[XX] handling new config:")
             print(new_config)
+        # TODO
 
     def command_handler(self, command):
+        # a command is of the form [ "command", { "arg1": arg1, "arg2": arg2 } ]
         if self.verbose:
             print("[XX] Boss got command:")
             print(command)
         answer = None
-        if "command" in command:
-            cmd = command["command"]
-            if cmd == "shutdown":
-                self.shutdown()
-            else:
-                answer = { "result": [ 1, "unknown command: " + cmd ] }
-        else:
+        if type(command) != list or len(command) == 0:
             answer = { "result": [ 1, "bad command" ] }
+        else:
+            cmd = command[0]
+            if cmd == "shutdown":
+                print("[XX] got shutdown command")
+                self.runnable = False
+                answer = { "result": [ 0 ] }
+            elif cmd == "print_message":
+                if len(command) > 1 and type(command[1]) == dict and "message" in command[1]:
+                    print(command[1]["message"])
+                answer = { "result": [ 0 ] }
+            else:
+                answer = { "result": [ 1, "Unknown command" ] }
         return answer
     
     def startup(self):
@@ -140,7 +148,7 @@ class BoB:
                 self.cc_session = ISC.CC.Session(self.c_channel_port)
             except ISC.CC.session.SessionError:
                 time.sleep(0.1)
-        self.cc_session.group_subscribe("Boss", "boss")
+        #self.cc_session.group_subscribe("Boss", "boss")
 
         # start the configuration manager
         if self.verbose:
@@ -161,7 +169,7 @@ class BoB:
         time.sleep(1)
         if self.verbose:
             print("[XX] starting ccsession")
-        self.ccs = isc.config.CCSession("bob", "bob.spec", self.config_handler, self.command_handler)
+        self.ccs = isc.config.CCSession("Boss", "bob.spec", self.config_handler, self.command_handler)
         if self.verbose:
             print("[XX] ccsession started")
 
@@ -280,56 +288,60 @@ class BoB:
             else:
                 sys.stdout.write("Unknown child pid %d exited.\n" % pid)
 
-    def recv_and_process_cc_msg(self):
-        """Receive and process the next message on the c-channel,
-        if any."""
-        msg, envelope = self.cc_session.group_recvmsg(False)
-        print(msg)
-        if msg is None:
-            return
-        if not ((type(msg) is dict) and (type(envelope) is dict)):
-            if self.verbose:
-                sys.stdout.write("Non-dictionary message\n")
-            return
-        if not "command" in msg:
-            if self.verbose:
-                if "msg" in envelope:
-                    del envelope['msg']
-                sys.stdout.write("Unknown message received\n")
-                sys.stdout.write(pprint.pformat(envelope) + "\n")
-                sys.stdout.write(pprint.pformat(msg) + "\n")
-            return
-        cmd = msg['command']
-        if not (type(cmd) is list):
-            if self.verbose:
-                sys.stdout.write("Non-list command\n")
-            return
+    # 'old' command style, uncommented for now
+    # move the handling below move to command_handler please
+    #def recv_and_process_cc_msg(self):
+        #"""Receive and process the next message on the c-channel,
+        #if any."""
+        #self.ccs.checkCommand()
+        #msg, envelope = self.cc_session.group_recvmsg(False)
+        #print(msg)
+        #if msg is None:
+        #    return
+        #if not ((type(msg) is dict) and (type(envelope) is dict)):
+        #    if self.verbose:
+        #        sys.stdout.write("Non-dictionary message\n")
+        #    return
+        #if not "command" in msg:
+        #    if self.verbose:
+        #        if "msg" in envelope:
+        #            del envelope['msg']
+        #        sys.stdout.write("Unknown message received\n")
+        #        sys.stdout.write(pprint.pformat(envelope) + "\n")
+        #        sys.stdout.write(pprint.pformat(msg) + "\n")
+        #    return
 
+        #cmd = msg['command']
+        #if not (type(cmd) is list):
+        #    if self.verbose:
+        #        sys.stdout.write("Non-list command\n")
+        #    return
+        #
         # done checking and extracting... time to execute the command
-        if cmd[0] == "shutdown":
-            if self.verbose:
-                sys.stdout.write("shutdown command received\n")
-            self.runnable = False
-            # XXX: reply here?
-        elif cmd[0] == "getProcessList":
-            if self.verbose:
-                sys.stdout.write("getProcessList command received\n")
-            live_processes = [ ]
-            for proc_info in processes:
-                live_processes.append({ "name": proc_info.name, 
-                                        "args": proc_info.args, 
-                                        "pid": proc_info.pid, })
-            dead_processes = [ ]
-            for proc_info in dead_processes:
-                dead_processes.append({ "name": proc_info.name, 
-                                        "args": proc_info.args, })
-            cc.group_reply(envelope, { "response": cmd,
-                                       "sent": msg["sent"],
-                                       "live_processes": live_processes,
-                                       "dead_processes": dead_processes, })
-        else:
-            if self.verbose:
-                sys.stdout.write("Unknown command %s\n" % str(cmd))
+        #if cmd[0] == "shutdown":
+        #    if self.verbose:
+        #        sys.stdout.write("shutdown command received\n")
+        #    self.runnable = False
+        #    # XXX: reply here?
+        #elif cmd[0] == "getProcessList":
+        #    if self.verbose:
+        #        sys.stdout.write("getProcessList command received\n")
+        #    live_processes = [ ]
+        #    for proc_info in processes:
+        #        live_processes.append({ "name": proc_info.name, 
+        #                                "args": proc_info.args, 
+        #                                "pid": proc_info.pid, })
+        #    dead_processes = [ ]
+        #    for proc_info in dead_processes:
+        #        dead_processes.append({ "name": proc_info.name, 
+        #                                "args": proc_info.args, })
+        #    cc.group_reply(envelope, { "response": cmd,
+        #                               "sent": msg["sent"],
+        #                               "live_processes": live_processes,
+        #                               "dead_processes": dead_processes, })
+        #else:
+        #    if self.verbose:
+        #        sys.stdout.write("Unknown command %s\n" % str(cmd))
 
     def restart_processes(self):
         """Restart any dead processes."""
@@ -427,7 +439,7 @@ def main():
     # In our main loop, we check for dead processes or messages 
     # on the c-channel.
     wakeup_fd = wakeup_pipe[0]
-    cc_fd = boss_of_bind.cc_session._socket.fileno()
+    ccs_fd = boss_of_bind.ccs.getSocket().fileno()
     while boss_of_bind.runnable:
         # XXX: get time for next restart for timeout
 
@@ -435,7 +447,7 @@ def main():
         # even if they are resumable, so we have to catch
         # the exception
         try:
-            (rlist, wlist, xlist) = select.select([wakeup_fd, cc_fd], [], [])
+            (rlist, wlist, xlist) = select.select([wakeup_fd, ccs_fd], [], [])
         except select.error as err:
             if err.args[0] == errno.EINTR:
                 (rlist, wlist, xlist) = ([], [], [])
@@ -444,8 +456,8 @@ def main():
                 break
 
         for fd in rlist + xlist:
-            if fd == cc_fd:
-                boss_of_bind.recv_and_process_cc_msg()
+            if fd == ccs_fd:
+                boss_of_bind.ccs.checkCommand()
             elif fd == wakeup_fd:
                 os.read(wakeup_fd, 32)
 

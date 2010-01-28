@@ -90,8 +90,8 @@ CommandSession::CommandSession(std::string module_name,
 
     session_.establish();
     session_.subscribe(module_name, "*");
-    session_.subscribe("Boss", "*");
-    session_.subscribe("statistics", "*");
+    //session_.subscribe("Boss", "*");
+    //session_.subscribe("statistics", "*");
     read_data_definition(spec_file_name);
     sleep(1);
     // send the data specification
