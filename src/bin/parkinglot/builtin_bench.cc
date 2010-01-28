@@ -16,8 +16,10 @@
 
 #include <sys/time.h>
 
+#include <algorithm>
 #include <iostream>
 #include <sstream>
+#include <vector>
 
 #include <dns/cpp/buffer.h>
 #include <dns/cpp/messagerenderer.h>
@@ -54,25 +56,83 @@ tv_sub(const struct timeval& t1, const struct timeval& t2)
     return (result.tv_sec + result.tv_usec / 1000000.0);
 }
 
+void
+buildAuthors(vector<string>& authors)
+{
+    authors.push_back("Han Feng");
+    authors.push_back("Kazunori Fujiwara");
+    authors.push_back("Michael Graff");
+    authors.push_back("Evan Hunt");
+    authors.push_back("Jelte Jansen");
+    authors.push_back("Jin Jian");
+    authors.push_back("JINMEI Tatuya");
+    authors.push_back("Naoki Kambe");
+    authors.push_back("Shane Kerr"); 
+    authors.push_back("Zhang Likun");
+    authors.push_back("Jeremy C. Reed");
+}
+
+struct RdataInserterFromText
+{
+    RdataInserterFromText(RRsetPtr rrset) : rrset_(rrset) {}
+    void operator()(const string& author)
+    {
+        rrset_->addRdata(generic::TXT(author));
+    }
+    RRsetPtr rrset_;
+};
+
 inline RRsetPtr
-getNormalRRset()
+getNormalRRset(const vector<string>& authors)
 {
     RRsetPtr rrset = RRsetPtr(new RRset(authors_name,  RRClass::CH(),
                                         RRType::TXT(), RRTTL(0)));
-    rrset->addRdata(generic::TXT("Han Feng"));
-    rrset->addRdata(generic::TXT("Kazunori Fujiwara"));
-    rrset->addRdata(generic::TXT("Michael Graff"));
-    rrset->addRdata(generic::TXT("Evan Hunt"));
-    rrset->addRdata(generic::TXT("Jelte Jansen"));
-    rrset->addRdata(generic::TXT("Jin Jian"));
-    rrset->addRdata(generic::TXT("JINMEI Tatuya"));
-    rrset->addRdata(generic::TXT("Naoki Kambe"));
-    rrset->addRdata(generic::TXT("Shane Kerr")); 
-    rrset->addRdata(generic::TXT("Zhang Likun"));
-    rrset->addRdata(generic::TXT("Jeremy C. Reed"));
+    for_each(authors.begin(), authors.end(), RdataInserterFromText(rrset));
 
     return (rrset);
 }
+
+struct RdataInserterFromWire
+{
+    RdataInserterFromWire(RRsetPtr rrset) : rrset_(rrset) {}
+    void operator()(const OutputBuffer& buffer)
+    {
+        InputBuffer b(buffer.getData(), buffer.getLength());
+        rrset_->addRdata(RdataPtr(new generic::TXT(b, buffer.getLength())));
+    }
+    RRsetPtr rrset_;
+};
+
+inline RRsetPtr
+getNormalRRset(const vector<OutputBuffer>& buffers)
+{
+    RRsetPtr rrset = RRsetPtr(new RRset(authors_name,  RRClass::CH(),
+                                        RRType::TXT(), RRTTL(0)));
+    for_each(buffers.begin(), buffers.end(), RdataInserterFromWire(rrset));
+
+    return (rrset);
+}
+
+inline OutputBuffer
+txtToWire(const string& txt)
+{
+    OutputBuffer buffer(0);
+    generic::TXT(txt).toWire(buffer);
+    return (buffer);
+}
+
+struct WireDataInserter
+{
+    WireDataInserter(vector<OutputBuffer>& buffers) : buffers_(buffers)
+    {}
+    void operator()(const string& author)
+    {
+        OutputBuffer buffer(0);
+        generic::TXT(author).toWire(buffer);
+        buffers_.push_back(buffer);
+    }
+    vector<OutputBuffer>& buffers_;
+};
 
 void
 showResult(const struct timeval& tv_begin, const struct timeval& tv_end,
@@ -92,6 +152,9 @@ main(int argc, char* argv[])
     if (argc > 1) {
         istringstream(argv[1]) >> dec >> iteration;
     }
+
+    vector<string> authors;
+    buildAuthors(authors);
 
     struct timeval tv_begin, tv_end;
     OutputBuffer buffer(512);
@@ -117,7 +180,7 @@ main(int argc, char* argv[])
     //
     // Benchmark for rendering a general purpose RRset of the same content
     //
-    RRsetPtr rrset_normal = getNormalRRset();
+    RRsetPtr rrset_normal = getNormalRRset(authors);
     gettimeofday(&tv_begin, NULL);
     for (int i = 0; i < iteration; ++i) {
         renderer.clear();
@@ -136,18 +199,43 @@ main(int argc, char* argv[])
     }
 
     //
-    // Benchmark for rendering a general purpose RRset of the same content
+    // Benchmark for rendering a general purpose RRset of the same content,
+    // create RRset from text every time
     //
     gettimeofday(&tv_begin, NULL);
     for (int i = 0; i < iteration; ++i) {
         renderer.clear();
         renderer.skip(12);
         renderer.writeName(authors_name);
-        getNormalRRset()->toWire(renderer);
+        getNormalRRset(authors)->toWire(renderer);
     }
     gettimeofday(&tv_end, NULL);
     showResult(tv_begin, tv_end, iteration,
                "Rendered normal RRset with fromText");
+
+    // Confirm the two sets of output are identical.
+    if (data.size() != buffer.getLength() ||
+        memcmp(&data[0], buffer.getData(), buffer.getLength())) {
+        cerr << "Rendered data mismatch" << endl;
+        return (1);
+    }
+
+    //
+    // Benchmark for rendering a general purpose RRset of the same content,
+    // create RRset from wire data every time
+    //
+    vector<OutputBuffer> buffers;
+    for_each(authors.begin(), authors.end(), WireDataInserter(buffers));
+    gettimeofday(&tv_begin, NULL);
+    for (int i = 0; i < iteration; ++i) {
+        renderer.clear();
+        renderer.skip(12);
+        renderer.writeName(authors_name);
+        getNormalRRset(buffers)->toWire(renderer);
+    }
+    gettimeofday(&tv_end, NULL);
+    showResult(tv_begin, tv_end, iteration,
+               "Rendered normal RRset with fromWire");
 
     // Confirm the two sets of output are identical.
     if (data.size() != buffer.getLength() ||
