@@ -148,7 +148,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/bind10/Makefile
                  src/bin/cmd-ctrld/Makefile
                  src/bin/bindctl/Makefile
-                 src/bin/bind-cfgd/Makefile
+                 src/bin/cfgmgr/Makefile
                  src/bin/host/Makefile
                  src/bin/msgq/Makefile
                  src/bin/parkinglot/Makefile
@@ -164,7 +164,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/dns/Makefile
                  src/lib/dns/cpp/Makefile
                ])
-AC_OUTPUT([src/bin/bind-cfgd/bind-cfgd
+AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr
            src/bin/cmd-ctrld/cmd-ctrld
            src/bin/bind10/bind10
            src/bin/bind10/bind10_test
@@ -173,7 +173,7 @@ AC_OUTPUT([src/bin/bind-cfgd/bind-cfgd
            src/bin/msgq/msgq_test
            src/bin/parkinglot/config.h
           ], [
-           chmod +x src/bin/bind-cfgd/bind-cfgd
+           chmod +x src/bin/cfgmgr/b10-cfgmgr
            chmod +x src/bin/cmd-ctrld/cmd-ctrld
            chmod +x src/bin/bind10/bind10
            chmod +x src/bin/bindctl/bindctl
