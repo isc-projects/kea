@@ -1,0 +1,6 @@
+This directory contains various general-purpose utility functions which are
+of general utility, but not part of any specific module.  These are part
+of the installation.
+
+Things that are only used to build or test should not go here (unless those
+parts are also installed.)
