@@ -15,6 +15,7 @@ import ssl, socket
 import os, time, random, re
 import getpass
 from hashlib import sha1
+import csv
 
 try:
     from collections import OrderedDict
@@ -61,25 +62,12 @@ class BindCmdInterpreter(Cmd):
         session_id = sha1(("%s%s%s" %(rand, now, ip)).encode())
         session_id = session_id.hexdigest()
         return session_id
-
+    
     def run(self):
-        count = 0
-        print("[TEMP MESSAGE]: username :root  password :bind10")
         try:
-            while count < 3:
-                count = count + 1
-                username = input("Username:")
-                passwd = getpass.getpass()
-                param = {'username': username, 'password' : passwd}
-                response = self.send_POST('/login', param)
-                data = response.read().decode()
-                print(data)
-            
-                if response.status == http.client.OK:
-                    break
-                if count == 3:
-                    print("Too many authentication failures")
-                    return True
+            ret = self.login()
+            if not ret:
+                return False
 
             # Get all module information from cmd-ctrld
             self.config_data = ISC.CC.data.UIConfigData(self)
@@ -87,6 +75,55 @@ class BindCmdInterpreter(Cmd):
             self.cmdloop()
         except KeyboardInterrupt:
             return True
+
+    def login(self):
+        bsuccess = False
+        try:
+            csvfile = open('default_user.csv')
+            users = csv.reader(csvfile)
+            for row in users:
+                if (len(row) < 2):
+                    continue
+
+                param = {'username': row[0], 'password' : row[1]}
+                response = self.send_POST('/login', param)
+                data = response.read().decode()
+                if response.status == http.client.OK:
+                    print(data + ' login as ' + row[0] )
+                    bsuccess = True
+                    break
+        except Exception as e:
+            print(e)
+            pass
+
+        csvfile.close()
+        if bsuccess:
+            return True
+
+        count = 0
+        print("[TEMP MESSAGE]: username :root  password :bind10")
+        while count < 3:
+            count = count + 1
+            username = input("Username:")
+            passwd = getpass.getpass()
+            param = {'username': username, 'password' : passwd}
+            response = self.send_POST('/login', param)
+            data = response.read().decode()
+            print(data)
+            
+            if response.status == http.client.OK:
+                csvfile = open('default_user.csv', 'w')
+                writer = csv.writer(csvfile)
+                writer.writerow([username, passwd])
+                bsuccess = True
+                break
+
+            if count == 3:
+                print("Too many authentication failures")
+                break
+
+        csvfile.close()
+        return bsuccess
 
 
     def update_commands(self):
