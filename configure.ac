@@ -148,12 +148,17 @@ AC_CONFIG_FILES([Makefile
                  src/bin/bind10/Makefile
                  src/bin/cmd-ctrld/Makefile
                  src/bin/bindctl/Makefile
+                 src/bin/bind-cfgd/Makefile
                  src/bin/host/Makefile
                  src/bin/msgq/Makefile
                  src/bin/parkinglot/Makefile
                  src/lib/Makefile
                  src/lib/cc/Makefile
                  src/lib/cc/cpp/Makefile
+                 src/lib/cc/python/Makefile
+                 src/lib/cc/python/ISC/Makefile
+                 src/lib/cc/python/ISC/CC/Makefile
+                 src/lib/cc/python/ISC/Util/Makefile
                  src/lib/config/Makefile
                  src/lib/config/cpp/Makefile
                  src/lib/dns/Makefile
