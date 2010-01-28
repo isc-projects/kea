@@ -169,6 +169,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr
            src/bin/bind10/bind10
            src/bin/bind10/bind10_test
            src/bin/bindctl/bindctl
+           src/bin/bindctl/unittest/bindctl_test
            src/bin/msgq/msgq
            src/bin/msgq/msgq_test
            src/bin/parkinglot/config.h
