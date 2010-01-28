@@ -73,6 +73,6 @@ if __name__ == '__main__':
         tool.run()
     except Exception as e:
         print(e)
-        print("Failed to connect with cmd-ctrld module, is it running?")
+        print("Failed to connect with b10-cmdctl module, is it running?")
 
 

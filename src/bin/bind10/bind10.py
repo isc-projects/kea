@@ -188,20 +188,20 @@ class BoB:
         if self.verbose:
             sys.stdout.write("Started parkinglot (PID %d)\n" % parkinglot.pid)
 
-        # start the cmd-ctrld
+        # start the b10-cmdctl
         # XXX: we hardcode port 8080
         if self.verbose:
-            sys.stdout.write("Starting cmd-ctrld on port 8080\n")
+            sys.stdout.write("Starting b10-cmdctl on port 8080\n")
         try:
-            cmd_ctrld = ProcessInfo("cmd-ctrld", ['cmd-ctrld'])
+            cmd_ctrld = ProcessInfo("b10-cmdctl", ['b10-cmdctl'])
         except Exception as e:
             c_channel.process.kill()
             bind_cfgd.process.kill()
             parkinglot.process.kill()
-            return "Unable to start cmd-ctrld; " + str(e)
+            return "Unable to start b10-cmdctl; " + str(e)
         self.processes[cmd_ctrld.pid] = cmd_ctrld
         if self.verbose:
-            sys.stdout.write("Started cmd-ctrld (PID %d)\n" % cmd_ctrld.pid)
+            sys.stdout.write("Started b10-cmdctl (PID %d)\n" % cmd_ctrld.pid)
 
         self.runnable = True
 
