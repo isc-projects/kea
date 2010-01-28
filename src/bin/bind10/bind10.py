@@ -152,19 +152,19 @@ class BoB:
 
         # start the configuration manager
         if self.verbose:
-            sys.stdout.write("Starting bind-cfgd\n")
+            sys.stdout.write("Starting b10-cfgmgr\n")
         try:
-            bind_cfgd = ProcessInfo("bind-cfgd", "bind-cfgd")
+            bind_cfgd = ProcessInfo("b10-cfgmgr", "b10-cfgmgr")
         except Exception as e:
             c_channel.process.kill()
-            return "Unable to start bind-cfgd; " + str(e)
+            return "Unable to start b10-cfgmgr; " + str(e)
         self.processes[bind_cfgd.pid] = bind_cfgd
         if self.verbose:
-            sys.stdout.write("Started bind-cfgd (PID %d)\n" % bind_cfgd.pid)
+            sys.stdout.write("Started b10-cfgmgr (PID %d)\n" % bind_cfgd.pid)
 
         # TODO: once this interface is done, replace self.cc_session
         # by this one
-        # sleep until bind-cfgd is fully up and running, this is a good place
+        # sleep until b10-cfgmgr is fully up and running, this is a good place
         # to have a (short) timeout on synchronized groupsend/receive
         time.sleep(1)
         if self.verbose:
