@@ -30,12 +30,6 @@ class ParamInfo:
     def __str__(self):        
         return str("\t%s <type: %s> \t(%s)" % (self.name, self.type, self.desc))
 
-    def write_xml(xmldoc, name, value):
-        node = xmldoc.createElement(PARAM_NODE_NAME)
-        node.setAttribute('name', name)
-        node.setAttribute('value', value)                             
-        return node
-
 class CommandInfo:
     """One command which provide by one bind10 module, it has zero or 
     more parameters
@@ -128,13 +122,6 @@ class CommandInfo:
     def need_instance_param(self):
         return self.need_inst_param
 
-    
-    def write_xml(self, xmldoc, command_name):
-        node = xmldoc.createElement(COMMAND_NODE_NAME)
-        node.setAttribute('name', command_name)
-        return node 
-        
-
     def command_help(self, inst_name, inst_type, inst_desc):
         print("Command ", self)
         print("\t\thelp (Get help for command)")
@@ -223,10 +210,5 @@ class ModuleInfo:
         self.commands[command].command_help(self.inst_name, 
                                             self.inst_type,
                                             self.inst_desc)
-    
-    def write_xml(self, xmldoc, module_name):
-        node = xmldoc.createElement(MODULE_NODE_NAME)
-        node.setAttribute('name', module_name)
-        return node
     
 
