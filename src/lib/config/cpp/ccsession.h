@@ -33,7 +33,7 @@ public:
      * @param spec_file_name: The name of the file containing the data
      *                        definition.
      */
-    CommandSession(std::string module_name, std::string spec_file_name,
+    CommandSession(std::string spec_file_name,
                    isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config) = NULL,
                    isc::data::ElementPtr(*command_handler)(isc::data::ElementPtr command) = NULL
                   ) throw (isc::cc::SessionError);

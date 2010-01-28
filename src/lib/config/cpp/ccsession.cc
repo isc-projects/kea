@@ -71,14 +71,16 @@ CommandSession::read_data_definition(const std::string& filename) {
     file.close();
 }
 
-CommandSession::CommandSession(std::string module_name,
-                               std::string spec_file_name,
+CommandSession::CommandSession(std::string spec_file_name,
                                isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config),
                                isc::data::ElementPtr(*command_handler)(isc::data::ElementPtr command)
                               ) throw (isc::cc::SessionError):
-    module_name_(module_name),
     session_(isc::cc::Session())
 {
+    read_data_definition(spec_file_name);
+    sleep(1);
+
+    module_name_ = data_definition_.getDefinition()->get("data_specification")->get("module_name")->stringValue();
     config_handler_ = config_handler;
     command_handler_ = command_handler;
 
@@ -89,18 +91,16 @@ CommandSession::CommandSession(std::string module_name,
     ElementPtr answer, env;
 
     session_.establish();
-    session_.subscribe(module_name, "*");
+    session_.subscribe(module_name_, "*");
     //session_.subscribe("Boss", "*");
     //session_.subscribe("statistics", "*");
-    read_data_definition(spec_file_name);
-    sleep(1);
     // send the data specification
     session_.group_sendmsg(data_definition_.getDefinition(), "ConfigManager");
     session_.group_recvmsg(env, answer, false);
     
     // get any stored configuration from the manager
     if (config_handler_) {
-        ElementPtr cmd = Element::createFromString("{ \"command\": [\"get_config\", {\"module_name\":\"" + module_name + "\"} ] }");
+        ElementPtr cmd = Element::createFromString("{ \"command\": [\"get_config\", {\"module_name\":\"" + module_name_ + "\"} ] }");
         session_.group_sendmsg(cmd, "ConfigManager");
         session_.group_recvmsg(env, answer, false);
         cout << "[XX] got config: " << endl << answer->str() << endl;

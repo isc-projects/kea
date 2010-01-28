@@ -61,6 +61,9 @@ class DataDefinition:
     def getDefinition(self):
         return self._data_spec
 
+    def getModuleName(self):
+        return self._data_spec["data_specification"]["module_name"]
+
 def _check(data_spec):
     if type(data_spec) != dict:
         raise DataDefinitionError("data specification not a dict")

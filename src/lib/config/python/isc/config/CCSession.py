@@ -26,17 +26,15 @@ from ISC.CC import Session
 import isc
 
 class CCSession:
-    def __init__(self, module_name, spec_file_name,
-                 config_handler, command_handler):
-        self._module_name = module_name
-        #self._spec_file_name = spec_file_name
+    def __init__(self, spec_file_name, config_handler, command_handler):
+        self._data_definition = isc.config.DataDefinition(spec_file_name)
+        self._module_name = self._data_definition.getModuleName()
+        
         self.setConfigHandler(config_handler)
         self.setCommandHandler(command_handler)
 
-        self._data_definition = isc.config.DataDefinition(spec_file_name)
-
         self._session = Session()
-        self._session.group_subscribe(module_name, "*")
+        self._session.group_subscribe(self._module_name, "*")
 
         self.__sendSpec()
         self.__getFullConfig()
@@ -49,7 +47,10 @@ class CCSession:
         """Returns the command-channel session that is used, so the
            application can use it directly"""
         return self._session
-    
+
+    def close(self):
+        self._session.close()
+
     def checkCommand(self):
         """Check whether there is a command on the channel.
            Call the command callback function if so"""

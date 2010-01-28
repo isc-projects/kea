@@ -107,7 +107,7 @@ main(int argc, char* argv[]) {
 
     // initialize command channel
     try {
-        CommandSession cs = CommandSession(PROGRAM, PARKINGLOT_SPECFILE_LOCATION, my_config_handler, my_command_handler);
+        CommandSession cs = CommandSession(PARKINGLOT_SPECFILE_LOCATION, my_config_handler, my_command_handler);
     
         // main server loop
         fd_set fds;
