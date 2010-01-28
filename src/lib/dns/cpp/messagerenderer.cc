@@ -163,6 +163,14 @@ MessageRenderer::skip(size_t len)
 }
 
 void
+MessageRenderer::clear()
+{
+    impl_->buffer_.clear();
+    impl_->nbuffer_.clear();
+    impl_->nodeset_.clear();
+}
+
+void
 MessageRenderer::writeUint8(uint8_t data)
 {
     impl_->buffer_.writeUint8(data);

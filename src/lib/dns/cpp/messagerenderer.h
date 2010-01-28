@@ -113,6 +113,11 @@ public:
     ///
     /// \param len The length of the gap to be inserted in bytes.
     void skip(size_t len);
+    /// \brief Clear the internal buffer and other internal resources.
+    ///
+    /// This method can be used to re-initialize and reuse the renderer
+    /// without constructing a new one.
+    void clear();
     /// \brief Write an unsigned 8-bit integer into the internal buffer.
     ///
     /// \param data The 8-bit integer to be written into the internal buffer.
