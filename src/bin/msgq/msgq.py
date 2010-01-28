@@ -198,7 +198,7 @@ class MsgQ:
             return
 
         try:
-            routingmsg = ISC.CC.Message.from_wire(routing)
+            routingmsg = ISC.CC.message.from_wire(routing)
         except DecodeError as err:
             self.kill_socket(fd, sock)
             sys.stderr.write("Routing decode error: %s\n" % err)
@@ -228,9 +228,9 @@ class MsgQ:
 
     def preparemsg(self, env, msg = None):
         if type(env) == dict:
-            env = ISC.CC.Message.to_wire(env)
+            env = ISC.CC.message.to_wire(env)
         if type(msg) == dict:
-            msg = ISC.CC.Message.to_wire(msg)
+            msg = ISC.CC.message.to_wire(msg)
         length = 2 + len(env);
         if msg:
             length += len(msg)
