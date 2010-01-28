@@ -1,2 +1,2 @@
-from isc.config.CCSession import *
-from isc.config.DataDefinition import *
+from isc.config.ccsession import *
+from isc.config.datadefinition import *
