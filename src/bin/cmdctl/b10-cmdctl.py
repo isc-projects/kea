@@ -202,8 +202,8 @@ class SecureHTTPServer(http.server.HTTPServer):
         try:
             connstream = ssl.wrap_socket(newsocket,
                                      server_side = True,
-                                     certfile = 'create_your_cert.pem',
-                                     keyfile = 'create_your_cert.pem',
+                                     certfile = 'b10-cmdctl.pem',
+                                     keyfile = 'b10-cmdctl.pem',
                                      ssl_version = ssl.PROTOCOL_SSLv23)
             return (connstream, fromaddr)
         except ssl.SSLError as e :
