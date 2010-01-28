@@ -30,3 +30,28 @@ report-coverage:
 
 coverage: clean-coverage perform-coverage report-coverage
 
+pyshared:
+	mkdir pyshared
+	mkdir pyshared/isc
+	ln -s ${abs_top_srcdir}/src/lib/config/python/isc/config pyshared/isc/config
+	ln -s ${abs_top_srcdir}/src/lib/cc/python/ISC/CC pyshared/isc/cc
+
+include:
+	mkdir include
+	ln -s ${abs_top_srcdir}/src/lib/cc/cpp include/cc
+	ln -s ${abs_top_srcdir}/src/lib/config/cpp include/config
+	ln -s ${abs_top_srcdir}/src/lib/dns/cpp include/dns
+
+stree_symlinks:	pyshared include
+.PHONY: stree_symlinks
+
+all: stree_symlinks
+clean-local:
+	rm pyshared/isc/config
+	rm pyshared/isc/cc
+	rmdir pyshared/isc
+	rmdir pyshared
+	rm include/cc
+	rm include/config
+	rm include/dns
+	rmdir include
