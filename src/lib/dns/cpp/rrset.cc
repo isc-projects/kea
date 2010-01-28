@@ -110,7 +110,7 @@ struct BasicRRsetImpl {
     RRClass rrclass_;
     RRType rrtype_;
     RRTTL ttl_;
-    std::vector<rdata::RdataPtr> rdatalist_;
+    vector<RdataPtr> rdatalist_;
 };
 
 BasicRRset::BasicRRset(const Name& name, const RRClass& rrclass,
