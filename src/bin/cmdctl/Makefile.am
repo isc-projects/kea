@@ -8,4 +8,4 @@ CLEANFILES=	b10-cmdctl.py
 # this is done here since configure.ac AC_OUTPUT doesn't expand exec_prefix
 b10-cmdctl: b10-cmdctl.py
 	$(SED) "s|@@PYTHONPATH@@|@pyexecdir@|" b10-cmdctl.py >$@
-#        chmod a+x $@
+	chmod a+x $@
