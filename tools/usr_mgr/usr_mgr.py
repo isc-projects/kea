@@ -21,7 +21,7 @@ class PasswordHash(object):
 def check_username(name):
     csvfile = open('passwd.csv')
     ret = 0
-    reader = csv.reader(csvfile, delimiter = "\t", quoting = csv.QUOTE_MINIMAL)
+    reader = csv.reader(csvfile)
     for row in reader:
         if name == row[0]:
             ret = 1
@@ -32,7 +32,7 @@ def check_username(name):
 
 def save_info(name,pw,salt):
     csvfile = open('passwd.csv', 'a')
-    writer = csv.writer(csvfile, delimiter = "\t", quoting = csv.QUOTE_MINIMAL)
+    writer = csv.writer(csvfile)
     writer.writerow([name, pw, salt])
     csvfile.close()
 
