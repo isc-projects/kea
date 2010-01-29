@@ -8,4 +8,4 @@ CLEANFILES = msgq.py
 # this is done here since configure.ac AC_OUTPUT doesn't expand exec_prefix
 msgq: msgq.py
 	$(SED) "s|@@PYTHONPATH@@|@pyexecdir@|" msgq.py >$@
-#        chmod a+x $@
+	chmod a+x $@
