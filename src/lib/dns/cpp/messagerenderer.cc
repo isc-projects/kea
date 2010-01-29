@@ -219,7 +219,8 @@ MessageRenderer::writeName(const Name& name, bool compress)
     name.toWire(impl_->nbuffer_);
 
     unsigned int i;
-    std::set<NameCompressNode>::const_iterator n;
+    std::set<NameCompressNode>::const_iterator notfound = impl_->nodeset_.end();
+    std::set<NameCompressNode>::const_iterator n = notfound;
 
     // Find the longest ancestor name in the rendered set that matches the
     // given name.
@@ -231,7 +232,7 @@ MessageRenderer::writeName(const Name& name, bool compress)
         n = impl_->nodeset_.find(NameCompressNode(impl_->nbuffer_, i,
                                                   impl_->nbuffer_.getLength() -
                                                   i));
-        if (n != impl_->nodeset_.end()) {
+        if (n != notfound) {
             break;
         }
     }
@@ -241,7 +242,7 @@ MessageRenderer::writeName(const Name& name, bool compress)
     // Write uncompress part...
     impl_->buffer_.writeData(impl_->nbuffer_.getData(),
                              compress ? i : impl_->nbuffer_.getLength());
-    if (compress && n != impl_->nodeset_.end()) {
+    if (compress && n != notfound) {
         // ...and compression pointer if available.
         uint16_t pointer = (*n).pos_;
         pointer |= Name::COMPRESS_POINTER_MARK16;
