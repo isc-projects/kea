@@ -1,14 +1,14 @@
 #!/usr/bin/python
 #
-# This program collects "counters" from "statistics" channel.
-# It accepts one command: "Boss" group "shutdown"
+# This program collects 'counters' from 'statistics' channel.
+# It accepts one command: 'Boss' group 'shutdown'
 
 import ISC.CC
 import time
 import select
 import os
 
-bossgroup = "Boss"
+bossgroup = 'Boss'
 
 def total(s):
     def totalsub(d,s):
@@ -50,12 +50,14 @@ def total(s):
 def dicttoxml(stats):
     def dicttoxmlsub(s, level):
         output = ''
-        spaces = '  ' * level
+        spaces = ' ' * level
         for k in s.keys():
             if (isinstance(s[k], dict)):
-                output += spaces + ('<%s>\n' %k) + dicttoxmlsub(s[k], level+1) + spaces + '</%s>\n' %k
+                output += spaces + ('<%s>\n' %k) \
+                  + dicttoxmlsub(s[k], level+1) \
+                  + spaces + '</%s>\n' %k
             else:
-                output += spaces + '<%s>%s</%s>\n' %(k, s[k], k)
+                output += spaces + '<%s>%s</%s>\n' % (k, s[k], k)
         return output
 
     for k in stats.keys():
@@ -65,8 +67,10 @@ def dicttoxml(stats):
             output = output + dicttoxmlsub(s, 1)
         else:
             for l in s.keys():
-                output = output + '  <from="%s">\n' %l + dicttoxmlsub(s[l], 2) + "  </from>\n"
-        output = output + "</component>\n"
+                output +=   ' <from="%s">\n' % l \
+                          + dicttoxmlsub(s[l], 2) \
+                          + '  </from>\n'
+        output += '</component>\n'
         return output
 
 def dump_stats(statpath, statcount, stat):
@@ -75,9 +79,9 @@ def dump_stats(statpath, statcount, stat):
     newfile.close()
     loop = statcount
     while(loop > 0):
-        old = statpath + '.%d'%loop
+        old = statpath + '.%d' % loop
         loop -= 1
-        new = statpath + '.%d'%loop
+        new = statpath + '.%d' % loop
         if (os.access(new, os.F_OK)):
             os.rename(new, old)
     if (os.access(statpath, os.F_OK)):
@@ -107,10 +111,10 @@ def collector(statgroup,step,statpath,statcount):
         for sock in r:
             if sock == cc._socket:
                 data,envelope = cc.group_recvmsg(False)
-                if (envelope["group"] == "Boss"):
-                    if ("shutdown" in data):
+                if (envelope['group'] == 'Boss'):
+                    if ('shutdown' in data):
                         exit()
-                if (envelope["group"] == statgroup):
+                if (envelope['group'] == statgroup):
                     # Check received data
                     if (not('component' in data and 'version' in data
                         and 'stats' in data)):
@@ -123,57 +127,6 @@ def collector(statgroup,step,statpath,statcount):
                     (stats[component])[_from] = data;
                     statstotal[component] = total(stats[component])
                     last_recvd_time = time.time()
-                    #print (stats)
-                    #print (statstotal)
-                    #print (dicttoxml(statstotal))
 
-def test_total():
-    stats = {
-              'auth': {
-                     'from1': {
-                               'component':'auth',
-                               'version':1,
-                               'from':'from1',
-                               'timestamp':20100125,
-                               'stats': {
-                                   'AUTH': {
-                                       'counterid': 1,
-                                       'requestv4': 2,
-                                       'requestv6': 4,
-                                   },
-                                   'SYS': {
-                                       'sockets': 8,
-                                       'memory': 16,
-                                   },
-                                },
-                     },
-                     'from2': {
-                               'component':'auth',
-                               'version':1,
-                               'from':'from1',
-                               'timestamp':20100126,
-                               'stats': {
-                                   'AUTH': {
-                                       'counterid': 256,
-                                       'requestv4': 512,
-                                       'requestv6': 1024,
-                                   },
-                                   'SYS': {
-                                       'sockets': 2048,
-                                       'memory': 4096,
-                                   },
-                                },
-                     },
-              },
-            };
-    t = {}
-    for key in stats:
-        t[key] = total(stats[key])
-    print (stats)
-    print (dicttoxml(stats))
-    print (t)
-    print (dicttoxml(t))
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     collector('statistics', 10, '/tmp/stats', 100)
-    #test_total()
