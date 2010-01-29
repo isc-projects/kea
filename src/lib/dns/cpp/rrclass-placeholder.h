@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
+// $Id: rrclass.h 530 2010-01-26 22:15:42Z jinmei $
 
 #ifndef __RRCLASS_H
 #define __RRCLASS_H 1
@@ -235,34 +235,15 @@ public:
     bool operator<(const RRClass& other) const
     { return (classcode_ < other.classcode_); }
 
-    // (Some) Well-known RRclass constants
-    // Note: we'll auto-generate these in a near future version.  These are
-    // hard-coded for a proof of concept.
-    static const RRClass& IN();
-    static const RRClass& CH();
+    // BEGIN_WELL_KNOWN_CLASS_DECLARATIONS
+    // END_WELL_KNOWN_CLASS_DECLARATIONS
 
 private:
     uint16_t classcode_;
 };
 
-// We'll probably auto generate this code.  But in this preliminary version
-// we simply hard code some selected classes.
-// Describing these will be deferred until that point.
-inline const RRClass&
-RRClass::IN()
-{
-    static RRClass rrclass(1);
-
-    return (rrclass);
-}
-
-inline const RRClass&
-RRClass::CH()
-{
-    static RRClass rrclass(3);
-
-    return (rrclass);
-}
+// BEGIN_WELL_KNOWN_CLASS_DEFINITIONS
+// END_WELL_KNOWN_CLASS_DEFINITIONS
 
 ///
 /// \brief Insert the \c RRClass as a string into stream.

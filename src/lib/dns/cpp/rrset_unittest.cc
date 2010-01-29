@@ -18,6 +18,7 @@
 #include "messagerenderer.h"
 #include "name.h"
 #include "rdata.h"
+#include "rdataclass.h"
 #include "rrclass.h"
 #include "rrtype.h"
 #include "rrttl.h"

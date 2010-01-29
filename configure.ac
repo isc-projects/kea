@@ -180,6 +180,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/msgq/msgq_test
            src/bin/msgq/run_msgq.sh
            src/bin/parkinglot/config.h
+           src/lib/dns/cpp/gen-rdatacode.py
           ], [
            chmod +x src/bin/cfgmgr/run_b10-cfgmgr.sh
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
@@ -187,5 +188,6 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            chmod +x src/bin/bindctl/bindctl
            chmod +x src/bin/msgq/run_msgq.sh
            chmod +x src/bin/msgq/msgq_test
+	   chmod +x src/lib/dns/cpp/gen-rdatacode.py
           ])
 AC_OUTPUT
