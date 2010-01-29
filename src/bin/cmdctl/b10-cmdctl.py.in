@@ -117,7 +117,7 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                 param = json.loads(post_str)
 
             reply_msg = self.server.send_command_to_module(mod, cmd, param)
-            print('cmd-ctrld finish send message \'%s\' to module %s' % (cmd, mod))
+            print('b10-cmdctl finish send message \'%s\' to module %s' % (cmd, mod))
         
         #TODO, set proper rcode
         self.send_response(rcode)
@@ -167,7 +167,7 @@ class CommandControl():
             content.append(params)
 
         msg = {'command' : content}
-        print('cmd-ctrld send command \'%s\' to %s' %(command_name, module_name))
+        print('b10-cmdctl send command \'%s\' to %s' %(command_name, module_name))
         try:
             self.cc.group_sendmsg(msg, module_name)
             answer, env = self.cc.group_recvmsg(False)
@@ -186,7 +186,7 @@ class CommandControl():
                 print("Error: unexpected answer from %s" % module_name)
         except Exception as e:
             print(e)
-            print('cmd-ctrld fail send command \'%s\' to %s' % (command_name, module_name))
+            print('b10-cmdctl fail send command \'%s\' to %s' % (command_name, module_name))
         return {}
 
 
@@ -248,7 +248,7 @@ class SecureHTTPServer(http.server.HTTPServer):
         return self.cmdctrl.send_command(module_name, command_name, params)
 
 def run(server_class = SecureHTTPServer, addr = 'localhost', port = 8080):
-    print("cmd-ctrld module is starting on :%s port:%d" %(addr, port))
+    print("b10-cmdctl module is starting on :%s port:%d" %(addr, port))
     httpd = server_class((addr, port), SecureHTTPRequestHandler)
     httpd.serve_forever()
 
@@ -257,7 +257,7 @@ if __name__ == '__main__':
     try:
         run()
     except ISC.CC.SessionError as se:
-        print("[cmd-ctrld] Error creating cmd-ctrld, "
+        print("[b10-cmdctl] Error creating b10-cmdctl, "
                 "is the command channel daemon running?")        
     except KeyboardInterrupt:
         print("exit http server")
