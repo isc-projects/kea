@@ -127,8 +127,8 @@ def import_copyright():
 
 if __name__ == "__main__":
     copyright_txt = import_copyright()
-    for dir in list(os.listdir('rdata')):
-        classdir = 'rdata' + os.sep + dir
+    for dir in list(os.listdir('@srcdir@/rdata')):
+        classdir = '@srcdir@/rdata' + os.sep + dir
         m = re_typecode.match(dir)
         if os.path.isdir(classdir) and (m != None or dir == 'generic'):
             if dir == 'generic':
@@ -191,7 +191,7 @@ RRType::''' + rrtype + '''()
     return (rrtype);
 }\n
 '''
-    rrtype_header_temp = open('rrtype-placeholder.h', 'r')
+    rrtype_header_temp = open('@srcdir@/rrtype-placeholder.h', 'r')
     rrtype_header_out = open('rrtype.h', 'w')
     rrtype_header_out.write(copyright_txt)
     for line in rrtype_header_temp.readlines():
@@ -217,7 +217,7 @@ RRClass::''' + rrclass + '''()
 }\n
 '''
 
-    rrclass_header_temp = open('rrclass-placeholder.h', 'r')
+    rrclass_header_temp = open('@srcdir@/rrclass-placeholder.h', 'r')
     rrclass_header_out = open('rrclass.h', 'w')
     rrclass_header_out.write(copyright_txt)
     for line in rrclass_header_temp.readlines():
@@ -252,7 +252,7 @@ RRClass::''' + rrclass + '''()
             typeandclassparams += ', RdataFactoryPtr(new RdataFactory<'
             typeandclassparams += class_txt + '::' + type_utxt + '>()));\n'
 
-    rrparam_temp = open('rrparamregistry-placeholder.cc', 'r')
+    rrparam_temp = open('@srcdir@/rrparamregistry-placeholder.cc', 'r')
     rrparam_out = open('rrparamregistry.cc', 'w')
     rrparam_out.write(copyright_txt)
     for line in rrparam_temp.readlines():
