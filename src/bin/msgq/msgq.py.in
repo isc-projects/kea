@@ -1,3 +1,7 @@
+#!@PYTHON@
+
+import sys; sys.path.append ('@@PYTHONPATH@@')
+
 """This code implements the msgq daemon."""
 
 import subprocess

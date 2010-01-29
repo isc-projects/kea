@@ -168,21 +168,23 @@ AC_CONFIG_FILES([Makefile
                  src/lib/dns/cpp/Makefile
                ])
 AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr
-           src/bin/cmdctl/b10-cmdctl
+           src/bin/cmdctl/b10-cmdctl.py
+           src/bin/cmdctl/run_b10-cmdctl.sh
            src/bin/bind10/bind10.py
            src/bin/bind10/bind10_test
            src/bin/bind10/run_bind10.sh
            src/bin/bindctl/bindctl
            src/bin/bindctl/unittest/bindctl_test
-           src/bin/msgq/msgq
+           src/bin/msgq/msgq.py
            src/bin/msgq/msgq_test
+           src/bin/msgq/run_msgq.sh
            src/bin/parkinglot/config.h
           ], [
            chmod +x src/bin/cfgmgr/b10-cfgmgr
-           chmod +x src/bin/cmdctl/b10-cmdctl
-           chmod +x src/bin/bind10/bind10
+           chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
+           chmod +x src/bin/bind10/run_bind10.sh
            chmod +x src/bin/bindctl/bindctl
-           chmod +x src/bin/msgq/msgq
+           chmod +x src/bin/msgq/run_msgq.sh
            chmod +x src/bin/msgq/msgq_test
           ])
 AC_OUTPUT
