@@ -1,3 +1,7 @@
+#!@PYTHON@
+
+import sys; sys.path.append ('@@PYTHONPATH@@')
+
 import ISC
 import signal
 import ast
