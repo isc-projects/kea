@@ -137,14 +137,16 @@ private:
 class NS : public Rdata {
 public:
     explicit NS(const std::string& namestr) : nsname_(namestr) {}
-    explicit NS(const Name& nsname) : nsname_(nsname) {}
     explicit NS(InputBuffer& buffer, size_t rdata_len);
     NS(const NS& other);
-    virtual ~NS() {}
     virtual std::string toText() const;
     virtual void toWire(OutputBuffer& buffer) const;
     virtual void toWire(MessageRenderer& buffer) const;
     virtual int compare(const Rdata& other) const;
+    ///
+    /// Specialized constructorx
+    ///
+    explicit NS(const Name& nsname) : nsname_(nsname) {}
     ///
     /// Specialized methods
     ///
