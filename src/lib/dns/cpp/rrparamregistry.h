@@ -179,6 +179,10 @@ public:
              const std::string& class_string, uint16_t class_code,
              rdata::RdataFactoryPtr rdata_factory);
 
+    /// TBD
+    void add(const std::string& type_string, uint16_t type_code,
+             rdata::RdataFactoryPtr rdata_factory);
+
     /// \brief Add mappings between RR type code and textual representation.
     ///
     /// This method adds a mapping from the type code of an RR to its textual

@@ -124,6 +124,7 @@ const size_t RRClassParam::UNKNOWN_MAXLEN =
 /// cases.
 typedef pair<RRType, RRClass> RRTypeClass;
 typedef map<RRTypeClass, RdataFactoryPtr> RdataFactoryMap;
+typedef map<RRType, RdataFactoryPtr> GenericRdataFactoryMap;
 
 template <typename T>
 class RdataFactory : public AbstractRdataFactory {
@@ -161,6 +162,7 @@ struct RRParamRegistryImpl {
     /// Mappings from textual representations of RR classes to integer codes.
     CodeRRClassMap code2classmap;
     RdataFactoryMap rdata_factories;
+    GenericRdataFactoryMap genericrdata_factories;
 };
 
 RRParamRegistry::RRParamRegistry()
@@ -181,19 +183,16 @@ RRParamRegistry::RRParamRegistry()
         // each class repeatedly?  Or should we have a special mapping category
         // of "generic" as a last resort?
         add("NS", 2, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::NS>()));
-        add("NS", 2, "CH", 3, RdataFactoryPtr(new RdataFactory<generic::NS>()));
+        add("NS", 2, RdataFactoryPtr(new RdataFactory<generic::NS>()));
         add("SOA", 6, "IN", 1,
             RdataFactoryPtr(new RdataFactory<generic::SOA>()));
-        add("SOA", 6, "CH", 3,
-            RdataFactoryPtr(new RdataFactory<generic::SOA>()));
+        add("SOA", 6, RdataFactoryPtr(new RdataFactory<generic::SOA>()));
         add("MX", 15, "IN", 1,
             RdataFactoryPtr(new RdataFactory<generic::MX>()));
-        add("MX", 15, "CH", 3,
-            RdataFactoryPtr(new RdataFactory<generic::MX>()));
+        add("MX", 15, RdataFactoryPtr(new RdataFactory<generic::MX>()));
         add("TXT", 16, "IN", 1,
             RdataFactoryPtr(new RdataFactory<generic::TXT>()));
-        add("TXT", 16, "CH", 3,
-            RdataFactoryPtr(new RdataFactory<generic::TXT>()));
+        add("TXT", 16, RdataFactoryPtr(new RdataFactory<generic::TXT>()));
     } catch (...) {
         delete impl_;
         throw;
@@ -211,6 +210,24 @@ RRParamRegistry::getRegistry()
     static RRParamRegistry registry;
 
     return (registry);
+}
+
+void
+RRParamRegistry::add(const string& typecode_string, uint16_t typecode,
+                     RdataFactoryPtr rdata_factory)
+{
+    bool type_added = false;
+    try {
+        type_added = addType(typecode_string, typecode);
+        impl_->genericrdata_factories.insert(pair<RRType, RdataFactoryPtr>(
+                                                 RRType(typecode),
+                                                 rdata_factory));
+    } catch (...) {
+        if (type_added) {
+            removeType(typecode);
+        }
+        throw;
+    }
 }
 
 void
@@ -439,6 +456,12 @@ RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
         return (found->second->create(rdata_string));
     }
 
+    GenericRdataFactoryMap::const_iterator genfound =
+        impl_->genericrdata_factories.find(rrtype);
+    if (genfound != impl_->genericrdata_factories.end()) {
+        return (genfound->second->create(rdata_string));
+    }
+
     dns_throw(InvalidRdataText, "Unrecognized Rdata type to create from text");
 }
 
@@ -450,6 +473,12 @@ RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
         impl_->rdata_factories.find(RRTypeClass(rrtype, rrclass));
     if (found != impl_->rdata_factories.end()) {
         return (found->second->create(buffer, rdata_len));
+    }
+
+    GenericRdataFactoryMap::const_iterator genfound =
+        impl_->genericrdata_factories.find(rrtype);
+    if (genfound != impl_->genericrdata_factories.end()) {
+        return (genfound->second->create(buffer, rdata_len));
     }
 
     // construct an "unknown" type of RDATA
@@ -464,6 +493,12 @@ RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
         impl_->rdata_factories.find(RRTypeClass(rrtype, rrclass));
     if (found != impl_->rdata_factories.end()) {
         return (found->second->create(source));
+    }
+
+    GenericRdataFactoryMap::const_iterator genfound =
+        impl_->genericrdata_factories.find(rrtype);
+    if (genfound != impl_->genericrdata_factories.end()) {
+        return (genfound->second->create(source));
     }
 
     dns_throw(InvalidRdataText, "TBD");

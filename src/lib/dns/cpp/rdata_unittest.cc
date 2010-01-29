@@ -243,6 +243,8 @@ TEST_F(RdataTest, createFromText_NS)
     EXPECT_EQ(0, rdata_ns.compare(generic::NS("ns.example.com.")));
     // should be case sensitive.
     EXPECT_EQ(0, rdata_ns.compare(generic::NS("NS.EXAMPLE.COM")));
+    EXPECT_EQ(0, rdata_ns.compare(*createRdata(RRType("NS"), RRClass(65000),
+                                               "ns.example.com")));
 }
 
 TEST_F(RdataTest, createFromWire_NS)
