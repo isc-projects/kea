@@ -1,6 +1,7 @@
 #!@PYTHON@
 
 import sys; sys.path.append ('@@PYTHONPATH@@')
+import os
 
 """\
 This file implements the Boss of Bind (BoB, or bob) program.
@@ -22,6 +23,18 @@ requires that signal processing happen in the main thread, we do
 signal handling outside of that class, in the code running for
 __main__.
 """
+
+# If B10_SPECFILE_PATH is set in the environment, we use the specification
+# file there, instead of the installed one (for instance when we run
+# from the source tree)
+if "B10_SPECFILE_PATH" in os.environ:
+    SPECFILE_LOCATION = os.environ["B10_SPECFILE_PATH"] + "bob.spec"
+else:
+    PREFIX = "@prefix@"
+    DATAROOTDIR = "@datarootdir@"
+    SPECFILE_LOCATION = "@datadir@/@PACKAGE@/bob.spec".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
+    
+
 
 # TODO: start up statistics thingy
 
@@ -56,7 +69,8 @@ class ProcessInfo:
             spawn_stdout = None
         spawn_env = self.env
         spawn_env['PATH'] = os.environ['PATH']
-        spawn_env['PYTHON_EXEC'] = os.environ['PYTHON_EXEC']
+        if 'PYTHON_EXEC' in os.environ:
+            spawn_env['PYTHON_EXEC'] = os.environ['PYTHON_EXEC']
         self.process = subprocess.Popen(self.args,
                                         stdin=subprocess.PIPE,
                                         stdout=spawn_stdout,
@@ -172,7 +186,7 @@ class BoB:
         time.sleep(1)
         if self.verbose:
             print("[XX] starting ccsession")
-        self.ccs = isc.config.CCSession("bob.spec", self.config_handler, self.command_handler)
+        self.ccs = isc.config.CCSession(SPECFILE_LOCATION, self.config_handler, self.command_handler)
         if self.verbose:
             print("[XX] ccsession started")
 
