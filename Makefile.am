@@ -47,11 +47,14 @@ stree_symlinks:	pyshared include
 
 all: stree_symlinks
 clean-local:
-	rm pyshared/isc/config
-	rm pyshared/isc/cc
-	rmdir pyshared/isc
-	rmdir pyshared
-	rm include/cc
-	rm include/config
-	rm include/dns
-	rmdir include
+	@if [ -d pyshared/isc ] ; then \
+		rm -f pyshared/isc/*; \
+		rmdir pyshared/isc; \
+	fi
+	@if [ -d pyshared ]; then \
+		rmdir pyshared; \
+	fi
+	@if [ -d include ]; then \
+		rm -f include/*; \
+		rmdir include; \
+	fi
