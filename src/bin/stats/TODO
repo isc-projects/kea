@@ -1,0 +1,5 @@
+statsd TODO.
+
+- read configuration from cfgd.
+- how to publish statistics data
+- need to be controled by BoB
