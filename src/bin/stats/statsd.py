@@ -9,6 +9,7 @@ import select
 import os
 
 bossgroup = 'Boss'
+myname = 'statsd'
 
 def total(s):
     def totalsub(d,s):
@@ -47,7 +48,7 @@ def total(s):
     out['timestamp2'] = _time2;
     return out
 
-def dicttoxml(stats):
+def dicttoxml(stats, level = 0):
     def dicttoxmlsub(s, level):
         output = ''
         spaces = ' ' * level
@@ -61,21 +62,33 @@ def dicttoxml(stats):
         return output
 
     for k in stats.keys():
-        output = '<component="%s">\n' % k
+        space = ' ' * level
+        output = space + '<component component="%s">\n' % k
         s = stats[k]
         if ('component' in s or 'components' in s):
-            output = output + dicttoxmlsub(s, 1)
+            output += dicttoxmlsub(s, level+1)
         else:
             for l in s.keys():
-                output +=   ' <from="%s">\n' % l \
-                          + dicttoxmlsub(s[l], 2) \
-                          + '  </from>\n'
-        output += '</component>\n'
+                output +=  space + ' <from from="%s">\n' % l \
+                          + dicttoxmlsub(s[l], level+2) \
+                          + space + '  </from>\n'
+        output += space + '</component>\n'
         return output
 
-def dump_stats(statpath, statcount, stat):
+def dump_stats(statpath, statcount, stat, statraw):
     newfile = open(statpath + '.new', 'w')
-    newfile.write(dicttoxml(stat))
+    newfile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+    newfile.write('<!-- created at '+time.strftime('%Y%m%d %H%M%S')+' -->\n')
+    newfile.write('<isc version="0.0">\n')
+    newfile.write(' <bind10>\n')
+    newfile.write('  <total>\n')
+    newfile.write(dicttoxml(stat, 3))
+    newfile.write('  </total>\n')
+    newfile.write('  <each>\n')
+    newfile.write(dicttoxml(statraw, 3))
+    newfile.write('  </each>\n')
+    newfile.write(' </bind10>\n')
+    newfile.write('</isc>\n')
     newfile.close()
     loop = statcount
     while(loop > 0):
@@ -92,7 +105,7 @@ def collector(statgroup,step,statpath,statcount):
     cc = ISC.CC.Session()
     print (cc.lname)
     cc.group_subscribe(statgroup)
-    cc.group_subscribe(bossgroup)
+    cc.group_subscribe(bossgroup, myname)
     wrote_time = -1
     last_wrote_time = -1
     last_recvd_time = -1
@@ -101,7 +114,7 @@ def collector(statgroup,step,statpath,statcount):
     while 1:
         wait = wrote_time + step - time.time()
         if wait <= 0 and last_recvd_time > wrote_time:
-            dump_stats(statpath, statcount, statstotal)
+            dump_stats(statpath, statcount, statstotal, stats)
             last_wrote_time = wrote_time;
             wrote_time = time.time();
             wait = last_wrote_time + step - time.time()
@@ -111,7 +124,7 @@ def collector(statgroup,step,statpath,statcount):
         for sock in r:
             if sock == cc._socket:
                 data,envelope = cc.group_recvmsg(False)
-                if (envelope['group'] == 'Boss'):
+                if (envelope['group'] == bossgroup):
                     if ('shutdown' in data):
                         exit()
                 if (envelope['group'] == statgroup):
