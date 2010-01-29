@@ -19,6 +19,7 @@
 #include "buffer.h"
 #include "messagerenderer.h"
 #include "rdata.h"
+#include "rdataclass.h"
 #include "rrclass.h"
 #include "rrtype.h"
 

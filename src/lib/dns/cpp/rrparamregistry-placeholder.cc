@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
+// $Id: rrparamregistry.cc 530 2010-01-26 22:15:42Z jinmei $
 
 #include <cassert>
 #include <algorithm>
@@ -32,6 +32,7 @@
 #include "rrclass.h"
 #include "rrtype.h"
 #include "rdata.h"
+#include "rdataclass.h"
 
 using namespace std;
 using namespace boost;
@@ -172,27 +173,8 @@ RRParamRegistry::RRParamRegistry()
     // set up parameters for well-known RRs
     // XXX: this should eventually be more automatic.
     try {
-        // Class-IN specific types
-        add("A", 1, "IN", 1, RdataFactoryPtr(new RdataFactory<in::A>()));
-        add("AAAA", 28, "IN", 1, RdataFactoryPtr(new RdataFactory<in::AAAA>()));
-
-        // Class-CH specific types
-        add("A", 1, "CH", 3, RdataFactoryPtr(new RdataFactory<ch::A>()));
-
-        // should we add factories for class-independent (generic) types to
-        // each class repeatedly?  Or should we have a special mapping category
-        // of "generic" as a last resort?
-        add("NS", 2, "IN", 1, RdataFactoryPtr(new RdataFactory<generic::NS>()));
-        add("NS", 2, RdataFactoryPtr(new RdataFactory<generic::NS>()));
-        add("SOA", 6, "IN", 1,
-            RdataFactoryPtr(new RdataFactory<generic::SOA>()));
-        add("SOA", 6, RdataFactoryPtr(new RdataFactory<generic::SOA>()));
-        add("MX", 15, "IN", 1,
-            RdataFactoryPtr(new RdataFactory<generic::MX>()));
-        add("MX", 15, RdataFactoryPtr(new RdataFactory<generic::MX>()));
-        add("TXT", 16, "IN", 1,
-            RdataFactoryPtr(new RdataFactory<generic::TXT>()));
-        add("TXT", 16, RdataFactoryPtr(new RdataFactory<generic::TXT>()));
+        // BEGIN_WELL_KNOWN_PARAMS
+        // END_WELL_KNOWN_PARAMS
     } catch (...) {
         delete impl_;
         throw;

@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
+// $Id: rrtype.h 534 2010-01-26 23:08:23Z jinmei $
 
 #ifndef __RRTYPE_H
 #define __RRTYPE_H 1
@@ -248,70 +248,15 @@ public:
     { return (typecode_ < other.typecode_); }
     //@}
 
-    // (Some) Well-known RRtype "constants"
-    // Note: we'll auto-generate these in a near future version.  These are
-    // hard-coded for a proof of concept.
-    static const RRType& A();
-    static const RRType& NS();
-    static const RRType& MX();
-    static const RRType& SOA();
-    static const RRType& TXT();
-    static const RRType& AAAA();
+    // BEGIN_WELL_KNOWN_TYPE_DECLARATIONS
+    // END_WELL_KNOWN_TYPE_DECLARATIONS
 
 private:
     uint16_t typecode_;
 };
 
-// We'll probably auto generate this code.  But in this preliminary version
-// we simply hard code some selected types.
-// Describing these will be deferred until that point.
-inline const RRType&
-RRType::A()
-{
-    static RRType rrtype(1);
-
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::NS()
-{
-    static RRType rrtype(2);
-
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::SOA()
-{
-    static RRType rrtype(6);
-
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::MX()
-{
-    static RRType rrtype(15);
-
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::TXT()
-{
-    static RRType rrtype(16);
-
-    return (rrtype);
-}
-
-inline const RRType&
-RRType::AAAA()
-{
-    static RRType rrtype(28);
-
-    return (rrtype);
-}
+// BEGIN_WELL_KNOWN_TYPE_DEFINITIONS
+// END_WELL_KNOWN_TYPE_DEFINITIONS
 
 ///
 /// \brief Insert the \c RRType as a string into stream.

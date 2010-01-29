@@ -18,6 +18,7 @@
 #include "message.h"
 #include "messagerenderer.h"
 #include "question.h"
+#include "rdataclass.h"
 #include "rrclass.h"
 #include "rrttl.h"
 #include "rrtype.h"

@@ -1,6 +1,7 @@
 
 #include <boost/foreach.hpp>
 
+#include <dns/cpp/rdataclass.h>
 #include <dns/cpp/rrttl.h>
 
 #include "data_source_plot.h"
