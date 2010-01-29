@@ -167,7 +167,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/dns/Makefile
                  src/lib/dns/cpp/Makefile
                ])
-AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr
+AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
+           src/bin/cfgmgr/run_b10-cfgmgr.sh
            src/bin/cmdctl/b10-cmdctl.py
            src/bin/cmdctl/run_b10-cmdctl.sh
            src/bin/bind10/bind10.py
@@ -180,7 +181,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr
            src/bin/msgq/run_msgq.sh
            src/bin/parkinglot/config.h
           ], [
-           chmod +x src/bin/cfgmgr/b10-cfgmgr
+           chmod +x src/bin/cfgmgr/run_b10-cfgmgr.sh
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/bind10/run_bind10.sh
            chmod +x src/bin/bindctl/bindctl

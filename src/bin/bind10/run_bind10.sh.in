@@ -3,9 +3,9 @@
 PYTHON_EXEC=${PYTHON_EXEC:-@PYTHON@}
 export PYTHON_EXEC
 
-BIND10_PATH=@abs_top_srcdir@/src/bin/bind10
+BIND10_PATH=@abs_top_builddir@/src/bin/bind10
 
-PATH=@abs_top_srcdir@/src/bin/msgq:@abs_top_srcdir@/src/bin/parkinglot:@abs_top_srcdir@/src/bin/cfgmgr:@abs_top_srcdir@/src/bin/cmdctl:$PATH
+PATH=@abs_top_builddir@/src/bin/msgq:@abs_top_builddir@/src/bin/parkinglot:@abs_top_builddir@/src/bin/cfgmgr:@abs_top_builddir@/src/bin/cmdctl:$PATH
 export PATH
 
 PYTHONPATH=@abs_top_srcdir@/src/lib/cc/python:@abs_top_srcdir@/src/lib/config/python

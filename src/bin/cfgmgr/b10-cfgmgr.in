@@ -1,9 +1,0 @@
-#!/bin/sh
-# use build time srcdir for now
-BINPATH=@abs_top_srcdir@/src/bin/cfgmgr
-LIBPATH=@abs_top_srcdir@/src/lib/cc/python
-
-PYTHON_EXEC=${PYTHON_EXEC:-@PYTHON@}
-
-PYTHONPATH=${LIBPATH}:${PYTHONPATH} ${PYTHON_EXEC} ${BINPATH}/b10-cfgmgr.py
-
