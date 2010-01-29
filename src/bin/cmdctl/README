@@ -1,9 +1,9 @@
-When cmd-ctrld runs, user should provide one certificate and create one account for bindctl. 
+When b10-cmdctrl runs, user should provide one certificate and create one account for bindctl. 
 
 
 1. Get a certificate
 
-cmd-ctrld is a https server, so a certificate should be acquired for the SSL-encrypted connection services it provides.
+b10-cmdctrl is a https server, so a certificate should be acquired for the SSL-encrypted connection services it provides.
 There are many ways of acquiring appropriate cetificates, such as buying one from a certification authority. Another common practice is to generate a self-signed certificate. The simplest way to do this is with the OpenSSL package, using something like the following:
       
    openssl req -new -x509 -days 365 -nodes -out cert.pem -keyout cert.pem
