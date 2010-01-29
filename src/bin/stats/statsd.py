@@ -10,6 +10,7 @@ import os
 
 bossgroup = 'Boss'
 myname = 'statsd'
+debug = 1
 
 def total(s):
     def totalsub(d,s):
@@ -103,7 +104,8 @@ def dump_stats(statpath, statcount, stat, statraw):
 
 def collector(statgroup,step,statpath,statcount):
     cc = ISC.CC.Session()
-    print (cc.lname)
+    if debug:
+        print ("cc.lname=",cc.lname)
     cc.group_subscribe(statgroup)
     cc.group_subscribe(bossgroup, myname)
     wrote_time = -1
@@ -114,6 +116,8 @@ def collector(statgroup,step,statpath,statcount):
     while 1:
         wait = wrote_time + step - time.time()
         if wait <= 0 and last_recvd_time > wrote_time:
+            if debug:
+                print ("dump stats")
             dump_stats(statpath, statcount, statstotal, stats)
             last_wrote_time = wrote_time;
             wrote_time = time.time();
@@ -135,6 +139,8 @@ def collector(statgroup,step,statpath,statcount):
                     component = data['component']
                     _from = envelope['from']
                     data['from'] = _from
+                    if debug:
+                        print ("received from ",_from)
                     if (not (component in stats)):
                         stats[component] = {}
                     (stats[component])[_from] = data;
