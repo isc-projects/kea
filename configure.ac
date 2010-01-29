@@ -169,8 +169,9 @@ AC_CONFIG_FILES([Makefile
                ])
 AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr
            src/bin/cmdctl/b10-cmdctl
-           src/bin/bind10/bind10
+           src/bin/bind10/bind10.py
            src/bin/bind10/bind10_test
+           src/bin/bind10/run_bind10.sh
            src/bin/bindctl/bindctl
            src/bin/bindctl/unittest/bindctl_test
            src/bin/msgq/msgq
