@@ -113,4 +113,24 @@ TEST_F(MessageRendererTest, writeNameCaseCompress)
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
                         buffer.getLength(), &data[0], data.size());
 }
+
+TEST_F(MessageRendererTest, writeRootName)
+{
+    // root name is special: it never causes compression or can (reasonably)
+    // be a compression pointer.  So it makes sense to check this case
+    // explicitly.
+    Name example_name = Name("www.example.com");
+
+    OutputBuffer expected(0);
+    expected.writeUint8(0);     // root name
+    example_name.toWire(expected);
+
+    renderer.writeName(Name("."));
+    renderer.writeName(example_name);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        static_cast<const uint8_t*>(buffer.getData()),
+                        buffer.getLength(),
+                        static_cast<const uint8_t*>(expected.getData()),
+                        expected.getLength());
+}
 }
