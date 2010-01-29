@@ -1,5 +1,0 @@
-Create user and its password by run the following command:
-
-python usr_mgr.py
-
-The user and its password is saved in file 'passwd.csv'.
