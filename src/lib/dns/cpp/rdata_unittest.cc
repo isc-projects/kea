@@ -48,10 +48,12 @@ protected:
     static const uint8_t wiredata_in_aaaa[];
     static const uint8_t wiredata_ns[];
     static const uint8_t wiredata_ns2[];
+    static const uint8_t wiredata_cname[];
+    static const uint8_t wiredata_cname2[];
     static const uint8_t wiredata_txt[];
-    static const generic::NS rdata_ns;
-    static const generic::NS rdata_ns2;
+    static const generic::NS rdata_ns, rdata_ns2;
     static const generic::SOA rdata_soa;
+    static const generic::CNAME rdata_cname, rdata_cname2;
     static const generic::MX rdata_mx;
     static const generic::TXT rdata_txt;
     static const generic::TXT rdata_txt_quoated;
@@ -64,6 +66,8 @@ const generic::NS RdataTest::rdata_ns2("ns2.example.com");
 const generic::SOA RdataTest::rdata_soa(Name("ns.example.com"),
                                         Name("root.example.com"),
                                         2010012601, 3600, 300, 3600000, 1200);
+const generic::CNAME RdataTest::rdata_cname("cn.example.com");
+const generic::CNAME RdataTest::rdata_cname2("cn2.example.com");
 const generic::MX RdataTest::rdata_mx(10, Name("mx.example.com"));
 const generic::TXT RdataTest::rdata_txt("Test String");
 const generic::TXT RdataTest::rdata_txt_quoated("\"Test String\"");
@@ -82,6 +86,16 @@ const uint8_t RdataTest::wiredata_ns2[] = {
     // second name: ns2.example.com.  all labels except the first should be
     // compressed.
     0x03, 0x6e, 0x73, 0x32, 0xc0, 0x03 };
+const uint8_t RdataTest::wiredata_cname[] = {
+    0x02, 0x63, 0x6e, 0x07, 0x65, 0x78, 0x61, 0x6d, 0x70, 0x6c, 0x65, 0x03,
+    0x63, 0x6f, 0x6d, 0x00 };
+const uint8_t RdataTest::wiredata_cname2[] = {
+    // first name: cn.example.com.
+    0x02, 0x63, 0x6e, 0x07, 0x65, 0x78, 0x61, 0x6d, 0x70, 0x6c, 0x65, 0x03,
+    0x63, 0x6f, 0x6d, 0x00,
+    // second name: cn2.example.com.  all labels except the first should be
+    // compressed.
+    0x03, 0x63, 0x6e, 0x32, 0xc0, 0x03 };
 const uint8_t RdataTest::wiredata_txt[] = {
     sizeof("Test String") - 1,
     'T', 'e', 's', 't', ' ', 'S', 't', 'r', 'i', 'n', 'g'
@@ -244,6 +258,8 @@ TEST_F(RdataTest, createFromText_NS)
     EXPECT_EQ(0, rdata_ns.compare(generic::NS("ns.example.com.")));
     // should be case sensitive.
     EXPECT_EQ(0, rdata_ns.compare(generic::NS("NS.EXAMPLE.COM")));
+    // RDATA of a class-independent type should be recognized for any
+    // "unknown" class.
     EXPECT_EQ(0, rdata_ns.compare(*createRdata(RRType("NS"), RRClass(65000),
                                                "ns.example.com")));
 }
@@ -417,6 +433,76 @@ TEST_F(RdataTest, toWireBuffer_TXT)
 TEST_F(RdataTest, toText_TXT)
 {
     EXPECT_EQ("\"Test String\"", rdata_txt.toText());
+}
+
+TEST_F(RdataTest, createFromText_CNAME)
+{
+    EXPECT_EQ(0, rdata_cname.compare(generic::CNAME("cn.example.com")));
+    // explicitly add a trailing dot.  should be the same RDATA.
+    EXPECT_EQ(0, rdata_cname.compare(generic::CNAME("cn.example.com.")));
+    // should be case sensitive.
+    EXPECT_EQ(0, rdata_cname.compare(generic::CNAME("CN.EXAMPLE.COM")));
+    // RDATA of a class-independent type should be recognized for any
+    // "unknown" class.
+    EXPECT_EQ(0, rdata_cname.compare(*createRdata(RRType("CNAME"),
+                                                  RRClass(65000),
+                                                  "cn.example.com")));
+}
+
+TEST_F(RdataTest, createFromWire_CNAME)
+{
+    EXPECT_EQ(0, rdata_cname.compare(
+                  *rdataFactoryFromFile(RRType("CNAME"), RRClass("IN"),
+                                        "testdata/rdata_cname_fromWire")));
+    // RDLENGTH is too short
+    EXPECT_THROW(rdataFactoryFromFile(RRType("CNAME"), RRClass("IN"),
+                                      "testdata/rdata_cname_fromWire", 18),
+                 InvalidRdataLength);
+    // RDLENGTH is too long
+    EXPECT_THROW(rdataFactoryFromFile(RRType("CNAME"), RRClass("IN"),
+                                      "testdata/rdata_cname_fromWire", 36),
+                 InvalidRdataLength);
+    // incomplete name.  the error should be detected in the name constructor
+    EXPECT_THROW(rdataFactoryFromFile(RRType("CNAME"), RRClass("IN"),
+                                      "testdata/rdata_cname_fromWire", 71),
+                 IncompleteName);
+
+    EXPECT_EQ(0, generic::CNAME("cn2.example.com").compare(
+                  *rdataFactoryFromFile(RRType("CNAME"), RRClass("IN"),
+                                        "testdata/rdata_cname_fromWire", 55)));
+    EXPECT_THROW(*rdataFactoryFromFile(RRType("CNAME"), RRClass("IN"),
+                                       "testdata/rdata_cname_fromWire", 63),
+                 InvalidRdataLength);
+}
+
+TEST_F(RdataTest, toWireBuffer_CNAME)
+{
+    rdata_cname.toWire(obuffer);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        obuffer.getData(), obuffer.getLength(),
+                        wiredata_cname, sizeof(wiredata_cname));
+}
+
+TEST_F(RdataTest, toWireRenderer_CNAME)
+{
+    rdata_cname.toWire(renderer);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        obuffer.getData(), obuffer.getLength(),
+                        wiredata_cname, sizeof(wiredata_cname));
+    rdata_cname2.toWire(renderer);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        obuffer.getData(), obuffer.getLength(),
+                        wiredata_cname2, sizeof(wiredata_cname2));
+}
+
+TEST_F(RdataTest, toText_CNAME)
+{
+    EXPECT_EQ("cn.example.com.", rdata_cname.toText());
+}
+
+TEST_F(RdataTest, getCname_CNAME)
+{
+    EXPECT_EQ(Name("cn.example.com."), rdata_cname.getCname());
 }
 
 }
