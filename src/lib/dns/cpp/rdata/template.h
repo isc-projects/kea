@@ -27,11 +27,24 @@
 
 // BEGIN_RDATA_NAMESPACE
 
-//class XX : public Rdata {
+// To add RDATA class definition of a new RR type (say "MyType"), copy this
+// file to an appropriate subdirectory (if it's class-independent type, it
+// should go to "generic/", if it's IN-class specific, it should be in
+// "in_1/", and so on).  The copied file should be named as type_nn.h where
+// "type" is textual representation (all lower cased) of the RR type, and "nn"
+// is the 16-bit type code of the RR type.
+// Normally, you'll need to define some specific member variables in the
+// "RR-type specific members" space (please make them private).  In addition,
+// you may want to define some specific member functions, either public or
+// private (or, though unlikely for a leaf class, protected).
+
+class MyType : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
     // END_COMMON_MEMBERS
-//};
+private:
+    // RR-type specific members are here.
+};
 
 // END_RDATA_NAMESPACE
 // END_ISC_NAMESPACE

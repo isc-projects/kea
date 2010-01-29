@@ -26,5 +26,48 @@ using namespace std;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
+// To add RDATA implementation of a new RR type (say "MyType"), copy this
+// template into the appropriate subdirectory with the appropriate name
+// (see template.h).
+// Then define (at least) the following common methods (that are inherited
+// from the base abstract class).
+// If you added member functions specific to this derived class, you'll need
+// to implement them here, of course.
+
+MyType::MyType(const std::string& type_str)
+{
+}
+
+MyType::MyType(InputBuffer& buffer, size_t rdata_len)
+{
+}
+
+MyType::MyType(const MyType& other)
+{
+}
+
+std::string
+MyType::toText() const
+{
+}
+
+void
+MyType::toWire(OutputBuffer& buffer) const
+{
+}
+
+void
+MyType::toWire(MessageRenderer& renderer) const
+{
+}
+
+int
+MyType::compare(const Rdata& other) const
+{
+    // The compare method normally begins with this dynamic cast.
+    const MyType& other_mytype = dynamic_cast<const MyType&>(other);
+    // ...
+}
+
 // END_RDATA_NAMESPACE
 // END_ISC_NAMESPACE
