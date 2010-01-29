@@ -12,5 +12,5 @@ PYTHONPATH=@abs_top_srcdir@/src/lib/cc/python:@abs_top_srcdir@/src/lib/config/py
 export PYTHONPATH
 
 cd ${BIND10_PATH}
-exec ${PYTHON_EXEC} -O bind10.py $*
+exec ${PYTHON_EXEC} -O bind10 $*
 

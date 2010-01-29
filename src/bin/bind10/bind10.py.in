@@ -1,3 +1,7 @@
+#!@PYTHON@
+
+import sys; sys.path.append ('@@PYTHONPATH@@')
+
 """\
 This file implements the Boss of Bind (BoB, or bob) program.
 
@@ -24,7 +28,6 @@ __main__.
 import subprocess
 import signal
 import os
-import sys
 import re
 import errno
 import time
