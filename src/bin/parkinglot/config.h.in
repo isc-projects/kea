@@ -1,1 +1,1 @@
-#define PARKINGLOT_SPECFILE_LOCATION "@abs_top_srcdir@/src/bin/parkinglot/parkinglot.spec"
+#define PARKINGLOT_SPECFILE_LOCATION "@prefix@/share/bind/parkinglot.spec"

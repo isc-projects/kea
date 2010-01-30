@@ -29,6 +29,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <cerrno>
 
 #include <boost/foreach.hpp>
 
@@ -55,7 +56,7 @@ CommandSession::read_data_definition(const std::string& filename) {
     // this file should be declared in a @something@ directive
     file.open(filename.c_str());
     if (!file) {
-        cout << "error opening " << filename << endl;
+        cout << "error opening " << filename << ": " << strerror(errno) << endl;
         exit(1);
     }
 
