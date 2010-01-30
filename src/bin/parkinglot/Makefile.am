@@ -13,7 +13,7 @@ b10_parkinglot_LDADD =  $(top_builddir)/src/lib/dns/cpp/.libs/libdns.a
 b10_parkinglot_LDADD += $(top_builddir)/src/lib/config/cpp/libclient.a
 b10_parkinglot_LDADD += $(top_builddir)/src/lib/cc/cpp/libcc.a
 
-b10_parkinglotdir = $(DESTDIR)$(pkgsrcdir)
+b10_parkinglotdir = $(DESTDIR)$(pkgdatadir)
 b10_parkinglot_DATA = parkinglot.spec
 
 # TODO: don't install this here
