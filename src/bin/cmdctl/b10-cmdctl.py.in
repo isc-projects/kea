@@ -62,110 +62,118 @@ CERTIFICATE_FILE = SPECFILE_PATH + "/b10-cmdctl.pem"
 class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     '''https connection request handler.
     Currently only GET and POST are supported.
+
     '''
 
-    def _check_username(self, name):
-        if self.server.user_infos.get(name):
-            return True
-        return False
-        
-    
-    def _check_password(self, name, password):
-        if not password:
-            return False
-        else:
-            info = self.server.user_infos.get(name)            
-            datastr = (password + info[1]).encode()
-            return sha1(datastr).hexdigest() == info[0]        
-
-    def _process_user_login(self):
-        # check username and password, if pass, record client's session id
-        rcode, reply = http.client.UNAUTHORIZED, []        
-        length = self.headers.get('content-length')
-        if not length:
-            reply = ["invalid username or password"]     
-        else:
-            user_info = json.loads((self.rfile.read(int(length))).decode())
-            name = user_info.get('username')
-            passwd = user_info.get('password')
-            if not user_info:
-                reply = ["invalid username or password"]                
-            elif not self._check_username(name):
-                reply = ["username doesn't exist"]    
-            elif not self._check_password(name, passwd):
-                reply = ["invalid password"]
-            else:
-                senid = self.headers.get('cookie')
-                if not senid:
-                    reply = ["need session id from client"]                
-                else:
-                    self.server.user_sessions.append(senid)
-                    rcode, reply = http.client.OK, ["login success "]
-    
-        return rcode, reply
-        
-    
-    def _parse_request_path(self, path):
-        '''Parse the url, the legal url should like /ldh or /ldh/ldh '''
-        groups = URL_PATTERN.match(path) 
-        if not groups:
-            return (None, None)
-
-        return (groups.group(1), groups.group(2))
-
     def do_GET(self):
-        ''' The client should send its session id in header with 
+        '''The client should send its session id in header with 
         the name 'cookie'
         '''
-        rcode, reply = 200, []        
-        senid = self.headers.get('cookie')
-        if not senid:
-            rcode = http.client.BAD_REQUEST
-        else:
-            if senid not in self.server.user_sessions:
-                rcode, reply = http.client.UNAUTHORIZED, ["please login"]
+        self.session_id = self.headers.get('cookie')
+        rcode, reply = http.client.OK, []        
+        if self._is_session_valid():
+            if self._is_user_logged_in():
+                rcode, reply = self._handle_get_request()
             else:
-                identifier, module = self._parse_request_path(self.path)   
-                rcode, reply = self.server.get_reply_data_for_GET(identifier, module) 
-                    
+                rcode, reply = http.client.UNAUTHORIZED, ["please login"]
+        else:
+            rcode = http.client.BAD_REQUEST
+
         self.send_response(rcode)
         self.end_headers()
         self.wfile.write(json.dumps(reply).encode())
 
-        
+    def _handle_get_request(self):
+        '''Currently only support the following three url GET request '''
+        id, module = self._parse_request_path()
+        return self.server.get_reply_data_for_GET(id, module) 
+
+    def _is_session_valid(self):
+        return self.session_id 
+
+    def _is_user_logged_in(self):
+        return self.session_id in self.server.user_sessions           
+
+    def _parse_request_path(self):
+        '''Parse the url, the legal url should like /ldh or /ldh/ldh '''
+        groups = URL_PATTERN.match(self.path) 
+        if not groups:
+            return (None, None)
+        else:
+            return (groups.group(1), groups.group(2))
+
     def do_POST(self):
         '''Process user login and send command to proper module  
         The client should send its session id in header with 
         the name 'cookie'
         '''
+        self.session_id = self.headers.get('cookie')
         rcode, reply = http.client.OK, []
-        id = self.headers.get('cookie')
-        if not id:
-            rcode = http.client.BAD_REQUEST
-        else:        
+        if self._is_session_valid():
             if self.path == '/login':
-                rcode, reply = self._process_user_login()
-            elif id not in self.server.user_sessions:
-                rcode, reply = http.client.UNAUTHORIZED, ["please login"]           
+                rcode, reply = self._handle_login()
             else:
-                mod, cmd = self._parse_request_path(self.path)
-                param = None
-                len = self.headers.get('Content-Length')
-                if len:
-                    post_str = str(self.rfile.read(int(len)).decode())
-                    print("command parameter:%s" % post_str)
-                    param = json.loads(post_str)
-    
-                # TODO, need return some proper return code. 
-                # currently always OK.
-                reply = self.server.send_command_to_module(mod, cmd, param)
-                print('b10-cmdctl finish send message \'%s\' to module %s' % (cmd, mod))            
-       
+                rcode, reply = self._handle_post_request()
+        else:
+            rcode, reply = http.client.BAD_REQUEST, ["session isn't valid"]
+      
         self.send_response(rcode)
         self.end_headers()
         self.wfile.write(json.dumps(reply).encode())
 
 
+    def _handle_login(self):
+        if self._is_user_logged_in():
+            return http.client.OK, ["user has already login"]
+        is_user_valid, error_info = self._check_user_name_and_pwd()
+        if is_user_valid:
+            self.server.user_sessions.append(self.session_id)
+            return http.client.OK, ["login success "]
+        else:
+            return http.client.UNAUTHORIZED, error_info
+
+    def _check_user_name_and_pwd(self):
+        length = self.headers.get('Content-Length')
+        if not length:
+            return False, ["invalid username or password"]     
+        user_info = json.loads((self.rfile.read(int(length))).decode())
+        if not user_info:
+             return False, ["invalid username or password"]                
+        
+        user_name = user_info.get('username')
+        if not user_name:
+            return False, ["need user name"]
+        if not self.server.user_infos.get(user_name):
+            return False, ["user doesn't exist"]
+
+        user_pwd = user_info.get('password')
+        if not user_pwd:
+            return False, ["need password"]
+        local_info = self.server.user_infos.get(user_name)
+        pwd_hashval = sha1((user_pwd + local_info[1]).encode())
+        if pwd_hashval.hexdigest() != local_info[0]:
+            return False, ["password doesn't match"] 
+
+        return True, None
+   
+
+    def _handle_post_request(self):
+        mod, cmd = self._parse_request_path()
+        param = None
+        len = self.headers.get('Content-Length')
+        rcode = http.client.OK
+        if len:
+            post_str = str(self.rfile.read(int(len)).decode())
+            print("command parameter:%s" % post_str)
+            param = json.loads(post_str)
+            # TODO, need return some proper return code. 
+            # currently always OK.
+            reply = self.server.send_command_to_module(mod, cmd, param)
+            print('b10-cmdctl finish send message \'%s\' to module %s' % (cmd, mod))            
+
+        return rcode, reply
+            
+   
 class CommandControl():
     '''Get all modules' config data/specification from configmanager.
     receive command from client and resend it to proper module.
@@ -283,21 +291,22 @@ class SecureHTTPServer(http.server.HTTPServer):
             # raise socket error to finish the request
             raise socket.error
             
-    
+
     def get_reply_data_for_GET(self, id, module):
         '''Currently only support the following three url GET request '''
         rcode, reply = http.client.NO_CONTENT, []        
         if not module:
+            rcode = http.client.OK
             if id == 'command_spec':
-                rcode, reply = http.client.OK, self.cmdctrl.command_spec
+                reply = self.cmdctrl.command_spec
             elif id == 'config_data':
-                rcode, reply = http.client.OK, self.cmdctrl.config_data
+                reply = self.cmdctrl.config_data
             elif id == 'config_spec':
-                rcode, reply = http.client.OK, self.cmdctrl.config_spec
+                reply = self.cmdctrl.config_spec
         
-        return rcode, reply     
-            
+        return rcode, reply 
 
+        
     def serve_forever(self, poll_interval = 0.5):
         self.__serving = True
         self.__is_shut_down.clear()
