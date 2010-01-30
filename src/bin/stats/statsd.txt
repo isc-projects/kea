@@ -1,21 +1,55 @@
-= statsd Overview =
+= Statistics overview =
 
-statsd gathers statistics from each BIND 10 components and dump them into a file periodically.
+Result of 26 Jan 2010 evening discussion,
+statistics overview was almost fixed.
 
-Currently, file path, dump frequency, rotate generations are fixed.
-statsd dumps to "/tmp/stats" every 10 seconds except no statistics received.
+Statsd listens msgq "statistics" channel, gathers statistics
+from each BIND 10 components and dump them into a XML file periodically.
+
+= Statsd current status =
+
+Statsd can run with msgq.
+Statsd is not controlled by BoB.
+Statsd does not read configuration from cfgd.
+File path, dump frequency, rotate generations are fixed.
+Statsd dumps to "/tmp/stats" every 10 seconds except no statistics received.
 "/tmp/stats" are preserved 100 generations.
+
+Current implementation is put on "bind10/branches/parkinglot/src/bin/stats/".
 
 = statistics channel Message format =
 
-The statsd accepts python dictionary format data from msgq "statistics" channel.
+The Statsd accepts python dictionary format data from msgq
+"statistics" channel.
 
 The data need to contain "components", "version", "timestamp", "stats" keys.
 
-The statistics data is { "component" : "<component_name>", "version": "<version number>", "timestamp": "<unixtime>", "stats": <python dictionary format statistics>}. "stats" data may be nested.
+The statistics data format is { "component" : "<component_name>",
+"version": "<version number>", "timestamp": "<unixtime>", "stats":
+<python dictionary format statistics>}.
 
+"stats" data may be nested.
 "stats" data is defined by each component.
 
-Each component may send statistics data to "statistics" group periodically without joining the group.
+Each component sends statistics data to "statistics" group periodically
+without joining the group.
 
 See a example component: "stats/test/test-agent.py".
+
+= How to publish statistics from each component =
+
+For example, parkinglot auth server has one "counter".
+Then, parkinglot's statistics message may be
+ { "component":"parkinglot", "version":1, "timestamp":unixtime,
+   stats: { "counter": counter } }.
+Send it to msgq "statistics" channel periodically
+(For example, every 10 second).
+
+Then "Statsd" will write it to the statistics file periodically.
+
+= TODO =
+
+- statsd.spec
+- read configuration from cfgd.
+- how to publish statistics data
+- controlled by BoB
