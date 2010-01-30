@@ -24,9 +24,9 @@ signal handling outside of that class, in the code running for
 __main__.
 """
 
-# If B10_SPECFILE_PATH is set in the environment, we use the specification
-# file there, instead of the installed one (for instance when we run
-# from the source tree)
+# If B10_FROM_SOURCE is set in the environment, we use data files
+# from a directory relative to that, otherwise we use the ones
+# installed on the system
 if "B10_FROM_SOURCE" in os.environ:
     SPECFILE_LOCATION = os.environ["B10_FROM_SOURCE"] + "/src/bin/bind10/bob.spec"
 else:
