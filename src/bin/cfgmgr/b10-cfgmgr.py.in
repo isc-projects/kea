@@ -9,10 +9,20 @@ import pprint
 import os
 from ISC.CC import data
 
+# If B10_FROM_SOURCE is set in the environment, we use data files
+# from a directory relative to that, otherwise we use the ones
+# installed on the system
+if "B10_FROM_SOURCE" in os.environ:
+    DATA_PATH = os.environ["B10_FROM_SOURCE"]
+else:
+    PREFIX = "@prefix@"
+    DATA_PATH = "@localstatedir@/@PACKAGE@".replace("${prefix}", PREFIX)
+    
+
 class ConfigManagerData:
     CONFIG_VERSION = 1
-    DB_FILENAME = "/tmp/parkinglot.db"
-    
+    DB_FILENAME = DATA_PATH  + "/b10-config.db"
+
     def __init__(self):
         self.data = {}
         self.data['version'] = ConfigManagerData.CONFIG_VERSION
@@ -24,7 +34,7 @@ class ConfigManagerData:
     def read_from_file():
         config = ConfigManagerData()
         try:
-            file = open(ConfigManagerData.DB_FILENAME, 'r')
+            file = open(self.DB_FILENAME, 'r')
             file_config = ast.literal_eval(file.read())
             if 'version' in file_config and \
                 file_config['version'] == ConfigManagerData.CONFIG_VERSION:
