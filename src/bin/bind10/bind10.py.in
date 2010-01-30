@@ -27,8 +27,8 @@ __main__.
 # If B10_SPECFILE_PATH is set in the environment, we use the specification
 # file there, instead of the installed one (for instance when we run
 # from the source tree)
-if "B10_SPECFILE_PATH" in os.environ:
-    SPECFILE_LOCATION = os.environ["B10_SPECFILE_PATH"] + "/bob.spec"
+if "B10_FROM_SOURCE" in os.environ:
+    SPECFILE_LOCATION = os.environ["B10_FROM_SOURCE"] + "/src/bin/bind10/bob.spec"
 else:
     PREFIX = "@prefix@"
     DATAROOTDIR = "@datarootdir@"
@@ -69,6 +69,8 @@ class ProcessInfo:
             spawn_stdout = None
         spawn_env = self.env
         spawn_env['PATH'] = os.environ['PATH']
+        if 'B10_FROM_SOURCE' in os.environ:
+            spawn_env['B10_FROM_SOURCE'] = os.environ['B10_FROM_SOURCE']
         if 'PYTHON_EXEC' in os.environ:
             spawn_env['PYTHON_EXEC'] = os.environ['PYTHON_EXEC']
         self.process = subprocess.Popen(self.args,
