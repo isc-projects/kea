@@ -108,6 +108,8 @@ class BindCmdInterpreter(Cmd):
                     print(data + ' login as ' + row[0] )
                     bsuccess = True
                     break
+        except IOError as e:
+            pass
         except Exception as e:
             print(e)
         finally:
