@@ -10,7 +10,7 @@ import os
 
 bossgroup = 'Boss'
 myname = 'statsd'
-debug = 1
+debug = 0
 
 def total(s):
     def totalsub(d,s):
@@ -72,7 +72,7 @@ def dicttoxml(stats, level = 0):
             for l in s.keys():
                 output +=  space + ' <from from="%s">\n' % l \
                           + dicttoxmlsub(s[l], level+2) \
-                          + space + '  </from>\n'
+                          + space + ' </from>\n'
         output += space + '</component>\n'
         return output
 
@@ -148,4 +148,4 @@ def collector(statgroup,step,statpath,statcount):
                     last_recvd_time = time.time()
 
 if __name__ == '__main__':
-    collector('statistics', 10, '/tmp/stats', 100)
+    collector('statistics', 10, '/tmp/stats.xml', 100)
