@@ -28,7 +28,7 @@ __main__.
 # file there, instead of the installed one (for instance when we run
 # from the source tree)
 if "B10_SPECFILE_PATH" in os.environ:
-    SPECFILE_LOCATION = os.environ["B10_SPECFILE_PATH"] + "bob.spec"
+    SPECFILE_LOCATION = os.environ["B10_SPECFILE_PATH"] + "/bob.spec"
 else:
     PREFIX = "@prefix@"
     DATAROOTDIR = "@datarootdir@"
