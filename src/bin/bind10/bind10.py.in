@@ -34,8 +34,6 @@ else:
     DATAROOTDIR = "@datarootdir@"
     SPECFILE_LOCATION = "@datadir@/@PACKAGE@/bob.spec".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
     
-
-
 # TODO: start up statistics thingy
 
 import subprocess
