@@ -45,7 +45,7 @@
 
 using namespace std;
 
-const string PROGRAM = "ParkingLot";
+//const string PROGRAM = "ParkingLot";
 const int DNSPORT = 5300;
 
 /* need global var for config/command handlers.
@@ -70,14 +70,11 @@ my_command_handler(isc::data::ElementPtr command)
 {
     isc::data::ElementPtr answer = isc::data::Element::createFromString("{ \"result\": [0] }");
 
-    cout << "[XX] Parkinglot handle command: " << endl << command->str() << endl;
     if (command->get(0)->stringValue() == "print_message") 
     {
         cout << command->get(1)->get("message") << endl;
         /* let's add that message to our answer as well */
-        cout << "[XX] answer was: " << answer->str() << endl;
         answer->get("result")->add(command->get(1));
-        cout << "[XX] answer now: " << answer->str() << endl;
     }
 
     return answer;
@@ -107,7 +104,13 @@ main(int argc, char* argv[]) {
 
     // initialize command channel
     try {
-        CommandSession cs = CommandSession(PARKINGLOT_SPECFILE_LOCATION, my_config_handler, my_command_handler);
+        std::string specfile;
+        if (getenv("B10_FROM_SOURCE")) {
+            specfile = std::string(getenv("B10_FROM_SOURCE")) + "/src/bin/parkinglot/parkinglot.spec";
+        } else {
+            specfile = std::string(PARKINGLOT_SPECFILE_LOCATION);
+        }
+        CommandSession cs = CommandSession(specfile, my_config_handler, my_command_handler);
     
         // main server loop
         fd_set fds;
@@ -116,7 +119,7 @@ main(int argc, char* argv[]) {
         int nfds = max(ps, ss) + 1;
         int counter = 0;
     
-        cout << "Server started." << endl;
+        cout << "[parkinglot] Server started." << endl;
         while (true) {
             FD_ZERO(&fds);
             FD_SET(ps, &fds);
@@ -124,7 +127,7 @@ main(int argc, char* argv[]) {
     
             int n = select(nfds, &fds, NULL, NULL, NULL);
             if (n < 0)
-                throw FatalError("select error");
+                throw FatalError("[parkinglot] select error");
     
             if (FD_ISSET(ps, &fds)) {
                 ++counter;
