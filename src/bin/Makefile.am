@@ -1,1 +1,1 @@
-SUBDIRS = bind10 bindctl cfgmgr msgq parkinglot host cmdctl
+SUBDIRS = bind10 bindctl cfgmgr msgq host cmdctl auth parkinglot

@@ -1,1 +1,1 @@
-SUBDIRS = cc config dns
+SUBDIRS = cc config dns auth

@@ -151,6 +151,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/cfgmgr/Makefile
                  src/bin/host/Makefile
                  src/bin/msgq/Makefile
+                 src/bin/auth/Makefile
                  src/bin/parkinglot/Makefile
                  src/lib/Makefile
                  src/lib/cc/Makefile
@@ -166,6 +167,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/config/python/isc/config/Makefile
                  src/lib/dns/Makefile
                  src/lib/dns/cpp/Makefile
+                 src/lib/auth/Makefile
+                 src/lib/auth/cpp/Makefile
                ])
 AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/cfgmgr/run_b10-cfgmgr.sh
@@ -179,6 +182,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/msgq/msgq.py
            src/bin/msgq/msgq_test
            src/bin/msgq/run_msgq.sh
+           src/bin/auth/config.h
            src/bin/parkinglot/config.h
            src/lib/dns/cpp/gen-rdatacode.py
           ], [

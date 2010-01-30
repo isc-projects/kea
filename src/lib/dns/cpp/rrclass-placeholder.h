@@ -237,6 +237,15 @@ public:
 
     // BEGIN_WELL_KNOWN_CLASS_DECLARATIONS
     // END_WELL_KNOWN_CLASS_DECLARATIONS
+    
+    // \brief Meta-classes
+    enum {
+        RRCLASS_RESERVED0 = 0,
+        RRCLASS_NONE = 254,
+        RRCLASS_ANY = 255
+    };
+    static const RRClass& NONE();
+    static const RRClass& ANY();
 
 private:
     uint16_t classcode_;
@@ -244,6 +253,22 @@ private:
 
 // BEGIN_WELL_KNOWN_CLASS_DEFINITIONS
 // END_WELL_KNOWN_CLASS_DEFINITIONS
+
+inline const RRClass&
+RRClass::NONE()
+{
+    static RRClass rrclass(RRCLASS_NONE);
+
+    return (rrclass);
+}
+
+inline const RRClass&
+RRClass::ANY()
+{
+    static RRClass rrclass(RRCLASS_ANY);
+
+    return (rrclass);
+}
 
 ///
 /// \brief Insert the \c RRClass as a string into stream.
