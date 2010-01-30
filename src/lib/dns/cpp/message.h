@@ -401,7 +401,15 @@ class Section {
 public:
     unsigned int getCode() const { return (code_); }
     bool operator==(const Section& other) const
-    { return (code_ == other.code_); }
+        { return (code_ == other.code_); }
+
+    enum {
+        SECTION_QUESTION = 0U,
+        SECTION_ANSWER = 1U,
+        SECTION_AUTHORITY = 2U,
+        SECTION_ADDITIONAL = 3U
+    };
+
     static const Section& QUESTION();
     static const Section& ANSWER();
     static const Section& AUTHORITY();
@@ -414,28 +422,28 @@ private:
 inline const Section&
 Section::QUESTION()
 {
-    static Section s(0);
+    static Section s(SECTION_QUESTION);
     return (s);
 }
 
 inline const Section&
 Section::ANSWER()
 {
-    static Section s(1);
+    static Section s(SECTION_ANSWER);
     return (s);
 }
 
 inline const Section&
 Section::AUTHORITY()
 {
-    static Section s(2);
+    static Section s(SECTION_AUTHORITY);
     return (s);
 }
 
 inline const Section&
 Section::ADDITIONAL()
 {
-    static Section s(3);
+    static Section s(SECTION_ADDITIONAL);
     return (s);
 }
 

@@ -1,0 +1,5 @@
+- NXDOMAIN case must add NSEC/NSEC3 data when wantDnssec()
+- DataSrc should implement a method findAddrRRsets() which queries
+  for A and AAAA records.  at the high level this would be implemented
+  as two queries in serial; low level subclasses could override it with
+  a single query.
