@@ -2,6 +2,9 @@ pkglibexecdir = $(libexecdir)/@PACKAGE@
 
 pkglibexec_SCRIPTS = b10-cmdctl
 
+b10_cmdctldir = $(DESTDIR)$(pkgdatadir)
+b10_cmdctl_DATA = passwd.csv
+
 CLEANFILES=	b10-cmdctl.py
 
 # TODO: does this need $$(DESTDIR) also?

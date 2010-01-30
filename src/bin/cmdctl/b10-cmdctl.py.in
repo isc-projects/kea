@@ -27,6 +27,7 @@ resut to client.
 '''
 
 import sys; sys.path.append ('@@PYTHONPATH@@')
+import os
 import http.server
 import urllib.parse
 import json
@@ -46,6 +47,18 @@ except ImportError:
 URL_PATTERN = re.compile('/([\w]+)(?:/([\w]+))?/?')
 USER_INFO_FILE = "passwd.csv"
 CERTIFICATE_FILE = 'b10-cmdctl.pem'
+
+# If B10_FROM_SOURCE is set in the environment, we use data files
+# from a directory relative to that, otherwise we use the ones
+# installed on the system
+if "B10_FROM_SOURCE" in os.environ:
+    SPECFILE_PATH = os.environ["B10_FROM_SOURCE"] + "/src/bin/cmdctl"
+else:
+    PREFIX = "@prefix@"
+    DATAROOTDIR = "@datarootdir@"
+    SPECFILE_PATH = "@datadir@/@PACKAGE@".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
+SPECFILE_LOCATION = SPECFILE_PATH + "/cmdctl.spec"
+USER_INFO_FILE = SPECFILE_PATH + "/passwd.csv"
         
 class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     '''https connection request handler.
