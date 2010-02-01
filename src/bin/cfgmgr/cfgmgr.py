@@ -1,9 +1,9 @@
-import ISC
+import isc
 import signal
 import ast
 import pprint
 import os
-from ISC.CC import data
+from isc.cc import data
 
 class ConfigManagerData:
     CONFIG_VERSION = 1
@@ -58,7 +58,7 @@ class ConfigManager:
         self.data_definitions = {}
         self.data_path = data_path
         self.config = ConfigManagerData(data_path)
-        self.cc = ISC.CC.Session()
+        self.cc = isc.cc.Session()
         self.cc.group_subscribe("ConfigManager")
         self.cc.group_subscribe("Boss", "ConfigManager")
         self.running = False

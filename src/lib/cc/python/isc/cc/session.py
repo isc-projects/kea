@@ -17,7 +17,8 @@ import sys
 import socket
 import struct
 
-from ISC.CC import message
+#from isc.cc import message
+import isc.cc.message
 
 class ProtocolError(Exception): pass
 class NetworkError(Exception): pass
@@ -61,9 +62,9 @@ class Session:
         if self._closed:
             raise SessionError("Session has been closed.")
         if type(env) == dict:
-            env = message.to_wire(env)
+            env = isc.cc.message.to_wire(env)
         if type(msg) == dict:
-            msg = message.to_wire(msg)
+            msg = isc.cc.message.to_wire(msg)
         self._socket.setblocking(1)
         length = 2 + len(env);
         if msg:
@@ -82,9 +83,9 @@ class Session:
             header_length = struct.unpack('>H', data[0:2])[0]
             data_length = len(data) - 2 - header_length
             if data_length > 0:
-                return message.from_wire(data[2:header_length+2]), message.from_wire(data[header_length + 2:])
+                return isc.cc.message.from_wire(data[2:header_length+2]), isc.cc.message.from_wire(data[header_length + 2:])
             else:
-                return message.from_wire(data[2:header_length+2]), None
+                return isc.cc.message.from_wire(data[2:header_length+2]), None
         return None, None
 
     def _receive_full_buffer(self, nonblock):
@@ -151,7 +152,7 @@ class Session:
             "group": group,
             "instance": instance,
             "seq": seq,
-        }, message.to_wire(msg))
+        }, isc.cc.message.to_wire(msg))
         return seq
 
     def group_recvmsg(self, nonblock = True):
@@ -172,7 +173,7 @@ class Session:
             "instance": routing["instance"],
             "seq": seq,
             "reply": routing["seq"],
-        }, message.to_wire(msg))
+        }, isc.cc.message.to_wire(msg))
         return seq
 
 if __name__ == "__main__":

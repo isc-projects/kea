@@ -6,7 +6,7 @@
 # One command is available
 #   "Boss"       group: "shutdown"
 
-import ISC
+import isc
 import time
 import select
 import random
@@ -14,7 +14,7 @@ import random
 step_time = 10
 statgroup = "statistics"
 
-cc = ISC.CC.Session()
+cc = isc.cc.Session()
 print (cc.lname)
 #cc.group_subscribe(statgroup)
 cc.group_subscribe("Boss")

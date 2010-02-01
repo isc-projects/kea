@@ -20,8 +20,8 @@ from exception import *
 from moduleinfo import *
 from cmdparse import BindCmdParse
 from xml.dom import minidom
-import ISC
-import ISC.CC.data
+import isc
+import isc.cc.data
 import http.client
 import json
 import inspect
@@ -85,7 +85,7 @@ class BindCmdInterpreter(Cmd):
                 return False
 
             # Get all module information from cmd-ctrld
-            self.config_data = ISC.CC.data.UIConfigData(self)
+            self.config_data = isc.cc.data.UIConfigData(self)
             self.update_commands()
             self.cmdloop()
         except KeyboardInterrupt:
@@ -453,9 +453,9 @@ class BindCmdInterpreter(Cmd):
                 self.config_data.commit(self)
             elif cmd.command == "go":
                 self.go(identifier)
-        except ISC.CC.data.DataTypeError as dte:
+        except isc.cc.data.DataTypeError as dte:
             print("Error: " + str(dte))
-        except ISC.CC.data.DataNotFoundError as dnfe:
+        except isc.cc.data.DataNotFoundError as dnfe:
             print("Error: " + identifier + " not found")
         except KeyError as ke:
             print("Error: missing " + str(ke))

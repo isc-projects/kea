@@ -3,7 +3,7 @@
 # This program collects 'counters' from 'statistics' channel.
 # It accepts one command: 'Boss' group 'shutdown'
 
-import ISC.CC
+import isc.cc
 import time
 import select
 import os
@@ -103,7 +103,7 @@ def dump_stats(statpath, statcount, stat, statraw):
     os.rename(statpath + '.new', statpath)
 
 def collector(statgroup,step,statpath,statcount):
-    cc = ISC.CC.Session()
+    cc = isc.cc.Session()
     if debug:
         print ("cc.lname=",cc.lname)
     cc.group_subscribe(statgroup)
