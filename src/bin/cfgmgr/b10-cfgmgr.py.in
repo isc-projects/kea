@@ -30,7 +30,7 @@ if __name__ == "__main__":
         cm.read_config()
         cm.notify_boss()
         cm.run()
-    except ISC.CC.SessionError as se:
+    except isc.cc.SessionError as se:
         print("[bind-cfgd] Error creating config manager, "
               "is the command channel daemon running?")
     except KeyboardInterrupt as kie:

@@ -21,7 +21,7 @@ class ConfigManagerData:
     def read_from_file(data_path):
         config = ConfigManagerData(data_path)
         try:
-            file = open(self.db_filename, 'r')
+            file = open(config.db_filename, 'r')
             file_config = ast.literal_eval(file.read())
             if 'version' in file_config and \
                 file_config['version'] == ConfigManagerData.CONFIG_VERSION:
