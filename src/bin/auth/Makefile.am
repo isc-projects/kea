@@ -8,3 +8,7 @@ b10_auth_LDADD =  $(top_builddir)/src/lib/dns/cpp/.libs/libdns.a
 b10_auth_LDADD +=  $(top_builddir)/src/lib/auth/cpp/.libs/libauth.a
 b10_auth_LDADD += $(top_builddir)/src/lib/config/cpp/libclient.a
 b10_auth_LDADD += $(top_builddir)/src/lib/cc/cpp/libcc.a
+
+b10_authdir = $(DESTDIR)$(pkgdatadir)
+b10_auth_DATA = auth.spec
+

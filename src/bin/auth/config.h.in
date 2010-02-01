@@ -1,1 +1,1 @@
-#define AUTH_SPECFILE_LOCATION "@abs_top_srcdir@/src/bin/auth/auth.spec"
+#define AUTH_SPECFILE_LOCATION "@prefix@/share/bind/auth.spec"
