@@ -21,7 +21,7 @@ using namespace isc::dns::rdata;
 StaticDataSrc::StaticDataSrc() : authors_name("authors.bind"),
                                  version_name("version.bind")
 {
-    RRsetPtr authors = RRsetPtr(new RRset(authors_name, RRClass::CH(),
+    authors = RRsetPtr(new RRset(authors_name, RRClass::CH(),
                                           RRType::TXT(), RRTTL(3600)));
     authors->addRdata(generic::TXT("Evan Hunt"));
     authors->addRdata(generic::TXT("Han Feng"));
@@ -35,7 +35,7 @@ StaticDataSrc::StaticDataSrc() : authors_name("authors.bind"),
     authors->addRdata(generic::TXT("Shane Kerr")); 
     authors->addRdata(generic::TXT("Zhang Likun"));
 
-    RRsetPtr version = RRsetPtr(new RRset(version_name, RRClass::CH(),
+    version = RRsetPtr(new RRset(version_name, RRClass::CH(),
                                           RRType::TXT(), RRTTL(3600)));
     version->addRdata(generic::TXT("BIND10 0.0.0 (pre-alpha)"));
 }
