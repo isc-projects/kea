@@ -163,7 +163,7 @@ if __name__ == "__main__":
                         if class_txt == 'generic':
                             typeandclass.append((type_txt, int(type_code),
                                                  (class_txt, 'in'), 1))
-    rdata_deffile = open('rdataclass.cc', 'w')
+    rdata_deffile = open('@srcdir@/rdataclass.cc', 'w')
     rdata_deffile.write(copyright_txt)
     rdata_deffile.write(class_definitions)
     rdata_deffile.close()
@@ -173,7 +173,7 @@ if __name__ == "__main__":
 // mode: c++
 // End:
 '''
-    rdata_header = open('rdataclass.h', 'w')
+    rdata_header = open('@srcdir@/rdataclass.h', 'w')
     rdata_header.write(copyright_txt)
     rdata_header.write(class_declarations)
     rdata_header.close()
@@ -192,7 +192,7 @@ RRType::''' + rrtype + '''()
 }\n
 '''
     rrtype_header_temp = open('@srcdir@/rrtype-placeholder.h', 'r')
-    rrtype_header_out = open('rrtype.h', 'w')
+    rrtype_header_out = open('@srcdir@/rrtype.h', 'w')
     rrtype_header_out.write(copyright_txt)
     for line in rrtype_header_temp.readlines():
         rrtype_header_out.write(line)
@@ -218,7 +218,7 @@ RRClass::''' + rrclass + '''()
 '''
 
     rrclass_header_temp = open('@srcdir@/rrclass-placeholder.h', 'r')
-    rrclass_header_out = open('rrclass.h', 'w')
+    rrclass_header_out = open('@srcdir@/rrclass.h', 'w')
     rrclass_header_out.write(copyright_txt)
     for line in rrclass_header_temp.readlines():
         rrclass_header_out.write(line)
@@ -253,7 +253,7 @@ RRClass::''' + rrclass + '''()
             typeandclassparams += class_txt + '::' + type_utxt + '>()));\n'
 
     rrparam_temp = open('@srcdir@/rrparamregistry-placeholder.cc', 'r')
-    rrparam_out = open('rrparamregistry.cc', 'w')
+    rrparam_out = open('@srcdir@/rrparamregistry.cc', 'w')
     rrparam_out.write(copyright_txt)
     for line in rrparam_temp.readlines():
         rrparam_out.write(line)

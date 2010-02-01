@@ -2,7 +2,7 @@
 
 import sys; sys.path.append ('@@PYTHONPATH@@')
 
-from cfgmgr import ConfigManager
+from isc.config.cfgmgr import ConfigManager
 import signal
 import os
 
