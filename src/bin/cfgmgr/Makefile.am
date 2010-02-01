@@ -1,6 +1,6 @@
 pkglibexecdir = $(libexecdir)/@PACKAGE@
 
-pkglibexec_SCRIPTS = b10-cfgmgr
+pkglibexec_SCRIPTS = b10-cfgmgr cfgmgr.py
 
 CLEANFILES = b10-cfgmgr.py
 
