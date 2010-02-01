@@ -5,31 +5,23 @@ import pprint
 import os
 from ISC.CC import data
 
-# If B10_FROM_SOURCE is set in the environment, we use data files
-# from a directory relative to that, otherwise we use the ones
-# installed on the system
-if "B10_FROM_SOURCE" in os.environ:
-    DATA_PATH = os.environ["B10_FROM_SOURCE"]
-else:
-    PREFIX = "@prefix@"
-    DATA_PATH = "@localstatedir@/@PACKAGE@".replace("${prefix}", PREFIX)
-
 class ConfigManagerData:
     CONFIG_VERSION = 1
-    DB_FILENAME = DATA_PATH  + "/b10-config.db"
 
-    def __init__(self):
+    def __init__(self, data_path):
         self.data = {}
         self.data['version'] = ConfigManagerData.CONFIG_VERSION
+        self.data_path = data_path
+        self.db_filename = data_path + "/b10-config.db"
 
     def set_data_definition(self, module_name, module_data_definition):
         self.zones[module_name] = module_data_definition
         self.data_definitions[module_name] = module_data_definition
 
-    def read_from_file():
-        config = ConfigManagerData()
+    def read_from_file(data_path):
+        config = ConfigManagerData(data_path)
         try:
-            file = open(self.DB_FILENAME, 'r')
+            file = open(self.db_filename, 'r')
             file_config = ast.literal_eval(file.read())
             if 'version' in file_config and \
                 file_config['version'] == ConfigManagerData.CONFIG_VERSION:
@@ -49,22 +41,23 @@ class ConfigManagerData:
         
     def write_to_file(self):
         try:
-            tmp_filename = self.DB_FILENAME + ".tmp"
+            tmp_filename = self.db_filename + ".tmp"
             file = open(tmp_filename, 'w');
             pp = pprint.PrettyPrinter(indent=4)
             s = pp.pformat(self.data)
             file.write(s)
             file.write("\n")
             file.close()
-            os.rename(tmp_filename, self.DB_FILENAME)
+            os.rename(tmp_filename, self.db_filename)
         except IOError as ioe:
             print("Unable to write config file; configuration not stored")
 
 class ConfigManager:
-    def __init__(self):
+    def __init__(self, data_path):
         self.commands = {}
         self.data_definitions = {}
-        self.config = ConfigManagerData()
+        self.data_path = data_path
+        self.config = ConfigManagerData(data_path)
         self.cc = ISC.CC.Session()
         self.cc.group_subscribe("ConfigManager")
         self.cc.group_subscribe("Boss", "ConfigManager")
@@ -87,7 +80,7 @@ class ConfigManager:
 
     def read_config(self):
         print("Reading config")
-        self.config = ConfigManagerData.read_from_file()
+        self.config = ConfigManagerData.read_from_file(self.data_path)
         
     def write_config(self):
         print("Writing config")

@@ -6,6 +6,15 @@ from cfgmgr import ConfigManager
 import signal
 import os
 
+# If B10_FROM_SOURCE is set in the environment, we use data files
+# from a directory relative to that, otherwise we use the ones
+# installed on the system
+if "B10_FROM_SOURCE" in os.environ:
+    DATA_PATH = os.environ["B10_FROM_SOURCE"]
+else:
+    PREFIX = "@prefix@"
+    DATA_PATH = "@localstatedir@/@PACKAGE@".replace("${prefix}", PREFIX)
+
 cm = None
 
 def signal_handler(signal, frame):
@@ -15,7 +24,7 @@ def signal_handler(signal, frame):
 
 if __name__ == "__main__":
     try:
-        cm = ConfigManager()
+        cm = ConfigManager(DATA_PATH)
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
         cm.read_config()
