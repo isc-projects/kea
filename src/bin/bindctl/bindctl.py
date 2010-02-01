@@ -16,7 +16,7 @@
 
 from moduleinfo  import *
 from bindcmd import *
-import ISC
+import isc
 import pprint
 
 

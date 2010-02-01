@@ -1,7 +1,7 @@
 #!/usr/bin/python3
-import ISC, sys
+import isc, sys
 
-cc = ISC.CC.Session()
+cc = isc.cc.Session()
 if len(sys.argv) < 3:
     sys.stderr.write('Usage: ' + sys.argv[0] + ' <channel> <command> [arg]\n')
     sys.exit(1)

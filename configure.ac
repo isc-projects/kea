@@ -157,9 +157,9 @@ AC_CONFIG_FILES([Makefile
                  src/lib/cc/Makefile
                  src/lib/cc/cpp/Makefile
                  src/lib/cc/python/Makefile
-                 src/lib/cc/python/ISC/Makefile
-                 src/lib/cc/python/ISC/CC/Makefile
-                 src/lib/cc/python/ISC/Util/Makefile
+                 src/lib/cc/python/isc/Makefile
+                 src/lib/cc/python/isc/cc/Makefile
+                 src/lib/cc/python/isc/Util/Makefile
                  src/lib/config/Makefile
                  src/lib/config/cpp/Makefile
                  src/lib/config/python/Makefile

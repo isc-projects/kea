@@ -1,1 +1,1 @@
-SUBDIRS = ISC
+SUBDIRS = isc

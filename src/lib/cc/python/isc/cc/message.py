@@ -14,7 +14,7 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 # XXX
-from ISC.Util import hexdump
+import isc.Util
 
 import sys
 import struct

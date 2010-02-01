@@ -1,6 +1,6 @@
-import ISC
+import isc
 
-cc = ISC.CC.Session()
+cc = isc.cc.Session()
 
 cc.group_subscribe("ConfigManager")
 

@@ -22,7 +22,7 @@
 # modeled after ccsession.h/cc 'protocol' changes here need to be
 # made there as well
 
-from ISC.CC import Session
+from isc.cc import Session
 import isc
 
 class CCSession:

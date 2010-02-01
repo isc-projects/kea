@@ -17,7 +17,7 @@ import pprint
 import random
 from optparse import OptionParser, OptionValueError
 
-import ISC.CC
+import isc.cc
 
 # This is the version that gets displayed to the user.
 __version__ = "v20091030 (Paving the DNS Parking Lot)"
@@ -202,7 +202,7 @@ class MsgQ:
             return
 
         try:
-            routingmsg = ISC.CC.message.from_wire(routing)
+            routingmsg = isc.cc.message.from_wire(routing)
         except DecodeError as err:
             self.kill_socket(fd, sock)
             sys.stderr.write("Routing decode error: %s\n" % err)
@@ -232,9 +232,9 @@ class MsgQ:
 
     def preparemsg(self, env, msg = None):
         if type(env) == dict:
-            env = ISC.CC.message.to_wire(env)
+            env = isc.cc.message.to_wire(env)
         if type(msg) == dict:
-            msg = ISC.CC.message.to_wire(msg)
+            msg = isc.cc.message.to_wire(msg)
         length = 2 + len(env);
         if msg:
             length += len(msg)

@@ -46,7 +46,7 @@ import select
 import pprint
 from optparse import OptionParser, OptionValueError
 
-import ISC.CC
+import isc.cc
 import isc
 
 # This is the version that gets displayed to the user.
@@ -164,8 +164,8 @@ class BoB:
                 return "Unable to connect to c-channel after 5 seconds"
             # try to connect, and if we can't wait a short while
             try:
-                self.cc_session = ISC.CC.Session(self.c_channel_port)
-            except ISC.CC.session.SessionError:
+                self.cc_session = isc.cc.Session(self.c_channel_port)
+            except isc.cc.session.SessionError:
                 time.sleep(0.1)
         #self.cc_session.group_subscribe("Boss", "boss")
 

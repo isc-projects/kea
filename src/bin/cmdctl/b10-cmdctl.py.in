@@ -33,7 +33,7 @@ import urllib.parse
 import json
 import re
 import ssl, socket
-import ISC
+import isc
 import pprint
 import select
 import csv
@@ -180,7 +180,7 @@ class CommandControl():
     '''
 
     def __init__(self):
-        self.cc = ISC.CC.Session()
+        self.cc = isc.cc.Session()
         self.cc.group_subscribe('Cmd-Ctrld')
         #self.cc.group_subscribe('Boss', 'Cmd-Ctrld')
         self.command_spec = self.get_cmd_specification()
@@ -339,7 +339,7 @@ def run(server_class = SecureHTTPServer, addr = 'localhost', port = 8080):
 if __name__ == '__main__':
     try:
         run()
-    except ISC.CC.SessionError as se:
+    except isc.cc.SessionError as se:
         print("[b10-cmdctl] Error creating b10-cmdctl, "
                 "is the command channel daemon running?")        
     except KeyboardInterrupt:

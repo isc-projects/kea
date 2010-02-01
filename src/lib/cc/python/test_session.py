@@ -1,4 +1,4 @@
-import ISC
+import isc
 
 import time
 import pprint
@@ -12,8 +12,8 @@ import unittest
 
 class TestCCWireEncoding(unittest.TestCase):
     def setUp(self):
-        self.s1 = ISC.CC.Session()
-        self.s2 = ISC.CC.Session()
+        self.s1 = isc.cc.Session()
+        self.s2 = isc.cc.Session()
 
     def tearDown(self):
         self.s1.close()
