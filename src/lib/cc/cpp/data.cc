@@ -872,9 +872,8 @@ MapElement::toWire(std::stringstream& ss, int omit_length)
 
 bool
 MapElement::find(const std::string& id, ElementPtr& t) {
-    ElementPtr p;
     try {
-        p = find(id);
+        ElementPtr p = find(id);
         if (p) {
             t = p;
             return true;
