@@ -1,5 +1,18 @@
-// XXXMLG UTF-8 and binary are all encoded as UTF-8, and decoded as UTF-8.
-// XXXMLG This will cause issues down the road, but for today it works.
+// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+// $Id$
 
 #include "data.h"
 
@@ -29,15 +42,20 @@ const unsigned char ITEM_LENGTH_16   = 0x10;
 const unsigned char ITEM_LENGTH_8    = 0x20;
 const unsigned char ITEM_LENGTH_MASK = 0x30;
 
-std::ostream& operator <<(std::ostream &out, const isc::data::ElementPtr& e) {
-    return out << e->str();
+static inline void
+throwParseError(const std::string error, const std::string file, int line = 0, int pos = 0)
+{
+    if (line != 0 || pos != 0) {
+        std::stringstream ss;
+        ss << error << "in " + file + ":" << line << ":" << pos;
+        throw ParseError(ss.str());
+    } else {
+        throw ParseError(error);
+    }
 }
 
-const char*
-ParseError::what() const throw() {
-    stringstream ss;
-    ss << msg << " line " << line << " pos " << pos;
-    return ss.str().c_str();
+std::ostream& operator <<(std::ostream &out, const isc::data::ElementPtr& e) {
+    return out << e->str();
 }
 
 //
@@ -106,7 +124,6 @@ Element::create(const std::map<std::string, ElementPtr>& m)
 
 //
 // helper functions for createFromString factory
-// these should probably also be moved to member functions
 //
 
 static bool
@@ -142,7 +159,8 @@ skip_chars(std::istream &in, const char *chars, int& line, int& pos)
 //
 // the character found is left on the stream
 static void
-skip_to(std::istream &in, int& line, int& pos, const char* chars, const char* may_skip="")
+skip_to(std::istream &in, const std::string& file, int& line,
+        int& pos, const char* chars, const char* may_skip="")
 {
     char c = in.get();
     pos++;
@@ -167,14 +185,14 @@ skip_to(std::istream &in, int& line, int& pos, const char* chars, const char* ma
             pos--;
             return;
         } else {
-            throw ParseError(std::string("'") + c + "' read, one of \"" + chars + "\" expected", line, pos);
+            throwParseError(std::string("'") + c + "' read, one of \"" + chars + "\" expected", file, line, pos);
         }
     }
-    throw ParseError(std::string("EOF read, one of \"") + chars + "\" expected", line, pos);
+    throwParseError(std::string("EOF read, one of \"") + chars + "\" expected", file, line, pos);
 }
 
 static std::string
-str_from_stringstream(std::istream &in, int& line, int& pos) throw (ParseError)
+str_from_stringstream(std::istream &in, const std::string& file, int& line, int& pos) throw (ParseError)
 {
     char c = 0;
     std::stringstream ss;
@@ -184,7 +202,7 @@ str_from_stringstream(std::istream &in, int& line, int& pos) throw (ParseError)
         c = in.get();
         pos++;
     } else {
-        throw ParseError("String expected", line, pos);
+        throwParseError("String expected", file, line, pos);
     }
     while (c != EOF && c != '"') {
         ss << c;
@@ -249,7 +267,7 @@ from_stringstream_int_or_double(std::istream &in, int &line, int &pos)
 }
 
 static ElementPtr
-from_stringstream_bool(std::istream &in, int& line, int& pos)
+from_stringstream_bool(std::istream &in, const std::string& file, int& line, int& pos)
 {
     std::string word = word_from_stringstream(in, line, pos);
     if (boost::iequals(word, "True")) {
@@ -257,18 +275,20 @@ from_stringstream_bool(std::istream &in, int& line, int& pos)
     } else if (boost::iequals(word, "False")) {
         return Element::create(false);
     } else {
-        throw ParseError(std::string("Bad boolean value: ") + word, line, pos);
+        throwParseError(std::string("Bad boolean value: ") + word, file, line, pos);
+        // above is a throw shortcur, return empty is never reached
+        return ElementPtr();
     }
 }
 
 static ElementPtr
-from_stringstream_string(std::istream &in, int& line, int& pos)
+from_stringstream_string(std::istream &in, const std::string& file, int& line, int& pos)
 {
-    return Element::create(str_from_stringstream(in, line, pos));
+    return Element::create(str_from_stringstream(in, file, line, pos));
 }
 
 static ElementPtr
-from_stringstream_list(std::istream &in, int& line, int& pos)
+from_stringstream_list(std::istream &in, const std::string& file, int& line, int& pos)
 {
     char c = 0;
     std::vector<ElementPtr> v;
@@ -277,9 +297,9 @@ from_stringstream_list(std::istream &in, int& line, int& pos)
     skip_chars(in, " \t\n", line, pos);
     while (c != EOF && c != ']') {
         if (in.peek() != ']') {
-            cur_list_element = Element::createFromString(in, line, pos);
+            cur_list_element = Element::createFromString(in, file, line, pos);
             v.push_back(cur_list_element);
-            skip_to(in, line, pos, ",]", " \t\n");
+            skip_to(in, file, line, pos, ",]", " \t\n");
         }
         c = in.get();
         pos++;
@@ -288,7 +308,7 @@ from_stringstream_list(std::istream &in, int& line, int& pos)
 }
 
 static ElementPtr
-from_stringstream_map(std::istream &in, int& line, int& pos)
+from_stringstream_map(std::istream &in, const std::string& file, int& line, int& pos)
 {
     char c = 0;
     std::map<std::string, ElementPtr> m;
@@ -297,14 +317,14 @@ from_stringstream_map(std::istream &in, int& line, int& pos)
     ElementPtr cur_map_element;
     skip_chars(in, " \t\n", line, pos);
     while (c != EOF && c != '}') {
-        p.first = str_from_stringstream(in, line, pos);
-        skip_to(in, line, pos, ":", " \t\n");
+        p.first = str_from_stringstream(in, file, line, pos);
+        skip_to(in, file, line, pos, ":", " \t\n");
         // skip the :
         in.get();
         pos++;
-        p.second = Element::createFromString(in, line, pos);
+        p.second = Element::createFromString(in, file, line, pos);
         m.insert(p);
-        skip_to(in, line, pos, ",}", " \t\n");
+        skip_to(in, file, line, pos, ",}", " \t\n");
         c = in.get();
         pos++;
     }
@@ -315,11 +335,11 @@ ElementPtr
 Element::createFromString(std::istream &in) throw(ParseError)
 {
     int line = 1, pos = 1;
-    return createFromString(in, line, pos);
+    return createFromString(in, "<unknown>", line, pos);
 }
 
 ElementPtr
-Element::createFromString(std::istream &in, int& line, int& pos) throw(ParseError)
+Element::createFromString(std::istream &in, const std::string& file, int& line, int& pos) throw(ParseError)
 {
     char c = 0;
     ElementPtr element;
@@ -348,26 +368,26 @@ Element::createFromString(std::istream &in, int& line, int& pos) throw(ParseErro
             case 'f':
             case 'F':
                 in.putback(c);
-                element = from_stringstream_bool(in, line, pos);
+                element = from_stringstream_bool(in, file, line, pos);
                 el_read = true;
                 break;
             case '"':
                 in.putback('"');
-                element = from_stringstream_string(in, line, pos);
+                element = from_stringstream_string(in, file, line, pos);
                 el_read = true;
                 break;
             case '[':
-                element = from_stringstream_list(in, line, pos);
+                element = from_stringstream_list(in, file, line, pos);
                 el_read = true;
                 break;
             case '{':
-                element = from_stringstream_map(in, line, pos);
+                element = from_stringstream_map(in, file, line, pos);
                 el_read = true;
                 break;
             case EOF:
                 break;
             default:
-                throw ParseError(std::string("error: unexpected character ") + c, line, pos);
+                throwParseError(std::string("error: unexpected character ") + c, file, line, pos);
                 break;
         }
     }
@@ -457,96 +477,6 @@ MapElement::str()
         ss << (*it).second->str();
     }
     ss << "}";
-    return ss.str();
-}
-
-//
-// helpers for strXML() functions
-//
-
-// prefix with 'prefix' number of spaces
-static void
-pre(std::ostream &out, size_t prefix)
-{
-    for (size_t i = 0; i < prefix; i++) {
-        out << " ";
-    }
-}
-
-std::string
-IntElement::strXML(size_t prefix)
-{
-    std::stringstream ss;
-    pre(ss, prefix);
-    ss << str();
-    return ss.str();
-}
-
-std::string
-DoubleElement::strXML(size_t prefix)
-{
-    std::stringstream ss;
-    pre(ss, prefix);
-    ss << str();
-    return ss.str();
-}
-
-std::string
-BoolElement::strXML(size_t prefix)
-{
-    std::stringstream ss;
-    pre(ss, prefix);
-    ss << str();
-    return ss.str();
-}
-
-std::string
-StringElement::strXML(size_t prefix)
-{
-    std::stringstream ss;
-    pre(ss, prefix);
-    ss << stringValue();
-    return ss.str();
-}
-
-std::string
-ListElement::strXML(size_t prefix)
-{
-    std::stringstream ss;
-    std::vector<ElementPtr> v;
-    pre(ss, prefix);
-    ss << "<list>" << endl;;
-    v = listValue();
-    for (std::vector<ElementPtr>::iterator it = v.begin(); it != v.end(); ++it) {
-        pre(ss, prefix + 4);
-        ss << "<listitem>" << endl;
-        ss << (*it)->strXML(prefix + 8) << endl;
-        pre(ss, prefix + 4);
-        ss << "</listitem>" << endl;
-    }
-    pre(ss, prefix);
-    ss << "</list>";
-    return ss.str();
-}
-
-std::string
-MapElement::strXML(size_t prefix)
-{
-    std::stringstream ss;
-    std::map<std::string, ElementPtr> m;
-    m = mapValue();
-    pre(ss, prefix);
-    ss << "<map>" << endl;
-    for (std::map<std::string, ElementPtr>::iterator it = m.begin(); it != m.end(); ++it) {
-        pre(ss, prefix + 4);
-        ss << "<mapitem name=\"" << (*it).first << "\">" << endl;
-        pre(ss, prefix);
-        ss << (*it).second->strXML(prefix+8) << endl;
-        pre(ss, prefix + 4);
-        ss << "</mapitem>" << endl;
-    }
-    pre(ss, prefix);
-    ss << "</map>";
     return ss.str();
 }
 
@@ -824,33 +754,33 @@ encode_length(unsigned int length, unsigned char type)
 }
 
 std::string
-StringElement::toWire(int omit_length)
+Element::toWire(int omit_length)
 {
     std::stringstream ss;
-
-    unsigned int length = stringValue().length();
-    ss << encode_length(length, ITEM_UTF8) << stringValue();
-
+    toWire(ss, omit_length);
     return ss.str();
 }
 
-std::string
-IntElement::toWire(int omit_length)
+void
+StringElement::toWire(std::stringstream& ss, int omit_length)
 {
-    std::stringstream ss;
+    unsigned int length = stringValue().length();
+    ss << encode_length(length, ITEM_UTF8) << stringValue();
+}
+
+void
+IntElement::toWire(std::stringstream& ss, int omit_length)
+{
     std::stringstream text;
 
     text << str();
     int length = text.str().length();
     ss << encode_length(length, ITEM_INT) << text.str();
-
-    return ss.str();
 }
 
-std::string
-BoolElement::toWire(int omit_length)
+void
+BoolElement::toWire(std::stringstream& ss, int omit_length)
 {
-    std::stringstream ss;
     std::stringstream text;
 
     text << str();
@@ -861,87 +791,80 @@ BoolElement::toWire(int omit_length)
     } else {
         ss << 0x00;
     }
-
-    return ss.str();
 }
 
-std::string
-DoubleElement::toWire(int omit_length)
+void
+DoubleElement::toWire(std::stringstream& ss, int omit_length)
 {
-    std::stringstream ss;
     std::stringstream text;
 
     text << str();
     int length = text.str().length();
     ss << encode_length(length, ITEM_REAL) << text.str();
-
-    return ss.str();
 }
 
-std::string
-ListElement::toWire(int omit_length)
+void
+ListElement::toWire(std::stringstream& ss, int omit_length)
 {
-    std::stringstream ss;
+    std::stringstream ss2;
     std::vector<ElementPtr> v;
     v = listValue();
     for (std::vector<ElementPtr>::iterator it = v.begin() ;
          it != v.end() ; ++it) {
-        ss << (*it)->toWire(0);
+        (*it)->toWire(ss2, 0);
     }
 
     if (omit_length) {
-        return ss.str();
+        ss << ss2.rdbuf();
     } else {
-        std::stringstream ss_len;
-        ss_len << encode_length(ss.str().length(), ITEM_LIST);
-        ss_len << ss.str();
-        return ss_len.str();
+        stringbuf *ss2_buf = ss2.rdbuf();
+        ss2_buf->pubseekpos(0);
+        ss << encode_length(ss2_buf->in_avail(), ITEM_LIST);
+        ss << ss2_buf;
     }
 }
 
-std::string
-encode_tag(const std::string &s)
+void
+encode_tag(std::stringstream& ss, const std::string &s)
 {
-    std::stringstream ss;
     int length = s.length();
     unsigned char val = length & 0x000000ff;
 
     ss << val << s;
-
-    return ss.str();
 }
 
-std::string
-MapElement::toWire(int omit_length)
+void
+MapElement::toWire(std::stringstream& ss, int omit_length)
 {
-    std::stringstream ss;
+    std::stringstream ss2;
     std::map<std::string, ElementPtr> m;
 
     //
     // If we don't want the length, we will want the protocol header
     //
     if (omit_length) {
-        ss << PROTOCOL_VERSION[0] << PROTOCOL_VERSION[1];
-        ss << PROTOCOL_VERSION[2] << PROTOCOL_VERSION[3];
+        ss2 << PROTOCOL_VERSION[0] << PROTOCOL_VERSION[1];
+        ss2 << PROTOCOL_VERSION[2] << PROTOCOL_VERSION[3];
     }
 
     m = mapValue();
     for (std::map<std::string, ElementPtr>::iterator it = m.begin() ;
          it != m.end() ; ++it) {
-        ss << encode_tag((*it).first);
-        ss << (*it).second->toWire(0);
+        encode_tag(ss2, (*it).first);
+        (*it).second->toWire(ss2, 0);
     }
 
     //
     // add length if needed
     //
     if (omit_length) {
-        return ss.str();
+        ss << ss2.rdbuf();
     } else {
-        std::stringstream ss_len;
-        ss_len << encode_length(ss.str().length(), ITEM_HASH);
-        ss_len << ss.str();
-        return ss_len.str();
+        
+        stringbuf *ss2_buf = ss2.rdbuf();
+        ss2_buf->pubseekpos(0);
+        ss << encode_length(ss2_buf->in_avail(), ITEM_HASH);
+        ss << ss2_buf;
     }
 }
 

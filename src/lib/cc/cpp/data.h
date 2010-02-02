@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -22,6 +22,7 @@
 #include <map>
 #include <boost/shared_ptr.hpp>
 #include <stdexcept>
+#include <dns/cpp/exceptions.h>
 
 namespace isc { namespace data {
 
@@ -35,28 +36,22 @@ typedef boost::shared_ptr<Element> ElementPtr;
 /// ListElement)
 ///
 // todo: include types and called function in the exception
-class TypeError : public std::exception {
+class TypeError : public isc::dns::Exception {
 public:
-    TypeError(std::string m = "Attempt to use function on wrong Element type") : msg(m) {}
-    ~TypeError() throw() {}
-    const char* what() const throw() { return msg.c_str(); }
-private:
-    std::string msg;
+    TypeError(const char* file, size_t line, const char* what) :
+        isc::dns::Exception(file, line, what) {}
 };
 
 ///
 /// \brief A standard Data module exception that is thrown if a parse
 /// error is encountered when constructing an Element from a string
 ///
-class ParseError : public std::exception {
+// i'd like to use Exception here but we need one that is derived from
+// runtime_error (as this one is directly based on external data, and
+// i want to add some values to any static data string that is provided)
+class ParseError : public std::runtime_error {
 public:
-    ParseError(std::string m = "Parse error in element data", int l = 0, int p = 0) : msg(m), line(l), pos(p) {}
-    ~ParseError() throw() {}
-    const char* what() const throw();
-private:
-    std::string msg;
-    int line;
-    int pos;
+    ParseError(const std::string &err) : std::runtime_error(err) {};
 };
 
 ///
@@ -120,22 +115,14 @@ public:
     /// \return std::string containing the string representation
     virtual std::string str() = 0;
 
-    /// Returns an xml representation for the Element and all its
-    /// child elements
-    ///
-    /// \param prefix Every line of the xml string will be prefixed with
-    ///        the number of spaces specified here
-    /// \return std::string containing the xml representation
-    // todo
-    virtual std::string strXML(size_t prefix = 0) = 0;
-
     /// Returns the wireformat for the Element and all its child
     /// elements.
     ///
     /// \param omit_length If this is non-zero, the item length will
     ///        be omitted from the wire format
     /// \return std::string containing the element in wire format
-    virtual std::string toWire(int omit_length = 1) = 0;
+    std::string toWire(int omit_length = 1);
+    virtual void toWire(std::stringstream& out, int omit_length = 1) = 0;
 
     /// \name Type-specific getters
     ///
@@ -146,12 +133,12 @@ public:
     /// If you want an exception-safe getter method, use
     /// getValue() below
     //@{
-    virtual int intValue() { throw TypeError(); };
-    virtual double doubleValue() { throw TypeError(); };
-    virtual bool boolValue() { throw TypeError(); };
-    virtual std::string stringValue() { throw TypeError(); };
-    virtual const std::vector<boost::shared_ptr<Element> >& listValue() { throw TypeError(); }; // replace with real exception or empty vector?
-    virtual const std::map<std::string, boost::shared_ptr<Element> >& mapValue() { throw TypeError(); }; // replace with real exception or empty map?
+    virtual int intValue() { dns_throw(TypeError, "intValue() called on non-integer Element"); };
+    virtual double doubleValue() { dns_throw(TypeError, "doubleValue() called on non-double Element"); };
+    virtual bool boolValue() { dns_throw(TypeError, "boolValue() called on non-Bool Element"); };
+    virtual std::string stringValue() { dns_throw(TypeError, "stringValue() called on non-string Element"); };
+    virtual const std::vector<boost::shared_ptr<Element> >& listValue() { dns_throw(TypeError, "listValue() called on non-list Element"); }; // replace with real exception or empty vector?
+    virtual const std::map<std::string, boost::shared_ptr<Element> >& mapValue() { dns_throw(TypeError, "mapValue() called on non-map Element"); }; // replace with real exception or empty map?
     //@}
 
     /// \name Exception-safe getters
@@ -198,21 +185,21 @@ public:
     /// Returns the ElementPtr at the given index. If the index is out
     /// of bounds, this function throws an std::out_of_range exception.
     /// \param i The position of the ElementPtr to return
-    virtual ElementPtr get(const int i) { throw TypeError(); };
+    virtual ElementPtr get(const int i) { dns_throw(TypeError, "get(int) called on a non-list Element"); };
     /// Sets the ElementPtr at the given index. If the index is out
     /// of bounds, this function throws an std::out_of_range exception.
     /// \param i The position of the ElementPtr to set
     /// \param element The ElementPtr to set at the position
-    virtual void set(const size_t i, ElementPtr element) { throw TypeError(); };
+    virtual void set(const size_t i, ElementPtr element) { dns_throw(TypeError, "set(int, element) called on a non-list Element"); };
     /// Adds an ElementPtr to the list
     /// \param element The ElementPtr to add
-    virtual void add(ElementPtr element) { throw TypeError(); };
+    virtual void add(ElementPtr element) { dns_throw(TypeError, "add() called on a non-list Element"); };
     /// Removes the element at the given position. If the index is out
     /// of nothing happens.
     /// \param i The index of the element to remove.
-    virtual void remove(const int i) { throw TypeError(); };
+    virtual void remove(const int i) { dns_throw(TypeError, "remove(int) called on a non-list Element"); };
     /// Returns the number of elements in the list.
-    virtual size_t size() { throw TypeError(); };
+    virtual size_t size() { dns_throw(TypeError, "size() called on a non-list Element"); };
     //@}
     
     /// \name MapElement functions
@@ -223,17 +210,17 @@ public:
     /// Returns the ElementPtr at the given key
     /// \param name The key of the Element to return
     /// \return The ElementPtr at the given key
-    virtual ElementPtr get(const std::string& name) { throw TypeError(); } ;
+    virtual ElementPtr get(const std::string& name) { dns_throw(TypeError, "get(string) called on a non-map Element"); } ;
     /// Sets the ElementPtr at the given key
     /// \param name The key of the Element to set
-    virtual void set(const std::string& name, ElementPtr element) { throw TypeError(); };
+    virtual void set(const std::string& name, ElementPtr element) { dns_throw(TypeError, "set(name, element) called on a non-map Element"); };
     /// Remove the ElementPtr at the given key
     /// \param name The key of the Element to remove
-    virtual void remove(const std::string& name) { throw TypeError(); };
+    virtual void remove(const std::string& name) { dns_throw(TypeError, "remove(string) called on a non-map Element"); };
     /// Checks if there is data at the given key
     /// \param name The key of the Element to remove
     /// \return true if there is data at the key, false if not.
-    virtual bool contains(const std::string& name) { throw TypeError(); }
+    virtual bool contains(const std::string& name) { dns_throw(TypeError, "contains(string) called on a non-map Element"); }
     /// Recursively finds any data at the given identifier. The
     /// identifier is a /-separated list of names of nested maps, with
     /// the last name being the leaf that is returned.
@@ -247,7 +234,7 @@ public:
     /// \return The ElementPtr at the given identifier. Returns a
     /// null ElementPtr if it is not found, which can be checked with
     /// Element::is_null(ElementPtr e).
-    virtual ElementPtr find(const std::string& identifier) { throw TypeError(); };
+    virtual ElementPtr find(const std::string& identifier) { dns_throw(TypeError, "find(string) called on a non-map Element"); };
     /// See \c Element::find()
     /// \param identifier The identifier of the element to find
     /// \param t Reference to store the resulting ElementPtr, if found.
@@ -308,9 +295,8 @@ public:
     /// \return An ElementPtr that contains the element(s) specified
     /// in the given input stream.
     // make this one private?
-    static ElementPtr createFromString(std::istream& in, int& line, int &pos) throw(ParseError);
+    static ElementPtr createFromString(std::istream& in, const std::string& file, int& line, int &pos) throw(ParseError);
     //@}
-    //static ElementPtr create_from_xml(std::stringstream& in);
 
     /// \name Wire format factory functions
 
@@ -341,8 +327,7 @@ public:
     bool getValue(int& t) { t = i; return true; };
     bool setValue(const int v) { i = v; return true; };
     std::string str();
-    std::string strXML(size_t prefix = 0);
-    std::string toWire(int omit_length = 1);
+    void toWire(std::stringstream& ss, int omit_length = 1);
 };
 
 class DoubleElement : public Element {
@@ -354,8 +339,7 @@ public:
     bool getValue(double& t) { t = d; return true; };
     bool setValue(const double v) { d = v; return true; };
     std::string str();
-    std::string strXML(size_t prefix = 0);
-    std::string toWire(int omit_length = 1);
+    void toWire(std::stringstream& ss, int omit_length = 1);
 };
 
 class BoolElement : public Element {
@@ -367,8 +351,7 @@ public:
     bool getValue(bool& t) { t = b; return true; };
     bool setValue(const bool v) { b = v; return true; };
     std::string str();
-    std::string strXML(size_t prefix = 0);
-    std::string toWire(int omit_length = 1);
+    void toWire(std::stringstream& ss, int omit_length = 1);
 };
 
 class StringElement : public Element {
@@ -380,8 +363,7 @@ public:
     bool getValue(std::string& t) { t = s; return true; };
     bool setValue(const std::string& v) { s = v; return true; };
     std::string str();
-    std::string strXML(size_t prefix = 0);
-    std::string toWire(int omit_length = 1);
+    void toWire(std::stringstream& ss, int omit_length = 1);
 };
 
 class ListElement : public Element {
@@ -397,8 +379,7 @@ public:
     void add(ElementPtr e) { l.push_back(e); };
     void remove(int i) { l.erase(l.begin() + i); };
     std::string str();
-    std::string strXML(size_t prefix = 0);
-    std::string toWire(int omit_length = 1);
+    void toWire(std::stringstream& ss, int omit_length = 1);
     size_t size() { return l.size(); }
 };
 
@@ -415,8 +396,7 @@ public:
     void remove(const std::string& s) { m.erase(s); }
     bool contains(const std::string& s) { return m.find(s) != m.end(); }
     std::string str();
-    std::string strXML(size_t prefix = 0);
-    std::string toWire(int omit_length = 1);
+    void toWire(std::stringstream& ss, int omit_length = 1);
     
     //
     // Encode into the CC wire format.
