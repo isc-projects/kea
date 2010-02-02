@@ -1,9 +1,9 @@
-#include <dns/cpp/buffer.h>
-#include <dns/cpp/name.h>
-#include <dns/cpp/rrset.h>
-#include <dns/cpp/message.h>
+#include <dns/buffer.h>
+#include <dns/name.h>
+#include <dns/rrset.h>
+#include <dns/message.h>
 
-#include <cc/cpp/data.h>
+#include <cc/data.h>
 
 #include "data_source.h"
 

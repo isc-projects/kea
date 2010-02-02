@@ -22,7 +22,7 @@
 #include <map>
 #include <boost/shared_ptr.hpp>
 #include <stdexcept>
-#include <dns/cpp/exceptions.h>
+#include <dns/exceptions.h>
 
 namespace isc { namespace data {
 

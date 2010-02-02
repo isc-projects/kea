@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_builddir)/src/lib/dns/cpp -I$(top_srcdir)/src/lib/dns/cpp -I$(top_srcdir)/src/lib -I$(top_srcdir)/ext
+AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_builddir)/src/lib/dns/cpp -I$(top_builddir)/include/dns/cpp -I$(top_builddir)/include -I$(top_srcdir)/ext
 
 bin_PROGRAMS = b10-auth
 b10_auth_SOURCES = auth_srv.cc auth_srv.h

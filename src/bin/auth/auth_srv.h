@@ -17,8 +17,8 @@
 #ifndef __AUTH_SRV_H
 #define __AUTH_SRV_H 1
 
-#include <cc/cpp/data.h>
-#include <auth/cpp/data_source_static.h>
+#include <cc/data.h>
+#include <auth/data_source_static.h>
 
 class AuthSrv {
 public:
