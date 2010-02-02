@@ -19,8 +19,8 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <dns/cpp/name.h>
-#include <dns/cpp/rrset.h>
+#include <dns/name.h>
+#include <dns/rrset.h>
 
 struct BuiltinRRsetsImpl;
 

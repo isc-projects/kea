@@ -18,7 +18,7 @@
 #define __PARKINGLOT_H 1
 
 #include "zoneset.h"
-#include <cc/cpp/data.h>
+#include <cc/data.h>
 #include "data_source_plot.h"
 
 class ParkingLot {

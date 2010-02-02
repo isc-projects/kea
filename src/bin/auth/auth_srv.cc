@@ -25,15 +25,15 @@
 #include <set>
 #include <iostream>
 
-#include <dns/cpp/buffer.h>
-#include <dns/cpp/messagerenderer.h>
-#include <dns/cpp/name.h>
-#include <dns/cpp/question.h>
-#include <dns/cpp/rrset.h>
-#include <dns/cpp/rrttl.h>
-#include <dns/cpp/message.h>
+#include <dns/buffer.h>
+#include <dns/messagerenderer.h>
+#include <dns/name.h>
+#include <dns/question.h>
+#include <dns/rrset.h>
+#include <dns/rrttl.h>
+#include <dns/message.h>
 
-#include <cc/cpp/data.h>
+#include <cc/data.h>
 
 #include "common.h"
 #include "auth_srv.h"

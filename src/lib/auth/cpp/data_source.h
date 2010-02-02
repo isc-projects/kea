@@ -18,9 +18,9 @@
 #define __DATA_SOURCE_H
 
 #include <boost/foreach.hpp>
-#include <dns/cpp/name.h>
-#include <dns/cpp/rrset.h>
-#include <auth/cpp/query.h>
+#include <dns/name.h>
+#include <dns/rrset.h>
+#include <auth/query.h>
 
 namespace isc {
 namespace dns {

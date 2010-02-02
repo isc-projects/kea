@@ -1,7 +1,7 @@
 #ifndef _DATA_DEF_H
 #define _DATA_DEF_H 1
 
-#include <cc/cpp/data.h>
+#include <cc/data.h>
 
 #include <sstream>
 

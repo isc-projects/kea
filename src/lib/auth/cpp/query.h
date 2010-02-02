@@ -19,12 +19,12 @@
 
 #include <queue>
 
-#include <dns/cpp/exceptions.h>
-#include <dns/cpp/name.h>
-#include <dns/cpp/message.h>
-#include <dns/cpp/rrset.h>
-#include <dns/cpp/rrclass.h>
-#include <dns/cpp/rrtype.h>
+#include <dns/exceptions.h>
+#include <dns/name.h>
+#include <dns/message.h>
+#include <dns/rrset.h>
+#include <dns/rrclass.h>
+#include <dns/rrtype.h>
 
 namespace isc {
 namespace dns {

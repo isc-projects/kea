@@ -18,8 +18,8 @@
 #define __ZONESET_H 1
 
 #include <set>
-#include <dns/cpp/buffer.h>
-#include <dns/cpp/name.h>
+#include <dns/buffer.h>
+#include <dns/name.h>
 
 class ZoneSet {
 public:

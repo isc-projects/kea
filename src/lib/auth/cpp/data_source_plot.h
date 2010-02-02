@@ -18,15 +18,15 @@
 #ifndef __DATA_SOURCE_SIMPLE_H
 #define __DATA_SOURCE_SIMPLE_H
 
-#include <dns/cpp/buffer.h>
-#include <dns/cpp/name.h>
-#include <dns/cpp/rdata.h>
-#include <dns/cpp/rrclass.h>
-#include <dns/cpp/rrtype.h>
-#include <dns/cpp/rrset.h>
-#include <dns/cpp/message.h>
+#include <dns/buffer.h>
+#include <dns/name.h>
+#include <dns/rdata.h>
+#include <dns/rrclass.h>
+#include <dns/rrtype.h>
+#include <dns/rrset.h>
+#include <dns/message.h>
 
-#include <cc/cpp/data.h>
+#include <cc/data.h>
 
 #include "common.h"
 

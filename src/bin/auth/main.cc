@@ -25,14 +25,14 @@
 
 #include <boost/foreach.hpp>
 
-#include <dns/cpp/buffer.h>
-#include <dns/cpp/name.h>
-#include <dns/cpp/rrset.h>
-#include <dns/cpp/message.h>
+#include <dns/buffer.h>
+#include <dns/name.h>
+#include <dns/rrset.h>
+#include <dns/message.h>
 
-#include <cc/cpp/session.h>
-#include <cc/cpp/data.h>
-#include <config/cpp/ccsession.h>
+#include <cc/session.h>
+#include <cc/data.h>
+#include <config/ccsession.h>
 
 #include "common.h"
 #include "config.h"

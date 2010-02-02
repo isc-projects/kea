@@ -17,8 +17,8 @@
 #ifndef __DATA_SOURCE_H
 #define __DATA_SOURCE_H
 
-#include <dns/cpp/name.h>
-#include <dns/cpp/rrset.h>
+#include <dns/name.h>
+#include <dns/rrset.h>
 
 namespace isc {
 namespace dns {

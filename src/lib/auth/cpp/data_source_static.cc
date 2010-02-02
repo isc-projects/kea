@@ -2,13 +2,13 @@
 
 #include "data_source_static.h"
 
-#include <dns/cpp/name.h>
-#include <dns/cpp/rdata.h>
-#include <dns/cpp/rdataclass.h>
-#include <dns/cpp/rrclass.h>
-#include <dns/cpp/rrset.h>
-#include <dns/cpp/rrtype.h>
-#include <dns/cpp/rrttl.h>
+#include <dns/name.h>
+#include <dns/rdata.h>
+#include <dns/rdataclass.h>
+#include <dns/rrclass.h>
+#include <dns/rrset.h>
+#include <dns/rrtype.h>
+#include <dns/rrttl.h>
 
 #include <iostream>
 
