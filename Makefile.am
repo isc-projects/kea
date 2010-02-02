@@ -34,10 +34,8 @@ pyshared:
 	mkdir pyshared
 	mkdir pyshared/isc
 	ln -s ${abs_top_srcdir}/src/lib/config/python/isc/config pyshared/isc/config
-	cat ${abs_top_srcdir}/src/lib/config/python/isc/__init__.py >> pyshared/isc/__init__.py
 	ln -s ${abs_top_srcdir}/src/lib/cc/python/isc/cc pyshared/isc/cc
 	ln -s ${abs_top_srcdir}/src/lib/cc/python/isc/cc pyshared/isc/Util
-	cat ${abs_top_srcdir}/src/lib/cc/python/isc/__init__.py >> pyshared/isc/__init__.py
 
 include:
 	mkdir include
