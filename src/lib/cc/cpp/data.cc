@@ -43,7 +43,7 @@ const unsigned char ITEM_LENGTH_8    = 0x20;
 const unsigned char ITEM_LENGTH_MASK = 0x30;
 
 static inline void
-throwParseError(const std::string error, const std::string file, int line = 0, int pos = 0)
+throwParseError(const std::string& error, const std::string& file, int line = 0, int pos = 0)
 {
     if (line != 0 || pos != 0) {
         std::stringstream ss;
@@ -574,6 +574,7 @@ decode_blob(std::stringstream& in, int& item_length)
 
     in.read(buf, item_length);
     if (in.fail()) {
+        delete[] buf;
         throw DecodeError();
     }
     buf[item_length] = 0;
@@ -593,6 +594,7 @@ decode_utf8(std::stringstream& in, int& item_length)
 
     in.read(buf, item_length);
     if (in.fail()) {
+        delete[] buf;
         throw DecodeError();
     }
     buf[item_length] = 0;
