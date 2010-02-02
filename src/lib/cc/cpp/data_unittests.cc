@@ -195,18 +195,6 @@ TEST(Element, MapElement) {
     EXPECT_FALSE(el->find("name/error", el2));
 }
 
-void my_print(std::string &s) {
-    int i;
-    for (i = 0; i < s.size(); i++) {
-        if (isalnum(s.at(i))) {
-            std::cout << s.at(i);
-        } else {
-            std::cout << "\\" << setfill('0') << setw(3) << oct << int(s.at(i));
-        }
-    }
-    std::cout << std::endl;
-}
-
 TEST(Element, to_and_from_wire) {
     ElementPtr el, decoded_el;
     std::string wire;

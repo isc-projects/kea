@@ -30,6 +30,7 @@ protected:
     {
         data16 = (2 << 8) | 3;
         data32 = (4 << 24) | (5 << 16) | (6 << 8) | 7;
+        memset(vdata, 0, sizeof(testdata));
     }
 
     InputBuffer ibuffer;

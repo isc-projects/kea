@@ -97,9 +97,10 @@ host_lookup(char* name, std::string type)
     char recvbuf[4096];
     int cc;
     if ((cc = recvfrom(s, recvbuf, sizeof(recvbuf), 0, sa, &sa_len)) > 0) {
-        Message rmsg;
-        InputBuffer ibuffer(recvbuf, cc);
         try {
+            Message rmsg;
+            InputBuffer ibuffer(recvbuf, cc);
+
             rmsg.fromWire(ibuffer);
             if (!verbose) {
                   for (RRsetIterator it = rmsg.beginSection(Section::ANSWER());

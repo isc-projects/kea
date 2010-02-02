@@ -31,7 +31,7 @@ using namespace isc::dns;
 namespace {
 class RRParamRegistryTest : public ::testing::Test {
 protected:
-    virtual void SetUp() {
+    /*virtual void SetUp() {
         ostringstream oss1;
         oss1 << test_class_code;
         test_class_unknown_str = "CLASS" + oss1.str();
@@ -39,7 +39,7 @@ protected:
         ostringstream oss2;
         oss2 << test_type_code;
         test_type_unknown_str = "TYPE" + oss2.str();
-    }
+    }*/
 
     string test_class_unknown_str;
     string test_type_unknown_str;

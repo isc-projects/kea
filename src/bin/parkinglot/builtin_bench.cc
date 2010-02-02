@@ -114,14 +114,6 @@ getNormalRRset(const vector<OutputBuffer>& buffers)
     return (rrset);
 }
 
-inline OutputBuffer
-txtToWire(const string& txt)
-{
-    OutputBuffer buffer(0);
-    generic::TXT(txt).toWire(buffer);
-    return (buffer);
-}
-
 struct WireDataInserter
 {
     WireDataInserter(vector<OutputBuffer>& buffers) : buffers_(buffers)

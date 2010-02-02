@@ -84,9 +84,8 @@ public:
         qname_ = &query->getName();
         qclass_ = &query->getClass();
         qtype_ = &query->getType();
-        QueryTask *qt = new QueryTask(*qname_, *qclass_, *qtype_,
-                                      Section::ANSWER());
-        querytasks.push(QueryTaskPtr(qt));
+        querytasks.push(QueryTaskPtr(new QueryTask(*qname_, *qclass_,
+                                     *qtype_, Section::ANSWER())));
     };
 
     virtual ~Query() {}
