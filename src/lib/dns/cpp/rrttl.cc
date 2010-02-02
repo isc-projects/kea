@@ -22,6 +22,7 @@
 #include "messagerenderer.h"
 #include "rrttl.h"
 
+#include <iostream>
 using namespace std;
 using namespace isc::dns;
 

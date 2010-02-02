@@ -27,6 +27,7 @@ namespace dns {
 // i.e. do we want this to be able to hold more types than RRset?
 class SearchResult {
 public:
+    SearchResult() : status(success) {};
     enum status_type { success, error, not_implemented,
                        zone_not_found, name_not_found };
 

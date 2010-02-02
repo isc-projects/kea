@@ -119,12 +119,13 @@ ParkingLot::processMessage() {
     socklen_t sa_len = sizeof(ss);
     struct sockaddr* sa = static_cast<struct sockaddr*>((void*)&ss);
     int s = sock;
-    Message msg;
     char recvbuf[4096];
     int cc;
 
     if ((cc = recvfrom(s, recvbuf, sizeof(recvbuf), 0, sa, &sa_len)) > 0) {
+        Message msg;
         InputBuffer buffer(recvbuf, cc);
+
         try {
             msg.fromWire(buffer);
         } catch (...) {

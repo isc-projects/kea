@@ -17,6 +17,7 @@ using namespace isc::data;
 Session::Session()
 {
     sock = -1;
+    sequence = 1;
 }
 
 void
