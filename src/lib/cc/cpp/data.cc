@@ -47,7 +47,7 @@ throwParseError(const std::string error, const std::string file, int line = 0, i
 {
     if (line != 0 || pos != 0) {
         std::stringstream ss;
-        ss << error << "in " + file + ":" << line << ":" << pos;
+        ss << error << " in " + file + ":" << line << ":" << pos;
         throw ParseError(ss.str());
     } else {
         throw ParseError(error);
