@@ -31,7 +31,8 @@ using namespace isc::dns;
 namespace {
 class RRParamRegistryTest : public ::testing::Test {
 protected:
-    RRParamRegistryTest() {
+    RRParamRegistryTest()
+    {
         ostringstream oss1;
         oss1 << test_class_code;
         test_class_unknown_str = "CLASS" + oss1.str();
