@@ -69,6 +69,8 @@ class ProcessInfo:
         spawn_env['PATH'] = os.environ['PATH']
         if 'B10_FROM_SOURCE' in os.environ:
             spawn_env['B10_FROM_SOURCE'] = os.environ['B10_FROM_SOURCE']
+        else: 
+            spawn_env['PATH'] = "@@LIBEXECDIR@@:" + spawn_env['PATH']
         if 'PYTHON_EXEC' in os.environ:
             spawn_env['PYTHON_EXEC'] = os.environ['PYTHON_EXEC']
         if 'PYTHONPATH' in os.environ:
