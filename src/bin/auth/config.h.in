@@ -1,1 +1,1 @@
-#define AUTH_SPECFILE_LOCATION "@prefix@/share/bind/auth.spec"
+#define AUTH_SPECFILE_LOCATION "@prefix@/share/@PACKAGE@/auth.spec"
