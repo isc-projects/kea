@@ -101,7 +101,7 @@ public:
     DSResult init() { return NOT_IMPLEMENTED; }
     DSResult close() { return NOT_IMPLEMENTED; }
 
-protected:
+private:
     RRClass rrclass;
 };
 
