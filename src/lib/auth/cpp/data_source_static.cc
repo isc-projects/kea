@@ -15,14 +15,13 @@
 namespace isc {
 namespace dns {
 
-using namespace isc::dns;
 using namespace isc::dns::rdata;
 
 StaticDataSrc::StaticDataSrc() : authors_name("authors.bind"),
                                  version_name("version.bind")
 {
     authors = RRsetPtr(new RRset(authors_name, RRClass::CH(),
-                                          RRType::TXT(), RRTTL(3600)));
+                                          RRType::TXT(), RRTTL(0)));
     authors->addRdata(generic::TXT("Evan Hunt"));
     authors->addRdata(generic::TXT("Han Feng"));
     authors->addRdata(generic::TXT("Jelte Jansen"));
@@ -32,12 +31,20 @@ StaticDataSrc::StaticDataSrc() : authors_name("authors.bind"),
     authors->addRdata(generic::TXT("Kazunori Fujiwara"));
     authors->addRdata(generic::TXT("Michael Graff"));
     authors->addRdata(generic::TXT("Naoki Kambe"));
-    authors->addRdata(generic::TXT("Shane Kerr")); 
+    authors->addRdata(generic::TXT("Shane Kerr"));
     authors->addRdata(generic::TXT("Zhang Likun"));
 
+    authors_ns = RRsetPtr(new RRset(authors_name, RRClass::CH(),
+                                    RRType::NS(), RRTTL(0)));
+    authors_ns->addRdata(generic::NS(authors_name));
+
     version = RRsetPtr(new RRset(version_name, RRClass::CH(),
-                                          RRType::TXT(), RRTTL(3600)));
+                                          RRType::TXT(), RRTTL(0)));
     version->addRdata(generic::TXT("BIND10 0.0.0 (pre-alpha)"));
+
+    version_ns = RRsetPtr(new RRset(version_name, RRClass::CH(),
+                                    RRType::NS(), RRTTL(0)));
+    version_ns->addRdata(generic::NS(version_name));
 }
 
 const DataSrc*
@@ -91,13 +98,27 @@ StaticDataSrc::findRRset(const Name& qname,
                          const RRType& qtype,
                          RRsetList& target) const
 {
-    if (qname == version_name) {
+    if (qname == version_name &&
+        qclass == version->getClass() && qtype == version->getType()) {
         target.push_back(version);
         return SUCCESS;
-    } else if (qname == authors_name) {
+    } else if (qname == version_name &&
+               qclass == version_ns->getClass() &&
+               qtype == version_ns->getType()) {
+        target.push_back(version_ns);
+        return SUCCESS;
+    } else if (qname == authors_name &&
+               qclass == authors->getClass() && qtype == authors->getType()) {
         target.push_back(authors);
         return SUCCESS;
+    } else if (qname == authors_name &&
+               qclass == authors_ns->getClass() &&
+               qtype == authors_ns->getType()) {
+        target.push_back(authors_ns);
+        return SUCCESS;
     }
+    // XXX: this is not 100% correct.
+    // We should also support the nodata/noerror case.
     return NAME_NOT_FOUND;
 }
 
