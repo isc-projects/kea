@@ -56,7 +56,9 @@ private:
     const Name authors_name;
     const Name version_name;
     RRsetPtr authors;
+    RRsetPtr authors_ns;
     RRsetPtr version;
+    RRsetPtr version_ns;
 };
 
 }
