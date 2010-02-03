@@ -39,7 +39,6 @@ class AbstractRRset;
 typedef boost::shared_ptr<AbstractRRset> RRsetPtr;
 class BasicRRset;
 typedef BasicRRset RRset;
-typedef std::vector<RRsetPtr> RRsetList;
 class BasicRRsetImpl;
 
 class RdataIterator;

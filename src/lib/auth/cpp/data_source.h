@@ -37,6 +37,8 @@ enum DSResult {
 
 class DataSrc;
 
+typedef std::vector<RRsetPtr> RRsetList;
+
 class AbstractDataSrc {
 public:
     virtual ~AbstractDataSrc() {};
