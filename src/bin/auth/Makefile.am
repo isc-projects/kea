@@ -6,7 +6,7 @@ b10_auth_SOURCES += common.cc common.h
 b10_auth_SOURCES += main.cc
 b10_auth_LDADD =  $(top_builddir)/src/lib/dns/cpp/.libs/libdns.a
 b10_auth_LDADD +=  $(top_builddir)/src/lib/auth/cpp/.libs/libauth.a
-b10_auth_LDADD += $(top_builddir)/src/lib/config/cpp/libclient.a
+b10_auth_LDADD += $(top_builddir)/src/lib/config/cpp/libcfgclient.a
 b10_auth_LDADD += $(top_builddir)/src/lib/cc/cpp/libcc.a
 
 b10_authdir = $(DESTDIR)$(pkgdatadir)

@@ -10,7 +10,7 @@ b10_parkinglot_SOURCES += data_source_plot.h data_source_plot.cc
 b10_parkinglot_SOURCES += data_source.h data_source.cc
 b10_parkinglot_SOURCES += builtin.h builtin.cc
 b10_parkinglot_LDADD =  $(top_builddir)/src/lib/dns/cpp/.libs/libdns.a
-b10_parkinglot_LDADD += $(top_builddir)/src/lib/config/cpp/libclient.a
+b10_parkinglot_LDADD += $(top_builddir)/src/lib/config/cpp/libcfgclient.a
 b10_parkinglot_LDADD += $(top_builddir)/src/lib/cc/cpp/libcc.a
 
 b10_parkinglotdir = $(DESTDIR)$(pkgdatadir)
