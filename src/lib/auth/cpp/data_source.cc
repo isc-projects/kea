@@ -13,11 +13,11 @@ namespace dns {
 DSResult
 DataSrc::runQuery(Query q) {
     DSResult result;
-    RRsetList data, sigs;
     Name container(".");
     Message& m = q.message();
 
     while (!q.tasks().empty()) {
+        RRsetList data, sigs;
         bool found = false;
         QueryTaskPtr task = q.tasks().front();
         q.tasks().pop();
@@ -40,6 +40,7 @@ DataSrc::runQuery(Query q) {
 
         switch (result) {
             case SUCCESS:
+                // XXX: what if 'data' contains more than one RRset?
                 m.addRRset(task->section, data[0]);
                 if (q.wantDnssec() && sigs.size() == 1) {
                     m.addRRset(Section(task->section), sigs[0]);
