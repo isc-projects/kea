@@ -61,6 +61,7 @@ TEST(Element, from_and_to_str) {
     sv.push_back("\"asdf\"");
     sv.push_back("[ 1, 2, 3, 4 ]");
     sv.push_back("{\"name\": \"foo\", \"value\": 47806}");
+    sv.push_back("[ {\"a\": 1, \"b\": \"c\"}, {\"a\": 2, \"b\": \"d\"} ]");
 
     BOOST_FOREACH(std::string s, sv) {
         // also test << operator, which uses Element::str()

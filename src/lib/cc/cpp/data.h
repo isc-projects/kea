@@ -96,7 +96,9 @@ protected:
     Element(int t) { type = t; }
 
 public:
-    enum types { integer, real, boolean, string, list, map };
+    // any is a special type used in list specifications, specifying
+    // that the elements can be of any type
+    enum types { integer, real, boolean, string, list, map, any };
     // base class; make dtor virtual
     virtual ~Element() {};
 

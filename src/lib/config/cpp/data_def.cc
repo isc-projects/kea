@@ -48,6 +48,8 @@ getType_value(const std::string& type_name) {
         return Element::list;
     } else if (type_name == "map") {
         return Element::map;
+    } else if (type_name == "any") {
+        return Element::any;
     } else {
         throw DataDefinitionError(type_name + " is not a valid type name");
     }
@@ -97,7 +99,6 @@ check_config_item(const ElementPtr& spec) {
 static void
 check_config_item_list(const ElementPtr& spec) {
     if (spec->getType() != Element::list) {
-        std::cout << "[XX] ERROR IN: " << spec << std::endl;
         throw DataDefinitionError("config_data is not a list of elements");
     }
     BOOST_FOREACH(ElementPtr item, spec->listValue()) {
@@ -210,16 +211,22 @@ check_type(ElementPtr spec, ElementPtr element)
 
 bool
 DataDefinition::validate_item(const ElementPtr spec, const ElementPtr data) {
-    std::cout << "Validating type of " << data << std::endl;
     if (!check_type(spec, data)) {
-        std::cout << "type mismatch; not " << spec->get("item_type") << ": " << data << std::endl;
-        std::cout << spec << std::endl;
+        // we should do some proper error feedback here
+        // std::cout << "type mismatch; not " << spec->get("item_type") << ": " << data << std::endl;
+        // std::cout << spec << std::endl;
         return false;
     }
     if (data->getType() == Element::list) {
+        ElementPtr list_spec = spec->get("list_item_spec");
         BOOST_FOREACH(ElementPtr list_el, data->listValue()) {
-            if (!validate_spec(spec->get("list_item_spec"), list_el)) {
+            if (!check_type(list_spec, list_el)) {
                 return false;
+            }
+            if (list_spec->get("item_type")->stringValue() == "map") {
+                if (!validate_item(list_spec, list_el)) {
+                    return false;
+                }
             }
         }
     }
@@ -238,7 +245,6 @@ DataDefinition::validate_spec(const ElementPtr spec, const ElementPtr data) {
     bool optional = spec->get("item_optional")->boolValue();
     ElementPtr data_el;
     
-    std::cout << "check for item with name " << item_name << std::endl;
     data_el = data->get(item_name);
     if (data_el) {
         if (!validate_item(spec, data_el)) {
@@ -246,7 +252,6 @@ DataDefinition::validate_spec(const ElementPtr spec, const ElementPtr data) {
         }
     } else {
         if (!optional) {
-            std::cout << "non-optional value not found" << std::endl;
             return false;
         }
     }
