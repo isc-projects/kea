@@ -75,7 +75,7 @@ TEST(Element, from_and_to_str) {
         Element::createFromString("{1}");
     } catch (isc::data::ParseError pe) {
         std::string s = std::string(pe.what());
-        EXPECT_EQ(s, "String expected in <unknown>:1:3");
+        EXPECT_EQ(s, "String expected in <string>:1:3");
     }
     
     sv.clear();

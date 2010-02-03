@@ -284,6 +284,7 @@ public:
     /// \return An ElementPtr that contains the element(s) specified
     /// in the given input stream.
     static ElementPtr createFromString(std::istream& in) throw(ParseError);
+    static ElementPtr createFromString(std::istream& in, const std::string& file_name) throw(ParseError);
     /// Creates an Element from the given input stream, where we keep
     /// track of the location in the stream for error reporting.
     ///

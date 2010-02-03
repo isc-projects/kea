@@ -316,17 +316,23 @@ from_stringstream_map(std::istream &in, const std::string& file, int& line, int&
     std::string cur_map_key;
     ElementPtr cur_map_element;
     skip_chars(in, " \t\n", line, pos);
-    while (c != EOF && c != '}') {
-        p.first = str_from_stringstream(in, file, line, pos);
-        skip_to(in, file, line, pos, ":", " \t\n");
-        // skip the :
-        in.get();
-        pos++;
-        p.second = Element::createFromString(in, file, line, pos);
-        m.insert(p);
-        skip_to(in, file, line, pos, ",}", " \t\n");
+    c = in.peek();
+    if (c == '}') {
+        // empty map, skip closing curly
         c = in.get();
-        pos++;
+    } else {
+        while (c != EOF && c != '}') {
+            p.first = str_from_stringstream(in, file, line, pos);
+            skip_to(in, file, line, pos, ":", " \t\n");
+            // skip the :
+            in.get();
+            pos++;
+            p.second = Element::createFromString(in, file, line, pos);
+            m.insert(p);
+            skip_to(in, file, line, pos, ",}", " \t\n");
+            c = in.get();
+            pos++;
+        }
     }
     return Element::create(m);
 }
@@ -335,7 +341,14 @@ ElementPtr
 Element::createFromString(std::istream &in) throw(ParseError)
 {
     int line = 1, pos = 1;
-    return createFromString(in, "<unknown>", line, pos);
+    return createFromString(in, "<istream>", line, pos);
+}
+
+ElementPtr
+Element::createFromString(std::istream &in, const std::string& file_name) throw(ParseError)
+{
+    int line = 1, pos = 1;
+    return createFromString(in, file_name, line, pos);
 }
 
 ElementPtr
@@ -403,7 +416,7 @@ Element::createFromString(const std::string &in)
 {
     std::stringstream ss;
     ss << in;
-    return createFromString(ss);
+    return createFromString(ss, "<string>");
 }
 
 //
