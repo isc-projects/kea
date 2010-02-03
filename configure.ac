@@ -184,6 +184,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/msgq/run_msgq.sh
            src/bin/auth/config.h
            src/bin/parkinglot/config.h
+           src/lib/config/cpp/data_def_unittests_config.h
            src/lib/dns/cpp/gen-rdatacode.py
           ], [
            chmod +x src/bin/cfgmgr/run_b10-cfgmgr.sh

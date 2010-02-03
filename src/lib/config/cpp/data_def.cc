@@ -3,6 +3,8 @@
 
 #include <sstream>
 #include <iostream>
+#include <fstream>
+#include <cerrno>
 
 #include <boost/foreach.hpp>
 
@@ -88,13 +90,14 @@ check_config_item(const ElementPtr& spec) {
     // todo: add stuff for type map
     if (getType_value(spec->get("item_type")->stringValue()) == Element::map) {
         check_leaf_item(spec, "map_item_spec", Element::list, true);
-        check_config_item_list(spec);
+        check_config_item_list(spec->get("map_item_spec"));
     }
 }
 
 static void
 check_config_item_list(const ElementPtr& spec) {
     if (spec->getType() != Element::list) {
+        std::cout << "[XX] ERROR IN: " << spec << std::endl;
         throw DataDefinitionError("config_data is not a list of elements");
     }
     BOOST_FOREACH(ElementPtr item, spec->listValue()) {
@@ -141,6 +144,24 @@ check_definition(const ElementPtr& def)
         throw DataDefinitionError("Data specification does not contain data_specification element");
     } else {
         check_data_specification(def->get("data_specification"));
+    }
+}
+
+DataDefinition::DataDefinition(const std::string& file_name,
+                               const bool check)
+                               throw(ParseError, DataDefinitionError) {
+    std::ifstream file;
+
+    file.open(file_name.c_str());
+    if (!file) {
+        std::stringstream errs;
+        errs << "Error opening " << file_name << ": " << strerror(errno);
+        throw DataDefinitionError(errs.str());
+    }
+
+    definition = Element::createFromString(file, file_name);
+    if (check) {
+        check_definition(definition);
     }
 }
 

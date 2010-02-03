@@ -65,6 +65,11 @@ class DataDefinition:
         return self._data_spec["data_specification"]["module_name"]
 
 def _check(data_spec):
+    """Checks the full specification. This is a dict that contains the
+       element "data_specification", which is in itself a dict that
+       must contain at least a "module_name" (string) and optionally
+       a "config_data" and a "commands" element, both of which are lists
+       of dicts. Raises a DataDefinitionError if there is a problem."""
     if type(data_spec) != dict:
         raise DataDefinitionError("data specification not a dict")
     if "data_specification" not in data_spec:
@@ -81,12 +86,17 @@ def _checkConfigSpec(config_data):
     # config data is a list of items represented by dicts that contain
     # things like "item_name", depending on the type they can have
     # specific subitems
+    """Checks a list that contains the configuration part of the
+       specification. Raises a DataDefinitionError if there is a
+       problem."""
     if type(config_data) != list:
         raise DataDefinitionError("config_data is not a list of items")
     for config_item in config_data:
         _checkItemSpec(config_item)
 
 def _checkCommandSpec(commands):
+    """Checks the list that contains a set of commands. Raises a
+       DataDefinitionError is there is an error"""
     if type(commands) != list:
         raise DataDefinitionError("commands is not a list of commands")
     for command in commands:
@@ -110,8 +120,9 @@ def _checkCommandSpec(commands):
     pass
 
 def _checkItemSpec(config_item):
-    # checks the dict that defines one config item
-    # (i.e. containing "item_name", "item_type", etc
+    """Checks the dict that defines one config item
+       (i.e. containing "item_name", "item_type", etc.
+       Raises a DataDefinitionError if there is an error"""
     if type(config_item) != dict:
         raise DataDefinitionError("item spec not a dict")
     if "item_name" not in config_item:

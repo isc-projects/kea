@@ -39,9 +39,22 @@ namespace isc { namespace data {
         /// the specification
         /// \param e The Element containing the data specification
         explicit DataDefinition(ElementPtr e) : definition(e) {};
+
+        /// Creates a \c DataDefinition instance from the contents
+        /// of the file given by file_name.
+        /// If check is true, and the definition is not of the correct
+        /// form, a DataDefinitionError is thrown. If the file could
+        /// not be parse, a ParseError is thrown.
+        /// \param file_name The file to be opened and parsed
+        /// \param check If true, the data definition in the file is
+        /// checked to be of the correct form
+        DataDefinition(const std::string& file_name, const bool check = true)
+                       throw(ParseError, DataDefinitionError);
+
         // todo: make check default false, or leave out option completely and always check?
-        /// Creates a \c DataDefinition instance from the given .spec
-        /// file stream. If check is true, and the definition is not of
+        /// Creates a \c DataDefinition instance from the given input
+        /// stream that contains the contents of a .spec file.
+        /// If check is true, and the definition is not of
         /// the correct form, a DataDefinitionError is thrown. If the
         /// file could not be parsed, a ParseError is thrown.
         /// \param in The std::istream containing the .spec file data
