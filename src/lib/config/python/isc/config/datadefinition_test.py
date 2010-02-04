@@ -19,8 +19,8 @@
 
 import unittest
 import os
-from isc.config import DataDefinition
-
+from isc.config import DataDefinition, DataDefinitionError
+import isc.cc.data
 
 class TestDataDefinition(unittest.TestCase):
 
@@ -30,6 +30,9 @@ class TestDataDefinition(unittest.TestCase):
 
     def spec_file(self, filename):
         return(self.data_path + os.sep + filename)
+
+    def read_spec_file(self, filename):
+        return DataDefinition(self.spec_file(filename))
 
     def spec1(self, dd):
         data_def = dd.get_definition()
@@ -48,7 +51,42 @@ class TestDataDefinition(unittest.TestCase):
         self.spec1(dd)
 
     def test_bad_specfiles(self):
-        self.assertRaises(DataDefinition(self.spec_file("spec3.spec")))
+        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec3.spec")
+        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec4.spec")
+        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec5.spec")
+        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec6.spec")
+        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec7.spec")
+        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec8.spec")
+        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec9.spec")
+        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec10.spec")
+        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec11.spec")
+        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec12.spec")
+        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec13.spec")
+        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec14.spec")
+        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec15.spec")
+        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec16.spec")
+        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec17.spec")
+        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec18.spec")
+        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec19.spec")
+        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec20.spec")
+        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec21.spec")
+
+    def validate_data(self, specfile_name, datafile_name):
+        dd = DataDefinition(self.spec_file(specfile_name));
+        data_file = open(self.spec_file(datafile_name))
+        data_str = data_file.read()
+        data = isc.cc.data.parse_value_str(data_str)
+        return dd.validate(data)
+        
+    def test_data_validation(self):
+        self.assertEqual(True, self.validate_data("spec22.spec", "data22_1.data"))
+        self.assertEqual(False, self.validate_data("spec22.spec", "data22_2.data"))
+        self.assertEqual(False, self.validate_data("spec22.spec", "data22_3.data"))
+        self.assertEqual(False, self.validate_data("spec22.spec", "data22_4.data"))
+        self.assertEqual(False, self.validate_data("spec22.spec", "data22_5.data"))
+        self.assertEqual(True, self.validate_data("spec22.spec", "data22_6.data"))
+        self.assertEqual(True, self.validate_data("spec22.spec", "data22_7.data"))
+        self.assertEqual(False, self.validate_data("spec22.spec", "data22_8.data"))
 
 if __name__ == '__main__':
     unittest.main()
