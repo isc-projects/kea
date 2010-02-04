@@ -399,22 +399,23 @@ Rcode::RESERVED15()
 
 class Section {
 public:
+    /// \brief Returns the relative position of the \c Section in DNS messages.
     unsigned int getCode() const { return (code_); }
     bool operator==(const Section& other) const
         { return (code_ == other.code_); }
-
-    enum {
-        SECTION_QUESTION = 0U,
-        SECTION_ANSWER = 1U,
-        SECTION_AUTHORITY = 2U,
-        SECTION_ADDITIONAL = 3U
-    };
 
     static const Section& QUESTION();
     static const Section& ANSWER();
     static const Section& AUTHORITY();
     static const Section& ADDITIONAL();
 private:
+    enum {
+        SECTION_QUESTION = 0,
+        SECTION_ANSWER = 1,
+        SECTION_AUTHORITY = 2,
+        SECTION_ADDITIONAL = 3
+    };
+
     Section(int code) : code_(code) {}
     unsigned int code_;
 };
