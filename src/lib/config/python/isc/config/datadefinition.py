@@ -19,6 +19,8 @@
 #
 import ast
 
+import isc.cc.data
+
 # file objects are passed around as _io.TextIOWrapper objects
 # import that so we can check those types
 
@@ -36,11 +38,25 @@ class DataDefinition:
         else:
             raise DataDefinitionError("Not a str or file-like object")
 
-    def validate(self, data):
+    def validate(self, data, errors = None):
         """Check whether the given piece of data conforms to this
-           data definition"""
-        # "TODO"
-        return True
+           data definition. If so, it returns True. If not, it will
+           return false. If errors is given, and is an array, a string
+           describing the error will be appended to it. The current
+           version stops as soon as there is one error so this list
+           will not be exhaustive."""
+        data_def = self.get_definition()
+        if 'data_specification' not in data_def:
+            if errors:
+                errors.append("Data definition has no data_specification element")
+            return False
+        data_def = data_def['data_specification']
+        if 'config_data' not in data_def:
+            if errors:
+                errors.append("The is no config_data for this specification")
+            return False
+        errors = []
+        return _validate_spec_list(data_def['config_data'], data, errors)
 
     def __read_data_spec_file(self, file, check = True):
         """Reads the data spec from the given file object.
@@ -102,20 +118,22 @@ def _check_command_spec(commands):
         if type(command) != dict:
             raise DataDefinitionError("command in commands list is not a dict")
         if "command_name" not in command:
-            raise DataDefitionError("no command_name in command item")
+            raise DataDefinitionError("no command_name in command item")
         command_name = command["command_name"]
         if type(command_name) != str:
             raise DataDefinitionError("command_name not a string: " + str(type(command_name)))
         if "command_description" in command:
             if type(command["command_description"]) != str:
-                raise DataDefitionError("command_description not a string in " + command_name)
+                raise DataDefinitionError("command_description not a string in " + command_name)
         if "command_args" in command:
             if type(command["command_args"]) != list:
-                raise DataDefitionError("command_args is not a list in " + command_name)
+                raise DataDefinitionError("command_args is not a list in " + command_name)
             for command_arg in command["command_args"]:
                 if type(command_arg) != dict:
                     raise DataDefinitionError("command argument not a dict in " + command_name)
                 _check_item_spec(command_arg)
+        else:
+            raise DataDefinitionError("command_args missing in " + command_name)
     pass
 
 def _check_item_spec(config_item):
@@ -134,17 +152,19 @@ def _check_item_spec(config_item):
     item_type = config_item["item_type"]
     if type(item_type) != str:
         raise DataDefinitionError("item_type in " + item_name + " is not a string: " + str(type(item_type)))
-    if item_type not in ["integer", "real", "boolean", "string", "list", "map"]:
+    if item_type not in ["integer", "real", "boolean", "string", "list", "map", "any"]:
         raise DataDefinitionError("unknown item_type in " + item_name + ": " + item_type)
     if "item_optional" in config_item:
         if type(config_item["item_optional"]) != bool:
             raise DataDefinitionError("item_default in " + item_name + " is not a boolean")
         if not config_item["item_optional"] and "item_default" not in config_item:
             raise DataDefinitionError("no default value for non-optional item " + item_name)
+    else:
+        raise DataDefinitionError("item_optional not in item " + item_name)
     if "item_default" in config_item:
         item_default = config_item["item_default"]
-        if (item_type == "int" and type(item_default) != int) or \
-           (item_type == "real" and type(item_default) != double) or \
+        if (item_type == "integer" and type(item_default) != int) or \
+           (item_type == "real" and type(item_default) != float) or \
            (item_type == "boolean" and type(item_default) != bool) or \
            (item_type == "string" and type(item_default) != str) or \
            (item_type == "list" and type(item_default) != list) or \
@@ -167,3 +187,69 @@ def _check_item_spec(config_item):
                 raise DataDefinitionError("map_item_spec element is not a dict")
             _check_item_spec(map_item)
 
+
+def _validate_type(spec, value, errors):
+    """Returns true if the value is of the correct type given the
+       specification"""
+    data_type = spec['item_type']
+    if data_type == "integer" and type(value) != int:
+        if errors:
+            errors.append(str(value) + " should be an integer")
+        return False
+    elif data_type == "real" and type(value) != float:
+        if errors:
+            errors.append(str(value) + " should be a real")
+        return False
+    elif data_type == "boolean" and type(value) != bool:
+        if errors:
+            errors.append(str(value) + " should be a boolean")
+        return False
+    elif data_type == "string" and type(value) != str:
+        if errors:
+            errors.append(str(value) + " should be a string")
+        return False
+    elif data_type == "list" and type(value) != list:
+        if errors:
+            errors.append(str(value) + " should be a list, not a " + str(value.__class__.__name__))
+        return False
+    elif data_type == "map" and type(value) != dict:
+        if errors:
+            errors.append(str(value) + " should be a map")
+        return False
+    else:
+        return True
+
+def _validate_item(spec, data, errors):
+    if not _validate_type(spec, data, errors):
+        return False
+    elif type(data) == list:
+        list_spec = spec['list_item_spec']
+        for data_el in data:
+            if not _validate_type(list_spec, data_el, errors):
+                return False
+            if list_spec['item_type'] == "map":
+                if not _validate_item(list_spec, data_el, errors):
+                    return False
+    elif type(data) == dict:
+        if not _validate_spec_list(spec['map_item_spec'], data, errors):
+            return False
+    return True
+
+def _validate_spec(spec, data, errors):
+    item_name = spec['item_name']
+    item_optional = spec['item_optional']
+
+    if item_name in data:
+        return _validate_item(spec, data[item_name], errors)
+    elif not item_optional:
+        if errors:
+            errors.append("non-optional item " + item_name + " missing")
+        return False
+    else:
+        return True
+
+def _validate_spec_list(data_spec, data, errors):
+    for spec_item in data_spec:
+        if not _validate_spec(spec_item, data, errors):
+            return False
+    return True
