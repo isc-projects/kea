@@ -31,12 +31,15 @@ namespace dns {
 
 RRTTL::RRTTL(const string& ttlstr)
 {
-    uint32_t val;
+    // Some systems (at least gcc-4.4) flow negative values over into
+    // unsigned integer, where older systems failed to parse. We want
+    // that failure here, so we extract into int64 and check the value
+    uint64_t val;
 
     istringstream iss(ttlstr);
     iss >> dec >> val;
-    if (iss.rdstate() == ios::eofbit) {
-        ttlval_ = val;
+    if (iss.rdstate() == ios::eofbit && val >= 0 && val <= 0xffffffff) {
+        ttlval_ = static_cast<uint32_t>(val);
     } else {
         dns_throw(InvalidRRTTL, "invalid TTL");
     }
