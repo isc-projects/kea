@@ -43,7 +43,7 @@ DataSrc::runQuery(Query q) {
                 // XXX: what if 'data' contains more than one RRset?
                 m.addRRset(task->section, data[0]);
                 if (q.wantDnssec() && sigs.size() == 1) {
-                    m.addRRset(Section(task->section), sigs[0]);
+                    m.addRRset(task->section, sigs[0]);
                 }
 
                 if (q.status() == QUERY_FINISHING) {
@@ -64,7 +64,7 @@ DataSrc::runQuery(Query q) {
             case CNAME:
                 m.addRRset(task->section, data[0]);
                 if (q.wantDnssec() && sigs.size() == 1) {
-                    m.addRRset(Section(task->section), sigs[0]);
+                    m.addRRset(task->section, sigs[0]);
                 }
 
                 // if (data[0].getType() == RRType::CNAME()) {
