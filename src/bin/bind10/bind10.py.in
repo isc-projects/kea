@@ -460,7 +460,7 @@ def main():
     # In our main loop, we check for dead processes or messages 
     # on the c-channel.
     wakeup_fd = wakeup_pipe[0]
-    ccs_fd = boss_of_bind.ccs.getSocket().fileno()
+    ccs_fd = boss_of_bind.ccs.get_socket().fileno()
     while boss_of_bind.runnable:
         # XXX: get time for next restart for timeout
 

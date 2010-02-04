@@ -28,22 +28,22 @@ import isc
 class CCSession:
     def __init__(self, spec_file_name, config_handler, command_handler):
         self._data_definition = isc.config.DataDefinition(spec_file_name)
-        self._module_name = self._data_definition.getModuleName()
+        self._module_name = self._data_definition.get_module_name()
         
-        self.setConfigHandler(config_handler)
-        self.setCommandHandler(command_handler)
+        self.set_config_handler(config_handler)
+        self.set_command_handler(command_handler)
 
         self._session = Session()
         self._session.group_subscribe(self._module_name, "*")
 
-        self.__sendSpec()
-        self.__getFullConfig()
+        self.__send_spec()
+        self.__get_full_config()
 
-    def getSocket(self):
+    def get_socket(self):
         """Returns the socket from the command channel session"""
         return self._session._socket
     
-    def getSession(self):
+    def get_session(self):
         """Returns the command-channel session that is used, so the
            application can use it directly"""
         return self._session
@@ -51,7 +51,7 @@ class CCSession:
     def close(self):
         self._session.close()
 
-    def checkCommand(self):
+    def check_command(self):
         """Check whether there is a command on the channel.
            Call the command callback function if so"""
         msg, env = self._session.group_recvmsg(False)
@@ -66,7 +66,7 @@ class CCSession:
             self._session.group_reply(env, answer)
 
     
-    def setConfigHandler(self, config_handler):
+    def set_config_handler(self, config_handler):
         """Set the config handler for this module. The handler is a
            function that takes the full configuration and handles it.
            It should return either { "result": [ 0 ] } or
@@ -74,19 +74,19 @@ class CCSession:
         self._config_handler = config_handler
         # should we run this right now since we've changed the handler?
 
-    def setCommandHandler(self, command_handler):
+    def set_command_handler(self, command_handler):
         """Set the command handler for this module. The handler is a
            function that takes a command as defined in the .spec file
            and return either { "result": [ 0, (result) ] } or
            { "result": [ <error_number>. "error message" ] }"""
         self._command_handler = command_handler
 
-    def __sendSpec(self):
+    def __send_spec(self):
         """Sends the data specification to the configuration manager"""
-        self._session.group_sendmsg(self._data_definition.getDefinition(), "ConfigManager")
+        self._session.group_sendmsg(self._data_definition.get_definition(), "ConfigManager")
         answer, env = self._session.group_recvmsg(False)
         
-    def __getFullConfig(self):
+    def __get_full_config(self):
         """Asks the configuration manager for the current configuration, and call the config handler if set"""
         self._session.group_sendmsg({ "command": [ "get_config", { "module_name": self._module_name } ] }, "ConfigManager")
         answer, env = self._session.group_recvmsg(False)
