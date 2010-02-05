@@ -28,19 +28,16 @@
 
 #include <gtest/gtest.h>
 
-using isc::UnitTestUtil;
-using isc::dns::InputBuffer;
-using isc::dns::OutputBuffer;
-using isc::dns::Name;
-using isc::dns::MessageRenderer;
-using isc::dns::NameComparisonResult;
+using namespace std;
+using namespace isc;
+using namespace isc::dns;
 
 //
 // XXX: these are defined as class static constants, but some compilers
 // seemingly cannot find the symbols when used in the EXPECT_xxx macros.
 //
-const size_t isc::dns::Name::MAX_WIRE;
-const size_t isc::dns::Name::MAX_LABELS;
+const size_t Name::MAX_WIRE;
+const size_t Name::MAX_LABELS;
 
 namespace {
 class NameTest : public ::testing::Test {
@@ -73,7 +70,7 @@ Name
 NameTest::nameFactoryFromWire(const char* datafile, size_t position,
                               bool downcase)
 {
-    std::vector<unsigned char> data;
+    vector<unsigned char> data;
     UnitTestUtil::readWireData(datafile, data);
 
     InputBuffer buffer(&data[0], data.size());
@@ -85,17 +82,17 @@ NameTest::nameFactoryFromWire(const char* datafile, size_t position,
 Name
 NameTest::nameFactoryLowerCase()
 {
-    std::string lowercase_namestr;
+    string lowercase_namestr;
     lowercase_namestr.reserve(Name::MAX_WIRE);
 
     unsigned int ch = 0;
     unsigned int labelcount = 0;
     do {
         if (ch < 'A' || ch > 'Z') {
-            std::ostringstream ss;
-            ss.setf(std::ios_base::right, std::ios_base::adjustfield);
+            ostringstream ss;
+            ss.setf(ios_base::right, ios_base::adjustfield);
             ss.width(3);
-            ss << std::setfill('0') << ch;
+            ss << setfill('0') << ch;
             lowercase_namestr += '\\' + ss.str();
 
             if (++labelcount == Name::MAX_LABELLEN) {
@@ -125,7 +122,7 @@ NameTest::compareInWireFormat(const Name& name_actual,
 
 TEST_F(NameTest, fromText)
 {
-    std::vector<std::string> strnames;
+    vector<string> strnames;
     strnames.push_back("www.example.com");
     strnames.push_back("www.example.com."); // with a trailing dot
     strnames.push_back("wWw.exAmpLe.com");  // mixed cases
@@ -133,7 +130,7 @@ TEST_F(NameTest, fromText)
     // decimal representation for "WWW"
     strnames.push_back("\\087\\087\\087.example.com");
 
-    std::vector<std::string>::const_iterator it;
+    vector<string>::const_iterator it;
     for (it = strnames.begin(); it != strnames.end(); ++it) {
         EXPECT_PRED_FORMAT2(UnitTestUtil::matchName, example_name, Name(*it));
     }
@@ -148,32 +145,32 @@ TEST_F(NameTest, fromText)
     // Tests for bogus names.  These should trigger an exception.
     //
     // empty label cannot be followed by another label
-    EXPECT_THROW(Name(".a"), isc::dns::EmptyLabel);
+    EXPECT_THROW(Name(".a"), EmptyLabel);
     // duplicate period
-    EXPECT_THROW(Name("a.."), isc::dns::EmptyLabel);
+    EXPECT_THROW(Name("a.."), EmptyLabel);
     // label length must be < 64
     EXPECT_THROW(Name("012345678901234567890123456789"
                       "012345678901234567890123456789"
-                      "0123"), isc::dns::TooLongLabel);
+                      "0123"), TooLongLabel);
     // now-unsupported bitstring labels
-    EXPECT_THROW(Name("\\[b11010000011101]"), isc::dns::BadLabelType);
+    EXPECT_THROW(Name("\\[b11010000011101]"), BadLabelType);
     // label length must be < 64
     EXPECT_THROW(Name("012345678901234567890123456789"
                       "012345678901234567890123456789"
-                      "012\\x"), isc::dns::TooLongLabel);
+                      "012\\x"), TooLongLabel);
     // but okay as long as resulting len < 64 even if the original string is
     // "too long"
     EXPECT_NO_THROW(Name("012345678901234567890123456789"
                          "012345678901234567890123456789"
                          "01\\x"));
     // incomplete \DDD pattern (exactly 3 D's must appear)
-    EXPECT_THROW(Name("\\12abc"), isc::dns::BadEscape);
+    EXPECT_THROW(Name("\\12abc"), BadEscape);
     // \DDD must not exceed 255
-    EXPECT_THROW(Name("\\256"), isc::dns::BadEscape);
+    EXPECT_THROW(Name("\\256"), BadEscape);
     // Same tests for \111 as for \\x above
     EXPECT_THROW(Name("012345678901234567890123456789"
                       "012345678901234567890123456789"
-                      "012\\111"), isc::dns::TooLongLabel);
+                      "012\\111"), TooLongLabel);
     EXPECT_NO_THROW(Name("012345678901234567890123456789"
                          "012345678901234567890123456789"
                          "01\\111"));
@@ -183,7 +180,7 @@ TEST_F(NameTest, fromText)
                       "123456789.123456789.123456789.123456789.123456789."
                       "123456789.123456789.123456789.123456789.123456789."
                       "123456789.123456789.123456789.123456789.123456789."
-                      "1234"), isc::dns::TooLongName);
+                      "1234"), TooLongName);
     // This is a possible longest name and should be accepted
     EXPECT_NO_THROW(Name("123456789.123456789.123456789.123456789.123456789."
                          "123456789.123456789.123456789.123456789.123456789."
@@ -192,7 +189,7 @@ TEST_F(NameTest, fromText)
                          "123456789.123456789.123456789.123456789.123456789."
                          "123"));
     // \DDD must consist of 3 digits.
-    EXPECT_THROW(Name("\\12"), isc::dns::IncompleteName);
+    EXPECT_THROW(Name("\\12"), IncompleteName);
 
     // a name with the max number of labels.  should be constructed without
     // an error, and its length should be the max value.
@@ -217,26 +214,26 @@ TEST_F(NameTest, fromWire)
                         Name("vix.com"));
     // bogus label character (looks like a local compression pointer)
     EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire2", 25),
-                 isc::dns::BadLabelType);
+                 BadLabelType);
     // a bad compression pointer (too big)
     EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire3_1", 25),
-                 isc::dns::BadPointer);
+                 BadPointer);
     // forward reference
     EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire3_2", 25),
-                 isc::dns::BadPointer);
+                 BadPointer);
     // invalid name length
     EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire4", 550),
-                 isc::dns::TooLongName);
+                 TooLongName);
 
     // skip test for from Wire5.  It's for disabling decompression, but our
     // implementation always allows it.
 
     // bad pointer (too big)
     EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire6", 25),
-                 isc::dns::BadPointer);
+                 BadPointer);
     // input ends unexpectedly
     EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire7", 25),
-                 isc::dns::IncompleteName);
+                 IncompleteName);
     // many hops of compression but valid.  should succeed.
     EXPECT_PRED_FORMAT2(UnitTestUtil::matchName,
                         nameFactoryFromWire("testdata/name_fromWire8", 383),
@@ -250,7 +247,7 @@ TEST_F(NameTest, fromWire)
     EXPECT_EQ(Name::MAX_WIRE,
               nameFactoryFromWire("testdata/name_fromWire9", 0).getLength());
     EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire10", 0).getLength(),
-                 isc::dns::TooLongName);
+                 TooLongName);
 
     // A name with possible maximum number of labels; awkward but valid
     EXPECT_EQ(nameFactoryFromWire("testdata/name_fromWire11",
@@ -259,7 +256,7 @@ TEST_F(NameTest, fromWire)
 
     // Wire format including an invalid label length
     EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire12", 0),
-                 isc::dns::BadLabelType);
+                 BadLabelType);
 
     // converting upper-case letters to down-case
     EXPECT_EQ("vix.com.", nameFactoryFromWire("testdata/name_fromWire1",
@@ -288,13 +285,13 @@ TEST_F(NameTest, toText)
     // escaped while the others are intact.  note that the conversion is
     // implementation specific; for example, it's not invalid to escape a
     // "normal" character such as 'a' with regard to the standard.
-    std::string all_printable("!\\\"#\\$%&'\\(\\)*+,-\\./0123456789:\\;<=>?\\@"
+    string all_printable("!\\\"#\\$%&'\\(\\)*+,-\\./0123456789:\\;<=>?\\@"
                               "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                               "[\\\\]^_.`abcdefghijklmnopqrstuvwxyz{|}~.");
     EXPECT_EQ(all_printable,
               nameFactoryFromWire("testdata/name_fromWire13", 0).toText());
 
-    std::string all_nonprintable(
+    string all_nonprintable(
         "\\000\\001\\002\\003\\004\\005\\006\\007\\008\\009"
         "\\010\\011\\012\\013\\014\\015\\016\\017\\018\\019"
         "\\020\\021\\022\\023\\024\\025\\026\\027\\028\\029"
@@ -319,10 +316,10 @@ TEST_F(NameTest, toText)
 
 TEST_F(NameTest, toWireBuffer)
 {
-    std::vector<unsigned char> data;
+    vector<unsigned char> data;
     OutputBuffer buffer(0);
 
-    UnitTestUtil::readWireData(std::string("01610376697803636f6d00"), data);
+    UnitTestUtil::readWireData(string("01610376697803636f6d00"), data);
     Name("a.vix.com.").toWire(buffer);
     EXPECT_EQ(true, buffer.getLength() == data.size() &&
               memcmp(buffer.getData(), &data[0], data.size()) == 0);
@@ -334,11 +331,11 @@ TEST_F(NameTest, toWireBuffer)
 //
 TEST_F(NameTest, toWireRenderer)
 {
-    std::vector<unsigned char> data;
+    vector<unsigned char> data;
     OutputBuffer buffer(0);
     MessageRenderer renderer(buffer);
 
-    UnitTestUtil::readWireData(std::string("01610376697803636f6d00"), data);
+    UnitTestUtil::readWireData(string("01610376697803636f6d00"), data);
     Name("a.vix.com.").toWire(renderer);
     EXPECT_EQ(true, buffer.getLength() == data.size() &&
               memcmp(buffer.getData(), &data[0], data.size()) == 0);
@@ -370,7 +367,7 @@ struct CompareParameters {
 
 TEST_F(NameTest, compare)
 {
-    std::vector<CompareParameters> params;
+    vector<CompareParameters> params;
     params.push_back(CompareParameters(Name("c.d"), Name("a.b.c.d"),
                                        NameComparisonResult::SUPERDOMAIN,
                                        -1, 3));
@@ -386,7 +383,7 @@ TEST_F(NameTest, compare)
                                        NameComparisonResult::EQUAL,
                                        0, 5));
 
-    std::vector<CompareParameters>::const_iterator it;
+    vector<CompareParameters>::const_iterator it;
     for (it = params.begin(); it != params.end(); ++it) {
         NameComparisonResult result = (*it).name1.compare((*it).name2);
         EXPECT_EQ((*it).reln, result.getRelation());
@@ -438,7 +435,7 @@ TEST_F(NameTest, concatenate)
     Name n2("123456789.123456789.123456789.123456789.123456789."
             "123456789.123456789.123456789.123456789.123456789."
             "1234.");
-    EXPECT_THROW(n1.concatenate(n2), isc::dns::TooLongName);
+    EXPECT_THROW(n1.concatenate(n2), TooLongName);
 }
 
 TEST_F(NameTest, split)
@@ -454,8 +451,8 @@ TEST_F(NameTest, split)
     EXPECT_PRED_FORMAT2(UnitTestUtil::matchName, example_name.split(3, 1),
                         Name("."));
     // invalid range: an exception should be thrown.
-    EXPECT_THROW(example_name.split(1, 0), isc::dns::OutOfRange);
-    EXPECT_THROW(example_name.split(2, 3), isc::dns::OutOfRange);
+    EXPECT_THROW(example_name.split(1, 0), OutOfRange);
+    EXPECT_THROW(example_name.split(2, 3), OutOfRange);
 }
 
 TEST_F(NameTest, downcase)
@@ -469,6 +466,24 @@ TEST_F(NameTest, downcase)
     example_name_upper.downcase();
     compareInWireFormat(example_name_upper, example_name);
     
+}
+
+TEST_F(NameTest, at)
+{
+    // Confirm at() produces the exact sequence of wire-format name data
+    vector<uint8_t> data;
+
+    for (size_t i = 0; i < example_name.getLength(); i++) {
+        data.push_back(example_name.at(i));
+    }
+
+    example_name.toWire(buffer_expected);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        &data[0], data.size(),
+                        buffer_expected.getData(), buffer_expected.getLength());
+
+    // Out-of-range access: should trigger an exception.
+    EXPECT_THROW(example_name.at(example_name.getLength()), OutOfRange);
 }
 
 //
@@ -530,7 +545,7 @@ TEST_F(NameTest, gthan)
 // test operator<<.  We simply confirm it appends the result of toText().
 TEST_F(NameTest, LeftShiftOperator)
 {
-    std::ostringstream oss;
+    ostringstream oss;
     oss << example_name;
     EXPECT_EQ(example_name.toText(), oss.str());
 }

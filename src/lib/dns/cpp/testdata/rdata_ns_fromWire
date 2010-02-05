@@ -1,0 +1,44 @@
+#
+# various kinds of NS RDATA stored in an input buffer
+#
+# Valid non-compressed RDATA for ns.example.com.
+# RDLENGHT=16 bytes
+# 0  1
+ 00 10
+# 2  3  4  5  6  7  8  9 10  1  2  3  4  5  6  7(bytes)
+#(2) n  s (7) e  x  a  m  p  l  e (3) c  o  m  .
+ 02 6e 73 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00
+#
+# short length
+# 8  9
+ 00 0f
+#20  1  2  3  4  5  6  7  8  9 30  1  2  3  4  5
+ 02 6e 73 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00
+#
+# length too long
+# 6  7
+ 00 11
+#
+# 8  9 40  1  2  3  4  5  6  7  8  9 50  1  2  3  4
+ 02 6e 73 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00 00
+#
+# Valid compressed NS name: 'ns2' + pointer
+# 5  6
+ 00 06
+# 7  8  9 60  1  2
+#(3) n  s  2 ptr=5
+ 03 6e 73 32 c0 05
+#
+# Valid compressed NS name but RDLENGTH is incorrect: it must be the length
+# of the sequence from the head to the pointer, not the decompressed name
+# length.
+# 3  4
+ 00 11
+# 5  6  7  8  9 70
+ 03 6e 73 32 c0 05
+# incomplete name (no trailing dot).  this can be tested only at the end of
+# the buffer.
+# 1  2
+ 00 0f
+# 3  4  5  6  7  8  9 80  1  2  3  4  5  6  7
+ 02 6e 73 07 65 78 61 6d 70 6c 65 03 63 6f 6d

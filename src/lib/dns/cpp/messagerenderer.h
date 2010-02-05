@@ -105,16 +105,53 @@ public:
     /// \name Methods for writing data into the internal buffer.
     ///
     //@{
+    /// \brief Insert a specified length of gap at the end of the buffer.
+    ///
+    /// The caller should not assume any particular value to be inserted.
+    /// This method is provided as a shortcut to make a hole in the buffer
+    /// that is to be filled in later, e.g, by \ref writeUint16At().
+    ///
+    /// \param len The length of the gap to be inserted in bytes.
+    void skip(size_t len);
+    /// \brief Clear the internal buffer and other internal resources.
+    ///
+    /// This method can be used to re-initialize and reuse the renderer
+    /// without constructing a new one.
+    void clear();
+    /// \brief Write an unsigned 8-bit integer into the internal buffer.
+    ///
+    /// \param data The 8-bit integer to be written into the internal buffer.
+    void writeUint8(uint8_t data);
     /// \brief Write an unsigned 16-bit integer in host byte order into the
     /// internal buffer in network byte order.
     ///
     /// \param data The 16-bit integer to be written into the buffer.
     void writeUint16(uint16_t data);
+    /// \brief Write an unsigned 16-bit integer in host byte order at the
+    /// specified position of the internal buffer in network byte order.
+    ///
+    /// The buffer must have a sufficient room to store the given data at the
+    /// given position, that is, <code>pos + 2 < getLength()</code>;
+    /// otherwise an exception of class \c isc::dns::InvalidBufferPosition will
+    /// be thrown.
+    /// Note also that this method never extends the internal buffer.
+    ///
+    /// \param data The 16-bit integer to be written into the internal buffer.
+    /// \param pos The beginning position in the buffer to write the data.
+    void writeUint16At(uint16_t data, size_t pos);
     /// \brief Write an unsigned 32-bit integer in host byte order into the
     /// internal buffer in network byte order.
     ///
     /// \param data The 32-bit integer to be written into the buffer.
     void writeUint32(uint32_t data);
+    /// \brief Copy an arbitrary length of data into the internal buffer
+    /// of the \c MessageRenderer.
+    ///
+    /// No conversion on the copied data is performed.
+    ///
+    /// \param data A pointer to the data to be copied into the internal buffer.
+    /// \param len The length of the data in bytes.
+    void writeData(const void *data, size_t len);
     //@}
 
     ///

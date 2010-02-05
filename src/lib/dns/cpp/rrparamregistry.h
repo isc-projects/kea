@@ -21,7 +21,10 @@
 
 #include <stdint.h>
 
-#include "exceptions.h"
+#include <boost/shared_ptr.hpp>
+
+#include <exceptions/exceptions.h>
+#include "rdata.h"
 
 namespace isc {
 namespace dns {
@@ -36,7 +39,7 @@ struct RRParamRegistryImpl;
 class RRTypeExists : public Exception {
 public:
     RRTypeExists(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 ///
@@ -46,8 +49,32 @@ public:
 class RRClassExists : public Exception {
 public:
     RRClassExists(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
+
+class InvalidRdataText : public Exception {
+public:
+    InvalidRdataText(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+namespace rdata {
+class AbstractRdataFactory {
+protected:
+    AbstractRdataFactory() {}
+public:
+    virtual ~AbstractRdataFactory() {};
+
+    // Factory methods for polymorphic creation:
+    virtual RdataPtr create(const std::string& rdata_str) const = 0;
+    virtual RdataPtr create(InputBuffer& buffer, size_t rdata_len) const = 0;
+    virtual RdataPtr create(const rdata::Rdata& source) const = 0;
+};
+///
+/// TBD: describe it
+///
+typedef boost::shared_ptr<AbstractRdataFactory> RdataFactoryPtr;
+} // end of namespace rdata
 
 ///
 /// The \c RRParamRegistry class represents a registry of parameters to
@@ -149,7 +176,12 @@ public:
     /// \param class_string The textual representation of the RR class.
     /// \param class_code The integer code of the RR class.
     void add(const std::string& type_string, uint16_t type_code,
-             const std::string& class_string, uint16_t class_code);
+             const std::string& class_string, uint16_t class_code,
+             rdata::RdataFactoryPtr rdata_factory);
+
+    /// TBD
+    void add(const std::string& type_string, uint16_t type_code,
+             rdata::RdataFactoryPtr rdata_factory);
 
     /// \brief Add mappings between RR type code and textual representation.
     ///
@@ -301,6 +333,21 @@ public:
     /// \param class_code The integer code of the RR class.
     /// \return A textual representation of the RR class for code \c class_code.
     std::string codeToClassText(uint16_t class_code) const;
+    //@}
+
+    ///
+    /// \name RDATA Factories
+    ///
+    //@{
+    /// \brief TBD
+    rdata::RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
+                                const std::string& rdata_string);
+    /// \brief TBD
+    rdata::RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
+                                InputBuffer& buffer, size_t len);
+    /// \brief Polymorphic copy constructor (detailed TBD)
+    rdata::RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
+                                const rdata::Rdata& source);
     //@}
 
 private:

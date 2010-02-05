@@ -1,0 +1,50 @@
+.\" Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+.Dd January 21, 2010
+.Dt MSGQ 8
+.Os
+.Sh NAME
+.Nm msgq
+.Nd message routing daemon for the Command channel
+.\" TODO: spell out CC
+.Sh SYNOPSIS
+.Nm
+.Op Fl m Ar number
+.Op Fl v
+.\" TODO: this seems wrong, what is correct for long options?
+.Op Fl msgq-port Ar number
+.Op Fl verbose
+.Sh DESCRIPTION
+The
+.Nm
+daemon handles message routing for the Command channel.
+It listens on 127.0.0.1.
+.\" TODO: point to Command channel specification or document some here
+.Sh OPTIONS
+The arguments are as follows:
+.
+.Bl -tag -width indent
+.It Fl m Ar number , Fl msgq-port Ar number
+The port
+.Ar number
+that
+.Nm
+will listen on.
+The default is 9912.
+.It Fl v , verbose
+Display more about what
+.Nm
+is doing.
+.El
+.\" .Sh SEE ALSO
+.\" .Sh STANDARDS
+.Sh HISTORY
+The python version of
+.Nm
+was first coded in December 2009.
+An older C version with different wire format was coded in September 2009.
+.Sh AUTHORS
+The
+.Nm
+daemon and Control channel specification
+were initially designed by Michael Graff of ISC.
+.\" .Sh BUGS

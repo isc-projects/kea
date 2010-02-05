@@ -21,10 +21,13 @@ class CC
 class Message
   PROTOCOL_VERSION = 0x536b616e
 
-  ITEM_DATA = 0x01
+  ITEM_BLOB = 0x01
   ITEM_HASH = 0x02
   ITEM_LIST = 0x03
   ITEM_NULL = 0x04
+  ITEM_BOOL = 0x05
+  ITEM_INT  = 0x06
+  ITEM_UTF8 = 0x08
   ITEM_MASK = 0x0f
 
   ITEM_LENGTH_32   = 0x00
@@ -55,12 +58,12 @@ class Message
   # the value is a Hash or Array, it will be encoded as a message type
   # HASH or LIST.  If it is nil, it will be encoded as NULL, and if it is
   # any other type, its to_s method will be called on it and it will be
-  # encoded as a DATA item.
+  # encoded as a UTF8 item.
   #
   def self.to_wire(msg)
     encoded = [PROTOCOL_VERSION].pack("N")
     encoded += encode_hash(msg)
-    CC::set_binary(encoded)
+    encoded.force_encoding('binary')
     encoded
   end
 
@@ -71,7 +74,7 @@ class Message
     if msg.length < 4
       raise CC::DecodeError, "Data is too short to decode"
     end
-    CC::set_binary(msg)
+    msg.force_encoding('binary')
     version, msg = msg.unpack("N a*")
     unless version == PROTOCOL_VERSION
       raise CC::DecodeError, "Incorrect protocol version"
@@ -102,8 +105,20 @@ class Message
   end
 
   # pack a string, including its type and length.
-  def self.pack_string(str)
-    encode_length_and_type(str.to_s, ITEM_DATA)
+  def self.pack_utf8(str)
+    encode_length_and_type(str.to_s.encode('binary'), ITEM_UTF8)
+  end
+
+  def self.pack_bool(bool)
+    encode_length_and_type(encode_bool(bool), ITEM_BOOL)
+  end
+
+  def self.pack_int(int)
+    encode_length_and_type(encode_int(int), ITEM_INT)
+  end
+
+  def self.pack_blob(str)
+    encode_length_and_type(str.to_s, ITEM_BLOB)
   end
 
   def self.pack_array(arr)
@@ -114,8 +129,12 @@ class Message
     encode_length_and_type(encode_hash(hash), ITEM_HASH)
   end
 
-  def self.encode_string(str)
-    str
+  def self.encode_data(data)
+    str.to_s
+  end
+
+  def self.encode_utf8(str)
+    str.to_s.encode('binary')
   end
 
   def self.pack_nil
@@ -124,14 +143,26 @@ class Message
 
   def self.encode_item(item)
     case item
-      when nil
+    when nil
       ret = pack_nil
-      when Hash
+    when Hash
       ret = pack_hash(item)
-      when Array
+    when Array
       ret = pack_array(item)
+    when String
+      if item.encoding == 'utf-8'
+        ret = pack_utf8(item)
+      else
+        ret = pack_blob(item)
+      end
+    when FalseClass
+      ret = pack_bool(item)
+    when TrueClass
+      ret = pack_bool(item)
+    when Integer
+      ret = pack_int(item)
     else
-      ret = pack_string(item.to_s)
+      ret = pack_blob(item.to_s)
     end
 
     ret
@@ -147,6 +178,21 @@ class Message
       buffer += encode_item(value)
     end
     buffer
+  end
+
+  def self.encode_bool(msg)
+    unless msg.class == FalseClass or msg.class == TrueClass
+      raise ArgumentError, "Should be true or false"
+    end
+    if msg
+      [0x01].pack("C")
+    else
+      [0x00].pack("C")
+    end
+  end
+
+  def self.encode_int(int)
+    int.to_s.encode('binary')
   end
 
   def self.encode_array(msg)
@@ -169,8 +215,7 @@ class Message
       raise CC::DecodeError, "Data underrun while decoding"
     end
     tag, remainder = str.unpack("x a#{length} a*")
-    CC::set_utf8(tag)
-    [ tag, remainder ]
+    [ tag.encode('utf-8'), remainder ]
   end
 
   def self.decode_item(msg)
@@ -208,13 +253,19 @@ class Message
 
     # unpack item based on type
     case type
-      when ITEM_DATA
+    when ITEM_BLOB
       value = item
-      when ITEM_HASH
+    when ITEM_UTF8
+      value = item.encode('utf-8')
+    when ITEM_BOOL
+      value = decode_bool(item)
+    when ITEM_INT
+      value = decode_int(item)
+    when ITEM_HASH
       value = decode_hash(item)
-      when ITEM_LIST
+    when ITEM_LIST
       value = decode_array(item)
-      when ITEM_NULL
+    when ITEM_NULL
       value = nil
     else
       raise CC::DecodeError, "Unknown item type in decode: #{type}"
@@ -223,6 +274,14 @@ class Message
     [value, msg]
   end
 
+  def self.decode_bool(msg)
+    return msg == [0x01].pack("C")
+  end
+
+  def self.decode_int(msg)
+    return Integer(msg.encode('utf-8'))
+  end
+  
   def self.decode_hash(msg)
     ret = {}
     while msg.length > 0
@@ -253,7 +312,7 @@ if $0 == __FILE__
     "to" => "recipient@host",
     "seq" => 1234,
     "data" => {
-      "list" => [ 1, 2, nil, "this" ],
+      "list" => [ 1, 2, nil, true, false, "this" ],
       "description" => "Fun for all",
     },
   }

@@ -1,0 +1,8 @@
+1. Refine code for b10-cmdctl.
+2. Add value type check according module specification.
+3. Description/Requirement document for b10-cmdctl.
+4. RESTful API document for b10-cmdctl.
+5. Unit tests for b10-cmdctl.
+6. Man page for b10-cmdctl?
+7. Support 'make install', Save user information and ssl certificate file to configmanager.
+
