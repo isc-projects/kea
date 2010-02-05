@@ -21,7 +21,6 @@
 #include <string>
 
 namespace isc {
-namespace dns {
 
 ///
 /// This is a base class for exceptions thrown from the DNS library module.
@@ -100,7 +99,7 @@ private:
 class OutOfRange : public Exception {
 public:
     OutOfRange(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 ///
@@ -110,7 +109,7 @@ public:
 class Unexpected : public Exception {
 public:
     Unexpected(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 ///
@@ -118,7 +117,6 @@ public:
 ///
 #define dns_throw(type, args...) throw type(__FILE__, __LINE__, args)
 
-}
 }
 #endif // __EXCEPTIONS_H
 

@@ -17,7 +17,7 @@
 #ifndef __RRTYPE_H
 #define __RRTYPE_H 1
 
-#include "exceptions.h"
+#include <exceptions/exceptions.h>
 
 namespace isc {
 namespace dns {
@@ -34,7 +34,7 @@ class MessageRenderer;
 class InvalidRRType : public Exception {
 public:
     InvalidRRType(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 ///
@@ -44,7 +44,7 @@ public:
 class IncompleteRRType : public Exception {
 public:
     IncompleteRRType(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 ///

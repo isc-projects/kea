@@ -12,34 +12,13 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
+// $Id: run_unittests.cc 476 2010-01-19 00:29:28Z jinmei $
 
-#include <string>
+#include <gtest/gtest.h>
 
-#include "exceptions.h"
-
-using isc::dns::Exception;
-
-namespace isc {
-namespace dns {
-
-const char*
-Exception::what() const throw()
+int
+main(int argc, char* argv[])
 {
-    const char* whatstr = "isc::dns::Exception";
-
-    // XXX: even though it's very unlikely that c_str() throws an exception,
-    // it's still not 100% guaranteed.  To meet the exception specification
-    // of this function, we catch any unexpected exception and fall back to
-    // the pre-defined constant.
-    try {
-        whatstr = what_.c_str();
-    } catch (...) {
-        // no exception handling is necessary.  just have to catch exceptions.
-    }
-
-    return (whatstr);
-}
-
-}
+    ::testing::InitGoogleTest(&argc, argv);
+    return (RUN_ALL_TESTS());
 }

@@ -22,7 +22,7 @@
 #include <arpa/inet.h> // XXX: for inet_pton/ntop(), not exist in C++ standards
 
 #include "buffer.h"
-#include "exceptions.h"
+#include <exceptions/exceptions.h>
 #include "messagerenderer.h"
 #include "rdata.h"
 #include "rdataclass.h"

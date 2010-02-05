@@ -27,7 +27,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "exceptions.h"
+#include <exceptions/exceptions.h>
 #include "rrparamregistry.h"
 #include "rrclass.h"
 #include "rrtype.h"

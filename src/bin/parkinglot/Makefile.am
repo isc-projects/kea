@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_builddir)/src/lib/dns/cpp -I$(top_builddir)/include/dns/cpp -I$(top_builddir)/include -I$(top_srcdir)/ext
+AM_CPPFLAGS = -I$(top_builddir)/include -I$(top_builddir)/src/lib -I$(top_builddir)/src/lib/dns/cpp -I$(top_builddir)/include/dns/cpp -I$(top_builddir)/include -I$(top_srcdir)/ext
 
 pkglibexecdir = $(libexecdir)/@PACKAGE@
 
@@ -12,6 +12,7 @@ b10_parkinglot_SOURCES += builtin.h builtin.cc
 b10_parkinglot_LDADD =  $(top_builddir)/src/lib/dns/cpp/.libs/libdns.a
 b10_parkinglot_LDADD += $(top_builddir)/src/lib/config/cpp/libcfgclient.a
 b10_parkinglot_LDADD += $(top_builddir)/src/lib/cc/cpp/libcc.a
+b10_parkinglot_LDADD += $(top_builddir)/src/lib/exceptions/cpp/.libs/libexceptions.a
 
 b10_parkinglotdir = $(DESTDIR)$(pkgdatadir)
 b10_parkinglot_DATA = parkinglot.spec
@@ -20,3 +21,4 @@ b10_parkinglot_DATA = parkinglot.spec
 bin_PROGRAMS = builtin_bench
 builtin_bench_SOURCES = builtin_bench.cc builtin.h builtin.cc
 builtin_bench_LDADD = $(top_builddir)/src/lib/dns/cpp/.libs/libdns.a
+builtin_bench_LDADD += $(top_builddir)/src/lib/exceptions/cpp/.libs/libexceptions.a

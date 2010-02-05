@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 
-#include "exceptions.h"
+#include <exceptions/exceptions.h>
 
 namespace isc {
 namespace dns {
@@ -37,7 +37,7 @@ class MessageRenderer;
 class EmptyLabel : public Exception {
 public:
     EmptyLabel(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 ///
@@ -47,7 +47,7 @@ public:
 class TooLongName : public Exception {
 public:
     TooLongName(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 ///
@@ -57,7 +57,7 @@ public:
 class TooLongLabel : public Exception {
 public:
     TooLongLabel(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 ///
@@ -69,7 +69,7 @@ public:
 class BadLabelType : public Exception {
 public:
     BadLabelType(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 ///
@@ -79,7 +79,7 @@ public:
 class BadEscape : public Exception {
 public:
     BadEscape(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 ///
@@ -89,7 +89,7 @@ public:
 class BadPointer : public Exception {
 public:
     BadPointer(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 ///
@@ -102,7 +102,7 @@ public:
 class IncompleteName : public Exception {
 public:
     IncompleteName(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 ///

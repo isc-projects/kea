@@ -44,6 +44,7 @@ include:
 	ln -s ${abs_top_srcdir}/src/lib/cc/cpp include/cc
 	ln -s ${abs_top_srcdir}/src/lib/config/cpp include/config
 	ln -s ${abs_top_srcdir}/src/lib/dns/cpp include/dns
+	ln -s ${abs_top_srcdir}/src/lib/exceptions/cpp include/exceptions
 
 stree_symlinks:	pyshared include
 .PHONY: stree_symlinks

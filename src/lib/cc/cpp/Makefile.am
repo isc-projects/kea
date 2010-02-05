@@ -11,6 +11,7 @@ run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 run_unittests_LDADD = libcc.a $(GTEST_LDADD)
 run_unittests_LDADD +=  $(top_builddir)/src/lib/dns/cpp/.libs/libdns.a
+run_unittests_LDADD +=  $(top_builddir)/src/lib/exceptions/cpp/.libs/libexceptions.a
 endif
 
 noinst_PROGRAMS = $(TESTS)

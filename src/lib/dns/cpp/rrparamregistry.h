@@ -23,7 +23,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "exceptions.h"
+#include <exceptions/exceptions.h>
 #include "rdata.h"
 
 namespace isc {
@@ -39,7 +39,7 @@ struct RRParamRegistryImpl;
 class RRTypeExists : public Exception {
 public:
     RRTypeExists(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 ///
@@ -49,13 +49,13 @@ public:
 class RRClassExists : public Exception {
 public:
     RRClassExists(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 class InvalidRdataText : public Exception {
 public:
     InvalidRdataText(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 namespace rdata {

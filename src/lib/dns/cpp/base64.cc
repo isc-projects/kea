@@ -24,7 +24,7 @@
 #include <boost/archive/iterators/transform_width.hpp>
 
 #include "base64.h"
-#include "exceptions.h"
+#include <exceptions/exceptions.h>
 
 using namespace std;
 using namespace boost::archive::iterators;
