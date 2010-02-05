@@ -327,7 +327,9 @@ class IntElement : public Element {
 public:
     IntElement(int v) : Element(integer), i(v) { };
     int intValue() { return i; }
+    using Element::getValue;
     bool getValue(int& t) { t = i; return true; };
+    using Element::setValue;
     bool setValue(const int v) { i = v; return true; };
     std::string str();
     void toWire(std::stringstream& ss, int omit_length = 1);
@@ -339,7 +341,9 @@ class DoubleElement : public Element {
 public:
     DoubleElement(double v) : Element(real), d(v) {};
     double doubleValue() { return d; }
+    using Element::getValue;
     bool getValue(double& t) { t = d; return true; };
+    using Element::setValue;
     bool setValue(const double v) { d = v; return true; };
     std::string str();
     void toWire(std::stringstream& ss, int omit_length = 1);
@@ -351,7 +355,9 @@ class BoolElement : public Element {
 public:
     BoolElement(const bool v) : Element(boolean), b(v) {};
     bool boolValue() { return b; }
+    using Element::getValue;
     bool getValue(bool& t) { t = b; return true; };
+    using Element::setValue;
     bool setValue(const bool v) { b = v; return true; };
     std::string str();
     void toWire(std::stringstream& ss, int omit_length = 1);
@@ -363,7 +369,9 @@ class StringElement : public Element {
 public:
     StringElement(std::string v) : Element(string), s(v) {};
     std::string stringValue() { return s; };
+    using Element::getValue;
     bool getValue(std::string& t) { t = s; return true; };
+    using Element::setValue;
     bool setValue(const std::string& v) { s = v; return true; };
     std::string str();
     void toWire(std::stringstream& ss, int omit_length = 1);
@@ -375,11 +383,16 @@ class ListElement : public Element {
 public:
     ListElement(std::vector<ElementPtr> v) : Element(list), l(v) {};
     const std::vector<ElementPtr>& listValue() { return l; }
+    using Element::getValue;
     bool getValue(std::vector<ElementPtr>& t) { t = l; return true; };
+    using Element::setValue;
     bool setValue(const std::vector<ElementPtr>& v) { l = v; return true; };
+    using Element::get;
     ElementPtr get(int i) { return l.at(i); };
+    using Element::set;
     void set(size_t i, ElementPtr e) { if (i <= l.size()) {l[i] = e;} else { throw std::out_of_range("vector::_M_range_check"); } };
     void add(ElementPtr e) { l.push_back(e); };
+    using Element::remove;
     void remove(int i) { l.erase(l.begin() + i); };
     std::string str();
     void toWire(std::stringstream& ss, int omit_length = 1);
@@ -392,10 +405,15 @@ class MapElement : public Element {
 public:
     MapElement(std::map<std::string, ElementPtr> v) : Element(map), m(v) {};
     const std::map<std::string, ElementPtr>& mapValue() { return m; }
+    using Element::getValue;
     bool getValue(std::map<std::string, ElementPtr>& t) { t = m; return true; };
+    using Element::setValue;
     bool setValue(std::map<std::string, ElementPtr>& v) { m = v; return true; };
+    using Element::get;
     ElementPtr get(const std::string& s) { return m[s]; };
+    using Element::set;
     void set(const std::string& s, ElementPtr p) { m[s] = p; };
+    using Element::remove;
     void remove(const std::string& s) { m.erase(s); }
     bool contains(const std::string& s) { return m.find(s) != m.end(); }
     std::string str();
@@ -446,3 +464,7 @@ bool isNull(ElementPtr p);
 std::ostream& operator <<(std::ostream &out, const isc::data::ElementPtr& e);
 
 #endif // _ISC_DATA_H
+
+// Local Variables: 
+// mode: c++
+// End: 
