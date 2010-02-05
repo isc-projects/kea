@@ -26,6 +26,7 @@
 #include "rrttl.h"
 #include "rdata.h"
 #include "rdataclass.h"
+#include <boost/lexical_cast.hpp>
 
 using namespace std;
 
@@ -139,12 +140,12 @@ string
 RRSIG::toText() const
 {
     return (impl_->covered_.toText() +
-            " " + lexical_cast<string>(static_cast<int>(impl_->algorithm_))
-            + " " + lexical_cast<string>(static_cast<int>(impl_->labels_))
-            + " " + lexical_cast<string>(impl_->originalttl_)
-            + " " + lexical_cast<string>(impl_->timeexpire_)
-            + " " + lexical_cast<string>(impl_->timeinception_)
-            + " " + lexical_cast<string>(impl_->keyid_)
+            " " + boost::lexical_cast<string>(static_cast<int>(impl_->algorithm_))
+            + " " + boost::lexical_cast<string>(static_cast<int>(impl_->labels_))
+            + " " + boost::lexical_cast<string>(impl_->originalttl_)
+            + " " + boost::lexical_cast<string>(impl_->timeexpire_)
+            + " " + boost::lexical_cast<string>(impl_->timeinception_)
+            + " " + boost::lexical_cast<string>(impl_->keyid_)
             + " " + impl_->signer_.toText()
             + " " + encodeBase64(impl_->signature_));
 }
