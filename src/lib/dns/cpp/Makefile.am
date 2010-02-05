@@ -15,6 +15,7 @@ libdns_la_SOURCES += rdataclass.h rdataclass.cc
 libdns_la_SOURCES += rrset.h rrset.cc
 libdns_la_SOURCES += question.h question.cc
 libdns_la_SOURCES += message.h message.cc
+libdns_la_SOURCES += base64.h base64.cc
 libdns_la_SOURCES += exceptions.h exceptions.cc
 
 rrclass.h: rrclass-placeholder.h
@@ -36,6 +37,7 @@ run_unittests_SOURCES += rrset_unittest.cc
 run_unittests_SOURCES += question_unittest.cc
 run_unittests_SOURCES += rrparamregistry_unittest.cc
 run_unittests_SOURCES += message_unittest.cc
+run_unittests_SOURCES += base64_unittest.cc
 run_unittests_SOURCES += run_unittests.cc
 run_unittests_CPPFLAGS = $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(GTEST_LDFLAGS)
