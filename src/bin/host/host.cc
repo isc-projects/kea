@@ -7,14 +7,14 @@
 #include <string>
 #include <iostream>
 
-#include "dns/cpp/buffer.h"
-#include "dns/cpp/name.h"
-#include "dns/cpp/message.h"
-#include "dns/cpp/messagerenderer.h"
-#include "dns/cpp/rrclass.h"
-#include "dns/cpp/rrtype.h"
-#include "dns/cpp/rrset.h"
-#include "dns/cpp/message.h"
+#include "dns/buffer.h"
+#include "dns/name.h"
+#include "dns/message.h"
+#include "dns/messagerenderer.h"
+#include "dns/rrclass.h"
+#include "dns/rrtype.h"
+#include "dns/rrset.h"
+#include "dns/message.h"
 
 using namespace std;
 using namespace isc::dns;
