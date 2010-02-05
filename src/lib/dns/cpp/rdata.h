@@ -41,7 +41,7 @@ namespace rdata {
 class InvalidRdataLength : public Exception {
 public:
     InvalidRdataLength(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 ///
@@ -51,7 +51,7 @@ public:
 class InvalidRdataText : public Exception {
 public:
     InvalidRdataText(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 ///
@@ -60,7 +60,7 @@ public:
 class CharStringTooLong : public Exception {
 public:
     CharStringTooLong(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 class Rdata;

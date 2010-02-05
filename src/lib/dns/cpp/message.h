@@ -22,7 +22,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "exceptions.h"
+#include <exceptions/exceptions.h>
 #include "question.h"
 #include "rrset.h"
 
@@ -35,13 +35,13 @@ namespace dns {
 class MessageTooShort : public Exception {
 public:
     MessageTooShort(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 class InvalidMessageSection : public Exception {
 public:
     InvalidMessageSection(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 typedef uint8_t rcode_t; // we actually only need 4 bits of it

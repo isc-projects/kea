@@ -14,40 +14,39 @@
 
 // $Id$
 
-#ifndef __BASE64_H
-#define __BASE64_H 1
-
+#include <stdexcept>
 #include <string>
-#include <vector>
 
-#include <exceptions/exceptions.h>
+#include "exceptions.h"
 
-//
-// Note: this helper module isn't specific to the DNS protocol per se.
-// We should probably move this to somewhere else, possibly in some common
-// utility area.
-//
+#include <gtest/gtest.h>
 
-namespace isc {
-namespace dns {
+using isc::Exception;
 
-///
-/// \brief A standard DNS (or ISC) module exception that is thrown a Base64
-/// decoder encounters an invalid input.
-///
-class BadBase64String : public Exception {
-public:
-    BadBase64String(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+namespace {
+
+class ExceptionTest : public ::testing::Test {
+protected:
+    ExceptionTest() : teststring("test") {}
+    const char* teststring;
 };
 
-std::string encodeBase64(const std::vector<char>& binary);
-void decodeBase64(const std::string& base64, std::vector<char>& result);
-}
+TEST_F(ExceptionTest, basicMethods) {
+    try {
+        dns_throw(Exception, teststring);
+    } catch (Exception& ex) {
+        EXPECT_EQ(ex.getMessage(), std::string(teststring));
+        EXPECT_EQ(ex.getFile(), std::string(__FILE__));
+        EXPECT_EQ(ex.getLine(), __LINE__ - 4);
+    }
 }
 
-#endif  // __BASE64_H
-
-// Local Variables: 
-// mode: c++
-// End: 
+// Test to see if it works as a proper derived class of std::exception.
+TEST_F(ExceptionTest, stdInheritance) {
+    try {
+        dns_throw(Exception, teststring);
+    } catch (std::exception& ex) {
+        EXPECT_EQ(std::string(ex.what()), std::string(teststring));
+    }
+}
+}

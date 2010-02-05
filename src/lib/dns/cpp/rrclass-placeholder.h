@@ -17,7 +17,7 @@
 #ifndef __RRCLASS_H
 #define __RRCLASS_H 1
 
-#include "exceptions.h"
+#include <exceptions/exceptions.h>
 
 namespace isc {
 namespace dns {
@@ -34,7 +34,7 @@ class MessageRenderer;
 class InvalidRRClass : public Exception {
 public:
     InvalidRRClass(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 ///
@@ -44,7 +44,7 @@ public:
 class IncompleteRRClass : public Exception {
 public:
     IncompleteRRClass(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 ///

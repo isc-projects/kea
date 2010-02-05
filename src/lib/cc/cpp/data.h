@@ -22,7 +22,7 @@
 #include <map>
 #include <boost/shared_ptr.hpp>
 #include <stdexcept>
-#include <dns/exceptions.h>
+#include <exceptions/exceptions.h>
 
 namespace isc { namespace data {
 
@@ -36,10 +36,10 @@ typedef boost::shared_ptr<Element> ElementPtr;
 /// ListElement)
 ///
 // todo: include types and called function in the exception
-class TypeError : public isc::dns::Exception {
+class TypeError : public isc::Exception {
 public:
     TypeError(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 ///

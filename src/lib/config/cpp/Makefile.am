@@ -10,7 +10,7 @@ run_unittests_SOURCES = data_def_unittests.cc run_unittests.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 run_unittests_LDADD = libcfgclient.a $(GTEST_LDADD)
-run_unittests_LDADD += $(top_builddir)/src/lib/dns/cpp/libdns.la
+run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/cpp/libexceptions.la
 run_unittests_LDADD += $(top_builddir)/src/lib/cc/cpp/libcc.a
 endif
 

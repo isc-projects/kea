@@ -23,7 +23,7 @@
 
 #include <stdint.h>
 
-#include "exceptions.h"
+#include <exceptions/exceptions.h>
 
 namespace isc {
 namespace dns {
@@ -35,7 +35,7 @@ namespace dns {
 class InvalidBufferPosition : public Exception {
 public:
     InvalidBufferPosition(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 ///\brief The \c InputBuffer class is a buffer abstraction for manipulating

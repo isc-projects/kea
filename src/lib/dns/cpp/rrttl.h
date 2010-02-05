@@ -19,7 +19,7 @@
 
 #include <stdint.h>
 
-#include "exceptions.h"
+#include <exceptions/exceptions.h>
 
 namespace isc {
 namespace dns {
@@ -36,7 +36,7 @@ class MessageRenderer;
 class InvalidRRTTL : public Exception {
 public:
     InvalidRRTTL(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 ///
@@ -46,7 +46,7 @@ public:
 class IncompleteRRTTL : public Exception {
 public:
     IncompleteRRTTL(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 ///

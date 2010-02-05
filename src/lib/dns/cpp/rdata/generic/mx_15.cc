@@ -19,7 +19,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include "buffer.h"
-#include "exceptions.h"
+#include <exceptions/exceptions.h>
 #include "name.h"
 #include "messagerenderer.h"
 #include "rdata.h"

@@ -19,7 +19,7 @@
 
 #include <queue>
 
-#include <dns/exceptions.h>
+#include <exceptions/exceptions.h>
 #include <dns/name.h>
 #include <dns/message.h>
 #include <dns/rrset.h>
@@ -42,7 +42,7 @@ enum QueryStatus {
 class MalformedMessage : public Exception {
 public:
     MalformedMessage(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 // An individual task to be carried out by the query logic
