@@ -1,0 +1,38 @@
+#!@PYTHON@
+
+import sys; sys.path.append ('@@PYTHONPATH@@')
+
+from isc.config.cfgmgr import ConfigManager
+import signal
+import os
+
+# If B10_FROM_SOURCE is set in the environment, we use data files
+# from a directory relative to that, otherwise we use the ones
+# installed on the system
+if "B10_FROM_SOURCE" in os.environ:
+    DATA_PATH = os.environ["B10_FROM_SOURCE"]
+else:
+    PREFIX = "@prefix@"
+    DATA_PATH = "@localstatedir@/@PACKAGE@".replace("${prefix}", PREFIX)
+
+cm = None
+
+def signal_handler(signal, frame):
+    global cm
+    if cm:
+        cm.running = False
+
+if __name__ == "__main__":
+    try:
+        cm = ConfigManager(DATA_PATH)
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGTERM, signal_handler)
+        cm.read_config()
+        cm.notify_boss()
+        cm.run()
+    except isc.cc.SessionError as se:
+        print("[bind-cfgd] Error creating config manager, "
+              "is the command channel daemon running?")
+    except KeyboardInterrupt as kie:
+        print("Got ctrl-c, exit")
+    cm.write_config()

@@ -18,7 +18,6 @@
 
 #include "buffer.h"
 #include "messagerenderer.h"
-#include "rrparamregistry.h"
 #include "rrclass.h"
 
 #include "unittest_util.h"
@@ -38,7 +37,7 @@ protected:
     static RRClass rrclassFactoryFromWire(const char* datafile);
     static const RRClass rrclass_1, rrclass_0x80, rrclass_0x800,
         rrclass_0x8000, rrclass_max;
-    static const uint8_t wiredata[10];
+    static const uint8_t wiredata[];
 };
 
 const RRClass RRClassTest::rrclass_1(1);
@@ -48,8 +47,8 @@ const RRClass RRClassTest::rrclass_0x8000(0x8000);
 const RRClass RRClassTest::rrclass_max(0xffff);
 // This is wire-format data for the above sample RRClasss rendered in the
 // appearing order.
-const uint8_t RRClassTest::wiredata[10] = { 0x00, 0x01, 0x00, 0x80, 0x08,
-                                           0x00, 0x80, 0x00, 0xff, 0xff };
+const uint8_t RRClassTest::wiredata[] = { 0x00, 0x01, 0x00, 0x80, 0x08,
+                                          0x00, 0x80, 0x00, 0xff, 0xff };
 
 RRClass
 RRClassTest::rrclassFactoryFromWire(const char* datafile)

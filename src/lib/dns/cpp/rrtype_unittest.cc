@@ -18,7 +18,6 @@
 
 #include "buffer.h"
 #include "messagerenderer.h"
-#include "rrparamregistry.h"
 #include "rrtype.h"
 
 #include "unittest_util.h"
@@ -38,7 +37,7 @@ protected:
     static RRType rrtypeFactoryFromWire(const char* datafile);
     static const RRType rrtype_1, rrtype_0x80, rrtype_0x800, rrtype_0x8000,
         rrtype_max;
-    static const uint8_t wiredata[10];
+    static const uint8_t wiredata[];
 };
 
 const RRType RRTypeTest::rrtype_1(1);
@@ -48,8 +47,8 @@ const RRType RRTypeTest::rrtype_0x8000(0x8000);
 const RRType RRTypeTest::rrtype_max(0xffff);
 // This is wire-format data for the above sample RRTypes rendered in the
 // appearing order.
-const uint8_t RRTypeTest::wiredata[10] = { 0x00, 0x01, 0x00, 0x80, 0x08,
-                                           0x00, 0x80, 0x00, 0xff, 0xff };
+const uint8_t RRTypeTest::wiredata[] = { 0x00, 0x01, 0x00, 0x80, 0x08,
+                                         0x00, 0x80, 0x00, 0xff, 0xff };
 
 RRType
 RRTypeTest::rrtypeFactoryFromWire(const char* datafile)

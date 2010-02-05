@@ -1,0 +1,6 @@
+Create user and its password by running the following command:
+
+python3 usermgr.py [-f  filename]
+
+If no filename is specified in command line, the user and its password are saved in default file 'passwd.csv'.
+

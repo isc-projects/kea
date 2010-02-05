@@ -157,15 +157,47 @@ MessageRenderer::~MessageRenderer()
 }
 
 void
+MessageRenderer::skip(size_t len)
+{
+    impl_->buffer_.skip(len);
+}
+
+void
+MessageRenderer::clear()
+{
+    impl_->buffer_.clear();
+    impl_->nbuffer_.clear();
+    impl_->nodeset_.clear();
+}
+
+void
+MessageRenderer::writeUint8(uint8_t data)
+{
+    impl_->buffer_.writeUint8(data);
+}
+
+void
 MessageRenderer::writeUint16(uint16_t data)
 {
     impl_->buffer_.writeUint16(data);
 }
 
 void
+MessageRenderer::writeUint16At(uint16_t data, size_t pos)
+{
+    impl_->buffer_.writeUint16At(data, pos);
+}
+
+void
 MessageRenderer::writeUint32(uint32_t data)
 {
     impl_->buffer_.writeUint32(data);
+}
+
+void
+MessageRenderer::writeData(const void* data, size_t len)
+{
+    impl_->buffer_.writeData(data, len);
 }
 
 const void*
@@ -187,7 +219,8 @@ MessageRenderer::writeName(const Name& name, bool compress)
     name.toWire(impl_->nbuffer_);
 
     unsigned int i;
-    std::set<NameCompressNode>::const_iterator n;
+    std::set<NameCompressNode>::const_iterator notfound = impl_->nodeset_.end();
+    std::set<NameCompressNode>::const_iterator n = notfound;
 
     // Find the longest ancestor name in the rendered set that matches the
     // given name.
@@ -199,7 +232,7 @@ MessageRenderer::writeName(const Name& name, bool compress)
         n = impl_->nodeset_.find(NameCompressNode(impl_->nbuffer_, i,
                                                   impl_->nbuffer_.getLength() -
                                                   i));
-        if (n != impl_->nodeset_.end()) {
+        if (n != notfound) {
             break;
         }
     }
@@ -209,7 +242,7 @@ MessageRenderer::writeName(const Name& name, bool compress)
     // Write uncompress part...
     impl_->buffer_.writeData(impl_->nbuffer_.getData(),
                              compress ? i : impl_->nbuffer_.getLength());
-    if (compress && n != impl_->nodeset_.end()) {
+    if (compress && n != notfound) {
         // ...and compression pointer if available.
         uint16_t pointer = (*n).pos_;
         pointer |= Name::COMPRESS_POINTER_MARK16;

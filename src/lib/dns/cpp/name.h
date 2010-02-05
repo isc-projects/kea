@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 
-#include "exceptions.h"
+#include <exceptions/exceptions.h>
 
 namespace isc {
 namespace dns {
@@ -37,7 +37,7 @@ class MessageRenderer;
 class EmptyLabel : public Exception {
 public:
     EmptyLabel(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 ///
@@ -47,7 +47,7 @@ public:
 class TooLongName : public Exception {
 public:
     TooLongName(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 ///
@@ -57,7 +57,7 @@ public:
 class TooLongLabel : public Exception {
 public:
     TooLongLabel(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 ///
@@ -69,7 +69,7 @@ public:
 class BadLabelType : public Exception {
 public:
     BadLabelType(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 ///
@@ -79,7 +79,7 @@ public:
 class BadEscape : public Exception {
 public:
     BadEscape(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 ///
@@ -89,7 +89,7 @@ public:
 class BadPointer : public Exception {
 public:
     BadPointer(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 ///
@@ -102,7 +102,7 @@ public:
 class IncompleteName : public Exception {
 public:
     IncompleteName(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        isc::Exception(file, line, what) {}
 };
 
 ///
@@ -267,6 +267,43 @@ public:
     /// \name Getter Methods
     ///
     //@{
+    /// \brief Provides one-byte name data in wire format at the specified
+    /// position.
+    ///
+    /// This method returns the unsigned 8-bit value of wire-format \c Name
+    /// data at the given position from the head.
+    ///
+    /// For example, if \c n is a \c Name object for "example.com",
+    /// \c n.at(3) would return \c 'a', and \c n.at(7) would return \c 'e'.
+    /// Note that \c n.at(0) would be 7 (decimal), the label length of
+    /// "example", instead of \c 'e', because it returns a data portion
+    /// in wire-format.  Likewise, \c n.at(8) would return 3 (decimal)
+    /// instead of <code>'.'</code>
+    ///
+    /// This method would be useful for an application to examine the
+    /// wire-format name data without dumping the data into a buffer,
+    /// which would involve data copies and would be less efficient.
+    /// One common usage of this method would be something like this:
+    /// \code for (size_t i = 0; i < name.getLength(); ++i) {
+    ///     uint8_t c = name.at(i);
+    ///     // do something with c
+    /// } \endcode
+    ///
+    /// Parameter \c pos must be in the valid range of the name data, that is,
+    /// must be less than \c Name.getLength().  Otherwise, an exception of
+    /// class \c OutOfRange will be thrown.
+    /// This method never throws an exception in other ways.
+    ///
+    /// \param pos The position in the wire format name data to be returned.
+    /// \return An unsigned 8-bit integer corresponding to the name data
+    /// at the position of \c pos.
+    const uint8_t at(size_t pos) const
+    {
+        if (pos >= length_) {
+            dns_throw(OutOfRange, "Out of range access in Name::at()");
+        }
+        return (ndata_[pos]);
+    }
     /// \brief Gets the length of the <code>Name</code> in its wire format.
     ///
     /// This method never throws an exception.

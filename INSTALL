@@ -1,0 +1,6 @@
+To build "configure" file:
+    autoreconf
+
+To then build from source:
+    ./configure
+    make

@@ -1,0 +1,16 @@
+#! /bin/sh
+
+PYTHON_EXEC=${PYTHON_EXEC:-@PYTHON@}
+export PYTHON_EXEC
+
+CONFIG_PATH=@abs_top_srcdir@/src/lib/config/python/isc/config/
+
+PYTHONPATH=@abs_top_srcdir@/pyshared
+export PYTHONPATH
+
+CONFIG_TESTDATA_PATH=@abs_top_srcdir@/src/lib/config/testdata
+export CONFIG_TESTDATA_PATH
+
+cd ${BIND10_PATH}
+exec ${PYTHON_EXEC} -O ${CONFIG_PATH}/datadefinition_test.py $*
+

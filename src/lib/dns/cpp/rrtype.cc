@@ -19,7 +19,7 @@
 #include <stdint.h>
 
 #include "buffer.h"
-#include "exceptions.h"
+#include <exceptions/exceptions.h>
 #include "messagerenderer.h"
 #include "rrparamregistry.h"
 #include "rrtype.h"

@@ -1,0 +1,3 @@
+The "tools" directory contains scripts for helping the BIND 10
+developers maintain the source tree. These are not intended
+to be built nor installed by the build system.
