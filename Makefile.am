@@ -33,7 +33,7 @@ coverage: clean-coverage perform-coverage report-coverage
 pyshared:
 	mkdir pyshared
 	mkdir pyshared/isc
-	cat src/lib/config/python/isc/__init__.py src/lib/cc/python/isc/__init__.py > pyshared/isc/__init__.py
+	cat ${srcdir}/src/lib/config/python/isc/__init__.py ${srcdir}/src/lib/cc/python/isc/__init__.py > pyshared/isc/__init__.py
 	ln -s ${abs_top_srcdir}/src/lib/config/python/isc/config pyshared/isc/config
 	ln -s ${abs_top_srcdir}/src/lib/cc/python/isc/cc pyshared/isc/cc
 	ln -s ${abs_top_srcdir}/src/lib/cc/python/isc/Util pyshared/isc/Util
