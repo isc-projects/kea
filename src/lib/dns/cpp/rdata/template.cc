@@ -34,7 +34,7 @@ using namespace std;
 // If you added member functions specific to this derived class, you'll need
 // to implement them here, of course.
 
-MyType::MyType(const std::string& type_str)
+MyType::MyType(const string& type_str)
 {
 }
 
@@ -42,7 +42,7 @@ MyType::MyType(InputBuffer& buffer, size_t rdata_len)
 {
 }
 
-MyType::MyType(const MyType& other)
+MyType::MyType(const MyType& source)
 {
 }
 
