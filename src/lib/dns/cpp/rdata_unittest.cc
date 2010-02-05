@@ -505,4 +505,26 @@ TEST_F(RdataTest, getCname_CNAME)
     EXPECT_EQ(Name("cn.example.com."), rdata_cname.getCname());
 }
 
+TEST_F(RdataTest, fromText_RRSIG)
+{
+    string rrsig_txt("A 5 4 43200 1264801134 191145710 8496 isc.org. "
+                     "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
+                     "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
+                     "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
+                     "f49t+sXKPzbipN9g+s1ZPiIyofc=");
+    generic::RRSIG rdata_rrsig(rrsig_txt);
+    EXPECT_EQ(rrsig_txt, rdata_rrsig.toText());
+}
+
+TEST_F(RdataTest, toWireRenderer_RRSIG)
+{
+    string rrsig_txt("A 5 4 43200 1264801134 191145710 8496 isc.org. "
+                     "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
+                     "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
+                     "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
+                     "f49t+sXKPzbipN9g+s1ZPiIyofc=");
+    generic::RRSIG rdata_rrsig(rrsig_txt);
+    rdata_rrsig.toWire(renderer);
+}
+
 }
