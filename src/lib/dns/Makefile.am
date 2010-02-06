@@ -1,1 +1,1 @@
-SUBDIRS = cpp cpp/tests
+SUBDIRS = cpp
