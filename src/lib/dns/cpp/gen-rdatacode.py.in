@@ -22,6 +22,7 @@ classes and constants.
 """
 
 import os
+from os.path import getmtime
 import re
 import sys
 
@@ -30,13 +31,16 @@ classcode2txt = {}
 typecode2txt = {}
 typeandclass = []
 generic_code = 65536            # something larger than any code value
-class_declarations = ''
+rdata_declarations = ''
 class_definitions = ''
+classdir_mtime = 0
+rdatadef_mtime = 0
+rdatahdr_mtime = 0
 copyright_file = '@top_srcdir@' + os.sep + 'COPYING'
 
 def import_classdef(class_txt, file):
-    rdata_source = open(file, 'r')
     content = ''
+    rdata_source = open(file, 'r')
     for line in rdata_source.readlines():
         if re.match('// BEGIN_ISC_NAMESPACE', line):
             content += 'namespace isc {\n'
@@ -59,6 +63,9 @@ def import_classdef(class_txt, file):
     return content
 
 def import_classheader(class_txt, type_txt, type_code, file):
+    type_utxt = type_txt.upper()
+    class_utxt = class_txt.upper()
+
     # for each CLASS_n/TYPE_m.h
     rdata_header = open(file, 'r')
     content = ''
@@ -125,12 +132,19 @@ def import_copyright():
 '''
     return copyright_txt
 
-if __name__ == "__main__":
-    copyright_txt = import_copyright()
+def import_definitions(classcode2txt, typecode2txt, typeandclass):
+    global rdata_declarations
+    global class_definitions
+    global classdir_mtime
+    global rdatadef_mtime
+    global rdatahdr_mtime
+
     for dir in list(os.listdir('@srcdir@/rdata')):
         classdir = '@srcdir@/rdata' + os.sep + dir
         m = re_typecode.match(dir)
         if os.path.isdir(classdir) and (m != None or dir == 'generic'):
+            if classdir_mtime < getmtime(classdir):
+                classdir_mtime = getmtime(classdir)
             if dir == 'generic':
                 class_txt = 'generic'
                 class_code = generic_code
@@ -145,15 +159,16 @@ if __name__ == "__main__":
                 if m != None:
                     type_txt = m.group(1)
                     type_code = m.group(2)
-                    type_utxt = type_txt.upper()
-                    class_utxt = class_txt.upper()
-
                     if not type_code in typecode2txt:
                         typecode2txt[type_code] = type_txt
                     if re.search('\cc$', file):
+                        if rdatadef_mtime < getmtime(file):
+                            rdatadef_mtime = getmtime(file)
                         class_definitions += import_classdef(class_txt, file)
                     elif re.search('\h$', file):
-                        class_declarations += import_classheader(class_txt,
+                        if rdatahdr_mtime < getmtime(file):
+                            rdatahdr_mtime = getmtime(file)
+                        rdata_declarations += import_classheader(class_txt,
                                                                  type_txt,
                                                                  type_code,
                                                                  file)
@@ -163,78 +178,89 @@ if __name__ == "__main__":
                         if class_txt == 'generic':
                             typeandclass.append((type_txt, int(type_code),
                                                  (class_txt, 'in'), 1))
-    rdata_deffile = open('@srcdir@/rdataclass.cc', 'w')
+
+def need_generate(file, mtime):
+    '''Check if we need to generate the specified file.
+
+    To avoid unnecessary compilation, we skip (re)generating the file when
+    the file already exists and newer than the base file.
+    '''
+    if os.path.exists(file) and getmtime(file) > mtime:
+        return False
+    return True
+
+def generate_rdatadef(file, copyright_txt, basemtime):
+    if not need_generate(file, basemtime):
+        print('skip generating ' + file);
+        return
+    rdata_deffile = open(file, 'w')
     rdata_deffile.write(copyright_txt)
     rdata_deffile.write(class_definitions)
     rdata_deffile.close()
 
-    class_declarations += '''
+def generate_rdatahdr(file, copyright_txt, declarations, basemtime):
+    if not need_generate(file, basemtime):
+        print('skip generating ' + file);
+        return
+    declarations += '''
 // Local Variables:
 // mode: c++
 // End:
 '''
-    rdata_header = open('@srcdir@/rdataclass.h', 'w')
+    rdata_header = open(file, 'w')
     rdata_header.write(copyright_txt)
-    rdata_header.write(class_declarations)
+    rdata_header.write(declarations)
     rdata_header.close()
-    
-    declarationtxt = ''
-    deftxt = ''
-    for code in typecode2txt.keys():
-        # for rrtype.h
-        rrtype = typecode2txt[code].upper()
-        declarationtxt += ' ' * 4 + 'static const RRType& ' + rrtype + '();\n'
-        deftxt += '''inline const RRType&
-RRType::''' + rrtype + '''()
-{
-    static RRType rrtype(''' + code + ''');
-    return (rrtype);
-}\n
-'''
-    rrtype_header_temp = open('@srcdir@/rrtype-placeholder.h', 'r')
-    rrtype_header_out = open('@srcdir@/rrtype.h', 'w')
-    rrtype_header_out.write(copyright_txt)
-    for line in rrtype_header_temp.readlines():
-        rrtype_header_out.write(line)
-        if re.match('\s+// BEGIN_WELL_KNOWN_TYPE_DECLARATIONS$', line):
-            rrtype_header_out.write(declarationtxt)
-        if re.match('// BEGIN_WELL_KNOWN_TYPE_DEFINITIONS$', line):
-            rrtype_header_out.write('\n' + deftxt)
-    rrtype_header_out.close()
-    rrtype_header_temp.close()
+
+def generate_typeclasscode(fileprefix, basemtime, code2txt, type_or_class):
+    placeholder = fileprefix + '-placeholder.h'
+    outputfile = fileprefix + '.h'
+    upper_key = type_or_class.upper() # TYPE or CLASS
+    lower_key = 'rr' + type_or_class.lower() # rrtype or rrclass
+    cap_key = type_or_class           # Type or Class
+
+    if not need_generate(outputfile, basemtime) and getmtime(outputfile) > getmtime(placeholder):
+        print('skip generating ' + outputfile)
+        return
 
     declarationtxt = ''
     deftxt = ''
-    for code in classcode2txt.keys():
-        # for rrclass.h
-        rrclass = classcode2txt[code].upper()
-        declarationtxt += ' ' * 4 + 'static const RRClass& ' + rrclass + '();\n'
-        deftxt += '''inline const RRClass&
-RRClass::''' + rrclass + '''()
+    for code in code2txt.keys():
+        codetxt = code2txt[code].upper()
+        declarationtxt += ' ' * 4 + 'static const RR' + cap_key + '& ' + codetxt + '();\n'
+        deftxt += '''inline const RR''' + cap_key + '''&
+RR''' + cap_key + '''::''' + codetxt + '''()
 {
-    static RRClass rrclass(''' + code + ''');
-    return (rrclass);
+    static RR''' + cap_key + ''' ''' + lower_key + '''(''' + code + ''');
+    return (''' + lower_key + ''');
 }\n
 '''
+    header_temp = open(placeholder, 'r')
+    header_out = open(outputfile, 'w')
+    header_out.write(copyright_txt)
+    for line in header_temp.readlines():
+        header_out.write(line)
+        if re.match('\s+// BEGIN_WELL_KNOWN_' + upper_key + '_DECLARATIONS$', line):
+            header_out.write(declarationtxt)
+        if re.match('// BEGIN_WELL_KNOWN_' + upper_key + '_DEFINITIONS$', line):
+            header_out.write('\n' + deftxt)
+    header_out.close()
+    header_temp.close()
 
-    rrclass_header_temp = open('@srcdir@/rrclass-placeholder.h', 'r')
-    rrclass_header_out = open('@srcdir@/rrclass.h', 'w')
-    rrclass_header_out.write(copyright_txt)
-    for line in rrclass_header_temp.readlines():
-        rrclass_header_out.write(line)
-        if re.match('\s+// BEGIN_WELL_KNOWN_CLASS_DECLARATIONS$', line):
-            rrclass_header_out.write(declarationtxt)
-        if re.match('// BEGIN_WELL_KNOWN_CLASS_DEFINITIONS$', line):
-            rrclass_header_out.write('\n' + deftxt)
-    rrclass_header_out.close()
-    rrclass_header_temp.close()
+def generate_rrparam(fileprefix, basemtime):
+    placeholder = fileprefix + '-placeholder.cc'
+    outputfile = fileprefix + '.cc'
+    if not need_generate(outputfile, basemtime) and getmtime(outputfile) > getmtime(placeholder):
+        print('skip generating ' + outputfile)
+        return
 
     # sort by class, then by type
     typeandclassparams = ''
     typeandclass.sort(key = lambda x: (x[3], x[1]))
     for param in typeandclass:
-        # for rdata.cc
-        # each param is a tuple of (type_txt, type_code, class_tuple, class_code)
+        # for rrparamregistry.cc
+        # each param is a tuple of (type_txt, type_code, class_tuple,
+        #                           class_code)
         (type_txt, type_code, class_tuple, class_code) = param
         type_utxt = type_txt.upper()
         class_txt = class_tuple[0]
@@ -252,8 +278,8 @@ RRClass::''' + rrclass + '''()
             typeandclassparams += ', RdataFactoryPtr(new RdataFactory<'
             typeandclassparams += class_txt + '::' + type_utxt + '>()));\n'
 
-    rrparam_temp = open('@srcdir@/rrparamregistry-placeholder.cc', 'r')
-    rrparam_out = open('@srcdir@/rrparamregistry.cc', 'w')
+    rrparam_temp = open(placeholder, 'r')
+    rrparam_out = open(outputfile, 'w')
     rrparam_out.write(copyright_txt)
     for line in rrparam_temp.readlines():
         rrparam_out.write(line)
@@ -261,3 +287,22 @@ RRClass::''' + rrclass + '''()
             rrparam_out.write(typeandclassparams)
     rrparam_temp.close()
     rrparam_out.close()
+
+if __name__ == "__main__":
+    try:
+        copyright_txt = import_copyright()
+        import_definitions(classcode2txt, typecode2txt, typeandclass)
+        generate_rdatadef('@srcdir@/rdataclass.cc', copyright_txt,
+                          rdatadef_mtime)
+        generate_rdatahdr('@srcdir@/rdataclass.h', copyright_txt,
+                          rdata_declarations, rdatahdr_mtime)
+        generate_typeclasscode('@srcdir@/rrtype',
+                               max(rdatadef_mtime, rdatahdr_mtime),
+                               typecode2txt, 'Type')
+        generate_typeclasscode('@srcdir@/rrclass', classdir_mtime,
+                               classcode2txt, 'Class')
+        generate_rrparam('@srcdir@/rrparamregistry', rdatahdr_mtime)
+    except:
+        sys.stderr.write('Code generation failed due to exception: %s\n' %
+                         sys.exc_info()[1])
+        exit(1)
