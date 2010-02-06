@@ -163,6 +163,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/config/python/isc/config/Makefile
                  src/lib/dns/Makefile
                  src/lib/dns/cpp/Makefile
+                 src/lib/dns/cpp/tests/Makefile
                  src/lib/exceptions/cpp/Makefile
                  src/lib/exceptions/Makefile
                  src/lib/auth/Makefile

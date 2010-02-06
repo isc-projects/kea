@@ -14,7 +14,7 @@
 
 // $Id$
 
-#include "buffer.h"
+#include <dns/buffer.h>
 
 #include <gtest/gtest.h>
 

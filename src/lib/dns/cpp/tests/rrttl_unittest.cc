@@ -16,9 +16,9 @@
 
 #include <gtest/gtest.h>
 
-#include "buffer.h"
-#include "messagerenderer.h"
-#include "rrttl.h"
+#include <dns/buffer.h>
+#include <dns/messagerenderer.h>
+#include <dns/rrttl.h>
 
 #include "unittest_util.h"
 

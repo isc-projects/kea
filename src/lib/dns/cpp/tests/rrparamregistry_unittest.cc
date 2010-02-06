@@ -21,9 +21,9 @@
 
 #include <gtest/gtest.h>
 
-#include "rrclass.h"
-#include "rrparamregistry.h"
-#include "rrtype.h"
+#include <dns/rrclass.h>
+#include <dns/rrparamregistry.h>
+#include <dns/rrtype.h>
 
 using namespace std;
 using namespace isc::dns;

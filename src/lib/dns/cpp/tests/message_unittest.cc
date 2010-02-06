@@ -14,14 +14,14 @@
 
 // $Id$
 
-#include "buffer.h"
-#include "message.h"
-#include "messagerenderer.h"
-#include "question.h"
-#include "rdataclass.h"
-#include "rrclass.h"
-#include "rrttl.h"
-#include "rrtype.h"
+#include <dns/buffer.h>
+#include <dns/message.h>
+#include <dns/messagerenderer.h>
+#include <dns/question.h>
+#include <dns/rdataclass.h>
+#include <dns/rrclass.h>
+#include <dns/rrttl.h>
+#include <dns/rrtype.h>
 
 #include <gtest/gtest.h>
 
