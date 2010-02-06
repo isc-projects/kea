@@ -20,7 +20,7 @@
 #include <vector>
 #include <string>
 
-#include "name.h"
+#include <dns/name.h>
 
 #include <gtest/gtest.h>
 

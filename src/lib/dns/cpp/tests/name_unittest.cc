@@ -20,9 +20,9 @@
 #include <iomanip>
 #include <stdexcept>
 
-#include "buffer.h"
-#include "name.h"
-#include "messagerenderer.h"
+#include <dns/buffer.h>
+#include <dns/name.h>
+#include <dns/messagerenderer.h>
 
 #include "unittest_util.h"
 

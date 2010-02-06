@@ -23,7 +23,7 @@
 
 #include <gtest/gtest.h>
 
-#include "name.h"
+#include <dns/name.h>
 #include "unittest_util.h"
 
 using isc::UnitTestUtil;

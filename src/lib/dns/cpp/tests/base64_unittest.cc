@@ -18,7 +18,7 @@
 #include <utility>
 #include <vector>
 
-#include "base64.h"
+#include <dns/base64.h>
 
 #include <gtest/gtest.h>
 
