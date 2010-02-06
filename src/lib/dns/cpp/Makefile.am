@@ -1,3 +1,5 @@
+SUBDIRS = . tests
+
 AM_CPPFLAGS = -I$(top_builddir)/include -I$(top_srcdir)/ext
 
 CLEANFILES = *.gcno *.gcda
@@ -22,4 +24,3 @@ rrtype.h: rrtype-placeholder.h
 rrparamregistry.cc: rrparamregistry-placeholder.cc
 rrclass.h rrtype.h rrparamregistry.cc rdataclass.h rdataclass.cc: Makefile
 	./gen-rdatacode.py
-tests: libdns.la
