@@ -5,21 +5,40 @@ import pprint
 import os
 from isc.cc import data
 
+class ConfigManagerDataReadError(Exception):
+    pass
+
+class ConfigManagerDataEmpty(Exception):
+    pass
+
 class ConfigManagerData:
     CONFIG_VERSION = 1
 
-    def __init__(self, data_path):
+    def __init__(self, data_path, file_name = "b10-config.db"):
+        """Initialize the data for the configuration manager, and
+           set the version and path for the data store. Initializing
+           this does not yet read the database, a call to
+           read_from_file is needed for that."""
         self.data = {}
         self.data['version'] = ConfigManagerData.CONFIG_VERSION
         self.data_path = data_path
-        self.db_filename = data_path + "/b10-config.db"
+        self.db_filename = data_path + os.sep + file_name
 
     def set_data_definition(self, module_name, module_data_definition):
-        self.zones[module_name] = module_data_definition
+        """Set the data definition for the given module name."""
+        #self.zones[module_name] = module_data_definition
         self.data_definitions[module_name] = module_data_definition
 
-    def read_from_file(data_path):
-        config = ConfigManagerData(data_path)
+    def read_from_file(data_path, file_name = "b10-config.db"):
+        """Read the current configuration found in the file at
+           data_path. If the file does not exist, a
+           ConfigManagerDataEmpty exception is raised. If there is a
+           parse error, or if the data in the file has the wrong
+           version, a ConfigManagerDataReadError is raised. In the first
+           case, it is probably safe to log and ignore. In the case of
+           the second exception, the best way is probably to report the
+           error and stop loading the system."""
+        config = ConfigManagerData(data_path, file_name)
         try:
             file = open(config.db_filename, 'r')
             file_config = ast.literal_eval(file.read())
@@ -27,19 +46,20 @@ class ConfigManagerData:
                 file_config['version'] == ConfigManagerData.CONFIG_VERSION:
                 config.data = file_config
             else:
-                # of course we can put in a migration path here for old data
-                print("[bind-cfgd] Old version of data found, starting with empty configuration")
+                # We can put in a migration path here for old data
+                raise ConfigManagerDataReadError("[bind-cfgd] Old version of data found")
             file.close()
         except IOError as ioe:
-            print("No config file found, starting with empty config")
-        except EOFError as eofe:
-            print("Config file empty, starting with empty config")
+            raise ConfigManagerDataEmpty("No config file found")
         except:
-            print("Config file unreadable, starting with empty config")
+            raise ConfigManagerDataReadError("Config file unreadable")
 
         return config
         
-    def write_to_file(self):
+    def write_to_file(self, output_file_name = None):
+        """Writes the current configuration data to a file. If
+           output_file_name is not specified, the file used in
+           read_from_file is used."""
         try:
             tmp_filename = self.db_filename + ".tmp"
             file = open(tmp_filename, 'w');
@@ -51,6 +71,13 @@ class ConfigManagerData:
             os.rename(tmp_filename, self.db_filename)
         except IOError as ioe:
             print("Unable to write config file; configuration not stored")
+
+    def __eq__(self, other):
+        """Returns True if the data contained is equal. data_path and
+           db_filename may be different."""
+        if type(other) != type(self):
+            return False
+        return self.data == other.data
 
 class ConfigManager:
     def __init__(self, data_path):
