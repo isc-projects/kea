@@ -89,4 +89,7 @@ class TestDataDefinition(unittest.TestCase):
         self.assertEqual(False, self.validate_data("spec22.spec", "data22_8.data"))
 
 if __name__ == '__main__':
+    if not 'CONFIG_TESTDATA_PATH' in os.environ:
+        print("You need to set the environment variable CONFIG_TESTDATA_PATH to point to the directory containing the test data files")
+        exit(1)
     unittest.main()
