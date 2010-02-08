@@ -59,26 +59,140 @@ class TestConfigManagerData(unittest.TestCase):
         new_config = ConfigManagerData(self.data_path, output_file_name)
         self.assertEqual(self.config_manager_data, new_config)
 
+#
+# We can probably use a more general version of this
+#
+class FakeCCSession:
+    def __init__(self):
+        self.subscriptions = {}
+        # each entry is of the form [ channel, instance, message ]
+        self.message_queue = []
 
-class TestConfigManager:
+    def group_subscribe(self, group_name, instance_name = None):
+        if not group_name in self.subscriptions:
+            self.subscriptions[group_name] = []
+        if instance_name:
+            self.subscriptions[group_name].append(instance_name)
+            
+
+    def has_subscription(self, group_name, instance_name = None):
+        if group_name in self.subscriptions:
+            if instance_name:
+                return instance_name in self.subscriptions[group_name]
+            else:
+                return True
+        else:
+            return False
+
+    def group_sendmsg(self, msg, channel, target = None):
+        self.message_queue.append([ channel, target, msg ])
+
+    def get_message(self, channel, target = None):
+        for qm in self.message_queue:
+            if qm[0] == channel and qm[1] == target:
+                self.message_queue.remove(qm)
+                return qm[2]
+        return None
+        
+
+class TestConfigManager(unittest.TestCase):
 
     def setUp(self):
-        pass
+        self.data_path = os.environ['CONFIG_TESTDATA_PATH']
+        self.fake_session = FakeCCSession()
+        self.cm = ConfigManager(self.data_path, self.fake_session)
+        self.name = "TestModule"
+        self.spec = { "asdf" }
+        self.commands = { "bbbb" }
     
     def test_init(self):
-        pass
+        self.assert_(self.cm.commands == {})
+        self.assert_(self.cm.data_definitions == {})
+        self.assert_(self.cm.data_path == self.data_path)
+        self.assert_(self.cm.config != None)
+        self.assert_(self.fake_session.has_subscription("ConfigManager"))
+        self.assert_(self.fake_session.has_subscription("Boss", "ConfigManager"))
+        self.assertFalse(self.cm.running)
+
+    def test_notify_boss(self):
+        self.cm.notify_boss()
+        msg = self.fake_session.get_message("Boss", None)
+        self.assert_(msg)
+        # this one is actually wrong, but 'current status quo'
+        self.assertEqual(msg, {"running": "configmanager"})
 
     def test_set_config(self):
-        pass
+        self.cm.set_config(self.name, self.spec)
+        self.assertEqual(self.cm.data_definitions[self.name], self.spec)
 
     def test_remove_config(self):
-        pass
+        self.assertRaises(KeyError, self.cm.remove_config, self.name)
+        self.cm.set_config(self.name, self.spec)
+        self.cm.remove_config(self.name)
+
+    def test_set_commands(self):
+        self.cm.set_commands(self.name, self.commands)
+        self.assertEqual(self.cm.commands[self.name], self.commands)
 
     def test_write_config(self):
-        pass
+        self.assertRaises(KeyError, self.cm.remove_commands, self.name)
+        self.cm.set_commands(self.name, self.commands)
+        self.cm.remove_commands(self.name)
+
+    def _handle_msg_helper(self, msg, expected_answer):
+        answer = self.cm.handle_msg(msg)
+        #self.assertEquals(answer, expected_answer)
+        self.assertEqual(expected_answer, answer)
 
     def test_handle_msg(self):
-        pass
+        self._handle_msg_helper({}, { 'result': [ 1, 'Unknown message format: {}']})
+        self._handle_msg_helper("", { 'result': [ 1, 'Unknown message format: ']})
+        self._handle_msg_helper({ "command": [ "badcommand" ] }, { 'result': [ 1, "Unknown command: ['badcommand']"]})
+        self._handle_msg_helper({ "command": [ "get_commands" ] }, { 'result': [ 0, {} ]})
+        self._handle_msg_helper({ "command": [ "get_data_spec" ] }, { 'result': [ 0, {} ]})
+        self._handle_msg_helper({ "command": [ "get_data_spec", { "module_name": "nosuchmodule" } ] },
+                                {'result': [1, 'No specification for module nosuchmodule']})
+        self._handle_msg_helper({ "command": [ "get_data_spec", 1 ] },
+                                {'result': [1, 'Bad get_data_spec command, argument not a dict']})
+        self._handle_msg_helper({ "command": [ "get_data_spec", { } ] },
+                                {'result': [1, 'Bad module_name in get_data_spec command']})
+        self._handle_msg_helper({ "command": [ "get_config" ] }, { 'result': [ 0, { 'version': 1} ]})
+        self._handle_msg_helper({ "command": [ "get_config", { "module_name": "nosuchmodule" } ] },
+                                {'result': [0, {}]})
+        self._handle_msg_helper({ "command": [ "get_config", 1 ] },
+                                {'result': [1, 'Bad get_config command, argument not a dict']})
+        self._handle_msg_helper({ "command": [ "get_config", { } ] },
+                                {'result': [1, 'Bad module_name in get_config command']})
+        self._handle_msg_helper({ "command": [ "set_config" ] },
+                                {'result': [1, 'Wrong number of arguments']})
+        self._handle_msg_helper({ "command": [ "set_config", {} ] },
+                                {'result': [0]})
+        self.assertEqual(len(self.fake_session.message_queue), 0)
+        self._handle_msg_helper({ "command": [ "set_config", self.name, { "test": 123 } ] },
+                                {'result': [0]})
+        self.assertEqual(len(self.fake_session.message_queue), 1)
+        self.assertEqual({'config_update': {'test': 123}},
+                         self.fake_session.get_message(self.name, None))
+        self._handle_msg_helper({ "command": [ "set_config", self.name, { "test": 124 } ] },
+                                {'result': [0]})
+        #print(self.fake_session.message_queue)
+        self.assertEqual(len(self.fake_session.message_queue), 1)
+        self.assertEqual({'config_update': {'test': 124}},
+                         self.fake_session.get_message(self.name, None))
+        self.assertEqual({'version': 1, 'TestModule': {'test': 124}}, self.cm.config.data)
+        self._handle_msg_helper({ "data_specification": 
+                                  { "module_name": self.name, "config_data": self.spec, "commands": self.commands }
+                                },
+                                {'result': [0]})
+        self.assertEqual(len(self.fake_session.message_queue), 2)
+        # the name here is actually wrong (and hardcoded), but needed in the current version
+        # TODO: fix that
+        self.assertEqual({'specification_update': [ self.name, self.spec ] },
+                         self.fake_session.get_message("Cmd-Ctrld", None))
+        self.assertEqual({'commands_update': [ self.name, self.commands ] },
+                         self.fake_session.get_message("Cmd-Ctrld", None))
+        
+        
 
     def test_run(self):
         pass
