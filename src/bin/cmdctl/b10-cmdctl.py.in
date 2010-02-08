@@ -162,6 +162,7 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         param = None
         len = self.headers.get('Content-Length')
         rcode = http.client.OK
+        reply = None
         if len:
             post_str = str(self.rfile.read(int(len)).decode())
             print("command parameter:%s" % post_str)
