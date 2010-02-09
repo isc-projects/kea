@@ -12,9 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id: rrtype_unittest.cc 476 2010-01-19 00:29:28Z jinmei $
-
-#include <vector>
+// $Id$
 
 #include <dns/buffer.h>
 #include <dns/messagerenderer.h>
@@ -33,27 +31,30 @@ using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 
-namespace isc {
-namespace dns {
-namespace rdata {
-RdataTest::RdataTest() :
-    obuffer(0), renderer(obuffer),
-    rdata_nomatch(createRdata(RRType(0), RRClass(1), "\\# 0"))
-{}
+namespace {
+class Rdata_RRSIG_Test : public RdataTest {
+    // there's nothing to specialize
+};
 
-RdataPtr
-RdataTest::rdataFactoryFromFile(const RRType& rrtype, const RRClass& rrclass,
-                                const char* datafile, size_t position)
+TEST_F(Rdata_RRSIG_Test, fromText)
 {
-    std::vector<unsigned char> data;
-    UnitTestUtil::readWireData(datafile, data);
-
-    InputBuffer buffer(&data[0], data.size());
-    buffer.setPosition(position);
-
-    uint16_t rdlen = buffer.readUint16();
-    return (createRdata(rrtype, rrclass, buffer, rdlen));
+    string rrsig_txt("A 5 4 43200 1264801134 191145710 8496 isc.org. "
+                     "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
+                     "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
+                     "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
+                     "f49t+sXKPzbipN9g+s1ZPiIyofc=");
+    generic::RRSIG rdata_rrsig(rrsig_txt);
+    EXPECT_EQ(rrsig_txt, rdata_rrsig.toText());
 }
-}
+
+TEST_F(Rdata_RRSIG_Test, toWireRenderer)
+{
+    string rrsig_txt("A 5 4 43200 1264801134 191145710 8496 isc.org. "
+                     "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
+                     "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
+                     "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
+                     "f49t+sXKPzbipN9g+s1ZPiIyofc=");
+    generic::RRSIG rdata_rrsig(rrsig_txt);
+    rdata_rrsig.toWire(renderer);
 }
 }

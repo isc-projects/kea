@@ -12,48 +12,40 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id: rrtype_unittest.cc 476 2010-01-19 00:29:28Z jinmei $
+// $Id$
 
-#include <vector>
+#ifndef __RDATA_UNITTEST_H
+#define __RDATA_UNITTEST_H 1
 
 #include <dns/buffer.h>
 #include <dns/messagerenderer.h>
-#include <dns/rdata.h>
-#include <dns/rdataclass.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
+#include <dns/rdata.h>
 
 #include <gtest/gtest.h>
-
-#include "unittest_util.h"
-#include "rdata_unittest.h"
-
-using isc::UnitTestUtil;
-using namespace std;
-using namespace isc::dns;
-using namespace isc::dns::rdata;
 
 namespace isc {
 namespace dns {
 namespace rdata {
-RdataTest::RdataTest() :
-    obuffer(0), renderer(obuffer),
-    rdata_nomatch(createRdata(RRType(0), RRClass(1), "\\# 0"))
-{}
+class RdataTest : public ::testing::Test {
+protected:
+    RdataTest();
+    static RdataPtr rdataFactoryFromFile(const RRType& rrtype,
+                                         const RRClass& rrclass,
+                                         const char* datafile,
+                                         size_t position = 0);
+    OutputBuffer obuffer;
+    MessageRenderer renderer;
+    /// This is an RDATA object of some "unknown" RR type so that it can be
+    /// used to test the compare() method against a well-known RR type.
+    RdataPtr rdata_nomatch;
+};
+}
+}
+}
+#endif // __RDATA_UNITTEST_H
 
-RdataPtr
-RdataTest::rdataFactoryFromFile(const RRType& rrtype, const RRClass& rrclass,
-                                const char* datafile, size_t position)
-{
-    std::vector<unsigned char> data;
-    UnitTestUtil::readWireData(datafile, data);
-
-    InputBuffer buffer(&data[0], data.size());
-    buffer.setPosition(position);
-
-    uint16_t rdlen = buffer.readUint16();
-    return (createRdata(rrtype, rrclass, buffer, rdlen));
-}
-}
-}
-}
+// Local Variables: 
+// mode: c++
+// End: 
