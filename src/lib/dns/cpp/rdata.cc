@@ -16,14 +16,15 @@
 
 #include <cctype>
 #include <string>
+#include <sstream>
+#include <iomanip>
+#include <ios>
 
 #include <stdint.h>
 #include <string.h>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
-
-#include <arpa/inet.h> // XXX: for inet_pton/ntop(), not exist in C++ standards
 
 #include "buffer.h"
 #include "name.h"
@@ -103,14 +104,66 @@ Generic::Generic(InputBuffer& buffer, size_t rdata_len) :
 
 Generic::Generic(const string& rdata_string)
 {
-    // parse the \# n xx xx... format (TBD)
+    istringstream iss(rdata_string);
+    string unknown_mark;
+    int32_t rdlen;
+
+    iss >> unknown_mark;
+    if (unknown_mark != "\\#") {
+        dns_throw(InvalidRdataText,
+                  "Missing the special token (\\#) for generic RDATA encoding");
+    }
+
+    iss >> rdlen;
+    if (iss.bad() || iss.fail() || rdlen < 0 || rdlen > 0xffff) {
+        dns_throw(InvalidRdataLength, "RDATA length is out of range");
+    }
+
+     while (!iss.eof() && data_.size() < rdlen) {
+        string bytes;
+        iss >> bytes;
+        if (iss.bad() || iss.fail() || (bytes.size() % 2) != 0) {
+            dns_throw(InvalidRdataText,
+                      "Invalid hex encoding of generic RDATA");
+        }
+
+        for (int pos = 0; pos < bytes.size(); pos += 2) {
+            unsigned int ch;
+            istringstream(bytes.substr(pos, 2)) >> hex >> ch;
+            data_.push_back(ch);
+        }
+    }
+
+    if (data_.size() != rdlen) {
+        dns_throw(InvalidRdataLength,
+                  "Generic RDATA code doesn't match RDLENGTH");
+    }
+}
+
+namespace {
+class UnknownRdataDumper {
+public:
+    UnknownRdataDumper(ostringstream& oss) : oss_(&oss) {}
+    void operator()(const unsigned char d)
+    {
+        *oss_ << setw(2) << static_cast<unsigned int>(d);
+    }
+private:
+    ostringstream* oss_;
+};
 }
 
 string
 Generic::toText() const
 {
-    // return rdata in the \# n xx xx format (TBD)
-    dns_throw(InvalidRdataText, "Not implemented yet");
+    ostringstream oss;
+
+    oss << "\\# " << data_.size() << " ";
+    oss.fill('0');
+    oss << right << hex;
+    for_each(data_.begin(), data_.end(), UnknownRdataDumper(oss));
+
+    return (oss.str());
 }
 
 void
@@ -145,11 +198,6 @@ Generic::compare(const Rdata& other) const
 
 } // end of namespace generic
 
-namespace in {
-} // end of namespace in
-
-namespace ch {
-} // end of namespace ch
 } // end of namespace rdata
 }
 }
