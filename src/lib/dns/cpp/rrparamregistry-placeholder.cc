@@ -72,22 +72,43 @@ struct RRTypeParam {
 
     /// magic constants
     static const unsigned int MAX_CODE = 0xffff;
-    static const string UNKNOWN_PREFIX;
-    static const size_t UNKNOWN_PREFIXLEN;
-    static const string UNKNOWN_MAX;
-    static const size_t UNKNOWN_MAXLEN;
+    static const string& UNKNOWN_PREFIX();
+    static size_t UNKNOWN_PREFIXLEN();
+    static const string& UNKNOWN_MAX();
+    static size_t UNKNOWN_MAXLEN();
 };
 
 typedef shared_ptr<RRTypeParam> RRTypeParamPtr;
 typedef map<string, RRTypeParamPtr, CIStringLess> StrRRTypeMap;
 typedef map<uint16_t, RRTypeParamPtr> CodeRRTypeMap;
 
-const string RRTypeParam::UNKNOWN_PREFIX = "TYPE";
-const size_t RRTypeParam::UNKNOWN_PREFIXLEN =
-    RRTypeParam::UNKNOWN_PREFIX.size();
-const string RRTypeParam::UNKNOWN_MAX = "TYPE65535";
-const size_t RRTypeParam::UNKNOWN_MAXLEN =
-    RRTypeParam::UNKNOWN_MAX.size();
+inline const string&
+RRTypeParam::UNKNOWN_PREFIX()
+{
+    static const string p("TYPE");
+    return (p);
+}
+
+inline size_t
+RRTypeParam::UNKNOWN_PREFIXLEN()
+{
+    static size_t plen = UNKNOWN_PREFIX().size();
+    return (plen);
+}
+
+inline const string&
+RRTypeParam::UNKNOWN_MAX()
+{
+    static const string p("TYPE65535");
+    return (p);
+}
+
+inline size_t
+RRTypeParam::UNKNOWN_MAXLEN()
+{
+    static size_t plen = UNKNOWN_MAX().size();
+    return (plen);
+}
 
 struct RRClassParam {
     RRClassParam(const string& code_string, uint16_t code) :
@@ -97,23 +118,44 @@ struct RRClassParam {
 
     /// magic constants
     static const unsigned int MAX_CODE = 0xffff;
-    static const string UNKNOWN_PREFIX;
-    static const size_t UNKNOWN_PREFIXLEN;
-    static const string UNKNOWN_MAX;
-    static const size_t UNKNOWN_MAXLEN;
+    static const string& UNKNOWN_PREFIX();
+    static size_t UNKNOWN_PREFIXLEN();
+    static const string& UNKNOWN_MAX();
+    static size_t UNKNOWN_MAXLEN();
 };
 
 typedef shared_ptr<RRClassParam> RRClassParamPtr;
 typedef map<string, RRClassParamPtr, CIStringLess> StrRRClassMap;
 typedef map<uint16_t, RRClassParamPtr> CodeRRClassMap;
 
-const string RRClassParam::UNKNOWN_PREFIX = "CLASS";
-const size_t RRClassParam::UNKNOWN_PREFIXLEN =
-    RRClassParam::UNKNOWN_PREFIX.size();
-const string RRClassParam::UNKNOWN_MAX = "CLASS65535";
-const size_t RRClassParam::UNKNOWN_MAXLEN =
-    RRClassParam::UNKNOWN_MAX.size();
+inline const string&
+RRClassParam::UNKNOWN_PREFIX()
+{
+    static const string p("CLASS");
+    return (p);
 }
+
+inline size_t
+RRClassParam::UNKNOWN_PREFIXLEN()
+{
+    static size_t plen = UNKNOWN_PREFIX().size();
+    return (plen);
+}
+
+inline const string&
+RRClassParam::UNKNOWN_MAX()
+{
+    static const string p("CLASS65535");
+    return (p);
+}
+
+inline size_t
+RRClassParam::UNKNOWN_MAXLEN()
+{
+    static size_t plen = UNKNOWN_MAX().size();
+    return (plen);
+}
+} // end of anonymous namespace
 
 /// Note: the element ordering in the type/class pair is intentional.
 /// The standard library will perform inequality comparison (i.e, '<')
@@ -338,12 +380,13 @@ textToCode(const string& code_str, MS& stringmap)
     }
 
     size_t l = code_str.size();
-    if (l > PT::UNKNOWN_PREFIXLEN &&
-        l <= PT::UNKNOWN_MAXLEN &&
-        caseStringEqual(code_str, PT::UNKNOWN_PREFIX, PT::UNKNOWN_PREFIXLEN)) {
+    if (l > PT::UNKNOWN_PREFIXLEN() &&
+        l <= PT::UNKNOWN_MAXLEN() &&
+        caseStringEqual(code_str, PT::UNKNOWN_PREFIX(),
+                        PT::UNKNOWN_PREFIXLEN())) {
         unsigned int code;
-        istringstream iss(code_str.substr(PT::UNKNOWN_PREFIXLEN,
-                                           l - PT::UNKNOWN_PREFIXLEN));
+        istringstream iss(code_str.substr(PT::UNKNOWN_PREFIXLEN(),
+                                          l - PT::UNKNOWN_PREFIXLEN()));
         iss >> dec >> code;
         if (iss.rdstate() == ios::eofbit && code <= PT::MAX_CODE) {
             return (code);
@@ -365,7 +408,7 @@ codeToText(uint16_t code, MC& codemap)
 
     ostringstream ss;
     ss << code;
-    return (PT::UNKNOWN_PREFIX + ss.str());
+    return (PT::UNKNOWN_PREFIX() + ss.str());
 }
 }
 
@@ -444,7 +487,8 @@ RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
         return (genfound->second->create(rdata_string));
     }
 
-    dns_throw(InvalidRdataText, "Unrecognized Rdata type to create from text");
+    // construct an "unknown" type of RDATA
+    return (RdataPtr(new generic::Generic(rdata_string)));
 }
 
 RdataPtr
