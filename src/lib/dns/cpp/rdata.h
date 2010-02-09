@@ -117,10 +117,14 @@ public:
 };
 
 namespace generic {
+struct GenericImpl;
+
 class Generic : public Rdata {
 public:
     explicit Generic(const std::string& rdata_string);
     explicit Generic(InputBuffer& buffer, size_t rdata_len);
+    explicit Generic(const Generic& source);
+    Generic& operator=(const Generic& source);
     virtual std::string toText() const;
     virtual void toWire(OutputBuffer& buffer) const;
     virtual void toWire(MessageRenderer& renderer) const;
@@ -131,7 +135,7 @@ public:
     ///
     virtual int compare(const Rdata& other) const;
 private:
-    std::vector<uint8_t> data_;
+    GenericImpl* impl_;
 };
 } // end of namespace "generic"
 
