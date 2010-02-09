@@ -1,0 +1,5 @@
+#
+# various kinds of "unknown" RDATA stored in an input buffer
+#
+# 0  1  2  3  4  5 (bytes)
+ 00 04 a1 b2 c3 0d

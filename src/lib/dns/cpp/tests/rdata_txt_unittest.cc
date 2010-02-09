@@ -12,9 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id: rrtype_unittest.cc 476 2010-01-19 00:29:28Z jinmei $
-
-#include <vector>
+// $Id$
 
 #include <dns/buffer.h>
 #include <dns/messagerenderer.h>
@@ -33,27 +31,40 @@ using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 
-namespace isc {
-namespace dns {
-namespace rdata {
-RdataTest::RdataTest() :
-    obuffer(0), renderer(obuffer),
-    rdata_nomatch(createRdata(RRType(0), RRClass(1), "\\# 0"))
-{}
+namespace {
+class Rdata_TXT_Test : public RdataTest {
+    // there's nothing to specialize
+};
 
-RdataPtr
-RdataTest::rdataFactoryFromFile(const RRType& rrtype, const RRClass& rrclass,
-                                const char* datafile, size_t position)
+const generic::TXT rdata_txt("Test String");
+const generic::TXT rdata_txt_quoated("\"Test String\"");
+const uint8_t wiredata_txt[] = {
+    sizeof("Test String") - 1,
+    'T', 'e', 's', 't', ' ', 'S', 't', 'r', 'i', 'n', 'g'
+};
+
+TEST_F(RdataTest, createFromText)
 {
-    std::vector<unsigned char> data;
-    UnitTestUtil::readWireData(datafile, data);
-
-    InputBuffer buffer(&data[0], data.size());
-    buffer.setPosition(position);
-
-    uint16_t rdlen = buffer.readUint16();
-    return (createRdata(rrtype, rrclass, buffer, rdlen));
+    EXPECT_EQ(0, rdata_txt.compare(rdata_txt_quoated));
 }
+
+TEST_F(Rdata_TXT_Test, createFromWire)
+{
+    EXPECT_EQ(0, rdata_txt.compare(
+                  *rdataFactoryFromFile(RRType("TXT"), RRClass("IN"),
+                                        "testdata/rdata_txt_fromWire")));
 }
+
+TEST_F(Rdata_TXT_Test, toWireBuffer)
+{
+    rdata_txt.toWire(obuffer);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        obuffer.getData(), obuffer.getLength(),
+                        wiredata_txt, sizeof(wiredata_txt));
+}
+
+TEST_F(Rdata_TXT_Test, toText)
+{
+    EXPECT_EQ("\"Test String\"", rdata_txt.toText());
 }
 }
