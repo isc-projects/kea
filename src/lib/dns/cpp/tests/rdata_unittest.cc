@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id: rrtype_unittest.cc 476 2010-01-19 00:29:28Z jinmei $
+// $Id$
 
 #include <vector>
 
@@ -55,5 +55,55 @@ RdataTest::rdataFactoryFromFile(const RRType& rrtype, const RRClass& rrclass,
     return (createRdata(rrtype, rrclass, buffer, rdlen));
 }
 }
+}
+}
+
+namespace {
+class Rdata_Unknown_Test : public RdataTest {
+    // there's nothing to specialize
+};
+
+// "Unknown" RR Type used for the test cases below.  If/when we use this
+// type number as a "well-known" (probably experimental) type, we'll need to
+// renumber it.
+const RRType unknown_rrtype = RRType("TYPE65000");
+
+TEST_F(Rdata_Unknown_Test, createFromText)
+{
+    // valid construction.  This also tests a normal case of "FromWire".
+    EXPECT_EQ(0, generic::Generic("\\# 4 a1b2c30d").compare(
+                  *rdataFactoryFromFile(unknown_rrtype, RRClass("IN"),
+                                        "testdata/rdata_unknown_fromWire")));
+    // 0-length RDATA should be accepted
+    EXPECT_EQ(0, generic::Generic("\\# 0").compare(
+                  *rdataFactoryFromFile(unknown_rrtype, RRClass("IN"),
+                                        "testdata/rdata_unknown_fromWire", 6)));
+    // the length field must match the encoding data length.
+    EXPECT_THROW(generic::Generic("\\# 4 1080c0ff00"), InvalidRdataLength);
+    EXPECT_THROW(generic::Generic("\\# 3 1080c0ff"), InvalidRdataLength);
+    // RDATA encoding part must consist of an even number of hex digits.
+    EXPECT_THROW(generic::Generic("\\# 1 1"), InvalidRdataText);
+    EXPECT_THROW(generic::Generic("\\# 1 ax"), InvalidRdataText);
+    // the length should be 16-bit unsigned integer
+    EXPECT_THROW(generic::Generic("\\# 65536 a1b2c30d"), InvalidRdataLength);
+    EXPECT_THROW(generic::Generic("\\# -1 a1b2c30d"), InvalidRdataLength);
+    EXPECT_THROW(generic::Generic("\\# 1.1 a1"), InvalidRdataText);
+    EXPECT_THROW(generic::Generic("\\# 0a 00010203040506070809"),
+                 InvalidRdataText);
+    // should reject if the special token is missing.
+    EXPECT_THROW(generic::Generic("4 a1b2c30d"), InvalidRdataText);
+    // the special token, the RDLENGTH and the data must be space separated.
+    EXPECT_THROW(generic::Generic("\\#0"), InvalidRdataText);
+    EXPECT_THROW(generic::Generic("\\# 1ff"), InvalidRdataText);
+}
+
+TEST_F(Rdata_Unknown_Test, createFromWire)
+{
+    // normal case (including 0-length data) is covered in createFromText.
+
+    // buffer too short.  the error should be detected in buffer read
+    EXPECT_THROW(rdataFactoryFromFile(unknown_rrtype, RRClass("IN"),
+                                      "testdata/rdata_unknown_fromWire", 8),
+                 InvalidBufferPosition);
 }
 }
