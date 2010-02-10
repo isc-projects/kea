@@ -119,6 +119,7 @@ class Generic : public Rdata {
 public:
     explicit Generic(const std::string& rdata_string);
     explicit Generic(InputBuffer& buffer, size_t rdata_len);
+    virtual ~Generic();
     Generic(const Generic& source);
     Generic& operator=(const Generic& source);
     virtual std::string toText() const;
