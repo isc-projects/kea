@@ -167,6 +167,9 @@ RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
 /// This function is publicly open, however, for the convenience of
 /// external developers who want to implement new or experimental RR types.
 ///
+/// This function never throws an exception as long as the given names are
+/// valid \c Name objects.
+///
 /// Additional note about applicability: In fact, BIND9's similar function,
 /// \c dns_name_rdatacompare(), is only used in rdata implementations and
 /// for testing purposes.
@@ -176,8 +179,7 @@ RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
 /// \return 0 if \c n1 is identical to \c n2 in terms of sorting order.
 /// \return 1 if \c n1 would be sorted after \c n2.
 ///
-int
-compareNames(const Name& n1, const Name& n2);
+int compareNames(const Name& n1, const Name& n2);
 
 } // end of namespace "rdata"
 }
