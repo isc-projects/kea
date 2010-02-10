@@ -51,10 +51,10 @@ SOA::SOA(const string& soastr) :
     }
     mname_ = Name(token);
     iss >> token;
-    rname_ = Name(token);
     if (iss.bad() || iss.fail()) {
         dns_throw(InvalidRdataText, "Invalid SOA RNAME");
     }
+    rname_ = Name(token);
 
     uint32_t serial, refresh, retry, expire, minimum;
     iss >> serial >> refresh >> retry >> expire >> minimum;
