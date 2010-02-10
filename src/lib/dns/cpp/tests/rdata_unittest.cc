@@ -15,6 +15,8 @@
 // $Id$
 
 #include <vector>
+#include <string>
+#include <sstream>
 
 #include <dns/buffer.h>
 #include <dns/messagerenderer.h>
@@ -60,8 +62,40 @@ RdataTest::rdataFactoryFromFile(const RRType& rrtype, const RRClass& rrclass,
 
 namespace {
 class Rdata_Unknown_Test : public RdataTest {
-    // there's nothing to specialize
+protected:
+    static string getLongestRdataTxt();
+    static void getLongestRdataWire(vector<uint8_t>& v);
 };
+
+string
+Rdata_Unknown_Test::getLongestRdataTxt()
+{
+    ostringstream oss;
+
+    oss << "\\# " << MAX_RDLENGTH << " ";
+    oss.fill('0');
+    oss << right << hex;
+    for (int i = 0; i < MAX_RDLENGTH; i++) {
+        oss << setw(2) << (i & 0xff);
+    }
+
+    return (oss.str());
+}
+
+void
+Rdata_Unknown_Test::getLongestRdataWire(vector<uint8_t>& v)
+{
+    unsigned char ch = 0;
+    for (int i = 0; i < MAX_RDLENGTH; ++i, ++ch) {
+        v.push_back(ch);
+    }
+}
+
+const string rdata_unknowntxt("\\# 4 a1b2c30d");
+const generic::Generic rdata_unknown(rdata_unknowntxt);
+// Wire-format data correspond to rdata_unknown.  Note that it doesn't include
+// RDLENGTH
+const uint8_t wiredata_unknown[] = { 0xa1, 0xb2, 0xc3, 0x0d };
 
 // "Unknown" RR Type used for the test cases below.  If/when we use this
 // type number as a "well-known" (probably experimental) type, we'll need to
@@ -74,13 +108,30 @@ TEST_F(Rdata_Unknown_Test, createFromText)
     EXPECT_EQ(0, generic::Generic("\\# 4 a1b2c30d").compare(
                   *rdataFactoryFromFile(unknown_rrtype, RRClass("IN"),
                                         "testdata/rdata_unknown_fromWire")));
+    // upper case hexadecimal digits should also be okay. 
+    EXPECT_EQ(0, generic::Generic("\\# 4 A1B2C30D").compare(
+                  *rdataFactoryFromFile(unknown_rrtype, RRClass("IN"),
+                                        "testdata/rdata_unknown_fromWire")));
     // 0-length RDATA should be accepted
     EXPECT_EQ(0, generic::Generic("\\# 0").compare(
                   *rdataFactoryFromFile(unknown_rrtype, RRClass("IN"),
                                         "testdata/rdata_unknown_fromWire", 6)));
+    // hex encoding can be space-separated
+    EXPECT_EQ(0, generic::Generic("\\# 4 a1 b2c30d").compare(rdata_unknown));
+    EXPECT_EQ(0, generic::Generic("\\# 4 a1b2 c30d").compare(rdata_unknown));
+    EXPECT_EQ(0, generic::Generic("\\# 4 a1 b2 c3 0d").compare(rdata_unknown));
+    EXPECT_EQ(0, generic::Generic("\\# 4 a1\tb2c3 0d").compare(rdata_unknown));
+
+    // Max-length RDATA
+    vector<uint8_t> v;
+    getLongestRdataWire(v);
+    InputBuffer ibuffer(&v[0], v.size());
+    EXPECT_EQ(0, generic::Generic(getLongestRdataTxt()).compare(
+                  generic::Generic(ibuffer, v.size())));
+
     // the length field must match the encoding data length.
     EXPECT_THROW(generic::Generic("\\# 4 1080c0ff00"), InvalidRdataLength);
-    EXPECT_THROW(generic::Generic("\\# 3 1080c0ff"), InvalidRdataLength);
+    EXPECT_THROW(generic::Generic("\\# 5 1080c0ff"), InvalidRdataLength);
     // RDATA encoding part must consist of an even number of hex digits.
     EXPECT_THROW(generic::Generic("\\# 1 1"), InvalidRdataText);
     EXPECT_THROW(generic::Generic("\\# 1 ax"), InvalidRdataText);
@@ -105,5 +156,91 @@ TEST_F(Rdata_Unknown_Test, createFromWire)
     EXPECT_THROW(rdataFactoryFromFile(unknown_rrtype, RRClass("IN"),
                                       "testdata/rdata_unknown_fromWire", 8),
                  InvalidBufferPosition);
+
+    // too large data
+    vector<uint8_t> v;
+    getLongestRdataWire(v);
+    v.push_back(0);             // making it too long
+    InputBuffer ibuffer(&v[0], v.size());
+    EXPECT_THROW(generic::Generic(ibuffer, v.size()), InvalidRdataLength);
+}
+
+TEST_F(Rdata_Unknown_Test, copyConstruct)
+{
+    generic::Generic copy(rdata_unknown);
+    EXPECT_EQ(0, copy.compare(rdata_unknown));
+
+    // Check the copied data is valid even after the original is deleted
+    generic::Generic* copy2 = new generic::Generic(rdata_unknown);
+    generic::Generic copy3(*copy2);
+    delete copy2;
+    EXPECT_EQ(0, copy3.compare(rdata_unknown));
+}
+
+TEST_F(Rdata_Unknown_Test, assignment)
+{
+    generic::Generic copy("\\# 1 10");
+    copy = rdata_unknown;
+    EXPECT_EQ(0, copy.compare(rdata_unknown));
+
+    // Check if the copied data is valid even after the original is deleted
+    generic::Generic* copy2 = new generic::Generic(rdata_unknown);
+    generic::Generic copy3("\\# 1 10");
+    copy3 = *copy2;
+    delete copy2;
+    EXPECT_EQ(0, copy3.compare(rdata_unknown));
+
+    // Self assignment
+    copy = copy;
+    EXPECT_EQ(0, copy.compare(rdata_unknown));
+}
+
+TEST_F(Rdata_Unknown_Test, toText)
+{
+    EXPECT_EQ(rdata_unknowntxt, rdata_unknown.toText());
+    EXPECT_EQ(getLongestRdataTxt(),
+              generic::Generic(getLongestRdataTxt()).toText());
+}
+
+TEST_F(Rdata_Unknown_Test, toWireBuffer)
+{
+    rdata_unknown.toWire(obuffer);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        obuffer.getData(), obuffer.getLength(),
+                        wiredata_unknown, sizeof(wiredata_unknown));
+}
+
+TEST_F(Rdata_Unknown_Test, toWireRenderer)
+{
+    rdata_unknown.toWire(renderer);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        obuffer.getData(), obuffer.getLength(),
+                        wiredata_unknown, sizeof(wiredata_unknown));
+}
+
+TEST_F(Rdata_Unknown_Test, compare)
+{
+    // comparison as left-justified unsigned octet sequences:
+    EXPECT_EQ(0, rdata_unknown.compare(rdata_unknown));
+
+    generic::Generic rdata_unknown_small("\\# 4 00b2c3ff");
+    EXPECT_GT(0, rdata_unknown_small.compare(rdata_unknown));
+    EXPECT_LT(0, rdata_unknown.compare(rdata_unknown_small));
+
+    generic::Generic rdata_unknown_large("\\# 4 ffb2c300");
+    EXPECT_LT(0, rdata_unknown_large.compare(rdata_unknown));
+    EXPECT_GT(0, rdata_unknown.compare(rdata_unknown_large));
+
+    // the absence of an octet sorts before a zero octet.
+    generic::Generic rdata_unknown_short("\\# 3 a1b2c3");
+    EXPECT_GT(0, rdata_unknown_short.compare(rdata_unknown));
+    EXPECT_LT(0, rdata_unknown.compare(rdata_unknown_short));
+}
+
+TEST_F(Rdata_Unknown_Test, LeftShiftOperator)
+{
+    ostringstream oss;
+    oss << rdata_unknown;
+    EXPECT_EQ(rdata_unknown.toText(), oss.str());
 }
 }
