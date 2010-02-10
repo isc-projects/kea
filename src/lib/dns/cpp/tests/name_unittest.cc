@@ -266,6 +266,36 @@ TEST_F(NameTest, fromWire)
                                   25).getLabelCount());
 }
 
+TEST_F(NameTest, copyConstruct)
+{
+    Name copy(example_name);
+    EXPECT_EQ(copy, example_name);
+
+    // Check the copied data is valid even after the original is deleted
+    Name* copy2 = new Name(example_name);
+    Name copy3(*copy2);
+    delete copy2;
+    EXPECT_EQ(copy3, example_name);
+}
+
+TEST_F(NameTest, assignment)
+{
+    Name copy(".");
+    copy = example_name;
+    EXPECT_EQ(copy, example_name);
+
+    // Check if the copied data is valid even after the original is deleted
+    Name* copy2 = new Name(example_name);
+    Name copy3(".");
+    copy3 = *copy2;
+    delete copy2;
+    EXPECT_EQ(copy3, example_name);
+
+    // Self assignment
+    copy = copy;
+    EXPECT_EQ(copy, example_name);
+}
+
 TEST_F(NameTest, toText)
 {
     // tests derived from BIND9
