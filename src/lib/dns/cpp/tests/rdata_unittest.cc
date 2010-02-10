@@ -165,6 +165,50 @@ TEST_F(Rdata_Unknown_Test, createFromWire)
     EXPECT_THROW(generic::Generic(ibuffer, v.size()), InvalidRdataLength);
 }
 
+// The following 3 sets of tests check the behavior of createRdata() variants
+// with the "unknown" RRtype.  The result should be RRclass independent.
+TEST_F(Rdata_Unknown_Test, createRdataFromString)
+{
+    EXPECT_EQ(0, rdata_unknown.compare(
+                  *createRdata(unknown_rrtype, RRClass("IN"),
+                               rdata_unknowntxt)));
+    EXPECT_EQ(0, rdata_unknown.compare(
+                  *createRdata(unknown_rrtype, RRClass("CH"),
+                               rdata_unknowntxt)));
+    EXPECT_EQ(0, rdata_unknown.compare(
+                  *createRdata(unknown_rrtype, RRClass("CLASS65000"),
+                               rdata_unknowntxt)));
+}
+
+TEST_F(Rdata_Unknown_Test, createRdataFromWire)
+{
+    InputBuffer ibuffer(wiredata_unknown, sizeof(wiredata_unknown));
+    EXPECT_EQ(0, rdata_unknown.compare(
+                  *createRdata(unknown_rrtype, RRClass("IN"),
+                               ibuffer, sizeof(wiredata_unknown))));
+
+    InputBuffer ibuffer2(wiredata_unknown, sizeof(wiredata_unknown));
+    EXPECT_EQ(0, rdata_unknown.compare(
+                  *createRdata(unknown_rrtype, RRClass("CH"),
+                               ibuffer2, sizeof(wiredata_unknown))));
+
+    InputBuffer ibuffer3(wiredata_unknown, sizeof(wiredata_unknown));
+    EXPECT_EQ(0, rdata_unknown.compare(
+                  *createRdata(unknown_rrtype, RRClass("CLASS65000"),
+                               ibuffer3, sizeof(wiredata_unknown))));
+}
+
+TEST_F(Rdata_Unknown_Test, createRdataByCopy)
+{
+    EXPECT_EQ(0, rdata_unknown.compare(
+                  *createRdata(unknown_rrtype, RRClass("IN"), rdata_unknown)));
+    EXPECT_EQ(0, rdata_unknown.compare(
+                  *createRdata(unknown_rrtype, RRClass("CH"), rdata_unknown)));
+    EXPECT_EQ(0, rdata_unknown.compare(
+                  *createRdata(unknown_rrtype, RRClass("CLASS65000"),
+                               rdata_unknown)));
+}
+
 TEST_F(Rdata_Unknown_Test, copyConstruct)
 {
     generic::Generic copy(rdata_unknown);
@@ -242,5 +286,29 @@ TEST_F(Rdata_Unknown_Test, LeftShiftOperator)
     ostringstream oss;
     oss << rdata_unknown;
     EXPECT_EQ(rdata_unknown.toText(), oss.str());
+}
+
+//
+// Tests for global utility functions
+//
+TEST_F(RdataTest, compareNames)
+{
+    Name small("a.example");
+    Name large("example");
+
+    // Check the case where the order is different from the owner name
+    // comparison:
+    EXPECT_EQ(true, small > large);
+    EXPECT_EQ(-1, compareNames(small, large));
+    EXPECT_EQ(1, compareNames(large, small));
+
+    // Check case insensitive comparison:
+    Name small_upper("A.EXAMPLE");
+    EXPECT_EQ(0, compareNames(small, small_upper));
+
+    // the absence of an octet sorts before a zero octet.
+    Name large2("a.example2");
+    EXPECT_EQ(-1, compareNames(small, large2));
+    EXPECT_EQ(1, compareNames(large2, small));
 }
 }
