@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id: rrparamregistry.cc 530 2010-01-26 22:15:42Z jinmei $
+// $Id$
 
 #include <cassert>
 #include <algorithm>
