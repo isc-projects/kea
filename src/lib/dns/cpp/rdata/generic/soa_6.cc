@@ -39,10 +39,35 @@ SOA::SOA(InputBuffer& buffer, size_t rdata_len) :
     buffer.readData(numdata_, sizeof(numdata_));
 }
 
-SOA::SOA(const std::string& soastr) :
-    mname_("."), rname_(".")
+SOA::SOA(const string& soastr) :
+    mname_("."), rname_(".")    // quick hack workaround
 {
-    dns_throw(InvalidRdataText, "Not implemented yet");
+    istringstream iss(soastr);
+    string token;
+
+    iss >> token;
+    if (iss.bad() || iss.fail()) {
+        dns_throw(InvalidRdataText, "Invalid SOA MNAME");
+    }
+    mname_ = Name(token);
+    iss >> token;
+    rname_ = Name(token);
+    if (iss.bad() || iss.fail()) {
+        dns_throw(InvalidRdataText, "Invalid SOA RNAME");
+    }
+
+    uint32_t serial, refresh, retry, expire, minimum;
+    iss >> serial >> refresh >> retry >> expire >> minimum;
+    if (iss.rdstate() != ios::eofbit) {
+        dns_throw(InvalidRdataText, "Invalid SOA format");
+    }
+    OutputBuffer buffer(20);
+    buffer.writeUint32(serial);
+    buffer.writeUint32(refresh);
+    buffer.writeUint32(retry);
+    buffer.writeUint32(expire);
+    buffer.writeUint32(minimum);
+    memcpy(numdata_,  buffer.getData(), buffer.getLength());
 }
 
 SOA::SOA(const Name& mname, const Name& rname, uint32_t serial,
