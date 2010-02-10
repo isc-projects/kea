@@ -29,6 +29,9 @@ fi
 
 # Checks for libraries.
 
+AC_SEARCH_LIBS(inet_pton, [nsl])
+AC_SEARCH_LIBS(recvfrom, [socket])
+
 # Checks for header files.
 
 # Checks for typedefs, structures, and compiler characteristics.
