@@ -182,6 +182,11 @@ Generic::Generic(const string& rdata_string)
     impl_ = new GenericImpl(data);
 }
 
+Generic::~Generic()
+{
+    delete impl_;
+}
+
 Generic::Generic(const Generic& source) :
     impl_(new GenericImpl(*source.impl_))
 {}
