@@ -261,7 +261,11 @@ public:
     /// \param buffer A buffer storing the wire format data.
     /// \param downcase Whether to convert upper case alphabets to lower case.
     explicit Name(InputBuffer& buffer, bool downcase = false);
+    ///
+    /// We use the default copy constructor intentionally.
     //@}
+    /// We use the default copy assignment operator intentionally.
+    ///
 
     ///
     /// \name Getter Methods
