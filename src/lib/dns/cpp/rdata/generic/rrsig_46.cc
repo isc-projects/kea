@@ -124,7 +124,7 @@ RRSIG::operator=(const RRSIG& source)
         return (*this);
     }
 
-    RRSIGImpl* newimpl = new RRSIGImpl(*impl_);
+    RRSIGImpl* newimpl = new RRSIGImpl(*source.impl_);
     delete impl_;
     impl_ = newimpl;
 
