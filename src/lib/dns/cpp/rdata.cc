@@ -14,6 +14,7 @@
 
 // $Id$
 
+#include <algorithm>
 #include <cctype>
 #include <string>
 #include <sstream>
@@ -85,14 +86,14 @@ compareNames(const Name& n1, const Name& n2)
 {
     size_t len1 = n1.getLength();
     size_t len2 = n2.getLength();
-    size_t cmplen = (len1 < len2) ? len1 : len2;
+    size_t cmplen = min(len1, len2);
 
     for (size_t i = 0; i < cmplen; ++i) {
         uint8_t c1 = tolower(n1.at(i));
         uint8_t c2 = tolower(n2.at(i));
         if (c1 < c2) {
             return (-1);
-        } else if (c2 > c1) {
+        } else if (c1 > c2) {
             return (1);
         }
     }
