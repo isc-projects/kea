@@ -19,6 +19,7 @@
 #include <sstream>
 #include <iomanip>
 #include <ios>
+#include <ostream>
 #include <vector>
 
 #include <stdint.h>
@@ -55,6 +56,10 @@ RdataPtr
 createRdata(const RRType& rrtype, const RRClass& rrclass,
             InputBuffer& buffer, size_t len)
 {
+    if (len > MAX_RDLENGTH) {
+        dns_throw(InvalidRdataLength, "RDLENGTH too large");
+    }
+
     size_t old_pos = buffer.getPosition();
 
     RdataPtr rdata =
@@ -103,6 +108,10 @@ struct GenericImpl {
 
 Generic::Generic(InputBuffer& buffer, size_t rdata_len)
 {
+    if (rdata_len > MAX_RDLENGTH) {
+        dns_throw(InvalidRdataLength, "RDLENGTH too large");
+    }
+
     vector<uint8_t> data(rdata_len);
     buffer.readData(&data[0], rdata_len);
     data.resize(rdata_len);
@@ -133,30 +142,35 @@ Generic::Generic(const string& rdata_string)
     if (rdlen < 0 || rdlen > 0xffff) {
         dns_throw(InvalidRdataLength, "RDATA length is out of range");
     }
+    iss >> ws;                  // skip any white spaces
 
+    // Hexadecimal encoding of RDATA: each segment must consist of an even
+    // number of hex digits.
     vector<uint8_t> data;
     while (!iss.eof() && data.size() < rdlen) {
-        string bytes;
-        iss >> bytes;
-        // Hexadecimal encoding of RDATA: each segment must consist of an even
-        // number of hex digits.
-        if ((iss.rdstate() & (ios::badbit | ios::failbit)) != 0 ||
-            (bytes.size() % 2) != 0) {
+        // extract two characters, which should compose a single byte of data.
+        char buf[2];
+        iss.read(buf, sizeof(buf));
+        if ((iss.rdstate() & (ios::badbit | ios::failbit)) != 0) {
             dns_throw(InvalidRdataText,
                       "Invalid hex encoding of generic RDATA");
         }
 
-        for (int pos = 0; pos < bytes.size(); pos += 2) {
-            istringstream iss_hex(bytes.substr(pos, 2));
-
-            unsigned int ch;
-            iss_hex >> hex >> ch;
-            if (iss_hex.rdstate() != ios::eofbit) {
-                dns_throw(InvalidRdataText,
-                          "Invalid hex encoding of generic RDATA");
-            }
-            data.push_back(ch);
+        // convert it to a single byte integer as a hex digit.
+        istringstream iss_byte(string(buf, sizeof(buf)));
+        unsigned int ch;
+        iss_byte >> hex >> ch;
+        if (iss_byte.rdstate() != ios::eofbit) {
+            dns_throw(InvalidRdataText,
+                      "Invalid hex encoding of generic RDATA");
         }
+        data.push_back(ch);
+        iss >> ws;              // skip spaces
+    }
+
+    if (!iss.eof()) {
+        dns_throw(InvalidRdataLength,
+                  "RDLENGTH is too small for generic RDATA");
     }
 
     if (data.size() != rdlen) {
@@ -178,7 +192,7 @@ Generic::operator=(const Generic& source)
         return (*this);
     }
 
-    GenericImpl* newimpl = new GenericImpl(*impl_);
+    GenericImpl* newimpl = new GenericImpl(*source.impl_);
     delete impl_;
     impl_ = newimpl;
 
@@ -223,17 +237,16 @@ Generic::toWire(MessageRenderer& renderer) const
     renderer.writeData(&impl_->data_[0], impl_->data_.size());
 }
 
-int
-Generic::compare(const Rdata& other) const
+namespace {
+inline int
+compare_internal(const GenericImpl& lhs, const GenericImpl& rhs)
 {
-    const Generic& other_rdata = dynamic_cast<const Generic&>(other);
-
-    size_t this_len = impl_->data_.size();
-    size_t other_len = other_rdata.impl_->data_.size();
+    size_t this_len = lhs.data_.size();
+    size_t other_len = rhs.data_.size();
     size_t len = (this_len < other_len) ? this_len : other_len;
     int cmp;
 
-    if ((cmp = memcmp(&impl_->data_[0], &other_rdata.impl_->data_[0], len))
+    if ((cmp = memcmp(&lhs.data_[0], &rhs.data_[0], len))
         != 0) {
         return (cmp);
     } else {
@@ -241,7 +254,21 @@ Generic::compare(const Rdata& other) const
                 (this_len < other_len) ? -1 : 1);
     }
 }
+}
 
+int
+Generic::compare(const Rdata& other) const
+{
+    const Generic& other_rdata = dynamic_cast<const Generic&>(other);
+
+    return (compare_internal(*impl_, *other_rdata.impl_));
+}
+
+std::ostream&
+operator<<(std::ostream& os, const Generic& rdata)
+{
+    return (os << rdata.toText());
+}
 } // end of namespace generic
 
 } // end of namespace rdata

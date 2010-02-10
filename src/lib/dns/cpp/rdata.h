@@ -66,6 +66,10 @@ public:
 class Rdata;
 typedef boost::shared_ptr<Rdata> RdataPtr;
 
+/// \brief Possible maximum length of RDATA, which is the maximum unsigned
+/// 16 bit value.
+const size_t MAX_RDLENGTH = 65535;
+
 /// Abstract RDATA class
 class Rdata {
 protected:
@@ -106,14 +110,6 @@ public:
     /// be more polymorphic, but might involve significant overhead, especially
     /// for a large size of RDATA.
     virtual int compare(const Rdata& other) const = 0;
-
-    // not yet:
-    // methods specific derived classes: throw an exception by default
-    //virtual Address& getAddress() = 0;
-    //virtual Name& getName() = 0;
-
-    // polymorphic copy constructor (XXX should revisit it)
-    //virtual Rdata* copy() const = 0;
 };
 
 namespace generic {
@@ -123,7 +119,7 @@ class Generic : public Rdata {
 public:
     explicit Generic(const std::string& rdata_string);
     explicit Generic(InputBuffer& buffer, size_t rdata_len);
-    explicit Generic(const Generic& source);
+    Generic(const Generic& source);
     Generic& operator=(const Generic& source);
     virtual std::string toText() const;
     virtual void toWire(OutputBuffer& buffer) const;
@@ -137,6 +133,9 @@ public:
 private:
     GenericImpl* impl_;
 };
+
+std::ostream&
+operator<<(std::ostream& os, const Generic& rdata);
 } // end of namespace "generic"
 
 ///
