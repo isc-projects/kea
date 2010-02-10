@@ -41,8 +41,7 @@ const uint8_t wiredata_in_a[] = { 192, 0, 2, 1 };
 
 TEST_F(Rdata_IN_A_Test, createFromText)
 {
-    rdata_in_a.compare(in::A(string("192.0.2.1")));
-    //EXPECT_EQ(0, rdata_in_a.compare(in::A("192.0.2.1")));
+    EXPECT_EQ(0, rdata_in_a.compare(in::A("192.0.2.1")));
     // should reject an abbreviated form of IPv4 address
     EXPECT_THROW(in::A("10.1"), InvalidRdataText);
     // or an IPv6 address
