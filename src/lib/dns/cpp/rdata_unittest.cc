@@ -330,7 +330,11 @@ TEST_F(RdataTest, getNSName)
 
 TEST_F(RdataTest, createFromText_SOA)
 {
-    //TBD
+    EXPECT_EQ(0, rdata_soa.compare(generic::SOA("ns.example.com. "
+                                                "root.example.com. "
+                                                "2010012601 3600 300 3600000 "
+                                                "1200")));
+    // TBD: more tests
 }
 
 TEST_F(RdataTest, createFromWire_SOA)
