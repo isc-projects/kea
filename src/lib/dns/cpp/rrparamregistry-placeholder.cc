@@ -174,17 +174,17 @@ class RdataFactory : public AbstractRdataFactory {
 public:
     virtual RdataPtr create(const string& rdata_str) const
     {
-        return (shared_ptr<T>(new T(rdata_str)));
+        return (RdataPtr(new T(rdata_str)));
     }
 
     virtual RdataPtr create(InputBuffer& buffer, size_t rdata_len) const
     {
-        return (shared_ptr<T>(new T(buffer, rdata_len)));
+        return (RdataPtr(new T(buffer, rdata_len)));
     }
 
     virtual RdataPtr create(const Rdata& source) const
     {
-        return (shared_ptr<T>(new T(dynamic_cast<const T&>(source))));
+        return (RdataPtr(new T(dynamic_cast<const T&>(source))));
     }
 };
 
