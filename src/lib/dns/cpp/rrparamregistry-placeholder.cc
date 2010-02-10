@@ -487,7 +487,6 @@ RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
         return (genfound->second->create(rdata_string));
     }
 
-    // construct an "unknown" type of RDATA
     return (RdataPtr(new generic::Generic(rdata_string)));
 }
 
@@ -507,7 +506,6 @@ RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
         return (genfound->second->create(buffer, rdata_len));
     }
 
-    // construct an "unknown" type of RDATA
     return (RdataPtr(new generic::Generic(buffer, rdata_len)));
 }
 
@@ -527,7 +525,8 @@ RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
         return (genfound->second->create(source));
     }
 
-    dns_throw(InvalidRdataText, "TBD");
+    return (RdataPtr(new rdata::generic::Generic(
+                         dynamic_cast<const generic::Generic&>(source))));
 }
 }
 }
