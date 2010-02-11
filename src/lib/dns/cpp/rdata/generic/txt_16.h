@@ -37,7 +37,6 @@ public:
 private:
     /// Note: this is a prototype version; we may reconsider
     /// this representation later.
-    static const unsigned int MAX_CHARSTRING_LEN = 255;
     std::vector<std::vector<uint8_t> > string_list_;
 };
 
