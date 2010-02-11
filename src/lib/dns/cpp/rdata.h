@@ -55,7 +55,9 @@ public:
 };
 
 ///
-/// \brief A standard DNS module exception that is thrown if ...TBD
+/// \brief A standard DNS module exception that is thrown if RDATA parser
+/// parser encounters a character-string (as defined in RFC1035) exceeding
+/// the maximum allowable length (\c MAX_CHARSTRING_LEN).
 ///
 class CharStringTooLong : public Exception {
 public:
@@ -70,6 +72,10 @@ typedef boost::shared_ptr<Rdata> RdataPtr;
 /// 16 bit value.
 const size_t MAX_RDLENGTH = 65535;
 
+/// \brief The maximum allowable length of character-string containing in
+/// RDATA as defined in RFC1035, not including the 1-byte length field.
+const unsigned int MAX_CHARSTRING_LEN = 255;
+
 /// Abstract RDATA class
 class Rdata {
 protected:
@@ -81,18 +87,6 @@ private:
     void operator=(const Rdata& source);
 public:
     virtual ~Rdata() {};
-
-    ///
-    /// \name Getter Methods
-    //
-    // need generic method for getting n-th field? c.f. ldns
-    // e.g. string getField(int n);
-    ///
-    //@{
-    // It's not yet clear if we really need to contain the RR type (and/or
-    // RR class) in RDATA.
-    //virtual const RRType& getType() const = 0;
-    //@}
 
     ///
     /// \name Converter methods
@@ -135,6 +129,20 @@ private:
     GenericImpl* impl_;
 };
 
+///
+/// \brief Insert the name as a string into stream.
+///
+/// This method convert the \c rdata into a string and inserts it into the
+/// output stream \c os.
+///
+/// This function overloads the global \c operator<< to behave as described in
+/// \c ostream::operator<< but applied to \c generic::Generic Rdata objects.
+///
+/// \param os A \c std::ostream object on which the insertion operation is
+/// performed.
+/// \param rdata The \c Generic object output by the operation.
+/// \return A reference to the same \c std::ostream object referenced by
+/// parameter \c os after the insertion operation.
 std::ostream&
 operator<<(std::ostream& os, const Generic& rdata);
 } // end of namespace "generic"
