@@ -52,12 +52,6 @@ public:
         isc::Exception(file, line, what) {}
 };
 
-class InvalidRdataText : public Exception {
-public:
-    InvalidRdataText(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
-};
-
 namespace rdata {
 class AbstractRdataFactory {
 protected:
@@ -158,7 +152,7 @@ public:
     /// representations.
     ///
     /// Regarding the mappings between textual representations and integer
-    /// codes, this methods behaves in the same way as \c addType() and
+    /// codes, this method behaves in the same way as \c addType() and
     /// \c addClass().  That is, it ignores any overriding attempt as
     /// long as the mapping is the same; otherwise the corresponding exception
     /// will be thrown.
@@ -167,9 +161,6 @@ public:
     /// exception is thrown the entire specified set of parameters must be
     /// stored in the registry; if this method throws an exception the
     /// registry will remain in the state before this method is called.
-    ///
-    /// Note: this method will be extended to support more parameters in a
-    /// near future version.
     ///
     /// \param type_string The textual representation of the RR type.
     /// \param type_code The integer code of the RR type.
@@ -219,7 +210,7 @@ public:
     /// exist in the registry.  If not, this method simply ignores the attempt
     /// and returns \c false.
     ///
-    /// This method never throw an exception.
+    /// This method never throws an exception.
     ///
     /// \param type_code The integer code of the RR type.
     /// \return \c true if mappings for the specified RR type exists and is
@@ -251,7 +242,8 @@ public:
     ///
     /// \param class_string The textual representation of the RR class.
     /// \param class_code The integer code of the RR class.
-    /// \return
+    /// \return \c true if a new mapping is added to the repository; \c false
+    /// if the same mapping is already registered.
     bool addClass(const std::string& class_string, uint16_t class_code);
 
     /// \brief Remove mappings between RR class code and textual representation
@@ -261,11 +253,18 @@ public:
     /// exist in the registry.  If not, this method simply ignores the attempt
     /// and returns \c false.
     ///
-    /// This method never throw an exception.
+    /// This method never throws an exception.
     ///
     /// \param class_code The integer code of the RR class.
-    /// \return
+    /// \return \c true if mappings for the specified RR type exists and is
+    /// removed; \c false if no such mapping is in the registry.
     bool removeClass(uint16_t class_code);
+
+    /// TBD
+    bool removeRdataFactory(const RRType& rrtype, const RRClass& rrclass);
+
+    /// TBD
+    bool removeRdataFactory(const RRType& rrtype);
     //@}
 
     ///

@@ -286,6 +286,33 @@ RRParamRegistry::add(const string& typecode_string, uint16_t typecode,
     }
 }
 
+bool
+RRParamRegistry::removeRdataFactory(const RRType& rrtype,
+                                    const RRClass& rrclass)
+{
+    RdataFactoryMap::iterator found =
+        impl_->rdata_factories.find(RRTypeClass(rrtype, rrclass));
+    if (found != impl_->rdata_factories.end()) {
+        impl_->rdata_factories.erase(found);
+        return (true);
+    }
+
+    return (false);
+}
+
+bool
+RRParamRegistry::removeRdataFactory(const RRType& rrtype)
+{
+    GenericRdataFactoryMap::iterator found =
+        impl_->genericrdata_factories.find(rrtype);
+    if (found != impl_->genericrdata_factories.end()) {
+        impl_->genericrdata_factories.erase(found);
+        return (true);
+    }
+
+    return (false);
+}
+
 namespace {
 ///
 /// These are helper functions to implement case-insensitive string comparison.
