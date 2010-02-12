@@ -53,19 +53,78 @@ public:
 };
 
 namespace rdata {
+/// \brief The \c AbstractRdataFactory class is an abstract base class to
+/// encapsulate a set of Rdata factory methods in a polymorphic way.
+///
+/// An external developers who want to introduce a new or experimental RR type
+/// are expected to define a corresponding derived class of \c
+/// AbstractRdataFactory and register it via \c RRParamRegistry.
+///
+/// For other users of this API normally do not have to care about this class
+/// or its derived classes; this class is generally intended to be used
+/// as an internal utility of the API implementation.
 class AbstractRdataFactory {
+    ///
+    /// \name Constructors and Destructor
+    ///
+    //@{
 protected:
+    /// The default constructor
+    ///
+    /// This is intentionally defined as \c protected as this base class should
+    /// never be instantiated (except as part of a derived class).
     AbstractRdataFactory() {}
 public:
+    /// The destructor.
     virtual ~AbstractRdataFactory() {};
+    //@}
 
-    // Factory methods for polymorphic creation:
+    ///
+    /// \name Factory methods for polymorphic creation.
+    ///
+    //@{
+    ///
+    /// \brief Create RDATA from a string.
+    ///
+    /// This method creates from a string an \c Rdata object of specific class
+    /// corresponding to the specific derived class of \c AbstractRdataFactory.
+    ///
+    /// \param rdata_str A string of textual representation of the \c Rdata.
+    /// \return An \c RdataPtr object pointing to the created \c Rdata object.
     virtual RdataPtr create(const std::string& rdata_str) const = 0;
+    ///
+    /// \brief Create RDATA from wire-format data.
+    ///
+    /// This method creates from wire-format binary data an \c Rdata object
+    /// of specific class corresponding to the specific derived class of
+    /// \c AbstractRdataFactory.
+    ///
+    /// \param buffer A reference to an \c InputBuffer object storing the
+    /// \c Rdata to parse.
+    /// \param rdata_len The length in buffer of the \c Rdata.  In bytes.
+    /// \return An \c RdataPtr object pointing to the created \c Rdata object.
     virtual RdataPtr create(InputBuffer& buffer, size_t rdata_len) const = 0;
+    ///
+    /// \brief Create RDATA from another \c Rdata object of the same type.
+    ///
+    /// This method creates an \c Rdata object of specific class corresponding
+    /// to the specific derived class of \c AbstractRdataFactory, copying the
+    /// content of the given \c Rdata, \c source.
+    ///
+    /// \c source must be an object of the concrete derived class corresponding
+    /// to the specific derived class of \c AbstractRdataFactory;
+    /// otherwise, an exception of class \c std::bad_cast will be thrown.
+    ///
+    /// \param source A reference to an \c Rdata object whose content is to
+    /// be copied to the created \c Rdata object.
+    /// \return An \c RdataPtr object pointing to the created \c Rdata object.
     virtual RdataPtr create(const rdata::Rdata& source) const = 0;
+    //@}
 };
+
 ///
-/// TBD: describe it
+/// The \c RdataFactoryPtr type is a pointer-like type, pointing to an
+/// object of some concrete derived class of \c AbstractRdataFactory.
 ///
 typedef boost::shared_ptr<AbstractRdataFactory> RdataFactoryPtr;
 } // end of namespace rdata
@@ -166,11 +225,21 @@ public:
     /// \param type_code The integer code of the RR type.
     /// \param class_string The textual representation of the RR class.
     /// \param class_code The integer code of the RR class.
+    /// \param rdata_factory An \c RdataFactoryPtr object pointing to a
+    /// concrete RDATA factory.
     void add(const std::string& type_string, uint16_t type_code,
              const std::string& class_string, uint16_t class_code,
              rdata::RdataFactoryPtr rdata_factory);
 
-    /// TBD
+    /// \brief Add a set of parameters for a class-independent RR type.
+    ///
+    /// This method behaves as exactly same as the other \c add method except
+    /// that it handles class-independent types (such as NS, CNAME, or SOA).
+    ///
+    /// \param type_string The textual representation of the RR type.
+    /// \param type_code The integer code of the RR type.
+    /// \param rdata_factory An \c RdataFactoryPtr object pointing to a
+    /// concrete RDATA factory.
     void add(const std::string& type_string, uint16_t type_code,
              rdata::RdataFactoryPtr rdata_factory);
 
@@ -260,10 +329,35 @@ public:
     /// removed; \c false if no such mapping is in the registry.
     bool removeClass(uint16_t class_code);
 
-    /// TBD
+    /// \brief Remove registered RDATA factory for the given pair of \c RRType
+    /// and \c RRClass.
+    ///
+    /// This method can safely be called whether or not the specified factory
+    /// object exist in the registry.  If not, this method simply ignores the
+    /// attempt and returns \c false.
+    ///
+    /// This method never throws an exception.
+    ///
+    /// \param rrtype An \c RRType object specifying the type/class pair.
+    /// \param rrclass An \c RRClass object specifying the type/class pair.
+    /// \return \c true if a factory object for the specified RR type/class
+    /// pair exists and is removed; \c false if no such object is in the
+    /// registry.
     bool removeRdataFactory(const RRType& rrtype, const RRClass& rrclass);
 
-    /// TBD
+    /// \brief Remove registered RDATA factory for the given pair of \c RRType
+    /// and \c RRClass.
+    ///
+    /// This method can safely be called whether or not the specified factory
+    /// object exist in the registry.  If not, this method simply ignores the
+    /// attempt and returns \c false.
+    ///
+    /// This method never throws an exception.
+    ///
+    /// \param rrtype An \c RRType object specifying the type/class pair.
+    /// \return \c true if a factory object for the specified RR type/class
+    /// pair exists and is removed; \c false if no such object is in the
+    /// registry.
     bool removeRdataFactory(const RRType& rrtype);
     //@}
 
@@ -337,14 +431,72 @@ public:
     ///
     /// \name RDATA Factories
     ///
+    /// This set of methods provide a unified interface to create an
+    /// \c rdata::Rdata object in a parameterized polymorphic way,
+    /// that is, these methods take a pair of \c RRType and \c RRClass
+    /// objects and data specific to that pair, and create an object of
+    /// the corresponding concrete derived class of \c rdata::Rdata.
+    ///
+    /// These methods first search the \c RRParamRegistry for a factory
+    /// method (a member of a concrete derived class of
+    /// \c AbstractRdataFactory) for the given RR type and class pair.
+    /// If the search fails, they then search for a factory method for
+    /// the given type ignoring the class, in case a RRClass independent
+    /// factory method is registered.
+    /// If it still fails, these methods assume the RDATA is of an "unknown"
+    /// type, and creates a new object by calling a constructor of the
+    /// \c rdata::generic::Generic class.
+    ///
     //@{
-    /// \brief TBD
+    /// \brief Create RDATA of a given pair of RR type and class from a string.
+    ///
+    /// This method creates from a string an \c Rdata object of the given pair
+    /// of RR type and class.
+    ///
+    /// \param rrtype An \c RRType object specifying the type/class pair.
+    /// \param rrclass An \c RRClass object specifying the type/class pair.
+    /// \param rdata_string A string of textual representation of the \c Rdata.
+    /// \return An \c rdata::RdataPtr object pointing to the created \c Rdata
+    /// object.
     rdata::RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
                                 const std::string& rdata_string);
-    /// \brief TBD
+    /// \brief Create RDATA of a given pair of RR type and class from
+    /// wire-format data.
+    ///
+    /// This method creates from wire-format binary data an \c Rdata object
+    /// of the given pair of RR type and class.
+    ///
+    /// \param rrtype An \c RRType object specifying the type/class pair.
+    /// \param rrclass An \c RRClass object specifying the type/class pair.
+    /// \param buffer A reference to an \c InputBuffer object storing the
+    /// \c Rdata to parse.
+    /// \param len The length in buffer of the \c Rdata.  In bytes.
+    /// \return An \c rdata::RdataPtr object pointing to the created \c Rdata
+    /// object.
     rdata::RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
                                 InputBuffer& buffer, size_t len);
-    /// \brief Polymorphic copy constructor (detailed TBD)
+    /// \brief Create RDATA of a given pair of RR type and class, copying
+    /// of another RDATA of same kind.
+    ///
+    /// This method creates an \c Rdata object of the given pair of
+    /// RR type and class, copying the  content of the given \c Rdata,
+    /// \c source.
+    ///
+    /// \c source must be an object of the concrete derived class of
+    /// \c rdata::Rdata for the given pair of RR type and class;
+    /// otherwise, an exception of class \c std::bad_cast will be thrown.
+    /// In case the \c RRParamRegistry doesn't have a factory method for
+    /// the given pair and it is assumed to be of an "unknown" type,
+    /// \c source must reference an object of class
+    /// \c rdata::generic::Generic; otherwise, an exception of class
+    /// \c std::bad_cast will be thrown.
+    ///
+    /// \param rrtype An \c RRType object specifying the type/class pair.
+    /// \param rrclass An \c RRClass object specifying the type/class pair.
+    /// \param source A reference to an \c rdata::Rdata object whose content
+    /// is to be copied to the created \c rdata::Rdata object.
+    /// \return An \c rdata::RdataPtr object pointing to the created
+    /// \c rdata::Rdata object.
     rdata::RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
                                 const rdata::Rdata& source);
     //@}
