@@ -147,16 +147,87 @@ std::ostream&
 operator<<(std::ostream& os, const Generic& rdata);
 } // end of namespace "generic"
 
+//
+// Non class-member functions related to Rdata
+//
+
 ///
-/// Non class-member functions related to Rdata
+/// \name Parameterized Polymorphic RDATA Factories
 ///
-/// TBD: document them
+/// This set of global functions provide a unified interface to create an
+/// \c Rdata object in a parameterized polymorphic way,
+/// that is, these functions take a pair of \c RRType and \c RRClass
+/// objects and data specific to that pair, and create an object of
+/// the corresponding concrete derived class of \c Rdata.
+///
+/// These will be useful when parsing/constructing a DNS message or
+/// parsing a master file, where information for a specific type of RDATA
+/// is given but the resulting object, once created, should better be used
+/// in a polymorphic way.
+///
+/// For example, if a master file parser encounters an NS RR
+/// \verbatim example.com. 3600 IN NS ns.example.com.\endverbatim
+/// it stores the text fragments "IN", "NS", and "ns.example.com." in
+/// \c std::string objects \c class_txt, \c type_txt, and \c nsname_txt,
+/// respectively, then it would create a new \c RdataPtr object as follows:
+/// \code RdataPtr rdata = createRdata(RRType(type_txt), RRClass(class_txt),
+///                              nsname_txt); \endcode
+///
+/// Internally, these functions uses the corresponding
+/// \c RRParamRegistry::createRdata methods of the \c RRParamRegistry.
+/// See also the description of about these methods for related notes.
+//@{
+/// \brief Create RDATA of a given pair of RR type and class from a string.
+///
+/// This method creates from a string an \c Rdata object of the given pair
+/// of RR type and class.
+///
+/// \param rrtype An \c RRType object specifying the type/class pair.
+/// \param rrclass An \c RRClass object specifying the type/class pair.
+/// \param rdata_string A string of textual representation of the \c Rdata.
+/// \return An \c RdataPtr object pointing to the created \c Rdata
+/// object.
 RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
                      const std::string& rdata_string);
+/// \brief Create RDATA of a given pair of RR type and class from
+/// wire-format data.
+///
+/// This method creates from wire-format binary data an \c Rdata object
+/// of the given pair of RR type and class.
+///
+/// \c len must not exceed the protocol defined maximum value, \c MAX_RDLENGTH;
+/// otherwise, an exception of class \c InvalidRdataLength will be thrown.
+///
+/// In some cases, the length of the RDATA is determined without the
+/// information of \c len.  For example, the RDATA length of an IN/A RR
+/// must always be 4.  If \c len is not equal to the actual length in such
+/// cases, an exception of class InvalidRdataLength will be thrown.
+///
+/// \param rrtype An \c RRType object specifying the type/class pair.
+/// \param rrclass An \c RRClass object specifying the type/class pair.
+/// \param buffer A reference to an \c InputBuffer object storing the
+/// \c Rdata to parse.
+/// \param len The length in buffer of the \c Rdata.  In bytes.
+/// \return An \c RdataPtr object pointing to the created \c Rdata
+/// object.
 RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
                      InputBuffer& buffer, size_t len);
+/// \brief Create RDATA of a given pair of RR type and class, copying
+/// of another RDATA of same kind.
+///
+/// This method creates an \c Rdata object of the given pair of
+/// RR type and class, copying the  content of the given \c Rdata,
+/// \c source.
+///
+/// \param rrtype An \c RRType object specifying the type/class pair.
+/// \param rrclass An \c RRClass object specifying the type/class pair.
+/// \param source A reference to an \c Rdata object whose content
+/// is to be copied to the created \c Rdata object.
+/// \return An \c RdataPtr object pointing to the created
+/// \c Rdata object.
 RdataPtr createRdata(const RRType& rrtype, const RRClass& rrclass,
                      const Rdata& source);
+//@}
 
 ///
 /// \brief Gives relative ordering of two names in terms of DNSSEC RDATA
