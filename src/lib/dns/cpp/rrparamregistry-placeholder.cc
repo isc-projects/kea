@@ -213,7 +213,6 @@ RRParamRegistry::RRParamRegistry()
     impl_ = new RRParamRegistryImpl;
 
     // set up parameters for well-known RRs
-    // XXX: this should eventually be more automatic.
     try {
         // BEGIN_WELL_KNOWN_PARAMS
         // END_WELL_KNOWN_PARAMS
