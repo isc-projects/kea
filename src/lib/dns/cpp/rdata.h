@@ -21,8 +21,6 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "name.h"
-
 namespace isc {
 namespace dns {
 class InputBuffer;
@@ -65,7 +63,13 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+// Forward declaration to define RdataPtr.
 class Rdata;
+
+///
+/// The \c RdataPtr type is a pointer-like type, pointing to an
+/// object of some concrete derived class of \c Rdata.
+///
 typedef boost::shared_ptr<Rdata> RdataPtr;
 
 /// \brief Possible maximum length of RDATA, which is the maximum unsigned
@@ -76,55 +80,281 @@ const size_t MAX_RDLENGTH = 65535;
 /// RDATA as defined in RFC1035, not including the 1-byte length field.
 const unsigned int MAX_CHARSTRING_LEN = 255;
 
-/// Abstract RDATA class
+/// \brief The \c Rdata class is an abstract base class that provides
+/// a set of common interfaces to manipulate concrete RDATA objects.
+///
+/// Generally, a separate derived class directly inherited from the base
+/// \c Rdata class is defined for each well known RDATA.
+/// Each of such classes will define the common logic based on the
+/// corresponding protocol standard.
+///
+/// Since some types of RRs are class specific and the corresponding RDATA
+/// may have different semantics (e.g. type A for class IN and type A for
+/// class CH have different representations and semantics), we separate
+/// \c Rdata derived classes for such RR types in different namespaces.
+/// The namespace of types specific to a class is named the lower-cased class
+/// name; for example, RDATA of class IN-specific types are defined in the
+/// \c in namespace, and RDATA of class CH-specific types are defined in
+/// the \c ch namespace, and so on.
+/// The derived classes are named using the RR type name (upper cased) such as
+/// \c A or \c AAAA.
+/// Thus RDATA of type A RR for class IN and CH are defined as \c in::A and
+/// \c ch::A, respectively.
+/// Many other RR types are class independent; the derived \c Rdata classes
+/// for such RR types are defined in the \c generic namespace.  Examples are
+/// \c generic::NS and \c generic::SOA.
+///
+/// If applications need to refer to these derived classes, it is generally
+/// recommended to prepend at least some part of the namespace because the
+/// same class name can be used in different namespaces.
+/// So, instead of doing
+/// \code using namespace isc::dns::rdata::in;
+/// A& rdata_type_a; \endcode
+/// it is advisable to prepend at least \c in from the namespace:
+/// \code using namespace isc::dns::rdata;
+/// in::A& rdata_type_a; \endcode
+///
+/// In many cases, however, an application doesn't have to care about such
+/// derived classes.
+/// For instance, to parse an incoming DNS message an application wouldn't
+/// have to perform type specific operation unless the application is
+/// specifically concerned about a particular type.
+/// So, this API generally handles \c Rdata in a polymorphic way through
+/// a pointer or reference to this base abstract class.
 class Rdata {
+    ///
+    /// \name Constructors and Destructor
+    ///
+    /// Note: The copy constructor and the assignment operator are intentionally
+    /// defined as private.  Concrete classes should generally specialize their
+    /// own versions of these methods.
+    //@{
 protected:
+    /// The default constructor.
+    ///
+    /// This is intentionally defined as \c protected as this base class should
+    /// never be instantiated (except as part of a derived class).  In many
+    /// cases, the derived class wouldn't define a public default constructor
+    /// either, because an \c Rdata object without concrete data isn't
+    /// meaningful.
     Rdata() {}
 private:
-    /// Copy constructor is intentionally private.  Concrete classes should
-    /// generally specialize their own versions of copy constructor.
     Rdata(const Rdata& source);
     void operator=(const Rdata& source);
 public:
+    /// The destructor.
     virtual ~Rdata() {};
+    //@}
 
     ///
     /// \name Converter methods
     ///
     //@{
+    /// \brief Convert an \c Rdata to a string.
+    ///
+    /// This method returns a \c std::string object representing the \c Rdata.
+    ///
+    /// This is a pure virtual method without the definition; the actual
+    /// representation is specific to each derived concrete class and
+    /// should be explicitly defined in the derived class.
+    ///
+    /// \return A string representation of \c Rdata.
     virtual std::string toText() const = 0;
+    /// \brief Render the \c Rdata in the wire format into a buffer.
+    ///
+    /// This is a pure virtual method without the definition; the actual
+    /// conversion is specific to each derived concrete class and
+    /// should be explicitly defined in the derived class.
+    ///
+    /// \param buffer An output buffer to store the wire data.
     virtual void toWire(OutputBuffer& buffer) const = 0;
+    /// \brief Render the \c Rdata in the wire format into a
+    /// \c MessageRenderer object.
+    ///
+    /// This is a pure virtual method without the definition; the actual
+    /// conversion is specific to each derived concrete class and
+    /// should be explicitly defined in the derived class.
+    ///
+    /// \param renderer DNS message rendering context that encapsulates the
+    /// output buffer in which the \c Rdata is to be stored.
     virtual void toWire(MessageRenderer& renderer) const = 0;
     //@}
 
-    /// Note about implementation choice: the current implementation relies on
-    /// dynamic_cast to ensure that the \c other is the same concrete Rdata
-    /// class as \c this object.  Alternatively, we could first convert the
-    /// data into wire-format and compare the pair as opaque data.  This would
-    /// be more polymorphic, but might involve significant overhead, especially
-    /// for a large size of RDATA.
+    ///
+    /// \name Comparison method
+    ///
+    //@{
+    /// \brief Compare two instances of \c Rdata.
+    ///
+    /// This method compares \c this and the \c other Rdata objects
+    /// in terms of the DNSSEC sorting order as defined in RFC4034, and returns
+    /// the result as an integer.
+    ///
+    /// This is a pure virtual method without the definition; the actual
+    /// comparison logic is specific to each derived concrete class and
+    /// should be explicitly defined in the derived class.
+    ///
+    /// Specific implementations of this method must confirm that \c this
+    /// and the \c other are objects of the same concrete derived class of
+    /// \c Rdata.  This is normally done by \c dynamic_cast in the
+    /// implementation.  It also means if the assumption doesn't met
+    /// an exception of class \c std::bad_cast will be thrown.
+    ///
+    /// Here is an implementation choice: instead of relying on
+    /// \c dynamic_cast, we could first convert the data into wire-format
+    /// and compare the pair as opaque data.  This would be more polymorphic,
+    /// but might involve significant overhead, especially for a large size
+    /// of RDATA.
+    ///
+    /// \param other the right-hand operand to compare against.
+    /// \return < 0 if \c this would be sorted before \c other.
+    /// \return 0 if \c this is identical to \c other in terms of sorting order.
+    /// \return > 0 if \c this would be sorted after \c other.
     virtual int compare(const Rdata& other) const = 0;
+    //@}
 };
 
 namespace generic {
+
+/// \brief The \c GenericImpl class is the actual implementation of the
+/// \c generic::Generic class.
+///
+/// The implementation is hidden from applications.  This approach requires
+/// dynamic memory allocation on construction, copy, or assignment, but
+/// we believe it should be acceptable as "unknown" RDATA should be pretty
+/// rare.
 struct GenericImpl;
 
+/// \brief The \c generic::Generic class represents generic "unknown" RDATA.
+///
+/// This class is used as a placeholder for all non well-known type of RDATA.
+/// By definition, the stored data is regarded as opaque binary without
+/// assuming any structure.
 class Generic : public Rdata {
 public:
+    ///
+    /// \name Constructors, Assignment Operator and Destructor.
+    ///
+    //@{
+    /// \brief Constructor from a string.
+    ///
+    /// This method constructs a \c generic::Generic object from a textual
+    /// representation as defined in RFC3597.
+    ///
+    /// If \c rdata_string isn't a valid textual representation of this type
+    /// of RDATA, an exception of class \c InvalidRdataText or
+    /// \c InvalidRdataLength will be thrown.
+    /// If resource allocation to store the data fails, a corresponding standard
+    /// exception will be thrown.
+    ///
+    /// \param rdata_string A string of textual representation of generic
+    /// RDATA.
     explicit Generic(const std::string& rdata_string);
-    explicit Generic(InputBuffer& buffer, size_t rdata_len);
+    ///
+    /// \brief Constructor from wire-format data.
+    ///
+    /// The \c buffer parameter normally stores a complete DNS message
+    /// containing the generic RDATA to be constructed.
+    /// The current read position of the buffer points to the head of the
+    /// data.
+    ///
+    /// This method reads \c rdata_len bytes from the \c buffer, and internally
+    /// stores the data as an opaque byte sequence.
+    ///
+    /// \c rdata_len must not exceed \c MAX_RDLENGTH; otherwise, an exception
+    /// of class \c InvalidRdataLength will be thrown.
+    /// If resource allocation to hold the data fails, a corresponding standard
+    /// exception will be thrown; if the \c buffer doesn't contain \c rdata_len
+    /// bytes of unread data, an exception of class \c InvalidBufferPosition
+    /// will be thrown.
+    ///
+    /// \param buffer A reference to an \c InputBuffer object storing the
+    /// \c Rdata to parse.
+    /// \param rdata_len The length in buffer of the \c Rdata.  In bytes.
+    Generic(InputBuffer& buffer, size_t rdata_len);
+    ///
+    /// \brief The destructor.
     virtual ~Generic();
+    ///
+    /// \brief The copy constructor.
+    ///
+    /// If resource allocation to copy the data fails, a corresponding standard
+    /// exception will be thrown.
+    ///
+    /// \param source A reference to a \c generic::Generic object to copy from.
     Generic(const Generic& source);
+    ///
+    /// \brief The assignment operator.
+    ///
+    /// If resource allocation to copy the data fails, a corresponding standard
+    /// exception will be thrown.
+    ///
+    /// \param source A reference to a \c generic::Generic object to copy from.
     Generic& operator=(const Generic& source);
+    //@}
+    ///
+    /// \name Converter methods
+    ///
+    //@{
+    /// \brief Convert an \c generic::Generic object to a string.
+    ///
+    /// This method converts a generic "unknown" RDATA object into a textual
+    /// representation of such unknown data as defined in RFC3597.
+    ///
+    /// If resource allocation to copy the data fails, a corresponding standard
+    /// exception will be thrown.
+    ///
+    /// \return A string representation of \c generic::Generic.
     virtual std::string toText() const;
+    ///
+    /// \brief Render the \c generic::Generic in the wire format into a buffer.
+    ///
+    /// This will require \c rdata_len bytes of remaining capacity in the
+    /// \c buffer.  If this is not the case and resource allocation for the
+    /// necessary memory space fails, a corresponding standard exception will
+    /// be thrown.
+    ///
+    /// \param buffer An output buffer to store the wire data.
     virtual void toWire(OutputBuffer& buffer) const;
+    /// \brief Render the \c generic::Generic in the wire format into a
+    /// \c MessageRenderer object.
+    ///
+    /// This will require \c rdata_len bytes of remaining capacity in the
+    /// \c buffer.  If this is not the case and resource allocation for the
+    /// necessary memory space fails, a corresponding standard exception will
+    /// be thrown.
+    ///
+    /// \param renderer DNS message rendering context that encapsulates the
+    /// output buffer in which the \c Generic object is to be stored.
     virtual void toWire(MessageRenderer& renderer) const;
+    //@}
     ///
-    /// Note: the comparison is RR type/class agnostic: this method doesn't
-    /// check whether the two Rdata objects to compare are of the comparable
-    /// RR type/class.  The caller must ensure this condition.
+    /// \name Comparison method
     ///
+    //@{
+    /// \brief Compare two instances of \c generic::Generic objects.
+    ///
+    /// As defined in RFC4034, this method simply compares the wire-format
+    /// representations of the two objects as left-justified unsigned octet
+    /// sequences.
+    ///
+    /// The object referenced by \c other must have been instantiated as
+    /// a c generic::Generic class object; otherwise, an exception of class
+    /// \c std::bad_cast will be thrown.
+    /// Note that the comparison is RR type/class agnostic: this method doesn't
+    /// check whether the two \c Rdata objects to compare are of the comparable
+    /// RR type/class.  For example, \c this object may come from an \c RRset
+    /// of \c RRType x, and the \c other may come from a different \c RRset
+    /// of \c RRType y (where x != y).  This situation would be considered a
+    /// bug, but this method cannot detect this type of error.
+    /// The caller must ensure this condition.
+    ///
+    /// \param other the right-hand operand to compare against.
+    /// \return < 0 if \c this would be sorted before \c other.
+    /// \return 0 if \c this is identical to \c other in terms of sorting order.
+    /// \return > 0 if \c this would be sorted after \c other.
     virtual int compare(const Rdata& other) const;
+    //@}
 private:
     GenericImpl* impl_;
 };
@@ -143,8 +373,7 @@ private:
 /// \param rdata The \c Generic object output by the operation.
 /// \return A reference to the same \c std::ostream object referenced by
 /// parameter \c os after the insertion operation.
-std::ostream&
-operator<<(std::ostream& os, const Generic& rdata);
+std::ostream& operator<<(std::ostream& os, const Generic& rdata);
 } // end of namespace "generic"
 
 //
@@ -172,6 +401,8 @@ operator<<(std::ostream& os, const Generic& rdata);
 /// respectively, then it would create a new \c RdataPtr object as follows:
 /// \code RdataPtr rdata = createRdata(RRType(type_txt), RRClass(class_txt),
 ///                              nsname_txt); \endcode
+/// On success, \c rdata will point to an object of the \c generic::NS class
+/// that internally holds a domain name of "ns.example.com."
 ///
 /// Internally, these functions uses the corresponding
 /// \c RRParamRegistry::createRdata methods of the \c RRParamRegistry.
