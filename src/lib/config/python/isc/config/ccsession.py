@@ -27,7 +27,7 @@ import isc
 
 class CCSession:
     def __init__(self, spec_file_name, config_handler, command_handler):
-        self._data_definition = isc.config.DataDefinition(spec_file_name)
+        self._data_definition = isc.config.data_spec_from_file(spec_file_name)
         self._module_name = self._data_definition.get_module_name()
         
         self.set_config_handler(config_handler)
@@ -83,7 +83,7 @@ class CCSession:
 
     def __send_spec(self):
         """Sends the data specification to the configuration manager"""
-        self._session.group_sendmsg(self._data_definition.get_definition(), "ConfigManager")
+        self._session.group_sendmsg({ "data_specification": self._data_definition.get_definition() }, "ConfigManager")
         answer, env = self._session.group_recvmsg(False)
         
     def __get_full_config(self):
