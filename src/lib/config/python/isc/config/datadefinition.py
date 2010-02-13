@@ -27,16 +27,28 @@ import isc.cc.data
 class DataDefinitionError(Exception):
     pass
 
+def data_spec_from_file(spec_file, check = True):
+    data_spec = None
+    if hasattr(spec_file, 'read'):
+        data_spec = ast.literal_eval(spec_file.read(-1))
+    elif type(spec_file) == str:
+        file = open(spec_file)
+        data_spec = ast.literal_eval(file.read(-1))
+        file.close()
+    else:
+        raise DataDefinitionError("spec_file not a str or file-like object")
+    if 'data_specification' not in data_spec:
+        raise DataDefinitionError("Data definition has no data_specification element")
+        
+    return DataDefinition(data_spec['data_specification'], check)
+
 class DataDefinition:
-    def __init__(self, spec_file, check = True):
-        if hasattr(spec_file, 'read'):
-            self._data_spec = self.__read_data_spec_file(spec_file)
-        elif type(spec_file) == str:
-            file = open(spec_file)
-            self._data_spec = self.__read_data_spec_file(file)
-            file.close()
-        else:
-            raise DataDefinitionError("Not a str or file-like object")
+    def __init__(self, data_spec, check = True):
+        if type(data_spec) != dict:
+            raise DataDefinitionError("data_spec is of type " + str(type(data_spec)) + ", not dict")
+        if check:
+            _check(data_spec)
+        self._data_spec = data_spec
 
     def validate(self, data, errors = None):
         """Check whether the given piece of data conforms to this
@@ -46,11 +58,6 @@ class DataDefinition:
            version stops as soon as there is one error so this list
            will not be exhaustive."""
         data_def = self.get_definition()
-        if 'data_specification' not in data_def:
-            if errors:
-                errors.append("Data definition has no data_specification element")
-            return False
-        data_def = data_def['data_specification']
         if 'config_data' not in data_def:
             if errors:
                 errors.append("The is no config_data for this specification")
@@ -58,26 +65,33 @@ class DataDefinition:
         errors = []
         return _validate_spec_list(data_def['config_data'], data, errors)
 
-    def __read_data_spec_file(self, file, check = True):
-        """Reads the data spec from the given file object.
-           If check is True, check whether it is of the correct form.
-           If it is not, an DataDefinitionError exception is raised"""
-        if not hasattr(file, 'read'):
-            raise DataDefinitionError("Not a file-like object:" + str(type(file)))
-        str = file.read(-1)
-        # TODO catch error here and reraise as a less ugly exception
-        data_spec = ast.literal_eval(str)
-        if check:
-            # TODO
-            _check(data_spec)
-            pass
-        return data_spec
+
+    def get_module_name(self):
+        return self._data_spec['module_name']
 
     def get_definition(self):
         return self._data_spec
 
-    def get_module_name(self):
-        return self._data_spec["data_specification"]["module_name"]
+    def get_config_spec(self):
+        if 'config_data' in self._data_spec:
+            return self._data_spec['config_data']
+        else:
+            return None
+    
+    def get_commands(self):
+        if 'commands' in self._data_spec:
+            return self._data_spec['commands']
+        else:
+            return None
+    
+    def get_config_data(self):
+        if 'config_data' in self._data_spec:
+            return self._data_spec['config_data']
+        else:
+            return None
+    
+    def __str__(self):
+        return self._data_spec.__str__()
 
 def _check(data_spec):
     """Checks the full specification. This is a dict that contains the
@@ -87,9 +101,6 @@ def _check(data_spec):
        of dicts. Raises a DataDefinitionError if there is a problem."""
     if type(data_spec) != dict:
         raise DataDefinitionError("data specification not a dict")
-    if "data_specification" not in data_spec:
-        raise DataDefinitionError("no data_specification element in specification")
-    data_spec = data_spec["data_specification"]
     if "module_name" not in data_spec:
         raise DataDefinitionError("no module_name in data_specification")
     if "config_data" in data_spec:
@@ -105,7 +116,7 @@ def _check_config_spec(config_data):
        specification. Raises a DataDefinitionError if there is a
        problem."""
     if type(config_data) != list:
-        raise DataDefinitionError("config_data is not a list of items")
+        raise DataDefinitionError("config_data is of type " + str(type(config_data)) + ", not a list of items")
     for config_item in config_data:
         _check_item_spec(config_item)
 

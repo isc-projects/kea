@@ -478,7 +478,7 @@ def main():
 
         for fd in rlist + xlist:
             if fd == ccs_fd:
-                boss_of_bind.ccs.checkCommand()
+                boss_of_bind.ccs.check_command()
             elif fd == wakeup_fd:
                 os.read(wakeup_fd, 32)
 

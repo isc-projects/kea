@@ -7,6 +7,12 @@
         "item_type": "string",
         "item_optional": False,
         "item_default": "Hi, shane!"
+      },
+      {
+        "item_name": "some_other_string",
+        "item_type": "string",
+        "item_optional": False,
+        "item_default": "Hi, shane!"
       }
     ],
     "commands": [

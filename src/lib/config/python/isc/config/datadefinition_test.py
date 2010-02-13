@@ -25,29 +25,29 @@ import isc.cc.data
 class TestDataDefinition(unittest.TestCase):
 
     def setUp(self):
-        self.assert_('CONFIG_TESTDATA_PATH' in os.environ)
-        self.data_path = os.environ['CONFIG_TESTDATA_PATH']
+        if 'CONFIG_TESTDATA_PATH' in os.environ:
+            self.data_path = os.environ['CONFIG_TESTDATA_PATH']
+        else:
+            self.data_path = "../../../testdata"
 
     def spec_file(self, filename):
         return(self.data_path + os.sep + filename)
 
     def read_spec_file(self, filename):
-        return DataDefinition(self.spec_file(filename))
+        return isc.config.data_spec_from_file(self.spec_file(filename))
 
     def spec1(self, dd):
-        data_def = dd.get_definition()
-        self.assert_('data_specification' in data_def)
-        data_spec = data_def['data_specification']
+        data_spec = dd.get_definition()
         self.assert_('module_name' in data_spec)
         self.assertEqual(data_spec['module_name'], "Spec1")
         
     def test_open_file_name(self):
-        dd = DataDefinition(self.spec_file("spec1.spec"))
+        dd = self.read_spec_file("spec1.spec")
         self.spec1(dd)
 
     def test_open_file_obj(self):
         file1 = open(self.spec_file("spec1.spec"))
-        dd = DataDefinition(file1)
+        dd = isc.config.data_spec_from_file(file1)
         self.spec1(dd)
 
     def test_bad_specfiles(self):
@@ -72,7 +72,7 @@ class TestDataDefinition(unittest.TestCase):
         self.assertRaises(DataDefinitionError, self.read_spec_file, "spec21.spec")
 
     def validate_data(self, specfile_name, datafile_name):
-        dd = DataDefinition(self.spec_file(specfile_name));
+        dd = self.read_spec_file(specfile_name);
         data_file = open(self.spec_file(datafile_name))
         data_str = data_file.read()
         data = isc.cc.data.parse_value_str(data_str)
@@ -89,7 +89,4 @@ class TestDataDefinition(unittest.TestCase):
         self.assertEqual(False, self.validate_data("spec22.spec", "data22_8.data"))
 
 if __name__ == '__main__':
-    if not 'CONFIG_TESTDATA_PATH' in os.environ:
-        print("You need to set the environment variable CONFIG_TESTDATA_PATH to point to the directory containing the test data files")
-        exit(1)
     unittest.main()
