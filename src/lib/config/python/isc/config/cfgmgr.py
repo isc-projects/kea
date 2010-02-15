@@ -179,13 +179,13 @@ class ConfigManager:
             if type(cmd[1]) == dict:
                 if 'module_name' in cmd[1] and cmd[1]['module_name'] != '':
                     module_name = cmd[1]['module_name']
-                    answer["result"] = [0, self.get_config_data(module_name)]
+                    answer = isc.config.ccsession.create_answer(0, self.get_config_data(module_name))
                 else:
-                    answer["result"] = [1, "Bad module_name in get_data_spec command"]
+                    answer = isc.config.ccsession.create_answer(1, "Bad module_name in get_data_spec command")
             else:
-                answer["result"] = [1, "Bad get_data_spec command, argument not a dict"]
+                answer = isc.config.ccsession.create_answer(1, "Bad get_data_spec command, argument not a dict")
         else:
-            answer["result"] = [0, self.get_config_data()]
+            answer = isc.config.ccsession.create_answer(0, self.get_config_data())
         return answer
 
     def _handle_get_config(self, cmd):
@@ -195,17 +195,17 @@ class ConfigManager:
                 if 'module_name' in cmd[1] and cmd[1]['module_name'] != '':
                     module_name = cmd[1]['module_name']
                     try:
-                        answer["result"] = [0, data.find(self.config.data, module_name) ]
+                        answer = isc.config.ccsession.create_answer(0, data.find(self.config.data, module_name))
                     except data.DataNotFoundError as dnfe:
                         # no data is ok, that means we have nothing that
                         # deviates from default values
-                        answer["result"] = [0, {} ]
+                        answer = isc.config.ccsession.create_answer(0, {})
                 else:
-                    answer["result"] = [1, "Bad module_name in get_config command"]
+                    answer = isc.config.ccsession.create_answer(1, "Bad module_name in get_config command")
             else:
-                answer["result"] = [1, "Bad get_config command, argument not a dict"]
+                answer = isc.config.ccsession.create_answer(1, "Bad get_config command, argument not a dict")
         else:
-            answer["result"] = [0, self.config.data]
+            answer = isc.config.ccsession.create_answer(0, self.config.data)
         return answer
 
     def _handle_set_config(self, cmd):
@@ -227,7 +227,8 @@ class ConfigManager:
                 answer, env = selc.cc.group_recvmsg(False)
                 print("[XX] module responded with")
                 print(answer)
-            if answer and "result" in answer and answer['result'][0] == 0:
+            rcode, val = isc.config.ccsession.parse_answer(answer)
+            if rcode == 0:
                 self.write_config()
         elif len(cmd) == 2:
             # todo: use api (and check the data against the definition?)
@@ -240,13 +241,15 @@ class ConfigManager:
                     answer, env = self.cc.group_recvmsg(False)
                     print("[XX] one module responded with")
                     print(answer)
-                    if answer and 'result' in answer and answer['result'][0] != 0:
+                    rcode, val = isc.config.ccsession.parse_answer(answer)
+                    if rcode != 0:
                         got_error = True
             if not got_error:
                 self.write_config()
             # TODO rollback changes that did get through?
+            # feed back *all* errors?
         else:
-            answer["result"] = [ 1, "Wrong number of arguments" ]
+            answer = isc.config.ccsession.create_answer(1, "Wrong number of arguments")
         return answer
 
     def _handle_data_specification(self, spec):
@@ -262,7 +265,7 @@ class ConfigManager:
         # passes both specification and commands at once
         self.cc.group_sendmsg({ "specification_update": [ spec.get_module_name(), spec.get_config_data() ] }, "Cmd-Ctrld")
         self.cc.group_sendmsg({ "commands_update": [ spec.get_module_name(), spec.get_commands() ] }, "Cmd-Ctrld")
-        answer["result"] = [ 0 ]
+        answer = isc.config.ccsession.create_answer(0)
         return answer
 
     def handle_msg(self, msg):
@@ -272,7 +275,7 @@ class ConfigManager:
             cmd = msg["command"]
             try:
                 if cmd[0] == "get_commands":
-                    answer["result"] = [ 0, self.get_commands() ]
+                    answer = isc.config.ccsession.create_answer(0, self.get_commands())
                 elif cmd[0] == "get_data_spec":
                     answer = self._handle_get_data_spec(cmd)
                 elif cmd[0] == "get_config":
@@ -282,22 +285,22 @@ class ConfigManager:
                 elif cmd[0] == "shutdown":
                     print("[bind-cfgd] Received shutdown command")
                     self.running = False
-                    answer["result"] = [ 0 ]
+                    answer = isc.config.ccsession.create_answer(0)
                 else:
-                    answer["result"] = [ 1, "Unknown command: " + str(cmd) ]
+                    answer = isc.config.ccsession.create_answer(1, "Unknown command: " + str(cmd))
             except IndexError as ie:
-                answer["result"] = [ 1, "Missing argument in command: " + str(ie) ]
+                answer = isc.config.ccsession.create_answer(1, "Missing argument in command: " + str(ie))
                 raise ie
         elif "data_specification" in msg:
             try:
                 answer = self._handle_data_specification(isc.config.DataDefinition(msg["data_specification"]))
             except isc.config.DataDefinitionError as dde:
-                answer['result'] = [ 1, "Error in data definition: " + str(dde) ]
+                answer = isc.config.ccsession.create_answer(1, "Error in data definition: " + str(dde))
         elif 'result' in msg:
             # this seems wrong, might start pingpong
-            answer['result'] = [0]
+            answer = isc.config.ccsession.create_answer(0)
         else:
-            answer["result"] = [ 1, "Unknown message format: " + str(msg) ]
+            answer = isc.config.ccsession.create_answer(1, "Unknown message format: " + str(msg))
         return answer
         
     def run(self):
@@ -308,6 +311,8 @@ class ConfigManager:
                 answer = self.handle_msg(msg);
                 print("[XX] CFGMGR Sending answer to UI:")
                 print(answer)
+                print("For command")
+                print(msg)
                 self.cc.group_reply(env, answer)
             else:
                 self.running = False
