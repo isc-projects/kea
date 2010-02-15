@@ -31,6 +31,7 @@ import os, time, random, re
 import getpass
 from hashlib import sha1
 import csv
+import ast
 
 try:
     from collections import OrderedDict
@@ -445,13 +446,21 @@ class BindCmdInterpreter(Cmd):
             elif cmd.command == "remove":
                 self.config_data.remove_value(identifier, cmd.params['value'])
             elif cmd.command == "set":
-                self.config_data.set_value(identifier, cmd.params['value'])
+                parsed_value = None
+                try:
+                    parsed_value = ast.literal_eval(cmd.params['value'])
+                except Exception as exc:
+                    # ok could be an unquoted string, interpret as such
+                    parsed_value = cmd.params['value']
+                self.config_data.set_value(identifier, parsed_value)
             elif cmd.command == "unset":
                 self.config_data.unset(identifier)
             elif cmd.command == "revert":
                 self.config_data.revert()
             elif cmd.command == "commit":
                 self.config_data.commit()
+            elif cmd.command == "diff":
+                print(self.config_data.get_local_changes());
             elif cmd.command == "go":
                 self.go(identifier)
         except isc.cc.data.DataTypeError as dte:

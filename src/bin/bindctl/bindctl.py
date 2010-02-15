@@ -53,6 +53,9 @@ def prepare_config_commands(tool):
     cmd.add_param(param)
     module.add_command(cmd)
 
+    cmd = CommandInfo(name = "diff", desc = "Show all local changes", need_inst_param = False)
+    module.add_command(cmd)
+
     cmd = CommandInfo(name = "revert", desc = "Revert all local changes", need_inst_param = False)
     module.add_command(cmd)
 

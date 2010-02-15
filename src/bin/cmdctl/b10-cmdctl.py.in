@@ -168,8 +168,8 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             param = json.loads(post_str)
             # TODO, need return some proper return code. 
             # currently always OK.
-            reply = self.server.send_command_to_module(mod, cmd, param)
-            print('b10-cmdctl finish send message \'%s\' to module %s' % (cmd, mod))            
+        reply = self.server.send_command_to_module(mod, cmd, param)
+        print('b10-cmdctl finish send message \'%s\' to module %s' % (cmd, mod))            
 
         return rcode, reply
             

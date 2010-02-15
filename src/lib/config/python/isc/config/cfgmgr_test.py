@@ -119,24 +119,6 @@ class TestConfigManager(unittest.TestCase):
         # this one is actually wrong, but 'current status quo'
         self.assertEqual(msg, {"running": "configmanager"})
 
-    #def test_set_config(self):
-        #self.cm.set_config(self.name, self.spec)
-        #self.assertEqual(self.cm.data_definitions[self.name], self.spec)
-
-    #def test_remove_config(self):
-        #self.assertRaises(KeyError, self.cm.remove_config, self.name)
-        #self.cm.set_config(self.name, self.spec)
-        #self.cm.remove_config(self.name)
-
-    #def test_set_commands(self):
-    #    self.cm.set_commands(self.name, self.commands)
-    #    self.assertEqual(self.cm.commands[self.name], self.commands)
-
-    #def test_write_config(self):
-    #    self.assertRaises(KeyError, self.cm.remove_commands, self.name)
-    #    self.cm.set_commands(self.name, self.commands)
-    #    self.cm.remove_commands(self.name)
-
     def _handle_msg_helper(self, msg, expected_answer):
         answer = self.cm.handle_msg(msg)
         self.assertEqual(expected_answer, answer)

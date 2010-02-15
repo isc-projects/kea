@@ -9,10 +9,10 @@
         "item_default": "Hi, shane!"
       },
       {
-        "item_name": "some_other_string",
-        "item_type": "string",
+        "item_name": "some_int",
+        "item_type": "integer",
         "item_optional": False,
-        "item_default": "Hi, shane!"
+        "item_default": 1
       }
     ],
     "commands": [
@@ -23,6 +23,16 @@
           "item_name": "message",
           "item_type": "string",
           "item_optional": False,
+          "item_default": ""
+        } ]
+      },
+      {
+        "command_name": "print_settings",
+        "command_description": "Print some_string and some_int to stdout",
+        "command_args": [ {
+          "item_name": "message",
+          "item_type": "string",
+          "item_optional": True,
           "item_default": ""
         } ]
       },

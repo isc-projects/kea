@@ -106,6 +106,7 @@ class BoB:
         self.verbose = verbose
         self.c_channel_port = c_channel_port
         self.cc_session = None
+        self.ccs = None
         self.processes = {}
         self.dead_processes = {}
         self.runnable = False
@@ -114,6 +115,18 @@ class BoB:
         if self.verbose:
             print("[XX] handling new config:")
             print(new_config)
+        errors = []
+        if self.ccs.get_config_data().get_specification().validate(False, new_config, errors):
+            print("[XX] new config validated")
+            self.ccs.set_config(new_config)
+            answer = { "result": [ 0 ] }
+        else:
+            print("[XX] new config validation failure")
+            if len(errors) > 0:
+                answer = { "result": [ 1, errors ] }
+            else:
+                answer = { "result": [ 1, "Unknown error in validation" ] }
+        return answer
         # TODO
 
     def command_handler(self, command):
@@ -121,7 +134,7 @@ class BoB:
         if self.verbose:
             print("[XX] Boss got command:")
             print(command)
-        answer = None
+        answer = [ 1, "Command not implemented" ]
         if type(command) != list or len(command) == 0:
             answer = { "result": [ 1, "bad command" ] }
         else:
@@ -133,6 +146,10 @@ class BoB:
             elif cmd == "print_message":
                 if len(command) > 1 and type(command[1]) == dict and "message" in command[1]:
                     print(command[1]["message"])
+                answer = { "result": [ 0 ] }
+            elif cmd == "print_settings":
+                print("Config:")
+                print(self.ccs.get_config())
                 answer = { "result": [ 0 ] }
             else:
                 answer = { "result": [ 1, "Unknown command" ] }
@@ -191,6 +208,7 @@ class BoB:
         if self.verbose:
             print("[XX] starting ccsession")
         self.ccs = isc.config.CCSession(SPECFILE_LOCATION, self.config_handler, self.command_handler)
+        self.ccs.start()
         if self.verbose:
             print("[XX] ccsession started")
 
