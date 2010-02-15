@@ -156,7 +156,6 @@ class ConfigManager:
                 commands[name] = self.data_specs[name].get_commands
         else:
             for module_name in self.data_specs.keys():
-                print("[XX] add commands for " + module_name)
                 commands[module_name] = self.data_specs[module_name].get_commands()
         return commands
 
@@ -218,24 +217,34 @@ class ConfigManager:
             if conf_part:
                 data.merge(conf_part, cmd[2])
                 self.cc.group_sendmsg({ "config_update": conf_part }, module_name)
+                answer, env = self.cc.group_recvmsg(False)
             else:
                 conf_part = data.set(self.config.data, module_name, {})
-                print("[XX] SET CONF PART:")
-                print(conf_part)
                 data.merge(conf_part[module_name], cmd[2])
                 # send out changed info
                 self.cc.group_sendmsg({ "config_update": conf_part[module_name] }, module_name)
-            self.write_config()
-            answer["result"] = [ 0 ]
+                # replace 'our' answer with that of the module
+                answer, env = selc.cc.group_recvmsg(False)
+                print("[XX] module responded with")
+                print(answer)
+            if answer and "result" in answer and answer['result'][0] == 0:
+                self.write_config()
         elif len(cmd) == 2:
             # todo: use api (and check the data against the definition?)
             data.merge(self.config.data, cmd[1])
             # send out changed info
+            got_error = False
             for module in self.config.data:
                 if module != "version":
                     self.cc.group_sendmsg({ "config_update": self.config.data[module] }, module)
-            self.write_config()
-            answer["result"] = [ 0 ]
+                    answer, env = self.cc.group_recvmsg(False)
+                    print("[XX] one module responded with")
+                    print(answer)
+                    if answer and 'result' in answer and answer['result'][0] != 0:
+                        got_error = True
+            if not got_error:
+                self.write_config()
+            # TODO rollback changes that did get through?
         else:
             answer["result"] = [ 1, "Wrong number of arguments" ]
         return answer
@@ -245,9 +254,9 @@ class ConfigManager:
         # todo: use DataDefinition class
         # todo: error checking (like keyerrors)
         answer = {}
-        print("[XX] CFGMGR got spec:")
-        print(spec)
         self.set_data_spec(spec)
+        print("[XX] cfgmgr add spec:")
+        print(spec)
         
         # We should make one general 'spec update for module' that
         # passes both specification and commands at once
@@ -259,23 +268,15 @@ class ConfigManager:
     def handle_msg(self, msg):
         """Handle a direct command"""
         answer = {}
-        print("[XX] cfgmgr got msg:")
-        print(msg)
         if "command" in msg:
             cmd = msg["command"]
             try:
                 if cmd[0] == "get_commands":
                     answer["result"] = [ 0, self.get_commands() ]
-                    print("[XX] get_commands answer:")
-                    print(answer)
                 elif cmd[0] == "get_data_spec":
                     answer = self._handle_get_data_spec(cmd)
-                    print("[XX] get_data_spec answer:")
-                    print(answer)
                 elif cmd[0] == "get_config":
                     answer = self._handle_get_config(cmd)
-                    print("[XX] get_config answer:")
-                    print(answer)
                 elif cmd[0] == "set_config":
                     answer = self._handle_set_config(cmd)
                 elif cmd[0] == "shutdown":
@@ -297,8 +298,6 @@ class ConfigManager:
             answer['result'] = [0]
         else:
             answer["result"] = [ 1, "Unknown message format: " + str(msg) ]
-        print("[XX] cfgmgr sending answer:")
-        print(answer)
         return answer
         
     def run(self):
@@ -307,6 +306,8 @@ class ConfigManager:
             msg, env = self.cc.group_recvmsg(False)
             if msg:
                 answer = self.handle_msg(msg);
+                print("[XX] CFGMGR Sending answer to UI:")
+                print(answer)
                 self.cc.group_reply(env, answer)
             else:
                 self.running = False

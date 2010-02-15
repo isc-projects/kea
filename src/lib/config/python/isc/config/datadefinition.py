@@ -50,20 +50,23 @@ class DataDefinition:
             _check(data_spec)
         self._data_spec = data_spec
 
-    def validate(self, data, errors = None):
+    def validate(self, full, data, errors = None):
         """Check whether the given piece of data conforms to this
            data definition. If so, it returns True. If not, it will
            return false. If errors is given, and is an array, a string
            describing the error will be appended to it. The current
            version stops as soon as there is one error so this list
-           will not be exhaustive."""
+           will not be exhaustive. If 'full' is true, it also errors on
+           non-optional missing values. Set this to False if you want to
+           validate only a part of a configuration tree (like a list of
+           non-default values)"""
         data_def = self.get_definition()
         if 'config_data' not in data_def:
             if errors:
                 errors.append("The is no config_data for this specification")
             return False
         errors = []
-        return _validate_spec_list(data_def['config_data'], data, errors)
+        return _validate_spec_list(data_def['config_data'], full, data, errors)
 
 
     def get_module_name(self):
@@ -89,7 +92,7 @@ class DataDefinition:
             return self._data_spec['config_data']
         else:
             return None
-    
+
     def __str__(self):
         return self._data_spec.__str__()
 
@@ -246,21 +249,21 @@ def _validate_item(spec, data, errors):
             return False
     return True
 
-def _validate_spec(spec, data, errors):
+def _validate_spec(spec, full, data, errors):
     item_name = spec['item_name']
     item_optional = spec['item_optional']
 
     if item_name in data:
         return _validate_item(spec, data[item_name], errors)
-    elif not item_optional:
+    elif full and not item_optional:
         if errors:
             errors.append("non-optional item " + item_name + " missing")
         return False
     else:
         return True
 
-def _validate_spec_list(data_spec, data, errors):
+def _validate_spec_list(data_spec, full, data, errors):
     for spec_item in data_spec:
-        if not _validate_spec(spec_item, data, errors):
+        if not _validate_spec(spec_item, full, data, errors):
             return False
     return True

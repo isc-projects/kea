@@ -137,6 +137,25 @@ class ConfigData:
             return spec['item_default'], True
         return None, False
 
+    def get_specification(self):
+        """Returns the datadefinition"""
+        print(self.specification)
+        return self.specification
+
+    def set_local_config(self, data):
+        """Set the non-default config values, as passed by cfgmgr"""
+        self.data = data
+
+    def get_local_config(self):
+        """Returns the non-default config values in a dict"""
+        return self.config();
+
+    #def get_identifiers(self):
+    # Returns a list containing all identifiers
+
+    #def 
+
+
 class MultiConfigData:
     """This class stores the datadefinitions, current non-default
        configuration values and 'local' (uncommitted) changes."""
@@ -308,7 +327,7 @@ class MultiConfigData:
         """Set the local value at the given identifier to value"""
         # todo: validate
         isc.cc.data.set(self._local_changes, identifier, value)
-
+ 
     def get_config_item_list(self, identifier = None):
         """Returns a list of strings containing the item_names of
            the child items at the given identifier. If no identifier is
@@ -391,6 +410,9 @@ class UIConfigData():
 
     def get_value_maps(self, identifier = None):
         return self._data.get_value_maps(identifier)
+
+    def get_local_changes(self):
+        return self._data.get_local_changes()
 
     def commit(self):
         self._conn.send_POST('/ConfigManager/set_config', self._data.get_local_changes())
