@@ -65,7 +65,6 @@ class DataDefinition:
             if errors:
                 errors.append("The is no config_data for this specification")
             return False
-        errors = []
         return _validate_spec_list(data_def['config_data'], full, data, errors)
 
 
@@ -207,27 +206,27 @@ def _validate_type(spec, value, errors):
        specification"""
     data_type = spec['item_type']
     if data_type == "integer" and type(value) != int:
-        if errors:
+        if errors != None:
             errors.append(str(value) + " should be an integer")
         return False
     elif data_type == "real" and type(value) != float:
-        if errors:
+        if errors != None:
             errors.append(str(value) + " should be a real")
         return False
     elif data_type == "boolean" and type(value) != bool:
-        if errors:
+        if errors != None:
             errors.append(str(value) + " should be a boolean")
         return False
     elif data_type == "string" and type(value) != str:
-        if errors:
+        if errors != None:
             errors.append(str(value) + " should be a string")
         return False
     elif data_type == "list" and type(value) != list:
-        if errors:
+        if errors != None:
             errors.append(str(value) + " should be a list, not a " + str(value.__class__.__name__))
         return False
     elif data_type == "map" and type(value) != dict:
-        if errors:
+        if errors != None:
             errors.append(str(value) + " should be a map")
         return False
     else:
@@ -256,7 +255,7 @@ def _validate_spec(spec, full, data, errors):
     if item_name in data:
         return _validate_item(spec, data[item_name], errors)
     elif full and not item_optional:
-        if errors:
+        if errors != None:
             errors.append("non-optional item " + item_name + " missing")
         return False
     else:
