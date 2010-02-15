@@ -21,6 +21,9 @@
 
 # modeled after ccsession.h/cc 'protocol' changes here need to be
 # made there as well
+"""This module provides the CCSession class, as well as a set of
+   utility functions to create and parse messages related to commands
+   and configuration"""
 
 from isc.cc import Session
 import isc
@@ -28,9 +31,9 @@ import isc
 class CCSessionError(Exception): pass
 
 def parse_answer(msg):
-    """Returns a type (rcode, value), where value depends on the command
-       that was called. If rcode != 0, value is a string containing
-       an error message"""
+    """Returns a tuple (rcode, value), where value depends on the
+       command that was called. If rcode != 0, value is a string
+       containing an error message"""
     if 'result' not in msg:
         raise CCSessionError("answer message does not contain 'result' element")
     elif type(msg['result']) != list:
@@ -60,7 +63,23 @@ def create_answer(rcode, arg = None):
         return { 'result': [ 0 ] }
 
 class CCSession:
+    """This class maintains a connection to the command channel, as
+       well as configuration options for modules. The module provides
+       a specification file that contains the module name, configuration
+       options, and commands. It also gives the CCSession two callback
+       functions, one to call when there is a direct command to the
+       module, and one to update the configuration run-time. These
+       callbacks are called when 'check_command' is called on the
+       CCSession"""
+       
     def __init__(self, spec_file_name, config_handler, command_handler):
+        """Initialize a CCSession. This does *NOT* send the
+           specification and request the configuration yet. Use start()
+           for that once the CCSession has been initialized.
+           specfile_name is the path to the specification file
+           config_handler and command_handler are callback functions,
+           see set_config_handler and set_command_handler for more
+           information on their signatures."""
         data_definition = isc.config.data_spec_from_file(spec_file_name)
         self._config_data = isc.config.config_data.ConfigData(data_definition)
         self._module_name = data_definition.get_module_name()
@@ -72,50 +91,59 @@ class CCSession:
         self._session.group_subscribe(self._module_name, "*")
 
     def start(self):
-        print("[XX] SEND SPEC AND REQ CONFIG")
+        """Send the specification for this module to the configuration
+           manager, and request the current non-default configuration.
+           The config_handler will be called with that configuration"""
         self.__send_spec()
         self.__request_config()
 
     def get_socket(self):
-        """Returns the socket from the command channel session"""
+        """Returns the socket from the command channel session. This can
+           be used in select() loops to see if there is anything on the
+           channel. This is not strictly necessary as long as
+           check_command is called periodically."""
         return self._session._socket
     
     def get_session(self):
         """Returns the command-channel session that is used, so the
-           application can use it directly"""
+           application can use it directly."""
         return self._session
 
     def set_config(self, new_config):
+        """Sets the current or non-default configuration"""
         return self._config_data.set_local_config(new_config)
 
     def get_config(self):
+        """Returns the current or non-default configuration"""
         return self._config_data.get_local_config()
 
     def get_config_data(self):
+        """Returns the config_data part of the specification"""
         return self._config_data
 
     def close(self):
+        """Close the session to the command channel"""
         self._session.close()
 
     def check_command(self):
-        """Check whether there is a command on the channel.
-           Call the command callback function if so"""
+        """Check whether there is a command or configuration update
+           on the channel. Call the corresponding callback function if
+           there is."""
         msg, env = self._session.group_recvmsg(False)
         # should we default to an answer? success-by-default? unhandled error?
-        answer = None
-        try:
-            if msg:
+        if msg:
+            answer = None
+            try:
                 print("[XX] got msg: ")
                 print(msg)
                 if "config_update" in msg and self._config_handler:
                     answer = self._config_handler(msg["config_update"])
                 if "command" in msg and self._command_handler:
                     answer = self._command_handler(msg["command"])
-        except Exception as exc:
-            answer = create_answer(1, str(exc))
-        if answer:
-            self._session.group_reply(env, answer)
-
+            except Exception as exc:
+                answer = create_answer(1, str(exc))
+            if answer:
+                self._session.group_reply(env, answer)
     
     def set_config_handler(self, config_handler):
         """Set the config handler for this module. The handler is a
