@@ -119,13 +119,13 @@ class BoB:
         if self.ccs.get_config_data().get_specification().validate(False, new_config, errors):
             print("[XX] new config validated")
             self.ccs.set_config(new_config)
-            answer = { "result": [ 0 ] }
+            answer = isc.config.ccsession.create_answer(0)
         else:
             print("[XX] new config validation failure")
             if len(errors) > 0:
-                answer = { "result": [ 1, errors ] }
+                answer = isc.config.ccsession.create_answer(1, " ".join(errors))
             else:
-                answer = { "result": [ 1, "Unknown error in validation" ] }
+                answer = isc.config.ccsession.create_answer(1, "Unknown error in validation")
         return answer
         # TODO
 
@@ -136,23 +136,23 @@ class BoB:
             print(command)
         answer = [ 1, "Command not implemented" ]
         if type(command) != list or len(command) == 0:
-            answer = { "result": [ 1, "bad command" ] }
+            answer = isc.config.ccsession.create_answer(1, "bad command")
         else:
             cmd = command[0]
             if cmd == "shutdown":
                 print("[XX] got shutdown command")
                 self.runnable = False
-                answer = { "result": [ 0 ] }
+                answer = isc.config.ccsession.create_answer(0)
             elif cmd == "print_message":
                 if len(command) > 1 and type(command[1]) == dict and "message" in command[1]:
                     print(command[1]["message"])
-                answer = { "result": [ 0 ] }
+                answer = isc.config.ccsession.create_answer(0)
             elif cmd == "print_settings":
                 print("Config:")
                 print(self.ccs.get_config())
-                answer = { "result": [ 0 ] }
+                answer = isc.config.ccsession.create_answer(0)
             else:
-                answer = { "result": [ 1, "Unknown command" ] }
+                answer = isc.config.ccsession.create_answer(1, "Unknown command")
         return answer
     
     def startup(self):
