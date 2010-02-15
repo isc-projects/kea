@@ -57,10 +57,10 @@ def create_answer(rcode, arg = None):
         raise CCSessionError("rcode in create_answer() must be an integer")
     if rcode != 0 and type(arg) != str:
         raise CCSessionError("arg in create_answer for rcode != 0 must be a string describing the error")
-    if arg:
+    if arg != None:
         return { 'result': [ rcode, arg ] }
     else:
-        return { 'result': [ 0 ] }
+        return { 'result': [ rcode ] }
 
 class CCSession:
     """This class maintains a connection to the command channel, as

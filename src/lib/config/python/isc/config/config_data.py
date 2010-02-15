@@ -158,7 +158,8 @@ class ConfigData:
 
 class MultiConfigData:
     """This class stores the datadefinitions, current non-default
-       configuration values and 'local' (uncommitted) changes."""
+       configuration values and 'local' (uncommitted) changes for
+       multiple modules"""
     LOCAL   = 1
     CURRENT = 2
     DEFAULT = 3
@@ -181,7 +182,8 @@ class MultiConfigData:
             return None
 
     def find_spec_part(self, identifier):
-        """returns the default value, or None if there is no default"""
+        """returns the specification for the item at the given
+           identifier, or None if not found"""
         if identifier[0] == '/':
             identifier = identifier[1:]
         module, sep, id = identifier.partition("/")
@@ -229,7 +231,8 @@ class MultiConfigData:
     def get_value(self, identifier):
         """Returns a tuple containing value,status. Status is either
            LOCAL, CURRENT, DEFAULT or NONE, corresponding to the
-           source of the value"""
+           source of the value (local change, current setting, default
+           as specified by the specification, or not found at all)."""
         value = self.get_local_value(identifier)
         if value:
             return value, self.LOCAL
@@ -332,7 +335,8 @@ class MultiConfigData:
         """Returns a list of strings containing the item_names of
            the child items at the given identifier. If no identifier is
            specified, returns a list of module names. The first part of
-           the identifier is interpreted as the module name"""
+           the identifier (up to the first /) is interpreted as the
+           module name"""
         if identifier:
             spec = self.find_spec_part(identifier)
             return spec_name_list(spec, identifier + "/")
