@@ -232,7 +232,7 @@ def _validate_type(spec, value, errors):
     else:
         return True
 
-def _validate_item(spec, data, errors):
+def _validate_item(spec, full, data, errors):
     if not _validate_type(spec, data, errors):
         return False
     elif type(data) == list:
@@ -241,10 +241,10 @@ def _validate_item(spec, data, errors):
             if not _validate_type(list_spec, data_el, errors):
                 return False
             if list_spec['item_type'] == "map":
-                if not _validate_item(list_spec, data_el, errors):
+                if not _validate_item(list_spec, full, data_el, errors):
                     return False
     elif type(data) == dict:
-        if not _validate_spec_list(spec['map_item_spec'], data, errors):
+        if not _validate_spec_list(spec['map_item_spec'], full, data, errors):
             return False
     return True
 
@@ -253,7 +253,7 @@ def _validate_spec(spec, full, data, errors):
     item_optional = spec['item_optional']
 
     if item_name in data:
-        return _validate_item(spec, data[item_name], errors)
+        return _validate_item(spec, full, data[item_name], errors)
     elif full and not item_optional:
         if errors != None:
             errors.append("non-optional item " + item_name + " missing")

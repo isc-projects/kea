@@ -87,6 +87,13 @@ class FakeCCSession:
     def group_sendmsg(self, msg, channel, target = None):
         self.message_queue.append([ channel, target, msg ])
 
+    def group_recvmsg(self, blocking):
+        for qm in self.message_queue:
+            if qm[0] in self.subscriptions and (qm[1] == None or qm[1] in self.subscriptions[qm[0]]):
+                self.message_queue.remove(qm)
+                return qm[2], {}
+        return None, None
+
     def get_message(self, channel, target = None):
         for qm in self.message_queue:
             if qm[0] == channel and qm[1] == target:
@@ -147,13 +154,21 @@ class TestConfigManager(unittest.TestCase):
         self._handle_msg_helper({ "command": [ "set_config", {} ] },
                                 {'result': [0]})
         self.assertEqual(len(self.fake_session.message_queue), 0)
+
+        # the targets of some of these tests expect specific answers, put
+        # those in our fake msgq first.
+        my_ok_answer = { 'result': [ 0 ] }
+
+        self.fake_session.group_sendmsg(my_ok_answer, "ConfigManager")
         self._handle_msg_helper({ "command": [ "set_config", self.name, { "test": 123 } ] },
-                                {'result': [0]})
+                                my_ok_answer)
         self.assertEqual(len(self.fake_session.message_queue), 1)
+        self.fake_session.group_sendmsg(my_ok_answer, "ConfigManager")
         self.assertEqual({'config_update': {'test': 123}},
                          self.fake_session.get_message(self.name, None))
         self._handle_msg_helper({ "command": [ "set_config", self.name, { "test": 124 } ] },
                                 {'result': [0]})
+
         #print(self.fake_session.message_queue)
         self.assertEqual(len(self.fake_session.message_queue), 1)
         self.assertEqual({'config_update': {'test': 124}},

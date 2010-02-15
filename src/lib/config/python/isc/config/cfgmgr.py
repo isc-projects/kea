@@ -209,7 +209,7 @@ class ConfigManager:
         return answer
 
     def _handle_set_config(self, cmd):
-        answer = {}
+        answer = None
         if len(cmd) == 3:
             # todo: use api (and check the data against the definition?)
             module_name = cmd[1]
@@ -224,7 +224,7 @@ class ConfigManager:
                 # send out changed info
                 self.cc.group_sendmsg({ "config_update": conf_part[module_name] }, module_name)
                 # replace 'our' answer with that of the module
-                answer, env = selc.cc.group_recvmsg(False)
+                answer, env = self.cc.group_recvmsg(False)
                 print("[XX] module responded with")
                 print(answer)
             rcode, val = isc.config.ccsession.parse_answer(answer)
@@ -235,6 +235,7 @@ class ConfigManager:
             data.merge(self.config.data, cmd[1])
             # send out changed info
             got_error = False
+            err_list = []
             for module in self.config.data:
                 if module != "version":
                     self.cc.group_sendmsg({ "config_update": self.config.data[module] }, module)
@@ -244,12 +245,19 @@ class ConfigManager:
                     rcode, val = isc.config.ccsession.parse_answer(answer)
                     if rcode != 0:
                         got_error = True
+                        err_list.append(val)
             if not got_error:
                 self.write_config()
-            # TODO rollback changes that did get through?
-            # feed back *all* errors?
+                answer = isc.config.ccsession.create_answer(0)
+            else:
+                # TODO rollback changes that did get through?
+                # feed back *all* errors?
+                answer = isc.config.ccsession.create_answer(1, " ".join(err_list))
         else:
             answer = isc.config.ccsession.create_answer(1, "Wrong number of arguments")
+        if not answer:
+            answer = isc.config.ccsession.create_answer(1, "Error handling set_config command")
+            
         return answer
 
     def _handle_data_specification(self, spec):
