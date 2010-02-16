@@ -13,26 +13,25 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-#
-# Classes to store configuration data and data specifications
-#
-# Used by the config manager, (python) modules, and UI's (those last
-# two through the classes in ccsession)
-#
+"""
+Classes to store configuration data and module specifications
 
+Used by the config manager, (python) modules, and UI's (those last
+two through the classes in ccsession)
+"""
 
 import isc.cc.data
 import isc.config.datadefinition
 
 class ConfigDataError(Exception): pass
 
-def check_type(specification, value):
+def check_type(spec_part, value):
     """Returns true if the value is of the correct type given the
        specification part relevant for the value"""
-    if type(specification) == list:
+    if type(spec_part) == list:
         data_type = "list"
     else:
-        data_type = specification['item_type']
+        data_type = spec_part['item_type']
 
     if data_type == "integer" and type(value) != int:
         raise isc.cc.data.DataTypeError(str(value) + " is not an integer")
@@ -47,7 +46,7 @@ def check_type(specification, value):
             raise isc.cc.data.DataTypeError(str(value) + " is not a list")
         else:
             for element in value:
-                check_type(specification['list_item_spec'], element)
+                check_type(spec_part['list_item_spec'], element)
     elif data_type == "map" and type(value) != dict:
         # todo: check types of map contents too
         raise isc.cc.data.DataTypeError(str(value) + " is not a map")
@@ -115,12 +114,6 @@ class ConfigData:
         self.specification = specification
         self.data = {}
 
-    def get_item_list(self, identifier = None, recurse = False):
-        if identifier:
-            spec = find_spec(self.specification.get_config_spec(), identifier, recurse)
-            return spec_name_list(spec, identifier + "/")
-        return spec_name_list(self.specification.get_config_spec(), "", recurse)
-
     def get_value(self, identifier):
         """Returns a tuple where the first item is the value at the
            given identifier, and the second item is a bool which is
@@ -145,19 +138,28 @@ class ConfigData:
         """Returns the non-default config values in a dict"""
         return self.data;
 
+    def get_item_list(self, identifier = None, recurse = False):
+        """Returns a list of strings containing the full identifiers of
+           all 'sub'options at the given identifier. If recurse is True,
+           it will also add all identifiers of all children, if any"""
+        if identifier:
+            spec = find_spec(self.specification.get_config_spec(), identifier, recurse)
+            return spec_name_list(spec, identifier + "/")
+        return spec_name_list(self.specification.get_config_spec(), "", recurse)
+
     def get_full_config(self):
+        """Returns a dict containing identifier: value elements, for
+           all configuration options for this module. If there is
+           a local setting, that will be used. Otherwise the value
+           will be the default as specified by the module specification.
+           If there is no default and no local setting, the value will
+           be None"""
         items = self.get_item_list(None, True)
         result = {}
         for item in items:
             value, default = self.get_value(item)
             result[item] = value
         return result
-
-    #def get_identifiers(self):
-    # Returns a list containing all identifiers
-
-    #def 
-
 
 class MultiConfigData:
     """This class stores the datadefinitions, current non-default
