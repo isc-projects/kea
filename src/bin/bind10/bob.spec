@@ -29,12 +29,7 @@
       {
         "command_name": "print_settings",
         "command_description": "Print some_string and some_int to stdout",
-        "command_args": [ {
-          "item_name": "message",
-          "item_type": "string",
-          "item_optional": True,
-          "item_default": ""
-        } ]
+        "command_args": []
       },
       {
         "command_name": "shutdown",

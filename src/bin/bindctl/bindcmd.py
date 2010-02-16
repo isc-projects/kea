@@ -446,13 +446,16 @@ class BindCmdInterpreter(Cmd):
             elif cmd.command == "remove":
                 self.config_data.remove_value(identifier, cmd.params['value'])
             elif cmd.command == "set":
-                parsed_value = None
-                try:
-                    parsed_value = ast.literal_eval(cmd.params['value'])
-                except Exception as exc:
-                    # ok could be an unquoted string, interpret as such
-                    parsed_value = cmd.params['value']
-                self.config_data.set_value(identifier, parsed_value)
+                if 'identifier' not in cmd.params:
+                    print("Error: missing identifier or value")
+                else:
+                    parsed_value = None
+                    try:
+                        parsed_value = ast.literal_eval(cmd.params['value'])
+                    except Exception as exc:
+                        # ok could be an unquoted string, interpret as such
+                        parsed_value = cmd.params['value']
+                    self.config_data.set_value(identifier, parsed_value)
             elif cmd.command == "unset":
                 self.config_data.unset(identifier)
             elif cmd.command == "revert":
