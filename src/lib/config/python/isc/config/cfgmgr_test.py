@@ -109,10 +109,10 @@ class TestConfigManager(unittest.TestCase):
         self.fake_session = FakeCCSession()
         self.cm = ConfigManager(self.data_path, self.fake_session)
         self.name = "TestModule"
-        self.spec = isc.config.data_spec_from_file(self.data_path + os.sep + "/spec2.spec")
+        self.spec = isc.config.module_spec_from_file(self.data_path + os.sep + "/spec2.spec")
     
     def test_init(self):
-        self.assert_(self.cm.data_specs == {})
+        self.assert_(self.cm.module_specs == {})
         self.assert_(self.cm.data_path == self.data_path)
         self.assert_(self.cm.config != None)
         self.assert_(self.fake_session.has_subscription("ConfigManager"))
@@ -134,14 +134,14 @@ class TestConfigManager(unittest.TestCase):
         self._handle_msg_helper({}, { 'result': [ 1, 'Unknown message format: {}']})
         self._handle_msg_helper("", { 'result': [ 1, 'Unknown message format: ']})
         self._handle_msg_helper({ "command": [ "badcommand" ] }, { 'result': [ 1, "Unknown command: ['badcommand']"]})
-        self._handle_msg_helper({ "command": [ "get_commands" ] }, { 'result': [ 0, {} ]})
-        self._handle_msg_helper({ "command": [ "get_data_spec" ] }, { 'result': [ 0, {} ]})
-        #self._handle_msg_helper({ "command": [ "get_data_spec", { "module_name": "nosuchmodule" } ] },
+        self._handle_msg_helper({ "command": [ "get_commands_spec" ] }, { 'result': [ 0, {} ]})
+        self._handle_msg_helper({ "command": [ "get_module_spec" ] }, { 'result': [ 0, {} ]})
+        #self._handle_msg_helper({ "command": [ "get_module_spec", { "module_name": "nosuchmodule" } ] },
         #                        {'result': [1, 'No specification for module nosuchmodule']})
-        self._handle_msg_helper({ "command": [ "get_data_spec", 1 ] },
-                                {'result': [1, 'Bad get_data_spec command, argument not a dict']})
-        self._handle_msg_helper({ "command": [ "get_data_spec", { } ] },
-                                {'result': [1, 'Bad module_name in get_data_spec command']})
+        self._handle_msg_helper({ "command": [ "get_module_spec", 1 ] },
+                                {'result': [1, 'Bad get_module_spec command, argument not a dict']})
+        self._handle_msg_helper({ "command": [ "get_module_spec", { } ] },
+                                {'result': [1, 'Bad module_name in get_module_spec command']})
         self._handle_msg_helper({ "command": [ "get_config" ] }, { 'result': [ 0, { 'version': 1} ]})
         self._handle_msg_helper({ "command": [ "get_config", { "module_name": "nosuchmodule" } ] },
                                 {'result': [0, {}]})
@@ -174,16 +174,16 @@ class TestConfigManager(unittest.TestCase):
         self.assertEqual({'config_update': {'test': 124}},
                          self.fake_session.get_message(self.name, None))
         self.assertEqual({'version': 1, 'TestModule': {'test': 124}}, self.cm.config.data)
-        self._handle_msg_helper({ "data_specification": 
-                                  self.spec.get_definition()
+        self._handle_msg_helper({ "module_spec": 
+                                  self.spec.get_full_spec()
                                 },
                                 {'result': [0]})
-        self._handle_msg_helper({ "data_specification": 
+        self._handle_msg_helper({ "module_spec": 
                                   { 'foo': 1 }
                                 },
-                                {'result': [1, 'Error in data definition: no module_name in data_specification']})
-        self._handle_msg_helper({ "command": [ "get_data_spec" ] }, { 'result': [ 0, { self.spec.get_module_name(): self.spec.get_config_spec() } ]})
-        self._handle_msg_helper({ "command": [ "get_commands" ] }, { 'result': [ 0, { self.spec.get_module_name(): self.spec.get_commands() } ]})
+                                {'result': [1, 'Error in data definition: no module_name in module_spec']})
+        self._handle_msg_helper({ "command": [ "get_module_spec" ] }, { 'result': [ 0, { self.spec.get_module_name(): self.spec.get_config_spec() } ]})
+        self._handle_msg_helper({ "command": [ "get_commands_spec" ] }, { 'result': [ 0, { self.spec.get_module_name(): self.spec.get_commands_spec() } ]})
         # re-add this once we have new way to propagate spec changes (1 instead of the current 2 messages)
         #self.assertEqual(len(self.fake_session.message_queue), 2)
         # the name here is actually wrong (and hardcoded), but needed in the current version

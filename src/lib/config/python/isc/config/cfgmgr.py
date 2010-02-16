@@ -106,12 +106,12 @@ class ConfigManager:
        The ability to specify a custom session is for testing purposes
        and should not be needed for normal usage."""
     def __init__(self, data_path, session = None):
-        # remove these and use self.data_specs
+        # remove these and use self.module_specs
         #self.commands = {}
         self.data_definitions = {}
 
         self.data_path = data_path
-        self.data_specs = {}
+        self.module_specs = {}
         self.config = ConfigManagerData(data_path)
         if session:
             self.cc = session
@@ -125,38 +125,38 @@ class ConfigManager:
         """Notifies the Boss module that the Config Manager is running"""
         self.cc.group_sendmsg({"running": "configmanager"}, "Boss")
 
-    def set_data_spec(self, spec):
-        #data_def = isc.config.DataDefinition(spec)
-        self.data_specs[spec.get_module_name()] = spec
+    def set_module_spec(self, spec):
+        #data_def = isc.config.ModuleSpec(spec)
+        self.module_specs[spec.get_module_name()] = spec
 
-    def get_data_spec(self, module_name):
-        if module_name in self.data_specs:
-            return self.data_specs[module_name]
+    def get_module_spec(self, module_name):
+        if module_name in self.module_specs:
+            return self.module_specs[module_name]
 
-    def get_config_data(self, name = None):
+    def get_config_spec(self, name = None):
         """Returns a dict containing 'module_name': config_data for
            all modules. If name is specified, only that module will
            be included"""
         config_data = {}
         if name:
-            if name in self.data_specs:
-                config_data[name] = self.data_specs[name].get_data
+            if name in self.module_specs:
+                config_data[name] = self.module_specs[name].get_data
         else:
-            for module_name in self.data_specs.keys():
-                config_data[module_name] = self.data_specs[module_name].get_config_data()
+            for module_name in self.module_specs.keys():
+                config_data[module_name] = self.module_specs[module_name].get_config_spec()
         return config_data
 
-    def get_commands(self, name = None):
+    def get_commands_spec(self, name = None):
         """Returns a dict containing 'module_name': commands_dict for
            all modules. If name is specified, only that module will
            be included"""
         commands = {}
         if name:
-            if name in self.data_specs:
-                commands[name] = self.data_specs[name].get_commands
+            if name in self.module_specs:
+                commands[name] = self.module_specs[name].get_commands_spec
         else:
-            for module_name in self.data_specs.keys():
-                commands[module_name] = self.data_specs[module_name].get_commands()
+            for module_name in self.module_specs.keys():
+                commands[module_name] = self.module_specs[module_name].get_commands_spec()
         return commands
 
     def read_config(self):
@@ -173,19 +173,19 @@ class ConfigManager:
            at the path specificied at init()"""
         self.config.write_to_file()
 
-    def _handle_get_data_spec(self, cmd):
+    def _handle_get_module_spec(self, cmd):
         answer = {}
         if len(cmd) > 1:
             if type(cmd[1]) == dict:
                 if 'module_name' in cmd[1] and cmd[1]['module_name'] != '':
                     module_name = cmd[1]['module_name']
-                    answer = isc.config.ccsession.create_answer(0, self.get_config_data(module_name))
+                    answer = isc.config.ccsession.create_answer(0, self.get_config_spec(module_name))
                 else:
-                    answer = isc.config.ccsession.create_answer(1, "Bad module_name in get_data_spec command")
+                    answer = isc.config.ccsession.create_answer(1, "Bad module_name in get_module_spec command")
             else:
-                answer = isc.config.ccsession.create_answer(1, "Bad get_data_spec command, argument not a dict")
+                answer = isc.config.ccsession.create_answer(1, "Bad get_module_spec command, argument not a dict")
         else:
-            answer = isc.config.ccsession.create_answer(0, self.get_config_data())
+            answer = isc.config.ccsession.create_answer(0, self.get_config_spec())
         return answer
 
     def _handle_get_config(self, cmd):
@@ -256,17 +256,17 @@ class ConfigManager:
             
         return answer
 
-    def _handle_data_specification(self, spec):
+    def _handle_module_spec(self, spec):
         # todo: validate? (no direct access to spec as
-        # todo: use DataDefinition class
+        # todo: use ModuleSpec class
         # todo: error checking (like keyerrors)
         answer = {}
-        self.set_data_spec(spec)
+        self.set_module_spec(spec)
         
         # We should make one general 'spec update for module' that
         # passes both specification and commands at once
-        self.cc.group_sendmsg({ "specification_update": [ spec.get_module_name(), spec.get_config_data() ] }, "Cmd-Ctrld")
-        self.cc.group_sendmsg({ "commands_update": [ spec.get_module_name(), spec.get_commands() ] }, "Cmd-Ctrld")
+        self.cc.group_sendmsg({ "specification_update": [ spec.get_module_name(), spec.get_config_spec() ] }, "Cmd-Ctrld")
+        self.cc.group_sendmsg({ "commands_update": [ spec.get_module_name(), spec.get_commands_spec() ] }, "Cmd-Ctrld")
         answer = isc.config.ccsession.create_answer(0)
         return answer
 
@@ -276,10 +276,10 @@ class ConfigManager:
         if "command" in msg:
             cmd = msg["command"]
             try:
-                if cmd[0] == "get_commands":
-                    answer = isc.config.ccsession.create_answer(0, self.get_commands())
-                elif cmd[0] == "get_data_spec":
-                    answer = self._handle_get_data_spec(cmd)
+                if cmd[0] == "get_commands_spec":
+                    answer = isc.config.ccsession.create_answer(0, self.get_commands_spec())
+                elif cmd[0] == "get_module_spec":
+                    answer = self._handle_get_module_spec(cmd)
                 elif cmd[0] == "get_config":
                     answer = self._handle_get_config(cmd)
                 elif cmd[0] == "set_config":
@@ -293,10 +293,10 @@ class ConfigManager:
             except IndexError as ie:
                 answer = isc.config.ccsession.create_answer(1, "Missing argument in command: " + str(ie))
                 raise ie
-        elif "data_specification" in msg:
+        elif "module_spec" in msg:
             try:
-                answer = self._handle_data_specification(isc.config.DataDefinition(msg["data_specification"]))
-            except isc.config.DataDefinitionError as dde:
+                answer = self._handle_module_spec(isc.config.ModuleSpec(msg["module_spec"]))
+            except isc.config.ModuleSpecError as dde:
                 answer = isc.config.ccsession.create_answer(1, "Error in data definition: " + str(dde))
         elif 'result' in msg:
             # this seems wrong, might start pingpong

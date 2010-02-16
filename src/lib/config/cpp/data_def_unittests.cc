@@ -47,11 +47,11 @@ TEST(DataDefinition, ReadingSpecfiles) {
     // Tests whether we can open specfiles and if we get the
     // right parse errors
     DataDefinition dd = DataDefinition(specfile("spec1.spec"));
-    EXPECT_EQ(dd.getDefinition()->get("data_specification")
+    EXPECT_EQ(dd.getDefinition()->get("module_spec")
                                 ->get("module_name")
                                 ->stringValue(), "Spec1");
     dd = DataDefinition(specfile("spec2.spec"));
-    EXPECT_EQ(dd.getDefinition()->get("data_specification")
+    EXPECT_EQ(dd.getDefinition()->get("module_spec")
                                 ->get("config_data")->size(), 6);
     data_def_error("doesnotexist",
                    "Error opening ",
@@ -61,7 +61,7 @@ TEST(DataDefinition, ReadingSpecfiles) {
     std::ifstream file;
     file.open(specfile("spec1.spec").c_str());
     dd = DataDefinition(file);
-    EXPECT_EQ(dd.getDefinition()->get("data_specification")
+    EXPECT_EQ(dd.getDefinition()->get("module_spec")
                                 ->get("module_name")
                                 ->stringValue(), "Spec1");
 }
@@ -96,7 +96,7 @@ TEST(DataDefinition, SpecfileConfigData)
     data_def_error("spec7.spec",
                    "module_name missing in {}");
     data_def_error("spec8.spec",
-                   "Data specification does not contain data_specification element");
+                   "Data specification does not contain module_spec element");
     data_def_error("spec16.spec",
                    "config_data is not a list of elements");
     data_def_error("spec21.spec",

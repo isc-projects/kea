@@ -19,10 +19,10 @@
 
 import unittest
 import os
-from isc.config import DataDefinition, DataDefinitionError
+from isc.config import ModuleSpec, ModuleSpecError
 import isc.cc.data
 
-class TestDataDefinition(unittest.TestCase):
+class TestModuleSpec(unittest.TestCase):
 
     def setUp(self):
         if 'CONFIG_TESTDATA_PATH' in os.environ:
@@ -34,12 +34,12 @@ class TestDataDefinition(unittest.TestCase):
         return(self.data_path + os.sep + filename)
 
     def read_spec_file(self, filename):
-        return isc.config.data_spec_from_file(self.spec_file(filename))
+        return isc.config.module_spec_from_file(self.spec_file(filename))
 
     def spec1(self, dd):
-        data_spec = dd.get_definition()
-        self.assert_('module_name' in data_spec)
-        self.assertEqual(data_spec['module_name'], "Spec1")
+        module_spec = dd.get_full_spec()
+        self.assert_('module_name' in module_spec)
+        self.assertEqual(module_spec['module_name'], "Spec1")
         
     def test_open_file_name(self):
         dd = self.read_spec_file("spec1.spec")
@@ -47,29 +47,29 @@ class TestDataDefinition(unittest.TestCase):
 
     def test_open_file_obj(self):
         file1 = open(self.spec_file("spec1.spec"))
-        dd = isc.config.data_spec_from_file(file1)
+        dd = isc.config.module_spec_from_file(file1)
         self.spec1(dd)
 
     def test_bad_specfiles(self):
-        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec3.spec")
-        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec4.spec")
-        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec5.spec")
-        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec6.spec")
-        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec7.spec")
-        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec8.spec")
-        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec9.spec")
-        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec10.spec")
-        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec11.spec")
-        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec12.spec")
-        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec13.spec")
-        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec14.spec")
-        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec15.spec")
-        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec16.spec")
-        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec17.spec")
-        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec18.spec")
-        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec19.spec")
-        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec20.spec")
-        self.assertRaises(DataDefinitionError, self.read_spec_file, "spec21.spec")
+        self.assertRaises(ModuleSpecError, self.read_spec_file, "spec3.spec")
+        self.assertRaises(ModuleSpecError, self.read_spec_file, "spec4.spec")
+        self.assertRaises(ModuleSpecError, self.read_spec_file, "spec5.spec")
+        self.assertRaises(ModuleSpecError, self.read_spec_file, "spec6.spec")
+        self.assertRaises(ModuleSpecError, self.read_spec_file, "spec7.spec")
+        self.assertRaises(ModuleSpecError, self.read_spec_file, "spec8.spec")
+        self.assertRaises(ModuleSpecError, self.read_spec_file, "spec9.spec")
+        self.assertRaises(ModuleSpecError, self.read_spec_file, "spec10.spec")
+        self.assertRaises(ModuleSpecError, self.read_spec_file, "spec11.spec")
+        self.assertRaises(ModuleSpecError, self.read_spec_file, "spec12.spec")
+        self.assertRaises(ModuleSpecError, self.read_spec_file, "spec13.spec")
+        self.assertRaises(ModuleSpecError, self.read_spec_file, "spec14.spec")
+        self.assertRaises(ModuleSpecError, self.read_spec_file, "spec15.spec")
+        self.assertRaises(ModuleSpecError, self.read_spec_file, "spec16.spec")
+        self.assertRaises(ModuleSpecError, self.read_spec_file, "spec17.spec")
+        self.assertRaises(ModuleSpecError, self.read_spec_file, "spec18.spec")
+        self.assertRaises(ModuleSpecError, self.read_spec_file, "spec19.spec")
+        self.assertRaises(ModuleSpecError, self.read_spec_file, "spec20.spec")
+        self.assertRaises(ModuleSpecError, self.read_spec_file, "spec21.spec")
 
     def validate_data(self, specfile_name, datafile_name):
         dd = self.read_spec_file(specfile_name);

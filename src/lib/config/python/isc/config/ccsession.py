@@ -80,7 +80,7 @@ class CCSession:
            config_handler and command_handler are callback functions,
            see set_config_handler and set_command_handler for more
            information on their signatures."""
-        data_definition = isc.config.data_spec_from_file(spec_file_name)
+        data_definition = isc.config.module_spec_from_file(spec_file_name)
         self._config_data = isc.config.config_data.ConfigData(data_definition)
         self._module_name = data_definition.get_module_name()
         
@@ -121,9 +121,8 @@ class CCSession:
         """Returns the current or non-default configuration"""
         return self._config_data.get_full_config()
 
-    def get_config_data(self):
-        """Returns the config_data part of the specification"""
-        return self._config_data
+    def get_module_spec(self):
+        return self._config_data.get_module_spec()
 
     def close(self):
         """Close the session to the command channel"""
@@ -165,7 +164,7 @@ class CCSession:
     def __send_spec(self):
         """Sends the data specification to the configuration manager"""
         print("[XX] send spec for " + self._module_name + " to ConfigManager")
-        self._session.group_sendmsg({ "data_specification": self._config_data.get_specification().get_definition() }, "ConfigManager")
+        self._session.group_sendmsg({ "module_spec": self._config_data.get_module_spec().get_full_spec() }, "ConfigManager")
         answer, env = self._session.group_recvmsg(False)
         print("[XX] got answer from cfgmgr:")
         print(answer)
@@ -176,7 +175,7 @@ class CCSession:
         answer, env = self._session.group_recvmsg(False)
         rcode, value = parse_answer(answer)
         if rcode == 0:
-            if self._config_data.get_specification().validate(False, value):
+            if self._config_data.get_module_spec().validate(False, value):
                 self._config_data.set_local_config(value);
                 if self._config_handler:
                     self._config_handler(value)

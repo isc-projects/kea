@@ -116,7 +116,7 @@ class BoB:
             print("[XX] handling new config:")
             print(new_config)
         errors = []
-        if self.ccs.get_config_data().get_specification().validate(False, new_config, errors):
+        if self.ccs.get_config_spec().get_module_spec().validate(False, new_config, errors):
             print("[XX] new config validated")
             self.ccs.set_config(new_config)
             answer = isc.config.ccsession.create_answer(0)

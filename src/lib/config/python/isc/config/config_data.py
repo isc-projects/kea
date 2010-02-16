@@ -108,9 +108,9 @@ class ConfigData:
    
     def __init__(self, specification):
         """Initialize a ConfigData instance. If specification is not
-           of type DataDefinition, a ConfigDataError is raised."""
-        if type(specification) != isc.config.DataDefinition:
-            raise ConfigDataError("specification is of type " + str(type(specification)) + ", not DataDefinition")
+           of type ModuleSpec, a ConfigDataError is raised."""
+        if type(specification) != isc.config.ModuleSpec:
+            raise ConfigDataError("specification is of type " + str(type(specification)) + ", not ModuleSpec")
         self.specification = specification
         self.data = {}
 
@@ -127,14 +127,13 @@ class ConfigData:
         value = isc.cc.data.find_no_exc(self.data, identifier)
         if value:
             return value, False
-        spec = find_spec(self.specification.get_config_data(), identifier)
+        spec = find_spec(self.specification.get_config_spec(), identifier)
         if spec and 'item_default' in spec:
             return spec['item_default'], True
         return None, False
 
-    def get_specification(self):
-        """Returns the datadefinition"""
-        print(self.specification)
+    def get_module_spec(self):
+        """Returns the ModuleSpec object associated with this ConfigData"""
         return self.specification
 
     def set_local_config(self, data):
@@ -147,10 +146,10 @@ class ConfigData:
 
     def get_full_config(self):
         items = self.get_item_list(None, True)
-        result = []
+        result = {}
         for item in items:
             value, default = self.get_value(item)
-            result.append(item + ": " + str(value))
+            result[item] = value
         return result
 
     #def get_identifiers(self):
@@ -174,11 +173,11 @@ class MultiConfigData:
         self._local_changes = {}
 
     def set_specification(self, spec):
-        if type(spec) != isc.config.DataDefinition:
+        if type(spec) != isc.config.ModuleSpec:
             raise Exception("not a datadef")
         self._specifications[spec.get_module_name()] = spec
 
-    def get_specification(self, module):
+    def get_module_spec(self, module):
         if module in self._specifications:
             return self._specifications[module]
         else:
@@ -191,7 +190,7 @@ class MultiConfigData:
             identifier = identifier[1:]
         module, sep, id = identifier.partition("/")
         try:
-            return find_spec(self._specifications[module].get_config_data(), id)
+            return find_spec(self._specifications[module].get_config_spec(), id)
         except isc.cc.data.DataNotFoundError as dnfe:
             return None
 
@@ -223,7 +222,7 @@ class MultiConfigData:
             identifier = identifier[1:]
         module, sep, id = identifier.partition("/")
         try:
-            spec = find_spec(self._specifications[module].get_config_data(), id)
+            spec = find_spec(self._specifications[module].get_config_spec(), id)
             if 'item_default' in spec:
                 return spec['item_default']
             else:
@@ -272,9 +271,9 @@ class MultiConfigData:
             if identifier[0] == '/':
                 identifier = identifier[1:]
             module, sep, id = identifier.partition('/')
-            spec = self.get_specification(module)
+            spec = self.get_module_spec(module)
             if spec:
-                spec_part = find_spec(spec.get_config_data(), id)
+                spec_part = find_spec(spec.get_config_spec(), id)
                 print(spec_part)
                 if type(spec_part) == list:
                     for item in spec_part:
@@ -370,7 +369,7 @@ class UIConfigData():
             if module in commands and commands[module]:
                 cur_spec['commands'] = commands[module]
             
-            self._data.set_specification(isc.config.DataDefinition(cur_spec))
+            self._data.set_specification(isc.config.ModuleSpec(cur_spec))
 
     def request_current_config(self):
         config = self._conn.send_GET('/config_data')
@@ -385,8 +384,8 @@ class UIConfigData():
         return self._data.set_value(identifier, value);
     
     def add_value(self, identifier, value_str):
-        data_spec = self._data.find_spec_part(identifier)
-        if (type(data_spec) != dict or "list_item_spec" not in data_spec):
+        module_spec = self._data.find_spec_part(identifier)
+        if (type(module_spec) != dict or "list_item_spec" not in module_spec):
             raise DataTypeError(identifier + " is not a list")
         value = isc.cc.data.parse_value_str(value_str)
         cur_list, status = self.get_value(identifier)
@@ -397,11 +396,11 @@ class UIConfigData():
         self.set_value(identifier, cur_list)
 
     def remove_value(self, identifier, value_str):
-        data_spec = find_spec(self.config.specification, identifier)
-        if (type(data_spec) != dict or "list_item_spec" not in data_spec):
+        module_spec = find_spec(self.config.specification, identifier)
+        if (type(module_spec) != dict or "list_item_spec" not in module_spec):
             raise DataTypeError(identifier + " is not a list")
         value = parse_value_str(value_str)
-        check_type(data_spec, [value])
+        check_type(module_spec, [value])
         cur_list = isc.cc.data.find_no_exc(self.config_changes, identifier)
         if not cur_list:
             cur_list = isc.cc.data.find_no_exc(self.config.data, identifier)
@@ -434,28 +433,28 @@ class OUIConfigData():
     def __init__(self, conn):
         # the specs dict contains module: configdata elements
         # these should all be replaced by the new stuff
-        data_spec = self.get_data_specification(conn)
-        self.config = data_spec
-        self.get_config_data(conn)
+        module_spec = self.get_module_spec(conn)
+        self.config = module_spec
+        self.get_config_spec(conn)
         self.config_changes = {}
         #
         self.config_
-        self.specs = self.get_data_specifications(conn)
+        self.specs = self.get_module_specs(conn)
         
     
-    def get_config_data(self, conn):
+    def get_config_spec(self, conn):
         data = conn.send_GET('/config_data')
 
     def send_changes(self, conn):
         conn.send_POST('/ConfigManager/set_config', self.config_changes)
         # Get latest config data
-        self.get_config_data(conn)
+        self.get_config_spec(conn)
         self.config_changes = {}
 
-    def get_data_specification(self, conn):
+    def get_module_spec(self, conn):
         return conn.send_GET('/config_spec')
 
-    def get_data_specifications(self, conn):
+    def get_module_specs(self, conn):
         specs = {}
         allspecs = conn.send_GET('/config_spec')
         
@@ -551,11 +550,11 @@ class OUIConfigData():
         return result
 
     def add(self, identifier, value_str):
-        data_spec = find_spec(self.config.specification, identifier)
-        if (type(data_spec) != dict or "list_item_spec" not in data_spec):
+        module_spec = find_spec(self.config.specification, identifier)
+        if (type(module_spec) != dict or "list_item_spec" not in module_spec):
             raise DataTypeError(identifier + " is not a list")
         value = parse_value_str(value_str)
-        check_type(data_spec, [value])
+        check_type(module_spec, [value])
         cur_list = isc.cc.data.find_no_exc(self.config_changes, identifier)
         if not cur_list:
             cur_list = isc.cc.data.find_no_exc(self.config.data, identifier)
@@ -566,11 +565,11 @@ class OUIConfigData():
         set(self.config_changes, identifier, cur_list)
 
     def remove(self, identifier, value_str):
-        data_spec = find_spec(self.config.specification, identifier)
-        if (type(data_spec) != dict or "list_item_spec" not in data_spec):
+        module_spec = find_spec(self.config.specification, identifier)
+        if (type(module_spec) != dict or "list_item_spec" not in module_spec):
             raise DataTypeError(identifier + " is not a list")
         value = parse_value_str(value_str)
-        check_type(data_spec, [value])
+        check_type(module_spec, [value])
         cur_list = isc.cc.data.find_no_exc(self.config_changes, identifier)
         if not cur_list:
             cur_list = isc.cc.data.find_no_exc(self.config.data, identifier)
@@ -581,9 +580,9 @@ class OUIConfigData():
         set(self.config_changes, identifier, cur_list)
 
     def set(self, identifier, value_str):
-        data_spec = find_spec(self.config.specification, identifier)
+        module_spec = find_spec(self.config.specification, identifier)
         value = parse_value_str(value_str)
-        check_type(data_spec, value)
+        check_type(module_spec, value)
         set(self.config_changes, identifier, value)
 
     def unset(self, identifier):

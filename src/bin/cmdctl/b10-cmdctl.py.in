@@ -188,7 +188,7 @@ class CommandControl():
         self.config_data = self.get_config_data()
 
     def get_cmd_specification(self): 
-        return self.send_command('ConfigManager', 'get_commands')
+        return self.send_command('ConfigManager', 'get_commands_spec')
 
     def get_config_data(self):
         return self.send_command('ConfigManager', 'get_config')
@@ -198,7 +198,7 @@ class CommandControl():
             self.config_data = self.get_config_data()
 
     def get_data_specification(self):
-        return self.send_command('ConfigManager', 'get_data_spec')
+        return self.send_command('ConfigManager', 'get_module_spec')
 
     def handle_recv_msg(self):
         # Handle received message, if 'shutdown' is received, return False

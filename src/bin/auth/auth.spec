@@ -1,5 +1,5 @@
 {
-  "data_specification": {
+  "module_spec": {
     "module_name": "Auth",
     "config_data": [
       { "item_name": "default_name",

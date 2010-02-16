@@ -24,31 +24,31 @@ import isc.cc.data
 # file objects are passed around as _io.TextIOWrapper objects
 # import that so we can check those types
 
-class DataDefinitionError(Exception):
+class ModuleSpecError(Exception):
     pass
 
-def data_spec_from_file(spec_file, check = True):
-    data_spec = None
+def module_spec_from_file(spec_file, check = True):
+    module_spec = None
     if hasattr(spec_file, 'read'):
-        data_spec = ast.literal_eval(spec_file.read(-1))
+        module_spec = ast.literal_eval(spec_file.read(-1))
     elif type(spec_file) == str:
         file = open(spec_file)
-        data_spec = ast.literal_eval(file.read(-1))
+        module_spec = ast.literal_eval(file.read(-1))
         file.close()
     else:
-        raise DataDefinitionError("spec_file not a str or file-like object")
-    if 'data_specification' not in data_spec:
-        raise DataDefinitionError("Data definition has no data_specification element")
+        raise ModuleSpecError("spec_file not a str or file-like object")
+    if 'module_spec' not in module_spec:
+        raise ModuleSpecError("Data definition has no module_spec element")
         
-    return DataDefinition(data_spec['data_specification'], check)
+    return ModuleSpec(module_spec['module_spec'], check)
 
-class DataDefinition:
-    def __init__(self, data_spec, check = True):
-        if type(data_spec) != dict:
-            raise DataDefinitionError("data_spec is of type " + str(type(data_spec)) + ", not dict")
+class ModuleSpec:
+    def __init__(self, module_spec, check = True):
+        if type(module_spec) != dict:
+            raise ModuleSpecError("module_spec is of type " + str(type(module_spec)) + ", not dict")
         if check:
-            _check(data_spec)
-        self._data_spec = data_spec
+            _check(module_spec)
+        self._module_spec = module_spec
 
     def validate(self, full, data, errors = None):
         """Check whether the given piece of data conforms to this
@@ -60,7 +60,11 @@ class DataDefinition:
            non-optional missing values. Set this to False if you want to
            validate only a part of a configuration tree (like a list of
            non-default values)"""
-        data_def = self.get_definition()
+        print("[XX] validate called with data:")
+        print(data)
+        data_def = self.get_config_spec()
+        print("[XX] data def:")
+        print(data_def)
         if 'config_data' not in data_def:
             if errors:
                 errors.append("The is no config_data for this specification")
@@ -69,111 +73,111 @@ class DataDefinition:
 
 
     def get_module_name(self):
-        return self._data_spec['module_name']
+        return self._module_spec['module_name']
 
-    def get_definition(self):
-        return self._data_spec
+    def get_full_spec(self):
+        """Returns a dict representation of the full module specification"""
+        return self._module_spec
 
     def get_config_spec(self):
-        if 'config_data' in self._data_spec:
-            return self._data_spec['config_data']
+        """Returns a dict representation of the configuration data part
+           of the specification, or None if there is none."""
+        if 'config_data' in self._module_spec:
+            return self._module_spec['config_data']
         else:
             return None
     
-    def get_commands(self):
-        if 'commands' in self._data_spec:
-            return self._data_spec['commands']
+    def get_commands_spec(self):
+        """Returns a dict representation of the commands part of the
+           specification, or None if there is none."""
+        if 'commands' in self._module_spec:
+            return self._module_spec['commands']
         else:
             return None
     
-    def get_config_data(self):
-        if 'config_data' in self._data_spec:
-            return self._data_spec['config_data']
-        else:
-            return None
-
     def __str__(self):
-        return self._data_spec.__str__()
+        """Returns a string representation of the full specification"""
+        return self._module_spec.__str__()
 
-def _check(data_spec):
+def _check(module_spec):
     """Checks the full specification. This is a dict that contains the
-       element "data_specification", which is in itself a dict that
+       element "module_spec", which is in itself a dict that
        must contain at least a "module_name" (string) and optionally
        a "config_data" and a "commands" element, both of which are lists
-       of dicts. Raises a DataDefinitionError if there is a problem."""
-    if type(data_spec) != dict:
-        raise DataDefinitionError("data specification not a dict")
-    if "module_name" not in data_spec:
-        raise DataDefinitionError("no module_name in data_specification")
-    if "config_data" in data_spec:
-        _check_config_spec(data_spec["config_data"])
-    if "commands" in data_spec:
-        _check_command_spec(data_spec["commands"])
+       of dicts. Raises a ModuleSpecError if there is a problem."""
+    if type(module_spec) != dict:
+        raise ModuleSpecError("data specification not a dict")
+    if "module_name" not in module_spec:
+        raise ModuleSpecError("no module_name in module_spec")
+    if "config_data" in module_spec:
+        _check_config_spec(module_spec["config_data"])
+    if "commands" in module_spec:
+        _check_command_spec(module_spec["commands"])
 
 def _check_config_spec(config_data):
     # config data is a list of items represented by dicts that contain
     # things like "item_name", depending on the type they can have
     # specific subitems
     """Checks a list that contains the configuration part of the
-       specification. Raises a DataDefinitionError if there is a
+       specification. Raises a ModuleSpecError if there is a
        problem."""
     if type(config_data) != list:
-        raise DataDefinitionError("config_data is of type " + str(type(config_data)) + ", not a list of items")
+        raise ModuleSpecError("config_data is of type " + str(type(config_data)) + ", not a list of items")
     for config_item in config_data:
         _check_item_spec(config_item)
 
 def _check_command_spec(commands):
     """Checks the list that contains a set of commands. Raises a
-       DataDefinitionError is there is an error"""
+       ModuleSpecError is there is an error"""
     if type(commands) != list:
-        raise DataDefinitionError("commands is not a list of commands")
+        raise ModuleSpecError("commands is not a list of commands")
     for command in commands:
         if type(command) != dict:
-            raise DataDefinitionError("command in commands list is not a dict")
+            raise ModuleSpecError("command in commands list is not a dict")
         if "command_name" not in command:
-            raise DataDefinitionError("no command_name in command item")
+            raise ModuleSpecError("no command_name in command item")
         command_name = command["command_name"]
         if type(command_name) != str:
-            raise DataDefinitionError("command_name not a string: " + str(type(command_name)))
+            raise ModuleSpecError("command_name not a string: " + str(type(command_name)))
         if "command_description" in command:
             if type(command["command_description"]) != str:
-                raise DataDefinitionError("command_description not a string in " + command_name)
+                raise ModuleSpecError("command_description not a string in " + command_name)
         if "command_args" in command:
             if type(command["command_args"]) != list:
-                raise DataDefinitionError("command_args is not a list in " + command_name)
+                raise ModuleSpecError("command_args is not a list in " + command_name)
             for command_arg in command["command_args"]:
                 if type(command_arg) != dict:
-                    raise DataDefinitionError("command argument not a dict in " + command_name)
+                    raise ModuleSpecError("command argument not a dict in " + command_name)
                 _check_item_spec(command_arg)
         else:
-            raise DataDefinitionError("command_args missing in " + command_name)
+            raise ModuleSpecError("command_args missing in " + command_name)
     pass
 
 def _check_item_spec(config_item):
     """Checks the dict that defines one config item
        (i.e. containing "item_name", "item_type", etc.
-       Raises a DataDefinitionError if there is an error"""
+       Raises a ModuleSpecError if there is an error"""
     if type(config_item) != dict:
-        raise DataDefinitionError("item spec not a dict")
+        raise ModuleSpecError("item spec not a dict")
     if "item_name" not in config_item:
-        raise DataDefinitionError("no item_name in config item")
+        raise ModuleSpecError("no item_name in config item")
     if type(config_item["item_name"]) != str:
-        raise DataDefinitionError("item_name is not a string: " + str(config_item["item_name"]))
+        raise ModuleSpecError("item_name is not a string: " + str(config_item["item_name"]))
     item_name = config_item["item_name"]
     if "item_type" not in config_item:
-        raise DataDefinitionError("no item_type in config item")
+        raise ModuleSpecError("no item_type in config item")
     item_type = config_item["item_type"]
     if type(item_type) != str:
-        raise DataDefinitionError("item_type in " + item_name + " is not a string: " + str(type(item_type)))
+        raise ModuleSpecError("item_type in " + item_name + " is not a string: " + str(type(item_type)))
     if item_type not in ["integer", "real", "boolean", "string", "list", "map", "any"]:
-        raise DataDefinitionError("unknown item_type in " + item_name + ": " + item_type)
+        raise ModuleSpecError("unknown item_type in " + item_name + ": " + item_type)
     if "item_optional" in config_item:
         if type(config_item["item_optional"]) != bool:
-            raise DataDefinitionError("item_default in " + item_name + " is not a boolean")
+            raise ModuleSpecError("item_default in " + item_name + " is not a boolean")
         if not config_item["item_optional"] and "item_default" not in config_item:
-            raise DataDefinitionError("no default value for non-optional item " + item_name)
+            raise ModuleSpecError("no default value for non-optional item " + item_name)
     else:
-        raise DataDefinitionError("item_optional not in item " + item_name)
+        raise ModuleSpecError("item_optional not in item " + item_name)
     if "item_default" in config_item:
         item_default = config_item["item_default"]
         if (item_type == "integer" and type(item_default) != int) or \
@@ -182,22 +186,22 @@ def _check_item_spec(config_item):
            (item_type == "string" and type(item_default) != str) or \
            (item_type == "list" and type(item_default) != list) or \
            (item_type == "map" and type(item_default) != dict):
-            raise DataDefinitionError("Wrong type for item_default in " + item_name)
+            raise ModuleSpecError("Wrong type for item_default in " + item_name)
     # TODO: once we have check_type, run the item default through that with the list|map_item_spec
     if item_type == "list":
         if "list_item_spec" not in config_item:
-            raise DataDefinitionError("no list_item_spec in list item " + item_name)
+            raise ModuleSpecError("no list_item_spec in list item " + item_name)
         if type(config_item["list_item_spec"]) != dict:
-            raise DataDefinitionError("list_item_spec in " + item_name + " is not a dict")
+            raise ModuleSpecError("list_item_spec in " + item_name + " is not a dict")
         _check_item_spec(config_item["list_item_spec"])
     if item_type == "map":
         if "map_item_spec" not in config_item:
-            raise DataDefinitionError("no map_item_sepc in map item " + item_name)
+            raise ModuleSpecError("no map_item_sepc in map item " + item_name)
         if type(config_item["map_item_spec"]) != list:
-            raise DataDefinitionError("map_item_spec in " + item_name + " is not a list")
+            raise ModuleSpecError("map_item_spec in " + item_name + " is not a list")
         for map_item in config_item["map_item_spec"]:
             if type(map_item) != dict:
-                raise DataDefinitionError("map_item_spec element is not a dict")
+                raise ModuleSpecError("map_item_spec element is not a dict")
             _check_item_spec(map_item)
 
 
@@ -261,8 +265,8 @@ def _validate_spec(spec, full, data, errors):
     else:
         return True
 
-def _validate_spec_list(data_spec, full, data, errors):
-    for spec_item in data_spec:
+def _validate_spec_list(module_spec, full, data, errors):
+    for spec_item in module_spec:
         if not _validate_spec(spec_item, full, data, errors):
             return False
     return True
