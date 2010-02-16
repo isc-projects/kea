@@ -141,10 +141,10 @@ check_data_specification(const ElementPtr& spec) {
 static void
 check_definition(const ElementPtr& def)
 {
-    if (!def->contains("data_specification")) {
-        throw DataDefinitionError("Data specification does not contain data_specification element");
+    if (!def->contains("module_spec")) {
+        throw DataDefinitionError("Data specification does not contain module_spec element");
     } else {
-        check_data_specification(def->get("data_specification"));
+        check_data_specification(def->get("module_spec"));
     }
 }
 
@@ -276,7 +276,7 @@ DataDefinition::validate_spec_list(const ElementPtr spec, const ElementPtr data)
 // form, we should do that in the constructor
 bool
 DataDefinition::validate(const ElementPtr data) {
-    ElementPtr spec = definition->find("data_specification/config_data");
+    ElementPtr spec = definition->find("module_spec/config_data");
     return validate_spec_list(spec, data);
 }
 

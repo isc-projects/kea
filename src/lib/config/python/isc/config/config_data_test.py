@@ -29,8 +29,8 @@ class TestConfigData(unittest.TestCase):
         else:
             self.data_path = "../../../testdata"
 
-    def test_data_spec_from_file(self):
-        spec = isc.config.data_spec_from_file(self.data_path + os.sep + "spec1.spec")
+    def test_module_spec_from_file(self):
+        spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec1.spec")
         cd = ConfigData(spec)
         self.assertEqual(cd.specification, spec)
         self.assertEqual(cd.data, {})

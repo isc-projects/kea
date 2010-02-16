@@ -1,5 +1,5 @@
 {
-  "data_specification": {
+  "module_spec": {
     "module_name": "Spec3",
     "config_data": [
       {

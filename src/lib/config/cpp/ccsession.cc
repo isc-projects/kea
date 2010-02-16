@@ -81,7 +81,7 @@ CommandSession::CommandSession(std::string spec_file_name,
     read_data_definition(spec_file_name);
     sleep(1);
 
-    module_name_ = data_definition_.getDefinition()->get("data_specification")->get("module_name")->stringValue();
+    module_name_ = data_definition_.getDefinition()->get("module_spec")->get("module_name")->stringValue();
     config_handler_ = config_handler;
     command_handler_ = command_handler;
 

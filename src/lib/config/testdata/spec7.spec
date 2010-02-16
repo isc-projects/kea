@@ -1,5 +1,5 @@
 {
-  "data_specification": {
+  "module_spec": {
   }
 }
 
