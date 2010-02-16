@@ -117,6 +117,10 @@ class CCSession:
         """Returns the current or non-default configuration"""
         return self._config_data.get_local_config()
 
+    def get_full_config(self):
+        """Returns the current or non-default configuration"""
+        return self._config_data.get_full_config()
+
     def get_config_data(self):
         """Returns the config_data part of the specification"""
         return self._config_data

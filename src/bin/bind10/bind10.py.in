@@ -148,8 +148,10 @@ class BoB:
                     print(command[1]["message"])
                 answer = isc.config.ccsession.create_answer(0)
             elif cmd == "print_settings":
-                print("Config:")
-                print(self.ccs.get_config())
+                print("Full Config:")
+                full_config = self.ccs.get_full_config()
+                for item in full_config:
+                    print(item + ": " + str(full_config[item]))
                 answer = isc.config.ccsession.create_answer(0)
             else:
                 answer = isc.config.ccsession.create_answer(1, "Unknown command")

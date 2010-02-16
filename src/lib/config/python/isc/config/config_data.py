@@ -25,36 +25,31 @@ import isc.config.datadefinition
 
 class ConfigDataError(Exception): pass
 
-#
-# hmm, these are more relevant for datadefition
-# should we (re)move them?
-#
 def check_type(specification, value):
     """Returns true if the value is of the correct type given the
-       specification"""
+       specification part relevant for the value"""
     if type(specification) == list:
         data_type = "list"
     else:
         data_type = specification['item_type']
 
     if data_type == "integer" and type(value) != int:
-        raise DataTypeError(str(value) + " should be an integer")
+        raise isc.cc.data.DataTypeError(str(value) + " is not an integer")
     elif data_type == "real" and type(value) != double:
-        raise DataTypeError(str(value) + " should be a real")
+        raise isc.cc.data.DataTypeError(str(value) + " is not a real")
     elif data_type == "boolean" and type(value) != boolean:
-        raise DataTypeError(str(value) + " should be a boolean")
+        raise isc.cc.data.DataTypeError(str(value) + " is not a boolean")
     elif data_type == "string" and type(value) != str:
-        raise DataTypeError(str(value) + " should be a string")
+        raise isc.cc.data.DataTypeError(str(value) + " is not a string")
     elif data_type == "list":
         if type(value) != list:
-            raise DataTypeError(str(value) + " should be a list, not a " + str(value.__class__.__name__))
+            raise isc.cc.data.DataTypeError(str(value) + " is not a list")
         else:
-            # todo: check subtypes etc
             for element in value:
                 check_type(specification['list_item_spec'], element)
     elif data_type == "map" and type(value) != dict:
-        # todo: check subtypes etc
-        raise DataTypeError(str(value) + " should be a map")
+        # todo: check types of map contents too
+        raise isc.cc.data.DataTypeError(str(value) + " is not a map")
 
 def find_spec(element, identifier):
     """find the data definition for the given identifier
@@ -119,20 +114,20 @@ class ConfigData:
         self.specification = specification
         self.data = {}
 
-    def get_item_list(self, identifier = None):
+    def get_item_list(self, identifier = None, recurse = False):
         if identifier:
-            spec = find_spec(self.specification, identifier)
+            spec = find_spec(self.specification.get_config_spec(), identifier, recurse)
             return spec_name_list(spec, identifier + "/")
-        return spec_name_list(self.specification)
+        return spec_name_list(self.specification.get_config_spec(), "", recurse)
 
     def get_value(self, identifier):
         """Returns a tuple where the first item is the value at the
            given identifier, and the second item is a bool which is
            true if the value is an unset default"""
-        value = find_no_exc(self.data, identifier)
+        value = isc.cc.data.find_no_exc(self.data, identifier)
         if value:
             return value, False
-        spec = find_spec(self.specification, identifier)
+        spec = find_spec(self.specification.get_config_data(), identifier)
         if spec and 'item_default' in spec:
             return spec['item_default'], True
         return None, False
@@ -148,7 +143,15 @@ class ConfigData:
 
     def get_local_config(self):
         """Returns the non-default config values in a dict"""
-        return self.config();
+        return self.data;
+
+    def get_full_config(self):
+        items = self.get_item_list(None, True)
+        result = []
+        for item in items:
+            value, default = self.get_value(item)
+            result.append(item + ": " + str(value))
+        return result
 
     #def get_identifiers(self):
     # Returns a list containing all identifiers
@@ -271,7 +274,6 @@ class MultiConfigData:
             module, sep, id = identifier.partition('/')
             spec = self.get_specification(module)
             if spec:
-                print("[XX] getpartspec")
                 spec_part = find_spec(spec.get_config_data(), id)
                 print(spec_part)
                 if type(spec_part) == list:
@@ -279,7 +281,6 @@ class MultiConfigData:
                         entry = {}
                         entry['name'] = item['item_name']
                         entry['type'] = item['item_type']
-                        print("[XX] getvalue")
                         value, status = self.get_value("/" + identifier + "/" + item['item_name'])
                         entry['value'] = value
                         if status == self.LOCAL:
@@ -295,8 +296,6 @@ class MultiConfigData:
                     item = spec_part
                     if item['item_type'] == 'list':
                         li_spec = item['list_item_spec']
-                        print("[XX] item:")
-                        print(item)
                         l, status =  self.get_value("/" + identifier)
                         if l:
                             for value in l:
@@ -328,8 +327,9 @@ class MultiConfigData:
 
     def set_value(self, identifier, value):
         """Set the local value at the given identifier to value"""
-        # todo: validate
-        isc.cc.data.set(self._local_changes, identifier, value)
+        spec_part = self.find_spec_part(identifier)
+        if check_type(spec_part, value):
+            isc.cc.data.set(self._local_changes, identifier, value)
  
     def get_config_item_list(self, identifier = None):
         """Returns a list of strings containing the item_names of
@@ -354,7 +354,6 @@ class UIConfigData():
         self.request_specifications()
         self.request_current_config()
         a,b = self._data.get_value("/Boss/some_string")
-        print("[XX] a,b: " + str(a) + ", " + str(b))
 
     def request_specifications(self):
         # this step should be unnecessary but is the current way cmdctl returns stuff
@@ -403,9 +402,9 @@ class UIConfigData():
             raise DataTypeError(identifier + " is not a list")
         value = parse_value_str(value_str)
         check_type(data_spec, [value])
-        cur_list = find_no_exc(self.config_changes, identifier)
+        cur_list = isc.cc.data.find_no_exc(self.config_changes, identifier)
         if not cur_list:
-            cur_list = find_no_exc(self.config.data, identifier)
+            cur_list = isc.cc.data.find_no_exc(self.config.data, identifier)
         if not cur_list:
             cur_list = []
         if value in cur_list:
@@ -459,8 +458,6 @@ class OUIConfigData():
     def get_data_specifications(self, conn):
         specs = {}
         allspecs = conn.send_GET('/config_spec')
-        print("[XX] allspecs:")
-        print(allspecs)
         
 
     def set(self, identifier, value):
@@ -517,8 +514,6 @@ class OUIConfigData():
            default: true if the value has been changed
            Throws DataNotFoundError if the identifier is bad
         """
-        print("[XX] config:")
-        print(self.config)
         spec = find_spec(self.config, identifier)
         result = []
         if type(spec) == dict:
@@ -561,9 +556,9 @@ class OUIConfigData():
             raise DataTypeError(identifier + " is not a list")
         value = parse_value_str(value_str)
         check_type(data_spec, [value])
-        cur_list = find_no_exc(self.config_changes, identifier)
+        cur_list = isc.cc.data.find_no_exc(self.config_changes, identifier)
         if not cur_list:
-            cur_list = find_no_exc(self.config.data, identifier)
+            cur_list = isc.cc.data.find_no_exc(self.config.data, identifier)
         if not cur_list:
             cur_list = []
         if value not in cur_list:
@@ -576,9 +571,9 @@ class OUIConfigData():
             raise DataTypeError(identifier + " is not a list")
         value = parse_value_str(value_str)
         check_type(data_spec, [value])
-        cur_list = find_no_exc(self.config_changes, identifier)
+        cur_list = isc.cc.data.find_no_exc(self.config_changes, identifier)
         if not cur_list:
-            cur_list = find_no_exc(self.config.data, identifier)
+            cur_list = isc.cc.data.find_no_exc(self.config.data, identifier)
         if not cur_list:
             cur_list = []
         if value in cur_list:
