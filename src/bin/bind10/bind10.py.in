@@ -116,7 +116,7 @@ class BoB:
             print("[XX] handling new config:")
             print(new_config)
         errors = []
-        if self.ccs.get_config_spec().get_module_spec().validate(False, new_config, errors):
+        if self.ccs.get_module_spec().validate(False, new_config, errors):
             print("[XX] new config validated")
             self.ccs.set_config(new_config)
             answer = isc.config.ccsession.create_answer(0)
@@ -209,7 +209,7 @@ class BoB:
         time.sleep(1)
         if self.verbose:
             print("[XX] starting ccsession")
-        self.ccs = isc.config.CCSession(SPECFILE_LOCATION, self.config_handler, self.command_handler)
+        self.ccs = isc.config.ModuleCCSession(SPECFILE_LOCATION, self.config_handler, self.command_handler)
         self.ccs.start()
         if self.verbose:
             print("[XX] ccsession started")

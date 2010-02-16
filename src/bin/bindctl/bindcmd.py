@@ -86,7 +86,7 @@ class BindCmdInterpreter(Cmd):
                 return False
 
             # Get all module information from cmd-ctrld
-            self.config_data = isc.config.UIConfigData(self)
+            self.config_data = isc.config.UIModuleCCSession(self)
             self.update_commands()
             self.cmdloop()
         except KeyboardInterrupt:

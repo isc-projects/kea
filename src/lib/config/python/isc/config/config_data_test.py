@@ -14,7 +14,7 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #
-# Tests for the ConfigData and UIConfigData classes
+# Tests for the ConfigData and MultiConfigData classes
 #
 
 import unittest

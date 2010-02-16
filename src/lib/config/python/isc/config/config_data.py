@@ -14,9 +14,10 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #
-# Class to store configuration data and data definition
-# Used by the config manager and python modules that communicate
-# with the configuration manager
+# Classes to store configuration data and data specifications
+#
+# Used by the config manager, (python) modules, and UI's (those last
+# two through the classes in ccsession)
 #
 
 
@@ -173,19 +174,23 @@ class MultiConfigData:
         self._local_changes = {}
 
     def set_specification(self, spec):
+        """Add or update a ModuleSpec"""
         if type(spec) != isc.config.ModuleSpec:
             raise Exception("not a datadef")
         self._specifications[spec.get_module_name()] = spec
 
     def get_module_spec(self, module):
+        """Returns the ModuleSpec for the module with the given name"""
         if module in self._specifications:
             return self._specifications[module]
         else:
             return None
 
     def find_spec_part(self, identifier):
-        """returns the specification for the item at the given
-           identifier, or None if not found"""
+        """Returns the specification for the item at the given
+           identifier, or None if not found. The first part of the
+           identifier (up to the first /) is interpreted as the module
+           name."""
         if identifier[0] == '/':
             identifier = identifier[1:]
         module, sep, id = identifier.partition("/")
@@ -194,30 +199,52 @@ class MultiConfigData:
         except isc.cc.data.DataNotFoundError as dnfe:
             return None
 
-    def set_current_config(self, config):
+    # this function should only be called by __request_config
+    def __set_current_config(self, config):
+        """Replace the full current config values."""
         self._current_config = config
 
     def get_current_config(self):
-        """The current config is a dict where the first level is
+        """Returns the current configuration as it is known by the
+           configuration manager. It is a dict where the first level is
            the module name, and the value is the config values for
            that module"""
         return self._current_config
         
     def get_local_changes(self):
+        """Returns the local config changes, i.e. those that have not
+           been committed yet and are not known by the configuration
+           manager or the modules."""
         return self._local_changes
 
     def clear_local_changes(self):
+        """Reverts all local changes"""
         self._local_changes = {}
 
     def get_local_value(self, identifier):
+        """Returns a specific local (uncommitted) configuration value,
+           as specified by the identifier. If the local changes do not
+           contain a new setting for this identifier, or if the
+           identifier cannot be found, None is returned. See
+           get_value() for a general way to find a configuration value
+           """
         return isc.cc.data.find_no_exc(self._local_changes, identifier)
         
     def get_current_value(self, identifier):
-        """Returns the current non-default value, or None if not set"""
+        """Returns the current non-default value as known by the
+           configuration manager, or None if it is not set.
+           See get_value() for a general way to find a configuration
+           value
+        """
         return isc.cc.data.find_no_exc(self._current_config, identifier)
         
     def get_default_value(self, identifier):
-        """returns the default value, or None if there is no default"""
+        """Returns the default value for the given identifier as
+           specified by the module specification, or None if there is
+           no default or the identifier could not be found.
+           See get_value() for a general way to find a configuration
+           value
+        """
         if identifier[0] == '/':
             identifier = identifier[1:]
         module, sep, id = identifier.partition("/")
@@ -231,10 +258,12 @@ class MultiConfigData:
             return None
 
     def get_value(self, identifier):
-        """Returns a tuple containing value,status. Status is either
-           LOCAL, CURRENT, DEFAULT or NONE, corresponding to the
-           source of the value (local change, current setting, default
-           as specified by the specification, or not found at all)."""
+        """Returns a tuple containing value,status.
+           The value contains the configuration value for the given
+           identifier. The status reports where this value came from;
+           it is one of: LOCAL, CURRENT, DEFAULT or NONE, corresponding
+           (local change, current setting, default as specified by the
+           specification, or not found at all)."""
         value = self.get_local_value(identifier)
         if value:
             return value, self.LOCAL
@@ -253,8 +282,8 @@ class MultiConfigData:
            value: value of the entry if it is a string, int, double or bool
            modified: true if the value is a local change
            default: true if the value has been changed
-           Throws DataNotFoundError if the identifier is bad
            TODO: use the consts for those last ones
+           Throws DataNotFoundError if the identifier is bad
         """
         result = []
         if not identifier:
@@ -327,8 +356,8 @@ class MultiConfigData:
     def set_value(self, identifier, value):
         """Set the local value at the given identifier to value"""
         spec_part = self.find_spec_part(identifier)
-        if check_type(spec_part, value):
-            isc.cc.data.set(self._local_changes, identifier, value)
+        check_type(spec_part, value)
+        isc.cc.data.set(self._local_changes, identifier, value)
  
     def get_config_item_list(self, identifier = None):
         """Returns a list of strings containing the item_names of
@@ -343,254 +372,3 @@ class MultiConfigData:
             return self._specifications.keys()
 
     
-class UIConfigData():
-    """This class is used in a configuration user interface. It contains
-       specific functions for getting, displaying, and sending
-       configuration settings."""
-    def __init__(self, conn):
-        self._conn = conn
-        self._data = MultiConfigData()
-        self.request_specifications()
-        self.request_current_config()
-        a,b = self._data.get_value("/Boss/some_string")
-
-    def request_specifications(self):
-        # this step should be unnecessary but is the current way cmdctl returns stuff
-        # so changes are needed there to make this clean (we need a command to simply get the
-        # full specs for everything, including commands etc, not separate gets for that)
-        specs = self._conn.send_GET('/config_spec')
-        commands = self._conn.send_GET('/commands')
-        #print(specs)
-        #print(commands)
-        for module in specs.keys():
-            cur_spec = { 'module_name': module }
-            if module in specs and specs[module]:
-                cur_spec['config_data'] = specs[module]
-            if module in commands and commands[module]:
-                cur_spec['commands'] = commands[module]
-            
-            self._data.set_specification(isc.config.ModuleSpec(cur_spec))
-
-    def request_current_config(self):
-        config = self._conn.send_GET('/config_data')
-        if 'version' not in config or config['version'] != 1:
-            raise Exception("Bad config version")
-        self._data.set_current_config(config)
-
-    def get_value(self, identifier):
-        return self._data.get_value(identifier)
-
-    def set_value(self, identifier, value):
-        return self._data.set_value(identifier, value);
-    
-    def add_value(self, identifier, value_str):
-        module_spec = self._data.find_spec_part(identifier)
-        if (type(module_spec) != dict or "list_item_spec" not in module_spec):
-            raise DataTypeError(identifier + " is not a list")
-        value = isc.cc.data.parse_value_str(value_str)
-        cur_list, status = self.get_value(identifier)
-        if not cur_list:
-            cur_list = []
-        if value not in cur_list:
-            cur_list.append(value)
-        self.set_value(identifier, cur_list)
-
-    def remove_value(self, identifier, value_str):
-        module_spec = find_spec(self.config.specification, identifier)
-        if (type(module_spec) != dict or "list_item_spec" not in module_spec):
-            raise DataTypeError(identifier + " is not a list")
-        value = parse_value_str(value_str)
-        check_type(module_spec, [value])
-        cur_list = isc.cc.data.find_no_exc(self.config_changes, identifier)
-        if not cur_list:
-            cur_list = isc.cc.data.find_no_exc(self.config.data, identifier)
-        if not cur_list:
-            cur_list = []
-        if value in cur_list:
-            cur_list.remove(value)
-        set(self.config_changes, identifier, cur_list)
-
-    def get_value_maps(self, identifier = None):
-        return self._data.get_value_maps(identifier)
-
-    def get_local_changes(self):
-        return self._data.get_local_changes()
-
-    def commit(self):
-        self._conn.send_POST('/ConfigManager/set_config', self._data.get_local_changes())
-        # todo: check result
-        self.request_current_config()
-        self._data.clear_local_changes()
-
-    def get_config_item_list(self, identifier = None):
-        return self._data.get_config_item_list(identifier)
-
-# remove
-class OUIConfigData():
-    """This class is used in a configuration user interface. It contains
-       specific functions for getting, displaying, and sending
-       configuration settings."""
-    def __init__(self, conn):
-        # the specs dict contains module: configdata elements
-        # these should all be replaced by the new stuff
-        module_spec = self.get_module_spec(conn)
-        self.config = module_spec
-        self.get_config_spec(conn)
-        self.config_changes = {}
-        #
-        self.config_
-        self.specs = self.get_module_specs(conn)
-        
-    
-    def get_config_spec(self, conn):
-        data = conn.send_GET('/config_data')
-
-    def send_changes(self, conn):
-        conn.send_POST('/ConfigManager/set_config', self.config_changes)
-        # Get latest config data
-        self.get_config_spec(conn)
-        self.config_changes = {}
-
-    def get_module_spec(self, conn):
-        return conn.send_GET('/config_spec')
-
-    def get_module_specs(self, conn):
-        specs = {}
-        allspecs = conn.send_GET('/config_spec')
-        
-
-    def set(self, identifier, value):
-        # check against definition
-        spec = find_spec(identifier)
-        check_type(spec, value)
-        set(self.config_changes, identifier, value)
-
-    def get_value(self, identifier):
-        """Returns a three-tuple, where the first item is the value
-           (or None), the second is a boolean specifying whether
-           the value is the default value, and the third is a boolean
-           specifying whether the value is an uncommitted change"""
-        value = isc.cc.data.find_no_exc(self.config_changes, identifier)
-        if value:
-            return value, False, True
-        value, default = self.config.get_value(identifier)
-        if value:
-            return value, default, False
-        return None, False, False
-
-    def get_value_map_single(self, identifier, entry):
-        """Returns a single entry for a value_map, where the value is
-           not a part of a bigger map"""
-        result_part = {}
-        result_part['name'] = entry['item_name']
-        result_part['type'] = entry['item_type']
-        value, default, modified = self.get_value(identifier)
-        # should we check type and only set int, double, bool and string here?
-        result_part['value'] = value
-        result_part['default'] = default
-        result_part['modified'] = modified
-        return result_part
-
-    def get_value_map(self, identifier, entry):
-        """Returns a single entry for a value_map, where the value is
-           a part of a bigger map"""
-        result_part = {}
-        result_part['name'] = entry['item_name']
-        result_part['type'] = entry['item_type']
-        value, default, modified = self.get_value(identifier + "/" + entry['item_name'])
-        # should we check type and only set int, double, bool and string here?
-        result_part['value'] = value
-        result_part['default'] = default
-        result_part['modified'] = modified
-        return result_part
-
-    def get_value_maps(self, identifier = None):
-        """Returns a list of maps, containing the following values:
-           name: name of the entry (string)
-           type: string containing the type of the value (or 'module')
-           value: value of the entry if it is a string, int, double or bool
-           modified: true if the value is a local change
-           default: true if the value has been changed
-           Throws DataNotFoundError if the identifier is bad
-        """
-        spec = find_spec(self.config, identifier)
-        result = []
-        if type(spec) == dict:
-            # either the top-level list of modules or a spec map
-            if 'item_name' in spec:
-                result_part = self.get_value_map_single(identifier, spec)
-                if result_part['type'] == "list":
-                    values = self.get_value(identifier)[0]
-                    if values:
-                        for value in values:
-                            result_part2 = {}
-                            li_spec = spec['list_item_spec']
-                            result_part2['name'] = li_spec['item_name']
-                            result_part2['value'] = value
-                            result_part2['type'] = li_spec['item_type']
-                            result_part2['default'] = False
-                            result_part2['modified'] = False
-                            result.append(result_part2)
-                else:
-                    result.append(result_part)
-                
-            else:
-                for name in spec:
-                    result_part = {}
-                    result_part['name'] = name
-                    result_part['type'] = "module"
-                    result_part['value'] = None
-                    result_part['default'] = False
-                    result_part['modified'] = False
-                    result.append(result_part)
-        elif type(spec) == list:
-            for entry in spec:
-                if type(entry) == dict and 'item_name' in entry:
-                    result.append(self.get_value_map(identifier, entry))
-        return result
-
-    def add(self, identifier, value_str):
-        module_spec = find_spec(self.config.specification, identifier)
-        if (type(module_spec) != dict or "list_item_spec" not in module_spec):
-            raise DataTypeError(identifier + " is not a list")
-        value = parse_value_str(value_str)
-        check_type(module_spec, [value])
-        cur_list = isc.cc.data.find_no_exc(self.config_changes, identifier)
-        if not cur_list:
-            cur_list = isc.cc.data.find_no_exc(self.config.data, identifier)
-        if not cur_list:
-            cur_list = []
-        if value not in cur_list:
-            cur_list.append(value)
-        set(self.config_changes, identifier, cur_list)
-
-    def remove(self, identifier, value_str):
-        module_spec = find_spec(self.config.specification, identifier)
-        if (type(module_spec) != dict or "list_item_spec" not in module_spec):
-            raise DataTypeError(identifier + " is not a list")
-        value = parse_value_str(value_str)
-        check_type(module_spec, [value])
-        cur_list = isc.cc.data.find_no_exc(self.config_changes, identifier)
-        if not cur_list:
-            cur_list = isc.cc.data.find_no_exc(self.config.data, identifier)
-        if not cur_list:
-            cur_list = []
-        if value in cur_list:
-            cur_list.remove(value)
-        set(self.config_changes, identifier, cur_list)
-
-    def set(self, identifier, value_str):
-        module_spec = find_spec(self.config.specification, identifier)
-        value = parse_value_str(value_str)
-        check_type(module_spec, value)
-        set(self.config_changes, identifier, value)
-
-    def unset(self, identifier):
-        # todo: check whether the value is optional?
-        unset(self.config_changes, identifier)
-
-    def revert(self):
-        self.config_changes = {}
-
-    def commit(self, conn):
-        self.send_changes(conn)
