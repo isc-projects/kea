@@ -60,16 +60,8 @@ class ModuleSpec:
            non-optional missing values. Set this to False if you want to
            validate only a part of a configuration tree (like a list of
            non-default values)"""
-        print("[XX] validate called with data:")
-        print(data)
         data_def = self.get_config_spec()
-        print("[XX] data def:")
-        print(data_def)
-        if 'config_data' not in data_def:
-            if errors:
-                errors.append("The is no config_data for this specification")
-            return False
-        return _validate_spec_list(data_def['config_data'], full, data, errors)
+        return _validate_spec_list(data_def, full, data, errors)
 
 
     def get_module_name(self):
