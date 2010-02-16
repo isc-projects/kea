@@ -21,27 +21,28 @@
 
 # modeled after ccsession.h/cc 'protocol' changes here need to be
 # made there as well
-"""This module provides the CCSession class, as well as a set of
+"""This module provides the ModuleCCSession class, as well as a set of
    utility functions to create and parse messages related to commands
    and configuration"""
 
 from isc.cc import Session
+from isc.config.config_data import ConfigData, MultiConfigData
 import isc
 
-class CCSessionError(Exception): pass
+class ModuleCCSessionError(Exception): pass
 
 def parse_answer(msg):
     """Returns a tuple (rcode, value), where value depends on the
        command that was called. If rcode != 0, value is a string
        containing an error message"""
     if 'result' not in msg:
-        raise CCSessionError("answer message does not contain 'result' element")
+        raise ModuleCCSessionError("answer message does not contain 'result' element")
     elif type(msg['result']) != list:
-        raise CCSessionError("wrong result type in answer message")
+        raise ModuleCCSessionError("wrong result type in answer message")
     elif len(msg['result']) < 1:
-        raise CCSessionError("empty result list in answer message")
+        raise ModuleCCSessionError("empty result list in answer message")
     elif type(msg['result'][0]) != int:
-        raise CCSessionError("wrong rcode type in answer message")
+        raise ModuleCCSessionError("wrong rcode type in answer message")
     else:
         if len(msg['result']) > 1:
             return msg['result'][0], msg['result'][1]
@@ -54,28 +55,28 @@ def create_answer(rcode, arg = None):
        on what the command or option was. If rcode != 0, arg must be
        a string containing an error message"""
     if type(rcode) != int:
-        raise CCSessionError("rcode in create_answer() must be an integer")
+        raise ModuleCCSessionError("rcode in create_answer() must be an integer")
     if rcode != 0 and type(arg) != str:
-        raise CCSessionError("arg in create_answer for rcode != 0 must be a string describing the error")
+        raise ModuleCCSessionError("arg in create_answer for rcode != 0 must be a string describing the error")
     if arg != None:
         return { 'result': [ rcode, arg ] }
     else:
         return { 'result': [ rcode ] }
 
-class CCSession:
+class ModuleCCSession:
     """This class maintains a connection to the command channel, as
        well as configuration options for modules. The module provides
        a specification file that contains the module name, configuration
-       options, and commands. It also gives the CCSession two callback
+       options, and commands. It also gives the ModuleCCSession two callback
        functions, one to call when there is a direct command to the
        module, and one to update the configuration run-time. These
        callbacks are called when 'check_command' is called on the
-       CCSession"""
+       ModuleCCSession"""
        
     def __init__(self, spec_file_name, config_handler, command_handler):
-        """Initialize a CCSession. This does *NOT* send the
+        """Initialize a ModuleCCSession. This does *NOT* send the
            specification and request the configuration yet. Use start()
-           for that once the CCSession has been initialized.
+           for that once the ModuleCCSession has been initialized.
            specfile_name is the path to the specification file
            config_handler and command_handler are callback functions,
            see set_config_handler and set_command_handler for more
@@ -137,8 +138,6 @@ class CCSession:
         if msg:
             answer = None
             try:
-                print("[XX] got msg: ")
-                print(msg)
                 if "config_update" in msg and self._config_handler:
                     answer = self._config_handler(msg["config_update"])
                 if "command" in msg and self._command_handler:
@@ -163,11 +162,8 @@ class CCSession:
 
     def __send_spec(self):
         """Sends the data specification to the configuration manager"""
-        print("[XX] send spec for " + self._module_name + " to ConfigManager")
         self._session.group_sendmsg({ "module_spec": self._config_data.get_module_spec().get_full_spec() }, "ConfigManager")
         answer, env = self._session.group_recvmsg(False)
-        print("[XX] got answer from cfgmgr:")
-        print(answer)
         
     def __request_config(self):
         """Asks the configuration manager for the current configuration, and call the config handler if set"""
@@ -175,11 +171,75 @@ class CCSession:
         answer, env = self._session.group_recvmsg(False)
         rcode, value = parse_answer(answer)
         if rcode == 0:
-            if self._config_data.get_module_spec().validate(False, value):
+            if value != None and self._config_data.get_module_spec().validate(False, value):
                 self._config_data.set_local_config(value);
                 if self._config_handler:
                     self._config_handler(value)
         else:
             # log error
             print("Error requesting configuration: " + value)
-    
+
+class UIModuleCCSession(MultiConfigData):
+    """This class is used in a configuration user interface. It contains
+       specific functions for getting, displaying, and sending
+       configuration settings."""
+    def __init__(self, conn):
+        MultiConfigData.__init__(self)
+        self._conn = conn
+        self.request_specifications()
+        self.request_current_config()
+
+    def request_specifications(self):
+        # this step should be unnecessary but is the current way cmdctl returns stuff
+        # so changes are needed there to make this clean (we need a command to simply get the
+        # full specs for everything, including commands etc, not separate gets for that)
+        specs = self._conn.send_GET('/config_spec')
+        commands = self._conn.send_GET('/commands')
+        for module in specs.keys():
+            cur_spec = { 'module_name': module }
+            if module in specs and specs[module]:
+                cur_spec['config_data'] = specs[module]
+            if module in commands and commands[module]:
+                cur_spec['commands'] = commands[module]
+            
+            self.set_specification(isc.config.ModuleSpec(cur_spec))
+
+    def request_current_config(self):
+        config = self._conn.send_GET('/config_data')
+        if 'version' not in config or config['version'] != 1:
+            raise Exception("Bad config version")
+        self.set_local_config(config)
+
+    def add_value(self, identifier, value_str):
+        module_spec = self.find_spec_part(identifier)
+        if (type(module_spec) != dict or "list_item_spec" not in module_spec):
+            raise DataTypeError(identifier + " is not a list")
+        value = isc.cc.data.parse_value_str(value_str)
+        cur_list, status = self.get_value(identifier)
+        if not cur_list:
+            cur_list = []
+        if value not in cur_list:
+            cur_list.append(value)
+        self.set_value(identifier, cur_list)
+
+    def remove_value(self, identifier, value_str):
+        module_spec = find_spec(self.config.specification, identifier)
+        if (type(module_spec) != dict or "list_item_spec" not in module_spec):
+            raise DataTypeError(identifier + " is not a list")
+        value = parse_value_str(value_str)
+        check_type(module_spec, [value])
+        cur_list = isc.cc.data.find_no_exc(self.config_changes, identifier)
+        if not cur_list:
+            cur_list = isc.cc.data.find_no_exc(self.config.data, identifier)
+        if not cur_list:
+            cur_list = []
+        if value in cur_list:
+            cur_list.remove(value)
+        set(self.config_changes, identifier, cur_list)
+
+    def commit(self):
+        if self.get_local_changes():
+            self._conn.send_POST('/ConfigManager/set_config', self.get_local_changes())
+            # todo: check result
+            self.request_current_config()
+            self.clear_local_changes()

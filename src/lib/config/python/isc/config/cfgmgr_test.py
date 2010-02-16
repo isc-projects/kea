@@ -62,7 +62,7 @@ class TestConfigManagerData(unittest.TestCase):
 #
 # We can probably use a more general version of this
 #
-class FakeCCSession:
+class FakeModuleCCSession:
     def __init__(self):
         self.subscriptions = {}
         # each entry is of the form [ channel, instance, message ]
@@ -106,7 +106,7 @@ class TestConfigManager(unittest.TestCase):
 
     def setUp(self):
         self.data_path = os.environ['CONFIG_TESTDATA_PATH']
-        self.fake_session = FakeCCSession()
+        self.fake_session = FakeModuleCCSession()
         self.cm = ConfigManager(self.data_path, self.fake_session)
         self.name = "TestModule"
         self.spec = isc.config.module_spec_from_file(self.data_path + os.sep + "/spec2.spec")
