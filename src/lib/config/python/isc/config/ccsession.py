@@ -21,9 +21,9 @@
 
 # modeled after ccsession.h/cc 'protocol' changes here need to be
 # made there as well
-"""This module provides the ModuleCCSession class, as well as a set of
-   utility functions to create and parse messages related to commands
-   and configuration"""
+"""This module provides the ModuleCCSession and UICCSession classes,
+   as well as a set of utility functions to create and parse messages
+   related to commands and configuration"""
 
 from isc.cc import Session
 from isc.config.config_data import ConfigData, MultiConfigData
@@ -63,7 +63,7 @@ def create_answer(rcode, arg = None):
     else:
         return { 'result': [ rcode ] }
 
-class ModuleCCSession:
+class ModuleCCSession(ConfigData):
     """This class maintains a connection to the command channel, as
        well as configuration options for modules. The module provides
        a specification file that contains the module name, configuration
@@ -81,9 +81,10 @@ class ModuleCCSession:
            config_handler and command_handler are callback functions,
            see set_config_handler and set_command_handler for more
            information on their signatures."""
-        data_definition = isc.config.module_spec_from_file(spec_file_name)
-        self._config_data = isc.config.config_data.ConfigData(data_definition)
-        self._module_name = data_definition.get_module_name()
+        module_spec = isc.config.module_spec_from_file(spec_file_name)
+        ConfigData.__init__(self, module_spec)
+        
+        self._module_name = module_spec.get_module_name()
         
         self.set_config_handler(config_handler)
         self.set_command_handler(command_handler)
@@ -109,21 +110,6 @@ class ModuleCCSession:
         """Returns the command-channel session that is used, so the
            application can use it directly."""
         return self._session
-
-    def set_config(self, new_config):
-        """Sets the current or non-default configuration"""
-        return self._config_data.set_local_config(new_config)
-
-    def get_config(self):
-        """Returns the current or non-default configuration"""
-        return self._config_data.get_local_config()
-
-    def get_full_config(self):
-        """Returns the current or non-default configuration"""
-        return self._config_data.get_full_config()
-
-    def get_module_spec(self):
-        return self._config_data.get_module_spec()
 
     def close(self):
         """Close the session to the command channel"""
@@ -162,7 +148,7 @@ class ModuleCCSession:
 
     def __send_spec(self):
         """Sends the data specification to the configuration manager"""
-        self._session.group_sendmsg({ "module_spec": self._config_data.get_module_spec().get_full_spec() }, "ConfigManager")
+        self._session.group_sendmsg({ "module_spec": self.get_module_spec().get_full_spec() }, "ConfigManager")
         answer, env = self._session.group_recvmsg(False)
         
     def __request_config(self):
@@ -171,8 +157,8 @@ class ModuleCCSession:
         answer, env = self._session.group_recvmsg(False)
         rcode, value = parse_answer(answer)
         if rcode == 0:
-            if value != None and self._config_data.get_module_spec().validate(False, value):
-                self._config_data.set_local_config(value);
+            if value != None and self.get_module_spec().validate(False, value):
+                self.set_local_config(value);
                 if self._config_handler:
                     self._config_handler(value)
         else:
@@ -182,14 +168,17 @@ class ModuleCCSession:
 class UIModuleCCSession(MultiConfigData):
     """This class is used in a configuration user interface. It contains
        specific functions for getting, displaying, and sending
-       configuration settings."""
+       configuration settings through the b10-cmdctl module."""
     def __init__(self, conn):
+        """Initialize a UIModuleCCSession. The conn object that is
+           passed must have send_GET and send_POST functions"""
         MultiConfigData.__init__(self)
         self._conn = conn
         self.request_specifications()
         self.request_current_config()
 
     def request_specifications(self):
+        """Request the module specifications from b10-cmdctl"""
         # this step should be unnecessary but is the current way cmdctl returns stuff
         # so changes are needed there to make this clean (we need a command to simply get the
         # full specs for everything, including commands etc, not separate gets for that)
@@ -205,12 +194,17 @@ class UIModuleCCSession(MultiConfigData):
             self.set_specification(isc.config.ModuleSpec(cur_spec))
 
     def request_current_config(self):
+        """Requests the current configuration from the configuration
+           manager through b10-cmdctl, and stores those as CURRENT"""
         config = self._conn.send_GET('/config_data')
         if 'version' not in config or config['version'] != 1:
             raise Exception("Bad config version")
-        self.set_local_config(config)
+        self._set_current_config(config)
 
     def add_value(self, identifier, value_str):
+        """Add a value to a configuration list. Raises a DataTypeError
+           if the value does not conform to the list_item_spec field
+           of the module config data specification"""
         module_spec = self.find_spec_part(identifier)
         if (type(module_spec) != dict or "list_item_spec" not in module_spec):
             raise DataTypeError(identifier + " is not a list")
@@ -223,6 +217,11 @@ class UIModuleCCSession(MultiConfigData):
         self.set_value(identifier, cur_list)
 
     def remove_value(self, identifier, value_str):
+        """Remove a value from a configuration list. The value string
+           must be a string representation of the full item. Raises
+           a DataTypeError if the value at the identifier is not a list,
+           or if the given value_str does not match the list_item_spec
+           """
         module_spec = find_spec(self.config.specification, identifier)
         if (type(module_spec) != dict or "list_item_spec" not in module_spec):
             raise DataTypeError(identifier + " is not a list")
@@ -238,6 +237,8 @@ class UIModuleCCSession(MultiConfigData):
         set(self.config_changes, identifier, cur_list)
 
     def commit(self):
+        """Commit all local changes, send them through b10-cmdctl to
+           the configuration manager"""
         if self.get_local_changes():
             self._conn.send_POST('/ConfigManager/set_config', self.get_local_changes())
             # todo: check result

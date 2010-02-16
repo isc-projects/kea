@@ -117,11 +117,9 @@ class BoB:
             print(new_config)
         errors = []
         if self.ccs.get_module_spec().validate(False, new_config, errors):
-            print("[XX] new config validated")
-            self.ccs.set_config(new_config)
+            self.ccs.set_local_config(new_config)
             answer = isc.config.ccsession.create_answer(0)
         else:
-            print("[XX] new config validation failure")
             if len(errors) > 0:
                 answer = isc.config.ccsession.create_answer(1, " ".join(errors))
             else:

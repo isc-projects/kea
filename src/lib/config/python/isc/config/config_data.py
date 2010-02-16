@@ -200,7 +200,7 @@ class MultiConfigData:
             return None
 
     # this function should only be called by __request_config
-    def __set_current_config(self, config):
+    def _set_current_config(self, config):
         """Replace the full current config values."""
         self._current_config = config
 
@@ -370,5 +370,3 @@ class MultiConfigData:
             return spec_name_list(spec, identifier + "/")
         else:
             return self._specifications.keys()
-
-    
