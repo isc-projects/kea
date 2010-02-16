@@ -2,6 +2,8 @@ AM_CPPFLAGS = -I$(top_builddir)/include -I$(top_builddir)/src/lib -I$(top_buildd
 
 pkglibexecdir = $(libexecdir)/@PACKAGE@
 
+CLEANFILES = *.gcno *.gcda
+
 pkglibexec_PROGRAMS = b10-auth
 b10_auth_SOURCES = auth_srv.cc auth_srv.h
 b10_auth_SOURCES += common.cc common.h
