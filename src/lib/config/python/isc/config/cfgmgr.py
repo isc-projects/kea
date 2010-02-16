@@ -225,8 +225,6 @@ class ConfigManager:
                 self.cc.group_sendmsg({ "config_update": conf_part[module_name] }, module_name)
                 # replace 'our' answer with that of the module
                 answer, env = self.cc.group_recvmsg(False)
-                print("[XX] module responded with")
-                print(answer)
             rcode, val = isc.config.ccsession.parse_answer(answer)
             if rcode == 0:
                 self.write_config()
@@ -240,8 +238,6 @@ class ConfigManager:
                 if module != "version":
                     self.cc.group_sendmsg({ "config_update": self.config.data[module] }, module)
                     answer, env = self.cc.group_recvmsg(False)
-                    print("[XX] one module responded with")
-                    print(answer)
                     rcode, val = isc.config.ccsession.parse_answer(answer)
                     if rcode != 0:
                         got_error = True
@@ -266,8 +262,6 @@ class ConfigManager:
         # todo: error checking (like keyerrors)
         answer = {}
         self.set_data_spec(spec)
-        print("[XX] cfgmgr add spec:")
-        print(spec)
         
         # We should make one general 'spec update for module' that
         # passes both specification and commands at once
@@ -317,10 +311,6 @@ class ConfigManager:
             msg, env = self.cc.group_recvmsg(False)
             if msg:
                 answer = self.handle_msg(msg);
-                print("[XX] CFGMGR Sending answer to UI:")
-                print(answer)
-                print("For command")
-                print(msg)
                 self.cc.group_reply(env, answer)
             else:
                 self.running = False
