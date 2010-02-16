@@ -1,5 +1,5 @@
 bin_SCRIPTS = bind10
-CLEANFILES = bind10.py
+CLEANFILES = bind10
 
 pkglibexecdir = $(libexecdir)/@PACKAGE@
 
