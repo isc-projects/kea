@@ -2,6 +2,8 @@
 lib_LTLIBRARIES = libexceptions.la
 libexceptions_la_SOURCES = exceptions.h exceptions.cc
 
+CLEANFILES = *.gcno *.gcda
+
 TESTS =
 if HAVE_GTEST
 TESTS += run_unittests
