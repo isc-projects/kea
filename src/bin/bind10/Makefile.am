@@ -1,4 +1,4 @@
-bin_SCRIPTS = bind10
+sbin_SCRIPTS = bind10
 CLEANFILES = bind10
 
 pkglibexecdir = $(libexecdir)/@PACKAGE@
