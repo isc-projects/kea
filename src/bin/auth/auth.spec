@@ -1,6 +1,6 @@
 {
   "data_specification": {
-    "module_name": "ParkingLot"
+    "module_name": "Auth"
   }
 }
 
