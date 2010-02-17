@@ -19,7 +19,6 @@
 
 #include <iostream>
 #include <string>
-#include <vector>
 
 #include <boost/shared_ptr.hpp>
 
@@ -73,6 +72,10 @@ typedef boost::shared_ptr<RdataIterator> RdataIteratorPtr;
 //     by one)?  ldns has ldns_rr_list_compare(), which takes
 //     the latter approach (assuming the caller sorts the lists
 //     beforehand?).
+//   - do we need to allow the user to remove specific Rdata?
+///    Looking at the BIND9 code, don't see the strong need for this at the
+///    moment.
+///
 class AbstractRRset {
 public:
     virtual ~AbstractRRset() {}
@@ -91,10 +94,6 @@ public:
     ///
     /// once constructed, only TTL and the set of Rdata can be modified,
     /// so \c setTTL() is the only explicit setter method.
-    ///
-    /// Do we need to allow the user to remove specific Rdata?
-    /// Looking at the BIND9 code, don't see the strong need for this at the
-    /// moment.
     ///
     virtual void setTTL(const RRTTL& ttl) = 0;
 
