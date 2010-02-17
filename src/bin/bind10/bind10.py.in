@@ -233,7 +233,7 @@ class BoB:
         cmd = { "command": ['shutdown']}
         self.cc_session.group_sendmsg(cmd, 'Boss', 'Cmd-Ctrld')
         self.cc_session.group_sendmsg(cmd, "Boss", "ConfigManager")
-        self.cc_session.group_sendmsg(cmd, "Boss", "ParkingLot")
+        self.cc_session.group_sendmsg(cmd, "Boss", "Auth")
 
     def stop_process(self, process):
         """Stop the given process, friendly-like."""
