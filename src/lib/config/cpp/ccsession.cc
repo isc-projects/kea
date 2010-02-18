@@ -50,7 +50,7 @@ using isc::data::ParseError;
 using isc::data::ModuleSpecError;
 
 void
-CommandSession::read_data_definition(const std::string& filename) {
+ModuleCCSession::read_module_specification(const std::string& filename) {
     std::ifstream file;
 
     // this file should be declared in a @something@ directive
@@ -61,27 +61,27 @@ CommandSession::read_data_definition(const std::string& filename) {
     }
 
     try {
-        data_definition_ = ModuleSpec(file, true);
+        module_specification_ = ModuleSpec(file, true);
     } catch (ParseError pe) {
-        cout << "Error parsing definition file: " << pe.what() << endl;
+        cout << "Error parsing module specification file: " << pe.what() << endl;
         exit(1);
     } catch (ModuleSpecError dde) {
-        cout << "Error reading definition file: " << dde.what() << endl;
+        cout << "Error reading module specification file: " << dde.what() << endl;
         exit(1);
     }
     file.close();
 }
 
-CommandSession::CommandSession(std::string spec_file_name,
+ModuleCCSession::ModuleCCSession(std::string spec_file_name,
                                isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config),
                                isc::data::ElementPtr(*command_handler)(isc::data::ElementPtr command)
                               ) throw (isc::cc::SessionError):
     session_(isc::cc::Session())
 {
-    read_data_definition(spec_file_name);
+    read_module_specification(spec_file_name);
     sleep(1);
 
-    module_name_ = data_definition_.getDefinition()->get("module_spec")->get("module_name")->stringValue();
+    module_name_ = module_specification_.getFullSpec()->get("module_spec")->get("module_name")->stringValue();
     config_handler_ = config_handler;
     command_handler_ = command_handler;
 
@@ -96,7 +96,7 @@ CommandSession::CommandSession(std::string spec_file_name,
     //session_.subscribe("Boss", "*");
     //session_.subscribe("statistics", "*");
     // send the data specification
-    session_.group_sendmsg(data_definition_.getDefinition(), "ConfigManager");
+    session_.group_sendmsg(module_specification_.getFullSpec(), "ConfigManager");
     session_.group_recvmsg(env, answer, false);
     
     // get any stored configuration from the manager
@@ -116,13 +116,13 @@ CommandSession::CommandSession(std::string spec_file_name,
 }
 
 int
-CommandSession::getSocket()
+ModuleCCSession::getSocket()
 {
     return (session_.getSocket());
 }
 
 int
-CommandSession::check_command()
+ModuleCCSession::check_command()
 {
     cout << "[XX] check for command" << endl;
     ElementPtr cmd, routing, data;

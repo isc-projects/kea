@@ -106,7 +106,7 @@ main(int argc, char* argv[]) {
         } else {
             specfile = std::string(AUTH_SPECFILE_LOCATION);
         }
-        CommandSession cs = CommandSession(specfile,
+        ModuleCCSession cs = ModuleCCSession(specfile,
                                            my_config_handler,
                                            my_command_handler);
     

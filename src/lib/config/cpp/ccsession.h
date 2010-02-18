@@ -23,20 +23,20 @@
 #include <cc/session.h>
 #include <cc/data.h>
 
-class CommandSession {
+class ModuleCCSession {
 public:
     /**
      * Initialize a config/command session
      * @param module_name: The name of this module. This is not a
      *                     reference because we expect static strings
      *                     to be passed here.
-     * @param spec_file_name: The name of the file containing the data
-     *                        definition.
+     * @param spec_file_name: The name of the file containing the
+     *                        module specification.
      */
-    CommandSession(std::string spec_file_name,
-                   isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config) = NULL,
-                   isc::data::ElementPtr(*command_handler)(isc::data::ElementPtr command) = NULL
-                  ) throw (isc::cc::SessionError);
+    ModuleCCSession(std::string spec_file_name,
+                    isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config) = NULL,
+                    isc::data::ElementPtr(*command_handler)(isc::data::ElementPtr command) = NULL
+                    ) throw (isc::cc::SessionError);
     int getSocket();
 
     /**
@@ -71,11 +71,11 @@ public:
     void set_command_handler(isc::data::ElementPtr(*command_handler)(isc::data::ElementPtr command)) { command_handler_ = command_handler; };
     
 private:
-    void read_data_definition(const std::string& filename);
+    void read_module_specification(const std::string& filename);
     
     std::string module_name_;
     isc::cc::Session session_;
-    isc::data::ModuleSpec data_definition_;
+    isc::data::ModuleSpec module_specification_;
     isc::data::ElementPtr config_;
 
     isc::data::ElementPtr(*config_handler_)(isc::data::ElementPtr new_config);

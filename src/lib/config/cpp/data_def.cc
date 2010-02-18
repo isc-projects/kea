@@ -26,6 +26,10 @@
 
 using namespace isc::data;
 
+//
+// static functions
+//
+
 // todo: is there a direct way to get a std::string from an enum label?
 static std::string
 getType_string(Element::types type)
@@ -98,7 +102,7 @@ check_config_item(const ElementPtr& spec) {
                     !spec->get("item_optional")->boolValue()
                    );
 
-    // if list, check the list definition
+    // if list, check the list specification
     if (getType_value(spec->get("item_type")->stringValue()) == Element::list) {
         check_leaf_item(spec, "list_item_spec", Element::map, true);
         check_config_item(spec->get("list_item_spec"));
@@ -150,10 +154,10 @@ check_data_specification(const ElementPtr& spec) {
     }
 }
 
-// checks whether the given element is a valid data definition
+// checks whether the given element is a valid module specification
 // throws a ModuleSpecError if the specification is bad
 static void
-check_definition(const ElementPtr& def)
+check_module_specification(const ElementPtr& def)
 {
     if (!def->contains("module_spec")) {
         throw ModuleSpecError("Data specification does not contain module_spec element");
@@ -161,6 +165,10 @@ check_definition(const ElementPtr& def)
         check_data_specification(def->get("module_spec"));
     }
 }
+
+//
+// Public functions
+//
 
 ModuleSpec::ModuleSpec(const std::string& file_name,
                                const bool check)
@@ -174,20 +182,59 @@ ModuleSpec::ModuleSpec(const std::string& file_name,
         throw ModuleSpecError(errs.str());
     }
 
-    definition = Element::createFromString(file, file_name);
+    module_specification = Element::createFromString(file, file_name);
     if (check) {
-        check_definition(definition);
+        check_module_specification(module_specification);
     }
 }
 
+
 ModuleSpec::ModuleSpec(std::istream& in, const bool check)
                                throw(ParseError, ModuleSpecError) {
-    definition = Element::createFromString(in);
+    module_specification = Element::createFromString(in);
     // make sure the whole structure is complete and valid
     if (check) {
-        check_definition(definition);
+        check_module_specification(module_specification);
     }
 }
+
+const ElementPtr
+ModuleSpec::getCommandsSpec()
+{
+    if (module_specification->contains("commands")) {
+        return module_specification->get("commands");
+    } else {
+        return ElementPtr();
+    }
+}
+
+const ElementPtr
+ModuleSpec::getConfigSpec()
+{
+    if (module_specification->contains("config_data")) {
+        return module_specification->get("config_data");
+    } else {
+        return ElementPtr();
+    }
+}
+
+const std::string
+ModuleSpec::getModuleName()
+{
+    return module_specification->get("module_name")->stringValue();
+}
+
+bool
+ModuleSpec::validate(const ElementPtr data)
+{
+    ElementPtr spec = module_specification->find("module_spec/config_data");
+    return validate_spec_list(spec, data);
+}
+
+
+//
+// private functions
+//
 
 //
 // helper functions for validation
@@ -283,14 +330,5 @@ ModuleSpec::validate_spec_list(const ElementPtr spec, const ElementPtr data) {
         }
     }
     return true;
-}
-
-// TODO
-// this function does *not* check if the specification is in correct
-// form, we should do that in the constructor
-bool
-ModuleSpec::validate(const ElementPtr data) {
-    ElementPtr spec = definition->find("module_spec/config_data");
-    return validate_spec_list(spec, data);
 }
 
