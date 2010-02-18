@@ -23,6 +23,9 @@
 #include <cc/session.h>
 #include <cc/data.h>
 
+namespace isc {
+namespace config {
+
 class ModuleCCSession {
 public:
     /**
@@ -75,13 +78,15 @@ private:
     
     std::string module_name_;
     isc::cc::Session session_;
-    isc::data::ModuleSpec module_specification_;
+    ModuleSpec module_specification_;
     isc::data::ElementPtr config_;
 
     isc::data::ElementPtr(*config_handler_)(isc::data::ElementPtr new_config);
     isc::data::ElementPtr(*command_handler_)(isc::data::ElementPtr command);
 };
 
+}
+}
 #endif // __CCSESSION_H
 
 // Local Variables:

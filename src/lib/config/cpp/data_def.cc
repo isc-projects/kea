@@ -25,7 +25,7 @@
 // todo: add more context to thrown ModuleSpecErrors?
 
 namespace isc {
-namespace data {
+namespace config {
 
 //
 // static functions

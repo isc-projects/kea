@@ -106,9 +106,9 @@ main(int argc, char* argv[]) {
         } else {
             specfile = std::string(AUTH_SPECFILE_LOCATION);
         }
-        ModuleCCSession cs = ModuleCCSession(specfile,
-                                           my_config_handler,
-                                           my_command_handler);
+        isc::config::ModuleCCSession cs = isc::config::ModuleCCSession(specfile,
+                                                                       my_config_handler,
+                                                                       my_command_handler);
     
         // main server loop
         fd_set fds;
