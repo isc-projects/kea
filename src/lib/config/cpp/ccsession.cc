@@ -48,6 +48,7 @@ using isc::data::ElementPtr;
 using isc::data::ModuleSpec;
 using isc::data::ParseError;
 using isc::data::ModuleSpecError;
+using namespace isc::data;
 
 void
 ModuleCCSession::read_module_specification(const std::string& filename) {
@@ -61,7 +62,7 @@ ModuleCCSession::read_module_specification(const std::string& filename) {
     }
 
     try {
-        module_specification_ = ModuleSpec(file, true);
+        module_specification_ = moduleSpecFromFile(file, true);
     } catch (ParseError pe) {
         cout << "Error parsing module specification file: " << pe.what() << endl;
         exit(1);

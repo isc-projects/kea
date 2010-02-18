@@ -24,7 +24,8 @@
 
 // todo: add more context to thrown ModuleSpecErrors?
 
-using namespace isc::data;
+namespace isc {
+namespace data {
 
 //
 // static functions
@@ -170,29 +171,12 @@ check_module_specification(const ElementPtr& def)
 // Public functions
 //
 
-ModuleSpec::ModuleSpec(const std::string& file_name,
-                               const bool check)
-                               throw(ParseError, ModuleSpecError) {
-    std::ifstream file;
-
-    file.open(file_name.c_str());
-    if (!file) {
-        std::stringstream errs;
-        errs << "Error opening " << file_name << ": " << strerror(errno);
-        throw ModuleSpecError(errs.str());
-    }
-
-    module_specification = Element::createFromString(file, file_name);
-    if (check) {
-        check_module_specification(module_specification);
-    }
-}
-
-
-ModuleSpec::ModuleSpec(std::istream& in, const bool check)
-                               throw(ParseError, ModuleSpecError) {
-    module_specification = Element::createFromString(in);
-    // make sure the whole structure is complete and valid
+ModuleSpec::ModuleSpec(ElementPtr module_spec_element,
+                       const bool check)
+                       throw(ModuleSpecError)
+                       
+{
+    module_specification = module_spec_element;
     if (check) {
         check_module_specification(module_specification);
     }
@@ -229,6 +213,30 @@ ModuleSpec::validate(const ElementPtr data)
 {
     ElementPtr spec = module_specification->find("module_spec/config_data");
     return validate_spec_list(spec, data);
+}
+
+ModuleSpec
+moduleSpecFromFile(const std::string& file_name, const bool check)
+                   throw(ParseError, ModuleSpecError)
+{
+    std::ifstream file;
+
+    file.open(file_name.c_str());
+    if (!file) {
+        std::stringstream errs;
+        errs << "Error opening " << file_name << ": " << strerror(errno);
+        throw ModuleSpecError(errs.str());
+    }
+
+    ElementPtr module_spec_element = Element::createFromString(file, file_name);
+    return ModuleSpec(module_spec_element, check);
+}
+
+ModuleSpec
+moduleSpecFromFile(std::ifstream& in, const bool check)
+                   throw(ParseError, ModuleSpecError) {
+    ElementPtr module_spec_element = Element::createFromString(in);
+    return ModuleSpec(module_spec_element, check);
 }
 
 
@@ -332,3 +340,5 @@ ModuleSpec::validate_spec_list(const ElementPtr spec, const ElementPtr data) {
     return true;
 }
 
+}
+}
