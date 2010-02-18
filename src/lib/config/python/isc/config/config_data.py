@@ -21,7 +21,7 @@ two through the classes in ccsession)
 """
 
 import isc.cc.data
-import isc.config.datadefinition
+import isc.config.module_spec
 
 class ConfigDataError(Exception): pass
 
@@ -102,7 +102,7 @@ def spec_name_list(spec, prefix="", recurse=False):
 
 
 class ConfigData:
-    """This class stores the datadefinition and the current non-default
+    """This class stores the module specs and the current non-default
        config values. It provides functions to get the actual value or
        the default value if no non-default value has been set"""
    
@@ -162,7 +162,7 @@ class ConfigData:
         return result
 
 class MultiConfigData:
-    """This class stores the datadefinitions, current non-default
+    """This class stores the module specs, current non-default
        configuration values and 'local' (uncommitted) changes for
        multiple modules"""
     LOCAL   = 1
