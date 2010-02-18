@@ -45,10 +45,10 @@ using namespace std;
 
 using isc::data::Element;
 using isc::data::ElementPtr;
-using isc::data::ModuleSpec;
 using isc::data::ParseError;
-using isc::data::ModuleSpecError;
-using namespace isc::data;
+
+namespace isc {
+namespace config {
 
 void
 ModuleCCSession::read_module_specification(const std::string& filename) {
@@ -156,3 +156,5 @@ ModuleCCSession::check_command()
     return 0;
 }
 
+}
+}

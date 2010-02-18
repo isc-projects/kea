@@ -20,7 +20,9 @@
 
 #include <sstream>
 
-namespace isc { namespace data {
+using namespace isc::data;
+
+namespace isc { namespace config {
 
     ///
     /// A standard ModuleSpec exception that is thrown when a

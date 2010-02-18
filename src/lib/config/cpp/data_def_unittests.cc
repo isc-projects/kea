@@ -23,6 +23,7 @@
 #include "data_def_unittests_config.h"
 
 using namespace isc::data;
+using namespace isc::config;
 
 std::string specfile(const std::string name) {
     return std::string(TEST_DATA_PATH) + "/" + name;
