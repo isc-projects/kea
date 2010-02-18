@@ -30,7 +30,7 @@ namespace isc { namespace data {
     /// what() there
     class ModuleSpecError : public std::exception {
     public:
-        ModuleSpecError(std::string m = "Data definition is invalid") : msg(m) {}
+        ModuleSpecError(std::string m = "Module specification is invalid") : msg(m) {}
         ~ModuleSpecError() throw() {}
         const char* what() const throw() { return msg.c_str(); }
     private:
@@ -53,38 +53,52 @@ namespace isc { namespace data {
         /// Create a \c ModuleSpec instance with the given data as
         /// the specification
         /// \param e The Element containing the data specification
-        explicit ModuleSpec(ElementPtr e) : definition(e) {};
+        explicit ModuleSpec(ElementPtr e) : module_specification(e) {};
 
         /// Creates a \c ModuleSpec instance from the contents
         /// of the file given by file_name.
-        /// If check is true, and the definition is not of the correct
-        /// form, a ModuleSpecError is thrown. If the file could
-        /// not be parse, a ParseError is thrown.
+        /// If check is true, and the module specification is not of
+        /// the correct form, a ModuleSpecError is thrown. If the file
+        /// could not be parse, a ParseError is thrown.
         /// \param file_name The file to be opened and parsed
-        /// \param check If true, the data definition in the file is
-        /// checked to be of the correct form
+        /// \param check If true, the module specification in the file
+        /// is checked to be of the correct form
         ModuleSpec(const std::string& file_name, const bool check = true)
                        throw(ParseError, ModuleSpecError);
 
-        // todo: make check default false, or leave out option completely and always check?
         /// Creates a \c ModuleSpec instance from the given input
         /// stream that contains the contents of a .spec file.
-        /// If check is true, and the definition is not of
+        /// If check is true, and the module specification is not of
         /// the correct form, a ModuleSpecError is thrown. If the
         /// file could not be parsed, a ParseError is thrown.
         /// \param in The std::istream containing the .spec file data
-        /// \param check If true, the data definition is checked to be
-        /// of the correct form
+        /// \param check If true, the module specification is checked
+        /// to be of the correct form
         explicit ModuleSpec(std::istream& in, const bool check = true)
                                 throw(ParseError, ModuleSpecError);
 
-        /// Returns the base \c element of the data definition contained
-        /// by this instance
-        /// \return ElementPtr Shared pointer to the data definition
-        const ElementPtr getDefinition() { return definition; };
+        /// Returns the commands part of the specification as an
+        /// ElementPtr, returns an empty ElementPtr if there is none
+        /// \return ElementPtr Shared pointer to the commands
+        ///                    part of the specification
+        const ElementPtr getCommandsSpec();
+
+        /// Returns the configuration part of the specification as an
+        /// ElementPtr
+        /// \return ElementPtr Shared pointer to the configuration
+        ///                    part of the specification
+        const ElementPtr getConfigSpec();
+
+        /// Returns the full module specification as an ElementPtr
+        /// \return ElementPtr Shared pointer to the specification
+        const ElementPtr getFullSpec() { return module_specification; };
+
+        /// Returns the module name as specified by the specification
+        const std::string getModuleName();
+        
         // returns true if the given element conforms to this data
-        // definition scheme
-        /// Validates the given data for this specification.
+        // configuration specification
+        /// Validates the given configuration data for this specification.
         /// \param data The base \c Element of the data to check
         /// \return true if the data conforms to the specification,
         /// false otherwise.
@@ -95,7 +109,7 @@ namespace isc { namespace data {
         bool validate_spec(const ElementPtr spec, const ElementPtr data);
         bool validate_spec_list(const ElementPtr spec, const ElementPtr data);
 
-        ElementPtr definition;
+        ElementPtr module_specification;
     };
 
 } }

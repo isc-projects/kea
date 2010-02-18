@@ -47,11 +47,11 @@ TEST(ModuleSpec, ReadingSpecfiles) {
     // Tests whether we can open specfiles and if we get the
     // right parse errors
     ModuleSpec dd = ModuleSpec(specfile("spec1.spec"));
-    EXPECT_EQ(dd.getDefinition()->get("module_spec")
+    EXPECT_EQ(dd.getFullSpec()->get("module_spec")
                                 ->get("module_name")
                                 ->stringValue(), "Spec1");
     dd = ModuleSpec(specfile("spec2.spec"));
-    EXPECT_EQ(dd.getDefinition()->get("module_spec")
+    EXPECT_EQ(dd.getFullSpec()->get("module_spec")
                                 ->get("config_data")->size(), 6);
     data_def_error("doesnotexist",
                    "Error opening ",
@@ -61,7 +61,7 @@ TEST(ModuleSpec, ReadingSpecfiles) {
     std::ifstream file;
     file.open(specfile("spec1.spec").c_str());
     dd = ModuleSpec(file);
-    EXPECT_EQ(dd.getDefinition()->get("module_spec")
+    EXPECT_EQ(dd.getFullSpec()->get("module_spec")
                                 ->get("module_name")
                                 ->stringValue(), "Spec1");
 }

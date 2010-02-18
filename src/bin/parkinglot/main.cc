@@ -110,7 +110,7 @@ main(int argc, char* argv[]) {
         } else {
             specfile = std::string(PARKINGLOT_SPECFILE_LOCATION);
         }
-        CommandSession cs = CommandSession(specfile, my_config_handler, my_command_handler);
+        ModuleCCSession cs = ModuleCCSession(specfile, my_config_handler, my_command_handler);
     
         // main server loop
         fd_set fds;
