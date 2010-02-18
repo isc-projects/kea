@@ -1,5 +1,20 @@
-#ifndef _DATA_DEF_H
-#define _DATA_DEF_H 1
+// Copyright (C) 2010  Internet Systems Consortium.
+//
+// Permission to use, copy, modify, and distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SYSTEMS CONSORTIUM
+// DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+// INTERNET SYSTEMS CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+// FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+// NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+// WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+#ifndef _MODULE_SPEC_H
+#define _MODULE_SPEC_H 1
 
 #include <cc/data.h>
 
@@ -8,22 +23,22 @@
 namespace isc { namespace data {
 
     ///
-    /// A standard DataDefinition exception that is thrown when a
+    /// A standard ModuleSpec exception that is thrown when a
     /// specification is not in the correct form.
     ///
     /// TODO: use jinmei's exception class as a base and not c_str in
     /// what() there
-    class DataDefinitionError : public std::exception {
+    class ModuleSpecError : public std::exception {
     public:
-        DataDefinitionError(std::string m = "Data definition is invalid") : msg(m) {}
-        ~DataDefinitionError() throw() {}
+        ModuleSpecError(std::string m = "Data definition is invalid") : msg(m) {}
+        ~ModuleSpecError() throw() {}
         const char* what() const throw() { return msg.c_str(); }
     private:
         std::string msg;
     };
 
     ///
-    /// The \c DataDefinition class holds a data specification.
+    /// The \c ModuleSpec class holds a data specification.
     /// Each module should have a .spec file containing the specification
     /// for configuration and commands for that module.
     /// This class holds that specification, and provides a function to
@@ -32,36 +47,36 @@ namespace isc { namespace data {
     ///
     /// The form of the specification is described in doc/ (TODO)
     ///
-    class DataDefinition {
+    class ModuleSpec {
     public:
-        explicit DataDefinition() {};
-        /// Create a \c DataDefinition instance with the given data as
+        explicit ModuleSpec() {};
+        /// Create a \c ModuleSpec instance with the given data as
         /// the specification
         /// \param e The Element containing the data specification
-        explicit DataDefinition(ElementPtr e) : definition(e) {};
+        explicit ModuleSpec(ElementPtr e) : definition(e) {};
 
-        /// Creates a \c DataDefinition instance from the contents
+        /// Creates a \c ModuleSpec instance from the contents
         /// of the file given by file_name.
         /// If check is true, and the definition is not of the correct
-        /// form, a DataDefinitionError is thrown. If the file could
+        /// form, a ModuleSpecError is thrown. If the file could
         /// not be parse, a ParseError is thrown.
         /// \param file_name The file to be opened and parsed
         /// \param check If true, the data definition in the file is
         /// checked to be of the correct form
-        DataDefinition(const std::string& file_name, const bool check = true)
-                       throw(ParseError, DataDefinitionError);
+        ModuleSpec(const std::string& file_name, const bool check = true)
+                       throw(ParseError, ModuleSpecError);
 
         // todo: make check default false, or leave out option completely and always check?
-        /// Creates a \c DataDefinition instance from the given input
+        /// Creates a \c ModuleSpec instance from the given input
         /// stream that contains the contents of a .spec file.
         /// If check is true, and the definition is not of
-        /// the correct form, a DataDefinitionError is thrown. If the
+        /// the correct form, a ModuleSpecError is thrown. If the
         /// file could not be parsed, a ParseError is thrown.
         /// \param in The std::istream containing the .spec file data
         /// \param check If true, the data definition is checked to be
         /// of the correct form
-        explicit DataDefinition(std::istream& in, const bool check = true)
-                                throw(ParseError, DataDefinitionError);
+        explicit ModuleSpec(std::istream& in, const bool check = true)
+                                throw(ParseError, ModuleSpecError);
 
         /// Returns the base \c element of the data definition contained
         /// by this instance

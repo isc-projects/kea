@@ -45,9 +45,9 @@ using namespace std;
 
 using isc::data::Element;
 using isc::data::ElementPtr;
-using isc::data::DataDefinition;
+using isc::data::ModuleSpec;
 using isc::data::ParseError;
-using isc::data::DataDefinitionError;
+using isc::data::ModuleSpecError;
 
 void
 CommandSession::read_data_definition(const std::string& filename) {
@@ -61,11 +61,11 @@ CommandSession::read_data_definition(const std::string& filename) {
     }
 
     try {
-        data_definition_ = DataDefinition(file, true);
+        data_definition_ = ModuleSpec(file, true);
     } catch (ParseError pe) {
         cout << "Error parsing definition file: " << pe.what() << endl;
         exit(1);
-    } catch (DataDefinitionError dde) {
+    } catch (ModuleSpecError dde) {
         cout << "Error reading definition file: " << dde.what() << endl;
         exit(1);
     }
