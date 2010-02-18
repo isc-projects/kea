@@ -19,7 +19,7 @@
 
 #include <string>
 
-#include <config/data_def.h>
+#include <config/module_spec.h>
 #include <cc/session.h>
 #include <cc/data.h>
 

@@ -34,7 +34,7 @@
 #include <boost/foreach.hpp>
 
 #include <cc/data.h>
-#include <data_def.h>
+#include <module_spec.h>
 #include <cc/session.h>
 
 //#include "common.h"
