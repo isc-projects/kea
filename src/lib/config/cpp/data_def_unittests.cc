@@ -34,9 +34,9 @@ data_def_error(const std::string& file,
                const std::string& error2 = "",
                const std::string& error3 = "")
 {
-    EXPECT_THROW(ModuleSpec(specfile(file)), ModuleSpecError);
+    EXPECT_THROW(moduleSpecFromFile(specfile(file)), ModuleSpecError);
     try {
-        ModuleSpec dd = ModuleSpec(specfile(file));
+        ModuleSpec dd = moduleSpecFromFile(specfile(file));
     } catch (ModuleSpecError dde) {
         std::string ddew = dde.what();
         EXPECT_EQ(error1 + error2 + error3, ddew);
@@ -46,11 +46,11 @@ data_def_error(const std::string& file,
 TEST(ModuleSpec, ReadingSpecfiles) {
     // Tests whether we can open specfiles and if we get the
     // right parse errors
-    ModuleSpec dd = ModuleSpec(specfile("spec1.spec"));
+    ModuleSpec dd = moduleSpecFromFile(specfile("spec1.spec"));
     EXPECT_EQ(dd.getFullSpec()->get("module_spec")
                                 ->get("module_name")
                                 ->stringValue(), "Spec1");
-    dd = ModuleSpec(specfile("spec2.spec"));
+    dd = moduleSpecFromFile(specfile("spec2.spec"));
     EXPECT_EQ(dd.getFullSpec()->get("module_spec")
                                 ->get("config_data")->size(), 6);
     data_def_error("doesnotexist",
@@ -60,7 +60,7 @@ TEST(ModuleSpec, ReadingSpecfiles) {
 
     std::ifstream file;
     file.open(specfile("spec1.spec").c_str());
-    dd = ModuleSpec(file);
+    dd = moduleSpecFromFile(file);
     EXPECT_EQ(dd.getFullSpec()->get("module_spec")
                                 ->get("module_name")
                                 ->stringValue(), "Spec1");
@@ -132,7 +132,7 @@ data_test(ModuleSpec dd, const std::string& data_file_name)
 }
 
 TEST(ModuleSpec, DataValidation) {
-    ModuleSpec dd = ModuleSpec(specfile("spec22.spec"));
+    ModuleSpec dd = moduleSpecFromFile(specfile("spec22.spec"));
 
     EXPECT_TRUE(data_test(dd, "data22_1.data"));
     EXPECT_FALSE(data_test(dd, "data22_2.data"));

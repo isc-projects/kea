@@ -53,29 +53,8 @@ namespace isc { namespace data {
         /// Create a \c ModuleSpec instance with the given data as
         /// the specification
         /// \param e The Element containing the data specification
-        explicit ModuleSpec(ElementPtr e) : module_specification(e) {};
-
-        /// Creates a \c ModuleSpec instance from the contents
-        /// of the file given by file_name.
-        /// If check is true, and the module specification is not of
-        /// the correct form, a ModuleSpecError is thrown. If the file
-        /// could not be parse, a ParseError is thrown.
-        /// \param file_name The file to be opened and parsed
-        /// \param check If true, the module specification in the file
-        /// is checked to be of the correct form
-        ModuleSpec(const std::string& file_name, const bool check = true)
-                       throw(ParseError, ModuleSpecError);
-
-        /// Creates a \c ModuleSpec instance from the given input
-        /// stream that contains the contents of a .spec file.
-        /// If check is true, and the module specification is not of
-        /// the correct form, a ModuleSpecError is thrown. If the
-        /// file could not be parsed, a ParseError is thrown.
-        /// \param in The std::istream containing the .spec file data
-        /// \param check If true, the module specification is checked
-        /// to be of the correct form
-        explicit ModuleSpec(std::istream& in, const bool check = true)
-                                throw(ParseError, ModuleSpecError);
+        explicit ModuleSpec(ElementPtr e, const bool check = true)
+                            throw(ModuleSpecError);
 
         /// Returns the commands part of the specification as an
         /// ElementPtr, returns an empty ElementPtr if there is none
@@ -112,6 +91,29 @@ namespace isc { namespace data {
         ElementPtr module_specification;
     };
 
+    /// Creates a \c ModuleSpec instance from the contents
+    /// of the file given by file_name.
+    /// If check is true, and the module specification is not of
+    /// the correct form, a ModuleSpecError is thrown. If the file
+    /// could not be parse, a ParseError is thrown.
+    /// \param file_name The file to be opened and parsed
+    /// \param check If true, the module specification in the file
+    /// is checked to be of the correct form
+    ModuleSpec
+    moduleSpecFromFile(const std::string& file_name, const bool check = true)
+                       throw(ParseError, ModuleSpecError);
+
+    /// Creates a \c ModuleSpec instance from the given input
+    /// stream that contains the contents of a .spec file.
+    /// If check is true, and the module specification is not of
+    /// the correct form, a ModuleSpecError is thrown. If the
+    /// file could not be parsed, a ParseError is thrown.
+    /// \param in The std::istream containing the .spec file data
+    /// \param check If true, the module specification is checked
+    /// to be of the correct form
+    ModuleSpec
+    moduleSpecFromFile(std::ifstream& in, const bool check = true)
+                       throw(ParseError, ModuleSpecError);
 } }
 
 #endif // _DATA_DEF_H
