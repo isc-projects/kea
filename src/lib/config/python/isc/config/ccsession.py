@@ -21,9 +21,20 @@
 
 # modeled after ccsession.h/cc 'protocol' changes here need to be
 # made there as well
-"""This module provides the ModuleCCSession and UICCSession classes,
+"""Classes and functions for handling configuration and commands
+
+   This module provides the ModuleCCSession and UICCSession classes,
    as well as a set of utility functions to create and parse messages
-   related to commands and configuration"""
+   related to commands and configuration
+
+   Modules should use the ModuleCCSession class to connect to the
+   configuration manager, and receive updates and commands from
+   other modules.
+
+   Configuration user interfaces should use the UICCSession to connect
+   to b10-cmdctl, and receive and send configuration and commands
+   through that to the configuration manager.
+"""
 
 from isc.cc import Session
 from isc.config.config_data import ConfigData, MultiConfigData

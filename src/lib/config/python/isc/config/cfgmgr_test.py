@@ -35,9 +35,6 @@ class TestConfigManagerData(unittest.TestCase):
         self.assertEqual(self.config_manager_data.db_filename,
                          self.data_path + os.sep + "b10-config.db")
 
-    def test_set_data_definition(self):
-        pass
-
     def test_read_from_file(self):
         ConfigManagerData.read_from_file(self.data_path)
         self.assertRaises(ConfigManagerDataEmpty,
@@ -59,6 +56,21 @@ class TestConfigManagerData(unittest.TestCase):
         new_config = ConfigManagerData(self.data_path, output_file_name)
         self.assertEqual(self.config_manager_data, new_config)
 
+    def test_equality(self):
+        # tests the __eq__ function. Equality is only defined
+        # by equality of the .data element. If data_path or db_filename
+        # are different, but the contents are the same, it's still
+        # considered equal
+        cfd1 = ConfigManagerData(self.data_path)
+        cfd2 = ConfigManagerData(self.data_path)
+        self.assertEqual(cfd1, cfd2)
+        cfd2.data_path = "some/unknown/path"
+        self.assertEqual(cfd1, cfd2)
+        cfd2.db_filename = "bad_file.name"
+        self.assertEqual(cfd1, cfd2)
+        cfd2.data['test'] = { 'a': [ 1, 2, 3]}
+        self.assertNotEqual(cfd1, cfd2)
+        
 #
 # We can probably use a more general version of this
 #
@@ -126,6 +138,71 @@ class TestConfigManager(unittest.TestCase):
         # this one is actually wrong, but 'current status quo'
         self.assertEqual(msg, {"running": "configmanager"})
 
+    def test_set_module_spec(self):
+        module_spec = isc.config.module_spec.module_spec_from_file(self.data_path + os.sep + "spec1.spec")
+        self.assert_(module_spec.get_module_name() not in self.cm.module_specs)
+        self.cm.set_module_spec(module_spec)
+        self.assert_(module_spec.get_module_name() in self.cm.module_specs)
+
+    def test_remove_module_spec(self):
+        module_spec = isc.config.module_spec.module_spec_from_file(self.data_path + os.sep + "spec1.spec")
+        self.assert_(module_spec.get_module_name() not in self.cm.module_specs)
+        self.cm.set_module_spec(module_spec)
+        self.assert_(module_spec.get_module_name() in self.cm.module_specs)
+        self.cm.remove_module_spec(module_spec.get_module_name())
+        self.assert_(module_spec.get_module_name() not in self.cm.module_specs)
+
+    def test_get_module_spec(self):
+        module_spec = isc.config.module_spec.module_spec_from_file(self.data_path + os.sep + "spec1.spec")
+        self.assert_(module_spec.get_module_name() not in self.cm.module_specs)
+        self.cm.set_module_spec(module_spec)
+        self.assert_(module_spec.get_module_name() in self.cm.module_specs)
+        module_spec2 = self.cm.get_module_spec(module_spec.get_module_name())
+        self.assertEqual(module_spec, module_spec2)
+
+    def test_get_config_spec(self):
+        config_spec = self.cm.get_config_spec()
+        self.assertEqual(config_spec, {})
+        module_spec = isc.config.module_spec.module_spec_from_file(self.data_path + os.sep + "spec1.spec")
+        self.assert_(module_spec.get_module_name() not in self.cm.module_specs)
+        self.cm.set_module_spec(module_spec)
+        self.assert_(module_spec.get_module_name() in self.cm.module_specs)
+        config_spec = self.cm.get_config_spec()
+        self.assertEqual(config_spec, { 'Spec1': None })
+        self.cm.remove_module_spec('Spec1')
+        module_spec = isc.config.module_spec.module_spec_from_file(self.data_path + os.sep + "spec2.spec")
+        self.assert_(module_spec.get_module_name() not in self.cm.module_specs)
+        self.cm.set_module_spec(module_spec)
+        self.assert_(module_spec.get_module_name() in self.cm.module_specs)
+        config_spec = self.cm.get_config_spec()
+        self.assertEqual(config_spec['Spec2'], module_spec.get_config_spec())
+    
+    def test_get_commands_spec(self):
+        commands_spec = self.cm.get_commands_spec()
+        self.assertEqual(commands_spec, {})
+        module_spec = isc.config.module_spec.module_spec_from_file(self.data_path + os.sep + "spec1.spec")
+        self.assert_(module_spec.get_module_name() not in self.cm.module_specs)
+        self.cm.set_module_spec(module_spec)
+        self.assert_(module_spec.get_module_name() in self.cm.module_specs)
+        commands_spec = self.cm.get_commands_spec()
+        self.assertEqual(commands_spec, { 'Spec1': None })
+        self.cm.remove_module_spec('Spec1')
+        module_spec = isc.config.module_spec.module_spec_from_file(self.data_path + os.sep + "spec2.spec")
+        self.assert_(module_spec.get_module_name() not in self.cm.module_specs)
+        self.cm.set_module_spec(module_spec)
+        self.assert_(module_spec.get_module_name() in self.cm.module_specs)
+        commands_spec = self.cm.get_commands_spec()
+        self.assertEqual(commands_spec['Spec2'], module_spec.get_commands_spec())
+
+    def test_read_config(self):
+        self.assertEqual(self.cm.config.data, {'version': 1})
+        self.cm.read_config()
+        self.assertEqual(self.cm.config.data, {'TestModule': {'test': 124}, 'version': 1})
+
+    def test_write_config(self):
+        # tested in ConfigManagerData tests
+        pass
+    
     def _handle_msg_helper(self, msg, expected_answer):
         answer = self.cm.handle_msg(msg)
         self.assertEqual(expected_answer, answer)

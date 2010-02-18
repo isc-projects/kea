@@ -13,9 +13,11 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-#
-# This is the main class for the b10-cfgmgr daemon
-#
+"""This is the BIND 10 configuration manager, run by b10-cfgmgr.
+
+   It stores the system configuration, and sends updates of the
+   configuration to the modules that need them.
+"""
 
 import isc
 import signal
@@ -25,12 +27,19 @@ import os
 from isc.cc import data
 
 class ConfigManagerDataReadError(Exception):
+    """This exception is thrown when there is an error while reading
+       the current configuration on startup."""
     pass
 
 class ConfigManagerDataEmpty(Exception):
+    """This exception is thrown when the currently stored configuration
+       is not found, or appears empty."""
     pass
 
 class ConfigManagerData:
+    """This class hold the actual configuration information, and
+       reads it from and writes it to persistent storage"""
+
     CONFIG_VERSION = 1
 
     def __init__(self, data_path, file_name = "b10-config.db"):
@@ -42,11 +51,6 @@ class ConfigManagerData:
         self.data['version'] = ConfigManagerData.CONFIG_VERSION
         self.data_path = data_path
         self.db_filename = data_path + os.sep + file_name
-
-    def set_data_definition(self, module_name, module_data_definition):
-        """Set the data definition for the given module name."""
-        #self.zones[module_name] = module_data_definition
-        self.data_definitions[module_name] = module_data_definition
 
     def read_from_file(data_path, file_name = "b10-config.db"):
         """Read the current configuration found in the file at
@@ -106,10 +110,11 @@ class ConfigManager:
        The ability to specify a custom session is for testing purposes
        and should not be needed for normal usage."""
     def __init__(self, data_path, session = None):
-        # remove these and use self.module_specs
-        #self.commands = {}
-        self.data_definitions = {}
-
+        """Initialize the configuration manager. The data_path string
+           is the path to the directory where the configuration is
+           stored (in <data_path>/b10-config.db). Session is an optional
+           cc-channel session. If this is not given, a new one is
+           created"""
         self.data_path = data_path
         self.module_specs = {}
         self.config = ConfigManagerData(data_path)
@@ -126,15 +131,23 @@ class ConfigManager:
         self.cc.group_sendmsg({"running": "configmanager"}, "Boss")
 
     def set_module_spec(self, spec):
-        #data_def = isc.config.ModuleSpec(spec)
+        """Adds a ModuleSpec"""
         self.module_specs[spec.get_module_name()] = spec
 
+    def remove_module_spec(self, module_name):
+        """Removes the full ModuleSpec for the given module_name.
+           Does nothing if the module was not present."""
+        if module_name in self.module_specs:
+            del self.module_specs[module_name]
+
     def get_module_spec(self, module_name):
+        """Returns the full ModuleSpec for the module with the given
+           module_name"""
         if module_name in self.module_specs:
             return self.module_specs[module_name]
 
     def get_config_spec(self, name = None):
-        """Returns a dict containing 'module_name': config_data for
+        """Returns a dict containing 'module_name': config_spec for
            all modules. If name is specified, only that module will
            be included"""
         config_data = {}
@@ -147,7 +160,7 @@ class ConfigManager:
         return config_data
 
     def get_commands_spec(self, name = None):
-        """Returns a dict containing 'module_name': commands_dict for
+        """Returns a dict containing 'module_name': commands_spec for
            all modules. If name is specified, only that module will
            be included"""
         commands = {}
@@ -174,6 +187,7 @@ class ConfigManager:
         self.config.write_to_file()
 
     def _handle_get_module_spec(self, cmd):
+        """Private function that handles the 'get_module_spec' command"""
         answer = {}
         if len(cmd) > 1:
             if type(cmd[1]) == dict:
@@ -189,6 +203,7 @@ class ConfigManager:
         return answer
 
     def _handle_get_config(self, cmd):
+        """Private function that handles the 'get_config' command"""
         answer = {}
         if len(cmd) > 1:
             if type(cmd[1]) == dict:
@@ -209,6 +224,7 @@ class ConfigManager:
         return answer
 
     def _handle_set_config(self, cmd):
+        """Private function that handles the 'set_config' command"""
         answer = None
         if len(cmd) == 3:
             # todo: use api (and check the data against the definition?)
@@ -257,6 +273,7 @@ class ConfigManager:
         return answer
 
     def _handle_module_spec(self, spec):
+        """Private function that handles the 'module_spec' command"""
         # todo: validate? (no direct access to spec as
         # todo: use ModuleSpec class
         # todo: error checking (like keyerrors)
@@ -271,7 +288,7 @@ class ConfigManager:
         return answer
 
     def handle_msg(self, msg):
-        """Handle a direct command"""
+        """Handle a command from the cc channel to the configuration manager"""
         answer = {}
         if "command" in msg:
             cmd = msg["command"]
@@ -306,6 +323,7 @@ class ConfigManager:
         return answer
         
     def run(self):
+        """Runs the configuration manager."""
         self.running = True
         while (self.running):
             msg, env = self.cc.group_recvmsg(False)
@@ -314,10 +332,3 @@ class ConfigManager:
                 self.cc.group_reply(env, answer)
             else:
                 self.running = False
-
-cm = None
-
-def signal_handler(signal, frame):
-    global cm
-    if cm:
-        cm.running = False
