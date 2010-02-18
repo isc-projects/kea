@@ -25,9 +25,15 @@ import isc.cc.data
 # import that so we can check those types
 
 class ModuleSpecError(Exception):
+    """This exception is raised it the ModuleSpec fails to initialize
+       or if there is a failure or parse error reading the specification
+       file"""
     pass
 
 def module_spec_from_file(spec_file, check = True):
+    """Returns a ModuleSpec object defined by the file at spec_file.
+       If check is True, the contents are verified. If there is an error
+       in those contents, a ModuleSpecError is raised."""
     module_spec = None
     if hasattr(spec_file, 'read'):
         module_spec = ast.literal_eval(spec_file.read(-1))
@@ -44,6 +50,10 @@ def module_spec_from_file(spec_file, check = True):
 
 class ModuleSpec:
     def __init__(self, module_spec, check = True):
+        """Initializes a ModuleSpec object from the specification in
+           the given module_spec (which must be a dict). If check is
+           True, the contents are verified. Raises a ModuleSpec error
+           if there is something wrong with the contents of the dict""".
         if type(module_spec) != dict:
             raise ModuleSpecError("module_spec is of type " + str(type(module_spec)) + ", not dict")
         if check:
@@ -65,6 +75,8 @@ class ModuleSpec:
 
 
     def get_module_name(self):
+        """Returns a string containing the name of the module as
+           specified by the specification given at __init__"""
         return self._module_spec['module_name']
 
     def get_full_spec(self):

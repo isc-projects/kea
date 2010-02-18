@@ -17,4 +17,3 @@ ${PYTHON_EXEC} -O ${CONFIG_PATH}/config_data_test.py $*
 ${PYTHON_EXEC} -O ${CONFIG_PATH}/module_spec_test.py $*
 
 ${PYTHON_EXEC} -O ${CONFIG_PATH}/cfgmgr_test.py $*
-
