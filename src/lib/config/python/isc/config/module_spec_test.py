@@ -14,7 +14,7 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #
-# Tests for the datadefinition module
+# Tests for the module_spec module
 #
 
 import unittest

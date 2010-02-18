@@ -12,7 +12,9 @@ CONFIG_TESTDATA_PATH=@abs_top_srcdir@/src/lib/config/testdata
 export CONFIG_TESTDATA_PATH
 
 cd ${BIND10_PATH}
-${PYTHON_EXEC} -O ${CONFIG_PATH}/datadefinition_test.py $*
+${PYTHON_EXEC} -O ${CONFIG_PATH}/config_data_test.py $*
+
+${PYTHON_EXEC} -O ${CONFIG_PATH}/module_spec_test.py $*
 
 ${PYTHON_EXEC} -O ${CONFIG_PATH}/cfgmgr_test.py $*
 

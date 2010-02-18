@@ -20,7 +20,7 @@
 import unittest
 import os
 from isc.config.config_data import *
-from isc.config.datadefinition import *
+from isc.config.module_spec import *
 
 class TestConfigData(unittest.TestCase):
     def setUp(self):
