@@ -13,10 +13,14 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-#
-# This class holds the data definition and validates data agains that
-# definition. It is the python equivalent of data_def.h
-#
+"""Module Specifications
+
+   A module specification holds the information about what configuration
+   a module can have, and what commands it understands. It provides
+   functions to read it from a .spec file, and to validate a given
+   set of data against the specification
+"""
+
 import ast
 
 import isc.cc.data
