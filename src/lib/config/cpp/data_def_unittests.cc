@@ -34,23 +34,23 @@ data_def_error(const std::string& file,
                const std::string& error2 = "",
                const std::string& error3 = "")
 {
-    EXPECT_THROW(DataDefinition(specfile(file)), DataDefinitionError);
+    EXPECT_THROW(ModuleSpec(specfile(file)), ModuleSpecError);
     try {
-        DataDefinition dd = DataDefinition(specfile(file));
-    } catch (DataDefinitionError dde) {
+        ModuleSpec dd = ModuleSpec(specfile(file));
+    } catch (ModuleSpecError dde) {
         std::string ddew = dde.what();
         EXPECT_EQ(error1 + error2 + error3, ddew);
     }
 }
 
-TEST(DataDefinition, ReadingSpecfiles) {
+TEST(ModuleSpec, ReadingSpecfiles) {
     // Tests whether we can open specfiles and if we get the
     // right parse errors
-    DataDefinition dd = DataDefinition(specfile("spec1.spec"));
+    ModuleSpec dd = ModuleSpec(specfile("spec1.spec"));
     EXPECT_EQ(dd.getDefinition()->get("module_spec")
                                 ->get("module_name")
                                 ->stringValue(), "Spec1");
-    dd = DataDefinition(specfile("spec2.spec"));
+    dd = ModuleSpec(specfile("spec2.spec"));
     EXPECT_EQ(dd.getDefinition()->get("module_spec")
                                 ->get("config_data")->size(), 6);
     data_def_error("doesnotexist",
@@ -60,13 +60,13 @@ TEST(DataDefinition, ReadingSpecfiles) {
 
     std::ifstream file;
     file.open(specfile("spec1.spec").c_str());
-    dd = DataDefinition(file);
+    dd = ModuleSpec(file);
     EXPECT_EQ(dd.getDefinition()->get("module_spec")
                                 ->get("module_name")
                                 ->stringValue(), "Spec1");
 }
 
-TEST(DataDefinition, SpecfileItems) {
+TEST(ModuleSpec, SpecfileItems) {
     data_def_error("spec3.spec",
                    "item_name missing in {\"item_default\": 1, \"item_optional\": False, \"item_type\": \"integer\"}");
     data_def_error("spec4.spec",
@@ -91,7 +91,7 @@ TEST(DataDefinition, SpecfileItems) {
                    "badname is not a valid type name");
 }
 
-TEST(DataDefinition, SpecfileConfigData)
+TEST(ModuleSpec, SpecfileConfigData)
 {
     data_def_error("spec7.spec",
                    "module_name missing in {}");
@@ -103,7 +103,7 @@ TEST(DataDefinition, SpecfileConfigData)
                    "commands is not a list of elements");
 }
 
-TEST(DataDefinition, SpecfileCommands)
+TEST(ModuleSpec, SpecfileCommands)
 {
     data_def_error("spec17.spec",
                    "command_name missing in {\"command_args\": [ {\"item_default\": \"\", \"item_name\": \"message\", \"item_optional\": False, \"item_type\": \"string\"} ], \"command_description\": \"Print the given message to stdout\"}");
@@ -120,7 +120,7 @@ TEST(DataDefinition, SpecfileCommands)
 }
 
 bool
-data_test(DataDefinition dd, const std::string& data_file_name)
+data_test(ModuleSpec dd, const std::string& data_file_name)
 {
     std::ifstream data_file;
 
@@ -131,8 +131,8 @@ data_test(DataDefinition dd, const std::string& data_file_name)
     return dd.validate(data);
 }
 
-TEST(DataDefinition, DataValidation) {
-    DataDefinition dd = DataDefinition(specfile("spec22.spec"));
+TEST(ModuleSpec, DataValidation) {
+    ModuleSpec dd = ModuleSpec(specfile("spec22.spec"));
 
     EXPECT_TRUE(data_test(dd, "data22_1.data"));
     EXPECT_FALSE(data_test(dd, "data22_2.data"));

@@ -75,7 +75,7 @@ private:
     
     std::string module_name_;
     isc::cc::Session session_;
-    isc::data::DataDefinition data_definition_;
+    isc::data::ModuleSpec data_definition_;
     isc::data::ElementPtr config_;
 
     isc::data::ElementPtr(*config_handler_)(isc::data::ElementPtr new_config);

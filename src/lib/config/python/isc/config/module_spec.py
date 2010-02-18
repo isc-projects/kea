@@ -57,7 +57,7 @@ class ModuleSpec:
         """Initializes a ModuleSpec object from the specification in
            the given module_spec (which must be a dict). If check is
            True, the contents are verified. Raises a ModuleSpec error
-           if there is something wrong with the contents of the dict""".
+           if there is something wrong with the contents of the dict"""
         if type(module_spec) != dict:
             raise ModuleSpecError("module_spec is of type " + str(type(module_spec)) + ", not dict")
         if check:

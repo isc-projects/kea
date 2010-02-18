@@ -1,3 +1,17 @@
+// Copyright (C) 2010  Internet Systems Consortium.
+//
+// Permission to use, copy, modify, and distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SYSTEMS CONSORTIUM
+// DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+// INTERNET SYSTEMS CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+// FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+// NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+// WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "data_def.h"
 
@@ -8,7 +22,7 @@
 
 #include <boost/foreach.hpp>
 
-// todo: add more context to thrown DataDefinitionErrors?
+// todo: add more context to thrown ModuleSpecErrors?
 
 using namespace isc::data;
 
@@ -51,7 +65,7 @@ getType_value(const std::string& type_name) {
     } else if (type_name == "any") {
         return Element::any;
     } else {
-        throw DataDefinitionError(type_name + " is not a valid type name");
+        throw ModuleSpecError(type_name + " is not a valid type name");
     }
 }
 
@@ -62,13 +76,13 @@ check_leaf_item(const ElementPtr& spec, const std::string& name, Element::types 
         if (spec->get(name)->getType() == type) {
             return;
         } else {
-            throw DataDefinitionError(name + " not of type " + getType_string(type));
+            throw ModuleSpecError(name + " not of type " + getType_string(type));
         }
     } else if (mandatory) {
         // todo: want parent item name, and perhaps some info about location
         // in list? or just catch and throw new...
         // or make this part non-throwing and check return value...
-        throw DataDefinitionError(name + " missing in " + spec->str());
+        throw ModuleSpecError(name + " missing in " + spec->str());
     }
 }
 
@@ -99,7 +113,7 @@ check_config_item(const ElementPtr& spec) {
 static void
 check_config_item_list(const ElementPtr& spec) {
     if (spec->getType() != Element::list) {
-        throw DataDefinitionError("config_data is not a list of elements");
+        throw ModuleSpecError("config_data is not a list of elements");
     }
     BOOST_FOREACH(ElementPtr item, spec->listValue()) {
         check_config_item(item);
@@ -116,7 +130,7 @@ check_command(const ElementPtr& spec) {
 static void
 check_command_list(const ElementPtr& spec) {
     if (spec->getType() != Element::list) {
-        throw DataDefinitionError("commands is not a list of elements");
+        throw ModuleSpecError("commands is not a list of elements");
     }
     BOOST_FOREACH(ElementPtr item, spec->listValue()) {
         check_command(item);
@@ -137,27 +151,27 @@ check_data_specification(const ElementPtr& spec) {
 }
 
 // checks whether the given element is a valid data definition
-// throws a DataDefinitionError if the specification is bad
+// throws a ModuleSpecError if the specification is bad
 static void
 check_definition(const ElementPtr& def)
 {
     if (!def->contains("module_spec")) {
-        throw DataDefinitionError("Data specification does not contain module_spec element");
+        throw ModuleSpecError("Data specification does not contain module_spec element");
     } else {
         check_data_specification(def->get("module_spec"));
     }
 }
 
-DataDefinition::DataDefinition(const std::string& file_name,
+ModuleSpec::ModuleSpec(const std::string& file_name,
                                const bool check)
-                               throw(ParseError, DataDefinitionError) {
+                               throw(ParseError, ModuleSpecError) {
     std::ifstream file;
 
     file.open(file_name.c_str());
     if (!file) {
         std::stringstream errs;
         errs << "Error opening " << file_name << ": " << strerror(errno);
-        throw DataDefinitionError(errs.str());
+        throw ModuleSpecError(errs.str());
     }
 
     definition = Element::createFromString(file, file_name);
@@ -166,8 +180,8 @@ DataDefinition::DataDefinition(const std::string& file_name,
     }
 }
 
-DataDefinition::DataDefinition(std::istream& in, const bool check)
-                               throw(ParseError, DataDefinitionError) {
+ModuleSpec::ModuleSpec(std::istream& in, const bool check)
+                               throw(ParseError, ModuleSpecError) {
     definition = Element::createFromString(in);
     // make sure the whole structure is complete and valid
     if (check) {
@@ -210,7 +224,7 @@ check_type(ElementPtr spec, ElementPtr element)
 }
 
 bool
-DataDefinition::validate_item(const ElementPtr spec, const ElementPtr data) {
+ModuleSpec::validate_item(const ElementPtr spec, const ElementPtr data) {
     if (!check_type(spec, data)) {
         // we should do some proper error feedback here
         // std::cout << "type mismatch; not " << spec->get("item_type") << ": " << data << std::endl;
@@ -240,7 +254,7 @@ DataDefinition::validate_item(const ElementPtr spec, const ElementPtr data) {
 
 // spec is a map with item_name etc, data is a map
 bool
-DataDefinition::validate_spec(const ElementPtr spec, const ElementPtr data) {
+ModuleSpec::validate_spec(const ElementPtr spec, const ElementPtr data) {
     std::string item_name = spec->get("item_name")->stringValue();
     bool optional = spec->get("item_optional")->boolValue();
     ElementPtr data_el;
@@ -260,7 +274,7 @@ DataDefinition::validate_spec(const ElementPtr spec, const ElementPtr data) {
 
 // spec is a list of maps, data is a map
 bool
-DataDefinition::validate_spec_list(const ElementPtr spec, const ElementPtr data) {
+ModuleSpec::validate_spec_list(const ElementPtr spec, const ElementPtr data) {
     ElementPtr cur_data_el;
     std::string cur_item_name;
     BOOST_FOREACH(ElementPtr cur_spec_el, spec->listValue()) {
@@ -275,7 +289,7 @@ DataDefinition::validate_spec_list(const ElementPtr spec, const ElementPtr data)
 // this function does *not* check if the specification is in correct
 // form, we should do that in the constructor
 bool
-DataDefinition::validate(const ElementPtr data) {
+ModuleSpec::validate(const ElementPtr data) {
     ElementPtr spec = definition->find("module_spec/config_data");
     return validate_spec_list(spec, data);
 }
