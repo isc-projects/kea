@@ -26,6 +26,18 @@
 namespace isc {
 namespace config {
 
+///
+/// \brief A standard cc session exception that is thrown if a function
+/// is there is a problem with one of the messages
+///
+// todo: include types and called function in the exception
+class CCSessionError : public isc::Exception {
+public:
+    CCSessionError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+
 class ModuleCCSession {
 public:
     /**
@@ -72,7 +84,7 @@ public:
      * This protocol is very likely to change.
      */
     void set_command_handler(isc::data::ElementPtr(*command_handler)(isc::data::ElementPtr command)) { command_handler_ = command_handler; };
-    
+
 private:
     void read_module_specification(const std::string& filename);
     
@@ -80,13 +92,14 @@ private:
     isc::cc::Session session_;
     ModuleSpec module_specification_;
     isc::data::ElementPtr config_;
+    ElementPtr handleConfigUpdate(ElementPtr new_config);
 
     isc::data::ElementPtr(*config_handler_)(isc::data::ElementPtr new_config);
     isc::data::ElementPtr(*command_handler_)(isc::data::ElementPtr command);
 };
 
 ElementPtr createAnswer(const int rcode, const ElementPtr arg);
-ElementPtr createAnswer(const int rcode, const std::string arg);
+ElementPtr createAnswer(const int rcode, const std::string& arg);
 
 }
 }

@@ -120,5 +120,7 @@ AuthSrv::updateConfig(isc::data::ElementPtr config) {
         // todo: what to do with port change. restart automatically?
         // ignore atm
     //}
-    return isc::data::Element::createFromString("{ \"result\": [0] }");
+    std::cout << "[XX] auth: new config " << config << std::endl;
+    
+    return isc::config::createAnswer(0);
 }
