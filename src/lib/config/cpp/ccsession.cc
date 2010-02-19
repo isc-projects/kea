@@ -50,6 +50,26 @@ using isc::data::ParseError;
 namespace isc {
 namespace config {
 
+ElementPtr
+create_answer(const int rcode, const ElementPtr arg)
+{
+    ElementPtr answer = Element::createFromString("{\"result\": []");
+    ElementPtr answer_content = answer->get("result");
+    answer_content->add(Element::create(rcode));
+    answer_content->add(arg);
+    return answer;
+}
+
+ElementPtr
+create_answer(const int rcode, const std::string& arg)
+{
+    ElementPtr answer = Element::createFromString("{\"result\": []");
+    ElementPtr answer_content = answer->get("result");
+    answer_content->add(Element::create(rcode));
+    answer_content->add(Element::create(arg));
+    return answer;
+}
+
 void
 ModuleCCSession::read_module_specification(const std::string& filename) {
     std::ifstream file;
@@ -136,11 +156,14 @@ ModuleCCSession::check_command()
         cout << "[XX] got something!" << endl << data->str() << endl;
         ElementPtr answer;
         if (data->contains("config_update")) {
-            if (config_handler_) {
-                // handle config update
-                answer = config_handler_(data->get("config_update"));
+            ElementPtr new_config = data->get("config_update");
+            if (!config_handler_) {
+                answer = create_answer(1, module_name_ + " does not have a config handler");
+            } else if (!module_specification_.validate_config(new_config)) {
+                answer = create_answer(2, "Error in config validation");
             } else {
-                answer = Element::createFromString("{ \"result\": [0] }");
+                // handle config update
+                answer = config_handler_(new_config);
             }
         }
         if (data->contains("command")) {

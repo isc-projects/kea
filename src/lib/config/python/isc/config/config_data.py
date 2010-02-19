@@ -27,7 +27,8 @@ class ConfigDataError(Exception): pass
 
 def check_type(spec_part, value):
     """Returns true if the value is of the correct type given the
-       specification part relevant for the value"""
+       specification part relevant for the value. spec_part can be
+       retrieved with find_spec()"""
     if type(spec_part) == list:
         data_type = "list"
     else:

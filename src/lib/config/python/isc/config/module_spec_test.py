@@ -76,7 +76,7 @@ class TestModuleSpec(unittest.TestCase):
         data_file = open(self.spec_file(datafile_name))
         data_str = data_file.read()
         data = isc.cc.data.parse_value_str(data_str)
-        return dd.validate(True, data)
+        return dd.validate_config(True, data)
         
     def test_data_validation(self):
         self.assertEqual(True, self.validate_data("spec22.spec", "data22_1.data"))

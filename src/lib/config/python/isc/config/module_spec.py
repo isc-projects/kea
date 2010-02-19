@@ -64,7 +64,7 @@ class ModuleSpec:
             _check(module_spec)
         self._module_spec = module_spec
 
-    def validate(self, full, data, errors = None):
+    def validate_config(self, full, data, errors = None):
         """Check whether the given piece of data conforms to this
            data definition. If so, it returns True. If not, it will
            return false. If errors is given, and is an array, a string

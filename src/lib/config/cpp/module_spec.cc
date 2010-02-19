@@ -209,7 +209,7 @@ ModuleSpec::getModuleName()
 }
 
 bool
-ModuleSpec::validate(const ElementPtr data)
+ModuleSpec::validate_config(const ElementPtr data)
 {
     ElementPtr spec = module_specification->find("module_spec/config_data");
     return validate_spec_list(spec, data);

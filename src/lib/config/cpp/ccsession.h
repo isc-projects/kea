@@ -85,6 +85,9 @@ private:
     isc::data::ElementPtr(*command_handler_)(isc::data::ElementPtr command);
 };
 
+ElementPtr createAnswer(const int rcode, const ElementPtr arg);
+ElementPtr createAnswer(const int rcode, const std::string arg);
+
 }
 }
 #endif // __CCSESSION_H

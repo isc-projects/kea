@@ -129,7 +129,7 @@ data_test(ModuleSpec dd, const std::string& data_file_name)
     ElementPtr data = Element::createFromString(data_file, data_file_name);
     data_file.close();
 
-    return dd.validate(data);
+    return dd.validate_config(data);
 }
 
 TEST(ModuleSpec, DataValidation) {
