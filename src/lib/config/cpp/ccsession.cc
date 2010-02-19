@@ -34,8 +34,9 @@
 #include <boost/foreach.hpp>
 
 #include <cc/data.h>
-#include <data_def.h>
+#include <module_spec.h>
 #include <cc/session.h>
+#include <exceptions/exceptions.h>
 
 //#include "common.h"
 #include "ccsession.h"
@@ -45,12 +46,65 @@ using namespace std;
 
 using isc::data::Element;
 using isc::data::ElementPtr;
-using isc::data::DataDefinition;
 using isc::data::ParseError;
-using isc::data::DataDefinitionError;
+
+namespace isc {
+namespace config {
+
+/// Creates a standard config/command protocol answer message
+ElementPtr
+createAnswer(const int rcode)
+{
+    ElementPtr answer = Element::createFromString("{\"result\": [] }");
+    ElementPtr answer_content = answer->get("result");
+    answer_content->add(Element::create(rcode));
+    return answer;
+}
+
+ElementPtr
+createAnswer(const int rcode, const ElementPtr arg)
+{
+    ElementPtr answer = Element::createFromString("{\"result\": [] }");
+    ElementPtr answer_content = answer->get("result");
+    answer_content->add(Element::create(rcode));
+    answer_content->add(arg);
+    return answer;
+}
+
+ElementPtr
+createAnswer(const int rcode, const std::string& arg)
+{
+    ElementPtr answer = Element::createFromString("{\"result\": [] }");
+    ElementPtr answer_content = answer->get("result");
+    answer_content->add(Element::create(rcode));
+    answer_content->add(Element::create(arg));
+    return answer;
+}
+
+ElementPtr
+parseAnswer(int &rcode, const ElementPtr msg)
+{
+    if (!msg->contains("result")) {
+        // TODO: raise CCSessionError exception
+        dns_throw(CCSessionError, "No result in answer message");
+    } else {
+        ElementPtr result = msg->get("result");
+        if (result->get(0)->getType() != Element::integer) {
+            dns_throw(CCSessionError, "First element of result is not an rcode in answer message");
+        } else if (result->get(0)->intValue() != 0 && result->get(1)->getType() != Element::string) {
+            dns_throw(CCSessionError, "Rcode in answer message is non-zero, but other argument is not a StringElement");
+        }
+        rcode = result->get(0)->intValue();
+        if (result->size() > 1) {
+            return result->get(1);
+        } else {
+            return ElementPtr();
+        }
+    }
+}
 
 void
-CommandSession::read_data_definition(const std::string& filename) {
+ModuleCCSession::read_module_specification(const std::string& filename) {
     std::ifstream file;
 
     // this file should be declared in a @something@ directive
@@ -61,27 +115,27 @@ CommandSession::read_data_definition(const std::string& filename) {
     }
 
     try {
-        data_definition_ = DataDefinition(file, true);
+        module_specification_ = moduleSpecFromFile(file, true);
     } catch (ParseError pe) {
-        cout << "Error parsing definition file: " << pe.what() << endl;
+        cout << "Error parsing module specification file: " << pe.what() << endl;
         exit(1);
-    } catch (DataDefinitionError dde) {
-        cout << "Error reading definition file: " << dde.what() << endl;
+    } catch (ModuleSpecError dde) {
+        cout << "Error reading module specification file: " << dde.what() << endl;
         exit(1);
     }
     file.close();
 }
 
-CommandSession::CommandSession(std::string spec_file_name,
+ModuleCCSession::ModuleCCSession(std::string spec_file_name,
                                isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config),
                                isc::data::ElementPtr(*command_handler)(isc::data::ElementPtr command)
                               ) throw (isc::cc::SessionError):
     session_(isc::cc::Session())
 {
-    read_data_definition(spec_file_name);
+    read_module_specification(spec_file_name);
     sleep(1);
 
-    module_name_ = data_definition_.getDefinition()->get("data_specification")->get("module_name")->stringValue();
+    module_name_ = module_specification_.getFullSpec()->get("module_spec")->get("module_name")->stringValue();
     config_handler_ = config_handler;
     command_handler_ = command_handler;
 
@@ -96,7 +150,7 @@ CommandSession::CommandSession(std::string spec_file_name,
     //session_.subscribe("Boss", "*");
     //session_.subscribe("statistics", "*");
     // send the data specification
-    session_.group_sendmsg(data_definition_.getDefinition(), "ConfigManager");
+    session_.group_sendmsg(module_specification_.getFullSpec(), "ConfigManager");
     session_.group_recvmsg(env, answer, false);
     
     // get any stored configuration from the manager
@@ -105,24 +159,43 @@ CommandSession::CommandSession(std::string spec_file_name,
         session_.group_sendmsg(cmd, "ConfigManager");
         session_.group_recvmsg(env, answer, false);
         cout << "[XX] got config: " << endl << answer->str() << endl;
-        if (answer->contains("result") &&
-            answer->get("result")->get(0)->intValue() == 0 &&
-            answer->get("result")->size() > 1) {
-            config_handler(answer->get("result")->get(1));
-        } else {
-            cout << "[XX] no result in answer" << endl;
-        }
+        int rcode;
+        ElementPtr new_config = parseAnswer(rcode, answer);
+        handleConfigUpdate(new_config);
     }
 }
 
+/// Validates the new config values, if they are correct,
+/// call the config handler
+/// If that results in success, store the new config
+ElementPtr
+ModuleCCSession::handleConfigUpdate(ElementPtr new_config)
+{
+    ElementPtr answer;
+    if (!config_handler_) {
+        answer = createAnswer(1, module_name_ + " does not have a config handler");
+    } else if (!module_specification_.validate_config(new_config)) {
+        answer = createAnswer(2, "Error in config validation");
+    } else {
+        // handle config update
+        answer = config_handler_(new_config);
+        int rcode;
+        parseAnswer(rcode, answer);
+        if (rcode == 0) {
+            config_ = new_config;
+        }
+    }
+    return answer;
+}
+
 int
-CommandSession::getSocket()
+ModuleCCSession::getSocket()
 {
     return (session_.getSocket());
 }
 
 int
-CommandSession::check_command()
+ModuleCCSession::check_command()
 {
     cout << "[XX] check for command" << endl;
     ElementPtr cmd, routing, data;
@@ -135,12 +208,8 @@ CommandSession::check_command()
         cout << "[XX] got something!" << endl << data->str() << endl;
         ElementPtr answer;
         if (data->contains("config_update")) {
-            if (config_handler_) {
-                // handle config update
-                answer = config_handler_(data->get("config_update"));
-            } else {
-                answer = Element::createFromString("{ \"result\": [0] }");
-            }
+            ElementPtr new_config = data->get("config_update");
+            answer = handleConfigUpdate(new_config);
         }
         if (data->contains("command")) {
             if (command_handler_) {
@@ -155,3 +224,5 @@ CommandSession::check_command()
     return 0;
 }
 
+}
+}

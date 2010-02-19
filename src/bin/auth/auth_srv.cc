@@ -32,6 +32,7 @@
 #include <dns/rrset.h>
 #include <dns/rrttl.h>
 #include <dns/message.h>
+#include <config/ccsession.h>
 
 #include <cc/data.h>
 
@@ -46,6 +47,7 @@ using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::data;
+using namespace isc::config;
 
 AuthSrv::AuthSrv(int port) {
     int s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -120,5 +122,7 @@ AuthSrv::updateConfig(isc::data::ElementPtr config) {
         // todo: what to do with port change. restart automatically?
         // ignore atm
     //}
-    return isc::data::Element::createFromString("{ \"result\": [0] }");
+    std::cout << "[XX] auth: new config " << config << std::endl;
+    
+    return isc::config::createAnswer(0);
 }
