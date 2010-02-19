@@ -64,18 +64,15 @@ my_config_handler(isc::data::ElementPtr config)
 
 isc::data::ElementPtr
 my_command_handler(isc::data::ElementPtr command) {
-    isc::data::ElementPtr answer = isc::data::Element::createFromString("{ \"result\": [0] }");
+    isc::data::ElementPtr answer = isc::config::createAnswer(0);
 
     cout << "[XX] Handle command: " << endl << command->str() << endl;
     if (command->get(0)->stringValue() == "print_message") 
     {
         cout << command->get(1)->get("message") << endl;
         /* let's add that message to our answer as well */
-        cout << "[XX] answer was: " << answer->str() << endl;
         answer->get("result")->add(command->get(1));
-        cout << "[XX] answer now: " << answer->str() << endl;
     }
-
     return answer;
 }
 
@@ -106,9 +103,9 @@ main(int argc, char* argv[]) {
         } else {
             specfile = std::string(AUTH_SPECFILE_LOCATION);
         }
-        CommandSession cs = CommandSession(specfile,
-                                           my_config_handler,
-                                           my_command_handler);
+        isc::config::ModuleCCSession cs = isc::config::ModuleCCSession(specfile,
+                                                                       my_config_handler,
+                                                                       my_command_handler);
     
         // main server loop
         fd_set fds;

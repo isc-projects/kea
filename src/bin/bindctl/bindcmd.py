@@ -31,6 +31,7 @@ import os, time, random, re
 import getpass
 from hashlib import sha1
 import csv
+import ast
 
 try:
     from collections import OrderedDict
@@ -85,7 +86,7 @@ class BindCmdInterpreter(Cmd):
                 return False
 
             # Get all module information from cmd-ctrld
-            self.config_data = isc.cc.data.UIConfigData(self)
+            self.config_data = isc.config.UIModuleCCSession(self)
             self.update_commands()
             self.cmdloop()
         except KeyboardInterrupt:
@@ -150,7 +151,8 @@ class BindCmdInterpreter(Cmd):
         if (len(cmd_spec) == 0):
             print('can\'t get any command specification')
         for module_name in cmd_spec.keys():
-            self.prepare_module_commands(module_name, cmd_spec[module_name])
+            if cmd_spec[module_name]:
+                self.prepare_module_commands(module_name, cmd_spec[module_name])
 
     def send_GET(self, url, body = None):
         headers = {"cookie" : self.session_id}
@@ -315,7 +317,7 @@ class BindCmdInterpreter(Cmd):
                     if cmd.module == "config":
                         # grm text has been stripped of slashes...
                         my_text = self.location + "/" + cur_line.rpartition(" ")[2]
-                        list = self.config_data.config.get_item_list(my_text.rpartition("/")[0])
+                        list = self.config_data.get_config_item_list(my_text.rpartition("/")[0])
                         hints.extend([val for val in list if val.startswith(text)])
             except CmdModuleNameFormatError:
                 if not text:
@@ -440,17 +442,28 @@ class BindCmdInterpreter(Cmd):
                         line += "(modified)"
                     print(line)
             elif cmd.command == "add":
-                self.config_data.add(identifier, cmd.params['value'])
+                self.config_data.add_value(identifier, cmd.params['value'])
             elif cmd.command == "remove":
-                self.config_data.remove(identifier, cmd.params['value'])
+                self.config_data.remove_value(identifier, cmd.params['value'])
             elif cmd.command == "set":
-                self.config_data.set(identifier, cmd.params['value'])
+                if 'identifier' not in cmd.params:
+                    print("Error: missing identifier or value")
+                else:
+                    parsed_value = None
+                    try:
+                        parsed_value = ast.literal_eval(cmd.params['value'])
+                    except Exception as exc:
+                        # ok could be an unquoted string, interpret as such
+                        parsed_value = cmd.params['value']
+                    self.config_data.set_value(identifier, parsed_value)
             elif cmd.command == "unset":
                 self.config_data.unset(identifier)
             elif cmd.command == "revert":
                 self.config_data.revert()
             elif cmd.command == "commit":
-                self.config_data.commit(self)
+                self.config_data.commit()
+            elif cmd.command == "diff":
+                print(self.config_data.get_local_changes());
             elif cmd.command == "go":
                 self.go(identifier)
         except isc.cc.data.DataTypeError as dte:
