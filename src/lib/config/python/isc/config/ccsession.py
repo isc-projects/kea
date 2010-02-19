@@ -233,19 +233,19 @@ class UIModuleCCSession(MultiConfigData):
            a DataTypeError if the value at the identifier is not a list,
            or if the given value_str does not match the list_item_spec
            """
-        module_spec = find_spec(self.config.specification, identifier)
+        module_spec = self.find_spec_part(identifier)
         if (type(module_spec) != dict or "list_item_spec" not in module_spec):
             raise DataTypeError(identifier + " is not a list")
-        value = parse_value_str(value_str)
-        check_type(module_spec, [value])
-        cur_list = isc.cc.data.find_no_exc(self.config_changes, identifier)
-        if not cur_list:
-            cur_list = isc.cc.data.find_no_exc(self.config.data, identifier)
+        value = isc.cc.data.parse_value_str(value_str)
+        isc.config.config_data.check_type(module_spec, [value])
+        cur_list, status = self.get_value(identifier)
+        #if not cur_list:
+        #    cur_list = isc.cc.data.find_no_exc(self.config.data, identifier)
         if not cur_list:
             cur_list = []
         if value in cur_list:
             cur_list.remove(value)
-        set(self.config_changes, identifier, cur_list)
+        self.set_value(identifier, cur_list)
 
     def commit(self):
         """Commit all local changes, send them through b10-cmdctl to
