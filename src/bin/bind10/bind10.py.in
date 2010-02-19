@@ -115,15 +115,7 @@ class BoB:
         if self.verbose:
             print("[XX] handling new config:")
             print(new_config)
-        errors = []
-        if self.ccs.get_module_spec().validate(False, new_config, errors):
-            self.ccs.set_local_config(new_config)
-            answer = isc.config.ccsession.create_answer(0)
-        else:
-            if len(errors) > 0:
-                answer = isc.config.ccsession.create_answer(1, " ".join(errors))
-            else:
-                answer = isc.config.ccsession.create_answer(1, "Unknown error in validation")
+        answer = isc.config.ccsession.create_answer(0)
         return answer
         # TODO
 

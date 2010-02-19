@@ -83,7 +83,7 @@ namespace isc { namespace config {
         /// \param data The base \c Element of the data to check
         /// \return true if the data conforms to the specification,
         /// false otherwise.
-        bool validate(const ElementPtr data);
+        bool validate_config(const ElementPtr data);
 
     private:
         bool validate_item(const ElementPtr spec, const ElementPtr data);

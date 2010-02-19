@@ -135,8 +135,15 @@ class ModuleCCSession(ConfigData):
         if msg:
             answer = None
             try:
-                if "config_update" in msg and self._config_handler:
-                    answer = self._config_handler(msg["config_update"])
+                if "config_update" in msg:
+                    new_config = msg["config_update"]
+                    errors = []
+                    if not self._config_handler:
+                        answer = create_answer(2, self._module_name + " has no config handler")
+                    elif not self.get_module_spec().validate_config(False, new_config, errors):
+                        answer = create_answer(1, " ".join(errors))
+                    else:
+                        answer = self._config_handler(msg["config_update"])
                 if "command" in msg and self._command_handler:
                     answer = self._command_handler(msg["command"])
             except Exception as exc:
@@ -168,7 +175,7 @@ class ModuleCCSession(ConfigData):
         answer, env = self._session.group_recvmsg(False)
         rcode, value = parse_answer(answer)
         if rcode == 0:
-            if value != None and self.get_module_spec().validate(False, value):
+            if value != None and self.get_module_spec().validate_config(False, value):
                 self.set_local_config(value);
                 if self._config_handler:
                     self._config_handler(value)
