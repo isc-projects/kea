@@ -36,6 +36,7 @@
 #include <cc/data.h>
 #include <module_spec.h>
 #include <cc/session.h>
+#include <exceptions/exceptions.h>
 
 //#include "common.h"
 #include "ccsession.h"
@@ -50,8 +51,9 @@ using isc::data::ParseError;
 namespace isc {
 namespace config {
 
+/// Creates a standard config/command protocol answer message
 ElementPtr
-create_answer(const int rcode, const ElementPtr arg)
+createAnswer(const int rcode, const ElementPtr arg)
 {
     ElementPtr answer = Element::createFromString("{\"result\": []");
     ElementPtr answer_content = answer->get("result");
@@ -61,13 +63,35 @@ create_answer(const int rcode, const ElementPtr arg)
 }
 
 ElementPtr
-create_answer(const int rcode, const std::string& arg)
+createAnswer(const int rcode, const std::string& arg)
 {
     ElementPtr answer = Element::createFromString("{\"result\": []");
     ElementPtr answer_content = answer->get("result");
     answer_content->add(Element::create(rcode));
     answer_content->add(Element::create(arg));
     return answer;
+}
+
+ElementPtr
+parseAnswer(int &rcode, const ElementPtr msg)
+{
+    if (!msg->contains("result")) {
+        // TODO: raise CCSessionError exception
+        dns_throw(CCSessionError, "No result in answer message");
+    } else {
+        ElementPtr result = msg->get("result");
+        if (result->get(0)->getType() != Element::integer) {
+            dns_throw(CCSessionError, "First element of result is not an rcode in answer message");
+        } else if (result->get(0)->intValue() != 0 && result->get(1)->getType() != Element::string) {
+            dns_throw(CCSessionError, "Rcode in answer message is non-zero, but other argument is not a StringElement");
+        }
+        rcode = result->get(0)->intValue();
+        if (result->size() > 1) {
+            return result->get(1);
+        } else {
+            return ElementPtr();
+        }
+    }
 }
 
 void
@@ -126,14 +150,33 @@ ModuleCCSession::ModuleCCSession(std::string spec_file_name,
         session_.group_sendmsg(cmd, "ConfigManager");
         session_.group_recvmsg(env, answer, false);
         cout << "[XX] got config: " << endl << answer->str() << endl;
-        if (answer->contains("result") &&
-            answer->get("result")->get(0)->intValue() == 0 &&
-            answer->get("result")->size() > 1) {
-            config_handler(answer->get("result")->get(1));
-        } else {
-            cout << "[XX] no result in answer" << endl;
+        int rcode;
+        ElementPtr new_config = parseAnswer(rcode, answer);
+        handleConfigUpdate(new_config);
+    }
+}
+
+/// Validates the new config values, if they are correct,
+/// call the config handler
+/// If that results in success, store the new config
+ElementPtr
+ModuleCCSession::handleConfigUpdate(ElementPtr new_config)
+{
+    ElementPtr answer;
+    if (!config_handler_) {
+        answer = createAnswer(1, module_name_ + " does not have a config handler");
+    } else if (!module_specification_.validate_config(new_config)) {
+        answer = createAnswer(2, "Error in config validation");
+    } else {
+        // handle config update
+        answer = config_handler_(new_config);
+        int rcode;
+        parseAnswer(rcode, answer);
+        if (rcode == 0) {
+            config_ = new_config;
         }
     }
+    return answer;
 }
 
 int
@@ -157,14 +200,7 @@ ModuleCCSession::check_command()
         ElementPtr answer;
         if (data->contains("config_update")) {
             ElementPtr new_config = data->get("config_update");
-            if (!config_handler_) {
-                answer = create_answer(1, module_name_ + " does not have a config handler");
-            } else if (!module_specification_.validate_config(new_config)) {
-                answer = create_answer(2, "Error in config validation");
-            } else {
-                // handle config update
-                answer = config_handler_(new_config);
-            }
+            answer = handleConfigUpdate(new_config);
         }
         if (data->contains("command")) {
             if (command_handler_) {

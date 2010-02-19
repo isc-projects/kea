@@ -35,7 +35,6 @@ typedef boost::shared_ptr<Element> ElementPtr;
 /// is called for an Element that has a wrong type (e.g. int_value on a
 /// ListElement)
 ///
-// todo: include types and called function in the exception
 class TypeError : public isc::Exception {
 public:
     TypeError(const char* file, size_t line, const char* what) :
