@@ -83,12 +83,15 @@ namespace isc { namespace config {
         /// \param data The base \c Element of the data to check
         /// \return true if the data conforms to the specification,
         /// false otherwise.
-        bool validate_config(const ElementPtr data);
+        bool validate_config(const ElementPtr data, const bool full = false);
+
+        /// errors must be of type ListElement
+        bool validate_config(const ElementPtr data, const bool full, ElementPtr errors);
 
     private:
-        bool validate_item(const ElementPtr spec, const ElementPtr data);
-        bool validate_spec(const ElementPtr spec, const ElementPtr data);
-        bool validate_spec_list(const ElementPtr spec, const ElementPtr data);
+        bool validate_item(const ElementPtr spec, const ElementPtr data, const bool full, ElementPtr errors);
+        bool validate_spec(const ElementPtr spec, const ElementPtr data, const bool full, ElementPtr errors);
+        bool validate_spec_list(const ElementPtr spec, const ElementPtr data, const bool full, ElementPtr errors);
 
         ElementPtr module_specification;
     };

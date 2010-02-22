@@ -209,10 +209,17 @@ ModuleSpec::getModuleName()
 }
 
 bool
-ModuleSpec::validate_config(const ElementPtr data)
+ModuleSpec::validate_config(const ElementPtr data, const bool full)
 {
     ElementPtr spec = module_specification->find("module_spec/config_data");
-    return validate_spec_list(spec, data);
+    return validate_spec_list(spec, data, full, ElementPtr());
+}
+
+bool
+ModuleSpec::validate_config(const ElementPtr data, const bool full, ElementPtr errors)
+{
+    ElementPtr spec = module_specification->find("module_spec/config_data");
+    return validate_spec_list(spec, data, full, errors);
 }
 
 ModuleSpec
@@ -279,28 +286,34 @@ check_type(ElementPtr spec, ElementPtr element)
 }
 
 bool
-ModuleSpec::validate_item(const ElementPtr spec, const ElementPtr data) {
+ModuleSpec::validate_item(const ElementPtr spec, const ElementPtr data, const bool full, ElementPtr errors) {
     if (!check_type(spec, data)) {
         // we should do some proper error feedback here
         // std::cout << "type mismatch; not " << spec->get("item_type") << ": " << data << std::endl;
         // std::cout << spec << std::endl;
+        if (errors) {
+            errors->add(Element::create("Type mismatch"));
+        }
         return false;
     }
     if (data->getType() == Element::list) {
         ElementPtr list_spec = spec->get("list_item_spec");
         BOOST_FOREACH(ElementPtr list_el, data->listValue()) {
             if (!check_type(list_spec, list_el)) {
+                if (errors) {
+                    errors->add(Element::create("Type mismatch"));
+                }
                 return false;
             }
             if (list_spec->get("item_type")->stringValue() == "map") {
-                if (!validate_item(list_spec, list_el)) {
+                if (!validate_item(list_spec, list_el, full, errors)) {
                     return false;
                 }
             }
         }
     }
     if (data->getType() == Element::map) {
-        if (!validate_spec_list(spec->get("map_item_spec"), data)) {
+        if (!validate_spec_list(spec->get("map_item_spec"), data, full, errors)) {
             return false;
         }
     }
@@ -309,18 +322,21 @@ ModuleSpec::validate_item(const ElementPtr spec, const ElementPtr data) {
 
 // spec is a map with item_name etc, data is a map
 bool
-ModuleSpec::validate_spec(const ElementPtr spec, const ElementPtr data) {
+ModuleSpec::validate_spec(const ElementPtr spec, const ElementPtr data, const bool full, ElementPtr errors) {
     std::string item_name = spec->get("item_name")->stringValue();
     bool optional = spec->get("item_optional")->boolValue();
     ElementPtr data_el;
-    
     data_el = data->get(item_name);
+    
     if (data_el) {
-        if (!validate_item(spec, data_el)) {
+        if (!validate_item(spec, data_el, full, errors)) {
             return false;
         }
     } else {
-        if (!optional) {
+        if (!optional && full) {
+            if (errors) {
+                errors->add(Element::create("Non-optional value missing"));
+            }
             return false;
         }
     }
@@ -329,11 +345,11 @@ ModuleSpec::validate_spec(const ElementPtr spec, const ElementPtr data) {
 
 // spec is a list of maps, data is a map
 bool
-ModuleSpec::validate_spec_list(const ElementPtr spec, const ElementPtr data) {
+ModuleSpec::validate_spec_list(const ElementPtr spec, const ElementPtr data, const bool full, ElementPtr errors) {
     ElementPtr cur_data_el;
     std::string cur_item_name;
     BOOST_FOREACH(ElementPtr cur_spec_el, spec->listValue()) {
-        if (!validate_spec(cur_spec_el, data)) {
+        if (!validate_spec(cur_spec_el, data, full, errors)) {
             return false;
         }
     }

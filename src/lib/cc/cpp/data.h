@@ -409,7 +409,7 @@ public:
     using Element::setValue;
     bool setValue(std::map<std::string, ElementPtr>& v) { m = v; return true; };
     using Element::get;
-    ElementPtr get(const std::string& s) { return m[s]; };
+    ElementPtr get(const std::string& s) { if (contains(s)) { return m[s]; } else { return ElementPtr();} };
     using Element::set;
     void set(const std::string& s, ElementPtr p) { m[s] = p; };
     using Element::remove;
