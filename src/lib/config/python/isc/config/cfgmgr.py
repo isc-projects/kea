@@ -230,6 +230,8 @@ class ConfigManager:
             # todo: use api (and check the data against the definition?)
             module_name = cmd[1]
             conf_part = data.find_no_exc(self.config.data, module_name)
+            print("[XX] cfgmgr conf part:")
+            print(conf_part)
             if conf_part:
                 data.merge(conf_part, cmd[2])
                 self.cc.group_sendmsg({ "config_update": conf_part }, module_name)
@@ -246,6 +248,7 @@ class ConfigManager:
                 self.write_config()
         elif len(cmd) == 2:
             # todo: use api (and check the data against the definition?)
+            old_data = self.config.data.copy()
             data.merge(self.config.data, cmd[1])
             # send out changed info
             got_error = False
@@ -262,8 +265,8 @@ class ConfigManager:
                 self.write_config()
                 answer = isc.config.ccsession.create_answer(0)
             else:
-                # TODO rollback changes that did get through?
-                # feed back *all* errors?
+                # TODO rollback changes that did get through, should we re-send update?
+                self.config.data = old_data
                 answer = isc.config.ccsession.create_answer(1, " ".join(err_list))
         else:
             answer = isc.config.ccsession.create_answer(1, "Wrong number of arguments")

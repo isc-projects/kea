@@ -487,7 +487,11 @@ MapElement::str()
             ss << ", ";
         }
         ss << "\"" << (*it).first << "\": ";
-        ss << (*it).second->str();
+        if ((*it).second) {
+            ss << (*it).second->str();
+        } else {
+            ss << "None";
+        }
     }
     ss << "}";
     return ss.str();
