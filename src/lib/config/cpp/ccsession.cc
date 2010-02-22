@@ -135,7 +135,7 @@ ModuleCCSession::ModuleCCSession(std::string spec_file_name,
     read_module_specification(spec_file_name);
     sleep(1);
 
-    module_name_ = module_specification_.getFullSpec()->get("module_spec")->get("module_name")->stringValue();
+    module_name_ = module_specification_.getFullSpec()->get("module_name")->stringValue();
     config_handler_ = config_handler;
     command_handler_ = command_handler;
 
@@ -150,7 +150,9 @@ ModuleCCSession::ModuleCCSession(std::string spec_file_name,
     //session_.subscribe("Boss", "*");
     //session_.subscribe("statistics", "*");
     // send the data specification
-    session_.group_sendmsg(module_specification_.getFullSpec(), "ConfigManager");
+    ElementPtr spec_msg = Element::createFromString("{}");
+    spec_msg->set("module_spec", module_specification_.getFullSpec());
+    session_.group_sendmsg(spec_msg, "ConfigManager");
     session_.group_recvmsg(env, answer, false);
     
     // get any stored configuration from the manager

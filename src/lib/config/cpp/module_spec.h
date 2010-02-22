@@ -62,20 +62,20 @@ namespace isc { namespace config {
         /// ElementPtr, returns an empty ElementPtr if there is none
         /// \return ElementPtr Shared pointer to the commands
         ///                    part of the specification
-        const ElementPtr getCommandsSpec();
+        const ElementPtr getCommandsSpec() const;
 
         /// Returns the configuration part of the specification as an
         /// ElementPtr
         /// \return ElementPtr Shared pointer to the configuration
         ///                    part of the specification
-        const ElementPtr getConfigSpec();
+        const ElementPtr getConfigSpec() const;
 
         /// Returns the full module specification as an ElementPtr
         /// \return ElementPtr Shared pointer to the specification
-        const ElementPtr getFullSpec() { return module_specification; };
+        const ElementPtr getFullSpec() const { return module_specification; };
 
         /// Returns the module name as specified by the specification
-        const std::string getModuleName();
+        const std::string getModuleName() const;
         
         // returns true if the given element conforms to this data
         // configuration specification

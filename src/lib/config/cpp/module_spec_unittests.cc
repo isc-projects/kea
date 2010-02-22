@@ -48,12 +48,10 @@ TEST(ModuleSpec, ReadingSpecfiles) {
     // Tests whether we can open specfiles and if we get the
     // right parse errors
     ModuleSpec dd = moduleSpecFromFile(specfile("spec1.spec"));
-    EXPECT_EQ(dd.getFullSpec()->get("module_spec")
-                                ->get("module_name")
-                                ->stringValue(), "Spec1");
+    EXPECT_EQ(dd.getFullSpec()->get("module_name")
+                              ->stringValue(), "Spec1");
     dd = moduleSpecFromFile(specfile("spec2.spec"));
-    EXPECT_EQ(dd.getFullSpec()->get("module_spec")
-                                ->get("config_data")->size(), 6);
+    EXPECT_EQ(dd.getFullSpec()->get("config_data")->size(), 6);
     module_spec_error("doesnotexist",
                    "Error opening ",
                    specfile("doesnotexist"),
@@ -62,9 +60,8 @@ TEST(ModuleSpec, ReadingSpecfiles) {
     std::ifstream file;
     file.open(specfile("spec1.spec").c_str());
     dd = moduleSpecFromFile(file);
-    EXPECT_EQ(dd.getFullSpec()->get("module_spec")
-                                ->get("module_name")
-                                ->stringValue(), "Spec1");
+    EXPECT_EQ(dd.getFullSpec()->get("module_name")
+                              ->stringValue(), "Spec1");
 }
 
 TEST(ModuleSpec, SpecfileItems) {
@@ -97,7 +94,7 @@ TEST(ModuleSpec, SpecfileConfigData)
     module_spec_error("spec7.spec",
                    "module_name missing in {}");
     module_spec_error("spec8.spec",
-                   "Data specification does not contain module_spec element");
+                   "No module_spec in specification");
     module_spec_error("spec16.spec",
                    "config_data is not a list of elements");
     module_spec_error("spec21.spec",

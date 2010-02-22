@@ -160,11 +160,7 @@ check_data_specification(const ElementPtr& spec) {
 static void
 check_module_specification(const ElementPtr& def)
 {
-    if (!def->contains("module_spec")) {
-        throw ModuleSpecError("Data specification does not contain module_spec element");
-    } else {
-        check_data_specification(def->get("module_spec"));
-    }
+    check_data_specification(def);
 }
 
 //
@@ -183,7 +179,7 @@ ModuleSpec::ModuleSpec(ElementPtr module_spec_element,
 }
 
 const ElementPtr
-ModuleSpec::getCommandsSpec()
+ModuleSpec::getCommandsSpec() const
 {
     if (module_specification->contains("commands")) {
         return module_specification->get("commands");
@@ -193,7 +189,7 @@ ModuleSpec::getCommandsSpec()
 }
 
 const ElementPtr
-ModuleSpec::getConfigSpec()
+ModuleSpec::getConfigSpec() const
 {
     if (module_specification->contains("config_data")) {
         return module_specification->get("config_data");
@@ -203,7 +199,7 @@ ModuleSpec::getConfigSpec()
 }
 
 const std::string
-ModuleSpec::getModuleName()
+ModuleSpec::getModuleName() const
 {
     return module_specification->get("module_name")->stringValue();
 }
@@ -211,14 +207,14 @@ ModuleSpec::getModuleName()
 bool
 ModuleSpec::validate_config(const ElementPtr data, const bool full)
 {
-    ElementPtr spec = module_specification->find("module_spec/config_data");
+    ElementPtr spec = module_specification->find("config_data");
     return validate_spec_list(spec, data, full, ElementPtr());
 }
 
 bool
 ModuleSpec::validate_config(const ElementPtr data, const bool full, ElementPtr errors)
 {
-    ElementPtr spec = module_specification->find("module_spec/config_data");
+    ElementPtr spec = module_specification->find("config_data");
     return validate_spec_list(spec, data, full, errors);
 }
 
@@ -236,14 +232,22 @@ moduleSpecFromFile(const std::string& file_name, const bool check)
     }
 
     ElementPtr module_spec_element = Element::createFromString(file, file_name);
-    return ModuleSpec(module_spec_element, check);
+    if (module_spec_element->contains("module_spec")) {
+        return ModuleSpec(module_spec_element->get("module_spec"), check);
+    } else {
+        throw ModuleSpecError("No module_spec in specification");
+    }
 }
 
 ModuleSpec
 moduleSpecFromFile(std::ifstream& in, const bool check)
                    throw(ParseError, ModuleSpecError) {
     ElementPtr module_spec_element = Element::createFromString(in);
-    return ModuleSpec(module_spec_element, check);
+    if (module_spec_element->contains("module_spec")) {
+        return ModuleSpec(module_spec_element->get("module_spec"), check);
+    } else {
+        throw ModuleSpecError("No module_spec in specification");
+    }
 }
 
 

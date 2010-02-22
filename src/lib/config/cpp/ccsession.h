@@ -37,7 +37,11 @@ public:
         isc::Exception(file, line, what) {}
 };
 
-
+///
+/// \brief This modules keeps a connection to the command channel,
+/// holds configuration information, and handles messages from
+/// the command channel
+///
 class ModuleCCSession {
 public:
     /**
