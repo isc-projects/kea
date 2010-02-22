@@ -85,6 +85,7 @@ public:
      */
     void set_command_handler(isc::data::ElementPtr(*command_handler)(isc::data::ElementPtr command)) { command_handler_ = command_handler; };
 
+    const ElementPtr getConfig() { return config_; }
 private:
     void read_module_specification(const std::string& filename);
     
