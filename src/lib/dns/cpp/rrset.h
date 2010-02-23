@@ -149,8 +149,8 @@ typedef boost::shared_ptr<RdataIterator> RdataIteratorPtr;
 ///      "sort" and "search(find)" method?
 ///   - what about comparing two RRsets of the same type?  If we need this,
 ///     should it compare rdata's as a set or as a list (i.e. compare
-///     each %rdata one by one or as a whole)?  c.f. NLnet Labs'
-///     <a href="http://www.nlnetlabs.nl/projects/ldns/doc/index.html">ldns</a>
+///     each %rdata one by one or as a whole)?  c.f. NLnet Labs' ldns
+///     (http://www.nlnetlabs.nl/projects/ldns/doc/index.html)
 ///     has \c ldns_rr_list_compare(), which takes the latter approach
 ///     (seemingly assuming the caller sorts the lists beforehand).
 ///   - BIND9 libdns has some special DNSSEC-related methods
@@ -498,13 +498,16 @@ public:
 /// \brief The \c BasicRRset class is a concrete derived class of
 /// \c AbstractRRset that defines a straightforward RRset implementation.
 ///
-/// designed to be as portable as possible.  performance is a secondary
-/// concern for this class.
+/// This class is designed to be as portable as possible, and so it adopts
+/// the Pimpl idiom to hide as many details as possible.
+/// Performance is a secondary concern for this class.
 ///
-/// We'd use the default implementations for the toWire()
-/// variants as defined in the base class.  These are not fully optimized
-/// for performance, but, again, it's a secondary goal for this generic
-/// class.
+/// This class is intended to be used by applications that only need
+/// moderate level of performance with full functionality provided by
+/// the \c AbstractRRset interfaces.
+/// Highly performance-sensitive applications, such as a large scale
+/// authoritative or caching name servers will implement and use a customized
+/// version of derived \c AbstractRRset class.
 class BasicRRset : public AbstractRRset {
     ///
     /// \name Constructors and Destructor
