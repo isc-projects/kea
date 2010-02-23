@@ -26,12 +26,12 @@ using namespace isc::data;
 namespace isc {
 namespace config {
 
-ElementPtr
+static ElementPtr
 find_spec_part(ElementPtr spec, const std::string& identifier)
 {
-    //std::cout << "[XX] find_spec_part" << std::endl;
+    //std::cout << "[XX] find_spec_part for " << identifier << std::endl;
     if (!spec) { return ElementPtr(); }
-    //std::cout << "in: " << spec << std::endl;
+    //std::cout << "in: " << std::endl << spec << std::endl;
     ElementPtr spec_part = spec;
     if (identifier == "") {
         //std::cout << "[XX] empty id" << std::endl;
@@ -48,7 +48,7 @@ find_spec_part(ElementPtr spec, const std::string& identifier)
                 if (list_el->getType() == Element::map &&
                     list_el->contains("item_name") &&
                     list_el->get("item_name")->stringValue() == part) {
-                    spec_part = list_el->get("item_name");
+                    spec_part = list_el;
                     found = true;
                 }
             }
@@ -63,7 +63,7 @@ find_spec_part(ElementPtr spec, const std::string& identifier)
                     if (list_el->getType() == Element::map &&
                         list_el->contains("item_name") &&
                         list_el->get("item_name")->stringValue() == part) {
-                        spec_part = list_el->get("item_name");
+                        spec_part = list_el;
                         found = true;
                     }
                 }
@@ -73,7 +73,12 @@ find_spec_part(ElementPtr spec, const std::string& identifier)
                 }
             }
         }
-        id = id.substr(sep + 1);
+        if (sep < id.size()) {
+            id = id.substr(sep + 1);
+        } else {
+            id = "";
+        }
+        sep = id.find("/");
     }
     if (id != "" && id != "/") {
         if (spec_part->getType() == Element::list) {
@@ -108,7 +113,33 @@ find_spec_part(ElementPtr spec, const std::string& identifier)
             }
         }
     }
+    //std::cout << "[XX] found spec part: " << std::endl << spec_part << std::endl;
     return spec_part;
+}
+
+static void
+spec_name_list(ElementPtr result, ElementPtr spec_part, std::string prefix, bool recurse = false)
+{
+    if (spec_part->getType() == Element::list) {
+        BOOST_FOREACH(ElementPtr list_el, spec_part->listValue()) {
+            if (list_el->getType() == Element::map &&
+                list_el->contains("item_name")) {
+                std::string new_prefix = prefix;
+                if (prefix != "") { new_prefix += "/"; }
+                new_prefix += list_el->get("item_name")->stringValue();
+                if (recurse && list_el->get("item_type")->stringValue() == "map") {
+                    spec_name_list(result, list_el->get("map_item_spec"), new_prefix, recurse);
+                } else {
+                    if (list_el->get("item_type")->stringValue() == "map" ||
+                        list_el->get("item_type")->stringValue() == "list"
+                    ) {
+                        new_prefix += "/";
+                    }
+                    result->add(Element::create(new_prefix));
+                }
+            }
+        }
+    }
 }
 
 ElementPtr
@@ -137,27 +168,9 @@ ConfigData::getValue(bool& is_default, const std::string& identifier)
     return value;
 }
 
-void
-spec_name_list(ElementPtr result, ElementPtr spec_part, std::string prefix, bool recurse = false)
-{
-    if (spec_part->getType() == Element::list) {
-        BOOST_FOREACH(ElementPtr list_el, spec_part->listValue()) {
-            if (list_el->getType() == Element::map &&
-                list_el->contains("item_name")) {
-                    result->add(Element::create(prefix + "/" + list_el->get("item_name")->stringValue()));
-            }
-        }
-    } else if (spec_part->getType() == Element::map &&
-               spec_part->contains("map_item_spec")
-    ) {
-        if (recurse) {
-            spec_name_list(result, spec_part->get("map_item_spec"), prefix + "/" + spec_part->get("item_name")->stringValue(), recurse);
-        } else {
-            result->add(Element::create(prefix + "/" + spec_part->get("item_name")->stringValue()));
-        }
-    }
-}
-
+/// Returns an ElementPtr pointing to a ListElement containing
+/// StringElements with the names of the options at the given
+/// identifier. If recurse is true, maps will be expanded as well
 ElementPtr
 ConfigData::getItemList(const std::string& identifier, bool recurse)
 {
@@ -170,10 +183,17 @@ ConfigData::getItemList(const std::string& identifier, bool recurse)
     return result;
 }
 
+/// Returns an ElementPtr containing a MapElement with identifier->value
+/// pairs.
 ElementPtr
 ConfigData::getFullConfig()
 {
-    return ElementPtr();
+    ElementPtr result = Element::createFromString("{}");
+    ElementPtr items = getItemList("", true);
+    BOOST_FOREACH(ElementPtr item, items->listValue()) {
+        result->set(item->stringValue(), getValue(item->stringValue()));
+    }
+    return result;
 }
 
 }
