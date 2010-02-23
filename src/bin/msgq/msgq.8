@@ -4,7 +4,7 @@
 .Os
 .Sh NAME
 .Nm msgq
-.Nd message routing daemon for the Command channel
+.Nd message routing daemon for the Command Channel
 .\" TODO: spell out CC
 .Sh SYNOPSIS
 .Nm
@@ -16,9 +16,36 @@
 .Sh DESCRIPTION
 The
 .Nm
-daemon handles message routing for the Command channel.
-It listens on 127.0.0.1.
-.\" TODO: point to Command channel specification or document some here
+daemon handles message routing for the Command Channel.
+.Pp
+The Command Channel is a message bus and subscription manager.
+Programs may subscribe to certain groups to receive messages
+for that group.
+Every new connection to the 
+.Nm 
+receives a unique identifier -- this is the local name.
+The commands it handles are:
+.Bl -tag -compact -offset indent
+.It getlname
+receive local name. 
+.It send
+send a message to defined subscribers.
+.It subscribe
+add a subscription. This means it is a listener for messages
+for a specific group.
+.It unsubscribe
+remove a subscription.
+.El
+.Pp
+.Nm
+listens on 127.0.0.1.
+.Pp
+The 
+.Nm
+daemon may be cleanly stopped by sending the  
+.Dv SIGTERM 
+signal to the process.
+This shutdown does not notify the subscribers.
 .Sh OPTIONS
 The arguments are as follows:
 .
@@ -36,15 +63,17 @@ Display more about what
 is doing.
 .El
 .\" .Sh SEE ALSO
+.\" TODO: point to Command channel specification or document some here.
 .\" .Sh STANDARDS
 .Sh HISTORY
 The python version of
 .Nm
 was first coded in December 2009.
-An older C version with different wire format was coded in September 2009.
+The C version with now deprecated wire format was coded in September
+2009.
 .Sh AUTHORS
 The
 .Nm
-daemon and Control channel specification
+daemon and Control Channel specification
 were initially designed by Michael Graff of ISC.
 .\" .Sh BUGS
