@@ -487,7 +487,11 @@ MapElement::str()
             ss << ", ";
         }
         ss << "\"" << (*it).first << "\": ";
-        ss << (*it).second->str();
+        if ((*it).second) {
+            ss << (*it).second->str();
+        } else {
+            ss << "None";
+        }
     }
     ss << "}";
     return ss.str();
@@ -829,13 +833,19 @@ ListElement::toWire(std::stringstream& ss, int omit_length)
         (*it)->toWire(ss2, 0);
     }
 
+
     if (omit_length) {
-        ss << ss2.rdbuf();
+        stringbuf *ss2_buf = ss2.rdbuf();
+        if (ss2_buf->in_avail() > 0) {
+            ss << ss2_buf;
+        }
     } else {
         stringbuf *ss2_buf = ss2.rdbuf();
         ss2_buf->pubseekpos(0);
         ss << encode_length(ss2_buf->in_avail(), ITEM_LIST);
-        ss << ss2_buf;
+        if (ss2_buf->in_avail() > 0) {
+            ss << ss2_buf;
+        }
     }
 }
 
@@ -873,13 +883,17 @@ MapElement::toWire(std::stringstream& ss, int omit_length)
     // add length if needed
     //
     if (omit_length) {
-        ss << ss2.rdbuf();
+        stringbuf *ss2_buf = ss2.rdbuf();
+        if (ss2_buf->in_avail() > 0) {
+            ss << ss2_buf;
+        }
     } else {
-        
         stringbuf *ss2_buf = ss2.rdbuf();
         ss2_buf->pubseekpos(0);
         ss << encode_length(ss2_buf->in_avail(), ITEM_HASH);
-        ss << ss2_buf;
+        if (ss2_buf->in_avail() > 0) {
+            ss << ss2_buf;
+        }
     }
 }
 
