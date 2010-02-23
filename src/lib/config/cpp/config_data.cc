@@ -30,7 +30,9 @@ static ElementPtr
 find_spec_part(ElementPtr spec, const std::string& identifier)
 {
     //std::cout << "[XX] find_spec_part for " << identifier << std::endl;
-    if (!spec) { return ElementPtr(); }
+    if (!spec) {
+        return ElementPtr();
+    }
     //std::cout << "in: " << std::endl << spec << std::endl;
     ElementPtr spec_part = spec;
     if (identifier == "") {
@@ -103,7 +105,9 @@ spec_name_list(ElementPtr result, ElementPtr spec_part, std::string prefix, bool
             if (list_el->getType() == Element::map &&
                 list_el->contains("item_name")) {
                 std::string new_prefix = prefix;
-                if (prefix != "") { new_prefix += "/"; }
+                if (prefix != "") {
+                    new_prefix += "/";
+                }
                 new_prefix += list_el->get("item_name")->stringValue();
                 if (recurse && list_el->get("item_type")->stringValue() == "map") {
                     spec_name_list(result, list_el->get("map_item_spec"), new_prefix, recurse);
