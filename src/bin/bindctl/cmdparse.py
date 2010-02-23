@@ -34,10 +34,10 @@ PARAM_PATTERN = re.compile(param_name_str + param_value_str + next_params_str)
 NAME_PATTERN = re.compile("^\s*(?P<name>[\w]+)(?P<blank>\s*)(?P<others>.*)$")
 
 class BindCmdParse:
-    """ This class will parse the command line usr input into three part
-    module name, command, parameters
-    the first two parts are strings and parameter is one hash, 
-    parameter part is optional
+    """ This class will parse the command line user input into three parts:
+    module name, command, parameters.
+    The first two parts are strings and parameter is one hash.
+    The parameter part is optional.
     
     Example: zone reload, zone_name=example.com 
     module == zone
