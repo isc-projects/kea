@@ -195,7 +195,7 @@ class MultiConfigData:
     def set_specification(self, spec):
         """Add or update a ModuleSpec"""
         if type(spec) != isc.config.ModuleSpec:
-            raise Exception("not a datadef")
+            raise Exception("not a datadef: " + str(type(spec)))
         self._specifications[spec.get_module_name()] = spec
 
     def get_module_spec(self, module):

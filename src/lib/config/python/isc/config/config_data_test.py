@@ -29,6 +29,7 @@ class TestConfigData(unittest.TestCase):
         else:
             self.data_path = "../../../testdata"
         spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec2.spec")
+        print("SPEC: " + str(type(spec)))
         self.cd = ConfigData(spec)
 
     #def test_module_spec_from_file(self):

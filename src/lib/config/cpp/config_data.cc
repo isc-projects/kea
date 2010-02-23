@@ -34,8 +34,7 @@ find_spec_part(ElementPtr spec, const std::string& identifier)
     //std::cout << "in: " << std::endl << spec << std::endl;
     ElementPtr spec_part = spec;
     if (identifier == "") {
-        //std::cout << "[XX] empty id" << std::endl;
-        return ElementPtr();
+        dns_throw(DataNotFoundError, "Empty identifier");
     }
     std::string id = identifier;
     size_t sep = id.find('/');
@@ -55,27 +54,8 @@ find_spec_part(ElementPtr spec, const std::string& identifier)
             if (!found) {
                 dns_throw(DataNotFoundError, identifier);
             }
-        } else if (spec_part->getType() == Element::map) {
-            if (spec_part->contains("map_item_spec")) {
-                bool found = false;
-                BOOST_FOREACH(ElementPtr list_el, spec_part->get("map_item_spec")->listValue()) {
-                    if (list_el->getType() == Element::map &&
-                        list_el->contains("item_name") &&
-                        list_el->get("item_name")->stringValue() == part) {
-                        spec_part = list_el;
-                        found = true;
-                    }
-                }
-                if (!found) {
-                    dns_throw(DataNotFoundError, identifier);
-                }
-            }
         }
-        if (sep < id.size()) {
-            id = id.substr(sep + 1);
-        } else {
-            id = "";
-        }
+        id = id.substr(sep + 1);
         sep = id.find("/");
     }
     if (id != "" && id != "/") {
@@ -106,6 +86,8 @@ find_spec_part(ElementPtr spec, const std::string& identifier)
                 if (!found) {
                     dns_throw(DataNotFoundError, identifier);
                 }
+            } else {
+                dns_throw(DataNotFoundError, identifier);
             }
         }
     }
@@ -135,6 +117,8 @@ spec_name_list(ElementPtr result, ElementPtr spec_part, std::string prefix, bool
                 }
             }
         }
+    } else if (spec_part->getType() == Element::map && spec_part->contains("map_item_spec")) {
+        spec_name_list(result, spec_part->get("map_item_spec"), prefix, recurse);
     }
 }
 
@@ -158,7 +142,7 @@ ConfigData::getValue(bool& is_default, const std::string& identifier)
             is_default = true;
         } else {
             is_default = false;
-            return ElementPtr();
+            value = ElementPtr();
         }
     }
     return value;

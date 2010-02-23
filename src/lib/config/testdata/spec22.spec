@@ -25,7 +25,7 @@
       { "item_name": "value5",
         "item_type": "list",
         "item_optional": False,
-        "item_default": [ ],
+        "item_default": [ "a", "b" ],
         "list_item_spec": {
           "item_name": "list_element",
           "item_type": "integer",
