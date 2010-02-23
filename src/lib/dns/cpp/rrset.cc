@@ -46,16 +46,20 @@ AbstractRRset::toText() const
     string s;
     RdataIteratorPtr it = getRdataIterator();
 
-    for (it->first(); !it->isLast(); it->next()) {
-        s += getName().toText() + " " +
-            getTTL().toText() + " " +
-            getClass().toText() + " " +
-            getType().toText() + " " +
-            it->getCurrent().toText() + "\n";
+    it->first();
+    if (it->isLast()) {
+        dns_throw(EmptyRRset, "ToText() is attempted for an empty RRset");
     }
 
+    do {
+        s += getName().toText() + " " + getTTL().toText() + " " +
+            getClass().toText() + " " + getType().toText() + " " +
+            it->getCurrent().toText() + "\n";
+        it->next();
+    } while (!it->isLast());
+
     return (s);
-}
+}   
 
 namespace {
 template <typename T>
@@ -65,9 +69,14 @@ rrsetToWire(const AbstractRRset& rrset, T& output)
     unsigned int n = 0;
     RdataIteratorPtr it = rrset.getRdataIterator();
 
+    it->first();
+    if (it->isLast()) {
+        dns_throw(EmptyRRset, "ToWire() is attempted for an empty RRset");
+    }
+
     // sort the set of Rdata based on rrset-order and sortlist, and possible
     // other options.  Details to be considered.
-    for (it->first(); !it->isLast(); it->next(), ++n) {
+    do {
         rrset.getName().toWire(output);
         rrset.getType().toWire(output);
         rrset.getClass().toWire(output);
@@ -77,7 +86,10 @@ rrsetToWire(const AbstractRRset& rrset, T& output)
         output.skip(sizeof(uint16_t)); // leave the space for RDLENGTH
         it->getCurrent().toWire(output);
         output.writeUint16At(output.getLength() - pos - sizeof(uint16_t), pos);
-    }
+
+        it->next();
+        ++n;
+    } while (!it->isLast());
 
     return (n);
 }
@@ -102,7 +114,10 @@ operator<<(ostream& os, const AbstractRRset& rrset)
     return (os);
 }
 
-struct BasicRRsetImpl {
+/// \brief This encapsulates the actual implementation of the \c BasicRRset
+/// class.  It's hidden from applications.
+class BasicRRsetImpl {
+public:
     BasicRRsetImpl(const Name& name, const RRClass& rrclass,
                    const RRType& rrtype, const RRTTL& ttl) :
         name_(name), rrclass_(rrclass), rrtype_(rrtype), ttl_(ttl) {}
@@ -110,7 +125,10 @@ struct BasicRRsetImpl {
     RRClass rrclass_;
     RRType rrtype_;
     RRTTL ttl_;
-    vector<RdataPtr> rdatalist_;
+    // XXX: "list" is not a good name: It in fact isn't a list; more conceptual
+    // name than a data structure name is generally better.  But since this
+    // is only used in the internal implementation we'll live with it.
+    vector<ConstRdataPtr> rdatalist_;
 };
 
 BasicRRset::BasicRRset(const Name& name, const RRClass& rrclass,
@@ -125,9 +143,15 @@ BasicRRset::~BasicRRset()
 }
 
 void
-BasicRRset::addRdata(const RdataPtr rdata)
+BasicRRset::addRdata(ConstRdataPtr rdata)
 {
     impl_->rdatalist_.push_back(rdata);
+}
+
+void
+BasicRRset::addRdata(const Rdata& rdata)
+{
+    AbstractRRset::addRdata(rdata);
 }
 
 unsigned int
@@ -161,9 +185,33 @@ BasicRRset::getTTL() const
 }
 
 void
+BasicRRset::setName(const Name& name)
+{
+    impl_->name_ = name;
+}
+
+void
 BasicRRset::setTTL(const RRTTL& ttl)
 {
     impl_->ttl_ = ttl;
+}
+
+string
+BasicRRset::toText() const
+{
+    return (AbstractRRset::toText());
+}
+
+unsigned int
+BasicRRset::toWire(OutputBuffer& buffer) const
+{
+    return (AbstractRRset::toWire(buffer));
+}
+
+unsigned int
+BasicRRset::toWire(MessageRenderer& renderer) const
+{
+    return (AbstractRRset::toWire(renderer));
 }
 
 namespace {
@@ -171,7 +219,7 @@ class BasicRdataIterator : public RdataIterator {
 private:
     BasicRdataIterator() {}
 public:
-    BasicRdataIterator(const std::vector<rdata::RdataPtr>& datavector) :
+    BasicRdataIterator(const std::vector<rdata::ConstRdataPtr>& datavector) :
         datavector_(&datavector) {}
     ~BasicRdataIterator() {}
     virtual void first() { it_ = datavector_->begin(); }
@@ -179,8 +227,8 @@ public:
     virtual const rdata::Rdata& getCurrent() const { return (**it_); }
     virtual bool isLast() const { return (it_ == datavector_->end()); }
 private:
-    const std::vector<rdata::RdataPtr>* datavector_;
-    std::vector<rdata::RdataPtr>::const_iterator it_;
+    const std::vector<rdata::ConstRdataPtr>* datavector_;
+    std::vector<rdata::ConstRdataPtr>::const_iterator it_;
 };
 }
 

@@ -65,6 +65,7 @@ public:
 
 class Rdata;
 typedef boost::shared_ptr<Rdata> RdataPtr;
+typedef boost::shared_ptr<const Rdata> ConstRdataPtr;
 
 /// Abstract RDATA class
 class Rdata {
