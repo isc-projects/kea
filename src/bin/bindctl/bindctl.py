@@ -53,6 +53,9 @@ def prepare_config_commands(tool):
     cmd.add_param(param)
     module.add_command(cmd)
 
+    cmd = CommandInfo(name = "diff", desc = "Show all local changes", need_inst_param = False)
+    module.add_command(cmd)
+
     cmd = CommandInfo(name = "revert", desc = "Revert all local changes", need_inst_param = False)
     module.add_command(cmd)
 
@@ -67,12 +70,17 @@ def prepare_config_commands(tool):
     tool.add_module_info(module)
 
 if __name__ == '__main__':
-    try:
-        tool = BindCmdInterpreter("localhost:8080")
-        prepare_config_commands(tool)
-        tool.run()
-    except Exception as e:
-        print(e)
-        print("Failed to connect with b10-cmdctl module, is it running?")
+    tool = BindCmdInterpreter("localhost:8080")
+    prepare_config_commands(tool)
+    tool.run()
+# TODO: put below back, was removed to see errors
+#if __name__ == '__main__':
+    #try:
+        #tool = BindCmdInterpreter("localhost:8080")
+        #prepare_config_commands(tool)
+        #tool.run()
+    #except Exception as e:
+        #print(e)
+        #print("Failed to connect with b10-cmdctl module, is it running?")
 
 

@@ -1,5 +1,5 @@
 {
-  "data_specification": {
+  "module_spec": {
     "module_name": "Spec2",
     "config_data": [
       { "item_name": "value1",
@@ -25,7 +25,7 @@
       { "item_name": "value5",
         "item_type": "list",
         "item_optional": False,
-        "item_default": [ ],
+        "item_default": [ "a", "b" ],
         "list_item_spec": {
           "item_name": "list_element",
           "item_type": "integer",

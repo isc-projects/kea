@@ -169,8 +169,8 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             param = json.loads(post_str)
             # TODO, need return some proper return code. 
             # currently always OK.
-            reply = self.server.send_command_to_module(mod, cmd, param)
-            print('b10-cmdctl finish send message \'%s\' to module %s' % (cmd, mod))            
+        reply = self.server.send_command_to_module(mod, cmd, param)
+        print('b10-cmdctl finish send message \'%s\' to module %s' % (cmd, mod))            
 
         return rcode, reply
             
@@ -189,7 +189,7 @@ class CommandControl():
         self.config_data = self.get_config_data()
 
     def get_cmd_specification(self): 
-        return self.send_command('ConfigManager', 'get_commands')
+        return self.send_command('ConfigManager', 'get_commands_spec')
 
     def get_config_data(self):
         return self.send_command('ConfigManager', 'get_config')
@@ -199,7 +199,7 @@ class CommandControl():
             self.config_data = self.get_config_data()
 
     def get_data_specification(self):
-        return self.send_command('ConfigManager', 'get_data_spec')
+        return self.send_command('ConfigManager', 'get_module_spec')
 
     def handle_recv_msg(self):
         # Handle received message, if 'shutdown' is received, return False
