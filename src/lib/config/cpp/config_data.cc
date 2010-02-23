@@ -153,8 +153,13 @@ ConfigData::getValue(bool& is_default, const std::string& identifier)
         is_default = false;
     } else {
         ElementPtr spec_part = find_spec_part(_module_spec.getConfigSpec(), identifier);
-        value = spec_part->get("item_default");
-        is_default = true;
+        if (spec_part->contains("item_default")) {
+            value = spec_part->get("item_default");
+            is_default = true;
+        } else {
+            is_default = false;
+            return ElementPtr();
+        }
     }
     return value;
 }
