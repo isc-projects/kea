@@ -50,7 +50,9 @@ def module_spec_from_file(spec_file, check = True):
     if 'module_spec' not in module_spec:
         raise ModuleSpecError("Data definition has no module_spec element")
         
-    return ModuleSpec(module_spec['module_spec'], check)
+    result = ModuleSpec(module_spec['module_spec'], check)
+    print("RETURNING: " + str(type(result)))
+    return result
 
 class ModuleSpec:
     def __init__(self, module_spec, check = True):
