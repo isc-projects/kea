@@ -57,11 +57,21 @@ TEST(ModuleSpec, ReadingSpecfiles) {
                    specfile("doesnotexist"),
                    ": No such file or directory");
 
+    dd = moduleSpecFromFile(specfile("spec2.spec"));
+    EXPECT_EQ("[ {\"command_args\": [ {\"item_default\": \"\", \"item_name\": \"message\", \"item_optional\": False, \"item_type\": \"string\"} ], \"command_description\": \"Print the given message to stdout\", \"command_name\": \"print_message\"}, {\"command_args\": [  ], \"command_description\": \"Shut down BIND 10\", \"command_name\": \"shutdown\"} ]", dd.getCommandsSpec()->str());
+    EXPECT_EQ("Spec2", dd.getModuleName());
+
     std::ifstream file;
     file.open(specfile("spec1.spec").c_str());
     dd = moduleSpecFromFile(file);
     EXPECT_EQ(dd.getFullSpec()->get("module_name")
                               ->stringValue(), "Spec1");
+    EXPECT_EQ(dd.getCommandsSpec(), ElementPtr());
+
+    std::ifstream file2;
+    file2.open(specfile("spec8.spec").c_str());
+    EXPECT_THROW(moduleSpecFromFile(file2), ModuleSpecError);
+
 }
 
 TEST(ModuleSpec, SpecfileItems) {
@@ -129,6 +139,18 @@ data_test(ModuleSpec dd, const std::string& data_file_name)
     return dd.validate_config(data);
 }
 
+bool
+data_test_with_errors(ModuleSpec dd, const std::string& data_file_name, ElementPtr errors)
+{
+    std::ifstream data_file;
+
+    data_file.open(specfile(data_file_name).c_str());
+    ElementPtr data = Element::createFromString(data_file, data_file_name);
+    data_file.close();
+
+    return dd.validate_config(data, true, errors);
+}
+
 TEST(ModuleSpec, DataValidation) {
     ModuleSpec dd = moduleSpecFromFile(specfile("spec22.spec"));
 
@@ -140,4 +162,8 @@ TEST(ModuleSpec, DataValidation) {
     EXPECT_TRUE(data_test(dd, "data22_6.data"));
     EXPECT_TRUE(data_test(dd, "data22_7.data"));
     EXPECT_FALSE(data_test(dd, "data22_8.data"));
+
+    ElementPtr errors = Element::createFromString("[]");
+    EXPECT_FALSE(data_test_with_errors(dd, "data22_8.data", errors));
+    EXPECT_EQ("[ \"Type mismatch\" ]", errors->str());
 }
