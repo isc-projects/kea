@@ -38,8 +38,8 @@ TEST(ConfigData, Creation) {
 }
 
 TEST(ConfigData, getValue) {
-    ModuleSpec spec2 = moduleSpecFromFile(std::string(TEST_DATA_PATH) + "/spec22.spec");
-    ConfigData cd = ConfigData(spec2);
+    ModuleSpec spec22 = moduleSpecFromFile(std::string(TEST_DATA_PATH) + "/spec22.spec");
+    ConfigData cd = ConfigData(spec22);
     //std::cout << "[XX] SPEC2: " << cd.getModuleSpec().getFullSpec() << std::endl;
     bool is_default;
     //ElementPtr value = cd.getValue(is_default, "item1");
@@ -74,6 +74,12 @@ TEST(ConfigData, getValue) {
     EXPECT_THROW(cd.getValue("value6/a")->str(), DataNotFoundError);
     EXPECT_THROW(cd.getValue("value6/no_such_item")->str(), DataNotFoundError);
     EXPECT_THROW(cd.getValue("value8/a")->str(), DataNotFoundError);
+    EXPECT_THROW(cd.getValue("value8/a")->str(), DataNotFoundError);
+    EXPECT_THROW(cd.getValue("value8/a")->str(), DataNotFoundError);
+
+    ModuleSpec spec1 = moduleSpecFromFile(std::string(TEST_DATA_PATH) + "/spec1.spec");
+    ConfigData cd1 = ConfigData(spec1);
+    EXPECT_THROW(cd1.getValue("anything")->str(), DataNotFoundError);
 }
 
 TEST(ConfigData, setLocalConfig) {

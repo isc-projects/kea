@@ -31,7 +31,7 @@ find_spec_part(ElementPtr spec, const std::string& identifier)
 {
     //std::cout << "[XX] find_spec_part for " << identifier << std::endl;
     if (!spec) {
-        return ElementPtr();
+        dns_throw(DataNotFoundError, "Empty specification");
     }
     //std::cout << "in: " << std::endl << spec << std::endl;
     ElementPtr spec_part = spec;
