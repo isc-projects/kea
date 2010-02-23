@@ -43,7 +43,7 @@ public:
     void setModuleSpec(ModuleSpec module_spec) { _module_spec = module_spec; };
     void setLocalConfig(ElementPtr config) { _config = config; }
     ElementPtr getLocalConfig() { return _config; }
-    ElementPtr getItemList(const std::string& identifier, bool recurse = false);
+    ElementPtr getItemList(const std::string& identifier = "", bool recurse = false);
     ElementPtr getFullConfig();
 
 private:
