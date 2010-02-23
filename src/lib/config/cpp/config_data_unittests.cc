@@ -43,20 +43,31 @@ TEST(ConfigData, getValue) {
     //std::cout << "[XX] SPEC2: " << cd.getModuleSpec().getFullSpec() << std::endl;
     bool is_default;
     //ElementPtr value = cd.getValue(is_default, "item1");
+    EXPECT_EQ(1, cd.getValue("item1")->intValue());
     EXPECT_EQ(1, cd.getValue(is_default, "item1")->intValue());
     EXPECT_TRUE(is_default);
+    EXPECT_EQ(1.1, cd.getValue("item2")->doubleValue());
     EXPECT_EQ(1.1, cd.getValue(is_default, "item2")->doubleValue());
     EXPECT_TRUE(is_default);
+    EXPECT_TRUE(cd.getValue("item3")->boolValue());
     EXPECT_TRUE(cd.getValue(is_default, "item3")->boolValue());
     EXPECT_TRUE(is_default);
+    EXPECT_EQ("test", cd.getValue("item4")->stringValue());
     EXPECT_EQ("test", cd.getValue(is_default, "item4")->stringValue());
     EXPECT_TRUE(is_default);
+    EXPECT_EQ("a", cd.getValue("item5")->get(0)->stringValue());
     EXPECT_EQ("a", cd.getValue(is_default, "item5")->get(0)->stringValue());
     EXPECT_TRUE(is_default);
+    EXPECT_EQ("b", cd.getValue("item5")->get(1)->stringValue());
     EXPECT_EQ("b", cd.getValue(is_default, "item5")->get(1)->stringValue());
     EXPECT_TRUE(is_default);
+    EXPECT_EQ("{}", cd.getValue("item6")->str());
     EXPECT_EQ("{}", cd.getValue(is_default, "item6")->str());
     EXPECT_TRUE(is_default);
+
+    EXPECT_THROW(cd.getValue("no_such_item")->str(), DataNotFoundError);
+    EXPECT_THROW(cd.getValue("item6/no_such_item")->str(), DataNotFoundError);
+
 }
 
 TEST(ConfigData, setLocalConfig) {
