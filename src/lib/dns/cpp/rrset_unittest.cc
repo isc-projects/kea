@@ -168,6 +168,17 @@ TEST_F(RRsetTest, iterator)
     rrset_a_empty.addRdata(in::A("192.0.2.1"));
     rrset_a_empty.addRdata(in::A("192.0.2.2"));
     addRdataTestCommon(rrset_a_empty);
+
+    // Rewind test: should be repeat the iteration by calling first().
+    for (int i = 0; i < 2; ++i) {
+        it = rrset_a_empty.getRdataIterator();
+        it->first();
+        EXPECT_FALSE(it->isLast());
+        it->next();
+        EXPECT_FALSE(it->isLast());
+        it->next();
+        EXPECT_TRUE(it->isLast());
+    }
 }
 
 TEST_F(RRsetTest, toText)
@@ -175,6 +186,9 @@ TEST_F(RRsetTest, toText)
     EXPECT_EQ("test.example.com. 3600 IN A 192.0.2.1\n"
               "test.example.com. 3600 IN A 192.0.2.2\n",
               rrset_a.toText());
+
+    // toText() cannot be performed for an empty RRset.
+    EXPECT_THROW(rrset_a_empty.toText(), EmptyRRset);
 }
 
 TEST_F(RRsetTest, toWireBuffer)
@@ -184,6 +198,10 @@ TEST_F(RRsetTest, toWireBuffer)
     UnitTestUtil::readWireData("testdata/rrset_toWire1", wiredata);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
                         buffer.getLength(), &wiredata[0], wiredata.size());
+
+    // toWire() cannot be performed for an empty RRset.
+    buffer.clear();
+    EXPECT_THROW(rrset_a_empty.toWire(buffer), EmptyRRset);
 }
 
 TEST_F(RRsetTest, toWireRenderer)
@@ -196,6 +214,10 @@ TEST_F(RRsetTest, toWireRenderer)
     UnitTestUtil::readWireData("testdata/rrset_toWire2", wiredata);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
                         buffer.getLength(), &wiredata[0], wiredata.size());
+
+    // toWire() cannot be performed for an empty RRset.
+    renderer.clear();
+    EXPECT_THROW(rrset_a_empty.toWire(renderer), EmptyRRset);
 }
 
 // test operator<<.  We simply confirm it appends the result of toText().
