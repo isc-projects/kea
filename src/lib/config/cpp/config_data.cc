@@ -53,8 +53,7 @@ find_spec_part(ElementPtr spec, const std::string& identifier)
                 }
             }
             if (!found) {
-                // raise exception?
-                return ElementPtr();
+                dns_throw(DataNotFoundError, identifier);
             }
         } else if (spec_part->getType() == Element::map) {
             if (spec_part->contains("map_item_spec")) {
@@ -68,8 +67,7 @@ find_spec_part(ElementPtr spec, const std::string& identifier)
                     }
                 }
                 if (!found) {
-                    // raise exception?
-                    return ElementPtr();
+                    dns_throw(DataNotFoundError, identifier);
                 }
             }
         }
@@ -92,8 +90,7 @@ find_spec_part(ElementPtr spec, const std::string& identifier)
                 }
             }
             if (!found) {
-                // raise exception?
-                return ElementPtr();
+                dns_throw(DataNotFoundError, identifier);
             }
         } else if (spec_part->getType() == Element::map) {
             if (spec_part->contains("map_item_spec")) {
@@ -107,8 +104,7 @@ find_spec_part(ElementPtr spec, const std::string& identifier)
                     }
                 }
                 if (!found) {
-                    // raise exception?
-                    return ElementPtr();
+                    dns_throw(DataNotFoundError, identifier);
                 }
             }
         }
@@ -153,17 +149,12 @@ ElementPtr
 ConfigData::getValue(bool& is_default, const std::string& identifier)
 {
     ElementPtr value = _config->find(identifier);
-    if (!value) {
-        ElementPtr spec_part = find_spec_part(_module_spec.getConfigSpec(), identifier);
-        if (spec_part) {
-            value = spec_part->get("item_default");
-            is_default = true;
-        } else {
-            // we should raise an error here
-            dns_throw(DataNotFoundError, "identifier not found");
-        }
-    } else {
+    if (value) {
         is_default = false;
+    } else {
+        ElementPtr spec_part = find_spec_part(_module_spec.getConfigSpec(), identifier);
+        value = spec_part->get("item_default");
+        is_default = true;
     }
     return value;
 }

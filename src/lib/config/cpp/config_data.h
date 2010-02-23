@@ -28,7 +28,7 @@ namespace config {
 
 class DataNotFoundError : public isc::Exception {
 public:
-    DataNotFoundError(const char* file, size_t line, const char* what) :
+    DataNotFoundError(const char* file, size_t line, const std::string& what) :
         isc::Exception(file, line, what) {}
 };
     
