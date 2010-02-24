@@ -241,6 +241,7 @@ class CommandControl():
                     return {}
             else:
                 print("Error: unexpected answer from %s" % module_name)
+                print(answer)
         except Exception as e:
             print(e)
             print('b10-cmdctl fail send command \'%s\' to %s' % (command_name, module_name))
