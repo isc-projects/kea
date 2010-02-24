@@ -74,6 +74,37 @@ def create_answer(rcode, arg = None):
     else:
         return { 'result': [ rcode ] }
 
+# 'fixed' commands
+"""Fixed names for command and configuration messages"""
+COMMAND_COMMANDS_UPDATE = "commands_update"
+COMMAND_SPECIFICATION_UPDATE = "specification_update"
+
+COMMAND_GET_COMMANDS_SPEC = "get_commands_spec"
+COMMAND_GET_CONFIG = "get_config"
+COMMAND_SET_CONFIG = "set_config"
+COMMAND_GET_MODULE_SPEC = "get_module_spec"
+
+def parse_command(msg):
+    """Parses what may be a command message. If it looks like one,
+       the function returns (command, value) where command is a
+       string. If it is not, this function returns None, None"""
+    if type(msg) == dict and len(msg.items()) == 1:
+        cmd, value = msg.popitem()
+        if type(cmd) == str:
+            return cmd, value
+    return None, None
+
+def create_command(command_name, params = None):
+    """Creates a module command message with the given command name (as
+       specified in the module's specification, and an optional params
+       object"""
+    # TODO: validate_command with spec
+    cmd = [ command_name ]
+    if params:
+        cmd.append(params)
+    msg = { 'command': cmd }
+    return msg
+
 class ModuleCCSession(ConfigData):
     """This class maintains a connection to the command channel, as
        well as configuration options for modules. The module provides
