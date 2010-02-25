@@ -236,7 +236,7 @@ def _validate_type(spec, value, errors):
         return False
     elif data_type == "list" and type(value) != list:
         if errors != None:
-            errors.append(str(value) + " should be a list, not a " + str(value.__class__.__name__))
+            errors.append(str(value) + " should be a list")
         return False
     elif data_type == "map" and type(value) != dict:
         if errors != None:
