@@ -78,6 +78,36 @@
           ]
         }
       },
+      { "item_name": "value9",
+        "item_type": "map",
+        "item_optional": False,
+        "item_default": {},
+        "map_item_spec": [
+          { "item_name": "v91",
+            "item_type": "string",
+            "item_optional": False,
+            "item_default": "def"
+          },
+          { "item_name": "v92",
+            "item_type": "map",
+            "item_optional": False,
+            "item_default": {},
+            "map_item_spec": [
+              { "item_name": "v92a",
+                "item_type": "string",
+                "item_optional": False,
+                "item_default": "Hello"
+              } ,
+              {
+                "item_name": "v92b",
+                "item_type": "integer",
+                "item_optional": False,
+                "item_default": 47806
+              }
+            ]
+          }
+        ]
+      }
     ]
   }
 }
