@@ -103,6 +103,42 @@ parseAnswer(int &rcode, const ElementPtr msg)
     }
 }
 
+ElementPtr
+createCommand(const std::string& command, ElementPtr arg)
+{
+    ElementPtr cmd = Element::createFromString("{}");
+    ElementPtr cmd_parts = Element::createFromString("[]");
+    cmd_parts->add(Element::create(command));
+    if (arg) {
+        cmd_parts->add(arg);
+    }
+    cmd->set("command", cmd_parts);
+    return cmd;
+}
+
+/// Returns "" and empty ElementPtr() if this does not
+/// look like a command
+const std::string
+parseCommand(ElementPtr& arg, const ElementPtr command)
+{
+    if (command->getType() == Element::map &&
+        command->contains("command")) {
+        ElementPtr cmd = command->get("command");
+        if (cmd->getType() == Element::list &&
+            cmd->size() > 0 &&
+            cmd->get(0)->getType() == Element::string) {
+            if (cmd->size() > 1) {
+                arg = cmd->get(1);
+            } else {
+                arg = ElementPtr();
+            }
+            return cmd->get(0)->stringValue();
+        }
+    }
+    arg = ElementPtr();
+    return "";
+}
+
 void
 ModuleCCSession::read_module_specification(const std::string& filename) {
     std::ifstream file;
@@ -150,8 +186,7 @@ ModuleCCSession::ModuleCCSession(std::string spec_file_name,
     //session_.subscribe("Boss", "*");
     //session_.subscribe("statistics", "*");
     // send the data specification
-    ElementPtr spec_msg = Element::createFromString("{}");
-    spec_msg->set("module_spec", module_specification_.getFullSpec());
+    ElementPtr spec_msg = createCommand("module_spec", module_specification_.getFullSpec());
     session_.group_sendmsg(spec_msg, "ConfigManager");
     session_.group_recvmsg(env, answer, false);
     
@@ -160,7 +195,6 @@ ModuleCCSession::ModuleCCSession(std::string spec_file_name,
         ElementPtr cmd = Element::createFromString("{ \"command\": [\"get_config\", {\"module_name\":\"" + module_name_ + "\"} ] }");
         session_.group_sendmsg(cmd, "ConfigManager");
         session_.group_recvmsg(env, answer, false);
-        cout << "[XX] got config: " << endl << answer->str() << endl;
         int rcode;
         ElementPtr new_config = parseAnswer(rcode, answer);
         handleConfigUpdate(new_config);
@@ -208,7 +242,6 @@ ModuleCCSession::getSocket()
 int
 ModuleCCSession::check_command()
 {
-    cout << "[XX] check for command" << endl;
     ElementPtr cmd, routing, data;
     if (session_.group_recvmsg(routing, data, true)) {
         /* ignore result messages (in case we're out of sync, to prevent
@@ -216,7 +249,6 @@ ModuleCCSession::check_command()
         if (!data->getType() == Element::map || data->contains("result")) {
             return 0;
         }
-        cout << "[XX] got something!" << endl << data->str() << endl;
         ElementPtr answer;
         if (data->contains("config_update")) {
             ElementPtr new_config = data->get("config_update");

@@ -103,7 +103,6 @@ def spec_name_list(spec, prefix="", recurse=False):
             for name in spec:
                 result.append(prefix + name + "/")
                 if recurse:
-                    print("[XX] recurse1")
                     result.extend(spec_name_list(spec[name],name, recurse))
     elif type(spec) == list:
         for list_el in spec:

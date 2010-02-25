@@ -210,7 +210,7 @@ class TestConfigManager(unittest.TestCase):
     def test_handle_msg(self):
         self._handle_msg_helper({}, { 'result': [ 1, 'Unknown message format: {}']})
         self._handle_msg_helper("", { 'result': [ 1, 'Unknown message format: ']})
-        self._handle_msg_helper({ "command": [ "badcommand" ] }, { 'result': [ 1, "Unknown command: ['badcommand']"]})
+        self._handle_msg_helper({ "command": [ "badcommand" ] }, { 'result': [ 1, "Unknown command: badcommand"]})
         self._handle_msg_helper({ "command": [ "get_commands_spec" ] }, { 'result': [ 0, {} ]})
         self._handle_msg_helper({ "command": [ "get_module_spec" ] }, { 'result': [ 0, {} ]})
         #self._handle_msg_helper({ "command": [ "get_module_spec", { "module_name": "nosuchmodule" } ] },
@@ -228,7 +228,7 @@ class TestConfigManager(unittest.TestCase):
                                 {'result': [1, 'Bad module_name in get_config command']})
         self._handle_msg_helper({ "command": [ "set_config" ] },
                                 {'result': [1, 'Wrong number of arguments']})
-        self._handle_msg_helper({ "command": [ "set_config", {} ] },
+        self._handle_msg_helper({ "command": [ "set_config", [{}]] },
                                 {'result': [0]})
         self.assertEqual(len(self.fake_session.message_queue), 0)
 
@@ -237,13 +237,13 @@ class TestConfigManager(unittest.TestCase):
         my_ok_answer = { 'result': [ 0 ] }
 
         self.fake_session.group_sendmsg(my_ok_answer, "ConfigManager")
-        self._handle_msg_helper({ "command": [ "set_config", self.name, { "test": 123 } ] },
+        self._handle_msg_helper({ "command": [ "set_config", [self.name, { "test": 123 }] ] },
                                 my_ok_answer)
         self.assertEqual(len(self.fake_session.message_queue), 1)
         self.fake_session.group_sendmsg(my_ok_answer, "ConfigManager")
         self.assertEqual({'config_update': {'test': 123}},
                          self.fake_session.get_message(self.name, None))
-        self._handle_msg_helper({ "command": [ "set_config", self.name, { "test": 124 } ] },
+        self._handle_msg_helper({ "command": [ "set_config", [self.name, { "test": 124 }] ] },
                                 {'result': [0]})
 
         #print(self.fake_session.message_queue)
@@ -251,13 +251,11 @@ class TestConfigManager(unittest.TestCase):
         self.assertEqual({'config_update': {'test': 124}},
                          self.fake_session.get_message(self.name, None))
         self.assertEqual({'version': 1, 'TestModule': {'test': 124}}, self.cm.config.data)
-        self._handle_msg_helper({ "module_spec": 
-                                  self.spec.get_full_spec()
+        self._handle_msg_helper({ "command": 
+                                  ["module_spec", self.spec.get_full_spec()]
                                 },
                                 {'result': [0]})
-        self._handle_msg_helper({ "module_spec": 
-                                  { 'foo': 1 }
-                                },
+        self._handle_msg_helper({ "command": [ "module_spec", { 'foo': 1 } ] },
                                 {'result': [1, 'Error in data definition: no module_name in module_spec']})
         self._handle_msg_helper({ "command": [ "get_module_spec" ] }, { 'result': [ 0, { self.spec.get_module_name(): self.spec.get_config_spec() } ]})
         self._handle_msg_helper({ "command": [ "get_commands_spec" ] }, { 'result': [ 0, { self.spec.get_module_name(): self.spec.get_commands_spec() } ]})
