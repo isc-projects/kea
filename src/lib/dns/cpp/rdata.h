@@ -71,6 +71,7 @@ class Rdata;
 /// object of some concrete derived class of \c Rdata.
 ///
 typedef boost::shared_ptr<Rdata> RdataPtr;
+typedef boost::shared_ptr<const Rdata> ConstRdataPtr;
 
 /// \brief Possible maximum length of RDATA, which is the maximum unsigned
 /// 16 bit value.
