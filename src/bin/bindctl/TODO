@@ -1,3 +1,15 @@
 1. Refactor the code for bindctl.
 2. Update man page for bindctl provided by jreed.
 3. Add more unit tests.
+4. Need Review:
+        bindcmd.py:
+            apply_config_cmd()
+            _validate_cmd()
+            complete()
+            
+        cmdparse.py:
+            _parse_params
+
+        moduleinfo.py:
+            get_param_name_by_position
+

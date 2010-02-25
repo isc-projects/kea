@@ -85,16 +85,6 @@ class TestCmdLex(unittest.TestCase):
         self.my_assert_raise(CmdCommandNameFormatError, "zone z-d ")
         self.my_assert_raise(CmdCommandNameFormatError, "zone zdd/")
         self.my_assert_raise(CmdCommandNameFormatError, "zone zdd/ \"")
-        
-
-    def testCmdParamFormatError(self): 
-        self.my_assert_raise(CmdParamFormatError, "zone load load")
-        self.my_assert_raise(CmdParamFormatError, "zone load load=")
-        self.my_assert_raise(CmdParamFormatError, "zone load load==dd")
-        self.my_assert_raise(CmdParamFormatError, "zone load , zone_name=dd zone_file=d" )
-        self.my_assert_raise(CmdParamFormatError, "zone load zone_name=dd zone_file" )
-        self.my_assert_raise(CmdParamFormatError, "zone zdd \"")
-        
 
 class TestCmdSyntax(unittest.TestCase):
     
@@ -103,18 +93,21 @@ class TestCmdSyntax(unittest.TestCase):
         
         tool = bindcmd.BindCmdInterpreter()        
         zone_file_param = ParamInfo(name = "zone_file")
+        zone_name = ParamInfo(name = 'zone_name')
         load_cmd = CommandInfo(name = "load")
         load_cmd.add_param(zone_file_param)
+        load_cmd.add_param(zone_name)
         
         param_master = ParamInfo(name = "master", optional = True)                                 
         param_allow_update = ParamInfo(name = "allow_update", optional = True)                                           
         set_cmd = CommandInfo(name = "set")
         set_cmd.add_param(param_master)
         set_cmd.add_param(param_allow_update)
+        set_cmd.add_param(zone_name)
         
-        reload_all_cmd = CommandInfo(name = "reload_all", need_inst_param = False)        
+        reload_all_cmd = CommandInfo(name = "reload_all")        
         
-        zone_module = ModuleInfo(name = "zone", inst_name = "zone_name")                             
+        zone_module = ModuleInfo(name = "zone")                             
         zone_module.add_command(load_cmd)
         zone_module.add_command(set_cmd)
         zone_module.add_command(reload_all_cmd)
@@ -129,12 +122,12 @@ class TestCmdSyntax(unittest.TestCase):
         
     def no_assert_raise(self, cmd_line):
         cmd = cmdparse.BindCmdParse(cmd_line)
-        self.bindcmd.validate_cmd(cmd) 
+        self.bindcmd._validate_cmd(cmd) 
         
         
     def my_assert_raise(self, exception_type, cmd_line):
         cmd = cmdparse.BindCmdParse(cmd_line)
-        self.assertRaises(exception_type, self.bindcmd.validate_cmd, cmd)  
+        self.assertRaises(exception_type, self.bindcmd._validate_cmd, cmd)  
         
         
     def testValidateSuccess(self):
