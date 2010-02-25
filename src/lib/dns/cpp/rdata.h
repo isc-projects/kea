@@ -21,6 +21,8 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <exceptions/exceptions.h>
+
 namespace isc {
 namespace dns {
 class InputBuffer;
