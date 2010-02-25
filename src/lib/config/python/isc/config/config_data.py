@@ -73,7 +73,7 @@ def find_spec_part(element, identifier):
         elif type(cur_el) == list:
             found = False
             for cur_el_item in cur_el:
-                if cur_el_item['item_name'] == id and 'item_default' in cur_el_item.keys():
+                if cur_el_item['item_name'] == id:
                     cur_el = cur_el_item
                     found = True
             if not found:
@@ -200,6 +200,11 @@ class MultiConfigData:
         if type(spec) != isc.config.ModuleSpec:
             raise ConfigDataError("not a datadef: " + str(type(spec)))
         self._specifications[spec.get_module_name()] = spec
+
+    def remove_specification(self, module_name):
+        """Removes the specification with the given module name. Does nothing if it wasn't there."""
+        if module_name in self._specifications:
+            del self._specifications[module_name]
 
     def get_module_spec(self, module):
         """Returns the ModuleSpec for the module with the given name.
@@ -344,13 +349,13 @@ class MultiConfigData:
                         else:
                             entry['default'] = False
                         result.append(entry)
-                else:
+                elif type(spec_part) == dict:
                     item = spec_part
                     if item['item_type'] == 'list':
                         li_spec = item['list_item_spec']
-                        l, status =  self.get_value("/" + identifier)
-                        if l:
-                            for value in l:
+                        item_list, status =  self.get_value("/" + identifier)
+                        if item_list != None:
+                            for value in item_list:
                                 result_part2 = {}
                                 result_part2['name'] = li_spec['item_name']
                                 result_part2['value'] = value
