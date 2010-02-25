@@ -38,12 +38,16 @@ import pprint
 import select
 import csv
 import random
+import time
+import signal
+from optparse import OptionParser, OptionValueError
 from hashlib import sha1
 try:
     import threading
 except ImportError:
     import dummy_threading as threading
 
+__version__ = 'BIND10'
 URL_PATTERN = re.compile('/([\w]+)(?:/([\w]+))?/?')
 
 # If B10_FROM_SOURCE is set in the environment, we use data files
@@ -92,7 +96,16 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         return self.session_id 
 
     def _is_user_logged_in(self):
-        return self.session_id in self.server.user_sessions           
+        login_time = self.server.user_sessions.get(self.session_id)
+        if not login_time:
+            return False
+        
+        idle_time = time.time() - login_time
+        if idle_time > self.server.idle_timeout:
+            return False
+        # Update idle time
+        self.server.user_sessions[self.session_id] = time.time()
+        return True
 
     def _parse_request_path(self):
         '''Parse the url, the legal url should like /ldh or /ldh/ldh '''
@@ -103,6 +116,7 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             return (groups.group(1), groups.group(2))
 
     def do_POST(self):
+        '''Process POST request. '''
         '''Process user login and send command to proper module  
         The client should send its session id in header with 
         the name 'cookie'
@@ -112,8 +126,10 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         if self._is_session_valid():
             if self.path == '/login':
                 rcode, reply = self._handle_login()
-            else:
+            elif self._is_user_logged_in():
                 rcode, reply = self._handle_post_request()
+            else:
+                rcode, reply = http.client.UNAUTHORIZED, ["please login"]
         else:
             rcode, reply = http.client.BAD_REQUEST, ["session isn't valid"]
       
@@ -127,19 +143,22 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             return http.client.OK, ["user has already login"]
         is_user_valid, error_info = self._check_user_name_and_pwd()
         if is_user_valid:
-            self.server.user_sessions.append(self.session_id)
+            self.server.save_user_session_id(self.session_id)
             return http.client.OK, ["login success "]
         else:
             return http.client.UNAUTHORIZED, error_info
 
     def _check_user_name_and_pwd(self):
+        '''Check user name and its password '''
         length = self.headers.get('Content-Length')
         if not length:
             return False, ["invalid username or password"]     
-        user_info = json.loads((self.rfile.read(int(length))).decode())
-        if not user_info:
-             return False, ["invalid username or password"]                
-        
+
+        try:
+            user_info = json.loads((self.rfile.read(int(length))).decode())
+        except:
+            return False, ["invalid username or password"]                
+
         user_name = user_info.get('username')
         if not user_name:
             return False, ["need user name"]
@@ -158,21 +177,24 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
    
 
     def _handle_post_request(self):
+        '''Handle all the post request from client. '''
         mod, cmd = self._parse_request_path()
+        if (not mod) or (not cmd):
+            return http.client.BAD_REQUEST, ['malformed url']
+
         param = None
         len = self.headers.get('Content-Length')
-        rcode = http.client.OK
-        reply = None
         if len:
-            post_str = str(self.rfile.read(int(len)).decode())
-            print("command parameter:%s" % post_str)
-            param = json.loads(post_str)
-            # TODO, need return some proper return code. 
-            # currently always OK.
-        reply = self.server.send_command_to_module(mod, cmd, param)
-        print('b10-cmdctl finish send message \'%s\' to module %s' % (cmd, mod))            
+            try:
+                post_str = str(self.rfile.read(int(len)).decode())
+                param = json.loads(post_str)
+            except:
+                pass
 
-        return rcode, reply
+        reply = self.server.send_command_to_module(mod, cmd, param)
+        print('b10-cmdctl finish send message \'%s\' to module %s' % (cmd, mod))
+        # TODO, need set proper rcode
+        return http.client.OK, reply
             
    
 class CommandControl():
@@ -192,9 +214,11 @@ class CommandControl():
         return self.send_command('ConfigManager', 'get_commands_spec')
 
     def get_config_data(self):
+        '''Get config data for all modules from configmanager '''
         return self.send_command('ConfigManager', 'get_config')
 
     def update_config_data(self, module_name, command_name):
+        '''Get lastest config data for all modules from configmanager '''
         if module_name == 'ConfigManager' and command_name == 'set_config':
             self.config_data = self.get_config_data()
 
@@ -202,7 +226,7 @@ class CommandControl():
         return self.send_command('ConfigManager', 'get_module_spec')
 
     def handle_recv_msg(self):
-        # Handle received message, if 'shutdown' is received, return False
+        '''Handle received message, if 'shutdown' is received, return False'''
         (message, env) = self.cc.group_recvmsg(True)
         while message:
             if 'commands_update' in message:
@@ -217,44 +241,44 @@ class CommandControl():
         return True
     
     def send_command(self, module_name, command_name, params = None):       
+        '''Send the command from bindctl to proper module. '''
         content = [command_name]
         if params:
             content.append(params)
 
-        msg = {'command' : content}
+        reply = {}
         print('b10-cmdctl send command \'%s\' to %s' %(command_name, module_name))
         try:
+            msg = {'command' : content}
             self.cc.group_sendmsg(msg, module_name)
-            #TODO, it may be blocked, msqg need to add a new interface
-            # wait in timeout.
+            #TODO, it may be blocked, msqg need to add a new interface waiting in timeout.
             answer, env = self.cc.group_recvmsg(False)
-            if answer and 'result' in answer.keys() and type(answer['result']) == list:
-                # TODO: with the new cc implementation, replace "1" by 1
-                if answer['result'][0] == 1:
+            if answer and 'result' in answer.keys() and type(answer['result']) == list:                
+                if answer['result'][0] != 0:
                     # todo: exception
-                    print("Error: " + str(answer['result'][1]))
-                    return {}
+                    print("Error: " + str(answer['result'][1]))                    
                 else:
                     self.update_config_data(module_name, command_name)
-                    if len(answer['result']) > 1:
-                        return answer['result'][1]
-                    return {}
+                    if (len(answer['result']) > 1):
+                        reply = answer['result'][1]
             else:
                 print("Error: unexpected answer from %s" % module_name)
                 print(answer)
         except Exception as e:
-            print(e)
-            print('b10-cmdctl fail send command \'%s\' to %s' % (command_name, module_name))
-        return {}
+            print(e, ':b10-cmdctl fail send command \'%s\' to %s' % (command_name, module_name))
+        
+        return reply
 
 
 class SecureHTTPServer(http.server.HTTPServer):
     '''Make the server address can be reused.'''
     allow_reuse_address = True
 
-    def __init__(self, server_address, RequestHandlerClass):
+    def __init__(self, server_address, RequestHandlerClass, idle_timeout = 1200):
+        '''idle_timeout: the max idle time for login'''
         http.server.HTTPServer.__init__(self, server_address, RequestHandlerClass)
-        self.user_sessions = []
+        self.user_sessions = {}
+        self.idle_timeout = idle_timeout
         self.cmdctrl = CommandControl()
         self.__is_shut_down = threading.Event()
         self.__serving = False
@@ -262,23 +286,25 @@ class SecureHTTPServer(http.server.HTTPServer):
         self._read_user_info()
 
     def _read_user_info(self):
-        # Get all username and password information
+        '''Read all user's name and its' password from csv file.'''
         csvfile = None
         try:
             csvfile = open(USER_INFO_FILE)
             reader = csv.reader(csvfile)
             for row in reader:
                 self.user_infos[row[0]] = [row[1], row[2]]
-                
         except Exception as e:
             print("Fail to read user information ", e)                
-            exit(1)
         finally:
             if csvfile:
                 csvfile.close()
         
+    def save_user_session_id(self, session_id):
+        # Record user's id and login time.
+        self.user_sessions[session_id] = time.time()
         
     def get_request(self):
+        '''Get client request socket and wrap it in SSL context. '''
         newsocket, fromaddr = self.socket.accept()
         try:
             connstream = ssl.wrap_socket(newsocket,
@@ -298,18 +324,18 @@ class SecureHTTPServer(http.server.HTTPServer):
         '''Currently only support the following three url GET request '''
         rcode, reply = http.client.NO_CONTENT, []        
         if not module:
-            rcode = http.client.OK
             if id == 'command_spec':
-                reply = self.cmdctrl.command_spec
+               rcode, reply = http.client.OK, self.cmdctrl.command_spec
             elif id == 'config_data':
-                reply = self.cmdctrl.config_data
+               rcode, reply = http.client.OK, self.cmdctrl.config_data
             elif id == 'config_spec':
-                reply = self.cmdctrl.config_spec
+               rcode, reply = http.client.OK, self.cmdctrl.config_spec
         
         return rcode, reply 
 
         
     def serve_forever(self, poll_interval = 0.5):
+        '''Start cmdctl as one tcp server. '''
         self.__serving = True
         self.__is_shut_down.clear()
         while self.__serving:
@@ -330,21 +356,69 @@ class SecureHTTPServer(http.server.HTTPServer):
     def send_command_to_module(self, module_name, command_name, params):
         return self.cmdctrl.send_command(module_name, command_name, params)
 
+httpd = None
 
-def run(server_class = SecureHTTPServer, addr = 'localhost', port = 8080):
+def signal_handler(signal, frame):
+    if httpd:
+        httpd.shutdown()
+    sys.exit(0)
+
+def set_signal_handler():
+    signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGINT, signal_handler)
+
+def run(addr = 'localhost', port = 8080, idle_timeout = 1200):
     ''' Start cmdctl as one https server. '''
     print("b10-cmdctl module is starting on :%s port:%d" %(addr, port))
-    httpd = server_class((addr, port), SecureHTTPRequestHandler)
+    httpd = SecureHTTPServer((addr, port), SecureHTTPRequestHandler, idle_timeout)
     httpd.serve_forever()
+
+def check_port(option, opt_str, value, parser):
+    if (value < 0) or (value > 65535):
+        raise OptionValueError('%s requires a port number (0-65535)' % opt_str)
+    parser.values.port = value
+
+def check_addr(option, opt_str, value, parser):
+    ipstr = value
+    ip_family = socket.AF_INET
+    if (ipstr.find(':') != -1):
+        ip_family = socket.AF_INET6
+
+    try:
+        socket.inet_pton(ip_family, ipstr)
+    except:
+        raise OptionValueError("%s invalid ip address" % ipstr)
+
+    parser.values.addr = value
+
+def set_cmd_options(parser):
+    parser.add_option('-p', '--port', dest = 'port', type = 'int',
+            action = 'callback', callback=check_port,
+            default = '8080', help = 'port cmdctl will use')
+
+    parser.add_option('-a', '--address', dest = 'addr', type = 'string',
+            action = 'callback', callback=check_addr,
+            default = '127.0.0.1', help = 'IP address cmdctl will use')
+
+    parser.add_option('-i', '--idle-timeout', dest = 'idle_timeout', type = 'int',
+            default = '1200', help = 'login idle time out')
 
 
 if __name__ == '__main__':
     try:
-        run()
+        parser = OptionParser(version = __version__)
+        set_cmd_options(parser)
+        (options, args) = parser.parse_args()
+        set_signal_handler()
+        run(options.addr, options.port, options.idle_timeout)
     except isc.cc.SessionError as se:
         print("[b10-cmdctl] Error creating b10-cmdctl, "
                 "is the command channel daemon running?")        
     except KeyboardInterrupt:
         print("exit http server")
-        
+
+    if httpd:
+        httpd.shutdown()
+
+
 
