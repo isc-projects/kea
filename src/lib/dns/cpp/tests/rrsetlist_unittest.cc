@@ -17,13 +17,13 @@
 #include <vector>
 #include <boost/foreach.hpp>
 
-#include "rdata.h"
-#include "rdataclass.h"
-#include "rrclass.h"
-#include "rrtype.h"
-#include "rrsetlist.h"
-#include "rrset.h"
-#include "rrttl.h"
+#include <dns/rdata.h>
+#include <dns/rdataclass.h>
+#include <dns/rrclass.h>
+#include <dns/rrtype.h>
+#include <dns/rrsetlist.h>
+#include <dns/rrset.h>
+#include <dns/rrttl.h>
 
 #include <gtest/gtest.h>
 
