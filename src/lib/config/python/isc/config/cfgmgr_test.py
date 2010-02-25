@@ -99,6 +99,9 @@ class FakeModuleCCSession:
     def group_sendmsg(self, msg, channel, target = None):
         self.message_queue.append([ channel, target, msg ])
 
+    def group_reply(self, env, msg):
+        pass
+
     def group_recvmsg(self, blocking):
         for qm in self.message_queue:
             if qm[0] in self.subscriptions and (qm[1] == None or qm[1] in self.subscriptions[qm[0]]):
@@ -176,6 +179,9 @@ class TestConfigManager(unittest.TestCase):
         self.assert_(module_spec.get_module_name() in self.cm.module_specs)
         config_spec = self.cm.get_config_spec()
         self.assertEqual(config_spec['Spec2'], module_spec.get_config_spec())
+        config_spec = self.cm.get_config_spec('Spec2')
+        self.assertEqual(config_spec['Spec2'], module_spec.get_config_spec())
+        
     
     def test_get_commands_spec(self):
         commands_spec = self.cm.get_commands_spec()
@@ -193,11 +199,17 @@ class TestConfigManager(unittest.TestCase):
         self.assert_(module_spec.get_module_name() in self.cm.module_specs)
         commands_spec = self.cm.get_commands_spec()
         self.assertEqual(commands_spec['Spec2'], module_spec.get_commands_spec())
+        commands_spec = self.cm.get_commands_spec('Spec2')
+        self.assertEqual(commands_spec['Spec2'], module_spec.get_commands_spec())
 
     def test_read_config(self):
         self.assertEqual(self.cm.config.data, {'version': 1})
         self.cm.read_config()
-        self.assertEqual(self.cm.config.data, {'TestModule': {'test': 124}, 'version': 1})
+        # due to what get written, the value here is what the last set_config command in test_handle_msg does
+        self.assertEqual(self.cm.config.data, {'TestModule': {'test': 125}, 'version': 1})
+        self.cm.data_path = "/no_such_path"
+        self.cm.read_config()
+        self.assertEqual(self.cm.config.data, {'version': 1})
 
     def test_write_config(self):
         # tested in ConfigManagerData tests
@@ -213,6 +225,7 @@ class TestConfigManager(unittest.TestCase):
         self._handle_msg_helper({ "command": [ "badcommand" ] }, { 'result': [ 1, "Unknown command: badcommand"]})
         self._handle_msg_helper({ "command": [ "get_commands_spec" ] }, { 'result': [ 0, {} ]})
         self._handle_msg_helper({ "command": [ "get_module_spec" ] }, { 'result': [ 0, {} ]})
+        self._handle_msg_helper({ "command": [ "get_module_spec", { "module_name": "Spec2" } ] }, { 'result': [ 0, {} ]})
         #self._handle_msg_helper({ "command": [ "get_module_spec", { "module_name": "nosuchmodule" } ] },
         #                        {'result': [1, 'No specification for module nosuchmodule']})
         self._handle_msg_helper({ "command": [ "get_module_spec", 1 ] },
@@ -236,21 +249,77 @@ class TestConfigManager(unittest.TestCase):
         # those in our fake msgq first.
         my_ok_answer = { 'result': [ 0 ] }
 
+
+        # Send the 'ok' that cfgmgr expects back to the fake queue first
         self.fake_session.group_sendmsg(my_ok_answer, "ConfigManager")
+        # then send the command
         self._handle_msg_helper({ "command": [ "set_config", [self.name, { "test": 123 }] ] },
                                 my_ok_answer)
+        # The cfgmgr should have eaten the ok message, and sent out an update again
         self.assertEqual(len(self.fake_session.message_queue), 1)
-        self.fake_session.group_sendmsg(my_ok_answer, "ConfigManager")
         self.assertEqual({'config_update': {'test': 123}},
                          self.fake_session.get_message(self.name, None))
-        self._handle_msg_helper({ "command": [ "set_config", [self.name, { "test": 124 }] ] },
-                                {'result': [0]})
+        # and the queue should now be empty again
+        self.assertEqual(len(self.fake_session.message_queue), 0)
 
-        #print(self.fake_session.message_queue)
+        # below are variations of the theme above
+        self.fake_session.group_sendmsg(my_ok_answer, "ConfigManager")
+        self._handle_msg_helper({ "command": [ "set_config", [self.name, { "test": 124 }] ] },
+                                my_ok_answer)
         self.assertEqual(len(self.fake_session.message_queue), 1)
         self.assertEqual({'config_update': {'test': 124}},
                          self.fake_session.get_message(self.name, None))
-        self.assertEqual({'version': 1, 'TestModule': {'test': 124}}, self.cm.config.data)
+        self.assertEqual(len(self.fake_session.message_queue), 0)
+
+
+        # This is the last 'succes' one, the value set here is what test_read_config expects
+        self.fake_session.group_sendmsg(my_ok_answer, "ConfigManager")
+        self._handle_msg_helper({ "command": [ "set_config", [ { self.name: { "test": 125 } }] ] },
+                                my_ok_answer )
+        self.assertEqual(len(self.fake_session.message_queue), 1)
+        self.assertEqual({'config_update': {'test': 125}},
+                         self.fake_session.get_message(self.name, None))
+        self.assertEqual(len(self.fake_session.message_queue), 0)
+
+        self.fake_session.group_sendmsg({ 'result': "bad_answer" }, "ConfigManager")
+        self.assertRaises(isc.config.ccsession.ModuleCCSessionError,
+                          self.cm.handle_msg,
+                          { "command": [ "set_config", [ { self.name: { "test": 125 } }] ] } )
+        self.assertEqual(len(self.fake_session.message_queue), 1)
+        self.assertEqual({'config_update': {'test': 125}},
+                         self.fake_session.get_message(self.name, None))
+        self.assertEqual(len(self.fake_session.message_queue), 0)
+
+        my_bad_answer = { 'result': [1, "bad_answer"] }
+        self.fake_session.group_sendmsg(my_bad_answer, "ConfigManager")
+        self._handle_msg_helper({ "command": [ "set_config", [ { self.name: { "test": 125 } }] ] },
+                                my_bad_answer )
+        self.assertEqual(len(self.fake_session.message_queue), 1)
+        self.assertEqual({'config_update': {'test': 125}},
+                         self.fake_session.get_message(self.name, None))
+        self.assertEqual(len(self.fake_session.message_queue), 0)
+
+        my_bad_answer = { 'result': [1, "bad_answer"] }
+        self.fake_session.group_sendmsg(my_bad_answer, "ConfigManager")
+        self._handle_msg_helper({ "command": [ "set_config", [ self.name, { "test": 125 }] ] },
+                                my_bad_answer )
+        self.assertEqual(len(self.fake_session.message_queue), 1)
+        self.assertEqual({'config_update': {'test': 125}},
+                         self.fake_session.get_message(self.name, None))
+        self.assertEqual(len(self.fake_session.message_queue), 0)
+
+        self._handle_msg_helper({ "command": [ "set_config", [ ] ] },
+                                {'result': [1, 'Wrong number of arguments']} )
+        self._handle_msg_helper({ "command": [ "set_config", [ { self.name: { "test": 125 } }] ] },
+                                { 'result': [1, 'No answer message from TestModule']} )
+        self._handle_msg_helper({ "command": [ "set_config", [ self.name, { "test": 125 }] ] },
+                                { 'result': [1, 'No answer message from TestModule']} )
+
+        #self.assertEqual(len(self.fake_session.message_queue), 1)
+        #self.assertEqual({'config_update': {'test': 124}},
+        #                 self.fake_session.get_message(self.name, None))
+        #self.assertEqual({'version': 1, 'TestModule': {'test': 124}}, self.cm.config.data)
+        #
         self._handle_msg_helper({ "command": 
                                   ["module_spec", self.spec.get_full_spec()]
                                 },
@@ -267,10 +336,15 @@ class TestConfigManager(unittest.TestCase):
         #                 self.fake_session.get_message("Cmd-Ctrld", None))
         #self.assertEqual({'commands_update': [ self.name, self.commands ] },
         #                 self.fake_session.get_message("Cmd-Ctrld", None))
-        
-        
+
+        self._handle_msg_helper({ "command": 
+                                  ["shutdown"]
+                                },
+                                {'result': [0]})
 
     def test_run(self):
+        self.fake_session.group_sendmsg({ "command": [ "get_commands_spec" ] }, "ConfigManager")
+        self.cm.run()
         pass
 
 

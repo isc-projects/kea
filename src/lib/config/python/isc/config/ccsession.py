@@ -46,6 +46,8 @@ def parse_answer(msg):
     """Returns a tuple (rcode, value), where value depends on the
        command that was called. If rcode != 0, value is a string
        containing an error message"""
+    if type(msg) != dict:
+        raise ModuleCCSessionError("Answer message is not a dict: " + str(msg))
     if 'result' not in msg:
         raise ModuleCCSessionError("answer message does not contain 'result' element")
     elif type(msg['result']) != list:
