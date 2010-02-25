@@ -30,10 +30,10 @@ def check_type(spec_part, value):
        specification part relevant for the value. Raises an
        isc.cc.data.DataTypeError exception if not. spec_part can be
        retrieved with find_spec_part()"""
-    if type(spec_part) == list:
-        data_type = "list"
-    else:
+    if type(spec_part) == dict and 'item_type' in spec_part:
         data_type = spec_part['item_type']
+    else:
+        raise isc.cc.data.DataTypeError(str("Incorrect specification part for type checking"))
 
     if data_type == "integer" and type(value) != int:
         raise isc.cc.data.DataTypeError(str(value) + " is not an integer")
@@ -62,11 +62,7 @@ def find_spec_part(element, identifier):
     id_parts[:] = (value for value in id_parts if value != "")
     cur_el = element
     for id in id_parts:
-        if type(cur_el) == dict and id in cur_el.keys():
-            cur_el = cur_el[id]
-        elif type(cur_el) == dict and 'item_name' in cur_el.keys() and cur_el['item_name'] == id:
-            pass
-        elif type(cur_el) == dict and 'map_item_spec' in cur_el.keys():
+        if type(cur_el) == dict and 'map_item_spec' in cur_el.keys():
             found = False
             for cur_el_item in cur_el['map_item_spec']:
                 if cur_el_item['item_name'] == id:
@@ -83,12 +79,13 @@ def find_spec_part(element, identifier):
             if not found:
                 raise isc.cc.data.DataNotFoundError(id + " in " + str(cur_el))
         else:
-            raise isc.cc.data.DataNotFoundError(id + " in " + str(cur_el))
+            raise isc.cc.data.DataNotFoundError("Not a correct config specification")
     return cur_el
 
 def spec_name_list(spec, prefix="", recurse=False):
     """Returns a full list of all possible item identifiers in the
-       specification (part)"""
+       specification (part). Raises a ConfigDataError if spec is not
+       a correct spec (as returned by ModuleSpec.get_config_spec()"""
     result = []
     if prefix != "" and not prefix.endswith("/"):
         prefix += "/"
@@ -98,7 +95,10 @@ def spec_name_list(spec, prefix="", recurse=False):
                 name = map_el['item_name']
                 if map_el['item_type'] == 'map':
                     name += "/"
-                result.append(prefix + name)
+                if recurse and 'map_item_spec' in map_el:
+                    result.extend(spec_name_list(map_el['map_item_spec'], prefix + map_el['item_name'], recurse))
+                else:
+                    result.append(prefix + name)
         else:
             for name in spec:
                 result.append(prefix + name + "/")
@@ -114,6 +114,10 @@ def spec_name_list(spec, prefix="", recurse=False):
                     if list_el['item_type'] in ["list", "map"]:
                         name += "/"
                     result.append(prefix + name)
+            else:
+                raise ConfigDataError("Bad specication")
+    else:
+        raise ConfigDataError("Bad specication")
     return result
 
 class ConfigData:
@@ -192,9 +196,9 @@ class MultiConfigData:
         self._local_changes = {}
 
     def set_specification(self, spec):
-        """Add or update a ModuleSpec"""
+        """Add or update a ModuleSpec. Raises a ConfigDataError is spec is not a ModuleSpec"""
         if type(spec) != isc.config.ModuleSpec:
-            raise Exception("not a datadef: " + str(type(spec)))
+            raise ConfigDataError("not a datadef: " + str(type(spec)))
         self._specifications[spec.get_module_name()] = spec
 
     def get_module_spec(self, module):
@@ -324,7 +328,6 @@ class MultiConfigData:
             spec = self.get_module_spec(module)
             if spec:
                 spec_part = find_spec_part(spec.get_config_spec(), id)
-                print(spec_part)
                 if type(spec_part) == list:
                     for item in spec_part:
                         entry = {}
@@ -389,14 +392,14 @@ class MultiConfigData:
            specified, returns a list of module names. The first part of
            the identifier (up to the first /) is interpreted as the
            module name"""
-        if identifier:
+        if identifier and identifier != "/":
             spec = self.find_spec_part(identifier)
             return spec_name_list(spec, identifier + "/", recurse)
         else:
             if recurse:
                 id_list = []
-                for module in self._specifications:
-                    id_list.extend(spec_name_list(self._specifications[module], module, recurse))
+                for module in self._specifications.keys():
+                    id_list.extend(spec_name_list(self.find_spec_part(module), module, recurse))
                 return id_list
             else:
                 return list(self._specifications.keys())

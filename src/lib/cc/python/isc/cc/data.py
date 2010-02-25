@@ -78,12 +78,8 @@ def set(element, identifier, value):
         if id in cur_el.keys():
             cur_el = cur_el[id]
         else:
-            if value:
-                cur_el[id] = {}
-                cur_el = cur_el[id]
-            else:
-                # set to none, and parent el not found, return
-                return element
+            cur_el[id] = {}
+            cur_el = cur_el[id]
     # value can be an empty list or dict, so check for None eplicitely
     if value != None:
         cur_el[id_parts[-1]] = value
