@@ -37,10 +37,15 @@
 // "RR-type specific members" space (please make them private).  In addition,
 // you may want to define some specific member functions, either public or
 // private (or, though unlikely for a leaf class, protected).
+//
+// Note: do not remove the comment lines beginning with "BEGIN_" and "END_".
+// These are markers used by a script for auto-generating build-able source
+// files.
 
 class MyType : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
+    // Do not remove the BEGIN_xxx and END_xxx comment lines.
     // END_COMMON_MEMBERS
 private:
     // RR-type specific members are here.
