@@ -29,6 +29,9 @@ fi
 
 # Checks for libraries.
 
+AC_SEARCH_LIBS(inet_pton, [nsl])
+AC_SEARCH_LIBS(recvfrom, [socket])
+
 # Checks for header files.
 
 # Checks for typedefs, structures, and compiler characteristics.
@@ -148,7 +151,6 @@ AC_CONFIG_FILES([Makefile
                  src/bin/host/Makefile
                  src/bin/msgq/Makefile
                  src/bin/auth/Makefile
-                 src/bin/parkinglot/Makefile
                  src/lib/Makefile
                  src/lib/cc/Makefile
                  src/lib/cc/cpp/Makefile
@@ -171,8 +173,9 @@ AC_CONFIG_FILES([Makefile
                ])
 AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/cfgmgr/run_b10-cfgmgr.sh
-           src/bin/cmdctl/b10-cmdctl.py
+           src/bin/cmdctl/cmdctl.py
            src/bin/cmdctl/run_b10-cmdctl.sh
+           src/bin/cmdctl/unittest/cmdctl_test
            src/bin/bind10/bind10.py
            src/bin/bind10/bind10_test
            src/bin/bind10/run_bind10.sh
@@ -182,7 +185,6 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/msgq/msgq_test
            src/bin/msgq/run_msgq.sh
            src/bin/auth/config.h
-           src/bin/parkinglot/config.h
            src/lib/config/cpp/data_def_unittests_config.h
            src/lib/config/python/isc/config/config_test
            src/lib/dns/cpp/gen-rdatacode.py
@@ -190,6 +192,8 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            chmod +x src/bin/cfgmgr/run_b10-cfgmgr.sh
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/bind10/run_bind10.sh
+           chmod +x src/bin/cmdctl/unittest/cmdctl_test
+           chmod +x src/bin/bindctl/unittest/bindctl_test
            chmod +x src/bin/bindctl/bindctl
            chmod +x src/bin/msgq/run_msgq.sh
            chmod +x src/bin/msgq/msgq_test

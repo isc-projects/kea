@@ -13,11 +13,14 @@
 # svn commit
 
 # need new boost stuff?
+# TODO: LICENSE_1_0.txt
 # add files to list 'ere
 FILES="
 boost/*.hpp
 boost/algorithm
 boost/asio
+boost/assign/list_inserter.hpp
+boost/assign/std/vector.hpp
 boost/bind
 boost/config
 boost/concept

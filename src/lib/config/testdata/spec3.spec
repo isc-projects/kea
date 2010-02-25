@@ -1,6 +1,6 @@
 {
-  "data_specification": {
-    "module_name": "Spec2",
+  "module_spec": {
+    "module_name": "Spec3",
     "config_data": [
       {
         "item_type": "integer",
