@@ -33,6 +33,7 @@ namespace isc {
 namespace dns {
 
 namespace {
+const char BASE64_PADDING_CHAR = '=';
 const char BINARY_ZERO_CODE = 0;
 
 typedef
@@ -86,12 +87,11 @@ encodeBase64(const vector<char>& binary)
                                                   binary.end())),
                   base64_encoder(BinaryNormalizer(binary.end(), binary.end())));
     assert(len >= base64.length());
-    base64.append(len - base64.length(), '=');
+    base64.append(len - base64.length(), BASE64_PADDING_CHAR);
     return (base64);
 }
 
 namespace {
-const char BASE64_PADDING_CHAR = '=';
 const size_t BASE64_MAX_PADDING_CHARS = 2;
 const char BASE64_ZERO_CODE = 'A'; // correspond to 000000(2)
 
