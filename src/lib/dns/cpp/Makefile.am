@@ -15,6 +15,7 @@ libdns_la_SOURCES += rrclass.h rrclass.cc rrtype.h rrtype.cc rrttl.h rrttl.cc
 libdns_la_SOURCES += rdata.h rdata.cc
 libdns_la_SOURCES += rdataclass.h rdataclass.cc
 libdns_la_SOURCES += rrset.h rrset.cc
+libdns_la_SOURCES += rrsetlist.h rrsetlist.cc
 libdns_la_SOURCES += question.h question.cc
 libdns_la_SOURCES += message.h message.cc
 libdns_la_SOURCES += base64.h base64.cc

@@ -25,7 +25,6 @@
 #include "rrtype.h"
 
 using namespace std;
-using namespace isc::dns;
 
 namespace isc {
 namespace dns {
@@ -67,13 +66,6 @@ Question::toWire(MessageRenderer& renderer) const
     rrclass_.toWire(renderer);
 
     return (1);                 // number of "entries"
-}
-
-bool
-Question::operator==(const Question& other) const
-{
-    return (name_ == other.name_ && rrtype_ == other.rrtype_ &&
-            rrclass_ == other.rrclass_);
 }
 
 ostream&
