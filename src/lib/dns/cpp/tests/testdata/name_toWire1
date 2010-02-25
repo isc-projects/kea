@@ -1,0 +1,12 @@
+#
+# Rendering 3 names with compression.  [x] means a compression pointer pointing
+# to offset 'x'.
+#
+#bytes:
+# 0 1 2 3 4 5 6 7 8 9 a b c d e
+#(1)a(7)e x a m p l e(3)c o m .
+ 0161076578616d706c6503636f6d00
+#(1)b [2]
+ 0162c002
+#   a . e x a m p l e . o r g .
+ 0161076578616d706c65036f726700

@@ -1,0 +1,13 @@
+#
+# various kinds of "unknown" RDATA stored in an input buffer
+#
+# 0  1  2  3  4  5 (bytes)
+ 00 04 a1 b2 c3 0d
+#
+# 0-length data
+# 6  7
+ 00 00
+#
+# short buffer (this can be tested only at the end of the buffer)
+# 8  9 10  1  2
+ 00 04 a1 b2 c3

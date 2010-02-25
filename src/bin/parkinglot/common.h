@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,36 +14,23 @@
 
 // $Id$
 
-// BEGIN_HEADER_GUARD
+#ifndef __COMMON_H
+#define __COMMON_H 1
 
-#include <stdint.h>
-
+#include <stdlib.h>
 #include <string>
-#include <vector>
 
-#include "rdata.h"
-
-// BEGIN_ISC_NAMESPACE
-
-// BEGIN_COMMON_DECLARATIONS
-// END_COMMON_DECLARATIONS
-
-// BEGIN_RDATA_NAMESPACE
-
-class TXT : public Rdata {
+class FatalError : public std::exception {
 public:
-    // BEGIN_COMMON_MEMBERS
-    // END_COMMON_MEMBERS
+    FatalError(std::string m = "fatal error");
+    ~FatalError() throw() {}
+    const char* what() const throw() { return msg.c_str(); }
 private:
-    /// Note: this is a prototype version; we may reconsider
-    /// this representation later.
-    std::vector<std::vector<uint8_t> > string_list_;
+    std::string msg;
 };
 
-// END_RDATA_NAMESPACE
-// END_ISC_NAMESPACE
-// END_HEADER_GUARD
+#endif // __COMMON_H
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:
