@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,36 +14,31 @@
 
 // $Id$
 
-// BEGIN_HEADER_GUARD
+#ifndef __PARKINGLOT_H
+#define __PARKINGLOT_H 1
 
-#include <stdint.h>
+#include "zoneset.h"
+#include <cc/data.h>
+#include "data_source_plot.h"
 
-#include <string>
-#include <vector>
-
-#include "rdata.h"
-
-// BEGIN_ISC_NAMESPACE
-
-// BEGIN_COMMON_DECLARATIONS
-// END_COMMON_DECLARATIONS
-
-// BEGIN_RDATA_NAMESPACE
-
-class TXT : public Rdata {
+class ParkingLot {
 public:
-    // BEGIN_COMMON_MEMBERS
-    // END_COMMON_MEMBERS
+    explicit ParkingLot(int port);
+    virtual ~ParkingLot() {}
+    int getSocket() { return (sock); }
+    void processMessage();
+    void command(std::pair<std::string,isc::data::ElementPtr>);
+    void serve(std::string zone_name);
+
+    isc::data::ElementPtr updateConfig(isc::data::ElementPtr config);
 private:
-    /// Note: this is a prototype version; we may reconsider
-    /// this representation later.
-    std::vector<std::vector<uint8_t> > string_list_;
+
+    isc::dns::DataSourceParkingLot data_source;
+    int sock;
 };
 
-// END_RDATA_NAMESPACE
-// END_ISC_NAMESPACE
-// END_HEADER_GUARD
+#endif // __PARKINGLOT_H
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:

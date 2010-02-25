@@ -14,36 +14,36 @@
 
 // $Id$
 
-// BEGIN_HEADER_GUARD
+#ifndef __BUILTIN_H
+#define __BUILTIN_H 1
 
-#include <stdint.h>
+#include <boost/shared_ptr.hpp>
 
-#include <string>
-#include <vector>
+#include <dns/name.h>
+#include <dns/rrset.h>
 
-#include "rdata.h"
+struct BuiltinRRsetsImpl;
 
-// BEGIN_ISC_NAMESPACE
+class isc::dns::Name;
 
-// BEGIN_COMMON_DECLARATIONS
-// END_COMMON_DECLARATIONS
-
-// BEGIN_RDATA_NAMESPACE
-
-class TXT : public Rdata {
+class BuiltinRRsets {
 public:
-    // BEGIN_COMMON_MEMBERS
-    // END_COMMON_MEMBERS
+    BuiltinRRsets(const isc::dns::Name& name, const char** answers,
+                  const char** authorities);
+    ~BuiltinRRsets();
+    isc::dns::RRsetPtr getAnswer() const;
+    isc::dns::RRsetPtr getAuthority() const;
 private:
-    /// Note: this is a prototype version; we may reconsider
-    /// this representation later.
-    std::vector<std::vector<uint8_t> > string_list_;
+    BuiltinRRsets(const BuiltinRRsets& source);
+    void operator=(const BuiltinRRsets& source);
+    BuiltinRRsetsImpl* impl_;
 };
 
-// END_RDATA_NAMESPACE
-// END_ISC_NAMESPACE
-// END_HEADER_GUARD
+const BuiltinRRsets& getBuiltinAuthors();
+const BuiltinRRsets& getBuiltinVersion();
 
-// Local Variables: 
+#endif // __BUILTIN_H
+
+// Local Variables:
 // mode: c++
-// End: 
+// End:
