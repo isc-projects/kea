@@ -266,5 +266,13 @@ TEST(Element, to_and_from_wire) {
 
     //EXPECT_EQ("\047\0031.2", Element::create(1.2)->toWire(0));
     EXPECT_EQ("\046\0011", Element::createFromString("[ 1 ]")->toWire(1));
+
+    std::string ddef = "{\"data_specification\": {\"config_data\": [ {\"item_default\": \"Hello, world!\", \"item_name\": \"default_name\", \"item_optional\": False, \"item_type\": \"string\"}, {\"item_default\": [  ], \"item_name\": \"zone_list\", \"item_optional\": False, \"item_type\": \"list\", \"list_item_spec\": {\"item_name\": \"zone_name\", \"item_optional\": True, \"item_type\": \"string\"}} ], \"module_name\": \"Auth\"}}";
+    //std::string ddef = "{\"aaa\": 123, \"test\": [  ], \"zzz\": 123}";
+    ElementPtr ddef_el = Element::createFromString(ddef);
+    std::string ddef_wire = ddef_el->toWire();
+    ElementPtr ddef_el2 = Element::fromWire(ddef_wire);
+    std::string ddef2 = ddef_el2->str();
+    EXPECT_EQ(ddef, ddef2);
 }
 

@@ -51,10 +51,8 @@ class CommandInfo:
     more parameters
     """
 
-    def __init__(self, name, desc = "", need_inst_param = True):
+    def __init__(self, name, desc = ""):
         self.name = name
-        # Wether command needs parameter "instance_name" 
-        self.need_inst_param = need_inst_param 
         self.desc = desc
         self.params = OrderedDict()        
         # Set default parameter "help"
@@ -91,7 +89,7 @@ class CommandInfo:
         return [name for name in all_names 
                 if not self.params[name].is_optional]        
         
-    def get_param_name_by_position(self, pos, index, param_count):
+    def get_param_name_by_position(self, pos, param_count):
         # count mandatories back from the last
         # from the last mandatory; see the number of mandatories before it
         # and compare that to the number of positional arguments left to do
@@ -101,7 +99,9 @@ class CommandInfo:
         # (can this be done in all cases? this is certainly not the most efficient method;
         # one way to make the whole of this more consistent is to always set mandatories first, but
         # that would make some commands less nice to use ("config set value location" instead of "config set location value")
-        if type(pos) == int:
+        if type(pos) != int:
+            raise KeyError(str(pos) + " is not an integer")
+        else:
             if param_count == len(self.params) - 1:
                 i = 0
                 for k in self.params.keys():
@@ -131,14 +131,9 @@ class CommandInfo:
                     raise KeyError(str(pos) + " out of range")
             else:
                 raise KeyError("Too many parameters")
-        else:
-            raise KeyError(str(pos) + " is not an integer")
-    
 
-    def need_instance_param(self):
-        return self.need_inst_param
 
-    def command_help(self, inst_name, inst_type, inst_desc):
+    def command_help(self):
         print("Command ", self)
         print("\t\thelp (Get help for command)")
                 
@@ -166,65 +161,39 @@ class CommandInfo:
 
 class ModuleInfo:
     """Define the information of one module, include module name, 
-    module supporting commands, instance name and the value type of instance name
+    module supporting commands.
     """    
     
-    def __init__(self, name, inst_name = "", inst_type = STRING_TYPE, 
-                 inst_desc = "", desc = ""):
+    def __init__(self, name, desc = ""):
         self.name = name
-        self.inst_name = inst_name
-        self.inst_type = inst_type
-        self.inst_desc = inst_desc
         self.desc = desc
         self.commands = OrderedDict()         
         self.add_command(CommandInfo(name = "help", 
-                                     desc = "Get help for module",
-                                     need_inst_param = False))
+                                     desc = "Get help for module"))
         
     def __str__(self):
         return str("%s \t%s" % (self.name, self.desc))
         
     def add_command(self, command_info):        
         self.commands[command_info.name] = command_info
-        if command_info.need_instance_param():
-            command_info.add_param(ParamInfo(name = self.inst_name, 
-                                             type = self.inst_type,
-                                             desc = self.inst_desc))
-
         
     def has_command_with_name(self, command_name):
         return command_name in self.commands
         
-
     def get_command_with_name(self, command_name):
         return self.commands[command_name]
-        
         
     def get_commands(self):
         return list(self.commands.values())
         
-    
     def get_command_names(self):
         return list(self.commands.keys())
-        
-    
-    def get_instance_param_name(self):
-        return self.inst_name
-        
-        
-    def get_instance_param_type(self):
-        return self.inst_type
-        
 
     def module_help(self):
         print("Module ", self, "\nAvailable commands:")
         for k in self.commands.keys():
             print("\t", self.commands[k])
             
-            
     def command_help(self, command):
-        self.commands[command].command_help(self.inst_name, 
-                                            self.inst_type,
-                                            self.inst_desc)
-    
+        self.commands[command].command_help()    
 

@@ -215,7 +215,7 @@ class MsgQ:
 
     def process_command(self, fd, sock, routing, data):
         """Process a single command.  This will split out into one of the
-           other functions, above."""
+           other functions."""
         print("[XX] got command: ")
         print(routing)
         cmd = routing["type"]
@@ -251,7 +251,7 @@ class MsgQ:
         sock.send(msg)
 
     def newlname(self):
-        """Generate a unique conenction identifier for this socket.
+        """Generate a unique connection identifier for this socket.
         This is done by using an increasing counter and the current
         time."""
         self.connection_counter += 1

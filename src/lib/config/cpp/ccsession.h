@@ -19,24 +19,43 @@
 
 #include <string>
 
-#include <config/data_def.h>
+#include <config/module_spec.h>
 #include <cc/session.h>
 #include <cc/data.h>
 
-class CommandSession {
+namespace isc {
+namespace config {
+
+///
+/// \brief A standard cc session exception that is thrown if a function
+/// is there is a problem with one of the messages
+///
+// todo: include types and called function in the exception
+class CCSessionError : public isc::Exception {
+public:
+    CCSessionError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+///
+/// \brief This modules keeps a connection to the command channel,
+/// holds configuration information, and handles messages from
+/// the command channel
+///
+class ModuleCCSession {
 public:
     /**
      * Initialize a config/command session
      * @param module_name: The name of this module. This is not a
      *                     reference because we expect static strings
      *                     to be passed here.
-     * @param spec_file_name: The name of the file containing the data
-     *                        definition.
+     * @param spec_file_name: The name of the file containing the
+     *                        module specification.
      */
-    CommandSession(std::string spec_file_name,
-                   isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config) = NULL,
-                   isc::data::ElementPtr(*command_handler)(isc::data::ElementPtr command) = NULL
-                  ) throw (isc::cc::SessionError);
+    ModuleCCSession(std::string spec_file_name,
+                    isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config) = NULL,
+                    isc::data::ElementPtr(*command_handler)(isc::data::ElementPtr command) = NULL
+                    ) throw (isc::cc::SessionError);
     int getSocket();
 
     /**
@@ -69,19 +88,27 @@ public:
      * This protocol is very likely to change.
      */
     void set_command_handler(isc::data::ElementPtr(*command_handler)(isc::data::ElementPtr command)) { command_handler_ = command_handler; };
-    
+
+    const ElementPtr getConfig() { return config_; }
 private:
-    void read_data_definition(const std::string& filename);
+    void read_module_specification(const std::string& filename);
     
     std::string module_name_;
     isc::cc::Session session_;
-    isc::data::DataDefinition data_definition_;
+    ModuleSpec module_specification_;
     isc::data::ElementPtr config_;
+    ElementPtr handleConfigUpdate(ElementPtr new_config);
 
     isc::data::ElementPtr(*config_handler_)(isc::data::ElementPtr new_config);
     isc::data::ElementPtr(*command_handler_)(isc::data::ElementPtr command);
 };
 
+ElementPtr createAnswer(const int rcode);
+ElementPtr createAnswer(const int rcode, const ElementPtr arg);
+ElementPtr createAnswer(const int rcode, const std::string& arg);
+
+}
+}
 #endif // __CCSESSION_H
 
 // Local Variables:

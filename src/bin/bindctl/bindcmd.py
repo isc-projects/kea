@@ -31,6 +31,7 @@ import os, time, random, re
 import getpass
 from hashlib import sha1
 import csv
+import ast
 
 try:
     from collections import OrderedDict
@@ -60,47 +61,52 @@ class BindCmdInterpreter(Cmd):
         self.modules = OrderedDict()
         self.add_module_info(ModuleInfo("help", desc = "Get help for bindctl"))
         self.server_port = server_port
-        self.connect_to_cmd_ctrld()
+        self._connect_to_cmd_ctrld()
         self.session_id = self._get_session_id()
 
-    def connect_to_cmd_ctrld(self):
+    def _connect_to_cmd_ctrld(self):
+        '''Connect to cmdctl in SSL context. '''
         try:
             self.conn = http.client.HTTPSConnection(self.server_port, cert_file='bindctl.pem')
         except  Exception as e:
-            print(e)
-            print("can't connect to %s, please make sure cmd-ctrld is running" % self.server_port)
+            print(e, "can't connect to %s, please make sure cmd-ctrld is running" %
+                  self.server_port)
 
     def _get_session_id(self):
+        '''Generate one session id for the connection. '''
         rand = os.urandom(16)
         now = time.time()
         ip = socket.gethostbyname(socket.gethostname())
         session_id = sha1(("%s%s%s" %(rand, now, ip)).encode())
-        session_id = session_id.hexdigest()
-        return session_id
+        digest = session_id.hexdigest()
+        return digest
     
     def run(self):
+        '''Parse commands inputted from user and send them to cmdctl. '''
         try:
-            ret = self.login()
-            if not ret:
+            if not self.login_to_cmdctl():
                 return False
 
             # Get all module information from cmd-ctrld
-            self.config_data = isc.cc.data.UIConfigData(self)
-            self.update_commands()
+            self.config_data = isc.config.UIModuleCCSession(self)
+            self._update_commands()
             self.cmdloop()
         except KeyboardInterrupt:
             return True
 
-    def login(self):
+    def login_to_cmdctl(self):
+        '''Login to cmdctl with the username and password inputted 
+        from user. After login sucessfully, the username and password
+        will be saved in 'default_user.csv', when login next time, 
+        username and password saved in 'default_user.csv' will be used
+        first.
+        '''
         csvfile = None
         bsuccess = False
         try:
             csvfile = open('default_user.csv')
             users = csv.reader(csvfile)
             for row in users:
-                if (len(row) < 2):
-                    continue
-
                 param = {'username': row[0], 'password' : row[1]}
                 response = self.send_POST('/login', param)
                 data = response.read().decode()
@@ -119,10 +125,13 @@ class BindCmdInterpreter(Cmd):
                 return True
 
         count = 0
-        csvfile = None
         print("[TEMP MESSAGE]: username :root  password :bind10")
-        while count < 3:
+        while True:
             count = count + 1
+            if count > 3:
+                print("Too many authentication failures")
+                return False
+
             username = input("Username:")
             passwd = getpass.getpass()
             param = {'username': username, 'password' : passwd}
@@ -134,25 +143,23 @@ class BindCmdInterpreter(Cmd):
                 csvfile = open('default_user.csv', 'w')
                 writer = csv.writer(csvfile)
                 writer.writerow([username, passwd])
-                bsuccess = True
-                break
+                csvfile.close()
+                return True
 
-            if count == 3:
-                print("Too many authentication failures")
-                break
 
-        if csvfile:
-            csvfile.close()
-        return bsuccess
-
-    def update_commands(self):
+    def _update_commands(self):
+        '''Get all commands of modules. '''
         cmd_spec = self.send_GET('/command_spec')
-        if (len(cmd_spec) == 0):
-            print('can\'t get any command specification')
+        if not cmd_spec:
+            return
+
         for module_name in cmd_spec.keys():
-            self.prepare_module_commands(module_name, cmd_spec[module_name])
+            self._prepare_module_commands(module_name, cmd_spec[module_name])
 
     def send_GET(self, url, body = None):
+        '''Send GET request to cmdctl, session id is send with the name
+        'cookie' in header.
+        '''
         headers = {"cookie" : self.session_id}
         self.conn.request('GET', url, body, headers)
         res = self.conn.getresponse()
@@ -160,11 +167,12 @@ class BindCmdInterpreter(Cmd):
         if reply_msg:
            return json.loads(reply_msg.decode())
         else:
-            return None
+            return {}
        
 
     def send_POST(self, url, post_param = None): 
-        '''
+        '''Send GET request to cmdctl, session id is send with the name
+        'cookie' in header.
         Format: /module_name/command_name
         parameters of command is encoded as a map
         '''
@@ -181,13 +189,12 @@ class BindCmdInterpreter(Cmd):
         self.prompt = self.location + self.prompt_end
         return stop
 
-    def prepare_module_commands(self, module_name, module_commands):
+    def _prepare_module_commands(self, module_name, module_commands):
         module = ModuleInfo(name = module_name,
                             desc = "same here")
         for command in module_commands:
             cmd = CommandInfo(name = command["command_name"],
-                              desc = command["command_description"],
-                              need_inst_param = False)
+                              desc = command["command_description"])
             for arg in command["command_args"]:
                 param = ParamInfo(name = arg["item_name"],
                                   type = arg["item_type"],
@@ -198,7 +205,7 @@ class BindCmdInterpreter(Cmd):
             module.add_command(cmd)
         self.add_module_info(module)
 
-    def validate_cmd(self, cmd):
+    def _validate_cmd(self, cmd):
         if not cmd.module in self.modules:
             raise CmdUnknownModuleSyntaxError(cmd.module)
         
@@ -223,7 +230,6 @@ class BindCmdInterpreter(Cmd):
                                              list(params.keys())[0])
         elif params:
             param_name = None
-            index = 0
             param_count = len(params)
             for name in params:
                 # either the name of the parameter must be known, or
@@ -248,18 +254,17 @@ class BindCmdInterpreter(Cmd):
                             raise CmdUnknownParamSyntaxError(cmd.module, cmd.command, cmd.params[name])
                     else:
                         # replace the numbered items by named items
-                        param_name = command_info.get_param_name_by_position(name+1, index, param_count)
+                        param_name = command_info.get_param_name_by_position(name+1, param_count)
                         cmd.params[param_name] = cmd.params[name]
                         del cmd.params[name]
                         
                 elif not name in all_params:
                     raise CmdUnknownParamSyntaxError(cmd.module, cmd.command, name)
+
             param_nr = 0
             for name in manda_params:
                 if not name in params and not param_nr in params:
                     raise CmdMissParamSyntaxError(cmd.module, cmd.command, name)
-                
-                param_nr += 1
                 param_nr += 1
 
     def _handle_cmd(self, cmd):
@@ -315,7 +320,7 @@ class BindCmdInterpreter(Cmd):
                     if cmd.module == "config":
                         # grm text has been stripped of slashes...
                         my_text = self.location + "/" + cur_line.rpartition(" ")[2]
-                        list = self.config_data.config.get_item_list(my_text.rpartition("/")[0])
+                        list = self.config_data.get_config_item_list(my_text.rpartition("/")[0])
                         hints.extend([val for val in list if val.startswith(text)])
             except CmdModuleNameFormatError:
                 if not text:
@@ -383,7 +388,7 @@ class BindCmdInterpreter(Cmd):
     def _parse_cmd(self, line):
         try:
             cmd = BindCmdParse(line)
-            self.validate_cmd(cmd)
+            self._validate_cmd(cmd)
             self._handle_cmd(cmd)
         except BindCtlException as e:
             print("Error! ", e)
@@ -440,17 +445,28 @@ class BindCmdInterpreter(Cmd):
                         line += "(modified)"
                     print(line)
             elif cmd.command == "add":
-                self.config_data.add(identifier, cmd.params['value'])
+                self.config_data.add_value(identifier, cmd.params['value'])
             elif cmd.command == "remove":
-                self.config_data.remove(identifier, cmd.params['value'])
+                self.config_data.remove_value(identifier, cmd.params['value'])
             elif cmd.command == "set":
-                self.config_data.set(identifier, cmd.params['value'])
+                if 'identifier' not in cmd.params:
+                    print("Error: missing identifier or value")
+                else:
+                    parsed_value = None
+                    try:
+                        parsed_value = ast.literal_eval(cmd.params['value'])
+                    except Exception as exc:
+                        # ok could be an unquoted string, interpret as such
+                        parsed_value = cmd.params['value']
+                    self.config_data.set_value(identifier, parsed_value)
             elif cmd.command == "unset":
                 self.config_data.unset(identifier)
             elif cmd.command == "revert":
                 self.config_data.revert()
             elif cmd.command == "commit":
-                self.config_data.commit(self)
+                self.config_data.commit()
+            elif cmd.command == "diff":
+                print(self.config_data.get_local_changes());
             elif cmd.command == "go":
                 self.go(identifier)
         except isc.cc.data.DataTypeError as dte:
@@ -482,7 +498,5 @@ class BindCmdInterpreter(Cmd):
         reply = self.send_POST(url, cmd.params)
         data = reply.read().decode()
         print("received reply:", data)
-
-
 
 

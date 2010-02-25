@@ -1,4 +1,4 @@
-PY_MODULES=	__init__.py ccsession.py datadefinition.py cfgmgr.py
+PY_MODULES=	__init__.py ccsession.py cfgmgr.py config_data.py module_spec.py
 
 install-data-local:
 	$(mkinstalldirs) $(DESTDIR)$(pyexecdir)/isc/config
