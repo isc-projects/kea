@@ -197,7 +197,7 @@ public:
     /// Specific implementations of this method must confirm that \c this
     /// and the \c other are objects of the same concrete derived class of
     /// \c Rdata.  This is normally done by \c dynamic_cast in the
-    /// implementation.  It also means if the assumption doesn't met
+    /// implementation.  It also means if the assumption isn't met
     /// an exception of class \c std::bad_cast will be thrown.
     ///
     /// Here is an implementation choice: instead of relying on
@@ -406,7 +406,7 @@ std::ostream& operator<<(std::ostream& os, const Generic& rdata);
 ///
 /// Internally, these functions uses the corresponding
 /// \c RRParamRegistry::createRdata methods of the \c RRParamRegistry.
-/// See also the description of about these methods for related notes.
+/// See also the description on these methods for related notes.
 //@{
 /// \brief Create RDATA of a given pair of RR type and class from a string.
 ///
