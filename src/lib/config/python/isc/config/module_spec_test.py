@@ -50,6 +50,9 @@ class TestModuleSpec(unittest.TestCase):
         dd = isc.config.module_spec_from_file(file1)
         self.spec1(dd)
 
+    def test_open_bad_file_obj(self):
+        self.assertRaises(ModuleSpecError, isc.config.module_spec_from_file, 1)
+
     def test_bad_specfiles(self):
         self.assertRaises(ModuleSpecError, self.read_spec_file, "spec3.spec")
         self.assertRaises(ModuleSpecError, self.read_spec_file, "spec4.spec")
@@ -87,6 +90,198 @@ class TestModuleSpec(unittest.TestCase):
         self.assertEqual(True, self.validate_data("spec22.spec", "data22_6.data"))
         self.assertEqual(True, self.validate_data("spec22.spec", "data22_7.data"))
         self.assertEqual(False, self.validate_data("spec22.spec", "data22_8.data"))
+
+    def test_init(self):
+        self.assertRaises(ModuleSpecError, ModuleSpec, 1)
+        module_spec = isc.config.module_spec_from_file(self.spec_file("spec1.spec"), False)
+        self.spec1(module_spec)
+
+    def test_str(self):
+        module_spec = isc.config.module_spec_from_file(self.spec_file("spec1.spec"), False)
+        self.assertEqual(module_spec.__str__(), "{'module_name': 'Spec1'}")
+
+    def test_check_module_spec(self):
+        self.assertRaises(ModuleSpecError, isc.config.module_spec._check, 1)
+        
+    def test_check_command_spec(self):
+        self.assertRaises(ModuleSpecError, isc.config.module_spec._check_command_spec, 1 )
+        
+        self.assertRaises(ModuleSpecError, isc.config.module_spec._check_command_spec, [ 1 ] )
+
+        self.assertRaises(ModuleSpecError, isc.config.module_spec._check_command_spec,
+                          [ { 'command_name': 1,
+                              'command_description': 'just for testing',
+                              'command_args': [
+                                { 'item_name': 'arg1',
+                                  'item_type': 'string',
+                                  'item_optional': True
+                                }
+                              ]
+                            }
+                          ]
+                         )
+
+        self.assertRaises(ModuleSpecError, isc.config.module_spec._check_command_spec,
+                          [ { 'command_name': 'test_command',
+                              'command_description': 1,
+                              'command_args': [
+                                { 'item_name': 'arg1',
+                                  'item_type': 'string',
+                                  'item_optional': True
+                                }
+                              ]
+                            }
+                          ]
+                         )
+
+        self.assertRaises(ModuleSpecError, isc.config.module_spec._check_command_spec,
+                          [  { 'command_name': 'test_command',
+                              'command_args': [ 1 ]
+                            }
+                          ]
+                         )
+
+    def test_check_item_spec(self):
+        self.assertRaises(ModuleSpecError, isc.config.module_spec._check_item_spec, 1 )
+        self.assertRaises(ModuleSpecError, isc.config.module_spec._check_item_spec,
+                          { 'item_name': 1,
+                            'item_type': "string",
+                            'item_optional': False,
+                            'item_default': "asdf"
+                          }
+                         )
+
+        self.assertRaises(ModuleSpecError, isc.config.module_spec._check_item_spec,
+                          { 'item_name': "an_item",
+                            'item_type': "bad_type",
+                            'item_optional': False,
+                            'item_default': "asdf"
+                          }
+                         )
+
+        self.assertRaises(ModuleSpecError, isc.config.module_spec._check_item_spec,
+                          { 'item_name': "an_item",
+                            'item_type': 1,
+                            'item_optional': False,
+                            'item_default': "asdf"
+                          }
+                         )
+
+        self.assertRaises(ModuleSpecError, isc.config.module_spec._check_item_spec,
+                          { 'item_name': "an_item",
+                            'item_type': "string",
+                            'item_optional': False,
+                          }
+                         )
+
+        self.assertRaises(ModuleSpecError, isc.config.module_spec._check_item_spec,
+                          { 'item_name': "an_item",
+                            'item_type': "string",
+                            'item_optional': 1,
+                          }
+                         )
+
+        self.assertRaises(ModuleSpecError, isc.config.module_spec._check_item_spec,
+                          { 'item_name': "an_item",
+                            'item_type': "string",
+                            'item_optional': False,
+                            'item_default': 1
+                          }
+                         )
+
+        
+        self.assertRaises(ModuleSpecError, isc.config.module_spec._check_item_spec,
+                          { 'item_name': "an_item",
+                            'item_type': "list",
+                            'item_optional': False,
+                            'item_default': []
+                          }
+                         )
+
+        self.assertRaises(ModuleSpecError, isc.config.module_spec._check_item_spec,
+                          { 'item_name': "an_item",
+                            'item_type': "list",
+                            'item_optional': False,
+                            'item_default': [],
+                            'list_item_spec': 1
+                          }
+                         )
+
+        self.assertRaises(ModuleSpecError, isc.config.module_spec._check_item_spec,
+                          { 'item_name': "an_item",
+                            'item_type': "map",
+                            'item_optional': False,
+                            'item_default': {}
+                          }
+                         )
+
+        self.assertRaises(ModuleSpecError, isc.config.module_spec._check_item_spec,
+                          { 'item_name': "an_item",
+                            'item_type': "map",
+                            'item_optional': False,
+                            'item_default': {},
+                            'map_item_spec': 1
+                          }
+                         )
+
+        self.assertRaises(ModuleSpecError, isc.config.module_spec._check_item_spec,
+                          { 'item_name': "an_item",
+                            'item_type': "map",
+                            'item_optional': False,
+                            'item_default': {},
+                            'map_item_spec': [ 1 ]
+                          }
+                         )
+
+    def test_validate_type(self):
+        errors = []
+        self.assertEqual(True, isc.config.module_spec._validate_type({ 'item_type': 'integer' }, 1, errors))
+        self.assertEqual(False, isc.config.module_spec._validate_type({ 'item_type': 'integer' }, "a", None))
+        self.assertEqual(False, isc.config.module_spec._validate_type({ 'item_type': 'integer' }, "a", errors))
+        self.assertEqual(['a should be an integer'], errors)
+
+        errors = []
+        self.assertEqual(True, isc.config.module_spec._validate_type({ 'item_type': 'real' }, 1.1, errors))
+        self.assertEqual(False, isc.config.module_spec._validate_type({ 'item_type': 'real' }, "a", None))
+        self.assertEqual(False, isc.config.module_spec._validate_type({ 'item_type': 'real' }, "a", errors))
+        self.assertEqual(['a should be a real'], errors)
+
+        errors = []
+        self.assertEqual(True, isc.config.module_spec._validate_type({ 'item_type': 'boolean' }, True, errors))
+        self.assertEqual(False, isc.config.module_spec._validate_type({ 'item_type': 'boolean' }, "a", None))
+        self.assertEqual(False, isc.config.module_spec._validate_type({ 'item_type': 'boolean' }, "a", errors))
+        self.assertEqual(['a should be a boolean'], errors)
+
+        errors = []
+        self.assertEqual(True, isc.config.module_spec._validate_type({ 'item_type': 'string' }, "a", errors))
+        self.assertEqual(False, isc.config.module_spec._validate_type({ 'item_type': 'string' }, 1, None))
+        self.assertEqual(False, isc.config.module_spec._validate_type({ 'item_type': 'string' }, 1, errors))
+        self.assertEqual(['1 should be a string'], errors)
+
+        errors = []
+        self.assertEqual(True, isc.config.module_spec._validate_type({ 'item_type': 'list' }, [ 1, 1], errors))
+        self.assertEqual(False, isc.config.module_spec._validate_type({ 'item_type': 'list' }, 1, None))
+        self.assertEqual(False, isc.config.module_spec._validate_type({ 'item_type': 'list' }, 1, errors))
+        self.assertEqual(['1 should be a list'], errors)
+
+        errors = []
+        self.assertEqual(True, isc.config.module_spec._validate_type({ 'item_type': 'map' }, {"a": 1}, errors))
+        self.assertEqual(False, isc.config.module_spec._validate_type({ 'item_type': 'map' }, 1, None))
+        self.assertEqual(False, isc.config.module_spec._validate_type({ 'item_type': 'map' }, 1, errors))
+        self.assertEqual(['1 should be a map'], errors)
+
+    def test_validate_spec(self):
+        spec = { 'item_name': "an_item",
+                 'item_type': "string",
+                 'item_optional': False,
+                 'item_default': "asdf"
+               }
+        errors = []
+        self.assertEqual(False, isc.config.module_spec._validate_spec(spec, True, {}, None))
+        self.assertEqual(False, isc.config.module_spec._validate_spec(spec, True, {}, errors))
+        self.assertEqual(['non-optional item an_item missing'], errors)
+        
+
 
 if __name__ == '__main__':
     unittest.main()
