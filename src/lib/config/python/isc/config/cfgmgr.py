@@ -91,9 +91,16 @@ class ConfigManagerData:
             file.write(s)
             file.write("\n")
             file.close()
-            os.rename(tmp_filename, self.db_filename)
+            if output_file_name:
+                os.rename(tmp_filename, output_file_name)
+            else:
+                os.rename(tmp_filename, self.db_filename)
         except IOError as ioe:
-            print("Unable to write config file; configuration not stored")
+            # TODO: log this (level critical)
+            print("[b10-cfgmgr] Unable to write config file; configuration not stored: " + str(ioe))
+        except OSError as ose:
+            # TODO: log this (level critical)
+            print("[b10-cfgmgr] Unable to write config file; configuration not stored: " + str(ose))
 
     def __eq__(self, other):
         """Returns True if the data contained is equal. data_path and
@@ -153,7 +160,7 @@ class ConfigManager:
         config_data = {}
         if name:
             if name in self.module_specs:
-                config_data[name] = self.module_specs[name].get_data
+                config_data[name] = self.module_specs[name].get_config_spec()
         else:
             for module_name in self.module_specs.keys():
                 config_data[module_name] = self.module_specs[module_name].get_config_spec()
@@ -166,7 +173,7 @@ class ConfigManager:
         commands = {}
         if name:
             if name in self.module_specs:
-                commands[name] = self.module_specs[name].get_commands_spec
+                commands[name] = self.module_specs[name].get_commands_spec()
         else:
             for module_name in self.module_specs.keys():
                 commands[module_name] = self.module_specs[module_name].get_commands_spec()
@@ -243,9 +250,10 @@ class ConfigManager:
                 self.cc.group_sendmsg({ "config_update": conf_part[module_name] }, module_name)
                 # replace 'our' answer with that of the module
                 answer, env = self.cc.group_recvmsg(False)
-            rcode, val = isc.config.ccsession.parse_answer(answer)
-            if rcode == 0:
-                self.write_config()
+            if answer:
+                rcode, val = isc.config.ccsession.parse_answer(answer)
+                if rcode == 0:
+                    self.write_config()
         elif len(cmd) == 1:
             # todo: use api (and check the data against the definition?)
             old_data = self.config.data.copy()
@@ -257,10 +265,14 @@ class ConfigManager:
                 if module != "version":
                     self.cc.group_sendmsg({ "config_update": self.config.data[module] }, module)
                     answer, env = self.cc.group_recvmsg(False)
-                    rcode, val = isc.config.ccsession.parse_answer(answer)
-                    if rcode != 0:
+                    if answer == None:
                         got_error = True
-                        err_list.append(val)
+                        err_list.append("No answer message from " + module)
+                    else:
+                        rcode, val = isc.config.ccsession.parse_answer(answer)
+                        if rcode != 0:
+                            got_error = True
+                            err_list.append(val)
             if not got_error:
                 self.write_config()
                 answer = isc.config.ccsession.create_answer(0)
@@ -272,7 +284,7 @@ class ConfigManager:
             print(cmd)
             answer = isc.config.ccsession.create_answer(1, "Wrong number of arguments")
         if not answer:
-            answer = isc.config.ccsession.create_answer(1, "Error handling set_config command")
+            answer = isc.config.ccsession.create_answer(1, "No answer message from " + cmd[0])
             
         return answer
 
@@ -312,6 +324,7 @@ class ConfigManager:
             elif cmd == isc.config.ccsession.COMMAND_SET_CONFIG:
                 answer = self._handle_set_config(arg)
             elif cmd == "shutdown":
+                # TODO: logging
                 print("[b10-cfgmgr] Received shutdown command")
                 self.running = False
                 answer = isc.config.ccsession.create_answer(0)
