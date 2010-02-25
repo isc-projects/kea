@@ -51,7 +51,6 @@ def module_spec_from_file(spec_file, check = True):
         raise ModuleSpecError("Data definition has no module_spec element")
         
     result = ModuleSpec(module_spec['module_spec'], check)
-    print("RETURNING: " + str(type(result)))
     return result
 
 class ModuleSpec:

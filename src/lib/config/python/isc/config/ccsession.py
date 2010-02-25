@@ -83,6 +83,7 @@ COMMAND_GET_COMMANDS_SPEC = "get_commands_spec"
 COMMAND_GET_CONFIG = "get_config"
 COMMAND_SET_CONFIG = "set_config"
 COMMAND_GET_MODULE_SPEC = "get_module_spec"
+COMMAND_MODULE_SPEC = "module_spec"
 
 def parse_command(msg):
     """Parses what may be a command message. If it looks like one,
@@ -90,8 +91,11 @@ def parse_command(msg):
        string. If it is not, this function returns None, None"""
     if type(msg) == dict and len(msg.items()) == 1:
         cmd, value = msg.popitem()
-        if type(cmd) == str:
-            return cmd, value
+        if cmd == "command" and type(value) == list:
+            if len(value) == 1:
+                return value[0], None
+            elif len(value) > 1:
+                return value[0], value[1]
     return None, None
 
 def create_command(command_name, params = None):
@@ -197,7 +201,8 @@ class ModuleCCSession(ConfigData):
 
     def __send_spec(self):
         """Sends the data specification to the configuration manager"""
-        self._session.group_sendmsg({ "module_spec": self.get_module_spec().get_full_spec() }, "ConfigManager")
+        msg = create_command(COMMAND_MODULE_SPEC, self.get_module_spec().get_full_spec())
+        self._session.group_sendmsg(msg, "ConfigManager")
         answer, env = self._session.group_recvmsg(False)
         
     def __request_config(self):
@@ -289,7 +294,7 @@ class UIModuleCCSession(MultiConfigData):
         """Commit all local changes, send them through b10-cmdctl to
            the configuration manager"""
         if self.get_local_changes():
-            self._conn.send_POST('/ConfigManager/set_config', self.get_local_changes())
+            self._conn.send_POST('/ConfigManager/set_config', [ self.get_local_changes() ])
             # todo: check result
             self.request_current_config()
             self.clear_local_changes()
