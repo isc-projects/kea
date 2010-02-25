@@ -63,6 +63,16 @@ struct RRSIGImpl {
         timeinception_(timeinception), keyid_(keyid), signer_(signer),
         signature_(signature)
     {}
+    RRSIGImpl(const RRType& covered, uint8_t algorithm, uint8_t labels,
+              uint32_t originalttl, uint32_t timeexpire, uint32_t timeinception,
+              uint16_t keyid, const Name& signer,
+              const string& signature_txt) :
+        covered_(covered), algorithm_(algorithm), labels_(labels),
+        originalttl_(originalttl), timeexpire_(timeexpire),
+        timeinception_(timeinception), keyid_(keyid), signer_(signer)
+    {
+        decodeBase64(signature_txt, signature_);
+    }
 
     const RRType covered_;
     uint8_t algorithm_;
@@ -72,7 +82,7 @@ struct RRSIGImpl {
     uint32_t timeinception_;
     uint16_t keyid_;
     const Name signer_;
-    const vector<char> signature_;
+    vector<char> signature_;
 };
 
 RRSIG::RRSIG(const string& rrsig_str) :
@@ -101,12 +111,9 @@ RRSIG::RRSIG(const string& rrsig_str) :
     uint32_t timeexpire = convertDNSSECTime(expire_txt);
     uint32_t timeinception = convertDNSSECTime(inception_txt);
 
-    vector<char> signature;
-    decodeBase64(signaturebuf.str(), signature);
-
     impl_ = new RRSIGImpl(RRType(covered_txt), algorithm, labels,
                           originalttl, timeexpire, timeinception, keyid,
-                          Name(signer_txt), signature);
+                          Name(signer_txt), signaturebuf.str());
 }
 
 RRSIG::RRSIG(InputBuffer& buffer, size_t rdata_len)
