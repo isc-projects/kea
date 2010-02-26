@@ -241,13 +241,15 @@ class ConfigManager:
             conf_part = data.find_no_exc(self.config.data, module_name)
             if conf_part:
                 data.merge(conf_part, cmd[1])
-                self.cc.group_sendmsg({ "config_update": conf_part }, module_name)
+                update_cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, conf_part)
+                self.cc.group_sendmsg(update_cmd, module_name)
                 answer, env = self.cc.group_recvmsg(False)
             else:
                 conf_part = data.set(self.config.data, module_name, {})
                 data.merge(conf_part[module_name], cmd[1])
                 # send out changed info
-                self.cc.group_sendmsg({ "config_update": conf_part[module_name] }, module_name)
+                update_cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, conf_part[module_name])
+                self.cc.group_sendmsg(update_cmd, module_name)
                 # replace 'our' answer with that of the module
                 answer, env = self.cc.group_recvmsg(False)
             if answer:
@@ -263,7 +265,8 @@ class ConfigManager:
             err_list = []
             for module in self.config.data:
                 if module != "version":
-                    self.cc.group_sendmsg({ "config_update": self.config.data[module] }, module)
+                    update_cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, self.config.data[module])
+                    self.cc.group_sendmsg(update_cmd, module)
                     answer, env = self.cc.group_recvmsg(False)
                     if answer == None:
                         got_error = True

@@ -54,7 +54,7 @@ public:
      */
     ModuleCCSession(std::string spec_file_name,
                     isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config) = NULL,
-                    isc::data::ElementPtr(*command_handler)(isc::data::ElementPtr command) = NULL
+                    isc::data::ElementPtr(*command_handler)(const std::string& command, const isc::data::ElementPtr args) = NULL
                     ) throw (isc::cc::SessionError);
     int getSocket();
 
@@ -87,7 +87,7 @@ public:
      *
      * This protocol is very likely to change.
      */
-    void set_command_handler(isc::data::ElementPtr(*command_handler)(isc::data::ElementPtr command)) { command_handler_ = command_handler; };
+    void set_command_handler(isc::data::ElementPtr(*command_handler)(const std::string& command, const isc::data::ElementPtr args)) { command_handler_ = command_handler; };
 
     const ElementPtr getConfig() { return config_; }
 private:
@@ -100,7 +100,7 @@ private:
     ElementPtr handleConfigUpdate(ElementPtr new_config);
 
     isc::data::ElementPtr(*config_handler_)(isc::data::ElementPtr new_config);
-    isc::data::ElementPtr(*command_handler_)(isc::data::ElementPtr command);
+    isc::data::ElementPtr(*command_handler_)(const std::string& command, const isc::data::ElementPtr args);
 };
 
 ElementPtr createAnswer(const int rcode);

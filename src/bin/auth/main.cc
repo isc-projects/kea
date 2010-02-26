@@ -63,15 +63,15 @@ my_config_handler(isc::data::ElementPtr config)
 }
 
 isc::data::ElementPtr
-my_command_handler(isc::data::ElementPtr command) {
+my_command_handler(const std::string& command, const isc::data::ElementPtr args) {
     isc::data::ElementPtr answer = isc::config::createAnswer(0);
 
-    cout << "[XX] Handle command: " << endl << command->str() << endl;
-    if (command->get(0)->stringValue() == "print_message") 
+    cout << "[XX] Handle command: " << endl << command << endl;
+    if (command == "print_message") 
     {
-        cout << command->get(1)->get("message") << endl;
+        cout << args << endl;
         /* let's add that message to our answer as well */
-        answer->get("result")->add(command->get(1));
+        answer->get("result")->add(args);
     }
     return answer;
 }

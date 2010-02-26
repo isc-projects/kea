@@ -20,6 +20,7 @@
 import unittest
 import os
 from isc.config.cfgmgr import *
+from unittest_fakesession import FakeModuleCCSession
 
 class TestConfigManagerData(unittest.TestCase):
     def setUp(self):
@@ -70,51 +71,6 @@ class TestConfigManagerData(unittest.TestCase):
         self.assertEqual(cfd1, cfd2)
         cfd2.data['test'] = { 'a': [ 1, 2, 3]}
         self.assertNotEqual(cfd1, cfd2)
-        
-#
-# We can probably use a more general version of this
-#
-class FakeModuleCCSession:
-    def __init__(self):
-        self.subscriptions = {}
-        # each entry is of the form [ channel, instance, message ]
-        self.message_queue = []
-
-    def group_subscribe(self, group_name, instance_name = None):
-        if not group_name in self.subscriptions:
-            self.subscriptions[group_name] = []
-        if instance_name:
-            self.subscriptions[group_name].append(instance_name)
-            
-
-    def has_subscription(self, group_name, instance_name = None):
-        if group_name in self.subscriptions:
-            if instance_name:
-                return instance_name in self.subscriptions[group_name]
-            else:
-                return True
-        else:
-            return False
-
-    def group_sendmsg(self, msg, channel, target = None):
-        self.message_queue.append([ channel, target, msg ])
-
-    def group_reply(self, env, msg):
-        pass
-
-    def group_recvmsg(self, blocking):
-        for qm in self.message_queue:
-            if qm[0] in self.subscriptions and (qm[1] == None or qm[1] in self.subscriptions[qm[0]]):
-                self.message_queue.remove(qm)
-                return qm[2], {}
-        return None, None
-
-    def get_message(self, channel, target = None):
-        for qm in self.message_queue:
-            if qm[0] == channel and qm[1] == target:
-                self.message_queue.remove(qm)
-                return qm[2]
-        return None
         
 
 class TestConfigManager(unittest.TestCase):
@@ -257,7 +213,7 @@ class TestConfigManager(unittest.TestCase):
                                 my_ok_answer)
         # The cfgmgr should have eaten the ok message, and sent out an update again
         self.assertEqual(len(self.fake_session.message_queue), 1)
-        self.assertEqual({'config_update': {'test': 123}},
+        self.assertEqual({'command': [ 'config_update', {'test': 123}]},
                          self.fake_session.get_message(self.name, None))
         # and the queue should now be empty again
         self.assertEqual(len(self.fake_session.message_queue), 0)
@@ -267,7 +223,7 @@ class TestConfigManager(unittest.TestCase):
         self._handle_msg_helper({ "command": [ "set_config", [self.name, { "test": 124 }] ] },
                                 my_ok_answer)
         self.assertEqual(len(self.fake_session.message_queue), 1)
-        self.assertEqual({'config_update': {'test': 124}},
+        self.assertEqual({'command': [ 'config_update', {'test': 124}]},
                          self.fake_session.get_message(self.name, None))
         self.assertEqual(len(self.fake_session.message_queue), 0)
 
@@ -277,7 +233,7 @@ class TestConfigManager(unittest.TestCase):
         self._handle_msg_helper({ "command": [ "set_config", [ { self.name: { "test": 125 } }] ] },
                                 my_ok_answer )
         self.assertEqual(len(self.fake_session.message_queue), 1)
-        self.assertEqual({'config_update': {'test': 125}},
+        self.assertEqual({'command': [ 'config_update', {'test': 125}]},
                          self.fake_session.get_message(self.name, None))
         self.assertEqual(len(self.fake_session.message_queue), 0)
 
@@ -286,7 +242,7 @@ class TestConfigManager(unittest.TestCase):
                           self.cm.handle_msg,
                           { "command": [ "set_config", [ { self.name: { "test": 125 } }] ] } )
         self.assertEqual(len(self.fake_session.message_queue), 1)
-        self.assertEqual({'config_update': {'test': 125}},
+        self.assertEqual({'command': [ 'config_update', {'test': 125}]},
                          self.fake_session.get_message(self.name, None))
         self.assertEqual(len(self.fake_session.message_queue), 0)
 
@@ -295,7 +251,7 @@ class TestConfigManager(unittest.TestCase):
         self._handle_msg_helper({ "command": [ "set_config", [ { self.name: { "test": 125 } }] ] },
                                 my_bad_answer )
         self.assertEqual(len(self.fake_session.message_queue), 1)
-        self.assertEqual({'config_update': {'test': 125}},
+        self.assertEqual({'command': [ 'config_update', {'test': 125}]},
                          self.fake_session.get_message(self.name, None))
         self.assertEqual(len(self.fake_session.message_queue), 0)
 
@@ -304,7 +260,7 @@ class TestConfigManager(unittest.TestCase):
         self._handle_msg_helper({ "command": [ "set_config", [ self.name, { "test": 125 }] ] },
                                 my_bad_answer )
         self.assertEqual(len(self.fake_session.message_queue), 1)
-        self.assertEqual({'config_update': {'test': 125}},
+        self.assertEqual({'command': [ 'config_update', {'test': 125}]},
                          self.fake_session.get_message(self.name, None))
         self.assertEqual(len(self.fake_session.message_queue), 0)
 
