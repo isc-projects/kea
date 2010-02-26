@@ -313,7 +313,6 @@ class ConfigManager:
     def handle_msg(self, msg):
         """Handle a command from the cc channel to the configuration manager"""
         answer = {}
-        print("[XX] got msg: " + str(msg))
         cmd, arg = isc.config.ccsession.parse_command(msg)
         if cmd:
             if cmd == isc.config.ccsession.COMMAND_GET_COMMANDS_SPEC:
@@ -323,11 +322,10 @@ class ConfigManager:
             elif cmd == isc.config.ccsession.COMMAND_GET_CONFIG:
                 answer = self._handle_get_config(arg)
             elif cmd == isc.config.ccsession.COMMAND_SET_CONFIG:
-                print("[b10-cfgmgr] got set_config command")
                 answer = self._handle_set_config(arg)
             elif cmd == "shutdown":
                 # TODO: logging
-                print("[b10-cfgmgr] Received shutdown command")
+                #print("[b10-cfgmgr] Received shutdown command")
                 self.running = False
                 answer = isc.config.ccsession.create_answer(0)
             elif cmd == isc.config.ccsession.COMMAND_MODULE_SPEC:
