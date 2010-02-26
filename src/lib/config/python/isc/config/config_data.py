@@ -218,7 +218,10 @@ class MultiConfigData:
         """Returns the specification for the item at the given
            identifier, or None if not found. The first part of the
            identifier (up to the first /) is interpreted as the module
-           name. Returns None if not found."""
+           name. Returns None if not found, or if identifier is not a
+           string."""
+        if type(identifier) != str:
+            return None
         if identifier[0] == '/':
             identifier = identifier[1:]
         module, sep, id = identifier.partition("/")
