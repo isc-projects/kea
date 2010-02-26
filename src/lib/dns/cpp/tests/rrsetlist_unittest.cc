@@ -107,19 +107,19 @@ TEST_F(RRsetListTest, randomAccess) {
     RRsetPtr p;
 
     p = list[RRType::CNAME()];
-    EXPECT_TRUE(p->getType() == RRType::CNAME());
+    EXPECT_EQ(p->getType(), RRType::CNAME());
 
     p = list[RRType::AAAA()];
-    EXPECT_TRUE(p->getType() == RRType::AAAA());
+    EXPECT_EQ(p->getType(), RRType::AAAA());
 
     p = list[RRType::NS()];
-    EXPECT_TRUE(p->getType() == RRType::NS());
+    EXPECT_EQ(p->getType(), RRType::NS());
 
     p = list[RRType::A()];
-    EXPECT_TRUE(p->getType() == RRType::A());
+    EXPECT_EQ(p->getType(), RRType::A());
 
     p = list[RRType::SOA()];
-    EXPECT_TRUE(p->getType() == RRType::SOA());
+    EXPECT_EQ(p->getType(), RRType::SOA());
 }
 
 TEST_F(RRsetListTest, findRRset) {
