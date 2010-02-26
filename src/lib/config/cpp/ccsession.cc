@@ -164,7 +164,7 @@ ModuleCCSession::read_module_specification(const std::string& filename) {
 
 ModuleCCSession::ModuleCCSession(std::string spec_file_name,
                                isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config),
-                               isc::data::ElementPtr(*command_handler)(isc::data::ElementPtr command)
+                               isc::data::ElementPtr(*command_handler)(const std::string& command, const isc::data::ElementPtr args)
                               ) throw (isc::cc::SessionError):
     session_(isc::cc::Session())
 {
@@ -249,16 +249,16 @@ ModuleCCSession::check_command()
         if (!data->getType() == Element::map || data->contains("result")) {
             return 0;
         }
+        ElementPtr arg;
+        std::string cmd_str = parseCommand(arg, data);
         ElementPtr answer;
-        if (data->contains("config_update")) {
-            ElementPtr new_config = data->get("config_update");
-            answer = handleConfigUpdate(new_config);
-        }
-        if (data->contains("command")) {
+        if (cmd_str == "config_update") {
+            answer = handleConfigUpdate(arg);
+        } else {
             if (command_handler_) {
-                answer = command_handler_(data->get("command"));
+                answer = command_handler_(cmd_str, arg);
             } else {
-                answer = Element::createFromString("{ \"result\": [0] }");
+                answer = createAnswer(1, "Command given but no command handler for module");
             }
         }
         session_.reply(routing, answer);

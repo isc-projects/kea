@@ -119,24 +119,23 @@ class BoB:
         return answer
         # TODO
 
-    def command_handler(self, command):
-        # a command is of the form [ "command", { "arg1": arg1, "arg2": arg2 } ]
+    def command_handler(self, command, args):
         if self.verbose:
             print("[XX] Boss got command:")
             print(command)
         answer = [ 1, "Command not implemented" ]
-        if type(command) != list or len(command) == 0:
+        if type(command) != str:
             answer = isc.config.ccsession.create_answer(1, "bad command")
         else:
-            cmd = command[0]
+            cmd = command
             if cmd == "shutdown":
                 print("[XX] got shutdown command")
                 self.runnable = False
                 answer = isc.config.ccsession.create_answer(0)
             elif cmd == "print_message":
-                if len(command) > 1 and type(command[1]) == dict and "message" in command[1]:
-                    print(command[1]["message"])
-                answer = isc.config.ccsession.create_answer(0)
+                if args:
+                    print(args)
+                answer = isc.config.ccsession.create_answer(0, args)
             elif cmd == "print_settings":
                 print("Full Config:")
                 full_config = self.ccs.get_full_config()

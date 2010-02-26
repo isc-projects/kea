@@ -58,6 +58,8 @@ def parse_answer(msg):
         raise ModuleCCSessionError("wrong rcode type in answer message")
     else:
         if len(msg['result']) > 1:
+            if (msg['result'][0] != 0 and type(msg['result'][1]) != str):
+                raise ModuleCCSessionError("rcode in answer message is non-zero, value is not a string")
             return msg['result'][0], msg['result'][1]
         else:
             return msg['result'][0], None
@@ -78,6 +80,7 @@ def create_answer(rcode, arg = None):
 
 # 'fixed' commands
 """Fixed names for command and configuration messages"""
+COMMAND_CONFIG_UPDATE = "config_update"
 COMMAND_COMMANDS_UPDATE = "commands_update"
 COMMAND_SPECIFICATION_UPDATE = "specification_update"
 
@@ -94,9 +97,9 @@ def parse_command(msg):
     if type(msg) == dict and len(msg.items()) == 1:
         cmd, value = msg.popitem()
         if cmd == "command" and type(value) == list:
-            if len(value) == 1:
+            if len(value) == 1 and type(value[0]) == str:
                 return value[0], None
-            elif len(value) > 1:
+            elif len(value) > 1 and type(value[0]) == str:
                 return value[0], value[1]
     return None, None
 
@@ -105,6 +108,8 @@ def create_command(command_name, params = None):
        specified in the module's specification, and an optional params
        object"""
     # TODO: validate_command with spec
+    if type(command_name) != str:
+        raise ModuleCCSessionError("command in create_command() not a string")
     cmd = [ command_name ]
     if params:
         cmd.append(params)
@@ -121,7 +126,7 @@ class ModuleCCSession(ConfigData):
        callbacks are called when 'check_command' is called on the
        ModuleCCSession"""
        
-    def __init__(self, spec_file_name, config_handler, command_handler):
+    def __init__(self, spec_file_name, config_handler, command_handler, cc_session = None):
         """Initialize a ModuleCCSession. This does *NOT* send the
            specification and request the configuration yet. Use start()
            for that once the ModuleCCSession has been initialized.
@@ -137,7 +142,10 @@ class ModuleCCSession(ConfigData):
         self.set_config_handler(config_handler)
         self.set_command_handler(command_handler)
 
-        self._session = Session()
+        if not cc_session:
+            self._session = Session()
+        else:
+            self._session = cc_session
         self._session.group_subscribe(self._module_name, "*")
 
     def start(self):
@@ -172,17 +180,18 @@ class ModuleCCSession(ConfigData):
         if msg:
             answer = None
             try:
-                if "config_update" in msg:
-                    new_config = msg["config_update"]
+                cmd, arg = isc.config.ccsession.parse_command(msg)
+                if cmd == COMMAND_CONFIG_UPDATE:
+                    new_config = arg
                     errors = []
                     if not self._config_handler:
                         answer = create_answer(2, self._module_name + " has no config handler")
                     elif not self.get_module_spec().validate_config(False, new_config, errors):
                         answer = create_answer(1, " ".join(errors))
                     else:
-                        answer = self._config_handler(msg["config_update"])
-                if "command" in msg and self._command_handler:
-                    answer = self._command_handler(msg["command"])
+                        answer = self._config_handler(new_config)
+                else:
+                    answer = self._command_handler(cmd, arg)
             except Exception as exc:
                 answer = create_answer(1, str(exc))
             if answer:
@@ -208,18 +217,22 @@ class ModuleCCSession(ConfigData):
         answer, env = self._session.group_recvmsg(False)
         
     def __request_config(self):
-        """Asks the configuration manager for the current configuration, and call the config handler if set"""
+        """Asks the configuration manager for the current configuration, and call the config handler if set.
+           Raises a ModuleCCSessionError if there is no answer from the configuration manager"""
         self._session.group_sendmsg({ "command": [ "get_config", { "module_name": self._module_name } ] }, "ConfigManager")
         answer, env = self._session.group_recvmsg(False)
-        rcode, value = parse_answer(answer)
-        if rcode == 0:
-            if value != None and self.get_module_spec().validate_config(False, value):
-                self.set_local_config(value);
-                if self._config_handler:
-                    self._config_handler(value)
+        if answer:
+            rcode, value = parse_answer(answer)
+            if rcode == 0:
+                if value != None and self.get_module_spec().validate_config(False, value):
+                    self.set_local_config(value);
+                    if self._config_handler:
+                        self._config_handler(value)
+            else:
+                # log error
+                print("Error requesting configuration: " + value)
         else:
-            # log error
-            print("Error requesting configuration: " + value)
+            raise ModuleCCSessionError("No answer from configuration manager")
 
 class UIModuleCCSession(MultiConfigData):
     """This class is used in a configuration user interface. It contains
