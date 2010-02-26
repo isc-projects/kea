@@ -266,6 +266,10 @@ class CommandControl():
         TODO. add check for parameters.
         '''
 
+        # core module ConfigManager does not have a specification file
+        if module_name == 'ConfigManager':
+            return self.send_command(module_name, command_name, params)
+
         if module_name not in self.command_spec.keys():
             return 1, {'error' : 'unknown module'}
 

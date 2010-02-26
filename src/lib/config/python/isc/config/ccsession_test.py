@@ -342,7 +342,95 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertEqual(len(fake_session.message_queue), 1)
         mccs.check_command()
         self.assertEqual(len(fake_session.message_queue), 0)
+
+class fakeUIConn():
+    def __init__(self):
+        self.get_answers = {}
+        self.post_answers = {}
+
+    def set_get_answer(self, name, answer):
+        self.get_answers[name] = answer
+    
+    def set_post_answer(self, name, answer):
+        self.post_answers[name] = answer
+    
+    def send_GET(self, name, arg = None):
+        if name in self.get_answers:
+            return self.get_answers[name]
+        else:
+            return None
+    
+    def send_POST(self, name, arg = None):
+        if name in self.post_answers:
+            return self.post_answers[name]
+        else:
+            return None
+    
+
+class TestUIModuleCCSession(unittest.TestCase):
+    def setUp(self):
+        if 'CONFIG_TESTDATA_PATH' in os.environ:
+            self.data_path = os.environ['CONFIG_TESTDATA_PATH']
+        else:
+            self.data_path = "../../../testdata"
+
+    def spec_file(self, file):
+        return self.data_path + os.sep + file
         
+    def create_uccs2(self, fake_conn):
+        module_spec = isc.config.module_spec_from_file(self.spec_file("spec2.spec"))
+        fake_conn.set_get_answer('/config_spec', { module_spec.get_module_name(): module_spec.get_config_spec()})
+        fake_conn.set_get_answer('/commands', { module_spec.get_module_name(): module_spec.get_commands_spec()})
+        fake_conn.set_get_answer('/config_data', { 'version': 1 })
+        return UIModuleCCSession(fake_conn)
+
+    def test_init(self):
+        fake_conn = fakeUIConn()
+        fake_conn.set_get_answer('/config_spec', {})
+        fake_conn.set_get_answer('/commands', {})
+        fake_conn.set_get_answer('/config_data', { 'version': 1 })
+        uccs = UIModuleCCSession(fake_conn)
+        self.assertEqual({}, uccs._specifications)
+        self.assertEqual({ 'version': 1}, uccs._current_config)
+
+        module_spec = isc.config.module_spec_from_file(self.spec_file("spec2.spec"))
+        fake_conn.set_get_answer('/config_spec', { module_spec.get_module_name(): module_spec.get_config_spec()})
+        fake_conn.set_get_answer('/commands', { module_spec.get_module_name(): module_spec.get_commands_spec()})
+        fake_conn.set_get_answer('/config_data', { 'version': 1 })
+        uccs = UIModuleCCSession(fake_conn)
+        self.assertEqual(module_spec._module_spec, uccs._specifications['Spec2']._module_spec)
+
+        fake_conn.set_get_answer('/config_data', { 'version': 123123 })
+        self.assertRaises(ModuleCCSessionError, UIModuleCCSession, fake_conn)
+
+    def test_add_remove_value(self):
+        fake_conn = fakeUIConn()
+        uccs = self.create_uccs2(fake_conn)
+        self.assertRaises(isc.cc.data.DataNotFoundError, uccs.add_value, 1, "a")
+        self.assertRaises(isc.cc.data.DataNotFoundError, uccs.add_value, "no_such_item", "a")
+        self.assertRaises(isc.cc.data.DataNotFoundError, uccs.add_value, "Spec2/item1", "a")
+        self.assertRaises(isc.cc.data.DataNotFoundError, uccs.remove_value, 1, "a")
+        self.assertRaises(isc.cc.data.DataNotFoundError, uccs.remove_value, "no_such_item", "a")
+        self.assertRaises(isc.cc.data.DataNotFoundError, uccs.remove_value, "Spec2/item1", "a")
+        self.assertEqual({}, uccs._local_changes)
+        uccs.add_value("Spec2/item5", "foo")
+        self.assertEqual({'Spec2': {'item5': ['a', 'b', 'foo']}}, uccs._local_changes)
+        uccs.remove_value("Spec2/item5", "foo")
+        self.assertEqual({'Spec2': {'item5': ['a', 'b']}}, uccs._local_changes)
+        uccs._local_changes = {'Spec2': {'item5': []}}
+        uccs.remove_value("Spec2/item5", "foo")
+        uccs.add_value("Spec2/item5", "foo")
+        self.assertEqual({'Spec2': {'item5': ['foo']}}, uccs._local_changes)
+        uccs.add_value("Spec2/item5", "foo")
+        self.assertEqual({'Spec2': {'item5': ['foo']}}, uccs._local_changes)
+
+    def test_commit(self):
+        fake_conn = fakeUIConn()
+        uccs = self.create_uccs2(fake_conn)
+        uccs.commit()
+        uccs._local_changes = {'Spec2': {'item5': [ 'a' ]}}
+        uccs.commit()
+
 if __name__ == '__main__':
     unittest.main()
 

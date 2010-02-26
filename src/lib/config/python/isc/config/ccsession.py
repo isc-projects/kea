@@ -270,7 +270,7 @@ class UIModuleCCSession(MultiConfigData):
            manager through b10-cmdctl, and stores those as CURRENT"""
         config = self._conn.send_GET('/config_data')
         if 'version' not in config or config['version'] != 1:
-            raise Exception("Bad config version")
+            raise ModuleCCSessionError("Bad config version")
         self._set_current_config(config)
 
     def add_value(self, identifier, value_str):
@@ -279,7 +279,7 @@ class UIModuleCCSession(MultiConfigData):
            of the module config data specification"""
         module_spec = self.find_spec_part(identifier)
         if (type(module_spec) != dict or "list_item_spec" not in module_spec):
-            raise DataTypeError(identifier + " is not a list")
+            raise isc.cc.data.DataNotFoundError(str(identifier) + " is not a list")
         value = isc.cc.data.parse_value_str(value_str)
         cur_list, status = self.get_value(identifier)
         if not cur_list:
@@ -296,7 +296,7 @@ class UIModuleCCSession(MultiConfigData):
            """
         module_spec = self.find_spec_part(identifier)
         if (type(module_spec) != dict or "list_item_spec" not in module_spec):
-            raise DataTypeError(identifier + " is not a list")
+            raise isc.cc.data.DataNotFoundError(str(identifier) + " is not a list")
         value = isc.cc.data.parse_value_str(value_str)
         isc.config.config_data.check_type(module_spec, [value])
         cur_list, status = self.get_value(identifier)
