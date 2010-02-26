@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id: rrtype_unittest.cc 476 2010-01-19 00:29:28Z jinmei $
+// $Id$
 
 #include <vector>
 #include <boost/foreach.hpp>
