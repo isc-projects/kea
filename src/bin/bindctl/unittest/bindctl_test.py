@@ -158,7 +158,24 @@ class TestCmdSyntax(unittest.TestCase):
     def testCmdUnknownParamSyntaxError(self):
         self.my_assert_raise(CmdUnknownParamSyntaxError, "zone load zone_d='cn'")
         self.my_assert_raise(CmdUnknownParamSyntaxError, "zone reload_all zone_name = 'cn'")  
+       
+class TestModuleInfo(unittest.TestCase):
+
+    def test_get_param_name_by_position(self):
+        cmd = CommandInfo('command')
+        cmd.add_param(ParamInfo('name'))
+        cmd.add_param(ParamInfo('age'))
+        cmd.add_param(ParamInfo('data', optional = True))
+        cmd.add_param(ParamInfo('sex'))
+        self.assertEqual('name', cmd.get_param_name_by_position(0, 2))
+        self.assertEqual('age', cmd.get_param_name_by_position(1, 2))
+        self.assertEqual('sex', cmd.get_param_name_by_position(2, 3))
+        self.assertEqual('data', cmd.get_param_name_by_position(2, 4))
+        self.assertEqual('data', cmd.get_param_name_by_position(2, 4))
         
+        self.assertRaises(KeyError, cmd.get_param_name_by_position, 4, 4)
+
+
     
 class TestNameSequence(unittest.TestCase):
     """
