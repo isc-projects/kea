@@ -2,10 +2,10 @@
   "module_spec": {
     "module_name": "Auth",
     "config_data": [
-      { "item_name": "default_name",
+      { "item_name": "database_file",
         "item_type": "string",
         "item_optional": False,
-        "item_default": "Hello, world!"
+        "item_default": "b10-auth.db"
       },
       { "item_name": "zone_list",
         "item_type": "list",

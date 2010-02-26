@@ -27,10 +27,11 @@ public:
     int getSocket() { return (sock); }
     void processMessage();
     void serve(std::string zone_name);
-
+    void setDbFile(const std::string& db_file);
     isc::data::ElementPtr updateConfig(isc::data::ElementPtr config);
 private:
-
+    std::string _db_file;
+    
     isc::auth::MetaDataSrc data_src;
     int sock;
 };

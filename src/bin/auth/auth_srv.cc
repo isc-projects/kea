@@ -125,16 +125,26 @@ AuthSrv::processMessage() {
     }
 }
 
+void
+AuthSrv::setDbFile(const std::string& db_file)
+{
+    if (_db_file != db_file) {
+        cout << "Change data source file, call our data source's function to now read " << db_file << endl;
+        _db_file = db_file;
+    }
+}
+
 ElementPtr
-AuthSrv::updateConfig(isc::data::ElementPtr config) {
-    //if (config->contains("port")) {
-        // todo: what to do with port change. restart automatically?
-        // ignore atm
-    //}
-    if (config) {
-        std::cout << "[XX] auth: new config " << config << std::endl;
-    } else {
-        std::cout << "[XX] auth: new config empty" << std::endl;
+AuthSrv::updateConfig(isc::data::ElementPtr new_config) {
+    if (new_config) {
+        // the ModuleCCSession has already checked if we have
+        // the correct ElementPtr type as specified in our .spec file
+        if (new_config->contains("database_file")) {
+            // Since we also get this value if it hasn't changed,
+            // but is non-default, setDbFile here should only really
+            // do anything if it has actually changed
+            setDbFile(new_config->get("database_file")->stringValue());
+        }
     }
     
     return isc::config::createAnswer(0);
