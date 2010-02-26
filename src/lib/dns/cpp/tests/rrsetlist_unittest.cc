@@ -110,6 +110,15 @@ TEST_F(RRsetListTest, randomAccess) {
 
     p = list[RRType::SOA()];
     EXPECT_EQ(p->getType(), RRType::SOA());
+
+    // What should this be?
+    p = RRsetPtr(new RRset(Name("example.com"), RRClass::CH(),
+                           RRType::DNAME(), RRTTL(3600)));
+    list.addRRset(p);
+    p = list[RRType::DNAME()];
+    //This will crash, but it's counter intuitive, isn't it?  We added a DNAME
+    //RRset and fetched a DNAME RRset in the list.  Why can't it succeed?
+    //EXPECT_EQ(p->getType(), RRType::DNAME());
 }
 
 TEST_F(RRsetListTest, findRRset) {
@@ -165,4 +174,3 @@ TEST_F(RRsetListTest, iterate) {
 }
 
 }
-
