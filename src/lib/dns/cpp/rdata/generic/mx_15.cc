@@ -103,7 +103,7 @@ MX::getMXName() const
     return (mxname_);
 }
 
-const uint16_t
+uint16_t
 MX::getMXPref() const
 {
     return (preference_);

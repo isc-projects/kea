@@ -40,7 +40,7 @@ public:
     /// Specialized methods
     ///
     const Name& getMXName() const;
-    const uint16_t getMXPref() const;
+    uint16_t getMXPref() const;
 
 private:
     /// Note: this is a prototype version; we may reconsider
