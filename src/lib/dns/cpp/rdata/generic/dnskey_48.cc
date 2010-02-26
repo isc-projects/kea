@@ -169,7 +169,7 @@ DNSKEY::compare(const Rdata& other) const
     }
 }
 
-const uint16_t
+uint16_t
 DNSKEY::getTag() const
 {
     if (impl_->algorithm_ == 1) {
@@ -193,12 +193,12 @@ DNSKEY::getTag() const
     return (ac & 0xffff);
 }
 
-const uint16_t
+uint16_t
 DNSKEY::getFlags() const {
     return (impl_->flags_);
 }
 
-const uint8_t
+uint8_t
 DNSKEY::getAlg() const {
     return (impl_->algorithm_);
 }
