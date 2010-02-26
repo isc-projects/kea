@@ -472,6 +472,8 @@ TEST_F(NameTest, reverse)
 {
     EXPECT_PRED_FORMAT2(UnitTestUtil::matchName, example_name.reverse(),
                         Name("com.example.www."));
+    EXPECT_PRED_FORMAT2(UnitTestUtil::matchName, Name(".").reverse(),
+                        Name("."));
 }
 
 TEST_F(NameTest, split)
