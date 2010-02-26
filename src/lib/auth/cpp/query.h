@@ -171,7 +171,8 @@ public:
     virtual ~QueryTask();
 };
 
-typedef std::queue<QueryTask> QueryTaskQueue;
+typedef boost::shared_ptr<QueryTask> QueryTaskPtr;
+typedef std::queue<QueryTaskPtr> QueryTaskQueue;
 
 class Query;
 typedef boost::shared_ptr<Query> QueryPtr;
@@ -202,11 +203,13 @@ public:
         qname_ = &query->getName();
         qclass_ = &query->getClass();
         qtype_ = &query->getType();
-        querytasks.push(QueryTask(*qname_, *qclass_, *qtype_,
-                                  Section::ANSWER()));
+
+        QueryTaskPtr initial_task(new QueryTask(*qname_, *qclass_, *qtype_,
+                                                Section::ANSWER()));
+        querytasks.push(initial_task);
     };
 
-    virtual ~Query() {}
+    virtual ~Query();
 
     // wantAdditional() == true indicates that additional-section data
     // should be looked up while processing this query.  false indicates
