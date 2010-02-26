@@ -48,14 +48,14 @@ class MySecureHTTPServer(SecureHTTPServer):
         self.idle_timeout = 1200
         self.cmdctrl = MyCommandControl()
 
-class MyCommandControl():
+class MyCommandControl(CommandControl):
     def __init__(self):
-        self.command_spec = []
-        self.config_spec = []
-        self.config_data = []
+        self.command_spec = {}
+        self.config_spec = {}
+        self.config_data = {}
 
     def send_command(self, mod, cmd, param):
-        pass
+        return 0, {}
 
 
 class TestSecureHTTPRequestHandler(unittest.TestCase):
@@ -226,7 +226,7 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
         self.handler.path = '/cfgmgr/revert'
         self.handler.headers = {}
         rcode, reply = self.handler._handle_post_request()
-        self.assertEqual(http.client.OK, rcode)
+        self.assertEqual(http.client.BAD_REQUEST, rcode)
 
     def test_handle_post_request_1(self):
         self.handler.path = '/*d/revert'
@@ -243,7 +243,9 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
         self.handler.rfile.close()
         os.remove('check.tmp')
 
-        self.handler.path = '/d/revert'
+        self.handler.path = '/module/command'
+        self.handler.server.cmdctrl.command_spec = {}
+        self.handler.server.cmdctrl.command_spec['module'] = [{'command_name':'command'}, {'command_name': ['data1']} ]
         rcode, reply = self.handler._handle_post_request()
         self.assertEqual(http.client.OK, rcode)
 
