@@ -39,21 +39,14 @@ class RRsetListTest : public ::testing::Test {
 protected:
     RRsetListTest() {}
     void setupList(RRsetList& list);
-    static const in::A rdata_in_a;
-    static const in::AAAA rdata_in_aaaa;
-    static const generic::NS rdata_ns;
-    static const generic::SOA rdata_soa;
-    static const generic::CNAME rdata_cname;
 };
 
-const in::A RRsetListTest::rdata_in_a("192.0.2.1");
-const in::AAAA RRsetListTest::rdata_in_aaaa("2001:db8::1234");
-const generic::NS RRsetListTest::rdata_ns("ns.example.com");
-const generic::SOA RRsetListTest::rdata_soa(Name("ns.example.com"),
-                                            Name("root.example.com"),
-                                            2010012601, 3600, 300,
-                                            3600000, 1200);
-const generic::CNAME RRsetListTest::rdata_cname("target.example.com");
+const in::A rdata_in_a("192.0.2.1");
+const in::AAAA rdata_in_aaaa("2001:db8::1234");
+const generic::NS rdata_ns("ns.example.com");
+const generic::SOA rdata_soa(Name("ns.example.com"), Name("root.example.com"),
+                             2010012601, 3600, 300, 3600000, 1200);
+const generic::CNAME rdata_cname("target.example.com");
 
 void
 RRsetListTest::setupList(RRsetList& list) {
