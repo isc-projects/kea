@@ -168,7 +168,7 @@ DS::compare(const Rdata& other) const
     }
 }
 
-const uint16_t
+uint16_t
 DS::getTag() const {
     return impl_->tag_;
 }

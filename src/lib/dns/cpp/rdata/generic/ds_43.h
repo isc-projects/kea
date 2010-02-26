@@ -44,7 +44,7 @@ public:
     ///
     /// Specialized methods
     ///
-    const uint16_t getTag() const;
+    uint16_t getTag() const;
 private:
     DSImpl* impl_;
 };
