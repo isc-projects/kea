@@ -33,14 +33,14 @@ namespace {
 class HexTest : public ::testing::Test {
 protected:
     HexTest() {}
-    static const std::string hex_txt;
 };
 
-const std::string HexTest::hex_txt("DEADBEEFDECADE");
+const std::string hex_txt("DEADBEEFDECADE");
+const std::string hex_txt_lower("deadbeefdecade");
 
 TEST_F(HexTest, encodeHex) {
-    std::vector<uint8_t>data;
-    std::string s;
+    std::vector<uint8_t> data;
+
     data.push_back(0xde);
     data.push_back(0xad);
     data.push_back(0xbe);
@@ -51,19 +51,34 @@ TEST_F(HexTest, encodeHex) {
     EXPECT_EQ(hex_txt, encodeHex(data));
 }
 
+void
+compareData(const std::vector<uint8_t>& data)
+{
+    EXPECT_EQ(0xde, data[0]);
+    EXPECT_EQ(0xad, data[1]);
+    EXPECT_EQ(0xbe, data[2]);
+    EXPECT_EQ(0xef, data[3]);
+    EXPECT_EQ(0xde, data[4]);
+    EXPECT_EQ(0xca, data[5]);
+    EXPECT_EQ(0xde, data[6]);
+}
+
 TEST_F(HexTest, decodeHex) {
-    std::vector<uint8_t>result;
-    result.clear();
+    std::vector<uint8_t> result;
+
     decodeHex(hex_txt, result);
-    EXPECT_EQ(0xde, result[0]);
-    EXPECT_EQ(0xad, result[1]);
-    EXPECT_EQ(0xbe, result[2]);
-    EXPECT_EQ(0xef, result[3]);
-    EXPECT_EQ(0xde, result[4]);
-    EXPECT_EQ(0xca, result[5]);
-    EXPECT_EQ(0xde, result[6]);
+    compareData(result);
 
+#if 0
+    // lower case hex digits should be accepted
+    result.clear();
+    decodeHex(hex_txt_lower, result);
+    compareData(result);
+
+    // Bogus input: should fail
+    result.clear();
+    decodeHex("1x", result);
+#endif
 }
 
 }
-
