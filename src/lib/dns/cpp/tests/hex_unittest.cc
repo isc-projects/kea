@@ -69,7 +69,6 @@ TEST_F(HexTest, decodeHex) {
     decodeHex(hex_txt, result);
     compareData(result);
 
-#if 0
     // lower case hex digits should be accepted
     result.clear();
     decodeHex(hex_txt_lower, result);
@@ -77,8 +76,7 @@ TEST_F(HexTest, decodeHex) {
 
     // Bogus input: should fail
     result.clear();
-    decodeHex("1x", result);
-#endif
+    EXPECT_THROW(decodeHex("1x", result), BadHexString);
 }
 
 }

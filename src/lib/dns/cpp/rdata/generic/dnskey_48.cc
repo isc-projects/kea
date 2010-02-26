@@ -74,11 +74,19 @@ DNSKEY::DNSKEY(const string& dnskey_str) :
     vector<uint8_t> keydata;
     decodeBase64(keydatabuf.str(), keydata);
 
+    if (algorithm == 1 && keydata.size() < 3) {
+        dns_throw(InvalidRdataText, "DNSKEY keydata too short");
+    }
+
     impl_ = new DNSKEYImpl(flags, protocol, algorithm, keydata);
 }
 
 DNSKEY::DNSKEY(InputBuffer& buffer, size_t rdata_len)
 {
+    if (rdata_len < 4) {
+        dns_throw(InvalidRdataLength, "DNSKEY too short");
+    }
+
     uint16_t flags = buffer.readUint16();
     uint16_t protocol = buffer.readUint8();
     uint16_t algorithm = buffer.readUint8();
@@ -174,11 +182,7 @@ DNSKEY::getTag() const
 {
     if (impl_->algorithm_ == 1) {
         int len = impl_->keydata_.size();
-        if (len >= 3) {
-            return ((impl_->keydata_[len - 3] << 8) + impl_->keydata_[len - 2]);
-        } else {
-            dns_throw(InvalidRdataText, "Bad keydata");
-        }
+        return ((impl_->keydata_[len - 3] << 8) + impl_->keydata_[len - 2]);
     }
 
     uint32_t ac = impl_->flags_;
@@ -199,7 +203,7 @@ DNSKEY::getFlags() const {
 }
 
 uint8_t
-DNSKEY::getAlg() const {
+DNSKEY::getAlgorithm() const {
     return (impl_->algorithm_);
 }
 

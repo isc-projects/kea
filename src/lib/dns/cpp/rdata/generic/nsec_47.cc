@@ -93,6 +93,10 @@ NSEC::NSEC(InputBuffer& buffer, size_t rdata_len)
     Name nextname(buffer);
     rdata_len -= (buffer.getPosition() - pos);
 
+    if (rdata_len == 0) {
+        dns_throw(InvalidRdataLength, "NSEC too short");
+    }
+
     vector<uint8_t> typebits;
     for (int i = 0; i < rdata_len; i++) {
         typebits.push_back(buffer.readUint8());
@@ -131,14 +135,10 @@ NSEC::toText() const
     int len = 0;
     s << impl_->nextname_;
     for (int i = 0; i < impl_->typebits_.size(); i += len) {
-        if (i + 2 > impl_->typebits_.size()) {
-            dns_throw(InvalidRdataText, "Invalid NSEC Rdata");
-        }
+        assert(i + 2 <= impl_->typebits_.size());
         int window = impl_->typebits_[i];
         len = impl_->typebits_[i + 1];
-        if (len < 0 || len >= 32) {
-            dns_throw(InvalidRdataText, "Invalid NSEC Rdata");
-        }
+        assert(len >= 0 && len < 32);
         i += 2;
         for (int j = 0; j < len; j++) {
             if (impl_->typebits_[i + j] == 0) {
