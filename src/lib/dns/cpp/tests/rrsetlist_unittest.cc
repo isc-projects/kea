@@ -27,9 +27,6 @@
 
 #include <gtest/gtest.h>
 
-#include "unittest_util.h"
-
-using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
