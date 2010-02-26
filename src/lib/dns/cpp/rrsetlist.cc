@@ -55,8 +55,8 @@ const RRsetPtr
 RRsetList::findRRset(const RRType& rrtype, const RRClass& rrclass)
 {
     BOOST_FOREACH(const RRsetPtr rrsetptr, rrsets_) {
-        const AbstractRRset* rrset = rrsetptr.get();
-        if ((rrset->getClass() == rrclass) && (rrset->getType() == rrtype)) {
+        if ((rrsetptr->getClass() == rrclass) &&
+            (rrsetptr->getType() == rrtype)) {
             return rrsetptr;
         }
     }
