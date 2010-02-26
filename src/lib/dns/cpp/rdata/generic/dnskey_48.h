@@ -44,9 +44,9 @@ public:
     ///
     /// Specialized methods
     ///
-    const uint16_t getTag() const;
-    const uint16_t getFlags() const;
-    const uint8_t getAlg() const;
+    uint16_t getTag() const;
+    uint16_t getFlags() const;
+    uint8_t getAlg() const;
 
 private:
     DNSKEYImpl* impl_;
