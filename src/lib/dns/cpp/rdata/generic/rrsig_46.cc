@@ -43,11 +43,11 @@ struct RRSIGImpl {
     // straightforward representation of RRSIG RDATA fields
     RRSIGImpl(const RRType& covered, uint8_t algorithm, uint8_t labels,
               uint32_t originalttl, uint32_t timeexpire, uint32_t timeinception,
-              uint16_t keyid, const Name& signer,
+              uint16_t tag, const Name& signer,
               const vector<uint8_t>& signature) :
         covered_(covered), algorithm_(algorithm), labels_(labels),
         originalttl_(originalttl), timeexpire_(timeexpire),
-        timeinception_(timeinception), keyid_(keyid), signer_(signer),
+        timeinception_(timeinception), tag_(tag), signer_(signer),
         signature_(signature)
     {}
 
@@ -57,7 +57,7 @@ struct RRSIGImpl {
     uint32_t originalttl_;
     uint32_t timeexpire_;
     uint32_t timeinception_;
-    uint16_t keyid_;
+    uint16_t tag_;
     const Name signer_;
     const vector<uint8_t> signature_;
 };
@@ -69,11 +69,11 @@ RRSIG::RRSIG(const string& rrsig_str) :
     string covered_txt, signer_txt, expire_txt, inception_txt;
     unsigned int algorithm, labels;
     uint32_t originalttl;
-    uint16_t keyid;
+    uint16_t tag;
     stringbuf signaturebuf;
 
     iss >> covered_txt >> algorithm >> labels >> originalttl
-        >> expire_txt >> inception_txt >> keyid >> signer_txt
+        >> expire_txt >> inception_txt >> tag >> signer_txt
         >> &signaturebuf;
     if (iss.bad() || iss.fail() || !iss.eof()) {
         dns_throw(InvalidRdataText, "Invalid RRSIG text");
@@ -92,12 +92,41 @@ RRSIG::RRSIG(const string& rrsig_str) :
     decodeBase64(signaturebuf.str(), signature);
 
     impl_ = new RRSIGImpl(RRType(covered_txt), algorithm, labels,
-                          originalttl, timeexpire, timeinception, keyid,
+                          originalttl, timeexpire, timeinception, tag,
                           Name(signer_txt), signature);
 }
 
 RRSIG::RRSIG(InputBuffer& buffer, size_t rdata_len)
 {
+    size_t pos = buffer.getPosition();
+
+    if (rdata_len < 18) {
+        dns_throw(InvalidRdataLength, "DS too short");
+    }
+
+    uint16_t typecode = buffer.readUint16();
+    RRType covered(typecode);
+    uint8_t algorithm = buffer.readUint8();
+    uint8_t labels = buffer.readUint8();
+    uint32_t originalttl = buffer.readUint32();
+    uint32_t timeexpire = buffer.readUint32();
+    uint32_t timeinception = buffer.readUint32();
+    uint16_t tag = buffer.readUint16();
+    Name signer(buffer);
+
+    rdata_len -= (buffer.getPosition() - pos);
+    if (rdata_len == 0) {
+        dns_throw(InvalidRdataLength, "DS too short");
+    }
+
+    vector<uint8_t> signature;
+    for (int i = 0; i < rdata_len; i++) {
+        signature.push_back(buffer.readUint8());
+    }
+
+    impl_ = new RRSIGImpl(covered, algorithm, labels,
+                          originalttl, timeexpire, timeinception, tag,
+                          signer, signature);
 }
 
 RRSIG::RRSIG(const RRSIG& source) :
@@ -136,7 +165,7 @@ RRSIG::toText() const
             + " " + boost::lexical_cast<string>(impl_->originalttl_)
             + " " + expire
             + " " + inception
-            + " " + boost::lexical_cast<string>(impl_->keyid_)
+            + " " + boost::lexical_cast<string>(impl_->tag_)
             + " " + impl_->signer_.toText()
             + " " + encodeBase64(impl_->signature_));
 }
@@ -150,7 +179,7 @@ RRSIG::toWire(OutputBuffer& buffer) const
     buffer.writeUint32(impl_->originalttl_);
     buffer.writeUint32(impl_->timeexpire_);
     buffer.writeUint32(impl_->timeinception_);
-    buffer.writeUint16(impl_->keyid_);
+    buffer.writeUint16(impl_->tag_);
     impl_->signer_.toWire(buffer);
     buffer.writeData(&impl_->signature_[0], impl_->signature_.size());
 }
@@ -164,7 +193,7 @@ RRSIG::toWire(MessageRenderer& renderer) const
     renderer.writeUint32(impl_->originalttl_);
     renderer.writeUint32(impl_->timeexpire_);
     renderer.writeUint32(impl_->timeinception_);
-    renderer.writeUint16(impl_->keyid_);
+    renderer.writeUint16(impl_->tag_);
     renderer.writeName(impl_->signer_, false);
     renderer.writeData(&impl_->signature_[0], impl_->signature_.size());
 }
@@ -196,8 +225,8 @@ RRSIG::compare(const Rdata& other) const
         return (impl_->timeinception_ < other_rrsig.impl_->timeinception_ ?
                 -1 : 1);
     }
-    if (impl_->keyid_ != other_rrsig.impl_->keyid_) {
-        return (impl_->keyid_ < other_rrsig.impl_->keyid_ ? -1 : 1);
+    if (impl_->tag_ != other_rrsig.impl_->tag_) {
+        return (impl_->tag_ < other_rrsig.impl_->tag_ ? -1 : 1);
     }
 
     int cmp = compareNames(impl_->signer_, other_rrsig.impl_->signer_);

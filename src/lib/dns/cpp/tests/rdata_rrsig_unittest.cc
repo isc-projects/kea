@@ -59,4 +59,15 @@ TEST_F(Rdata_RRSIG_Test, toWireRenderer_RRSIG)
     rdata_rrsig.toWire(renderer);
 }
 
+TEST_F(Rdata_RRSIG_Test, createFromWire_RRSIG)
+{
+    string rrsig_txt("A 5 2 43200 20100327070149 20100225070149 2658 isc.org. "
+                "HkJk/xZTvzePU8NENl/ley8bbUumhk1hXciyqhLnz1VQFzkDooej6neX"
+                "ZgWZzQKeTKPOYWrnYtdZW4PnPQFeUl3orgLev7F8J6FZlDn0y/J/ThR5"
+                "m36Mo2/Gdxjj8lJ/IjPVkdpKyBpcnYND8KEIma5MyNCNeyO1UkfPQZGHNSQ=");
+    EXPECT_EQ(rrsig_txt, rdataFactoryFromFile(RRType("RRSIG"), RRClass("IN"),
+                             "testdata/rdata_rrsig_fromWire")->toText());
+}
+
+
 }

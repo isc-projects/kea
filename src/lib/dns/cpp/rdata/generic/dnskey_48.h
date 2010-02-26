@@ -46,7 +46,7 @@ public:
     ///
     uint16_t getTag() const;
     uint16_t getFlags() const;
-    uint8_t getAlg() const;
+    uint8_t getAlgorithm() const;
 
 private:
     DNSKEYImpl* impl_;

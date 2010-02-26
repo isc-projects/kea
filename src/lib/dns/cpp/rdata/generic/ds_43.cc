@@ -78,6 +78,10 @@ DS::DS(const string& ds_str) :
 
 DS::DS(InputBuffer& buffer, size_t rdata_len)
 {
+    if (rdata_len < 4) {
+        dns_throw(InvalidRdataLength, "DS too short");
+    }
+
     uint16_t tag = buffer.readUint16();
     uint16_t algorithm = buffer.readUint8();
     uint16_t digest_type = buffer.readUint8();

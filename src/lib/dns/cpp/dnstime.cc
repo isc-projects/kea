@@ -47,9 +47,13 @@ DNSSECTimeToText(const time_t timeval, string& s)
 
     s.reserve(14);              // YYYYMMDDHHmmSS
     ostringstream oss(s);
-    oss << setfill('0') << setw(4) << t->tm_year + 1900
-        << setw(2) << t->tm_mon + 1 << t->tm_mday 
-        << t->tm_hour << t->tm_min << t->tm_sec;
+    oss << setfill('0')
+        << setw(4) << t->tm_year + 1900
+        << setw(2) << t->tm_mon + 1
+        << setw(2) << t->tm_mday 
+        << setw(2) << t->tm_hour
+        << setw(2) << t->tm_min
+        << setw(2) << t->tm_sec;
     s = oss.str();
 }
 
