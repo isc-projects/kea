@@ -26,8 +26,9 @@
 namespace isc {
 namespace auth {
 
-// Destructor defined here to avoid confusing the linker
+// Destructors defined here to avoid confusing the linker
 QueryTask::~QueryTask() {}
+Query::~Query() {}
 
 }
 }

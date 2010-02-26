@@ -30,23 +30,24 @@ getAdditional(Query& q, RRsetPtr rrset) {
     RdataIteratorPtr it = rrset->getRdataIterator();
     for (it->first(); !it->isLast(); it->next()) {
         const Rdata& rd(it->getCurrent());
-        QueryTask* t = NULL;
+        QueryTaskPtr newtask = QueryTaskPtr();
+
         if (rrset->getType() == RRType::NS()) {
             const generic::NS& ns = dynamic_cast<const generic::NS&>(rd);
 
-            t = new QueryTask(ns.getNSName(), q.qclass(),
-                              Section::ADDITIONAL(),
-                              QueryTask::GLUE_QUERY,
-                              QueryTask::GETADDITIONAL); 
+            newtask = QueryTaskPtr(new QueryTask(ns.getNSName(), q.qclass(),
+                                                 Section::ADDITIONAL(),
+                                                 QueryTask::GLUE_QUERY,
+                                                 QueryTask::GETADDITIONAL)); 
         } else if (rrset->getType() == RRType::MX()) {
             const generic::MX& mx = dynamic_cast<const generic::MX&>(rd);
-            t = new QueryTask(mx.getMXName(), q.qclass(),
-                              Section::ADDITIONAL(),
-                              QueryTask::NOGLUE_QUERY,
-                              QueryTask::GETADDITIONAL); 
+            newtask = QueryTaskPtr(new QueryTask(mx.getMXName(), q.qclass(),
+                                                 Section::ADDITIONAL(),
+                                                 QueryTask::NOGLUE_QUERY,
+                                                 QueryTask::GETADDITIONAL)); 
         }
-        if (t != NULL) {
-            q.tasks().push(*t);
+        if (newtask) {
+            q.tasks().push(newtask);
         }
     }
 }
@@ -54,7 +55,7 @@ getAdditional(Query& q, RRsetPtr rrset) {
 // Synthesize a CNAME answer, for the benefit of clients that don't
 // understand DNAME
 static void
-synthesizeCname(Query& q, QueryTask& task, RRsetPtr rrset, RRsetList& target) {
+synthesizeCname(Query& q, QueryTaskPtr task, RRsetPtr rrset, RRsetList& target) {
     RdataIteratorPtr it;
     it = rrset->getRdataIterator();
 
@@ -70,11 +71,11 @@ synthesizeCname(Query& q, QueryTask& task, RRsetPtr rrset, RRsetList& target) {
     const Name& dname_target(dname.getDname());
 
     try {
-        int qnlen = task.qname.getLabelCount();
+        int qnlen = task->qname.getLabelCount();
         int dnlen = rrset->getName().getLabelCount();
-        const Name& prefix(task.qname.split(0, qnlen - dnlen));
+        const Name& prefix(task->qname.split(0, qnlen - dnlen));
         const Name& newname(prefix.concatenate(dname_target));
-        RRsetPtr cname(new RRset(task.qname, task.qclass, RRType::CNAME(),
+        RRsetPtr cname(new RRset(task->qname, task->qclass, RRType::CNAME(),
                                  rrset->getTTL()));
         cname->addRdata(generic::CNAME(newname));
         cname->setTTL(rrset->getTTL());
@@ -85,7 +86,7 @@ synthesizeCname(Query& q, QueryTask& task, RRsetPtr rrset, RRsetList& target) {
 // Add a task to the query task queue to look up the data pointed
 // to by a CNAME record
 static void
-chaseCname(Query& q, QueryTask& task, RRsetPtr rrset) {
+chaseCname(Query& q, QueryTaskPtr task, RRsetPtr rrset) {
     RdataIteratorPtr it;
     it = rrset->getRdataIterator();
 
@@ -100,9 +101,11 @@ chaseCname(Query& q, QueryTask& task, RRsetPtr rrset) {
     const generic::CNAME& cname = dynamic_cast<const generic::CNAME&>(rd);
     const Name& target(cname.getCname());
 
-    QueryTask* t = new QueryTask(target, task.qclass, task.qtype,
-                                 Section::ANSWER(), QueryTask::FOLLOWCNAME);
-    q.tasks().push(*t);
+    QueryTaskPtr newtask = QueryTaskPtr(new QueryTask(target, task->qclass,
+                                                      task->qtype,
+                                                      Section::ANSWER(),
+                                                      QueryTask::FOLLOWCNAME)); 
+    q.tasks().push(newtask);
 }
 
 // Perform the query specified in a QueryTask object
@@ -146,12 +149,12 @@ copyAuth(Query& q, const RRsetList& auth) {
 
 // Query for referrals (i.e., NS/DS or DNAME) at a given name
 static inline bool
-refQuery(const Name& name, Query& q, QueryTask& task,
+refQuery(const Name& name, Query& q, QueryTaskPtr task,
          const DataSrc* ds, RRsetList& target) {
-    QueryTask t(name, q.qclass(), QueryTask::REF_QUERY);
-    t.zone = task.zone;
+    QueryTask newtask(name, q.qclass(), QueryTask::REF_QUERY);
+    newtask.zone = task->zone;
 
-    DataSrc::Result result = doQueryTask(ds, q, t, target);
+    DataSrc::Result result = doQueryTask(ds, q, newtask, target);
 
     // Lookup failed
     if (result != DataSrc::SUCCESS) {
@@ -159,7 +162,7 @@ refQuery(const Name& name, Query& q, QueryTask& task,
     }
     
     // Referral bit is expected, so clear it when checking flags
-    if ((t.flags & ~DataSrc::REFERRAL) != 0) {
+    if ((newtask.flags & ~DataSrc::REFERRAL) != 0) {
         return (false);
     }
 
@@ -169,15 +172,15 @@ refQuery(const Name& name, Query& q, QueryTask& task,
 // Match downward, from the zone apex to the query name, looking for
 // referrals.
 static inline bool
-hasDelegation(const DataSrc* ds, Query& q, QueryTask& task) {
+hasDelegation(const DataSrc* ds, Query& q, QueryTaskPtr task) {
     Message& m = q.message();
-    int nlen = task.qname.getLabelCount();
-    int diff = nlen - task.zone->getLabelCount();
+    int nlen = task->qname.getLabelCount();
+    int diff = nlen - task->zone->getLabelCount();
     if (diff > 1) {
         bool found = false;
         RRsetList ref;
         for(int i = diff; i > 1; i--) {
-            Name sub(task.qname.split(i - 1, nlen - i));
+            Name sub(task->qname.split(i - 1, nlen - i));
             if (refQuery(sub, q, task, ds, ref)) {
                 found = true;
                 break;
@@ -186,7 +189,7 @@ hasDelegation(const DataSrc* ds, Query& q, QueryTask& task) {
 
         // Found a referral while getting additional data
         // for something other than NS; we skip it.
-        if (found && task.op == QueryTask::NOGLUE_QUERY) {
+        if (found && task->op == QueryTask::NOGLUE_QUERY) {
             return (true);
         }
 
@@ -215,8 +218,8 @@ hasDelegation(const DataSrc* ds, Query& q, QueryTask& task) {
     // We appear to have authoritative data; set the header
     // flag.  (We may clear it later if we find a referral
     // at the actual qname node.)
-    if (task.op == QueryTask::AUTH_QUERY &&
-        task.state == QueryTask::GETANSWER) {
+    if (task->op == QueryTask::AUTH_QUERY &&
+        task->state == QueryTask::GETANSWER) {
         m.setHeaderFlag(MessageFlag::AA());
     }
 
@@ -225,19 +228,19 @@ hasDelegation(const DataSrc* ds, Query& q, QueryTask& task) {
 
 // Attempt a wildcard lookup
 static inline DataSrc::Result
-tryWildcard(Query& q, QueryTask& task, const DataSrc* ds, bool& found) {
+tryWildcard(Query& q, QueryTaskPtr task, const DataSrc* ds, bool& found) {
     Message& m = q.message();
     DataSrc::Result result;
     found = false;
 
-    if ((task.flags & DataSrc::NAME_NOT_FOUND) == 0 || 
-        (task.state != QueryTask::GETANSWER &&
-         task.state != QueryTask::FOLLOWCNAME)) {
+    if ((task->flags & DataSrc::NAME_NOT_FOUND) == 0 || 
+        (task->state != QueryTask::GETANSWER &&
+         task->state != QueryTask::FOLLOWCNAME)) {
         return (DataSrc::SUCCESS);
     }
 
-    int nlen = task.qname.getLabelCount();
-    int diff = nlen - task.zone->getLabelCount();
+    int nlen = task->qname.getLabelCount();
+    int diff = nlen - task->zone->getLabelCount();
     if (diff < 1) {
         return (DataSrc::SUCCESS);
     }
@@ -247,14 +250,14 @@ tryWildcard(Query& q, QueryTask& task, const DataSrc* ds, bool& found) {
     uint32_t rflags = 0;
 
     for(int i = 1; i <= diff; i++) {
-        const Name& wname(star.concatenate(task.qname.split(i, nlen - i)));
-        QueryTask t(wname, task.qclass, task.qtype,
-                    QueryTask::SIMPLE_QUERY); 
-        t.zone = task.zone;
-        result = doQueryTask(ds, q, t, wild);
+        const Name& wname(star.concatenate(task->qname.split(i, nlen - i)));
+        QueryTask newtask(wname, task->qclass, task->qtype,
+                          QueryTask::SIMPLE_QUERY); 
+        newtask.zone = task->zone;
+        result = doQueryTask(ds, q, newtask, wild);
         if (result == DataSrc::SUCCESS &&
-            (t.flags == 0 || (t.flags & DataSrc::CNAME_FOUND))) {
-            rflags = t.flags;
+            (newtask.flags == 0 || (newtask.flags & DataSrc::CNAME_FOUND))) {
+            rflags = newtask.flags;
             found = true;
             break;
         }
@@ -268,18 +271,18 @@ tryWildcard(Query& q, QueryTask& task, const DataSrc* ds, bool& found) {
     if (found) {
         if (rflags & DataSrc::CNAME_FOUND) {
             if (RRsetPtr rrset = wild[RRType::CNAME()]) {
-                rrset->setName(task.qname);
+                rrset->setName(task->qname);
                 m.addRRset(Section::ANSWER(), rrset, q.wantDnssec());
                 chaseCname(q, task, rrset);
             }
         } else {
             BOOST_FOREACH (RRsetPtr rrset, wild) {
-                rrset->setName(task.qname);
+                rrset->setName(task->qname);
                 m.addRRset(Section::ANSWER(), rrset, q.wantDnssec());
             }
 
             RRsetList auth;
-            if (! refQuery(Name(*task.zone), q, task, ds, auth)) {
+            if (! refQuery(Name(*task->zone), q, task, ds, auth)) {
                 return (DataSrc::ERROR);
             }
 
@@ -288,15 +291,15 @@ tryWildcard(Query& q, QueryTask& task, const DataSrc* ds, bool& found) {
     } else if (q.wantDnssec()) {
         // No wildcard found; add an NSEC to prove it
         RRsetList nsec;
-        QueryTask t = QueryTask(*task.zone, task.qclass, RRType::NSEC(),
+        QueryTask newtask = QueryTask(*task->zone, task->qclass, RRType::NSEC(),
                                 QueryTask::SIMPLE_QUERY); 
-        t.zone = task.zone;
-        result = doQueryTask(ds, q, t, nsec);
+        newtask.zone = task->zone;
+        result = doQueryTask(ds, q, newtask, nsec);
         if (result != DataSrc::SUCCESS) {
             return (DataSrc::ERROR);
         }
 
-        if (t.flags == 0) {
+        if (newtask.flags == 0) {
             m.addRRset(Section::AUTHORITY(), nsec[RRType::NSEC()], true);
         }
     }
@@ -321,12 +324,12 @@ DataSrc::doQuery(Query q) {
     while (!q.tasks().empty()) {
         RRsetList data;
 
-        QueryTask task = q.tasks().front();
+        QueryTaskPtr task = q.tasks().front();
         q.tasks().pop();
 
         // These task types should never be on the task queue.
-        if (task.op == QueryTask::SIMPLE_QUERY ||
-            task.op == QueryTask::REF_QUERY) {
+        if (task->op == QueryTask::SIMPLE_QUERY ||
+            task->op == QueryTask::REF_QUERY) {
             m.setRcode(Rcode::SERVFAIL());
             return;
         }
@@ -335,10 +338,10 @@ DataSrc::doQuery(Query q) {
         // and the concrete data source which is authoritative for it.
         // (Note that RRtype DS queries need to go to the parent.)
         Name search(".");
-        if (task.qtype == RRType::DS()) {
-            search = task.qname.split(1, task.qname.getLabelCount() - 1);
+        if (task->qtype == RRType::DS()) {
+            search = task->qname.split(1, task->qname.getLabelCount() - 1);
         } else {
-            search = task.qname;
+            search = task->qname;
         }
 
         NameMatch match(search);
@@ -347,18 +350,18 @@ DataSrc::doQuery(Query q) {
         const Name* zone = match.closestName();
 
         if (ds) {
-            task.zone = new Name(*zone);
+            task->zone = new Name(*zone);
 
             // For these query task types, if there is more than
             // one level between the zone name and qname, we need to
             // check the intermediate nodes for referrals.
-            if ((task.op == QueryTask::AUTH_QUERY ||
-                 task.op == QueryTask::NOGLUE_QUERY) &&
+            if ((task->op == QueryTask::AUTH_QUERY ||
+                 task->op == QueryTask::NOGLUE_QUERY) &&
                   hasDelegation(ds, q, task)) {
                 continue;
             }
 
-            result = doQueryTask(ds, q, task, data);
+            result = doQueryTask(ds, q, *task, data);
             if (result != SUCCESS) {
                 m.setRcode(Rcode::SERVFAIL());
                 return;
@@ -367,24 +370,24 @@ DataSrc::doQuery(Query q) {
             // Query found a referral; let's find out if that was expected--
             // i.e., if an NS was at the zone apex, or if we were querying
             // specifically for the NS, DS or DNAME record.
-            if ((task.flags & REFERRAL) &&
-                (zone->getLabelCount() == task.qname.getLabelCount() ||
-                 task.qtype == RRType::NS() ||
-                 task.qtype == RRType::DS() ||
-                 task.qtype == RRType::DNAME())) {
-                task.flags &= ~REFERRAL;
+            if ((task->flags & REFERRAL) &&
+                (zone->getLabelCount() == task->qname.getLabelCount() ||
+                 task->qtype == RRType::NS() ||
+                 task->qtype == RRType::DS() ||
+                 task->qtype == RRType::DNAME())) {
+                task->flags &= ~REFERRAL;
             }
         } else {
-            task.flags = NO_SUCH_ZONE;
+            task->flags = NO_SUCH_ZONE;
         }
 
-        if (result == SUCCESS && task.flags == 0) {
+        if (result == SUCCESS && task->flags == 0) {
             bool have_ns = false, need_auth = false;
-            switch (task.state) {
+            switch (task->state) {
             case QueryTask::GETANSWER:
             case QueryTask::FOLLOWCNAME:
                 BOOST_FOREACH(RRsetPtr rrset, data) {
-                    m.addRRset(task.section, rrset, q.wantDnssec());
+                    m.addRRset(task->section, rrset, q.wantDnssec());
                     if (q.tasks().empty()) {
                         need_auth = true;
                     }
@@ -428,20 +431,20 @@ DataSrc::doQuery(Query q) {
         } else if (result == ERROR || result == NOT_IMPLEMENTED) {
             m.setRcode(Rcode::SERVFAIL());
             return;
-        } else if (task.flags & CNAME_FOUND) {
+        } else if (task->flags & CNAME_FOUND) {
             // The qname node contains a CNAME.  Add a new task to the
             // queue to look up its target.
             if (RRsetPtr rrset = data[RRType::CNAME()]) {
-                m.addRRset(task.section, rrset, q.wantDnssec());
+                m.addRRset(task->section, rrset, q.wantDnssec());
                 chaseCname(q, task, rrset);
             }
             continue;
-        } else if (task.flags & REFERRAL) {
+        } else if (task->flags & REFERRAL) {
             // The qname node contains an out-of-zone referral.
-            if (task.state == QueryTask::GETANSWER) {
+            if (task->state == QueryTask::GETANSWER) {
                 RRsetList auth;
                 m.clearHeaderFlag(MessageFlag::AA());
-                if (! refQuery(task.qname, q, task, ds, auth)) {
+                if (! refQuery(task->qname, q, task, ds, auth)) {
                     m.setRcode(Rcode::SERVFAIL());
                     return;
                 }
@@ -450,7 +453,7 @@ DataSrc::doQuery(Query q) {
                         continue;
                     }
                     if (rrset->getType() == RRType::DS() &&
-                        task.qtype == RRType::DS()) {
+                        task->qtype == RRType::DS()) {
                         m.addRRset(Section::ANSWER(), rrset, q.wantDnssec());
                     } else {
                         m.addRRset(Section::AUTHORITY(), rrset, q.wantDnssec());
@@ -459,16 +462,16 @@ DataSrc::doQuery(Query q) {
                 }
             } 
             continue;
-        } else if (task.flags & NO_SUCH_ZONE) {
+        } else if (task->flags & NO_SUCH_ZONE) {
             // No such zone.  If we're chasing cnames or adding additional
             // data, that's okay, but if doing an original query, return
             // REFUSED.
-            if (task.state == QueryTask::GETANSWER) {
+            if (task->state == QueryTask::GETANSWER) {
                 m.setRcode(Rcode::REFUSED());
                 return;
             }
             continue;
-        } else if (task.flags & (NAME_NOT_FOUND|TYPE_NOT_FOUND)) {
+        } else if (task->flags & (NAME_NOT_FOUND|TYPE_NOT_FOUND)) {
             // No data found at this qname/qtype.
             // If we were looking for answer data, not additional,
             // and the name was not found, we need to find out whether
@@ -491,22 +494,22 @@ DataSrc::doQuery(Query q) {
             // NXDOMAIN, and also add the previous NSEC to the authority
             // section.  For TYPE_NOT_FOUND, do not set an error rcode,
             // and send the current NSEC in the authority section.
-            Name nsecname(task.qname);
-            if (task.flags & NAME_NOT_FOUND) {
-                ds->findPreviousName(q, task.qname, nsecname, task.zone);
+            Name nsecname(task->qname);
+            if (task->flags & NAME_NOT_FOUND) {
+                ds->findPreviousName(q, task->qname, nsecname, task->zone);
             }
 
-            if (task.state == QueryTask::GETANSWER) {
-                if (task.flags & NAME_NOT_FOUND) {
+            if (task->state == QueryTask::GETANSWER) {
+                if (task->flags & NAME_NOT_FOUND) {
                     m.setRcode(Rcode::NXDOMAIN());
                 }
 
                 RRsetList soa;
-                QueryTask t(Name(*zone), task.qclass, RRType::SOA(), 
-                            QueryTask::SIMPLE_QUERY); 
-                t.zone = task.zone;
-                result = doQueryTask(ds, q, t, soa);
-                if (result != SUCCESS || t.flags != 0) {
+                QueryTask newtask(Name(*zone), task->qclass, RRType::SOA(), 
+                                  QueryTask::SIMPLE_QUERY); 
+                newtask.zone = task->zone;
+                result = doQueryTask(ds, q, newtask, soa);
+                if (result != SUCCESS || newtask.flags != 0) {
                     m.setRcode(Rcode::SERVFAIL());
                     return;
                 }
@@ -517,16 +520,17 @@ DataSrc::doQuery(Query q) {
 
             if (q.wantDnssec()) {
                 RRsetList nsec;
-                QueryTask t = QueryTask(nsecname, task.qclass, RRType::NSEC(), 
-                                        QueryTask::SIMPLE_QUERY); 
-                t.zone = task.zone;
-                result = doQueryTask(ds, q, t, nsec);
+                QueryTask newtask = QueryTask(nsecname, task->qclass,
+                                              RRType::NSEC(), 
+                                              QueryTask::SIMPLE_QUERY); 
+                newtask.zone = task->zone;
+                result = doQueryTask(ds, q, newtask, nsec);
                 if (result != SUCCESS) {
                     m.setRcode(Rcode::SERVFAIL());
                     return;
                 }
 
-                if (t.flags == 0) {
+                if (newtask.flags == 0) {
                     m.addRRset(Section::AUTHORITY(), nsec[RRType::NSEC()],
                                true);
                 }
