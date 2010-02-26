@@ -14,6 +14,7 @@
 
 // $Id$
 
+#include <stdint.h>
 #include <cassert>
 #include <iterator>
 #include <string>
@@ -34,13 +35,12 @@ namespace dns {
 
 namespace {
 const char BASE64_PADDING_CHAR = '=';
-const char BINARY_ZERO_CODE = 0;
-
-typedef
-class BinaryNormalizer : public iterator<input_iterator_tag, char> {
+const uint8_t BINARY_ZERO_CODE = 0;
+  
+class BinaryNormalizer : public iterator<input_iterator_tag, uint8_t> {
 public:
-    BinaryNormalizer(const vector<char>::const_iterator& base,
-                     const vector<char>::const_iterator& base_end) :
+    BinaryNormalizer(const vector<uint8_t>::const_iterator& base,
+                     const vector<uint8_t>::const_iterator& base_end) :
         base_(base), base_end_(base_end), in_pad_(false)
     {}
     BinaryNormalizer& operator++()
@@ -53,7 +53,7 @@ public:
         }
         return (*this);
     }
-    const char& operator*() const {
+    const uint8_t& operator*() const {
         if (in_pad_) {
             return (BINARY_ZERO_CODE);
         } else {
@@ -65,17 +65,17 @@ public:
         return (base_ == other.base_);
     }
 private:
-    vector<char>::const_iterator base_;
-    const vector<char>::const_iterator base_end_;
+    vector<uint8_t>::const_iterator base_;
+    const vector<uint8_t>::const_iterator base_end_;
     bool in_pad_;
 };
 
-typedef 
+typedef
 base64_from_binary<transform_width<BinaryNormalizer, 6, 8> > base64_encoder;
 } // end of anonymous namespace
 
 string
-encodeBase64(const vector<char>& binary)
+encodeBase64(const vector<uint8_t>& binary)
 {
     // calculate the resulting length.  it's the smallest multiple of 4
     // equal to or larger than 4/3 * original data length.
@@ -138,7 +138,7 @@ base64_decoder;
 } // end of anonymous namespace
 
 void
-decodeBase64(const string& base64, vector<char>& result)
+decodeBase64(const string& base64, vector<uint8_t>& result)
 {
     // enumerate the number of trailing padding characters (=), ignoring
     // white spaces.  since base64_from_binary doesn't accept padding,
@@ -173,7 +173,7 @@ decodeBase64(const string& base64, vector<char>& result)
     // Confirm the original base64 text is the canonical encoding of the
     // data.
     assert(result.size() >= padlen);
-    vector<char>::const_reverse_iterator rit = result.rbegin();
+    vector<uint8_t>::const_reverse_iterator rit = result.rbegin();
     for (int i = 0; i < padlen; ++i, ++rit) {
         if (*rit != 0) {
             dns_throw(BadBase64String, "Non 0 bits included in padding");

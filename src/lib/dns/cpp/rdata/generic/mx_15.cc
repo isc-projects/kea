@@ -38,10 +38,21 @@ MX::MX(InputBuffer& buffer, size_t rdata_len) :
     // check consistency.
 }
 
-MX::MX(const std::string& mxstr) :
+MX::MX(const std::string& mx_str) :
     preference_(0), mxname_(".")
 {
-    dns_throw(InvalidRdataText, "Not implemented yet");
+    istringstream iss(mx_str);
+    uint16_t pref;
+    string mxname;
+
+    iss >> pref >> mxname;
+
+    if (iss.bad() || iss.fail() || !iss.eof()) {
+        dns_throw(InvalidRdataText, "Invalid MX text format");
+    }
+
+    preference_ = pref;
+    mxname_ = Name(mxname);
 }
 
 MX::MX(uint16_t preference, const Name& mxname) :
@@ -84,6 +95,18 @@ MX::compare(const Rdata& other) const
     }
 
     return (compareNames(mxname_, other_mx.mxname_));
+}
+
+const Name&
+MX::getMXName() const
+{
+    return (mxname_);
+}
+
+const uint16_t
+MX::getMXPref() const
+{
+    return (preference_);
 }
 
 // END_RDATA_NAMESPACE

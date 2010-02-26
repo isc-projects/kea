@@ -238,16 +238,16 @@ public:
     // BEGIN_WELL_KNOWN_CLASS_DECLARATIONS
     // END_WELL_KNOWN_CLASS_DECLARATIONS
     
+    static const RRClass& NONE();
+    static const RRClass& ANY();
+
+private:
     // \brief Meta-classes
     enum {
         RRCLASS_RESERVED0 = 0,
         RRCLASS_NONE = 254,
         RRCLASS_ANY = 255
     };
-    static const RRClass& NONE();
-    static const RRClass& ANY();
-
-private:
     uint16_t classcode_;
 };
 

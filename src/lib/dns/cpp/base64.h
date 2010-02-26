@@ -17,6 +17,7 @@
 #ifndef __BASE64_H
 #define __BASE64_H 1
 
+#include <stdint.h>
 #include <string>
 #include <vector>
 
@@ -41,8 +42,8 @@ public:
         isc::Exception(file, line, what) {}
 };
 
-std::string encodeBase64(const std::vector<char>& binary);
-void decodeBase64(const std::string& base64, std::vector<char>& result);
+std::string encodeBase64(const std::vector<uint8_t>& binary);
+void decodeBase64(const std::string& base64, std::vector<uint8_t>& result);
 }
 }
 

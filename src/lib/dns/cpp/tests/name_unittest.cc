@@ -468,6 +468,12 @@ TEST_F(NameTest, concatenate)
     EXPECT_THROW(n1.concatenate(n2), TooLongName);
 }
 
+TEST_F(NameTest, reverse)
+{
+    EXPECT_PRED_FORMAT2(UnitTestUtil::matchName, example_name.reverse(),
+                        Name("com.example.www."));
+}
+
 TEST_F(NameTest, split)
 {
     // normal cases with or without explicitly specifying the trailing dot.

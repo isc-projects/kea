@@ -478,6 +478,7 @@ private:
 public:
     bool getHeaderFlag(const MessageFlag& flag) const;
     void setHeaderFlag(const MessageFlag& flag);
+    void clearHeaderFlag(const MessageFlag& flag);
     qid_t getQid() const;
     void setQid(qid_t qid);
     const Rcode& getRcode() const;
@@ -502,7 +503,7 @@ public:
     void addQuestion(QuestionPtr question);
     void addQuestion(const Question& question);
     void removeQuestion(QuestionPtr question);
-    void addRRset(const Section& section, RRsetPtr rrset);
+    void addRRset(const Section& section, RRsetPtr rrset, bool sign = false);
     void removeRRset(const Section& section, RRsetPtr rrset);
     // notyet:
     //void addRR(const Section& section, const RR& rr);
@@ -528,6 +529,11 @@ public:
     static const rcode_t RCODE_NXDOMAIN = 3;
     static const rcode_t RCODE_NOTIMP = 4;
     static const rcode_t RCODE_REFUSED = 5;
+    static const rcode_t RCODE_YXDOMAIN = 6;
+    static const rcode_t RCODE_YXRRSET = 7;
+    static const rcode_t RCODE_NXRRSET = 8;
+    static const rcode_t RCODE_NOTAUTH = 9;
+    static const rcode_t RCODE_NOTZONE = 10;
     // ...more to follow
 
     static const opcode_t OPCODE_QUERY = 0;

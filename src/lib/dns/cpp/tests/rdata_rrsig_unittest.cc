@@ -36,20 +36,21 @@ class Rdata_RRSIG_Test : public RdataTest {
     // there's nothing to specialize
 };
 
-TEST_F(Rdata_RRSIG_Test, fromText)
+TEST_F(Rdata_RRSIG_Test, fromText_RRSIG)
 {
-    string rrsig_txt("A 5 4 43200 1264801134 191145710 8496 isc.org. "
+    string rrsig_txt("A 5 4 43200 20100223214617 20100222214617 8496 isc.org. "
                      "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
                      "f49t+sXKPzbipN9g+s1ZPiIyofc=");
     generic::RRSIG rdata_rrsig(rrsig_txt);
     EXPECT_EQ(rrsig_txt, rdata_rrsig.toText());
+
 }
 
-TEST_F(Rdata_RRSIG_Test, toWireRenderer)
+TEST_F(Rdata_RRSIG_Test, toWireRenderer_RRSIG)
 {
-    string rrsig_txt("A 5 4 43200 1264801134 191145710 8496 isc.org. "
+    string rrsig_txt("A 5 4 43200 20100223214617 20100222214617 8496 isc.org. "
                      "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
@@ -57,4 +58,5 @@ TEST_F(Rdata_RRSIG_Test, toWireRenderer)
     generic::RRSIG rdata_rrsig(rrsig_txt);
     rdata_rrsig.toWire(renderer);
 }
+
 }

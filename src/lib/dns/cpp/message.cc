@@ -216,6 +216,12 @@ Message::setHeaderFlag(const MessageFlag& flag)
     impl_->flags_ |= flag.getBit();
 }
 
+void
+Message::clearHeaderFlag(const MessageFlag& flag)
+{
+    impl_->flags_ &= ~flag.getBit();
+}
+
 qid_t
 Message::getQid() const
 {
@@ -259,11 +265,17 @@ Message::getRRCount(const Section& section) const
 }
 
 void
-Message::addRRset(const Section& section, RRsetPtr rrset)
+Message::addRRset(const Section& section, RRsetPtr rrset, bool sign)
 {
     // Note: should check duplicate (TBD)
     impl_->rrsets_[sectionCodeToId(section)].push_back(rrset);
     impl_->counts_[section.getCode()] += rrset->getRdataCount();
+
+    RRsetPtr sp = rrset->getRRsig();
+    if (sign && sp) {
+        impl_->rrsets_[sectionCodeToId(section)].push_back(sp);
+        impl_->counts_[section.getCode()] += sp->getRdataCount();
+    }
 }
 
 void

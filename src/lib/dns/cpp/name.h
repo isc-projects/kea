@@ -513,6 +513,14 @@ public:
     /// labels including and following the <code>first</code> label.  
     Name split(unsigned int first, unsigned int n) const;
 
+    /// \brief Reverse the labels of a name
+    ///
+    /// This method reverses the labels of a name.  For example, if
+    /// \c this is "www.example.com.", this method will return 
+    /// "com.example.www."  (This is useful because DNSSEC sort order
+    /// is equivalent to a lexical sort of label-reversed names.)
+    Name reverse() const;
+
     /// \brief Concatenate two names.
     ///
     /// This method appends \c suffix to \c this Name.  The trailing dot of

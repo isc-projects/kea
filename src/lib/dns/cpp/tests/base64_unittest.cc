@@ -43,11 +43,11 @@ protected:
         test_sequence.push_back(StringPair("foobar", "Zm9vYmFy"));
     }
     vector<StringPair> test_sequence;
-    vector<char> decoded_data;
+    vector<uint8_t> decoded_data;
 };
 
 void
-decodeCheck(const string& input_string, vector<char>& output,
+decodeCheck(const string& input_string, vector<uint8_t>& output,
             const string& expected)
 {
     decodeBase64(input_string, output);

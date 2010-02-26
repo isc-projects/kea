@@ -1,0 +1,4 @@
+# www.sql1.example.com/A (delegation to local authoritative zone)
+  75 b3 01 00 00 01 00 00 00 00 00 00 03 77 77 77
+  04 73 71 6c 31 07 65 78 61 6d 70 6c 65 03 63 6f
+  6d 00 00 01 00 01

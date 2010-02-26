@@ -27,30 +27,46 @@
 
 #include "data_source.h"
 
+using namespace isc::dns;
+
 namespace isc {
-namespace dns {
+namespace auth {
 
 class StaticDataSrc : public DataSrc {
 public:
     StaticDataSrc();
-    ~StaticDataSrc() {};
+    ~StaticDataSrc() {}
 
-    const DataSrc* findClosestEnclosure(const Name& qname,
-                                        Name& container,
-                                        bool& found) const;
+    void findClosestEnclosure(NameMatch& match) const;
 
-    DSResult findRRset(const Name& qname,
-                       const RRClass& qclass,
-                       const RRType& qtype,
-                       RRsetList& target, RRsetList& sigs) const;
+    Result findRRset(const Query& q,
+                     const Name& qname,
+                     const RRClass& qclass,
+                     const RRType& qtype,
+                     RRsetList& target,
+                     uint32_t& flags,
+                     Name* zone = NULL) const;
 
-    DSResult findRRset(const Name& qname,
-                       const RRClass& qclass,
-                       const RRType& qtype,
-                       RRsetList& target) const;
+    Result findExactRRset(const Query& q,
+                         const Name& qname,
+                         const RRClass& qclass,
+                         const RRType& qtype,
+                         RRsetList& target,
+                         uint32_t& flags,
+                         Name* zone = NULL) const
+    {
+        return (findRRset(q, qname, qclass, qtype, target, flags, zone));
+    }
 
-    DSResult init() { return SUCCESS; };
-    DSResult close() { return SUCCESS; } ;
+    Result findPreviousName(const Query& q,
+                            const Name& qname,
+                            Name& target,
+                            Name* zone) const {
+        return (NOT_IMPLEMENTED);
+    }
+
+    Result init() { return (SUCCESS); }
+    Result close() { return (SUCCESS); }
 
 private:
     const Name authors_name;

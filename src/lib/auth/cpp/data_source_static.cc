@@ -1,4 +1,18 @@
+// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
 
+// $Id$
 
 #include "data_source_static.h"
 
@@ -12,14 +26,18 @@
 
 #include <iostream>
 
-namespace isc {
-namespace dns {
-
+using namespace std;
+using namespace isc::dns;
 using namespace isc::dns::rdata;
+
+namespace isc {
+namespace auth {
 
 StaticDataSrc::StaticDataSrc() : authors_name("authors.bind"),
                                  version_name("version.bind")
 {
+    setClass(RRClass::CH());
+
     authors = RRsetPtr(new RRset(authors_name, RRClass::CH(),
                                           RRType::TXT(), RRTTL(0)));
     authors->addRdata(generic::TXT("Evan Hunt"));
@@ -47,88 +65,65 @@ StaticDataSrc::StaticDataSrc() : authors_name("authors.bind"),
     version_ns->addRdata(generic::NS(version_name));
 }
 
-const DataSrc*
-StaticDataSrc::findClosestEnclosure(const Name& qname, Name& container, bool& found) const {
-    NameComparisonResult::NameRelation version_cmp = 
-        qname.compare(version_name).getRelation();
+void
+StaticDataSrc::findClosestEnclosure(NameMatch& match) const {
+    const Name& qname = match.qname();
+    NameComparisonResult::NameRelation cmp;
 
-    if (version_cmp == NameComparisonResult::EQUAL ||
-        version_cmp == NameComparisonResult::SUBDOMAIN) {
-        NameComparisonResult::NameRelation sub_cmp = 
-           version_name.compare(container).getRelation();
-
-        if (sub_cmp == NameComparisonResult::SUBDOMAIN) {
-            container = authors_name;
-            found = true;
-            return this;
-        } else if (!found && sub_cmp == NameComparisonResult::EQUAL) {
-            found = true;
-            return this;
-        } else {
-            return NULL;
-        }
+    cmp = qname.compare(version_name).getRelation();
+    if (cmp == NameComparisonResult::EQUAL ||
+        cmp == NameComparisonResult::SUBDOMAIN) {
+        match.update(*this, version_name);
+        return;
     }
 
-    NameComparisonResult::NameRelation authors_cmp = 
-        qname.compare(authors_name).getRelation();
-
-    if (authors_cmp == NameComparisonResult::EQUAL ||
-        authors_cmp == NameComparisonResult::SUBDOMAIN) {
-        NameComparisonResult::NameRelation sub_cmp = 
-            authors_name.compare(container).getRelation();
-
-        if (sub_cmp == NameComparisonResult::SUBDOMAIN) {
-            container = authors_name;
-            found = true;
-            return this;
-        } else if (!found && sub_cmp == NameComparisonResult::EQUAL) {
-            found = true;
-            return this;
-        } else {
-            return NULL;
-        }
+    cmp = qname.compare(authors_name).getRelation();
+    if (cmp == NameComparisonResult::EQUAL ||
+        cmp == NameComparisonResult::SUBDOMAIN) {
+        match.update(*this, authors_name);
+        return;
     }
-
-    return NULL;
 }
 
-DSResult
-StaticDataSrc::findRRset(const Name& qname,
+DataSrc::Result
+StaticDataSrc::findRRset(const Query& q,
+                         const Name& qname,
                          const RRClass& qclass,
                          const RRType& qtype,
-                         RRsetList& target) const
+                         RRsetList& target,
+                         uint32_t& flags,
+                         Name* zone) const
 {
-    if (qname == version_name &&
-        qclass == version->getClass() && qtype == version->getType()) {
-        target.push_back(version);
-        return SUCCESS;
-    } else if (qname == version_name &&
-               qclass == version_ns->getClass() &&
-               qtype == version_ns->getType()) {
-        target.push_back(version_ns);
-        return SUCCESS;
-    } else if (qname == authors_name &&
-               qclass == authors->getClass() && qtype == authors->getType()) {
-        target.push_back(authors);
-        return SUCCESS;
-    } else if (qname == authors_name &&
-               qclass == authors_ns->getClass() &&
-               qtype == authors_ns->getType()) {
-        target.push_back(authors_ns);
-        return SUCCESS;
+    flags = 0;
+    if (qclass != getClass()) {
+        return (ERROR);
     }
-    // XXX: this is not 100% correct.
-    // We should also support the nodata/noerror case.
-    return NAME_NOT_FOUND;
-}
 
-DSResult
-StaticDataSrc::findRRset(const Name& qname,
-                         const RRClass& qclass,
-                         const RRType& qtype,
-                         RRsetList& target, RRsetList& sigs) const
-{
-    return findRRset(qname, qclass, qtype, target);
+    bool any = (qtype == RRType::ANY());
+
+    if (qname == version_name) {
+        if (qtype == RRType::TXT() || any) {
+            target.addRRset(version);
+        } else if (qtype == RRType::NS()) {
+            target.addRRset(version_ns);
+        } else {
+            flags = TYPE_NOT_FOUND;
+        }
+    } else if (qname == authors_name) {
+        if (qtype == RRType::TXT() || any) {
+            target.addRRset(authors);
+            return (SUCCESS);
+        } else if (qtype == RRType::NS()) {
+            target.addRRset(authors_ns);
+            return (SUCCESS);
+        } else {
+            flags = TYPE_NOT_FOUND;
+        }
+    } else {
+        flags = NAME_NOT_FOUND;
+    }
+
+    return (SUCCESS);
 }
 
 }

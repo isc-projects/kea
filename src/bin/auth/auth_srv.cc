@@ -44,6 +44,7 @@
 
 using namespace std;
 
+using namespace isc::auth;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::data;
@@ -68,6 +69,14 @@ AuthSrv::AuthSrv(int port) {
         throw FatalError("could not bind socket");
 
     sock = s;
+
+    // add static data source
+    data_src.addDataSrc(new StaticDataSrc);
+
+    // add SQL data source
+    Sqlite3DataSrc* sd = new Sqlite3DataSrc;
+    sd->init();
+    data_src.addDataSrc(sd);
 }
 
 void
@@ -104,7 +113,7 @@ AuthSrv::processMessage() {
 
         // do the DataSource call here
         Query q = Query(msg, false);
-        data_src.runQuery(q);
+        data_src.doQuery(q);
 
         OutputBuffer obuffer(4096);
         MessageRenderer renderer(obuffer);

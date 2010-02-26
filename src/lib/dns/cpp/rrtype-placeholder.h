@@ -251,12 +251,45 @@ public:
     // BEGIN_WELL_KNOWN_TYPE_DECLARATIONS
     // END_WELL_KNOWN_TYPE_DECLARATIONS
 
+    static const RRType& IXFR();
+    static const RRType& AXFR();
+    static const RRType& ANY();
+
 private:
+    // \brief Meta-classes
+    // XXX: these should be implemented using rrparamregistry
+    enum {
+        RRTYPE_IXFR = 251,
+        RRTYPE_AXFR = 252,
+        RRTYPE_ANY = 255
+    };
+
     uint16_t typecode_;
 };
 
 // BEGIN_WELL_KNOWN_TYPE_DEFINITIONS
 // END_WELL_KNOWN_TYPE_DEFINITIONS
+
+inline const RRType&
+RRType::IXFR()
+{
+    static RRType rrtype(RRTYPE_IXFR);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::AXFR()
+{
+    static RRType rrtype(RRTYPE_AXFR);
+    return (rrtype);
+}
+
+inline const RRType&
+RRType::ANY()
+{
+    static RRType rrtype(RRTYPE_ANY);
+    return (rrtype);
+}
 
 ///
 /// \brief Insert the \c RRType as a string into stream.

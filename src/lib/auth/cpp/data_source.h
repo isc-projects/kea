@@ -20,57 +20,101 @@
 #include <boost/foreach.hpp>
 #include <dns/name.h>
 #include <dns/rrset.h>
+#include <dns/rrsetlist.h>
 #include <auth/query.h>
+#include <iostream>
+
+using namespace isc::dns;
 
 namespace isc {
-namespace dns {
-
-enum DSResult {
-    SUCCESS,
-    NOT_IMPLEMENTED,
-    ERROR,
-    CNAME,
-    ZONE_NOT_FOUND,
-    NAME_NOT_FOUND,
-    TYPE_NOT_FOUND
-};
+namespace auth {
 
 class DataSrc;
-
-typedef std::vector<RRsetPtr> RRsetList;
+class NameMatch;
 
 class AbstractDataSrc {
 public:
+    enum Result {
+        SUCCESS,
+        ERROR,
+        NOT_IMPLEMENTED
+    };
+
+    // These flags indicate conditions encountered while processing a query.
+    //
+    // REFERRAL:       The node contains an NS record
+    // CNAME_FOUND:    The node contains a CNAME record
+    // NAME_NOT_FOUND: The node does not exist in the data source.
+    // TYPE_NOT_FOUND: The node does not contain the requested RRType
+    // NO_SUCH_ZONE:   The zone does not exist in this data source.
+    enum QueryResponseFlags {
+        REFERRAL = 0x01,
+        CNAME_FOUND = 0x02,
+        NAME_NOT_FOUND = 0x04,
+        TYPE_NOT_FOUND = 0x08,
+        NO_SUCH_ZONE = 0x10
+    };
+
     virtual ~AbstractDataSrc() {};
 
     // 'High-level' methods.  These will be implemented by the
-    // general DataSrc class, but MAY be overwritten by subclasses.
-    virtual DSResult runQuery(Query query) = 0;
+    // general DataSrc class, and SHOULD NOT be overwritten by subclasses.
+    virtual void doQuery(Query query) = 0;
 
-    // Mandatory 'low-level' methods: These will NOT be implemented by
-    // the general DataSrc class; subclasses MUST implement them.
-    virtual DSResult findRRset(const Name& qname,
-                               const RRClass& qclass,
-                               const RRType& qtype,
-                               RRsetList& target,
-                               RRsetList& sigs) const = 0;
+    // XXX: High-level methods to be implemented later:
+    // virtual void doUpdate(Update update) = 0;
+    // virtual void doXfr(Query query) = 0;
 
-    virtual DSResult findRRset(const Name& qname,
-                               const RRClass& qclass,
-                               const RRType& qtype,
-                               RRsetList& target) const = 0;
-
-    virtual const DataSrc* findClosestEnclosure(const Name& qname,
-                                                Name& container,
-                                                bool& found) const = 0;
+    // 'Medium-level' methods.  This will be implemented by the general
+    // DataSrc class but MAY be overwritten by subclasses.
+    virtual void findClosestEnclosure(NameMatch& match) const = 0;
 
     // Optional 'low-level' methods.  These will have stub implementations
     // in the general DataSrc class but MAY be overwritten by subclasses
-    virtual DSResult init() = 0;
-    virtual DSResult close() = 0;
+    virtual Result init() = 0;
+    virtual Result close() = 0;
 
-    //virtual const RRClass& getClass() const = 0;
-    //virtual const RRClass& setClass() const = 0;
+    // Mandatory 'low-level' methods: These will NOT be implemented by
+    // the general DataSrc class; subclasses MUST implement them.
+    virtual Result findRRset(const Query& q,
+                             const Name& qname,
+                             const RRClass& qclass,
+                             const RRType& qtype,
+                             RRsetList& target,
+                             uint32_t& flags,
+                             Name* zone = NULL) const = 0;
+
+    virtual Result findExactRRset(const Query& q,
+                                  const Name& qname,
+                                  const RRClass& qclass,
+                                  const RRType& qtype,
+                                  RRsetList& target,
+                                  uint32_t& flags,
+                                  Name* zone = NULL) const = 0;
+
+    // These will have dumb implementations in the general DataSrc
+    // class, and SHOULD be overwritten by subclasses.
+    virtual Result findAddrs(const Query& q,
+                             const Name& qname,
+                             const RRClass& qclass,
+                             RRsetList& target,
+                             uint32_t& flags,
+                             Name* zone = NULL) const = 0;
+
+     virtual Result findReferral(const Query& q,
+                                const Name& qname,
+                                const RRClass& qclass,
+                                RRsetList& target,
+                                uint32_t& flags,
+                                Name* zone = NULL) const = 0;
+
+    // This MUST be implemented by concrete data sources which support
+    // DNSSEC, but is optional for others (e.g., the static data source).
+    virtual Result findPreviousName(const Query& q,
+                                    const Name& qname,
+                                    Name& target,
+                                    Name* zone) const = 0;
+
 };
 
 // Base class for a DNS Data Source
@@ -80,29 +124,111 @@ public:
     DataSrc(const RRClass& c) : rrclass(c) {}
     virtual ~DataSrc() {};
 
-    DSResult runQuery(Query q);
+    void doQuery(Query q);
 
-    virtual DSResult findRRset(const Name& qname,
-                               const RRClass& qclass,
-                               const RRType& qtype,
-                               RRsetList& target,
-                               RRsetList& sigs) const = 0;
-
-    virtual DSResult findRRset(const Name& qname,
-                               const RRClass& qclass,
-                               const RRType& qtype,
-                               RRsetList& target) const = 0;
-
-    virtual const DataSrc* findClosestEnclosure(const Name& qname,
-                                                Name& container,
-                                                bool& found) const = 0;
+    virtual void findClosestEnclosure(NameMatch& match) const = 0;
 
     const RRClass& getClass() const { return rrclass; }
     void setClass(RRClass& c) { rrclass = c; }
+    void setClass(const RRClass& c) { rrclass = c; }
 
-    DSResult init() { return NOT_IMPLEMENTED; }
-    DSResult close() { return NOT_IMPLEMENTED; }
+    Result init() { return NOT_IMPLEMENTED; }
+    Result close() { return NOT_IMPLEMENTED; }
 
+    virtual Result findRRset(const Query& q,
+                             const Name& qname,
+                             const RRClass& qclass,
+                             const RRType& qtype,
+                             RRsetList& target,
+                             uint32_t& flags,
+                             Name* zone = NULL) const = 0;
+
+    virtual Result findExactRRset(const Query& q,
+                                  const Name& qname,
+                                  const RRClass& qclass,
+                                  const RRType& qtype,
+                                  RRsetList& target,
+                                  uint32_t& flags,
+                                  Name* zone = NULL) const = 0;
+
+    virtual Result findAddrs(const Query& q,
+                               const Name& qname,
+                               const RRClass& qclass,
+                               RRsetList& target,
+                               uint32_t& flags,
+                               Name* zone = NULL) const {
+        Result r;
+        bool a = false, aaaa = false;
+
+        flags = 0;
+        r = findExactRRset(q, qname, qclass, RRType::A(), target, flags, zone);
+        if (r == SUCCESS && flags == 0) {
+            a = true;
+        }
+
+        flags = 0;
+        r = findExactRRset(q, qname, qclass, RRType::AAAA(), target,
+                           flags, zone);
+        if (r == SUCCESS && flags == 0) {
+            aaaa = true;
+        }
+
+        if (!a && !aaaa) {
+            flags = TYPE_NOT_FOUND;
+        } else {
+            flags = 0;
+        }
+
+        return (SUCCESS);
+    }
+
+    virtual Result findReferral(const Query& q,
+                                const Name& qname,
+                                const RRClass& qclass,
+                                RRsetList& target,
+                                uint32_t& flags,
+                                Name* zone = NULL) const {
+        Result r;
+        bool ns = false, ds = false, dname = false;
+
+        flags = 0;
+        r = findExactRRset(q, qname, qclass, RRType::NS(), target, flags, zone);
+        if (r == SUCCESS && flags == 0) {
+            ns = true;
+        } else if ((flags & (NO_SUCH_ZONE|NAME_NOT_FOUND))) {
+            return (SUCCESS);
+        }
+
+        flags = 0;
+        r = findExactRRset(q, qname, qclass, RRType::DS(), target, flags, zone);
+        if (r == SUCCESS && flags == 0) {
+            ds = true;
+        } else if ((flags & (NO_SUCH_ZONE|NAME_NOT_FOUND))) {
+            return (SUCCESS);
+        }
+
+        flags = 0;
+        r = findExactRRset(q, qname, qclass, RRType::DNAME(), target,
+                           flags, zone);
+        if (r == SUCCESS && flags == 0) {
+            dname = true;
+        } else if ((flags & (NO_SUCH_ZONE|NAME_NOT_FOUND))) {
+            return (SUCCESS);
+        }
+
+        if (!ns && !dname && !ds) {
+            flags = TYPE_NOT_FOUND;
+        } else {
+            flags = 0;
+        }
+
+        return (SUCCESS);
+    }
+
+    virtual Result findPreviousName(const Query& q,
+                                    const Name& qname,
+                                    Name& target,
+                                    Name* zone) const = 0;
 private:
     RRClass rrclass;
 };
@@ -119,31 +245,99 @@ public:
         }
 
         data_sources.push_back(ds);
-    };
+    }
 
-    const DataSrc* findClosestEnclosure(const Name& qname,
-                                        Name& container,
-                                        bool& found) const
-    {
-        const DataSrc* best = NULL;
+    void findClosestEnclosure(NameMatch& match) const {
         BOOST_FOREACH (DataSrc* ds, data_sources) {
-            const DataSrc* source;
-
             if (getClass() != RRClass::ANY() && ds->getClass() != getClass()) {
                 continue;
             }
 
-            source = ds->findClosestEnclosure(qname, container, found);
-            if (source != NULL) {
-                best = source;
-            }
+            ds->findClosestEnclosure(match);
         }
+    }
 
-        return (best);
-    };
+    // Actual queries for data should not be sent to a MetaDataSrc object,
+    // so we return NOT_IMPLEMENTED if we receive any.
+    //
+    // The proper way to use the MetaDataSrc is to run findClosestEnclosure()
+    // to get a pointer to the best concrete data source for the specified
+    // zone, then send all queries directly to that data source.
+
+    Result findRRset(const Query& q, const Name& qname,
+                     const RRClass& qclass, const RRType& qtype,
+                     RRsetList& target, uint32_t& flags,
+                     Name* zone = NULL) const {
+        return (NOT_IMPLEMENTED);
+    }
+
+    Result findExactRRset(const Query& q, const Name& qname,
+                          const RRClass& qclass, const RRType& qtype,
+                          RRsetList& target, uint32_t& flags,
+                          Name* zone = NULL) const {
+        return (NOT_IMPLEMENTED);
+    }
+
+    Result findAddrs(const Query& q,
+                     const Name& qname, const RRClass& qclass,
+                     RRsetList& target, uint32_t& flags,
+                     Name* zone = NULL) const {
+        return (NOT_IMPLEMENTED);
+    }
+
+    Result findReferral(const Query& q,
+                        const Name& qname, const RRClass& qclass,
+                        RRsetList& target, uint32_t& flags,
+                        Name* zone = NULL) const {
+        return (NOT_IMPLEMENTED);
+    }
+
+    virtual Result findPreviousName(const Query& q,
+                                    const Name& qname,
+                                    Name& target,
+                                    Name* zone) const {
+        return (NOT_IMPLEMENTED);
+    }
 
 private:
     std::vector<DataSrc*> data_sources;
+};
+
+class NameMatch {
+public:
+    NameMatch(const Name& qname) :
+        closest_name_(NULL), best_source_(NULL), qname_(qname) {}
+
+    ~NameMatch() {
+        delete closest_name_;
+    }
+
+    void update(const DataSrc& new_source, const Name& container) {
+        if (closest_name_ == NULL) {
+            closest_name_ = new Name(container);
+            best_source_ = &new_source;
+            return;
+        }
+
+        NameComparisonResult::NameRelation cmp = 
+            container.compare(*closest_name_).getRelation();
+
+        if (cmp == NameComparisonResult::SUBDOMAIN) {
+            Name* newname = new Name(container);
+            delete closest_name_;
+            closest_name_ = newname;
+            best_source_ = &new_source;
+        }
+    }
+
+    const Name& qname() { return (qname_); }
+    const Name* closestName() { return (closest_name_); }
+    const DataSrc* bestDataSrc() { return (best_source_); }
+
+private:
+    const Name* closest_name_;
+    const DataSrc* best_source_;
+    const Name& qname_;
 };
 
 }

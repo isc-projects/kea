@@ -19,11 +19,11 @@
 
 #include <cc/data.h>
 #include <auth/data_source_static.h>
+#include <auth/data_source_sqlite3.h>
 
 class AuthSrv {
 public:
     explicit AuthSrv(int port);
-    //~AuthSrv() {}
     int getSocket() { return (sock); }
     void processMessage();
     void serve(std::string zone_name);
@@ -31,8 +31,7 @@ public:
     isc::data::ElementPtr updateConfig(isc::data::ElementPtr config);
 private:
 
-    // TODO: make this a MetaDataSrc, but that one is abstract...
-    isc::dns::StaticDataSrc data_src;
+    isc::auth::MetaDataSrc data_src;
     int sock;
 };
 

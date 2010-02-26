@@ -26,40 +26,152 @@
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
 
+using namespace isc::dns;
+
 namespace isc {
-namespace dns {
-
-enum QueryStatus {
-    QUERY_INCOMPLETE,
-    QUERY_FINISHING,
-    QUERY_DONE,
-    QUERY_NODATA
-};
-
-///
-/// \brief exception to throw if a DNS Message is malformed
-/// 
-class MalformedMessage : public Exception {
-public:
-    MalformedMessage(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
-};
+namespace auth {
 
 // An individual task to be carried out by the query logic
 class QueryTask {
 public:
-    QueryTask(const Name& n, const RRClass& c,
-              const RRType& t, const Section& s);
-    virtual ~QueryTask();
+    // XXX: Members are currently public, but should probably be
+    // moved to private and wrapped in get() functions later.
 
+    // The standard query tuple: qname/qclass/qtype.
+    // Note that qtype is ignored in the GLUE_QUERY/NOGLUE_QUERY case.
     const Name& qname;
     const RRClass& qclass;
     const RRType& qtype;
+
+    // Optional: name for the containing zone, if known.
+    // This is particularly needed when looking up data in a
+    // zone other than the closest enclosure (such as getting
+    // DS queries from a parent zone on a server which serves
+    // both parent and child).
+    Name* zone;
+
+    // The section of the reply into which the data should be
+    // written after it has been fetched from the data source.
     const Section& section;
+
+    // The op field indicates the operation to be carried out by
+    // this query task:
+    //
+    // - SIMPLE_QUERY: look for a match for qname/qclass/qtype
+    //   in local data (regardless of whether it is above or below
+    //   a zone cut).
+    //
+    // - AUTH_QUERY: look for a match for qname/qclass/qtype, or
+    //   for qname/qclass/CNAME, or for a referral.
+    //
+    // - GLUE_QUERY: look for matches with qname/qclass/A
+    //   OR qname/class/AAAA in local data, regardless of
+    //   authority, for use in glue.  (This can be implemented
+    //   as two successive SIMPLE_QUERY tasks, but might be
+    //   optimized by the concrete data source implementation
+    //   by turning it into a single database lookup.)
+    //
+    // - NOGLUE_QUERY: same as GLUE_QUERY except that answers
+    //   are rejected if they are below a zone cut.
+    //
+    // - REF_QUERY: look for matches for qname/qclass/NS,
+    //   qname/qclass/DS, and qname/qclass/DNAME.  Used
+    //   to search for a zone cut.
+
+    const enum Op {
+        SIMPLE_QUERY,
+        AUTH_QUERY,
+        GLUE_QUERY,
+        NOGLUE_QUERY,
+        REF_QUERY,
+    } op;
+
+    // The state field indicates the state of the query; it controls
+    // the next step after processing each query task.
+    //
+    // - GETANSWER: We are looking for the answer to a primary query.
+    //   (The qname of the task should exactly match the qname of the
+    //   query.)  If we have no match, the query has failed.
+    //
+    // - GETADDITIONAL: We are filling in additional data, either
+    //   as a result of finding NS or MX records via a GETANSWER
+    //   query task, or as a result of finding NS records when
+    //   getting authority-section data.
+    //
+    // - FOLLOWCNAME: We are looking for the target of a CNAME RR that
+    //   was found via a previous GETANSWER query task.  If we have no
+    //   match, the query is still successful.
+    //
+    // (NOTE: It is only necessary to set a task state when pushing
+    // tasks onto the query task queue, which in turn is only necessary
+    // when it's uncertain which data source will be authoritative for the
+    // data.  That's why there is no GETAUTHORITY task state; when
+    // processing an answer, either positive or negative, the authoritative
+    // data source will already have been discovered, and can be queried
+    // directly.)
+
+    enum State {
+        GETANSWER,
+        GETADDITIONAL,
+        FOLLOWCNAME
+    } state;
+
+    // Response flags to indicate conditions encountered while
+    // processing this task.
+    uint32_t flags;
+
+    // Constructors
+    QueryTask(const Name& n, const RRClass& c,
+              const RRType& t, const Section& sect) :
+        qname(n), qclass(c), qtype(t), zone(NULL),
+        section(sect), op(AUTH_QUERY), state(GETANSWER), flags(0) {}
+    QueryTask(const Name& n, const RRClass& c,
+              const RRType& t, const Section& sect, const Op o) :
+        qname(n), qclass(c), qtype(t), zone(NULL),
+        section(sect), op(o), state(GETANSWER), flags(0) {}
+    QueryTask(const Name& n, const RRClass& c,
+              const RRType& t, const Section& sect, const State st) :
+        qname(n), qclass(c), qtype(t), zone(NULL),
+        section(sect), op(AUTH_QUERY), state(st), flags(0) {}
+    QueryTask(const Name& n, const RRClass& c,
+              const RRType& t, const Section& sect,
+              const Op o, const State st) :
+        qname(n), qclass(c), qtype(t), zone(NULL),
+        section(sect), op(o), state(st), flags(0) {}
+
+    // These are special constructors for particular query task types,
+    // to simplify the code.
+    //
+    // A simple query doesn't need to specify section or state.
+    QueryTask(const Name& n, const RRClass& c, const RRType& t, const Op o) :
+        qname(n), qclass(c), qtype(t), zone(NULL),
+        section(Section::ANSWER()), op(o), state(GETANSWER), flags(0) {
+        if (op != SIMPLE_QUERY) {
+            throw "invalid constructor for this task operation";
+        }
+    }
+    // A referral query doesn't need to specify section, state, or type.
+    QueryTask(const Name& n, const RRClass& c, const Op o) :
+        qname(n), qclass(c), qtype(RRType::ANY()), zone(NULL),
+        section(Section::ANSWER()), op(o), state(GETANSWER), flags(0) {
+        if (op != REF_QUERY) {
+            throw "invalid constructor for this task operation";
+        }
+    }
+    // A glue (or noglue) query doesn't need to specify type.
+    QueryTask(const Name& n, const RRClass& c,
+              const Section& sect, const Op o, const State st) :
+        qname(n), qclass(c), qtype(RRType::ANY()), zone(NULL),
+        section(sect), op(o), state(st), flags(0) {
+        if (op != GLUE_QUERY && op != NOGLUE_QUERY) {
+            throw "invalid constructor for this task operation";
+        }
+    }
+
+    virtual ~QueryTask();
 };
 
-typedef boost::shared_ptr<QueryTask> QueryTaskPtr;
-typedef std::queue<QueryTaskPtr> QueryTaskQueue;
+typedef std::queue<QueryTask> QueryTaskQueue;
 
 class Query;
 typedef boost::shared_ptr<Query> QueryPtr;
@@ -67,25 +179,31 @@ typedef boost::shared_ptr<Query> QueryPtr;
 // Data Source query
 class Query {
 public:
+    // The state of a query: pending or answered.
+    enum Status {
+        PENDING,
+        ANSWERED
+    };
+
+    // Query constructor
     Query(Message& m, bool dnssec) {
         message_ = &m;
         want_additional = true;
         want_dnssec = dnssec;
-        status_ = QUERY_INCOMPLETE;
+        status_ = PENDING;
 
         // Check message formatting
-        QuestionIterator qid = message_->beginQuestion();
-        qid++;
-        if (qid != message_->endQuestion())
-                dns_throw(MalformedMessage, "too many questions");
+        if (message_->getRRCount(Section::QUESTION()) != 1) {
+            dns_throw(Unexpected, "malformed message: too many questions");
+        }
 
-        // Populate the query tasks queue with the initial question
+        // Populate the query task queue with the initial question
         QuestionPtr query = *message_->beginQuestion();
         qname_ = &query->getName();
         qclass_ = &query->getClass();
         qtype_ = &query->getType();
-        querytasks.push(QueryTaskPtr(new QueryTask(*qname_, *qclass_,
-                                     *qtype_, Section::ANSWER())));
+        querytasks.push(QueryTask(*qname_, *qclass_, *qtype_,
+                                  Section::ANSWER()));
     };
 
     virtual ~Query() {}
@@ -108,13 +226,12 @@ public:
     Message& message() { return *message_; }
     QueryTaskQueue& tasks() { return querytasks; }
 
-    QueryStatus status() { return status_; }
-    void setStatus(QueryStatus s) { status_ = s; }
-
-protected:
-    QueryStatus status_;
+    Status status() { return status_; }
+    void setStatus(Status s) { status_ = s; }
 
 private:
+    Status status_;
+
     const Name* qname_;
     const RRClass* qclass_;
     const RRType* qtype_;
