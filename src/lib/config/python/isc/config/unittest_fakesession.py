@@ -30,13 +30,14 @@ class FakeModuleCCSession:
         self.message_queue.append([ channel, target, msg ])
 
     def group_reply(self, env, msg):
-        pass
+        if 'to' in env:
+            self.message_queue.append([ env['to'], None, msg])
 
     def group_recvmsg(self, blocking):
         for qm in self.message_queue:
             if qm[0] in self.subscriptions and (qm[1] == None or qm[1] in self.subscriptions[qm[0]]):
                 self.message_queue.remove(qm)
-                return qm[2], {}
+                return qm[2], {'to': qm[0], 'from': qm[1]}
         return None, None
 
     def get_message(self, channel, target = None):

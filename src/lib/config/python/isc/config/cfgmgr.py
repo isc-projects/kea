@@ -313,11 +313,8 @@ class ConfigManager:
     def handle_msg(self, msg):
         """Handle a command from the cc channel to the configuration manager"""
         answer = {}
-        #print("[XX] got msg:")
-        #print(msg)
         cmd, arg = isc.config.ccsession.parse_command(msg)
         if cmd:
-            #print("[XX] cmd: " + cmd)
             if cmd == isc.config.ccsession.COMMAND_GET_COMMANDS_SPEC:
                 answer = isc.config.ccsession.create_answer(0, self.get_commands_spec())
             elif cmd == isc.config.ccsession.COMMAND_GET_MODULE_SPEC:
@@ -347,7 +344,7 @@ class ConfigManager:
         self.running = True
         while (self.running):
             msg, env = self.cc.group_recvmsg(False)
-            if msg:
+            if msg and not 'result' in msg:
                 answer = self.handle_msg(msg);
                 self.cc.group_reply(env, answer)
             else:

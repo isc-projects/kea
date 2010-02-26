@@ -137,6 +137,74 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertEqual({'command': ['get_config', {'module_name': 'Spec1'}]},
                          fake_session.get_message('ConfigManager', None))
 
+    def test_start2(self):
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec2.spec", None, None, fake_session)
+        self.assertEqual(len(fake_session.message_queue), 0)
+        self.assertRaises(ModuleCCSessionError, mccs.start)
+        self.assertEqual(len(fake_session.message_queue), 2)
+        self.assertEqual({'command': ['module_spec', mccs.specification._module_spec]},
+                         fake_session.get_message('ConfigManager', None))
+        self.assertEqual({'command': ['get_config', {'module_name': 'Spec2'}]},
+                         fake_session.get_message('ConfigManager', None))
+
+        self.assertEqual(len(fake_session.message_queue), 0)
+        fake_session.group_sendmsg({'result': [ 0 ]}, "Spec2")
+        fake_session.group_sendmsg({'result': [ 0, {} ]}, "Spec2")
+        mccs.start()
+        self.assertEqual(len(fake_session.message_queue), 2)
+
+        self.assertEqual({'command': ['module_spec', mccs.specification._module_spec]},
+                         fake_session.get_message('ConfigManager', None))
+        self.assertEqual({'command': ['get_config', {'module_name': 'Spec2'}]},
+                         fake_session.get_message('ConfigManager', None))
+
+    def test_start3(self):
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec2.spec", None, None, fake_session)
+        mccs.set_config_handler(self.my_config_handler_ok)
+        self.assertEqual(len(fake_session.message_queue), 0)
+        self.assertRaises(ModuleCCSessionError, mccs.start)
+        self.assertEqual(len(fake_session.message_queue), 2)
+        self.assertEqual({'command': ['module_spec', mccs.specification._module_spec]},
+                         fake_session.get_message('ConfigManager', None))
+        self.assertEqual({'command': ['get_config', {'module_name': 'Spec2'}]},
+                         fake_session.get_message('ConfigManager', None))
+
+        self.assertEqual(len(fake_session.message_queue), 0)
+        fake_session.group_sendmsg({'result': [ 0 ]}, "Spec2")
+        fake_session.group_sendmsg({'result': [ 0, {} ]}, "Spec2")
+        mccs.start()
+        self.assertEqual(len(fake_session.message_queue), 2)
+
+        self.assertEqual({'command': ['module_spec', mccs.specification._module_spec]},
+                         fake_session.get_message('ConfigManager', None))
+        self.assertEqual({'command': ['get_config', {'module_name': 'Spec2'}]},
+                         fake_session.get_message('ConfigManager', None))
+
+    def test_start4(self):
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec2.spec", None, None, fake_session)
+        mccs.set_config_handler(self.my_config_handler_ok)
+        self.assertEqual(len(fake_session.message_queue), 0)
+        self.assertRaises(ModuleCCSessionError, mccs.start)
+        self.assertEqual(len(fake_session.message_queue), 2)
+        self.assertEqual({'command': ['module_spec', mccs.specification._module_spec]},
+                         fake_session.get_message('ConfigManager', None))
+        self.assertEqual({'command': ['get_config', {'module_name': 'Spec2'}]},
+                         fake_session.get_message('ConfigManager', None))
+
+        self.assertEqual(len(fake_session.message_queue), 0)
+        fake_session.group_sendmsg({'result': [ 0 ]}, "Spec2")
+        fake_session.group_sendmsg({'result': [ 1, "just an error" ]}, "Spec2")
+        mccs.start()
+        self.assertEqual(len(fake_session.message_queue), 2)
+
+        self.assertEqual({'command': ['module_spec', mccs.specification._module_spec]},
+                         fake_session.get_message('ConfigManager', None))
+        self.assertEqual({'command': ['get_config', {'module_name': 'Spec2'}]},
+                         fake_session.get_message('ConfigManager', None))
+
     def test_get_socket(self):
         fake_session = FakeModuleCCSession()
         mccs = self.create_session("spec1.spec", None, None, fake_session)
@@ -153,7 +221,22 @@ class TestModuleCCSession(unittest.TestCase):
         mccs.close()
         self.assertEqual("closed", fake_session._socket)
 
-    def test_check_command(self):
+    def my_config_handler_ok(self, new_config):
+        return isc.config.ccsession.create_answer(0)
+
+    def my_config_handler_err(self, new_config):
+        return isc.config.ccsession.create_answer(1, "just an error")
+
+    def my_config_handler_exc(self, new_config):
+        raise Exception("just an exception")
+
+    def my_command_handler_ok(self, command, args):
+        return isc.config.ccsession.create_answer(0)
+
+    def my_command_handler_no_answer(self, command, args):
+        pass
+
+    def test_check_command1(self):
         fake_session = FakeModuleCCSession()
         mccs = self.create_session("spec1.spec", None, None, fake_session)
 
@@ -161,6 +244,102 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertEqual(len(fake_session.message_queue), 0)
 
         fake_session.group_sendmsg({'result': [ 0 ]}, "Spec1")
+        mccs.check_command()
+        self.assertEqual(len(fake_session.message_queue), 0)
+
+        cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, { 'Spec1': 'a' })
+
+        fake_session.group_sendmsg(cmd, 'Spec1')
+        mccs.check_command()
+        self.assertEqual(len(fake_session.message_queue), 1)
+        self.assertEqual({'result': [2, 'Spec1 has no config handler']},
+                         fake_session.get_message('Spec1', None))
+
+    def test_check_command2(self):
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec1.spec", None, None, fake_session)
+        mccs.set_config_handler(self.my_config_handler_ok)
+        self.assertEqual(len(fake_session.message_queue), 0)
+        cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, { 'Spec1': 'a' })
+        fake_session.group_sendmsg(cmd, 'Spec1')
+        self.assertEqual(len(fake_session.message_queue), 1)
+        mccs.check_command()
+        self.assertEqual(len(fake_session.message_queue), 1)
+        self.assertEqual({'result': [1, 'No config_data specification']},
+                         fake_session.get_message('Spec1', None))
+        
+    def test_check_command3(self):
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec2.spec", None, None, fake_session)
+        mccs.set_config_handler(self.my_config_handler_ok)
+        self.assertEqual(len(fake_session.message_queue), 0)
+        cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, { 'Spec2': { 'item1': 2 }})
+        fake_session.group_sendmsg(cmd, 'Spec2')
+        self.assertEqual(len(fake_session.message_queue), 1)
+        mccs.check_command()
+        self.assertEqual(len(fake_session.message_queue), 1)
+        self.assertEqual({'result': [0]},
+                         fake_session.get_message('Spec2', None))
+        
+    def test_check_command4(self):
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec2.spec", None, None, fake_session)
+        mccs.set_config_handler(self.my_config_handler_err)
+        self.assertEqual(len(fake_session.message_queue), 0)
+        cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, { 'Spec2': { 'item1': 'aaa' }})
+        fake_session.group_sendmsg(cmd, 'Spec2')
+        self.assertEqual(len(fake_session.message_queue), 1)
+        mccs.check_command()
+        self.assertEqual(len(fake_session.message_queue), 1)
+        self.assertEqual({'result': [1, 'just an error']},
+                         fake_session.get_message('Spec2', None))
+        
+    def test_check_command5(self):
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec2.spec", None, None, fake_session)
+        mccs.set_config_handler(self.my_config_handler_exc)
+        self.assertEqual(len(fake_session.message_queue), 0)
+        cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, { 'Spec2': { 'item1': 'aaa' }})
+        fake_session.group_sendmsg(cmd, 'Spec2')
+        self.assertEqual(len(fake_session.message_queue), 1)
+        mccs.check_command()
+        self.assertEqual(len(fake_session.message_queue), 1)
+        self.assertEqual({'result': [1, 'just an exception']},
+                         fake_session.get_message('Spec2', None))
+        
+    def test_check_command6(self):
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec2.spec", None, None, fake_session)
+        self.assertEqual(len(fake_session.message_queue), 0)
+        cmd = isc.config.ccsession.create_command("print_message", "just a message")
+        fake_session.group_sendmsg(cmd, 'Spec2')
+        self.assertEqual(len(fake_session.message_queue), 1)
+        mccs.check_command()
+        self.assertEqual(len(fake_session.message_queue), 1)
+        self.assertEqual({'result': [2, 'Spec2 has no command handler']},
+                         fake_session.get_message('Spec2', None))
+        
+    def test_check_command7(self):
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec2.spec", None, None, fake_session)
+        mccs.set_command_handler(self.my_command_handler_ok)
+        self.assertEqual(len(fake_session.message_queue), 0)
+        cmd = isc.config.ccsession.create_command("print_message", "just a message")
+        fake_session.group_sendmsg(cmd, 'Spec2')
+        self.assertEqual(len(fake_session.message_queue), 1)
+        mccs.check_command()
+        self.assertEqual(len(fake_session.message_queue), 1)
+        self.assertEqual({'result': [0]},
+                         fake_session.get_message('Spec2', None))
+        
+    def test_check_command8(self):
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec2.spec", None, None, fake_session)
+        mccs.set_command_handler(self.my_command_handler_no_answer)
+        self.assertEqual(len(fake_session.message_queue), 0)
+        cmd = isc.config.ccsession.create_command("print_message", "just a message")
+        fake_session.group_sendmsg(cmd, 'Spec2')
+        self.assertEqual(len(fake_session.message_queue), 1)
         mccs.check_command()
         self.assertEqual(len(fake_session.message_queue), 0)
         

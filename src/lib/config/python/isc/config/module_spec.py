@@ -76,7 +76,12 @@ class ModuleSpec:
            validate only a part of a configuration tree (like a list of
            non-default values)"""
         data_def = self.get_config_spec()
-        return _validate_spec_list(data_def, full, data, errors)
+        if data_def:
+            return _validate_spec_list(data_def, full, data, errors)
+        else:
+            # no spec, always bad
+            errors.append("No config_data specification")
+            return False
 
 
     def get_module_name(self):

@@ -177,7 +177,7 @@ class ModuleCCSession(ConfigData):
            there is."""
         msg, env = self._session.group_recvmsg(False)
         # should we default to an answer? success-by-default? unhandled error?
-        if msg:
+        if msg and not 'result' in msg:
             answer = None
             try:
                 cmd, arg = isc.config.ccsession.parse_command(msg)
@@ -191,7 +191,10 @@ class ModuleCCSession(ConfigData):
                     else:
                         answer = self._config_handler(new_config)
                 else:
-                    answer = self._command_handler(cmd, arg)
+                    if self._command_handler:
+                        answer = self._command_handler(cmd, arg)
+                    else:
+                        answer = create_answer(2, self._module_name + " has no command handler")
             except Exception as exc:
                 answer = create_answer(1, str(exc))
             if answer:
