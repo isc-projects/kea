@@ -145,7 +145,8 @@ TEST_F(RRsetListTest, iterate) {
     RRsetList list;
     setupList(list);
 
-    bool has_a, has_aaaa, has_ns, has_soa, has_cname;
+    bool has_a = false, has_aaaa = false, has_ns = false, has_soa = false,
+        has_cname = false;
     int i = 0;
     BOOST_FOREACH(RRsetPtr rrset, list) {
         if (rrset->getType() == RRType::A()) {
