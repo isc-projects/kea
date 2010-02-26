@@ -75,7 +75,7 @@ public:
      * 100000 zones, where the whole list is passed every time a single
      * thing changes)
      */
-    void set_config_handler(isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config)) { config_handler_ = config_handler; };
+    void setConfigHandler(isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config)) { config_handler_ = config_handler; };
 
     /**
      * Set a command handler; the function that is passed takes an

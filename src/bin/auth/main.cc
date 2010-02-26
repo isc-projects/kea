@@ -57,9 +57,10 @@ usage() {
 }
 
 isc::data::ElementPtr
-my_config_handler(isc::data::ElementPtr config)
+my_config_handler(isc::data::ElementPtr new_config)
 {
-    return auth.updateConfig(config);
+    auth.updateConfig(new_config);
+    return isc::config::createAnswer(0);
 }
 
 isc::data::ElementPtr
@@ -106,7 +107,7 @@ main(int argc, char* argv[]) {
         isc::config::ModuleCCSession cs = isc::config::ModuleCCSession(specfile,
                                                                        my_config_handler,
                                                                        my_command_handler);
-    
+
         // main server loop
         fd_set fds;
         int ps = auth.getSocket();
