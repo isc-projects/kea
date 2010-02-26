@@ -206,6 +206,12 @@ class BindCmdInterpreter(Cmd):
         self.add_module_info(module)
 
     def _validate_cmd(self, cmd):
+        '''validate the parameters and merge some parameters together,
+        merge algorithm is based on the command line syntax, later, if
+        a better command line syntax come out, this function should be 
+        updated first.        
+        '''
+
         if not cmd.module in self.modules:
             raise CmdUnknownModuleSyntaxError(cmd.module)
         
@@ -254,7 +260,7 @@ class BindCmdInterpreter(Cmd):
                             raise CmdUnknownParamSyntaxError(cmd.module, cmd.command, cmd.params[name])
                     else:
                         # replace the numbered items by named items
-                        param_name = command_info.get_param_name_by_position(name+1, param_count)
+                        param_name = command_info.get_param_name_by_position(name, param_count)
                         cmd.params[param_name] = cmd.params[name]
                         del cmd.params[name]
                         

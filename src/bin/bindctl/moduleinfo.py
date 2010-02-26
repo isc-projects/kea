@@ -90,47 +90,35 @@ class CommandInfo:
                 if not self.params[name].is_optional]        
         
     def get_param_name_by_position(self, pos, param_count):
-        # count mandatories back from the last
-        # from the last mandatory; see the number of mandatories before it
-        # and compare that to the number of positional arguments left to do
-        # if the number of lefts is higher than the number of mandatories,
-        # use the first optional. Otherwise, use the first unhandled mandatory
-        # (and update the location accordingly?)
-        # (can this be done in all cases? this is certainly not the most efficient method;
-        # one way to make the whole of this more consistent is to always set mandatories first, but
-        # that would make some commands less nice to use ("config set value location" instead of "config set location value")
+        '''
+        Find a proper parameter name for the position 'pos':
+        If param_count is equal to the count of mandatory parameters of command,
+        and there is some optional parameter, find the first mandatory parameter 
+        from the position 'pos' to the end. Else, return the name on position pos.
+        (This function will be changed if bindctl command line syntax is changed
+        in the future. )
+        '''
         if type(pos) != int:
             raise KeyError(str(pos) + " is not an integer")
+
         else:
-            if param_count == len(self.params) - 1:
-                i = 0
-                for k in self.params.keys():
-                    if i == pos:
-                        return k
-                    i += 1
+            params = self.params.copy()
+            del params['help']
+            count = len(params)
+            if (pos >= count):
                 raise KeyError(str(pos) + " out of range")
-            elif param_count <= len(self.params):
-                mandatory_count = 0
-                for k in self.params.keys():
-                    if not self.params[k].is_optional:
-                        mandatory_count += 1
-                if param_count == mandatory_count:
-                    # return the first mandatory from pos
-                    i = 0
-                    for k in self.params.keys():
-                        if i >= pos and not self.params[k].is_optional:
-                            return k
-                        i += 1
-                    raise KeyError(str(pos) + " out of range")
-                else:
-                    i = 0
-                    for k in self.params.keys():
-                        if i == pos:
-                            return k
-                        i += 1
-                    raise KeyError(str(pos) + " out of range")
+
+            mandatory_count = len(self.get_mandatory_param_names())
+            param_names = list(params.keys())
+            if (param_count == mandatory_count) and (param_count < count):
+                while pos < count:
+                    if not params[param_names[pos]].is_optional:
+                        return param_names[pos]
+                    pos += 1
+                
+                raise KeyError(str(pos) + "parameters have error")
             else:
-                raise KeyError("Too many parameters")
+                return param_names[pos]
 
 
     def command_help(self):
