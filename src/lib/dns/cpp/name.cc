@@ -18,6 +18,8 @@
 #include <cassert>
 #include <iterator>
 #include <functional>
+#include <vector>
+#include <iostream>
 
 #include <algorithm>
 
@@ -601,6 +603,36 @@ Name::concatenate(const Name& suffix) const
               bind2nd(plus<char>(), this->length_ - 1));
     assert(retname.offsets_.size() == labels);
     retname.labelcount_ = labels;
+
+    return (retname);
+}
+
+Name
+Name::reverse() const
+{
+    Name retname;
+    //
+    // Set up offsets: The size of the string and number of labels will
+    // be the same in as in the original.
+    //
+    retname.offsets_.reserve(labelcount_);
+    retname.ndata_.reserve(length_);
+
+    // Copy the original name, label by label, from tail to head.
+    vector<unsigned char>::const_reverse_iterator rit0 = offsets_.rbegin();
+    vector<unsigned char>::const_reverse_iterator rit1 = rit0 + 1;
+    string::const_iterator n0 = ndata_.begin();
+    retname.offsets_.push_back(0);
+    while (rit1 != offsets_.rend()) {
+        retname.ndata_.append(n0 + *rit1, n0 + *rit0);
+        retname.offsets_.push_back(retname.ndata_.size());
+        ++rit0;
+        ++rit1;
+    }
+    retname.ndata_.push_back(0);
+
+    retname.labelcount_ = labelcount_;
+    retname.length_ = length_;
 
     return (retname);
 }

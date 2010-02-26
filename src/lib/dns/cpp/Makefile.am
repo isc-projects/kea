@@ -19,6 +19,8 @@ libdns_la_SOURCES += rrsetlist.h rrsetlist.cc
 libdns_la_SOURCES += question.h question.cc
 libdns_la_SOURCES += message.h message.cc
 libdns_la_SOURCES += base64.h base64.cc
+libdns_la_SOURCES += dnstime.h dnstime.cc
+libdns_la_SOURCES += hex.h hex.cc
 
 rrclass.h: rrclass-placeholder.h
 rrtype.h: rrtype-placeholder.h

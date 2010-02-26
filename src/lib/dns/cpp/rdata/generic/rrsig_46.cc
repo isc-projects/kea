@@ -15,11 +15,14 @@
 // $Id$
 
 #include <string>
+#include <iomanip>
+#include <iostream>
 #include <sstream>
 #include <vector>
 
 #include "base64.h"
 #include "buffer.h"
+#include "dnstime.h"
 #include "messagerenderer.h"
 #include "name.h"
 #include "rrtype.h"
@@ -28,51 +31,25 @@
 #include "rdataclass.h"
 #include <boost/lexical_cast.hpp>
 
+#include <stdio.h>
+#include <time.h>
+
 using namespace std;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
-
-namespace {
-inline uint32_t
-convertDNSSECTime(const string time_txt)
-{
-    istringstream iss(time_txt);
-
-    uint32_t timeval;
-    iss >> timeval;
-
-    // right now, we don't support the YYYYMMDDHHmmSS format for
-    // expire/inception
-    if (iss.bad() || iss.fail() || !iss.eof()) {
-        dns_throw(InvalidRdataText, "Invalid RRSIG Time format");
-    }
-
-    return (timeval);
-}
-}
 
 struct RRSIGImpl {
     // straightforward representation of RRSIG RDATA fields
     RRSIGImpl(const RRType& covered, uint8_t algorithm, uint8_t labels,
               uint32_t originalttl, uint32_t timeexpire, uint32_t timeinception,
               uint16_t keyid, const Name& signer,
-              const vector<char>& signature) :
+              const vector<uint8_t>& signature) :
         covered_(covered), algorithm_(algorithm), labels_(labels),
         originalttl_(originalttl), timeexpire_(timeexpire),
         timeinception_(timeinception), keyid_(keyid), signer_(signer),
         signature_(signature)
     {}
-    RRSIGImpl(const RRType& covered, uint8_t algorithm, uint8_t labels,
-              uint32_t originalttl, uint32_t timeexpire, uint32_t timeinception,
-              uint16_t keyid, const Name& signer,
-              const string& signature_txt) :
-        covered_(covered), algorithm_(algorithm), labels_(labels),
-        originalttl_(originalttl), timeexpire_(timeexpire),
-        timeinception_(timeinception), keyid_(keyid), signer_(signer)
-    {
-        decodeBase64(signature_txt, signature_);
-    }
 
     const RRType covered_;
     uint8_t algorithm_;
@@ -82,7 +59,7 @@ struct RRSIGImpl {
     uint32_t timeinception_;
     uint16_t keyid_;
     const Name signer_;
-    vector<char> signature_;
+    const vector<uint8_t> signature_;
 };
 
 RRSIG::RRSIG(const string& rrsig_str) :
@@ -108,12 +85,15 @@ RRSIG::RRSIG(const string& rrsig_str) :
         dns_throw(InvalidRdataText, "RRSIG labels out of range");
     }
 
-    uint32_t timeexpire = convertDNSSECTime(expire_txt);
-    uint32_t timeinception = convertDNSSECTime(inception_txt);
+    uint32_t timeexpire = DNSSECTimeFromText(expire_txt);
+    uint32_t timeinception = DNSSECTimeFromText(inception_txt);
+
+    vector<uint8_t> signature;
+    decodeBase64(signaturebuf.str(), signature);
 
     impl_ = new RRSIGImpl(RRType(covered_txt), algorithm, labels,
                           originalttl, timeexpire, timeinception, keyid,
-                          Name(signer_txt), signaturebuf.str());
+                          Name(signer_txt), signature);
 }
 
 RRSIG::RRSIG(InputBuffer& buffer, size_t rdata_len)
@@ -146,12 +126,16 @@ RRSIG::~RRSIG()
 string
 RRSIG::toText() const
 {
+    string expire, inception;
+    DNSSECTimeToText(impl_->timeexpire_, expire);
+    DNSSECTimeToText(impl_->timeinception_, inception);
+
     return (impl_->covered_.toText() +
             " " + boost::lexical_cast<string>(static_cast<int>(impl_->algorithm_))
             + " " + boost::lexical_cast<string>(static_cast<int>(impl_->labels_))
             + " " + boost::lexical_cast<string>(impl_->originalttl_)
-            + " " + boost::lexical_cast<string>(impl_->timeexpire_)
-            + " " + boost::lexical_cast<string>(impl_->timeinception_)
+            + " " + expire
+            + " " + inception
             + " " + boost::lexical_cast<string>(impl_->keyid_)
             + " " + impl_->signer_.toText()
             + " " + encodeBase64(impl_->signature_));

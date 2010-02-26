@@ -1,0 +1,3 @@
+# example.com/NS (normal lookup, positive answer)
+  dd 6b 01 00 00 01 00 00 00 00 00 00 07 65 78 61
+  6d 70 6c 65 03 63 6f 6d 00 00 02 00 01

@@ -25,6 +25,7 @@
 #include <exceptions/exceptions.h>
 
 #include "rdata.h"
+#include "rrtype.h"
 
 namespace isc {
 namespace dns {
@@ -50,22 +51,20 @@ class AbstractRRset;
 class BasicRRset;
 class RdataIterator;
 class BasicRRsetImpl;
+class RRset;
 
-/// \brief A pointer-like type pointing to an \c AbstractRRset object.
+/// \brief A pointer-like type pointing to an \c RRset object.
 ///
 /// This type is commonly used as an argument of various functions defined
 /// in this library in order to handle RRsets in a polymorphic manner.
-typedef boost::shared_ptr<AbstractRRset> RRsetPtr;
+typedef boost::shared_ptr<RRset> RRsetPtr;
 
-/// \brief A pointer-like type pointing to an (immutable) \c AbstractRRset
+/// \brief A pointer-like type pointing to an (immutable) \c RRset
 /// object.
 ///
 /// This type is commonly used as an argument of various functions defined
 /// in this library in order to handle RRsets in a polymorphic manner.
-typedef boost::shared_ptr<const AbstractRRset> ConstRRsetPtr;
-
-/// \brief A convenient abbreviation for the most generic derived RRset class.
-typedef BasicRRset RRset;
+typedef boost::shared_ptr<const RRset> ConstRRsetPtr;
 
 /// \brief A pointer-like type point to an \c RdataIterator object.
 typedef boost::shared_ptr<RdataIterator> RdataIteratorPtr;
@@ -661,6 +660,69 @@ public:
 private:
     BasicRRsetImpl* impl_;
 };
+
+/// \brief The \c RRset class is a concrete derived class of
+/// \c BasicRRset which contains a pointer to an additional RRset
+/// containing associated RRSIG records.  This allows DNSSEC aware
+/// applications to treat data associated with a particular
+/// QNAME/QTYPE/QCLASS as a single object.
+class RRset : public BasicRRset {
+public:
+    explicit RRset(const Name& name, const RRClass& rrclass,
+          const RRType& rrtype, const RRTTL& ttl);
+
+    virtual ~RRset();
+
+    /// \brief Updates the owner name of the \c RRset, including RRSIGs if any
+    virtual void setName(const Name& n) {
+        BasicRRset::setName(n);
+        if (rrsig_) {
+            rrsig_->setName(n);
+        }
+    }
+
+    /// \brief Updates the owner name of the \c RRset, including RRSIGs if any
+    virtual void setTTL(const RRTTL& ttl) {
+        BasicRRset::setTTL(ttl);
+        if (rrsig_) {
+            rrsig_->setTTL(ttl);
+        }
+    }
+
+    /// \brief Adds an RRSIG RR to this RRset's signatures
+    virtual void addRRsig(const rdata::RdataPtr rdata) {
+        if (!rrsig_) {
+            rrsig_ = RRsetPtr(new RRset(this->getName(), this->getClass(),
+                                        RRType::RRSIG(), this->getTTL()));
+        }
+        rrsig_->addRdata(rdata);
+    }
+
+    /// \brief Adds an RRSIG RRset to this RRset
+    void addRRsig(AbstractRRset& sigs) {
+        RdataIteratorPtr it = sigs.getRdataIterator();
+
+        if (!rrsig_) {
+            rrsig_ = RRsetPtr(new RRset(this->getName(), this->getClass(),
+                                        RRType::RRSIG(), this->getTTL()));
+        }
+
+        for (it->first(); !it->isLast(); it->next()) {
+            rrsig_->addRdata(it->getCurrent());
+        }
+    }
+
+    void addRRsig(RRsetPtr sigs) { addRRsig(*sigs); }
+
+    /// \brief Clear the RRSIGs for this RRset
+    void removeRRsig() { rrsig_ = RRsetPtr(); }
+
+    /// \brief Return a pointer to this RRset's RRSIG RRset
+    RRsetPtr getRRsig() { return (rrsig_); }
+private:
+    RRsetPtr rrsig_;
+};
+
 
 /// \brief Insert the \c RRset as a string into stream.
 ///

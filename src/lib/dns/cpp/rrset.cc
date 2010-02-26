@@ -214,6 +214,15 @@ BasicRRset::toWire(MessageRenderer& renderer) const
     return (AbstractRRset::toWire(renderer));
 }
 
+RRset::RRset(const Name& name, const RRClass& rrclass,
+            const RRType& rrtype, const RRTTL& ttl) :
+    BasicRRset(name, rrclass, rrtype, ttl)
+{
+    rrsig_ = RRsetPtr();
+}
+
+RRset::~RRset() {}
+
 namespace {
 class BasicRdataIterator : public RdataIterator {
 private:

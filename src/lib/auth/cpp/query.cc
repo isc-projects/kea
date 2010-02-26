@@ -24,20 +24,10 @@
 #include "query.h"
 
 namespace isc {
-namespace dns {
+namespace auth {
 
-QueryTask::QueryTask(const Name& n, const RRClass& c,
-                     const RRType& t, const Section& s) :
-    qname(n), qclass(c), qtype(t), section(s)
-{
-        // Empty constructor.  It is defined outside the class statement
-        // because otherwise the linker will be confused.
-}
-
-QueryTask::~QueryTask() {
-        // Empty destructor.  It is defined outside the class statement
-        // because otherwise the linker will be confused.
-}
+// Destructor defined here to avoid confusing the linker
+QueryTask::~QueryTask() {}
 
 }
 }

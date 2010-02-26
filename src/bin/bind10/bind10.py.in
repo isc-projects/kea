@@ -50,7 +50,7 @@ import isc.cc
 import isc
 
 # This is the version that gets displayed to the user.
-__version__ = "v20091030 (Paving the DNS Parking Lot)"
+__version__ = "v20100225"
 
 # Nothing at all to do with the 1990-12-10 article here:
 # http://www.subgenius.com/subg-digest/v2/0056.html
