@@ -63,16 +63,16 @@ TEST_F(Rdata_DNSKEY_Test, assign)
 
 TEST_F(Rdata_DNSKEY_Test, badText)
 {
-    EXPECT_THROW(generic::DNSKEY rdata_dnskey("257 3 5"),
-                                              InvalidRdataText);
-    EXPECT_THROW(generic::DNSKEY rdata_dnskey("99999 3 5 BAAAAAAAAAAAD"),
-                                              InvalidRdataText);
-    EXPECT_THROW(generic::DNSKEY rdata_dnskey("257 300 5 BAAAAAAAAAAAD"),
-                                              InvalidRdataText);
-    EXPECT_THROW(generic::DNSKEY rdata_dnskey("257 3 500 BAAAAAAAAAAAD"),
-                                              InvalidRdataText);
-    EXPECT_THROW(generic::DNSKEY rdata_dnskey("257 3 5 BAAAAAAAAAAAD"),
-                                              BadBase64String);
+    EXPECT_THROW(generic::DNSKEY("257 3 5"),
+                 InvalidRdataText);
+    EXPECT_THROW(generic::DNSKEY("99999 3 5 BAAAAAAAAAAAD"),
+                 InvalidRdataText);
+    EXPECT_THROW(generic::DNSKEY("257 300 5 BAAAAAAAAAAAD"),
+                 InvalidRdataText);
+    EXPECT_THROW(generic::DNSKEY("257 3 500 BAAAAAAAAAAAD"),
+                 InvalidRdataText);
+    EXPECT_THROW(generic::DNSKEY("257 3 5 BAAAAAAAAAAAD"),
+                 BadBase64String);
 }
 
 TEST_F(Rdata_DNSKEY_Test, toWireRenderer)
@@ -94,7 +94,7 @@ TEST_F(Rdata_DNSKEY_Test, toWireBuffer)
     rdata_dnskey.toWire(obuffer);
 }
 
-TEST_F(Rdata_DNSKEY_Test, createFromWire_DNSKEY)
+TEST_F(Rdata_DNSKEY_Test, createFromWire)
 {
     generic::DNSKEY rdata_dnskey(dnskey_txt);
     EXPECT_EQ(0, rdata_dnskey.compare(
@@ -102,19 +102,19 @@ TEST_F(Rdata_DNSKEY_Test, createFromWire_DNSKEY)
                                         "testdata/rdata_dnskey_fromWire")));
 }
 
-TEST_F(Rdata_DNSKEY_Test, getTag_DNSKEY)
+TEST_F(Rdata_DNSKEY_Test, getTag)
 {
     generic::DNSKEY rdata_dnskey(dnskey_txt);
     EXPECT_EQ(12892, rdata_dnskey.getTag());
 }
 
-TEST_F(Rdata_DNSKEY_Test, getAlgorithm_DNSKEY)
+TEST_F(Rdata_DNSKEY_Test, getAlgorithm)
 {
     generic::DNSKEY rdata_dnskey(dnskey_txt);
     EXPECT_EQ(5, rdata_dnskey.getAlgorithm());
 }
 
-TEST_F(Rdata_DNSKEY_Test, getFlags_DNSKEY)
+TEST_F(Rdata_DNSKEY_Test, getFlags)
 {
     generic::DNSKEY rdata_dnskey(dnskey_txt);
     EXPECT_EQ(257, rdata_dnskey.getFlags());
