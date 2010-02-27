@@ -152,7 +152,7 @@ doQueryTask(const DataSrc* ds, Query& q, QueryTask& task, RRsetList& target) {
 
 // Copy referral information into the authority section of a message
 static inline void
-copyAuth(Query& q, const RRsetList& auth) {
+copyAuth(Query& q, RRsetList& auth) {
     Message& m = q.message();
     BOOST_FOREACH(RRsetPtr rrset, auth) {
         if (rrset->getType() == RRType::DNAME()) {
