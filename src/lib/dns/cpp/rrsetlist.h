@@ -76,7 +76,11 @@ private:
 };
 
 class RRsetList {
+private:
+    RRsetList(const RRsetList& source);
+    RRsetList& operator=(const RRsetList& source);
 public:
+    RRsetList() {}
     void addRRset(RRsetPtr new_rrsetptr);
     RRsetPtr findRRset(const RRType& rrtype,
                             const RRClass& rrclass = RRClass::IN());
