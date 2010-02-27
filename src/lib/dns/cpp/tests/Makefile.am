@@ -36,10 +36,4 @@ run_unittests_LDADD += $(top_builddir)/src/lib/dns/cpp/.libs/libdns.a
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/cpp/.libs/libexceptions.a
 endif
 
-foo_SOURCES = foo.cc
-foo_CPPFLAGS = $(AM_CPPFLAGS)
-foo_LDFLAGS = $(AM_LDFLAGS)
-
-foo: foo.cc
-
 noinst_PROGRAMS = $(TESTS)
