@@ -15,6 +15,7 @@ run_unittests_SOURCES = run_unittests.cc
 run_unittests_SOURCES += unittest_util.h unittest_util.cc
 run_unittests_SOURCES += unittest_ds.h unittest_ds.cc
 run_unittests_SOURCES += datasrc_unittest.cc
+run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 run_unittests_LDADD = $(GTEST_LDADD)
 run_unittests_LDADD += .libs/libauth.a
