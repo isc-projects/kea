@@ -14,7 +14,9 @@
 
 // $Id$
 
+#include <dns/base64.h>
 #include <dns/buffer.h>
+#include <dns/dnstime.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
@@ -48,6 +50,51 @@ TEST_F(Rdata_RRSIG_Test, fromText_RRSIG)
 
 }
 
+TEST_F(Rdata_RRSIG_Test, badText_RRSIG)
+{
+    EXPECT_THROW(const generic::RRSIG sig("SPORK"), InvalidRdataText);
+    EXPECT_THROW(const generic::RRSIG sig("A 555 4 43200 "
+                     "20100223214617 20100222214617 8496 isc.org. "
+                     "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
+                     "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
+                     "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
+                     "f49t+sXKPzbipN9g+s1ZPiIyofc="), InvalidRdataText);
+    EXPECT_THROW(const generic::RRSIG sig("A 5 4444 43200 "
+                     "20100223214617 20100222214617 8496 isc.org. "
+                     "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
+                     "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
+                     "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
+                     "f49t+sXKPzbipN9g+s1ZPiIyofc="), InvalidRdataText);
+    EXPECT_THROW(const generic::RRSIG sig("A 5 4 999999999999 "
+                     "20100223214617 20100222214617 8496 isc.org. "
+                     "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
+                     "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
+                     "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
+                     "f49t+sXKPzbipN9g+s1ZPiIyofc="), InvalidRdataText);
+    EXPECT_THROW(const generic::RRSIG sig("A 5 4 43200 "
+                     "20100223 20100227 8496 isc.org. "
+                     "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
+                     "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
+                     "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
+                     "f49t+sXKPzbipN9g+s1ZPiIyofc="), InvalidTime);
+    EXPECT_THROW(const generic::RRSIG sig("A 5 4 43200 "
+                     "19100223214617 19100222214617 8496 isc.org. "
+                     "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
+                     "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
+                     "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
+                     "f49t+sXKPzbipN9g+s1ZPiIyofc="), InvalidTime);
+    EXPECT_THROW(const generic::RRSIG sig("A 5 4 43200 "
+                     "20100223214617 20100222214617 999999 isc.org. "
+                     "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
+                     "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
+                     "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
+                     "f49t+sXKPzbipN9g+s1ZPiIyofc="), InvalidRdataText);
+    EXPECT_THROW(const generic::RRSIG sig("A 5 4 43200 "
+                     "20100223214617 20100222214617 8496 isc.org. "
+                     "EEeeeeeeEEEeeeeeeGaaahAAAAAAAAHHHHHHHHHHH!="),
+                     BadBase64String);
+}
+
 TEST_F(Rdata_RRSIG_Test, toWireRenderer_RRSIG)
 {
     string rrsig_txt("A 5 4 43200 20100223214617 20100222214617 8496 isc.org. "
@@ -59,6 +106,17 @@ TEST_F(Rdata_RRSIG_Test, toWireRenderer_RRSIG)
     rdata_rrsig.toWire(renderer);
 }
 
+TEST_F(Rdata_RRSIG_Test, toWireBuffer_RRSIG)
+{
+    string rrsig_txt("A 5 4 43200 20100223214617 20100222214617 8496 isc.org. "
+                     "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
+                     "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
+                     "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
+                     "f49t+sXKPzbipN9g+s1ZPiIyofc=");
+    generic::RRSIG rdata_rrsig(rrsig_txt);
+    rdata_rrsig.toWire(obuffer);
+}
+
 TEST_F(Rdata_RRSIG_Test, createFromWire_RRSIG)
 {
     string rrsig_txt("A 5 2 43200 20100327070149 20100225070149 2658 isc.org. "
@@ -67,6 +125,10 @@ TEST_F(Rdata_RRSIG_Test, createFromWire_RRSIG)
                 "m36Mo2/Gdxjj8lJ/IjPVkdpKyBpcnYND8KEIma5MyNCNeyO1UkfPQZGHNSQ=");
     EXPECT_EQ(rrsig_txt, rdataFactoryFromFile(RRType("RRSIG"), RRClass("IN"),
                              "testdata/rdata_rrsig_fromWire")->toText());
+    generic::RRSIG rdata_rrsig(rrsig_txt);
+    EXPECT_EQ(0, rdata_rrsig.compare(
+                      *rdataFactoryFromFile(RRType("RRSIG"), RRClass("IN"),
+                                          "testdata/rdata_rrsig_fromWire")));
 }
 
 

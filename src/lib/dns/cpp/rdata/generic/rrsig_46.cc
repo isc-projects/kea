@@ -101,7 +101,7 @@ RRSIG::RRSIG(InputBuffer& buffer, size_t rdata_len)
     size_t pos = buffer.getPosition();
 
     if (rdata_len < 18) {
-        dns_throw(InvalidRdataLength, "DS too short");
+        dns_throw(InvalidRdataLength, "RRSIG too short");
     }
 
     uint16_t typecode = buffer.readUint16();
@@ -155,9 +155,8 @@ RRSIG::~RRSIG()
 string
 RRSIG::toText() const
 {
-    string expire, inception;
-    DNSSECTimeToText(impl_->timeexpire_, expire);
-    DNSSECTimeToText(impl_->timeinception_, inception);
+    string expire = DNSSECTimeToText(impl_->timeexpire_);
+    string inception = DNSSECTimeToText(impl_->timeinception_);
 
     return (impl_->covered_.toText() +
             " " + boost::lexical_cast<string>(static_cast<int>(impl_->algorithm_))

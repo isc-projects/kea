@@ -40,13 +40,12 @@ using namespace std;
 namespace isc {
 namespace dns {
 
-void
-DNSSECTimeToText(const time_t timeval, string& s)
+string
+DNSSECTimeToText(const time_t timeval)
 {
     struct tm *t = gmtime(&timeval);
 
-    s.reserve(14);              // YYYYMMDDHHmmSS
-    ostringstream oss(s);
+    ostringstream oss;
     oss << setfill('0')
         << setw(4) << t->tm_year + 1900
         << setw(2) << t->tm_mon + 1
@@ -54,7 +53,7 @@ DNSSECTimeToText(const time_t timeval, string& s)
         << setw(2) << t->tm_hour
         << setw(2) << t->tm_min
         << setw(2) << t->tm_sec;
-    s = oss.str();
+    return (oss.str());
 }
 
 static inline void
@@ -82,32 +81,32 @@ DNSSECTimeFromText(const string& time_txt)
     // first try reading YYYYMMDDHHmmSS format
     int year, month, day, hour, minute, second;
     if (sscanf(time_txt.c_str(), "%4d%2d%2d%2d%2d%2d",
-               &year, &month, &day, &hour, &minute, &second) == 6) {
-
-        checkRange(1970, 9999, year, "year");
-        checkRange(1, 12, month, "month");
-        checkRange(1, days[month - 1] + ((month == 2 && isLeap(year)) ? 1 : 0),
-                day, "day");
-        checkRange(0, 23, hour, "hour");
-        checkRange(0, 59, minute, "minute");
-        checkRange(0, 60, second, "second");
-
-        timeval = second + (60 * minute) + (3600 * hour) + ((day - 1) * 86400);
-        for (int m = 0; m < (month - 1); m++)
-                timeval += days[m] * 86400;
-        if (isLeap(year) && month > 2)
-                timeval += 86400;
-        for (int y = 1970; y < year; y++) {
-            timeval += ((isLeap(y) ? 366 : 365 ) * 86400);
-        }
-
-        return (timeval);
+               &year, &month, &day, &hour, &minute, &second) != 6) {
+        ostringstream oss;
+        oss << "Couldn't convert time value: " << time_txt;
+        dns_throw(InvalidTime, oss.str().c_str());
     }
 
-    ostringstream oss;
-    oss << "Couldn't convert time value: " << time_txt;
-    dns_throw(InvalidTime, oss.str().c_str());
+    checkRange(1970, 9999, year, "year");
+    checkRange(1, 12, month, "month");
+    checkRange(1, days[month - 1] + ((month == 2 && isLeap(year)) ? 1 : 0),
+            day, "day");
+    checkRange(0, 23, hour, "hour");
+    checkRange(0, 59, minute, "minute");
+    checkRange(0, 60, second, "second");
+
+    timeval = second + (60 * minute) + (3600 * hour) + ((day - 1) * 86400);
+    for (int m = 0; m < (month - 1); m++)
+            timeval += days[m] * 86400;
+    if (isLeap(year) && month > 2)
+            timeval += 86400;
+    for (int y = 1970; y < year; y++) {
+        timeval += ((isLeap(y) ? 366 : 365 ) * 86400);
+    }
+
+    return (timeval);
 }
+
 
 
 }
