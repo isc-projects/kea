@@ -36,7 +36,7 @@ public:
         isc::Exception(file, line, what) {}
 };
 
-template <typename T>
+template <typename T, typename P, typename R>
 class RRsetListIterator :
         public std::iterator<std::input_iterator_tag, RRsetPtr> {
 public:
@@ -54,17 +54,21 @@ public:
         ++it_;
         return (tmp);
     }
-    RRsetPtr& operator*() const
+    R operator*() const
     {
-        return (it_.operator*());
+        return (*it_);
     }
-    RRsetPtr* operator->() const
+    P operator->() const
     {
         return (it_.operator->());
     }
     bool operator==(const RRsetListIterator& other)
     {
         return (it_ == other.it_);
+    }
+    bool operator!=(const RRsetListIterator& other)
+    {
+        return (it_ != other.it_);
     }
     
 private:
@@ -80,9 +84,12 @@ public:
 
     RRsetPtr operator[](RRType t) { return (this->findRRset(t)); }
 
-    typedef RRsetListIterator<std::vector<RRsetPtr>::iterator> iterator;
-    typedef RRsetListIterator<std::vector<RRsetPtr>::const_iterator>
-    const_iterator;
+    typedef RRsetListIterator<std::vector<RRsetPtr>::iterator,
+                              RRsetPtr*,
+                              RRsetPtr&> iterator;
+    typedef RRsetListIterator<std::vector<RRsetPtr>::const_iterator,
+                              const RRsetPtr*,
+                              const RRsetPtr&> const_iterator;
 
     const_iterator begin() const { return (const_iterator(rrsets_.begin())); }
     const_iterator end() const { return (const_iterator(rrsets_.end())); }
