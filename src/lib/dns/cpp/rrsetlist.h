@@ -18,6 +18,7 @@
 #define __RRSETLIST_H 1
 
 #include <iostream>
+#include <iterator>
 #include <vector>
 
 #include <boost/shared_ptr.hpp>
@@ -35,22 +36,59 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+template <typename T>
+class RRsetListIterator :
+        public std::iterator<std::input_iterator_tag, RRsetPtr> {
+public:
+    RRsetListIterator() {}
+    explicit RRsetListIterator(const T& it) :
+        it_(it) {}
+    RRsetListIterator& operator++()
+    {
+        ++it_;
+        return (*this);
+    }
+    RRsetListIterator operator++(int)
+    {
+        RRsetListIterator tmp(*this);
+        ++it_;
+        return (tmp);
+    }
+    RRsetPtr& operator*() const
+    {
+        return (it_.operator*());
+    }
+    RRsetPtr* operator->() const
+    {
+        return (it_.operator->());
+    }
+    bool operator==(const RRsetListIterator& other)
+    {
+        return (it_ == other.it_);
+    }
+    
+private:
+    T it_;
+};
+
 class RRsetList {
 public:
-    void addRRset(const RRsetPtr new_rrsetptr);
-    const RRsetPtr findRRset(const RRType& rrtype,
-                             const RRClass& rrclass = RRClass::IN());
-    const RRsetPtr findRRset(const RRsetPtr);
+    void addRRset(RRsetPtr new_rrsetptr);
+    RRsetPtr findRRset(const RRType& rrtype,
+                            const RRClass& rrclass = RRClass::IN());
+    RRsetPtr findRRset(ConstRRsetPtr rrsetptr);
 
-    const RRsetPtr operator[](RRType t) { return (this->findRRset(t)); }
+    RRsetPtr operator[](RRType t) { return (this->findRRset(t)); }
 
-    typedef std::vector<RRsetPtr>::const_iterator const_iterator;
-    const_iterator begin() const { return (rrsets_.begin()); }
-    const_iterator end() const { return (rrsets_.end)(); }
+    typedef RRsetListIterator<std::vector<RRsetPtr>::iterator> iterator;
+    typedef RRsetListIterator<std::vector<RRsetPtr>::const_iterator>
+    const_iterator;
 
-    typedef std::vector<RRsetPtr>::iterator iterator;
-    iterator begin() { return (rrsets_.begin()); }
-    iterator end() { return (rrsets_.end)(); }
+    const_iterator begin() const { return (const_iterator(rrsets_.begin())); }
+    const_iterator end() const { return (const_iterator(rrsets_.end())); }
+
+    iterator begin() { return (iterator(rrsets_.begin())); }
+    iterator end() { return (iterator(rrsets_.end())); }
 
     size_t size() const { return (rrsets_.size()); }
 
