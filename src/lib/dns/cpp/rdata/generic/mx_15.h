@@ -20,6 +20,7 @@
 
 #include <string>
 
+#include "name.h"
 #include "rdata.h"
 
 // BEGIN_ISC_NAMESPACE
