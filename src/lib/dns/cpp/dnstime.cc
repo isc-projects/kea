@@ -40,6 +40,10 @@ using namespace std;
 namespace isc {
 namespace dns {
 
+enum {
+    DATE_LEN = 14       // YYYYMMDDHHmmSS
+};
+
 string
 DNSSECTimeToText(const time_t timeval)
 {
@@ -80,8 +84,10 @@ DNSSECTimeFromText(const string& time_txt)
 
     // first try reading YYYYMMDDHHmmSS format
     int year, month, day, hour, minute, second;
-    if (sscanf(time_txt.c_str(), "%4d%2d%2d%2d%2d%2d",
-               &year, &month, &day, &hour, &minute, &second) != 6) {
+    if (time_txt.length() != DATE_LEN ||
+        sscanf(time_txt.c_str(), "%4d%2d%2d%2d%2d%2d",
+               &year, &month, &day, &hour, &minute, &second) != 6)
+    {
         ostringstream oss;
         oss << "Couldn't convert time value: " << time_txt;
         dns_throw(InvalidTime, oss.str().c_str());
