@@ -82,7 +82,7 @@ public:
                             const RRClass& rrclass = RRClass::IN());
     RRsetPtr findRRset(ConstRRsetPtr rrsetptr);
 
-    RRsetPtr operator[](RRType t) { return (this->findRRset(t)); }
+    RRsetPtr operator[](const RRType& t) { return (this->findRRset(t)); }
 
     typedef RRsetListIterator<std::vector<RRsetPtr>::iterator,
                               RRsetPtr*,
