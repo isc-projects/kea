@@ -45,8 +45,8 @@ public:
 time_t
 DNSSECTimeFromText(const std::string& time_txt);
 
-void
-DNSSECTimeToText(const time_t timeval, std::string& s);
+std::string
+DNSSECTimeToText(const time_t timeval);
 }
 }
 

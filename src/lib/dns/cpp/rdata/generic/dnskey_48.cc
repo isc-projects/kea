@@ -75,7 +75,7 @@ DNSKEY::DNSKEY(const string& dnskey_str) :
     decodeBase64(keydatabuf.str(), keydata);
 
     if (algorithm == 1 && keydata.size() < 3) {
-        dns_throw(InvalidRdataText, "DNSKEY keydata too short");
+        dns_throw(InvalidRdataLength, "DNSKEY keydata too short");
     }
 
     impl_ = new DNSKEYImpl(flags, protocol, algorithm, keydata);

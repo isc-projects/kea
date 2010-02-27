@@ -16,10 +16,10 @@ run_unittests_SOURCES += rdata_in_a_unittest.cc rdata_in_aaaa_unittest.cc
 run_unittests_SOURCES += rdata_ns_unittest.cc rdata_soa_unittest.cc
 run_unittests_SOURCES += rdata_txt_unittest.cc rdata_mx_unittest.cc
 run_unittests_SOURCES += rdata_cname_unittest.cc
-#run_unittests_SOURCES += rdata_dname_unittest.cc
-#run_unittests_SOURCES += rdata_dnskey_unittest.cc
-#run_unittests_SOURCES += rdata_ds_unittest.cc
-#run_unittests_SOURCES += rdata_nsec_unittest.cc
+run_unittests_SOURCES += rdata_dname_unittest.cc
+run_unittests_SOURCES += rdata_dnskey_unittest.cc
+run_unittests_SOURCES += rdata_ds_unittest.cc
+run_unittests_SOURCES += rdata_nsec_unittest.cc
 run_unittests_SOURCES += rdata_rrsig_unittest.cc
 run_unittests_SOURCES += rrset_unittest.cc rrsetlist_unittest.cc
 run_unittests_SOURCES += question_unittest.cc
@@ -35,5 +35,11 @@ run_unittests_LDADD = $(GTEST_LDADD)
 run_unittests_LDADD += $(top_builddir)/src/lib/dns/cpp/.libs/libdns.a
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/cpp/.libs/libexceptions.a
 endif
+
+foo_SOURCES = foo.cc
+foo_CPPFLAGS = $(AM_CPPFLAGS)
+foo_LDFLAGS = $(AM_LDFLAGS)
+
+foo: foo.cc
 
 noinst_PROGRAMS = $(TESTS)

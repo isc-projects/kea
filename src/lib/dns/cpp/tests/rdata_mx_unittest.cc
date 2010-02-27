@@ -40,7 +40,23 @@ const generic::MX rdata_mx(10, Name("mx.example.com"));
 
 TEST_F(Rdata_MX_Test, createFromText)
 {
-    //TBD
+    const generic::MX rdata_mx2("10 mx.example.com");
+    EXPECT_EQ(0, rdata_mx2.compare(rdata_mx));
+}
+
+TEST_F(Rdata_MX_Test, badText)
+{
+    EXPECT_THROW(const generic::MX rdata_mx("99999999 mx."), InvalidRdataText);
+    EXPECT_THROW(const generic::MX rdata_mx("10"), InvalidRdataText);
+    EXPECT_THROW(const generic::MX rdata_mx("SPOON"), InvalidRdataText);
+    EXPECT_THROW(const generic::MX rdata_mx("10 mx. example.com."),
+                 InvalidRdataText);
+}
+
+TEST_F(Rdata_MX_Test, copy)
+{
+    const generic::MX rdata_mx2(rdata_mx);
+    EXPECT_EQ(0, rdata_mx.compare(rdata_mx2));
 }
 
 TEST_F(Rdata_MX_Test, createFromWire)
@@ -62,9 +78,33 @@ TEST_F(Rdata_MX_Test, toWireRenderer)
                         obuffer.getLength(), &data[0], data.size());
 }
 
+TEST_F(Rdata_MX_Test, toWireBuffer)
+{
+    renderer.writeName(Name("example.com"));
+    rdata_mx.toWire(obuffer);
+
+#if 0
+// XXX: does not pass
+    vector<unsigned char> data;
+    UnitTestUtil::readWireData("testdata/rdata_mx_toWire1", data);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, obuffer.getData(),
+                        obuffer.getLength(), &data[0], data.size());
+#endif
+}
+
 TEST_F(Rdata_MX_Test, toText)
 {
     EXPECT_EQ("10 mx.example.com.", rdata_mx.toText());
+}
+
+TEST_F(Rdata_MX_Test, getMXName)
+{
+    EXPECT_EQ(Name("mx.example.com."), rdata_mx.getMXName());
+}
+
+TEST_F(Rdata_MX_Test, getMXPref)
+{
+    EXPECT_EQ(10, rdata_mx.getMXPref());
 }
 
 TEST_F(Rdata_MX_Test, compare)

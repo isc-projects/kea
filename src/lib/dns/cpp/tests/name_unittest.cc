@@ -474,6 +474,9 @@ TEST_F(NameTest, reverse)
                         Name("com.example.www."));
     EXPECT_PRED_FORMAT2(UnitTestUtil::matchName, Name(".").reverse(),
                         Name("."));
+    EXPECT_PRED_FORMAT2(UnitTestUtil::matchName,
+                        Name("a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s").reverse(),
+                        Name("s.r.q.p.o.n.m.l.k.j.i.h.g.f.e.d.c.b.a"));
 }
 
 TEST_F(NameTest, split)
