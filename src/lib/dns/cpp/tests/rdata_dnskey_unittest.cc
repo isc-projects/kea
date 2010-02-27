@@ -73,6 +73,13 @@ TEST_F(Rdata_DNSKEY_Test, badText)
                  InvalidRdataText);
     EXPECT_THROW(generic::DNSKEY("257 3 5 BAAAAAAAAAAAD"),
                  BadBase64String);
+    // Should this be allowed?
+//     EXPECT_THROW(generic::DNSKEY("257 3 5BEAAEFTd"),
+//                  InvalidRdataText);
+    // How about this?  It's even more confusing for the parser because
+    // it could be ambiguous '51 EAAA' vs '5 1EAA..'
+//     EXPECT_THROW(generic::DNSKEY("257 3 51EAAEFTd"),
+//                  InvalidRdataText);
 }
 
 TEST_F(Rdata_DNSKEY_Test, toWireRenderer)
