@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id: unittest_util.cc 754 2010-02-08 22:28:56Z each $
+// $Id$
 
 #include <iostream>
 #include <fstream>
