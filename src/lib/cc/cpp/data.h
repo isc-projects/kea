@@ -455,12 +455,22 @@ bool isNull(ElementPtr p);
 
 ///
 /// \brief Remove all values from the first ElementPtr that are
-/// also present in the second. Both ElementPtrs MUST be MapElements
+/// equal in the second. Both ElementPtrs MUST be MapElements
 /// The use for this function is to end up with a MapElement that
 /// only contains new and changed values (for ModuleCCSession and
 /// configuration update handlers)
 /// Raises a TypeError if a or b are not MapElements
 void removeIdentical(ElementPtr a, const ElementPtr b);
+
+/// \brief Merges the data from other into element.
+/// (on the first level). Both elements must be
+/// MapElements.
+/// Every string,value pair in other is copied into element
+/// (the ElementPtr of value is copied, this is not a new object)
+/// Unless the value is an empty ElementPtr, in which case the
+/// whole key is removed from element.
+/// Raises a TypeError if either ElementPtr is not a MapElement
+void merge(ElementPtr element, const ElementPtr other);
 
 } }
 

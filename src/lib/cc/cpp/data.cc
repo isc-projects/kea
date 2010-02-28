@@ -1005,21 +1005,40 @@ isc::data::isNull(ElementPtr p)
 void
 isc::data::removeIdentical(ElementPtr a, const ElementPtr b)
 {
+    if (!b) {
+        return;
+    }
     if (a->getType() != Element::map || b->getType() != Element::map) {
         dns_throw(TypeError, "Non-map Elements passed to removeIdentical");
     }
-    std::cout<<"[XX] removeidentical from " << a << " and " << b << std::endl;
-    
+
     std::map<std::string, ElementPtr> m = a->mapValue();
     for (std::map<std::string, ElementPtr>::iterator it = m.begin() ;
          it != m.end() ; ++it) {
         if (b->contains((*it).first)) {
             if (a->get((*it).first)->equals(b->get((*it).first))) {
-                std::cout<<"[XX] remove " << (*it).first << std::endl;
                 a->remove((*it).first);
             }
         }
     }
-    std::cout<<"[XX] a now " << a << std::endl;
-
 }
+
+void
+isc::data::merge(ElementPtr element, const ElementPtr other)
+{
+    if (element->getType() != Element::map ||
+        other->getType() != Element::map) {
+        dns_throw(TypeError, "merge arguments not MapElements");
+    }
+    
+    std::map<std::string, ElementPtr> m = other->mapValue();
+    for (std::map<std::string, ElementPtr>::iterator it = m.begin() ;
+         it != m.end() ; ++it) {
+        if ((*it).second) {
+            element->set((*it).first, (*it).second);
+        } else if (element->contains((*it).first)) {
+            element->remove((*it).first);
+        }
+    }
+}
+

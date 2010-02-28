@@ -380,3 +380,35 @@ TEST(Element, removeIdentical) {
     removeIdentical(a, b);
     EXPECT_TRUE(a == c);
 }
+
+TEST(Element, merge)
+{
+    ElementPtr a = Element::createFromString("{}");
+    ElementPtr b = Element::createFromString("{}");
+    ElementPtr c = Element::createFromString("{}");
+    merge(a, b);
+    EXPECT_TRUE(a == c);
+
+    a = Element::createFromString("1");
+    b = Element::createFromString("{}");
+    EXPECT_THROW(merge(a, b), TypeError);
+
+    a = Element::createFromString("{}");
+    b = Element::createFromString("{ \"a\": 1 }");
+    c = Element::createFromString("{ \"a\": 1 }");
+    merge(a, b);
+    EXPECT_TRUE(a == c);
+
+    a = Element::createFromString("{ \"a\": 1 }");
+    b = Element::createFromString("{ \"a\": 2 }");
+    c = Element::createFromString("{ \"a\": 2 }");
+    merge(a, b);
+    EXPECT_TRUE(a == c);
+
+    a = Element::createFromString("{ \"a\": { \"b\": \"c\" } }");
+    b = Element::createFromString("{ \"a\": { \"b\": \"d\" } }");
+    c = Element::createFromString("{ \"a\": { \"b\": \"d\" } }");
+    merge(a, b);
+    EXPECT_TRUE(a == c);
+
+}

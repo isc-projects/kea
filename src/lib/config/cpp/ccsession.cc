@@ -189,7 +189,8 @@ ModuleCCSession::ModuleCCSession(std::string spec_file_name,
     ElementPtr spec_msg = createCommand("module_spec", module_specification_.getFullSpec());
     session_.group_sendmsg(spec_msg, "ConfigManager");
     session_.group_recvmsg(env, answer, false);
-    
+
+    config_ = Element::createFromString("{}");
     // get any stored configuration from the manager
     if (config_handler_) {
         ElementPtr cmd = Element::createFromString("{ \"command\": [\"get_config\", {\"module_name\":\"" + module_name_ + "\"} ] }");
@@ -202,7 +203,7 @@ ModuleCCSession::ModuleCCSession(std::string spec_file_name,
 }
 
 /// Validates the new config values, if they are correct,
-/// call the config handler
+/// call the config handler with the values that have changed
 /// If that results in success, store the new config
 ElementPtr
 ModuleCCSession::handleConfigUpdate(ElementPtr new_config)
@@ -220,13 +221,15 @@ ModuleCCSession::handleConfigUpdate(ElementPtr new_config)
         }
         answer = createAnswer(2, ss.str());
     } else {
+        // remove the values that have not changed
+        isc::data::removeIdentical(new_config, getConfig());
         // handle config update
         std::cout << "handleConfigUpdate " << new_config << std::endl;
         answer = config_handler_(new_config);
         int rcode;
         parseAnswer(rcode, answer);
         if (rcode == 0) {
-            config_ = new_config;
+            isc::data::merge(config_, new_config);
         }
     }
     std::cout << "end handleConfigUpdate " << new_config << std::endl;
