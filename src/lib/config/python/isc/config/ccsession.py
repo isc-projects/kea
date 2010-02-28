@@ -189,14 +189,22 @@ class ModuleCCSession(ConfigData):
                     elif not self.get_module_spec().validate_config(False, new_config, errors):
                         answer = create_answer(1, " ".join(errors))
                     else:
+                        isc.cc.data.remove_identical(new_config, self.get_local_config())
                         answer = self._config_handler(new_config)
+                        rcode, val = parse_answer(answer)
+                        if rcode == 0:
+                            newc = self.get_local_config()
+                            isc.cc.data.merge(newc, new_config)
+                            self.set_local_config(newc)
                 else:
                     if self._command_handler:
                         answer = self._command_handler(cmd, arg)
                     else:
                         answer = create_answer(2, self._module_name + " has no command handler")
             except Exception as exc:
+                print("error! " + str(exc))
                 answer = create_answer(1, str(exc))
+                raise exc
             if answer:
                 self._session.group_reply(env, answer)
     

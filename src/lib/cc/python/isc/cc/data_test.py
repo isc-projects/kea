@@ -22,6 +22,55 @@ import os
 import data
 
 class TestData(unittest.TestCase):
+    def test_remove_identical(self):
+        a = {}
+        b = {}
+        c = {}
+        data.remove_identical(a, b)
+        self.assertEqual(a, c)
+
+        a = { "a": 1 }
+        b = { "a": 1 }
+        c = {}
+        data.remove_identical(a, b)
+        self.assertEqual(a, c)
+    
+        a = { "a": 1, "b": [ 1, 2 ] }
+        b = {}
+        c = { "a": 1, "b": [ 1, 2 ] }
+        data.remove_identical(a, b)
+        self.assertEqual(a, c)
+    
+        a = { "a": 1, "b": [ 1, 2 ] }
+        b = { "a": 1, "b": [ 1, 2 ] }
+        c = {}
+        data.remove_identical(a, b)
+        self.assertEqual(a, c)
+    
+        a = { "a": 1, "b": [ 1, 2 ] }
+        b = { "a": 1, "b": [ 1, 3 ] }
+        c = { "b": [ 1, 2 ] }
+        data.remove_identical(a, b)
+        self.assertEqual(a, c)
+    
+        a = { "a": { "b": "c" } }
+        b = {}
+        c = { "a": { "b": "c" } }
+        data.remove_identical(a, b)
+        self.assertEqual(a, c)
+    
+        a = { "a": { "b": "c" } }
+        b = { "a": { "b": "c" } }
+        c = {}
+        data.remove_identical(a, b)
+        self.assertEqual(a, c)
+    
+        a = { "a": { "b": "c" } }
+        b = { "a": { "b": "d" } }
+        c = { "a": { "b": "c" } }
+        data.remove_identical(a, b)
+        self.assertEqual(a, c)
+        
     def test_merge(self):
         d1 = { 'a': 'a', 'b': 1, 'c': { 'd': 'd', 'e': 2 } }
         d2 = { 'a': None, 'c': { 'd': None, 'e': 3, 'f': [ 1 ] } }

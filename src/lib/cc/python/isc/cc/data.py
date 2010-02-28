@@ -25,6 +25,18 @@ import ast
 class DataNotFoundError(Exception): pass
 class DataTypeError(Exception): pass
 
+def remove_identical(a, b):
+    """Removes the values from dict a that are the same as in dict b.
+       Raises a DataTypeError is a or b is not a dict"""
+    to_remove = []
+    if type(a) != dict or type(b) != dict:
+        raise DataTypeError("Not a dict in remove_identical()")
+    for ka in a.keys():
+        if ka in b and a[ka] == b[ka]:
+            to_remove.append(ka)
+    for id in to_remove:
+        del(a[id])
+
 def merge(orig, new):
     """Merges the contents of new into orig, think recursive update()
        orig and new must both be dicts. If an element value is None in
@@ -78,6 +90,10 @@ def set(element, identifier, value):
         if id in cur_el.keys():
             cur_el = cur_el[id]
         else:
+            if value == None:
+                # ok we are unsetting a value that wasn't set in
+                # the first place. Simply stop.
+                return
             cur_el[id] = {}
             cur_el = cur_el[id]
     # value can be an empty list or dict, so check for None eplicitely
