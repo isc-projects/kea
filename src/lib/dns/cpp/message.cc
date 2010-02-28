@@ -179,6 +179,7 @@ public:
     vector<QuestionPtr> questions_;
     vector<RRsetPtr> rrsets_[SECTION_MAX];
     RRsetPtr edns_;
+    uint16_t udpsize_;
 
 #ifdef notyet
     // tsig/sig0: TODO
@@ -191,12 +192,9 @@ public:
                       InputBuffer& buffer);
 };
 
-MessageImpl::MessageImpl() :
-    qid_(0), rcode_(NULL), opcode_(NULL), flags_(0), dnssec_ok_(false)
+MessageImpl::MessageImpl()
 {
-    for (int i = 0; i < SECTION_MAX; i++) {
-        counts_[i] = 0;
-    }
+    init();
 }
 
 void
@@ -208,6 +206,7 @@ MessageImpl::init()
     opcode_ = NULL;
     dnssec_ok_ = false;
     edns_ = RRsetPtr();
+    udpsize_ = Message::DEFAULT_MAX_UDPSIZE;
 
     for (int i = 0; i < SECTION_MAX; i++) {
         counts_[i] = 0;
@@ -251,6 +250,12 @@ bool
 Message::isDNSSECSupported() const
 {
     return (impl_->dnssec_ok_);
+}
+
+uint16_t
+Message::getUDPSize() const
+{
+    return (impl_->udpsize_);
 }
 
 qid_t
@@ -479,16 +484,22 @@ MessageImpl::parseSection(Message& messge, const Section& section,
             if (edns_ != NULL) {
                 dns_throw(DNSMessageFORMERR, "multiple EDNS OPT RR found");
             }
+            if (((ttl.getValue() & 0x00ff0000) >> 16) >
+                Message::EDNS0_SUPPORTED_VERSION) {
+                dns_throw(DNSMessageBADVERS, "unsupported EDNS version");
+            }
             if (name != Name::ROOT_NAME()) {
                 dns_throw(DNSMessageFORMERR,
-                          "invalid owner name for  EDNS OPT RR");
+                          "invalid owner name for EDNS OPT RR");
             }
 
             edns_ = RRsetPtr(new RRset(name, rrclass, rrtype, ttl));
             edns_->addRdata(rdata);
 
             dnssec_ok_ = (((ttl.getValue() & 0xffff) & EXTFLAG_DO) != 0);
-
+            if (rrclass.getCode() > Message::DEFAULT_MAX_UDPSIZE) {
+                udpsize_ = rrclass.getCode();
+            }
             continue;
         }
 

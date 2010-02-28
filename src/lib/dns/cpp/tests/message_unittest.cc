@@ -32,11 +32,12 @@ using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 
+const uint16_t Message::DEFAULT_MAX_UDPSIZE;
+
 namespace {
 class MessageTest : public ::testing::Test {
 protected:
-    MessageTest() : obuffer(0), renderer(obuffer)
-    {}
+    MessageTest() : obuffer(0), renderer(obuffer) {}
     static Question factoryFromFile(const char* datafile);
     OutputBuffer obuffer;
     MessageRenderer renderer;
@@ -92,16 +93,36 @@ TEST_F(MessageTest, fromWire)
 
 TEST_F(MessageTest, EDNS0DOBit)
 {
+    // Without EDNS0, DNSSEC is considered to be unsupported.
     factoryFromFile(message, "testdata/message_fromWire1");
     EXPECT_FALSE(message.isDNSSECSupported());
 
+    // If DO bit is on, DNSSEC is considered to be supported.
     message.clear();
     factoryFromFile(message, "testdata/message_fromWire2");
     EXPECT_TRUE(message.isDNSSECSupported());
 
+    // If DO bit is off, DNSSEC is considered to be unsupported.
     message.clear();
     factoryFromFile(message, "testdata/message_fromWire3");
     EXPECT_FALSE(message.isDNSSECSupported());
+}
+
+TEST_F(MessageTest, EDNS0UDPSize)
+{
+    // Without EDNS0, the default max UDP size is used.
+    factoryFromFile(message, "testdata/message_fromWire1");
+    EXPECT_EQ(Message::DEFAULT_MAX_UDPSIZE, message.getUDPSize());
+
+    // If the size specified in EDNS0 > default max, use it.
+    message.clear();
+    factoryFromFile(message, "testdata/message_fromWire2");
+    EXPECT_EQ(4096, message.getUDPSize());
+
+    // If the size specified in EDNS0 < default max, keep using the default.
+    message.clear();
+    factoryFromFile(message, "testdata/message_fromWire8");
+    EXPECT_EQ(Message::DEFAULT_MAX_UDPSIZE, message.getUDPSize());
 }
 
 TEST_F(MessageTest, BadEDNS0)
@@ -122,6 +143,10 @@ TEST_F(MessageTest, BadEDNS0)
     // We accept it, but is it okay?
     message.clear();
     EXPECT_NO_THROW(factoryFromFile(message, "testdata/message_fromWire7"));
+    // Unsupported Version
+    message.clear();
+    EXPECT_THROW(factoryFromFile(message, "testdata/message_fromWire9"),
+                 DNSMessageBADVERS);
 }
 
 TEST_F(MessageTest, toWire)
