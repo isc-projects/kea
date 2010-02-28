@@ -174,7 +174,6 @@ AC_CONFIG_FILES([Makefile
                  src/lib/auth/cpp/Makefile
                ])
 AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
-           src/bin/cfgmgr/run_b10-cfgmgr.sh
            src/bin/cmdctl/cmdctl.py
            src/bin/cmdctl/run_b10-cmdctl.sh
            src/bin/cmdctl/unittest/cmdctl_test
