@@ -80,46 +80,37 @@ config add [identifier] <value>: add a value to a list
 config remove [identifier] <value>: remove a value from a list 
 config revert:	Revert all changes that have not been committed
 config commit: Commit all changes
-
+config diff: Show the changes that have not been committed yet
 
 EXAMPLE SESSION
 
 ~> bindctl
+["login success "] login as root
 > config show
-ParkingLot/	module	
-> config show ParkingLot/
-port:	5300	integer	(default)
-zones/	list	
-a_records/	list	(default)
-aaaa_records/	list	(default)
-ns_records/	list	(default)
-> config go ParkingLot/
-/ParkingLot> config show
-port:	5300	integer	(default)
-zones/	list	
-a_records/	list	(default)
-aaaa_records/	list	(default)
-ns_records/	list	(default)
-/ParkingLot> config show zones
-/ParkingLot> config add zone tjeb.nl
-Error: /ParkingLot/zone not found
-/ParkingLot> config add zones tjeb.nl
-/ParkingLot> config show zones
-zone_name:	tjeb.nl	string	
-/ParkingLot> config show
-port:	5300	integer	(default)
-zones/	list	(modified)
-a_records/	list	(default)
-aaaa_records/	list	(default)
-ns_records/	list	(default)
-/ParkingLot> config go /
-> config show ParkingLot/port
-port:	5300	integer	(default)
-> config go ParkingLot/a_records/
-/ParkingLot/a_records> config show
-address:	127.0.0.1	string	
-/ParkingLot/a_records> config add "127.0.0.2"
-/ParkingLot/a_records> config show
-address:	127.0.0.2	string	
-/ParkingLot/a_records> 
-
+Auth/	module	
+Boss/	module	
+> config show Auth/
+database_file:	b10-auth.db	string	
+zone_list/	list	
+> config go Auth
+/Auth> config show
+database_file:	b10-auth.db	string	
+zone_list/	list	
+/Auth> config show zone_list
+/Auth> config add zone example.com
+Error: /Auth/zone not found
+/Auth> config add zone_list example.com
+/Auth> config show zone_list
+zone_name:	example.com	string	
+/Auth> config show
+database_file:	b10-auth.db	string	
+zone_list/	list	(modified)
+/Auth> config go /
+> config show Auth/database_file
+database_file:	b10-auth.db	string	
+> config diff
+{'Auth': {'zone_list': ['example.com']}}
+> config commit
+> config diff
+{}
+> quit
