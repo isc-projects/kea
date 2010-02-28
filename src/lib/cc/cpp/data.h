@@ -103,6 +103,10 @@ public:
 
     /// \return the type of this element
     int getType() { return type; };
+
+    /// \returns true if the other ElementPtr has the same type and
+    ///          value
+    virtual bool equals(ElementPtr other) = 0;
     
     // pure virtuals, every derived class must implement these
 
@@ -332,6 +336,7 @@ public:
     bool setValue(const int v) { i = v; return true; };
     std::string str();
     void toWire(std::stringstream& ss, int omit_length = 1);
+    bool equals(ElementPtr other);
 };
 
 class DoubleElement : public Element {
@@ -346,6 +351,7 @@ public:
     bool setValue(const double v) { d = v; return true; };
     std::string str();
     void toWire(std::stringstream& ss, int omit_length = 1);
+    bool equals(ElementPtr other);
 };
 
 class BoolElement : public Element {
@@ -360,6 +366,7 @@ public:
     bool setValue(const bool v) { b = v; return true; };
     std::string str();
     void toWire(std::stringstream& ss, int omit_length = 1);
+    bool equals(ElementPtr other);
 };
 
 class StringElement : public Element {
@@ -374,6 +381,7 @@ public:
     bool setValue(const std::string& v) { s = v; return true; };
     std::string str();
     void toWire(std::stringstream& ss, int omit_length = 1);
+    bool equals(ElementPtr other);
 };
 
 class ListElement : public Element {
@@ -396,6 +404,7 @@ public:
     std::string str();
     void toWire(std::stringstream& ss, int omit_length = 1);
     size_t size() { return l.size(); }
+    bool equals(ElementPtr other);
 };
 
 class MapElement : public Element {
@@ -435,6 +444,8 @@ public:
     // it doesnt exist or one of the elements in the path is not
     // a MapElement)
     bool find(const std::string& id, ElementPtr& t);
+
+    bool equals(ElementPtr other);
 };
 
 /// Checks whether the given ElementPtr is a NULL pointer
@@ -442,6 +453,14 @@ public:
 /// \return true if it is NULL, false if not.
 bool isNull(ElementPtr p);
 
+///
+/// \brief Remove all values from the first ElementPtr that are
+/// also present in the second. Both ElementPtrs MUST be MapElements
+/// The use for this function is to end up with a MapElement that
+/// only contains new and changed values (for ModuleCCSession and
+/// configuration update handlers)
+/// Raises a TypeError if a or b are not MapElements
+void removeIdentical(ElementPtr a, const ElementPtr b);
 
 } }
 
@@ -461,6 +480,8 @@ bool isNull(ElementPtr p);
 /// \return A reference to the same \c std::ostream object referenced by
 /// parameter \c os after the insertion operation.
 std::ostream& operator <<(std::ostream &out, const isc::data::ElementPtr& e);
+
+bool operator==(const isc::data::ElementPtr a, const isc::data::ElementPtr b);
 
 #endif // _ISC_DATA_H
 
