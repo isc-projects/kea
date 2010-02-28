@@ -583,6 +583,11 @@ TEST_F(NameTest, gthan)
     EXPECT_FALSE(small_name > large_name);
 }
 
+TEST_F(NameTest, constants)
+{
+    EXPECT_EQ(Name("."), Name::ROOT_NAME());
+}
+
 // test operator<<.  We simply confirm it appends the result of toText().
 TEST_F(NameTest, LeftShiftOperator)
 {

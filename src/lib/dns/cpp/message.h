@@ -20,14 +20,27 @@
 #include <iterator>
 #include <string>
 
-#include <boost/shared_ptr.hpp>
-
 #include <exceptions/exceptions.h>
 #include "question.h"
 #include "rrset.h"
 
 namespace isc {
 namespace dns {
+
+///
+/// \brief A standard DNS module exception ...[TBD]
+///
+class DNSProtocolError : public Exception {
+public:
+    DNSProtocolError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+class DNSMessageFORMERR : public DNSProtocolError {
+public:
+    DNSMessageFORMERR(const char* file, size_t line, const char* what) :
+        DNSProtocolError(file, line, what) {}
+};
 
 ///
 /// \brief A standard DNS module exception ...[TBD]
@@ -403,6 +416,8 @@ public:
     unsigned int getCode() const { return (code_); }
     bool operator==(const Section& other) const
         { return (code_ == other.code_); }
+    bool operator!=(const Section& other) const
+        { return (code_ != other.code_); }
 
     static const Section& QUESTION();
     static const Section& ANSWER();
@@ -474,11 +489,13 @@ public:
     ~Message();
 private:
     Message(const Message& source);
-    void operator=(const Message& source);
+    Message& operator=(const Message& source);
 public:
     bool getHeaderFlag(const MessageFlag& flag) const;
     void setHeaderFlag(const MessageFlag& flag);
     void clearHeaderFlag(const MessageFlag& flag);
+    bool isDNSSECSupported() const;
+    void setDNSSECSupported(bool on);
     qid_t getQid() const;
     void setQid(qid_t qid);
     const Rcode& getRcode() const;
@@ -509,45 +526,26 @@ public:
     //void addRR(const Section& section, const RR& rr);
     //void removeRR(const Section& section, const RR& rr);
 
+    void clear();
+
     // prepare for making a response from a request.  This will clear the
     // DNS header except those fields that should be kept for the response,
     // and clear answer and the following sections.
     // see also dns_message_reply() of BIND9.
     void makeResponse();
 
-    /// Render message
+    /// \brief Render message.
     void toWire(MessageRenderer& renderer);
 
     /// \brief Parse a DNS message.
     void fromWire(InputBuffer& buffer);
 
-public:
-    // public protocol constants
-    static const rcode_t RCODE_NOERROR = 0;
-    static const rcode_t RCODE_FORMERR = 1;
-    static const rcode_t RCODE_SERVFAIL = 2;
-    static const rcode_t RCODE_NXDOMAIN = 3;
-    static const rcode_t RCODE_NOTIMP = 4;
-    static const rcode_t RCODE_REFUSED = 5;
-    static const rcode_t RCODE_YXDOMAIN = 6;
-    static const rcode_t RCODE_YXRRSET = 7;
-    static const rcode_t RCODE_NXRRSET = 8;
-    static const rcode_t RCODE_NOTAUTH = 9;
-    static const rcode_t RCODE_NOTZONE = 10;
-    // ...more to follow
-
-    static const opcode_t OPCODE_QUERY = 0;
-    static const opcode_t OPCODE_IQUERY = 1;
-    static const opcode_t OPCODE_STATUS = 2;
-    static const opcode_t OPCODE_NOTIFY = 4;
-    static const opcode_t OPCODE_UPDATE = 5;
-
 private:
     MessageImpl* impl_;
 };
 
-std::ostream& operator<<(std::ostream& os, const Opcode& rrset);
-std::ostream& operator<<(std::ostream& os, const Rcode& rrset);
+std::ostream& operator<<(std::ostream& os, const Opcode& opcode);
+std::ostream& operator<<(std::ostream& os, const Rcode& rcode);
 std::ostream& operator<<(std::ostream& os, const Message& message);
 }
 }

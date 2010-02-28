@@ -55,6 +55,8 @@ static const flags_t FLAG_RA = 0x0080;
 static const flags_t FLAG_AD = 0x0020;
 static const flags_t FLAG_CD = 0x0010;
 
+static const flags_t EXTFLAG_DO = 0x8000;
+
 static const unsigned int OPCODE_MASK = 0x7800;
 static const unsigned int OPCODE_SHIFT = 11;
 static const unsigned int RCODE_MASK = 0x000f;
@@ -151,39 +153,6 @@ Rcode::toText() const
     return (rcodetext[code_]);
 }
 
-struct MessageImpl {
-    MessageImpl();
-    // Open issues: should we rather have a header in wire-format
-    // for efficiency?
-    qid_t qid_;
-    const Rcode* rcode_;
-    const Opcode* opcode_;
-    flags_t flags_;
-
-    static const unsigned int SECTION_MAX = 4; // TODO: revisit this design
-    int counts_[SECTION_MAX];   // TODO: revisit this definition
-    vector<QuestionPtr> questions_;
-    vector<RRsetPtr> rrsets_[SECTION_MAX];
-
-#ifdef notyet
-    // tsig/sig0: TODO
-    EDNS* edns_;
-    RRsetsSorter* sorter_;
-#endif
-
-    void parseQuestion(Message& message, InputBuffer& buffer);
-    void parseSection(Message& messge, const Section& section,
-                      InputBuffer& buffer);
-};
-
-MessageImpl::MessageImpl() :
-    qid_(0), rcode_(NULL), opcode_(NULL), flags_(0)
-{
-    for (int i = 0; i < SECTION_MAX; i++) {
-        counts_[i] = 0;
-    }
-}
-
 namespace {
 inline unsigned int
 sectionCodeToId(const Section& section)
@@ -192,6 +161,62 @@ sectionCodeToId(const Section& section)
     assert(code > 0);
     return (section.getCode() - 1);
 }
+}
+
+class MessageImpl {
+public:
+    MessageImpl();
+    // Open issues: should we rather have a header in wire-format
+    // for efficiency?
+    qid_t qid_;
+    const Rcode* rcode_;
+    const Opcode* opcode_;
+    flags_t flags_;
+    bool dnssec_ok_;
+
+    static const unsigned int SECTION_MAX = 4; // TODO: revisit this design
+    int counts_[SECTION_MAX];   // TODO: revisit this definition
+    vector<QuestionPtr> questions_;
+    vector<RRsetPtr> rrsets_[SECTION_MAX];
+    RRsetPtr edns_;
+
+#ifdef notyet
+    // tsig/sig0: TODO
+    RRsetsSorter* sorter_;
+#endif
+
+    void init();
+    void parseQuestion(Message& message, InputBuffer& buffer);
+    void parseSection(Message& messge, const Section& section,
+                      InputBuffer& buffer);
+};
+
+MessageImpl::MessageImpl() :
+    qid_(0), rcode_(NULL), opcode_(NULL), flags_(0), dnssec_ok_(false)
+{
+    for (int i = 0; i < SECTION_MAX; i++) {
+        counts_[i] = 0;
+    }
+}
+
+void
+MessageImpl::init()
+{
+    flags_ = 0;
+    qid_ = 0;
+    rcode_ = NULL;
+    opcode_ = NULL;
+    dnssec_ok_ = false;
+    edns_ = RRsetPtr();
+
+    for (int i = 0; i < SECTION_MAX; i++) {
+        counts_[i] = 0;
+    }
+
+    questions_.clear();
+    rrsets_[sectionCodeToId(Section::ANSWER())].clear();
+    rrsets_[sectionCodeToId(Section::AUTHORITY())].clear();
+    rrsets_[sectionCodeToId(Section::ADDITIONAL())].clear();
 }
 
 Message::Message() :
@@ -220,6 +245,12 @@ void
 Message::clearHeaderFlag(const MessageFlag& flag)
 {
     impl_->flags_ &= ~flag.getBit();
+}
+
+bool
+Message::isDNSSECSupported() const
+{
+    return (impl_->dnssec_ok_);
 }
 
 qid_t
@@ -437,6 +468,30 @@ MessageImpl::parseSection(Message& messge, const Section& section,
         size_t rdlen = buffer.readUint16();
         RdataPtr rdata = createRdata(rrtype, rrclass, buffer, rdlen);
 
+        // XXX: we wanted to avoid hardcoding type-specific logic here,
+        // but this would be the fastest way for a proof-of-concept
+        // implementation.  We'll revisit this part later.
+        if (rrtype == RRType::OPT()) {
+            if (section != Section::ADDITIONAL()) {
+                dns_throw(DNSMessageFORMERR,
+                          "EDNS OPT RR found in an invalid section");
+            }
+            if (edns_ != NULL) {
+                dns_throw(DNSMessageFORMERR, "multiple EDNS OPT RR found");
+            }
+            if (name != Name::ROOT_NAME()) {
+                dns_throw(DNSMessageFORMERR,
+                          "invalid owner name for  EDNS OPT RR");
+            }
+
+            edns_ = RRsetPtr(new RRset(name, rrclass, rrtype, ttl));
+            edns_->addRdata(rdata);
+
+            dnssec_ok_ = (((ttl.getValue() & 0xffff) & EXTFLAG_DO) != 0);
+
+            continue;
+        }
+
         vector<RRsetPtr>::iterator it =
             find_if(rrsets_[sectionCodeToId(section)].begin(),
                     rrsets_[sectionCodeToId(section)].end(),
@@ -546,14 +601,23 @@ Message::toText() const
 }
 
 void
+Message::clear()
+{
+    impl_->init();
+}
+
+void
 Message::makeResponse()
 {
     impl_->flags_ &= MESSAGE_REPLYPRESERVE;
     setHeaderFlag(MessageFlag::QR());
 
     impl_->rrsets_[sectionCodeToId(Section::ANSWER())].clear();
+    impl_->counts_[Section::ANSWER().getCode()] = 0;
     impl_->rrsets_[sectionCodeToId(Section::AUTHORITY())].clear();
+    impl_->counts_[Section::AUTHORITY().getCode()] = 0;
     impl_->rrsets_[sectionCodeToId(Section::ADDITIONAL())].clear();
+    impl_->counts_[Section::ADDITIONAL().getCode()] = 0;
 }
 
 ///

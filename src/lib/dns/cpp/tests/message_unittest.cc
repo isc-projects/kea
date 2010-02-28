@@ -44,6 +44,8 @@ protected:
     static void factoryFromFile(Message& message, const char* datafile);
 };
 
+const Name test_name("test.example.com");
+
 void
 MessageTest::factoryFromFile(Message& message, const char* datafile)
 {
@@ -65,12 +67,16 @@ TEST_F(MessageTest, fromWire)
     EXPECT_TRUE(message.getHeaderFlag(MessageFlag::AA()));
 
     QuestionPtr q = *message.beginQuestion();
-    EXPECT_EQ(Name("test.example.com"), q->getName());
+    EXPECT_EQ(test_name, q->getName());
     EXPECT_EQ(RRType::A(), q->getType());
     EXPECT_EQ(RRClass::IN(), q->getClass());
+    EXPECT_EQ(1, message.getRRCount(Section::QUESTION()));
+    EXPECT_EQ(2, message.getRRCount(Section::ANSWER()));
+    EXPECT_EQ(0, message.getRRCount(Section::AUTHORITY()));
+    EXPECT_EQ(0, message.getRRCount(Section::ADDITIONAL()));
 
     RRsetPtr rrset = *message.beginSection(Section::ANSWER());
-    EXPECT_EQ(Name("test.example.com"), rrset->getName());
+    EXPECT_EQ(test_name, rrset->getName());
     EXPECT_EQ(RRType::A(), rrset->getType());
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
     // TTL should be 3600, even though that of the 2nd RR is 7200
@@ -82,6 +88,40 @@ TEST_F(MessageTest, fromWire)
     EXPECT_EQ("192.0.2.2", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
+}
+
+TEST_F(MessageTest, EDNS0DOBit)
+{
+    factoryFromFile(message, "testdata/message_fromWire1");
+    EXPECT_FALSE(message.isDNSSECSupported());
+
+    message.clear();
+    factoryFromFile(message, "testdata/message_fromWire2");
+    EXPECT_TRUE(message.isDNSSECSupported());
+
+    message.clear();
+    factoryFromFile(message, "testdata/message_fromWire3");
+    EXPECT_FALSE(message.isDNSSECSupported());
+}
+
+TEST_F(MessageTest, BadEDNS0)
+{
+    // OPT RR in the answer section
+    EXPECT_THROW(factoryFromFile(message, "testdata/message_fromWire4"),
+                 DNSMessageFORMERR);
+    // multiple OPT RRs (in the additional section)
+    message.clear();
+    EXPECT_THROW(factoryFromFile(message, "testdata/message_fromWire5"),
+                 DNSMessageFORMERR);
+    // OPT RR of a non root name
+    message.clear();
+    EXPECT_THROW(factoryFromFile(message, "testdata/message_fromWire6"),
+                 DNSMessageFORMERR);
+    // Compressed owner name of OPT RR points to a root name.
+    // Not necessarily bogus, but very unusual and mostly pathological.
+    // We accept it, but is it okay?
+    message.clear();
+    EXPECT_NO_THROW(factoryFromFile(message, "testdata/message_fromWire7"));
 }
 
 TEST_F(MessageTest, toWire)
