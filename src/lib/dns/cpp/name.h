@@ -599,12 +599,27 @@ public:
     static const uint16_t COMPRESS_POINTER_MARK16 = 0xc000;
     //@}
 
+    ///
+    /// \name Well-known name constants
+    ///
+    //@{
+    /// \brief Root name (i.e. ".").
+    static const Name& ROOT_NAME();
+    //@}
+
 private:
     std::string ndata_;
     std::vector<unsigned char> offsets_;
     unsigned int length_;
     unsigned int labelcount_;
 };
+
+inline const Name&
+Name::ROOT_NAME()
+{
+    static Name root_name(".");
+    return (root_name);
+}
 
 ///
 /// \brief Insert the name as a string into stream.

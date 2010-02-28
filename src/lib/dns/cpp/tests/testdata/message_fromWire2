@@ -1,0 +1,22 @@
+#
+# A simple DNS query message with a valid EDNS0 OPT RR
+# ID = 0x1035
+# QR=0 (query), Opcode=0, RD=1 (other fields are 0)
+# QDCOUNT=1, ANCOUNT=0, NSCOUNT=0, ARCOUNT=1
+# Question: test.example.com. IN A
+1035 0100
+0001 0000 0000 0001
+#(4) t  e  s  t (7) e  x  a  m  p  l  e (3) c  o  m  .
+ 04 74 65 73 74 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00
+0001 0001
+# EDNS0 OPT RR
+# owner name: "."
+00
+# TYPE: OPT (41 = 0x29)
+00 29
+# CLASS (= UDP size): 4096
+1000
+# TTL (extended RCODE and flags): RCODE=0, version=0, flags=DO
+0000 8000
+# RDLEN = 0
+0000
