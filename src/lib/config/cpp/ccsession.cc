@@ -221,7 +221,7 @@ ModuleCCSession::handleConfigUpdate(ElementPtr new_config)
         answer = createAnswer(2, ss.str());
     } else {
         // remove the values that have not changed
-        isc::data::removeIdentical(new_config, getConfig());
+        isc::data::removeIdentical(new_config, getLocalConfig());
         // handle config update
         answer = config_handler_(new_config);
         int rcode;

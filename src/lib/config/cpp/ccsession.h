@@ -19,6 +19,7 @@
 
 #include <string>
 
+#include <config/config_data.h>
 #include <config/module_spec.h>
 #include <cc/session.h>
 #include <cc/data.h>
@@ -42,7 +43,7 @@ public:
 /// holds configuration information, and handles messages from
 /// the command channel
 ///
-class ModuleCCSession {
+class ModuleCCSession : public ConfigData {
 public:
     /**
      * Initialize a config/command session
@@ -89,7 +90,6 @@ public:
      */
     void set_command_handler(isc::data::ElementPtr(*command_handler)(const std::string& command, const isc::data::ElementPtr args)) { command_handler_ = command_handler; };
 
-    const ElementPtr getConfig() { return config_; }
 private:
     void read_module_specification(const std::string& filename);
     
