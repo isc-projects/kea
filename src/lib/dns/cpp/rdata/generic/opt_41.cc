@@ -69,7 +69,7 @@ int
 OPT::compare(const Rdata& other) const
 {
     //const OPT& other_opt = dynamic_cast<const OPT&>(other);
-    dynamic_cast<const OPT&>(other);
+    dynamic_cast<const OPT&>(other); // right now we don't need other_opt
 
     return (0);
 }
