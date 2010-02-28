@@ -50,7 +50,7 @@ TEST_F(Rdata_IN_A_Test, createFromText)
     EXPECT_THROW(in::A("xxx"), InvalidRdataText);
 }
 
-TEST_F(RdataTest, createFromWire)
+TEST_F(Rdata_IN_A_Test, createFromWire)
 {
     // Valid data
     EXPECT_EQ(0, rdata_in_a.compare(
@@ -70,7 +70,7 @@ TEST_F(RdataTest, createFromWire)
                  InvalidBufferPosition);
 }
 
-TEST_F(RdataTest, toWireBuffer)
+TEST_F(Rdata_IN_A_Test, toWireBuffer)
 {
     rdata_in_a.toWire(obuffer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
@@ -78,7 +78,7 @@ TEST_F(RdataTest, toWireBuffer)
                         wiredata_in_a, sizeof(wiredata_in_a));
 }
 
-TEST_F(RdataTest, toWireRenderer)
+TEST_F(Rdata_IN_A_Test, toWireRenderer)
 {
     rdata_in_a.toWire(renderer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
@@ -86,14 +86,14 @@ TEST_F(RdataTest, toWireRenderer)
                         wiredata_in_a, sizeof(wiredata_in_a));
 }
 
-TEST_F(RdataTest, toText)
+TEST_F(Rdata_IN_A_Test, toText)
 {
     EXPECT_EQ("192.0.2.1", rdata_in_a.toText());
     string longaddr("255.255.255.255"); // this shouldn't make the code crash
     EXPECT_EQ(longaddr, in::A(longaddr).toText());
 }
 
-TEST_F(RdataTest, compare)
+TEST_F(Rdata_IN_A_Test, compare)
 {
     in::A small1("1.1.1.1");
     in::A small2("1.2.3.4");
