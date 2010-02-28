@@ -42,6 +42,12 @@ public:
         DNSProtocolError(file, line, what) {}
 };
 
+class DNSMessageBADVERS : public DNSProtocolError {
+public:
+    DNSMessageBADVERS(const char* file, size_t line, const char* what) :
+        DNSProtocolError(file, line, what) {}
+};
+
 ///
 /// \brief A standard DNS module exception ...[TBD]
 ///
@@ -495,7 +501,8 @@ public:
     void setHeaderFlag(const MessageFlag& flag);
     void clearHeaderFlag(const MessageFlag& flag);
     bool isDNSSECSupported() const;
-    void setDNSSECSupported(bool on);
+    void setDNSSECSupported(bool on); // not yet
+    uint16_t getUDPSize() const;
     qid_t getQid() const;
     void setQid(qid_t qid);
     const Rcode& getRcode() const;
@@ -539,6 +546,20 @@ public:
 
     /// \brief Parse a DNS message.
     void fromWire(InputBuffer& buffer);
+
+    ///
+    /// \name Protocol constants
+    ///
+    //@{
+    /// \brief The default maximum size of UDP DNS messages that don't cause
+    /// truncation.
+    ///
+    /// With EDNS0 the maximum size can be increases per message.
+    static const uint16_t DEFAULT_MAX_UDPSIZE = 512;
+
+    /// \brief The highest EDNS0 version this implementation supports.
+    static const uint8_t EDNS0_SUPPORTED_VERSION = 0;
+    //@}
 
 private:
     MessageImpl* impl_;
