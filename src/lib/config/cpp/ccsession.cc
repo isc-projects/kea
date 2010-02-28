@@ -210,7 +210,6 @@ ModuleCCSession::handleConfigUpdate(ElementPtr new_config)
 {
     ElementPtr answer;
     ElementPtr errors = Element::createFromString("[]");
-    std::cout << "handleConfigUpdate " << new_config << std::endl;
     if (!config_handler_) {
         answer = createAnswer(1, module_name_ + " does not have a config handler");
     } else if (!module_specification_.validate_config(new_config, false, errors)) {
@@ -224,7 +223,6 @@ ModuleCCSession::handleConfigUpdate(ElementPtr new_config)
         // remove the values that have not changed
         isc::data::removeIdentical(new_config, getConfig());
         // handle config update
-        std::cout << "handleConfigUpdate " << new_config << std::endl;
         answer = config_handler_(new_config);
         int rcode;
         parseAnswer(rcode, answer);
@@ -232,7 +230,6 @@ ModuleCCSession::handleConfigUpdate(ElementPtr new_config)
             isc::data::merge(config_, new_config);
         }
     }
-    std::cout << "end handleConfigUpdate " << new_config << std::endl;
     return answer;
 }
 
