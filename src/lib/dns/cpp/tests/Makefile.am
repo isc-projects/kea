@@ -17,6 +17,7 @@ run_unittests_SOURCES += rdata_ns_unittest.cc rdata_soa_unittest.cc
 run_unittests_SOURCES += rdata_txt_unittest.cc rdata_mx_unittest.cc
 run_unittests_SOURCES += rdata_cname_unittest.cc
 run_unittests_SOURCES += rdata_dname_unittest.cc
+run_unittests_SOURCES += rdata_opt_unittest.cc
 run_unittests_SOURCES += rdata_dnskey_unittest.cc
 run_unittests_SOURCES += rdata_ds_unittest.cc
 run_unittests_SOURCES += rdata_nsec_unittest.cc
