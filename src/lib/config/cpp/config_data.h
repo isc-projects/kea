@@ -45,6 +45,8 @@ public:
     /// \param module_spec A ModuleSpec for the relevant module
     ConfigData(const ModuleSpec& module_spec) : _module_spec(module_spec) { _config = Element::createFromString("{}"); }
 
+    virtual ~ConfigData() {};
+
     /// Returns the value currently set for the given identifier
     /// If no value is set, the default value (as specified by the
     /// .spec file) is returned. If there is no value and no default,
