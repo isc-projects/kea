@@ -58,6 +58,11 @@ std::ostream& operator <<(std::ostream &out, const isc::data::ElementPtr& e) {
     return out << e->str();
 }
 
+bool operator==(const isc::data::ElementPtr a, const isc::data::ElementPtr b)
+{
+    return a->equals(b);
+};
+
 //
 // factory functions
 //
@@ -912,8 +917,109 @@ MapElement::find(const std::string& id, ElementPtr& t) {
 }
 
 bool
+IntElement::equals(ElementPtr other)
+{
+    return (other->getType() == Element::integer) &&
+           (i == other->intValue());
+}
+
+bool
+DoubleElement::equals(ElementPtr other)
+{
+    return (other->getType() == Element::real) &&
+           (d == other->doubleValue());
+}
+
+bool
+BoolElement::equals(ElementPtr other)
+{
+    return (other->getType() == Element::boolean) &&
+           (b == other->boolValue());
+}
+
+bool
+StringElement::equals(ElementPtr other)
+{
+    return (other->getType() == Element::string) &&
+           (s == other->stringValue());
+}
+
+bool
+ListElement::equals(ElementPtr other)
+{
+    if (other->getType() == Element::list) {
+        int s = size();
+        if (s != other->size()) {
+            return false;
+        }
+        for (int i = 0; i < s; i++) {
+            if (!get(i)->equals(other->get(i))) {
+                return false;
+            }
+        }
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool
+MapElement::equals(ElementPtr other)
+{
+    if (other->getType() == Element::map) {
+        std::map<std::string, ElementPtr> m = mapValue();
+        for (std::map<std::string, ElementPtr>::iterator it = m.begin() ;
+             it != m.end() ; ++it) {
+            if (other->contains((*it).first)) {
+                if (!get((*it).first)->equals(other->get((*it).first))) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
+        // quickly walk through the other map too, to see if there's
+        // anything in there that we don't have. We don't need to
+        // compare those elements; if one of them is missing we
+        // differ (and if it's not missing the loop above has checked
+        // it)
+        m = other->mapValue();
+        for (std::map<std::string, ElementPtr>::iterator it = m.begin() ;
+             it != m.end() ; ++it) {
+            if (!contains((*it).first)) {
+                return false;
+            }
+        }
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool
 isc::data::isNull(ElementPtr p)
 {
     return !p;
 }
 
+void
+isc::data::removeIdentical(ElementPtr a, const ElementPtr b)
+{
+    if (a->getType() != Element::map || b->getType() != Element::map) {
+        dns_throw(TypeError, "Non-map Elements passed to removeIdentical");
+    }
+    std::cout<<"[XX] removeidentical from " << a << " and " << b << std::endl;
+    
+    std::map<std::string, ElementPtr> m = a->mapValue();
+    for (std::map<std::string, ElementPtr>::iterator it = m.begin() ;
+         it != m.end() ; ++it) {
+        if (b->contains((*it).first)) {
+            if (a->get((*it).first)->equals(b->get((*it).first))) {
+                std::cout<<"[XX] remove " << (*it).first << std::endl;
+                a->remove((*it).first);
+            }
+        }
+    }
+    std::cout<<"[XX] a now " << a << std::endl;
+
+}

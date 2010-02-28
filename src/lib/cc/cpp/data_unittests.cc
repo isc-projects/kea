@@ -276,3 +276,107 @@ TEST(Element, to_and_from_wire) {
     EXPECT_EQ(ddef, ddef2);
 }
 
+ElementPtr efs(const std::string& str) {
+    return Element::createFromString(str);
+}
+
+TEST(Element, equals) {
+    // why does EXPECT_EQ not work?
+    EXPECT_TRUE(efs("1") == efs("1"));
+    EXPECT_FALSE(efs("1") == efs("2"));
+    EXPECT_FALSE(efs("1") == efs("\"1\""));
+    EXPECT_FALSE(efs("1") == efs("[]"));
+    EXPECT_FALSE(efs("1") == efs("True"));
+    EXPECT_FALSE(efs("1") == efs("{}"));
+
+    EXPECT_TRUE(efs("1.1") == efs("1.1"));
+    EXPECT_FALSE(efs("1.0") == efs("1"));
+    EXPECT_FALSE(efs("1.1") == efs("\"1\""));
+    EXPECT_FALSE(efs("1.1") == efs("[]"));
+    EXPECT_FALSE(efs("1.1") == efs("True"));
+    EXPECT_FALSE(efs("1.1") == efs("{}"));
+
+    EXPECT_TRUE(efs("True") == efs("True"));
+    EXPECT_FALSE(efs("True") == efs("False"));
+    EXPECT_FALSE(efs("True") == efs("1"));
+    EXPECT_FALSE(efs("True") == efs("\"1\""));
+    EXPECT_FALSE(efs("True") == efs("[]"));
+    EXPECT_FALSE(efs("True") == efs("{}"));
+
+    EXPECT_TRUE(efs("\"foo\"") == efs("\"foo\""));
+    EXPECT_FALSE(efs("\"foo\"") == efs("\"bar\""));
+    EXPECT_FALSE(efs("\"foo\"") == efs("1"));
+    EXPECT_FALSE(efs("\"foo\"") == efs("\"1\""));
+    EXPECT_FALSE(efs("\"foo\"") == efs("True"));
+    EXPECT_FALSE(efs("\"foo\"") == efs("[]"));
+    EXPECT_FALSE(efs("\"foo\"") == efs("{}"));
+
+    EXPECT_TRUE(efs("[]") == efs("[]"));
+    EXPECT_TRUE(efs("[ 1, 2, 3 ]") == efs("[ 1, 2, 3 ]"));
+    EXPECT_TRUE(efs("[ \"a\", [ True, 1], 2.2 ]") == efs("[ \"a\", [ True, 1], 2.2 ]"));
+    EXPECT_FALSE(efs("[ \"a\", [ True, 1], 2.2 ]") == efs("[ \"a\", [ True, 2], 2.2 ]"));
+    EXPECT_FALSE(efs("[]") == efs("[1]"));
+    EXPECT_FALSE(efs("[]") == efs("1"));
+    EXPECT_FALSE(efs("[]") == efs("\"1\""));
+    EXPECT_FALSE(efs("[]") == efs("{}"));
+
+    EXPECT_TRUE(efs("{}") == efs("{}"));
+    EXPECT_TRUE(efs("{ \"foo\": \"bar\" }") == efs("{ \"foo\": \"bar\" }"));
+    EXPECT_TRUE(efs("{ \"item1\": 1, \"item2\": [ \"a\", \"list\" ], \"item3\": { \"foo\": \"bar\" } }") == efs("{ \"item1\": 1, \"item2\": [ \"a\", \"list\" ], \"item3\": { \"foo\": \"bar\" } }"));
+    EXPECT_FALSE(efs("{ \"item1\": 1, \"item2\": [ \"a\", \"list\" ], \"item3\": { \"foo\": \"bar\" } }") == efs("{ \"item1\": 1, \"item2\": [ \"a\", \"list\" ], \"item3\": { \"foo\": \"bar2\" } }"));
+    EXPECT_FALSE(efs("{ \"item1\": 1, \"item2\": [ \"a\", \"list\" ], \"item3\": { \"foo\": \"bar\" } }") == efs("{ \"item1\": 1, \"item2\": [ \"a\", \"list\", 1 ], \"item3\": { \"foo\": \"bar\" } }"));
+    EXPECT_FALSE(efs("{ \"foo\": \"bar\" }") == efs("1"));
+    EXPECT_FALSE(efs("{ \"foo\": \"bar\" }") == efs("\"1\""));
+    EXPECT_FALSE(efs("{ \"foo\": \"bar\" }") == efs("[]"));
+    EXPECT_FALSE(efs("{ \"foo\": \"bar\" }") == efs("{}"));
+}
+
+TEST(Element, removeIdentical) {
+    ElementPtr a = Element::createFromString("{}");
+    ElementPtr b = Element::createFromString("{}");
+    ElementPtr c = Element::createFromString("{}");
+    removeIdentical(a, b);
+    EXPECT_TRUE(a == c);
+
+    a = Element::createFromString("{ \"a\": 1 }");
+    b = Element::createFromString("{ \"a\": 1 }");
+    c = Element::createFromString("{}");
+    removeIdentical(a, b);
+    EXPECT_TRUE(a == c);
+
+    a = Element::createFromString("{ \"a\": 1, \"b\": [ 1, 2 ] }");
+    b = Element::createFromString("{}");
+    c = Element::createFromString("{ \"a\": 1, \"b\": [ 1, 2 ] }");
+    removeIdentical(a, b);
+    EXPECT_TRUE(a == c);
+
+    a = Element::createFromString("{ \"a\": 1, \"b\": [ 1, 2 ] }");
+    b = Element::createFromString("{ \"a\": 1, \"b\": [ 1, 2 ] }");
+    c = Element::createFromString("{}");
+    removeIdentical(a, b);
+    EXPECT_TRUE(a == c);
+
+    a = Element::createFromString("{ \"a\": 1, \"b\": [ 1, 2 ] }");
+    b = Element::createFromString("{ \"a\": 1, \"b\": [ 1, 3 ] }");
+    c = Element::createFromString("{ \"b\": [ 1, 2 ] }");
+    removeIdentical(a, b);
+    EXPECT_TRUE(a == c);
+
+    a = Element::createFromString("{ \"a\": { \"b\": \"c\" } }");
+    b = Element::createFromString("{}");
+    c = Element::createFromString("{ \"a\": { \"b\": \"c\" } }");
+    removeIdentical(a, b);
+    EXPECT_TRUE(a == c);
+
+    a = Element::createFromString("{ \"a\": { \"b\": \"c\" } }");
+    b = Element::createFromString("{ \"a\": { \"b\": \"c\" } }");
+    c = Element::createFromString("{}");
+    removeIdentical(a, b);
+    EXPECT_TRUE(a == c);
+
+    a = Element::createFromString("{ \"a\": { \"b\": \"c\" } }");
+    b = Element::createFromString("{ \"a\": { \"b\": \"d\" } }");
+    c = Element::createFromString("{ \"a\": { \"b\": \"c\" } }");
+    removeIdentical(a, b);
+    EXPECT_TRUE(a == c);
+}
