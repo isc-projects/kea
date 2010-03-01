@@ -8,7 +8,7 @@ BUILDING
 
 Simple build instructions:
 
-  autoreconf
+  autoreconf --install
   ./configure
   make
 
