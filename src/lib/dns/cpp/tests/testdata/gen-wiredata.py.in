@@ -1,0 +1,191 @@
+#!@PYTHON@
+
+import configparser, re, sys
+from optparse import OptionParser
+
+re_hex = re.compile('0x[0-9a-fA-F]+')
+re_decimal = re.compile('\d+')
+re_ = re.compile('\d+$')
+dict_qr = { 'query' : 0, 'response' : 1 }
+dict_opcode = { 'query' : 0, 'iquery' : 1, 'status' : 2, 'notify' : 4,
+                'update' : 5 }
+rdict_opcode = dict([(dict_opcode[k], k.upper()) for k in dict_opcode.keys()])
+dict_rcode = { 'noerror' : 0, 'formerr' : 1, 'servfail' : 2, 'nxdomain' : 3,
+               'notimp' : 4, 'refused' : 5, 'yxdomain' : 6, 'yxrrset' : 7,
+               'nxrrset' : 8, 'notauth' : 9, 'notzone' : 10 }
+rdict_rcode = dict([(dict_rcode[k], k.upper()) for k in dict_rcode.keys()])
+dict_rrtype = { 'none' : 0, 'a' : 1, 'ns' : 2, 'md' : 3, 'mf' : 4, 'cname' : 5,
+                'soa' : 6, 'mb' : 7, 'mg' : 8, 'mr' : 9, 'null' : 10,
+                'wks' : 11, 'ptr' : 12, 'hinfo' : 13, 'minfo' : 14, 'mx' : 15,
+                'txt' : 16, 'rp' : 17, 'afsdb' : 18, 'x25' : 19, 'isdn' : 20,
+                'rt' : 21, 'nsap' : 22, 'nsap_tr' : 23, 'sig' : 24, 'key' : 25,
+                'px' : 26, 'gpos' : 27, 'aaaa' : 28, 'loc' : 29, 'nxt' : 30,
+                'srv' : 33, 'naptr' : 35, 'kx' : 36, 'cert' : 37, 'a6' : 38,
+                'dname' : 39, 'opt' : 41, 'apl' : 42, 'ds' : 43, 'sshfp' : 44,
+                'ipseckey' : 45, 'rrsig' : 46, 'nsec' : 47, 'dnskey' : 48,
+                'dhcid' : 49, 'nsec3' : 50, 'nsec3param' : 51, 'hip' : 55,
+                'spf' : 99, 'unspec' : 103, 'tkey' : 249, 'tsig' : 250,
+                'dlv' : 32769, 'ixfr' : 251, 'axfr' : 252, 'mailb' : 253,
+                'maila' : 254, 'any' : 255 }
+rdict_rrtype = dict([(dict_rrtype[k], k.upper()) for k in dict_rrtype.keys()])
+dict_rrclass = { 'in' : 1, 'ch' : 3, 'hs' : 4, 'any' : 255 }
+rdict_rrclass = dict([(dict_rrclass[k], k.upper()) for k in dict_rrclass.keys()])
+header_xtables = { 'qr' : dict_qr, 'opcode' : dict_opcode,
+                   'rcode' : dict_rcode }
+question_xtables = { 'rrtype' : dict_rrtype, 'rrclass' : dict_rrclass }
+
+def parse_value(value, xtable = {}):
+    if re.search(re_hex, value):
+        return int(value, 16)
+    if re.search(re_decimal, value):
+        return int(value)
+    lovalue = value.lower()
+    if lovalue in xtable:
+        return xtable[lovalue]
+    return value
+
+def code_totext(code, dict):
+    if code in dict.keys():
+        return dict[code] + '(' + str(code) + ')'
+    return str(code)
+
+def encode_name(name):
+    # make sure the name is dot-terminated.  duplicate dots will be ignored
+    # below.
+    name += '.'
+    labels = name.split('.')
+    wire = ''
+    for l in labels:
+        wire += '%02x' % len(l)
+        wire += ''.join(['%02x' % ord(ch) for ch in l])
+        if len(l) == 0:
+            break
+    return wire
+
+def get_config(config, section, configobj, xtables = {}):
+    try:
+        for field in config.options(section):
+            value = config.get(section, field)
+            if field in xtables.keys():
+                xtable = xtables[field]
+            else:
+                xtable = {}
+            configobj.__dict__[field] = parse_value(value, xtable)
+    except configparser.NoSectionError:
+        return False
+    return True
+
+def print_header(f, input_file):
+    f.write('''###
+### This data file was auto-generated from ''' + input_file + '''
+###
+''')
+
+class DNSHeader:
+    id = 0x1035
+    (qr, aa, tc, rd, ra, ad, cd) = 0, 0, 0, 0, 0, 0, 0
+    mbz = 0
+    rcode = 0                   # noerror
+    opcode = 0                  # query
+    (qdcount, ancount, nscount, arcount) = 1, 0, 0, 0
+    def dump(self, f):
+        f.write('\n# Header Section\n')
+        f.write('# ID=' + str(self.id))
+        f.write(' QR=' + ('Response' if self.qr else 'Query'))
+        f.write(' Opcode=' + code_totext(self.opcode, rdict_opcode))
+        f.write(' Rcode=' + code_totext(self.rcode, rdict_rcode))
+        f.write('%s' % (' AA' if self.aa else ''))
+        f.write('%s' % (' TC' if self.tc else ''))
+        f.write('%s' % (' RD' if self.rd else ''))
+        f.write('%s' % (' AD' if self.ad else ''))
+        f.write('%s' % (' CD' if self.cd else ''))
+        f.write('\n')
+        f.write('%04x ' % self.id)
+        flag_and_code = 0
+        flag_and_code |= (self.qr << 15 | self.opcode << 14 | self.aa << 10 |
+                          self.tc << 9 | self.rd << 8 | self.ra << 7 |
+                          self.mbz << 6 | self.ad << 5 | self.cd << 4 |
+                          self.rcode)
+        f.write('%04x\n' % flag_and_code)
+        f.write('# QDCNT=%d, ANCNT=%d, NSCNT=%d, ARCND=%d\n' %
+                (self.qdcount, self.ancount, self.nscount, self.arcount))
+        f.write('%04x %04x %04x %04x\n' % (self.qdcount, self.ancount,
+                                           self.nscount, self.arcount))
+
+class DNSQuestion:
+    name = 'example.com.'
+    rrtype = parse_value('A', dict_rrtype)
+    rrclass = parse_value('IN', dict_rrclass)
+    def dump(self, f):
+        f.write('\n# Question Section\n')
+        f.write('# QNAME=%s QTYPE=%s QCLASS=%s\n' %
+                (self.name,
+                 code_totext(self.rrtype, rdict_rrtype),
+                 code_totext(self.rrclass, rdict_rrclass)))
+        f.write(encode_name(self.name))
+        f.write(' %04x %04x\n' % (self.rrtype, self.rrclass))
+
+class EDNS:
+    name = '.'
+    udpsize = 4096
+    extrcode = 0
+    version = 0
+    do = 0
+    mbz = 0
+    rdlen = 0
+    def dump(self, f):
+        f.write('\n# EDNS OPT RR\n')
+        f.write('# NAME=%s TYPE=%s UDPSize=%d ExtRcode=%s Version=%s DO=%d\n' %
+                (self.name, code_totext(dict_rrtype['opt'], rdict_rrtype),
+                 self.udpsize, self.extrcode, self.version,
+                 1 if self.do else 0))
+        
+        code_vers = (self.extrcode << 8) | (self.version & 0x00ff)
+        extflags = (self.do << 15) | (self.mbz & 0x8000)
+        f.write('%s %04x %04x %04x %04x\n' %
+                (encode_name(self.name), dict_rrtype['opt'], self.udpsize,
+                 code_vers, extflags))
+        f.write('# RDLEN=%d\n' % self.rdlen)
+        f.write('%04x\n' % self.rdlen)
+
+usage = '''usage: %prog [options] input_file'''
+
+if __name__ == "__main__":
+    parser = OptionParser(usage=usage)
+    parser.add_option('-o', '--output', action='store', dest='output',
+                      default=None, metavar='FILE',
+                      help='output file name [default: prefix of input_file]')
+    (options, args) = parser.parse_args()
+
+    if len(args) == 0:
+        parser.error('input file is missing')
+    configfile = args[0]
+
+    outputfile = options.output
+    if not outputfile:
+        m = re.match('(.*)\.[^.]+$', sys.argv[1])
+        if m:
+            outputfile = m.group(1)
+        else:
+            raise ValueError('output file is not specified and input file is not in the form of "output_file.suffix"')
+
+    config = configparser.SafeConfigParser()
+    config.read(configfile)
+
+    output = open(outputfile, 'w')
+
+    print_header(output, configfile)
+
+    header = DNSHeader()
+    if get_config(config, 'header', header, header_xtables):
+        header.dump(output)
+
+    question = DNSQuestion()
+    if get_config(config, 'question', question, question_xtables):
+        question.dump(output)
+
+    edns = EDNS()
+    if get_config(config, 'edns', edns):
+        edns.dump(output)
+
+    output.close()
