@@ -200,5 +200,6 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            chmod +x src/bin/msgq/run_msgq.sh
            chmod +x src/bin/msgq/msgq_test
 	   chmod +x src/lib/dns/cpp/gen-rdatacode.py
+	   chmod +x src/lib/dns/cpp/tests/testdata/gen-wiredata.py
           ])
 AC_OUTPUT
