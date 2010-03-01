@@ -18,10 +18,13 @@
 
 #include <algorithm>
 #include <string>
+#include <sstream>
 #include <vector>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
+
+#include <exceptions/exceptions.h>
 
 #include "buffer.h"
 #include "message.h"
@@ -55,7 +58,13 @@ static const flags_t FLAG_RA = 0x0080;
 static const flags_t FLAG_AD = 0x0020;
 static const flags_t FLAG_CD = 0x0010;
 
+//
+// EDNS0 related constants
+//
+static const flags_t EXTFLAG_MASK = 0xffff;
 static const flags_t EXTFLAG_DO = 0x8000;
+static const uint32_t EXTRCODE_MASK = 0xff000000; 
+static const uint32_t EDNSVERSION_MASK = 0x00ff0000;
 
 static const unsigned int OPCODE_MASK = 0x7800;
 static const unsigned int OPCODE_SHIFT = 11;
@@ -64,23 +73,24 @@ static const unsigned int FLAG_MASK = 0x8ff0;
 
 static const unsigned int MESSAGE_REPLYPRESERVE = (FLAG_RD | FLAG_CD);
 
-static const Rcode* rcodes[] = {
-    &Rcode::NOERROR(),
-    &Rcode::FORMERR(),
-    &Rcode::SERVFAIL(),
-    &Rcode::NXDOMAIN(),
-    &Rcode::NOTIMP(),
-    &Rcode::REFUSED(),
-    &Rcode::YXDOMAIN(),
-    &Rcode::YXRRSET(),
-    &Rcode::NXRRSET(),
-    &Rcode::NOTAUTH(),
-    &Rcode::NOTZONE(),
-    &Rcode::RESERVED11(),
-    &Rcode::RESERVED12(),
-    &Rcode::RESERVED13(),
-    &Rcode::RESERVED14(),
-    &Rcode::RESERVED15()
+static const Rcode rcodes[] = {
+    Rcode::NOERROR(),
+    Rcode::FORMERR(),
+    Rcode::SERVFAIL(),
+    Rcode::NXDOMAIN(),
+    Rcode::NOTIMP(),
+    Rcode::REFUSED(),
+    Rcode::YXDOMAIN(),
+    Rcode::YXRRSET(),
+    Rcode::NXRRSET(),
+    Rcode::NOTAUTH(),
+    Rcode::NOTZONE(),
+    Rcode::RESERVED11(),
+    Rcode::RESERVED12(),
+    Rcode::RESERVED13(),
+    Rcode::RESERVED14(),
+    Rcode::RESERVED15(),
+    Rcode::BADVERS()
 };
 
 static const char *rcodetext[] = {
@@ -99,7 +109,8 @@ static const char *rcodetext[] = {
     "RESERVED12",
     "RESERVED13",
     "RESERVED14",
-    "RESERVED15"
+    "RESERVED15",
+    "BADVERS"
 };
 
 static const Opcode* opcodes[] = {
@@ -147,10 +158,23 @@ Opcode::toText() const
     return (opcodetext[code_]);
 }
 
+Rcode::Rcode(uint16_t code) : code_(code)
+{
+    if (code_ > MAX_RCODE) {
+        dns_throw(OutOfRange, "Rcode is too large to construct");
+    }
+}
+
 string
 Rcode::toText() const
 {
-    return (rcodetext[code_]);
+    if (code_ < sizeof(rcodetext) / sizeof (const char *)) {
+        return (rcodetext[code_]);
+    }
+
+    ostringstream oss;
+    oss << code_;
+    return (oss.str());
 }
 
 namespace {
@@ -169,7 +193,7 @@ public:
     // Open issues: should we rather have a header in wire-format
     // for efficiency?
     qid_t qid_;
-    const Rcode* rcode_;
+    Rcode rcode_;
     const Opcode* opcode_;
     flags_t flags_;
     bool dnssec_ok_;
@@ -192,7 +216,8 @@ public:
                       InputBuffer& buffer);
 };
 
-MessageImpl::MessageImpl()
+MessageImpl::MessageImpl() :
+    rcode_(Rcode::NOERROR())
 {
     init();
 }
@@ -202,7 +227,7 @@ MessageImpl::init()
 {
     flags_ = 0;
     qid_ = 0;
-    rcode_ = NULL;
+    rcode_ = Rcode::NOERROR();  // XXX
     opcode_ = NULL;
     dnssec_ok_ = false;
     edns_ = RRsetPtr();
@@ -273,13 +298,13 @@ Message::setQid(qid_t qid)
 const Rcode&
 Message::getRcode() const
 {
-    return (*impl_->rcode_);
+    return (impl_->rcode_);
 }
 
 void
 Message::setRcode(const Rcode& rcode)
 {
-    impl_->rcode_ = &rcode;
+    impl_->rcode_ = rcode;
 }
 
 const Opcode&
@@ -378,7 +403,7 @@ Message::toWire(MessageRenderer& renderer)
     renderer.writeUint16At(impl_->qid_, header_pos);
     header_pos += sizeof(uint16_t);
     codes_and_flags = (impl_->opcode_->getCode() << OPCODE_SHIFT) & OPCODE_MASK;
-    codes_and_flags |= (impl_->rcode_->getCode() & RCODE_MASK);
+    codes_and_flags |= (impl_->rcode_.getCode() & RCODE_MASK);
     codes_and_flags |= (impl_->flags_ & FLAG_MASK);
     renderer.writeUint16At(codes_and_flags, header_pos);
     header_pos += sizeof(uint16_t);
@@ -456,14 +481,15 @@ struct MatchRR : public unary_function<RRsetPtr, bool> {
 }
 
 void
-MessageImpl::parseSection(Message& messge, const Section& section,
+MessageImpl::parseSection(Message& message, const Section& section,
                           InputBuffer& buffer)
 {
     for (unsigned int count = 0; count < counts_[section.getCode()]; count++) {
         Name name(buffer);
 
+        // buffer must store at least RR TYPE, RR CLASS, TTL, and RDLEN.
         if ((buffer.getLength() - buffer.getPosition()) <
-            2 * sizeof(uint16_t) + sizeof(uint32_t)) {
+            3 * sizeof(uint16_t) + sizeof(uint32_t)) {
             dns_throw(MessageTooShort, "");
         }
 
@@ -484,7 +510,13 @@ MessageImpl::parseSection(Message& messge, const Section& section,
             if (edns_ != NULL) {
                 dns_throw(DNSMessageFORMERR, "multiple EDNS OPT RR found");
             }
-            if (((ttl.getValue() & 0x00ff0000) >> 16) >
+            if (((ttl.getValue() & EDNSVERSION_MASK) >> 16) >
+                // XXX: we should probably not reject the message yet, because
+                // it's better to let the requestor know the responder-side
+                // highest version as indicated in Section 4.6 of RFC2671.
+                // This is probably because why BIND 9 does the version check
+                // in the client code.
+                // This is a TODO item.  Right now we simply reject it.
                 Message::EDNS0_SUPPORTED_VERSION) {
                 dns_throw(DNSMessageBADVERS, "unsupported EDNS version");
             }
@@ -496,10 +528,12 @@ MessageImpl::parseSection(Message& messge, const Section& section,
             edns_ = RRsetPtr(new RRset(name, rrclass, rrtype, ttl));
             edns_->addRdata(rdata);
 
-            dnssec_ok_ = (((ttl.getValue() & 0xffff) & EXTFLAG_DO) != 0);
+            dnssec_ok_ = (((ttl.getValue() & EXTFLAG_MASK) & EXTFLAG_DO) != 0);
             if (rrclass.getCode() > Message::DEFAULT_MAX_UDPSIZE) {
                 udpsize_ = rrclass.getCode();
             }
+            rcode_ = Rcode(((ttl.getValue() & EXTRCODE_MASK) >> 20) |
+                           rcode_.getCode());
             continue;
         }
 
@@ -550,7 +584,7 @@ Message::toText() const
 
     s += ";; ->>HEADER<<- opcode: " + impl_->opcode_->toText();
     // for simplicity we don't consider extended rcode (unlike BIND9)
-    s += ", status: " + impl_->rcode_->toText();
+    s += ", status: " + impl_->rcode_.toText();
     s += ", id: " + boost::lexical_cast<string>(impl_->qid_);
     s += "\n;; flags: ";
     if (getHeaderFlag(MessageFlag::QR()))
