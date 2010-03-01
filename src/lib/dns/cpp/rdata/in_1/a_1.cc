@@ -20,6 +20,7 @@
 #include <string>
 
 #include <arpa/inet.h> // XXX: for inet_pton/ntop(), not exist in C++ standards
+#include <sys/socket.h> // for AF_INET/AF_INET6
 
 #include "buffer.h"
 #include <exceptions/exceptions.h>
