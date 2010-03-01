@@ -68,7 +68,10 @@ UnitTestUtil::readWireData(const string& datastr,
         string bytes;
         iss >> bytes;
         if (iss.bad() || iss.fail() || (bytes.size() % 2) != 0) {
-            throw runtime_error("unexpected input or I/O error");
+            ostringstream err_oss;
+            err_oss << "unexpected input or I/O error in reading " <<
+                datastr;
+            throw runtime_error(err_oss.str());
         }
 
         for (int pos = 0; pos < bytes.size(); pos += 2) {
