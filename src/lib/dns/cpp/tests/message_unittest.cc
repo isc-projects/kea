@@ -14,6 +14,8 @@
 
 // $Id$
 
+#include <exceptions/exceptions.h>
+
 #include <dns/buffer.h>
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
@@ -55,6 +57,25 @@ MessageTest::factoryFromFile(Message& message, const char* datafile)
 
     InputBuffer buffer(&data[0], data.size());
     message.fromWire(buffer);
+}
+
+TEST_F(MessageTest, RcodeConstruct)
+{
+    // normal cases
+    EXPECT_EQ(0, Rcode(0).getCode());
+    EXPECT_EQ(0xfff, Rcode(0xfff).getCode()); // possible max code
+
+    // should fail on attempt of construction with an out of range code
+    EXPECT_THROW(Rcode(0x1000), isc::OutOfRange);
+    EXPECT_THROW(Rcode(0xffff), isc::OutOfRange);
+}
+
+TEST_F(MessageTest, RcodeToText)
+{
+    EXPECT_EQ("NOERROR", Rcode::NOERROR().toText());
+    EXPECT_EQ("BADVERS", Rcode::BADVERS().toText());
+    EXPECT_EQ("17", Rcode(Rcode::BADVERS().getCode() + 1).toText());
+    EXPECT_EQ("4095", Rcode(Rcode(0xfff)).toText());
 }
 
 TEST_F(MessageTest, fromWire)
@@ -123,6 +144,18 @@ TEST_F(MessageTest, EDNS0UDPSize)
     message.clear();
     factoryFromFile(message, "testdata/message_fromWire8");
     EXPECT_EQ(Message::DEFAULT_MAX_UDPSIZE, message.getUDPSize());
+}
+
+TEST_F(MessageTest, EDNS0ExtCode)
+{
+    // Extended Rcode = BADVERS
+    factoryFromFile(message, "testdata/message_fromWire10");
+    EXPECT_EQ(Rcode::BADVERS(), message.getRcode());
+
+    // Maximum extended Rcode
+    message.clear();
+    factoryFromFile(message, "testdata/message_fromWire11");
+    EXPECT_EQ(0xfff, message.getRcode().getCode());
 }
 
 TEST_F(MessageTest, BadEDNS0)
