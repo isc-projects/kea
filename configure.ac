@@ -189,6 +189,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/lib/config/cpp/data_def_unittests_config.h
            src/lib/config/python/isc/config/unittests/config_test
            src/lib/dns/cpp/gen-rdatacode.py
+           src/lib/dns/cpp/tests/testdata/gen-wiredata.py
           ], [
            chmod +x src/bin/cfgmgr/run_b10-cfgmgr.sh
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
