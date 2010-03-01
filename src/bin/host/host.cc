@@ -3,6 +3,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>          // for getaddrinfo
 #include <sys/time.h>       // for gettimeofday
+#include <sys/socket.h>     // networking functions and definitions on FreeBSD
 
 #include <string>
 #include <iostream>
