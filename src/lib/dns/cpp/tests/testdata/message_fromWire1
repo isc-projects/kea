@@ -1,5 +1,5 @@
 #
-# A simple DNS resonse message
+# A simple DNS response message
 # ID = 0x1035
 # QR=1 (response), Opcode=0, AA=1, RD=1 (other fields are 0)
 # QDCOUNT=1, ANCOUNT=2, other COUNTS=0
