@@ -26,27 +26,29 @@
 #include <dns/name.h>
 #include "unittest_util.h"
 
+using namespace std;
+
 using isc::UnitTestUtil;
 using isc::dns::NameComparisonResult;
 
 void
 UnitTestUtil::readWireData(const char* datafile,
-                           std::vector<unsigned char>& data)
+                           vector<unsigned char>& data)
 {
-    std::ifstream ifs;
+    ifstream ifs;
  
-    ifs.open(datafile, std::ios_base::in);
-    if ((ifs.rdstate() & std::istream::failbit) != 0) {
-        throw std::runtime_error("failed to open data file: " +
-                                 std::string(datafile));
+    ifs.open(datafile, ios_base::in);
+    if ((ifs.rdstate() & istream::failbit) != 0) {
+        throw runtime_error("failed to open data file: " +
+                                 string(datafile));
     }
 
     data.clear();
 
-    std::string s;
+    string s;
     while (getline(ifs, s), !ifs.eof()) {
         if (ifs.bad() || ifs.fail()) {
-            throw std::runtime_error("unexpected data line");
+            throw runtime_error("unexpected data line");
         }
         if (s.empty() || s[0] == '#') {
             continue;
@@ -57,21 +59,28 @@ UnitTestUtil::readWireData(const char* datafile,
 }
 
 void
-UnitTestUtil::readWireData(const std::string& datastr,
-                           std::vector<unsigned char>& data)
+UnitTestUtil::readWireData(const string& datastr,
+                           vector<unsigned char>& data)
 {
-    std::istringstream iss(datastr);
+    istringstream iss(datastr);
 
     do {
-        std::string bytes;
+        string bytes;
         iss >> bytes;
         if (iss.bad() || iss.fail() || (bytes.size() % 2) != 0) {
-            throw std::runtime_error("unexpected input or I/O error");
+            throw runtime_error("unexpected input or I/O error");
         }
 
         for (int pos = 0; pos < bytes.size(); pos += 2) {
+            istringstream iss_byte(bytes.substr(pos, 2));
             unsigned int ch;
-            std::istringstream(bytes.substr(pos, 2)) >> std::hex >> ch;
+
+            iss_byte >> hex >> ch;
+            if (iss_byte.rdstate() != istream::eofbit) {
+                ostringstream err_oss;
+                err_oss << "invalid byte representation: " << iss_byte.str();
+                throw runtime_error(err_oss.str());
+            }
             data.push_back(static_cast<unsigned char>(ch));
         }
     } while (!iss.eof());
@@ -84,7 +93,7 @@ UnitTestUtil::matchWireData(const char* dataexp1, const char* lenexp1,
                             const void* data2, size_t len2)
 {
     ::testing::Message msg;
-    size_t cmplen = std::min(len1, len2);
+    size_t cmplen = min(len1, len2);
 
     for (int i = 0; i < cmplen; i++) {
         int ch1 = static_cast<const uint8_t*>(data1)[i];
