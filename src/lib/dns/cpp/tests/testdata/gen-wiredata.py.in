@@ -107,7 +107,7 @@ class DNSHeader:
                           self.mbz << 6 | self.ad << 5 | self.cd << 4 |
                           self.rcode)
         f.write('%04x\n' % flag_and_code)
-        f.write('# QDCNT=%d, ANCNT=%d, NSCNT=%d, ARCND=%d\n' %
+        f.write('# QDCNT=%d, ANCNT=%d, NSCNT=%d, ARCNT=%d\n' %
                 (self.qdcount, self.ancount, self.nscount, self.arcount))
         f.write('%04x %04x %04x %04x\n' % (self.qdcount, self.ancount,
                                            self.nscount, self.arcount))
