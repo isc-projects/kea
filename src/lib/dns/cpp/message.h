@@ -280,6 +280,7 @@ Opcode::RESERVED15()
 
 class Rcode {
 public:
+    Rcode(uint16_t code);
     uint16_t getCode() const { return (code_); }
     bool operator==(const Rcode& other) const { return (code_ == other.code_); }
     std::string toText() const;
@@ -299,9 +300,13 @@ public:
     static const Rcode& RESERVED13();
     static const Rcode& RESERVED14();
     static const Rcode& RESERVED15();
+    // Extended Rcodes follow (EDNS required)
+    static const Rcode& BADVERS();
 private:
-    Rcode(uint16_t code) : code_(code) {}
     uint16_t code_;
+
+    // EDNS-extended RCODEs are 12-bit unsigned integers.
+    static const uint16_t MAX_RCODE = 0xfff;
 };
 
 inline const Rcode&
@@ -413,6 +418,13 @@ inline const Rcode&
 Rcode::RESERVED15()
 {
     static Rcode c(15);
+    return (c);
+}
+
+inline const Rcode&
+Rcode::BADVERS()
+{
+    static Rcode c(16);
     return (c);
 }
 
