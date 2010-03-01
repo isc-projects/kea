@@ -3,9 +3,9 @@
 ###
 
 # Header Section
-# ID=4149 QR=Query Opcode=QUERY(0) Rcode=NOERROR(0) RD
-1035 0100
-# QDCNT=1, ANCNT=0, NSCNT=0, ARCND=1
+# ID=4149 QR=Response Opcode=QUERY(0) Rcode=NOERROR(0) RD
+1035 8100
+# QDCNT=1, ANCNT=0, NSCNT=0, ARCNT=1
 0001 0000 0000 0001
 
 # Question Section

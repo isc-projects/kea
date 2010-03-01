@@ -1,8 +1,9 @@
 #
-# A simple DNS query message with an EDNS0 indicating a BADVERS error
+# A simple DNS response message with an EDNS0 indicating a BADVERS error
 #
 
 [header]
+qr: response
 rd: 1
 arcount: 1
 [question]
