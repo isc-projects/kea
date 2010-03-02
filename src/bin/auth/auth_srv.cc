@@ -89,7 +89,7 @@ AuthSrv::processMessage() {
     int cc;
 
     if ((cc = recvfrom(s, recvbuf, sizeof(recvbuf), 0, sa, &sa_len)) > 0) {
-        Message msg;
+        Message msg(Message::PARSE);
         InputBuffer buffer(recvbuf, cc);
 
         try {
@@ -105,17 +105,22 @@ AuthSrv::processMessage() {
             return;
         }
 
+        bool dnssec_ok = msg.isDNSSECSupported();
+        uint16_t remote_bufsize = msg.getUDPSize();
+
         QuestionPtr query = *msg.beginQuestion();
 
         msg.makeResponse();
         msg.setHeaderFlag(MessageFlag::AA());
         msg.setRcode(Rcode::NOERROR());
+        msg.setDNSSECSupported(dnssec_ok);
+        msg.setUDPSize(sizeof(recvbuf));
 
         // do the DataSource call here
         Query q = Query(msg, false);
         data_src.doQuery(q);
 
-        OutputBuffer obuffer(4096);
+        OutputBuffer obuffer(remote_bufsize);
         MessageRenderer renderer(obuffer);
         msg.toWire(renderer);
         cout << "sending a response (" <<

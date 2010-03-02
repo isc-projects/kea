@@ -39,11 +39,16 @@ const uint16_t Message::DEFAULT_MAX_UDPSIZE;
 namespace {
 class MessageTest : public ::testing::Test {
 protected:
-    MessageTest() : obuffer(0), renderer(obuffer) {}
+    MessageTest() : obuffer(0), renderer(obuffer),
+                    message_parse(Message::PARSE),
+                    message_render(Message::RENDER)
+    {}
+    
     static Question factoryFromFile(const char* datafile);
     OutputBuffer obuffer;
     MessageRenderer renderer;
-    Message message;
+    Message message_parse;
+    Message message_render;
     static void factoryFromFile(Message& message, const char* datafile);
 };
 
@@ -80,24 +85,24 @@ TEST_F(MessageTest, RcodeToText)
 
 TEST_F(MessageTest, fromWire)
 {
-    factoryFromFile(message, "testdata/message_fromWire1");
-    EXPECT_EQ(0x1035, message.getQid());
-    EXPECT_EQ(Opcode::QUERY(), message.getOpcode());
-    EXPECT_EQ(Rcode::NOERROR(), message.getRcode());
-    EXPECT_TRUE(message.getHeaderFlag(MessageFlag::QR()));
-    EXPECT_TRUE(message.getHeaderFlag(MessageFlag::RD()));
-    EXPECT_TRUE(message.getHeaderFlag(MessageFlag::AA()));
+    factoryFromFile(message_parse, "testdata/message_fromWire1");
+    EXPECT_EQ(0x1035, message_parse.getQid());
+    EXPECT_EQ(Opcode::QUERY(), message_parse.getOpcode());
+    EXPECT_EQ(Rcode::NOERROR(), message_parse.getRcode());
+    EXPECT_TRUE(message_parse.getHeaderFlag(MessageFlag::QR()));
+    EXPECT_TRUE(message_parse.getHeaderFlag(MessageFlag::RD()));
+    EXPECT_TRUE(message_parse.getHeaderFlag(MessageFlag::AA()));
 
-    QuestionPtr q = *message.beginQuestion();
+    QuestionPtr q = *message_parse.beginQuestion();
     EXPECT_EQ(test_name, q->getName());
     EXPECT_EQ(RRType::A(), q->getType());
     EXPECT_EQ(RRClass::IN(), q->getClass());
-    EXPECT_EQ(1, message.getRRCount(Section::QUESTION()));
-    EXPECT_EQ(2, message.getRRCount(Section::ANSWER()));
-    EXPECT_EQ(0, message.getRRCount(Section::AUTHORITY()));
-    EXPECT_EQ(0, message.getRRCount(Section::ADDITIONAL()));
+    EXPECT_EQ(1, message_parse.getRRCount(Section::QUESTION()));
+    EXPECT_EQ(2, message_parse.getRRCount(Section::ANSWER()));
+    EXPECT_EQ(0, message_parse.getRRCount(Section::AUTHORITY()));
+    EXPECT_EQ(0, message_parse.getRRCount(Section::ADDITIONAL()));
 
-    RRsetPtr rrset = *message.beginSection(Section::ANSWER());
+    RRsetPtr rrset = *message_parse.beginSection(Section::ANSWER());
     EXPECT_EQ(test_name, rrset->getName());
     EXPECT_EQ(RRType::A(), rrset->getType());
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
@@ -112,98 +117,144 @@ TEST_F(MessageTest, fromWire)
     EXPECT_TRUE(it->isLast());
 }
 
-TEST_F(MessageTest, EDNS0DOBit)
+TEST_F(MessageTest, GetEDNS0DOBit)
 {
     // Without EDNS0, DNSSEC is considered to be unsupported.
-    factoryFromFile(message, "testdata/message_fromWire1");
-    EXPECT_FALSE(message.isDNSSECSupported());
+    factoryFromFile(message_parse, "testdata/message_fromWire1");
+    EXPECT_FALSE(message_parse.isDNSSECSupported());
 
     // If DO bit is on, DNSSEC is considered to be supported.
-    message.clear();
-    factoryFromFile(message, "testdata/message_fromWire2");
-    EXPECT_TRUE(message.isDNSSECSupported());
+    message_parse.clear();
+    factoryFromFile(message_parse, "testdata/message_fromWire2");
+    EXPECT_TRUE(message_parse.isDNSSECSupported());
 
     // If DO bit is off, DNSSEC is considered to be unsupported.
-    message.clear();
-    factoryFromFile(message, "testdata/message_fromWire3");
-    EXPECT_FALSE(message.isDNSSECSupported());
+    message_parse.clear();
+    factoryFromFile(message_parse, "testdata/message_fromWire3");
+    EXPECT_FALSE(message_parse.isDNSSECSupported());
 }
 
-TEST_F(MessageTest, EDNS0UDPSize)
+TEST_F(MessageTest, SetEDNS0DOBit)
+{
+    // By default, it's false, and we can enable/disable it.
+    EXPECT_FALSE(message_render.isDNSSECSupported());
+    message_render.setDNSSECSupported(true);
+    EXPECT_TRUE(message_render.isDNSSECSupported());
+    message_render.setDNSSECSupported(false);
+    EXPECT_FALSE(message_render.isDNSSECSupported());
+
+    // A message in the parse mode doesn't allow this flag to be set.
+    EXPECT_THROW(message_parse.setDNSSECSupported(true),
+                 InvalidMessageOperation);
+    // Once converted to the render mode, it works as above
+    message_parse.makeResponse();
+    EXPECT_FALSE(message_parse.isDNSSECSupported());
+    message_parse.setDNSSECSupported(true);
+    EXPECT_TRUE(message_parse.isDNSSECSupported());
+    message_parse.setDNSSECSupported(false);
+    EXPECT_FALSE(message_parse.isDNSSECSupported());
+}
+
+TEST_F(MessageTest, GetEDNS0UDPSize)
 {
     // Without EDNS0, the default max UDP size is used.
-    factoryFromFile(message, "testdata/message_fromWire1");
-    EXPECT_EQ(Message::DEFAULT_MAX_UDPSIZE, message.getUDPSize());
+    factoryFromFile(message_parse, "testdata/message_fromWire1");
+    EXPECT_EQ(Message::DEFAULT_MAX_UDPSIZE, message_parse.getUDPSize());
 
     // If the size specified in EDNS0 > default max, use it.
-    message.clear();
-    factoryFromFile(message, "testdata/message_fromWire2");
-    EXPECT_EQ(4096, message.getUDPSize());
+    message_parse.clear();
+    factoryFromFile(message_parse, "testdata/message_fromWire2");
+    EXPECT_EQ(4096, message_parse.getUDPSize());
 
     // If the size specified in EDNS0 < default max, keep using the default.
-    message.clear();
-    factoryFromFile(message, "testdata/message_fromWire8");
-    EXPECT_EQ(Message::DEFAULT_MAX_UDPSIZE, message.getUDPSize());
+    message_parse.clear();
+    factoryFromFile(message_parse, "testdata/message_fromWire8");
+    EXPECT_EQ(Message::DEFAULT_MAX_UDPSIZE, message_parse.getUDPSize());
+}
+
+TEST_F(MessageTest, SetEDNS0UDPSize)
+{
+    // The default size if unspecified
+    EXPECT_EQ(Message::DEFAULT_MAX_UDPSIZE, message_render.getUDPSize());
+    // A common buffer size with EDNS, should succeed
+    message_render.setUDPSize(4096);
+    EXPECT_EQ(4096, message_render.getUDPSize());
+    // Unusual large value, but accepted
+    message_render.setUDPSize(0xffff);
+    EXPECT_EQ(0xffff, message_render.getUDPSize());
+    // Too small is value is rejected
+    EXPECT_THROW(message_render.setUDPSize(511), InvalidMessageUDPSize);
+
+    // A message in the parse mode doesn't allow the set operation.
+    EXPECT_THROW(message_parse.setUDPSize(4096), InvalidMessageOperation);
+    // Once converted to the render mode, it works as above.
+    message_parse.makeResponse();
+    message_parse.setUDPSize(4096);
+    EXPECT_EQ(4096, message_parse.getUDPSize());
+    message_parse.setUDPSize(0xffff);
+    EXPECT_EQ(0xffff, message_parse.getUDPSize());
+    EXPECT_THROW(message_parse.setUDPSize(511), InvalidMessageUDPSize);
 }
 
 TEST_F(MessageTest, EDNS0ExtCode)
 {
     // Extended Rcode = BADVERS
-    factoryFromFile(message, "testdata/message_fromWire10");
-    EXPECT_EQ(Rcode::BADVERS(), message.getRcode());
+    factoryFromFile(message_parse, "testdata/message_fromWire10");
+    EXPECT_EQ(Rcode::BADVERS(), message_parse.getRcode());
 
     // Maximum extended Rcode
-    message.clear();
-    factoryFromFile(message, "testdata/message_fromWire11");
-    EXPECT_EQ(0xfff, message.getRcode().getCode());
+    message_parse.clear();
+    factoryFromFile(message_parse, "testdata/message_fromWire11");
+    EXPECT_EQ(0xfff, message_parse.getRcode().getCode());
 }
 
 TEST_F(MessageTest, BadEDNS0)
 {
     // OPT RR in the answer section
-    EXPECT_THROW(factoryFromFile(message, "testdata/message_fromWire4"),
+    EXPECT_THROW(factoryFromFile(message_parse, "testdata/message_fromWire4"),
                  DNSMessageFORMERR);
     // multiple OPT RRs (in the additional section)
-    message.clear();
-    EXPECT_THROW(factoryFromFile(message, "testdata/message_fromWire5"),
+    message_parse.clear();
+    EXPECT_THROW(factoryFromFile(message_parse, "testdata/message_fromWire5"),
                  DNSMessageFORMERR);
     // OPT RR of a non root name
-    message.clear();
-    EXPECT_THROW(factoryFromFile(message, "testdata/message_fromWire6"),
+    message_parse.clear();
+    EXPECT_THROW(factoryFromFile(message_parse, "testdata/message_fromWire6"),
                  DNSMessageFORMERR);
     // Compressed owner name of OPT RR points to a root name.
     // Not necessarily bogus, but very unusual and mostly pathological.
     // We accept it, but is it okay?
-    message.clear();
-    EXPECT_NO_THROW(factoryFromFile(message, "testdata/message_fromWire7"));
+    message_parse.clear();
+    EXPECT_NO_THROW(factoryFromFile(message_parse,
+                                    "testdata/message_fromWire7"));
     // Unsupported Version
-    message.clear();
-    EXPECT_THROW(factoryFromFile(message, "testdata/message_fromWire9"),
+    message_parse.clear();
+    EXPECT_THROW(factoryFromFile(message_parse, "testdata/message_fromWire9"),
                  DNSMessageBADVERS);
 }
 
 TEST_F(MessageTest, toWire)
 {
-    message.setQid(0x1035);
-    message.setOpcode(Opcode::QUERY());
-    message.setRcode(Rcode::NOERROR());
-    message.setHeaderFlag(MessageFlag::QR());
-    message.setHeaderFlag(MessageFlag::RD());
-    message.setHeaderFlag(MessageFlag::AA());
-    message.addQuestion(Question(Name("test.example.com"), RRClass::IN(),
-                                     RRType::A()));
+    message_render.setQid(0x1035);
+    message_render.setOpcode(Opcode::QUERY());
+    message_render.setRcode(Rcode::NOERROR());
+    message_render.setHeaderFlag(MessageFlag::QR());
+    message_render.setHeaderFlag(MessageFlag::RD());
+    message_render.setHeaderFlag(MessageFlag::AA());
+    message_render.addQuestion(Question(Name("test.example.com"), RRClass::IN(),
+                                        RRType::A()));
     RRsetPtr rrset = RRsetPtr(new RRset(Name("test.example.com"), RRClass::IN(),
                                         RRType::A(), RRTTL(3600)));
     rrset->addRdata(in::A("192.0.2.1"));
     rrset->addRdata(in::A("192.0.2.2"));
-    message.addRRset(Section::ANSWER(), rrset);
+    message_render.addRRset(Section::ANSWER(), rrset);
 
-    EXPECT_EQ(1, message.getRRCount(Section::QUESTION()));
-    EXPECT_EQ(2, message.getRRCount(Section::ANSWER()));
-    EXPECT_EQ(0, message.getRRCount(Section::AUTHORITY()));
-    EXPECT_EQ(0, message.getRRCount(Section::ADDITIONAL()));
+    EXPECT_EQ(1, message_render.getRRCount(Section::QUESTION()));
+    EXPECT_EQ(2, message_render.getRRCount(Section::ANSWER()));
+    EXPECT_EQ(0, message_render.getRRCount(Section::AUTHORITY()));
+    EXPECT_EQ(0, message_render.getRRCount(Section::ADDITIONAL()));
 
-    message.toWire(renderer);
+    message_render.toWire(renderer);
     vector<unsigned char> data;
     UnitTestUtil::readWireData("testdata/message_toWire1", data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, obuffer.getData(),

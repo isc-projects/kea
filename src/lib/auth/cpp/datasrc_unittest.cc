@@ -42,7 +42,8 @@ using namespace isc::auth;
 namespace {
 class DataSrcTest : public ::testing::Test {
 protected:
-    DataSrcTest() : obuffer(0), renderer(obuffer) {}
+    DataSrcTest() : obuffer(0), renderer(obuffer), msg(Message::PARSE)
+    {}
     TestDataSrc ds;
     OutputBuffer obuffer;
     MessageRenderer renderer;
