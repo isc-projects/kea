@@ -116,7 +116,7 @@ RRSIG::RRSIG(InputBuffer& buffer, size_t rdata_len)
 
     rdata_len -= (buffer.getPosition() - pos);
     if (rdata_len == 0) {
-        dns_throw(InvalidRdataLength, "DS too short");
+        dns_throw(InvalidRdataLength, "RRSIG too short");
     }
 
     vector<uint8_t> signature;
