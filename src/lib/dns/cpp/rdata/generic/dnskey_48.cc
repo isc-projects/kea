@@ -58,7 +58,7 @@ DNSKEY::DNSKEY(const string& dnskey_str) :
     stringbuf keydatabuf;
 
     iss >> flags >> protocol >> algorithm >> &keydatabuf;
-    if (iss.bad() || iss.fail() || !iss.eof()) {
+    if (iss.bad() || iss.fail()) {
         dns_throw(InvalidRdataText, "Invalid DNSKEY text");
     }
     if (flags > 0xffff) {

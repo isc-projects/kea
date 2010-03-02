@@ -57,7 +57,7 @@ DS::DS(const string& ds_str) :
     stringbuf digestbuf;
 
     iss >> tag >> algorithm >> digest_type >> &digestbuf;
-    if (iss.bad() || iss.fail() || !iss.eof()) {
+    if (iss.bad() || iss.fail()) {
         dns_throw(InvalidRdataText, "Invalid DS text");
     }
     if (tag > 0xffff) {
