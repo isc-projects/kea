@@ -71,8 +71,7 @@ DS::DS(const string& ds_str) :
     }
 
     vector<uint8_t> digest;
-    string digest_string = digestbuf.str();
-    decodeHex(digest_string, digest);
+    decodeHex(digestbuf.str(), digest);
 
     impl_ = new DSImpl(tag, algorithm, digest_type, digest);
 }
