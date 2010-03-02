@@ -165,6 +165,7 @@ class EDNS:
 
 class RRSIG:
     rdlen = -1                  # auto-calculate
+    covered = 1                 # A
     algorithm = 5               # RSA-SHA1
     labels = -1                 # auto-calculate (#labels of signer)
     originalttl = 3600
@@ -186,15 +187,17 @@ class RRSIG:
             labels = count_namelabels(self.signer)
         f.write('\n# RRSIG RDATA (RDLEN=%d)\n' % rdlen)
         f.write('%04x\n' % rdlen);
-        f.write('# Algorithm=%s Labels=%d OrigTTL=%d\n' %
-                (code_totext(self.algorithm, rdict_algorithm), labels,
+        f.write('# Covered=%s Algorithm=%s Labels=%d OrigTTL=%d\n' %
+                (code_totext(self.covered, rdict_rrtype),
+                 code_totext(self.algorithm, rdict_algorithm), labels,
                  self.originalttl))
-        f.write('%02x %02x %04x\n' % (self.algorithm, labels, self.originalttl))
+        f.write('%04x %02x %02x %08x\n' % (self.covered, self.algorithm, labels,
+                                           self.originalttl))
         f.write('# Expiration=%s, Inception=%s\n' %
                 (str(self.expiration), str(self.inception)))
         f.write('%08x %08x\n' % (self.expiration, self.inception))
-        f.write('# Signer=%s and Signature\n' % self.signer)
-        f.write('%s %s\n' % (name_wire, sig_wire))
+        f.write('# Tag=%d Signer=%s and Signature\n' % (self.tag, self.signer))
+        f.write('%04x %s %s\n' % (self.tag, name_wire, sig_wire))
 
 config_param = {'header' : (DNSHeader, header_xtables),
                 'question' : (DNSQuestion, question_xtables),
