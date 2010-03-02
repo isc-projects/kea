@@ -17,6 +17,8 @@
 #ifndef __AUTH_SRV_H
 #define __AUTH_SRV_H 1
 
+#include <string>
+
 #include <cc/data.h>
 #include <auth/data_source_static.h>
 #include <auth/data_source_sqlite3.h>
@@ -31,10 +33,13 @@ public:
     isc::data::ElementPtr updateConfig(isc::data::ElementPtr config);
 private:
     std::string _db_file;
-    
+
     isc::auth::MetaDataSrc data_src;
     int sock;
 };
 
 #endif // __AUTH_SRV_H
 
+// Local Variables: 
+// mode: c++
+// End: 
