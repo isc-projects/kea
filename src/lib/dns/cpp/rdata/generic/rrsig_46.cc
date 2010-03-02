@@ -128,10 +128,8 @@ RRSIG::RRSIG(InputBuffer& buffer, size_t rdata_len)
     }
     rdata_len -= (buffer.getPosition() - pos);
 
-    vector<uint8_t> signature;
-    for (int i = 0; i < rdata_len; i++) {
-        signature.push_back(buffer.readUint8());
-    }
+    vector<uint8_t> signature(rdata_len);
+    buffer.readData(&signature[0], rdata_len);
 
     impl_ = new RRSIGImpl(covered, algorithm, labels,
                           originalttl, timeexpire, timeinception, tag,
