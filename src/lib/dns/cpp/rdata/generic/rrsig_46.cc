@@ -75,7 +75,7 @@ RRSIG::RRSIG(const string& rrsig_str) :
     iss >> covered_txt >> algorithm >> labels >> originalttl
         >> expire_txt >> inception_txt >> tag >> signer_txt
         >> &signaturebuf;
-    if (iss.bad() || iss.fail() || !iss.eof()) {
+    if (iss.bad() || iss.fail()) {
         dns_throw(InvalidRdataText, "Invalid RRSIG text");
     }
     if (algorithm > 0xff) {
