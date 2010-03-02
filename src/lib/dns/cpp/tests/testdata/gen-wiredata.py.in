@@ -218,7 +218,7 @@ if __name__ == "__main__":
 
     outputfile = options.output
     if not outputfile:
-        m = re.match('(.*)\.[^.]+$', sys.argv[1])
+        m = re.match('(.*)\.[^.]+$', configfile)
         if m:
             outputfile = m.group(1)
         else:
