@@ -39,6 +39,15 @@ using namespace std;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
+namespace {
+// This is the minimum necessary length of all wire-format RRSIG RDATA:
+// - two 8-bit fields (algorithm and labels)
+// - two 16-bit fields (covered and tag)
+// - three 32-bit fields (original TTL, expire and inception)
+const size_t RRSIG_MINIMUM_LEN = 2 * sizeof(uint8_t) + 2 * sizeof(uint16_t) +
+    3 * sizeof(uint32_t);
+}
+
 struct RRSIGImpl {
     // straightforward representation of RRSIG RDATA fields
     RRSIGImpl(const RRType& covered, uint8_t algorithm, uint8_t labels,
@@ -100,12 +109,11 @@ RRSIG::RRSIG(InputBuffer& buffer, size_t rdata_len)
 {
     size_t pos = buffer.getPosition();
 
-    if (rdata_len < 18) {
+    if (rdata_len < RRSIG_MINIMUM_LEN) {
         dns_throw(InvalidRdataLength, "RRSIG too short");
     }
 
-    uint16_t typecode = buffer.readUint16();
-    RRType covered(typecode);
+    RRType covered(buffer);
     uint8_t algorithm = buffer.readUint8();
     uint8_t labels = buffer.readUint8();
     uint32_t originalttl = buffer.readUint32();
