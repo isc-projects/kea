@@ -122,10 +122,11 @@ RRSIG::RRSIG(InputBuffer& buffer, size_t rdata_len)
     uint16_t tag = buffer.readUint16();
     Name signer(buffer);
 
-    rdata_len -= (buffer.getPosition() - pos);
-    if (rdata_len == 0) {
+    // rdata_len must be sufficiently large to hold non empty signature data.
+    if (rdata_len <= buffer.getPosition() - pos) {
         dns_throw(InvalidRdataLength, "RRSIG too short");
     }
+    rdata_len -= (buffer.getPosition() - pos);
 
     vector<uint8_t> signature;
     for (int i = 0; i < rdata_len; i++) {
