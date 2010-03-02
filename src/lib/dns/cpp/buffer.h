@@ -358,7 +358,7 @@ public:
     /// \param pos The beginning position in the buffer to write the data.
     void writeUint16At(uint16_t data, size_t pos)
     {
-        if (pos + sizeof(data) >= data_.size()) {
+        if (pos + sizeof(data) > data_.size()) {
             dns_throw(InvalidBufferPosition, "write at invalid position");
         }
 
