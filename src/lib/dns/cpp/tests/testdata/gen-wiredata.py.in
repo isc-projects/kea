@@ -1,11 +1,14 @@
 #!@PYTHON@
 
-import configparser, re, sys
+import configparser, re, time, sys
+from datetime import datetime
 from optparse import OptionParser
 
 re_hex = re.compile('0x[0-9a-fA-F]+')
-re_decimal = re.compile('\d+')
-re_ = re.compile('\d+$')
+re_decimal = re.compile('\d+$')
+
+dnssec_timefmt = '%Y%m%d%H%M%S'
+
 dict_qr = { 'query' : 0, 'response' : 1 }
 dict_opcode = { 'query' : 0, 'iquery' : 1, 'status' : 2, 'notify' : 4,
                 'update' : 5 }
@@ -30,9 +33,13 @@ dict_rrtype = { 'none' : 0, 'a' : 1, 'ns' : 2, 'md' : 3, 'mf' : 4, 'cname' : 5,
 rdict_rrtype = dict([(dict_rrtype[k], k.upper()) for k in dict_rrtype.keys()])
 dict_rrclass = { 'in' : 1, 'ch' : 3, 'hs' : 4, 'any' : 255 }
 rdict_rrclass = dict([(dict_rrclass[k], k.upper()) for k in dict_rrclass.keys()])
+dict_algorithm = { 'rsamd5' : 1, 'dh' : 2, 'dsa' : 3, 'ecc' : 4, 'rsasha1' : 5 }
+rdict_algorithm = dict([(dict_algorithm[k], k.upper()) for k in dict_algorithm.keys()])
+
 header_xtables = { 'qr' : dict_qr, 'opcode' : dict_opcode,
                    'rcode' : dict_rcode }
 question_xtables = { 'rrtype' : dict_rrtype, 'rrclass' : dict_rrclass }
+rrsig_xtables = { 'algorithm' : dict_algorithm }
 
 def parse_value(value, xtable = {}):
     if re.search(re_hex, value):
@@ -61,6 +68,14 @@ def encode_name(name):
         if len(l) == 0:
             break
     return wire
+
+def count_namelabels(name):
+    if name == '.':             # special case
+        return 0
+    m = re.match('^(.*)\.$', name)
+    if m:
+        name = m.group(1)
+    return len(name.split('.'))
 
 def get_config(config, section, configobj, xtables = {}):
     try:
@@ -148,6 +163,43 @@ class EDNS:
         f.write('# RDLEN=%d\n' % self.rdlen)
         f.write('%04x\n' % self.rdlen)
 
+class RRSIG:
+    rdlen = -1                  # auto-calculate
+    algorithm = 5               # RSA-SHA1
+    labels = -1                 # auto-calculate (#labels of signer)
+    originalttl = 3600
+    expiration = int(time.mktime(datetime.strptime('20100131120000',
+                                                   dnssec_timefmt).timetuple()))
+    inception = int(time.mktime(datetime.strptime('20100101120000',
+                                                  dnssec_timefmt).timetuple()))
+    tag = 0x1035
+    signer = 'example.com'
+    signature = 0x123456789abcdef123456789abcdef
+    def dump(self, f):
+        name_wire = encode_name(self.signer)
+        sig_wire = '%x' % self.signature 
+        rdlen = self.rdlen
+        if rdlen < 0:
+            rdlen = int(18 + len(name_wire) / 2 + len(str(sig_wire)) / 2)
+        labels = self.labels
+        if labels < 0:
+            labels = count_namelabels(self.signer)
+        f.write('\n# RRSIG RDATA (RDLEN=%d)\n' % rdlen)
+        f.write('%04x\n' % rdlen);
+        f.write('# Algorithm=%s Labels=%d OrigTTL=%d\n' %
+                (code_totext(self.algorithm, rdict_algorithm), labels,
+                 self.originalttl))
+        f.write('%02x %02x %04x\n' % (self.algorithm, labels, self.originalttl))
+        f.write('# Expiration=%s, Inception=%s\n' %
+                (str(self.expiration), str(self.inception)))
+        f.write('%08x %08x\n' % (self.expiration, self.inception))
+        f.write('# Signer=%s and Signature\n' % self.signer)
+        f.write('%s %s\n' % (name_wire, sig_wire))
+
+config_param = {'header' : (DNSHeader, header_xtables),
+                'question' : (DNSQuestion, question_xtables),
+                'edns' : (EDNS, {}), 'rrsig' : (RRSIG, {}) }
+
 usage = '''usage: %prog [options] input_file'''
 
 if __name__ == "__main__":
@@ -155,6 +207,9 @@ if __name__ == "__main__":
     parser.add_option('-o', '--output', action='store', dest='output',
                       default=None, metavar='FILE',
                       help='output file name [default: prefix of input_file]')
+    parser.add_option('-m', '--mode', action='store', dest='mode',
+                      default='message', metavar='[message|custom]',
+                      help='specify dump mode [default: %default]')
     (options, args) = parser.parse_args()
 
     if len(args) == 0:
@@ -176,16 +231,15 @@ if __name__ == "__main__":
 
     print_header(output, configfile)
 
-    header = DNSHeader()
-    if get_config(config, 'header', header, header_xtables):
-        header.dump(output)
+    if options.mode == 'custom':
+        sections = config.get('custom', 'sections').split(':')
+    else:
+        sections = ['header', 'question', 'edns']
 
-    question = DNSQuestion()
-    if get_config(config, 'question', question, question_xtables):
-        question.dump(output)
-
-    edns = EDNS()
-    if get_config(config, 'edns', edns):
-        edns.dump(output)
+    for s in sections:
+        section_param = config_param[s]
+        (obj, xtables) = (section_param[0](), section_param[1])
+        if get_config(config, s, obj, xtables):
+            obj.dump(output)
 
     output.close()
