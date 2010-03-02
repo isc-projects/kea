@@ -31,6 +31,7 @@
 #include "messagerenderer.h"
 #include "name.h"
 #include "question.h"
+#include "rdataclass.h"
 #include "rrclass.h"
 #include "rrtype.h"
 #include "rrttl.h"
@@ -59,7 +60,7 @@ static const flags_t FLAG_AD = 0x0020;
 static const flags_t FLAG_CD = 0x0010;
 
 //
-// EDNS0 related constants
+// EDNS related constants
 //
 static const flags_t EXTFLAG_MASK = 0xffff;
 static const flags_t EXTFLAG_DO = 0x8000;
@@ -189,9 +190,10 @@ sectionCodeToId(const Section& section)
 
 class MessageImpl {
 public:
-    MessageImpl();
+    MessageImpl(Message::Mode mode);
     // Open issues: should we rather have a header in wire-format
     // for efficiency?
+    Message::Mode mode_;
     qid_t qid_;
     Rcode rcode_;
     const Opcode* opcode_;
@@ -202,7 +204,9 @@ public:
     int counts_[SECTION_MAX];   // TODO: revisit this definition
     vector<QuestionPtr> questions_;
     vector<RRsetPtr> rrsets_[SECTION_MAX];
-    RRsetPtr edns_;
+    RRsetPtr remote_edns_;
+    uint16_t remote_udpsize_;
+    RRsetPtr local_edns_;
     uint16_t udpsize_;
 
 #ifdef notyet
@@ -211,13 +215,13 @@ public:
 #endif
 
     void init();
-    void parseQuestion(Message& message, InputBuffer& buffer);
-    void parseSection(Message& messge, const Section& section,
-                      InputBuffer& buffer);
+    int parseQuestion(Message& message, InputBuffer& buffer);
+    int parseSection(Message& messge, const Section& section,
+                     InputBuffer& buffer);
 };
 
-MessageImpl::MessageImpl() :
-    rcode_(Rcode::NOERROR())
+MessageImpl::MessageImpl(Message::Mode mode) :
+    mode_(mode), rcode_(Rcode::NOERROR())
 {
     init();
 }
@@ -230,7 +234,9 @@ MessageImpl::init()
     rcode_ = Rcode::NOERROR();  // XXX
     opcode_ = NULL;
     dnssec_ok_ = false;
-    edns_ = RRsetPtr();
+    remote_edns_ = RRsetPtr();
+    remote_udpsize_ = Message::DEFAULT_MAX_UDPSIZE;
+    local_edns_ = RRsetPtr();
     udpsize_ = Message::DEFAULT_MAX_UDPSIZE;
 
     for (int i = 0; i < SECTION_MAX; i++) {
@@ -243,8 +249,8 @@ MessageImpl::init()
     rrsets_[sectionCodeToId(Section::ADDITIONAL())].clear();
 }
 
-Message::Message() :
-    impl_(new MessageImpl())
+Message::Message(Mode mode) :
+    impl_(new MessageImpl(mode))
 {
 }
 
@@ -277,10 +283,34 @@ Message::isDNSSECSupported() const
     return (impl_->dnssec_ok_);
 }
 
+void
+Message::setDNSSECSupported(bool on)
+{
+    if (impl_->mode_ != Message::RENDER) {
+        dns_throw(InvalidMessageOperation,
+                  "setDNSSECSupported performed in non-render mode");
+    }
+    impl_->dnssec_ok_ = on;
+}
+
 uint16_t
 Message::getUDPSize() const
 {
     return (impl_->udpsize_);
+}
+
+void
+Message::setUDPSize(uint16_t size)
+{
+    if (impl_->mode_ != Message::RENDER) {
+        dns_throw(InvalidMessageOperation,
+                  "setUDPSize performed in non-render mode");
+    }
+    if (size < DEFAULT_MAX_UDPSIZE) {
+        dns_throw(InvalidMessageUDPSize,
+                  "Specified UDP message size is too small");
+    }
+    impl_->udpsize_ = size;
 }
 
 qid_t
@@ -370,6 +400,44 @@ struct RenderSection
 };
 }
 
+namespace {
+bool
+addEDNS(MessageImpl* mimpl, MessageRenderer& renderer)
+{
+    bool is_query = ((mimpl->flags_ & MessageFlag::QR().getBit()) == 0); 
+
+    // If this is a reply and the request didn't have EDNS, we shouldn't add it.
+    if (mimpl->remote_edns_ == NULL && !is_query) {
+        return (false);
+    }
+
+    // For queries, we add EDNS only when necessary:
+    // Local UDP size is not the default value, or
+    // DNSSEC DO bit is to be set, or
+    // Extended Rcode is to be specified.
+    if (is_query && mimpl->udpsize_ == Message::DEFAULT_MAX_UDPSIZE &&
+        !mimpl->dnssec_ok_ &&
+        mimpl->rcode_.getCode() < 0x10) {
+        return (false);
+    }
+
+    // Render EDNS OPT RR
+    uint32_t extrcode_flags = ((mimpl->rcode_.getCode() & 0xff0) << 24);
+    if (mimpl->dnssec_ok_) {
+        extrcode_flags |= 0x8000; // set DO bit
+    }
+    mimpl->local_edns_ = RRsetPtr(new RRset(Name::ROOT_NAME(),
+                                            RRClass(mimpl->udpsize_),
+                                            RRType::OPT(),
+                                            RRTTL(extrcode_flags)));
+    // We don't support any options in this simple implementation
+    mimpl->local_edns_->addRdata(ConstRdataPtr(new generic::OPT()));
+    mimpl->local_edns_->toWire(renderer);
+
+    return (true);
+}
+}
+
 void
 Message::toWire(MessageRenderer& renderer)
 {
@@ -378,7 +446,7 @@ Message::toWire(MessageRenderer& renderer)
     // reserve room for the header
     renderer.skip(HEADERLEN);
 
-    uint16_t qrcount =
+    uint16_t qdcount =
         for_each(impl_->questions_.begin(), impl_->questions_.end(),
                  RenderSection<QuestionPtr>(renderer)).getTotalCount();
 
@@ -396,6 +464,12 @@ Message::toWire(MessageRenderer& renderer)
                  impl_->rrsets_[sectionCodeToId(Section::ADDITIONAL())].end(),
                  RenderSection<RRsetPtr>(renderer)).getTotalCount();
 
+    // Added EDNS OPT RR if necessary (we want to avoid hardcoding specialized
+    // logic, see the parser case)
+    if (addEDNS(this->impl_, renderer)) {
+        ++arcount;
+    }
+
     // TBD: EDNS, TSIG, etc.
 
     // fill in the header
@@ -408,7 +482,7 @@ Message::toWire(MessageRenderer& renderer)
     renderer.writeUint16At(codes_and_flags, header_pos);
     header_pos += sizeof(uint16_t);
     // XXX: should avoid repeated pattern (TODO)
-    renderer.writeUint16At(qrcount, header_pos);
+    renderer.writeUint16At(qdcount, header_pos);
     header_pos += sizeof(uint16_t);
     renderer.writeUint16At(ancount, header_pos);
     header_pos += sizeof(uint16_t);
@@ -435,15 +509,21 @@ Message::fromWire(InputBuffer& buffer)
     impl_->counts_[Section::AUTHORITY().getCode()] = buffer.readUint16();
     impl_->counts_[Section::ADDITIONAL().getCode()] = buffer.readUint16();
 
-    impl_->parseQuestion(*this, buffer);
-    impl_->parseSection(*this, Section::ANSWER(), buffer);
-    impl_->parseSection(*this, Section::AUTHORITY(), buffer);
-    impl_->parseSection(*this, Section::ADDITIONAL(), buffer);
+    impl_->counts_[Section::QUESTION().getCode()] =
+        impl_->parseQuestion(*this, buffer);
+    impl_->counts_[Section::ANSWER().getCode()] =
+        impl_->parseSection(*this, Section::ANSWER(), buffer);
+    impl_->counts_[Section::AUTHORITY().getCode()] =
+        impl_->parseSection(*this, Section::AUTHORITY(), buffer);
+    impl_->counts_[Section::ADDITIONAL().getCode()] =
+        impl_->parseSection(*this, Section::ADDITIONAL(), buffer);
 }
 
-void
+int
 MessageImpl::parseQuestion(Message& message, InputBuffer& buffer)
 {
+    unsigned int added = 0;
+
     for (unsigned int count = 0;
          count < counts_[Section::QUESTION().getCode()];
          count++) {
@@ -460,8 +540,11 @@ MessageImpl::parseQuestion(Message& message, InputBuffer& buffer)
         // algorithm that requires the question section contain exactly one
         // RR.
 
-        questions_.push_back(QuestionPtr(new Question(name, rrclass, rrtype))); 
+        questions_.push_back(QuestionPtr(new Question(name, rrclass, rrtype)));
+        ++added;
     }
+
+    return (added);
 }
 
 namespace {
@@ -480,10 +563,12 @@ struct MatchRR : public unary_function<RRsetPtr, bool> {
 };
 }
 
-void
+int
 MessageImpl::parseSection(Message& message, const Section& section,
                           InputBuffer& buffer)
 {
+    unsigned int added = 0;
+
     for (unsigned int count = 0; count < counts_[section.getCode()]; count++) {
         Name name(buffer);
 
@@ -507,17 +592,17 @@ MessageImpl::parseSection(Message& message, const Section& section,
                 dns_throw(DNSMessageFORMERR,
                           "EDNS OPT RR found in an invalid section");
             }
-            if (edns_ != NULL) {
+            if (remote_edns_ != NULL) {
                 dns_throw(DNSMessageFORMERR, "multiple EDNS OPT RR found");
             }
             if (((ttl.getValue() & EDNSVERSION_MASK) >> 16) >
+                Message::EDNS_SUPPORTED_VERSION) {
                 // XXX: we should probably not reject the message yet, because
                 // it's better to let the requestor know the responder-side
                 // highest version as indicated in Section 4.6 of RFC2671.
                 // This is probably because why BIND 9 does the version check
                 // in the client code.
                 // This is a TODO item.  Right now we simply reject it.
-                Message::EDNS0_SUPPORTED_VERSION) {
                 dns_throw(DNSMessageBADVERS, "unsupported EDNS version");
             }
             if (name != Name::ROOT_NAME()) {
@@ -525,8 +610,8 @@ MessageImpl::parseSection(Message& message, const Section& section,
                           "invalid owner name for EDNS OPT RR");
             }
 
-            edns_ = RRsetPtr(new RRset(name, rrclass, rrtype, ttl));
-            edns_->addRdata(rdata);
+            remote_edns_ = RRsetPtr(new RRset(name, rrclass, rrtype, ttl));
+            remote_edns_->addRdata(rdata);
 
             dnssec_ok_ = (((ttl.getValue() & EXTFLAG_MASK) & EXTFLAG_DO) != 0);
             if (rrclass.getCode() > Message::DEFAULT_MAX_UDPSIZE) {
@@ -549,7 +634,10 @@ MessageImpl::parseSection(Message& message, const Section& section,
             rrset->addRdata(rdata);
             rrsets_[sectionCodeToId(section)].push_back(rrset);
         }
+        ++added;
     }
+
+    return (added);
 }
 
 namespace {
@@ -609,9 +697,36 @@ Message::toText() const
         lexical_cast<string>(impl_->counts_[Section::ANSWER().getCode()]);
     s += ", AUTHORITY: " +
         lexical_cast<string>(impl_->counts_[Section::AUTHORITY().getCode()]);
-    s += ", ADDITIONAL: " +
-        lexical_cast<string>(impl_->counts_[Section::ADDITIONAL().getCode()])
-        + "\n";
+
+    unsigned int arcount = impl_->counts_[Section::ADDITIONAL().getCode()];
+    RRsetPtr edns_rrset;
+    if (!getHeaderFlag(MessageFlag::QR()) && impl_->remote_edns_ != NULL) {
+        edns_rrset = impl_->remote_edns_;
+        ++arcount;
+    } else if (getHeaderFlag(MessageFlag::QR()) && impl_->local_edns_ != NULL) {
+        edns_rrset = impl_->local_edns_;
+        ++arcount;
+    }
+    s += ", ADDITIONAL: " + lexical_cast<string>(arcount) + "\n";
+
+    if (edns_rrset != NULL) {
+        s += "\n;; OPT PSEUDOSECTION:\n";
+        s += "; EDNS: version: ";
+        s += lexical_cast<string>(
+            (edns_rrset->getTTL().getValue() & 0x00ff0000) >> 16);
+        s += ", flags:";
+        if ((edns_rrset->getTTL().getValue() & 0x8000) != 0) {
+            s += " do";
+        }
+        uint32_t mbz = edns_rrset->getTTL().getValue() & ~0x8000 & 0xffff;
+        if (mbz != 0) {
+            s += "; MBZ: " + lexical_cast<string>(mbz) + ", udp: ";
+        } else {
+            s += "; udp: " +
+                lexical_cast<string>(edns_rrset->getClass().getCode());
+        }
+        s += "\n";
+    }
 
     if (!impl_->questions_.empty()) {
         s += "\n;; " +
@@ -654,8 +769,20 @@ Message::clear()
 void
 Message::makeResponse()
 {
+    if (impl_->mode_ != Message::PARSE) {
+        dns_throw(InvalidMessageOperation,
+                  "makeResponse() is performed in non-parse mode");
+    }
+
+    impl_->dnssec_ok_ = false;
+    impl_->remote_udpsize_ = impl_->udpsize_;
+    impl_->local_edns_ = RRsetPtr();
+    impl_->udpsize_ = DEFAULT_MAX_UDPSIZE;
+
     impl_->flags_ &= MESSAGE_REPLYPRESERVE;
     setHeaderFlag(MessageFlag::QR());
+
+    impl_->mode_ = Message::RENDER;
 
     impl_->rrsets_[sectionCodeToId(Section::ANSWER())].clear();
     impl_->counts_[Section::ANSWER().getCode()] = 0;

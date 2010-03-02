@@ -63,6 +63,18 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+class InvalidMessageOperation : public Exception {
+public:
+    InvalidMessageOperation(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+class InvalidMessageUDPSize : public Exception {
+public:
+    InvalidMessageUDPSize(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 typedef uint8_t rcode_t; // we actually only need 4 bits of it
 typedef uint8_t opcode_t; // we actually only need 4 bits of it
 typedef uint16_t qid_t;
@@ -503,7 +515,12 @@ typedef SectionIterator<RRsetPtr> RRsetIterator;
 
 class Message {
 public:
-    Message();
+    enum Mode {
+        PARSE = 0,
+        RENDER = 1
+    };
+public:
+    Message(Mode mode);
     ~Message();
 private:
     Message(const Message& source);
@@ -513,8 +530,9 @@ public:
     void setHeaderFlag(const MessageFlag& flag);
     void clearHeaderFlag(const MessageFlag& flag);
     bool isDNSSECSupported() const;
-    void setDNSSECSupported(bool on); // not yet
+    void setDNSSECSupported(bool on);
     uint16_t getUDPSize() const;
+    void setUDPSize(uint16_t size);
     qid_t getQid() const;
     void setQid(qid_t qid);
     const Rcode& getRcode() const;
@@ -566,11 +584,11 @@ public:
     /// \brief The default maximum size of UDP DNS messages that don't cause
     /// truncation.
     ///
-    /// With EDNS0 the maximum size can be increases per message.
+    /// With EDNS the maximum size can be increases per message.
     static const uint16_t DEFAULT_MAX_UDPSIZE = 512;
 
-    /// \brief The highest EDNS0 version this implementation supports.
-    static const uint8_t EDNS0_SUPPORTED_VERSION = 0;
+    /// \brief The highest EDNS version this implementation supports.
+    static const uint8_t EDNS_SUPPORTED_VERSION = 0;
     //@}
 
 private:

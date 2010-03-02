@@ -31,7 +31,7 @@ int
 host_lookup(char* name, std::string type)
 {
 
-    Message msg;
+    Message msg(Message::RENDER);
 
     msg.setQid(0); // does this matter?
 
@@ -99,7 +99,7 @@ host_lookup(char* name, std::string type)
     int cc;
     if ((cc = recvfrom(s, recvbuf, sizeof(recvbuf), 0, sa, &sa_len)) > 0) {
         try {
-            Message rmsg;
+            Message rmsg(Message::PARSE);
             InputBuffer ibuffer(recvbuf, cc);
 
             rmsg.fromWire(ibuffer);
