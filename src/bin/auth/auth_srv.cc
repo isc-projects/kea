@@ -21,8 +21,6 @@
 #include <netdb.h>
 #include <stdlib.h>
 
-#include <algorithm>
-#include <set>
 #include <iostream>
 
 #include <dns/buffer.h>
@@ -40,7 +38,6 @@
 #include "auth_srv.h"
 
 #include <boost/lexical_cast.hpp>
-#include <boost/foreach.hpp>
 
 using namespace std;
 
@@ -50,10 +47,12 @@ using namespace isc::dns::rdata;
 using namespace isc::data;
 using namespace isc::config;
 
-AuthSrv::AuthSrv(int port) {
+AuthSrv::AuthSrv(int port)
+{
     int s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (s < 0)
+    if (s < 0) {
         throw FatalError("failed to open socket");
+    }
 
     struct sockaddr_in sin;
     sin.sin_family = AF_INET;
@@ -65,8 +64,9 @@ AuthSrv::AuthSrv(int port) {
     sin.sin_len = sa_len;
 #endif
 
-    if (bind(s, (struct sockaddr *)&sin, sa_len) < 0)
+    if (bind(s, (struct sockaddr *)&sin, sa_len) < 0) {
         throw FatalError("could not bind socket");
+    }
 
     sock = s;
 
@@ -80,7 +80,8 @@ AuthSrv::AuthSrv(int port) {
 }
 
 void
-AuthSrv::processMessage() {
+AuthSrv::processMessage()
+{
     struct sockaddr_storage ss;
     socklen_t sa_len = sizeof(ss);
     struct sockaddr* sa = static_cast<struct sockaddr*>((void*)&ss);
@@ -115,8 +116,7 @@ AuthSrv::processMessage() {
         msg.setUDPSize(sizeof(recvbuf));
 
         // do the DataSource call here
-        Query q = Query(msg, false);
-        data_src.doQuery(q);
+        data_src.doQuery(Query(msg, false));
 
         OutputBuffer obuffer(remote_bufsize);
         MessageRenderer renderer(obuffer);
@@ -136,7 +136,8 @@ AuthSrv::setDbFile(const std::string& db_file)
 }
 
 ElementPtr
-AuthSrv::updateConfig(isc::data::ElementPtr new_config) {
+AuthSrv::updateConfig(isc::data::ElementPtr new_config)
+{
     if (new_config) {
         // the ModuleCCSession has already checked if we have
         // the correct ElementPtr type as specified in our .spec file
