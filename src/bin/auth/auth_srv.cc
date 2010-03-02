@@ -108,8 +108,6 @@ AuthSrv::processMessage() {
         bool dnssec_ok = msg.isDNSSECSupported();
         uint16_t remote_bufsize = msg.getUDPSize();
 
-        QuestionPtr query = *msg.beginQuestion();
-
         msg.makeResponse();
         msg.setHeaderFlag(MessageFlag::AA());
         msg.setRcode(Rcode::NOERROR());
