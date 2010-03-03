@@ -38,7 +38,7 @@ class Rdata_RRSIG_Test : public RdataTest {
     // there's nothing to specialize
 };
 
-TEST_F(Rdata_RRSIG_Test, fromText_RRSIG)
+TEST_F(Rdata_RRSIG_Test, fromText)
 {
     string rrsig_txt("A 5 4 43200 20100223214617 20100222214617 8496 isc.org. "
                      "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
@@ -50,7 +50,7 @@ TEST_F(Rdata_RRSIG_Test, fromText_RRSIG)
 
 }
 
-TEST_F(Rdata_RRSIG_Test, badText_RRSIG)
+TEST_F(Rdata_RRSIG_Test, badText)
 {
     EXPECT_THROW(const generic::RRSIG sig("SPORK"), InvalidRdataText);
     EXPECT_THROW(const generic::RRSIG sig("A 555 4 43200 "
@@ -89,7 +89,7 @@ TEST_F(Rdata_RRSIG_Test, badText_RRSIG)
                      BadBase64String);
 }
 
-TEST_F(Rdata_RRSIG_Test, toWireRenderer_RRSIG)
+TEST_F(Rdata_RRSIG_Test, toWireRenderer)
 {
     string rrsig_txt("A 5 4 43200 20100223214617 20100222214617 8496 isc.org. "
                      "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
@@ -100,7 +100,7 @@ TEST_F(Rdata_RRSIG_Test, toWireRenderer_RRSIG)
     rdata_rrsig.toWire(renderer);
 }
 
-TEST_F(Rdata_RRSIG_Test, toWireBuffer_RRSIG)
+TEST_F(Rdata_RRSIG_Test, toWireBuffer)
 {
     string rrsig_txt("A 5 4 43200 20100223214617 20100222214617 8496 isc.org. "
                      "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
@@ -111,7 +111,7 @@ TEST_F(Rdata_RRSIG_Test, toWireBuffer_RRSIG)
     rdata_rrsig.toWire(obuffer);
 }
 
-TEST_F(Rdata_RRSIG_Test, createFromWire_RRSIG)
+TEST_F(Rdata_RRSIG_Test, createFromWire)
 {
     string rrsig_txt("A 5 2 43200 20100327070149 20100225070149 2658 isc.org. "
                 "HkJk/xZTvzePU8NENl/ley8bbUumhk1hXciyqhLnz1VQFzkDooej6neX"
