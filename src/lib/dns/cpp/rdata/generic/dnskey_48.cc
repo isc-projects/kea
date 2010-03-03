@@ -90,12 +90,10 @@ DNSKEY::DNSKEY(InputBuffer& buffer, size_t rdata_len)
     uint16_t flags = buffer.readUint16();
     uint16_t protocol = buffer.readUint8();
     uint16_t algorithm = buffer.readUint8();
-    vector<uint8_t> keydata;
 
     rdata_len -= 4;
-    for (int i = 0; i < rdata_len; i++) {
-        keydata.push_back(buffer.readUint8());
-    }
+    vector<uint8_t> keydata(rdata_len);
+    buffer.readData(&keydata[0], rdata_len);
 
     impl_ = new DNSKEYImpl(flags, protocol, algorithm, keydata);
 }
