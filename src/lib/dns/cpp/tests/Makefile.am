@@ -11,6 +11,7 @@ run_unittests_SOURCES += buffer_unittest.cc name_unittest.cc
 run_unittests_SOURCES += messagerenderer_unittest.cc
 run_unittests_SOURCES += rrclass_unittest.cc rrtype_unittest.cc
 run_unittests_SOURCES += rrttl_unittest.cc
+run_unittests_SOURCES += dnstime_unittest.cc
 run_unittests_SOURCES += rdata_unittest.h rdata_unittest.cc
 run_unittests_SOURCES += rdata_in_a_unittest.cc rdata_in_aaaa_unittest.cc
 run_unittests_SOURCES += rdata_ns_unittest.cc rdata_soa_unittest.cc
