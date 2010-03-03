@@ -85,12 +85,10 @@ DS::DS(InputBuffer& buffer, size_t rdata_len)
     uint16_t tag = buffer.readUint16();
     uint16_t algorithm = buffer.readUint8();
     uint16_t digest_type = buffer.readUint8();
-    vector<uint8_t> digest;
 
     rdata_len -= 4;
-    for (int i = 0; i < rdata_len; i++) {
-        digest.push_back(buffer.readUint8());
-    }
+    vector<uint8_t> digest(rdata_len);
+    buffer.readData(&digest[0], rdata_len);
 
     impl_ = new DSImpl(tag, algorithm, digest_type, digest);
 }
