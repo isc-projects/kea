@@ -58,13 +58,17 @@ TEST_F(Rdata_NSEC_Test, createFromWire_NSEC)
 {
     const generic::NSEC rdata_nsec(nsec_txt);
     EXPECT_EQ(0, rdata_nsec.compare(
-                  *rdataFactoryFromFile(RRType("NSEC"), RRClass("IN"),
+                  *rdataFactoryFromFile(RRType::NSEC(), RRClass::IN(),
                                         "testdata/rdata_nsec_fromWire1")));
 
     // Too short RDLENGTH
-    EXPECT_THROW(rdataFactoryFromFile(RRType("NSEC"), RRClass("IN"),
+    EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC(), RRClass::IN(),
                                       "testdata/rdata_nsec_fromWire2"),
                  InvalidRdataLength);
+
+    // This should be rejected
+    //rdataFactoryFromFile(RRType::NSEC(), RRClass::IN(),
+    //                   "testdata/rdata_nsec_fromWire3")->toText();
 }
 
 TEST_F(Rdata_NSEC_Test, toWireRenderer_NSEC)
