@@ -189,8 +189,8 @@ public:
     // Query constructor
     Query(Message& m, bool dnssec) {
         message_ = &m;
-        want_additional = true;
-        want_dnssec = dnssec;
+        want_additional_ = true;
+        want_dnssec_ = dnssec;
         status_ = PENDING;
 
         // Check message formatting
@@ -206,7 +206,7 @@ public:
 
         QueryTaskPtr initial_task(new QueryTask(*qname_, *qclass_, *qtype_,
                                                 Section::ANSWER()));
-        querytasks.push(initial_task);
+        querytasks_.push(initial_task);
     };
 
     virtual ~Query();
@@ -214,22 +214,22 @@ public:
     // wantAdditional() == true indicates that additional-section data
     // should be looked up while processing this query.  false indicates
     // that we're only interested in answer-section data
-    bool wantAdditional() { return want_additional; }
-    void setWantAdditional(bool d) { want_additional = d; }
+    bool wantAdditional() { return want_additional_; }
+    void setWantAdditional(bool d) { want_additional_ = d; }
 
     // wantDnssec() == true indicates that DNSSEC data should be retrieved
     // from the data source when this query is being processed
-    bool wantDnssec() { return want_dnssec; }
-    void setWantDnssec(bool d) { want_dnssec = d; }
+    bool wantDnssec() const { return want_dnssec_; }
+    void setWantDnssec(bool d) { want_dnssec_ = d; }
 
-    const Name& qname() { return *qname_; }
-    const RRClass& qclass() { return *qclass_; }
-    const RRType& qtype() { return *qtype_; }
+    const Name& qname() const { return *qname_; }
+    const RRClass& qclass() const { return *qclass_; }
+    const RRType& qtype() const { return *qtype_; }
 
-    Message& message() { return *message_; }
-    QueryTaskQueue& tasks() { return querytasks; }
+    Message& message() const { return *message_; }
+    QueryTaskQueue& tasks() { return querytasks_; }
 
-    Status status() { return status_; }
+    Status status() const { return status_; }
     void setStatus(Status s) { status_ = s; }
 
 private:
@@ -240,10 +240,10 @@ private:
     const RRType* qtype_;
 
     Message* message_;
-    QueryTaskQueue querytasks;
+    QueryTaskQueue querytasks_;
 
-    bool want_additional;
-    bool want_dnssec;
+    bool want_additional_;
+    bool want_dnssec_;
 };
 
 }
