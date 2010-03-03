@@ -68,7 +68,7 @@ NSEC::NSEC(const string& nsec_str) :
         bitmap[code / 8] |= (0x80 >> (code % 8));
     } while(!iss.eof());
 
-    for(int window = 0; window < 256; window++) {
+    for (int window = 0; window < 256; window++) {
         int octet;
         for (octet = 31; octet >= 0; octet--) {
             if (bitmap[window * 32 + octet] != 0) {
