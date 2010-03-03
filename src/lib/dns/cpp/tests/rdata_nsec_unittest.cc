@@ -59,7 +59,12 @@ TEST_F(Rdata_NSEC_Test, createFromWire_NSEC)
     const generic::NSEC rdata_nsec(nsec_txt);
     EXPECT_EQ(0, rdata_nsec.compare(
                   *rdataFactoryFromFile(RRType("NSEC"), RRClass("IN"),
-                                        "testdata/rdata_nsec_fromWire")));
+                                        "testdata/rdata_nsec_fromWire1")));
+
+    // Too short RDLENGTH
+    EXPECT_THROW(rdataFactoryFromFile(RRType("NSEC"), RRClass("IN"),
+                                      "testdata/rdata_nsec_fromWire2"),
+                 InvalidRdataLength);
 }
 
 TEST_F(Rdata_NSEC_Test, toWireRenderer_NSEC)
@@ -69,7 +74,7 @@ TEST_F(Rdata_NSEC_Test, toWireRenderer_NSEC)
     rdata_nsec.toWire(renderer);
 
     vector<unsigned char> data;
-    UnitTestUtil::readWireData("testdata/rdata_nsec_fromWire", data);
+    UnitTestUtil::readWireData("testdata/rdata_nsec_fromWire1", data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         static_cast<const uint8_t *>(obuffer.getData()) + 2,
                         obuffer.getLength() - 2, &data[2], data.size() - 2);
