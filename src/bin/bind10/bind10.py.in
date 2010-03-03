@@ -322,7 +322,7 @@ class BoB:
                     sys.stdout.write("Process %s (PID %d) died.\n" % 
                                      (proc_info.name, proc_info.pid))
                 if proc_info.name == "msgq":
-                    if self.verbose:
+                    if self.verbose and self.runnable:
                         sys.stdout.write(
                                      "The msgq process died, shutting down.\n")
                     self.runnable = False
@@ -482,6 +482,10 @@ def main():
     wakeup_fd = wakeup_pipe[0]
     ccs_fd = boss_of_bind.ccs.get_socket().fileno()
     while boss_of_bind.runnable:
+        # clean up any processes that exited
+        boss_of_bind.reap_children()
+        boss_of_bind.restart_processes()
+
         # XXX: get time for next restart for timeout
 
         # select() can raise EINTR when a signal arrives, 
@@ -501,10 +505,6 @@ def main():
                 boss_of_bind.ccs.check_command()
             elif fd == wakeup_fd:
                 os.read(wakeup_fd, 32)
-
-        # clean up any processes that exited
-        boss_of_bind.reap_children()
-        boss_of_bind.restart_processes()
 
     # shutdown
     signal.signal(signal.SIGCHLD, signal.SIG_DFL)
