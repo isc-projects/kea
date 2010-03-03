@@ -98,6 +98,8 @@ NSEC::NSEC(InputBuffer& buffer, size_t rdata_len)
     }
     rdata_len -= (buffer.getPosition() - pos);
 
+    // FIXIT: we cannot naively copy the data because the bitmaps have
+    // semantics and other part of this class assumes they are valid.
     vector<uint8_t> typebits(rdata_len);
     buffer.readData(&typebits[0], rdata_len);
 
