@@ -332,10 +332,6 @@ DataSrc::doQuery(Query q) {
     Message& m = q.message();
     vector<RRsetPtr> additional;
 
-    // XXX: this is for testing purposes; it should be done when 
-    // parsing the message for EDNS0 options
-    q.setWantDnssec(true);
-
     m.clearHeaderFlag(MessageFlag::AA());
     while (!q.tasks().empty()) {
         RRsetList data;
