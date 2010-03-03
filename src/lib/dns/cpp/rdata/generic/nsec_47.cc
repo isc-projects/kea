@@ -91,11 +91,12 @@ NSEC::NSEC(InputBuffer& buffer, size_t rdata_len)
 {
     size_t pos = buffer.getPosition();
     Name nextname(buffer);
-    rdata_len -= (buffer.getPosition() - pos);
 
-    if (rdata_len == 0) {
+    // rdata_len must be sufficiently large to hold non empty bitmap.
+    if (rdata_len <= buffer.getPosition() - pos) {
         dns_throw(InvalidRdataLength, "NSEC too short");
     }
+    rdata_len -= (buffer.getPosition() - pos);
 
     vector<uint8_t> typebits;
     for (int i = 0; i < rdata_len; i++) {
