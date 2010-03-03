@@ -1,5 +1,5 @@
 #
-# NSEC RDATA with invalid a type bitmap
+# NSEC RDATA with an invalid type bitmap
 #
 
 # RDLENGTH, 22 bytes
