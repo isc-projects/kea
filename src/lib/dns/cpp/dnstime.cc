@@ -102,18 +102,17 @@ DNSSECTimeFromText(const string& time_txt)
     checkRange(0, 60, second, "second");
 
     timeval = second + (60 * minute) + (3600 * hour) + ((day - 1) * 86400);
-    for (int m = 0; m < (month - 1); m++)
+    for (int m = 0; m < (month - 1); m++) {
             timeval += days[m] * 86400;
-    if (isLeap(year) && month > 2)
+    }
+    if (isLeap(year) && month > 2) {
             timeval += 86400;
+    }
     for (int y = 1970; y < year; y++) {
         timeval += ((isLeap(y) ? 366 : 365 ) * 86400);
     }
 
     return (timeval);
 }
-
-
-
 }
 }
