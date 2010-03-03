@@ -98,10 +98,8 @@ NSEC::NSEC(InputBuffer& buffer, size_t rdata_len)
     }
     rdata_len -= (buffer.getPosition() - pos);
 
-    vector<uint8_t> typebits;
-    for (int i = 0; i < rdata_len; i++) {
-        typebits.push_back(buffer.readUint8());
-    }
+    vector<uint8_t> typebits(rdata_len);
+    buffer.readData(&typebits[0], rdata_len);
 
     impl_ = new NSECImpl(nextname, typebits);
 }
