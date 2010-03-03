@@ -116,7 +116,7 @@ AuthSrv::processMessage()
         msg.setUDPSize(sizeof(recvbuf));
 
         // do the DataSource call here
-        data_src.doQuery(Query(msg, false));
+        data_src.doQuery(Query(msg, dnssec_ok));
 
         OutputBuffer obuffer(remote_bufsize);
         MessageRenderer renderer(obuffer);
