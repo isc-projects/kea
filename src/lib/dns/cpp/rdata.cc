@@ -115,7 +115,6 @@ Generic::Generic(InputBuffer& buffer, size_t rdata_len)
 
     vector<uint8_t> data(rdata_len);
     buffer.readData(&data[0], rdata_len);
-    data.resize(rdata_len);
 
     impl_ = new GenericImpl(data);
 }
