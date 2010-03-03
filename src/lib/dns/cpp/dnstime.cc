@@ -99,7 +99,7 @@ DNSSECTimeFromText(const string& time_txt)
             day, "day");
     checkRange(0, 23, hour, "hour");
     checkRange(0, 59, minute, "minute");
-    checkRange(0, 60, second, "second");
+    checkRange(0, 60, second, "second"); // 60 == leap second.
 
     timeval = second + (60 * minute) + (3600 * hour) + ((day - 1) * 86400);
     for (int m = 0; m < (month - 1); m++) {
@@ -108,7 +108,7 @@ DNSSECTimeFromText(const string& time_txt)
     if (isLeap(year) && month > 2) {
             timeval += 86400;
     }
-    for (int y = 1970; y < year; y++) {
+    for (int y = 1970; y < year; ++y) {
         timeval += ((isLeap(y) ? 366 : 365 ) * 86400);
     }
 
