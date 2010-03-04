@@ -34,10 +34,9 @@ namespace auth {
 //  Prepare a statement.  Can call release() or sqlite3_finalize()
 //  directly.
 //
-sqlite3_stmt* Sqlite3DataSrc::prepare(const char *statement)
-{
+sqlite3_stmt* Sqlite3DataSrc::prepare(const char* statement) {
     int rc;
-    sqlite3_stmt *prepared = NULL;
+    sqlite3_stmt* prepared = NULL;
 
     rc = sqlite3_prepare_v2(db, statement, -1, &prepared, NULL);
     if (rc != SQLITE_OK) {
@@ -56,8 +55,7 @@ void Sqlite3DataSrc::release(sqlite3_stmt* prepared) {
 //
 //  Get the database schema version.
 //
-int Sqlite3DataSrc::getVersion(void)
-{
+int Sqlite3DataSrc::getVersion(void) {
     if (database_version == -1) {
         loadVersion();
     }
@@ -68,8 +66,7 @@ int Sqlite3DataSrc::getVersion(void)
 //  Find the exact zone match.  Return -1 if not found, or the zone's
 //  ID if found.  This will always be >= 0 if found.
 //
-int Sqlite3DataSrc::hasExactZone(const char* name) const
-{
+int Sqlite3DataSrc::hasExactZone(const char* name) const {
     int rc, i;
     sqlite3_reset(q_zone);
     rc = sqlite3_bind_text(q_zone, 1, name, -1, SQLITE_STATIC);
@@ -93,10 +90,8 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
 {
     int rc;
     const string s_name = name.toText();
-    const char *c_name = s_name.c_str();
-    const string s_rdtype = rdtype.toText();
-    const char *c_rdtype = s_rdtype.c_str();
-    sqlite3_stmt *query;
+    const char* const c_name = s_name.c_str();
+    sqlite3_stmt* query;
 
     switch (mode) {
     case ADDRESS:
@@ -116,13 +111,8 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
 
     flags = 0;
 
-    int zone_id;
-    if (zonename == NULL) {
-        zone_id = findClosest(c_name, NULL);
-    } else {
-        zone_id = findClosest(zonename->toText().c_str(), NULL);
-    }
-
+    int zone_id = (zonename == NULL) ? findClosest(c_name, NULL) :
+        findClosest(zonename->toText().c_str(), NULL);
     if (zone_id < 0) {
         flags = NO_SUCH_ZONE;
         return (0);
@@ -141,7 +131,8 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
     }
 
     if (query == q_record) {
-        rc = sqlite3_bind_text(query, 3, c_rdtype, -1, SQLITE_STATIC);
+        rc = sqlite3_bind_text(query, 3, rdtype.toText().c_str(), -1,
+                               SQLITE_STATIC);
         if (rc != SQLITE_OK) {
             throw("Could not bind 3 (record)");
         }
@@ -156,10 +147,10 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
 
     rc = sqlite3_step(query);
     while (rc == SQLITE_ROW) {
-        const char *type = (const char *)sqlite3_column_text(query, 0);
+        const char* type = (const char*)sqlite3_column_text(query, 0);
         int ttl = sqlite3_column_int(query, 1);
-        const char *sigtype = (const char *)sqlite3_column_text(query, 2);
-        const char *rdata = (const char *)sqlite3_column_text(query, 3);
+        const char* sigtype = (const char*)sqlite3_column_text(query, 2);
+        const char* rdata = (const char*)sqlite3_column_text(query, 3);
 
         RRType rt(sigtype ? sigtype : type);
 
@@ -172,7 +163,7 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
             continue;
         }
 
-        rows++;
+        ++rows;
 
         // Looking for something else but found CNAME
         if (rt == RRType::CNAME() && rdtype != RRType::CNAME()) {
@@ -193,9 +184,7 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
         }
 
         if (!sigtype && RRType(type) == rrset->getType()) {
-            RdataPtr item = createRdata(RRType(type), RRClass("IN"), rdata);
-            rrset->addRdata(item);
-
+            rrset->addRdata(createRdata(RRType(type), RRClass::IN(), rdata));
             if (target_ttl == -1 || target_ttl > ttl) {
                 target_ttl = ttl;
             }
@@ -246,8 +235,7 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
 
     rc = sqlite3_step(q_count);
     if(rc == SQLITE_ROW) {
-        int count = sqlite3_column_int(q_count, 0);
-        if (count != 0) {
+        if (sqlite3_column_int(q_count, 0) != 0) {
             flags |= TYPE_NOT_FOUND;
             sqlite3_reset(q_count);
             return (0);
@@ -264,13 +252,11 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
 //  >= 0 if found.  If position is not NULL, it will be filled in with the
 //  longest match found.
 //
-int Sqlite3DataSrc::findClosest(const char *name, const char **position) const
-{
-    int rc;
-    const char *current = name;
+int Sqlite3DataSrc::findClosest(const char* name, const char** position) const {
+    const char* current = name;
     
     while (*current != 0) {
-        rc = hasExactZone(current);
+        int rc = hasExactZone(current);
         if (rc >= 0) {
             if (position != NULL) {
                 *position = current;
@@ -278,10 +264,10 @@ int Sqlite3DataSrc::findClosest(const char *name, const char **position) const
             return (rc);
         }
         while (*current != '.' && *current != 0) {
-            current++;
+            ++current;
         }
         if (*current == '.') {
-            current++;
+            ++current;
         }
     }
 
@@ -289,14 +275,10 @@ int Sqlite3DataSrc::findClosest(const char *name, const char **position) const
 }
 
 void
-Sqlite3DataSrc::loadVersion(void)
-{
-    int rc;
-
-    const char *q = "SELECT version FROM schema_version";
-    sqlite3_stmt *prepared = prepare(q);
-    rc = sqlite3_step(prepared);
-    if (rc != SQLITE_ROW) {
+Sqlite3DataSrc::loadVersion(void) {
+    const char* q = "SELECT version FROM schema_version";
+    sqlite3_stmt* prepared = prepare(q);
+    if (sqlite3_step(prepared) != SQLITE_ROW) {
         throw("failed to find a row in schema_version table");
     }
     database_version = sqlite3_column_int(prepared, 0);
@@ -304,8 +286,7 @@ Sqlite3DataSrc::loadVersion(void)
 }
 
 void
-Sqlite3DataSrc::setupPreparedStatements(void)
-{
+Sqlite3DataSrc::setupPreparedStatements(void) {
 
     const char* q_zone_str = "SELECT id FROM zones WHERE name=?1";
     try {
@@ -352,7 +333,7 @@ Sqlite3DataSrc::setupPreparedStatements(void)
         cout << sqlite3_errmsg(db) << endl;
         throw(e);
     }
-    const char *q_any_str = "SELECT rdtype, ttl, sigtype, rdata "
+    const char* q_any_str = "SELECT rdtype, ttl, sigtype, rdata "
                              "FROM records WHERE zone_id=?1 AND name=?2";
     try {
         q_any = prepare(q_any_str);
@@ -387,8 +368,7 @@ Sqlite3DataSrc::setupPreparedStatements(void)
 }
 
 void
-Sqlite3DataSrc::execSetupQuery(const char *query)
-{
+Sqlite3DataSrc::execSetupQuery(const char* query) {
     int rc;
 
     rc = sqlite3_exec(db, query, NULL, NULL, NULL);
@@ -398,8 +378,7 @@ Sqlite3DataSrc::execSetupQuery(const char *query)
 }
 
 void
-Sqlite3DataSrc::checkAndSetupSchema(void)
-{
+Sqlite3DataSrc::checkAndSetupSchema(void) {
     try {
         loadVersion();
         setupPreparedStatements();
@@ -431,8 +410,7 @@ Sqlite3DataSrc::checkAndSetupSchema(void)
     }
 }
 
-Sqlite3DataSrc::Sqlite3DataSrc()
-{
+Sqlite3DataSrc::Sqlite3DataSrc() {
     db = NULL;
     database_version = -1;
     q_zone = NULL;
@@ -444,14 +422,12 @@ Sqlite3DataSrc::Sqlite3DataSrc()
     q_previous = NULL;
 }
 
-Sqlite3DataSrc::~Sqlite3DataSrc()
-{
+Sqlite3DataSrc::~Sqlite3DataSrc() {
     close();
 }
 
 DataSrc::Result
-Sqlite3DataSrc::init()
-{
+Sqlite3DataSrc::init() {
     try {
         open("/tmp/zone.sqlite3");
     
@@ -464,14 +440,10 @@ Sqlite3DataSrc::init()
 }
 
 void
-Sqlite3DataSrc::findClosestEnclosure(NameMatch& match) const
-{
-    const Name& qname = match.qname();
-    const string target_string = qname.toText();
-    const char *position = NULL;
+Sqlite3DataSrc::findClosestEnclosure(NameMatch& match) const {
+    const char* position = NULL;
     
-    int ret = findClosest(target_string.c_str(), &position);
-    if (ret == -1) {
+    if (findClosest(match.qname().toText().c_str(), &position) == -1) {
         return;
     }
 
@@ -484,16 +456,9 @@ Sqlite3DataSrc::findPreviousName(const Query& q,
                                  Name& target,
                                  const Name* zonename) const
 {
-    const char* c_rname = qname.reverse().toText().c_str();
-
-    int zone_id;
-    if (zonename == NULL) {
-        const char* c_name = qname.toText().c_str();
-        zone_id = findClosest(c_name, NULL);
-    } else {
-        const char* c_zone = zonename->toText().c_str();
-        zone_id = findClosest(c_zone, NULL);
-    }
+    int zone_id = (zonename == NULL) ?
+        findClosest(qname.toText().c_str(), NULL) :
+        findClosest(zonename->toText().c_str(), NULL);
 
     if (zone_id < 0) {
         return (ERROR);
@@ -506,7 +471,8 @@ Sqlite3DataSrc::findPreviousName(const Query& q,
     if (rc != SQLITE_OK) {
         throw ("Could not bind 1 (record)");
     }
-    rc = sqlite3_bind_text(q_previous, 2, c_rname, -1, SQLITE_STATIC);
+    rc = sqlite3_bind_text(q_previous, 2, qname.reverse().toText().c_str(),
+                           -1, SQLITE_STATIC);
     if (rc != SQLITE_OK) {
         throw ("Could not bind 2 (record)");
     }
@@ -517,8 +483,8 @@ Sqlite3DataSrc::findPreviousName(const Query& q,
         return (ERROR);
     }
 
-    const char *prev = (const char *) sqlite3_column_text(q_previous, 0);
-    target = Name(prev);
+    // XXX: bad cast.  we should revisit this.
+    target = Name((const char*)sqlite3_column_text(q_previous, 0));
     sqlite3_reset(q_previous);
     return (SUCCESS);
 }
@@ -586,8 +552,7 @@ Sqlite3DataSrc::findReferral(const Query& q,
 //  Open the database.
 //
 void
-Sqlite3DataSrc::open(const string& name)
-{
+Sqlite3DataSrc::open(const string& name) {
     int rc;
 
     database_name = name;
@@ -603,8 +568,7 @@ Sqlite3DataSrc::open(const string& name)
 }
 
 DataSrc::Result
-Sqlite3DataSrc::close(void)
-{
+Sqlite3DataSrc::close(void) {
     if (db == NULL) {
         return (SUCCESS);
     }
