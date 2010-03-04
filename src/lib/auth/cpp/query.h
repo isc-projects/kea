@@ -48,13 +48,6 @@ public:
     const isc::dns::RRClass& qclass;
     const isc::dns::RRType& qtype;
 
-    // Optional: name for the containing zone, if known.
-    // This is particularly needed when looking up data in a
-    // zone other than the closest enclosure (such as getting
-    // DS queries from a parent zone on a server which serves
-    // both parent and child).
-    isc::dns::Name* zone;
-
     // The section of the reply into which the data should be
     // written after it has been fetched from the data source.
     const isc::dns::Section& section;

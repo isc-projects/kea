@@ -58,7 +58,7 @@ public:
                      const isc::dns::RRType& qtype,
                      isc::dns::RRsetList& target,
                      uint32_t& flags,
-                     isc::dns::Name* zone = NULL) const;
+                     const isc::dns::Name* zonename) const;
 
     Result findExactRRset(const Query& q,
                           const isc::dns::Name& qname,
@@ -66,26 +66,26 @@ public:
                           const isc::dns::RRType& qtype,
                           isc::dns::RRsetList& target,
                           uint32_t& flags,
-                          isc::dns::Name* zone = NULL) const;
+                          const isc::dns::Name* zonename) const;
 
     Result findAddrs(const Query& q,
                      const isc::dns::Name& qname,
                      const isc::dns::RRClass& qclass,
                      isc::dns::RRsetList& target,
                      uint32_t& flags,
-                     isc::dns::Name* zone = NULL) const;
+                     const isc::dns::Name* zonename) const;
 
     Result findReferral(const Query& q,
                         const isc::dns::Name& qname,
                         const isc::dns::RRClass& qclass,
                         isc::dns::RRsetList& target,
                         uint32_t& flags,
-                        isc::dns::Name* zone = NULL) const;
+                        const isc::dns::Name* zonename) const;
 
     Result findPreviousName(const Query& q,
                             const isc::dns::Name& qname,
                             isc::dns::Name& target,
-                            isc::dns::Name* zone) const;
+                            const isc::dns::Name* zonename) const;
 
     Result init() { return (SUCCESS); }
     Result close() { return (SUCCESS); }
@@ -98,8 +98,9 @@ private:
     };
 
     void findRecords(const isc::dns::Name& name, const isc::dns::RRType& rdtype,
-                     isc::dns::RRsetList& target, isc::dns::Name* zone,
-                     const Mode mode, uint32_t& flags) const;
+                     isc::dns::RRsetList& target,
+                     const isc::dns::Name* zonename, const Mode mode,
+                     uint32_t& flags) const;
 
     const isc::dns::Name example;
     const isc::dns::Name sql1;

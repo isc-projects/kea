@@ -113,7 +113,8 @@ StaticDataSrc::findClosestEnclosure(NameMatch& match) const {
 DataSrc::Result
 StaticDataSrc::findRRset(const Query& q, const Name& qname,
                          const RRClass& qclass, const RRType& qtype,
-                         RRsetList& target, uint32_t& flags, Name* zone) const
+                         RRsetList& target, uint32_t& flags,
+                         const Name* zonename) const
 {
     flags = 0;
     if (qclass != getClass()) {
@@ -151,14 +152,14 @@ DataSrc::Result
 StaticDataSrc::findExactRRset(const Query& q, const Name& qname,
                               const RRClass& qclass, const RRType& qtype,
                               RRsetList& target, uint32_t& flags,
-                              Name* zone) const
+                              const Name* zonename) const
 {
-    return (findRRset(q, qname, qclass, qtype, target, flags, zone));
+    return (findRRset(q, qname, qclass, qtype, target, flags, zonename));
 }
 
 DataSrc::Result
 StaticDataSrc::findPreviousName(const Query& q, const Name& qname,
-                                Name& target, Name* zone) const
+                                Name& target, const Name* zonename) const
 {
     return (NOT_IMPLEMENTED);
 }

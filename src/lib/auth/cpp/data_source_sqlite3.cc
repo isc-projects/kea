@@ -87,9 +87,9 @@ int Sqlite3DataSrc::hasExactZone(const char* name) const
 }
 
 int
-Sqlite3DataSrc::
-findRecords(const Name& name, const RRType& rdtype, RRsetList& target,
-            Name* zone, const Mode mode, uint32_t& flags) const
+Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
+                            RRsetList& target, const Name* zonename,
+                            const Mode mode, uint32_t& flags) const
 {
     int rc;
     const string s_name = name.toText();
@@ -117,12 +117,10 @@ findRecords(const Name& name, const RRType& rdtype, RRsetList& target,
     flags = 0;
 
     int zone_id;
-    if (zone == NULL) {
+    if (zonename == NULL) {
         zone_id = findClosest(c_name, NULL);
     } else {
-        const string s_zone = zone->toText();
-        const char *c_zone = s_zone.c_str();
-        zone_id = findClosest(c_zone, NULL);
+        zone_id = findClosest(zonename->toText().c_str(), NULL);
     }
 
     if (zone_id < 0) {
@@ -484,16 +482,16 @@ DataSrc::Result
 Sqlite3DataSrc::findPreviousName(const Query& q,
                                  const Name& qname,
                                  Name& target,
-                                 Name* zone) const
+                                 const Name* zonename) const
 {
     const char* c_rname = qname.reverse().toText().c_str();
 
     int zone_id;
-    if (zone == NULL) {
+    if (zonename == NULL) {
         const char* c_name = qname.toText().c_str();
         zone_id = findClosest(c_name, NULL);
     } else {
-        const char* c_zone = zone->toText().c_str();
+        const char* c_zone = zonename->toText().c_str();
         zone_id = findClosest(c_zone, NULL);
     }
 
@@ -532,9 +530,9 @@ Sqlite3DataSrc::findRRset(const Query& q,
                           const RRType& qtype,
                           RRsetList& target,
                           uint32_t& flags,
-                          Name* zone) const
+                          const Name* zonename) const
 {
-    findRecords(qname, qtype, target, zone, NORMAL, flags);
+    findRecords(qname, qtype, target, zonename, NORMAL, flags);
     return (SUCCESS);
 }
 
@@ -545,9 +543,9 @@ Sqlite3DataSrc::findExactRRset(const Query& q,
                                const RRType& qtype,
                                RRsetList& target,
                                uint32_t& flags,
-                               Name* zone) const
+                               const Name* zonename) const
 {
-    findRecords(qname, qtype, target, zone, NORMAL, flags);
+    findRecords(qname, qtype, target, zonename, NORMAL, flags);
 
     // Ignore referrals in this case
     flags &= ~REFERRAL;
@@ -567,9 +565,9 @@ Sqlite3DataSrc::findAddrs(const Query& q,
                           const RRClass& qclass,
                           RRsetList& target,
                           uint32_t& flags,
-                          Name* zone) const
+                          const Name* zonename) const
 {
-    findRecords(qname, RRType::ANY(), target, zone, ADDRESS, flags);
+    findRecords(qname, RRType::ANY(), target, zonename, ADDRESS, flags);
     return (SUCCESS);
 }
 
@@ -579,9 +577,9 @@ Sqlite3DataSrc::findReferral(const Query& q,
                              const RRClass& qclass,
                              RRsetList& target,
                              uint32_t& flags,
-                             Name* zone) const
+                             const Name* zonename) const
 {
-    findRecords(qname, RRType::ANY(), target, zone, DELEGATION, flags);
+    findRecords(qname, RRType::ANY(), target, zonename, DELEGATION, flags);
     return (SUCCESS);
 }
 //

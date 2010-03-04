@@ -14,6 +14,8 @@
 
 // $Id$
 
+#include <cassert>
+
 #include "unittest_util.h"
 #include "unittest_ds.h"
 #include "data_source.h"
@@ -388,14 +390,14 @@ TestDataSrc::findClosestEnclosure(NameMatch& match) const {
 
 void
 TestDataSrc::findRecords(const Name& name, const RRType& rdtype,
-                         RRsetList& target, Name* zone, const Mode mode,
+                         RRsetList& target, const Name* zonename, const Mode mode,
                          uint32_t& flags) const
 {
     bool any = (rdtype == RRType::ANY());
     flags = 0;
 
-
-    if (*zone == sql1) {
+    assert(zonename != NULL);
+    if (*zonename == sql1) {
         if (name == sql1 && mode == DELEGATION) {
             target.addRRset(sql1_ns);
             flags |= REFERRAL;
@@ -619,9 +621,9 @@ TestDataSrc::findRRset(const Query& q,
                        const RRType& qtype,
                        RRsetList& target,
                        uint32_t& flags,
-                       Name* zone) const
+                       const Name* zonename) const
 {
-    findRecords(qname, qtype, target, zone, NORMAL, flags);
+    findRecords(qname, qtype, target, zonename, NORMAL, flags);
     return (SUCCESS);
 }
 
@@ -632,9 +634,9 @@ TestDataSrc::findExactRRset(const Query& q,
                             const RRType& qtype,
                             RRsetList& target,
                             uint32_t& flags,
-                            Name* zone) const
+                            const Name* zonename) const
 {
-    findRecords(qname, qtype, target, zone, NORMAL, flags);
+    findRecords(qname, qtype, target, zonename, NORMAL, flags);
     // Ignore referrals in this case
     flags &= ~REFERRAL;
 
@@ -653,9 +655,9 @@ TestDataSrc::findAddrs(const Query& q,
                         const RRClass& qclass,
                         RRsetList& target,
                         uint32_t& flags,
-                        Name* zone) const
+                        const Name* zonename) const
 {
-    findRecords(qname, RRType::ANY(), target, zone, ADDRESS, flags);
+    findRecords(qname, RRType::ANY(), target, zonename, ADDRESS, flags);
     return (SUCCESS);
 }
 
@@ -665,9 +667,9 @@ TestDataSrc::findReferral(const Query& q,
                           const RRClass& qclass,
                           RRsetList& target,
                           uint32_t& flags,
-                          Name* zone) const
+                          const Name* zonename) const
 {
-    findRecords(qname, RRType::ANY(), target, zone, DELEGATION, flags);
+    findRecords(qname, RRType::ANY(), target, zonename, DELEGATION, flags);
     return (SUCCESS);
 }
 
@@ -675,9 +677,11 @@ DataSrc::Result
 TestDataSrc::findPreviousName(const Query& q,
                               const Name& qname,
                               Name& target,
-                              Name* zone) const
+                              const Name* zonename) const
 {
-    if (*zone == example) {
+    assert(zonename != NULL);
+
+    if (*zonename == example) {
         if (qname >= example || qname < cnameext) {
             target = example;
         } else if (qname < cnameint) {
