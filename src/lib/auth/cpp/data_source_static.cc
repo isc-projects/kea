@@ -14,17 +14,14 @@
 
 // $Id$
 
-#include "data_source_static.h"
-
 #include <dns/name.h>
-#include <dns/rdata.h>
 #include <dns/rdataclass.h>
 #include <dns/rrclass.h>
 #include <dns/rrset.h>
 #include <dns/rrtype.h>
 #include <dns/rrttl.h>
 
-#include <iostream>
+#include "data_source_static.h"
 
 using namespace std;
 using namespace isc::dns;
