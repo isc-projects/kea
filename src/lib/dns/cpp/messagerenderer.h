@@ -77,7 +77,7 @@ public:
     /// \param buffer An \c OutputBuffer object to which wire format data is
     /// written.
     MessageRenderer(OutputBuffer& buffer);
-    /// \brief The default destructor.
+    /// \brief The destructor.
     ///
     /// The destructor does nothing on the given \c buffer on construction;
     /// in fact, it is expected that the user will use the resulting buffer
