@@ -26,6 +26,25 @@
 namespace isc {
 namespace auth {
 
+Query::Query(Message& m, bool dnssec) :
+    status_(PENDING), qname_(NULL), qclass_(NULL), qtype_(NULL),
+    message_(&m), want_additional_(true), want_dnssec_(dnssec)
+{
+    // Check message formatting
+    if (message_->getRRCount(Section::QUESTION()) != 1) {
+        dns_throw(Unexpected, "malformed message: too many questions");
+    }
+
+    // Populate the query task queue with the initial question
+    QuestionPtr question = *message_->beginQuestion();
+    qname_ = &question->getName();
+    qclass_ = &question->getClass();
+    qtype_ = &question->getType();
+
+    querytasks_.push(QueryTaskPtr(new QueryTask(*qname_, *qclass_, *qtype_,
+                                                Section::ANSWER())));
+}
+
 // Destructors defined here to avoid confusing the linker
 QueryTask::~QueryTask() {}
 Query::~Query() {}
