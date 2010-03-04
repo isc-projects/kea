@@ -32,6 +32,8 @@
 #include <dns/message.h>
 #include <config/ccsession.h>
 
+#include <auth/query.h>
+
 #include <cc/data.h>
 
 #include "common.h"
@@ -47,7 +49,8 @@ using namespace isc::dns::rdata;
 using namespace isc::data;
 using namespace isc::config;
 
-AuthSrv::AuthSrv(int port)
+AuthSrv::AuthSrv(int port) :
+    data_src(NULL), sock(-1)
 {
     int s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (s < 0) {
@@ -65,18 +68,33 @@ AuthSrv::AuthSrv(int port)
 #endif
 
     if (bind(s, (struct sockaddr *)&sin, sa_len) < 0) {
+        close(s);
         throw FatalError("could not bind socket");
     }
 
     sock = s;
 
+    // XXX: the following code is not exception-safe.  Will address in the
+    // next phase.
+
+    data_src = new(MetaDataSrc);
+
     // add static data source
-    data_src.addDataSrc(new StaticDataSrc);
+    data_src->addDataSrc(new StaticDataSrc);
 
     // add SQL data source
     Sqlite3DataSrc* sd = new Sqlite3DataSrc;
     sd->init();
-    data_src.addDataSrc(sd);
+    data_src->addDataSrc(sd);
+}
+
+AuthSrv::~AuthSrv()
+{
+    if (sock >= 0) {
+        close(sock);
+    }
+
+    delete data_src;
 }
 
 void
@@ -115,8 +133,8 @@ AuthSrv::processMessage()
         msg.setDNSSECSupported(dnssec_ok);
         msg.setUDPSize(sizeof(recvbuf));
 
-        // do the DataSource call here
-        data_src.doQuery(Query(msg, dnssec_ok));
+        Query query(msg, dnssec_ok);
+        data_src->doQuery(query);
 
         OutputBuffer obuffer(remote_bufsize);
         MessageRenderer renderer(obuffer);

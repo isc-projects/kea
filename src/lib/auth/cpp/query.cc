@@ -29,8 +29,8 @@ namespace isc {
 namespace auth {
 
 // Destructors defined here to avoid confusing the linker
-QueryTask::~QueryTask() {}
 Query::~Query() {}
+QueryTask::~QueryTask() {}
 
 QueryTask::QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
                      const isc::dns::RRType& t, const isc::dns::Section& sect) :
@@ -66,7 +66,7 @@ QueryTask::QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
     op(o), state(GETANSWER), flags(0)
 {
     if (op != SIMPLE_QUERY) {
-        throw "invalid constructor for this task operation";
+        dns_throw(Unexpected, "invalid constructor for this task operation");
     }
 }
 
@@ -78,7 +78,7 @@ QueryTask::QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
     flags(0)
 {
     if (op != REF_QUERY) {
-        throw "invalid constructor for this task operation";
+        dns_throw(Unexpected, "invalid constructor for this task operation");
     }
 }
 
@@ -89,7 +89,7 @@ QueryTask::QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
         section(sect), op(o), state(st), flags(0)
 {
     if (op != GLUE_QUERY && op != NOGLUE_QUERY) {
-        throw "invalid constructor for this task operation";
+        dns_throw(Unexpected, "invalid constructor for this task operation");
     }
 }
 

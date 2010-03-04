@@ -27,54 +27,61 @@
 
 #include "data_source.h"
 
-using namespace isc::dns;
-
 namespace isc {
+
+namespace dns {
+class Name;
+class RRClass;
+class RRType;
+class RRType;
+class RRsetList;
+}
+
 namespace auth {
 
+class Query;
+class NameMatch;
+
 class StaticDataSrc : public DataSrc {
+private:
+    ///
+    /// \name Constructors, Assignment Operator and Destructor.
+    ///
+    /// Note: The copy constructor and the assignment operator are intentionally
+    /// defined as private.
+    //@{
+    StaticDataSrc(const StaticDataSrc& source);
+    StaticDataSrc& operator=(const StaticDataSrc& source);
 public:
     StaticDataSrc();
     ~StaticDataSrc() {}
+    //@}
 
     void findClosestEnclosure(NameMatch& match) const;
 
     Result findRRset(const Query& q,
-                     const Name& qname,
-                     const RRClass& qclass,
-                     const RRType& qtype,
-                     RRsetList& target,
+                     const isc::dns::Name& qname,
+                     const isc::dns::RRClass& qclass,
+                     const isc::dns::RRType& qtype,
+                     isc::dns::RRsetList& target,
                      uint32_t& flags,
-                     Name* zone = NULL) const;
+                     isc::dns::Name* zone = NULL) const;
 
     Result findExactRRset(const Query& q,
-                         const Name& qname,
-                         const RRClass& qclass,
-                         const RRType& qtype,
-                         RRsetList& target,
-                         uint32_t& flags,
-                         Name* zone = NULL) const
-    {
-        return (findRRset(q, qname, qclass, qtype, target, flags, zone));
-    }
+                          const isc::dns::Name& qname,
+                          const isc::dns::RRClass& qclass,
+                          const isc::dns::RRType& qtype,
+                          isc::dns::RRsetList& target,
+                          uint32_t& flags,
+                          isc::dns::Name* zone = NULL) const;
 
     Result findPreviousName(const Query& q,
-                            const Name& qname,
-                            Name& target,
-                            Name* zone) const {
-        return (NOT_IMPLEMENTED);
-    }
+                            const isc::dns::Name& qname,
+                            isc::dns::Name& target,
+                            isc::dns::Name* zone) const;
 
-    Result init() { return (SUCCESS); }
-    Result close() { return (SUCCESS); }
-
-private:
-    const Name authors_name;
-    const Name version_name;
-    RRsetPtr authors;
-    RRsetPtr authors_ns;
-    RRsetPtr version;
-    RRsetPtr version_ns;
+    Result init();
+    Result close();
 };
 
 }

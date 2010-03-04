@@ -31,6 +31,7 @@
 #include <dns/rrttl.h>
 #include <dns/rrtype.h>
 
+#include "query.h"
 #include "unittest_util.h"
 #include "unittest_ds.h"
 
@@ -66,7 +67,7 @@ TEST_F(DataSrcTest, Query) {
     msg.makeResponse();
     msg.setHeaderFlag(MessageFlag::AA());
     msg.setRcode(Rcode::NOERROR());
-    Query q = Query(msg, true);
+    Query q(msg, true);
     ds.doQuery(q);
     Message* m = &(q.message());
 
@@ -127,7 +128,7 @@ TEST_F(DataSrcTest, NSQuery) {
     msg.makeResponse();
     msg.setHeaderFlag(MessageFlag::AA());
     msg.setRcode(Rcode::NOERROR());
-    Query q = Query(msg, true);
+    Query q(msg, true);
     ds.doQuery(q);
     Message* m = &(q.message());
 
@@ -162,7 +163,7 @@ TEST_F(DataSrcTest, NxRRset) {
     msg.makeResponse();
     msg.setHeaderFlag(MessageFlag::AA());
     msg.setRcode(Rcode::NOERROR());
-    Query q = Query(msg, true);
+    Query q(msg, true);
     ds.doQuery(q);
     Message* m = &(q.message());
 
@@ -186,7 +187,7 @@ TEST_F(DataSrcTest, Nxdomain) {
     msg.makeResponse();
     msg.setHeaderFlag(MessageFlag::AA());
     msg.setRcode(Rcode::NOERROR());
-    Query q = Query(msg, true);
+    Query q(msg, true);
     ds.doQuery(q);
     Message* m = &(q.message());
 
@@ -212,7 +213,7 @@ TEST_F(DataSrcTest, NxZone) {
     msg.makeResponse();
     msg.setHeaderFlag(MessageFlag::AA());
     msg.setRcode(Rcode::NOERROR());
-    Query q = Query(msg, true);
+    Query q(msg, true);
     ds.doQuery(q);
     Message* m = &(q.message());
 
@@ -228,7 +229,7 @@ TEST_F(DataSrcTest, Wildcard) {
     msg.makeResponse();
     msg.setHeaderFlag(MessageFlag::AA());
     msg.setRcode(Rcode::NOERROR());
-    Query q = Query(msg, true);
+    Query q(msg, true);
     ds.doQuery(q);
     Message* m = &(q.message());
 
@@ -287,7 +288,7 @@ TEST_F(DataSrcTest, AuthDelegation) {
     msg.makeResponse();
     msg.setHeaderFlag(MessageFlag::AA());
     msg.setRcode(Rcode::NOERROR());
-    Query q = Query(msg, true);
+    Query q(msg, true);
     ds.doQuery(q);
     Message* m = &(q.message());
 
@@ -346,7 +347,7 @@ TEST_F(DataSrcTest, Dname) {
     msg.makeResponse();
     msg.setHeaderFlag(MessageFlag::AA());
     msg.setRcode(Rcode::NOERROR());
-    Query q = Query(msg, true);
+    Query q(msg, true);
     ds.doQuery(q);
     Message* m = &(q.message());
 
@@ -407,7 +408,7 @@ TEST_F(DataSrcTest, Cname) {
     msg.makeResponse();
     msg.setHeaderFlag(MessageFlag::AA());
     msg.setRcode(Rcode::NOERROR());
-    Query q = Query(msg, true);
+    Query q(msg, true);
     ds.doQuery(q);
     Message* m = &(q.message());
 
@@ -438,7 +439,7 @@ TEST_F(DataSrcTest, CnameInt) {
     msg.makeResponse();
     msg.setHeaderFlag(MessageFlag::AA());
     msg.setRcode(Rcode::NOERROR());
-    Query q = Query(msg, true);
+    Query q(msg, true);
     ds.doQuery(q);
     Message* m = &(q.message());
 
@@ -477,7 +478,7 @@ TEST_F(DataSrcTest, CnameExt) {
     msg.makeResponse();
     msg.setHeaderFlag(MessageFlag::AA());
     msg.setRcode(Rcode::NOERROR());
-    Query q = Query(msg, true);
+    Query q(msg, true);
     ds.doQuery(q);
     Message* m = &(q.message());
 
@@ -514,7 +515,7 @@ TEST_F(DataSrcTest, Delegation) {
     msg.makeResponse();
     msg.setHeaderFlag(MessageFlag::AA());
     msg.setRcode(Rcode::NOERROR());
-    Query q = Query(msg, true);
+    Query q(msg, true);
     ds.doQuery(q);
     Message* m = &(q.message());
 
@@ -557,7 +558,7 @@ TEST_F(DataSrcTest, DS) {
     msg.makeResponse();
     msg.setHeaderFlag(MessageFlag::AA());
     msg.setRcode(Rcode::NOERROR());
-    Query q = Query(msg, true);
+    Query q(msg, true);
     ds.doQuery(q);
     Message* m = &(q.message());
 

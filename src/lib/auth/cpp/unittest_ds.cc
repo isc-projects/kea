@@ -25,6 +25,7 @@
 #include <dns/rdataclass.h>
 #include <dns/rrclass.h>
 #include <dns/rrset.h>
+#include <dns/rrsetlist.h>
 #include <dns/rrtype.h>
 #include <dns/rrttl.h>
 
