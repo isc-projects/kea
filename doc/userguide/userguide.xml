@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+<!ENTITY mdash  "&#x2014;" >
+]>
+<book>
+  <bookinfo>
+    <title>BIND 10 User Guide</title>
+    <subtitle>Administrator Reference for BIND 10</subtitle>
+
+    <copyright>
+      <year>2010</year><holder>Internet Systems Consortium, Inc.</holder>
+    </copyright>
+
+<!--    <abstract><para>This is the definitive reference and user's guide for BIND 10</para></abstract> -->
+
+  </bookinfo>
+
+  <chapter id="intro">
+    <title>Introduction</title>
+    <para>
+      BIND is the popular implementation of a DNS server, developer
+      interfaces, and DNS tools.
+      BIND 10 is a rewrite, using C++ and Python, to provide
+      modular components for serving and maintaining DNS.
+    </para>
+
+    <para>
+      BIND 10 provides separate executables for different tasks.
+      The standard components include:
+      <itemizedlist>
+      <listitem>
+      <simpara><command>msgq</command> &mdash; message bus</simpara>
+      </listitem>
+      <listitem>
+      <simpara><command>b10-auth</command> &mdash; authoritative DNS server</simpara>
+      </listitem>
+      <listitem>
+      <simpara><command>b10-cfgmgr</command> &mdash; configuration daemon</simpara>
+      </listitem>
+      <listitem>
+      <simpara><command>b10-cmdctl</command> <!-- TODO --></simpara>
+      </listitem>
+      </itemizedlist>
+    </para>
+
+    <para>
+      The user tools include:
+
+      <itemizedlist>
+      <listitem>
+      <simpara><command>bindctl</command> &mdash; interactive administration interface</simpara>
+      </listitem>
+      <listitem>
+      <simpara><command>bind10</command> &mdash; master process for BIND 10</simpara>
+      </listitem>
+      </itemizedlist>
+    </para>
+
+    <para>
+      The tools and modules are covered in full detail in this users guide.
+<!-- TODO point to these -->
+      In addition, manual pages are also provided in the default installation.
+    </para>
+      
+<!--
+bin/
+  bindctl*
+  host*
+lib/
+  libauth
+  libdns
+  libexceptions
+  python3.1/site-packages/isc/{cc,config}
+sbin/
+  bind10
+share/
+  share/bind10/                                       <
+    auth.spec
+    b10-cmdctl.pem
+    bob.spec
+    passwd.csv
+  man/
+var/
+  bind10/b10-config.db
+-->
+
+    <para>
+      BIND 10 also provides libraries and programmer interfaces
+      for C++ and Python for the message bus, configuration backend,
+      and, of course, DNS. These include detailed developer
+      documentation and code examples.
+<!-- TODO point to this -->
+    </para>
+
+  </chapter>
+
+  <chapter id="install">
+    <title>Installation</title>
+    <para>
+    BIND 10 is open source software written in C++ and Python.
+    It is freely available in source code form from ISC via
+    the Subversion code revision control system or as a downloadable
+    tar file. It may also be available in pre-compiled ready-to-use
+    packages from operating system vendors.
+    </para>
+
+    <sect1>
+      <title>Download Tar File</title>
+      <para>The BIND 10 release and development snapshots
+        are available as tarball downloads.
+      </para>
+<!-- TODO -->
+    </sect1>
+
+    <sect1>
+      <title>Retrieve from Subversion</title>
+      <para>
+        The latest development code, including temporary experiments
+        and un-reviewed code, is available via the BIND 10 code revision
+        control system. This is powered by Subversion and all the BIND 10
+        development is public.
+        The leading development is done in the <quote>trunk</quote>
+        and the first year prototype containing reviewed code is in
+        <filename>branches/Y1</filename>.
+      </para>
+      <para>
+        The code can be checked out from <filename>svn://bind10.isc.org/svn/bind10</filename>; for example to check out the trunk:
+
+      <screen>$ <userinput>svn co svn://bind10.isc.org/svn/bind10/trunk</userinput></screen>
+
+      </para>
+      <sect2>
+        <title>Generate configuration files</title>
+        <para>
+        When checking out the code from
+        the code version control system, it doesn't include the
+        generated configure script, Makefile.in files, nor the
+        related configure files.
+        They can be created by running <command>autoreconf</command>
+        with the <command>--install</command> switch.
+        This will run <command>autoconf</command>, <command>aclocal</command>,
+        <command>libtoolize</command>, <command>autoheader</command>,
+        <command>automake</command>, and related commands &mdash;
+        and provide needed build files.
+      </para>
+      <para>
+        This requires <command>autoconf</command> version 2.59 or newer
+	and <command>automake</command> version 1.11 or better (for
+	working Python 3.1 tests).
+      </para>
+      </sect2>
+    </sect1>
+
+    <sect1>
+      <title>Dependencies</title>
+      <para>
+        BIND 10 requires Python 3.1 and SQLite 3.
+<!-- TODO: this will change ... -->
+        Building BIND 10 also requires a C++ compiler and
+        standard development headers.
+      </para>
+    </sect1>
+
+    <sect1>
+      <title>Supported Platforms</title>
+      <para>
+        BIND 10 builds have been tested on Debian GNU/Linux 5,
+        NetBSD 5, Solaris 10, and FreeBSD 7. It has been tested on
+        Sparc, i386, and amd64 hardware platforms.
+        It is planned for BIND 10 to build, install and run on
+        Windows and standard Unix-type platforms.
+      </para>
+    </sect1>
+
+    <sect1>
+      <title>Build and install</title>
+      <para>
+        BIND 10 uses the GNU Build System to discover build environment
+        details.
+        To generate the makefiles using the defaults, simply run:
+        <screen>$ <userinput>./configure</userinput></screen>
+      </para>
+      <para>
+        Run <command>./configure</command> with the <command>--help</command>
+        switch to view the different options. The commonly-used option
+	is <command>--prefix</command> to define the installation
+        location (the default is <filename>/usr/local/</filename>).
+<!-- TODO: gtest, lcov -->
+      </para>
+
+      <para>
+        Then to build the executables from the C++ code, run:
+        <screen>$ <userinput>make</userinput></screen>
+      </para>
+
+      <para>
+	Then to install the BIND 10 executables, support files,
+	and documentation, run:
+        <screen>$ <userinput>make install</userinput></screen>
+      </para>
+      <note><para>The install step may require superuser
+      privileges.</para></note>
+
+<!-- TODO: tests -->
+
+    </sect1>
+    <sect1>
+      <title>Install Hierarchy</title>
+      <para>
+        The following is the layout of the complete BIND 10 installation:
+<!-- TODO: formatting needed -->
+<!--
+bin/
+  bindctl*
+  host*
+lib/
+  libauth
+  libdns
+  libexceptions
+  python3.1/site-packages/isc/{cc,config}
+libexec/bind10
+  b10-auth
+  b10-cfgmgr
+  b10-cmdctl
+  msgq
+sbin/
+  bind10
+share/
+  share/bind10/                                       <
+    auth.spec
+    b10-cmdctl.pem
+    bob.spec
+    passwd.csv
+  man/
+var/
+  bind10/b10-config.db
+-->
+      </para>
+    </sect1>
+
+  </chapter>
+
+<!-- TODO: how to help: run unit tests, join lists, review trac tickets -->
+
+  <!-- <index>    <title>Index</title> </index> -->
+
+</book>
+
