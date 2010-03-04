@@ -183,7 +183,13 @@ public:
     const isc::dns::RRClass& qclass() const { return *qclass_; }
     const isc::dns::RRType& qtype() const { return *qtype_; }
 
-    isc::dns::Message& message() const { return *message_; }
+    // Note: these can't be constant member functions because they expose
+    // writable 'handles' of internal member variables.  It's questionable
+    // whether we need these accessors in the first place because the
+    // corresponding members are public (which itself is not a good practice
+    // but it's a different topic), but at the moment we keep them.
+    // We should definitely revisit the design later.
+    isc::dns::Message& message() { return *message_; }
     QueryTaskQueue& tasks() { return querytasks_; }
 
     Status status() const { return status_; }
