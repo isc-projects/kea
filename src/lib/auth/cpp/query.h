@@ -125,25 +125,25 @@ public:
               const isc::dns::RRType& t, const isc::dns::Section& sect);
     QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
               const isc::dns::RRType& t, const isc::dns::Section& sect,
-              const Op o);
+              Op o);
     QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
               const isc::dns::RRType& t, const isc::dns::Section& sect,
               const State st);
     QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
               const isc::dns::RRType& t, const isc::dns::Section& sect,
-              const Op o, const State st);
+              Op o, State st);
 
     // These are special constructors for particular query task types,
     // to simplify the code.
     //
     // A simple query doesn't need to specify section or state.
     QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
-              const isc::dns::RRType& t, const Op o);
+              const isc::dns::RRType& t, Op o);
     // A referral query doesn't need to specify section, state, or type.
-    QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c, const Op o);
+    QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c, Op o);
     // A glue (or noglue) query doesn't need to specify type.
     QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
-              const isc::dns::Section& sect, const Op o, const State st);
+              const isc::dns::Section& sect, Op o, State st);
 
     virtual ~QueryTask();
 };
