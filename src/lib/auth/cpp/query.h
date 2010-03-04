@@ -19,16 +19,16 @@
 
 #include <queue>
 
-#include <exceptions/exceptions.h>
-#include <dns/name.h>
-#include <dns/message.h>
-#include <dns/rrset.h>
-#include <dns/rrclass.h>
-#include <dns/rrtype.h>
-
-using namespace isc::dns;
-
 namespace isc {
+
+namespace dns {
+class Name;
+class Message;
+class Section;
+class RRClass;
+class RRType;
+}
+
 namespace auth {
 
 // An individual task to be carried out by the query logic
@@ -39,20 +39,20 @@ public:
 
     // The standard query tuple: qname/qclass/qtype.
     // Note that qtype is ignored in the GLUE_QUERY/NOGLUE_QUERY case.
-    const Name& qname;
-    const RRClass& qclass;
-    const RRType& qtype;
+    const isc::dns::Name& qname;
+    const isc::dns::RRClass& qclass;
+    const isc::dns::RRType& qtype;
 
     // Optional: name for the containing zone, if known.
     // This is particularly needed when looking up data in a
     // zone other than the closest enclosure (such as getting
     // DS queries from a parent zone on a server which serves
     // both parent and child).
-    Name* zone;
+    isc::dns::Name* zone;
 
     // The section of the reply into which the data should be
     // written after it has been fetched from the data source.
-    const Section& section;
+    const isc::dns::Section& section;
 
     // The op field indicates the operation to be carried out by
     // this query task:
@@ -121,52 +121,29 @@ public:
     uint32_t flags;
 
     // Constructors
-    QueryTask(const Name& n, const RRClass& c,
-              const RRType& t, const Section& sect) :
-        qname(n), qclass(c), qtype(t), zone(NULL),
-        section(sect), op(AUTH_QUERY), state(GETANSWER), flags(0) {}
-    QueryTask(const Name& n, const RRClass& c,
-              const RRType& t, const Section& sect, const Op o) :
-        qname(n), qclass(c), qtype(t), zone(NULL),
-        section(sect), op(o), state(GETANSWER), flags(0) {}
-    QueryTask(const Name& n, const RRClass& c,
-              const RRType& t, const Section& sect, const State st) :
-        qname(n), qclass(c), qtype(t), zone(NULL),
-        section(sect), op(AUTH_QUERY), state(st), flags(0) {}
-    QueryTask(const Name& n, const RRClass& c,
-              const RRType& t, const Section& sect,
-              const Op o, const State st) :
-        qname(n), qclass(c), qtype(t), zone(NULL),
-        section(sect), op(o), state(st), flags(0) {}
+    QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
+              const isc::dns::RRType& t, const isc::dns::Section& sect);
+    QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
+              const isc::dns::RRType& t, const isc::dns::Section& sect,
+              const Op o);
+    QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
+              const isc::dns::RRType& t, const isc::dns::Section& sect,
+              const State st);
+    QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
+              const isc::dns::RRType& t, const isc::dns::Section& sect,
+              const Op o, const State st);
 
     // These are special constructors for particular query task types,
     // to simplify the code.
     //
     // A simple query doesn't need to specify section or state.
-    QueryTask(const Name& n, const RRClass& c, const RRType& t, const Op o) :
-        qname(n), qclass(c), qtype(t), zone(NULL),
-        section(Section::ANSWER()), op(o), state(GETANSWER), flags(0) {
-        if (op != SIMPLE_QUERY) {
-            throw "invalid constructor for this task operation";
-        }
-    }
+    QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
+              const isc::dns::RRType& t, const Op o);
     // A referral query doesn't need to specify section, state, or type.
-    QueryTask(const Name& n, const RRClass& c, const Op o) :
-        qname(n), qclass(c), qtype(RRType::ANY()), zone(NULL),
-        section(Section::ANSWER()), op(o), state(GETANSWER), flags(0) {
-        if (op != REF_QUERY) {
-            throw "invalid constructor for this task operation";
-        }
-    }
+    QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c, const Op o);
     // A glue (or noglue) query doesn't need to specify type.
-    QueryTask(const Name& n, const RRClass& c,
-              const Section& sect, const Op o, const State st) :
-        qname(n), qclass(c), qtype(RRType::ANY()), zone(NULL),
-        section(sect), op(o), state(st), flags(0) {
-        if (op != GLUE_QUERY && op != NOGLUE_QUERY) {
-            throw "invalid constructor for this task operation";
-        }
-    }
+    QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
+              const isc::dns::Section& sect, const Op o, const State st);
 
     virtual ~QueryTask();
 };
@@ -187,7 +164,7 @@ public:
     };
 
     // Query constructor
-    Query(Message& m, bool dnssec);
+    Query(isc::dns::Message& m, bool dnssec);
 
     virtual ~Query();
 
@@ -202,11 +179,11 @@ public:
     bool wantDnssec() const { return want_dnssec_; }
     void setWantDnssec(bool d) { want_dnssec_ = d; }
 
-    const Name& qname() const { return *qname_; }
-    const RRClass& qclass() const { return *qclass_; }
-    const RRType& qtype() const { return *qtype_; }
+    const isc::dns::Name& qname() const { return *qname_; }
+    const isc::dns::RRClass& qclass() const { return *qclass_; }
+    const isc::dns::RRType& qtype() const { return *qtype_; }
 
-    Message& message() const { return *message_; }
+    isc::dns::Message& message() const { return *message_; }
     QueryTaskQueue& tasks() { return querytasks_; }
 
     Status status() const { return status_; }
@@ -215,11 +192,11 @@ public:
 private:
     Status status_;
 
-    const Name* qname_;
-    const RRClass* qclass_;
-    const RRType* qtype_;
+    const isc::dns::Name* qname_;
+    const isc::dns::RRClass* qclass_;
+    const isc::dns::RRType* qtype_;
 
-    Message* message_;
+    isc::dns::Message* message_;
     QueryTaskQueue querytasks_;
 
     bool want_additional_;
