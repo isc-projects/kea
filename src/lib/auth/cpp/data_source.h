@@ -102,7 +102,7 @@ public:
                              const isc::dns::RRType& qtype,
                              isc::dns::RRsetList& target,
                              uint32_t& flags,
-                             isc::dns::Name* zone = NULL) const = 0;
+                             const isc::dns::Name* zonename) const = 0;
 
     virtual Result findExactRRset(const Query& q,
                                   const isc::dns::Name& qname,
@@ -110,7 +110,7 @@ public:
                                   const isc::dns::RRType& qtype,
                                   isc::dns::RRsetList& target,
                                   uint32_t& flags,
-                                  isc::dns::Name* zone = NULL) const = 0;
+                                  const isc::dns::Name* zonename) const = 0;
 
     // These will have dumb implementations in the general DataSrc
     // class, and SHOULD be overwritten by subclasses.
@@ -119,21 +119,21 @@ public:
                              const isc::dns::RRClass& qclass,
                              isc::dns::RRsetList& target,
                              uint32_t& flags,
-                             isc::dns::Name* zone = NULL) const = 0;
+                             const isc::dns::Name* zonename) const = 0;
 
      virtual Result findReferral(const Query& q,
-                                const isc::dns::Name& qname,
-                                const isc::dns::RRClass& qclass,
-                                isc::dns::RRsetList& target,
-                                uint32_t& flags,
-                                isc::dns::Name* zone = NULL) const = 0;
+                                 const isc::dns::Name& qname,
+                                 const isc::dns::RRClass& qclass,
+                                 isc::dns::RRsetList& target,
+                                 uint32_t& flags,
+                                 const isc::dns::Name* zonename) const = 0;
 
     // This MUST be implemented by concrete data sources which support
     // DNSSEC, but is optional for others (e.g., the static data source).
     virtual Result findPreviousName(const Query& q,
                                     const isc::dns::Name& qname,
                                     isc::dns::Name& target,
-                                    isc::dns::Name* zone) const = 0;
+                                    const isc::dns::Name* zonename) const = 0;
 
 };
 
@@ -171,7 +171,7 @@ public:
                              const isc::dns::RRType& qtype,
                              isc::dns::RRsetList& target,
                              uint32_t& flags,
-                             isc::dns::Name* zone = NULL) const = 0;
+                             const isc::dns::Name* zonename) const = 0;
 
     virtual Result findExactRRset(const Query& q,
                                   const isc::dns::Name& qname,
@@ -179,26 +179,26 @@ public:
                                   const isc::dns::RRType& qtype,
                                   isc::dns::RRsetList& target,
                                   uint32_t& flags,
-                                  isc::dns::Name* zone = NULL) const = 0;
+                                  const isc::dns::Name* zonename) const = 0;
 
     virtual Result findAddrs(const Query& q,
-                               const isc::dns::Name& qname,
-                               const isc::dns::RRClass& qclass,
-                               isc::dns::RRsetList& target,
-                               uint32_t& flags,
-                             isc::dns::Name* zone = NULL) const;
+                             const isc::dns::Name& qname,
+                             const isc::dns::RRClass& qclass,
+                             isc::dns::RRsetList& target,
+                             uint32_t& flags,
+                             const isc::dns::Name* zonename) const;
 
     virtual Result findReferral(const Query& q,
                                 const isc::dns::Name& qname,
                                 const isc::dns::RRClass& qclass,
                                 isc::dns::RRsetList& target,
                                 uint32_t& flags,
-                                isc::dns::Name* zone = NULL) const;
+                                const isc::dns::Name* zonename) const;
 
     virtual Result findPreviousName(const Query& q,
                                     const isc::dns::Name& qname,
                                     isc::dns::Name& target,
-                                    isc::dns::Name* zone) const = 0;
+                                    const isc::dns::Name* zonename) const = 0;
 private:
     isc::dns::RRClass rrclass;
 };
@@ -234,7 +234,7 @@ public:
                      const isc::dns::RRClass& qclass,
                      const isc::dns::RRType& qtype,
                      isc::dns::RRsetList& target, uint32_t& flags,
-                     isc::dns::Name* zone = NULL) const
+                     const isc::dns::Name* zonename) const
     {
         return (NOT_IMPLEMENTED);
     }
@@ -243,7 +243,7 @@ public:
                           const isc::dns::RRClass& qclass,
                           const isc::dns::RRType& qtype,
                           isc::dns::RRsetList& target, uint32_t& flags,
-                          isc::dns::Name* zone = NULL) const
+                          const isc::dns::Name* zonename) const
     {
         return (NOT_IMPLEMENTED);
     }
@@ -251,7 +251,7 @@ public:
     Result findAddrs(const Query& q, const isc::dns::Name& qname,
                      const isc::dns::RRClass& qclass,
                      isc::dns::RRsetList& target, uint32_t& flags,
-                     isc::dns::Name* zone = NULL) const
+                     const isc::dns::Name* zonename) const
     {
         return (NOT_IMPLEMENTED);
     }
@@ -259,7 +259,7 @@ public:
     Result findReferral(const Query& q, const isc::dns::Name& qname,
                         const isc::dns::RRClass& qclass,
                         isc::dns::RRsetList& target, uint32_t& flags,
-                        isc::dns::Name* zone = NULL) const
+                        const isc::dns::Name* zonename) const
     {
         return (NOT_IMPLEMENTED);
     }
@@ -267,7 +267,7 @@ public:
     virtual Result findPreviousName(const Query& q,
                                     const isc::dns::Name& qname,
                                     isc::dns::Name& target,
-                                    isc::dns::Name* zone) const
+                                    const isc::dns::Name* zonename) const
     {
         return (NOT_IMPLEMENTED);
     }

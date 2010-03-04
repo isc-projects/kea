@@ -65,7 +65,7 @@ public:
                      const isc::dns::RRType& qtype,
                      isc::dns::RRsetList& target,
                      uint32_t& flags,
-                     isc::dns::Name* zone = NULL) const;
+                     const isc::dns::Name* zonename) const;
 
     Result findExactRRset(const Query& q,
                           const isc::dns::Name& qname,
@@ -73,12 +73,12 @@ public:
                           const isc::dns::RRType& qtype,
                           isc::dns::RRsetList& target,
                           uint32_t& flags,
-                          isc::dns::Name* zone = NULL) const;
+                          const isc::dns::Name* zonename) const;
 
     Result findPreviousName(const Query& q,
                             const isc::dns::Name& qname,
                             isc::dns::Name& target,
-                            isc::dns::Name* zone) const;
+                            const isc::dns::Name* zonename) const;
 
     Result init();
     Result close();
