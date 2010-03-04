@@ -24,9 +24,6 @@
 
 #include <gtest/gtest.h>
 
-using namespace std;
-using namespace isc::dns;
-
 namespace isc {
 
 class UnitTestUtil {
@@ -77,7 +74,7 @@ public:
     ///
     static ::testing::AssertionResult
     matchName(const char* nameexp1, const char* nameexp2,
-              const Name& name1, const Name& name2);
+              const isc::dns::Name& name1, const isc::dns::Name& name2);
 };
 }
 #endif // __UNITTEST_UTIL_H

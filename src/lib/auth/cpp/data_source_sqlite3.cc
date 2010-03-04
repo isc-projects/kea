@@ -34,7 +34,8 @@ namespace auth {
 //  Prepare a statement.  Can call release() or sqlite3_finalize()
 //  directly.
 //
-sqlite3_stmt* Sqlite3DataSrc::prepare(const char *statement) {
+sqlite3_stmt* Sqlite3DataSrc::prepare(const char *statement)
+{
     int rc;
     sqlite3_stmt *prepared = NULL;
 
@@ -55,7 +56,8 @@ void Sqlite3DataSrc::release(sqlite3_stmt* prepared) {
 //
 //  Get the database schema version.
 //
-int Sqlite3DataSrc::getVersion(void) {
+int Sqlite3DataSrc::getVersion(void)
+{
     if (database_version == -1) {
         loadVersion();
     }
@@ -66,7 +68,8 @@ int Sqlite3DataSrc::getVersion(void) {
 //  Find the exact zone match.  Return -1 if not found, or the zone's
 //  ID if found.  This will always be >= 0 if found.
 //
-int Sqlite3DataSrc::hasExactZone(const char *name) const {
+int Sqlite3DataSrc::hasExactZone(const char* name) const
+{
     int rc, i;
     sqlite3_reset(q_zone);
     rc = sqlite3_bind_text(q_zone, 1, name, -1, SQLITE_STATIC);
@@ -263,7 +266,8 @@ findRecords(const Name& name, const RRType& rdtype, RRsetList& target,
 //  >= 0 if found.  If position is not NULL, it will be filled in with the
 //  longest match found.
 //
-int Sqlite3DataSrc::findClosest(const char *name, const char **position) const {
+int Sqlite3DataSrc::findClosest(const char *name, const char **position) const
+{
     int rc;
     const char *current = name;
     
@@ -286,7 +290,9 @@ int Sqlite3DataSrc::findClosest(const char *name, const char **position) const {
     return (-1);
 }
 
-void Sqlite3DataSrc::loadVersion(void) {
+void
+Sqlite3DataSrc::loadVersion(void)
+{
     int rc;
 
     const char *q = "SELECT version FROM schema_version";
@@ -299,49 +305,51 @@ void Sqlite3DataSrc::loadVersion(void) {
     release(prepared);
 }
 
-void Sqlite3DataSrc::setupPreparedStatements(void) {
+void
+Sqlite3DataSrc::setupPreparedStatements(void)
+{
 
-    const char *q_zone_str = "SELECT id FROM zones WHERE name=?1";
+    const char* q_zone_str = "SELECT id FROM zones WHERE name=?1";
     try {
         q_zone = prepare(q_zone_str);
-    } catch (const char *e) {
+    } catch (const char* e) {
         cout << e << endl << q_zone_str << endl;
         cout << sqlite3_errmsg(db) << endl;
         throw(e);
     }
 
-    const char *q_record_str = "SELECT rdtype, ttl, sigtype, rdata "
+    const char* q_record_str = "SELECT rdtype, ttl, sigtype, rdata "
                                "FROM records WHERE zone_id=?1 AND name=?2 AND "
                                "((rdtype=?3 OR sigtype=?3) OR "
                                "(rdtype='CNAME' OR sigtype='CNAME') OR "
                                "(rdtype='NS' OR sigtype='NS'))";
     try {
         q_record = prepare(q_record_str);
-    } catch (const char *e) {
+    } catch (const char* e) {
         cout << e << endl << q_record_str << endl;
         cout << sqlite3_errmsg(db) << endl;
         throw(e);
     }
 
-    const char *q_addrs_str = "SELECT rdtype, ttl, sigtype, rdata "
+    const char* q_addrs_str = "SELECT rdtype, ttl, sigtype, rdata "
                                "FROM records WHERE zone_id=?1 AND name=?2 AND "
                                "(rdtype='A' OR sigtype='A' OR "
                                "rdtype='AAAA' OR sigtype='AAAA')";
     try {
         q_addrs = prepare(q_addrs_str);
-    } catch (const char *e) {
+    } catch (const char* e) {
         cout << e << endl << q_addrs_str << endl;
         cout << sqlite3_errmsg(db) << endl;
         throw(e);
     }
-    const char *q_referral_str = "SELECT rdtype, ttl, sigtype, rdata FROM "
+    const char* q_referral_str = "SELECT rdtype, ttl, sigtype, rdata FROM "
                                  "records WHERE zone_id=?1 AND name=?2 AND"
                                  "(rdtype='NS' OR sigtype='NS' OR "
                                  "rdtype='DS' OR sigtype='DS' OR "
                                  "rdtype='DNAME' OR sigtype='DNAME')";
     try {
         q_referral = prepare(q_referral_str);
-    } catch (const char *e) {
+    } catch (const char* e) {
         cout << e << endl << q_referral_str << endl;
         cout << sqlite3_errmsg(db) << endl;
         throw(e);
@@ -350,29 +358,29 @@ void Sqlite3DataSrc::setupPreparedStatements(void) {
                              "FROM records WHERE zone_id=?1 AND name=?2";
     try {
         q_any = prepare(q_any_str);
-    } catch (const char *e) {
+    } catch (const char* e) {
         cout << e << endl << q_any_str << endl;
         cout << sqlite3_errmsg(db) << endl;
         throw(e);
     }
 
-    const char *q_count_str = "SELECT COUNT(*) FROM records "
+    const char* q_count_str = "SELECT COUNT(*) FROM records "
                               "WHERE zone_id=?1 AND (name=?2 OR "
                               "name LIKE '%.' || ?2);";
     try {
         q_count = prepare(q_count_str);
-    } catch (const char *e) {
+    } catch (const char* e) {
         cout << e << endl << q_count_str << endl;
         cout << sqlite3_errmsg(db) << endl;
         throw(e);
     }
 
-    const char *q_previous_str = "SELECT name FROM records "
+    const char* q_previous_str = "SELECT name FROM records "
                                  "WHERE zone_id=?1 AND rdtype = 'NSEC' AND "
                                  "rname < $2 ORDER BY rname DESC LIMIT 1";
     try {
         q_previous = prepare(q_previous_str);
-    } catch (const char *e) {
+    } catch (const char* e) {
         cout << e << endl << q_previous_str << endl;
         cout << sqlite3_errmsg(db) << endl;
         throw(e);
@@ -380,7 +388,9 @@ void Sqlite3DataSrc::setupPreparedStatements(void) {
 
 }
 
-void Sqlite3DataSrc::execSetupQuery(const char *query) {
+void
+Sqlite3DataSrc::execSetupQuery(const char *query)
+{
     int rc;
 
     rc = sqlite3_exec(db, query, NULL, NULL, NULL);
@@ -389,7 +399,9 @@ void Sqlite3DataSrc::execSetupQuery(const char *query) {
     }
 }
 
-void Sqlite3DataSrc::checkAndSetupSchema(void) {
+void
+Sqlite3DataSrc::checkAndSetupSchema(void)
+{
     try {
         loadVersion();
         setupPreparedStatements();
@@ -446,7 +458,7 @@ Sqlite3DataSrc::init()
         open("/tmp/zone.sqlite3");
     
         cout << "Schema version: " << getVersion() << endl;
-    } catch (const char *e) {
+    } catch (const char* e) {
         cout << e << endl;
     }
 
@@ -454,7 +466,8 @@ Sqlite3DataSrc::init()
 }
 
 void
-Sqlite3DataSrc::findClosestEnclosure(NameMatch& match) const {
+Sqlite3DataSrc::findClosestEnclosure(NameMatch& match) const
+{
     const Name& qname = match.qname();
     const string target_string = qname.toText();
     const char *position = NULL;
@@ -473,14 +486,14 @@ Sqlite3DataSrc::findPreviousName(const Query& q,
                                  Name& target,
                                  Name* zone) const
 {
-    const char *c_rname = qname.reverse().toText().c_str();
+    const char* c_rname = qname.reverse().toText().c_str();
 
     int zone_id;
     if (zone == NULL) {
-        const char *c_name = qname.toText().c_str();
+        const char* c_name = qname.toText().c_str();
         zone_id = findClosest(c_name, NULL);
     } else {
-        const char *c_zone = zone->toText().c_str();
+        const char* c_zone = zone->toText().c_str();
         zone_id = findClosest(c_zone, NULL);
     }
 
@@ -554,18 +567,20 @@ Sqlite3DataSrc::findAddrs(const Query& q,
                           const RRClass& qclass,
                           RRsetList& target,
                           uint32_t& flags,
-                          Name* zone) const {
+                          Name* zone) const
+{
     findRecords(qname, RRType::ANY(), target, zone, ADDRESS, flags);
     return (SUCCESS);
 }
 
 DataSrc::Result
 Sqlite3DataSrc::findReferral(const Query& q,
-                            const Name& qname,
-                            const RRClass& qclass,
-                            RRsetList& target,
-                            uint32_t& flags,
-                            Name* zone) const {
+                             const Name& qname,
+                             const RRClass& qclass,
+                             RRsetList& target,
+                             uint32_t& flags,
+                             Name* zone) const
+{
     findRecords(qname, RRType::ANY(), target, zone, DELEGATION, flags);
     return (SUCCESS);
 }

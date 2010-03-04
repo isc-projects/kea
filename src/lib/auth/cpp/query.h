@@ -33,6 +33,11 @@ namespace auth {
 
 // An individual task to be carried out by the query logic
 class QueryTask {
+private:
+    /// Note: The copy constructor and the assignment operator are intentionally
+    /// defined as private.
+    QueryTask(const QueryTask& source);
+    QueryTask& operator=(const QueryTask& source);
 public:
     // XXX: Members are currently public, but should probably be
     // moved to private and wrapped in get() functions later.
@@ -145,7 +150,7 @@ public:
     QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
               const isc::dns::Section& sect, Op o, State st);
 
-    virtual ~QueryTask();
+    ~QueryTask();
 };
 
 typedef boost::shared_ptr<QueryTask> QueryTaskPtr;
@@ -163,10 +168,21 @@ public:
         ANSWERED
     };
 
+    ///
+    /// \name Constructors, Assignment Operator and Destructor.
+    ///
+    /// Note: The copy constructor and the assignment operator are intentionally
+    /// defined as private.
+    //@{
+private:
+    Query(const Query& source);
+    Query& operator=(const Query& source);
+public:
     // Query constructor
     Query(isc::dns::Message& m, bool dnssec);
-
+    /// \brief The destructor.
     virtual ~Query();
+    //@}
 
     // wantAdditional() == true indicates that additional-section data
     // should be looked up while processing this query.  false indicates

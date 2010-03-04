@@ -17,57 +17,75 @@
 #ifndef __TEST_DATA_SOURCE_H
 #define __TEST_DATA_SOURCE_H
 
-#include <gtest/gtest.h>
-#include "unittest_util.h"
+#include <dns/name.h>
+#include <dns/rrset.h>
 
-using isc::UnitTestUtil;
-using namespace isc::dns;
+#include <gtest/gtest.h>
 
 #include "data_source.h"
 
 namespace isc {
+
+namespace dns {
+class RRClass;
+class RRType;
+class RRsetList;
+}
+
 namespace auth {
+class Query;
+
 class TestDataSrc : public DataSrc {
+    ///
+    /// \name Constructors, Assignment Operator and Destructor.
+    ///
+    /// Note: The copy constructor and the assignment operator are intentionally
+    /// defined as private.
+    //@{
+private:
+    TestDataSrc(const TestDataSrc& source);
+    TestDataSrc operator=(const TestDataSrc& source); 
 public:
     TestDataSrc();
     ~TestDataSrc() {}
+    //@}
 
     void findClosestEnclosure(NameMatch& match) const;
 
     Result findRRset(const Query& q,
-                     const Name& qname,
-                     const RRClass& qclass,
-                     const RRType& qtype,
-                     RRsetList& target,
+                     const isc::dns::Name& qname,
+                     const isc::dns::RRClass& qclass,
+                     const isc::dns::RRType& qtype,
+                     isc::dns::RRsetList& target,
                      uint32_t& flags,
-                     Name* zone = NULL) const;
+                     isc::dns::Name* zone = NULL) const;
 
     Result findExactRRset(const Query& q,
-                          const Name& qname,
-                          const RRClass& qclass,
-                          const RRType& qtype,
-                          RRsetList& target,
+                          const isc::dns::Name& qname,
+                          const isc::dns::RRClass& qclass,
+                          const isc::dns::RRType& qtype,
+                          isc::dns::RRsetList& target,
                           uint32_t& flags,
-                          Name* zone = NULL) const;
+                          isc::dns::Name* zone = NULL) const;
 
     Result findAddrs(const Query& q,
-                     const Name& qname,
-                     const RRClass& qclass,
-                     RRsetList& target,
+                     const isc::dns::Name& qname,
+                     const isc::dns::RRClass& qclass,
+                     isc::dns::RRsetList& target,
                      uint32_t& flags,
-                     Name* zone = NULL) const;
+                     isc::dns::Name* zone = NULL) const;
 
     Result findReferral(const Query& q,
-                        const Name& qname,
-                        const RRClass& qclass,
-                        RRsetList& target,
+                        const isc::dns::Name& qname,
+                        const isc::dns::RRClass& qclass,
+                        isc::dns::RRsetList& target,
                         uint32_t& flags,
-                        Name* zone = NULL) const;
+                        isc::dns::Name* zone = NULL) const;
 
     Result findPreviousName(const Query& q,
-                            const Name& qname,
-                            Name& target,
-                            Name* zone) const;
+                            const isc::dns::Name& qname,
+                            isc::dns::Name& target,
+                            isc::dns::Name* zone) const;
 
     Result init() { return (SUCCESS); }
     Result close() { return (SUCCESS); }
@@ -79,56 +97,56 @@ private:
         DELEGATION
     };
 
-    void findRecords(const Name& name, const RRType& rdtype,
-                     RRsetList& target, Name* zone, const Mode mode,
-                     uint32_t& flags) const;
+    void findRecords(const isc::dns::Name& name, const isc::dns::RRType& rdtype,
+                     isc::dns::RRsetList& target, isc::dns::Name* zone,
+                     const Mode mode, uint32_t& flags) const;
 
-    const Name example;
-    const Name sql1;
-    const Name www_sql1;
-    const Name www;
-    const Name foo;
-    const Name dns01;
-    const Name dns02;
-    const Name dns03;
-    const Name cnameint;
-    const Name cnameext;
-    const Name dname;
-    const Name wild;
-    const Name subzone;
-    RRsetPtr example_ns;
-    RRsetPtr example_soa;
-    RRsetPtr example_nsec;
-    RRsetPtr www_a;
-    RRsetPtr www_nsec;
-    RRsetPtr foo_cname;
-    RRsetPtr foo_nsec;
-    RRsetPtr cnameint_cname;
-    RRsetPtr cnameint_nsec;
-    RRsetPtr cnameext_cname;
-    RRsetPtr cnameext_nsec;
-    RRsetPtr dns01_a;
-    RRsetPtr dns01_nsec;
-    RRsetPtr dns02_a;
-    RRsetPtr dns02_nsec;
-    RRsetPtr dns03_a;
-    RRsetPtr dns03_nsec;
-    RRsetPtr wild_a;
-    RRsetPtr wild_nsec;
-    RRsetPtr dname_dname;
-    RRsetPtr dname_nsec;
-    RRsetPtr sql1_ns;
-    RRsetPtr sql1_soa;
-    RRsetPtr sql1_nsec;
-    RRsetPtr sql1_ds;
-    RRsetPtr sql1_ds_nsec;
-    RRsetPtr www_sql1_a;
-    RRsetPtr www_sql1_nsec;
-    RRsetPtr subzone_ns;
-    RRsetPtr subzone_nsec;
-    RRsetPtr subzone_glue1;
-    RRsetPtr subzone_glue2;
-    RRsetPtr subzone_ds;
+    const isc::dns::Name example;
+    const isc::dns::Name sql1;
+    const isc::dns::Name www_sql1;
+    const isc::dns::Name www;
+    const isc::dns::Name foo;
+    const isc::dns::Name dns01;
+    const isc::dns::Name dns02;
+    const isc::dns::Name dns03;
+    const isc::dns::Name cnameint;
+    const isc::dns::Name cnameext;
+    const isc::dns::Name dname;
+    const isc::dns::Name wild;
+    const isc::dns::Name subzone;
+    isc::dns::RRsetPtr example_ns;
+    isc::dns::RRsetPtr example_soa;
+    isc::dns::RRsetPtr example_nsec;
+    isc::dns::RRsetPtr www_a;
+    isc::dns::RRsetPtr www_nsec;
+    isc::dns::RRsetPtr foo_cname;
+    isc::dns::RRsetPtr foo_nsec;
+    isc::dns::RRsetPtr cnameint_cname;
+    isc::dns::RRsetPtr cnameint_nsec;
+    isc::dns::RRsetPtr cnameext_cname;
+    isc::dns::RRsetPtr cnameext_nsec;
+    isc::dns::RRsetPtr dns01_a;
+    isc::dns::RRsetPtr dns01_nsec;
+    isc::dns::RRsetPtr dns02_a;
+    isc::dns::RRsetPtr dns02_nsec;
+    isc::dns::RRsetPtr dns03_a;
+    isc::dns::RRsetPtr dns03_nsec;
+    isc::dns::RRsetPtr wild_a;
+    isc::dns::RRsetPtr wild_nsec;
+    isc::dns::RRsetPtr dname_dname;
+    isc::dns::RRsetPtr dname_nsec;
+    isc::dns::RRsetPtr sql1_ns;
+    isc::dns::RRsetPtr sql1_soa;
+    isc::dns::RRsetPtr sql1_nsec;
+    isc::dns::RRsetPtr sql1_ds;
+    isc::dns::RRsetPtr sql1_ds_nsec;
+    isc::dns::RRsetPtr www_sql1_a;
+    isc::dns::RRsetPtr www_sql1_nsec;
+    isc::dns::RRsetPtr subzone_ns;
+    isc::dns::RRsetPtr subzone_nsec;
+    isc::dns::RRsetPtr subzone_glue1;
+    isc::dns::RRsetPtr subzone_glue2;
+    isc::dns::RRsetPtr subzone_ds;
 };
 
 }

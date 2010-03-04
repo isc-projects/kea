@@ -26,6 +26,7 @@
 class AuthSrv {
 public:
     explicit AuthSrv(int port);
+    ~AuthSrv();
     int getSocket() { return (sock); }
     void processMessage();
     void serve(std::string zone_name);
@@ -34,7 +35,7 @@ public:
 private:
     std::string _db_file;
 
-    isc::auth::MetaDataSrc data_src;
+    isc::auth::MetaDataSrc* data_src;
     int sock;
 };
 

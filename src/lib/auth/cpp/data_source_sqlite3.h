@@ -14,59 +14,79 @@
 
 // $Id$
 
-#ifndef __SQLITE3_DATA_SOURCE_H
-#define __SQLITE3_DATA_SOURCE_H
+#ifndef __DATA_SOURCE_SQLITE3_H
+#define __DATA_SOURCE_SQLITE3_H
+
+#include <string>
 
 #include <sqlite3.h>
 
 #include "data_source.h"
 
-using namespace isc::dns;
-
 namespace isc {
+
+namespace dns {
+class Name;
+class RRClass;
+class RRType;
+class RRsetList;
+}
+
 namespace auth {
 
+class Query;
+
 class Sqlite3DataSrc : public DataSrc {
+    ///
+    /// \name Constructors, Assignment Operator and Destructor.
+    ///
+    /// Note: The copy constructor and the assignment operator are intentionally
+    /// defined as private.
+    //@{
+private:
+    Sqlite3DataSrc(const Sqlite3DataSrc& source);
+    Sqlite3DataSrc& operator=(const Sqlite3DataSrc& source);
 public:
     Sqlite3DataSrc();
     virtual ~Sqlite3DataSrc();
+    //@}
 
     virtual void findClosestEnclosure(NameMatch& match) const;
 
     virtual Result findRRset(const Query& q,
-                             const Name& qname,
-                             const RRClass& qclass,
-                             const RRType& qtype,
-                             RRsetList& target,
+                             const isc::dns::Name& qname,
+                             const isc::dns::RRClass& qclass,
+                             const isc::dns::RRType& qtype,
+                             isc::dns::RRsetList& target,
                              uint32_t& flags,
-                             Name* zone = NULL) const;
+                             isc::dns::Name* zone = NULL) const;
 
     virtual Result findExactRRset(const Query& q,
-                                  const Name& qname,
-                                  const RRClass& qclass,
-                                  const RRType& qtype,
-                                  RRsetList& target,
+                                  const isc::dns::Name& qname,
+                                  const isc::dns::RRClass& qclass,
+                                  const isc::dns::RRType& qtype,
+                                  isc::dns::RRsetList& target,
                                   uint32_t& flags,
-                                  Name* zone = NULL) const;
+                                  isc::dns::Name* zone = NULL) const;
 
     virtual Result findAddrs(const Query& q,
-                               const Name& qname,
-                               const RRClass& qclass,
-                               RRsetList& target,
+                               const isc::dns::Name& qname,
+                               const isc::dns::RRClass& qclass,
+                               isc::dns::RRsetList& target,
                                uint32_t& flags,
-                               Name* zone = NULL) const;
+                               isc::dns::Name* zone = NULL) const;
 
     virtual Result findReferral(const Query& q,
-                                const Name& qname,
-                                const RRClass& qclass,
-                                RRsetList& target,
+                                const isc::dns::Name& qname,
+                                const isc::dns::RRClass& qclass,
+                                isc::dns::RRsetList& target,
                                 uint32_t& flags,
-                                Name* zone = NULL) const;
+                                isc::dns::Name* zone = NULL) const;
 
     virtual DataSrc::Result findPreviousName(const Query& q,
-                                             const Name& qname,
-                                             Name& target,
-                                             Name* zone) const;
+                                             const isc::dns::Name& qname,
+                                             isc::dns::Name& target,
+                                             isc::dns::Name* zone) const;
 
     virtual Result init();
     virtual Result close();
@@ -83,8 +103,8 @@ private:
     void release(sqlite3_stmt* prepared);
     int getVersion(void);
     int hasExactZone(const char *name) const;
-    int findRecords(const Name& name, const RRType& rdtype,
-                    RRsetList& target, Name* zone,
+    int findRecords(const isc::dns::Name& name, const isc::dns::RRType& rdtype,
+                    isc::dns::RRsetList& target, isc::dns::Name* zone,
                     const Mode mode, uint32_t& flags) const;
     int findClosest(const char *name, const char **position) const;
     void loadVersion(void);
@@ -111,7 +131,7 @@ private:
 }
 }
 
-#endif // __SQLITE3_DATA_SOURCE_H
+#endif // __DATA_SOURCE_SQLITE3_H
 
 // Local Variables: 
 // mode: c++
