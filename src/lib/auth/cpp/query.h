@@ -187,27 +187,7 @@ public:
     };
 
     // Query constructor
-    Query(Message& m, bool dnssec) {
-        message_ = &m;
-        want_additional_ = true;
-        want_dnssec_ = dnssec;
-        status_ = PENDING;
-
-        // Check message formatting
-        if (message_->getRRCount(Section::QUESTION()) != 1) {
-            dns_throw(Unexpected, "malformed message: too many questions");
-        }
-
-        // Populate the query task queue with the initial question
-        QuestionPtr query = *message_->beginQuestion();
-        qname_ = &query->getName();
-        qclass_ = &query->getClass();
-        qtype_ = &query->getType();
-
-        QueryTaskPtr initial_task(new QueryTask(*qname_, *qclass_, *qtype_,
-                                                Section::ANSWER()));
-        querytasks_.push(initial_task);
-    };
+    Query(Message& m, bool dnssec);
 
     virtual ~Query();
 
