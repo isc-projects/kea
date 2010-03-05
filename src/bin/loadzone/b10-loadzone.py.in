@@ -1,0 +1,70 @@
+#!@PYTHON@
+# Copyright (C) 2010  Internet Systems Consortium.
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SYSTEMS CONSORTIUM
+# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+# INTERNET SYSTEMS CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+import sys; sys.path.append ('@@PYTHONPATH@@')
+import re, getopt
+import isc
+
+#########################################################################
+# usage: print usage note and exit
+#########################################################################
+def usage():
+    print("Usage: %s [-d <database>] [-o <origin>] <file>" % sys.argv[0], \
+          file=sys.stderr)
+    exit(1)
+
+#########################################################################
+# main
+#########################################################################
+def main():
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "d:o:h", \
+                                                ["dbfile", "origin", "help"])
+    except getopt.GetoptError as e:
+        print(str(e))
+        usage()
+        exit(2)
+
+    dbfile = '/tmp/zone.sqlite3'
+    initial_origin = '.'
+    for o, a in opts:
+        if o in ("-d", "--dbfile"):
+            dbfile = a
+        elif o in ("-o", "--origin"):
+            initial_origin = a
+        elif o in ("-h", "--help"):
+            usage()
+        else:
+            assert False, "unhandled option"
+
+    if len(args) != 1:
+        usage()
+    zonefile = args[0]
+
+    try:
+        zone, zonedata = isc.auth.master.parse(zonefile, initial_origin)
+    except Exception as e:
+        print("Error reading zone file: " + str(e))
+        exit(1)
+
+    try:
+        isc.auth.sqlite3_ds.load(dbfile, zone, zonedata)
+    except Exception as e:
+        print("Error loading database: " + str(e))
+        exit(1)
+
+if __name__ == "__main__":
+    main()

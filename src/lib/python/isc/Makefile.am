@@ -1,4 +1,4 @@
-SUBDIRS = cc Util config
+SUBDIRS = auth cc Util config
 
 PY_MODULES=	__init__.py
 

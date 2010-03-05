@@ -149,12 +149,14 @@ AC_CONFIG_FILES([Makefile
                  src/bin/bindctl/Makefile
                  src/bin/cfgmgr/Makefile
                  src/bin/host/Makefile
+                 src/bin/loadzone/Makefile
                  src/bin/msgq/Makefile
                  src/bin/auth/Makefile
                  src/lib/Makefile
                  src/lib/cc/Makefile
                  src/lib/python/Makefile
                  src/lib/python/isc/Makefile
+                 src/lib/python/isc/auth/Makefile
                  src/lib/python/isc/cc/Makefile
                  src/lib/python/isc/config/Makefile
                  src/lib/python/isc/Util/Makefile
@@ -173,6 +175,8 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/bind10/run_bind10.sh
            src/bin/bindctl/bindctl
            src/bin/bindctl/unittest/bindctl_test
+           src/bin/loadzone/run_loadzone
+           src/bin/loadzone/b10-loadzone.py
            src/bin/msgq/msgq.py
            src/bin/msgq/msgq_test
            src/bin/msgq/run_msgq.sh
@@ -187,6 +191,8 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            chmod +x src/bin/cmdctl/unittest/cmdctl_test
            chmod +x src/bin/bindctl/unittest/bindctl_test
            chmod +x src/bin/bindctl/bindctl
+           chmod +x src/bin/loadzone/b10-loadzone
+           chmod +x src/bin/loadzone/run_loadzone
            chmod +x src/bin/msgq/run_msgq.sh
            chmod +x src/bin/msgq/msgq_test
 	   chmod +x src/lib/dns/gen-rdatacode.py
