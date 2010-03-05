@@ -26,7 +26,7 @@ from os.path import getmtime
 import re
 import sys
 
-re_typecode = re.compile('([a-z]+)_(\d+)')
+re_typecode = re.compile('([\da-z]+)_(\d+)')
 classcode2txt = {}
 typecode2txt = {}
 typeandclass = []
