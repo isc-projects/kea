@@ -191,7 +191,6 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            chmod +x src/bin/cmdctl/unittest/cmdctl_test
            chmod +x src/bin/bindctl/unittest/bindctl_test
            chmod +x src/bin/bindctl/bindctl
-           chmod +x src/bin/loadzone/b10-loadzone
            chmod +x src/bin/loadzone/run_loadzone
            chmod +x src/bin/msgq/run_msgq.sh
            chmod +x src/bin/msgq/msgq_test
