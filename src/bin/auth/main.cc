@@ -106,6 +106,13 @@ getSocket(int af, const char* port) {
         return (-1);
     }
 
+    if (af == AF_INET6) {
+        int on = 1;
+        if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on)) < 0) {
+            cerr << "couldn't set IPV6_V6ONLY socket option" << endl;
+        }
+    }
+
     if (bind(s, res->ai_addr, res->ai_addrlen) < 0) {
         cerr << "binding socket failure" << endl;
         close(s);
@@ -147,7 +154,7 @@ main(int argc, char* argv[]) {
         cerr << "-4 and -6 can't coexist" << endl;
         usage();
     }
-    if (!ipv4_only) {
+    if (!ipv6_only) {
         ps4 = getSocket(AF_INET, port);
         if (ps4 < 0) {
             exit(1);
@@ -200,13 +207,17 @@ main(int argc, char* argv[]) {
                 throw FatalError("select error");
             }
 
-            if (FD_ISSET(ps4, &fds)) {
-                ++counter;
-                auth_server->processMessage(ps4);
+            if (ps4 >= 0) {
+                if (FD_ISSET(ps4, &fds)) {
+                    ++counter;
+                    auth_server->processMessage(ps4);
+                }
             }
-            if (FD_ISSET(ps6, &fds)) {
-                ++counter;
-                auth_server->processMessage(ps6);
+            if (ps6 >= 0) {
+                if (FD_ISSET(ps6, &fds)) {
+                    ++counter;
+                    auth_server->processMessage(ps6);
+                }
             }
     
             if (FD_ISSET(ss, &fds)) {
