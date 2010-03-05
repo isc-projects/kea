@@ -35,6 +35,7 @@ class RRsetList;
 namespace auth {
 
 class Query;
+class Nsec3Param;
 
 class Sqlite3DataSrc : public DataSrc {
     ///
@@ -48,48 +49,54 @@ private:
     Sqlite3DataSrc& operator=(const Sqlite3DataSrc& source);
 public:
     Sqlite3DataSrc();
-    virtual ~Sqlite3DataSrc();
+    ~Sqlite3DataSrc();
     //@}
 
-    virtual void findClosestEnclosure(NameMatch& match) const;
+    void findClosestEnclosure(NameMatch& match) const;
 
-    virtual Result findRRset(const Query& q,
+    Result findRRset(const Query& q,
+                     const isc::dns::Name& qname,
+                     const isc::dns::RRClass& qclass,
+                     const isc::dns::RRType& qtype,
+                     isc::dns::RRsetList& target,
+                     uint32_t& flags,
+                     const isc::dns::Name* zonename) const;
+
+    Result findExactRRset(const Query& q,
+                          const isc::dns::Name& qname,
+                          const isc::dns::RRClass& qclass,
+                          const isc::dns::RRType& qtype,
+                          isc::dns::RRsetList& target,
+                          uint32_t& flags,
+                          const isc::dns::Name* zonename) const;
+
+    Result findAddrs(const Query& q,
+                       const isc::dns::Name& qname,
+                       const isc::dns::RRClass& qclass,
+                       isc::dns::RRsetList& target,
+                       uint32_t& flags,
+                       const isc::dns::Name* zonename) const;
+
+    Result findReferral(const Query& q,
+                        const isc::dns::Name& qname,
+                        const isc::dns::RRClass& qclass,
+                        isc::dns::RRsetList& target,
+                        uint32_t& flags,
+                        const isc::dns::Name* zonename) const;
+
+    DataSrc::Result findPreviousName(const Query& q,
+                                     const isc::dns::Name& qname,
+                                     isc::dns::Name& target,
+                                     const isc::dns::Name* zonename) const;
+
+    Result findCoveringNSEC3(const Query& q,
+                             const Nsec3Param& param,
                              const isc::dns::Name& qname,
-                             const isc::dns::RRClass& qclass,
-                             const isc::dns::RRType& qtype,
-                             isc::dns::RRsetList& target,
-                             uint32_t& flags,
-                             const isc::dns::Name* zonename) const;
+                             const isc::dns::Name& zonename,
+                             isc::dns::RRsetList& target) const;
 
-    virtual Result findExactRRset(const Query& q,
-                                  const isc::dns::Name& qname,
-                                  const isc::dns::RRClass& qclass,
-                                  const isc::dns::RRType& qtype,
-                                  isc::dns::RRsetList& target,
-                                  uint32_t& flags,
-                                  const isc::dns::Name* zonename) const;
-
-    virtual Result findAddrs(const Query& q,
-                               const isc::dns::Name& qname,
-                               const isc::dns::RRClass& qclass,
-                               isc::dns::RRsetList& target,
-                               uint32_t& flags,
-                               const isc::dns::Name* zonename) const;
-
-    virtual Result findReferral(const Query& q,
-                                const isc::dns::Name& qname,
-                                const isc::dns::RRClass& qclass,
-                                isc::dns::RRsetList& target,
-                                uint32_t& flags,
-                                const isc::dns::Name* zonename) const;
-
-    virtual DataSrc::Result findPreviousName(const Query& q,
-                                             const isc::dns::Name& qname,
-                                             isc::dns::Name& target,
-                                             const isc::dns::Name* zonename) const;
-
-    virtual Result init();
-    virtual Result close();
+    Result init();
+    Result close();
 
 private:
     enum Mode {
@@ -126,6 +133,8 @@ private:
     sqlite3_stmt *q_any;
     sqlite3_stmt *q_count;
     sqlite3_stmt *q_previous;
+    sqlite3_stmt *q_nsec3;
+    sqlite3_stmt *q_prevnsec3;
 };
 
 }

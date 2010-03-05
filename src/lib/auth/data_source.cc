@@ -20,11 +20,14 @@
 
 #include <boost/foreach.hpp>
 
+#include <dns/base32.h>
+#include <dns/buffer.h>
 #include <dns/message.h>
 #include <dns/name.h>
 #include <dns/rdataclass.h>
 #include <dns/rrset.h>
 #include <dns/rrsetlist.h>
+#include <dns/sha1.h>
 
 #include <cc/data.h>
 
@@ -687,6 +690,39 @@ NameMatch::update(const DataSrc& new_source, const Name& container)
         closest_name_ = newname;
         best_source_ = &new_source;
     }
+}
+
+Nsec3Param::Nsec3Param(uint8_t a, uint8_t f, uint16_t i,
+                       std::vector<uint8_t>& s) :
+    algorithm(a), flags(f), iterations(i), salt(s)
+{}
+
+string
+Nsec3Param::getHash(const Name& name) const {
+    OutputBuffer buf(0);
+
+    name.toWire(buf);
+    buf.writeData(&salt[0], salt.size());
+    uint8_t* in = (uint8_t*) buf.getData();
+    size_t inlength = buf.getLength();
+    uint8_t digest[SHA1_HASHSIZE];
+    int n = 0;
+
+    SHA1Context sha;
+    do {
+        SHA1Reset(&sha);
+        SHA1Input(&sha, in, inlength);
+        SHA1Result(&sha, digest);
+        in = digest;
+        inlength = SHA1_HASHSIZE;
+    } while (n++ < iterations);
+
+    vector<uint8_t> result;
+    for (int i = 0; i < SHA1_HASHSIZE; ++i) {
+        result.push_back(digest[i]);
+    }
+
+    return (encodeBase32(result));
 }
 
 }
