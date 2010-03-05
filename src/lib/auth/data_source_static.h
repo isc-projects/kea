@@ -41,6 +41,7 @@ namespace auth {
 
 class Query;
 class NameMatch;
+struct StaticDataSrcImpl;
 
 class StaticDataSrc : public DataSrc {
 private:
@@ -54,7 +55,7 @@ private:
     StaticDataSrc& operator=(const StaticDataSrc& source);
 public:
     StaticDataSrc();
-    ~StaticDataSrc() {}
+    ~StaticDataSrc();
     //@}
 
     void findClosestEnclosure(NameMatch& match) const;
@@ -88,6 +89,8 @@ public:
 
     Result init();
     Result close();
+private:
+    StaticDataSrcImpl* impl_;
 };
 
 }
