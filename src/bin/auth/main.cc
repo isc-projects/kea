@@ -161,7 +161,7 @@ main(int argc, char* argv[]) {
             exit(1);
         }
     }
-    if (!ipv6_only) {
+    if (!ipv4_only) {
         ps6 = getSocket(AF_INET6, port);
         if (ps6 < 0) {
             if (ps4 < 0) {
@@ -208,17 +208,13 @@ main(int argc, char* argv[]) {
                 throw FatalError("select error");
             }
 
-            if (ps4 >= 0) {
-                if (FD_ISSET(ps4, &fds)) {
-                    ++counter;
-                    auth_server->processMessage(ps4);
-                }
+            if (ps4 >= 0 && FD_ISSET(ps4, &fds)) {
+                ++counter;
+                auth_server->processMessage(ps4);
             }
-            if (ps6 >= 0) {
-                if (FD_ISSET(ps6, &fds)) {
-                    ++counter;
-                    auth_server->processMessage(ps6);
-                }
+            if (ps6 >= 0 && FD_ISSET(ps6, &fds)) {
+                ++counter;
+                auth_server->processMessage(ps6);
             }
     
             if (FD_ISSET(ss, &fds)) {
