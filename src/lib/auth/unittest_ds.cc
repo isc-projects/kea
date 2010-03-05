@@ -41,20 +41,57 @@ using namespace isc::dns::rdata;
 namespace isc {
 namespace auth {
 
-TestDataSrc::TestDataSrc() : example("example.com"),
-                             sql1("sql1.example.com"),
-                             www_sql1("www.sql1.example.com"),
-                             www("www.example.com"),
-                             foo("foo.example.com"),
-                             dns01("dns01.example.com"),
-                             dns02("dns02.example.com"),
-                             dns03("dns03.example.com"),
-                             cnameint("cname-int.example.com"),
-                             cnameext("cname-ext.example.com"),
-                             dname("dname.example.com"),
-                             wild("*.wild.example.com"),
-                             subzone("subzone.example.com")
-{
+namespace {
+const Name example("example.com");
+const Name sql1("sql1.example.com");
+const Name www_sql1("www.sql1.example.com");
+const Name www("www.example.com");
+const Name foo("foo.example.com");
+const Name dns01("dns01.example.com");
+const Name dns02("dns02.example.com");
+const Name dns03("dns03.example.com");
+const Name cnameint("cname-int.example.com");
+const Name cnameext("cname-ext.example.com");
+const Name dname("dname.example.com");
+const Name wild("*.wild.example.com");
+const Name subzone("subzone.example.com");
+
+RRsetPtr example_ns;
+RRsetPtr example_soa;
+RRsetPtr example_nsec;
+RRsetPtr www_a;
+RRsetPtr www_nsec;
+RRsetPtr foo_cname;
+RRsetPtr foo_nsec;
+RRsetPtr cnameint_cname;
+RRsetPtr cnameint_nsec;
+RRsetPtr cnameext_cname;
+RRsetPtr cnameext_nsec;
+RRsetPtr dns01_a;
+RRsetPtr dns01_nsec;
+RRsetPtr dns02_a;
+RRsetPtr dns02_nsec;
+RRsetPtr dns03_a;
+RRsetPtr dns03_nsec;
+RRsetPtr wild_a;
+RRsetPtr wild_nsec;
+RRsetPtr dname_dname;
+RRsetPtr dname_nsec;
+RRsetPtr sql1_ns;
+RRsetPtr sql1_soa;
+RRsetPtr sql1_nsec;
+RRsetPtr sql1_ds;
+RRsetPtr sql1_ds_nsec;
+RRsetPtr www_sql1_a;
+RRsetPtr www_sql1_nsec;
+RRsetPtr subzone_ns;
+RRsetPtr subzone_nsec;
+RRsetPtr subzone_glue1;
+RRsetPtr subzone_glue2;
+RRsetPtr subzone_ds;
+}
+
+TestDataSrc::TestDataSrc() {
     RRset* rp;
     RRsetPtr rrsig;
 
