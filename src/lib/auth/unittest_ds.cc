@@ -95,7 +95,12 @@ RRsetPtr loop1_cname;
 RRsetPtr loop2_cname;
 }
 
-TestDataSrc::TestDataSrc() {
+DataSrc::Result
+TestDataSrc::init() {
+    if (initialized) {
+        return (SUCCESS);
+    }
+
     RRset* rp;
     RRsetPtr rrsig;
 
@@ -403,6 +408,9 @@ TestDataSrc::TestDataSrc() {
     loop2_cname = RRsetPtr(new RRset(loop2, RRClass::IN(), RRType::CNAME(),
                                      RRTTL(3600)));
     loop2_cname->addRdata(generic::CNAME(loop1));
+
+    initialized = true;
+    return (SUCCESS);
 }
 
 void
