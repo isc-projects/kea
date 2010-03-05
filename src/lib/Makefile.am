@@ -1,1 +1,1 @@
-SUBDIRS = exceptions dns cc config auth
+SUBDIRS = exceptions dns cc config auth python

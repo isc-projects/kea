@@ -29,36 +29,3 @@ report-coverage:
 	$(GENHTML) -o coverage report.info 
 
 coverage: clean-coverage perform-coverage report-coverage
-
-pyshared:
-	mkdir pyshared
-	mkdir pyshared/isc
-	cat ${srcdir}/src/lib/config/python/isc/__init__.py ${srcdir}/src/lib/cc/python/isc/__init__.py > pyshared/isc/__init__.py
-	ln -s ${abs_top_srcdir}/src/lib/config/python/isc/config pyshared/isc/config
-	ln -s ${abs_top_srcdir}/src/lib/cc/python/isc/cc pyshared/isc/cc
-	ln -s ${abs_top_srcdir}/src/lib/cc/python/isc/Util pyshared/isc/Util
-
-include:
-	mkdir include
-	ln -s ${abs_top_srcdir}/src/lib/auth/cpp include/auth
-	ln -s ${abs_top_srcdir}/src/lib/cc/cpp include/cc
-	ln -s ${abs_top_srcdir}/src/lib/config/cpp include/config
-	ln -s ${abs_top_srcdir}/src/lib/dns/cpp include/dns
-	ln -s ${abs_top_srcdir}/src/lib/exceptions/cpp include/exceptions
-
-stree_symlinks:	pyshared include
-.PHONY: stree_symlinks
-
-all: stree_symlinks
-clean-local:
-	@if [ -d pyshared/isc ] ; then \
-		rm -f pyshared/isc/*; \
-		rmdir pyshared/isc; \
-	fi
-	@if [ -d pyshared ]; then \
-		rmdir pyshared; \
-	fi
-	@if [ -d include ]; then \
-		rm -f include/*; \
-		rmdir include; \
-	fi

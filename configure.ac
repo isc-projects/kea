@@ -155,23 +155,16 @@ AC_CONFIG_FILES([Makefile
                  src/bin/auth/Makefile
                  src/lib/Makefile
                  src/lib/cc/Makefile
-                 src/lib/cc/cpp/Makefile
-                 src/lib/cc/python/Makefile
-                 src/lib/cc/python/isc/Makefile
-                 src/lib/cc/python/isc/cc/Makefile
-                 src/lib/cc/python/isc/Util/Makefile
+                 src/lib/python/Makefile
+                 src/lib/python/isc/Makefile
+                 src/lib/python/isc/cc/Makefile
+                 src/lib/python/isc/config/Makefile
+                 src/lib/python/isc/Util/Makefile
                  src/lib/config/Makefile
-                 src/lib/config/cpp/Makefile
-                 src/lib/config/python/Makefile
-                 src/lib/config/python/isc/Makefile
-                 src/lib/config/python/isc/config/Makefile
                  src/lib/dns/Makefile
-                 src/lib/dns/cpp/Makefile
-                 src/lib/dns/cpp/tests/Makefile
-                 src/lib/exceptions/cpp/Makefile
+                 src/lib/dns/tests/Makefile
                  src/lib/exceptions/Makefile
                  src/lib/auth/Makefile
-                 src/lib/auth/cpp/Makefile
                ])
 AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/cmdctl/cmdctl.py
@@ -186,10 +179,10 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/msgq/msgq_test
            src/bin/msgq/run_msgq.sh
            src/bin/auth/config.h
-           src/lib/config/cpp/data_def_unittests_config.h
-           src/lib/config/python/isc/config/unittests/config_test
-           src/lib/dns/cpp/gen-rdatacode.py
-           src/lib/dns/cpp/tests/testdata/gen-wiredata.py
+           src/lib/config/data_def_unittests_config.h
+           src/lib/python/isc/config/unittests/config_test
+           src/lib/dns/gen-rdatacode.py
+           src/lib/dns/tests/testdata/gen-wiredata.py
           ], [
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/bind10/run_bind10.sh
@@ -198,7 +191,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            chmod +x src/bin/bindctl/bindctl
            chmod +x src/bin/msgq/run_msgq.sh
            chmod +x src/bin/msgq/msgq_test
-	   chmod +x src/lib/dns/cpp/gen-rdatacode.py
-	   chmod +x src/lib/dns/cpp/tests/testdata/gen-wiredata.py
+	   chmod +x src/lib/dns/gen-rdatacode.py
+	   chmod +x src/lib/dns/tests/testdata/gen-wiredata.py
           ])
 AC_OUTPUT

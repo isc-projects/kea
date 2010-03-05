@@ -5,7 +5,7 @@ export PYTHON_EXEC
 
 MYPATH_PATH=@abs_top_builddir@/src/bin/msgq
 
-PYTHONPATH=@abs_top_srcdir@/src/lib/cc/python:${abs_top_src_dir}/lib/cc/python/ISC
+PYTHONPATH=@abs_top_srcdir@/src/lib/python
 export PYTHONPATH
 
 cd ${MYPATH_PATH}
