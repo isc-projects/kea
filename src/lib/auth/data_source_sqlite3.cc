@@ -14,6 +14,8 @@
 
 // $Id$
 
+#include <string>
+
 #include "data_source_sqlite3.h"
 
 #include <dns/rrttl.h>
@@ -366,6 +368,7 @@ Sqlite3DataSrc::setupPreparedStatements(void) {
         throw(e);
     }
 
+#if 0                           // XXX
     const char* q_nsec3_str = "SELECT rdtype, ttl, rdata FROM nsec3 "
                               "WHERE zone_id=?1 AND hash == $2";
     try {
@@ -386,6 +389,7 @@ Sqlite3DataSrc::setupPreparedStatements(void) {
         cout << sqlite3_errmsg(db) << endl;
         throw(e);
     }
+#endif
 }
 
 void
@@ -440,8 +444,9 @@ Sqlite3DataSrc::checkAndSetupSchema(void) {
     }
 }
 
-Sqlite3DataSrc::Sqlite3DataSrc() {
-    db = NULL;
+Sqlite3DataSrc::Sqlite3DataSrc() :
+    db(NULL)
+{
     database_version = -1;
     q_zone = NULL;
     q_record = NULL;
@@ -460,13 +465,8 @@ Sqlite3DataSrc::~Sqlite3DataSrc() {
 
 DataSrc::Result
 Sqlite3DataSrc::init() {
-    try {
-        open("/tmp/zone.sqlite3");
-    
-        cout << "Schema version: " << getVersion() << endl;
-    } catch (const char* e) {
-        cout << e << endl;
-    }
+    open("/tmp/zone.sqlite3");
+    cerr << "Schema version: " << getVersion() << endl;
 
     return (SUCCESS);
 }
