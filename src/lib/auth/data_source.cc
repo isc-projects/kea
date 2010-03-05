@@ -354,10 +354,9 @@ DataSrc::doQuery(Query& q)
         // Find the closest enclosing zone for which we are authoritative,
         // and the concrete data source which is authoritative for it.
         // (Note that RRtype DS queries need to go to the parent.)
-        Name matchname(task->qtype == RRType::DS() ?
-                       task->qname.split(1, task->qname.getLabelCount() - 1) :
-                       task->qname);
-        NameMatch match(matchname);
+        NameMatch match(task->qtype == RRType::DS() ?
+                        task->qname.split(1, task->qname.getLabelCount() - 1) :
+                        task->qname);
         findClosestEnclosure(match);
         const DataSrc* datasource = match.bestDataSrc();
         const Name* zonename = match.closestName();
