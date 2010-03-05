@@ -53,6 +53,14 @@ protected:
 };
 
 void
+performQuery(Message& message) {
+    message.setHeaderFlag(MessageFlag::AA());
+    message.setRcode(Rcode::NOERROR());
+    Query q(message, true);
+    ds.doQuery(q);
+}
+
+void
 readAndProcessQuery(Message& message, const char* datafile) {
     std::vector<unsigned char> data;
     UnitTestUtil::readWireData(datafile, data);
@@ -61,10 +69,18 @@ readAndProcessQuery(Message& message, const char* datafile) {
     message.fromWire(buffer);
 
     message.makeResponse();
-    message.setHeaderFlag(MessageFlag::AA());
-    message.setRcode(Rcode::NOERROR());
-    Query q(message, true);
-    ds.doQuery(q);
+    performQuery(message);
+}
+
+void
+createAndProcessQuery(Message& message, const Name& qname,
+                      const RRClass& qclass, const RRType& qtype)
+{
+    message.makeResponse();
+    message.setOpcode(Opcode::QUERY());
+    message.addQuestion(Question(qname, qclass, qtype));
+    message.setHeaderFlag(MessageFlag::RD());
+    performQuery(message);
 }
 
 void
@@ -453,6 +469,12 @@ TEST_F(DataSrcTest, DS) {
     EXPECT_EQ("dns03.example.com.", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
+}
+
+TEST_F(DataSrcTest, CNAMELoop) {
+    // This should not make the process hang
+    //createAndProcessQuery(msg, Name("loop1.example.com"), RRClass::IN(),
+    //                    RRType::A());
 }
 
 }
