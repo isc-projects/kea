@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I$(top_builddir)/include -I$(top_builddir)/src/lib -I$(top_builddir)/src/lib/dns/cpp -I$(top_builddir)/include/dns/cpp -I$(top_builddir)/include -I$(top_srcdir)/ext $(SQLITE_CFLAGS)
+AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/ext $(SQLITE_CFLAGS)
 
 pkglibexecdir = $(libexecdir)/@PACKAGE@
 
@@ -8,11 +8,11 @@ pkglibexec_PROGRAMS = b10-auth
 b10_auth_SOURCES = auth_srv.cc auth_srv.h
 b10_auth_SOURCES += common.cc common.h
 b10_auth_SOURCES += main.cc
-b10_auth_LDADD =  $(top_builddir)/src/lib/auth/cpp/.libs/libauth.a
-b10_auth_LDADD +=  $(top_builddir)/src/lib/dns/cpp/.libs/libdns.a
-b10_auth_LDADD += $(top_builddir)/src/lib/config/cpp/libcfgclient.a
-b10_auth_LDADD += $(top_builddir)/src/lib/cc/cpp/libcc.a
-b10_auth_LDADD += $(top_builddir)/src/lib/exceptions/cpp/.libs/libexceptions.a
+b10_auth_LDADD =  $(top_builddir)/src/lib/auth/.libs/libauth.a
+b10_auth_LDADD +=  $(top_builddir)/src/lib/dns/.libs/libdns.a
+b10_auth_LDADD += $(top_builddir)/src/lib/config/libcfgclient.a
+b10_auth_LDADD += $(top_builddir)/src/lib/cc/libcc.a
+b10_auth_LDADD += $(top_builddir)/src/lib/exceptions/.libs/libexceptions.a
 b10_auth_LDADD += $(SQLITE_LIBS)
 
 # TODO: config.h.in is wrong because doesn't honor pkgdatadir

@@ -3,9 +3,9 @@
 PYTHON_EXEC=${PYTHON_EXEC:-@PYTHON@}
 export PYTHON_EXEC
 
-CONFIG_PATH=@abs_top_srcdir@/src/lib/config/python/isc/config/unittests
+CONFIG_PATH=@abs_top_srcdir@/src/lib/python/isc/config/unittests
 
-PYTHONPATH=@abs_top_srcdir@/pyshared
+PYTHONPATH=@abs_top_srcdir@/src/lib/python
 export PYTHONPATH
 
 CONFIG_TESTDATA_PATH=@abs_top_srcdir@/src/lib/config/testdata

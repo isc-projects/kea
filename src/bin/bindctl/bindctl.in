@@ -5,7 +5,7 @@ export PYTHON_EXEC
 
 BINDCTL_PATH=@abs_top_srcdir@/src/bin/bindctl
 
-PYTHONPATH=@abs_top_builddir@/pyshared
+PYTHONPATH=@abs_top_builddir@/src/lib/python
 export PYTHONPATH
 
 cd ${BINDCTL_PATH}

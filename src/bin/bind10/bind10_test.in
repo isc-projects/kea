@@ -5,10 +5,10 @@ export PYTHON_EXEC
 
 BIND10_PATH=@abs_top_srcdir@/src/bin/bind10
 
-PATH=@abs_top_srcdir@/src/bin/msgq:@abs_top_srcdir@/src/bin/auth:$PATH
+PATH=@abs_top_srcdir@/src/bin/msgq:@abs_top_srcdir@/src/bin/auth:@abs_top_srcdir@/src/bin/bind-cfgd:$PATH
 export PATH
 
-PYTHONPATH=@abs_top_srcdir@/src/lib/cc/python:${abs_top_src_dir}/lib/cc/python/ISC
+PYTHONPATH=@abs_top_srcdir@/src/lib/python
 export PYTHONPATH
 
 cd ${BIND10_PATH}
