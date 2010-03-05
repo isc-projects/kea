@@ -19,6 +19,8 @@
 
 #include <vector>
 
+#include <boost/shared_ptr.hpp>
+
 #include <dns/name.h>
 #include <dns/rrclass.h>
 
@@ -35,6 +37,10 @@ namespace auth {
 
 class NameMatch;
 class Query;
+
+class DataSrc;
+typedef boost::shared_ptr<DataSrc> DataSrcPtr;
+typedef boost::shared_ptr<const DataSrc> ConstDataSrcPtr;
 
 class AbstractDataSrc {
     ///
@@ -220,7 +226,7 @@ public:
     virtual ~MetaDataSrc() {}
     //@}
 
-    void addDataSrc(DataSrc* ds);
+    void addDataSrc(ConstDataSrcPtr data_src);
     void findClosestEnclosure(NameMatch& match) const;
 
     // Actual queries for data should not be sent to a MetaDataSrc object,
@@ -273,7 +279,7 @@ public:
     }
 
 private:
-    std::vector<DataSrc*> data_sources;
+    std::vector<ConstDataSrcPtr> data_sources;
 };
 
 class NameMatch {

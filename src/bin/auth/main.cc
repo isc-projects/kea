@@ -48,7 +48,7 @@ const int DNSPORT = 5300;
 /* need global var for config/command handlers.
  * todo: turn this around, and put handlers in the authserver
  * class itself? */
-AuthSrv auth = AuthSrv(DNSPORT);
+AuthSrv auth(DNSPORT);
 
 static void
 usage() {

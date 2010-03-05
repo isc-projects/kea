@@ -21,6 +21,7 @@
 #include <netdb.h>
 #include <stdlib.h>
 
+#include <cassert>
 #include <iostream>
 
 #include <dns/buffer.h>
@@ -33,6 +34,9 @@
 #include <config/ccsession.h>
 
 #include <auth/query.h>
+#include <auth/data_source.h>
+#include <auth/data_source_static.h>
+#include <auth/data_source_sqlite3.h>
 
 #include <cc/data.h>
 
@@ -49,11 +53,27 @@ using namespace isc::dns::rdata;
 using namespace isc::data;
 using namespace isc::config;
 
-AuthSrv::AuthSrv(int port) :
-    data_src(NULL), sock(-1)
+namespace {
+// This is a helper class to make construction of the AuthSrv class
+// exception safe.
+class AuthSocket {
+private:
+    // prohibit copy
+    AuthSocket(const AuthSocket& source);
+    AuthSocket& operator=(const AuthSocket& source);
+public:
+    AuthSocket(int port);
+    ~AuthSocket();
+    int getFD() const { return (fd_); }
+private:
+    int fd_;
+};
+
+AuthSocket::AuthSocket(int port) :
+    fd_(-1)
 {
-    int s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (s < 0) {
+    fd_ = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (fd_ < 0) {
         throw FatalError("failed to open socket");
     }
 
@@ -67,34 +87,56 @@ AuthSrv::AuthSrv(int port) :
     sin.sin_len = sa_len;
 #endif
 
-    if (bind(s, (struct sockaddr *)&sin, sa_len) < 0) {
-        close(s);
+    if (bind(fd_, (const struct sockaddr *)&sin, sa_len) < 0) {
+        close(fd_);
         throw FatalError("could not bind socket");
     }
+}
 
-    sock = s;
+AuthSocket::~AuthSocket() {
+    assert(fd_ >= 0);
+    close(fd_);
+}
+}
 
-    // XXX: the following code is not exception-safe.  Will address in the
-    // next phase.
+class AuthSrvImpl {
+private:
+    // prohibit copy
+    AuthSrvImpl(const AuthSrvImpl& source);
+    AuthSrvImpl& operator=(const AuthSrvImpl& source);
+public:
+    AuthSrvImpl(int port);
+    AuthSocket sock;
+    std::string _db_file;
+    isc::auth::MetaDataSrc data_sources;
+};
 
-    data_src = new(MetaDataSrc);
-
+AuthSrvImpl::AuthSrvImpl(int port) :
+    sock(port)
+{
     // add static data source
-    data_src->addDataSrc(new StaticDataSrc);
+    data_sources.addDataSrc(ConstDataSrcPtr(new StaticDataSrc));
 
     // add SQL data source
     Sqlite3DataSrc* sd = new Sqlite3DataSrc;
     sd->init();
-    data_src->addDataSrc(sd);
+    data_sources.addDataSrc(ConstDataSrcPtr(sd));
+}
+
+AuthSrv::AuthSrv(int port)
+{
+    impl_ = new AuthSrvImpl(port);
 }
 
 AuthSrv::~AuthSrv()
 {
-    if (sock >= 0) {
-        close(sock);
-    }
+    delete impl_;
+}
 
-    delete data_src;
+int
+AuthSrv::getSocket() const
+{
+    return (impl_->sock.getFD());
 }
 
 void
@@ -103,7 +145,7 @@ AuthSrv::processMessage()
     struct sockaddr_storage ss;
     socklen_t sa_len = sizeof(ss);
     struct sockaddr* sa = static_cast<struct sockaddr*>((void*)&ss);
-    int s = sock;
+    const int s = impl_->sock.getFD();
     char recvbuf[4096];
     int cc;
 
@@ -134,7 +176,7 @@ AuthSrv::processMessage()
         msg.setUDPSize(sizeof(recvbuf));
 
         Query query(msg, dnssec_ok);
-        data_src->doQuery(query);
+        impl_->data_sources.doQuery(query);
 
         OutputBuffer obuffer(remote_bufsize);
         MessageRenderer renderer(obuffer);
@@ -150,7 +192,7 @@ void
 AuthSrv::setDbFile(const std::string& db_file)
 {
     cout << "Change data source file, call our data source's function to now read " << db_file << endl;
-    _db_file = db_file;
+    impl_->_db_file = db_file;
 }
 
 ElementPtr
