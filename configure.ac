@@ -10,8 +10,6 @@ AC_CONFIG_HEADERS([config.h])
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_CC
-AC_PROG_RANLIB
-
 AC_PROG_LIBTOOL
 
 m4_define([_AM_PYTHON_INTERPRETER_LIST], [python python3 python3.1])
