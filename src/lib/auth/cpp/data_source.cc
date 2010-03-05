@@ -645,24 +645,25 @@ DataSrc::findReferral(const Query& q, const Name& qname, const RRClass& qclass,
 }
 
 void
-MetaDataSrc::addDataSrc(DataSrc* ds)
+MetaDataSrc::addDataSrc(ConstDataSrcPtr data_src)
 {
-    if (getClass() != RRClass::ANY() && ds->getClass() != getClass()) {
+    if (getClass() != RRClass::ANY() && data_src->getClass() != getClass()) {
         dns_throw(Unexpected, "class mismatch");
     }
 
-    data_sources.push_back(ds);
+    data_sources.push_back(data_src);
 }
 
 void
 MetaDataSrc::findClosestEnclosure(NameMatch& match) const
 {
-    BOOST_FOREACH (DataSrc* ds, data_sources) {
-        if (getClass() != RRClass::ANY() && ds->getClass() != getClass()) {
+    BOOST_FOREACH (ConstDataSrcPtr data_src, data_sources) {
+        if (getClass() != RRClass::ANY() &&
+            data_src->getClass() != getClass()) {
             continue;
         }
 
-        ds->findClosestEnclosure(match);
+        data_src->findClosestEnclosure(match);
     }
 }
 

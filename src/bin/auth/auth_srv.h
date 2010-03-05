@@ -20,23 +20,30 @@
 #include <string>
 
 #include <cc/data.h>
-#include <auth/data_source_static.h>
-#include <auth/data_source_sqlite3.h>
+
+class AuthSrvImpl;
 
 class AuthSrv {
+    ///
+    /// \name Constructors, Assignment Operator and Destructor.
+    ///
+    /// Note: The copy constructor and the assignment operator are intentionally
+    /// defined as private.
+    //@{
+private:
+    AuthSrv(const AuthSrv& source);
+    AuthSrv& operator=(const AuthSrv& source);
 public:
     explicit AuthSrv(int port);
     ~AuthSrv();
-    int getSocket() { return (sock); }
+    //@}
+    int getSocket() const;
     void processMessage();
     void serve(std::string zone_name);
     void setDbFile(const std::string& db_file);
     isc::data::ElementPtr updateConfig(isc::data::ElementPtr config);
 private:
-    std::string _db_file;
-
-    isc::auth::MetaDataSrc* data_src;
-    int sock;
+    AuthSrvImpl* impl_;
 };
 
 #endif // __AUTH_SRV_H
