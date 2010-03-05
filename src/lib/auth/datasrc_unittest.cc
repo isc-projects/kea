@@ -45,8 +45,9 @@ TestDataSrc ds;
 
 class DataSrcTest : public ::testing::Test {
 protected:
-    DataSrcTest() : obuffer(0), renderer(obuffer), msg(Message::PARSE)
-    {}
+    DataSrcTest() : obuffer(0), renderer(obuffer), msg(Message::PARSE) {
+        ds.init();
+    }
     OutputBuffer obuffer;
     MessageRenderer renderer;
     Message msg;

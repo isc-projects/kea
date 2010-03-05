@@ -44,7 +44,7 @@ private:
     TestDataSrc(const TestDataSrc& source);
     TestDataSrc operator=(const TestDataSrc& source); 
 public:
-    TestDataSrc();
+    TestDataSrc() : initialized(false) {}
     ~TestDataSrc() {}
     //@}
 
@@ -91,10 +91,11 @@ public:
                              const isc::dns::Name& zonename,
                              isc::dns::RRsetList& target) const;
 
-    Result init() { return (SUCCESS); }
+    Result init();
     Result close() { return (SUCCESS); }
 
 private:
+    bool initialized;
     enum Mode {
         NORMAL,
         ADDRESS,
