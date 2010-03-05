@@ -89,17 +89,16 @@ synthesizeCname(Query& q, QueryTaskPtr task, RRsetPtr rrset, RRsetList& target)
     const generic::DNAME& dname = dynamic_cast<const generic::DNAME&>(rd);
     const Name& dname_target(dname.getDname());
 
-    try {
-        int qnlen = task->qname.getLabelCount();
-        int dnlen = rrset->getName().getLabelCount();
-        const Name& prefix(task->qname.split(0, qnlen - dnlen));
-        const Name& newname(prefix.concatenate(dname_target));
-        RRsetPtr cname(new RRset(task->qname, task->qclass, RRType::CNAME(),
-                                 rrset->getTTL()));
-        cname->addRdata(generic::CNAME(newname));
-        cname->setTTL(rrset->getTTL());
-        target.addRRset(cname);
-    } catch (...) {}
+    RRsetPtr cname(new RRset(task->qname, task->qclass, RRType::CNAME(),
+                             rrset->getTTL()));
+
+    const int qnlen = task->qname.getLabelCount();
+    const int dnlen = rrset->getName().getLabelCount();
+    assert(qnlen > dnlen);
+    const Name& prefix(task->qname.split(0, qnlen - dnlen));
+    cname->addRdata(generic::CNAME(prefix.concatenate(dname_target)));
+
+    target.addRRset(cname);
 }
 
 // Add a task to the query task queue to look up the data pointed
@@ -197,8 +196,8 @@ hasDelegation(const DataSrc* ds, const Name* zonename, Query& q,
     if (diff > 1) {
         bool found = false;
         RRsetList ref;
-        for(int i = diff; i > 1; --i) {
-            Name sub(task->qname.split(i - 1, nlen - i));
+        for (int i = diff; i > 1; --i) {
+            const Name sub(task->qname.split(i - 1, nlen - i));
             if (refQuery(sub, q, task, ds, zonename, ref)) {
                 found = true;
                 break;
