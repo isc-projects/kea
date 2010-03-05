@@ -41,31 +41,38 @@
 #include <boost/foreach.hpp>
 
 using namespace std;
+using namespace isc::data;
+using namespace isc::cc;
+using namespace isc::config;
 
+namespace {
 const string PROGRAM = "Auth";
-const int DNSPORT = 5300;
+const char* DNSPORT = "5300";
+}
 
 /* need global var for config/command handlers.
  * todo: turn this around, and put handlers in the authserver
  * class itself? */
-AuthSrv auth(DNSPORT);
+namespace {
+AuthSrv *auth_server;
+}
 
 static void
 usage() {
-    cerr << "Usage: b10-auth [-p port]" << endl;
+    cerr << "Usage: b10-auth [-p port] [-4|-6]" << endl;
     exit(1);
 }
 
-isc::data::ElementPtr
-my_config_handler(isc::data::ElementPtr new_config)
+ElementPtr
+my_config_handler(ElementPtr new_config)
 {
-    auth.updateConfig(new_config);
-    return isc::config::createAnswer(0);
+    auth_server->updateConfig(new_config);
+    return createAnswer(0);
 }
 
-isc::data::ElementPtr
-my_command_handler(const std::string& command, const isc::data::ElementPtr args) {
-    isc::data::ElementPtr answer = isc::config::createAnswer(0);
+ElementPtr
+my_command_handler(const string& command, const ElementPtr args) {
+    ElementPtr answer = createAnswer(0);
 
     cout << "[XX] Handle command: " << endl << command << endl;
     if (command == "print_message") 
@@ -77,15 +84,54 @@ my_command_handler(const std::string& command, const isc::data::ElementPtr args)
     return answer;
 }
 
+static int
+getSocket(int af, const char* port) {
+    struct addrinfo hints, *res;
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = af;
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_flags = AI_PASSIVE;
+    hints.ai_protocol = IPPROTO_UDP;
+
+    int error = getaddrinfo(NULL, port, &hints, &res);
+    if (error != 0) {
+        cerr << "getaddrinfo failed: " << gai_strerror(error);
+        return (-1);
+    }
+
+    int s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+    if (s < 0) {
+        cerr << "failed to open socket" << endl;
+        return (-1);
+    }
+
+    if (bind(s, res->ai_addr, res->ai_addrlen) < 0) {
+        cerr << "binding socket failure" << endl;
+        close(s);
+        return (-1);
+    }
+
+    return (s);
+}
+
 int
 main(int argc, char* argv[]) {
     int ch;
-    int port = DNSPORT;
+    const char* port = DNSPORT;
+    bool ipv4_only = false, ipv6_only = false;
+    int ps4 = -1, ps6 = -1;
 
-    while ((ch = getopt(argc, argv, "p:")) != -1) {
+    while ((ch = getopt(argc, argv, "46p:")) != -1) {
         switch (ch) {
+        case '4':
+            ipv4_only = true;
+            break;
+        case '6':
+            ipv6_only = true;
+            break;
         case 'p':
-            port = atoi(optarg);
+            port = optarg;
             break;
         case '?':
         default:
@@ -93,52 +139,91 @@ main(int argc, char* argv[]) {
         }
     }
 
-    if (argc - optind > 0)
+    if (argc - optind > 0) {
         usage();
+    }
+
+    if (ipv4_only && ipv6_only) {
+        cerr << "-4 and -6 can't coexist" << endl;
+        usage();
+    }
+    if (!ipv4_only) {
+        ps4 = getSocket(AF_INET, port);
+        if (ps4 < 0) {
+            exit(1);
+        }
+    }
+    if (!ipv6_only) {
+        ps6 = getSocket(AF_INET6, port);
+        if (ps6 < 0) {
+            if (ps4 < 0) {
+                close(ps4);
+            }
+            exit(1);
+        }
+    }
+
+    auth_server = new AuthSrv;
 
     // initialize command channel
+    int ret = 0;
     try {
-        std::string specfile;
+        string specfile;
         if (getenv("B10_FROM_SOURCE")) {
-            specfile = std::string(getenv("B10_FROM_SOURCE")) + "/src/bin/auth/auth.spec";
+            specfile = string(getenv("B10_FROM_SOURCE")) +
+                "/src/bin/auth/auth.spec";
         } else {
-            specfile = std::string(AUTH_SPECFILE_LOCATION);
+            specfile = string(AUTH_SPECFILE_LOCATION);
         }
-        isc::config::ModuleCCSession cs = isc::config::ModuleCCSession(specfile,
-                                                                       my_config_handler,
-                                                                       my_command_handler);
+        ModuleCCSession cs = ModuleCCSession(specfile, my_config_handler,
+                                             my_command_handler);
 
         // main server loop
         fd_set fds;
-        int ps = auth.getSocket();
         int ss = cs.getSocket();
-        int nfds = max(ps, ss) + 1;
+        int nfds = max(max(ps4, ps6), ss) + 1;
         int counter = 0;
-    
+
         cout << "Server started." << endl;
         while (true) {
             FD_ZERO(&fds);
-            FD_SET(ps, &fds);
+            if (ps4 >= 0) {
+                FD_SET(ps4, &fds);
+            }
+            if (ps6 >= 0) {
+                FD_SET(ps6, &fds);
+            }
             FD_SET(ss, &fds);
-    
+
             int n = select(nfds, &fds, NULL, NULL, NULL);
-            if (n < 0)
+            if (n < 0) {
                 throw FatalError("select error");
-    
-            if (FD_ISSET(ps, &fds)) {
+            }
+
+            if (FD_ISSET(ps4, &fds)) {
                 ++counter;
-                auth.processMessage();
+                auth_server->processMessage(ps4);
+            }
+            if (FD_ISSET(ps6, &fds)) {
+                ++counter;
+                auth_server->processMessage(ps6);
             }
     
-            /* isset not really necessary, but keep it for now */
             if (FD_ISSET(ss, &fds)) {
                 cs.check_command();
             }
         }
-    } catch (isc::cc::SessionError se) {
+    } catch (SessionError se) {
         cout << se.what() << endl;
-        exit(1);
+        ret = 1;
     }
-    
-    return (0);
+
+    if (ps4 >= 0) {
+        close(ps4);
+    }
+    if (ps6 >= 0) {
+        close(ps6);
+    }
+    delete auth_server;
+    return (ret);
 }

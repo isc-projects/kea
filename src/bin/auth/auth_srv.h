@@ -34,11 +34,10 @@ private:
     AuthSrv(const AuthSrv& source);
     AuthSrv& operator=(const AuthSrv& source);
 public:
-    explicit AuthSrv(int port);
+    explicit AuthSrv();
     ~AuthSrv();
     //@}
-    int getSocket() const;
-    void processMessage();
+    void processMessage(int fd);
     void serve(std::string zone_name);
     void setDbFile(const std::string& db_file);
     isc::data::ElementPtr updateConfig(isc::data::ElementPtr config);

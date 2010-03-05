@@ -53,67 +53,18 @@ using namespace isc::dns::rdata;
 using namespace isc::data;
 using namespace isc::config;
 
-namespace {
-// This is a helper class to make construction of the AuthSrv class
-// exception safe.
-class AuthSocket {
-private:
-    // prohibit copy
-    AuthSocket(const AuthSocket& source);
-    AuthSocket& operator=(const AuthSocket& source);
-public:
-    AuthSocket(int port);
-    ~AuthSocket();
-    int getFD() const { return (fd_); }
-private:
-    int fd_;
-};
-
-AuthSocket::AuthSocket(int port) :
-    fd_(-1)
-{
-    fd_ = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (fd_ < 0) {
-        throw FatalError("failed to open socket");
-    }
-
-    struct sockaddr_in sin;
-    sin.sin_family = AF_INET;
-    sin.sin_addr.s_addr = INADDR_ANY;
-    sin.sin_port = htons(port);
-
-    socklen_t sa_len = sizeof(sin);
-#ifdef HAVE_SIN_LEN
-    sin.sin_len = sa_len;
-#endif
-
-    if (bind(fd_, (const struct sockaddr *)&sin, sa_len) < 0) {
-        close(fd_);
-        throw FatalError("could not bind socket");
-    }
-}
-
-AuthSocket::~AuthSocket() {
-    assert(fd_ >= 0);
-    close(fd_);
-}
-}
-
 class AuthSrvImpl {
 private:
     // prohibit copy
     AuthSrvImpl(const AuthSrvImpl& source);
     AuthSrvImpl& operator=(const AuthSrvImpl& source);
 public:
-    AuthSrvImpl(int port);
-    AuthSocket sock;
+    AuthSrvImpl();
     std::string _db_file;
     isc::auth::MetaDataSrc data_sources;
 };
 
-AuthSrvImpl::AuthSrvImpl(int port) :
-    sock(port)
-{
+AuthSrvImpl::AuthSrvImpl() {
     // add static data source
     data_sources.addDataSrc(ConstDataSrcPtr(new StaticDataSrc));
 
@@ -123,9 +74,9 @@ AuthSrvImpl::AuthSrvImpl(int port) :
     data_sources.addDataSrc(ConstDataSrcPtr(sd));
 }
 
-AuthSrv::AuthSrv(int port)
+AuthSrv::AuthSrv()
 {
-    impl_ = new AuthSrvImpl(port);
+    impl_ = new AuthSrvImpl;
 }
 
 AuthSrv::~AuthSrv()
@@ -133,23 +84,16 @@ AuthSrv::~AuthSrv()
     delete impl_;
 }
 
-int
-AuthSrv::getSocket() const
-{
-    return (impl_->sock.getFD());
-}
-
 void
-AuthSrv::processMessage()
+AuthSrv::processMessage(const int fd)
 {
     struct sockaddr_storage ss;
     socklen_t sa_len = sizeof(ss);
     struct sockaddr* sa = static_cast<struct sockaddr*>((void*)&ss);
-    const int s = impl_->sock.getFD();
     char recvbuf[4096];
     int cc;
 
-    if ((cc = recvfrom(s, recvbuf, sizeof(recvbuf), 0, sa, &sa_len)) > 0) {
+    if ((cc = recvfrom(fd, recvbuf, sizeof(recvbuf), 0, sa, &sa_len)) > 0) {
         Message msg(Message::PARSE);
         InputBuffer buffer(recvbuf, cc);
 
@@ -184,7 +128,7 @@ AuthSrv::processMessage()
         cout << "sending a response (" <<
             boost::lexical_cast<string>(obuffer.getLength())
                   << " bytes):\n" << msg.toText() << endl;
-        sendto(s, obuffer.getData(), obuffer.getLength(), 0, sa, sa_len);
+        sendto(fd, obuffer.getData(), obuffer.getLength(), 0, sa, sa_len);
     }
 }
 
