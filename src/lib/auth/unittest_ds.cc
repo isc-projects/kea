@@ -55,6 +55,8 @@ const Name cnameext("cname-ext.example.com");
 const Name dname("dname.example.com");
 const Name wild("*.wild.example.com");
 const Name subzone("subzone.example.com");
+const Name loop1("loop1.example.com");
+const Name loop2("loop2.example.com");
 
 RRsetPtr example_ns;
 RRsetPtr example_soa;
@@ -89,6 +91,8 @@ RRsetPtr subzone_nsec;
 RRsetPtr subzone_glue1;
 RRsetPtr subzone_glue2;
 RRsetPtr subzone_ds;
+RRsetPtr loop1_cname;
+RRsetPtr loop2_cname;
 }
 
 TestDataSrc::TestDataSrc() {
@@ -111,17 +115,16 @@ TestDataSrc::TestDataSrc() {
                                     RRType::SOA(), RRTTL(3600)));
     example_soa->addRdata(generic::SOA("master.example.com. admin.example.com. 1234 3600 1800 2419200 7200"));
 
-    rp = new RRset(example, RRClass::IN(), RRType::RRSIG(), RRTTL(3600));
-    rrsig = RRsetPtr(rp);
+    rrsig = RRsetPtr(new RRset(example, RRClass::IN(), RRType::RRSIG(),
+                               RRTTL(3600)));
     rrsig->addRdata(generic::RRSIG("SOA 5 2 3600 20100322084538 20100220084538 33495 example.com.  KUun66Qaw36osk2BJS6U1fAy3PPDkNo2QK4meGNbDBY8q8b+f2o+IXJ14YCvssGl1ORW0CcLnDRxssnk8V/Svmj5iFhO+8HC2hnVBdi2zewvdVtwRb+lWwKN7pkXXwuy6g1t9WCd/j5FCc/wgxqtZUTPb6XgZcnHrORDMOTqLs4="));
     example_soa->addRRsig(rrsig);
 
     example_nsec = RRsetPtr(new RRset(example, RRClass::IN(),
                                       RRType::NSEC(), RRTTL(3600)));
     example_nsec->addRdata(generic::NSEC("cname-ext.example.com. NS SOA MX RRSIG NSEC DNSKEY"));
-    rp = new RRset(example, RRClass::IN(), RRType::RRSIG(), RRTTL(3600));
-    rrsig = RRsetPtr(rp);
-
+    rrsig = RRsetPtr(new RRset(example, RRClass::IN(), RRType::RRSIG(),
+                               RRTTL(3600)));
     rrsig->addRdata(generic::RRSIG("NSEC 5 2 7200 20100322084538 20100220084538 33495 example.com. KxuVaPPKNPJzr/q+cJPiNlkHVTQK0LVsgTbSqruXQc25lAd0wn5oKUtxL1bEAchHkfA8eLzcYCj2ZqqAv9OJubw53mfskTad7UHs4Uj2RTrIsNGMCiZGgOpvNb9JcWpQtoyXVT1uNse+Qsbeir0eyeYIufUynFU041jtNrlJMio="));
     example_nsec->addRRsig(rrsig);
 
@@ -132,8 +135,8 @@ TestDataSrc::TestDataSrc() {
     sql1_ns->addRdata(generic::NS(dns02));
     sql1_ns->addRdata(generic::NS(dns03));
 
-    rp = new RRset(sql1, RRClass::IN(), RRType::RRSIG(), RRTTL(3600));
-    rrsig = RRsetPtr(rp);
+    rrsig = RRsetPtr(new RRset(sql1, RRClass::IN(), RRType::RRSIG(),
+                               RRTTL(3600)));
     rrsig->addRdata(generic::RRSIG("NS 5 3 3600 20100322084536 20100220084536 12447 sql1.example.com. 0CL8noy0NSgoWwuKd+Dc6vyIIw2BrAEBx0IJzcSB6GlB25x/zjEd6AJG0be13HN6jOaTX8iWTuCVrEYuXg76V+M4EvTZHjEScj0az74TrDv4Vdo459paGKCX9B8NLJW1mW4fzZrrXQ8jmBEZeS91Q5rJrO+UKJEuUz3LYdTPvao="));
     sql1_ns->addRRsig(rrsig);
 
@@ -141,17 +144,15 @@ TestDataSrc::TestDataSrc() {
                                  RRType::SOA(), RRTTL(3600)));
     sql1_soa->addRdata(generic::SOA("master.example.com. admin.example.com. 678 3600 1800 2419200 7200"));
 
-    rp = new RRset(sql1, RRClass::IN(), RRType::RRSIG(), RRTTL(3600));
-    rrsig = RRsetPtr(rp);
+    rrsig = RRsetPtr(new RRset(sql1, RRClass::IN(), RRType::RRSIG(),
+                               RRTTL(3600)));
     rrsig->addRdata(generic::RRSIG("SOA 5 3 3600 20100322084536 20100220084536 12447 sql1.example.com. oakulfyljL/RAKgCKXEZ3KsG8BJj5WG4JK4moWFB6c9OKem6jIk8hKP2XlUVXFuOYJlRdIM4KicmR2GAK+5jJp6z5ShssstYTXo3QosVm6oCKumuFeLFHzcjfqP1D+F9NsvHldJIBnS/4ebPkmR5OENyCZXQF5HmN2awIj4CLjE="));
     sql1_soa->addRRsig(rrsig);
 
     sql1_nsec = RRsetPtr(new RRset(sql1, RRClass::IN(),
                                       RRType::NSEC(), RRTTL(3600)));
     sql1_nsec->addRdata(generic::NSEC("www.sql1.example.com. NS SOA RRSIG NSEC DNSKEY"));
-    rp = new RRset(sql1, RRClass::IN(), RRType::RRSIG(), RRTTL(3600));
-    rrsig = RRsetPtr(rp);
-
+    rrsig = RRsetPtr(new RRset(sql1, RRClass::IN(), RRType::RRSIG(), RRTTL(3600)));
     rrsig->addRdata(generic::RRSIG("NSEC 5 3 7200 20100322084536 20100220084536 12447 sql1.example.com. v71CgdTYccCiTqfRcn6HsvISQa8ruvUfCKtpwym0RW/G27xlZn8otj2IMtWwkLxti8Rqqu+PTViLaOIbeVfHBcqzAd7U59cAOYoq3ODZx6auiE3C23HAKqUavKcP7Esaajm1cbcWy6Kyie4CAZc8M7EeKxgkXMKJGqBQzF+/FOo="));
     sql1_nsec->addRRsig(rrsig);
     sql1_ds = RRsetPtr(new RRset(sql1, RRClass::IN(),
@@ -159,8 +160,8 @@ TestDataSrc::TestDataSrc() {
     sql1_ds->addRdata(generic::DS("33313 5 1 0FDD7A2C11AA7F55D50FBF9B7EDDA2322C541A8D"));
     sql1_ds->addRdata(generic::DS("33313 5 2 00B99B7006F496D135B01AB17EDB469B4BE9E1973884DEA757BC4E3015A8C3AB"));
 
-    rp = new RRset(sql1, RRClass::IN(), RRType::RRSIG(), RRTTL(3600));
-    rrsig = RRsetPtr(rp);
+    rrsig = RRsetPtr(new RRset(sql1, RRClass::IN(), RRType::RRSIG(),
+                               RRTTL(3600)));
     rrsig->addRdata(generic::RRSIG("DS 5 3 3600 20100322084538 20100220084538 33495 example.com. dIqZKvpkJN1l92SOiWgJh3KbjErIN+EfojMsm4pEdV5xQdZwj6DNNEu6Kw4rRwdvrZIu0TyqPr3jSJb7o6R7vZgZzmLfVV/ojQah7rwuYHCFcfyZ4JyK2311fMhRR1QAvMsdcjdyA1XC140Cm6AnL3cH5rh/KUks/0ec3Ca7GNQ="));
     sql1_ds->addRRsig(rrsig);
 
@@ -168,8 +169,8 @@ TestDataSrc::TestDataSrc() {
     sql1_ds_nsec = RRsetPtr(new RRset(sql1, RRClass::IN(),
                                    RRType::NSEC(), RRTTL(3600)));
     sql1_ds_nsec->addRdata(generic::NSEC("subzone.example.com. NS DS RRSIG NSEC"));
-    rp = new RRset(sql1, RRClass::IN(), RRType::RRSIG(), RRTTL(3600));
-    rrsig = RRsetPtr(rp);
+    rrsig = RRsetPtr(new RRset(sql1, RRClass::IN(), RRType::RRSIG(),
+                               RRTTL(3600)));
     rrsig->addRdata(generic::RRSIG("NSEC 5 3 7200 20100322084538 20100220084538 33495 example.com. k9FRdFyk/cPdkmmaoZbGZPpzIzfbFWQ3QCHd2qhJa0xAXaEOT/GBL6aFqx9SlunDu2wgES+To5fWPZGi4NzWpp6c5t27rnATN/oCEQ/UYIJKmWbqrXdst0Ps5boznk7suK2Y+km31KxaIf3fDd/T3kZCVsR0aWKRRRatPb7GfLw="));
     sql1_ds_nsec->addRRsig(rrsig);
 
@@ -179,8 +180,8 @@ TestDataSrc::TestDataSrc() {
                                     RRTTL(3600)));
     www_sql1_a->addRdata(in::A("192.168.2.2"));
 
-    rp = new RRset(www_sql1, RRClass::IN(), RRType::RRSIG(), RRTTL(3600));
-    rrsig = RRsetPtr(rp);
+    rrsig = RRsetPtr(new RRset(www_sql1, RRClass::IN(), RRType::RRSIG(),
+                               RRTTL(3600)));
     rrsig->addRdata(generic::RRSIG("A 5 4 3600 20100322084536 20100220084536 12447 sql1.example.com. DNdVKxB3oBsB14NPoV9WG14Y/g4zMcIXLYnFjj9vRZRZJpAvbTEipiXlayuhOxnqU827OipETQyeULZmLsqIQ1wK4Fgf+9b5aJ8D85/o4wBka00X4hZ3MwDPRb4mjuogwBTBg5NRpNSzUfbkPGiav08BFwgg+Efm9veSB05arS0="));
     www_sql1_a->addRRsig(rrsig);
 
@@ -188,9 +189,8 @@ TestDataSrc::TestDataSrc() {
                                        RRClass::IN(), RRType::NSEC(),
                                        RRTTL(3600)));
     www_sql1_nsec->addRdata(generic::NSEC("sql1.example.com. A RRSIG NSEC"));
-    rp = new RRset(www_sql1, RRClass::IN(), RRType::RRSIG(), RRTTL(3600));
-    rrsig = RRsetPtr(rp);
-
+    rrsig = RRsetPtr(new RRset(www_sql1, RRClass::IN(), RRType::RRSIG(),
+                               RRTTL(3600)));
     rrsig->addRdata(generic::RRSIG("NSEC 5 4 7200 20100322084536 20100220084536 12447 sql1.example.com. cJMJhDx/ND7/9j3zhyXe+6eaSsU7ByYpXhJzbe+OhjFgH0VasQXq7o1QB3I293UZ+yhkjgXap+9QtPlraaNaYyTyOMQ42OoxSefJpYz9CME/FI2tsUfyrCnLFxYRNet7sMS0q+hLqxRayuEHDFDp72hHPGLJQ8a7jq4SrIonT50="));
     www_sql1_nsec->addRRsig(rrsig);
 
@@ -200,16 +200,16 @@ TestDataSrc::TestDataSrc() {
                                          RRTTL(3600)));
     dns01_a->addRdata(in::A("192.168.2.1"));
 
-    rp = new RRset(dns01, RRClass::IN(), RRType::RRSIG(), RRTTL(3600));
-    rrsig = RRsetPtr(rp);
+    rrsig = RRsetPtr(new RRset(dns01, RRClass::IN(), RRType::RRSIG(),
+                               RRTTL(3600)));
     rrsig->addRdata(generic::RRSIG("A 5 3 3600 20100322084538 20100220084538 33495 example.com. NIawlZLk8WZAjNux7oQM2mslfW52OZFFkWt++7FHu2SU98XqEeKfCMnpgtWe5T8Nr9cS8df901iEOJoWQzGTEaHYUBtEhsSjBVn7mKp3fz6473a2xxy75SUKZ0rxjNXSZ8Q5rnFmkX0HTH2Sg51mtjH6aC2pfheQnA2t193BnSg="));
     dns01_a->addRRsig(rrsig);
 
     dns01_nsec = RRsetPtr(new RRset(dns01, RRClass::IN(), RRType::NSEC(), RRTTL(3600)));
     dns01_nsec->addRdata(generic::NSEC("dns02.example.com. A RRSIG NSEC"));
 
-    rp = new RRset(dns01, RRClass::IN(), RRType::RRSIG(), RRTTL(3600));
-    rrsig = RRsetPtr(rp);
+    rrsig = RRsetPtr(new RRset(dns01, RRClass::IN(), RRType::RRSIG(),
+                               RRTTL(3600)));
     rrsig->addRdata(generic::RRSIG("NSEC 5 3 7200 20100322084538 20100220084538 33495 example.com. EkyeshmMNP9xiAz6mDFDIwksTdmkF9zsFzLuVKAgK6eUk7St6tp5PSvjA8nWol0vdvvz4LK85a4ffTFEiNRyvWeYP2vOhEkyDcrwuCd8Vc3jh/8Sm1Js+nX7hJStrZGFvp2TWPpt9nKH5p3MxXvTb/YVurnue0xSeFAE17O3+I0="));
     dns01_nsec->addRRsig(rrsig);
 
@@ -217,16 +217,16 @@ TestDataSrc::TestDataSrc() {
     dns02_a = RRsetPtr(new RRset(dns02, RRClass::IN(), RRType::A(), RRTTL(3600)));
     dns02_a->addRdata(in::A("192.168.2.2"));
 
-    rp = new RRset(dns02, RRClass::IN(), RRType::RRSIG(), RRTTL(3600));
-    rrsig = RRsetPtr(rp);
+    rrsig = RRsetPtr(new RRset(dns02, RRClass::IN(), RRType::RRSIG(),
+                               RRTTL(3600)));
     rrsig->addRdata(generic::RRSIG("A 5 3 3600 20100322084538 20100220084538 33495 example.com. XJtVMbUIRE0mk6Hn/Nx6k36jaxaBDPK2/IYB6vCQjJETz6gW4T6q/H/eY9/Lsw5iYPFhoBRDxT4XFj575t98kELXnJe1WhuMbRPlOhyOjxkLECaUne/sbFPOtbGFx9ohuojI0RgxxZiCFaO8wJuv6nfPuzmlLajWS6z9NZeOMIk="));
     dns02_a->addRRsig(rrsig);
 
     dns02_nsec = RRsetPtr(new RRset(dns02, RRClass::IN(),
                                       RRType::NSEC(), RRTTL(3600)));
     dns02_nsec->addRdata(generic::NSEC("dns03.example.com. A RRSIG NSEC"));
-    rp = new RRset(dns02, RRClass::IN(), RRType::RRSIG(), RRTTL(3600));
-    rrsig = RRsetPtr(rp);
+    rrsig = RRsetPtr(new RRset(dns02, RRClass::IN(), RRType::RRSIG(),
+                               RRTTL(3600)));
 
     rrsig->addRdata(generic::RRSIG("NSEC 5 3 7200 20100322084538 20100220084538 33495 example.com. imBNTMB3sPU4kblcaAH6V7lCVt5xgtAybi3DA/SbLEulLaV2NE6vcoEn/AieaM4mOJicQnUDj/H+1hSEhzxU2tRM8zfVlvztxQWn6eh7ZR4mKfNDSvRUGU9ykhpwMyC7wjOt1j5bcSA/OTnLRAilslnJyOM4bSaxVEFo8YPjncY="));
     dns02_nsec->addRRsig(rrsig);
@@ -237,16 +237,16 @@ TestDataSrc::TestDataSrc() {
                                          RRTTL(3600)));
     dns03_a->addRdata(in::A("192.168.2.3"));
 
-    rp = new RRset(dns03, RRClass::IN(), RRType::RRSIG(), RRTTL(3600));
-    rrsig = RRsetPtr(rp);
+    rrsig = RRsetPtr(new RRset(dns03, RRClass::IN(), RRType::RRSIG(),
+                               RRTTL(3600)));
     rrsig->addRdata(generic::RRSIG("A 5 3 3600 20100322084538 20100220084538 33495 example.com. Ubrcm1H+F6m8khle7P9zU8eO+Jtuj+1Vx1MM5KAkmZPJwQe9uTcoCpQa6DXOGG9kajDTnNN1Be1gkZuJDTZJG4SmJLXLbNY3RDnxpGmWta3qs/VgDq78/YM8ropt1/s7YKyrCfGE2ff+FUB0mLObiG01ZV2gu5HJzgE7SEWLEiI="));
     dns03_a->addRRsig(rrsig);
 
     dns03_nsec = RRsetPtr(new RRset(dns03, RRClass::IN(),
                                       RRType::NSEC(), RRTTL(3600)));
     dns03_nsec->addRdata(generic::NSEC("foo.example.com. A RRSIG NSEC"));
-    rp = new RRset(dns03, RRClass::IN(), RRType::RRSIG(), RRTTL(3600));
-    rrsig = RRsetPtr(rp);
+    rrsig = RRsetPtr(new RRset(dns03, RRClass::IN(), RRType::RRSIG(),
+                               RRTTL(3600)));
 
     rrsig->addRdata(generic::RRSIG("NSEC 5 3 7200 20100322084538 20100220084538 33495 example.com.  nn829Xw5CJFnPHwI9WHeT5epQv+odtCkHnjlPFGoPTLOyiks+041UmMqtq3uiSp4d2meMSe9UuDvoROT0L6NTtQQvVqiDhTn0irTFw1uw7fO8ZTG7eyu6Ypfz0+HvfbNvd4kMoD2OTgADRXPVsCTwK+PBOIIG9YTEQfl8pCqW5g="));
     dns03_nsec->addRRsig(rrsig);
@@ -256,17 +256,16 @@ TestDataSrc::TestDataSrc() {
                                        RRTTL(3600)));
     www_a->addRdata(in::A("192.168.1.1"));
 
-    rp = new RRset(www, RRClass::IN(), RRType::RRSIG(), RRTTL(3600));
-    rrsig = RRsetPtr(rp);
+    rrsig = RRsetPtr(new RRset(www, RRClass::IN(), RRType::RRSIG(),
+                               RRTTL(3600)));
     rrsig->addRdata(generic::RRSIG("A 5 3 3600 20100322084538 20100220084538 33495 example.com. qyFyyV/mE8x4pdhudr5iycwhDsva31MzwO1kBR+bDKvzJg8mN8KxlPZrOlNNUhd3YRXQVwieMyxOTWRPXoxrNEDkNwimXkfe3rrHY7ibV9eNS4OIBUjb44VjCNr9CmQSzfuQ2yxO2r+YIuPYHRCjieD4xh6t9ay4IaCN/tDAJ+Q="));
     www_a->addRRsig(rrsig);
 
     www_nsec = RRsetPtr(new RRset(www, RRClass::IN(),
                                   RRType::NSEC(), RRTTL(3600)));
     www_nsec->addRdata(generic::NSEC("example.com. A RRSIG NSEC"));
-    rp = new RRset(www, RRClass::IN(), RRType::RRSIG(), RRTTL(3600));
-    rrsig = RRsetPtr(rp);
-
+    rrsig = RRsetPtr(new RRset(www, RRClass::IN(), RRType::RRSIG(),
+                               RRTTL(3600)));
     rrsig->addRdata(generic::RRSIG("NSEC 5 3 7200 20100322084538 20100220084538 33495 example.com. ZLZlSVBa2oe4U+7SZASnypP2VkI5gg1/1cVGqYUvfYNIUkcVMWDgn7DZCfpmo+2vdlV/4VhAc+sjDd+X+e57XGnW8+lqZHvG6NMMhmSGmeATD3D+8lEJJGo0dxoN4rHJQyp/eT2S4nChz+D/ze+YRagYxGF7pXm9zcrw3kKZGTs="));
     www_nsec->addRRsig(rrsig);
 
@@ -275,16 +274,17 @@ TestDataSrc::TestDataSrc() {
                                         RRTTL(3600)));
     wild_a->addRdata(in::A("192.168.3.2"));
 
-    rp = new RRset(wild, RRClass::IN(), RRType::RRSIG(), RRTTL(3600));
-    rrsig = RRsetPtr(rp);
+    rrsig = RRsetPtr(new RRset(wild, RRClass::IN(), RRType::RRSIG(),
+                               RRTTL(3600)));
     rrsig->addRdata(generic::RRSIG("A 5 3 3600 20100322084538 20100220084538 33495 example.com. FdO+UWONgtLKFxUzzygGunw67F9y8SzsP7yOLEYVJclRR8X3Ii62L0gtQHq2y0TcKsXttRsD6XY+tM5P/pgXlTNi7Bk4Fgb0PIDPjOsfT4DrS80kWn0YbinM/4/FA1j5ru5sTTboOY5UGhvDnoA9ogNuQQYb2/3wkoH0PrA2Q/0="));
     wild_a->addRRsig(rrsig);
 
     wild_nsec = RRsetPtr(new RRset(wild, RRClass::IN(),
                                    RRType::NSEC(), RRTTL(3600)));
     wild_nsec->addRdata(generic::NSEC("www.example.com. A RRSIG NSEC"));
-    rp = new RRset(wild, RRClass::IN(), RRType::RRSIG(), RRTTL(3600));
-    rrsig = RRsetPtr(rp);
+
+    rrsig = RRsetPtr(new RRset(wild, RRClass::IN(), RRType::RRSIG(),
+                               RRTTL(3600)));
 
     rrsig->addRdata(generic::RRSIG("NSEC 5 3 7200 20100322084538 20100220084538 33495 example.com. OoGYslRj4xjZnBuzgOqsrvkDAHWycmQzbUxCRmgWnCbXiobJK7/ynONH3jm8G3vGlU0lwpHkhNs6cUK+6Nu8W49X3MT0Xksl/brroLcXYLi3vfxnYUNMMpXdeFl6WNNfoJRo90F/f/TWXAClRrDS29qiG3G1PEJZikIxZsZ0tyM="));
     wild_nsec->addRRsig(rrsig);
@@ -294,17 +294,16 @@ TestDataSrc::TestDataSrc() {
                                            RRTTL(3600)));
     foo_cname->addRdata(generic::CNAME("cnametest.flame.org"));
 
-    rp = new RRset(foo, RRClass::IN(), RRType::RRSIG(), RRTTL(3600));
-    rrsig = RRsetPtr(rp);
+    rrsig = RRsetPtr(new RRset(foo, RRClass::IN(), RRType::RRSIG(),
+                               RRTTL(3600)));
     rrsig->addRdata(generic::RRSIG("CNAME 5 3 3600 20100322084538 20100220084538 33495 example.com. DSqkLnsh0gCeCPVW/Q8viy9GNP+KHmFGfWqyVG1S6koBtGN/VQQ16M4PHZ9Zssmf/JcDVJNIhAChHPE2WJiaPCNGTprsaUshf1Q2vMPVnkrJKgDY8SVRYMptmT8eaT0gGri4KhqRoFpMT5OYfesybwDgfhFSQQAh6ps3bIUsy4o="));
     foo_cname->addRRsig(rrsig);
 
     foo_nsec = RRsetPtr(new RRset(foo, RRClass::IN(),
                                   RRType::NSEC(), RRTTL(3600)));
     foo_nsec->addRdata(generic::NSEC("mail.example.com. CNAME RRSIG NSEC"));
-    rp = new RRset(foo, RRClass::IN(), RRType::RRSIG(), RRTTL(3600));
-    rrsig = RRsetPtr(rp);
-
+    rrsig = RRsetPtr(new RRset(foo, RRClass::IN(), RRType::RRSIG(),
+                               RRTTL(3600)));
     rrsig->addRdata(generic::RRSIG("NSEC 5 3 7200 20100322084538 20100220084538 33495 example.com. RTQwlSqui6StUYye1KCSOEr1d3irndWFqHBpwP7g7n+w8EDXJ8I7lYgwzHvlQt6BLAxe5fUDi7ct8M5hXvsm7FoWPZ5wXH+2/eJUCYxIw4vezKMkMwBP6M/YkJ2CMqY8DppYf60QaLDONQAr7AcK/naSyioeI5h6eaoVitUDMso="));
     foo_nsec->addRRsig(rrsig);
 
@@ -313,17 +312,16 @@ TestDataSrc::TestDataSrc() {
                                         RRType::CNAME(), RRTTL(3600)));
     cnameint_cname->addRdata(generic::CNAME("www.example.com"));
 
-    rp = new RRset(cnameint, RRClass::IN(), RRType::RRSIG(), RRTTL(3600));
-    rrsig = RRsetPtr(rp);
+    rrsig = RRsetPtr(new RRset(cnameint, RRClass::IN(), RRType::RRSIG(),
+                               RRTTL(3600)));
     rrsig->addRdata(generic::RRSIG("CNAME 5 3 3600 20100322084538 20100220084538 33495 example.com. U1wjt0XY9xjTwvUmWSUcfLGMhCjfX2ylWfHrycy50x2oxcK9z94E1ejen9wDTIEBSGYgi6wpZ8RK0+02N1DWTGpDqNXd7aFRfDrWQJ/q/XJHDx0vlcmhkWhrT82LBfKxkrptOzchuSo/c0mpK+mpiIMc1VOwY+yuQ2ALfcD6EHw="));
     cnameint_cname->addRRsig(rrsig);
 
     cnameint_nsec = RRsetPtr(new RRset(cnameint, RRClass::IN(),
                                       RRType::NSEC(), RRTTL(3600)));
     cnameint_nsec->addRdata(generic::NSEC("dname.example.com. CNAME RRSIG NSEC"));
-    rp = new RRset(cnameint, RRClass::IN(), RRType::RRSIG(), RRTTL(3600));
-    rrsig = RRsetPtr(rp);
-
+    rrsig = RRsetPtr(new RRset(cnameint, RRClass::IN(), RRType::RRSIG(),
+                               RRTTL(3600)));
     rrsig->addRdata(generic::RRSIG("NSEC 5 3 7200 20100322084538 20100220084538 33495 example.com. rbV+gaxfrsoha59NOLF4EFyWQ+GuFCVK/8D77x1atan3HNlXBlZ1smgudKTaJ3CtlobIDt0MEdPxY1yn2Tskw/5mlP1PWf8oaP3BwGSQdn4gLI8+sMpNOPFEdXpxqxngm2F6/7fqniL1QuSAQBEdO+5UiCAgnncPmAsSJg3u1zg="));
     cnameint_nsec->addRRsig(rrsig);
 
@@ -332,17 +330,16 @@ TestDataSrc::TestDataSrc() {
                                         RRType::CNAME(), RRTTL(3600)));
     cnameext_cname->addRdata(generic::CNAME("www.sql1.example.com"));
 
-    rp = new RRset(cnameext, RRClass::IN(), RRType::RRSIG(), RRTTL(3600));
-    rrsig = RRsetPtr(rp);
+    rrsig = RRsetPtr(new RRset(cnameext, RRClass::IN(), RRType::RRSIG(),
+                               RRTTL(3600)));
     rrsig->addRdata(generic::RRSIG("CNAME 5 3 3600 20100322084538 20100220084538 33495 example.com. bGPIuZilyygvTThK4BrdECuaBcnZUgW/0d09iN2CrNjckchQl3dtbnMNirFsVs9hShDSldRNlQpiAVMpnPgXHhReNum7jmX6yqIH6s8GKIo91zr3VL/ramlezie5w4MilDHrxXLK2pb8IHmP+ZHivQ2EtdYQZgETWBWxr5FDfwk="));
     cnameext_cname->addRRsig(rrsig);
 
     cnameext_nsec = RRsetPtr(new RRset(cnameext, RRClass::IN(),
                                       RRType::NSEC(), RRTTL(3600)));
     cnameext_nsec->addRdata(generic::NSEC("cname-int.example.com. CNAME RRSIG NSEC"));
-    rp = new RRset(cnameext, RRClass::IN(), RRType::RRSIG(), RRTTL(3600));
-    rrsig = RRsetPtr(rp);
-
+    rrsig = RRsetPtr(new RRset(cnameext, RRClass::IN(), RRType::RRSIG(),
+                               RRTTL(3600)));
     rrsig->addRdata(generic::RRSIG("NSEC 5 3 7200 20100322084538 20100220084538 33495 example.com. inWsFwSDWG7TakjwbUTzTRpXz0WifelA5Kn3ABk6BVirIPmd+yQoNj2QZBDFAQwhnLPlNws2Oo4vgMsBMyx1Fv5eHgMUuCN3DUDaLlzlPtUb42CjOUa+jZBeTV/Hd7WZrirluASE1QFDprLdSSqoPPfAKvN3pORtW7y580dMOIM="));
     cnameext_nsec->addRRsig(rrsig);
 
@@ -351,17 +348,16 @@ TestDataSrc::TestDataSrc() {
                                RRTTL(3600)));
     dname_dname->addRdata(generic::DNAME("sql1.example.com."));
 
-    rp = new RRset(dname, RRClass::IN(), RRType::RRSIG(), RRTTL(3600));
-    rrsig = RRsetPtr(rp);
+    rrsig = RRsetPtr(new RRset(dname, RRClass::IN(), RRType::RRSIG(),
+                               RRTTL(3600)));
     rrsig->addRdata(generic::RRSIG("DNAME 5 3 3600 20100322084538 20100220084538 33495 example.com. ae8U47oaiwWdurkSyzcsCAF6DxBqjukizwF7K7U6lQVMtfoUE14oiAqfj1fjH8YLDOO/Hd1twrd/u0vgjnI1Gg32YTi7cYOzwE912SV1u2B/y0awaQKWPBwOW0aI7vxelt1vMUF81xosiQD04gOIdDBTqbHKcDxum87iWbhk4Ug="));
     dname_dname->addRRsig(rrsig);
 
     dname_nsec = RRsetPtr(new RRset(dname, RRClass::IN(),
                                       RRType::NSEC(), RRTTL(3600)));
     dname_nsec->addRdata(generic::NSEC("dns01.example.com. DNAME RRSIG NSEC"));
-    rp = new RRset(dname, RRClass::IN(), RRType::RRSIG(), RRTTL(3600));
-    rrsig = RRsetPtr(rp);
-
+    rrsig = RRsetPtr(new RRset(dname, RRClass::IN(), RRType::RRSIG(),
+                               RRTTL(3600)));
     rrsig->addRdata(generic::RRSIG("NSEC 5 3 7200 20100322084538 20100220084538 33495 example.com. c21Fff2D8vBrLzohBnUeflkaRdUAnUxAFGp+UQ0miACDCMOFBlCS9v9g/2+orOnKfd3l4vyz55C310t8JXgXb119ofaZWj2zkdUe+X8Bax+sMS0Y5K/sUhSNvbJbozr9UYPdvjSVBiWgh3s9fsb+etKq9uFukAzGU/FuGYpO0r0="));
     dname_nsec->addRRsig(rrsig);
 
@@ -389,19 +385,24 @@ TestDataSrc::TestDataSrc() {
     subzone_ds->addRdata(generic::DS("33313 5 1 0FDD7A2C11AA7F55D50FBF9B7EDDA2322C541A8D"));
     subzone_ds->addRdata(generic::DS("33313 5 2 00B99B7006F496D135B01AB17EDB469B4BE9E1973884DEA757BC4E3015A8C3AB"));
 
-    rp = new RRset(subzone, RRClass::IN(), RRType::RRSIG(), RRTTL(3600));
-    rrsig = RRsetPtr(rp);
+    rrsig = RRsetPtr(new RRset(subzone, RRClass::IN(), RRType::RRSIG(),
+                               RRTTL(3600)));
     rrsig->addRdata(generic::RRSIG("DS 5 3 3600 20100322084538 20100220084538 33495 example.com. dIqZKvpkJN1l92SOiWgJh3KbjErIN+EfojMsm4pEdV5xQdZwj6DNNEu6Kw4rRwdvrZIu0TyqPr3jSJb7o6R7vZgZzmLfVV/ojQah7rwuYHCFcfyZ4JyK2311fMhRR1QAvMsdcjdyA1XC140Cm6AnL3cH5rh/KUks/0ec3Ca7GNQ="));
     subzone_ds->addRRsig(rrsig);
 
     subzone_nsec = RRsetPtr(new RRset(subzone, RRClass::IN(),
                                       RRType::NSEC(), RRTTL(3600)));
     subzone_nsec->addRdata(generic::NSEC("*.wild.example.com. NS DS RRSIG NSEC"));
-    rp = new RRset(subzone, RRClass::IN(), RRType::RRSIG(), RRTTL(3600));
-    rrsig = RRsetPtr(rp);
-
+    rrsig = RRsetPtr(new RRset(subzone, RRClass::IN(), RRType::RRSIG(), RRTTL(3600)));
     rrsig->addRdata(generic::RRSIG("NSEC 5 3 7200 20100322084538 20100220084538 33495 example.com. Oe2kgIhsLtPJ4+lDZDxznV8/vEVoXKOBFN9lwWyebaKa19BaSXlQ+YVejmulmKDDjEucMvEfuItfn6w7bnU+DzOLk5D1lJCjwDlKz8u3xOAx16TiuQn4bgQAOiFtBQygmGGqO3BVpX+jxsmw7eH3emofy8uUqr/C4aopnwuf28g="));
     subzone_nsec->addRRsig(rrsig);
+
+    loop1_cname = RRsetPtr(new RRset(loop1, RRClass::IN(), RRType::CNAME(),
+                                     RRTTL(3600)));
+    loop1_cname->addRdata(generic::CNAME(loop2));
+    loop2_cname = RRsetPtr(new RRset(loop2, RRClass::IN(), RRType::CNAME(),
+                                     RRTTL(3600)));
+    loop2_cname->addRdata(generic::CNAME(loop1));
 }
 
 void
@@ -644,6 +645,16 @@ TestDataSrc::findRecords(const Name& name, const RRType& rdtype,
             target.addRRset(subzone_glue1);
         } else if (name == Name("ns2.subzone.example.com") && mode == ADDRESS) {
             target.addRRset(subzone_glue2);
+        } else if (name == loop1) {
+            target.addRRset(loop1_cname);
+            if (rdtype != RRType::CNAME()) {
+                flags |= CNAME_FOUND;
+            }
+        } else if (name == loop2) {
+            target.addRRset(loop1_cname);
+            if (rdtype != RRType::CNAME()) {
+                flags |= CNAME_FOUND;
+            }
         } else {
             flags |= NAME_NOT_FOUND;
         }
