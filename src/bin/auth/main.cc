@@ -18,6 +18,7 @@
 #include <sys/socket.h>
 #include <sys/select.h>
 #include <netdb.h>
+#include <netinet/in.h>  // IPPROTO_UDP
 #include <stdlib.h>
 
 #include <set>
