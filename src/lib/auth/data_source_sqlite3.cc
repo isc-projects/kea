@@ -157,13 +157,15 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
 
         RRType rt(sigtype ? sigtype : type);
 
-        // looking for something else but found NS; we need to inform
-        // the caller that this is a referral, but we do not return the
-        // NS RRset to the caller.
-        if (rdtype != RRType::NS() && !any && rt == RRType::NS()) {
+        // found an NS; we need to inform the caller that this might be a
+        // referral, but we do not return the NS RRset to the caller
+        // unless asked for it.
+        if (rt == RRType::NS() && !any) {
             flags |= REFERRAL;
-            rc = sqlite3_step(query);
-            continue;
+            if (rdtype != RRType::NS()) {
+                rc = sqlite3_step(query);
+                continue;
+            }
         }
 
         ++rows;

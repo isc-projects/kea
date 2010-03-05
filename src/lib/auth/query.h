@@ -44,7 +44,7 @@ public:
 
     // The standard query tuple: qname/qclass/qtype.
     // Note that qtype is ignored in the GLUE_QUERY/NOGLUE_QUERY case.
-    const isc::dns::Name& qname;
+    const isc::dns::Name qname;
     const isc::dns::RRClass& qclass;
     const isc::dns::RRType& qtype;
 

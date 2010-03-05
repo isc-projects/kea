@@ -163,6 +163,9 @@ copyAuth(Query& q, RRsetList& auth)
         if (rrset->getType() == RRType::DNAME()) {
             continue;
         }
+        if (rrset->getType() == RRType::DS() && !q.wantDnssec()) {
+            continue;
+        }
         q.message().addRRset(Section::AUTHORITY(), rrset, q.wantDnssec());
         getAdditional(q, rrset);
     }
@@ -351,9 +354,10 @@ DataSrc::doQuery(Query& q)
         // Find the closest enclosing zone for which we are authoritative,
         // and the concrete data source which is authoritative for it.
         // (Note that RRtype DS queries need to go to the parent.)
-        NameMatch match(task->qtype == RRType::DS() ?
-                        task->qname.split(1, task->qname.getLabelCount() - 1) :
-                        task->qname);
+        Name matchname(task->qtype == RRType::DS() ?
+                       task->qname.split(1, task->qname.getLabelCount() - 1) :
+                       task->qname);
+        NameMatch match(matchname);
         findClosestEnclosure(match);
         const DataSrc* datasource = match.bestDataSrc();
         const Name* zonename = match.closestName();
@@ -382,10 +386,9 @@ DataSrc::doQuery(Query& q)
 
             // Query found a referral; let's find out if that was expected--
             // i.e., if an NS was at the zone apex, or if we were querying
-            // specifically for the NS, DS or DNAME record.
+            // specifically for the DS or DNAME record.
             if ((task->flags & REFERRAL) != 0 &&
                 (zonename->getLabelCount() == task->qname.getLabelCount() ||
-                 task->qtype == RRType::NS() ||
                  task->qtype == RRType::DS() ||
                  task->qtype == RRType::DNAME())) {
                 task->flags &= ~REFERRAL;
@@ -473,14 +476,11 @@ DataSrc::doQuery(Query& q)
                     return;
                 }
                 BOOST_FOREACH (RRsetPtr rrset, auth) {
-                    if (rrset->getType() == RRType::DNAME()) {
-                        continue;
-                    }
-                    if (rrset->getType() == RRType::DS() &&
-                        task->qtype == RRType::DS()) {
+                    if (rrset->getType() == task->qtype) {
                         m.addRRset(Section::ANSWER(), rrset, q.wantDnssec());
-                    } else {
-                        m.addRRset(Section::AUTHORITY(), rrset, q.wantDnssec());
+                    } else if (rrset->getType() == RRType::DS() &&
+                               q.wantDnssec()) {
+                        m.addRRset(Section::AUTHORITY(), rrset, true);
                     }
                     getAdditional(q, rrset);
                 }
