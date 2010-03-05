@@ -41,46 +41,54 @@ using namespace isc::dns;
 using namespace isc::auth;
 
 namespace {
+TestDataSrc ds;
+
 class DataSrcTest : public ::testing::Test {
 protected:
     DataSrcTest() : obuffer(0), renderer(obuffer), msg(Message::PARSE)
     {}
-    TestDataSrc ds;
     OutputBuffer obuffer;
     MessageRenderer renderer;
     Message msg;
-    static void msgFromFile(Message& message, const char* datafile);
 };
 
 void
-DataSrcTest::msgFromFile(Message& message, const char* datafile)
-{
+readAndProcessQuery(Message& message, const char* datafile) {
     std::vector<unsigned char> data;
     UnitTestUtil::readWireData(datafile, data);
 
     InputBuffer buffer(&data[0], data.size());
     message.fromWire(buffer);
+
+    message.makeResponse();
+    message.setHeaderFlag(MessageFlag::AA());
+    message.setRcode(Rcode::NOERROR());
+    Query q(message, true);
+    ds.doQuery(q);
+}
+
+void
+headerCheck(const Message& message, const Rcode& rcode, const bool qrflag,
+            const bool aaflag, const bool rdflag, const unsigned int ancount,
+            const unsigned int nscount, const unsigned int arcount)
+{
+    EXPECT_EQ(rcode, message.getRcode());
+    EXPECT_EQ(qrflag, message.getHeaderFlag(MessageFlag::QR()));
+    EXPECT_EQ(aaflag, message.getHeaderFlag(MessageFlag::AA()));
+    EXPECT_EQ(rdflag, message.getHeaderFlag(MessageFlag::RD()));
+
+    EXPECT_EQ(ancount, message.getRRCount(Section::ANSWER()));
+    EXPECT_EQ(nscount, message.getRRCount(Section::AUTHORITY()));
+    EXPECT_EQ(arcount, message.getRRCount(Section::ADDITIONAL()));
+    
 }
 
 TEST_F(DataSrcTest, Query) {
-    msgFromFile(msg, "testdata/q_www");
-    msg.makeResponse();
-    msg.setHeaderFlag(MessageFlag::AA());
-    msg.setRcode(Rcode::NOERROR());
-    Query q(msg, true);
-    ds.doQuery(q);
-    Message* m = &(q.message());
+    readAndProcessQuery(msg, "testdata/q_www");
 
-    EXPECT_EQ(Rcode::NOERROR(), m->getRcode());
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::QR()));
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::AA()));
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::RD()));
+    headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 4, 6);
 
-    EXPECT_EQ(2, m->getRRCount(Section::ANSWER()));
-    EXPECT_EQ(4, m->getRRCount(Section::AUTHORITY()));
-    EXPECT_EQ(6, m->getRRCount(Section::ADDITIONAL()));
-
-    RRsetIterator rit = m->beginSection(Section::ANSWER());
+    RRsetIterator rit = msg.beginSection(Section::ANSWER());
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("www.example.com"), rrset->getName());
     EXPECT_EQ(RRType::A(), rrset->getType());
@@ -94,7 +102,7 @@ TEST_F(DataSrcTest, Query) {
 
     // XXX: also check ANSWER RRSIG
 
-    rit = m->beginSection(Section::AUTHORITY());
+    rit = msg.beginSection(Section::AUTHORITY());
     rrset = *rit;
     EXPECT_EQ(Name("example.com"), rrset->getName());
     EXPECT_EQ(RRType::NS(), rrset->getType());
@@ -110,7 +118,7 @@ TEST_F(DataSrcTest, Query) {
     it->next();
     EXPECT_TRUE(it->isLast());
 
-    rit = m->beginSection(Section::ADDITIONAL());
+    rit = msg.beginSection(Section::ADDITIONAL());
     rrset = *rit;
     EXPECT_EQ(Name("dns01.example.com"), rrset->getName());
     EXPECT_EQ(RRType::A(), rrset->getType());
@@ -124,24 +132,11 @@ TEST_F(DataSrcTest, Query) {
 }
 
 TEST_F(DataSrcTest, NSQuery) {
-    msgFromFile(msg, "testdata/q_example_ns");
-    msg.makeResponse();
-    msg.setHeaderFlag(MessageFlag::AA());
-    msg.setRcode(Rcode::NOERROR());
-    Query q(msg, true);
-    ds.doQuery(q);
-    Message* m = &(q.message());
+    readAndProcessQuery(msg, "testdata/q_example_ns");
 
-    EXPECT_EQ(Rcode::NOERROR(), m->getRcode());
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::QR()));
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::AA()));
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::RD()));
+    headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 0, 6);
 
-    EXPECT_EQ(4, m->getRRCount(Section::ANSWER()));
-    EXPECT_EQ(0, m->getRRCount(Section::AUTHORITY()));
-    EXPECT_EQ(6, m->getRRCount(Section::ADDITIONAL()));
-
-    RRsetIterator rit = m->beginSection(Section::ANSWER());
+    RRsetIterator rit = msg.beginSection(Section::ANSWER());
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("example.com"), rrset->getName());
     EXPECT_EQ(RRType::NS(), rrset->getType());
@@ -159,48 +154,22 @@ TEST_F(DataSrcTest, NSQuery) {
 }
 
 TEST_F(DataSrcTest, NxRRset) {
-    msgFromFile(msg, "testdata/q_example_ptr");
-    msg.makeResponse();
-    msg.setHeaderFlag(MessageFlag::AA());
-    msg.setRcode(Rcode::NOERROR());
-    Query q(msg, true);
-    ds.doQuery(q);
-    Message* m = &(q.message());
+    readAndProcessQuery(msg, "testdata/q_example_ptr");
 
-    EXPECT_EQ(Rcode::NOERROR(), m->getRcode());
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::QR()));
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::AA()));
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::RD()));
+    headerCheck(msg, Rcode::NOERROR(), true, true, true, 0, 4, 0);
 
-    EXPECT_EQ(0, m->getRRCount(Section::ANSWER()));
-    EXPECT_EQ(4, m->getRRCount(Section::AUTHORITY()));
-    EXPECT_EQ(0, m->getRRCount(Section::ADDITIONAL()));
-
-    RRsetIterator rit = m->beginSection(Section::AUTHORITY());
+    RRsetIterator rit = msg.beginSection(Section::AUTHORITY());
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("example.com"), rrset->getName());
     EXPECT_EQ(RRType::SOA(), rrset->getType());
 }
 
 TEST_F(DataSrcTest, Nxdomain) {
-    msgFromFile(msg, "testdata/q_glork");
-    msg.makeResponse();
-    msg.setHeaderFlag(MessageFlag::AA());
-    msg.setRcode(Rcode::NOERROR());
-    Query q(msg, true);
-    ds.doQuery(q);
-    Message* m = &(q.message());
+    readAndProcessQuery(msg, "testdata/q_glork");
 
-    EXPECT_EQ(Rcode::NXDOMAIN(), m->getRcode());
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::QR()));
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::AA()));
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::RD()));
+    headerCheck(msg, Rcode::NXDOMAIN(), true, true, true, 0, 6, 0);
 
-    EXPECT_EQ(0, m->getRRCount(Section::ANSWER()));
-    EXPECT_EQ(6, m->getRRCount(Section::AUTHORITY()));
-    EXPECT_EQ(0, m->getRRCount(Section::ADDITIONAL()));
-
-    RRsetIterator rit = m->beginSection(Section::AUTHORITY());
+    RRsetIterator rit = msg.beginSection(Section::AUTHORITY());
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("example.com"), rrset->getName());
     EXPECT_EQ(RRType::NSEC(), rrset->getType());
@@ -209,40 +178,23 @@ TEST_F(DataSrcTest, Nxdomain) {
 }
 
 TEST_F(DataSrcTest, NxZone) {
-    msgFromFile(msg, "testdata/q_spork");
-    msg.makeResponse();
-    msg.setHeaderFlag(MessageFlag::AA());
-    msg.setRcode(Rcode::NOERROR());
-    Query q(msg, true);
-    ds.doQuery(q);
-    Message* m = &(q.message());
+    readAndProcessQuery(msg, "testdata/q_spork");
 
-    EXPECT_EQ(Rcode::REFUSED(), m->getRcode());
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::QR()));
-    EXPECT_FALSE(m->getHeaderFlag(MessageFlag::AA()));
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::RD()));
+    headerCheck(msg, Rcode::REFUSED(), true, false, true, 0, 0, 0);
+
+    EXPECT_EQ(Rcode::REFUSED(), msg.getRcode());
+    EXPECT_TRUE(msg.getHeaderFlag(MessageFlag::QR()));
+    EXPECT_FALSE(msg.getHeaderFlag(MessageFlag::AA()));
+    EXPECT_TRUE(msg.getHeaderFlag(MessageFlag::RD()));
 
 }
 
 TEST_F(DataSrcTest, Wildcard) {
-    msgFromFile(msg, "testdata/q_wild");
-    msg.makeResponse();
-    msg.setHeaderFlag(MessageFlag::AA());
-    msg.setRcode(Rcode::NOERROR());
-    Query q(msg, true);
-    ds.doQuery(q);
-    Message* m = &(q.message());
+    readAndProcessQuery(msg, "testdata/q_wild");
 
-    EXPECT_EQ(Rcode::NOERROR(), m->getRcode());
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::QR()));
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::AA()));
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::RD()));
+    headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 4, 6);
 
-    EXPECT_EQ(2, m->getRRCount(Section::ANSWER()));
-    EXPECT_EQ(4, m->getRRCount(Section::AUTHORITY()));
-    EXPECT_EQ(6, m->getRRCount(Section::ADDITIONAL()));
-
-    RRsetIterator rit = m->beginSection(Section::ANSWER());
+    RRsetIterator rit = msg.beginSection(Section::ANSWER());
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("www.wild.example.com"), rrset->getName());
     EXPECT_EQ(RRType::A(), rrset->getType());
@@ -254,7 +206,7 @@ TEST_F(DataSrcTest, Wildcard) {
     it->next();
     EXPECT_TRUE(it->isLast());
 
-    rit = m->beginSection(Section::AUTHORITY());
+    rit = msg.beginSection(Section::AUTHORITY());
     rrset = *rit;
     EXPECT_EQ(Name("example.com"), rrset->getName());
     EXPECT_EQ(RRType::NS(), rrset->getType());
@@ -270,7 +222,7 @@ TEST_F(DataSrcTest, Wildcard) {
     it->next();
     EXPECT_TRUE(it->isLast());
 
-    rit = m->beginSection(Section::ADDITIONAL());
+    rit = msg.beginSection(Section::ADDITIONAL());
     rrset = *rit;
     EXPECT_EQ(Name("dns01.example.com"), rrset->getName());
     EXPECT_EQ(RRType::A(), rrset->getType());
@@ -284,24 +236,11 @@ TEST_F(DataSrcTest, Wildcard) {
 }
 
 TEST_F(DataSrcTest, AuthDelegation) {
-    msgFromFile(msg, "testdata/q_sql1");
-    msg.makeResponse();
-    msg.setHeaderFlag(MessageFlag::AA());
-    msg.setRcode(Rcode::NOERROR());
-    Query q(msg, true);
-    ds.doQuery(q);
-    Message* m = &(q.message());
+    readAndProcessQuery(msg, "testdata/q_sql1");
 
-    EXPECT_EQ(Rcode::NOERROR(), m->getRcode());
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::QR()));
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::AA()));
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::RD()));
+    headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 4, 6);
 
-    EXPECT_EQ(2, m->getRRCount(Section::ANSWER()));
-    EXPECT_EQ(4, m->getRRCount(Section::AUTHORITY()));
-    EXPECT_EQ(6, m->getRRCount(Section::ADDITIONAL()));
-
-    RRsetIterator rit = m->beginSection(Section::ANSWER());
+    RRsetIterator rit = msg.beginSection(Section::ANSWER());
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("www.sql1.example.com"), rrset->getName());
     EXPECT_EQ(RRType::A(), rrset->getType());
@@ -313,7 +252,7 @@ TEST_F(DataSrcTest, AuthDelegation) {
     it->next();
     EXPECT_TRUE(it->isLast());
 
-    rit = m->beginSection(Section::AUTHORITY());
+    rit = msg.beginSection(Section::AUTHORITY());
     rrset = *rit;
     EXPECT_EQ(Name("sql1.example.com"), rrset->getName());
     EXPECT_EQ(RRType::NS(), rrset->getType());
@@ -329,7 +268,7 @@ TEST_F(DataSrcTest, AuthDelegation) {
     it->next();
     EXPECT_TRUE(it->isLast());
 
-    rit = m->beginSection(Section::ADDITIONAL());
+    rit = msg.beginSection(Section::ADDITIONAL());
     rrset = *rit;
     EXPECT_EQ(Name("dns01.example.com"), rrset->getName());
     EXPECT_EQ(RRType::A(), rrset->getType());
@@ -343,24 +282,11 @@ TEST_F(DataSrcTest, AuthDelegation) {
 }
 
 TEST_F(DataSrcTest, Dname) {
-    msgFromFile(msg, "testdata/q_dname");
-    msg.makeResponse();
-    msg.setHeaderFlag(MessageFlag::AA());
-    msg.setRcode(Rcode::NOERROR());
-    Query q(msg, true);
-    ds.doQuery(q);
-    Message* m = &(q.message());
+    readAndProcessQuery(msg, "testdata/q_dname");
 
-    EXPECT_EQ(Rcode::NOERROR(), m->getRcode());
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::QR()));
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::AA()));
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::RD()));
+    headerCheck(msg, Rcode::NOERROR(), true, true, true, 5, 4, 6);
 
-    EXPECT_EQ(5, m->getRRCount(Section::ANSWER()));
-    EXPECT_EQ(4, m->getRRCount(Section::AUTHORITY()));
-    EXPECT_EQ(6, m->getRRCount(Section::ADDITIONAL()));
-
-    RRsetIterator rit = m->beginSection(Section::ANSWER());
+    RRsetIterator rit = msg.beginSection(Section::ANSWER());
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("dname.example.com"), rrset->getName());
     EXPECT_EQ(RRType::DNAME(), rrset->getType());
@@ -374,7 +300,7 @@ TEST_F(DataSrcTest, Dname) {
 
     // XXX: check CNAME and A record too
 
-    rit = m->beginSection(Section::AUTHORITY());
+    rit = msg.beginSection(Section::AUTHORITY());
     rrset = *rit;
     EXPECT_EQ(Name("sql1.example.com"), rrset->getName());
     EXPECT_EQ(RRType::NS(), rrset->getType());
@@ -390,7 +316,7 @@ TEST_F(DataSrcTest, Dname) {
     it->next();
     EXPECT_TRUE(it->isLast());
 
-    rit = m->beginSection(Section::ADDITIONAL());
+    rit = msg.beginSection(Section::ADDITIONAL());
     rrset = *rit;
     EXPECT_EQ(Name("dns01.example.com"), rrset->getName());
     EXPECT_EQ(RRType::A(), rrset->getType());
@@ -404,24 +330,11 @@ TEST_F(DataSrcTest, Dname) {
 }
 
 TEST_F(DataSrcTest, Cname) {
-    msgFromFile(msg, "testdata/q_cname");
-    msg.makeResponse();
-    msg.setHeaderFlag(MessageFlag::AA());
-    msg.setRcode(Rcode::NOERROR());
-    Query q(msg, true);
-    ds.doQuery(q);
-    Message* m = &(q.message());
+    readAndProcessQuery(msg, "testdata/q_cname");
 
-    EXPECT_EQ(Rcode::NOERROR(), m->getRcode());
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::QR()));
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::AA()));
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::RD()));
+    headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 0, 0);
 
-    EXPECT_EQ(2, m->getRRCount(Section::ANSWER()));
-    EXPECT_EQ(0, m->getRRCount(Section::AUTHORITY()));
-    EXPECT_EQ(0, m->getRRCount(Section::ADDITIONAL()));
-
-    RRsetIterator rit = m->beginSection(Section::ANSWER());
+    RRsetIterator rit = msg.beginSection(Section::ANSWER());
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("foo.example.com"), rrset->getName());
     EXPECT_EQ(RRType::CNAME(), rrset->getType());
@@ -435,24 +348,11 @@ TEST_F(DataSrcTest, Cname) {
 }
 
 TEST_F(DataSrcTest, CnameInt) {
-    msgFromFile(msg, "testdata/q_cname_int");
-    msg.makeResponse();
-    msg.setHeaderFlag(MessageFlag::AA());
-    msg.setRcode(Rcode::NOERROR());
-    Query q(msg, true);
-    ds.doQuery(q);
-    Message* m = &(q.message());
+    readAndProcessQuery(msg, "testdata/q_cname_int");
 
-    EXPECT_EQ(Rcode::NOERROR(), m->getRcode());
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::QR()));
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::AA()));
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::RD()));
+    headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 4, 6);
 
-    EXPECT_EQ(4, m->getRRCount(Section::ANSWER()));
-    EXPECT_EQ(4, m->getRRCount(Section::AUTHORITY()));
-    EXPECT_EQ(6, m->getRRCount(Section::ADDITIONAL()));
-
-    RRsetIterator rit = m->beginSection(Section::ANSWER());
+    RRsetIterator rit = msg.beginSection(Section::ANSWER());
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("cname-int.example.com"), rrset->getName());
     EXPECT_EQ(RRType::CNAME(), rrset->getType());
@@ -466,7 +366,7 @@ TEST_F(DataSrcTest, CnameInt) {
 
     // XXX: check a record as well
 
-    rit = m->beginSection(Section::AUTHORITY());
+    rit = msg.beginSection(Section::AUTHORITY());
     rrset = *rit;
     EXPECT_EQ(Name("example.com"), rrset->getName());
     EXPECT_EQ(RRType::NS(), rrset->getType());
@@ -474,24 +374,11 @@ TEST_F(DataSrcTest, CnameInt) {
 }
 
 TEST_F(DataSrcTest, CnameExt) {
-    msgFromFile(msg, "testdata/q_cname_ext");
-    msg.makeResponse();
-    msg.setHeaderFlag(MessageFlag::AA());
-    msg.setRcode(Rcode::NOERROR());
-    Query q(msg, true);
-    ds.doQuery(q);
-    Message* m = &(q.message());
+    readAndProcessQuery(msg, "testdata/q_cname_ext");
 
-    EXPECT_EQ(Rcode::NOERROR(), m->getRcode());
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::QR()));
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::AA()));
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::RD()));
+    headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 4, 6);
 
-    EXPECT_EQ(4, m->getRRCount(Section::ANSWER()));
-    EXPECT_EQ(4, m->getRRCount(Section::AUTHORITY()));
-    EXPECT_EQ(6, m->getRRCount(Section::ADDITIONAL()));
-
-    RRsetIterator rit = m->beginSection(Section::ANSWER());
+    RRsetIterator rit = msg.beginSection(Section::ANSWER());
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("cname-ext.example.com"), rrset->getName());
     EXPECT_EQ(RRType::CNAME(), rrset->getType());
@@ -503,7 +390,7 @@ TEST_F(DataSrcTest, CnameExt) {
     it->next();
     EXPECT_TRUE(it->isLast());
 
-    rit = m->beginSection(Section::AUTHORITY());
+    rit = msg.beginSection(Section::AUTHORITY());
     rrset = *rit;
     EXPECT_EQ(Name("sql1.example.com"), rrset->getName());
     EXPECT_EQ(RRType::NS(), rrset->getType());
@@ -511,24 +398,11 @@ TEST_F(DataSrcTest, CnameExt) {
 }
 
 TEST_F(DataSrcTest, Delegation) {
-    msgFromFile(msg, "testdata/q_subzone");
-    msg.makeResponse();
-    msg.setHeaderFlag(MessageFlag::AA());
-    msg.setRcode(Rcode::NOERROR());
-    Query q(msg, true);
-    ds.doQuery(q);
-    Message* m = &(q.message());
+    readAndProcessQuery(msg, "testdata/q_subzone");
 
-    EXPECT_EQ(Rcode::NOERROR(), m->getRcode());
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::QR()));
-    EXPECT_FALSE(m->getHeaderFlag(MessageFlag::AA()));
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::RD()));
+    headerCheck(msg, Rcode::NOERROR(), true, false, true, 0, 5, 2);
 
-    EXPECT_EQ(0, m->getRRCount(Section::ANSWER()));
-    EXPECT_EQ(5, m->getRRCount(Section::AUTHORITY()));
-    EXPECT_EQ(2, m->getRRCount(Section::ADDITIONAL()));
-
-    RRsetIterator rit = m->beginSection(Section::AUTHORITY());
+    RRsetIterator rit = msg.beginSection(Section::AUTHORITY());
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("subzone.example.com."), rrset->getName());
     EXPECT_EQ(RRType::NS(), rrset->getType());
@@ -540,7 +414,7 @@ TEST_F(DataSrcTest, Delegation) {
     it->next();
     EXPECT_FALSE(it->isLast());
 
-    rit = m->beginSection(Section::ADDITIONAL());
+    rit = msg.beginSection(Section::ADDITIONAL());
     rrset = *rit;
     EXPECT_EQ(Name("ns1.subzone.example.com"), rrset->getName());
     EXPECT_EQ(RRType::A(), rrset->getType());
@@ -554,30 +428,17 @@ TEST_F(DataSrcTest, Delegation) {
 }
 
 TEST_F(DataSrcTest, DS) {
-    msgFromFile(msg, "testdata/q_subzone_ds");
-    msg.makeResponse();
-    msg.setHeaderFlag(MessageFlag::AA());
-    msg.setRcode(Rcode::NOERROR());
-    Query q(msg, true);
-    ds.doQuery(q);
-    Message* m = &(q.message());
+    readAndProcessQuery(msg, "testdata/q_subzone_ds");
 
-    EXPECT_EQ(Rcode::NOERROR(), m->getRcode());
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::QR()));
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::AA()));
-    EXPECT_TRUE(m->getHeaderFlag(MessageFlag::RD()));
+    headerCheck(msg, Rcode::NOERROR(), true, true, true, 3, 4, 6);
 
-    EXPECT_EQ(3, m->getRRCount(Section::ANSWER()));
-    EXPECT_EQ(4, m->getRRCount(Section::AUTHORITY()));
-    EXPECT_EQ(6, m->getRRCount(Section::ADDITIONAL()));
-
-    RRsetIterator rit = m->beginSection(Section::ANSWER());
+    RRsetIterator rit = msg.beginSection(Section::ANSWER());
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("subzone.example.com."), rrset->getName());
     EXPECT_EQ(RRType::DS(), rrset->getType());
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
-    rit = m->beginSection(Section::AUTHORITY());
+    rit = msg.beginSection(Section::AUTHORITY());
     rrset = *rit;
     EXPECT_EQ(Name("example.com"), rrset->getName());
     EXPECT_EQ(RRType::NS(), rrset->getType());

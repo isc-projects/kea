@@ -393,7 +393,7 @@ TestDataSrc::findRecords(const Name& name, const RRType& rdtype,
                          RRsetList& target, const Name* zonename, const Mode mode,
                          uint32_t& flags) const
 {
-    bool any = (rdtype == RRType::ANY());
+    const bool any = (rdtype == RRType::ANY());
     flags = 0;
 
     assert(zonename != NULL);
