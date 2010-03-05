@@ -475,7 +475,9 @@ DataSrc::doQuery(Query& q)
                     return;
                 }
                 BOOST_FOREACH (RRsetPtr rrset, auth) {
-                    if (rrset->getType() == task->qtype) {
+                    if (rrset->getType() == RRType::NS()) {
+                        m.addRRset(Section::AUTHORITY(), rrset, q.wantDnssec());
+                    } else if (rrset->getType() == task->qtype) {
                         m.addRRset(Section::ANSWER(), rrset, q.wantDnssec());
                     } else if (rrset->getType() == RRType::DS() &&
                                q.wantDnssec()) {
