@@ -66,6 +66,8 @@ protected:
                              const Name& name_expected);
 };
 
+const Name downcased_global("\\255.EXAMPLE.COM", true);
+
 Name
 NameTest::nameFactoryFromWire(const char* datafile, size_t position,
                               bool downcase)
@@ -118,6 +120,15 @@ NameTest::compareInWireFormat(const Name& name_actual,
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         buffer_actual.getData(), buffer_actual.getLength(),
                         buffer_expected.getData(), buffer_expected.getLength());
+}
+
+TEST_F(NameTest, nonlocalObject)
+{
+    // A previous version of code relied on a non local static object for
+    // name construction, so a non local static Name object defined outside
+    // the name module might not be initialized correctly.  This test detects
+    // that kind of bug.
+    EXPECT_EQ("\\255.example.com.", downcased_global.toText());
 }
 
 TEST_F(NameTest, fromText)
