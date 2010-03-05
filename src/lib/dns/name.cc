@@ -40,13 +40,15 @@ namespace {
 /// digitvalue converts a digit character to the corresponding integer.
 /// maptolower convert uppercase alphabets to their lowercase counterparts.
 /// We once used a helper non-local static object to avoid hardcoding the
-/// array members, but we realized it didn't always work for a non-local static
-/// Name object defined in another translation unit than this file.
+/// array members, but we then realized it's susceptible to static
+/// initialization order fiasco: Since these constants are used in a Name
+/// constructor, a non-local static Name object defined in another translation
+/// unit than this file may not be initialized correctly.
 /// There are several ways to address this issue, but in this specific case
 /// we chose the naive but simple hardcoding approach.
 /// These definitions are derived from BIND 9's libdns module.
 ///
-static char digitvalue[256] = {
+static const char digitvalue[256] = {
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /*16*/
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /*32*/
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /*48*/
@@ -65,7 +67,7 @@ static char digitvalue[256] = {
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, /*256*/
 };
 
-static unsigned char maptolower[] = {
+static const unsigned char maptolower[] = {
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
     0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
     0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
