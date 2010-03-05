@@ -765,5 +765,15 @@ TestDataSrc::findPreviousName(const Query& q,
     return (SUCCESS);
 }
 
+DataSrc::Result
+TestDataSrc::findCoveringNSEC3(const Query& q,
+                               const Nsec3Param& param,
+                               const Name& qname,
+                               const Name& zonename,
+                               RRsetList& target) const
+{
+    return (NOT_IMPLEMENTED);
+}
+
 }
 }

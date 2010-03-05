@@ -37,6 +37,7 @@ namespace auth {
 
 class NameMatch;
 class Query;
+class Nsec3Param;
 
 class DataSrc;
 typedef boost::shared_ptr<DataSrc> DataSrcPtr;
@@ -141,6 +142,13 @@ public:
                                     isc::dns::Name& target,
                                     const isc::dns::Name* zonename) const = 0;
 
+   // This MUST be implemented by concrete data sources which support
+   // NSEC3, but is optional for others
+   virtual Result findCoveringNSEC3(const Query& q,
+                                    const Nsec3Param& param,
+                                    const isc::dns::Name& qname,
+                                    const isc::dns::Name& zonename,
+                                    isc::dns::RRsetList& target) const = 0;
 };
 
 // Base class for a DNS Data Source
@@ -205,6 +213,13 @@ public:
                                     const isc::dns::Name& qname,
                                     isc::dns::Name& target,
                                     const isc::dns::Name* zonename) const = 0;
+
+   virtual Result findCoveringNSEC3(const Query& q,
+                                    const Nsec3Param& param,
+                                    const isc::dns::Name& qname,
+                                    const isc::dns::Name& zonename,
+                                    isc::dns::RRsetList& target) const = 0;
+
 private:
     isc::dns::RRClass rrclass;
 };
@@ -278,6 +293,15 @@ public:
         return (NOT_IMPLEMENTED);
     }
 
+   virtual Result findCoveringNSEC3(const Query& q,
+                                    const Nsec3Param& param,
+                                    const isc::dns::Name& qname,
+                                    const isc::dns::Name& zonename,
+                                    isc::dns::RRsetList& target) const
+   {
+       return (NOT_IMPLEMENTED);
+   }
+
 private:
     std::vector<ConstDataSrcPtr> data_sources;
 };
@@ -298,6 +322,18 @@ private:
     const isc::dns::Name* closest_name_;
     const DataSrc* best_source_;
     const isc::dns::Name qname_;
+};
+
+class Nsec3Param {
+public:
+    Nsec3Param(uint8_t a, uint8_t f, uint16_t i, std::vector<uint8_t>& s);
+
+    const uint8_t algorithm;
+    const uint8_t flags;
+    const uint16_t iterations;
+    const std::vector<uint8_t>& salt;
+
+    std::string getHash(const isc::dns::Name& name) const;
 };
 
 }

@@ -15,6 +15,7 @@
 // $Id$
 
 #include "data_source_sqlite3.h"
+
 #include <dns/rrttl.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
@@ -123,21 +124,21 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
 
     rc = sqlite3_bind_int(query, 1, zone_id);
     if (rc != SQLITE_OK) {
-        throw("Could not bind 1 (record)");
+        throw("Could not bind 1 (query)");
     }
     rc = sqlite3_bind_text(query, 2, c_name, -1, SQLITE_STATIC);
     if (rc != SQLITE_OK) {
-        throw("Could not bind 2 (record)");
+        throw("Could not bind 2 (query)");
     }
 
     if (query == q_record) {
         rc = sqlite3_bind_text(query, 3, rdtype.toText().c_str(), -1,
                                SQLITE_STATIC);
         if (rc != SQLITE_OK) {
-            throw("Could not bind 3 (record)");
+            throw("Could not bind 3 (query)");
         }
     }
-
+  
     // loop
     int target_ttl = -1;
     int sig_ttl = -1;
@@ -365,6 +366,26 @@ Sqlite3DataSrc::setupPreparedStatements(void) {
         throw(e);
     }
 
+    const char* q_nsec3_str = "SELECT rdtype, ttl, rdata FROM nsec3 "
+                              "WHERE zone_id=?1 AND hash == $2";
+    try {
+        q_nsec3 = prepare(q_nsec3_str);
+    } catch (const char* e) {
+        cout << e << endl << q_nsec3_str << endl;
+        cout << sqlite3_errmsg(db) << endl;
+        throw(e);
+    }
+
+    const char* q_prevnsec3_str = "SELECT rdtype, ttl, rdata FROM nsec3 "
+                                  "WHERE zone_id=?1 AND hash <= $2 "
+                                  "ORDER BY rhash DESC LIMIT 1";
+    try {
+        q_prevnsec3 = prepare(q_prevnsec3_str);
+    } catch (const char* e) {
+        cout << e << endl << q_prevnsec3_str << endl;
+        cout << sqlite3_errmsg(db) << endl;
+        throw(e);
+    }
 }
 
 void
@@ -392,6 +413,7 @@ Sqlite3DataSrc::checkAndSetupSchema(void) {
                           "name STRING NOT NULL, "
                           "rdclass STRING NOT NULL DEFAULT 'IN', "
                           "dnssec BOOLEAN NOT NULL DEFAULT 0)");
+        execSetupQuery("CREATE INDEX zones_byname ON zones (name)");
         execSetupQuery("CREATE TABLE records ("
                           "id INTEGER PRIMARY KEY, "
                           "zone_id INTEGER NOT NULL, "
@@ -403,7 +425,15 @@ Sqlite3DataSrc::checkAndSetupSchema(void) {
                           "rdata STRING NOT NULL)");
         execSetupQuery("CREATE INDEX records_byname ON records (name)");
         execSetupQuery("CREATE INDEX records_byrname ON records (rname)");
-        execSetupQuery("CREATE INDEX zones_byname ON zones (name)");
+        execSetupQuery("CREATE TABLE nsec3 ("
+                          "id INTEGER PRIMARY KEY, "
+                          "zone_id INTEGER NOT NULL, "
+                          "hash STRING NOT NULL, "
+                          "owner STRING NOT NULL, "
+                          "ttl INTEGER NOT NULL, "
+                          "rdtype STRING NOT NULL, "
+                          "rdata STRING NOT NULL)");
+        execSetupQuery("CREATE INDEX nsec3_byhash ON nsec3 (hash)");
 
         setupPreparedStatements();
         cout << "Created new file and schema" << endl;
@@ -420,6 +450,8 @@ Sqlite3DataSrc::Sqlite3DataSrc() {
     q_any = NULL;
     q_count = NULL;
     q_previous = NULL;
+    q_nsec3 = NULL;
+    q_prevnsec3 = NULL;
 }
 
 Sqlite3DataSrc::~Sqlite3DataSrc() {
@@ -469,14 +501,14 @@ Sqlite3DataSrc::findPreviousName(const Query& q,
 
     int rc = sqlite3_bind_int(q_previous, 1, zone_id);
     if (rc != SQLITE_OK) {
-        throw ("Could not bind 1 (record)");
+        throw ("Could not bind 1 (previous)");
     }
     rc = sqlite3_bind_text(q_previous, 2, qname.reverse().toText().c_str(),
                            -1, SQLITE_STATIC);
     if (rc != SQLITE_OK) {
-        throw ("Could not bind 2 (record)");
+        throw ("Could not bind 2 (previous)");
     }
-
+  
     rc = sqlite3_step(q_previous);
     if (rc != SQLITE_ROW) {
         sqlite3_reset(q_previous);
@@ -486,6 +518,112 @@ Sqlite3DataSrc::findPreviousName(const Query& q,
     // XXX: bad cast.  we should revisit this.
     target = Name((const char*)sqlite3_column_text(q_previous, 0));
     sqlite3_reset(q_previous);
+    return (SUCCESS);
+}
+
+DataSrc::Result
+Sqlite3DataSrc::findCoveringNSEC3(const Query& q,
+                                  const Nsec3Param& nsec3param,
+                                  const Name& qname,
+                                  const Name& zonename,
+                                  RRsetList& target) const
+{
+    int zone_id = findClosest(zonename.toText().c_str(), NULL);
+    if (zone_id < 0) {
+        return (ERROR);
+    }
+
+    string hashstr = nsec3param.getHash(qname);
+
+    sqlite3_reset(q_prevnsec3);
+    sqlite3_clear_bindings(q_prevnsec3);
+
+    int rc = sqlite3_bind_int(q_prevnsec3, 1, zone_id);
+    if (rc != SQLITE_OK) {
+        throw ("Could not bind 1 (previous NSEC3)");
+    }
+
+    rc = sqlite3_bind_text(q_prevnsec3, 2, hashstr.c_str(), -1, SQLITE_STATIC);
+    if (rc != SQLITE_OK) {
+        throw ("Could not bind 2 (previous NSEC3)");
+    }
+
+    rc = sqlite3_step(q_prevnsec3);
+    const char* hash;
+    if (rc == SQLITE_ROW) {
+        hash = (const char*) sqlite3_column_text(q_prevnsec3, 0);
+    } else {
+        // We need to find the final NSEC3 in the chain.
+        // A valid NSEC3 hash is in base32, which contains no
+        // letters higher than V, so a search for the previous 
+        // NSEC3 from "W" will always find it.
+        sqlite3_reset(q_prevnsec3);
+        rc = sqlite3_bind_text(q_prevnsec3, 2, "W", -1, SQLITE_STATIC);
+        if (rc != SQLITE_OK) {
+            throw ("Could not bind 2 (last NSEC3)");
+        }
+
+        rc = sqlite3_step(q_prevnsec3);
+        if (rc != SQLITE_ROW) {
+            return (ERROR);
+        }
+
+        hash = (const char*) sqlite3_column_text(q_prevnsec3, 0);
+    }
+
+    sqlite3_reset(q_nsec3);
+    sqlite3_clear_bindings(q_nsec3);
+
+    rc = sqlite3_bind_int(q_nsec3, 1, zone_id);
+    if (rc != SQLITE_OK) {
+        throw ("Could not bind 1 (NSEC3)");
+    }
+
+    rc = sqlite3_bind_text(q_nsec3, 2, hash, -1, SQLITE_STATIC);
+    if (rc != SQLITE_OK) {
+        throw ("Could not bind 2 (NSEC3)");
+    }
+
+    int target_ttl = -1;
+    int sig_ttl = -1;
+    const Name& name(Name(hash).concatenate(zonename));
+    RRsetPtr rrset(new RRset(name, RRClass::IN(), RRType::NSEC3(), RRTTL(0)));
+    if (!target[RRType::NSEC3()]) {
+        target.addRRset(rrset);
+    }
+
+    rc = sqlite3_step(q_nsec3);
+    while (rc == SQLITE_ROW) {
+        RRType type((const char*)sqlite3_column_text(q_nsec3, 1));
+        int ttl = sqlite3_column_int(q_nsec3, 2);
+        const char* rdata = (const char*)sqlite3_column_text(q_nsec3, 3);
+
+        if (type == RRType::NSEC3()) {
+            rrset->addRdata(createRdata(type, RRClass::IN(), rdata));
+            if (target_ttl == -1 || target_ttl > ttl) {
+                target_ttl = ttl;
+            }
+            rrset->setTTL(RRTTL(target_ttl));
+        } else {
+            RdataPtr rrsig = createRdata(RRType::RRSIG(), RRClass::IN(), rdata);
+            if (rrset->getRRsig()) {
+                rrset->getRRsig()->addRdata(rrsig);
+            } else {
+                RRsetPtr sigs = RRsetPtr(new RRset(name, RRClass::IN(),
+                                                   RRType::RRSIG(), RRTTL(0)));
+                sigs->addRdata(rrsig);
+                rrset->addRRsig(sigs);
+            }
+        }
+
+        if (sig_ttl == -1 || sig_ttl > ttl) {
+            sig_ttl = ttl;
+        }
+        rrset->getRRsig()->setTTL(RRTTL(sig_ttl));
+        rc = sqlite3_step(q_nsec3);
+    }
+
+    sqlite3_reset(q_nsec3);
     return (SUCCESS);
 }
 
@@ -606,6 +744,16 @@ Sqlite3DataSrc::close(void) {
     if (q_previous) {
         release(q_previous);
         q_previous = NULL;
+    }
+
+    if (q_prevnsec3) {
+        release(q_prevnsec3);
+        q_prevnsec3 = NULL;
+    }
+
+    if (q_nsec3) {
+        release(q_nsec3);
+        q_nsec3 = NULL;
     }
 
     sqlite3_close(db);
