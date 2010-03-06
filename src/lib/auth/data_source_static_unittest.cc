@@ -46,8 +46,7 @@ protected:
                              authors_name("authors.bind"),
                              nomatch_name("example.com"),
                              rrclass(RRClass::CH()), rrtype(RRType::TXT()),
-                             find_flags(0),
-                             matched_rdata(0)
+                             rrttl(RRTTL(0)), find_flags(0), matched_rdata(0)
     {
         // static data source will ignore the message, and the encapsulating
         // query object so the content doesn't matter.
@@ -84,6 +83,7 @@ protected:
     const Name nomatch_name;
     const RRClass rrclass;
     RRType rrtype;              // we allow this to be modified in the test
+    RRTTL rrttl;
     RRsetList result_sets;
     uint32_t find_flags;
     unsigned matched_rdata;
@@ -96,11 +96,12 @@ protected:
 void
 checkRRset(ConstRRsetPtr rrset, const Name& expected_name,
            const RRClass& expected_class, const RRType& expected_type,
-           const vector<string>& expected_data)
+           const RRTTL& rrttl, const vector<string>& expected_data)
 {
     EXPECT_EQ(expected_name, rrset->getName());
     EXPECT_EQ(expected_class, rrset->getClass());
     EXPECT_EQ(expected_type, rrset->getType());
+    EXPECT_EQ(rrttl, rrset->getTTL());
 
     RdataIteratorPtr rdata_iterator = rrset->getRdataIterator();
     rdata_iterator->first();
@@ -168,12 +169,13 @@ TEST_F(StaticDataSourceTest, findRRsetVersionTXT) {
     EXPECT_EQ(DataSrc::SUCCESS,
               data_source.findRRset(*query, version_name, rrclass, rrtype,
                                     result_sets, find_flags, NULL));
+    EXPECT_EQ(0, find_flags);
     // There should be only item in result_sets, which should be
     // version_name/TXT.
     RRsetList::iterator it = result_sets.begin();
     for (; it != result_sets.end(); ++it) {
         if ((*it)->getType() == rrtype) {
-            checkRRset(*it, version_name, rrclass, rrtype, version_data);
+            checkRRset(*it, version_name, rrclass, rrtype, rrttl, version_data);
             ++matched_rdata;
         }
     }
@@ -185,10 +187,12 @@ TEST_F(StaticDataSourceTest, findRRsetVersionNS) {
     EXPECT_EQ(DataSrc::SUCCESS,
               data_source.findRRset(*query, version_name, rrclass, rrtype,
                                     result_sets, find_flags, NULL));
+    EXPECT_EQ(0, find_flags);
     RRsetList::iterator it = result_sets.begin();
     for (; it != result_sets.end(); ++it) {
         if ((*it)->getType() == rrtype) {
-            checkRRset(*it, version_name, rrclass, rrtype, version_ns_data);
+            checkRRset(*it, version_name, rrclass, rrtype, rrttl,
+                       version_ns_data);
             ++matched_rdata;
         }
     }
@@ -199,10 +203,11 @@ TEST_F(StaticDataSourceTest, findRRsetAuthors) {
     EXPECT_EQ(DataSrc::SUCCESS,
               data_source.findRRset(*query, authors_name, rrclass, rrtype,
                                     result_sets, find_flags, NULL));
+    EXPECT_EQ(0, find_flags);
     RRsetList::iterator it = result_sets.begin();
     for (; it != result_sets.end(); ++it) {
         if ((*it)->getType() == RRType::TXT()) {
-            checkRRset(*it, authors_name, rrclass, rrtype, authors_data);
+            checkRRset(*it, authors_name, rrclass, rrtype, rrttl, authors_data);
             ++matched_rdata;
         }
     }
@@ -214,10 +219,12 @@ TEST_F(StaticDataSourceTest, findRRsetAuthorsNS) {
     EXPECT_EQ(DataSrc::SUCCESS,
               data_source.findRRset(*query, authors_name, rrclass, rrtype,
                                     result_sets, find_flags, NULL));
+    EXPECT_EQ(0, find_flags);
     RRsetList::iterator it = result_sets.begin();
     for (; it != result_sets.end(); ++it) {
         if ((*it)->getType() == rrtype) {
-            checkRRset(*it, authors_name, rrclass, rrtype, authors_ns_data);
+            checkRRset(*it, authors_name, rrclass, rrtype, rrttl,
+                       authors_ns_data);
             ++matched_rdata;
         }
     }
