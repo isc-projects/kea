@@ -30,20 +30,27 @@ def create(cur):
     cur.execute("CREATE TABLE schema_version (version INTEGER NOT NULL)")
     cur.execute("INSERT INTO schema_version VALUES (1)")
     cur.execute("""CREATE TABLE zones (id INTEGER PRIMARY KEY, 
-                   name STRING NOT NULL, rdclass STRING NOT NULL DEFAULT 'IN', 
+                   name STRING NOT NULL COLLATE NOCASE,
+                   rdclass STRING NOT NULL COLLATE NOCASE DEFAULT 'IN', 
                    dnssec BOOLEAN NOT NULL DEFAULT 0)""")
     cur.execute("CREATE INDEX zones_byname ON zones (name)")
     cur.execute("""CREATE TABLE records (id INTEGER PRIMARY KEY, 
-                   zone_id INTEGER NOT NULL, name STRING NOT NULL,
-                   rname STRING NOT NULL, ttl INTEGER NOT NULL,
-                   rdtype STRING NOT NULL, sigtype STRING,
+                   zone_id INTEGER NOT NULL,
+                   name STRING NOT NULL COLLATE NOCASE,
+                   rname STRING NOT NULL COLLATE NOCASE,
+                   ttl INTEGER NOT NULL,
+                   rdtype STRING NOT NULL COLLATE NOCASE,
+                   sigtype STRING COLLATE NOCASE,
                    rdata STRING NOT NULL)""")
     cur.execute("CREATE INDEX records_byname ON records (name)")
     cur.execute("CREATE INDEX records_byrname ON records (rname)")
     cur.execute("""CREATE TABLE nsec3 (id INTEGER PRIMARY KEY, 
-                   zone_id INTEGER NOT NULL, hash STRING NOT NULL,
-                   owner STRING NOT NULL, ttl INTEGER NOT NULL,
-                   rdtype STRING NOT NULL, rdata STRING NOT NULL)""")
+                   zone_id INTEGER NOT NULL,
+                   hash STRING NOT NULL COLLATE NOCASE,
+                   owner STRING NOT NULL COLLATE NOCASE,
+                   ttl INTEGER NOT NULL,
+                   rdtype STRING NOT NULL COLLATE NOCASE,
+                   rdata STRING NOT NULL)""")
     cur.execute("CREATE INDEX nsec3_byhash ON nsec3 (hash)")
 
 #########################################################################
