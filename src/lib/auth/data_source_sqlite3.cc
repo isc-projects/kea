@@ -373,7 +373,7 @@ Sqlite3DataSrc::setupPreparedStatements(void) {
     }
 
     const char* q_nsec3_str = "SELECT rdtype, ttl, rdata FROM nsec3 "
-                              "WHERE zone_id=?1 AND hash == $2";
+                              "WHERE zone_id = ?1 AND hash = $2";
     try {
         q_nsec3 = prepare(q_nsec3_str);
     } catch (const char* e) {
@@ -382,10 +382,9 @@ Sqlite3DataSrc::setupPreparedStatements(void) {
         throw(e);
     }
 
-#ifdef notyet
-    const char* q_prevnsec3_str = "SELECT rdtype, ttl, rdata FROM nsec3 "
-                                  "WHERE zone_id=?1 AND hash <= $2 "
-                                  "ORDER BY rhash DESC LIMIT 1";
+    const char* q_prevnsec3_str = "SELECT hash FROM nsec3 "
+                                  "WHERE zone_id = ?1 AND hash <= $2 "
+                                  "ORDER BY hash DESC LIMIT 1";
     try {
         q_prevnsec3 = prepare(q_prevnsec3_str);
     } catch (const char* e) {
@@ -393,7 +392,6 @@ Sqlite3DataSrc::setupPreparedStatements(void) {
         cout << sqlite3_errmsg(db) << endl;
         throw(e);
     }
-#endif
 }
 
 void
@@ -593,16 +591,20 @@ Sqlite3DataSrc::findCoveringNSEC3(const Query& q,
     int target_ttl = -1;
     int sig_ttl = -1;
     const Name& name(Name(hash).concatenate(zonename));
-    RRsetPtr rrset(new RRset(name, RRClass::IN(), RRType::NSEC3(), RRTTL(0)));
-    if (!target[RRType::NSEC3()]) {
+    RRsetPtr rrset = target[RRType::NSEC3()];
+    if (!rrset) {
+        rrset = RRsetPtr(new RRset(name, RRClass::IN(), RRType::NSEC3(),
+                                   RRTTL(0)));
+        rrset->addRRsig(RRsetPtr(new RRset(name, RRClass::IN(),
+                                           RRType::RRSIG(), RRTTL(0))));
         target.addRRset(rrset);
     }
 
     rc = sqlite3_step(q_nsec3);
     while (rc == SQLITE_ROW) {
-        RRType type((const char*)sqlite3_column_text(q_nsec3, 1));
-        int ttl = sqlite3_column_int(q_nsec3, 2);
-        const char* rdata = (const char*)sqlite3_column_text(q_nsec3, 3);
+        RRType type((const char*)sqlite3_column_text(q_nsec3, 0));
+        int ttl = sqlite3_column_int(q_nsec3, 1);
+        const char* rdata = (const char*)sqlite3_column_text(q_nsec3, 2);
 
         if (type == RRType::NSEC3()) {
             rrset->addRdata(createRdata(type, RRClass::IN(), rdata));

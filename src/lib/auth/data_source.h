@@ -325,10 +325,10 @@ class Nsec3Param {
 public:
     Nsec3Param(uint8_t a, uint8_t f, uint16_t i, const std::vector<uint8_t>& s);
 
-    const uint8_t algorithm;
-    const uint8_t flags;
-    const uint16_t iterations;
-    const std::vector<uint8_t>& salt;
+    const uint8_t algorithm_;
+    const uint8_t flags_;
+    const uint16_t iterations_;
+    const std::vector<uint8_t> salt_;
 
     std::string getHash(const isc::dns::Name& name) const;
 };

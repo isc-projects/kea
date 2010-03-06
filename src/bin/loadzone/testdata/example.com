@@ -21,6 +21,11 @@ ns2.subzone	A 192.168.3.2
 dname		DNAME sql1.example.com.
 
 $ORIGIN sql1.example.com.
-sql1.example.com.		NS dns01.example.com.
-		NS dns02.example.com.
-		NS dns03.example.com.
+sql1.example.com.	NS dns01.example.com.
+		        NS dns02.example.com.
+		        NS dns03.example.com.
+
+$ORIGIN sql2.example.com.
+sql2.example.com.	NS dns01.example.com.
+		        NS dns02.example.com.
+		        NS dns03.example.com.
