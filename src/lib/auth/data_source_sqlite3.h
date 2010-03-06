@@ -95,6 +95,7 @@ public:
                              isc::dns::RRsetList& target) const;
 
     Result init();
+    Result init(const std::string& dbfile);
     Result close();
 
 private:
