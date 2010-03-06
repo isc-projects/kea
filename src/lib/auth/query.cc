@@ -28,10 +28,6 @@ using namespace isc::dns;
 namespace isc {
 namespace auth {
 
-// Destructors defined here to avoid confusing the linker
-Query::~Query() {}
-QueryTask::~QueryTask() {}
-
 QueryTask::QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
                      const isc::dns::RRType& t, const isc::dns::Section& sect) :
     qname(n), qclass(c), qtype(t), section(sect), op(AUTH_QUERY),
@@ -90,6 +86,8 @@ QueryTask::QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
     }
 }
 
+QueryTask::~QueryTask() {}
+
 Query::Query(Message& m, bool dnssec) :
     status_(PENDING), qname_(NULL), qclass_(NULL), qtype_(NULL),
     message_(&m), want_additional_(true), want_dnssec_(dnssec)
@@ -108,6 +106,8 @@ Query::Query(Message& m, bool dnssec) :
     querytasks_.push(QueryTaskPtr(new QueryTask(*qname_, *qclass_, *qtype_,
                                                 Section::ANSWER())));
 }
+
+Query::~Query() {}
 
 }
 }

@@ -45,10 +45,10 @@ public:
     ///
     /// Specialized methods
     ///
-    uint8_t getHash() const;
+    uint8_t getHashalg() const;
     uint8_t getFlags() const;
     uint16_t getIterations() const;
-    std::vector<uint8_t> getSalt() const;
+    const std::vector<uint8_t>& getSalt() const;
 private:
     NSEC3PARAMImpl* impl_;
 };

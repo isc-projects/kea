@@ -249,6 +249,149 @@ hasDelegation(const DataSrc* ds, const Name* zonename, Query& q,
     return (false);
 }
 
+static inline DataSrc::Result
+addSOA(Query& q, const Name* zonename, const DataSrc* ds) {
+    Message& m = q.message();
+    DataSrc::Result result;
+    RRsetList soa;
+
+    QueryTask newtask(*zonename, q.qclass(), RRType::SOA(),
+                      QueryTask::SIMPLE_QUERY);
+    result = doQueryTask(ds, zonename, q, newtask, soa);
+    if (result != DataSrc::SUCCESS || newtask.flags != 0) {
+        return (DataSrc::ERROR);
+    }
+
+    m.addRRset(Section::AUTHORITY(), soa[RRType::SOA()], q.wantDnssec());
+    return (DataSrc::SUCCESS);
+}
+
+static inline DataSrc::Result
+addNSEC(Query& q, const QueryTaskPtr task, const Name& name,
+        const Name& zonename, const DataSrc* ds)
+{
+    RRsetList nsec;
+    Message& m = q.message();
+    DataSrc::Result result;
+
+    QueryTask newtask(name, task->qclass, RRType::NSEC(),
+                      QueryTask::SIMPLE_QUERY); 
+    result = doQueryTask(ds, &zonename, q, newtask, nsec);
+    if (result != DataSrc::SUCCESS) {
+        return (DataSrc::ERROR);
+    }
+
+    if (newtask.flags == 0) {
+        m.addRRset(Section::AUTHORITY(), nsec[RRType::NSEC()], true);
+    }
+
+    return (DataSrc::SUCCESS);
+}
+
+static inline DataSrc::Result
+addNSEC3(const string& hash, Query& q, const DataSrc* ds, const Name& zonename)
+{
+    RRsetList nsec3;
+    Message& m = q.message();
+    DataSrc::Result result;
+
+    result = ds->findCoveringNSEC3(q, hash, zonename, nsec3);
+    if (result != DataSrc::SUCCESS) {
+        return (DataSrc::ERROR);
+    }
+
+    m.addRRset(Section::AUTHORITY(), nsec3[RRType::NSEC3()], true);
+    return (DataSrc::SUCCESS);
+}
+
+static Nsec3Param*
+getNsec3Param(Query& q, const DataSrc* ds, const Name& zonename)
+{
+    DataSrc::Result result;
+    RRsetList nsec3param;
+
+    QueryTask newtask(zonename, q.qclass(), RRType::NSEC3PARAM(),
+                      QueryTask::SIMPLE_QUERY); 
+    result = doQueryTask(ds, &zonename, q, newtask, nsec3param);
+    newtask.flags &= ~DataSrc::REFERRAL;
+    if (result != DataSrc::SUCCESS || newtask.flags != 0) {
+        return (NULL);
+    }
+
+    RRsetPtr rrset = nsec3param[RRType::NSEC3PARAM()];
+    if (!rrset) {
+        return (NULL);
+    }
+
+    // XXX: currently only one NSEC3 chain per zone is supported;
+    // we will need to revisit this.
+    RdataIteratorPtr it = rrset->getRdataIterator();
+    it->first();
+    if (it->isLast()) {
+        return (NULL);
+    }
+
+    const generic::NSEC3PARAM& np =
+            dynamic_cast<const generic::NSEC3PARAM&>(it->getCurrent());
+    return (new Nsec3Param(np.getHashalg(), np.getFlags(),
+                           np.getIterations(), np.getSalt()));
+}
+
+static inline DataSrc::Result
+proveNX(Query& q, QueryTaskPtr task, const DataSrc* ds, const Name& zonename)
+{
+    DataSrc::Result result;
+    Nsec3Param* nsec3 = getNsec3Param(q, ds, zonename);
+    if (nsec3) {
+        string node = nsec3->getHash(task->qname);
+        string apex = nsec3->getHash(zonename);
+        string wild = nsec3->getHash(Name("*").concatenate(zonename));
+        delete nsec3;
+
+        result = addNSEC3(node, q, ds, zonename);
+        if (result != DataSrc::SUCCESS) {
+            return (result);
+        }
+
+        if (node != apex) {
+            result = addNSEC3(apex, q, ds, zonename);
+            if (result != DataSrc::SUCCESS) {
+                return (result);
+            }
+        }
+
+        if ((task->flags & DataSrc::NAME_NOT_FOUND) != 0 && node != wild) {
+            result = addNSEC3(wild, q, ds, zonename);
+            if (result != DataSrc::SUCCESS) {
+                return (result);
+            }
+        }
+    } else {
+        Name nsecname(task->qname);
+        if ((task->flags & DataSrc::NAME_NOT_FOUND) != 0) {
+            ds->findPreviousName(q, task->qname, nsecname, &zonename);
+        }
+
+        result = addNSEC(q, task, nsecname, zonename, ds);
+        if (result != DataSrc::SUCCESS) {
+            return (result);
+        }
+
+        if ((task->flags & DataSrc::TYPE_NOT_FOUND) != 0 ||
+            nsecname == zonename)
+        {
+            return (DataSrc::SUCCESS);
+        }
+
+        result = addNSEC(q, task, zonename, zonename, ds);
+        if (result != DataSrc::SUCCESS) {
+            return (result);
+        }
+    }
+
+    return (DataSrc::SUCCESS);
+}
+
 // Attempt a wildcard lookup
 static inline DataSrc::Result
 tryWildcard(Query& q, QueryTaskPtr task, const DataSrc* ds,
@@ -311,19 +454,6 @@ tryWildcard(Query& q, QueryTaskPtr task, const DataSrc* ds,
             }
 
             copyAuth(q, auth);
-        }
-    } else if (q.wantDnssec()) {
-        // No wildcard found; add an NSEC to prove it
-        RRsetList nsec;
-        QueryTask newtask(*zonename, task->qclass, RRType::NSEC(),
-                          QueryTask::SIMPLE_QUERY); 
-        result = doQueryTask(ds, zonename, q, newtask, nsec);
-        if (result != DataSrc::SUCCESS) {
-            return (DataSrc::ERROR);
-        }
-
-        if (newtask.flags == 0) {
-            m.addRRset(Section::AUTHORITY(), nsec[RRType::NSEC()], true);
         }
     }
 
@@ -510,43 +640,29 @@ DataSrc::doQuery(Query& q)
             // NXDOMAIN, and also add the previous NSEC to the authority
             // section.  For TYPE_NOT_FOUND, do not set an error rcode,
             // and send the current NSEC in the authority section.
+            if (task->state == QueryTask::GETANSWER) {
+                if ((task->flags & NAME_NOT_FOUND) != 0) {
+                    m.setRcode(Rcode::NXDOMAIN());
+                }
+
+                result = addSOA(q, zonename, datasource);
+                if (result != SUCCESS) {
+                    m.setRcode(Rcode::SERVFAIL());
+                    return;
+                }
+            }
+
             Name nsecname(task->qname);
             if ((task->flags & NAME_NOT_FOUND) != 0) {
                 datasource->findPreviousName(q, task->qname, nsecname,
                                              zonename);
             }
 
-            if (task->state == QueryTask::GETANSWER) {
-                if ((task->flags & NAME_NOT_FOUND) != 0) {
-                    m.setRcode(Rcode::NXDOMAIN());
-                }
-
-                RRsetList soa;
-                QueryTask newtask(*zonename, task->qclass, RRType::SOA(), 
-                                  QueryTask::SIMPLE_QUERY); 
-                result = doQueryTask(datasource, zonename, q, newtask, soa);
-                if (result != SUCCESS || newtask.flags != 0) {
-                    m.setRcode(Rcode::SERVFAIL());
-                    return;
-                }
-
-                m.addRRset(Section::AUTHORITY(), soa[RRType::SOA()],
-                           q.wantDnssec());
-            }
-
             if (q.wantDnssec()) {
-                RRsetList nsec;
-                QueryTask newtask(nsecname, task->qclass,
-                                  RRType::NSEC(), QueryTask::SIMPLE_QUERY);  
-                result = doQueryTask(datasource, zonename, q, newtask, nsec);
-                if (result != SUCCESS) {
+                result = proveNX(q, task, datasource, *zonename);
+                if (result != DataSrc::SUCCESS) {
                     m.setRcode(Rcode::SERVFAIL());
                     return;
-                }
-
-                if (newtask.flags == 0) {
-                    m.addRRset(Section::AUTHORITY(), nsec[RRType::NSEC()],
-                               true);
                 }
             }
 
@@ -694,7 +810,7 @@ NameMatch::update(const DataSrc& new_source, const Name& container)
 }
 
 Nsec3Param::Nsec3Param(uint8_t a, uint8_t f, uint16_t i,
-                       std::vector<uint8_t>& s) :
+                       const std::vector<uint8_t>& s) :
     algorithm(a), flags(f), iterations(i), salt(s)
 {}
 

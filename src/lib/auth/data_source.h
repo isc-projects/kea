@@ -145,8 +145,7 @@ public:
    // This MUST be implemented by concrete data sources which support
    // NSEC3, but is optional for others
    virtual Result findCoveringNSEC3(const Query& q,
-                                    const Nsec3Param& param,
-                                    const isc::dns::Name& qname,
+                                    const std::string& hash,
                                     const isc::dns::Name& zonename,
                                     isc::dns::RRsetList& target) const = 0;
 };
@@ -215,8 +214,7 @@ public:
                                     const isc::dns::Name* zonename) const = 0;
 
    virtual Result findCoveringNSEC3(const Query& q,
-                                    const Nsec3Param& param,
-                                    const isc::dns::Name& qname,
+                                    const std::string& hash,
                                     const isc::dns::Name& zonename,
                                     isc::dns::RRsetList& target) const = 0;
 
@@ -294,8 +292,7 @@ public:
     }
 
    virtual Result findCoveringNSEC3(const Query& q,
-                                    const Nsec3Param& param,
-                                    const isc::dns::Name& qname,
+                                    const std::string& qname,
                                     const isc::dns::Name& zonename,
                                     isc::dns::RRsetList& target) const
    {
@@ -326,7 +323,7 @@ private:
 
 class Nsec3Param {
 public:
-    Nsec3Param(uint8_t a, uint8_t f, uint16_t i, std::vector<uint8_t>& s);
+    Nsec3Param(uint8_t a, uint8_t f, uint16_t i, const std::vector<uint8_t>& s);
 
     const uint8_t algorithm;
     const uint8_t flags;

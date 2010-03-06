@@ -41,14 +41,14 @@ using namespace std;
 
 struct NSEC3Impl {
     // straightforward representation of NSEC3 RDATA fields
-    NSEC3Impl(uint8_t hash, uint8_t flags, uint16_t iterations,
+    NSEC3Impl(uint8_t hashalg, uint8_t flags, uint16_t iterations,
               vector<uint8_t>salt, vector<uint8_t>next,
               vector<uint8_t> typebits) :
-        hash_(hash), flags_(flags), iterations_(iterations),
+        hashalg_(hashalg), flags_(flags), iterations_(iterations),
         salt_(salt), next_(next), typebits_(typebits)
     {}
 
-    uint8_t hash_;
+    uint8_t hashalg_;
     uint8_t flags_;
     uint16_t iterations_;
     vector<uint8_t> salt_;
@@ -60,15 +60,15 @@ NSEC3::NSEC3(const string& nsec3_str) :
     impl_(NULL)
 {
     istringstream iss(nsec3_str);
-    unsigned int hash, flags, iterations;
+    unsigned int hashalg, flags, iterations;
     string salthex;
 
-    iss >> hash >> flags >> iterations >> salthex;
+    iss >> hashalg >> flags >> iterations >> salthex;
     if (iss.bad() || iss.fail()) {
         dns_throw(InvalidRdataText, "Invalid NSEC3 text");
     }
-    if (hash > 0xf) {
-        dns_throw(InvalidRdataText, "NSEC3 hash out of range");
+    if (hashalg > 0xf) {
+        dns_throw(InvalidRdataText, "NSEC3 hash algorithm out of range");
     }
     if (flags > 0xff) {
         dns_throw(InvalidRdataText, "NSEC3 flags out of range");
@@ -84,7 +84,7 @@ NSEC3::NSEC3(const string& nsec3_str) :
     iss >> setw(32) >> nextstr;
     vector<uint8_t> next;
     if (iss.bad() || iss.fail()) {
-        dns_throw(InvalidRdataText, "Invalid NSEC3 hash");
+        dns_throw(InvalidRdataText, "Invalid NSEC3 hash algorithm");
     }
     decodeBase32(nextstr, next);
 
@@ -116,7 +116,7 @@ NSEC3::NSEC3(const string& nsec3_str) :
         }
     }
 
-    impl_ = new NSEC3Impl(hash, flags, iterations, salt, next, typebits);
+    impl_ = new NSEC3Impl(hashalg, flags, iterations, salt, next, typebits);
 }
 
 NSEC3::NSEC3(InputBuffer& buffer, size_t rdata_len)
@@ -125,7 +125,7 @@ NSEC3::NSEC3(InputBuffer& buffer, size_t rdata_len)
         dns_throw(InvalidRdataLength, "NSEC3 too short");
     }
 
-    uint8_t hash = buffer.readUint8();
+    uint8_t hashalg = buffer.readUint8();
     uint8_t flags = buffer.readUint8();
     uint16_t iterations = buffer.readUint16();
     rdata_len -= 4;
@@ -161,7 +161,7 @@ NSEC3::NSEC3(InputBuffer& buffer, size_t rdata_len)
     vector<uint8_t> typebits(rdata_len);
     buffer.readData(&typebits[0], rdata_len);
 
-    impl_ = new NSEC3Impl(hash, flags, iterations, salt, next, typebits);
+    impl_ = new NSEC3Impl(hashalg, flags, iterations, salt, next, typebits);
 }
 
 NSEC3::NSEC3(const NSEC3& source) :
@@ -213,7 +213,7 @@ NSEC3::toText() const
     }
 
     using namespace boost;
-    return (lexical_cast<string>(static_cast<int>(impl_->hash_)) +
+    return (lexical_cast<string>(static_cast<int>(impl_->hashalg_)) +
         " " + lexical_cast<string>(static_cast<int>(impl_->flags_)) +
         " " + lexical_cast<string>(static_cast<int>(impl_->iterations_)) +
         " " + encodeHex(impl_->salt_) +
@@ -223,7 +223,7 @@ NSEC3::toText() const
 void
 NSEC3::toWire(OutputBuffer& buffer) const
 {
-    buffer.writeUint8(impl_->hash_);
+    buffer.writeUint8(impl_->hashalg_);
     buffer.writeUint8(impl_->flags_);
     buffer.writeUint16(impl_->iterations_);
     buffer.writeUint8(impl_->salt_.size());
@@ -236,7 +236,7 @@ NSEC3::toWire(OutputBuffer& buffer) const
 void
 NSEC3::toWire(MessageRenderer& renderer) const
 {
-    renderer.writeUint8(impl_->hash_);
+    renderer.writeUint8(impl_->hashalg_);
     renderer.writeUint8(impl_->flags_);
     renderer.writeUint16(impl_->iterations_);
     renderer.writeUint8(impl_->salt_.size());
@@ -251,8 +251,8 @@ NSEC3::compare(const Rdata& other) const
 {
     const NSEC3& other_nsec3 = dynamic_cast<const NSEC3&>(other);
 
-    if (impl_->hash_ != other_nsec3.impl_->hash_) {
-        return (impl_->hash_ < other_nsec3.impl_->hash_ ? -1 : 1);
+    if (impl_->hashalg_ != other_nsec3.impl_->hashalg_) {
+        return (impl_->hashalg_ < other_nsec3.impl_->hashalg_ ? -1 : 1);
     }
     if (impl_->flags_ != other_nsec3.impl_->flags_) {
         return (impl_->flags_ < other_nsec3.impl_->flags_ ? -1 : 1);
@@ -302,8 +302,8 @@ NSEC3::compare(const Rdata& other) const
 }
 
 uint8_t
-NSEC3::getHash() const {
-    return impl_->hash_;
+NSEC3::getHashalg() const {
+    return impl_->hashalg_;
 }
 
 uint8_t
@@ -316,7 +316,7 @@ NSEC3::getIterations() const {
     return impl_->iterations_;
 }
 
-vector<uint8_t>
+vector<uint8_t>&
 NSEC3::getSalt() const {
     return impl_->salt_;
 }
