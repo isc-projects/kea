@@ -199,14 +199,14 @@ TEST_F(StaticDataSourceTest, findRRsetVersionNS) {
     EXPECT_EQ(1, matched_rdata);
 }
 
-TEST_F(StaticDataSourceTest, findRRsetAuthors) {
+TEST_F(StaticDataSourceTest, findRRsetAuthorsTXT) {
     EXPECT_EQ(DataSrc::SUCCESS,
               data_source.findRRset(*query, authors_name, rrclass, rrtype,
                                     result_sets, find_flags, NULL));
     EXPECT_EQ(0, find_flags);
     RRsetList::iterator it = result_sets.begin();
     for (; it != result_sets.end(); ++it) {
-        if ((*it)->getType() == RRType::TXT()) {
+        if ((*it)->getType() == rrtype) {
             checkRRset(*it, authors_name, rrclass, rrtype, rrttl, authors_data);
             ++matched_rdata;
         }
