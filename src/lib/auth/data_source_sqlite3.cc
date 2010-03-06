@@ -33,6 +33,12 @@ using namespace isc::dns::rdata;
 namespace isc {
 namespace auth {
 
+namespace {
+// Note: this cannot be std::string to avoid
+// "static initialization order fiasco".
+static const char* DEFAULT_DB_FILE = "/tmp/zone.sqlite3";
+}
+
 //
 //  Prepare a statement.  Can call release() or sqlite3_finalize()
 //  directly.
@@ -142,8 +148,6 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
     }
   
     // loop
-    int target_ttl = -1;
-    int sig_ttl = -1;
     int rows = 0;
     RRsetPtr rrset;
     bool any = (rdtype == RRType::ANY());
@@ -184,16 +188,15 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
         }
 
         if (!target[rt]) {
-            rrset = RRsetPtr(new RRset(name, RRClass::IN(), rt, RRTTL(3600)));
+            rrset = RRsetPtr(new RRset(name, RRClass::IN(), rt, RRTTL(ttl)));
             target.addRRset(rrset);
         }
 
         if (!sigtype && RRType(type) == rrset->getType()) {
             rrset->addRdata(createRdata(RRType(type), RRClass::IN(), rdata));
-            if (target_ttl == -1 || target_ttl > ttl) {
-                target_ttl = ttl;
+            if (ttl > rrset->getTTL().getValue()) {
+                rrset->setTTL(RRTTL(ttl));
             }
-            rrset->setTTL(RRTTL(target_ttl));
         } else if (sigtype && RRType(sigtype) == rrset->getType()) {
             RdataPtr rrsig = createRdata(RRType::RRSIG(), RRClass::IN(), rdata);
             if (rrset->getRRsig()) {
@@ -201,17 +204,16 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
             } else {
                 RRsetPtr sigs = RRsetPtr(new RRset(name, RRClass::IN(),
                                                    RRType::RRSIG(),
-                                                   RRTTL(3600)));
+                                                   RRTTL(ttl)));
                 sigs->addRdata(rrsig);
                 rrset->addRRsig(sigs);
             }
 
-            if (sig_ttl == -1 || sig_ttl > ttl) {
-                sig_ttl = ttl;
+            if (ttl > rrset->getRRsig()->getTTL().getValue()) {
+                rrset->getRRsig()->setTTL(RRTTL(ttl));
             }
-            rrset->getRRsig()->setTTL(RRTTL(sig_ttl));
         }
-        
+
         rc = sqlite3_step(query);
     }
 
@@ -464,11 +466,16 @@ Sqlite3DataSrc::~Sqlite3DataSrc() {
 }
 
 DataSrc::Result
-Sqlite3DataSrc::init() {
-    open("/tmp/zone.sqlite3");
+Sqlite3DataSrc::init(const string& dbfile) {
+    open(dbfile);
     cerr << "Schema version: " << getVersion() << endl;
 
     return (SUCCESS);
+}
+
+DataSrc::Result
+Sqlite3DataSrc::init() {
+    return (init(DEFAULT_DB_FILE));
 }
 
 void
