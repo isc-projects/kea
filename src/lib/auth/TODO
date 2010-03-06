@@ -1,4 +1,6 @@
 - change filenames so we don't have everything starting with "data_source_"?
-- clean up SQL data source code
 - store rdata in the database as binary blobs instead of text
-- correct NSEC3 logic
+- correct NSEC3 logic:
+  - closest encloser proof is incorrect; need to send covering NSEC3
+    for the "next closest" name, not necessarily for the name itself
+  - need to check for duplication in the resulting NSEC3's
