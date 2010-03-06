@@ -254,7 +254,6 @@ TEST_F(Sqlite3DataSourceTest, findRRsetNormalANY) {
 }
 
 // Case insensitive lookup
-#if 0                           // this currently fails
 TEST_F(Sqlite3DataSourceTest, findRRsetNormalCase) {
     checkFind(data_source, *query, www_upper_name, NULL, rrclass, rrtype, rrttl,
               0, www_data, &www_sig_data);
@@ -268,7 +267,6 @@ TEST_F(Sqlite3DataSourceTest, findRRsetNormalCase) {
     EXPECT_EQ(DataSrc::NO_SUCH_ZONE, find_flags);
     EXPECT_TRUE(result_sets.begin() == result_sets.end()); // should be empty
 }
-#endif
 
 TEST_F(Sqlite3DataSourceTest, findRRsetApexNS) {
     rrtype = RRType::NS();
