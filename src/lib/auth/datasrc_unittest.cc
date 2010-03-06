@@ -478,5 +478,16 @@ TEST_F(DataSrcTest, CNAMELoop) {
     //                    RRType::A());
 }
 
+TEST_F(DataSrcTest, Nsec3Hash) {
+    vector<uint8_t> salt;
+    salt.push_back(0xfe);
+    salt.push_back(0xed);
+    salt.push_back(0xab);
+    salt.push_back(0xee);
+    Nsec3Param nsec3(1, 0, 10, salt);
+    EXPECT_EQ("VIR9KJAPN2FHRLS6EP0JBQ89MBLUE296", nsec3.getHash(Name("test1")));
+    EXPECT_EQ("FHA27EURONFH5640SFJQ8MJAKMCVB7UJ", nsec3.getHash(Name("test2")));
+    EXPECT_EQ("A4M93LR7A60IDDQMO6TCVUPCC60CU38A", nsec3.getHash(Name("test3")));
+}
 }
 

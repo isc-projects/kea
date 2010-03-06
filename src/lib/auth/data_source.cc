@@ -821,20 +821,25 @@ Nsec3Param::Nsec3Param(uint8_t a, uint8_t f, uint16_t i,
 string
 Nsec3Param::getHash(const Name& name) const {
     OutputBuffer buf(0);
-
     name.toWire(buf);
-    buf.writeData(&salt_[0], salt_.size());
-    uint8_t* in = (uint8_t*) buf.getData();
-    size_t inlength = buf.getLength();
-    uint8_t digest[SHA1_HASHSIZE];
-    int n = 0;
 
+    uint8_t digest[SHA1_HASHSIZE];
+    uint8_t* input = (uint8_t*) buf.getData();
+    size_t inlength = buf.getLength();
+    uint8_t saltlen = salt_.size();
+    uint8_t salt[saltlen];
+    for (int i = 0; i < saltlen; ++i) {
+        salt[i] = salt_[i];
+    }
+
+    int n = 0;
     SHA1Context sha;
     do {
         SHA1Reset(&sha);
-        SHA1Input(&sha, in, inlength);
+        SHA1Input(&sha, input, inlength);
+        SHA1Input(&sha, salt, saltlen);
         SHA1Result(&sha, digest);
-        in = digest;
+        input = digest;
         inlength = SHA1_HASHSIZE;
     } while (n++ < iterations_);
 
