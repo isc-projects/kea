@@ -1,3 +1,4 @@
 - change filenames so we don't have everything starting with "data_source_"?
 - clean up SQL data source code
 - store rdata in the database as binary blobs instead of text
+- correct NSEC3 logic

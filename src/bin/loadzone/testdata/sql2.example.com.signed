@@ -1,0 +1,160 @@
+; File written on Fri Mar  5 19:18:38 2010
+; dnssec_signzone version 9.7.0
+sql2.example.com.	3600	IN SOA	master.example.com. admin.example.com. (
+					678        ; serial
+					3600       ; refresh (1 hour)
+					1800       ; retry (30 minutes)
+					2419200    ; expire (4 weeks)
+					7200       ; minimum (2 hours)
+					)
+			3600	RRSIG	SOA 5 3 3600 20100405021838 (
+					20100306021838 63192 sql2.example.com.
+					GHZ2Emfin4Fj4sKSAfhoDuHYo1omaAHFXdW3
+					bn8NjR+DXxKlhwCtZnnatWFcvrAxkkOipcLw
+					DGViJdrRvkKXShnZewapuYwUmX7RK1nbqJPo
+					Xvzs6QyhkaEcunNjf7qr8bbgAgV1z66dpzYL
+					tBSukPE4lgDHxT+BPE7TgB9Jvdc= )
+			3600	NS	dns01.example.com.
+			3600	NS	dns02.example.com.
+			3600	NS	dns03.example.com.
+			3600	RRSIG	NS 5 3 3600 20100405021838 (
+					20100306021838 63192 sql2.example.com.
+					K/C9TBGNjaf9jwPAxNQlfN4qpTr07kYMmPyI
+					B3ScvmgVONa7+4LI86bSBDYC0qXhVo+oGkJc
+					u7DhcZ5YyaypafuoZTu4/Cbwqthwel69pw9Q
+					xi0kMWHv9/ijYTxplzG0oQZeZjgJ04hWukR8
+					L8FgtTwwL6IHI8llZqXBiAihsrQ= )
+			3600	DNSKEY	256 3 5 (
+					AwEAAdKcbdCUqIv7gGzBFnmNaZjSY9uLXlYD
+					mMC9XOYN79SIEdIYwvsiiygvURBxutSclG9R
+					YDDDigb5gOfvgFVyf0IV3qe0rySIOZL6xTq4
+					25MacI8KEYUu6F4DesyejPJz+G7PZAYnsufV
+					3NBccTFTC2bSsyM/5ZDbNyF//+ZV3lpH
+					) ; key id = 63192
+			3600	DNSKEY	257 3 5 (
+					AwEAAdNHTu+NmN/07XFztWhlyIybbPvq8FER
+					TASCrfmthpbsFPyQy0GlF1PnEWasfpM0H5KE
+					4aEmPlvcDD6cpg+Tz+2aXQa9cPe3C4Vy+a0O
+					4bp0+LDG7TZmsQxqSuQen9YsSqIDclz+ajC0
+					L8WUt6/kjv7TEtqwMLqkuViTjHef1dq3vqPN
+					n3ZlD+uh9sOn0q+B2r9mkPXtcOQKvi8bZyRW
+					+RaBDHy5XjlUocjXtS3aCjh8S+vqJdyhuepX
+					dhvh+owUQy6h+HxkVX/6jx+8wc/EJXYbCc+Z
+					O9+hO4L7Wu8I89qJY2/xQ6SpDVHCoAj6kf3F
+					O/7YAwy60bef5HaUN7d/SY8=
+					) ; key id = 38482
+			3600	RRSIG	DNSKEY 5 3 3600 20100405021838 (
+					20100306021838 38482 sql2.example.com.
+					yzX77VLc88eiigZECMPwR11vtVhoSAUL0Ado
+					us91613C9mskvBu2ThYalkwAQiQHJa3fOal+
+					a3DBzaGOI2n8FkynP/t2BjeSwNUR+k4Ts+kb
+					UBDIKA3f08bpXjWMRvRP+sLXZ98DiqU/7AkO
+					farImxOwVTrbvt14IjVCcQlal77pnWKNSWPE
+					0aDAtkqQNE5yDDik5Aj2aTtoSUKBvthBBH9+
+					zkNUmvUDSF0Ulywv3xUOpOldqoG9eWThogRg
+					zpRXYw4mrCBKrCTlbpQtrfn2o+GbTScMxAYk
+					cgqnfN8LkpzSYtK8HlGwhLHigSl3uB+M1F5n
+					WxD+6iKvsWMnnycdHA== )
+			3600	RRSIG	DNSKEY 5 3 3600 20100405021838 (
+					20100306021838 63192 sql2.example.com.
+					V84sEJFayUmg2mAvCJpirRy15dgRMQUJnqkX
+					xG8wO3vd8nNoQBZMoBJOFcDrEKvd81Vo/zoG
+					Namrhzx8MMtRxXzt0Q++mN0i376rTfNoTs1o
+					iJJ6x5V1o3X+Dt62F9aBRS7nqWRwAum7Eh1V
+					ViFKiSoLFiW+n+u1zwXYNx77lag= )
+			0	NSEC3PARAM 1 0 10 ADDFEE
+			0	RRSIG	NSEC3PARAM 5 3 0 20100405021838 (
+					20100306021838 63192 sql2.example.com.
+					KlhkWFiZuMp45BiugsAVV1RfiokV0mqLYibu
+					XGZttNfk2N1mDiGVLUyc2Y4Rdp4Xvma3lpGB
+					XZPCrdvky4eI+KwBi8dM7+pi1YPcQcEKyLYP
+					FN2I5GAehN5l0p/mEDJhxRym4Z+KaP4piHYI
+					Qlwdg/mLlPaAatG3TzMknNyjrVA= )
+a.sql2.example.com.	3600	IN A	192.168.2.1
+			3600	RRSIG	A 5 4 3600 20100405021838 (
+					20100306021838 63192 sql2.example.com.
+					ci3CrRml5ml74tNrEy/Bgy/CWaXP1sNoSTVi
+					0jgdzKGXg3xiOmbENEGr+mkbqH4hMVHzn3OO
+					ovqui7mL55C40fMPZb9rwSe9G7XvivBRlJY+
+					4JFdOWZNc1TBmjukDyR/MVpNz8wdtgeNbqPD
+					LsnRejxgvWXZMbjGk7sn7JglE5M= )
+b.sql2.example.com.	3600	IN A	192.168.2.2
+			3600	RRSIG	A 5 4 3600 20100405021838 (
+					20100306021838 63192 sql2.example.com.
+					jG7Hlyg/M2SmPKG65jjzBsmwboWY7fpzSXm/
+					3h8luq/rvIlxU65XO6nAjweQOj4vJRsx3DxD
+					+sTcAsBbyAjsyfe1lDWlyIWB7xXCSdafNNWX
+					0GWV1+/v8cOLd1xwZhx7vIA8TkcWUvw6BNkX
+					896bCfew9yw2Z/GsSdTWlwdybBE= )
+c.sql2.example.com.	3600	IN A	192.168.2.3
+			3600	RRSIG	A 5 4 3600 20100405021838 (
+					20100306021838 63192 sql2.example.com.
+					k9s9zNDcO0BR+Gy+2zeFq1O/KNtq0y609Rwy
+					AsGpNjiF08rPWVpEUXDJDsO7gx03ES4gnbou
+					LYwtBrzlekjofSga8FtkWkcLaxCZ6+X1kuJJ
+					rBIaiq3AJkzIE4RvdqymOWMgGSb9W9szcbnd
+					h1OOHdoyW53z8O3EAEUFS16OAGs= )
+d.sql2.example.com.	3600	IN A	192.168.2.4
+			3600	RRSIG	A 5 4 3600 20100405021838 (
+					20100306021838 63192 sql2.example.com.
+					NeXmw3JQHJnfkvO/TeyNgtCYVMqNB24xB+gA
+					sMTbmsOp6AeYHCLe23yej3OiSFZE2ZDcGl7u
+					nAACdOtGhuLTXWgFIkAArK2uJEEzLcbxeYKG
+					XigvbKSGLayFiCWFKUrkCY45LSx8BFm8T1lL
+					gqqaEOoLsyXIMsaXZr+lxVKvloo= )
+www.sql2.example.com.	3600	IN A	192.168.2.5
+			3600	RRSIG	A 5 4 3600 20100405021838 (
+					20100306021838 63192 sql2.example.com.
+					lU5C4PWsIGRpr9J+L9/4/qa0DtSI8UqKsifT
+					sR6PvqCaQ1ckrBo7ydUMhvAFgaxMGellPx3L
+					bCiXg6lTmmYhu8OjD+MP75O0Wf0eHiLFc30O
+					ff+vxHXnr8nD3NaipNS2tknoJLTnN20B2IEe
+					si8jhHmKzDVQWiHDcWbk1mjXolI= )
+2BGB4LBTNVHRI9AK6UAJHH2OJT502O0N.sql2.example.com. 7200	IN NSEC3 1 0 10 ADDFEE GL4QIPNRBF61DU386BB2KR5421KMG027 A RRSIG
+			7200	RRSIG	NSEC3 5 4 7200 20100405021838 (
+					20100306021838 63192 sql2.example.com.
+					dkKEl+NpM93LpRGbz2kQqLvxOfzepLwTeM9/
+					jmU61386kWjhgMMBtw1BUBgukid3frGR6nvV
+					nJZxfFGUlLPI8xYHZ3jd4tvmVihCJLqgrYKq
+					kn1RS8iDWzJTcnCnoh/tk56WKRBbmSCRwa06
+					N4kzs7xDwZza/llhwKO0wtISEXk= )
+GL4QIPNRBF61DU386BB2KR5421KMG027.sql2.example.com. 7200	IN NSEC3 1 0 10 ADDFEE HTD0INO9630H7MCGPOEB6MF9SPVCA3R0 A RRSIG
+			7200	RRSIG	NSEC3 5 4 7200 20100405021838 (
+					20100306021838 63192 sql2.example.com.
+					xtklCx/faeEek/n0jipi+vOE+4wPqEDslD9t
+					iH/8XjR++2mVyYDqdttt4iVAnr66hFQ31ftJ
+					aLzFM951s2b7nyfHupJgRudyA9Y6uX2lFIjl
+					zrzRgZwMXwg7Ob0zX3M+09KccTt95wYO8/i4
+					hvRRerk/0XCpkfU0OE7aF5VBuos= )
+HTD0INO9630H7MCGPOEB6MF9SPVCA3R0.sql2.example.com. 7200	IN NSEC3 1 0 10 ADDFEE MKI8J0I7MHI2U4K0L3V0VLIRI3RCAD7R A RRSIG
+			7200	RRSIG	NSEC3 5 4 7200 20100405021838 (
+					20100306021838 63192 sql2.example.com.
+					DKv1FkZRyhNQxia2+hxtcQsOaA60gC0xPujv
+					vm3omETNxll7PwO69b9Nmh5/nv8CbxDrl+fQ
+					AbzBPP6FZdbQfR6yjLt+Xef1YG79qK6EEJpM
+					ylneYdx54cxTUo3WcviuBKygFc/clrr6Hea7
+					EC2YHjVfCniiqS3d9KrULV6KpL0= )
+MKI8J0I7MHI2U4K0L3V0VLIRI3RCAD7R.sql2.example.com. 7200	IN NSEC3 1 0 10 ADDFEE OQRIGUURA2EA10PTM2S3E8FF152OLJFM A RRSIG
+			7200	RRSIG	NSEC3 5 4 7200 20100405021838 (
+					20100306021838 63192 sql2.example.com.
+					Hk1MQB/K/xVocCITenl81R2SJlVklk9D0rUO
+					VHnaL35hO3pCznZQ3A8KzLjE0Zy8m1Yh7Pkb
+					w+KmjwpxTsj9cDFeUO050bwbM7cdesnRUBUR
+					0rLAQfZBI6UALTCkTj6sBbpOXYZHToeBr7ac
+					ZidcGHEkDMRonYePH+QD845fJSk= )
+OQRIGUURA2EA10PTM2S3E8FF152OLJFM.sql2.example.com. 7200	IN NSEC3 1 0 10 ADDFEE OU39TUD6NV4L80BF15H6TJ6DVNOERDP0 NS SOA RRSIG DNSKEY NSEC3PARAM
+			7200	RRSIG	NSEC3 5 4 7200 20100405021838 (
+					20100306021838 63192 sql2.example.com.
+					QZrp4Vqz2Muvrc2duM1sxgDFZBEJNOyaZTMx
+					F6OaVKOFZhcZQBzKJZkANDarJmKlwsSW9BAD
+					JvP5RpGzHAtL8zVSWJgeEkL47ldHdejyHhCQ
+					6Z8F3ip7lonIx9J3HoSQz3OSJS9chX63eAS9
+					2XegwKglK0aGl4UE5qxIURQj4TA= )
+OU39TUD6NV4L80BF15H6TJ6DVNOERDP0.sql2.example.com. 7200	IN NSEC3 1 0 10 ADDFEE 2BGB4LBTNVHRI9AK6UAJHH2OJT502O0N A RRSIG
+			7200	RRSIG	NSEC3 5 4 7200 20100405021838 (
+					20100306021838 63192 sql2.example.com.
+					qhn5WW5nC9neuarr1947bUW6rS4X0P8vU/L7
+					KlyzrbhPVDK/3Ko+S02nIonZ2Q7WMW2twb2A
+					N03SoLrwPPkTEK5BqTArbZha6R1a2HU1SNja
+					qtVgHqVKFz2DXY1jcewQ/cE0XwgeMn7Xunvz
+					E9Tk0jcWsfCJhs7E6TQ8IkeDvoM= )

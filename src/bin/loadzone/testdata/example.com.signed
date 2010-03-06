@@ -1,4 +1,4 @@
-; File written on Sat Feb 20 01:45:38 2010
+; File written on Fri Mar  5 19:13:28 2010
 ; dnssec_signzone version 9.7.0
 example.com.		3600	IN SOA	master.example.com. admin.example.com. (
 					1234       ; serial
@@ -7,40 +7,40 @@ example.com.		3600	IN SOA	master.example.com. admin.example.com. (
 					2419200    ; expire (4 weeks)
 					7200       ; minimum (2 hours)
 					)
-			3600	RRSIG	SOA 5 2 3600 20100322084538 (
-					20100220084538 33495 example.com.
-					KUun66Qaw36osk2BJS6U1fAy3PPDkNo2QK4m
-					eGNbDBY8q8b+f2o+IXJ14YCvssGl1ORW0CcL
-					nDRxssnk8V/Svmj5iFhO+8HC2hnVBdi2zewv
-					dVtwRb+lWwKN7pkXXwuy6g1t9WCd/j5FCc/w
-					gxqtZUTPb6XgZcnHrORDMOTqLs4= )
+			3600	RRSIG	SOA 5 2 3600 20100405021328 (
+					20100306021328 33495 example.com.
+					d5AuvOc1q4KtKCG1Doy8/8iFxS80xc00Pyqn
+					TUHT1vOp4w76MJjur7o3fx6tKuDfqGhiXBy5
+					JMZBNSgrn3ipn9W4rBwwG42DxTNHR/EouWy1
+					hngp0tmds8pUSrOheZAZkMnYsMrlZS5IZuYN
+					VogXi84PJsnsibbpv30+JVX5vX4= )
 			3600	NS	dns01.example.com.
 			3600	NS	dns02.example.com.
 			3600	NS	dns03.example.com.
-			3600	RRSIG	NS 5 2 3600 20100322084538 (
-					20100220084538 33495 example.com.
-					ClcrfjkQZUY5L6ZlCkU3cJHzcrEGrofKSVee
-					oeZ+w6yeEowFNVXs2YBo3tom53DiCrdD9rs3
-					feVSLGW5rjsz/O6lDuomgQG+EVSnWa7GTIPB
-					Xj1BmDXXp3XxeldYmhf4UzaN5BA+RUA5E8NC
-					hNKuNNof76j2S9tilfN/kvpy4fw= )
+			3600	RRSIG	NS 5 2 3600 20100405021328 (
+					20100306021328 33495 example.com.
+					vUcWEoZrfXNBRt+OqRr2jABJolj/Nnl/wGvd
+					mwXLC5MPiQsXj//r2ptasnhVLva/EnnZ9gzm
+					ewp/rgW9XsCgXVVns5f+ApVPtQ53sxeG8NOx
+					KyFnVC8eVDwy2arwmG3/8iWrvl2us3vzjban
+					T+FATw2ATDUwhWzPkl++bivURlI= )
 			3600	MX	10 mail.example.com.
 			3600	MX	20 mail.subzone.example.com.
-			3600	RRSIG	MX 5 2 3600 20100322084538 (
-					20100220084538 33495 example.com.
-					ooh3/uAdqf/BFxqhncQrCvepKJbWf8235WLD
-					93m3TwJoxSLC5SsD6SGXa49wWeWxBpjhargR
-					aezN7JQ1T6RKMUQcbCz3Uoku2gznPIsUvJEU
-					w+vFz2hh5FUE2OVoiD5UL34PsyjpMu7XBjNY
-					FUK564QHflpeRpuLoYyxexgSGmY= )
+			3600	RRSIG	MX 5 2 3600 20100405021328 (
+					20100306021328 33495 example.com.
+					OdwG6QZ4jzKgyAXIRJirxOT9N5j42UnGkjRo
+					fdYifPRhSDU/GKRVBjL1rR3+dSHbH1g390kh
+					o8L+24B/98uAvbaqx8iSArmtbPX0E658VpeH
+					pLH5N0PxCbOgogJWP3o3KeAVdkRMKbzNWGvP
+					pBoeDOBUdv0WJ//IBtKZ5IWJOZU= )
 			7200	NSEC	cname-ext.example.com. NS SOA MX RRSIG NSEC DNSKEY
-			7200	RRSIG	NSEC 5 2 7200 20100322084538 (
-					20100220084538 33495 example.com.
-					KxuVaPPKNPJzr/q+cJPiNlkHVTQK0LVsgTbS
-					qruXQc25lAd0wn5oKUtxL1bEAchHkfA8eLzc
-					YCj2ZqqAv9OJubw53mfskTad7UHs4Uj2RTrI
-					sNGMCiZGgOpvNb9JcWpQtoyXVT1uNse+Qsbe
-					ir0eyeYIufUynFU041jtNrlJMio= )
+			7200	RRSIG	NSEC 5 2 7200 20100405021328 (
+					20100306021328 33495 example.com.
+					GdyxCI8sGIw5Vv64fAH4bqNoUgbzmxC2Qw6c
+					qdRIr9RpRlt/t8qXkiB2LAE7NV7Vlrt4vULD
+					P4HNVTxep+G0oJ2VQuwry1rBA+gCkBCOnyEh
+					oR12IWXRE0GZ0FLe5z0heUhYxKy7iez9Hh+a
+					nX4B3yAczjJFd2oARoMM1+UDQKc= )
 			3600	DNSKEY	256 3 5 (
 					AwEAAcOUBllYc1hf7ND9uDy+Yz1BF3sI0m4q
 					NGV7WcTD0WEiuV7IjXgHE36fCmS9QsUxSSOV
@@ -60,177 +60,188 @@ example.com.		3600	IN SOA	master.example.com. admin.example.com. (
 					RyoYNcL1SXjaKVLG5jyU3UR+LcGZT5t/0xGf
 					oIK/aKwENrsjcKZZj660b1M=
 					) ; key id = 4456
-			3600	RRSIG	DNSKEY 5 2 3600 20100322084538 (
-					20100220084538 4456 example.com.
-					SOR9XmFwTECrb7GH4WWybovFVkzsV3pqtz5d
-					Dp7L24nx/v+MDJzWhzczWh7i4P8Z2BCRnzqU
-					V7H9RRCLv/o9utDREFsYf5hBzidJcjUpyMQ3
-					cqGh9obIk/QRf0JjorUNOuAENppIjOSJtzk4
-					K7WYp+KIwrjjPeDEp2e5l+9EuBspowOD5R+P
-					QxkzNxbiGqo4UIZ0HqmJccpAykd8OCRLUGv0
-					EqZWVymTJ7us5uoVS6TofP3fmtQSXUlB2GVT
-					b0Q3UW2PdH332nU588Q1wQTf3xa8FI7rJD6C
-					LVC0OSI7lWpWVID1X4++KIDVGzwcNj8W+ilC
-					RHBbdEIRYuE0AhpMDQ== )
-			3600	RRSIG	DNSKEY 5 2 3600 20100322084538 (
-					20100220084538 33495 example.com.
-					OgEjTmMOo4Evt3AAmAN1WufYuXaPUP2dGd/B
-					96K6OVdE5xDWnMHz1cO2tzkn+E6Y4oJl1EBg
-					ShZguhchu6EA6ppSqsgQCKlkVgf+hvkBqbRq
-					+1gmotrCrI5P3HzkgiqF71adijidvXQal3BI
-					zqKlYMTaYbdxYVlTjOfhk6weSPM= )
+			3600	RRSIG	DNSKEY 5 2 3600 20100405021328 (
+					20100306021328 4456 example.com.
+					H6+1xsac6jivDyzgL+F4O1Bs6Qc+V/OGHpCj
+					9/L2SxxxJ1cA5taMea66bL/zoTdjPJiqUXUb
+					9KyKhs1dGuu9/+nRzrZBfEtn0gMhF+ogE3eN
+					+GktiSPux46NKG07JWH5IF3nIdJP5AkOdIcI
+					joOjqWATKg/mxYBiHhHAZMK/dRv6C1vIIJ0n
+					SQdDigcTOACqhWEDvVo9wMvfFJTBGIOEuQxl
+					v44BEqflLT091OeCq+VTuzU9CJlDUxI8ebue
+					K6Eh3Fu94FavxJlgxDOD3m4PshBKHpelnMTL
+					d9U1l918rZIy+CYC2RvnA2bCCQ0RtZfaQNCg
+					zINT9QYWj2lgWdZkYw== )
+			3600	RRSIG	DNSKEY 5 2 3600 20100405021328 (
+					20100306021328 33495 example.com.
+					ZZcC9YGnoZTTys1bR5cyalFPsVlAR1SdQMjG
+					SJjJWZitH3nQdOLZ24lAdPfEEKVxwbEAcAek
+					+P8x08X8DeJESiMWTAP0nHeUrxPgiDg3GxbL
+					tmwtahqCN2KjnZ3fpvGTuRuvlKUfmHx0+GMm
+					DmT+aZoX90f+TVvexkzhBzx6R0Q= )
 cname-ext.example.com.	3600	IN CNAME www.sql1.example.com.
-			3600	RRSIG	CNAME 5 3 3600 20100322084538 (
-					20100220084538 33495 example.com.
-					bGPIuZilyygvTThK4BrdECuaBcnZUgW/0d09
-					iN2CrNjckchQl3dtbnMNirFsVs9hShDSldRN
-					lQpiAVMpnPgXHhReNum7jmX6yqIH6s8GKIo9
-					1zr3VL/ramlezie5w4MilDHrxXLK2pb8IHmP
-					+ZHivQ2EtdYQZgETWBWxr5FDfwk= )
+			3600	RRSIG	CNAME 5 3 3600 20100405021328 (
+					20100306021328 33495 example.com.
+					mgR0kc7NMYVQtYs+KA/HcYWpNzObiukDyx2U
+					dlobkCH8Bt7YisrLs+j6cUNx9D96BM0mQ+SD
+					BO1FayIBszuZ9ZQ1T6yWxchoEc8lbUgq73W2
+					3I1P76/r2BFo6kp4OeFZ+HkYzgjp7SS10+yB
+					9MZZ37mdygNf6GExRa9Ox8l5yl4= )
 			7200	NSEC	cname-int.example.com. CNAME RRSIG NSEC
-			7200	RRSIG	NSEC 5 3 7200 20100322084538 (
-					20100220084538 33495 example.com.
-					inWsFwSDWG7TakjwbUTzTRpXz0WifelA5Kn3
-					ABk6BVirIPmd+yQoNj2QZBDFAQwhnLPlNws2
-					Oo4vgMsBMyx1Fv5eHgMUuCN3DUDaLlzlPtUb
-					42CjOUa+jZBeTV/Hd7WZrirluASE1QFDprLd
-					SSqoPPfAKvN3pORtW7y580dMOIM= )
+			7200	RRSIG	NSEC 5 3 7200 20100405021328 (
+					20100306021328 33495 example.com.
+					NWP08QajgwdbQg3OXrImgYF5QUrP+0xMsBS/
+					bZhoF8XlahTsUcQS0PTTGfdvAhSmRwWU8uqp
+					89231D2qYXe6lzJfgRr2jt+Xogjd1LTX2NNk
+					ipwYUmDN0tfFFwy3j1YqrCCVxtGeWdG0jWAR
+					8S+8RapcToDXDBizfZIpQUJUjv4= )
 cname-int.example.com.	3600	IN CNAME www.example.com.
-			3600	RRSIG	CNAME 5 3 3600 20100322084538 (
-					20100220084538 33495 example.com.
-					U1wjt0XY9xjTwvUmWSUcfLGMhCjfX2ylWfHr
-					ycy50x2oxcK9z94E1ejen9wDTIEBSGYgi6wp
-					Z8RK0+02N1DWTGpDqNXd7aFRfDrWQJ/q/XJH
-					Dx0vlcmhkWhrT82LBfKxkrptOzchuSo/c0mp
-					K+mpiIMc1VOwY+yuQ2ALfcD6EHw= )
+			3600	RRSIG	CNAME 5 3 3600 20100405021328 (
+					20100306021328 33495 example.com.
+					LLe4c+59/kLZOrjB9WrVM0EFWX4suXGJ3EN+
+					wnMtHU02F5qEPwnwefM208pIJVEIOrQh7EuZ
+					EmNWw/YSKAtb96Ian0e2HUQ6lE4xXM5fBi2g
+					tOkslN+sCKtERGj81tw91EbfOgKCZW/JxOK8
+					LP/pzlnDzJ3rT92I1EpV9cZhWJw= )
 			7200	NSEC	dname.example.com. CNAME RRSIG NSEC
-			7200	RRSIG	NSEC 5 3 7200 20100322084538 (
-					20100220084538 33495 example.com.
-					rbV+gaxfrsoha59NOLF4EFyWQ+GuFCVK/8D7
-					7x1atan3HNlXBlZ1smgudKTaJ3CtlobIDt0M
-					EdPxY1yn2Tskw/5mlP1PWf8oaP3BwGSQdn4g
-					LI8+sMpNOPFEdXpxqxngm2F6/7fqniL1QuSA
-					QBEdO+5UiCAgnncPmAsSJg3u1zg= )
+			7200	RRSIG	NSEC 5 3 7200 20100405021328 (
+					20100306021328 33495 example.com.
+					Byp8UqIsOPeukqVjt4kqDSrVgF8XzVl8Va59
+					mcdBNdLmhJQplwOZDVtJ2ZoVreDKb6OrtmNJ
+					l9Foywczy8g5uhpXrftc6KqiV9V1Eb3gs/Mt
+					S4khRSkDe1dWVWvR/djZaX1J9pTm4nTBgYSL
+					n53xsjMxFtPfp99CW08/w2BiF84= )
 dname.example.com.	3600	IN DNAME sql1.example.com.
-			3600	RRSIG	DNAME 5 3 3600 20100322084538 (
-					20100220084538 33495 example.com.
-					ae8U47oaiwWdurkSyzcsCAF6DxBqjukizwF7
-					K7U6lQVMtfoUE14oiAqfj1fjH8YLDOO/Hd1t
-					wrd/u0vgjnI1Gg32YTi7cYOzwE912SV1u2B/
-					y0awaQKWPBwOW0aI7vxelt1vMUF81xosiQD0
-					4gOIdDBTqbHKcDxum87iWbhk4Ug= )
+			3600	RRSIG	DNAME 5 3 3600 20100405021328 (
+					20100306021328 33495 example.com.
+					He1wFX1A+qJ/YKgou9d/gK36tVILzA/so3PV
+					GBUfmasfDlXaDb/0EnfXepdeoPyyAuecaC0F
+					xgkxq/V2ikpaWB7sq7WWSinj+0hRBGBJQD1f
+					kndYVkngYF+MNsaQVPmj65WShgZQKi3Izlet
+					dXFhHwDuNTsk+sgowIH8PV6763U= )
 			7200	NSEC	dns01.example.com. DNAME RRSIG NSEC
-			7200	RRSIG	NSEC 5 3 7200 20100322084538 (
-					20100220084538 33495 example.com.
-					c21Fff2D8vBrLzohBnUeflkaRdUAnUxAFGp+
-					UQ0miACDCMOFBlCS9v9g/2+orOnKfd3l4vyz
-					55C310t8JXgXb119ofaZWj2zkdUe+X8Bax+s
-					MS0Y5K/sUhSNvbJbozr9UYPdvjSVBiWgh3s9
-					fsb+etKq9uFukAzGU/FuGYpO0r0= )
+			7200	RRSIG	NSEC 5 3 7200 20100405021328 (
+					20100306021328 33495 example.com.
+					Mptzmr87da2fvuPoOGLwHZ1LgRYayvCeZOoy
+					jvEN3nQr+2E/QFMe1xGafPwSmtA8gi+WLtlQ
+					2vXki/gpGG/UOhwPFdwhdRO/aUZGLO4Oy6pz
+					o7cH/+YIro1Zir0cxqmZTZsNLVI8P0VVoF7V
+					0DKF0d7yL23OEKixNnp3i3SPmL4= )
 dns01.example.com.	3600	IN A	192.168.2.1
-			3600	RRSIG	A 5 3 3600 20100322084538 (
-					20100220084538 33495 example.com.
-					NIawlZLk8WZAjNux7oQM2mslfW52OZFFkWt+
-					+7FHu2SU98XqEeKfCMnpgtWe5T8Nr9cS8df9
-					01iEOJoWQzGTEaHYUBtEhsSjBVn7mKp3fz64
-					73a2xxy75SUKZ0rxjNXSZ8Q5rnFmkX0HTH2S
-					g51mtjH6aC2pfheQnA2t193BnSg= )
+			3600	RRSIG	A 5 3 3600 20100405021328 (
+					20100306021328 33495 example.com.
+					KqK0TwB0ZtMSdBCh3ywBVWT6NDxKX87kH+0s
+					FQgDUo+WIC6WUp0M3qrlQe+US5+pctpVZyum
+					cdsHTYS1i1GtgiCr4jZBBVZDP9Qq9XJgrfZt
+					8U/YFqeyQoCC+/HO+mRbkflhXndzGatnUgrr
+					aaW1sYhFgEe8SFomj1fIhYzBq+I= )
 			7200	NSEC	dns02.example.com. A RRSIG NSEC
-			7200	RRSIG	NSEC 5 3 7200 20100322084538 (
-					20100220084538 33495 example.com.
-					EkyeshmMNP9xiAz6mDFDIwksTdmkF9zsFzLu
-					VKAgK6eUk7St6tp5PSvjA8nWol0vdvvz4LK8
-					5a4ffTFEiNRyvWeYP2vOhEkyDcrwuCd8Vc3j
-					h/8Sm1Js+nX7hJStrZGFvp2TWPpt9nKH5p3M
-					xXvTb/YVurnue0xSeFAE17O3+I0= )
+			7200	RRSIG	NSEC 5 3 7200 20100405021328 (
+					20100306021328 33495 example.com.
+					u/IwAp81rmt/r1OGtF6KJgruMG6o37zKcKxe
+					8wYJpgGr0/RpH2d8AVG2NAvhHSJk52s4HIKz
+					yXXhsYzUvNvZqRG8VbnjBk6dH3/wJe0VpNT3
+					HWC6lMxnnwnMCk0Q9NiAGeJfJgURXx7h65Ih
+					tqUpk0sGOgJknov2+5d05Jj4hCQ= )
 dns02.example.com.	3600	IN A	192.168.2.2
-			3600	RRSIG	A 5 3 3600 20100322084538 (
-					20100220084538 33495 example.com.
-					XJtVMbUIRE0mk6Hn/Nx6k36jaxaBDPK2/IYB
-					6vCQjJETz6gW4T6q/H/eY9/Lsw5iYPFhoBRD
-					xT4XFj575t98kELXnJe1WhuMbRPlOhyOjxkL
-					ECaUne/sbFPOtbGFx9ohuojI0RgxxZiCFaO8
-					wJuv6nfPuzmlLajWS6z9NZeOMIk= )
+			3600	RRSIG	A 5 3 3600 20100405021328 (
+					20100306021328 33495 example.com.
+					PWK9EYa7QrfGwn1XuzIS4hVBdfMd9LsIOuf+
+					fg7oByfI3bir45Yn0XPdyubvoomHGKpAzID3
+					aRjaSqFDdDizrCtJhnN6e2DOLHmGkWi6wpUr
+					i3AzYeQnHSgA3I2YTHDQ0zWQ46fbzAp+KovA
+					h7BLGn8LAYju8VTiI+51O+KsoQU= )
 			7200	NSEC	dns03.example.com. A RRSIG NSEC
-			7200	RRSIG	NSEC 5 3 7200 20100322084538 (
-					20100220084538 33495 example.com.
-					imBNTMB3sPU4kblcaAH6V7lCVt5xgtAybi3D
-					A/SbLEulLaV2NE6vcoEn/AieaM4mOJicQnUD
-					j/H+1hSEhzxU2tRM8zfVlvztxQWn6eh7ZR4m
-					KfNDSvRUGU9ykhpwMyC7wjOt1j5bcSA/OTnL
-					RAilslnJyOM4bSaxVEFo8YPjncY= )
+			7200	RRSIG	NSEC 5 3 7200 20100405021328 (
+					20100306021328 33495 example.com.
+					NSO5/Pc3ayufI7Uwk2akkB1PGA49bjgX6jj5
+					g6/IJpzqKriLLksZ3h9HJqWIfvG78gPWNzcF
+					Wbk0bsHI3p6UxpApqOkzFS0mdP4+a3t7Eb0a
+					0oyZ7nc+hD/vIAtZkdh5w78L5KiI2/QvtK84
+					kGLqxt2Bh2pOthKt2fDJOVBcPRQ= )
 dns03.example.com.	3600	IN A	192.168.2.3
-			3600	RRSIG	A 5 3 3600 20100322084538 (
-					20100220084538 33495 example.com.
-					Ubrcm1H+F6m8khle7P9zU8eO+Jtuj+1Vx1MM
-					5KAkmZPJwQe9uTcoCpQa6DXOGG9kajDTnNN1
-					Be1gkZuJDTZJG4SmJLXLbNY3RDnxpGmWta3q
-					s/VgDq78/YM8ropt1/s7YKyrCfGE2ff+FUB0
-					mLObiG01ZV2gu5HJzgE7SEWLEiI= )
+			3600	RRSIG	A 5 3 3600 20100405021328 (
+					20100306021328 33495 example.com.
+					QvjZeOzYVYl23dj6Rkl18Tj24N8SYgEYSPWE
+					ZRa4bFxDwxVt1M5AB5QG/iSmdfNFw70j+A1Q
+					qHLphQKmjDkEWI2XYOmcdJ1gSoCC2fStcFvW
+					l+/H/4Epy7aukvf1OQQBC2xb4N8pnjeG5ATw
+					EQslxYHWkpRYAcPi2cPfq6n6ogk= )
 			7200	NSEC	foo.example.com. A RRSIG NSEC
-			7200	RRSIG	NSEC 5 3 7200 20100322084538 (
-					20100220084538 33495 example.com.
-					nn829Xw5CJFnPHwI9WHeT5epQv+odtCkHnjl
-					PFGoPTLOyiks+041UmMqtq3uiSp4d2meMSe9
-					UuDvoROT0L6NTtQQvVqiDhTn0irTFw1uw7fO
-					8ZTG7eyu6Ypfz0+HvfbNvd4kMoD2OTgADRXP
-					VsCTwK+PBOIIG9YTEQfl8pCqW5g= )
+			7200	RRSIG	NSEC 5 3 7200 20100405021328 (
+					20100306021328 33495 example.com.
+					Susdb3W6aOjuf/Y2JEQnpXpD7hv/MMiJNwll
+					oK322Vr6BDhq8DWAqqBIUa28YP2hDcq3h5p6
+					n4zmDnrAerKpCxvYtcZgxdHAtLPqAitg/Wur
+					q9LYlOBFMXl0fG5qdc85cDSGKBDSERfEaeB9
+					ZGO0flyPOAewxgrTFFqfYY4q+e0= )
 foo.example.com.	3600	IN CNAME cnametest.flame.org.
-			3600	RRSIG	CNAME 5 3 3600 20100322084538 (
-					20100220084538 33495 example.com.
-					DSqkLnsh0gCeCPVW/Q8viy9GNP+KHmFGfWqy
-					VG1S6koBtGN/VQQ16M4PHZ9Zssmf/JcDVJNI
-					hAChHPE2WJiaPCNGTprsaUshf1Q2vMPVnkrJ
-					KgDY8SVRYMptmT8eaT0gGri4KhqRoFpMT5OY
-					fesybwDgfhFSQQAh6ps3bIUsy4o= )
+			3600	RRSIG	CNAME 5 3 3600 20100405021328 (
+					20100306021328 33495 example.com.
+					bljg//e1PekNHE3JEvAcrLSQOW2Vw4A6NnG4
+					5afdS03YxJW6oPj+PxS7rcItnn+cMEC9hg5c
+					v/3dj79VqxjOsULFQBO+hIKNtTN9KeMOHSvX
+					50jkGS96+etEavjbggTJ7vO31ttWNbCZv7vQ
+					3Yli9XSJyUCIi6GfjMrsMYdJYGw= )
 			7200	NSEC	mail.example.com. CNAME RRSIG NSEC
-			7200	RRSIG	NSEC 5 3 7200 20100322084538 (
-					20100220084538 33495 example.com.
-					RTQwlSqui6StUYye1KCSOEr1d3irndWFqHBp
-					wP7g7n+w8EDXJ8I7lYgwzHvlQt6BLAxe5fUD
-					i7ct8M5hXvsm7FoWPZ5wXH+2/eJUCYxIw4ve
-					zKMkMwBP6M/YkJ2CMqY8DppYf60QaLDONQAr
-					7AcK/naSyioeI5h6eaoVitUDMso= )
+			7200	RRSIG	NSEC 5 3 7200 20100405021328 (
+					20100306021328 33495 example.com.
+					D20zTV49yeSHDbZzxRYXylnfRyXh8a7OWE19
+					9q4fMshdQiTTAKWiVABl0RSeUeMyjxGIkKiT
+					+LO1N38O5QsNgYjptDlzBP+EjYgzq8Xcp92n
+					sfSy/1eBMNgngFdzyoSRh3yCW+QpgJtuNBOU
+					xz5FpDehkMI49zh6yUc5ZXLU248= )
 mail.example.com.	3600	IN A	192.168.10.10
-			3600	RRSIG	A 5 3 3600 20100322084538 (
-					20100220084538 33495 example.com.
-					EG78Rr7lI99x8fCg+nSTGJtxyK9rlnmbHB+P
-					bn6UX9QdyYvWCj3/wU3Rz2z8E/piV+XrtLNQ
-					hrqOkaM1XaxPg/DgiZ275uPJRObLFgvuCMXZ
-					cBsJ3kt4zw+N6RjtjKO9WkvheRq6TfiiLB+O
-					POOlueqWagMDXx1Pjmbkyv7BNAo= )
+			3600	RRSIG	A 5 3 3600 20100405021328 (
+					20100306021328 33495 example.com.
+					qSeY+NXyzein0SxdEjWveWUGzuwTG1GlllWZ
+					DUJg3CNqqcznOuh6zLipDwpg30MDfAnJSY2S
+					KjbJyV4kSmeE+7tZvPlp8ZR0xI1gAvLrKctk
+					95n3fuRfFCyolasU6+NTs41/XRx/4sGQTATf
+					OxrJv823Q69ewqnB/dqudAyd5yA= )
 			7200	NSEC	sql1.example.com. A RRSIG NSEC
-			7200	RRSIG	NSEC 5 3 7200 20100322084538 (
-					20100220084538 33495 example.com.
-					lSS6eNZVy1oAK/+54kAc96NJY0z0guJDmV5u
-					dENBCldWli7MkcO5SrySx48DaYPpOfEv2ulS
-					ItW7Qn/REMbcMb8g4IYxQK4GRqnlmgExdTqZ
-					l/3oQbJCXCvBW4nhtYreeBaKXCw2yIBogoBD
-					1Uej/lMZ48o3oaxpC+SrC76gN+Q= )
+			7200	RRSIG	NSEC 5 3 7200 20100405021328 (
+					20100306021328 33495 example.com.
+					n+m4tCesXTnHvwxxP5MjVspJYtTqWZD5VFb7
+					OBYwSRselINYPEBDGLGfOiN+hofqPD3u/Mne
+					yUjcEUz1yom+tmyKaFJ6myYd/SSAmY33Oakk
+					RvbFePwMigoDKmoX3Xc8sN1s/oAsZWH2/La4
+					+JIQDiPxgMubPiU8Ean+4JpJfUY= )
 sql1.example.com.	3600	IN NS	dns01.example.com.
 			3600	IN NS	dns02.example.com.
 			3600	IN NS	dns03.example.com.
-			3600	DS	33313 5 1 (
-					FDD7A2C11AA7F55D50FBF9B7EDDA2322C541
-					A8DE )
-			3600	DS	33313 5 2 (
-					0B99B7006F496D135B01AB17EDB469B4BE9E
-					1973884DEA757BC4E3015A8C3AB3 )
-			3600	RRSIG	DS 5 3 3600 20100322084538 (
-					20100220084538 33495 example.com.
-					dIqZKvpkJN1l92SOiWgJh3KbjErIN+EfojMs
-					m4pEdV5xQdZwj6DNNEu6Kw4rRwdvrZIu0Tyq
-					Pr3jSJb7o6R7vZgZzmLfVV/ojQah7rwuYHCF
-					cfyZ4JyK2311fMhRR1QAvMsdcjdyA1XC140C
-					m6AnL3cH5rh/KUks/0ec3Ca7GNQ= )
+			7200	NSEC	sql2.example.com. NS RRSIG NSEC
+			7200	RRSIG	NSEC 5 3 7200 20100405021328 (
+					20100306021328 33495 example.com.
+					QeTGyR6nCTF97WVsyWy8RJZpwVrnytv+GYle
+					r/UgufK3nwRu89CP/UA68kWar/Q5UxnI3RgR
+					Le9DZPb7fkg1koUyOjg3or4oeYbKXZpH3XY8
+					EM89EZIzMda0v4Hw7LsUIgjs9zMGgkRM7NQP
+					NOs40J76flnEKvCapnoszve9bDM= )
+sql2.example.com.	3600	IN NS	dns01.example.com.
+			3600	IN NS	dns02.example.com.
+			3600	IN NS	dns03.example.com.
+			3600	DS	38482 5 1 (
+					F44110605A52A65AA364A61D543BC2E150E1
+					D367 )
+			3600	DS	38482 5 2 (
+					9FB7634F7BB1C84478BBDB32F4D15371D5B4
+					101459E700E50B0B2C29A5018262 )
+			3600	RRSIG	DS 5 3 3600 20100405021328 (
+					20100306021328 33495 example.com.
+					MUIsF6Ty9dTP4pGvoAI+OrQojBIFpogr2qPh
+					QW2/JN7A6VQKu46SwlXDN4SeE6dlqO9dz/WQ
+					8scTxWCTAFLH9oREogH8nbBvzcuK2IRJWWdr
+					4dqLVjnFT6yWJOuYRHghXLTXjTjbZD1yMt3L
+					gIGzs7tTv6lJ6zReYR0gMX0/Xak= )
 			7200	NSEC	subzone.example.com. NS DS RRSIG NSEC
-			7200	RRSIG	NSEC 5 3 7200 20100322084538 (
-					20100220084538 33495 example.com.
-					k9FRdFyk/cPdkmmaoZbGZPpzIzfbFWQ3QCHd
-					2qhJa0xAXaEOT/GBL6aFqx9SlunDu2wgES+T
-					o5fWPZGi4NzWpp6c5t27rnATN/oCEQ/UYIJK
-					mWbqrXdst0Ps5boznk7suK2Y+km31KxaIf3f
-					Dd/T3kZCVsR0aWKRRRatPb7GfLw= )
+			7200	RRSIG	NSEC 5 3 7200 20100405021328 (
+					20100306021328 33495 example.com.
+					JMCBeJ3t+ps/eKshNMuAd3x0T7HCM5Mscumv
+					rZR0JPYYsGipS7CbBnPGtS5XyzcnTmDm3wuz
+					KxtsE6zVTpAQKYto1lZfNqiEpOZCvyPHehIm
+					Aqw5dlVVSsaRT7bLLQRLx+MnJZocCq1Wd1Jy
+					PY4UONQwl6LQAly7WzyAW31XsEY= )
 ns1.subzone.example.com. 3600	IN A	192.168.3.1
 ns2.subzone.example.com. 3600	IN A	192.168.3.2
 subzone.example.com.	3600	IN NS	ns1.subzone.example.com.
@@ -241,50 +252,50 @@ subzone.example.com.	3600	IN NS	ns1.subzone.example.com.
 			3600	DS	40633 5 2 (
 					AA8D4BD330C68BFB4D785894DDCF6B689CE9
 					873C4A3801F57A5AA3FE17925B8C )
-			3600	RRSIG	DS 5 3 3600 20100322084538 (
-					20100220084538 33495 example.com.
-					rARTxwVxMTN64iK8NWOW7FjXLdIJBpAik5BZ
-					TcmqOAp16v3ijRC4UZfs6LFHMXHwIPHJlggx
-					mrDDeJtSgNAs82ZR8/L8T80tHL7cythf3OFA
-					t5VDY2sQKEBPun1bRhi4g0KAbd5MURv9kawX
-					MCxNuSkIAZpzZMHdMo7jLxHLsSs= )
+			3600	RRSIG	DS 5 3 3600 20100405021328 (
+					20100306021328 33495 example.com.
+					hAtdQPwmdCi+0pELa63DM26sp+w+CdZamYId
+					vsvK0N8D9YngxFubUQNQ0cWGfTAtzEBIc9nf
+					/jOyEi6jsuk1f8Ueb98K9DCWfQuK8JcHrmD4
+					q29M+9AjJTzNuup5QcGUaItwN3p53OcQNjYT
+					+6TPFv1cmHIzJRx1g+F0YhgVcqM= )
 			7200	NSEC	*.wild.example.com. NS DS RRSIG NSEC
-			7200	RRSIG	NSEC 5 3 7200 20100322084538 (
-					20100220084538 33495 example.com.
-					Oe2kgIhsLtPJ4+lDZDxznV8/vEVoXKOBFN9l
-					wWyebaKa19BaSXlQ+YVejmulmKDDjEucMvEf
-					uItfn6w7bnU+DzOLk5D1lJCjwDlKz8u3xOAx
-					16TiuQn4bgQAOiFtBQygmGGqO3BVpX+jxsmw
-					7eH3emofy8uUqr/C4aopnwuf28g= )
+			7200	RRSIG	NSEC 5 3 7200 20100405021328 (
+					20100306021328 33495 example.com.
+					koXnly9GZ8HpsdBgtNd4hdSHOR/3GEL/gt0b
+					qZyqXhECDJ2b4vBUbEd0l5NORN/bybS4/5Ru
+					6T+lPvJGwL0N+CasUsEDytY+hTJHqmoTLXdA
+					zsu2Mqj0ubnUW6XvbUyOuLnKmbISminP866M
+					HQTUcx8mK1KyouD0d5BBrvkadsE= )
 *.wild.example.com.	3600	IN A	192.168.3.2
-			3600	RRSIG	A 5 3 3600 20100322084538 (
-					20100220084538 33495 example.com.
-					FdO+UWONgtLKFxUzzygGunw67F9y8SzsP7yO
-					LEYVJclRR8X3Ii62L0gtQHq2y0TcKsXttRsD
-					6XY+tM5P/pgXlTNi7Bk4Fgb0PIDPjOsfT4Dr
-					S80kWn0YbinM/4/FA1j5ru5sTTboOY5UGhvD
-					noA9ogNuQQYb2/3wkoH0PrA2Q/0= )
+			3600	RRSIG	A 5 3 3600 20100405021328 (
+					20100306021328 33495 example.com.
+					PEuhFCuDMaQ/rrhzDJnssbyRDRZznM7s1sqR
+					e8kwfjf0m79wUpMoe+kzjr88+xqVZTyyCeoB
+					QJcq150wrDzjzkEZECnLBU+0PEQU+a3SFVlP
+					IKhCFUmI+XhjYFsnHzeYAg0rXWKNth05N6LS
+					XqaBnUgvxL+mpgdBjG1KTdhHW58= )
 			7200	NSEC	www.example.com. A RRSIG NSEC
-			7200	RRSIG	NSEC 5 3 7200 20100322084538 (
-					20100220084538 33495 example.com.
-					OoGYslRj4xjZnBuzgOqsrvkDAHWycmQzbUxC
-					RmgWnCbXiobJK7/ynONH3jm8G3vGlU0lwpHk
-					hNs6cUK+6Nu8W49X3MT0Xksl/brroLcXYLi3
-					vfxnYUNMMpXdeFl6WNNfoJRo90F/f/TWXACl
-					RrDS29qiG3G1PEJZikIxZsZ0tyM= )
+			7200	RRSIG	NSEC 5 3 7200 20100405021328 (
+					20100306021328 33495 example.com.
+					rV+jmQclEWMdV3Xsyr+hXohyP8evqrUcXcx5
+					P+vQGYopuKJvXPg6doOBXI9LqvjLLWLZIOwm
+					vEQ10QKVaXfFaO1Tkisws00u1okGRnLgYr6R
+					6ZeF6+sMQ9EyTlarVDF0n8/khuH2j3NBwJa6
+					ymL4Vcl8sw5YiaXGb0UZJXnchrk= )
 www.example.com.	3600	IN A	192.168.1.1
-			3600	RRSIG	A 5 3 3600 20100322084538 (
-					20100220084538 33495 example.com.
-					qyFyyV/mE8x4pdhudr5iycwhDsva31MzwO1k
-					BR+bDKvzJg8mN8KxlPZrOlNNUhd3YRXQVwie
-					MyxOTWRPXoxrNEDkNwimXkfe3rrHY7ibV9eN
-					S4OIBUjb44VjCNr9CmQSzfuQ2yxO2r+YIuPY
-					HRCjieD4xh6t9ay4IaCN/tDAJ+Q= )
+			3600	RRSIG	A 5 3 3600 20100405021328 (
+					20100306021328 33495 example.com.
+					TXPC9rTyV+iU1rGxavsgOkKkQceVMoJWRBDH
+					StFdybaYnmdKJMDQWt1da8Zy1tgXQIAAfWEa
+					SXRIbIrIa9RQsQ3HLP2u1KTrwtsBvIjC394N
+					k7XVsTpmOt8Wm5VxPrnSIoLkMoq58fJ7Xg+T
+					JqvXxbe4qE3F66aLZQje6XXQXqk= )
 			7200	NSEC	example.com. A RRSIG NSEC
-			7200	RRSIG	NSEC 5 3 7200 20100322084538 (
-					20100220084538 33495 example.com.
-					ZLZlSVBa2oe4U+7SZASnypP2VkI5gg1/1cVG
-					qYUvfYNIUkcVMWDgn7DZCfpmo+2vdlV/4VhA
-					c+sjDd+X+e57XGnW8+lqZHvG6NMMhmSGmeAT
-					D3D+8lEJJGo0dxoN4rHJQyp/eT2S4nChz+D/
-					ze+YRagYxGF7pXm9zcrw3kKZGTs= )
+			7200	RRSIG	NSEC 5 3 7200 20100405021328 (
+					20100306021328 33495 example.com.
+					PEYfAk+U4kt3Vu78AHJFu7NwXt82I4FOGrAb
+					yl7tft8ravsDriNYG85rCd2OZE9z00udeLX2
+					LLmNOViM1MZdYgvvUk1ArszCbbbnpJv3ucOD
+					Mv8en9xZFByaFklY90/KTslzl+7QiaM2RTFL
+					fmYmW70k7YJUyyoPg96MxxM9gQg= )

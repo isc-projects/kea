@@ -15,6 +15,7 @@
 // $Id$
 
 #include <cassert>
+#include <iomanip>
 #include <iostream>
 #include <vector>
 
@@ -345,7 +346,10 @@ proveNX(Query& q, QueryTaskPtr task, const DataSrc* ds, const Name& zonename)
     if (nsec3) {
         string node = nsec3->getHash(task->qname);
         string apex = nsec3->getHash(zonename);
-        string wild = nsec3->getHash(Name("*").concatenate(zonename));
+        string wild("");
+        if ((task->flags & DataSrc::NAME_NOT_FOUND) != 0) {
+            wild = nsec3->getHash(Name("*").concatenate(zonename));
+        }
         delete nsec3;
 
         result = addNSEC3(node, q, ds, zonename);
@@ -360,7 +364,7 @@ proveNX(Query& q, QueryTaskPtr task, const DataSrc* ds, const Name& zonename)
             }
         }
 
-        if ((task->flags & DataSrc::NAME_NOT_FOUND) != 0 && node != wild) {
+        if (wild.length() != 0 && node != wild) {
             result = addNSEC3(wild, q, ds, zonename);
             if (result != DataSrc::SUCCESS) {
                 return (result);
@@ -811,7 +815,7 @@ NameMatch::update(const DataSrc& new_source, const Name& container)
 
 Nsec3Param::Nsec3Param(uint8_t a, uint8_t f, uint16_t i,
                        const std::vector<uint8_t>& s) :
-    algorithm(a), flags(f), iterations(i), salt(s)
+    algorithm_(a), flags_(f), iterations_(i), salt_(s)
 {}
 
 string
@@ -819,7 +823,7 @@ Nsec3Param::getHash(const Name& name) const {
     OutputBuffer buf(0);
 
     name.toWire(buf);
-    buf.writeData(&salt[0], salt.size());
+    buf.writeData(&salt_[0], salt_.size());
     uint8_t* in = (uint8_t*) buf.getData();
     size_t inlength = buf.getLength();
     uint8_t digest[SHA1_HASHSIZE];
@@ -832,7 +836,7 @@ Nsec3Param::getHash(const Name& name) const {
         SHA1Result(&sha, digest);
         in = digest;
         inlength = SHA1_HASHSIZE;
-    } while (n++ < iterations);
+    } while (n++ < iterations_);
 
     vector<uint8_t> result;
     for (int i = 0; i < SHA1_HASHSIZE; ++i) {

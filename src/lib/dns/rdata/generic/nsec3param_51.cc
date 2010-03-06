@@ -38,14 +38,14 @@ using namespace std;
 struct NSEC3PARAMImpl {
     // straightforward representation of NSEC3PARAM RDATA fields
     NSEC3PARAMImpl(uint8_t hashalg, uint8_t flags, uint16_t iterations,
-                   vector<uint8_t>salt) :
+                   const vector<uint8_t>& salt) :
         hashalg_(hashalg), flags_(flags), iterations_(iterations), salt_(salt)
     {}
 
     uint8_t hashalg_;
     uint8_t flags_;
     uint16_t iterations_;
-    vector<uint8_t> salt_;
+    const vector<uint8_t> salt_;
 };
 
 NSEC3PARAM::NSEC3PARAM(const string& nsec3param_str) :
