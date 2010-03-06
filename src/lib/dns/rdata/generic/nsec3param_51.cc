@@ -37,30 +37,30 @@ using namespace std;
 
 struct NSEC3PARAMImpl {
     // straightforward representation of NSEC3PARAM RDATA fields
-    NSEC3PARAMImpl(uint8_t hash, uint8_t flags, uint16_t iterations,
+    NSEC3PARAMImpl(uint8_t hashalg, uint8_t flags, uint16_t iterations,
                    vector<uint8_t>salt) :
-        hash_(hash), flags_(flags), iterations_(iterations), salt_(salt)
+        hashalg_(hashalg), flags_(flags), iterations_(iterations), salt_(salt)
     {}
 
-    uint8_t hash_;
+    uint8_t hashalg_;
     uint8_t flags_;
     uint16_t iterations_;
-    const vector<uint8_t> salt_;
+    const vector<uint8_t>& salt_;
 };
 
 NSEC3PARAM::NSEC3PARAM(const string& nsec3param_str) :
     impl_(NULL)
 {
     istringstream iss(nsec3param_str);
-    uint16_t hash, flags, iterations;
+    uint16_t hashalg, flags, iterations;
     stringbuf saltbuf;
 
-    iss >> hash >> flags >> iterations >> &saltbuf;
+    iss >> hashalg >> flags >> iterations >> &saltbuf;
     if (iss.bad() || iss.fail()) {
         dns_throw(InvalidRdataText, "Invalid NSEC3PARAM text");
     }
-    if (hash > 0xf) {
-        dns_throw(InvalidRdataText, "NSEC3PARAM hash out of range");
+    if (hashalg > 0xf) {
+        dns_throw(InvalidRdataText, "NSEC3PARAM hash algorithm out of range");
     }
     if (flags > 0xff) {
         dns_throw(InvalidRdataText, "NSEC3PARAM flags out of range");
@@ -69,7 +69,7 @@ NSEC3PARAM::NSEC3PARAM(const string& nsec3param_str) :
     vector<uint8_t> salt;
     decodeHex(saltbuf.str(), salt);
 
-    impl_ = new NSEC3PARAMImpl(hash, flags, iterations, salt);
+    impl_ = new NSEC3PARAMImpl(hashalg, flags, iterations, salt);
 }
 
 NSEC3PARAM::NSEC3PARAM(InputBuffer& buffer, size_t rdata_len)
@@ -78,7 +78,7 @@ NSEC3PARAM::NSEC3PARAM(InputBuffer& buffer, size_t rdata_len)
         dns_throw(InvalidRdataLength, "NSEC3PARAM too short");
     }
 
-    uint8_t hash = buffer.readUint8();
+    uint8_t hashalg = buffer.readUint8();
     uint8_t flags = buffer.readUint8();
     uint16_t iterations = buffer.readUint16();
     rdata_len -= 4;
@@ -93,7 +93,7 @@ NSEC3PARAM::NSEC3PARAM(InputBuffer& buffer, size_t rdata_len)
     vector<uint8_t> salt(saltlen);
     buffer.readData(&salt[0], saltlen);
 
-    impl_ = new NSEC3PARAMImpl(hash, flags, iterations, salt);
+    impl_ = new NSEC3PARAMImpl(hashalg, flags, iterations, salt);
 }
 
 NSEC3PARAM::NSEC3PARAM(const NSEC3PARAM& source) :
@@ -123,7 +123,7 @@ string
 NSEC3PARAM::toText() const
 {
     using namespace boost;
-    return (lexical_cast<string>(static_cast<int>(impl_->hash_)) +
+    return (lexical_cast<string>(static_cast<int>(impl_->hashalg_)) +
         " " + lexical_cast<string>(static_cast<int>(impl_->flags_)) +
         " " + lexical_cast<string>(static_cast<int>(impl_->iterations_)) +
         " " + encodeHex(impl_->salt_));
@@ -132,7 +132,7 @@ NSEC3PARAM::toText() const
 void
 NSEC3PARAM::toWire(OutputBuffer& buffer) const
 {
-    buffer.writeUint8(impl_->hash_);
+    buffer.writeUint8(impl_->hashalg_);
     buffer.writeUint8(impl_->flags_);
     buffer.writeUint16(impl_->iterations_);
     buffer.writeUint8(impl_->salt_.size());
@@ -142,7 +142,7 @@ NSEC3PARAM::toWire(OutputBuffer& buffer) const
 void
 NSEC3PARAM::toWire(MessageRenderer& renderer) const
 {
-    renderer.writeUint8(impl_->hash_);
+    renderer.writeUint8(impl_->hashalg_);
     renderer.writeUint8(impl_->flags_);
     renderer.writeUint16(impl_->iterations_);
     renderer.writeUint8(impl_->salt_.size());
@@ -154,8 +154,8 @@ NSEC3PARAM::compare(const Rdata& other) const
 {
     const NSEC3PARAM& other_param = dynamic_cast<const NSEC3PARAM&>(other);
 
-    if (impl_->hash_ != other_param.impl_->hash_) {
-        return (impl_->hash_ < other_param.impl_->hash_ ? -1 : 1);
+    if (impl_->hashalg_ != other_param.impl_->hashalg_) {
+        return (impl_->hashalg_ < other_param.impl_->hashalg_ ? -1 : 1);
     }
     if (impl_->flags_ != other_param.impl_->flags_) {
         return (impl_->flags_ < other_param.impl_->flags_ ? -1 : 1);
@@ -177,24 +177,25 @@ NSEC3PARAM::compare(const Rdata& other) const
 }
 
 uint8_t
-NSEC3PARAM::getHash() const {
-    return impl_->hash_;
+NSEC3PARAM::getHashalg() const {
+    return (impl_->hashalg_);
 }
 
 uint8_t
 NSEC3PARAM::getFlags() const {
-    return impl_->flags_;
+    return (impl_->flags_);
 }
 
 uint16_t
 NSEC3PARAM::getIterations() const {
-    return impl_->iterations_;
+    return (impl_->iterations_);
 }
 
-vector<uint8_t>
+const vector<uint8_t>&
 NSEC3PARAM::getSalt() const {
-    return impl_->salt_;
+    return (impl_->salt_);
 }
+
 
 // END_RDATA_NAMESPACE
 // END_ISC_NAMESPACE

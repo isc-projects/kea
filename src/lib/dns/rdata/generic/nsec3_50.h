@@ -42,10 +42,10 @@ public:
     NSEC3& operator=(const NSEC3& source);
     ~NSEC3();
 
-    uint8_t getHash() const;
+    uint8_t getHashalg() const;
     uint8_t getFlags() const;
     uint16_t getIterations() const;
-    std::vector<uint8_t> getSalt() const;
+    std::vector<uint8_t>& getSalt() const;
 
 private:
     NSEC3Impl* impl_;

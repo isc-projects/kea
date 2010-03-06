@@ -189,7 +189,7 @@ TEST_F(DataSrcTest, Nxdomain) {
     RRsetIterator rit = msg.beginSection(Section::AUTHORITY());
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("example.com"), rrset->getName());
-    EXPECT_EQ(RRType::NSEC(), rrset->getType());
+    EXPECT_EQ(RRType::SOA(), rrset->getType());
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
     // XXX: check for other authority section answers
 }

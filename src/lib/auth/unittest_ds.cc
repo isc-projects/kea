@@ -738,7 +738,7 @@ TestDataSrc::findPreviousName(const Query& q,
     assert(zonename != NULL);
 
     if (*zonename == example) {
-        if (qname >= example || qname < cnameext) {
+        if (qname >= example && qname < cnameext) {
             target = example;
         } else if (qname < cnameint) {
             target = cnameext;
@@ -775,8 +775,7 @@ TestDataSrc::findPreviousName(const Query& q,
 
 DataSrc::Result
 TestDataSrc::findCoveringNSEC3(const Query& q,
-                               const Nsec3Param& param,
-                               const Name& qname,
+                               const string& hash,
                                const Name& zonename,
                                RRsetList& target) const
 {

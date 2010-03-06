@@ -370,7 +370,6 @@ Sqlite3DataSrc::setupPreparedStatements(void) {
         throw(e);
     }
 
-#if 0                           // XXX
     const char* q_nsec3_str = "SELECT rdtype, ttl, rdata FROM nsec3 "
                               "WHERE zone_id=?1 AND hash == $2";
     try {
@@ -391,7 +390,6 @@ Sqlite3DataSrc::setupPreparedStatements(void) {
         cout << sqlite3_errmsg(db) << endl;
         throw(e);
     }
-#endif
 }
 
 void
@@ -525,8 +523,7 @@ Sqlite3DataSrc::findPreviousName(const Query& q,
 
 DataSrc::Result
 Sqlite3DataSrc::findCoveringNSEC3(const Query& q,
-                                  const Nsec3Param& nsec3param,
-                                  const Name& qname,
+                                  const string& hashstr,
                                   const Name& zonename,
                                   RRsetList& target) const
 {
@@ -534,8 +531,6 @@ Sqlite3DataSrc::findCoveringNSEC3(const Query& q,
     if (zone_id < 0) {
         return (ERROR);
     }
-
-    string hashstr = nsec3param.getHash(qname);
 
     sqlite3_reset(q_prevnsec3);
     sqlite3_clear_bindings(q_prevnsec3);
@@ -558,9 +553,9 @@ Sqlite3DataSrc::findCoveringNSEC3(const Query& q,
         // We need to find the final NSEC3 in the chain.
         // A valid NSEC3 hash is in base32, which contains no
         // letters higher than V, so a search for the previous 
-        // NSEC3 from "W" will always find it.
+        // NSEC3 from "w" will always find it.
         sqlite3_reset(q_prevnsec3);
-        rc = sqlite3_bind_text(q_prevnsec3, 2, "W", -1, SQLITE_STATIC);
+        rc = sqlite3_bind_text(q_prevnsec3, 2, "w", -1, SQLITE_STATIC);
         if (rc != SQLITE_OK) {
             throw ("Could not bind 2 (last NSEC3)");
         }
