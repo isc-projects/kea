@@ -96,8 +96,15 @@ NSEC3::NSEC3(const string& nsec3_str) :
         string type;
         int code;
         iss >> type;
-        code = RRType(type).getCode();
-        bitmap[code / 8] |= (0x80 >> (code % 8));
+
+        if (iss.eof() || type.length() == 0) {
+            break;
+        }
+
+        try {
+            code = RRType(type).getCode();
+            bitmap[code / 8] |= (0x80 >> (code % 8));
+        } catch (...) {}
     } while(!iss.eof());
 
     for (int window = 0; window < 256; window++) {
