@@ -42,13 +42,9 @@ def create(cur):
     cur.execute("CREATE INDEX records_byrname ON records (rname)")
     cur.execute("""CREATE TABLE nsec3 (id INTEGER PRIMARY KEY, 
                    zone_id INTEGER NOT NULL, hash STRING NOT NULL,
-                   rhash STRING NOT NULL, owner STRING NOT NULL,
-                   rowner STRING NOT NULL, ttl INTEGER NOT NULL,
+                   owner STRING NOT NULL, ttl INTEGER NOT NULL,
                    rdtype STRING NOT NULL, rdata STRING NOT NULL)""")
     cur.execute("CREATE INDEX nsec3_byhash ON nsec3 (hash)")
-    cur.execute("CREATE INDEX nsec3_byrhash ON nsec3 (rhash)")
-    cur.execute("CREATE INDEX nsec3_byowner ON nsec3 (owner)")
-    cur.execute("CREATE INDEX nsec3_byrowner ON nsec3 (rowner)")
 
 #########################################################################
 # open: open a database.  if the database is not yet set up, 
@@ -131,7 +127,13 @@ def load(dbfile, zone, zonedata):
         if rdtype.lower() == 'rrsig':
             sigtype = rdata.split()[0]
 
-        if sigtype:
+        if rdtype.lower() == 'nsec3' or sigtype.lower() == 'nsec3':
+            hash = name.split('.')[0]
+            cur.execute("""INSERT INTO nsec3
+                           (zone_id, hash, owner, ttl, rdtype, rdata)
+                           VALUES (?, ?, ?, ?, ?, ?)""",
+                        [new_zone_id, hash, name, ttl, rdtype, rdata])
+        elif rdtype.lower() == 'rrsig':
             cur.execute("""INSERT INTO records
                            (zone_id, name, rname, ttl, rdtype, sigtype, rdata)
                            VALUES (?, ?, ?, ?, ?, ?, ?)""",
@@ -149,6 +151,7 @@ def load(dbfile, zone, zonedata):
         cur.execute("UPDATE zones SET name=? WHERE id=?", [zone, new_zone_id])
         conn.commit()
         cur.execute("DELETE FROM records WHERE zone_id=?", [old_zone_id])
+        cur.execute("DELETE FROM nsec3 WHERE zone_id=?", [old_zone_id])
         conn.commit()
     else:
         cur.execute("UPDATE zones SET name=? WHERE id=?", [zone, new_zone_id])
