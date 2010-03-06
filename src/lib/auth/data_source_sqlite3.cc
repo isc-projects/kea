@@ -382,6 +382,7 @@ Sqlite3DataSrc::setupPreparedStatements(void) {
         throw(e);
     }
 
+#ifdef notyet
     const char* q_prevnsec3_str = "SELECT rdtype, ttl, rdata FROM nsec3 "
                                   "WHERE zone_id=?1 AND hash <= $2 "
                                   "ORDER BY rhash DESC LIMIT 1";
@@ -392,6 +393,7 @@ Sqlite3DataSrc::setupPreparedStatements(void) {
         cout << sqlite3_errmsg(db) << endl;
         throw(e);
     }
+#endif
 }
 
 void
