@@ -99,7 +99,7 @@ dns03.example.com.	3600	IN A	192.168.2.3
 			7200	RRSIG	NSEC 5 3 7200 20100322084538 (
 					20100220084538 33495 example.com.
 					FAKEFAKEFAKEFAKE )
-foo.example.com.	3600	IN CNAME cnametest.flame.org.
+foo.example.com.	3600	IN CNAME cnametest.example.org.
 			3600	RRSIG	CNAME 5 3 3600 20100322084538 (
 					20100220084538 33495 example.com.
 					FAKEFAKEFAKEFAKE )
@@ -148,7 +148,7 @@ subzone.example.com.	3600	IN NS	ns1.subzone.example.com.
 			7200	RRSIG	NSEC 5 3 7200 20100322084538 (
 					20100220084538 33495 example.com.
 					FAKEFAKEFAKEFAKE )
-*.wild.example.com.	3600	IN A	192.168.3.2
+*.wild.example.com.	3600	IN A	192.0.2.255
 			3600	RRSIG	A 5 3 3600 20100322084538 (
 					20100220084538 33495 example.com.
 					FAKEFAKEFAKEFAKE )
@@ -167,3 +167,6 @@ www.example.com.	3600	IN A	192.0.2.1
 ;; This doesn't have an RRSIG.  It makes this zone "incomplete signed",
 ;; but for the purpose of data source API testing it doesn't matter.
 nosig.example.com.	3600	IN A	192.0.2.1
+
+;; Two labels + apex name for empty node test
+foo.bar.example.com.	3600	IN A	192.0.2.1

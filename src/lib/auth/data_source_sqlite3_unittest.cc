@@ -44,6 +44,21 @@ static const char* SQLITE_DBFILE_EXAMPLE = "testdata/test.sqlite3";
 
 static const string sigdata_common(" 20100322084538 20100220084538 "
                                    "33495 example.com. FAKEFAKEFAKEFAKE");
+static const string dnskey1_data(" AwEAAcOUBllYc1hf7ND9uDy+Yz1BF3sI0m4q"
+                                 "NGV7WcTD0WEiuV7IjXgHE36fCmS9QsUxSSOV"
+                                 "o1I/FMxI2PJVqTYHkXFBS7AzLGsQYMU7UjBZ"
+                                 "SotBJ6Imt5pXMu+lEDNy8TOUzG3xm7g0qcbW"
+                                 "YF6qCEfvZoBtAqi5Rk7Mlrqs8agxYyMx");
+static const string dnskey2_data(" AwEAAe5WFbxdCPq2jZrZhlMj7oJdff3W7syJ"
+                                 "tbvzg62tRx0gkoCDoBI9DPjlOQG0UAbj+xUV"
+                                 "4HQZJStJaZ+fHU5AwVNT+bBZdtV+NujSikhd"
+                                 "THb4FYLg2b3Cx9NyJvAVukHp/91HnWuG4T36"
+                                 "CzAFrfPwsHIrBz9BsaIQ21VRkcmj7DswfI/i"
+                                 "DGd8j6bqiODyNZYQ+ZrLmF0KIJ2yPN3iO6Zq"
+                                 "23TaOrVTjB7d1a/h31ODfiHAxFHrkY3t3D5J"
+                                 "R9Nsl/7fdRmSznwtcSDgLXBoFEYmw6p86Acv"
+                                 "RyoYNcL1SXjaKVLG5jyU3UR+LcGZT5t/0xGf"
+                                 "oIK/aKwENrsjcKZZj660b1M=");
 
 static const Name zone_name("example.com");
 static const Name nomatch_name("example.org");
@@ -65,14 +80,44 @@ protected:
         message.addQuestion(Question(Name("example.org"), rrclass, rrtype));
         query = new Query(message, true);
 
-        www_data.push_back("192.0.2.1");
-        www_sig_data.push_back("A 5 3 3600" + sigdata_common);
+        common_a_data.push_back("192.0.2.1");
+        common_sig_data.push_back("A 5 3 3600" + sigdata_common);
+
         www_nsec_data.push_back("example.com. A RRSIG NSEC");
         www_nsec_sig_data.push_back("NSEC 5 3 7200" + sigdata_common);
+
+        apex_soa_data.push_back("master.example.com. admin.example.com. "
+                                "1234 3600 1800 2419200 7200");
+        apex_soa_sig_data.push_back("SOA 5 2 3600" + sigdata_common);
         apex_ns_data.push_back("dns01.example.com.");
         apex_ns_data.push_back("dns02.example.com.");
         apex_ns_data.push_back("dns03.example.com.");
         apex_ns_sig_data.push_back("NS 5 2 3600" + sigdata_common);
+        apex_mx_data.push_back("10 mail.example.com.");
+        apex_mx_data.push_back("20 mail.subzone.example.com.");
+        apex_mx_sig_data.push_back("MX 5 2 3600" + sigdata_common);
+        apex_nsec_data.push_back("cname-ext.example.com. "
+                                 "NS SOA MX RRSIG NSEC DNSKEY");
+        apex_nsec_sig_data.push_back("NSEC 5 2 7200" + sigdata_common);
+        apex_dnskey_data.push_back("256 3 5" + dnskey1_data);
+        apex_dnskey_data.push_back("257 3 5" + dnskey2_data);
+        // this one is special (using different key):
+        apex_dnskey_sig_data.push_back("DNSKEY 5 2 3600 20100322084538 "
+                                       "20100220084538 4456 example.com. "
+                                       "FAKEFAKEFAKEFAKE");
+        apex_dnskey_sig_data.push_back("DNSKEY 5 2 3600" + sigdata_common);
+
+        wild_a_data.push_back("192.0.2.255");
+        dname_data.push_back("sql1.example.com.");
+        dname_sig_data.push_back("DNAME 5 3 3600" + sigdata_common);
+        cname_data.push_back("cnametest.example.org.");
+        cname_sig_data.push_back("CNAME 5 3 3600" + sigdata_common);
+        cname_nsec_data.push_back("mail.example.com. CNAME RRSIG NSEC");
+        cname_nsec_sig_data.push_back("NSEC 5 3 7200" + sigdata_common);
+        delegation_ns_data.push_back("ns1.subzone.example.com.");
+        delegation_ns_data.push_back("ns2.subzone.example.com.");
+        delegation_nsec_data.push_back("*.wild.example.com. NS DS RRSIG NSEC");
+        delegation_nsec_sig_data.push_back("NSEC 5 3 7200" + sigdata_common);
     }
     ~Sqlite3DataSourceTest() { delete query; }
     Sqlite3DataSrc data_source;
@@ -93,12 +138,31 @@ protected:
     vector<const vector<string>* > signatures;
 
     vector<RRType> expected_types;
-    vector<string> www_data;
-    vector<string> www_sig_data;
+    vector<string> common_a_data;
+    vector<string> common_sig_data;
     vector<string> www_nsec_data;
     vector<string> www_nsec_sig_data;
+    vector<string> apex_soa_data;
+    vector<string> apex_soa_sig_data;
     vector<string> apex_ns_data;
     vector<string> apex_ns_sig_data;
+    vector<string> apex_mx_data;
+    vector<string> apex_mx_sig_data;
+    vector<string> apex_nsec_data;
+    vector<string> apex_nsec_sig_data;
+    vector<string> apex_dnskey_data;
+    vector<string> apex_dnskey_sig_data;
+    vector<string> wild_a_data;
+    vector<string> dname_data;
+    vector<string> dname_sig_data;
+    vector<string> cname_data;
+    vector<string> cname_sig_data;
+    vector<string> cname_nsec_data;
+    vector<string> cname_nsec_sig_data;
+    vector<string> delegation_ns_data;
+    vector<string> delegation_ns_sig_data;
+    vector<string> delegation_nsec_data;
+    vector<string> delegation_nsec_sig_data;
 };
 
 void
@@ -161,8 +225,9 @@ checkFind(const Sqlite3DataSrc& data_source, const Query& query,
     EXPECT_EQ(expected_flags, find_flags);
     RRsetList::iterator it = result_sets.begin();
     for (; it != result_sets.end(); ++it) {
-        vector<RRType>::const_iterator found_type = find(expected_types.begin(), expected_types.end(),
-                          (*it)->getType());
+        vector<RRType>::const_iterator found_type =
+            find(expected_types.begin(), expected_types.end(),
+                 (*it)->getType());
         // there should be a match
         EXPECT_TRUE(found_type != expected_types.end());
         if (found_type != expected_types.end()) {
@@ -222,10 +287,10 @@ TEST_F(Sqlite3DataSourceTest, findClosestEnclosureNoMatch) {
 TEST_F(Sqlite3DataSourceTest, findRRsetNormal) {
     // Without specifying the zone name, and then with the zone name
     checkFind(data_source, *query, www_name, NULL, rrclass, rrtype, rrttl, 0,
-              www_data, &www_sig_data);
+              common_a_data, &common_sig_data);
 
     checkFind(data_source, *query, www_name, &zone_name, rrclass, rrtype, rrttl,
-              0, www_data, &www_sig_data);
+              0, common_a_data, &common_sig_data);
 
     // With a zone name that doesn't match
     EXPECT_EQ(DataSrc::SUCCESS,
@@ -240,9 +305,9 @@ TEST_F(Sqlite3DataSourceTest, findRRsetNormalANY) {
     types.push_back(RRType::NSEC());
     ttls.push_back(RRTTL(3600));
     ttls.push_back(RRTTL(7200));
-    answers.push_back(&www_data);
+    answers.push_back(&common_a_data);
     answers.push_back(&www_nsec_data);
-    signatures.push_back(&www_sig_data);
+    signatures.push_back(&common_sig_data);
     signatures.push_back(&www_nsec_sig_data);
 
     rrtype = RRType::ANY();
@@ -256,10 +321,10 @@ TEST_F(Sqlite3DataSourceTest, findRRsetNormalANY) {
 // Case insensitive lookup
 TEST_F(Sqlite3DataSourceTest, findRRsetNormalCase) {
     checkFind(data_source, *query, www_upper_name, NULL, rrclass, rrtype, rrttl,
-              0, www_data, &www_sig_data);
+              0, common_a_data, &common_sig_data);
 
     checkFind(data_source, *query, www_upper_name, &zone_name, rrclass, rrtype,
-              rrttl, 0, www_data, &www_sig_data);
+              rrttl, 0, common_a_data, &common_sig_data);
 
     EXPECT_EQ(DataSrc::SUCCESS,
               data_source.findRRset(*query, www_upper_name, rrclass, rrtype,
@@ -281,6 +346,192 @@ TEST_F(Sqlite3DataSourceTest, findRRsetApexNS) {
                                     result_sets, find_flags, &nomatch_name));
     EXPECT_EQ(DataSrc::NO_SUCH_ZONE, find_flags);
     EXPECT_TRUE(result_sets.begin() == result_sets.end()); // should be empty
+}
+
+TEST_F(Sqlite3DataSourceTest, findRRsetApexANY) {
+    types.push_back(RRType::SOA());
+    types.push_back(RRType::NS());
+    types.push_back(RRType::MX());
+    types.push_back(RRType::NSEC());
+    types.push_back(RRType::DNSKEY());
+    ttls.push_back(rrttl); // SOA TTL
+    ttls.push_back(rrttl); // NS TTL
+    ttls.push_back(rrttl); // MX TTL
+    ttls.push_back(RRTTL(7200)); // NSEC TTL
+    ttls.push_back(rrttl); // DNSKEY TTL
+    answers.push_back(&apex_soa_data);
+    answers.push_back(&apex_ns_data);
+    answers.push_back(&apex_mx_data);
+    answers.push_back(&apex_nsec_data);
+    answers.push_back(&apex_dnskey_data);
+    signatures.push_back(&apex_soa_sig_data);
+    signatures.push_back(&apex_ns_sig_data);
+    signatures.push_back(&apex_mx_sig_data);
+    signatures.push_back(&apex_nsec_sig_data);
+    signatures.push_back(&apex_dnskey_sig_data);
+
+    rrtype = RRType::ANY();
+    checkFind(data_source, *query, zone_name, NULL, rrclass, rrtype, ttls, 0,
+              types, answers, signatures);
+
+    checkFind(data_source, *query, zone_name, &zone_name, rrclass, rrtype, ttls,
+              0, types, answers, signatures);
+}
+
+TEST_F(Sqlite3DataSourceTest, findRRsetApexNXRRSET) {
+    rrtype = RRType::AAAA();
+    EXPECT_EQ(DataSrc::SUCCESS,
+              data_source.findRRset(*query, zone_name, rrclass, rrtype,
+                                    result_sets, find_flags, &zone_name));
+    // there's an NS RRset at the apex name, so the REFERRAL flag should be
+    // set, too.
+    EXPECT_EQ(DataSrc::TYPE_NOT_FOUND | DataSrc::REFERRAL, find_flags);
+    EXPECT_TRUE(result_sets.begin() == result_sets.end());
+
+    // Same test, without specifying the zone name
+    EXPECT_EQ(DataSrc::SUCCESS,
+              data_source.findRRset(*query, zone_name, rrclass, rrtype,
+                                    result_sets, find_flags, NULL));
+    // there's an NS RRset at the apex name, so the REFERRAL flag should be
+    // set, too.
+    EXPECT_EQ(DataSrc::TYPE_NOT_FOUND | DataSrc::REFERRAL, find_flags);
+    EXPECT_TRUE(result_sets.begin() == result_sets.end());
+}
+
+// Matching a wildcard node.  There's nothing special for the data source API
+// point of view, but perform minimal tests anyway.
+TEST_F(Sqlite3DataSourceTest, findRRsetWildcard) {
+    Name qname("*.wild.example.com");
+    checkFind(data_source, *query, qname, NULL, rrclass,
+              rrtype, rrttl, 0, wild_a_data, &common_sig_data);
+    checkFind(data_source, *query, qname, &zone_name, rrclass,
+              rrtype, rrttl, 0, wild_a_data, &common_sig_data);
+}
+
+TEST_F(Sqlite3DataSourceTest, findRRsetEmptyNode) {
+    // foo.bar.example.com exists, but bar.example.com doesn't have any data.
+    Name qname("bar.example.com");
+
+    EXPECT_EQ(DataSrc::SUCCESS,
+              data_source.findRRset(*query, qname, rrclass, rrtype,
+                                    result_sets, find_flags, NULL));
+    EXPECT_EQ(DataSrc::TYPE_NOT_FOUND, find_flags);
+    EXPECT_TRUE(result_sets.begin() == result_sets.end());
+
+    EXPECT_EQ(DataSrc::SUCCESS,
+              data_source.findRRset(*query, qname, rrclass, rrtype,
+                                    result_sets, find_flags, &zone_name));
+    EXPECT_EQ(DataSrc::TYPE_NOT_FOUND, find_flags);
+    EXPECT_TRUE(result_sets.begin() == result_sets.end());
+}
+
+// There's nothing special about DNAME lookup for the data source API
+// point of view, but perform minimal tests anyway.
+TEST_F(Sqlite3DataSourceTest, findRRsetDNAME) {
+    Name qname("dname.example.com");
+
+    rrtype = RRType::DNAME();
+    checkFind(data_source, *query, qname, NULL, rrclass,
+              rrtype, rrttl, 0, dname_data, &dname_sig_data);
+    checkFind(data_source, *query, qname, &zone_name, rrclass,
+              rrtype, rrttl, 0, dname_data, &dname_sig_data);
+}
+
+TEST_F(Sqlite3DataSourceTest, findRRsetCNAME) {
+    Name qname("foo.example.com");
+
+    // This qname only has the CNAME (+ sigs).  CNAME query is not different
+    // from ordinary queries.
+    rrtype = RRType::CNAME();
+    checkFind(data_source, *query, qname, NULL, rrclass,
+              rrtype, rrttl, 0, cname_data, &cname_sig_data);
+    checkFind(data_source, *query, qname, &zone_name, rrclass,
+              rrtype, rrttl, 0, cname_data, &cname_sig_data);
+
+    // queries for (ordinary) different RR types that match the CNAME.
+    // CNAME_FOUND flag is set, and the CNAME RR is returned instead of A
+    rrtype = RRType::A();
+    types.push_back(RRType::CNAME());
+    ttls.push_back(rrttl);
+    answers.push_back(&cname_data);
+    signatures.push_back(&cname_sig_data);
+    checkFind(data_source, *query, qname, NULL, rrclass,
+              rrtype, ttls, DataSrc::CNAME_FOUND, types, answers, signatures);
+    checkFind(data_source, *query, qname, &zone_name, rrclass,
+              rrtype, ttls, DataSrc::CNAME_FOUND, types, answers, signatures);
+
+    // NSEC query that match the CNAME.
+    // CNAME_FOUND flag is NOT set, and the NSEC RR is returned instead of
+    // CNAME.
+    rrtype = RRType::NSEC();
+    checkFind(data_source, *query, qname, NULL, rrclass,
+              rrtype, RRTTL(7200), 0, cname_nsec_data, &cname_nsec_sig_data);
+    checkFind(data_source, *query, qname, &zone_name, rrclass,
+              rrtype, RRTTL(7200), 0, cname_nsec_data, &cname_nsec_sig_data);
+}
+
+TEST_F(Sqlite3DataSourceTest, findRRsetDelegation) {
+    Name qname("www.subzone.example.com");
+
+    // query for a name under a zone cut.  From the data source API point
+    // of view this is no different than "NXDOMAIN".
+    EXPECT_EQ(DataSrc::SUCCESS,
+              data_source.findRRset(*query, qname, rrclass, rrtype,
+                                    result_sets, find_flags, NULL));
+    // there's an NS RRset at the apex name, so the REFERRAL flag should be
+    // set, too.
+    EXPECT_EQ(DataSrc::NAME_NOT_FOUND, find_flags);
+    EXPECT_TRUE(result_sets.begin() == result_sets.end());
+}
+
+TEST_F(Sqlite3DataSourceTest, findRRsetDelegationAtZoneCut) {
+    Name qname("subzone.example.com");
+
+    // query for a name *at* a zone cut.  It matches the NS RRset for the
+    // delegation.
+
+    // For non-NS ordinary queries, "no type" should be set too, and no RRset is
+    // returned.
+    EXPECT_EQ(DataSrc::SUCCESS,
+              data_source.findRRset(*query, qname, rrclass, rrtype,
+                                    result_sets, find_flags, NULL));
+    EXPECT_EQ(DataSrc::TYPE_NOT_FOUND | DataSrc::REFERRAL, find_flags);
+    EXPECT_TRUE(result_sets.begin() == result_sets.end());
+
+    EXPECT_EQ(DataSrc::SUCCESS,
+              data_source.findRRset(*query, qname, rrclass, rrtype,
+                                    result_sets, find_flags, &zone_name));
+    EXPECT_EQ(DataSrc::TYPE_NOT_FOUND | DataSrc::REFERRAL, find_flags);
+    EXPECT_TRUE(result_sets.begin() == result_sets.end());
+
+    // For NS query, RRset is returned with the REFERRAL flag.  No RRSIG should
+    // be provided.
+    rrtype = RRType::NS();
+    checkFind(data_source, *query, qname, NULL, rrclass,
+              rrtype, rrttl, DataSrc::REFERRAL, delegation_ns_data, NULL);
+    checkFind(data_source, *query, qname, &zone_name, rrclass,
+              rrtype, rrttl, DataSrc::REFERRAL, delegation_ns_data, NULL);
+
+    // For ANY query.  What should we do?
+#if 0
+    rrtype = RRType::ANY();
+    EXPECT_EQ(DataSrc::SUCCESS,
+              data_source.findRRset(*query, qname, rrclass, rrtype,
+                                    result_sets, find_flags, NULL));
+    EXPECT_EQ(DataSrc::REFERRAL, find_flags);
+#endif
+
+    // For NSEC query.  What should we do?  Probably return the NSEC + RRSIG
+    // without REFERRAL.  But it currently doesn't act like so.
+#if 0
+    rrtype = RRType::NSEC();
+    checkFind(data_source, *query, qname, NULL, rrclass,
+              rrtype, RRTTL(7200), 0, delegation_nsec_data,
+              &delegation_nsec_sig_data);
+    checkFind(data_source, *query, qname, &zone_name, rrclass,
+              rrtype, RRTTL(7200), 0, delegation_nsec_data,
+              &delegation_nsec_sig_data);
+#endif    
 }
 
 }
