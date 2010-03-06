@@ -45,7 +45,7 @@ struct NSEC3PARAMImpl {
     uint8_t hashalg_;
     uint8_t flags_;
     uint16_t iterations_;
-    const vector<uint8_t>& salt_;
+    vector<uint8_t> salt_;
 };
 
 NSEC3PARAM::NSEC3PARAM(const string& nsec3param_str) :
