@@ -293,18 +293,18 @@ addNSEC(Query& q, const QueryTaskPtr task, const Name& name,
 }
 
 static inline DataSrc::Result
-addNSEC3(const string& hash, Query& q, const DataSrc* ds, const Name& zonename)
+getNsec3(Query& q, const DataSrc* ds, const Name& zonename, string& hash, 
+         RRsetPtr target)
 {
-    RRsetList nsec3;
-    Message& m = q.message();
     DataSrc::Result result;
+    RRsetList rl;
 
-    result = ds->findCoveringNSEC3(q, hash, zonename, nsec3);
+    result = ds->findCoveringNSEC3(q, zonename, hash, rl);
     if (result != DataSrc::SUCCESS) {
-        return (DataSrc::ERROR);
+        return (result);
     }
 
-    m.addRRset(Section::AUTHORITY(), nsec3[RRType::NSEC3()], true);
+    target = rl[RRType::NSEC3()];
     return (DataSrc::SUCCESS);
 }
 
@@ -344,31 +344,60 @@ getNsec3Param(Query& q, const DataSrc* ds, const Name& zonename) {
 static inline DataSrc::Result
 proveNX(Query& q, QueryTaskPtr task, const DataSrc* ds, const Name& zonename)
 {
+    Message& m = q.message();
     DataSrc::Result result;
+
     ConstNsec3ParamPtr nsec3 = getNsec3Param(q, ds, zonename);
     if (nsec3 != NULL) {
-        string node(nsec3->getHash(task->qname));
-        result = addNSEC3(node, q, ds, zonename);
+        // Attach the NSEC3 record covering the QNAME
+        RRsetPtr rrset;
+        string hash1(nsec3->getHash(task->qname));
+        result = getNsec3(q, ds, zonename, hash1, rrset);
         if (result != DataSrc::SUCCESS) {
             return (result);
         }
+        m.addRRset(Section::AUTHORITY(), rrset, true);
 
-        string apex(nsec3->getHash(zonename));
-        if (node != apex) {
-            result = addNSEC3(apex, q, ds, zonename);
+        // If this is an NXRRSET or NOERROR/NODATA, we're done
+        if ((task->flags & DataSrc::TYPE_NOT_FOUND) != 0) {
+            return (DataSrc::SUCCESS);
+        }
+
+        // Find the closest provable enclosing name for QNAME
+        Name enclosure(zonename);
+        int nlen = task->qname.getLabelCount();
+        int diff = nlen - enclosure.getLabelCount();
+        for (int i = 1; i <= diff; ++i) {
+            enclosure = task->qname.split(i, nlen - i);
+            string nodehash(nsec3->getHash(enclosure));
+            if (nodehash == hash1) {
+                break;
+            }
+            hash2 = nodehash;
+            RRsetList rl;
+
+            // hash2 will be overwritten with the actual hash found;
+            // we don't want to use one until we find an exact match
+            result = getNsec3(q, ds, zonename, hash2, rrset);
             if (result != DataSrc::SUCCESS) {
-                return (result);
+                return (DataSrc::ERROR);
+            }
+
+            if (hash2 == nodehash) {
+                m.addRRset(Section::AUTHORITY(), rrset, true);
+                break;
             }
         }
 
-        if ((task->flags & DataSrc::NAME_NOT_FOUND) != 0) {
-            string wild(nsec3->getHash(Name("*").concatenate(zonename)));
-            if (node != wild) {
-                result = addNSEC3(wild, q, ds, zonename);
-                if (result != DataSrc::SUCCESS) {
-                    return (result);
-                }
+        // Now add a covering NSEC3 for a wildcard under the
+        // closest provable enclosing name
+        string hash3(nsec3->getHash(Name("*").concatenate(enclosure)));
+        if (wild != hash1 && wild != hash2) {
+            result = getNsec3(q, ds, zonename, wild, rrset);
+            if (result != DataSrc::SUCCESS) {
+                return (result);
             }
+            m.addRRset(Section::AUTHORITY(), rrset, true);
         }
     } else {
         Name nsecname(task->qname);

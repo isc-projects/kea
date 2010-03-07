@@ -677,8 +677,8 @@ TEST_F(Sqlite3DataSourceTest, findRRsetNSEC3) {
 
     const Name nsec3_zonename("sql2.example.com");
     EXPECT_EQ(DataSrc::SUCCESS,
-              data_source.findCoveringNSEC3(*query, hashstr, nsec3_zonename,
-                                            result_sets));
+              data_source.findCoveringNSEC3(*query, nsec3_zonename,
+                                            hashstr, result_sets));
     RRsetList::iterator it = result_sets.begin();
     checkRRset(*it, Name(hashstr).concatenate(nsec3_zonename), RRClass::IN(),
                RRType::NSEC3(), RRTTL(7200), nsec3_data, &nsec3_sig_data);

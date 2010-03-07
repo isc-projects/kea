@@ -175,8 +175,8 @@ StaticDataSrc::findPreviousName(const Query& q, const Name& qname,
 }
 
 DataSrc::Result
-StaticDataSrc::findCoveringNSEC3(const Query& q, const string& hash,
-                                 const Name& zonename, RRsetList& target) const
+StaticDataSrc::findCoveringNSEC3(const Query& q, const Name& zonename,
+                                 string& hash, RRsetList& target) const
 {
    return (NOT_IMPLEMENTED);
 }
