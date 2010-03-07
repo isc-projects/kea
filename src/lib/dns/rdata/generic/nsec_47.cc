@@ -64,8 +64,12 @@ NSEC::NSEC(const string& nsec_str) :
         string type;
         int code;
         iss >> type;
-        code = RRType(type).getCode();
-        bitmap[code / 8] |= (0x80 >> (code % 8));
+        try {
+            code = RRType(type).getCode();
+            bitmap[code / 8] |= (0x80 >> (code % 8));
+        } catch (...) {
+            dns_throw(InvalidRdataText, "Invalid RRtype in NSEC");
+        }
     } while(!iss.eof());
 
     for (int window = 0; window < 256; window++) {

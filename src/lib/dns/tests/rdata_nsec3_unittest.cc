@@ -54,10 +54,7 @@ TEST_F(Rdata_NSEC3_Test, badText)
     EXPECT_THROW(generic::NSEC3 rdata_nsec3("1 1 1 ADDAFEE "
                                             "0123456789ABCDEFGHIJKLMNOPQRSTUV "
                                             "BIFF POW SPOON"),
-                 InvalidRRType);
-    EXPECT_THROW(generic::NSEC3 rdata_nsec3("1 1 1 ADDAFEE "
-                                            "0123456789ABCDEFGHIJKLMNOPQRSTUV"),
-                 InvalidRRType);
+                 InvalidRdataText);
     EXPECT_THROW(generic::NSEC3 rdata_nsec3("1 1 1 ADDAFEE "
                                             "WXYZWXYZWXYZ=WXYZWXYZ==WXYZWXYZW "
                                             "A NS SOA"),

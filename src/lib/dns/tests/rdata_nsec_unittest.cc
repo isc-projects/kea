@@ -49,9 +49,9 @@ TEST_F(Rdata_NSEC_Test, toText_NSEC)
 TEST_F(Rdata_NSEC_Test, badText_NSEC)
 {
     EXPECT_THROW(generic::NSEC rdata_nsec("www.isc.org. BIFF POW SPOON"),
-                 InvalidRRType);
+                 InvalidRdataText);
     EXPECT_THROW(generic::NSEC rdata_nsec("www.isc.org."),
-                 InvalidRRType);
+                 InvalidRdataText);
 }
 
 TEST_F(Rdata_NSEC_Test, createFromWire_NSEC)
