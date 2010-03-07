@@ -17,6 +17,8 @@
 #ifndef __DATA_SOURCE_H
 #define __DATA_SOURCE_H
 
+#include <stdint.h>
+
 #include <vector>
 
 #include <boost/shared_ptr.hpp>
@@ -324,13 +326,12 @@ private:
 class Nsec3Param {
 public:
     Nsec3Param(uint8_t a, uint8_t f, uint16_t i, const std::vector<uint8_t>& s);
-
+    std::string getHash(const isc::dns::Name& name) const;
+private:
     const uint8_t algorithm_;
     const uint8_t flags_;
     const uint16_t iterations_;
     const std::vector<uint8_t> salt_;
-
-    std::string getHash(const isc::dns::Name& name) const;
 };
 
 }
