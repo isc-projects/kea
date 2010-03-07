@@ -36,6 +36,12 @@
 #include "data_source.h"
 #include "query.h"
 
+#define RETERR(x) do { \
+                      DataSrc::Result r = (x); \
+                      if (r != DataSrc::SUCCESS) \
+                          return (r); \
+                      } while (0)
+
 using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
@@ -256,13 +262,12 @@ hasDelegation(const DataSrc* ds, const Name* zonename, Query& q,
 static inline DataSrc::Result
 addSOA(Query& q, const Name* zonename, const DataSrc* ds) {
     Message& m = q.message();
-    DataSrc::Result result;
     RRsetList soa;
 
     QueryTask newtask(*zonename, q.qclass(), RRType::SOA(),
                       QueryTask::SIMPLE_QUERY);
-    result = doQueryTask(ds, zonename, q, newtask, soa);
-    if (result != DataSrc::SUCCESS || newtask.flags != 0) {
+    RETERR(doQueryTask(ds, zonename, q, newtask, soa));
+    if (newtask.flags != 0) {
         return (DataSrc::ERROR);
     }
 
@@ -276,15 +281,10 @@ addNSEC(Query& q, const QueryTaskPtr task, const Name& name,
 {
     RRsetList nsec;
     Message& m = q.message();
-    DataSrc::Result result;
 
     QueryTask newtask(name, task->qclass, RRType::NSEC(),
                       QueryTask::SIMPLE_QUERY); 
-    result = doQueryTask(ds, &zonename, q, newtask, nsec);
-    if (result != DataSrc::SUCCESS) {
-        return (DataSrc::ERROR);
-    }
-
+    RETERR(doQueryTask(ds, &zonename, q, newtask, nsec));
     if (newtask.flags == 0) {
         m.addRRset(Section::AUTHORITY(), nsec[RRType::NSEC()], true);
     }
@@ -294,16 +294,10 @@ addNSEC(Query& q, const QueryTaskPtr task, const Name& name,
 
 static inline DataSrc::Result
 getNsec3(Query& q, const DataSrc* ds, const Name& zonename, string& hash, 
-         RRsetPtr target)
+         RRsetPtr& target)
 {
-    DataSrc::Result result;
     RRsetList rl;
-
-    result = ds->findCoveringNSEC3(q, zonename, hash, rl);
-    if (result != DataSrc::SUCCESS) {
-        return (result);
-    }
-
+    RETERR(ds->findCoveringNSEC3(q, zonename, hash, rl));
     target = rl[RRType::NSEC3()];
     return (DataSrc::SUCCESS);
 }
@@ -345,17 +339,12 @@ static inline DataSrc::Result
 proveNX(Query& q, QueryTaskPtr task, const DataSrc* ds, const Name& zonename)
 {
     Message& m = q.message();
-    DataSrc::Result result;
-
     ConstNsec3ParamPtr nsec3 = getNsec3Param(q, ds, zonename);
     if (nsec3 != NULL) {
         // Attach the NSEC3 record covering the QNAME
         RRsetPtr rrset;
-        string hash1(nsec3->getHash(task->qname));
-        result = getNsec3(q, ds, zonename, hash1, rrset);
-        if (result != DataSrc::SUCCESS) {
-            return (result);
-        }
+        string hash1(nsec3->getHash(task->qname)), hash2;
+        RETERR(getNsec3(q, ds, zonename, hash1, rrset));
         m.addRRset(Section::AUTHORITY(), rrset, true);
 
         // If this is an NXRRSET or NOERROR/NODATA, we're done
@@ -378,11 +367,7 @@ proveNX(Query& q, QueryTaskPtr task, const DataSrc* ds, const Name& zonename)
 
             // hash2 will be overwritten with the actual hash found;
             // we don't want to use one until we find an exact match
-            result = getNsec3(q, ds, zonename, hash2, rrset);
-            if (result != DataSrc::SUCCESS) {
-                return (DataSrc::ERROR);
-            }
-
+            RETERR(getNsec3(q, ds, zonename, hash2, rrset));
             if (hash2 == nodehash) {
                 m.addRRset(Section::AUTHORITY(), rrset, true);
                 break;
@@ -392,11 +377,8 @@ proveNX(Query& q, QueryTaskPtr task, const DataSrc* ds, const Name& zonename)
         // Now add a covering NSEC3 for a wildcard under the
         // closest provable enclosing name
         string hash3(nsec3->getHash(Name("*").concatenate(enclosure)));
-        if (wild != hash1 && wild != hash2) {
-            result = getNsec3(q, ds, zonename, wild, rrset);
-            if (result != DataSrc::SUCCESS) {
-                return (result);
-            }
+        RETERR(getNsec3(q, ds, zonename, hash3, rrset));
+        if (hash3 != hash1 && hash3 != hash2) {
             m.addRRset(Section::AUTHORITY(), rrset, true);
         }
     } else {
@@ -405,21 +387,14 @@ proveNX(Query& q, QueryTaskPtr task, const DataSrc* ds, const Name& zonename)
             ds->findPreviousName(q, task->qname, nsecname, &zonename);
         }
 
-        result = addNSEC(q, task, nsecname, zonename, ds);
-        if (result != DataSrc::SUCCESS) {
-            return (result);
-        }
-
+        RETERR(addNSEC(q, task, nsecname, zonename, ds));
         if ((task->flags & DataSrc::TYPE_NOT_FOUND) != 0 ||
             nsecname == zonename)
         {
             return (DataSrc::SUCCESS);
         }
 
-        result = addNSEC(q, task, zonename, zonename, ds);
-        if (result != DataSrc::SUCCESS) {
-            return (result);
-        }
+        RETERR(addNSEC(q, task, zonename, zonename, ds));
     }
 
     return (DataSrc::SUCCESS);
