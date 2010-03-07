@@ -186,3 +186,9 @@ ip46.example.com.	3600	IN A	192.0.2.1
 
 ;; not an address
 text.example.com.	3600	IN TXT	"No address is here"
+
+;; mixed ordering
+mix.example.com.	3600	IN A 192.0.2.1
+			3600	IN AAAA 2001:db8::1
+			3600	IN A 192.0.2.2
+			3600	IN AAAA 2001:db8::2

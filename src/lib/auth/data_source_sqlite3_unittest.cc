@@ -97,6 +97,11 @@ protected:
         www_nsec_data.push_back("example.com. A RRSIG NSEC");
         www_nsec_sig_data.push_back("NSEC 5 3 7200" + sigdata_common);
 
+        mix_a_data.push_back("192.0.2.1");
+        mix_a_data.push_back("192.0.2.2");
+        mix_aaaa_data.push_back("2001:db8::1");
+        mix_aaaa_data.push_back("2001:db8::2");
+
         apex_soa_data.push_back("master.example.com. admin.example.com. "
                                 "1234 3600 1800 2419200 7200");
         apex_soa_sig_data.push_back("SOA 5 2 3600" + sigdata_common);
@@ -165,6 +170,8 @@ protected:
     vector<string> common_aaaa_sig_data;
     vector<string> www_nsec_data;
     vector<string> www_nsec_sig_data;
+    vector<string> mix_a_data;
+    vector<string> mix_aaaa_data;
     vector<string> apex_soa_data;
     vector<string> apex_soa_sig_data;
     vector<string> apex_ns_data;
@@ -452,6 +459,24 @@ TEST_F(Sqlite3DataSourceTest, findRRsetApexANY) {
               ttls, 0, types, answers, signatures);
 
     checkFind(NORMAL, data_source, *query, zone_name, &zone_name, rrclass,
+              rrtype, ttls, 0, types, answers, signatures);
+}
+
+TEST_F(Sqlite3DataSourceTest, findRRsetMixedANY) {
+    // ANY query for mixed order RRs
+    const Name qname("mix.example.com");
+
+    types.push_back(RRType::A());
+    types.push_back(RRType::AAAA());
+    ttls.push_back(rrttl);
+    ttls.push_back(rrttl);
+    answers.push_back(&mix_a_data);
+    answers.push_back(&mix_aaaa_data);
+    signatures.push_back(NULL);
+    signatures.push_back(NULL);
+
+    rrtype = RRType::ANY();
+    checkFind(NORMAL, data_source, *query, qname, &zone_name, rrclass,
               rrtype, ttls, 0, types, answers, signatures);
 }
 

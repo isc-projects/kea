@@ -148,7 +148,6 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
     }
   
     int rows = 0;
-    RRsetPtr rrset;
     const bool any = (rdtype == RRType::ANY());
 
     rc = sqlite3_step(query);
@@ -186,7 +185,8 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
             }
         }
 
-        if (!target[rt]) {
+        RRsetPtr rrset = target[rt];
+        if (rrset == NULL) {
             rrset = RRsetPtr(new RRset(name, RRClass::IN(), rt, RRTTL(ttl)));
             target.addRRset(rrset);
         }
