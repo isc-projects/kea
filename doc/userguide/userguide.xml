@@ -25,6 +25,10 @@
       modular components for serving and maintaining DNS.
     </para>
 
+    <note><para>BIND 10, at this time, does not provide an recursive
+      DNS server. It does provide a EDNS0- and DNSSEC-capable
+      authoritative DNS server.</para></note>
+
     <para>
       BIND 10 provides separate executables for different tasks.
       The standard components include:
@@ -95,6 +99,16 @@ var/
 
   </chapter>
 
+  <chapter id="quickstart">
+    <title>Quickstart</title>
+    <para>
+      This chapter just covers the standard steps for installing
+      and deploying BIND 10 as an authoritative nameserver using
+      its defaults. For full customizations and details, see
+      the respective chapters.
+    </para>
+  </chapter>
+
   <chapter id="install">
     <title>Installation</title>
     <para>
@@ -155,7 +169,8 @@ var/
     <sect1>
       <title>Dependencies</title>
       <para>
-        BIND 10 requires Python 3.1 and SQLite 3.
+        BIND 10 requires Python 3.1, SQLite 3.3.9 or newer,
+        and the Python _sqlite3.so module.
 <!-- TODO: this will change ... -->
         Building BIND 10 also requires a C++ compiler and
         standard development headers.
@@ -195,7 +210,7 @@ var/
       </para>
 
       <para>
-	Then to install the BIND 10 executables, support files,
+	To install the BIND 10 executables, support files,
 	and documentation, run:
         <screen>$ <userinput>make install</userinput></screen>
       </para>
@@ -209,33 +224,91 @@ var/
       <title>Install Hierarchy</title>
       <para>
         The following is the layout of the complete BIND 10 installation:
-<!-- TODO: formatting needed -->
-<!--
-bin/
-  bindctl*
-  host*
-lib/
-  libauth
-  libdns
-  libexceptions
-  python3.1/site-packages/isc/{cc,config}
-libexec/bind10
-  b10-auth
-  b10-cfgmgr
-  b10-cmdctl
-  msgq
-sbin/
-  bind10
-share/
-  share/bind10/                                       <
-    auth.spec
-    b10-cmdctl.pem
-    bob.spec
-    passwd.csv
-  man/
-var/
-  bind10/b10-config.db
--->
+      <itemizedlist>
+      <listitem>
+      <simpara><filename>bin/</filename> &mdash; general tools and
+      diagnostic clients</simpara>
+      </listitem>
+      <listitem>
+      <simpara><filename>lib/</filename> &mdash; libraries and
+      python modules</simpara>
+      </listitem>
+      <listitem>
+      <simpara><filename>libexec/bind10/</filename> &mdash; executables that
+      a user wouldn't normally run directly. Nor would they be used
+      independently. These are the BIND 10 modules.
+      </simpara>
+      </listitem>
+      <listitem>
+      <simpara><filename>sbin/</filename> &mdash; commands used by
+      the system administrator
+      </simpara>
+      </listitem>
+      <listitem>
+      <simpara><filename>share/bind10/</filename> &mdash; configuration
+        specifications
+      </simpara>
+      </listitem>
+      <listitem>
+      <simpara><filename>share/man/</filename> &mdash; manual pages (online
+        documentation)
+      </simpara>
+      </listitem>
+      <listitem>
+      <simpara><filename>var/bind10/</filename> &mdash; configuration database
+      </simpara>
+      </listitem>
+      </itemizedlist>
+    </para>
+    </sect1>
+
+    <sect1>
+    <title>Starting BIND 10</title>
+    <para>
+      BIND 10 provides the <command>bind10</command> command which 
+      starts up the required daemons to provide the message
+      communication bus, configurations, <!-- TODO: security, -->
+      and the DNS server(s).
+      Also known as BoB or the Boss of BIND, <command>bind10</command>
+      will also restart processes that exit.
+    </para>
+
+    <para>
+      After starting the <command>msgq</command> communications channel,
+      <command>bind10</command> connects to it, 
+      runs the configuration manager, and reads its own configuration.
+      Then it starts the other modules.
+   </para>
+   </sect1>
+
+  </chapter>
+
+  <chapter id="authserver">
+    <title>Authoritative Server</title>
+    <para>
+    </para>
+
+    <sect1>
+      <title>Server Configurations</title>
+      <para>
+      </para>
+    </sect1>
+
+    <sect1>
+      <title>Data Source Backends</title>
+      <para>
+      </para>
+    </sect1>
+
+    <sect1>
+      <title>Loading Master Zones Files</title>
+      <para>
+      </para>
+    </sect1>
+
+    <sect1>
+      <title>Troubleshooting</title>
+      <para>
       </para>
     </sect1>
 
