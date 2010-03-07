@@ -15,6 +15,7 @@
 // $Id$
 
 #include <string>
+#include <sstream>
 
 #include "data_source_sqlite3.h"
 
@@ -284,7 +285,7 @@ Sqlite3DataSrc::findClosest(const char* const name,
                             const char** position) const
 {
     const char* current = name;
-    
+
     while (*current != 0) {
         const int rc = hasExactZone(current);
         if (rc >= 0) {
@@ -683,15 +684,12 @@ Sqlite3DataSrc::findReferral(const Query& q,
 //
 void
 Sqlite3DataSrc::open(const string& name) {
-    database_name = name;
-    
-    if (sqlite3_open(database_name.c_str(), &db) != 0) {
-        cerr << "open database: " << sqlite3_errmsg(db) << "\n";
+    if (sqlite3_open(name.c_str(), &db) != 0) {
         // sqlite3_close() must be called even when open fails.
         sqlite3_close(db);
-        throw("Cannot open database");
+        isc_throw(Sqlite3Error, "Cannot open Sqlite3 database file: " << name);
     }
-    
+
     checkAndSetupSchema();
 }
 
