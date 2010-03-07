@@ -187,21 +187,21 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
 
         RRsetPtr rrset = target[rt];
         if (rrset == NULL) {
-            rrset = RRsetPtr(new RRset(name, RRClass::IN(), rt, RRTTL(ttl)));
+            rrset = RRsetPtr(new RRset(name, getClass(), rt, RRTTL(ttl)));
             target.addRRset(rrset);
         }
 
         if (!sigtype && RRType(type) == rrset->getType()) {
-            rrset->addRdata(createRdata(RRType(type), RRClass::IN(), rdata));
+            rrset->addRdata(createRdata(RRType(type), getClass(), rdata));
             if (ttl > rrset->getTTL().getValue()) {
                 rrset->setTTL(RRTTL(ttl));
             }
         } else if (sigtype && RRType(sigtype) == rrset->getType()) {
-            RdataPtr rrsig = createRdata(RRType::RRSIG(), RRClass::IN(), rdata);
+            RdataPtr rrsig = createRdata(RRType::RRSIG(), getClass(), rdata);
             if (rrset->getRRsig()) {
                 rrset->getRRsig()->addRdata(rrsig);
             } else {
-                RRsetPtr sigs = RRsetPtr(new RRset(name, RRClass::IN(),
+                RRsetPtr sigs = RRsetPtr(new RRset(name, getClass(),
                                                    RRType::RRSIG(),
                                                    RRTTL(ttl)));
                 sigs->addRdata(rrsig);
@@ -591,9 +591,9 @@ Sqlite3DataSrc::findCoveringNSEC3(const Query& q,
     const Name& name(Name(hash).concatenate(zonename));
     RRsetPtr rrset = target[RRType::NSEC3()];
     if (!rrset) {
-        rrset = RRsetPtr(new RRset(name, RRClass::IN(), RRType::NSEC3(),
+        rrset = RRsetPtr(new RRset(name, getClass(), RRType::NSEC3(),
                                    RRTTL(0)));
-        rrset->addRRsig(RRsetPtr(new RRset(name, RRClass::IN(),
+        rrset->addRRsig(RRsetPtr(new RRset(name, getClass(),
                                            RRType::RRSIG(), RRTTL(0))));
         target.addRRset(rrset);
     }
@@ -605,17 +605,17 @@ Sqlite3DataSrc::findCoveringNSEC3(const Query& q,
         const char* const rdata = (const char*)sqlite3_column_text(q_nsec3, 2);
 
         if (type == RRType::NSEC3()) {
-            rrset->addRdata(createRdata(type, RRClass::IN(), rdata));
+            rrset->addRdata(createRdata(type, getClass(), rdata));
             if (target_ttl == -1 || target_ttl > ttl) {
                 target_ttl = ttl;
             }
             rrset->setTTL(RRTTL(target_ttl));
         } else {
-            RdataPtr rrsig = createRdata(RRType::RRSIG(), RRClass::IN(), rdata);
+            RdataPtr rrsig = createRdata(RRType::RRSIG(), getClass(), rdata);
             if (rrset->getRRsig()) {
                 rrset->getRRsig()->addRdata(rrsig);
             } else {
-                RRsetPtr sigs = RRsetPtr(new RRset(name, RRClass::IN(),
+                RRsetPtr sigs = RRsetPtr(new RRset(name, getClass(),
                                                    RRType::RRSIG(), RRTTL(0)));
                 sigs->addRdata(rrsig);
                 rrset->addRRsig(sigs);
