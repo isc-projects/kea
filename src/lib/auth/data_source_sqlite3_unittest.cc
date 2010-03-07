@@ -41,6 +41,7 @@ using namespace isc::auth;
 
 namespace {
 static const char* SQLITE_DBFILE_EXAMPLE = "testdata/test.sqlite3";
+static const char* SQLITE_DBFILE_EXAMPLE2 = "testdata/test2.sqlite3";
 
 static const string sigdata_common(" 20100322084538 20100220084538 "
                                    "33495 example.com. FAKEFAKEFAKEFAKE");
@@ -62,6 +63,7 @@ static const string dnskey2_data(" AwEAAe5WFbxdCPq2jZrZhlMj7oJdff3W7syJ"
 
 static const Name zone_name("example.com");
 static const Name nomatch_name("example.org");
+static const Name child_name("sql1.example.com");
 static const Name www_name("www.example.com");
 static const Name www_upper_name("WWW.EXAMPLE.COM");
 
@@ -323,10 +325,31 @@ TEST_F(Sqlite3DataSourceTest, close) {
     EXPECT_EQ(DataSrc::SUCCESS, data_source.close());
 }
 
+TEST_F(Sqlite3DataSourceTest, reOpen) {
+    // Replace the data with a totally different zone.  This should succeed,
+    // and shouldn't match any names in the previously managed domains.
+    EXPECT_EQ(DataSrc::SUCCESS, data_source.close());
+    EXPECT_EQ(DataSrc::SUCCESS, data_source.init(SQLITE_DBFILE_EXAMPLE2));
+
+    NameMatch name_match(www_name);
+    data_source.findClosestEnclosure(name_match);
+    EXPECT_EQ(NULL, name_match.closestName());
+    EXPECT_EQ(NULL, name_match.bestDataSrc());
+}
+
 TEST_F(Sqlite3DataSourceTest, findClosestEnclosure) {
     NameMatch name_match(www_name);
     data_source.findClosestEnclosure(name_match);
     EXPECT_EQ(zone_name, *name_match.closestName());
+    EXPECT_EQ(&data_source, name_match.bestDataSrc());
+}
+
+TEST_F(Sqlite3DataSourceTest, findClosestEnclosureAtDelegation) {
+    // The search name exists both in the parent and child zones, but
+    // child has a better match.
+    NameMatch name_match(child_name);
+    data_source.findClosestEnclosure(name_match);
+    EXPECT_EQ(child_name, *name_match.closestName());
     EXPECT_EQ(&data_source, name_match.bestDataSrc());
 }
 
