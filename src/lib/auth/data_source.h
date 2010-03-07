@@ -39,7 +39,6 @@ namespace auth {
 
 class NameMatch;
 class Query;
-class Nsec3Param;
 
 class DataSrc;
 typedef boost::shared_ptr<DataSrc> DataSrcPtr;

@@ -35,7 +35,6 @@ class RRsetList;
 namespace auth {
 
 class Query;
-class Nsec3Param;
 
 class Sqlite3DataSrc : public DataSrc {
     ///
