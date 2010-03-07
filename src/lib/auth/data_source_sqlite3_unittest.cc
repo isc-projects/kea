@@ -239,11 +239,14 @@ checkRRset(RRsetPtr rrset, const Name& expected_name,
 
     if (expected_sig_data != NULL) {
         RRsetPtr sig_rrset = rrset->getRRsig();
-        EXPECT_FALSE(NULL == sig_rrset);
-        // Note: we assume the TTL for RRSIG is the same as that of the
-        // RRSIG target.
-        checkRRset(sig_rrset, expected_name, expected_class, RRType::RRSIG(),
-                   expected_rrttl, *expected_sig_data, NULL);
+        EXPECT_FALSE(sig_rrset == NULL);
+        if (sig_rrset != NULL) { // check this to avoid possible bug.
+            // Note: we assume the TTL for RRSIG is the same as that of the
+            // RRSIG target.
+            checkRRset(sig_rrset, expected_name, expected_class,
+                       RRType::RRSIG(), expected_rrttl, *expected_sig_data,
+                       NULL);
+        }
     } else {
         EXPECT_TRUE(NULL == rrset->getRRsig());
     }
