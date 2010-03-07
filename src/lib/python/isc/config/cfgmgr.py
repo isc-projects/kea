@@ -24,6 +24,7 @@ import signal
 import ast
 import pprint
 import os
+import copy
 from isc.cc import data
 
 class ConfigManagerDataReadError(Exception):
@@ -237,6 +238,7 @@ class ConfigManager:
             return isc.config.ccsession.create_answer(1, "Wrong number of arguments")
         if len(cmd) == 2:
             # todo: use api (and check the data against the definition?)
+            old_data = copy.deepcopy(self.config.data)
             module_name = cmd[0]
             conf_part = data.find_no_exc(self.config.data, module_name)
             if conf_part:
@@ -256,9 +258,10 @@ class ConfigManager:
                 rcode, val = isc.config.ccsession.parse_answer(answer)
                 if rcode == 0:
                     self.write_config()
+                else:
+                    self.config.data = old_data
         elif len(cmd) == 1:
-            # todo: use api (and check the data against the definition?)
-            old_data = self.config.data.copy()
+            old_data = copy.deepcopy(self.config.data)
             data.merge(self.config.data, cmd[0])
             # send out changed info
             got_error = False
