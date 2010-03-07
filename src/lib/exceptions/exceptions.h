@@ -19,6 +19,7 @@
 
 #include <stdexcept>
 #include <string>
+#include <sstream>
 
 namespace isc {
 
@@ -125,8 +126,30 @@ public:
 ///
 /// A shortcut macro to insert known values into exception arguments.
 ///
-#define isc_throw(type, args...) throw type(__FILE__, __LINE__, args)
-
+/// It allows the \c stream argument to be part of a statement using an
+/// \c ostream object and its \c operator<<.  For example,
+/// \code int x = 10;
+/// isc_throw(SomeException, "Error happened, parameter: " << x);
+/// \endcode
+/// will throw an exception of class \c SomeException whose \c what string
+/// will be <code>"Error happened, parameter: 10"</code>.
+///
+/// Note: the stream related operations or creation of the exception object
+/// may itself throw an exception (specifically \c std::bad_alloc).
+/// Even though it should be very rare, we may have to address this issue later.
+///
+/// Note: in general we hate macros and avoid using it in the code.  This is
+/// one of few exceptions to that policy.  inline functions cannot be used
+/// for embedding \c __FILE__ and \c __LINE__.  This is the main reason why
+/// this is defined as a macro.  The convenience for the ostream is a secondary
+/// purpose (if that were the only possible reason we should rather avoid
+/// using a macro).
+#define isc_throw(type, stream) \
+    do { \
+        std::ostringstream oss__; \
+        oss__ << stream; \
+        throw type(__FILE__, __LINE__, oss__.str().c_str()); \
+    } while (1)
 }
 #endif // __EXCEPTIONS_H
 
