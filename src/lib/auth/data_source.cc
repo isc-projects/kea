@@ -347,18 +347,13 @@ proveNX(Query& q, QueryTaskPtr task, const DataSrc* ds, const Name& zonename)
     DataSrc::Result result;
     ConstNsec3ParamPtr nsec3 = getNsec3Param(q, ds, zonename);
     if (nsec3 != NULL) {
-        string node = nsec3->getHash(task->qname);
-        string apex = nsec3->getHash(zonename);
-        string wild("");
-        if ((task->flags & DataSrc::NAME_NOT_FOUND) != 0) {
-            wild = nsec3->getHash(Name("*").concatenate(zonename));
-        }
-
+        string node(nsec3->getHash(task->qname));
         result = addNSEC3(node, q, ds, zonename);
         if (result != DataSrc::SUCCESS) {
             return (result);
         }
 
+        string apex(nsec3->getHash(zonename));
         if (node != apex) {
             result = addNSEC3(apex, q, ds, zonename);
             if (result != DataSrc::SUCCESS) {
@@ -366,10 +361,13 @@ proveNX(Query& q, QueryTaskPtr task, const DataSrc* ds, const Name& zonename)
             }
         }
 
-        if (wild.length() != 0 && node != wild) {
-            result = addNSEC3(wild, q, ds, zonename);
-            if (result != DataSrc::SUCCESS) {
-                return (result);
+        if ((task->flags & DataSrc::NAME_NOT_FOUND) != 0) {
+            string wild(nsec3->getHash(Name("*").concatenate(zonename)));
+            if (node != wild) {
+                result = addNSEC3(wild, q, ds, zonename);
+                if (result != DataSrc::SUCCESS) {
+                    return (result);
+                }
             }
         }
     } else {
