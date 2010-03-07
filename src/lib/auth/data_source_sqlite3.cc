@@ -687,6 +687,7 @@ Sqlite3DataSrc::open(const string& name) {
     
     if (sqlite3_open(database_name.c_str(), &db) != 0) {
         cerr << "open database: " << sqlite3_errmsg(db) << "\n";
+        // sqlite3_close() must be called even when open fails.
         sqlite3_close(db);
         throw("Cannot open database");
     }
