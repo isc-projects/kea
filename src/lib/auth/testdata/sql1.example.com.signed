@@ -45,7 +45,7 @@ sql1.example.com.	3600	IN SOA	master.example.com. admin.example.com. (
 			3600	RRSIG	DNSKEY 5 3 3600 20100322084536 (
 					20100220084536 33313 sql1.example.com.
 					FAKEFAKEFAKEFAKE )
-www.sql1.example.com.	3600	IN A	192.168.2.2
+www.sql1.example.com.	3600	IN A	192.0.2.100
 			3600	RRSIG	A 5 4 3600 20100322084536 (
 					20100220084536 12447 sql1.example.com.
 					FAKEFAKEFAKEFAKE )
