@@ -19,6 +19,7 @@
 #include <iostream>
 #include <vector>
 
+#include <boost/shared_ptr.hpp>
 #include <boost/foreach.hpp>
 
 #include <dns/base32.h>
@@ -41,6 +42,8 @@ using namespace isc::dns::rdata;
 
 namespace isc {
 namespace auth {
+
+typedef boost::shared_ptr<const Nsec3Param> ConstNsec3ParamPtr;
 
 // Add a task to the query task queue to look up additional data
 // (i.e., address records for the names included in NS or MX records)
@@ -305,9 +308,8 @@ addNSEC3(const string& hash, Query& q, const DataSrc* ds, const Name& zonename)
     return (DataSrc::SUCCESS);
 }
 
-static Nsec3Param*
-getNsec3Param(Query& q, const DataSrc* ds, const Name& zonename)
-{
+static ConstNsec3ParamPtr
+getNsec3Param(Query& q, const DataSrc* ds, const Name& zonename) {
     DataSrc::Result result;
     RRsetList nsec3param;
 
@@ -316,12 +318,12 @@ getNsec3Param(Query& q, const DataSrc* ds, const Name& zonename)
     result = doQueryTask(ds, &zonename, q, newtask, nsec3param);
     newtask.flags &= ~DataSrc::REFERRAL;
     if (result != DataSrc::SUCCESS || newtask.flags != 0) {
-        return (NULL);
+        return (ConstNsec3ParamPtr());
     }
 
     RRsetPtr rrset = nsec3param[RRType::NSEC3PARAM()];
     if (!rrset) {
-        return (NULL);
+        return (ConstNsec3ParamPtr());
     }
 
     // XXX: currently only one NSEC3 chain per zone is supported;
@@ -329,28 +331,28 @@ getNsec3Param(Query& q, const DataSrc* ds, const Name& zonename)
     RdataIteratorPtr it = rrset->getRdataIterator();
     it->first();
     if (it->isLast()) {
-        return (NULL);
+        return (ConstNsec3ParamPtr());
     }
 
     const generic::NSEC3PARAM& np =
             dynamic_cast<const generic::NSEC3PARAM&>(it->getCurrent());
-    return (new Nsec3Param(np.getHashalg(), np.getFlags(),
-                           np.getIterations(), np.getSalt()));
+    return (ConstNsec3ParamPtr(new Nsec3Param(np.getHashalg(), np.getFlags(),
+                                              np.getIterations(),
+                                              np.getSalt())));
 }
 
 static inline DataSrc::Result
 proveNX(Query& q, QueryTaskPtr task, const DataSrc* ds, const Name& zonename)
 {
     DataSrc::Result result;
-    Nsec3Param* nsec3 = getNsec3Param(q, ds, zonename);
-    if (nsec3) {
+    ConstNsec3ParamPtr nsec3 = getNsec3Param(q, ds, zonename);
+    if (nsec3 != NULL) {
         string node = nsec3->getHash(task->qname);
         string apex = nsec3->getHash(zonename);
         string wild("");
         if ((task->flags & DataSrc::NAME_NOT_FOUND) != 0) {
             wild = nsec3->getHash(Name("*").concatenate(zonename));
         }
-        delete nsec3;
 
         result = addNSEC3(node, q, ds, zonename);
         if (result != DataSrc::SUCCESS) {
