@@ -145,7 +145,7 @@ importSqlite3Rows(sqlite3_stmt* query, const Name& qname, const RRClass& qclass,
             }
         }
 
-        RRsetPtr rrset = result_sets[base_rrtype];
+        RRsetPtr rrset = result_sets.findRRset(base_rrtype, qclass);
         if (rrset == NULL) {
             rrset = RRsetPtr(new RRset(qname, qclass, base_rrtype, RRTTL(ttl)));
             result_sets.addRRset(rrset);
