@@ -42,6 +42,11 @@ using namespace isc::auth;
 namespace {
 static const char* SQLITE_DBFILE_EXAMPLE = "testdata/test.sqlite3";
 static const char* SQLITE_DBFILE_EXAMPLE2 = "testdata/test2.sqlite3";
+// The following file must be non existent and mutt be "creatable";
+// the sqlite3 library will try to create a new DB file if it doesn't exist,
+// so to test a failure case the create operation should also fail.
+// The "nodir", a non existent directory, is inserted for this purpose.
+static const char* SQLITE_DBFILE_NOTEXIST = "testdata/nodir/notexist";
 
 static const string sigdata_common(" 20100322084538 20100220084538 "
                                    "33495 example.com. FAKEFAKEFAKEFAKE");
@@ -351,6 +356,11 @@ TEST_F(Sqlite3DataSourceTest, reOpen) {
     data_source.findClosestEnclosure(name_match);
     EXPECT_EQ(NULL, name_match.closestName());
     EXPECT_EQ(NULL, name_match.bestDataSrc());
+}
+
+TEST_F(Sqlite3DataSourceTest, openFail) {
+    EXPECT_EQ(DataSrc::SUCCESS, data_source.close());
+    EXPECT_THROW(data_source.init(SQLITE_DBFILE_NOTEXIST), Sqlite3Error);
 }
 
 TEST_F(Sqlite3DataSourceTest, findClosestEnclosure) {

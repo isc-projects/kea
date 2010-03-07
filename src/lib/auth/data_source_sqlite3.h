@@ -19,6 +19,8 @@
 
 #include <string>
 
+#include <exceptions/exceptions.h>
+
 #include <sqlite3.h>
 
 #include "data_source.h"
@@ -35,6 +37,12 @@ class RRsetList;
 namespace auth {
 
 class Query;
+
+class Sqlite3Error : public Exception {
+public:
+    Sqlite3Error(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
 
 class Sqlite3DataSrc : public DataSrc {
     ///
@@ -119,7 +127,6 @@ private:
     void checkAndSetupSchema(void);
 
     sqlite3 *db;
-    std::string database_name;
     int database_version;
     
     //
