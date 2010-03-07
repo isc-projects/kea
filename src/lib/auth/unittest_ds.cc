@@ -775,8 +775,8 @@ TestDataSrc::findPreviousName(const Query& q,
 
 DataSrc::Result
 TestDataSrc::findCoveringNSEC3(const Query& q,
-                               const string& hash,
                                const Name& zonename,
+                               string& hash,
                                RRsetList& target) const
 {
     return (NOT_IMPLEMENTED);

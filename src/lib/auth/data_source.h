@@ -146,8 +146,8 @@ public:
    // This MUST be implemented by concrete data sources which support
    // NSEC3, but is optional for others
    virtual Result findCoveringNSEC3(const Query& q,
-                                    const std::string& hash,
                                     const isc::dns::Name& zonename,
+                                    std::string& hash,
                                     isc::dns::RRsetList& target) const = 0;
 };
 
@@ -215,8 +215,8 @@ public:
                                     const isc::dns::Name* zonename) const = 0;
 
    virtual Result findCoveringNSEC3(const Query& q,
-                                    const std::string& hash,
                                     const isc::dns::Name& zonename,
+                                    std::string& hash,
                                     isc::dns::RRsetList& target) const = 0;
 
 private:
@@ -293,8 +293,8 @@ public:
     }
 
    virtual Result findCoveringNSEC3(const Query& q,
-                                    const std::string& qname,
                                     const isc::dns::Name& zonename,
+                                    std::string& hash,
                                     isc::dns::RRsetList& target) const
    {
        return (NOT_IMPLEMENTED);

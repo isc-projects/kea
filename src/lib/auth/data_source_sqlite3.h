@@ -89,8 +89,8 @@ public:
                                      const isc::dns::Name* zonename) const;
 
     Result findCoveringNSEC3(const Query& q,
-                             const std::string& hash,
                              const isc::dns::Name& zonename,
+                             std::string& hash,
                              isc::dns::RRsetList& target) const;
 
     Result init();

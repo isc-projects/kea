@@ -549,8 +549,8 @@ Sqlite3DataSrc::findPreviousName(const Query& q,
 
 DataSrc::Result
 Sqlite3DataSrc::findCoveringNSEC3(const Query& q,
-                                  const string& hashstr,
                                   const Name& zonename,
+                                  string& hashstr,
                                   RRsetList& target) const
 {
     int zone_id = findClosest(zonename.toText().c_str(), NULL);
@@ -614,7 +614,7 @@ Sqlite3DataSrc::findCoveringNSEC3(const Query& q,
                           flags) == 0 || flags != 0) {
         result = ERROR;
     }
-
+    hashstr = string(hash);
     sqlite3_reset(q_nsec3);
     return (result);
 }
