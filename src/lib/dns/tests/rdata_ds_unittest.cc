@@ -42,13 +42,11 @@ string ds_txt("12892 5 2 F1E184C0E1D615D20EB3C223ACED3B03C773DD952D"
               "5F0EB5C777586DE18DA6B5");
 const generic::DS rdata_ds(ds_txt);
 
-TEST_F(Rdata_DS_Test, toText_DS)
-{
+TEST_F(Rdata_DS_Test, toText_DS) {
     EXPECT_EQ(ds_txt, rdata_ds.toText());
 }
 
-TEST_F(Rdata_DS_Test, badText_DS)
-{
+TEST_F(Rdata_DS_Test, badText_DS) {
     EXPECT_THROW(const generic::DS ds2("99999 5 2 BEEF"), InvalidRdataText);
     EXPECT_THROW(const generic::DS ds2("11111 555 2 BEEF"), InvalidRdataText);
     EXPECT_THROW(const generic::DS ds2("11111 5 22222 BEEF"), InvalidRdataText);
@@ -56,20 +54,17 @@ TEST_F(Rdata_DS_Test, badText_DS)
     EXPECT_THROW(const generic::DS ds2("GARBAGE IN"), InvalidRdataText);
 }
 
-TEST_F(Rdata_DS_Test, createFromWire_DS)
-{
+TEST_F(Rdata_DS_Test, createFromWire_DS) {
     EXPECT_EQ(0, rdata_ds.compare(
-                  *rdataFactoryFromFile(RRType("DS"), RRClass("IN"),
+                  *rdataFactoryFromFile(RRType::DS(), RRClass::IN(),
                                         "testdata/rdata_ds_fromWire")));
 }
 
-TEST_F(Rdata_DS_Test, getTag_DS)
-{
+TEST_F(Rdata_DS_Test, getTag_DS) {
     EXPECT_EQ(12892, rdata_ds.getTag());
 }
 
-TEST_F(Rdata_DS_Test, toWireRenderer)
-{
+TEST_F(Rdata_DS_Test, toWireRenderer) {
     renderer.skip(2);
     generic::DS rdata_ds(ds_txt);
     rdata_ds.toWire(renderer);
@@ -81,10 +76,16 @@ TEST_F(Rdata_DS_Test, toWireRenderer)
                         obuffer.getLength() - 2, &data[2], data.size() - 2);
 }
 
-TEST_F(Rdata_DS_Test, toWireBuffer)
-{
+TEST_F(Rdata_DS_Test, toWireBuffer) {
     generic::DS rdata_ds(ds_txt);
     rdata_ds.toWire(obuffer);
+}
+
+TEST_F(Rdata_DS_Test, compare) {
+    // trivial case: self equivalence
+    EXPECT_EQ(0, generic::DS(ds_txt).compare(generic::DS(ds_txt)));
+
+    // TODO: need more tests
 }
 
 }
