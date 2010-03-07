@@ -92,6 +92,93 @@ Sqlite3DataSrc::hasExactZone(const char* name) const {
     return (i);
 }
 
+static int
+importSqlite3Rows(sqlite3_stmt* query, const Name& qname, const RRClass& qclass,
+                  const RRType& qtype, const bool nsec3_tree,
+                  RRsetList& result_sets, uint32_t& flags)
+{
+    int rows = 0;
+    int rc = sqlite3_step(query);
+    const bool qtype_is_any = (qtype == RRType::ANY());
+
+    while (rc == SQLITE_ROW) {
+        const char* type = (const char*)sqlite3_column_text(query, 0);
+        int ttl = sqlite3_column_int(query, 1);
+        const char* sigtype = NULL;
+        const char* rdata;
+
+        if (nsec3_tree) {
+            rdata = (const char*)sqlite3_column_text(query, 2);
+            if (RRType(type) == RRType::RRSIG()) {
+                sigtype = "NSEC3";
+            }
+        } else {
+            sigtype = (const char*)sqlite3_column_text(query, 2);
+            rdata = (const char*)sqlite3_column_text(query, 3);
+        }
+
+        const RRType base_rrtype(sigtype != NULL ? sigtype : type);
+
+        // found an NS; we need to inform the caller that this might be a
+        // referral, but we do not return the NS RRset to the caller
+        // unless asked for it.
+        if (base_rrtype == RRType::NS() && !qtype_is_any) {
+            flags |= DataSrc::REFERRAL;
+            if (qtype != RRType::NS()) {
+                rc = sqlite3_step(query);
+                continue;
+            }
+        }
+
+        ++rows;
+
+        // Looking for something else but found CNAME
+        if (base_rrtype == RRType::CNAME() && qtype != RRType::CNAME()) {
+            if (qtype == RRType::NSEC()) {
+                // NSEC query, just skip the CNAME
+                rc = sqlite3_step(query);
+                continue;
+            } else if (!qtype_is_any) {
+                // include the CNAME, but don't flag it for chasing if
+                // this is an ANY query
+                flags |= DataSrc::CNAME_FOUND;
+            }
+        }
+
+        RRsetPtr rrset = result_sets[base_rrtype];
+        if (rrset == NULL) {
+            rrset = RRsetPtr(new RRset(qname, qclass, base_rrtype, RRTTL(ttl)));
+            result_sets.addRRset(rrset);
+        }
+
+        if (sigtype == NULL && base_rrtype == rrset->getType()) {
+            rrset->addRdata(createRdata(rrset->getType(), qclass, rdata));
+            if (ttl > rrset->getTTL().getValue()) {
+                rrset->setTTL(RRTTL(ttl));
+            }
+        } else if (sigtype != NULL && base_rrtype == rrset->getType()) {
+            RdataPtr rrsig = createRdata(RRType::RRSIG(), qclass, rdata);
+            if (rrset->getRRsig()) {
+                rrset->getRRsig()->addRdata(rrsig);
+            } else {
+                RRsetPtr sigs = RRsetPtr(new RRset(qname, qclass,
+                                                   RRType::RRSIG(),
+                                                   RRTTL(ttl)));
+                sigs->addRdata(rrsig);
+                rrset->addRRsig(sigs);
+            }
+
+            if (ttl > rrset->getRRsig()->getTTL().getValue()) {
+                rrset->getRRsig()->setTTL(RRTTL(ttl));
+            }
+        }
+
+        rc = sqlite3_step(query);
+    }
+
+    return (rows);
+}
+
 int
 Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
                             RRsetList& target, const Name* zonename,
@@ -146,75 +233,9 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
             throw("Could not bind 3 (query)");
         }
     }
-  
-    int rows = 0;
-    const bool any = (rdtype == RRType::ANY());
 
-    rc = sqlite3_step(query);
-    while (rc == SQLITE_ROW) {
-        const char* type = (const char*)sqlite3_column_text(query, 0);
-        int ttl = sqlite3_column_int(query, 1);
-        const char* sigtype = (const char*)sqlite3_column_text(query, 2);
-        const char* rdata = (const char*)sqlite3_column_text(query, 3);
-
-        RRType rt(sigtype ? sigtype : type);
-
-        // found an NS; we need to inform the caller that this might be a
-        // referral, but we do not return the NS RRset to the caller
-        // unless asked for it.
-        if (rt == RRType::NS() && !any) {
-            flags |= REFERRAL;
-            if (rdtype != RRType::NS()) {
-                rc = sqlite3_step(query);
-                continue;
-            }
-        }
-
-        ++rows;
-
-        // Looking for something else but found CNAME
-        if (rt == RRType::CNAME() && rdtype != RRType::CNAME()) {
-            if (rdtype == RRType::NSEC()) {
-                // NSEC query, just skip the CNAME
-                rc = sqlite3_step(query);
-                continue;
-            } else if (!any) {
-                // include the CNAME, but don't flag it for chasing if
-                // this is an ANY query
-                flags |= CNAME_FOUND;
-            }
-        }
-
-        RRsetPtr rrset = target[rt];
-        if (rrset == NULL) {
-            rrset = RRsetPtr(new RRset(name, getClass(), rt, RRTTL(ttl)));
-            target.addRRset(rrset);
-        }
-
-        if (!sigtype && RRType(type) == rrset->getType()) {
-            rrset->addRdata(createRdata(RRType(type), getClass(), rdata));
-            if (ttl > rrset->getTTL().getValue()) {
-                rrset->setTTL(RRTTL(ttl));
-            }
-        } else if (sigtype && RRType(sigtype) == rrset->getType()) {
-            RdataPtr rrsig = createRdata(RRType::RRSIG(), getClass(), rdata);
-            if (rrset->getRRsig()) {
-                rrset->getRRsig()->addRdata(rrsig);
-            } else {
-                RRsetPtr sigs = RRsetPtr(new RRset(name, getClass(),
-                                                   RRType::RRSIG(),
-                                                   RRTTL(ttl)));
-                sigs->addRdata(rrsig);
-                rrset->addRRsig(sigs);
-            }
-
-            if (ttl > rrset->getRRsig()->getTTL().getValue()) {
-                rrset->getRRsig()->setTTL(RRTTL(ttl));
-            }
-        }
-
-        rc = sqlite3_step(query);
-    }
+    int rows = importSqlite3Rows(query, name, getClass(), rdtype, false, target,
+                                 flags);
 
     sqlite3_reset(query);
     if (rows > 0) {
@@ -586,51 +607,16 @@ Sqlite3DataSrc::findCoveringNSEC3(const Query& q,
         throw ("Could not bind 2 (NSEC3)");
     }
 
-    int target_ttl = -1;
-    int sig_ttl = -1;
-    const Name& name(Name(hash).concatenate(zonename));
-    RRsetPtr rrset = target[RRType::NSEC3()];
-    if (!rrset) {
-        rrset = RRsetPtr(new RRset(name, getClass(), RRType::NSEC3(),
-                                   RRTTL(0)));
-        rrset->addRRsig(RRsetPtr(new RRset(name, getClass(),
-                                           RRType::RRSIG(), RRTTL(0))));
-        target.addRRset(rrset);
-    }
-
-    rc = sqlite3_step(q_nsec3);
-    while (rc == SQLITE_ROW) {
-        const RRType type((const char*)sqlite3_column_text(q_nsec3, 0));
-        const int ttl = sqlite3_column_int(q_nsec3, 1);
-        const char* const rdata = (const char*)sqlite3_column_text(q_nsec3, 2);
-
-        if (type == RRType::NSEC3()) {
-            rrset->addRdata(createRdata(type, getClass(), rdata));
-            if (target_ttl == -1 || target_ttl > ttl) {
-                target_ttl = ttl;
-            }
-            rrset->setTTL(RRTTL(target_ttl));
-        } else {
-            RdataPtr rrsig = createRdata(RRType::RRSIG(), getClass(), rdata);
-            if (rrset->getRRsig()) {
-                rrset->getRRsig()->addRdata(rrsig);
-            } else {
-                RRsetPtr sigs = RRsetPtr(new RRset(name, getClass(),
-                                                   RRType::RRSIG(), RRTTL(0)));
-                sigs->addRdata(rrsig);
-                rrset->addRRsig(sigs);
-            }
-        }
-
-        if (sig_ttl == -1 || sig_ttl > ttl) {
-            sig_ttl = ttl;
-        }
-        rrset->getRRsig()->setTTL(RRTTL(sig_ttl));
-        rc = sqlite3_step(q_nsec3);
+    DataSrc::Result result = SUCCESS;
+    uint32_t flags = 0;
+    if (importSqlite3Rows(q_nsec3, Name(hash).concatenate(zonename),
+                          getClass(), RRType::NSEC3(), true, target,
+                          flags) == 0 || flags != 0) {
+        result = ERROR;
     }
 
     sqlite3_reset(q_nsec3);
-    return (SUCCESS);
+    return (result);
 }
 
 DataSrc::Result
