@@ -43,12 +43,11 @@ static const char* DEFAULT_DB_FILE = "/tmp/zone.sqlite3";
 //  Prepare a statement.  Can call release() or sqlite3_finalize()
 //  directly.
 //
-sqlite3_stmt* Sqlite3DataSrc::prepare(const char* statement) {
-    int rc;
+sqlite3_stmt*
+Sqlite3DataSrc::prepare(const char* statement) {
     sqlite3_stmt* prepared = NULL;
 
-    rc = sqlite3_prepare_v2(db, statement, -1, &prepared, NULL);
-    if (rc != SQLITE_OK) {
+    if (sqlite3_prepare_v2(db, statement, -1, &prepared, NULL) != SQLITE_OK) { 
         throw("could not prepare");
     }
     return (prepared);
@@ -57,14 +56,16 @@ sqlite3_stmt* Sqlite3DataSrc::prepare(const char* statement) {
 //
 //  Release memory associated with a prepared query.
 //
-void Sqlite3DataSrc::release(sqlite3_stmt* prepared) {
+void
+Sqlite3DataSrc::release(sqlite3_stmt* prepared) {
     sqlite3_finalize(prepared);
 }
 
 //
 //  Get the database schema version.
 //
-int Sqlite3DataSrc::getVersion(void) {
+int
+Sqlite3DataSrc::getVersion(void) {
     if (database_version == -1) {
         loadVersion();
     }
@@ -75,19 +76,18 @@ int Sqlite3DataSrc::getVersion(void) {
 //  Find the exact zone match.  Return -1 if not found, or the zone's
 //  ID if found.  This will always be >= 0 if found.
 //
-int Sqlite3DataSrc::hasExactZone(const char* name) const {
-    int rc, i;
+int
+Sqlite3DataSrc::hasExactZone(const char* name) const {
+    int rc;
+
     sqlite3_reset(q_zone);
     rc = sqlite3_bind_text(q_zone, 1, name, -1, SQLITE_STATIC);
     if (rc != SQLITE_OK) {
         throw("Could not bind");
     }
+
     rc = sqlite3_step(q_zone);
-    if (rc == SQLITE_ROW) {
-        i = sqlite3_column_int(q_zone, 0);
-    } else {
-        i = -1;
-    }
+    int i = (rc == SQLITE_ROW) ? sqlite3_column_int(q_zone, 0) : -1; 
     sqlite3_reset(q_zone);
     return (i);
 }
@@ -97,7 +97,6 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
                             RRsetList& target, const Name* zonename,
                             const Mode mode, uint32_t& flags) const
 {
-    int rc;
     const string s_name = name.toText();
     const char* const c_name = s_name.c_str();
     sqlite3_stmt* query;
@@ -130,6 +129,7 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
     sqlite3_reset(query);
     sqlite3_clear_bindings(query);
 
+    int rc;
     rc = sqlite3_bind_int(query, 1, zone_id);
     if (rc != SQLITE_OK) {
         throw("Could not bind 1 (query)");
@@ -147,10 +147,9 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
         }
     }
   
-    // loop
     int rows = 0;
     RRsetPtr rrset;
-    bool any = (rdtype == RRType::ANY());
+    const bool any = (rdtype == RRType::ANY());
 
     rc = sqlite3_step(query);
     while (rc == SQLITE_ROW) {
@@ -241,7 +240,7 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
     }
 
     rc = sqlite3_step(q_count);
-    if(rc == SQLITE_ROW) {
+    if (rc == SQLITE_ROW) {
         if (sqlite3_column_int(q_count, 0) != 0) {
             flags |= TYPE_NOT_FOUND;
             sqlite3_reset(q_count);
@@ -259,11 +258,14 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
 //  >= 0 if found.  If position is not NULL, it will be filled in with the
 //  longest match found.
 //
-int Sqlite3DataSrc::findClosest(const char* name, const char** position) const {
+int
+Sqlite3DataSrc::findClosest(const char* const name,
+                            const char** position) const
+{
     const char* current = name;
     
     while (*current != 0) {
-        int rc = hasExactZone(current);
+        const int rc = hasExactZone(current);
         if (rc >= 0) {
             if (position != NULL) {
                 *position = current;
@@ -283,8 +285,7 @@ int Sqlite3DataSrc::findClosest(const char* name, const char** position) const {
 
 void
 Sqlite3DataSrc::loadVersion(void) {
-    const char* q = "SELECT version FROM schema_version";
-    sqlite3_stmt* prepared = prepare(q);
+    sqlite3_stmt* prepared = prepare("SELECT version FROM schema_version");
     if (sqlite3_step(prepared) != SQLITE_ROW) {
         throw("failed to find a row in schema_version table");
     }
@@ -396,10 +397,7 @@ Sqlite3DataSrc::setupPreparedStatements(void) {
 
 void
 Sqlite3DataSrc::execSetupQuery(const char* query) {
-    int rc;
-
-    rc = sqlite3_exec(db, query, NULL, NULL, NULL);
-    if (rc != SQLITE_OK) {
+    if (sqlite3_exec(db, query, NULL, NULL, NULL) != SQLITE_OK) { 
         throw(query);
     }
 }
@@ -602,9 +600,9 @@ Sqlite3DataSrc::findCoveringNSEC3(const Query& q,
 
     rc = sqlite3_step(q_nsec3);
     while (rc == SQLITE_ROW) {
-        RRType type((const char*)sqlite3_column_text(q_nsec3, 0));
-        int ttl = sqlite3_column_int(q_nsec3, 1);
-        const char* rdata = (const char*)sqlite3_column_text(q_nsec3, 2);
+        const RRType type((const char*)sqlite3_column_text(q_nsec3, 0));
+        const int ttl = sqlite3_column_int(q_nsec3, 1);
+        const char* const rdata = (const char*)sqlite3_column_text(q_nsec3, 2);
 
         if (type == RRType::NSEC3()) {
             rrset->addRdata(createRdata(type, RRClass::IN(), rdata));
@@ -699,12 +697,9 @@ Sqlite3DataSrc::findReferral(const Query& q,
 //
 void
 Sqlite3DataSrc::open(const string& name) {
-    int rc;
-
     database_name = name;
     
-    rc = sqlite3_open(database_name.c_str(), &db);
-    if (rc) {
+    if (sqlite3_open(database_name.c_str(), &db) != 0) {
         cerr << "open database: " << sqlite3_errmsg(db) << "\n";
         sqlite3_close(db);
         throw("Cannot open database");
