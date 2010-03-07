@@ -144,6 +144,10 @@ protected:
         child_sig_data.push_back("A 5 4 3600 20100322084536 "
                                  "20100220084536 12447 sql1.example.com. "
                                  "FAKEFAKEFAKEFAKE");
+        nsec3_data.push_back("1 0 10 FEEDABEE 4KLSVDE8KH8G95VU68R7AHBE1CPQN38J");
+        nsec3_sig_data.push_back("NSEC3 5 4 7200 20100405201820 "
+                                 "20100306201820 33495 sql2.example.com. "
+                                 "FAKEFAKEFAKEFAKE");
     }
     ~Sqlite3DataSourceTest() { delete query; }
     Sqlite3DataSrc data_source;
@@ -197,6 +201,8 @@ protected:
     vector<string> delegation_nsec_sig_data;
     vector<string> child_a_data;
     vector<string> child_sig_data;
+    vector<string> nsec3_data;
+    vector<string> nsec3_sig_data;
 };
 
 void
@@ -660,6 +666,22 @@ TEST_F(Sqlite3DataSourceTest, findExactRRset) {
     // Normal case.  No different than findRRset.
     checkFind(EXACT, data_source, *query, www_name, &zone_name, rrclass, rrtype,
               rrttl, 0, common_a_data, &common_sig_data);
+}
+
+TEST_F(Sqlite3DataSourceTest, findRRsetNSEC3) {
+    // Simple NSEC3 tests (more should be added)
+    string hashstr("1BB7SO0452U1QHL98UISNDD9218GELR5");
+
+    const Name nsec3_zonename("sql2.example.com");
+    EXPECT_EQ(DataSrc::SUCCESS,
+              data_source.findCoveringNSEC3(*query, hashstr, nsec3_zonename,
+                                            result_sets));
+    RRsetList::iterator it = result_sets.begin();
+    checkRRset(*it, Name(hashstr).concatenate(nsec3_zonename), RRClass::IN(),
+               RRType::NSEC3(), RRTTL(7200), nsec3_data, &nsec3_sig_data);
+    ++it;
+    EXPECT_TRUE(it == result_sets.end());
+
 }
 
 TEST_F(Sqlite3DataSourceTest, findExactRRsetCNAME) {
