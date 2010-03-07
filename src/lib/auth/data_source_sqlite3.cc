@@ -256,7 +256,8 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
         throw("Could not bind 1 (count)");
     }
 
-    rc = sqlite3_bind_text(q_count, 2, c_name, -1, SQLITE_STATIC);
+    rc = sqlite3_bind_text(q_count, 2, name.reverse().toText().c_str(), -1,
+                           SQLITE_STATIC);
     if (rc != SQLITE_OK) {
         throw("Could not bind 2 (count)");
     }
@@ -374,8 +375,8 @@ Sqlite3DataSrc::setupPreparedStatements(void) {
     }
 
     const char* q_count_str = "SELECT COUNT(*) FROM records "
-                              "WHERE zone_id=?1 AND (name=?2 OR "
-                              "name LIKE '%.' || ?2);";
+                              "WHERE zone_id=?1 AND "
+                              "rname LIKE (?2 || '%');";
     try {
         q_count = prepare(q_count_str);
     } catch (const char* e) {
