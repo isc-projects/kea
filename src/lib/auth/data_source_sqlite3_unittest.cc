@@ -89,6 +89,8 @@ protected:
 
         common_a_data.push_back("192.0.2.1");
         common_sig_data.push_back("A 5 3 3600" + sigdata_common);
+        common_aaaa_data.push_back("2001:db8::1234");
+        common_aaaa_sig_data.push_back("AAAA 5 3 3600" + sigdata_common);
 
         www_nsec_data.push_back("example.com. A RRSIG NSEC");
         www_nsec_sig_data.push_back("NSEC 5 3 7200" + sigdata_common);
@@ -157,6 +159,8 @@ protected:
     vector<RRType> expected_types;
     vector<string> common_a_data;
     vector<string> common_sig_data;
+    vector<string> common_aaaa_data;
+    vector<string> common_aaaa_sig_data;
     vector<string> www_nsec_data;
     vector<string> www_nsec_sig_data;
     vector<string> apex_soa_data;
@@ -206,8 +210,15 @@ checkRRset(RRsetPtr rrset, const Name& expected_name,
             // buggy case, should stop here
             break;
         }
-        EXPECT_EQ(0, (rdata_iterator->getCurrent()).compare(
-                      *createRdata(expected_type, expected_class, *data_it)));
+
+        // We use text-based comparison so that we can easily identify which
+        // data causes the error.  RDATA::compare() is the most strict
+        // comparison method, but in this case text-based comparison should
+        // be okay because we generate the text data from Rdata objects
+        // rather than hand-write the expected text.
+        EXPECT_EQ(createRdata(expected_type, expected_class,
+                              *data_it)->toText(),
+                  rdata_iterator->getCurrent().toText());
         rdata_iterator->next();
     }
 
@@ -626,7 +637,7 @@ TEST_F(Sqlite3DataSourceTest, findExactRRsetCNAME) {
 }
 
 #if 0 // this should work, but doesn't.  maybe the loadzone tool is broken?
-TEST_F(Sqlite3DataSourceTest, findExactRRsetReferral) {
+TEST_F(Sqlite3DataSourceTest, findReferralRRset) {
     // A referral lookup searches for NS, DS, or DNAME, or their sigs.
     const Name qname("sql1.example.com");
 
@@ -644,5 +655,53 @@ TEST_F(Sqlite3DataSourceTest, findExactRRsetReferral) {
               rrtype, ttls, 0, types, answers, signatures);
 }
 #endif
+
+TEST_F(Sqlite3DataSourceTest, findReferralRRsetDNAME) {
+    // same as above.  the DNAME case.
+    const Name qname("dname.example.com");
+    checkFind(REFERRAL, data_source, *query, qname, &zone_name, rrclass,
+              RRType::DNAME(), rrttl, 0, dname_data, &dname_sig_data);
+}
+
+TEST_F(Sqlite3DataSourceTest, findReferralRRsetFail) {
+    // qname has not "referral" records.  the result should be "empty".
+    EXPECT_EQ(DataSrc::SUCCESS,
+              data_source.findReferral(*query, www_name, rrclass,
+                                       result_sets, find_flags, &zone_name));
+    EXPECT_EQ(DataSrc::TYPE_NOT_FOUND, find_flags);
+    EXPECT_TRUE(result_sets.begin() == result_sets.end());
+}
+
+TEST_F(Sqlite3DataSourceTest, findAddressRRset) {
+    // A referral lookup searches for A or AAAA, or their sigs.
+
+    // A-only case
+    checkFind(ADDRESS, data_source, *query, www_name, &zone_name, rrclass,
+              rrtype, rrttl, 0, common_a_data, &common_sig_data);
+
+    // AAAA-only case
+    checkFind(ADDRESS, data_source, *query, Name("ip6.example.com"), &zone_name,
+              rrclass, RRType::AAAA(), rrttl, 0, common_aaaa_data,
+              &common_aaaa_sig_data);
+
+    // Dual-stack
+    types.push_back(RRType::A());
+    ttls.push_back(rrttl);
+    answers.push_back(&common_a_data);
+    signatures.push_back(&common_sig_data);
+    types.push_back(RRType::AAAA());
+    ttls.push_back(rrttl);
+    answers.push_back(&common_aaaa_data);
+    signatures.push_back(&common_aaaa_sig_data);
+    checkFind(ADDRESS, data_source, *query, Name("ip46.example.com"),
+              &zone_name, rrclass, rrtype, ttls, 0, types, answers, signatures);
+
+    // The qname doesn't have no address records.
+    EXPECT_EQ(DataSrc::SUCCESS,
+              data_source.findAddrs(*query, Name("text.example.com"), rrclass,
+                                    result_sets, find_flags, &zone_name));
+    EXPECT_EQ(DataSrc::TYPE_NOT_FOUND, find_flags);
+    EXPECT_TRUE(result_sets.begin() == result_sets.end());
+}
 
 }
