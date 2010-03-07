@@ -67,7 +67,7 @@ checkRange(int min, int max, int value, const string& valname) {
     }
     ostringstream oss;
     oss << "Invalid " << valname << " value: " << value;
-    dns_throw(InvalidTime, oss.str().c_str());
+    isc_throw(InvalidTime, oss.str().c_str());
 }
 
 static int days[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
@@ -90,7 +90,7 @@ DNSSECTimeFromText(const string& time_txt)
     {
         ostringstream oss;
         oss << "Couldn't convert time value: " << time_txt;
-        dns_throw(InvalidTime, oss.str().c_str());
+        isc_throw(InvalidTime, oss.str().c_str());
     }
 
     checkRange(1970, 9999, year, "year");

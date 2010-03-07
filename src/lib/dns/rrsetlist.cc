@@ -33,7 +33,7 @@ RRsetList::addRRset(RRsetPtr rrsetptr)
     ConstRRsetPtr rrset_found = findRRset(rrsetptr->getType(),
                                           rrsetptr->getClass());
     if (rrset_found != NULL) {
-        dns_throw(DuplicateRRset, "");
+        isc_throw(DuplicateRRset, "");
     }
     rrsets_.push_back(rrsetptr);
 }

@@ -86,13 +86,13 @@ parseAnswer(int &rcode, const ElementPtr msg)
 {
     if (!msg->contains("result")) {
         // TODO: raise CCSessionError exception
-        dns_throw(CCSessionError, "No result in answer message");
+        isc_throw(CCSessionError, "No result in answer message");
     } else {
         ElementPtr result = msg->get("result");
         if (result->get(0)->getType() != Element::integer) {
-            dns_throw(CCSessionError, "First element of result is not an rcode in answer message");
+            isc_throw(CCSessionError, "First element of result is not an rcode in answer message");
         } else if (result->get(0)->intValue() != 0 && result->get(1)->getType() != Element::string) {
-            dns_throw(CCSessionError, "Rcode in answer message is non-zero, but other argument is not a StringElement");
+            isc_throw(CCSessionError, "Rcode in answer message is non-zero, but other argument is not a StringElement");
         }
         rcode = result->get(0)->intValue();
         if (result->size() > 1) {

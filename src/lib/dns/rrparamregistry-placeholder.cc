@@ -352,7 +352,7 @@ addParam(const string& code_string, uint16_t code, MC& codemap, MS& stringmap)
     typename MC::const_iterator found = codemap.find(code);
     if (found != codemap.end()) {
         if (found->second->code_string_ != code_string) {
-            dns_throw(ET, "Duplicate RR parameter registration");
+            isc_throw(ET, "Duplicate RR parameter registration");
         }
         return (false);
     }
@@ -418,7 +418,7 @@ textToCode(const string& code_str, MS& stringmap)
             return (code);
         }
     }
-    dns_throw(ET, "Unrecognized RR parameter string");
+    isc_throw(ET, "Unrecognized RR parameter string");
 }
 
 template <typename PT, typename MC>

@@ -36,7 +36,7 @@ using namespace std;
 AAAA::AAAA(const string& addrstr)
 {
     if (inet_pton(AF_INET6, addrstr.c_str(), &addr_) != 1) {
-        dns_throw(InvalidRdataText,
+        isc_throw(InvalidRdataText,
                   "failed to parse IPv6 address for IN/AAAA RDATA");
     }
 }
@@ -44,7 +44,7 @@ AAAA::AAAA(const string& addrstr)
 AAAA::AAAA(InputBuffer& buffer, size_t rdata_len)
 {
     if (rdata_len != sizeof(addr_)) {
-        dns_throw(InvalidRdataLength, "Length mismatch for IN/AAAA RDATA");
+        isc_throw(InvalidRdataLength, "Length mismatch for IN/AAAA RDATA");
     }
     buffer.readData(&addr_, sizeof(addr_));
 }
@@ -72,7 +72,7 @@ AAAA::toText() const
     char addr_string[sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255")];
 
     if (inet_ntop(AF_INET6, &addr_, addr_string, sizeof(addr_string)) == NULL) {
-        dns_throw(Unexpected, "inet_ntop failed for an IPv6 address");
+        isc_throw(Unexpected, "inet_ntop failed for an IPv6 address");
     }
 
     return (string(addr_string));

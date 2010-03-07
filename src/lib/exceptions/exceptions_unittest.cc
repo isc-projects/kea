@@ -33,7 +33,7 @@ protected:
 
 TEST_F(ExceptionTest, basicMethods) {
     try {
-        dns_throw(Exception, teststring);
+        isc_throw(Exception, teststring);
     } catch (Exception& ex) {
         EXPECT_EQ(ex.getMessage(), std::string(teststring));
         EXPECT_EQ(ex.getFile(), std::string(__FILE__));
@@ -44,7 +44,7 @@ TEST_F(ExceptionTest, basicMethods) {
 // Test to see if it works as a proper derived class of std::exception.
 TEST_F(ExceptionTest, stdInheritance) {
     try {
-        dns_throw(Exception, teststring);
+        isc_throw(Exception, teststring);
     } catch (std::exception& ex) {
         EXPECT_EQ(std::string(ex.what()), std::string(teststring));
     }

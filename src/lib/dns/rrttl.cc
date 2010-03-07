@@ -41,14 +41,14 @@ RRTTL::RRTTL(const string& ttlstr)
     if (iss.rdstate() == ios::eofbit && val >= 0 && val <= 0xffffffff) {
         ttlval_ = static_cast<uint32_t>(val);
     } else {
-        dns_throw(InvalidRRTTL, "invalid TTL");
+        isc_throw(InvalidRRTTL, "invalid TTL");
     }
 }
 
 RRTTL::RRTTL(InputBuffer& buffer)
 {
     if (buffer.getLength() - buffer.getPosition() < sizeof(uint32_t)) {
-        dns_throw(IncompleteRRTTL, "incomplete wire-format TTL value");
+        isc_throw(IncompleteRRTTL, "incomplete wire-format TTL value");
     }
     ttlval_ = buffer.readUint32();
 }

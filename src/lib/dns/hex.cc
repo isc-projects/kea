@@ -65,7 +65,7 @@ decodeHex(const std::string& hex, std::vector<uint8_t>& result)
         iss >> c2;
         const char* pos = strchr(hexdigits, toupper(c2));
         if (!pos) {
-            dns_throw (BadHexString, "Invalid hex digit");
+            isc_throw (BadHexString, "Invalid hex digit");
         }
 
         n = pos - hexdigits;
@@ -77,7 +77,7 @@ decodeHex(const std::string& hex, std::vector<uint8_t>& result)
         const char* pos1 = strchr(hexdigits, toupper(c1));
         const char* pos2 = strchr(hexdigits, toupper(c2));
         if (!pos1 || !pos2) {
-            dns_throw (BadHexString, "Invalid hex digit");
+            isc_throw (BadHexString, "Invalid hex digit");
         }
 
         n = (pos1 - hexdigits) << 4;

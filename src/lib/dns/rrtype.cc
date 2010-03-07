@@ -39,7 +39,7 @@ RRType::RRType(const string& typestr)
 RRType::RRType(InputBuffer& buffer)
 {
     if (buffer.getLength() - buffer.getPosition() < sizeof(uint16_t)) {
-        dns_throw(IncompleteRRType, "incomplete wire-format RR type");
+        isc_throw(IncompleteRRType, "incomplete wire-format RR type");
     }
     typecode_ = buffer.readUint16();
 }

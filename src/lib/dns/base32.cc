@@ -129,7 +129,7 @@ decodeBase32(const string& base32, vector<uint8_t>& result)
 
     // base32 text should be a multiple of 8 bytes long
     if (comp.str().length() % 8 != 0) {
-        dns_throw (BadBase32String, "Invalid length");
+        isc_throw (BadBase32String, "Invalid length");
     }
 
     istringstream iss(comp.str());
@@ -140,7 +140,7 @@ decodeBase32(const string& base32, vector<uint8_t>& result)
 
         iss >> setw(8) >> group;
         if (iss.bad() || iss.fail()) {
-            dns_throw (BadBase32String, "Could not parse base32 input");
+            isc_throw (BadBase32String, "Could not parse base32 input");
         }
 
         uint8_t octet = 0;
@@ -149,7 +149,7 @@ decodeBase32(const string& base32, vector<uint8_t>& result)
             int value;
 
             if (c != '=' && seenpad) {
-                dns_throw (BadBase32String, "Invalid base32 input");
+                isc_throw (BadBase32String, "Invalid base32 input");
             } else 
 
             if (c == '=' && !seenpad) {
@@ -158,7 +158,7 @@ decodeBase32(const string& base32, vector<uint8_t>& result)
             } else {
                 const char* pos = strchr(base32hex, c);
                 if (!pos) {
-                    dns_throw (BadBase32String, "Invalid base32 input");
+                    isc_throw (BadBase32String, "Invalid base32 input");
                 }
                 value = pos - base32hex;
                 assert (value < 32);

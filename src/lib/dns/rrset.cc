@@ -48,7 +48,7 @@ AbstractRRset::toText() const
 
     it->first();
     if (it->isLast()) {
-        dns_throw(EmptyRRset, "ToText() is attempted for an empty RRset");
+        isc_throw(EmptyRRset, "ToText() is attempted for an empty RRset");
     }
 
     do {
@@ -71,7 +71,7 @@ rrsetToWire(const AbstractRRset& rrset, T& output)
 
     it->first();
     if (it->isLast()) {
-        dns_throw(EmptyRRset, "ToWire() is attempted for an empty RRset");
+        isc_throw(EmptyRRset, "ToWire() is attempted for an empty RRset");
     }
 
     // sort the set of Rdata based on rrset-order and sortlist, and possible

@@ -85,13 +85,13 @@ RRSIG::RRSIG(const string& rrsig_str) :
         >> expire_txt >> inception_txt >> tag >> signer_txt
         >> &signaturebuf;
     if (iss.bad() || iss.fail()) {
-        dns_throw(InvalidRdataText, "Invalid RRSIG text");
+        isc_throw(InvalidRdataText, "Invalid RRSIG text");
     }
     if (algorithm > 0xff) {
-        dns_throw(InvalidRdataText, "RRSIG algorithm out of range");
+        isc_throw(InvalidRdataText, "RRSIG algorithm out of range");
     }
     if (labels > 0xff) {
-        dns_throw(InvalidRdataText, "RRSIG labels out of range");
+        isc_throw(InvalidRdataText, "RRSIG labels out of range");
     }
 
     uint32_t timeexpire = DNSSECTimeFromText(expire_txt);
@@ -110,7 +110,7 @@ RRSIG::RRSIG(InputBuffer& buffer, size_t rdata_len)
     size_t pos = buffer.getPosition();
 
     if (rdata_len < RRSIG_MINIMUM_LEN) {
-        dns_throw(InvalidRdataLength, "RRSIG too short");
+        isc_throw(InvalidRdataLength, "RRSIG too short");
     }
 
     RRType covered(buffer);
@@ -124,7 +124,7 @@ RRSIG::RRSIG(InputBuffer& buffer, size_t rdata_len)
 
     // rdata_len must be sufficiently large to hold non empty signature data.
     if (rdata_len <= buffer.getPosition() - pos) {
-        dns_throw(InvalidRdataLength, "RRSIG too short");
+        isc_throw(InvalidRdataLength, "RRSIG too short");
     }
     rdata_len -= (buffer.getPosition() - pos);
 

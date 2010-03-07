@@ -57,13 +57,13 @@ NSEC3PARAM::NSEC3PARAM(const string& nsec3param_str) :
 
     iss >> hashalg >> flags >> iterations >> &saltbuf;
     if (iss.bad() || iss.fail()) {
-        dns_throw(InvalidRdataText, "Invalid NSEC3PARAM text");
+        isc_throw(InvalidRdataText, "Invalid NSEC3PARAM text");
     }
     if (hashalg > 0xf) {
-        dns_throw(InvalidRdataText, "NSEC3PARAM hash algorithm out of range");
+        isc_throw(InvalidRdataText, "NSEC3PARAM hash algorithm out of range");
     }
     if (flags > 0xff) {
-        dns_throw(InvalidRdataText, "NSEC3PARAM flags out of range");
+        isc_throw(InvalidRdataText, "NSEC3PARAM flags out of range");
     }
 
     vector<uint8_t> salt;
@@ -75,7 +75,7 @@ NSEC3PARAM::NSEC3PARAM(const string& nsec3param_str) :
 NSEC3PARAM::NSEC3PARAM(InputBuffer& buffer, size_t rdata_len)
 {
     if (rdata_len < 4) {
-        dns_throw(InvalidRdataLength, "NSEC3PARAM too short");
+        isc_throw(InvalidRdataLength, "NSEC3PARAM too short");
     }
 
     uint8_t hashalg = buffer.readUint8();
@@ -87,7 +87,7 @@ NSEC3PARAM::NSEC3PARAM(InputBuffer& buffer, size_t rdata_len)
     --rdata_len;
 
     if (rdata_len < saltlen) {
-        dns_throw(InvalidRdataLength, "NSEC3PARAM salt too short");
+        isc_throw(InvalidRdataLength, "NSEC3PARAM salt too short");
     }
 
     vector<uint8_t> salt(saltlen);

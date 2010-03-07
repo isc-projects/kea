@@ -304,7 +304,7 @@ public:
     const uint8_t at(size_t pos) const
     {
         if (pos >= length_) {
-            dns_throw(OutOfRange, "Out of range access in Name::at()");
+            isc_throw(OutOfRange, "Out of range access in Name::at()");
         }
         return (ndata_[pos]);
     }

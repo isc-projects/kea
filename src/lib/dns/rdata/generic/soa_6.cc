@@ -47,19 +47,19 @@ SOA::SOA(const string& soastr) :
 
     iss >> token;
     if (iss.bad() || iss.fail()) {
-        dns_throw(InvalidRdataText, "Invalid SOA MNAME");
+        isc_throw(InvalidRdataText, "Invalid SOA MNAME");
     }
     mname_ = Name(token);
     iss >> token;
     if (iss.bad() || iss.fail()) {
-        dns_throw(InvalidRdataText, "Invalid SOA RNAME");
+        isc_throw(InvalidRdataText, "Invalid SOA RNAME");
     }
     rname_ = Name(token);
 
     uint32_t serial, refresh, retry, expire, minimum;
     iss >> serial >> refresh >> retry >> expire >> minimum;
     if (iss.rdstate() != ios::eofbit) {
-        dns_throw(InvalidRdataText, "Invalid SOA format");
+        isc_throw(InvalidRdataText, "Invalid SOA format");
     }
     OutputBuffer buffer(20);
     buffer.writeUint32(serial);

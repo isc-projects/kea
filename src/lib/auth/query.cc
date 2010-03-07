@@ -60,7 +60,7 @@ QueryTask::QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
     state(GETANSWER), flags(0)
 {
     if (op != SIMPLE_QUERY) {
-        dns_throw(Unexpected, "invalid constructor for this task operation");
+        isc_throw(Unexpected, "invalid constructor for this task operation");
     }
 }
 
@@ -71,7 +71,7 @@ QueryTask::QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
     op(o), state(GETANSWER), flags(0)
 {
     if (op != REF_QUERY) {
-        dns_throw(Unexpected, "invalid constructor for this task operation");
+        isc_throw(Unexpected, "invalid constructor for this task operation");
     }
 }
 
@@ -82,7 +82,7 @@ QueryTask::QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
         state(st), flags(0)
 {
     if (op != GLUE_QUERY && op != NOGLUE_QUERY) {
-        dns_throw(Unexpected, "invalid constructor for this task operation");
+        isc_throw(Unexpected, "invalid constructor for this task operation");
     }
 }
 
@@ -94,7 +94,7 @@ Query::Query(Message& m, bool dnssec) :
 {
     // Check message formatting
     if (message_->getRRCount(Section::QUESTION()) != 1) {
-        dns_throw(Unexpected, "malformed message: too many questions");
+        isc_throw(Unexpected, "malformed message: too many questions");
     }
 
     // Populate the query task queue with the initial question

@@ -25,7 +25,7 @@ namespace isc {
 ///
 /// This is a base class for exceptions thrown from the DNS library module.
 /// Normally, the exceptions are thrown via a convenient shortcut macro,
-/// @ref dns_throw, which automatically gives trivial parameters for the
+/// @ref isc_throw, which automatically gives trivial parameters for the
 /// exception such as the file name and line number where the exception is
 /// triggered.
 ///
@@ -125,7 +125,7 @@ public:
 ///
 /// A shortcut macro to insert known values into exception arguments.
 ///
-#define dns_throw(type, args...) throw type(__FILE__, __LINE__, args)
+#define isc_throw(type, args...) throw type(__FILE__, __LINE__, args)
 
 }
 #endif // __EXCEPTIONS_H

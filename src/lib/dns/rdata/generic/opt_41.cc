@@ -27,7 +27,7 @@ using namespace std;
 
 OPT::OPT(const string& type_str)
 {
-    dns_throw(InvalidRdataText, "OPT RR cannot be constructed from text");
+    isc_throw(InvalidRdataText, "OPT RR cannot be constructed from text");
 }
 
 OPT::OPT(InputBuffer& buffer, size_t rdata_len)
@@ -35,7 +35,7 @@ OPT::OPT(InputBuffer& buffer, size_t rdata_len)
     // setPosition() will throw against a short buffer anyway, but it's safer
     // to check it explicitly here.
     if (buffer.getLength() - buffer.getPosition() < rdata_len) {
-        dns_throw(InvalidRdataLength, "RDLEN of OPT is too large");
+        isc_throw(InvalidRdataLength, "RDLEN of OPT is too large");
     }
 
     // This simple implementation ignores any options

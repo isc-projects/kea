@@ -53,7 +53,7 @@ TXT::TXT(const std::string& txtstr)
         length -= 2;
     }
     if (length > MAX_CHARSTRING_LEN) {
-        dns_throw(CharStringTooLong, "");
+        isc_throw(CharStringTooLong, "");
     }
 
     vector<uint8_t> data;

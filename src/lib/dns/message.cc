@@ -162,7 +162,7 @@ Opcode::toText() const
 Rcode::Rcode(uint16_t code) : code_(code)
 {
     if (code_ > MAX_RCODE) {
-        dns_throw(OutOfRange, "Rcode is too large to construct");
+        isc_throw(OutOfRange, "Rcode is too large to construct");
     }
 }
 
@@ -287,7 +287,7 @@ void
 Message::setDNSSECSupported(bool on)
 {
     if (impl_->mode_ != Message::RENDER) {
-        dns_throw(InvalidMessageOperation,
+        isc_throw(InvalidMessageOperation,
                   "setDNSSECSupported performed in non-render mode");
     }
     impl_->dnssec_ok_ = on;
@@ -303,11 +303,11 @@ void
 Message::setUDPSize(uint16_t size)
 {
     if (impl_->mode_ != Message::RENDER) {
-        dns_throw(InvalidMessageOperation,
+        isc_throw(InvalidMessageOperation,
                   "setUDPSize performed in non-render mode");
     }
     if (size < DEFAULT_MAX_UDPSIZE) {
-        dns_throw(InvalidMessageUDPSize,
+        isc_throw(InvalidMessageUDPSize,
                   "Specified UDP message size is too small");
     }
     impl_->udpsize_ = size;
@@ -496,7 +496,7 @@ void
 Message::fromWire(InputBuffer& buffer)
 {
     if ((buffer.getLength() - buffer.getPosition()) < HEADERLEN) {
-        dns_throw(MessageTooShort, "");
+        isc_throw(MessageTooShort, "");
     }
 
     impl_->qid_ = buffer.readUint16();
@@ -531,7 +531,7 @@ MessageImpl::parseQuestion(Message& message, InputBuffer& buffer)
 
         if ((buffer.getLength() - buffer.getPosition()) <
             2 * sizeof(uint16_t)) {
-            dns_throw(MessageTooShort, "");
+            isc_throw(MessageTooShort, "");
         }
         RRType rrtype(buffer.readUint16());
         RRClass rrclass(buffer.readUint16());
@@ -575,7 +575,7 @@ MessageImpl::parseSection(Message& message, const Section& section,
         // buffer must store at least RR TYPE, RR CLASS, TTL, and RDLEN.
         if ((buffer.getLength() - buffer.getPosition()) <
             3 * sizeof(uint16_t) + sizeof(uint32_t)) {
-            dns_throw(MessageTooShort, "");
+            isc_throw(MessageTooShort, "");
         }
 
         RRType rrtype(buffer.readUint16());
@@ -589,11 +589,11 @@ MessageImpl::parseSection(Message& message, const Section& section,
         // implementation.  We'll revisit this part later.
         if (rrtype == RRType::OPT()) {
             if (section != Section::ADDITIONAL()) {
-                dns_throw(DNSMessageFORMERR,
+                isc_throw(DNSMessageFORMERR,
                           "EDNS OPT RR found in an invalid section");
             }
             if (remote_edns_ != NULL) {
-                dns_throw(DNSMessageFORMERR, "multiple EDNS OPT RR found");
+                isc_throw(DNSMessageFORMERR, "multiple EDNS OPT RR found");
             }
             if (((ttl.getValue() & EDNSVERSION_MASK) >> 16) >
                 Message::EDNS_SUPPORTED_VERSION) {
@@ -603,10 +603,10 @@ MessageImpl::parseSection(Message& message, const Section& section,
                 // This is probably because why BIND 9 does the version check
                 // in the client code.
                 // This is a TODO item.  Right now we simply reject it.
-                dns_throw(DNSMessageBADVERS, "unsupported EDNS version");
+                isc_throw(DNSMessageBADVERS, "unsupported EDNS version");
             }
             if (name != Name::ROOT_NAME()) {
-                dns_throw(DNSMessageFORMERR,
+                isc_throw(DNSMessageFORMERR,
                           "invalid owner name for EDNS OPT RR");
             }
 
@@ -770,7 +770,7 @@ void
 Message::makeResponse()
 {
     if (impl_->mode_ != Message::PARSE) {
-        dns_throw(InvalidMessageOperation,
+        isc_throw(InvalidMessageOperation,
                   "makeResponse() is performed in non-parse mode");
     }
 
@@ -904,7 +904,7 @@ const SectionIterator<RRsetPtr>
 Message::beginSection(const Section& section) const
 {
     if (section == Section::QUESTION()) {
-        dns_throw(InvalidMessageSection, "");
+        isc_throw(InvalidMessageSection, "");
     }
 
     return (RRsetIterator(
@@ -916,7 +916,7 @@ const SectionIterator<RRsetPtr>
 Message::endSection(const Section& section) const
 {
     if (section == Section::QUESTION()) {
-        dns_throw(InvalidMessageSection, "");
+        isc_throw(InvalidMessageSection, "");
     }
 
     return (RRsetIterator(
