@@ -58,7 +58,7 @@ createRdata(const RRType& rrtype, const RRClass& rrclass,
             InputBuffer& buffer, size_t len)
 {
     if (len > MAX_RDLENGTH) {
-        dns_throw(InvalidRdataLength, "RDLENGTH too large");
+        isc_throw(InvalidRdataLength, "RDLENGTH too large");
     }
 
     size_t old_pos = buffer.getPosition();
@@ -68,7 +68,7 @@ createRdata(const RRType& rrtype, const RRClass& rrclass,
                                                    len);
                                                    
     if (buffer.getPosition() - old_pos != len) {
-        dns_throw(InvalidRdataLength, "RDLENGTH mismatch");
+        isc_throw(InvalidRdataLength, "RDLENGTH mismatch");
     }
 
     return (rdata);
@@ -110,7 +110,7 @@ struct GenericImpl {
 Generic::Generic(InputBuffer& buffer, size_t rdata_len)
 {
     if (rdata_len > MAX_RDLENGTH) {
-        dns_throw(InvalidRdataLength, "RDLENGTH too large");
+        isc_throw(InvalidRdataLength, "RDLENGTH too large");
     }
 
     vector<uint8_t> data(rdata_len);
@@ -125,7 +125,7 @@ Generic::Generic(const string& rdata_string)
     string unknown_mark;
     iss >> unknown_mark;
     if (unknown_mark != "\\#") {
-        dns_throw(InvalidRdataText,
+        isc_throw(InvalidRdataText,
                   "Missing the special token (\\#) for generic RDATA encoding");
     }
 
@@ -136,11 +136,11 @@ Generic::Generic(const string& rdata_string)
     int32_t rdlen;
     iss_rdlen >> rdlen;
     if (iss_rdlen.rdstate() != ios::eofbit) {
-        dns_throw(InvalidRdataText,
+        isc_throw(InvalidRdataText,
                   "Invalid representation for a generic RDLENGTH");
     }
     if (rdlen < 0 || rdlen > 0xffff) {
-        dns_throw(InvalidRdataLength, "RDATA length is out of range");
+        isc_throw(InvalidRdataLength, "RDATA length is out of range");
     }
     iss >> ws;                  // skip any white spaces
 
@@ -152,7 +152,7 @@ Generic::Generic(const string& rdata_string)
         char buf[2];
         iss.read(buf, sizeof(buf));
         if ((iss.rdstate() & (ios::badbit | ios::failbit)) != 0) {
-            dns_throw(InvalidRdataText,
+            isc_throw(InvalidRdataText,
                       "Invalid hex encoding of generic RDATA");
         }
 
@@ -161,7 +161,7 @@ Generic::Generic(const string& rdata_string)
         unsigned int ch;
         iss_byte >> hex >> ch;
         if (iss_byte.rdstate() != ios::eofbit) {
-            dns_throw(InvalidRdataText,
+            isc_throw(InvalidRdataText,
                       "Invalid hex encoding of generic RDATA");
         }
         data.push_back(ch);
@@ -169,12 +169,12 @@ Generic::Generic(const string& rdata_string)
     }
 
     if (!iss.eof()) {
-        dns_throw(InvalidRdataLength,
+        isc_throw(InvalidRdataLength,
                   "RDLENGTH is too small for generic RDATA");
     }
 
     if (data.size() != rdlen) {
-        dns_throw(InvalidRdataLength,
+        isc_throw(InvalidRdataLength,
                   "Generic RDATA code doesn't match RDLENGTH");
     }
 

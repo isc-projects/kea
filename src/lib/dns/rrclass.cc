@@ -38,7 +38,7 @@ RRClass::RRClass(const string& classstr)
 RRClass::RRClass(InputBuffer& buffer)
 {
     if (buffer.getLength() - buffer.getPosition() < sizeof(uint16_t)) {
-        dns_throw(IncompleteRRClass, "incomplete wire-format RR class");
+        isc_throw(IncompleteRRClass, "incomplete wire-format RR class");
     }
     classcode_ = buffer.readUint16();
 }

@@ -123,7 +123,7 @@ public:
     void setPosition(size_t position)
     {
         if (position > len_)
-            dns_throw(InvalidBufferPosition, "position is too large");
+            isc_throw(InvalidBufferPosition, "position is too large");
         position_ = position;
     }
     //@}
@@ -138,7 +138,7 @@ public:
     uint8_t readUint8()
     {
         if (position_ + sizeof(uint8_t) > len_) {
-            dns_throw(InvalidBufferPosition, "read beyond end of buffer");
+            isc_throw(InvalidBufferPosition, "read beyond end of buffer");
         }
 
         return (data_[position_++]);
@@ -154,7 +154,7 @@ public:
         const uint8_t* cp;
 
         if (position_ + sizeof(data) > len_) {
-            dns_throw(InvalidBufferPosition, "read beyond end of buffer");
+            isc_throw(InvalidBufferPosition, "read beyond end of buffer");
         }
 
         cp = &data_[position_];
@@ -175,7 +175,7 @@ public:
         const uint8_t* cp;
 
         if (position_ + sizeof(data) > len_) {
-            dns_throw(InvalidBufferPosition, "read beyond end of buffer");
+            isc_throw(InvalidBufferPosition, "read beyond end of buffer");
         }
 
         cp = &data_[position_];
@@ -197,7 +197,7 @@ public:
     void readData(void* data, size_t len)
     {
         if (position_ + len > len_) {
-            dns_throw(InvalidBufferPosition, "read beyond end of buffer");
+            isc_throw(InvalidBufferPosition, "read beyond end of buffer");
         }
 
         memcpy(data, &data_[position_], len);
@@ -309,7 +309,7 @@ public:
     uint8_t operator[](size_t pos) const
     {
         if (pos >= data_.size()) {
-            dns_throw(InvalidBufferPosition, "read at invalid position");
+            isc_throw(InvalidBufferPosition, "read at invalid position");
         }
         return (data_[pos]);
     }
@@ -359,7 +359,7 @@ public:
     void writeUint16At(uint16_t data, size_t pos)
     {
         if (pos + sizeof(data) > data_.size()) {
-            dns_throw(InvalidBufferPosition, "write at invalid position");
+            isc_throw(InvalidBufferPosition, "write at invalid position");
         }
 
         data_[pos] = static_cast<uint8_t>((data & 0xff00U) >> 8);

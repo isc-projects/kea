@@ -150,7 +150,7 @@ decodeBase64(const string& base64, vector<uint8_t>& result)
         char ch = *srit;
         if (ch == BASE64_PADDING_CHAR) {
             if (++padlen > BASE64_MAX_PADDING_CHARS) {
-                dns_throw(BadBase64String,
+                isc_throw(BadBase64String,
                           "Too many Base64 padding characters");
             }
         } else if (!isspace(ch)) {
@@ -167,7 +167,7 @@ decodeBase64(const string& base64, vector<uint8_t>& result)
                                                       base64.end(),
                                                       base64.end())));
     } catch (dataflow_exception& ex) {
-        dns_throw(BadBase64String, ex.what());
+        isc_throw(BadBase64String, ex.what());
     }
 
     // Confirm the original base64 text is the canonical encoding of the
@@ -176,7 +176,7 @@ decodeBase64(const string& base64, vector<uint8_t>& result)
     vector<uint8_t>::const_reverse_iterator rit = result.rbegin();
     for (int i = 0; i < padlen; ++i, ++rit) {
         if (*rit != 0) {
-            dns_throw(BadBase64String, "Non 0 bits included in padding");
+            isc_throw(BadBase64String, "Non 0 bits included in padding");
         }
     }
 

@@ -48,7 +48,7 @@ MX::MX(const std::string& mx_str) :
     iss >> pref >> mxname;
 
     if (iss.bad() || iss.fail() || !iss.eof()) {
-        dns_throw(InvalidRdataText, "Invalid MX text format");
+        isc_throw(InvalidRdataText, "Invalid MX text format");
     }
 
     preference_ = pref;

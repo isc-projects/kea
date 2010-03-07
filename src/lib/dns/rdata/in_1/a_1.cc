@@ -40,7 +40,7 @@ A::A(const string& addrstr)
     // This is exactly what inet_pton() accepts for AF_INET.  In particular,
     // it rejects an abbreviated form such as "10.1" meaning "10.0.0.1".
     if (inet_pton(AF_INET, addrstr.c_str(), &addr_) != 1) {
-        dns_throw(InvalidRdataText,
+        isc_throw(InvalidRdataText,
                   "failed to parse IPv4 address for IN/A RDATA");
     }
 }
@@ -48,7 +48,7 @@ A::A(const string& addrstr)
 A::A(InputBuffer& buffer, size_t rdata_len)
 {
     if (rdata_len != sizeof(addr_)) {
-        dns_throw(InvalidRdataLength, "Length mismatch for IN/A RDATA");
+        isc_throw(InvalidRdataLength, "Length mismatch for IN/A RDATA");
     }
     buffer.readData(&addr_, sizeof(addr_));
 }
@@ -75,7 +75,7 @@ A::toText() const
     char addr_string[sizeof("255.255.255.255")];
 
     if (inet_ntop(AF_INET, &addr_, addr_string, sizeof(addr_string)) == NULL) {
-        dns_throw(Unexpected, "inet_ntop failed for an IPv4 address");
+        isc_throw(Unexpected, "inet_ntop failed for an IPv4 address");
     }
 
     return (string(addr_string));

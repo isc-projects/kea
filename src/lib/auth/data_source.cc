@@ -587,7 +587,7 @@ DataSrc::doQuery(Query& q)
                 continue;
 
             default:
-                dns_throw (Unexpected, "unexpected query state");
+                isc_throw (Unexpected, "unexpected query state");
             }
         } else if (result == ERROR || result == NOT_IMPLEMENTED) {
             m.setRcode(Rcode::SERVFAIL());
@@ -773,7 +773,7 @@ void
 MetaDataSrc::addDataSrc(ConstDataSrcPtr data_src)
 {
     if (getClass() != RRClass::ANY() && data_src->getClass() != getClass()) {
-        dns_throw(Unexpected, "class mismatch");
+        isc_throw(Unexpected, "class mismatch");
     }
 
     data_sources.push_back(data_src);

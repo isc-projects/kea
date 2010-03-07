@@ -138,12 +138,12 @@ public:
     /// If you want an exception-safe getter method, use
     /// getValue() below
     //@{
-    virtual int intValue() { dns_throw(TypeError, "intValue() called on non-integer Element"); };
-    virtual double doubleValue() { dns_throw(TypeError, "doubleValue() called on non-double Element"); };
-    virtual bool boolValue() { dns_throw(TypeError, "boolValue() called on non-Bool Element"); };
-    virtual std::string stringValue() { dns_throw(TypeError, "stringValue() called on non-string Element"); };
-    virtual const std::vector<boost::shared_ptr<Element> >& listValue() { dns_throw(TypeError, "listValue() called on non-list Element"); }; // replace with real exception or empty vector?
-    virtual const std::map<std::string, boost::shared_ptr<Element> >& mapValue() { dns_throw(TypeError, "mapValue() called on non-map Element"); }; // replace with real exception or empty map?
+    virtual int intValue() { isc_throw(TypeError, "intValue() called on non-integer Element"); };
+    virtual double doubleValue() { isc_throw(TypeError, "doubleValue() called on non-double Element"); };
+    virtual bool boolValue() { isc_throw(TypeError, "boolValue() called on non-Bool Element"); };
+    virtual std::string stringValue() { isc_throw(TypeError, "stringValue() called on non-string Element"); };
+    virtual const std::vector<boost::shared_ptr<Element> >& listValue() { isc_throw(TypeError, "listValue() called on non-list Element"); }; // replace with real exception or empty vector?
+    virtual const std::map<std::string, boost::shared_ptr<Element> >& mapValue() { isc_throw(TypeError, "mapValue() called on non-map Element"); }; // replace with real exception or empty map?
     //@}
 
     /// \name Exception-safe getters
@@ -190,21 +190,21 @@ public:
     /// Returns the ElementPtr at the given index. If the index is out
     /// of bounds, this function throws an std::out_of_range exception.
     /// \param i The position of the ElementPtr to return
-    virtual ElementPtr get(const int i) { dns_throw(TypeError, "get(int) called on a non-list Element"); };
+    virtual ElementPtr get(const int i) { isc_throw(TypeError, "get(int) called on a non-list Element"); };
     /// Sets the ElementPtr at the given index. If the index is out
     /// of bounds, this function throws an std::out_of_range exception.
     /// \param i The position of the ElementPtr to set
     /// \param element The ElementPtr to set at the position
-    virtual void set(const size_t i, ElementPtr element) { dns_throw(TypeError, "set(int, element) called on a non-list Element"); };
+    virtual void set(const size_t i, ElementPtr element) { isc_throw(TypeError, "set(int, element) called on a non-list Element"); };
     /// Adds an ElementPtr to the list
     /// \param element The ElementPtr to add
-    virtual void add(ElementPtr element) { dns_throw(TypeError, "add() called on a non-list Element"); };
+    virtual void add(ElementPtr element) { isc_throw(TypeError, "add() called on a non-list Element"); };
     /// Removes the element at the given position. If the index is out
     /// of nothing happens.
     /// \param i The index of the element to remove.
-    virtual void remove(const int i) { dns_throw(TypeError, "remove(int) called on a non-list Element"); };
+    virtual void remove(const int i) { isc_throw(TypeError, "remove(int) called on a non-list Element"); };
     /// Returns the number of elements in the list.
-    virtual size_t size() { dns_throw(TypeError, "size() called on a non-list Element"); };
+    virtual size_t size() { isc_throw(TypeError, "size() called on a non-list Element"); };
     //@}
     
     /// \name MapElement functions
@@ -215,17 +215,17 @@ public:
     /// Returns the ElementPtr at the given key
     /// \param name The key of the Element to return
     /// \return The ElementPtr at the given key
-    virtual ElementPtr get(const std::string& name) { dns_throw(TypeError, "get(string) called on a non-map Element"); } ;
+    virtual ElementPtr get(const std::string& name) { isc_throw(TypeError, "get(string) called on a non-map Element"); } ;
     /// Sets the ElementPtr at the given key
     /// \param name The key of the Element to set
-    virtual void set(const std::string& name, ElementPtr element) { dns_throw(TypeError, "set(name, element) called on a non-map Element"); };
+    virtual void set(const std::string& name, ElementPtr element) { isc_throw(TypeError, "set(name, element) called on a non-map Element"); };
     /// Remove the ElementPtr at the given key
     /// \param name The key of the Element to remove
-    virtual void remove(const std::string& name) { dns_throw(TypeError, "remove(string) called on a non-map Element"); };
+    virtual void remove(const std::string& name) { isc_throw(TypeError, "remove(string) called on a non-map Element"); };
     /// Checks if there is data at the given key
     /// \param name The key of the Element to remove
     /// \return true if there is data at the key, false if not.
-    virtual bool contains(const std::string& name) { dns_throw(TypeError, "contains(string) called on a non-map Element"); }
+    virtual bool contains(const std::string& name) { isc_throw(TypeError, "contains(string) called on a non-map Element"); }
     /// Recursively finds any data at the given identifier. The
     /// identifier is a /-separated list of names of nested maps, with
     /// the last name being the leaf that is returned.
@@ -239,7 +239,7 @@ public:
     /// \return The ElementPtr at the given identifier. Returns a
     /// null ElementPtr if it is not found, which can be checked with
     /// Element::is_null(ElementPtr e).
-    virtual ElementPtr find(const std::string& identifier) { dns_throw(TypeError, "find(string) called on a non-map Element"); };
+    virtual ElementPtr find(const std::string& identifier) { isc_throw(TypeError, "find(string) called on a non-map Element"); };
     /// See \c Element::find()
     /// \param identifier The identifier of the element to find
     /// \param t Reference to store the resulting ElementPtr, if found.

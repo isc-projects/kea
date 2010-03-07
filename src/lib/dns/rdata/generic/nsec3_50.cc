@@ -65,16 +65,16 @@ NSEC3::NSEC3(const string& nsec3_str) :
 
     iss >> hashalg >> flags >> iterations >> salthex;
     if (iss.bad() || iss.fail()) {
-        dns_throw(InvalidRdataText, "Invalid NSEC3 text");
+        isc_throw(InvalidRdataText, "Invalid NSEC3 text");
     }
     if (hashalg > 0xf) {
-        dns_throw(InvalidRdataText, "NSEC3 hash algorithm out of range");
+        isc_throw(InvalidRdataText, "NSEC3 hash algorithm out of range");
     }
     if (flags > 0xff) {
-        dns_throw(InvalidRdataText, "NSEC3 flags out of range");
+        isc_throw(InvalidRdataText, "NSEC3 flags out of range");
     }
     if (iterations > 0xffff) {
-        dns_throw(InvalidRdataText, "NSEC3 iterations out of range");
+        isc_throw(InvalidRdataText, "NSEC3 iterations out of range");
     }
 
     vector<uint8_t> salt;
@@ -84,7 +84,7 @@ NSEC3::NSEC3(const string& nsec3_str) :
     iss >> setw(32) >> nextstr;
     vector<uint8_t> next;
     if (iss.bad() || iss.fail()) {
-        dns_throw(InvalidRdataText, "Invalid NSEC3 hash algorithm");
+        isc_throw(InvalidRdataText, "Invalid NSEC3 hash algorithm");
     }
     decodeBase32(nextstr, next);
 
@@ -101,7 +101,7 @@ NSEC3::NSEC3(const string& nsec3_str) :
                 code = RRType(type).getCode();
                 bitmap[code / 8] |= (0x80 >> (code % 8));
             } catch (...) {
-                dns_throw(InvalidRdataText, "Invalid RRtype in NSEC3");
+                isc_throw(InvalidRdataText, "Invalid RRtype in NSEC3");
             }
         }
     } while(!iss.eof());
@@ -128,7 +128,7 @@ NSEC3::NSEC3(const string& nsec3_str) :
 NSEC3::NSEC3(InputBuffer& buffer, size_t rdata_len)
 {
     if (rdata_len < 5) {
-        dns_throw(InvalidRdataLength, "NSEC3 too short");
+        isc_throw(InvalidRdataLength, "NSEC3 too short");
     }
 
     uint8_t hashalg = buffer.readUint8();
@@ -140,7 +140,7 @@ NSEC3::NSEC3(InputBuffer& buffer, size_t rdata_len)
     --rdata_len;
 
     if (rdata_len < saltlen) {
-        dns_throw(InvalidRdataLength, "NSEC3 salt too short");
+        isc_throw(InvalidRdataLength, "NSEC3 salt too short");
     }
 
     vector<uint8_t> salt(saltlen);
@@ -151,7 +151,7 @@ NSEC3::NSEC3(InputBuffer& buffer, size_t rdata_len)
     --rdata_len;
 
     if (rdata_len < nextlen) {
-        dns_throw(InvalidRdataLength, "NSEC3 next hash too short");
+        isc_throw(InvalidRdataLength, "NSEC3 next hash too short");
     }
 
     vector<uint8_t> next(nextlen);
@@ -159,7 +159,7 @@ NSEC3::NSEC3(InputBuffer& buffer, size_t rdata_len)
     rdata_len -= nextlen;
 
     if (rdata_len == 0) {
-        dns_throw(InvalidRdataLength, "NSEC3 type bitmap too short");
+        isc_throw(InvalidRdataLength, "NSEC3 type bitmap too short");
     }
 
     // FIXIT: we cannot naively copy the data because the bitmaps have

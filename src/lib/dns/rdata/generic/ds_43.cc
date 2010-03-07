@@ -58,16 +58,16 @@ DS::DS(const string& ds_str) :
 
     iss >> tag >> algorithm >> digest_type >> &digestbuf;
     if (iss.bad() || iss.fail()) {
-        dns_throw(InvalidRdataText, "Invalid DS text");
+        isc_throw(InvalidRdataText, "Invalid DS text");
     }
     if (tag > 0xffff) {
-        dns_throw(InvalidRdataText, "DS tag out of range");
+        isc_throw(InvalidRdataText, "DS tag out of range");
     }
     if (algorithm > 0xff) {
-        dns_throw(InvalidRdataText, "DS algorithm out of range");
+        isc_throw(InvalidRdataText, "DS algorithm out of range");
     }
     if (digest_type > 0xff) {
-        dns_throw(InvalidRdataText, "DS digest type out of range");
+        isc_throw(InvalidRdataText, "DS digest type out of range");
     }
 
     vector<uint8_t> digest;
@@ -79,7 +79,7 @@ DS::DS(const string& ds_str) :
 DS::DS(InputBuffer& buffer, size_t rdata_len)
 {
     if (rdata_len < 4) {
-        dns_throw(InvalidRdataLength, "DS too short");
+        isc_throw(InvalidRdataLength, "DS too short");
     }
 
     uint16_t tag = buffer.readUint16();

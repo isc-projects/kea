@@ -56,7 +56,7 @@ NSEC::NSEC(const string& nsec_str) :
 
     iss >> nextname;
     if (iss.bad() || iss.fail()) {
-        dns_throw(InvalidRdataText, "Invalid NSEC name");
+        isc_throw(InvalidRdataText, "Invalid NSEC name");
     }
 
     memset(bitmap, 0, sizeof(bitmap));
@@ -68,7 +68,7 @@ NSEC::NSEC(const string& nsec_str) :
             code = RRType(type).getCode();
             bitmap[code / 8] |= (0x80 >> (code % 8));
         } catch (...) {
-            dns_throw(InvalidRdataText, "Invalid RRtype in NSEC");
+            isc_throw(InvalidRdataText, "Invalid RRtype in NSEC");
         }
     } while(!iss.eof());
 
@@ -98,7 +98,7 @@ NSEC::NSEC(InputBuffer& buffer, size_t rdata_len)
 
     // rdata_len must be sufficiently large to hold non empty bitmap.
     if (rdata_len <= buffer.getPosition() - pos) {
-        dns_throw(InvalidRdataLength, "NSEC too short");
+        isc_throw(InvalidRdataLength, "NSEC too short");
     }
     rdata_len -= (buffer.getPosition() - pos);
 

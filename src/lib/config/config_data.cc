@@ -31,12 +31,12 @@ find_spec_part(ElementPtr spec, const std::string& identifier)
 {
     //std::cout << "[XX] find_spec_part for " << identifier << std::endl;
     if (!spec) {
-        dns_throw(DataNotFoundError, "Empty specification");
+        isc_throw(DataNotFoundError, "Empty specification");
     }
     //std::cout << "in: " << std::endl << spec << std::endl;
     ElementPtr spec_part = spec;
     if (identifier == "") {
-        dns_throw(DataNotFoundError, "Empty identifier");
+        isc_throw(DataNotFoundError, "Empty identifier");
     }
     std::string id = identifier;
     size_t sep = id.find('/');
@@ -54,7 +54,7 @@ find_spec_part(ElementPtr spec, const std::string& identifier)
                 }
             }
             if (!found) {
-                dns_throw(DataNotFoundError, identifier);
+                isc_throw(DataNotFoundError, identifier);
             }
         }
         id = id.substr(sep + 1);
@@ -72,7 +72,7 @@ find_spec_part(ElementPtr spec, const std::string& identifier)
                 }
             }
             if (!found) {
-                dns_throw(DataNotFoundError, identifier);
+                isc_throw(DataNotFoundError, identifier);
             }
         } else if (spec_part->getType() == Element::map) {
             if (spec_part->contains("map_item_spec")) {
@@ -86,10 +86,10 @@ find_spec_part(ElementPtr spec, const std::string& identifier)
                     }
                 }
                 if (!found) {
-                    dns_throw(DataNotFoundError, identifier);
+                    isc_throw(DataNotFoundError, identifier);
                 }
             } else {
-                dns_throw(DataNotFoundError, identifier);
+                isc_throw(DataNotFoundError, identifier);
             }
         }
     }

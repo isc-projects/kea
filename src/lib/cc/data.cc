@@ -1009,7 +1009,7 @@ isc::data::removeIdentical(ElementPtr a, const ElementPtr b)
         return;
     }
     if (a->getType() != Element::map || b->getType() != Element::map) {
-        dns_throw(TypeError, "Non-map Elements passed to removeIdentical");
+        isc_throw(TypeError, "Non-map Elements passed to removeIdentical");
     }
 
     std::map<std::string, ElementPtr> m = a->mapValue();
@@ -1028,7 +1028,7 @@ isc::data::merge(ElementPtr element, const ElementPtr other)
 {
     if (element->getType() != Element::map ||
         other->getType() != Element::map) {
-        dns_throw(TypeError, "merge arguments not MapElements");
+        isc_throw(TypeError, "merge arguments not MapElements");
     }
     
     std::map<std::string, ElementPtr> m = other->mapValue();

@@ -59,23 +59,23 @@ DNSKEY::DNSKEY(const string& dnskey_str) :
 
     iss >> flags >> protocol >> algorithm >> &keydatabuf;
     if (iss.bad() || iss.fail()) {
-        dns_throw(InvalidRdataText, "Invalid DNSKEY text");
+        isc_throw(InvalidRdataText, "Invalid DNSKEY text");
     }
     if (flags > 0xffff) {
-        dns_throw(InvalidRdataText, "DNSKEY flags out of range");
+        isc_throw(InvalidRdataText, "DNSKEY flags out of range");
     }
     if (protocol > 0xff) {
-        dns_throw(InvalidRdataText, "DNSKEY protocol out of range");
+        isc_throw(InvalidRdataText, "DNSKEY protocol out of range");
     }
     if (algorithm > 0xff) {
-        dns_throw(InvalidRdataText, "DNSKEY algorithm out of range");
+        isc_throw(InvalidRdataText, "DNSKEY algorithm out of range");
     }
 
     vector<uint8_t> keydata;
     decodeBase64(keydatabuf.str(), keydata);
 
     if (algorithm == 1 && keydata.size() < 3) {
-        dns_throw(InvalidRdataLength, "DNSKEY keydata too short");
+        isc_throw(InvalidRdataLength, "DNSKEY keydata too short");
     }
 
     impl_ = new DNSKEYImpl(flags, protocol, algorithm, keydata);
@@ -84,7 +84,7 @@ DNSKEY::DNSKEY(const string& dnskey_str) :
 DNSKEY::DNSKEY(InputBuffer& buffer, size_t rdata_len)
 {
     if (rdata_len < 4) {
-        dns_throw(InvalidRdataLength, "DNSKEY too short");
+        isc_throw(InvalidRdataLength, "DNSKEY too short");
     }
 
     uint16_t flags = buffer.readUint16();

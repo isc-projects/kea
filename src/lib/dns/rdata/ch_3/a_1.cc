@@ -58,7 +58,7 @@ string
 A::toText() const
 {
     // TBD
-    dns_throw(InvalidRdataText, "Not implemented yet");
+    isc_throw(InvalidRdataText, "Not implemented yet");
 }
 
 int
