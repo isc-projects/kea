@@ -165,9 +165,24 @@ www.example.com.	3600	IN A	192.0.2.1
 					20100220084538 33495 example.com.
 					FAKEFAKEFAKEFAKE )
 
-;; This doesn't have an RRSIG.  It makes this zone "incomplete signed",
-;; but for the purpose of data source API testing it doesn't matter.
-nosig.example.com.	3600	IN A	192.0.2.1
-
 ;; Two labels + apex name for empty node test
 foo.bar.example.com.	3600	IN A	192.0.2.1
+
+;; AAAA-only name
+ip6.example.com.	3600	IN AAAA	2001:db8::1234
+			3600	RRSIG	AAAA 5 3 3600 20100322084538 (
+					20100220084538 33495 example.com.
+					FAKEFAKEFAKEFAKE )
+
+;; Dual-stack host
+ip46.example.com.	3600	IN A	192.0.2.1
+			3600	RRSIG	A 5 3 3600 20100322084538 (
+					20100220084538 33495 example.com.
+					FAKEFAKEFAKEFAKE )
+			3600	IN AAAA	2001:db8::1234
+			3600	RRSIG	AAAA 5 3 3600 20100322084538 (
+					20100220084538 33495 example.com.
+					FAKEFAKEFAKEFAKE )
+
+;; not an address
+text.example.com.	3600	IN TXT	"No address is here"
