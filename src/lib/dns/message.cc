@@ -387,7 +387,7 @@ template <typename T>
 struct RenderSection
 {
     RenderSection(MessageRenderer& renderer, const bool partial_ok) :
-        counter_(0), renderer_(renderer), partial_ok_(partial_ok_),
+        counter_(0), renderer_(renderer), partial_ok_(partial_ok),
         truncated_(false)
     {}
     void operator()(const T& entry)
