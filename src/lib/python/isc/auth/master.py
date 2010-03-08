@@ -90,8 +90,11 @@ def records(input):
 #########################################################################
 def pop(line):
     list = line.split()
-    first = list[0]
-    rest = ' '.join(list[1:])
+    first, rest = '', ''
+    if len(list) != 0:
+        first = list[0]
+    if len(list) > 1:
+        rest = ' '.join(list[1:])
     return first, rest
 
 #########################################################################
@@ -190,7 +193,7 @@ def directive(s):
     first, more = pop(s)
     second, more = pop(more)
     if re.match('\$origin', first, re.I):
-        if not isname(second):
+        if not second or not isname(second):
             raise MasterFileError('Invalid $ORIGIN')
         if more:
             raise MasterFileError('Invalid $ORIGIN')
@@ -202,8 +205,8 @@ def directive(s):
             origin = second + '.' + origin
         return True
     elif re.match('\$ttl', first, re.I):
-        if not isttl(second):
-            raise MasterFileError('Invalid $TTL: ' + second)
+        if not second or not isttl(second):
+            raise MasterFileError('Invalid TTL: "' + second + '"')
         if more:
             raise MasterFileError('Invalid $TTL statement')
         defttl = parse_ttl(second)
@@ -374,10 +377,13 @@ def zonedata(zone):
             sub.close()
             continue
 
-        first = record.split()[0]
-        if first == '@':
-            name = origin
-            at, record = pop(record)
+        # replace @ with origin
+        rl = record.split()
+        if rl[0] == '@':
+            rl[0] = origin
+            if not origin:
+                rl[0] = '.'
+            record = ' '.join(rl)
 
         result = four(record, name)
 
