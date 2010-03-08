@@ -165,8 +165,7 @@ ModuleCCSession::read_module_specification(const std::string& filename) {
 ModuleCCSession::ModuleCCSession(std::string spec_file_name,
                                isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config),
                                isc::data::ElementPtr(*command_handler)(const std::string& command, const isc::data::ElementPtr args)
-                              ) throw (isc::cc::SessionError):
-    session_(isc::cc::Session())
+                              ) throw (isc::cc::SessionError)
 {
     read_module_specification(spec_file_name);
     sleep(1);
