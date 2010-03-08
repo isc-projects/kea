@@ -2,6 +2,7 @@
 
 import sys; sys.path.append ('@@PYTHONPATH@@')
 import os
+import time
 
 """\
 This file implements the Boss of Bind (BoB, or bob) program.
@@ -50,10 +51,48 @@ import isc.cc
 import isc
 
 # This is the version that gets displayed to the user.
-__version__ = "v20100225"
+__version__ = "v20100308"
 
 # Nothing at all to do with the 1990-12-10 article here:
 # http://www.subgenius.com/subg-digest/v2/0056.html
+
+class RestartSchedule:
+    """
+Keeps state when restarting something (in this case, a process).
+
+When a process dies unexpectedly, we need to restart it. However, if 
+it fails to restart for some reason, then we should not simply keep
+restarting it at high speed.
+
+A more sophisticated algorithm can be developed, but for now we choose
+a simple set of rules:
+
+  * If a process was been running for >=10 seconds, we restart it
+    right away.
+  * If a process was running for <10 seconds, we wait until 10 seconds
+    after it was started."""
+
+    def __init__(self, restart_frequency=10.0):
+        self.restart_frequency = restart_frequency
+        self.run_start_time = None
+        self.run_stop_time = None
+        self.restart_time = None
+    
+    def set_run_start_time(self, when=None):
+        if when is None:
+            when = time.time()
+        self.run_start_time = when
+        self.restart_time = when + self.restart_frequency
+
+    def set_run_stop_time(self, when=None):
+        if when is None:
+            when = time.time()
+        self.run_stop_time = when
+
+    def get_restart_time(self, when=None):
+        if when is None:
+            when = time.time()
+        return max(when, self.restart_time)
 
 class ProcessInfo:
     """Information about a process"""
@@ -89,6 +128,8 @@ class ProcessInfo:
         self.env = env
         self.dev_null_stdout = dev_null_stdout
         self._spawn()
+        self.last_spawn_time = time.time()
+#        self.respawn
 
     def respawn(self):
         self._spawn()
