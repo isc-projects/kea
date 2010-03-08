@@ -133,7 +133,7 @@ def isclass(s):
 name_regex = re.compile('[-\w\$\d\/*]+(?:\.[-\w\$\d\/]+)*\.?')
 def isname(s):
     global name_regex
-    if name_regex.match(s):
+    if s == '.' or name_regex.match(s):
         return True
     else:
         return False
