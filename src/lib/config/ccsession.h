@@ -90,8 +90,46 @@ public:
      */
     void set_command_handler(isc::data::ElementPtr(*command_handler)(const std::string& command, const isc::data::ElementPtr args)) { command_handler_ = command_handler; };
 
+    /**
+     * Gives access to the configuration values of a different module
+     * Once this function has been called with the name of the specification
+     * file of the module you want the configuration of, you can use
+     * \c getRemoteConfigValue() to get a specific setting.
+     * Changes are automatically updated, but you cannot specify handlers
+     * for those changes, must use \c getRemoteConfigValue() to get a value
+     * This function will subscribe to the relevant module channel.
+     *
+     * \param spec_file_name The path to the specification file of
+     *                       the module we want to have configuration
+     *                       values from
+     * \return The name of the module specified in the given specification
+     *         file
+     */
+    std::string addRemoteConfig(const std::string& spec_file_name);
+
+    /**
+     * Removes the module with the given name from the remote config
+     * settings. If the module was not added with \c addRemoteConfig(),
+     * nothing happens.
+     */
+    void removeRemoteConfig(const std::string& module_name);
+
+    /**
+     * Returns the current configuration value for the given module
+     * name at the given identifier. See \c ConfigData::getValue() for
+     * more details.
+     * Raises a ModuleCCSessionError if the module name is unknown
+     * Raises a DataNotFoundError if the identifier does not exist
+     * in the specification.
+     *
+     * \param module_name The name of the module to get a config value for
+     * \param identifier The identifier of the config value
+     * \return The configuration setting at the given identifier
+     */
+    ElementPtr getRemoteConfigValue(const std::string& module_name, const std::string& identifier);
+    
 private:
-    void read_module_specification(const std::string& filename);
+    ModuleSpec read_module_specification(const std::string& filename);
     
     std::string module_name_;
     isc::cc::Session session_;
@@ -101,6 +139,9 @@ private:
 
     isc::data::ElementPtr(*config_handler_)(isc::data::ElementPtr new_config);
     isc::data::ElementPtr(*command_handler_)(const std::string& command, const isc::data::ElementPtr args);
+
+    std::map<std::string, ConfigData> remote_module_configs_;
+    void updateRemoteConfig(const std::string& module_name, ElementPtr new_config);
 };
 
 ElementPtr createAnswer(const int rcode);
