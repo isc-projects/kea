@@ -4,19 +4,7 @@
     "config_data": [
       { "item_name": "database_file",
         "item_type": "string",
-        "item_optional": False,
-        "item_default": "b10-auth.db"
-      },
-      { "item_name": "zone_list",
-        "item_type": "list",
-        "item_optional": False,
-        "item_default": [],
-        "list_item_spec":
-          { "item_name": "zone_name",
-            "item_type": "string",
-            "item_optional": True,
-            "item_default": ""
-          }
+        "item_optional": True
       }
     ],
     "commands": [

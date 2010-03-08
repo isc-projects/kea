@@ -67,15 +67,13 @@ usage() {
 ElementPtr
 my_config_handler(ElementPtr new_config)
 {
-    auth_server->updateConfig(new_config);
-    return createAnswer(0);
+    return auth_server->updateConfig(new_config);
 }
 
 ElementPtr
 my_command_handler(const string& command, const ElementPtr args) {
     ElementPtr answer = createAnswer(0);
 
-    cout << "[XX] Handle command: " << endl << command << endl;
     if (command == "print_message") 
     {
         cout << args << endl;

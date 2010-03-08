@@ -20,6 +20,7 @@
 #include <string>
 
 #include <cc/data.h>
+#include <auth/data_source.h>
 
 class AuthSrvImpl;
 
@@ -39,10 +40,14 @@ public:
     //@}
     void processMessage(int fd);
     void serve(std::string zone_name);
-    void setDbFile(const std::string& db_file);
+    isc::data::ElementPtr setDbFile(const isc::data::ElementPtr config);
     isc::data::ElementPtr updateConfig(isc::data::ElementPtr config);
 private:
     AuthSrvImpl* impl_;
+    /// We keep a pointer to the currently running sqlite datasource
+    /// so that we can specifically remove that one should the database
+    /// file change
+    isc::auth::ConstDataSrcPtr cur_datasrc_;
 };
 
 #endif // __AUTH_SRV_H

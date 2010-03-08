@@ -189,16 +189,24 @@ ModuleCCSession::ModuleCCSession(std::string spec_file_name,
     ElementPtr spec_msg = createCommand("module_spec", module_specification_.getFullSpec());
     session_.group_sendmsg(spec_msg, "ConfigManager");
     session_.group_recvmsg(env, answer, false);
-
+    int rcode;
+    ElementPtr err = parseAnswer(rcode, answer);
+    if (rcode != 0) {
+        std::cerr << "[" << module_name_ << "] Error in specification: " << answer << std::endl;
+    }
+    
     config_ = Element::createFromString("{}");
     // get any stored configuration from the manager
     if (config_handler_) {
         ElementPtr cmd = Element::createFromString("{ \"command\": [\"get_config\", {\"module_name\":\"" + module_name_ + "\"} ] }");
         session_.group_sendmsg(cmd, "ConfigManager");
         session_.group_recvmsg(env, answer, false);
-        int rcode;
         ElementPtr new_config = parseAnswer(rcode, answer);
-        handleConfigUpdate(new_config);
+        if (rcode == 0) {
+            handleConfigUpdate(new_config);
+        } else {
+            std::cerr << "[" << module_name_ << "] Error getting config: " << new_config << std::endl;
+        }
     }
 }
 

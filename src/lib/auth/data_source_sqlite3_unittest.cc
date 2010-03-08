@@ -29,6 +29,7 @@
 #include <dns/rrtype.h>
 #include <dns/rdataclass.h>
 #include <dns/rrsetlist.h>
+#include <cc/data.h>
 
 #include "query.h"
 #include "data_source.h"
@@ -38,15 +39,19 @@ using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::auth;
+using namespace isc::data;
 
 namespace {
-static const char* SQLITE_DBFILE_EXAMPLE = "testdata/test.sqlite3";
-static const char* SQLITE_DBFILE_EXAMPLE2 = "testdata/test2.sqlite3";
+static ElementPtr SQLITE_DBFILE_EXAMPLE = Element::createFromString(
+                     "{ \"database_file\": \"testdata/test.sqlite3\"}");
+static ElementPtr SQLITE_DBFILE_EXAMPLE2 = Element::createFromString(
+                     "{ \"database_file\": \"testdata/test2.sqlite3\"}");
 // The following file must be non existent and mutt be "creatable";
 // the sqlite3 library will try to create a new DB file if it doesn't exist,
 // so to test a failure case the create operation should also fail.
 // The "nodir", a non existent directory, is inserted for this purpose.
-static const char* SQLITE_DBFILE_NOTEXIST = "testdata/nodir/notexist";
+static ElementPtr SQLITE_DBFILE_NOTEXIST = Element::createFromString(
+                     "{ \"database_file\": \"testdata/nodir/notexist\"}");
 
 static const string sigdata_common(" 20100322084538 20100220084538 "
                                    "33495 example.com. FAKEFAKEFAKEFAKE");
@@ -350,6 +355,7 @@ TEST_F(Sqlite3DataSourceTest, reOpen) {
     // Replace the data with a totally different zone.  This should succeed,
     // and shouldn't match any names in the previously managed domains.
     EXPECT_EQ(DataSrc::SUCCESS, data_source.close());
+
     EXPECT_EQ(DataSrc::SUCCESS, data_source.init(SQLITE_DBFILE_EXAMPLE2));
 
     NameMatch name_match(www_name);

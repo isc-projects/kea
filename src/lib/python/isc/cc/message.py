@@ -113,9 +113,9 @@ def _encode_item(item):
 def _encode_bool(item):
     """Encode a boolean value into a bytearray of one byte (0=false)"""
     if item:
-        return b'\x01'
+        return b'1'
     else:
-        return b'\x00'
+        return b'0'
 
 def _encode_array(item):
     """Encode an array, where each value is encoded recursively"""
@@ -203,7 +203,7 @@ def _decode_item(data):
     return (value, data)
 
 def _decode_bool(data):
-    return data == b'0x01'
+    return data == b'1' or data == b'0x01'
 
 def _decode_int(data):
     return int(str(data, 'utf-8'))
