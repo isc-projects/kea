@@ -1,0 +1,19 @@
+Support optional origin in $INCLUDE:
+$INCLUDE filename origin
+
+Support optional comment in $INCLUDE:
+$INCLUDE filename origin comment
+
+Support optional comment in $TTL (RFC 2308):
+$TTL number comment
+
+If ttl is not set on the record line but $TTL is set at top,
+it is not loaded. But running master.py manually does show the
+TTL to be same as the $TTL. When including the ttl on every line,
+it is loaded and can be served.
+
+Open questions to document in manual page:
+
+What happens in the database? replaces existing? What if a.foo
+existed but new zone file didn't have a.foo, would previous a.foo
+in database be removed?
