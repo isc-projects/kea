@@ -306,7 +306,7 @@ public:
     /// exception class of \c InvalidBufferPosition will be thrown.
     ///
     /// \param pos The position in the buffer to be returned.
-    uint8_t operator[](size_t pos) const
+    const uint8_t& operator[](size_t pos) const
     {
         if (pos >= data_.size()) {
             isc_throw(InvalidBufferPosition, "read at invalid position");
@@ -326,6 +326,14 @@ public:
     /// that is to be filled in later, e.g, by \ref writeUint16At().
     /// \param len The length of the gap to be inserted in bytes.
     void skip(size_t len) { data_.insert(data_.end(), len, 0); }
+    /// \brief TBD
+    void trim(size_t len)
+    {
+        if (len > data_.size()) {
+            isc_throw(OutOfRange, "trimming too large from output buffer");
+        }
+        data_.resize(data_.size() - len);
+    }
     /// \brief Clear buffer content.
     ///
     /// This method can be used to re-initialize and reuse the buffer without

@@ -124,6 +124,7 @@ AuthSrv::processMessage(const int fd)
 
         OutputBuffer obuffer(remote_bufsize);
         MessageRenderer renderer(obuffer);
+        renderer.setLengthLimit(remote_bufsize);
         msg.toWire(renderer);
         cout << "sending a response (" <<
             boost::lexical_cast<string>(obuffer.getLength())
