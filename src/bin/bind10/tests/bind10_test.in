@@ -8,9 +8,9 @@ BIND10_PATH=@abs_top_srcdir@/src/bin/bind10
 PATH=@abs_top_srcdir@/src/bin/msgq:@abs_top_srcdir@/src/bin/auth:@abs_top_srcdir@/src/bin/bind-cfgd:$PATH
 export PATH
 
-PYTHONPATH=@abs_top_srcdir@/src/lib/python
+PYTHONPATH=@abs_top_srcdir@/src/lib/python:@abs_top_srcdir@/src/bin/bind10
 export PYTHONPATH
 
-cd ${BIND10_PATH}
+cd ${BIND10_PATH}/tests
 exec ${PYTHON_EXEC} -O bind10_test.py $*
 
