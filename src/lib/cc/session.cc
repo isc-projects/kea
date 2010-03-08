@@ -64,8 +64,19 @@ namespace {
 // with the RAII approach.
 class SocketHolder {
 public:
-    SocketHolder(int fd) : fd_(fd) {}
-    ~SocketHolder() { close (fd_); }
+    SocketHolder(SessionImpl* obj, int fd) : impl_obj_(obj), fd_(fd)
+    {
+        impl_obj_->sock_ = fd;
+    }
+    ~SocketHolder()
+    {
+        if (fd_ >= 0) {
+            close(fd_);
+            impl_obj_->sock_ = -1;
+        }
+    }
+    void clear() { fd_ = -1; }
+    SessionImpl* impl_obj_;
     int fd_;
 };
 }
@@ -80,7 +91,7 @@ Session::establish() {
         throw SessionError("socket() failed");
     }
 
-    SocketHolder socket_holder(s);
+    SocketHolder socket_holder(impl_, s);
 
     sin.sin_family = AF_INET;
     sin.sin_port = htons(9912);
@@ -91,8 +102,9 @@ Session::establish() {
 #endif
 
     ret = connect(s, (struct sockaddr *)&sin, sizeof(sin));
-    if (ret < 0)
+    if (ret < 0) {
         throw SessionError("Unable to connect to message queue");
+    }
 
     //
     // send a request for our local name, and wait for a response
@@ -109,7 +121,7 @@ Session::establish() {
     impl_->lname_ = msg->get("lname")->stringValue();
     cout << "My local name is:  " << impl_->lname_ << endl;
 
-    impl_->sock_ = socket_holder.fd_;
+    socket_holder.clear();
 }
 
 //
@@ -123,6 +135,8 @@ Session::sendmsg(ElementPtr& msg) {
     unsigned short header_length = header_wire.length();
     unsigned short header_length_net = htons(header_length);
     unsigned int ret;
+
+    assert(impl_->sock_ != -1);
 
     ret = write(impl_->sock_, &length_net, 4);
     if (ret != 4)
