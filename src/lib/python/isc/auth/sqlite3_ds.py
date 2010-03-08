@@ -119,9 +119,9 @@ def reverse_name(name):
 # input:
 #   dbfile: the sqlite3 database fileanme
 #   zone: the zone origin
-#   zonedata: an array of name/ttl/class/rrtype/rdata-text tuples
+#   zonedata: an iterable set of name/ttl/class/rrtype/rdata-text tuples
 #########################################################################
-def load(dbfile, zone, zonedata):
+def load(dbfile, zone, reader, file):
     conn, cur = open(dbfile)
     old_zone_id = get_zoneid(zone, cur)
 
@@ -129,7 +129,7 @@ def load(dbfile, zone, zonedata):
     cur.execute("INSERT INTO zones (name, rdclass) VALUES (?, 'IN')", [temp])
     new_zone_id = cur.lastrowid
 
-    for name, ttl, rdclass, rdtype, rdata in zonedata:
+    for name, ttl, rdclass, rdtype, rdata in reader(file):
         sigtype = ''
         if rdtype.lower() == 'rrsig':
             sigtype = rdata.split()[0]
