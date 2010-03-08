@@ -132,35 +132,35 @@ TEST_F(StaticDataSourceTest, close) {
 
 TEST_F(StaticDataSourceTest, findClosestEnclosureForVersion) {
     NameMatch name_match(version_name);
-    data_source.findClosestEnclosure(name_match, RRClass::IN());
+    data_source.findClosestEnclosure(name_match, rrclass);
     EXPECT_EQ(version_name, *name_match.closestName());
     EXPECT_EQ(&data_source, name_match.bestDataSrc());
 }
 
 TEST_F(StaticDataSourceTest, findClosestEnclosureForVersionPartial) {
     NameMatch name_match(Name("foo").concatenate(version_name));
-    data_source.findClosestEnclosure(name_match, RRClass::IN());
+    data_source.findClosestEnclosure(name_match, rrclass);
     EXPECT_EQ(version_name, *name_match.closestName());
     EXPECT_EQ(&data_source, name_match.bestDataSrc());
 }
 
 TEST_F(StaticDataSourceTest, findClosestEnclosureForAuthors) {
     NameMatch name_match(authors_name);
-    data_source.findClosestEnclosure(name_match, RRClass::IN());
+    data_source.findClosestEnclosure(name_match, rrclass);
     EXPECT_EQ(authors_name, *name_match.closestName());
     EXPECT_EQ(&data_source, name_match.bestDataSrc());
 }
 
 TEST_F(StaticDataSourceTest, findClosestEnclosureForAuthorsPartial) {
     NameMatch name_match(Name("foo").concatenate(authors_name));
-    data_source.findClosestEnclosure(name_match, RRClass::IN());
+    data_source.findClosestEnclosure(name_match, rrclass);
     EXPECT_EQ(authors_name, *name_match.closestName());
     EXPECT_EQ(&data_source, name_match.bestDataSrc());
 }
 
 TEST_F(StaticDataSourceTest, findClosestEnclosureNoMatch) {
     NameMatch name_match(nomatch_name);
-    data_source.findClosestEnclosure(name_match, RRClass::IN());
+    data_source.findClosestEnclosure(name_match, rrclass);
     EXPECT_EQ(NULL, name_match.closestName());
     EXPECT_EQ(NULL, name_match.bestDataSrc());
 }
