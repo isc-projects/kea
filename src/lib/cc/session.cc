@@ -157,17 +157,17 @@ Session::recvmsg(ElementPtr& msg, bool nonblock)
     if (header_length != length) {
         throw SessionError("Received non-empty body where only a header expected");
     }
-    
-    char *buffer = new char[length];
-    ret = read(sock, buffer, length);
-    if (ret != length)
-        throw SessionError("Short read");
 
-    std::string wire = std::string(buffer, length);
-    delete [] buffer;
+    std::vector<char> buffer(length);
+    ret = read(sock, &buffer[0], length);
+    if (ret != length) {
+        throw SessionError("Short read");
+    }
+
+    std::string wire = std::string(&buffer[0], length);
 
     std::stringstream wire_stream;
-    wire_stream <<wire;
+    wire_stream << wire;
 
     msg = Element::fromWire(wire_stream, length);
 
