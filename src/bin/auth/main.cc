@@ -181,8 +181,7 @@ main(int argc, char* argv[]) {
         } else {
             specfile = string(AUTH_SPECFILE_LOCATION);
         }
-        ModuleCCSession cs = ModuleCCSession(specfile, my_config_handler,
-                                             my_command_handler);
+        ModuleCCSession cs(specfile, my_config_handler, my_command_handler);
 
         // main server loop
         fd_set fds;

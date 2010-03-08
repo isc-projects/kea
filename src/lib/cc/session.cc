@@ -30,28 +30,57 @@ using namespace isc::data;
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-Session::Session()
-{
-    sock = -1;
-    sequence = 1;
+namespace isc {
+namespace cc {
+
+class SessionImpl {
+public:
+    SessionImpl() : sock_(-1), sequence_(-1) {}
+    int sock_;
+    int sequence_; // the next sequence number to use
+    std::string lname_;
+};
+
+Session::Session() : impl_(new SessionImpl)
+{}
+
+Session::~Session() {
+    delete impl_;
 }
 
 void
-Session::disconnect()
-{
-    close(sock);
-    sock = -1;
+Session::disconnect() {
+    close(impl_->sock_);
+    impl_->sock_ = -1;
+}
+
+int
+Session::getSocket() const {
+     return (impl_->sock_);
+}
+
+namespace {
+// This is a helper class to make the establish() method (below) exception-safe
+// with the RAII approach.
+class SocketHolder {
+public:
+    SocketHolder(int fd) : fd_(fd) {}
+    ~SocketHolder() { close (fd_); }
+    int fd_;
+};
 }
 
 void
-Session::establish()
-{
-    int ret;
+Session::establish() {
+    int s, ret;
     struct sockaddr_in sin;
 
-    sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (sock < -1)
+    s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (s < 0) {
         throw SessionError("socket() failed");
+    }
+
+    SocketHolder socket_holder(s);
 
     sin.sin_family = AF_INET;
     sin.sin_port = htons(9912);
@@ -61,7 +90,7 @@ Session::establish()
     sin.sin_len = sizeof(struct sockaddr_in);
 #endif
 
-    ret = connect(sock, (struct sockaddr *)&sin, sizeof(sin));
+    ret = connect(s, (struct sockaddr *)&sin, sizeof(sin));
     if (ret < 0)
         throw SessionError("Unable to connect to message queue");
 
@@ -77,16 +106,17 @@ Session::establish()
     ElementPtr routing, msg;
     recvmsg(routing, msg, false);
 
-    lname = msg->get("lname")->stringValue();
-    cout << "My local name is:  " << lname << endl;
+    impl_->lname_ = msg->get("lname")->stringValue();
+    cout << "My local name is:  " << impl_->lname_ << endl;
+
+    impl_->sock_ = socket_holder.fd_;
 }
 
 //
 // Convert to wire format and send this on the TCP stream with its length prefix
 //
 void
-Session::sendmsg(ElementPtr& msg)
-{
+Session::sendmsg(ElementPtr& msg) {
     std::string header_wire = msg->toWire();
     unsigned int length = 2 + header_wire.length();
     unsigned int length_net = htonl(length);
@@ -94,15 +124,15 @@ Session::sendmsg(ElementPtr& msg)
     unsigned short header_length_net = htons(header_length);
     unsigned int ret;
 
-    ret = write(sock, &length_net, 4);
+    ret = write(impl_->sock_, &length_net, 4);
     if (ret != 4)
         throw SessionError("Short write");
 
-    ret = write(sock, &header_length_net, 2);
+    ret = write(impl_->sock_, &header_length_net, 2);
     if (ret != 2)
         throw SessionError("Short write");
 
-    ret = write(sock, header_wire.c_str(), header_length);
+    ret = write(impl_->sock_, header_wire.c_str(), header_length);
     if (ret != header_length) {
         throw SessionError("Short write");
     }
@@ -119,19 +149,19 @@ Session::sendmsg(ElementPtr& env, ElementPtr& msg)
     unsigned short header_length_net = htons(header_length);
     unsigned int ret;
 
-    ret = write(sock, &length_net, 4);
+    ret = write(impl_->sock_, &length_net, 4);
     if (ret != 4)
         throw SessionError("Short write");
 
-    ret = write(sock, &header_length_net, 2);
+    ret = write(impl_->sock_, &header_length_net, 2);
     if (ret != 2)
         throw SessionError("Short write");
 
-    ret = write(sock, header_wire.c_str(), header_length);
+    ret = write(impl_->sock_, header_wire.c_str(), header_length);
     if (ret != header_length) {
         throw SessionError("Short write");
     }
-    ret = write(sock, body_wire.c_str(), body_wire.length());
+    ret = write(impl_->sock_, body_wire.c_str(), body_wire.length());
     if (ret != body_wire.length()) {
         throw SessionError("Short write");
     }
@@ -144,11 +174,11 @@ Session::recvmsg(ElementPtr& msg, bool nonblock)
     unsigned short header_length_net;
     unsigned int ret;
 
-    ret = read(sock, &length_net, 4);
+    ret = read(impl_->sock_, &length_net, 4);
     if (ret != 4)
         throw SessionError("Short read");
 
-    ret = read(sock, &header_length_net, 2);
+    ret = read(impl_->sock_, &header_length_net, 2);
     if (ret != 2)
         throw SessionError("Short read");
 
@@ -159,7 +189,7 @@ Session::recvmsg(ElementPtr& msg, bool nonblock)
     }
 
     std::vector<char> buffer(length);
-    ret = read(sock, &buffer[0], length);
+    ret = read(impl_->sock_, &buffer[0], length);
     if (ret != length) {
         throw SessionError("Short read");
     }
@@ -182,11 +212,11 @@ Session::recvmsg(ElementPtr& env, ElementPtr& msg, bool nonblock)
     unsigned short header_length_net;
     unsigned int ret;
 
-    ret = read(sock, &length_net, 4);
+    ret = read(impl_->sock_, &length_net, 4);
     if (ret != 4)
         throw SessionError("Short read");
 
-    ret = read(sock, &header_length_net, 2);
+    ret = read(impl_->sock_, &header_length_net, 2);
     if (ret != 2)
         throw SessionError("Short read");
 
@@ -198,7 +228,7 @@ Session::recvmsg(ElementPtr& env, ElementPtr& msg, bool nonblock)
     // remove the header-length bytes from the total length
     length -= 2;
     std::vector<char> buffer(length);
-    ret = read(sock, &buffer[0], length);
+    ret = read(impl_->sock_, &buffer[0], length);
     if (ret != length) {
         throw SessionError("Short read");
     }
@@ -249,16 +279,16 @@ Session::group_sendmsg(ElementPtr msg, std::string group,
     ElementPtr env = Element::create(std::map<std::string, ElementPtr>());
 
     env->set("type", Element::create("send"));
-    env->set("from", Element::create(lname));
+    env->set("from", Element::create(impl_->lname_));
     env->set("to", Element::create(to));
     env->set("group", Element::create(group));
     env->set("instance", Element::create(instance));
-    env->set("seq", Element::create(sequence));
+    env->set("seq", Element::create(impl_->sequence_));
     //env->set("msg", Element::create(msg->toWire()));
 
     sendmsg(env, msg);
 
-    return (sequence++);
+    return (impl_->sequence_++);
 }
 
 bool
@@ -278,14 +308,16 @@ Session::reply(ElementPtr& envelope, ElementPtr& newmsg)
     ElementPtr env = Element::create(std::map<std::string, ElementPtr>());
 
     env->set("type", Element::create("send"));
-    env->set("from", Element::create(lname));
+    env->set("from", Element::create(impl_->lname_));
     env->set("to", Element::create(envelope->get("from")->stringValue()));
     env->set("group", Element::create(envelope->get("group")->stringValue()));
     env->set("instance", Element::create(envelope->get("instance")->stringValue()));
-    env->set("seq", Element::create(sequence));
+    env->set("seq", Element::create(impl_->sequence_));
     env->set("reply", Element::create(envelope->get("seq")->intValue()));
 
     sendmsg(env, newmsg);
 
-    return (sequence++);
+    return (impl_->sequence_++);
+}
+}
 }

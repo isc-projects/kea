@@ -18,13 +18,13 @@
 #define _ISC_SESSION_H 1
 
 #include <string>
-#include <vector>
-#include <map>
 
 #include "data.h"
 
 namespace isc {
     namespace cc {
+        class SessionImpl;
+
         class SessionError : public std::exception {
         public:
             SessionError(std::string m = "CC Session Error") : msg(m) {}
@@ -36,16 +36,18 @@ namespace isc {
 
         class Session {
         private:
-            int sock;
-            int sequence; // the next sequence number to use
+            SessionImpl* impl_;
+
+        private:
+            Session(const Session& source);
+            Session& operator=(const Session& source);
 
         public:
-            std::string lname;
-
             Session();
+            ~Session();
 
             // XXX: quick hack to allow the user to watch the socket directly.
-            int getSocket() const { return (sock); }
+            int getSocket() const;
 
             void establish();
             void disconnect();
