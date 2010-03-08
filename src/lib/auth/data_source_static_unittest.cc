@@ -27,6 +27,7 @@
 #include <dns/rrtype.h>
 #include <dns/rdataclass.h>
 #include <dns/rrsetlist.h>
+#include <cc/data.h>
 
 #include "query.h"
 #include "data_source.h"

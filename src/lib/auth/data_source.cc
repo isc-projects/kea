@@ -782,6 +782,19 @@ MetaDataSrc::addDataSrc(ConstDataSrcPtr data_src)
 }
 
 void
+MetaDataSrc::removeDataSrc(ConstDataSrcPtr data_src)
+{
+    std::vector<ConstDataSrcPtr>::iterator it, itr;
+    for (it = data_sources.begin(); it != data_sources.end(); it++) {
+        if (*it == data_src) {
+            itr = it;
+        }
+    }
+
+    data_sources.erase(itr);
+}
+
+void
 MetaDataSrc::findClosestEnclosure(NameMatch& match, const RRClass& qclass) const
 {
     if (qclass == RRClass::ANY()) {
