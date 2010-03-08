@@ -761,9 +761,10 @@ Message::toText() const
 }
 
 void
-Message::clear()
+Message::clear(Mode mode)
 {
     impl_->init();
+    impl_->mode_ = mode;
 }
 
 void
