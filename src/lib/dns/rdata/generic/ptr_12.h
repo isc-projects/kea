@@ -32,8 +32,6 @@ class PTR : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
     // END_COMMON_MEMBERS
-private:
-    // RR-type specific members are here.
 
     ///
     /// Specialized constructor
