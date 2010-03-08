@@ -345,7 +345,7 @@ def openzone(filename, initial_origin = '.'):
     try:
         zf = open(filename, 'r')
     except:
-        return
+        raise MasterFileError("Could not open " + filename)
     origin = initial_origin
     return zf
 
