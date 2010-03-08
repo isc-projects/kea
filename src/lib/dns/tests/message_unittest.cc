@@ -124,12 +124,12 @@ TEST_F(MessageTest, GetEDNS0DOBit)
     EXPECT_FALSE(message_parse.isDNSSECSupported());
 
     // If DO bit is on, DNSSEC is considered to be supported.
-    message_parse.clear();
+    message_parse.clear(Message::PARSE);
     factoryFromFile(message_parse, "testdata/message_fromWire2");
     EXPECT_TRUE(message_parse.isDNSSECSupported());
 
     // If DO bit is off, DNSSEC is considered to be unsupported.
-    message_parse.clear();
+    message_parse.clear(Message::PARSE);
     factoryFromFile(message_parse, "testdata/message_fromWire3");
     EXPECT_FALSE(message_parse.isDNSSECSupported());
 }
@@ -162,12 +162,12 @@ TEST_F(MessageTest, GetEDNS0UDPSize)
     EXPECT_EQ(Message::DEFAULT_MAX_UDPSIZE, message_parse.getUDPSize());
 
     // If the size specified in EDNS0 > default max, use it.
-    message_parse.clear();
+    message_parse.clear(Message::PARSE);
     factoryFromFile(message_parse, "testdata/message_fromWire2");
     EXPECT_EQ(4096, message_parse.getUDPSize());
 
     // If the size specified in EDNS0 < default max, keep using the default.
-    message_parse.clear();
+    message_parse.clear(Message::PARSE);
     factoryFromFile(message_parse, "testdata/message_fromWire8");
     EXPECT_EQ(Message::DEFAULT_MAX_UDPSIZE, message_parse.getUDPSize());
 }
@@ -203,7 +203,7 @@ TEST_F(MessageTest, EDNS0ExtCode)
     EXPECT_EQ(Rcode::BADVERS(), message_parse.getRcode());
 
     // Maximum extended Rcode
-    message_parse.clear();
+    message_parse.clear(Message::PARSE);
     factoryFromFile(message_parse, "testdata/message_fromWire11");
     EXPECT_EQ(0xfff, message_parse.getRcode().getCode());
 }
@@ -214,21 +214,21 @@ TEST_F(MessageTest, BadEDNS0)
     EXPECT_THROW(factoryFromFile(message_parse, "testdata/message_fromWire4"),
                  DNSMessageFORMERR);
     // multiple OPT RRs (in the additional section)
-    message_parse.clear();
+    message_parse.clear(Message::PARSE);
     EXPECT_THROW(factoryFromFile(message_parse, "testdata/message_fromWire5"),
                  DNSMessageFORMERR);
     // OPT RR of a non root name
-    message_parse.clear();
+    message_parse.clear(Message::PARSE);
     EXPECT_THROW(factoryFromFile(message_parse, "testdata/message_fromWire6"),
                  DNSMessageFORMERR);
     // Compressed owner name of OPT RR points to a root name.
     // Not necessarily bogus, but very unusual and mostly pathological.
     // We accept it, but is it okay?
-    message_parse.clear();
+    message_parse.clear(Message::PARSE);
     EXPECT_NO_THROW(factoryFromFile(message_parse,
                                     "testdata/message_fromWire7"));
     // Unsupported Version
-    message_parse.clear();
+    message_parse.clear(Message::PARSE);
     EXPECT_THROW(factoryFromFile(message_parse, "testdata/message_fromWire9"),
                  DNSMessageBADVERS);
 }

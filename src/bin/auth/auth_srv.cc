@@ -84,52 +84,41 @@ AuthSrv::~AuthSrv()
     delete impl_;
 }
 
-void
-AuthSrv::processMessage(const int fd)
+int
+AuthSrv::processMessage(InputBuffer& request_buffer,
+                        Message& message,
+                        MessageRenderer& response_renderer)
 {
-    struct sockaddr_storage ss;
-    socklen_t sa_len = sizeof(ss);
-    struct sockaddr* sa = static_cast<struct sockaddr*>((void*)&ss);
-    char recvbuf[4096];
-    int cc;
-
-    if ((cc = recvfrom(fd, recvbuf, sizeof(recvbuf), 0, sa, &sa_len)) > 0) {
-        Message msg(Message::PARSE);
-        InputBuffer buffer(recvbuf, cc);
-
-        try {
-            msg.fromWire(buffer);
-        } catch (...) {
-            cerr << "[AuthSrv] parse failed" << endl;
-            return;
-        }
-
-        cout << "[AuthSrv] received a message:\n" << msg.toText() << endl;
-
-        if (msg.getRRCount(Section::QUESTION()) != 1) {
-            return;
-        }
-
-        bool dnssec_ok = msg.isDNSSECSupported();
-        uint16_t remote_bufsize = msg.getUDPSize();
-
-        msg.makeResponse();
-        msg.setHeaderFlag(MessageFlag::AA());
-        msg.setRcode(Rcode::NOERROR());
-        msg.setDNSSECSupported(dnssec_ok);
-        msg.setUDPSize(sizeof(recvbuf));
-
-        Query query(msg, dnssec_ok);
-        impl_->data_sources.doQuery(query);
-
-        OutputBuffer obuffer(remote_bufsize);
-        MessageRenderer renderer(obuffer);
-        msg.toWire(renderer);
-        cout << "sending a response (" <<
-            boost::lexical_cast<string>(obuffer.getLength())
-                  << " bytes):\n" << msg.toText() << endl;
-        sendto(fd, obuffer.getData(), obuffer.getLength(), 0, sa, sa_len);
+    try {
+            message.fromWire(request_buffer);
+    } catch (...) {
+        cerr << "[AuthSrv] parse failed" << endl;
+        return (-1);
     }
+
+    cout << "[AuthSrv] received a message:\n" << message.toText() << endl;
+
+    if (message.getRRCount(Section::QUESTION()) != 1) {
+        return (-1);
+    }
+
+    bool dnssec_ok = message.isDNSSECSupported();
+    // unused for now.  should set this to renderer for truncation
+    uint16_t remote_bufsize = message.getUDPSize();
+
+    message.makeResponse();
+    message.setHeaderFlag(MessageFlag::AA());
+    message.setRcode(Rcode::NOERROR());
+    message.setDNSSECSupported(dnssec_ok);
+    message.setUDPSize(4096);   // XXX: hardcoding
+
+    Query query(message, dnssec_ok);
+    impl_->data_sources.doQuery(query);
+
+    message.toWire(response_renderer);
+    cout << "sending a response:\n" << message.toText() << endl;
+
+    return (0);
 }
 
 void

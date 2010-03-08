@@ -563,7 +563,7 @@ public:
     //void addRR(const Section& section, const RR& rr);
     //void removeRR(const Section& section, const RR& rr);
 
-    void clear();
+    void clear(Mode mode);
 
     // prepare for making a response from a request.  This will clear the
     // DNS header except those fields that should be kept for the response,

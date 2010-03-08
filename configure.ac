@@ -12,6 +12,10 @@ AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_LIBTOOL
 
+# Use C++ language
+AC_LANG_CPLUSPLUS
+AX_COMPILER_VENDOR
+
 m4_define([_AM_PYTHON_INTERPRETER_LIST], [python python3 python3.1])
 AM_PATH_PYTHON([3.1])
 
@@ -85,6 +89,46 @@ if test "$lcov" != "no"; then
 	AC_SUBST(GENHTML)
 fi
 AC_SUBST(USE_LCOV)
+
+# Check availability of the Boost System library
+
+AC_MSG_CHECKING([for boost::system library])
+AC_ARG_WITH([boostlib],
+AC_HELP_STRING([--with-boostlib=PATH],
+  [specify a path to boost libraries if it is not automatically found]),
+  [boostlib_path="$withval"], [boostlib_path="no"])
+if test "$boostlib_path" != "no"; then
+	BOOST_LDFLAGS="-L$boostlib_path"
+fi
+
+LDFLAGS_SAVED="$LDFLAGS"
+LIBS_SAVED="$LIBS"
+CPPFLAGS_SAVED="$CPPFLAGS"
+CPPFLAGS="$CPPFLAGS -Iext"
+
+for BOOST_TRY_LIB in boost_system boost_system-mt; do
+	LDFLAGS="$LDFLAGS_SAVED ${BOOST_LDFLAGS}"
+	LIBS="$LIBS_SAVED -l${BOOST_TRY_LIB}"
+	AC_TRY_LINK([#include <boost/system/error_code.hpp>],
+		[ boost::system::error_code error_code;
+		  std::string message(error_code.message());
+		  return 0; ],
+	[ AC_MSG_RESULT(ok)
+	  BOOST_SYSTEM_LIB="-l${BOOST_TRY_LIB}"
+	  ],[])
+	if test "X${BOOST_SYSTEM_LIB}" != X; then
+        	break
+	fi
+done
+
+if test "X${BOOST_SYSTEM_LIB}" = X; then
+	AC_MSG_RESULT(not found)
+	AC_MSG_ERROR(Unable to link with the boost::system library)
+fi
+
+CPPFLAGS="$CPPFLAGS_SAVED"
+LIBS="$LIBS_SAVED"
+AC_SUBST(BOOST_SYSTEM_LIB)
 
 #
 # Check availability of gtest, which will be used for unit tests.
