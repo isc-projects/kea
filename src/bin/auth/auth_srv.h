@@ -47,7 +47,8 @@ public:
     //@}
     int processMessage(isc::dns::InputBuffer& request_buffer,
                        isc::dns::Message& message,
-                       isc::dns::MessageRenderer& response_renderer);
+                       isc::dns::MessageRenderer& response_renderer,
+                       bool udp_buffer);
     void serve(std::string zone_name);
     void setDbFile(const std::string& db_file);
     isc::data::ElementPtr updateConfig(isc::data::ElementPtr config);

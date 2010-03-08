@@ -99,6 +99,23 @@ public:
     const void* getData() const;
     /// \brief Return the length of data written in the internal buffer.
     size_t getLength() const;
+
+    /// \brief TBD
+    bool isTruncated() const;
+
+    /// \brief TBD
+    size_t getLengthLimit() const;
+    //@}
+
+    ///
+    /// \name Setter Methods
+    ///
+    //@{
+    /// \brief TBD
+    void setLengthLimit(size_t len);
+
+    /// \brief TBD
+    void setTruncated();
     //@}
 
     ///
@@ -113,6 +130,9 @@ public:
     ///
     /// \param len The length of the gap to be inserted in bytes.
     void skip(size_t len);
+
+    /// \brief TBD
+    void trim(size_t len);
     /// \brief Clear the internal buffer and other internal resources.
     ///
     /// This method can be used to re-initialize and reuse the renderer
