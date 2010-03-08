@@ -194,7 +194,9 @@ def directive(s):
             raise MasterFileError('Invalid $ORIGIN')
         if more:
             raise MasterFileError('Invalid $ORIGIN')
-        if second[-1] == '.':
+        if second == '.':
+            origin = ''
+        elif second[-1] == '.':
             origin = second
         else:
             origin = second + '.' + origin
@@ -341,11 +343,13 @@ def reset():
 #########################################################################
 # openzone: open a zone master file, set initial origin, return descriptor
 #########################################################################
-def openzone(filename, initial_origin = '.'):
+def openzone(filename, initial_origin = ''):
     try:
         zf = open(filename, 'r')
     except:
         raise MasterFileError("Could not open " + filename)
+    if initial_origin == '.':
+        initial_origin = ''
     origin = initial_origin
     return zf
 
@@ -421,9 +425,11 @@ def zonedata(zone):
 # zonename: scans zone data for an SOA record, returns its name, restores
 # the zone file to its prior state
 #########################################################################
-def zonename(zone, initial_origin = '.'):
+def zonename(zone, initial_origin = ''):
     global origin
     old_origin = origin
+    if initial_origin == '.':
+        initial_origin = ''
     origin = initial_origin
     old_location = zone.tell()
     zone.seek(0)

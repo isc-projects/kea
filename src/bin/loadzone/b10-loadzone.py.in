@@ -40,7 +40,7 @@ def main():
         exit(2)
 
     dbfile = '/tmp/zone.sqlite3'
-    initial_origin = '.'
+    initial_origin = ''
     for o, a in opts:
         if o in ("-d", "--dbfile"):
             dbfile = a
