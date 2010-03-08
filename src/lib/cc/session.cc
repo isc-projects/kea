@@ -18,6 +18,7 @@
 #include "session.h"
 
 #include <cstdio>
+#include <vector>
 #include <iostream>
 #include <sstream>
 
@@ -196,14 +197,14 @@ Session::recvmsg(ElementPtr& env, ElementPtr& msg, bool nonblock)
 
     // remove the header-length bytes from the total length
     length -= 2;
-    char *buffer = new char[length];
-    ret = read(sock, buffer, length);
-    if (ret != length)
+    std::vector<char> buffer(length);
+    ret = read(sock, &buffer[0], length);
+    if (ret != length) {
         throw SessionError("Short read");
+    }
 
-    std::string header_wire = std::string(buffer, header_length);
-    std::string body_wire = std::string(buffer + header_length, length - header_length);
-    delete [] buffer;
+    std::string header_wire = std::string(&buffer[0], header_length);
+    std::string body_wire = std::string(&buffer[0] + header_length, length - header_length);
 
     std::stringstream header_wire_stream;
     header_wire_stream << header_wire;
