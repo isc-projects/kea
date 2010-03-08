@@ -87,10 +87,11 @@ AuthSrv::~AuthSrv()
 int
 AuthSrv::processMessage(InputBuffer& request_buffer,
                         Message& message,
-                        MessageRenderer& response_renderer)
+                        MessageRenderer& response_renderer,
+                        const bool udp_buffer)
 {
     try {
-            message.fromWire(request_buffer);
+        message.fromWire(request_buffer);
     } catch (...) {
         cerr << "[AuthSrv] parse failed" << endl;
         return (-1);
@@ -115,8 +116,11 @@ AuthSrv::processMessage(InputBuffer& request_buffer,
     Query query(message, dnssec_ok);
     impl_->data_sources.doQuery(query);
 
+    response_renderer.setLengthLimit(udp_buffer ? remote_bufsize : 65535);
     message.toWire(response_renderer);
-    cout << "sending a response:\n" << message.toText() << endl;
+    cout << "sending a response (" <<
+        boost::lexical_cast<string>(response_renderer.getLength())
+         << " bytes):\n" << message.toText() << endl;
 
     return (0);
 }

@@ -127,7 +127,7 @@ public:
         if (!error) {
             InputBuffer dnsbuffer(data_, bytes_transferred);
             if (auth_server->processMessage(dnsbuffer, dns_message_,
-                                            response_renderer_) == 0) {
+                                            response_renderer_, false) == 0) {
                 responselen_buffer_.writeUint16(response_buffer_.getLength());
                 async_write(socket_,
                             boost::asio::buffer(
@@ -231,7 +231,7 @@ public:
             dns_message_.clear(Message::PARSE);
             response_renderer_.clear();
             if (auth_server->processMessage(request_buffer, dns_message_,
-                                            response_renderer_) == 0) {
+                                            response_renderer_, true) == 0) {
                 socket_.async_send_to(
                     boost::asio::buffer(response_buffer_.getData(),
                                         response_buffer_.getLength()),
