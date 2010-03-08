@@ -500,9 +500,14 @@ Sqlite3DataSrc::init() {
 }
 
 void
-Sqlite3DataSrc::findClosestEnclosure(NameMatch& match) const {
+Sqlite3DataSrc::findClosestEnclosure(NameMatch& match,
+                                     const RRClass& qclass) const {
     const char* position = NULL;
     
+    if (qclass != getClass()) {
+        return;
+    }
+
     if (findClosest(match.qname().toText().c_str(), &position) == -1) {
         return;
     }

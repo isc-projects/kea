@@ -48,7 +48,8 @@ public:
     ~TestDataSrc() {}
     //@}
 
-    void findClosestEnclosure(NameMatch& match) const;
+    void findClosestEnclosure(NameMatch& match,
+                              const isc::dns::RRClass& qclass) const;
 
     Result findRRset(const Query& q,
                      const isc::dns::Name& qname,

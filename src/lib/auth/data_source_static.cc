@@ -101,9 +101,14 @@ StaticDataSrc::~StaticDataSrc()
 }
 
 void
-StaticDataSrc::findClosestEnclosure(NameMatch& match) const {
+StaticDataSrc::findClosestEnclosure(NameMatch& match,
+                                    const RRClass& qclass) const {
     const Name& qname = match.qname();
     NameComparisonResult::NameRelation cmp;
+
+    if (qclass != getClass()) {
+        return;
+    }
 
     cmp = qname.compare(impl_->version_name).getRelation();
     if (cmp == NameComparisonResult::EQUAL ||

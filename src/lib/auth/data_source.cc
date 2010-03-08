@@ -495,7 +495,7 @@ DataSrc::doQuery(Query& q)
         NameMatch match(task->qtype == RRType::DS() ?
                         task->qname.split(1, task->qname.getLabelCount() - 1) :
                         task->qname);
-        findClosestEnclosure(match);
+        findClosestEnclosure(match, task->qclass);
         const DataSrc* datasource = match.bestDataSrc();
         const Name* zonename = match.closestName();
 
@@ -782,15 +782,22 @@ MetaDataSrc::addDataSrc(ConstDataSrcPtr data_src)
 }
 
 void
-MetaDataSrc::findClosestEnclosure(NameMatch& match) const
+MetaDataSrc::findClosestEnclosure(NameMatch& match, const RRClass& qclass) const
 {
+    if (qclass == RRClass::ANY()) {
+        isc_throw(Unexpected, "invalid query class");
+    }
+
+    if (getClass() != RRClass::ANY() && getClass() != qclass) {
+        return;
+    }
+
     BOOST_FOREACH (ConstDataSrcPtr data_src, data_sources) {
-        if (getClass() != RRClass::ANY() &&
-            data_src->getClass() != getClass()) {
+        if (data_src->getClass() != qclass) {
             continue;
         }
 
-        data_src->findClosestEnclosure(match);
+        data_src->findClosestEnclosure(match, qclass);
     }
 }
 
