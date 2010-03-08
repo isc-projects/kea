@@ -414,9 +414,14 @@ TestDataSrc::init() {
 }
 
 void
-TestDataSrc::findClosestEnclosure(NameMatch& match) const {
+TestDataSrc::findClosestEnclosure(NameMatch& match,
+                                  const RRClass& qclass) const {
     const Name& qname = match.qname();
     NameComparisonResult::NameRelation cmp;
+
+    if (qclass != getClass()) {
+        return;
+    }
 
     cmp = qname.compare(sql1).getRelation();
     if (cmp == NameComparisonResult::EQUAL ||

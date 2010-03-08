@@ -95,7 +95,9 @@ public:
 
     // 'Medium-level' methods.  This will be implemented by the general
     // DataSrc class but MAY be overwritten by subclasses.
-    virtual void findClosestEnclosure(NameMatch& match) const = 0;
+    virtual void findClosestEnclosure(NameMatch& match,
+                                      const isc::dns::RRClass& qclasss)
+                                      const = 0;
 
     // Optional 'low-level' methods.  These will have stub implementations
     // in the general DataSrc class but MAY be overwritten by subclasses
@@ -170,7 +172,9 @@ public:
 
     virtual void doQuery(Query& q);
 
-    virtual void findClosestEnclosure(NameMatch& match) const = 0;
+    virtual void findClosestEnclosure(NameMatch& match,
+                                      const isc::dns::RRClass& qclass)
+                                      const = 0;
 
     const isc::dns::RRClass& getClass() const { return rrclass; }
     void setClass(isc::dns::RRClass& c) { rrclass = c; }
@@ -241,7 +245,8 @@ public:
     //@}
 
     void addDataSrc(ConstDataSrcPtr data_src);
-    void findClosestEnclosure(NameMatch& match) const;
+    void findClosestEnclosure(NameMatch& match,
+                              const isc::dns::RRClass& qclass) const;
 
     // Actual queries for data should not be sent to a MetaDataSrc object,
     // so we return NOT_IMPLEMENTED if we receive any.

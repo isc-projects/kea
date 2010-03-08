@@ -353,7 +353,7 @@ TEST_F(Sqlite3DataSourceTest, reOpen) {
     EXPECT_EQ(DataSrc::SUCCESS, data_source.init(SQLITE_DBFILE_EXAMPLE2));
 
     NameMatch name_match(www_name);
-    data_source.findClosestEnclosure(name_match);
+    data_source.findClosestEnclosure(name_match, RRClass::IN());
     EXPECT_EQ(NULL, name_match.closestName());
     EXPECT_EQ(NULL, name_match.bestDataSrc());
 }
@@ -365,7 +365,7 @@ TEST_F(Sqlite3DataSourceTest, openFail) {
 
 TEST_F(Sqlite3DataSourceTest, findClosestEnclosure) {
     NameMatch name_match(www_name);
-    data_source.findClosestEnclosure(name_match);
+    data_source.findClosestEnclosure(name_match, RRClass::IN());
     EXPECT_EQ(zone_name, *name_match.closestName());
     EXPECT_EQ(&data_source, name_match.bestDataSrc());
 }
@@ -374,14 +374,14 @@ TEST_F(Sqlite3DataSourceTest, findClosestEnclosureAtDelegation) {
     // The search name exists both in the parent and child zones, but
     // child has a better match.
     NameMatch name_match(child_name);
-    data_source.findClosestEnclosure(name_match);
+    data_source.findClosestEnclosure(name_match, RRClass::IN());
     EXPECT_EQ(child_name, *name_match.closestName());
     EXPECT_EQ(&data_source, name_match.bestDataSrc());
 }
 
 TEST_F(Sqlite3DataSourceTest, findClosestEnclosureNoMatch) {
     NameMatch name_match(nomatch_name);
-    data_source.findClosestEnclosure(name_match);
+    data_source.findClosestEnclosure(name_match, RRClass::IN());
     EXPECT_EQ(NULL, name_match.closestName());
     EXPECT_EQ(NULL, name_match.bestDataSrc());
 }
