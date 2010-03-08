@@ -335,8 +335,8 @@ def two(record, curname):
 #########################################################################
 def reset():
     global defttl, origin
-    defttl = -1
-    origin=''
+    defttl = ''
+    origin = ''
 
 #########################################################################
 # openzone: open a zone master file, set initial origin, return descriptor
@@ -398,15 +398,22 @@ def zonedata(zone):
         if rrclass.upper() != 'IN':
             raise MasterFileError("CH and HS zones not supported")
 
-        # add origin to rdata if necessary
-        if rrtype.lower() in ('cname', 'dname', 'ns'):
+        if not ttl:
+            raise MasterFileError("No TTL specified; zone rejected")
+
+        # add origin to rdata containing names, if necessary
+        if rrtype.lower() in ('cname', 'dname', 'ns', 'ptr'):
             if not isname(rdata):
                 raise MasterFileError("Invalid " + rrtype + ": " + rdata)
             if rdata[-1] != '.':
                 rdata += '.' + origin
-
-        if (ttl == -1):
-            raise MasterFileError("No TTL specified; zone rejected")
+        if rrtype.lower() == 'mx':
+            mx = rdata.split()
+            if len(mx) != 2 or not isname(mx[1]):
+                raise MasterFileError("Invalid " + rrtype + ": " + rdata)
+            if mx[1][-1] != '.':
+                mx[1] += '.' + origin
+                rdata = ' '.join(mx)
 
         yield (name, ttl, rrclass, rrtype, rdata)
 
