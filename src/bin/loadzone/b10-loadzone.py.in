@@ -16,7 +16,8 @@
 
 import sys; sys.path.append ('@@PYTHONPATH@@')
 import re, getopt
-import isc
+import isc.auth
+import isc.auth.master
 
 #########################################################################
 # usage: print usage note and exit
@@ -55,13 +56,20 @@ def main():
     zonefile = args[0]
 
     try:
-        zone, zonedata = isc.auth.master.parse(zonefile, initial_origin)
+        zf = isc.auth.master.openzone(zonefile, initial_origin)
     except Exception as e:
         print("Error reading zone file: " + str(e))
         exit(1)
 
     try:
-        isc.auth.sqlite3_ds.load(dbfile, zone, zonedata)
+        zone = isc.auth.master.zonename(zf, initial_origin)
+    except Exception as e:
+        print("Error reading zone file: " + str(e))
+        exit(1)
+
+    try:
+
+        isc.auth.sqlite3_ds.load(dbfile, zone, isc.auth.master.zonedata, zf)
     except Exception as e:
         print("Error loading database: " + str(e))
         exit(1)
