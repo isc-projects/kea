@@ -379,18 +379,10 @@ main(int argc, char* argv[]) {
         ret = 1;
     }
 
-    if (udp4_server != NULL) {
-        delete udp4_server;
-    }
-    if (tcp4_server != NULL) {
-        delete tcp4_server;
-    }
-    if (udp6_server != NULL) {
-        delete udp6_server;
-    }
-    if (tcp6_server != NULL) {
-        delete tcp6_server;
-    }
+    delete udp4_server;
+    delete tcp4_server;
+    delete udp6_server;
+    delete tcp6_server;
 
     delete auth_server;
     return (ret);
