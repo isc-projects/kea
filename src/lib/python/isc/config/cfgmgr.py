@@ -316,7 +316,6 @@ class ConfigManager:
         """Handle a command from the cc channel to the configuration manager"""
         answer = {}
         cmd, arg = isc.config.ccsession.parse_command(msg)
-        print("[b10-cfgmgr] got message: " + str(msg))
         if cmd:
             if cmd == isc.config.ccsession.COMMAND_GET_COMMANDS_SPEC:
                 answer = isc.config.ccsession.create_answer(0, self.get_commands_spec())
