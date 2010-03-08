@@ -14,9 +14,13 @@
 
 // $Id$
 
+#include <exceptions/exceptions.h>
+
 #include <dns/buffer.h>
 
 #include <gtest/gtest.h>
+
+using namespace isc;
 
 namespace {
 
@@ -156,6 +160,20 @@ TEST_F(BufferTest, outputBufferSkip)
 
     obuffer.skip(2);
     EXPECT_EQ(6, obuffer.getLength());
+}
+
+TEST_F(BufferTest, outputBufferTrim)
+{
+    obuffer.writeData(testdata, sizeof(testdata));
+    EXPECT_EQ(5, obuffer.getLength());
+
+    obuffer.trim(1);
+    EXPECT_EQ(4, obuffer.getLength());
+
+    obuffer.trim(2);
+    EXPECT_EQ(2, obuffer.getLength());
+
+    EXPECT_THROW(obuffer.trim(3), OutOfRange);
 }
 
 TEST_F(BufferTest, outputBufferReadat)

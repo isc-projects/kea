@@ -386,17 +386,31 @@ namespace {
 template <typename T>
 struct RenderSection
 {
-    RenderSection(MessageRenderer& renderer) :
-        counter_(0), renderer_(renderer) {}
+    RenderSection(MessageRenderer& renderer, const bool partial_ok) :
+        counter_(0), renderer_(renderer), partial_ok_(partial_ok_),
+        truncated_(false)
+    {}
     void operator()(const T& entry)
     {
-        // TBD: if truncation is necessary, do something special.
-        // throw an exception, set an internal flag, etc.
+        // If it's already truncated, ignore the rest of the section.
+        if (truncated_) {
+            return;
+        }
+        size_t pos0 = renderer_.getLength();
         counter_ += entry->toWire(renderer_);
+        if (renderer_.isTruncated()) {
+            truncated_ = true;
+            if (!partial_ok_) {
+                // roll back to the end of the previous RRset.
+                renderer_.trim(renderer_.getLength() - pos0);
+            }
+        }
     }
     unsigned int getTotalCount() { return (counter_); }
     unsigned int counter_;
     MessageRenderer& renderer_;
+    const bool partial_ok_;
+    bool truncated_;
 };
 }
 
@@ -418,6 +432,13 @@ addEDNS(MessageImpl* mimpl, MessageRenderer& renderer)
     if (is_query && mimpl->udpsize_ == Message::DEFAULT_MAX_UDPSIZE &&
         !mimpl->dnssec_ok_ &&
         mimpl->rcode_.getCode() < 0x10) {
+        return (false);
+    }
+
+    // If adding the OPT RR would exceed the size limit, don't do it.
+    // 11 = len(".") + type(2byte) + class(2byte) + TTL(4byte) + RDLEN(2byte)
+    // (RDATA is empty in this simple implementation)
+    if (renderer.getLength() + 11 > renderer.getLengthLimit()) {
         return (false);
     }
 
@@ -446,31 +467,41 @@ Message::toWire(MessageRenderer& renderer)
     // reserve room for the header
     renderer.skip(HEADERLEN);
 
+    uint16_t ancount = 0, nscount = 0, arcount = 0;
+
     uint16_t qdcount =
         for_each(impl_->questions_.begin(), impl_->questions_.end(),
-                 RenderSection<QuestionPtr>(renderer)).getTotalCount();
+                 RenderSection<QuestionPtr>(renderer, false)).getTotalCount();
 
     // TBD: sort RRsets in each section based on configuration policy.
-    uint16_t ancount =
-        for_each(impl_->rrsets_[sectionCodeToId(Section::ANSWER())].begin(),
-                 impl_->rrsets_[sectionCodeToId(Section::ANSWER())].end(),
-                 RenderSection<RRsetPtr>(renderer)).getTotalCount();
-    uint16_t nscount =
-        for_each(impl_->rrsets_[sectionCodeToId(Section::AUTHORITY())].begin(),
-                 impl_->rrsets_[sectionCodeToId(Section::AUTHORITY())].end(),
-                 RenderSection<RRsetPtr>(renderer)).getTotalCount();
-    uint16_t arcount =
-        for_each(impl_->rrsets_[sectionCodeToId(Section::ADDITIONAL())].begin(),
-                 impl_->rrsets_[sectionCodeToId(Section::ADDITIONAL())].end(),
-                 RenderSection<RRsetPtr>(renderer)).getTotalCount();
+    if (!renderer.isTruncated()) {
+        ancount =
+            for_each(impl_->rrsets_[sectionCodeToId(Section::ANSWER())].begin(),
+                     impl_->rrsets_[sectionCodeToId(Section::ANSWER())].end(),
+                     RenderSection<RRsetPtr>(renderer, true)).getTotalCount();
+    }
+    if (!renderer.isTruncated()) {
+        nscount =
+            for_each(impl_->rrsets_[sectionCodeToId(Section::AUTHORITY())].begin(),
+                     impl_->rrsets_[sectionCodeToId(Section::AUTHORITY())].end(),
+                     RenderSection<RRsetPtr>(renderer, true)).getTotalCount();
+    }
+    if (renderer.isTruncated()) {
+        setHeaderFlag(MessageFlag::TC());
+    } else {
+        arcount =
+            for_each(impl_->rrsets_[sectionCodeToId(Section::ADDITIONAL())].begin(),
+                     impl_->rrsets_[sectionCodeToId(Section::ADDITIONAL())].end(),
+                     RenderSection<RRsetPtr>(renderer, false)).getTotalCount();
+    }
 
     // Added EDNS OPT RR if necessary (we want to avoid hardcoding specialized
     // logic, see the parser case)
-    if (addEDNS(this->impl_, renderer)) {
+    if (!renderer.isTruncated() && addEDNS(this->impl_, renderer)) {
         ++arcount;
     }
 
-    // TBD: EDNS, TSIG, etc.
+    // TBD: TSIG, SIG(0) etc.
 
     // fill in the header
     size_t header_pos = 0;
@@ -764,6 +795,13 @@ void
 Message::clear()
 {
     impl_->init();
+}
+
+void
+Message::clear(Mode mode)
+{
+    impl_->init();
+    impl_->mode_ = mode;
 }
 
 void

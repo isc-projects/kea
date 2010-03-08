@@ -135,7 +135,9 @@ struct MessageRendererImpl {
     /// \param buffer An \c OutputBuffer object to which wire format data is
     /// written.
     MessageRendererImpl(OutputBuffer& buffer) :
-        buffer_(buffer), nbuffer_(Name::MAX_WIRE) {}
+        buffer_(buffer), nbuffer_(Name::MAX_WIRE), msglength_limit_(512),
+        truncated_(false)
+    {}
     /// The buffer that holds the entire DNS message.
     OutputBuffer& buffer_;
     /// A local working buffer to convert each given name into wire format.
@@ -145,6 +147,10 @@ struct MessageRendererImpl {
     OutputBuffer nbuffer_;
     /// A set of compression pointers.
     std::set<NameCompressNode, NameCompare> nodeset_;
+
+    /// TBD
+    uint16_t msglength_limit_;
+    bool truncated_;
 };
 
 MessageRenderer::MessageRenderer(OutputBuffer& buffer) :
@@ -160,6 +166,12 @@ void
 MessageRenderer::skip(size_t len)
 {
     impl_->buffer_.skip(len);
+}
+
+void
+MessageRenderer::trim(size_t len)
+{
+    impl_->buffer_.trim(len);
 }
 
 void
@@ -210,6 +222,30 @@ size_t
 MessageRenderer::getLength() const
 {
     return (impl_->buffer_.getLength());
+}
+
+size_t
+MessageRenderer::getLengthLimit() const
+{
+    return (impl_->msglength_limit_);
+}
+
+void
+MessageRenderer::setLengthLimit(size_t len)
+{
+    impl_->msglength_limit_ = len;
+}
+
+bool
+MessageRenderer::isTruncated() const
+{
+    return (impl_->truncated_);
+}
+
+void
+MessageRenderer::setTruncated()
+{
+    impl_->truncated_ = true;
 }
 
 void

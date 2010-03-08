@@ -64,7 +64,7 @@ AbstractRRset::toText() const
 namespace {
 template <typename T>
 inline unsigned int
-rrsetToWire(const AbstractRRset& rrset, T& output)
+rrsetToWire(const AbstractRRset& rrset, T& output, const size_t limit)
 {
     unsigned int n = 0;
     RdataIteratorPtr it = rrset.getRdataIterator();
@@ -77,15 +77,24 @@ rrsetToWire(const AbstractRRset& rrset, T& output)
     // sort the set of Rdata based on rrset-order and sortlist, and possible
     // other options.  Details to be considered.
     do {
+        const size_t pos0 = output.getLength();
+        assert(pos0 < 65536);
+
         rrset.getName().toWire(output);
         rrset.getType().toWire(output);
         rrset.getClass().toWire(output);
         rrset.getTTL().toWire(output);
 
-        size_t pos = output.getLength();
+        const size_t pos = output.getLength();
         output.skip(sizeof(uint16_t)); // leave the space for RDLENGTH
         it->getCurrent().toWire(output);
         output.writeUint16At(output.getLength() - pos - sizeof(uint16_t), pos);
+
+        if (limit > 0 && output.getLength() > limit) {
+            // truncation is needed
+            output.trim(output.getLength() - pos0);
+            return (n);
+        }
 
         it->next();
         ++n;
@@ -98,13 +107,18 @@ rrsetToWire(const AbstractRRset& rrset, T& output)
 unsigned int
 AbstractRRset::toWire(OutputBuffer& buffer) const
 {
-    return (rrsetToWire<OutputBuffer>(*this, buffer));
+    return (rrsetToWire<OutputBuffer>(*this, buffer, 0));
 }
 
 unsigned int
 AbstractRRset::toWire(MessageRenderer& renderer) const
 {
-    return (rrsetToWire<MessageRenderer>(*this, renderer));
+    const unsigned int rrs_written = rrsetToWire<MessageRenderer>(
+        *this, renderer, renderer.getLengthLimit());
+    if (getRdataCount() > rrs_written) {
+        renderer.setTruncated();
+    }
+    return (rrs_written);
 }
 
 ostream&
