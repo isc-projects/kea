@@ -343,6 +343,23 @@ class TestModuleCCSession(unittest.TestCase):
         mccs.check_command()
         self.assertEqual(len(fake_session.message_queue), 0)
 
+    def test_remote_module(self):
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec1.spec", None, None, fake_session)
+        mccs.remove_remote_config("Spec2")
+
+        self.assertRaises(ModuleCCSessionError, mccs.get_remote_config_value, "Spec2", "item1")
+
+        rmodname = mccs.add_remote_config(self.spec_file("spec2.spec"))
+        self.assertEqual("Spec2", rmodname)
+        self.assertRaises(isc.cc.data.DataNotFoundError, mccs.get_remote_config_value, rmodname, "asdf")
+        value, default = mccs.get_remote_config_value(rmodname, "item1")
+        self.assertEqual(1, value)
+        self.assertEqual(True, default)
+
+        mccs.remove_remote_config(rmodname)
+        self.assertRaises(ModuleCCSessionError, mccs.get_remote_config_value, "Spec2", "item1")
+    
 class fakeUIConn():
     def __init__(self):
         self.get_answers = {}
