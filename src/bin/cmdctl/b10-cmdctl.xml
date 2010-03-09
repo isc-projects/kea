@@ -1,0 +1,136 @@
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	       [<!ENTITY mdash "&#8212;">]>
+<!--
+ - Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+ -
+ - Permission to use, copy, modify, and/or distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
+-->
+
+<!-- $Id$ -->
+<refentry>
+
+  <refentryinfo>
+    <date>March 9, 2010</date>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle>b10-cmdctl</refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo>BIND10</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>b10-cmdctl</refname>
+    <refpurpose>BIND 10 remote control daemon</refpurpose>
+<!-- TODO: is that okay? -->
+  </refnamediv>
+
+  <docinfo>
+    <copyright>
+      <year>2010</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
+    </copyright>
+  </docinfo>
+
+<!--
+NO command line arguments
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command></command>
+      <arg><option></option></arg>
+      <arg choice="opt"></arg>
+      <arg choice="opt"></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+-->
+
+  <refsect1>
+    <title>DESCRIPTION</title>
+    <para>The <command>b10-cmdctl</command> daemon provides an entry
+      for commands sent to the BIND 10 services.
+      For example, the <command>bindctl</command> user interface
+      communicates via <command>b10-cmdctl</command>.
+    </para>
+
+    <para>
+      It is a lightweight HTTPS server with HTTP Digest Authentication
+      (username and password validation).
+      It offers a RESTful style interface.
+<!-- TODO: document the RESTful APIs -->
+      It currently runs on port 8080 on localhost (127.0.0.1).
+<!-- TODO: this will be customizable -->
+    </para>
+  </refsect1>
+
+<!--
+  <refsect1>
+    <title>ARGUMENTS</title>
+    <para>
+      <orderedlist numeration="loweralpha">
+        <listitem>
+          <para>
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+          </para>
+        </listitem>
+      </orderedlist>
+    </para>
+
+  </refsect1>
+-->
+
+  <refsect1>
+    <title>FILES</title>
+<!-- TODO: replace /usr/local -->
+<!-- TODO: permissions -->
+<!-- TODO: what about multiple accounts? -->
+<!-- TODO: shouldn't the password file name say cmdctl in it? -->
+    <para><filename>/usr/local/share/bind10/passwd.csv</filename>
+      &mdash; account database containing the name, hashed password,
+      and the salt.
+    </para>
+<!-- TODO: replace /usr/local -->
+<!-- TODO: permissions -->
+<!-- TODO: shouldn't have both in same file, will be configurable -->
+    <para><filename>/usr/local/share/bind10/b10-cmdctl.pem</filename>
+      &mdash; contains the RSA Private key and the Certificate.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry>
+        <refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>bindctl</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>AUTHORS</title>
+    <para>
+      The <command>b10-cmdctl</command> daemon was initially designed
+      and coded by Zhang Likun of CNNIC.
+    </para>
+  </refsect1>
+</refentry><!--
+ - Local variables:
+ - mode: sgml
+ - End:
+-->
