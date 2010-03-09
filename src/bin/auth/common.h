@@ -20,13 +20,12 @@
 #include <stdlib.h>
 #include <string>
 
-class FatalError : public std::exception {
+#include <exceptions/exceptions.h>
+
+class FatalError : public isc::Exception {
 public:
-    FatalError(std::string m = "fatal error");
-    ~FatalError() throw() {}
-    const char* what() const throw() { return msg.c_str(); }
-private:
-    std::string msg;
+    FatalError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
 };
 
 #endif // __COMMON_H

@@ -20,6 +20,7 @@
 //               react on config change announcements)
 //
 
+#include "config.h"
 
 #include <stdexcept>
 #include <stdlib.h>
@@ -31,7 +32,9 @@
 #include <sstream>
 #include <cerrno>
 
+#ifdef HAVE_BOOSTLIB
 #include <boost/bind.hpp>
+#endif
 #include <boost/foreach.hpp>
 
 #include <cc/data.h>
@@ -163,6 +166,7 @@ ModuleCCSession::read_module_specification(const std::string& filename) {
     file.close();
 }
 
+#ifdef HAVE_BOOSTLIB
 void
 ModuleCCSession::startCheck() {
     // data available on the command channel.  process it in the synchronous
@@ -187,6 +191,7 @@ ModuleCCSession::ModuleCCSession(
     // register callback for asynchronous read
     session_.startRead(boost::bind(&ModuleCCSession::startCheck, this));
 }
+#endif
 
 ModuleCCSession::ModuleCCSession(
     std::string spec_file_name,
