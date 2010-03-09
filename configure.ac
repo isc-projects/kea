@@ -95,42 +95,45 @@ AC_SUBST(USE_LCOV)
 AC_MSG_CHECKING([for boost::system library])
 AC_ARG_WITH([boostlib],
 AC_HELP_STRING([--with-boostlib=PATH],
-  [specify a path to boost libraries if it is not automatically found]),
-  [boostlib_path="$withval"], [boostlib_path="no"])
-if test "$boostlib_path" != "no"; then
+  [specify a path to boost libraries if it is not automatically found, or "no" to disable it]),
+  [boostlib_path="$withval"], [boostlib_path="auto"])
+if test "$boostlib_path" != "no" -a "$boostlib_path" != "auto"; then
 	BOOST_LDFLAGS="-L$boostlib_path"
 fi
 
-LDFLAGS_SAVED="$LDFLAGS"
-LIBS_SAVED="$LIBS"
-CPPFLAGS_SAVED="$CPPFLAGS"
-CPPFLAGS="$CPPFLAGS -Iext"
+if test "$boostlib_path" != "no"; then
+	LDFLAGS_SAVED="$LDFLAGS"
+	LIBS_SAVED="$LIBS"
+	CPPFLAGS_SAVED="$CPPFLAGS"
+	CPPFLAGS="$CPPFLAGS -Iext"
 
-for BOOST_TRY_LIB in boost_system boost_system-mt; do
-	LDFLAGS="$LDFLAGS_SAVED ${BOOST_LDFLAGS}"
-	LIBS="$LIBS_SAVED -l${BOOST_TRY_LIB}"
-	AC_TRY_LINK([#include <boost/system/error_code.hpp>],
-		[ boost::system::error_code error_code;
-		  std::string message(error_code.message());
-		  return 0; ],
-	[ AC_MSG_RESULT(yes)
-	  BOOST_SYSTEM_LIB="-l${BOOST_TRY_LIB}"
-	  ],[])
-	if test "X${BOOST_SYSTEM_LIB}" != X; then
-        	break
-	fi
-done
+	for BOOST_TRY_LIB in boost_system boost_system-mt; do
+		LDFLAGS="$LDFLAGS_SAVED ${BOOST_LDFLAGS}"
+		LIBS="$LIBS_SAVED -l${BOOST_TRY_LIB}"
+		AC_TRY_LINK([#include <boost/system/error_code.hpp>],
+			[ boost::system::error_code error_code;
+			std::string message(error_code.message());
+			return 0; ],
+			[ AC_MSG_RESULT(yes)
+			BOOST_SYSTEM_LIB="-l${BOOST_TRY_LIB}"
+			],[])
+		if test "X${BOOST_SYSTEM_LIB}" != X; then
+        		break
+		fi
+	done
+
+	LDFLAGS="$LDFLAGS_SAVED"
+	CPPFLAGS="$CPPFLAGS_SAVED"
+	LIBS="$LIBS_SAVED"
+fi
 
 if test "X${BOOST_SYSTEM_LIB}" = X; then
-	AC_MSG_RESULT(not found)
+	AC_MSG_RESULT(no)
 else
 	AC_DEFINE(HAVE_BOOSTLIB, 1, Define to 1 if boost libraries are available)
 fi
 
 AM_CONDITIONAL(HAVE_BOOSTLIB, test "X${BOOST_SYSTEM_LIB}" != X)
-LDFLAGS="$LDFLAGS_SAVED"
-CPPFLAGS="$CPPFLAGS_SAVED"
-LIBS="$LIBS_SAVED"
 AC_SUBST(BOOST_LDFLAGS)
 AC_SUBST(BOOST_SYSTEM_LIB)
 
