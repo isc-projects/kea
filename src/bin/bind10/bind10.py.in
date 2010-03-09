@@ -276,6 +276,20 @@ class BoB:
         if self.verbose:
             sys.stdout.write("Started b10-auth (PID %d)\n" % auth.pid)
 
+        # start the b10-xfrin
+        if self.verbose:
+            sys.stdout.write("Starting b10-xfrin\n")
+        try:
+            xfrind = ProcessInfo("b10-xfrin", ['b10-xfrin'])
+        except Exception as e:
+            c_channel.process.kill()
+            bind_cfgd.process.kill()
+            auth.process.kill()
+            return "Unable to start b10-xfrin; " + str(e)
+        self.processes[xfrind.pid] = xfrind
+        if self.verbose:
+            sys.stdout.write("Started b10-xfrin (PID %d)\n" % xfrind.pid)
+
         # start the b10-cmdctl
         # XXX: we hardcode port 8080
         if self.verbose:
@@ -286,6 +300,7 @@ class BoB:
             c_channel.process.kill()
             bind_cfgd.process.kill()
             auth.process.kill()
+            xfrind.process.kill()
             return "Unable to start b10-cmdctl; " + str(e)
         self.processes[cmd_ctrld.pid] = cmd_ctrld
         if self.verbose:
