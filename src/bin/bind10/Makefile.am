@@ -15,5 +15,7 @@ bind10: bind10.py
 
 check: test
 
-test: 
+test: pytest
+
+pytest:
 	$(SHELL) tests/bind10_test
