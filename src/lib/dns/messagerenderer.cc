@@ -180,6 +180,8 @@ MessageRenderer::clear()
     impl_->buffer_.clear();
     impl_->nbuffer_.clear();
     impl_->nodeset_.clear();
+    impl_->msglength_limit_ = 512;
+    impl_->truncated_ = false;
 }
 
 void
