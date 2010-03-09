@@ -90,8 +90,11 @@ def records(input):
 #########################################################################
 def pop(line):
     list = line.split()
-    first = list[0]
-    rest = ' '.join(list[1:])
+    first, rest = '', ''
+    if len(list) != 0:
+        first = list[0]
+    if len(list) > 1:
+        rest = ' '.join(list[1:])
     return first, rest
 
 #########################################################################
@@ -133,7 +136,7 @@ def isclass(s):
 name_regex = re.compile('[-\w\$\d\/*]+(?:\.[-\w\$\d\/]+)*\.?')
 def isname(s):
     global name_regex
-    if name_regex.match(s):
+    if s == '.' or name_regex.match(s):
         return True
     else:
         return False
@@ -190,18 +193,20 @@ def directive(s):
     first, more = pop(s)
     second, more = pop(more)
     if re.match('\$origin', first, re.I):
-        if not isname(second):
+        if not second or not isname(second):
             raise MasterFileError('Invalid $ORIGIN')
         if more:
             raise MasterFileError('Invalid $ORIGIN')
-        if second[-1] == '.':
+        if second == '.':
+            origin = ''
+        elif second[-1] == '.':
             origin = second
         else:
             origin = second + '.' + origin
         return True
     elif re.match('\$ttl', first, re.I):
-        if not isttl(second):
-            raise MasterFileError('Invalid $TTL: ' + second)
+        if not second or not isttl(second):
+            raise MasterFileError('Invalid TTL: "' + second + '"')
         if more:
             raise MasterFileError('Invalid $TTL statement')
         defttl = parse_ttl(second)
@@ -335,17 +340,20 @@ def two(record, curname):
 #########################################################################
 def reset():
     global defttl, origin
-    defttl = -1
-    origin=''
+    defttl = ''
+    origin = ''
 
 #########################################################################
 # openzone: open a zone master file, set initial origin, return descriptor
 #########################################################################
-def openzone(filename, initial_origin = '.'):
+def openzone(filename, initial_origin = ''):
+    global origin
     try:
         zf = open(filename, 'r')
     except:
-        return
+        raise MasterFileError("Could not open " + filename)
+    if initial_origin == '.':
+        initial_origin = ''
     origin = initial_origin
     return zf
 
@@ -370,10 +378,13 @@ def zonedata(zone):
             sub.close()
             continue
 
-        first = record.split()[0]
-        if first == '@':
-            name = origin
-            at, record = pop(record)
+        # replace @ with origin
+        rl = record.split()
+        if rl[0] == '@':
+            rl[0] = origin
+            if not origin:
+                rl[0] = '.'
+            record = ' '.join(rl)
 
         result = four(record, name)
 
@@ -398,15 +409,31 @@ def zonedata(zone):
         if rrclass.upper() != 'IN':
             raise MasterFileError("CH and HS zones not supported")
 
-        # add origin to rdata if necessary
-        if rrtype.lower() in ('cname', 'dname', 'ns'):
+        if not ttl:
+            raise MasterFileError("No TTL specified; zone rejected")
+
+        # add origin to rdata containing names, if necessary
+        if rrtype.lower() in ('cname', 'dname', 'ns', 'ptr'):
             if not isname(rdata):
                 raise MasterFileError("Invalid " + rrtype + ": " + rdata)
             if rdata[-1] != '.':
                 rdata += '.' + origin
-
-        if (ttl == -1):
-            raise MasterFileError("No TTL specified; zone rejected")
+        if rrtype.lower() == 'soa':
+            soa = rdata.split()
+            if len(soa) < 2 or not isname(soa[0]) or not isname(soa[1]):
+                raise MasterFileError("Invalid " + rrtype + ": " + rdata)
+            if soa[0][-1] != '.':
+                soa[0] += '.' + origin
+            if soa[1][-1] != '.':
+                soa[1] += '.' + origin
+            rdata = ' '.join(soa)
+        if rrtype.lower() == 'mx':
+            mx = rdata.split()
+            if len(mx) != 2 or not isname(mx[1]):
+                raise MasterFileError("Invalid " + rrtype + ": " + rdata)
+            if mx[1][-1] != '.':
+                mx[1] += '.' + origin
+                rdata = ' '.join(mx)
 
         yield (name, ttl, rrclass, rrtype, rdata)
 
@@ -414,9 +441,11 @@ def zonedata(zone):
 # zonename: scans zone data for an SOA record, returns its name, restores
 # the zone file to its prior state
 #########################################################################
-def zonename(zone, initial_origin = '.'):
+def zonename(zone, initial_origin = ''):
     global origin
     old_origin = origin
+    if initial_origin == '.':
+        initial_origin = ''
     origin = initial_origin
     old_location = zone.tell()
     zone.seek(0)

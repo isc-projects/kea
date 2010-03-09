@@ -12,3 +12,6 @@ bind10: bind10.py
 	$(SED) -e "s|@@PYTHONPATH@@|@pyexecdir@|" \
 	       -e "s|@@LIBEXECDIR@@|$(pkglibexecdir)|" bind10.py >$@
 	chmod a+x $@
+
+pytest:
+	$(SHELL) tests/bind10_test

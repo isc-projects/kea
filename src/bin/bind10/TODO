@@ -8,7 +8,6 @@
   - Force-stop a component
 - Mechanism to wait for child to start before continuing
 - Way to ask a child to die politely 
-- Back-off mechanism for restarting failed processes
 - Start statistics daemon
 - Statistics interaction (?)
 - Use .spec file to define comands

@@ -129,29 +129,34 @@ def load(dbfile, zone, reader, file):
     cur.execute("INSERT INTO zones (name, rdclass) VALUES (?, 'IN')", [temp])
     new_zone_id = cur.lastrowid
 
-    for name, ttl, rdclass, rdtype, rdata in reader(file):
-        sigtype = ''
-        if rdtype.lower() == 'rrsig':
-            sigtype = rdata.split()[0]
+    try:
+        for name, ttl, rdclass, rdtype, rdata in reader(file):
+            sigtype = ''
+            if rdtype.lower() == 'rrsig':
+                sigtype = rdata.split()[0]
 
-        if rdtype.lower() == 'nsec3' or sigtype.lower() == 'nsec3':
-            hash = name.split('.')[0]
-            cur.execute("""INSERT INTO nsec3
-                           (zone_id, hash, owner, ttl, rdtype, rdata)
-                           VALUES (?, ?, ?, ?, ?, ?)""",
-                        [new_zone_id, hash, name, ttl, rdtype, rdata])
-        elif rdtype.lower() == 'rrsig':
-            cur.execute("""INSERT INTO records
-                           (zone_id, name, rname, ttl, rdtype, sigtype, rdata)
-                           VALUES (?, ?, ?, ?, ?, ?, ?)""",
-                        [new_zone_id, name, reverse_name(name), ttl,
-                        rdtype, sigtype, rdata])
-        else:
-            cur.execute("""INSERT INTO records
-                           (zone_id, name, rname, ttl, rdtype, rdata)
-                           VALUES (?, ?, ?, ?, ?, ?)""",
-                        [new_zone_id, name, reverse_name(name), ttl,
-                        rdtype, rdata])
+            if rdtype.lower() == 'nsec3' or sigtype.lower() == 'nsec3':
+                hash = name.split('.')[0]
+                cur.execute("""INSERT INTO nsec3
+                               (zone_id, hash, owner, ttl, rdtype, rdata)
+                               VALUES (?, ?, ?, ?, ?, ?)""",
+                            [new_zone_id, hash, name, ttl, rdtype, rdata])
+            elif rdtype.lower() == 'rrsig':
+                cur.execute("""INSERT INTO records
+                               (zone_id, name, rname, ttl,
+                                rdtype, sigtype, rdata)
+                               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                            [new_zone_id, name, reverse_name(name), ttl,
+                            rdtype, sigtype, rdata])
+            else:
+                cur.execute("""INSERT INTO records
+                               (zone_id, name, rname, ttl, rdtype, rdata)
+                               VALUES (?, ?, ?, ?, ?, ?)""",
+                            [new_zone_id, name, reverse_name(name), ttl,
+                            rdtype, rdata])
+    except Exception as e:
+        fail = "Error while loading " + zone + ": " + e.args[0]
+        raise Sqlite3DSError(fail)
 
     if old_zone_id:
         cur.execute("DELETE FROM zones WHERE id=?", [old_zone_id])

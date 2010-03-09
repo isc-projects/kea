@@ -200,6 +200,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/loadzone/Makefile
                  src/bin/msgq/Makefile
                  src/bin/auth/Makefile
+                 src/bin/xfrin/Makefile
                  src/lib/Makefile
                  src/lib/cc/Makefile
                  src/lib/python/Makefile
@@ -218,8 +219,11 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/cmdctl/cmdctl.py
            src/bin/cmdctl/run_b10-cmdctl.sh
            src/bin/cmdctl/unittest/cmdctl_test
+           src/bin/xfrin/unittest/xfrin_test
+           src/bin/xfrin/xfrin.py
+           src/bin/xfrin/run_b10-xfrin.sh
            src/bin/bind10/bind10.py
-           src/bin/bind10/bind10_test
+           src/bin/bind10/tests/bind10_test
            src/bin/bind10/run_bind10.sh
            src/bin/bindctl/bindctl
            src/bin/bindctl/unittest/bindctl_test
@@ -235,8 +239,10 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/lib/dns/tests/testdata/gen-wiredata.py
           ], [
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
+           chmod +x src/bin/xfrin/run_b10-xfrin.sh
            chmod +x src/bin/bind10/run_bind10.sh
            chmod +x src/bin/cmdctl/unittest/cmdctl_test
+           chmod +x src/bin/xfrin/unittest/xfrin_test
            chmod +x src/bin/bindctl/unittest/bindctl_test
            chmod +x src/bin/bindctl/bindctl
            chmod +x src/bin/loadzone/run_loadzone

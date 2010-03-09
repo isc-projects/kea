@@ -1,0 +1,10 @@
+SRC = exceptions.cc name.cc messagerenderer.cc rrtype.cc rdata.cc rrclass.cc  rrsetlist.cc \
+	  rrttl.cc rrset.cc rrparamregistry.cc rdataclass.cc dnstime.cc hex.cc base64.cc question.cc message.cc
+CFLAGS = -I/usr/local/include -I/usr/local/include/python3.1 -I/root/trunk/src/lib/
+all : bind10_message.so message_python.cc
+
+bind10_message.so : message_python.o $(SRC)
+	g++ -shared -o bind10_message.so message_python.o $(CFLAGS) $(SRC) -L/usr/local/lib -lboost_python3
+
+message_python.o : message_python.cc
+	g++ -c -fPIC $(CFLAGS) message_python.cc -L/usr/local/lib -lboost_python3
