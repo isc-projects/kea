@@ -232,7 +232,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/msgq/msgq.py
            src/bin/msgq/msgq_test
            src/bin/msgq/run_msgq.sh
-           src/bin/auth/config.h
+           src/bin/auth/spec_config.h
            src/lib/config/data_def_unittests_config.h
            src/lib/python/isc/config/unittests/config_test
            src/lib/dns/gen-rdatacode.py

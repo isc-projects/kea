@@ -14,7 +14,7 @@
 
 // $Id$
 
-#include "../../../config.h"
+#include "config.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -45,7 +45,7 @@
 #include <cc/data.h>
 #include <config/ccsession.h>
 
-#include "config.h"
+#include "spec_config.h"
 #include "common.h"
 #include "auth_srv.h"
 
