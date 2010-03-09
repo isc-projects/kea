@@ -7,10 +7,15 @@ $INCLUDE filename origin comment
 Support optional comment in $TTL (RFC 2308):
 $TTL number comment
 
-If ttl is not set on the record line but $TTL is set at top,
-it is not loaded. But running master.py manually does show the
-TTL to be same as the $TTL. When including the ttl on every line,
-it is loaded and can be served.
+Do not assume "." is origin if origin is not set and sees a @ or
+a label without a ".". It should probably fail.  (Don't assume a
+mistake means it is a root level label.)
+
+Add verbose option to show what it is adding, not necessarily
+in master file format, but in the context of the data source.
+
+Add "check" option to check sanity of master file but don't really
+add to data source.
 
 Open questions to document in manual page:
 
