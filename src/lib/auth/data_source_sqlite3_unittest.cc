@@ -46,7 +46,9 @@ static ElementPtr SQLITE_DBFILE_EXAMPLE = Element::createFromString(
                      "{ \"database_file\": \"testdata/test.sqlite3\"}");
 static ElementPtr SQLITE_DBFILE_EXAMPLE2 = Element::createFromString(
                      "{ \"database_file\": \"testdata/test2.sqlite3\"}");
-// The following file must be non existent and mutt be "creatable";
+static ElementPtr SQLITE_DBFILE_EXAMPLE_ROOT = Element::createFromString(
+                     "{ \"database_file\": \"testdata/test-root.sqlite3\"}");
+// The following file must be non existent and must be non"creatable";
 // the sqlite3 library will try to create a new DB file if it doesn't exist,
 // so to test a failure case the create operation should also fail.
 // The "nodir", a non existent directory, is inserted for this purpose.
@@ -342,9 +344,9 @@ checkFind(FindMode mode, const Sqlite3DataSrc& data_source, const Query& query,
     answers.push_back(&expected_data);
     signatures.push_back(expected_sig_data);
 
-    checkFind(mode, data_source, query, expected_name, zone_name, expected_class,
-              expected_type, ttls, expected_flags, types, answers,
-              signatures);
+    checkFind(mode, data_source, query, expected_name, zone_name,
+              expected_class, expected_type, ttls, expected_flags, types,
+              answers, signatures);
 }
 
 TEST_F(Sqlite3DataSourceTest, close) {
@@ -355,7 +357,6 @@ TEST_F(Sqlite3DataSourceTest, reOpen) {
     // Replace the data with a totally different zone.  This should succeed,
     // and shouldn't match any names in the previously managed domains.
     EXPECT_EQ(DataSrc::SUCCESS, data_source.close());
-
     EXPECT_EQ(DataSrc::SUCCESS, data_source.init(SQLITE_DBFILE_EXAMPLE2));
 
     NameMatch name_match(www_name);
@@ -371,8 +372,18 @@ TEST_F(Sqlite3DataSourceTest, openFail) {
 
 TEST_F(Sqlite3DataSourceTest, findClosestEnclosure) {
     NameMatch name_match(www_name);
-    data_source.findClosestEnclosure(name_match, RRClass::IN());
+    data_source.findClosestEnclosure(name_match, rrclass);
     EXPECT_EQ(zone_name, *name_match.closestName());
+    EXPECT_EQ(&data_source, name_match.bestDataSrc());
+}
+
+TEST_F(Sqlite3DataSourceTest, findClosestEnclosureMatchRoot) {
+    EXPECT_EQ(DataSrc::SUCCESS, data_source.close());
+    EXPECT_EQ(DataSrc::SUCCESS, data_source.init(SQLITE_DBFILE_EXAMPLE_ROOT));
+
+    NameMatch name_match(Name("org."));
+    data_source.findClosestEnclosure(name_match, rrclass);
+    EXPECT_EQ(Name("."), *name_match.closestName());
     EXPECT_EQ(&data_source, name_match.bestDataSrc());
 }
 
@@ -380,14 +391,14 @@ TEST_F(Sqlite3DataSourceTest, findClosestEnclosureAtDelegation) {
     // The search name exists both in the parent and child zones, but
     // child has a better match.
     NameMatch name_match(child_name);
-    data_source.findClosestEnclosure(name_match, RRClass::IN());
+    data_source.findClosestEnclosure(name_match, rrclass);
     EXPECT_EQ(child_name, *name_match.closestName());
     EXPECT_EQ(&data_source, name_match.bestDataSrc());
 }
 
 TEST_F(Sqlite3DataSourceTest, findClosestEnclosureNoMatch) {
     NameMatch name_match(nomatch_name);
-    data_source.findClosestEnclosure(name_match, RRClass::IN());
+    data_source.findClosestEnclosure(name_match, rrclass);
     EXPECT_EQ(NULL, name_match.closestName());
     EXPECT_EQ(NULL, name_match.bestDataSrc());
 }

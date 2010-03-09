@@ -185,10 +185,15 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
                             RRsetList& target, const Name* zonename,
                             const Mode mode, uint32_t& flags) const
 {
-    const string s_name = name.toText();
-    const char* const c_name = s_name.c_str();
-    sqlite3_stmt* query;
+    flags = 0;
+    int zone_id = (zonename == NULL) ? findClosest(name, NULL) :
+        findClosest(*zonename, NULL);
+    if (zone_id < 0) {
+        flags = NO_SUCH_ZONE;
+        return (0);
+    }
 
+    sqlite3_stmt* query;
     switch (mode) {
     case ADDRESS:
         query = q_addrs;
@@ -204,15 +209,6 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
         }
         break;
     }
-
-    flags = 0;
-
-    int zone_id = (zonename == NULL) ? findClosest(c_name, NULL) :
-        findClosest(zonename->toText().c_str(), NULL);
-    if (zone_id < 0) {
-        flags = NO_SUCH_ZONE;
-        return (0);
-    }
     
     sqlite3_reset(query);
     sqlite3_clear_bindings(query);
@@ -222,7 +218,8 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
     if (rc != SQLITE_OK) {
         throw("Could not bind 1 (query)");
     }
-    rc = sqlite3_bind_text(query, 2, c_name, -1, SQLITE_STATIC);
+    const string s_name = name.toText();
+    rc = sqlite3_bind_text(query, 2, s_name.c_str(), -1, SQLITE_STATIC);
     if (rc != SQLITE_OK) {
         throw("Could not bind 2 (query)");
     }
@@ -282,29 +279,22 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
 //  longest match found.
 //
 int
-Sqlite3DataSrc::findClosest(const char* const name,
-                            const char** position) const
-{
-    const char* current = name;
-
-    while (*current != 0) {
-        const int rc = hasExactZone(current);
+Sqlite3DataSrc::findClosest(const Name& name, unsigned int* position) const {
+    const unsigned int nlabels = name.getLabelCount();
+    for (unsigned int i = 0; i < nlabels; ++i) {
+        Name matchname(name.split(i, nlabels - i));
+        const int rc = hasExactZone(matchname.toText().c_str());
         if (rc >= 0) {
             if (position != NULL) {
-                *position = current;
+                *position = i;
             }
             return (rc);
-        }
-        while (*current != '.' && *current != 0) {
-            ++current;
-        }
-        if (*current == '.' && *(current + 1) != '\0') {
-            ++current;
         }
     }
 
     return (-1);
 }
+
 
 void
 Sqlite3DataSrc::loadVersion(void) {
@@ -498,18 +488,20 @@ Sqlite3DataSrc::init(const isc::data::ElementPtr config) {
 
 void
 Sqlite3DataSrc::findClosestEnclosure(NameMatch& match,
-                                     const RRClass& qclass) const {
-    const char* position = NULL;
-    
+                                     const RRClass& qclass) const
+{
     if (qclass != getClass()) {
         return;
     }
 
-    if (findClosest(match.qname().toText().c_str(), &position) == -1) {
+    unsigned int position;
+    if (findClosest(match.qname(), &position) == -1) {
         return;
     }
 
-    match.update(*this, Name(position));
+    match.update(*this, match.qname().split(position,
+                                            match.qname().getLabelCount() -
+                                            position));
 }
 
 DataSrc::Result
@@ -519,8 +511,8 @@ Sqlite3DataSrc::findPreviousName(const Query& q,
                                  const Name* zonename) const
 {
     int zone_id = (zonename == NULL) ?
-        findClosest(qname.toText().c_str(), NULL) :
-        findClosest(zonename->toText().c_str(), NULL);
+        findClosest(qname, NULL) :
+        findClosest(*zonename, NULL);
 
     if (zone_id < 0) {
         return (ERROR);
@@ -557,7 +549,7 @@ Sqlite3DataSrc::findCoveringNSEC3(const Query& q,
                                   string& hashstr,
                                   RRsetList& target) const
 {
-    int zone_id = findClosest(zonename.toText().c_str(), NULL);
+    int zone_id = findClosest(zonename, NULL);
     if (zone_id < 0) {
         return (ERROR);
     }
