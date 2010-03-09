@@ -347,6 +347,7 @@ def reset():
 # openzone: open a zone master file, set initial origin, return descriptor
 #########################################################################
 def openzone(filename, initial_origin = ''):
+    global origin
     try:
         zf = open(filename, 'r')
     except:
@@ -417,6 +418,15 @@ def zonedata(zone):
                 raise MasterFileError("Invalid " + rrtype + ": " + rdata)
             if rdata[-1] != '.':
                 rdata += '.' + origin
+        if rrtype.lower() == 'soa':
+            soa = rdata.split()
+            if len(soa) < 2 or not isname(soa[0]) or not isname(soa[1]):
+                raise MasterFileError("Invalid " + rrtype + ": " + rdata)
+            if soa[0][-1] != '.':
+                soa[0] += '.' + origin
+            if soa[1][-1] != '.':
+                soa[1] += '.' + origin
+            rdata = ' '.join(soa)
         if rrtype.lower() == 'mx':
             mx = rdata.split()
             if len(mx) != 2 or not isname(mx[1]):
