@@ -1,0 +1,12 @@
+#! /bin/sh
+
+PYTHON_EXEC=${PYTHON_EXEC:-@PYTHON@}
+export PYTHON_EXEC
+
+CMD_CTRLD_PATH=@abs_top_builddir@/src/bin/xfrin
+PYTHONPATH=@abs_top_srcdir@/src/lib/cc/python:${abs_top_src_dir}/lib/cc/python/ISC
+export PYTHONPATH
+
+cd ${CMD_CTRLD_PATH}
+${PYTHON_EXEC} b10-xfrin
+
