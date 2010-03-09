@@ -298,7 +298,7 @@ Sqlite3DataSrc::findClosest(const char* const name,
         while (*current != '.' && *current != 0) {
             ++current;
         }
-        if (*current == '.') {
+        if (*current == '.' && *(current + 1) != '\0') {
             ++current;
         }
     }
