@@ -287,7 +287,6 @@ class ConfigManager:
                 self.config.data = old_data
                 answer = isc.config.ccsession.create_answer(1, " ".join(err_list))
         else:
-            print(cmd)
             answer = isc.config.ccsession.create_answer(1, "Wrong number of arguments")
         if not answer:
             answer = isc.config.ccsession.create_answer(1, "No answer message from " + cmd[0])

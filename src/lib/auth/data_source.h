@@ -25,6 +25,7 @@
 
 #include <dns/name.h>
 #include <dns/rrclass.h>
+#include <cc/data.h>
 
 namespace isc {
 
@@ -102,6 +103,7 @@ public:
     // Optional 'low-level' methods.  These will have stub implementations
     // in the general DataSrc class but MAY be overwritten by subclasses
     virtual Result init() = 0;
+    virtual Result init(const isc::data::ElementPtr config) = 0;
     virtual Result close() = 0;
 
     // Mandatory 'low-level' methods: These will NOT be implemented by
@@ -181,6 +183,7 @@ public:
     void setClass(const isc::dns::RRClass& c) { rrclass = c; }
 
     Result init() { return NOT_IMPLEMENTED; }
+    Result init(const isc::data::ElementPtr config) { return NOT_IMPLEMENTED; }
     Result close() { return NOT_IMPLEMENTED; }
 
     virtual Result findRRset(const Query& q,
@@ -245,6 +248,9 @@ public:
     //@}
 
     void addDataSrc(ConstDataSrcPtr data_src);
+    void removeDataSrc(ConstDataSrcPtr data_src);
+    size_t dataSrcCount() { return data_sources.size(); };
+    
     void findClosestEnclosure(NameMatch& match,
                               const isc::dns::RRClass& qclass) const;
 

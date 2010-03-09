@@ -32,6 +32,8 @@
 #include <dns/rrttl.h>
 #include <dns/message.h>
 #include <config/ccsession.h>
+#include <cc/data.h>
+#include <exceptions/exceptions.h>
 
 #include <auth/query.h>
 #include <auth/data_source.h>
@@ -65,18 +67,17 @@ public:
 };
 
 AuthSrvImpl::AuthSrvImpl() {
-    // add static data source
-    data_sources.addDataSrc(ConstDataSrcPtr(new StaticDataSrc));
-
-    // add SQL data source
-    Sqlite3DataSrc* sd = new Sqlite3DataSrc;
-    sd->init();
-    data_sources.addDataSrc(ConstDataSrcPtr(sd));
 }
 
 AuthSrv::AuthSrv()
 {
     impl_ = new AuthSrvImpl;
+    // set empty (sqlite) data source, once ccsession is up
+    // the datasource will be set by the configuration setting
+    // (or the default one if none is set)
+    cur_datasrc_ = ConstDataSrcPtr();
+    // add static data source
+    impl_->data_sources.addDataSrc(ConstDataSrcPtr(new StaticDataSrc));
 }
 
 AuthSrv::~AuthSrv()
@@ -125,24 +126,52 @@ AuthSrv::processMessage(InputBuffer& request_buffer,
     return (0);
 }
 
-void
-AuthSrv::setDbFile(const std::string& db_file)
+ElementPtr
+AuthSrv::setDbFile(const isc::data::ElementPtr config)
 {
-    cout << "Change data source file, call our data source's function to now read " << db_file << endl;
-    impl_->_db_file = db_file;
+    if (config) {
+        impl_->_db_file = config->get("database_file")->stringValue();
+        cout << "[AuthSrv] Data source database file: " << impl_->_db_file << endl;
+    }
+
+    try {
+        // create SQL data source
+        // config may be empty here; in that case it will load the default
+        // database file
+        Sqlite3DataSrc* sd = new Sqlite3DataSrc;
+        sd->init(config);
+
+        if (cur_datasrc_) {
+            impl_->data_sources.removeDataSrc(cur_datasrc_);
+        }
+
+        ConstDataSrcPtr csd = ConstDataSrcPtr(sd);
+        impl_->data_sources.addDataSrc(csd);
+        cur_datasrc_ = csd;
+
+        return isc::config::createAnswer(0);
+    } catch (isc::Exception error) {
+        cout << "[AuthSrv] error: " << error.what() << endl;
+        return isc::config::createAnswer(1, error.what());
+    }
 }
 
 ElementPtr
 AuthSrv::updateConfig(isc::data::ElementPtr new_config)
 {
+    ElementPtr answer = isc::config::createAnswer(0);
     if (new_config) {
         // the ModuleCCSession has already checked if we have
         // the correct ElementPtr type as specified in our .spec file
         if (new_config->contains("database_file")) {
-            // We only get this if the value has actually changed.
-            setDbFile(new_config->get("database_file")->stringValue());
+            answer = setDbFile(new_config);
         }
     }
+
+    // if we have no sqlite3 data source, use the default
+    if (!cur_datasrc_) {
+        setDbFile(ElementPtr());
+    }
     
-    return isc::config::createAnswer(0);
+    return answer;
 }

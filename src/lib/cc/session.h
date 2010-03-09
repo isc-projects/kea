@@ -18,39 +18,52 @@
 #define _ISC_SESSION_H 1
 
 #include <string>
-#include <vector>
-#include <map>
+
+#include <boost/function.hpp>
+
+#include <exceptions/exceptions.h>
 
 #include "data.h"
 
+namespace boost {
+namespace asio {
+class io_service;
+}
+}
+
 namespace isc {
     namespace cc {
-        class SessionError : public std::exception {
+        class SessionImpl;
+
+        class SessionError : public isc::Exception {
         public:
-            SessionError(std::string m = "CC Session Error") : msg(m) {}
-            ~SessionError() throw() {}
-            const char* what() const throw() { return msg.c_str(); }
-        private:
-            std::string msg;
+            SessionError(const char* file, size_t line, const char* what) :
+                isc::Exception(file, line, what) {}
         };
 
         class Session {
         private:
-            int sock;
-            int sequence; // the next sequence number to use
+            SessionImpl* impl_;
+
+        private:
+            Session(const Session& source);
+            Session& operator=(const Session& source);
 
         public:
-            std::string lname;
-
             Session();
+            Session(boost::asio::io_service& ioservice);
+            ~Session();
 
             // XXX: quick hack to allow the user to watch the socket directly.
-            int getSocket() const { return (sock); }
+            int getSocket() const;
+
+            void startRead(boost::function<void()> read_callback);
 
             void establish();
             void disconnect();
             void sendmsg(isc::data::ElementPtr& msg);
-            void sendmsg(isc::data::ElementPtr& env, isc::data::ElementPtr& msg);
+            void sendmsg(isc::data::ElementPtr& env,
+                         isc::data::ElementPtr& msg);
             bool recvmsg(isc::data::ElementPtr& msg,
                          bool nonblock = true);
             bool recvmsg(isc::data::ElementPtr& env,

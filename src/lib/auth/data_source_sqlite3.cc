@@ -487,16 +487,13 @@ Sqlite3DataSrc::~Sqlite3DataSrc() {
 }
 
 DataSrc::Result
-Sqlite3DataSrc::init(const string& dbfile) {
-    open(dbfile);
-    cerr << "Schema version: " << getVersion() << endl;
-
+Sqlite3DataSrc::init(const isc::data::ElementPtr config) {
+    if (config and config->contains("database_file")) {
+        open(config->get("database_file")->stringValue());
+    } else {
+        open(DEFAULT_DB_FILE);
+    }
     return (SUCCESS);
-}
-
-DataSrc::Result
-Sqlite3DataSrc::init() {
-    return (init(DEFAULT_DB_FILE));
 }
 
 void

@@ -48,15 +48,15 @@ def cleanup(s):
 # records: generator function to return complete RRs from the zone file,
 # combining lines when necessary because of parentheses
 # input:
-#   zonedata as an array of lines
+#   descriptor for a zone master file (returned from openzone)
 # yields:
 #   complete RR
 #########################################################################
-def records(data):
+def records(input):
     record = []
     complete = True
     paren = 0
-    for line in data:
+    for line in input:
         list = cleanup(line).split()
         for word in list:
             if paren == 0:
@@ -230,7 +230,7 @@ def include(s):
         m = filename.match(rest)
         if m:
             file = m.group(1)
-            return parse(file)
+            return file
 
 #########################################################################
 # four: try parsing on the assumption that the RR type is specified in
@@ -339,28 +339,37 @@ def reset():
     origin=''
 
 #########################################################################
-# do_parse: parse a zone master file and return it as an array of
-# tuples
+# openzone: open a zone master file, set initial origin, return descriptor
 #########################################################################
-def do_parse(file, initial_origin = '.'):
+def openzone(filename, initial_origin = '.'):
+    try:
+        zf = open(filename, 'r')
+    except:
+        return
+    origin = initial_origin
+    return zf
+
+#########################################################################
+# zonedata: generator function to parse a zone master file and return
+# each RR as a (name, ttl, type, class, rdata) tuple
+#########################################################################
+def zonedata(zone):
     global defttl, origin, defclass
 
-    if not origin:
-        origin = initial_origin
-
-    zone = []
     name = ''
 
-    data = open(file).read().splitlines()
-    for record in records(data):
+    for record in records(zone):
         if directive(record):
             continue
 
         incl = include(record)
         if incl:
-            zone += incl
+            sub = openzone(incl, origin)
+            for name, ttl, rrclass, rrtype, rdata in zonedata(sub):
+                yield (name, ttl, rrclass, rrtype, rdata)
+            sub.close()
             continue
-    
+
         first = record.split()[0]
         if first == '@':
             name = origin
@@ -399,46 +408,47 @@ def do_parse(file, initial_origin = '.'):
         if (ttl == -1):
             raise MasterFileError("No TTL specified; zone rejected")
 
-        zone.append((name, ttl, rrclass, rrtype, rdata))
-
-    return zone
+        yield (name, ttl, rrclass, rrtype, rdata)
 
 #########################################################################
-# parse: call do_parse on behalf of a caller; determine the zone name
-# and return the zone data
-# input:
-#   filename
-# returns:
-#   zonename, data
+# zonename: scans zone data for an SOA record, returns its name, restores
+# the zone file to its prior state
 #########################################################################
-def parse(file, initial_origin = '.'):
-    zone = do_parse(file, initial_origin)
-    zonename = ''
-    for record in zone:
-        if record[3].lower() == 'soa':
-            zonename = record[0]
-    if not zonename:
-        raise MasterFileError("No SOA; zone rejected")
-    return zonename, zone
+def zonename(zone, initial_origin = '.'):
+    global origin
+    old_origin = origin
+    origin = initial_origin
+    old_location = zone.tell()
+    zone.seek(0)
+    for name, ttl, rrclass, rrtype, rdata in zonedata(zone):
+        if rrtype.lower() == 'soa':
+            break
+    zone.seek(old_location)
+    origin = old_origin
+    if rrtype.lower() != 'soa':
+        raise MasterFileError("No SOA found")
+    return name
 
 #########################################################################
 # main: used for testing; parse a zone file and print out each record
 # broken up into separate name, ttl, class, type, and rdata files
 #########################################################################
 def main():
-    print ('---------------------')
     try:
         file = sys.argv[1]
     except:
         file = 'testfile'
-    zone = parse(file)
-    for name, ttl, rrclass, rrtype, rdata in zone:
+    zf = openzone(file, '.')
+    print ('zone name: ' + zonename(zf))
+    print ('---------------------')
+    for name, ttl, rrclass, rrtype, rdata in zonedata(zf):
         print ('name: ' + name)
         print ('ttl: ' + str(ttl))
         print ('rrclass: ' + rrclass)
         print ('rrtype: ' + rrtype)
         print ('rdata: ' + rdata)
         print ('---------------------')
+    zf.close()
 
 # initialize
 reset()

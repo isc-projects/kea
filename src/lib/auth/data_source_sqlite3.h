@@ -102,8 +102,8 @@ public:
                              std::string& hash,
                              isc::dns::RRsetList& target) const;
 
-    Result init();
-    Result init(const std::string& dbfile);
+    Result init() { return init(isc::data::ElementPtr()); };
+    Result init(const isc::data::ElementPtr config);
     Result close();
 
 private:

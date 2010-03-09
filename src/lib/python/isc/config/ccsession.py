@@ -148,6 +148,8 @@ class ModuleCCSession(ConfigData):
             self._session = cc_session
         self._session.group_subscribe(self._module_name, "*")
 
+        self._remote_module_configs = {}
+
     def start(self):
         """Send the specification for this module to the configuration
            manager, and request the current non-default configuration.
@@ -183,6 +185,21 @@ class ModuleCCSession(ConfigData):
                 cmd, arg = isc.config.ccsession.parse_command(msg)
                 if cmd == COMMAND_CONFIG_UPDATE:
                     new_config = arg
+                    module_name = env['group']
+                    # If the target channel was not this module
+                    # it might be in the remote_module_configs
+                    if module_name != self._module_name:
+                        if module_name in self._remote_module_configs:
+                            # no checking for validity, that's up to the
+                            # module itself.
+                            newc = self._remote_module_configs[module_name].get_local_config()
+                            isc.cc.data.merge(newc, new_config)
+                            self._remote_module_configs[module_name].set_local_config(newc)
+                            print("[XX] updated remote config value: ")
+                            print(newc)
+                            return
+
+                    # ok, so apparently this update is for us.
                     errors = []
                     if not self._config_handler:
                         answer = create_answer(2, self._module_name + " has no config handler")
@@ -202,7 +219,6 @@ class ModuleCCSession(ConfigData):
                     else:
                         answer = create_answer(2, self._module_name + " has no command handler")
             except Exception as exc:
-                print("error! " + str(exc))
                 answer = create_answer(1, str(exc))
                 raise exc
             if answer:
@@ -220,6 +236,47 @@ class ModuleCCSession(ConfigData):
            function that takes a command as defined in the .spec file
            and return an answer created with create_answer()"""
         self._command_handler = command_handler
+
+    def add_remote_config(self, spec_file_name):
+        """Gives access to the configuration of a different module.
+           These remote module options can at this moment only be
+           accessed through get_remote_config_value(). This function
+           also subscribes to the channel of the remote module name
+           to receive the relevant updates. It is not possible to
+           specify your own handler for this right now.
+           Returns the name of the module."""
+        module_spec = isc.config.module_spec_from_file(spec_file_name)
+        module_cfg = ConfigData(module_spec)
+        module_name = module_spec.get_module_name()
+        self._session.group_subscribe(module_name);
+
+        # Get the current config for that module now
+        self._session.group_sendmsg({ "command": [ "get_config", { "module_name": module_name } ] }, "ConfigManager")
+        answer, env = self._session.group_recvmsg(False)
+        if answer:
+            rcode, value = parse_answer(answer)
+            if rcode == 0:
+                if value != None and self.get_module_spec().validate_config(False, value):
+                    module_cfg.set_local_config(value);
+
+        # all done, add it
+        self._remote_module_configs[module_name] = module_cfg
+        return module_name
+        
+    def remove_remote_config(self, module_name):
+        """Removes the remote configuration access for this module"""
+        if module_name in self._remote_module_configs:
+            del self._remote_module_configs[module_name]
+
+    def get_remote_config_value(self, module_name, identifier):
+        """Returns the current setting for the given identifier at the
+           given module. If the module has not been added with
+           add_remote_config, a ModuleCCSessionError is raised"""
+        if module_name in self._remote_module_configs:
+            return self._remote_module_configs[module_name].get_value(identifier)
+        else:
+            raise ModuleCCSessionError("Remote module " + module_name +
+                                       " not found")
 
     def __send_spec(self):
         """Sends the data specification to the configuration manager"""
@@ -244,6 +301,7 @@ class ModuleCCSession(ConfigData):
                 print("Error requesting configuration: " + value)
         else:
             raise ModuleCCSessionError("No answer from configuration manager")
+
 
 class UIModuleCCSession(MultiConfigData):
     """This class is used in a configuration user interface. It contains
