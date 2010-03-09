@@ -22,6 +22,14 @@
 #include <cc/data.h>
 #include <auth/data_source.h>
 
+namespace isc {
+namespace dns {
+class InputBuffer;
+class Message;
+class MessageRenderer;
+}
+}
+
 class AuthSrvImpl;
 
 class AuthSrv {
@@ -38,7 +46,10 @@ public:
     explicit AuthSrv();
     ~AuthSrv();
     //@}
-    void processMessage(int fd);
+    int processMessage(isc::dns::InputBuffer& request_buffer,
+                       isc::dns::Message& message,
+                       isc::dns::MessageRenderer& response_renderer,
+                       bool udp_buffer);
     void serve(std::string zone_name);
     isc::data::ElementPtr setDbFile(const isc::data::ElementPtr config);
     isc::data::ElementPtr updateConfig(isc::data::ElementPtr config);
