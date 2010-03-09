@@ -113,7 +113,7 @@ for BOOST_TRY_LIB in boost_system boost_system-mt; do
 		[ boost::system::error_code error_code;
 		  std::string message(error_code.message());
 		  return 0; ],
-	[ AC_MSG_RESULT(ok)
+	[ AC_MSG_RESULT(yes)
 	  BOOST_SYSTEM_LIB="-l${BOOST_TRY_LIB}"
 	  ],[])
 	if test "X${BOOST_SYSTEM_LIB}" != X; then
@@ -123,11 +123,15 @@ done
 
 if test "X${BOOST_SYSTEM_LIB}" = X; then
 	AC_MSG_RESULT(not found)
-	AC_MSG_ERROR(Unable to link with the boost::system library)
+else
+	AC_DEFINE(HAVE_BOOSTLIB, 1, Define to 1 if boost libraries are available)
 fi
 
+AM_CONDITIONAL(HAVE_BOOSTLIB, test "X${BOOST_SYSTEM_LIB}" != X)
+LDFLAGS="$LDFLAGS_SAVED"
 CPPFLAGS="$CPPFLAGS_SAVED"
 LIBS="$LIBS_SAVED"
+AC_SUBST(BOOST_LDFLAGS)
 AC_SUBST(BOOST_SYSTEM_LIB)
 
 #

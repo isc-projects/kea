@@ -14,18 +14,25 @@
 
 // $Id$
 
+#include "../../../config.h"
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/select.h>
 #include <netdb.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #include <set>
 #include <iostream>
 
 #include <boost/foreach.hpp>
+#ifdef HAVE_BOOSTLIB
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
+#endif
+
+#include <exceptions/exceptions.h>
 
 #include <dns/buffer.h>
 #include <dns/name.h>
@@ -38,17 +45,19 @@
 #include <cc/data.h>
 #include <config/ccsession.h>
 
-#include "common.h"
 #include "config.h"
+#include "common.h"
 #include "auth_srv.h"
 
 #include <boost/foreach.hpp>
 
 using namespace std;
 
+#ifdef HAVE_BOOSTLIB
 using namespace boost::asio;
 using ip::udp;
 using ip::tcp;
+#endif
 
 using namespace isc::data;
 using namespace isc::cc;
@@ -57,7 +66,7 @@ using namespace isc::dns;
 
 namespace {
 const string PROGRAM = "Auth";
-const short DNSPORT = 5300;
+const char* DNSPORT = "5300";
 }
 
 /* need global var for config/command handlers.
@@ -67,6 +76,26 @@ namespace {
 AuthSrv *auth_server;
 }
 
+static ElementPtr
+my_config_handler(ElementPtr new_config)
+{
+    return auth_server->updateConfig(new_config);
+}
+
+static ElementPtr
+my_command_handler(const string& command, const ElementPtr args) {
+    ElementPtr answer = createAnswer(0);
+
+    if (command == "print_message") 
+    {
+        cout << args << endl;
+        /* let's add that message to our answer as well */
+        answer->get("result")->add(args);
+    }
+    return answer;
+}
+
+#ifdef HAVE_BOOSTLIB
 //
 // Helper classes for asynchronous I/O using boost::asio
 //
@@ -272,7 +301,281 @@ private:
     enum { MAX_LENGTH = 4096 };
     char data_[MAX_LENGTH];
 };
+
+struct ServerSet {
+    ServerSet() : udp4_server(NULL), udp6_server(NULL),
+                  tcp4_server(NULL), tcp6_server(NULL)
+    {}
+    ~ServerSet()
+    {
+        delete udp4_server;
+        delete udp6_server;
+        delete tcp4_server;
+        delete tcp6_server;
+    }
+    UDPServer* udp4_server;
+    UDPServer* udp6_server;
+    TCPServer* tcp4_server;
+    TCPServer* tcp6_server;
+};
+
+static void
+run_server(const char* port, const bool use_ipv4, const bool use_ipv6,
+           const string& specfile)
+{
+    ServerSet servers;
+    boost::asio::io_service io_service;
+    short portnum = atoi(port);
+
+    ModuleCCSession cs(specfile, io_service, my_config_handler,
+                       my_command_handler);
+
+    if (use_ipv4) {
+        servers.udp4_server = new UDPServer(io_service, AF_INET, portnum);
+        servers.tcp4_server = new TCPServer(io_service, AF_INET, portnum);
+    }
+    if (use_ipv6) {
+        servers.udp6_server = new UDPServer(io_service, AF_INET6, portnum);
+        servers.tcp6_server = new TCPServer(io_service, AF_INET6, portnum);
+    }
+
+    cout << "Server started." << endl;
+    io_service.run();
 }
+}
+#else  // !HAVE_BOOSTLIB
+struct SocketSet {
+    SocketSet() : ups4(-1), tps4(-1), ups6(-1), tps6(-1) {}
+    ~SocketSet()
+    {
+        if (ups4 >= 0) {
+            close(ups4);
+        }
+        if (tps4 >= 0) {
+            close(tps4);
+        }
+        if (ups6 >= 0) {
+            close(ups6);
+        }
+        if (tps4 >= 0) {
+            close(tps6);
+        }
+    }
+    int ups4, tps4, ups6, tps6;
+};
+
+static int
+getUDPSocket(int af, const char* port) {
+    struct addrinfo hints, *res;
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = af;
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_flags = AI_PASSIVE;
+    hints.ai_protocol = IPPROTO_UDP;
+
+    int error = getaddrinfo(NULL, port, &hints, &res);
+    if (error != 0) {
+        isc_throw(FatalError, "getaddrinfo failed: " << gai_strerror(error));
+    }
+
+    int s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+    if (s < 0) {
+        isc_throw(FatalError, "failed to open socket");
+    }
+
+    if (af == AF_INET6) {
+        int on = 1;
+        if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on)) < 0) {
+            cerr << "couldn't set IPV6_V6ONLY socket option" << endl;
+            // proceed anyway
+        }
+    }
+
+    if (bind(s, res->ai_addr, res->ai_addrlen) < 0) {
+        isc_throw(FatalError, "binding socket failure");
+    }
+
+    return (s);
+}
+
+static int
+getTCPSocket(int af, const char* port) {
+    struct addrinfo hints, *res;
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = af;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE;
+    hints.ai_protocol = IPPROTO_TCP;
+
+    int error = getaddrinfo(NULL, port, &hints, &res);
+    if (error != 0) {
+        isc_throw(FatalError, "getaddrinfo failed: " << gai_strerror(error));
+    }
+
+    int s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+    if (s < 0) {
+        isc_throw(FatalError, "failed to open socket");
+    }
+
+    int on = 1;
+    if (af == AF_INET6) {
+        if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on)) < 0) {
+            cerr << "couldn't set IPV6_V6ONLY socket option" << endl;
+        }
+    }
+
+    if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0) {
+        cerr << "couldn't set SO_REUSEADDR socket option" << endl;
+    }
+
+    if (bind(s, res->ai_addr, res->ai_addrlen) < 0) {
+        isc_throw(FatalError, "binding socket failure");
+    }
+
+    listen(s, 100);
+    return (s);
+}
+
+static void
+processMessageUDP(const int fd, Message& dns_message,
+                  MessageRenderer& response_renderer)
+{
+    struct sockaddr_storage ss;
+    socklen_t sa_len = sizeof(ss);
+    struct sockaddr* sa = static_cast<struct sockaddr*>((void*)&ss);
+    char recvbuf[4096];
+    int cc;
+
+    dns_message.clear(Message::PARSE);
+    response_renderer.clear();
+    if ((cc = recvfrom(fd, recvbuf, sizeof(recvbuf), 0, sa, &sa_len)) > 0) {
+        InputBuffer buffer(recvbuf, cc);
+        if (auth_server->processMessage(buffer, dns_message, response_renderer,
+                                        true) == 0) {
+            sendto(fd, response_renderer.getData(),
+                   response_renderer.getLength(), 0, sa, sa_len);
+        }
+    }
+}
+
+static void
+processMessageTCP(const int fd, Message& dns_message,
+                  MessageRenderer& response_renderer)
+{
+    struct sockaddr_storage ss;
+    socklen_t sa_len = sizeof(ss);
+    struct sockaddr* sa = static_cast<struct sockaddr*>((void*)&ss);
+    char sizebuf[2];
+    int cc;
+    int ts = accept(fd, sa, &sa_len);
+
+    cout << "[XX] process TCP" << endl;
+    cc = recv(ts, sizebuf, 2, 0);
+    cout << "[XX] got: " << cc << endl;
+    uint16_t size, size_n;
+    memcpy(&size_n, sizebuf, 2);
+    size = ntohs(size_n);
+    cout << "[XX] got: " << size << endl;
+
+    vector<char> message_buffer;
+    message_buffer.reserve(size);
+    cc = 0;
+    while (cc < size) {
+        cout << "[XX] cc now: " << cc << " of " << size << endl;
+        cc += recv(ts, &message_buffer[0] + cc, size - cc, 0);
+    }
+
+    InputBuffer buffer(&message_buffer[0], size);
+    dns_message.clear(Message::PARSE);
+    response_renderer.clear();
+    if (auth_server->processMessage(buffer, dns_message, response_renderer,
+                                    false) == 0) {
+        size = response_renderer.getLength();
+        size_n = htons(size);
+        if (send(ts, &size_n, 2, 0) == 2) {
+            cc = send(ts, response_renderer.getData(),
+                      response_renderer.getLength(), 0);
+            if (cc == -1) {
+                cerr << "[AuthSrv] error in sending TCP response message" <<
+                    endl;
+            } else {
+                cout << "[XX] sent TCP response: " << cc << " bytes" << endl;
+            }
+        }
+    }
+ 
+   // TODO: we don't check for more queries on the stream atm
+    close(ts);
+}
+
+static void
+run_server(const char* port, const bool use_ipv4, const bool use_ipv6,
+           const string& specfile)
+{
+    SocketSet socket_set;
+    fd_set fds_base;
+    int nfds = -1;
+
+    FD_ZERO(&fds_base);
+    if (use_ipv4) {
+        socket_set.ups4 = getUDPSocket(AF_INET, port);
+        FD_SET(socket_set.ups4, &fds_base);
+        nfds = max(nfds, socket_set.ups4);
+        socket_set.tps4 = getTCPSocket(AF_INET, port);
+        FD_SET(socket_set.tps4, &fds_base);
+        nfds = max(nfds, socket_set.tps4);
+    }
+    if (use_ipv6) {
+        socket_set.ups6 = getUDPSocket(AF_INET6, port);
+        FD_SET(socket_set.ups6, &fds_base);
+        nfds = max(nfds, socket_set.ups6);
+        socket_set.tps6 = getTCPSocket(AF_INET6, port);
+        FD_SET(socket_set.tps6, &fds_base);
+        nfds = max(nfds, socket_set.tps6);
+    }
+    ++nfds;
+
+    ModuleCCSession cs(specfile, my_config_handler, my_command_handler);
+
+    cout << "Server started." << endl;
+    
+    int ss = cs.getSocket();
+    Message dns_message(Message::PARSE);
+    OutputBuffer resonse_buffer(0);
+    MessageRenderer response_renderer(resonse_buffer);
+
+    while (true) {
+        fd_set fds = fds_base;
+        FD_SET(ss, &fds);
+
+        int n = select(nfds, &fds, NULL, NULL, NULL);
+        if (n < 0) {
+            if (errno != EINTR) {
+                isc_throw(FatalError, "select error");
+            }
+            continue;
+        }
+
+        if (socket_set.ups4 >= 0 && FD_ISSET(socket_set.ups4, &fds)) {
+            processMessageUDP(socket_set.ups4, dns_message, response_renderer);
+        }
+        if (socket_set.ups6 >= 0 && FD_ISSET(socket_set.ups6, &fds)) {
+            processMessageUDP(socket_set.ups6, dns_message, response_renderer);
+        }
+        if (socket_set.tps4 >= 0 && FD_ISSET(socket_set.tps4, &fds)) {
+            processMessageTCP(socket_set.tps4, dns_message, response_renderer);
+        }
+        if (socket_set.tps6 >= 0 && FD_ISSET(socket_set.tps6, &fds)) {
+            processMessageTCP(socket_set.tps6, dns_message, response_renderer);
+        }
+        if (FD_ISSET(ss, &fds)) {
+            cs.check_command();
+        }
+    }
+}
+#endif // HAVE_BOOSTLIB
 
 static void
 usage() {
@@ -280,35 +583,12 @@ usage() {
     exit(1);
 }
 
-ElementPtr
-my_config_handler(ElementPtr new_config)
-{
-    return auth_server->updateConfig(new_config);
-}
-
-ElementPtr
-my_command_handler(const string& command, const ElementPtr args) {
-    ElementPtr answer = createAnswer(0);
-
-    if (command == "print_message") 
-    {
-        cout << args << endl;
-        /* let's add that message to our answer as well */
-        answer->get("result")->add(args);
-    }
-    return answer;
-}
-
 int
 main(int argc, char* argv[]) {
     int ch;
-    short port = DNSPORT;
+    const char* port = DNSPORT;
     bool ipv4_only = false, ipv6_only = false;
     bool use_ipv4 = false, use_ipv6 = false;
-    UDPServer* udp4_server = NULL;
-    UDPServer* udp6_server = NULL;
-    TCPServer* tcp4_server = NULL;
-    TCPServer* tcp6_server = NULL;
 
     while ((ch = getopt(argc, argv, "46p:")) != -1) {
         switch (ch) {
@@ -319,7 +599,7 @@ main(int argc, char* argv[]) {
             ipv6_only = true;
             break;
         case 'p':
-            port = atoi(optarg);
+            port = optarg;
             break;
         case '?':
         default:
@@ -355,34 +635,11 @@ main(int argc, char* argv[]) {
             specfile = string(AUTH_SPECFILE_LOCATION);
         }
 
-        // XXX: in this prototype code we'll ignore any message on the command
-        // channel.
-
-        boost::asio::io_service io_service;
-
-        ModuleCCSession cs(specfile, io_service, my_config_handler,
-                           my_command_handler);
-
-        if (use_ipv4) {
-            udp4_server = new UDPServer(io_service, AF_INET, port);
-            tcp4_server = new TCPServer(io_service, AF_INET, port);
-        }
-        if (use_ipv6) {
-            udp6_server = new UDPServer(io_service, AF_INET6, port);
-            tcp6_server = new TCPServer(io_service, AF_INET6, port);
-        }
-
-        cout << "Server started." << endl;
-        io_service.run();
+        run_server(port, use_ipv4, use_ipv6, specfile);
     } catch (const std::exception& ex) {
         cerr << ex.what() << endl;
         ret = 1;
     }
-
-    delete udp4_server;
-    delete tcp4_server;
-    delete udp6_server;
-    delete tcp6_server;
 
     delete auth_server;
     return (ret);
