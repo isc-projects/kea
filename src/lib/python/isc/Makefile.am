@@ -1,4 +1,4 @@
-SUBDIRS = auth cc Util config
+SUBDIRS = auth cc config # Util
 
 python_PYTHON = __init__.py
 
