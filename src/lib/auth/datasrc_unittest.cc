@@ -489,5 +489,15 @@ TEST_F(DataSrcTest, Nsec3Hash) {
     EXPECT_EQ("FHA27EURONFH5640SFJQ8MJAKMCVB7UJ", nsec3.getHash(Name("test2")));
     EXPECT_EQ("A4M93LR7A60IDDQMO6TCVUPCC60CU38A", nsec3.getHash(Name("test3")));
 }
+
+TEST_F(DataSrcTest, AddRemoveDataSrc) {
+    MetaDataSrc ds;
+    ConstDataSrcPtr tsp = ConstDataSrcPtr(new TestDataSrc);
+    EXPECT_EQ(0, ds.dataSrcCount());
+    ds.addDataSrc(tsp);
+    EXPECT_EQ(1, ds.dataSrcCount());
+    ds.removeDataSrc(tsp);
+    EXPECT_EQ(0, ds.dataSrcCount());
+}
 }
 

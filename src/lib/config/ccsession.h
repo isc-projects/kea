@@ -24,6 +24,12 @@
 #include <cc/session.h>
 #include <cc/data.h>
 
+namespace boost {
+namespace asio {
+class io_service;
+}
+}
+
 namespace isc {
 namespace config {
 
@@ -54,6 +60,11 @@ public:
      *                        module specification.
      */
     ModuleCCSession(std::string spec_file_name,
+                    isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config) = NULL,
+                    isc::data::ElementPtr(*command_handler)(const std::string& command, const isc::data::ElementPtr args) = NULL
+                    ) throw (isc::cc::SessionError);
+    ModuleCCSession(std::string spec_file_name,
+                    boost::asio::io_service& io_service,
                     isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config) = NULL,
                     isc::data::ElementPtr(*command_handler)(const std::string& command, const isc::data::ElementPtr args) = NULL
                     ) throw (isc::cc::SessionError);
@@ -91,7 +102,15 @@ public:
     void set_command_handler(isc::data::ElementPtr(*command_handler)(const std::string& command, const isc::data::ElementPtr args)) { command_handler_ = command_handler; };
 
 private:
+    void init(
+        std::string spec_file_name,
+        isc::data::ElementPtr(*config_handler)(
+            isc::data::ElementPtr new_config),
+        isc::data::ElementPtr(*command_handler)(
+            const std::string& command, const isc::data::ElementPtr args)
+        ) throw (isc::cc::SessionError);
     void read_module_specification(const std::string& filename);
+    void startCheck();
     
     std::string module_name_;
     isc::cc::Session session_;

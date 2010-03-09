@@ -31,6 +31,7 @@
 #include <sstream>
 #include <cerrno>
 
+#include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 
 #include <cc/data.h>
@@ -162,11 +163,48 @@ ModuleCCSession::read_module_specification(const std::string& filename) {
     file.close();
 }
 
-ModuleCCSession::ModuleCCSession(std::string spec_file_name,
-                               isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config),
-                               isc::data::ElementPtr(*command_handler)(const std::string& command, const isc::data::ElementPtr args)
-                              ) throw (isc::cc::SessionError):
-    session_(isc::cc::Session())
+void
+ModuleCCSession::startCheck() {
+    // data available on the command channel.  process it in the synchronous
+    // mode.
+    check_command();
+
+    // start asynchronous read again.
+    session_.startRead(boost::bind(&ModuleCCSession::startCheck, this));
+}
+
+ModuleCCSession::ModuleCCSession(
+    std::string spec_file_name,
+    boost::asio::io_service& io_service,
+    isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config),
+    isc::data::ElementPtr(*command_handler)(
+        const std::string& command, const isc::data::ElementPtr args)
+    ) throw (isc::cc::SessionError) :
+    session_(io_service)
+{
+    init(spec_file_name, config_handler, command_handler);
+
+    // register callback for asynchronous read
+    session_.startRead(boost::bind(&ModuleCCSession::startCheck, this));
+}
+
+ModuleCCSession::ModuleCCSession(
+    std::string spec_file_name,
+    isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config),
+    isc::data::ElementPtr(*command_handler)(
+        const std::string& command, const isc::data::ElementPtr args)
+    ) throw (isc::cc::SessionError)
+{
+    init(spec_file_name, config_handler, command_handler);
+}
+
+void
+ModuleCCSession::init(
+    std::string spec_file_name,
+    isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config),
+    isc::data::ElementPtr(*command_handler)(
+        const std::string& command, const isc::data::ElementPtr args)
+    ) throw (isc::cc::SessionError)
 {
     read_module_specification(spec_file_name);
     sleep(1);
@@ -189,16 +227,24 @@ ModuleCCSession::ModuleCCSession(std::string spec_file_name,
     ElementPtr spec_msg = createCommand("module_spec", module_specification_.getFullSpec());
     session_.group_sendmsg(spec_msg, "ConfigManager");
     session_.group_recvmsg(env, answer, false);
-
+    int rcode;
+    ElementPtr err = parseAnswer(rcode, answer);
+    if (rcode != 0) {
+        std::cerr << "[" << module_name_ << "] Error in specification: " << answer << std::endl;
+    }
+    
     config_ = Element::createFromString("{}");
     // get any stored configuration from the manager
     if (config_handler_) {
         ElementPtr cmd = Element::createFromString("{ \"command\": [\"get_config\", {\"module_name\":\"" + module_name_ + "\"} ] }");
         session_.group_sendmsg(cmd, "ConfigManager");
         session_.group_recvmsg(env, answer, false);
-        int rcode;
         ElementPtr new_config = parseAnswer(rcode, answer);
-        handleConfigUpdate(new_config);
+        if (rcode == 0) {
+            handleConfigUpdate(new_config);
+        } else {
+            std::cerr << "[" << module_name_ << "] Error getting config: " << new_config << std::endl;
+        }
     }
 }
 

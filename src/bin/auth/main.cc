@@ -283,15 +283,13 @@ usage() {
 ElementPtr
 my_config_handler(ElementPtr new_config)
 {
-    auth_server->updateConfig(new_config);
-    return createAnswer(0);
+    return auth_server->updateConfig(new_config);
 }
 
 ElementPtr
 my_command_handler(const string& command, const ElementPtr args) {
     ElementPtr answer = createAnswer(0);
 
-    cout << "[XX] Handle command: " << endl << command << endl;
     if (command == "print_message") 
     {
         cout << args << endl;
@@ -356,13 +354,15 @@ main(int argc, char* argv[]) {
         } else {
             specfile = string(AUTH_SPECFILE_LOCATION);
         }
-        ModuleCCSession cs = ModuleCCSession(specfile, my_config_handler,
-                                             my_command_handler);
 
         // XXX: in this prototype code we'll ignore any message on the command
         // channel.
 
         boost::asio::io_service io_service;
+
+        ModuleCCSession cs(specfile, io_service, my_config_handler,
+                           my_command_handler);
+
         if (use_ipv4) {
             udp4_server = new UDPServer(io_service, AF_INET, port);
             tcp4_server = new TCPServer(io_service, AF_INET, port);

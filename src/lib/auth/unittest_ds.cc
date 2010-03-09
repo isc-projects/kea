@@ -96,6 +96,12 @@ RRsetPtr loop2_cname;
 }
 
 DataSrc::Result
+TestDataSrc::init(const isc::data::ElementPtr config)
+{
+    return init();
+}
+
+DataSrc::Result
 TestDataSrc::init() {
     if (initialized) {
         return (SUCCESS);
