@@ -3,6 +3,7 @@ pkglibexecdir = $(libexecdir)/@PACKAGE@
 pkglibexec_SCRIPTS = b10-cmdctl
 
 b10_cmdctldir = $(DESTDIR)$(pkgdatadir)
+# TODO: this is dangerous -- will overwrite!
 b10_cmdctl_DATA = passwd.csv b10-cmdctl.pem
 
 CLEANFILES=	b10-cmdctl
@@ -12,3 +13,7 @@ CLEANFILES=	b10-cmdctl
 b10-cmdctl: cmdctl.py
 	$(SED) "s|@@PYTHONPATH@@|@pyexecdir@|" cmdctl.py >$@
 	chmod a+x $@
+
+install-data-local:
+	chmod go-rwx $(DESTDIR)$(pkgdatadir)/passwd.csv
+	chmod go-rwx $(DESTDIR)$(pkgdatadir)/b10-cmdctl.pem
