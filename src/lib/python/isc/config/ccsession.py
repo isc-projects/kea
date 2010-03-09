@@ -195,8 +195,6 @@ class ModuleCCSession(ConfigData):
                             newc = self._remote_module_configs[module_name].get_local_config()
                             isc.cc.data.merge(newc, new_config)
                             self._remote_module_configs[module_name].set_local_config(newc)
-                            print("[XX] updated remote config value: ")
-                            print(newc)
                             return
 
                     # ok, so apparently this update is for us.

@@ -42,7 +42,6 @@
 #include <cc/session.h>
 #include <exceptions/exceptions.h>
 
-//#include "common.h"
 #include "ccsession.h"
 #include "config.h"
 
@@ -143,10 +142,11 @@ parseCommand(ElementPtr& arg, const ElementPtr command)
     return "";
 }
 
-void
+ModuleSpec
 ModuleCCSession::read_module_specification(const std::string& filename) {
     std::ifstream file;
-
+    ModuleSpec module_spec;
+    
     // this file should be declared in a @something@ directive
     file.open(filename.c_str());
     if (!file) {
@@ -155,7 +155,7 @@ ModuleCCSession::read_module_specification(const std::string& filename) {
     }
 
     try {
-        module_specification_ = moduleSpecFromFile(file, true);
+        module_spec = moduleSpecFromFile(file, true);
     } catch (ParseError pe) {
         cout << "Error parsing module specification file: " << pe.what() << endl;
         exit(1);
@@ -164,6 +164,7 @@ ModuleCCSession::read_module_specification(const std::string& filename) {
         exit(1);
     }
     file.close();
+    return module_spec;
 }
 
 #ifdef HAVE_BOOSTLIB
@@ -211,7 +212,7 @@ ModuleCCSession::init(
         const std::string& command, const isc::data::ElementPtr args)
     ) throw (isc::cc::SessionError)
 {
-    read_module_specification(spec_file_name);
+    module_specification_ = read_module_specification(spec_file_name);
     sleep(1);
 
     module_name_ = module_specification_.getFullSpec()->get("module_name")->stringValue();
@@ -295,6 +296,7 @@ ModuleCCSession::check_command()
 {
     ElementPtr cmd, routing, data;
     if (session_.group_recvmsg(routing, data, true)) {
+        
         /* ignore result messages (in case we're out of sync, to prevent
          * pingpongs */
         if (!data->getType() == Element::map || data->contains("result")) {
@@ -304,7 +306,16 @@ ModuleCCSession::check_command()
         std::string cmd_str = parseCommand(arg, data);
         ElementPtr answer;
         if (cmd_str == "config_update") {
-            answer = handleConfigUpdate(arg);
+            std::string target_module = routing->get("group")->stringValue();
+            if (target_module == module_name_) {
+                answer = handleConfigUpdate(arg);
+            } else {
+                // ok this update is not for us, if we have this module
+                // in our remote config list, update that
+                updateRemoteConfig(target_module, arg);
+                // we're not supposed to answer to this, so return
+                return 0;
+            }
         } else {
             if (command_handler_) {
                 answer = command_handler_(cmd_str, arg);
@@ -316,6 +327,70 @@ ModuleCCSession::check_command()
     }
     
     return 0;
+}
+
+std::string
+ModuleCCSession::addRemoteConfig(const std::string& spec_file_name)
+{
+    ModuleSpec rmod_spec = read_module_specification(spec_file_name);
+    std::string module_name = rmod_spec.getFullSpec()->get("module_name")->stringValue();
+    ConfigData rmod_config = ConfigData(rmod_spec);
+    session_.subscribe(module_name);
+
+    // Get the current configuration values for that module
+    ElementPtr cmd = Element::createFromString("{ \"command\": [\"get_config\", {\"module_name\":\"" + module_name + "\"} ] }");
+    ElementPtr env, answer;
+    int rcode;
+    
+    session_.group_sendmsg(cmd, "ConfigManager");
+    session_.group_recvmsg(env, answer, false);
+    ElementPtr new_config = parseAnswer(rcode, answer);
+    if (rcode == 0) {
+        rmod_config.setLocalConfig(new_config);
+    } else {
+        isc_throw(CCSessionError, "Error getting config for " + module_name + ": " + answer->str());
+    }
+
+    // all ok, add it
+    remote_module_configs_[module_name] = rmod_config;
+    return module_name;
+}
+
+void
+ModuleCCSession::removeRemoteConfig(const std::string& module_name)
+{
+    std::map<std::string, ConfigData>::iterator it;
+
+    it = remote_module_configs_.find(module_name);
+    if (it != remote_module_configs_.end()) {
+        remote_module_configs_.erase(it);
+        session_.unsubscribe(module_name);
+    }
+}
+
+ElementPtr
+ModuleCCSession::getRemoteConfigValue(const std::string& module_name, const std::string& identifier)
+{
+    std::map<std::string, ConfigData>::iterator it;
+
+    it = remote_module_configs_.find(module_name);
+    if (it != remote_module_configs_.end()) {
+        return remote_module_configs_[module_name].getValue(identifier);
+    } else {
+        isc_throw(CCSessionError, "Remote module " + module_name + " not found.");
+    }
+}
+
+void
+ModuleCCSession::updateRemoteConfig(const std::string& module_name, ElementPtr new_config)
+{
+    std::map<std::string, ConfigData>::iterator it;
+
+    it = remote_module_configs_.find(module_name);
+    if (it != remote_module_configs_.end()) {
+        ElementPtr rconf = (*it).second.getLocalConfig();
+        isc::data::merge(rconf, new_config);
+    }
 }
 
 }

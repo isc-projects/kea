@@ -40,11 +40,13 @@ def main():
         exit(2)
 
     dbfile = '/tmp/zone.sqlite3'
-    initial_origin = '.'
+    initial_origin = ''
     for o, a in opts:
         if o in ("-d", "--dbfile"):
             dbfile = a
         elif o in ("-o", "--origin"):
+            if a[-1] != '.':
+                a += '.'
             initial_origin = a
         elif o in ("-h", "--help"):
             usage()
@@ -68,7 +70,6 @@ def main():
         exit(1)
 
     try:
-
         isc.auth.sqlite3_ds.load(dbfile, zone, isc.auth.master.zonedata, zf)
     except Exception as e:
         print("Error loading database: " + str(e))

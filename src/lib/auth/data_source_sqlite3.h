@@ -121,7 +121,7 @@ private:
     int findRecords(const isc::dns::Name& name, const isc::dns::RRType& rdtype,
                     isc::dns::RRsetList& target, const isc::dns::Name* zonename,
                     const Mode mode, uint32_t& flags) const;
-    int findClosest(const char *name, const char **position) const;
+    int findClosest(const isc::dns::Name& name, unsigned int* position) const;
     void loadVersion(void);
     void setupPreparedStatements(void);
     void execSetupQuery(const char *query);
