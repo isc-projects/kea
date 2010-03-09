@@ -19,19 +19,26 @@
 
 #include <string>
 
+#include <boost/function.hpp>
+
+#include <exceptions/exceptions.h>
+
 #include "data.h"
+
+namespace boost {
+namespace asio {
+class io_service;
+}
+}
 
 namespace isc {
     namespace cc {
         class SessionImpl;
 
-        class SessionError : public std::exception {
+        class SessionError : public isc::Exception {
         public:
-            SessionError(std::string m = "CC Session Error") : msg(m) {}
-            ~SessionError() throw() {}
-            const char* what() const throw() { return msg.c_str(); }
-        private:
-            std::string msg;
+            SessionError(const char* file, size_t line, const char* what) :
+                isc::Exception(file, line, what) {}
         };
 
         class Session {
@@ -44,15 +51,19 @@ namespace isc {
 
         public:
             Session();
+            Session(boost::asio::io_service& ioservice);
             ~Session();
 
             // XXX: quick hack to allow the user to watch the socket directly.
             int getSocket() const;
 
+            void startRead(boost::function<void()> read_callback);
+
             void establish();
             void disconnect();
             void sendmsg(isc::data::ElementPtr& msg);
-            void sendmsg(isc::data::ElementPtr& env, isc::data::ElementPtr& msg);
+            void sendmsg(isc::data::ElementPtr& env,
+                         isc::data::ElementPtr& msg);
             bool recvmsg(isc::data::ElementPtr& msg,
                          bool nonblock = true);
             bool recvmsg(isc::data::ElementPtr& env,
