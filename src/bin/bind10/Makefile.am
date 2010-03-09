@@ -13,9 +13,5 @@ bind10: bind10.py
 	       -e "s|@@LIBEXECDIR@@|$(pkglibexecdir)|" bind10.py >$@
 	chmod a+x $@
 
-check: test
-
-test: pytest
-
 pytest:
 	$(SHELL) tests/bind10_test
