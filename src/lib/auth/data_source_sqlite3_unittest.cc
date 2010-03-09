@@ -360,7 +360,7 @@ TEST_F(Sqlite3DataSourceTest, reOpen) {
     EXPECT_EQ(DataSrc::SUCCESS, data_source.init(SQLITE_DBFILE_EXAMPLE2));
 
     NameMatch name_match(www_name);
-    data_source.findClosestEnclosure(name_match, RRClass::IN());
+    data_source.findClosestEnclosure(name_match, rrclass);
     EXPECT_EQ(NULL, name_match.closestName());
     EXPECT_EQ(NULL, name_match.bestDataSrc());
 }
@@ -707,7 +707,7 @@ TEST_F(Sqlite3DataSourceTest, findRRsetNSEC3) {
               data_source.findCoveringNSEC3(*query, nsec3_zonename,
                                             hashstr, result_sets));
     RRsetList::iterator it = result_sets.begin();
-    checkRRset(*it, Name(hashstr).concatenate(nsec3_zonename), RRClass::IN(),
+    checkRRset(*it, Name(hashstr).concatenate(nsec3_zonename), rrclass,
                RRType::NSEC3(), RRTTL(7200), nsec3_data, &nsec3_sig_data);
     ++it;
     EXPECT_TRUE(it == result_sets.end());
