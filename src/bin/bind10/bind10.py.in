@@ -3,6 +3,7 @@
 import sys; sys.path.append ('@@PYTHONPATH@@')
 import os
 import time
+import random
 
 """\
 This file implements the Boss of Bind (BoB, or bob) program.
@@ -51,7 +52,7 @@ import isc.cc
 import isc
 
 # This is the version that gets displayed to the user.
-__version__ = "v20100308"
+__version__ = "v20100309"
 
 # Nothing at all to do with the 1990-12-10 article here:
 # http://www.subgenius.com/subg-digest/v2/0056.html
@@ -70,7 +71,10 @@ a simple set of rules:
   * If a process was been running for >=10 seconds, we restart it
     right away.
   * If a process was running for <10 seconds, we wait until 10 seconds
-    after it was started."""
+    after it was started.
+
+To avoid programs getting into lockstep, we use a normal distribution
+to avoid being restarted at exactly 10 seconds."""
 
     def __init__(self, restart_frequency=10.0):
         self.restart_frequency = restart_frequency
@@ -82,7 +86,9 @@ a simple set of rules:
         if when is None:
             when = time.time()
         self.run_start_time = when
-        self.restart_time = when + self.restart_frequency
+        sigma = self.restart_frequency * 0.05
+        self.restart_time = when + random.normalvariate(self.restart_frequency, 
+                                                        sigma)
 
     def set_run_stop_time(self, when=None):
         if when is None:
@@ -121,15 +127,15 @@ class ProcessInfo:
                                         close_fds=True,
                                         env=spawn_env,)
         self.pid = self.process.pid
+        self.restart_schedule.set_run_start_time()
 
     def __init__(self, name, args, env={}, dev_null_stdout=False):
         self.name = name 
         self.args = args
         self.env = env
         self.dev_null_stdout = dev_null_stdout
+        self.restart_schedule = RestartSchedule()
         self._spawn()
-        self.last_spawn_time = time.time()
-#        self.respawn
 
     def respawn(self):
         self._spawn()
@@ -358,6 +364,7 @@ class BoB:
             if pid == 0: break
             if pid in self.processes:
                 proc_info = self.processes.pop(pid)
+                proc_info.restart_schedule.set_run_stop_time()
                 self.dead_processes[proc_info.pid] = proc_info
                 if self.verbose:
                     sys.stdout.write("Process %s (PID %d) died.\n" % 
@@ -427,26 +434,39 @@ class BoB:
 
     def restart_processes(self):
         """Restart any dead processes."""
-        # XXX: this needs a back-off algorithm
+        next_restart = None
         # if we're shutting down, then don't restart
         if not self.runnable:
-            return
+            return next_restart
         # otherwise look through each dead process and try to restart
         still_dead = {}
+        now = time.time()
         for proc_info in self.dead_processes.values():
-            if self.verbose:
-                sys.stdout.write("Resurrecting dead %s process...\n" % 
-                                 proc_info.name)
-            try:
-                proc_info.respawn()
-                self.processes[proc_info.pid] = proc_info
-                if self.verbose:
-                    sys.stdout.write("Resurrected %s (PID %d)\n" %
-                                     (proc_info.name, proc_info.pid))
-            except:
+            restart_time = proc_info.restart_schedule.get_restart_time(now)
+            if restart_time > now:
+#                if self.verbose:
+#                    sys.stdout.write("Dead %s process waiting %.1f seconds "\
+#                                     "for resurrection\n" % 
+#                                     (proc_info.name, (restart_time-now)))
+                if (next_restart is None) or (next_restart > restart_time):
+                    next_restart = restart_time
                 still_dead[proc_info.pid] = proc_info
+            else:
+                if self.verbose:
+                    sys.stdout.write("Resurrecting dead %s process...\n" % 
+                                     proc_info.name)
+                try:
+                    proc_info.respawn()
+                    self.processes[proc_info.pid] = proc_info
+                    if self.verbose:
+                        sys.stdout.write("Resurrected %s (PID %d)\n" %
+                                         (proc_info.name, proc_info.pid))
+                except:
+                    still_dead[proc_info.pid] = proc_info
         # remember any processes that refuse to be resurrected
         self.dead_processes = still_dead
+        # return the time when the next process is ready to be restarted
+        return next_restart
 
 def reaper(signal_number, stack_frame):
     """A child process has died (SIGCHLD received)."""
@@ -525,15 +545,18 @@ def main():
     while boss_of_bind.runnable:
         # clean up any processes that exited
         boss_of_bind.reap_children()
-        boss_of_bind.restart_processes()
-
-        # XXX: get time for next restart for timeout
+        next_restart = boss_of_bind.restart_processes()
+        if next_restart is None:
+            wait_time = None
+        else:
+            wait_time = max(next_restart - time.time(), 0)
 
         # select() can raise EINTR when a signal arrives, 
         # even if they are resumable, so we have to catch
         # the exception
         try:
-            (rlist, wlist, xlist) = select.select([wakeup_fd, ccs_fd], [], [])
+            (rlist, wlist, xlist) = select.select([wakeup_fd, ccs_fd], [], [], 
+                                                  wait_time)
         except select.error as err:
             if err.args[0] == errno.EINTR:
                 (rlist, wlist, xlist) = ([], [], [])
