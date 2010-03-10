@@ -23,7 +23,6 @@
 #include <stdlib.h>
 #include <errno.h>
 
-#include <set>
 #include <iostream>
 
 #include <boost/foreach.hpp>
@@ -35,9 +34,6 @@
 #include <exceptions/exceptions.h>
 
 #include <dns/buffer.h>
-#include <dns/name.h>
-#include <dns/message.h>
-#include <dns/rrset.h>
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
 
@@ -48,8 +44,6 @@
 #include "spec_config.h"
 #include "common.h"
 #include "auth_srv.h"
-
-#include <boost/foreach.hpp>
 
 using namespace std;
 
@@ -100,18 +94,6 @@ my_command_handler(const string& command, const ElementPtr args) {
 // Helper classes for asynchronous I/O using boost::asio
 //
 namespace {
-class Completed {
-public:
-    Completed(size_t len) : len_(len) {}
-    bool operator()(const boost::system::error_code& error,
-                    size_t bytes_transferred) const
-    {
-        return (error != 0 || bytes_transferred >= len_);
-    }
-private:
-    size_t len_;
-};
-
 class TCPClient {
 public:
     TCPClient(io_service& io_service) :
@@ -124,7 +106,6 @@ public:
 
     void start() {
         async_read(socket_, boost::asio::buffer(data_, TCP_MESSAGE_LENGTHSIZE),
-                   Completed(TCP_MESSAGE_LENGTHSIZE),
                    boost::bind(&TCPClient::headerRead, this,
                                placeholders::error,
                                placeholders::bytes_transferred));
@@ -136,12 +117,11 @@ public:
                     size_t bytes_transferred)
     {
         if (!error) {
-            assert(bytes_transferred == TCP_MESSAGE_LENGTHSIZE);
-            InputBuffer dnsbuffer(data_, TCP_MESSAGE_LENGTHSIZE);
+            InputBuffer dnsbuffer(data_, bytes_transferred);
 
             uint16_t msglen = dnsbuffer.readUint16();
             async_read(socket_, boost::asio::buffer(data_, msglen),
-                       Completed(msglen),
+
                        boost::bind(&TCPClient::requestRead, this,
                                    placeholders::error,
                                    placeholders::bytes_transferred));
