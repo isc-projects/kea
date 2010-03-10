@@ -222,7 +222,7 @@ class ConfigManager:
                     except data.DataNotFoundError as dnfe:
                         # no data is ok, that means we have nothing that
                         # deviates from default values
-                        answer = isc.config.ccsession.create_answer(0, { 'version': CONFIG_VERSION })
+                        answer = isc.config.ccsession.create_answer(0, { 'version': self.config.CONFIG_VERSION })
                 else:
                     answer = isc.config.ccsession.create_answer(1, "Bad module_name in get_config command")
             else:
