@@ -31,9 +31,9 @@
 #include <dns/rrsetlist.h>
 #include <cc/data.h>
 
-#include "query.h"
-#include "data_source.h"
-#include "data_source_sqlite3.h"
+#include <auth/query.h>
+#include <auth/data_source.h>
+#include <auth/sqlite3_ds.h>
 
 using namespace std;
 using namespace isc::dns;

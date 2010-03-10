@@ -31,9 +31,9 @@
 #include <dns/rrttl.h>
 #include <dns/rrtype.h>
 
-#include "query.h"
+#include <auth/query.h>
 #include "unittest_util.h"
-#include "unittest_ds.h"
+#include "test_ds.h"
 
 using isc::UnitTestUtil;
 using namespace std;

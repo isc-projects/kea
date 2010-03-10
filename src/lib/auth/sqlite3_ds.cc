@@ -17,7 +17,7 @@
 #include <string>
 #include <sstream>
 
-#include "data_source_sqlite3.h"
+#include "sqlite3_ds.h"
 
 #include <dns/rrttl.h>
 #include <dns/rdata.h>
@@ -420,7 +420,7 @@ Sqlite3DataSrc::checkAndSetupSchema(void) {
     try {
         loadVersion();
         setupPreparedStatements();
-        cout << "Loaded existing schema" << endl;
+        // cout << "Loaded existing schema" << endl;
     } catch(...) {
         execSetupQuery("CREATE TABLE schema_version ("
                           "version INTEGER NOT NULL)");
@@ -453,7 +453,7 @@ Sqlite3DataSrc::checkAndSetupSchema(void) {
         execSetupQuery("CREATE INDEX nsec3_byhash ON nsec3 (hash)");
 
         setupPreparedStatements();
-        cout << "Created new file and schema" << endl;
+        // cout << "Created new file and schema" << endl;
     }
 }
 
