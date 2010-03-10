@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/ext -Wall -Werror
+AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/ext
 
 lib_LIBRARIES = libcfgclient.a
 libcfgclient_a_SOURCES = config_data.h config_data.cc module_spec.h module_spec.cc ccsession.cc ccsession.h
