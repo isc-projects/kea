@@ -227,7 +227,7 @@ class MasterFile:
             if more:
                 raise MasterFileError('Invalid $TTL statement')
             self.__ttl = parse_ttl(second)
-            if self.__ttl > self.__maxttl:
+            if int(self.__ttl) > self.__maxttl:
                 raise MasterFileError('TTL too high: ' + second)
             return True
         elif re.match('\$generate', first, re.I):
