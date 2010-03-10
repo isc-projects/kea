@@ -14,6 +14,8 @@
 
 // $Id$
 
+#include "config.h"
+
 #include <string>
 
 #include <boost/lexical_cast.hpp>
@@ -31,7 +33,7 @@ using namespace boost;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
-SOA::SOA(InputBuffer& buffer, size_t rdata_len) :
+SOA::SOA(InputBuffer& buffer, size_t rdata_len UNUSED_PARAM) :
     mname_(buffer), rname_(buffer)
 {
     // we don't need rdata_len for parsing.  if necessary, the caller will
@@ -85,7 +87,7 @@ SOA::SOA(const Name& mname, const Name& rname, uint32_t serial,
 }
 
 SOA::SOA(const SOA& other) :
-    mname_(other.mname_), rname_(other.rname_)
+    Rdata(), mname_(other.mname_), rname_(other.rname_)
 {
     memcpy(numdata_, other.numdata_, sizeof(numdata_));
 }

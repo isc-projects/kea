@@ -14,6 +14,8 @@
 
 // $Id$
 
+#include "config.h"
+
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -99,7 +101,7 @@ DNSKEY::DNSKEY(InputBuffer& buffer, size_t rdata_len)
 }
 
 DNSKEY::DNSKEY(const DNSKEY& source) :
-    impl_(new DNSKEYImpl(*source.impl_))
+    Rdata(), impl_(new DNSKEYImpl(*source.impl_))
 {}
 
 DNSKEY&

@@ -13,6 +13,9 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 // $Id$
+
+#include "config.h"
+
 #include <string>
 
 #include "buffer.h"
@@ -25,7 +28,7 @@ using namespace std;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
-OPT::OPT(const string& type_str)
+OPT::OPT(const string& type_str UNUSED_PARAM)
 {
     isc_throw(InvalidRdataText, "OPT RR cannot be constructed from text");
 }
@@ -42,7 +45,7 @@ OPT::OPT(InputBuffer& buffer, size_t rdata_len)
     buffer.setPosition(buffer.getPosition() + rdata_len);
 }
 
-OPT::OPT(const OPT& source)
+OPT::OPT(const OPT& source UNUSED_PARAM) : Rdata()
 {
     // there's nothing to copy in this simple implementation.
 }
@@ -54,13 +57,13 @@ OPT::toText() const
 }
 
 void
-OPT::toWire(OutputBuffer& buffer) const
+OPT::toWire(OutputBuffer& buffer UNUSED_PARAM) const
 {
     // nothing to do, as this simple version doesn't support any options.
 }
 
 void
-OPT::toWire(MessageRenderer& renderer) const
+OPT::toWire(MessageRenderer& renderer UNUSED_PARAM) const
 {
     // nothing to do, as this simple version doesn't support any options.
 }

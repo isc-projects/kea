@@ -14,6 +14,8 @@
 
 // $Id$
 
+#include <config.h>
+
 #include <string>
 
 #include "buffer.h"
@@ -31,7 +33,7 @@ DNAME::DNAME(const std::string& namestr) :
     dname_(namestr)
 {}
 
-DNAME::DNAME(InputBuffer& buffer, size_t rdata_len) :
+DNAME::DNAME(InputBuffer& buffer, size_t rdata_len UNUSED_PARAM) :
     dname_(buffer)
 {
     // we don't need rdata_len for parsing.  if necessary, the caller will
@@ -39,7 +41,7 @@ DNAME::DNAME(InputBuffer& buffer, size_t rdata_len) :
 }
 
 DNAME::DNAME(const DNAME& other) :
-    dname_(other.dname_)
+    Rdata(), dname_(other.dname_)
 {}
 
 DNAME::DNAME(const Name& dname) :

@@ -14,6 +14,8 @@
 
 // $Id: rdata.cc 545 2010-01-27 00:33:28Z jinmei $
 
+#include "config.h"
+
 #include <stdint.h>
 #include <string.h>
 
@@ -54,7 +56,7 @@ A::A(InputBuffer& buffer, size_t rdata_len)
 }
 
 A::A(const A& other) :
-    addr_(other.addr_)
+    Rdata(), addr_(other.addr_)
 {}
 
 void

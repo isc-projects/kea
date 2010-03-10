@@ -14,6 +14,8 @@
 
 // $Id$
 
+#include "config.h"
+
 #include <string>
 
 #include "buffer.h"
@@ -31,7 +33,7 @@ PTR::PTR(const string& type_str) :
     ptr_name_(type_str)
 {}
 
-PTR::PTR(InputBuffer& buffer, size_t rdata_len) :
+PTR::PTR(InputBuffer& buffer, size_t rdata_len UNUSED_PARAM) :
     ptr_name_(buffer)
 {
     // we don't need rdata_len for parsing.  if necessary, the caller will
@@ -39,7 +41,7 @@ PTR::PTR(InputBuffer& buffer, size_t rdata_len) :
 }
 
 PTR::PTR(const PTR& source) :
-    ptr_name_(source.ptr_name_)
+    Rdata(), ptr_name_(source.ptr_name_)
 {}
 
 std::string

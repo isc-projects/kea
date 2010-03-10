@@ -14,6 +14,8 @@
 
 // $Id$
 
+#include "config.h"
+
 #include <stdint.h>
 #include <string.h>
 
@@ -30,7 +32,7 @@ using namespace std;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
-TXT::TXT(InputBuffer& buffer, size_t rdata_len)
+TXT::TXT(InputBuffer& buffer, size_t rdata_len UNUSED_PARAM)
 {
     uint8_t len;
 
@@ -65,7 +67,7 @@ TXT::TXT(const std::string& txtstr)
 }
 
 TXT::TXT(const TXT& other) :
-    string_list_(other.string_list_)
+    Rdata(), string_list_(other.string_list_)
 {}
 
 void

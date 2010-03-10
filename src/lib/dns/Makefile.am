@@ -1,6 +1,6 @@
 SUBDIRS = . tests
 
-AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/ext -Wall -Werror
+AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/ext -Werror
 
 CLEANFILES = *.gcno *.gcda
 CLEANFILES += rrclass.h rrtype.h rrparamregistry.cc rdataclass.h rdataclass.cc

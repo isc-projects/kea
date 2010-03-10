@@ -24,7 +24,9 @@ AM_PATH_PYTHON([3.1])
 # default compiler warning settings
 if test "X$GCC" = "Xyes"; then
 CXXFLAGS="$CXXFLAGS -g -Wall -Wextra -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
+UNUSED_PARAM_ATTRIBUTE='__attribute__((unused))'
 fi
+AC_DEFINE_UNQUOTED(UNUSED_PARAM, $UNUSED_PARAM_ATTRIBUTE, Define to compiler keyword indicating a function argument is intentionally unused)
 
 # produce PIC unless we disable shared libraries. need this for python bindings.
 if test $enable_shared != "no" -a "X$GCC" = "Xyes"; then
@@ -205,6 +207,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/loadzone/Makefile
                  src/bin/msgq/Makefile
                  src/bin/auth/Makefile
+                 src/bin/auth/tests/Makefile
                  src/bin/xfrin/Makefile
                  src/bin/usermgr/Makefile
                  src/lib/Makefile
