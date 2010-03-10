@@ -72,7 +72,10 @@ const char* DNSPORT = "5300";
  * todo: turn this around, and put handlers in the authserver
  * class itself? */
 namespace {
-AuthSrv *auth_server;
+    AuthSrv *auth_server;
+    // TODO: this should be a property of AuthSrv, and AuthSrv needs
+    // a stop() method (so the shutdown command can be handled)
+    boost::asio::io_service io_service_;
 }
 
 static ElementPtr
@@ -84,12 +87,14 @@ static ElementPtr
 my_command_handler(const string& command, const ElementPtr args) {
     ElementPtr answer = createAnswer(0);
 
-    if (command == "print_message") 
-    {
+    if (command == "print_message") {
         cout << args << endl;
         /* let's add that message to our answer as well */
         answer->get("result")->add(args);
+    } else if (command == "shutdown") {
+        io_service_.stop();
     }
+    
     return answer;
 }
 
@@ -190,6 +195,8 @@ private:
 
 class TCPServer
 {
+private:
+    TCPClient* listening;
 public:
     TCPServer(io_service& io_service, int af, short port) :
         io_service_(io_service),
@@ -201,7 +208,10 @@ public:
         acceptor_.async_accept(new_client->getSocket(),
                                boost::bind(&TCPServer::handleAccept, this,
                                            new_client, placeholders::error));
+        listening = new_client;
     }
+
+    ~TCPServer() { delete listening; }
 
     void handleAccept(TCPClient* new_client,
                       const boost::system::error_code& error)
@@ -213,6 +223,7 @@ public:
                                    boost::bind(&TCPServer::handleAccept,
                                                this, new_client,
                                                placeholders::error));
+            listening = new_client;
         } else {
             delete new_client;
         }
@@ -310,23 +321,22 @@ run_server(const char* port, const bool use_ipv4, const bool use_ipv6,
            const string& specfile)
 {
     ServerSet servers;
-    boost::asio::io_service io_service;
     short portnum = atoi(port);
 
-    ModuleCCSession cs(specfile, io_service, my_config_handler,
+    ModuleCCSession cs(specfile, io_service_, my_config_handler,
                        my_command_handler);
 
     if (use_ipv4) {
-        servers.udp4_server = new UDPServer(io_service, AF_INET, portnum);
-        servers.tcp4_server = new TCPServer(io_service, AF_INET, portnum);
+        servers.udp4_server = new UDPServer(io_service_, AF_INET, portnum);
+        servers.tcp4_server = new TCPServer(io_service_, AF_INET, portnum);
     }
     if (use_ipv6) {
-        servers.udp6_server = new UDPServer(io_service, AF_INET6, portnum);
-        servers.tcp6_server = new TCPServer(io_service, AF_INET6, portnum);
+        servers.udp6_server = new UDPServer(io_service_, AF_INET6, portnum);
+        servers.tcp6_server = new TCPServer(io_service_, AF_INET6, portnum);
     }
 
     cout << "Server started." << endl;
-    io_service.run();
+    io_service_.run();
 }
 }
 #else  // !HAVE_BOOSTLIB
