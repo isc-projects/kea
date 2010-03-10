@@ -71,20 +71,18 @@ public:
 };
 
 AuthSrvImpl::AuthSrvImpl() {
-}
-
-AuthSrv::AuthSrv() {
-    impl_ = new AuthSrvImpl;
-    // set empty (sqlite) data source, once ccsession is up
+    // cur_datasrc_ is automatically initialized by the default constructor,
+    // effectively being an empty (sqlite) data source.  once ccsession is up
     // the datasource will be set by the configuration setting
     // (or the default one if none is set)
-    impl_->cur_datasrc_ = ConstDataSrcPtr();
+
     // add static data source
-    impl_->data_sources_.addDataSrc(ConstDataSrcPtr(new StaticDataSrc));
+    data_sources_.addDataSrc(ConstDataSrcPtr(new StaticDataSrc));
 }
 
-AuthSrv::~AuthSrv()
-{
+AuthSrv::AuthSrv() : impl_(new AuthSrvImpl) {}
+
+AuthSrv::~AuthSrv() {
     delete impl_;
 }
 
