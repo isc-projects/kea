@@ -31,7 +31,7 @@
 
 #include <auth/query.h>
 #include <auth/data_source.h>
-#include <auth/static_ds.h>
+#include <auth/static_datasrc.h>
 
 using namespace std;
 using namespace isc::dns;

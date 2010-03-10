@@ -37,8 +37,8 @@
 
 #include <auth/query.h>
 #include <auth/data_source.h>
-#include <auth/static_ds.h>
-#include <auth/sqlite3_ds.h>
+#include <auth/static_datasrc.h>
+#include <auth/sqlite3_datasrc.h>
 
 #include <cc/data.h>
 

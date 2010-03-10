@@ -33,7 +33,7 @@
 
 #include <auth/query.h>
 #include <auth/data_source.h>
-#include <auth/sqlite3_ds.h>
+#include <auth/sqlite3_datasrc.h>
 
 using namespace std;
 using namespace isc::dns;
