@@ -178,6 +178,8 @@ public:
                                                 response_buffer_.getLength()),
                         boost::bind(&TCPClient::handleWrite, this,
                                     placeholders::error));
+        } else {
+            delete this;
         }
     }
 
