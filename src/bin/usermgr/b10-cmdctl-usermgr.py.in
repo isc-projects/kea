@@ -1,3 +1,5 @@
+#!@PYTHON@
+
 # Copyright (C) 2010  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -15,7 +17,7 @@
 
 '''
 This file implements user management program. The user name and 
-its password is appended in csv file.
+its password is appended to csv file.
 '''
 import random
 from hashlib import sha1
@@ -25,7 +27,7 @@ import getopt
 import sys
 
 VERSION_NUMBER = 'bind10'
-DEFAULT_FILE = 'passwd.csv'
+DEFAULT_FILE = 'cmdctl-accounts.csv'
 
 def gen_password_hash(password):
     salt = "".join(chr(random.randint(33, 127)) for x in range(64))
@@ -55,7 +57,7 @@ def save_userinfo(username, pw, salt, filename):
     writer = csv.writer(csvfile)
     writer.writerow([username, pw, salt])
     csvfile.close()
-    print("add user success!")
+    print("\n create new account successfully! \n")
 
 def usage():
     print('''Usage: usermgr [options]
@@ -103,7 +105,7 @@ def main():
             
             salt, pw = gen_password_hash(pwd1)
             save_userinfo(name, pw, salt, filename)
-            inputdata = input('continue by input \'y\' or \'Y\':')
+            inputdata = input('continue to create new account by input \'y\' or \'Y\':')
             if inputdata not in ['y', 'Y']:
                 break                
                 
