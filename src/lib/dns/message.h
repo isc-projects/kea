@@ -30,22 +30,27 @@ namespace dns {
 ///
 /// \brief A standard DNS module exception ...[TBD]
 ///
+class Rcode;                    // forward declaration
+
 class DNSProtocolError : public Exception {
 public:
     DNSProtocolError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
+    virtual const Rcode& getRcode() const = 0;
 };
 
 class DNSMessageFORMERR : public DNSProtocolError {
 public:
     DNSMessageFORMERR(const char* file, size_t line, const char* what) :
         DNSProtocolError(file, line, what) {}
+    virtual const Rcode& getRcode() const;
 };
 
 class DNSMessageBADVERS : public DNSProtocolError {
 public:
     DNSMessageBADVERS(const char* file, size_t line, const char* what) :
         DNSProtocolError(file, line, what) {}
+    virtual const Rcode& getRcode() const;
 };
 
 ///
@@ -156,6 +161,8 @@ public:
     uint16_t getCode() const { return (code_); }
     bool operator==(const Opcode& other) const
     { return (code_ == other.code_); }
+    bool operator!=(const Opcode& other) const
+    { return (code_ != other.code_); }
     std::string toText() const;
     static const Opcode& QUERY();
     static const Opcode& IQUERY();
