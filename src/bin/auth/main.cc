@@ -76,8 +76,7 @@ AuthSrv *auth_server;
 }
 
 static ElementPtr
-my_config_handler(ElementPtr new_config)
-{
+my_config_handler(ElementPtr new_config) {
     return auth_server->updateConfig(new_config);
 }
 
