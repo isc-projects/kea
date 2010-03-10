@@ -99,7 +99,7 @@ AC_ARG_WITH([boostlib],
 AC_HELP_STRING([--with-boostlib=PATH],
   [specify a path to boost libraries if it is not automatically found, or "no" to disable it]),
   [boostlib_path="$withval"], [boostlib_path="auto"])
-if test "$boostlib_path" != "no" -a "$boostlib_path" != "auto"; then
+if test "$boostlib_path" != "no" -a "$boostlib_path" != "auto" -a "$boostlib_path" != "yes"; then
 	BOOST_LDFLAGS="-L$boostlib_path"
 fi
 
