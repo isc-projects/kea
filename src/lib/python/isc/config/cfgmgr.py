@@ -269,8 +269,6 @@ class ConfigManager:
             for module in self.config.data:
                 if module != "version" and (module not in old_data or self.config.data[module] != old_data[module]):
                     update_cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, self.config.data[module])
-                    print("[XX] send update: " + str(update_cmd))
-                    print("[XX] to: " + str(module))
                     self.cc.group_sendmsg(update_cmd, module)
                     answer, env = self.cc.group_recvmsg(False)
                     if answer == None:
