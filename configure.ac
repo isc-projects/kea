@@ -206,6 +206,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/msgq/Makefile
                  src/bin/auth/Makefile
                  src/bin/xfrin/Makefile
+                 src/bin/usermgr/Makefile
                  src/lib/Makefile
                  src/lib/cc/Makefile
                  src/lib/python/Makefile
@@ -235,6 +236,8 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/bindctl/unittest/bindctl_test
            src/bin/loadzone/run_loadzone
            src/bin/loadzone/b10-loadzone.py
+           src/bin/usermgr/run_b10-cmdctl-usermgr.sh
+           src/bin/usermgr/b10-cmdctl-usermgr.py
            src/bin/msgq/msgq.py
            src/bin/msgq/msgq_test
            src/bin/msgq/run_msgq.sh
@@ -252,9 +255,10 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            chmod +x src/bin/bindctl/unittest/bindctl_test
            chmod +x src/bin/bindctl/bindctl
            chmod +x src/bin/loadzone/run_loadzone
+           chmod +x src/bin/usermgr/run_b10-cmdctl-usermgr.sh
            chmod +x src/bin/msgq/run_msgq.sh
            chmod +x src/bin/msgq/msgq_test
-	   chmod +x src/lib/dns/gen-rdatacode.py
-	   chmod +x src/lib/dns/tests/testdata/gen-wiredata.py
+	       chmod +x src/lib/dns/gen-rdatacode.py
+	       chmod +x src/lib/dns/tests/testdata/gen-wiredata.py
           ])
 AC_OUTPUT
