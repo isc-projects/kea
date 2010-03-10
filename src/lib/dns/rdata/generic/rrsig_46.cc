@@ -14,6 +14,8 @@
 
 // $Id$
 
+#include "config.h"
+
 #include <string>
 #include <iomanip>
 #include <iostream>
@@ -137,7 +139,7 @@ RRSIG::RRSIG(InputBuffer& buffer, size_t rdata_len)
 }
 
 RRSIG::RRSIG(const RRSIG& source) :
-    impl_(new RRSIGImpl(*source.impl_))
+    Rdata(), impl_(new RRSIGImpl(*source.impl_))
 {}
 
 RRSIG&

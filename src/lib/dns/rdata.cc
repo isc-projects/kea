@@ -187,7 +187,7 @@ Generic::~Generic()
 }
 
 Generic::Generic(const Generic& source) :
-    impl_(new GenericImpl(*source.impl_))
+    Rdata(), impl_(new GenericImpl(*source.impl_))
 {}
 
 Generic&

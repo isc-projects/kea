@@ -14,6 +14,8 @@
 
 // $Id$
 
+#include "config.h"
+
 #include <iostream>
 #include <iomanip>
 #include <string>
@@ -171,7 +173,7 @@ NSEC3::NSEC3(InputBuffer& buffer, size_t rdata_len)
 }
 
 NSEC3::NSEC3(const NSEC3& source) :
-    impl_(new NSEC3Impl(*source.impl_))
+    Rdata(), impl_(new NSEC3Impl(*source.impl_))
 {}
 
 NSEC3&

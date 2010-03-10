@@ -14,6 +14,8 @@
 
 // $Id$
 
+#include "config.h"
+
 #include <string>
 
 #include <boost/lexical_cast.hpp>
@@ -31,7 +33,7 @@ using namespace boost;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
-MX::MX(InputBuffer& buffer, size_t rdata_len) :
+MX::MX(InputBuffer& buffer, size_t rdata_len UNUSED_PARAM) :
     preference_(buffer.readUint16()), mxname_(buffer)
 {
     // we don't need rdata_len for parsing.  if necessary, the caller will
@@ -60,7 +62,7 @@ MX::MX(uint16_t preference, const Name& mxname) :
 {}
 
 MX::MX(const MX& other) :
-    preference_(other.preference_), mxname_(other.mxname_)
+    Rdata(), preference_(other.preference_), mxname_(other.mxname_)
 {}
 
 void

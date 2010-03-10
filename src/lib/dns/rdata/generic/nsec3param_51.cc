@@ -14,6 +14,8 @@
 
 // $Id$
 
+#include "config.h"
+
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -97,7 +99,7 @@ NSEC3PARAM::NSEC3PARAM(InputBuffer& buffer, size_t rdata_len)
 }
 
 NSEC3PARAM::NSEC3PARAM(const NSEC3PARAM& source) :
-    impl_(new NSEC3PARAMImpl(*source.impl_))
+    Rdata(), impl_(new NSEC3PARAMImpl(*source.impl_))
 {}
 
 NSEC3PARAM&

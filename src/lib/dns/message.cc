@@ -225,9 +225,8 @@ public:
 #endif
 
     void init();
-    int parseQuestion(Message& message, InputBuffer& buffer);
-    int parseSection(Message& messge, const Section& section,
-                     InputBuffer& buffer);
+    int parseQuestion(InputBuffer& buffer);
+    int parseSection(const Section& section, InputBuffer& buffer);
 };
 
 MessageImpl::MessageImpl(Message::Mode mode) :
@@ -551,17 +550,17 @@ Message::fromWire(InputBuffer& buffer)
     impl_->counts_[Section::ADDITIONAL().getCode()] = buffer.readUint16();
 
     impl_->counts_[Section::QUESTION().getCode()] =
-        impl_->parseQuestion(*this, buffer);
+        impl_->parseQuestion(buffer);
     impl_->counts_[Section::ANSWER().getCode()] =
-        impl_->parseSection(*this, Section::ANSWER(), buffer);
+        impl_->parseSection(Section::ANSWER(), buffer);
     impl_->counts_[Section::AUTHORITY().getCode()] =
-        impl_->parseSection(*this, Section::AUTHORITY(), buffer);
+        impl_->parseSection(Section::AUTHORITY(), buffer);
     impl_->counts_[Section::ADDITIONAL().getCode()] =
-        impl_->parseSection(*this, Section::ADDITIONAL(), buffer);
+        impl_->parseSection(Section::ADDITIONAL(), buffer);
 }
 
 int
-MessageImpl::parseQuestion(Message& message, InputBuffer& buffer)
+MessageImpl::parseQuestion(InputBuffer& buffer)
 {
     unsigned int added = 0;
 
@@ -605,9 +604,7 @@ struct MatchRR : public unary_function<RRsetPtr, bool> {
 }
 
 int
-MessageImpl::parseSection(Message& message, const Section& section,
-                          InputBuffer& buffer)
-{
+MessageImpl::parseSection(const Section& section, InputBuffer& buffer) {
     unsigned int added = 0;
 
     for (unsigned int count = 0; count < counts_[section.getCode()]; count++) {

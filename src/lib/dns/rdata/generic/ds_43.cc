@@ -14,6 +14,8 @@
 
 // $Id$
 
+#include <config.h>
+
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -94,7 +96,7 @@ DS::DS(InputBuffer& buffer, size_t rdata_len)
 }
 
 DS::DS(const DS& source) :
-    impl_(new DSImpl(*source.impl_))
+    Rdata(), impl_(new DSImpl(*source.impl_))
 {}
 
 DS&

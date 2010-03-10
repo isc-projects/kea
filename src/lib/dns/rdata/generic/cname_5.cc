@@ -14,6 +14,8 @@
 
 // $Id$
 
+#include "config.h"
+
 #include <string>
 
 #include "buffer.h"
@@ -31,15 +33,15 @@ CNAME::CNAME(const std::string& namestr) :
     cname_(namestr)
 {}
 
-CNAME::CNAME(InputBuffer& buffer, size_t rdata_len) :
-    cname_(buffer)
+CNAME::CNAME(InputBuffer& buffer, size_t rdata_len UNUSED_PARAM) :
+    Rdata(), cname_(buffer)
 {
     // we don't need rdata_len for parsing.  if necessary, the caller will
     // check consistency.
 }
 
 CNAME::CNAME(const CNAME& other) :
-    cname_(other.cname_)
+    Rdata(), cname_(other.cname_)
 {}
 
 CNAME::CNAME(const Name& cname) :

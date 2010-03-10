@@ -14,6 +14,8 @@
 
 // $Id$
 
+#include "config.h"
+
 #include <stdint.h>
 #include <string.h>
 
@@ -49,8 +51,7 @@ AAAA::AAAA(InputBuffer& buffer, size_t rdata_len)
     buffer.readData(&addr_, sizeof(addr_));
 }
 
-AAAA::AAAA(const AAAA& other)
-{
+AAAA::AAAA(const AAAA& other) : Rdata() {
     memcpy(addr_, other.addr_, sizeof(addr_));
 }
 

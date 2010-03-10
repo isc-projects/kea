@@ -14,6 +14,8 @@
 
 // $Id$
 
+#include <config.h>             // for UNUSED
+
 #include <string>
 
 #include "buffer.h"
@@ -27,29 +29,29 @@ using namespace std;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
-A::A(const string& addrstr)
+A::A(const string& addrstr UNUSED_PARAM)
 {
     // TBD
 }
 
-A::A(InputBuffer& buffer, size_t rdata_len)
+A::A(InputBuffer& buffer UNUSED_PARAM, size_t rdata_len UNUSED_PARAM)
 {
     // TBD
 }
 
-A::A(const A& source)
-{
-    // TBD
-}
-
-void
-A::toWire(OutputBuffer& buffer) const
+A::A(const A& source UNUSED_PARAM) : Rdata()
 {
     // TBD
 }
 
 void
-A::toWire(MessageRenderer& renderer) const
+A::toWire(OutputBuffer& buffer UNUSED_PARAM) const
+{
+    // TBD
+}
+
+void
+A::toWire(MessageRenderer& renderer UNUSED_PARAM) const
 {
     // TBD
 }
@@ -62,7 +64,7 @@ A::toText() const
 }
 
 int
-A::compare(const Rdata& other) const
+A::compare(const Rdata& other UNUSED_PARAM) const
 {
     return (0);                 // dummy.  TBD
 }
