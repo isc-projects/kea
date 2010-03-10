@@ -62,6 +62,9 @@ private:
     AuthSrvImpl& operator=(const AuthSrvImpl& source);
 public:
     AuthSrvImpl();
+
+    isc::data::ElementPtr setDbFile(const isc::data::ElementPtr config);
+
     std::string db_file_;
     isc::auth::MetaDataSrc data_sources_;
     /// We keep a pointer to the currently running sqlite datasource
@@ -131,50 +134,53 @@ AuthSrv::processMessage(InputBuffer& request_buffer,
 }
 
 ElementPtr
-AuthSrv::setDbFile(const isc::data::ElementPtr config) {
+AuthSrvImpl::setDbFile(const isc::data::ElementPtr config) {
     if (config) {
-        impl_->db_file_ = config->get("database_file")->stringValue();
-        cout << "[AuthSrv] Data source database file: " << impl_->db_file_
-             << endl;
+        db_file_ = config->get("database_file")->stringValue();
+        cout << "[AuthSrv] Data source database file: " << db_file_ << endl;
     }
 
-    try {
-        // create SQL data source
-        // config may be empty here; in that case it will load the default
-        // database file
-        Sqlite3DataSrc* sd = new Sqlite3DataSrc;
-        sd->init(config);
+    // create SQL data source
+    // config may be empty here; in that case it will load the default
+    // database file
+    // Note: the following step is tricky to be exception-safe and to ensure
+    // exception guarantee: We first need to perform all operations that can
+    // fail, while acquiring resources in the RAII manner.  We then perform
+    // delete and swap operations which should not fail.
+    DataSrcPtr datasrc_ptr(DataSrcPtr(new Sqlite3DataSrc));
+    datasrc_ptr->init(config);
+    ElementPtr answer = isc::config::createAnswer(0);
+    data_sources_.addDataSrc(datasrc_ptr);
 
-        if (impl_->cur_datasrc_) {
-            impl_->data_sources_.removeDataSrc(impl_->cur_datasrc_);
-        }
-
-        ConstDataSrcPtr csd = ConstDataSrcPtr(sd);
-        impl_->data_sources_.addDataSrc(csd);
-        impl_->cur_datasrc_ = csd;
-
-        return isc::config::createAnswer(0);
-    } catch (isc::Exception error) {
-        cout << "[AuthSrv] error: " << error.what() << endl;
-        return isc::config::createAnswer(1, error.what());
+    // The following code should be exception free.
+    if (cur_datasrc_ != NULL) {
+        data_sources_.removeDataSrc(cur_datasrc_);
     }
+    cur_datasrc_ = datasrc_ptr;
+
+    return answer;
 }
 
 ElementPtr
 AuthSrv::updateConfig(isc::data::ElementPtr new_config) {
-    ElementPtr answer = isc::config::createAnswer(0);
-    if (new_config) {
-        // the ModuleCCSession has already checked if we have
-        // the correct ElementPtr type as specified in our .spec file
-        if (new_config->contains("database_file")) {
-            answer = setDbFile(new_config);
+    try {
+        ElementPtr answer = isc::config::createAnswer(0);
+        if (new_config != NULL) {
+            // the ModuleCCSession has already checked if we have
+            // the correct ElementPtr type as specified in our .spec file
+            if (new_config->contains("database_file")) {
+                answer = impl_->setDbFile(new_config);
+            }
         }
-    }
 
-    // if we have no sqlite3 data source, use the default
-    if (impl_->cur_datasrc_ == NULL) {
-        setDbFile(ElementPtr());
-    }
+        // if we have no sqlite3 data source, use the default
+        if (impl_->cur_datasrc_ == NULL) {
+            impl_->setDbFile(ElementPtr());
+        }
     
-    return answer;
+        return answer;
+    } catch (const isc::Exception& error) {
+        cout << "[AuthSrv] error: " << error.what() << endl;
+        return isc::config::createAnswer(1, error.what());
+    }
 }

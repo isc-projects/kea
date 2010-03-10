@@ -50,7 +50,6 @@ public:
                        isc::dns::MessageRenderer& response_renderer,
                        bool udp_buffer, bool verbose_mode);
     void serve(std::string zone_name);
-    isc::data::ElementPtr setDbFile(const isc::data::ElementPtr config);
     isc::data::ElementPtr updateConfig(isc::data::ElementPtr config);
 private:
     AuthSrvImpl* impl_;
