@@ -20,7 +20,6 @@
 #include <string>
 
 #include <cc/data.h>
-#include <auth/data_source.h>
 
 namespace isc {
 namespace dns {
@@ -55,10 +54,6 @@ public:
     isc::data::ElementPtr updateConfig(isc::data::ElementPtr config);
 private:
     AuthSrvImpl* impl_;
-    /// We keep a pointer to the currently running sqlite datasource
-    /// so that we can specifically remove that one should the database
-    /// file change
-    isc::auth::ConstDataSrcPtr cur_datasrc_;
 };
 
 #endif // __AUTH_SRV_H
