@@ -153,6 +153,16 @@ static const char *opcodetext[] = {
 };
 }
 
+const Rcode&
+DNSMessageFORMERR::getRcode() const {
+    return (Rcode::FORMERR());
+}
+
+const Rcode&
+DNSMessageBADVERS::getRcode() const {
+    return (Rcode::BADVERS());
+}
+
 string
 Opcode::toText() const
 {
