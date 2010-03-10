@@ -4,7 +4,7 @@ pkglibexec_SCRIPTS = b10-cmdctl
 
 b10_cmdctldir = $(DESTDIR)$(pkgdatadir)
 # TODO: this is dangerous -- will overwrite!
-b10_cmdctl_DATA = passwd.csv b10-cmdctl.pem
+b10_cmdctl_DATA = cmdctl-accounts.csv cmdctl-keyfile.pem cmdctl-certfile.pem cmdctl.spec
 
 CLEANFILES=	b10-cmdctl
 
@@ -15,5 +15,6 @@ b10-cmdctl: cmdctl.py
 	chmod a+x $@
 
 install-data-local:
-	chmod go-rwx $(DESTDIR)$(pkgdatadir)/passwd.csv
-	chmod go-rwx $(DESTDIR)$(pkgdatadir)/b10-cmdctl.pem
+	chmod go-rwx $(DESTDIR)$(pkgdatadir)/cmdctl-accounts.csv
+	chmod go-rwx $(DESTDIR)$(pkgdatadir)/cmdctl-certfile.pem
+	chmod go-rwx $(DESTDIR)$(pkgdatadir)/cmdctl-keyfile.pem
