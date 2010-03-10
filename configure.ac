@@ -19,9 +19,11 @@ AX_COMPILER_VENDOR
 m4_define([_AM_PYTHON_INTERPRETER_LIST], [python python3 python3.1])
 AM_PATH_PYTHON([3.1])
 
+# TODO: check for _sqlite3.py module
+
 # default compiler warning settings
 if test "X$GCC" = "Xyes"; then
-CXXFLAGS="-g -Wall -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
+CXXFLAGS="$CXXFLAGS -g -Wall -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
 fi
 
 # produce PIC unless we disable shared libraries. need this for python bindings.
