@@ -160,8 +160,8 @@ public:
                             boost::asio::buffer(
                                 responselen_buffer_.getData(),
                                 responselen_buffer_.getLength()),
-                        boost::bind(&TCPClient::responseWrite, this,
-                                    placeholders::error));
+                            boost::bind(&TCPClient::responseWrite, this,
+                                        placeholders::error));
             } else {
                 delete this;
             }
