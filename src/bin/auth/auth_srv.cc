@@ -89,7 +89,7 @@ int
 AuthSrv::processMessage(InputBuffer& request_buffer,
                         Message& message,
                         MessageRenderer& response_renderer,
-                        const bool udp_buffer)
+                        const bool udp_buffer, const bool verbose_mode)
 {
     try {
         message.fromWire(request_buffer);
@@ -98,7 +98,9 @@ AuthSrv::processMessage(InputBuffer& request_buffer,
         return (-1);
     }
 
-    cout << "[AuthSrv] received a message:\n" << message.toText() << endl;
+    if (verbose_mode) {
+        cerr << "[AuthSrv] received a message:\n" << message.toText() << endl;
+    }
 
     if (message.getRRCount(Section::QUESTION()) != 1) {
         return (-1);
@@ -119,9 +121,11 @@ AuthSrv::processMessage(InputBuffer& request_buffer,
 
     response_renderer.setLengthLimit(udp_buffer ? remote_bufsize : 65535);
     message.toWire(response_renderer);
-    cout << "sending a response (" <<
-        boost::lexical_cast<string>(response_renderer.getLength())
-         << " bytes):\n" << message.toText() << endl;
+    if (verbose_mode) {
+        cerr << "sending a response (" <<
+            boost::lexical_cast<string>(response_renderer.getLength())
+             << " bytes):\n" << message.toText() << endl;
+    }
 
     return (0);
 }

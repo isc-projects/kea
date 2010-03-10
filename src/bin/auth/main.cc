@@ -59,6 +59,10 @@ using namespace isc::config;
 using namespace isc::dns;
 
 namespace {
+static bool verbose_mode = false;
+}
+
+namespace {
 const string PROGRAM = "Auth";
 const char* DNSPORT = "5300";
 }
@@ -136,7 +140,8 @@ public:
         if (!error) {
             InputBuffer dnsbuffer(data_, bytes_transferred);
             if (auth_server->processMessage(dnsbuffer, dns_message_,
-                                            response_renderer_, false) == 0) {
+                                            response_renderer_, false,
+                                            verbose_mode) == 0) {
                 responselen_buffer_.writeUint16(response_buffer_.getLength());
                 async_write(socket_,
                             boost::asio::buffer(
@@ -240,7 +245,8 @@ public:
             dns_message_.clear(Message::PARSE);
             response_renderer_.clear();
             if (auth_server->processMessage(request_buffer, dns_message_,
-                                            response_renderer_, true) == 0) {
+                                            response_renderer_, true,
+                                            verbose_mode) == 0) {
                 socket_.async_send_to(
                     boost::asio::buffer(response_buffer_.getData(),
                                         response_buffer_.getLength()),
@@ -451,19 +457,27 @@ processMessageTCP(const int fd, Message& dns_message,
     int cc;
     int ts = accept(fd, sa, &sa_len);
 
-    cout << "[XX] process TCP" << endl;
+    if (verbose_mode) {
+        cerr << "[XX] process TCP" << endl;
+    }
     cc = recv(ts, sizebuf, 2, 0);
-    cout << "[XX] got: " << cc << endl;
+    if (verbose_mode) {
+        cerr << "[XX] got: " << cc << endl;
+    }
     uint16_t size, size_n;
     memcpy(&size_n, sizebuf, 2);
     size = ntohs(size_n);
-    cout << "[XX] got: " << size << endl;
+    if (verbose_mode) {
+        cerr << "[XX] got: " << size << endl;
+    }
 
     vector<char> message_buffer;
     message_buffer.reserve(size);
     cc = 0;
     while (cc < size) {
-        cout << "[XX] cc now: " << cc << " of " << size << endl;
+        if (verbose_mode) {
+            cerr << "[XX] cc now: " << cc << " of " << size << endl;
+        }
         cc += recv(ts, &message_buffer[0] + cc, size - cc, 0);
     }
 
@@ -478,10 +492,15 @@ processMessageTCP(const int fd, Message& dns_message,
             cc = send(ts, response_renderer.getData(),
                       response_renderer.getLength(), 0);
             if (cc == -1) {
-                cerr << "[AuthSrv] error in sending TCP response message" <<
-                    endl;
+                if (verbose_mode) {
+                    cerr << "[AuthSrv] error in sending TCP response message" <<
+                        endl;
+                }
             } else {
-                cout << "[XX] sent TCP response: " << cc << " bytes" << endl;
+                if (verbose_mode) {
+                    cerr << "[XX] sent TCP response: " << cc << " bytes"
+                         << endl;
+                }
             }
         }
     }
@@ -570,7 +589,7 @@ main(int argc, char* argv[]) {
     bool ipv4_only = false, ipv6_only = false;
     bool use_ipv4 = false, use_ipv6 = false;
 
-    while ((ch = getopt(argc, argv, "46p:")) != -1) {
+    while ((ch = getopt(argc, argv, "46p:v")) != -1) {
         switch (ch) {
         case '4':
             ipv4_only = true;
@@ -580,6 +599,9 @@ main(int argc, char* argv[]) {
             break;
         case 'p':
             port = optarg;
+            break;
+        case 'v':
+            verbose_mode = true;
             break;
         case '?':
         default:
