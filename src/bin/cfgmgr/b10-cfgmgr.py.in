@@ -3,6 +3,7 @@
 import sys; sys.path.append ('@@PYTHONPATH@@')
 
 from isc.config.cfgmgr import ConfigManager
+from isc.cc import SessionError
 import signal
 import os
 
@@ -30,7 +31,7 @@ if __name__ == "__main__":
         cm.read_config()
         cm.notify_boss()
         cm.run()
-    except isc.cc.SessionError as se:
+    except SessionError as se:
         print("[b10-cfgmgr] Error creating config manager, "
               "is the command channel daemon running?")
     except KeyboardInterrupt as kie:
