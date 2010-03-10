@@ -119,9 +119,10 @@ def reverse_name(name):
 # input:
 #   dbfile: the sqlite3 database fileanme
 #   zone: the zone origin
-#   zonedata: an iterable set of name/ttl/class/rrtype/rdata-text tuples
+#   reader: an generator function producing an iterable set of
+#           name/ttl/class/rrtype/rdata-text tuples
 #########################################################################
-def load(dbfile, zone, reader, file):
+def load(dbfile, zone, reader):
     conn, cur = open(dbfile)
     old_zone_id = get_zoneid(zone, cur)
 
@@ -130,7 +131,7 @@ def load(dbfile, zone, reader, file):
     new_zone_id = cur.lastrowid
 
     try:
-        for name, ttl, rdclass, rdtype, rdata in reader(file):
+        for name, ttl, rdclass, rdtype, rdata in reader():
             sigtype = ''
             if rdtype.lower() == 'rrsig':
                 sigtype = rdata.split()[0]
