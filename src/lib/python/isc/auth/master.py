@@ -131,7 +131,7 @@ def parse_ttl(s):
         ttl *= 3600
     elif suffix.lower() == 'm':
         ttl *= 60
-    return ttl
+    return str(ttl)
 
 #########################################################################
 # records: generator function to return complete RRs from the zone file,
@@ -176,9 +176,9 @@ def records(input):
 # define the MasterFile class for reading zone master files
 #########################################################################
 class MasterFile:
-    __defclass = 'IN'
+    __rrclass = 'IN'
     __maxttl = 0x7fffffff
-    __defttl = ''
+    __ttl = ''
     __zonefile = ''
     __name = ''
 
@@ -226,8 +226,8 @@ class MasterFile:
                 raise MasterFileError('Invalid TTL: "' + second + '"')
             if more:
                 raise MasterFileError('Invalid $TTL statement')
-            self.__defttl = parse_ttl(second)
-            if self.__defttl > self.__maxttl:
+            self.__ttl = parse_ttl(second)
+            if self.__ttl > self.__maxttl:
                 raise MasterFileError('TTL too high: ' + second)
             return True
         elif re.match('\$generate', first, re.I):
@@ -290,14 +290,14 @@ class MasterFile:
         if istype(list[2]) and not istype(list[1]):
             if isclass(list[1]) and not isttl(list[0]) and isname(list[0]):
                 rrclass = list[1]
-                ttl = self.__defttl
+                ttl = self.__ttl
                 name = list[0]
             elif not isclass(list[1]) and isttl(list[1]) and isname(list[0]):
-                rrclass = self.__defclass
+                rrclass = self.__rrclass
                 ttl = parse_ttl(list[1])
                 name = list[0]
             elif curname and isclass(list[1]) and isttl(list[0]):
-                rrclass = self.__defclass
+                rrclass = self.__rrclass
                 ttl = parse_ttl(list[0])
                 name = curname
             else:
@@ -325,11 +325,11 @@ class MasterFile:
             return ret
 
         if istype(list[1]):
-            rrclass = self.__defclass
+            rrclass = self.__rrclass
             rrtype = list[1]
             if list[0].lower() == 'rrsig':
                 name = curname
-                ttl = self.__defttl
+                ttl = self.__ttl
                 rrtype = list[0]
                 rdata = ' '.join(list[1:])
             elif isttl(list[0]):
@@ -338,7 +338,7 @@ class MasterFile:
                 rdata = ' '.join(list[2:])
             elif isname(list[0]):
                 name = list[0]
-                ttl = self.__defttl
+                ttl = self.__ttl
                 rdata = ' '.join(list[2:])
             else:
                 raise MasterFileError("Cannot parse RR: " + record)
@@ -385,7 +385,7 @@ class MasterFile:
             if not result:
                 first, rdata = pop(record)
                 if istype(first):
-                    result = name, self.__defttl, self.__defclass, first, rdata
+                    result = name, self.__ttl, self.__rrclass, first, rdata
 
             if not result:
                 raise MasterFileError("Cannot parse RR: " + record)
@@ -452,7 +452,7 @@ class MasterFile:
     def reset(self):
         self.__zonefile.seek(0)
         self.__origin = self.__initial_origin
-        self.__defttl = ''
+        self.__ttl = ''
 
 #########################################################################
 # main: used for testing; parse a zone file and print out each record
@@ -468,7 +468,7 @@ def main():
     print ('---------------------')
     for name, ttl, rrclass, rrtype, rdata in master.zonedata():
         print ('name: ' + name)
-        print ('ttl: ' + str(ttl))
+        print ('ttl: ' + ttl)
         print ('rrclass: ' + rrclass)
         print ('rrtype: ' + rrtype)
         print ('rdata: ' + rdata)
