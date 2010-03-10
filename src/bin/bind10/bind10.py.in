@@ -91,6 +91,8 @@ to avoid being restarted at exactly 10 seconds."""
                                                         sigma)
 
     def set_run_stop_time(self, when=None):
+        """We don't actually do anything with stop time now, but it 
+        might be useful for future algorithms."""
         if when is None:
             when = time.time()
         self.run_stop_time = when
