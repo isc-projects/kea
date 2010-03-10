@@ -36,4 +36,5 @@ if __name__ == "__main__":
               "is the command channel daemon running?")
     except KeyboardInterrupt as kie:
         print("Got ctrl-c, exit")
-    cm.write_config()
+    if cm:
+        cm.write_config()
