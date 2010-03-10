@@ -62,22 +62,21 @@ private:
     AuthSrvImpl& operator=(const AuthSrvImpl& source);
 public:
     AuthSrvImpl();
-    std::string _db_file;
-    isc::auth::MetaDataSrc data_sources;
+    std::string db_file_;
+    isc::auth::MetaDataSrc data_sources_;
 };
 
 AuthSrvImpl::AuthSrvImpl() {
 }
 
-AuthSrv::AuthSrv()
-{
+AuthSrv::AuthSrv() {
     impl_ = new AuthSrvImpl;
     // set empty (sqlite) data source, once ccsession is up
     // the datasource will be set by the configuration setting
     // (or the default one if none is set)
     cur_datasrc_ = ConstDataSrcPtr();
     // add static data source
-    impl_->data_sources.addDataSrc(ConstDataSrcPtr(new StaticDataSrc));
+    impl_->data_sources_.addDataSrc(ConstDataSrcPtr(new StaticDataSrc));
 }
 
 AuthSrv::~AuthSrv()
@@ -106,9 +105,8 @@ AuthSrv::processMessage(InputBuffer& request_buffer,
         return (-1);
     }
 
-    bool dnssec_ok = message.isDNSSECSupported();
-    // unused for now.  should set this to renderer for truncation
-    uint16_t remote_bufsize = message.getUDPSize();
+    const bool dnssec_ok = message.isDNSSECSupported();
+    const uint16_t remote_bufsize = message.getUDPSize();
 
     message.makeResponse();
     message.setHeaderFlag(MessageFlag::AA());
@@ -117,7 +115,7 @@ AuthSrv::processMessage(InputBuffer& request_buffer,
     message.setUDPSize(4096);   // XXX: hardcoding
 
     Query query(message, dnssec_ok);
-    impl_->data_sources.doQuery(query);
+    impl_->data_sources_.doQuery(query);
 
     response_renderer.setLengthLimit(udp_buffer ? remote_bufsize : 65535);
     message.toWire(response_renderer);
@@ -131,11 +129,11 @@ AuthSrv::processMessage(InputBuffer& request_buffer,
 }
 
 ElementPtr
-AuthSrv::setDbFile(const isc::data::ElementPtr config)
-{
+AuthSrv::setDbFile(const isc::data::ElementPtr config) {
     if (config) {
-        impl_->_db_file = config->get("database_file")->stringValue();
-        cout << "[AuthSrv] Data source database file: " << impl_->_db_file << endl;
+        impl_->db_file_ = config->get("database_file")->stringValue();
+        cout << "[AuthSrv] Data source database file: " << impl_->db_file_
+             << endl;
     }
 
     try {
@@ -146,11 +144,11 @@ AuthSrv::setDbFile(const isc::data::ElementPtr config)
         sd->init(config);
 
         if (cur_datasrc_) {
-            impl_->data_sources.removeDataSrc(cur_datasrc_);
+            impl_->data_sources_.removeDataSrc(cur_datasrc_);
         }
 
         ConstDataSrcPtr csd = ConstDataSrcPtr(sd);
-        impl_->data_sources.addDataSrc(csd);
+        impl_->data_sources_.addDataSrc(csd);
         cur_datasrc_ = csd;
 
         return isc::config::createAnswer(0);
@@ -161,8 +159,7 @@ AuthSrv::setDbFile(const isc::data::ElementPtr config)
 }
 
 ElementPtr
-AuthSrv::updateConfig(isc::data::ElementPtr new_config)
-{
+AuthSrv::updateConfig(isc::data::ElementPtr new_config) {
     ElementPtr answer = isc::config::createAnswer(0);
     if (new_config) {
         // the ModuleCCSession has already checked if we have
