@@ -204,6 +204,14 @@ public:
     Status status() const { return status_; }
     void setStatus(Status s) { status_ = s; }
 
+    // Limit CNAME chains to 16 per query, to avoid loops
+    inline bool tooMany() {
+        if (++restarts_ > MAX_RESTARTS) {
+            return (true);
+        }
+        return (false);
+    }
+
 private:
     Status status_;
 
@@ -216,6 +224,9 @@ private:
 
     bool want_additional_;
     bool want_dnssec_;
+
+    static const int MAX_RESTARTS = 16;
+    int restarts_;
 };
 
 }
