@@ -22,10 +22,18 @@ class MasterFileError(Exception):
     pass
 
 #########################################################################
-# global variables
+# pop: remove the first word from a line
+# input: a line
+# returns: first word, rest of the line
 #########################################################################
-maxttl = 0x7fffffff
-defclass = 'IN'
+def pop(line):
+    list = line.split()
+    first, rest = '', ''
+    if len(list) != 0:
+        first = list[0]
+    if len(list) > 1:
+        rest = ' '.join(list[1:])
+    return first, rest
 
 #########################################################################
 # cleanup: removes excess content from zone file data, including comments
@@ -43,59 +51,6 @@ def cleanup(s):
     s = s.strip().expandtabs()
     s = decomment.sub('', s)
     return ' '.join(s.split())
-
-#########################################################################
-# records: generator function to return complete RRs from the zone file,
-# combining lines when necessary because of parentheses
-# input:
-#   descriptor for a zone master file (returned from openzone)
-# yields:
-#   complete RR
-#########################################################################
-def records(input):
-    record = []
-    complete = True
-    paren = 0
-    for line in input:
-        list = cleanup(line).split()
-        for word in list:
-            if paren == 0:
-                left, p, right = word.partition('(')
-                if p == '(':
-                    if left: record.append(left)
-                    if right: record.append(right)
-                    paren += 1
-                else:
-                    record.append(word)
-            else:
-                left, p, right = word.partition(')')
-                if p == ')':
-                    if left: record.append(left)
-                    if right: record.append(right)
-                    paren -= 1
-                else:
-                    record.append(word)
-
-        if paren == 1 or not record:
-            continue
-
-        ret = ' '.join(record)
-        record = []
-        yield ret
-
-#########################################################################
-# pop: remove the first word from a line
-# input: a line
-# returns: first word, rest of the line
-#########################################################################
-def pop(line):
-    list = line.split()
-    first, rest = '', ''
-    if len(list) != 0:
-        first = list[0]
-    if len(list) > 1:
-        rest = ' '.join(list[1:])
-    return first, rest
 
 #########################################################################
 # istype: check whether a string is a known RR type.
@@ -179,284 +134,325 @@ def parse_ttl(s):
     return ttl
 
 #########################################################################
-# directive: handle $ORIGIN, $TTL and $GENERATE directives
-# (currently only $ORIGIN and $TTL are implemented)
+# records: generator function to return complete RRs from the zone file,
+# combining lines when necessary because of parentheses
 # input:
-#   a line from a zone file
-# returns:
-#   a boolean indicating whether a directive was found
-# throws:
-#   MasterFileError
+#   descriptor for a zone master file (returned from openzone)
+# yields:
+#   complete RR
 #########################################################################
-def directive(s):
-    global origin, defttl, maxttl
-    first, more = pop(s)
-    second, more = pop(more)
-    if re.match('\$origin', first, re.I):
-        if not second or not isname(second):
-            raise MasterFileError('Invalid $ORIGIN')
-        if more:
-            raise MasterFileError('Invalid $ORIGIN')
-        if second == '.':
-            origin = ''
-        elif second[-1] == '.':
-            origin = second
+def records(input):
+    record = []
+    complete = True
+    paren = 0
+    for line in input:
+        list = cleanup(line).split()
+        for word in list:
+            if paren == 0:
+                left, p, right = word.partition('(')
+                if p == '(':
+                    if left: record.append(left)
+                    if right: record.append(right)
+                    paren += 1
+                else:
+                    record.append(word)
+            else:
+                left, p, right = word.partition(')')
+                if p == ')':
+                    if left: record.append(left)
+                    if right: record.append(right)
+                    paren -= 1
+                else:
+                    record.append(word)
+
+        if paren == 1 or not record:
+            continue
+
+        ret = ' '.join(record)
+        record = []
+        yield ret
+
+#########################################################################
+# define the MasterFile class for reading zone master files
+#########################################################################
+class MasterFile:
+    __defclass = 'IN'
+    __maxttl = 0x7fffffff
+    __defttl = ''
+    __zonefile = ''
+    __name = ''
+
+    def __init__(self, filename, initial_origin = ''):
+        if initial_origin == '.':
+            initial_origin = ''
+        self.__initial_origin = initial_origin
+        self.__origin = initial_origin
+        try:
+            self.__zonefile = open(filename, 'r')
+        except:
+            raise MasterFileError("Could not open " + filename)
+
+    def __del__(self):
+        if self.__zonefile:
+            self.__zonefile.close()
+
+    #########################################################################
+    # handle $ORIGIN, $TTL and $GENERATE directives
+    # (currently only $ORIGIN and $TTL are implemented)
+    # input:
+    #   a line from a zone file
+    # returns:
+    #   a boolean indicating whether a directive was found
+    # throws:
+    #   MasterFileError
+    #########################################################################
+    def __directive(self, s):
+        first, more = pop(s)
+        second, more = pop(more)
+        if re.match('\$origin', first, re.I):
+            if not second or not isname(second):
+                raise MasterFileError('Invalid $ORIGIN')
+            if more:
+                raise MasterFileError('Invalid $ORIGIN')
+            if second == '.':
+                self.__origin = ''
+            elif second[-1] == '.':
+                self.__origin = second
+            else:
+                self.__origin = second + '.' + self.__origin
+            return True
+        elif re.match('\$ttl', first, re.I):
+            if not second or not isttl(second):
+                raise MasterFileError('Invalid TTL: "' + second + '"')
+            if more:
+                raise MasterFileError('Invalid $TTL statement')
+            self.__defttl = parse_ttl(second)
+            if self.__defttl > self.__maxttl:
+                raise MasterFileError('TTL too high: ' + second)
+            return True
+        elif re.match('\$generate', first, re.I):
+            raise MasterFileError('$GENERATE not yet implemented')
         else:
-            origin = second + '.' + origin
-        return True
-    elif re.match('\$ttl', first, re.I):
-        if not second or not isttl(second):
-            raise MasterFileError('Invalid TTL: "' + second + '"')
-        if more:
-            raise MasterFileError('Invalid $TTL statement')
-        defttl = parse_ttl(second)
-        if defttl > maxttl:
-            raise MasterFileError('TTL too high: ' + second)
-        return True
-    elif re.match('\$generate', first, re.I):
-        raise MasterFileError('$GENERATE not yet implemented')
-    else:
-        return False
+            return False
 
-#########################################################################
-# include: handle $INCLUDE directives
-# input:
-#   a line from a zone file
-# returns:
-#   the parsed output of the included file, if any, or an empty array
-# throws:
-#   MasterFileError
-#########################################################################
-filename=re.compile('[\"\']*([^\'\"]+)[\"\']*')
-def include(s):
-    global origin, defttl, maxttl
-    first, rest = pop(s)
-    if re.match('\$include', first, re.I):
-        m = filename.match(rest)
-        if m:
-            file = m.group(1)
-            return file
+    #########################################################################
+    # handle $INCLUDE directives
+    # input:
+    #   a line from a zone file
+    # returns:
+    #   the parsed output of the included file, if any, or an empty array
+    # throws:
+    #   MasterFileError
+    #########################################################################
+    __filename = re.compile('[\"\']*([^\'\"]+)[\"\']*')
+    def __include(self, s):
+        first, rest = pop(s)
+        if re.match('\$include', first, re.I):
+            m = self.__filename.match(rest)
+            if m:
+                file = m.group(1)
+                return file
 
-#########################################################################
-# four: try parsing on the assumption that the RR type is specified in
-# field 4, and name, ttl and class are in fields 1-3
-# are all specified, with type in field 4
-# input:
-#   a record to parse, and the most recent name found in prior records
-# returns:
-#   empty list if parse failed, else name, ttl, class, type, rdata
-#########################################################################
-def four(record, curname):
-    ret = ''
-    list = record.split()
-    if len(list) <= 4:
+    #########################################################################
+    # try parsing an RR on the assumption that the type is specified in
+    # field 4, and name, ttl and class are in fields 1-3
+    # are all specified, with type in field 4
+    # input:
+    #   a record to parse, and the most recent name found in prior records
+    # returns:
+    #   empty list if parse failed, else name, ttl, class, type, rdata
+    #########################################################################
+    def __four(self, record, curname):
+        ret = ''
+        list = record.split()
+        if len(list) <= 4:
+            return ret
+        if istype(list[3]):
+            if isclass(list[2]) and isttl(list[1]) and isname(list[0]):
+                name, ttl, rrclass, rrtype = list[0:4]
+                rdata = ' '.join(list[4:])
+                ret = name, ttl, rrclass, rrtype, rdata
         return ret
-    if istype(list[3]):
-        if isclass(list[2]) and isttl(list[1]) and isname(list[0]):
-            name, ttl, rrclass, rrtype = list[0:4]
-            rdata = ' '.join(list[4:])
+
+    #########################################################################
+    # try parsing an RR on the assumption that the type is specified
+    # in field 3, and one of name, ttl, or class has been omitted
+    # input:
+    #   a record to parse, and the most recent name found in prior records
+    # returns:
+    #   empty list if parse failed, else name, ttl, class, type, rdata
+    #########################################################################
+    def __three(self, record, curname):
+        ret = ''
+        list = record.split()
+        if len(list) <= 3:
+            return ret
+        if istype(list[2]) and not istype(list[1]):
+            if isclass(list[1]) and not isttl(list[0]) and isname(list[0]):
+                rrclass = list[1]
+                ttl = self.__defttl
+                name = list[0]
+            elif not isclass(list[1]) and isttl(list[1]) and isname(list[0]):
+                rrclass = self.__defclass
+                ttl = parse_ttl(list[1])
+                name = list[0]
+            elif curname and isclass(list[1]) and isttl(list[0]):
+                rrclass = self.__defclass
+                ttl = parse_ttl(list[0])
+                name = curname
+            else:
+                return ret
+
+            rrtype = list[2]
+            rdata = ' '.join(list[3:])
             ret = name, ttl, rrclass, rrtype, rdata
-    return ret
-
-#########################################################################
-# three: try parsing on the assumption that the RR type is specified in
-# field 3, and one of name, ttl, or class has been omitted
-# input:
-#   a record to parse, and the most recent name found in prior records
-# returns:
-#   empty list if parse failed, else name, ttl, class, type, rdata
-#########################################################################
-def three(record, curname):
-    global defttl, defclass
-    ret = ''
-    list = record.split()
-    if len(list) <= 3:
         return ret
-    if istype(list[2]) and not istype(list[1]):
-        if isclass(list[1]) and not isttl(list[0]) and isname(list[0]):
-            rrclass = list[1]
-            ttl = defttl
-            name = list[0]
-        elif not isclass(list[1]) and isttl(list[1]) and isname(list[0]):
-            rrclass = defclass
-            ttl = parse_ttl(list[1])
-            name = list[0]
-        elif curname and isclass(list[1]) and isttl(list[0]):
-            rrclass = defclass
-            ttl = parse_ttl(list[0])
-            name = curname
-        else:
+
+    #########################################################################
+    # try parsing an RR on the assumption that the type is specified in
+    # field 2, and field 1 is either name or ttl
+    # input:
+    #   a record to parse, and the most recent name found in prior records
+    # returns:
+    #   empty list if parse failed, else name, ttl, class, type, rdata
+    # throws:
+    #   MasterFileError
+    #########################################################################
+    def __two(self, record, curname):
+        ret = ''
+        list = record.split()
+        if len(list) <= 2:
             return ret
 
-        rrtype = list[2]
-        rdata = ' '.join(list[3:])
-        ret = name, ttl, rrclass, rrtype, rdata
-    return ret
+        if istype(list[1]):
+            rrclass = self.__defclass
+            rrtype = list[1]
+            if list[0].lower() == 'rrsig':
+                name = curname
+                ttl = self.__defttl
+                rrtype = list[0]
+                rdata = ' '.join(list[1:])
+            elif isttl(list[0]):
+                ttl = parse_ttl(list[0])
+                name = curname
+                rdata = ' '.join(list[2:])
+            elif isname(list[0]):
+                name = list[0]
+                ttl = self.__defttl
+                rdata = ' '.join(list[2:])
+            else:
+                raise MasterFileError("Cannot parse RR: " + record)
 
-#########################################################################
-# two: try parsing on the assumption that the RR type is specified in
-# field 2, and field 1 is either name or ttl
-# input:
-#   a record to parse, and the most recent name found in prior records
-# returns:
-#   empty list if parse failed, else name, ttl, class, type, rdata
-# throws:
-#   MasterFileError
-#########################################################################
-def two(record, curname):
-    global defttl, defclass
-    ret = ''
-    list = record.split()
-    if len(list) <= 2:
+            ret = name, ttl, rrclass, rrtype, rdata
+
         return ret
 
-    if istype(list[1]):
-        rrclass = defclass
-        rrtype = list[1]
-        if list[0].lower() == 'rrsig':
-            name = curname
-            ttl = defttl
-            rrtype = list[0]
-            rdata = ' '.join(list[1:])
-        elif isttl(list[0]):
-            ttl = parse_ttl(list[0])
-            name = curname
-            rdata = ' '.join(list[2:])
-        elif isname(list[0]):
-            name = list[0]
-            ttl = defttl
-            rdata = ' '.join(list[2:])
-        else:
-            raise MasterFileError("Cannot parse RR: " + record)
+    #########################################################################
+    # zonedata: generator function to parse a zone master file and return
+    # each RR as a (name, ttl, type, class, rdata) tuple
+    #########################################################################
+    def zonedata(self):
+        name = ''
 
-        ret = name, ttl, rrclass, rrtype, rdata
+        for record in records(self.__zonefile):
+            if self.__directive(record):
+                continue
 
-    return ret
+            incl = self.__include(record)
+            if incl:
+                sub = MasterFile(incl, self.__origin)
+                for name, ttl, rrclass, rrtype, rdata in sub.zonedata():
+                    yield (name, ttl, rrclass, rrtype, rdata)
+                del sub
+                continue
 
+            # replace @ with origin
+            rl = record.split()
+            if rl[0] == '@':
+                rl[0] = self.__origin
+                if not self.__origin:
+                    rl[0] = '.'
+                record = ' '.join(rl)
 
-#########################################################################
-# reset: reset the state of the master file parser; use when parsing
-# more than one file
-#########################################################################
-def reset():
-    global defttl, origin
-    defttl = ''
-    origin = ''
+            result = self.__four(record, name)
 
-#########################################################################
-# openzone: open a zone master file, set initial origin, return descriptor
-#########################################################################
-def openzone(filename, initial_origin = ''):
-    global origin
-    try:
-        zf = open(filename, 'r')
-    except:
-        raise MasterFileError("Could not open " + filename)
-    if initial_origin == '.':
-        initial_origin = ''
-    origin = initial_origin
-    return zf
+            if not result:
+                result = self.__three(record, name)
 
-#########################################################################
-# zonedata: generator function to parse a zone master file and return
-# each RR as a (name, ttl, type, class, rdata) tuple
-#########################################################################
-def zonedata(zone):
-    global defttl, origin, defclass
+            if not result:
+                result = self.__two(record, name)
 
-    name = ''
+            if not result:
+                first, rdata = pop(record)
+                if istype(first):
+                    result = name, self.__defttl, self.__defclass, first, rdata
 
-    for record in records(zone):
-        if directive(record):
-            continue
+            if not result:
+                raise MasterFileError("Cannot parse RR: " + record)
 
-        incl = include(record)
-        if incl:
-            sub = openzone(incl, origin)
-            for name, ttl, rrclass, rrtype, rdata in zonedata(sub):
-                yield (name, ttl, rrclass, rrtype, rdata)
-            sub.close()
-            continue
+            name, ttl, rrclass, rrtype, rdata = result
+            if name[-1] != '.':
+                name += '.' + self.__origin
 
-        # replace @ with origin
-        rl = record.split()
-        if rl[0] == '@':
-            rl[0] = origin
-            if not origin:
-                rl[0] = '.'
-            record = ' '.join(rl)
+            if rrclass.lower() != 'in':
+                raise MasterFileError("CH and HS zones not supported")
 
-        result = four(record, name)
+            if not ttl:
+                raise MasterFileError("No TTL specified; zone rejected")
 
-        if not result:
-            result = three(record, name)
+            # add origin to rdata containing names, if necessary
+            if rrtype.lower() in ('cname', 'dname', 'ns', 'ptr'):
+                if not isname(rdata):
+                    raise MasterFileError("Invalid " + rrtype + ": " + rdata)
+                if rdata[-1] != '.':
+                    rdata += '.' + self.__origin
+            if rrtype.lower() == 'soa':
+                soa = rdata.split()
+                if len(soa) < 2 or not isname(soa[0]) or not isname(soa[1]):
+                    raise MasterFileError("Invalid " + rrtype + ": " + rdata)
+                if soa[0][-1] != '.':
+                    soa[0] += '.' + self.__origin
+                if soa[1][-1] != '.':
+                    soa[1] += '.' + self.__origin
+                rdata = ' '.join(soa)
+            if rrtype.lower() == 'mx':
+                mx = rdata.split()
+                if len(mx) != 2 or not isname(mx[1]):
+                    raise MasterFileError("Invalid " + rrtype + ": " + rdata)
+                if mx[1][-1] != '.':
+                    mx[1] += '.' + self.__origin
+                    rdata = ' '.join(mx)
 
-        if not result:
-            result = two(record, name)
+            yield (name, ttl, rrclass, rrtype, rdata)
 
-        if not result:
-            first, rdata = pop(record)
-            if istype(first):
-                result = name, defttl, defclass, first, rdata
+    #########################################################################
+    # zonename: scans zone data for an SOA record, returns its name, restores
+    # the zone file to its prior state
+    #########################################################################
+    def zonename(self):
+        if self.__name:
+            return self.__name
+        old_origin = self.__origin
+        self.__origin = self.__initial_origin
+        old_location = self.__zonefile.tell()
+        self.__zonefile.seek(0)
+        for name, ttl, rrclass, rrtype, rdata in self.zonedata():
+            if rrtype.lower() == 'soa':
+                break
+        self.__zonefile.seek(old_location)
+        self.__origin = old_origin
+        if rrtype.lower() != 'soa':
+            raise MasterFileError("No SOA found")
+        self.__name = name
+        return name
 
-        if not result:
-            raise MasterFileError("Cannot parse RR: " + record)
-
-        name, ttl, rrclass, rrtype, rdata = result
-        if name[-1] != '.':
-            name += '.' + origin
-
-        if rrclass.upper() != 'IN':
-            raise MasterFileError("CH and HS zones not supported")
-
-        if not ttl:
-            raise MasterFileError("No TTL specified; zone rejected")
-
-        # add origin to rdata containing names, if necessary
-        if rrtype.lower() in ('cname', 'dname', 'ns', 'ptr'):
-            if not isname(rdata):
-                raise MasterFileError("Invalid " + rrtype + ": " + rdata)
-            if rdata[-1] != '.':
-                rdata += '.' + origin
-        if rrtype.lower() == 'soa':
-            soa = rdata.split()
-            if len(soa) < 2 or not isname(soa[0]) or not isname(soa[1]):
-                raise MasterFileError("Invalid " + rrtype + ": " + rdata)
-            if soa[0][-1] != '.':
-                soa[0] += '.' + origin
-            if soa[1][-1] != '.':
-                soa[1] += '.' + origin
-            rdata = ' '.join(soa)
-        if rrtype.lower() == 'mx':
-            mx = rdata.split()
-            if len(mx) != 2 or not isname(mx[1]):
-                raise MasterFileError("Invalid " + rrtype + ": " + rdata)
-            if mx[1][-1] != '.':
-                mx[1] += '.' + origin
-                rdata = ' '.join(mx)
-
-        yield (name, ttl, rrclass, rrtype, rdata)
-
-#########################################################################
-# zonename: scans zone data for an SOA record, returns its name, restores
-# the zone file to its prior state
-#########################################################################
-def zonename(zone, initial_origin = ''):
-    global origin
-    old_origin = origin
-    if initial_origin == '.':
-        initial_origin = ''
-    origin = initial_origin
-    old_location = zone.tell()
-    zone.seek(0)
-    for name, ttl, rrclass, rrtype, rdata in zonedata(zone):
-        if rrtype.lower() == 'soa':
-            break
-    zone.seek(old_location)
-    origin = old_origin
-    if rrtype.lower() != 'soa':
-        raise MasterFileError("No SOA found")
-    return name
+    #########################################################################
+    # reset: reset the state of the master file
+    #########################################################################
+    def reset(self):
+        self.__zonefile.seek(0)
+        self.__origin = self.__initial_origin
+        self.__defttl = ''
 
 #########################################################################
 # main: used for testing; parse a zone file and print out each record
@@ -467,20 +463,17 @@ def main():
         file = sys.argv[1]
     except:
         file = 'testfile'
-    zf = openzone(file, '.')
-    print ('zone name: ' + zonename(zf))
+    master = MasterFile(file, '.')
+    print ('zone name: ' + master.zonename())
     print ('---------------------')
-    for name, ttl, rrclass, rrtype, rdata in zonedata(zf):
+    for name, ttl, rrclass, rrtype, rdata in master.zonedata():
         print ('name: ' + name)
         print ('ttl: ' + str(ttl))
         print ('rrclass: ' + rrclass)
         print ('rrtype: ' + rrtype)
         print ('rdata: ' + rdata)
         print ('---------------------')
-    zf.close()
-
-# initialize
-reset()
+    del master
 
 if __name__ == "__main__":
     main()
