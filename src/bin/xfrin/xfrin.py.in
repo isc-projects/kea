@@ -308,7 +308,8 @@ class Xfrin():
 
 
     def config_handler(self, new_config):
-        answer = create_answer(0, 'ok')
+        # TODO, process new config data
+        return create_answer(0)
 
 
     def _print_settings(self):
