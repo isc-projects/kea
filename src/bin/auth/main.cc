@@ -440,7 +440,7 @@ processMessageUDP(const int fd, Message& dns_message,
     if ((cc = recvfrom(fd, recvbuf, sizeof(recvbuf), 0, sa, &sa_len)) > 0) {
         InputBuffer buffer(recvbuf, cc);
         if (auth_server->processMessage(buffer, dns_message, response_renderer,
-                                        true) == 0) {
+                                        true, verbose_mode) == 0) {
             sendto(fd, response_renderer.getData(),
                    response_renderer.getLength(), 0, sa, sa_len);
         }
@@ -486,7 +486,7 @@ processMessageTCP(const int fd, Message& dns_message,
     dns_message.clear(Message::PARSE);
     response_renderer.clear();
     if (auth_server->processMessage(buffer, dns_message, response_renderer,
-                                    false) == 0) {
+                                    false, verbose_mode) == 0) {
         size = response_renderer.getLength();
         size_n = htons(size);
         if (send(ts, &size_n, 2, 0) == 2) {
