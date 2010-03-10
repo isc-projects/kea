@@ -1,10 +1,5 @@
 #!@PYTHON@
 
-import sys; sys.path.append ('@@PYTHONPATH@@')
-import os
-import time
-import random
-
 """\
 This file implements the Boss of Bind (BoB, or bob) program.
 
@@ -26,6 +21,9 @@ signal handling outside of that class, in the code running for
 __main__.
 """
 
+import sys; sys.path.append ('@@PYTHONPATH@@')
+import os
+
 # If B10_FROM_SOURCE is set in the environment, we use data files
 # from a directory relative to that, otherwise we use the ones
 # installed on the system
@@ -40,19 +38,18 @@ else:
 
 import subprocess
 import signal
-import os
 import re
 import errno
 import time
 import select
 import pprint
+import random
 from optparse import OptionParser, OptionValueError
 
 import isc.cc
-import isc
 
 # This is the version that gets displayed to the user.
-__version__ = "v20100309"
+__version__ = "v20100310"
 
 # Nothing at all to do with the 1990-12-10 article here:
 # http://www.subgenius.com/subg-digest/v2/0056.html
