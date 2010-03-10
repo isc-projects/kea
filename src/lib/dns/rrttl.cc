@@ -34,7 +34,7 @@ RRTTL::RRTTL(const string& ttlstr)
     // Some systems (at least gcc-4.4) flow negative values over into
     // unsigned integer, where older systems failed to parse. We want
     // that failure here, so we extract into int64 and check the value
-    uint64_t val;
+    int64_t val;
 
     istringstream iss(ttlstr);
     iss >> dec >> val;
