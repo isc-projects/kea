@@ -301,7 +301,7 @@ public:
     /// \param pos The position in the wire format name data to be returned.
     /// \return An unsigned 8-bit integer corresponding to the name data
     /// at the position of \c pos.
-    const uint8_t at(size_t pos) const
+    uint8_t at(size_t pos) const
     {
         if (pos >= length_) {
             isc_throw(OutOfRange, "Out of range access in Name::at()");
