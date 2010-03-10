@@ -128,6 +128,10 @@ chaseCname(Query& q, QueryTaskPtr task, RRsetPtr rrset)
         return;
     }
 
+    if (q.tooMany()) {
+        return;
+    }
+
     q.tasks().push(QueryTaskPtr(
                        new QueryTask(dynamic_cast<const generic::CNAME&>
                                      (it->getCurrent()).getCname(),

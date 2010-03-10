@@ -102,6 +102,7 @@ Query::Query(Message& m, bool dnssec) :
     qname_ = &question->getName();
     qclass_ = &question->getClass();
     qtype_ = &question->getType();
+    restarts_ = 0;
 
     querytasks_.push(QueryTaskPtr(new QueryTask(*qname_, *qclass_, *qtype_,
                                                 Section::ANSWER())));

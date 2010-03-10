@@ -473,9 +473,8 @@ TEST_F(DataSrcTest, DS) {
 }
 
 TEST_F(DataSrcTest, CNAMELoop) {
-    // This should not make the process hang
-    //createAndProcessQuery(msg, Name("loop1.example.com"), RRClass::IN(),
-    //                    RRType::A());
+    createAndProcessQuery(msg, Name("loop1.example.com"), RRClass::IN(),
+                          RRType::A());
 }
 
 TEST_F(DataSrcTest, Nsec3Hash) {
