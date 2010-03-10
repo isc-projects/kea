@@ -73,9 +73,13 @@ const char* DNSPORT = "5300";
  * class itself? */
 namespace {
     AuthSrv *auth_server;
+#ifdef HAVE_BOOSTLIB
     // TODO: this should be a property of AuthSrv, and AuthSrv needs
     // a stop() method (so the shutdown command can be handled)
     boost::asio::io_service io_service_;
+#else
+    bool running;
+#endif
 }
 
 static ElementPtr
@@ -92,7 +96,11 @@ my_command_handler(const string& command, const ElementPtr args) {
         /* let's add that message to our answer as well */
         answer->get("result")->add(args);
     } else if (command == "shutdown") {
+#ifdef HAVE_BOOSTLIB
         io_service_.stop();
+#else
+        running = false;
+#endif
     }
     
     return answer;
@@ -555,9 +563,11 @@ run_server(const char* port, const bool use_ipv4, const bool use_ipv6,
     OutputBuffer resonse_buffer(0);
     MessageRenderer response_renderer(resonse_buffer);
 
-    while (true) {
+    running = true;
+    while (running) {
         fd_set fds = fds_base;
         FD_SET(ss, &fds);
+        ++nfds;
 
         int n = select(nfds, &fds, NULL, NULL, NULL);
         if (n < 0) {
