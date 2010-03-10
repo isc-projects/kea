@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <errno.h>
 
+#include <cassert>
 #include <iostream>
 
 #include <boost/foreach.hpp>
@@ -206,34 +207,33 @@ private:
 class TCPServer
 {
 private:
-    TCPClient* listening;
 public:
     TCPServer(io_service& io_service, int af, short port) :
         io_service_(io_service),
         acceptor_(io_service,
-                  tcp::endpoint(af == AF_INET6 ? tcp::v6() : tcp::v4(), port))
+                  tcp::endpoint(af == AF_INET6 ? tcp::v6() : tcp::v4(), port)),
+        listening_(new TCPClient(io_service_))
     {
-        TCPClient* new_client = new TCPClient(io_service_);
         // XXX: isn't the following exception free?  Need to check it.
-        acceptor_.async_accept(new_client->getSocket(),
+        acceptor_.async_accept(listening_->getSocket(),
                                boost::bind(&TCPServer::handleAccept, this,
-                                           new_client, placeholders::error));
-        listening = new_client;
+                                           listening_, placeholders::error));
     }
 
-    ~TCPServer() { delete listening; }
+    ~TCPServer() { delete listening_; }
 
     void handleAccept(TCPClient* new_client,
                       const boost::system::error_code& error)
     {
         if (!error) {
+            assert(new_client == listening_);
             new_client->start();
-            new_client = new TCPClient(io_service_);
+            listening_ = new TCPClient(io_service_);
             acceptor_.async_accept(new_client->getSocket(),
                                    boost::bind(&TCPServer::handleAccept,
-                                               this, new_client,
+                                               this, listening_,
                                                placeholders::error));
-            listening = new_client;
+            listening_ = new_client;
         } else {
             delete new_client;
         }
@@ -242,6 +242,7 @@ public:
 private:
     io_service& io_service_;
     tcp::acceptor acceptor_;
+    TCPClient* listening_;
 };
 
 class UDPServer {
