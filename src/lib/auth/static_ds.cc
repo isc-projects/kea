@@ -23,7 +23,7 @@
 #include <dns/rrttl.h>
 
 #include "data_source.h"
-#include "data_source_static.h"
+#include "static_ds.h"
 
 using namespace std;
 using namespace isc::dns;

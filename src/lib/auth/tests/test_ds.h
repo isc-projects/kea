@@ -19,7 +19,7 @@
 
 #include <gtest/gtest.h>
 
-#include "data_source.h"
+#include <auth/data_source.h>
 
 namespace isc {
 

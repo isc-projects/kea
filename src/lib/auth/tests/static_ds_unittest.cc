@@ -29,9 +29,9 @@
 #include <dns/rrsetlist.h>
 #include <cc/data.h>
 
-#include "query.h"
-#include "data_source.h"
-#include "data_source_static.h"
+#include <auth/query.h>
+#include <auth/data_source.h>
+#include <auth/static_ds.h>
 
 using namespace std;
 using namespace isc::dns;
