@@ -60,8 +60,9 @@ else:
     DATAROOTDIR = "@datarootdir@"
     SPECFILE_PATH = "@datadir@/@PACKAGE@".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
 SPECFILE_LOCATION = SPECFILE_PATH + "/cmdctl.spec"
-USER_INFO_FILE = SPECFILE_PATH + "/passwd.csv"
-CERTIFICATE_FILE = SPECFILE_PATH + "/b10-cmdctl.pem"
+USER_INFO_FILE = SPECFILE_PATH + "/cmdctl-accounts.csv"
+PRIVATE_KEY_FILE = SPECFILE_PATH + "/cmdctl-keyfile.pem"
+CERTIFICATE_FILE = SPECFILE_PATH + "/cmdctl-certfile.pem"
         
 class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     '''https connection request handler.
@@ -357,7 +358,7 @@ class SecureHTTPServer(http.server.HTTPServer):
             connstream = ssl.wrap_socket(newsocket,
                                      server_side = True,
                                      certfile = CERTIFICATE_FILE,
-                                     keyfile = CERTIFICATE_FILE,
+                                     keyfile = PRIVATE_KEY_FILE,
                                      ssl_version = ssl.PROTOCOL_SSLv23)
             return (connstream, fromaddr)
         except ssl.SSLError as e :
