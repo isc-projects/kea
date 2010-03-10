@@ -33,7 +33,7 @@
 
 #include <auth/query.h>
 #include "unittest_util.h"
-#include "test_ds.h"
+#include "test_datasrc.h"
 
 using isc::UnitTestUtil;
 using namespace std;

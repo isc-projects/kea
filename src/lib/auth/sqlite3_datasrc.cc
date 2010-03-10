@@ -17,7 +17,7 @@
 #include <string>
 #include <sstream>
 
-#include "sqlite3_ds.h"
+#include "sqlite3_datasrc.h"
 
 #include <dns/rrttl.h>
 #include <dns/rdata.h>
