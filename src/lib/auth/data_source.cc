@@ -482,6 +482,12 @@ DataSrc::doQuery(Query& q)
         QueryTaskPtr task = q.tasks().front();
         q.tasks().pop();
 
+        // Can't query directly for RRSIG.
+        if (task->qtype == RRType::RRSIG()) {
+            m.setRcode(Rcode::REFUSED());
+            return;
+        }
+
         // These task types should never be on the task queue.
         if (task->op == QueryTask::SIMPLE_QUERY ||
             task->op == QueryTask::REF_QUERY) {
