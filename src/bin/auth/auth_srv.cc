@@ -64,6 +64,10 @@ public:
     AuthSrvImpl();
     std::string db_file_;
     isc::auth::MetaDataSrc data_sources_;
+    /// We keep a pointer to the currently running sqlite datasource
+    /// so that we can specifically remove that one should the database
+    /// file change
+    isc::auth::ConstDataSrcPtr cur_datasrc_;
 };
 
 AuthSrvImpl::AuthSrvImpl() {
@@ -74,7 +78,7 @@ AuthSrv::AuthSrv() {
     // set empty (sqlite) data source, once ccsession is up
     // the datasource will be set by the configuration setting
     // (or the default one if none is set)
-    cur_datasrc_ = ConstDataSrcPtr();
+    impl_->cur_datasrc_ = ConstDataSrcPtr();
     // add static data source
     impl_->data_sources_.addDataSrc(ConstDataSrcPtr(new StaticDataSrc));
 }
@@ -143,13 +147,13 @@ AuthSrv::setDbFile(const isc::data::ElementPtr config) {
         Sqlite3DataSrc* sd = new Sqlite3DataSrc;
         sd->init(config);
 
-        if (cur_datasrc_) {
-            impl_->data_sources_.removeDataSrc(cur_datasrc_);
+        if (impl_->cur_datasrc_) {
+            impl_->data_sources_.removeDataSrc(impl_->cur_datasrc_);
         }
 
         ConstDataSrcPtr csd = ConstDataSrcPtr(sd);
         impl_->data_sources_.addDataSrc(csd);
-        cur_datasrc_ = csd;
+        impl_->cur_datasrc_ = csd;
 
         return isc::config::createAnswer(0);
     } catch (isc::Exception error) {
@@ -170,7 +174,7 @@ AuthSrv::updateConfig(isc::data::ElementPtr new_config) {
     }
 
     // if we have no sqlite3 data source, use the default
-    if (!cur_datasrc_) {
+    if (impl_->cur_datasrc_ == NULL) {
         setDbFile(ElementPtr());
     }
     
