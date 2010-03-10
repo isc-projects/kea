@@ -23,7 +23,7 @@ AM_PATH_PYTHON([3.1])
 
 # default compiler warning settings
 if test "X$GCC" = "Xyes"; then
-CXXFLAGS="$CXXFLAGS -g -Wall -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
+CXXFLAGS="$CXXFLAGS -g -Wall -Wextra -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
 fi
 
 # produce PIC unless we disable shared libraries. need this for python bindings.
