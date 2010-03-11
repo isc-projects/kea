@@ -5,7 +5,7 @@ CLEANFILES = *.gcno *.gcda
 TESTS =
 if HAVE_GTEST
 TESTS += run_unittests
-run_unittests_SOURCES = ccsession_unittests.cc module_spec_unittests.cc config_data_unittests.cc run_unittests.cc
+run_unittests_SOURCES = module_spec_unittests.cc config_data_unittests.cc run_unittests.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 run_unittests_LDADD =  $(top_builddir)/src/lib/config/libcfgclient.la $(GTEST_LDADD)
