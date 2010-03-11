@@ -252,6 +252,14 @@ TEST_F(DataSrcTest, Wildcard) {
     EXPECT_TRUE(it->isLast());
 }
 
+TEST_F(DataSrcTest, WildcardNodata) {
+
+    // Check that a query for a data type not covered by the wildcard
+    // returns NOERROR
+    readAndProcessQuery(msg, "testdata/q_wild2");
+    headerCheck(msg, Rcode::NOERROR(), true, true, true, 0, 2, 0);
+}
+
 TEST_F(DataSrcTest, AuthDelegation) {
     readAndProcessQuery(msg, "testdata/q_sql1");
 
