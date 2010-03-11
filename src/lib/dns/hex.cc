@@ -55,24 +55,45 @@ encodeHex(const std::vector<uint8_t>& binary)
 void
 decodeHex(const std::string& hex, std::vector<uint8_t>& result)
 {
+    ostringstream comp;
+
+    // compress input by removing whitespace
+    size_t len = hex.length();
+    for (int i = 0; i < len; i++) {
+        char c = hex.at(i);
+        if (c == ' ' || c == '\t' || c == '\r' || c == '\n') {
+            continue;
+        }
+        comp << c;
+    }
+
+    istringstream iss(comp.str());
     result.clear();
-    std::istringstream iss(hex);
     char c1, c2;
     uint8_t n;
 
     iss.width(1);
-    if ((hex.size() % 2) == 1) {
+    if ((comp.str().length() % 2) == 1) {
+        c2 = '0';
         iss >> c2;
+
         const char* pos = strchr(hexdigits, toupper(c2));
         if (!pos) {
             isc_throw (BadHexString, "Invalid hex digit");
         }
 
-        n = pos - hexdigits;
-        result.push_back(n);
+        if (!iss.eof() && !iss.bad() && !iss.fail()) {
+            n = pos - hexdigits;
+            result.push_back(n);
+        }
     }
     while (!iss.eof()) {
+        c1 = c2 = '0';
         iss >> c1 >> c2;;
+
+        if (iss.eof() || iss.fail() || iss.bad()) {
+            break;
+        }
 
         const char* pos1 = strchr(hexdigits, toupper(c1));
         const char* pos2 = strchr(hexdigits, toupper(c2));
@@ -82,10 +103,7 @@ decodeHex(const std::string& hex, std::vector<uint8_t>& result)
 
         n = (pos1 - hexdigits) << 4;
         n |= (pos2 - hexdigits);
-
-        if (!iss.bad() && !iss.fail()) {
-            result.push_back(n);
-        }
+        result.push_back(n);
     }
 }
 
