@@ -23,7 +23,7 @@ libdns_la_SOURCES += base32.h base32.cc
 libdns_la_SOURCES += base64.h base64.cc
 libdns_la_SOURCES += sha1.h sha1.cc
 libdns_la_SOURCES += tsig.h tsig.cc
-libdns_la_SOURCES += dnstime.h dnstime.cc
+libdns_la_SOURCES += dnssectime.h dnssectime.cc
 libdns_la_SOURCES += hex.h hex.cc
 
 rrclass.h: rrclass-placeholder.h

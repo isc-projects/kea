@@ -24,7 +24,7 @@
 
 #include "base64.h"
 #include "buffer.h"
-#include "dnstime.h"
+#include "dnssectime.h"
 #include "messagerenderer.h"
 #include "name.h"
 #include "rrtype.h"
@@ -96,8 +96,8 @@ RRSIG::RRSIG(const string& rrsig_str) :
         isc_throw(InvalidRdataText, "RRSIG labels out of range");
     }
 
-    uint32_t timeexpire = DNSSECTimeFromText(expire_txt);
-    uint32_t timeinception = DNSSECTimeFromText(inception_txt);
+    uint32_t timeexpire = timeFromText(expire_txt);
+    uint32_t timeinception = timeFromText(inception_txt);
 
     vector<uint8_t> signature;
     decodeBase64(signaturebuf.str(), signature);
@@ -164,8 +164,8 @@ RRSIG::~RRSIG()
 string
 RRSIG::toText() const
 {
-    string expire = DNSSECTimeToText(impl_->timeexpire_);
-    string inception = DNSSECTimeToText(impl_->timeinception_);
+    string expire = timeToText(impl_->timeexpire_);
+    string inception = timeToText(impl_->timeinception_);
 
     return (impl_->covered_.toText() +
             " " + boost::lexical_cast<string>(static_cast<int>(impl_->algorithm_))

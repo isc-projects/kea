@@ -16,7 +16,7 @@
 
 #include <dns/base64.h>
 #include <dns/buffer.h>
-#include <dns/dnstime.h>
+#include <dns/dnssectime.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>

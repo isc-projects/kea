@@ -14,8 +14,8 @@
 
 // $Id$
 
-#ifndef __DNSTIME_H
-#define __DNSTIME_H 1
+#ifndef __DNSSECTIME_H
+#define __DNSSECTIME_H 1
 
 #include <sys/types.h>
 #include <stdint.h>
@@ -43,14 +43,14 @@ public:
 };
 
 time_t
-DNSSECTimeFromText(const std::string& time_txt);
+timeFromText(const std::string& time_txt);
 
 std::string
-DNSSECTimeToText(const time_t timeval);
+timeToText(const time_t timeval);
 }
 }
 
-#endif  // __DNSTIME_H
+#endif  // __DNSSECTIME_H
 
 // Local Variables: 
 // mode: c++
