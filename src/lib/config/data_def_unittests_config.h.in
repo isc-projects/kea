@@ -1,1 +1,0 @@
-#define TEST_DATA_PATH "@abs_srcdir@/testdata"

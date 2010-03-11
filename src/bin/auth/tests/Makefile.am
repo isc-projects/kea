@@ -16,7 +16,7 @@ run_unittests_LDADD = $(GTEST_LDADD)
 run_unittests_LDADD += $(SQLITE_LIBS)
 run_unittests_LDADD +=  $(top_builddir)/src/lib/auth/.libs/libauth.a
 run_unittests_LDADD +=  $(top_builddir)/src/lib/dns/.libs/libdns.a
-run_unittests_LDADD += $(top_builddir)/src/lib/config/libcfgclient.a
+run_unittests_LDADD += $(top_builddir)/src/lib/config/.libs/libcfgclient.a
 run_unittests_LDADD += $(top_builddir)/src/lib/cc/libcc.a
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/.libs/libexceptions.a
 if HAVE_BOOSTLIB
