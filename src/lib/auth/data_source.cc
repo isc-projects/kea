@@ -87,8 +87,7 @@ getAdditional(Query& q, RRsetPtr rrset) {
 // Synthesize a CNAME answer, for the benefit of clients that don't
 // understand DNAME
 static void
-synthesizeCname(Query& q, QueryTaskPtr task, RRsetPtr rrset, RRsetList& target)
-{
+synthesizeCname(QueryTaskPtr task, RRsetPtr rrset, RRsetList& target) {
     RdataIteratorPtr it = rrset->getRdataIterator();
 
     // More than one DNAME RR in the RRset is illegal, so we only have
@@ -187,8 +186,8 @@ copyAuth(Query& q, RRsetList& auth)
 
 // Query for referrals (i.e., NS/DS or DNAME) at a given name
 static inline bool
-refQuery(const Name& name, Query& q, QueryTaskPtr task,
-         const DataSrc* ds, const Name* zonename, RRsetList& target)
+refQuery(const Name& name, Query& q, const DataSrc* ds, const Name* zonename,
+         RRsetList& target)
 {
     QueryTask newtask(name, q.qclass(), QueryTask::REF_QUERY);
 
@@ -218,7 +217,7 @@ hasDelegation(const DataSrc* ds, const Name* zonename, Query& q,
         RRsetList ref;
         for (int i = diff; i > 1; --i) {
             const Name sub(task->qname.split(i - 1, nlen - i));
-            if (refQuery(sub, q, task, ds, zonename, ref)) {
+            if (refQuery(sub, q, ds, zonename, ref)) {
                 found = true;
                 break;
             }
@@ -237,7 +236,7 @@ hasDelegation(const DataSrc* ds, const Name* zonename, Query& q,
                 RRsetList syn;
                 q.message().addRRset(Section::ANSWER(), r, q.wantDnssec());
                 q.message().setHeaderFlag(MessageFlag::AA());
-                synthesizeCname(q, task, r, syn);
+                synthesizeCname(task, r, syn);
                 if (syn.size() == 1) {
                     q.message().addRRset(Section::ANSWER(),
                                          syn[RRType::CNAME()],
@@ -461,7 +460,7 @@ tryWildcard(Query& q, QueryTaskPtr task, const DataSrc* ds,
             }
 
             RRsetList auth;
-            if (! refQuery(*zonename, q, task, ds, zonename, auth)) {
+            if (! refQuery(*zonename, q, ds, zonename, auth)) {
                 return (DataSrc::ERROR);
             }
 
@@ -574,8 +573,7 @@ DataSrc::doQuery(Query& q)
                     // Add the NS records for the enclosing zone to
                     // the authority section.
                     RRsetList auth;
-                    if (! refQuery(*zonename, q, task, datasource,
-                                   zonename, auth)) {
+                    if (!refQuery(*zonename, q, datasource, zonename, auth)) {
                         m.setRcode(Rcode::SERVFAIL());
                         return;
                     }
@@ -617,8 +615,7 @@ DataSrc::doQuery(Query& q)
             if (task->state == QueryTask::GETANSWER) {
                 RRsetList auth;
                 m.clearHeaderFlag(MessageFlag::AA());
-                if (!refQuery(task->qname, q, task, datasource, zonename,
-                              auth)) {
+                if (!refQuery(task->qname, q, datasource, zonename, auth)) {
                     m.setRcode(Rcode::SERVFAIL());
                     return;
                 }
