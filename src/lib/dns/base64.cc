@@ -14,6 +14,8 @@
 
 // $Id$
 
+#include "config.h"
+
 #include <stdint.h>
 #include <cassert>
 #include <iterator>
