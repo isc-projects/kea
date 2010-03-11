@@ -16,7 +16,7 @@
 
 #include <gtest/gtest.h>
 
-#include <module_spec.h>
+#include <config/module_spec.h>
 
 #include <fstream>
 

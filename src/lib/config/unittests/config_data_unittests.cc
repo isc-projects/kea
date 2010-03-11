@@ -17,8 +17,8 @@
 
 #include <gtest/gtest.h>
 
-#include "config_data.h"
 #include "data_def_unittests_config.h"
+#include <config/config_data.h>
 
 #include <iostream>
 
