@@ -356,7 +356,7 @@ class BoB:
                                  (proc_info.name, proc_info.pid))
             try:
                 proc_info.process.kill()
-            except OSError as o:
+            except OSError:
                 # ignore these (usually ESRCH because the child
                 # finally exited)
                 pass
