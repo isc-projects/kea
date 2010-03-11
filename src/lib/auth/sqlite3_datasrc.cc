@@ -123,9 +123,9 @@ importSqlite3Rows(sqlite3_stmt* query, const Name& qname, const RRClass& qclass,
         // found an NS; we need to inform the caller that this might be a
         // referral, but we do not return the NS RRset to the caller
         // unless asked for it.
-        if (base_rrtype == RRType::NS() && !qtype_is_any) {
+        if (base_rrtype == RRType::NS()) {
             flags |= DataSrc::REFERRAL;
-            if (qtype != RRType::NS()) {
+            if (!qtype_is_any && qtype != RRType::NS()) {
                 rc = sqlite3_step(query);
                 continue;
             }
