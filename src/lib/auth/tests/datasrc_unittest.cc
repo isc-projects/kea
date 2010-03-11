@@ -482,7 +482,7 @@ TEST_F(DataSrcTest, NSDelegation) {
     EXPECT_TRUE(it->isLast());
 }
 
-TEST_F(DataSrcTest, ANYDelegation) {
+TEST_F(DataSrcTest, ANYZonecut) {
     // An ANY query at a zone cut should behave the same as any other
     // delegation
     readAndProcessQuery(msg, "testdata/q_subzone_any");
@@ -510,6 +510,34 @@ TEST_F(DataSrcTest, ANYDelegation) {
     it = rrset->getRdataIterator();
     it->first();
     EXPECT_EQ("192.168.3.1", it->getCurrent().toText());
+    it->next();
+    EXPECT_TRUE(it->isLast());
+}
+
+TEST_F(DataSrcTest, NSECZonecut) {
+    readAndProcessQuery(msg, "testdata/q_subzone_nsec");
+
+    headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 4, 6);
+
+    RRsetIterator rit = msg.beginSection(Section::ANSWER());
+    RRsetPtr rrset = *rit;
+    EXPECT_EQ(Name("subzone.example.com."), rrset->getName());
+    EXPECT_EQ(RRType::NSEC(), rrset->getType());
+    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+
+    rit = msg.beginSection(Section::AUTHORITY());
+    rrset = *rit;
+    EXPECT_EQ(Name("example.com"), rrset->getName());
+    EXPECT_EQ(RRType::NS(), rrset->getType());
+    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+
+    RdataIteratorPtr it = rrset->getRdataIterator();
+    it->first();
+    EXPECT_EQ("dns01.example.com.", it->getCurrent().toText());
+    it->next();
+    EXPECT_EQ("dns02.example.com.", it->getCurrent().toText());
+    it->next();
+    EXPECT_EQ("dns03.example.com.", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
 }

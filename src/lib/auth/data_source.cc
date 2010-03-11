@@ -537,10 +537,11 @@ DataSrc::doQuery(Query& q)
 
             // Query found a referral; let's find out if that was expected--
             // i.e., if an NS was at the zone apex, or if we were querying
-            // specifically for the DS or DNAME record.
+            // specifically for the DS, NSEC, or DNAME record.
             if ((task->flags & REFERRAL) != 0 &&
                 (zonename->getLabelCount() == task->qname.getLabelCount() ||
                  task->qtype == RRType::DS() ||
+                 task->qtype == RRType::NSEC() ||
                  task->qtype == RRType::DNAME())) {
                 task->flags &= ~REFERRAL;
             }
