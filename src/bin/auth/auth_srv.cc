@@ -93,14 +93,32 @@ AuthSrv::~AuthSrv() {
     delete impl_;
 }
 
-static void
+namespace {
+void
 makeErrorMessage(Message& message, MessageRenderer& renderer,
                  const Rcode& rcode)
 {
-    message.makeResponse();
+    // extract the parameters that should be kept.
+    // XXX: with the current implementation, it's not easy to set EDNS0
+    // depending on whether the query had it.  So we'll simply omit it.
+    const qid_t qid = message.getQid();
+    const bool rd = message.getHeaderFlag(MessageFlag::RD());
+    const bool cd = message.getHeaderFlag(MessageFlag::CD());
+    const Opcode& opcode = message.getOpcode();
+
+    message.clear(Message::RENDER);
+    message.setQid(qid);
+    message.setOpcode(opcode);
+    message.setHeaderFlag(MessageFlag::QR());
+    if (rd) {
+        message.setHeaderFlag(MessageFlag::RD());
+    }
+    if (cd) {
+        message.setHeaderFlag(MessageFlag::CD());
+    }
     message.setRcode(rcode);
-    message.setUDPSize(4096);   // XXX: hardcoding
     message.toWire(renderer);
+}
 }
 
 int
