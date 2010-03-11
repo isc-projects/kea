@@ -207,7 +207,7 @@ TEST_F(DataSrcTest, NxZone) {
 }
 
 TEST_F(DataSrcTest, Wildcard) {
-    readAndProcessQuery(msg, "testdata/q_wild");
+    readAndProcessQuery(msg, "testdata/q_wild_a");
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 4, 6);
 
@@ -256,7 +256,7 @@ TEST_F(DataSrcTest, WildcardNodata) {
 
     // Check that a query for a data type not covered by the wildcard
     // returns NOERROR
-    readAndProcessQuery(msg, "testdata/q_wild2");
+    readAndProcessQuery(msg, "testdata/q_wild_aaaa");
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 0, 2, 0);
 }
 
@@ -452,6 +452,35 @@ TEST_F(DataSrcTest, Delegation) {
     EXPECT_TRUE(it->isLast());
 }
 
+TEST_F(DataSrcTest, NSDelegation) {
+    readAndProcessQuery(msg, "testdata/q_subzone_ns");
+
+    headerCheck(msg, Rcode::NOERROR(), true, false, true, 0, 5, 2);
+
+    RRsetIterator rit = msg.beginSection(Section::AUTHORITY());
+    RRsetPtr rrset = *rit;
+    EXPECT_EQ(Name("subzone.example.com."), rrset->getName());
+    EXPECT_EQ(RRType::NS(), rrset->getType());
+    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+
+    RdataIteratorPtr it = rrset->getRdataIterator();
+    it->first();
+    EXPECT_EQ("ns1.subzone.example.com.", it->getCurrent().toText());
+    it->next();
+    EXPECT_FALSE(it->isLast());
+
+    rit = msg.beginSection(Section::ADDITIONAL());
+    rrset = *rit;
+    EXPECT_EQ(Name("ns1.subzone.example.com"), rrset->getName());
+    EXPECT_EQ(RRType::A(), rrset->getType());
+    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+
+    it = rrset->getRdataIterator();
+    it->first();
+    EXPECT_EQ("192.168.3.1", it->getCurrent().toText());
+    it->next();
+    EXPECT_TRUE(it->isLast());
+}
 TEST_F(DataSrcTest, DS) {
     readAndProcessQuery(msg, "testdata/q_subzone_ds");
 
