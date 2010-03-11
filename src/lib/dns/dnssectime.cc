@@ -33,7 +33,7 @@
 #include <stdio.h>
 #include <time.h>
 
-#include "dnstime.h"
+#include "dnssectime.h"
 
 using namespace std;
 
@@ -45,9 +45,15 @@ enum {
 };
 
 string
-DNSSECTimeToText(const time_t timeval)
+timeToText(const time_t timeval)
 {
     struct tm *t = gmtime(&timeval);
+
+    // gmtime() will keep most values within range, but it can
+    // produce a five-digit year; check for this.
+    if ((t->tm_year + 1900) > 9999) {
+        isc_throw(InvalidTime, "Time value out of range: year > 9999");
+    }
 
     ostringstream oss;
     oss << setfill('0')
@@ -78,17 +84,25 @@ isLeap(int y) {
 }
 
 time_t
-DNSSECTimeFromText(const string& time_txt)
+timeFromText(const string& time_txt)
 {
     time_t timeval;
+    ostringstream oss;
 
     // first try reading YYYYMMDDHHmmSS format
     int year, month, day, hour, minute, second;
+
+    for (int i = 0; i < time_txt.length(); ++i) {
+        if (!isdigit(time_txt.at(i))) {
+            oss << "Couldn't convert non-numeric time value: " << time_txt;
+            isc_throw(InvalidTime, oss.str().c_str());
+        }
+    }
+
     if (time_txt.length() != DATE_LEN ||
         sscanf(time_txt.c_str(), "%4d%2d%2d%2d%2d%2d",
                &year, &month, &day, &hour, &minute, &second) != 6)
     {
-        ostringstream oss;
         oss << "Couldn't convert time value: " << time_txt;
         isc_throw(InvalidTime, oss.str().c_str());
     }
