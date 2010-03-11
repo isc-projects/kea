@@ -72,6 +72,11 @@ static const string dnskey2_data(" AwEAAe5WFbxdCPq2jZrZhlMj7oJdff3W7syJ"
                                  "R9Nsl/7fdRmSznwtcSDgLXBoFEYmw6p86Acv"
                                  "RyoYNcL1SXjaKVLG5jyU3UR+LcGZT5t/0xGf"
                                  "oIK/aKwENrsjcKZZj660b1M=");
+static const string nsec3_signature("gNIVj4T8t51fEU6kOPpvK7HOGBFZGbalN5ZK"
+                                    "mInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/L"
+                                    "is2M6yUWHyXbNbj/QqwqgadG5dhxTArfuR02"
+                                    "xP600x0fWX8LXzW4yLMdKVxGbzYT+vvGz71o"
+                                    "8gHSY5vYTtothcZQa4BMKhmGQEk=");
 
 static const Name zone_name("example.com");
 static const Name nomatch_name("example.org");
@@ -150,9 +155,9 @@ protected:
                                  "20100220084536 12447 sql1.example.com. "
                                  "FAKEFAKEFAKEFAKE");
         nsec3_data.push_back("1 0 10 FEEDABEE 4KLSVDE8KH8G95VU68R7AHBE1CPQN38J");
-        nsec3_sig_data.push_back("NSEC3 5 4 7200 20100405201820 "
-                                 "20100306201820 33495 sql2.example.com. "
-                                 "FAKEFAKEFAKEFAKE");
+        nsec3_sig_data.push_back("NSEC3 5 4 7200 20100410172647 "
+                                 "20100311172647 63192 sql2.example.com. "
+                                 + nsec3_signature);
     }
     Sqlite3DataSrc data_source;
     // we allow these to be modified in the test
