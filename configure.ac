@@ -223,7 +223,6 @@ AC_CONFIG_FILES([Makefile
                  src/lib/dns/tests/Makefile
                  src/lib/exceptions/Makefile
                  src/lib/auth/Makefile
-                 src/lib/auth/tests/Makefile
                ])
 AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/cmdctl/cmdctl.py
