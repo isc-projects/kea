@@ -1,6 +1,4 @@
-pkglibexecdir = $(libexecdir)/@PACKAGE@
-
-pkglibexec_SCRIPTS = b10-cmdctl-usermgr
+sbin_SCRIPTS = b10-cmdctl-usermgr
 
 b10_cmdctl_usermgrdir = $(DESTDIR)$(pkgdatadir)
 
