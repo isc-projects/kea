@@ -481,6 +481,10 @@ class BoB:
         # return the time when the next process is ready to be restarted
         return next_restart
 
+# global variables, needed for signal handlers
+options = None
+boss_of_bind = None
+
 def reaper(signal_number, stack_frame):
     """A child process has died (SIGCHLD received)."""
     # don't do anything... 
