@@ -259,6 +259,67 @@ TEST_F(DataSrcTest, WildcardNodata) {
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 0, 2, 0);
 }
 
+TEST_F(DataSrcTest, WildcardCname) {
+    // Check that wildcard answers containing CNAMES are followed
+    // correctly
+    readAndProcessQuery(msg, "testdata/q_wild2_a");
+
+    headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 4, 6);
+
+    RRsetIterator rit = msg.beginSection(Section::ANSWER());
+    RRsetPtr rrset = *rit;
+    EXPECT_EQ(Name("www.wild2.example.com"), rrset->getName());
+    EXPECT_EQ(RRType::CNAME(), rrset->getType());
+    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+
+    RdataIteratorPtr it = rrset->getRdataIterator();
+    it->first();
+    EXPECT_EQ("www.example.com.", it->getCurrent().toText());
+    it->next();
+    EXPECT_TRUE(it->isLast());
+
+    ++rit;
+    ++rit;
+    rrset = *rit;
+    EXPECT_EQ(Name("www.example.com"), rrset->getName());
+    EXPECT_EQ(RRType::A(), rrset->getType());
+    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+
+    it = rrset->getRdataIterator();
+    it->first();
+    EXPECT_EQ("192.0.2.1", it->getCurrent().toText());
+    it->next();
+    EXPECT_TRUE(it->isLast());
+
+    rit = msg.beginSection(Section::AUTHORITY());
+    rrset = *rit;
+    EXPECT_EQ(Name("example.com"), rrset->getName());
+    EXPECT_EQ(RRType::NS(), rrset->getType());
+    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+
+    it = rrset->getRdataIterator();
+    it->first();
+    EXPECT_EQ("dns01.example.com.", it->getCurrent().toText());
+    it->next();
+    EXPECT_EQ("dns02.example.com.", it->getCurrent().toText());
+    it->next();
+    EXPECT_EQ("dns03.example.com.", it->getCurrent().toText());
+    it->next();
+    EXPECT_TRUE(it->isLast());
+
+    rit = msg.beginSection(Section::ADDITIONAL());
+    rrset = *rit;
+    EXPECT_EQ(Name("dns01.example.com"), rrset->getName());
+    EXPECT_EQ(RRType::A(), rrset->getType());
+    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+
+    it = rrset->getRdataIterator();
+    it->first();
+    EXPECT_EQ("192.0.2.1", it->getCurrent().toText());
+    it->next();
+    EXPECT_TRUE(it->isLast());
+}
+
 TEST_F(DataSrcTest, AuthDelegation) {
     readAndProcessQuery(msg, "testdata/q_sql1");
 

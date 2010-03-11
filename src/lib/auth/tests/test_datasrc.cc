@@ -57,6 +57,7 @@ const Name cnameint("cname-int.example.com");
 const Name cnameext("cname-ext.example.com");
 const Name dname("dname.example.com");
 const Name wild("*.wild.example.com");
+const Name wild2("*.wild2.example.com");
 const Name subzone("subzone.example.com");
 const Name loop1("loop1.example.com");
 const Name loop2("loop2.example.com");
@@ -80,6 +81,8 @@ RRsetPtr dns03_a;
 RRsetPtr dns03_nsec;
 RRsetPtr wild_a;
 RRsetPtr wild_nsec;
+RRsetPtr wild2_cname;
+RRsetPtr wild2_nsec;
 RRsetPtr dname_dname;
 RRsetPtr dname_nsec;
 RRsetPtr sql1_ns;
@@ -295,13 +298,33 @@ TestDataSrc::init() {
 
     wild_nsec = RRsetPtr(new RRset(wild, RRClass::IN(),
                                    RRType::NSEC(), RRTTL(3600)));
-    wild_nsec->addRdata(generic::NSEC("www.example.com. A RRSIG NSEC"));
+    wild_nsec->addRdata(generic::NSEC("*.wild2.example.com. A RRSIG NSEC"));
 
     rrsig = RRsetPtr(new RRset(wild, RRClass::IN(), RRType::RRSIG(),
                                RRTTL(3600)));
 
     rrsig->addRdata(generic::RRSIG("NSEC 5 3 7200 20100322084538 20100220084538 33495 example.com. OoGYslRj4xjZnBuzgOqsrvkDAHWycmQzbUxCRmgWnCbXiobJK7/ynONH3jm8G3vGlU0lwpHkhNs6cUK+6Nu8W49X3MT0Xksl/brroLcXYLi3vfxnYUNMMpXdeFl6WNNfoJRo90F/f/TWXAClRrDS29qiG3G1PEJZikIxZsZ0tyM="));
     wild_nsec->addRRsig(rrsig);
+
+    // *.wild2.example.com HERE
+    wild2_cname = RRsetPtr(new RRset(wild2, RRClass::IN(), RRType::CNAME(),
+                                     RRTTL(3600)));
+    wild2_cname->addRdata(generic::CNAME("www.example.com"));
+
+    rrsig = RRsetPtr(new RRset(wild2, RRClass::IN(), RRType::RRSIG(),
+                               RRTTL(3600)));
+    rrsig->addRdata(generic::RRSIG("CNAME 5 3 3600 20100410212307 20100311212307 33495 example.com. pGHtGdRBi4GKFSKszi6SsKvuBLDX8dFhZubU0tMojQ9SJuiFNF+WtxvdAYuUaoWP/9VLUaYmiw5u7JnzmR84DiXZPEs6DtD+UJdOZhaS7V7RTpE+tMOfVQBLpUnRWYtlTTmiBpFquzf3DdIxgUFhEPEuJJyp3LFRxJObCaq9 nvI="));
+    wild2_cname->addRRsig(rrsig);
+
+    wild2_nsec = RRsetPtr(new RRset(wild2, RRClass::IN(),
+                                    RRType::NSEC(), RRTTL(3600)));
+    wild2_nsec->addRdata(generic::NSEC("www.example.com. CNAME RRSIG NSEC"));
+
+    rrsig = RRsetPtr(new RRset(wild2, RRClass::IN(), RRType::RRSIG(),
+                               RRTTL(3600)));
+
+    rrsig->addRdata(generic::RRSIG("NSEC 5 3 7200 20100410212307 20100311212307 33495 example.com. EuSzh6or8mbvwru2H7fyYeMpW6J8YZ528rabU38V/lMN0TdamghIuCneAvSNaZgwk2MSN1bWpZqB2kAipaM/ZI9/piLlTvVjjOQ8pjk0auwCEqT7Z7Qng3E92O9yVzO+WHT9QZn/fR6t60392In4IvcBGjZyjzQk8njIwbui xGA="));
+    wild2_nsec->addRRsig(rrsig);
 
     // foo.example.com
     foo_cname = RRsetPtr(new RRset(foo, RRClass::IN(), RRType::CNAME(),
@@ -324,7 +347,7 @@ TestDataSrc::init() {
     // cname-int.example.com
     cnameint_cname = RRsetPtr(new RRset(cnameint, RRClass::IN(),
                                         RRType::CNAME(), RRTTL(3600)));
-    cnameint_cname->addRdata(generic::CNAME("www.example.com"));
+    cnameint_cname->addRdata(generic::CNAME("www.example.com."));
 
     rrsig = RRsetPtr(new RRset(cnameint, RRClass::IN(), RRType::RRSIG(),
                                RRTTL(3600)));
@@ -606,9 +629,20 @@ TestDataSrc::findRecords(const Name& name, const RRType& rdtype,
                 target.addRRset(wild_a);
             } else if (rdtype == RRType::NSEC()) {
                 target.addRRset(wild_nsec);
-                flags |= REFERRAL;
             } else {
                 flags |= TYPE_NOT_FOUND;
+            }
+        } else if (name == wild2) {
+            if (any) {
+                target.addRRset(wild2_cname);
+                target.addRRset(wild2_nsec);
+            } else if (rdtype == RRType::NSEC()) {
+                target.addRRset(wild2_nsec);
+            } else {
+                target.addRRset(wild2_cname);
+                if (rdtype != RRType::CNAME()) {
+                    flags |= CNAME_FOUND;
+                }
             }
         } else if (name == www) {
             if (any) {
@@ -769,8 +803,10 @@ TestDataSrc::findPreviousName(const Name& qname,
             target = subzone;
         } else if (qname < wild) {
             target = www;
-        } else {
+        } else if (qname < wild2) {
             target = wild;
+        } else {
+            target = wild2;
         }
     } else {
         if (qname >= sql1 || qname < www_sql1) {
