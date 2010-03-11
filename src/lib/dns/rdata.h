@@ -55,6 +55,17 @@ public:
 };
 
 ///
+/// \brief A standard DNS module exception that is thrown if wire format
+/// RDTA is invalid
+///
+class InvalidRdata : public Exception {
+public:
+    InvalidRdata(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+
+///
 /// \brief A standard DNS module exception that is thrown if RDATA parser
 /// parser encounters a character-string (as defined in RFC1035) exceeding
 /// the maximum allowable length (\c MAX_CHARSTRING_LEN).
