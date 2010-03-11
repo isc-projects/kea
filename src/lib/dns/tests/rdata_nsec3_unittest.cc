@@ -84,6 +84,11 @@ TEST_F(Rdata_NSEC3_Test, createFromWire)
     EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
                                       "testdata/rdata_nsec3_fromWire2"),
                  InvalidRdataLength);
+
+    // Invalid type bits
+    EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
+                                      "testdata/rdata_nsec3_fromWire3"),
+                 InvalidRdata);
 }
 
 TEST_F(Rdata_NSEC3_Test, toWireRenderer)

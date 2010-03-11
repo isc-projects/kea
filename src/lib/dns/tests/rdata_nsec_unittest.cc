@@ -66,9 +66,9 @@ TEST_F(Rdata_NSEC_Test, createFromWire_NSEC)
                                       "testdata/rdata_nsec_fromWire2"),
                  InvalidRdataLength);
 
-    // This should be rejected
-    //rdataFactoryFromFile(RRType::NSEC(), RRClass::IN(),
-    //                   "testdata/rdata_nsec_fromWire3")->toText();
+    EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC(), RRClass::IN(),
+                       "testdata/rdata_nsec_fromWire3"),
+                 InvalidRdata);
 }
 
 TEST_F(Rdata_NSEC_Test, toWireRenderer_NSEC)
