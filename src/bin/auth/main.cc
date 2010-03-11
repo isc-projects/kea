@@ -73,13 +73,13 @@ const char* DNSPORT = "5300";
  * todo: turn this around, and put handlers in the authserver
  * class itself? */
 namespace {
-    AuthSrv *auth_server;
+AuthSrv *auth_server;
 #ifdef HAVE_BOOSTLIB
-    // TODO: this should be a property of AuthSrv, and AuthSrv needs
-    // a stop() method (so the shutdown command can be handled)
-    boost::asio::io_service io_service_;
+// TODO: this should be a property of AuthSrv, and AuthSrv needs
+// a stop() method (so the shutdown command can be handled)
+boost::asio::io_service io_service_;
 #else
-    bool running;
+bool running;
 #endif
 }
 
@@ -285,9 +285,11 @@ public:
         }
     }
 
-    void sendCompleted(const boost::system::error_code& error,
-                       size_t bytes_sent)
+    void sendCompleted(const boost::system::error_code& error UNUSED_PARAM,
+                       size_t bytes_sent UNUSED_PARAM)
     {
+        // Even if error occurred there's nothing to do.  Simply handle
+        // the next request.
         startReceive();
     }
 private:
