@@ -17,6 +17,7 @@
 #include <exceptions/exceptions.h>
 
 #include <dns/buffer.h>
+#include <dns/exceptions.h>
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
 #include <dns/question.h>
