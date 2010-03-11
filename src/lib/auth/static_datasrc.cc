@@ -14,6 +14,8 @@
 
 // $Id$
 
+#include "config.h"
+
 #include <dns/name.h>
 #include <dns/rdataclass.h>
 #include <dns/rrclass.h>
@@ -126,7 +128,7 @@ StaticDataSrc::findClosestEnclosure(NameMatch& match,
 }
 
 DataSrc::Result
-StaticDataSrc::findRRset(const Query& q, const Name& qname,
+StaticDataSrc::findRRset(const Name& qname,
                          const RRClass& qclass, const RRType& qtype,
                          RRsetList& target, uint32_t& flags,
                          const Name* zonename) const
@@ -164,24 +166,26 @@ StaticDataSrc::findRRset(const Query& q, const Name& qname,
 }
 
 DataSrc::Result
-StaticDataSrc::findExactRRset(const Query& q, const Name& qname,
+StaticDataSrc::findExactRRset(const Name& qname,
                               const RRClass& qclass, const RRType& qtype,
                               RRsetList& target, uint32_t& flags,
                               const Name* zonename) const
 {
-    return (findRRset(q, qname, qclass, qtype, target, flags, zonename));
+    return (findRRset(qname, qclass, qtype, target, flags, zonename));
 }
 
 DataSrc::Result
-StaticDataSrc::findPreviousName(const Query& q, const Name& qname,
-                                Name& target, const Name* zonename) const
+StaticDataSrc::findPreviousName(const Name& qname UNUSED_PARAM,
+                                Name& target UNUSED_PARAM,
+                                const Name* zonename UNUSED_PARAM) const
 {
     return (NOT_IMPLEMENTED);
 }
 
 DataSrc::Result
-StaticDataSrc::findCoveringNSEC3(const Query& q, const Name& zonename,
-                                 string& hash, RRsetList& target) const
+StaticDataSrc::findCoveringNSEC3(const Name& zonename UNUSED_PARAM,
+                                 string& hash UNUSED_PARAM,
+                                 RRsetList& target UNUSED_PARAM) const
 {
    return (NOT_IMPLEMENTED);
 }

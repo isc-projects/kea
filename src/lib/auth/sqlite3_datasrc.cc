@@ -505,8 +505,7 @@ Sqlite3DataSrc::findClosestEnclosure(NameMatch& match,
 }
 
 DataSrc::Result
-Sqlite3DataSrc::findPreviousName(const Query& q,
-                                 const Name& qname,
+Sqlite3DataSrc::findPreviousName(const Name& qname,
                                  Name& target,
                                  const Name* zonename) const
 {
@@ -544,8 +543,7 @@ Sqlite3DataSrc::findPreviousName(const Query& q,
 }
 
 DataSrc::Result
-Sqlite3DataSrc::findCoveringNSEC3(const Query& q,
-                                  const Name& zonename,
+Sqlite3DataSrc::findCoveringNSEC3(const Name& zonename,
                                   string& hashstr,
                                   RRsetList& target) const
 {
@@ -616,8 +614,7 @@ Sqlite3DataSrc::findCoveringNSEC3(const Query& q,
 }
 
 DataSrc::Result
-Sqlite3DataSrc::findRRset(const Query& q,
-                          const Name& qname,
+Sqlite3DataSrc::findRRset(const Name& qname,
                           const RRClass& qclass,
                           const RRType& qtype,
                           RRsetList& target,
@@ -629,8 +626,7 @@ Sqlite3DataSrc::findRRset(const Query& q,
 }
 
 DataSrc::Result
-Sqlite3DataSrc::findExactRRset(const Query& q,
-                               const Name& qname,
+Sqlite3DataSrc::findExactRRset(const Name& qname,
                                const RRClass& qclass,
                                const RRType& qtype,
                                RRsetList& target,
@@ -652,8 +648,7 @@ Sqlite3DataSrc::findExactRRset(const Query& q,
 }
 
 DataSrc::Result
-Sqlite3DataSrc::findAddrs(const Query& q,
-                          const Name& qname,
+Sqlite3DataSrc::findAddrs(const Name& qname,
                           const RRClass& qclass,
                           RRsetList& target,
                           uint32_t& flags,
@@ -664,8 +659,7 @@ Sqlite3DataSrc::findAddrs(const Query& q,
 }
 
 DataSrc::Result
-Sqlite3DataSrc::findReferral(const Query& q,
-                             const Name& qname,
+Sqlite3DataSrc::findReferral(const Name& qname,
                              const RRClass& qclass,
                              RRsetList& target,
                              uint32_t& flags,

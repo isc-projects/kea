@@ -41,20 +41,12 @@ using namespace isc::auth;
 namespace {
 class StaticDataSourceTest : public ::testing::Test {
 protected:
-    StaticDataSourceTest() : message(Message::PARSE),
-                             query(NULL),
-                             version_name("version.bind"),
+    StaticDataSourceTest() : version_name("version.bind"),
                              authors_name("authors.bind"),
                              nomatch_name("example.com"),
                              rrclass(RRClass::CH()), rrtype(RRType::TXT()),
                              rrttl(RRTTL(0)), find_flags(0), matched_rdata(0)
     {
-        // static data source will ignore the message, and the encapsulating
-        // query object so the content doesn't matter.
-        // (it's a bad practice, but it's a different issue)
-        message.addQuestion(Question(Name(version_name), rrclass, rrtype));
-        query = new Query(message, true);
-
         // XXX: the following values can change as release/developers change,
         // in which case the test code must be updated accordingly.
         version_data.push_back("BIND10 0.0.0 (pre-alpha)");
@@ -75,10 +67,7 @@ protected:
         version_ns_data.push_back("version.bind.");
         authors_ns_data.push_back("authors.bind.");
     }
-    ~StaticDataSourceTest() { delete query; }
     StaticDataSrc data_source;
-    Message message;
-    Query* query;
     const Name version_name;
     const Name authors_name;
     const Name nomatch_name;
@@ -168,7 +157,7 @@ TEST_F(StaticDataSourceTest, findClosestEnclosureNoMatch) {
 
 TEST_F(StaticDataSourceTest, findRRsetVersionTXT) {
     EXPECT_EQ(DataSrc::SUCCESS,
-              data_source.findRRset(*query, version_name, rrclass, rrtype,
+              data_source.findRRset(version_name, rrclass, rrtype,
                                     result_sets, find_flags, NULL));
     EXPECT_EQ(0, find_flags);
     // There should be only item in result_sets, which should be
@@ -186,7 +175,7 @@ TEST_F(StaticDataSourceTest, findRRsetVersionTXT) {
 TEST_F(StaticDataSourceTest, findRRsetVersionNS) {
     rrtype = RRType::NS();
     EXPECT_EQ(DataSrc::SUCCESS,
-              data_source.findRRset(*query, version_name, rrclass, rrtype,
+              data_source.findRRset(version_name, rrclass, rrtype,
                                     result_sets, find_flags, NULL));
     EXPECT_EQ(0, find_flags);
     RRsetList::iterator it = result_sets.begin();
@@ -202,7 +191,7 @@ TEST_F(StaticDataSourceTest, findRRsetVersionNS) {
 
 TEST_F(StaticDataSourceTest, findRRsetAuthorsTXT) {
     EXPECT_EQ(DataSrc::SUCCESS,
-              data_source.findRRset(*query, authors_name, rrclass, rrtype,
+              data_source.findRRset(authors_name, rrclass, rrtype,
                                     result_sets, find_flags, NULL));
     EXPECT_EQ(0, find_flags);
     RRsetList::iterator it = result_sets.begin();
@@ -218,7 +207,7 @@ TEST_F(StaticDataSourceTest, findRRsetAuthorsTXT) {
 TEST_F(StaticDataSourceTest, findRRsetAuthorsNS) {
     rrtype = RRType::NS();
     EXPECT_EQ(DataSrc::SUCCESS,
-              data_source.findRRset(*query, authors_name, rrclass, rrtype,
+              data_source.findRRset(authors_name, rrclass, rrtype,
                                     result_sets, find_flags, NULL));
     EXPECT_EQ(0, find_flags);
     RRsetList::iterator it = result_sets.begin();

@@ -14,6 +14,8 @@
 
 // $Id$
 
+#include "config.h"
+
 #include <cassert>
 
 #include "unittest_util.h"
@@ -97,7 +99,7 @@ RRsetPtr loop2_cname;
 }
 
 DataSrc::Result
-TestDataSrc::init(const isc::data::ElementPtr config)
+TestDataSrc::init(const isc::data::ElementPtr config UNUSED_PARAM)
 {
     return init();
 }
@@ -683,9 +685,8 @@ TestDataSrc::findRecords(const Name& name, const RRType& rdtype,
 }
 
 DataSrc::Result
-TestDataSrc::findRRset(const Query& q,
-                       const Name& qname,
-                       const RRClass& qclass,
+TestDataSrc::findRRset(const Name& qname,
+                       const RRClass& qclass UNUSED_PARAM,
                        const RRType& qtype,
                        RRsetList& target,
                        uint32_t& flags,
@@ -696,9 +697,8 @@ TestDataSrc::findRRset(const Query& q,
 }
 
 DataSrc::Result
-TestDataSrc::findExactRRset(const Query& q,
-                            const Name& qname,
-                            const RRClass& qclass,
+TestDataSrc::findExactRRset(const Name& qname,
+                            const RRClass& qclass UNUSED_PARAM,
                             const RRType& qtype,
                             RRsetList& target,
                             uint32_t& flags,
@@ -718,21 +718,19 @@ TestDataSrc::findExactRRset(const Query& q,
 }
 
 DataSrc::Result
-TestDataSrc::findAddrs(const Query& q,
-                        const Name& qname,
-                        const RRClass& qclass,
-                        RRsetList& target,
-                        uint32_t& flags,
-                        const Name* zonename) const
+TestDataSrc::findAddrs(const Name& qname,
+                       const RRClass& qclass UNUSED_PARAM,
+                       RRsetList& target,
+                       uint32_t& flags,
+                       const Name* zonename) const
 {
     findRecords(qname, RRType::ANY(), target, zonename, ADDRESS, flags);
     return (SUCCESS);
 }
 
 DataSrc::Result
-TestDataSrc::findReferral(const Query& q,
-                          const Name& qname,
-                          const RRClass& qclass,
+TestDataSrc::findReferral(const Name& qname,
+                          const RRClass& qclass UNUSED_PARAM,
                           RRsetList& target,
                           uint32_t& flags,
                           const Name* zonename) const
@@ -742,8 +740,7 @@ TestDataSrc::findReferral(const Query& q,
 }
 
 DataSrc::Result
-TestDataSrc::findPreviousName(const Query& q,
-                              const Name& qname,
+TestDataSrc::findPreviousName(const Name& qname,
                               Name& target,
                               const Name* zonename) const
 {
@@ -786,10 +783,9 @@ TestDataSrc::findPreviousName(const Query& q,
 }
 
 DataSrc::Result
-TestDataSrc::findCoveringNSEC3(const Query& q,
-                               const Name& zonename,
-                               string& hash,
-                               RRsetList& target) const
+TestDataSrc::findCoveringNSEC3(const Name& zonename UNUSED_PARAM,
+                               string& hash UNUSED_PARAM,
+                               RRsetList& target UNUSED_PARAM) const
 {
     return (NOT_IMPLEMENTED);
 }

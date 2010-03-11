@@ -142,25 +142,25 @@ chaseCname(Query& q, QueryTaskPtr task, RRsetPtr rrset)
 
 // Perform the query specified in a QueryTask object
 static DataSrc::Result
-doQueryTask(const DataSrc* ds, const Name* zonename, Query& q, QueryTask& task,
+doQueryTask(const DataSrc* ds, const Name* zonename, QueryTask& task,
             RRsetList& target)
 {
     switch (task.op) {
     case QueryTask::AUTH_QUERY:
-        return (ds->findRRset(q, task.qname, task.qclass, task.qtype,
+        return (ds->findRRset(task.qname, task.qclass, task.qtype,
                               target, task.flags, zonename));
 
     case QueryTask::SIMPLE_QUERY:
-        return (ds->findExactRRset(q, task.qname, task.qclass, task.qtype,
+        return (ds->findExactRRset(task.qname, task.qclass, task.qtype,
                                    target, task.flags, zonename));
 
     case QueryTask::GLUE_QUERY:
     case QueryTask::NOGLUE_QUERY:
-        return (ds->findAddrs(q, task.qname, task.qclass, target,
+        return (ds->findAddrs(task.qname, task.qclass, target,
                               task.flags, zonename));
 
     case QueryTask::REF_QUERY:
-        return (ds->findReferral(q, task.qname, task.qclass, target,
+        return (ds->findReferral(task.qname, task.qclass, target,
                                  task.flags, zonename));
     }
 
@@ -191,7 +191,7 @@ refQuery(const Name& name, Query& q, const DataSrc* ds, const Name* zonename,
 {
     QueryTask newtask(name, q.qclass(), QueryTask::REF_QUERY);
 
-    if (doQueryTask(ds, zonename, q, newtask, target) != DataSrc::SUCCESS) {
+    if (doQueryTask(ds, zonename, newtask, target) != DataSrc::SUCCESS) {
         // Lookup failed
         return (false);
     }
@@ -269,7 +269,7 @@ addSOA(Query& q, const Name* zonename, const DataSrc* ds) {
 
     QueryTask newtask(*zonename, q.qclass(), RRType::SOA(),
                       QueryTask::SIMPLE_QUERY);
-    RETERR(doQueryTask(ds, zonename, q, newtask, soa));
+    RETERR(doQueryTask(ds, zonename, newtask, soa));
     if (newtask.flags != 0) {
         return (DataSrc::ERROR);
     }
@@ -287,7 +287,7 @@ addNSEC(Query& q, const QueryTaskPtr task, const Name& name,
 
     QueryTask newtask(name, task->qclass, RRType::NSEC(),
                       QueryTask::SIMPLE_QUERY); 
-    RETERR(doQueryTask(ds, &zonename, q, newtask, nsec));
+    RETERR(doQueryTask(ds, &zonename, newtask, nsec));
     if (newtask.flags == 0) {
         m.addRRset(Section::AUTHORITY(), nsec[RRType::NSEC()], true);
     }
@@ -296,11 +296,11 @@ addNSEC(Query& q, const QueryTaskPtr task, const Name& name,
 }
 
 static inline DataSrc::Result
-getNsec3(Query& q, const DataSrc* ds, const Name& zonename, string& hash, 
+getNsec3(const DataSrc* ds, const Name& zonename, string& hash, 
          RRsetPtr& target)
 {
     RRsetList rl;
-    RETERR(ds->findCoveringNSEC3(q, zonename, hash, rl));
+    RETERR(ds->findCoveringNSEC3(zonename, hash, rl));
     target = rl[RRType::NSEC3()];
     return (DataSrc::SUCCESS);
 }
@@ -312,7 +312,7 @@ getNsec3Param(Query& q, const DataSrc* ds, const Name& zonename) {
 
     QueryTask newtask(zonename, q.qclass(), RRType::NSEC3PARAM(),
                       QueryTask::SIMPLE_QUERY); 
-    result = doQueryTask(ds, &zonename, q, newtask, nsec3param);
+    result = doQueryTask(ds, &zonename, newtask, nsec3param);
     newtask.flags &= ~DataSrc::REFERRAL;
     if (result != DataSrc::SUCCESS || newtask.flags != 0) {
         return (ConstNsec3ParamPtr());
@@ -347,7 +347,7 @@ proveNX(Query& q, QueryTaskPtr task, const DataSrc* ds, const Name& zonename)
         // Attach the NSEC3 record covering the QNAME
         RRsetPtr rrset;
         string hash1(nsec3->getHash(task->qname)), hash2;
-        RETERR(getNsec3(q, ds, zonename, hash1, rrset));
+        RETERR(getNsec3(ds, zonename, hash1, rrset));
         m.addRRset(Section::AUTHORITY(), rrset, true);
 
         // If this is an NXRRSET or NOERROR/NODATA, we're done
@@ -370,7 +370,7 @@ proveNX(Query& q, QueryTaskPtr task, const DataSrc* ds, const Name& zonename)
 
             // hash2 will be overwritten with the actual hash found;
             // we don't want to use one until we find an exact match
-            RETERR(getNsec3(q, ds, zonename, hash2, rrset));
+            RETERR(getNsec3(ds, zonename, hash2, rrset));
             if (hash2 == nodehash) {
                 m.addRRset(Section::AUTHORITY(), rrset, true);
                 break;
@@ -380,14 +380,14 @@ proveNX(Query& q, QueryTaskPtr task, const DataSrc* ds, const Name& zonename)
         // Now add a covering NSEC3 for a wildcard under the
         // closest provable enclosing name
         string hash3(nsec3->getHash(Name("*").concatenate(enclosure)));
-        RETERR(getNsec3(q, ds, zonename, hash3, rrset));
+        RETERR(getNsec3(ds, zonename, hash3, rrset));
         if (hash3 != hash1 && hash3 != hash2) {
             m.addRRset(Section::AUTHORITY(), rrset, true);
         }
     } else {
         Name nsecname(task->qname);
         if ((task->flags & DataSrc::NAME_NOT_FOUND) != 0) {
-            ds->findPreviousName(q, task->qname, nsecname, &zonename);
+            ds->findPreviousName(task->qname, nsecname, &zonename);
         }
 
         RETERR(addNSEC(q, task, nsecname, zonename, ds));
@@ -432,7 +432,7 @@ tryWildcard(Query& q, QueryTaskPtr task, const DataSrc* ds,
         const Name& wname(star.concatenate(task->qname.split(i, nlen - i)));
         QueryTask newtask(wname, task->qclass, task->qtype,
                           QueryTask::SIMPLE_QUERY); 
-        result = doQueryTask(ds, zonename, q, newtask, wild);
+        result = doQueryTask(ds, zonename, newtask, wild);
         if (result == DataSrc::SUCCESS &&
             (newtask.flags == 0 || (newtask.flags & DataSrc::CNAME_FOUND))) {
             rflags = newtask.flags;
@@ -524,7 +524,7 @@ DataSrc::doQuery(Query& q)
                 continue;
             }
 
-            result = doQueryTask(datasource, zonename, q, *task, data);
+            result = doQueryTask(datasource, zonename, *task, data);
             if (result != SUCCESS) {
                 m.setRcode(Rcode::SERVFAIL());
                 return;
@@ -669,8 +669,7 @@ DataSrc::doQuery(Query& q)
 
             Name nsecname(task->qname);
             if ((task->flags & NAME_NOT_FOUND) != 0) {
-                datasource->findPreviousName(q, task->qname, nsecname,
-                                             zonename);
+                datasource->findPreviousName(task->qname, nsecname, zonename);
             }
 
             if (q.wantDnssec()) {
@@ -707,7 +706,7 @@ DataSrc::doQuery(Query& q)
 }
 
 DataSrc::Result
-DataSrc::findAddrs(const Query& q, const Name& qname, const RRClass& qclass,
+DataSrc::findAddrs(const Name& qname, const RRClass& qclass,
                    RRsetList& target, uint32_t& flags,
                    const Name* zonename) const
 {
@@ -715,13 +714,13 @@ DataSrc::findAddrs(const Query& q, const Name& qname, const RRClass& qclass,
     bool a = false, aaaa = false;
 
     flags = 0;
-    r = findExactRRset(q, qname, qclass, RRType::A(), target, flags, zonename);
+    r = findExactRRset(qname, qclass, RRType::A(), target, flags, zonename);
     if (r == SUCCESS && flags == 0) {
         a = true;
     }
 
     flags = 0;
-    r = findExactRRset(q, qname, qclass, RRType::AAAA(), target, flags,
+    r = findExactRRset(qname, qclass, RRType::AAAA(), target, flags,
                        zonename);
     if (r == SUCCESS && flags == 0) {
         aaaa = true;
@@ -737,7 +736,7 @@ DataSrc::findAddrs(const Query& q, const Name& qname, const RRClass& qclass,
 }
 
 DataSrc::Result
-DataSrc::findReferral(const Query& q, const Name& qname, const RRClass& qclass,
+DataSrc::findReferral(const Name& qname, const RRClass& qclass,
                       RRsetList& target, uint32_t& flags,
                       const Name* zonename) const
 {
@@ -745,7 +744,7 @@ DataSrc::findReferral(const Query& q, const Name& qname, const RRClass& qclass,
     bool ns = false, ds = false, dname = false;
 
     flags = 0;
-    r = findExactRRset(q, qname, qclass, RRType::NS(), target, flags, zonename);
+    r = findExactRRset(qname, qclass, RRType::NS(), target, flags, zonename);
     if (r == SUCCESS && flags == 0) {
         ns = true;
     } else if ((flags & (NO_SUCH_ZONE|NAME_NOT_FOUND))) {
@@ -753,7 +752,7 @@ DataSrc::findReferral(const Query& q, const Name& qname, const RRClass& qclass,
     }
 
     flags = 0;
-    r = findExactRRset(q, qname, qclass, RRType::DS(), target, flags, zonename);
+    r = findExactRRset(qname, qclass, RRType::DS(), target, flags, zonename);
     if (r == SUCCESS && flags == 0) {
         ds = true;
     } else if ((flags & (NO_SUCH_ZONE|NAME_NOT_FOUND))) {
@@ -761,7 +760,7 @@ DataSrc::findReferral(const Query& q, const Name& qname, const RRClass& qclass,
     }
 
     flags = 0;
-    r = findExactRRset(q, qname, qclass, RRType::DNAME(), target, flags,
+    r = findExactRRset(qname, qclass, RRType::DNAME(), target, flags,
                        zonename);
     if (r == SUCCESS && flags == 0) {
         dname = true;

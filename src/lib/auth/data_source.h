@@ -110,16 +110,14 @@ public:
 
     // Mandatory 'low-level' methods: These will NOT be implemented by
     // the general DataSrc class; subclasses MUST implement them.
-    virtual Result findRRset(const Query& q,
-                             const isc::dns::Name& qname,
+    virtual Result findRRset(const isc::dns::Name& qname,
                              const isc::dns::RRClass& qclass,
                              const isc::dns::RRType& qtype,
                              isc::dns::RRsetList& target,
                              uint32_t& flags,
                              const isc::dns::Name* zonename) const = 0;
 
-    virtual Result findExactRRset(const Query& q,
-                                  const isc::dns::Name& qname,
+    virtual Result findExactRRset(const isc::dns::Name& qname,
                                   const isc::dns::RRClass& qclass,
                                   const isc::dns::RRType& qtype,
                                   isc::dns::RRsetList& target,
@@ -128,15 +126,13 @@ public:
 
     // These will have dumb implementations in the general DataSrc
     // class, and SHOULD be overwritten by subclasses.
-    virtual Result findAddrs(const Query& q,
-                             const isc::dns::Name& qname,
+    virtual Result findAddrs(const isc::dns::Name& qname,
                              const isc::dns::RRClass& qclass,
                              isc::dns::RRsetList& target,
                              uint32_t& flags,
                              const isc::dns::Name* zonename) const = 0;
 
-     virtual Result findReferral(const Query& q,
-                                 const isc::dns::Name& qname,
+     virtual Result findReferral(const isc::dns::Name& qname,
                                  const isc::dns::RRClass& qclass,
                                  isc::dns::RRsetList& target,
                                  uint32_t& flags,
@@ -144,15 +140,13 @@ public:
 
     // This MUST be implemented by concrete data sources which support
     // DNSSEC, but is optional for others (e.g., the static data source).
-    virtual Result findPreviousName(const Query& q,
-                                    const isc::dns::Name& qname,
+    virtual Result findPreviousName(const isc::dns::Name& qname,
                                     isc::dns::Name& target,
                                     const isc::dns::Name* zonename) const = 0;
 
    // This MUST be implemented by concrete data sources which support
    // NSEC3, but is optional for others
-   virtual Result findCoveringNSEC3(const Query& q,
-                                    const isc::dns::Name& zonename,
+   virtual Result findCoveringNSEC3(const isc::dns::Name& zonename,
                                     std::string& hash,
                                     isc::dns::RRsetList& target) const = 0;
 };
@@ -189,43 +183,37 @@ public:
     { return NOT_IMPLEMENTED; }
     Result close() { return NOT_IMPLEMENTED; }
 
-    virtual Result findRRset(const Query& q,
-                             const isc::dns::Name& qname,
+    virtual Result findRRset(const isc::dns::Name& qname,
                              const isc::dns::RRClass& qclass,
                              const isc::dns::RRType& qtype,
                              isc::dns::RRsetList& target,
                              uint32_t& flags,
                              const isc::dns::Name* zonename) const = 0;
 
-    virtual Result findExactRRset(const Query& q,
-                                  const isc::dns::Name& qname,
+    virtual Result findExactRRset(const isc::dns::Name& qname,
                                   const isc::dns::RRClass& qclass,
                                   const isc::dns::RRType& qtype,
                                   isc::dns::RRsetList& target,
                                   uint32_t& flags,
                                   const isc::dns::Name* zonename) const = 0;
 
-    virtual Result findAddrs(const Query& q,
-                             const isc::dns::Name& qname,
+    virtual Result findAddrs(const isc::dns::Name& qname,
                              const isc::dns::RRClass& qclass,
                              isc::dns::RRsetList& target,
                              uint32_t& flags,
                              const isc::dns::Name* zonename) const;
 
-    virtual Result findReferral(const Query& q,
-                                const isc::dns::Name& qname,
+    virtual Result findReferral(const isc::dns::Name& qname,
                                 const isc::dns::RRClass& qclass,
                                 isc::dns::RRsetList& target,
                                 uint32_t& flags,
                                 const isc::dns::Name* zonename) const;
 
-    virtual Result findPreviousName(const Query& q,
-                                    const isc::dns::Name& qname,
+    virtual Result findPreviousName(const isc::dns::Name& qname,
                                     isc::dns::Name& target,
                                     const isc::dns::Name* zonename) const = 0;
 
-   virtual Result findCoveringNSEC3(const Query& q,
-                                    const isc::dns::Name& zonename,
+   virtual Result findCoveringNSEC3(const isc::dns::Name& zonename,
                                     std::string& hash,
                                     isc::dns::RRsetList& target) const = 0;
 
@@ -264,8 +252,7 @@ public:
     // to get a pointer to the best concrete data source for the specified
     // zone, then send all queries directly to that data source.
 
-    Result findRRset(const Query& q UNUSED_PARAM,
-                     const isc::dns::Name& qname UNUSED_PARAM,
+    Result findRRset(const isc::dns::Name& qname UNUSED_PARAM,
                      const isc::dns::RRClass& qclass UNUSED_PARAM,
                      const isc::dns::RRType& qtype UNUSED_PARAM,
                      isc::dns::RRsetList& target UNUSED_PARAM,
@@ -275,8 +262,7 @@ public:
         return (NOT_IMPLEMENTED);
     }
 
-    Result findExactRRset(const Query& q UNUSED_PARAM,
-                          const isc::dns::Name& qname UNUSED_PARAM,
+    Result findExactRRset(const isc::dns::Name& qname UNUSED_PARAM,
                           const isc::dns::RRClass& qclass UNUSED_PARAM,
                           const isc::dns::RRType& qtype UNUSED_PARAM,
                           isc::dns::RRsetList& target UNUSED_PARAM,
@@ -286,8 +272,7 @@ public:
         return (NOT_IMPLEMENTED);
     }
 
-    Result findAddrs(const Query& q UNUSED_PARAM,
-                     const isc::dns::Name& qname UNUSED_PARAM,
+    Result findAddrs(const isc::dns::Name& qname UNUSED_PARAM,
                      const isc::dns::RRClass& qclass UNUSED_PARAM,
                      isc::dns::RRsetList& target UNUSED_PARAM,
                      uint32_t& flags UNUSED_PARAM,
@@ -296,8 +281,7 @@ public:
         return (NOT_IMPLEMENTED);
     }
 
-    Result findReferral(const Query& q UNUSED_PARAM,
-                        const isc::dns::Name& qname UNUSED_PARAM,
+    Result findReferral(const isc::dns::Name& qname UNUSED_PARAM,
                         const isc::dns::RRClass& qclass UNUSED_PARAM,
                         isc::dns::RRsetList& target UNUSED_PARAM,
                         uint32_t& flags UNUSED_PARAM,
@@ -307,7 +291,6 @@ public:
     }
 
     virtual Result findPreviousName(
-        const Query& q UNUSED_PARAM,
         const isc::dns::Name& qname UNUSED_PARAM,
         isc::dns::Name& target UNUSED_PARAM,
         const isc::dns::Name* zonename UNUSED_PARAM) const
@@ -316,7 +299,6 @@ public:
     }
 
    virtual Result findCoveringNSEC3(
-       const Query& q UNUSED_PARAM,
        const isc::dns::Name& zonename UNUSED_PARAM,
        std::string& hash UNUSED_PARAM,
        isc::dns::RRsetList& target UNUSED_PARAM) const
