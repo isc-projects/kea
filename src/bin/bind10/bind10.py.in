@@ -42,7 +42,6 @@ import re
 import errno
 import time
 import select
-import pprint
 import random
 from optparse import OptionParser, OptionValueError
 
@@ -342,7 +341,7 @@ class BoB:
                                  (proc_info.name, proc_info.pid))
             try:
                 proc_info.process.terminate()
-            except OSError as o:
+            except OSError:
                 # ignore these (usually ESRCH because the child
                 # finally exited)
                 pass
