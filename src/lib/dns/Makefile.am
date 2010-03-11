@@ -10,6 +10,7 @@ BUILT_SOURCES = rrclass.h rrtype.h rrparamregistry.cc
 
 lib_LTLIBRARIES = libdns.la
 libdns_la_SOURCES = buffer.h name.cc name.h messagerenderer.h messagerenderer.cc
+libdns_la_SOURCES += exceptions.h exceptions.cc
 libdns_la_SOURCES += rrparamregistry.h rrparamregistry.cc
 libdns_la_SOURCES += rrclass.h rrclass.cc rrtype.h rrtype.cc rrttl.h rrttl.cc
 libdns_la_SOURCES += rdata.h rdata.cc

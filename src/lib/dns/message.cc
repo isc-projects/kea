@@ -27,6 +27,7 @@
 #include <exceptions/exceptions.h>
 
 #include "buffer.h"
+#include "exceptions.h"
 #include "message.h"
 #include "messagerenderer.h"
 #include "name.h"
@@ -151,16 +152,6 @@ static const char *opcodetext[] = {
     "RESERVED14",
     "RESERVED15"
 };
-}
-
-const Rcode&
-DNSMessageFORMERR::getRcode() const {
-    return (Rcode::FORMERR());
-}
-
-const Rcode&
-DNSMessageBADVERS::getRcode() const {
-    return (Rcode::BADVERS());
 }
 
 string
