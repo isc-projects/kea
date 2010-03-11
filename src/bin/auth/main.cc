@@ -595,7 +595,7 @@ run_server(const char* port, const bool use_ipv4, const bool use_ipv6,
             processMessageTCP(socket_set.tps6, dns_message, response_renderer);
         }
         if (FD_ISSET(ss, &fds)) {
-            cs.check_command();
+            cs.checkCommand();
         }
     }
 }

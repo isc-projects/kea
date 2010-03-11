@@ -77,7 +77,7 @@ public:
      * This is a non-blocking read; if there is nothing this function
      * will return 0.
      */
-    int check_command();
+    int checkCommand();
 
     /**
      * The config handler function should expect an ElementPtr containing
@@ -99,7 +99,7 @@ public:
      *
      * This protocol is very likely to change.
      */
-    void set_command_handler(isc::data::ElementPtr(*command_handler)(const std::string& command, const isc::data::ElementPtr args)) { command_handler_ = command_handler; };
+    void setCommandHandler(isc::data::ElementPtr(*command_handler)(const std::string& command, const isc::data::ElementPtr args)) { command_handler_ = command_handler; };
 
     /**
      * Gives access to the configuration values of a different module
@@ -147,7 +147,7 @@ private:
         isc::data::ElementPtr(*command_handler)(
             const std::string& command, const isc::data::ElementPtr args)
         ) throw (isc::cc::SessionError);
-    ModuleSpec read_module_specification(const std::string& filename);
+    ModuleSpec readModuleSpecification(const std::string& filename);
     void startCheck();
     
     std::string module_name_;

@@ -143,7 +143,7 @@ parseCommand(ElementPtr& arg, const ElementPtr command)
 }
 
 ModuleSpec
-ModuleCCSession::read_module_specification(const std::string& filename) {
+ModuleCCSession::readModuleSpecification(const std::string& filename) {
     std::ifstream file;
     ModuleSpec module_spec;
     
@@ -172,7 +172,7 @@ void
 ModuleCCSession::startCheck() {
     // data available on the command channel.  process it in the synchronous
     // mode.
-    check_command();
+    checkCommand();
 
     // start asynchronous read again.
     session_.startRead(boost::bind(&ModuleCCSession::startCheck, this));
@@ -212,7 +212,7 @@ ModuleCCSession::init(
         const std::string& command, const isc::data::ElementPtr args)
     ) throw (isc::cc::SessionError)
 {
-    module_specification_ = read_module_specification(spec_file_name);
+    module_specification_ = readModuleSpecification(spec_file_name);
     sleep(1);
 
     module_name_ = module_specification_.getFullSpec()->get("module_name")->stringValue();
@@ -292,7 +292,7 @@ ModuleCCSession::getSocket()
 }
 
 int
-ModuleCCSession::check_command()
+ModuleCCSession::checkCommand()
 {
     ElementPtr cmd, routing, data;
     if (session_.group_recvmsg(routing, data, true)) {
@@ -332,7 +332,7 @@ ModuleCCSession::check_command()
 std::string
 ModuleCCSession::addRemoteConfig(const std::string& spec_file_name)
 {
-    ModuleSpec rmod_spec = read_module_specification(spec_file_name);
+    ModuleSpec rmod_spec = readModuleSpecification(spec_file_name);
     std::string module_name = rmod_spec.getFullSpec()->get("module_name")->stringValue();
     ConfigData rmod_config = ConfigData(rmod_spec);
     session_.subscribe(module_name);
