@@ -27,6 +27,7 @@
 #include <exceptions/exceptions.h>
 
 #include <dns/buffer.h>
+#include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/question.h>
@@ -127,6 +128,15 @@ AuthSrv::processMessage(InputBuffer& request_buffer,
     //
     // Incoming Message Validation
     //
+
+    // Ignore all requests.
+    if (message.getHeaderFlag(MessageFlag::QR())) {
+        if (verbose_mode) {
+            cerr << "received unexpected response, ignoring" << endl;
+        }
+        return (-1);
+    }
+
     // In this implementation, we only support normal queries
     if (message.getOpcode() != Opcode::QUERY()) {
         if (verbose_mode) {
