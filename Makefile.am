@@ -25,6 +25,11 @@ report-coverage:
 			boost/\* \
 			gtest/\* \
 			usr/include/\* \
+			tests/\* \
+			unittests/\* \
+			\*_unittests.cc \
+			\*_unittest.cc \
+			\*_unittests.h \
 		--output report.info
 	$(GENHTML) -o coverage report.info 
 
