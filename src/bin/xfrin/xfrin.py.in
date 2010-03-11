@@ -438,6 +438,9 @@ if __name__ == '__main__':
         xfrind.startup()
     except KeyboardInterrupt:
         print("exit http server")
+    except isc.cc.session.SessionError as e:
+        print(e)
+        print('[b10-xfrin] Error happened! is the command channel daemon running?')
     except Exception as e:
         print(e)
 
