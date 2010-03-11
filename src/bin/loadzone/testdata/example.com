@@ -18,6 +18,7 @@ subzone		NS ns2.subzone.example.com.
 ns1.subzone	A 192.168.3.1
 ns2.subzone	A 192.168.3.2
 *.wild		A 192.168.3.2
+*.wild2		CNAME www.example.com.
 dname		DNAME sql1.example.com.
 
 $ORIGIN sql1.example.com.
