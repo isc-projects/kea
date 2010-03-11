@@ -36,6 +36,7 @@ protected:
 };
 
 const std::string hex_txt("DEADBEEFDECADE");
+const std::string hex_txt_space("DEAD BEEF DECADE");
 const std::string hex_txt_lower("deadbeefdecade");
 
 TEST_F(HexTest, encodeHex) {
@@ -72,6 +73,11 @@ TEST_F(HexTest, decodeHex) {
     // lower case hex digits should be accepted
     result.clear();
     decodeHex(hex_txt_lower, result);
+    compareData(result);
+
+    // white space should be ignored
+    result.clear();
+    decodeHex(hex_txt_space, result);
     compareData(result);
 
     // Bogus input: should fail
