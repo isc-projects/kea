@@ -24,6 +24,8 @@
 #include <cassert>
 #include <iostream>
 
+#include <exceptions/exceptions.h>
+
 #include <dns/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
@@ -49,6 +51,7 @@
 
 using namespace std;
 
+using namespace isc;
 using namespace isc::auth;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
@@ -89,6 +92,16 @@ AuthSrv::~AuthSrv() {
     delete impl_;
 }
 
+static void
+makeErrorMessage(Message& message, MessageRenderer& renderer,
+                 const Rcode& rcode)
+{
+    message.makeResponse();
+    message.setRcode(rcode);
+    message.setUDPSize(4096);   // XXX: hardcoding
+    message.toWire(renderer);
+}
+
 int
 AuthSrv::processMessage(InputBuffer& request_buffer,
                         Message& message,
@@ -97,17 +110,35 @@ AuthSrv::processMessage(InputBuffer& request_buffer,
 {
     try {
         message.fromWire(request_buffer);
-    } catch (...) {
-        cerr << "[AuthSrv] parse failed" << endl;
-        return (-1);
-    }
+    } catch (const DNSProtocolError& error) {
+        cerr << "returning protocol error" << endl;
+        makeErrorMessage(message, response_renderer, error.getRcode());
+        return (0);
+    } catch (const Exception& ex) {
+        cerr << "returning servfail" << endl;
+        makeErrorMessage(message, response_renderer, Rcode::SERVFAIL());
+        return (0);
+    } // other exceptions will be handled at a higher layer.
 
     if (verbose_mode) {
         cerr << "[AuthSrv] received a message:\n" << message.toText() << endl;
     }
 
+    //
+    // Incoming Message Validation
+    //
+    // In this implementation, we only support normal queries
+    if (message.getOpcode() != Opcode::QUERY()) {
+        if (verbose_mode) {
+            cerr << "unsupported opcode" << endl;
+        }
+        makeErrorMessage(message, response_renderer, Rcode::NOTIMP());
+        return (0);
+    }
+
     if (message.getRRCount(Section::QUESTION()) != 1) {
-        return (-1);
+        makeErrorMessage(message, response_renderer, Rcode::FORMERR());
+        return (0);
     }
 
     const bool dnssec_ok = message.isDNSSECSupported();

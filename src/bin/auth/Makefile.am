@@ -1,3 +1,5 @@
+SUBDIRS = . tests
+
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/ext $(SQLITE_CFLAGS)
 
 pkglibexecdir = $(libexecdir)/@PACKAGE@
