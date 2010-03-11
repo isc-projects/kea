@@ -150,8 +150,12 @@ AuthSrv::processMessage(InputBuffer& request_buffer,
     message.setDNSSECSupported(dnssec_ok);
     message.setUDPSize(4096);   // XXX: hardcoding
 
-    Query query(message, dnssec_ok);
-    impl_->data_sources_.doQuery(query);
+    try {
+        Query query(message, dnssec_ok);
+        impl_->data_sources_.doQuery(query);
+    } catch(...) {
+        message.setRcode(Rcode::SERVFAIL());
+    }
 
     response_renderer.setLengthLimit(udp_buffer ? remote_bufsize : 65535);
     message.toWire(response_renderer);
