@@ -114,7 +114,7 @@ public:
         }
         return (*this);
     }
-    const char operator*() const {
+    const char& operator*() const {
         if (in_pad_ && *base_ == BASE64_PADDING_CHAR) {
             return (BASE64_ZERO_CODE);
         } else {
