@@ -192,7 +192,7 @@ TestDataSrc::init() {
     www_sql1_a = RRsetPtr(new RRset(www_sql1,
                                     RRClass::IN(), RRType::A(),
                                     RRTTL(3600)));
-    www_sql1_a->addRdata(in::A("192.168.2.2"));
+    www_sql1_a->addRdata(in::A("192.0.2.2"));
 
     rrsig = RRsetPtr(new RRset(www_sql1, RRClass::IN(), RRType::RRSIG(),
                                RRTTL(3600)));
@@ -212,7 +212,7 @@ TestDataSrc::init() {
     dns01_a = RRsetPtr(new RRset(dns01,
                                          RRClass::IN(), RRType::A(),
                                          RRTTL(3600)));
-    dns01_a->addRdata(in::A("192.168.2.1"));
+    dns01_a->addRdata(in::A("192.0.2.1"));
 
     rrsig = RRsetPtr(new RRset(dns01, RRClass::IN(), RRType::RRSIG(),
                                RRTTL(3600)));
@@ -229,7 +229,7 @@ TestDataSrc::init() {
 
     // dns02.example.com
     dns02_a = RRsetPtr(new RRset(dns02, RRClass::IN(), RRType::A(), RRTTL(3600)));
-    dns02_a->addRdata(in::A("192.168.2.2"));
+    dns02_a->addRdata(in::A("192.0.2.2"));
 
     rrsig = RRsetPtr(new RRset(dns02, RRClass::IN(), RRType::RRSIG(),
                                RRTTL(3600)));
@@ -249,7 +249,7 @@ TestDataSrc::init() {
     dns03_a = RRsetPtr(new RRset(dns03,
                                          RRClass::IN(), RRType::A(),
                                          RRTTL(3600)));
-    dns03_a->addRdata(in::A("192.168.2.3"));
+    dns03_a->addRdata(in::A("192.0.2.3"));
 
     rrsig = RRsetPtr(new RRset(dns03, RRClass::IN(), RRType::RRSIG(),
                                RRTTL(3600)));
@@ -268,7 +268,7 @@ TestDataSrc::init() {
     // www.example.com
     www_a = RRsetPtr(new RRset(www, RRClass::IN(), RRType::A(),
                                        RRTTL(3600)));
-    www_a->addRdata(in::A("192.168.1.1"));
+    www_a->addRdata(in::A("192.0.2.1"));
 
     rrsig = RRsetPtr(new RRset(www, RRClass::IN(), RRType::RRSIG(),
                                RRTTL(3600)));
@@ -286,7 +286,7 @@ TestDataSrc::init() {
     // *.wild.example.com
     wild_a = RRsetPtr(new RRset(wild, RRClass::IN(), RRType::A(),
                                         RRTTL(3600)));
-    wild_a->addRdata(in::A("192.168.3.2"));
+    wild_a->addRdata(in::A("192.0.2.2"));
 
     rrsig = RRsetPtr(new RRset(wild, RRClass::IN(), RRType::RRSIG(),
                                RRTTL(3600)));
@@ -387,11 +387,11 @@ TestDataSrc::init() {
     subzone_glue1 = RRsetPtr(new RRset(Name("ns1.subzone.example.com"),
                                     RRClass::IN(), RRType::A(),
                                     RRTTL(3600)));
-    subzone_glue1->addRdata(in::A("192.168.3.1"));
+    subzone_glue1->addRdata(in::A("192.0.2.1"));
     subzone_glue2 = RRsetPtr(new RRset(Name("ns2.subzone.example.com"),
                                     RRClass::IN(), RRType::A(),
                                     RRTTL(3600)));
-    subzone_glue2->addRdata(in::A("192.168.3.2"));
+    subzone_glue2->addRdata(in::A("192.0.2.2"));
 
     subzone_ds = RRsetPtr(new RRset(subzone, RRClass::IN(), RRType::DS(),
                                     RRTTL(3600)));

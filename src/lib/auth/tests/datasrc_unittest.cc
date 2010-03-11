@@ -97,7 +97,6 @@ headerCheck(const Message& message, const Rcode& rcode, const bool qrflag,
     EXPECT_EQ(ancount, message.getRRCount(Section::ANSWER()));
     EXPECT_EQ(nscount, message.getRRCount(Section::AUTHORITY()));
     EXPECT_EQ(arcount, message.getRRCount(Section::ADDITIONAL()));
-    
 }
 
 TEST_F(DataSrcTest, Query) {
@@ -113,7 +112,7 @@ TEST_F(DataSrcTest, Query) {
 
     RdataIteratorPtr it = rrset->getRdataIterator();
     it->first();
-    EXPECT_EQ("192.168.1.1", it->getCurrent().toText());
+    EXPECT_EQ("192.0.2.1", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
 
@@ -143,7 +142,7 @@ TEST_F(DataSrcTest, Query) {
 
     it = rrset->getRdataIterator();
     it->first();
-    EXPECT_EQ("192.168.2.1", it->getCurrent().toText());
+    EXPECT_EQ("192.0.2.1", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
 }
@@ -219,7 +218,7 @@ TEST_F(DataSrcTest, Wildcard) {
 
     RdataIteratorPtr it = rrset->getRdataIterator();
     it->first();
-    EXPECT_EQ("192.168.3.2", it->getCurrent().toText());
+    EXPECT_EQ("192.0.2.2", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
 
@@ -247,7 +246,7 @@ TEST_F(DataSrcTest, Wildcard) {
 
     it = rrset->getRdataIterator();
     it->first();
-    EXPECT_EQ("192.168.2.1", it->getCurrent().toText());
+    EXPECT_EQ("192.0.2.1", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
 }
@@ -273,7 +272,7 @@ TEST_F(DataSrcTest, AuthDelegation) {
 
     RdataIteratorPtr it = rrset->getRdataIterator();
     it->first();
-    EXPECT_EQ("192.168.2.2", it->getCurrent().toText());
+    EXPECT_EQ("192.0.2.2", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
 
@@ -301,7 +300,7 @@ TEST_F(DataSrcTest, AuthDelegation) {
 
     it = rrset->getRdataIterator();
     it->first();
-    EXPECT_EQ("192.168.2.1", it->getCurrent().toText());
+    EXPECT_EQ("192.0.2.1", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
 }
@@ -349,7 +348,7 @@ TEST_F(DataSrcTest, Dname) {
 
     it = rrset->getRdataIterator();
     it->first();
-    EXPECT_EQ("192.168.2.1", it->getCurrent().toText());
+    EXPECT_EQ("192.0.2.1", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
 }
@@ -447,7 +446,7 @@ TEST_F(DataSrcTest, Delegation) {
 
     it = rrset->getRdataIterator();
     it->first();
-    EXPECT_EQ("192.168.3.1", it->getCurrent().toText());
+    EXPECT_EQ("192.0.2.1", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
 }
@@ -477,7 +476,7 @@ TEST_F(DataSrcTest, NSDelegation) {
 
     it = rrset->getRdataIterator();
     it->first();
-    EXPECT_EQ("192.168.3.1", it->getCurrent().toText());
+    EXPECT_EQ("192.0.2.1", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
 }
@@ -509,7 +508,7 @@ TEST_F(DataSrcTest, ANYZonecut) {
 
     it = rrset->getRdataIterator();
     it->first();
-    EXPECT_EQ("192.168.3.1", it->getCurrent().toText());
+    EXPECT_EQ("192.0.2.1", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
 }
