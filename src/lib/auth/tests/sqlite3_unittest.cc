@@ -481,11 +481,14 @@ TEST_F(Sqlite3DataSourceTest, findRRsetApexANY) {
     signatures.push_back(&apex_dnskey_sig_data);
 
     rrtype = RRType::ANY();
+
+    // there is an NS at the zone apex, so the REFERRAL flag should
+    // be set, but will ordinarily be ignored by the caller
     checkFind(NORMAL, data_source, zone_name, NULL, rrclass, rrtype,
-              ttls, 0, types, answers, signatures);
+              ttls, DataSrc::REFERRAL, types, answers, signatures);
 
     checkFind(NORMAL, data_source, zone_name, &zone_name, rrclass,
-              rrtype, ttls, 0, types, answers, signatures);
+              rrtype, ttls, DataSrc::REFERRAL, types, answers, signatures);
 }
 
 TEST_F(Sqlite3DataSourceTest, findRRsetMixedANY) {
