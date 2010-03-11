@@ -430,14 +430,19 @@ tryWildcard(Query& q, QueryTaskPtr task, const DataSrc* ds,
 
     for (int i = 1; i <= diff; ++i) {
         const Name& wname(star.concatenate(task->qname.split(i, nlen - i)));
-        QueryTask newtask(wname, task->qclass, task->qtype,
-                          QueryTask::SIMPLE_QUERY); 
+        QueryTask newtask(wname, task->qclass, task->qtype, Section::ANSWER(),
+                          QueryTask::AUTH_QUERY); 
         result = doQueryTask(ds, zonename, newtask, wild);
-        if (result == DataSrc::SUCCESS &&
-            (newtask.flags == 0 || (newtask.flags & DataSrc::CNAME_FOUND))) {
-            rflags = newtask.flags;
-            found = true;
-            break;
+        if (result == DataSrc::SUCCESS) {
+            if (newtask.flags == 0 || (newtask.flags & DataSrc::CNAME_FOUND)) {
+                rflags = newtask.flags;
+                found = true;
+                break;
+            } else if ((newtask.flags & DataSrc::TYPE_NOT_FOUND) != 0) {
+                task->flags &= ~DataSrc::NAME_NOT_FOUND;
+                task->flags |= DataSrc::TYPE_NOT_FOUND;
+                break;
+            }
         }
     }
 
