@@ -88,18 +88,11 @@ typedef enum {
 
 class Sqlite3DataSourceTest : public ::testing::Test {
 protected:
-    Sqlite3DataSourceTest() : message(Message::PARSE),
-                              query(NULL), rrclass(RRClass::IN()),
+    Sqlite3DataSourceTest() : rrclass(RRClass::IN()),
                               rrtype(RRType::A()), rrttl(RRTTL(3600)),
                               find_flags(0), rrset_matched(0), rrset_count(0)
     {
         data_source.init(SQLITE_DBFILE_EXAMPLE);
-
-        // the data source will ignore the message, and the encapsulating
-        // query object so the content doesn't matter.
-        // (it's a bad practice, but is a different issue)
-        message.addQuestion(Question(Name("example.org"), rrclass, rrtype));
-        query = new Query(message, true);
 
         common_a_data.push_back("192.0.2.1");
         common_sig_data.push_back("A 5 3 3600" + sigdata_common);
@@ -161,10 +154,7 @@ protected:
                                  "20100306201820 33495 sql2.example.com. "
                                  "FAKEFAKEFAKEFAKE");
     }
-    ~Sqlite3DataSourceTest() { delete query; }
     Sqlite3DataSrc data_source;
-    Message message;
-    Query* query;
     // we allow these to be modified in the test
     RRClass rrclass;
     RRType rrtype;
@@ -267,7 +257,7 @@ checkRRset(RRsetPtr rrset, const Name& expected_name,
 }
 
 void
-checkFind(FindMode mode, const Sqlite3DataSrc& data_source, const Query& query,
+checkFind(FindMode mode, const Sqlite3DataSrc& data_source,
           const Name& expected_name, const Name* zone_name,
           const RRClass& expected_class, const RRType& expected_type,
           const vector<RRTTL>& expected_ttls, const uint32_t expected_flags,
@@ -283,25 +273,25 @@ checkFind(FindMode mode, const Sqlite3DataSrc& data_source, const Query& query,
     switch (mode) {
     case NORMAL:
         EXPECT_EQ(DataSrc::SUCCESS,
-                  data_source.findRRset(query, expected_name, expected_class,
+                  data_source.findRRset(expected_name, expected_class,
                                         expected_type, result_sets, find_flags,
                                         zone_name));
         break;
     case EXACT:
         EXPECT_EQ(DataSrc::SUCCESS,
-                  data_source.findExactRRset(query, expected_name,
+                  data_source.findExactRRset(expected_name,
                                              expected_class, expected_type,
                                              result_sets, find_flags,
                                              zone_name));
         break;
     case ADDRESS:
         EXPECT_EQ(DataSrc::SUCCESS,
-                  data_source.findAddrs(query, expected_name, expected_class,
+                  data_source.findAddrs(expected_name, expected_class,
                                         result_sets, find_flags, zone_name));
         break;
     case REFERRAL:
         EXPECT_EQ(DataSrc::SUCCESS,
-                  data_source.findReferral(query, expected_name, expected_class,
+                  data_source.findReferral(expected_name, expected_class,
                                            result_sets, find_flags, zone_name));
         break;
     }
@@ -327,7 +317,7 @@ checkFind(FindMode mode, const Sqlite3DataSrc& data_source, const Query& query,
 }
 
 void
-checkFind(FindMode mode, const Sqlite3DataSrc& data_source, const Query& query,
+checkFind(FindMode mode, const Sqlite3DataSrc& data_source,
           const Name& expected_name, const Name* zone_name,
           const RRClass& expected_class, const RRType& expected_type,
           const RRTTL& expected_rrttl, const uint32_t expected_flags,
@@ -344,7 +334,7 @@ checkFind(FindMode mode, const Sqlite3DataSrc& data_source, const Query& query,
     answers.push_back(&expected_data);
     signatures.push_back(expected_sig_data);
 
-    checkFind(mode, data_source, query, expected_name, zone_name,
+    checkFind(mode, data_source, expected_name, zone_name,
               expected_class, expected_type, ttls, expected_flags, types,
               answers, signatures);
 }
@@ -405,15 +395,15 @@ TEST_F(Sqlite3DataSourceTest, findClosestEnclosureNoMatch) {
 
 TEST_F(Sqlite3DataSourceTest, findRRsetNormal) {
     // Without specifying the zone name, and then with the zone name
-    checkFind(NORMAL, data_source, *query, www_name, NULL, rrclass, rrtype,
+    checkFind(NORMAL, data_source, www_name, NULL, rrclass, rrtype,
               rrttl, 0, common_a_data, &common_sig_data);
 
-    checkFind(NORMAL, data_source, *query, www_name, &zone_name, rrclass,
+    checkFind(NORMAL, data_source, www_name, &zone_name, rrclass,
               rrtype, rrttl, 0, common_a_data, &common_sig_data);
 
     // With a zone name that doesn't match
     EXPECT_EQ(DataSrc::SUCCESS,
-              data_source.findRRset(*query, www_name, rrclass, rrtype,
+              data_source.findRRset(www_name, rrclass, rrtype,
                                     result_sets, find_flags, &nomatch_name));
     EXPECT_EQ(DataSrc::NO_SUCH_ZONE, find_flags);
     EXPECT_TRUE(result_sets.begin() == result_sets.end()); // should be empty
@@ -430,23 +420,23 @@ TEST_F(Sqlite3DataSourceTest, findRRsetNormalANY) {
     signatures.push_back(&www_nsec_sig_data);
 
     rrtype = RRType::ANY();
-    checkFind(NORMAL, data_source, *query, www_name, NULL, rrclass, rrtype,
+    checkFind(NORMAL, data_source, www_name, NULL, rrclass, rrtype,
               ttls, 0, types, answers, signatures);
 
-    checkFind(NORMAL, data_source, *query, www_name, &zone_name, rrclass,
+    checkFind(NORMAL, data_source, www_name, &zone_name, rrclass,
               rrtype, ttls, 0, types, answers, signatures);
 }
 
 // Case insensitive lookup
 TEST_F(Sqlite3DataSourceTest, findRRsetNormalCase) {
-    checkFind(NORMAL, data_source, *query, www_upper_name, NULL, rrclass,
+    checkFind(NORMAL, data_source, www_upper_name, NULL, rrclass,
               rrtype, rrttl, 0, common_a_data, &common_sig_data);
 
-    checkFind(NORMAL, data_source, *query, www_upper_name, &zone_name, rrclass,
+    checkFind(NORMAL, data_source, www_upper_name, &zone_name, rrclass,
               rrtype, rrttl, 0, common_a_data, &common_sig_data);
 
     EXPECT_EQ(DataSrc::SUCCESS,
-              data_source.findRRset(*query, www_upper_name, rrclass, rrtype,
+              data_source.findRRset(www_upper_name, rrclass, rrtype,
                                     result_sets, find_flags, &nomatch_name));
     EXPECT_EQ(DataSrc::NO_SUCH_ZONE, find_flags);
     EXPECT_TRUE(result_sets.begin() == result_sets.end()); // should be empty
@@ -454,15 +444,15 @@ TEST_F(Sqlite3DataSourceTest, findRRsetNormalCase) {
 
 TEST_F(Sqlite3DataSourceTest, findRRsetApexNS) {
     rrtype = RRType::NS();
-    checkFind(NORMAL, data_source, *query, zone_name, NULL, rrclass, rrtype,
+    checkFind(NORMAL, data_source, zone_name, NULL, rrclass, rrtype,
               rrttl, DataSrc::REFERRAL, apex_ns_data, &apex_ns_sig_data);
 
-    checkFind(NORMAL, data_source, *query, zone_name, &zone_name, rrclass,
+    checkFind(NORMAL, data_source, zone_name, &zone_name, rrclass,
               rrtype, rrttl, DataSrc::REFERRAL, apex_ns_data,
               &apex_ns_sig_data);
 
     EXPECT_EQ(DataSrc::SUCCESS,
-              data_source.findRRset(*query, zone_name, rrclass, rrtype,
+              data_source.findRRset(zone_name, rrclass, rrtype,
                                     result_sets, find_flags, &nomatch_name));
     EXPECT_EQ(DataSrc::NO_SUCH_ZONE, find_flags);
     EXPECT_TRUE(result_sets.begin() == result_sets.end()); // should be empty
@@ -491,10 +481,10 @@ TEST_F(Sqlite3DataSourceTest, findRRsetApexANY) {
     signatures.push_back(&apex_dnskey_sig_data);
 
     rrtype = RRType::ANY();
-    checkFind(NORMAL, data_source, *query, zone_name, NULL, rrclass, rrtype,
+    checkFind(NORMAL, data_source, zone_name, NULL, rrclass, rrtype,
               ttls, 0, types, answers, signatures);
 
-    checkFind(NORMAL, data_source, *query, zone_name, &zone_name, rrclass,
+    checkFind(NORMAL, data_source, zone_name, &zone_name, rrclass,
               rrtype, ttls, 0, types, answers, signatures);
 }
 
@@ -512,14 +502,14 @@ TEST_F(Sqlite3DataSourceTest, findRRsetMixedANY) {
     signatures.push_back(NULL);
 
     rrtype = RRType::ANY();
-    checkFind(NORMAL, data_source, *query, qname, &zone_name, rrclass,
+    checkFind(NORMAL, data_source, qname, &zone_name, rrclass,
               rrtype, ttls, 0, types, answers, signatures);
 }
 
 TEST_F(Sqlite3DataSourceTest, findRRsetApexNXRRSET) {
     rrtype = RRType::AAAA();
     EXPECT_EQ(DataSrc::SUCCESS,
-              data_source.findRRset(*query, zone_name, rrclass, rrtype,
+              data_source.findRRset(zone_name, rrclass, rrtype,
                                     result_sets, find_flags, &zone_name));
     // there's an NS RRset at the apex name, so the REFERRAL flag should be
     // set, too.
@@ -528,7 +518,7 @@ TEST_F(Sqlite3DataSourceTest, findRRsetApexNXRRSET) {
 
     // Same test, without specifying the zone name
     EXPECT_EQ(DataSrc::SUCCESS,
-              data_source.findRRset(*query, zone_name, rrclass, rrtype,
+              data_source.findRRset(zone_name, rrclass, rrtype,
                                     result_sets, find_flags, NULL));
     // there's an NS RRset at the apex name, so the REFERRAL flag should be
     // set, too.
@@ -540,9 +530,9 @@ TEST_F(Sqlite3DataSourceTest, findRRsetApexNXRRSET) {
 // point of view, but perform minimal tests anyway.
 TEST_F(Sqlite3DataSourceTest, findRRsetWildcard) {
     const Name qname("*.wild.example.com");
-    checkFind(NORMAL, data_source, *query, qname, NULL, rrclass,
+    checkFind(NORMAL, data_source, qname, NULL, rrclass,
               rrtype, rrttl, 0, wild_a_data, &common_sig_data);
-    checkFind(NORMAL, data_source, *query, qname, &zone_name, rrclass,
+    checkFind(NORMAL, data_source, qname, &zone_name, rrclass,
               rrtype, rrttl, 0, wild_a_data, &common_sig_data);
 }
 
@@ -551,13 +541,13 @@ TEST_F(Sqlite3DataSourceTest, findRRsetEmptyNode) {
     const Name qname("bar.example.com");
 
     EXPECT_EQ(DataSrc::SUCCESS,
-              data_source.findRRset(*query, qname, rrclass, rrtype,
+              data_source.findRRset(qname, rrclass, rrtype,
                                     result_sets, find_flags, NULL));
     EXPECT_EQ(DataSrc::TYPE_NOT_FOUND, find_flags);
     EXPECT_TRUE(result_sets.begin() == result_sets.end());
 
     EXPECT_EQ(DataSrc::SUCCESS,
-              data_source.findRRset(*query, qname, rrclass, rrtype,
+              data_source.findRRset(qname, rrclass, rrtype,
                                     result_sets, find_flags, &zone_name));
     EXPECT_EQ(DataSrc::TYPE_NOT_FOUND, find_flags);
     EXPECT_TRUE(result_sets.begin() == result_sets.end());
@@ -569,9 +559,9 @@ TEST_F(Sqlite3DataSourceTest, findRRsetDNAME) {
     const Name qname("dname.example.com");
 
     rrtype = RRType::DNAME();
-    checkFind(NORMAL, data_source, *query, qname, NULL, rrclass,
+    checkFind(NORMAL, data_source, qname, NULL, rrclass,
               rrtype, rrttl, 0, dname_data, &dname_sig_data);
-    checkFind(NORMAL, data_source, *query, qname, &zone_name, rrclass,
+    checkFind(NORMAL, data_source, qname, &zone_name, rrclass,
               rrtype, rrttl, 0, dname_data, &dname_sig_data);
 }
 
@@ -581,9 +571,9 @@ TEST_F(Sqlite3DataSourceTest, findRRsetCNAME) {
     // This qname only has the CNAME (+ sigs).  CNAME query is not different
     // from ordinary queries.
     rrtype = RRType::CNAME();
-    checkFind(NORMAL, data_source, *query, qname, NULL, rrclass,
+    checkFind(NORMAL, data_source, qname, NULL, rrclass,
               rrtype, rrttl, 0, cname_data, &cname_sig_data);
-    checkFind(NORMAL, data_source, *query, qname, &zone_name, rrclass,
+    checkFind(NORMAL, data_source, qname, &zone_name, rrclass,
               rrtype, rrttl, 0, cname_data, &cname_sig_data);
 
     // queries for (ordinary) different RR types that match the CNAME.
@@ -593,18 +583,18 @@ TEST_F(Sqlite3DataSourceTest, findRRsetCNAME) {
     ttls.push_back(rrttl);
     answers.push_back(&cname_data);
     signatures.push_back(&cname_sig_data);
-    checkFind(NORMAL, data_source, *query, qname, NULL, rrclass,
+    checkFind(NORMAL, data_source, qname, NULL, rrclass,
               rrtype, ttls, DataSrc::CNAME_FOUND, types, answers, signatures);
-    checkFind(NORMAL, data_source, *query, qname, &zone_name, rrclass,
+    checkFind(NORMAL, data_source, qname, &zone_name, rrclass,
               rrtype, ttls, DataSrc::CNAME_FOUND, types, answers, signatures);
 
     // NSEC query that match the CNAME.
     // CNAME_FOUND flag is NOT set, and the NSEC RR is returned instead of
     // CNAME.
     rrtype = RRType::NSEC();
-    checkFind(NORMAL, data_source, *query, qname, NULL, rrclass,
+    checkFind(NORMAL, data_source, qname, NULL, rrclass,
               rrtype, RRTTL(7200), 0, cname_nsec_data, &cname_nsec_sig_data);
-    checkFind(NORMAL, data_source, *query, qname, &zone_name, rrclass,
+    checkFind(NORMAL, data_source, qname, &zone_name, rrclass,
               rrtype, RRTTL(7200), 0, cname_nsec_data, &cname_nsec_sig_data);
 }
 
@@ -614,7 +604,7 @@ TEST_F(Sqlite3DataSourceTest, findRRsetDelegation) {
     // query for a name under a zone cut.  From the data source API point
     // of view this is no different than "NXDOMAIN".
     EXPECT_EQ(DataSrc::SUCCESS,
-              data_source.findRRset(*query, qname, rrclass, rrtype,
+              data_source.findRRset(qname, rrclass, rrtype,
                                     result_sets, find_flags, NULL));
     EXPECT_EQ(DataSrc::NAME_NOT_FOUND, find_flags);
     EXPECT_TRUE(result_sets.begin() == result_sets.end());
@@ -629,13 +619,13 @@ TEST_F(Sqlite3DataSourceTest, findRRsetDelegationAtZoneCut) {
     // For non-NS ordinary queries, "no type" should be set too, and no RRset is
     // returned.
     EXPECT_EQ(DataSrc::SUCCESS,
-              data_source.findRRset(*query, qname, rrclass, rrtype,
+              data_source.findRRset(qname, rrclass, rrtype,
                                     result_sets, find_flags, NULL));
     EXPECT_EQ(DataSrc::TYPE_NOT_FOUND | DataSrc::REFERRAL, find_flags);
     EXPECT_TRUE(result_sets.begin() == result_sets.end());
 
     EXPECT_EQ(DataSrc::SUCCESS,
-              data_source.findRRset(*query, qname, rrclass, rrtype,
+              data_source.findRRset(qname, rrclass, rrtype,
                                     result_sets, find_flags, &zone_name));
     EXPECT_EQ(DataSrc::TYPE_NOT_FOUND | DataSrc::REFERRAL, find_flags);
     EXPECT_TRUE(result_sets.begin() == result_sets.end());
@@ -643,16 +633,16 @@ TEST_F(Sqlite3DataSourceTest, findRRsetDelegationAtZoneCut) {
     // For NS query, RRset is returned with the REFERRAL flag.  No RRSIG should
     // be provided.
     rrtype = RRType::NS();
-    checkFind(NORMAL, data_source, *query, qname, NULL, rrclass,
+    checkFind(NORMAL, data_source, qname, NULL, rrclass,
               rrtype, rrttl, DataSrc::REFERRAL, delegation_ns_data, NULL);
-    checkFind(NORMAL, data_source, *query, qname, &zone_name, rrclass,
+    checkFind(NORMAL, data_source, qname, &zone_name, rrclass,
               rrtype, rrttl, DataSrc::REFERRAL, delegation_ns_data, NULL);
 
     // For ANY query.  What should we do?
 #if 0
     rrtype = RRType::ANY();
     EXPECT_EQ(DataSrc::SUCCESS,
-              data_source.findRRset(*query, qname, rrclass, rrtype,
+              data_source.findRRset(qname, rrclass, rrtype,
                                     result_sets, find_flags, NULL));
     EXPECT_EQ(DataSrc::REFERRAL, find_flags);
 #endif
@@ -661,10 +651,10 @@ TEST_F(Sqlite3DataSourceTest, findRRsetDelegationAtZoneCut) {
     // without REFERRAL.  But it currently doesn't act like so.
 #if 0
     rrtype = RRType::NSEC();
-    checkFind(NORMAL, data_source, *query, qname, NULL, rrclass,
+    checkFind(NORMAL, data_source, qname, NULL, rrclass,
               rrtype, RRTTL(7200), 0, delegation_nsec_data,
               &delegation_nsec_sig_data);
-    checkFind(NORMAL, data_source, *query, qname, &zone_name, rrclass,
+    checkFind(NORMAL, data_source, qname, &zone_name, rrclass,
               rrtype, RRTTL(7200), 0, delegation_nsec_data,
               &delegation_nsec_sig_data);
 #endif    
@@ -676,25 +666,25 @@ TEST_F(Sqlite3DataSourceTest, findRRsetInChildZone) {
 
     // If we don't specify the zone, the data source should identify the
     // best matching zone.
-    checkFind(NORMAL, data_source, *query, qname, NULL, rrclass,
+    checkFind(NORMAL, data_source, qname, NULL, rrclass,
               rrtype, rrttl, 0, child_a_data, &child_sig_data);
 
     // If we specify the parent zone, it's treated as NXDOMAIN because it's
     // under a zone cut.
     EXPECT_EQ(DataSrc::SUCCESS,
-              data_source.findRRset(*query, qname, rrclass, rrtype,
+              data_source.findRRset(qname, rrclass, rrtype,
                                     result_sets, find_flags, &zone_name));
     EXPECT_EQ(DataSrc::NAME_NOT_FOUND, find_flags);
     EXPECT_TRUE(result_sets.begin() == result_sets.end());
 
     // If we specify the child zone, it should be the same as the first case.
-    checkFind(NORMAL, data_source, *query, qname, &child_zone_name, rrclass,
+    checkFind(NORMAL, data_source, qname, &child_zone_name, rrclass,
               rrtype, rrttl, 0, child_a_data, &child_sig_data);
 }
 
 TEST_F(Sqlite3DataSourceTest, findExactRRset) {
     // Normal case.  No different than findRRset.
-    checkFind(EXACT, data_source, *query, www_name, &zone_name, rrclass, rrtype,
+    checkFind(EXACT, data_source, www_name, &zone_name, rrclass, rrtype,
               rrttl, 0, common_a_data, &common_sig_data);
 }
 
@@ -704,7 +694,7 @@ TEST_F(Sqlite3DataSourceTest, findRRsetNSEC3) {
 
     const Name nsec3_zonename("sql2.example.com");
     EXPECT_EQ(DataSrc::SUCCESS,
-              data_source.findCoveringNSEC3(*query, nsec3_zonename,
+              data_source.findCoveringNSEC3(nsec3_zonename,
                                             hashstr, result_sets));
     RRsetList::iterator it = result_sets.begin();
     checkRRset(*it, Name(hashstr).concatenate(nsec3_zonename), rrclass,
@@ -720,7 +710,7 @@ TEST_F(Sqlite3DataSourceTest, findExactRRsetCNAME) {
     // This qname only has the CNAME (+ sigs).  In this case it should be
     // no different than findRRset for CNAME query.
     rrtype = RRType::CNAME();
-    checkFind(NORMAL, data_source, *query, qname, &zone_name, rrclass,
+    checkFind(NORMAL, data_source, qname, &zone_name, rrclass,
               rrtype, rrttl, 0, cname_data, &cname_sig_data);
 
     // queries for (ordinary) different RR types that match the CNAME.
@@ -731,7 +721,7 @@ TEST_F(Sqlite3DataSourceTest, findExactRRsetCNAME) {
     ttls.push_back(rrttl);
     answers.push_back(&cname_data);
     signatures.push_back(&cname_sig_data);
-    checkFind(EXACT, data_source, *query, qname, &zone_name, rrclass,
+    checkFind(EXACT, data_source, qname, &zone_name, rrclass,
               rrtype, ttls, DataSrc::TYPE_NOT_FOUND, types, answers,
               signatures);
 }
@@ -751,7 +741,7 @@ TEST_F(Sqlite3DataSourceTest, findReferralRRset) {
     signatures.push_back(&delegation_ds_sig_data);
     // Note: zone_name matters here because we need to perform the search
     // in the parent zone.
-    checkFind(REFERRAL, data_source, *query, qname, &zone_name, rrclass,
+    checkFind(REFERRAL, data_source, qname, &zone_name, rrclass,
               rrtype, ttls, 0, types, answers, signatures);
 }
 #endif
@@ -759,14 +749,14 @@ TEST_F(Sqlite3DataSourceTest, findReferralRRset) {
 TEST_F(Sqlite3DataSourceTest, findReferralRRsetDNAME) {
     // same as above.  the DNAME case.
     const Name qname("dname.example.com");
-    checkFind(REFERRAL, data_source, *query, qname, &zone_name, rrclass,
+    checkFind(REFERRAL, data_source, qname, &zone_name, rrclass,
               RRType::DNAME(), rrttl, 0, dname_data, &dname_sig_data);
 }
 
 TEST_F(Sqlite3DataSourceTest, findReferralRRsetFail) {
     // qname has not "referral" records.  the result should be "empty".
     EXPECT_EQ(DataSrc::SUCCESS,
-              data_source.findReferral(*query, www_name, rrclass,
+              data_source.findReferral(www_name, rrclass,
                                        result_sets, find_flags, &zone_name));
     EXPECT_EQ(DataSrc::TYPE_NOT_FOUND, find_flags);
     EXPECT_TRUE(result_sets.begin() == result_sets.end());
@@ -776,11 +766,11 @@ TEST_F(Sqlite3DataSourceTest, findAddressRRset) {
     // A referral lookup searches for A or AAAA, or their sigs.
 
     // A-only case
-    checkFind(ADDRESS, data_source, *query, www_name, &zone_name, rrclass,
+    checkFind(ADDRESS, data_source, www_name, &zone_name, rrclass,
               rrtype, rrttl, 0, common_a_data, &common_sig_data);
 
     // AAAA-only case
-    checkFind(ADDRESS, data_source, *query, Name("ip6.example.com"), &zone_name,
+    checkFind(ADDRESS, data_source, Name("ip6.example.com"), &zone_name,
               rrclass, RRType::AAAA(), rrttl, 0, common_aaaa_data,
               &common_aaaa_sig_data);
 
@@ -793,12 +783,12 @@ TEST_F(Sqlite3DataSourceTest, findAddressRRset) {
     ttls.push_back(rrttl);
     answers.push_back(&common_aaaa_data);
     signatures.push_back(&common_aaaa_sig_data);
-    checkFind(ADDRESS, data_source, *query, Name("ip46.example.com"),
+    checkFind(ADDRESS, data_source, Name("ip46.example.com"),
               &zone_name, rrclass, rrtype, ttls, 0, types, answers, signatures);
 
     // The qname doesn't have no address records.
     EXPECT_EQ(DataSrc::SUCCESS,
-              data_source.findAddrs(*query, Name("text.example.com"), rrclass,
+              data_source.findAddrs(Name("text.example.com"), rrclass,
                                     result_sets, find_flags, &zone_name));
     EXPECT_EQ(DataSrc::TYPE_NOT_FOUND, find_flags);
     EXPECT_TRUE(result_sets.begin() == result_sets.end());

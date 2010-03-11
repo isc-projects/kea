@@ -61,29 +61,25 @@ public:
     void findClosestEnclosure(NameMatch& match,
                               const isc::dns::RRClass& qclass) const;
 
-    Result findRRset(const Query& q,
-                     const isc::dns::Name& qname,
+    Result findRRset(const isc::dns::Name& qname,
                      const isc::dns::RRClass& qclass,
                      const isc::dns::RRType& qtype,
                      isc::dns::RRsetList& target,
                      uint32_t& flags,
                      const isc::dns::Name* zonename) const;
 
-    Result findExactRRset(const Query& q,
-                          const isc::dns::Name& qname,
+    Result findExactRRset(const isc::dns::Name& qname,
                           const isc::dns::RRClass& qclass,
                           const isc::dns::RRType& qtype,
                           isc::dns::RRsetList& target,
                           uint32_t& flags,
                           const isc::dns::Name* zonename) const;
 
-    Result findPreviousName(const Query& q,
-                            const isc::dns::Name& qname,
+    Result findPreviousName(const isc::dns::Name& qname,
                             isc::dns::Name& target,
                             const isc::dns::Name* zonename) const;
 
-   Result findCoveringNSEC3(const Query& q,
-                            const isc::dns::Name& zonename,
+   Result findCoveringNSEC3(const isc::dns::Name& zonename,
                             std::string& hash,
                             isc::dns::RRsetList& target) const;
 
