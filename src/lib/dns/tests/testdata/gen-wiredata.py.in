@@ -199,9 +199,16 @@ class RRSIG:
         f.write('# Tag=%d Signer=%s and Signature\n' % (self.tag, self.signer))
         f.write('%04x %s %s\n' % (self.tag, name_wire, sig_wire))
 
-config_param = {'header' : (DNSHeader, header_xtables),
+def get_config_param(section):
+    config_param = {'header' : (DNSHeader, header_xtables),
                 'question' : (DNSQuestion, question_xtables),
                 'edns' : (EDNS, {}), 'rrsig' : (RRSIG, {}) }
+    s = section
+    m = re.match('^([^:]+)/\d+$', section)
+    if m:
+        s = m.group(1)
+    sys.stderr.write('searching config param' + s + '\n');
+    return config_param[s]
 
 usage = '''usage: %prog [options] input_file'''
 
@@ -240,7 +247,7 @@ if __name__ == "__main__":
         sections = ['header', 'question', 'edns']
 
     for s in sections:
-        section_param = config_param[s]
+        section_param = get_config_param(s)
         (obj, xtables) = (section_param[0](), section_param[1])
         if get_config(config, s, obj, xtables):
             obj.dump(output)
