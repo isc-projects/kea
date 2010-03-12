@@ -25,8 +25,23 @@ AM_PATH_PYTHON([3.1])
 if test "X$GCC" = "Xyes"; then
 CXXFLAGS="$CXXFLAGS -g -Wall -Wextra -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
 UNUSED_PARAM_ATTRIBUTE='__attribute__((unused))'
+
+# Certain versions of gcc (g++) have a bug that incorrectly warns about
+# the use of anonymous name spaces even if they're closed in a single
+# translation unit.  For these versions we have to disable -Werror.
+werror_ok=0
+CXXFLAGS_SAVED="$CXXFLAGS"
+CXXFLAGS="$CXXFLAGS -Werror"
+AC_MSG_CHECKING(for in-TU anonymous namespace breakage)
+AC_TRY_COMPILE([namespace { class Foo {}; }
+namespace isc {class Bar {Foo foo_;};} ],,
+	[AC_MSG_RESULT(no)
+	 werror_ok=1],
+	[AC_MSG_RESULT(yes)])
+CXXFLAGS="$CXXFLAGS_SAVED"
 fi
 AC_DEFINE_UNQUOTED(UNUSED_PARAM, $UNUSED_PARAM_ATTRIBUTE, Define to compiler keyword indicating a function argument is intentionally unused)
+AM_CONDITIONAL(GCC_WERROR_OK, test $werror_ok = 1)
 
 # produce PIC unless we disable shared libraries. need this for python bindings.
 if test $enable_shared != "no" -a "X$GCC" = "Xyes"; then
