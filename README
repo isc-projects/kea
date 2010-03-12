@@ -86,31 +86,55 @@ EXAMPLE SESSION
 
 ~> bindctl
 ["login success "] login as root
+> help
+BindCtl, verstion 0.1
+usage: <module name> <command name> [param1 = value1 [, param2 = value2]]
+Type Tab character to get the hint of module/command/paramters.
+Type "help(? h)" for help on bindctl.
+Type "<module_name> help" for help on the specific module.
+Type "<module_name> <command_name> help" for help on the specific command.
+
+Available module names: 
+	 help 	Get help for bindctl
+	 config 	Configuration commands
+	 Xfrin 	same here
+	 Auth 	same here
+	 Boss 	same here
+> config help
+Module  config 	Configuration commands 
+Available commands:
+	 help 	(Get help for module)
+	 show 	(Show configuration)
+	 add 	(Add entry to configuration list)
+	 remove 	(Remove entry from configuration list)
+	 set 	(Set a configuration value)
+	 unset 	(Unset a configuration value)
+	 diff 	(Show all local changes)
+	 revert 	(Revert all local changes)
+	 commit 	(Commit all local changes)
+	 go 	(Go to a specific configuration part)
 > config show
+Xfrin/	module	
 Auth/	module	
 Boss/	module	
-> config show Auth/
-database_file:	b10-auth.db	string	
-zone_list/	list	
+> config show Xfrin
+transfers_in:	10	integer	
 > config go Auth
 /Auth> config show
-database_file:	b10-auth.db	string	
-zone_list/	list	
-/Auth> config show zone_list
-/Auth> config add zone example.com
-Error: /Auth/zone not found
-/Auth> config add zone_list example.com
-/Auth> config show zone_list
-zone_name:	example.com	string	
-/Auth> config show
-database_file:	b10-auth.db	string	
-zone_list/	list	(modified)
+database_file:	None	string	
+/Auth> config set database_file /tmp/bind10_zones.db
+/Auth> config commit
 /Auth> config go /
-> config show Auth/database_file
-database_file:	b10-auth.db	string	
+> config show Auth/
+database_file:	/tmp/bind10_zones.db	string	
 > config diff
-{'Auth': {'zone_list': ['example.com']}}
-> config commit
+{}
+> config set Auth/foobar
+Error: missing identifier or value
+> config set Auth/database_file foobar
+> config diff
+{'Auth': {'database_file': 'foobar'}}
+> config revert
 > config diff
 {}
 > quit

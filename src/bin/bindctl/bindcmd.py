@@ -468,7 +468,7 @@ class BindCmdInterpreter(Cmd):
             elif cmd.command == "unset":
                 self.config_data.unset(identifier)
             elif cmd.command == "revert":
-                self.config_data.revert()
+                self.config_data.clear_local_changes()
             elif cmd.command == "commit":
                 self.config_data.commit()
             elif cmd.command == "diff":
