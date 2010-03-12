@@ -895,6 +895,13 @@ SectionIterator<T>::operator->() const
 
 template <typename T>
 bool
+SectionIterator<T>::operator==(const SectionIterator<T>& other) const
+{
+    return (impl_->it_ == other.impl_->it_);
+}
+
+template <typename T>
+bool
 SectionIterator<T>::operator!=(const SectionIterator<T>& other) const
 {
     return (impl_->it_ != other.impl_->it_);
