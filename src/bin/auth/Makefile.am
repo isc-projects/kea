@@ -1,6 +1,9 @@
 SUBDIRS = . tests
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/ext $(SQLITE_CFLAGS)
+if GCC_WERROR_OK
+AM_CPPFLAGS += -Werror
+endif
 
 pkglibexecdir = $(libexecdir)/@PACKAGE@
 
