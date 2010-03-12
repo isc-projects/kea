@@ -152,6 +152,13 @@ static const char *opcodetext[] = {
     "RESERVED14",
     "RESERVED15"
 };
+
+static const char *sectiontext[] = {
+    "QUESTION",
+    "ANSWER",
+    "AUTHORITY",
+    "ADDITIONAL"
+};
 }
 
 string
@@ -572,21 +579,21 @@ Message::fromWire(InputBuffer& buffer) {
 }
 
 int
-MessageImpl::parseQuestion(InputBuffer& buffer)
-{
+MessageImpl::parseQuestion(InputBuffer& buffer) {
     unsigned int added = 0;
 
     for (unsigned int count = 0;
          count < counts_[Section::QUESTION().getCode()];
          count++) {
-        Name name(buffer);
+        const Name name(buffer);
 
         if ((buffer.getLength() - buffer.getPosition()) <
             2 * sizeof(uint16_t)) {
-            isc_throw(MessageTooShort, "");
+            isc_throw(DNSMessageFORMERR, "Question section too short: " <<
+                      (buffer.getLength() - buffer.getPosition()) << " bytes");
         }
-        RRType rrtype(buffer.readUint16());
-        RRClass rrclass(buffer.readUint16());
+        const RRType rrtype(buffer.readUint16());
+        const RRClass rrclass(buffer.readUint16());
 
         // XXX: need a duplicate check.  We might also want to have an optimized
         // algorithm that requires the question section contain exactly one
@@ -625,7 +632,9 @@ MessageImpl::parseSection(const Section& section, InputBuffer& buffer) {
         // buffer must store at least RR TYPE, RR CLASS, TTL, and RDLEN.
         if ((buffer.getLength() - buffer.getPosition()) <
             3 * sizeof(uint16_t) + sizeof(uint32_t)) {
-            isc_throw(MessageTooShort, "");
+            isc_throw(DNSMessageFORMERR, sectiontext[section.getCode()] <<
+                      " section too short: " <<
+                      (buffer.getLength() - buffer.getPosition()) << " bytes");
         }
 
         RRType rrtype(buffer.readUint16());
@@ -691,13 +700,6 @@ MessageImpl::parseSection(const Section& section, InputBuffer& buffer) {
 }
 
 namespace {
-static const char *sectiontext[] = {
-    "QUESTION",
-    "ANSWER",
-    "AUTHORITY",
-    "ADDITIONAL"
-};
-
 template <typename T>
 struct SectionFormatter
 {
@@ -962,7 +964,8 @@ const SectionIterator<RRsetPtr>
 Message::beginSection(const Section& section) const
 {
     if (section == Section::QUESTION()) {
-        isc_throw(InvalidMessageSection, "");
+        isc_throw(InvalidMessageSection,
+                  "RRset iterator is requested for question");
     }
 
     return (RRsetIterator(
@@ -974,7 +977,8 @@ const SectionIterator<RRsetPtr>
 Message::endSection(const Section& section) const
 {
     if (section == Section::QUESTION()) {
-        isc_throw(InvalidMessageSection, "");
+        isc_throw(InvalidMessageSection,
+                  "RRset iterator is requested for question");
     }
 
     return (RRsetIterator(
