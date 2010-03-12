@@ -96,7 +96,7 @@ def main():
                 continue
 
             if username_exist(name, filename):
-                 print("use name already exist!")
+                 print("user name already exists!")
                  continue
 
             while True:
