@@ -419,6 +419,7 @@ getTCPSocket(int af, const char* port) {
         if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on)) < 0) {
             cerr << "couldn't set IPV6_V6ONLY socket option" << endl;
         }
+        // proceed anyway
     }
 
     if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0) {
@@ -429,7 +430,9 @@ getTCPSocket(int af, const char* port) {
         isc_throw(FatalError, "binding socket failure");
     }
 
-    listen(s, 100);
+    if (listen(s, 100) < 0) {
+        isc_throw(FatalError, "failed to listen on a TCP socket");
+    }
     return (s);
 }
 
@@ -449,9 +452,14 @@ processMessageUDP(const int fd, Message& dns_message,
         InputBuffer buffer(recvbuf, cc);
         if (auth_server->processMessage(buffer, dns_message, response_renderer,
                                         true)) {
-            sendto(fd, response_renderer.getData(),
-                   response_renderer.getLength(), 0, sa, sa_len);
+            cc = sendto(fd, response_renderer.getData(),
+                        response_renderer.getLength(), 0, sa, sa_len);
+            if (cc != response_renderer.getLength()) {
+                cerr << "UDP send error" << endl;
+            }
         }
+    } else if (verbose_mode) {
+        cerr << "UDP receive error" << endl;
     }
 }
 
@@ -464,7 +472,14 @@ processMessageTCP(const int fd, Message& dns_message,
     struct sockaddr* sa = static_cast<struct sockaddr*>((void*)&ss);
     char sizebuf[2];
     int cc;
+
     int ts = accept(fd, sa, &sa_len);
+    if (ts < 0) {
+        if (verbose_mode) {
+            cerr << "[XX] TCP accept failure:" << endl;
+            return;
+        }
+    }
 
     if (verbose_mode) {
         cerr << "[XX] process TCP" << endl;
@@ -487,7 +502,13 @@ processMessageTCP(const int fd, Message& dns_message,
         if (verbose_mode) {
             cerr << "[XX] cc now: " << cc << " of " << size << endl;
         }
-        cc += recv(ts, &message_buffer[0] + cc, size - cc, 0);
+        const int cc0 = recv(ts, &message_buffer[0] + cc, size - cc, 0);
+        if (cc0 < 0) {
+            if (verbose_mode) {
+                cerr << "TCP receive error" << endl;
+            }
+        }
+        cc += cc0;
     }
 
     InputBuffer buffer(&message_buffer[0], size);
