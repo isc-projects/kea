@@ -217,8 +217,13 @@ AuthSrv::processMessage(InputBuffer& request_buffer, Message& message,
     try {
         Query query(message, dnssec_ok);
         impl_->data_sources_.doQuery(query);
-    } catch(...) {
-        message.setRcode(Rcode::SERVFAIL());
+    } catch (const Exception& ex) {
+        if (verbose_mode) {
+            cerr << "Internal error, returning SERVFAIL: " << ex.what() << endl;
+        }
+        makeErrorMessage(message, response_renderer, Rcode::SERVFAIL(),
+                         verbose_mode);
+        return (true);
     }
 
     response_renderer.setLengthLimit(udp_buffer ? remote_bufsize : 65535);

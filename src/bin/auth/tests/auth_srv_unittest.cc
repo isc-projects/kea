@@ -23,6 +23,8 @@
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
 
+#include <cc/data.h>
+
 #include <auth/auth_srv.h>
 
 #include <dns/tests/unittest_util.h>
@@ -30,8 +32,11 @@
 using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::dns;
+using namespace isc::data;
 
 namespace {
+const char* CONFIG_TESTDB = "{\"database_file\": \"testdata/example.sqlite3\"}";
+
 class AuthSrvTest : public ::testing::Test {
 protected:
     AuthSrvTest() : request_message(Message::RENDER),
@@ -89,13 +94,13 @@ headerCheck(const Message& message, const qid_t qid, const Rcode& rcode,
     EXPECT_EQ(qid, message.getQid());
     EXPECT_EQ(rcode, message.getRcode());
     EXPECT_EQ(opcodeval, message.getOpcode().getCode());
-    EXPECT_EQ((flags & QR_FLAG) == 1, message.getHeaderFlag(MessageFlag::QR()));
-    EXPECT_EQ((flags & AA_FLAG) == 1, message.getHeaderFlag(MessageFlag::AA()));
-    EXPECT_EQ((flags & TC_FLAG) == 1, message.getHeaderFlag(MessageFlag::TC()));
-    EXPECT_EQ((flags & RA_FLAG) == 1, message.getHeaderFlag(MessageFlag::RA()));
-    EXPECT_EQ((flags & RD_FLAG) == 1, message.getHeaderFlag(MessageFlag::RD()));
-    EXPECT_EQ((flags & AD_FLAG) == 1, message.getHeaderFlag(MessageFlag::AD()));
-    EXPECT_EQ((flags & CD_FLAG) == 1, message.getHeaderFlag(MessageFlag::CD()));
+    EXPECT_EQ((flags & QR_FLAG) != 0, message.getHeaderFlag(MessageFlag::QR()));
+    EXPECT_EQ((flags & AA_FLAG) != 0, message.getHeaderFlag(MessageFlag::AA()));
+    EXPECT_EQ((flags & TC_FLAG) != 0, message.getHeaderFlag(MessageFlag::TC()));
+    EXPECT_EQ((flags & RA_FLAG) != 0, message.getHeaderFlag(MessageFlag::RA()));
+    EXPECT_EQ((flags & RD_FLAG) != 0, message.getHeaderFlag(MessageFlag::RD()));
+    EXPECT_EQ((flags & AD_FLAG) != 0, message.getHeaderFlag(MessageFlag::AD()));
+    EXPECT_EQ((flags & CD_FLAG) != 0, message.getHeaderFlag(MessageFlag::CD()));
 
     EXPECT_EQ(qdcount, message.getRRCount(Section::QUESTION()));
     EXPECT_EQ(ancount, message.getRRCount(Section::ANSWER()));
@@ -212,4 +217,43 @@ TEST_F(AuthSrvTest, ednsBadVers) {
     EXPECT_FALSE(parse_message.isDNSSECSupported());
 }
 
+void
+updateConfig(AuthSrv* server, const char* const dbfile) {
+    const ElementPtr config_answer =
+        server->updateConfig(Element::createFromString(dbfile));
+    EXPECT_EQ(Element::map, config_answer->getType());
+    EXPECT_TRUE(config_answer->contains("result"));
+
+    const ElementPtr result = config_answer->get("result");
+    EXPECT_EQ(Element::list, result->getType());
+    EXPECT_EQ(0, result->get(0)->intValue());
+}
+
+// Install a Sqlite3 data source with testing data.
+TEST_F(AuthSrvTest, updateConfig) {
+    updateConfig(&server, CONFIG_TESTDB);
+
+    // query for existent data in the installed data source.  The resulting
+    // response should have the AA flag on, and have an RR in each answer
+    // and authority section.
+    createDataFromFile("testdata/examplequery_fromWire");
+    EXPECT_EQ(true, server.processMessage(*ibuffer, parse_message,
+                                           response_renderer, true, false));
+    headerCheck(parse_message, default_qid, Rcode::NOERROR(), opcode.getCode(),
+                QR_FLAG | AA_FLAG, 1, 1, 1, 0);
+}
+
+TEST_F(AuthSrvTest, datasourceFail) {
+    updateConfig(&server, CONFIG_TESTDB);
+
+    // This query will hit a corrupted entry of the data source (the zoneload
+    // tool and the data source itself naively accept it).  This will result
+    // in a SERVFAIL response, and the answer and authority sections should
+    // be empty.
+    createDataFromFile("testdata/badExampleQuery_fromWire");
+    EXPECT_EQ(true, server.processMessage(*ibuffer, parse_message,
+                                          response_renderer, true, false));
+    headerCheck(parse_message, default_qid, Rcode::SERVFAIL(), opcode.getCode(),
+                QR_FLAG, 1, 0, 0, 0);
+}
 }
