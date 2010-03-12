@@ -90,7 +90,7 @@ my_config_handler(ElementPtr new_config) {
 
 static ElementPtr
 my_command_handler(const string& command, const ElementPtr args) {
-    ElementPtr answer = createAnswer(0);
+    ElementPtr answer = createAnswer();
 
     if (command == "print_message") {
         cout << args << endl;

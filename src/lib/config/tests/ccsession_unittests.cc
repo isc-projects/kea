@@ -49,7 +49,7 @@ initFakeSession()
     initial_messages = el("[]");
     msg_queue = el("[]");
     subscriptions = el("[]");
-    initial_messages->add(createAnswer(0));
+    initial_messages->add(createAnswer());
 }
 
 void
@@ -63,14 +63,13 @@ endFakeSession()
 TEST(CCSession, createAnswer)
 {
     ElementPtr answer;
-    // todo: this should fail (actually int rcode should probably be removed)
-    answer = createAnswer(1);
-    answer = createAnswer(0);
+    answer = createAnswer();
     EXPECT_EQ("{\"result\": [ 0 ]}", answer->str());
     answer = createAnswer(1, "error");
     EXPECT_EQ("{\"result\": [ 1, \"error\" ]}", answer->str());
-    // todo: this should fail
-    answer = createAnswer(0, "error");
+
+    EXPECT_THROW(createAnswer(1, ElementPtr()), CCSessionError);
+    EXPECT_THROW(createAnswer(1, Element::create(1)), CCSessionError);
 
     ElementPtr arg = el("[ \"just\", \"some\", \"data\" ]");
     answer = createAnswer(0, arg);
@@ -83,19 +82,20 @@ TEST(CCSession, parseAnswer)
     ElementPtr arg;
     int rcode;
 
-    // todo: these should throw CCSessionError
-    //answer = el("1");
-    //arg = parseAnswer(rcode, ElementPtr());
-    //arg = parseAnswer(rcode, answer);
-    // etc
+    EXPECT_THROW(parseAnswer(rcode, ElementPtr()), CCSessionError);
+    EXPECT_THROW(parseAnswer(rcode, el("1")), CCSessionError);
+    EXPECT_THROW(parseAnswer(rcode, el("[]")), CCSessionError);
+    EXPECT_THROW(parseAnswer(rcode, el("{}")), CCSessionError);
+    EXPECT_THROW(parseAnswer(rcode, el("{ \"something\": 1 }")), CCSessionError);
+    EXPECT_THROW(parseAnswer(rcode, el("{ \"result\": 0 }")), CCSessionError);
+    EXPECT_THROW(parseAnswer(rcode, el("{ \"result\": 1 }")), CCSessionError);
+    EXPECT_THROW(parseAnswer(rcode, el("{ \"result\": [ 1 ]}")), CCSessionError);
+    EXPECT_THROW(parseAnswer(rcode, el("{ \"result\": [ 1, 1 ]}")), CCSessionError);
     
     answer = el("{\"result\": [ 0 ]}");
     arg = parseAnswer(rcode, answer);
     EXPECT_EQ(0, rcode);
     EXPECT_TRUE(isNull(arg));
-
-    // todo: this should throw
-    answer = el("{\"result\": [ 1 ]}");
 
     answer = el("{\"result\": [ 1, \"error\"]}");
     arg = parseAnswer(rcode, answer);
@@ -113,9 +113,8 @@ TEST(CCSession, createCommand)
     ElementPtr command;
     ElementPtr arg;
 
-    // todo: add overload for no arg
-    //command = createCommand("my_command");
-    //ASSERT_EQ("{\"command\": [ \"my_command\" ]", command->str());
+    command = createCommand("my_command");
+    ASSERT_EQ("{\"command\": [ \"my_command\" ]}", command->str());
 
     arg = el("1");
     command = createCommand("my_command", arg);
@@ -136,14 +135,17 @@ TEST(CCSession, parseCommand)
     std::string cmd;
 
     // should throw
-    //parseCommand(arg, ElementPtr());
-    parseCommand(arg, el("1"));
-    parseCommand(arg, el("{}"));
-    parseCommand(arg, el("{\"not a command\": 1 }"));
-    parseCommand(arg, el("{\"command\": 1 }"));
-    parseCommand(arg, el("{\"command\": [] }"));
-    parseCommand(arg, el("{\"command\": [ 1 ] }"));
-    parseCommand(arg, el("{\"command\": [ \"command\" ] }"));
+    EXPECT_THROW(parseCommand(arg, ElementPtr()), CCSessionError);
+    EXPECT_THROW(parseCommand(arg, el("1")), CCSessionError);
+    EXPECT_THROW(parseCommand(arg, el("{}")), CCSessionError);
+    EXPECT_THROW(parseCommand(arg, el("{\"not a command\": 1 }")), CCSessionError);
+    EXPECT_THROW(parseCommand(arg, el("{\"command\": 1 }")), CCSessionError);
+    EXPECT_THROW(parseCommand(arg, el("{\"command\": [] }")), CCSessionError);
+    EXPECT_THROW(parseCommand(arg, el("{\"command\": [ 1 ] }")), CCSessionError);
+
+    cmd = parseCommand(arg, el("{\"command\": [ \"my_command\" ] }"));
+    EXPECT_EQ("my_command", cmd);
+    EXPECT_TRUE(isNull(arg));
 
     cmd = parseCommand(arg, el("{\"command\": [ \"my_command\", 1 ] }"));
     EXPECT_EQ("my_command", cmd);
@@ -197,13 +199,13 @@ ElementPtr my_config_handler(ElementPtr new_config)
         new_config->get("item1")->intValue() == 5) {
         return createAnswer(6, "I do not like the number 5");
     }
-    return createAnswer(0);
+    return createAnswer();
 }
 
 ElementPtr my_command_handler(const std::string& command, ElementPtr arg UNUSED_PARAM)
 {
     if (command == "good_command") {
-        return createAnswer(0);
+        return createAnswer();
     } else if (command == "command_with_arg") {
         if (arg) {
             if (arg->getType() == Element::integer) {
@@ -266,10 +268,10 @@ TEST(CCSession, checkCommand)
     result = mccs.checkCommand();
     EXPECT_EQ(0, result);
 
-    // todo: type check in message handling in checkCommand
-    //addMessage(el("1"), "Spec2", "*");
-    //result = mccs.checkCommand();
-    //EXPECT_EQ(0, result);
+    // not a command, should be ignored
+    addMessage(el("1"), "Spec2", "*");
+    result = mccs.checkCommand();
+    EXPECT_EQ(0, result);
 
     addMessage(el("{ \"command\": [ \"good_command\" ] }"), "Spec2", "*");
     result = mccs.checkCommand();
@@ -279,6 +281,13 @@ TEST(CCSession, checkCommand)
     EXPECT_EQ(0, result);
 
     addMessage(el("{ \"command\": \"bad_command\" }"), "Spec2", "*");
+    result = mccs.checkCommand();
+    EXPECT_EQ(1, msg_queue->size());
+    msg = getFirstMessage(group, to);
+    EXPECT_EQ("{\"result\": [ 1, \"Command part in command message missing, empty, or not a list\" ]}", msg->str());
+    EXPECT_EQ(0, result);
+
+    addMessage(el("{ \"command\": [ \"bad_command\" ] }"), "Spec2", "*");
     result = mccs.checkCommand();
     EXPECT_EQ(1, msg_queue->size());
     msg = getFirstMessage(group, to);

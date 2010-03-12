@@ -33,12 +33,72 @@ class io_service;
 namespace isc {
 namespace config {
 
-ElementPtr createAnswer(const int rcode);
+///
+/// \brief Creates a standard config/command level success answer message
+///        (i.e. of the form { "result": [ 0 ] }
+/// \return Standard command/config success answer message
+ElementPtr createAnswer();
+
+///
+/// \brief Creates a standard config/command level answer message
+///        (i.e. of the form { "result": [ rcode, arg ] }
+/// If rcode != 0, arg must be a StringElement
+///
+/// \param rcode The return code (0 for success)
+/// \param arg For rcode == 0, this is an optional argument of any
+///            Element type. For rcode == 1, this argument is mandatory,
+///            and must be a StringElement containing an error description
+/// \return Standard command/config answer message
 ElementPtr createAnswer(const int rcode, const ElementPtr arg);
+
+///
+/// \brief Creates a standard config/command level answer message
+/// (i.e. of the form { "result": [ rcode, arg ] }
+///
+/// \param rcode The return code (0 for success)
+/// \param arg A string to put into the StringElement argument
+/// \return Standard command/config answer message
 ElementPtr createAnswer(const int rcode, const std::string& arg);
+
+///
+/// Parses a standard config/command level answer message
+/// 
+/// \param rcode This value will be set to the return code contained in
+///              the message
+/// \param msg The message to parse
+/// \return The optional argument in the message, or an empty ElementPtr
+///         if there was no argument. If rcode != 0, this contains a
+///         StringElement with the error description.
 ElementPtr parseAnswer(int &rcode, const ElementPtr msg);
 
+
+///
+/// \brief Creates a standard config/command command message with no
+/// argument (of the form { "command": [ "my_command" ] }
+/// 
+/// \param command The command string
+/// \return The created message
+ElementPtr createCommand(const std::string& command);
+
+///
+/// \brief Creates a standard config/command command message with the
+/// given argument (of the form { "command": [ "my_command", arg ] }
+/// 
+/// \param command The command string
+/// \param arg The optional argument for the command. This can be of 
+///        any Element type, but it should conform to the .spec file.
+/// \return The created message
 ElementPtr createCommand(const std::string& command, ElementPtr arg);
+
+///
+/// \brief Parses the given command into a string containing the actual
+///        command and an ElementPtr containing the optional argument.
+///
+/// \param arg This value will be set to the ElementPtr pointing to
+///        the argument, or to an empty ElementPtr if there was none.
+/// \param command The command message containing the command (as made
+///        by createCommand()
+/// \return The command string
 const std::string parseCommand(ElementPtr& arg, const ElementPtr command);
 
 
