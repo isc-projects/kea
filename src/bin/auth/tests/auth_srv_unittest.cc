@@ -37,7 +37,7 @@ protected:
     AuthSrvTest() : request_message(Message::RENDER),
                     parse_message(Message::PARSE), default_qid(0x1035),
                     opcode(Opcode(Opcode::QUERY())), qname("www.example.com"),
-                    qclass(RRClass::IN()), qtype(RRType::A()),
+                    qclass(RRClass::IN()), qtype(RRType::A()), ibuffer(NULL),
                     request_obuffer(0), request_renderer(request_obuffer),
                     response_obuffer(0), response_renderer(response_obuffer)
     {}
@@ -49,11 +49,14 @@ protected:
     Name qname;
     RRClass qclass;
     RRType qtype;
+    InputBuffer* ibuffer;
     OutputBuffer request_obuffer;
     MessageRenderer request_renderer;
     OutputBuffer response_obuffer;
     MessageRenderer response_renderer;
     vector<uint8_t> data;
+
+    void createDataFromFile(const char* const datafile);
 };
 
 // These are flags to indicate whether the corresponding flag bit of the
@@ -68,9 +71,12 @@ const unsigned int AD_FLAG = 0x20;
 const unsigned int CD_FLAG = 0x40;
 
 void
-createDataFromFile(const char* const datafile, vector<uint8_t>& data) {
+AuthSrvTest::createDataFromFile(const char* const datafile) {
+    delete ibuffer;
+    data.clear();
+
     UnitTestUtil::readWireData(datafile, data);
-    InputBuffer buffer(&data[0], data.size());
+    ibuffer = new InputBuffer(&data[0], data.size());
 }
 
 void
@@ -99,15 +105,14 @@ headerCheck(const Message& message, const qid_t qid, const Rcode& rcode,
 
 // Unsupported requests.  Should result in NOTIMP.
 TEST_F(AuthSrvTest, unsupportedRequest) {
-    createDataFromFile("testdata/simplequery_fromWire", data);
     for (unsigned int i = 1; i < 16; ++i) {
         // set Opcode to 'i', which iterators over all possible codes except
         // the standard query (0)
+        createDataFromFile("testdata/simplequery_fromWire");
         data[2] = ((i << 3) & 0xff);
 
-        InputBuffer buffer(&data[0], data.size());
         parse_message.clear(Message::PARSE);
-        EXPECT_EQ(true, server.processMessage(buffer, parse_message,
+        EXPECT_EQ(true, server.processMessage(*ibuffer, parse_message,
                                               response_renderer, true, false));
         headerCheck(parse_message, default_qid, Rcode::NOTIMP(), i, QR_FLAG,
                     0, 0, 0, 0);
@@ -116,9 +121,8 @@ TEST_F(AuthSrvTest, unsupportedRequest) {
 
 // Multiple questions.  Should result in FORMERR.
 TEST_F(AuthSrvTest, multiQuestion) {
-    createDataFromFile("testdata/multiquestion_fromWire", data);
-    InputBuffer buffer(&data[0], data.size());
-    EXPECT_EQ(true, server.processMessage(buffer, parse_message,
+    createDataFromFile("testdata/multiquestion_fromWire");
+    EXPECT_EQ(true, server.processMessage(*ibuffer, parse_message,
                                           response_renderer, true, false));
     headerCheck(parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
                 QR_FLAG, 2, 0, 0, 0);
@@ -138,10 +142,30 @@ TEST_F(AuthSrvTest, multiQuestion) {
 // Incoming data doesn't even contain the complete header.  Must be silently
 // dropped.
 TEST_F(AuthSrvTest, shortMessage) {
-    createDataFromFile("testdata/shortmessage_fromWire", data);
-    InputBuffer buffer(&data[0], data.size());
-    EXPECT_EQ(false, server.processMessage(buffer, parse_message,
+    createDataFromFile("testdata/shortmessage_fromWire");
+    EXPECT_EQ(false, server.processMessage(*ibuffer, parse_message,
                                            response_renderer, true, false));
+}
+
+// Response messages.  Must be silently dropped, whether it's a valid response
+// or malformed or could otherwise cause a protocol error.
+TEST_F(AuthSrvTest, response) {
+    // A valid (although unusual) response
+    createDataFromFile("testdata/simpleresponse_fromWire");
+    EXPECT_EQ(false, server.processMessage(*ibuffer, parse_message,
+                                           response_renderer, true, false));
+
+    // A response with a broken question section.  must be dropped rather than
+    // returning FORMERR.
+    createDataFromFile("testdata/shortresponse_fromWire");
+    EXPECT_EQ(false, server.processMessage(*ibuffer, parse_message,
+                                           response_renderer, true, false));    
+
+    // A response to iquery.  must be dropped rather than returning NOTIMP.
+    createDataFromFile("testdata/iqueryresponse_fromWire");
+    EXPECT_EQ(false, server.processMessage(*ibuffer, parse_message,
+                                           response_renderer, true, false));    
+
 }
 
 }
