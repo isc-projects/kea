@@ -83,16 +83,6 @@ public:
 };
 
 ///
-/// \brief A standard DNS module exception that is thrown if the wire-format
-/// name contains an invalid compression pointer.
-///
-class BadPointer : public Exception {
-public:
-    BadPointer(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
-};
-
-///
 /// \brief A standard DNS module exception that is thrown if the name parser
 /// finds the input (string or wire-format data) is incomplete.
 ///

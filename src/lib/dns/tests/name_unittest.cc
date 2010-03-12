@@ -21,6 +21,7 @@
 #include <stdexcept>
 
 #include <dns/buffer.h>
+#include <dns/exceptions.h>
 #include <dns/name.h>
 #include <dns/messagerenderer.h>
 
@@ -225,26 +226,26 @@ TEST_F(NameTest, fromWire)
                         Name("vix.com"));
     // bogus label character (looks like a local compression pointer)
     EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire2", 25),
-                 BadLabelType);
+                 DNSMessageFORMERR);
     // a bad compression pointer (too big)
     EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire3_1", 25),
-                 BadPointer);
+                 DNSMessageFORMERR);
     // forward reference
     EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire3_2", 25),
-                 BadPointer);
+                 DNSMessageFORMERR);
     // invalid name length
     EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire4", 550),
-                 TooLongName);
+                 DNSMessageFORMERR);
 
     // skip test for from Wire5.  It's for disabling decompression, but our
     // implementation always allows it.
 
     // bad pointer (too big)
     EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire6", 25),
-                 BadPointer);
+                 DNSMessageFORMERR);
     // input ends unexpectedly
     EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire7", 25),
-                 IncompleteName);
+                 DNSMessageFORMERR);
     // many hops of compression but valid.  should succeed.
     EXPECT_PRED_FORMAT2(UnitTestUtil::matchName,
                         nameFactoryFromWire("testdata/name_fromWire8", 383),
@@ -258,7 +259,7 @@ TEST_F(NameTest, fromWire)
     EXPECT_EQ(Name::MAX_WIRE,
               nameFactoryFromWire("testdata/name_fromWire9", 0).getLength());
     EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire10", 0).getLength(),
-                 TooLongName);
+                 DNSMessageFORMERR);
 
     // A name with possible maximum number of labels; awkward but valid
     EXPECT_EQ(nameFactoryFromWire("testdata/name_fromWire11",
@@ -267,7 +268,7 @@ TEST_F(NameTest, fromWire)
 
     // Wire format including an invalid label length
     EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire12", 0),
-                 BadLabelType);
+                 DNSMessageFORMERR);
 
     // converting upper-case letters to down-case
     EXPECT_EQ("vix.com.", nameFactoryFromWire("testdata/name_fromWire1",

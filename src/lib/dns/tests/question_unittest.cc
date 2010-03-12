@@ -20,6 +20,7 @@
 #include <exceptions/exceptions.h>
 
 #include <dns/buffer.h>
+#include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/question.h>
@@ -84,7 +85,7 @@ TEST_F(QuestionTest, fromWire)
     // Pathological cases: Corresponding exceptions will be thrown from
     // the underlying parser.
     EXPECT_THROW(questionFromWire("testdata/question_fromWire", 31),
-                 BadPointer);
+                 DNSMessageFORMERR);
     EXPECT_THROW(questionFromWire("testdata/question_fromWire", 36),
                  IncompleteRRClass);
 }
