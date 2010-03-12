@@ -250,9 +250,10 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/bind10/bind10.py
            src/bin/bind10/tests/bind10_test
            src/bin/bind10/run_bind10.sh
-           src/bin/bindctl/bindctl
+           src/bin/bindctl/run_bindctl.sh
+           src/bin/bindctl/bindctl.py
            src/bin/bindctl/unittest/bindctl_test
-           src/bin/loadzone/run_loadzone
+           src/bin/loadzone/run_loadzone.sh
            src/bin/loadzone/b10-loadzone.py
            src/bin/usermgr/run_b10-cmdctl-usermgr.sh
            src/bin/usermgr/b10-cmdctl-usermgr.py
@@ -271,8 +272,8 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            chmod +x src/bin/cmdctl/unittest/cmdctl_test
            chmod +x src/bin/xfrin/unittest/xfrin_test
            chmod +x src/bin/bindctl/unittest/bindctl_test
-           chmod +x src/bin/bindctl/bindctl
-           chmod +x src/bin/loadzone/run_loadzone
+           chmod +x src/bin/bindctl/run_bindctl.sh
+           chmod +x src/bin/loadzone/run_loadzone.sh
            chmod +x src/bin/usermgr/run_b10-cmdctl-usermgr.sh
            chmod +x src/bin/msgq/run_msgq.sh
            chmod +x src/bin/msgq/msgq_test
