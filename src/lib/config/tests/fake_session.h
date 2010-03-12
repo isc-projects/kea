@@ -38,9 +38,9 @@ class io_service;
 // if initial_messages contains a list of messages,
 // these are sent when recv_msg or group_recvmsg is called
 // instead of whatever is in the msg queue
-isc::data::ElementPtr initial_messages;
-isc::data::ElementPtr subscriptions;
-isc::data::ElementPtr msg_queue;
+extern isc::data::ElementPtr initial_messages;
+extern isc::data::ElementPtr subscriptions;
+extern isc::data::ElementPtr msg_queue;
 
 bool haveSubscription(const std::string& group, const std::string& instance);
 bool haveSubscription(const isc::data::ElementPtr group, const isc::data::ElementPtr instance);

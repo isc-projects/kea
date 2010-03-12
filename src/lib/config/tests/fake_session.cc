@@ -51,6 +51,9 @@ using boost::asio::ip::tcp;
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+isc::data::ElementPtr initial_messages;
+isc::data::ElementPtr subscriptions;
+isc::data::ElementPtr msg_queue;
 
 // ok i want these in cc/data 
 static bool
