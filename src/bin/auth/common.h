@@ -17,9 +17,6 @@
 #ifndef __COMMON_H
 #define __COMMON_H 1
 
-#include <stdlib.h>
-#include <string>
-
 #include <exceptions/exceptions.h>
 
 class FatalError : public isc::Exception {
