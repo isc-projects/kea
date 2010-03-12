@@ -213,6 +213,7 @@ ModuleCCSession::init(
     ) throw (isc::cc::SessionError)
 {
     module_specification_ = readModuleSpecification(spec_file_name);
+    setModuleSpec(module_specification_);
     sleep(1);
 
     module_name_ = module_specification_.getFullSpec()->get("module_name")->stringValue();
@@ -239,7 +240,7 @@ ModuleCCSession::init(
         std::cerr << "[" << module_name_ << "] Error in specification: " << answer << std::endl;
     }
     
-    config_ = Element::createFromString("{}");
+    setLocalConfig(Element::createFromString("{}"));
     // get any stored configuration from the manager
     if (config_handler_) {
         ElementPtr cmd = Element::createFromString("{ \"command\": [\"get_config\", {\"module_name\":\"" + module_name_ + "\"} ] }");
@@ -279,7 +280,9 @@ ModuleCCSession::handleConfigUpdate(ElementPtr new_config)
         int rcode;
         parseAnswer(rcode, answer);
         if (rcode == 0) {
-            isc::data::merge(config_, new_config);
+            ElementPtr local_config = getLocalConfig();
+            isc::data::merge(local_config, new_config);
+            setLocalConfig(local_config);
         }
     }
     return answer;
