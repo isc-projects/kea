@@ -50,7 +50,9 @@ public:
     bool processMessage(isc::dns::InputBuffer& request_buffer,
                         isc::dns::Message& message,
                         isc::dns::MessageRenderer& response_renderer,
-                        bool udp_buffer, bool verbose_mode);
+                        bool udp_buffer);
+    void setVerbose(bool on);
+    bool getVerbose() const;
     void serve(std::string zone_name);
     isc::data::ElementPtr updateConfig(isc::data::ElementPtr config);
 private:
