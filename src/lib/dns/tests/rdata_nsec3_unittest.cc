@@ -18,6 +18,7 @@
 
 #include <dns/base32.h>
 #include <dns/buffer.h>
+#include <dns/exceptions.h>
 #include <dns/hex.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
@@ -88,7 +89,7 @@ TEST_F(Rdata_NSEC3_Test, createFromWire)
     // Invalid type bits
     EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
                                       "testdata/rdata_nsec3_fromWire3"),
-                 InvalidRdata);
+                 DNSMessageFORMERR);
 }
 
 TEST_F(Rdata_NSEC3_Test, toWireRenderer)

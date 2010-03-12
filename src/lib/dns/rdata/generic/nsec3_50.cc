@@ -24,6 +24,7 @@
 
 #include "base32.h"
 #include "buffer.h"
+#include "exceptions.h"
 #include "hex.h"
 #include "messagerenderer.h"
 #include "name.h"
@@ -170,11 +171,13 @@ NSEC3::NSEC3(InputBuffer& buffer, size_t rdata_len)
     int len = 0;
     for (int i = 0; i < typebits.size(); i += len) {
         if (i + 2 > typebits.size()) {
-            isc_throw(InvalidRdata, "Bad NSEC3 typebits");
+            isc_throw(DNSMessageFORMERR, "Invalid rdata: "
+                                         "bad NSEC3 type bitmap");
         }
         len = typebits[i + 1];
         if (len > 31) {
-            isc_throw(InvalidRdata, "Bad NSEC3 typebits");
+            isc_throw(DNSMessageFORMERR, "Invalid rdata: "
+                                         "bad NSEC3 type bitmap");
         }
         i += 2;
     }

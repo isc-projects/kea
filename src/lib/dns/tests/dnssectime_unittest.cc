@@ -63,6 +63,6 @@ TEST(DNSSECTimeTest, toText)
     EXPECT_EQ("20100311233000", timeToText(1268350200));
 
     // Jan 1, Year 10,000.  What should we do?
-    EXPECT_THROW(timeToText(253402300800), InvalidTime);
+    EXPECT_THROW(timeToText(253402300800LL), InvalidTime);
 }
 }
