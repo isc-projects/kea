@@ -55,14 +55,16 @@ URL_PATTERN = re.compile('/([\w]+)(?:/([\w]+))?/?')
 # installed on the system
 if "B10_FROM_SOURCE" in os.environ:
     SPECFILE_PATH = os.environ["B10_FROM_SOURCE"] + "/src/bin/cmdctl"
+    SYSCONF_PATH = os.environ["B10_FROM_SOURCE"] + "/src/bin/cmdctl"
 else:
     PREFIX = "@prefix@"
     DATAROOTDIR = "@datarootdir@"
     SPECFILE_PATH = "@datadir@/@PACKAGE@".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
+    SYSCONF_PATH = "@sysconfdir@/@PACKAGE@".replace("${prefix}", PREFIX)
 SPECFILE_LOCATION = SPECFILE_PATH + "/cmdctl.spec"
-USER_INFO_FILE = SPECFILE_PATH + "/cmdctl-accounts.csv"
-PRIVATE_KEY_FILE = SPECFILE_PATH + "/cmdctl-keyfile.pem"
-CERTIFICATE_FILE = SPECFILE_PATH + "/cmdctl-certfile.pem"
+USER_INFO_FILE = SYSCONF_PATH + "/cmdctl-accounts.csv"
+PRIVATE_KEY_FILE = SYSCONF_PATH + "/cmdctl-keyfile.pem"
+CERTIFICATE_FILE = SYSCONF_PATH + "/cmdctl-certfile.pem"
         
 class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     '''https connection request handler.

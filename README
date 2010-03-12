@@ -16,9 +16,20 @@ Requires autoconf 2.59 or newer.
 
 Use automake-1.11 or better for working Python 3.1 tests.
 
+INSTALLATION
+
 Install with:
 
   make install
+
+Testing samples of a RSA key, certificate, and user account
+are installed under the $PREFIX/share/bind10/ directory.
+  cmdctl-accounts.csv
+  cmdctl-keyfile.pem
+  cmdctl-certfile.pem
+Copy them to your $sysconfdir/bind10/ directory  for testing.
+Or create your own.
+TODO: show how
 
 TEST COVERAGE
 
