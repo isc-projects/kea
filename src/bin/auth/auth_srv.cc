@@ -14,13 +14,6 @@
 
 // $Id$
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/select.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <stdlib.h>
-
 #include <algorithm>
 #include <cassert>
 #include <iostream>
@@ -140,8 +133,7 @@ makeErrorMessage(Message& message, MessageRenderer& renderer,
 }
 
 bool
-AuthSrv::processMessage(InputBuffer& request_buffer,
-                        Message& message,
+AuthSrv::processMessage(InputBuffer& request_buffer, Message& message,
                         MessageRenderer& response_renderer,
                         const bool udp_buffer, const bool verbose_mode)
 {
@@ -161,6 +153,7 @@ AuthSrv::processMessage(InputBuffer& request_buffer,
         return (false);
     }
 
+    // Parse the message.  On failure, return an appropriate error.
     try {
         message.fromWire(request_buffer);
     } catch (const DNSProtocolError& error) {
@@ -177,9 +170,7 @@ AuthSrv::processMessage(InputBuffer& request_buffer,
         cerr << "[AuthSrv] received a message:\n" << message.toText() << endl;
     }
 
-    //
-    // Incoming Message Validation
-    //
+    // Perform further protocol-level validation.
 
     // In this implementation, we only support normal queries
     if (message.getOpcode() != Opcode::QUERY()) {
