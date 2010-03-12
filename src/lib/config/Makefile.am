@@ -7,5 +7,5 @@ CLEANFILES = *.gcno *.gcda
 
 TESTS =
 if HAVE_GTEST
-SUBDIRS = . unittests
+SUBDIRS = . tests
 endif
