@@ -557,6 +557,7 @@ public:
     void toWire(MessageRenderer& renderer);
 
     /// \brief Parse a DNS message.
+    void parseHeader(InputBuffer& buffer);
     void fromWire(InputBuffer& buffer);
 
     ///
