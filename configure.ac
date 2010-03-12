@@ -217,7 +217,6 @@ AC_CONFIG_FILES([Makefile
                  src/lib/python/isc/auth/Makefile
                  src/lib/python/isc/cc/Makefile
                  src/lib/python/isc/config/Makefile
-                 src/lib/python/isc/Util/Makefile
                  src/lib/config/Makefile
                  src/lib/config/tests/Makefile
                  src/lib/dns/Makefile
@@ -262,7 +261,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            chmod +x src/bin/usermgr/run_b10-cmdctl-usermgr.sh
            chmod +x src/bin/msgq/run_msgq.sh
            chmod +x src/bin/msgq/msgq_test
-	       chmod +x src/lib/dns/gen-rdatacode.py
-	       chmod +x src/lib/dns/tests/testdata/gen-wiredata.py
+           chmod +x src/lib/dns/gen-rdatacode.py
+           chmod +x src/lib/dns/tests/testdata/gen-wiredata.py
           ])
 AC_OUTPUT
