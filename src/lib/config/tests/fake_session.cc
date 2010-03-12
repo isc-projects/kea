@@ -56,6 +56,9 @@ using boost::asio::ip::tcp;
 static bool
 listContains(ElementPtr list, ElementPtr el)
 {
+    if (!list) {
+        return false;
+    }
     BOOST_FOREACH(ElementPtr l_el, list->listValue()) {
         if (l_el == el) {
             return true;
@@ -116,8 +119,9 @@ haveSubscription(const std::string& group, const std::string& instance)
     s1->add(Element::create(group));
     s1->add(Element::create(instance));
     s2->add(Element::create(group));
-    s2->add(Element::create(instance));
-    return (listContains(subscriptions, s1) || listContains(subscriptions, s2));
+    s2->add(Element::create("*"));
+    bool result = (listContains(subscriptions, s1) || listContains(subscriptions, s2));
+    return result;
 }
 
 bool
@@ -223,11 +227,14 @@ Session::recvmsg(ElementPtr& env, ElementPtr& msg, bool nonblock UNUSED_PARAM) {
 }
 
 void
-    //cout << "[XX] client subscribes to " << group << " . " << instance << endl;
 Session::subscribe(std::string group, std::string instance) {
+    //cout << "[XX] client subscribes to " << group << " . " << instance << endl;
     ElementPtr s_el = Element::createFromString("[]");
     s_el->add(Element::create(group));
     s_el->add(Element::create(instance));
+    if (!subscriptions) {
+        subscriptions = Element::createFromString("[]");
+    }
     subscriptions->add(s_el);
 }
 
