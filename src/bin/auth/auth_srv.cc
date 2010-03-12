@@ -21,8 +21,10 @@
 #include <netdb.h>
 #include <stdlib.h>
 
+#include <algorithm>
 #include <cassert>
 #include <iostream>
+#include <vector>
 
 #include <exceptions/exceptions.h>
 
@@ -94,6 +96,15 @@ AuthSrv::~AuthSrv() {
 }
 
 namespace {
+class QuestionInserter {
+public:
+    QuestionInserter(Message* message) : message_(message) {}
+    void operator()(const QuestionPtr question) {
+        message_->addQuestion(question);
+    }
+    Message* message_;
+};
+
 void
 makeErrorMessage(Message& message, MessageRenderer& renderer,
                  const Rcode& rcode)
@@ -105,6 +116,12 @@ makeErrorMessage(Message& message, MessageRenderer& renderer,
     const bool rd = message.getHeaderFlag(MessageFlag::RD());
     const bool cd = message.getHeaderFlag(MessageFlag::CD());
     const Opcode& opcode = message.getOpcode();
+    vector<QuestionPtr> questions;
+
+    // If this is an error to a query, we should also copy the question section.
+    if (opcode == Opcode::QUERY()) {
+        questions.assign(message.beginQuestion(), message.endQuestion());
+    }
 
     message.clear(Message::RENDER);
     message.setQid(qid);
@@ -116,6 +133,7 @@ makeErrorMessage(Message& message, MessageRenderer& renderer,
     if (cd) {
         message.setHeaderFlag(MessageFlag::CD());
     }
+    for_each(questions.begin(), questions.end(), QuestionInserter(&message));
     message.setRcode(rcode);
     message.toWire(renderer);
 }

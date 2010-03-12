@@ -115,14 +115,24 @@ TEST_F(AuthSrvTest, unsupportedRequest) {
 }
 
 // Multiple questions.  Should result in FORMERR.
-
 TEST_F(AuthSrvTest, multiQuestion) {
     createDataFromFile("testdata/multiquestion_fromWire", data);
     InputBuffer buffer(&data[0], data.size());
     EXPECT_EQ(0, server.processMessage(buffer, parse_message,
                                            response_renderer, true, false));
     headerCheck(parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
-                QR_FLAG, 0, 0, 0, 0);
+                QR_FLAG, 2, 0, 0, 0);
+
+    QuestionIterator qit = parse_message.beginQuestion();
+    EXPECT_EQ(Name("example.com"), (*qit)->getName());
+    EXPECT_EQ(RRClass::IN(), (*qit)->getClass());
+    EXPECT_EQ(RRType::A(), (*qit)->getType());
+    ++qit;
+    EXPECT_EQ(Name("example.com"), (*qit)->getName());
+    EXPECT_EQ(RRClass::IN(), (*qit)->getClass());
+    EXPECT_EQ(RRType::AAAA(), (*qit)->getType());
+    ++qit;
+    EXPECT_TRUE(qit == parse_message.endQuestion());
 }
 
 }
