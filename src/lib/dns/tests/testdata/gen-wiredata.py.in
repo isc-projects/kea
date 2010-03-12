@@ -207,7 +207,6 @@ def get_config_param(section):
     m = re.match('^([^:]+)/\d+$', section)
     if m:
         s = m.group(1)
-    sys.stderr.write('searching config param' + s + '\n');
     return config_param[s]
 
 usage = '''usage: %prog [options] input_file'''
