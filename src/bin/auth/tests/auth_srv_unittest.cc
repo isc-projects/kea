@@ -107,8 +107,8 @@ TEST_F(AuthSrvTest, unsupportedRequest) {
 
         InputBuffer buffer(&data[0], data.size());
         parse_message.clear(Message::PARSE);
-        EXPECT_EQ(0, server.processMessage(buffer, parse_message,
-                                           response_renderer, true, false));
+        EXPECT_EQ(true, server.processMessage(buffer, parse_message,
+                                              response_renderer, true, false));
         headerCheck(parse_message, default_qid, Rcode::NOTIMP(), i, QR_FLAG,
                     0, 0, 0, 0);
     }
@@ -118,8 +118,8 @@ TEST_F(AuthSrvTest, unsupportedRequest) {
 TEST_F(AuthSrvTest, multiQuestion) {
     createDataFromFile("testdata/multiquestion_fromWire", data);
     InputBuffer buffer(&data[0], data.size());
-    EXPECT_EQ(0, server.processMessage(buffer, parse_message,
-                                           response_renderer, true, false));
+    EXPECT_EQ(true, server.processMessage(buffer, parse_message,
+                                          response_renderer, true, false));
     headerCheck(parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
                 QR_FLAG, 2, 0, 0, 0);
 
@@ -133,6 +133,15 @@ TEST_F(AuthSrvTest, multiQuestion) {
     EXPECT_EQ(RRType::AAAA(), (*qit)->getType());
     ++qit;
     EXPECT_TRUE(qit == parse_message.endQuestion());
+}
+
+// Incoming data doesn't even contain the complete header.  Must be silently
+// dropped.
+TEST_F(AuthSrvTest, shortMessage) {
+    createDataFromFile("testdata/shortmessage_fromWire", data);
+    InputBuffer buffer(&data[0], data.size());
+    EXPECT_EQ(false, server.processMessage(buffer, parse_message,
+                                           response_renderer, true, false));
 }
 
 }

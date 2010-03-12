@@ -45,10 +45,12 @@ public:
     explicit AuthSrv();
     ~AuthSrv();
     //@}
-    int processMessage(isc::dns::InputBuffer& request_buffer,
-                       isc::dns::Message& message,
-                       isc::dns::MessageRenderer& response_renderer,
-                       bool udp_buffer, bool verbose_mode);
+    /// \return \c true if the \message contains a response to be returned;
+    /// otherwise \c false.
+    bool processMessage(isc::dns::InputBuffer& request_buffer,
+                        isc::dns::Message& message,
+                        isc::dns::MessageRenderer& response_renderer,
+                        bool udp_buffer, bool verbose_mode);
     void serve(std::string zone_name);
     isc::data::ElementPtr updateConfig(isc::data::ElementPtr config);
 private:

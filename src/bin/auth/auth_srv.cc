@@ -139,22 +139,38 @@ makeErrorMessage(Message& message, MessageRenderer& renderer,
 }
 }
 
-int
+bool
 AuthSrv::processMessage(InputBuffer& request_buffer,
                         Message& message,
                         MessageRenderer& response_renderer,
                         const bool udp_buffer, const bool verbose_mode)
 {
+    // First, check the header part.  If we fail even for the base header,
+    // just drop the message.
+    try {
+        message.parseHeader(request_buffer);
+
+        // Ignore all responses.
+        if (message.getHeaderFlag(MessageFlag::QR())) {
+            if (verbose_mode) {
+                cerr << "received unexpected response, ignoring" << endl;
+            }
+            return (false);
+        }
+    } catch (const Exception& ex) {
+        return (false);
+    }
+
     try {
         message.fromWire(request_buffer);
     } catch (const DNSProtocolError& error) {
         cerr << "returning protocol error" << endl;
         makeErrorMessage(message, response_renderer, error.getRcode());
-        return (0);
+        return (true);
     } catch (const Exception& ex) {
         cerr << "returning servfail" << endl;
         makeErrorMessage(message, response_renderer, Rcode::SERVFAIL());
-        return (0);
+        return (true);
     } // other exceptions will be handled at a higher layer.
 
     if (verbose_mode) {
@@ -165,26 +181,18 @@ AuthSrv::processMessage(InputBuffer& request_buffer,
     // Incoming Message Validation
     //
 
-    // Ignore all requests.
-    if (message.getHeaderFlag(MessageFlag::QR())) {
-        if (verbose_mode) {
-            cerr << "received unexpected response, ignoring" << endl;
-        }
-        return (-1);
-    }
-
     // In this implementation, we only support normal queries
     if (message.getOpcode() != Opcode::QUERY()) {
         if (verbose_mode) {
             cerr << "unsupported opcode" << endl;
         }
         makeErrorMessage(message, response_renderer, Rcode::NOTIMP());
-        return (0);
+        return (true);
     }
 
     if (message.getRRCount(Section::QUESTION()) != 1) {
         makeErrorMessage(message, response_renderer, Rcode::FORMERR());
-        return (0);
+        return (true);
     }
 
     const bool dnssec_ok = message.isDNSSECSupported();
@@ -211,7 +219,7 @@ AuthSrv::processMessage(InputBuffer& request_buffer,
              << " bytes):\n" << message.toText() << endl;
     }
 
-    return (0);
+    return (true);
 }
 
 ElementPtr
