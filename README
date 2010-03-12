@@ -37,6 +37,11 @@ Doing code coverage tests:
 	Generates the coverage HTML, excluding some unrelated headers.
 	The HTML reports are placed in a directory called coverage/.
 
+DEVELOPERS
+
+The generated run_*.sh scripts available in the src/bin directories
+are for running the code using the source tree.
+
 RUNNING
 
 You can start the BIND 10 processes by running bind10 which is
