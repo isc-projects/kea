@@ -122,17 +122,26 @@ TEST_F(AuthSrvTest, unsupportedRequest) {
 
         parse_message.clear(Message::PARSE);
         EXPECT_EQ(true, server.processMessage(*ibuffer, parse_message,
-                                              response_renderer, true, false));
+                                              response_renderer, true));
         headerCheck(parse_message, default_qid, Rcode::NOTIMP(), i, QR_FLAG,
                     0, 0, 0, 0);
     }
+}
+
+// Simple API check
+TEST_F(AuthSrvTest, verbose) {
+    EXPECT_FALSE(server.getVerbose());
+    server.setVerbose(true);
+    EXPECT_TRUE(server.getVerbose());
+    server.setVerbose(false);
+    EXPECT_FALSE(server.getVerbose());
 }
 
 // Multiple questions.  Should result in FORMERR.
 TEST_F(AuthSrvTest, multiQuestion) {
     createDataFromFile("testdata/multiquestion_fromWire");
     EXPECT_EQ(true, server.processMessage(*ibuffer, parse_message,
-                                          response_renderer, true, false));
+                                          response_renderer, true));
     headerCheck(parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
                 QR_FLAG, 2, 0, 0, 0);
 
@@ -153,7 +162,7 @@ TEST_F(AuthSrvTest, multiQuestion) {
 TEST_F(AuthSrvTest, shortMessage) {
     createDataFromFile("testdata/shortmessage_fromWire");
     EXPECT_EQ(false, server.processMessage(*ibuffer, parse_message,
-                                           response_renderer, true, false));
+                                           response_renderer, true));
 }
 
 // Response messages.  Must be silently dropped, whether it's a valid response
@@ -162,25 +171,25 @@ TEST_F(AuthSrvTest, response) {
     // A valid (although unusual) response
     createDataFromFile("testdata/simpleresponse_fromWire");
     EXPECT_EQ(false, server.processMessage(*ibuffer, parse_message,
-                                           response_renderer, true, false));
+                                           response_renderer, true));
 
     // A response with a broken question section.  must be dropped rather than
     // returning FORMERR.
     createDataFromFile("testdata/shortresponse_fromWire");
     EXPECT_EQ(false, server.processMessage(*ibuffer, parse_message,
-                                           response_renderer, true, false));    
+                                           response_renderer, true));
 
     // A response to iquery.  must be dropped rather than returning NOTIMP.
     createDataFromFile("testdata/iqueryresponse_fromWire");
     EXPECT_EQ(false, server.processMessage(*ibuffer, parse_message,
-                                           response_renderer, true, false));    
+                                           response_renderer, true));
 }
 
 // Query with a broken question
 TEST_F(AuthSrvTest, shortQuestion) {
     createDataFromFile("testdata/shortquestion_fromWire");
     EXPECT_EQ(true, server.processMessage(*ibuffer, parse_message,
-                                           response_renderer, true, false));
+                                          response_renderer, true));
     // Since the query's question is broken, the question section of the
     // response should be empty.
     headerCheck(parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
@@ -191,7 +200,7 @@ TEST_F(AuthSrvTest, shortQuestion) {
 TEST_F(AuthSrvTest, shortAnswer) {
     createDataFromFile("testdata/shortanswer_fromWire");
     EXPECT_EQ(true, server.processMessage(*ibuffer, parse_message,
-                                           response_renderer, true, false));
+                                          response_renderer, true));
 
     // This is a bogus query, but question section is valid.  So the response
     // should copy the question section.
@@ -210,7 +219,7 @@ TEST_F(AuthSrvTest, shortAnswer) {
 TEST_F(AuthSrvTest, ednsBadVers) {
     createDataFromFile("testdata/queryBadEDNS_fromWire");
     EXPECT_EQ(true, server.processMessage(*ibuffer, parse_message,
-                                           response_renderer, true, false));
+                                          response_renderer, true));
 
     // The response must have an EDNS OPT RR in the additional section.
     // Note that the DNSSEC DO bit is cleared even if this bit in the query
@@ -244,7 +253,7 @@ TEST_F(AuthSrvTest, updateConfig) {
     // and authority section.
     createDataFromFile("testdata/examplequery_fromWire");
     EXPECT_EQ(true, server.processMessage(*ibuffer, parse_message,
-                                           response_renderer, true, false));
+                                          response_renderer, true));
     headerCheck(parse_message, default_qid, Rcode::NOERROR(), opcode.getCode(),
                 QR_FLAG | AA_FLAG, 1, 1, 1, 0);
 }
@@ -258,7 +267,7 @@ TEST_F(AuthSrvTest, datasourceFail) {
     // be empty.
     createDataFromFile("testdata/badExampleQuery_fromWire");
     EXPECT_EQ(true, server.processMessage(*ibuffer, parse_message,
-                                          response_renderer, true, false));
+                                          response_renderer, true));
     headerCheck(parse_message, default_qid, Rcode::SERVFAIL(), opcode.getCode(),
                 QR_FLAG, 1, 0, 0, 0);
 }
@@ -273,7 +282,7 @@ TEST_F(AuthSrvTest, updateConfigFail) {
     // The original data source should still exist.
     createDataFromFile("testdata/examplequery_fromWire");
     EXPECT_EQ(true, server.processMessage(*ibuffer, parse_message,
-                                           response_renderer, true, false));
+                                          response_renderer, true));
     headerCheck(parse_message, default_qid, Rcode::NOERROR(), opcode.getCode(),
                 QR_FLAG | AA_FLAG, 1, 1, 1, 0);
 }

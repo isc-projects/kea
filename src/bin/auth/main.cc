@@ -149,8 +149,7 @@ public:
         if (!error) {
             InputBuffer dnsbuffer(data_, bytes_transferred);
             if (auth_server->processMessage(dnsbuffer, dns_message_,
-                                            response_renderer_, false,
-                                            verbose_mode)) {
+                                            response_renderer_, false)) {
                 responselen_buffer_.writeUint16(response_buffer_.getLength());
                 async_write(socket_,
                             boost::asio::buffer(
@@ -258,8 +257,7 @@ public:
             dns_message_.clear(Message::PARSE);
             response_renderer_.clear();
             if (auth_server->processMessage(request_buffer, dns_message_,
-                                            response_renderer_, true,
-                                            verbose_mode)) {
+                                            response_renderer_, true)) {
                 socket_.async_send_to(
                     boost::asio::buffer(response_buffer_.getData(),
                                         response_buffer_.getLength()),
@@ -450,7 +448,7 @@ processMessageUDP(const int fd, Message& dns_message,
     if ((cc = recvfrom(fd, recvbuf, sizeof(recvbuf), 0, sa, &sa_len)) > 0) {
         InputBuffer buffer(recvbuf, cc);
         if (auth_server->processMessage(buffer, dns_message, response_renderer,
-                                        true, verbose_mode)) {
+                                        true)) {
             sendto(fd, response_renderer.getData(),
                    response_renderer.getLength(), 0, sa, sa_len);
         }
@@ -496,7 +494,7 @@ processMessageTCP(const int fd, Message& dns_message,
     dns_message.clear(Message::PARSE);
     response_renderer.clear();
     if (auth_server->processMessage(buffer, dns_message, response_renderer,
-                                    false, verbose_mode)) {
+                                    false)) {
         size = response_renderer.getLength();
         size_n = htons(size);
         if (send(ts, &size_n, 2, 0) == 2) {
@@ -639,6 +637,7 @@ main(int argc, char* argv[]) {
     }
 
     auth_server = new AuthSrv;
+    auth_server->setVerbose(verbose_mode);
 
     // initialize command channel
     int ret = 0;

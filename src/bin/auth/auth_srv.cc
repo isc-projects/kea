@@ -71,11 +71,13 @@ public:
     /// file change
     isc::auth::ConstDataSrcPtr cur_datasrc_;
 
+    bool verbose_mode_;
+
     /// Currently non-configurable, but will be.
     static const uint16_t DEFAULT_LOCAL_UDPSIZE = 4096;
 };
 
-AuthSrvImpl::AuthSrvImpl() {
+AuthSrvImpl::AuthSrvImpl() : verbose_mode_(false) {
     // cur_datasrc_ is automatically initialized by the default constructor,
     // effectively being an empty (sqlite) data source.  once ccsession is up
     // the datasource will be set by the configuration setting
@@ -142,10 +144,20 @@ makeErrorMessage(Message& message, MessageRenderer& renderer,
 }
 }
 
+void
+AuthSrv::setVerbose(const bool on) {
+    impl_->verbose_mode_ = on;
+}
+
+bool
+AuthSrv::getVerbose() const {
+    return (impl_->verbose_mode_);
+}
+
 bool
 AuthSrv::processMessage(InputBuffer& request_buffer, Message& message,
                         MessageRenderer& response_renderer,
-                        const bool udp_buffer, const bool verbose_mode)
+                        const bool udp_buffer)
 {
     // First, check the header part.  If we fail even for the base header,
     // just drop the message.
@@ -154,7 +166,7 @@ AuthSrv::processMessage(InputBuffer& request_buffer, Message& message,
 
         // Ignore all responses.
         if (message.getHeaderFlag(MessageFlag::QR())) {
-            if (verbose_mode) {
+            if (impl_->verbose_mode_) {
                 cerr << "received unexpected response, ignoring" << endl;
             }
             return (false);
@@ -167,23 +179,23 @@ AuthSrv::processMessage(InputBuffer& request_buffer, Message& message,
     try {
         message.fromWire(request_buffer);
     } catch (const DNSProtocolError& error) {
-        if (verbose_mode) {
+        if (impl_->verbose_mode_) {
             cerr << "returning " <<  error.getRcode().toText() << ": "
                  << error.what() << endl;
         }
         makeErrorMessage(message, response_renderer, error.getRcode(),
-                         verbose_mode);
+                         impl_->verbose_mode_);
         return (true);
     } catch (const Exception& ex) {
-        if (verbose_mode) {
+        if (impl_->verbose_mode_) {
             cerr << "returning SERVFAIL: " << ex.what() << endl;
         }
         makeErrorMessage(message, response_renderer, Rcode::SERVFAIL(),
-                         verbose_mode);
+                         impl_->verbose_mode_);
         return (true);
     } // other exceptions will be handled at a higher layer.
 
-    if (verbose_mode) {
+    if (impl_->verbose_mode_) {
         cerr << "[AuthSrv] received a message:\n" << message.toText() << endl;
     }
 
@@ -191,17 +203,17 @@ AuthSrv::processMessage(InputBuffer& request_buffer, Message& message,
 
     // In this implementation, we only support normal queries
     if (message.getOpcode() != Opcode::QUERY()) {
-        if (verbose_mode) {
+        if (impl_->verbose_mode_) {
             cerr << "unsupported opcode" << endl;
         }
         makeErrorMessage(message, response_renderer, Rcode::NOTIMP(),
-                         verbose_mode);
+                         impl_->verbose_mode_);
         return (true);
     }
 
     if (message.getRRCount(Section::QUESTION()) != 1) {
         makeErrorMessage(message, response_renderer, Rcode::FORMERR(),
-                         verbose_mode);
+                         impl_->verbose_mode_);
         return (true);
     }
 
@@ -218,17 +230,17 @@ AuthSrv::processMessage(InputBuffer& request_buffer, Message& message,
         Query query(message, dnssec_ok);
         impl_->data_sources_.doQuery(query);
     } catch (const Exception& ex) {
-        if (verbose_mode) {
+        if (impl_->verbose_mode_) {
             cerr << "Internal error, returning SERVFAIL: " << ex.what() << endl;
         }
         makeErrorMessage(message, response_renderer, Rcode::SERVFAIL(),
-                         verbose_mode);
+                         impl_->verbose_mode_);
         return (true);
     }
 
     response_renderer.setLengthLimit(udp_buffer ? remote_bufsize : 65535);
     message.toWire(response_renderer);
-    if (verbose_mode) {
+    if (impl_->verbose_mode_) {
         cerr << "sending a response (" <<
             boost::lexical_cast<string>(response_renderer.getLength())
              << " bytes):\n" << message.toText() << endl;
@@ -241,7 +253,9 @@ ElementPtr
 AuthSrvImpl::setDbFile(const isc::data::ElementPtr config) {
     if (config) {
         db_file_ = config->get("database_file")->stringValue();
-        cout << "[AuthSrv] Data source database file: " << db_file_ << endl;
+        if (verbose_mode_) {
+            cout << "[AuthSrv] Data source database file: " << db_file_ << endl;
+        }
     }
 
     // create SQL data source
@@ -284,7 +298,9 @@ AuthSrv::updateConfig(isc::data::ElementPtr new_config) {
     
         return answer;
     } catch (const isc::Exception& error) {
-        cout << "[AuthSrv] error: " << error.what() << endl;
+        if (impl_->verbose_mode_) {
+            cerr << "[AuthSrv] error: " << error.what() << endl;
+        }
         return isc::config::createAnswer(1, error.what());
     }
 }
