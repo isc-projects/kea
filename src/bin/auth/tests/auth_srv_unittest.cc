@@ -44,11 +44,11 @@ protected:
     AuthSrv server;
     Message request_message;
     Message parse_message;
-    qid_t default_qid;
-    Opcode opcode;
-    Name qname;
-    RRClass qclass;
-    RRType qtype;
+    const qid_t default_qid;
+    const Opcode opcode;
+    const Name qname;
+    const RRClass qclass;
+    const RRType qtype;
     InputBuffer* ibuffer;
     OutputBuffer request_obuffer;
     MessageRenderer request_renderer;
@@ -165,7 +165,35 @@ TEST_F(AuthSrvTest, response) {
     createDataFromFile("testdata/iqueryresponse_fromWire");
     EXPECT_EQ(false, server.processMessage(*ibuffer, parse_message,
                                            response_renderer, true, false));    
+}
 
+// Query with a broken question
+TEST_F(AuthSrvTest, shortQuestion) {
+    createDataFromFile("testdata/shortquestion_fromWire");
+    EXPECT_EQ(true, server.processMessage(*ibuffer, parse_message,
+                                           response_renderer, true, false));
+    // Since the query's question is broken, the question section of the
+    // response should be empty.
+    headerCheck(parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
+                QR_FLAG, 0, 0, 0, 0);
+}
+
+// Query with a broken answer section
+TEST_F(AuthSrvTest, shortAnswer) {
+    createDataFromFile("testdata/shortanswer_fromWire");
+    EXPECT_EQ(true, server.processMessage(*ibuffer, parse_message,
+                                           response_renderer, true, true));
+    headerCheck(parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
+                QR_FLAG, 1, 0, 0, 0);
+
+    // This is a bogus query, but question section is valid.  So the response
+    // should copy the question section.
+    QuestionIterator qit = parse_message.beginQuestion();
+    EXPECT_EQ(Name("example.com"), (*qit)->getName());
+    EXPECT_EQ(RRClass::IN(), (*qit)->getClass());
+    EXPECT_EQ(RRType::A(), (*qit)->getType());
+    ++qit;
+    EXPECT_TRUE(qit == parse_message.endQuestion());
 }
 
 }
