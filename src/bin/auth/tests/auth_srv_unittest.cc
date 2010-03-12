@@ -36,6 +36,10 @@ using namespace isc::data;
 
 namespace {
 const char* CONFIG_TESTDB = "{\"database_file\": \"testdata/example.sqlite3\"}";
+// The following file must be non existent and must be non"creatable" (see
+// the sqlite3 test).
+const char* BADCONFIG_TESTDB =
+    "{ \"database_file\": \"testdata/nodir/notexist\"}";
 
 class AuthSrvTest : public ::testing::Test {
 protected:
@@ -218,7 +222,9 @@ TEST_F(AuthSrvTest, ednsBadVers) {
 }
 
 void
-updateConfig(AuthSrv* server, const char* const dbfile) {
+updateConfig(AuthSrv* server, const char* const dbfile,
+             const bool expect_success)
+{
     const ElementPtr config_answer =
         server->updateConfig(Element::createFromString(dbfile));
     EXPECT_EQ(Element::map, config_answer->getType());
@@ -226,12 +232,12 @@ updateConfig(AuthSrv* server, const char* const dbfile) {
 
     const ElementPtr result = config_answer->get("result");
     EXPECT_EQ(Element::list, result->getType());
-    EXPECT_EQ(0, result->get(0)->intValue());
+    EXPECT_EQ(expect_success ? 0 : 1, result->get(0)->intValue());
 }
 
 // Install a Sqlite3 data source with testing data.
 TEST_F(AuthSrvTest, updateConfig) {
-    updateConfig(&server, CONFIG_TESTDB);
+    updateConfig(&server, CONFIG_TESTDB, true);
 
     // query for existent data in the installed data source.  The resulting
     // response should have the AA flag on, and have an RR in each answer
@@ -244,7 +250,7 @@ TEST_F(AuthSrvTest, updateConfig) {
 }
 
 TEST_F(AuthSrvTest, datasourceFail) {
-    updateConfig(&server, CONFIG_TESTDB);
+    updateConfig(&server, CONFIG_TESTDB, true);
 
     // This query will hit a corrupted entry of the data source (the zoneload
     // tool and the data source itself naively accept it).  This will result
@@ -255,5 +261,20 @@ TEST_F(AuthSrvTest, datasourceFail) {
                                           response_renderer, true, false));
     headerCheck(parse_message, default_qid, Rcode::SERVFAIL(), opcode.getCode(),
                 QR_FLAG, 1, 0, 0, 0);
+}
+
+TEST_F(AuthSrvTest, updateConfigFail) {
+    // First, load a valid data source.
+    updateConfig(&server, CONFIG_TESTDB, true);
+
+    // Next, try to update it with a non-existent one.  This should fail.
+    updateConfig(&server, BADCONFIG_TESTDB, false);
+
+    // The original data source should still exist.
+    createDataFromFile("testdata/examplequery_fromWire");
+    EXPECT_EQ(true, server.processMessage(*ibuffer, parse_message,
+                                           response_renderer, true, false));
+    headerCheck(parse_message, default_qid, Rcode::NOERROR(), opcode.getCode(),
+                QR_FLAG | AA_FLAG, 1, 1, 1, 0);
 }
 }
