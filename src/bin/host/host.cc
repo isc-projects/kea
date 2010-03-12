@@ -20,22 +20,23 @@
 using namespace std;
 using namespace isc::dns;
 
+namespace {
 char* dns_type = NULL;    // not set, so A, AAAA, MX
-std::string server = "127.0.0.1";
+const char* server = "127.0.0.1";
+const char* server_port = "53";
 int   verbose = 0;
 int   first_time = 1;
 bool  recursive_bit = true;
 struct timeval before_time, after_time;
 
 int
-host_lookup(char* name, std::string type)
-{
+host_lookup(const char* const name, const char* const type) {
 
     Message msg(Message::RENDER);
 
     msg.setQid(0); // does this matter?
 
-// TODO: add switch for this
+    // TODO: add switch for this
     msg.setOpcode(Opcode::QUERY());
     msg.setRcode(Rcode::NOERROR());
     if (recursive_bit) {
@@ -45,8 +46,6 @@ host_lookup(char* name, std::string type)
     msg.addQuestion(Question(Name(name),
                              RRClass::IN(),    // IN class only for now
                              RRType(type)));  // if NULL then:
-// terminate called after throwing an instance of 'std::logic_error'
-//  what():  basic_string::_S_construct NULL not valid
 
     OutputBuffer obuffer(512);
     MessageRenderer renderer(obuffer);
@@ -58,7 +57,7 @@ host_lookup(char* name, std::string type)
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = 0; // not using AI_NUMERICHOST in case to bootstrap
-    e = getaddrinfo(server.c_str(), "53", &hints, &res);
+    e = getaddrinfo(server, server_port, &hints, &res);
 
     if (verbose) {
         cout << "Trying \"" << name << "\"\n";
@@ -69,9 +68,10 @@ host_lookup(char* name, std::string type)
         first_time = 0;
         cout << "Using domain server:\n";
         cout << "Name: " << server << "\n";
-// TODO: I guess I have to do a lookup to get that address and aliases too
-//        cout << "Address: " << address << "\n" ; // "#" << port << "\n";
-//        cout << "Aliases: " << server << "\n";
+        // TODO: I guess I have to do a lookup to get that address and aliases
+        // too
+        //cout << "Address: " << address << "\n" ; // "#" << port << "\n";
+        //cout << "Aliases: " << server << "\n";
     }
 
     int s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
@@ -133,9 +133,9 @@ host_lookup(char* name, std::string type)
                     (after_time.tv_sec - before_time.tv_sec)
                     + ((after_time.tv_usec - before_time.tv_usec))/1000;
 
-// TODO: if NXDOMAIN, host(1) doesn't show HEADER
-// Host hsdjkfhksjhdfkj not found: 3(NXDOMAIN)
-// TODO: figure out the new libdns way to test if NXDOMAIN
+                // TODO: if NXDOMAIN, host(1) doesn't show HEADER
+                // Host hsdjkfhksjhdfkj not found: 3(NXDOMAIN)
+                // TODO: figure out the new libdns way to test if NXDOMAIN
 
                 std::cout << "Received " << cc <<
                     " bytes in " << elapsed_time << " ms\n";
@@ -154,26 +154,26 @@ host_lookup(char* name, std::string type)
 
     return (0);
 } // host_lookup()
+}
 
 int
-main(int argc, char* argv[])
-{
-
+main(int argc, char* argv[]) {
     int c;
 
-    while ((c = getopt(argc, argv, "rt:v")) != -1)
+    while ((c = getopt(argc, argv, "p:rt:v")) != -1)
         switch (c) {
-
         case 'r':
             recursive_bit = false;
             break;
         case 't':
             dns_type = optarg;
             break;
+        case 'p':
+            server_port = optarg;
+            break;
         case 'v':
             verbose = 1;
             break;
-
     }
     argc -= optind;
     argv += optind;
@@ -187,9 +187,9 @@ main(int argc, char* argv[])
       server = argv[1];
     }
 
-    if (!dns_type) {
+    if (dns_type == NULL) {
         host_lookup(argv[0], "A");
-// TODO: don't do next if A doesn't exist
+        // TODO: don't do next if A doesn't exist
         host_lookup(argv[0], "AAAA");
         host_lookup(argv[0], "MX");
     } else {
@@ -197,5 +197,3 @@ main(int argc, char* argv[])
     }
     return (0);
 }
-
-
