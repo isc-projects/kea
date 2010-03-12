@@ -36,7 +36,7 @@ class AuthSrvTest : public ::testing::Test {
 protected:
     AuthSrvTest() : request_message(Message::RENDER),
                     parse_message(Message::PARSE), default_qid(0x1035),
-                    qname("www.example.com"),
+                    opcode(Opcode(Opcode::QUERY())), qname("www.example.com"),
                     qclass(RRClass::IN()), qtype(RRType::A()),
                     request_obuffer(0), request_renderer(request_obuffer),
                     response_obuffer(0), response_renderer(response_obuffer)
@@ -45,6 +45,7 @@ protected:
     Message request_message;
     Message parse_message;
     qid_t default_qid;
+    Opcode opcode;
     Name qname;
     RRClass qclass;
     RRType qtype;
@@ -112,4 +113,16 @@ TEST_F(AuthSrvTest, unsupportedRequest) {
                     0, 0, 0, 0);
     }
 }
+
+// Multiple questions.  Should result in FORMERR.
+
+TEST_F(AuthSrvTest, multiQuestion) {
+    createDataFromFile("testdata/multiquestion_fromWire", data);
+    InputBuffer buffer(&data[0], data.size());
+    EXPECT_EQ(0, server.processMessage(buffer, parse_message,
+                                           response_renderer, true, false));
+    headerCheck(parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
+                QR_FLAG, 0, 0, 0, 0);
+}
+
 }
