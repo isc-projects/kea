@@ -70,6 +70,9 @@ public:
     /// so that we can specifically remove that one should the database
     /// file change
     isc::auth::ConstDataSrcPtr cur_datasrc_;
+
+    /// Currently non-configurable, but will be.
+    static const uint16_t DEFAULT_LOCAL_UDPSIZE = 4096;
 };
 
 AuthSrvImpl::AuthSrvImpl() {
@@ -100,7 +103,7 @@ public:
 
 void
 makeErrorMessage(Message& message, MessageRenderer& renderer,
-                 const Rcode& rcode)
+                 const Rcode& rcode, const bool verbose_mode)
 {
     // extract the parameters that should be kept.
     // XXX: with the current implementation, it's not easy to set EDNS0
@@ -120,6 +123,7 @@ makeErrorMessage(Message& message, MessageRenderer& renderer,
     message.setQid(qid);
     message.setOpcode(opcode);
     message.setHeaderFlag(MessageFlag::QR());
+    message.setUDPSize(AuthSrvImpl::DEFAULT_LOCAL_UDPSIZE);
     if (rd) {
         message.setHeaderFlag(MessageFlag::RD());
     }
@@ -129,6 +133,12 @@ makeErrorMessage(Message& message, MessageRenderer& renderer,
     for_each(questions.begin(), questions.end(), QuestionInserter(&message));
     message.setRcode(rcode);
     message.toWire(renderer);
+
+    if (verbose_mode) {
+        cerr << "sending an error response (" <<
+            boost::lexical_cast<string>(renderer.getLength())
+             << " bytes):\n" << message.toText() << endl;
+    }
 }
 }
 
@@ -161,13 +171,15 @@ AuthSrv::processMessage(InputBuffer& request_buffer, Message& message,
             cerr << "returning " <<  error.getRcode().toText() << ": "
                  << error.what() << endl;
         }
-        makeErrorMessage(message, response_renderer, error.getRcode());
+        makeErrorMessage(message, response_renderer, error.getRcode(),
+                         verbose_mode);
         return (true);
     } catch (const Exception& ex) {
         if (verbose_mode) {
             cerr << "returning SERVFAIL: " << ex.what() << endl;
         }
-        makeErrorMessage(message, response_renderer, Rcode::SERVFAIL());
+        makeErrorMessage(message, response_renderer, Rcode::SERVFAIL(),
+                         verbose_mode);
         return (true);
     } // other exceptions will be handled at a higher layer.
 
@@ -182,12 +194,14 @@ AuthSrv::processMessage(InputBuffer& request_buffer, Message& message,
         if (verbose_mode) {
             cerr << "unsupported opcode" << endl;
         }
-        makeErrorMessage(message, response_renderer, Rcode::NOTIMP());
+        makeErrorMessage(message, response_renderer, Rcode::NOTIMP(),
+                         verbose_mode);
         return (true);
     }
 
     if (message.getRRCount(Section::QUESTION()) != 1) {
-        makeErrorMessage(message, response_renderer, Rcode::FORMERR());
+        makeErrorMessage(message, response_renderer, Rcode::FORMERR(),
+                         verbose_mode);
         return (true);
     }
 
@@ -198,7 +212,7 @@ AuthSrv::processMessage(InputBuffer& request_buffer, Message& message,
     message.setHeaderFlag(MessageFlag::AA());
     message.setRcode(Rcode::NOERROR());
     message.setDNSSECSupported(dnssec_ok);
-    message.setUDPSize(4096);   // XXX: hardcoding
+    message.setUDPSize(AuthSrvImpl::DEFAULT_LOCAL_UDPSIZE);
 
     try {
         Query query(message, dnssec_ok);

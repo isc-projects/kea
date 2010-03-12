@@ -5,6 +5,6 @@
 
 [header]
 # use default
-ancount: 1
+arcount: 1
 [question]
 # use default
