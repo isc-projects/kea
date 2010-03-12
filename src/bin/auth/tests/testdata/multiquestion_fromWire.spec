@@ -9,4 +9,4 @@ qdcount: 2
 [question/0]
 # use default
 [question/1]
-name: q2.example.com
+rrtype: AAAA 
