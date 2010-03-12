@@ -248,7 +248,7 @@ AuthSrvImpl::setDbFile(const isc::data::ElementPtr config) {
     // delete and swap operations which should not fail.
     DataSrcPtr datasrc_ptr(DataSrcPtr(new Sqlite3DataSrc));
     datasrc_ptr->init(config);
-    ElementPtr answer = isc::config::createAnswer(0);
+    ElementPtr answer = isc::config::createAnswer();
     data_sources_.addDataSrc(datasrc_ptr);
 
     // The following code should be exception free.
@@ -263,7 +263,7 @@ AuthSrvImpl::setDbFile(const isc::data::ElementPtr config) {
 ElementPtr
 AuthSrv::updateConfig(isc::data::ElementPtr new_config) {
     try {
-        ElementPtr answer = isc::config::createAnswer(0);
+        ElementPtr answer = isc::config::createAnswer();
         if (new_config != NULL) {
             // the ModuleCCSession has already checked if we have
             // the correct ElementPtr type as specified in our .spec file

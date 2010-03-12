@@ -56,17 +56,20 @@ namespace config {
 
 /// Creates a standard config/command protocol answer message
 ElementPtr
-createAnswer(const int rcode)
+createAnswer()
 {
     ElementPtr answer = Element::createFromString("{\"result\": [] }");
     ElementPtr answer_content = answer->get("result");
-    answer_content->add(Element::create(rcode));
+    answer_content->add(Element::create(0));
     return answer;
 }
 
 ElementPtr
 createAnswer(const int rcode, const ElementPtr arg)
 {
+    if (rcode != 0 && (!arg || arg->getType() != Element::string)) {
+        isc_throw(CCSessionError, "Bad or no argument for rcode != 0");
+    }
     ElementPtr answer = Element::createFromString("{\"result\": [] }");
     ElementPtr answer_content = answer->get("result");
     answer_content->add(Element::create(rcode));
@@ -87,23 +90,38 @@ createAnswer(const int rcode, const std::string& arg)
 ElementPtr
 parseAnswer(int &rcode, const ElementPtr msg)
 {
-    if (!msg->contains("result")) {
-        // TODO: raise CCSessionError exception
-        isc_throw(CCSessionError, "No result in answer message");
-    } else {
+    if (msg &&
+        msg->getType() == Element::map &&
+        msg->contains("result")) {
         ElementPtr result = msg->get("result");
-        if (result->get(0)->getType() != Element::integer) {
+        if (result->getType() != Element::list) {
+            isc_throw(CCSessionError, "Result element in answer message is not a list");
+        } else if (result->get(0)->getType() != Element::integer) {
             isc_throw(CCSessionError, "First element of result is not an rcode in answer message");
-        } else if (result->get(0)->intValue() != 0 && result->get(1)->getType() != Element::string) {
-            isc_throw(CCSessionError, "Rcode in answer message is non-zero, but other argument is not a StringElement");
         }
         rcode = result->get(0)->intValue();
         if (result->size() > 1) {
-            return result->get(1);
+            if (rcode == 0 || result->get(1)->getType() == Element::string) {
+                return result->get(1);
+            } else {
+                isc_throw(CCSessionError, "Error description in result with rcode != 0 is not a string");
+            }
         } else {
-            return ElementPtr();
+            if (rcode == 0) {
+                return ElementPtr();
+            } else {
+                isc_throw(CCSessionError, "Result with rcode != 0 does not have an error description");
+            }
         }
+    } else {
+        isc_throw(CCSessionError, "No result part in answer message");
     }
+}
+
+ElementPtr
+createCommand(const std::string& command)
+{
+    return createCommand(command, ElementPtr());
 }
 
 ElementPtr
@@ -124,7 +142,8 @@ createCommand(const std::string& command, ElementPtr arg)
 const std::string
 parseCommand(ElementPtr& arg, const ElementPtr command)
 {
-    if (command->getType() == Element::map &&
+    if (command &&
+        command->getType() == Element::map &&
         command->contains("command")) {
         ElementPtr cmd = command->get("command");
         if (cmd->getType() == Element::list &&
@@ -136,10 +155,12 @@ parseCommand(ElementPtr& arg, const ElementPtr command)
                 arg = ElementPtr();
             }
             return cmd->get(0)->stringValue();
+        } else {
+            isc_throw(CCSessionError, "Command part in command message missing, empty, or not a list");
         }
+    } else {
+        isc_throw(CCSessionError, "Command Element empty or not a map with \"command\"");
     }
-    arg = ElementPtr();
-    return "";
 }
 
 ModuleSpec
@@ -302,29 +323,33 @@ ModuleCCSession::checkCommand()
         
         /* ignore result messages (in case we're out of sync, to prevent
          * pingpongs */
-        if (!data->getType() == Element::map || data->contains("result")) {
+        if (data->getType() != Element::map || data->contains("result")) {
             return 0;
         }
         ElementPtr arg;
-        std::string cmd_str = parseCommand(arg, data);
         ElementPtr answer;
-        if (cmd_str == "config_update") {
-            std::string target_module = routing->get("group")->stringValue();
-            if (target_module == module_name_) {
-                answer = handleConfigUpdate(arg);
+        try {
+            std::string cmd_str = parseCommand(arg, data);
+            if (cmd_str == "config_update") {
+                std::string target_module = routing->get("group")->stringValue();
+                if (target_module == module_name_) {
+                    answer = handleConfigUpdate(arg);
+                } else {
+                    // ok this update is not for us, if we have this module
+                    // in our remote config list, update that
+                    updateRemoteConfig(target_module, arg);
+                    // we're not supposed to answer to this, so return
+                    return 0;
+                }
             } else {
-                // ok this update is not for us, if we have this module
-                // in our remote config list, update that
-                updateRemoteConfig(target_module, arg);
-                // we're not supposed to answer to this, so return
-                return 0;
+                if (command_handler_) {
+                    answer = command_handler_(cmd_str, arg);
+                } else {
+                    answer = createAnswer(1, "Command given but no command handler for module");
+                }
             }
-        } else {
-            if (command_handler_) {
-                answer = command_handler_(cmd_str, arg);
-            } else {
-                answer = createAnswer(1, "Command given but no command handler for module");
-            }
+        } catch (CCSessionError re) {
+            answer = createAnswer(1, re.what());
         }
         session_.reply(routing, answer);
     }
