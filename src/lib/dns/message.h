@@ -276,6 +276,7 @@ public:
     Rcode(uint16_t code);
     uint16_t getCode() const { return (code_); }
     bool operator==(const Rcode& other) const { return (code_ == other.code_); }
+    bool operator!=(const Rcode& other) const { return (code_ != other.code_); }
     std::string toText() const;
     static const Rcode& NOERROR();
     static const Rcode& FORMERR();
