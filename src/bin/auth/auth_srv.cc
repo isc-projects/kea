@@ -254,7 +254,7 @@ AuthSrvImpl::setDbFile(const isc::data::ElementPtr config) {
     if (config) {
         db_file_ = config->get("database_file")->stringValue();
         if (verbose_mode_) {
-            cout << "[AuthSrv] Data source database file: " << db_file_ << endl;
+            cerr << "[AuthSrv] Data source database file: " << db_file_ << endl;
         }
     }
 
