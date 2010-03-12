@@ -24,6 +24,7 @@
 #include <algorithm>
 
 #include "buffer.h"
+#include "exceptions.h"
 #include "name.h"
 #include "messagerenderer.h"
 
@@ -288,8 +289,7 @@ typedef enum {
 } fw_state;
 }
 
-Name::Name(InputBuffer& buffer, bool downcase)
-{
+Name::Name(InputBuffer& buffer, bool downcase) {
     std::vector<unsigned char> offsets;
     offsets.reserve(Name::MAX_LABELS);
 
@@ -332,7 +332,8 @@ Name::Name(InputBuffer& buffer, bool downcase)
             if (c <= MAX_LABELLEN) {
                 offsets.push_back(nused);
                 if (nused + c + 1 > Name::MAX_WIRE) {
-                    isc_throw(TooLongName, "wire name is too long");
+                    isc_throw(DNSMessageFORMERR, "wire name is too long: "
+                              << nused + c + 1 << " bytes");
                 }
                 nused += c + 1;
                 ndata_.push_back(c);
@@ -351,7 +352,7 @@ Name::Name(InputBuffer& buffer, bool downcase)
             } else {
                 // this case includes local compression pointer, which hasn't
                 // been standardized.
-                isc_throw(BadLabelType, "unknown label character");
+                isc_throw(DNSMessageFORMERR, "unknown label character: " << c);
             }
             break;
         case fw_ordinary:
@@ -370,7 +371,9 @@ Name::Name(InputBuffer& buffer, bool downcase)
                 break;
             }
             if (new_current >= biggest_pointer) {
-                isc_throw(BadPointer, "bad compression pointer: out of range");
+                isc_throw(DNSMessageFORMERR,
+                          "bad compression pointer (out of range): " <<
+                          new_current);
             }
             biggest_pointer = new_current;
             current = new_current;
@@ -384,7 +387,7 @@ Name::Name(InputBuffer& buffer, bool downcase)
     }
 
     if (!done) {
-        isc_throw(IncompleteName, "incomplete wire-format name");
+        isc_throw(DNSMessageFORMERR, "incomplete wire-format name");
     }
 
     labelcount_ = offsets.size();

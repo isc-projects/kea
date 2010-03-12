@@ -15,6 +15,7 @@
 // $Id$
 
 #include <dns/buffer.h>
+#include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
@@ -79,7 +80,7 @@ TEST_F(Rdata_CNAME_Test, createFromWire)
     // incomplete name.  the error should be detected in the name constructor
     EXPECT_THROW(rdataFactoryFromFile(RRType("CNAME"), RRClass("IN"),
                                       "testdata/rdata_cname_fromWire", 71),
-                 IncompleteName);
+                 DNSMessageFORMERR);
 
     EXPECT_EQ(0, generic::CNAME("cn2.example.com").compare(
                   *rdataFactoryFromFile(RRType("CNAME"), RRClass("IN"),
