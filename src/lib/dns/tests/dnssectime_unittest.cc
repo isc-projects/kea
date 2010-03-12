@@ -61,8 +61,14 @@ TEST(DNSSECTimeTest, toText)
 {
     EXPECT_EQ("19700101000000", timeToText(0));
     EXPECT_EQ("20100311233000", timeToText(1268350200));
-
-    // Jan 1, Year 10,000.  What should we do?
-    //EXPECT_THROW(timeToText(253402300800LL), InvalidTime);
 }
+
+TEST(DNSSECTimeTest, overflow)
+{
+    // Jan 1, Year 10,000.
+    if (sizeof(time_t) > 4) {
+        EXPECT_THROW(timeToText(253402300800LL), InvalidTime);
+    }
+}
+
 }
