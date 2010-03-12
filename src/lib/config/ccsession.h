@@ -33,6 +33,15 @@ class io_service;
 namespace isc {
 namespace config {
 
+ElementPtr createAnswer(const int rcode);
+ElementPtr createAnswer(const int rcode, const ElementPtr arg);
+ElementPtr createAnswer(const int rcode, const std::string& arg);
+ElementPtr parseAnswer(int &rcode, const ElementPtr msg);
+
+ElementPtr createCommand(const std::string& command, ElementPtr arg);
+const std::string parseCommand(ElementPtr& arg, const ElementPtr command);
+
+
 ///
 /// \brief A standard cc session exception that is thrown if a function
 /// is there is a problem with one of the messages
@@ -153,7 +162,6 @@ private:
     std::string module_name_;
     isc::cc::Session session_;
     ModuleSpec module_specification_;
-    isc::data::ElementPtr config_;
     ElementPtr handleConfigUpdate(ElementPtr new_config);
 
     isc::data::ElementPtr(*config_handler_)(isc::data::ElementPtr new_config);
@@ -162,10 +170,6 @@ private:
     std::map<std::string, ConfigData> remote_module_configs_;
     void updateRemoteConfig(const std::string& module_name, ElementPtr new_config);
 };
-
-ElementPtr createAnswer(const int rcode);
-ElementPtr createAnswer(const int rcode, const ElementPtr arg);
-ElementPtr createAnswer(const int rcode, const std::string& arg);
 
 }
 }
