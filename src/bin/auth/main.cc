@@ -31,7 +31,7 @@
 #ifdef HAVE_BOOSTLIB
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
-#endif
+#endif  // HAVE_BOOSTLIB
 
 #include <exceptions/exceptions.h>
 
@@ -53,7 +53,7 @@ using namespace std;
 using namespace boost::asio;
 using ip::udp;
 using ip::tcp;
-#endif
+#endif  // HAVE_BOOSTLIB
 
 using namespace isc::data;
 using namespace isc::cc;
@@ -61,18 +61,15 @@ using namespace isc::config;
 using namespace isc::dns;
 
 namespace {
-static bool verbose_mode = false;
-}
 
-namespace {
+bool verbose_mode = false;
+
 const string PROGRAM = "Auth";
 const char* DNSPORT = "5300";
-}
 
 /* need global var for config/command handlers.
  * todo: turn this around, and put handlers in the authserver
  * class itself? */
-namespace {
 AuthSrv *auth_server;
 #ifdef HAVE_BOOSTLIB
 // TODO: this should be a property of AuthSrv, and AuthSrv needs
@@ -80,15 +77,14 @@ AuthSrv *auth_server;
 boost::asio::io_service io_service_;
 #else
 bool running;
-#endif
-}
+#endif  // HAVE_BOOSTLIB
 
-static ElementPtr
+ElementPtr
 my_config_handler(ElementPtr new_config) {
     return auth_server->updateConfig(new_config);
 }
 
-static ElementPtr
+ElementPtr
 my_command_handler(const string& command, const ElementPtr args) {
     ElementPtr answer = createAnswer();
 
@@ -101,7 +97,7 @@ my_command_handler(const string& command, const ElementPtr args) {
         io_service_.stop();
 #else
         running = false;
-#endif
+#endif  // HAVE_BOOSTLIB
     }
     
     return answer;
@@ -111,7 +107,6 @@ my_command_handler(const string& command, const ElementPtr args) {
 //
 // Helper classes for asynchronous I/O using boost::asio
 //
-namespace {
 class TCPClient {
 public:
     TCPClient(io_service& io_service) :
@@ -171,8 +166,7 @@ public:
         }
     }
 
-    void responseWrite(const boost::system::error_code& error)
-    {
+    void responseWrite(const boost::system::error_code& error) {
         if (!error) {
                 async_write(socket_,
                             boost::asio::buffer(response_buffer_.getData(),
@@ -184,8 +178,7 @@ public:
         }
     }
 
-    void handleWrite(const boost::system::error_code& error)
-    {
+    void handleWrite(const boost::system::error_code& error) {
         if (!error) {
             start();            // handle next request, if any.
       } else {
@@ -204,9 +197,7 @@ private:
     char data_[MAX_LENGTH];
 };
 
-class TCPServer
-{
-private:
+class TCPServer {
 public:
     TCPServer(io_service& io_service, int af, short port) :
         io_service_(io_service),
@@ -316,8 +307,7 @@ struct ServerSet {
     ServerSet() : udp4_server(NULL), udp6_server(NULL),
                   tcp4_server(NULL), tcp6_server(NULL)
     {}
-    ~ServerSet()
-    {
+    ~ServerSet() {
         delete udp4_server;
         delete udp6_server;
         delete tcp4_server;
@@ -329,7 +319,7 @@ struct ServerSet {
     TCPServer* tcp6_server;
 };
 
-static void
+void
 run_server(const char* port, const bool use_ipv4, const bool use_ipv6,
            const string& specfile)
 {
@@ -351,12 +341,10 @@ run_server(const char* port, const bool use_ipv4, const bool use_ipv6,
     cout << "Server started." << endl;
     io_service_.run();
 }
-}
 #else  // !HAVE_BOOSTLIB
 struct SocketSet {
     SocketSet() : ups4(-1), tps4(-1), ups6(-1), tps6(-1) {}
-    ~SocketSet()
-    {
+    ~SocketSet() {
         if (ups4 >= 0) {
             close(ups4);
         }
@@ -373,7 +361,7 @@ struct SocketSet {
     int ups4, tps4, ups6, tps6;
 };
 
-static int
+int
 getUDPSocket(int af, const char* port) {
     struct addrinfo hints, *res;
 
@@ -408,7 +396,7 @@ getUDPSocket(int af, const char* port) {
     return (s);
 }
 
-static int
+int
 getTCPSocket(int af, const char* port) {
     struct addrinfo hints, *res;
 
@@ -447,7 +435,7 @@ getTCPSocket(int af, const char* port) {
     return (s);
 }
 
-static void
+void
 processMessageUDP(const int fd, Message& dns_message,
                   MessageRenderer& response_renderer)
 {
@@ -469,7 +457,7 @@ processMessageUDP(const int fd, Message& dns_message,
     }
 }
 
-static void
+void
 processMessageTCP(const int fd, Message& dns_message,
                   MessageRenderer& response_renderer)
 {
@@ -532,7 +520,7 @@ processMessageTCP(const int fd, Message& dns_message,
     close(ts);
 }
 
-static void
+void
 run_server(const char* port, const bool use_ipv4, const bool use_ipv6,
            const string& specfile)
 {
@@ -601,11 +589,12 @@ run_server(const char* port, const bool use_ipv4, const bool use_ipv6,
 }
 #endif // HAVE_BOOSTLIB
 
-static void
+void
 usage() {
     cerr << "Usage: b10-auth [-p port] [-4|-6]" << endl;
     exit(1);
 }
+} // end of anonymous namespace
 
 int
 main(int argc, char* argv[]) {
