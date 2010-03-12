@@ -91,8 +91,12 @@ def main():
     try:
         while True :
             name = input("Desired Login Name:")
+            if name == '':
+                print("error, user name can't be empty")
+                continue
+
             if username_exist(name, filename):
-                 print("The usename already exist!")
+                 print("use name already exist!")
                  continue
 
             while True:
