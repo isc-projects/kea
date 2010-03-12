@@ -114,6 +114,9 @@ addMessage(ElementPtr msg, const std::string& group, const std::string& to)
 bool
 haveSubscription(const std::string& group, const std::string& instance)
 {
+    if (!subscriptions) {
+        return false;
+    }
     ElementPtr s1 = Element::createFromString("[]");
     ElementPtr s2 = Element::createFromString("[]");
     s1->add(Element::create(group));
@@ -205,7 +208,7 @@ Session::recvmsg(ElementPtr& env, ElementPtr& msg, bool nonblock UNUSED_PARAM) {
         msg = initial_messages->get(0);
         initial_messages->remove(0);
         return true;
-    } else {
+    } else if (msg_queue) {
         BOOST_FOREACH(ElementPtr c_m, msg_queue->listValue()) {
             ElementPtr to_remove = ElementPtr();
             if (haveSubscription(c_m->get(0), c_m->get(1))) {
@@ -244,6 +247,9 @@ Session::unsubscribe(std::string group, std::string instance) {
     ElementPtr s_el = Element::createFromString("[]");
     s_el->add(Element::create(group));
     s_el->add(Element::create(instance));
+    if (!subscriptions) {
+        return;
+    }
     listRemove(subscriptions, s_el);
 }
 
