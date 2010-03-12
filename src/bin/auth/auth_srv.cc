@@ -157,11 +157,16 @@ AuthSrv::processMessage(InputBuffer& request_buffer, Message& message,
     try {
         message.fromWire(request_buffer);
     } catch (const DNSProtocolError& error) {
-        cerr << "returning protocol error" << endl;
+        if (verbose_mode) {
+            cerr << "returning " <<  error.getRcode().toText() << ": "
+                 << error.what() << endl;
+        }
         makeErrorMessage(message, response_renderer, error.getRcode());
         return (true);
     } catch (const Exception& ex) {
-        cerr << "returning servfail" << endl;
+        if (verbose_mode) {
+            cerr << "returning SERVFAIL: " << ex.what() << endl;
+        }
         makeErrorMessage(message, response_renderer, Rcode::SERVFAIL());
         return (true);
     } // other exceptions will be handled at a higher layer.
