@@ -182,18 +182,34 @@ TEST_F(AuthSrvTest, shortQuestion) {
 TEST_F(AuthSrvTest, shortAnswer) {
     createDataFromFile("testdata/shortanswer_fromWire");
     EXPECT_EQ(true, server.processMessage(*ibuffer, parse_message,
-                                           response_renderer, true, true));
-    headerCheck(parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
-                QR_FLAG, 1, 0, 0, 0);
+                                           response_renderer, true, false));
 
     // This is a bogus query, but question section is valid.  So the response
     // should copy the question section.
+    headerCheck(parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
+                QR_FLAG, 1, 0, 0, 0);
+
     QuestionIterator qit = parse_message.beginQuestion();
     EXPECT_EQ(Name("example.com"), (*qit)->getName());
     EXPECT_EQ(RRClass::IN(), (*qit)->getClass());
     EXPECT_EQ(RRType::A(), (*qit)->getType());
     ++qit;
     EXPECT_TRUE(qit == parse_message.endQuestion());
+}
+
+// Query with unsupported version of EDNS.
+TEST_F(AuthSrvTest, ednsBadVers) {
+    createDataFromFile("testdata/queryBadEDNS_fromWire");
+    EXPECT_EQ(true, server.processMessage(*ibuffer, parse_message,
+                                           response_renderer, true, false));
+
+    // The response must have an EDNS OPT RR in the additional section.
+    // Note that the DNSSEC DO bit is cleared even if this bit in the query
+    // is set.  This is a limitation of the current implementation.
+    headerCheck(parse_message, default_qid, Rcode::BADVERS(), opcode.getCode(),
+                QR_FLAG, 1, 0, 0, 1);
+    EXPECT_EQ(4096, parse_message.getUDPSize());
+    EXPECT_FALSE(parse_message.isDNSSECSupported());
 }
 
 }
