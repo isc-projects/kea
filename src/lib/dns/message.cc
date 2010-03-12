@@ -201,6 +201,7 @@ public:
     flags_t flags_;
     bool dnssec_ok_;
 
+    bool header_parsed_;
     static const unsigned int SECTION_MAX = 4; // TODO: revisit this design
     int counts_[SECTION_MAX];   // TODO: revisit this definition
     vector<QuestionPtr> questions_;
@@ -243,6 +244,7 @@ MessageImpl::init()
         counts_[i] = 0;
     }
 
+    header_parsed_ = false;
     questions_.clear();
     rrsets_[sectionCodeToId(Section::ANSWER())].clear();
     rrsets_[sectionCodeToId(Section::AUTHORITY())].clear();
@@ -524,10 +526,15 @@ Message::toWire(MessageRenderer& renderer)
 }
 
 void
-Message::fromWire(InputBuffer& buffer)
-{
+Message::parseHeader(InputBuffer& buffer) {
+    if (impl_->mode_ != Message::PARSE) {
+        isc_throw(InvalidMessageOperation,
+                  "Message parse attempted in non parse mode");
+    }
+
     if ((buffer.getLength() - buffer.getPosition()) < HEADERLEN) {
-        isc_throw(MessageTooShort, "");
+        isc_throw(MessageTooShort, "Malformed DNS message (short length): "
+                  << buffer.getLength() - buffer.getPosition());
     }
 
     impl_->qid_ = buffer.readUint16();
@@ -539,6 +546,20 @@ Message::fromWire(InputBuffer& buffer)
     impl_->counts_[Section::ANSWER().getCode()] = buffer.readUint16();
     impl_->counts_[Section::AUTHORITY().getCode()] = buffer.readUint16();
     impl_->counts_[Section::ADDITIONAL().getCode()] = buffer.readUint16();
+
+    impl_->header_parsed_ = true;
+}
+
+void
+Message::fromWire(InputBuffer& buffer) {
+    if (impl_->mode_ != Message::PARSE) {
+        isc_throw(InvalidMessageOperation,
+                  "Message parse attempted in non parse mode");
+    }
+
+    if (!impl_->header_parsed_) {
+        parseHeader(buffer);
+    }
 
     impl_->counts_[Section::QUESTION().getCode()] =
         impl_->parseQuestion(buffer);
