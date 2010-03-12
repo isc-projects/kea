@@ -486,6 +486,7 @@ public:
     SectionIterator<T> operator++(int);
     const T& operator*() const;
     const T* operator->() const;
+    bool operator==(const SectionIterator<T>& other) const;
     bool operator!=(const SectionIterator<T>& other) const;
 private:
     SectionIteratorImpl<T>* impl_;
