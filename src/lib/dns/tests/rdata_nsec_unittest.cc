@@ -17,6 +17,7 @@
 #include <string>
 
 #include <dns/buffer.h>
+#include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
@@ -68,7 +69,7 @@ TEST_F(Rdata_NSEC_Test, createFromWire_NSEC)
 
     EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC(), RRClass::IN(),
                        "testdata/rdata_nsec_fromWire3"),
-                 InvalidRdata);
+                 DNSMessageFORMERR);
 }
 
 TEST_F(Rdata_NSEC_Test, toWireRenderer_NSEC)

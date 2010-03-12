@@ -23,6 +23,7 @@
 
 #include "base64.h"
 #include "buffer.h"
+#include "exceptions.h"
 #include "messagerenderer.h"
 #include "name.h"
 #include "rrtype.h"
@@ -110,11 +111,13 @@ NSEC::NSEC(InputBuffer& buffer, size_t rdata_len)
     int len = 0;
     for (int i = 0; i < typebits.size(); i += len) {
         if (i + 2 > typebits.size()) {
-            isc_throw(InvalidRdata, "Bad NSEC typebits");
+            isc_throw(DNSMessageFORMERR, "Invalid rdata: "
+                                         "bad NSEC type bitmap");
         }
         len = typebits[i + 1];
         if (len > 31) {
-            isc_throw(InvalidRdata, "Bad NSEC typebits");
+            isc_throw(DNSMessageFORMERR, "Invalid rdata: "
+                                         "bad NSEC type bitmap");
         }
         i += 2;
     }
