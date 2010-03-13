@@ -686,6 +686,13 @@ TEST_F(DataSrcTest, NSECZonecutOfNonsecureZone) {
 }
 #endif
 
+#if 0
+TEST_F(DataSrcTest, RootDSQuery) {
+    createAndProcessQuery(test_source, msg, Name("."),
+                          RRClass::IN(), RRType::DS());
+}
+#endif
+
 TEST_F(DataSrcTest, Nsec3Hash) {
     vector<uint8_t> salt;
     salt.push_back(0xfe);
