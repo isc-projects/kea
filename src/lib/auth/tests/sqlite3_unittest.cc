@@ -42,47 +42,47 @@ using namespace isc::auth;
 using namespace isc::data;
 
 namespace {
-static ElementPtr SQLITE_DBFILE_EXAMPLE = Element::createFromString(
-                     "{ \"database_file\": \"testdata/test.sqlite3\"}");
-static ElementPtr SQLITE_DBFILE_EXAMPLE2 = Element::createFromString(
-                     "{ \"database_file\": \"testdata/test2.sqlite3\"}");
-static ElementPtr SQLITE_DBFILE_EXAMPLE_ROOT = Element::createFromString(
-                     "{ \"database_file\": \"testdata/test-root.sqlite3\"}");
+ElementPtr SQLITE_DBFILE_EXAMPLE = Element::createFromString(
+    "{ \"database_file\": \"testdata/test.sqlite3\"}");
+ElementPtr SQLITE_DBFILE_EXAMPLE2 = Element::createFromString(
+    "{ \"database_file\": \"testdata/test2.sqlite3\"}");
+ElementPtr SQLITE_DBFILE_EXAMPLE_ROOT = Element::createFromString(
+    "{ \"database_file\": \"testdata/test-root.sqlite3\"}");
 // The following file must be non existent and must be non"creatable";
 // the sqlite3 library will try to create a new DB file if it doesn't exist,
 // so to test a failure case the create operation should also fail.
 // The "nodir", a non existent directory, is inserted for this purpose.
-static ElementPtr SQLITE_DBFILE_NOTEXIST = Element::createFromString(
-                     "{ \"database_file\": \"testdata/nodir/notexist\"}");
+ElementPtr SQLITE_DBFILE_NOTEXIST = Element::createFromString(
+    "{ \"database_file\": \"testdata/nodir/notexist\"}");
 
-static const string sigdata_common(" 20100322084538 20100220084538 "
-                                   "33495 example.com. FAKEFAKEFAKEFAKE");
-static const string dnskey1_data(" AwEAAcOUBllYc1hf7ND9uDy+Yz1BF3sI0m4q"
-                                 "NGV7WcTD0WEiuV7IjXgHE36fCmS9QsUxSSOV"
-                                 "o1I/FMxI2PJVqTYHkXFBS7AzLGsQYMU7UjBZ"
-                                 "SotBJ6Imt5pXMu+lEDNy8TOUzG3xm7g0qcbW"
-                                 "YF6qCEfvZoBtAqi5Rk7Mlrqs8agxYyMx");
-static const string dnskey2_data(" AwEAAe5WFbxdCPq2jZrZhlMj7oJdff3W7syJ"
-                                 "tbvzg62tRx0gkoCDoBI9DPjlOQG0UAbj+xUV"
-                                 "4HQZJStJaZ+fHU5AwVNT+bBZdtV+NujSikhd"
-                                 "THb4FYLg2b3Cx9NyJvAVukHp/91HnWuG4T36"
-                                 "CzAFrfPwsHIrBz9BsaIQ21VRkcmj7DswfI/i"
-                                 "DGd8j6bqiODyNZYQ+ZrLmF0KIJ2yPN3iO6Zq"
-                                 "23TaOrVTjB7d1a/h31ODfiHAxFHrkY3t3D5J"
-                                 "R9Nsl/7fdRmSznwtcSDgLXBoFEYmw6p86Acv"
-                                 "RyoYNcL1SXjaKVLG5jyU3UR+LcGZT5t/0xGf"
-                                 "oIK/aKwENrsjcKZZj660b1M=");
-static const string nsec3_signature("gNIVj4T8t51fEU6kOPpvK7HOGBFZGbalN5ZK"
-                                    "mInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/L"
-                                    "is2M6yUWHyXbNbj/QqwqgadG5dhxTArfuR02"
-                                    "xP600x0fWX8LXzW4yLMdKVxGbzYT+vvGz71o"
-                                    "8gHSY5vYTtothcZQa4BMKhmGQEk=");
+const string sigdata_common(" 20100322084538 20100220084538 "
+                            "33495 example.com. FAKEFAKEFAKEFAKE");
+const string dnskey1_data(" AwEAAcOUBllYc1hf7ND9uDy+Yz1BF3sI0m4q"
+                          "NGV7WcTD0WEiuV7IjXgHE36fCmS9QsUxSSOV"
+                          "o1I/FMxI2PJVqTYHkXFBS7AzLGsQYMU7UjBZ"
+                          "SotBJ6Imt5pXMu+lEDNy8TOUzG3xm7g0qcbW"
+                          "YF6qCEfvZoBtAqi5Rk7Mlrqs8agxYyMx");
+const string dnskey2_data(" AwEAAe5WFbxdCPq2jZrZhlMj7oJdff3W7syJ"
+                          "tbvzg62tRx0gkoCDoBI9DPjlOQG0UAbj+xUV"
+                          "4HQZJStJaZ+fHU5AwVNT+bBZdtV+NujSikhd"
+                          "THb4FYLg2b3Cx9NyJvAVukHp/91HnWuG4T36"
+                          "CzAFrfPwsHIrBz9BsaIQ21VRkcmj7DswfI/i"
+                          "DGd8j6bqiODyNZYQ+ZrLmF0KIJ2yPN3iO6Zq"
+                          "23TaOrVTjB7d1a/h31ODfiHAxFHrkY3t3D5J"
+                          "R9Nsl/7fdRmSznwtcSDgLXBoFEYmw6p86Acv"
+                          "RyoYNcL1SXjaKVLG5jyU3UR+LcGZT5t/0xGf"
+                          "oIK/aKwENrsjcKZZj660b1M=");
+const string nsec3_signature("gNIVj4T8t51fEU6kOPpvK7HOGBFZGbalN5ZK"
+                             "mInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/L"
+                             "is2M6yUWHyXbNbj/QqwqgadG5dhxTArfuR02"
+                             "xP600x0fWX8LXzW4yLMdKVxGbzYT+vvGz71o"
+                             "8gHSY5vYTtothcZQa4BMKhmGQEk=");
 
-static const Name zone_name("example.com");
-static const Name nomatch_name("example.org");
-static const Name child_name("sql1.example.com");
-static const Name www_name("www.example.com");
-static const Name www_upper_name("WWW.EXAMPLE.COM");
+const Name zone_name("example.com");
+const Name nomatch_name("example.org");
+const Name child_name("sql1.example.com");
+const Name www_name("www.example.com");
+const Name www_upper_name("WWW.EXAMPLE.COM");
 
 typedef enum {
     NORMAL,
