@@ -365,6 +365,11 @@ TEST_F(Sqlite3DataSourceTest, openFail) {
     EXPECT_THROW(data_source.init(SQLITE_DBFILE_NOTEXIST), Sqlite3Error);
 }
 
+TEST_F(Sqlite3DataSourceTest, doubleOpen) {
+    // An attempt of duplicate open should trigger an exception.
+    EXPECT_THROW(data_source.init(SQLITE_DBFILE_EXAMPLE), Sqlite3Error);
+}
+
 TEST_F(Sqlite3DataSourceTest, findClosestEnclosure) {
     NameMatch name_match(www_name);
     data_source.findClosestEnclosure(name_match, rrclass);

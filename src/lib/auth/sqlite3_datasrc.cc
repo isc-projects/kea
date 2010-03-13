@@ -37,7 +37,7 @@ namespace auth {
 namespace {
 // Note: this cannot be std::string to avoid
 // "static initialization order fiasco".
-static const char* DEFAULT_DB_FILE = "/tmp/zone.sqlite3";
+const char* DEFAULT_DB_FILE = "/tmp/zone.sqlite3";
 }
 
 //
@@ -95,7 +95,8 @@ Sqlite3DataSrc::hasExactZone(const char* name) const {
     return (i);
 }
 
-static int
+namespace {
+int
 importSqlite3Rows(sqlite3_stmt* query, const Name& qname, const RRClass& qclass,
                   const RRType& qtype, const bool nsec3_tree,
                   RRsetList& result_sets, uint32_t& flags)
@@ -180,6 +181,7 @@ importSqlite3Rows(sqlite3_stmt* query, const Name& qname, const RRClass& qclass,
     }
 
     return (rows);
+}
 }
 
 int
@@ -685,6 +687,9 @@ Sqlite3DataSrc::findReferral(const Name& qname,
 //
 void
 Sqlite3DataSrc::open(const string& name) {
+    if (db != NULL) {
+        isc_throw(Sqlite3Error, "Duplicate Sqlite3 open with " << name);
+    }
     if (sqlite3_open(name.c_str(), &db) != 0) {
         // sqlite3_close() must be called even when open fails.
         sqlite3_close(db);
