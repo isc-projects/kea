@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 
+#include <sqlite3.h>
 #include <gtest/gtest.h>
 
 #include <dns/name.h>
@@ -48,6 +49,11 @@ ElementPtr SQLITE_DBFILE_EXAMPLE2 = Element::createFromString(
     "{ \"database_file\": \"testdata/test2.sqlite3\"}");
 ElementPtr SQLITE_DBFILE_EXAMPLE_ROOT = Element::createFromString(
     "{ \"database_file\": \"testdata/test-root.sqlite3\"}");
+ElementPtr SQLITE_DBFILE_BROKENDB = Element::createFromString(
+    "{ \"database_file\": \"testdata/brokendb.sqlite3\"}");
+ElementPtr SQLITE_DBFILE_MEMORY = Element::createFromString(
+    "{ \"database_file\": \":memory:\"}");
+
 // The following file must be non existent and must be non"creatable";
 // the sqlite3 library will try to create a new DB file if it doesn't exist,
 // so to test a failure case the create operation should also fail.
@@ -374,6 +380,24 @@ TEST_F(Sqlite3DataSourceTest, doubleClose) {
     // An attempt of duplicate close should trigger an exception.
     EXPECT_EQ(DataSrc::SUCCESS, data_source.close());
     EXPECT_THROW(data_source.close(), DataSourceError);
+}
+
+#if 0                           // currently fails
+TEST_F(Sqlite3DataSourceTest, openBrokenDB) {
+    EXPECT_EQ(DataSrc::SUCCESS, data_source.close());
+    // The database exists but is broken.  An exception will be thrown 
+    // in the middle of the initialization.
+    EXPECT_THROW(data_source.init(SQLITE_DBFILE_BROKENDB), Sqlite3Error);
+    // Confirming the strong exception guarantee: the data source must be
+    // in the closed state.
+    EXPECT_EQ(DataSrc::SUCCESS, data_source.init(SQLITE_DBFILE_EXAMPLE));
+}
+#endif
+
+// This test only confirms that on-the-fly schema creation works.
+TEST_F(Sqlite3DataSourceTest, memoryDB) {
+    EXPECT_EQ(DataSrc::SUCCESS, data_source.close());
+    EXPECT_EQ(DataSrc::SUCCESS, data_source.init(SQLITE_DBFILE_MEMORY));
 }
 
 TEST_F(Sqlite3DataSourceTest, findClosestEnclosure) {
