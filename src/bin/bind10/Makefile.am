@@ -6,6 +6,8 @@ pkglibexecdir = $(libexecdir)/@PACKAGE@
 bind10dir = $(DESTDIR)$(pkgdatadir)
 bind10_DATA = bob.spec
 
+EXTRA_DIST = bob.spec
+
 # TODO: does this need $$(DESTDIR) also?
 # this is done here since configure.ac AC_OUTPUT doesn't expand exec_prefix
 bind10: bind10.py

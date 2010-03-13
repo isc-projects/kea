@@ -203,8 +203,8 @@ def generate_rdatahdr(file, declarations, basemtime):
     rdata_header.close()
 
 def generate_typeclasscode(fileprefix, basemtime, code2txt, type_or_class):
-    placeholder = fileprefix + '-placeholder.h'
-    outputfile = fileprefix + '.h'
+    placeholder = '@srcdir@/' + fileprefix + '-placeholder.h'
+    outputfile = '@builddir@/' + fileprefix + '.h'
     upper_key = type_or_class.upper() # TYPE or CLASS
     lower_key = 'rr' + type_or_class.lower() # rrtype or rrclass
     cap_key = type_or_class           # Type or Class
@@ -238,8 +238,8 @@ RR''' + cap_key + '''::''' + codetxt + '''()
     header_temp.close()
 
 def generate_rrparam(fileprefix, basemtime):
-    placeholder = fileprefix + '-placeholder.cc'
-    outputfile = fileprefix + '.cc'
+    placeholder = '@srcdir@/' + fileprefix + '-placeholder.cc'
+    outputfile = '@builddir@/' + fileprefix + '.cc'
     if not need_generate(outputfile, basemtime) and getmtime(outputfile) > getmtime(placeholder):
         print('skip generating ' + outputfile)
         return
@@ -281,15 +281,15 @@ def generate_rrparam(fileprefix, basemtime):
 if __name__ == "__main__":
     try:
         import_definitions(classcode2txt, typecode2txt, typeandclass)
-        generate_rdatadef('@srcdir@/rdataclass.cc', rdatadef_mtime)
-        generate_rdatahdr('@srcdir@/rdataclass.h', rdata_declarations,
+        generate_rdatadef('@builddir@/rdataclass.cc', rdatadef_mtime)
+        generate_rdatahdr('@builddir@/rdataclass.h', rdata_declarations,
                           rdatahdr_mtime)
-        generate_typeclasscode('@srcdir@/rrtype',
+        generate_typeclasscode('rrtype',
                                max(rdatadef_mtime, rdatahdr_mtime),
                                typecode2txt, 'Type')
-        generate_typeclasscode('@srcdir@/rrclass', classdir_mtime,
+        generate_typeclasscode('rrclass', classdir_mtime,
                                classcode2txt, 'Class')
-        generate_rrparam('@srcdir@/rrparamregistry', rdatahdr_mtime)
+        generate_rrparam('rrparamregistry', rdatahdr_mtime)
     except:
         sys.stderr.write('Code generation failed due to exception: %s\n' %
                          sys.exc_info()[1])
