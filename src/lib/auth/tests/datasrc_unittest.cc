@@ -26,39 +26,51 @@
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
 #include <dns/question.h>
+#include <dns/rdata.h>
 #include <dns/rdataclass.h>
 #include <dns/rrclass.h>
 #include <dns/rrttl.h>
 #include <dns/rrtype.h>
 
+#include <cc/data.h>
+
 #include <auth/query.h>
+#include <auth/sqlite3_datasrc.h>
+
 #include "unittest_util.h"
 #include "test_datasrc.h"
 
 using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::dns;
+using namespace isc::dns::rdata;
 using namespace isc::auth;
+using namespace isc::data;
 
 namespace {
-TestDataSrc ds;
+const ElementPtr SQLITE_DBFILE_EXAMPLE = Element::createFromString(
+    "{ \"database_file\": \"testdata/example.org.sqlite3\"}");
+
+TestDataSrc test_source;
 
 class DataSrcTest : public ::testing::Test {
 protected:
     DataSrcTest() : obuffer(0), renderer(obuffer), msg(Message::PARSE) {
-        ds.init();
+        sql3_source.init(SQLITE_DBFILE_EXAMPLE);
+        test_source.init();
     }
+    Sqlite3DataSrc sql3_source;
     OutputBuffer obuffer;
     MessageRenderer renderer;
     Message msg;
 };
 
 void
-performQuery(Message& message) {
+performQuery(DataSrc& data_source, Message& message) {
     message.setHeaderFlag(MessageFlag::AA());
     message.setRcode(Rcode::NOERROR());
     Query q(message, true);
-    ds.doQuery(q);
+    data_source.doQuery(q);
 }
 
 void
@@ -70,18 +82,19 @@ readAndProcessQuery(Message& message, const char* datafile) {
     message.fromWire(buffer);
 
     message.makeResponse();
-    performQuery(message);
+    performQuery(test_source, message);
 }
 
 void
-createAndProcessQuery(Message& message, const Name& qname,
-                      const RRClass& qclass, const RRType& qtype)
+createAndProcessQuery(DataSrc& data_source, Message& message,
+                      const Name& qname, const RRClass& qclass,
+                      const RRType& qtype)
 {
     message.makeResponse();
     message.setOpcode(Opcode::QUERY());
     message.addQuestion(Question(qname, qclass, qtype));
     message.setHeaderFlag(MessageFlag::RD());
-    performQuery(message);
+    performQuery(data_source, message);
 }
 
 void
@@ -631,9 +644,47 @@ TEST_F(DataSrcTest, DS) {
 }
 
 TEST_F(DataSrcTest, CNAMELoop) {
-    createAndProcessQuery(msg, Name("loop1.example.com"), RRClass::IN(),
-                          RRType::A());
+    createAndProcessQuery(test_source, msg, Name("loop1.example.com"),
+                          RRClass::IN(), RRType::A());
 }
+
+// NSEC query for the name of a zone cut for non-secure delegation.
+// Should return normal referral.
+#if 0                           // currently fails
+TEST_F(DataSrcTest, NSECZonecutOfNonsecureZone) {
+    createAndProcessQuery(sql3_source, msg, Name("sub.example.org"),
+                          RRClass::IN(), RRType::NSEC());
+
+    headerCheck(msg, Rcode::NOERROR(), true, false, true, 0, 1, 1);
+
+    RRsetIterator rit = msg.beginSection(Section::AUTHORITY());
+    ConstRRsetPtr rrset = *rit;
+    EXPECT_EQ(Name("sub.example.org."), rrset->getName());
+    EXPECT_EQ(RRType::NS(), rrset->getType());
+    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+
+    RdataIteratorPtr it = rrset->getRdataIterator();
+    it->first();
+    EXPECT_EQ(createRdata(RRType::NS(), RRClass::IN(),
+                          "ns.sub.example.org.")->toText(),
+              it->getCurrent().toText());
+    it->next();
+    EXPECT_TRUE(it->isLast());
+
+    rit = msg.beginSection(Section::ADDITIONAL());
+    rrset = *rit;
+    EXPECT_EQ(Name("ns.sub.example.org."), rrset->getName());
+    EXPECT_EQ(RRType::A(), rrset->getType());
+    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+
+    it = rrset->getRdataIterator();
+    it->first();
+    EXPECT_EQ(createRdata(RRType::A(), RRClass::IN(), "192.0.2.101")->toText(),
+              it->getCurrent().toText());
+    it->next();
+    EXPECT_TRUE(it->isLast());
+}
+#endif
 
 TEST_F(DataSrcTest, Nsec3Hash) {
     vector<uint8_t> salt;
@@ -657,4 +708,3 @@ TEST_F(DataSrcTest, AddRemoveDataSrc) {
     EXPECT_EQ(0, ds.dataSrcCount());
 }
 }
-
