@@ -192,3 +192,6 @@ mix.example.com.	3600	IN A 192.0.2.1
 			3600	IN AAAA 2001:db8::1
 			3600	IN A 192.0.2.2
 			3600	IN AAAA 2001:db8::2
+
+nosecsub.example.com.	3600	IN NS ns.nosecsub.example.com.
+ns.nosecsub.example.com. 3600	IN A  192.0.2.101

@@ -1,0 +1,12 @@
+;; This is an unsigned zone.
+
+$TTL 3600
+example.org.    SOA ns1.example.org. admin.example.org. 1234 3600 1800 2419200 7200
+        	NS ns1.example.org.
+        	NS ns2.example.org.
+		NS ns3.example.org.
+                MX 10 mail.example.org.
+www.example.org. A 192.0.2.1
+mail.example.org. A 192.0.2.10
+sub.example.org. NS ns.sub.example.org.
+ns.sub.example.org. A 192.0.2.101
