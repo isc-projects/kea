@@ -1,6 +1,8 @@
 SUBDIRS = . tests
 
-AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/ext $(SQLITE_CFLAGS)
+AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
+AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
+AM_CPPFLAGS += -I$(top_srcdir)/ext  
 if GCC_WERROR_OK
 AM_CPPFLAGS += -Werror
 endif
@@ -28,4 +30,6 @@ endif
 # and can't use @datadir@ because doesn't expand default ${prefix}
 b10_authdir = $(DESTDIR)$(pkgdatadir)
 b10_auth_DATA = auth.spec
+
+EXTRA_DIST = auth.spec
 

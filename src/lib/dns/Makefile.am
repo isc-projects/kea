@@ -1,6 +1,7 @@
 SUBDIRS = . tests
 
-AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/ext
+AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
+AM_CPPFLAGS += -I$(top_srcdir)/ext
 if GCC_WERROR_OK
 AM_CPPFLAGS += -Werror
 endif
@@ -8,16 +9,63 @@ endif
 CLEANFILES = *.gcno *.gcda
 CLEANFILES += rrclass.h rrtype.h rrparamregistry.cc rdataclass.h rdataclass.cc
 
+EXTRA_DIST = rrclass-placeholder.h
+EXTRA_DIST += rrparamregistry-placeholder.cc
+EXTRA_DIST += rrtype-placeholder.h
+
+# TODO: double-check that this is the only way
+# NOTE: when an rdata file is added, please also add to this list:
+EXTRA_DIST += rdata/in_1/aaaa_28.cc
+EXTRA_DIST += rdata/in_1/aaaa_28.h
+EXTRA_DIST += rdata/in_1/a_1.cc
+EXTRA_DIST += rdata/in_1/a_1.h
+EXTRA_DIST += rdata/ch_3/a_1.cc
+EXTRA_DIST += rdata/ch_3/a_1.h
+EXTRA_DIST += rdata/generic/mx_15.h
+EXTRA_DIST += rdata/generic/rrsig_46.cc
+EXTRA_DIST += rdata/generic/dname_39.cc
+EXTRA_DIST += rdata/generic/rrsig_46.h
+EXTRA_DIST += rdata/generic/dname_39.h
+EXTRA_DIST += rdata/generic/ns_2.cc
+EXTRA_DIST += rdata/generic/nsec_47.cc
+EXTRA_DIST += rdata/generic/ns_2.h
+EXTRA_DIST += rdata/generic/nsec_47.h
+EXTRA_DIST += rdata/generic/opt_41.cc
+EXTRA_DIST += rdata/generic/soa_6.cc
+EXTRA_DIST += rdata/generic/cname_5.cc
+EXTRA_DIST += rdata/generic/dnskey_48.cc
+EXTRA_DIST += rdata/generic/opt_41.h
+EXTRA_DIST += rdata/generic/soa_6.h
+EXTRA_DIST += rdata/generic/cname_5.h
+EXTRA_DIST += rdata/generic/dnskey_48.h
+EXTRA_DIST += rdata/generic/ds_43.cc
+EXTRA_DIST += rdata/generic/ds_43.h
+EXTRA_DIST += rdata/generic/txt_16.cc
+EXTRA_DIST += rdata/generic/txt_16.h
+EXTRA_DIST += rdata/generic/mx_15.cc
+EXTRA_DIST += rdata/generic/nsec3param_51.h
+EXTRA_DIST += rdata/generic/nsec3param_51.cc
+EXTRA_DIST += rdata/generic/nsec3_50.cc
+EXTRA_DIST += rdata/generic/nsec3_50.h
+EXTRA_DIST += rdata/generic/ptr_12.cc
+EXTRA_DIST += rdata/generic/ptr_12.h
+EXTRA_DIST += rdata/hs_4/a_1.cc
+EXTRA_DIST += rdata/hs_4/a_1.h
+#EXTRA_DIST += rdata/template.cc
+#EXTRA_DIST += rdata/template.h
+
 # auto-generate by gen-rdatacode.py:
 BUILT_SOURCES = rrclass.h rrtype.h rrparamregistry.cc
+#TODO: check this###BUILT_SOURCES = rdataclass.h rdataclass.cc
 
 lib_LTLIBRARIES = libdns.la
 libdns_la_SOURCES = buffer.h name.cc name.h messagerenderer.h messagerenderer.cc
 libdns_la_SOURCES += exceptions.h exceptions.cc
-libdns_la_SOURCES += rrparamregistry.h rrparamregistry.cc
-libdns_la_SOURCES += rrclass.h rrclass.cc rrtype.h rrtype.cc rrttl.h rrttl.cc
+libdns_la_SOURCES += rrparamregistry.h
+libdns_la_SOURCES += rrclass.cc
+libdns_la_SOURCES += rrtype.cc
+libdns_la_SOURCES += rrttl.h rrttl.cc
 libdns_la_SOURCES += rdata.h rdata.cc
-libdns_la_SOURCES += rdataclass.h rdataclass.cc
 libdns_la_SOURCES += rrset.h rrset.cc
 libdns_la_SOURCES += rrsetlist.h rrsetlist.cc
 libdns_la_SOURCES += question.h question.cc
@@ -28,6 +76,9 @@ libdns_la_SOURCES += sha1.h sha1.cc
 libdns_la_SOURCES += tsig.h tsig.cc
 libdns_la_SOURCES += dnssectime.h dnssectime.cc
 libdns_la_SOURCES += hex.h hex.cc
+
+nodist_libdns_la_SOURCES = rrparamregistry.cc
+nodist_libdns_la_SOURCES += rdataclass.cc
 
 rrclass.h: rrclass-placeholder.h
 rrtype.h: rrtype-placeholder.h
