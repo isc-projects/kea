@@ -686,7 +686,7 @@ TEST_F(DataSrcTest, NSECZonecutOfNonsecureZone) {
 }
 #endif
 
-#if 0
+#if 0                           // currently fails
 TEST_F(DataSrcTest, RootDSQuery) {
     createAndProcessQuery(test_source, msg, Name("."),
                           RRClass::IN(), RRType::DS());
