@@ -482,7 +482,9 @@ Sqlite3DataSrc::Sqlite3DataSrc() :
 }
 
 Sqlite3DataSrc::~Sqlite3DataSrc() {
-    close();
+    if (db != NULL) {
+        close();
+    }
 }
 
 DataSrc::Result
@@ -688,7 +690,7 @@ Sqlite3DataSrc::findReferral(const Name& qname,
 void
 Sqlite3DataSrc::open(const string& name) {
     if (db != NULL) {
-        isc_throw(Sqlite3Error, "Duplicate Sqlite3 open with " << name);
+        isc_throw(DataSourceError, "Duplicate Sqlite3 open with " << name);
     }
     if (sqlite3_open(name.c_str(), &db) != 0) {
         // sqlite3_close() must be called even when open fails.
@@ -702,7 +704,8 @@ Sqlite3DataSrc::open(const string& name) {
 DataSrc::Result
 Sqlite3DataSrc::close(void) {
     if (db == NULL) {
-        return (SUCCESS);
+        isc_throw(DataSourceError,
+                  "Sqlite3 data source is being closed before open");
     }
 
     if (q_zone != NULL) {

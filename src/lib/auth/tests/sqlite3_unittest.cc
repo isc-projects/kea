@@ -367,7 +367,13 @@ TEST_F(Sqlite3DataSourceTest, openFail) {
 
 TEST_F(Sqlite3DataSourceTest, doubleOpen) {
     // An attempt of duplicate open should trigger an exception.
-    EXPECT_THROW(data_source.init(SQLITE_DBFILE_EXAMPLE), Sqlite3Error);
+    EXPECT_THROW(data_source.init(SQLITE_DBFILE_EXAMPLE), DataSourceError);
+}
+
+TEST_F(Sqlite3DataSourceTest, doubleClose) {
+    // An attempt of duplicate close should trigger an exception.
+    EXPECT_EQ(DataSrc::SUCCESS, data_source.close());
+    EXPECT_THROW(data_source.close(), DataSourceError);
 }
 
 TEST_F(Sqlite3DataSourceTest, findClosestEnclosure) {
