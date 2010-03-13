@@ -49,7 +49,8 @@ Sqlite3DataSrc::prepare(const char* statement) {
     sqlite3_stmt* prepared = NULL;
 
     if (sqlite3_prepare_v2(db, statement, -1, &prepared, NULL) != SQLITE_OK) { 
-        throw("could not prepare");
+        isc_throw(Sqlite3Error, "could not prepare sqlite3 statement: " <<
+                  statement);
     }
     return (prepared);
 }
@@ -84,11 +85,12 @@ Sqlite3DataSrc::hasExactZone(const char* name) const {
     sqlite3_reset(q_zone);
     rc = sqlite3_bind_text(q_zone, 1, name, -1, SQLITE_STATIC);
     if (rc != SQLITE_OK) {
-        throw("Could not bind");
+        isc_throw(Sqlite3Error, "Could not bind " << name <<
+                  " to SQL statement (zone)");
     }
 
     rc = sqlite3_step(q_zone);
-    int i = (rc == SQLITE_ROW) ? sqlite3_column_int(q_zone, 0) : -1; 
+    const int i = (rc == SQLITE_ROW) ? sqlite3_column_int(q_zone, 0) : -1; 
     sqlite3_reset(q_zone);
     return (i);
 }
@@ -216,25 +218,27 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
     int rc;
     rc = sqlite3_bind_int(query, 1, zone_id);
     if (rc != SQLITE_OK) {
-        throw("Could not bind 1 (query)");
+        isc_throw(Sqlite3Error, "Could not bind zone ID " << zone_id <<
+                  " to SQL statement (query)");
     }
     const string s_name = name.toText();
     rc = sqlite3_bind_text(query, 2, s_name.c_str(), -1, SQLITE_STATIC);
     if (rc != SQLITE_OK) {
-        throw("Could not bind 2 (query)");
+        isc_throw(Sqlite3Error, "Could not bind name " << s_name <<
+                  " to SQL statement (query)");
     }
 
     if (query == q_record) {
         rc = sqlite3_bind_text(query, 3, rdtype.toText().c_str(), -1,
                                SQLITE_STATIC);
         if (rc != SQLITE_OK) {
-            throw("Could not bind 3 (query)");
+            isc_throw(Sqlite3Error, "Could not bind RR type " <<
+                      rdtype.toText() << " to SQL statement (query)");
         }
     }
 
-    int rows = importSqlite3Rows(query, name, getClass(), rdtype, false, target,
-                                 flags);
-
+    const int rows = importSqlite3Rows(query, name, getClass(), rdtype, false,
+                                       target, flags);
     sqlite3_reset(query);
     if (rows > 0) {
         return (rows);
@@ -250,13 +254,15 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
 
     rc = sqlite3_bind_int(q_count, 1, zone_id);
     if (rc != SQLITE_OK) {
-        throw("Could not bind 1 (count)");
+        isc_throw(Sqlite3Error, "Could not bind zone ID " << zone_id <<
+                  " to SQL statement (qcount)");
     }
 
     rc = sqlite3_bind_text(q_count, 2, name.reverse().toText().c_str(), -1,
                            SQLITE_STATIC);
     if (rc != SQLITE_OK) {
-        throw("Could not bind 2 (count)");
+        isc_throw(Sqlite3Error, "Could not bind name " << name.reverse() <<
+                  " to SQL statement (qcount)");
     }
 
     rc = sqlite3_step(q_count);
@@ -300,7 +306,7 @@ void
 Sqlite3DataSrc::loadVersion(void) {
     sqlite3_stmt* prepared = prepare("SELECT version FROM schema_version");
     if (sqlite3_step(prepared) != SQLITE_ROW) {
-        throw("failed to find a row in schema_version table");
+        isc_throw(Sqlite3Error, "Failed to find a row in schema_version table");
     }
     database_version = sqlite3_column_int(prepared, 0);
     release(prepared);
@@ -309,7 +315,7 @@ Sqlite3DataSrc::loadVersion(void) {
 void
 Sqlite3DataSrc::setupPreparedStatements(void) {
 
-    const char* q_zone_str = "SELECT id FROM zones WHERE name=?1";
+    const char* const q_zone_str = "SELECT id FROM zones WHERE name=?1";
     try {
         q_zone = prepare(q_zone_str);
     } catch (const char* e) {
@@ -409,9 +415,10 @@ Sqlite3DataSrc::setupPreparedStatements(void) {
 }
 
 void
-Sqlite3DataSrc::execSetupQuery(const char* query) {
-    if (sqlite3_exec(db, query, NULL, NULL, NULL) != SQLITE_OK) { 
-        throw(query);
+Sqlite3DataSrc::execSetupQuery(const char* const query) {
+    if (sqlite3_exec(db, query, NULL, NULL, NULL) != SQLITE_OK) {
+        isc_throw(Sqlite3Error, "Failed to find a row in schema_version table: "
+                  << query);
     }
 }
 
@@ -509,10 +516,8 @@ Sqlite3DataSrc::findPreviousName(const Name& qname,
                                  Name& target,
                                  const Name* zonename) const
 {
-    int zone_id = (zonename == NULL) ?
-        findClosest(qname, NULL) :
-        findClosest(*zonename, NULL);
-
+    const int zone_id = (zonename == NULL) ?
+        findClosest(qname, NULL) : findClosest(*zonename, NULL);
     if (zone_id < 0) {
         return (ERROR);
     }
@@ -522,12 +527,14 @@ Sqlite3DataSrc::findPreviousName(const Name& qname,
 
     int rc = sqlite3_bind_int(q_previous, 1, zone_id);
     if (rc != SQLITE_OK) {
-        throw ("Could not bind 1 (previous)");
+        isc_throw(Sqlite3Error, "Could not bind zone ID " << zone_id <<
+                  " to SQL statement (qprevious)");        
     }
     rc = sqlite3_bind_text(q_previous, 2, qname.reverse().toText().c_str(),
                            -1, SQLITE_STATIC);
     if (rc != SQLITE_OK) {
-        throw ("Could not bind 2 (previous)");
+        isc_throw(Sqlite3Error, "Could not bind name " << qname <<
+                  " to SQL statement (qprevious)");
     }
   
     rc = sqlite3_step(q_previous);
@@ -547,7 +554,7 @@ Sqlite3DataSrc::findCoveringNSEC3(const Name& zonename,
                                   string& hashstr,
                                   RRsetList& target) const
 {
-    int zone_id = findClosest(zonename, NULL);
+    const int zone_id = findClosest(zonename, NULL);
     if (zone_id < 0) {
         return (ERROR);
     }
@@ -557,12 +564,14 @@ Sqlite3DataSrc::findCoveringNSEC3(const Name& zonename,
 
     int rc = sqlite3_bind_int(q_prevnsec3, 1, zone_id);
     if (rc != SQLITE_OK) {
-        throw ("Could not bind 1 (previous NSEC3)");
+        isc_throw(Sqlite3Error, "Could not bind zone ID " << zone_id <<
+                  " to SQL statement (previous NSEC3)");        
     }
 
     rc = sqlite3_bind_text(q_prevnsec3, 2, hashstr.c_str(), -1, SQLITE_STATIC);
     if (rc != SQLITE_OK) {
-        throw ("Could not bind 2 (previous NSEC3)");
+        isc_throw(Sqlite3Error, "Could not bind hash " << hashstr <<
+                  " to SQL statement (previous NSEC3)");
     }
 
     rc = sqlite3_step(q_prevnsec3);
@@ -577,7 +586,8 @@ Sqlite3DataSrc::findCoveringNSEC3(const Name& zonename,
         sqlite3_reset(q_prevnsec3);
         rc = sqlite3_bind_text(q_prevnsec3, 2, "w", -1, SQLITE_STATIC);
         if (rc != SQLITE_OK) {
-            throw ("Could not bind 2 (last NSEC3)");
+            isc_throw(Sqlite3Error, "Could not bind \"w\""
+                      " to SQL statement (previous NSEC3)");
         }
 
         rc = sqlite3_step(q_prevnsec3);
@@ -593,12 +603,14 @@ Sqlite3DataSrc::findCoveringNSEC3(const Name& zonename,
 
     rc = sqlite3_bind_int(q_nsec3, 1, zone_id);
     if (rc != SQLITE_OK) {
-        throw ("Could not bind 1 (NSEC3)");
+        isc_throw(Sqlite3Error, "Could not bind zone ID " << zone_id <<
+                  " to SQL statement (NSEC3)");        
     }
 
     rc = sqlite3_bind_text(q_nsec3, 2, hash, -1, SQLITE_STATIC);
     if (rc != SQLITE_OK) {
-        throw ("Could not bind 2 (NSEC3)");
+        isc_throw(Sqlite3Error, "Could not bind hash " << hash <<
+                  " to SQL statement (NSEC3)");
     }
 
     DataSrc::Result result = SUCCESS;
