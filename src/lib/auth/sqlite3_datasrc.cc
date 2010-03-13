@@ -109,14 +109,6 @@ const char* const q_prevnsec3_str = "SELECT hash FROM nsec3 "
 }
 
 //
-//  Release memory associated with a prepared query.
-//
-void
-Sqlite3DataSrc::release(sqlite3_stmt* prepared) {
-    sqlite3_finalize(prepared);
-}
-
-//
 //  Find the exact zone match.  Return -1 if not found, or the zone's
 //  ID if found.  This will always be >= 0 if found.
 //
