@@ -21,8 +21,6 @@
 
 #include <exceptions/exceptions.h>
 
-#include <sqlite3.h>
-
 #include "data_source.h"
 
 namespace isc {
@@ -37,6 +35,7 @@ class RRsetList;
 namespace auth {
 
 class Query;
+struct Sqlite3Parameters;
 
 class Sqlite3Error : public Exception {
 public:
@@ -108,34 +107,15 @@ private:
     };
 
     void open(const std::string& name);
-    sqlite3_stmt* prepare(const char *statement);
     void release(sqlite3_stmt* prepared);
-    int getVersion(void);
     int hasExactZone(const char *name) const;
     int findRecords(const isc::dns::Name& name, const isc::dns::RRType& rdtype,
                     isc::dns::RRsetList& target, const isc::dns::Name* zonename,
                     const Mode mode, uint32_t& flags) const;
     int findClosest(const isc::dns::Name& name, unsigned int* position) const;
-    void loadVersion(void);
-    void setupPreparedStatements(void);
-    void execSetupQuery(const char *query);
-    void checkAndSetupSchema(void);
 
-    sqlite3 *db;
-    int database_version;
-    
-    //
-    // Prepared statements
-    //
-    sqlite3_stmt *q_zone;
-    sqlite3_stmt *q_record;
-    sqlite3_stmt *q_addrs;
-    sqlite3_stmt *q_referral;
-    sqlite3_stmt *q_any;
-    sqlite3_stmt *q_count;
-    sqlite3_stmt *q_previous;
-    sqlite3_stmt *q_nsec3;
-    sqlite3_stmt *q_prevnsec3;
+private:
+    Sqlite3Parameters* dbparameters;
 };
 
 }
