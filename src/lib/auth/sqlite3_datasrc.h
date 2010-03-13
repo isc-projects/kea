@@ -107,7 +107,6 @@ private:
     };
 
     void open(const std::string& name);
-    void release(sqlite3_stmt* prepared);
     int hasExactZone(const char *name) const;
     int findRecords(const isc::dns::Name& name, const isc::dns::RRType& rdtype,
                     isc::dns::RRsetList& target, const isc::dns::Name* zonename,
