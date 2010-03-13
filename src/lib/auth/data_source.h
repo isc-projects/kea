@@ -25,6 +25,8 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <exceptions/exceptions.h>
+
 #include <dns/name.h>
 #include <dns/rrclass.h>
 #include <cc/data.h>
@@ -46,6 +48,15 @@ class Query;
 class DataSrc;
 typedef boost::shared_ptr<DataSrc> DataSrcPtr;
 typedef boost::shared_ptr<const DataSrc> ConstDataSrcPtr;
+
+/// This exception represents Backend-independent errors relating to
+/// data source operations.
+class DataSourceError : public Exception {
+public:
+    DataSourceError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 
 class AbstractDataSrc {
     ///
