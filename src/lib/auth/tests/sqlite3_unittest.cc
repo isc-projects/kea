@@ -382,7 +382,6 @@ TEST_F(Sqlite3DataSourceTest, doubleClose) {
     EXPECT_THROW(data_source.close(), DataSourceError);
 }
 
-#if 0                           // currently fails
 TEST_F(Sqlite3DataSourceTest, openBrokenDB) {
     EXPECT_EQ(DataSrc::SUCCESS, data_source.close());
     // The database exists but is broken.  An exception will be thrown 
@@ -392,7 +391,6 @@ TEST_F(Sqlite3DataSourceTest, openBrokenDB) {
     // in the closed state.
     EXPECT_EQ(DataSrc::SUCCESS, data_source.init(SQLITE_DBFILE_EXAMPLE));
 }
-#endif
 
 // This test only confirms that on-the-fly schema creation works.
 TEST_F(Sqlite3DataSourceTest, memoryDB) {

@@ -17,6 +17,8 @@
 #include <string>
 #include <sstream>
 
+#include <sqlite3.h>
+
 #include "sqlite3_datasrc.h"
 
 #include <dns/rrttl.h>
@@ -25,8 +27,6 @@
 #include <dns/rrset.h>
 #include <dns/rrsetlist.h>
 
-#include <iostream>
-
 using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
@@ -34,25 +34,78 @@ using namespace isc::dns::rdata;
 namespace isc {
 namespace auth {
 
+struct Sqlite3Parameters {
+    Sqlite3Parameters() :  db_(NULL), version_(-1),
+        q_zone_(NULL), q_record_(NULL), q_addrs_(NULL), q_referral_(NULL),
+        q_any_(NULL), q_count_(NULL), q_previous_(NULL), q_nsec3_(NULL),
+        q_prevnsec3_(NULL)
+    {}
+    sqlite3* db_;
+    int version_;
+    sqlite3_stmt* q_zone_;
+    sqlite3_stmt* q_record_;
+    sqlite3_stmt* q_addrs_;
+    sqlite3_stmt* q_referral_;
+    sqlite3_stmt* q_any_;
+    sqlite3_stmt* q_count_;
+    sqlite3_stmt* q_previous_;
+    sqlite3_stmt* q_nsec3_;
+    sqlite3_stmt* q_prevnsec3_;
+};
+
 namespace {
 // Note: this cannot be std::string to avoid
 // "static initialization order fiasco".
 const char* DEFAULT_DB_FILE = "/tmp/zone.sqlite3";
-}
 
-//
-//  Prepare a statement.  Can call release() or sqlite3_finalize()
-//  directly.
-//
-sqlite3_stmt*
-Sqlite3DataSrc::prepare(const char* statement) {
-    sqlite3_stmt* prepared = NULL;
+const char* const SCHEMA_LIST[] = {
+    "CREATE TABLE schema_version (version INTEGER NOT NULL)",
+    "INSERT INTO schema_version VALUES (1)",
+    "CREATE TABLE zones (id INTEGER PRIMARY KEY, "
+    "name STRING NOT NULL COLLATE NOCASE, "
+    "rdclass STRING NOT NULL COLLATE NOCASE DEFAULT 'IN', "
+    "dnssec BOOLEAN NOT NULL DEFAULT 0)",
+    "CREATE INDEX zones_byname ON zones (name)",
+    "CREATE TABLE records (id INTEGER PRIMARY KEY, "
+    "zone_id INTEGER NOT NULL, name STRING NOT NULL COLLATE NOCASE, "
+    "rname STRING NOT NULL COLLATE NOCASE, ttl INTEGER NOT NULL, "
+    "rdtype STRING NOT NULL COLLATE NOCASE, sigtype STRING COLLATE NOCASE, "
+    "rdata STRING NOT NULL)",
+    "CREATE INDEX records_byname ON records (name)",
+    "CREATE INDEX records_byrname ON records (rname)",
+    "CREATE TABLE nsec3 (id INTEGER PRIMARY KEY, zone_id INTEGER NOT NULL, "
+    "hash STRING NOT NULL COLLATE NOCASE, owner STRING NOT NULL COLLATE NOCASE, "
+    "ttl INTEGER NOT NULL, rdtype STRING NOT NULL COLLATE NOCASE, "
+    "rdata STRING NOT NULL)",
+    "CREATE INDEX nsec3_byhash ON nsec3 (hash)",
+    NULL
+};
 
-    if (sqlite3_prepare_v2(db, statement, -1, &prepared, NULL) != SQLITE_OK) { 
-        isc_throw(Sqlite3Error, "could not prepare sqlite3 statement: " <<
-                  statement);
-    }
-    return (prepared);
+const char* const q_zone_str = "SELECT id FROM zones WHERE name=?1";
+const char* const q_record_str = "SELECT rdtype, ttl, sigtype, rdata "
+    "FROM records WHERE zone_id=?1 AND name=?2 AND "
+    "((rdtype=?3 OR sigtype=?3) OR "
+    "(rdtype='CNAME' OR sigtype='CNAME') OR "
+    "(rdtype='NS' OR sigtype='NS'))";
+const char* const q_addrs_str = "SELECT rdtype, ttl, sigtype, rdata "
+    "FROM records WHERE zone_id=?1 AND name=?2 AND "
+    "(rdtype='A' OR sigtype='A' OR rdtype='AAAA' OR sigtype='AAAA')";
+const char* const q_referral_str = "SELECT rdtype, ttl, sigtype, rdata FROM "
+    "records WHERE zone_id=?1 AND name=?2 AND"
+    "(rdtype='NS' OR sigtype='NS' OR rdtype='DS' OR sigtype='DS' OR "
+    "rdtype='DNAME' OR sigtype='DNAME')";
+const char* const q_any_str = "SELECT rdtype, ttl, sigtype, rdata "
+    "FROM records WHERE zone_id=?1 AND name=?2";
+const char* const q_count_str = "SELECT COUNT(*) FROM records "
+    "WHERE zone_id=?1 AND rname LIKE (?2 || '%');";
+const char* const q_previous_str = "SELECT name FROM records "
+    "WHERE zone_id=?1 AND rdtype = 'NSEC' AND "
+    "rname < $2 ORDER BY rname DESC LIMIT 1";
+const char* const q_nsec3_str = "SELECT rdtype, ttl, rdata FROM nsec3 "
+    "WHERE zone_id = ?1 AND hash = $2";
+const char* const q_prevnsec3_str = "SELECT hash FROM nsec3 "
+    "WHERE zone_id = ?1 AND hash <= $2 ORDER BY hash DESC LIMIT 1";
+
 }
 
 //
@@ -64,17 +117,6 @@ Sqlite3DataSrc::release(sqlite3_stmt* prepared) {
 }
 
 //
-//  Get the database schema version.
-//
-int
-Sqlite3DataSrc::getVersion(void) {
-    if (database_version == -1) {
-        loadVersion();
-    }
-    return (database_version);
-}
-
-//
 //  Find the exact zone match.  Return -1 if not found, or the zone's
 //  ID if found.  This will always be >= 0 if found.
 //
@@ -82,16 +124,17 @@ int
 Sqlite3DataSrc::hasExactZone(const char* name) const {
     int rc;
 
-    sqlite3_reset(q_zone);
-    rc = sqlite3_bind_text(q_zone, 1, name, -1, SQLITE_STATIC);
+    sqlite3_reset(dbparameters->q_zone_);
+    rc = sqlite3_bind_text(dbparameters->q_zone_, 1, name, -1, SQLITE_STATIC);
     if (rc != SQLITE_OK) {
         isc_throw(Sqlite3Error, "Could not bind " << name <<
                   " to SQL statement (zone)");
     }
 
-    rc = sqlite3_step(q_zone);
-    const int i = (rc == SQLITE_ROW) ? sqlite3_column_int(q_zone, 0) : -1; 
-    sqlite3_reset(q_zone);
+    rc = sqlite3_step(dbparameters->q_zone_);
+    const int i = (rc == SQLITE_ROW) ?
+        sqlite3_column_int(dbparameters->q_zone_, 0) : -1; 
+    sqlite3_reset(dbparameters->q_zone_);
     return (i);
 }
 
@@ -200,16 +243,16 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
     sqlite3_stmt* query;
     switch (mode) {
     case ADDRESS:
-        query = q_addrs;
+        query = dbparameters->q_addrs_;
         break;
     case DELEGATION:
-        query = q_referral;
+        query = dbparameters->q_referral_;
         break;
     default:
         if (rdtype == RRType::ANY()) {
-            query = q_any;
+            query = dbparameters->q_any_;
         } else {
-            query = q_record;
+            query = dbparameters->q_record_;
         }
         break;
     }
@@ -230,7 +273,7 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
                   " to SQL statement (query)");
     }
 
-    if (query == q_record) {
+    if (query == dbparameters->q_record_) {
         rc = sqlite3_bind_text(query, 3, rdtype.toText().c_str(), -1,
                                SQLITE_STATIC);
         if (rc != SQLITE_OK) {
@@ -251,33 +294,33 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
     // any RRs with that name to determine whether this is NXDOMAIN or
     // NXRRSET
     //
-    sqlite3_reset(q_count);
-    sqlite3_clear_bindings(q_count);
-
-    rc = sqlite3_bind_int(q_count, 1, zone_id);
+    sqlite3_reset(dbparameters->q_count_);
+    sqlite3_clear_bindings(dbparameters->q_count_);
+    
+    rc = sqlite3_bind_int(dbparameters->q_count_, 1, zone_id);
     if (rc != SQLITE_OK) {
         isc_throw(Sqlite3Error, "Could not bind zone ID " << zone_id <<
                   " to SQL statement (qcount)");
     }
 
-    rc = sqlite3_bind_text(q_count, 2, name.reverse().toText().c_str(), -1,
-                           SQLITE_STATIC);
+    rc = sqlite3_bind_text(dbparameters->q_count_, 2,
+                           name.reverse().toText().c_str(), -1, SQLITE_STATIC);
     if (rc != SQLITE_OK) {
         isc_throw(Sqlite3Error, "Could not bind name " << name.reverse() <<
                   " to SQL statement (qcount)");
     }
 
-    rc = sqlite3_step(q_count);
+    rc = sqlite3_step(dbparameters->q_count_);
     if (rc == SQLITE_ROW) {
-        if (sqlite3_column_int(q_count, 0) != 0) {
+        if (sqlite3_column_int(dbparameters->q_count_, 0) != 0) {
             flags |= TYPE_NOT_FOUND;
-            sqlite3_reset(q_count);
+            sqlite3_reset(dbparameters->q_count_);
             return (0);
         }
     }
 
     flags |= NAME_NOT_FOUND;
-    sqlite3_reset(q_count);
+    sqlite3_reset(dbparameters->q_count_);
     return (0);
 }
 
@@ -301,200 +344,6 @@ Sqlite3DataSrc::findClosest(const Name& name, unsigned int* position) const {
     }
 
     return (-1);
-}
-
-
-void
-Sqlite3DataSrc::loadVersion(void) {
-    sqlite3_stmt* prepared = prepare("SELECT version FROM schema_version");
-    if (sqlite3_step(prepared) != SQLITE_ROW) {
-        isc_throw(Sqlite3Error, "Failed to find a row in schema_version table");
-    }
-    database_version = sqlite3_column_int(prepared, 0);
-    release(prepared);
-}
-
-void
-Sqlite3DataSrc::setupPreparedStatements(void) {
-
-    const char* const q_zone_str = "SELECT id FROM zones WHERE name=?1";
-    try {
-        q_zone = prepare(q_zone_str);
-    } catch (const char* e) {
-        cout << e << endl << q_zone_str << endl;
-        cout << sqlite3_errmsg(db) << endl;
-        throw(e);
-    }
-
-    const char* q_record_str = "SELECT rdtype, ttl, sigtype, rdata "
-                               "FROM records WHERE zone_id=?1 AND name=?2 AND "
-                               "((rdtype=?3 OR sigtype=?3) OR "
-                               "(rdtype='CNAME' OR sigtype='CNAME') OR "
-                               "(rdtype='NS' OR sigtype='NS'))";
-    try {
-        q_record = prepare(q_record_str);
-    } catch (const char* e) {
-        cout << e << endl << q_record_str << endl;
-        cout << sqlite3_errmsg(db) << endl;
-        throw(e);
-    }
-
-    const char* q_addrs_str = "SELECT rdtype, ttl, sigtype, rdata "
-                               "FROM records WHERE zone_id=?1 AND name=?2 AND "
-                               "(rdtype='A' OR sigtype='A' OR "
-                               "rdtype='AAAA' OR sigtype='AAAA')";
-    try {
-        q_addrs = prepare(q_addrs_str);
-    } catch (const char* e) {
-        cout << e << endl << q_addrs_str << endl;
-        cout << sqlite3_errmsg(db) << endl;
-        throw(e);
-    }
-    const char* q_referral_str = "SELECT rdtype, ttl, sigtype, rdata FROM "
-                                 "records WHERE zone_id=?1 AND name=?2 AND"
-                                 "(rdtype='NS' OR sigtype='NS' OR "
-                                 "rdtype='DS' OR sigtype='DS' OR "
-                                 "rdtype='DNAME' OR sigtype='DNAME')";
-    try {
-        q_referral = prepare(q_referral_str);
-    } catch (const char* e) {
-        cout << e << endl << q_referral_str << endl;
-        cout << sqlite3_errmsg(db) << endl;
-        throw(e);
-    }
-    const char* q_any_str = "SELECT rdtype, ttl, sigtype, rdata "
-                             "FROM records WHERE zone_id=?1 AND name=?2";
-    try {
-        q_any = prepare(q_any_str);
-    } catch (const char* e) {
-        cout << e << endl << q_any_str << endl;
-        cout << sqlite3_errmsg(db) << endl;
-        throw(e);
-    }
-
-    const char* q_count_str = "SELECT COUNT(*) FROM records "
-                              "WHERE zone_id=?1 AND "
-                              "rname LIKE (?2 || '%');";
-    try {
-        q_count = prepare(q_count_str);
-    } catch (const char* e) {
-        cout << e << endl << q_count_str << endl;
-        cout << sqlite3_errmsg(db) << endl;
-        throw(e);
-    }
-
-    const char* q_previous_str = "SELECT name FROM records "
-                                 "WHERE zone_id=?1 AND rdtype = 'NSEC' AND "
-                                 "rname < $2 ORDER BY rname DESC LIMIT 1";
-    try {
-        q_previous = prepare(q_previous_str);
-    } catch (const char* e) {
-        cout << e << endl << q_previous_str << endl;
-        cout << sqlite3_errmsg(db) << endl;
-        throw(e);
-    }
-
-    const char* q_nsec3_str = "SELECT rdtype, ttl, rdata FROM nsec3 "
-                              "WHERE zone_id = ?1 AND hash = $2";
-    try {
-        q_nsec3 = prepare(q_nsec3_str);
-    } catch (const char* e) {
-        cout << e << endl << q_nsec3_str << endl;
-        cout << sqlite3_errmsg(db) << endl;
-        throw(e);
-    }
-
-    const char* q_prevnsec3_str = "SELECT hash FROM nsec3 "
-                                  "WHERE zone_id = ?1 AND hash <= $2 "
-                                  "ORDER BY hash DESC LIMIT 1";
-    try {
-        q_prevnsec3 = prepare(q_prevnsec3_str);
-    } catch (const char* e) {
-        cout << e << endl << q_prevnsec3_str << endl;
-        cout << sqlite3_errmsg(db) << endl;
-        throw(e);
-    }
-}
-
-void
-Sqlite3DataSrc::execSetupQuery(const char* const query) {
-    if (sqlite3_exec(db, query, NULL, NULL, NULL) != SQLITE_OK) {
-        isc_throw(Sqlite3Error, "Failed to find a row in schema_version table: "
-                  << query);
-    }
-}
-
-void
-Sqlite3DataSrc::checkAndSetupSchema(void) {
-    try {
-        loadVersion();
-        setupPreparedStatements();
-        // cout << "Loaded existing schema" << endl;
-    } catch(...) {
-        execSetupQuery("CREATE TABLE schema_version ("
-                          "version INTEGER NOT NULL)");
-        execSetupQuery("INSERT INTO schema_version VALUES (1)");
-        execSetupQuery("CREATE TABLE zones ("
-                         "id INTEGER PRIMARY KEY, "
-                         "name STRING NOT NULL COLLATE NOCASE, "
-                         "rdclass STRING NOT NULL COLLATE NOCASE DEFAULT 'IN', "
-                         "dnssec BOOLEAN NOT NULL DEFAULT 0)");
-        execSetupQuery("CREATE INDEX zones_byname ON zones (name)");
-        execSetupQuery("CREATE TABLE records ("
-                         "id INTEGER PRIMARY KEY, "
-                         "zone_id INTEGER NOT NULL, "
-                         "name STRING NOT NULL COLLATE NOCASE, "
-                         "rname STRING NOT NULL COLLATE NOCASE, "
-                         "ttl INTEGER NOT NULL, "
-                         "rdtype STRING NOT NULL COLLATE NOCASE, "
-                         "sigtype STRING COLLATE NOCASE, "
-                         "rdata STRING NOT NULL)");
-        execSetupQuery("CREATE INDEX records_byname ON records (name)");
-        execSetupQuery("CREATE INDEX records_byrname ON records (rname)");
-        execSetupQuery("CREATE TABLE nsec3 ("
-                         "id INTEGER PRIMARY KEY, "
-                         "zone_id INTEGER NOT NULL, "
-                         "hash STRING NOT NULL COLLATE NOCASE, "
-                         "owner STRING NOT NULL COLLATE NOCASE, "
-                         "ttl INTEGER NOT NULL, "
-                         "rdtype STRING NOT NULL COLLATE NOCASE, "
-                         "rdata STRING NOT NULL)");
-        execSetupQuery("CREATE INDEX nsec3_byhash ON nsec3 (hash)");
-
-        setupPreparedStatements();
-        // cout << "Created new file and schema" << endl;
-    }
-}
-
-Sqlite3DataSrc::Sqlite3DataSrc() :
-    db(NULL)
-{
-    database_version = -1;
-    q_zone = NULL;
-    q_record = NULL;
-    q_addrs = NULL;
-    q_referral = NULL;
-    q_any = NULL;
-    q_count = NULL;
-    q_previous = NULL;
-    q_nsec3 = NULL;
-    q_prevnsec3 = NULL;
-}
-
-Sqlite3DataSrc::~Sqlite3DataSrc() {
-    if (db != NULL) {
-        close();
-    }
-}
-
-DataSrc::Result
-Sqlite3DataSrc::init(const isc::data::ElementPtr config) {
-    if (config && config->contains("database_file")) {
-        open(config->get("database_file")->stringValue());
-    } else {
-        open(DEFAULT_DB_FILE);
-    }
-    return (SUCCESS);
 }
 
 void
@@ -526,30 +375,31 @@ Sqlite3DataSrc::findPreviousName(const Name& qname,
         return (ERROR);
     }
     
-    sqlite3_reset(q_previous);
-    sqlite3_clear_bindings(q_previous);
+    sqlite3_reset(dbparameters->q_previous_);
+    sqlite3_clear_bindings(dbparameters->q_previous_);
 
-    int rc = sqlite3_bind_int(q_previous, 1, zone_id);
+    int rc = sqlite3_bind_int(dbparameters->q_previous_, 1, zone_id);
     if (rc != SQLITE_OK) {
         isc_throw(Sqlite3Error, "Could not bind zone ID " << zone_id <<
                   " to SQL statement (qprevious)");        
     }
-    rc = sqlite3_bind_text(q_previous, 2, qname.reverse().toText().c_str(),
-                           -1, SQLITE_STATIC);
+    rc = sqlite3_bind_text(dbparameters->q_previous_, 2,
+                           qname.reverse().toText().c_str(), -1, SQLITE_STATIC);
     if (rc != SQLITE_OK) {
         isc_throw(Sqlite3Error, "Could not bind name " << qname <<
                   " to SQL statement (qprevious)");
     }
   
-    rc = sqlite3_step(q_previous);
+    rc = sqlite3_step(dbparameters->q_previous_);
     if (rc != SQLITE_ROW) {
-        sqlite3_reset(q_previous);
+        sqlite3_reset(dbparameters->q_previous_);
         return (ERROR);
     }
 
     // XXX: bad cast.  we should revisit this.
-    target = Name((const char*)sqlite3_column_text(q_previous, 0));
-    sqlite3_reset(q_previous);
+    target = Name((const char*)sqlite3_column_text(dbparameters->q_previous_,
+                                                   0));
+    sqlite3_reset(dbparameters->q_previous_);
     return (SUCCESS);
 }
 
@@ -563,55 +413,57 @@ Sqlite3DataSrc::findCoveringNSEC3(const Name& zonename,
         return (ERROR);
     }
 
-    sqlite3_reset(q_prevnsec3);
-    sqlite3_clear_bindings(q_prevnsec3);
+    sqlite3_reset(dbparameters->q_prevnsec3_);
+    sqlite3_clear_bindings(dbparameters->q_prevnsec3_);
 
-    int rc = sqlite3_bind_int(q_prevnsec3, 1, zone_id);
+    int rc = sqlite3_bind_int(dbparameters->q_prevnsec3_, 1, zone_id);
     if (rc != SQLITE_OK) {
         isc_throw(Sqlite3Error, "Could not bind zone ID " << zone_id <<
                   " to SQL statement (previous NSEC3)");        
     }
 
-    rc = sqlite3_bind_text(q_prevnsec3, 2, hashstr.c_str(), -1, SQLITE_STATIC);
+    rc = sqlite3_bind_text(dbparameters->q_prevnsec3_, 2, hashstr.c_str(),
+                           -1, SQLITE_STATIC);
     if (rc != SQLITE_OK) {
         isc_throw(Sqlite3Error, "Could not bind hash " << hashstr <<
                   " to SQL statement (previous NSEC3)");
     }
 
-    rc = sqlite3_step(q_prevnsec3);
+    rc = sqlite3_step(dbparameters->q_prevnsec3_);
     const char* hash;
     if (rc == SQLITE_ROW) {
-        hash = (const char*) sqlite3_column_text(q_prevnsec3, 0);
+        hash = (const char*) sqlite3_column_text(dbparameters->q_prevnsec3_, 0);
     } else {
         // We need to find the final NSEC3 in the chain.
         // A valid NSEC3 hash is in base32, which contains no
         // letters higher than V, so a search for the previous 
         // NSEC3 from "w" will always find it.
-        sqlite3_reset(q_prevnsec3);
-        rc = sqlite3_bind_text(q_prevnsec3, 2, "w", -1, SQLITE_STATIC);
+        sqlite3_reset(dbparameters->q_prevnsec3_);
+        rc = sqlite3_bind_text(dbparameters->q_prevnsec3_, 2, "w", -1,
+                               SQLITE_STATIC);
         if (rc != SQLITE_OK) {
             isc_throw(Sqlite3Error, "Could not bind \"w\""
                       " to SQL statement (previous NSEC3)");
         }
 
-        rc = sqlite3_step(q_prevnsec3);
+        rc = sqlite3_step(dbparameters->q_prevnsec3_);
         if (rc != SQLITE_ROW) {
             return (ERROR);
         }
 
-        hash = (const char*) sqlite3_column_text(q_prevnsec3, 0);
+        hash = (const char*) sqlite3_column_text(dbparameters->q_prevnsec3_, 0);
     }
 
-    sqlite3_reset(q_nsec3);
-    sqlite3_clear_bindings(q_nsec3);
+    sqlite3_reset(dbparameters->q_nsec3_);
+    sqlite3_clear_bindings(dbparameters->q_nsec3_);
 
-    rc = sqlite3_bind_int(q_nsec3, 1, zone_id);
+    rc = sqlite3_bind_int(dbparameters->q_nsec3_, 1, zone_id);
     if (rc != SQLITE_OK) {
         isc_throw(Sqlite3Error, "Could not bind zone ID " << zone_id <<
                   " to SQL statement (NSEC3)");        
     }
 
-    rc = sqlite3_bind_text(q_nsec3, 2, hash, -1, SQLITE_STATIC);
+    rc = sqlite3_bind_text(dbparameters->q_nsec3_, 2, hash, -1, SQLITE_STATIC);
     if (rc != SQLITE_OK) {
         isc_throw(Sqlite3Error, "Could not bind hash " << hash <<
                   " to SQL statement (NSEC3)");
@@ -619,13 +471,14 @@ Sqlite3DataSrc::findCoveringNSEC3(const Name& zonename,
 
     DataSrc::Result result = SUCCESS;
     uint32_t flags = 0;
-    if (importSqlite3Rows(q_nsec3, Name(hash).concatenate(zonename),
+    if (importSqlite3Rows(dbparameters->q_nsec3_,
+                          Name(hash).concatenate(zonename),
                           getClass(), RRType::NSEC3(), true, target,
                           flags) == 0 || flags != 0) {
         result = ERROR;
     }
     hashstr = string(hash);
-    sqlite3_reset(q_nsec3);
+    sqlite3_reset(dbparameters->q_nsec3_);
     return (result);
 }
 
@@ -684,78 +537,182 @@ Sqlite3DataSrc::findReferral(const Name& qname,
     findRecords(qname, RRType::ANY(), target, zonename, DELEGATION, flags);
     return (SUCCESS);
 }
+
+Sqlite3DataSrc::Sqlite3DataSrc() :
+    dbparameters(new Sqlite3Parameters)
+{}
+
+Sqlite3DataSrc::~Sqlite3DataSrc() {
+    if (dbparameters->db_ != NULL) {
+        close();
+    }
+    delete dbparameters;
+}
+
+DataSrc::Result
+Sqlite3DataSrc::init(const isc::data::ElementPtr config) {
+    if (config && config->contains("database_file")) {
+        open(config->get("database_file")->stringValue());
+    } else {
+        open(DEFAULT_DB_FILE);
+    }
+    return (SUCCESS);
+}
+
+namespace {
+// This is a helper class to initialize a Sqlite3 DB safely.  An object of
+// this class encapsulates all temporary resources that are necessary for
+// the initialization, and release them in the destructor.  Once everything
+// is properly initialized, the move() method moves the allocated resources
+// to the main object in an exception free manner.  This way, the main code
+// for the initialization can be exception safe, and can provide the strong
+// exception guarantee.
+class Sqlite3Initializer {
+public:
+    ~Sqlite3Initializer() {
+        if (params_.q_zone_ != NULL) {
+            sqlite3_finalize(params_.q_zone_);
+        }
+        if (params_.q_record_ != NULL) {
+            sqlite3_finalize(params_.q_record_);
+        }
+        if (params_.q_addrs_ != NULL) {
+            sqlite3_finalize(params_.q_addrs_);
+        }
+        if (params_.q_referral_ != NULL) {
+            sqlite3_finalize(params_.q_referral_);
+        }
+        if (params_.q_any_ != NULL) {
+            sqlite3_finalize(params_.q_any_);
+        }
+        if (params_.q_count_ != NULL) {
+            sqlite3_finalize(params_.q_count_);
+        }
+        if (params_.q_previous_ != NULL) {
+            sqlite3_finalize(params_.q_previous_);
+        }
+        if (params_.q_nsec3_ != NULL) {
+            sqlite3_finalize(params_.q_nsec3_);
+        }
+        if (params_.q_prevnsec3_ != NULL) {
+            sqlite3_finalize(params_.q_prevnsec3_);
+        }
+        if (params_.db_ != NULL) {
+            sqlite3_close(params_.db_);
+        }
+    }
+    void move(Sqlite3Parameters* dst) {
+        *dst = params_;
+        params_ = Sqlite3Parameters(); // clear everything
+    }
+    Sqlite3Parameters params_;
+};
+
+sqlite3_stmt*
+prepare(sqlite3* const db, const char* const statement) {
+    sqlite3_stmt* prepared = NULL;
+    if (sqlite3_prepare_v2(db, statement, -1, &prepared, NULL) != SQLITE_OK) { 
+        isc_throw(Sqlite3Error, "could not prepare sqlite3 statement: " <<
+                  statement);
+    }
+    return (prepared);
+}
+
+void
+checkAndSetupSchema(Sqlite3Initializer* initializer) {
+    sqlite3* const db = initializer->params_.db_;
+
+    sqlite3_stmt* prepared = NULL;
+    if (sqlite3_prepare_v2(db, "SELECT version FROM schema_version", -1,
+                           &prepared, NULL) == SQLITE_OK &&
+        sqlite3_step(prepared) == SQLITE_ROW) {
+        initializer->params_.version_ = sqlite3_column_int(prepared, 0);
+        sqlite3_finalize(prepared);
+    } else {
+        if (prepared != NULL) {
+            sqlite3_finalize(prepared);
+        }
+        for (int i = 0; SCHEMA_LIST[i] != NULL; ++i) {
+            if (sqlite3_exec(db, SCHEMA_LIST[i], NULL, NULL, NULL) !=
+                SQLITE_OK) {
+                isc_throw(Sqlite3Error,
+                          "Failed to set up schema " << SCHEMA_LIST[i]);
+            }
+        }
+    }
+
+    initializer->params_.q_zone_ = prepare(db, q_zone_str);
+    initializer->params_.q_record_ = prepare(db, q_record_str);
+    initializer->params_.q_addrs_ = prepare(db, q_addrs_str);
+    initializer->params_.q_referral_ = prepare(db, q_referral_str);
+    initializer->params_.q_any_ = prepare(db, q_any_str);
+    initializer->params_.q_count_ = prepare(db, q_count_str);
+    initializer->params_.q_previous_ = prepare(db, q_previous_str);
+    initializer->params_.q_nsec3_ = prepare(db, q_nsec3_str);
+    initializer->params_.q_prevnsec3_ = prepare(db, q_prevnsec3_str);
+}
+}
+
 //
 //  Open the database.
 //
 void
 Sqlite3DataSrc::open(const string& name) {
-    if (db != NULL) {
+    if (dbparameters->db_ != NULL) {
         isc_throw(DataSourceError, "Duplicate Sqlite3 open with " << name);
     }
-    if (sqlite3_open(name.c_str(), &db) != 0) {
-        // sqlite3_close() must be called even when open fails.
-        sqlite3_close(db);
+
+    Sqlite3Initializer initializer;
+
+    if (sqlite3_open(name.c_str(), &initializer.params_.db_) != 0) {
         isc_throw(Sqlite3Error, "Cannot open Sqlite3 database file: " << name);
     }
 
-    checkAndSetupSchema();
+    checkAndSetupSchema(&initializer);
+    initializer.move(dbparameters);
 }
 
+//
+//  Close the database.
+//
 DataSrc::Result
 Sqlite3DataSrc::close(void) {
-    if (db == NULL) {
+    if (dbparameters->db_ == NULL) {
         isc_throw(DataSourceError,
                   "Sqlite3 data source is being closed before open");
     }
 
-    if (q_zone != NULL) {
-        release(q_zone);
-        q_zone = NULL;
-    }
+    // XXX: sqlite3_finalize() could fail.  What should we do in that case?
+    sqlite3_finalize(dbparameters->q_zone_);
+    dbparameters->q_zone_ = NULL;
 
-    if (q_record) {
-        release(q_record);
-        q_record = NULL;
-    }
+    sqlite3_finalize(dbparameters->q_record_);
+    dbparameters->q_record_ = NULL;
 
-    if (q_addrs) {
-        release(q_addrs);
-        q_addrs = NULL;
-    }
+    sqlite3_finalize(dbparameters->q_addrs_);
+    dbparameters->q_addrs_ = NULL;
 
-    if (q_referral) {
-        release(q_referral);
-        q_referral = NULL;
-    }
+    sqlite3_finalize(dbparameters->q_referral_);
+    dbparameters->q_referral_ = NULL;
 
-    if (q_any) {
-        release(q_any);
-        q_any = NULL;
-    }
+    sqlite3_finalize(dbparameters->q_any_);
+    dbparameters->q_any_ = NULL;
 
-    if (q_count) {
-        release(q_count);
-        q_count = NULL;
-    }
+    sqlite3_finalize(dbparameters->q_count_);
+    dbparameters->q_count_ = NULL;
 
-    if (q_previous) {
-        release(q_previous);
-        q_previous = NULL;
-    }
+    sqlite3_finalize(dbparameters->q_previous_);
+    dbparameters->q_previous_ = NULL;
 
-    if (q_prevnsec3) {
-        release(q_prevnsec3);
-        q_prevnsec3 = NULL;
-    }
+    sqlite3_finalize(dbparameters->q_prevnsec3_);
+    dbparameters->q_prevnsec3_ = NULL;
 
-    if (q_nsec3) {
-        release(q_nsec3);
-        q_nsec3 = NULL;
-    }
+    sqlite3_finalize(dbparameters->q_nsec3_);
+    dbparameters->q_nsec3_ = NULL;
 
-    sqlite3_close(db);
+    sqlite3_close(dbparameters->db_);
+    dbparameters->db_ = NULL;
 
-    db = NULL;
     return (SUCCESS);
 }
 
