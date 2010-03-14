@@ -148,12 +148,19 @@ protected:
         cname_nsec_sig_data.push_back("NSEC 5 3 7200" + sigdata_common);
         delegation_ns_data.push_back("ns1.subzone.example.com.");
         delegation_ns_data.push_back("ns2.subzone.example.com.");
-        delegation_ds_data.push_back("33313 5 1 "
-                                     "FDD7A2C11AA7F55D50FBF9B7EDDA2322C541A8DE");
-        delegation_ds_data.push_back("33313 5 2 "
-                                     "0B99B7006F496D135B01AB17EDB469B4BE9E"
-                                     "1973884DEA757BC4E3015A8C3AB3");
+        delegation_ds_data.push_back("40633 5 1 "
+                                     "3E56C0EA92CF529E005A4B62979533350492 "
+                                     "F105");
+        delegation_ds_data.push_back("40633 5 2 "
+                                     "AA8D4BD330C68BFB4D785894DDCF6B689CE9"
+                                     "873C4A3801F57A5AA3FE17925B8C");
         delegation_ds_sig_data.push_back("DS 5 3 3600" + sigdata_common);
+        child_ds_data.push_back("33313 5 1 "
+                                "FDD7A2C11AA7F55D50FBF9B7EDDA2322C541A8DE");
+        child_ds_data.push_back("33313 5 2 "
+                                "0B99B7006F496D135B01AB17EDB469B4BE9E"
+                                "1973884DEA757BC4E3015A8C3AB3");
+        child_ds_sig_data.push_back("DS 5 3 3600" + sigdata_common);
         delegation_nsec_data.push_back("*.wild.example.com. NS DS RRSIG NSEC");
         delegation_nsec_sig_data.push_back("NSEC 5 3 7200" + sigdata_common);
         child_a_data.push_back("192.0.2.100");
@@ -210,6 +217,8 @@ protected:
     vector<string> delegation_ns_sig_data;
     vector<string> delegation_ds_data;
     vector<string> delegation_ds_sig_data;
+    vector<string> child_ds_data;
+    vector<string> child_ds_sig_data;
     vector<string> delegation_nsec_data;
     vector<string> delegation_nsec_sig_data;
     vector<string> child_a_data;
@@ -692,26 +701,38 @@ TEST_F(Sqlite3DataSourceTest, findRRsetDelegationAtZoneCut) {
     checkFind(NORMAL, data_source, qname, &zone_name, rrclass,
               rrtype, rrttl, DataSrc::REFERRAL, delegation_ns_data, NULL);
 
-    // For ANY query.  What should we do?
-#if 0
+    // For ANY query.  At the backend data source level, it returns all
+    // existent records with their RRSIGs, setting the referral flag.
     rrtype = RRType::ANY();
-    EXPECT_EQ(DataSrc::SUCCESS,
-              data_source.findRRset(qname, rrclass, rrtype,
-                                    result_sets, find_flags, NULL));
-    EXPECT_EQ(DataSrc::REFERRAL, find_flags);
-#endif
+    types.push_back(RRType::NS());
+    types.push_back(RRType::NSEC());
+    types.push_back(RRType::DS());
+    ttls.push_back(rrttl);
+    ttls.push_back(RRTTL(7200));
+    ttls.push_back(rrttl);
+    answers.push_back(&delegation_ns_data);
+    answers.push_back(&delegation_nsec_data);
+    answers.push_back(&delegation_ds_data);
+    signatures.push_back(NULL);
+    signatures.push_back(&delegation_nsec_sig_data);
+    signatures.push_back(&delegation_ds_sig_data);
 
-    // For NSEC query.  What should we do?  Probably return the NSEC + RRSIG
-    // without REFERRAL.  But it currently doesn't act like so.
-#if 0
+    checkFind(NORMAL, data_source, qname, &zone_name, rrclass,
+              rrtype, ttls, DataSrc::REFERRAL, types, answers,
+              signatures);
+    checkFind(NORMAL, data_source, qname, NULL, rrclass,
+              rrtype, ttls, DataSrc::REFERRAL, types, answers,
+              signatures);
+
+    // For NSEC query.  At the backend data source level, it returns NSEC+
+    // RRSIG with the referral flag.
     rrtype = RRType::NSEC();
     checkFind(NORMAL, data_source, qname, NULL, rrclass,
-              rrtype, RRTTL(7200), 0, delegation_nsec_data,
+              rrtype, RRTTL(7200), DataSrc::REFERRAL, delegation_nsec_data,
               &delegation_nsec_sig_data);
     checkFind(NORMAL, data_source, qname, &zone_name, rrclass,
-              rrtype, RRTTL(7200), 0, delegation_nsec_data,
+              rrtype, RRTTL(7200), DataSrc::REFERRAL, delegation_nsec_data,
               &delegation_nsec_sig_data);
-#endif    
 }
 
 TEST_F(Sqlite3DataSourceTest, findRRsetInChildZone) {
@@ -787,7 +808,6 @@ TEST_F(Sqlite3DataSourceTest, findExactRRsetCNAME) {
               signatures);
 }
 
-#if 0 // this should work, but doesn't.  maybe the loadzone tool is broken?
 TEST_F(Sqlite3DataSourceTest, findReferralRRset) {
     // A referral lookup searches for NS, DS, or DNAME, or their sigs.
     const Name qname("sql1.example.com");
@@ -797,15 +817,14 @@ TEST_F(Sqlite3DataSourceTest, findReferralRRset) {
     ttls.push_back(rrttl);
     ttls.push_back(rrttl);
     answers.push_back(&apex_ns_data);
-    answers.push_back(&delegation_ds_data);
+    answers.push_back(&child_ds_data);
     signatures.push_back(NULL);
-    signatures.push_back(&delegation_ds_sig_data);
+    signatures.push_back(&child_ds_sig_data);
     // Note: zone_name matters here because we need to perform the search
     // in the parent zone.
     checkFind(REFERRAL, data_source, qname, &zone_name, rrclass,
-              rrtype, ttls, 0, types, answers, signatures);
+              rrtype, ttls, DataSrc::REFERRAL, types, answers, signatures);
 }
-#endif
 
 TEST_F(Sqlite3DataSourceTest, findReferralRRsetClassMismatch) {
     EXPECT_EQ(DataSrc::ERROR,
