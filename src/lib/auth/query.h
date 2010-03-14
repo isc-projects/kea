@@ -19,17 +19,14 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <dns/name.h>
+#include <dns/message.h>
+#include <dns/rrtype.h>
+#include <dns/rrclass.h>
+
 #include <queue>
 
 namespace isc {
-
-namespace dns {
-class Name;
-class Message;
-class Section;
-class RRClass;
-class RRType;
-}
 
 namespace auth {
 
@@ -47,12 +44,12 @@ public:
     // The standard query tuple: qname/qclass/qtype.
     // Note that qtype is ignored in the GLUE_QUERY/NOGLUE_QUERY case.
     const isc::dns::Name qname;
-    const isc::dns::RRClass& qclass;
-    const isc::dns::RRType& qtype;
+    const isc::dns::RRClass qclass;
+    const isc::dns::RRType qtype;
 
     // The section of the reply into which the data should be
     // written after it has been fetched from the data source.
-    const isc::dns::Section& section;
+    const isc::dns::Section section;
 
     // The op field indicates the operation to be carried out by
     // this query task:
