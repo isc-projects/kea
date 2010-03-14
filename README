@@ -11,6 +11,10 @@ Simple build instructions:
 Requires autoconf 2.59 or newer.
 
 Use automake-1.11 or better for working Python 3.1 tests.
+Alternatively, you could manually specify an absolute path to python
+executable by the --with-pythonpath option of the configure script,
+e.g.,
+% ./configure --with-pythonpath=/usr/local/bin/python3.1
 
 Operating-System specific tips:
 
