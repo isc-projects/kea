@@ -12,6 +12,19 @@ Requires autoconf 2.59 or newer.
 
 Use automake-1.11 or better for working Python 3.1 tests.
 
+Operating-System specific tips:
+
+- FreeBSD
+  You may need to install a python binding for sqlite3 by hand.  A
+  sample procedure is as follows:
+  - add the following to /etc/make.conf
+    PYTHON_VERSION=3.1
+  - build and install the python binding from ports, assuming the top
+    directory of the ports system is /usr/ports
+  % cd /usr/ports/databases/py-sqlite3/
+  % make
+  % sudo make install
+
 INSTALLATION
 
 Install with:
