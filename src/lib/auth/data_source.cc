@@ -418,14 +418,14 @@ tryWildcard(Query& q, QueryTaskPtr task, const DataSrc* ds,
         return (DataSrc::SUCCESS);
     }
 
-    int nlen = task->qname.getLabelCount();
-    int diff = nlen - zonename->getLabelCount();
+    const int nlen = task->qname.getLabelCount();
+    const int diff = nlen - zonename->getLabelCount();
     if (diff < 1) {
         return (DataSrc::SUCCESS);
     }
 
     RRsetList wild;
-    Name star("*");
+    const Name star("*");
     uint32_t rflags = 0;
 
     for (int i = 1; i <= diff; ++i) {
