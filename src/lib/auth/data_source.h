@@ -322,10 +322,19 @@ private:
 };
 
 class NameMatch {
+    ///
+    /// \name Constructors, Assignment Operator and Destructor.
+    ///
+    /// Note: The copy constructor and the assignment operator are intentionally
+    /// defined as private.
+private:
+    NameMatch(const NameMatch& source);
+    NameMatch& operator=(const NameMatch& source);
 public:
     NameMatch(const isc::dns::Name& qname) :
         closest_name_(NULL), best_source_(NULL), qname_(qname) {}
     ~NameMatch();
+    //@}
 
     void update(const DataSrc& new_source, const isc::dns::Name& container);
 
