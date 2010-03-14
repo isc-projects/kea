@@ -338,9 +338,9 @@ public:
 
     void update(const DataSrc& new_source, const isc::dns::Name& container);
 
-    const isc::dns::Name& qname() { return (qname_); }
-    const isc::dns::Name* closestName() { return (closest_name_); }
-    const DataSrc* bestDataSrc() { return (best_source_); }
+    const isc::dns::Name& qname() const { return (qname_); }
+    const isc::dns::Name* closestName() const { return (closest_name_); }
+    const DataSrc* bestDataSrc() const { return (best_source_); }
 
 private:
     const isc::dns::Name* closest_name_;
