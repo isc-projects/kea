@@ -17,7 +17,16 @@ AC_LANG_CPLUSPLUS
 AX_COMPILER_VENDOR
 
 m4_define([_AM_PYTHON_INTERPRETER_LIST], [python python3 python3.1])
-AM_PATH_PYTHON([3.1])
+AC_ARG_WITH([pythonpath],
+AC_HELP_STRING([--with-pythonpath=PATH],
+  [specify an absolute path to python executable when automatic version check (incorreclty) fails]),
+  [python_path="$withval"], [python_path="auto"])
+if test "$python_path" = auto; then
+	AM_PATH_PYTHON([3.1])
+else
+	PYTHON=$python_path
+	AC_SUBST(PYTHON)
+fi
 
 # TODO: check for _sqlite3.py module
 
