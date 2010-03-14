@@ -1,8 +1,4 @@
-This is the source for the BIND 10 testing branch known as
-the parkinglot. This is a simple authoritative server used
-to provide identical records for many zones, such as in
-a DNS parking service.
-
+This is the source for a pre-alpha version of BIND 10.
 
 BUILDING
 
