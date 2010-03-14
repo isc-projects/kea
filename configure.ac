@@ -14,7 +14,6 @@ AC_PROG_LIBTOOL
 
 # Use C++ language
 AC_LANG_CPLUSPLUS
-AX_COMPILER_VENDOR
 
 m4_define([_AM_PYTHON_INTERPRETER_LIST], [python python3 python3.1])
 AC_ARG_WITH([pythonpath],
