@@ -17,6 +17,8 @@
 #ifndef __QUERY_H
 #define __QUERY_H
 
+#include <boost/shared_ptr.hpp>
+
 #include <queue>
 
 namespace isc {
