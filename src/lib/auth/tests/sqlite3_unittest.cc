@@ -431,6 +431,13 @@ TEST_F(Sqlite3DataSourceTest, findClosestEnclosureNoMatch) {
     EXPECT_EQ(NULL, name_match.bestDataSrc());
 }
 
+TEST_F(Sqlite3DataSourceTest, findClosestClassMismatch) {
+    NameMatch name_match(www_name);
+    data_source.findClosestEnclosure(name_match, RRClass::CH());
+    EXPECT_EQ(NULL, name_match.closestName());
+    EXPECT_EQ(NULL, name_match.bestDataSrc());
+}
+
 TEST_F(Sqlite3DataSourceTest, findRRsetNormal) {
     // Without specifying the zone name, and then with the zone name
     checkFind(NORMAL, data_source, www_name, NULL, rrclass, rrtype,
@@ -445,6 +452,12 @@ TEST_F(Sqlite3DataSourceTest, findRRsetNormal) {
                                     result_sets, find_flags, &nomatch_name));
     EXPECT_EQ(DataSrc::NO_SUCH_ZONE, find_flags);
     EXPECT_TRUE(result_sets.begin() == result_sets.end()); // should be empty
+}
+
+TEST_F(Sqlite3DataSourceTest, findRRsetClassMismatch) {
+    EXPECT_EQ(DataSrc::ERROR,
+              data_source.findRRset(www_name, RRClass::CH(), rrtype,
+                                    result_sets, find_flags, NULL));
 }
 
 TEST_F(Sqlite3DataSourceTest, findRRsetNormalANY) {
@@ -729,6 +742,13 @@ TEST_F(Sqlite3DataSourceTest, findExactRRset) {
               rrttl, 0, common_a_data, &common_sig_data);
 }
 
+TEST_F(Sqlite3DataSourceTest, findExactRRsetClassMismatch) {
+    // Normal case.  No different than findRRset.
+    EXPECT_EQ(DataSrc::ERROR,
+              data_source.findExactRRset(www_name, RRClass::CH(), rrtype,
+                                         result_sets, find_flags, NULL));
+}
+
 TEST_F(Sqlite3DataSourceTest, findRRsetNSEC3) {
     // Simple NSEC3 tests (more should be added)
     string hashstr("1BB7SO0452U1QHL98UISNDD9218GELR5");
@@ -787,6 +807,12 @@ TEST_F(Sqlite3DataSourceTest, findReferralRRset) {
 }
 #endif
 
+TEST_F(Sqlite3DataSourceTest, findReferralRRsetClassMismatch) {
+    EXPECT_EQ(DataSrc::ERROR,
+              data_source.findReferral(www_name, RRClass::CH(), result_sets,
+                                       find_flags, NULL));
+}
+
 TEST_F(Sqlite3DataSourceTest, findReferralRRsetDNAME) {
     // same as above.  the DNAME case.
     const Name qname("dname.example.com");
@@ -833,6 +859,12 @@ TEST_F(Sqlite3DataSourceTest, findAddressRRset) {
                                     result_sets, find_flags, &zone_name));
     EXPECT_EQ(DataSrc::TYPE_NOT_FOUND, find_flags);
     EXPECT_TRUE(result_sets.begin() == result_sets.end());
+}
+
+TEST_F(Sqlite3DataSourceTest, findAddressRRsetClassMismatch) {
+    EXPECT_EQ(DataSrc::ERROR, data_source.findAddrs(www_name, RRClass::CH(),
+                                                    result_sets, find_flags,
+                                                    NULL));
 }
 
 }

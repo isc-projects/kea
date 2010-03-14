@@ -113,7 +113,7 @@ const char* const q_prevnsec3_str = "SELECT hash FROM nsec3 "
 //  ID if found.  This will always be >= 0 if found.
 //
 int
-Sqlite3DataSrc::hasExactZone(const char* name) const {
+Sqlite3DataSrc::hasExactZone(const char* const name) const {
     int rc;
 
     sqlite3_reset(dbparameters->q_zone_);
@@ -482,6 +482,9 @@ Sqlite3DataSrc::findRRset(const Name& qname,
                           uint32_t& flags,
                           const Name* zonename) const
 {
+    if (qclass != getClass()) {
+        return (ERROR);
+    }
     findRecords(qname, qtype, target, zonename, NORMAL, flags);
     return (SUCCESS);
 }
@@ -494,6 +497,9 @@ Sqlite3DataSrc::findExactRRset(const Name& qname,
                                uint32_t& flags,
                                const Name* zonename) const
 {
+    if (qclass != getClass()) {
+        return (ERROR);
+    }
     findRecords(qname, qtype, target, zonename, NORMAL, flags);
 
     // Ignore referrals in this case
@@ -515,6 +521,9 @@ Sqlite3DataSrc::findAddrs(const Name& qname,
                           uint32_t& flags,
                           const Name* zonename) const
 {
+    if (qclass != getClass()) {
+        return (ERROR);
+    }
     findRecords(qname, RRType::ANY(), target, zonename, ADDRESS, flags);
     return (SUCCESS);
 }
@@ -526,6 +535,9 @@ Sqlite3DataSrc::findReferral(const Name& qname,
                              uint32_t& flags,
                              const Name* zonename) const
 {
+    if (qclass != getClass()) {
+            return (ERROR);
+    }
     findRecords(qname, RRType::ANY(), target, zonename, DELEGATION, flags);
     return (SUCCESS);
 }
