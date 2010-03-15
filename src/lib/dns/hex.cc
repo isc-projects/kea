@@ -35,14 +35,15 @@ using namespace std;
 namespace isc {
 namespace dns {
 
-static const char hexdigits[] = "0123456789ABCDEF";
+namespace {
+const char hexdigits[] = "0123456789ABCDEF";
+}
 
 std::string
-encodeHex(const std::vector<uint8_t>& binary)
-{
+encodeHex(const std::vector<uint8_t>& binary) {
     // calculate the resulting length.  it should be twice the
     // original data length
-    size_t len = (binary.size() * 2);
+    const size_t len = (binary.size() * 2);
     std::ostringstream hex;
 
     BOOST_FOREACH(uint8_t octet, binary) {
@@ -53,13 +54,12 @@ encodeHex(const std::vector<uint8_t>& binary)
 }
 
 void
-decodeHex(const std::string& hex, std::vector<uint8_t>& result)
-{
+decodeHex(const std::string& hex, std::vector<uint8_t>& result) {
     ostringstream comp;
 
     // compress input by removing whitespace
-    size_t len = hex.length();
-    for (int i = 0; i < len; i++) {
+    const size_t len = hex.length();
+    for (int i = 0; i < len; ++i) {
         char c = hex.at(i);
         if (c == ' ' || c == '\t' || c == '\r' || c == '\n') {
             continue;
@@ -70,7 +70,6 @@ decodeHex(const std::string& hex, std::vector<uint8_t>& result)
     istringstream iss(comp.str());
     result.clear();
     char c1, c2;
-    uint8_t n;
 
     iss.width(1);
     if ((comp.str().length() % 2) == 1) {
@@ -78,13 +77,12 @@ decodeHex(const std::string& hex, std::vector<uint8_t>& result)
         iss >> c2;
 
         const char* pos = strchr(hexdigits, toupper(c2));
-        if (!pos) {
-            isc_throw (BadHexString, "Invalid hex digit");
+        if (pos == NULL) {
+            isc_throw(BadHexString, "Invalid hex digit");
         }
 
         if (!iss.eof() && !iss.bad() && !iss.fail()) {
-            n = pos - hexdigits;
-            result.push_back(n);
+            result.push_back(pos - hexdigits);
         }
     }
     while (!iss.eof()) {
@@ -98,11 +96,10 @@ decodeHex(const std::string& hex, std::vector<uint8_t>& result)
         const char* pos1 = strchr(hexdigits, toupper(c1));
         const char* pos2 = strchr(hexdigits, toupper(c2));
         if (!pos1 || !pos2) {
-            isc_throw (BadHexString, "Invalid hex digit");
+            isc_throw(BadHexString, "Invalid hex digit");
         }
 
-        n = (pos1 - hexdigits) << 4;
-        n |= (pos2 - hexdigits);
+        const uint8_t n = ((pos1 - hexdigits) << 4) | (pos2 - hexdigits);
         result.push_back(n);
     }
 }
