@@ -188,7 +188,7 @@ public:
     virtual void writeData(const void* data, size_t datalen);
     virtual void readData(void* data, size_t datalen);
     virtual size_t readDataLength();
-    virtual void startRead(boost::function<void()> user_handler)
+    virtual void startRead(boost::function<void()> user_handler UNUSED_PARAM)
     {} // nothing to do for this class
 private:
     int sock_;
