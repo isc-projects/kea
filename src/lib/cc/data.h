@@ -492,8 +492,6 @@ void removeIdentical(ElementPtr a, const ElementPtr b);
 /// Raises a TypeError if either ElementPtr is not a MapElement
 void merge(ElementPtr element, const ElementPtr other);
 
-} }
-
 ///
 /// \brief Insert the Element as a string into stream.
 ///
@@ -512,6 +510,7 @@ void merge(ElementPtr element, const ElementPtr other);
 std::ostream& operator <<(std::ostream &out, const isc::data::ElementPtr& e);
 
 bool operator==(const isc::data::ElementPtr a, const isc::data::ElementPtr b);
+} }
 
 #endif // _ISC_DATA_H
 
