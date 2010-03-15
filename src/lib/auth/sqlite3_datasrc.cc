@@ -342,7 +342,7 @@ void
 Sqlite3DataSrc::findClosestEnclosure(NameMatch& match,
                                      const RRClass& qclass) const
 {
-    if (qclass != getClass()) {
+    if (qclass != getClass() && qclass != RRClass::ANY()) {
         return;
     }
 
@@ -482,7 +482,7 @@ Sqlite3DataSrc::findRRset(const Name& qname,
                           uint32_t& flags,
                           const Name* zonename) const
 {
-    if (qclass != getClass()) {
+    if (qclass != getClass() && qclass != RRClass::ANY()) {
         return (ERROR);
     }
     findRecords(qname, qtype, target, zonename, NORMAL, flags);
@@ -497,7 +497,7 @@ Sqlite3DataSrc::findExactRRset(const Name& qname,
                                uint32_t& flags,
                                const Name* zonename) const
 {
-    if (qclass != getClass()) {
+    if (qclass != getClass() && qclass != RRClass::ANY()) {
         return (ERROR);
     }
     findRecords(qname, qtype, target, zonename, NORMAL, flags);
@@ -521,7 +521,7 @@ Sqlite3DataSrc::findAddrs(const Name& qname,
                           uint32_t& flags,
                           const Name* zonename) const
 {
-    if (qclass != getClass()) {
+    if (qclass != getClass() && qclass != RRClass::ANY()) {
         return (ERROR);
     }
     findRecords(qname, RRType::ANY(), target, zonename, ADDRESS, flags);
@@ -535,7 +535,7 @@ Sqlite3DataSrc::findReferral(const Name& qname,
                              uint32_t& flags,
                              const Name* zonename) const
 {
-    if (qclass != getClass()) {
+    if (qclass != getClass() && qclass != RRClass::ANY()) {
             return (ERROR);
     }
     findRecords(qname, RRType::ANY(), target, zonename, DELEGATION, flags);

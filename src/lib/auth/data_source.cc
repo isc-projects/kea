@@ -809,19 +809,12 @@ MetaDataSrc::removeDataSrc(ConstDataSrcPtr data_src)
 void
 MetaDataSrc::findClosestEnclosure(NameMatch& match, const RRClass& qclass) const
 {
-    if (qclass == RRClass::ANY()) {
-        isc_throw(Unexpected, "invalid query class");
-    }
-
-    if (getClass() != RRClass::ANY() && getClass() != qclass) {
+    if (getClass() != qclass &&
+        getClass() != RRClass::ANY() && qclass != RRClass::ANY()) {
         return;
     }
 
     BOOST_FOREACH (ConstDataSrcPtr data_src, data_sources) {
-        if (data_src->getClass() != qclass) {
-            continue;
-        }
-
         data_src->findClosestEnclosure(match, qclass);
     }
 }
