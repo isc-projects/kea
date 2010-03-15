@@ -59,8 +59,7 @@ std::ostream& operator <<(std::ostream &out, const isc::data::ElementPtr& e) {
     return out << e->str();
 }
 
-bool operator==(const isc::data::ElementPtr a, const isc::data::ElementPtr b)
-{
+bool operator==(const isc::data::ElementPtr a, const isc::data::ElementPtr b) {
     return a->equals(b);
 };
 
@@ -68,8 +67,7 @@ bool operator==(const isc::data::ElementPtr a, const isc::data::ElementPtr b)
 // factory functions
 //
 ElementPtr
-Element::create(const int i)
-{
+Element::create(const int i) {
     try {
         return ElementPtr(new IntElement(i));
     } catch (std::bad_alloc) {
@@ -78,8 +76,7 @@ Element::create(const int i)
 }
 
 ElementPtr
-Element::create(const double d)
-{
+Element::create(const double d) {
     try {
         return ElementPtr(new DoubleElement(d));
     } catch (std::bad_alloc) {
@@ -88,8 +85,7 @@ Element::create(const double d)
 }
 
 ElementPtr
-Element::create(const std::string& s)
-{
+Element::create(const std::string& s) {
     try {
         return ElementPtr(new StringElement(s));
     } catch (std::bad_alloc) {
@@ -98,8 +94,7 @@ Element::create(const std::string& s)
 }
 
 ElementPtr
-Element::create(const bool b)
-{
+Element::create(const bool b) {
     try {
         return ElementPtr(new BoolElement(b));
     } catch (std::bad_alloc) {
@@ -108,8 +103,7 @@ Element::create(const bool b)
 }
 
 ElementPtr
-Element::create(const std::vector<ElementPtr>& v)
-{
+Element::create(const std::vector<ElementPtr>& v) {
     try {
         return ElementPtr(new ListElement(v));
     } catch (std::bad_alloc) {
@@ -118,8 +112,7 @@ Element::create(const std::vector<ElementPtr>& v)
 }
 
 ElementPtr
-Element::create(const std::map<std::string, ElementPtr>& m)
-{
+Element::create(const std::map<std::string, ElementPtr>& m) {
     try {
         return ElementPtr(new MapElement(m));
     } catch (std::bad_alloc) {
@@ -133,9 +126,8 @@ Element::create(const std::map<std::string, ElementPtr>& m)
 //
 
 static bool
-char_in(char c, const char *chars)
-{
-    for (size_t i = 0; i < strlen(chars); i++) {
+char_in(const char c, const char *chars) {
+    for (size_t i = 0; i < strlen(chars); ++i) {
         if (chars[i] == c) {
             return true;
         }
@@ -144,15 +136,14 @@ char_in(char c, const char *chars)
 }
 
 static void
-skip_chars(std::istream &in, const char *chars, int& line, int& pos)
-{
+skip_chars(std::istream &in, const char *chars, int& line, int& pos) {
     char c = in.peek();
     while (char_in(c, chars) && c != EOF) {
         if (c == '\n') {
-            line++;
+            ++line;
             pos = 1;
         } else {
-            pos++;
+            ++pos;
         }
         in.get();
         c = in.peek();
@@ -169,26 +160,26 @@ skip_to(std::istream &in, const std::string& file, int& line,
         int& pos, const char* chars, const char* may_skip="")
 {
     char c = in.get();
-    pos++;
+    ++pos;
     while (c != EOF) {
         if (c == '\n') {
             pos = 1;
-            line++;
+            ++line;
         }
         if (char_in(c, may_skip)) {
             c = in.get();
-            pos++;
+            ++pos;
         } else if (char_in(c, chars)) {
             while(char_in(in.peek(), may_skip)) {
                 if (in.peek() == '\n') {
                     pos = 1;
-                    line++;
+                    ++line;
                 }
                 in.get();
-                pos++;
+                ++pos;
             }
             in.putback(c);
-            pos--;
+            --pos;
             return;
         } else {
             throwParseError(std::string("'") + c + "' read, one of \"" + chars + "\" expected", file, line, pos);
@@ -203,10 +194,10 @@ str_from_stringstream(std::istream &in, const std::string& file, int& line, int&
     char c = 0;
     std::stringstream ss;
     c = in.get();
-    pos++;
+    ++pos;
     if (c == '"') {
         c = in.get();
-        pos++;
+        ++pos;
     } else {
         throwParseError("String expected", file, line, pos);
     }
@@ -214,17 +205,16 @@ str_from_stringstream(std::istream &in, const std::string& file, int& line, int&
         ss << c;
         if (c == '\\' && in.peek() == '"') {
             ss << in.get();
-            pos++;
+            ++pos;
         }
         c = in.get();
-        pos++;
+        ++pos;
     }
     return ss.str();
 }
 
 static std::string
-word_from_stringstream(std::istream &in, int& line, int& pos)
-{
+word_from_stringstream(std::istream &in, int& line, int& pos) {
     std::stringstream ss;
     while (isalpha(in.peek())) {
         ss << (char) in.get();
@@ -234,30 +224,27 @@ word_from_stringstream(std::istream &in, int& line, int& pos)
 }
 
 static inline int
-count_chars_i(int i)
-{
+count_chars_i(int i) {
     int result = 1;
     while (i > 10) {
-        result++;
-        i=i/10;
+        ++result;
+        i = i / 10;
     }
     return result;
 }
 
 static inline int
-count_chars_d(double d)
-{
+count_chars_d(double d) {
     int result = 1;
-    while(d < 1.0) {
-        result++;
+    while (d < 1.0) {
+        ++result;
         d = d * 10;
     }
     return result;
 }
 
 static ElementPtr
-from_stringstream_int_or_double(std::istream &in, int &line, int &pos)
-{
+from_stringstream_int_or_double(std::istream &in, int &line, int &pos) {
     int i;
     in >> i;
     pos += count_chars_i(i);
@@ -275,7 +262,7 @@ from_stringstream_int_or_double(std::istream &in, int &line, int &pos)
 static ElementPtr
 from_stringstream_bool(std::istream &in, const std::string& file, int& line, int& pos)
 {
-    std::string word = word_from_stringstream(in, line, pos);
+    const std::string word = word_from_stringstream(in, line, pos);
     if (boost::iequals(word, "True")) {
         return Element::create(true);
     } else if (boost::iequals(word, "False")) {
@@ -288,7 +275,7 @@ from_stringstream_bool(std::istream &in, const std::string& file, int& line, int
 }
 
 static ElementPtr
-from_stringstream_string(std::istream &in, const std::string& file, int& line, int& pos)
+from_stringstream_string(std::istream& in, const std::string& file, int& line, int& pos)
 {
     return Element::create(str_from_stringstream(in, file, line, pos));
 }
@@ -344,14 +331,13 @@ from_stringstream_map(std::istream &in, const std::string& file, int& line, int&
 }
 
 ElementPtr
-Element::createFromString(std::istream &in) throw(ParseError)
-{
+Element::createFromString(std::istream& in) throw(ParseError) {
     int line = 1, pos = 1;
     return createFromString(in, "<istream>", line, pos);
 }
 
 ElementPtr
-Element::createFromString(std::istream &in, const std::string& file_name) throw(ParseError)
+Element::createFromString(std::istream& in, const std::string& file_name) throw(ParseError)
 {
     int line = 1, pos = 1;
     return createFromString(in, file_name, line, pos);
@@ -418,8 +404,7 @@ Element::createFromString(std::istream &in, const std::string& file, int& line, 
 }
 
 ElementPtr
-Element::createFromString(const std::string &in)
-{
+Element::createFromString(const std::string &in) {
     std::stringstream ss;
     ss << in;
     return createFromString(ss, "<string>");
@@ -429,24 +414,21 @@ Element::createFromString(const std::string &in)
 // a general to_str() function
 //
 std::string
-IntElement::str()
-{
+IntElement::str() {
     std::stringstream ss;
     ss << intValue();
     return ss.str();
 }
 
 std::string
-DoubleElement::str()
-{
+DoubleElement::str() {
     std::stringstream ss;
     ss << doubleValue();
     return ss.str();
 }
 
 std::string
-BoolElement::str()
-{
+BoolElement::str() {
     if (b) {
         return "True";
     } else {
@@ -455,8 +437,7 @@ BoolElement::str()
 }
 
 std::string
-StringElement::str()
-{
+StringElement::str() {
     std::stringstream ss;
     ss << "\"";
     ss << stringValue();
@@ -465,13 +446,13 @@ StringElement::str()
 }
 
 std::string
-ListElement::str()
-{
+ListElement::str() {
     std::stringstream ss;
-    std::vector<ElementPtr> v;
     ss << "[ ";
-    v = listValue();
-    for (std::vector<ElementPtr>::iterator it = v.begin(); it != v.end(); ++it) {
+
+    const std::vector<ElementPtr>& v = listValue();
+    for (std::vector<ElementPtr>::const_iterator it = v.begin();
+         it != v.end(); ++it) {
         if (it != v.begin()) {
             ss << ", ";
         }
@@ -482,13 +463,13 @@ ListElement::str()
 }
 
 std::string
-MapElement::str()
-{
+MapElement::str() {
     std::stringstream ss;
-    std::map<std::string, ElementPtr> m;
     ss << "{";
-    m = mapValue();
-    for (std::map<std::string, ElementPtr>::iterator it = m.begin(); it != m.end(); ++it) {
+
+    const std::map<std::string, ElementPtr>& m = mapValue();
+    for (std::map<std::string, ElementPtr>::const_iterator it = m.begin();
+         it != m.end(); ++it) {
         if (it != m.begin()) {
             ss << ", ";
         }
@@ -508,17 +489,16 @@ MapElement::str()
 // returns 0 if it could simply not be found
 // should that also be an exception?
 ElementPtr
-MapElement::find(const std::string& id)
-{
-    size_t sep = id.find('/');
+MapElement::find(const std::string& id) {
+    const size_t sep = id.find('/');
     if (sep == std::string::npos) {
         return get(id);
     } else {
         ElementPtr ce = get(id.substr(0, sep));
         if (ce) {
             // ignore trailing slash
-            if  (sep+1 != id.size()) {
-                return ce->find(id.substr(sep+1));
+            if  (sep + 1 != id.size()) {
+                return ce->find(id.substr(sep + 1));
             } else {
                 return ce;
             }
@@ -535,9 +515,8 @@ MapElement::find(const std::string& id)
 ElementPtr decode_element(std::stringstream& in, int& in_length);
 
 static unsigned char
-get_byte(std::stringstream& in)
-{
-    int c = in.get();
+get_byte(std::stringstream& in) {
+    const int c = in.get();
     if (c == EOF) {
         throw DecodeError("End of data while decoding wire format message");
     }
@@ -546,11 +525,10 @@ get_byte(std::stringstream& in)
 }
 
 std::string
-decode_tag(std::stringstream& in, int& item_length)
-{
+decode_tag(std::stringstream& in, int& item_length) {
     char buf[256];
 
-    int len = get_byte(in);
+    const int len = get_byte(in);
     item_length--;
 
     in.read(buf, len);
@@ -564,10 +542,8 @@ decode_tag(std::stringstream& in, int& item_length)
 }
 
 ElementPtr
-decode_bool(std::stringstream& in, int& item_length)
-{
-    char c;
-    c = in.get();
+decode_bool(std::stringstream& in, int& item_length) {
+    const char c = in.get();
     
     if (c == '1') {
         return Element::create(true);
@@ -577,22 +553,19 @@ decode_bool(std::stringstream& in, int& item_length)
 }
 
 ElementPtr
-decode_int(std::stringstream& in, int& item_length)
-{
+decode_int(std::stringstream& in, int& item_length) {
     int skip, me;
     return from_stringstream_int_or_double(in, skip, me);
 }
 
 ElementPtr
-decode_real(std::stringstream& in, int& item_length)
-{
+decode_real(std::stringstream& in, int& item_length) {
     int skip, me;
     return from_stringstream_int_or_double(in, skip, me);
 }
 
 ElementPtr
-decode_blob(std::stringstream& in, int& item_length)
-{
+decode_blob(std::stringstream& in, int& item_length) {
     char *buf = new char[item_length + 1];
 
     in.read(buf, item_length);
@@ -611,8 +584,7 @@ decode_blob(std::stringstream& in, int& item_length)
 
 // XXXMLG currently identical to decode_blob
 ElementPtr
-decode_utf8(std::stringstream& in, int& item_length)
-{
+decode_utf8(std::stringstream& in, int& item_length) {
     char *buf = new char[item_length + 1];
 
     in.read(buf, item_length);
@@ -630,8 +602,7 @@ decode_utf8(std::stringstream& in, int& item_length)
 }
 
 ElementPtr
-decode_hash(std::stringstream& in, int& item_length)
-{
+decode_hash(std::stringstream& in, int& item_length) {
     std::map<std::string, ElementPtr> m;
     std::pair<std::string, ElementPtr> p;
 
@@ -645,8 +616,7 @@ decode_hash(std::stringstream& in, int& item_length)
 }
 
 ElementPtr
-decode_list(std::stringstream& in, int& item_length)
-{
+decode_list(std::stringstream& in, int& item_length) {
     std::vector<ElementPtr> v;
 
     while (item_length > 0) {
@@ -656,19 +626,17 @@ decode_list(std::stringstream& in, int& item_length)
 }
 
 ElementPtr
-decode_null(std::stringstream& in, int& item_length)
-{
+decode_null(std::stringstream& in, int& item_length) {
     return Element::create("NULL");
 }
 
 ElementPtr
-decode_element(std::stringstream& in, int& in_length)
-{
+decode_element(std::stringstream& in, int& in_length) {
     ElementPtr element;
 
-    unsigned char type_and_length = get_byte(in);
-    unsigned char type = type_and_length & ITEM_MASK;
-    unsigned char lenbytes = type_and_length & ITEM_LENGTH_MASK;
+    const unsigned char type_and_length = get_byte(in);
+    const unsigned char type = type_and_length & ITEM_MASK;
+    const unsigned char lenbytes = type_and_length & ITEM_LENGTH_MASK;
     in_length--;
 
     int item_length = 0;
@@ -721,30 +689,26 @@ decode_element(std::stringstream& in, int& in_length)
 }
 
 ElementPtr
-Element::fromWire(const std::string& s)
-{
+Element::fromWire(const std::string& s) {
     std::stringstream ss;
     ss << s;
     return fromWire(ss, s.length());
 }
 
 ElementPtr
-Element::fromWire(std::stringstream& in, int length)
-{
+Element::fromWire(std::stringstream& in, int length) {
     //
     // Check protocol version
     //
-    for (int i = 0 ; i < 4 ; i++) {
-        unsigned char version_byte = get_byte(in);
+    for (int i = 0 ; i < 4 ; ++i) {
+        const unsigned char version_byte = get_byte(in);
         if (PROTOCOL_VERSION[i] != version_byte) {
             throw DecodeError("Protocol version incorrect");
         }
     }
     length -= 4;
 
-    ElementPtr element;
-    element = decode_hash(in, length);
-    return (element);
+    return (decode_hash(in, length));
 }
 
 //
@@ -752,12 +716,11 @@ Element::fromWire(std::stringstream& in, int length)
 //
 
 std::string
-encode_length(unsigned int length, unsigned char type)
-{
+encode_length(const unsigned int length, unsigned char type) {
     std::stringstream ss;
 
     if (length <= 0x000000ff) {
-        unsigned char val = (length & 0x000000ff);
+        const unsigned char val = (length & 0x000000ff);
         type |= ITEM_LENGTH_8;
         ss << type << val;
     } else if (length <= 0x0000ffff) {
@@ -779,38 +742,27 @@ encode_length(unsigned int length, unsigned char type)
 }
 
 std::string
-Element::toWire(int omit_length)
-{
+Element::toWire(const int omit_length) {
     std::stringstream ss;
     toWire(ss, omit_length);
     return ss.str();
 }
 
 void
-StringElement::toWire(std::stringstream& ss, int omit_length)
-{
+StringElement::toWire(std::stringstream& ss, const int omit_length) {
     unsigned int length = stringValue().length();
     ss << encode_length(length, ITEM_UTF8) << stringValue();
 }
 
 void
-IntElement::toWire(std::stringstream& ss, int omit_length)
-{
-    std::stringstream text;
-
-    text << str();
-    int length = text.str().length();
-    ss << encode_length(length, ITEM_INT) << text.str();
+IntElement::toWire(std::stringstream& ss, const int omit_length) {
+    const std::string& s = str();
+    ss << encode_length(s.length(), ITEM_INT) << s;
 }
 
 void
-BoolElement::toWire(std::stringstream& ss, int omit_length)
-{
-    std::stringstream text;
-
-    text << str();
-    int length = 1;
-    ss << encode_length(length, ITEM_BOOL);
+BoolElement::toWire(std::stringstream& ss, const int omit_length) {
+    ss << encode_length(1, ITEM_BOOL);
     if (boolValue()) {
         ss << 0x01;
     } else {
@@ -819,22 +771,19 @@ BoolElement::toWire(std::stringstream& ss, int omit_length)
 }
 
 void
-DoubleElement::toWire(std::stringstream& ss, int omit_length)
-{
+DoubleElement::toWire(std::stringstream& ss, const int omit_length) {
     std::stringstream text;
 
     text << str();
-    int length = text.str().length();
+    const int length = text.str().length();
     ss << encode_length(length, ITEM_REAL) << text.str();
 }
 
 void
-ListElement::toWire(std::stringstream& ss, int omit_length)
-{
+ListElement::toWire(std::stringstream& ss, const int omit_length) {
     std::stringstream ss2;
-    std::vector<ElementPtr> v;
-    v = listValue();
-    for (std::vector<ElementPtr>::iterator it = v.begin() ;
+    const std::vector<ElementPtr>& v = listValue();
+    for (std::vector<ElementPtr>::const_iterator it = v.begin() ;
          it != v.end() ; ++it) {
         (*it)->toWire(ss2, 0);
     }
@@ -857,17 +806,14 @@ ListElement::toWire(std::stringstream& ss, int omit_length)
 }
 
 void
-encode_tag(std::stringstream& ss, const std::string &s)
-{
-    int length = s.length();
-    unsigned char val = length & 0x000000ff;
+encode_tag(std::stringstream& ss, const std::string &s) {
+    const unsigned char val = s.length() & 0x000000ff;
 
     ss << val << s;
 }
 
 void
-MapElement::toWire(std::stringstream& ss, int omit_length)
-{
+MapElement::toWire(std::stringstream& ss, int omit_length) {
     std::stringstream ss2;
 
     //
@@ -912,49 +858,44 @@ MapElement::find(const std::string& id, ElementPtr& t) {
             t = p;
             return true;
         }
-    } catch (TypeError e) {
+    } catch (const TypeError& e) {
         // ignore
     }
     return false;
 }
 
 bool
-IntElement::equals(ElementPtr other)
-{
+IntElement::equals(ElementPtr other) {
     return (other->getType() == Element::integer) &&
            (i == other->intValue());
 }
 
 bool
-DoubleElement::equals(ElementPtr other)
-{
+DoubleElement::equals(ElementPtr other) {
     return (other->getType() == Element::real) &&
            (d == other->doubleValue());
 }
 
 bool
-BoolElement::equals(ElementPtr other)
-{
+BoolElement::equals(ElementPtr other) {
     return (other->getType() == Element::boolean) &&
            (b == other->boolValue());
 }
 
 bool
-StringElement::equals(ElementPtr other)
-{
+StringElement::equals(ElementPtr other) {
     return (other->getType() == Element::string) &&
            (s == other->stringValue());
 }
 
 bool
-ListElement::equals(ElementPtr other)
-{
+ListElement::equals(ElementPtr other) {
     if (other->getType() == Element::list) {
-        int s = size();
+        const int s = size();
         if (s != other->size()) {
             return false;
         }
-        for (int i = 0; i < s; i++) {
+        for (int i = 0; i < s; ++i) {
             if (!get(i)->equals(other->get(i))) {
                 return false;
             }
@@ -966,11 +907,10 @@ ListElement::equals(ElementPtr other)
 }
 
 bool
-MapElement::equals(ElementPtr other)
-{
+MapElement::equals(ElementPtr other) {
     if (other->getType() == Element::map) {
         std::map<std::string, ElementPtr> m = mapValue();
-        for (std::map<std::string, ElementPtr>::iterator it = m.begin() ;
+        for (std::map<std::string, ElementPtr>::const_iterator it = m.begin();
              it != m.end() ; ++it) {
             if (other->contains((*it).first)) {
                 if (!get((*it).first)->equals(other->get((*it).first))) {
@@ -986,7 +926,7 @@ MapElement::equals(ElementPtr other)
         // differ (and if it's not missing the loop above has checked
         // it)
         m = other->mapValue();
-        for (std::map<std::string, ElementPtr>::iterator it = m.begin() ;
+        for (std::map<std::string, ElementPtr>::const_iterator it = m.begin();
              it != m.end() ; ++it) {
             if (!contains((*it).first)) {
                 return false;
@@ -999,14 +939,12 @@ MapElement::equals(ElementPtr other)
 }
 
 bool
-isc::data::isNull(ElementPtr p)
-{
+isc::data::isNull(ElementPtr p) {
     return !p;
 }
 
 void
-isc::data::removeIdentical(ElementPtr a, const ElementPtr b)
-{
+isc::data::removeIdentical(ElementPtr a, const ElementPtr b) {
     if (!b) {
         return;
     }
@@ -1015,7 +953,7 @@ isc::data::removeIdentical(ElementPtr a, const ElementPtr b)
     }
 
     std::map<std::string, ElementPtr> m = a->mapValue();
-    for (std::map<std::string, ElementPtr>::iterator it = m.begin() ;
+    for (std::map<std::string, ElementPtr>::const_iterator it = m.begin();
          it != m.end() ; ++it) {
         if (b->contains((*it).first)) {
             if (a->get((*it).first)->equals(b->get((*it).first))) {
@@ -1026,15 +964,14 @@ isc::data::removeIdentical(ElementPtr a, const ElementPtr b)
 }
 
 void
-isc::data::merge(ElementPtr element, const ElementPtr other)
-{
+isc::data::merge(ElementPtr element, const ElementPtr other) {
     if (element->getType() != Element::map ||
         other->getType() != Element::map) {
         isc_throw(TypeError, "merge arguments not MapElements");
     }
     
     std::map<std::string, ElementPtr> m = other->mapValue();
-    for (std::map<std::string, ElementPtr>::iterator it = m.begin() ;
+    for (std::map<std::string, ElementPtr>::const_iterator it = m.begin();
          it != m.end() ; ++it) {
         if ((*it).second) {
             element->set((*it).first, (*it).second);
