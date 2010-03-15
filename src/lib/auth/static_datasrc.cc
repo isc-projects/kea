@@ -16,6 +16,8 @@
 
 #include "config.h"
 
+#include <cassert>
+
 #include <dns/name.h>
 #include <dns/rdataclass.h>
 #include <dns/rrclass.h>
@@ -102,26 +104,31 @@ StaticDataSrc::~StaticDataSrc()
     delete impl_;
 }
 
+namespace {
+bool
+isSubdomain(const Name& qname, const Name& zone) {
+    const NameComparisonResult::NameRelation cmp =
+        qname.compare(zone).getRelation();
+    return (cmp == NameComparisonResult::EQUAL ||
+            cmp == NameComparisonResult::SUBDOMAIN);
+}
+}
+
 void
 StaticDataSrc::findClosestEnclosure(NameMatch& match,
                                     const RRClass& qclass) const {
     const Name& qname = match.qname();
-    NameComparisonResult::NameRelation cmp;
 
     if (qclass != getClass() && qclass != RRClass::ANY()) {
         return;
     }
 
-    cmp = qname.compare(impl_->version_name).getRelation();
-    if (cmp == NameComparisonResult::EQUAL ||
-        cmp == NameComparisonResult::SUBDOMAIN) {
+    if (isSubdomain(qname, impl_->version_name)) {
         match.update(*this, impl_->version_name);
         return;
     }
 
-    cmp = qname.compare(impl_->authors_name).getRelation();
-    if (cmp == NameComparisonResult::EQUAL ||
-        cmp == NameComparisonResult::SUBDOMAIN) {
+    if (isSubdomain(qname, impl_->authors_name)) {
         match.update(*this, impl_->authors_name);
         return;
     }
@@ -131,35 +138,66 @@ DataSrc::Result
 StaticDataSrc::findRRset(const Name& qname,
                          const RRClass& qclass, const RRType& qtype,
                          RRsetList& target, uint32_t& flags,
-                         const Name* zonename) const
+                         const Name* const zonename) const
 {
     flags = 0;
     if (qclass != getClass() && qclass != RRClass::ANY()) {
         return (ERROR);
     }
 
-    const bool any = (qtype == RRType::ANY());
-
-    if (qname == impl_->version_name) {
-        if (qtype == RRType::TXT() || any) {
-            target.addRRset(impl_->version);
-        } else if (qtype == RRType::NS()) {
-            target.addRRset(impl_->version_ns);
+    // Identify the appropriate zone.
+    bool is_versionname = false, is_authorsname = false;
+    if (zonename != NULL) {
+        if (*zonename == impl_->version_name &&
+            isSubdomain(qname, impl_->version_name)) {
+            is_versionname = true;
+        } else if (*zonename == impl_->authors_name &&
+                   isSubdomain(qname, impl_->authors_name)) {
+            is_authorsname = true;
         } else {
-            flags = TYPE_NOT_FOUND;
-        }
-    } else if (qname == impl_->authors_name) {
-        if (qtype == RRType::TXT() || any) {
-            target.addRRset(impl_->authors);
+            flags = NO_SUCH_ZONE;
             return (SUCCESS);
-        } else if (qtype == RRType::NS()) {
-            target.addRRset(impl_->authors_ns);
-            return (SUCCESS);
-        } else {
-            flags = TYPE_NOT_FOUND;
         }
     } else {
-        flags = NAME_NOT_FOUND;
+        if (isSubdomain(qname, impl_->version_name)) {
+            is_versionname = true;
+        } else if (isSubdomain(qname, impl_->authors_name)) {
+            is_authorsname = true;
+        } else {
+            flags = NO_SUCH_ZONE;
+            return (SUCCESS);
+        }
+    }
+
+    const bool any = (qtype == RRType::ANY());
+
+    if (is_versionname) {
+        if (qname == impl_->version_name) {
+            if (qtype == RRType::TXT() || any) {
+                target.addRRset(impl_->version);
+            } else if (qtype == RRType::NS()) {
+                target.addRRset(impl_->version_ns);
+            } else {
+                flags = TYPE_NOT_FOUND;
+            }
+        } else {
+            flags = NAME_NOT_FOUND;
+        }
+    } else {
+        assert(is_authorsname);
+        if (qname == impl_->authors_name) {
+            if (qtype == RRType::TXT() || any) {
+                target.addRRset(impl_->authors);
+                return (SUCCESS);
+            } else if (qtype == RRType::NS()) {
+                target.addRRset(impl_->authors_ns);
+                return (SUCCESS);
+            } else {
+                flags = TYPE_NOT_FOUND;
+            }
+        } else {
+            flags = NAME_NOT_FOUND;
+        }
     }
 
     return (SUCCESS);
