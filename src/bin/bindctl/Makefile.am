@@ -8,7 +8,7 @@ pythondir = $(pyexecdir)/bindctl
 
 CLEANFILES = bindctl
 
-bindctl: bindctl.py
+bindctl: bindctl-source.py
 	$(SED) -e "s|@@PYTHONPATH@@|@pyexecdir@|" \
-	       -e "s|@@LIBEXECDIR@@|$(pkglibexecdir)|" bindctl.py >$@
+	       -e "s|@@LIBEXECDIR@@|$(pkglibexecdir)|" bindctl-source.py >$@
 	chmod a+x $@

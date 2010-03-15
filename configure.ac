@@ -259,7 +259,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/bind10/tests/bind10_test
            src/bin/bind10/run_bind10.sh
            src/bin/bindctl/run_bindctl.sh
-           src/bin/bindctl/bindctl.py
+           src/bin/bindctl/bindctl-source.py
            src/bin/bindctl/unittest/bindctl_test
            src/bin/loadzone/run_loadzone.sh
            src/bin/loadzone/b10-loadzone.py
