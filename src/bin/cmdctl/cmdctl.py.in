@@ -28,6 +28,7 @@ resut to client.
 
 import sys; sys.path.append ('@@PYTHONPATH@@')
 import os
+import socketserver
 import http.server
 import urllib.parse
 import json
@@ -320,7 +321,7 @@ class CommandControl():
         return 1, {'error': errstr}
 
 
-class SecureHTTPServer(http.server.HTTPServer):
+class SecureHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
     '''Make the server address can be reused.'''
     allow_reuse_address = True
 
