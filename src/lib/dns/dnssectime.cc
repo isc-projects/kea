@@ -20,6 +20,11 @@
 #include <sstream>
 #include <vector>
 
+#include <stdio.h>
+#include <time.h>
+
+#include <exceptions/exceptions.h>
+
 #include "base64.h"
 #include "buffer.h"
 #include "messagerenderer.h"
@@ -28,11 +33,6 @@
 #include "rrttl.h"
 #include "rdata.h"
 #include "rdataclass.h"
-#include <boost/lexical_cast.hpp>
-
-#include <stdio.h>
-#include <time.h>
-
 #include "dnssectime.h"
 
 using namespace std;
@@ -45,9 +45,8 @@ enum {
 };
 
 string
-timeToText(const time_t timeval)
-{
-    struct tm *t = gmtime(&timeval);
+timeToText(const time_t timeval) {
+    struct tm* const t = gmtime(&timeval);
 
     // gmtime() will keep most values within range, but it can
     // produce a five-digit year; check for this.
@@ -66,36 +65,34 @@ timeToText(const time_t timeval)
     return (oss.str());
 }
 
-static inline void
-checkRange(int min, int max, int value, const string& valname) {
+namespace {
+inline void
+checkRange(const int min, const int max, const int value,
+           const string& valname)
+{
     if ((value >= min) && (value <= max)) {
         return;
     }
-    ostringstream oss;
-    oss << "Invalid " << valname << " value: " << value;
-    isc_throw(InvalidTime, oss.str().c_str());
+    isc_throw(InvalidTime, "Invalid " << valname << "value: " << value);
 }
 
-static int days[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+int days[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 
-static inline bool
-isLeap(int y) {
+inline bool
+isLeap(const int y) {
     return ((((y) % 4) == 0 && ((y) % 100) != 0) || ((y) % 400) == 0);
+}
 }
 
 time_t
-timeFromText(const string& time_txt)
-{
-    time_t timeval;
-    ostringstream oss;
-
+timeFromText(const string& time_txt) {
     // first try reading YYYYMMDDHHmmSS format
     int year, month, day, hour, minute, second;
 
     for (int i = 0; i < time_txt.length(); ++i) {
         if (!isdigit(time_txt.at(i))) {
-            oss << "Couldn't convert non-numeric time value: " << time_txt;
-            isc_throw(InvalidTime, oss.str().c_str());
+            isc_throw(InvalidTime,
+                      "Couldn't convert non-numeric time value: " << time_txt); 
         }
     }
 
@@ -103,8 +100,7 @@ timeFromText(const string& time_txt)
         sscanf(time_txt.c_str(), "%4d%2d%2d%2d%2d%2d",
                &year, &month, &day, &hour, &minute, &second) != 6)
     {
-        oss << "Couldn't convert time value: " << time_txt;
-        isc_throw(InvalidTime, oss.str().c_str());
+        isc_throw(InvalidTime, "Couldn't convert time value: " << time_txt);
     }
 
     checkRange(1970, 9999, year, "year");
@@ -115,7 +111,8 @@ timeFromText(const string& time_txt)
     checkRange(0, 59, minute, "minute");
     checkRange(0, 60, second, "second"); // 60 == leap second.
 
-    timeval = second + (60 * minute) + (3600 * hour) + ((day - 1) * 86400);
+    time_t timeval = second + (60 * minute) + (3600 * hour) +
+        ((day - 1) * 86400);
     for (int m = 0; m < (month - 1); m++) {
             timeval += days[m] * 86400;
     }
