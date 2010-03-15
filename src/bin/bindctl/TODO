@@ -13,4 +13,4 @@ functions should be updated first.):
 
         moduleinfo.py:
             get_param_name_by_position
-
+5. Understandable error message is cert_file is missing.
