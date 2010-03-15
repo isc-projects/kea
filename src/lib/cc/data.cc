@@ -18,9 +18,10 @@
 
 #include <cstdio>
 #include <iostream>
+#include <string>
 #include <sstream>
 
-#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string.hpp> // for iequals
 
 using namespace std;
 using namespace isc::data;
@@ -841,6 +842,7 @@ ListElement::toWire(std::stringstream& ss, int omit_length)
 
     if (omit_length) {
         stringbuf *ss2_buf = ss2.rdbuf();
+        ss2_buf->pubseekpos(0);
         if (ss2_buf->in_avail() > 0) {
             ss << ss2_buf;
         }
@@ -867,7 +869,6 @@ void
 MapElement::toWire(std::stringstream& ss, int omit_length)
 {
     std::stringstream ss2;
-    std::map<std::string, ElementPtr> m;
 
     //
     // If we don't want the length, we will want the protocol header
@@ -877,8 +878,8 @@ MapElement::toWire(std::stringstream& ss, int omit_length)
         ss2 << PROTOCOL_VERSION[2] << PROTOCOL_VERSION[3];
     }
 
-    m = mapValue();
-    for (std::map<std::string, ElementPtr>::iterator it = m.begin() ;
+    const std::map<std::string, ElementPtr>& m = mapValue();
+    for (std::map<std::string, ElementPtr>::const_iterator it = m.begin() ;
          it != m.end() ; ++it) {
         encode_tag(ss2, (*it).first);
         (*it).second->toWire(ss2, 0);
@@ -889,14 +890,15 @@ MapElement::toWire(std::stringstream& ss, int omit_length)
     //
     if (omit_length) {
         stringbuf *ss2_buf = ss2.rdbuf();
-        if (ss2_buf->in_avail() > 0) {
+        ss2_buf->pubseekpos(0);
+        if (ss2_buf->in_avail()) {
             ss << ss2_buf;
         }
     } else {
         stringbuf *ss2_buf = ss2.rdbuf();
         ss2_buf->pubseekpos(0);
         ss << encode_length(ss2_buf->in_avail(), ITEM_HASH);
-        if (ss2_buf->in_avail() > 0) {
+        if (ss2_buf->in_avail()) {
             ss << ss2_buf;
         }
     }
