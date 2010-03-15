@@ -45,8 +45,7 @@ protected:
                              authors_name("authors.bind"),
                              nomatch_name("example.com"),
                              rrclass(RRClass::CH()), rrtype(RRType::TXT()),
-                             rrttl(RRTTL(0)), soa_rrttl(RRTTL(86400)),
-                             find_flags(0), matched_rdata(0)
+                             rrttl(RRTTL(0)), find_flags(0), matched_rdata(0)
     {
         // XXX: the following values can change as release/developers change,
         // in which case the test code must be updated accordingly.
@@ -80,10 +79,12 @@ protected:
     const RRClass rrclass;
     RRType rrtype;              // we allow this to be modified in the test
     RRTTL rrttl;
-    RRTTL soa_rrttl;
     RRsetList result_sets;
     uint32_t find_flags;
     unsigned matched_rdata;
+    vector<RRType> types;
+    vector<RRTTL> ttls;
+    vector<const vector<string>* > answers;
     vector<string> version_data;
     vector<string> authors_data;
     vector<string> version_ns_data;
@@ -125,32 +126,63 @@ void
 checkFind(const DataSrc& data_source,
           const Name& qname, const Name* zone_name,
           const RRClass& qclass, const RRClass& expected_class,
-          const RRType& qtype,  // == expected RRType
-          const RRTTL& expected_ttl, const uint32_t expected_flags,
-          const vector<string>& expected_answers)
+          const RRType& qtype, const vector<RRTTL>& expected_ttls,
+          const uint32_t expected_flags, const vector<RRType>& expected_types,
+          const vector<const vector<string>* >& expected_answers)
 {
     RRsetList result_sets;
     uint32_t find_flags;
+    unsigned int rrset_matched = 0;
+    unsigned int rrset_count = 0;
 
     EXPECT_EQ(DataSrc::SUCCESS,
               data_source.findRRset(qname, qclass, qtype, result_sets,
                                     find_flags, zone_name));
     EXPECT_EQ(expected_flags, find_flags);
+
     if ((find_flags & (DataSrc::NO_SUCH_ZONE | DataSrc::NAME_NOT_FOUND |
                        DataSrc::TYPE_NOT_FOUND)) != 0) {
-        // result should be empty
         EXPECT_TRUE(result_sets.begin() == result_sets.end());
         return;
     }
 
-    // There's always exactly one RRset, whose RR type should match the
-    // expected type.
     RRsetList::iterator it = result_sets.begin();
-    EXPECT_EQ(qtype, (*it)->getType());
-    checkRRset((*it), qname, expected_class, qtype, expected_ttl,
-               expected_answers);
-    ++it;
-    EXPECT_TRUE(result_sets.end() == it);
+    for (; it != result_sets.end(); ++it) {
+        vector<RRType>::const_iterator found_type =
+            find(expected_types.begin(), expected_types.end(),
+                 (*it)->getType());
+        // there should be a match
+        EXPECT_TRUE(found_type != expected_types.end());
+        if (found_type != expected_types.end()) {
+            unsigned int index = distance(expected_types.begin(), found_type);
+            checkRRset(*it, qname, expected_class, (*it)->getType(),
+                       expected_ttls[index], *expected_answers[index]);
+            ++rrset_matched;
+        }
+        ++rrset_count;
+    }
+    EXPECT_EQ(expected_types.size(), rrset_count);
+    EXPECT_EQ(expected_types.size(), rrset_matched);
+}
+
+void
+checkFind(const DataSrc& data_source,
+          const Name& qname, const Name* zone_name,
+          const RRClass& qclass, const RRClass& expected_class,
+          const RRType& qtype,  // == expected RRType
+          const RRTTL& expected_ttl, const uint32_t expected_flags,
+          const vector<string>& expected_answers)
+{
+    vector<RRType> types;
+    vector<RRTTL> ttls;
+    vector<const vector<string>* > answers;
+
+    types.push_back(qtype);
+    ttls.push_back(expected_ttl);
+    answers.push_back(&expected_answers);
+
+    checkFind(data_source, qname, zone_name, qclass, expected_class, qtype,
+              ttls, expected_flags, types, answers);
 }
 
 TEST_F(StaticDataSourceTest, init) {
@@ -229,10 +261,30 @@ TEST_F(StaticDataSourceTest, findRRsetVersionNS) {
 
 TEST_F(StaticDataSourceTest, findRRsetVersionSOA) {
     rrtype = RRType::SOA();
+
     checkFind(data_source, version_name, NULL, rrclass, rrclass,
-              rrtype, soa_rrttl, 0, version_soa_data);
+              rrtype, rrttl, 0, version_soa_data);
     checkFind(data_source, version_name, &version_name, rrclass, rrclass,
-              rrtype, soa_rrttl, 0, version_soa_data);
+              rrtype, rrttl, 0, version_soa_data);
+}
+
+TEST_F(StaticDataSourceTest, findRRsetVersionANY) {
+    rrtype = RRType::ANY();
+    
+    types.push_back(RRType::TXT());
+    types.push_back(RRType::NS());
+    types.push_back(RRType::SOA());
+    ttls.push_back(rrttl);
+    ttls.push_back(rrttl);
+    ttls.push_back(rrttl);
+    answers.push_back(&version_data);
+    answers.push_back(&version_ns_data);
+    answers.push_back(&version_soa_data);
+
+    checkFind(data_source, version_name, NULL, rrclass, rrclass, rrtype, ttls,
+              0, types, answers);
+    checkFind(data_source, version_name, &version_name, rrclass, rrclass,
+              rrtype, ttls, 0, types, answers);
 }
 
 TEST_F(StaticDataSourceTest, findRRsetAuthorsTXT) {
@@ -253,11 +305,29 @@ TEST_F(StaticDataSourceTest, findRRsetAuthorsNS) {
 TEST_F(StaticDataSourceTest, findRRsetAuthorsSOA) {
     rrtype = RRType::SOA();
     checkFind(data_source, authors_name, NULL, rrclass, rrclass,
-              rrtype, soa_rrttl, 0, authors_soa_data);
+              rrtype, rrttl, 0, authors_soa_data);
     checkFind(data_source, authors_name, &authors_name, rrclass, rrclass,
-              rrtype, soa_rrttl, 0, authors_soa_data);
+              rrtype, rrttl, 0, authors_soa_data);
 }
 
+TEST_F(StaticDataSourceTest, findRRsetAuthorsANY) {
+    rrtype = RRType::ANY();
+    
+    types.push_back(RRType::TXT());
+    types.push_back(RRType::NS());
+    types.push_back(RRType::SOA());
+    ttls.push_back(rrttl);
+    ttls.push_back(rrttl);
+    ttls.push_back(rrttl);
+    answers.push_back(&authors_data);
+    answers.push_back(&authors_ns_data);
+    answers.push_back(&authors_soa_data);
+
+    checkFind(data_source, authors_name, NULL, rrclass, rrclass, rrtype, ttls,
+              0, types, answers);
+    checkFind(data_source, authors_name, &authors_name, rrclass, rrclass,
+              rrtype, ttls, 0, types, answers);
+}
 // Class ANY lookup should result in the same answer.
 TEST_F(StaticDataSourceTest, findRRsetVersionClassAny) {
     checkFind(data_source, version_name, NULL, RRClass::ANY(), rrclass,
