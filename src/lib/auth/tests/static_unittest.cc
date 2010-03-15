@@ -112,6 +112,38 @@ checkRRset(ConstRRsetPtr rrset, const Name& expected_name,
     EXPECT_TRUE(rdata_iterator->isLast());
 }
 
+void
+checkFind(const DataSrc& data_source,
+          const Name& qname, const Name* zone_name,
+          const RRClass& qclass, const RRClass& expected_class,
+          const RRType& qtype,  // == expected RRType
+          const RRTTL& expected_ttl, const uint32_t expected_flags,
+          const vector<string>& expected_answers)
+{
+    RRsetList result_sets;
+    uint32_t find_flags;
+
+    EXPECT_EQ(DataSrc::SUCCESS,
+              data_source.findRRset(qname, qclass, qtype, result_sets,
+                                    find_flags, zone_name));
+    EXPECT_EQ(expected_flags, find_flags);
+    if ((find_flags & (DataSrc::NO_SUCH_ZONE | DataSrc::NAME_NOT_FOUND |
+                       DataSrc::TYPE_NOT_FOUND)) != 0) {
+        // result should be empty
+        EXPECT_TRUE(result_sets.begin() == result_sets.end());
+        return;
+    }
+
+    // There's always exactly one RRset, whose RR type should match the
+    // expected type.
+    RRsetList::iterator it = result_sets.begin();
+    EXPECT_EQ(qtype, (*it)->getType());
+    checkRRset((*it), qname, expected_class, qtype, expected_ttl,
+               expected_answers);
+    ++it;
+    EXPECT_TRUE(result_sets.end() == it);
+}
+
 TEST_F(StaticDataSourceTest, init) {
     EXPECT_EQ(DataSrc::SUCCESS, data_source.init());
 }
@@ -125,6 +157,22 @@ TEST_F(StaticDataSourceTest, findClosestEnclosureForVersion) {
     data_source.findClosestEnclosure(name_match, rrclass);
     EXPECT_EQ(version_name, *name_match.closestName());
     EXPECT_EQ(&data_source, name_match.bestDataSrc());
+}
+
+// Class Any query should result in the same answer.
+TEST_F(StaticDataSourceTest, findClosestEnclosureForVersionClassAny) {
+    NameMatch name_match(version_name);
+    data_source.findClosestEnclosure(name_match, RRClass::ANY());
+    EXPECT_EQ(version_name, *name_match.closestName());
+    EXPECT_EQ(&data_source, name_match.bestDataSrc());
+}
+
+// If class doesn't match the lookup should fail.
+TEST_F(StaticDataSourceTest, findClosestEnclosureForVersionClassMismatch) {
+    NameMatch name_match(version_name);
+    data_source.findClosestEnclosure(name_match, RRClass::IN());
+    EXPECT_EQ(NULL, name_match.closestName());
+    EXPECT_EQ(NULL, name_match.bestDataSrc());
 }
 
 TEST_F(StaticDataSourceTest, findClosestEnclosureForVersionPartial) {
@@ -156,69 +204,115 @@ TEST_F(StaticDataSourceTest, findClosestEnclosureNoMatch) {
 }
 
 TEST_F(StaticDataSourceTest, findRRsetVersionTXT) {
-    EXPECT_EQ(DataSrc::SUCCESS,
-              data_source.findRRset(version_name, rrclass, rrtype,
-                                    result_sets, find_flags, NULL));
-    EXPECT_EQ(0, find_flags);
-    // There should be only item in result_sets, which should be
-    // version_name/TXT.
-    RRsetList::iterator it = result_sets.begin();
-    for (; it != result_sets.end(); ++it) {
-        if ((*it)->getType() == rrtype) {
-            checkRRset(*it, version_name, rrclass, rrtype, rrttl, version_data);
-            ++matched_rdata;
-        }
-    }
-    EXPECT_EQ(1, matched_rdata);
+    checkFind(data_source, version_name, NULL, rrclass, rrclass,
+              rrtype, rrttl, 0, version_data);
+    checkFind(data_source, version_name, &version_name, rrclass, rrclass,
+              rrtype, rrttl, 0, version_data);
 }
 
 TEST_F(StaticDataSourceTest, findRRsetVersionNS) {
     rrtype = RRType::NS();
-    EXPECT_EQ(DataSrc::SUCCESS,
-              data_source.findRRset(version_name, rrclass, rrtype,
-                                    result_sets, find_flags, NULL));
-    EXPECT_EQ(0, find_flags);
-    RRsetList::iterator it = result_sets.begin();
-    for (; it != result_sets.end(); ++it) {
-        if ((*it)->getType() == rrtype) {
-            checkRRset(*it, version_name, rrclass, rrtype, rrttl,
-                       version_ns_data);
-            ++matched_rdata;
-        }
-    }
-    EXPECT_EQ(1, matched_rdata);
+    checkFind(data_source, version_name, NULL, rrclass, rrclass,
+              rrtype, rrttl, 0, version_ns_data);
+    checkFind(data_source, version_name, &version_name, rrclass, rrclass,
+              rrtype, rrttl, 0, version_ns_data);
 }
 
 TEST_F(StaticDataSourceTest, findRRsetAuthorsTXT) {
-    EXPECT_EQ(DataSrc::SUCCESS,
-              data_source.findRRset(authors_name, rrclass, rrtype,
-                                    result_sets, find_flags, NULL));
-    EXPECT_EQ(0, find_flags);
-    RRsetList::iterator it = result_sets.begin();
-    for (; it != result_sets.end(); ++it) {
-        if ((*it)->getType() == rrtype) {
-            checkRRset(*it, authors_name, rrclass, rrtype, rrttl, authors_data);
-            ++matched_rdata;
-        }
-    }
-    EXPECT_EQ(1, matched_rdata);
+    checkFind(data_source, authors_name, NULL, rrclass, rrclass,
+              rrtype, rrttl, 0, authors_data);
+    checkFind(data_source, authors_name, &authors_name, rrclass, rrclass,
+              rrtype, rrttl, 0, authors_data);
 }
 
 TEST_F(StaticDataSourceTest, findRRsetAuthorsNS) {
     rrtype = RRType::NS();
-    EXPECT_EQ(DataSrc::SUCCESS,
-              data_source.findRRset(authors_name, rrclass, rrtype,
-                                    result_sets, find_flags, NULL));
-    EXPECT_EQ(0, find_flags);
-    RRsetList::iterator it = result_sets.begin();
-    for (; it != result_sets.end(); ++it) {
-        if ((*it)->getType() == rrtype) {
-            checkRRset(*it, authors_name, rrclass, rrtype, rrttl,
-                       authors_ns_data);
-            ++matched_rdata;
-        }
-    }
-    EXPECT_EQ(1, matched_rdata);
+    checkFind(data_source, authors_name, NULL, rrclass, rrclass,
+              rrtype, rrttl, 0, authors_ns_data);
+    checkFind(data_source, authors_name, &authors_name, rrclass, rrclass,
+              rrtype, rrttl, 0, authors_ns_data);
+}
+
+// Class ANY lookup should result in the same answer.
+TEST_F(StaticDataSourceTest, findRRsetVersionClassAny) {
+    checkFind(data_source, version_name, NULL, RRClass::ANY(), rrclass,
+              rrtype, rrttl, 0, version_data);
+    checkFind(data_source, version_name, &version_name, RRClass::ANY(), rrclass,
+              rrtype, rrttl, 0, version_data);
+}
+
+// If the class doesn't match, it should simply fail.
+TEST_F(StaticDataSourceTest, findRRsetVersionClassMismatch) {
+    EXPECT_EQ(DataSrc::ERROR,
+              data_source.findRRset(version_name, RRClass::IN(), rrtype,
+                                    result_sets, find_flags, &version_name));
+}
+
+TEST_F(StaticDataSourceTest, findRRsetOutOfZone) {
+    // If the qname doesn't match any of the static zones, the result should
+    // be "no such zone", regardless of whether the zone is explicitly
+    // specified.  Other "expected" result parameters will be ignored.
+    checkFind(data_source, nomatch_name, NULL, rrclass, rrclass,
+              rrtype, rrttl, DataSrc::NO_SUCH_ZONE, authors_ns_data);
+    checkFind(data_source, nomatch_name, &version_name, rrclass, rrclass,
+              rrtype, rrttl, DataSrc::NO_SUCH_ZONE, authors_ns_data);
+    checkFind(data_source, nomatch_name, &authors_name, rrclass, rrclass,
+              rrtype, rrttl, DataSrc::NO_SUCH_ZONE, authors_ns_data);
+}
+
+// If a zone name is given but doesn't match any of the static zones,
+// the result should be "no such zone"
+TEST_F(StaticDataSourceTest, findRRsetZoneMismatch) {
+    const Name& short_zonename(Name("bind"));
+    checkFind(data_source, version_name, &short_zonename, rrclass, rrclass,
+              rrtype, rrttl, DataSrc::NO_SUCH_ZONE, authors_ns_data);
+    checkFind(data_source, authors_name, &short_zonename, rrclass, rrclass,
+              rrtype, rrttl, DataSrc::NO_SUCH_ZONE, authors_ns_data);
+}
+
+// Zone matches, but name doesn't exist in the zone
+TEST_F(StaticDataSourceTest, findRRsetNoName) {
+    checkFind(data_source, Name("foo").concatenate(version_name), NULL, rrclass,
+              rrclass, rrtype, rrttl, DataSrc::NAME_NOT_FOUND, authors_ns_data);
+    checkFind(data_source, Name("foo").concatenate(version_name), &version_name,
+              rrclass, rrclass, rrtype, rrttl, DataSrc::NAME_NOT_FOUND,
+              authors_ns_data);
+    checkFind(data_source, Name("foo").concatenate(authors_name), NULL, rrclass,
+              rrclass, rrtype, rrttl, DataSrc::NAME_NOT_FOUND, authors_ns_data);
+    checkFind(data_source, Name("foo").concatenate(authors_name), &authors_name,
+              rrclass, rrclass, rrtype, rrttl, DataSrc::NAME_NOT_FOUND,
+              authors_ns_data);
+}
+
+// Zone matches and qname exists, but type doesn't exist for the name.
+TEST_F(StaticDataSourceTest, findRRsetNoType) {
+    const RRType& nomatch_type = RRType::A();
+
+    checkFind(data_source, version_name, NULL, rrclass,
+              rrclass, nomatch_type, rrttl, DataSrc::TYPE_NOT_FOUND,
+              authors_ns_data);
+    checkFind(data_source, version_name, &version_name, rrclass,
+              rrclass, nomatch_type, rrttl, DataSrc::TYPE_NOT_FOUND,
+              authors_ns_data);
+    checkFind(data_source, authors_name, NULL, rrclass,
+              rrclass, nomatch_type, rrttl, DataSrc::TYPE_NOT_FOUND,
+              authors_ns_data);
+    checkFind(data_source, authors_name, &authors_name, rrclass,
+              rrclass, nomatch_type, rrttl, DataSrc::TYPE_NOT_FOUND,
+              authors_ns_data);
+}
+
+// Simple tests for "unsupported" tests.
+TEST_F(StaticDataSourceTest, notImplemented) {
+    Name target_name(version_name);
+    EXPECT_EQ(DataSrc::NOT_IMPLEMENTED,
+              data_source.findPreviousName(version_name, target_name,
+                                           &version_name));
+
+    string target_hash;
+    EXPECT_EQ(DataSrc::NOT_IMPLEMENTED,
+              data_source.findCoveringNSEC3(version_name, target_hash,
+                                            result_sets));
 }
 
 }
