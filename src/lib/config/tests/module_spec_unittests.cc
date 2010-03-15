@@ -66,7 +66,7 @@ TEST(ModuleSpec, ReadingSpecfiles) {
     dd = moduleSpecFromFile(file);
     EXPECT_EQ(dd.getFullSpec()->get("module_name")
                               ->stringValue(), "Spec1");
-    EXPECT_EQ(dd.getCommandsSpec(), ElementPtr());
+    EXPECT_TRUE(isNull(dd.getCommandsSpec()));
 
     std::ifstream file2;
     file2.open(specfile("spec8.spec").c_str());
