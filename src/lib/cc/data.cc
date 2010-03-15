@@ -43,7 +43,11 @@ const unsigned char ITEM_LENGTH_16   = 0x10;
 const unsigned char ITEM_LENGTH_8    = 0x20;
 const unsigned char ITEM_LENGTH_MASK = 0x30;
 
-static inline void
+namespace isc {
+namespace data {
+
+namespace {
+inline void
 throwParseError(const std::string& error, const std::string& file, int line = 0, int pos = 0)
 {
     if (line != 0 || pos != 0) {
@@ -53,6 +57,7 @@ throwParseError(const std::string& error, const std::string& file, int line = 0,
     } else {
         throw ParseError(error);
     }
+}
 }
 
 std::ostream& operator <<(std::ostream &out, const isc::data::ElementPtr& e) {
@@ -124,8 +129,8 @@ Element::create(const std::map<std::string, ElementPtr>& m) {
 //
 // helper functions for createFromString factory
 //
-
-static bool
+namespace {
+bool
 char_in(const char c, const char *chars) {
     for (size_t i = 0; i < strlen(chars); ++i) {
         if (chars[i] == c) {
@@ -135,7 +140,7 @@ char_in(const char c, const char *chars) {
     return false;
 }
 
-static void
+void
 skip_chars(std::istream &in, const char *chars, int& line, int& pos) {
     char c = in.peek();
     while (char_in(c, chars) && c != EOF) {
@@ -155,7 +160,7 @@ skip_chars(std::istream &in, const char *chars, int& line, int& pos) {
 // unless that character is specified in the optional may_skip
 //
 // the character found is left on the stream
-static void
+void
 skip_to(std::istream &in, const std::string& file, int& line,
         int& pos, const char* chars, const char* may_skip="")
 {
@@ -188,7 +193,7 @@ skip_to(std::istream &in, const std::string& file, int& line,
     throwParseError(std::string("EOF read, one of \"") + chars + "\" expected", file, line, pos);
 }
 
-static std::string
+std::string
 str_from_stringstream(std::istream &in, const std::string& file, int& line, int& pos) throw (ParseError)
 {
     char c = 0;
@@ -213,7 +218,7 @@ str_from_stringstream(std::istream &in, const std::string& file, int& line, int&
     return ss.str();
 }
 
-static std::string
+std::string
 word_from_stringstream(std::istream &in, int& line, int& pos) {
     std::stringstream ss;
     while (isalpha(in.peek())) {
@@ -223,7 +228,7 @@ word_from_stringstream(std::istream &in, int& line, int& pos) {
     return ss.str();
 }
 
-static inline int
+inline int
 count_chars_i(int i) {
     int result = 1;
     while (i > 10) {
@@ -233,7 +238,7 @@ count_chars_i(int i) {
     return result;
 }
 
-static inline int
+inline int
 count_chars_d(double d) {
     int result = 1;
     while (d < 1.0) {
@@ -243,7 +248,7 @@ count_chars_d(double d) {
     return result;
 }
 
-static ElementPtr
+ElementPtr
 from_stringstream_int_or_double(std::istream &in, int &line, int &pos) {
     int i;
     in >> i;
@@ -259,7 +264,7 @@ from_stringstream_int_or_double(std::istream &in, int &line, int &pos) {
     }
 }
 
-static ElementPtr
+ElementPtr
 from_stringstream_bool(std::istream &in, const std::string& file, int& line, int& pos)
 {
     const std::string word = word_from_stringstream(in, line, pos);
@@ -274,13 +279,13 @@ from_stringstream_bool(std::istream &in, const std::string& file, int& line, int
     }
 }
 
-static ElementPtr
+ElementPtr
 from_stringstream_string(std::istream& in, const std::string& file, int& line, int& pos)
 {
     return Element::create(str_from_stringstream(in, file, line, pos));
 }
 
-static ElementPtr
+ElementPtr
 from_stringstream_list(std::istream &in, const std::string& file, int& line, int& pos)
 {
     char c = 0;
@@ -300,7 +305,7 @@ from_stringstream_list(std::istream &in, const std::string& file, int& line, int
     return Element::create(v);
 }
 
-static ElementPtr
+ElementPtr
 from_stringstream_map(std::istream &in, const std::string& file, int& line, int& pos)
 {
     char c = 0;
@@ -328,6 +333,7 @@ from_stringstream_map(std::istream &in, const std::string& file, int& line, int&
         }
     }
     return Element::create(m);
+}
 }
 
 ElementPtr
@@ -511,10 +517,10 @@ MapElement::find(const std::string& id) {
 //
 // Decode from wire format.
 //
-
+namespace {
 ElementPtr decode_element(std::stringstream& in, int& in_length);
 
-static unsigned char
+unsigned char
 get_byte(std::stringstream& in) {
     const int c = in.get();
     if (c == EOF) {
@@ -687,6 +693,7 @@ decode_element(std::stringstream& in, int& in_length) {
 
     return (element);
 }
+}
 
 ElementPtr
 Element::fromWire(const std::string& s) {
@@ -805,11 +812,13 @@ ListElement::toWire(std::stringstream& ss, const int omit_length) {
     }
 }
 
+namespace {
 void
 encode_tag(std::stringstream& ss, const std::string &s) {
     const unsigned char val = s.length() & 0x000000ff;
 
     ss << val << s;
+}
 }
 
 void
@@ -939,12 +948,12 @@ MapElement::equals(ElementPtr other) {
 }
 
 bool
-isc::data::isNull(ElementPtr p) {
+isNull(ElementPtr p) {
     return !p;
 }
 
 void
-isc::data::removeIdentical(ElementPtr a, const ElementPtr b) {
+removeIdentical(ElementPtr a, const ElementPtr b) {
     if (!b) {
         return;
     }
@@ -964,7 +973,7 @@ isc::data::removeIdentical(ElementPtr a, const ElementPtr b) {
 }
 
 void
-isc::data::merge(ElementPtr element, const ElementPtr other) {
+merge(ElementPtr element, const ElementPtr other) {
     if (element->getType() != Element::map ||
         other->getType() != Element::map) {
         isc_throw(TypeError, "merge arguments not MapElements");
@@ -981,3 +990,5 @@ isc::data::merge(ElementPtr element, const ElementPtr other) {
     }
 }
 
+}
+}
