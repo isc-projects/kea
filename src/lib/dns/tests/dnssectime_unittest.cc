@@ -27,8 +27,7 @@ using namespace isc::dns;
 
 namespace {
 
-TEST(DNSSECTimeTest, fromText)
-{
+TEST(DNSSECTimeTest, fromText) {
     // These are bogus and should be rejected
     EXPECT_THROW(timeFromText("2011 101120000"), InvalidTime);
     EXPECT_THROW(timeFromText("201101011200-0"), InvalidTime);
@@ -57,14 +56,12 @@ TEST(DNSSECTimeTest, fromText)
     EXPECT_THROW(timeFromText("20110101120061"), InvalidTime); // SS=61
 }
 
-TEST(DNSSECTimeTest, toText)
-{
+TEST(DNSSECTimeTest, toText) {
     EXPECT_EQ("19700101000000", timeToText(0));
     EXPECT_EQ("20100311233000", timeToText(1268350200));
 }
 
-TEST(DNSSECTimeTest, overflow)
-{
+TEST(DNSSECTimeTest, overflow) {
     // Jan 1, Year 10,000.
     if (sizeof(time_t) > 4) {
         EXPECT_THROW(timeToText(253402300800LL), InvalidTime);
