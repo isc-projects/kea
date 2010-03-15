@@ -39,7 +39,7 @@ except ImportError:
     from bindctl.mycollections import OrderedDict
 
 
-CONST_BINDCTL_HELP = """BindCtl, verstion 0.1
+CONST_BINDCTL_HELP = """BindCtl, version 0.1
 usage: <module name> <command name> [param1 = value1 [, param2 = value2]]
 Type Tab character to get the hint of module/command/paramters.
 Type \"help(? h)\" for help on bindctl.
