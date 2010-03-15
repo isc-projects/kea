@@ -32,6 +32,7 @@ class Session:
         self._recvlength = 0
         self._sequence = 1
         self._closed = False
+        self._queue = []
 
         try:
             self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -75,7 +76,18 @@ class Session:
         if msg:
             self._socket.send(msg)
 
-    def recvmsg(self, nonblock = True):
+    def recvmsg(self, nonblock = True, seq = None):
+        if len(self._queue) > 0:
+            if seq == None:
+                msg, env = self._queue.pop(0)
+            else:
+                i = 0;
+                for msg, env in self._queue:
+                    if "reply" in env and seq == env["reply"]:
+                        self._queue.remove(i)
+                        return env, msg
+                    else:
+                        i = i + 1
         if self._closed:
             raise SessionError("Session has been closed.")
         data = self._receive_full_buffer(nonblock)
@@ -83,7 +95,13 @@ class Session:
             header_length = struct.unpack('>H', data[0:2])[0]
             data_length = len(data) - 2 - header_length
             if data_length > 0:
-                return isc.cc.message.from_wire(data[2:header_length+2]), isc.cc.message.from_wire(data[header_length + 2:])
+                env = isc.cc.message.from_wire(data[2:header_length+2])
+                msg = isc.cc.message.from_wire(data[header_length + 2:])
+                if seq == None or "reply" in env and seq == env["reply"]:
+                    return env, msg
+                else:
+                    self._queue.append((env,msg))
+                    self.recvmsg(nonblock, seq)
             else:
                 return isc.cc.message.from_wire(data[2:header_length+2]), None
         return None, None
@@ -155,8 +173,8 @@ class Session:
         }, isc.cc.message.to_wire(msg))
         return seq
 
-    def group_recvmsg(self, nonblock = True):
-        env, msg  = self.recvmsg(nonblock)
+    def group_recvmsg(self, nonblock = True, seq = None):
+        env, msg  = self.recvmsg(nonblock, seq)
         if env == None:
             # return none twice to match normal return value
             # (so caller won't get a type error on no data)

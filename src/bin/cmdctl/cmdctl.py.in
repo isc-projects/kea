@@ -296,9 +296,9 @@ class CommandControl():
         print('b10-cmdctl send command \'%s\' to %s' %(command_name, module_name))
         try:
             msg = isc.config.ccsession.create_command(command_name, params)
-            self.cc.group_sendmsg(msg, module_name)
+            seq = self.cc.group_sendmsg(msg, module_name)
             #TODO, it may be blocked, msqg need to add a new interface waiting in timeout.
-            answer, env = self.cc.group_recvmsg(False)
+            answer, env = self.cc.group_recvmsg(False, seq)
             if answer:
                 try:
                     rcode, arg = isc.config.ccsession.parse_answer(answer)
