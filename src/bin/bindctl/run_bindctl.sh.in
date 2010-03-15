@@ -9,4 +9,4 @@ PYTHONPATH=@abs_top_builddir@/src/lib/python:@abs_top_builddir@/src/bin
 export PYTHONPATH
 
 cd ${BINDCTL_PATH}
-exec ${PYTHON_EXEC} -O bindctl.py $*
+exec ${PYTHON_EXEC} -O bindctl $*
