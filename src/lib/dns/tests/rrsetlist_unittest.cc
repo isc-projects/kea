@@ -34,8 +34,12 @@ using namespace isc::dns::rdata;
 namespace {
 class RRsetListTest : public ::testing::Test {
 protected:
-    RRsetListTest() {}
+    RRsetListTest() : example_name(Name("example.com")),
+                      example_ttl(RRTTL(3600))
+    {}
     void setupList(RRsetList& list);
+    Name example_name;
+    RRTTL example_ttl;
 };
 
 const in::A rdata_in_a("192.0.2.1");
@@ -48,15 +52,15 @@ const generic::CNAME rdata_cname("target.example.com");
 void
 RRsetListTest::setupList(RRsetList& list) {
     RRsetPtr a(new RRset(Name("example.com"), RRClass::IN(),
-                         RRType::A(), RRTTL(3600)));
+                         RRType::A(), example_ttl));
     RRsetPtr aaaa(new RRset(Name("example.com"), RRClass::IN(),
-                            RRType::AAAA(), RRTTL(3600)));
+                            RRType::AAAA(), example_ttl));
     RRsetPtr ns(new RRset(Name("example.com"), RRClass::IN(),
-                          RRType::NS(), RRTTL(3600)));
+                          RRType::NS(), example_ttl));
     RRsetPtr soa(new RRset(Name("example.com"), RRClass::IN(),
-                           RRType::SOA(), RRTTL(3600)));
+                           RRType::SOA(), example_ttl));
     RRsetPtr cname(new RRset(Name("example.com"), RRClass::IN(),
-                             RRType::CNAME(), RRTTL(3600)));
+                             RRType::CNAME(), example_ttl));
 
     a->addRdata(rdata_in_a);
     aaaa->addRdata(rdata_in_aaaa);
@@ -86,55 +90,47 @@ TEST_F(RRsetListTest, extraRRset) {
     RRsetList list;
     setupList(list);
     RRsetPtr cname(new RRset(Name("another.example.com"), RRClass::IN(),
-                             RRType::CNAME(), RRTTL(3600)));
+                             RRType::CNAME(), example_ttl));
     EXPECT_THROW(list.addRRset(cname), DuplicateRRset);
 }
 
-TEST_F(RRsetListTest, randomAccess) {
-    RRsetList list;
-    setupList(list);
-
-    RRsetPtr p;
-
-    p = list[RRType::CNAME()];
-    EXPECT_EQ(p->getType(), RRType::CNAME());
-
-    p = list[RRType::AAAA()];
-    EXPECT_EQ(p->getType(), RRType::AAAA());
-
-    p = list[RRType::NS()];
-    EXPECT_EQ(p->getType(), RRType::NS());
-
-    p = list[RRType::A()];
-    EXPECT_EQ(p->getType(), RRType::A());
-
-    p = list[RRType::SOA()];
-    EXPECT_EQ(p->getType(), RRType::SOA());
-
-    // What should this be?
-    p = RRsetPtr(new RRset(Name("example.com"), RRClass::CH(),
-                           RRType::DNAME(), RRTTL(3600)));
-    list.addRRset(p);
-    p = list[RRType::DNAME()];
-    //This will crash, but it's counter intuitive, isn't it?  We added a DNAME
-    //RRset and fetched a DNAME RRset in the list.  Why can't it succeed?
-    //EXPECT_EQ(p->getType(), RRType::DNAME());
+void
+checkFindResult(RRsetList& list, const Name& name,
+                const RRType& rrtype, const RRClass& rrclass,
+                const RRTTL& rrttl)
+{
+    RRsetPtr rrset = list.findRRset(rrtype, rrclass);;
+    EXPECT_EQ(name, rrset->getName());
+    EXPECT_EQ(rrtype, rrset->getType());
+    EXPECT_EQ(rrclass, rrset->getClass());
+    EXPECT_EQ(rrttl, rrset->getTTL());
 }
 
 TEST_F(RRsetListTest, findRRset) {
     RRsetList list;
     setupList(list);
-    EXPECT_EQ(list[RRType::A()], list.findRRset(RRType::A(), RRClass::IN()));
+ 
+    checkFindResult(list, example_name, RRType::A(), RRClass::IN(),
+                    example_ttl);
+    checkFindResult(list, example_name, RRType::CNAME(), RRClass::IN(),
+                    example_ttl);
+    checkFindResult(list, example_name, RRType::AAAA(), RRClass::IN(),
+                    example_ttl);
+    checkFindResult(list, example_name, RRType::NS(), RRClass::IN(),
+                    example_ttl);
+    checkFindResult(list, example_name, RRType::SOA(), RRClass::IN(),
+                    example_ttl);
 }
 
 TEST_F(RRsetListTest, checkData) {
     RRsetList list;
     RRsetPtr a(new RRset(Name("example.com"), RRClass::IN(),
-                         RRType::A(), RRTTL(3600)));
+                         RRType::A(), example_ttl));
     a->addRdata(rdata_in_a);
     list.addRRset(a);
 
-    RdataIteratorPtr it = list[RRType::A()]->getRdataIterator();
+    RdataIteratorPtr it =
+        list.findRRset(RRType::A(), RRClass::IN())->getRdataIterator();
     it->first();
     EXPECT_FALSE(it->isLast());
     EXPECT_EQ("192.0.2.1", it->getCurrent().toText());

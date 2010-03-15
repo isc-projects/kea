@@ -16,13 +16,14 @@
 
 #include <vector>
 
-#include <boost/shared_ptr.hpp>
 #include <boost/foreach.hpp>
 
-#include "rrsetlist.h"
+#include <exceptions/exceptions.h>
 
-using namespace std;
-using namespace isc::dns;
+#include "rrclass.h"
+#include "rrtype.h"
+#include "rrset.h"
+#include "rrsetlist.h"
 
 namespace isc {
 namespace dns {
@@ -33,20 +34,11 @@ RRsetList::addRRset(RRsetPtr rrsetptr)
     ConstRRsetPtr rrset_found = findRRset(rrsetptr->getType(),
                                           rrsetptr->getClass());
     if (rrset_found != NULL) {
-        isc_throw(DuplicateRRset, "");
+        isc_throw(DuplicateRRset, "RRset is being doubly added to RRsetList: "
+                  "type=" << rrsetptr->getType() << ", class=" <<
+                  rrsetptr->getClass());
     }
     rrsets_.push_back(rrsetptr);
-}
-
-RRsetPtr
-RRsetList::findRRset(ConstRRsetPtr rrsetptr)
-{
-    BOOST_FOREACH(RRsetPtr t, rrsets_) {
-        if (rrsetptr == t) {
-            return t;
-        }
-    }
-    return RRsetPtr();
 }
 
 RRsetPtr
