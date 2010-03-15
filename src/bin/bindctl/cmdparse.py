@@ -14,11 +14,11 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 import re
-from exception import *
+from bindctl.exception import *
 try:
     from collections import OrderedDict
 except ImportError:
-    from mycollections import OrderedDict
+    from bindctl.mycollections import OrderedDict
 
 param_name_str = "^\s*(?P<param_name>[\w]+)\s*=\s*"
 param_value_str = "(?P<param_value>[\w\./-]+)"
