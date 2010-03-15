@@ -36,6 +36,7 @@
 
 #include <auth/query.h>
 #include <auth/sqlite3_datasrc.h>
+#include <auth/static_datasrc.h>
 
 #include "unittest_util.h"
 #include "test_datasrc.h"
@@ -58,8 +59,10 @@ protected:
         sql3_source->init(SQLITE_DBFILE_EXAMPLE);
         DataSrcPtr test_source = DataSrcPtr(new TestDataSrc);
         test_source->init();
+        DataSrcPtr static_source = DataSrcPtr(new StaticDataSrc);
         meta_source.addDataSrc(test_source);
         meta_source.addDataSrc(sql3_source);
+        meta_source.addDataSrc(static_source);
     }
     void QueryCommon(const RRClass& qclass);
     void readAndProcessQuery(const char* datafile);
@@ -718,6 +721,20 @@ TEST_F(DataSrcTest, RootDSQuery) {
     createAndProcessQuery(Name("."), RRClass::IN(), RRType::DS());
 }
 #endif
+
+// Non-existent name in the "static" data source.  The purpose of this test
+// is to check a corner case behavior when atypical RRClass (CH in this case)
+// is specified.
+TEST_F(DataSrcTest, StaticNxDomain) {
+    createAndProcessQuery(Name("www.version.bind"), RRClass::CH(),
+                          RRType::TXT());
+    headerCheck(msg, Rcode::NXDOMAIN(), true, true, true, 0, 1, 0);
+    RRsetIterator rit = msg.beginSection(Section::AUTHORITY());
+    RRsetPtr rrset = *rit;
+    EXPECT_EQ(Name("version.bind"), rrset->getName());
+    EXPECT_EQ(RRType::SOA(), rrset->getType());
+    EXPECT_EQ(RRClass::CH(), rrset->getClass());
+}
 
 TEST_F(DataSrcTest, Nsec3Hash) {
     vector<uint8_t> salt;
