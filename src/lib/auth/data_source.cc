@@ -232,16 +232,19 @@ hasDelegation(const DataSrc* ds, const Name* zonename, Query& q,
         // Found a referral while getting answer data;
         // send a delegation.
         if (found) {
-            if (RRsetPtr r = ref[RRType::DNAME()]) {
+            RRsetPtr r = ref.findRRset(RRType::DNAME(), q.qclass());
+            if (r != NULL) {
                 RRsetList syn;
                 q.message().addRRset(Section::ANSWER(), r, q.wantDnssec());
                 q.message().setHeaderFlag(MessageFlag::AA());
                 synthesizeCname(task, r, syn);
                 if (syn.size() == 1) {
                     q.message().addRRset(Section::ANSWER(),
-                                         syn[RRType::CNAME()],
+                                         syn.findRRset(RRType::CNAME(),
+                                                       q.qclass()),
                                          q.wantDnssec());
-                    chaseCname(q, task, syn[RRType::CNAME()]);
+                    chaseCname(q, task, syn.findRRset(RRType::CNAME(),
+                                                      q.qclass()));
                     return (true);
                 }
             }
@@ -274,7 +277,8 @@ addSOA(Query& q, const Name* zonename, const DataSrc* ds) {
         return (DataSrc::ERROR);
     }
 
-    m.addRRset(Section::AUTHORITY(), soa[RRType::SOA()], q.wantDnssec());
+    m.addRRset(Section::AUTHORITY(), soa.findRRset(RRType::SOA(), q.qclass()),
+               q.wantDnssec());
     return (DataSrc::SUCCESS);
 }
 
@@ -289,19 +293,20 @@ addNSEC(Query& q, const QueryTaskPtr task, const Name& name,
                       QueryTask::SIMPLE_QUERY); 
     RETERR(doQueryTask(ds, &zonename, newtask, nsec));
     if (newtask.flags == 0) {
-        m.addRRset(Section::AUTHORITY(), nsec[RRType::NSEC()], true);
+        m.addRRset(Section::AUTHORITY(), nsec.findRRset(RRType::NSEC(),
+                                                        q.qclass()), true);
     }
 
     return (DataSrc::SUCCESS);
 }
 
 static inline DataSrc::Result
-getNsec3(const DataSrc* ds, const Name& zonename, string& hash, 
-         RRsetPtr& target)
+getNsec3(const DataSrc* ds, const Name& zonename, const RRClass& qclass,
+         string& hash, RRsetPtr& target)
 {
     RRsetList rl;
     RETERR(ds->findCoveringNSEC3(zonename, hash, rl));
-    target = rl[RRType::NSEC3()];
+    target = rl.findRRset(RRType::NSEC3(), qclass);
     return (DataSrc::SUCCESS);
 }
 
@@ -318,7 +323,7 @@ getNsec3Param(Query& q, const DataSrc* ds, const Name& zonename) {
         return (ConstNsec3ParamPtr());
     }
 
-    RRsetPtr rrset = nsec3param[RRType::NSEC3PARAM()];
+    RRsetPtr rrset = nsec3param.findRRset(RRType::NSEC3PARAM(), q.qclass());
     if (!rrset) {
         return (ConstNsec3ParamPtr());
     }
@@ -347,7 +352,7 @@ proveNX(Query& q, QueryTaskPtr task, const DataSrc* ds, const Name& zonename)
         // Attach the NSEC3 record covering the QNAME
         RRsetPtr rrset;
         string hash1(nsec3->getHash(task->qname)), hash2;
-        RETERR(getNsec3(ds, zonename, hash1, rrset));
+        RETERR(getNsec3(ds, zonename, q.qclass(), hash1, rrset));
         m.addRRset(Section::AUTHORITY(), rrset, true);
 
         // If this is an NXRRSET or NOERROR/NODATA, we're done
@@ -370,7 +375,7 @@ proveNX(Query& q, QueryTaskPtr task, const DataSrc* ds, const Name& zonename)
 
             // hash2 will be overwritten with the actual hash found;
             // we don't want to use one until we find an exact match
-            RETERR(getNsec3(ds, zonename, hash2, rrset));
+            RETERR(getNsec3(ds, zonename, q.qclass(), hash2, rrset));
             if (hash2 == nodehash) {
                 m.addRRset(Section::AUTHORITY(), rrset, true);
                 break;
@@ -380,7 +385,7 @@ proveNX(Query& q, QueryTaskPtr task, const DataSrc* ds, const Name& zonename)
         // Now add a covering NSEC3 for a wildcard under the
         // closest provable enclosing name
         string hash3(nsec3->getHash(Name("*").concatenate(enclosure)));
-        RETERR(getNsec3(ds, zonename, hash3, rrset));
+        RETERR(getNsec3(ds, zonename, q.qclass(), hash3, rrset));
         if (hash3 != hash1 && hash3 != hash2) {
             m.addRRset(Section::AUTHORITY(), rrset, true);
         }
@@ -453,7 +458,8 @@ tryWildcard(Query& q, QueryTaskPtr task, const DataSrc* ds,
     // add authority.
     if (found) {
         if ((rflags & DataSrc::CNAME_FOUND) != 0) {
-            if (RRsetPtr rrset = wild[RRType::CNAME()]) {
+            RRsetPtr rrset = wild.findRRset(RRType::CNAME(), q.qclass());
+            if (rrset != NULL) {
                 rrset->setName(task->qname);
                 m.addRRset(Section::ANSWER(), rrset, q.wantDnssec());
                 chaseCname(q, task, rrset);
@@ -611,7 +617,8 @@ DataSrc::doQuery(Query& q)
         } else if ((task->flags & CNAME_FOUND) != 0) {
             // The qname node contains a CNAME.  Add a new task to the
             // queue to look up its target.
-            if (RRsetPtr rrset = data[RRType::CNAME()]) {
+            RRsetPtr rrset = data.findRRset(RRType::CNAME(), q.qclass());
+            if (rrset != NULL) {
                 m.addRRset(task->section, rrset, q.wantDnssec());
                 chaseCname(q, task, rrset);
             }
