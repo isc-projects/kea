@@ -45,7 +45,8 @@ protected:
                              authors_name("authors.bind"),
                              nomatch_name("example.com"),
                              rrclass(RRClass::CH()), rrtype(RRType::TXT()),
-                             rrttl(RRTTL(0)), find_flags(0), matched_rdata(0)
+                             rrttl(RRTTL(0)), soa_rrttl(RRTTL(86400)),
+                             find_flags(0), matched_rdata(0)
     {
         // XXX: the following values can change as release/developers change,
         // in which case the test code must be updated accordingly.
@@ -66,6 +67,11 @@ protected:
 
         version_ns_data.push_back("version.bind.");
         authors_ns_data.push_back("authors.bind.");
+
+        version_soa_data.push_back("version.bind. hostmaster.version.bind. "
+                                   "0 28800 7200 604800 86400");
+        authors_soa_data.push_back("authors.bind. hostmaster.authors.bind. "
+                                   "0 28800 7200 604800 86400");
     }
     StaticDataSrc data_source;
     const Name version_name;
@@ -74,6 +80,7 @@ protected:
     const RRClass rrclass;
     RRType rrtype;              // we allow this to be modified in the test
     RRTTL rrttl;
+    RRTTL soa_rrttl;
     RRsetList result_sets;
     uint32_t find_flags;
     unsigned matched_rdata;
@@ -81,6 +88,8 @@ protected:
     vector<string> authors_data;
     vector<string> version_ns_data;
     vector<string> authors_ns_data;
+    vector<string> version_soa_data;
+    vector<string> authors_soa_data;
 };
 
 void
@@ -218,6 +227,14 @@ TEST_F(StaticDataSourceTest, findRRsetVersionNS) {
               rrtype, rrttl, 0, version_ns_data);
 }
 
+TEST_F(StaticDataSourceTest, findRRsetVersionSOA) {
+    rrtype = RRType::SOA();
+    checkFind(data_source, version_name, NULL, rrclass, rrclass,
+              rrtype, soa_rrttl, 0, version_soa_data);
+    checkFind(data_source, version_name, &version_name, rrclass, rrclass,
+              rrtype, soa_rrttl, 0, version_soa_data);
+}
+
 TEST_F(StaticDataSourceTest, findRRsetAuthorsTXT) {
     checkFind(data_source, authors_name, NULL, rrclass, rrclass,
               rrtype, rrttl, 0, authors_data);
@@ -231,6 +248,14 @@ TEST_F(StaticDataSourceTest, findRRsetAuthorsNS) {
               rrtype, rrttl, 0, authors_ns_data);
     checkFind(data_source, authors_name, &authors_name, rrclass, rrclass,
               rrtype, rrttl, 0, authors_ns_data);
+}
+
+TEST_F(StaticDataSourceTest, findRRsetAuthorsSOA) {
+    rrtype = RRType::SOA();
+    checkFind(data_source, authors_name, NULL, rrclass, rrclass,
+              rrtype, soa_rrttl, 0, authors_soa_data);
+    checkFind(data_source, authors_name, &authors_name, rrclass, rrclass,
+              rrtype, soa_rrttl, 0, authors_soa_data);
 }
 
 // Class ANY lookup should result in the same answer.

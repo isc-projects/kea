@@ -59,8 +59,10 @@ public:
     // We should revisit this design later.
     RRsetPtr authors;
     RRsetPtr authors_ns;
+    RRsetPtr authors_soa;
     RRsetPtr version;
     RRsetPtr version_ns;
+    RRsetPtr version_soa;
 };
 
 StaticDataSrcImpl::StaticDataSrcImpl() :
@@ -84,6 +86,12 @@ StaticDataSrcImpl::StaticDataSrcImpl() :
                                     RRType::NS(), RRTTL(0)));
     authors_ns->addRdata(generic::NS(authors_name));
 
+    authors_soa = RRsetPtr(new RRset(authors_name, RRClass::CH(),
+                                     RRType::SOA(), RRTTL(86400)));
+    authors_soa->addRdata(generic::SOA(
+                              "authors.bind. hostmaster.authors.bind. "
+                              "0 28800 7200 604800 86400"));
+
     version = RRsetPtr(new RRset(version_name, RRClass::CH(),
                                  RRType::TXT(), RRTTL(0)));
     version->addRdata(generic::TXT("BIND10 0.0.0 (pre-alpha)"));
@@ -91,6 +99,12 @@ StaticDataSrcImpl::StaticDataSrcImpl() :
     version_ns = RRsetPtr(new RRset(version_name, RRClass::CH(),
                                     RRType::NS(), RRTTL(0)));
     version_ns->addRdata(generic::NS(version_name));
+
+    version_soa = RRsetPtr(new RRset(version_name, RRClass::CH(),
+                                     RRType::SOA(), RRTTL(86400)));
+    version_soa->addRdata(generic::SOA(
+                              "version.bind. hostmaster.version.bind. "
+                               "0 28800 7200 604800 86400"));
 }
 
 StaticDataSrc::StaticDataSrc()
@@ -177,6 +191,8 @@ StaticDataSrc::findRRset(const Name& qname,
                 target.addRRset(impl_->version);
             } else if (qtype == RRType::NS()) {
                 target.addRRset(impl_->version_ns);
+            } else if (qtype == RRType::SOA()) {
+                target.addRRset(impl_->version_soa);
             } else {
                 flags = TYPE_NOT_FOUND;
             }
@@ -191,6 +207,9 @@ StaticDataSrc::findRRset(const Name& qname,
                 return (SUCCESS);
             } else if (qtype == RRType::NS()) {
                 target.addRRset(impl_->authors_ns);
+                return (SUCCESS);
+            } else if (qtype == RRType::SOA()) {
+                target.addRRset(impl_->authors_soa);
                 return (SUCCESS);
             } else {
                 flags = TYPE_NOT_FOUND;
