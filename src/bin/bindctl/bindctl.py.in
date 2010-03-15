@@ -18,9 +18,9 @@
 
 import sys; sys.path.append ('@@PYTHONPATH@@')
 
-from moduleinfo  import *
-from bindcmd import *
-import isc
+import bindctl
+from bindctl.moduleinfo import *
+from bindctl.bindcmd import *
 import pprint
 from optparse import OptionParser, OptionValueError
 

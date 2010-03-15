@@ -16,9 +16,9 @@
 import sys
 import readline
 from cmd import Cmd
-from exception import *
-from moduleinfo import *
-from cmdparse import BindCmdParse
+from bindctl.exception import *
+from bindctl.moduleinfo import *
+from bindctl.cmdparse import BindCmdParse
 from xml.dom import minidom
 import isc
 import isc.cc.data
@@ -36,7 +36,7 @@ import ast
 try:
     from collections import OrderedDict
 except ImportError:
-    from mycollections import OrderedDict
+    from bindctl.mycollections import OrderedDict
 
 
 CONST_BINDCTL_HELP = """BindCtl, verstion 0.1

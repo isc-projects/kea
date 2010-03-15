@@ -17,7 +17,7 @@
 try:
     from collections import OrderedDict
 except ImportError:
-    from mycollections import OrderedDict
+    from bindctl.mycollections import OrderedDict
 
 # Define value type
 STRING_TYPE = "string"
