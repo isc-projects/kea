@@ -108,7 +108,7 @@ StaticDataSrc::findClosestEnclosure(NameMatch& match,
     const Name& qname = match.qname();
     NameComparisonResult::NameRelation cmp;
 
-    if (qclass != getClass()) {
+    if (qclass != getClass() && qclass != RRClass::ANY()) {
         return;
     }
 
@@ -134,7 +134,7 @@ StaticDataSrc::findRRset(const Name& qname,
                          const Name* zonename) const
 {
     flags = 0;
-    if (qclass != getClass()) {
+    if (qclass != getClass() && qclass != RRClass::ANY()) {
         return (ERROR);
     }
 

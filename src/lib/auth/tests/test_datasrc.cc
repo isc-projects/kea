@@ -451,7 +451,7 @@ TestDataSrc::findClosestEnclosure(NameMatch& match,
     const Name& qname = match.qname();
     NameComparisonResult::NameRelation cmp;
 
-    if (qclass != getClass()) {
+    if (qclass != getClass() && qclass != RRClass::ANY()) {
         return;
     }
 
@@ -726,6 +726,10 @@ TestDataSrc::findRRset(const Name& qname,
                        uint32_t& flags,
                        const Name* zonename) const
 {
+    if (qclass != getClass() && qclass != RRClass::ANY()) {
+        return (ERROR);
+    }
+
     findRecords(qname, qtype, target, zonename, NORMAL, flags);
     return (SUCCESS);
 }
@@ -738,6 +742,10 @@ TestDataSrc::findExactRRset(const Name& qname,
                             uint32_t& flags,
                             const Name* zonename) const
 {
+    if (qclass != getClass() && qclass != RRClass::ANY()) {
+        return (ERROR);
+    }
+
     findRecords(qname, qtype, target, zonename, NORMAL, flags);
     // Ignore referrals in this case
     flags &= ~REFERRAL;
@@ -758,6 +766,10 @@ TestDataSrc::findAddrs(const Name& qname,
                        uint32_t& flags,
                        const Name* zonename) const
 {
+    if (qclass != getClass() && qclass != RRClass::ANY()) {
+        return (ERROR);
+    }
+
     findRecords(qname, RRType::ANY(), target, zonename, ADDRESS, flags);
     return (SUCCESS);
 }
@@ -769,6 +781,10 @@ TestDataSrc::findReferral(const Name& qname,
                           uint32_t& flags,
                           const Name* zonename) const
 {
+    if (qclass != getClass() && qclass != RRClass::ANY()) {
+        return (ERROR);
+    }
+
     findRecords(qname, RRType::ANY(), target, zonename, DELEGATION, flags);
     return (SUCCESS);
 }
