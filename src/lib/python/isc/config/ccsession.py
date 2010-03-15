@@ -296,7 +296,7 @@ class ModuleCCSession(ConfigData):
                         self._config_handler(value)
             else:
                 # log error
-                print("Error requesting configuration: " + value)
+                print("[" + self._module_name + "] Error requesting configuration: " + value)
         else:
             raise ModuleCCSessionError("No answer from configuration manager")
 
