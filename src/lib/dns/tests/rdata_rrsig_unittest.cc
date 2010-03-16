@@ -87,6 +87,12 @@ TEST_F(Rdata_RRSIG_Test, badText)
                      "20100223214617 20100222214617 8496 isc.org. "
                      "EEeeeeeeEEEeeeeeeGaaahAAAAAAAAHHHHHHHHHHH!="),
                      BadBase64String);
+
+#if 0                           // this currently fails
+    // no space between the tag and signer
+    EXPECT_THROW(generic::RRSIG("A 5 4 43200 20100223214617 20100222214617 "
+                                "8496isc.org. ofc="), InvalidRdataText);
+#endif
 }
 
 TEST_F(Rdata_RRSIG_Test, toWireRenderer)

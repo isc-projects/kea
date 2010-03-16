@@ -72,6 +72,12 @@ TEST_F(Rdata_NSEC3_Test, badText)
                                             "0123456789ABCDEFGHIJKLMNOPQRSTUV "
                                             "A NS SOA"),
                  InvalidRdataText);
+
+#if 0 // this currently fails
+    EXPECT_THROW(generic::NSEC3(
+                     "1 1 1D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6 "
+                     "NS SOA RRSIG DNSKEY NSEC3PARAM"), InvalidRdataText);
+#endif
 }
 
 TEST_F(Rdata_NSEC3_Test, createFromWire)

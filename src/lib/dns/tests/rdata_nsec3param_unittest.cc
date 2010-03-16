@@ -49,16 +49,15 @@ TEST_F(Rdata_NSEC3PARAM_Test, toText)
 
 TEST_F(Rdata_NSEC3PARAM_Test, badText)
 {
-    EXPECT_THROW(generic::NSEC3PARAM rdata_nsec3param("1 1 1 SPORK"),
-                 BadHexString);
-    EXPECT_THROW(generic::NSEC3PARAM rdata_nsec3param("100000 1 1 ADDAFEE"),
-                 InvalidRdataText);
-    EXPECT_THROW(generic::NSEC3PARAM rdata_nsec3param("1 100000 1 ADDAFEE"),
-                 InvalidRdataText);
-    EXPECT_THROW(generic::NSEC3PARAM rdata_nsec3param("1 1 100000 ADDAFEE"),
-                 InvalidRdataText);
-    EXPECT_THROW(generic::NSEC3PARAM rdata_nsec3param("1"),
-                 InvalidRdataText);
+    EXPECT_THROW(generic::NSEC3PARAM("1 1 1 SPORK"), BadHexString);
+    EXPECT_THROW(generic::NSEC3PARAM("100000 1 1 ADDAFEE"), InvalidRdataText);
+    EXPECT_THROW(generic::NSEC3PARAM("1 100000 1 ADDAFEE"), InvalidRdataText);
+    EXPECT_THROW(generic::NSEC3PARAM("1 1 100000 ADDAFEE"), InvalidRdataText);
+    EXPECT_THROW(generic::NSEC3PARAM("1"), InvalidRdataText);
+
+#if 0                           // this currently fails
+    EXPECT_THROW(generic::NSEC3PARAM("1 0 1D399EAAB"), InvalidRdataText);
+#endif
 }
 
 TEST_F(Rdata_NSEC3PARAM_Test, createFromWire)
