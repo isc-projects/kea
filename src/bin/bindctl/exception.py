@@ -13,7 +13,7 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-
+"""This module holds exception classes specific for bindctl"""
 class BindCtlException(Exception):
     """Abstract base class shared by all bindctl exceptions"""
     def __str__(self):

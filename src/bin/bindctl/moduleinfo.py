@@ -13,6 +13,8 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+"""This module holds classes representing modules, commands and
+   parameters for use in bindctl"""
 
 try:
     from collections import OrderedDict

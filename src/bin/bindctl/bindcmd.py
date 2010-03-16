@@ -13,6 +13,11 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+"""This module holds the BindCmdInterpreter class. This provides the
+   core functionality for bindctl. It maintains a session with
+   b10-cmdctl, holds local configuration and module information, and
+   handles command line interface commands"""
+
 import sys
 from cmd import Cmd
 from bindctl.exception import *
