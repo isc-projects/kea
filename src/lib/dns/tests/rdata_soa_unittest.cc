@@ -36,25 +36,21 @@ class Rdata_SOA_Test : public RdataTest {
     // there's nothing to specialize
 };
 
-const generic::SOA rdata_soa(Name("ns.example.com"),
-                                        Name("root.example.com"),
-                                        2010012601, 3600, 300, 3600000, 1200);
+const generic::SOA rdata_soa(Name("ns.example.com"), Name("root.example.com"),
+                             2010012601, 3600, 300, 3600000, 1200);
 
-TEST_F(Rdata_SOA_Test, createFromText)
-{
+TEST_F(Rdata_SOA_Test, createFromText) {
     //TBD
 }
 
-TEST_F(Rdata_SOA_Test, createFromWire)
-{
+TEST_F(Rdata_SOA_Test, createFromWire) {
     EXPECT_EQ(0, rdata_soa.compare(
                   *rdataFactoryFromFile(RRType("SOA"), RRClass("IN"),
                                         "testdata/rdata_soa_fromWire")));
     // TBD: more tests
 }
 
-TEST_F(Rdata_SOA_Test, toWireRenderer)
-{
+TEST_F(Rdata_SOA_Test, toWireRenderer) {
     renderer.skip(2);
     rdata_soa.toWire(renderer);
 
@@ -65,23 +61,17 @@ TEST_F(Rdata_SOA_Test, toWireRenderer)
                         obuffer.getLength() - 2, &data[2], data.size() - 2);
 }
 
-TEST_F(Rdata_SOA_Test, toWireBuffer)
-{
+TEST_F(Rdata_SOA_Test, toWireBuffer) {
     obuffer.skip(2);
     rdata_soa.toWire(obuffer);
     vector<unsigned char> data;
-    UnitTestUtil::readWireData("testdata/rdata_soa_fromWire", data);
-#if 0
-// XXX: this currently fails with a mismatch at byte 21.  I'm not sure
-// whether it's a test error or a problem with the toWire() method
+    UnitTestUtil::readWireData("testdata/rdata_soa_toWireUncompressed", data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         static_cast<const uint8_t *>(obuffer.getData()) + 2,
                         obuffer.getLength() - 2, &data[2], data.size() - 2);
-#endif
 }
 
-TEST_F(Rdata_SOA_Test, toText)
-{
+TEST_F(Rdata_SOA_Test, toText) {
     EXPECT_EQ("ns.example.com. root.example.com. "
               "2010012601 3600 300 3600000 1200", rdata_soa.toText());
 }
