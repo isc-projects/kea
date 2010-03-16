@@ -379,7 +379,7 @@ struct RenderSection {
         if (truncated_) {
             return;
         }
-        size_t pos0 = renderer_.getLength();
+        const size_t pos0 = renderer_.getLength();
         counter_ += entry->toWire(renderer_);
         if (renderer_.isTruncated()) {
             truncated_ = true;
@@ -537,7 +537,7 @@ Message::parseHeader(InputBuffer& buffer) {
     }
 
     impl_->qid_ = buffer.readUint16();
-    uint16_t codes_and_flags = buffer.readUint16();
+    const uint16_t codes_and_flags = buffer.readUint16();
     impl_->opcode_ = opcodes[((codes_and_flags & OPCODE_MASK) >> OPCODE_SHIFT)];
     impl_->rcode_ = rcodes[(codes_and_flags & RCODE_MASK)];
     impl_->flags_ = (codes_and_flags & FLAG_MASK);
@@ -602,8 +602,7 @@ namespace {
 struct MatchRR : public unary_function<RRsetPtr, bool> {
     MatchRR(const Name& name, const RRType& rrtype, const RRClass& rrclass) :
         name_(name), rrtype_(rrtype), rrclass_(rrclass) {}
-    bool operator()(const RRsetPtr& rrset) const
-    {
+    bool operator()(const RRsetPtr& rrset) const {
         return (rrset->getType() == rrtype_ &&
                 rrset->getClass() == rrclass_ &&
                 rrset->getName() == name_);
@@ -619,7 +618,7 @@ MessageImpl::parseSection(const Section& section, InputBuffer& buffer) {
     unsigned int added = 0;
 
     for (unsigned int count = 0; count < counts_[section.getCode()]; ++count) {
-        Name name(buffer);
+        const Name name(buffer);
 
         // buffer must store at least RR TYPE, RR CLASS, TTL, and RDLEN.
         if ((buffer.getLength() - buffer.getPosition()) <
@@ -629,11 +628,11 @@ MessageImpl::parseSection(const Section& section, InputBuffer& buffer) {
                       (buffer.getLength() - buffer.getPosition()) << " bytes");
         }
 
-        RRType rrtype(buffer.readUint16());
-        RRClass rrclass(buffer.readUint16());
-        RRTTL ttl(buffer.readUint32());
-        size_t rdlen = buffer.readUint16();
-        RdataPtr rdata = createRdata(rrtype, rrclass, buffer, rdlen);
+        const RRType rrtype(buffer.readUint16());
+        const RRClass rrclass(buffer.readUint16());
+        const RRTTL ttl(buffer.readUint32());
+        const size_t rdlen = buffer.readUint16();
+        ConstRdataPtr rdata = createRdata(rrtype, rrclass, buffer, rdlen);
 
         // XXX: we wanted to avoid hardcoding type-specific logic here,
         // but this would be the fastest way for a proof-of-concept
@@ -699,8 +698,7 @@ template <typename T>
 struct SectionFormatter {
     SectionFormatter(const Section& section, string& output) :
         section_(section), output_(output) {}
-    void operator()(const T& entry)
-    {
+    void operator()(const T& entry) {
         if (section_ == Section::QUESTION()) {
             output_ += ";";
         }
@@ -760,7 +758,7 @@ Message::toText() const {
         if ((edns_rrset->getTTL().getValue() & 0x8000) != 0) {
             s += " do";
         }
-        uint32_t mbz = edns_rrset->getTTL().getValue() & ~0x8000 & 0xffff;
+        const uint32_t mbz = edns_rrset->getTTL().getValue() & ~0x8000 & 0xffff;
         if (mbz != 0) {
             s += "; MBZ: " + lexical_cast<string>(mbz) + ", udp: ";
         } else {
