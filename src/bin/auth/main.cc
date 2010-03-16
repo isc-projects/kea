@@ -619,16 +619,20 @@ int
 main(int argc, char* argv[]) {
     int ch;
     const char* port = DNSPORT;
-    bool ipv4_only = false, ipv6_only = false;
-    bool use_ipv4 = false, use_ipv6 = false;
+    bool use_ipv4 = true, use_ipv6 = true;
 
     while ((ch = getopt(argc, argv, "46p:v")) != -1) {
         switch (ch) {
         case '4':
-            ipv4_only = true;
+            // Note that -4 means "ipv4 only", we need to set "use_ipv6" here,
+            // not "use_ipv4".  We could use something like "ipv4_only", but
+            // we found the negatively named variable could confuse the code
+            // logic.
+            use_ipv6 = false;
             break;
         case '6':
-            ipv6_only = true;
+            // The same note as -4 applies.
+            use_ipv4 = false;
             break;
         case 'p':
             port = optarg;
@@ -646,15 +650,9 @@ main(int argc, char* argv[]) {
         usage();
     }
 
-    if (ipv4_only && ipv6_only) {
+    if (!use_ipv4 && !use_ipv6) {
         cerr << "-4 and -6 can't coexist" << endl;
         usage();
-    }
-    if (!ipv6_only) {
-        use_ipv4 = true;
-    }
-    if (!ipv4_only) {
-        use_ipv4 = true;
     }
 
     auth_server = new AuthSrv;
