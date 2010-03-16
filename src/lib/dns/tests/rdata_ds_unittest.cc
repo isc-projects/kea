@@ -52,6 +52,13 @@ TEST_F(Rdata_DS_Test, badText_DS) {
     EXPECT_THROW(const generic::DS ds2("11111 5 22222 BEEF"), InvalidRdataText);
     EXPECT_THROW(const generic::DS ds2("11111 5 2"), InvalidRdataText);
     EXPECT_THROW(const generic::DS ds2("GARBAGE IN"), InvalidRdataText);
+
+#if 0              // this test currently fails
+    // no space between the digest type and the digest.
+    EXPECT_THROW(const generic::DS ds2(
+                     "12892 5 2F1E184C0E1D615D20EB3C223ACED3B03C773DD952D"
+                     "5F0EB5C777586DE18DA6B5"), InvalidRdataText);
+#endif
 }
 
 TEST_F(Rdata_DS_Test, createFromWire_DS) {
