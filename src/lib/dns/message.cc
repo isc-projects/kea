@@ -50,32 +50,32 @@ namespace {
 typedef uint16_t flags_t;
 
 // protocol constants
-static const size_t HEADERLEN = 12;
+const size_t HEADERLEN = 12;
 
-static const flags_t FLAG_QR = 0x8000;
-static const flags_t FLAG_AA = 0x0400;
-static const flags_t FLAG_TC = 0x0200;
-static const flags_t FLAG_RD = 0x0100;
-static const flags_t FLAG_RA = 0x0080;
-static const flags_t FLAG_AD = 0x0020;
-static const flags_t FLAG_CD = 0x0010;
+const flags_t FLAG_QR = 0x8000;
+const flags_t FLAG_AA = 0x0400;
+const flags_t FLAG_TC = 0x0200;
+const flags_t FLAG_RD = 0x0100;
+const flags_t FLAG_RA = 0x0080;
+const flags_t FLAG_AD = 0x0020;
+const flags_t FLAG_CD = 0x0010;
 
 //
 // EDNS related constants
 //
-static const flags_t EXTFLAG_MASK = 0xffff;
-static const flags_t EXTFLAG_DO = 0x8000;
-static const uint32_t EXTRCODE_MASK = 0xff000000; 
-static const uint32_t EDNSVERSION_MASK = 0x00ff0000;
+const flags_t EXTFLAG_MASK = 0xffff;
+const flags_t EXTFLAG_DO = 0x8000;
+const uint32_t EXTRCODE_MASK = 0xff000000; 
+const uint32_t EDNSVERSION_MASK = 0x00ff0000;
 
-static const unsigned int OPCODE_MASK = 0x7800;
-static const unsigned int OPCODE_SHIFT = 11;
-static const unsigned int RCODE_MASK = 0x000f;
-static const unsigned int FLAG_MASK = 0x8ff0;
+const unsigned int OPCODE_MASK = 0x7800;
+const unsigned int OPCODE_SHIFT = 11;
+const unsigned int RCODE_MASK = 0x000f;
+const unsigned int FLAG_MASK = 0x8ff0;
 
-static const unsigned int MESSAGE_REPLYPRESERVE = (FLAG_RD | FLAG_CD);
+const unsigned int MESSAGE_REPLYPRESERVE = (FLAG_RD | FLAG_CD);
 
-static const Rcode rcodes[] = {
+const Rcode rcodes[] = {
     Rcode::NOERROR(),
     Rcode::FORMERR(),
     Rcode::SERVFAIL(),
@@ -95,7 +95,7 @@ static const Rcode rcodes[] = {
     Rcode::BADVERS()
 };
 
-static const char *rcodetext[] = {
+const char *rcodetext[] = {
     "NOERROR",
     "FORMERR",
     "SERVFAIL",
@@ -115,7 +115,7 @@ static const char *rcodetext[] = {
     "BADVERS"
 };
 
-static const Opcode* opcodes[] = {
+const Opcode* opcodes[] = {
     &Opcode::QUERY(),
     &Opcode::IQUERY(),
     &Opcode::STATUS(),
@@ -134,7 +134,7 @@ static const Opcode* opcodes[] = {
     &Opcode::RESERVED15()
 };
 
-static const char *opcodetext[] = {
+const char *opcodetext[] = {
     "QUERY",
     "IQUERY",
     "STATUS",
@@ -153,7 +153,7 @@ static const char *opcodetext[] = {
     "RESERVED15"
 };
 
-static const char *sectiontext[] = {
+const char *sectiontext[] = {
     "QUESTION",
     "ANSWER",
     "AUTHORITY",
@@ -242,7 +242,7 @@ MessageImpl::init() {
     local_edns_ = RRsetPtr();
     udpsize_ = Message::DEFAULT_MAX_UDPSIZE;
 
-    for (int i = 0; i < SECTION_MAX; i++) {
+    for (int i = 0; i < SECTION_MAX; ++i) {
         counts_[i] = 0;
     }
 
@@ -344,13 +344,13 @@ Message::getRRCount(const Section& section) const {
 }
 
 void
-Message::addRRset(const Section& section, RRsetPtr rrset, bool sign) {
+Message::addRRset(const Section& section, RRsetPtr rrset, const bool sign) {
     // Note: should check duplicate (TBD)
     impl_->rrsets_[sectionCodeToId(section)].push_back(rrset);
     impl_->counts_[section.getCode()] += rrset->getRdataCount();
 
     RRsetPtr sp = rrset->getRRsig();
-    if (sign && sp) {
+    if (sign && sp != NULL) {
         impl_->rrsets_[sectionCodeToId(section)].push_back(sp);
         impl_->counts_[section.getCode()] += sp->getRdataCount();
     }
@@ -359,7 +359,7 @@ Message::addRRset(const Section& section, RRsetPtr rrset, bool sign) {
 void
 Message::addQuestion(const QuestionPtr question) {
     impl_->questions_.push_back(question);
-    impl_->counts_[Section::QUESTION().getCode()]++;
+    ++impl_->counts_[Section::QUESTION().getCode()];
 }
 
 void
@@ -374,8 +374,7 @@ struct RenderSection {
         counter_(0), renderer_(renderer), partial_ok_(partial_ok),
         truncated_(false)
     {}
-    void operator()(const T& entry)
-    {
+    void operator()(const T& entry) {
         // If it's already truncated, ignore the rest of the section.
         if (truncated_) {
             return;
@@ -448,30 +447,34 @@ addEDNS(MessageImpl* mimpl, MessageRenderer& renderer) {
 
 void
 Message::toWire(MessageRenderer& renderer) {
-    uint16_t codes_and_flags;
+    if (impl_->mode_ != Message::RENDER) {
+        isc_throw(InvalidMessageOperation,
+                  "Message rendering attempted in non render mode");
+    }
 
     // reserve room for the header
     renderer.skip(HEADERLEN);
-
-    uint16_t ancount = 0, nscount = 0, arcount = 0;
 
     uint16_t qdcount =
         for_each(impl_->questions_.begin(), impl_->questions_.end(),
                  RenderSection<QuestionPtr>(renderer, false)).getTotalCount();
 
     // TBD: sort RRsets in each section based on configuration policy.
+    uint16_t ancount = 0;
     if (!renderer.isTruncated()) {
         ancount =
             for_each(impl_->rrsets_[sectionCodeToId(Section::ANSWER())].begin(),
                      impl_->rrsets_[sectionCodeToId(Section::ANSWER())].end(),
                      RenderSection<RRsetPtr>(renderer, true)).getTotalCount();
     }
+    uint16_t nscount = 0;
     if (!renderer.isTruncated()) {
         nscount =
             for_each(impl_->rrsets_[sectionCodeToId(Section::AUTHORITY())].begin(),
                      impl_->rrsets_[sectionCodeToId(Section::AUTHORITY())].end(),
                      RenderSection<RRsetPtr>(renderer, true)).getTotalCount();
     }
+    uint16_t arcount = 0;
     if (renderer.isTruncated()) {
         setHeaderFlag(MessageFlag::TC());
     } else {
@@ -503,7 +506,9 @@ Message::toWire(MessageRenderer& renderer) {
     size_t header_pos = 0;
     renderer.writeUint16At(impl_->qid_, header_pos);
     header_pos += sizeof(uint16_t);
-    codes_and_flags = (impl_->opcode_->getCode() << OPCODE_SHIFT) & OPCODE_MASK;
+
+    uint16_t codes_and_flags =
+        (impl_->opcode_->getCode() << OPCODE_SHIFT) & OPCODE_MASK;
     codes_and_flags |= (impl_->rcode_.getCode() & RCODE_MASK);
     codes_and_flags |= (impl_->flags_ & FLAG_MASK);
     renderer.writeUint16At(codes_and_flags, header_pos);
@@ -571,7 +576,7 @@ MessageImpl::parseQuestion(InputBuffer& buffer) {
 
     for (unsigned int count = 0;
          count < counts_[Section::QUESTION().getCode()];
-         count++) {
+         ++count) {
         const Name name(buffer);
 
         if ((buffer.getLength() - buffer.getPosition()) <
@@ -613,7 +618,7 @@ int
 MessageImpl::parseSection(const Section& section, InputBuffer& buffer) {
     unsigned int added = 0;
 
-    for (unsigned int count = 0; count < counts_[section.getCode()]; count++) {
+    for (unsigned int count = 0; count < counts_[section.getCode()]; ++count) {
         Name name(buffer);
 
         // buffer must store at least RR TYPE, RR CLASS, TTL, and RDLEN.
@@ -845,8 +850,7 @@ SectionIterator<T>::SectionIterator(const SectionIteratorImpl<T>& impl) {
 }
 
 template <typename T>
-SectionIterator<T>::~SectionIterator()
-{
+SectionIterator<T>::~SectionIterator() {
     delete impl_;
 }
 

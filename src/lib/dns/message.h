@@ -17,10 +17,14 @@
 #ifndef __MESSAGE_H
 #define __MESSAGE_H 1
 
+#include <stdint.h>
+
 #include <iterator>
 #include <string>
+#include <ostream>
 
 #include <exceptions/exceptions.h>
+
 #include "question.h"
 #include "rrset.h"
 
@@ -526,8 +530,6 @@ public:
     /// \brief Returns the number of RRs contained in the given section.
     unsigned int getRRCount(const Section& section) const;
 
-    // we don't provide accessors to QD/AN/NS/AR counters as this information
-    // is included in the corresponding RRsets.
     // Open issues:
     //   - may want to provide an "iterator" for all RRsets/RRs
     //   - may want to provide a "find" method for a specified type
