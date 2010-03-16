@@ -4,7 +4,7 @@ PYTHON_EXEC=${PYTHON_EXEC:-@PYTHON@}
 export PYTHON_EXEC
 
 BINDCTL_TEST_PATH=@abs_top_srcdir@/src/bin/bindctl/unittest
-PYTHONPATH=@abs_top_srcdir@/src/lib/cc/python:@abs_top_srcdir@/src/bin/bindctl
+PYTHONPATH=@abs_top_srcdir@/src/lib/python:@abs_top_srcdir@/src/bin
 export PYTHONPATH
 
 cd ${BINDCTL_TEST_PATH}
