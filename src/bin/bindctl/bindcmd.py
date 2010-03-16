@@ -98,10 +98,10 @@ class BindCmdInterpreter(Cmd):
 
     def login_to_cmdctl(self):
         '''Login to cmdctl with the username and password inputted 
-        from user. After login sucessfully, the username and password
-        will be saved in 'default_user.csv', when login next time, 
-        username and password saved in 'default_user.csv' will be used
-        first.
+        from user. After the login is sucessful, the username and
+        password will be saved in 'default_user.csv', when run the next
+        time, username and password saved in 'default_user.csv' will be
+        used first.
         '''
         csvfile = None
         bsuccess = False
@@ -150,7 +150,7 @@ class BindCmdInterpreter(Cmd):
 
 
     def _update_commands(self):
-        '''Get all commands of modules. '''
+        '''Get the commands of all modules. '''
         cmd_spec = self.send_GET('/command_spec')
         if not cmd_spec:
             return
@@ -173,7 +173,7 @@ class BindCmdInterpreter(Cmd):
        
 
     def send_POST(self, url, post_param = None): 
-        '''Send GET request to cmdctl, session id is send with the name
+        '''Send POST request to cmdctl, session id is send with the name
         'cookie' in header.
         Format: /module_name/command_name
         parameters of command is encoded as a map
@@ -188,10 +188,12 @@ class BindCmdInterpreter(Cmd):
         
 
     def postcmd(self, stop, line):
+        '''Update the prompt after every command'''
         self.prompt = self.location + self.prompt_end
         return stop
 
     def _prepare_module_commands(self, module_name, module_commands):
+        '''Prepare the module commands'''
         module = ModuleInfo(name = module_name,
                             desc = "same here")
         for command in module_commands:
@@ -213,7 +215,6 @@ class BindCmdInterpreter(Cmd):
         a better command line syntax come out, this function should be 
         updated first.        
         '''
-
         if not cmd.module in self.modules:
             raise CmdUnknownModuleSyntaxError(cmd.module)
         
@@ -225,7 +226,7 @@ class BindCmdInterpreter(Cmd):
         manda_params = command_info.get_mandatory_param_names()
         all_params = command_info.get_param_names()
         
-        # If help is inputed, don't do further paramters validation.
+        # If help is entered, don't do further parameter validation.
         for val in cmd.params.keys():
             if val == "help":
                 return
@@ -276,7 +277,7 @@ class BindCmdInterpreter(Cmd):
                 param_nr += 1
 
     def _handle_cmd(self, cmd):
-        #to do, consist xml package and send to bind10
+        '''Handle a command entered by the user'''
         if cmd.command == "help" or ("help" in cmd.params.keys()):
             self._handle_help(cmd)
         elif cmd.module == "config":
@@ -284,10 +285,12 @@ class BindCmdInterpreter(Cmd):
         else:
             self.apply_cmd(cmd)
 
-    def add_module_info(self, module_info):        
+    def add_module_info(self, module_info):
+        '''Add the information about one module'''
         self.modules[module_info.name] = module_info
         
     def get_module_names(self):
+        '''Return the names of all known modules'''
         return list(self.modules.keys())
 
     #override methods in cmd
@@ -428,6 +431,11 @@ class BindCmdInterpreter(Cmd):
 
 
     def apply_config_cmd(self, cmd):
+        '''Handles a configuration command.
+           Raises a DataTypeError if a wrong value is set.
+           Raises a DataNotFoundError if a wrong identifier is used.
+           Raises a KeyError if the command was not complete
+        '''
         identifier = self.location
         try:
             if 'identifier' in cmd.params:
@@ -486,7 +494,9 @@ class BindCmdInterpreter(Cmd):
             raise ke
 
     def go(self, identifier):
-        # just to see if it exists
+        '''Handles the config go command, change the 'current' location
+           within the configuration tree'''
+        # this is just to see if it exists
         self.config_data.get_value(identifier)
         # some sanitizing
         identifier = identifier.replace("//", "/")
@@ -497,6 +507,7 @@ class BindCmdInterpreter(Cmd):
         self.location = identifier
 
     def apply_cmd(self, cmd):
+        '''Handles a general module command'''
         url = '/' + cmd.module + '/' + cmd.command
         cmd_params = None
         if (len(cmd.params) != 0):
