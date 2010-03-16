@@ -26,6 +26,7 @@
 
 #include <ctype.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "base32.h"
 
