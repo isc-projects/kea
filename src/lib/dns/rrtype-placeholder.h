@@ -17,6 +17,11 @@
 #ifndef __RRTYPE_H
 #define __RRTYPE_H 1
 
+#include <stdint.h>
+
+#include <string>
+#include <ostream>
+
 #include <exceptions/exceptions.h>
 
 namespace isc {
