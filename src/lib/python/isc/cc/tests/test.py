@@ -1,3 +1,5 @@
+# -*- coding: UTF8 -*-
+
 import isc
 import unittest
 
