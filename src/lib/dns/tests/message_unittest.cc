@@ -35,6 +35,18 @@ using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 
+//
+// Note: we need more tests, including:
+// parsing malformed headers
+// more complete tests about parsing/rendering header flags, opcode, rcode, etc.
+// tests for adding RRsets
+// tests for RRset/Question iterators
+// But, we'll ship with the current set of tests for now, partly because many
+// of the above are covered as part of other tests, and partly due to time
+// limitation.  We also expect to revisit the fundamental design of the Message
+// class, at which point we'll also revise the tests including more cases.
+//
+
 const uint16_t Message::DEFAULT_MAX_UDPSIZE;
 
 namespace {
@@ -56,8 +68,7 @@ protected:
 const Name test_name("test.example.com");
 
 void
-MessageTest::factoryFromFile(Message& message, const char* datafile)
-{
+MessageTest::factoryFromFile(Message& message, const char* datafile) {
     std::vector<unsigned char> data;
     UnitTestUtil::readWireData(datafile, data);
 
@@ -65,8 +76,7 @@ MessageTest::factoryFromFile(Message& message, const char* datafile)
     message.fromWire(buffer);
 }
 
-TEST_F(MessageTest, RcodeConstruct)
-{
+TEST_F(MessageTest, RcodeConstruct) {
     // normal cases
     EXPECT_EQ(0, Rcode(0).getCode());
     EXPECT_EQ(0xfff, Rcode(0xfff).getCode()); // possible max code
@@ -76,16 +86,15 @@ TEST_F(MessageTest, RcodeConstruct)
     EXPECT_THROW(Rcode(0xffff), isc::OutOfRange);
 }
 
-TEST_F(MessageTest, RcodeToText)
-{
+TEST_F(MessageTest, RcodeToText) {
     EXPECT_EQ("NOERROR", Rcode::NOERROR().toText());
     EXPECT_EQ("BADVERS", Rcode::BADVERS().toText());
     EXPECT_EQ("17", Rcode(Rcode::BADVERS().getCode() + 1).toText());
     EXPECT_EQ("4095", Rcode(Rcode(0xfff)).toText());
 }
 
-TEST_F(MessageTest, fromWire)
-{
+
+TEST_F(MessageTest, fromWire) {
     factoryFromFile(message_parse, "testdata/message_fromWire1");
     EXPECT_EQ(0x1035, message_parse.getQid());
     EXPECT_EQ(Opcode::QUERY(), message_parse.getOpcode());
@@ -118,8 +127,7 @@ TEST_F(MessageTest, fromWire)
     EXPECT_TRUE(it->isLast());
 }
 
-TEST_F(MessageTest, GetEDNS0DOBit)
-{
+TEST_F(MessageTest, GetEDNS0DOBit) {
     // Without EDNS0, DNSSEC is considered to be unsupported.
     factoryFromFile(message_parse, "testdata/message_fromWire1");
     EXPECT_FALSE(message_parse.isDNSSECSupported());
@@ -135,8 +143,7 @@ TEST_F(MessageTest, GetEDNS0DOBit)
     EXPECT_FALSE(message_parse.isDNSSECSupported());
 }
 
-TEST_F(MessageTest, SetEDNS0DOBit)
-{
+TEST_F(MessageTest, SetEDNS0DOBit) {
     // By default, it's false, and we can enable/disable it.
     EXPECT_FALSE(message_render.isDNSSECSupported());
     message_render.setDNSSECSupported(true);
@@ -156,8 +163,7 @@ TEST_F(MessageTest, SetEDNS0DOBit)
     EXPECT_FALSE(message_parse.isDNSSECSupported());
 }
 
-TEST_F(MessageTest, GetEDNS0UDPSize)
-{
+TEST_F(MessageTest, GetEDNS0UDPSize) {
     // Without EDNS0, the default max UDP size is used.
     factoryFromFile(message_parse, "testdata/message_fromWire1");
     EXPECT_EQ(Message::DEFAULT_MAX_UDPSIZE, message_parse.getUDPSize());
@@ -173,8 +179,7 @@ TEST_F(MessageTest, GetEDNS0UDPSize)
     EXPECT_EQ(Message::DEFAULT_MAX_UDPSIZE, message_parse.getUDPSize());
 }
 
-TEST_F(MessageTest, SetEDNS0UDPSize)
-{
+TEST_F(MessageTest, SetEDNS0UDPSize) {
     // The default size if unspecified
     EXPECT_EQ(Message::DEFAULT_MAX_UDPSIZE, message_render.getUDPSize());
     // A common buffer size with EDNS, should succeed
@@ -197,8 +202,7 @@ TEST_F(MessageTest, SetEDNS0UDPSize)
     EXPECT_THROW(message_parse.setUDPSize(511), InvalidMessageUDPSize);
 }
 
-TEST_F(MessageTest, EDNS0ExtCode)
-{
+TEST_F(MessageTest, EDNS0ExtCode) {
     // Extended Rcode = BADVERS
     factoryFromFile(message_parse, "testdata/message_fromWire10");
     EXPECT_EQ(Rcode::BADVERS(), message_parse.getRcode());
@@ -209,8 +213,7 @@ TEST_F(MessageTest, EDNS0ExtCode)
     EXPECT_EQ(0xfff, message_parse.getRcode().getCode());
 }
 
-TEST_F(MessageTest, BadEDNS0)
-{
+TEST_F(MessageTest, BadEDNS0) {
     // OPT RR in the answer section
     EXPECT_THROW(factoryFromFile(message_parse, "testdata/message_fromWire4"),
                  DNSMessageFORMERR);
@@ -234,8 +237,7 @@ TEST_F(MessageTest, BadEDNS0)
                  DNSMessageBADVERS);
 }
 
-TEST_F(MessageTest, toWire)
-{
+TEST_F(MessageTest, toWire) {
     message_render.setQid(0x1035);
     message_render.setOpcode(Opcode::QUERY());
     message_render.setRcode(Rcode::NOERROR());
