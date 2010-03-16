@@ -74,7 +74,8 @@ const char* const SCHEMA_LIST[] = {
     "CREATE INDEX records_byname ON records (name)",
     "CREATE INDEX records_byrname ON records (rname)",
     "CREATE TABLE nsec3 (id INTEGER PRIMARY KEY, zone_id INTEGER NOT NULL, "
-    "hash STRING NOT NULL COLLATE NOCASE, owner STRING NOT NULL COLLATE NOCASE, "
+    "hash STRING NOT NULL COLLATE NOCASE, "
+    "owner STRING NOT NULL COLLATE NOCASE, "
     "ttl INTEGER NOT NULL, rdtype STRING NOT NULL COLLATE NOCASE, "
     "rdata STRING NOT NULL)",
     "CREATE INDEX nsec3_byhash ON nsec3 (hash)",
@@ -82,27 +83,35 @@ const char* const SCHEMA_LIST[] = {
 };
 
 const char* const q_zone_str = "SELECT id FROM zones WHERE name=?1";
+
 const char* const q_record_str = "SELECT rdtype, ttl, sigtype, rdata "
     "FROM records WHERE zone_id=?1 AND name=?2 AND "
     "((rdtype=?3 OR sigtype=?3) OR "
     "(rdtype='CNAME' OR sigtype='CNAME') OR "
     "(rdtype='NS' OR sigtype='NS'))";
+
 const char* const q_addrs_str = "SELECT rdtype, ttl, sigtype, rdata "
     "FROM records WHERE zone_id=?1 AND name=?2 AND "
     "(rdtype='A' OR sigtype='A' OR rdtype='AAAA' OR sigtype='AAAA')";
+
 const char* const q_referral_str = "SELECT rdtype, ttl, sigtype, rdata FROM "
     "records WHERE zone_id=?1 AND name=?2 AND"
     "(rdtype='NS' OR sigtype='NS' OR rdtype='DS' OR sigtype='DS' OR "
     "rdtype='DNAME' OR sigtype='DNAME')";
+
 const char* const q_any_str = "SELECT rdtype, ttl, sigtype, rdata "
     "FROM records WHERE zone_id=?1 AND name=?2";
+
 const char* const q_count_str = "SELECT COUNT(*) FROM records "
     "WHERE zone_id=?1 AND rname LIKE (?2 || '%');";
+
 const char* const q_previous_str = "SELECT name FROM records "
     "WHERE zone_id=?1 AND rdtype = 'NSEC' AND "
     "rname < $2 ORDER BY rname DESC LIMIT 1";
+
 const char* const q_nsec3_str = "SELECT rdtype, ttl, rdata FROM nsec3 "
     "WHERE zone_id = ?1 AND hash = $2";
+
 const char* const q_prevnsec3_str = "SELECT hash FROM nsec3 "
     "WHERE zone_id = ?1 AND hash <= $2 ORDER BY hash DESC LIMIT 1";
 
