@@ -249,8 +249,8 @@ class ModuleCCSession(ConfigData):
         self._session.group_subscribe(module_name);
 
         # Get the current config for that module now
-        self._session.group_sendmsg({ "command": [ "get_config", { "module_name": module_name } ] }, "ConfigManager")
-        answer, env = self._session.group_recvmsg(False)
+        seq = self._session.group_sendmsg({ "command": [ "get_config", { "module_name": module_name } ] }, "ConfigManager")
+        answer, env = self._session.group_recvmsg(False, seq)
         if answer:
             rcode, value = parse_answer(answer)
             if rcode == 0:
@@ -279,14 +279,14 @@ class ModuleCCSession(ConfigData):
     def __send_spec(self):
         """Sends the data specification to the configuration manager"""
         msg = create_command(COMMAND_MODULE_SPEC, self.get_module_spec().get_full_spec())
-        self._session.group_sendmsg(msg, "ConfigManager")
-        answer, env = self._session.group_recvmsg(False)
+        seq = self._session.group_sendmsg(msg, "ConfigManager")
+        answer, env = self._session.group_recvmsg(False, seq)
         
     def __request_config(self):
         """Asks the configuration manager for the current configuration, and call the config handler if set.
            Raises a ModuleCCSessionError if there is no answer from the configuration manager"""
-        self._session.group_sendmsg({ "command": [ "get_config", { "module_name": self._module_name } ] }, "ConfigManager")
-        answer, env = self._session.group_recvmsg(False)
+        seq = self._session.group_sendmsg({ "command": [ "get_config", { "module_name": self._module_name } ] }, "ConfigManager")
+        answer, env = self._session.group_recvmsg(False, seq)
         if answer:
             rcode, value = parse_answer(answer)
             if rcode == 0:
