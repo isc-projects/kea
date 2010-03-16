@@ -244,16 +244,16 @@ class ConfigManager:
             if conf_part:
                 data.merge(conf_part, cmd[1])
                 update_cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, conf_part)
-                self.cc.group_sendmsg(update_cmd, module_name)
-                answer, env = self.cc.group_recvmsg(False)
+                seq = self.cc.group_sendmsg(update_cmd, module_name)
+                answer, env = self.cc.group_recvmsg(False, seq)
             else:
                 conf_part = data.set(self.config.data, module_name, {})
                 data.merge(conf_part[module_name], cmd[1])
                 # send out changed info
                 update_cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, conf_part[module_name])
-                self.cc.group_sendmsg(update_cmd, module_name)
+                seq = self.cc.group_sendmsg(update_cmd, module_name)
                 # replace 'our' answer with that of the module
-                answer, env = self.cc.group_recvmsg(False)
+                answer, env = self.cc.group_recvmsg(False, seq)
             if answer:
                 rcode, val = isc.config.ccsession.parse_answer(answer)
                 if rcode == 0:
@@ -269,8 +269,8 @@ class ConfigManager:
             for module in self.config.data:
                 if module != "version" and (module not in old_data or self.config.data[module] != old_data[module]):
                     update_cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, self.config.data[module])
-                    self.cc.group_sendmsg(update_cmd, module)
-                    answer, env = self.cc.group_recvmsg(False)
+                    seq = self.cc.group_sendmsg(update_cmd, module)
+                    answer, env = self.cc.group_recvmsg(False, seq)
                     if answer == None:
                         got_error = True
                         err_list.append("No answer message from " + module)
