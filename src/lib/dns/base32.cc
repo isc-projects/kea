@@ -22,9 +22,8 @@
 #include <string>
 #include <vector>
 
-
 #include <exceptions/exceptions.h>
-#include <boost/foreach.hpp>
+
 #include <ctype.h>
 #include <stdint.h>
 
@@ -38,8 +37,7 @@ namespace dns {
 static const char base32hex[] = "0123456789ABCDEFGHIJKLMNOPQRSTUV";
 
 string
-encodeBase32(const vector<uint8_t>& binary)
-{
+encodeBase32(const vector<uint8_t>& binary) {
     ostringstream base32;
     size_t len = binary.size();
     size_t pos = 0;
@@ -113,14 +111,13 @@ encodeBase32(const vector<uint8_t>& binary)
 }
 
 void
-decodeBase32(const string& base32, vector<uint8_t>& result)
-{
+decodeBase32(const string& base32, vector<uint8_t>& result) {
     ostringstream comp;
 
     // compress input by removing whitespace
-    size_t len = base32.length();
-    for (int i = 0; i < len; i++) {
-        char c = base32.at(i);
+    const size_t len = base32.length();
+    for (int i = 0; i < len; ++i) {
+        const char c = base32[i];
         if (c == ' ' || c == '\t' || c == '\r' || c == '\n') {
             continue;
         }
@@ -129,7 +126,7 @@ decodeBase32(const string& base32, vector<uint8_t>& result)
 
     // base32 text should be a multiple of 8 bytes long
     if (comp.str().length() % 8 != 0) {
-        isc_throw (BadBase32String, "Invalid length");
+        isc_throw(BadBase32String, "Invalid length");
     }
 
     istringstream iss(comp.str());
@@ -144,12 +141,12 @@ decodeBase32(const string& base32, vector<uint8_t>& result)
         }
 
         uint8_t octet = 0;
-        for (int i = 0; i < 8; i ++) {
+        for (int i = 0; i < 8; ++i) {
             char c = toupper(group.at(i));
             int value;
 
             if (c != '=' && seenpad) {
-                isc_throw (BadBase32String, "Invalid base32 input");
+                isc_throw(BadBase32String, "Invalid base32 input");
             } else 
 
             if (c == '=' && !seenpad) {
@@ -158,7 +155,7 @@ decodeBase32(const string& base32, vector<uint8_t>& result)
             } else {
                 const char* pos = strchr(base32hex, c);
                 if (!pos) {
-                    isc_throw (BadBase32String, "Invalid base32 input");
+                    isc_throw(BadBase32String, "Invalid base32 input");
                 }
                 value = pos - base32hex;
                 assert (value < 32);
