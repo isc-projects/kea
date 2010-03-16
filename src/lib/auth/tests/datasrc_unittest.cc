@@ -716,11 +716,11 @@ TEST_F(DataSrcTest, NSECZonecutOfNonsecureZone) {
 }
 #endif
 
-#if 0                           // currently fails
+//#if 0                           // currently fails
 TEST_F(DataSrcTest, RootDSQuery) {
     createAndProcessQuery(Name("."), RRClass::IN(), RRType::DS());
 }
-#endif
+//#endif
 
 // Non-existent name in the "static" data source.  The purpose of this test
 // is to check a corner case behavior when atypical RRClass (CH in this case)

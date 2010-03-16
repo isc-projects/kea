@@ -512,7 +512,8 @@ DataSrc::doQuery(Query& q)
         // Find the closest enclosing zone for which we are authoritative,
         // and the concrete data source which is authoritative for it.
         // (Note that RRtype DS queries need to go to the parent.)
-        NameMatch match(task->qtype == RRType::DS() ?
+        int nlabels = task->qname.getLabelCount() - 1;
+        NameMatch match(nlabels != 0 && task->qtype == RRType::DS() ?
                         task->qname.split(1, task->qname.getLabelCount() - 1) :
                         task->qname);
         findClosestEnclosure(match, task->qclass);
@@ -543,12 +544,13 @@ DataSrc::doQuery(Query& q)
 
             // Query found a referral; let's find out if that was expected--
             // i.e., if an NS was at the zone apex, or if we were querying
-            // specifically for the DS, NSEC, or DNAME record.
+            // specifically for, and found, a DS, NSEC, or DNAME record.
             if ((task->flags & REFERRAL) != 0 &&
                 (zonename->getLabelCount() == task->qname.getLabelCount() ||
-                 task->qtype == RRType::DS() ||
-                 task->qtype == RRType::NSEC() ||
-                 task->qtype == RRType::DNAME())) {
+                 ((task->qtype == RRType::NSEC() ||
+                   task->qtype == RRType::DS() ||
+                   task->qtype == RRType::DNAME()) &&
+                  data.findRRset(task->qtype, task->qclass)))) {
                 task->flags &= ~REFERRAL;
             }
         } else {
