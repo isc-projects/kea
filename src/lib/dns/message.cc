@@ -268,11 +268,19 @@ Message::getHeaderFlag(const MessageFlag& flag) const {
 
 void
 Message::setHeaderFlag(const MessageFlag& flag) {
+    if (impl_->mode_ != Message::RENDER) {
+        isc_throw(InvalidMessageOperation,
+                  "setHeaderFlag performed in non-render mode");
+    }
     impl_->flags_ |= flag.getBit();
 }
 
 void
 Message::clearHeaderFlag(const MessageFlag& flag) {
+    if (impl_->mode_ != Message::RENDER) {
+        isc_throw(InvalidMessageOperation,
+                  "clearHeaderFlag performed in non-render mode");
+    }
     impl_->flags_ &= ~flag.getBit();
 }
 
@@ -315,6 +323,10 @@ Message::getQid() const {
 
 void
 Message::setQid(qid_t qid) {
+    if (impl_->mode_ != Message::RENDER) {
+        isc_throw(InvalidMessageOperation,
+                  "setQid performed in non-render mode");
+    }
     impl_->qid_ = qid;
 }
 
@@ -325,6 +337,10 @@ Message::getRcode() const {
 
 void
 Message::setRcode(const Rcode& rcode) {
+    if (impl_->mode_ != Message::RENDER) {
+        isc_throw(InvalidMessageOperation,
+                  "setRcode performed in non-render mode");
+    }
     impl_->rcode_ = rcode;
 }
 
@@ -335,6 +351,10 @@ Message::getOpcode() const {
 
 void
 Message::setOpcode(const Opcode& opcode) {
+    if (impl_->mode_ != Message::RENDER) {
+        isc_throw(InvalidMessageOperation,
+                  "setOpcode performed in non-render mode");
+    }
     impl_->opcode_ = &opcode;
 }
 
@@ -345,6 +365,11 @@ Message::getRRCount(const Section& section) const {
 
 void
 Message::addRRset(const Section& section, RRsetPtr rrset, const bool sign) {
+    if (impl_->mode_ != Message::RENDER) {
+        isc_throw(InvalidMessageOperation,
+                  "addRRset performed in non-render mode");
+    }
+
     // Note: should check duplicate (TBD)
     impl_->rrsets_[sectionCodeToId(section)].push_back(rrset);
     impl_->counts_[section.getCode()] += rrset->getRdataCount();
@@ -358,6 +383,11 @@ Message::addRRset(const Section& section, RRsetPtr rrset, const bool sign) {
 
 void
 Message::addQuestion(const QuestionPtr question) {
+    if (impl_->mode_ != Message::RENDER) {
+        isc_throw(InvalidMessageOperation,
+                  "addQuestion performed in non-render mode");
+    }
+
     impl_->questions_.push_back(question);
     ++impl_->counts_[Section::QUESTION().getCode()];
 }
@@ -814,6 +844,8 @@ Message::makeResponse()
                   "makeResponse() is performed in non-parse mode");
     }
 
+    impl_->mode_ = Message::RENDER;
+
     impl_->dnssec_ok_ = false;
     impl_->remote_udpsize_ = impl_->udpsize_;
     impl_->local_edns_ = RRsetPtr();
@@ -821,8 +853,6 @@ Message::makeResponse()
 
     impl_->flags_ &= MESSAGE_REPLYPRESERVE;
     setHeaderFlag(MessageFlag::QR());
-
-    impl_->mode_ = Message::RENDER;
 
     impl_->rrsets_[sectionCodeToId(Section::ANSWER())].clear();
     impl_->counts_[Section::ANSWER().getCode()] = 0;

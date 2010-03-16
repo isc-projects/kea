@@ -32,7 +32,9 @@ namespace isc {
 namespace dns {
 
 ///
-/// \brief A standard DNS module exception ...[TBD]
+/// \brief A standard DNS module exception that is thrown if a wire format
+/// message parser encounters a short length of data that don't even contain
+/// the full header section.
 ///
 class MessageTooShort : public Exception {
 public:
@@ -40,26 +42,39 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+///
+/// \brief A standard DNS module exception that is thrown if a section iterator
+/// is being constructed for an incompatible section.  Specifically, this
+/// happens RRset iterator is being constructed for a Question section.
+///
 class InvalidMessageSection : public Exception {
 public:
     InvalidMessageSection(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
 
+///
+/// \brief A standard DNS module exception that is thrown if a \c Message
+/// class method is called that is prohibited for the current mode of
+/// the message.
+///
 class InvalidMessageOperation : public Exception {
 public:
     InvalidMessageOperation(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
 
+///
+/// \brief A standard DNS module exception that is thrown if a UDP buffer size
+/// smaller than the standard default maximum (DEFAULT_MAX_UDPSIZE) is
+/// being specified for the message.
+///
 class InvalidMessageUDPSize : public Exception {
 public:
     InvalidMessageUDPSize(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
 
-typedef uint8_t rcode_t; // we actually only need 4 bits of it
-typedef uint8_t opcode_t; // we actually only need 4 bits of it
 typedef uint16_t qid_t;
 
 class InputBuffer;
@@ -70,6 +85,10 @@ struct MessageImpl;
 template <typename T>
 struct SectionIteratorImpl;
 
+/// \brief The \c MessageFlag class objects represent standard flag bits
+/// of the header section of DNS messages.
+///
+/// Constant objects are defined for standard flags.
 class MessageFlag {
 public:
     uint16_t getBit() const { return (flagbit_); }
@@ -134,6 +153,13 @@ MessageFlag::CD()
     return (f);
 }
 
+/// \brief The \c Opcode class objects represent standard OPCODEs
+/// of the header section of DNS messages.
+///
+/// Note: since there are only 15 possible values, it may make more sense to
+/// simply define an enum type to represent these values.
+///
+/// Constant objects are defined for standard flags.
 class Opcode {
 public:
     uint16_t getCode() const { return (code_); }
@@ -275,6 +301,11 @@ Opcode::RESERVED15()
     return (c);
 }
 
+/// \brief The \c Rcode class objects represent standard Response Codes
+/// (RCODEs) of the header section of DNS messages, and extended response
+/// codes as defined in the EDNS specification.
+///
+/// Constant objects are defined for standard flags.
 class Rcode {
 public:
     Rcode(uint16_t code);
@@ -426,6 +457,17 @@ Rcode::BADVERS()
     return (c);
 }
 
+/// \brief The \c Section class objects represent DNS message sections such
+/// as the header, question, or answer.
+///
+/// Note: this class doesn't seem to be very useful.  We should probably
+/// revisit this design.
+///
+/// Note: whether or not it's represented as a class, we'll need a way
+/// to represent more advanced sections such as those used in dynamic updates.
+/// This is a TODO item.
+///
+/// Constant objects are defined for standard flags.
 class Section {
 public:
     /// \brief Returns the relative position of the \c Section in DNS messages.
@@ -479,6 +521,10 @@ Section::ADDITIONAL()
     return (s);
 }
 
+/// \c SectionIterator is a templated class to provide standard-compatible
+/// iterators for Questions and RRsets for a given DNS message section.
+/// The template parameter is either \c QuestionPtr (for the question section)
+/// or \c RRsetPtr (for the answer, authority, or additional section).
 template <typename T>
 class SectionIterator : public std::iterator<std::input_iterator_tag, T> {
 public:
@@ -500,67 +546,218 @@ private:
 typedef SectionIterator<QuestionPtr> QuestionIterator;
 typedef SectionIterator<RRsetPtr> RRsetIterator;
 
+/// \brief The \c Message class encapsulates a standard DNS message.
+///
+/// Details of the design and interfaces of this class is still in flux.
+/// Here are some notes about the current design.
+///
+/// Since many realistic DNS applications deal with messages, message objects
+/// will be frequently used, and can be performance sensitive.  To minimize
+/// the performance overhead of constructing and destructing the objects,
+/// this class is designed to be reusable.  The \c clear() method is provided
+/// for this purpose.
+///
+/// A \c Message class object is in either the \c PARSE or the \c RENDER mode.
+/// A \c PARSE mode object is intended to be used to convert wire-format
+/// message data into a complete \c Message object.
+/// A \c RENDER mode object is intended to be used to convert a \c Message
+/// object into wire-format data.
+/// Some of the method functions of this class is limited to a specific mode.
+/// In general, "set" type operations are only allowed for \c RENDER mode
+/// objects.
+/// The initial mode must be specified on construction, and can be changed
+/// through some method functions.
+///
+/// This class uses the "pimpl" idiom, and hide detailed implementation
+/// through the \c impl_ pointer.  Since a \c Message object is expected to
+/// be reused, the construction overhead of this approach should be acceptable.
+///
+/// Open issues (among other things):
+/// - We may want to provide an "iterator" for all RRsets/RRs for convenience.
+///   This will be for applications that do not care about performance much,
+///   so the implementation can only be moderately efficient.
+/// - may want to provide a "find" method for a specified type
+///   of RR in the message.
 class Message {
 public:
     enum Mode {
         PARSE = 0,
         RENDER = 1
     };
+
+    ///
+    /// \name Constructors and Destructor
+    ///
+    /// Note: The copy constructor and the assignment operator are intentionally
+    /// defined as private.  The intended use case wouldn't require copies of
+    /// a \c Message object; once created, it would normally be expected to
+    /// be reused, changing the mode from \c PARSE to \c RENDER, and vice
+    /// versa.
+    //@{
 public:
+    /// \brief The constructor.
+    /// The mode of the message is specified by the \c mode parameter.
     Message(Mode mode);
+    /// \brief The destructor.
     ~Message();
 private:
     Message(const Message& source);
     Message& operator=(const Message& source);
+    //@}
 public:
+    /// \brief Return whether the specified header flag bit is set in the
+    /// header section.
     bool getHeaderFlag(const MessageFlag& flag) const;
+
+    /// \brief Set the specified header flag bit is set in the header section.
+    ///
+    /// Only allowed in the \c RENDER mode.
     void setHeaderFlag(const MessageFlag& flag);
+
+    /// \brief Clear the specified header flag bit is set in the header section.
+    ///
+    /// Only allowed in the \c RENDER mode.
+    /// Note: it may make more sense to integrate this method into \c
+    /// \c setHeaderFlag() with an additional argument.
     void clearHeaderFlag(const MessageFlag& flag);
+
+    /// \brief Return whether the message sender indicates DNSSEC is supported.
+    /// If EDNS is included, this corresponds to the value of the DO bit.
+    /// Otherwise, DNSSEC is considered not supported.
     bool isDNSSECSupported() const;
+
+    /// \brief Specify whether DNSSEC is supported in the message.
+    ///
+    /// Only allowed in the \c RENDER mode.
+    /// If EDNS is included in the message, the DO bit is set or cleared
+    /// according to the specified value of this method.
     void setDNSSECSupported(bool on);
+
+    /// \brief Return the maximum buffer size of UDP messages for the sender
+    /// of the message.
+    ///
+    /// The semantics of this value is different based on the mode:
+    /// In the \c PARSE mode, it means the buffer size of the remote node;
+    /// in the \c RENDER mode, it means the buffer size of the local node.
+    ///
+    /// In either case, its value is the value of the UDP payload size field
+    /// of EDNS (when it's included) or \c DEFAULT_MAX_UDPSIZE.
+    ///
+    /// Note: this interface may be confusing and may have to be revisited.
     uint16_t getUDPSize() const;
+
+    /// \brief Specify the maximum buffer size of UDP messages of the local
+    /// node.
+    ///
+    /// Only allowed in the \c RENDER mode.
+    /// If EDNS OPT RR is included in the message, its UDP payload size field
+    /// will be set to the specified value.
     void setUDPSize(uint16_t size);
+
+    /// \brief Return the query ID given in the header section of the message.
     qid_t getQid() const;
+
+    /// \brief Set the query ID of the header section of the message.
+    ///
+    /// Only allowed in the \c RENDER mode.
     void setQid(qid_t qid);
+
+    /// \brief Return the Response Code of the message.
+    ///
+    /// This includes extended codes specified by an EDNS OPT RR (when
+    /// included).  In the \c PARSE mode, if the received message contains
+    /// an EDNS OPT RR, the corresponding extended code is identified and
+    /// returned.
     const Rcode& getRcode() const;
+
+    /// \brief Return the Response Code of the message.
+    ///
+    /// Only allowed in the \c RENDER mode.
+    /// If the specified code is an EDNS extended RCODE, an EDNS OPT RR will be
+    /// included in the message.
     void setRcode(const Rcode& rcode);
+
+    /// \brief Return the OPCODE given in the header section of the message.
     const Opcode& getOpcode() const;
+
+    /// \brief Set the OPCODE of the header section of the message.
+    ///
+    /// Only allowed in the \c RENDER mode.
     void setOpcode(const Opcode& opcode);
-    std::string toText() const;
+
     /// \brief Returns the number of RRs contained in the given section.
     unsigned int getRRCount(const Section& section) const;
 
-    // Open issues:
-    //   - may want to provide an "iterator" for all RRsets/RRs
-    //   - may want to provide a "find" method for a specified type
-    //     of RR in the message
+    /// \brief Return an iterator corresponding to the beginning of the
+    /// Question section of the message.
     const QuestionIterator beginQuestion() const;
+
+    /// \brief Return an iterator corresponding to the end of the
+    /// Question section of the message.
     const QuestionIterator endQuestion() const;
+
+    /// \brief Return an iterator corresponding to the beginning of the
+    /// given section (other than Question) of the message.
     const RRsetIterator beginSection(const Section& section) const;
+
+    /// \brief Return an iterator corresponding to the end of the
+    /// given section (other than Question) of the message.
     const RRsetIterator endSection(const Section& section) const;
 
+    /// \brief Add a (pointer like object of) Question to the message.
+    ///
+    /// Only allowed in the \c RENDER mode.
     void addQuestion(QuestionPtr question);
+
+    /// \brief Add a (pointer like object of) Question to the message.
+    ///
+    /// This version internally creates a \c QuestionPtr object from the
+    /// given \c question and calls the other version of this method.
+    /// So this is inherently less efficient, but is provided because this
+    /// form may be more intuitive and may make more sense for performance
+    /// insensitive applications.
+    ///
+    /// Only allowed in the \c RENDER mode.
     void addQuestion(const Question& question);
-    void removeQuestion(QuestionPtr question);
+
+    /// \brief Add a (pointer like object of) RRset to the given section
+    /// of the message.
+    ///
+    /// This interface takes into account the RRSIG possibly attached to
+    /// \c rrset.  This interface design needs to be revisited later.
+    ///
+    /// Only allowed in the \c RENDER mode.
     void addRRset(const Section& section, RRsetPtr rrset, bool sign = false);
-    void removeRRset(const Section& section, RRsetPtr rrset);
+
+    // The following methods are not currently implemented.
+    //void removeQuestion(QuestionPtr question);
+    //void removeRRset(const Section& section, RRsetPtr rrset);
     // notyet:
     //void addRR(const Section& section, const RR& rr);
     //void removeRR(const Section& section, const RR& rr);
 
+    /// \brief Clear the message content (if any) and reinitialize it in the
+    /// specified mode.
     void clear(Mode mode);
 
-    // prepare for making a response from a request.  This will clear the
-    // DNS header except those fields that should be kept for the response,
-    // and clear answer and the following sections.
-    // see also dns_message_reply() of BIND9.
+    /// \brief Prepare for making a response from a request.
+    ///
+    /// This will clear the DNS header except those fields that should be kept
+    /// for the response, and clear answer and the following sections.
+    /// See also dns_message_reply() of BIND9.
     void makeResponse();
 
-    /// \brief Render message.
+    /// \brief Convert the Message to a string.
+    std::string toText() const;
+
+    /// \brief Render the message in wire formant into a \c MessageRenderer
+    /// object.
     void toWire(MessageRenderer& renderer);
 
-    /// \brief Parse a DNS message.
+    /// \brief Parse the header section of the \c Message.
     void parseHeader(InputBuffer& buffer);
+
+    /// \brief Parse the \c Message.
     void fromWire(InputBuffer& buffer);
 
     ///
