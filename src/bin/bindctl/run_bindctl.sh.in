@@ -8,5 +8,8 @@ BINDCTL_PATH=@abs_top_srcdir@/src/bin/bindctl
 PYTHONPATH=@abs_top_builddir@/src/lib/python:@abs_top_builddir@/src/bin
 export PYTHONPATH
 
+B10_FROM_SOURCE=@abs_top_srcdir@
+export B10_FROM_SOURCE
+
 cd ${BINDCTL_PATH}
 exec ${PYTHON_EXEC} -O bindctl $*
