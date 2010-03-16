@@ -52,7 +52,7 @@ CONST_COMMAND_NODE = "command"
 class BindCmdInterpreter(Cmd):
     """simple bindctl example."""    
 
-    def __init__(self, server_port = 'localhost:8080'):
+    def __init__(self, server_port = 'localhost:8080', pem_file = "bindctl.pem"):
         Cmd.__init__(self)
         self.location = ""
         self.prompt_end = '> '
@@ -61,13 +61,15 @@ class BindCmdInterpreter(Cmd):
         self.modules = OrderedDict()
         self.add_module_info(ModuleInfo("help", desc = "Get help for bindctl"))
         self.server_port = server_port
+        self.pem_file = pem_file
         self._connect_to_cmd_ctrld()
         self.session_id = self._get_session_id()
 
     def _connect_to_cmd_ctrld(self):
         '''Connect to cmdctl in SSL context. '''
         try:
-            self.conn = http.client.HTTPSConnection(self.server_port, cert_file='bindctl.pem')
+            self.conn = http.client.HTTPSConnection(self.server_port,
+                          cert_file=self.pem_file)
         except  Exception as e:
             print(e, "can't connect to %s, please make sure cmd-ctrld is running" %
                   self.server_port)
