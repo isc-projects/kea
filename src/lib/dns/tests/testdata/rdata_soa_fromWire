@@ -1,5 +1,5 @@
 #
-# various kinds of SOA RDATA stored in an input buffer
+# A common style of SOA RDATA stored in an input buffer
 #
 # Valid compressed RDATA for "(ns.example.com. root.example.com.
 # 2010012601 3600 300 3600000 1200)"
