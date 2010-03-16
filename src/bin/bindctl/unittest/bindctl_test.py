@@ -15,10 +15,10 @@
 
 
 import unittest
-import cmdparse
-import bindcmd
-from moduleinfo import *
-from exception import *    
+from bindctl import cmdparse
+from bindctl import bindcmd
+from bindctl.moduleinfo import *
+from bindctl.exception import *    
 try:
     from collections import OrderedDict
 except ImportError:
