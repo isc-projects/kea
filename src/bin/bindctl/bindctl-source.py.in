@@ -108,7 +108,7 @@ if __name__ == '__main__':
         set_bindctl_options(parser)
         (options, args) = parser.parse_args()
         server_addr = options.addr + ':' + str(options.port)
-        tool = BindCmdInterpreter(server_addr)
+        tool = BindCmdInterpreter(server_addr, pem_file = "@@SYSCONFDIR@@/bind10/bindctl.pem")
         prepare_config_commands(tool)
         tool.run()
     except Exception as e:

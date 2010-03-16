@@ -14,3 +14,4 @@ functions should be updated first.):
         moduleinfo.py:
             get_param_name_by_position
 5. Understandable error message when cert_file is missing.
+6. Pick location to save default user. Or use the cfgmgr for this.
