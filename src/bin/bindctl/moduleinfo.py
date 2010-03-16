@@ -30,8 +30,8 @@ PARAM_NODE_NAME = 'param'
 
 
 class ParamInfo:
-    """The parameter of one command
-    each command parameter have four attributes, 
+    """One parameter of one command.
+    Each command parameter has four attributes:
     parameter name, parameter type, parameter value, and parameter description
     """
     def __init__(self, name, desc = '', type = STRING_TYPE, 
@@ -47,8 +47,8 @@ class ParamInfo:
         return str("\t%s <type: %s> \t(%s)" % (self.name, self.type, self.desc))
 
 class CommandInfo:
-    """One command which provide by one bind10 module, it has zero or 
-    more parameters
+    """One command which is provided by one bind10 module, it has zero
+       or more parameters
     """
 
     def __init__(self, name, desc = ""):
@@ -65,26 +65,34 @@ class CommandInfo:
         
 
     def add_param(self, paraminfo):
+    """Add a ParamInfo object to this CommandInfo"""
         self.params[paraminfo.name] = paraminfo
         
 
     def has_param_with_name(self, param_name):
+    """Returns true if the parameter with param_name exists"""
         return param_name in self.params
         
 
     def get_param_with_name(self, param_name):
+    """Returns the ParamInfo with the given name. Raises a
+       KeyError if it doesn't exist"""
         return self.params[param_name]
         
 
     def get_params(self):
+    """Returns a list of all ParamInfo objects for this CommandInfo"""
         return list(self.params.values())
         
 
     def get_param_names(self):
+    """Returns a list of the names of all parameters for this command"""
         return list(self.params.keys())
         
         
     def get_mandatory_param_names(self):
+    """Returns a list of the names of all mandatory parameters for
+       this command"""
         all_names = self.params.keys()
         return [name for name in all_names 
                 if not self.params[name].is_optional]        
@@ -122,6 +130,7 @@ class CommandInfo:
 
 
     def command_help(self):
+    """Prints the help info for this command to stdout"""
         print("Command ", self)
         print("\t\thelp (Get help for command)")
                 
@@ -162,26 +171,35 @@ class ModuleInfo:
     def __str__(self):
         return str("%s \t%s" % (self.name, self.desc))
         
-    def add_command(self, command_info):        
+    def add_command(self, command_info):
+    """Add a CommandInfo to this ModuleInfo."""
         self.commands[command_info.name] = command_info
         
     def has_command_with_name(self, command_name):
+    """Returns true if this module has a command with the given name."""
         return command_name in self.commands
         
     def get_command_with_name(self, command_name):
+    """Returns the CommandInfo for the command with the given name.
+       Raises a KeyError if not found"""
         return self.commands[command_name]
         
     def get_commands(self):
+    """Returns a list of all CommandInfo objects for this module."""
         return list(self.commands.values())
         
     def get_command_names(self):
+    """Returns a list of the names of all commands for this module."""
         return list(self.commands.keys())
 
     def module_help(self):
+    """Prints the help info for this module to stdout"""
         print("Module ", self, "\nAvailable commands:")
         for k in self.commands.keys():
             print("\t", self.commands[k])
             
     def command_help(self, command):
+    """Prints the help info for the command with the given name.
+       Raises KeyError if not found"""
         self.commands[command].command_help()    
 
