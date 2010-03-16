@@ -163,6 +163,33 @@ class EDNS:
         f.write('# RDLEN=%d\n' % self.rdlen)
         f.write('%04x\n' % self.rdlen)
 
+class SOA:
+    # this currently doesn't support name compression within the RDATA.
+    rdlen = -1                  # auto-calculate
+    mname = 'ns.example.com'
+    rname = 'root.example.com'
+    serial = 2010012601
+    refresh = 3600
+    retry = 300
+    expire = 3600000
+    minimum = 1200
+    def dump(self, f):
+        mname_wire = encode_name(self.mname)
+        rname_wire = encode_name(self.rname)
+        rdlen = self.rdlen
+        if rdlen < 0:
+            rdlen = int(20 + len(mname_wire) / 2 + len(str(rname_wire)) / 2)
+        f.write('\n# SOA RDATA (RDLEN=%d)\n' % rdlen)
+        f.write('%04x\n' % rdlen);
+        f.write('# NNAME=%s RNAME=%s\n' % (self.mname, self.rname))
+        f.write('%s %s\n' % (mname_wire, rname_wire))
+        f.write('# SERIAL(%d) REFRESH(%d) RETRY(%d) EXPIRE(%d) MINIMUM(%d)\n' %
+                (self.serial, self.refresh, self.retry, self.expire,
+                 self.minimum))
+        f.write('%08x %08x %08x %08x %08x\n' % (self.serial, self.refresh,
+                                                self.retry, self.expire,
+                                                self.minimum))
+
 class RRSIG:
     rdlen = -1                  # auto-calculate
     covered = 1                 # A
@@ -202,7 +229,7 @@ class RRSIG:
 def get_config_param(section):
     config_param = {'header' : (DNSHeader, header_xtables),
                 'question' : (DNSQuestion, question_xtables),
-                'edns' : (EDNS, {}), 'rrsig' : (RRSIG, {}) }
+                'edns' : (EDNS, {}), 'soa' : (SOA, {}), 'rrsig' : (RRSIG, {}) }
     s = section
     m = re.match('^([^:]+)/\d+$', section)
     if m:
