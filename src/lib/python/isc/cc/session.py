@@ -101,7 +101,7 @@ class Session:
                     return env, msg
                 else:
                     self._queue.append((env,msg))
-                    self.recvmsg(nonblock, seq)
+                    return self.recvmsg(nonblock, seq)
             else:
                 return isc.cc.message.from_wire(data[2:header_length+2]), None
         return None, None
