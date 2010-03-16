@@ -40,10 +40,6 @@ using namespace std;
 namespace isc {
 namespace dns {
 
-enum {
-    DATE_LEN = 14       // YYYYMMDDHHmmSS
-};
-
 string
 timeToText(const time_t timeval) {
     struct tm* const t = gmtime(&timeval);
@@ -66,6 +62,8 @@ timeToText(const time_t timeval) {
 }
 
 namespace {
+const size_t DATE_LEN = 14;      // YYYYMMDDHHmmSS
+
 inline void
 checkRange(const int min, const int max, const int value,
            const string& valname)
