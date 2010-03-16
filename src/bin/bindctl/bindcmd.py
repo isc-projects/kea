@@ -14,7 +14,6 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 import sys
-import readline
 from cmd import Cmd
 from bindctl.exception import *
 from bindctl.moduleinfo import *
@@ -37,6 +36,13 @@ try:
     from collections import OrderedDict
 except ImportError:
     from bindctl.mycollections import OrderedDict
+
+# if we have readline support, use that, otherwise use normal stdio
+try:
+    import readline
+    my_readline = readline.get_line_buffer
+except ImportError:
+    my_readline = sys.stding.readline
 
 
 CONST_BINDCTL_HELP = """BindCtl, version 0.1
@@ -320,7 +326,7 @@ class BindCmdInterpreter(Cmd):
         if 0 == state:
             text = text.strip()
             hints = []
-            cur_line = readline.get_line_buffer()            
+            cur_line = my_readline()
             try:
                 cmd = BindCmdParse(cur_line)
                 if not cmd.params and text:
