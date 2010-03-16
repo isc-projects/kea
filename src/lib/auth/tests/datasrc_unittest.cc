@@ -680,7 +680,6 @@ TEST_F(DataSrcTest, CNAMELoop) {
 
 // NSEC query for the name of a zone cut for non-secure delegation.
 // Should return normal referral.
-#if 0                           // currently fails
 TEST_F(DataSrcTest, NSECZonecutOfNonsecureZone) {
     createAndProcessQuery(Name("sub.example.org"), RRClass::IN(),
                           RRType::NSEC());
@@ -714,13 +713,10 @@ TEST_F(DataSrcTest, NSECZonecutOfNonsecureZone) {
     it->next();
     EXPECT_TRUE(it->isLast());
 }
-#endif
 
-//#if 0                           // currently fails
 TEST_F(DataSrcTest, RootDSQuery) {
     createAndProcessQuery(Name("."), RRClass::IN(), RRType::DS());
 }
-//#endif
 
 // Non-existent name in the "static" data source.  The purpose of this test
 // is to check a corner case behavior when atypical RRClass (CH in this case)
