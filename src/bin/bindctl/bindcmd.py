@@ -326,7 +326,10 @@ class BindCmdInterpreter(Cmd):
             line = 'help'
         
         Cmd.onecmd(self, line)
-                    
+
+    def remove_prefix(self, list, prefix):
+        return [(val[len(prefix):]) for val in list]
+
     def complete(self, text, state):
         if 0 == state:
             text = text.strip()
@@ -342,9 +345,10 @@ class BindCmdInterpreter(Cmd):
                     if cmd.module == "config":
                         # grm text has been stripped of slashes...
                         my_text = self.location + "/" + cur_line.rpartition(" ")[2]
-                        print("[XX] completing config part")
-                        list = self.config_data.get_config_item_list(my_text.rpartition("/")[0])
-                        hints.extend([val for val in list if val.startswith(text)])
+                        list = self.config_data.get_config_item_list(my_text.rpartition("/")[0], True)
+                        hints.extend([val for val in list if val.startswith(my_text[1:])])
+                        # remove the common prefix from the hints so we don't get it twice
+                        hints = self.remove_prefix(hints, my_text.rpartition("/")[0])
             except CmdModuleNameFormatError:
                 if not text:
                     hints = self.get_module_names()
