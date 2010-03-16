@@ -111,7 +111,14 @@ if __name__ == '__main__':
         set_bindctl_options(parser)
         (options, args) = parser.parse_args()
         server_addr = options.addr + ':' + str(options.port)
-        tool = BindCmdInterpreter(server_addr, pem_file = "@@SYSCONFDIR@@/bind10/bindctl.pem")
+        # If B10_FROM_SOURCE is set in the environment, we use PEM file
+        # from a directory relative to that, otherwise we use the one
+        # installed on the system
+        if "B10_FROM_SOURCE" in os.environ:
+            SYSCONF_PATH = os.environ["B10_FROM_SOURCE"] + "/src/bin/bindctl"
+        else:
+            SYSCONF_PATH = "@@SYSCONFDIR@@/@PACKAGE@"
+        tool = BindCmdInterpreter(server_addr, pem_file = SYSCONF_PATH + "/bindctl.pem")
         prepare_config_commands(tool)
         tool.run()
     except Exception as e:
