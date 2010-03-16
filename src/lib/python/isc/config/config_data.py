@@ -401,6 +401,8 @@ class MultiConfigData:
            the identifier (up to the first /) is interpreted as the
            module name"""
         if identifier and identifier != "/":
+            if identifier.startswith("/"):
+                identifier = identifier[1:]
             spec = self.find_spec_part(identifier)
             return spec_name_list(spec, identifier + "/", recurse)
         else:
