@@ -147,9 +147,11 @@ struct MessageRendererImpl {
     OutputBuffer nbuffer_;
     /// A set of compression pointers.
     std::set<NameCompressNode, NameCompare> nodeset_;
-
-    /// TBD
+    /// The maximum length of rendered data that can fit without
+    /// truncation.
     uint16_t msglength_limit_;
+    /// A boolean flag that indicates truncation has occurred while rendering
+    /// the data.
     bool truncated_;
 };
 

@@ -99,11 +99,22 @@ public:
     const void* getData() const;
     /// \brief Return the length of data written in the internal buffer.
     size_t getLength() const;
-
-    /// \brief TBD
+    /// \brief Return whether truncation has occurred while rendering.
+    ///
+    /// Once the return value of this method is \c true, it doesn't make sense
+    /// to try rendering more data, although this class itself doesn't reject
+    /// the attempt.
+    ///
+    /// This method never throws an exception.
+    ///
+    /// \return true if truncation has occurred; otherwise \c false.
     bool isTruncated() const;
-
-    /// \brief TBD
+    /// \brief Return the maximum length of rendered data that can fit in the
+    /// corresponding DNS message without truncation.
+    ///
+    /// This method never throws an exception.
+    ///
+    /// \return The maximum length in bytes.
     size_t getLengthLimit() const;
     //@}
 
@@ -111,11 +122,18 @@ public:
     /// \name Setter Methods
     ///
     //@{
-    /// \brief TBD
-    void setLengthLimit(size_t len);
-
-    /// \brief TBD
+    /// \brief Mark the renderer to indicate truncation has occurred while
+    /// rendering.
+    ///
+    /// This method never throws an exception.
     void setTruncated();
+    /// \brief Set the maximum length of rendered data that can fit in the
+    /// corresponding DNS message without truncation.
+    ///
+    /// This method never throws an exception.
+    ///
+    /// \param len The maximum length in bytes.
+    void setLengthLimit(size_t len);
     //@}
 
     ///
@@ -130,8 +148,16 @@ public:
     ///
     /// \param len The length of the gap to be inserted in bytes.
     void skip(size_t len);
-
-    /// \brief TBD
+    /// \brief Trim the specified length of data from the end of the internal
+    /// buffer.
+    ///
+    /// This method is provided for such cases as DNS message truncation.
+    ///
+    /// The specified length must not exceed the current data size of the
+    /// buffer; otherwise an exception of class \c isc::OutOfRange will
+    /// be thrown.
+    ///
+    /// \param len The length of data that should be trimmed.
     void trim(size_t len);
     /// \brief Clear the internal buffer and other internal resources.
     ///

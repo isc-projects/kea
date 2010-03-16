@@ -326,7 +326,14 @@ public:
     /// that is to be filled in later, e.g, by \ref writeUint16At().
     /// \param len The length of the gap to be inserted in bytes.
     void skip(size_t len) { data_.insert(data_.end(), len, 0); }
-    /// \brief TBD
+
+    /// \brief Trim the specified length of data from the end of the buffer.
+    ///
+    /// The specified length must not exceed the current data size of the
+    /// buffer; otherwise an exception of class \c isc::OutOfRange will
+    /// be thrown.
+    ///
+    /// \param len The length of data that should be trimmed.
     void trim(size_t len)
     {
         if (len > data_.size()) {
