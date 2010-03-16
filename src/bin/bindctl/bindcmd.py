@@ -342,6 +342,7 @@ class BindCmdInterpreter(Cmd):
                     if cmd.module == "config":
                         # grm text has been stripped of slashes...
                         my_text = self.location + "/" + cur_line.rpartition(" ")[2]
+                        print("[XX] completing config part")
                         list = self.config_data.get_config_item_list(my_text.rpartition("/")[0])
                         hints.extend([val for val in list if val.startswith(text)])
             except CmdModuleNameFormatError:
