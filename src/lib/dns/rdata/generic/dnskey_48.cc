@@ -83,10 +83,9 @@ DNSKEY::DNSKEY(const string& dnskey_str) :
     impl_ = new DNSKEYImpl(flags, protocol, algorithm, keydata);
 }
 
-DNSKEY::DNSKEY(InputBuffer& buffer, size_t rdata_len)
-{
+DNSKEY::DNSKEY(InputBuffer& buffer, size_t rdata_len) {
     if (rdata_len < 4) {
-        isc_throw(InvalidRdataLength, "DNSKEY too short");
+        isc_throw(InvalidRdataLength, "DNSKEY too short: " << rdata_len);
     }
 
     uint16_t flags = buffer.readUint16();
