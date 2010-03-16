@@ -299,8 +299,6 @@ class CommandControl():
             seq = self.cc.group_sendmsg(msg, module_name)
             #TODO, it may be blocked, msqg need to add a new interface waiting in timeout.
             answer, env = self.cc.group_recvmsg(False, seq)
-            while answer == None:
-                answer, env = self.cc.group_recvmsg(False, seq)
             if answer:
                 try:
                     rcode, arg = isc.config.ccsession.parse_answer(answer)
