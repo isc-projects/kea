@@ -475,10 +475,12 @@ tryWildcard(Query& q, QueryTaskPtr task, const DataSrc* ds,
     // A wildcard was found.
     if (found) {
         // Prove the nonexistence of the name we were looking for
-        result = proveNX(q, task, ds, *zonename, true);
-        if (result != DataSrc::SUCCESS) {
-            m.setRcode(Rcode::SERVFAIL());
-            return (DataSrc::ERROR);
+        if (q.wantDnssec()) {
+            result = proveNX(q, task, ds, *zonename, true);
+            if (result != DataSrc::SUCCESS) {
+                m.setRcode(Rcode::SERVFAIL());
+                return (DataSrc::ERROR);
+            }
         }
 
         // Add the data to the answer section (but with the name changed to
