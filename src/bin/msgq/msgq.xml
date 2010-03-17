@@ -47,9 +47,8 @@
       <command>msgq</command>
       <arg><option>-m <replaceable>number</replaceable></option></arg>
       <arg><option>-v</option></arg>
-      <arg choice='plain'>--msgq-port <replaceable>number</replaceable></arg>
-      <arg choice='plain'>--verbose </arg>
-<!-- TODO arg choice versus option? -->
+      <arg><option>--msgq-port <replaceable>number</replaceable></option></arg>
+      <arg><option>--verbose</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
