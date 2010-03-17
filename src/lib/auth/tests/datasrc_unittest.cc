@@ -729,7 +729,9 @@ TEST_F(DataSrcTest, NSECZonecutOfNonsecureZone) {
 }
 
 TEST_F(DataSrcTest, RootDSQuery) {
-    createAndProcessQuery(Name("."), RRClass::IN(), RRType::DS());
+    EXPECT_NO_THROW(createAndProcessQuery(Name("."), RRClass::IN(),
+                                          RRType::DS()));
+    headerCheck(msg, Rcode::REFUSED(), true, false, true, 0, 0, 0);
 }
 
 // Non-existent name in the "static" data source.  The purpose of this test
