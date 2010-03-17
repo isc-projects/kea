@@ -6,6 +6,7 @@ from optparse import OptionParser
 
 re_hex = re.compile('0x[0-9a-fA-F]+')
 re_decimal = re.compile('\d+$')
+re_string = re.compile("\'(.+)\'$")
 
 dnssec_timefmt = '%Y%m%d%H%M%S'
 
@@ -46,6 +47,9 @@ def parse_value(value, xtable = {}):
         return int(value, 16)
     if re.search(re_decimal, value):
         return int(value)
+    m = re.match(re_string, value)
+    if m:
+        return m.group(1)
     lovalue = value.lower()
     if lovalue in xtable:
         return xtable[lovalue]
@@ -190,6 +194,29 @@ class SOA:
                                                 self.retry, self.expire,
                                                 self.minimum))
 
+class NSEC:
+    rdlen = -1                  # auto-calculate
+    nextname = 'next.example.com'
+    block = 0
+    maplen = -1                 # auto-calculate
+    bitmap = '040000000003'
+    def dump(self, f):
+        name_wire = encode_name(self.nextname)
+        rdlen = self.rdlen
+        maplen = self.maplen
+        if maplen < 0:
+            maplen = int(len(self.bitmap) / 2)
+        # if rdlen needs to be calculated, it must be based on the bitmap
+        # length, because the configured maplen can be fake.
+        if rdlen < 0:
+            rdlen = int(len(name_wire) / 2) + 2 + int(len(self.bitmap) / 2)
+        f.write('\n# NSEC RDATA (RDLEN=%d)\n' % rdlen)
+        f.write('%04x\n' % rdlen);
+        f.write('# Next Name=%s\n' % self.nextname)
+        f.write('%s\n' % name_wire)
+        f.write('# Bitmap: Block=%d, Length=%d\n' % (self.block, maplen))
+        f.write('%02x %02x %s\n' % (self.block, maplen, self.bitmap))
+
 class RRSIG:
     rdlen = -1                  # auto-calculate
     covered = 1                 # A
@@ -228,8 +255,9 @@ class RRSIG:
 
 def get_config_param(section):
     config_param = {'header' : (DNSHeader, header_xtables),
-                'question' : (DNSQuestion, question_xtables),
-                'edns' : (EDNS, {}), 'soa' : (SOA, {}), 'rrsig' : (RRSIG, {}) }
+                    'question' : (DNSQuestion, question_xtables),
+                    'edns' : (EDNS, {}), 'soa' : (SOA, {}),
+                    'rrsig' : (RRSIG, {}), 'nsec' : (NSEC, {})}
     s = section
     m = re.match('^([^:]+)/\d+$', section)
     if m:
