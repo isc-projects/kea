@@ -127,7 +127,7 @@ decodeBase32(const string& base32, vector<uint8_t>& result) {
 
     // base32 text should be a multiple of 8 bytes long
     if (comp.str().length() % 8 != 0) {
-        isc_throw(BadBase32String, "Invalid length");
+        isc_throw(BadBase32String, "Invalid length: " << comp.str().length());
     }
 
     istringstream iss(comp.str());
@@ -138,7 +138,8 @@ decodeBase32(const string& base32, vector<uint8_t>& result) {
 
         iss >> setw(8) >> group;
         if (iss.bad() || iss.fail()) {
-            isc_throw (BadBase32String, "Could not parse base32 input");
+            isc_throw(BadBase32String,
+                      "Could not parse base32 input: " << base32);
         }
 
         uint8_t octet = 0;
@@ -147,7 +148,7 @@ decodeBase32(const string& base32, vector<uint8_t>& result) {
             int value;
 
             if (c != '=' && seenpad) {
-                isc_throw(BadBase32String, "Invalid base32 input");
+                isc_throw(BadBase32String, "Invalid base32 input: " << base32);
             } else 
 
             if (c == '=' && !seenpad) {
@@ -156,7 +157,8 @@ decodeBase32(const string& base32, vector<uint8_t>& result) {
             } else {
                 const char* pos = strchr(base32hex, c);
                 if (!pos) {
-                    isc_throw(BadBase32String, "Invalid base32 input");
+                    isc_throw(BadBase32String,
+                              "Invalid base32 input: " << base32);
                 }
                 value = pos - base32hex;
                 assert (value < 32);
