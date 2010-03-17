@@ -155,6 +155,7 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     def _check_user_name_and_pwd(self):
         '''Check user name and its password '''
         length = self.headers.get('Content-Length')
+
         if not length:
             return False, ["invalid username or password"]     
 
@@ -196,7 +197,9 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                 pass
 
         rcode, reply = self.server.send_command_to_module(mod, cmd, param)
-        print('b10-cmdctl finish send message \'%s\' to module %s' % (cmd, mod))
+        if self.server._verbose:
+            print('[b10-cmdctl] Finish send message \'%s\' to module %s' % (cmd, mod))
+
         ret = http.client.OK
         if rcode != 0:
             ret = http.client.BAD_REQUEST
@@ -212,10 +215,10 @@ class CommandControl():
     receive command from client and resend it to proper module.
     '''
 
-    def __init__(self):
+    def __init__(self, verbose = False):
+        self._verbose = verbose
         self.cc = isc.cc.Session()
         self.cc.group_subscribe('Cmd-Ctrld')
-        #self.cc.group_subscribe('Boss', 'Cmd-Ctrld')
         self.command_spec = self.get_cmd_specification()
         self.config_spec = self.get_data_specification()
         self.config_data = self.get_config_data()
@@ -234,6 +237,7 @@ class CommandControl():
         '''Get config data for all modules from configmanager '''
         rcode, reply = self.send_command('ConfigManager', isc.config.ccsession.COMMAND_GET_CONFIG)
         return self._parse_command_result(rcode, reply)
+
 
     def update_config_data(self, module_name, command_name):
         '''Get lastest config data for all modules from configmanager '''
@@ -293,7 +297,8 @@ class CommandControl():
         '''Send the command from bindctl to proper module. '''
         
         errstr = 'no error'
-        print('b10-cmdctl send command \'%s\' to %s' %(command_name, module_name))
+        if self._verbose:
+            self.log_info('[b10-cmdctl] send command \'%s\' to %s\n' %(command_name, module_name))
         try:
             msg = isc.config.ccsession.create_command(command_name, params)
             seq = self.cc.group_sendmsg(msg, module_name)
@@ -313,19 +318,21 @@ class CommandControl():
                         errstr = str(answer['result'][1])
                 except isc.config.ccsession.ModuleCCSessionError as mcse:
                     errstr = str("Error in ccsession answer:") + str(mcse)
-                    print(answer)
+                    self.log_info(answer)
         except Exception as e:
             errstr = str(e)
-            print(e, ':b10-cmdctl fail send command \'%s\' to %s' % (command_name, module_name))
+            self.log_info('\'%s\':[b10-cmdctl] fail send command \'%s\' to %s\n' % (e, command_name, module_name))
         
         return 1, {'error': errstr}
-
+    
+    def log_info(self, msg):
+        sys.stdout.write(msg)
 
 class SecureHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
     '''Make the server address can be reused.'''
     allow_reuse_address = True
 
-    def __init__(self, server_address, RequestHandlerClass, idle_timeout = 1200):
+    def __init__(self, server_address, RequestHandlerClass, idle_timeout = 1200, verbose = False):
         '''idle_timeout: the max idle time for login'''
         http.server.HTTPServer.__init__(self, server_address, RequestHandlerClass)
         self.user_sessions = {}
@@ -333,6 +340,7 @@ class SecureHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
         self.cmdctrl = CommandControl()
         self.__is_shut_down = threading.Event()
         self.__serving = False
+        self._verbose = verbose
         self.user_infos = {}
         self._read_user_info()
 
@@ -345,7 +353,7 @@ class SecureHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
             for row in reader:
                 self.user_infos[row[0]] = [row[1], row[2]]
         except Exception as e:
-            print("Fail to read user information ", e)                
+            self.log_info('[b10-cmdctl] Fail to read user information :\'%s\'\n' % e)                
         finally:
             if csvfile:
                 csvfile.close()
@@ -365,7 +373,7 @@ class SecureHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
                                      ssl_version = ssl.PROTOCOL_SSLv23)
             return (connstream, fromaddr)
         except ssl.SSLError as e :
-            print("cmdctl: deny client's invalid connection", e)
+            self.log_info('[b10-cmdctl] deny client\'s invalid connection:\'%s\'\n' % e)
             self.close_request(newsocket)
             # raise socket error to finish the request
             raise socket.error
@@ -406,6 +414,9 @@ class SecureHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
 
     def send_command_to_module(self, module_name, command_name, params):
         return self.cmdctrl.send_command_with_check(module_name, command_name, params)
+   
+    def log_info(self, msg):
+        sys.stdout.write(msg)
 
 httpd = None
 
@@ -418,10 +429,11 @@ def set_signal_handler():
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
 
-def run(addr = 'localhost', port = 8080, idle_timeout = 1200):
+def run(addr = 'localhost', port = 8080, idle_timeout = 1200, verbose = False):
     ''' Start cmdctl as one https server. '''
-    print("b10-cmdctl module is starting on :%s port:%d" %(addr, port))
-    httpd = SecureHTTPServer((addr, port), SecureHTTPRequestHandler, idle_timeout)
+    if verbose:
+        sys.stdout.write("[b10-cmdctl] starting on :%s port:%d\n" %(addr, port))
+    httpd = SecureHTTPServer((addr, port), SecureHTTPRequestHandler, idle_timeout, verbose)
     httpd.serve_forever()
 
 def check_port(option, opt_str, value, parser):
@@ -463,10 +475,10 @@ if __name__ == '__main__':
         set_signal_handler()
         run(options.addr, options.port, options.idle_timeout)
     except isc.cc.SessionError as se:
-        print("[b10-cmdctl] Error creating b10-cmdctl, "
-                "is the command channel daemon running?")        
+        sys.stderr.write("[b10-cmdctl] Error creating b10-cmdctl, "
+                "is the command channel daemon running?\n")        
     except KeyboardInterrupt:
-        print("exit http server")
+        sys.stderr.write("[b10-cmdctl] exit http server\n")
 
     if httpd:
         httpd.shutdown()

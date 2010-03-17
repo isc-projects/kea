@@ -25,6 +25,7 @@ import struct
 import threading
 import socket
 import random
+from optparse import OptionParser, OptionValueError
 from isc.config.ccsession import *
 try:
     from bind10_message import *
@@ -56,6 +57,12 @@ XFRIN_QUERY_SOA = 1
 XFRIN_FIRST_AXFR = 2
 XFRIN_FIRST_IXFR = 3
 
+def log_error(msg):
+    sys.stderr.write("[b10-xfrin] ")
+    sys.stderr.write(msg)
+    sys.stderr.write('\n')
+
+
 class XfrinException(Exception): 
     pass
 
@@ -68,7 +75,8 @@ class XfrinConnection(asyncore.dispatcher):
                  master_addr, 
                  port = 53, 
                  check_soa = True, 
-                 idle_timeout = 60):
+                 verbose = False,
+                 idle_timeout = 60): 
         ''' idle_timeout: max idle time for read data from socket.
             db_file: specify the data source file.
             check_soa: when it's true, check soa first before sending xfr query
@@ -82,7 +90,7 @@ class XfrinConnection(asyncore.dispatcher):
         self.setblocking(1)
         self.connect((master_addr, port))
         self._shutdown_event = shutdown_event
-
+        self._verbose = verbose
 
     def _create_query(self, query_type):
         '''Create dns query message. '''
@@ -115,7 +123,7 @@ class XfrinConnection(asyncore.dispatcher):
         self._send_data(header_len)
         self._send_data(obuf.get_data())
 
-
+    
     def _get_request_response(self, size):
         recv_size = 0
         data = b''
@@ -152,23 +160,22 @@ class XfrinConnection(asyncore.dispatcher):
         #serial 
         return XFRIN_OK
 
-
     def do_xfrin(self, check_soa, ixfr_first = False):
         try:
             ret = XFRIN_OK
             if check_soa:
                 ret =  self._check_soa_serial()
-
-            print('[xfrin] transfer of \'%s\': AXFR started' % self._zone_name)
+            
+            self.log_msg('transfer of \'%s\': AXFR started' % self._zone_name)
             if ret == XFRIN_OK:    
                 self._send_query(rr_type.AXFR())
                 ret = self._handle_xfrin_response()
 
             self._insert_record_to_sqlite3(self._records)
-            print('[xfrin] transfer of \'%s\' AXFR ended' % self._zone_name)
+            self.log_msg('transfer of \'%s\' AXFR ended' % self._zone_name)
         except XfrinException as e:
-            print(e)
-            print('[xfrin] Error happened during xfrin!')
+            self.log_msg(e)
+            self.log_msg('Error happened during xfrin!')
             #TODO, recover data source. 
         finally:
            self.close()
@@ -252,20 +259,25 @@ class XfrinConnection(asyncore.dispatcher):
         return False
 
 
-    def log_info(self, msg, type = ''):
+    def log_info(self, msg):
         # Overwrite the log function, log nothing
         pass
 
+    def log_msg(self, msg):
+        sys.stdout.write('[b10-xfrin] ')
+        sys.stdout.write(msg)
+        sys.stdout.write('\n')
+
 
 def process_xfrin(xfrin_recorder, zone_name, db_file, 
-                  shutdown_event, master_addr, port, check_soa):
+                  shutdown_event, master_addr, port, check_soa, verbose):
     xfrin_recorder.increment(name)
     try:
         conn = XfrinConnection(zone_name, db_file, shutdown_event, 
-                           master_addr, int(port), check_soa)
+                           master_addr, int(port), check_soa, verbose)
         conn.do_xfrin(False)
     except Exception as e:
-        print('[xfrin] Error happened:', e)
+        log_error(e)
 
     xfrin_recorder.decrement(zone_name)
 
@@ -299,12 +311,13 @@ class XfrinRecorder():
         return ret
 
 class Xfrin():
-    def __init__(self):
+    def __init__(self, verbose = False):
         self._cc = isc.config.ModuleCCSession(SPECFILE_LOCATION, self.config_handler, self.command_handler)
         self._cc.start()
         self._max_transfers_in = 10
         self.recorder = XfrinRecorder()
         self._shutdown_event = threading.Event()
+        self._verbose = verbose
 
 
     def config_handler(self, new_config):
@@ -400,7 +413,8 @@ class Xfrin():
                                                 db_file, 
                                                 self._shutdown_event,
                                                 master_addr, 
-                                                port, check_soa))
+                                                port, check_soa, self._verbose))
+                                                
         xfrin_thread.start()
         return (0, 'zone xfrin is started')
 
@@ -431,18 +445,27 @@ def check_addr(ipstr):
         raise XfrinException("%s invalid ip address" % ipstr)
 
 
+def set_cmd_options(parser):
+    parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
+            help="display more about what is going on")
+
+    
 if __name__ == '__main__':
     try:
+        parser = OptionParser(version = __version__)
+        set_cmd_options(parser)
+        (options, args) = parser.parse_args()
+
         set_signal_handler()
-        xfrind = Xfrin()
+        xfrind = Xfrin(verbose = options.verbose)
         xfrind.startup()
     except KeyboardInterrupt:
-        print("exit http server")
+        log_error("exit b10-xfrin")
     except isc.cc.session.SessionError as e:
-        print(e)
-        print('[b10-xfrin] Error happened! is the command channel daemon running?')
+        log_error(e)
+        log_error('Error happened! is the command channel daemon running?')
     except Exception as e:
-        print(e)
+        log_error(e)
 
     if xfrind:
         xfrind.shutdown()
