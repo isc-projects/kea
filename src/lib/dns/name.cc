@@ -47,8 +47,13 @@ namespace {
 /// unit than this file may not be initialized correctly.
 /// There are several ways to address this issue, but in this specific case
 /// we chose the naive but simple hardcoding approach.
-/// These definitions are derived from BIND 9's libdns module.
 ///
+/// These definitions are derived from BIND 9's libdns module.
+/// Note: it was not clear why the maptolower array was needed rather than
+/// using the standard tolower() function.  It was perhaps due performance
+/// concern, but we were not sure.  Even if it was performance reasons, we
+/// should carefully assess the effect via benchmarking to avoid the pitfall of 
+/// premature optimization.  We should revisit this point later.
 static const char digitvalue[256] = {
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // 16
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // 32
