@@ -485,19 +485,16 @@ TestDataSrc::findRecords(const Name& name, const RRType& rdtype,
             target.addRRset(sql1_ns);
             flags |= REFERRAL;
         } else if (name == sql1) {
+            flags |= REFERRAL;
             if (any) {
                 target.addRRset(sql1_ns);
                 target.addRRset(sql1_nsec);
-                flags |= REFERRAL;
             } else if (rdtype == RRType::NS()) {
                 target.addRRset(sql1_ns);
-                flags |= REFERRAL;
             } else if (rdtype == RRType::SOA()) {
                 target.addRRset(sql1_soa);
-                flags |= REFERRAL;
             } else if (rdtype == RRType::NSEC()) {
                 target.addRRset(sql1_nsec);
-                flags |= REFERRAL;
             } else {
                 flags |= TYPE_NOT_FOUND;
             }
@@ -509,7 +506,6 @@ TestDataSrc::findRecords(const Name& name, const RRType& rdtype,
                 target.addRRset(www_sql1_a);
             } else if (rdtype == RRType::NSEC()) {
                 target.addRRset(www_sql1_nsec);
-                flags |= REFERRAL;
             } else {
                 flags |= TYPE_NOT_FOUND;
             }
@@ -521,20 +517,17 @@ TestDataSrc::findRecords(const Name& name, const RRType& rdtype,
             target.addRRset(example_ns);
             flags |= REFERRAL;
         } else if (name == example) {
+            flags |= REFERRAL;
             if (any) {
                 target.addRRset(example_ns);
                 target.addRRset(example_soa);
                 target.addRRset(example_nsec);
-                flags |= REFERRAL;
             } else if (rdtype == RRType::NS()) {
                 target.addRRset(example_ns);
-                flags |= REFERRAL;
             } else if (rdtype == RRType::SOA()) {
                 target.addRRset(example_soa);
-                flags |= REFERRAL;
             } else if (rdtype == RRType::NSEC()) {
                 target.addRRset(example_nsec);
-                flags |= REFERRAL;
             } else {
                 flags |= TYPE_NOT_FOUND;
             }
@@ -544,20 +537,17 @@ TestDataSrc::findRecords(const Name& name, const RRType& rdtype,
             target.addRRset(sql1_ds_nsec);
             flags |= REFERRAL;
         } else if (name == sql1) {
+            flags |= REFERRAL;
             if (any) {
                 target.addRRset(sql1_ns);
                 target.addRRset(sql1_ds);
                 target.addRRset(sql1_ds_nsec);
-                flags |= REFERRAL;
             } else if (rdtype == RRType::DS()) {
                 target.addRRset(sql1_ds);
-                flags |= REFERRAL;
             } else if (rdtype == RRType::NS()) {
                 target.addRRset(sql1_ns);
-                flags |= REFERRAL;
             } else if (rdtype == RRType::NSEC()) {
                 target.addRRset(sql1_ds_nsec);
-                flags |= REFERRAL;
             } else {
                 flags |= TYPE_NOT_FOUND;
             }
@@ -566,19 +556,16 @@ TestDataSrc::findRecords(const Name& name, const RRType& rdtype,
             target.addRRset(subzone_ds);
             flags |= REFERRAL;
         } else if (name == subzone) {
+            flags |= REFERRAL;
             if (any) {
                 target.addRRset(subzone_ns);
                 target.addRRset(subzone_nsec);
-                flags |= REFERRAL;
             } else if (rdtype == RRType::NS()) {
                 target.addRRset(subzone_ns);
-                flags |= REFERRAL;
             } else if (rdtype == RRType::DS()) {
                 target.addRRset(subzone_ds);
-                flags |= REFERRAL;
             } else if (rdtype == RRType::NSEC()) {
                 target.addRRset(subzone_nsec);
-                flags |= REFERRAL;
             } else {
                 flags |= TYPE_NOT_FOUND;
             }
@@ -652,7 +639,6 @@ TestDataSrc::findRecords(const Name& name, const RRType& rdtype,
                 target.addRRset(www_a);
             } else if (rdtype == RRType::NSEC()) {
                 target.addRRset(www_nsec);
-                flags |= REFERRAL;
             } else {
                 flags |= TYPE_NOT_FOUND;
             }
@@ -684,16 +670,14 @@ TestDataSrc::findRecords(const Name& name, const RRType& rdtype,
                 }
             }
         } else if (name == dname) {
+            flags |= REFERRAL;
             if (any) {
                 target.addRRset(dname_dname);
                 target.addRRset(dname_nsec);
-                flags |= REFERRAL;
             } else if (rdtype == RRType::DNAME()) {
                 target.addRRset(dname_dname);
-                flags |= REFERRAL;
             } else if (rdtype == RRType::NSEC()) {
                 target.addRRset(dns01_nsec);
-                flags |= REFERRAL;
             } else {
                 flags |= TYPE_NOT_FOUND;
             }

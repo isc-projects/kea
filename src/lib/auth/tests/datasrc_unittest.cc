@@ -604,31 +604,6 @@ TEST_F(DataSrcTest, ANYZonecut) {
     // delegation
     readAndProcessQuery("testdata/q_subzone_any");
 
-    headerCheck(msg, Rcode::NOERROR(), true, false, true, 0, 5, 2);
-
-    RRsetIterator rit = msg.beginSection(Section::AUTHORITY());
-    RRsetPtr rrset = *rit;
-    EXPECT_EQ(Name("subzone.example.com."), rrset->getName());
-    EXPECT_EQ(RRType::NS(), rrset->getType());
-    EXPECT_EQ(RRClass::IN(), rrset->getClass());
-
-    RdataIteratorPtr it = rrset->getRdataIterator();
-    it->first();
-    EXPECT_EQ("ns1.subzone.example.com.", it->getCurrent().toText());
-    it->next();
-    EXPECT_FALSE(it->isLast());
-
-    rit = msg.beginSection(Section::ADDITIONAL());
-    rrset = *rit;
-    EXPECT_EQ(Name("ns1.subzone.example.com"), rrset->getName());
-    EXPECT_EQ(RRType::A(), rrset->getType());
-    EXPECT_EQ(RRClass::IN(), rrset->getClass());
-
-    it = rrset->getRdataIterator();
-    it->first();
-    EXPECT_EQ("192.0.2.1", it->getCurrent().toText());
-    it->next();
-    EXPECT_TRUE(it->isLast());
 }
 
 TEST_F(DataSrcTest, NSECZonecut) {
@@ -655,6 +630,35 @@ TEST_F(DataSrcTest, NSECZonecut) {
     EXPECT_EQ("dns02.example.com.", it->getCurrent().toText());
     it->next();
     EXPECT_EQ("dns03.example.com.", it->getCurrent().toText());
+    it->next();
+    EXPECT_TRUE(it->isLast());
+}
+
+TEST_F(DataSrcTest, DNAMEZonecut) {
+    readAndProcessQuery("testdata/q_subzone_dname");
+
+    headerCheck(msg, Rcode::NOERROR(), true, false, true, 0, 5, 2);
+    RRsetIterator rit = msg.beginSection(Section::AUTHORITY());
+    RRsetPtr rrset = *rit;
+    EXPECT_EQ(Name("subzone.example.com."), rrset->getName());
+    EXPECT_EQ(RRType::NS(), rrset->getType());
+    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+
+    RdataIteratorPtr it = rrset->getRdataIterator();
+    it->first();
+    EXPECT_EQ("ns1.subzone.example.com.", it->getCurrent().toText());
+    it->next();
+    EXPECT_FALSE(it->isLast());
+
+    rit = msg.beginSection(Section::ADDITIONAL());
+    rrset = *rit;
+    EXPECT_EQ(Name("ns1.subzone.example.com"), rrset->getName());
+    EXPECT_EQ(RRType::A(), rrset->getType());
+    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+
+    it = rrset->getRdataIterator();
+    it->first();
+    EXPECT_EQ("192.0.2.1", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
 }
