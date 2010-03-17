@@ -32,21 +32,17 @@ using namespace std;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
-TXT::TXT(InputBuffer& buffer, size_t rdata_len UNUSED_PARAM)
-{
-    uint8_t len;
-
+TXT::TXT(InputBuffer& buffer, size_t rdata_len UNUSED_PARAM) {
     // TBD: this is a simple, incomplete implementation that only supports
     // a single character-string.
-    len = buffer.readUint8();
+    const uint8_t len = buffer.readUint8();
     vector<uint8_t> data(len + 1);
     data[0] = len;
     buffer.readData(&data[0] + 1, len);
     string_list_.push_back(data);
 }
 
-TXT::TXT(const std::string& txtstr)
-{
+TXT::TXT(const std::string& txtstr) {
     size_t length = txtstr.size();
     size_t pos_begin = 0;
 
@@ -71,8 +67,7 @@ TXT::TXT(const TXT& other) :
 {}
 
 void
-TXT::toWire(OutputBuffer& buffer) const
-{
+TXT::toWire(OutputBuffer& buffer) const {
     for (vector<vector<uint8_t> >::const_iterator it = string_list_.begin();
          it != string_list_.end();
          ++it)
@@ -82,8 +77,7 @@ TXT::toWire(OutputBuffer& buffer) const
 }
 
 void
-TXT::toWire(MessageRenderer& renderer) const
-{
+TXT::toWire(MessageRenderer& renderer) const {
     for (vector<vector<uint8_t> >::const_iterator it = string_list_.begin();
          it != string_list_.end();
          ++it)
@@ -93,8 +87,7 @@ TXT::toWire(MessageRenderer& renderer) const
 }
 
 string
-TXT::toText() const
-{
+TXT::toText() const {
     string s;
 
     // XXX: this implementation is not entirely correct.  for example, it
@@ -115,8 +108,7 @@ TXT::toText() const
 }
 
 int
-TXT::compare(const Rdata& other) const
-{
+TXT::compare(const Rdata& other) const {
     const TXT& other_txt = dynamic_cast<const TXT&>(other);
 
     // This implementation is not efficient.  Revisit this (TBD).
@@ -126,10 +118,11 @@ TXT::compare(const Rdata& other) const
 
     OutputBuffer other_buffer(0);
     other_txt.toWire(other_buffer);
-    size_t other_len = other_buffer.getLength();
+    const size_t other_len = other_buffer.getLength();
 
-    size_t cmplen = min(this_len, other_len);
-    int cmp = memcmp(this_buffer.getData(), other_buffer.getData(), cmplen);
+    const size_t cmplen = min(this_len, other_len);
+    const int cmp = memcmp(this_buffer.getData(), other_buffer.getData(),
+                           cmplen);
     if (cmp != 0) {
         return (cmp);
     } else {
