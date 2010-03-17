@@ -65,10 +65,15 @@ TEST_F(Rdata_NSEC_Test, createFromWire_NSEC)
     // Too short RDLENGTH
     EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC(), RRClass::IN(),
                                       "testdata/rdata_nsec_fromWire2"),
-                 InvalidRdataLength);
+                 DNSMessageFORMERR);
 
     EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC(), RRClass::IN(),
-                       "testdata/rdata_nsec_fromWire3"),
+                                      "testdata/rdata_nsec_fromWire3"),
+                 DNSMessageFORMERR);
+
+    // A malformed NSEC bitmap length field that could cause overflow.
+    EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC(), RRClass::IN(),
+                                      "testdata/rdata_nsec_fromWire4"),
                  DNSMessageFORMERR);
 }
 
