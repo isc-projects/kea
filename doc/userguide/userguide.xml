@@ -29,6 +29,9 @@
       DNS server. It does provide a EDNS0- and DNSSEC-capable
       authoritative DNS server.</para></note>
 
+    <note><para>This guide covers the experimental prototype version
+      of BIND 10.</para></note>
+
     <para>
       BIND 10 provides separate executables for different tasks.
       The standard components include:
@@ -36,7 +39,7 @@
       <itemizedlist>
 
       <listitem>
-      <simpara><command>msgq</command> &mdash; message bus</simpara>
+      <simpara><command>msgq</command> &mdash; message bus daemon</simpara>
       </listitem>
       <listitem>
       <simpara><command>b10-auth</command> &mdash; authoritative DNS server</simpara>
@@ -45,13 +48,16 @@
       <simpara><command>b10-cfgmgr</command> &mdash; configuration manager</simpara>
       </listitem>
       <listitem>
-      <simpara><command>b10-cmdctl</command> <!-- TODO --></simpara>
+      <simpara><command>b10-cmdctl</command> REST-ful communication service</simpara>
       </listitem>
 
       <listitem>
-      <simpara><command>b10-xfrin</command> <!-- TODO --></simpara>
+      <simpara><command>b10-xfrin</command> Incoming zone transfer service</simpara>
       </listitem>
 
+      <listitem>
+      <simpara><command>bind10</command> &mdash; master process for BIND 10</simpara>
+      </listitem>
       </itemizedlist>
     </para>
 
@@ -63,8 +69,9 @@
       <simpara><command>bindctl</command> &mdash; interactive administration interface</simpara>
       </listitem>
       <listitem>
-      <simpara><command>bind10</command> &mdash; master process for BIND 10</simpara>
+      <simpara><command>b10-loadzone</command> &mdash; tool to load standard master zone files</simpara>
       </listitem>
+<!-- TODO usermgr -->
       </itemizedlist>
     </para>
 
@@ -107,13 +114,82 @@ var/
   </chapter>
 
   <chapter id="quickstart">
-    <title>Quickstart</title>
+    <title>Quick start</title>
     <para>
-      This chapter just covers the standard steps for installing
+      This quickly covers the standard steps for installing
       and deploying BIND 10 as an authoritative nameserver using
-      its defaults. For full customizations and details, see
-      the respective chapters.
+      its defaults. For troubleshooting, full customizations and further
+      details, see the respective chapters in the BIND 10 user guide.
     </para>
+
+    <itemizedlist>
+    
+      <listitem>
+        <simpara>Install required dependencies: Python 3.1, SQLite3
+          library, and Boost development headers.</simpara>
+      </listitem>
+
+      <listitem>
+        <simpara>Download the BIND 10 source tarball. <!-- TODO: from -->
+        </simpara>
+      </listitem>
+
+      <listitem>
+        <para>Extract the tar file:
+        <screen>$ <userinput>gzcat bind10-<replaceable>VERSION</replaceable>.tar.gz | tar -xvf -</userinput></screen>
+        </para>
+      </listitem>
+
+      <listitem>
+        <para>Go into the source and run configure:
+          <screen>$ <userinput>cd bind10-<replaceable>VERSION</replaceable></userinput>
+$ <userinput>./configure</userinput></screen>
+        </para>
+      </listitem>
+
+      <listitem>
+        <para>Build it:
+          <screen>$ <userinput>make</userinput></screen>
+        </para>
+      </listitem>
+
+      <listitem>
+        <para>Install it (to default /usr/local):
+          <screen>$ <userinput>make install</userinput></screen>
+        </para>
+      </listitem>
+
+      <listitem>
+        <para>Start the server:
+          <screen>$ <userinput>/usr/local/sbin/bind10</userinput></screen>
+        </para>
+      </listitem>
+
+      <listitem>
+
+       <note><simpara>The Y1 prototype of the b10-auth server listens on
+         0.0.0.0 (all interfaces) port 5300. (This is not the standard
+         domain service port.)</simpara></note>
+
+       <para>Test it; for example:
+          <screen>$ <userinput>dig @127.0.0.1 -p 5300 -c CH -t TXT authors.bind</userinput></screen>
+       </para>
+
+      </listitem>
+
+      <listitem>
+        <para>Load desired zone file(s), for example:
+          <screen>$ <userinput>b10-loadzone <replaceable>your.zone.example.org</replaceable></userinput></screen>
+        </para>
+      </listitem>
+
+      <listitem>
+        <simpara>Test the new zone.
+        </simpara>
+      </listitem>
+
+    </itemizedlist>
+
   </chapter>
 
   <chapter id="install">
@@ -383,6 +459,8 @@ to bindctl (through cmdctl in fact), so an admin can simply run bindctl,
 do config show, and it shows all modules; config show >module> shows all
 options for that module
 
+(12:21:30) jinmei: I'd like to have sample session using a command line www client such as wget
+(12:21:33) jinmei: btw
 -->
 
     <para>
@@ -431,3 +509,20 @@ options for that module
 
 </book>
 
+<!--
+
+TODO:
+
+Overview
+
+Getting BIND 10 Installed
+  Basics
+  Dependencies
+  Optional
+  Advanced
+
+How Does Everything Work Together?
+
+Need Help?
+
+-->
