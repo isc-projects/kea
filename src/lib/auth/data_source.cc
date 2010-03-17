@@ -452,35 +452,38 @@ tryWildcard(Query& q, QueryTaskPtr task, const DataSrc* ds,
                           QueryTask::AUTH_QUERY); 
         result = doQueryTask(ds, zonename, newtask, wild);
         if (result == DataSrc::SUCCESS) {
-            task->flags &= ~DataSrc::NAME_NOT_FOUND;
-            task->flags &= ~DataSrc::TYPE_NOT_FOUND;
             if (newtask.flags == 0) {
+                task->flags &= ~DataSrc::NAME_NOT_FOUND;
+                task->flags &= ~DataSrc::TYPE_NOT_FOUND;
                 found = true;
                 break;
             } else if ((newtask.flags & DataSrc::CNAME_FOUND) != 0) {
+                task->flags &= ~DataSrc::NAME_NOT_FOUND;
+                task->flags &= ~DataSrc::TYPE_NOT_FOUND;
                 task->flags |= DataSrc::CNAME_FOUND;
                 found = true;
                 cname = true;
                 break;
             } else if ((newtask.flags & DataSrc::TYPE_NOT_FOUND) != 0) {
+                task->flags &= ~DataSrc::NAME_NOT_FOUND;
                 task->flags |= DataSrc::TYPE_NOT_FOUND;
                 break;
             }
         }
     }
 
-    // A wildcard was found.  Add the data to the answer
-    // section (but with the name changed to match the
-    // qname), and then continue as if this were a normal
-    // answer: if a CNAME, chase the target, otherwise
-    // add authority.
+    // A wildcard was found.
     if (found) {
+        // Prove the nonexistence of the name we were looking for
         result = proveNX(q, task, ds, *zonename, true);
         if (result != DataSrc::SUCCESS) {
             m.setRcode(Rcode::SERVFAIL());
             return (DataSrc::ERROR);
         }
 
+        // Add the data to the answer section (but with the name changed to
+        // match the qname), and then continue as if this were a normal
+        // answer: if a CNAME, chase the target, otherwise add authority.
         if (cname) {
             RRsetPtr rrset = wild.findRRset(RRType::CNAME(), q.qclass());
             if (rrset != NULL) {

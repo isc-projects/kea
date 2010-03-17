@@ -251,7 +251,7 @@ TEST_F(DataSrcTest, NxZone) {
 TEST_F(DataSrcTest, Wildcard) {
     readAndProcessQuery("testdata/q_wild_a");
 
-    headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 4, 6);
+    headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 6, 6);
 
     RRsetIterator rit = msg.beginSection(Section::ANSWER());
     RRsetPtr rrset = *rit;
@@ -266,6 +266,13 @@ TEST_F(DataSrcTest, Wildcard) {
     EXPECT_TRUE(it->isLast());
 
     rit = msg.beginSection(Section::AUTHORITY());
+    rrset = *rit;
+    EXPECT_EQ(Name("*.wild.example.com"), rrset->getName());
+    EXPECT_EQ(RRType::NSEC(), rrset->getType());
+    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+    ++rit;
+    ++rit;
+
     rrset = *rit;
     EXPECT_EQ(Name("example.com"), rrset->getName());
     EXPECT_EQ(RRType::NS(), rrset->getType());
@@ -307,7 +314,7 @@ TEST_F(DataSrcTest, WildcardCname) {
     // correctly
     readAndProcessQuery("testdata/q_wild2_a");
 
-    headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 4, 6);
+    headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 6, 6);
 
     RRsetIterator rit = msg.beginSection(Section::ANSWER());
     RRsetPtr rrset = *rit;
@@ -335,6 +342,13 @@ TEST_F(DataSrcTest, WildcardCname) {
     EXPECT_TRUE(it->isLast());
 
     rit = msg.beginSection(Section::AUTHORITY());
+    rrset = *rit;
+    EXPECT_EQ(Name("*.wild2.example.com"), rrset->getName());
+    EXPECT_EQ(RRType::NSEC(), rrset->getType());
+    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+    ++rit;
+    ++rit;
+
     rrset = *rit;
     EXPECT_EQ(Name("example.com"), rrset->getName());
     EXPECT_EQ(RRType::NS(), rrset->getType());
