@@ -39,7 +39,7 @@ def main():
         usage()
         exit(2)
 
-    dbfile = '/tmp/zone.sqlite3'
+    dbfile = '@@LOCALSTATEDIR@@/@PACKAGE@/zone.sqlite3'
     initial_origin = ''
     for o, a in opts:
         if o in ("-d", "--dbfile"):

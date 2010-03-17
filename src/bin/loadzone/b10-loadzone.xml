@@ -84,9 +84,10 @@
 
       <varlistentry>
         <term>-d <replaceable class="parameter">database</replaceable> </term>
-<listitem><para>
-  Defines the filename for the database.
-          The default is <filename>/tmp/zone.sqlite3</filename>.
+        <listitem><para>
+          Defines the filename for the database.
+	  The default is
+	  <filename>/usr/local/var/bind10/zone.sqlite3</filename>.
 <!-- TODO: fix filename -->
         </para></listitem>
       </varlistentry>
