@@ -25,6 +25,20 @@ if test "$python_path" = auto; then
 else
 	PYTHON=$python_path
 	AC_SUBST(PYTHON)
+	PYTHON_PREFIX='${prefix}'
+	AC_SUBST(PYTHON_PREFIX)
+	PYTHON_EXEC_PREFIX='$(exec_prefix)'
+	AC_SUBST(PYTHON_EXEC_PREFIX)
+	PYTHON_PLATFORM="todo"
+	AC_SUBST(PYTHON_PLATFORM)
+	pythondir='${prefix}/lib/python3.1/site-packages'
+	AC_SUBST(pythondir)
+	pkgpythondir='${pythondir}/bind10'
+	AC_SUBST(pkgpythondir)
+	pyexecdir='${exec_prefix}/lib/python3.1/site-packages'
+	AC_SUBST(pyexecdir)
+	pkgpyexecdir='${pyexecdir}/bind10'
+	AC_SUBST(pkgpyexecdir)
 fi
 
 # TODO: check for _sqlite3.py module
