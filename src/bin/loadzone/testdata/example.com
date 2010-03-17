@@ -13,6 +13,10 @@ cname-ext	CNAME www.sql1.example.com.
 dns01           A 192.168.2.1
 dns02           A 192.168.2.2
 dns03           A 192.168.2.3
+insec           NS ns1.insec.example.com.
+insec           NS ns2.insec.example.com.
+ns1.insec  	A 192.168.4.1
+ns2.insec  	A 192.168.4.2
 subzone		NS ns1.subzone.example.com.
 subzone		NS ns2.subzone.example.com.
 ns1.subzone	A 192.168.3.1
