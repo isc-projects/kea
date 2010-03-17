@@ -17,8 +17,6 @@ in master file format, but in the context of the data source.
 Add "check" option to check sanity of master file but don't really
 add to data source.
 
-Open questions to document in manual page:
-
-What happens in the database? replaces existing? What if a.foo
-existed but new zone file didn't have a.foo, would previous a.foo
-in database be removed?
+Currently b10-loadzone uses a default database path, overridable by
+the -d option.  It should also be able to get the database path from
+the bind10 configuration.
