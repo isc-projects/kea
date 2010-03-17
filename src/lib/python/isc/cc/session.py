@@ -77,17 +77,20 @@ class Session:
             self._socket.send(msg)
 
     def recvmsg(self, nonblock = True, seq = None):
+        #print("[XX] queue len: " + str(len(self._queue)))
         if len(self._queue) > 0:
             if seq == None:
-                msg, env = self._queue.pop(0)
+                #print("[XX] return first")
+                return self._queue.pop(0)
             else:
                 i = 0;
-                for msg, env in self._queue:
+                #print("[XX] check rest")
+                for env, msg in self._queue:
                     if "reply" in env and seq == env["reply"]:
-                        self._queue.remove(i)
-                        return env, msg
+                        return self._queue.pop(i)
                     else:
                         i = i + 1
+                #print("[XX] not found")
         if self._closed:
             raise SessionError("Session has been closed.")
         data = self._receive_full_buffer(nonblock)
