@@ -399,30 +399,150 @@ $ <userinput>./configure</userinput></screen>
     </para>
 
 
-    <sect1 id="cmdctl">
-      <title>Remote control daemon</title>
+    <sect1 id="start">
+      <title>Starting BIND 10</title>
+      <para>
+        To start the BIND 10 service, simply run <command>bind10</command>.
+        Run it with the <command>--verbose</command> switch to
+        get additional debugging or diagnostic output.
+      </para>
+<!-- TODO: note it doesn't go into background -->
+    </sect1>
+
+  </chapter>
+
+  <chapter id="cfgmgr">
+    <title>Configuration manager</title>
+
+      <para>
+	 The configuration manager, <command>b10-cfgmgr</command>,
+	 handles all BIND 10 system configuration.  It provides
+	 persistent storage for configuration, and notifies running
+	 modules of configuration changes.</para>
+
+      <para>The administrator
+	 doesn't use it directly, but uses a tool like
+	 <command>bindctl</command> (or other GUI or web interface)
+         to communicate with the configuration manager.
+      </para>
+
+<!-- TODO: what about run time config to change this? -->
+<!-- jelte: > config set cfgmgr/config_database <file> -->
+<!-- TODO: what about command line switch to change this? -->
+      <para>
+        The stored configuration file is at
+        <filename>/usr/local/var/bind10/b10-config.db</filename>.
+        (The full path is what was defined at build configure time for
+        --localstatedir. The default is <filename>/usr/local/var/</filename>.)
+	The format is loosely based on JSON and is directly parseable
+	python, but this may change in a future version.
+	This configuration data file is not manually edited by the
+	administrator.
+      </para>
+
+      <para>
+        The direct communication with the configuration manager is
+        <command>b10-cmdctl</command> using its REST-ful interface.
+        This is covered in <xref linkend="cmdctl"/>.
+      </para>
+
+<!-- TODO -->
+      <note><para>
+	The Y1 prototype release only provides the
+	<command>bindctl</command> as a user interface to it.
+        Upcoming releases will provide another interactive command-line
+        interface and a web-based interface.
+      </para></note>
+
+      <para>
+        The <command>b10-cfgmgr</command> daemon can send all
+        specifications and all current settings to the
+	<command>bindctl</command> client (via
+	<command>b10-cmdctl</command>).
+      </para>
+
+<!-- TODO: show examples, test this -->
+
+<!--
+, so an admin can simply run bindctl,
+do config show, and it shows all modules; config show >module> shows all
+options for that module
+-->
+
+<!--
+
+Well the specfiles have a more fixed format (they must contain specific
+stuff), but those are also directly parseable python structures (and
+'coincidentally', our data::element string representation is the same)
+
+loosely based on json, tweaked to be directly parseable in python, but a
+subset of that.
+wiki page is http://bind10.isc.org/wiki/DataElementDesign
+
+nope, spec files are written by module developers, and db should be done
+through bindctl and friends
+
+-->
 
     <para>
-      <command>b10-cmdctl</command> is the gateway between
-      administrators and the whole system; when it starts it firsts
+      The configuration manager does not have any command line arguments.
+      Normally it is not started manually, but is automatically
+      started using the <command>bind10</command> master process
+      (as covered in <xref linkend="bind10"/>).
+    </para>
+
+<!-- TODO: upcoming plans:
+configuration for configuration manager itself. And perhaps we might
+change the messaging protocol, but an admin should never see any of that
+-->
+
+  </chapter>
+
+  <chapter id="cmdctl">
+    <title>Remote control daemon</title>
+
+      <para>
+        <command>b10-cmdctl</command> is the gateway between
+        administrators and the BIND 10 system.
+        It is a HTTPS server that uses standard HTTP Digest
+        Authentication for username and password validation.
+        It provides a REST-ful interface for accessing and controlling
+        BIND 10.
+      </para>
+<!-- TODO: copy examples from wiki, try with wget -->
+
+      <para>
+      When <command>b10-cmdctl</command> starts, it firsts
       asks <command>b10-cfgmgr</command> about what modules are
       running and what their configuration is (over the
-      <command>msgq</command> channel), then it will start listening
-      on HTTPS for clients (i.e. <command>bindctl</command>).
+      <command>msgq</command> channel). Then it will start listening
+      on HTTPS for clients, such as <command>bindctl</command>.
     </para>
+
 <!-- TODO: replace /usr/local -->
 <!-- TODO: permissions -->
-    <para><filename>/usr/local/share/bind10/cmdctl-keyfile.pem</filename>
-      contains the Private key, such as a RSA PRIVATE KEY.
-    </para>
-    <para><filename>/usr/local/share/bind10/cmdctl-certfile.pem</filename>
-      contains the Certificate.
-    </para>
-    <para>
-      This could be a self-signed certificate or purchased from a
+    <para>The HTTPS server requires a private key,
+      such as a RSA PRIVATE KEY.
+      The default location is at
+      <filename>/usr/local/etc/bind10/cmdctl-keyfile.pem</filename>.
+      (A sample key is at
+      <filename>/usr/local/share/bind10/cmdctl-keyfile.pem</filename>.)
+      It also uses a certificate located at
+      <filename>/usr/local/etc/bind10/cmdctl-certfile.pem</filename>.
+      (A sample certificate is at
+      <filename>/usr/local/share/bind10/cmdctl-certfile.pem</filename>.)
+      This may be a self-signed certificate or purchased from a
       certification authority.
     </para>
-    </sect1>
+
+    <note><para>
+      The HTTPS server is configured to require a PEM certificate from
+      the client.
+      The BIND 10 installation provides a PEM bundle that matches
+      the sample key and certificate.
+    </para></note>
+<!-- TODO: cross-ref -->
+<!-- TODO: why is this required? -->
 
 <!--
     <para>
@@ -430,45 +550,70 @@ $ <userinput>./configure</userinput></screen>
 (08:21:02) shane: I think we discussed this.
     </para>
 -->
-    <sect1 id="cfgmgr">
-      <title>Configuration manager</title>
-      <para>
-	 The configuration manager, <command>b10-cfgmgr</command>
-	 handles all BIND 10 system configuration.  It provides
-	 persistent storage for configuration, and notifies running
-	 modules of configuration changes.  The administrator
-	 doesn't use it directly, but uses a tool like
-	 <command>bindctl</command> (or other GUI or web interface)
-         to communicate with the configuration manager.
-      </para>
-<!--
-      <para>
-        The stored configuration file is ...
-TODO
-      </para>
+
+<!-- TODO: Please check https://bind10.isc.org/wiki/cmd-ctrld -->
+
+
+    <para>
+      The <command>b10-cmdctl</command> daemon also requires
+      the user account file located at
+      <filename>/usr/local/etc/bind10/cmdctl-accounts.csv</filename>.
+      This comma-delimited file lists the accounts with a user name,
+      hashed password, and salt.
+      (A sample file is at
+      <filename>/usr/local/share/bind10/cmdctl-accounts.csv</filename>.
+      It contains the user named <quote>root</quote> with the password
+      <quote>bind10</quote>.)
+    </para>
+
+<!-- TODO
+openssl req -new -x509 -keyout server.pem -out server.pem -days 365 -nodes
+but that is a single file, maybethis should go back to that format?
 -->
+
+    <para>
+      The administrator may create a user account with the
+      <command>b10-cmdctl-usermgr</command> tool.
+    </para>
+<!-- TODO: show example -->
+
+<!-- TODO: does cmdctl need to be restarted to change cert or key
+or accounts database -->
+
+    <para>
+      By default the HTTPS server listens on the localhost port 8080.
+      The port can be set by using the --port command line option.
+      The address to listen on can be set using the --address command
+      line argument.
+      Each HTTPS connection is stateless and timesout in 1200 seconds
+      by default.  This can be
+      redefined by using the --idle-timeout command line argument.
+    </para>
+
+    <sect1 id="cmdctl.spec">
+      <title>Configuration specification for b10-cmdctl</title>
+      <para>
+        The configuration items for <command>b10-cmdctl</command> are:
+key_file
+cert_file
+accounts_file
+      </para>
+<!-- TODO -->
+
+      <para>
+        The control commands are:
+print_settings
+shutdown
+print_message
+      </para>
+<!-- TODO -->
     </sect1>
 
 <!--
 TODO
-    <para>
-bindctl talks to b10-cmdctl
-    </para>
-cfgmanager can send all specifications (and all current settings)
-to bindctl (through cmdctl in fact), so an admin can simply run bindctl,
-do config show, and it shows all modules; config show >module> shows all
-options for that module
-
 (12:21:30) jinmei: I'd like to have sample session using a command line www client such as wget
 (12:21:33) jinmei: btw
 -->
-
-    <para>
-      To start the BIND 10 service, run <command>bind10</command>.
-      Run it with the <command>--verbose</command> switch to
-      get additional debugging or diagnostic output.
-    </para>
-<!-- TODO: note it doesn't go into background -->
 
   </chapter>
 
