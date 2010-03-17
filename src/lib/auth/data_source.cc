@@ -344,7 +344,8 @@ getNsec3Param(Query& q, const DataSrc* ds, const Name& zonename) {
 }
 
 static inline DataSrc::Result
-proveNX(Query& q, QueryTaskPtr task, const DataSrc* ds, const Name& zonename)
+proveNX(Query& q, QueryTaskPtr task, const DataSrc* ds,
+        const Name& zonename, const bool wildcard)
 {
     Message& m = q.message();
     ConstNsec3ParamPtr nsec3 = getNsec3Param(q, ds, zonename);
@@ -382,8 +383,13 @@ proveNX(Query& q, QueryTaskPtr task, const DataSrc* ds, const Name& zonename)
             }
         }
 
-        // Now add a covering NSEC3 for a wildcard under the
-        // closest provable enclosing name
+        // If we are processing a wildcard answer, we're done.
+        if (wildcard) {
+            return (DataSrc::SUCCESS);
+        }
+
+        // Otherwise, there is no wildcard record, so we must add a
+        // covering NSEC3 to prove that it doesn't exist.
         string hash3(nsec3->getHash(Name("*").concatenate(enclosure)));
         RETERR(getNsec3(ds, zonename, q.qclass(), hash3, rrset));
         if (hash3 != hash1 && hash3 != hash2) {
@@ -391,7 +397,7 @@ proveNX(Query& q, QueryTaskPtr task, const DataSrc* ds, const Name& zonename)
         }
     } else {
         Name nsecname(task->qname);
-        if ((task->flags & DataSrc::NAME_NOT_FOUND) != 0) {
+        if ((task->flags & DataSrc::NAME_NOT_FOUND) != 0 || wildcard) {
             ds->findPreviousName(task->qname, nsecname, &zonename);
         }
 
@@ -402,6 +408,13 @@ proveNX(Query& q, QueryTaskPtr task, const DataSrc* ds, const Name& zonename)
             return (DataSrc::SUCCESS);
         }
 
+        // If we are processing a wildcard answer, we're done.
+        if (wildcard) {
+            return (DataSrc::SUCCESS);
+        }
+
+        // Otherwise, there is no wildcard record, so we must add an
+        // NSEC for the zone to prove the wildcard doesn't exist.
         RETERR(addNSEC(q, task, zonename, zonename, ds));
     }
 
@@ -431,7 +444,7 @@ tryWildcard(Query& q, QueryTaskPtr task, const DataSrc* ds,
 
     RRsetList wild;
     const Name star("*");
-    uint32_t rflags = 0;
+    bool cname = false;
 
     for (int i = 1; i <= diff; ++i) {
         const Name& wname(star.concatenate(task->qname.split(i, nlen - i)));
@@ -439,12 +452,17 @@ tryWildcard(Query& q, QueryTaskPtr task, const DataSrc* ds,
                           QueryTask::AUTH_QUERY); 
         result = doQueryTask(ds, zonename, newtask, wild);
         if (result == DataSrc::SUCCESS) {
-            if (newtask.flags == 0 || (newtask.flags & DataSrc::CNAME_FOUND)) {
-                rflags = newtask.flags;
+            task->flags &= ~DataSrc::NAME_NOT_FOUND;
+            task->flags &= ~DataSrc::TYPE_NOT_FOUND;
+            if (newtask.flags == 0) {
                 found = true;
                 break;
+            } else if ((newtask.flags & DataSrc::CNAME_FOUND) != 0) {
+                task->flags |= DataSrc::CNAME_FOUND;
+                found = true;
+                cname = true;
+                break;
             } else if ((newtask.flags & DataSrc::TYPE_NOT_FOUND) != 0) {
-                task->flags &= ~DataSrc::NAME_NOT_FOUND;
                 task->flags |= DataSrc::TYPE_NOT_FOUND;
                 break;
             }
@@ -457,7 +475,13 @@ tryWildcard(Query& q, QueryTaskPtr task, const DataSrc* ds,
     // answer: if a CNAME, chase the target, otherwise
     // add authority.
     if (found) {
-        if ((rflags & DataSrc::CNAME_FOUND) != 0) {
+        result = proveNX(q, task, ds, *zonename, true);
+        if (result != DataSrc::SUCCESS) {
+            m.setRcode(Rcode::SERVFAIL());
+            return (DataSrc::ERROR);
+        }
+
+        if (cname) {
             RRsetPtr rrset = wild.findRRset(RRType::CNAME(), q.qclass());
             if (rrset != NULL) {
                 rrset->setName(task->qname);
@@ -688,7 +712,7 @@ DataSrc::doQuery(Query& q)
             }
 
             if (q.wantDnssec()) {
-                result = proveNX(q, task, datasource, *zonename);
+                result = proveNX(q, task, datasource, *zonename, false);
                 if (result != DataSrc::SUCCESS) {
                     m.setRcode(Rcode::SERVFAIL());
                     return;
