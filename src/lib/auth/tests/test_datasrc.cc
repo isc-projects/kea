@@ -815,14 +815,14 @@ TestDataSrc::findPreviousName(const Name& qname,
             target = foo;
         } else if (qname < subzone) {
             target = sql1;
-        } else if (qname < www) {
-            target = subzone;
         } else if (qname < wild) {
-            target = www;
+            target = subzone;
         } else if (qname < wild2) {
             target = wild;
-        } else {
+        } else if (qname < www) {
             target = wild2;
+        } else {
+            target = www;
         }
     } else {
         if (qname >= sql1 || qname < www_sql1) {
