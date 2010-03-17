@@ -193,7 +193,7 @@ $ <userinput>./configure</userinput></screen>
   </chapter>
 
   <chapter id="install">
-    <title>Installation</title>
+    <title>Installation from source</title>
     <para>
     BIND 10 is open source software written in C++ and Python.
     It is freely available in source code form from ISC via
@@ -204,7 +204,7 @@ $ <userinput>./configure</userinput></screen>
 
     <sect1>
       <title>Download Tar File</title>
-      <para>The BIND 10 release and development snapshots
+      <para>The BIND 10 development snapshots and releases
         are available as tarball downloads.
       </para>
 <!-- TODO -->
@@ -225,8 +225,14 @@ $ <userinput>./configure</userinput></screen>
         The code can be checked out from <filename>svn://bind10.isc.org/svn/bind10</filename>; for example to check out the trunk:
 
       <screen>$ <userinput>svn co svn://bind10.isc.org/svn/bind10/trunk</userinput></screen>
-
       </para>
+
+      <para>
+        You don't need to retrieve the source code from subversion
+        unless you are testing latest code which is not provided in the
+        source tarball. Most users will just use the source tar file.
+      </para>
+
       <sect2>
         <title>Generate configuration files</title>
         <para>
@@ -257,23 +263,52 @@ $ <userinput>./configure</userinput></screen>
     <sect1>
       <title>Required Software</title>
       <para>
-        BIND 10 requires Python 3.1, SQLite 3.3.9 or newer,
-        and the Python _sqlite3.so module.
-<!-- TODO: list where to get these from -->
-<!-- TODO: this will change ... -->
+        BIND 10 requires Python 3.1.
       </para>
+
+      <para>
+        Building from the source tarball requires the Boost
+        build-time headers. At least Boost version 1.34 is required.
+<!-- TODO: we don't check for this version -->
+<!-- NOTE: jreed has tested with 1.34, 1.38, and 1.41. -->
+      </para>
+
+      <para>
+	If the Boost System Library is detected at configure time,
+	BIND 10 will be built using an alternative method for
+	networking I/O using Boost ASIO support.  This provides
+	asynchrony support; with ASIO the Authoritative DNS server
+	can handle other queries while the processing of a TCP
+	transaction stalls.
+        This dependency is not required unless you need
+        <!-- TODO: want --> this feature as TCP transport support is
+        provided using alternative code.
+      </para>
+
       <note><para>
-        Some operating systems do not provide these in their
-        default installation nor standard packages collections.
+        For the Y1 prototype release, the only supported data source
+        backend is SQLite3. The authoritative server requires
+        SQLite 3.3.9 or newer,
+        and the XFRin module requires the Python _sqlite3.so module.
+      </para></note>
+<!-- TODO: this will change ... -->
+
+<!-- TODO: list where to get these from -->
+
+      <note><para>
+        Some operating systems do not provide these dependencies
+	in their default installation nor standard packages
+	collections.
         You may need to install them separately.
       </para></note>
+
       <para>
         Building BIND 10 also requires a C++ compiler and
         standard development headers.
         BIND 10 builds have been tested with GCC g++ 3.4.3, 4.1.2,
         4.2.1, 4.3.2, and 4.4.1.
-<!-- TODO: what about boost? ship with it or not? -->
       </para>
+
     </sect1>
 
     <sect1>
@@ -292,7 +327,7 @@ $ <userinput>./configure</userinput></screen>
     </sect1>
 
     <sect1>
-      <title>Build and install</title>
+      <title>Configure before the build</title>
       <para>
         BIND 10 uses the GNU Build System to discover build environment
         details.
@@ -301,17 +336,87 @@ $ <userinput>./configure</userinput></screen>
       </para>
       <para>
         Run <command>./configure</command> with the <command>--help</command>
-        switch to view the different options. The commonly-used option
-	is <command>--prefix</command> to define the installation
-        location (the default is <filename>/usr/local/</filename>).
+        switch to view the different options. The commonly-used options are:
+
+        <variablelist>
+
+        <varlistentry>
+          <term>--with-boostlib</term>
+          <listitem> 
+            <simpara>Define the path to find the Boost system library.
+            </simpara>
+          </listitem> 
+        </varlistentry>
+
+        <varlistentry>
+          <term>--without-boostlib</term> or
+          <term>--with-boostlib=no</term>
+          <listitem> 
+            <simpara>Disable the Boost ASIO support.</simpara>
+          </listitem> 
+        </varlistentry>
+
+        <varlistentry>
+          <term>--with-pythonpath</term>
+          <listitem> 
+            <simpara>Define the path to Python 3.1 if it is not in the
+              standard execution path.
+            </simpara>
+          </listitem> 
+        </varlistentry>
+
+        <varlistentry>
+          <term>--with-boost-include</term>
+          <listitem> 
+            <simpara>Define the path to find the Boost headers.
+            </simpara>
+          </listitem> 
+        </varlistentry>
+
+        <varlistentry>
+          <term>--prefix</term>
+          <listitem> 
+	    <simpara>Define the the installation location (the
+	      default is <filename>/usr/local/</filename>).
+            </simpara>
+          </listitem> 
+        </varlistentry>
+
+        </variablelist>
+
+      </para>
 <!-- TODO: gtest, lcov -->
+
+      <para>
+        For example, the following configures it to build
+	with BOOST ASIO support, find the Boost headers, find the
+	Python interpreter, and sets the installation location:
+
+        <screen>$ <userinput>./configure --with-boostlib=/usr/pkg/lib \
+    --with-boost-include=/usr/pkg/include \
+    --with-pythonpath=/usr/pkg/bin/python3.1 \
+    --prefix=/opt/bind10</userinput></screen>
       </para>
 
       <para>
-        Then to build the executables from the C++ code, run:
-        <screen>$ <userinput>make</userinput></screen>
+        If the configure fails, it may be due to missing or old
+        dependencies.
       </para>
 
+    </sect1>
+
+    <sect1>
+      <title>Build</title>
+      <para>
+	After the configure step is complete, to build the executables
+	from the C++ code and prepare the Python scripts, run:
+
+        <screen>$ <userinput>make</userinput></screen>
+      </para>
+    </sect1>
+
+    <sect1>
+      <title>Install</title>
       <para>
 	To install the BIND 10 executables, support files,
 	and documentation, run:
@@ -320,9 +425,10 @@ $ <userinput>./configure</userinput></screen>
       <note><para>The install step may require superuser
       privileges.</para></note>
 
+    </sect1>
+
 <!-- TODO: tests -->
 
-    </sect1>
     <sect1>
       <title>Install Hierarchy</title>
       <para>
@@ -331,6 +437,11 @@ $ <userinput>./configure</userinput></screen>
       <listitem>
       <simpara><filename>bin/</filename> &mdash; general tools and
       diagnostic clients.</simpara>
+      </listitem>
+      <listitem>
+      <simpara><filename>etc/bind10/</filename> &mdash; configuration files.
+      </simpara>
+<!-- TODO: create the etc/bind10/ directory? -->
       </listitem>
       <listitem>
       <simpara><filename>lib/</filename> &mdash; libraries and
@@ -359,14 +470,22 @@ $ <userinput>./configure</userinput></screen>
       </simpara>
       </listitem>
       <listitem>
-      <simpara><filename>var/bind10/</filename> &mdash; configuration and
-        data source databases.
+      <simpara><filename>var/bind10/</filename> &mdash; data source and
+        configuration databases.
 <!-- TODO: move the sqlite3 database there -->
       </simpara>
       </listitem>
       </itemizedlist>
     </para>
     </sect1>
+
+<!--
+    <sect1 id="install.troubleshooting">
+      <title>Troubleshooting</title>
+      <para>
+      </para>
+    </sect1>
+-->
   
   </chapter>
 
