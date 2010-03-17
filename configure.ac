@@ -18,7 +18,7 @@ AC_LANG_CPLUSPLUS
 m4_define([_AM_PYTHON_INTERPRETER_LIST], [python python3 python3.1])
 AC_ARG_WITH([pythonpath],
 AC_HELP_STRING([--with-pythonpath=PATH],
-  [specify an absolute path to python executable when automatic version check (incorreclty) fails]),
+  [specify an absolute path to python executable when automatic version check (incorrectly) fails]),
   [python_path="$withval"], [python_path="auto"])
 if test "$python_path" = auto; then
 	AM_PATH_PYTHON([3.1])
@@ -29,7 +29,10 @@ else
 	AC_SUBST(PYTHON_PREFIX)
 	PYTHON_EXEC_PREFIX='$(exec_prefix)'
 	AC_SUBST(PYTHON_EXEC_PREFIX)
-	PYTHON_PLATFORM="todo"
+	PYTHON_VERSION=[`$PYTHON -c "import sys; print(sys.version[:3])"`]
+	AC_SUBST(PYTHON_VERSION)
+	AM_PYTHON_CHECK_VERSION([$PYTHON], [3.1], [], [AC_MSG_ERROR(["Python version too old: $PYTHON_VERSION, need 3.1 or higher"])])
+	PYTHON_PLATFORM=`$PYTHON -c "import sys; print(sys.platform)"`
 	AC_SUBST(PYTHON_PLATFORM)
 	pythondir='${prefix}/lib/python3.1/site-packages'
 	AC_SUBST(pythondir)
