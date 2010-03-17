@@ -511,12 +511,16 @@ $ <userinput>./configure</userinput></screen>
       The <command>msgq</command> and <command>b10-cfgmgr</command>
       services make up the core. The <command>msgq</command> daemon
       provides the communication channel between every part of the system.
-      And <command>b10-cfgmgr</command> is always needed by every
+      The <command>b10-cfgmgr</command> daemon is always needed by every
       module, if only to send information about themselves somewhere,
       but more importantly to ask about their own settings, and
       about other modules.
+      The <command>bind10</command> master process will also startup
+      <command>b10-cmdctl</command> for admins to communicate with the
+      system, <command>b10-auth</command> for Authoritative DNS service,
+      and <command>b10-xfrin</command> for inbound DNS zone transfers.
+      (These are covered in upcoming chapters.)
     </para>
-
 
     <sect1 id="start">
       <title>Starting BIND 10</title>
@@ -527,6 +531,38 @@ $ <userinput>./configure</userinput></screen>
       </para>
 <!-- TODO: note it doesn't go into background -->
     </sect1>
+
+  </chapter>
+
+  <chapter id="msgq">
+    <title>Command channel</title>
+
+      <para>
+        The BIND 10 components use the <command>msgq</command>
+        message routing daemon to intercommunicate.
+        This is called the <quote>Command Channel</quote>.
+        The members of the channel subscribe to listen to certain
+        messages and are programmed to handle received messages.
+	Example messages include shutdown, get configurations, and set
+	configurations.
+      </para>
+
+      <note><simpara>
+        This Command Channel is not used for DNS message passing.
+      </simpara></note>
+
+      <para>
+        Administrators do not communicate directly with the
+        <command>msgq</command> daemon. The only configuration is
+        to choose the port number it listens on.
+        By default, BIND 10 uses port 9912 for the
+        <command>msgq</command> service.
+        It listens on 127.0.0.1.
+      </para>
+
+<!-- TODO: upcoming plans:
+Unix domain sockets
+-->
 
   </chapter>
 
@@ -580,13 +616,6 @@ $ <userinput>./configure</userinput></screen>
 	<command>b10-cmdctl</command>).
       </para>
 
-<!-- TODO: show examples, test this -->
-
-<!--
-, so an admin can simply run bindctl,
-do config show, and it shows all modules; config show >module> shows all
-options for that module
--->
 
 <!--
 
@@ -613,6 +642,16 @@ through bindctl and friends
 <!-- TODO: upcoming plans:
 configuration for configuration manager itself. And perhaps we might
 change the messaging protocol, but an admin should never see any of that
+-->
+
+     <para>
+     </para>
+
+<!-- TODO: show examples, test this -->
+<!--
+, so an admin can simply run bindctl,
+do config show, and it shows all modules; config show >module> shows all
+options for that module
 -->
 
   </chapter>
@@ -655,13 +694,22 @@ change the messaging protocol, but an admin should never see any of that
     </para>
 
     <note><para>
-      The HTTPS server is configured to require a PEM certificate from
-      the client.
-      The BIND 10 installation provides a PEM bundle that matches
+      The HTTPS server doesn't support a certificate request from a
+      client (at this time).
+<!-- TODO: maybe allow request from server side -->
+      The <command>b10-cmdctl</command> daemon does not provide a
+      public service. If any client wants to control BIND 10, then
+      a certificate needs to be first recieved from the BIND 10
+      administrator.
+      The BIND 10 installation provides a sample PEM bundle that matches
       the sample key and certificate.
     </para></note>
 <!-- TODO: cross-ref -->
-<!-- TODO: why is this required? -->
+
+<!-- TODO
+openssl req -new -x509 -keyout server.pem -out server.pem -days 365 -nodes
+but that is a single file, maybethis should go back to that format?
+-->
 
 <!--
     <para>
@@ -684,11 +732,6 @@ change the messaging protocol, but an admin should never see any of that
       It contains the user named <quote>root</quote> with the password
       <quote>bind10</quote>.)
     </para>
-
-<!-- TODO
-openssl req -new -x509 -keyout server.pem -out server.pem -days 365 -nodes
-but that is a single file, maybethis should go back to that format?
--->
 
     <para>
       The administrator may create a user account with the
