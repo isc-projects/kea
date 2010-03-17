@@ -10,8 +10,24 @@
  *      single character names, were used because those were the names
  *      used in the publication.
  *
- *      Please read the file sha1.c for more information.
+ *      Please read the file sha1.cc for more information.
  *
+ *  Authorship:
+ *      This file is adapted from RFC 4634, by D. Eastlake et al.
+ *      Copyright (C) The Internet Society (2006).
+ *
+ *      Permission is granted for all uses, commercial and non-commercial,
+ *      of the sample code found in Section 8.  Royalty free license to
+ *      use, copy, modify and distribute the software found in Section 8 is
+ *      granted, provided that this document is identified in all material
+ *      mentioning or referencing this software, and provided that
+ *      redistributed derivative works do not contain misleading author or
+ *      version information.
+ *
+ *      The authors make no representations concerning either the
+ *      merchantability of this software or the suitability of this
+ *      software for any particular purpose.  It is provided "as is"
+ *      without express or implied warranty of any kind.
  */
 
 #ifndef _SHA1_H_
@@ -35,7 +51,9 @@ enum {
 };
 
 enum {
-    SHA1_HASHSIZE = 20
+    SHA1_HASHSIZE = 20,
+    SHA1_HASHBITS = 20,
+    SHA1_BLOCKSIZE = 64
 };
 
 /*
@@ -56,8 +74,11 @@ typedef struct SHA1Context
 /*
  *  Function Prototypes
  */
-int SHA1Reset(SHA1Context *);
-int SHA1Input(SHA1Context *, const uint8_t *, unsigned int);
-int SHA1Result(SHA1Context *, uint8_t Message_Digest[SHA1_HASHSIZE]);
+extern int SHA1Reset(SHA1Context *);
+extern int SHA1Input(SHA1Context *, const uint8_t *bytes,
+                     unsigned int bytecount);
+extern int SHA1FinalBits(SHA1Context *, const uint8_t bits,
+                         unsigned int bitcount);
+extern int SHA1Result(SHA1Context *, uint8_t Message_Digest[SHA1_HASHSIZE]);
 
 #endif
