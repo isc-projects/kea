@@ -15,3 +15,6 @@ functions should be updated first.):
             get_param_name_by_position
 5. Understandable error message when cert_file is missing.
 6. Pick location to save default user. Or use the cfgmgr for this.
+   If the default user is saved in file, its password shouldn't be saved in plaintext.
+7. Need to think of what exactly to do with responses received to commands
+   (currently it simply print the map)

@@ -50,15 +50,13 @@ except ImportError:
     my_readline = sys.stding.readline
 
 
-CONST_BINDCTL_HELP = """BindCtl, version 0.1
+CONST_BINDCTL_HELP = """
 usage: <module name> <command name> [param1 = value1 [, param2 = value2]]
 Type Tab character to get the hint of module/command/parameters.
 Type \"help(? h)\" for help on bindctl.
 Type \"<module_name> help\" for help on the specific module.
 Type \"<module_name> <command_name> help\" for help on the specific command.
 \nAvailable module names: """
-
-CONST_COMMAND_NODE = "command"
 
 class BindCmdInterpreter(Cmd):
     """simple bindctl example."""    
