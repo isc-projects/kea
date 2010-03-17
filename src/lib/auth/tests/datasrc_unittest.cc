@@ -377,6 +377,75 @@ TEST_F(DataSrcTest, WildcardCname) {
     EXPECT_TRUE(it->isLast());
 }
 
+TEST_F(DataSrcTest, WildcardCnameNodata) {
+    // A wildcard containing a CNAME whose target does not include
+    // data of this type.
+    readAndProcessQuery("testdata/q_wild2_aaaa");
+    headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 4, 0);
+
+    RRsetIterator rit = msg.beginSection(Section::ANSWER());
+    RRsetPtr rrset = *rit;
+    EXPECT_EQ(Name("www.wild2.example.com"), rrset->getName());
+    EXPECT_EQ(RRType::CNAME(), rrset->getType());
+    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+
+    RdataIteratorPtr it = rrset->getRdataIterator();
+    it->first();
+    EXPECT_EQ("www.example.com.", it->getCurrent().toText());
+    it->next();
+    EXPECT_TRUE(it->isLast());
+
+    rit = msg.beginSection(Section::AUTHORITY());
+    rrset = *rit;
+    EXPECT_EQ(Name("*.wild2.example.com"), rrset->getName());
+    EXPECT_EQ(RRType::NSEC(), rrset->getType());
+    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+    ++rit;
+    ++rit;
+
+    rrset = *rit;
+    EXPECT_EQ(Name("www.example.com"), rrset->getName());
+    EXPECT_EQ(RRType::NSEC(), rrset->getType());
+    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+}
+
+TEST_F(DataSrcTest, WildcardCnameNxdomain) {
+    // A wildcard containing a CNAME whose target does not exist
+    readAndProcessQuery("testdata/q_wild3_a");
+    headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 6, 0);
+
+    RRsetIterator rit = msg.beginSection(Section::ANSWER());
+    RRsetPtr rrset = *rit;
+    EXPECT_EQ(Name("www.wild3.example.com"), rrset->getName());
+    EXPECT_EQ(RRType::CNAME(), rrset->getType());
+    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+
+    RdataIteratorPtr it = rrset->getRdataIterator();
+    it->first();
+    EXPECT_EQ("spork.example.com.", it->getCurrent().toText());
+    it->next();
+    EXPECT_TRUE(it->isLast());
+
+    rit = msg.beginSection(Section::AUTHORITY());
+    rrset = *rit;
+    EXPECT_EQ(Name("*.wild3.example.com"), rrset->getName());
+    EXPECT_EQ(RRType::NSEC(), rrset->getType());
+    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+    ++rit;
+    ++rit;
+
+    rrset = *rit;
+    EXPECT_EQ(Name("foo.example.com"), rrset->getName());
+    EXPECT_EQ(RRType::NSEC(), rrset->getType());
+    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+    ++rit;
+    ++rit;
+
+    rrset = *rit;
+    EXPECT_EQ(Name("example.com"), rrset->getName());
+    EXPECT_EQ(RRType::NSEC(), rrset->getType());
+    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+}
 TEST_F(DataSrcTest, AuthDelegation) {
     readAndProcessQuery("testdata/q_sql1");
 
