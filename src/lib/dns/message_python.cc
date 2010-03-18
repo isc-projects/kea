@@ -24,7 +24,7 @@
 #include <boost/python/copy_const_reference.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include "exceptions/exceptions.h"
+#include <exceptions/exceptions.h>
 #include "buffer.h"
 #include "name.h"
 #include "messagerenderer.h"
@@ -61,7 +61,6 @@ namespace
         DEFINE_EXCEPTION_TRANSLATOR(TooLongLabel)
         DEFINE_EXCEPTION_TRANSLATOR(BadLabelType)
         DEFINE_EXCEPTION_TRANSLATOR(BadEscape)
-        DEFINE_EXCEPTION_TRANSLATOR(BadPointer)
         DEFINE_EXCEPTION_TRANSLATOR(IncompleteName)
         DEFINE_EXCEPTION_TRANSLATOR(InvalidRRType)
         DEFINE_EXCEPTION_TRANSLATOR(IncompleteRRType)
@@ -79,9 +78,6 @@ namespace
         DEFINE_EXCEPTION_TRANSLATOR(InvalidRdataText)
         DEFINE_EXCEPTION_TRANSLATOR(CharStringTooLong)
 
-        DEFINE_EXCEPTION_TRANSLATOR(DNSProtocolError);
-        DEFINE_EXCEPTION_TRANSLATOR(DNSMessageFORMERR);
-        DEFINE_EXCEPTION_TRANSLATOR(DNSMessageBADVERS);
         DEFINE_EXCEPTION_TRANSLATOR(MessageTooShort);
         DEFINE_EXCEPTION_TRANSLATOR(InvalidMessageSection);
         DEFINE_EXCEPTION_TRANSLATOR(InvalidMessageOperation);
@@ -198,8 +194,7 @@ namespace
             RRsetIterator end_;
     };
 
-
-
+ 
     BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(write_name_overloads, writeName, 1, 2)
     BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(to_text_overloads, toText, 0, 1)
     BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(find_rrset_overloads, findRRset, 1, 2)
@@ -217,7 +212,6 @@ BOOST_PYTHON_MODULE(bind10_message)
     REGISTER_EXCEPTION(TooLongLabel);
     REGISTER_EXCEPTION(BadLabelType);
     REGISTER_EXCEPTION(BadEscape);
-    REGISTER_EXCEPTION(BadPointer);
     REGISTER_EXCEPTION(IncompleteName);
     REGISTER_EXCEPTION(InvalidRRClass);
     REGISTER_EXCEPTION(IncompleteRRClass);
@@ -228,9 +222,6 @@ BOOST_PYTHON_MODULE(bind10_message)
     REGISTER_EXCEPTION(InvalidRdataText);
     REGISTER_EXCEPTION(CharStringTooLong);
     REGISTER_EXCEPTION(DuplicateRRset);
-    REGISTER_EXCEPTION(DNSProtocolError);
-    REGISTER_EXCEPTION(DNSMessageFORMERR);
-    REGISTER_EXCEPTION(DNSMessageBADVERS);
     REGISTER_EXCEPTION(MessageTooShort);
     REGISTER_EXCEPTION(InvalidMessageSection);
     REGISTER_EXCEPTION(InvalidMessageOperation);
@@ -463,8 +454,7 @@ BOOST_PYTHON_MODULE(bind10_message)
    
     class_<RRsetList, boost::noncopyable>("rrset_list", init<>())
         .def("add_rrset", &RRsetList::addRRset)
-        .def("find_rrset", (RRsetPtr(RRsetList::*)(ConstRRsetPtr))&RRsetList::findRRset)
-        .def("find_rrset", (RRsetPtr(RRsetList::*)(const RRType &, const RRClass &))&RRsetList::findRRset, find_rrset_overloads(args("rrtype","rrclass")))
+        .def("find_rrset", &RRsetList::findRRset) 
         .def("__iter__", &RRsetList_iterator_wrapper::create)
         .def("__len__", &RRsetList::size);
 
@@ -601,7 +591,7 @@ BOOST_PYTHON_MODULE(bind10_message)
         .def("get_rcode", &Message::getRcode, return_internal_reference<>())
         .def("set_rcode", &Message::setRcode)
         .def("get_opcode", &Message::getOpcode, return_internal_reference<>())
-        .def("set_opcode", &Message::setOpcode)
+        .def("set_opcode", &Message::setOpcode, with_custodian_and_ward<1,2>())
         .def("to_text", &Message::toText)
         .def("get_rr_count", &Message::getRRCount)
         .def("add_question", (void (Message:: *)(QuestionPtr))&Message::addQuestion)

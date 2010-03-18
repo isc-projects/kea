@@ -1,5 +1,5 @@
-SRC = exceptions.cc name.cc messagerenderer.cc rrtype.cc rdata.cc rrclass.cc  rrsetlist.cc \
-	  rrttl.cc rrset.cc rrparamregistry.cc rdataclass.cc dnstime.cc hex.cc base64.cc question.cc message.cc
+SRC = ../exceptions/exceptions.cc exceptions.cc name.cc messagerenderer.cc rrtype.cc rdata.cc rrclass.cc  rrsetlist.cc \
+	  rrttl.cc rrset.cc rrparamregistry.cc rdataclass.cc dnssectime.cc hex.cc base32.cc base64.cc question.cc message.cc
 CFLAGS = -I/usr/local/include -I/usr/local/include/python3.1 -I/root/trunk/src/lib/
 all : bind10_message.so message_python.cc
 
