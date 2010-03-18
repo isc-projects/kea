@@ -199,20 +199,18 @@ private:
 class TCPServer {
 public:
     TCPServer(io_service& io_service, int af, short port) :
-        io_service_(io_service),
-        acceptor_(io_service, af == AF_INET6 ? tcp::v6() : tcp::v4()),
+        io_service_(io_service), acceptor_(io_service_),
         listening_(new TCPClient(io_service_))
     {
+        tcp::endpoint endpoint(af == AF_INET6 ? tcp::v6() : tcp::v4(), port);
+        acceptor_.open(endpoint.protocol());
         // Set v6-only (we use a different instantiation for v4,
         // otherwise asio will bind to both v4 and v6
         if (af == AF_INET6) {
-            boost::asio::ip::v6_only option(true);
-            acceptor_.set_option(option);
-            acceptor_.bind(tcp::endpoint(tcp::v6(), port));
-        } else {
-            acceptor_.bind(tcp::endpoint(tcp::v4(), port));
+            acceptor_.set_option(boost::asio::ip::v6_only(true));
         }
-        // XXX: isn't the following exception free?  Need to check it.
+        acceptor_.bind(endpoint);
+        acceptor_.listen();
         acceptor_.async_accept(listening_->getSocket(),
                                boost::bind(&TCPServer::handleAccept, this,
                                            listening_, placeholders::error));
@@ -244,7 +242,7 @@ private:
 
 class UDPServer {
 public:
-    UDPServer(io_service& io_service, int af UNUSED_PARAM, short port UNUSED_PARAM) :
+    UDPServer(io_service& io_service, int af, short port) :
         io_service_(io_service),
         socket_(io_service, af == AF_INET6 ? udp::v6() : udp::v4()),
         response_buffer_(0),
@@ -254,8 +252,7 @@ public:
         // Set v6-only (we use a different instantiation for v4,
         // otherwise asio will bind to both v4 and v6
         if (af == AF_INET6) {
-            boost::asio::ip::v6_only option(true);
-            socket_.set_option(option);
+            socket_.set_option(boost::asio::ip::v6_only(true));
             socket_.bind(udp::endpoint(udp::v6(), port));
         } else {
             socket_.bind(udp::endpoint(udp::v4(), port));
