@@ -35,10 +35,10 @@ class Session:
         self._queue = []
 
         if port == 0:
-	  if 'B10_FROM_SOURCE' in os.environ:
-	    port = int(os.environ["ISC_MSGQ_PORT"])
-	  else:
-	    port = 9912
+	        if 'B10_FROM_SOURCE' in os.environ:
+	            port = int(os.environ["ISC_MSGQ_PORT"])
+	        else:
+	            port = 9912
 
         try:
             self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
