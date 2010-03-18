@@ -185,7 +185,7 @@
               <command>b10-cmdctl-usermgr</command> &mdash;
               user access control.
               This tool allows an administrator to authorize additional users
-              of the <command>bindctl</command> tool.
+              to manage BIND 10.
             </simpara>
           </listitem>
   <!-- TODO usermgr -->
@@ -236,6 +236,15 @@ var/
 
     <section>
       <title>Building Requirements</title>
+        <note>
+          <para>
+            Some operating systems have split their distribution packages into
+            a run-time and a development package.  You will need to install
+            the development package versions, which include header files and
+            libraries, to build BIND 10 form source code.
+          </para>
+        </note>
+
         <para>
           Building from source code requires the Boost
           build-time headers. At least Boost version 1.34 is required.
@@ -357,8 +366,9 @@ var/
 
       <section>
         <title>Download Tar File</title>
-        <para>The BIND 10 development snapshots and releases
-          are available as tar file downloads.
+        <para>The BIND 10 releases are available as tar file downloads from
+          <ulink url="ftp://ftp.isc.org/isc/bind10/"/>.
+          Periodic development snapshots may also be available.
         </para>
   <!-- TODO -->
       </section>
