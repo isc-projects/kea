@@ -140,7 +140,7 @@ class ProcessInfo:
 
 class BoB:
     """Boss of BIND class."""
-    def __init__(self, c_channel_port=9912, verbose=False):
+    def __init__(self, c_channel_port=9912, auth_port=5300, verbose=False):
         """Initialize the Boss of BIND. This is a singleton (only one
         can run).
         
@@ -150,6 +150,7 @@ class BoB:
         """
         self.verbose = verbose
         self.c_channel_port = c_channel_port
+        self.auth_port = auth_port
         self.cc_session = None
         self.ccs = None
         self.processes = {}
@@ -259,13 +260,15 @@ class BoB:
         if self.verbose:
             print("[XX] ccsession started")
 
-        # start the parking lot
+        # start b10-auth
         # XXX: this must be read from the configuration manager in the future
-        # XXX: we hardcode port 5300
+        authargs = ['b10-auth', '-p', str(self.auth_port)]
         if self.verbose:
-            sys.stdout.write("Starting b10-auth  on port 5300\n")
+            sys.stdout.write("Starting b10-auth using port %d\n" %
+                             self.auth_port)
+            authargs += ['-v']
         try:
-            auth = ProcessInfo("b10-auth", ["b10-auth", "-p", "5300"])
+            auth = ProcessInfo("b10-auth", authargs)
         except Exception as e:
             c_channel.process.kill()
             bind_cfgd.process.kill()
@@ -515,7 +518,12 @@ def check_port(option, opt_str, value, parser):
     a valid port number. Used by OptionParser() on startup."""
     if not re.match('^(6553[0-5]|655[0-2]\d|65[0-4]\d\d|6[0-4]\d{3}|[1-5]\d{4}|[1-9]\d{0,3}|0)$', value):
         raise OptionValueError("%s requires a port number (0-65535)" % opt_str)
-    parser.values.msgq_port = value
+    if (opt_str == '-m' or opt_str == '--msgq-port'):
+        parser.values.msgq_port = value
+    elif (opt_str == '-p' or opt_str == '--port'):
+        parser.values.auth_port = value
+    else:
+        raise OptionValueError("Unknown option " + opt_str)
   
 def main():
     global options
@@ -524,9 +532,12 @@ def main():
     parser = OptionParser(version=__version__)
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
                       help="display more about what is going on")
+    parser.add_option("-p", "--port", dest="auth_port", type="string",
+                      action="callback", callback=check_port, default="5300",
+                      help="port the b10-auth daemon will use (default 5300)")
     parser.add_option("-m", "--msgq-port", dest="msgq_port", type="string",
                       action="callback", callback=check_port, default="9912",
-                      help="port the msgq daemon will use")
+                      help="port the msgq daemon will use (default 9912)")
     (options, args) = parser.parse_args()
 
     # Announce startup.
@@ -549,7 +560,8 @@ def main():
     signal.signal(signal.SIGTERM, fatal_signal)
 
     # Go bob!
-    boss_of_bind = BoB(int(options.msgq_port), options.verbose)
+    boss_of_bind = BoB(int(options.msgq_port), int(options.auth_port), \
+                       options.verbose)
     startup_result = boss_of_bind.startup()
     if startup_result:
         sys.stderr.write("Error on startup: %s\n" % startup_result)
