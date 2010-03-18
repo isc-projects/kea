@@ -163,9 +163,6 @@ If the option is mandatory, it will reset to the default value.
 .\" Get help for the
 .\" .Em ParkingLot
 .\" module.
-.\" .It Ic print_message Ar string
-.\" Print the given message to stdout.
-.\" .El
 .\"
 .\" TODO: Command arguments which have embedded spaces may be quoted with
 .\" quote
@@ -187,13 +184,6 @@ module.
 Go to the
 .Dq ParkingLot/
 configuration location.
-.It Ic "ParkingLot print_message help"
-Show the one-line description and parameter for the
-.Dq print_message
-command available from the external
-.Dq ParkingLot
-module.
-.\" TODO: why the trailing slash?
 -->
 
   </refsect1>
