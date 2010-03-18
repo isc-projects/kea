@@ -35,7 +35,7 @@ class Session:
         self._queue = []
 
         if port == 0:
-	        if 'B10_FROM_SOURCE' in os.environ:
+	        if 'ISC_MSGQ_PORT' in os.environ:
 	            port = int(os.environ["ISC_MSGQ_PORT"])
 	        else:
 	            port = 9912

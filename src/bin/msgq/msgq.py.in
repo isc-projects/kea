@@ -71,15 +71,25 @@ class SubscriptionManager:
 
 class MsgQ:
     """Message Queue class."""
-    def __init__(self, c_channel_port=9912, verbose=False):
+    def __init__(self, port=0, verbose=False):
         """Initialize the MsgQ master.
         
-        The c_channel_port specifies the TCP/IP port that the msgq
+        The port specifies the TCP/IP port that the msgq
         process listens on. If verbose is True, then the MsgQ reports
         what it is doing.
         """
+
+        if port == 0:
+	        if 'ISC_MSGQ_PORT' in os.environ:
+	            port = int(os.environ["ISC_MSGQ_PORT"])
+	        else:
+	            port = 9912
+
+
+        print(port)
+
         self.verbose = verbose
-        self.c_channel_port = c_channel_port
+        self.c_channel_port = port
         self.poller = None
         self.kqueue = None
         self.runnable = False
@@ -365,7 +375,7 @@ if __name__ == "__main__":
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
                       help="display more about what is going on")
     parser.add_option("-m", "--msgq-port", dest="msgq_port", type="string",
-                      action="callback", callback=check_port, default="9912",
+                      action="callback", callback=check_port, default="0",
                       help="port the msgq daemon will use")
     (options, args) = parser.parse_args()
 
