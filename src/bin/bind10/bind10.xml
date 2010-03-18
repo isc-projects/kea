@@ -59,6 +59,8 @@
     BIND 10 required daemons.  It handles restarting of exiting
     programs and also the shutdown of all managed daemons.</para>
 
+<!-- TODO: list what it starts here? -->
+
 <!-- TODO
     <para>The configuration of the <command>bind10</command> daemon
     is defined in the TODO configuration file, as described in the

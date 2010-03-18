@@ -62,19 +62,19 @@
     </para>
 
     <para>
-      This daemon communicates over a
+      This daemon communicates with other BIND 10 components over a
       <citerefentry><refentrytitle>msgq</refentrytitle><manvolnum>8</manvolnum></citerefentry>
       C-Channel connection.  If this connection is not established,
       <command>b10-auth</command> will exit.
-<!-- TODO what if connection closes later, will b10-auth exit? -->
+<!-- TODO what if msgq connection closes later, will b10-auth exit? -->
     </para>
 
-
     <para>
-     It also receives its configurations from
+      It also receives its configurations from
 <citerefentry><refentrytitle>b10-cfgmgr</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-      using the REST-ful interface provided by
-      <citerefentry><refentrytitle>b10-cmdctl</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+      (via the
+      <citerefentry><refentrytitle>msgq</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      command channel).
       It will honor the <emphasis>database_file</emphasis> configuration
       to point to the SQLite3 zone file.
 

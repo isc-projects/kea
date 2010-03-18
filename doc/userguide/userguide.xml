@@ -575,11 +575,47 @@ Unix domain sockets
 	 persistent storage for configuration, and notifies running
 	 modules of configuration changes.</para>
 
-      <para>The administrator
-	 doesn't use it directly, but uses a tool like
-	 <command>bindctl</command> (or other GUI or web interface)
-         to communicate with the configuration manager.
+      <para>
+	The <command>b10-auth</command> and <command>b10-xfrin</command>
+	daemons and other components receive their configurations
+	from the configuration manager over the <command>msgq</command>
+	command channel.
       </para>
+
+      <para>The administrator doesn't connect to it directly, but
+        uses a user interface to communicate with the configuration
+        manager via <command>b10-cmdctl</command>'s REST-ful interface.
+        <command>b10-cmdctl</command> is covered in <xref linkend="cmdctl"/>.
+      </para>
+
+<!-- TODO -->
+      <note><para>
+	The Y1 prototype release only provides the
+	<command>bindctl</command> as a user interface to
+        <command>b10-cmdctl</command>.
+        Upcoming releases will provide another interactive command-line
+        interface and a web-based interface.
+      </para></note>
+
+      <para>
+        The <command>b10-cfgmgr</command> daemon can send all
+        specifications and all current settings to the
+	<command>bindctl</command> client (via
+	<command>b10-cmdctl</command>).
+      </para>
+
+      <para>
+        <command>b10-cfgmgr</command> relays configurations received
+        from <command>b10-cmdctl</command> to the appropriate modules.
+      </para>
+<!-- TODO:
+        Configuration settings for itself are defined as ConfigManager.
+TODO: show examples
+-->
+
+<!-- TODO:
+config changes are actually commands to cfgmgr
+-->
 
 <!-- TODO: what about run time config to change this? -->
 <!-- jelte: > config set cfgmgr/config_database <file> -->
@@ -594,28 +630,6 @@ Unix domain sockets
 	This configuration data file is not manually edited by the
 	administrator.
       </para>
-
-      <para>
-        The direct communication with the configuration manager is
-        <command>b10-cmdctl</command> using its REST-ful interface.
-        This is covered in <xref linkend="cmdctl"/>.
-      </para>
-
-<!-- TODO -->
-      <note><para>
-	The Y1 prototype release only provides the
-	<command>bindctl</command> as a user interface to it.
-        Upcoming releases will provide another interactive command-line
-        interface and a web-based interface.
-      </para></note>
-
-      <para>
-        The <command>b10-cfgmgr</command> daemon can send all
-        specifications and all current settings to the
-	<command>bindctl</command> client (via
-	<command>b10-cmdctl</command>).
-      </para>
-
 
 <!--
 
@@ -644,9 +658,6 @@ configuration for configuration manager itself. And perhaps we might
 change the messaging protocol, but an admin should never see any of that
 -->
 
-     <para>
-     </para>
-
 <!-- TODO: show examples, test this -->
 <!--
 , so an admin can simply run bindctl,
@@ -659,23 +670,44 @@ options for that module
   <chapter id="cmdctl">
     <title>Remote control daemon</title>
 
-      <para>
-        <command>b10-cmdctl</command> is the gateway between
-        administrators and the BIND 10 system.
-        It is a HTTPS server that uses standard HTTP Digest
-        Authentication for username and password validation.
-        It provides a REST-ful interface for accessing and controlling
-        BIND 10.
-      </para>
+    <para>
+      <command>b10-cmdctl</command> is the gateway between
+      administrators and the BIND 10 system.
+      It is a HTTPS server that uses standard HTTP Digest
+      Authentication for username and password validation.
+      It provides a REST-ful interface for accessing and controlling
+      BIND 10.
+    </para>
 <!-- TODO: copy examples from wiki, try with wget -->
 
-      <para>
+    <para>
       When <command>b10-cmdctl</command> starts, it firsts
       asks <command>b10-cfgmgr</command> about what modules are
       running and what their configuration is (over the
       <command>msgq</command> channel). Then it will start listening
-      on HTTPS for clients, such as <command>bindctl</command>.
+      on HTTPS for clients &mdash; the user interface &mdash; such
+      as <command>bindctl</command>.
     </para>
+
+    <para>
+      <command>b10-cmdctl</command> directly sends commands
+      (received from the user interface) to the specified component.
+      Configuration changes are actually commands to
+      <command>b10-cfgmgr</command> so are sent there.
+    </para>
+
+<!--
+TODO:
+"For bindctl to list a module's available configurations and
+available commands, it communicates over the cmdctl REST interface.
+cmdctl then asks cfgmgr over the msgq command channel. Then cfgmgr
+asks the module for its specification and also cfgmgr looks in its
+own configuration database for current values."
+
+(05:32:03) jelte: i think cmdctl doesn't request it upon a incoming
+GET, but rather requests it once and then listens in for updates,
+but you might wanna check with likun
+-->
 
 <!-- TODO: replace /usr/local -->
 <!-- TODO: permissions -->
@@ -776,6 +808,44 @@ TODO
 (12:21:30) jinmei: I'd like to have sample session using a command line www client such as wget
 (12:21:33) jinmei: btw
 -->
+
+  </chapter>
+
+  <chapter id="bindctl">
+    <title>Control and configure user interface</title>
+
+    <note><para>
+      For the Y1 prototype release, <command>bindctl</command>
+      is the only user interface. It is expected that upcoming
+      releases will provide another interactive command-line
+      interface and a web-based interface for controlling and
+      configuring BIND 10.
+    </para></note>
+
+    <para>
+      The <command>bindctl</command> tool provides an interactive
+      prompt for configuring, controlling, and querying the BIND 10
+      components.
+      It communicates directly with a RESTful interface over HTTPS
+      provided by <command>b10-cmdctl</command>. It doesn't
+      communicate to any other components directly.
+    </para>
+
+<!-- TODO: explain and show interface -->
+
+    <para>
+      Configuration changes are actually commands to
+      <command>b10-cfgmgr</command>. So when <command>bindctl</command>
+      sends a configuration, it is sent to <command>b10-cmdctl</command>
+      (over a HTTPS connection); then <command>b10-cmdctl</command>
+      sends the command (over a <command>msgq</command> command
+      channel) to <command>b10-cfgmgr</command> which then stores
+      the details and relays (over a <command>msgq</command> command
+      channel) the configuration on to the specified module.
+    </para>
+
+    <para>
+    </para>
 
   </chapter>
 
