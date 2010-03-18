@@ -291,6 +291,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/cmdctl/unittest/cmdctl_test
            src/bin/xfrin/unittest/xfrin_test
            src/bin/xfrin/xfrin.py
+           src/bin/xfrin/xfrin.pre
            src/bin/xfrin/run_b10-xfrin.sh
            src/bin/bind10/bind10.py
            src/bin/bind10/tests/bind10_test
