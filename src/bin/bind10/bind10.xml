@@ -123,7 +123,8 @@
       </citerefentry>,
       <citerefentry>
         <refentrytitle>msgq</refentrytitle><manvolnum>8</manvolnum>
-      </citerefentry>.
+      </citerefentry>,
+      <citetitle>BIND 10 User Guide</citetitle>.
     </para>
   </refsect1>
 

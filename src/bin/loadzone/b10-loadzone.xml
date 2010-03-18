@@ -75,6 +75,12 @@
     by following records that don't have their TTL set.
     </para>
 
+<!-- TODO: write this better -->
+    <para>
+      When replacing a zone, all records from the prior same zone
+      disappear and the whole new set appears.
+    </para>
+
   </refsect1>
 
   <refsect1>
