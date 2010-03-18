@@ -352,7 +352,7 @@ Session::sendmsg(ElementPtr& env, ElementPtr& msg) {
 }
 
 bool
-Session::recvmsg(ElementPtr& msg, bool nonblock) {
+Session::recvmsg(ElementPtr& msg, bool nonblock UNUSED_PARAM) {
     size_t length = impl_->readDataLength();
 
     unsigned short header_length_net;
@@ -378,7 +378,7 @@ Session::recvmsg(ElementPtr& msg, bool nonblock) {
 }
 
 bool
-Session::recvmsg(ElementPtr& env, ElementPtr& msg, bool nonblock) {
+Session::recvmsg(ElementPtr& env, ElementPtr& msg, bool nonblock UNUSED_PARAM) {
     size_t length = impl_->readDataLength();
 
     unsigned short header_length_net;
