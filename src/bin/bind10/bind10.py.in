@@ -156,6 +156,8 @@ class BoB:
         self.processes = {}
         self.dead_processes = {}
         self.runnable = False
+        
+        os.environ['ISC_MSGQ_PORT'] = str(self.c_channel_port)
 
     def config_handler(self, new_config):
         if self.verbose:
