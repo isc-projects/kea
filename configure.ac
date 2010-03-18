@@ -306,6 +306,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/msgq/msgq.py
            src/bin/msgq/msgq_test
            src/bin/msgq/run_msgq.sh
+           src/bin/auth/auth.pre
            src/bin/auth/spec_config.h
            src/lib/config/tests/data_def_unittests_config.h
            src/lib/python/isc/config/tests/config_test

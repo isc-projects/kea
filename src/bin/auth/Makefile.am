@@ -9,10 +9,10 @@ endif
 
 pkglibexecdir = $(libexecdir)/@PACKAGE@
 
-CLEANFILES = *.gcno *.gcda
+CLEANFILES = *.gcno *.gcda auth.pre auth.spec
 
 man_MANS = b10-auth.8
-EXTRA_DIST = $(man_MANS) b10-auth.xml
+EXTRA_DIST = $(man_MANS) b10-auth.xml auth.spec
 
 if ENABLE_MAN
 
@@ -20,6 +20,9 @@ b10-auth.8: b10-auth.xml
 	xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-auth.xml
 
 endif
+
+auth.spec: auth.pre
+	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" auth.pre >$@
 
 pkglibexec_PROGRAMS = b10-auth
 b10_auth_SOURCES = auth_srv.cc auth_srv.h

@@ -20,6 +20,7 @@
 #include <string>
 
 #include <cc/data.h>
+#include <config/ccsession.h>
 
 namespace isc {
 namespace dns {
@@ -55,6 +56,8 @@ public:
     bool getVerbose() const;
     void serve(std::string zone_name);
     isc::data::ElementPtr updateConfig(isc::data::ElementPtr config);
+    isc::config::ModuleCCSession* configSession() const;
+    void setConfigSession(isc::config::ModuleCCSession* cs);
 private:
     AuthSrvImpl* impl_;
 };
