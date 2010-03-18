@@ -54,10 +54,6 @@ struct Sqlite3Parameters {
 };
 
 namespace {
-// Note: this cannot be std::string to avoid
-// "static initialization order fiasco".
-const char* DEFAULT_DB_FILE = "/tmp/zone.sqlite3";
-
 const char* const SCHEMA_LIST[] = {
     "CREATE TABLE schema_version (version INTEGER NOT NULL)",
     "INSERT INTO schema_version VALUES (1)",
@@ -567,7 +563,7 @@ Sqlite3DataSrc::init(const isc::data::ElementPtr config) {
     if (config && config->contains("database_file")) {
         open(config->get("database_file")->stringValue());
     } else {
-        open(DEFAULT_DB_FILE);
+        isc_throw(DataSourceError, "No sqlite3 database file specified");
     }
     return (SUCCESS);
 }

@@ -65,11 +65,12 @@ public:
     isc::data::ElementPtr setDbFile(const isc::data::ElementPtr config);
 
     std::string db_file_;
-    isc::auth::MetaDataSrc data_sources_;
+    ModuleCCSession* cs_;
+    MetaDataSrc data_sources_;
     /// We keep a pointer to the currently running sqlite datasource
     /// so that we can specifically remove that one should the database
     /// file change
-    isc::auth::ConstDataSrcPtr cur_datasrc_;
+    ConstDataSrcPtr cur_datasrc_;
 
     bool verbose_mode_;
 
@@ -77,17 +78,18 @@ public:
     static const uint16_t DEFAULT_LOCAL_UDPSIZE = 4096;
 };
 
-AuthSrvImpl::AuthSrvImpl() : verbose_mode_(false) {
+AuthSrvImpl::AuthSrvImpl() : cs_(NULL), verbose_mode_(false)
+{
     // cur_datasrc_ is automatically initialized by the default constructor,
     // effectively being an empty (sqlite) data source.  once ccsession is up
     // the datasource will be set by the configuration setting
-    // (or the default one if none is set)
 
     // add static data source
     data_sources_.addDataSrc(ConstDataSrcPtr(new StaticDataSrc));
 }
 
-AuthSrv::AuthSrv() : impl_(new AuthSrvImpl) {}
+AuthSrv::AuthSrv() : impl_(new AuthSrvImpl) {
+}
 
 AuthSrv::~AuthSrv() {
     delete impl_;
@@ -152,6 +154,16 @@ AuthSrv::setVerbose(const bool on) {
 bool
 AuthSrv::getVerbose() const {
     return (impl_->verbose_mode_);
+}
+
+void
+AuthSrv::setConfigSession(ModuleCCSession* cs) {
+    impl_->cs_ = cs;
+}
+
+ModuleCCSession*
+AuthSrv::configSession() const {
+    return (impl_->cs_);
 }
 
 bool
@@ -251,23 +263,34 @@ AuthSrv::processMessage(InputBuffer& request_buffer, Message& message,
 
 ElementPtr
 AuthSrvImpl::setDbFile(const isc::data::ElementPtr config) {
-    if (config) {
+    ElementPtr answer = isc::config::createAnswer();
+    ElementPtr final;
+
+    if (config && config->contains("database_file")) {
         db_file_ = config->get("database_file")->stringValue();
-        if (verbose_mode_) {
-            cerr << "[AuthSrv] Data source database file: " << db_file_ << endl;
-        }
+        final = config;
+    } else if (cs_ != NULL) {
+        bool is_default;
+        string item("database_file");
+        ElementPtr value = cs_->getValue(is_default, item);
+        db_file_ = value->stringValue();
+        final = Element::createFromString("{}");
+        final->set(item, value);
+    } else {
+        return (answer);
+    }
+
+    if (verbose_mode_) {
+        cerr << "[AuthSrv] Data source database file: " << db_file_ << endl;
     }
 
     // create SQL data source
-    // config may be empty here; in that case it will load the default
-    // database file
     // Note: the following step is tricky to be exception-safe and to ensure
     // exception guarantee: We first need to perform all operations that can
     // fail, while acquiring resources in the RAII manner.  We then perform
     // delete and swap operations which should not fail.
     DataSrcPtr datasrc_ptr(DataSrcPtr(new Sqlite3DataSrc));
-    datasrc_ptr->init(config);
-    ElementPtr answer = isc::config::createAnswer();
+    datasrc_ptr->init(final);
     data_sources_.addDataSrc(datasrc_ptr);
 
     // The following code should be exception free.
@@ -276,26 +299,17 @@ AuthSrvImpl::setDbFile(const isc::data::ElementPtr config) {
     }
     cur_datasrc_ = datasrc_ptr;
 
-    return answer;
+    return (answer);
 }
 
 ElementPtr
 AuthSrv::updateConfig(isc::data::ElementPtr new_config) {
     try {
+        // the ModuleCCSession has already checked if we have
+        // the correct ElementPtr type as specified in our .spec file
         ElementPtr answer = isc::config::createAnswer();
-        if (new_config != NULL) {
-            // the ModuleCCSession has already checked if we have
-            // the correct ElementPtr type as specified in our .spec file
-            if (new_config->contains("database_file")) {
-                answer = impl_->setDbFile(new_config);
-            }
-        }
+        answer = impl_->setDbFile(new_config);
 
-        // if we have no sqlite3 data source, use the default
-        if (impl_->cur_datasrc_ == NULL) {
-            impl_->setDbFile(ElementPtr());
-        }
-    
         return answer;
     } catch (const isc::Exception& error) {
         if (impl_->verbose_mode_) {

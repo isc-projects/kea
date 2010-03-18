@@ -332,13 +332,10 @@ struct ServerSet {
 
 void
 run_server(const char* port, const bool use_ipv4, const bool use_ipv6,
-           const string& specfile)
+           AuthSrv* srv)
 {
     ServerSet servers;
     short portnum = atoi(port);
-
-    ModuleCCSession cs(specfile, io_service_, my_config_handler,
-                       my_command_handler);
 
     if (use_ipv4) {
         servers.udp4_server = new UDPServer(io_service_, AF_INET, portnum);
@@ -554,7 +551,7 @@ processMessageTCP(const int fd, Message& dns_message,
 
 void
 run_server(const char* port, const bool use_ipv4, const bool use_ipv6,
-           const string& specfile)
+           AuthSrv* srv)
 {
     SocketSet socket_set;
     fd_set fds_base;
@@ -579,11 +576,13 @@ run_server(const char* port, const bool use_ipv4, const bool use_ipv6,
     }
     ++nfds;
 
-    ModuleCCSession cs(specfile, my_config_handler, my_command_handler);
-
     cout << "Server started." << endl;
     
-    int ss = cs.getSocket();
+    if (srv->configSession() == NULL) {
+        isc_throw(FatalError, "Config session not initalized");
+    }
+
+    int ss = srv->configSession()->getSocket();
     Message dns_message(Message::PARSE);
     OutputBuffer resonse_buffer(0);
     MessageRenderer response_renderer(resonse_buffer);
@@ -615,7 +614,7 @@ run_server(const char* port, const bool use_ipv4, const bool use_ipv6,
             processMessageTCP(socket_set.tps6, dns_message, response_renderer);
         }
         if (FD_ISSET(ss, &fds)) {
-            cs.checkCommand();
+            srv->configSession()->checkCommand();
         }
     }
 }
@@ -668,9 +667,6 @@ main(int argc, char* argv[]) {
         usage();
     }
 
-    auth_server = new AuthSrv;
-    auth_server->setVerbose(verbose_mode);
-
     // initialize command channel
     int ret = 0;
     try {
@@ -682,7 +678,20 @@ main(int argc, char* argv[]) {
             specfile = string(AUTH_SPECFILE_LOCATION);
         }
 
-        run_server(port, use_ipv4, use_ipv6, specfile);
+        auth_server = new AuthSrv;
+        auth_server->setVerbose(verbose_mode);
+
+#ifdef HAVE_BOOSTLIB
+        ModuleCCSession cs(specfile, io_service_, my_config_handler,
+                           my_command_handler);
+#else
+        ModuleCCSession cs(specfile, my_config_handler, my_command_handler);
+#endif
+
+        auth_server->setConfigSession(&cs);
+        auth_server->updateConfig(ElementPtr());
+
+        run_server(port, use_ipv4, use_ipv6, auth_server);
     } catch (const std::exception& ex) {
         cerr << ex.what() << endl;
         ret = 1;
