@@ -62,13 +62,7 @@ using the REST\-ful interface provided by
 .PP
 The configurable setting is transfers\-in which defines the maximum number of inbound zone transfers that can run concurrently\&. The default is 10\&.
 .PP
-The configuration commands are: print_settings shutdown
-
-retransfer triggers the transfer in for a single zone without checking the zone\'s serial number\&. retransfer has the following arguments: zone_name port (defaults to 53) master db_file (defaults to /tmp/zone\&.sqlite3
-
-
-
-The administrator can send zone transfer\-in command to xfrin module, or terminate all going transfer in by sending shutdown command to xfrin module\&.
+The configuration commands are: print_settings, shutdown, and retransfer (triggers the transfer in for a single zone without checking the zone\'s serial number)\&.
 .if n \{\
 .sp
 .\}
