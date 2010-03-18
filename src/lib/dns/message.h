@@ -91,6 +91,12 @@ struct SectionIteratorImpl;
 /// Constant objects are defined for standard flags.
 class MessageFlag {
 public:
+    /// \brief Returns the corresponding bit of the MessageFlag.
+    ///
+    /// Note: this value is intended to be used for rendering or parsing
+    /// low level wire-format data.  Applications should use abstract
+    /// interfaces.  This also means the interface is not well sophisticated,
+    /// and we should revisit the design.
     uint16_t getBit() const { return (flagbit_); }
     static const MessageFlag& QR();
     static const MessageFlag& AA();
@@ -329,7 +335,7 @@ public:
     static const Rcode& RESERVED13();
     static const Rcode& RESERVED14();
     static const Rcode& RESERVED15();
-    // Extended Rcodes follow (EDNS required)
+    // Extended Rcodes follow (EDNS required):
     static const Rcode& BADVERS();
 private:
     uint16_t code_;
@@ -548,7 +554,7 @@ typedef SectionIterator<RRsetPtr> RRsetIterator;
 
 /// \brief The \c Message class encapsulates a standard DNS message.
 ///
-/// Details of the design and interfaces of this class is still in flux.
+/// Details of the design and interfaces of this class are still in flux.
 /// Here are some notes about the current design.
 ///
 /// Since many realistic DNS applications deal with messages, message objects
@@ -562,13 +568,13 @@ typedef SectionIterator<RRsetPtr> RRsetIterator;
 /// message data into a complete \c Message object.
 /// A \c RENDER mode object is intended to be used to convert a \c Message
 /// object into wire-format data.
-/// Some of the method functions of this class is limited to a specific mode.
+/// Some of the method functions of this class are limited to a specific mode.
 /// In general, "set" type operations are only allowed for \c RENDER mode
 /// objects.
 /// The initial mode must be specified on construction, and can be changed
 /// through some method functions.
 ///
-/// This class uses the "pimpl" idiom, and hide detailed implementation
+/// This class uses the "pimpl" idiom, and hides detailed implementation
 /// through the \c impl_ pointer.  Since a \c Message object is expected to
 /// be reused, the construction overhead of this approach should be acceptable.
 ///
@@ -652,6 +658,12 @@ public:
     /// Only allowed in the \c RENDER mode.
     /// If EDNS OPT RR is included in the message, its UDP payload size field
     /// will be set to the specified value.
+    ///
+    /// Unless explicitly specified, \c DEFAULT_MAX_UDPSIZE will be assumed
+    /// for the maximum buffer size, regardless of whether EDNS OPT RR is
+    /// included or not.  This means if an application wants to send a message
+    /// with an EDNS OPT RR for specifying a larger UDP size, it must explicitly
+    /// specify the value using this method.
     void setUDPSize(uint16_t size);
 
     /// \brief Return the query ID given in the header section of the message.
@@ -767,7 +779,7 @@ public:
     /// \brief The default maximum size of UDP DNS messages that don't cause
     /// truncation.
     ///
-    /// With EDNS the maximum size can be increases per message.
+    /// With EDNS the maximum size can be increased per message.
     static const uint16_t DEFAULT_MAX_UDPSIZE = 512;
 
     /// \brief The highest EDNS version this implementation supports.
