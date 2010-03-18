@@ -64,21 +64,23 @@
 
     <para>
     Some control entries (aka directives) are supported.
-    $ORIGIN is followed by a domain name and is used to define the
-    relative domain name.
+    $ORIGIN is followed by a domain name, and sets the the origin
+    that will be used for relative domain names in subsequent records.
     $INCLUDE is followed by a filename to load.
 <!-- TODO: and optionally a
     domain name used to set the relative domain name origin. -->
     The previous origin is restored after the file is included.
 <!-- the current domain name is also restored -->
     $TTL is followed by a time-to-live value which is used
-    by following records that don't have their TTL set.
+    by any following records that don't specify a TTL.
     </para>
 
-<!-- TODO: write this better -->
     <para>
-      When replacing a zone, all records from the prior same zone
-      disappear and the whole new set appears.
+      When re-loading an existing zone, the prior version is completely
+      removed.  While the new version of the zone is being loaded, the old
+      version remains accessible to queries.  After the new version is
+      completely loaded, the old version is swapped out and replaced
+      with the new one in a single operation.
     </para>
 
   </refsect1>
