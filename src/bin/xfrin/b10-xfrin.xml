@@ -94,8 +94,6 @@ add a usage example of xfrin -->
 
     <para>
       The configuration commands are:
-
-print_message
 print_settings
 shutdown
 <!-- TODO: refresh is code but not in spec -->

@@ -1117,7 +1117,7 @@ This may be a temporary setting until then.
         In the Y1 prototype release, only the SQLite3 back end is used.
         By default, it stores the zone data in
         <filename>/usr/local/var/bind10/zone.sqlite3</filename>
-        unless the <option>-d</option> swith is used to set the
+        unless the <option>-d</option> switch is used to set the
         database filename.
         Multiple zones are stored in a single SQLite3 zone database.
       </para>
