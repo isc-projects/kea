@@ -799,6 +799,17 @@ TODO
     <sect1>
       <title>Loading Master Zones Files</title>
       <para>
+<!-- TODO
+loadzone
+What happens in the database? replaces existing? What if a.foo
+existed but new zone file didn't have a.foo, would previous a.foo
+in database be removed?
+
+if you replace the zone foo.com, all records from the prior foo.com disappear and a whole new set appears
+-->
+
+<!--TODO: permissions for xfrin or loadzone to create the file -->
+
       </para>
     </sect1>
 
