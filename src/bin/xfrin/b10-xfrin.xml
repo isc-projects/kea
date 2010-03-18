@@ -92,20 +92,24 @@ add a usage example of xfrin -->
       concurrently. The default is 10.
     </para>
 
-    <para>
-      The configuration commands are:
-print_settings
-shutdown
+<!-- TODO: formating -->
 <!-- TODO: refresh is code but not in spec -->
 <!-- schedule immediate maintenance for a zone(check soa serial ) -->
+    <para>
+      The configuration commands are:
+print_settings,
+shutdown, and
+retransfer (triggers the transfer in for a single zone without checking
+the zone's serial number).
+     </para>
 
-retransfer triggers the transfer in for a single zone without checking
-the zone's serial number.
+<!-- TODO:
+
 retransfer has the following arguments:
 zone_name
 port (defaults to 53)
 master
-db_file (defaults to /tmp/zone.sqlite3 <!-- TODO: fix this -->
+db_file (defaults to zone.sqlite3) --> <!-- TODO: fix this -->
 
 
 <!--
@@ -127,11 +131,14 @@ command "retransfer to xfrin."
 -->
 
 <!-- TODO: reword -->
+<!-- TODO:
+    <para>
       The administrator can send zone transfer-in command to xfrin
-      module, or terminate all going transfer in by sending shutdown
-      command to xfrin module.
-
+      module, or terminate all ongoing incoming transfers by sending
+      the <quote>shutdown</quote> command to xfrin module.
     </para>
+-->
+<!-- TODO: kills it and bind10 restarts? -->
 
     <note><para>
       This prototype version uses SQLite3 as its data source backend.
