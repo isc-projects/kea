@@ -51,10 +51,12 @@
       <arg><option>-h</option></arg>
       <arg><option>-i <replaceable>number</replaceable></option></arg>
       <arg><option>-p <replaceable>number</replaceable></option></arg>
+      <arg><option>-v</option></arg>
       <arg><option>--address <replaceable>string</replaceable></option></arg>
       <arg><option>--help</option></arg>
       <arg><option>--idle-timeout <replaceable>number</replaceable></option></arg>
       <arg><option>--port <replaceable>number</replaceable></option></arg>
+      <arg><option>--verbose</option></arg>
       <arg><option>--version</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -114,6 +116,14 @@
         <listitem><para>
           The port number <command>b10-cmdctl</command> will listen on.
           The default is 8080.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-v</option></term>
+        <term><option>--verbose</option></term>
+        <listitem><para>
+          Enable verbose mode.</para>
         </listitem>
       </varlistentry>
 
