@@ -227,11 +227,10 @@ public:
             assert(new_client == listening_);
             new_client->start();
             listening_ = new TCPClient(io_service_);
-            acceptor_.async_accept(new_client->getSocket(),
+            acceptor_.async_accept(listening_->getSocket(),
                                    boost::bind(&TCPServer::handleAccept,
                                                this, listening_,
                                                placeholders::error));
-            listening_ = new_client;
         } else {
             delete new_client;
         }
