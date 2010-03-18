@@ -24,8 +24,10 @@
 #include <arpa/inet.h> // XXX: for inet_pton/ntop(), not exist in C++ standards
 #include <sys/socket.h> // for AF_INET/AF_INET6
 
-#include "buffer.h"
 #include <exceptions/exceptions.h>
+
+#include "buffer.h"
+#include "exceptions.h"
 #include "messagerenderer.h"
 #include "rdata.h"
 #include "rdataclass.h"
@@ -35,18 +37,25 @@ using namespace std;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
-AAAA::AAAA(const string& addrstr)
-{
+AAAA::AAAA(const string& addrstr) {
     if (inet_pton(AF_INET6, addrstr.c_str(), &addr_) != 1) {
         isc_throw(InvalidRdataText,
-                  "failed to parse IPv6 address for IN/AAAA RDATA");
+                  "IN/AAAA RDATA construction from text failed: "
+                  "Address cannot be converted: " << addrstr);
     }
 }
 
-AAAA::AAAA(InputBuffer& buffer, size_t rdata_len)
-{
+AAAA::AAAA(InputBuffer& buffer, size_t rdata_len) {
     if (rdata_len != sizeof(addr_)) {
-        isc_throw(InvalidRdataLength, "Length mismatch for IN/AAAA RDATA");
+        isc_throw(DNSMessageFORMERR,
+                  "IN/AAAA RDATA construction from wire failed: "
+                  "Invalid length: " << rdata_len);
+    }
+    if (buffer.getLength() - buffer.getPosition() < sizeof(addr_)) {
+        isc_throw(DNSMessageFORMERR,
+                  "IN/AAAA RDATA construction from wire failed: "
+                  "insufficient buffer length: "
+                  << buffer.getLength() - buffer.getPosition());
     }
     buffer.readData(&addr_, sizeof(addr_));
 }
@@ -56,32 +65,29 @@ AAAA::AAAA(const AAAA& other) : Rdata() {
 }
 
 void
-AAAA::toWire(OutputBuffer& buffer) const
-{
+AAAA::toWire(OutputBuffer& buffer) const {
     buffer.writeData(&addr_, sizeof(addr_));
 }
 
 void
-AAAA::toWire(MessageRenderer& renderer) const
-{
+AAAA::toWire(MessageRenderer& renderer) const {
     renderer.writeData(&addr_, sizeof(addr_));
 }
 
 string
-AAAA::toText() const
-{
+AAAA::toText() const {
     char addr_string[sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255")];
 
     if (inet_ntop(AF_INET6, &addr_, addr_string, sizeof(addr_string)) == NULL) {
-        isc_throw(Unexpected, "inet_ntop failed for an IPv6 address");
+        isc_throw(Unexpected,
+                  "Failed to convert IN/AAAA RDATA to textual IPv6 address");
     }
 
     return (string(addr_string));
 }
 
 int
-AAAA::compare(const Rdata& other) const
-{
+AAAA::compare(const Rdata& other) const {
     const AAAA& other_a = dynamic_cast<const AAAA&>(other);
     return (memcmp(&addr_, &other_a.addr_, sizeof(addr_)));
 }
