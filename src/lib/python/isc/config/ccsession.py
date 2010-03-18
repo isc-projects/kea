@@ -158,17 +158,13 @@ class ModuleCCSession(ConfigData):
         self.__request_config()
 
     def get_socket(self):
-        """Returns the socket from the command channel session. This can
-           be used in select() loops to see if there is anything on the
-           channel. This is not strictly necessary as long as
-           check_command is called periodically."""
+        """Returns the socket from the command channel session. This
+           should *only* be used for select() loops to see if there
+           is anything on the channel. If that loop is not completely
+           time-critical, it is strongly recommended to only use
+           check_command(), and not look at the socket at all."""
         return self._session._socket
     
-    def get_session(self):
-        """Returns the command-channel session that is used, so the
-           application can use it directly."""
-        return self._session
-
     def close(self):
         """Close the session to the command channel"""
         self._session.close()
