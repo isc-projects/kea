@@ -219,7 +219,7 @@ str_from_stringstream(std::istream &in, const std::string& file, int& line, int&
 }
 
 std::string
-word_from_stringstream(std::istream &in, int& line, int& pos) {
+word_from_stringstream(std::istream &in, int& line UNUSED_PARAM, int& pos) {
     std::stringstream ss;
     while (isalpha(in.peek())) {
         ss << (char) in.get();
@@ -249,7 +249,9 @@ count_chars_d(double d) {
 }
 
 ElementPtr
-from_stringstream_int_or_double(std::istream &in, int &line, int &pos) {
+from_stringstream_int_or_double(std::istream &in, int &line UNUSED_PARAM,
+                                int &pos)
+{
     int i;
     in >> i;
     pos += count_chars_i(i);
@@ -548,7 +550,7 @@ decode_tag(std::stringstream& in, int& item_length) {
 }
 
 ElementPtr
-decode_bool(std::stringstream& in, int& item_length) {
+decode_bool(std::stringstream& in, int& item_length UNUSED_PARAM) {
     const char c = in.get();
     
     if (c == '1') {
@@ -559,13 +561,13 @@ decode_bool(std::stringstream& in, int& item_length) {
 }
 
 ElementPtr
-decode_int(std::stringstream& in, int& item_length) {
+decode_int(std::stringstream& in, int& item_length UNUSED_PARAM) {
     int skip, me;
     return from_stringstream_int_or_double(in, skip, me);
 }
 
 ElementPtr
-decode_real(std::stringstream& in, int& item_length) {
+decode_real(std::stringstream& in, int& item_length UNUSED_PARAM) {
     int skip, me;
     return from_stringstream_int_or_double(in, skip, me);
 }
@@ -632,7 +634,7 @@ decode_list(std::stringstream& in, int& item_length) {
 }
 
 ElementPtr
-decode_null(std::stringstream& in, int& item_length) {
+decode_null(std::stringstream& in UNUSED_PARAM, int& item_length UNUSED_PARAM) {
     return Element::create("NULL");
 }
 
@@ -756,19 +758,25 @@ Element::toWire(const int omit_length) {
 }
 
 void
-StringElement::toWire(std::stringstream& ss, const int omit_length) {
+StringElement::toWire(std::stringstream& ss,
+                      const int omit_length UNUSED_PARAM)
+{
     unsigned int length = stringValue().length();
     ss << encode_length(length, ITEM_UTF8) << stringValue();
 }
 
 void
-IntElement::toWire(std::stringstream& ss, const int omit_length) {
+IntElement::toWire(std::stringstream& ss,
+                   const int omit_length UNUSED_PARAM)
+{
     const std::string& s = str();
     ss << encode_length(s.length(), ITEM_INT) << s;
 }
 
 void
-BoolElement::toWire(std::stringstream& ss, const int omit_length) {
+BoolElement::toWire(std::stringstream& ss,
+                    const int omit_length UNUSED_PARAM)
+{
     ss << encode_length(1, ITEM_BOOL);
     if (boolValue()) {
         ss << 0x01;
@@ -778,7 +786,9 @@ BoolElement::toWire(std::stringstream& ss, const int omit_length) {
 }
 
 void
-DoubleElement::toWire(std::stringstream& ss, const int omit_length) {
+DoubleElement::toWire(std::stringstream& ss,
+                      const int omit_length UNUSED_PARAM)
+{
     std::stringstream text;
 
     text << str();
