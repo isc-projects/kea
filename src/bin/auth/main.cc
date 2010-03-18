@@ -473,6 +473,8 @@ processMessageUDP(const int fd, Message& dns_message,
     }
 }
 
+// XXX: this function does not handle partial reads or partial writes,
+//      and is VERY UNSAFE - will probably be removed or rewritten
 void
 processMessageTCP(const int fd, Message& dns_message,
                   MessageRenderer& response_renderer)
@@ -495,6 +497,13 @@ processMessageTCP(const int fd, Message& dns_message,
         cerr << "[XX] process TCP" << endl;
     }
     cc = recv(ts, sizebuf, 2, 0);
+    if (cc < 0) {
+        if (verbose_mode) {
+            cerr << "[XX] TCP recv failure:" << endl;
+        }
+        close(ts);
+        return;
+    }
     if (verbose_mode) {
         cerr << "[XX] got: " << cc << endl;
     }
@@ -548,6 +557,10 @@ processMessageTCP(const int fd, Message& dns_message,
                     cerr << "[XX] sent TCP response: " << cc << " bytes"
                          << endl;
                 }
+            }
+        } else {
+            if (verbose_mode) {
+                cerr << "TCP send error" << endl;
             }
         }
     }
