@@ -1,12 +1,51 @@
-This is the source for a pre-alpha version of BIND 10.
+This is the source for the development version of BIND 10.
+
+BIND is the popular implementation of a DNS server, developer
+interfaces, and DNS tools. BIND 10 is a rewrite of BIND 9. BIND 10
+is written in C++ and Python and provides a modular environment
+for serving and maintaining DNS.
+
+BIND10-devel is new development leading up to the production
+BIND 10 release. It contains prototype code and experimental
+interfaces. Nevertheless it is ready to use now for testing the
+new BIND 10 infrastructure ideas. The Year 1 (Y1) deliverable of
+the five year plan is described here:
+
+        http://bind10.isc.org/wiki/Year1Deliverable
+
+This release includes the bind10 master process, msgq message bus,
+b10-auth authoritative DNS server, b10-cmdctl remote control daemon,
+b10-cfgmgr configuration manager, and a new libdns library.
+
+Documentation is included and also available via the BIND 10
+website at http://bind10.isc.org/
+
+The latest released source may be downloaded from:
+
+        ftp://ftp.isc.org/isc/bind10/
+
+Users and developers are encouraged to participate on the BIND 10
+mailing lists:
+
+        https://lists.isc.org/mailman/listinfo/bind10-users
+        https://lists.isc.org/mailman/listinfo/bind10-dev
+
+Bugs may be reported as tickets via the developers website:
+
+        http://bind10.isc.org/
 
 BUILDING
 
 Simple build instructions:
 
-  autoreconf --install
   ./configure
   make
+
+If building from Subversion repo, run:
+
+  autoreconf --install
+
+before running ./configure
 
 Requires autoconf 2.59 or newer.
 
@@ -34,15 +73,6 @@ INSTALLATION
 Install with:
 
   make install
-
-Testing samples of a RSA key, certificate, and user account
-are installed under the $PREFIX/share/bind10/ directory.
-  cmdctl-accounts.csv
-  cmdctl-keyfile.pem
-  cmdctl-certfile.pem
-Copy them to your $sysconfdir/bind10/ directory  for testing.
-Or create your own.
-TODO: show how
 
 TEST COVERAGE
 
