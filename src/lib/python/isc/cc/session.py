@@ -16,8 +16,8 @@
 import sys
 import socket
 import struct
+import os
 
-#from isc.cc import message
 import isc.cc.message
 
 class ProtocolError(Exception): pass
@@ -25,7 +25,7 @@ class NetworkError(Exception): pass
 class SessionError(Exception): pass
 
 class Session:
-    def __init__(self, port=9912):
+    def __init__(self, port=0):
         self._socket = None
         self._lname = None
         self._recvbuffer = bytearray()
@@ -33,6 +33,11 @@ class Session:
         self._sequence = 1
         self._closed = False
         self._queue = []
+
+        if port == 0 and 'B10_FROM_SOURCE' in os.environ:
+	  port = int(os.environ["ISC_MSGQ_PORT"])
+	else:
+	  port = 9912
 
         try:
             self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
