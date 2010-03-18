@@ -546,50 +546,61 @@ var/
         <title>Install Hierarchy</title>
         <para>
           The following is the layout of the complete BIND 10 installation:
-        <itemizedlist>
-        <listitem>
-        <simpara><filename>bin/</filename> &mdash; general tools and
-        diagnostic clients.</simpara>
-        </listitem>
-        <listitem>
-        <simpara><filename>etc/bind10/</filename> &mdash; configuration files.
-        </simpara>
-  <!-- TODO: create the etc/bind10/ directory? -->
-        </listitem>
-        <listitem>
-        <simpara><filename>lib/</filename> &mdash; libraries and
-        python modules.</simpara>
-        </listitem>
-        <listitem>
-        <simpara><filename>libexec/bind10/</filename> &mdash; executables that
-        a user wouldn't normally run directly. Nor would they be used
-        independently. These are the BIND 10 modules which are daemons
-        started by the <command>bind10</command> tool.
-        </simpara>
-        </listitem>
-        <listitem>
-        <simpara><filename>sbin/</filename> &mdash; commands used by
-        the system administrator.
-        </simpara>
-        </listitem>
-        <listitem>
-        <simpara><filename>share/bind10/</filename> &mdash; configuration
-          specifications.
-        </simpara>
-        </listitem>
-        <listitem>
-        <simpara><filename>share/man/</filename> &mdash; manual pages (online
-          documentation).
-        </simpara>
-        </listitem>
-        <listitem>
-        <simpara><filename>var/bind10/</filename> &mdash; data source and
-          configuration databases.
-  <!-- TODO: move the sqlite3 database there -->
-        </simpara>
-        </listitem>
-        </itemizedlist>
-      </para>
+          <itemizedlist>
+            <listitem>
+              <simpara>
+                <filename>bin/</filename> &mdash;
+                general tools and diagnostic clients.
+              </simpara>
+            </listitem>
+            <listitem>
+            <simpara>
+              <filename>etc/bind10/</filename> &mdash;
+              configuration files.
+            </simpara>
+      <!-- TODO: create the etc/bind10/ directory? -->
+            </listitem>
+            <listitem>
+              <simpara>
+                <filename>lib/</filename> &mdash;
+                libraries and python modules.
+              </simpara>
+            </listitem>
+            <listitem>
+              <simpara>
+                <filename>libexec/bind10/</filename> &mdash;
+                executables that a user wouldn't normally run directly and
+                are not run independently.
+                These are the BIND 10 modules which are daemons started by
+                the <command>bind10</command> tool.
+              </simpara>
+            </listitem>
+            <listitem>
+              <simpara>
+                <filename>sbin/</filename> &mdash;
+                commands used by the system administrator.
+              </simpara>
+            </listitem>
+            <listitem>
+              <simpara>
+                <filename>share/bind10/</filename> &mdash;
+                configuration specifications.
+              </simpara>
+            </listitem>
+            <listitem>
+              <simpara>
+                <filename>share/man/</filename> &mdash;
+                manual pages (online documentation).
+              </simpara>
+            </listitem>
+            <listitem>
+              <simpara>
+                <filename>var/bind10/</filename> &mdash;
+                data source and configuration databases.
+              </simpara>
+            </listitem>
+          </itemizedlist>
+        </para>
       </section>
     </section>
 
