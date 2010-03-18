@@ -401,7 +401,7 @@ var/
           <para>
             When using source code retrieved via Subversion additional
             software will be required:  automake (v1.11 or newer),
-            libtoolize, and autoconfigure (2.59 or newer).
+            libtoolize, and autoconf (2.59 or newer).
             These may need to be installed.
           </para>
         </note>
