@@ -134,6 +134,18 @@ if test "$lcov" != "no"; then
 fi
 AC_SUBST(USE_LCOV)
 
+AC_ARG_WITH([boost-include],
+  AC_HELP_STRING([--with-boost-include=PATH],
+    [specify exact directory for Boost headers]),
+    [boost_include_path="$withval"])
+if test "${boost_include_path}" ; then
+  CPPFLAGS="$CPPFLAGS -I${boost_include_path}"
+else
+# abs_top_srcdir not defined yet
+# so this is only useful to check but not to use later
+  CPPFLAGS="$CPPFLAGS -Iext"
+fi
+
 # Check availability of the Boost System library
 
 AC_MSG_CHECKING([for boost::system library])
@@ -233,6 +245,11 @@ AC_SUBST(GTEST_LDFLAGS)
 AC_SUBST(GTEST_LDADD)
 
 PKG_CHECK_MODULES(SQLITE, sqlite3 >= 3.3.9)
+
+# Check for headers from required devel kits.
+# boost/shared_ptr.hpp is in ext in svn but not in tarball.
+AC_CHECK_HEADERS([boost/shared_ptr.hpp],,
+  AC_MSG_ERROR([Missing required header files.]))
 
 # Checks for library functions.
 
