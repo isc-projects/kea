@@ -2,12 +2,12 @@
 .\"     Title: bind10
 .\"    Author: [see the "AUTHORS" section]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: February 22, 2010
+.\"      Date: March 18, 2010
 .\"    Manual: BIND10
 .\"    Source: BIND10
 .\"  Language: English
 .\"
-.TH "BIND10" "8" "February 22, 2010" "BIND10" "BIND10"
+.TH "BIND10" "8" "March 18, 2010" "BIND10" "BIND10"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -22,7 +22,7 @@
 bind10 \- BIND 10 master process
 .SH "SYNOPSIS"
 .HP \w'\fBbind10\fR\ 'u
-\fBbind10\fR [\fB\-m\ \fR\fB\fInumber\fR\fR] [\fB\-v\fR] [\fB\-msgq\-port\ \fR\fB\fInumber\fR\fR] [\fB\-verbose\fR]
+\fBbind10\fR [\fB\-m\ \fR\fB\fInumber\fR\fR] [\fB\-p\ \fR\fB\fInumber\fR\fR] [\fB\-v\fR] [\fB\-msgq\-port\ \fR\fB\fInumber\fR\fR] [\fB\-port\ \fR\fB\fInumber\fR\fR] [\fB\-verbose\fR]
 .SH "DESCRIPTION"
 .PP
 The
@@ -37,6 +37,28 @@ The arguments are as follows:
 The port number for the
 \fBmsgq\fR(8)
 daemon to listen on\&. The default is 9912\&.
+.RE
+.PP
+\fB\-p\fR \fInumber\fR, \fB\-\-port\fR \fInumber\fR
+.RS 4
+The port number for the
+\fBb10-auth\fR(8)
+daemon to listen on\&. The default is 5300\&.
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBNote\fR
+.ps -1
+.br
+The Y1 prototype release uses a non\-default port for domain service\&.
+.sp .5v
+.RE
 .RE
 .PP
 \fB\-v\fR, \fB\-\-verbose\fR
