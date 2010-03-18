@@ -1057,7 +1057,6 @@ This may be a temporary setting until then.
       </para></note>
 
 
-<!-- TODO: really is /tmp/zone.sqlite3 until fixed. -->
       <para>
         By default, the SQLite3 backend uses the data file located at
         <filename>/usr/local/var/bind10/zone.sqlite3</filename>.
