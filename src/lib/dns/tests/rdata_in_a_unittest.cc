@@ -15,6 +15,7 @@
 // $Id$
 
 #include <dns/buffer.h>
+#include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
@@ -39,8 +40,7 @@ class Rdata_IN_A_Test : public RdataTest {
 const in::A rdata_in_a("192.0.2.1");
 const uint8_t wiredata_in_a[] = { 192, 0, 2, 1 };
 
-TEST_F(Rdata_IN_A_Test, createFromText)
-{
+TEST_F(Rdata_IN_A_Test, createFromText) {
     EXPECT_EQ(0, rdata_in_a.compare(in::A("192.0.2.1")));
     // should reject an abbreviated form of IPv4 address
     EXPECT_THROW(in::A("10.1"), InvalidRdataText);
@@ -50,51 +50,46 @@ TEST_F(Rdata_IN_A_Test, createFromText)
     EXPECT_THROW(in::A("xxx"), InvalidRdataText);
 }
 
-TEST_F(Rdata_IN_A_Test, createFromWire)
-{
+TEST_F(Rdata_IN_A_Test, createFromWire) {
     // Valid data
     EXPECT_EQ(0, rdata_in_a.compare(
-                  *rdataFactoryFromFile(RRType("A"), RRClass("IN"),
+                  *rdataFactoryFromFile(RRType::A(), RRClass::IN(),
                                         "testdata/rdata_in_a_fromWire")));
     // RDLENGTH is too short
-    EXPECT_THROW(rdataFactoryFromFile(RRType("A"), RRClass("IN"),
+    EXPECT_THROW(rdataFactoryFromFile(RRType::A(), RRClass::IN(),
                                       "testdata/rdata_in_a_fromWire", 6),
-                 InvalidRdataLength);
+                 DNSMessageFORMERR);
     // RDLENGTH is too long
-    EXPECT_THROW(rdataFactoryFromFile(RRType("A"), RRClass("IN"),
+    EXPECT_THROW(rdataFactoryFromFile(RRType::A(), RRClass::IN(),
                                       "testdata/rdata_in_a_fromWire", 12),
-                 InvalidRdataLength);
-    // buffer too short.  the error should be detected in buffer read
-    EXPECT_THROW(rdataFactoryFromFile(RRType("A"), RRClass("IN"),
+                 DNSMessageFORMERR);
+    // buffer too short.
+    EXPECT_THROW(rdataFactoryFromFile(RRType::A(), RRClass::IN(),
                                       "testdata/rdata_in_a_fromWire", 19),
-                 InvalidBufferPosition);
+                 DNSMessageFORMERR);
 }
 
-TEST_F(Rdata_IN_A_Test, toWireBuffer)
-{
+TEST_F(Rdata_IN_A_Test, toWireBuffer) {
     rdata_in_a.toWire(obuffer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         obuffer.getData(), obuffer.getLength(),
                         wiredata_in_a, sizeof(wiredata_in_a));
 }
 
-TEST_F(Rdata_IN_A_Test, toWireRenderer)
-{
+TEST_F(Rdata_IN_A_Test, toWireRenderer) {
     rdata_in_a.toWire(renderer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         obuffer.getData(), obuffer.getLength(),
                         wiredata_in_a, sizeof(wiredata_in_a));
 }
 
-TEST_F(Rdata_IN_A_Test, toText)
-{
+TEST_F(Rdata_IN_A_Test, toText) {
     EXPECT_EQ("192.0.2.1", rdata_in_a.toText());
     string longaddr("255.255.255.255"); // this shouldn't make the code crash
     EXPECT_EQ(longaddr, in::A(longaddr).toText());
 }
 
-TEST_F(Rdata_IN_A_Test, compare)
-{
+TEST_F(Rdata_IN_A_Test, compare) {
     in::A small1("1.1.1.1");
     in::A small2("1.2.3.4");
     in::A large1("255.255.255.255");
