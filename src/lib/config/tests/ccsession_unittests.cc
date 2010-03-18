@@ -350,3 +350,56 @@ TEST(CCSession, checkCommand)
 
     endFakeSession();
 }
+
+TEST(CCSession, remoteConfig)
+{
+    std::string module_name;
+    int item1;
+    
+    initFakeSession();
+    ModuleCCSession mccs(ccspecfile("spec1.spec"), NULL, NULL);
+    EXPECT_EQ(true, haveSubscription("Spec1", "*"));
+    
+    // first simply connect, with no config values, and see we get
+    // the default
+    initial_messages->add(createAnswer(0, el("{}")));
+
+    EXPECT_EQ(false, haveSubscription("Spec2", "*"));
+    module_name = mccs.addRemoteConfig(ccspecfile("spec2.spec"));
+    EXPECT_EQ("Spec2", module_name);
+    EXPECT_EQ(true, haveSubscription("Spec2", "*"));
+
+    item1 = mccs.getRemoteConfigValue(module_name, "item1")->intValue();
+    EXPECT_EQ(1, item1);
+
+    // Remove it and see we get an error asking for a config value
+    mccs.removeRemoteConfig(module_name);
+    EXPECT_EQ(false, haveSubscription("Spec2", "*"));
+    EXPECT_THROW(mccs.getRemoteConfigValue(module_name, "item1"), CCSessionError);
+
+    // Now re-add it, with a specific config value, and see we get that
+    initial_messages->add(createAnswer(0, el("{ \"item1\": 2 }")));
+    module_name = mccs.addRemoteConfig(ccspecfile("spec2.spec"));
+    item1 = mccs.getRemoteConfigValue(module_name, "item1")->intValue();
+    EXPECT_EQ(2, item1);
+
+    // Try a config_update command
+    addMessage(el("{ \"command\": [ \"config_update\", { \"item1\": 3 } ] }"), module_name, "*");
+    mccs.checkCommand();
+    item1 = mccs.getRemoteConfigValue(module_name, "item1")->intValue();
+    EXPECT_EQ(3, item1);
+
+    // remove, re-add, now with a *bad* config request answer
+    mccs.removeRemoteConfig(module_name);
+    initial_messages->add(el("{}"));
+    EXPECT_THROW(mccs.addRemoteConfig(ccspecfile("spec2.spec")), CCSessionError);
+    
+    initial_messages->add(createAnswer(1, "my_error"));
+    EXPECT_THROW(mccs.addRemoteConfig(ccspecfile("spec2.spec")), CCSessionError);
+    
+    initial_messages->add(createAnswer());
+    mccs.addRemoteConfig(ccspecfile("spec2.spec"));
+    
+    endFakeSession();
+}
+

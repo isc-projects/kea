@@ -77,6 +77,7 @@ listRemove(ElementPtr list, ElementPtr el) {
         if (el == s_el) {
             i = 0;
         }
+        i++;
     }
     if (i >= 0) {
         list->remove(i);
