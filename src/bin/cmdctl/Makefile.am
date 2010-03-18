@@ -8,7 +8,10 @@ b10_cmdctldir = $(DESTDIR)$(pkgdatadir)
 # So these generic copies are placed in share/bind10 instead of to etc
 # Admin or packageer will need to put into place manually.
 
-b10_cmdctl_DATA = cmdctl-accounts.csv cmdctl-keyfile.pem cmdctl-certfile.pem
+CMDCTL_CONFIGURATIONS = cmdctl-accounts.csv
+CMDCTL_CONFIGURATIONS += cmdctl-keyfile.pem cmdctl-certfile.pem
+
+b10_cmdctl_DATA = $(CMDCTL_CONFIGURATIONS)
 b10_cmdctl_DATA += cmdctl.spec
  
 EXTRA_DIST = cmdctl-accounts.csv cmdctl-keyfile.pem cmdctl-certfile.pem
@@ -32,7 +35,12 @@ b10-cmdctl: cmdctl.py
 	$(SED) "s|@@PYTHONPATH@@|@pyexecdir@|" cmdctl.py >$@
 	chmod a+x $@
 
+# TODO: permissions handled later
 install-data-local:
 	$(mkinstalldirs) $(DESTDIR)/@sysconfdir@/@PACKAGE@   
-# TODO: permissions handled later
+	for f in $(CMDCTL_CONFIGURATIONS) ; do	\
+	  if test ! -f $(DESTDIR)$(sysconfdir)/@PACKAGE@/$$f; then	\
+	    $(INSTALL_DATA) $(srcdir)/$$f $(DESTDIR)$(sysconfdir)/@PACKAGE@/ ;	\
+	  fi ;	\
+	done
 

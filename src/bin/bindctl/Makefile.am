@@ -24,3 +24,11 @@ bindctl: bindctl-source.py
 	       -e "s|@@SYSCONFDIR@@|@sysconfdir@|" \
 	       -e "s|@@LIBEXECDIR@@|$(pkglibexecdir)|" bindctl-source.py >$@
 	chmod a+x $@
+
+# TODO: permissions handled later
+install-data-local:
+	$(mkinstalldirs) $(DESTDIR)/@sysconfdir@/@PACKAGE@   
+	if test ! -f $(DESTDIR)$(sysconfdir)/@PACKAGE@/bindctl.pem; then	\
+	  $(INSTALL_DATA) $(srcdir)/bindctl.pem $(DESTDIR)$(sysconfdir)/@PACKAGE@/ ;	\
+	fi
+
