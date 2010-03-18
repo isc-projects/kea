@@ -536,7 +536,7 @@ var/
           <screen>$ <userinput>make install</userinput></screen>
         </para>
         <note>
-          <para>The install step may require superuserprivileges.</para>
+          <para>The install step may require superuser privileges.</para>
         </note>
 
       </section>
