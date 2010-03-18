@@ -42,15 +42,15 @@
       </para>
     </note>
 
-  	<section>
+    <section>
       <title>Supported Platforms</title>
       <para>
-	BIND 10 builds have been tested on Debian GNU/Linux 5,
-	Ubuntu 9.10, NetBSD 5, Solaris 10, FreeBSD 7, and CentOS
-	Linux 5.3.
+  BIND 10 builds have been tested on Debian GNU/Linux 5,
+  Ubuntu 9.10, NetBSD 5, Solaris 10, FreeBSD 7, and CentOS
+  Linux 5.3.
 
-	It has been tested on Sparc, i386, and amd64 hardware
-	platforms.
+  It has been tested on Sparc, i386, and amd64 hardware
+  platforms.
 
         It is planned for BIND 10 to build, install and run on
         Windows and standard Unix-type platforms.
@@ -61,26 +61,7 @@
       <title>Required Software</title>
       <para>
         BIND 10 requires Python 3.1.  Later versions may work, but Python
-				3.1 is the minimum version which will work.
-      </para>
-
-      <para>
-        Building from source code requires the Boost
-        build-time headers. At least Boost version 1.34 is required.
-<!-- TODO: we don't check for this version -->
-<!-- NOTE: jreed has tested with 1.34, 1.38, and 1.41. -->
-      </para>
-
-      <para>
-	If the Boost System Library is detected at configure time,
-	BIND 10 will be built using an alternative method for
-	networking I/O using Boost ASIO support.  This provides
-	asynchrony support; with ASIO the Authoritative DNS server
-	can handle other queries while the processing of a TCP
-	transaction stalls.
-        This dependency is not required unless you need
-        <!-- TODO: want --> this feature as TCP transport support is
-        provided using alternative code.
+        3.1 is the minimum version which will work.
       </para>
 
       <note><para>
@@ -88,47 +69,39 @@
         backend is SQLite3. The authoritative server requires
         SQLite 3.3.9 or newer,
         and the <command>b10-xfrin</command> module requires the
-				Python _sqlite3.so module.
+        Python _sqlite3.so module.
       </para></note>
 <!-- TODO: this will change ... -->
 
 <!-- TODO: list where to get these from -->
 
       <note>
-				<para>
-  	      Some operating systems do not provide these dependencies
-					in their default installation nor standard packages
-					collections.
-	        You may need to install them separately.
-      	</para>
-			</note>
-
-      <para>
-        Building BIND 10 also requires a C++ compiler and
-        standard development headers.
-        BIND 10 builds have been tested with GCC g++ 3.4.3, 4.1.2,
-        4.2.1, 4.3.2, and 4.4.1.
-      </para>
-
+        <para>
+          Some operating systems do not provide these dependencies
+          in their default installation nor standard packages
+          collections.
+          You may need to install them separately.
+        </para>
+      </note>
     </section>
 
     <section id="starting_stopping">
       <title>Starting and Stopping the Server</title>
 
-	    <para>
-	      BIND 10 is modular.  Part of this modularity is
-	      accomplished using multiple cooperating processes which, together,
-	      provide DNS functionality.  This is a change from the previous generation
-	      of BIND software, which used a single process.
-	    </para>
+      <para>
+        BIND 10 is modular.  Part of this modularity is
+        accomplished using multiple cooperating processes which, together,
+        provide DNS functionality.  This is a change from the previous generation
+        of BIND software, which used a single process.
+      </para>
 
-	    <para>
-	      At first, running many different processes may seem confusing.  However,
-	      these processes are started, stopped, and maintained by a single command,
-	      <command>bind10</command>.  Additionally, most processes started by
-	      the <command>bind10</command> command have names starting with "b10-",
-	      with one exception, <command>msgq</command>.
-	    </para>
+      <para>
+        At first, running many different processes may seem confusing.  However,
+        these processes are started, stopped, and maintained by a single command,
+        <command>bind10</command>.  Additionally, most processes started by
+        the <command>bind10</command> command have names starting with "b10-",
+        with one exception, <command>msgq</command>.
+      </para>
       
       <para>
         Starting and stopping the server is performed by a single command,
@@ -144,32 +117,39 @@
           <listitem>
             <simpara>
               <command>msgq</command> &mdash;
-              message bus daemon
+              message bus daemon.
+              This process coordinates communication between all of the other
+              BIND 10 processes.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
               <command>b10-auth</command> &mdash;
-              authoritative DNS server
+              authoritative DNS server.
+              This process serves DNS requests.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
               <command>b10-cfgmgr</command> &mdash;
-              configuration manager
+              configuration manager.
+              This process maintains all of the configuration for BIND 10.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
               <command>b10-cmdctl</command> &mdash;
-              REST-ful communication service
+              command and control service.
+              This process allows external control of the BIND 10 system.
             </simpara>
           </listitem>
 
           <listitem>
             <simpara>
               <command>b10-xfrin</command> &mdash;
-              Incoming zone transfer service
+              Incoming zone transfer service.
+              This process is started as needed to transfer a new copy
+              of a zone into BIND 10, when acting as a secondary server.
             </simpara>
           </listitem>
 
@@ -187,13 +167,17 @@
           <listitem>
             <simpara>
               <command>bindctl</command> &mdash;
-              interactive administration interface
+              interactive administration interface.
+              This is a command-line tool which allows an administrator
+              to control BIND 10.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
               <command>b10-loadzone</command> &mdash;
-              tool to load standard master zone files
+              zone file loader.
+              This tool will load standard masterfile-format zone files into
+              BIND 10.
             </simpara>
           </listitem>
   <!-- TODO usermgr -->
@@ -241,6 +225,35 @@ var/
 
   <chapter id="installation">
     <title>Installation</title>
+
+    <section>
+      <title>Building Requirements</title>
+        <para>
+          Building from source code requires the Boost
+          build-time headers. At least Boost version 1.34 is required.
+  <!-- TODO: we don't check for this version -->
+  <!-- NOTE: jreed has tested with 1.34, 1.38, and 1.41. -->
+        </para>
+
+        <para>
+          If the Boost System Library is detected at configure time,
+          BIND 10 will be built using an alternative method for
+          networking I/O using Boost ASIO support.  This provides
+          asynchrony support; with ASIO the Authoritative DNS server
+          can handle other queries while the processing of a TCP
+          transaction stalls.
+          This dependency is not required unless you need
+          <!-- TODO: want --> this feature as TCP transport support is
+          provided using alternative code.
+        </para>
+
+        <para>
+          Building BIND 10 also requires a C++ compiler and
+          standard development headers.
+          BIND 10 builds have been tested with GCC g++ 3.4.3, 4.1.2,
+          4.2.1, 4.3.2, and 4.4.1.
+        </para>
+    </section>
 
     <section id="quickstart">
       <title>Quick start</title>
@@ -447,8 +460,8 @@ var/
           <varlistentry>
             <term>--prefix</term>
             <listitem>
-  	    <simpara>Define the the installation location (the
-  	      default is <filename>/usr/local/</filename>).
+        <simpara>Define the the installation location (the
+          default is <filename>/usr/local/</filename>).
               </simpara>
             </listitem> 
           </varlistentry>
@@ -460,8 +473,8 @@ var/
 
         <para>
           For example, the following configures it to build
-  	with BOOST ASIO support, find the Boost headers, find the
-  	Python interpreter, and sets the installation location:
+    with BOOST ASIO support, find the Boost headers, find the
+    Python interpreter, and sets the installation location:
 
           <screen>$ <userinput>./configure --with-boostlib=/usr/pkg/lib \
       --with-boost-include=/usr/pkg/include \
@@ -479,8 +492,8 @@ var/
       <section>
         <title>Build</title>
         <para>
-  	After the configure step is complete, to build the executables
-  	from the C++ code and prepare the Python scripts, run:
+    After the configure step is complete, to build the executables
+    from the C++ code and prepare the Python scripts, run:
 
           <screen>$ <userinput>make</userinput></screen>
         </para>
@@ -489,8 +502,8 @@ var/
       <section>
         <title>Install</title>
         <para>
-  	To install the BIND 10 executables, support files,
-  	and documentation, run:
+    To install the BIND 10 executables, support files,
+    and documentation, run:
           <screen>$ <userinput>make install</userinput></screen>
         </para>
         <note><para>The install step may require superuser
@@ -615,8 +628,8 @@ var/
         This is called the <quote>Command Channel</quote>.
         The members of the channel subscribe to listen to certain
         messages and are programmed to handle received messages.
-	Example messages include shutdown, get configurations, and set
-	configurations.
+  Example messages include shutdown, get configurations, and set
+  configurations.
       </para>
 
       <note><simpara>
@@ -642,16 +655,16 @@ Unix domain sockets
     <title>Configuration manager</title>
 
       <para>
-	 The configuration manager, <command>b10-cfgmgr</command>,
-	 handles all BIND 10 system configuration.  It provides
-	 persistent storage for configuration, and notifies running
-	 modules of configuration changes.</para>
+   The configuration manager, <command>b10-cfgmgr</command>,
+   handles all BIND 10 system configuration.  It provides
+   persistent storage for configuration, and notifies running
+   modules of configuration changes.</para>
 
       <para>
-	The <command>b10-auth</command> and <command>b10-xfrin</command>
-	daemons and other components receive their configurations
-	from the configuration manager over the <command>msgq</command>
-	command channel.
+  The <command>b10-auth</command> and <command>b10-xfrin</command>
+  daemons and other components receive their configurations
+  from the configuration manager over the <command>msgq</command>
+  command channel.
       </para>
 
       <para>The administrator doesn't connect to it directly, but
@@ -662,8 +675,8 @@ Unix domain sockets
 
 <!-- TODO -->
       <note><para>
-	The Y1 prototype release only provides the
-	<command>bindctl</command> as a user interface to
+  The Y1 prototype release only provides the
+  <command>bindctl</command> as a user interface to
         <command>b10-cmdctl</command>.
         Upcoming releases will provide another interactive command-line
         interface and a web-based interface.
@@ -672,8 +685,8 @@ Unix domain sockets
       <para>
         The <command>b10-cfgmgr</command> daemon can send all
         specifications and all current settings to the
-	<command>bindctl</command> client (via
-	<command>b10-cmdctl</command>).
+  <command>bindctl</command> client (via
+  <command>b10-cmdctl</command>).
       </para>
 
       <para>
@@ -698,10 +711,10 @@ config changes are actually commands to cfgmgr
         (The full path is what was defined at build configure time for
         <option>--localstatedir</option>.
         The default is <filename>/usr/local/var/</filename>.)
-	The format is loosely based on JSON and is directly parseable
-	python, but this may change in a future version.
-	This configuration data file is not manually edited by the
-	administrator.
+  The format is loosely based on JSON and is directly parseable
+  python, but this may change in a future version.
+  This configuration data file is not manually edited by the
+  administrator.
       </para>
 
 <!--
@@ -1007,8 +1020,8 @@ This may be a temporary setting until then.
         (The full path is what was defined at build configure time for
         <option>--localstatedir</option>.
         The default is <filename>/usr/local/var/</filename>.)
-	This data file location may be changed by defining the
-	<quote>database_file</quote> configuration.
+  This data file location may be changed by defining the
+  <quote>database_file</quote> configuration.
       </para>
 
     </section>
