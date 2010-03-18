@@ -4,6 +4,8 @@
 <!ENTITY mdash  "&#x2014;" >
 ]>
 <book>
+  <?xml-stylesheet href="userguide.css" type="text/css"?>
+
   <bookinfo>
     <title>BIND 10 User Guide</title>
     <subtitle>Administrator Reference for BIND 10</subtitle>
@@ -105,25 +107,29 @@
       </para>
     </section>
 
-    <para>
-      Once BIND 10 is running, two commands are used to interact directly with
-      the system:
-      <itemizedlist>
-        <listitem>
-          <simpara>
-            <command>bindctl</command> &mdash;
-            interactive administration interface
-          </simpara>
-        </listitem>
-        <listitem>
-          <simpara>
-            <command>b10-loadzone</command> &mdash;
-            tool to load standard master zone files
-          </simpara>
-        </listitem>
-<!-- TODO usermgr -->
-      </itemizedlist>
-    </para>
+    <section id="managing_once_running">
+      <title>Managing BIND 10</title>
+      
+      <para>
+        Once BIND 10 is running, two commands are used to interact directly with
+        the system:
+        <itemizedlist>
+          <listitem>
+            <simpara>
+              <command>bindctl</command> &mdash;
+              interactive administration interface
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <command>b10-loadzone</command> &mdash;
+              tool to load standard master zone files
+            </simpara>
+          </listitem>
+  <!-- TODO usermgr -->
+        </itemizedlist>
+      </para>
+    </section>
 
     <para>
       The tools and modules are covered in full detail in this users guide.
@@ -163,166 +169,17 @@ var/
 
   </chapter>
 
-  <chapter id="quickstart">
-    <title>Quick start</title>
-    <para>
-      This quickly covers the standard steps for installing
-      and deploying BIND 10 as an authoritative nameserver using
-      its defaults. For troubleshooting, full customizations and further
-      details, see the respective chapters in the BIND 10 user guide.
-    </para>
+  <chapter id="installation">
+    <title>Installation</title>
 
-    <itemizedlist>
-    
-      <listitem>
-        <simpara>Install required dependencies: Python 3.1, SQLite3
-          library, and Boost development headers.</simpara>
-      </listitem>
-
-      <listitem>
-        <simpara>Download the BIND 10 source tarball. <!-- TODO: from -->
-        </simpara>
-      </listitem>
-
-      <listitem>
-        <para>Extract the tar file:
-        <screen>$ <userinput>gzcat bind10-<replaceable>VERSION</replaceable>.tar.gz | tar -xvf -</userinput></screen>
-        </para>
-      </listitem>
-
-      <listitem>
-        <para>Go into the source and run configure:
-          <screen>$ <userinput>cd bind10-<replaceable>VERSION</replaceable></userinput>
-$ <userinput>./configure</userinput></screen>
-        </para>
-      </listitem>
-
-      <listitem>
-        <para>Build it:
-          <screen>$ <userinput>make</userinput></screen>
-        </para>
-      </listitem>
-
-      <listitem>
-        <para>Install it (to default /usr/local):
-          <screen>$ <userinput>make install</userinput></screen>
-        </para>
-      </listitem>
-
-      <listitem>
-        <para>Start the server:
-          <screen>$ <userinput>/usr/local/sbin/bind10</userinput></screen>
-        </para>
-      </listitem>
-
-      <listitem>
-
-       <note><simpara>The Y1 prototype of the b10-auth server listens on
-         0.0.0.0 (all interfaces) port 5300. (This is not the standard
-         domain service port.)</simpara></note>
-
-       <para>Test it; for example:
-          <screen>$ <userinput>dig @127.0.0.1 -p 5300 -c CH -t TXT authors.bind</userinput></screen>
-       </para>
-
-      </listitem>
-
-      <listitem>
-        <para>Load desired zone file(s), for example:
-          <screen>$ <userinput>b10-loadzone <replaceable>your.zone.example.org</replaceable></userinput></screen>
-        </para>
-      </listitem>
-
-      <listitem>
-        <simpara>Test the new zone.
-        </simpara>
-      </listitem>
-
-    </itemizedlist>
-
-  </chapter>
-
-  <chapter id="install">
-    <title>Installation from source</title>
-    <para>
-    BIND 10 is open source software written in C++ and Python.
-    It is freely available in source code form from ISC via
-    the Subversion code revision control system or as a downloadable
-    tar file. It may also be available in pre-compiled ready-to-use
-    packages from operating system vendors.
-    </para>
-
-    <sect1>
-      <title>Download Tar File</title>
-      <para>The BIND 10 development snapshots and releases
-        are available as tarball downloads.
-      </para>
-<!-- TODO -->
-    </sect1>
-
-    <sect1>
-      <title>Retrieve from Subversion</title>
-      <para>
-        The latest development code, including temporary experiments
-        and un-reviewed code, is available via the BIND 10 code revision
-        control system. This is powered by Subversion and all the BIND 10
-        development is public.
-        The leading development is done in the <quote>trunk</quote>
-        and the first year prototype containing reviewed code is in
-        <filename>branches/Y1</filename>.
-      </para>
-      <para>
-        The code can be checked out from <filename>svn://bind10.isc.org/svn/bind10</filename>; for example to check out the trunk:
-
-      <screen>$ <userinput>svn co svn://bind10.isc.org/svn/bind10/trunk</userinput></screen>
-      </para>
-
-      <para>
-        You do not need to retrieve the source code from subversion
-        unless you are testing latest code which is not provided in the
-        source tarball or you are a developer.
-        Most users will just use the source tar file.
-      </para>
-
-      <sect2>
-        <title>Generate configuration files</title>
-        <para>
-        When checking out the code from
-        the code version control system, it doesn't include the
-        generated configure script, Makefile.in files, nor the
-        related configure files.
-        They can be created by running <command>autoreconf</command>
-        with the <option>--install</option> switch.
-        This will run <command>autoconf</command>, <command>aclocal</command>,
-        <command>libtoolize</command>, <command>autoheader</command>,
-        <command>automake</command>, and related commands &mdash;
-        and provide needed build files.
-      </para>
-      <para>
-        This requires <command>autoconf</command> version 2.59 or newer
-	and <command>automake</command> version 1.10 or better.
-	(For working Python 3.1 tests, <command>automake</command>
-	version 1.11 or better is needed or use the
-	<option>--with-pythonpath</option> configure option described
-	below).
-
-      </para>
-      <note><para>
-        Some operating systems do not provide these in their
-        default installation nor standard packages collections.
-        You may need to install them separately.
-      </para></note>
-      </sect2>
-    </sect1>
-
-    <sect1>
+    <section>
       <title>Required Software</title>
       <para>
         BIND 10 requires Python 3.1.
       </para>
 
       <para>
-        Building from the source tarball requires the Boost
+        Building from source code requires the Boost
         build-time headers. At least Boost version 1.34 is required.
 <!-- TODO: we don't check for this version -->
 <!-- NOTE: jreed has tested with 1.34, 1.38, and 1.41. -->
@@ -364,9 +221,9 @@ $ <userinput>./configure</userinput></screen>
         4.2.1, 4.3.2, and 4.4.1.
       </para>
 
-    </sect1>
+    </section>
 
-    <sect1>
+    <section>
       <title>Supported Platforms</title>
       <para>
 	BIND 10 builds have been tested on Debian GNU/Linux 5,
@@ -379,168 +236,324 @@ $ <userinput>./configure</userinput></screen>
         It is planned for BIND 10 to build, install and run on
         Windows and standard Unix-type platforms.
       </para>
-    </sect1>
-
-    <sect1>
-      <title>Configure before the build</title>
+    </section>
+    
+    <section id="quickstart">
+      <title>Quick start</title>
       <para>
-        BIND 10 uses the GNU Build System to discover build environment
-        details.
-        To generate the makefiles using the defaults, simply run:
-        <screen>$ <userinput>./configure</userinput></screen>
-      </para>
-      <para>
-        Run <command>./configure</command> with the <option>--help</option>
-        switch to view the different options. The commonly-used options are:
-
-        <variablelist>
-
-        <varlistentry>
-          <term>--with-boostlib</term>
-          <listitem> 
-            <simpara>Define the path to find the Boost system library.
-            </simpara>
-          </listitem> 
-        </varlistentry>
-
-        <varlistentry>
-          <term>--without-boostlib</term> or
-          <term>--with-boostlib=no</term>
-          <listitem> 
-            <simpara>Disable the Boost ASIO support.</simpara>
-          </listitem> 
-        </varlistentry>
-
-        <varlistentry>
-          <term>--with-pythonpath</term>
-          <listitem> 
-            <simpara>Define the path to Python 3.1 if it is not in the
-              standard execution path.
-            </simpara>
-          </listitem> 
-        </varlistentry>
-
-        <varlistentry>
-          <term>--with-boost-include</term>
-          <listitem> 
-            <simpara>Define the path to find the Boost headers.
-            </simpara>
-          </listitem> 
-        </varlistentry>
-
-        <varlistentry>
-          <term>--prefix</term>
-          <listitem> 
-	    <simpara>Define the the installation location (the
-	      default is <filename>/usr/local/</filename>).
-            </simpara>
-          </listitem> 
-        </varlistentry>
-
-        </variablelist>
-
-      </para>
-<!-- TODO: gtest, lcov -->
-
-      <para>
-        For example, the following configures it to build
-	with BOOST ASIO support, find the Boost headers, find the
-	Python interpreter, and sets the installation location:
-
-        <screen>$ <userinput>./configure --with-boostlib=/usr/pkg/lib \
-    --with-boost-include=/usr/pkg/include \
-    --with-pythonpath=/usr/pkg/bin/python3.1 \
-    --prefix=/opt/bind10</userinput></screen>
+        This quickly covers the standard steps for installing
+        and deploying BIND 10 as an authoritative nameserver using
+        its defaults. For troubleshooting, full customizations and further
+        details, see the respective chapters in the BIND 10 user guide.
       </para>
 
-      <para>
-        If the configure fails, it may be due to missing or old
-        dependencies.
-      </para>
+      <note>
+        <simpara>
+          The Y1 prototype of the b10-auth server listens on
+          0.0.0.0 (all interfaces) port 5300. (This is not the standard
+          domain service port.)
+        </simpara>
+      </note>
 
-    </sect1>
-
-    <sect1>
-      <title>Build</title>
-      <para>
-	After the configure step is complete, to build the executables
-	from the C++ code and prepare the Python scripts, run:
-
-        <screen>$ <userinput>make</userinput></screen>
-      </para>
-    </sect1>
-
-    <sect1>
-      <title>Install</title>
-      <para>
-	To install the BIND 10 executables, support files,
-	and documentation, run:
-        <screen>$ <userinput>make install</userinput></screen>
-      </para>
-      <note><para>The install step may require superuser
-      privileges.</para></note>
-
-    </sect1>
-
-<!-- TODO: tests -->
-
-    <sect1>
-      <title>Install Hierarchy</title>
-      <para>
-        The following is the layout of the complete BIND 10 installation:
       <itemizedlist>
-      <listitem>
-      <simpara><filename>bin/</filename> &mdash; general tools and
-      diagnostic clients.</simpara>
-      </listitem>
-      <listitem>
-      <simpara><filename>etc/bind10/</filename> &mdash; configuration files.
-      </simpara>
-<!-- TODO: create the etc/bind10/ directory? -->
-      </listitem>
-      <listitem>
-      <simpara><filename>lib/</filename> &mdash; libraries and
-      python modules.</simpara>
-      </listitem>
-      <listitem>
-      <simpara><filename>libexec/bind10/</filename> &mdash; executables that
-      a user wouldn't normally run directly. Nor would they be used
-      independently. These are the BIND 10 modules which are daemons
-      started by the <command>bind10</command> tool.
-      </simpara>
-      </listitem>
-      <listitem>
-      <simpara><filename>sbin/</filename> &mdash; commands used by
-      the system administrator.
-      </simpara>
-      </listitem>
-      <listitem>
-      <simpara><filename>share/bind10/</filename> &mdash; configuration
-        specifications.
-      </simpara>
-      </listitem>
-      <listitem>
-      <simpara><filename>share/man/</filename> &mdash; manual pages (online
-        documentation).
-      </simpara>
-      </listitem>
-      <listitem>
-      <simpara><filename>var/bind10/</filename> &mdash; data source and
-        configuration databases.
-<!-- TODO: move the sqlite3 database there -->
-      </simpara>
-      </listitem>
-      </itemizedlist>
-    </para>
-    </sect1>
+    
+        <listitem>
+          <simpara>Install required dependencies: Python 3.1, SQLite3
+            library, and Boost development headers.</simpara>
+        </listitem>
 
-<!--
-    <sect1 id="install.troubleshooting">
-      <title>Troubleshooting</title>
+        <listitem>
+          <simpara>Download the BIND 10 source tarball. <!-- TODO: from -->
+          </simpara>
+        </listitem>
+
+        <listitem>
+          <para>Extract the tar file:
+          <screen>$ <userinput>gzcat bind10-<replaceable>VERSION</replaceable>.tar.gz | tar -xvf -</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>Go into the source and run configure:
+            <screen>$ <userinput>cd bind10-<replaceable>VERSION</replaceable></userinput>
+  $ <userinput>./configure</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>Build it:
+            <screen>$ <userinput>make</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>Install it (to default /usr/local):
+            <screen>$ <userinput>make install</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>Start the server:
+            <screen>$ <userinput>/usr/local/sbin/bind10</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+
+         <para>Test it; for example:
+            <screen>$ <userinput>dig @127.0.0.1 -p 5300 -c CH -t TXT authors.bind</userinput></screen>
+         </para>
+        </listitem>
+
+        <listitem>
+          <para>Load desired zone file(s), for example:
+            <screen>$ <userinput>b10-loadzone <replaceable>your.zone.example.org</replaceable></userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+          <simpara>Test the new zone.
+          </simpara>
+        </listitem>
+
+      </itemizedlist>
+
+    </section>
+
+    <section id="install">
+      <title>Installation from source</title>
       <para>
+        BIND 10 is open source software written in C++ and Python.
+        It is freely available in source code form from ISC via
+        the Subversion code revision control system or as a downloadable
+        tar file. It may also be available in pre-compiled ready-to-use
+        packages from operating system vendors.
       </para>
-    </sect1>
--->
+
+      <section>
+        <title>Download Tar File</title>
+        <para>The BIND 10 development snapshots and releases
+          are available as tarball downloads.
+        </para>
+  <!-- TODO -->
+      </section>
+
+      <section>
+        <title>Retrieve from Subversion</title>
+        <para>
+          The latest development code, including temporary experiments
+          and un-reviewed code, is available via the BIND 10 code revision
+          control system. This is powered by Subversion and all the BIND 10
+          development is public.
+          The leading development is done in the <quote>trunk</quote>
+          and the first year prototype containing reviewed code is in
+          <filename>branches/Y1</filename>.
+        </para>
+        <para>
+          The code can be checked out from <filename>svn://bind10.isc.org/svn/bind10</filename>; for example to check out the trunk:
+
+        <screen>$ <userinput>svn co svn://bind10.isc.org/svn/bind10/trunk</userinput></screen>
+        </para>
+
+        <para>
+          You do not need to retrieve the source code from subversion
+          unless you are testing latest code which is not provided in the
+          source tarball or you are a developer.
+          Most users will just use the source tar file.
+        </para>
+
+        <section>
+          <title>Generate configuration files</title>
+          <para>
+          When checking out the code from
+          the code version control system, it doesn't include the
+          generated configure script, Makefile.in files, nor the
+          related configure files.
+          They can be created by running <command>autoreconf</command>
+          with the <option>--install</option> switch.
+          This will run <command>autoconf</command>, <command>aclocal</command>,
+          <command>libtoolize</command>, <command>autoheader</command>,
+          <command>automake</command>, and related commands &mdash;
+          and provide needed build files.
+        </para>
+        <para>
+          This requires <command>autoconf</command> version 2.59 or newer
+          and <command>automake</command> version 1.10 or better.
+          (For working Python 3.1 tests, <command>automake</command>
+          version 1.11 or better is needed or use the
+          <option>--with-pythonpath</option> configure option described
+          below).
+        </para>
+        <note><para>
+          Some operating systems do not provide these in their
+          default installation nor standard packages collections.
+          You may need to install them separately.
+        </para></note>
+        </section>
+      </section>
+
+
+      <section>
+        <title>Configure before the build</title>
+        <para>
+          BIND 10 uses the GNU Build System to discover build environment
+          details.
+          To generate the makefiles using the defaults, simply run:
+          <screen>$ <userinput>./configure</userinput></screen>
+        </para>
+        <para>
+          Run <command>./configure</command> with the <option>--help</option>
+          switch to view the different options. The commonly-used options are:
+
+          <variablelist>
+
+          <varlistentry>
+            <term>--with-boostlib</term>
+            <listitem> 
+              <simpara>Define the path to find the Boost system library.
+              </simpara>
+            </listitem> 
+          </varlistentry>
+
+          <varlistentry>
+            <term>--without-boostlib</term> or
+            <term>--with-boostlib=no</term>
+            <listitem> 
+              <simpara>Disable the Boost ASIO support.</simpara>
+            </listitem> 
+          </varlistentry>
+
+          <varlistentry>
+            <term>--with-pythonpath</term>
+            <listitem> 
+              <simpara>Define the path to Python 3.1 if it is not in the
+                standard execution path.
+              </simpara>
+            </listitem> 
+          </varlistentry>
+
+          <varlistentry>
+            <term>--with-boost-include</term>
+            <listitem> 
+              <simpara>Define the path to find the Boost headers.
+              </simpara>
+            </listitem> 
+          </varlistentry>
+
+          <varlistentry>
+            <term>--prefix</term>
+            <listitem>
+  	    <simpara>Define the the installation location (the
+  	      default is <filename>/usr/local/</filename>).
+              </simpara>
+            </listitem> 
+          </varlistentry>
+
+          </variablelist>
+
+        </para>
+  <!-- TODO: gtest, lcov -->
+
+        <para>
+          For example, the following configures it to build
+  	with BOOST ASIO support, find the Boost headers, find the
+  	Python interpreter, and sets the installation location:
+
+          <screen>$ <userinput>./configure --with-boostlib=/usr/pkg/lib \
+      --with-boost-include=/usr/pkg/include \
+      --with-pythonpath=/usr/pkg/bin/python3.1 \
+      --prefix=/opt/bind10</userinput></screen>
+        </para>
+
+        <para>
+          If the configure fails, it may be due to missing or old
+          dependencies.
+        </para>
+
+      </section>
+
+      <section>
+        <title>Build</title>
+        <para>
+  	After the configure step is complete, to build the executables
+  	from the C++ code and prepare the Python scripts, run:
+
+          <screen>$ <userinput>make</userinput></screen>
+        </para>
+      </section>
+
+      <section>
+        <title>Install</title>
+        <para>
+  	To install the BIND 10 executables, support files,
+  	and documentation, run:
+          <screen>$ <userinput>make install</userinput></screen>
+        </para>
+        <note><para>The install step may require superuser
+        privileges.</para></note>
+
+      </section>
+
+  <!-- TODO: tests -->
+
+      <section>
+        <title>Install Hierarchy</title>
+        <para>
+          The following is the layout of the complete BIND 10 installation:
+        <itemizedlist>
+        <listitem>
+        <simpara><filename>bin/</filename> &mdash; general tools and
+        diagnostic clients.</simpara>
+        </listitem>
+        <listitem>
+        <simpara><filename>etc/bind10/</filename> &mdash; configuration files.
+        </simpara>
+  <!-- TODO: create the etc/bind10/ directory? -->
+        </listitem>
+        <listitem>
+        <simpara><filename>lib/</filename> &mdash; libraries and
+        python modules.</simpara>
+        </listitem>
+        <listitem>
+        <simpara><filename>libexec/bind10/</filename> &mdash; executables that
+        a user wouldn't normally run directly. Nor would they be used
+        independently. These are the BIND 10 modules which are daemons
+        started by the <command>bind10</command> tool.
+        </simpara>
+        </listitem>
+        <listitem>
+        <simpara><filename>sbin/</filename> &mdash; commands used by
+        the system administrator.
+        </simpara>
+        </listitem>
+        <listitem>
+        <simpara><filename>share/bind10/</filename> &mdash; configuration
+          specifications.
+        </simpara>
+        </listitem>
+        <listitem>
+        <simpara><filename>share/man/</filename> &mdash; manual pages (online
+          documentation).
+        </simpara>
+        </listitem>
+        <listitem>
+        <simpara><filename>var/bind10/</filename> &mdash; data source and
+          configuration databases.
+  <!-- TODO: move the sqlite3 database there -->
+        </simpara>
+        </listitem>
+        </itemizedlist>
+      </para>
+      </section>
+    </section>
+
+  <!--
+      <section id="install.troubleshooting">
+        <title>Troubleshooting</title>
+        <para>
+        </para>
+      </section>
+  -->
   
   </chapter>
 
@@ -577,7 +590,7 @@ $ <userinput>./configure</userinput></screen>
       (These are covered in upcoming chapters.)
     </para>
 
-    <sect1 id="start">
+    <section id="start">
       <title>Starting BIND 10</title>
       <para>
         To start the BIND 10 service, simply run <command>bind10</command>.
@@ -585,7 +598,7 @@ $ <userinput>./configure</userinput></screen>
         get additional debugging or diagnostic output.
       </para>
 <!-- TODO: note it doesn't go into background -->
-    </sect1>
+    </section>
 
   </chapter>
 
@@ -840,7 +853,7 @@ or accounts database -->
       redefined by using the <option>--idle-timeout</option> command line argument.
     </para>
 
-    <sect1 id="cmdctl.spec">
+    <section id="cmdctl.spec">
       <title>Configuration specification for b10-cmdctl</title>
       <para>
         The configuration items for <command>b10-cmdctl</command> are:
@@ -856,7 +869,7 @@ print_settings
 shutdown
       </para>
 <!-- TODO -->
-    </sect1>
+    </section>
 
 <!--
 TODO
@@ -919,7 +932,7 @@ TODO
       port 5300.
     </simpara></note>
 
-    <sect1>
+    <section>
       <title>Server Configurations</title>
 
 <!-- TODO: offers command line options but not used
@@ -970,9 +983,9 @@ This may be a temporary setting until then.
 
 <!-- TODO: examples of setting or running above? -->
 
-    </sect1>
+    </section>
 
-    <sect1>
+    <section>
       <title>Data Source Backends</title>
 
       <note><para>
@@ -994,9 +1007,9 @@ This may be a temporary setting until then.
 	<quote>database_file</quote> configuration.
       </para>
 
-    </sect1>
+    </section>
 
-    <sect1>
+    <section>
       <title>Loading Master Zones Files</title>
 
       <para>
@@ -1064,15 +1077,15 @@ This may be a temporary setting until then.
 
 <!--TODO: permissions for xfrin or loadzone to create the file -->
 
-    </sect1>
+    </section>
 
 <!--
 TODO
-    <sect1>
+    <section>
       <title>Troubleshooting</title>
       <para>
       </para>
-    </sect1>
+    </section>
 -->
 
   </chapter>
