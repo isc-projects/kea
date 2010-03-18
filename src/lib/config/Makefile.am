@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
+AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib -Wno-strict-aliasing
 AM_CPPFLAGS += -I$(top_srcdir)/ext
 
 lib_LTLIBRARIES = libcfgclient.la

@@ -137,6 +137,16 @@ public:
                     isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config) = NULL,
                     isc::data::ElementPtr(*command_handler)(const std::string& command, const isc::data::ElementPtr args) = NULL
                     ) throw (isc::cc::SessionError);
+
+    /**
+     * Returns the socket that is used to communicate with the msgq
+     * command channel. This socket should *only* be used to run a
+     * select() loop over it. And if not time-critical, it is strongly
+     * recommended to only use checkCommand() to check for messages
+     *
+     * @return The socket used to communicate with the msgq command
+     *         channel.
+     */
     int getSocket();
 
     /**
