@@ -207,8 +207,9 @@ public:
         // Set v6-only (we use a different instantiation for v4,
         // otherwise asio will bind to both v4 and v6
         if (af == AF_INET6) {
-            acceptor_.set_option(boost::asio::ip::v6_only(true));
+            acceptor_.set_option(ip::v6_only(true));
         }
+        acceptor_.set_option(tcp::acceptor::reuse_address(true));
         acceptor_.bind(endpoint);
         acceptor_.listen();
         acceptor_.async_accept(listening_->getSocket(),
