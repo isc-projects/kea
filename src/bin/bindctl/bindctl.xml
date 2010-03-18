@@ -60,6 +60,15 @@
     </para>
 
     <para>
+      <command>bindctl</command> communicates over the REST-ful
+      interface provided by
+      <citerefentry><refentrytitle>b10-cmdctl</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+      The
+<citerefentry><refentrytitle>b10-cfgmgr</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      daemon stores the configurations and defines the commands.
+    </para>
+
+    <para>
       The <command>bindctl</command> prompt shows
       <quote>&gt; </quote>.
        The prompt will also display the location if changed.
