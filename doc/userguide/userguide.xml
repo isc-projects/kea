@@ -211,7 +211,7 @@ lib/
 sbin/
   bind10
 share/
-  share/bind10/                                       <
+  share/bind10/
     auth.spec
     b10-cmdctl.pem
     bob.spec
@@ -237,12 +237,12 @@ var/
     <section>
       <title>Building Requirements</title>
         <note>
-          <para>
+          <simpara>
             Some operating systems have split their distribution packages into
             a run-time and a development package.  You will need to install
             the development package versions, which include header files and
             libraries, to build BIND 10 from source code.
-          </para>
+          </simpara>
         </note>
 
         <para>
@@ -274,12 +274,14 @@ var/
 
     <section id="quickstart">
       <title>Quick start</title>
-      <para>
-        This quickly covers the standard steps for installing
-        and deploying BIND 10 as an authoritative nameserver using
-        its defaults. For troubleshooting, full customizations and further
-        details, see the respective chapters in the BIND 10 user guide.
-      </para>
+      <note>
+        <simpara>
+          This quickly covers the standard steps for installing
+          and deploying BIND 10 as an authoritative name server using
+          its defaults. For troubleshooting, full customizations and further
+          details, see the respective chapters in the BIND 10 user guide.
+        </simpara>
+      </note>
 
       <note>
         <simpara>
@@ -289,15 +291,22 @@ var/
         </simpara>
       </note>
 
-      <itemizedlist>
+      <para>
+        To quickly get started with BIND 10, follow these steps.
+      </para>
+
+      <orderedlist>
     
         <listitem>
-          <simpara>Install required dependencies: Python 3.1, SQLite3
-            library, and Boost development headers.</simpara>
+          <simpara>
+            Install required build dependencies.
+          </simpara>
         </listitem>
 
         <listitem>
-          <simpara>Download the BIND 10 source tar file. <!-- TODO: from -->
+          <simpara>
+            Download the BIND 10 source tar file from
+            <ulink url="ftp://ftp.isc.org/isc/bind10/"/>.
           </simpara>
         </listitem>
 
@@ -346,11 +355,12 @@ var/
         </listitem>
 
         <listitem>
-          <simpara>Test the new zone.
+          <simpara>
+            Test the new zone.
           </simpara>
         </listitem>
 
-      </itemizedlist>
+      </orderedlist>
 
     </section>
 
