@@ -396,7 +396,16 @@ var/
           developers or advanced users.  Using development code in a production
           environment is not recommended.
         </para>
-        
+
+        <note>
+          <para>
+            When using source code retrieved via Subversion additional
+            software will be required:  automake (v1.11 or newer),
+            libtoolize, and autoconfigure (2.59 or newer).
+            These may need to be installed.
+          </para>
+        </note>
+
         <para>
           The latest development code, including temporary experiments
           and un-reviewed code, is available via the BIND 10 code revision
@@ -412,38 +421,21 @@ var/
         <screen>$ <userinput>svn co svn://bind10.isc.org/svn/bind10/trunk</userinput></screen>
         </para>
 
-        <section>
-          <title>Generate configuration files</title>
-          <para>
-            When checking out the code from
-            the code version control system, it doesn't include the
-            generated configure script, Makefile.in files, nor the
-            related configure files.
-            They can be created by running <command>autoreconf</command>
-            with the <option>--install</option> switch.
-            This will run <command>autoconf</command>,
-            <command>aclocal</command>,
-            <command>libtoolize</command>,
-            <command>autoheader</command>,
-            <command>automake</command>,
-            and related commands.
-          </para>
-          <para>
-            This requires <command>autoconf</command> version 2.59 or newer
-            and <command>automake</command> version 1.10 or better.
-            (For working Python 3.1 tests, <command>automake</command>
-            version 1.11 or better is needed or use the
-            <option>--with-pythonpath</option> configure option described
-            below).
-          </para>
-          <note>
-            <para>
-              Some operating systems do not provide these in their
-              default installation nor standard packages collections.
-              You may need to install them separately.
-            </para>
-          </note>
-        </section>
+        <para>
+          When checking out the code from
+          the code version control system, it doesn't include the
+          generated configure script, Makefile.in files, nor the
+          related configure files.
+          They can be created by running <command>autoreconf</command>
+          with the <option>--install</option> switch.
+          This will run <command>autoconf</command>,
+          <command>aclocal</command>,
+          <command>libtoolize</command>,
+          <command>autoheader</command>,
+          <command>automake</command>,
+          and related commands.
+        </para>
+
       </section>
 
 
@@ -637,11 +629,10 @@ var/
       module, if only to send information about themselves somewhere,
       but more importantly to ask about their own settings, and
       about other modules.
-      The <command>bind10</command> master process will also startup
+      The <command>bind10</command> master process will also start up
       <command>b10-cmdctl</command> for admins to communicate with the
       system, <command>b10-auth</command> for Authoritative DNS service,
       and <command>b10-xfrin</command> for inbound DNS zone transfers.
-      (These are covered in upcoming chapters.)
     </para>
 
     <section id="start">
