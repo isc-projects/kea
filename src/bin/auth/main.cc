@@ -332,7 +332,7 @@ struct ServerSet {
 
 void
 run_server(const char* port, const bool use_ipv4, const bool use_ipv6,
-           AuthSrv* srv)
+           AuthSrv* srv UNUSED_PARAM)
 {
     ServerSet servers;
     short portnum = atoi(port);
