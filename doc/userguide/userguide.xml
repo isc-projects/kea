@@ -21,56 +21,106 @@
     <para>
       BIND is the popular implementation of a DNS server, developer
       interfaces, and DNS tools.
-      BIND 10 is a rewrite, using C++ and Python, to provide
-      modular components for serving and maintaining DNS.
+      BIND 10 is a rewrite of BIND 9.  BIND 10 is written in C++ and Python
+      and provides a modular environment for serving and maintaining DNS.
     </para>
 
-    <note><para>BIND 10, at this time, does not provide an recursive
-      DNS server. It does provide a EDNS0- and DNSSEC-capable
-      authoritative DNS server.</para></note>
+    <note>
+      <para>
+        This guide covers the experimental prototype version of
+        BIND 10.
+      </para>
+    </note>
 
-    <note><para>This guide covers the experimental prototype version
-      of BIND 10.</para></note>
-
+    <note>
+      <para>
+        BIND 10, at this time, does not provide an recursive
+        DNS server. It does provide a EDNS0- and DNSSEC-capable
+        authoritative DNS server.
+      </para>
+    </note>
+    
     <para>
-      BIND 10 provides separate executables for different tasks.
-      The standard components include:
-
-      <itemizedlist>
-
-      <listitem>
-      <simpara><command>msgq</command> &mdash; message bus daemon</simpara>
-      </listitem>
-      <listitem>
-      <simpara><command>b10-auth</command> &mdash; authoritative DNS server</simpara>
-      </listitem>
-      <listitem>
-      <simpara><command>b10-cfgmgr</command> &mdash; configuration manager</simpara>
-      </listitem>
-      <listitem>
-      <simpara><command>b10-cmdctl</command> REST-ful communication service</simpara>
-      </listitem>
-
-      <listitem>
-      <simpara><command>b10-xfrin</command> Incoming zone transfer service</simpara>
-      </listitem>
-
-      <listitem>
-      <simpara><command>bind10</command> &mdash; master process for BIND 10</simpara>
-      </listitem>
-      </itemizedlist>
+      BIND 10 is modular.  Part of this modularity is
+      accomplished using multiple cooperating processes which, together,
+      provide DNS functionality.  This is a change from the previous generation
+      of BIND software, which used a single process.
+    </para>
+    
+    <para>
+      At first, running many different processes may seem confusing.  However,
+      these processes are started, stopped, and maintained by a single command,
+      <command>bind10</command>.  Additionally, most processes started by
+      the <command>bind10</command> command have names starting with "b10-",
+      with one exception, <command>msgq</command>.
     </para>
 
-    <para>
-      The user tools include:
+    <section id="starting_stopping">
+      <title>Starting and Stopping the Server</title>
+      
+      <para>
+        Starting and stopping the server is performed by a single command,
+        <command>bind10</command>.  This command starts a master process
+        which will start other processes as needed.
+      </para>
+      
+      <para>
+        Most of these are run automatically by a single command,
+        <command>bind10</command> and should not be run manually.
 
+        <itemizedlist>
+          <listitem>
+            <simpara>
+              <command>msgq</command> &mdash;
+              message bus daemon
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <command>b10-auth</command> &mdash;
+              authoritative DNS server
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <command>b10-cfgmgr</command> &mdash;
+              configuration manager
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <command>b10-cmdctl</command> &mdash;
+              REST-ful communication service
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
+              <command>b10-xfrin</command> &mdash;
+              Incoming zone transfer service
+            </simpara>
+          </listitem>
+
+        </itemizedlist>
+      </para>
+    </section>
+
+    <para>
+      Once BIND 10 is running, two commands are used to interact directly with
+      the system:
       <itemizedlist>
-      <listitem>
-      <simpara><command>bindctl</command> &mdash; interactive administration interface</simpara>
-      </listitem>
-      <listitem>
-      <simpara><command>b10-loadzone</command> &mdash; tool to load standard master zone files</simpara>
-      </listitem>
+        <listitem>
+          <simpara>
+            <command>bindctl</command> &mdash;
+            interactive administration interface
+          </simpara>
+        </listitem>
+        <listitem>
+          <simpara>
+            <command>b10-loadzone</command> &mdash;
+            tool to load standard master zone files
+          </simpara>
+        </listitem>
 <!-- TODO usermgr -->
       </itemizedlist>
     </para>
