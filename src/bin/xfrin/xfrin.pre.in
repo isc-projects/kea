@@ -50,7 +50,7 @@
             "item_name": "db_file",
             "item_type": "string",
             "item_optional": True,
-            "item_default": '/tmp/zone.sqlite3'
+            "item_default": '@@LOCALSTATEDIR@@/@PACKAGE@/zone.sqlite3'
           }
         ]
       },

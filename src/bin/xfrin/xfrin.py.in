@@ -384,7 +384,7 @@ class Xfrin():
         db_file = args.get('db_file')
         if not db_file:
             #TODO, the db file path should be got in auth server's configuration
-            db_file = '/tmp/zone.sqlite3'
+            db_file = '@@LOCALSTATEDIR@@/@PACKAGE@/zone.sqlite3'
 
         return (zone_name, master, port, db_file)
             
