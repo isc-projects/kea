@@ -21,3 +21,8 @@ CLEANFILES=	b10-cmdctl
 b10-cmdctl: cmdctl.py
 	$(SED) "s|@@PYTHONPATH@@|@pyexecdir@|" cmdctl.py >$@
 	chmod a+x $@
+
+install-data-local:
+	$(mkinstalldirs) $(DESTDIR)/@sysconfdir@/@PACKAGE@   
+# TODO: permissions handled later
+
