@@ -466,6 +466,9 @@ def set_cmd_options(parser):
     parser.add_option('-i', '--idle-timeout', dest = 'idle_timeout', type = 'int',
             default = '1200', help = 'login idle time out')
 
+    parser.add_option("-v", "--verbose", dest="verbose", action="store_true", default=False,
+            help="display more about what is going on")
+
 
 if __name__ == '__main__':
     try:
@@ -473,7 +476,7 @@ if __name__ == '__main__':
         set_cmd_options(parser)
         (options, args) = parser.parse_args()
         set_signal_handler()
-        run(options.addr, options.port, options.idle_timeout)
+        run(options.addr, options.port, options.idle_timeout, options.verbose)
     except isc.cc.SessionError as se:
         sys.stderr.write("[b10-cmdctl] Error creating b10-cmdctl, "
                 "is the command channel daemon running?\n")        
