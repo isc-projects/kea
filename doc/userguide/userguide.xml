@@ -180,6 +180,14 @@
               BIND 10.
             </simpara>
           </listitem>
+          <listitem>
+            <simpara>
+              <command>b10-cmdctl-usermgr</command> &mdash;
+              user access control.
+              This tool allows an administrator to authorize additional users
+              of the <command>bindctl</command> tool.
+            </simpara>
+          </listitem>
   <!-- TODO usermgr -->
         </itemizedlist>
       </para>
@@ -280,7 +288,7 @@ var/
         </listitem>
 
         <listitem>
-          <simpara>Download the BIND 10 source tarball. <!-- TODO: from -->
+          <simpara>Download the BIND 10 source tar file. <!-- TODO: from -->
           </simpara>
         </listitem>
 
@@ -350,7 +358,7 @@ var/
       <section>
         <title>Download Tar File</title>
         <para>The BIND 10 development snapshots and releases
-          are available as tarball downloads.
+          are available as tar file downloads.
         </para>
   <!-- TODO -->
       </section>
@@ -375,7 +383,7 @@ var/
         <para>
           You do not need to retrieve the source code from subversion
           unless you are testing latest code which is not provided in the
-          source tarball or you are a developer.
+          source tar file or you are a developer.
           Most users will just use the source tar file.
         </para>
 
