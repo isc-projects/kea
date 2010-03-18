@@ -220,9 +220,14 @@ SocketSession::establish() {
     if (s < 0) {
         isc_throw(SessionError, "socket() failed");
     }
+    
+    int port = atoi(getenv("ISC_MSGQ_PORT"));
+    if (port == 0) {
+        port = 9912;
+    }
 
     sin.sin_family = AF_INET;
-    sin.sin_port = htons(9912);
+    sin.sin_port = htons(port);
     sin.sin_addr.s_addr = INADDR_ANY;
 
 #ifdef HAVE_SIN_LEN
