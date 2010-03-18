@@ -32,17 +32,36 @@ using namespace std;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
-TXT::TXT(InputBuffer& buffer, size_t rdata_len UNUSED_PARAM) {
-    // TBD: this is a simple, incomplete implementation that only supports
-    // a single character-string.
-    const uint8_t len = buffer.readUint8();
-    vector<uint8_t> data(len + 1);
-    data[0] = len;
-    buffer.readData(&data[0] + 1, len);
-    string_list_.push_back(data);
+TXT::TXT(InputBuffer& buffer, size_t rdata_len) {
+    if (rdata_len > MAX_RDLENGTH) {
+        isc_throw(InvalidRdataLength, "RDLENGTH too large: " << rdata_len);
+    }
+
+    if (rdata_len == 0) {       // note that this couldn't happen in the loop.
+        isc_throw(DNSMessageFORMERR,
+                  "Error in parsing TXT RDATA: 0-length character string");
+    }
+
+    do {
+        const uint8_t len = buffer.readUint8();
+        if (rdata_len < len + 1) {
+            isc_throw(DNSMessageFORMERR,
+                      "Error in parsing TXT RDATA: character string length "
+                      "is too large: " << static_cast<int>(len));
+        }
+        vector<uint8_t> data(len + 1);
+        data[0] = len;
+        buffer.readData(&data[0] + 1, len);
+        string_list_.push_back(data);
+
+        rdata_len -= (len + 1);
+    } while (rdata_len > 0);
 }
 
 TXT::TXT(const std::string& txtstr) {
+    // TBD: this is a simple, incomplete implementation that only supports
+    // a single character-string.
+
     size_t length = txtstr.size();
     size_t pos_begin = 0;
 
@@ -50,8 +69,16 @@ TXT::TXT(const std::string& txtstr) {
         pos_begin = 1;
         length -= 2;
     }
+
     if (length > MAX_CHARSTRING_LEN) {
-        isc_throw(CharStringTooLong, "");
+        isc_throw(CharStringTooLong, "TXT RDATA construction from text: "
+                  "string length is too long: " << length);
+    }
+
+    // TBD: right now, we don't support escaped characters
+    if (txtstr.find('\\') != string::npos) {
+        isc_throw(InvalidRdataText, "TXT RDATA from text: "
+                  "escaped character is currently not supported: " << txtstr);
     }
 
     vector<uint8_t> data;

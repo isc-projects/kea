@@ -24,8 +24,10 @@
 #include <arpa/inet.h> // XXX: for inet_pton/ntop(), not exist in C++ standards
 #include <sys/socket.h> // for AF_INET/AF_INET6
 
-#include "buffer.h"
 #include <exceptions/exceptions.h>
+
+#include "buffer.h"
+#include "exceptions.h"
 #include "messagerenderer.h"
 #include "rdata.h"
 #include "rdataclass.h"
@@ -35,57 +37,60 @@ using namespace std;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
-A::A(const string& addrstr)
-{
+A::A(const string& addrstr) {
     // RFC1035 states textual representation of IN/A RDATA is
     // "four decimal numbers separated by dots without any embedded spaces".
     // This is exactly what inet_pton() accepts for AF_INET.  In particular,
     // it rejects an abbreviated form such as "10.1" meaning "10.0.0.1".
     if (inet_pton(AF_INET, addrstr.c_str(), &addr_) != 1) {
         isc_throw(InvalidRdataText,
-                  "failed to parse IPv4 address for IN/A RDATA");
+                  "IN/A RDATA construction from text failed: Address cannot be "
+                  "converted: " << addrstr);
     }
 }
 
-A::A(InputBuffer& buffer, size_t rdata_len)
-{
+A::A(InputBuffer& buffer, size_t rdata_len) {
     if (rdata_len != sizeof(addr_)) {
-        isc_throw(InvalidRdataLength, "Length mismatch for IN/A RDATA");
+        isc_throw(DNSMessageFORMERR,
+                  "IN/A RDATA construction from wire failed: Invalid length: "
+                  << rdata_len);
+    }
+    if (buffer.getLength() - buffer.getPosition() < sizeof(addr_)) {
+        isc_throw(DNSMessageFORMERR,
+                  "IN/A RDATA construction from wire failed: "
+                  "insufficient buffer length: "
+                  << buffer.getLength() - buffer.getPosition());
     }
     buffer.readData(&addr_, sizeof(addr_));
 }
 
-A::A(const A& other) :
-    Rdata(), addr_(other.addr_)
+A::A(const A& other) : Rdata(), addr_(other.addr_)
 {}
 
 void
-A::toWire(OutputBuffer& buffer) const
-{
+A::toWire(OutputBuffer& buffer) const {
     buffer.writeData(&addr_, sizeof(addr_));
 }
 
 void
-A::toWire(MessageRenderer& renderer) const
-{
+A::toWire(MessageRenderer& renderer) const {
     renderer.writeData(&addr_, sizeof(addr_));
 }
 
 string
-A::toText() const
-{
+A::toText() const {
     char addr_string[sizeof("255.255.255.255")];
 
     if (inet_ntop(AF_INET, &addr_, addr_string, sizeof(addr_string)) == NULL) {
-        isc_throw(Unexpected, "inet_ntop failed for an IPv4 address");
+        isc_throw(Unexpected,
+                  "Failed to convert IN/A RDATA to textual IPv4 address");
     }
 
-    return (string(addr_string));
+    return (addr_string);
 }
 
 int
-A::compare(const Rdata& other) const
-{
+A::compare(const Rdata& other) const {
     const A& other_a = dynamic_cast<const A&>(other);
     return (memcmp(&addr_, &other_a.addr_, sizeof(addr_)));
 }
