@@ -6,7 +6,7 @@ from optparse import OptionParser
 
 re_hex = re.compile('0x[0-9a-fA-F]+')
 re_decimal = re.compile('\d+$')
-re_string = re.compile("\'(.+)\'$")
+re_string = re.compile("\'(.*)\'$")
 
 dnssec_timefmt = '%Y%m%d%H%M%S'
 
@@ -72,6 +72,9 @@ def encode_name(name):
         if len(l) == 0:
             break
     return wire
+
+def encode_string(name):
+    return ''.join(['%02x' % ord(ch) for ch in name])
 
 def count_namelabels(name):
     if name == '.':             # special case
@@ -194,28 +197,87 @@ class SOA:
                                                 self.retry, self.expire,
                                                 self.minimum))
 
+class TXT:
+    rdlen = -1                  # auto-calculate
+    nstring = 1                 # number of character-strings
+    stringlen = -1              # default string length, auto-calculate
+    string = 'Test String'      # default string
+    def dump(self, f):
+        stringlen_list = []
+        string_list = []
+        wirestring_list = []
+        for i in range(0, self.nstring):
+            key_string = 'string' + str(i)
+            if key_string in self.__dict__:
+                string_list.append(self.__dict__[key_string])
+            else:
+                string_list.append(self.string)
+            wirestring_list.append(encode_string(string_list[-1]))
+            key_stringlen = 'stringlen' + str(i)
+            if key_stringlen in self.__dict__:
+                stringlen_list.append(self.__dict__[key_stringlen])
+            else:
+                stringlen_list.append(self.stringlen)
+            if stringlen_list[-1] < 0:
+                stringlen_list[-1] = int(len(wirestring_list[-1]) / 2)
+        rdlen = self.rdlen
+        if rdlen < 0:
+            rdlen = int(len(''.join(wirestring_list)) / 2) + self.nstring
+        f.write('\n# TXT RDATA (RDLEN=%d)\n' % rdlen)
+        f.write('%04x\n' % rdlen);
+        for i in range(0, self.nstring):
+            f.write('# String Len=%d, String=\"%s\"\n' %
+                    (stringlen_list[i], string_list[i]))
+            f.write('%02x%s%s\n' % (stringlen_list[i],
+                                    ' ' if len(wirestring_list[i]) > 0 else '',
+                                    wirestring_list[i]))
+
 class NSEC:
     rdlen = -1                  # auto-calculate
     nextname = 'next.example.com'
+    nbitmap = 1                 # number of bitmaps
     block = 0
-    maplen = -1                 # auto-calculate
-    bitmap = '040000000003'
+    maplen = -1                 # default bitmap length, auto-calculate
+    bitmap = '040000000003'     # an arbtrarily chosen bitmap sample
     def dump(self, f):
+        block_list = []
+        maplen_list = []
+        bitmap_list = []
+        for i in range(0, self.nbitmap):
+            key_bitmap = 'bitmap' + str(i)
+            if key_bitmap in self.__dict__:
+                bitmap_list.append(self.__dict__[key_bitmap])
+            else:
+                bitmap_list.append(self.bitmap)
+            key_maplen = 'maplen' + str(i)
+            if key_maplen in self.__dict__:
+                maplen_list.append(self.__dict__[key_maplen])
+            else:
+                maplen_list.append(self.maplen)
+            if maplen_list[-1] < 0:
+                maplen_list[-1] = int(len(bitmap_list[-1]) / 2)
+            key_block = 'block' + str(i)
+            if key_block in self.__dict__:
+               block_list.append(self.__dict__[key_block])
+            else:
+                block_list.append(self.block)
         name_wire = encode_name(self.nextname)
         rdlen = self.rdlen
-        maplen = self.maplen
-        if maplen < 0:
-            maplen = int(len(self.bitmap) / 2)
-        # if rdlen needs to be calculated, it must be based on the bitmap
-        # length, because the configured maplen can be fake.
         if rdlen < 0:
-            rdlen = int(len(name_wire) / 2) + 2 + int(len(self.bitmap) / 2)
+            # if rdlen needs to be calculated, it must be based on the bitmap
+            # length, because the configured maplen can be fake.
+            rdlen = int(len(name_wire) / 2) + 2 * self.nbitmap
+            rdlen = rdlen + int(len(''.join(bitmap_list)) / 2)
         f.write('\n# NSEC RDATA (RDLEN=%d)\n' % rdlen)
         f.write('%04x\n' % rdlen);
-        f.write('# Next Name=%s\n' % self.nextname)
+        f.write('# Next Name=%s (%d bytes)\n' % (self.nextname,
+                                                 int(len(name_wire) / 2)))
         f.write('%s\n' % name_wire)
-        f.write('# Bitmap: Block=%d, Length=%d\n' % (self.block, maplen))
-        f.write('%02x %02x %s\n' % (self.block, maplen, self.bitmap))
+        for i in range(0, self.nbitmap):
+            f.write('# Bitmap: Block=%d, Length=%d\n' %
+                    (block_list[i], maplen_list[i]))
+            f.write('%02x %02x %s\n' %
+                    (block_list[i], maplen_list[i], bitmap_list[i]))
 
 class RRSIG:
     rdlen = -1                  # auto-calculate
@@ -256,7 +318,7 @@ class RRSIG:
 def get_config_param(section):
     config_param = {'header' : (DNSHeader, header_xtables),
                     'question' : (DNSQuestion, question_xtables),
-                    'edns' : (EDNS, {}), 'soa' : (SOA, {}),
+                    'edns' : (EDNS, {}), 'soa' : (SOA, {}), 'txt' : (TXT, {}),
                     'rrsig' : (RRSIG, {}), 'nsec' : (NSEC, {})}
     s = section
     m = re.match('^([^:]+)/\d+$', section)
