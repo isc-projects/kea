@@ -531,12 +531,13 @@ var/
       <section>
         <title>Install</title>
         <para>
-    To install the BIND 10 executables, support files,
-    and documentation, run:
+          To install the BIND 10 executables, support files,
+          and documentation, run:
           <screen>$ <userinput>make install</userinput></screen>
         </para>
-        <note><para>The install step may require superuser
-        privileges.</para></note>
+        <note>
+          <para>The install step may require superuserprivileges.</para>
+        </note>
 
       </section>
 
@@ -615,14 +616,13 @@ var/
   </chapter>
 
   <chapter id="bind10">
-    <title>Starting BIND10 with bind10</title>
+    <title>Starting BIND10 with <command>bind10</command></title>
     <para>
       BIND 10 provides the <command>bind10</command> command which 
-      starts up the required daemons to provide the message
-      communication bus, configurations, <!-- TODO: security, -->
-      and the DNS server(s).
-      Also known as BoB or the Boss of BIND, <command>bind10</command>
-      will also restart processes that exit.
+      starts up the required processes.
+      <command>bind10</command>
+      will also restart processes that exit unexpectedly.
+      This is the only command needed to start the BIND 10 system.
     </para>
 
     <para>
@@ -663,25 +663,30 @@ var/
 
       <para>
         The BIND 10 components use the <command>msgq</command>
-        message routing daemon to intercommunicate.
-        This is called the <quote>Command Channel</quote>.
-        The members of the channel subscribe to listen to certain
+        message routing daemon to communicate with other BIND 10 components.
+        The <command>msgq</command> implements what is called the
+        <quote>Command Channel</quote>.
+        Processes intercommunicate by sending messages on the command
+        channel.
         messages and are programmed to handle received messages.
-  Example messages include shutdown, get configurations, and set
-  configurations.
-      </para>
-
-      <note><simpara>
+        Example messages include shutdown, get configurations, and set
+        configurations.
         This Command Channel is not used for DNS message passing.
-      </simpara></note>
+        It is used only to control and monitor the BIND 10 system.
+      </para>
 
       <para>
         Administrators do not communicate directly with the
-        <command>msgq</command> daemon. The only configuration is
-        to choose the port number it listens on.
+        <command>msgq</command> daemon.
         By default, BIND 10 uses port 9912 for the
         <command>msgq</command> service.
         It listens on 127.0.0.1.
+      </para>
+      
+      <para>
+        To select an alternate port for the <command>msgq</command> to
+        use, run <command>bind10</command> specifying the option:
+        <screen> $ <userinput>bind10 --msgq-port 9912</userinput></screen>
       </para>
 
 <!-- TODO: upcoming plans:
