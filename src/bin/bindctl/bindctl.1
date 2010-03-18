@@ -1,188 +1,84 @@
-.\" Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
-.Dd January 19, 2010
-.Dt BINDCTL 1
-.Os
-.Sh NAME
-.Nm bindctl
-.Nd control and configure BIND 10
-.Sh SYNOPSIS
-.\" TODO: option to choose the command channel?
-.Nm
-.Sh DESCRIPTION
-The
-.Nm
-tool is a user interface to the BIND 10 services.
-The program can be used to control the components
-and configure the BIND 10 options.
-The options may be specified as command-line arguments,
-or via the interactive command interpreter.
-.\" TODO: command-line arguments?
-.Pp
-.Nm
-must communicate over a
-.Xr msgq 8
-C-Channel
-connection.
-If this connection is not established,
-.Nm
-will exit.
-.\" TODO: what if msgq is running but no BindCtl or Boss groups?
-.Pp
-The
-.Nm
-prompt shows
-.Dq "\*[Gt] " .
-The prompt will also display the location if changed.
-The options are based on the module in use.
-The
-.Nm
-usage is:
-.Pp
-.Ic module Ic command Op Ar "param1 = value1" Op Ar ", param2 = value2"
-.Pp
-.Nm Ap s
-interactive interface provides command-line completion and hints.
-Press the
-.Li Tab
-key to get a hint for the module, command, and/or parameters.
-.\" TODO: no hints at a blank line though
-The arrow keys and Emacs-style editing keys may be used to edit
-and recall previous lines.
-.\" TODO:  all Emacs-style editing keys?
-.Pp
-You can use the
-.Ic help
-keyword to receive usage assistance for a module or a module's
-command.
-.Pp
-The
-.Ic quit
-command is used to exit
-.Nm
-(and doesn't stop the BIND 10 services).
-.Pp
-The following modules are available by default:
-.Pp
-.Bl -tag -width ".Li config" -compact -offset indent
-.It Ic boss
-Control BIND 10 services.
-.It Ic config
-Configuration commands.
-.El
-Additional modules may be available, such as
-.Ic ParkingLot .
-.\" TODO
-.Sh BOSS COMMANDS
-.Bl -tag -width Ic
-.It Ic help
-Get help for the
-.Em boss
-module.
-.It Ic shutdown Op Ar module_name
-Stop the defined BIND 10 process.
-If
-.Ar module_name
-is not provided, then tell the
-.\" TODO: write this manual page
-.Xr boss 8
-process to stop all the BIND 10 processes.
-.El
-.Sh CONFIGURATION COMMANDS
-The following configuration commands are recognized by
-.Nm :
-.Bl -tag -width Ic
-.It Ic add Ar identifier Ar value
-Add a value to a list.
-.\" TODO: explain better
-.\" TODO: define list, map, others ...
-.\" TODO: why the value?
-.It Ic commit
-Commit all local changes.
-.\" TODO: what does this do?
-.It Ic go Ar identifier
-Go to the specified location within the configuration.
-.\" TODO: explain this
-.It Ic help
-Get help for the
-.Em config
-module.
-.It Ic remove Ar identifier Ar value
-Remove a value from a list.
-.\" TODO: why the value?
-.It Ic revert
-Revert all local changes (that have not been committed).
-.\" TODO: what does this do?
-.It Ic set Ar identifier Ar value
-Set a configuration value.
-.\" TODO
-.It Ic show Op Ar identifier.
-.\" TODO
-Show the currently set configuration values.
-If no
-.Ar identifier
-is given, the current location is used (as set by the
-.Ic go
-command).
-If a config option is a list or a map, the value is not
-shown directly, but must be requested separately.
-.\" TODO: example of this list or map
-.It Ic unset Ar identifier
-Remove a configuration value.
-If the option is mandatory, it will reset to the default value.
-.\" TODO: how to know default values before?
-.El
-.\" This manual page only covers builtin commands.
-.\" .Sh PARKINGLOT COMMANDS
-.\" .Bl -tag -width Ic
-.\" .It Ic help
-.\" Get help for the
-.\" .Em ParkingLot
-.\" module.
-.\" .It Ic print_message Ar string
-.\" Print the given message to stdout.
-.\" .El
+'\" t
+.\"     Title: bindctl
+.\"    Author: [see the "AUTHORS" section]
+.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
+.\"      Date: January 19, 2010
+.\"    Manual: BIND10
+.\"    Source: BIND10
+.\"  Language: English
 .\"
-.\" TODO: Command arguments which have embedded spaces may be quoted with
-.\" quote
-.\" .Sq \&"
-.\" marks.
-.Pp
-.Pp command-line editing?
-.Pp
-.Sh EXAMPLES
-The following are some
-.Nm
-examples:
-.Bl -tag -width abcde
-.It Ic "config help"
-Show the commands for the
-.Em config
-module.
-.It Ic "config go ParkingLot/"
-Go to the
-.Dq ParkingLot/
-configuration location.
-.It Ic "ParkingLot print_message help"
-Show the one-line description and parameter for the
-.Dq print_message
-command available from the external
-.Dq ParkingLot
-module.
-.\" TODO: why the trailing slash?
-.El
-.Sh SEE ALSO
-.Xr boss 8 ,
-.Xr msgq 8
-.\" TODO: write boss and msgq manual pages
-.\" .Sh STANDARDS
-.Sh HISTORY
-The initial version (with internal name of
-.Dq BigTool )
-was started in October 2009.
-.Sh AUTHORS
+.TH "BINDCTL" "1" "January 19, 2010" "BIND10" "BIND10"
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+bindctl \- control and configure BIND 10
+.SH "SYNOPSIS"
+.HP \w'\fBbindctl\fR\ 'u
+\fBbindctl\fR
+.SH "DESCRIPTION"
+.PP
 The
-.Nm
-tool and library were initially coded by Zhang Likun of CNNIC
-for the BIND 10 project.
-The initial manual page was written by Jeremy C. Reed of ISC.
-.\" .Sh BUGS
+\fBbindctl\fR
+tool is a user interface to the BIND 10 services\&. The program can be used to control the components and configure the BIND 10 options\&. The options may be specified
+via its interactive command interpreter\&.
+.PP
+The
+\fBbindctl\fR
+prompt shows
+\(lq> \(rq\&. The prompt will also display the location if changed\&. The options are based on the module in use\&. The usage is:
+\fBmodule\fR
+\fBcommand\fR
+\fIparam1 = value1 , \fR\fI\fIparam2 = value2\fR\fR
+.PP
+
+\fBbindctl\fR\'s interactive interface provides command\-line completion and hints\&. Press the Tab key to get a hint for the module, command, and/or parameters\&.
+The arrow keys and Emacs\-style editing keys may be used to edit and recall previous lines\&.
+.PP
+You can use the
+\fBhelp\fR
+keyword to receive usage assistance for a module or a module\'s command\&.
+.PP
+The
+\fBquit\fR
+command is used to exit
+\fBbindctl\fR
+(and doesn\'t stop the BIND 10 services)\&.
+.PP
+The following module is available by default:
+\fBconfig\fR
+for Configuration commands\&.
+Additional modules may be available, such as
+\fBBoss\fR,
+\fBXfrin\fR, and
+\fBAuth\fR\&.
+.SH "SEE ALSO"
+.PP
+
+\fBb10-auth\fR(8),
+\fBb10-cfgmgr\fR(8),
+\fBb10-cmdctl\fR(8),
+\fBb10-xfrin\fR(8),
+\fBbind10\fR(8),
+\fBmsgq\fR(8),
+BIND 10 User Guide\&.
+.SH "AUTHORS"
+.PP
+The
+\fBbindctl\fR
+tool and library were initially coded by Zhang Likun of CNNIC for the BIND 10 project\&. The initial manual page was written by Jeremy C\&. Reed of ISC\&.
+.SH "HISTORY"
+.PP
+The initial version (with internal name of
+\fBBigTool\fR) was started in October 2009\&.
+.SH "COPYRIGHT"
+.br
+Copyright \(co 2010 Internet Systems Consortium, Inc. ("ISC")
+.br

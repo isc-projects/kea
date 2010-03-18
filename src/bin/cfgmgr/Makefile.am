@@ -7,6 +7,12 @@ CLEANFILES = b10-cfgmgr
 b10_cfgmgrdir = @localstatedir@/@PACKAGE@
 #B10_cfgmgr_DATA = 
 
+man_MANS = b10-cfgmgr.8
+EXTRA_DIST = $(man_MANS) b10-cfgmgr.xml
+
+b10-cfgmgr.8: b10-cfgmgr.xml
+	xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-cfgmgr.xml
+
 # TODO: does this need $$(DESTDIR) also?
 # this is done here since configure.ac AC_OUTPUT doesn't expand exec_prefix
 b10-cfgmgr: b10-cfgmgr.py
