@@ -15,6 +15,7 @@
 // $Id$
 
 #include <dns/buffer.h>
+#include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
@@ -41,45 +42,50 @@ const uint8_t wiredata_in_aaaa[] = {
     0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x12, 0x34 };
 
-TEST_F(Rdata_IN_AAAA_Test, createFromText)
-{
+TEST_F(Rdata_IN_AAAA_Test, createFromText) {
     rdata_in_aaaa.compare(in::AAAA(string("2001:db8::1234")));
     EXPECT_THROW(in::AAAA("192.0.2.1"), InvalidRdataText);
     EXPECT_THROW(in::AAAA("xxx"), InvalidRdataText);
 }
 
-TEST_F(Rdata_IN_AAAA_Test, createFromWire)
-{
+TEST_F(Rdata_IN_AAAA_Test, createFromWire) {
     // Valid data
     EXPECT_EQ(0, rdata_in_aaaa.compare(
-                  *rdataFactoryFromFile(RRType("AAAA"), RRClass("IN"),
+                  *rdataFactoryFromFile(RRType::AAAA(), RRClass::IN(),
                                         "testdata/rdata_in_aaaa_fromWire")));
-    //TBD: more tests
+    // RDLENGTH is too short
+    EXPECT_THROW(rdataFactoryFromFile(RRType::AAAA(), RRClass::IN(),
+                                      "testdata/rdata_in_aaaa_fromWire", 18),
+                 DNSMessageFORMERR);
+    // RDLENGTH is too long
+    EXPECT_THROW(rdataFactoryFromFile(RRType::AAAA(), RRClass::IN(),
+                                      "testdata/rdata_in_aaaa_fromWire", 36),
+                 DNSMessageFORMERR);
+    // buffer too short.
+    EXPECT_THROW(rdataFactoryFromFile(RRType::AAAA(), RRClass::IN(),
+                                      "testdata/rdata_in_aaaa_fromWire", 55),
+                 DNSMessageFORMERR);
 }
 
-TEST_F(Rdata_IN_AAAA_Test, toWireBuffer)
-{
+TEST_F(Rdata_IN_AAAA_Test, toWireBuffer) {
     rdata_in_aaaa.toWire(obuffer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         obuffer.getData(), obuffer.getLength(),
                         wiredata_in_aaaa, sizeof(wiredata_in_aaaa));
 }
 
-TEST_F(Rdata_IN_AAAA_Test, toWireRenderer)
-{
+TEST_F(Rdata_IN_AAAA_Test, toWireRenderer) {
     rdata_in_aaaa.toWire(renderer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         obuffer.getData(), obuffer.getLength(),
                         wiredata_in_aaaa, sizeof(wiredata_in_aaaa));
 }
 
-TEST_F(Rdata_IN_AAAA_Test, toText)
-{
+TEST_F(Rdata_IN_AAAA_Test, toText) {
     EXPECT_EQ("2001:db8::1234", rdata_in_aaaa.toText());
 }
 
-TEST_F(Rdata_IN_AAAA_Test, compare)
-{
+TEST_F(Rdata_IN_AAAA_Test, compare) {
     in::AAAA small1("::1");
     in::AAAA small2("1:2:3:4:5:6:7:8");
     in::AAAA large1("ffff::");
