@@ -278,9 +278,10 @@ $ <userinput>./configure</userinput></screen>
       </para>
 
       <para>
-        You don't need to retrieve the source code from subversion
+        You do not need to retrieve the source code from subversion
         unless you are testing latest code which is not provided in the
-        source tarball. Most users will just use the source tar file.
+        source tarball or you are a developer.
+        Most users will just use the source tar file.
       </para>
 
       <sect2>
@@ -291,7 +292,7 @@ $ <userinput>./configure</userinput></screen>
         generated configure script, Makefile.in files, nor the
         related configure files.
         They can be created by running <command>autoreconf</command>
-        with the <command>--install</command> switch.
+        with the <option>--install</option> switch.
         This will run <command>autoconf</command>, <command>aclocal</command>,
         <command>libtoolize</command>, <command>autoheader</command>,
         <command>automake</command>, and related commands &mdash;
@@ -299,8 +300,12 @@ $ <userinput>./configure</userinput></screen>
       </para>
       <para>
         This requires <command>autoconf</command> version 2.59 or newer
-	and <command>automake</command> version 1.11 or better (for
-	working Python 3.1 tests).
+	and <command>automake</command> version 1.10 or better.
+	(For working Python 3.1 tests, <command>automake</command>
+	version 1.11 or better is needed or use the
+	<option>--with-pythonpath</option> configure option described
+	below).
+
       </para>
       <note><para>
         Some operating systems do not provide these in their
@@ -385,7 +390,7 @@ $ <userinput>./configure</userinput></screen>
         <screen>$ <userinput>./configure</userinput></screen>
       </para>
       <para>
-        Run <command>./configure</command> with the <command>--help</command>
+        Run <command>./configure</command> with the <option>--help</option>
         switch to view the different options. The commonly-used options are:
 
         <variablelist>
@@ -576,7 +581,7 @@ $ <userinput>./configure</userinput></screen>
       <title>Starting BIND 10</title>
       <para>
         To start the BIND 10 service, simply run <command>bind10</command>.
-        Run it with the <command>--verbose</command> switch to
+        Run it with the <option>--verbose</option> switch to
         get additional debugging or diagnostic output.
       </para>
 <!-- TODO: note it doesn't go into background -->
@@ -674,7 +679,8 @@ config changes are actually commands to cfgmgr
         The stored configuration file is at
         <filename>/usr/local/var/bind10/b10-config.db</filename>.
         (The full path is what was defined at build configure time for
-        --localstatedir. The default is <filename>/usr/local/var/</filename>.)
+        <option>--localstatedir</option>.
+        The default is <filename>/usr/local/var/</filename>.)
 	The format is loosely based on JSON and is directly parseable
 	python, but this may change in a future version.
 	This configuration data file is not manually edited by the
@@ -826,12 +832,12 @@ or accounts database -->
 
     <para>
       By default the HTTPS server listens on the localhost port 8080.
-      The port can be set by using the --port command line option.
-      The address to listen on can be set using the --address command
+      The port can be set by using the <option>--port</option> command line option.
+      The address to listen on can be set using the <option>--address</option> command
       line argument.
       Each HTTPS connection is stateless and timesout in 1200 seconds
       by default.  This can be
-      redefined by using the --idle-timeout command line argument.
+      redefined by using the <option>--idle-timeout</option> command line argument.
     </para>
 
     <sect1 id="cmdctl.spec">
@@ -848,7 +854,6 @@ accounts_file
         The control commands are:
 print_settings
 shutdown
-print_message
       </para>
 <!-- TODO -->
     </sect1>
@@ -876,7 +881,7 @@ TODO
       The <command>bindctl</command> tool provides an interactive
       prompt for configuring, controlling, and querying the BIND 10
       components.
-      It communicates directly with a RESTful interface over HTTPS
+      It communicates directly with a REST-ful interface over HTTPS
       provided by <command>b10-cmdctl</command>. It doesn't
       communicate to any other components directly.
     </para>
@@ -901,43 +906,174 @@ TODO
 
   <chapter id="authserver">
     <title>Authoritative Server</title>
+
     <para>
+      The <command>b10-auth</command> is the authoritative DNS server.
+      It supports EDNS0 and DNSSEC. It supports IPv6.
+      Normally it is started by the <command>bind10</command> master
+      process.
     </para>
+
+    <note><simpara>
+      The Y1 prototype release listens on all interfaces and the non-standard
+      port 5300.
+    </simpara></note>
 
     <sect1>
       <title>Server Configurations</title>
+
+<!-- TODO: offers command line options but not used
+since we used bind10 -->
+
       <para>
+        <command>b10-auth</command> is configured via the
+        <command>b10-cfgmgr</command> configuration manager.
+        The module name is <quote>Auth</quote>.
+        The configuration data item is:
+
+        <variablelist>
+    
+          <varlistentry>
+            <term>database_file</term>
+            <listitem> 
+              <simpara>This is an optional string to define the path to find
+                 the SQLite3 database file.
+<!-- TODO: -->
+Note: Later the DNS server will use various data source backends.
+This may be a temporary setting until then.
+              </simpara>
+            </listitem>
+          </varlistentry>
+
+        </variablelist>
+
       </para>
+
+      <para>
+
+        The configuration command is:
+
+        <variablelist>
+
+          <varlistentry>
+            <term>shutdown</term>
+            <listitem> 
+              <simpara>Stop the authoritative DNS server.
+              </simpara>
+<!-- TODO: what happens when this is sent, will bind10 restart? -->
+            </listitem>
+          </varlistentry>
+
+        </variablelist>
+
+      </para>
+
+<!-- TODO: examples of setting or running above? -->
+
     </sect1>
 
     <sect1>
       <title>Data Source Backends</title>
+
+      <note><para>
+        For the Y1 prototype release, <command>b10-auth</command>
+        only supports the SQLite3 data source backend.
+        Upcoming versions will be able to use multiple different
+        data sources, such as MySQL, Berkeley DB, or in-memory DB.
+      </para></note>
+
+
+<!-- TODO: really is /tmp/zone.sqlite3 until fixed. -->
       <para>
+        By default, the SQLite3 backend uses the data file located at
+        <filename>/usr/local/var/bind10/zone.sqlite3</filename>.
+        (The full path is what was defined at build configure time for
+        <option>--localstatedir</option>.
+        The default is <filename>/usr/local/var/</filename>.)
+	This data file location may be changed by defining the
+	<quote>database_file</quote> configuration.
       </para>
+
     </sect1>
 
     <sect1>
       <title>Loading Master Zones Files</title>
-      <para>
-<!-- TODO
-loadzone
-What happens in the database? replaces existing? What if a.foo
-existed but new zone file didn't have a.foo, would previous a.foo
-in database be removed?
 
-if you replace the zone foo.com, all records from the prior foo.com disappear and a whole new set appears
--->
+      <para>
+        RFC 1035 style DNS master zone files may imported
+        into a BIND 10 data source by using the
+        <command>b10-loadzone</command> utility.
+      </para>
+
+      <para>
+        <command>b10-loadzone</command> supports the following
+        special directives (control entries):
+
+        <variablelist>
+
+          <varlistentry>
+            <term>$INCLUDE</term>
+            <listitem> 
+              <simpara>Loads an additional zone file. This may be recursive.
+              </simpara>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>$ORIGIN</term>
+            <listitem> 
+              <simpara>Defines the relative domain name.
+              </simpara>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>$TTL</term>
+            <listitem> 
+              <simpara>Defines the time-to-live value used for following
+                records that don't include a TTL.
+              </simpara>
+            </listitem>
+          </varlistentry>
+
+        </variablelist>
+
+      </para>
+
+      <para>
+        The <option>-o</option> argument may be used to define the
+        default origin for loaded zone file records.
+      </para>
+
+      <note>
+      <para>
+        In the Y1 prototype release, only the SQLite3 back end is used.
+        By default, it stores the zone data in
+        <filename>/usr/local/var/bind10/zone.sqlite3</filename>
+        unless the <option>-d</option> swith is used to set the
+        database filename.
+        Multiple zones are stored in a single SQLite3 zone database.
+      </para>
+      </note>
+
+      <para>
+        If you reload a zone already existing in the database,
+        all records from that prior zone disappear and a while new set
+        appears.
+      </para>
 
 <!--TODO: permissions for xfrin or loadzone to create the file -->
 
-      </para>
     </sect1>
 
+<!--
+TODO
     <sect1>
       <title>Troubleshooting</title>
       <para>
       </para>
     </sect1>
+-->
 
   </chapter>
 
