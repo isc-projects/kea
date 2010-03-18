@@ -251,7 +251,10 @@ PKG_CHECK_MODULES(SQLITE, sqlite3 >= 3.3.9)
 AC_CHECK_HEADERS([boost/shared_ptr.hpp],,
   AC_MSG_ERROR([Missing required header files.]))
 
-# Checks for library functions.
+AC_ARG_ENABLE(man, [AC_HELP_STRING([--enable-man],
+  [regenerate man pages [default=no]])] ,enable_man=yes, enable_man=no)
+
+AM_CONDITIONAL(ENABLE_MAN, test x$enable_man != xno)
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile

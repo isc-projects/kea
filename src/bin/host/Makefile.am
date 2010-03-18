@@ -12,5 +12,9 @@ host_LDADD += $(top_builddir)/src/lib/exceptions/.libs/libexceptions.a
 #man_MANS = host.1
 #EXTRA_DIST = $(man_MANS) host.xml
 #
+#if ENABLE_MAN
+#
 #host.1: host.xml
 #	xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/host.xml
+#
+#endif

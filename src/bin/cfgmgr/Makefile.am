@@ -10,8 +10,12 @@ b10_cfgmgrdir = @localstatedir@/@PACKAGE@
 man_MANS = b10-cfgmgr.8
 EXTRA_DIST = $(man_MANS) b10-cfgmgr.xml
 
+if ENABLE_MAN
+
 b10-cfgmgr.8: b10-cfgmgr.xml
 	xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-cfgmgr.xml
+
+endif
 
 # TODO: does this need $$(DESTDIR) also?
 # this is done here since configure.ac AC_OUTPUT doesn't expand exec_prefix
