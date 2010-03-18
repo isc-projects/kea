@@ -241,7 +241,7 @@ var/
             Some operating systems have split their distribution packages into
             a run-time and a development package.  You will need to install
             the development package versions, which include header files and
-            libraries, to build BIND 10 form source code.
+            libraries, to build BIND 10 from source code.
           </para>
         </note>
 
