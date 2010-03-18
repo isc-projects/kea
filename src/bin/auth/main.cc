@@ -516,7 +516,14 @@ processMessageTCP(const int fd, Message& dns_message,
         if (cc0 < 0) {
             if (verbose_mode) {
                 cerr << "TCP receive error" << endl;
+                close(ts);
+                return;
             }
+        }
+        if (cc0 == 0) {
+            // client closed connection
+            close(ts);
+            return;
         }
         cc += cc0;
     }
