@@ -1,5 +1,5 @@
 #
-# A invalid NSEC RDATA with a longest bitmap field (33 bitmap bytes)
+# An invalid NSEC RDATA with an oversized bitmap field (33 bitmap bytes)
 #
 
 [custom]

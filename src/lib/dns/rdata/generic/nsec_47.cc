@@ -73,7 +73,7 @@ NSEC::NSEC(const string& nsec_str) :
         } catch (...) {
             isc_throw(InvalidRdataText, "Invalid RRtype in NSEC");
         }
-    } while(!iss.eof());
+    } while (!iss.eof());
 
     for (int window = 0; window < 256; window++) {
         int octet;
@@ -94,14 +94,14 @@ NSEC::NSEC(const string& nsec_str) :
     impl_ = new NSECImpl(Name(nextname), typebits);
 }
 
-NSEC::NSEC(InputBuffer& buffer, size_t rdata_len)
-{
-    size_t pos = buffer.getPosition();
-    Name nextname(buffer);
+NSEC::NSEC(InputBuffer& buffer, size_t rdata_len) {
+    const size_t pos = buffer.getPosition();
+    const Name nextname(buffer);
 
     // rdata_len must be sufficiently large to hold non empty bitmap.
     if (rdata_len <= buffer.getPosition() - pos) {
-        isc_throw(InvalidRdataLength, "NSEC too short");
+        isc_throw(DNSMessageFORMERR,
+                  "NSEC RDATA from wire too short: " << rdata_len << "bytes");
     }
     rdata_len -= (buffer.getPosition() - pos);
 
@@ -109,17 +109,40 @@ NSEC::NSEC(InputBuffer& buffer, size_t rdata_len)
     buffer.readData(&typebits[0], rdata_len);
 
     int len = 0;
-    for (int i = 0; i < typebits.size(); i += len) {
-        if (i + 2 > typebits.size()) {
-            isc_throw(DNSMessageFORMERR, "Invalid rdata: "
-                                         "bad NSEC type bitmap");
+    bool first = true;
+    unsigned int block, lastblock = 0;
+    for (int i = 0; i < rdata_len; i += len) {
+        if (i + 2 > rdata_len) {
+            isc_throw(DNSMessageFORMERR, "NSEC RDATA from wire: "
+                      "incomplete bit map filed");
         }
+        block = typebits[i];
         len = typebits[i + 1];
-        if (len > 31) {
-            isc_throw(DNSMessageFORMERR, "Invalid rdata: "
-                                         "bad NSEC type bitmap");
+        // Check that bitmap window blocks are in the correct order.
+        if (!first && block <= lastblock) {
+            isc_throw(DNSMessageFORMERR, "NSEC RDATA from wire: Disordered "
+                      "window blocks found: " << lastblock <<
+                      " then " << block);
         }
+        // Check for legal length
+        if (len < 1 || len > 32) {
+            isc_throw(DNSMessageFORMERR, "NSEC RDATA from wire: Invalid bitmap "
+                      "length: " << len);
+        }
+        // Check for overflow.
         i += 2;
+        if (i + len > rdata_len) {
+            isc_throw(DNSMessageFORMERR, "NSEC RDATA from wire: bitmap length "
+                      "too large: " << len);
+        }
+        // The last octet of the bitmap must be non zero.
+        if (typebits[i + len - 1] == 0) {
+            isc_throw(DNSMessageFORMERR, "NSEC RDATA from wire: bitmap ending "
+                      "an all-zero byte");
+        }
+
+        lastblock = block;
+        first = false;
     }
 
     impl_ = new NSECImpl(nextname, typebits);
@@ -130,8 +153,7 @@ NSEC::NSEC(const NSEC& source) :
 {}
 
 NSEC&
-NSEC::operator=(const NSEC& source)
-{
+NSEC::operator=(const NSEC& source) {
     if (impl_ == source.impl_) {
         return (*this);
     }
@@ -143,33 +165,37 @@ NSEC::operator=(const NSEC& source)
     return (*this);
 }
 
-NSEC::~NSEC()
-{
+NSEC::~NSEC() {
     delete impl_;
 }
 
 string
-NSEC::toText() const
-{
+NSEC::toText() const {
     ostringstream s;
     int len = 0;
     s << impl_->nextname_;
+
+    // In the following loop we use string::at() rather than operator[].
+    // Since the index calculation is a bit complicated, it will be safer
+    // and easier to find a bug (if any).  Note that this conversion method
+    // is generally not expected to be very efficient, so the slight overhead
+    // of at() should be acceptable.
     for (int i = 0; i < impl_->typebits_.size(); i += len) {
         assert(i + 2 <= impl_->typebits_.size());
-        int window = impl_->typebits_[i];
-        len = impl_->typebits_[i + 1];
-        assert(len >= 0 && len < 32);
+        const int block = impl_->typebits_.at(i);
+        len = impl_->typebits_.at(i + 1);
+        assert(len >= 0 && len <= 32);
         i += 2;
         for (int j = 0; j < len; j++) {
-            if (impl_->typebits_[i + j] == 0) {
+            if (impl_->typebits_.at(i + j) == 0) {
                 continue;
             }
             for (int k = 0; k < 8; k++) {
-                if ((impl_->typebits_[i + j] & (0x80 >> k)) == 0) {
+                if ((impl_->typebits_.at(i + j) & (0x80 >> k)) == 0) {
                     continue;
                 }
-                int t = window * 256 + j * 8 + k;
-                s << " " << RRType(t).toText();
+                const int t = block * 256 + j * 8 + k;
+                s << " " << RRType(t);
             }
         }
     }
@@ -178,22 +204,19 @@ NSEC::toText() const
 }
 
 void
-NSEC::toWire(OutputBuffer& buffer) const
-{
+NSEC::toWire(OutputBuffer& buffer) const {
     impl_->nextname_.toWire(buffer);
     buffer.writeData(&impl_->typebits_[0], impl_->typebits_.size());
 }
 
 void
-NSEC::toWire(MessageRenderer& renderer) const
-{
+NSEC::toWire(MessageRenderer& renderer) const {
     impl_->nextname_.toWire(renderer);
     renderer.writeData(&impl_->typebits_[0], impl_->typebits_.size());
 }
 
 int
-NSEC::compare(const Rdata& other) const
-{
+NSEC::compare(const Rdata& other) const {
     const NSEC& other_nsec = dynamic_cast<const NSEC&>(other);
 
     int cmp = compareNames(impl_->nextname_, other_nsec.impl_->nextname_);
@@ -201,9 +224,9 @@ NSEC::compare(const Rdata& other) const
         return (cmp);
     }
 
-    size_t this_len = impl_->typebits_.size();
-    size_t other_len = other_nsec.impl_->typebits_.size();
-    size_t cmplen = min(this_len, other_len);
+    const size_t this_len = impl_->typebits_.size();
+    const size_t other_len = other_nsec.impl_->typebits_.size();
+    const size_t cmplen = min(this_len, other_len);
     cmp = memcmp(&impl_->typebits_[0], &other_nsec.impl_->typebits_[0],
                  cmplen);
     if (cmp != 0) {
