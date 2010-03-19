@@ -31,14 +31,25 @@ class TestXfrin(unittest.TestCase):
         args['zone_name'] = 'sd.cn.'
         args['port'] = '12345'
         args['master'] = '218.241.108.122'
+        args['db_file'] = '/home/tt'
 
         name, master, port, db_file = xfr._parse_cmd_params(args)
         self.assertEqual(port, 12345)
         self.assertEqual(name, 'sd.cn.')
         self.assertEqual(master, '218.241.108.122')
-        self.assertEqual(db_file, '/tmp/zone.sqlite3')
+        self.assertEqual(db_file, '/home/tt')
 
+    def test_parse_cmd_params_1(self):
+        xfr = MyXfrin()
+        args = {}
+        args['port'] = '12345'
+        args['master'] = '218.241.108.122'
+        args['db_file'] = '/home/tt'
 
+        self.assertRaises(XfrinException, xfr._parse_cmd_params, args)
+        self.assertRaises(XfrinException, xfr._parse_cmd_params, {'zone_name':'ds.cn.', 'master':'3.3.3'})
+        self.assertRaises(XfrinException, xfr._parse_cmd_params, {'zone_name':'ds.cn.'})
+        self.assertRaises(XfrinException, xfr._parse_cmd_params, {'master':'ds.cn.'})
 
 
 if __name__== "__main__":
