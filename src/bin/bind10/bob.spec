@@ -3,13 +3,13 @@
     "module_name": "Boss",
     "config_data": [
       {
-        "item_name": "some_string",
+        "item_name": "example_string",
         "item_type": "string",
         "item_optional": False,
-        "item_default": "Hi, shane!"
+        "item_default": "Just an example string configuration value"
       },
       {
-        "item_name": "some_int",
+        "item_name": "example_int",
         "item_type": "integer",
         "item_optional": False,
         "item_default": 1
