@@ -95,7 +95,7 @@
         <listitem><para>
           Defines the filename for the database.
 	  The default is
-	  <filename>/usr/local/var/bind10/zone.sqlite3</filename>.
+	  <filename>/usr/local/var/bind10-devel/zone.sqlite3</filename>.
 <!-- TODO: fix filename -->
         </para></listitem>
       </varlistentry>
