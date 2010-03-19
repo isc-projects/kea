@@ -269,7 +269,6 @@ AC_CONFIG_FILES([Makefile
                  src/bin/cmdctl/Makefile
                  src/bin/bindctl/Makefile
                  src/bin/cfgmgr/Makefile
-                 src/bin/host/Makefile
                  src/bin/loadzone/Makefile
                  src/bin/msgq/Makefile
                  src/bin/auth/Makefile
