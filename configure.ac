@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10, 10.0.0, bind10-bugs@isc.org)
+AC_INIT(bind10-devel, 20100318, bind10-bugs@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
@@ -36,11 +36,11 @@ else
 	AC_SUBST(PYTHON_PLATFORM)
 	pythondir='${prefix}/lib/python3.1/site-packages'
 	AC_SUBST(pythondir)
-	pkgpythondir='${pythondir}/bind10'
+	pkgpythondir='${pythondir}/'$PACKAGE
 	AC_SUBST(pkgpythondir)
 	pyexecdir='${exec_prefix}/lib/python3.1/site-packages'
 	AC_SUBST(pyexecdir)
-	pkgpyexecdir='${pyexecdir}/bind10'
+	pkgpyexecdir='${pyexecdir}/'$PACKAGE
 	AC_SUBST(pkgpyexecdir)
 fi
 
