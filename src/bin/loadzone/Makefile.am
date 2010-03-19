@@ -42,4 +42,3 @@ EXTRA_DIST += testdata/sql1.example.com
 EXTRA_DIST += testdata/sql1.example.com.signed
 EXTRA_DIST += testdata/sql2.example.com
 EXTRA_DIST += testdata/sql2.example.com.signed
-EXTRA_DIST += testdata/
