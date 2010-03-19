@@ -4,10 +4,10 @@
 <!ENTITY mdash  "&#x2014;" >
 ]>
 <book>
-  <?xml-stylesheet href="userguide.css" type="text/css"?>
+  <?xml-stylesheet href="bind10-guide.css" type="text/css"?>
 
   <bookinfo>
-    <title>BIND 10 User Guide</title>
+    <title>BIND 10 Guide</title>
     <subtitle>Administrator Reference for BIND 10</subtitle>
 
     <copyright>
@@ -194,7 +194,7 @@
     </section>
 
     <para>
-      The tools and modules are covered in full detail in this users guide.
+      The tools and modules are covered in full detail in this guide.
 <!-- TODO point to these -->
       In addition, manual pages are also provided in the default installation.
     </para>
@@ -279,7 +279,7 @@ var/
           This quickly covers the standard steps for installing
           and deploying BIND 10 as an authoritative name server using
           its defaults. For troubleshooting, full customizations and further
-          details, see the respective chapters in the BIND 10 user guide.
+          details, see the respective chapters in the BIND 10 guide.
         </simpara>
       </note>
 
