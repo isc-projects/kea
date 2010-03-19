@@ -556,10 +556,9 @@ var/
             </listitem>
             <listitem>
             <simpara>
-              <filename>etc/bind10/</filename> &mdash;
+              <filename>etc/bind10-devel/</filename> &mdash;
               configuration files.
             </simpara>
-      <!-- TODO: create the etc/bind10/ directory? -->
             </listitem>
             <listitem>
               <simpara>
@@ -569,7 +568,7 @@ var/
             </listitem>
             <listitem>
               <simpara>
-                <filename>libexec/bind10/</filename> &mdash;
+                <filename>libexec/bind10-devel/</filename> &mdash;
                 executables that a user wouldn't normally run directly and
                 are not run independently.
                 These are the BIND 10 modules which are daemons started by
@@ -584,7 +583,7 @@ var/
             </listitem>
             <listitem>
               <simpara>
-                <filename>share/bind10/</filename> &mdash;
+                <filename>share/bind10-devel/</filename> &mdash;
                 configuration specifications.
               </simpara>
             </listitem>
@@ -596,7 +595,7 @@ var/
             </listitem>
             <listitem>
               <simpara>
-                <filename>var/bind10/</filename> &mdash;
+                <filename>var/bind10-devel/</filename> &mdash;
                 data source and configuration databases.
               </simpara>
             </listitem>
@@ -751,7 +750,7 @@ config changes are actually commands to cfgmgr
 <!-- TODO: what about command line switch to change this? -->
       <para>
         The stored configuration file is at
-        <filename>/usr/local/var/bind10/b10-config.db</filename>.
+        <filename>/usr/local/var/bind10-devel/b10-config.db</filename>.
         (The full path is what was defined at build configure time for
         <option>--localstatedir</option>.
         The default is <filename>/usr/local/var/</filename>.)
@@ -844,13 +843,13 @@ but you might wanna check with likun
     <para>The HTTPS server requires a private key,
       such as a RSA PRIVATE KEY.
       The default location is at
-      <filename>/usr/local/etc/bind10/cmdctl-keyfile.pem</filename>.
+      <filename>/usr/local/etc/bind10-devel/cmdctl-keyfile.pem</filename>.
       (A sample key is at
-      <filename>/usr/local/share/bind10/cmdctl-keyfile.pem</filename>.)
+      <filename>/usr/local/share/bind10-devel/cmdctl-keyfile.pem</filename>.)
       It also uses a certificate located at
-      <filename>/usr/local/etc/bind10/cmdctl-certfile.pem</filename>.
+      <filename>/usr/local/etc/bind10-devel/cmdctl-certfile.pem</filename>.
       (A sample certificate is at
-      <filename>/usr/local/share/bind10/cmdctl-certfile.pem</filename>.)
+      <filename>/usr/local/share/bind10-devel/cmdctl-certfile.pem</filename>.)
       This may be a self-signed certificate or purchased from a
       certification authority.
     </para>
@@ -886,11 +885,11 @@ but that is a single file, maybethis should go back to that format?
     <para>
       The <command>b10-cmdctl</command> daemon also requires
       the user account file located at
-      <filename>/usr/local/etc/bind10/cmdctl-accounts.csv</filename>.
+      <filename>/usr/local/etc/bind10-devel/cmdctl-accounts.csv</filename>.
       This comma-delimited file lists the accounts with a user name,
       hashed password, and salt.
       (A sample file is at
-      <filename>/usr/local/share/bind10/cmdctl-accounts.csv</filename>.
+      <filename>/usr/local/share/bind10-devel/cmdctl-accounts.csv</filename>.
       It contains the user named <quote>root</quote> with the password
       <quote>bind10</quote>.)
     </para>
@@ -1059,7 +1058,7 @@ This may be a temporary setting until then.
 
       <para>
         By default, the SQLite3 backend uses the data file located at
-        <filename>/usr/local/var/bind10/zone.sqlite3</filename>.
+        <filename>/usr/local/var/bind10-devel/zone.sqlite3</filename>.
         (The full path is what was defined at build configure time for
         <option>--localstatedir</option>.
         The default is <filename>/usr/local/var/</filename>.)
@@ -1122,7 +1121,7 @@ This may be a temporary setting until then.
       <para>
         In the Y1 prototype release, only the SQLite3 back end is used.
         By default, it stores the zone data in
-        <filename>/usr/local/var/bind10/zone.sqlite3</filename>
+        <filename>/usr/local/var/bind10-devel/zone.sqlite3</filename>
         unless the <option>-d</option> switch is used to set the
         database filename.
         Multiple zones are stored in a single SQLite3 zone database.
