@@ -21,3 +21,24 @@ b10-loadzone: b10-loadzone.py
 install-data-local:
 	$(mkinstalldirs) $(DESTDIR)/@localstatedir@/@PACKAGE@
 # TODO: permissions handled later
+
+EXTRA_DIST += testdata/README
+EXTRA_DIST += testdata/dsset-subzone.example.com.
+EXTRA_DIST += testdata/example.com
+EXTRA_DIST += testdata/example.com.signed
+EXTRA_DIST += testdata/Kexample.com.+005+04456.key
+EXTRA_DIST += testdata/Kexample.com.+005+04456.private
+EXTRA_DIST += testdata/Kexample.com.+005+33495.key
+EXTRA_DIST += testdata/Kexample.com.+005+33495.private
+EXTRA_DIST += testdata/Ksql1.example.com.+005+12447.key
+EXTRA_DIST += testdata/Ksql1.example.com.+005+12447.private
+EXTRA_DIST += testdata/Ksql1.example.com.+005+33313.key
+EXTRA_DIST += testdata/Ksql1.example.com.+005+33313.private
+EXTRA_DIST += testdata/Ksql2.example.com.+005+38482.key
+EXTRA_DIST += testdata/Ksql2.example.com.+005+38482.private
+EXTRA_DIST += testdata/Ksql2.example.com.+005+63192.key
+EXTRA_DIST += testdata/Ksql2.example.com.+005+63192.private
+EXTRA_DIST += testdata/sql1.example.com
+EXTRA_DIST += testdata/sql1.example.com.signed
+EXTRA_DIST += testdata/sql2.example.com
+EXTRA_DIST += testdata/sql2.example.com.signed
