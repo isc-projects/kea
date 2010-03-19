@@ -8,7 +8,7 @@ b10_xfrin_DATA = xfrin.spec
 CLEANFILES = b10-xfrin xfrin.pre xfrin.spec
 
 man_MANS = b10-xfrin.8
-EXTRA_DIST += $(man_MANS) b10-xfrin.xml
+EXTRA_DIST = $(man_MANS) b10-xfrin.xml
 
 if ENABLE_MAN
 
