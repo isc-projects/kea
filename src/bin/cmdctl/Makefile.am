@@ -14,7 +14,7 @@ CMDCTL_CONFIGURATIONS += cmdctl-keyfile.pem cmdctl-certfile.pem
 b10_cmdctl_DATA = $(CMDCTL_CONFIGURATIONS)
 b10_cmdctl_DATA += cmdctl.spec
  
-EXTRA_DIST = cmdctl-accounts.csv cmdctl-keyfile.pem cmdctl-certfile.pem
+EXTRA_DIST = $(CMDCTL_CONFIGURATIONS)
 EXTRA_DIST += cmdctl.spec
 
 CLEANFILES=	b10-cmdctl
@@ -35,6 +35,8 @@ b10-cmdctl: cmdctl.py
 	$(SED) "s|@@PYTHONPATH@@|@pyexecdir@|" cmdctl.py >$@
 	chmod a+x $@
 
+if ENABLE_CONFIGURATION_INSTALL
+
 # TODO: permissions handled later
 install-data-local:
 	$(mkinstalldirs) $(DESTDIR)/@sysconfdir@/@PACKAGE@   
@@ -44,3 +46,4 @@ install-data-local:
 	  fi ;	\
 	done
 
+endif

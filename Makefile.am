@@ -3,6 +3,9 @@ USE_LCOV=@USE_LCOV@
 LCOV=@LCOV@
 GENHTML=@GENHTML@
 
+# When running distcheck target, do not install the configurations
+DISTCHECK_CONFIGURE_FLAGS = --disable-configuration-install
+
 clean-coverage:
 	@if [ $(USE_LCOV) = yes ] ; then \
 		$(LCOV) --directory . --zerocounters; \
