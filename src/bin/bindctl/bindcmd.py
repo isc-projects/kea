@@ -115,7 +115,12 @@ class BindCmdInterpreter(Cmd):
         csvfile = None
         bsuccess = False
         try:
-            csvfile = open('default_user.csv')
+            cvsfilepath = ""
+            if ('HOME' in os.environ):
+                cvsfilepath = os.environ['HOME']
+                cvsfilepath += os.sep + '.bind10' + os.sep
+            cvsfilepath += 'default_user.csv'
+            csvfile = open(cvsfilepath)
             users = csv.reader(csvfile)
             for row in users:
                 param = {'username': row[0], 'password' : row[1]}
@@ -151,10 +156,23 @@ class BindCmdInterpreter(Cmd):
             print(data)
             
             if response.status == http.client.OK:
-                csvfile = open('default_user.csv', 'w')
-                writer = csv.writer(csvfile)
-                writer.writerow([username, passwd])
-                csvfile.close()
+                cvsfilepath = ""
+                try:
+                    if ('HOME' in os.environ):
+                        cvsfilepath = os.environ['HOME']
+                        cvsfilepath += os.sep + '.bind10' + os.sep
+                        if not os.path.exists(cvsfilepath):
+                                os.mkdir(cvsfilepath, 0o700)
+                    cvsfilepath += 'default_user.csv'
+                    csvfile = open(cvsfilepath, 'w')
+                    os.chmod(cvsfilepath, 0o600)
+                    writer = csv.writer(csvfile)
+                    writer.writerow([username, passwd])
+                    csvfile.close()
+                except Exception as e:
+                    # just not store it
+                    print("Cannot write ~/.bind10/default_user.csv; default user is not stored")
+                    print(e)
                 return True
 
 
