@@ -190,7 +190,7 @@ class TestConfigManager(unittest.TestCase):
                                 {'result': [1, 'Bad module_name in get_module_spec command']})
         self._handle_msg_helper({ "command": [ "get_config" ] }, { 'result': [ 0, { 'version': 1} ]})
         self._handle_msg_helper({ "command": [ "get_config", { "module_name": "nosuchmodule" } ] },
-                                {'result': [0, {}]})
+                                {'result': [0, { 'version': 1 }]})
         self._handle_msg_helper({ "command": [ "get_config", 1 ] },
                                 {'result': [1, 'Bad get_config command, argument not a dict']})
         self._handle_msg_helper({ "command": [ "get_config", { } ] },
@@ -237,24 +237,6 @@ class TestConfigManager(unittest.TestCase):
                          self.fake_session.get_message(self.name, None))
         self.assertEqual(len(self.fake_session.message_queue), 0)
 
-        self.fake_session.group_sendmsg({ 'result': "bad_answer" }, "ConfigManager")
-        self.assertRaises(isc.config.ccsession.ModuleCCSessionError,
-                          self.cm.handle_msg,
-                          { "command": [ "set_config", [ { self.name: { "test": 125 } }] ] } )
-        self.assertEqual(len(self.fake_session.message_queue), 1)
-        self.assertEqual({'command': [ 'config_update', {'test': 125}]},
-                         self.fake_session.get_message(self.name, None))
-        self.assertEqual(len(self.fake_session.message_queue), 0)
-
-        my_bad_answer = { 'result': [1, "bad_answer"] }
-        self.fake_session.group_sendmsg(my_bad_answer, "ConfigManager")
-        self._handle_msg_helper({ "command": [ "set_config", [ { self.name: { "test": 125 } }] ] },
-                                my_bad_answer )
-        self.assertEqual(len(self.fake_session.message_queue), 1)
-        self.assertEqual({'command': [ 'config_update', {'test': 125}]},
-                         self.fake_session.get_message(self.name, None))
-        self.assertEqual(len(self.fake_session.message_queue), 0)
-
         my_bad_answer = { 'result': [1, "bad_answer"] }
         self.fake_session.group_sendmsg(my_bad_answer, "ConfigManager")
         self._handle_msg_helper({ "command": [ "set_config", [ self.name, { "test": 125 }] ] },
@@ -266,8 +248,6 @@ class TestConfigManager(unittest.TestCase):
 
         self._handle_msg_helper({ "command": [ "set_config", [ ] ] },
                                 {'result': [1, 'Wrong number of arguments']} )
-        self._handle_msg_helper({ "command": [ "set_config", [ { self.name: { "test": 125 } }] ] },
-                                { 'result': [1, 'No answer message from TestModule']} )
         self._handle_msg_helper({ "command": [ "set_config", [ self.name, { "test": 125 }] ] },
                                 { 'result': [1, 'No answer message from TestModule']} )
 

@@ -214,7 +214,6 @@ class ModuleCCSession(ConfigData):
                         answer = create_answer(2, self._module_name + " has no command handler")
             except Exception as exc:
                 answer = create_answer(1, str(exc))
-                raise exc
             if answer:
                 self._session.group_reply(env, answer)
     
