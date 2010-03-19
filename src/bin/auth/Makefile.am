@@ -12,7 +12,7 @@ pkglibexecdir = $(libexecdir)/@PACKAGE@
 CLEANFILES = *.gcno *.gcda auth.pre auth.spec
 
 man_MANS = b10-auth.8
-EXTRA_DIST = $(man_MANS) b10-auth.xml auth.pre.in
+EXTRA_DIST = $(man_MANS) b10-auth.xml
 
 if ENABLE_MAN
 
