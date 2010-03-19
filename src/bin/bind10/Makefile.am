@@ -8,7 +8,7 @@ bind10_DATA = bob.spec
 EXTRA_DIST = bob.spec
 
 man_MANS = bind10.8
-EXTRA_DIST += $(man_MANS) bind10.xml
+EXTRA_DIST += $(man_MANS) bind10.xml tests/bind10_test.py
 
 if ENABLE_MAN
 

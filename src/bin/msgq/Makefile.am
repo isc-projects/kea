@@ -5,7 +5,7 @@ pkglibexec_SCRIPTS = msgq
 CLEANFILES = msgq
 
 man_MANS = msgq.8
-EXTRA_DIST = $(man_MANS) msgq.xml
+EXTRA_DIST = $(man_MANS) msgq.xml msgq_test.py
 
 if ENABLE_MAN
 
