@@ -14,8 +14,14 @@
       <year>2010</year><holder>Internet Systems Consortium, Inc.</holder>
     </copyright>
 
-<!--    <abstract><para>This is the definitive reference and user's guide for BIND 10</para></abstract> -->
-
+    <abstract>
+      <para>This is the reference guide for BIND 10.</para>
+      <para>
+        The most up-to-date version of this document, along with other documents
+        for BIND 10, can be found at
+        <ulink url="http://bind10.isc.org/docs"/>.
+      </para>
+    </abstract>
   </bookinfo>
 
   <chapter id="intro">
@@ -672,7 +678,6 @@ implementation in BIND 10.
         <quote>Command Channel</quote>.
         Processes intercommunicate by sending messages on the command
         channel.
-        messages and are programmed to handle received messages.
         Example messages include shutdown, get configurations, and set
         configurations.
         This Command Channel is not used for DNS message passing.
@@ -703,16 +708,17 @@ Unix domain sockets
     <title>Configuration manager</title>
 
       <para>
-   The configuration manager, <command>b10-cfgmgr</command>,
-   handles all BIND 10 system configuration.  It provides
-   persistent storage for configuration, and notifies running
-   modules of configuration changes.</para>
+         The configuration manager, <command>b10-cfgmgr</command>,
+         handles all BIND 10 system configuration.  It provides
+         persistent storage for configuration, and notifies running
+         modules of configuration changes.
+      </para>
 
       <para>
-  The <command>b10-auth</command> and <command>b10-xfrin</command>
-  daemons and other components receive their configurations
-  from the configuration manager over the <command>msgq</command>
-  command channel.
+        The <command>b10-auth</command> and <command>b10-xfrin</command>
+        daemons and other components receive their configurations
+        from the configuration manager over the <command>msgq</command>
+        command channel.
       </para>
 
       <para>The administrator doesn't connect to it directly, but
@@ -722,19 +728,21 @@ Unix domain sockets
       </para>
 
 <!-- TODO -->
-      <note><para>
-  The Y1 prototype release only provides the
-  <command>bindctl</command> as a user interface to
-        <command>b10-cmdctl</command>.
-        Upcoming releases will provide another interactive command-line
-        interface and a web-based interface.
-      </para></note>
+      <note>
+        <para>
+          The Y1 prototype release only provides the
+          <command>bindctl</command> as a user interface to
+          <command>b10-cmdctl</command>.
+          Upcoming releases will provide another interactive command-line
+          interface and a web-based interface.
+        </para>
+      </note>
 
       <para>
         The <command>b10-cfgmgr</command> daemon can send all
         specifications and all current settings to the
-  <command>bindctl</command> client (via
-  <command>b10-cmdctl</command>).
+        <command>bindctl</command> client (via
+        <command>b10-cmdctl</command>).
       </para>
 
       <para>
@@ -759,10 +767,10 @@ config changes are actually commands to cfgmgr
         (The full path is what was defined at build configure time for
         <option>--localstatedir</option>.
         The default is <filename>/usr/local/var/</filename>.)
-  The format is loosely based on JSON and is directly parseable
-  python, but this may change in a future version.
-  This configuration data file is not manually edited by the
-  administrator.
+        The format is loosely based on JSON and is directly parseable
+        python, but this may change in a future version.
+        This configuration data file is not manually edited by the
+        administrator.
       </para>
 
 <!--

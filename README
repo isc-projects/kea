@@ -46,7 +46,7 @@ Simple build instructions:
   ./configure
   make
 
-If building from Subversion repo, run:
+If building from Subversion repository, run:
 
   autoreconf --install
 
@@ -79,7 +79,23 @@ Install with:
 
   make install
 
+TESTS
+
+The tests use the googletests framework for C++. It is available
+from http://code.google.com/p/googletest/.  To enable the tests,
+configure BIND 10 with: 
+
+  ./configure --with-gtest
+
+Then run "make check" to run these tests.
+
 TEST COVERAGE
+
+The code coverage report for the C++ tests uses LCOV. It is available
+from http://ltp.sourceforge.net/. To generate your own HTML report,
+first configure BIND 10 with:
+ 
+  ./configure --with-lcov
 
 Doing code coverage tests:
 
