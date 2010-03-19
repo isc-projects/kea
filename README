@@ -83,23 +83,19 @@ TESTS
 
 The tests use the googletests framework for C++. It is available
 from http://code.google.com/p/googletest/.  To enable the tests,
-configure BIND 10 with --with-gtest to point to the base path that
-contains the gtest include and lib directories, for example:
+configure BIND 10 with: 
 
-  ./configure --with-gtest=/usr/pkg/
+  ./configure --with-gtest
 
 Then run "make check" to run these tests.
-
-./configure CXX=/usr/pkg/gcc44/bin/g++ --with-lcov=/usr/pkg/bin/lcov --prefix=/home/reed/opt/bind10 --with-gtest=/usr/pkg/ LDFLAGS="-Wl,-R/usr/pkg/lib -lpthread" --enable-man --with-boostlib
 
 TEST COVERAGE
 
 The code coverage report for the C++ tests uses LCOV. It is available
 from http://ltp.sourceforge.net/. To generate your own HTML report,
-configure BIND 10 with the --with-lcov switch to point to the lcov
-executable, for example:
-
-  ./configure --with-lcov=/usr/pkg/bin/lcov
+first configure BIND 10 with:
+ 
+  ./configure --with-lcov
 
 Doing code coverage tests:
 
