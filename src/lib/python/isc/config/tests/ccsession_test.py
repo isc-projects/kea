@@ -213,7 +213,7 @@ class TestModuleCCSession(unittest.TestCase):
     def test_get_session(self):
         fake_session = FakeModuleCCSession()
         mccs = self.create_session("spec1.spec", None, None, fake_session)
-        self.assertEqual(fake_session, mccs.get_session())
+        self.assertEqual(fake_session, mccs._session)
 
     def test_close(self):
         fake_session = FakeModuleCCSession()
