@@ -163,6 +163,9 @@ class BindCmdInterpreter(Cmd):
                         cvsfilepath += os.sep + '.bind10' + os.sep
                         if not os.path.exists(cvsfilepath):
                                 os.mkdir(cvsfilepath, 0o700)
+                    else:
+                        print("Cannot determine location of $HOME. Not storing default user")
+                        return True
                     cvsfilepath += 'default_user.csv'
                     csvfile = open(cvsfilepath, 'w')
                     os.chmod(cvsfilepath, 0o600)
