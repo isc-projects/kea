@@ -256,6 +256,12 @@ AC_ARG_ENABLE(man, [AC_HELP_STRING([--enable-man],
 
 AM_CONDITIONAL(ENABLE_MAN, test x$enable_man != xno)
 
+AC_ARG_ENABLE(configuration-install,
+  [AC_HELP_STRING([--enable-configuration-install],
+  [install configuration [default=yes]])], enable_configuration_install=$enableval, enable_configuration_install=no)
+
+AM_CONDITIONAL(ENABLE_CONFIGURATION_INSTALL, test x$enable_configuration_install != xno)
+
 AC_CONFIG_FILES([Makefile
                  src/Makefile
                  src/bin/Makefile
