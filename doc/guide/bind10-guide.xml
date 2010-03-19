@@ -1143,7 +1143,7 @@ This may be a temporary setting until then.
 
       <para>
         If you reload a zone already existing in the database,
-        all records from that prior zone disappear and a while new set
+        all records from that prior zone disappear and a whole new set
         appears.
       </para>
 
