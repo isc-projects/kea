@@ -9,6 +9,7 @@ pythondir = $(pyexecdir)/bindctl
 bindctldir = $(DESTDIR)$(pkgdatadir)
 bindctl_DATA = bindctl.pem
 EXTRA_DIST += bindctl.pem
+EXTRA_DIST += unittest/bindctl_test.py
 
 CLEANFILES = bindctl
 
