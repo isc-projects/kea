@@ -255,6 +255,8 @@ class BoB:
         # by this one
         # sleep until b10-cfgmgr is fully up and running, this is a good place
         # to have a (short) timeout on synchronized groupsend/receive
+        # TODO: replace the sleep by a listen for ConfigManager started
+        # message
         time.sleep(1)
         if self.verbose:
             print("[XX] starting ccsession")
