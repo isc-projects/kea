@@ -35,7 +35,7 @@ b10-cmdctl: cmdctl.py
 	$(SED) "s|@@PYTHONPATH@@|@pyexecdir@|" cmdctl.py >$@
 	chmod a+x $@
 
-if ENABLE_CONFIGURATION_INSTALL
+if INSTALL_CONFIGURATIONS
 
 # TODO: permissions handled later
 install-data-local:

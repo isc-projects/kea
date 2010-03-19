@@ -25,7 +25,7 @@ bindctl: bindctl-source.py
 	       -e "s|@@LIBEXECDIR@@|$(pkglibexecdir)|" bindctl-source.py >$@
 	chmod a+x $@
 
-if ENABLE_CONFIGURATION_INSTALL
+if INSTALL_CONFIGURATIONS
 
 # TODO: permissions handled later
 install-data-local:
