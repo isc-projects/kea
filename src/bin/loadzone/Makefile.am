@@ -22,7 +22,7 @@ install-data-local:
 	$(mkinstalldirs) $(DESTDIR)/@localstatedir@/@PACKAGE@
 # TODO: permissions handled later
 
-EXTRA_DIST =  testdata/README
+EXTRA_DIST += testdata/README
 EXTRA_DIST += testdata/dsset-subzone.example.com.
 EXTRA_DIST += testdata/example.com
 EXTRA_DIST += testdata/example.com.signed
