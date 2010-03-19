@@ -4,3 +4,6 @@ To build "configure" file:
 To then build from source:
     ./configure
     make
+
+We recommend using the Boost libraries as it provides a safer TCP
+implementation in BIND 10.

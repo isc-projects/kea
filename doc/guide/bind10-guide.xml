@@ -264,6 +264,11 @@ var/
           provided using alternative code.
         </para>
 
+<note><simpara>
+We recommend using the Boost libraries as it provides a safer TCP
+implementation in BIND 10. 
+</simpara></note>
+
         <para>
           Building BIND 10 also requires a C++ compiler and
           standard development headers.
