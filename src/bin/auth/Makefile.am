@@ -12,7 +12,7 @@ pkglibexecdir = $(libexecdir)/@PACKAGE@
 CLEANFILES = *.gcno *.gcda auth.pre auth.spec
 
 man_MANS = b10-auth.8
-EXTRA_DIST = $(man_MANS) b10-auth.xml auth.spec
+EXTRA_DIST = $(man_MANS) b10-auth.xml
 
 if ENABLE_MAN
 
@@ -43,6 +43,4 @@ endif
 # and can't use @datadir@ because doesn't expand default ${prefix}
 b10_authdir = $(DESTDIR)$(pkgdatadir)
 b10_auth_DATA = auth.spec
-
-EXTRA_DIST += auth.spec
 
