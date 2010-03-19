@@ -5,7 +5,7 @@ pkglibexec_SCRIPTS = b10-xfrin
 b10_xfrindir = $(DESTDIR)$(pkgdatadir)
 b10_xfrin_DATA = xfrin.spec
 
-EXTRA_DIST = xfrin.spec
+EXTRA_DIST = xfrin.pre.in
 
 CLEANFILES = b10-xfrin xfrin.pre xfrin.spec
 
