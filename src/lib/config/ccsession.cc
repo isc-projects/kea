@@ -235,15 +235,10 @@ ModuleCCSession::init(
 {
     module_specification_ = readModuleSpecification(spec_file_name);
     setModuleSpec(module_specification_);
-    sleep(1);
 
     module_name_ = module_specification_.getFullSpec()->get("module_name")->stringValue();
     config_handler_ = config_handler;
     command_handler_ = command_handler;
-
-    // todo: workaround, let boss wait until msgq is started
-    // and remove sleep here
-    sleep(1);
 
     ElementPtr answer, env;
 
