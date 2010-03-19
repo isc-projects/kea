@@ -84,10 +84,7 @@ public:
                             isc::dns::RRsetList& target) const;
 
     Result init();
-    // Static data source is "configuration less", so the \c config parameter
-    // is intentionally ignored.
-    Result init(const isc::data::ElementPtr config UNUSED_PARAM)
-    { return init(); };
+    Result init(const isc::data::ElementPtr config);
     Result close();
 private:
     StaticDataSrcImpl* impl_;

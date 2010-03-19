@@ -17,8 +17,6 @@
 #ifndef _ISC_DATA_H
 #define _ISC_DATA_H 1
 
-#include "config.h"
-
 #include <string>
 #include <vector>
 #include <map>
@@ -157,14 +155,12 @@ public:
     /// data to the given reference and returning true
     ///
     //@{
-    virtual bool getValue(int& t UNUSED_PARAM) { return false; };
-    virtual bool getValue(double& t UNUSED_PARAM) { return false; };
-    virtual bool getValue(bool& t UNUSED_PARAM) { return false; };
-    virtual bool getValue(std::string& t UNUSED_PARAM) { return false; };
-    virtual bool getValue(std::vector<ElementPtr>& t UNUSED_PARAM)
-    { return false; };
-    virtual bool getValue(std::map<std::string, ElementPtr>& t UNUSED_PARAM)
-    { return false; };
+    virtual bool getValue(int& t);
+    virtual bool getValue(double& t);
+    virtual bool getValue(bool& t);
+    virtual bool getValue(std::string& t);
+    virtual bool getValue(std::vector<ElementPtr>& t);
+    virtual bool getValue(std::map<std::string, ElementPtr>& t);
     //@}
     ///
     /// \name Exception-safe setters.
@@ -174,15 +170,12 @@ public:
     /// is of the correct type
     ///
     //@{
-    virtual bool setValue(const int v UNUSED_PARAM) { return false; };
-    virtual bool setValue(const double v UNUSED_PARAM) { return false; };
-    virtual bool setValue(const bool t UNUSED_PARAM) { return false; };
-    virtual bool setValue(const std::string& v UNUSED_PARAM) { return false; };
-    virtual bool setValue(const std::vector<ElementPtr>& v UNUSED_PARAM)
-    { return false; };
-    virtual bool setValue(const std::map<std::string,
-                          ElementPtr>& v UNUSED_PARAM)
-    { return false; };
+    virtual bool setValue(const int v);
+    virtual bool setValue(const double v);
+    virtual bool setValue(const bool t);
+    virtual bool setValue(const std::string& v);
+    virtual bool setValue(const std::vector<ElementPtr>& v);
+    virtual bool setValue(const std::map<std::string, ElementPtr>& v);
     //@}
 
 
@@ -197,26 +190,21 @@ public:
     /// Returns the ElementPtr at the given index. If the index is out
     /// of bounds, this function throws an std::out_of_range exception.
     /// \param i The position of the ElementPtr to return
-    virtual ElementPtr get(const int i UNUSED_PARAM)
-    { isc_throw(TypeError, "get(int) called on a non-list Element"); };
+    virtual ElementPtr get(const int i);
     /// Sets the ElementPtr at the given index. If the index is out
     /// of bounds, this function throws an std::out_of_range exception.
     /// \param i The position of the ElementPtr to set
     /// \param element The ElementPtr to set at the position
-    virtual void set(const size_t i UNUSED_PARAM,
-                     ElementPtr element UNUSED_PARAM)
-    { isc_throw(TypeError, "set(int, element) called on a non-list Element"); };
+    virtual void set(const size_t i, ElementPtr element);
     /// Adds an ElementPtr to the list
     /// \param element The ElementPtr to add
-    virtual void add(ElementPtr element UNUSED_PARAM)
-    { isc_throw(TypeError, "add() called on a non-list Element"); };
+    virtual void add(ElementPtr element);
     /// Removes the element at the given position. If the index is out
     /// of nothing happens.
     /// \param i The index of the element to remove.
-    virtual void remove(const int i UNUSED_PARAM)
-    { isc_throw(TypeError, "remove(int) called on a non-list Element"); };
+    virtual void remove(const int i);
     /// Returns the number of elements in the list.
-    virtual size_t size() { isc_throw(TypeError, "size() called on a non-list Element"); };
+    virtual size_t size();
     //@}
     
     /// \name MapElement functions
@@ -227,22 +215,17 @@ public:
     /// Returns the ElementPtr at the given key
     /// \param name The key of the Element to return
     /// \return The ElementPtr at the given key
-    virtual ElementPtr get(const std::string& name UNUSED_PARAM)
-    { isc_throw(TypeError, "get(string) called on a non-map Element"); } ;
+    virtual ElementPtr get(const std::string& name);
     /// Sets the ElementPtr at the given key
     /// \param name The key of the Element to set
-    virtual void set(const std::string& name UNUSED_PARAM,
-                     ElementPtr element UNUSED_PARAM)
-    { isc_throw(TypeError, "set(name, element) called on a non-map Element"); };
+    virtual void set(const std::string& name, ElementPtr element);
     /// Remove the ElementPtr at the given key
     /// \param name The key of the Element to remove
-    virtual void remove(const std::string& name UNUSED_PARAM)
-    { isc_throw(TypeError, "remove(string) called on a non-map Element"); };
+    virtual void remove(const std::string& name);
     /// Checks if there is data at the given key
     /// \param name The key of the Element to remove
     /// \return true if there is data at the key, false if not.
-    virtual bool contains(const std::string& name UNUSED_PARAM)
-    { isc_throw(TypeError, "contains(string) called on a non-map Element"); }
+    virtual bool contains(const std::string& name);
     /// Recursively finds any data at the given identifier. The
     /// identifier is a /-separated list of names of nested maps, with
     /// the last name being the leaf that is returned.
@@ -256,15 +239,12 @@ public:
     /// \return The ElementPtr at the given identifier. Returns a
     /// null ElementPtr if it is not found, which can be checked with
     /// Element::is_null(ElementPtr e).
-    virtual ElementPtr find(const std::string& identifier UNUSED_PARAM)
-    { isc_throw(TypeError, "find(string) called on a non-map Element"); };
+    virtual ElementPtr find(const std::string& identifier);
     /// See \c Element::find()
     /// \param identifier The identifier of the element to find
     /// \param t Reference to store the resulting ElementPtr, if found.
     /// \return true if the element was found, false if not.
-    virtual bool find(const std::string& identifier UNUSED_PARAM,
-                      ElementPtr& t UNUSED_PARAM)
-    { return false; };
+    virtual bool find(const std::string& identifier, ElementPtr& t);
     //@}
 
     /// \name Factory functions
