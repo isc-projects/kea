@@ -14,8 +14,14 @@
       <year>2010</year><holder>Internet Systems Consortium, Inc.</holder>
     </copyright>
 
-<!--    <abstract><para>This is the definitive reference and user's guide for BIND 10</para></abstract> -->
-
+    <abstract>
+      <para>This is the reference guide for BIND 10.</para>
+      <para>
+        The most up-to-date version of this document, along with other documents
+        for BIND 10, can be found at
+        <ulink url="http://bind10.isc.org/docs"/>.
+      </para>
+    </abstract>
   </bookinfo>
 
   <chapter id="intro">
