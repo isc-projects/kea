@@ -167,8 +167,8 @@
       <title>Managing BIND 10</title>
       
       <para>
-        Once BIND 10 is running, two commands are used to interact directly with
-        the system:
+	Once BIND 10 is running, a few commands are used to interact
+	directly with the system:
         <itemizedlist>
           <listitem>
             <simpara>
