@@ -248,7 +248,7 @@ PKG_CHECK_MODULES(SQLITE, sqlite3 >= 3.3.9)
 
 # Check for headers from required devel kits.
 # boost/shared_ptr.hpp is in ext in svn but not in tarball.
-AC_CHECK_HEADERS([boost/shared_ptr.hpp],,
+AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp],,
   AC_MSG_ERROR([Missing required header files.]))
 
 AC_ARG_ENABLE(man, [AC_HELP_STRING([--enable-man],
