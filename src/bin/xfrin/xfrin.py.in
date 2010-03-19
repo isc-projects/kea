@@ -372,14 +372,20 @@ class Xfrin():
         return answer
 
     def _parse_cmd_params(self, args):
-        zone_name = args['zone_name']
-        master = args['master']
+        zone_name = args.get('zone_name')
+        if not zone_name:
+            raise XfrinException('zone name should be provided')
+
+        master = args.get('master')
+        if not master:
+            raise XfrinException('master address should be provided')
+
         check_addr(master)
-        port = int(args.get('port'))
-        if port:
+        port = 53
+        port_str = args.get('port')
+        if port_str:
+            port = int(port_str)
             check_port(port)
-        else:
-            port = 53
 
         db_file = args.get('db_file')
         if not db_file:
