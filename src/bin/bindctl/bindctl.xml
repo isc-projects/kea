@@ -21,7 +21,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>January 19, 2010</date>
+    <date>March 18, 2010</date>
   </refentryinfo>
 
   <refmeta>
@@ -66,6 +66,13 @@
       The
 <citerefentry><refentrytitle>b10-cfgmgr</refentrytitle><manvolnum>8</manvolnum></citerefentry>
       daemon stores the configurations and defines the commands.
+    </para>
+
+    <para>
+      The tool will authenticate using a username and password.
+      On the first successful login, it will save the details to
+      <filename>~/.bind10/default_user.csv</filename>
+      which will be used for later uses of <command>bindctl</command>.
     </para>
 
     <para>
