@@ -14,6 +14,8 @@
 
 // $Id$
 
+#include "config.h"
+
 #include "data.h"
 
 #include <cstdio>
@@ -24,8 +26,8 @@
 #include <boost/algorithm/string.hpp> // for iequals
 
 using namespace std;
-using namespace isc::data;
 
+namespace {
 const unsigned char PROTOCOL_VERSION[4] = { 0x53, 0x6b, 0x61, 0x6e };
 
 const unsigned char ITEM_BLOB = 0x01;
@@ -42,9 +44,137 @@ const unsigned char ITEM_LENGTH_32   = 0x00;
 const unsigned char ITEM_LENGTH_16   = 0x10;
 const unsigned char ITEM_LENGTH_8    = 0x20;
 const unsigned char ITEM_LENGTH_MASK = 0x30;
+}
 
 namespace isc {
 namespace data {
+
+//
+// The following methods are effectively empty, and their parameters are
+// unused.  To silence compilers that warn unused function parameters,
+// we specify a (compiler dependent) special keyword when available.
+// It's defined in config.h, and to avoid including this header file from
+// installed files we define the methods here.
+//
+bool
+Element::getValue(int& t UNUSED_PARAM) {
+    return false;
+}
+
+bool
+Element::getValue(double& t UNUSED_PARAM) {
+    return false;
+}
+
+bool
+Element::getValue(bool& t UNUSED_PARAM) {
+    return false;
+}
+
+bool
+Element::getValue(std::string& t UNUSED_PARAM) {
+    return false;
+}
+
+bool
+Element::getValue(std::vector<ElementPtr>& t UNUSED_PARAM) {
+    return false;
+}
+
+bool
+Element::getValue(std::map<std::string, ElementPtr>& t UNUSED_PARAM) {
+    return false;
+}
+
+bool
+Element::setValue(const int v UNUSED_PARAM) {
+    return false;
+}
+
+bool
+Element::setValue(const double v UNUSED_PARAM) {
+    return false;
+}
+
+bool
+Element::setValue(const bool t UNUSED_PARAM) {
+    return false;
+}
+
+bool
+Element::setValue(const std::string& v UNUSED_PARAM) {
+    return false;
+}
+
+bool
+Element::setValue(const std::vector<ElementPtr>& v UNUSED_PARAM) {
+    return false;
+}
+
+bool
+Element::setValue(const std::map<std::string, ElementPtr>& v UNUSED_PARAM)
+{
+    return false;
+}
+
+ElementPtr
+Element::get(const int i UNUSED_PARAM) {
+    isc_throw(TypeError, "get(int) called on a non-list Element");
+}
+
+void
+Element::set(const size_t i UNUSED_PARAM, ElementPtr element UNUSED_PARAM) {
+    isc_throw(TypeError, "set(int, element) called on a non-list Element");
+}
+
+void
+Element::add(ElementPtr element UNUSED_PARAM) {
+    isc_throw(TypeError, "add() called on a non-list Element");
+}
+
+void
+Element::remove(const int i UNUSED_PARAM) {
+    isc_throw(TypeError, "remove(int) called on a non-list Element");
+}
+
+size_t
+Element::size() {
+    isc_throw(TypeError, "size() called on a non-list Element");
+}
+
+ElementPtr
+Element::get(const std::string& name UNUSED_PARAM) {
+    isc_throw(TypeError, "get(string) called on a non-map Element");
+}
+
+void
+Element::set(const std::string& name UNUSED_PARAM,
+             ElementPtr element UNUSED_PARAM)
+{
+    isc_throw(TypeError, "set(name, element) called on a non-map Element");
+}
+
+void
+Element::remove(const std::string& name UNUSED_PARAM) {
+    isc_throw(TypeError, "remove(string) called on a non-map Element");
+}
+
+bool
+Element::contains(const std::string& name UNUSED_PARAM) {
+    isc_throw(TypeError, "contains(string) called on a non-map Element");
+}
+
+ElementPtr
+Element::find(const std::string& identifier UNUSED_PARAM) {
+    isc_throw(TypeError, "find(string) called on a non-map Element");
+}
+
+bool
+Element::find(const std::string& identifier UNUSED_PARAM,
+              ElementPtr& t UNUSED_PARAM)
+{
+    return false;
+}
 
 namespace {
 inline void

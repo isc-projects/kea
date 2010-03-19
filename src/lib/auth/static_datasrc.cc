@@ -251,14 +251,19 @@ StaticDataSrc::findCoveringNSEC3(const Name& zonename UNUSED_PARAM,
 }
 
 DataSrc::Result
-StaticDataSrc::init()
-{
+StaticDataSrc::init() {
     return (SUCCESS);
 }
 
+// Static data source is "configuration less", so the \c config parameter
+// is intentionally ignored.
 DataSrc::Result
-StaticDataSrc::close()
-{
+StaticDataSrc::init(const isc::data::ElementPtr config UNUSED_PARAM) {
+    return init();
+}
+
+DataSrc::Result
+StaticDataSrc::close() {
     return (SUCCESS);
 }
 

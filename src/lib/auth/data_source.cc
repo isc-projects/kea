@@ -14,6 +14,8 @@
 
 // $Id$
 
+#include "config.h"
+
 #include <cassert>
 #include <iomanip>
 #include <iostream>
@@ -893,29 +895,90 @@ Nsec3Param::getHash(const Name& name) const {
     uint8_t digest[SHA1_HASHSIZE];
     uint8_t* input = (uint8_t*) buf.getData();
     size_t inlength = buf.getLength();
-    uint8_t saltlen = salt_.size();
-    uint8_t salt[saltlen];
-    for (int i = 0; i < saltlen; ++i) {
-        salt[i] = salt_[i];
-    }
+    const uint8_t saltlen = salt_.size();
 
     int n = 0;
     SHA1Context sha;
     do {
         SHA1Reset(&sha);
         SHA1Input(&sha, input, inlength);
-        SHA1Input(&sha, salt, saltlen);
+        SHA1Input(&sha, &salt_[0], saltlen);
         SHA1Result(&sha, digest);
         input = digest;
         inlength = SHA1_HASHSIZE;
     } while (n++ < iterations_);
 
-    vector<uint8_t> result;
-    for (int i = 0; i < SHA1_HASHSIZE; ++i) {
-        result.push_back(digest[i]);
-    }
+    return (encodeBase32(vector<uint8_t>(digest, digest + SHA1_HASHSIZE)));
+}
 
-    return (encodeBase32(result));
+//
+// The following methods are effectively empty, and their parameters are
+// unused.  To silence compilers that warn unused function parameters,
+// we specify a (compiler dependent) special keyword when available.
+// It's defined in config.h, and to avoid including this header file from
+// installed files we define the methods here.
+//
+DataSrc::Result
+DataSrc::init(const isc::data::ElementPtr config UNUSED_PARAM) {
+    return NOT_IMPLEMENTED;
+}
+
+DataSrc::Result
+MetaDataSrc::findRRset(const isc::dns::Name& qname UNUSED_PARAM,
+                       const isc::dns::RRClass& qclass UNUSED_PARAM,
+                       const isc::dns::RRType& qtype UNUSED_PARAM,
+                       isc::dns::RRsetList& target UNUSED_PARAM,
+                       uint32_t& flags UNUSED_PARAM,
+                       const isc::dns::Name* zonename UNUSED_PARAM) const
+{
+    return (NOT_IMPLEMENTED);
+}
+
+DataSrc::Result
+MetaDataSrc::findExactRRset(const isc::dns::Name& qname UNUSED_PARAM,
+                            const isc::dns::RRClass& qclass UNUSED_PARAM,
+                            const isc::dns::RRType& qtype UNUSED_PARAM,
+                            isc::dns::RRsetList& target UNUSED_PARAM,
+                            uint32_t& flags UNUSED_PARAM,
+                            const isc::dns::Name* zonename UNUSED_PARAM) const
+{
+    return (NOT_IMPLEMENTED);
+}
+
+DataSrc::Result
+MetaDataSrc::findAddrs(const isc::dns::Name& qname UNUSED_PARAM,
+                       const isc::dns::RRClass& qclass UNUSED_PARAM,
+                       isc::dns::RRsetList& target UNUSED_PARAM,
+                       uint32_t& flags UNUSED_PARAM,
+                       const isc::dns::Name* zonename UNUSED_PARAM) const
+{
+    return (NOT_IMPLEMENTED);
+}
+
+DataSrc::Result
+MetaDataSrc::findReferral(const isc::dns::Name& qname UNUSED_PARAM,
+                          const isc::dns::RRClass& qclass UNUSED_PARAM,
+                          isc::dns::RRsetList& target UNUSED_PARAM,
+                          uint32_t& flags UNUSED_PARAM,
+                          const isc::dns::Name* zonename UNUSED_PARAM) const
+{
+    return (NOT_IMPLEMENTED);
+}
+
+DataSrc::Result
+MetaDataSrc::findPreviousName(const isc::dns::Name& qname UNUSED_PARAM,
+                              isc::dns::Name& target UNUSED_PARAM,
+                              const isc::dns::Name* zonename UNUSED_PARAM) const
+{
+    return (NOT_IMPLEMENTED);
+}
+
+DataSrc::Result
+MetaDataSrc::findCoveringNSEC3(const isc::dns::Name& zonename UNUSED_PARAM,
+                               std::string& hash UNUSED_PARAM,
+                               isc::dns::RRsetList& target UNUSED_PARAM) const
+{
+    return (NOT_IMPLEMENTED);
 }
 
 }
