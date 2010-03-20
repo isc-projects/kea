@@ -165,8 +165,8 @@ AC_SUBST(BOOST_INCLUDES)
 AC_ARG_WITH([boost-lib],
 AC_HELP_STRING([--with-boost-lib=PATH],
   [specify exact directory for Boost libraries]),
-  [boostlib_path="$withval"], [boostlib_path="auto"])
-if test "$boostlib_path" != "no"; then
+  [boostlib_path="$withval"])
+if test "X$boostlib_path" != "X"; then
 	BOOST_LDFLAGS="-L$boostlib_path"
 fi
 AC_SUBST(BOOST_LDFLAGS)
