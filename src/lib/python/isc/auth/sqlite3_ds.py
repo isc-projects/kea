@@ -172,3 +172,77 @@ def load(dbfile, zone, reader):
 
     cur.close()
     conn.close()
+
+
+#########################################################################
+# temp sqlite3 datasource backend for axfr in. The code should be refectored 
+# later.
+#########################################################################
+class AXFRInDB:
+    def __init__(self, dbfile, zone_name):
+        self._dbfile = dbfile
+        self._zone_name = zone_name
+        self._old_zone_id = None
+        self._new_zone_id = None
+
+    def prepare_axfrin(self):
+        self._conn, self._cur = open(self._dbfile)
+        self._old_zone_id = get_zoneid(self._zone_name, self._cur)
+
+        temp = str(random.randrange(100000))
+        self._cur.execute("INSERT INTO zones (name, rdclass) VALUES (?, 'IN')", [temp])
+        self._new_zone_id = self._cur.lastrowid
+
+
+    def insert_axfr_record(self, rrsets):
+        '''insert zone records to sqlite3 database'''
+
+        try:
+            for name, ttl, rdclass, rdtype, rdata in rrsets:
+                sigtype = ''
+                if rdtype.lower() == 'rrsig':
+                    sigtype = rdata.split()[0]
+
+                if rdtype.lower() == 'nsec3' or sigtype.lower() == 'nsec3':
+                    hash = name.split('.')[0]
+                    self._cur.execute("""INSERT INTO nsec3
+                                   (zone_id, hash, owner, ttl, rdtype, rdata)
+                                   VALUES (?, ?, ?, ?, ?, ?)""",
+                                [self._new_zone_id, hash, name, ttl, rdtype, rdata])
+                elif rdtype.lower() == 'rrsig':
+                    self._cur.execute("""INSERT INTO records
+                                   (zone_id, name, rname, ttl,
+                                    rdtype, sigtype, rdata)
+                                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                                [self._new_zone_id, name, reverse_name(name), ttl,
+                                rdtype, sigtype, rdata])
+                else:
+                    self._cur.execute("""INSERT INTO records
+                                   (zone_id, name, rname, ttl, rdtype, rdata)
+                                   VALUES (?, ?, ?, ?, ?, ?)""",
+                                [self._new_zone_id, name, reverse_name(name), ttl,
+                                rdtype, rdata])
+        except Exception as e:
+            fail = "Error while loading " + self._zone_name + ": " + e.args[0]
+            raise Sqlite3DSError(fail)
+
+
+    def finish_axfrin(self):
+        '''commit changes and close sqlite3 database'''
+
+        if self._old_zone_id:
+            self._cur.execute("DELETE FROM zones WHERE id=?", [self._old_zone_id])
+            self._cur.execute("UPDATE zones SET name=? WHERE id=?", [self._zone_name, self._new_zone_id])
+            self._conn.commit()
+            self._cur.execute("DELETE FROM records WHERE zone_id=?", [self._old_zone_id])
+            self._cur.execute("DELETE FROM nsec3 WHERE zone_id=?", [self._old_zone_id])
+            self._conn.commit()
+        else:
+            self._cur.execute("UPDATE zones SET name=? WHERE id=?", [self._zone_name, self._new_zone_id])
+            self._conn.commit()
+
+        self._cur.close()
+        self._conn.close()
+
+
+
