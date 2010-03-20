@@ -273,7 +273,7 @@ def process_xfrin(xfrin_recorder, zone_name, db_file,
                            master_addr, int(port), check_soa, verbose)
         conn.do_xfrin(False)
     except Exception as e:
-        log_error(e)
+        log_error(str(e))
 
     xfrin_recorder.decrement(zone_name)
 
@@ -464,10 +464,10 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         log_error("exit b10-xfrin")
     except isc.cc.session.SessionError as e:
-        log_error(e)
+        log_error(str(e))
         log_error('Error happened! is the command channel daemon running?')
     except Exception as e:
-        log_error(e)
+        log_error(str(e))
 
     if xfrind:
         xfrind.shutdown()
