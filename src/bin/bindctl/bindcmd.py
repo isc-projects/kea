@@ -47,7 +47,7 @@ try:
     import readline
     my_readline = readline.get_line_buffer
 except ImportError:
-    my_readline = sys.stding.readline
+    my_readline = sys.stdin.readline
 
 
 CONST_BINDCTL_HELP = """
