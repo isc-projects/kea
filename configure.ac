@@ -44,6 +44,24 @@ else
 	AC_SUBST(pkgpyexecdir)
 fi
 
+PYTHON_INCLUDES=`${PYTHON}-config --includes`
+AC_SUBST(PYTHON_INCLUDES)
+for flag in `${PYTHON}-config --ldflags`; do
+	PYTHON_LDFLAGS="$PYTHON_LDFLAGS `echo $flag | sed -ne 's/^\(\-L.*\)$/\1/p'`"
+done
+AC_SUBST(PYTHON_LDFLAGS)
+
+# Check for python library (not absolutely mandatory, but needed for
+# Boost.Python when we use it.  See below.)
+LDFLAGS_SAVED="$LDFLAGS"
+LDFLAGS="$LDFLAGS $PYTHON_LDFLAGS"
+python_bin="python${PYTHON_VERSION}"
+AC_CHECK_LIB($python_bin, main, python_lib=$python_bin, python_lib=no)
+if test $python_lib != "no"; then
+	PYTHON_LIB="-l$python_lib"
+fi
+AC_SUBST(PYTHON_LIB)
+
 # TODO: check for _sqlite3.py module
 
 # default compiler warning settings
@@ -139,25 +157,29 @@ AC_ARG_WITH([boost-include],
     [specify exact directory for Boost headers]),
     [boost_include_path="$withval"])
 if test "${boost_include_path}" ; then
-  CPPFLAGS="$CPPFLAGS -I${boost_include_path}"
-else
-# abs_top_srcdir not defined yet
-# so this is only useful to check but not to use later
-  CPPFLAGS="$CPPFLAGS -Iext"
+	BOOST_INCLUDES="-I${boost_include_path}"
+	CPPFLAGS="$CPPFLAGS $BOOST_INCLUDES"
 fi
+AC_SUBST(BOOST_INCLUDES)
+
+AC_ARG_WITH([boost-lib],
+AC_HELP_STRING([--with-boost-lib=PATH],
+  [specify exact directory for Boost libraries]),
+  [boostlib_path="$withval"], [boostlib_path="auto"])
+if test "$boostlib_path" != "no"; then
+	BOOST_LDFLAGS="-L$boostlib_path"
+fi
+AC_SUBST(BOOST_LDFLAGS)
 
 # Check availability of the Boost System library
 
 AC_MSG_CHECKING([for boost::system library])
-AC_ARG_WITH([boostlib],
-AC_HELP_STRING([--with-boostlib=PATH],
-  [specify a path to boost libraries if it is not automatically found, or "no" to disable it]),
-  [boostlib_path="$withval"], [boostlib_path="auto"])
-if test "$boostlib_path" != "no" -a "$boostlib_path" != "auto" -a "$boostlib_path" != "yes"; then
-	BOOST_LDFLAGS="-L$boostlib_path"
-fi
+AC_ARG_WITH([boost-system],
+AC_HELP_STRING([--with-boost-system],
+  [specify whether to use the boost system library]),
+  [with_boost_system="$withval"], [with_boost_system="auto"])
 
-if test "$boostlib_path" != "no"; then
+if test "$with_boost_system" != "no"; then
 	LDFLAGS_SAVED="$LDFLAGS"
 	LIBS_SAVED="$LIBS"
 	CPPFLAGS_SAVED="$CPPFLAGS"
@@ -185,13 +207,63 @@ fi
 
 if test "X${BOOST_SYSTEM_LIB}" = X; then
 	AC_MSG_RESULT(no)
+	if test "$with_boost_system" = "yes"; then
+	   AC_MSG_ERROR([boost system library is requested but not found])
+	fi
 else
-	AC_DEFINE(HAVE_BOOSTLIB, 1, Define to 1 if boost libraries are available)
+	AC_DEFINE(HAVE_BOOST_SYSTEM, 1, Define to 1 if boost system library is available)
 fi
 
-AM_CONDITIONAL(HAVE_BOOSTLIB, test "X${BOOST_SYSTEM_LIB}" != X)
-AC_SUBST(BOOST_LDFLAGS)
+AM_CONDITIONAL(HAVE_BOOST_SYSTEM, test "X${BOOST_SYSTEM_LIB}" != X)
 AC_SUBST(BOOST_SYSTEM_LIB)
+
+# Check availability of the Boost Python library
+
+AC_MSG_CHECKING([for boost::python library])
+AC_ARG_WITH([boost-python],
+AC_HELP_STRING([--with-boost-python],
+  [specify whether to use the boost python library]),
+  [with_boost_python="$withval"], [with_boost_python="auto"])
+if test "$with_boost_python" != "no"; then
+	if test "$with_boost_python" != "auto" -a "X$PYTHON_LIB" = X; then
+		AC_MSG_ERROR([Boost.Python requested but python library is not available])
+	fi
+	LDFLAGS_SAVED="$LDFLAGS"
+	LIBS_SAVED="$LIBS"
+	CPPFLAGS_SAVED="$CPPFLAGS"
+	CPPFLAGS="$CPPFLAGS $PYTHON_INCLUDES"
+
+	for BOOST_TRY_LIB in boost_python boost_python-mt; do
+		LDFLAGS="$LDFLAGS_SAVED ${BOOST_LDFLAGS} ${PYTHON_LDFLAGS}"
+		LIBS="$LIBS_SAVED -l${BOOST_TRY_LIB} ${PYTHON_LIB}"
+		AC_TRY_LINK([#include <boost/python/module.hpp>
+	      using namespace boost::python;
+	      BOOST_PYTHON_MODULE(test) { throw "Boost::Python test."; }],
+			[ return 0; ],
+			[ AC_MSG_RESULT(yes)
+			BOOST_PYTHON_LIB="-l${BOOST_TRY_LIB}"
+			],[])
+		if test "X${BOOST_PYTHON_LIB}" != X; then
+        		break
+		fi
+	done
+
+	LDFLAGS="$LDFLAGS_SAVED"
+	CPPFLAGS="$CPPFLAGS_SAVED"
+	LIBS="$LIBS_SAVED"
+fi
+
+if test "X${BOOST_PYTHON_LIB}" = X; then
+	AC_MSG_RESULT(no)
+	if test "$with_boost_python" = "yes"; then
+	   AC_MSG_ERROR([boost python library is requested but not found])
+	fi
+else
+	AC_DEFINE(HAVE_BOOST_PYTHON, 1, Define to 1 if boost python library is available)
+fi
+
+AM_CONDITIONAL(HAVE_BOOST_PYTHON, test "X${BOOST_PYTHON_LIB}" != X)
+AC_SUBST(BOOST_PYTHON_LIB)
 
 #
 # Check availability of gtest, which will be used for unit tests.
@@ -248,8 +320,18 @@ PKG_CHECK_MODULES(SQLITE, sqlite3 >= 3.3.9)
 
 # Check for headers from required devel kits.
 # boost/shared_ptr.hpp is in ext in svn but not in tarball.
+CPPFLAGS_SAVED=$CPPFLAGS
+if test "X$BOOST_INCLUDES" = "X"; then
+	# abs_top_srcdir not defined yet
+	# so this is only useful to check.  We'll replace it after the check.
+	CPPFLAGS="$CPPFLAGS -Iext"
+fi
 AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp],,
   AC_MSG_ERROR([Missing required header files.]))
+CPPFLAGS=$CPPFLAGS_SAVED
+if test "X$BOOST_INCLUDES" = "X"; then
+	CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext"
+fi
 
 AC_ARG_ENABLE(man, [AC_HELP_STRING([--enable-man],
   [regenerate man pages [default=no]])] ,enable_man=yes, enable_man=no)

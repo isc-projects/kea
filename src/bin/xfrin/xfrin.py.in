@@ -28,7 +28,7 @@ import random
 from optparse import OptionParser, OptionValueError
 from isc.config.ccsession import *
 try:
-    from bind10_message import *
+    from bind10_dns import *
 except:
     pass
 
@@ -399,8 +399,8 @@ class Xfrin():
     def xfrin_start(self, zone_name, db_file, master_addr, 
                     port = 53, 
                     check_soa = True):
-        if "bind10_message" not in sys.modules:
-            return (1, "xfrin failed, can't load dns message python library: 'bind10_message'")
+        if "bind10_dns" not in sys.modules:
+            return (1, "xfrin failed, can't load dns message python library: 'bind10_dns'")
 
         # check max_transfer_in, else return quota error
         if self.recorder.count() >= self._max_transfers_in:

@@ -28,10 +28,10 @@
 #include <iostream>
 
 #include <boost/foreach.hpp>
-#ifdef HAVE_BOOSTLIB
+#ifdef HAVE_BOOST_SYSTEM
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
-#endif  // HAVE_BOOSTLIB
+#endif  // HAVE_BOOST_SYSTEM
 
 #include <exceptions/exceptions.h>
 
@@ -49,11 +49,11 @@
 
 using namespace std;
 
-#ifdef HAVE_BOOSTLIB
+#ifdef HAVE_BOOST_SYSTEM
 using namespace boost::asio;
 using ip::udp;
 using ip::tcp;
-#endif  // HAVE_BOOSTLIB
+#endif  // HAVE_BOOST_SYSTEM
 
 using namespace isc::data;
 using namespace isc::cc;
@@ -71,13 +71,13 @@ const char* DNSPORT = "5300";
  * todo: turn this around, and put handlers in the authserver
  * class itself? */
 AuthSrv *auth_server;
-#ifdef HAVE_BOOSTLIB
+#ifdef HAVE_BOOST_SYSTEM
 // TODO: this should be a property of AuthSrv, and AuthSrv needs
 // a stop() method (so the shutdown command can be handled)
 boost::asio::io_service io_service_;
 #else
 bool running;
-#endif  // HAVE_BOOSTLIB
+#endif  // HAVE_BOOST_SYSTEM
 
 ElementPtr
 my_config_handler(ElementPtr new_config) {
@@ -93,17 +93,17 @@ my_command_handler(const string& command, const ElementPtr args) {
         /* let's add that message to our answer as well */
         answer->get("result")->add(args);
     } else if (command == "shutdown") {
-#ifdef HAVE_BOOSTLIB
+#ifdef HAVE_BOOST_SYSTEM
         io_service_.stop();
 #else
         running = false;
-#endif  // HAVE_BOOSTLIB
+#endif  // HAVE_BOOST_SYSTEM
     }
     
     return answer;
 }
 
-#ifdef HAVE_BOOSTLIB
+#ifdef HAVE_BOOST_SYSTEM
 //
 // Helper classes for asynchronous I/O using boost::asio
 //
@@ -349,7 +349,7 @@ run_server(const char* port, const bool use_ipv4, const bool use_ipv6,
     cout << "Server started." << endl;
     io_service_.run();
 }
-#else  // !HAVE_BOOSTLIB
+#else  // !HAVE_BOOST_SYSTEM
 struct SocketSet {
     SocketSet() : ups4(-1), tps4(-1), ups6(-1), tps6(-1) {}
     ~SocketSet() {
@@ -638,7 +638,7 @@ run_server(const char* port, const bool use_ipv4, const bool use_ipv6,
         }
     }
 }
-#endif // HAVE_BOOSTLIB
+#endif // HAVE_BOOST_SYSTEM
 
 void
 usage() {
@@ -701,7 +701,7 @@ main(int argc, char* argv[]) {
         auth_server = new AuthSrv;
         auth_server->setVerbose(verbose_mode);
 
-#ifdef HAVE_BOOSTLIB
+#ifdef HAVE_BOOST_SYSTEM
         ModuleCCSession cs(specfile, io_service_, my_config_handler,
                            my_command_handler);
 #else

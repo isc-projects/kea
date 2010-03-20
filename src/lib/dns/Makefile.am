@@ -1,7 +1,6 @@
 SUBDIRS = . tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
-AM_CPPFLAGS += -I$(top_srcdir)/ext
 if GCC_WERROR_OK
 AM_CPPFLAGS += -Werror
 endif
@@ -59,23 +58,46 @@ BUILT_SOURCES = rrclass.h rrtype.h rrparamregistry.cc
 #TODO: check this###BUILT_SOURCES = rdataclass.h rdataclass.cc
 
 lib_LTLIBRARIES = libdns.la
-libdns_la_SOURCES = buffer.h name.cc name.h messagerenderer.h messagerenderer.cc
+
+libdns_la_SOURCES = base32.h base32.cc
+libdns_la_SOURCES += base64.h base64.cc
+libdns_la_SOURCES += buffer.h
+libdns_la_SOURCES += dnssectime.h dnssectime.cc
 libdns_la_SOURCES += exceptions.h exceptions.cc
-libdns_la_SOURCES += rrparamregistry.h
-libdns_la_SOURCES += rrclass.cc
-libdns_la_SOURCES += rrtype.cc
-libdns_la_SOURCES += rrttl.h rrttl.cc
+libdns_la_SOURCES += hex.h hex.cc
+libdns_la_SOURCES += message.h message.cc
+libdns_la_SOURCES += messagerenderer.h messagerenderer.cc
+libdns_la_SOURCES += name.h name.cc
 libdns_la_SOURCES += rdata.h rdata.cc
+libdns_la_SOURCES += rrclass.h rrclass.cc
 libdns_la_SOURCES += rrset.h rrset.cc
 libdns_la_SOURCES += rrsetlist.h rrsetlist.cc
+libdns_la_SOURCES += rrttl.h rrttl.cc
+libdns_la_SOURCES += rrtype.h rrtype.cc
 libdns_la_SOURCES += question.h question.cc
-libdns_la_SOURCES += message.h message.cc
-libdns_la_SOURCES += base32.h base32.cc
-libdns_la_SOURCES += base64.h base64.cc
 libdns_la_SOURCES += sha1.h sha1.cc
 libdns_la_SOURCES += tsig.h tsig.cc
-libdns_la_SOURCES += dnssectime.h dnssectime.cc
-libdns_la_SOURCES += hex.h hex.cc
+
+if HAVE_BOOST_PYTHON
+# This is a loadable module for python scripts, so we use the prefix "pyexec"
+# to make sure the object files will be installed in the appropriate place
+# for this purpose.
+pyexec_LTLIBRARIES = bind10_dns.la
+bind10_dns_la_SOURCES = python_dns.cc
+bind10_dns_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
+if GCC_WERROR_OK
+# XXX: Boost.Python triggers strict aliasing violation, so if we use -Werror
+# we need to suppress the warnings.
+bind10_dns_la_CPPFLAGS += -fno-strict-aliasing
+endif
+bind10_dns_la_LDFLAGS = $(BOOST_LDFLAGS) $(PYTHON_LDFLAGS)
+# Python prefers .so, while some OSes (specifically MacOS) use a different
+# suffix for dynamic objects.  -module is necessary to work this around.
+bind10_dns_la_LDFLAGS += -module
+bind10_dns_la_LIBADD = $(top_builddir)/src/lib/dns/libdns.la
+bind10_dns_la_LIBADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+bind10_dns_la_LIBADD += $(BOOST_PYTHON_LIB) $(PYTHON_LIB)
+endif
 
 nodist_libdns_la_SOURCES = rrparamregistry.cc
 nodist_libdns_la_SOURCES += rdataclass.cc

@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_builddir)/src/bin -I$(top_srcdir)/ext
+AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_builddir)/src/bin
 
 CLEANFILES = *.gcno *.gcda
 
@@ -19,7 +19,7 @@ run_unittests_LDADD +=  $(top_builddir)/src/lib/dns/.libs/libdns.a
 run_unittests_LDADD += $(top_builddir)/src/lib/config/.libs/libcfgclient.a
 run_unittests_LDADD += $(top_builddir)/src/lib/cc/libcc.a
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/.libs/libexceptions.a
-if HAVE_BOOSTLIB
+if HAVE_BOOST_SYSTEM
 run_unittests_LDFLAGS += $(BOOST_LDFLAGS)
 run_unittests_LDADD += $(BOOST_SYSTEM_LIB)
 endif

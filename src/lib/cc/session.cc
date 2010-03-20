@@ -23,7 +23,7 @@
 #include <iostream>
 #include <sstream>
 
-#ifdef HAVE_BOOSTLIB
+#ifdef HAVE_BOOST_SYSTEM
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
 #include <boost/asio.hpp>
@@ -38,7 +38,7 @@ using namespace std;
 using namespace isc::cc;
 using namespace isc::data;
 
-#ifdef HAVE_BOOSTLIB
+#ifdef HAVE_BOOST_SYSTEM
 // some of the boost::asio names conflict with socket API system calls
 // (e.g. write(2)) so we don't import the entire boost::asio namespace.
 using boost::asio::io_service;
@@ -68,7 +68,7 @@ public:
     std::string lname_;
 };
 
-#ifdef HAVE_BOOSTLIB
+#ifdef HAVE_BOOST_SYSTEM
 class ASIOSession : public SessionImpl {
 public:
     ASIOSession(io_service& io_service) :
@@ -270,7 +270,7 @@ SocketSession::readData(void* data, const size_t datalen) {
 Session::Session() : impl_(new SocketSession)
 {}
 
-#ifdef HAVE_BOOSTLIB
+#ifdef HAVE_BOOST_SYSTEM
 Session::Session(io_service& io_service) : impl_(new ASIOSession(io_service))
 {}
 #endif
