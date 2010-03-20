@@ -1,4 +1,3 @@
-import sys; sys.path.append ('/Users/jinmei/opt/lib/python3.1/site-packages')
 from bind10_dns import *
 from struct import *
 
