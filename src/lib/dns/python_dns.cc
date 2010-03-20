@@ -14,7 +14,8 @@
 
 // $Id: message_python.cc 2010-03-08 18:44:00 feng $
 
-#include <string>
+#include <cassert>
+
 #include <boost/python.hpp>
 #include <boost/python/class.hpp>
 #include <boost/python/module.hpp>
@@ -25,6 +26,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <exceptions/exceptions.h>
+
 #include "buffer.h"
 #include "name.h"
 #include "messagerenderer.h"
@@ -89,8 +91,12 @@ namespace
             public:
             PyInputBuffer(object bytes) : InputBuffer(0,0)
             {
-                if (PyBytes_Check(bytes.ptr()))
-                    PyBytes_AsStringAndSize(bytes.ptr(), (char **)&data_, (int *)&len_);
+                if (PyBytes_Check(bytes.ptr())) {
+                    Py_ssize_t len = 0;
+                    PyBytes_AsStringAndSize(bytes.ptr(), (char **)&data_, &len);
+                    assert(len >= 0);
+                    len_ = len;
+                }
             }
         };
 
@@ -109,8 +115,10 @@ namespace
                 if (PyBytes_Check(bytes.ptr()))
                 {
                     uint8_t *raw_data = NULL;
-                    int raw_data_len = 0;
-                    PyBytes_AsStringAndSize(bytes.ptr(), (char **)&raw_data, &raw_data_len);
+                    Py_ssize_t raw_data_len = 0;
+                    PyBytes_AsStringAndSize(bytes.ptr(), (char **)&raw_data,
+                                            &raw_data_len);
+                    assert(raw_data_len >= 0);
                     writeData(raw_data, raw_data_len);
 
                 }
@@ -134,8 +142,10 @@ namespace
                 if (PyBytes_Check(bytes.ptr()))
                 {
                     uint8_t *raw_data = NULL;
-                    int raw_data_len = 0;
-                    PyBytes_AsStringAndSize(bytes.ptr(), (char **)&raw_data, &raw_data_len);
+                    Py_ssize_t raw_data_len = 0;
+                    PyBytes_AsStringAndSize(bytes.ptr(), (char **)&raw_data,
+                                            &raw_data_len);
+                    assert(raw_data_len >= 0);
                     writeData(raw_data, raw_data_len);
                 }
             }
@@ -201,7 +211,7 @@ namespace
     BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(add_rrset_overloads, addRRset, 2, 3)
 }
      
-BOOST_PYTHON_MODULE(bind10_message)
+BOOST_PYTHON_MODULE(bind10_dns)
 {
     REGISTER_EXCEPTION(Exception);
     REGISTER_EXCEPTION(OutOfRange);

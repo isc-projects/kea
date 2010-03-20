@@ -207,6 +207,11 @@ public:
 
 private:
     size_t position_;
+
+    // XXX: The following must be private, but for a short term workaround with
+    // Boost.Python binding, we changed it to protected.  We should soon
+    // revisit it.
+protected:
     const uint8_t* data_;
     size_t len_;
 };

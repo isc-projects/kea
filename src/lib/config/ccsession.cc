@@ -32,7 +32,7 @@
 #include <sstream>
 #include <cerrno>
 
-#ifdef HAVE_BOOSTLIB
+#ifdef HAVE_BOOST_SYSTEM
 #include <boost/bind.hpp>
 #endif
 #include <boost/foreach.hpp>
@@ -188,7 +188,7 @@ ModuleCCSession::readModuleSpecification(const std::string& filename) {
     return module_spec;
 }
 
-#ifdef HAVE_BOOSTLIB
+#ifdef HAVE_BOOST_SYSTEM
 void
 ModuleCCSession::startCheck() {
     // data available on the command channel.  process it in the synchronous
