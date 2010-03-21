@@ -23,22 +23,26 @@ AC_HELP_STRING([--with-pythonpath=PATH],
 if test "$python_path" = auto; then
 	AM_PATH_PYTHON([3.1])
 else
+	# Older versions of automake can't handle python3 well.  This is an
+	# in-house workaround for them.
 	PYTHON=$python_path
 	AC_SUBST(PYTHON)
 	PYTHON_PREFIX='${prefix}'
 	AC_SUBST(PYTHON_PREFIX)
 	PYTHON_EXEC_PREFIX='$(exec_prefix)'
 	AC_SUBST(PYTHON_EXEC_PREFIX)
-	PYTHON_VERSION=[`$PYTHON -c "import sys; print(sys.version[:3])"`]
+	PYTHON_VERSION=[`$PYTHON -c "import sys; sys.stdout.write(sys.version[:3])"`]
+	if test `echo "$PYTHON_VERSION >= 3.1" | bc` != 1 ; then
+		AC_MSG_ERROR(["Python version too old: $PYTHON_VERSION, need 3.1 or higher"])
+	fi
 	AC_SUBST(PYTHON_VERSION)
-	AM_PYTHON_CHECK_VERSION([$PYTHON], [3.1], [], [AC_MSG_ERROR(["Python version too old: $PYTHON_VERSION, need 3.1 or higher"])])
 	PYTHON_PLATFORM=`$PYTHON -c "import sys; print(sys.platform)"`
 	AC_SUBST(PYTHON_PLATFORM)
-	pythondir='${prefix}/lib/python3.1/site-packages'
+	pythondir='${prefix}/lib/python'$PYTHON_VERSION'/site-packages'
 	AC_SUBST(pythondir)
 	pkgpythondir='${pythondir}/'$PACKAGE
 	AC_SUBST(pkgpythondir)
-	pyexecdir='${exec_prefix}/lib/python3.1/site-packages'
+	pyexecdir='${exec_prefix}/lib/python'$PYTHON_VERSION'/site-packages'
 	AC_SUBST(pyexecdir)
 	pkgpyexecdir='${pyexecdir}/'$PACKAGE
 	AC_SUBST(pkgpyexecdir)
