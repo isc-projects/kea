@@ -136,7 +136,7 @@ dispatch_axfr_query(int tcp_sock, char axfr_query[], uint16_t query_len)
     }
 }
 
-#ifdef HAVE_BOOSTLIB
+#ifdef HAVE_BOOST_SYSTEM
 //
 // Helper classes for asynchronous I/O using boost::asio
 //
