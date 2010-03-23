@@ -1,0 +1,12 @@
+#! /bin/sh
+
+PYTHON_EXEC=${PYTHON_EXEC:-@PYTHON@}
+export PYTHON_EXEC
+
+MYPATH_PATH=@abs_top_builddir@/src/bin/xfrout
+PYTHONPATH=@abs_top_srcdir@/src/lib/python
+export PYTHONPATH
+
+cd ${MYPATH_PATH}
+${PYTHON_EXEC} b10-xfrout
+

@@ -265,6 +265,21 @@ class BoB:
         if self.verbose:
             print("[XX] ccsession started")
 
+        # start the xfrout before auth-server, to make sure every xfr-query can be
+        # processed properly.
+        if self.verbose:
+            sys.stdout.write("Starting b10-xfrout\n")
+        try:
+            xfrout = ProcessInfo("b10-xfrout", ["b10-xfrout"], 
+								 { 'ISC_MSGQ_PORT': str(self.c_channel_port)})
+        except Exception as e:
+            c_channel.process.kill()
+            bind_cfgd.process.kill()
+            return "Unable to start b10-xfrout; " + str(e)
+        self.processes[xfrout.pid] = xfrout
+        if self.verbose:
+            sys.stdout.write("Started b10-xfrout (PID %d)\n" % xfrout.pid)
+
         # start b10-auth
         # XXX: this must be read from the configuration manager in the future
         authargs = ['b10-auth', '-p', str(self.auth_port)]
@@ -278,6 +293,7 @@ class BoB:
         except Exception as e:
             c_channel.process.kill()
             bind_cfgd.process.kill()
+            xfrout.process.kill()
             return "Unable to start b10-auth; " + str(e)
         self.processes[auth.pid] = auth
         if self.verbose:
@@ -292,6 +308,7 @@ class BoB:
         except Exception as e:
             c_channel.process.kill()
             bind_cfgd.process.kill()
+            xfrout.process.kill()
             auth.process.kill()
             return "Unable to start b10-xfrin; " + str(e)
         self.processes[xfrind.pid] = xfrind
@@ -308,6 +325,7 @@ class BoB:
         except Exception as e:
             c_channel.process.kill()
             bind_cfgd.process.kill()
+            xfrout.process.kill()
             auth.process.kill()
             xfrind.process.kill()
             return "Unable to start b10-cmdctl; " + str(e)

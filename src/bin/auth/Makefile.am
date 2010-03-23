@@ -33,6 +33,7 @@ b10_auth_LDADD += $(top_builddir)/src/lib/config/.libs/libcfgclient.a
 b10_auth_LDADD += $(top_builddir)/src/lib/cc/libcc.a
 b10_auth_LDADD += $(top_builddir)/src/lib/exceptions/.libs/libexceptions.a
 b10_auth_LDADD += $(SQLITE_LIBS)
+b10_auth_LDADD += $(top_builddir)/src/lib/xfr/.libs/libxfr.a
 if HAVE_BOOST_SYSTEM
 b10_auth_LDFLAGS = $(AM_LDFLAGS) $(BOOST_LDFLAGS)
 b10_auth_LDADD += $(BOOST_SYSTEM_LIB)
