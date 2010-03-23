@@ -1,3 +1,6 @@
+#ifndef FD_SHARE_H_
+#define FD_SHARE_H_
+
 #include <stdlib.h>
 
 namespace isc {
@@ -17,3 +20,5 @@ send_fd(int sock, int fd);
 
 } // End for namespace xfr
 } // End for namespace isc
+
+#endif
