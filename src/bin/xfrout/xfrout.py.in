@@ -320,6 +320,7 @@ def listen_on_xfr_query(unix_socket_server):
 class XfroutServer:
     def __init__(self):
         self._init_config_data()
+        self._unix_socket_server = None
         self._cc = isc.config.ModuleCCSession(SPECFILE_LOCATION, self.config_handler, self.command_handler)
         self._cc.start()
         self._lock = threading.Lock()
@@ -355,6 +356,9 @@ class XfroutServer:
                 continue
             self._config_data[key] = new_config[key]
         
+        if self._unix_socket_server:
+            self._unix_socket_server.update_config_data(new_config)
+
         return answer
 
 
