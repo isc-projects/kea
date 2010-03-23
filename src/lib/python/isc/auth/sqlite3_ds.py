@@ -84,6 +84,40 @@ def open(dbfile):
 
     return conn, cur
 
+
+#########################################################################
+# get_zone_datas
+#   returns all the records for one zone with the given zone name. 
+#########################################################################
+def get_zone_datas(zonename, dbfile):
+    conn, cur = open(dbfile)
+    zone_id = get_zoneid(zonename, cur)
+
+    cur.execute("SELECT * FROM records WHERE zone_id = ?", [zone_id])
+    record = cur.fetchone()
+    while record:
+        yield record
+        record = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+
+#########################################################################
+# get_zone_soa
+#   returns the soa record of the zone with the given zone name. 
+#   If the zone doesn't exist, return None. 
+#########################################################################
+def get_zone_soa(zonename, dbfile):
+    conn, cur = open(dbfile)
+    id = get_zoneid(zonename, cur)
+    cur.execute("SELECT * FROM records WHERE zone_id = ? and rdtype = ?", [id, 'SOA'])
+    datas = cur.fetchone()
+    cur.close()
+    conn.close()
+
+    return datas
+
 #########################################################################
 # get_zoneid:
 #   returns the zone_id for a given zone name, or an empty
