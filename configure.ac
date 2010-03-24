@@ -169,10 +169,9 @@ AC_SUBST(BOOST_INCLUDES)
 AC_ARG_WITH([boost-lib],
 AC_HELP_STRING([--with-boost-lib=PATH],
   [specify exact directory for Boost libraries]),
-  [boostlib_path="$withval"])
-if test "X$boostlib_path" != "X"; then
-	BOOST_LDFLAGS="-L$boostlib_path"
-fi
+  [if test "$withval" != "yes" -a "$withval" != "no"; then
+   BOOST_LDFLAGS="-L$withval"
+   fi])
 AC_SUBST(BOOST_LDFLAGS)
 
 # Check availability of the Boost System library
