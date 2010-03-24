@@ -19,7 +19,6 @@
 import sys; sys.path.append ('@@PYTHONPATH@@')
 import isc
 import isc.cc
-import os
 import threading
 import struct
 import signal
@@ -28,8 +27,6 @@ from socketserver import *
 import os
 from isc.config.ccsession import *
 import socket
-from bind10_xfr import *
-from bind10_dns import *
 from optparse import OptionParser, OptionValueError
 try:
     from bind10_xfr import *

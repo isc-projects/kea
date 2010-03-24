@@ -42,14 +42,20 @@
 #include <cc/session.h>
 #include <cc/data.h>
 #include <config/ccsession.h>
+
+#if defined(HAVE_BOOST_SYSTEM) && defined(HAVE_BOOST_PYTHON)
+#define USE_XFROUT
 #include <xfr/xfrout_client.h>
+#endif
 
 #include "spec_config.h"
 #include "common.h"
 #include "auth_srv.h"
 
 using namespace std;
+#ifdef USE_XFROUT
 using namespace isc::xfr;
+#endif
 
 #ifdef HAVE_BOOST_SYSTEM
 using namespace boost::asio;
@@ -105,6 +111,7 @@ my_command_handler(const string& command, const ElementPtr args) {
     return answer;
 }
 
+#ifdef USE_XFROUT
 //TODO. The sample way for checking axfr query, the code should be merged to auth server class
 static bool
 check_axfr_query(char *msg_data, uint16_t msg_len)
@@ -135,6 +142,7 @@ dispatch_axfr_query(int tcp_sock, char axfr_query[], uint16_t query_len)
             cerr << "error handle xfr query:" << err.what() << endl;
     }
 }
+#endif
 
 #ifdef HAVE_BOOST_SYSTEM
 //
@@ -181,12 +189,13 @@ public:
     {
         if (!error) {
             InputBuffer dnsbuffer(data_, bytes_transferred);
+#ifdef USE_XFROUT
             if (check_axfr_query(data_, bytes_transferred)) {
                 dispatch_axfr_query(socket_.native(), data_, bytes_transferred); 
                 // start to get new query ?
                 start();
-            }
-            else {          
+            } else {
+#endif          
                 if (auth_server->processMessage(dnsbuffer, dns_message_,
                                                 response_renderer_, false)) {
                     responselen_buffer_.writeUint16(response_buffer_.getLength());
@@ -199,7 +208,9 @@ public:
                 } else {
                     delete this;
                 }
+#ifdef USE_XFROUT
             }
+#endif
         } else {
             delete this;
         }
@@ -577,30 +588,25 @@ processMessageTCP(const int fd, Message& dns_message,
         cc += cc0;
     }
 
-    if (check_axfr_query(&message_buffer[0], size)) {
-        dispatch_axfr_query(ts, &message_buffer[0], size);
-    }
-    else {          
-        InputBuffer buffer(&message_buffer[0], size);
-        dns_message.clear(Message::PARSE);
-        response_renderer.clear();
-        if (auth_server->processMessage(buffer, dns_message, response_renderer,
-                                        false)) {
-            size = response_renderer.getLength();
-            size_n = htons(size);
-            if (send(ts, &size_n, 2, 0) == 2) {
-                cc = send(ts, response_renderer.getData(),
-                          response_renderer.getLength(), 0);
-                if (cc == -1) {
-                    if (verbose_mode) {
-                        cerr << "[AuthSrv] error in sending TCP response message" <<
-                            endl;
-                    }
-                } else {
-                    if (verbose_mode) {
-                        cerr << "[XX] sent TCP response: " << cc << " bytes"
-                             << endl;
-                    }
+    InputBuffer buffer(&message_buffer[0], size);
+    dns_message.clear(Message::PARSE);
+    response_renderer.clear();
+    if (auth_server->processMessage(buffer, dns_message, response_renderer,
+                                    false)) {
+        size = response_renderer.getLength();
+        size_n = htons(size);
+        if (send(ts, &size_n, 2, 0) == 2) {
+            cc = send(ts, response_renderer.getData(),
+                      response_renderer.getLength(), 0);
+            if (cc == -1) {
+                if (verbose_mode) {
+                    cerr << "[AuthSrv] error in sending TCP response message" <<
+                        endl;
+                }
+            } else {
+                if (verbose_mode) {
+                    cerr << "[XX] sent TCP response: " << cc << " bytes"
+                         << endl;
                 }
             }
         } else {
