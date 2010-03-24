@@ -352,7 +352,7 @@ class XfroutServer:
 
 
     def shutdown(self):
-        ''' shutdown the xfrin process. the thread which is doing xfrin should be
+        ''' shutdown the xfrout process. The thread which is doing zone transfer-out should be
         terminated.
         '''
         self._shutdown_event.set()
