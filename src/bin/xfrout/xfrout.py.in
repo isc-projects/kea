@@ -316,14 +316,13 @@ def listen_on_xfr_query(unix_socket_server):
 
 class XfroutServer:
     def __init__(self):
-        self._init_config_data()
-        self._unix_socket_server = None
-        self._cc = isc.config.ModuleCCSession(SPECFILE_LOCATION, self.config_handler, self.command_handler)
-        self._cc.start()
-        self._lock = threading.Lock()
-        self._shutdown_event = threading.Event()
         self._listen_sock_file = '/tmp/auth_xfrout_conn' # TODO, should this be configurable in cfgmgr
+        self._shutdown_event = threading.Event()
+        self._cc = isc.config.ModuleCCSession(SPECFILE_LOCATION, self.config_handler, self.command_handler)
+        self._config_data = self._cc.get_full_config()
         self._start_xfr_query_listener()
+        self._cc.start()
+
 
     def _start_xfr_query_listener(self):
         '''Start a new thread to accept xfr query. '''
@@ -338,14 +337,8 @@ class XfroutServer:
         listener.start()
 
 
-    def _init_config_data(self):
-        '''Init the config item here. In case there is some error in config data got from cfgmgr.'''
-        self._config_data = {'transfers_out': 10, 'db_file':'/tmp/zone.sqlite3'}
-
-
     def config_handler(self, new_config):
         '''Update config data. TODO. Do error check'''
-
         answer = create_answer(0)
         for key in new_config:
             if key not in self._config_data:
@@ -353,8 +346,7 @@ class XfroutServer:
                 continue
             self._config_data[key] = new_config[key]
         
-        if self._unix_socket_server:
-            self._unix_socket_server.update_config_data(new_config)
+        self._unix_socket_server.update_config_data(self._config_data)
 
         return answer
 
