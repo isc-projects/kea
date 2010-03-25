@@ -43,7 +43,7 @@ else:
 SPECFILE_LOCATION = SPECFILE_PATH + "/xfrout.spec"
 
 MAX_TRANSFERS_OUT = 10
-verbose_mode = True
+verbose_mode = False
 
 
 class XfroutException(Exception): pass
@@ -59,7 +59,8 @@ class XfroutSession(BaseRequestHandler):
         try:
             self.dns_xfrout_start(sock, msgdata)
         except Exception as e:
-            self.log_msg(str(e))
+            if verbose_mode:
+                self.log_msg(str(e))
 
         sock.close()
                
@@ -70,7 +71,8 @@ class XfroutSession(BaseRequestHandler):
             msg = message(message_mode.PARSE)
             msg.from_wire(input_buffer(mdata))
         except Exception as err:
-            self.log_msg(str(err))
+            if verbose_mode:
+                self.log_msg(str(err))
             return rcode.FORMERR(), None
 
         return rcode.NOERROR(), msg
