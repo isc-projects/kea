@@ -62,10 +62,10 @@ else:
     DATAROOTDIR = "@datarootdir@"
     SPECFILE_PATH = "@datadir@/@PACKAGE@".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
     SYSCONF_PATH = "@sysconfdir@/@PACKAGE@".replace("${prefix}", PREFIX)
-SPECFILE_LOCATION = SPECFILE_PATH + "/cmdctl.spec"
-USER_INFO_FILE = SYSCONF_PATH + "/cmdctl-accounts.csv"
-PRIVATE_KEY_FILE = SYSCONF_PATH + "/cmdctl-keyfile.pem"
-CERTIFICATE_FILE = SYSCONF_PATH + "/cmdctl-certfile.pem"
+SPECFILE_LOCATION = SPECFILE_PATH + os.sep + "cmdctl.spec"
+USER_INFO_FILE = SYSCONF_PATH + os.sep + "cmdctl-accounts.csv"
+PRIVATE_KEY_FILE = SYSCONF_PATH + os.sep + "cmdctl-keyfile.pem"
+CERTIFICATE_FILE = SYSCONF_PATH + os.sep + "cmdctl-certfile.pem"
         
 class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     '''https connection request handler.
@@ -257,7 +257,7 @@ class CommandControl():
                 self.command_spec[arg[0]] = arg[1]
             elif command == isc.config.ccsession.COMMAND_SPECIFICATION_UPDATE:
                 self.config_spec[arg[0]] = arg[1]
-            elif command == "shutdown":
+            elif command == isc.config.ccsession.COMMAND_SHUTDOWN:
                 return False
             (message, env) = self.cc.group_recvmsg(True)
             command, arg = isc.config.ccsession.parse_command(message)
