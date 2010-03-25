@@ -89,6 +89,7 @@ COMMAND_GET_CONFIG = "get_config"
 COMMAND_SET_CONFIG = "set_config"
 COMMAND_GET_MODULE_SPEC = "get_module_spec"
 COMMAND_MODULE_SPEC = "module_spec"
+COMMAND_SHUTDOWN = "shutdown"
 
 def parse_command(msg):
     """Parses what may be a command message. If it looks like one,
