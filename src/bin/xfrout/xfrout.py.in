@@ -105,7 +105,7 @@ class XfroutSession(BaseRequestHandler):
         self._send_message(sock, msg)
 
 
-    def _reply_query_with_format_error(self, sock, msg):
+    def _reply_query_with_format_error(self, msg, sock):
         '''query message format isn't legal.'''
         if not msg:
             return # query message is invalid. send nothing back. 
@@ -152,7 +152,7 @@ class XfroutSession(BaseRequestHandler):
         rcode_, msg = self._parse_query_message(msg_query)
         #TODO. create query message and parse header
         if rcode_ != rcode.NOERROR():
-            return self._reply_query_with_format_error(msg, sock, msg_query)
+            return self._reply_query_with_format_error(msg, sock)
 
         zone_name = self._get_query_zone_name(msg)
         rcode_ = self._check_xfrout_available(zone_name)
