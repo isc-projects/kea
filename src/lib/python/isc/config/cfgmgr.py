@@ -325,7 +325,7 @@ class ConfigManager:
                 answer = self._handle_get_config(arg)
             elif cmd == isc.config.ccsession.COMMAND_SET_CONFIG:
                 answer = self._handle_set_config(arg)
-            elif cmd == "shutdown":
+            elif cmd == isc.config.ccsession.COMMAND_SHUTDOWN:
                 # TODO: logging
                 #print("[b10-cfgmgr] Received shutdown command")
                 self.running = False
