@@ -381,8 +381,8 @@ AC_CONFIG_FILES([Makefile
 AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/cmdctl/cmdctl.py
            src/bin/cmdctl/run_b10-cmdctl.sh
-           src/bin/cmdctl/unittest/cmdctl_test
-           src/bin/xfrin/unittest/xfrin_test
+           src/bin/cmdctl/tests/cmdctl_test
+           src/bin/xfrin/tests/xfrin_test
            src/bin/xfrin/xfrin.py
            src/bin/xfrin/xfrin.pre
            src/bin/xfrin/run_b10-xfrin.sh
@@ -395,7 +395,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/bind10/run_bind10.sh
            src/bin/bindctl/run_bindctl.sh
            src/bin/bindctl/bindctl-source.py
-           src/bin/bindctl/unittest/bindctl_test
+           src/bin/bindctl/tests/bindctl_test
            src/bin/loadzone/run_loadzone.sh
            src/bin/loadzone/b10-loadzone.py
            src/bin/usermgr/run_b10-cmdctl-usermgr.sh
@@ -415,10 +415,10 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
            chmod +x src/bin/xfrout/run_b10-xfrout.sh
            chmod +x src/bin/bind10/run_bind10.sh
-           chmod +x src/bin/cmdctl/unittest/cmdctl_test
-           chmod +x src/bin/xfrin/unittest/xfrin_test
+           chmod +x src/bin/cmdctl/tests/cmdctl_test
+           chmod +x src/bin/xfrin/tests/xfrin_test
            chmod +x src/bin/xfrout/tests/xfrout_test
-           chmod +x src/bin/bindctl/unittest/bindctl_test
+           chmod +x src/bin/bindctl/tests/bindctl_test
            chmod +x src/bin/bindctl/run_bindctl.sh
            chmod +x src/bin/loadzone/run_loadzone.sh
            chmod +x src/bin/usermgr/run_b10-cmdctl-usermgr.sh
