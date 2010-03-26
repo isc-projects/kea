@@ -423,8 +423,8 @@ implementation in BIND 10.
           control system. This is powered by Subversion and all the BIND 10
           development is public.
           The leading development is done in the <quote>trunk</quote>
-          and the first year prototype containing reviewed code is in
-          <filename>branches/Y1</filename>.
+          and the reviewed code is in
+          <filename>branches/REVIEWED</filename>.
         </para>
         <para>
           The code can be checked out from <filename>svn://bind10.isc.org/svn/bind10</filename>; for example to check out the trunk:
@@ -873,7 +873,7 @@ but you might wanna check with likun
 <!-- TODO: maybe allow request from server side -->
       The <command>b10-cmdctl</command> daemon does not provide a
       public service. If any client wants to control BIND 10, then
-      a certificate needs to be first recieved from the BIND 10
+      a certificate needs to be first received from the BIND 10
       administrator.
       The BIND 10 installation provides a sample PEM bundle that matches
       the sample key and certificate.
