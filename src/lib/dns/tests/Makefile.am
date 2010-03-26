@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I$(top_builddir)/src/lib
+AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 
 CLEANFILES = *.gcno *.gcda
 
