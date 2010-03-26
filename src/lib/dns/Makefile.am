@@ -100,8 +100,7 @@ bind10_dns_la_LIBADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 bind10_dns_la_LIBADD += $(BOOST_PYTHON_LIB) $(PYTHON_LIB)
 endif
 
-nodist_libdns_la_SOURCES = rrparamregistry.cc
-nodist_libdns_la_SOURCES += rdataclass.cc
+nodist_libdns_la_SOURCES = rdataclass.cc rrclass.h rrtype.h rrparamregistry.cc
 
 rrclass.h: rrclass-placeholder.h
 rrtype.h: rrtype-placeholder.h
