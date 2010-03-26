@@ -16,6 +16,7 @@ b10_cmdctl_DATA += cmdctl.spec
  
 EXTRA_DIST = $(CMDCTL_CONFIGURATIONS)
 EXTRA_DIST += cmdctl.spec
+EXTRA_DIST += tests/cmdctl_test.py
 
 CLEANFILES=	b10-cmdctl
 

@@ -7,6 +7,8 @@ b10_xfrout_DATA = xfrout.spec
 
 CLEANFILES=	xfrout.py xfrout.pre  xfrout.spec
 
+EXTRA_DIST = tests/xfrout_test.py
+
 xfrout.spec: xfrout.pre
 	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" xfrout.pre >$@
 
