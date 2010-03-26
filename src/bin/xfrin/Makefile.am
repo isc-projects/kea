@@ -9,6 +9,7 @@ CLEANFILES = b10-xfrin xfrin.pre xfrin.spec
 
 man_MANS = b10-xfrin.8
 EXTRA_DIST = $(man_MANS) b10-xfrin.xml
+EXTRA_DIST += tests/xfrin_test.py
 
 if ENABLE_MAN
 
