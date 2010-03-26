@@ -8,7 +8,7 @@ endif
 
 pkglibexecdir = $(libexecdir)/@PACKAGE@
 
-CLEANFILES = *.gcno *.gcda auth.pre auth.spec
+CLEANFILES = *.gcno *.gcda auth.spec
 
 man_MANS = b10-auth.8
 EXTRA_DIST = $(man_MANS) b10-auth.xml
@@ -20,8 +20,8 @@ b10-auth.8: b10-auth.xml
 
 endif
 
-auth.spec: auth.pre
-	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" auth.pre >$@
+auth.spec: auth.spec.pre
+	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" auth.spec.pre >$@
 
 pkglibexec_PROGRAMS = b10-auth
 b10_auth_SOURCES = auth_srv.cc auth_srv.h
