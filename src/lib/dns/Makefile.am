@@ -70,6 +70,7 @@ libdns_la_SOURCES += messagerenderer.h messagerenderer.cc
 libdns_la_SOURCES += name.h name.cc
 libdns_la_SOURCES += rdata.h rdata.cc
 libdns_la_SOURCES += rrclass.h rrclass.cc
+libdns_la_SOURCES += rrparamregistry.h
 libdns_la_SOURCES += rrset.h rrset.cc
 libdns_la_SOURCES += rrsetlist.h rrsetlist.cc
 libdns_la_SOURCES += rrttl.h rrttl.cc
