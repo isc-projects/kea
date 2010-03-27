@@ -1,4 +1,5 @@
-AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_builddir)/src/bin
+AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
+AM_CPPFLAGS += -I$(top_builddir)/src/lib/dns -I$(top_srcdir)/src/bin
 
 CLEANFILES = *.gcno *.gcda
 
