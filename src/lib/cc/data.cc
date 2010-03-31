@@ -703,40 +703,16 @@ decode_real(std::stringstream& in, int& item_length UNUSED_PARAM) {
 }
 
 ElementPtr
-decode_blob(std::stringstream& in, int& item_length) {
-    char *buf = new char[item_length + 1];
+decode_blob(std::stringstream& in, const int item_length) {
+    vector<char> buf(item_length + 1);
 
-    in.read(buf, item_length);
+    in.read(&buf[0], item_length);
     if (in.fail()) {
-        delete[] buf;
         throw DecodeError();
     }
     buf[item_length] = 0;
 
-    std::string s = std::string(buf, item_length);
-    item_length -= item_length;
-
-    delete [] buf;
-    return Element::create(s);
-}
-
-// XXXMLG currently identical to decode_blob
-ElementPtr
-decode_utf8(std::stringstream& in, int& item_length) {
-    char *buf = new char[item_length + 1];
-
-    in.read(buf, item_length);
-    if (in.fail()) {
-        delete[] buf;
-        throw DecodeError();
-    }
-    buf[item_length] = 0;
-
-    std::string s = std::string(buf, item_length);
-    item_length -= item_length;
-
-    delete [] buf;
-    return Element::create(s);
+    return Element::create(std::string(&buf[0], item_length));
 }
 
 ElementPtr
@@ -810,7 +786,8 @@ decode_element(std::stringstream& in, int& in_length) {
         element = decode_blob(in, item_length);
         break;
     case ITEM_UTF8:
-        element = decode_utf8(in, item_length);
+        // XXXMLG currently identical to decode_blob
+        element = decode_blob(in, item_length);
         break;
     case ITEM_HASH:
         element = decode_hash(in, item_length);
