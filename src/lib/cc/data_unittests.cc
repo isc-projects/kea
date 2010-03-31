@@ -27,7 +27,7 @@ using std::oct;
 #include <iomanip>
 using std::setfill;
 using std::setw;
-
+using std::string;
 
 TEST(Element, type) {
     // this tests checks whether the getType() function returns the
@@ -170,6 +170,15 @@ TEST(Element, ListElement) {
     EXPECT_EQ(el->get(2)->intValue(), 32);
 }
 
+namespace {
+const string long_maptag("0123456789abcdef1123456789abcdef2123456789abcdef"
+                         "3123456789abcdef4123456789abcdef5123456789abcdef"
+                         "6123456789abcdef7123456789abcdef8123456789abcdef"
+                         "9123456789abcdefa123456789abcdefb123456789abcdef"
+                         "c123456789abcdefd123456789abcdefe123456789abcdef"
+                         "f123456789abcdef");
+}
+
 TEST(Element, MapElement) {
     // this function checks the specific functions for ListElements
     ElementPtr el = Element::createFromString("{ \"name\": \"foo\", \"value1\": \"bar\", \"value2\": { \"number\": 42 } }");
@@ -194,6 +203,23 @@ TEST(Element, MapElement) {
     
     EXPECT_TRUE(el->find("value1", el2));
     EXPECT_FALSE(el->find("name/error", el2));
+
+    // A map element whose (only) element has the maximum length of tag.
+    string long_maptag("0123456789abcdef1123456789abcdef2123456789abcdef"
+                       "3123456789abcdef4123456789abcdef5123456789abcdef"
+                       "6123456789abcdef7123456789abcdef8123456789abcdef"
+                       "9123456789abcdefa123456789abcdefb123456789abcdef"
+                       "c123456789abcdefd123456789abcdefe123456789abcdef"
+                       "f123456789abcde");
+    EXPECT_EQ(255, long_maptag.length()); // check prerequisite
+    el = Element::createFromString("{ \"" + long_maptag + "\": \"bar\"}");
+    EXPECT_EQ("bar", el->find(long_maptag)->stringValue());
+
+    // A one-byte longer tag should trigger an exception.
+    long_maptag.push_back('f');
+    EXPECT_THROW(Element::createFromString("{ \"" + long_maptag +
+                                           "\": \"bar\"}"),
+                 ParseError);
 }
 
 TEST(Element, to_and_from_wire) {
