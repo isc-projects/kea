@@ -324,7 +324,8 @@ skip_to(std::istream &in, const std::string& file, int& line,
 }
 
 std::string
-str_from_stringstream(std::istream &in, const std::string& file, int& line, int& pos) throw (ParseError)
+str_from_stringstream(std::istream &in, const std::string& file, const int line,
+                      int& pos) throw (ParseError)
 {
     char c = 0;
     std::stringstream ss;
@@ -349,7 +350,7 @@ str_from_stringstream(std::istream &in, const std::string& file, int& line, int&
 }
 
 std::string
-word_from_stringstream(std::istream &in, int& line UNUSED_PARAM, int& pos) {
+word_from_stringstream(std::istream &in, int& pos) {
     std::stringstream ss;
     while (isalpha(in.peek())) {
         ss << (char) in.get();
@@ -379,9 +380,7 @@ count_chars_d(double d) {
 }
 
 ElementPtr
-from_stringstream_int_or_double(std::istream &in, int &line UNUSED_PARAM,
-                                int &pos)
-{
+from_stringstream_int_or_double(std::istream &in, int &pos) {
     int i;
     in >> i;
     pos += count_chars_i(i);
@@ -397,9 +396,10 @@ from_stringstream_int_or_double(std::istream &in, int &line UNUSED_PARAM,
 }
 
 ElementPtr
-from_stringstream_bool(std::istream &in, const std::string& file, int& line, int& pos)
+from_stringstream_bool(std::istream &in, const std::string& file,
+                       const int line, int& pos)
 {
-    const std::string word = word_from_stringstream(in, line, pos);
+    const std::string word = word_from_stringstream(in, pos);
     if (boost::iequals(word, "True")) {
         return Element::create(true);
     } else if (boost::iequals(word, "False")) {
@@ -503,7 +503,7 @@ Element::createFromString(std::istream &in, const std::string& file, int& line, 
             case '9':
             case '0':
                 in.putback(c);
-                element = from_stringstream_int_or_double(in, line, pos);
+                element = from_stringstream_int_or_double(in, pos);
                 el_read = true;
                 break;
             case 't':
@@ -680,7 +680,7 @@ decode_tag(std::stringstream& in, int& item_length) {
 }
 
 ElementPtr
-decode_bool(std::stringstream& in, int& item_length UNUSED_PARAM) {
+decode_bool(std::stringstream& in) {
     const char c = in.get();
     
     if (c == '1') {
@@ -691,15 +691,15 @@ decode_bool(std::stringstream& in, int& item_length UNUSED_PARAM) {
 }
 
 ElementPtr
-decode_int(std::stringstream& in, int& item_length UNUSED_PARAM) {
-    int skip, me;
-    return from_stringstream_int_or_double(in, skip, me);
+decode_int(std::stringstream& in) {
+    int me;
+    return from_stringstream_int_or_double(in, me);
 }
 
 ElementPtr
-decode_real(std::stringstream& in, int& item_length UNUSED_PARAM) {
-    int skip, me;
-    return from_stringstream_int_or_double(in, skip, me);
+decode_real(std::stringstream& in) {
+    int me;
+    return from_stringstream_int_or_double(in, me);
 }
 
 ElementPtr
@@ -716,7 +716,7 @@ decode_blob(std::stringstream& in, const int item_length) {
 }
 
 ElementPtr
-decode_hash(std::stringstream& in, int& item_length) {
+decode_hash(std::stringstream& in, int item_length) {
     std::map<std::string, ElementPtr> m;
     std::pair<std::string, ElementPtr> p;
 
@@ -730,7 +730,7 @@ decode_hash(std::stringstream& in, int& item_length) {
 }
 
 ElementPtr
-decode_list(std::stringstream& in, int& item_length) {
+decode_list(std::stringstream& in, int item_length) {
     std::vector<ElementPtr> v;
 
     while (item_length > 0) {
@@ -740,7 +740,7 @@ decode_list(std::stringstream& in, int& item_length) {
 }
 
 ElementPtr
-decode_null(std::stringstream& in UNUSED_PARAM, int& item_length UNUSED_PARAM) {
+decode_null() {
     return Element::create("NULL");
 }
 
@@ -774,13 +774,13 @@ decode_element(std::stringstream& in, int& in_length) {
 
     switch (type) {
     case ITEM_BOOL:
-        element = decode_bool(in, item_length);
+        element = decode_bool(in);
         break;
     case ITEM_INT:
-        element = decode_int(in, item_length);
+        element = decode_int(in);
         break;
     case ITEM_REAL:
-        element = decode_real(in, item_length);
+        element = decode_real(in);
         break;
     case ITEM_BLOB:
         element = decode_blob(in, item_length);
@@ -796,7 +796,7 @@ decode_element(std::stringstream& in, int& in_length) {
         element = decode_list(in, item_length);
         break;
     case ITEM_NULL:
-        element = decode_null(in, item_length);
+        element = decode_null();
         break;
     }
 
