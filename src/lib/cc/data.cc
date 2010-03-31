@@ -438,21 +438,26 @@ from_stringstream_list(std::istream &in, const std::string& file, int& line, int
 }
 
 ElementPtr
-from_stringstream_map(std::istream &in, const std::string& file, int& line, int& pos)
+from_stringstream_map(std::istream &in, const std::string& file, int& line,
+                      int& pos)
 {
-    char c = 0;
     std::map<std::string, ElementPtr> m;
-    std::pair<std::string, ElementPtr> p;
-    std::string cur_map_key;
-    ElementPtr cur_map_element;
     skip_chars(in, " \t\n", line, pos);
-    c = in.peek();
+    char c = in.peek();
     if (c == '}') {
         // empty map, skip closing curly
         c = in.get();
     } else {
         while (c != EOF && c != '}') {
+            std::pair<std::string, ElementPtr> p;
+
             p.first = str_from_stringstream(in, file, line, pos);
+            if (p.first.length() > 255) {
+                // Map tag has one-byte length field in wire format, so the
+                // length cannot exceed 255.
+                throwParseError("Map tag is too long", file, line, pos);
+            }
+
             skip_to(in, file, line, pos, ":", " \t\n");
             // skip the :
             in.get();
@@ -929,15 +934,6 @@ ListElement::toWire(std::stringstream& ss, const int omit_length) {
     }
 }
 
-namespace {
-void
-encode_tag(std::stringstream& ss, const std::string &s) {
-    const unsigned char val = s.length() & 0x000000ff;
-
-    ss << val << s;
-}
-}
-
 void
 MapElement::toWire(std::stringstream& ss, int omit_length) {
     std::stringstream ss2;
@@ -951,9 +947,13 @@ MapElement::toWire(std::stringstream& ss, int omit_length) {
     }
 
     const std::map<std::string, ElementPtr>& m = mapValue();
-    for (std::map<std::string, ElementPtr>::const_iterator it = m.begin() ;
-         it != m.end() ; ++it) {
-        encode_tag(ss2, (*it).first);
+    for (std::map<std::string, ElementPtr>::const_iterator it = m.begin();
+         it != m.end(); ++it) {
+        const size_t taglen = (*it).first.length();
+        assert(taglen <= 0xff);
+        const unsigned char val = (taglen & 0x000000ff);
+        ss2 << val << (*it).first;
+
         (*it).second->toWire(ss2, 0);
     }
 
