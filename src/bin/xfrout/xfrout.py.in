@@ -319,6 +319,7 @@ def listen_on_xfr_query(unix_socket_server):
 
 class XfroutServer:
     def __init__(self):
+        self._unix_socket_server = None
         self._listen_sock_file = '/tmp/auth_xfrout_conn' # TODO, should this be configurable in cfgmgr
         self._shutdown_event = threading.Event()
         self._cc = isc.config.ModuleCCSession(SPECFILE_LOCATION, self.config_handler, self.command_handler)
@@ -349,7 +350,8 @@ class XfroutServer:
                 continue
             self._config_data[key] = new_config[key]
         
-        self._unix_socket_server.update_config_data(self._config_data)
+        if self._unix_socket_server:
+            self._unix_socket_server.update_config_data(self._config_data)
 
         return answer
 
@@ -359,7 +361,8 @@ class XfroutServer:
         terminated.
         '''
         self._shutdown_event.set()
-        self._unix_socket_server.shutdown()
+        if self._unix_socket_server:
+            self._unix_socket_server.shutdown()
 
         main_thread = threading.currentThread()
         for th in threading.enumerate():
