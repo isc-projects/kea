@@ -373,6 +373,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/config/tests/Makefile
                  src/lib/dns/Makefile
                  src/lib/dns/tests/Makefile
+                 src/lib/dns-python/Makefile
                  src/lib/exceptions/Makefile
                  src/lib/auth/Makefile
                  src/lib/auth/tests/Makefile
