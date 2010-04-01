@@ -18,6 +18,7 @@
 
 #include "data.h"
 
+#include <cassert>
 #include <cstdio>
 #include <iostream>
 #include <string>
