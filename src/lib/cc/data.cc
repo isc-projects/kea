@@ -249,6 +249,12 @@ Element::create(const std::vector<ElementPtr>& v) {
 
 ElementPtr
 Element::create(const std::map<std::string, ElementPtr>& m) {
+    for (std::map<std::string, ElementPtr>::const_iterator it = m.begin();
+         it != m.end(); ++it) {
+        if ((*it).first.length() > 255) {
+            isc_throw(TypeError, "Map tag is too long");
+        }
+    }
     try {
         return ElementPtr(new MapElement(m));
     } catch (std::bad_alloc) {

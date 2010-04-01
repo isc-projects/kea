@@ -211,8 +211,14 @@ TEST(Element, MapElement) {
                        "9123456789abcdefa123456789abcdefb123456789abcdef"
                        "c123456789abcdefd123456789abcdefe123456789abcdef"
                        "f123456789abcde");
+    std::map<std::string, ElementPtr> long_maptag_map;
+    
     EXPECT_EQ(255, long_maptag.length()); // check prerequisite
     el = Element::createFromString("{ \"" + long_maptag + "\": \"bar\"}");
+    EXPECT_EQ("bar", el->find(long_maptag)->stringValue());
+
+    long_maptag_map[long_maptag] = Element::create("bar");
+    el = Element::create(long_maptag_map);
     EXPECT_EQ("bar", el->find(long_maptag)->stringValue());
 
     // A one-byte longer tag should trigger an exception.
@@ -220,6 +226,10 @@ TEST(Element, MapElement) {
     EXPECT_THROW(Element::createFromString("{ \"" + long_maptag +
                                            "\": \"bar\"}"),
                  ParseError);
+
+    long_maptag_map[long_maptag] = Element::create("bar");
+    EXPECT_THROW(Element::create(long_maptag_map), TypeError);
+
 }
 
 TEST(Element, to_and_from_wire) {
