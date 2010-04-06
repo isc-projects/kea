@@ -267,9 +267,10 @@ class XfrinConnection(asyncore.dispatcher):
         pass
 
     def log_msg(self, msg):
-        sys.stdout.write('[b10-xfrin] ')
-        sys.stdout.write(str(msg))
-        sys.stdout.write('\n')
+        if self._verbose:
+            sys.stdout.write('[b10-xfrin] ')
+            sys.stdout.write(str(msg))
+            sys.stdout.write('\n')
 
 
 def process_xfrin(xfrin_recorder, zone_name, db_file, 
@@ -349,7 +350,6 @@ class Xfrin():
     def command_handler(self, command, args):
         answer = create_answer(0)
         cmd = command
-        log_info('commaond handler received: ' + cmd)
         try:
             if cmd == 'print_message':
                 print(args)
