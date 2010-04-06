@@ -14,3 +14,6 @@
 - Rename "c-channel" stuff to msgq for clarity
 - Use logger
 - Reply to shutdown message?
+- Some sort of group creation so termination signals can be sent to
+  children of children processes (if any)
+
