@@ -62,7 +62,6 @@ def log_error(msg):
     sys.stderr.write(str(msg))
     sys.stderr.write('\n')
 
-
 class XfrinException(Exception): 
     pass
 
@@ -173,7 +172,9 @@ class XfrinConnection(asyncore.dispatcher):
                 self._send_query(rr_type.AXFR())
                 ret = self._handle_xfrin_response()
 
-            self.log_msg('transfer of \'%s\' AXFR ended' % self._zone_name)
+            endmsg = 'succeeded' if ret == XFRIN_OK else 'failed'
+            self.log_msg('transfer of \'%s\' AXFR %s' % (self._zone_name,
+                                                         endmsg))
         except XfrinException as e:
             self.log_msg(e)
             self.log_msg('Error happened during xfrin!')
@@ -218,9 +219,15 @@ class XfrinConnection(asyncore.dispatcher):
                 # Count the soa record count
                 if rrset.get_type() == rr_type.SOA():
                     self._soa_rr_count += 1
+
+                    # XXX: the current DNS message parser can't preserve the
+                    # RR order or separete the beginning and ending SOA RRs.
+                    # As a short term workaround, we simply ignore the second
+                    # SOA, and ignore the erroneous case where the transfer
+                    # session doesn't end with an SOA.
                     if (self._soa_rr_count == 2):
-                        # Avoid inserting soa record twice                        
-                        return
+                        # Avoid inserting soa record twice
+                        break
 
                 rdata_text = rdata_iter.get_current().to_text()
                 rr_data = (rrset_name, rrset_ttl, rrset_class, rrset_type, rdata_text)
@@ -342,6 +349,7 @@ class Xfrin():
     def command_handler(self, command, args):
         answer = create_answer(0)
         cmd = command
+        log_info('commaond handler received: ' + cmd)
         try:
             if cmd == 'print_message':
                 print(args)
@@ -471,6 +479,3 @@ if __name__ == '__main__':
 
     if xfrind:
         xfrind.shutdown()
-
-
-
