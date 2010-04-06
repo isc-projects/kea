@@ -363,7 +363,6 @@ class BoB:
         self.reap_children()
         # next try sending a SIGTERM
         processes_to_stop = list(self.processes.values())
-        unstopped_processes = []
         for proc_info in processes_to_stop:
             if self.verbose:
                 sys.stdout.write("Sending SIGTERM to %s (PID %d).\n" % 
@@ -374,21 +373,22 @@ class BoB:
                 # ignore these (usually ESRCH because the child
                 # finally exited)
                 pass
-        # XXX: some delay probably useful... how much is uncertain
-        time.sleep(0.1)  
-        self.reap_children()
-        # finally, send a SIGKILL (unmaskable termination)
-        processes_to_stop = unstopped_processes
-        for proc_info in processes_to_stop:
-            if self.verbose:
-                sys.stdout.write("Sending SIGKILL to %s (PID %d).\n" % 
-                                 (proc_info.name, proc_info.pid))
-            try:
-                proc_info.process.kill()
-            except OSError:
-                # ignore these (usually ESRCH because the child
-                # finally exited)
-                pass
+        # finally, send SIGKILL (unmaskable termination) until everybody dies
+        while self.processes:
+            # XXX: some delay probably useful... how much is uncertain
+            time.sleep(0.1)  
+            self.reap_children()
+            processes_to_stop = list(self.processes.values())
+            for proc_info in processes_to_stop:
+                if self.verbose:
+                    sys.stdout.write("Sending SIGKILL to %s (PID %d).\n" % 
+                                     (proc_info.name, proc_info.pid))
+                try:
+                    proc_info.process.kill()
+                except OSError:
+                    # ignore these (usually ESRCH because the child
+                    # finally exited)
+                    pass
         if self.verbose:
             sys.stdout.write("All processes ended, server done.\n")
 
