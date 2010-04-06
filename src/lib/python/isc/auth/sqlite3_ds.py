@@ -13,6 +13,8 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+# $Id$
+
 import sqlite3, re, random
 import isc
 
@@ -277,6 +279,3 @@ class AXFRInDB:
 
         self._cur.close()
         self._conn.close()
-
-
-
