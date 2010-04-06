@@ -218,6 +218,10 @@ class AXFRInDB:
     def __init__(self, dbfile, zone_name):
         self._dbfile = dbfile
         self._zone_name = zone_name
+        # if the zone name doesn't contain the trailing dot, automatically
+        # add it.
+        if self._zone_name[-1] != '.':
+            self._zone_name += '.'
         self._old_zone_id = None
         self._new_zone_id = None
 
