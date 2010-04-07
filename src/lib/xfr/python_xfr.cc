@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id: message_python.cc 2010-03-08 18:44:00 feng $
+// $Id$
 
 #include <boost/python.hpp>
 #include <boost/python/class.hpp>
