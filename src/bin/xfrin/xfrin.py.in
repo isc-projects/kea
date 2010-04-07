@@ -267,7 +267,7 @@ class XfrinConnection(asyncore.dispatcher):
 
 def process_xfrin(xfrin_recorder, zone_name, db_file, 
                   shutdown_event, master_addr, port, check_soa, verbose):
-    xfrin_recorder.increment(name)
+    xfrin_recorder.increment(zone_name)
     try:
         conn = XfrinConnection(zone_name, db_file, shutdown_event, 
                            master_addr, int(port), check_soa, verbose)
