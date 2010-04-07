@@ -30,8 +30,10 @@ from optparse import OptionParser, OptionValueError
 from isc.config.ccsession import *
 try:
     from bind10_dns import *
-except:
-    pass
+except ImportError as e:
+    # C++ loadable module may not be installed; even so the xfrin process
+    # must keep running, so we warn about it and move forward.
+    sys.stderr.write('[b10-xfrin] failed to import DNS module: %s\n' % str(e))
 
 # If B10_FROM_SOURCE is set in the environment, we use data files
 # from a directory relative to that, otherwise we use the ones
