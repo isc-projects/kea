@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+// $Id$
+
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -27,14 +29,15 @@ namespace xfr {
         int fd[n]; \
     }
 
+namespace {
 int
-send_fds_with_buffer(int sock, const int *fds, unsigned n_fds, void *buffer)
+send_fds_with_buffer(const int sock, const int* fds, const unsigned n_fds,
+                     void* buffer)
 {
     struct msghdr msghdr;
     char nothing = '!';
     struct iovec nothing_ptr;
-    struct cmsghdr *cmsg;
-    int i;
+    struct cmsghdr* cmsg;
 
     nothing_ptr.iov_base = &nothing;
     nothing_ptr.iov_len = 1;
@@ -49,15 +52,17 @@ send_fds_with_buffer(int sock, const int *fds, unsigned n_fds, void *buffer)
     cmsg->cmsg_len = msghdr.msg_controllen;
     cmsg->cmsg_level = SOL_SOCKET;
     cmsg->cmsg_type = SCM_RIGHTS;
-    for(i = 0; i < n_fds; i++)
+    for (int i = 0; i < n_fds; ++i) {
         ((int *)CMSG_DATA(cmsg))[i] = fds[i];
-    
-    int ret =  sendmsg(sock, &msghdr, 0);
+    }
+
+    const int ret =  sendmsg(sock, &msghdr, 0);
     return (ret >= 0 ? 0 : -1);
 }
 
 int
-recv_fds_with_buffer(int sock, int *fds, unsigned n_fds, void *buffer)
+recv_fds_with_buffer(const int sock, int* fds, const unsigned n_fds,
+                     void* buffer)
 {
     struct msghdr msghdr;
     char nothing;
@@ -78,35 +83,35 @@ recv_fds_with_buffer(int sock, int *fds, unsigned n_fds, void *buffer)
     cmsg->cmsg_len = msghdr.msg_controllen;
     cmsg->cmsg_level = SOL_SOCKET;
     cmsg->cmsg_type = SCM_RIGHTS;
-    for(i = 0; i < n_fds; i++)
+    for (i = 0; i < n_fds; i++) {
         ((int *)CMSG_DATA(cmsg))[i] = -1;
-    
-    if(recvmsg(sock, &msghdr, 0) < 0)
-        return (-1);
+    }
 
-    for(i = 0; i < n_fds; i++) {
+    if (recvmsg(sock, &msghdr, 0) < 0) {
+        return (-1);
+    }
+
+    for (i = 0; i < n_fds; i++) {
         fds[i] = ((int *)CMSG_DATA(cmsg))[i];
     }
 
-    n_fds = (msghdr.msg_controllen - sizeof(struct cmsghdr)) / sizeof(int);
-    return n_fds;
+    return ((msghdr.msg_controllen - sizeof(struct cmsghdr)) / sizeof(int));
+}
 }
 
 int
-recv_fd(int sock)
-{
+recv_fd(const int sock) {
     FD_BUFFER_CREATE(1) buffer;
     int fd = 0;
-    int ret = recv_fds_with_buffer(sock, &fd, 1, &buffer);
-    if (ret == -1)
+    if (recv_fds_with_buffer(sock, &fd, 1, &buffer) == -1) {
         return -1;
+    }
 
     return fd;
 }
 
 int
-send_fd(int sock, int fd)
-{
+send_fd(const int sock, const int fd) {
     FD_BUFFER_CREATE(1) buffer;
     int ret = send_fds_with_buffer(sock, &fd, 1, &buffer);
     return ((ret < 0) ? -1 : ret);
