@@ -108,16 +108,13 @@ class ProcessInfo:
             spawn_stdout = self.dev_null
         else:
             spawn_stdout = None
-        spawn_env = self.env
-        spawn_env['PATH'] = os.environ['PATH']
-        if 'B10_FROM_SOURCE' in os.environ:
-            spawn_env['B10_FROM_SOURCE'] = os.environ['B10_FROM_SOURCE']
-        else: 
+        # Environment variables for the child process will be a copy of those
+        # of the boss process with any additional specific variables given
+        # on construction (self.env).
+        spawn_env = os.environ
+        spawn_env.update(self.env)
+        if not 'B10_FROM_SOURCE' in os.environ:
             spawn_env['PATH'] = "@@LIBEXECDIR@@:" + spawn_env['PATH']
-        if 'PYTHON_EXEC' in os.environ:
-            spawn_env['PYTHON_EXEC'] = os.environ['PYTHON_EXEC']
-        if 'PYTHONPATH' in os.environ:
-            spawn_env['PYTHONPATH'] = os.environ['PYTHONPATH']
         self.process = subprocess.Popen(self.args,
                                         stdin=subprocess.PIPE,
                                         stdout=spawn_stdout,
