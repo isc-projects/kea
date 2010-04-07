@@ -329,13 +329,6 @@ class Xfrin():
         # TODO, process new config data
         return create_answer(0)
 
-
-    def _print_settings(self):
-        full_config = self._cc.get_full_config()
-        for item in full_config:
-            print(item + ":" + str(full_config[item]))
-
-
     def shutdown(self):
         ''' shutdown the xfrin process. the thread which is doing xfrin should be 
         terminated.
@@ -352,13 +345,7 @@ class Xfrin():
         answer = create_answer(0)
         cmd = command
         try:
-            if cmd == 'print_message':
-                print(args)
-
-            elif cmd == 'print_settings':
-                self._print_settings()  
-
-            elif cmd == 'shutdown':
+            if cmd == 'shutdown':
                 self._shutdown_event.set()
 
             elif cmd == 'retransfer':
