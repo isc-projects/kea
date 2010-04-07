@@ -14,7 +14,6 @@
 
 // $Id: message_python.cc 2010-03-08 18:44:00 feng $
 
-#include <string>
 #include <boost/python.hpp>
 #include <boost/python/class.hpp>
 #include <boost/python/module.hpp>
