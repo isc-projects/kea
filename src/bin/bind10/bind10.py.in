@@ -108,6 +108,10 @@ class ProcessInfo:
             spawn_stdout = self.dev_null
         else:
             spawn_stdout = None
+        if options.verbose:
+            spawn_stderr = sys.stderr
+        else:
+            spawn_stderr = spawn_stdout
         # Environment variables for the child process will be a copy of those
         # of the boss process with any additional specific variables given
         # on construction (self.env).
@@ -118,7 +122,7 @@ class ProcessInfo:
         self.process = subprocess.Popen(self.args,
                                         stdin=subprocess.PIPE,
                                         stdout=spawn_stdout,
-                                        stderr=spawn_stdout,
+                                        stderr=spawn_stderr,
                                         close_fds=True,
                                         env=spawn_env,)
         self.pid = self.process.pid
@@ -296,7 +300,7 @@ class BoB:
         if self.verbose:
             sys.stdout.write("Started b10-auth (PID %d)\n" % auth.pid)
 
-        # start the b10-xfrin
+        # start b10-xfrin
         if self.verbose:
             sys.stdout.write("Starting b10-xfrin\n")
         try:
