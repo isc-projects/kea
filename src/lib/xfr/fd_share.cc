@@ -32,7 +32,19 @@ namespace {
 // Note that cmsg_space() could run slow on OSes that do not have
 // CMSG_SPACE.
 inline socklen_t
-cmsg_space(socklen_t len) {
+cmsg_len(const socklen_t len) {
+#ifdef CMSG_LEN
+    return (CMSG_LEN(len));
+#else
+    // Cast NULL so that any pointer arithmetic performed by CMSG_DATA
+    // is correct.
+    const uintptr_t hdrlen = (uintptr_t)CMSG_DATA(((struct cmsghdr*)NULL));
+    return (hdrlen + len);
+#endif
+}
+
+inline socklen_t
+cmsg_space(const socklen_t len) {
 #ifdef CMSG_SPACE
     return (CMSG_SPACE(len));
 #else
@@ -84,8 +96,9 @@ recv_fd(const int sock) {
     }
     const struct cmsghdr* cmsg = CMSG_FIRSTHDR(&msghdr);
     int fd = -1;
-    if (cmsg->cmsg_level == SOL_SOCKET && cmsg->cmsg_type == SCM_RIGHTS) {
-        fd = *(const int *)CMSG_DATA(cmsg);
+    if (cmsg != NULL && cmsg->cmsg_len == cmsg_len(sizeof(int)) &&
+        cmsg->cmsg_level == SOL_SOCKET && cmsg->cmsg_type == SCM_RIGHTS) {
+        fd = *(const int*)CMSG_DATA(cmsg);
     }
     free(msghdr.msg_control);
     return (fd);
@@ -111,10 +124,10 @@ send_fd(const int sock, const int fd) {
     }
 
     struct cmsghdr* cmsg = CMSG_FIRSTHDR(&msghdr);
-    cmsg->cmsg_len = msghdr.msg_controllen;
+    cmsg->cmsg_len = cmsg_len(sizeof(int));
     cmsg->cmsg_level = SOL_SOCKET;
     cmsg->cmsg_type = SCM_RIGHTS;
-    *(int *)CMSG_DATA(cmsg) = fd;
+    *(int*)CMSG_DATA(cmsg) = fd;
 
     const int ret = sendmsg(sock, &msghdr, 0);
     free(msghdr.msg_control);
