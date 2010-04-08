@@ -35,21 +35,6 @@ XfroutClient::disconnect() {
     socket_.close();
 }
 
-void
-XfroutClient::sendData(const uint8_t* msg_data, const uint16_t msg_len) {
-    int count = 0;
-    while (count < msg_len) {
-        const int size = send(socket_.native(), msg_data + count,
-                              msg_len - count, 0);
-        if (size == -1) {
-            isc_throw(XfroutError, "auth failed to send data to xfrout module");
-        }
-        count += size;
-    }
-
-    return;
-}
-
 int 
 XfroutClient::sendXfroutRequestInfo(const int tcp_sock, uint8_t* msg_data,
                                     const uint16_t msg_len)
@@ -59,8 +44,16 @@ XfroutClient::sendXfroutRequestInfo(const int tcp_sock, uint8_t* msg_data,
                   "Fail to send socket descriptor to xfrout module");
     }
 
-    sendData((uint8_t*)&msg_len, 2);
-    sendData(msg_data, msg_len);
+    // XXX: this shouldn't be blocking send, even though it's unlikely to block.
+    const uint8_t lenbuf[2] = { msg_len >> 8, msg_len & 0xff };
+    if (send(socket_.native(), lenbuf, sizeof(lenbuf), 0) != sizeof(lenbuf)) {
+        isc_throw(XfroutError,
+                  "failed to send XFR request length to xfrout module");
+    }
+    if (send(socket_.native(), msg_data, msg_len, 0) != msg_len) {
+        isc_throw(XfroutError,
+                  "failed to send XFR request data to xfrout module");
+    }
     
     int databuf = 0;
     if (recv(socket_.native(), &databuf, sizeof(int), 0) != 0) {
