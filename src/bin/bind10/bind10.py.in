@@ -108,10 +108,10 @@ class ProcessInfo:
             spawn_stdout = self.dev_null
         else:
             spawn_stdout = None
-        if options.verbose:
-            spawn_stderr = sys.stderr
+        if self.dev_null_stderr:
+            spawn_stderr = self.dev_null
         else:
-            spawn_stderr = spawn_stdout
+            spawn_stderr = None
         # Environment variables for the child process will be a copy of those
         # of the boss process with any additional specific variables given
         # on construction (self.env).
@@ -128,11 +128,13 @@ class ProcessInfo:
         self.pid = self.process.pid
         self.restart_schedule.set_run_start_time()
 
-    def __init__(self, name, args, env={}, dev_null_stdout=False):
+    def __init__(self, name, args, env={}, dev_null_stdout=False,
+                 dev_null_stderr=False):
         self.name = name 
         self.args = args
         self.env = env
         self.dev_null_stdout = dev_null_stdout
+        self.dev_null_stderr = dev_null_stderr
         self.restart_schedule = RestartSchedule()
         self._spawn()
 
@@ -218,7 +220,8 @@ class BoB:
             sys.stdout.write("Starting msgq using port %d\n" % 
                              self.c_channel_port)
         try:
-            c_channel = ProcessInfo("msgq", ["msgq"], c_channel_env, True)
+            c_channel = ProcessInfo("msgq", ["msgq"], c_channel_env, True,
+                                    not self.verbose)
         except Exception as e:
             return "Unable to start msgq; " + str(e)
         self.processes[c_channel.pid] = c_channel
