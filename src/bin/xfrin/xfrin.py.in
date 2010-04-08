@@ -90,9 +90,17 @@ class XfrinConnection(asyncore.dispatcher):
         self._soa_rr_count = 0
         self._idle_timeout = idle_timeout
         self.setblocking(1)
-        self.connect((master_addr, port))
         self._shutdown_event = shutdown_event
         self._verbose = verbose
+
+    def connect_to_master(self, master_addr, port):
+        '''Connect to master in TCP.'''
+        try:
+            self.connect((master_addr, port))
+            return True
+        except socket.error as e:
+            self.log_msg('Failed to connect:(%s:%d), %s' % (master_addr, port, str(e)))
+            return False
 
     def _create_query(self, query_type):
         '''Create dns query message. '''
@@ -164,21 +172,22 @@ class XfrinConnection(asyncore.dispatcher):
             if check_soa:
                 ret =  self._check_soa_serial()
             
-            self.log_msg('transfer of \'%s\': AXFR started' % self._zone_name)
+            logstr = 'transfer of \'%s\': AXFR ' % self._zone_name
             if ret == XFRIN_OK:    
+                self.log_msg(logstr + 'started')
                 self._send_query(rr_type.AXFR())
                 isc.auth.sqlite3_ds.load(self._db_file, self._zone_name,
                                          self._handle_xfrin_response)
 
-            endmsg = 'succeeded' if ret == XFRIN_OK else 'failed'
-            self.log_msg('transfer of \'%s\' AXFR %s' % (self._zone_name,
-                                                         endmsg))
+                self.log_msg(logstr + 'succeeded')
+
         except XfrinException as e:
             self.log_msg(e)
-            self.log_msg('Error happened during xfrin!')
+            self.log_msg(logstr + 'failed')
             #TODO, recover data source.
         except isc.auth.sqlite3_ds.Sqlite3DSError as e:
             self.log_msg(e)
+            self.log_msg(logstr + 'failed')
         finally:
            self.close()
 
@@ -186,8 +195,9 @@ class XfrinConnection(asyncore.dispatcher):
     
     def _check_response_status(self, msg):
         #TODO, check more?
-        if msg.get_rcode() != rcode.NOERROR():
-            raise XfrinException('error response: ')
+        msg_rcode = msg.get_rcode()
+        if msg_rcode != rcode.NOERROR():
+            raise XfrinException('error response: %s' % msg_rcode.to_text())
 
         if not msg.get_header_flag(message_flag.QR()):
             raise XfrinException('response is not a response ')
@@ -269,13 +279,12 @@ class XfrinConnection(asyncore.dispatcher):
 
 def process_xfrin(xfrin_recorder, zone_name, db_file, 
                   shutdown_event, master_addr, port, check_soa, verbose):
+    port = int(port)
     xfrin_recorder.increment(zone_name)
-    try:
-        conn = XfrinConnection(zone_name, db_file, shutdown_event, 
-                           master_addr, int(port), check_soa, verbose)
+    conn = XfrinConnection(zone_name, db_file, shutdown_event, 
+                           master_addr, port, check_soa, verbose)
+    if conn.connect_to_master(master_addr, port):
         conn.do_xfrin(False)
-    except Exception as e:
-        log_error(str(e))
 
     xfrin_recorder.decrement(zone_name)
 
