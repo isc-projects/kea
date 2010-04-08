@@ -43,9 +43,6 @@ public:
                               uint16_t msg_len);
 
 private:
-    void sendData(const uint8_t *msg_data, uint16_t msg_len);
-
-private:
     boost::asio::io_service io_service_;
     // The socket used to communicate with the xfrout server.
     stream_protocol::socket socket_;

@@ -53,8 +53,10 @@ class XfroutException(Exception): pass
 class XfroutSession(BaseRequestHandler):
     def handle(self):
         fd = recv_fd(self.request.fileno())
+        if fd < 0:
+            raise XfroutException("failed to receive the FD for XFR connection")
         data_len = self.request.recv(2)
-        msg_len = struct.unpack('H', data_len)[0]
+        msg_len = struct.unpack('!H', data_len)[0]
         msgdata = self.request.recv(msg_len)
         sock = socket.fromfd(fd, socket.AF_INET, socket.SOCK_STREAM)
         try:
@@ -64,7 +66,7 @@ class XfroutSession(BaseRequestHandler):
                 self.log_msg(str(e))
 
         sock.close()
-               
+
     def _parse_query_message(self, mdata):
         ''' parse query message to [socket,message]'''
         #TODO, need to add parseHeader() in case the message header is invalid 
@@ -77,7 +79,6 @@ class XfroutSession(BaseRequestHandler):
             return rcode.FORMERR(), None
 
         return rcode.NOERROR(), msg
-
 
     def _get_query_zone_name(self, msg):
         q_iter = question_iter(msg)
