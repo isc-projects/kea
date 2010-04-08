@@ -32,8 +32,10 @@ from optparse import OptionParser, OptionValueError
 try:
     from bind10_xfr import *
     from bind10_dns import *
-except:
-    pass
+except ImportError as e:
+    # C++ loadable module may not be installed; even so the xfrout process
+    # must keep running, so we warn about it and move forward.
+    sys.stderr.write('[b10-xfrout] failed to import DNS or XFR module: %s\n' % str(e))
 
 if "B10_FROM_SOURCE" in os.environ:
     SPECFILE_PATH = os.environ["B10_FROM_SOURCE"] + "/src/bin/xfrout"
