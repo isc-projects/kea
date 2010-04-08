@@ -239,7 +239,7 @@ class XfrinConnection(asyncore.dispatcher):
             msg = message(message_mode.PARSE)
             msg.from_wire(input_buffer(recvdata))
             self._check_response_status(msg)
-            
+
             rrset_iter = section_iter(msg, section.ANSWER())
             for rr in self._handle_answer_section(rrset_iter):
                 yield rr
