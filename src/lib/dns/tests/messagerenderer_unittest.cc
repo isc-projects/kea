@@ -49,8 +49,7 @@ protected:
 const uint8_t MessageRendererTest::testdata[5] = {1, 2, 3, 4, 5};
 
 // The test cases are borrowed from those for the OutputBuffer class.
-TEST_F(MessageRendererTest, writeIntger)
-{
+TEST_F(MessageRendererTest, writeIntger) {
     renderer.writeUint16(data16);
     expected_size += sizeof(data16);
 
@@ -58,8 +57,7 @@ TEST_F(MessageRendererTest, writeIntger)
                         renderer.getLength(), &testdata[1], sizeof(data16));
 }
 
-TEST_F(MessageRendererTest, writeName)
-{
+TEST_F(MessageRendererTest, writeName) {
     UnitTestUtil::readWireData("testdata/name_toWire1", data);
     renderer.writeName(Name("a.example.com."));
     renderer.writeName(Name("b.example.com."));
@@ -68,8 +66,7 @@ TEST_F(MessageRendererTest, writeName)
                         buffer.getLength(), &data[0], data.size());
 }
 
-TEST_F(MessageRendererTest, writeNameInLargeBuffer)
-{
+TEST_F(MessageRendererTest, writeNameInLargeBuffer) {
     size_t offset = 0x3fff;
     buffer.skip(offset);
 
@@ -83,8 +80,7 @@ TEST_F(MessageRendererTest, writeNameInLargeBuffer)
                         &data[0], data.size());
 }
 
-TEST_F(MessageRendererTest, writeNameWithUncompressed)
-{
+TEST_F(MessageRendererTest, writeNameWithUncompressed) {
     UnitTestUtil::readWireData("testdata/name_toWire3", data);
     renderer.writeName(Name("a.example.com."));
     renderer.writeName(Name("b.example.com."), false);
@@ -93,8 +89,7 @@ TEST_F(MessageRendererTest, writeNameWithUncompressed)
                         buffer.getLength(), &data[0], data.size());
 }
 
-TEST_F(MessageRendererTest, writeNamePointerChain)
-{
+TEST_F(MessageRendererTest, writeNamePointerChain) {
     UnitTestUtil::readWireData("testdata/name_toWire4", data);
     renderer.writeName(Name("a.example.com."));
     renderer.writeName(Name("b.example.com."));
@@ -103,8 +98,7 @@ TEST_F(MessageRendererTest, writeNamePointerChain)
                         buffer.getLength(), &data[0], data.size());
 }
 
-TEST_F(MessageRendererTest, writeNameCaseCompress)
-{
+TEST_F(MessageRendererTest, writeNameCaseCompress) {
     UnitTestUtil::readWireData("testdata/name_toWire1", data);
     renderer.writeName(Name("a.example.com."));
     // this should match the first name in terms of compression:
@@ -114,8 +108,7 @@ TEST_F(MessageRendererTest, writeNameCaseCompress)
                         buffer.getLength(), &data[0], data.size());
 }
 
-TEST_F(MessageRendererTest, writeRootName)
-{
+TEST_F(MessageRendererTest, writeRootName) {
     // root name is special: it never causes compression or can (reasonably)
     // be a compression pointer.  So it makes sense to check this case
     // explicitly.
