@@ -60,15 +60,16 @@ def code_totext(code, dict):
         return dict[code] + '(' + str(code) + ')'
     return str(code)
 
-def encode_name(name):
+def encode_name(name, absolute = True):
     # make sure the name is dot-terminated.  duplicate dots will be ignored
     # below.
     name += '.'
     labels = name.split('.')
     wire = ''
     for l in labels:
-        wire += '%02x' % len(l)
-        wire += ''.join(['%02x' % ord(ch) for ch in l])
+        if absolute or len(l) > 0:
+            wire += '%02x' % len(l)
+            wire += ''.join(['%02x' % ord(ch) for ch in l])
         if len(l) == 0:
             break
     return wire
@@ -102,6 +103,21 @@ def print_header(f, input_file):
 ### This data file was auto-generated from ''' + input_file + '''
 ###
 ''')
+
+class Name:
+    name = 'example.com'
+    pointer = -1                # no compression by default
+    def dump(self, f):
+        name_wire = encode_name(self.name,
+                                True if self.pointer == -1 else False)
+        f.write('\n# DNS Name: %s' % self.name)
+        if self.pointer >= 0:
+            f.write(' + compression pointer: %d' % self.pointer)
+        f.write('\n')
+        f.write('%s' % name_wire)
+        if self.pointer >= 0:
+            f.write(' %04x' % (0xc000 | self.pointer))
+        f.write('\n')
 
 class DNSHeader:
     id = 0x1035
@@ -316,7 +332,8 @@ class RRSIG:
         f.write('%04x %s %s\n' % (self.tag, name_wire, sig_wire))
 
 def get_config_param(section):
-    config_param = {'header' : (DNSHeader, header_xtables),
+    config_param = {'name' : (Name, {}),
+                    'header' : (DNSHeader, header_xtables),
                     'question' : (DNSQuestion, question_xtables),
                     'edns' : (EDNS, {}), 'soa' : (SOA, {}), 'txt' : (TXT, {}),
                     'rrsig' : (RRSIG, {}), 'nsec' : (NSEC, {})}
