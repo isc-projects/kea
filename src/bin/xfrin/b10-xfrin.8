@@ -29,9 +29,7 @@ The
 \fBb10\-xfrin\fR
 daemon provides the BIND 10 incoming DNS zone transfer service\&. Normally it is started by the
 \fBbind10\fR(8)
-master process and communicates with the
-\fBb10-auth\fR(8)
-authoritative DNS server\&.
+boss process\&. When triggered it can request and receive a zone transfer and store the zone in a BIND 10 zone data store\&.
 .if n \{\
 .sp
 .\}
@@ -49,20 +47,36 @@ The Y1 prototype release only supports AXFR\&. IXFR is not implemented\&.
 .sp .5v
 .RE
 .PP
-This daemon communicates over a
+This daemon communicates with the BIND 10 over a
 \fBmsgq\fR(8)
 C\-Channel connection\&. If this connection is not established,
 \fBb10\-xfrin\fR
 will exit\&.
 .PP
-It also receives its configurations from
-\fBb10-cfgmgr\fR(8)
-using the REST\-ful interface provided by
-\fBb10-cmdctl\fR(8)\&.
+
+\fBb10\-xfrin\fR
+receives its configurations from
+\fBb10-cfgmgr\fR(8)\&.
+.SH "CONFIGURATION AND COMMANDS"
 .PP
-The configurable setting is transfers\-in which defines the maximum number of inbound zone transfers that can run concurrently\&. The default is 10\&.
+The configurable setting is
+\fItransfers\-in\fR
+which defines the maximum number of inbound zone transfers that can run concurrently\&. The default is 10\&.
 .PP
-The configuration commands are: print_settings, shutdown, and retransfer (triggers the transfer in for a single zone without checking the zone\'s serial number)\&.
+The configuration commands are:
+.PP
+
+\fBshutdown\fR
+stops all incoming zone transfers and exits
+\fBb10\-xfrin\fR\&. (Note that the BIND 10 boss process will restart this service\&.)
+.PP
+
+\fBretransfer\fR
+triggers the transfer in for a single zone without checking the zone\'s serial number\&. It has the following arguments:
+\fIzone_name\fR
+to define the zone to request and
+\fImaster\fR
+to define the IP address of the authoritative server to transfer from\&.
 .if n \{\
 .sp
 .\}
@@ -82,9 +96,7 @@ This prototype version uses SQLite3 as its data source backend\&. Future version
 .SH "SEE ALSO"
 .PP
 
-\fBb10-auth\fR(8),
 \fBb10-cfgmgr\fR(8),
-\fBb10-cmdctl\fR(8),
 \fBbind10\fR(8),
 \fBmsgq\fR(8),
 BIND 10 Guide\&.
