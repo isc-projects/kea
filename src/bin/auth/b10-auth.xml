@@ -58,7 +58,7 @@
       authoritative DNS server.
       Normally it is started by the
       <citerefentry><refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-      master process.
+      boss process.
     </para>
 
     <para>
