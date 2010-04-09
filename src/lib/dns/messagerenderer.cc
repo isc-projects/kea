@@ -34,7 +34,8 @@ namespace {     // hide internal-only names from the public namespaces
 /// objects, and searches the set for the position of the longest match
 /// (ancestor) name against each new name to be rendered into the buffer.
 struct NameCompressNode {
-    NameCompressNode(const OutputBuffer& buffer, size_t pos, size_t len) :
+    NameCompressNode(const OutputBuffer& buffer, const size_t pos,
+                     const size_t len) :
         buffer_(buffer), pos_(pos), len_(len) {}
     /// The buffer in which the corresponding name is rendered.
     const OutputBuffer& buffer_;
@@ -159,26 +160,22 @@ MessageRenderer::MessageRenderer(OutputBuffer& buffer) :
     impl_(new MessageRendererImpl(buffer))
 {}
 
-MessageRenderer::~MessageRenderer()
-{
+MessageRenderer::~MessageRenderer() {
     delete impl_;
 }
 
 void
-MessageRenderer::skip(size_t len)
-{
+MessageRenderer::skip(const size_t len) {
     impl_->buffer_.skip(len);
 }
 
 void
-MessageRenderer::trim(size_t len)
-{
+MessageRenderer::trim(const size_t len) {
     impl_->buffer_.trim(len);
 }
 
 void
-MessageRenderer::clear()
-{
+MessageRenderer::clear() {
     impl_->buffer_.clear();
     impl_->nbuffer_.clear();
     impl_->nodeset_.clear();
@@ -187,74 +184,62 @@ MessageRenderer::clear()
 }
 
 void
-MessageRenderer::writeUint8(uint8_t data)
-{
+MessageRenderer::writeUint8(const uint8_t data) {
     impl_->buffer_.writeUint8(data);
 }
 
 void
-MessageRenderer::writeUint16(uint16_t data)
-{
+MessageRenderer::writeUint16(const uint16_t data) {
     impl_->buffer_.writeUint16(data);
 }
 
 void
-MessageRenderer::writeUint16At(uint16_t data, size_t pos)
-{
+MessageRenderer::writeUint16At(const uint16_t data, const size_t pos) {
     impl_->buffer_.writeUint16At(data, pos);
 }
 
 void
-MessageRenderer::writeUint32(uint32_t data)
-{
+MessageRenderer::writeUint32(const uint32_t data) {
     impl_->buffer_.writeUint32(data);
 }
 
 void
-MessageRenderer::writeData(const void* data, size_t len)
-{
+MessageRenderer::writeData(const void* const data, const size_t len) {
     impl_->buffer_.writeData(data, len);
 }
 
 const void*
-MessageRenderer::getData() const
-{
+MessageRenderer::getData() const {
     return (impl_->buffer_.getData());
 }
 
 size_t
-MessageRenderer::getLength() const
-{
+MessageRenderer::getLength() const {
     return (impl_->buffer_.getLength());
 }
 
 size_t
-MessageRenderer::getLengthLimit() const
-{
+MessageRenderer::getLengthLimit() const {
     return (impl_->msglength_limit_);
 }
 
 void
-MessageRenderer::setLengthLimit(size_t len)
-{
+MessageRenderer::setLengthLimit(const size_t len) {
     impl_->msglength_limit_ = len;
 }
 
 bool
-MessageRenderer::isTruncated() const
-{
+MessageRenderer::isTruncated() const {
     return (impl_->truncated_);
 }
 
 void
-MessageRenderer::setTruncated()
-{
+MessageRenderer::setTruncated() {
     impl_->truncated_ = true;
 }
 
 void
-MessageRenderer::writeName(const Name& name, bool compress)
-{
+MessageRenderer::writeName(const Name& name, const bool compress) {
     impl_->nbuffer_.clear();
     name.toWire(impl_->nbuffer_);
 
@@ -278,7 +263,7 @@ MessageRenderer::writeName(const Name& name, bool compress)
     }
 
     // Record the current offset before extending the buffer.
-    size_t offset = impl_->buffer_.getLength();
+    const size_t offset = impl_->buffer_.getLength();
     // Write uncompress part...
     impl_->buffer_.writeData(impl_->nbuffer_.getData(),
                              compress ? i : impl_->nbuffer_.getLength());
