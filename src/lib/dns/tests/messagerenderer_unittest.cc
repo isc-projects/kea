@@ -98,12 +98,57 @@ TEST_F(MessageRendererTest, writeNamePointerChain) {
                         buffer.getLength(), &data[0], data.size());
 }
 
+TEST_F(MessageRendererTest, compressMode) {
+    // By default the render performs case insensitive compression.
+    EXPECT_EQ(MessageRenderer::CASE_INSENSITIVE, renderer.getCompressMode());
+
+    // The mode can be explicitly changed.
+    renderer.setCompressMode(MessageRenderer::CASE_SENSITIVE);
+    EXPECT_EQ(MessageRenderer::CASE_SENSITIVE, renderer.getCompressMode());
+    renderer.setCompressMode(MessageRenderer::CASE_INSENSITIVE);
+    EXPECT_EQ(MessageRenderer::CASE_INSENSITIVE, renderer.getCompressMode());
+
+    // The clear() method resets the mode to the default.
+    renderer.setCompressMode(MessageRenderer::CASE_SENSITIVE);
+    renderer.clear();
+    EXPECT_EQ(MessageRenderer::CASE_INSENSITIVE, renderer.getCompressMode());
+}
+
 TEST_F(MessageRendererTest, writeNameCaseCompress) {
+    // By default MessageRenderer performs case insensitive compression.
+
     UnitTestUtil::readWireData("testdata/name_toWire1", data);
     renderer.writeName(Name("a.example.com."));
     // this should match the first name in terms of compression:
     renderer.writeName(Name("b.exAmple.CoM."));
     renderer.writeName(Name("a.example.org."));
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
+                        buffer.getLength(), &data[0], data.size());
+}
+
+TEST_F(MessageRendererTest, writeNameCaseSensitiveCompress) {
+    // name compression in case sensitive manner.  See the data file
+    // description for details.
+    renderer.setCompressMode(MessageRenderer::CASE_SENSITIVE);
+    UnitTestUtil::readWireData("testdata/name_toWire5", data);
+    renderer.writeName(Name("a.example.com."));
+    renderer.writeName(Name("b.eXample.com."));
+    renderer.writeName(Name("c.eXample.com."));
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
+                        buffer.getLength(), &data[0], data.size());
+}
+
+TEST_F(MessageRendererTest, writeNameMixedCaseCompress) {
+    renderer.setCompressMode(MessageRenderer::CASE_SENSITIVE);
+    UnitTestUtil::readWireData("testdata/name_toWire6", data);
+    renderer.writeName(Name("a.example.com."));
+    renderer.writeName(Name("b.eXample.com."));
+
+    // Change the compression mode in the middle of rendering.  This is an
+    // unusual operation and is unlikely to happen in practice, but is still
+    // allowed in this API.
+    renderer.setCompressMode(MessageRenderer::CASE_INSENSITIVE);
+    renderer.writeName(Name("c.b.EXAMPLE.com."));
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
                         buffer.getLength(), &data[0], data.size());
 }

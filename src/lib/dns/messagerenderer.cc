@@ -34,9 +34,14 @@ namespace {     // hide internal-only names from the public namespaces
 /// objects, and searches the set for the position of the longest match
 /// (ancestor) name against each new name to be rendered into the buffer.
 struct NameCompressNode {
-    NameCompressNode(const OutputBuffer& buffer, const size_t pos,
+    NameCompressNode(const MessageRenderer& renderer,
+                     const OutputBuffer& buffer, const size_t pos,
                      const size_t len) :
-        buffer_(buffer), pos_(pos), len_(len) {}
+        renderer_(renderer), buffer_(buffer), pos_(pos), len_(len) {}
+    /// The renderer that performs name compression using the node.
+    /// This is kept in each node to detect the compression mode
+    /// (case-sensitive or not) in the comparison functor (\c NameCompare).
+    const MessageRenderer& renderer_;
     /// The buffer in which the corresponding name is rendered.
     const OutputBuffer& buffer_;
     /// The position (offset from the beginning) in the buffer where the
@@ -78,6 +83,9 @@ struct NameCompare : public std::binary_function<NameCompressNode,
             return (false);
         }
 
+        const bool case_sensitive =
+            (n1.renderer_.getCompressMode() == MessageRenderer::CASE_SENSITIVE);
+
         uint16_t pos1 = n1.pos_;
         uint16_t pos2 = n2.pos_;
         uint16_t l1 = 0;
@@ -85,10 +93,19 @@ struct NameCompare : public std::binary_function<NameCompressNode,
         for (uint16_t i = 0; i < n1.len_; i++, pos1++, pos2++) {
             pos1 = nextPosition(n1.buffer_, pos1, l1);
             pos2 = nextPosition(n2.buffer_, pos2, l2);
-            if (tolower(n1.buffer_[pos1]) < tolower(n2.buffer_[pos2])) {
-                return (true);
-            } else if (tolower(n1.buffer_[pos1]) > tolower(n2.buffer_[pos2])) {
-                return (false);
+            if (case_sensitive) {
+                if (n1.buffer_[pos1] < n2.buffer_[pos2]) {
+                    return (true);
+                } else if (n1.buffer_[pos1] > n2.buffer_[pos2]) {
+                    return (false);
+                }
+            } else {
+                if (tolower(n1.buffer_[pos1]) < tolower(n2.buffer_[pos2])) {
+                    return (true);
+                } else if (tolower(n1.buffer_[pos1]) >
+                           tolower(n2.buffer_[pos2])) {
+                    return (false);
+                }
             }
         }
 
@@ -130,14 +147,14 @@ private:
 /// The implementation is hidden from applications.  We can refer to specific
 /// members of this class only within the implementation source file.
 ///
-struct MessageRendererImpl {
+struct MessageRenderer::MessageRendererImpl {
     /// \brief Constructor from an output buffer.
     ///
     /// \param buffer An \c OutputBuffer object to which wire format data is
     /// written.
     MessageRendererImpl(OutputBuffer& buffer) :
         buffer_(buffer), nbuffer_(Name::MAX_WIRE), msglength_limit_(512),
-        truncated_(false)
+        truncated_(false), compress_mode_(MessageRenderer::CASE_INSENSITIVE)
     {}
     /// The buffer that holds the entire DNS message.
     OutputBuffer& buffer_;
@@ -154,6 +171,8 @@ struct MessageRendererImpl {
     /// A boolean flag that indicates truncation has occurred while rendering
     /// the data.
     bool truncated_;
+    /// The name compression mode.
+    CompressMode compress_mode_;
 };
 
 MessageRenderer::MessageRenderer(OutputBuffer& buffer) :
@@ -181,6 +200,7 @@ MessageRenderer::clear() {
     impl_->nodeset_.clear();
     impl_->msglength_limit_ = 512;
     impl_->truncated_ = false;
+    impl_->compress_mode_ = CASE_INSENSITIVE;
 }
 
 void
@@ -238,6 +258,16 @@ MessageRenderer::setTruncated() {
     impl_->truncated_ = true;
 }
 
+MessageRenderer::CompressMode
+MessageRenderer::getCompressMode() const {
+    return (impl_->compress_mode_);
+}
+
+void
+MessageRenderer::setCompressMode(const CompressMode mode) {
+    impl_->compress_mode_ = mode;
+}
+
 void
 MessageRenderer::writeName(const Name& name, const bool compress) {
     impl_->nbuffer_.clear();
@@ -254,7 +284,7 @@ MessageRenderer::writeName(const Name& name, const bool compress) {
         if (impl_->nbuffer_[i] == 0) {
             continue;
         }
-        n = impl_->nodeset_.find(NameCompressNode(impl_->nbuffer_, i,
+        n = impl_->nodeset_.find(NameCompressNode(*this, impl_->nbuffer_, i,
                                                   impl_->nbuffer_.getLength() -
                                                   i));
         if (n != notfound) {
@@ -283,7 +313,8 @@ MessageRenderer::writeName(const Name& name, const bool compress) {
         if (offset + j > Name::MAX_COMPRESS_POINTER) {
             break;
         }
-        impl_->nodeset_.insert(NameCompressNode(impl_->buffer_, offset + j,
+        impl_->nodeset_.insert(NameCompressNode(*this, impl_->buffer_,
+                                                offset + j,
                                                 impl_->nbuffer_.getLength() -
                                                 j));
     }

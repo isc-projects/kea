@@ -22,7 +22,6 @@ namespace dns {
 // forward declarations
 class OutputBuffer;
 class Name;
-class MessageRendererImpl;
 
 ///
 /// \brief The \c MessageRenderer class encapsulates implementation details
@@ -38,7 +37,7 @@ class MessageRendererImpl;
 /// to care about this class.
 ///
 /// A \c MessageRenderer class object is constructed with a \c OutputBuffer
-/// object, which is the buffer into which the rendered data will be written.
+/// object, which is the buffer into which the rendered %data will be written.
 /// Normally the buffer is expected to be empty on construction, but it doesn't
 /// have to be so; the \c MessageRenderer object will start rendering from the
 /// end of the buffer at the time of construction.  However, if the
@@ -68,6 +67,34 @@ class MessageRendererImpl;
 /// At the moment we don't the strong need for it, so we rather avoid over
 /// abstraction and keep the definition simpler.
 class MessageRenderer {
+public:
+    /// \brief Compression mode constants.
+    ///
+    /// The \c CompressMode enum type represents the name compression mode
+    /// for the \c MessageRenderer.
+    /// \c CASE_INSENSITIVE means compress names in case-insensitive manner;
+    /// \c CASE_SENSITIVE means compress names in case-sensitive manner.
+    /// By default, \c MessageRenderer compresses names in case-insensitive
+    /// manner.
+    /// Compression mode can be dynamically modified by the
+    /// \c setCompressMode() method.
+    /// The mode can be changed even in the middle of rendering, although this
+    /// is not an intended usage.  In this case the names already compressed
+    /// are intact; only names being compressed after the mode change are
+    /// affected by the change.
+    /// If the internal \c MessageRenderer is reinitialized by the \c clear()
+    /// method, the compression mode will be reset to the default, which is
+    /// \c CASE_INSENSITIVE
+    ///
+    /// One specific case where case-sensitive compression is required is
+    /// AXFR as described in draft-ietf-dnsext-axfr-clarify.  A primary
+    /// authoritative DNS server implementation using this API would specify
+    /// \c CASE_SENSITIVE before rendering outgoing AXFR messages.
+    ///
+    enum CompressMode {
+        CASE_INSENSITIVE,  //!< Compress names case-insensitive manner (default)
+        CASE_SENSITIVE     //!< Compress names case-sensitive manner
+    };
 public:
     ///
     /// \name Constructors and Destructor
@@ -116,6 +143,12 @@ public:
     ///
     /// \return The maximum length in bytes.
     size_t getLengthLimit() const;
+    /// \brief Return the compression mode of the \c MessageRenderer.
+    ///
+    /// This method never throws an exception.
+    ///
+    /// \return The current compression mode.
+    CompressMode getCompressMode() const;
     //@}
 
     ///
@@ -134,6 +167,12 @@ public:
     ///
     /// \param len The maximum length in bytes.
     void setLengthLimit(size_t len);
+    /// \brief Set the compression mode of the \c MessageRenderer.
+    ///
+    /// This method never throws an exception.
+    ///
+    /// \param mode A \c CompressMode value representing the compression mode.
+    void setCompressMode(CompressMode mode);
     //@}
 
     ///
@@ -220,6 +259,7 @@ public:
     /// \param compress A boolean indicating whether to enable name compression.
     void writeName(const Name& name, bool compress = true);
 private:
+    struct MessageRendererImpl;
     MessageRendererImpl* impl_;
 };
 }
