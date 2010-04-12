@@ -20,13 +20,12 @@
 #include <functional>
 #include <vector>
 #include <iostream>
-
 #include <algorithm>
 
-#include "buffer.h"
-#include "exceptions.h"
-#include "name.h"
-#include "messagerenderer.h"
+#include <dns/buffer.h>
+#include <dns/exceptions.h>
+#include <dns/name.h>
+#include <dns/messagerenderer.h>
 
 using namespace std;
 using isc::dns::NameComparisonResult;

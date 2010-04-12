@@ -24,7 +24,8 @@
 #include <boost/shared_ptr.hpp>
 
 #include <exceptions/exceptions.h>
-#include "rdata.h"
+
+#include <dns/rdata.h>
 
 namespace isc {
 namespace dns {

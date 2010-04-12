@@ -18,10 +18,10 @@
 
 #include <string>
 
-#include "name.h"
-#include "rrtype.h"
-#include "rrttl.h"
-#include "rdata.h"
+#include <dns/name.h>
+#include <dns/rrtype.h>
+#include <dns/rrttl.h>
+#include <dns/rdata.h>
 
 // BEGIN_HEADER_GUARD
 

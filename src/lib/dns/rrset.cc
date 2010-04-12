@@ -20,13 +20,13 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "buffer.h"
-#include "messagerenderer.h"
-#include "name.h"
-#include "rrclass.h"
-#include "rrtype.h"
-#include "rrttl.h"
-#include "rrset.h"
+#include <dns/buffer.h>
+#include <dns/messagerenderer.h>
+#include <dns/name.h>
+#include <dns/rrclass.h>
+#include <dns/rrtype.h>
+#include <dns/rrttl.h>
+#include <dns/rrset.h>
 
 using namespace std;
 using namespace isc::dns;

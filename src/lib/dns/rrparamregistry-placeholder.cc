@@ -28,11 +28,12 @@
 #include <boost/shared_ptr.hpp>
 
 #include <exceptions/exceptions.h>
-#include "rrparamregistry.h"
-#include "rrclass.h"
-#include "rrtype.h"
-#include "rdata.h"
-#include "rdataclass.h"
+
+#include <dns/rrparamregistry.h>
+#include <dns/rrclass.h>
+#include <dns/rrtype.h>
+#include <dns/rdata.h>
+#include <dns/rdataclass.h>
 
 using namespace std;
 using namespace boost;
