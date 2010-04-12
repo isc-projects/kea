@@ -14,15 +14,16 @@
 
 // $Id$
 
-#include <string>
-
 #include <stdint.h>
 
-#include "buffer.h"
+#include <string>
+
 #include <exceptions/exceptions.h>
-#include "messagerenderer.h"
-#include "rrparamregistry.h"
-#include "rrclass.h"
+
+#include <dns/buffer.h>
+#include <dns/messagerenderer.h>
+#include <dns/rrparamregistry.h>
+#include <dns/rrclass.h>
 
 using namespace std;
 using namespace isc::dns;

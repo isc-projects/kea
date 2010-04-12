@@ -22,9 +22,9 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "name.h"
-#include "rrclass.h"
-#include "rrtype.h"
+#include <dns/name.h>
+#include <dns/rrclass.h>
+#include <dns/rrtype.h>
 
 namespace isc {
 namespace dns {

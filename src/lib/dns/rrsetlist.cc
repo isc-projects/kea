@@ -20,10 +20,10 @@
 
 #include <exceptions/exceptions.h>
 
-#include "rrclass.h"
-#include "rrtype.h"
-#include "rrset.h"
-#include "rrsetlist.h"
+#include <dns/rrclass.h>
+#include <dns/rrtype.h>
+#include <dns/rrset.h>
+#include <dns/rrsetlist.h>
 
 namespace isc {
 namespace dns {

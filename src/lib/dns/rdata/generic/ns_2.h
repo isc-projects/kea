@@ -18,8 +18,8 @@
 
 #include <string>
 
-#include "name.h"
-#include "rdata.h"
+#include <dns/name.h>
+#include <dns/rdata.h>
 
 // BEGIN_ISC_NAMESPACE
 

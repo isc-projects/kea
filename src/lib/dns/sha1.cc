@@ -50,7 +50,7 @@
  *      without express or implied warranty of any kind.
  *      
  */
-#include "sha1.h"
+#include <dns/sha1.h>
 
 /* Local Function Prototyptes */
 static void SHA1Finalize(SHA1Context *, uint8_t Pad_Byte);

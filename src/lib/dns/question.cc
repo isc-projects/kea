@@ -17,12 +17,12 @@
 #include <iostream>
 #include <string>
 
-#include "buffer.h"
-#include "messagerenderer.h"
-#include "name.h"
-#include "question.h"
-#include "rrclass.h"
-#include "rrtype.h"
+#include <dns/buffer.h>
+#include <dns/messagerenderer.h>
+#include <dns/name.h>
+#include <dns/question.h>
+#include <dns/rrclass.h>
+#include <dns/rrtype.h>
 
 using namespace std;
 

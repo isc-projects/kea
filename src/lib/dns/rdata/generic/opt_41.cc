@@ -14,14 +14,14 @@
 
 // $Id$
 
-#include "config.h"
+#include <config.h>
 
 #include <string>
 
-#include "buffer.h"
-#include "messagerenderer.h"
-#include "rdata.h"
-#include "rdataclass.h"
+#include <dns/buffer.h>
+#include <dns/messagerenderer.h>
+#include <dns/rdata.h>
+#include <dns/rdataclass.h>
 
 using namespace std;
 

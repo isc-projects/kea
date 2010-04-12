@@ -18,9 +18,9 @@
 #include <cassert>
 #include <set>
 
-#include "buffer.h"
-#include "name.h"
-#include "messagerenderer.h"
+#include <dns/buffer.h>
+#include <dns/name.h>
+#include <dns/messagerenderer.h>
 
 namespace isc {
 namespace dns {

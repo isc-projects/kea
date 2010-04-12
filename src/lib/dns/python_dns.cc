@@ -27,18 +27,18 @@
 
 #include <exceptions/exceptions.h>
 
-#include "buffer.h"
-#include "name.h"
-#include "messagerenderer.h"
-#include "rrtype.h"
-#include "rrclass.h"
-#include "rrttl.h"
-#include "rrset.h"
-#include "rdata.h"
-#include "rdataclass.h"
-#include "rrsetlist.h"
-#include "question.h"
-#include "message.h"
+#include <dns/buffer.h>
+#include <dns/name.h>
+#include <dns/messagerenderer.h>
+#include <dns/rrtype.h>
+#include <dns/rrclass.h>
+#include <dns/rrttl.h>
+#include <dns/rrset.h>
+#include <dns/rdata.h>
+#include <dns/rdataclass.h>
+#include <dns/rrsetlist.h>
+#include <dns/question.h>
+#include <dns/message.h>
 
 using namespace isc::dns;
 using namespace boost::python;

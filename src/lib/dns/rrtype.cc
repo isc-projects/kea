@@ -14,15 +14,17 @@
 
 // $Id$
 
-#include <string>
-
 #include <stdint.h>
 
-#include "buffer.h"
+#include <string>
+#include <ostream>
+
 #include <exceptions/exceptions.h>
-#include "messagerenderer.h"
-#include "rrparamregistry.h"
-#include "rrtype.h"
+
+#include <dns/buffer.h>
+#include <dns/messagerenderer.h>
+#include <dns/rrparamregistry.h>
+#include <dns/rrtype.h>
 
 using namespace std;
 using isc::dns::RRType;
