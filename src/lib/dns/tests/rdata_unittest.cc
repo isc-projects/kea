@@ -107,15 +107,15 @@ TEST_F(Rdata_Unknown_Test, createFromText)
     // valid construction.  This also tests a normal case of "FromWire".
     EXPECT_EQ(0, generic::Generic("\\# 4 a1b2c30d").compare(
                   *rdataFactoryFromFile(unknown_rrtype, RRClass::IN(),
-                                        "testdata/rdata_unknown_fromWire")));
+                                        "rdata_unknown_fromWire")));
     // upper case hexadecimal digits should also be okay. 
     EXPECT_EQ(0, generic::Generic("\\# 4 A1B2C30D").compare(
                   *rdataFactoryFromFile(unknown_rrtype, RRClass::IN(),
-                                        "testdata/rdata_unknown_fromWire")));
+                                        "rdata_unknown_fromWire")));
     // 0-length RDATA should be accepted
     EXPECT_EQ(0, generic::Generic("\\# 0").compare(
                   *rdataFactoryFromFile(unknown_rrtype, RRClass::IN(),
-                                        "testdata/rdata_unknown_fromWire", 6)));
+                                        "rdata_unknown_fromWire", 6)));
     // hex encoding can be space-separated
     EXPECT_EQ(0, generic::Generic("\\# 4 a1 b2c30d").compare(rdata_unknown));
     EXPECT_EQ(0, generic::Generic("\\# 4 a1b2 c30d").compare(rdata_unknown));
@@ -154,7 +154,7 @@ TEST_F(Rdata_Unknown_Test, createFromWire)
 
     // buffer too short.  the error should be detected in buffer read
     EXPECT_THROW(rdataFactoryFromFile(unknown_rrtype, RRClass::IN(),
-                                      "testdata/rdata_unknown_fromWire", 8),
+                                      "rdata_unknown_fromWire", 8),
                  InvalidBufferPosition);
 
     // too large data

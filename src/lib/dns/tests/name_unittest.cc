@@ -222,33 +222,29 @@ TEST_F(NameTest, fromWire)
     //
     // normal case with a compression pointer
     EXPECT_PRED_FORMAT2(UnitTestUtil::matchName,
-                        nameFactoryFromWire("testdata/name_fromWire1", 25),
+                        nameFactoryFromWire("name_fromWire1", 25),
                         Name("vix.com"));
     // bogus label character (looks like a local compression pointer)
-    EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire2", 25),
-                 DNSMessageFORMERR);
+    EXPECT_THROW(nameFactoryFromWire("name_fromWire2", 25), DNSMessageFORMERR);
     // a bad compression pointer (too big)
-    EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire3_1", 25),
+    EXPECT_THROW(nameFactoryFromWire("name_fromWire3_1", 25),
                  DNSMessageFORMERR);
     // forward reference
-    EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire3_2", 25),
+    EXPECT_THROW(nameFactoryFromWire("name_fromWire3_2", 25),
                  DNSMessageFORMERR);
     // invalid name length
-    EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire4", 550),
-                 DNSMessageFORMERR);
+    EXPECT_THROW(nameFactoryFromWire("name_fromWire4", 550), DNSMessageFORMERR);
 
     // skip test for from Wire5.  It's for disabling decompression, but our
     // implementation always allows it.
 
     // bad pointer (too big)
-    EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire6", 25),
-                 DNSMessageFORMERR);
+    EXPECT_THROW(nameFactoryFromWire("name_fromWire6", 25), DNSMessageFORMERR);
     // input ends unexpectedly
-    EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire7", 25),
-                 DNSMessageFORMERR);
+    EXPECT_THROW(nameFactoryFromWire("name_fromWire7", 25), DNSMessageFORMERR);
     // many hops of compression but valid.  should succeed.
     EXPECT_PRED_FORMAT2(UnitTestUtil::matchName,
-                        nameFactoryFromWire("testdata/name_fromWire8", 383),
+                        nameFactoryFromWire("name_fromWire8", 383),
                         Name("vix.com"));
 
     //
@@ -257,25 +253,21 @@ TEST_F(NameTest, fromWire)
 
     // large names, a long but valid one, and invalid (too long) one.
     EXPECT_EQ(Name::MAX_WIRE,
-              nameFactoryFromWire("testdata/name_fromWire9", 0).getLength());
-    EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire10", 0).getLength(),
+              nameFactoryFromWire("name_fromWire9", 0).getLength());
+    EXPECT_THROW(nameFactoryFromWire("name_fromWire10", 0).getLength(),
                  DNSMessageFORMERR);
 
     // A name with possible maximum number of labels; awkward but valid
-    EXPECT_EQ(nameFactoryFromWire("testdata/name_fromWire11",
-                                  0).getLabelCount(),
+    EXPECT_EQ(nameFactoryFromWire("name_fromWire11", 0).getLabelCount(),
               Name::MAX_LABELS);
 
     // Wire format including an invalid label length
-    EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire12", 0),
-                 DNSMessageFORMERR);
+    EXPECT_THROW(nameFactoryFromWire("name_fromWire12", 0), DNSMessageFORMERR);
 
     // converting upper-case letters to down-case
-    EXPECT_EQ("vix.com.", nameFactoryFromWire("testdata/name_fromWire1",
-                                              25, true).toText());
-    EXPECT_EQ(3,
-              nameFactoryFromWire("testdata/name_fromWire1",
-                                  25).getLabelCount());
+    EXPECT_EQ("vix.com.",
+              nameFactoryFromWire("name_fromWire1", 25, true).toText());
+    EXPECT_EQ(3, nameFactoryFromWire("name_fromWire1", 25).getLabelCount());
 }
 
 TEST_F(NameTest, copyConstruct)
@@ -331,7 +323,7 @@ TEST_F(NameTest, toText)
                               "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                               "[\\\\]^_.`abcdefghijklmnopqrstuvwxyz{|}~.");
     EXPECT_EQ(all_printable,
-              nameFactoryFromWire("testdata/name_fromWire13", 0).toText());
+              nameFactoryFromWire("name_fromWire13", 0).toText());
 
     string all_nonprintable(
         "\\000\\001\\002\\003\\004\\005\\006\\007\\008\\009"
@@ -353,7 +345,7 @@ TEST_F(NameTest, toText)
         "\\240\\241\\242\\243\\244\\245\\246\\247\\248\\249"
         "\\250\\251\\252\\253\\254\\255.");
     EXPECT_EQ(all_nonprintable,
-              nameFactoryFromWire("testdata/name_fromWire14", 0).toText());
+              nameFactoryFromWire("name_fromWire14", 0).toText());
 }
 
 TEST_F(NameTest, toWireBuffer)

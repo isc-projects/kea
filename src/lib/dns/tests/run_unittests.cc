@@ -16,9 +16,12 @@
 
 #include <gtest/gtest.h>
 
+#include "unittest_util.h"
+
 int
-main(int argc, char* argv[])
-{
+main(int argc, char* argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
+    isc::UnitTestUtil::addDataPath(TEST_DATA_DIR);
+
     return (RUN_ALL_TESTS());
 }

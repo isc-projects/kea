@@ -201,7 +201,7 @@ TEST_F(RRsetTest, toWireBuffer)
 {
     rrset_a.toWire(buffer);
 
-    UnitTestUtil::readWireData("testdata/rrset_toWire1", wiredata);
+    UnitTestUtil::readWireData("rrset_toWire1", wiredata);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
                         buffer.getLength(), &wiredata[0], wiredata.size());
 
@@ -217,7 +217,7 @@ TEST_F(RRsetTest, toWireRenderer)
     rrset_a.toWire(renderer);
     rrset_ns.toWire(renderer);
 
-    UnitTestUtil::readWireData("testdata/rrset_toWire2", wiredata);
+    UnitTestUtil::readWireData("rrset_toWire2", wiredata);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
                         buffer.getLength(), &wiredata[0], wiredata.size());
 

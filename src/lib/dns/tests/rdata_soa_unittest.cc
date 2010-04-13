@@ -46,7 +46,7 @@ TEST_F(Rdata_SOA_Test, createFromText) {
 TEST_F(Rdata_SOA_Test, createFromWire) {
     EXPECT_EQ(0, rdata_soa.compare(
                   *rdataFactoryFromFile(RRType("SOA"), RRClass("IN"),
-                                        "testdata/rdata_soa_fromWire")));
+                                        "rdata_soa_fromWire")));
     // TBD: more tests
 }
 
@@ -55,7 +55,7 @@ TEST_F(Rdata_SOA_Test, toWireRenderer) {
     rdata_soa.toWire(renderer);
 
     vector<unsigned char> data;
-    UnitTestUtil::readWireData("testdata/rdata_soa_fromWire", data);
+    UnitTestUtil::readWireData("rdata_soa_fromWire", data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         static_cast<const uint8_t *>(obuffer.getData()) + 2,
                         obuffer.getLength() - 2, &data[2], data.size() - 2);
@@ -65,7 +65,7 @@ TEST_F(Rdata_SOA_Test, toWireBuffer) {
     obuffer.skip(2);
     rdata_soa.toWire(obuffer);
     vector<unsigned char> data;
-    UnitTestUtil::readWireData("testdata/rdata_soa_toWireUncompressed", data);
+    UnitTestUtil::readWireData("rdata_soa_toWireUncompressed", data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         static_cast<const uint8_t *>(obuffer.getData()) + 2,
                         obuffer.getLength() - 2, &data[2], data.size() - 2);
