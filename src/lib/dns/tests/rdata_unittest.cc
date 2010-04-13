@@ -100,7 +100,7 @@ const uint8_t wiredata_unknown[] = { 0xa1, 0xb2, 0xc3, 0x0d };
 // "Unknown" RR Type used for the test cases below.  If/when we use this
 // type number as a "well-known" (probably experimental) type, we'll need to
 // renumber it.
-const RRType unknown_rrtype = RRType("TYPE65000");
+const RRType unknown_rrtype = RRType(65000);
 
 TEST_F(Rdata_Unknown_Test, createFromText)
 {
