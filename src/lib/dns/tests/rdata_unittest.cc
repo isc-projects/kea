@@ -194,7 +194,7 @@ TEST_F(Rdata_Unknown_Test, createRdataFromWire)
 
     InputBuffer ibuffer3(wiredata_unknown, sizeof(wiredata_unknown));
     EXPECT_EQ(0, rdata_unknown.compare(
-                  *createRdata(unknown_rrtype, RRClass("CLASS65000"),
+                  *createRdata(unknown_rrtype, RRClass(65000),
                                ibuffer3, sizeof(wiredata_unknown))));
 }
 
@@ -205,7 +205,7 @@ TEST_F(Rdata_Unknown_Test, createRdataByCopy)
     EXPECT_EQ(0, rdata_unknown.compare(
                   *createRdata(unknown_rrtype, RRClass::CH(), rdata_unknown)));
     EXPECT_EQ(0, rdata_unknown.compare(
-                  *createRdata(unknown_rrtype, RRClass("CLASS65000"),
+                  *createRdata(unknown_rrtype, RRClass(65000),
                                rdata_unknown)));
 }
 
