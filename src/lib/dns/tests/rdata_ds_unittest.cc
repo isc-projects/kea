@@ -64,7 +64,7 @@ TEST_F(Rdata_DS_Test, badText_DS) {
 TEST_F(Rdata_DS_Test, createFromWire_DS) {
     EXPECT_EQ(0, rdata_ds.compare(
                   *rdataFactoryFromFile(RRType::DS(), RRClass::IN(),
-                                        "testdata/rdata_ds_fromWire")));
+                                        "rdata_ds_fromWire")));
 }
 
 TEST_F(Rdata_DS_Test, getTag_DS) {
@@ -77,7 +77,7 @@ TEST_F(Rdata_DS_Test, toWireRenderer) {
     rdata_ds.toWire(renderer);
 
     vector<unsigned char> data;
-    UnitTestUtil::readWireData("testdata/rdata_ds_fromWire", data);
+    UnitTestUtil::readWireData("rdata_ds_fromWire", data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         static_cast<const uint8_t *>(obuffer.getData()) + 2,
                         obuffer.getLength() - 2, &data[2], data.size() - 2);

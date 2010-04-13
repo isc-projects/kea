@@ -57,52 +57,52 @@ TEST_F(Rdata_NSEC_Test, createFromWire_NSEC) {
     const generic::NSEC rdata_nsec(nsec_txt);
     EXPECT_EQ(0, rdata_nsec.compare(
                   *rdataFactoryFromFile(RRType::NSEC(), RRClass::IN(),
-                                        "testdata/rdata_nsec_fromWire1")));
+                                        "rdata_nsec_fromWire1")));
 
     // Too short RDLENGTH
     EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC(), RRClass::IN(),
-                                      "testdata/rdata_nsec_fromWire2"),
+                                      "rdata_nsec_fromWire2"),
                  DNSMessageFORMERR);
 
     EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC(), RRClass::IN(),
-                                      "testdata/rdata_nsec_fromWire3"),
+                                      "rdata_nsec_fromWire3"),
                  DNSMessageFORMERR);
 
     // A malformed NSEC bitmap length field that could cause overflow.
     EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC(), RRClass::IN(),
-                                      "testdata/rdata_nsec_fromWire4"),
+                                      "rdata_nsec_fromWire4"),
                  DNSMessageFORMERR);
 
     // The bitmap field is incomplete (only the first byte is included)
     EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC(), RRClass::IN(),
-                                      "testdata/rdata_nsec_fromWire5"),
+                                      "rdata_nsec_fromWire5"),
                  DNSMessageFORMERR);
 
     // Bitmap length is 0, which is invalid.
     EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC(), RRClass::IN(),
-                                      "testdata/rdata_nsec_fromWire6"),
+                                      "rdata_nsec_fromWire6"),
                  DNSMessageFORMERR);
 
     // A boundary case: longest possible bitmaps (32 maps).  This should be
     // accepted.
     EXPECT_NO_THROW(rdataFactoryFromFile(RRType::NSEC(), RRClass::IN(),
-                                         "testdata/rdata_nsec_fromWire7"));
+                                         "rdata_nsec_fromWire7"));
 
     // Another boundary condition: 33 bitmaps, which should be rejected.
     EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC(), RRClass::IN(),
-                                      "testdata/rdata_nsec_fromWire8"),
+                                      "rdata_nsec_fromWire8"),
                  DNSMessageFORMERR);
 
     // Disordered bitmap window blocks.
     EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC(), RRClass::IN(),
-                                      "testdata/rdata_nsec_fromWire9"),
+                                      "rdata_nsec_fromWire9"),
                  DNSMessageFORMERR);
 
     // Bitmap ending with all-zero bytes.  Not necessarily harmful except
     // the additional overhead of parsing, but invalid according to the
     // spec anyway.
     EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC(), RRClass::IN(),
-                                      "testdata/rdata_nsec_fromWire10"),
+                                      "rdata_nsec_fromWire10"),
                  DNSMessageFORMERR);
 }
 
@@ -112,7 +112,7 @@ TEST_F(Rdata_NSEC_Test, toWireRenderer_NSEC) {
     rdata_nsec.toWire(renderer);
 
     vector<unsigned char> data;
-    UnitTestUtil::readWireData("testdata/rdata_nsec_fromWire1", data);
+    UnitTestUtil::readWireData("rdata_nsec_fromWire1", data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         static_cast<const uint8_t *>(obuffer.getData()) + 2,
                         obuffer.getLength() - 2, &data[2], data.size() - 2);

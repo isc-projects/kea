@@ -124,15 +124,15 @@ TEST_F(Rdata_RRSIG_Test, createFromWire)
                 "ZgWZzQKeTKPOYWrnYtdZW4PnPQFeUl3orgLev7F8J6FZlDn0y/J/ThR5"
                 "m36Mo2/Gdxjj8lJ/IjPVkdpKyBpcnYND8KEIma5MyNCNeyO1UkfPQZGHNSQ=");
     EXPECT_EQ(rrsig_txt, rdataFactoryFromFile(RRType("RRSIG"), RRClass("IN"),
-                             "testdata/rdata_rrsig_fromWire1")->toText());
+                             "rdata_rrsig_fromWire1")->toText());
     generic::RRSIG rdata_rrsig(rrsig_txt);
     EXPECT_EQ(0, rdata_rrsig.compare(
                       *rdataFactoryFromFile(RRType("RRSIG"), RRClass("IN"),
-                                          "testdata/rdata_rrsig_fromWire1")));
+                                          "rdata_rrsig_fromWire1")));
 
     // RDLEN is too short
     EXPECT_THROW(rdataFactoryFromFile(RRType::RRSIG(), RRClass::IN(),
-                                      "testdata/rdata_rrsig_fromWire2"),
+                                      "rdata_rrsig_fromWire2"),
                  InvalidRdataLength);
 }
 }

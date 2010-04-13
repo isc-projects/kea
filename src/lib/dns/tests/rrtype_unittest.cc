@@ -88,9 +88,8 @@ TEST_F(RRTypeTest, fromText)
 TEST_F(RRTypeTest, fromWire)
 {
     EXPECT_EQ(0x1234,
-              rrtypeFactoryFromWire("testdata/rrcode16_fromWire1").getCode());
-    EXPECT_THROW(rrtypeFactoryFromWire("testdata/rrcode16_fromWire2"),
-                 IncompleteRRType);
+              rrtypeFactoryFromWire("rrcode16_fromWire1").getCode());
+    EXPECT_THROW(rrtypeFactoryFromWire("rrcode16_fromWire2"), IncompleteRRType);
 }
 
 // from string, lower case

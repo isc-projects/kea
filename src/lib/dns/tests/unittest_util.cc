@@ -33,16 +33,51 @@ using namespace std;
 using isc::UnitTestUtil;
 using isc::dns::NameComparisonResult;
 
+namespace {
+class UnitTestUtilConfig {
+private:
+    // This is a singleton object and cannot be constructed explicitly.
+    UnitTestUtilConfig() {}
+    UnitTestUtilConfig(const UnitTestUtilConfig& source);
+    ~UnitTestUtilConfig() {}
+public:
+    /// Return a singleton unit test configuration object.  On first invocation
+    /// one will be constructed.
+    static UnitTestUtilConfig& getConfig();
+
+    /// A list of paths to wire data files.
+    /// \c UnitTestUtil::readWireData() (first version)
+    /// will search the directories in this list for the specified data file.
+    std::vector<string> data_paths_;
+};
+
+UnitTestUtilConfig&
+UnitTestUtilConfig::getConfig() {
+    static UnitTestUtilConfig config;
+    return (config);
+}
+}
+
 void
-UnitTestUtil::readWireData(const char* datafile,
-                           vector<unsigned char>& data)
-{
+UnitTestUtil::readWireData(const char* datafile, vector<unsigned char>& data) {
     ifstream ifs;
- 
-    ifs.open(datafile, ios_base::in);
-    if ((ifs.rdstate() & istream::failbit) != 0) {
-        throw runtime_error("failed to open data file: " +
-                                 string(datafile));
+
+    const UnitTestUtilConfig& config = UnitTestUtilConfig::getConfig();
+    vector<string>::const_iterator it = config.data_paths_.begin();
+    for (; it != config.data_paths_.end(); ++it) {
+        string data_path = *it;
+        if (data_path.empty() || *data_path.rend() != '/') {
+            data_path.push_back('/');
+        }
+        ifs.open((data_path + datafile).c_str(), ios_base::in);
+        if ((ifs.rdstate() & istream::failbit) == 0) {
+            break;
+        }
+    }
+
+    if (it == config.data_paths_.end()) {
+        throw runtime_error("failed to open data file in data paths: " +
+                            string(datafile));
     }
 
     data.clear();
@@ -58,6 +93,11 @@ UnitTestUtil::readWireData(const char* datafile,
 
         readWireData(s, data);
     }
+}
+
+void
+UnitTestUtil::addDataPath(const string& directory) {
+    UnitTestUtilConfig::getConfig().data_paths_.push_back(directory);
 }
 
 void

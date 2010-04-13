@@ -68,25 +68,25 @@ TEST_F(Rdata_DNAME_Test, createFromWire)
 {
     EXPECT_EQ(0, rdata_dname.compare(
                   *rdataFactoryFromFile(RRType("DNAME"), RRClass("IN"),
-                                        "testdata/rdata_dname_fromWire")));
+                                        "rdata_dname_fromWire")));
     // RDLENGTH is too short
     EXPECT_THROW(rdataFactoryFromFile(RRType("DNAME"), RRClass("IN"),
-                                      "testdata/rdata_dname_fromWire", 18),
+                                      "rdata_dname_fromWire", 18),
                  InvalidRdataLength);
     // RDLENGTH is too long
     EXPECT_THROW(rdataFactoryFromFile(RRType("DNAME"), RRClass("IN"),
-                                      "testdata/rdata_dname_fromWire", 36),
+                                      "rdata_dname_fromWire", 36),
                  InvalidRdataLength);
     // incomplete name.  the error should be detected in the name constructor
     EXPECT_THROW(rdataFactoryFromFile(RRType("DNAME"), RRClass("IN"),
-                                      "testdata/rdata_dname_fromWire", 71),
+                                      "rdata_dname_fromWire", 71),
                  DNSMessageFORMERR);
 
     EXPECT_EQ(0, generic::DNAME("dn2.example.com").compare(
                   *rdataFactoryFromFile(RRType("DNAME"), RRClass("IN"),
-                                        "testdata/rdata_dname_fromWire", 55)));
+                                        "rdata_dname_fromWire", 55)));
     EXPECT_THROW(*rdataFactoryFromFile(RRType("DNAME"), RRClass("IN"),
-                                       "testdata/rdata_dname_fromWire", 63),
+                                       "rdata_dname_fromWire", 63),
                  InvalidRdataLength);
 }
 
