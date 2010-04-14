@@ -44,13 +44,13 @@ using namespace isc::data;
 
 namespace {
 ElementPtr SQLITE_DBFILE_EXAMPLE = Element::createFromString(
-    "{ \"database_file\": \"testdata/test.sqlite3\"}");
+    "{ \"database_file\": \"" TEST_DATA_DIR "/test.sqlite3\"}");
 ElementPtr SQLITE_DBFILE_EXAMPLE2 = Element::createFromString(
-    "{ \"database_file\": \"testdata/test2.sqlite3\"}");
+    "{ \"database_file\": \"" TEST_DATA_DIR "/test2.sqlite3\"}");
 ElementPtr SQLITE_DBFILE_EXAMPLE_ROOT = Element::createFromString(
-    "{ \"database_file\": \"testdata/test-root.sqlite3\"}");
+    "{ \"database_file\": \"" TEST_DATA_DIR "/test-root.sqlite3\"}");
 ElementPtr SQLITE_DBFILE_BROKENDB = Element::createFromString(
-    "{ \"database_file\": \"testdata/brokendb.sqlite3\"}");
+    "{ \"database_file\": \"" TEST_DATA_DIR "/brokendb.sqlite3\"}");
 ElementPtr SQLITE_DBFILE_MEMORY = Element::createFromString(
     "{ \"database_file\": \":memory:\"}");
 
@@ -59,7 +59,7 @@ ElementPtr SQLITE_DBFILE_MEMORY = Element::createFromString(
 // so to test a failure case the create operation should also fail.
 // The "nodir", a non existent directory, is inserted for this purpose.
 ElementPtr SQLITE_DBFILE_NOTEXIST = Element::createFromString(
-    "{ \"database_file\": \"testdata/nodir/notexist\"}");
+    "{ \"database_file\": \"" TEST_DATA_DIR "/nodir/notexist\"}");
 
 const string sigdata_common(" 20100322084538 20100220084538 "
                             "33495 example.com. FAKEFAKEFAKEFAKE");
