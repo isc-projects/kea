@@ -1,4 +1,4 @@
-SUBDIRS = . tests
+SUBDIRS = . tests python
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 if GCC_WERROR_OK
