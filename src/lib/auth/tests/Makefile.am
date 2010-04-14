@@ -1,5 +1,6 @@
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/lib/dns -I$(top_srcdir)/src/lib/dns
+AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(srcdir)/testdata\"
 
 CLEANFILES = *.gcno *.gcda
 
@@ -7,7 +8,8 @@ TESTS =
 if HAVE_GTEST
 TESTS += run_unittests
 run_unittests_SOURCES = run_unittests.cc
-run_unittests_SOURCES += unittest_util.h unittest_util.cc
+run_unittests_SOURCES += $(top_srcdir)/src/lib/dns/tests/unittest_util.h
+run_unittests_SOURCES += $(top_srcdir)/src/lib/dns/tests/unittest_util.cc
 run_unittests_SOURCES += datasrc_unittest.cc
 run_unittests_SOURCES += sqlite3_unittest.cc
 run_unittests_SOURCES += static_unittest.cc

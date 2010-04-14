@@ -18,7 +18,7 @@
 
 #include <cassert>
 
-#include "unittest_util.h"
+#include <dns/tests/unittest_util.h>
 #include "test_datasrc.h"
 
 #include <auth/data_source.h>

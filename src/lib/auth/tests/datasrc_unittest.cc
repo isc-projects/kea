@@ -38,7 +38,7 @@
 #include <auth/sqlite3_datasrc.h>
 #include <auth/static_datasrc.h>
 
-#include "unittest_util.h"
+#include <dns/tests/unittest_util.h>
 #include "test_datasrc.h"
 
 using isc::UnitTestUtil;
@@ -50,7 +50,7 @@ using namespace isc::data;
 
 namespace {
 const ElementPtr SQLITE_DBFILE_EXAMPLE = Element::createFromString(
-    "{ \"database_file\": \"testdata/example.org.sqlite3\"}");
+    "{ \"database_file\": \"" TEST_DATA_DIR "/example.org.sqlite3\"}");
 
 class DataSrcTest : public ::testing::Test {
 protected:
@@ -192,7 +192,7 @@ TEST_F(DataSrcTest, QueryClassAny) {
 }
 
 TEST_F(DataSrcTest, NSQuery) {
-    readAndProcessQuery("testdata/q_example_ns");
+    readAndProcessQuery("q_example_ns");
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 0, 6);
 
@@ -214,7 +214,7 @@ TEST_F(DataSrcTest, NSQuery) {
 }
 
 TEST_F(DataSrcTest, NxRRset) {
-    readAndProcessQuery("testdata/q_example_ptr");
+    readAndProcessQuery("q_example_ptr");
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 0, 4, 0);
 
@@ -225,7 +225,7 @@ TEST_F(DataSrcTest, NxRRset) {
 }
 
 TEST_F(DataSrcTest, Nxdomain) {
-    readAndProcessQuery("testdata/q_glork");
+    readAndProcessQuery("q_glork");
 
     headerCheck(msg, Rcode::NXDOMAIN(), true, true, true, 0, 6, 0);
 
@@ -238,7 +238,7 @@ TEST_F(DataSrcTest, Nxdomain) {
 }
 
 TEST_F(DataSrcTest, NxZone) {
-    readAndProcessQuery("testdata/q_spork");
+    readAndProcessQuery("q_spork");
 
     headerCheck(msg, Rcode::REFUSED(), true, false, true, 0, 0, 0);
 
@@ -249,7 +249,7 @@ TEST_F(DataSrcTest, NxZone) {
 }
 
 TEST_F(DataSrcTest, Wildcard) {
-    readAndProcessQuery("testdata/q_wild_a");
+    readAndProcessQuery("q_wild_a");
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 6, 6);
 
@@ -305,14 +305,14 @@ TEST_F(DataSrcTest, WildcardNodata) {
 
     // Check that a query for a data type not covered by the wildcard
     // returns NOERROR
-    readAndProcessQuery("testdata/q_wild_aaaa");
+    readAndProcessQuery("q_wild_aaaa");
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 0, 2, 0);
 }
 
 TEST_F(DataSrcTest, WildcardCname) {
     // Check that wildcard answers containing CNAMES are followed
     // correctly
-    readAndProcessQuery("testdata/q_wild2_a");
+    readAndProcessQuery("q_wild2_a");
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 6, 6);
 
@@ -380,7 +380,7 @@ TEST_F(DataSrcTest, WildcardCname) {
 TEST_F(DataSrcTest, WildcardCnameNodata) {
     // A wildcard containing a CNAME whose target does not include
     // data of this type.
-    readAndProcessQuery("testdata/q_wild2_aaaa");
+    readAndProcessQuery("q_wild2_aaaa");
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 4, 0);
 
     RRsetIterator rit = msg.beginSection(Section::ANSWER());
@@ -411,7 +411,7 @@ TEST_F(DataSrcTest, WildcardCnameNodata) {
 
 TEST_F(DataSrcTest, WildcardCnameNxdomain) {
     // A wildcard containing a CNAME whose target does not exist
-    readAndProcessQuery("testdata/q_wild3_a");
+    readAndProcessQuery("q_wild3_a");
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 6, 0);
 
     RRsetIterator rit = msg.beginSection(Section::ANSWER());
@@ -447,7 +447,7 @@ TEST_F(DataSrcTest, WildcardCnameNxdomain) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 }
 TEST_F(DataSrcTest, AuthDelegation) {
-    readAndProcessQuery("testdata/q_sql1");
+    readAndProcessQuery("q_sql1");
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 4, 6);
 
@@ -493,7 +493,7 @@ TEST_F(DataSrcTest, AuthDelegation) {
 }
 
 TEST_F(DataSrcTest, Dname) {
-    readAndProcessQuery("testdata/q_dname");
+    readAndProcessQuery("q_dname");
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 5, 4, 6);
 
@@ -541,7 +541,7 @@ TEST_F(DataSrcTest, Dname) {
 }
 
 TEST_F(DataSrcTest, Cname) {
-    readAndProcessQuery("testdata/q_cname");
+    readAndProcessQuery("q_cname");
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 0, 0);
 
@@ -559,7 +559,7 @@ TEST_F(DataSrcTest, Cname) {
 }
 
 TEST_F(DataSrcTest, CnameInt) {
-    readAndProcessQuery("testdata/q_cname_int");
+    readAndProcessQuery("q_cname_int");
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 4, 6);
 
@@ -585,7 +585,7 @@ TEST_F(DataSrcTest, CnameInt) {
 }
 
 TEST_F(DataSrcTest, CnameExt) {
-    readAndProcessQuery("testdata/q_cname_ext");
+    readAndProcessQuery("q_cname_ext");
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 4, 6);
 
@@ -609,7 +609,7 @@ TEST_F(DataSrcTest, CnameExt) {
 }
 
 TEST_F(DataSrcTest, Delegation) {
-    readAndProcessQuery("testdata/q_subzone");
+    readAndProcessQuery("q_subzone");
 
     headerCheck(msg, Rcode::NOERROR(), true, false, true, 0, 5, 2);
 
@@ -639,7 +639,7 @@ TEST_F(DataSrcTest, Delegation) {
 }
 
 TEST_F(DataSrcTest, NSDelegation) {
-    readAndProcessQuery("testdata/q_subzone_ns");
+    readAndProcessQuery("q_subzone_ns");
 
     headerCheck(msg, Rcode::NOERROR(), true, false, true, 0, 5, 2);
 
@@ -671,12 +671,12 @@ TEST_F(DataSrcTest, NSDelegation) {
 TEST_F(DataSrcTest, ANYZonecut) {
     // An ANY query at a zone cut should behave the same as any other
     // delegation
-    readAndProcessQuery("testdata/q_subzone_any");
+    readAndProcessQuery("q_subzone_any");
 
 }
 
 TEST_F(DataSrcTest, NSECZonecut) {
-    readAndProcessQuery("testdata/q_subzone_nsec");
+    readAndProcessQuery("q_subzone_nsec");
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 4, 6);
 
@@ -704,7 +704,7 @@ TEST_F(DataSrcTest, NSECZonecut) {
 }
 
 TEST_F(DataSrcTest, DNAMEZonecut) {
-    readAndProcessQuery("testdata/q_subzone_dname");
+    readAndProcessQuery("q_subzone_dname");
 
     headerCheck(msg, Rcode::NOERROR(), true, false, true, 0, 5, 2);
     RRsetIterator rit = msg.beginSection(Section::AUTHORITY());
@@ -733,7 +733,7 @@ TEST_F(DataSrcTest, DNAMEZonecut) {
 }
 
 TEST_F(DataSrcTest, DS) {
-    readAndProcessQuery("testdata/q_subzone_ds");
+    readAndProcessQuery("q_subzone_ds");
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 3, 4, 6);
 
