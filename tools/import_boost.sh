@@ -30,6 +30,7 @@ boost/function
 boost/iterator
 boost/mpl
 boost/preprocessor
+boost/python
 boost/range
 boost/smart_ptr
 boost/type_traits
