@@ -48,12 +48,22 @@ else
 	AC_SUBST(pkgpyexecdir)
 fi
 
+if test ! -x ${PYTHON}-config; then
+	AC_MSG_ERROR([${PYTHON}-config not found])
+fi
+
 PYTHON_INCLUDES=`${PYTHON}-config --includes`
 AC_SUBST(PYTHON_INCLUDES)
 for flag in `${PYTHON}-config --ldflags`; do
 	PYTHON_LDFLAGS="$PYTHON_LDFLAGS `echo $flag | sed -ne 's/^\(\-L.*\)$/\1/p'`"
 done
 AC_SUBST(PYTHON_LDFLAGS)
+
+CPPFLAGS_SAVED="$CPPFLAGS"
+CPPFLAGS="$CPPFLAGS ${PYTHON_INCLUDES}"
+AC_CHECK_HEADERS([Python.h],, AC_MSG_ERROR([Missing Python.h]))
+CPPFLAGS="$CPPFLAGS_SAVED"
+
 
 # Check for python library (not absolutely mandatory, but needed for
 # Boost.Python when we use it.  See below.)
