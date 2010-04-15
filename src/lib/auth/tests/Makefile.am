@@ -28,11 +28,11 @@ endif
 noinst_PROGRAMS = $(TESTS)
 
 EXTRA_DIST =  testdata/brokendb.sqlite3
-EXTRA_DIST += testdata/example2.com
-EXTRA_DIST += testdata/example2.com.sqlite3
 EXTRA_DIST += testdata/example.com.signed
 EXTRA_DIST += testdata/example.org
 EXTRA_DIST += testdata/example.org.sqlite3
+EXTRA_DIST += testdata/example2.com
+EXTRA_DIST += testdata/example2.com.sqlite3
 EXTRA_DIST += testdata/mkbrokendb.c
 EXTRA_DIST += testdata/q_cname
 EXTRA_DIST += testdata/q_cname_ext
@@ -59,3 +59,4 @@ EXTRA_DIST += testdata/sql1.example.com.signed
 EXTRA_DIST += testdata/sql2.example.com.signed
 EXTRA_DIST += testdata/test-root.sqlite3
 EXTRA_DIST += testdata/test.sqlite3
+EXTRA_DIST += testdata/test2.sqlite3
