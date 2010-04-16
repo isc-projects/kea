@@ -46,7 +46,7 @@ namespace {
 ElementPtr SQLITE_DBFILE_EXAMPLE = Element::createFromString(
     "{ \"database_file\": \"" TEST_DATA_DIR "/test.sqlite3\"}");
 ElementPtr SQLITE_DBFILE_EXAMPLE2 = Element::createFromString(
-    "{ \"database_file\": \"" TEST_DATA_DIR "/test2.sqlite3\"}");
+    "{ \"database_file\": \"" TEST_DATA_DIR "/example2.com.sqlite3\"}");
 ElementPtr SQLITE_DBFILE_EXAMPLE_ROOT = Element::createFromString(
     "{ \"database_file\": \"" TEST_DATA_DIR "/test-root.sqlite3\"}");
 ElementPtr SQLITE_DBFILE_BROKENDB = Element::createFromString(
