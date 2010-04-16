@@ -53,9 +53,10 @@ namespace auth {
 
 typedef boost::shared_ptr<const Nsec3Param> ConstNsec3ParamPtr;
 
+namespace {
 // Add a task to the query task queue to look up additional data
 // (i.e., address records for the names included in NS or MX records)
-static void
+void
 getAdditional(Query& q, RRsetPtr rrset) {
     if (!q.wantAdditional()) {
         return;
@@ -88,7 +89,7 @@ getAdditional(Query& q, RRsetPtr rrset) {
 
 // Synthesize a CNAME answer, for the benefit of clients that don't
 // understand DNAME
-static void
+void
 synthesizeCname(QueryTaskPtr task, RRsetPtr rrset, RRsetList& target) {
     RdataIteratorPtr it = rrset->getRdataIterator();
 
@@ -117,9 +118,8 @@ synthesizeCname(QueryTaskPtr task, RRsetPtr rrset, RRsetList& target) {
 
 // Add a task to the query task queue to look up the data pointed
 // to by a CNAME record
-static void
-chaseCname(Query& q, QueryTaskPtr task, RRsetPtr rrset)
-{
+void
+chaseCname(Query& q, QueryTaskPtr task, RRsetPtr rrset) {
     RdataIteratorPtr it = rrset->getRdataIterator();
 
     // More than one CNAME RR in the RRset is illegal, so we only have
@@ -143,7 +143,7 @@ chaseCname(Query& q, QueryTaskPtr task, RRsetPtr rrset)
 }
 
 // Perform the query specified in a QueryTask object
-static DataSrc::Result
+DataSrc::Result
 doQueryTask(const DataSrc* ds, const Name* zonename, QueryTask& task,
             RRsetList& target)
 {
@@ -171,9 +171,8 @@ doQueryTask(const DataSrc* ds, const Name* zonename, QueryTask& task,
 }
 
 // Copy referral information into the authority section of a message
-static inline void
-copyAuth(Query& q, RRsetList& auth)
-{
+inline void
+copyAuth(Query& q, RRsetList& auth) {
     BOOST_FOREACH(RRsetPtr rrset, auth) {
         if (rrset->getType() == RRType::DNAME()) {
             continue;
@@ -187,7 +186,7 @@ copyAuth(Query& q, RRsetList& auth)
 }
 
 // Query for referrals (i.e., NS/DS or DNAME) at a given name
-static inline bool
+inline bool
 refQuery(const Name& name, Query& q, const DataSrc* ds, const Name* zonename,
          RRsetList& target)
 {
@@ -208,12 +207,12 @@ refQuery(const Name& name, Query& q, const DataSrc* ds, const Name* zonename,
 
 // Match downward, from the zone apex to the query name, looking for
 // referrals.
-static inline bool
+inline bool
 hasDelegation(const DataSrc* ds, const Name* zonename, Query& q,
               QueryTaskPtr task)
 {
-    int nlen = task->qname.getLabelCount();
-    int diff = nlen - zonename->getLabelCount();
+    const int nlen = task->qname.getLabelCount();
+    const int diff = nlen - zonename->getLabelCount();
     if (diff > 1) {
         bool found = false;
         RRsetList ref;
@@ -267,7 +266,7 @@ hasDelegation(const DataSrc* ds, const Name* zonename, Query& q,
     return (false);
 }
 
-static inline DataSrc::Result
+inline DataSrc::Result
 addSOA(Query& q, const Name* zonename, const DataSrc* ds) {
     Message& m = q.message();
     RRsetList soa;
@@ -284,7 +283,7 @@ addSOA(Query& q, const Name* zonename, const DataSrc* ds) {
     return (DataSrc::SUCCESS);
 }
 
-static inline DataSrc::Result
+inline DataSrc::Result
 addNSEC(Query& q, const QueryTaskPtr task, const Name& name,
         const Name& zonename, const DataSrc* ds)
 {
@@ -302,7 +301,7 @@ addNSEC(Query& q, const QueryTaskPtr task, const Name& name,
     return (DataSrc::SUCCESS);
 }
 
-static inline DataSrc::Result
+inline DataSrc::Result
 getNsec3(const DataSrc* ds, const Name& zonename, const RRClass& qclass,
          string& hash, RRsetPtr& target)
 {
@@ -312,7 +311,7 @@ getNsec3(const DataSrc* ds, const Name& zonename, const RRClass& qclass,
     return (DataSrc::SUCCESS);
 }
 
-static ConstNsec3ParamPtr
+ConstNsec3ParamPtr
 getNsec3Param(Query& q, const DataSrc* ds, const Name& zonename) {
     DataSrc::Result result;
     RRsetList nsec3param;
@@ -345,7 +344,7 @@ getNsec3Param(Query& q, const DataSrc* ds, const Name& zonename) {
                                               np.getSalt())));
 }
 
-static inline DataSrc::Result
+inline DataSrc::Result
 proveNX(Query& q, QueryTaskPtr task, const DataSrc* ds,
         const Name& zonename, const bool wildcard)
 {
@@ -354,7 +353,7 @@ proveNX(Query& q, QueryTaskPtr task, const DataSrc* ds,
     if (nsec3 != NULL) {
         // Attach the NSEC3 record covering the QNAME
         RRsetPtr rrset;
-        string hash1(nsec3->getHash(task->qname)), hash2;
+        string hash1(nsec3->getHash(task->qname));
         RETERR(getNsec3(ds, zonename, q.qclass(), hash1, rrset));
         m.addRRset(Section::AUTHORITY(), rrset, true);
 
@@ -365,8 +364,9 @@ proveNX(Query& q, QueryTaskPtr task, const DataSrc* ds,
 
         // Find the closest provable enclosing name for QNAME
         Name enclosure(zonename);
-        int nlen = task->qname.getLabelCount();
-        int diff = nlen - enclosure.getLabelCount();
+        const int nlen = task->qname.getLabelCount();
+        const int diff = nlen - enclosure.getLabelCount();
+        string hash2;
         for (int i = 1; i <= diff; ++i) {
             enclosure = task->qname.split(i, nlen - i);
             string nodehash(nsec3->getHash(enclosure));
@@ -424,7 +424,7 @@ proveNX(Query& q, QueryTaskPtr task, const DataSrc* ds,
 }
 
 // Attempt a wildcard lookup
-static inline DataSrc::Result
+inline DataSrc::Result
 tryWildcard(Query& q, QueryTaskPtr task, const DataSrc* ds,
             const Name* zonename, bool& found)
 {
@@ -512,13 +512,13 @@ tryWildcard(Query& q, QueryTaskPtr task, const DataSrc* ds,
 
     return (DataSrc::SUCCESS);
 }
+} // end of anonymous namespace
 
 //
 // doQuery: Processes a query.
 // 
 void
-DataSrc::doQuery(Query& q)
-{
+DataSrc::doQuery(Query& q) {
     Message& m = q.message();
     vector<RRsetPtr> additional;
 
@@ -543,7 +543,7 @@ DataSrc::doQuery(Query& q)
         // Find the closest enclosing zone for which we are authoritative,
         // and the concrete data source which is authoritative for it.
         // (Note that RRtype DS queries need to go to the parent.)
-        int nlabels = task->qname.getLabelCount() - 1;
+        const int nlabels = task->qname.getLabelCount() - 1;
         NameMatch match(nlabels != 0 && task->qtype == RRType::DS() ?
                         task->qname.split(1, task->qname.getLabelCount() - 1) :
                         task->qname);
@@ -824,8 +824,7 @@ DataSrc::findReferral(const Name& qname, const RRClass& qclass,
 }
 
 void
-MetaDataSrc::addDataSrc(ConstDataSrcPtr data_src)
-{
+MetaDataSrc::addDataSrc(ConstDataSrcPtr data_src) {
     if (getClass() != RRClass::ANY() && data_src->getClass() != getClass()) {
         isc_throw(Unexpected, "class mismatch");
     }
@@ -834,8 +833,7 @@ MetaDataSrc::addDataSrc(ConstDataSrcPtr data_src)
 }
 
 void
-MetaDataSrc::removeDataSrc(ConstDataSrcPtr data_src)
-{
+MetaDataSrc::removeDataSrc(ConstDataSrcPtr data_src) {
     std::vector<ConstDataSrcPtr>::iterator it, itr;
     for (it = data_sources.begin(); it != data_sources.end(); it++) {
         if (*it == data_src) {
@@ -859,14 +857,12 @@ MetaDataSrc::findClosestEnclosure(NameMatch& match, const RRClass& qclass) const
     }
 }
 
-NameMatch::~NameMatch()
-{
+NameMatch::~NameMatch() {
     delete closest_name_;
 }
 
 void
-NameMatch::update(const DataSrc& new_source, const Name& container)
-{
+NameMatch::update(const DataSrc& new_source, const Name& container) {
     if (closest_name_ == NULL) {
         closest_name_ = new Name(container);
         best_source_ = &new_source;
@@ -875,7 +871,7 @@ NameMatch::update(const DataSrc& new_source, const Name& container)
 
     if (container.compare(*closest_name_).getRelation() ==
         NameComparisonResult::SUBDOMAIN) {
-        Name* newname = new Name(container);
+        const Name* newname = new Name(container);
         delete closest_name_;
         closest_name_ = newname;
         best_source_ = &new_source;
