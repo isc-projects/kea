@@ -66,7 +66,7 @@ UnitTestUtil::readWireData(const char* datafile, vector<unsigned char>& data) {
     vector<string>::const_iterator it = config.data_paths_.begin();
     for (; it != config.data_paths_.end(); ++it) {
         string data_path = *it;
-        if (data_path.empty() || *data_path.rend() != '/') {
+        if (data_path.empty() || *data_path.rbegin() != '/') {
             data_path.push_back('/');
         }
         ifs.open((data_path + datafile).c_str(), ios_base::in);
