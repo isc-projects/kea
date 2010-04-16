@@ -806,8 +806,7 @@ DataSrc::findReferral(const Name& qname, const RRClass& qclass,
     }
 
     flags = 0;
-    r = findExactRRset(qname, qclass, RRType::DNAME(), target, flags,
-                       zonename);
+    r = findExactRRset(qname, qclass, RRType::DNAME(), target, flags, zonename);
     if (r == SUCCESS && flags == 0) {
         dname = true;
     } else if ((flags & (NO_SUCH_ZONE|NAME_NOT_FOUND))) {
@@ -878,7 +877,7 @@ NameMatch::update(const DataSrc& new_source, const Name& container) {
     }
 }
 
-Nsec3Param::Nsec3Param(uint8_t a, uint8_t f, uint16_t i,
+Nsec3Param::Nsec3Param(const uint8_t a, const uint8_t f, const uint16_t i,
                        const std::vector<uint8_t>& s) :
     algorithm_(a), flags_(f), iterations_(i), salt_(s)
 {}
@@ -889,7 +888,7 @@ Nsec3Param::getHash(const Name& name) const {
     name.toWire(buf);
 
     uint8_t digest[SHA1_HASHSIZE];
-    uint8_t* input = (uint8_t*) buf.getData();
+    const uint8_t* input = static_cast<const uint8_t*>(buf.getData());
     size_t inlength = buf.getLength();
     const uint8_t saltlen = salt_.size();
 
