@@ -57,7 +57,7 @@ namespace {
 // Add a task to the query task queue to look up additional data
 // (i.e., address records for the names included in NS or MX records)
 void
-getAdditional(Query& q, RRsetPtr rrset) {
+getAdditional(Query& q, ConstRRsetPtr rrset) {
     if (!q.wantAdditional()) {
         return;
     }
@@ -65,24 +65,20 @@ getAdditional(Query& q, RRsetPtr rrset) {
     RdataIteratorPtr it = rrset->getRdataIterator();
     for (it->first(); !it->isLast(); it->next()) {
         const Rdata& rd(it->getCurrent());
-        QueryTaskPtr newtask = QueryTaskPtr();
-
         if (rrset->getType() == RRType::NS()) {
             const generic::NS& ns = dynamic_cast<const generic::NS&>(rd);
-
-            newtask = QueryTaskPtr(new QueryTask(ns.getNSName(), q.qclass(),
-                                                 Section::ADDITIONAL(),
-                                                 QueryTask::GLUE_QUERY,
-                                                 QueryTask::GETADDITIONAL)); 
+            q.tasks().push(QueryTaskPtr(
+                               new QueryTask(ns.getNSName(), q.qclass(),
+                                             Section::ADDITIONAL(),
+                                             QueryTask::GLUE_QUERY,
+                                             QueryTask::GETADDITIONAL))); 
         } else if (rrset->getType() == RRType::MX()) {
             const generic::MX& mx = dynamic_cast<const generic::MX&>(rd);
-            newtask = QueryTaskPtr(new QueryTask(mx.getMXName(), q.qclass(),
-                                                 Section::ADDITIONAL(),
-                                                 QueryTask::NOGLUE_QUERY,
-                                                 QueryTask::GETADDITIONAL)); 
-        }
-        if (newtask) {
-            q.tasks().push(newtask);
+            q.tasks().push(QueryTaskPtr(
+                               new QueryTask(mx.getMXName(), q.qclass(),
+                                             Section::ADDITIONAL(),
+                                             QueryTask::NOGLUE_QUERY,
+                                             QueryTask::GETADDITIONAL))); 
         }
     }
 }
@@ -187,10 +183,10 @@ copyAuth(Query& q, RRsetList& auth) {
 
 // Query for referrals (i.e., NS/DS or DNAME) at a given name
 inline bool
-refQuery(const Name& name, Query& q, const DataSrc* ds, const Name* zonename,
-         RRsetList& target)
+refQuery(const Name& name, const RRClass& qclass, const DataSrc* ds,
+         const Name* zonename, RRsetList& target)
 {
-    QueryTask newtask(name, q.qclass(), QueryTask::REF_QUERY);
+    QueryTask newtask(name, qclass, QueryTask::REF_QUERY);
 
     if (doQueryTask(ds, zonename, newtask, target) != DataSrc::SUCCESS) {
         // Lookup failed
@@ -218,7 +214,7 @@ hasDelegation(const DataSrc* ds, const Name* zonename, Query& q,
         RRsetList ref;
         for (int i = diff; i > 1; --i) {
             const Name sub(task->qname.split(i - 1, nlen - i));
-            if (refQuery(sub, q, ds, zonename, ref)) {
+            if (refQuery(sub, q.qclass(), ds, zonename, ref)) {
                 found = true;
                 break;
             }
@@ -502,7 +498,7 @@ tryWildcard(Query& q, QueryTaskPtr task, const DataSrc* ds,
             }
 
             RRsetList auth;
-            if (! refQuery(*zonename, q, ds, zonename, auth)) {
+            if (!refQuery(*zonename, q.qclass(), ds, zonename, auth)) {
                 return (DataSrc::ERROR);
             }
 
@@ -618,7 +614,8 @@ DataSrc::doQuery(Query& q) {
                     // Add the NS records for the enclosing zone to
                     // the authority section.
                     RRsetList auth;
-                    if (!refQuery(*zonename, q, datasource, zonename, auth)) {
+                    if (!refQuery(*zonename, q.qclass(), datasource, zonename,
+                                  auth)) {
                         m.setRcode(Rcode::SERVFAIL());
                         return;
                     }
@@ -661,7 +658,8 @@ DataSrc::doQuery(Query& q) {
             if (task->state == QueryTask::GETANSWER) {
                 RRsetList auth;
                 m.clearHeaderFlag(MessageFlag::AA());
-                if (!refQuery(task->qname, q, datasource, zonename, auth)) {
+                if (!refQuery(task->qname, q.qclass(), datasource, zonename,
+                              auth)) {
                     m.setRcode(Rcode::SERVFAIL());
                     return;
                 }
