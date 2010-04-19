@@ -31,7 +31,7 @@ class CmdModuleNameFormatError(CmdFormatError):
     """module name format error"""
 
     def __str__(self):
-        return "Module name format error: the character of name can only be '0-9a-zA-Z_'" 
+        return "Module name format error: the charater of name can only be '0-9a-zA-Z_'" 
                       
                 
 class CmdCommandNameFormatError(CmdFormatError):
@@ -41,7 +41,7 @@ class CmdCommandNameFormatError(CmdFormatError):
         self.module = module        
         
     def __str__(self):
-        return "Command name format error: the character of name can only be '0-9a-zA-Z_'"      
+        return "Command name format error: the charater of name can only be '0-9a-zA-Z_'"      
         
         
 class CmdMissCommandNameFormatError(CmdFormatError):
