@@ -63,7 +63,6 @@ done
 if test -z "${PYTHON_LDFLAGS}"; then
 	PYTHON_LDFLAGS="-L`${PYTHON}-config --prefix`/lib"
 fi
-echo "python ldflags is ${PYTHON_LDFLAGS}."
 AC_SUBST(PYTHON_LDFLAGS)
 
 # Check for python library (not absolutely mandatory, but needed for
