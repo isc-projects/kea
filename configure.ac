@@ -51,8 +51,18 @@ fi
 PYTHON_INCLUDES=`${PYTHON}-config --includes`
 AC_SUBST(PYTHON_INCLUDES)
 for flag in `${PYTHON}-config --ldflags`; do
-	PYTHON_LDFLAGS="$PYTHON_LDFLAGS `echo $flag | sed -ne 's/^\(\-L.*\)$/\1/p'`"
+	# add any '-L..." flags to PYTHON_LDFLAGS
+	flag=`echo $flag | sed -ne 's/^\(\-L.*\)$/\1/p'`
+	if test "X${flag}" != X; then
+		PYTHON_LDFLAGS="$PYTHON_LDFLAGS ${flag}"
+	fi
 done
+# on some platforms, ${PYTHON}-config --ldflags doesn't provide a -L option
+# while having the library under a non trivial directory.  as a workaround
+# we try the "lib" sub directory under the common prefix for this python.
+if test -z "${PYTHON_LDFLAGS}"; then
+	PYTHON_LDFLAGS="-L`${PYTHON}-config --prefix`/lib"
+fi
 AC_SUBST(PYTHON_LDFLAGS)
 
 # Check for python library (not absolutely mandatory, but needed for
