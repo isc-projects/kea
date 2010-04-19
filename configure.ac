@@ -51,7 +51,7 @@ fi
 PYTHON_INCLUDES=`${PYTHON}-config --includes`
 AC_SUBST(PYTHON_INCLUDES)
 for flag in `${PYTHON}-config --ldflags`; do
-	# add any '-L..." flags to PYTHON_INCLUDES
+	# add any '-L..." flags to PYTHON_LDFLAGS
 	flag=`echo $flag | sed -ne 's/^\(\-L.*\)$/\1/p'`
 	if test "X${flag}" != X; then
 		PYTHON_LDFLAGS="$PYTHON_LDFLAGS ${flag}"
