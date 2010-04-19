@@ -243,8 +243,7 @@ public:
     /// method will automatically decompress it.
     ///
     /// If the given data does not represent a valid DNS name, an exception
-    /// of class \c TooLongName, \c BadLabelType, \c BadPointer, or
-    /// \c IncompleteName will be thrown.
+    /// of class \c DNSMessageFORMERR will be thrown.
     /// In addition, if resource allocation for the new name fails, a
     /// corresponding standard exception will be thrown.
     ///
