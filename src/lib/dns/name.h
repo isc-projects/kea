@@ -605,8 +605,7 @@ private:
 };
 
 inline const Name&
-Name::ROOT_NAME()
-{
+Name::ROOT_NAME() {
     static Name root_name(".");
     return (root_name);
 }
