@@ -164,7 +164,7 @@ class BoB:
 
     def config_handler(self, new_config):
         if self.verbose:
-            print("[XX] handling new config:")
+            print("[bind10] handling new config:")
             print(new_config)
         answer = isc.config.ccsession.create_answer(0)
         return answer
@@ -172,15 +172,15 @@ class BoB:
 
     def command_handler(self, command, args):
         if self.verbose:
-            print("[XX] Boss got command:")
+            print("[bind10] Boss got command:")
             print(command)
-        answer = [ 1, "Command not implemented" ]
+        answer = isc.config.ccsession.create_answer(1, "command not implemented")
         if type(command) != str:
             answer = isc.config.ccsession.create_answer(1, "bad command")
         else:
             cmd = command
             if cmd == "shutdown":
-                print("[XX] got shutdown command")
+                print("[bind10] got shutdown command")
                 self.runnable = False
                 answer = isc.config.ccsession.create_answer(0)
             elif cmd == "print_message":
@@ -188,7 +188,7 @@ class BoB:
                     print(args)
                 answer = isc.config.ccsession.create_answer(0, args)
             elif cmd == "print_settings":
-                print("Full Config:")
+                print("[bind10] Full Config:")
                 full_config = self.ccs.get_full_config()
                 for item in full_config:
                     print(item + ": " + str(full_config[item]))
@@ -244,7 +244,7 @@ class BoB:
 
         # start the configuration manager
         if self.verbose:
-            sys.stdout.write("Starting b10-cfgmgr\n")
+            sys.stdout.write("[bind10] Starting b10-cfgmgr\n")
         try:
             bind_cfgd = ProcessInfo("b10-cfgmgr", ["b10-cfgmgr"],
                                     { 'ISC_MSGQ_PORT': str(self.c_channel_port)})
@@ -253,7 +253,7 @@ class BoB:
             return "Unable to start b10-cfgmgr; " + str(e)
         self.processes[bind_cfgd.pid] = bind_cfgd
         if self.verbose:
-            sys.stdout.write("Started b10-cfgmgr (PID %d)\n" % bind_cfgd.pid)
+            sys.stdout.write("[bind10] Started b10-cfgmgr (PID %d)\n" % bind_cfgd.pid)
 
         # TODO: once this interface is done, replace self.cc_session
         # by this one
@@ -263,11 +263,11 @@ class BoB:
         # message
         time.sleep(1)
         if self.verbose:
-            print("[XX] starting ccsession")
+            print("[bind10] starting ccsession")
         self.ccs = isc.config.ModuleCCSession(SPECFILE_LOCATION, self.config_handler, self.command_handler)
         self.ccs.start()
         if self.verbose:
-            print("[XX] ccsession started")
+            print("[bind10] ccsession started")
 
         # start the xfrout before auth-server, to make sure every xfr-query can be
         # processed properly.
@@ -275,7 +275,7 @@ class BoB:
             sys.stdout.write("Starting b10-xfrout\n")
         try:
             xfrout = ProcessInfo("b10-xfrout", ["b10-xfrout"], 
-								 { 'ISC_MSGQ_PORT': str(self.c_channel_port)})
+                                 { 'ISC_MSGQ_PORT': str(self.c_channel_port)})
         except Exception as e:
             c_channel.process.kill()
             bind_cfgd.process.kill()
@@ -499,13 +499,13 @@ class BoB:
                 still_dead[proc_info.pid] = proc_info
             else:
                 if self.verbose:
-                    sys.stdout.write("Resurrecting dead %s process...\n" % 
+                    sys.stdout.write("[bind10] Resurrecting dead %s process...\n" % 
                                      proc_info.name)
                 try:
                     proc_info.respawn()
                     self.processes[proc_info.pid] = proc_info
                     if self.verbose:
-                        sys.stdout.write("Resurrected %s (PID %d)\n" %
+                        sys.stdout.write("[bind10] Resurrected %s (PID %d)\n" %
                                          (proc_info.name, proc_info.pid))
                 except:
                     still_dead[proc_info.pid] = proc_info
@@ -539,7 +539,7 @@ def fatal_signal(signal_number, stack_frame):
     global options
     global boss_of_bind
     if options.verbose:
-        sys.stdout.write("Received %s.\n" % get_signame(signal_number))
+        sys.stdout.write("[bind10] Received %s.\n" % get_signame(signal_number))
     signal.signal(signal.SIGCHLD, signal.SIG_DFL)
     boss_of_bind.runnable = False
 
@@ -590,7 +590,7 @@ def main():
     signal.signal(signal.SIGTERM, fatal_signal)
 
     # Go bob!
-    boss_of_bind = BoB(int(options.msgq_port), int(options.auth_port), \
+    boss_of_bind = BoB(int(options.msgq_port), int(options.auth_port),
                        options.verbose)
     startup_result = boss_of_bind.startup()
     if startup_result:
