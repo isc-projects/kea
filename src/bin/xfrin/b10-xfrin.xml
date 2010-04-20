@@ -68,8 +68,9 @@
     </simpara></note>
 
     <para>
-      This daemon communicates with the BIND 10 over a
-      <citerefentry><refentrytitle>msgq</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+<!-- TODO: does it really use msgq? what for? -->
+      This daemon communicates with BIND 10 over a
+      <citerefentry><refentrytitle>b10-msgq</refentrytitle><manvolnum>8</manvolnum></citerefentry>
       C-Channel connection.  If this connection is not established,
       <command>b10-xfrin</command> will exit.
 <!-- TODO what if connection closes later, will b10-xfrin exit? -->
@@ -178,10 +179,10 @@ operation
         <refentrytitle>b10-cfgmgr</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
-        <refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum>
+        <refentrytitle>b10-msgq</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
-        <refentrytitle>msgq</refentrytitle><manvolnum>8</manvolnum>
+        <refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citetitle>BIND 10 Guide</citetitle>.
     </para>

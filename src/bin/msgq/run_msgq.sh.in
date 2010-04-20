@@ -9,4 +9,4 @@ PYTHONPATH=@abs_top_srcdir@/src/lib/python
 export PYTHONPATH
 
 cd ${MYPATH_PATH}
-exec ${PYTHON_EXEC} -O msgq $*
+exec ${PYTHON_EXEC} -O b10-msgq $*

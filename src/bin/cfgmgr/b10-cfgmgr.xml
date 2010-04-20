@@ -69,7 +69,7 @@
      
 <!-- TODO: briefly explain why both msqg channel and cmdctl communication -->
     <para>
-      This daemon communicates over a <command>msgq</command> C-Channel
+      This daemon communicates over a <command>b10-msgq</command> C-Channel
       connection.  If this connection is not established,
       <command>b10-cfgmgr</command> will exit.
     </para>
