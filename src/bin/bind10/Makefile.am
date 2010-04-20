@@ -1,7 +1,7 @@
 SUBDIRS = tests
 
 sbin_SCRIPTS = bind10
-CLEANFILES = bind10
+CLEANFILES = bind10 bind10.pyc
 
 pkglibexecdir = $(libexecdir)/@PACKAGE@
 

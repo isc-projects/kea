@@ -4,7 +4,7 @@ pkglibexecdir = $(libexecdir)/@PACKAGE@
  
 pkglibexec_SCRIPTS = b10-msgq
 
-CLEANFILES = msgq
+CLEANFILES = b10-msgq msgq.pyc
 
 man_MANS = b10-msgq.8
 EXTRA_DIST = $(man_MANS) msgq.xml
