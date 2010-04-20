@@ -10,5 +10,5 @@ EXTRA_DIST = $(PYTESTS)
 ###	for pytest in $(PYTESTS) ; do \
 ###	echo Running test: $$pytest ; \
 ###	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_srcdir)/src/bin/cmdctl \
-###	$(PYCOVERAGE) $$pytest ; \
+###	$(PYCOVERAGE) $(abs_srcdir)/$$pytest ; \
 ###	done

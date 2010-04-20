@@ -10,7 +10,7 @@ check-local:
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
 	env PYTHONPATH=$(abs_top_srcdir)/src/bin/xfrout:$(abs_top_srcdir)/src/lib/python:$(abs_top_srcdir)/src/lib/dns/.libs:$(abs_top_srcdir)/src/lib/xfr/.libs \
-	$(PYCOVERAGE) $$pytest ; \
+	$(PYCOVERAGE) $(abs_srcdir)/$$pytest ; \
 	done
 
 endif
