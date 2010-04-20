@@ -11,5 +11,5 @@ check-local:
 	echo Running test: $$pytest ; \
 	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python \
 	CONFIG_TESTDATA_PATH=$(abs_top_srcdir)/src/lib/config/testdata \
-	$(PYCOVERAGE) $$pytest ; \
+	$(PYCOVERAGE) $(abs_srcdir)/$$pytest ; \
 	done
