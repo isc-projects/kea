@@ -207,26 +207,26 @@ class BoB:
         # to see if it is already running
         c_channel_env = { "ISC_MSGQ_PORT": str(self.c_channel_port), }
         if self.verbose:
-            sys.stdout.write("Checking for already running msgq\n")
+            sys.stdout.write("Checking for already running b10-msgq\n")
         # try to connect, and if we can't wait a short while
         try:
             self.cc_session = isc.cc.Session(self.c_channel_port)
-            return "msgq already running, cannot start"
+            return "b10-msgq already running, cannot start"
         except isc.cc.session.SessionError:
             pass
 
         # start the c-channel daemon
         if self.verbose:
-            sys.stdout.write("Starting msgq using port %d\n" % 
+            sys.stdout.write("Starting b10-msgq using port %d\n" % 
                              self.c_channel_port)
         try:
-            c_channel = ProcessInfo("msgq", ["msgq"], c_channel_env, True,
-                                    not self.verbose)
+            c_channel = ProcessInfo("b10-msgq", ["b10-msgq"], c_channel_env,
+                                    True, not self.verbose)
         except Exception as e:
-            return "Unable to start msgq; " + str(e)
+            return "Unable to start b10-msgq; " + str(e)
         self.processes[c_channel.pid] = c_channel
         if self.verbose:
-            sys.stdout.write("Started msgq (PID %d)\n" % c_channel.pid)
+            sys.stdout.write("Started b10-msgq (PID %d)\n" % c_channel.pid)
 
         # now connect to the c-channel
         cc_connect_start = time.time()
@@ -415,10 +415,10 @@ class BoB:
                 if self.verbose:
                     sys.stdout.write("Process %s (PID %d) died.\n" % 
                                      (proc_info.name, proc_info.pid))
-                if proc_info.name == "msgq":
+                if proc_info.name == "b10-msgq":
                     if self.verbose and self.runnable:
                         sys.stdout.write(
-                                     "The msgq process died, shutting down.\n")
+                                     "The b10-msgq process died, shutting down.\n")
                     self.runnable = False
             else:
                 sys.stdout.write("Unknown child pid %d exited.\n" % pid)
@@ -567,7 +567,7 @@ def main():
                       help="port the b10-auth daemon will use (default 5300)")
     parser.add_option("-m", "--msgq-port", dest="msgq_port", type="string",
                       action="callback", callback=check_port, default="9912",
-                      help="port the msgq daemon will use (default 9912)")
+                      help="port the b10-msgq daemon will use (default 9912)")
     (options, args) = parser.parse_args()
 
     # Announce startup.

@@ -104,9 +104,8 @@
       <para>
         At first, running many different processes may seem confusing.  However,
         these processes are started, stopped, and maintained by a single command,
-        <command>bind10</command>.  Additionally, most processes started by
-        the <command>bind10</command> command have names starting with "b10-",
-        with one exception, <command>msgq</command>.
+        <command>bind10</command>.  Additionally, the processes started by
+        the <command>bind10</command> command have names starting with "b10-".
       </para>
       
       <para>
@@ -122,7 +121,7 @@
         <itemizedlist>
           <listitem>
             <simpara>
-              <command>msgq</command> &mdash;
+              <command>b10-msgq</command> &mdash;
               message bus daemon.
               This process coordinates communication between all of the other
               BIND 10 processes.
@@ -636,15 +635,15 @@ implementation in BIND 10.
     </para>
 
     <para>
-      After starting the <command>msgq</command> communications channel,
+      After starting the <command>b10-msgq</command> communications channel,
       <command>bind10</command> connects to it, 
       runs the configuration manager, and reads its own configuration.
       Then it starts the other modules.
     </para>
 
     <para>
-      The <command>msgq</command> and <command>b10-cfgmgr</command>
-      services make up the core. The <command>msgq</command> daemon
+      The <command>b10-msgq</command> and <command>b10-cfgmgr</command>
+      services make up the core. The <command>b10-msgq</command> daemon
       provides the communication channel between every part of the system.
       The <command>b10-cfgmgr</command> daemon is always needed by every
       module, if only to send information about themselves somewhere,
@@ -672,9 +671,9 @@ implementation in BIND 10.
     <title>Command channel</title>
 
       <para>
-        The BIND 10 components use the <command>msgq</command>
+        The BIND 10 components use the <command>b10-msgq</command>
         message routing daemon to communicate with other BIND 10 components.
-        The <command>msgq</command> implements what is called the
+        The <command>b10-msgq</command> implements what is called the
         <quote>Command Channel</quote>.
         Processes intercommunicate by sending messages on the command
         channel.
@@ -686,14 +685,14 @@ implementation in BIND 10.
 
       <para>
         Administrators do not communicate directly with the
-        <command>msgq</command> daemon.
+        <command>b10-msgq</command> daemon.
         By default, BIND 10 uses port 9912 for the
-        <command>msgq</command> service.
+        <command>b10-msgq</command> service.
         It listens on 127.0.0.1.
       </para>
       
       <para>
-        To select an alternate port for the <command>msgq</command> to
+        To select an alternate port for the <command>b10-msgq</command> to
         use, run <command>bind10</command> specifying the option:
         <screen> $ <userinput>bind10 --msgq-port 9912</userinput></screen>
       </para>
@@ -717,7 +716,7 @@ Unix domain sockets
       <para>
         The <command>b10-auth</command> and <command>b10-xfrin</command>
         daemons and other components receive their configurations
-        from the configuration manager over the <command>msgq</command>
+        from the configuration manager over the <command>b10-msgq</command>
         command channel.
       </para>
 
@@ -826,7 +825,7 @@ options for that module
       When <command>b10-cmdctl</command> starts, it firsts
       asks <command>b10-cfgmgr</command> about what modules are
       running and what their configuration is (over the
-      <command>msgq</command> channel). Then it will start listening
+      <command>b10-msgq</command> channel). Then it will start listening
       on HTTPS for clients &mdash; the user interface &mdash; such
       as <command>bindctl</command>.
     </para>
@@ -979,9 +978,9 @@ TODO
       <command>b10-cfgmgr</command>. So when <command>bindctl</command>
       sends a configuration, it is sent to <command>b10-cmdctl</command>
       (over a HTTPS connection); then <command>b10-cmdctl</command>
-      sends the command (over a <command>msgq</command> command
+      sends the command (over a <command>b10-msgq</command> command
       channel) to <command>b10-cfgmgr</command> which then stores
-      the details and relays (over a <command>msgq</command> command
+      the details and relays (over a <command>b10-msgq</command> command
       channel) the configuration on to the specified module.
     </para>
 

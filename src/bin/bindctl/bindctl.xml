@@ -215,9 +215,6 @@ configuration location.
       <citerefentry>
         <refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
-      <citerefentry>
-        <refentrytitle>msgq</refentrytitle><manvolnum>8</manvolnum>
-      </citerefentry>,
       <citetitle>BIND 10 Guide</citetitle>.
     </para>
 <!-- TODO: point to developer docs -->
