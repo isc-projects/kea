@@ -94,7 +94,8 @@ StaticDataSrcImpl::StaticDataSrcImpl() :
 
     version = RRsetPtr(new RRset(version_name, RRClass::CH(),
                                  RRType::TXT(), RRTTL(0)));
-    version->addRdata(generic::TXT("BIND10 0.0.0 (pre-alpha)"));
+    //version->addRdata(generic::TXT("BIND10-devel" CONFIG_VERSION));
+    version->addRdata(generic::TXT(PACKAGE_STRING));
 
     version_ns = RRsetPtr(new RRset(version_name, RRClass::CH(),
                                     RRType::NS(), RRTTL(0)));
