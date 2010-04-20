@@ -7,7 +7,7 @@ pkglibexec_SCRIPTS = b10-xfrin
 b10_xfrindir = $(DESTDIR)$(pkgdatadir)
 b10_xfrin_DATA = xfrin.spec
 
-CLEANFILES = b10-xfrin xfrin.spec
+CLEANFILES = b10-xfrin xfrin.pyc xfrin.spec
 
 man_MANS = b10-xfrin.8
 EXTRA_DIST = $(man_MANS) b10-xfrin.xml

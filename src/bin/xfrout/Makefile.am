@@ -7,7 +7,7 @@ pkglibexec_SCRIPTS = b10-xfrout
 b10_xfroutdir = $(DESTDIR)$(pkgdatadir)
 b10_xfrout_DATA = xfrout.spec
 
-CLEANFILES=	b10-xfrout xfrout.spec
+CLEANFILES=	b10-xfrout xfrout.pyc xfrout.spec
 
 xfrout.spec: xfrout.spec.pre
 	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" xfrout.spec.pre >$@
