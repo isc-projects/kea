@@ -7,7 +7,7 @@ PYCOVERAGE = $(PYTHON)
 check-local:
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
-	env PYTHONPATH=$(abs_top_srcdir)/src/bin/msgq:$(abs_top_srcdir)/src/lib/python \
+	env PYTHONPATH=$(abs_top_builddir)/src/bin/msgq:$(abs_top_srcdir)/src/lib/python \
 	$(PYCOVERAGE) $(abs_srcdir)/$$pytest ; \
 	done
 
