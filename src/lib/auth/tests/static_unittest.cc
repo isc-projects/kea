@@ -18,6 +18,8 @@
 #include <string>
 #include <vector>
 
+#include "config.h"
+
 #include <gtest/gtest.h>
 
 #include <dns/name.h>
@@ -49,7 +51,7 @@ protected:
     {
         // XXX: the following values can change as release/developers change,
         // in which case the test code must be updated accordingly.
-        version_data.push_back("BIND10 0.0.0 (pre-alpha)");
+        version_data.push_back(PACKAGE_STRING);
 
         // XXX: in addition, the order the following items matter.
         authors_data.push_back("Evan Hunt");
