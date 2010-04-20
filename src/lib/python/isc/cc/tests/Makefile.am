@@ -1,5 +1,4 @@
-#PYTESTS = data_test.py session_test.py test.py
-PYTESTS = data_test.py session_test.py
+PYTESTS = data_test.py session_test.py test.py
 # NOTE: test_session.py is to be run manually, so not automated.
 EXTRA_DIST = $(PYTESTS)
 EXTRA_DIST += sendcmd.py
