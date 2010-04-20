@@ -361,16 +361,22 @@ AC_CONFIG_FILES([Makefile
                  src/Makefile
                  src/bin/Makefile
                  src/bin/bind10/Makefile
+                 src/bin/bind10/tests/Makefile
                  src/bin/cmdctl/Makefile
+                 src/bin/cmdctl/tests/Makefile
                  src/bin/bindctl/Makefile
+                 src/bin/bindctl/tests/Makefile
                  src/bin/cfgmgr/Makefile
                  src/bin/host/Makefile
                  src/bin/loadzone/Makefile
                  src/bin/msgq/Makefile
+                 src/bin/msgq/tests/Makefile
                  src/bin/auth/Makefile
                  src/bin/auth/tests/Makefile
                  src/bin/xfrin/Makefile
+                 src/bin/xfrin/tests/Makefile
                  src/bin/xfrout/Makefile
+                 src/bin/xfrout/tests/Makefile
                  src/bin/usermgr/Makefile
                  src/lib/Makefile
                  src/lib/cc/Makefile
@@ -378,7 +384,9 @@ AC_CONFIG_FILES([Makefile
                  src/lib/python/isc/Makefile
                  src/lib/python/isc/auth/Makefile
                  src/lib/python/isc/cc/Makefile
+                 src/lib/python/isc/cc/tests/Makefile
                  src/lib/python/isc/config/Makefile
+                 src/lib/python/isc/config/tests/Makefile
                  src/lib/config/Makefile
                  src/lib/config/tests/Makefile
                  src/lib/dns/Makefile
@@ -411,7 +419,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/usermgr/run_b10-cmdctl-usermgr.sh
            src/bin/usermgr/b10-cmdctl-usermgr.py
            src/bin/msgq/msgq.py
-           src/bin/msgq/msgq_test
+           src/bin/msgq/tests/msgq_test
            src/bin/msgq/run_msgq.sh
            src/bin/auth/auth.spec.pre
            src/bin/auth/spec_config.h
@@ -433,7 +441,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            chmod +x src/bin/loadzone/run_loadzone.sh
            chmod +x src/bin/usermgr/run_b10-cmdctl-usermgr.sh
            chmod +x src/bin/msgq/run_msgq.sh
-           chmod +x src/bin/msgq/msgq_test
+           chmod +x src/bin/msgq/tests/msgq_test
            chmod +x src/lib/dns/gen-rdatacode.py
            chmod +x src/lib/dns/tests/testdata/gen-wiredata.py
           ])
