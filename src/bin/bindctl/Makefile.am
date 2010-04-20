@@ -1,3 +1,5 @@
+SUBDIRS = tests
+
 bin_SCRIPTS = bindctl
 man_MANS = bindctl.1
 
@@ -9,7 +11,6 @@ pythondir = $(pyexecdir)/bindctl
 bindctldir = $(DESTDIR)$(pkgdatadir)
 bindctl_DATA = bindctl.pem
 EXTRA_DIST += bindctl.pem
-EXTRA_DIST += tests/bindctl_test.py
 
 CLEANFILES = bindctl
 
