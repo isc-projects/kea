@@ -32,16 +32,13 @@ daemon provides the BIND 10 authoritative DNS server\&. Normally it is started b
 boss process\&.
 .PP
 This daemon communicates with other BIND 10 components over a
-\fBmsgq\fR(8)
+\fBb10-msgq\fR(8)
 C\-Channel connection\&. If this connection is not established,
 \fBb10\-auth\fR
 will exit\&.
 .PP
 It also receives its configurations from
-\fBb10-cfgmgr\fR(8)
-(via the
-\fBmsgq\fR(8)
-command channel)\&. It will honor the
+\fBb10-cfgmgr\fR(8)\&. It will honor the
 \fIdatabase_file\fR
 configuration to point to the SQLite3 zone file\&.
 .if n \{\
@@ -113,8 +110,8 @@ configuration is not defined\&.
 \fBb10-cfgmgr\fR(8),
 \fBb10-cmdctl\fR(8),
 \fBb10-loadzone\fR(8),
+\fBb10-msgq\fR(8),
 \fBbind10\fR(8),
-\fBmsgq\fR(8),
 BIND 10 Guide\&.
 .SH "HISTORY"
 .PP
