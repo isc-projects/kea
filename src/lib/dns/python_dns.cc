@@ -14,8 +14,6 @@
 
 // $Id: message_python.cc 2010-03-08 18:44:00 feng $
 
-#include <cassert>
-
 #include <boost/python.hpp>
 #include <boost/python/class.hpp>
 #include <boost/python/module.hpp>
@@ -24,6 +22,8 @@
 #include <boost/python/return_internal_reference.hpp>
 #include <boost/python/copy_const_reference.hpp>
 #include <boost/shared_ptr.hpp>
+
+#include <cassert>
 
 #include <exceptions/exceptions.h>
 
