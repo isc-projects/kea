@@ -1,11 +1,13 @@
+SUBDIRS = tests
+
 pkglibexecdir = $(libexecdir)/@PACKAGE@
  
 pkglibexec_SCRIPTS = b10-msgq
 
-CLEANFILES = b10-msgq
+CLEANFILES = b10-msgq msgq.pyc
 
 man_MANS = b10-msgq.8
-EXTRA_DIST = $(man_MANS) msgq.xml msgq_test.py
+EXTRA_DIST = $(man_MANS) msgq.xml
 
 if ENABLE_MAN
 

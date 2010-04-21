@@ -1,5 +1,7 @@
+SUBDIRS = tests
+
 sbin_SCRIPTS = bind10
-CLEANFILES = bind10
+CLEANFILES = bind10 bind10.pyc
 
 pkglibexecdir = $(libexecdir)/@PACKAGE@
 
@@ -8,7 +10,7 @@ bind10_DATA = bob.spec
 EXTRA_DIST = bob.spec
 
 man_MANS = bind10.8
-EXTRA_DIST += $(man_MANS) bind10.xml tests/bind10_test.py
+EXTRA_DIST += $(man_MANS) bind10.xml
 
 if ENABLE_MAN
 
