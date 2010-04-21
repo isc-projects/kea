@@ -47,8 +47,9 @@ The Y1 prototype release only supports AXFR\&. IXFR is not implemented\&.
 .sp .5v
 .RE
 .PP
-This daemon communicates with the BIND 10 over a
-\fBmsgq\fR(8)
+
+This daemon communicates with BIND 10 over a
+\fBb10-msgq\fR(8)
 C\-Channel connection\&. If this connection is not established,
 \fBb10\-xfrin\fR
 will exit\&.
@@ -97,8 +98,8 @@ This prototype version uses SQLite3 as its data source backend\&. Future version
 .PP
 
 \fBb10-cfgmgr\fR(8),
+\fBb10-msgq\fR(8),
 \fBbind10\fR(8),
-\fBmsgq\fR(8),
 BIND 10 Guide\&.
 .SH "HISTORY"
 .PP
