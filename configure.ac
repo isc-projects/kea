@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10-devel, 20100318, bind10-bugs@isc.org)
+AC_INIT(bind10-devel, 20100421, bind10-bugs@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
@@ -367,7 +367,6 @@ AC_CONFIG_FILES([Makefile
                  src/bin/bindctl/Makefile
                  src/bin/bindctl/tests/Makefile
                  src/bin/cfgmgr/Makefile
-                 src/bin/host/Makefile
                  src/bin/loadzone/Makefile
                  src/bin/msgq/Makefile
                  src/bin/msgq/tests/Makefile

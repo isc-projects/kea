@@ -1,0 +1,83 @@
+bind10-devel-20100421 released on April 21, 2010
+
+FEATURES:
+
+ - Use PACKAGE_STRING (name + version) from config.h instead of
+   hard-coded value in CH TXT version.bind replies (Trac #114, r1749)
+
+ - Renamed msgq to b10-msgq (Trac #25, r1747, r1748)
+
+ - Supported case-sensitive name compression in MessageRenderer (r1704)
+
+ - Support a simple name with possible compression (r1701)
+
+ - Removed print_message and print_settings configuration commands
+   from Xfrin (Trac #136, r1682)
+
+ - Changed zone loader/updater so trailing dot is not required (r1681)
+
+ - b10-xfrout for AXFR-out support added (r1629, r1630)
+
+ - New API for inserting zone data to sqlite3 database for AXFR in
+   (r1612, r16133)
+
+FIXES:
+
+ - More code review, miscellaneous cleanups, style guidelines,
+   and new and improved unit tests added.
+
+ - Manual page cleanups and improvements.
+
+ - Enable Python unit tests for "make check" (r1762)
+
+ - Fix msgq CC test so it can find its module (r1751)
+
+ - Add missing copyright license statements to various source files
+   (r1750)
+
+ - Make log message more readable when xfrin failed (r1697)
+
+ - Keep stderr for child processes if -v is specified (r1690, r1698)
+
+ - Allow bind10 boss to pass environment variables from parent (r1689)
+
+ - Xfrin warn if bind10_dns load failed (r1688)
+
+ - Use sqlite3_ds.load() in xfrin module and catch Sqlite3DSError
+   explicitly (r1684)
+
+ - Change shutdown to actually SIGKILL properly (r1675)
+
+ - Don't ignore other RRs than SOA even if the second SOA is found
+   (r1674)
+
+ - Fix tests and testdata so can be used from a read-only source
+   directory.
+
+ - Make sure python tests scripts are included in tarball (r1648)
+
+ - Improve python detection for configure (r1622)
+
+ - Automake the python binding of libdns (r1617)
+
+ - Fix log errors which may cause xfrin module to crash (r1613)
+
+ - NSEC RDATA fixes for buffer overrun lookups, incorrect boundary
+   checks, spec-non-conformant behaviors (r1611)
+
+ - Remove a re-raise of an exception that should only have been
+   included in an error answer on the cc channel (r1601)
+
+ - Removed unnecessary sleep() from ccsession.cc (r1528)
+
+OPERATIONAL NOTES:
+
+ - Xfrin and Xfrout modules only work when build is configured
+   with boost, boost-python, and python _sqlite3 support. Build
+   details are documented in the BIND 10 Guide.
+
+ - The configure --with-boostlib option changed to --with-boost-lib
+
+---------------
+
+bind10-devel-20100319 released on March 19, 2010
