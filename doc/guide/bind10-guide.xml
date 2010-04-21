@@ -589,6 +589,14 @@ implementation in BIND 10.
           <para>The install step may require superuser privileges.</para>
         </note>
 
+<!-- Trac #148 -->
+        <note><simpara>
+	  Depending on your system and the location of your Boost
+	  Python and Python shared libraries, you may need to
+	  configure your run-time linker to find them (such as
+	  setting LD_LIBRARY_PATH).
+        </simpara></note>
+
       </section>
 
   <!-- TODO: tests -->
