@@ -80,11 +80,11 @@ class TestCCWireEncoding(unittest.TestCase):
 
     def test_to_wire_of_bool_true(self):
         wire = isc.cc.message.to_wire({ "bool": True })
-        self.assertEqual(wire, b'Skan\x04bool%\x01\x01')
+        self.assertEqual(wire, b'Skan\x04bool%\x011')
 
     def test_to_wire_of_bool_false(self):
         wire = isc.cc.message.to_wire({ "bool": False })
-        self.assertEqual(wire, b'Skan\x04bool%\x01\x00')
+        self.assertEqual(wire, b'Skan\x04bool%\x010')
 
     def test_from_wire_of_bool_true(self):
         wire = b'Skan\x04bool%\x01\x01'
