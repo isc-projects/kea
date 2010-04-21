@@ -12,7 +12,7 @@ FEATURES:
  - b10-xfrout for AXFR-out support added (r1629, r1630)
 
  - New API for inserting zone data to sqlite3 database for AXFR in
-   (r1612, r16133)
+   (r1612, r1613)
 
 FIXES:
 
