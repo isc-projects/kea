@@ -5,16 +5,9 @@ FEATURES:
  - Use PACKAGE_STRING (name + version) from config.h instead of
    hard-coded value in CH TXT version.bind replies (Trac #114, r1749)
 
- - Renamed msgq to b10-msgq (Trac #25, r1747, r1748)
-
- - Supported case-sensitive name compression in MessageRenderer (r1704)
+ - Support case-sensitive name compression in MessageRenderer (r1704)
 
  - Support a simple name with possible compression (r1701)
-
- - Removed print_message and print_settings configuration commands
-   from Xfrin (Trac #136, r1682)
-
- - Changed zone loader/updater so trailing dot is not required (r1681)
 
  - b10-xfrout for AXFR-out support added (r1629, r1630)
 
@@ -75,6 +68,13 @@ OPERATIONAL NOTES:
  - Xfrin and Xfrout modules only work when build is configured
    with boost, boost-python, and python _sqlite3 support. Build
    details are documented in the BIND 10 Guide.
+
+ - Renamed msgq to b10-msgq (Trac #25, r1747, r1748)
+
+ - Removed print_message and print_settings configuration commands
+   from Xfrin (Trac #136, r1682)
+
+ - Changed zone loader/updater so trailing dot is not required (r1681)
 
  - The configure --with-boostlib option changed to --with-boost-lib
 
