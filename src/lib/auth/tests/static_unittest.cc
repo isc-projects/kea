@@ -49,8 +49,8 @@ protected:
                              rrclass(RRClass::CH()), rrtype(RRType::TXT()),
                              rrttl(RRTTL(0)), find_flags(0), matched_rdata(0)
     {
-        // XXX: the following values can change as release/developers change,
-        // in which case the test code must be updated accordingly.
+        // version.bind is answered with package name+version
+        // (defined as PACKAGE_STRING in config.h)
         version_data.push_back(PACKAGE_STRING);
 
         // XXX: in addition, the order the following items matter.
