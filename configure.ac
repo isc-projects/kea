@@ -48,21 +48,30 @@ else
 	AC_SUBST(pkgpyexecdir)
 fi
 
-PYTHON_INCLUDES=`${PYTHON}-config --includes`
-AC_SUBST(PYTHON_INCLUDES)
-for flag in `${PYTHON}-config --ldflags`; do
-	# add any '-L..." flags to PYTHON_LDFLAGS
-	flag=`echo $flag | sed -ne 's/^\(\-L.*\)$/\1/p'`
-	if test "X${flag}" != X; then
-		PYTHON_LDFLAGS="$PYTHON_LDFLAGS ${flag}"
+# Check for python development environments
+if test -x ${PYTHON}-config; then
+	PYTHON_INCLUDES=`${PYTHON}-config --includes`
+
+	for flag in `${PYTHON}-config --ldflags`; do
+		# add any '-L..." flags to PYTHON_LDFLAGS
+		flag=`echo $flag | sed -ne 's/^\(\-L.*\)$/\1/p'`
+		if test "X${flag}" != X; then
+			PYTHON_LDFLAGS="$PYTHON_LDFLAGS ${flag}"
+		fi
+	done
+	# on some platforms, ${PYTHON}-config --ldflags doesn't provide a -L
+	# option while having the library under a non trivial directory.
+	# as a workaround we try the "lib" sub directory under the common
+	# prefix for this python.
+	if test -z "${PYTHON_LDFLAGS}"; then
+		PYTHON_LDFLAGS="-L`${PYTHON}-config --prefix`/lib"
 	fi
-done
-# on some platforms, ${PYTHON}-config --ldflags doesn't provide a -L option
-# while having the library under a non trivial directory.  as a workaround
-# we try the "lib" sub directory under the common prefix for this python.
-if test -z "${PYTHON_LDFLAGS}"; then
-	PYTHON_LDFLAGS="-L`${PYTHON}-config --prefix`/lib"
+else
+	if test "X$PYTHON_INCLUDES" = X -o "X$PYTHON_LDFLAGS" = X; then
+		AC_MSG_WARN([${PYTHON}-config does not exist or is not executable, so we could not detect python development environment.  Your system may require an additional package (e.g. "python3-dev").  Alternatively, if you are sure you have python headers and libraries, define PYTHON_INCLUDES and PYTHON_LDFLAGS and run this script.])
+	fi
 fi
+AC_SUBST(PYTHON_INCLUDES)
 AC_SUBST(PYTHON_LDFLAGS)
 
 # Check for python library (not absolutely mandatory, but needed for
