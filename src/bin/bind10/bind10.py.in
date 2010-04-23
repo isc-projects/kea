@@ -362,6 +362,8 @@ class BoB:
         self.cc_session.group_sendmsg(cmd, 'Boss', 'Cmd-Ctrld')
         self.cc_session.group_sendmsg(cmd, "Boss", "ConfigManager")
         self.cc_session.group_sendmsg(cmd, "Boss", "Auth")
+        self.cc_session.group_sendmsg(cmd, "Boss", "Xfrout")
+        self.cc_session.group_sendmsg(cmd, "Boss", "Xfrin")
 
     def stop_process(self, process):
         """Stop the given process, friendly-like."""
@@ -378,7 +380,7 @@ class BoB:
         except:
             pass
         # XXX: some delay probably useful... how much is uncertain
-        time.sleep(0.1)  
+        time.sleep(0.5)  
         self.reap_children()
         # next try sending a SIGTERM
         processes_to_stop = list(self.processes.values())
