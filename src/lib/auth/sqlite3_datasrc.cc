@@ -563,7 +563,7 @@ Sqlite3DataSrc::init(const isc::data::ElementPtr config) {
     if (config && config->contains("database_file")) {
         open(config->get("database_file")->stringValue());
     } else {
-        isc_throw(DataSourceError, "No sqlite3 database file specified");
+        isc_throw(DataSourceError, "No SQLite database file specified");
     }
     return (SUCCESS);
 }
@@ -621,7 +621,7 @@ sqlite3_stmt*
 prepare(sqlite3* const db, const char* const statement) {
     sqlite3_stmt* prepared = NULL;
     if (sqlite3_prepare_v2(db, statement, -1, &prepared, NULL) != SQLITE_OK) { 
-        isc_throw(Sqlite3Error, "could not prepare sqlite3 statement: " <<
+        isc_throw(Sqlite3Error, "Could not prepare SQLite statement: " <<
                   statement);
     }
     return (prepared);
@@ -668,13 +668,13 @@ checkAndSetupSchema(Sqlite3Initializer* initializer) {
 void
 Sqlite3DataSrc::open(const string& name) {
     if (dbparameters->db_ != NULL) {
-        isc_throw(DataSourceError, "Duplicate Sqlite3 open with " << name);
+        isc_throw(DataSourceError, "Duplicate SQLite open with " << name);
     }
 
     Sqlite3Initializer initializer;
 
     if (sqlite3_open(name.c_str(), &initializer.params_.db_) != 0) {
-        isc_throw(Sqlite3Error, "Cannot open Sqlite3 database file: " << name);
+        isc_throw(Sqlite3Error, "Cannot open SQLite database file: " << name);
     }
 
     checkAndSetupSchema(&initializer);
@@ -688,7 +688,7 @@ DataSrc::Result
 Sqlite3DataSrc::close(void) {
     if (dbparameters->db_ == NULL) {
         isc_throw(DataSourceError,
-                  "Sqlite3 data source is being closed before open");
+                  "SQLite data source is being closed before open");
     }
 
     // XXX: sqlite3_finalize() could fail.  What should we do in that case?
