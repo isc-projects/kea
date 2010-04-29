@@ -14,12 +14,14 @@
 
 // $Id$
 
-#ifndef __TEST_DATA_SOURCE_H
-#define __TEST_DATA_SOURCE_H
+#ifndef __DATA_SOURCE_SQLITE3_H
+#define __DATA_SOURCE_SQLITE3_H
 
-#include <gtest/gtest.h>
+#include <string>
 
-#include <auth/data_source.h>
+#include <exceptions/exceptions.h>
+
+#include "data_source.h"
 
 namespace isc {
 
@@ -30,10 +32,18 @@ class RRType;
 class RRsetList;
 }
 
-namespace auth {
-class Query;
+namespace datasrc {
 
-class TestDataSrc : public DataSrc {
+class Query;
+struct Sqlite3Parameters;
+
+class Sqlite3Error : public Exception {
+public:
+    Sqlite3Error(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+class Sqlite3DataSrc : public DataSrc {
     ///
     /// \name Constructors, Assignment Operator and Destructor.
     ///
@@ -41,11 +51,11 @@ class TestDataSrc : public DataSrc {
     /// defined as private.
     //@{
 private:
-    TestDataSrc(const TestDataSrc& source);
-    TestDataSrc operator=(const TestDataSrc& source); 
+    Sqlite3DataSrc(const Sqlite3DataSrc& source);
+    Sqlite3DataSrc& operator=(const Sqlite3DataSrc& source);
 public:
-    TestDataSrc() : initialized(false) {}
-    ~TestDataSrc() {}
+    Sqlite3DataSrc();
+    ~Sqlite3DataSrc();
     //@}
 
     void findClosestEnclosure(NameMatch& match,
@@ -77,36 +87,40 @@ public:
                         uint32_t& flags,
                         const isc::dns::Name* zonename) const;
 
-    Result findPreviousName(const isc::dns::Name& qname,
-                            isc::dns::Name& target,
-                            const isc::dns::Name* zonename) const;
+    DataSrc::Result findPreviousName(const isc::dns::Name& qname,
+                                     isc::dns::Name& target,
+                                     const isc::dns::Name* zonename) const;
 
     Result findCoveringNSEC3(const isc::dns::Name& zonename,
                              std::string& hash,
                              isc::dns::RRsetList& target) const;
 
-    Result init();
+    Result init() { return init(isc::data::ElementPtr()); };
     Result init(const isc::data::ElementPtr config);
-    Result close() { return (SUCCESS); }
+    Result close();
 
 private:
-    bool initialized;
     enum Mode {
         NORMAL,
         ADDRESS,
         DELEGATION
     };
 
-    void findRecords(const isc::dns::Name& name, const isc::dns::RRType& rdtype,
-                     isc::dns::RRsetList& target,
-                     const isc::dns::Name* zonename, const Mode mode,
-                     uint32_t& flags) const;
+    void open(const std::string& name);
+    int hasExactZone(const char *name) const;
+    int findRecords(const isc::dns::Name& name, const isc::dns::RRType& rdtype,
+                    isc::dns::RRsetList& target, const isc::dns::Name* zonename,
+                    const Mode mode, uint32_t& flags) const;
+    int findClosest(const isc::dns::Name& name, unsigned int* position) const;
+
+private:
+    Sqlite3Parameters* dbparameters;
 };
 
 }
 }
 
-#endif
+#endif // __DATA_SOURCE_SQLITE3_H
 
 // Local Variables: 
 // mode: c++

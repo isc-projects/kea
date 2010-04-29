@@ -31,14 +31,14 @@
 #include <dns/rrsetlist.h>
 #include <cc/data.h>
 
-#include <auth/query.h>
-#include <auth/data_source.h>
-#include <auth/static_datasrc.h>
+#include <datasrc/query.h>
+#include <datasrc/data_source.h>
+#include <datasrc/static_datasrc.h>
 
 using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
-using namespace isc::auth;
+using namespace isc::datasrc;
 
 namespace {
 class StaticDataSourceTest : public ::testing::Test {

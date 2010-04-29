@@ -26,7 +26,7 @@
 using namespace isc::dns;
 
 namespace isc {
-namespace auth {
+namespace datasrc {
 
 QueryTask::QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
                      const isc::dns::RRType& t, const isc::dns::Section& sect) :

@@ -165,8 +165,8 @@ class XfrinConnection(asyncore.dispatcher):
             if ret == XFRIN_OK:    
                 self.log_msg(logstr + 'started')
                 self._send_query(rr_type.AXFR())
-                isc.auth.sqlite3_ds.load(self._db_file, self._zone_name,
-                                         self._handle_xfrin_response)
+                isc.datasrc.sqlite3_ds.load(self._db_file, self._zone_name,
+                                            self._handle_xfrin_response)
 
                 self.log_msg(logstr + 'succeeded')
 
@@ -174,7 +174,7 @@ class XfrinConnection(asyncore.dispatcher):
             self.log_msg(e)
             self.log_msg(logstr + 'failed')
             #TODO, recover data source.
-        except isc.auth.sqlite3_ds.Sqlite3DSError as e:
+        except isc.datasrc.sqlite3_ds.Sqlite3DSError as e:
             self.log_msg(e)
             self.log_msg(logstr + 'failed')
         finally:

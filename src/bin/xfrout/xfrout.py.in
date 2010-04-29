@@ -22,7 +22,7 @@ import isc.cc
 import threading
 import struct
 import signal
-from isc.auth import sqlite3_ds
+from isc.datasrc import sqlite3_ds
 from socketserver import *
 import os
 from isc.config.ccsession import *
