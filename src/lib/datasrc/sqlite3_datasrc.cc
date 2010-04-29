@@ -32,7 +32,7 @@ using namespace isc::dns;
 using namespace isc::dns::rdata;
 
 namespace isc {
-namespace auth {
+namespace datasrc {
 
 struct Sqlite3Parameters {
     Sqlite3Parameters() :  db_(NULL), version_(-1),

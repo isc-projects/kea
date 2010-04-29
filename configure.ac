@@ -391,7 +391,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/cc/Makefile
                  src/lib/python/Makefile
                  src/lib/python/isc/Makefile
-                 src/lib/python/isc/auth/Makefile
+                 src/lib/python/isc/datasrc/Makefile
                  src/lib/python/isc/cc/Makefile
                  src/lib/python/isc/cc/tests/Makefile
                  src/lib/python/isc/config/Makefile
@@ -401,8 +401,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/dns/Makefile
                  src/lib/dns/tests/Makefile
                  src/lib/exceptions/Makefile
-                 src/lib/auth/Makefile
-                 src/lib/auth/tests/Makefile
+                 src/lib/datasrc/Makefile
+                 src/lib/datasrc/tests/Makefile
                  src/lib/xfr/Makefile
                ])
 AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py

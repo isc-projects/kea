@@ -21,7 +21,7 @@
 #include <dns/tests/unittest_util.h>
 #include "test_datasrc.h"
 
-#include <auth/data_source.h>
+#include <datasrc/data_source.h>
 
 #include <dns/buffer.h>
 #include <dns/messagerenderer.h>
@@ -42,7 +42,7 @@ using namespace isc::dns;
 using namespace isc::dns::rdata;
 
 namespace isc {
-namespace auth {
+namespace datasrc {
 
 namespace {
 const Name example("example.com");

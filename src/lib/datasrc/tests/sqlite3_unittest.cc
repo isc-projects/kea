@@ -32,14 +32,14 @@
 #include <dns/rrsetlist.h>
 #include <cc/data.h>
 
-#include <auth/query.h>
-#include <auth/data_source.h>
-#include <auth/sqlite3_datasrc.h>
+#include <datasrc/query.h>
+#include <datasrc/data_source.h>
+#include <datasrc/sqlite3_datasrc.h>
 
 using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
-using namespace isc::auth;
+using namespace isc::datasrc;
 using namespace isc::data;
 
 namespace {

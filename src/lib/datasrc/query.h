@@ -28,7 +28,7 @@
 
 namespace isc {
 
-namespace auth {
+namespace datasrc {
 
 // An individual task to be carried out by the query logic
 class QueryTask {

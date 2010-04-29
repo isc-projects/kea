@@ -20,12 +20,12 @@
 #include <dns/rrtype.h>
 #include <dns/rrclass.h>
 
-#include <auth/query.h>
+#include <datasrc/query.h>
 
 namespace {
 
 using namespace isc::dns;
-using namespace isc::auth;
+using namespace isc::datasrc;
 
 
 class QueryTest : public ::testing::Test {

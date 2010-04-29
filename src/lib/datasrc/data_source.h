@@ -38,7 +38,7 @@ class RRset;
 class RRsetList;
 }
 
-namespace auth {
+namespace datasrc {
 
 class NameMatch;
 class Query;

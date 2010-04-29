@@ -34,7 +34,7 @@ using namespace isc::dns;
 using namespace isc::dns::rdata;
 
 namespace isc {
-namespace auth {
+namespace datasrc {
 
 // This class stores the "static" data for the built-in static data source.
 // Since it's static, it could be literally static, i.e, defined as static

@@ -49,7 +49,7 @@ using namespace isc::dns;
 using namespace isc::dns::rdata;
 
 namespace isc {
-namespace auth {
+namespace datasrc {
 
 typedef boost::shared_ptr<const Nsec3Param> ConstNsec3ParamPtr;
 

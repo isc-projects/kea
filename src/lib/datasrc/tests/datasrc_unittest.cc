@@ -34,9 +34,9 @@
 
 #include <cc/data.h>
 
-#include <auth/query.h>
-#include <auth/sqlite3_datasrc.h>
-#include <auth/static_datasrc.h>
+#include <datasrc/query.h>
+#include <datasrc/sqlite3_datasrc.h>
+#include <datasrc/static_datasrc.h>
 
 #include <dns/tests/unittest_util.h>
 #include "test_datasrc.h"
@@ -45,7 +45,7 @@ using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
-using namespace isc::auth;
+using namespace isc::datasrc;
 using namespace isc::data;
 
 namespace {

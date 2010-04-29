@@ -17,8 +17,8 @@
 
 import sys; sys.path.append ('@@PYTHONPATH@@')
 import re, getopt
-import isc.auth
-from isc.auth.master import MasterFile
+import isc.datasrc
+from isc.datasrc.master import MasterFile
 
 #########################################################################
 # usage: print usage note and exit
@@ -71,10 +71,10 @@ def main():
         exit(1)
 
     try:
-        isc.auth.sqlite3_ds.load(dbfile, zone, master.zonedata)
+        isc.datasrc.sqlite3_ds.load(dbfile, zone, master.zonedata)
     except Exception as e:
         print("Error loading database: " + str(e))
         exit(1)
 
 if __name__ == "__main__":
-    main()
+    main(datasrc
