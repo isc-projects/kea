@@ -399,8 +399,7 @@ struct CompareParameters {
     unsigned int labels;
 };
 
-TEST_F(NameTest, compare)
-{
+TEST_F(NameTest, compare) {
     vector<CompareParameters> params;
     params.push_back(CompareParameters(Name("c.d"), Name("a.b.c.d"),
                                        NameComparisonResult::SUPERDOMAIN,
@@ -427,8 +426,7 @@ TEST_F(NameTest, compare)
     }
 }
 
-TEST_F(NameTest, equal)
-{
+TEST_F(NameTest, equal) {
     EXPECT_TRUE(example_name == Name("WWW.EXAMPLE.COM."));
     EXPECT_TRUE(example_name.equals(Name("WWW.EXAMPLE.COM.")));
     EXPECT_TRUE(example_name != Name("www.example.org."));
@@ -443,15 +441,13 @@ TEST_F(NameTest, equal)
     EXPECT_TRUE(example_name.nequals(Name("www\\.example.com.")));
 }
 
-TEST_F(NameTest, isWildcard)
-{
+TEST_F(NameTest, isWildcard) {
     EXPECT_EQ(false, example_name.isWildcard());
     EXPECT_EQ(true, Name("*.a.example.com").isWildcard());
     EXPECT_EQ(false, Name("a.*.example.com").isWildcard());
 }
 
-TEST_F(NameTest, concatenate)
-{
+TEST_F(NameTest, concatenate) {
     NameComparisonResult result =
         Name("aaa.www.example.com.").compare(Name("aaa").concatenate(example_name));
     EXPECT_EQ(NameComparisonResult::EQUAL, result.getRelation());
@@ -472,8 +468,7 @@ TEST_F(NameTest, concatenate)
     EXPECT_THROW(n1.concatenate(n2), TooLongName);
 }
 
-TEST_F(NameTest, reverse)
-{
+TEST_F(NameTest, reverse) {
     EXPECT_PRED_FORMAT2(UnitTestUtil::matchName, example_name.reverse(),
                         Name("com.example.www."));
     EXPECT_PRED_FORMAT2(UnitTestUtil::matchName, Name(".").reverse(),
@@ -483,8 +478,7 @@ TEST_F(NameTest, reverse)
                         Name("s.r.q.p.o.n.m.l.k.j.i.h.g.f.e.d.c.b.a"));
 }
 
-TEST_F(NameTest, split)
-{
+TEST_F(NameTest, split) {
     // normal cases with or without explicitly specifying the trailing dot.
     EXPECT_PRED_FORMAT2(UnitTestUtil::matchName, example_name.split(1, 2),
                         Name("example.com."));
@@ -500,8 +494,7 @@ TEST_F(NameTest, split)
     EXPECT_THROW(example_name.split(2, 3), OutOfRange);
 }
 
-TEST_F(NameTest, downcase)
-{
+TEST_F(NameTest, downcase) {
     // usual case: all-upper case name to all-lower case
     compareInWireFormat(example_name_upper.downcase(), example_name);
     // confirm that non upper-case characters are intact
@@ -513,8 +506,7 @@ TEST_F(NameTest, downcase)
     
 }
 
-TEST_F(NameTest, at)
-{
+TEST_F(NameTest, at) {
     // Confirm at() produces the exact sequence of wire-format name data
     vector<uint8_t> data;
 
@@ -536,8 +528,7 @@ TEST_F(NameTest, at)
 // The test logic is simple, and all tests are just straightforward variations
 // of the first one.
 //
-TEST_F(NameTest, leq)
-{
+TEST_F(NameTest, leq) {
     // small <= large is true
     EXPECT_TRUE(small_name.leq(large_name));
     EXPECT_TRUE(small_name <= large_name);
@@ -551,8 +542,7 @@ TEST_F(NameTest, leq)
     EXPECT_FALSE(large_name <= small_name);
 }
 
-TEST_F(NameTest, geq)
-{
+TEST_F(NameTest, geq) {
     EXPECT_TRUE(large_name.geq(small_name));
     EXPECT_TRUE(large_name >= small_name);
 
@@ -563,8 +553,7 @@ TEST_F(NameTest, geq)
     EXPECT_FALSE(small_name >= large_name);
 }
 
-TEST_F(NameTest, lthan)
-{
+TEST_F(NameTest, lthan) {
     EXPECT_TRUE(small_name.lthan(large_name));
     EXPECT_TRUE(small_name < large_name);
 
@@ -575,8 +564,7 @@ TEST_F(NameTest, lthan)
     EXPECT_FALSE(large_name < small_name);
 }
 
-TEST_F(NameTest, gthan)
-{
+TEST_F(NameTest, gthan) {
     EXPECT_TRUE(large_name.gthan(small_name));
     EXPECT_TRUE(large_name > small_name);
 
@@ -587,14 +575,12 @@ TEST_F(NameTest, gthan)
     EXPECT_FALSE(small_name > large_name);
 }
 
-TEST_F(NameTest, constants)
-{
+TEST_F(NameTest, constants) {
     EXPECT_EQ(Name("."), Name::ROOT_NAME());
 }
 
 // test operator<<.  We simply confirm it appends the result of toText().
-TEST_F(NameTest, LeftShiftOperator)
-{
+TEST_F(NameTest, LeftShiftOperator) {
     ostringstream oss;
     oss << example_name;
     EXPECT_EQ(example_name.toText(), oss.str());
