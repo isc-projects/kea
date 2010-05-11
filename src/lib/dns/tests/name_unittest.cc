@@ -18,6 +18,7 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
+#include <limits>
 #include <stdexcept>
 
 #include <dns/buffer.h>
@@ -492,6 +493,11 @@ TEST_F(NameTest, split) {
     // invalid range: an exception should be thrown.
     EXPECT_THROW(example_name.split(1, 0), OutOfRange);
     EXPECT_THROW(example_name.split(2, 3), OutOfRange);
+
+    // invalid range: the following parameters would cause overflow,
+    // bypassing naive validation.
+    EXPECT_THROW(example_name.split(1, numeric_limits<unsigned int>::max()),
+                 OutOfRange);
 }
 
 TEST_F(NameTest, downcase) {
