@@ -667,7 +667,7 @@ Name::reverse() const {
 
 Name
 Name::split(unsigned int first, unsigned int n) const {
-    if (n == 0 || first + n > labelcount_) {
+    if (n == 0 || n > labelcount_ || first > labelcount_ - n) {
         isc_throw(OutOfRange, "Name::split: invalid split range");
     }
 
