@@ -461,6 +461,7 @@ Name_split(s_Name* self, PyObject* args)
     }
     return (PyObject*) ret;
 }
+#include <iostream>
 
 static PyObject* 
 Name_richcmp(s_Name* n1, s_Name* n2, int op)
@@ -489,10 +490,11 @@ Name_richcmp(s_Name* n1, s_Name* n2, int op)
     default:
         assert(0);              // XXX: should trigger an exception
     }
-    if (c)
+    if (c) {
         Py_RETURN_TRUE;
-    else
+    } else {
         Py_RETURN_FALSE;
+    }
 }
 
 static PyObject*
