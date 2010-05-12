@@ -14,21 +14,20 @@
 
 // $Id$
 
-#include "config.h"
-
 #include <iostream>
 #include <string>
 #include <sstream>
 #include <vector>
 
-#include "base64.h"
-#include "buffer.h"
-#include "messagerenderer.h"
-#include "name.h"
-#include "rdata.h"
-#include "rdataclass.h"
 #include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
+
+#include <dns/base64.h>
+#include <dns/buffer.h>
+#include <dns/messagerenderer.h>
+#include <dns/name.h>
+#include <dns/rdata.h>
+#include <dns/rdataclass.h>
 
 #include <stdio.h>
 #include <time.h>

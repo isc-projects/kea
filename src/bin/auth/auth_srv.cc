@@ -33,10 +33,10 @@
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
 
-#include <auth/query.h>
-#include <auth/data_source.h>
-#include <auth/static_datasrc.h>
-#include <auth/sqlite3_datasrc.h>
+#include <datasrc/query.h>
+#include <datasrc/data_source.h>
+#include <datasrc/static_datasrc.h>
+#include <datasrc/sqlite3_datasrc.h>
 
 #include <cc/data.h>
 
@@ -48,7 +48,7 @@
 using namespace std;
 
 using namespace isc;
-using namespace isc::auth;
+using namespace isc::datasrc;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::data;

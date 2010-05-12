@@ -21,7 +21,7 @@
 
 #include <algorithm>
 
-#include "tsig.h"
+#include <dns/tsig.h>
 
 using namespace std;
 using isc::dns::MessageRenderer;

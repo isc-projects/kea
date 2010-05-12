@@ -21,17 +21,17 @@
 <refentry>
 
   <refentryinfo>
-    <date>January 21, 2010</date>
+    <date>April 19, 2010</date>
   </refentryinfo>
 
   <refmeta>
-    <refentrytitle>msgq</refentrytitle>
+    <refentrytitle>b10-msgq</refentrytitle>
     <manvolnum>8</manvolnum>
     <refmiscinfo>BIND10</refmiscinfo>
   </refmeta>
 
   <refnamediv>
-    <refname>msgq</refname>
+    <refname>b10-msgq</refname>
     <refpurpose>message routing daemon for the Command Channel</refpurpose>
   </refnamediv>
 
@@ -44,7 +44,7 @@
 
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>msgq</command>
+      <command>b10-msgq</command>
       <arg><option>-m <replaceable>number</replaceable></option></arg>
       <arg><option>-v</option></arg>
       <arg><option>--msgq-port <replaceable>number</replaceable></option></arg>
@@ -55,7 +55,7 @@
   <refsect1>
     <title>DESCRIPTION</title>
     <para>
-      The <command>msgq</command>
+      The <command>b10-msgq</command>
       daemon provides message routing for the Command Channel.
     </para>
 
@@ -63,7 +63,7 @@
       The Command Channel is a message bus and subscription manager.
       Programs may subscribe to certain groups to receive messages
       for that group.
-      Every new connection to the <command>msgq</command> is
+      Every new connection to <command>b10-msgq</command> is
       assigned a unique identifier -- this is the local name.
       The commands it handles are:
       <itemizedlist>
@@ -97,7 +97,7 @@
     </para>
 
     <para>
-      The <command>msgq</command> daemon may be cleanly stopped by
+      The <command>b10-msgq</command> daemon may be cleanly stopped by
       sending the SIGTERM signal to the process.
       This shutdown does not notify the subscribers.
     </para>
@@ -114,7 +114,7 @@
         <term><option>-m <replaceable>number</replaceable></option>,
           <option>--msgq-port <replaceable>number</replaceable></option></term>
         <listitem><para>
-          The port number that <command>msgq</command> will listen on.
+          The port number that <command>b10-msgq</command> will listen on.
           The default is 9912.</para>
         </listitem>
       </varlistentry>
@@ -123,7 +123,7 @@
         <term><option>-v</option>, <option>--verbose</option></term>
         <listitem><para>
           Enabled verbose mode. This enables diagnostic messages to
-          STDERR.  Displays more about what <command>msgq</command>
+          STDERR.  Displays more about what <command>b10-msgq</command>
           is doing.
 <!-- TODO: is STDERR correct? -->
         </para></listitem>
@@ -147,7 +147,7 @@
   <refsect1>
     <title>AUTHORS</title>
     <para>
-      The <command>msgq</command> daemon and Control Channel specification
+      The <command>b10-msgq</command> daemon and Control Channel specification
       were initially designed by Michael Graff of ISC.
     </para>
   </refsect1>

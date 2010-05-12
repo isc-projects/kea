@@ -14,22 +14,20 @@
 
 // $Id$
 
-#include "config.h"
-
 #include <iostream>
 #include <string>
 #include <sstream>
 #include <vector>
 
-#include "base64.h"
-#include "buffer.h"
-#include "exceptions.h"
-#include "messagerenderer.h"
-#include "name.h"
-#include "rrtype.h"
-#include "rrttl.h"
-#include "rdata.h"
-#include "rdataclass.h"
+#include <dns/base64.h>
+#include <dns/buffer.h>
+#include <dns/exceptions.h>
+#include <dns/messagerenderer.h>
+#include <dns/name.h>
+#include <dns/rrtype.h>
+#include <dns/rrttl.h>
+#include <dns/rdata.h>
+#include <dns/rdataclass.h>
 
 #include <stdio.h>
 #include <time.h>

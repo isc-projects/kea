@@ -18,6 +18,7 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
+#include <limits>
 #include <stdexcept>
 
 #include <dns/buffer.h>
@@ -222,33 +223,29 @@ TEST_F(NameTest, fromWire)
     //
     // normal case with a compression pointer
     EXPECT_PRED_FORMAT2(UnitTestUtil::matchName,
-                        nameFactoryFromWire("testdata/name_fromWire1", 25),
+                        nameFactoryFromWire("name_fromWire1", 25),
                         Name("vix.com"));
     // bogus label character (looks like a local compression pointer)
-    EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire2", 25),
-                 DNSMessageFORMERR);
+    EXPECT_THROW(nameFactoryFromWire("name_fromWire2", 25), DNSMessageFORMERR);
     // a bad compression pointer (too big)
-    EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire3_1", 25),
+    EXPECT_THROW(nameFactoryFromWire("name_fromWire3_1", 25),
                  DNSMessageFORMERR);
     // forward reference
-    EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire3_2", 25),
+    EXPECT_THROW(nameFactoryFromWire("name_fromWire3_2", 25),
                  DNSMessageFORMERR);
     // invalid name length
-    EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire4", 550),
-                 DNSMessageFORMERR);
+    EXPECT_THROW(nameFactoryFromWire("name_fromWire4", 550), DNSMessageFORMERR);
 
     // skip test for from Wire5.  It's for disabling decompression, but our
     // implementation always allows it.
 
     // bad pointer (too big)
-    EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire6", 25),
-                 DNSMessageFORMERR);
+    EXPECT_THROW(nameFactoryFromWire("name_fromWire6", 25), DNSMessageFORMERR);
     // input ends unexpectedly
-    EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire7", 25),
-                 DNSMessageFORMERR);
+    EXPECT_THROW(nameFactoryFromWire("name_fromWire7", 25), DNSMessageFORMERR);
     // many hops of compression but valid.  should succeed.
     EXPECT_PRED_FORMAT2(UnitTestUtil::matchName,
-                        nameFactoryFromWire("testdata/name_fromWire8", 383),
+                        nameFactoryFromWire("name_fromWire8", 383),
                         Name("vix.com"));
 
     //
@@ -257,25 +254,21 @@ TEST_F(NameTest, fromWire)
 
     // large names, a long but valid one, and invalid (too long) one.
     EXPECT_EQ(Name::MAX_WIRE,
-              nameFactoryFromWire("testdata/name_fromWire9", 0).getLength());
-    EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire10", 0).getLength(),
+              nameFactoryFromWire("name_fromWire9", 0).getLength());
+    EXPECT_THROW(nameFactoryFromWire("name_fromWire10", 0).getLength(),
                  DNSMessageFORMERR);
 
     // A name with possible maximum number of labels; awkward but valid
-    EXPECT_EQ(nameFactoryFromWire("testdata/name_fromWire11",
-                                  0).getLabelCount(),
+    EXPECT_EQ(nameFactoryFromWire("name_fromWire11", 0).getLabelCount(),
               Name::MAX_LABELS);
 
     // Wire format including an invalid label length
-    EXPECT_THROW(nameFactoryFromWire("testdata/name_fromWire12", 0),
-                 DNSMessageFORMERR);
+    EXPECT_THROW(nameFactoryFromWire("name_fromWire12", 0), DNSMessageFORMERR);
 
     // converting upper-case letters to down-case
-    EXPECT_EQ("vix.com.", nameFactoryFromWire("testdata/name_fromWire1",
-                                              25, true).toText());
-    EXPECT_EQ(3,
-              nameFactoryFromWire("testdata/name_fromWire1",
-                                  25).getLabelCount());
+    EXPECT_EQ("vix.com.",
+              nameFactoryFromWire("name_fromWire1", 25, true).toText());
+    EXPECT_EQ(3, nameFactoryFromWire("name_fromWire1", 25).getLabelCount());
 }
 
 TEST_F(NameTest, copyConstruct)
@@ -331,7 +324,7 @@ TEST_F(NameTest, toText)
                               "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                               "[\\\\]^_.`abcdefghijklmnopqrstuvwxyz{|}~.");
     EXPECT_EQ(all_printable,
-              nameFactoryFromWire("testdata/name_fromWire13", 0).toText());
+              nameFactoryFromWire("name_fromWire13", 0).toText());
 
     string all_nonprintable(
         "\\000\\001\\002\\003\\004\\005\\006\\007\\008\\009"
@@ -353,7 +346,7 @@ TEST_F(NameTest, toText)
         "\\240\\241\\242\\243\\244\\245\\246\\247\\248\\249"
         "\\250\\251\\252\\253\\254\\255.");
     EXPECT_EQ(all_nonprintable,
-              nameFactoryFromWire("testdata/name_fromWire14", 0).toText());
+              nameFactoryFromWire("name_fromWire14", 0).toText());
 }
 
 TEST_F(NameTest, toWireBuffer)
@@ -407,8 +400,7 @@ struct CompareParameters {
     unsigned int labels;
 };
 
-TEST_F(NameTest, compare)
-{
+TEST_F(NameTest, compare) {
     vector<CompareParameters> params;
     params.push_back(CompareParameters(Name("c.d"), Name("a.b.c.d"),
                                        NameComparisonResult::SUPERDOMAIN,
@@ -435,8 +427,7 @@ TEST_F(NameTest, compare)
     }
 }
 
-TEST_F(NameTest, equal)
-{
+TEST_F(NameTest, equal) {
     EXPECT_TRUE(example_name == Name("WWW.EXAMPLE.COM."));
     EXPECT_TRUE(example_name.equals(Name("WWW.EXAMPLE.COM.")));
     EXPECT_TRUE(example_name != Name("www.example.org."));
@@ -451,15 +442,13 @@ TEST_F(NameTest, equal)
     EXPECT_TRUE(example_name.nequals(Name("www\\.example.com.")));
 }
 
-TEST_F(NameTest, isWildcard)
-{
+TEST_F(NameTest, isWildcard) {
     EXPECT_EQ(false, example_name.isWildcard());
     EXPECT_EQ(true, Name("*.a.example.com").isWildcard());
     EXPECT_EQ(false, Name("a.*.example.com").isWildcard());
 }
 
-TEST_F(NameTest, concatenate)
-{
+TEST_F(NameTest, concatenate) {
     NameComparisonResult result =
         Name("aaa.www.example.com.").compare(Name("aaa").concatenate(example_name));
     EXPECT_EQ(NameComparisonResult::EQUAL, result.getRelation());
@@ -480,8 +469,7 @@ TEST_F(NameTest, concatenate)
     EXPECT_THROW(n1.concatenate(n2), TooLongName);
 }
 
-TEST_F(NameTest, reverse)
-{
+TEST_F(NameTest, reverse) {
     EXPECT_PRED_FORMAT2(UnitTestUtil::matchName, example_name.reverse(),
                         Name("com.example.www."));
     EXPECT_PRED_FORMAT2(UnitTestUtil::matchName, Name(".").reverse(),
@@ -491,8 +479,7 @@ TEST_F(NameTest, reverse)
                         Name("s.r.q.p.o.n.m.l.k.j.i.h.g.f.e.d.c.b.a"));
 }
 
-TEST_F(NameTest, split)
-{
+TEST_F(NameTest, split) {
     // normal cases with or without explicitly specifying the trailing dot.
     EXPECT_PRED_FORMAT2(UnitTestUtil::matchName, example_name.split(1, 2),
                         Name("example.com."));
@@ -506,10 +493,14 @@ TEST_F(NameTest, split)
     // invalid range: an exception should be thrown.
     EXPECT_THROW(example_name.split(1, 0), OutOfRange);
     EXPECT_THROW(example_name.split(2, 3), OutOfRange);
+
+    // invalid range: the following parameters would cause overflow,
+    // bypassing naive validation.
+    EXPECT_THROW(example_name.split(1, numeric_limits<unsigned int>::max()),
+                 OutOfRange);
 }
 
-TEST_F(NameTest, downcase)
-{
+TEST_F(NameTest, downcase) {
     // usual case: all-upper case name to all-lower case
     compareInWireFormat(example_name_upper.downcase(), example_name);
     // confirm that non upper-case characters are intact
@@ -521,8 +512,7 @@ TEST_F(NameTest, downcase)
     
 }
 
-TEST_F(NameTest, at)
-{
+TEST_F(NameTest, at) {
     // Confirm at() produces the exact sequence of wire-format name data
     vector<uint8_t> data;
 
@@ -544,8 +534,7 @@ TEST_F(NameTest, at)
 // The test logic is simple, and all tests are just straightforward variations
 // of the first one.
 //
-TEST_F(NameTest, leq)
-{
+TEST_F(NameTest, leq) {
     // small <= large is true
     EXPECT_TRUE(small_name.leq(large_name));
     EXPECT_TRUE(small_name <= large_name);
@@ -559,8 +548,7 @@ TEST_F(NameTest, leq)
     EXPECT_FALSE(large_name <= small_name);
 }
 
-TEST_F(NameTest, geq)
-{
+TEST_F(NameTest, geq) {
     EXPECT_TRUE(large_name.geq(small_name));
     EXPECT_TRUE(large_name >= small_name);
 
@@ -571,8 +559,7 @@ TEST_F(NameTest, geq)
     EXPECT_FALSE(small_name >= large_name);
 }
 
-TEST_F(NameTest, lthan)
-{
+TEST_F(NameTest, lthan) {
     EXPECT_TRUE(small_name.lthan(large_name));
     EXPECT_TRUE(small_name < large_name);
 
@@ -583,8 +570,7 @@ TEST_F(NameTest, lthan)
     EXPECT_FALSE(large_name < small_name);
 }
 
-TEST_F(NameTest, gthan)
-{
+TEST_F(NameTest, gthan) {
     EXPECT_TRUE(large_name.gthan(small_name));
     EXPECT_TRUE(large_name > small_name);
 
@@ -595,14 +581,12 @@ TEST_F(NameTest, gthan)
     EXPECT_FALSE(small_name > large_name);
 }
 
-TEST_F(NameTest, constants)
-{
+TEST_F(NameTest, constants) {
     EXPECT_EQ(Name("."), Name::ROOT_NAME());
 }
 
 // test operator<<.  We simply confirm it appends the result of toText().
-TEST_F(NameTest, LeftShiftOperator)
-{
+TEST_F(NameTest, LeftShiftOperator) {
     ostringstream oss;
     oss << example_name;
     EXPECT_EQ(example_name.toText(), oss.str());

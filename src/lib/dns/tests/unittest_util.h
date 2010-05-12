@@ -31,8 +31,13 @@ public:
     ///
     /// read text format wire data from a file and put it to the given vector.
     ///
-    static void readWireData(const char*datafile,
+    static void readWireData(const char* datafile,
                              std::vector<unsigned char>& data);
+
+    ///
+    /// add a path that \c readWireData() will search for test data files.
+    ///
+    static void addDataPath(const std::string& directory);
 
     ///
     /// convert a sequence of hex strings into the corresponding list of

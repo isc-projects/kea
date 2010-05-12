@@ -22,8 +22,8 @@
 
 #include <exceptions/exceptions.h>
 
-#include "name.h"
-#include "message.h"
+#include <dns/name.h>
+#include <dns/message.h>
 
 namespace isc {
 namespace dns {

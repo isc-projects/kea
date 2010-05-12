@@ -29,12 +29,12 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include "buffer.h"
-#include "name.h"
-#include "messagerenderer.h"
-#include "rdata.h"
-#include "rrparamregistry.h"
-#include "rrtype.h"
+#include <dns/buffer.h>
+#include <dns/name.h>
+#include <dns/messagerenderer.h>
+#include <dns/rdata.h>
+#include <dns/rrparamregistry.h>
+#include <dns/rrtype.h>
 
 using namespace std;
 using namespace boost;

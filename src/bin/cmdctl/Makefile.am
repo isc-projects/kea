@@ -1,3 +1,5 @@
+SUBDIRS = tests
+
 pkglibexecdir = $(libexecdir)/@PACKAGE@
 
 pkglibexec_SCRIPTS = b10-cmdctl
@@ -16,9 +18,8 @@ b10_cmdctl_DATA += cmdctl.spec
  
 EXTRA_DIST = $(CMDCTL_CONFIGURATIONS)
 EXTRA_DIST += cmdctl.spec
-EXTRA_DIST += tests/cmdctl_test.py
 
-CLEANFILES=	b10-cmdctl
+CLEANFILES=	b10-cmdctl cmdctl.pyc
 
 man_MANS = b10-cmdctl.8
 EXTRA_DIST += $(man_MANS) b10-cmdctl.xml

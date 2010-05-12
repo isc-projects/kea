@@ -69,7 +69,7 @@ questionFromWire(const char* datafile, size_t position = 0)
 
 TEST_F(QuestionTest, fromWire)
 {
-    Question q = questionFromWire("testdata/question_fromWire");
+    Question q = questionFromWire("question_fromWire");
 
     EXPECT_EQ(example_name1, q.getName());
     EXPECT_EQ(RRClass::IN(), q.getClass());
@@ -77,17 +77,15 @@ TEST_F(QuestionTest, fromWire)
 
     // owner name of the second Question is compressed.  It's uncommon
     // (to have multiple questions), but isn't prohibited by the protocol.
-    q = questionFromWire("testdata/question_fromWire", 21);
+    q = questionFromWire("question_fromWire", 21);
     EXPECT_EQ(example_name2, q.getName());
     EXPECT_EQ(RRClass::CH(), q.getClass());
     EXPECT_EQ(RRType::A(), q.getType());
 
     // Pathological cases: Corresponding exceptions will be thrown from
     // the underlying parser.
-    EXPECT_THROW(questionFromWire("testdata/question_fromWire", 31),
-                 DNSMessageFORMERR);
-    EXPECT_THROW(questionFromWire("testdata/question_fromWire", 36),
-                 IncompleteRRClass);
+    EXPECT_THROW(questionFromWire("question_fromWire", 31), DNSMessageFORMERR);
+    EXPECT_THROW(questionFromWire("question_fromWire", 36), IncompleteRRClass);
 }
 
 TEST_F(QuestionTest, toText)
@@ -100,7 +98,7 @@ TEST_F(QuestionTest, toWireBuffer)
 {
     test_question1.toWire(obuffer);
     test_question2.toWire(obuffer);
-    UnitTestUtil::readWireData("testdata/question_toWire1", wiredata);
+    UnitTestUtil::readWireData("question_toWire1", wiredata);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, obuffer.getData(),
                         obuffer.getLength(), &wiredata[0], wiredata.size());
 }
@@ -109,7 +107,7 @@ TEST_F(QuestionTest, toWireRenderer)
 {
     test_question1.toWire(renderer);
     test_question2.toWire(renderer);
-    UnitTestUtil::readWireData("testdata/question_toWire2", wiredata);
+    UnitTestUtil::readWireData("question_toWire2", wiredata);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, obuffer.getData(),
                         obuffer.getLength(), &wiredata[0], wiredata.size());
 }

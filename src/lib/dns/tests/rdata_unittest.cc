@@ -100,22 +100,22 @@ const uint8_t wiredata_unknown[] = { 0xa1, 0xb2, 0xc3, 0x0d };
 // "Unknown" RR Type used for the test cases below.  If/when we use this
 // type number as a "well-known" (probably experimental) type, we'll need to
 // renumber it.
-const RRType unknown_rrtype = RRType("TYPE65000");
+const RRType unknown_rrtype = RRType(65000);
 
 TEST_F(Rdata_Unknown_Test, createFromText)
 {
     // valid construction.  This also tests a normal case of "FromWire".
     EXPECT_EQ(0, generic::Generic("\\# 4 a1b2c30d").compare(
-                  *rdataFactoryFromFile(unknown_rrtype, RRClass("IN"),
-                                        "testdata/rdata_unknown_fromWire")));
+                  *rdataFactoryFromFile(unknown_rrtype, RRClass::IN(),
+                                        "rdata_unknown_fromWire")));
     // upper case hexadecimal digits should also be okay. 
     EXPECT_EQ(0, generic::Generic("\\# 4 A1B2C30D").compare(
-                  *rdataFactoryFromFile(unknown_rrtype, RRClass("IN"),
-                                        "testdata/rdata_unknown_fromWire")));
+                  *rdataFactoryFromFile(unknown_rrtype, RRClass::IN(),
+                                        "rdata_unknown_fromWire")));
     // 0-length RDATA should be accepted
     EXPECT_EQ(0, generic::Generic("\\# 0").compare(
-                  *rdataFactoryFromFile(unknown_rrtype, RRClass("IN"),
-                                        "testdata/rdata_unknown_fromWire", 6)));
+                  *rdataFactoryFromFile(unknown_rrtype, RRClass::IN(),
+                                        "rdata_unknown_fromWire", 6)));
     // hex encoding can be space-separated
     EXPECT_EQ(0, generic::Generic("\\# 4 a1 b2c30d").compare(rdata_unknown));
     EXPECT_EQ(0, generic::Generic("\\# 4 a1b2 c30d").compare(rdata_unknown));
@@ -153,8 +153,8 @@ TEST_F(Rdata_Unknown_Test, createFromWire)
     // normal case (including 0-length data) is covered in createFromText.
 
     // buffer too short.  the error should be detected in buffer read
-    EXPECT_THROW(rdataFactoryFromFile(unknown_rrtype, RRClass("IN"),
-                                      "testdata/rdata_unknown_fromWire", 8),
+    EXPECT_THROW(rdataFactoryFromFile(unknown_rrtype, RRClass::IN(),
+                                      "rdata_unknown_fromWire", 8),
                  InvalidBufferPosition);
 
     // too large data
@@ -170,10 +170,10 @@ TEST_F(Rdata_Unknown_Test, createFromWire)
 TEST_F(Rdata_Unknown_Test, createRdataFromString)
 {
     EXPECT_EQ(0, rdata_unknown.compare(
-                  *createRdata(unknown_rrtype, RRClass("IN"),
+                  *createRdata(unknown_rrtype, RRClass::IN(),
                                rdata_unknowntxt)));
     EXPECT_EQ(0, rdata_unknown.compare(
-                  *createRdata(unknown_rrtype, RRClass("CH"),
+                  *createRdata(unknown_rrtype, RRClass::CH(),
                                rdata_unknowntxt)));
     EXPECT_EQ(0, rdata_unknown.compare(
                   *createRdata(unknown_rrtype, RRClass("CLASS65000"),
@@ -184,28 +184,28 @@ TEST_F(Rdata_Unknown_Test, createRdataFromWire)
 {
     InputBuffer ibuffer(wiredata_unknown, sizeof(wiredata_unknown));
     EXPECT_EQ(0, rdata_unknown.compare(
-                  *createRdata(unknown_rrtype, RRClass("IN"),
+                  *createRdata(unknown_rrtype, RRClass::IN(),
                                ibuffer, sizeof(wiredata_unknown))));
 
     InputBuffer ibuffer2(wiredata_unknown, sizeof(wiredata_unknown));
     EXPECT_EQ(0, rdata_unknown.compare(
-                  *createRdata(unknown_rrtype, RRClass("CH"),
+                  *createRdata(unknown_rrtype, RRClass::CH(),
                                ibuffer2, sizeof(wiredata_unknown))));
 
     InputBuffer ibuffer3(wiredata_unknown, sizeof(wiredata_unknown));
     EXPECT_EQ(0, rdata_unknown.compare(
-                  *createRdata(unknown_rrtype, RRClass("CLASS65000"),
+                  *createRdata(unknown_rrtype, RRClass(65000),
                                ibuffer3, sizeof(wiredata_unknown))));
 }
 
 TEST_F(Rdata_Unknown_Test, createRdataByCopy)
 {
     EXPECT_EQ(0, rdata_unknown.compare(
-                  *createRdata(unknown_rrtype, RRClass("IN"), rdata_unknown)));
+                  *createRdata(unknown_rrtype, RRClass::IN(), rdata_unknown)));
     EXPECT_EQ(0, rdata_unknown.compare(
-                  *createRdata(unknown_rrtype, RRClass("CH"), rdata_unknown)));
+                  *createRdata(unknown_rrtype, RRClass::CH(), rdata_unknown)));
     EXPECT_EQ(0, rdata_unknown.compare(
-                  *createRdata(unknown_rrtype, RRClass("CLASS65000"),
+                  *createRdata(unknown_rrtype, RRClass(65000),
                                rdata_unknown)));
 }
 

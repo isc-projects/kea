@@ -200,7 +200,7 @@ def _decode_item(data):
     return (value, data)
 
 def _decode_bool(data):
-    return data == b'1' or data == b'0x01'
+    return data == b'1'
 
 def _decode_int(data):
     return int(str(data, 'utf-8'))

@@ -47,6 +47,7 @@ class MySecureHTTPServer(SecureHTTPServer):
         self.user_sessions = {}
         self.idle_timeout = 1200
         self.cmdctrl = MyCommandControl()
+        self._verbose = False
 
 class MyCommandControl(CommandControl):
     def __init__(self):

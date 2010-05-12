@@ -14,15 +14,16 @@
 
 // $Id$
 
-#include <config.h>             // for UNUSED
+#include <config.h>             // for UNUSED_PARAM
 
 #include <string>
 
-#include "buffer.h"
 #include <exceptions/exceptions.h>
-#include "messagerenderer.h"
-#include "rdata.h"
-#include "rdataclass.h"
+
+#include <dns/buffer.h>
+#include <dns/messagerenderer.h>
+#include <dns/rdata.h>
+#include <dns/rdataclass.h>
 
 using namespace std;
 

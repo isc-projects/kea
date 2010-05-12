@@ -130,7 +130,7 @@ check_axfr_query(char *msg_data, uint16_t msg_len)
 static void
 dispatch_axfr_query(int tcp_sock, char axfr_query[], uint16_t query_len)
 {
-    std::string path = "/tmp/auth_xfrout_conn";
+    std::string path = string(UNIX_SOCKET_FILE);
     XfroutClient xfr_client(path);
     try {
         xfr_client.connect();

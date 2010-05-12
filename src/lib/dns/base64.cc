@@ -14,8 +14,6 @@
 
 // $Id$
 
-#include "config.h"
-
 #include <stdint.h>
 #include <cassert>
 #include <iterator>
@@ -26,8 +24,9 @@
 #include <boost/archive/iterators/binary_from_base64.hpp>
 #include <boost/archive/iterators/transform_width.hpp>
 
-#include "base64.h"
 #include <exceptions/exceptions.h>
+
+#include <dns/base64.h>
 
 using namespace std;
 using namespace boost::archive::iterators;

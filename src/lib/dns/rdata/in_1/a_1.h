@@ -18,7 +18,7 @@
 
 #include <string>
 
-#include "rdata.h"
+#include <dns/rdata.h>
 
 // BEGIN_ISC_NAMESPACE
 

@@ -25,15 +25,15 @@
 
 #include <exceptions/exceptions.h>
 
-#include "base64.h"
-#include "buffer.h"
-#include "messagerenderer.h"
-#include "name.h"
-#include "rrtype.h"
-#include "rrttl.h"
-#include "rdata.h"
-#include "rdataclass.h"
-#include "dnssectime.h"
+#include <dns/base64.h>
+#include <dns/buffer.h>
+#include <dns/messagerenderer.h>
+#include <dns/name.h>
+#include <dns/rrtype.h>
+#include <dns/rrttl.h>
+#include <dns/rdata.h>
+#include <dns/rdataclass.h>
+#include <dns/dnssectime.h>
 
 using namespace std;
 

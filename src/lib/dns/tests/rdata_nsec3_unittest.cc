@@ -85,16 +85,16 @@ TEST_F(Rdata_NSEC3_Test, createFromWire)
     const generic::NSEC3 rdata_nsec3(nsec3_txt);
     EXPECT_EQ(0, rdata_nsec3.compare(
                   *rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
-                                        "testdata/rdata_nsec3_fromWire1")));
+                                        "rdata_nsec3_fromWire1")));
 
     // Too short RDLENGTH
     EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
-                                      "testdata/rdata_nsec3_fromWire2"),
+                                      "rdata_nsec3_fromWire2"),
                  InvalidRdataLength);
 
     // Invalid type bits
     EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
-                                      "testdata/rdata_nsec3_fromWire3"),
+                                      "rdata_nsec3_fromWire3"),
                  DNSMessageFORMERR);
 }
 
@@ -105,7 +105,7 @@ TEST_F(Rdata_NSEC3_Test, toWireRenderer)
     rdata_nsec3.toWire(renderer);
 
     vector<unsigned char> data;
-    UnitTestUtil::readWireData("testdata/rdata_nsec3_fromWire1", data);
+    UnitTestUtil::readWireData("rdata_nsec3_fromWire1", data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         static_cast<const uint8_t *>(obuffer.getData()) + 2,
                         obuffer.getLength() - 2, &data[2], data.size() - 2);

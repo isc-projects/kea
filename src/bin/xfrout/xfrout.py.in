@@ -22,7 +22,7 @@ import isc.cc
 import threading
 import struct
 import signal
-from isc.auth import sqlite3_ds
+from isc.datasrc import sqlite3_ds
 from socketserver import *
 import os
 from isc.config.ccsession import *
@@ -32,8 +32,10 @@ from optparse import OptionParser, OptionValueError
 try:
     from bind10_xfr import *
     from bind10_dns import *
-except:
-    pass
+except ImportError as e:
+    # C++ loadable module may not be installed; even so the xfrout process
+    # must keep running, so we warn about it and move forward.
+    sys.stderr.write('[b10-xfrout] failed to import DNS or XFR module: %s\n' % str(e))
 
 if "B10_FROM_SOURCE" in os.environ:
     SPECFILE_PATH = os.environ["B10_FROM_SOURCE"] + "/src/bin/xfrout"
@@ -42,6 +44,7 @@ else:
     DATAROOTDIR = "@datarootdir@"
     SPECFILE_PATH = "@datadir@/@PACKAGE@".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
 SPECFILE_LOCATION = SPECFILE_PATH + "/xfrout.spec"
+UNIX_SOCKET_FILE = "@localstatedir@".replace("${prefix}", PREFIX) + "/auth_xfrout_conn"
 
 MAX_TRANSFERS_OUT = 10
 verbose_mode = False
@@ -53,8 +56,10 @@ class XfroutException(Exception): pass
 class XfroutSession(BaseRequestHandler):
     def handle(self):
         fd = recv_fd(self.request.fileno())
+        if fd < 0:
+            raise XfroutException("failed to receive the FD for XFR connection")
         data_len = self.request.recv(2)
-        msg_len = struct.unpack('H', data_len)[0]
+        msg_len = struct.unpack('!H', data_len)[0]
         msgdata = self.request.recv(msg_len)
         sock = socket.fromfd(fd, socket.AF_INET, socket.SOCK_STREAM)
         try:
@@ -64,7 +69,7 @@ class XfroutSession(BaseRequestHandler):
                 self.log_msg(str(e))
 
         sock.close()
-               
+
     def _parse_query_message(self, mdata):
         ''' parse query message to [socket,message]'''
         #TODO, need to add parseHeader() in case the message header is invalid 
@@ -77,7 +82,6 @@ class XfroutSession(BaseRequestHandler):
             return rcode.FORMERR(), None
 
         return rcode.NOERROR(), msg
-
 
     def _get_query_zone_name(self, msg):
         q_iter = question_iter(msg)
@@ -273,12 +277,25 @@ class UnixSockServer(ThreadingUnixStreamServer):
     '''The unix domain socket server which accept xfr query sent from auth server.'''
 
     def __init__(self, sock_file, handle_class, shutdown_event, config_data):
+        try:
+            os.unlink(sock_file)
+        except:
+            pass
+ 
+        self._sock_file = sock_file
         ThreadingUnixStreamServer.__init__(self, sock_file, handle_class)
         self._lock = threading.Lock()
         self._transfers_counter = 0
         self._shutdown_event = shutdown_event
         self.update_config_data(config_data)
+    
 
+    def shutdown(self):
+        ThreadingUnixStreamServer.shutdown(self)
+        try:
+            os.unlink(self._sock_file)
+        except:
+            pass
 
     def update_config_data(self, new_config):
         '''Apply the new config setting of xfrout module. '''
@@ -311,16 +328,18 @@ class UnixSockServer(ThreadingUnixStreamServer):
         self._transfers_counter -= 1
         self._lock.release()
 
-
 def listen_on_xfr_query(unix_socket_server):
-    '''Listen xfr query in one single thread. '''
-    unix_socket_server.serve_forever()
+
+    '''Listen xfr query in one single thread. Polls for shutdown 
+    every 0.1 seconds, is there a better time?
+    '''
+    unix_socket_server.serve_forever(poll_interval = 0.1)
    
 
 class XfroutServer:
     def __init__(self):
         self._unix_socket_server = None
-        self._listen_sock_file = '/tmp/auth_xfrout_conn' # TODO, should this be configurable in cfgmgr
+        self._listen_sock_file = UNIX_SOCKET_FILE 
         self._shutdown_event = threading.Event()
         self._cc = isc.config.ModuleCCSession(SPECFILE_LOCATION, self.config_handler, self.command_handler)
         self._config_data = self._cc.get_full_config()
@@ -330,11 +349,7 @@ class XfroutServer:
 
     def _start_xfr_query_listener(self):
         '''Start a new thread to accept xfr query. '''
-        try:
-            os.unlink(self._listen_sock_file)
-        except:
-            pass
-     
+    
         self._unix_socket_server = UnixSockServer(self._listen_sock_file, XfroutSession, 
                                                   self._shutdown_event, self._config_data);
         listener = threading.Thread(target = listen_on_xfr_query, args = (self._unix_socket_server,))
@@ -360,6 +375,9 @@ class XfroutServer:
         ''' shutdown the xfrout process. The thread which is doing zone transfer-out should be
         terminated.
         '''
+
+        global xfrout_server
+        xfrout_server = None #Avoid shutdown is called twice
         self._shutdown_event.set()
         if self._unix_socket_server:
             self._unix_socket_server.shutdown()
@@ -369,7 +387,6 @@ class XfroutServer:
             if th is main_thread:
                 continue
             th.join()
-
 
     def command_handler(self, cmd, args):
         if cmd == "shutdown":
@@ -392,7 +409,7 @@ class XfroutServer:
 xfrout_server = None
 
 def signal_handler(signal, frame):
-   if xfrout_server:
+    if xfrout_server:
         xfrout_server.shutdown()
         sys.exit(0)
 

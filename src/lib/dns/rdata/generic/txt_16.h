@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 
-#include "rdata.h"
+#include <dns/rdata.h>
 
 // BEGIN_ISC_NAMESPACE
 

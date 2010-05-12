@@ -54,18 +54,18 @@ TEST_F(Rdata_IN_A_Test, createFromWire) {
     // Valid data
     EXPECT_EQ(0, rdata_in_a.compare(
                   *rdataFactoryFromFile(RRType::A(), RRClass::IN(),
-                                        "testdata/rdata_in_a_fromWire")));
+                                        "rdata_in_a_fromWire")));
     // RDLENGTH is too short
     EXPECT_THROW(rdataFactoryFromFile(RRType::A(), RRClass::IN(),
-                                      "testdata/rdata_in_a_fromWire", 6),
+                                      "rdata_in_a_fromWire", 6),
                  DNSMessageFORMERR);
     // RDLENGTH is too long
     EXPECT_THROW(rdataFactoryFromFile(RRType::A(), RRClass::IN(),
-                                      "testdata/rdata_in_a_fromWire", 12),
+                                      "rdata_in_a_fromWire", 12),
                  DNSMessageFORMERR);
     // buffer too short.
     EXPECT_THROW(rdataFactoryFromFile(RRType::A(), RRClass::IN(),
-                                      "testdata/rdata_in_a_fromWire", 19),
+                                      "rdata_in_a_fromWire", 19),
                  DNSMessageFORMERR);
 }
 
