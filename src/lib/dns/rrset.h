@@ -24,8 +24,8 @@
 
 #include <exceptions/exceptions.h>
 
-#include "rdata.h"
-#include "rrtype.h"
+#include <dns/rdata.h>
+#include <dns/rrtype.h>
 
 namespace isc {
 namespace dns {

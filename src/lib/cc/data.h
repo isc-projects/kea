@@ -411,7 +411,7 @@ class MapElement : public Element {
     std::map<std::string, ElementPtr> m;
 
 public:
-    MapElement(std::map<std::string, ElementPtr> v) : Element(map), m(v) {};
+    MapElement(const std::map<std::string, ElementPtr>& v) : Element(map), m(v) {};
     const std::map<std::string, ElementPtr>& mapValue() { return m; }
     using Element::getValue;
     bool getValue(std::map<std::string, ElementPtr>& t) { t = m; return true; };

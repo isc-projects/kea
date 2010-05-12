@@ -28,7 +28,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "base32.h"
+#include <dns/base32.h>
 
 using namespace std;
 

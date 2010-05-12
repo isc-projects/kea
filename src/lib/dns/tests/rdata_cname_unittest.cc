@@ -68,25 +68,25 @@ TEST_F(Rdata_CNAME_Test, createFromWire)
 {
     EXPECT_EQ(0, rdata_cname.compare(
                   *rdataFactoryFromFile(RRType("CNAME"), RRClass("IN"),
-                                        "testdata/rdata_cname_fromWire")));
+                                        "rdata_cname_fromWire")));
     // RDLENGTH is too short
     EXPECT_THROW(rdataFactoryFromFile(RRType("CNAME"), RRClass("IN"),
-                                      "testdata/rdata_cname_fromWire", 18),
+                                      "rdata_cname_fromWire", 18),
                  InvalidRdataLength);
     // RDLENGTH is too long
     EXPECT_THROW(rdataFactoryFromFile(RRType("CNAME"), RRClass("IN"),
-                                      "testdata/rdata_cname_fromWire", 36),
+                                      "rdata_cname_fromWire", 36),
                  InvalidRdataLength);
     // incomplete name.  the error should be detected in the name constructor
     EXPECT_THROW(rdataFactoryFromFile(RRType("CNAME"), RRClass("IN"),
-                                      "testdata/rdata_cname_fromWire", 71),
+                                      "rdata_cname_fromWire", 71),
                  DNSMessageFORMERR);
 
     EXPECT_EQ(0, generic::CNAME("cn2.example.com").compare(
                   *rdataFactoryFromFile(RRType("CNAME"), RRClass("IN"),
-                                        "testdata/rdata_cname_fromWire", 55)));
+                                        "rdata_cname_fromWire", 55)));
     EXPECT_THROW(*rdataFactoryFromFile(RRType("CNAME"), RRClass("IN"),
-                                       "testdata/rdata_cname_fromWire", 63),
+                                       "rdata_cname_fromWire", 63),
                  InvalidRdataLength);
 }
 

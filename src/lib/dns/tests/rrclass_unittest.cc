@@ -84,8 +84,8 @@ TEST_F(RRClassTest, fromText)
 TEST_F(RRClassTest, fromWire)
 {
     EXPECT_EQ(0x1234,
-              rrclassFactoryFromWire("testdata/rrcode16_fromWire1").getCode());
-    EXPECT_THROW(rrclassFactoryFromWire("testdata/rrcode16_fromWire2"),
+              rrclassFactoryFromWire("rrcode16_fromWire1").getCode());
+    EXPECT_THROW(rrclassFactoryFromWire("rrcode16_fromWire2"),
                  IncompleteRRClass);
 }
 

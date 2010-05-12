@@ -25,8 +25,8 @@
 
 #include <exceptions/exceptions.h>
 
-#include "question.h"
-#include "rrset.h"
+#include <dns/question.h>
+#include <dns/rrset.h>
 
 namespace isc {
 namespace dns {

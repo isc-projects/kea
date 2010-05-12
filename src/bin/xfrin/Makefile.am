@@ -1,3 +1,5 @@
+SUBDIRS = tests
+
 pkglibexecdir = $(libexecdir)/@PACKAGE@
 
 pkglibexec_SCRIPTS = b10-xfrin
@@ -5,11 +7,10 @@ pkglibexec_SCRIPTS = b10-xfrin
 b10_xfrindir = $(DESTDIR)$(pkgdatadir)
 b10_xfrin_DATA = xfrin.spec
 
-CLEANFILES = b10-xfrin xfrin.spec
+CLEANFILES = b10-xfrin xfrin.pyc xfrin.spec
 
 man_MANS = b10-xfrin.8
 EXTRA_DIST = $(man_MANS) b10-xfrin.xml
-EXTRA_DIST += tests/xfrin_test.py
 
 if ENABLE_MAN
 

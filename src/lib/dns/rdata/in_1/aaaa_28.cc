@@ -14,8 +14,6 @@
 
 // $Id$
 
-#include "config.h"
-
 #include <stdint.h>
 #include <string.h>
 
@@ -26,11 +24,11 @@
 
 #include <exceptions/exceptions.h>
 
-#include "buffer.h"
-#include "exceptions.h"
-#include "messagerenderer.h"
-#include "rdata.h"
-#include "rdataclass.h"
+#include <dns/buffer.h>
+#include <dns/exceptions.h>
+#include <dns/messagerenderer.h>
+#include <dns/rdata.h>
+#include <dns/rdataclass.h>
 
 using namespace std;
 

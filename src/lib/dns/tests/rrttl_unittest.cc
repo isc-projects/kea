@@ -85,8 +85,8 @@ TEST_F(RRTTLTest, fromText)
 TEST_F(RRTTLTest, fromWire)
 {
     EXPECT_EQ(0x12345678,
-              rrttlFactoryFromWire("testdata/rrcode32_fromWire1").getValue());
-    EXPECT_THROW(rrttlFactoryFromWire("testdata/rrcode32_fromWire2"),
+              rrttlFactoryFromWire("rrcode32_fromWire1").getValue());
+    EXPECT_THROW(rrttlFactoryFromWire("rrcode32_fromWire2"),
                  IncompleteRRTTL);
 }
 

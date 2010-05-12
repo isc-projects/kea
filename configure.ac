@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10-devel, 20100318, bind10-bugs@isc.org)
+AC_INIT(bind10-devel, 20100318, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
@@ -48,15 +48,30 @@ else
 	AC_SUBST(pkgpyexecdir)
 fi
 
-if test ! -x ${PYTHON}-config; then
-	AC_MSG_ERROR([${PYTHON}-config not found])
-fi
+# Check for python development environments
+if test -x ${PYTHON}-config; then
+	PYTHON_INCLUDES=`${PYTHON}-config --includes`
 
-PYTHON_INCLUDES=`${PYTHON}-config --includes`
+	for flag in `${PYTHON}-config --ldflags`; do
+		# add any '-L..." flags to PYTHON_LDFLAGS
+		flag=`echo $flag | sed -ne 's/^\(\-L.*\)$/\1/p'`
+		if test "X${flag}" != X; then
+			PYTHON_LDFLAGS="$PYTHON_LDFLAGS ${flag}"
+		fi
+	done
+	# on some platforms, ${PYTHON}-config --ldflags doesn't provide a -L
+	# option while having the library under a non trivial directory.
+	# as a workaround we try the "lib" sub directory under the common
+	# prefix for this python.
+	if test -z "${PYTHON_LDFLAGS}"; then
+		PYTHON_LDFLAGS="-L`${PYTHON}-config --prefix`/lib"
+	fi
+else
+	if test "X$PYTHON_INCLUDES" = X -o "X$PYTHON_LDFLAGS" = X; then
+		AC_MSG_WARN([${PYTHON}-config does not exist or is not executable, so we could not detect python development environment.  Your system may require an additional package (e.g. "python3-dev").  Alternatively, if you are sure you have python headers and libraries, define PYTHON_INCLUDES and PYTHON_LDFLAGS and run this script.])
+	fi
+fi
 AC_SUBST(PYTHON_INCLUDES)
-for flag in `${PYTHON}-config --ldflags`; do
-	PYTHON_LDFLAGS="$PYTHON_LDFLAGS `echo $flag | sed -ne 's/^\(\-L.*\)$/\1/p'`"
-done
 AC_SUBST(PYTHON_LDFLAGS)
 
 CPPFLAGS_SAVED="$CPPFLAGS"
@@ -361,24 +376,32 @@ AC_CONFIG_FILES([Makefile
                  src/Makefile
                  src/bin/Makefile
                  src/bin/bind10/Makefile
+                 src/bin/bind10/tests/Makefile
                  src/bin/cmdctl/Makefile
+                 src/bin/cmdctl/tests/Makefile
                  src/bin/bindctl/Makefile
+                 src/bin/bindctl/tests/Makefile
                  src/bin/cfgmgr/Makefile
                  src/bin/host/Makefile
                  src/bin/loadzone/Makefile
                  src/bin/msgq/Makefile
+                 src/bin/msgq/tests/Makefile
                  src/bin/auth/Makefile
                  src/bin/auth/tests/Makefile
                  src/bin/xfrin/Makefile
+                 src/bin/xfrin/tests/Makefile
                  src/bin/xfrout/Makefile
+                 src/bin/xfrout/tests/Makefile
                  src/bin/usermgr/Makefile
                  src/lib/Makefile
                  src/lib/cc/Makefile
                  src/lib/python/Makefile
                  src/lib/python/isc/Makefile
-                 src/lib/python/isc/auth/Makefile
+                 src/lib/python/isc/datasrc/Makefile
                  src/lib/python/isc/cc/Makefile
+                 src/lib/python/isc/cc/tests/Makefile
                  src/lib/python/isc/config/Makefile
+                 src/lib/python/isc/config/tests/Makefile
                  src/lib/config/Makefile
                  src/lib/config/tests/Makefile
                  src/lib/dns/Makefile
@@ -386,8 +409,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/dns/python/Makefile
                  src/lib/dns-python/Makefile
                  src/lib/exceptions/Makefile
-                 src/lib/auth/Makefile
-                 src/lib/auth/tests/Makefile
+                 src/lib/datasrc/Makefile
+                 src/lib/datasrc/tests/Makefile
                  src/lib/xfr/Makefile
                ])
 AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
@@ -413,7 +436,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/usermgr/run_b10-cmdctl-usermgr.sh
            src/bin/usermgr/b10-cmdctl-usermgr.py
            src/bin/msgq/msgq.py
-           src/bin/msgq/msgq_test
+           src/bin/msgq/tests/msgq_test
            src/bin/msgq/run_msgq.sh
            src/bin/auth/auth.spec.pre
            src/bin/auth/spec_config.h
@@ -436,7 +459,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            chmod +x src/bin/loadzone/run_loadzone.sh
            chmod +x src/bin/usermgr/run_b10-cmdctl-usermgr.sh
            chmod +x src/bin/msgq/run_msgq.sh
-           chmod +x src/bin/msgq/msgq_test
+           chmod +x src/bin/msgq/tests/msgq_test
            chmod +x src/lib/dns/gen-rdatacode.py
            chmod +x src/lib/dns/tests/testdata/gen-wiredata.py
            chmod +x src/lib/dns/python/tests/libdns_python_test

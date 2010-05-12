@@ -49,13 +49,13 @@ TEST_F(Rdata_OPT_Test, createFromWire)
     // Valid cases: in the simple implementation with no supported options,
     // we can only check these don't throw.
     EXPECT_NO_THROW(rdataFactoryFromFile(RRType::OPT(), RRClass("CLASS4096"),
-                                         "testdata/rdata_opt_fromWire"));
+                                         "rdata_opt_fromWire"));
     EXPECT_NO_THROW(rdataFactoryFromFile(RRType::OPT(), RRClass::CH(),
-                                         "testdata/rdata_opt_fromWire", 2));
+                                         "rdata_opt_fromWire", 2));
 
     // short buffer case.
     EXPECT_THROW(rdataFactoryFromFile(RRType::OPT(), RRClass::IN(),
-                                      "testdata/rdata_opt_fromWire", 11),
+                                      "rdata_opt_fromWire", 11),
                  InvalidRdataLength);
 }
 
@@ -81,7 +81,7 @@ TEST_F(Rdata_OPT_Test, compare)
     // This simple implementation always returns "true"
     EXPECT_EQ(0, rdata_opt.compare(
                   *rdataFactoryFromFile(RRType::OPT(), RRClass::CH(),
-                                        "testdata/rdata_opt_fromWire", 2)));
+                                        "rdata_opt_fromWire", 2)));
 
     // comparison attempt between incompatible RR types should be rejected
     EXPECT_THROW(rdata_opt.compare(*RdataTest::rdata_nomatch), bad_cast); 

@@ -14,15 +14,15 @@
 
 // $Id$
 
-#include <sstream>
-
 #include <stdint.h>
 
-#include "buffer.h"
-#include "messagerenderer.h"
-#include "rrttl.h"
+#include <sstream>
+#include <ostream>
 
-#include <iostream>
+#include <dns/buffer.h>
+#include <dns/messagerenderer.h>
+#include <dns/rrttl.h>
+
 using namespace std;
 using namespace isc::dns;
 

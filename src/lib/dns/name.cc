@@ -20,13 +20,12 @@
 #include <functional>
 #include <vector>
 #include <iostream>
-
 #include <algorithm>
 
-#include "buffer.h"
-#include "exceptions.h"
-#include "name.h"
-#include "messagerenderer.h"
+#include <dns/buffer.h>
+#include <dns/exceptions.h>
+#include <dns/name.h>
+#include <dns/messagerenderer.h>
 
 using namespace std;
 using isc::dns::NameComparisonResult;
@@ -127,8 +126,7 @@ typedef enum {
 } ft_state;
 }
 
-Name::Name(const std::string &namestring, bool downcase)
-{
+Name::Name(const std::string &namestring, bool downcase) {
     //
     // Initialize things to make the compiler happy; they're not required.
     //
@@ -402,20 +400,17 @@ Name::Name(InputBuffer& buffer, bool downcase) {
 }
 
 void
-Name::toWire(OutputBuffer& buffer) const
-{
+Name::toWire(OutputBuffer& buffer) const {
     buffer.writeData(ndata_.data(), ndata_.size());
 }
 
 void
-Name::toWire(MessageRenderer& renderer) const
-{
+Name::toWire(MessageRenderer& renderer) const {
     renderer.writeName(*this);
 }
 
 std::string
-Name::toText(bool omit_final_dot) const
-{
+Name::toText(bool omit_final_dot) const {
     if (length_ == 1) {
         //
         // Special handling for the root label.  We ignore omit_final_dot.
@@ -494,8 +489,7 @@ Name::toText(bool omit_final_dot) const
 }
 
 NameComparisonResult
-Name::compare(const Name& other) const
-{
+Name::compare(const Name& other) const {
     // Determine the relative ordering under the DNSSEC order relation of
     // 'this' and 'other', and also determine the hierarchical relationship
     // of the names.
@@ -554,8 +548,7 @@ Name::compare(const Name& other) const
 }
 
 bool
-Name::equals(const Name& other) const
-{
+Name::equals(const Name& other) const {
     if (length_ != other.length_ || labelcount_ != other.labelcount_) {
         return (false);
     }
@@ -582,38 +575,32 @@ Name::equals(const Name& other) const
 }
 
 bool
-Name::leq(const Name& other) const
-{
+Name::leq(const Name& other) const {
     return (compare(other).getOrder() <= 0);
 }
 
 bool
-Name::geq(const Name& other) const
-{
+Name::geq(const Name& other) const {
     return (compare(other).getOrder() >= 0);
 }
 
 bool
-Name::lthan(const Name& other) const
-{
+Name::lthan(const Name& other) const {
     return (compare(other).getOrder() < 0);
 }
 
 bool
-Name::gthan(const Name& other) const
-{
+Name::gthan(const Name& other) const {
     return (compare(other).getOrder() > 0);
 }
 
 bool
-Name::isWildcard() const
-{
+Name::isWildcard() const {
     return (length_ >= 2 && ndata_[0] == 1 && ndata_[1] == '*'); 
 }
 
 Name
-Name::concatenate(const Name& suffix) const
-{
+Name::concatenate(const Name& suffix) const {
     assert(this->length_ > 0 && suffix.length_ > 0);
     assert(this->labelcount_ > 0 && suffix.labelcount_ > 0);
 
@@ -650,8 +637,7 @@ Name::concatenate(const Name& suffix) const
 }
 
 Name
-Name::reverse() const
-{
+Name::reverse() const {
     Name retname;
     //
     // Set up offsets: The size of the string and number of labels will
@@ -680,9 +666,8 @@ Name::reverse() const
 }
 
 Name
-Name::split(unsigned int first, unsigned int n) const
-{
-    if (n == 0 || first + n > labelcount_) {
+Name::split(unsigned int first, unsigned int n) const {
+    if (n == 0 || n > labelcount_ || first > labelcount_ - n) {
         isc_throw(OutOfRange, "Name::split: invalid split range");
     }
 
@@ -718,8 +703,7 @@ Name::split(unsigned int first, unsigned int n) const
 }
 
 Name&
-Name::downcase()
-{
+Name::downcase() {
     unsigned int nlen = length_;
     unsigned int labels = labelcount_;
     unsigned int pos = 0;
@@ -747,8 +731,7 @@ Name::downcase()
 }
 
 std::ostream&
-operator<<(std::ostream& os, const Name& name)
-{
+operator<<(std::ostream& os, const Name& name) {
     os << name.toText();
     return (os);
 }

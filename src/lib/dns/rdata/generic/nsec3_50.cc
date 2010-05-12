@@ -14,25 +14,24 @@
 
 // $Id$
 
-#include "config.h"
-
 #include <iostream>
 #include <iomanip>
 #include <string>
 #include <sstream>
 #include <vector>
 
-#include "base32.h"
-#include "buffer.h"
-#include "exceptions.h"
-#include "hex.h"
-#include "messagerenderer.h"
-#include "name.h"
-#include "rrtype.h"
-#include "rrttl.h"
-#include "rdata.h"
-#include "rdataclass.h"
 #include <boost/lexical_cast.hpp>
+
+#include <dns/base32.h>
+#include <dns/buffer.h>
+#include <dns/exceptions.h>
+#include <dns/hex.h>
+#include <dns/messagerenderer.h>
+#include <dns/name.h>
+#include <dns/rrtype.h>
+#include <dns/rrttl.h>
+#include <dns/rdata.h>
+#include <dns/rdataclass.h>
 
 #include <stdio.h>
 #include <time.h>

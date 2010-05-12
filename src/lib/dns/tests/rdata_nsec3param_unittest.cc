@@ -65,7 +65,7 @@ TEST_F(Rdata_NSEC3PARAM_Test, createFromWire)
     const generic::NSEC3PARAM rdata_nsec3param(nsec3param_txt);
     EXPECT_EQ(0, rdata_nsec3param.compare(
                   *rdataFactoryFromFile(RRType::NSEC3PARAM(), RRClass::IN(),
-                                       "testdata/rdata_nsec3param_fromWire1")));
+                                       "rdata_nsec3param_fromWire1")));
 }
 
 TEST_F(Rdata_NSEC3PARAM_Test, toWireRenderer)
@@ -75,7 +75,7 @@ TEST_F(Rdata_NSEC3PARAM_Test, toWireRenderer)
     rdata_nsec3param.toWire(renderer);
 
     vector<unsigned char> data;
-    UnitTestUtil::readWireData("testdata/rdata_nsec3param_fromWire1", data);
+    UnitTestUtil::readWireData("rdata_nsec3param_fromWire1", data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         static_cast<const uint8_t *>(obuffer.getData()) + 2,
                         obuffer.getLength() - 2, &data[2], data.size() - 2);

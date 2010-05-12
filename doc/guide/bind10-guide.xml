@@ -71,11 +71,12 @@
       </para>
 
       <note><para>
-        For the Y1 prototype release, the only supported data source
-        backend is SQLite3. The authoritative server requires
-        SQLite 3.3.9 or newer,
-        and the <command>b10-xfrin</command> module requires the
-        Python _sqlite3.so module.
+	For this development prototype release, the only supported
+	data source backend is SQLite3. The authoritative server
+	requires SQLite 3.3.9 or newer.
+        The <command>b10-xfrin</command> and <command>b10-xfrout</command>
+	modules require the libboost library, libpython3 library,
+	and the Python _sqlite3.so module.
       </para></note>
 <!-- TODO: this will change ... -->
 
@@ -104,9 +105,8 @@
       <para>
         At first, running many different processes may seem confusing.  However,
         these processes are started, stopped, and maintained by a single command,
-        <command>bind10</command>.  Additionally, most processes started by
-        the <command>bind10</command> command have names starting with "b10-",
-        with one exception, <command>msgq</command>.
+        <command>bind10</command>.  Additionally, the processes started by
+        the <command>bind10</command> command have names starting with "b10-".
       </para>
       
       <para>
@@ -122,7 +122,7 @@
         <itemizedlist>
           <listitem>
             <simpara>
-              <command>msgq</command> &mdash;
+              <command>b10-msgq</command> &mdash;
               message bus daemon.
               This process coordinates communication between all of the other
               BIND 10 processes.
@@ -154,8 +154,18 @@
             <simpara>
               <command>b10-xfrin</command> &mdash;
               Incoming zone transfer service.
-              This process is started as needed to transfer a new copy
+              This process is used to transfer a new copy
               of a zone into BIND 10, when acting as a secondary server.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
+              <command>b10-xfrout</command> &mdash;
+              Outgoing zone transfer service.
+	      This process is used to handle transfer requests to
+	      send a local zone to a remote secondary server,
+	      when acting as a master server.
             </simpara>
           </listitem>
 
@@ -259,6 +269,17 @@ var/
         </para>
 
         <para>
+	  The Boost Library, Boost Python library, Python Library,
+	  and Python _sqlite3 module are required to enable the
+	  Xfrout and Xfrin support.
+        </para>
+
+        <note><simpara>
+          The Python related libraries and modules need to be built
+          for Python 3.1.
+        </simpara></note>
+
+        <para>
           If the Boost System Library is detected at configure time,
           BIND 10 will be built using an alternative method for
           networking I/O using Boost ASIO support.  This provides
@@ -279,7 +300,7 @@ implementation in BIND 10.
           Building BIND 10 also requires a C++ compiler and
           standard development headers.
           BIND 10 builds have been tested with GCC g++ 3.4.3, 4.1.2,
-          4.2.1, 4.3.2, and 4.4.1.
+          4.1.3, 4.2.1, 4.3.2, and 4.4.1.
         </para>
     </section>
 
@@ -296,7 +317,7 @@ implementation in BIND 10.
 
       <note>
         <simpara>
-          The Y1 prototype of the b10-auth server listens on
+          The development prototype of the b10-auth server listens on
           0.0.0.0 (all interfaces) port 5300. (This is not the standard
           domain service port.)
         </simpara>
@@ -422,9 +443,7 @@ implementation in BIND 10.
           and un-reviewed code, is available via the BIND 10 code revision
           control system. This is powered by Subversion and all the BIND 10
           development is public.
-          The leading development is done in the <quote>trunk</quote>
-          and the reviewed code is in
-          <filename>branches/REVIEWED</filename>.
+          The leading development is done in the <quote>trunk</quote>.
         </para>
         <para>
           The code can be checked out from <filename>svn://bind10.isc.org/svn/bind10</filename>; for example to check out the trunk:
@@ -465,26 +484,10 @@ implementation in BIND 10.
           <variablelist>
 
           <varlistentry>
-            <term>--with-boostlib</term>
-            <listitem> 
-              <simpara>Define the path to find the Boost system library.
-              </simpara>
-            </listitem> 
-          </varlistentry>
-
-          <varlistentry>
-            <term>--without-boostlib</term> or
-            <term>--with-boostlib=no</term>
-            <listitem> 
-              <simpara>Disable the Boost ASIO support.</simpara>
-            </listitem> 
-          </varlistentry>
-
-          <varlistentry>
-            <term>--with-pythonpath</term>
-            <listitem> 
-              <simpara>Define the path to Python 3.1 if it is not in the
-                standard execution path.
+            <term>--prefix</term>
+            <listitem>
+              <simpara>Define the the installation location (the
+                default is <filename>/usr/local/</filename>).
               </simpara>
             </listitem> 
           </varlistentry>
@@ -498,10 +501,44 @@ implementation in BIND 10.
           </varlistentry>
 
           <varlistentry>
-            <term>--prefix</term>
-            <listitem>
-        <simpara>Define the the installation location (the
-          default is <filename>/usr/local/</filename>).
+            <term>--with-boost-lib</term>
+            <listitem> 
+              <simpara>Define the path to find the Boost library.
+              </simpara>
+            </listitem> 
+          </varlistentry>
+
+          <varlistentry>
+            <term>--with-boost-python</term>
+            <listitem> 
+              <simpara>Define to use the Boost Python library.
+              </simpara>
+            </listitem> 
+          </varlistentry>
+
+          <varlistentry>
+            <term>--with-boost-system</term>
+            <listitem> 
+              <simpara>Define to use the Boost System library.
+              </simpara>
+            </listitem> 
+          </varlistentry>
+
+          <varlistentry>
+            <term>--with-pythonpath</term>
+            <listitem> 
+              <simpara>Define the path to Python 3.1 if it is not in the
+                standard execution path.
+              </simpara>
+            </listitem> 
+          </varlistentry>
+
+          <varlistentry>
+            <term>--with-gtest</term>
+            <listitem> 
+              <simpara>Enable building the C++ Unit Tests using the
+                Google Tests framework. Optionally this can define the
+                path to the gtest header files and library.
               </simpara>
             </listitem> 
           </varlistentry>
@@ -509,15 +546,17 @@ implementation in BIND 10.
           </variablelist>
 
         </para>
-  <!-- TODO: gtest, lcov -->
+  <!-- TODO: lcov -->
 
         <para>
           For example, the following configures it to build
     with BOOST ASIO support, find the Boost headers, find the
     Python interpreter, and sets the installation location:
 
-          <screen>$ <userinput>./configure --with-boostlib=/usr/pkg/lib \
+          <screen>$ <userinput>./configure --with-boost-lib=/usr/pkg/lib \
       --with-boost-include=/usr/pkg/include \
+      --with-boost-python \
+      --with-boost-system \
       --with-pythonpath=/usr/pkg/bin/python3.1 \
       --prefix=/opt/bind10</userinput></screen>
         </para>
@@ -549,6 +588,14 @@ implementation in BIND 10.
         <note>
           <para>The install step may require superuser privileges.</para>
         </note>
+
+<!-- Trac #148 -->
+        <note><simpara>
+	  Depending on your system and the location of your Boost
+	  Python and Python shared libraries, you may need to
+	  configure your run-time linker to find them (such as
+	  setting LD_LIBRARY_PATH).
+        </simpara></note>
 
       </section>
 
@@ -636,15 +683,15 @@ implementation in BIND 10.
     </para>
 
     <para>
-      After starting the <command>msgq</command> communications channel,
+      After starting the <command>b10-msgq</command> communications channel,
       <command>bind10</command> connects to it, 
       runs the configuration manager, and reads its own configuration.
       Then it starts the other modules.
     </para>
 
     <para>
-      The <command>msgq</command> and <command>b10-cfgmgr</command>
-      services make up the core. The <command>msgq</command> daemon
+      The <command>b10-msgq</command> and <command>b10-cfgmgr</command>
+      services make up the core. The <command>b10-msgq</command> daemon
       provides the communication channel between every part of the system.
       The <command>b10-cfgmgr</command> daemon is always needed by every
       module, if only to send information about themselves somewhere,
@@ -653,7 +700,8 @@ implementation in BIND 10.
       The <command>bind10</command> master process will also start up
       <command>b10-cmdctl</command> for admins to communicate with the
       system, <command>b10-auth</command> for Authoritative DNS service,
-      and <command>b10-xfrin</command> for inbound DNS zone transfers.
+      <command>b10-xfrin</command> for inbound DNS zone transfers.
+      and <command>b10-xfrout</command> for outbound DNS zone transfers.
     </para>
 
     <section id="start">
@@ -672,9 +720,9 @@ implementation in BIND 10.
     <title>Command channel</title>
 
       <para>
-        The BIND 10 components use the <command>msgq</command>
+        The BIND 10 components use the <command>b10-msgq</command>
         message routing daemon to communicate with other BIND 10 components.
-        The <command>msgq</command> implements what is called the
+        The <command>b10-msgq</command> implements what is called the
         <quote>Command Channel</quote>.
         Processes intercommunicate by sending messages on the command
         channel.
@@ -686,17 +734,19 @@ implementation in BIND 10.
 
       <para>
         Administrators do not communicate directly with the
-        <command>msgq</command> daemon.
+        <command>b10-msgq</command> daemon.
         By default, BIND 10 uses port 9912 for the
-        <command>msgq</command> service.
+        <command>b10-msgq</command> service.
         It listens on 127.0.0.1.
       </para>
       
+<!-- TODO: this is broken, see Trac #111
       <para>
-        To select an alternate port for the <command>msgq</command> to
+        To select an alternate port for the <command>b10-msgq</command> to
         use, run <command>bind10</command> specifying the option:
-        <screen> $ <userinput>bind10 --msgq-port 9912</userinput></screen>
+        <screen> $ <userinput>bind10 -TODO-msgq-port 9912</userinput></screen>
       </para>
+-->
 
 <!-- TODO: upcoming plans:
 Unix domain sockets
@@ -717,7 +767,7 @@ Unix domain sockets
       <para>
         The <command>b10-auth</command> and <command>b10-xfrin</command>
         daemons and other components receive their configurations
-        from the configuration manager over the <command>msgq</command>
+        from the configuration manager over the <command>b10-msgq</command>
         command channel.
       </para>
 
@@ -730,7 +780,7 @@ Unix domain sockets
 <!-- TODO -->
       <note>
         <para>
-          The Y1 prototype release only provides the
+          The development prototype release only provides the
           <command>bindctl</command> as a user interface to
           <command>b10-cmdctl</command>.
           Upcoming releases will provide another interactive command-line
@@ -826,7 +876,7 @@ options for that module
       When <command>b10-cmdctl</command> starts, it firsts
       asks <command>b10-cfgmgr</command> about what modules are
       running and what their configuration is (over the
-      <command>msgq</command> channel). Then it will start listening
+      <command>b10-msgq</command> channel). Then it will start listening
       on HTTPS for clients &mdash; the user interface &mdash; such
       as <command>bindctl</command>.
     </para>
@@ -956,7 +1006,7 @@ TODO
     <title>Control and configure user interface</title>
 
     <note><para>
-      For the Y1 prototype release, <command>bindctl</command>
+      For this development prototype release, <command>bindctl</command>
       is the only user interface. It is expected that upcoming
       releases will provide another interactive command-line
       interface and a web-based interface for controlling and
@@ -979,9 +1029,9 @@ TODO
       <command>b10-cfgmgr</command>. So when <command>bindctl</command>
       sends a configuration, it is sent to <command>b10-cmdctl</command>
       (over a HTTPS connection); then <command>b10-cmdctl</command>
-      sends the command (over a <command>msgq</command> command
+      sends the command (over a <command>b10-msgq</command> command
       channel) to <command>b10-cfgmgr</command> which then stores
-      the details and relays (over a <command>msgq</command> command
+      the details and relays (over a <command>b10-msgq</command> command
       channel) the configuration on to the specified module.
     </para>
 
@@ -1001,8 +1051,8 @@ TODO
     </para>
 
     <note><simpara>
-      The Y1 prototype release listens on all interfaces and the non-standard
-      port 5300.
+      This development prototype release listens on all interfaces
+      and the non-standard port 5300.
     </simpara></note>
 
     <section>
@@ -1062,7 +1112,7 @@ This may be a temporary setting until then.
       <title>Data Source Backends</title>
 
       <note><para>
-        For the Y1 prototype release, <command>b10-auth</command>
+        For the development prototype release, <command>b10-auth</command>
         only supports the SQLite3 data source backend.
         Upcoming versions will be able to use multiple different
         data sources, such as MySQL, Berkeley DB, or in-memory DB.
@@ -1132,7 +1182,8 @@ This may be a temporary setting until then.
 
       <note>
       <para>
-        In the Y1 prototype release, only the SQLite3 back end is used.
+        In the development prototype release, only the SQLite3 back
+        end is used.
         By default, it stores the zone data in
         <filename>/usr/local/var/bind10-devel/zone.sqlite3</filename>
         unless the <option>-d</option> switch is used to set the
@@ -1158,6 +1209,69 @@ TODO
       <para>
       </para>
     </section>
+-->
+
+  </chapter>
+
+  <chapter id="xfrin">
+    <title>Incoming Zone Transfers</title>
+
+    <para>
+      The <command>b10-xfrin</command> process is started by
+      <command>bind10</command>.
+      It can be manually triggered to request an AXFR zone
+      transfer. When received, it is stored in the BIND 10
+      data store, and its records can be served by
+      <command>b10-auth</command>.
+      This allows the BIND 10 server to provide
+      <quote>secondary</quote> service.
+    </para>
+
+    <note><simpara>
+     The current development release of BIND 10 only supports
+     AXFR. (IXFR is not supported.) 
+     It also does not yet support automated SOA checks.
+    </simpara></note>
+
+    <para>
+       To manually trigger a zone transfer to retrieve a remote zone,
+       you may use the <command>bindctl</command> utility.
+       For example, at the <command>bindctl</command> prompt run:
+
+       <screen>&gt; <userinput>Xfrin retransfer zone_name="<option>foo.example.org</option>" master=<option>192.0.2.99</option></userinput></screen>
+    </para>
+
+  </chapter>
+
+  <chapter id="xfrout">
+    <title>Outbound Zone Transfers</title>
+
+    <para>
+      The <command>b10-xfrout</command> process is started by
+      <command>bind10</command>.
+      When the <command>b10-auth</command> authoritative DNS server
+      receives an AXFR request, <command>b10-xfrout</command>
+      sends the zone.
+      This is used to provide master DNS service to share zones
+      to secondary name servers.
+    </para>
+
+    <note><simpara>
+     The current development release of BIND 10 only supports
+     AXFR. (IXFR is not supported.) 
+     It also does not yet support NOTIFY.
+     Access control is not yet provided.
+    </simpara></note>
+
+
+<!--
+TODO:
+xfrout section:
+auth servers checks for AXFR query
+sends the XFR query to the xfrout module
+uses /tmp/auth_xfrout_conn which is a socket
+what is XfroutClient xfr_client??
+/tmp/auth_xfrout_conn is not removed
 -->
 
   </chapter>

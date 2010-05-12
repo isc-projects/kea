@@ -104,17 +104,17 @@ makeLargest(vector<uint8_t>& data) {
 TEST_F(Rdata_TXT_Test, createFromWire) {
     EXPECT_EQ(0, rdata_txt.compare(
                   *rdataFactoryFromFile(RRType("TXT"), RRClass("IN"),
-                                        "testdata/rdata_txt_fromWire1")));
+                                        "rdata_txt_fromWire1")));
 
     // Empty character string
     EXPECT_EQ(0, rdata_txt_empty.compare(
                   *rdataFactoryFromFile(RRType("TXT"), RRClass("IN"),
-                                        "testdata/rdata_txt_fromWire2")));
+                                        "rdata_txt_fromWire2")));
 
     // Multiple character strings
     obuffer.clear();
     rdataFactoryFromFile(RRType("TXT"), RRClass("IN"),
-                         "testdata/rdata_txt_fromWire3")->toWire(obuffer);
+                         "rdata_txt_fromWire3")->toWire(obuffer);
     // the result should be 'wiredata_txt' repeated twice
     vector<uint8_t> expected_data(wiredata_txt, wiredata_txt +
                                   sizeof(wiredata_txt));
@@ -145,12 +145,12 @@ TEST_F(Rdata_TXT_Test, createFromWire) {
 
     // RDATA is empty, which is invalid for TXT.
     EXPECT_THROW(rdataFactoryFromFile(RRType("TXT"), RRClass("IN"),
-                                      "testdata/rdata_txt_fromWire4"),
+                                      "rdata_txt_fromWire4"),
                  DNSMessageFORMERR);
 
     // character-string length is too large, which could cause overrun.
     EXPECT_THROW(rdataFactoryFromFile(RRType("TXT"), RRClass("IN"),
-                                      "testdata/rdata_txt_fromWire5"),
+                                      "rdata_txt_fromWire5"),
                  DNSMessageFORMERR);
 }
 

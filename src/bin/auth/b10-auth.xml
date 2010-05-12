@@ -58,12 +58,12 @@
       authoritative DNS server.
       Normally it is started by the
       <citerefentry><refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-      master process.
+      boss process.
     </para>
 
     <para>
       This daemon communicates with other BIND 10 components over a
-      <citerefentry><refentrytitle>msgq</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      <citerefentry><refentrytitle>b10-msgq</refentrytitle><manvolnum>8</manvolnum></citerefentry>
       C-Channel connection.  If this connection is not established,
       <command>b10-auth</command> will exit.
 <!-- TODO what if msgq connection closes later, will b10-auth exit? -->
@@ -71,10 +71,7 @@
 
     <para>
       It also receives its configurations from
-<citerefentry><refentrytitle>b10-cfgmgr</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-      (via the
-      <citerefentry><refentrytitle>msgq</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-      command channel).
+<citerefentry><refentrytitle>b10-cfgmgr</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
       It will honor the <emphasis>database_file</emphasis> configuration
       to point to the SQLite3 zone file.
 
@@ -158,10 +155,10 @@
         <refentrytitle>b10-loadzone</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
-        <refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum>
+        <refentrytitle>b10-msgq</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
-        <refentrytitle>msgq</refentrytitle><manvolnum>8</manvolnum>
+        <refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citetitle>BIND 10 Guide</citetitle>.
     </para>

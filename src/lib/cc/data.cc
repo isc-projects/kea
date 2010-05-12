@@ -898,9 +898,9 @@ BoolElement::toWire(std::stringstream& ss,
 {
     ss << encode_length(1, ITEM_BOOL);
     if (boolValue()) {
-        ss << 0x01;
+        ss << '1';
     } else {
-        ss << 0x00;
+        ss << '0';
     }
 }
 

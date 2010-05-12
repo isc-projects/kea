@@ -58,38 +58,36 @@
       incoming DNS zone transfer service.
       Normally it is started by the
       <citerefentry><refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-      master process
-      and communicates with the
-      <citerefentry><refentrytitle>b10-auth</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-      authoritative DNS server.
+      boss process.
+      When triggered it can request and receive a zone transfer and store
+      the zone in a BIND 10 zone data store.
     </para>
 
     <note><simpara>
       The Y1 prototype release only supports AXFR. IXFR is not implemented.
     </simpara></note>
 
-<!-- TODO:
-add a usage example of xfrin -->
-
     <para>
-      This daemon communicates over a
-      <citerefentry><refentrytitle>msgq</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+<!-- TODO: does it really use msgq? what for? -->
+      This daemon communicates with BIND 10 over a
+      <citerefentry><refentrytitle>b10-msgq</refentrytitle><manvolnum>8</manvolnum></citerefentry>
       C-Channel connection.  If this connection is not established,
       <command>b10-xfrin</command> will exit.
-<!-- TODO what if connection closes later, will b10-auth exit? -->
+<!-- TODO what if connection closes later, will b10-xfrin exit? -->
     </para>
 
     <para>
-     It also receives its configurations from
-<citerefentry><refentrytitle>b10-cfgmgr</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-      using the REST-ful interface provided by
-      <citerefentry><refentrytitle>b10-cmdctl</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+     <command>b10-xfrin</command> receives its configurations from
+<citerefentry><refentrytitle>b10-cfgmgr</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
     </para>
+  </refsect1>
 
+  <refsect1>
+    <title>CONFIGURATION AND COMMANDS</title>
     <para>
-      The configurable setting is transfers-in which defines
-      the maximum number of inbound zone transfers that can run
-      concurrently. The default is 10.
+      The configurable setting is <varname>transfers-in</varname>
+      which defines the maximum number of inbound zone transfers
+      that can run concurrently. The default is 10.
     </para>
 
 <!-- TODO: formating -->
@@ -97,25 +95,30 @@ add a usage example of xfrin -->
 <!-- schedule immediate maintenance for a zone(check soa serial ) -->
     <para>
       The configuration commands are:
-print_settings,
-shutdown, and
-retransfer (triggers the transfer in for a single zone without checking
-the zone's serial number).
+    </para>
+    <para>
+      <command>shutdown</command> stops all incoming zone transfers
+      and exits <command>b10-xfrin</command>. (Note that the BIND 10
+      boss process will restart this service.)
+    </para>
+    <para>
+      <command>retransfer</command> triggers the transfer in for
+      a single zone without checking the zone's serial number.
+      It has the following arguments: <varname>zone_name</varname>
+      to define the zone to request and <varname>master</varname>
+      to define the IP address of the authoritative server to
+      transfer from.
      </para>
+<!-- TODO: later hostname for master? -->
+
+<!-- TODO:
+add a usage example of xfrin -->
 
 <!-- TODO:
 
-retransfer has the following arguments:
-zone_name
 port (defaults to 53)
-master
 db_file (defaults to zone.sqlite3) --> <!-- TODO: fix this -->
 
-
-<!--
-If the admin want to get the latest zone data from master, he can send the
-command "retransfer to xfrin."
--->
 <!-- TODO:
 
  later it will can be triggered by :
@@ -129,16 +132,6 @@ command "retransfer to xfrin."
 4.  Schedule zone maintenance for all zones.
 
 -->
-
-<!-- TODO: reword -->
-<!-- TODO:
-    <para>
-      The administrator can send zone transfer-in command to xfrin
-      module, or terminate all ongoing incoming transfers by sending
-      the <quote>shutdown</quote> command to xfrin module.
-    </para>
--->
-<!-- TODO: kills it and bind10 restarts? -->
 
     <note><para>
       This prototype version uses SQLite3 as its data source backend.
@@ -183,19 +176,13 @@ operation
     <title>SEE ALSO</title>
     <para>
       <citerefentry>
-        <refentrytitle>b10-auth</refentrytitle><manvolnum>8</manvolnum>
-      </citerefentry>,
-      <citerefentry>
         <refentrytitle>b10-cfgmgr</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
-        <refentrytitle>b10-cmdctl</refentrytitle><manvolnum>8</manvolnum>
+        <refentrytitle>b10-msgq</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
         <refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum>
-      </citerefentry>,
-      <citerefentry>
-        <refentrytitle>msgq</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citetitle>BIND 10 Guide</citetitle>.
     </para>

@@ -1,5 +1,6 @@
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/lib/dns -I$(top_srcdir)/src/bin
+AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(srcdir)/testdata\"
 
 CLEANFILES = *.gcno *.gcda
 
@@ -15,7 +16,7 @@ run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 run_unittests_LDADD = $(GTEST_LDADD)
 run_unittests_LDADD += $(SQLITE_LIBS)
-run_unittests_LDADD +=  $(top_builddir)/src/lib/auth/.libs/libauth.a
+run_unittests_LDADD +=  $(top_builddir)/src/lib/datasrc/.libs/libdatasrc.a
 run_unittests_LDADD +=  $(top_builddir)/src/lib/dns/.libs/libdns.a
 run_unittests_LDADD += $(top_builddir)/src/lib/config/.libs/libcfgclient.a
 run_unittests_LDADD += $(top_builddir)/src/lib/cc/libcc.a

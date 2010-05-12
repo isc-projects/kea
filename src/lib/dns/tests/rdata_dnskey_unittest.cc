@@ -91,7 +91,7 @@ TEST_F(Rdata_DNSKEY_Test, toWireRenderer)
     rdata_dnskey.toWire(renderer);
 
     vector<unsigned char> data;
-    UnitTestUtil::readWireData("testdata/rdata_dnskey_fromWire", data);
+    UnitTestUtil::readWireData("rdata_dnskey_fromWire", data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         static_cast<const uint8_t *>(obuffer.getData()) + 2,
                         obuffer.getLength() - 2, &data[2], data.size() - 2);
@@ -108,7 +108,7 @@ TEST_F(Rdata_DNSKEY_Test, createFromWire)
     generic::DNSKEY rdata_dnskey(dnskey_txt);
     EXPECT_EQ(0, rdata_dnskey.compare(
                   *rdataFactoryFromFile(RRType("DNSKEY"), RRClass("IN"),
-                                        "testdata/rdata_dnskey_fromWire")));
+                                        "rdata_dnskey_fromWire")));
 }
 
 TEST_F(Rdata_DNSKEY_Test, getTag)

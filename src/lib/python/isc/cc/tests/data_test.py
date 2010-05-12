@@ -19,7 +19,7 @@
 
 import unittest
 import os
-import data
+from isc.cc import data
 
 class TestData(unittest.TestCase):
     def test_remove_identical(self):

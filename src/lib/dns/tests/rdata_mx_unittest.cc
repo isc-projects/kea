@@ -63,7 +63,7 @@ TEST_F(Rdata_MX_Test, createFromWire)
 {
     EXPECT_EQ(0, rdata_mx.compare(
                   *rdataFactoryFromFile(RRType("MX"), RRClass("IN"),
-                                        "testdata/rdata_mx_fromWire")));
+                                        "rdata_mx_fromWire")));
     // TBD: more tests
 }
 
@@ -73,7 +73,7 @@ TEST_F(Rdata_MX_Test, toWireRenderer)
     rdata_mx.toWire(renderer);
 
     vector<unsigned char> data;
-    UnitTestUtil::readWireData("testdata/rdata_mx_toWire1", data);
+    UnitTestUtil::readWireData("rdata_mx_toWire1", data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, obuffer.getData(),
                         obuffer.getLength(), &data[0], data.size());
 }
@@ -86,7 +86,7 @@ TEST_F(Rdata_MX_Test, toWireBuffer)
 #if 0
 // XXX: does not pass
     vector<unsigned char> data;
-    UnitTestUtil::readWireData("testdata/rdata_mx_toWire1", data);
+    UnitTestUtil::readWireData("rdata_mx_toWire1", data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, obuffer.getData(),
                         obuffer.getLength(), &data[0], data.size());
 #endif

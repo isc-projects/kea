@@ -26,17 +26,17 @@
 
 #include <exceptions/exceptions.h>
 
-#include "buffer.h"
-#include "exceptions.h"
-#include "message.h"
-#include "messagerenderer.h"
-#include "name.h"
-#include "question.h"
-#include "rdataclass.h"
-#include "rrclass.h"
-#include "rrtype.h"
-#include "rrttl.h"
-#include "rrset.h"
+#include <dns/buffer.h>
+#include <dns/exceptions.h>
+#include <dns/message.h>
+#include <dns/messagerenderer.h>
+#include <dns/name.h>
+#include <dns/question.h>
+#include <dns/rdataclass.h>
+#include <dns/rrclass.h>
+#include <dns/rrtype.h>
+#include <dns/rrttl.h>
+#include <dns/rrset.h>
 
 using namespace std;
 using namespace boost;
