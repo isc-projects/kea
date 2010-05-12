@@ -132,10 +132,11 @@ MessageRenderer_getLength(s_MessageRenderer* self)
 static PyObject*
 MessageRenderer_isTruncated(s_MessageRenderer* self)
 {
-    if (self->messagerenderer->isTruncated())
+    if (self->messagerenderer->isTruncated()) {
         Py_RETURN_TRUE;
-    else
+    } else {
         Py_RETURN_FALSE;
+    }
 }
 
 static PyObject*

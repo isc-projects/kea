@@ -67,7 +67,8 @@ static PyObject* RRset_setTTL(s_RRset* self, PyObject* args);
 static PyObject* RRset_toText(s_RRset* self);
 static PyObject* RRset_toWire(s_RRset* self, PyObject* args);
 static PyObject* RRset_addRdata(s_RRset* self, PyObject* args);
-// TODO: iterator
+static PyObject* RRset_getRdata(s_RRset* self);
+// TODO: iterator?
 
 static PyMethodDef RRset_methods[] = {
     { "get_rdata_count", (PyCFunction)RRset_getRdataCount, METH_NOARGS, "Return the number of rdata fields" },
@@ -80,6 +81,7 @@ static PyMethodDef RRset_methods[] = {
     { "to_text", (PyCFunction)RRset_toText, METH_NOARGS, "Return" },
     { "to_wire", (PyCFunction)RRset_toWire, METH_VARARGS, "Return" },
     { "add_rdata", (PyCFunction)RRset_addRdata, METH_VARARGS, "Return" },
+    { "get_rdata", (PyCFunction)RRset_getRdata, METH_NOARGS, "Returns a List containing all Rdata elements" },
     { NULL, NULL, 0, NULL }
 };
 
@@ -330,6 +332,31 @@ RRset_addRdata(s_RRset* self, PyObject* args)
         return NULL;
     }
 }
+
+static PyObject*
+RRset_getRdata(s_RRset* self)
+{
+    PyObject* list = PyList_New(0);
+
+    RdataIteratorPtr it = self->rrset->getRdataIterator();
+
+    for (it->first(); !it->isLast(); it->next()) {
+        s_Rdata *rds = (s_Rdata*)rdata_type.tp_alloc(&rdata_type, 0);
+        if (rds != NULL) {
+            // hmz them iterators/shared_ptrs and private constructors
+            // make this a bit weird, so we create a new one with
+            // the data available
+            const Rdata *rd = &it->getCurrent();
+            rds->rdata = createRdata(self->rrset->getType(), self->rrset->getClass(), *rd);
+            PyList_Append(list, (PyObject*) rds);
+        } else {
+            return NULL;
+        }
+    }
+    
+    return list;
+}
+
 // end of RRset
 
 

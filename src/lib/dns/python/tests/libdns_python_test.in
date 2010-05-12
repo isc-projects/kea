@@ -8,7 +8,14 @@ CONFIG_PATH=@abs_top_srcdir@/src/lib/dns/python/tests
 PYTHONPATH=@abs_top_srcdir@/src/lib/python:@abs_top_srcdir@/src/lib/dns/python/.libs
 export PYTHONPATH
 
+TESTDATA_PATH=@abs_top_srcdir@/src/lib/dns/tests/testdata
+export TESTDATA_PATH
+
 cd ${BIND10_PATH}
 ${PYTHON_EXEC} -O ${CONFIG_PATH}/rrtype_python_test.py $*
 
 ${PYTHON_EXEC} -O ${CONFIG_PATH}/rrset_python_test.py $*
+
+${PYTHON_EXEC} -O ${CONFIG_PATH}/question_python_test.py $*
+
+${PYTHON_EXEC} -O ${CONFIG_PATH}/message_python_test.py $*

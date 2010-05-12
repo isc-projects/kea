@@ -12,6 +12,7 @@
 // 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include <structmember.h>
 
 #include "config.h"
 
@@ -33,6 +34,8 @@
 #include "rrttl_python.cc"
 #include "rdata_python.cc"
 #include "rrset_python.cc"
+#include "question_python.cc"
+#include "message_python.cc"
 
 //
 // Definition of the module
@@ -84,6 +87,14 @@ PyInit_libdns_python(void)
     }
 
     if (!initModulePart_RRset(mod)) {
+        return NULL;
+    }
+
+    if (!initModulePart_Question(mod)) {
+        return NULL;
+    }
+
+    if (!initModulePart_Message(mod)) {
         return NULL;
     }
 
