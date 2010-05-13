@@ -108,4 +108,3 @@ if __name__== "__main__":
         os.remove(DB_FILE)
     except KeyboardInterrupt as e:
         print(e)
-
