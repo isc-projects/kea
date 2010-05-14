@@ -2,6 +2,8 @@
 add statics for RRClass::IN() (RRClass.IN()) etc.
 (and replace RRClass("IN") in tests with those)
 
+same for RRType? (xfrout.py.in line 256)
+
 __str__ for name, question, everything with to_text()
 
 All constructors based on buffers need an optional position
@@ -9,3 +11,5 @@ argument (like question_python has now)
 
 at question.to_wire(bytes) does not seem to work right (only return
 value seems correct, while i'd like in-place addition if possible)
+
+creating a render message and not setting opcode/rcode results in a segfault later (nullpointer)

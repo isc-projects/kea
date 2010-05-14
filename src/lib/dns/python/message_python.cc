@@ -1478,8 +1478,10 @@ Message_init(s_Message* self, PyObject* args)
         PyErr_Clear();
         if (i == Message::PARSE) {
             self->message = new Message(Message::PARSE);
+            Py_INCREF(self);
             return 0;
         } else if (i == Message::RENDER) {
+            Py_INCREF(self);
             self->message = new Message(Message::RENDER);
             return 0;
         } else {
@@ -1723,8 +1725,6 @@ Message_getSection(s_Message* self, PyObject* args)
          ++rrsi) {
         s_RRset *rrset = (s_RRset*)rrset_type.tp_alloc(&rrset_type, 0);
         if (rrset != NULL) {
-            // hmz, copy constructor is private...
-            //rrset->rrset = new RRset(*rrsi->get());
             rrset->rrset = rrsi->get();
             if (rrset->rrset == NULL)
               {
@@ -1754,6 +1754,7 @@ Message_addRRset(s_Message* self, PyObject* args)
                                            &PyBool_Type, &sign)) {
         return NULL;
     }
+    Py_INCREF(rrset);
     RRsetPtr rrset_ptr = RRsetPtr(rrset->rrset);
 
     if (sign == Py_True) {
