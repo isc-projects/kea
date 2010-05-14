@@ -6,3 +6,5 @@
 4. Xfrin.retransfer and refresh share most of the code.  should be unified.
 5. class IN is hardcoded.  bad.
         query_question = question(name(self._zone_name), rr_class.IN(), query_type)
+6. QID 0 should be allowed:
+        query_id = random.randint(1, 0xFFFF)
