@@ -1,1 +1,3 @@
 1. When xfrin's config data is changed, new config data should be applied.
+2. mutex on recorder is not sufficient.  race can happen if two xfrin requests
+   occur at the same time.  (but testing it would be very difficult)
