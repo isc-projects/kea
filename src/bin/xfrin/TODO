@@ -8,3 +8,7 @@
         query_question = question(name(self._zone_name), rr_class.IN(), query_type)
 6. QID 0 should be allowed:
         query_id = random.randint(1, 0xFFFF)
+7. what if xfrin fails after opening a new DB?  looks like garbage
+   (intermediate) data remains in the DB file, although it's more about
+   the data source implementation.  check it, and fix it if it's the case.
+  
