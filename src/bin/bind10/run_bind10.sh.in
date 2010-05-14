@@ -23,7 +23,7 @@ BIND10_PATH=@abs_top_builddir@/src/bin/bind10
 PATH=@abs_top_builddir@/src/bin/msgq:@abs_top_builddir@/src/bin/auth:@abs_top_builddir@/src/bin/cfgmgr:@abs_top_builddir@/src/bin/cmdctl:@abs_top_builddir@/src/bin/xfrin:@abs_top_builddir@/src/bin/xfrout:$PATH
 export PATH
 
-PYTHONPATH=@abs_top_builddir@/src/lib/python
+PYTHONPATH=@abs_top_builddir@/src/lib/python:@abs_top_builddir@/src/lib/dns/python/.libs
 export PYTHONPATH
 
 B10_FROM_SOURCE=@abs_top_srcdir@
