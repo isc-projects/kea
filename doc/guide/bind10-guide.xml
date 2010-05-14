@@ -98,32 +98,28 @@
       <para>
         BIND 10 is modular.  Part of this modularity is
         accomplished using multiple cooperating processes which, together,
-        provide DNS functionality.  This is a change from the previous generation
-        of BIND software, which used a single process.
+	provide the server functionality.  This is a change from
+	the previous generation of BIND software, which used a
+	single process.
       </para>
 
       <para>
-        At first, running many different processes may seem confusing.  However,
-        these processes are started, stopped, and maintained by a single command,
-        <command>bind10</command>.  Additionally, the processes started by
-        the <command>bind10</command> command have names starting with "b10-".
+	At first, running many different processes may seem confusing.
+	However, these processes are started, stopped, and maintained
+	by a single command, <command>bind10</command>.
+	This command starts a master process which will start other
+	processes as needed.
+	The processes started by the <command>bind10</command>
+	command have names starting with "b10-", including:
       </para>
       
       <para>
-        Starting and stopping the server is performed by a single command,
-        <command>bind10</command>.  This command starts a master process
-        which will start other processes as needed.
-      </para>
-      
-      <para>
-        Most of these are run automatically by a single command,
-        <command>bind10</command> and should not be run manually.
 
         <itemizedlist>
           <listitem>
             <simpara>
               <command>b10-msgq</command> &mdash;
-              message bus daemon.
+              Message bus daemon.
               This process coordinates communication between all of the other
               BIND 10 processes.
             </simpara>
@@ -131,21 +127,21 @@
           <listitem>
             <simpara>
               <command>b10-auth</command> &mdash;
-              authoritative DNS server.
+              Authoritative DNS server.
               This process serves DNS requests.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
               <command>b10-cfgmgr</command> &mdash;
-              configuration manager.
+              Configuration manager.
               This process maintains all of the configuration for BIND 10.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
               <command>b10-cmdctl</command> &mdash;
-              command and control service.
+              Command and control service.
               This process allows external control of the BIND 10 system.
             </simpara>
           </listitem>
@@ -171,6 +167,12 @@
 
         </itemizedlist>
       </para>
+
+      <para>
+	These are ran automatically by <command>bind10</command>
+	and do not need to be run manually.
+      </para>
+
     </section>
 
     <section id="managing_once_running">
