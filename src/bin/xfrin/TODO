@@ -11,4 +11,6 @@
 7. what if xfrin fails after opening a new DB?  looks like garbage
    (intermediate) data remains in the DB file, although it's more about
    the data source implementation.  check it, and fix it if it's the case.
-8. Xfrin.command_handler() ignores unknown commands.  should return an error.  
+8. Xfrin.command_handler() ignores unknown commands.  should return an error.
+9. XfrinConnection() can leak sockets. (same problem as that Jelte mentioned
+   on xfrout?)
