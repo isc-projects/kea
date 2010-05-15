@@ -12,5 +12,8 @@
    (intermediate) data remains in the DB file, although it's more about
    the data source implementation.  check it, and fix it if it's the case.
 8. Xfrin.command_handler() ignores unknown commands.  should return an error.
-9. XfrinConnection() can leak sockets. (same problem as that Jelte mentioned
+9. XfrinConnection can leak sockets. (same problem as that Jelte mentioned
    on xfrout?)
+10. The following line of _check_soa_serial() is incorrect.
+        soa_reply = self._get_request_response(int(data_size))
+    Unpack the data and convert it in the host by order.
