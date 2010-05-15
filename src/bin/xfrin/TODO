@@ -17,3 +17,10 @@
 10. The following line of _check_soa_serial() is incorrect.
         soa_reply = self._get_request_response(int(data_size))
     Unpack the data and convert it in the host by order.
+11. if do_xfrin fails it should probably return a non "OK" value.
+    (it's currently ignored anyway, though)
+12. XfrinConnection should probably define handle_close().  Also, the
+    following part should be revised because this can also happen when the
+    master closes the connection.
+            if self._recv_time_out:
+                raise XfrinException('receive data from socket time out.')
