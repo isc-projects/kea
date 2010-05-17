@@ -338,7 +338,7 @@ AC_SUBST(GTEST_INCLUDES)
 AC_SUBST(GTEST_LDFLAGS)
 AC_SUBST(GTEST_LDADD)
 
-PKG_CHECK_MODULES(SQLITE, sqlite3 >= 3.3.9)
+PKG_CHECK_MODULES(SQLITE, sqlite3 >= 3.3.9, enable_features="$enable_features SQLite3")
 
 # Check for headers from required devel kits.
 # boost/shared_ptr.hpp is in ext in svn but not in tarball.
@@ -455,3 +455,44 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            chmod +x src/lib/dns/tests/testdata/gen-wiredata.py
           ])
 AC_OUTPUT
+
+dnl Print the results
+dnl
+
+cat > config.report << END
+
+     BIND 10 source configure results:
+    -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+Package:
+  Name:          $PACKAGE_NAME
+  Version:       $PACKAGE_VERSION
+
+Flags:
+  DEFS:          $DEFS
+  CPPFLAGS:      $CPPFLAGS
+  CFLAGS:        $CFLAGS
+  CXXFLAGS:      $CXXFLAGS
+dnl includes too
+  Boost Python:  $BOOST_PYTHON_LIB
+  Boost System:  $BOOST_SYSTEM_LIB
+  SQLite:	 $SQLITE_CFLAGS
+                 $SQLITE_LIBS
+
+Features:
+  $enable_features
+
+Developer:
+  Google Tests:  $gtest_path
+  Code Coverage: $USE_LCOV
+  Generate Manuals:  $enable_man
+
+END
+
+cat config.report
+cat <<EOF
+
+  Now you can type "make" to build BIND 10
+
+EOF
+
