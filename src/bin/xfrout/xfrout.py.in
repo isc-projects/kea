@@ -30,7 +30,7 @@ from isc.cc import SessionError
 import socket
 from optparse import OptionParser, OptionValueError
 try:
-    from bind10_xfr import *
+    from libxfr_python import *
     from libdns_python import *
 except ImportError as e:
     # C++ loadable module may not be installed; even so the xfrout process
@@ -431,6 +431,7 @@ if '__main__' == __name__:
         set_cmd_options(parser)
         (options, args) = parser.parse_args()
         verbose_mode = options.verbose
+        verbose_mode = True # XX remove
 
         set_signal_handler()
         xfrout_server = XfroutServer()
