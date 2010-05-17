@@ -6,7 +6,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 #libdns_python_name_la_LDFLAGS = $(PYTHON_LDFLAGS)
 
 #lib_LTLIBRARIES = libdns_python_name.la libdns_python_rrset.la
-lib_LTLIBRARIES = libdns_python.la
+pyexec_LTLIBRARIES = libdns_python.la
 libdns_python_la_SOURCES = libdns_python.cc libdns_python_common.cc
 libdns_python_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
 libdns_python_la_LDFLAGS = $(PYTHON_LDFLAGS)

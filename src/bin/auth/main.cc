@@ -43,7 +43,7 @@
 #include <cc/data.h>
 #include <config/ccsession.h>
 
-#if defined(HAVE_BOOST_SYSTEM) && defined(HAVE_BOOST_PYTHON)
+#if defined(HAVE_BOOST_SYSTEM)
 #define USE_XFROUT
 #include <xfr/xfrout_client.h>
 #endif
