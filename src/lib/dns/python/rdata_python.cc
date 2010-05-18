@@ -150,6 +150,9 @@ Rdata_init(s_Rdata* self, PyObject* args)
 static void
 Rdata_destroy(s_Rdata* self)
 {
+    // Clear the shared_ptr so that its reference count is zero
+    // before we call tp_free() (there is no direct release())
+    self->rdata.reset();
     Py_TYPE(self)->tp_free(self);
 }
 

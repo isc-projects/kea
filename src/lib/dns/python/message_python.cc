@@ -1490,10 +1490,8 @@ Message_init(s_Message* self, PyObject* args)
         PyErr_Clear();
         if (i == Message::PARSE) {
             self->message = new Message(Message::PARSE);
-            Py_INCREF(self);
             return 0;
         } else if (i == Message::RENDER) {
-            Py_INCREF(self);
             self->message = new Message(Message::RENDER);
             return 0;
         } else {
@@ -1711,7 +1709,7 @@ Message_getQuestion(s_Message* self)
          ++qi) {
         s_Question *question = (s_Question*)question_type.tp_alloc(&question_type, 0);
         if (question != NULL) {
-            question->question = new Question(*qi->get());
+            question->question = *qi;
             if (question->question == NULL)
               {
                 Py_DECREF(question);
@@ -1768,10 +1766,8 @@ Message_addQuestion(s_Message* self, PyObject* args)
         return NULL;
     }
 
-    Py_INCREF(question);
-    QuestionPtr question_ptr = QuestionPtr(question->question);
-    self->message->addQuestion(question_ptr);
-
+    self->message->addQuestion(question->question);
+    
     Py_RETURN_NONE;
 }
 
@@ -1786,7 +1782,6 @@ Message_addRRset(s_Message* self, PyObject* args)
                                            &PyBool_Type, &sign)) {
         return NULL;
     }
-    Py_INCREF(rrset);
     
     if (sign == Py_True) {
         self->message->addRRset(*section->section, rrset->rrset, true);
