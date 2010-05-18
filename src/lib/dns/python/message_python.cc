@@ -669,9 +669,18 @@ Opcode_richcmp(s_Opcode* self, s_Opcode* other, int op)
 //
 // Rcode
 //
+
+// We added a helper variable static_code here
+// Since we can create Rcodes dynamically with Rcode(int), but also
+// use the static globals (Rcode::NOERROR() etc), we use this
+// variable to see if the code came from one of the latter, in which
+// case Rcode_destroy should not free it (the other option is to
+// allocate new Rcodes for every use of the static ones, but this
+// seems more efficient).
 typedef struct {
     PyObject_HEAD
     const Rcode* rcode;
+    bool static_code;
 } s_Rcode;
 
 static int Rcode_init(s_Rcode* self, PyObject* args);
@@ -783,6 +792,7 @@ Rcode_init(s_Rcode* self UNUSED_PARAM, PyObject* args UNUSED_PARAM)
     if (PyArg_ParseTuple(args, "h", &code)) {
         try {
             self->rcode = new Rcode(code);
+            self->static_code = false;
         } catch (isc::OutOfRange) {
             PyErr_SetString(PyExc_OverflowError,
                             "rcode out of range");
@@ -799,7 +809,9 @@ Rcode_destroy(s_Rcode* self)
 {
     // We only use the consts from Rcode, so don't
     // delete self->rcode here
-    delete self->rcode;
+    if (!self->static_code) {
+        delete self->rcode;
+    }
     self->rcode = NULL;
     Py_TYPE(self)->tp_free(self);
 }
@@ -829,12 +841,12 @@ Rcode_NOERROR(s_Rcode* self UNUSED_PARAM)
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::NOERROR();
+        ret->static_code = true;
         if (ret->rcode == NULL) {
             Py_DECREF(ret);
             return NULL;
         }
     }
-    Py_INCREF(ret);
     return (PyObject*) ret;
 }
 
@@ -844,12 +856,12 @@ Rcode_FORMERR(s_Rcode* self UNUSED_PARAM)
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::FORMERR();
+        ret->static_code = true;
         if (ret->rcode == NULL) {
             Py_DECREF(ret);
             return NULL;
         }
     }
-    Py_INCREF(ret);
     return (PyObject*) ret;
 }
 
@@ -859,12 +871,12 @@ Rcode_SERVFAIL(s_Rcode* self UNUSED_PARAM)
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::SERVFAIL();
+        ret->static_code = true;
         if (ret->rcode == NULL) {
             Py_DECREF(ret);
             return NULL;
         }
     }
-    Py_INCREF(ret);
     return (PyObject*) ret;
 }
 
@@ -874,12 +886,12 @@ Rcode_NXDOMAIN(s_Rcode* self UNUSED_PARAM)
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::NXDOMAIN();
+        ret->static_code = true;
         if (ret->rcode == NULL) {
             Py_DECREF(ret);
             return NULL;
         }
     }
-    Py_INCREF(ret);
     return (PyObject*) ret;
 }
 
@@ -889,12 +901,12 @@ Rcode_NOTIMP(s_Rcode* self UNUSED_PARAM)
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::NOTIMP();
+        ret->static_code = true;
         if (ret->rcode == NULL) {
             Py_DECREF(ret);
             return NULL;
         }
     }
-    Py_INCREF(ret);
     return (PyObject*) ret;
 }
 
@@ -904,12 +916,12 @@ Rcode_REFUSED(s_Rcode* self UNUSED_PARAM)
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::REFUSED();
+        ret->static_code = true;
         if (ret->rcode == NULL) {
             Py_DECREF(ret);
             return NULL;
         }
     }
-    Py_INCREF(ret);
     return (PyObject*) ret;
 }
 
@@ -919,12 +931,12 @@ Rcode_YXDOMAIN(s_Rcode* self UNUSED_PARAM)
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::YXDOMAIN();
+        ret->static_code = true;
         if (ret->rcode == NULL) {
             Py_DECREF(ret);
             return NULL;
         }
     }
-    Py_INCREF(ret);
     return (PyObject*) ret;
 }
 
@@ -934,12 +946,12 @@ Rcode_YXRRSET(s_Rcode* self UNUSED_PARAM)
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::YXRRSET();
+        ret->static_code = true;
         if (ret->rcode == NULL) {
             Py_DECREF(ret);
             return NULL;
         }
     }
-    Py_INCREF(ret);
     return (PyObject*) ret;
 }
 
@@ -949,12 +961,12 @@ Rcode_NXRRSET(s_Rcode* self UNUSED_PARAM)
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::NXRRSET();
+        ret->static_code = true;
         if (ret->rcode == NULL) {
             Py_DECREF(ret);
             return NULL;
         }
     }
-    Py_INCREF(ret);
     return (PyObject*) ret;
 }
 
@@ -964,12 +976,12 @@ Rcode_NOTAUTH(s_Rcode* self UNUSED_PARAM)
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::NOTAUTH();
+        ret->static_code = true;
         if (ret->rcode == NULL) {
             Py_DECREF(ret);
             return NULL;
         }
     }
-    Py_INCREF(ret);
     return (PyObject*) ret;
 }
 
@@ -979,12 +991,12 @@ Rcode_NOTZONE(s_Rcode* self UNUSED_PARAM)
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::NOTZONE();
+        ret->static_code = true;
         if (ret->rcode == NULL) {
             Py_DECREF(ret);
             return NULL;
         }
     }
-    Py_INCREF(ret);
     return (PyObject*) ret;
 }
 
@@ -994,12 +1006,12 @@ Rcode_RESERVED11(s_Rcode* self UNUSED_PARAM)
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::RESERVED11();
+        ret->static_code = true;
         if (ret->rcode == NULL) {
             Py_DECREF(ret);
             return NULL;
         }
     }
-    Py_INCREF(ret);
     return (PyObject*) ret;
 }
 
@@ -1009,12 +1021,12 @@ Rcode_RESERVED12(s_Rcode* self UNUSED_PARAM)
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::RESERVED12();
+        ret->static_code = true;
         if (ret->rcode == NULL) {
             Py_DECREF(ret);
             return NULL;
         }
     }
-    Py_INCREF(ret);
     return (PyObject*) ret;
 }
 
@@ -1024,12 +1036,12 @@ Rcode_RESERVED13(s_Rcode* self UNUSED_PARAM)
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::RESERVED13();
+        ret->static_code = true;
         if (ret->rcode == NULL) {
             Py_DECREF(ret);
             return NULL;
         }
     }
-    Py_INCREF(ret);
     return (PyObject*) ret;
 }
 
@@ -1039,12 +1051,12 @@ Rcode_RESERVED14(s_Rcode* self UNUSED_PARAM)
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::RESERVED14();
+        ret->static_code = true;
         if (ret->rcode == NULL) {
             Py_DECREF(ret);
             return NULL;
         }
     }
-    Py_INCREF(ret);
     return (PyObject*) ret;
 }
 
@@ -1054,12 +1066,12 @@ Rcode_RESERVED15(s_Rcode* self UNUSED_PARAM)
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::RESERVED15();
+        ret->static_code = true;
         if (ret->rcode == NULL) {
             Py_DECREF(ret);
             return NULL;
         }
     }
-    Py_INCREF(ret);
     return (PyObject*) ret;
 }
 
@@ -1069,12 +1081,12 @@ Rcode_BADVERS(s_Rcode* self UNUSED_PARAM)
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::BADVERS();
+        ret->static_code = true;
         if (ret->rcode == NULL) {
             Py_DECREF(ret);
             return NULL;
         }
     }
-    Py_INCREF(ret);
     return (PyObject*) ret;
 }
 
@@ -1370,7 +1382,7 @@ static PyObject* Message_getSection(s_Message* self, PyObject* args);
 //static PyObject* Message_endSection(s_Message* self, PyObject* args);
 
 // TODO: Question not wrapped yet
-//static PyObject* Message_addQuestion(s_Message* self, PyObject* args);
+static PyObject* Message_addQuestion(s_Message* self, PyObject* args);
 static PyObject* Message_addRRset(s_Message* self, PyObject* args);
 static PyObject* Message_clear(s_Message* self, PyObject* args);
 static PyObject* Message_makeResponse(s_Message* self);
@@ -1402,7 +1414,7 @@ static PyMethodDef Message_methods[] = {
     { "get_rr_count", (PyCFunction)Message_getRRCount, METH_VARARGS, "" },
     { "get_question", (PyCFunction)Message_getQuestion, METH_NOARGS, "Returns a list of all Question object in the message (should be 0 or 1)" },
     { "get_section", (PyCFunction)Message_getSection, METH_VARARGS, "Returns a list of all RRset objects in the given section of the message" },
-//    { "add_question", (PyCFunction)Message_addQuestion, METH_VARARGS, "" },
+    { "add_question", (PyCFunction)Message_addQuestion, METH_VARARGS, "" },
     { "add_rrset", (PyCFunction)Message_addRRset, METH_VARARGS, "" },
     { "clear", (PyCFunction)Message_clear, METH_VARARGS, "" },
     { "make_response", (PyCFunction)Message_makeResponse, METH_NOARGS, "" },
@@ -1723,16 +1735,21 @@ Message_getSection(s_Message* self, PyObject* args)
     for (RRsetIterator rrsi = self->message->beginSection(*section->section);
          rrsi != self->message->endSection(*section->section);
          ++rrsi) {
+
         s_RRset *rrset = (s_RRset*)rrset_type.tp_alloc(&rrset_type, 0);
         if (rrset != NULL) {
-            rrset->rrset = rrsi->get();
+            rrset->rrset = *rrsi;
             if (rrset->rrset == NULL)
               {
                 Py_DECREF(rrset);
+                Py_DECREF(list);
                 return NULL;
               }
         }
         PyList_Append(list, (PyObject*) rrset);
+        // PyList_Append increases refcount, so we remove ours since
+        // we don't need it anymore
+        Py_DECREF(rrset);
     }
     return list;
 }
@@ -1742,11 +1759,26 @@ Message_getSection(s_Message* self, PyObject* args)
 //static PyObject* Message_beginSection(s_Message* self, PyObject* args);
 //static PyObject* Message_endSection(s_Message* self, PyObject* args);
 //static PyObject* Message_addQuestion(s_Message* self, PyObject* args);
+static PyObject*
+Message_addQuestion(s_Message* self, PyObject* args)
+{
+    s_Question *question;
+
+    if (!PyArg_ParseTuple(args, "O!", &question_type, &question)) {
+        return NULL;
+    }
+
+    Py_INCREF(question);
+    QuestionPtr question_ptr = QuestionPtr(question->question);
+    self->message->addQuestion(question_ptr);
+
+    Py_RETURN_NONE;
+}
 
 static PyObject*
 Message_addRRset(s_Message* self, PyObject* args)
 {
-    PyObject *sign;
+    PyObject *sign = Py_False;
     s_Section* section;
     s_RRset* rrset;
     if (!PyArg_ParseTuple(args, "O!O!|O!", &section_type, &section,
@@ -1755,12 +1787,11 @@ Message_addRRset(s_Message* self, PyObject* args)
         return NULL;
     }
     Py_INCREF(rrset);
-    RRsetPtr rrset_ptr = RRsetPtr(rrset->rrset);
-
+    
     if (sign == Py_True) {
-        self->message->addRRset(*section->section, rrset_ptr, true);
+        self->message->addRRset(*section->section, rrset->rrset, true);
     } else {
-        self->message->addRRset(*section->section, rrset_ptr, false);
+        self->message->addRRset(*section->section, rrset->rrset, false);
     }
     
     Py_RETURN_NONE;
