@@ -258,10 +258,10 @@ class XfroutSession(BaseRequestHandler):
             # TODO: RRType.SOA() ?
             if RRType(rr_data[5]) == RRType("SOA"): #ignore soa record
                 continue
-           
+
             rrset_ = self._create_rrset_from_db_record(rr_data)
             msg.add_rrset(Section.ANSWER(), rrset_)
-            message_len = self._get_message_len(msg) 
+            message_len = self._get_message_len(msg)
             if message_len != old_message_len:
                 old_message_len = message_len
                 continue
@@ -431,7 +431,6 @@ if '__main__' == __name__:
         set_cmd_options(parser)
         (options, args) = parser.parse_args()
         verbose_mode = options.verbose
-        verbose_mode = True # XX remove
 
         set_signal_handler()
         xfrout_server = XfroutServer()
