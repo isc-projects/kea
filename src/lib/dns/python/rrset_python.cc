@@ -51,7 +51,7 @@ using namespace isc::dns;
 // RRset
 typedef struct {
     PyObject_HEAD
-    RRset* rrset;
+    RRsetPtr rrset;
 } s_RRset;
 
 static int RRset_init(s_RRset* self, PyObject* args);
@@ -138,7 +138,7 @@ static PyTypeObject rrset_type = {
 };
 
 static int
-RRset_init(s_RRset* self UNUSED_PARAM, PyObject* args UNUSED_PARAM)
+RRset_init(s_RRset* self, PyObject* args UNUSED_PARAM)
 {
     s_Name* name;
     s_RRClass* rrclass;
@@ -150,21 +150,19 @@ RRset_init(s_RRset* self UNUSED_PARAM, PyObject* args UNUSED_PARAM)
                                            &rrtype_type, &rrtype,
                                            &rrttl_type, &rrttl
        )) {
-        self->rrset = new RRset(*name->name, *rrclass->rrclass,
-                                *rrtype->rrtype, *rrttl->rrttl);
+        Py_INCREF(self);
+        self->rrset = RRsetPtr(new RRset(*name->name, *rrclass->rrclass,
+                                *rrtype->rrtype, *rrttl->rrttl));
         return 0;
     }
 
-    self->rrset = NULL;
+    self->rrset = RRsetPtr();
     return -1;
 }
 
 static void
 RRset_destroy(s_RRset* self)
 {
-    if (self->rrset != NULL)
-        delete self->rrset;
-    self->rrset = NULL;
     Py_TYPE(self)->tp_free(self);
 }
 
