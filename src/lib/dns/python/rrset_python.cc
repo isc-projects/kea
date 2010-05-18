@@ -150,7 +150,6 @@ RRset_init(s_RRset* self, PyObject* args UNUSED_PARAM)
                                            &rrtype_type, &rrtype,
                                            &rrttl_type, &rrttl
        )) {
-        Py_INCREF(self);
         self->rrset = RRsetPtr(new RRset(*name->name, *rrclass->rrclass,
                                 *rrtype->rrtype, *rrttl->rrttl));
         return 0;
@@ -163,6 +162,9 @@ RRset_init(s_RRset* self, PyObject* args UNUSED_PARAM)
 static void
 RRset_destroy(s_RRset* self)
 {
+    // Clear the shared_ptr so that its reference count is zero
+    // before we call tp_free() (there is no direct release())
+    self->rrset.reset();
     Py_TYPE(self)->tp_free(self);
 }
 

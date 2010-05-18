@@ -38,7 +38,7 @@ using namespace isc::dns;
 // The s_* Class simply coverst one instantiation of the object
 typedef struct {
     PyObject_HEAD
-    Question* question;
+    QuestionPtr question;
 } s_Question;
 
 //
@@ -153,14 +153,14 @@ Question_init(s_Question* self, PyObject* args)
                                                &rrclass_type, &rrclass,
                                                &rrtype_type, &rrtype
            )) {
-            self->question = new Question(*name->name, *rrclass->rrclass,
-                                          *rrtype->rrtype);
+            self->question = QuestionPtr(new Question(*name->name, *rrclass->rrclass,
+                                          *rrtype->rrtype));
             return 0;
         } else if (PyArg_ParseTuple(args, "y#|I", &b, &len, &position)) {
             PyErr_Clear();
             InputBuffer inbuf(b, len);
             inbuf.setPosition(position);
-            self->question = new Question(inbuf);
+            self->question = QuestionPtr(new Question(inbuf));
             return 0;
         }
     } catch (isc::dns::DNSMessageFORMERR dmfe) {
@@ -177,7 +177,7 @@ Question_init(s_Question* self, PyObject* args)
         return -1;
     }
 
-    self->question = NULL;
+    self->question = QuestionPtr();
     
     PyErr_Clear();
     PyErr_SetString(PyExc_TypeError,
@@ -188,9 +188,7 @@ Question_init(s_Question* self, PyObject* args)
 static void
 Question_destroy(s_Question* self)
 {
-    if (self->question != NULL)
-        delete self->question;
-    self->question = NULL;
+    self->question.reset();
     Py_TYPE(self)->tp_free(self);
 }
 
