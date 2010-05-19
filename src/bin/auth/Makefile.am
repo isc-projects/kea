@@ -26,11 +26,11 @@ auth.spec: auth.spec.pre
 spec_config.h: spec_config.h.pre
 	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" spec_config.h.pre >$@
 
+BUILT_SOURCES = spec_config.h 
 pkglibexec_PROGRAMS = b10-auth
 b10_auth_SOURCES = auth_srv.cc auth_srv.h
 b10_auth_SOURCES += common.h
 b10_auth_SOURCES += main.cc
-b10_auth_SOURCES += spec_config.h 
 b10_auth_LDADD =  $(top_builddir)/src/lib/datasrc/.libs/libdatasrc.a
 b10_auth_LDADD += $(top_builddir)/src/lib/dns/.libs/libdns.a
 b10_auth_LDADD += $(top_builddir)/src/lib/config/.libs/libcfgclient.a
