@@ -219,8 +219,7 @@ class CommandControl():
         self._verbose = verbose
         self.cc = isc.cc.Session()
         self.cc.group_subscribe('Cmd-Ctrld')
-        self.command_spec = self.get_cmd_specification()
-        self.config_spec = self.get_data_specification()
+        self.module_spec = self.get_module_specification()
         self.config_data = self.get_config_data()
 
     def _parse_command_result(self, rcode, reply):
@@ -228,10 +227,6 @@ class CommandControl():
         if rcode != 0:
             return {}
         return reply
-
-    def get_cmd_specification(self): 
-        rcode, reply = self.send_command('ConfigManager', isc.config.ccsession.COMMAND_GET_COMMANDS_SPEC)
-        return self._parse_command_result(rcode, reply)
 
     def get_config_data(self):
         '''Get config data for all modules from configmanager '''
@@ -244,7 +239,7 @@ class CommandControl():
         if module_name == 'ConfigManager' and command_name == isc.config.ccsession.COMMAND_SET_CONFIG:
             self.config_data = self.get_config_data()
 
-    def get_data_specification(self):
+    def get_module_specification(self):
         rcode, reply = self.send_command('ConfigManager', isc.config.ccsession.COMMAND_GET_MODULE_SPEC)
         return self._parse_command_result(rcode, reply)
 
@@ -253,10 +248,8 @@ class CommandControl():
         (message, env) = self.cc.group_recvmsg(True)
         command, arg = isc.config.ccsession.parse_command(message)
         while command:
-            if command == isc.config.ccsession.COMMAND_COMMANDS_UPDATE:
-                self.command_spec[arg[0]] = arg[1]
-            elif command == isc.config.ccsession.COMMAND_SPECIFICATION_UPDATE:
-                self.config_spec[arg[0]] = arg[1]
+            if command == isc.config.ccsession.COMMAND_MODULE_SPECIFICATION_UPDATE:
+                self.module_spec[arg[0]] = arg[1]
             elif command == isc.config.ccsession.COMMAND_SHUTDOWN:
                 return False
             (message, env) = self.cc.group_recvmsg(True)
@@ -278,11 +271,12 @@ class CommandControl():
         if module_name == 'ConfigManager':
             return self.send_command(module_name, command_name, params)
 
-        if module_name not in self.command_spec.keys():
+        if module_name not in self.module_spec.keys():
             return 1, {'error' : 'unknown module'}
 
         cmd_valid = False
-        commands = self.command_spec[module_name]
+        # todo: make validate_command() in ModuleSpec class
+        commands = self.module_spec[module_name]["commands"]
         for cmd in commands:
             if cmd['command_name'] == command_name:
                 cmd_valid = True
@@ -383,12 +377,10 @@ class SecureHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
         '''Currently only support the following three url GET request '''
         rcode, reply = http.client.NO_CONTENT, []        
         if not module:
-            if id == 'command_spec':
-               rcode, reply = http.client.OK, self.cmdctrl.command_spec
-            elif id == 'config_data':
+            if id == 'config_data':
                rcode, reply = http.client.OK, self.cmdctrl.config_data
-            elif id == 'config_spec':
-               rcode, reply = http.client.OK, self.cmdctrl.config_spec
+            elif id == 'module_spec':
+                rcode, reply = http.client.OK, self.cmdctrl.module_spec
         
         return rcode, reply 
 

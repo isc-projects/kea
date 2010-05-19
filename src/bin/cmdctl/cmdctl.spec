@@ -1,6 +1,7 @@
 {
   "module_spec": {
     "module_name": "Cmdctl",
+    "module_description": "Interface for command and control",
     "config_data": [
       {
         "item_name": "key_file",

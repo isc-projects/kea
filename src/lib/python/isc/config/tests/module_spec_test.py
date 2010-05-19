@@ -75,6 +75,7 @@ class TestModuleSpec(unittest.TestCase):
         self.assertRaises(ModuleSpecError, self.read_spec_file, "spec19.spec")
         self.assertRaises(ModuleSpecError, self.read_spec_file, "spec20.spec")
         self.assertRaises(ModuleSpecError, self.read_spec_file, "spec21.spec")
+        self.assertRaises(ModuleSpecError, self.read_spec_file, "spec26.spec")
 
     def validate_data(self, specfile_name, datafile_name):
         dd = self.read_spec_file(specfile_name);
@@ -97,6 +98,10 @@ class TestModuleSpec(unittest.TestCase):
         self.assertRaises(ModuleSpecError, ModuleSpec, 1)
         module_spec = isc.config.module_spec_from_file(self.spec_file("spec1.spec"), False)
         self.spec1(module_spec)
+
+        module_spec = isc.config.module_spec_from_file(self.spec_file("spec25.spec"), True)
+        self.assertEqual("Spec25", module_spec.get_module_name())
+        self.assertEqual("Just an empty module", module_spec.get_module_description())
 
     def test_str(self):
         module_spec = isc.config.module_spec_from_file(self.spec_file("spec1.spec"), False)

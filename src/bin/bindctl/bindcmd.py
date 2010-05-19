@@ -180,13 +180,9 @@ class BindCmdInterpreter(Cmd):
 
 
     def _update_commands(self):
-        '''Get the commands of all modules. '''
-        cmd_spec = self.send_GET('/command_spec')
-        if not cmd_spec:
-            return
-
-        for module_name in cmd_spec.keys():
-            self._prepare_module_commands(module_name, cmd_spec[module_name])
+        '''Update the commands of all modules. '''
+        for module_name in self.config_data.get_config_item_list():
+            self._prepare_module_commands(self.config_data.get_module_spec(module_name))
 
     def send_GET(self, url, body = None):
         '''Send GET request to cmdctl, session id is send with the name
@@ -222,11 +218,11 @@ class BindCmdInterpreter(Cmd):
         self.prompt = self.location + self.prompt_end
         return stop
 
-    def _prepare_module_commands(self, module_name, module_commands):
+    def _prepare_module_commands(self, module_spec):
         '''Prepare the module commands'''
-        module = ModuleInfo(name = module_name,
-                            desc = "same here")
-        for command in module_commands:
+        module = ModuleInfo(name = module_spec.get_module_name(),
+                            desc = module_spec.get_module_description())
+        for command in module_spec.get_commands_spec():
             cmd = CommandInfo(name = command["command_name"],
                               desc = command["command_description"])
             for arg in command["command_args"]:
