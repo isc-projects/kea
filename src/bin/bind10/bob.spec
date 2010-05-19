@@ -1,6 +1,7 @@
 {
   "module_spec": {
     "module_name": "Boss",
+    "module_description": "Master process",
     "config_data": [
       {
         "item_name": "example_string",

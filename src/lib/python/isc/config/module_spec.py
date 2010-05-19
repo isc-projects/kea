@@ -86,8 +86,18 @@ class ModuleSpec:
 
     def get_module_name(self):
         """Returns a string containing the name of the module as
-           specified by the specification given at __init__"""
+           specified by the specification given at __init__()"""
         return self._module_spec['module_name']
+
+    def get_module_description(self):
+        """Returns a string containing the description of the module as
+           specified by the specification given at __init__().
+           Returns an empty string if there is no description.
+        """
+        if 'module_description' in self._module_spec:
+            return self._module_spec['module_description']
+        else:
+            return ""
 
     def get_full_spec(self):
         """Returns a dict representation of the full module specification"""
@@ -123,6 +133,9 @@ def _check(module_spec):
         raise ModuleSpecError("data specification not a dict")
     if "module_name" not in module_spec:
         raise ModuleSpecError("no module_name in module_spec")
+    if "module_description" in module_spec and \
+       type(module_spec["module_description"]) != str:
+        raise ModuleSpecError("module_description is not a string")
     if "config_data" in module_spec:
         _check_config_spec(module_spec["config_data"])
     if "commands" in module_spec:

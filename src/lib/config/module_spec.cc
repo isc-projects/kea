@@ -145,6 +145,7 @@ check_command_list(const ElementPtr& spec) {
 static void
 check_data_specification(const ElementPtr& spec) {
     check_leaf_item(spec, "module_name", Element::string, true);
+    check_leaf_item(spec, "module_description", Element::string, false);
     // config_data is not mandatory; module could just define
     // commands and have no config
     if (spec->contains("config_data")) {
@@ -202,6 +203,16 @@ const std::string
 ModuleSpec::getModuleName() const
 {
     return module_specification->get("module_name")->stringValue();
+}
+
+const std::string
+ModuleSpec::getModuleDescription() const
+{
+    if (module_specification->contains("module_description")) {
+        return module_specification->get("module_description")->stringValue();
+    } else {
+        return std::string("");
+    }
 }
 
 bool

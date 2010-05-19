@@ -77,6 +77,10 @@ namespace isc { namespace config {
         /// Returns the module name as specified by the specification
         const std::string getModuleName() const;
         
+        /// Returns the module description as specified by the specification
+        /// returns an empty string if there is no description
+        const std::string getModuleDescription() const;
+        
         // returns true if the given element conforms to this data
         // configuration specification
         /// Validates the given configuration data for this specification.

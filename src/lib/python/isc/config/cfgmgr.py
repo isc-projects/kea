@@ -148,11 +148,23 @@ class ConfigManager:
         if module_name in self.module_specs:
             del self.module_specs[module_name]
 
-    def get_module_spec(self, module_name):
+    def get_module_spec(self, module_name = None):
         """Returns the full ModuleSpec for the module with the given
-           module_name"""
-        if module_name in self.module_specs:
-            return self.module_specs[module_name]
+           module_name. If no module name is given, a dict will
+           be returned with 'name': module_spec values. If the
+           module name is given, but does not exist, an empty dict
+           is returned"""
+        if module_name:
+            if module_name in self.module_specs:
+                return self.module_specs[module_name]
+            else:
+                # TODO: log error?
+                return {}
+        else:
+            result = {}
+            for module in self.module_specs:
+                result[module] = self.module_specs[module].get_full_spec()
+            return result
 
     def get_config_spec(self, name = None):
         """Returns a dict containing 'module_name': config_spec for
@@ -201,13 +213,13 @@ class ConfigManager:
             if type(cmd) == dict:
                 if 'module_name' in cmd and cmd['module_name'] != '':
                     module_name = cmd['module_name']
-                    answer = isc.config.ccsession.create_answer(0, self.get_config_spec(module_name))
+                    answer = isc.config.ccsession.create_answer(0, self.get_module_spec(module_name))
                 else:
                     answer = isc.config.ccsession.create_answer(1, "Bad module_name in get_module_spec command")
             else:
                 answer = isc.config.ccsession.create_answer(1, "Bad get_module_spec command, argument not a dict")
         else:
-            answer = isc.config.ccsession.create_answer(0, self.get_config_spec())
+            answer = isc.config.ccsession.create_answer(0, self.get_module_spec())
         return answer
 
     def _handle_get_config(self, cmd):
@@ -303,14 +315,10 @@ class ConfigManager:
         
         # We should make one general 'spec update for module' that
         # passes both specification and commands at once
-        spec_update = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_SPECIFICATION_UPDATE,
-                                                          [ spec.get_module_name(), spec.get_config_spec() ])
+        spec_update = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_MODULE_SPECIFICATION_UPDATE,
+                                                          [ spec.get_module_name(), spec.get_full_spec() ])
         self.cc.group_sendmsg(spec_update, "Cmd-Ctrld")
-        cmds_update = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_COMMANDS_UPDATE,
-                                                          [ spec.get_module_name(), spec.get_commands_spec() ])
-        self.cc.group_sendmsg(cmds_update, "Cmd-Ctrld")
-        answer = isc.config.ccsession.create_answer(0)
-        return answer
+        return isc.config.ccsession.create_answer(0)
 
     def handle_msg(self, msg):
         """Handle a command from the cc channel to the configuration manager"""
