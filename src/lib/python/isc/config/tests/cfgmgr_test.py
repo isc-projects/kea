@@ -264,7 +264,7 @@ class TestConfigManager(unittest.TestCase):
                                 {'result': [0]})
         self._handle_msg_helper({ "command": [ "module_spec", { 'foo': 1 } ] },
                                 {'result': [1, 'Error in data definition: no module_name in module_spec']})
-        self._handle_msg_helper({ "command": [ "get_module_spec" ] }, { 'result': [ 0, { self.spec.get_module_name(): self.spec.get_config_spec() } ]})
+        self._handle_msg_helper({ "command": [ "get_module_spec" ] }, { 'result': [ 0, { self.spec.get_module_name(): self.spec.get_full_spec() } ]})
         self._handle_msg_helper({ "command": [ "get_commands_spec" ] }, { 'result': [ 0, { self.spec.get_module_name(): self.spec.get_commands_spec() } ]})
         # re-add this once we have new way to propagate spec changes (1 instead of the current 2 messages)
         #self.assertEqual(len(self.fake_session.message_queue), 2)
