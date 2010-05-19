@@ -23,6 +23,9 @@ endif
 auth.spec: auth.spec.pre
 	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" auth.spec.pre >$@
 
+spec_config.h: spec_config.h.pre
+	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" spec_config.h.pre >$@
+
 pkglibexec_PROGRAMS = b10-auth
 b10_auth_SOURCES = auth_srv.cc auth_srv.h
 b10_auth_SOURCES += common.h
