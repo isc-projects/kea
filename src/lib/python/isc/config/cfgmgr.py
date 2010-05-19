@@ -25,6 +25,7 @@ import ast
 import pprint
 import os
 import copy
+import tempfile
 from isc.cc import data
 
 class ConfigManagerDataReadError(Exception):
@@ -84,24 +85,35 @@ class ConfigManagerData:
         """Writes the current configuration data to a file. If
            output_file_name is not specified, the file used in
            read_from_file is used."""
+        filename = None
         try:
-            tmp_filename = self.db_filename + ".tmp"
-            file = open(tmp_filename, 'w');
+            file = tempfile.NamedTemporaryFile(mode='w',
+                                               prefix="b10-config.db.",
+                                               dir=self.data_path,
+                                               delete=False)
+            filename = file.name
             pp = pprint.PrettyPrinter(indent=4)
             s = pp.pformat(self.data)
             file.write(s)
             file.write("\n")
             file.close()
             if output_file_name:
-                os.rename(tmp_filename, output_file_name)
+                os.rename(filename, output_file_name)
             else:
-                os.rename(tmp_filename, self.db_filename)
+                os.rename(filename, self.db_filename)
         except IOError as ioe:
             # TODO: log this (level critical)
             print("[b10-cfgmgr] Unable to write config file; configuration not stored: " + str(ioe))
+            # TODO: debug option to keep file?
         except OSError as ose:
             # TODO: log this (level critical)
             print("[b10-cfgmgr] Unable to write config file; configuration not stored: " + str(ose))
+        try:
+            if filename and os.path.exists(filename):
+                os.remove(filename)
+        except OSError:
+            # Ok if we really can't delete it anymore, leave it
+            pass
 
     def __eq__(self, other):
         """Returns True if the data contained is equal. data_path and
