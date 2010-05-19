@@ -44,7 +44,7 @@ else:
     DATAROOTDIR = "@datarootdir@"
     SPECFILE_PATH = "@datadir@/@PACKAGE@".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
 SPECFILE_LOCATION = SPECFILE_PATH + "/xfrout.spec"
-UNIX_SOCKET_FILE = "@@LOCALSTATEDIR@@/auth_xfrout_conn"
+UNIX_SOCKET_FILE = "@localstatedir@".replace("${prefix}", PREFIX) + "/auth_xfrout_conn"
 
 MAX_TRANSFERS_OUT = 10
 verbose_mode = False
