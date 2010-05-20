@@ -664,6 +664,9 @@ run_server(const char* port, const bool use_ipv4, const bool use_ipv6,
         FD_SET(ss, &fds);
         ++nfds;
 
+        if (srv->configSession()->hasQueuedMsgs()) {
+            srv->configSession()->checkCommand();
+        }
         int n = select(nfds, &fds, NULL, NULL, NULL);
         if (n < 0) {
             if (errno != EINTR) {
