@@ -150,6 +150,16 @@ public:
     int getSocket();
 
     /**
+     * Optional optimization for checkCommand loop; returns true
+     * if there are unhandled queued messages in the cc session.
+     * (if either this is true or there is data on the socket found
+     * by the select() call on getSocket(), run checkCommand())
+     * 
+     * @return true if there are unhandled queued messages
+     */
+    bool hasQueuedMsgs();
+
+    /**
      * Check if there is a command or config change on the command
      * session. If so, the appropriate handler is called if set.
      * If not set, a default answer is returned.

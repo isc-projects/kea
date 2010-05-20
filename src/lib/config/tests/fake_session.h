@@ -74,15 +74,16 @@ namespace isc {
             void startRead(boost::function<void()> read_callback);
 
             void establish();
+            bool connect();
             void disconnect();
             void sendmsg(isc::data::ElementPtr& msg);
             void sendmsg(isc::data::ElementPtr& env,
                          isc::data::ElementPtr& msg);
             bool recvmsg(isc::data::ElementPtr& msg,
-                         bool nonblock = true);
+                         bool nonblock = true, int seq = -1);
             bool recvmsg(isc::data::ElementPtr& env,
                          isc::data::ElementPtr& msg,
-                         bool nonblock = true);
+                         bool nonblock = true, int seq = -1);
             void subscribe(std::string group,
                            std::string instance = "*");
             void unsubscribe(std::string group,
@@ -93,9 +94,11 @@ namespace isc {
                                        std::string to = "*");
             bool group_recvmsg(isc::data::ElementPtr& envelope,
                                isc::data::ElementPtr& msg,
-                               bool nonblock = true);
+                               bool nonblock = true,
+                               int seq = -1);
             unsigned int reply(isc::data::ElementPtr& envelope,
                                isc::data::ElementPtr& newmsg);
+            bool hasQueuedMsgs();
 
         };
     } // namespace cc

@@ -54,7 +54,7 @@ namespace cc {
 
 class SessionImpl {
 public:
-    SessionImpl() : sequence_(-1) {}
+    SessionImpl() : sequence_(-1) { queue_ = Element::createFromString("[]"); }
     virtual ~SessionImpl() {}
     virtual void establish() = 0; 
     virtual int getSocket() = 0;
@@ -63,9 +63,10 @@ public:
     virtual size_t readDataLength() = 0;
     virtual void readData(void* data, size_t datalen) = 0;
     virtual void startRead(boost::function<void()> user_handler) = 0;
-
+    
     int sequence_; // the next sequence number to use
     std::string lname_;
+    ElementPtr queue_;
 };
 
 #ifdef HAVE_BOOST_SYSTEM
@@ -352,35 +353,35 @@ Session::sendmsg(ElementPtr& env, ElementPtr& msg) {
 }
 
 bool
-Session::recvmsg(ElementPtr& msg, bool nonblock UNUSED_PARAM) {
-    size_t length = impl_->readDataLength();
-
-    unsigned short header_length_net;
-    impl_->readData(&header_length_net, sizeof(header_length_net));
-
-    unsigned short header_length = ntohs(header_length_net);
-    if (header_length != length) {
-        isc_throw(SessionError, "Length parameters invalid: total=" << length
-                  << ", header=" << header_length);
-    }
-
-    std::vector<char> buffer(length);
-    impl_->readData(&buffer[0], length);
-
-    std::string wire = std::string(&buffer[0], length);
-    std::stringstream wire_stream;
-    wire_stream << wire;
-
-    msg = Element::fromWire(wire_stream, length);
-
-    return (true);
-    // XXXMLG handle non-block here, and return false for short reads
+Session::recvmsg(ElementPtr& msg, bool nonblock, int seq) {
+    ElementPtr l_env;
+    return recvmsg(l_env, msg, nonblock, seq);
 }
 
 bool
-Session::recvmsg(ElementPtr& env, ElementPtr& msg, bool nonblock UNUSED_PARAM) {
+Session::recvmsg(ElementPtr& env, ElementPtr& msg,
+                 bool nonblock, int seq) {
     size_t length = impl_->readDataLength();
-
+    ElementPtr l_env, l_msg;
+    if (hasQueuedMsgs()) {
+        ElementPtr q_el;
+        for (int i = 0; i < impl_->queue_->size(); i++) {
+            q_el = impl_->queue_->get(i);
+            if (( seq == -1 &&
+                  !q_el->get(0)->contains("reply")
+                ) || (
+                  q_el->get(0)->contains("reply") &&
+                  q_el->get(0)->get("reply")->intValue() == seq
+                )
+               ) {
+                   env = q_el->get(0);
+                   msg = q_el->get(1);
+                   impl_->queue_->remove(i);
+                   return true;
+            }
+        }
+    }
+    
     unsigned short header_length_net;
     impl_->readData(&header_length_net, sizeof(header_length_net));
 
@@ -400,13 +401,28 @@ Session::recvmsg(ElementPtr& env, ElementPtr& msg, bool nonblock UNUSED_PARAM) {
                                         length - header_length);
     std::stringstream header_wire_stream;
     header_wire_stream << header_wire;
-    env = Element::fromWire(header_wire_stream, header_length);
+    l_env = Element::fromWire(header_wire_stream, header_length);
     
     std::stringstream body_wire_stream;
     body_wire_stream << body_wire;
-    msg = Element::fromWire(body_wire_stream, length - header_length);
-
-    return (true);
+    l_msg = Element::fromWire(body_wire_stream, length - header_length);
+    if ((seq == -1 &&
+         !l_env->contains("reply")
+        ) || (
+         l_env->contains("reply") &&
+         l_env->get("reply")->intValue() == seq
+        )
+       ) {
+        env = l_env;
+        msg = l_msg;
+        return true;
+    } else {
+        ElementPtr q_el = Element::createFromString("[]");
+        q_el->add(l_env);
+        q_el->add(l_msg);
+        impl_->queue_->add(q_el);
+        return recvmsg(env, msg, nonblock, seq);
+    }
     // XXXMLG handle non-block here, and return false for short reads
 }
 
@@ -432,47 +448,55 @@ Session::unsubscribe(std::string group, std::string instance) {
     sendmsg(env);
 }
 
-unsigned int
+int
 Session::group_sendmsg(ElementPtr msg, std::string group,
                        std::string instance, std::string to)
 {
     ElementPtr env = Element::create(std::map<std::string, ElementPtr>());
-
+    int nseq = ++impl_->sequence_;
+    
     env->set("type", Element::create("send"));
     env->set("from", Element::create(impl_->lname_));
     env->set("to", Element::create(to));
     env->set("group", Element::create(group));
     env->set("instance", Element::create(instance));
-    env->set("seq", Element::create(impl_->sequence_));
+    env->set("seq", Element::create(nseq));
     //env->set("msg", Element::create(msg->toWire()));
 
     sendmsg(env, msg);
-
-    return (++impl_->sequence_);
+    return nseq;
 }
 
 bool
 Session::group_recvmsg(ElementPtr& envelope, ElementPtr& msg,
-                       bool nonblock)
+                       bool nonblock, int seq)
 {
-    return (recvmsg(envelope, msg, nonblock));
+    return (recvmsg(envelope, msg, nonblock, seq));
 }
 
-unsigned int
+int
 Session::reply(ElementPtr& envelope, ElementPtr& newmsg) {
     ElementPtr env = Element::create(std::map<std::string, ElementPtr>());
-
+    int nseq = ++impl_->sequence_;
+    
     env->set("type", Element::create("send"));
     env->set("from", Element::create(impl_->lname_));
     env->set("to", Element::create(envelope->get("from")->stringValue()));
     env->set("group", Element::create(envelope->get("group")->stringValue()));
     env->set("instance", Element::create(envelope->get("instance")->stringValue()));
-    env->set("seq", Element::create(impl_->sequence_));
+    env->set("seq", Element::create(nseq));
     env->set("reply", Element::create(envelope->get("seq")->intValue()));
 
     sendmsg(env, newmsg);
 
-    return (++impl_->sequence_);
+    return nseq;
 }
+
+bool
+Session::hasQueuedMsgs()
+{
+    return (impl_->queue_->size() > 0);
+}
+
 }
 }

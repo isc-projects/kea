@@ -153,6 +153,11 @@ Session::Session(io_service& io_service UNUSED_PARAM)
 Session::~Session() {
 }
 
+bool
+Session::connect() {
+    return true;
+}
+
 void
 Session::disconnect() {
 }
@@ -188,7 +193,7 @@ Session::sendmsg(ElementPtr& env, ElementPtr& msg) {
 }
 
 bool
-Session::recvmsg(ElementPtr& msg, bool nonblock UNUSED_PARAM) {
+Session::recvmsg(ElementPtr& msg, bool nonblock UNUSED_PARAM, int seq UNUSED_PARAM) {
     //cout << "[XX] client asks for message " << endl;
     if (initial_messages &&
         initial_messages->getType() == Element::list &&
@@ -202,7 +207,7 @@ Session::recvmsg(ElementPtr& msg, bool nonblock UNUSED_PARAM) {
 }
 
 bool
-Session::recvmsg(ElementPtr& env, ElementPtr& msg, bool nonblock UNUSED_PARAM) {
+Session::recvmsg(ElementPtr& env, ElementPtr& msg, bool nonblock UNUSED_PARAM, int seq UNUSED_PARAM) {
     //cout << "[XX] client asks for message and env" << endl;
     env = ElementPtr();
     if (initial_messages &&
@@ -269,9 +274,9 @@ Session::group_sendmsg(ElementPtr msg, std::string group,
 
 bool
 Session::group_recvmsg(ElementPtr& envelope, ElementPtr& msg,
-                       bool nonblock)
+                       bool nonblock, int seq)
 {
-    return (recvmsg(envelope, msg, nonblock));
+    return (recvmsg(envelope, msg, nonblock, seq));
 }
 
 unsigned int
@@ -280,6 +285,11 @@ Session::reply(ElementPtr& envelope, ElementPtr& newmsg) {
     //cout << "[XX] env: " << envelope << endl;
     addMessage(newmsg, envelope->get("group")->stringValue(), envelope->get("to")->stringValue());
     return 1;
+}
+
+bool
+Session::hasQueuedMsgs() {
+    return false;
 }
 
 }
