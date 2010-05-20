@@ -123,6 +123,14 @@ class XfrinConnection(asyncore.dispatcher):
 
         self._send_data(header_len)
         self._send_data(obuf.get_data())
+
+    def _asyncore_loop(self):
+        '''
+This method is a trivial wrapper for asyncore.loop().  It's extracted from
+_get_request_response so that we can test the rest of the code without
+involving actual communication with a remote server.
+'''
+        asyncore.loop(self._idle_timeout, count = 1)
     
     def _get_request_response(self, size):
         recv_size = 0
@@ -130,7 +138,7 @@ class XfrinConnection(asyncore.dispatcher):
         while recv_size < size:
             self._recv_time_out = True
             self._need_recv_size = size - recv_size
-            asyncore.loop(self._idle_timeout, count = 1)
+            self._asyncore_loop()
             if self._recv_time_out:
                 raise XfrinException('receive data from socket time out.')
 
@@ -320,13 +328,22 @@ class XfrinRecorder():
 
 class Xfrin():
     def __init__(self, verbose = False):
-        self._cc = isc.config.ModuleCCSession(SPECFILE_LOCATION, self.config_handler, self.command_handler)
-        self._cc.start()
+        self._cc_setup()
         self._max_transfers_in = 10
         self.recorder = XfrinRecorder()
         self._shutdown_event = threading.Event()
         self._verbose = verbose
 
+    def _cc_setup(self):
+        '''
+This method is used only as part of initialization, but is implemented
+separately for convenience of unit tests; by letting the test code override
+this method we can test most of this class without requiring a command channel.
+'''
+        self._cc = isc.config.ModuleCCSession(SPECFILE_LOCATION,
+                                              self.config_handler,
+                                              self.command_handler)
+        self._cc.start()
 
     def config_handler(self, new_config):
         # TODO, process new config data
@@ -415,7 +432,7 @@ class Xfrin():
                                                 self._shutdown_event,
                                                 master_addr,
                                                 port, check_soa, self._verbose))
-                                                
+
         xfrin_thread.start()
         return (0, 'zone xfrin is started')
 
