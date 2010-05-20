@@ -23,7 +23,8 @@
 #include <iostream>
 #include <sstream>
 
-#include <asio.hpp>
+#include <asio/io_service.hpp>
+#include <asio/ip/tcp.hpp>
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
