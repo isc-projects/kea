@@ -51,9 +51,8 @@ class MySecureHTTPServer(SecureHTTPServer):
 
 class MyCommandControl(CommandControl):
     def __init__(self):
-        self.command_spec = {}
-        self.config_spec = {}
         self.config_data = {}
+        self.module_spec = {}
 
     def send_command(self, mod, cmd, param):
         return 0, {}
@@ -120,7 +119,7 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
     def test_do_GET_3(self):
         self.handler.headers['cookie'] = 12346
         self.handler.server.user_sessions[12346] = time.time() + 1000000
-        path_vec = ['command_spec', 'config_data', 'config_spec']
+        path_vec = ['config_data', 'module_spec']
         for path in path_vec:
             self.handler.path = '/' + path
             self.handler.do_GET()
@@ -245,8 +244,8 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
         os.remove('check.tmp')
 
         self.handler.path = '/module/command'
-        self.handler.server.cmdctrl.command_spec = {}
-        self.handler.server.cmdctrl.command_spec['module'] = [{'command_name':'command'}, {'command_name': ['data1']} ]
+        self.handler.server.cmdctrl.module_spec = {}
+        self.handler.server.cmdctrl.module_spec['module'] = { 'commands': [{'command_name':'command'}, {'command_name': ['data1']} ] }
         rcode, reply = self.handler._handle_post_request()
         self.assertEqual(http.client.OK, rcode)
 
