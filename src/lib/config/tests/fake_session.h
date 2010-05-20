@@ -25,10 +25,8 @@
 
 #include <cc/data.h>
 
-namespace boost {
 namespace asio {
 class io_service;
-}
 }
 
 // global variables so tests can insert
@@ -65,7 +63,7 @@ namespace isc {
             // public so tests can inspect them
         
             Session();
-            Session(boost::asio::io_service& ioservice);
+            Session(asio::io_service& ioservice);
             ~Session();
 
             // XXX: quick hack to allow the user to watch the socket directly.

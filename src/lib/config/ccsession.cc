@@ -32,9 +32,7 @@
 #include <sstream>
 #include <cerrno>
 
-#ifdef HAVE_BOOST_SYSTEM
 #include <boost/bind.hpp>
-#endif
 #include <boost/foreach.hpp>
 
 #include <cc/data.h>
@@ -188,7 +186,6 @@ ModuleCCSession::readModuleSpecification(const std::string& filename) {
     return module_spec;
 }
 
-#ifdef HAVE_BOOST_SYSTEM
 void
 ModuleCCSession::startCheck() {
     // data available on the command channel.  process it in the synchronous
@@ -201,7 +198,7 @@ ModuleCCSession::startCheck() {
 
 ModuleCCSession::ModuleCCSession(
     std::string spec_file_name,
-    boost::asio::io_service& io_service,
+    asio::io_service& io_service,
     isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config),
     isc::data::ElementPtr(*command_handler)(
         const std::string& command, const isc::data::ElementPtr args)
@@ -213,7 +210,6 @@ ModuleCCSession::ModuleCCSession(
     // register callback for asynchronous read
     session_.startRead(boost::bind(&ModuleCCSession::startCheck, this));
 }
-#endif
 
 ModuleCCSession::ModuleCCSession(
     std::string spec_file_name,

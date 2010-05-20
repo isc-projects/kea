@@ -25,10 +25,8 @@
 
 #include "data.h"
 
-namespace boost {
 namespace asio {
 class io_service;
-}
 }
 
 namespace isc {
@@ -51,7 +49,7 @@ namespace isc {
 
         public:
             Session();
-            Session(boost::asio::io_service& ioservice);
+            Session(asio::io_service& ioservice);
             ~Session();
 
             // XXX: quick hack to allow the user to watch the socket directly.

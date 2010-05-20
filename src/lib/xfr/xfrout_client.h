@@ -19,7 +19,7 @@
 
 #include <string>
 
-#include <boost/asio.hpp>
+#include <asio.hpp>
 #include <exceptions/exceptions.h>
 
 namespace isc {
@@ -31,7 +31,7 @@ public:
         isc::Exception(file, line, what) {}
 };
 
-using boost::asio::local::stream_protocol;
+using asio::local::stream_protocol;
 class XfroutClient {
 public:
     XfroutClient(const std::string& file):
@@ -43,7 +43,7 @@ public:
                               uint16_t msg_len);
 
 private:
-    boost::asio::io_service io_service_;
+    asio::io_service io_service_;
     // The socket used to communicate with the xfrout server.
     stream_protocol::socket socket_;
     const std::string file_path_;

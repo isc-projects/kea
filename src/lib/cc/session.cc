@@ -23,11 +23,12 @@
 #include <iostream>
 #include <sstream>
 
-#ifdef HAVE_BOOST_SYSTEM
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
-#include <boost/asio.hpp>
-#endif
+
+#include <asio.hpp>
+#include <asio/error_code.hpp>
+#include <asio/system_error.hpp>
 
 #include <exceptions/exceptions.h>
 
@@ -38,12 +39,10 @@ using namespace std;
 using namespace isc::cc;
 using namespace isc::data;
 
-#ifdef HAVE_BOOST_SYSTEM
-// some of the boost::asio names conflict with socket API system calls
+// some of the asio names conflict with socket API system calls
 // (e.g. write(2)) so we don't import the entire boost::asio namespace.
-using boost::asio::io_service;
-using boost::asio::ip::tcp;
-#endif
+using asio::io_service;
+using asio::ip::tcp;
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -68,7 +67,6 @@ public:
     std::string lname_;
 };
 
-#ifdef HAVE_BOOST_SYSTEM
 class ASIOSession : public SessionImpl {
 public:
     ASIOSession(io_service& io_service) :
@@ -82,7 +80,7 @@ public:
     virtual void readData(void* data, size_t datalen);
     virtual void startRead(boost::function<void()> user_handler);
 private:
-    void internalRead(const boost::system::error_code& error,
+    void internalRead(const asio::error_code& error,
                       size_t bytes_transferred);
 
 private:
@@ -90,12 +88,12 @@ private:
     tcp::socket socket_;
     uint32_t data_length_;
     boost::function<void()> user_handler_;
-    boost::system::error_code error_;
+    asio::error_code error_;
 };
 
 void
 ASIOSession::establish() {
-    socket_.connect(tcp::endpoint(boost::asio::ip::address_v4::loopback(),
+    socket_.connect(tcp::endpoint(asio::ip::address_v4::loopback(),
                                   9912), error_);
     if (error_) {
         isc_throw(SessionError, "Unable to connect to message queue");
@@ -111,8 +109,8 @@ ASIOSession::disconnect() {
 void
 ASIOSession::writeData(const void* data, size_t datalen) {
     try {
-        boost::asio::write(socket_, boost::asio::buffer(data, datalen));
-    } catch (const boost::system::system_error& boost_ex) {
+        asio::write(socket_, asio::buffer(data, datalen));
+    } catch (const asio::system_error& boost_ex) {
         isc_throw(SessionError, "ASIO write failed: " << boost_ex.what());
     }
 }
@@ -136,8 +134,8 @@ ASIOSession::readDataLength() {
 void
 ASIOSession::readData(void* data, size_t datalen) {
     try {
-        boost::asio::read(socket_, boost::asio::buffer(data, datalen));
-    } catch (const boost::system::system_error& boost_ex) {
+        asio::read(socket_, asio::buffer(data, datalen));
+    } catch (const asio::system_error& boost_ex) {
         // to hide boost specific exceptions, we catch them explicitly
         // and convert it to SessionError.
         isc_throw(SessionError, "ASIO read failed: " << boost_ex.what());
@@ -148,15 +146,15 @@ void
 ASIOSession::startRead(boost::function<void()> user_handler) {
     data_length_ = 0;
     user_handler_ = user_handler;
-    async_read(socket_, boost::asio::buffer(&data_length_,
+    async_read(socket_, asio::buffer(&data_length_,
                                             sizeof(data_length_)),
                boost::bind(&ASIOSession::internalRead, this,
-                           boost::asio::placeholders::error,
-                           boost::asio::placeholders::bytes_transferred));
+                           asio::placeholders::error,
+                           asio::placeholders::bytes_transferred));
 }
 
 void
-ASIOSession::internalRead(const boost::system::error_code& error,
+ASIOSession::internalRead(const asio::error_code& error,
                           size_t bytes_transferred)
 {
     if (!error) {
@@ -170,7 +168,6 @@ ASIOSession::internalRead(const boost::system::error_code& error,
         isc_throw(SessionError, "asynchronous read failed");
     }
 }
-#endif
 
 class SocketSession : public SessionImpl {
 public:
@@ -270,10 +267,8 @@ SocketSession::readData(void* data, const size_t datalen) {
 Session::Session() : impl_(new SocketSession)
 {}
 
-#ifdef HAVE_BOOST_SYSTEM
 Session::Session(io_service& io_service) : impl_(new ASIOSession(io_service))
 {}
-#endif
 
 Session::~Session() {
     delete impl_;
