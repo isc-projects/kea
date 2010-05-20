@@ -20,7 +20,7 @@
 #include "fd_share.h"
 #include "xfrout_client.h"
 
-using boost::asio::local::stream_protocol;
+using asio::local::stream_protocol;
 
 namespace isc {
 namespace xfr {
