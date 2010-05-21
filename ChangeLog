@@ -1,3 +1,6 @@
+   2.	[func]		jinmei
+	lib/dns: added a separate signature for Name::split() as a
+	convenient wrapper for common usage. (Trac #49, svn r1903)
    1.	[bug]		jinmei
 	lib/dns: parameter validation of Name::split() was not sufficient,
 	and invalid parameters could cause integer overflow and make the
