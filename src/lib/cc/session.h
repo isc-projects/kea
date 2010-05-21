@@ -24,6 +24,7 @@
 #include <exceptions/exceptions.h>
 
 #include "data.h"
+#include "session_config.h"
 
 namespace boost {
 namespace asio {

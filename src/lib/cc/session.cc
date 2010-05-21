@@ -88,7 +88,7 @@ private:
 
 private:
     io_service& io_service_;
-    tcp::socket socket_;
+    boost::asio::local::stream_protocol::socket socket_;
     uint32_t data_length_;
     boost::function<void()> user_handler_;
     boost::system::error_code error_;
@@ -96,10 +96,13 @@ private:
 
 void
 ASIOSession::establish() {
-    socket_.connect(tcp::endpoint(boost::asio::ip::address_v4::loopback(),
-                                  9912), error_);
+    const char *socket_file = getenv("BIND10_MSGQ_SOCKET_FILE");
+    if (!socket_file) {
+        socket_file = BIND10_MSGQ_SOCKET_FILE;
+    }
+    socket_.connect(boost::asio::local::stream_protocol::endpoint(socket_file), error_);
     if (error_) {
-        isc_throw(SessionError, "Unable to connect to message queue");
+        isc_throw(SessionError, "Unable to connect to message queue.");
     }
 }
 
@@ -215,27 +218,22 @@ public:
 void
 SocketSession::establish() {
     int s;
-    struct sockaddr_in sin;
+    struct sockaddr_un sun;
 
-    s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    s = socket(AF_UNIX, SOCK_STREAM, IPPROTO_TCP);
     if (s < 0) {
         isc_throw(SessionError, "socket() failed");
     }
     
-    int port = atoi(getenv("ISC_MSGQ_PORT"));
-    if (port == 0) {
-        port = 9912;
+    const char *socket_file = getenv("BIND10_MSGQ_SOCKET_FILE");
+    if (!socket_file) {
+        socket_file = BIND10_MSGQ_SOCKET_FILE;
     }
 
-    sin.sin_family = AF_INET;
-    sin.sin_port = htons(port);
-    sin.sin_addr.s_addr = INADDR_ANY;
+    sun.sun_family = AF_UNIX;
+    strncpy(sun.sun_path, socket_file, 107);
 
-#ifdef HAVE_SIN_LEN
-    sin.sin_len = sizeof(struct sockaddr_in);
-#endif
-
-    if (connect(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
+    if (connect(s, (struct sockaddr *)&sun, sizeof(sun)) < 0) {
         close(s);
         isc_throw(SessionError, "Unable to connect to message queue");
     }

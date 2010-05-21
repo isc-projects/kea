@@ -2,6 +2,7 @@ from msgq import SubscriptionManager, MsgQ
 
 import unittest
 import os
+import socket
 
 #
 # Currently only the subscription part is implemented...  I'd have to mock
@@ -62,6 +63,7 @@ class TestSubscriptionManager(unittest.TestCase):
     def test_open_socket_parameter(self):
         self.assertFalse(os.path.exists("./my_socket_file"))
         msgq = MsgQ("./my_socket_file");
+        msgq.setup()
         self.assertTrue(os.path.exists("./my_socket_file"))
         msgq.shutdown();
         self.assertFalse(os.path.exists("./my_socket_file"))
@@ -70,6 +72,7 @@ class TestSubscriptionManager(unittest.TestCase):
         self.assertFalse(os.path.exists("my_socket_file"))
         os.environ["BIND10_MSGQ_SOCKET_FILE"] = "./my_socket_file"
         msgq = MsgQ();
+        msgq.setup()
         self.assertTrue(os.path.exists("./my_socket_file"))
         msgq.shutdown();
         self.assertFalse(os.path.exists("./my_socket_file"))
@@ -80,13 +83,15 @@ class TestSubscriptionManager(unittest.TestCase):
         socket_file = MsgQ.SOCKET_FILE
         self.assertFalse(os.path.exists(socket_file))
         msgq = MsgQ();
-        self.assertTrue(os.path.exists("./my_socket_file"))
+        msgq.setup()
+        self.assertTrue(os.path.exists(socket_file))
         msgq.shutdown();
-        self.assertFalse(os.path.exists("./my_socket_file"))
+        self.assertFalse(os.path.exists(socket_file))
         pass
 
     def test_open_socket_bad(self):
-        self.assertRaises(Exception, MsgQ("/does/not/exist"))
+        msgq = MsgQ("/does/not/exist")
+        self.assertRaises(socket.error, msgq.setup)
         pass
 
 if __name__ == '__main__':
