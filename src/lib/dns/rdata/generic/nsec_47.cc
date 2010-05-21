@@ -182,7 +182,7 @@ NSEC::toText() const {
         assert(i + 2 <= impl_->typebits_.size());
         const int block = impl_->typebits_.at(i);
         len = impl_->typebits_.at(i + 1);
-        assert(len >= 0 && len <= 32);
+        assert(len > 0 && len <= 32);
         i += 2;
         for (int j = 0; j < len; j++) {
             if (impl_->typebits_.at(i + j) == 0) {
