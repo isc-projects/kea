@@ -112,7 +112,7 @@ NSEC::NSEC(InputBuffer& buffer, size_t rdata_len) {
     for (int i = 0; i < rdata_len; i += len) {
         if (i + 2 > rdata_len) {
             isc_throw(DNSMessageFORMERR, "NSEC RDATA from wire: "
-                      "incomplete bit map filed");
+                      "incomplete bit map field");
         }
         block = typebits[i];
         len = typebits[i + 1];
