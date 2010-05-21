@@ -84,7 +84,7 @@ public:
 
 ///
 /// \brief A standard DNS module exception that is thrown if the name parser
-/// finds the input (string or wire-format data) is incomplete.
+/// finds the input (string or wire-format %data) is incomplete.
 ///
 /// An attempt of constructing a name from an empty string will trigger this
 /// exception.
@@ -168,13 +168,13 @@ private:
 ///
 /// The \c Name class encapsulates DNS names.
 ///
-/// It provides interfaces to construct a name from string or wire-format data,
-/// transform a name into a string or wire-format data, compare two names, get
+/// It provides interfaces to construct a name from string or wire-format %data,
+/// transform a name into a string or wire-format %data, compare two names, get
 /// access to various properties of a name, etc.
 ///
-/// Notes to developers: Internally, a name object maintains the name data
+/// Notes to developers: Internally, a name object maintains the name %data
 /// in wire format as an instance of \c std::string.  Since many string
-/// implementations adopt copy-on-write data sharing, we expect this approach
+/// implementations adopt copy-on-write %data sharing, we expect this approach
 /// will make copying a name less expensive in typical cases.  If this is
 /// found to be a significant performance bottleneck later, we may reconsider
 /// the internal representation or perhaps the API.
@@ -187,9 +187,9 @@ private:
 /// included.  In the BIND9 DNS library from which this implementation is
 /// derived, the offsets are optional, probably due to performance
 /// considerations (in fact, offsets can always be calculated from the name
-/// data, and in that sense are redundant).  In our implementation, however,
+/// %data, and in that sense are redundant).  In our implementation, however,
 /// we always build and maintain the offsets.  We believe we need more low
-/// level, specialized data structure and interface where we really need to
+/// level, specialized %data structure and interface where we really need to
 /// pursue performance, and would rather keep this generic API and
 /// implementation simpler.
 ///
@@ -233,21 +233,21 @@ public:
     /// \param namestr A string representation of the name to be constructed.
     /// \param downcase Whether to convert upper case alphabets to lower case.
     explicit Name(const std::string& namestr, bool downcase = false);
-    /// Constructor from wire-format data.
+    /// Constructor from wire-format %data.
     ///
     /// The \c buffer parameter normally stores a complete DNS message
     /// containing the name to be constructed.  The current read position of
     /// the buffer points to the head of the name.
     ///
-    /// The input data may or may not be compressed; if it's compressed, this
+    /// The input %data may or may not be compressed; if it's compressed, this
     /// method will automatically decompress it.
     ///
-    /// If the given data does not represent a valid DNS name, an exception
+    /// If the given %data does not represent a valid DNS name, an exception
     /// of class \c DNSMessageFORMERR will be thrown.
     /// In addition, if resource allocation for the new name fails, a
     /// corresponding standard exception will be thrown.
     ///
-    /// \param buffer A buffer storing the wire format data.
+    /// \param buffer A buffer storing the wire format %data.
     /// \param downcase Whether to convert upper case alphabets to lower case.
     explicit Name(InputBuffer& buffer, bool downcase = false);
     ///
@@ -260,35 +260,35 @@ public:
     /// \name Getter Methods
     ///
     //@{
-    /// \brief Provides one-byte name data in wire format at the specified
+    /// \brief Provides one-byte name %data in wire format at the specified
     /// position.
     ///
     /// This method returns the unsigned 8-bit value of wire-format \c Name
-    /// data at the given position from the head.
+    /// %data at the given position from the head.
     ///
     /// For example, if \c n is a \c Name object for "example.com",
     /// \c n.at(3) would return \c 'a', and \c n.at(7) would return \c 'e'.
     /// Note that \c n.at(0) would be 7 (decimal), the label length of
-    /// "example", instead of \c 'e', because it returns a data portion
+    /// "example", instead of \c 'e', because it returns a %data portion
     /// in wire-format.  Likewise, \c n.at(8) would return 3 (decimal)
     /// instead of <code>'.'</code>
     ///
     /// This method would be useful for an application to examine the
-    /// wire-format name data without dumping the data into a buffer,
-    /// which would involve data copies and would be less efficient.
+    /// wire-format name %data without dumping the %data into a buffer,
+    /// which would involve %data copies and would be less efficient.
     /// One common usage of this method would be something like this:
     /// \code for (size_t i = 0; i < name.getLength(); ++i) {
     ///     uint8_t c = name.at(i);
     ///     // do something with c
     /// } \endcode
     ///
-    /// Parameter \c pos must be in the valid range of the name data, that is,
+    /// Parameter \c pos must be in the valid range of the name %data, that is,
     /// must be less than \c Name.getLength().  Otherwise, an exception of
     /// class \c OutOfRange will be thrown.
     /// This method never throws an exception in other ways.
     ///
-    /// \param pos The position in the wire format name data to be returned.
-    /// \return An unsigned 8-bit integer corresponding to the name data
+    /// \param pos The position in the wire format name %data to be returned.
+    /// \return An unsigned 8-bit integer corresponding to the name %data
     /// at the position of \c pos.
     uint8_t at(size_t pos) const
     {
@@ -360,7 +360,7 @@ public:
     /// <code>buffer.getCapacity() - buffer.getLength() >= Name::MAX_WIRE</code>
     /// then this method should not throw an exception.
     ///
-    /// \param buffer An output buffer to store the wire data.
+    /// \param buffer An output buffer to store the wire %data.
     void toWire(OutputBuffer& buffer) const;
     //@}
 
@@ -501,6 +501,72 @@ public:
     /// \return A new Name object based on the Name containing <code>n</code>
     /// labels including and following the <code>first</code> label.  
     Name split(unsigned int first, unsigned int n) const;
+
+    /// \brief Extract a specified super domain name of Name.
+    ///
+    /// This function constructs a new \c Name object that is a super domain
+    /// of \c this name.
+    /// The new name is \c level labels upper than \c this name.
+    /// For example, when \c name is www.example.com,
+    /// <code>name.split(1)</code> will return a \c Name object for example.com.
+    /// \c level can be 0, in which case this method returns a copy of
+    /// \c this name.
+    /// The possible maximum value for \c level is
+    /// <code>this->getLabelCount()-1</code>, in which case this method
+    /// returns a root name.
+    ///
+    /// One common expected usage of this method is to iterate over super
+    /// domains of a given name, label by label, as shown in the following
+    /// sample code:
+    /// \code // if name is www.example.com...
+    /// for (int i = 0; i < name.getLabelCount(); ++i) {
+    ///     Name upper_name(name.split(i));
+    ///     // upper_name'll be www.example.com., example.com., com., and then .
+    /// }
+    /// \endcode
+    ///
+    /// \c level must be smaller than the number of labels of \c this name;
+    /// otherwise an exception of class \c OutOfRange will be thrown.
+    /// In addition, if resource allocation for the new name fails, a
+    /// corresponding standard exception will be thrown.
+    ///
+    /// Note to developers: probably as easily imagined, this method is a
+    /// simple wrapper to one usage of the other
+    /// <code>split(unsigned int, unsigned int) const</code> method and is
+    /// redundant in some sense.
+    /// We provide the "redundant" method for convenience, however, because
+    /// the expected usage shown above seems to be common, and the parameters
+    /// to the other \c split(unsigned int, unsigned int) const to implement
+    /// it may not be very intuitive.
+    ///
+    /// We are also aware that it is generally discouraged to add a public
+    /// member function that could be implemented using other member functions.
+    /// We considered making it a non member function, but we could not come
+    /// up with an intuitive function name to represent the specific service.
+    /// Some other BIND 10 developers argued, probably partly because of the
+    /// counter intuitive function name, a different signature of \c split
+    /// would be better to improve code readability.
+    /// While that may be a matter of personal preference, we accepted the
+    /// argument.  One major goal of public APIs like this is wider acceptance
+    /// from internal/external developers, so unless there is a clear advantage
+    /// it would be better to respect the preference of the API users.
+    ///
+    /// Since this method doesn't have to be a member function in other way,
+    /// it is intentionally implemented only using public interfaces of the
+    /// \c Name class; it doesn't refer to private members of the class even if
+    /// it could.
+    /// This way we hope we can avoid damaging the class encapsulation,
+    /// which is a major drawback of public member functions.
+    /// As such if and when this "method" has to be extended, it should be
+    /// implemented without the privilege of being a member function unless
+    /// there is a very strong reason to do so.  In particular a minor
+    /// performance advantage shouldn't justify that approach.
+    ///
+    /// \param level The number of labels to be removed from \c this name to
+    /// create the super domain name.
+    /// (0 <= \c level < <code>this->getLabelCount()</code>)
+    /// \return A new \c Name object to be created.
+    Name split(unsigned int level) const;
 
     /// \brief Reverse the labels of a name
     ///
