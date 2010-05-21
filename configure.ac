@@ -436,7 +436,9 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/lib/python/isc/config/tests/config_test
            src/lib/python/isc/cc/tests/cc_test
            src/lib/dns/gen-rdatacode.py
+           src/lib/python/isc/cc/session.py
            src/lib/dns/tests/testdata/gen-wiredata.py
+           src/lib/cc/session_config.h.pre
           ], [
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh

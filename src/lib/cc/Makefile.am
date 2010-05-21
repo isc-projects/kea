@@ -5,6 +5,11 @@ libcc_a_SOURCES = data.cc data.h session.cc session.h
 
 CLEANFILES = *.gcno *.gcda
 
+session_config.h: session_config.h.pre
+	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" session_config.h.pre >$@
+
+BUILT_SOURCES = session_config.h 
+
 TESTS =
 if HAVE_GTEST
 TESTS += run_unittests
