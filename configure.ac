@@ -407,6 +407,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/dns/Makefile
                  src/lib/dns/tests/Makefile
                  src/lib/dns/python/Makefile
+                 src/lib/dns/python/tests/Makefile
                  src/lib/dns-python/Makefile
                  src/lib/exceptions/Makefile
                  src/lib/datasrc/Makefile
