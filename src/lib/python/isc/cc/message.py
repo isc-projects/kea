@@ -26,6 +26,7 @@ _ITEM_LIST = 0x03
 _ITEM_NULL = 0x04
 _ITEM_BOOL = 0x05
 _ITEM_INT  = 0x06
+_ITEM_REAL = 0x07
 _ITEM_UTF8 = 0x08
 _ITEM_MASK = 0x0f
 
@@ -77,6 +78,10 @@ def _pack_int(item):
     """Pack an integer and its type/length prefix."""
     return (_encode_length_and_type(bytes(str(item), 'utf-8'), _ITEM_INT))
 
+def _pack_real(item):
+    """Pack an integer and its type/length prefix."""
+    return (_encode_length_and_type(bytes(str(item), 'utf-8'), _ITEM_REAL))
+
 def _pack_array(item):
     """Pack a list (array) and its type/length prefix."""
     return (_encode_length_and_type(_encode_array(item), _ITEM_LIST))
@@ -98,6 +103,8 @@ def _encode_item(item):
         return (_pack_bool(item))
     elif type(item) == int:
         return (_pack_int(item))
+    elif type(item) == float:
+        return (_pack_real(item))
     elif type(item) == dict:
         return (_pack_hash(item))
     elif type(item) == list:
@@ -186,6 +193,8 @@ def _decode_item(data):
         value = _decode_bool(item)
     elif item_type == _ITEM_INT:
         value = _decode_int(item)
+    elif item_type == _ITEM_REAL:
+        value = _decode_real(item)
     elif item_type == _ITEM_UTF8:
         value = str(item, 'utf-8')
     elif item_type == _ITEM_HASH:
@@ -204,6 +213,9 @@ def _decode_bool(data):
 
 def _decode_int(data):
     return int(str(data, 'utf-8'))
+
+def _decode_real(data):
+    return float(str(data, 'utf-8'))
 
 def _decode_hash(data):
     ret = {}
