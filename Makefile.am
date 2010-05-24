@@ -3,6 +3,8 @@ USE_LCOV=@USE_LCOV@
 LCOV=@LCOV@
 GENHTML=@GENHTML@
 
+DISTCLEANFILES = config.report
+
 # When running distcheck target, do not install the configurations
 DISTCHECK_CONFIGURE_FLAGS = --disable-install-configurations
 
