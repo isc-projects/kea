@@ -263,8 +263,6 @@ class CommandControl():
         Return rcode, dict.
         rcode = 0: dict is the correct returned value.
         rcode > 0: dict is : { 'error' : 'error reason' }
-
-        TODO. add check for parameters.
         '''
 
         # core module ConfigManager does not have a specification file
@@ -273,18 +271,12 @@ class CommandControl():
 
         if module_name not in self.module_spec.keys():
             return 1, {'error' : 'unknown module'}
-
-        cmd_valid = False
-        # todo: make validate_command() in ModuleSpec class
-        commands = self.module_spec[module_name]["commands"]
-        for cmd in commands:
-            if cmd['command_name'] == command_name:
-                cmd_valid = True
-                break
-
-        if not cmd_valid:
-            return 1, {'error' : 'unknown command'}
-
+       
+        spec_obj = isc.config.module_spec.ModuleSpec(self.module_spec[module_name], False)
+        errors = []
+        if not spec_obj.validate_command(command_name, params, errors):
+            return 1, {'error': errors[0]}
+        
         return self.send_command(module_name, command_name, params)
 
     def send_command(self, module_name, command_name, params = None):
