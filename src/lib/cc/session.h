@@ -60,7 +60,7 @@ namespace isc {
 
             void startRead(boost::function<void()> read_callback);
 
-            void establish();
+            void establish(const char* socket_file = NULL);
             void disconnect();
             void sendmsg(isc::data::ElementPtr& msg);
             void sendmsg(isc::data::ElementPtr& env,
