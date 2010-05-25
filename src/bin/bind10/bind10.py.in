@@ -222,7 +222,9 @@ class BoB:
         """
         # try to connect to the c-channel daemon, 
         # to see if it is already running
-        c_channel_env = { "BIND10_MSGQ_SOCKET_FILE": self.msgq_socket_file }
+        c_channel_env = {}
+        if self.msgq_socket_file is not None:
+             c_channel_env["BIND10_MSGQ_SOCKET_FILE"] = self.msgq_socket_file 
         if self.verbose:
             sys.stdout.write("Checking for already running b10-msgq\n")
         # try to connect, and if we can't wait a short while
@@ -234,8 +236,8 @@ class BoB:
 
         # start the c-channel daemon
         if self.verbose:
-            sys.stdout.write("Starting b10-msgq using domain socket %s\n" % 
-                             self.msgq_socket_file)
+            if self.msgq_socket_file:
+                sys.stdout.write("Starting b10-msgq\n")
         try:
             c_channel = ProcessInfo("b10-msgq", ["b10-msgq"], c_channel_env,
                                     True, not self.verbose)
@@ -264,7 +266,7 @@ class BoB:
             sys.stdout.write("[bind10] Starting b10-cfgmgr\n")
         try:
             bind_cfgd = ProcessInfo("b10-cfgmgr", ["b10-cfgmgr"],
-                                    { 'BIND10_MSGQ_SOCKET_FILE': str(self.msgq_socket_file)})
+                                    c_channel_env)
         except Exception as e:
             c_channel.process.kill()
             return "Unable to start b10-cfgmgr; " + str(e)
@@ -292,7 +294,7 @@ class BoB:
             sys.stdout.write("Starting b10-xfrout\n")
         try:
             xfrout = ProcessInfo("b10-xfrout", ["b10-xfrout"], 
-                                 { 'BIND10_MSGQ_SOCKET_FILE': str(self.msgq_socket_file)})
+                                 c_channel_env )
         except Exception as e:
             c_channel.process.kill()
             bind_cfgd.process.kill()
@@ -310,7 +312,7 @@ class BoB:
             authargs += ['-v']
         try:
             auth = ProcessInfo("b10-auth", authargs,
-                               { 'BIND10_MSGQ_SOCKET_FILE': str(self.msgq_socket_file)})
+                               c_channel_env)
         except Exception as e:
             c_channel.process.kill()
             bind_cfgd.process.kill()
@@ -325,7 +327,7 @@ class BoB:
             sys.stdout.write("Starting b10-xfrin\n")
         try:
             xfrind = ProcessInfo("b10-xfrin", ['b10-xfrin'],
-                                 { 'BIND10_MSGQ_SOCKET_FILE': str(self.msgq_socket_file)})
+                                 c_channel_env)
         except Exception as e:
             c_channel.process.kill()
             bind_cfgd.process.kill()
@@ -342,7 +344,7 @@ class BoB:
             sys.stdout.write("Starting b10-cmdctl on port 8080\n")
         try:
             cmd_ctrld = ProcessInfo("b10-cmdctl", ['b10-cmdctl'],
-                                    { 'BIND10_MSGQ_SOCKET_FILE': str(self.msgq_socket_file)})
+                                    c_channel_env)
         except Exception as e:
             c_channel.process.kill()
             bind_cfgd.process.kill()
@@ -585,7 +587,7 @@ def main():
                       action="callback", callback=check_port, default="5300",
                       help="port the b10-auth daemon will use (default 5300)")
     parser.add_option("-m", "--msgq-socket-file", dest="msgq_socket_file",
-                      type="string", default=isc.cc.Session.SOCKET_FILE,
+                      type="string", default=None,
                       help="UNIX domain socket file the b10-msgq daemon will use")
     (options, args) = parser.parse_args()
 
