@@ -175,70 +175,6 @@ if test "$lcov" != "no"; then
 fi
 AC_SUBST(USE_LCOV)
 
-AC_ARG_WITH([boost-include],
-  AC_HELP_STRING([--with-boost-include=PATH],
-    [specify exact directory for Boost headers]),
-    [boost_include_path="$withval"])
-if test "${boost_include_path}" ; then
-	BOOST_INCLUDES="-I${boost_include_path}"
-	CPPFLAGS="$CPPFLAGS $BOOST_INCLUDES"
-fi
-AC_SUBST(BOOST_INCLUDES)
-
-AC_ARG_WITH([boost-lib],
-AC_HELP_STRING([--with-boost-lib=PATH],
-  [specify exact directory for Boost libraries]),
-  [if test "$withval" != "yes" -a "$withval" != "no"; then
-   BOOST_LDFLAGS="-L$withval"
-   fi])
-AC_SUBST(BOOST_LDFLAGS)
-
-# Check availability of the Boost System library
-
-AC_MSG_CHECKING([for boost::system library])
-AC_ARG_WITH([boost-system],
-AC_HELP_STRING([--with-boost-system],
-  [specify whether to use the boost system library]),
-  [with_boost_system="$withval"], [with_boost_system="auto"])
-
-if test "$with_boost_system" != "no"; then
-	LDFLAGS_SAVED="$LDFLAGS"
-	LIBS_SAVED="$LIBS"
-	CPPFLAGS_SAVED="$CPPFLAGS"
-	CPPFLAGS="$CPPFLAGS -Iext"
-
-	for BOOST_TRY_LIB in boost_system boost_system-mt; do
-		LDFLAGS="$LDFLAGS_SAVED ${BOOST_LDFLAGS}"
-		LIBS="$LIBS_SAVED -l${BOOST_TRY_LIB}"
-		AC_TRY_LINK([#include <boost/system/error_code.hpp>],
-			[ boost::system::error_code error_code;
-			std::string message(error_code.message());
-			return 0; ],
-			[ AC_MSG_RESULT(yes)
-			BOOST_SYSTEM_LIB="-l${BOOST_TRY_LIB}"
-			],[])
-		if test "X${BOOST_SYSTEM_LIB}" != X; then
-        		break
-		fi
-	done
-
-	LDFLAGS="$LDFLAGS_SAVED"
-	CPPFLAGS="$CPPFLAGS_SAVED"
-	LIBS="$LIBS_SAVED"
-fi
-
-if test "X${BOOST_SYSTEM_LIB}" = X; then
-	AC_MSG_RESULT(no)
-	if test "$with_boost_system" = "yes"; then
-	   AC_MSG_ERROR([boost system library is requested but not found])
-	fi
-else
-	AC_DEFINE(HAVE_BOOST_SYSTEM, 1, Define to 1 if boost system library is available)
-fi
-
-AM_CONDITIONAL(HAVE_BOOST_SYSTEM, test "X${BOOST_SYSTEM_LIB}" != X)
-AC_SUBST(BOOST_SYSTEM_LIB)
-
 # Check availability of the Boost Python library
 
 AC_MSG_CHECKING([for boost::python library])
@@ -475,7 +411,6 @@ Flags:
   CXXFLAGS:      $CXXFLAGS
 dnl includes too
   Boost Python:  $BOOST_PYTHON_LIB
-  Boost System:  $BOOST_SYSTEM_LIB
   SQLite:	 $SQLITE_CFLAGS
                  $SQLITE_LIBS
 
