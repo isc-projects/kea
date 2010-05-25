@@ -109,10 +109,6 @@ ASIOSession::establish(const char* socket_file) {
     if (error_) {
         isc_throw(SessionError, "Unable to connect to message queue.");
     }
-    socket_.connect(boost::asio::local::stream_protocol::endpoint(socket_file), error_);
-    if (error_) {
-        isc_throw(SessionError, "Unable to connect to message queue.");
-    }
 }
 
 void
