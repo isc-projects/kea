@@ -14,6 +14,7 @@
 
 // $Id$
 
+#include "session_config.h"
 #include "config.h"
 
 #include <stdint.h>
@@ -231,7 +232,8 @@ SocketSession::establish() {
     }
 
     sun.sun_family = AF_UNIX;
-    strncpy(sun.sun_path, socket_file, 107);
+    strncpy(sun.sun_path, socket_file, sizeof(sun.sun_path) - 1);
+    sun.sun_path[sizeof(sun.sun_path) - 1] = '\0';
 
     if (connect(s, (struct sockaddr *)&sun, sizeof(sun)) < 0) {
         close(s);

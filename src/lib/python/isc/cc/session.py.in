@@ -52,13 +52,9 @@ class Session:
 
         try:
             self._socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            print("[XX] SOCKET FILE TO CONNECT TO: " + str(self.socket_file))
             self._socket.connect(self.socket_file)
-            print("[XX] CONNECTED")
             self.sendmsg({ "type": "getlname" })
-            print("[XX] MSG SENT")
             env, msg = self.recvmsg(False)
-            print("[XX] MSG RECEIVED")
             if not env:
                 raise ProtocolError("Could not get local name")
             self._lname = msg["lname"]
