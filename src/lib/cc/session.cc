@@ -24,6 +24,8 @@
 #include <iostream>
 #include <sstream>
 
+#include <sys/un.h>
+
 #ifdef HAVE_BOOST_SYSTEM
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
