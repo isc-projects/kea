@@ -14,6 +14,7 @@
 
 // $Id: data_unittests.cc 1899 2010-05-21 12:03:59Z jelte $
 
+#include "config.h"
 #include <gtest/gtest.h>
 #include <session.h>
 #include <boost/asio.hpp>
@@ -21,6 +22,7 @@
 
 using namespace isc::cc;
 
+#ifdef HAVE_BOOST_SYSTEM
 TEST(AsioSession, establish) {
     boost::asio::io_service io_service_;
     Session sess(io_service_);
@@ -40,6 +42,7 @@ TEST(AsioSession, establish) {
     );
                   
 }
+#endif
 
 TEST(Session, establish) {
     Session sess;
