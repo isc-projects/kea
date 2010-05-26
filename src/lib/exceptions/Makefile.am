@@ -15,3 +15,6 @@ run_unittests_LDADD = .libs/libexceptions.a $(GTEST_LDADD)
 endif
 
 noinst_PROGRAMS = $(TESTS)
+
+libexceptions_includedir = $(includedir)/exceptions
+libexceptions_include_HEADERS = exceptions.h

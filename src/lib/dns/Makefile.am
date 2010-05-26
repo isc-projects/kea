@@ -107,3 +107,29 @@ rrtype.h: rrtype-placeholder.h
 rrparamregistry.cc: rrparamregistry-placeholder.cc
 rrclass.h rrtype.h rrparamregistry.cc rdataclass.h rdataclass.cc: Makefile
 	./gen-rdatacode.py
+
+libdns_includedir = $(includedir)/dns
+libdns_include_HEADERS = \
+	buffer.h \
+	dnssectime.h \
+	exceptions.h \
+	message.h \
+	messagerenderer.h \
+	name.h \
+	question.h \
+	rdata.h \
+	rdataclass.h \
+	rrclass.h \
+	rrparamregistry.h \
+	rrset.h \
+	rrsetlist.h \
+	rrttl.h \
+	rrtype.h \
+	tsig.h
+# Purposely not installing these headers:
+# base32.h # used only internally, and not actually DNS specific
+# base64.h # used only internally, and not actually DNS specific
+# hex.h # used only internally, and not actually DNS specific
+# sha1.h # used only internally, and not actually DNS specific
+# rrclass-placeholder.h
+# rrtype-placeholder.h
