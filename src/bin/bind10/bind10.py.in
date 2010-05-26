@@ -176,9 +176,6 @@ class BoB:
         self.dead_processes = {}
         self.runnable = False
 
-        if self.msgq_socket_file is not None:
-            os.environ['BIND10_MSGQ_SOCKET_FILE'] = str(self.msgq_socket_file)
-
     def config_handler(self, new_config):
         if self.verbose:
             print("[bind10] handling new config:")
