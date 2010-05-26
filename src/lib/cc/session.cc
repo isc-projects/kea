@@ -109,7 +109,7 @@ ASIOSession::establish(const char* socket_file) {
     }
     try {
         socket_.connect(boost::asio::local::stream_protocol::endpoint(socket_file), error_);
-    } catch (boost::system::system_error se) {
+    } catch (boost::system::system_error& se) {
         isc_throw(SessionError, se.what());
     }
     if (error_) {
