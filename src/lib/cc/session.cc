@@ -231,9 +231,6 @@ SocketSession::establish(const char* socket_file) {
     int s;
     struct sockaddr_un sun;
 
-#ifdef HAVE_SUN_LEN
-    sun.sun_len = sizeof(struct sockaddr_un);
-#endif
     s = socket(AF_UNIX, SOCK_STREAM, IPPROTO_TCP);
     if (s < 0) {
         isc_throw(SessionError, "socket() failed");
@@ -246,10 +243,10 @@ SocketSession::establish(const char* socket_file) {
         socket_file = BIND10_MSGQ_SOCKET_FILE;
     }
 
-/*    if (strlen(socket_file) >= sizeof(sun.sun_path)) {
+    if (strlen(socket_file) >= sizeof(sun.sun_path)) {
         isc_throw(SessionError, "Unable to connect to message queue; socket file path too long");
     }
-*/
+
     sun.sun_family = AF_UNIX;
     strncpy(sun.sun_path, socket_file, sizeof(sun.sun_path) - 1);
 
