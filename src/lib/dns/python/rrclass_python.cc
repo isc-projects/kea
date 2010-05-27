@@ -165,15 +165,8 @@ RRClass_init(s_RRClass* self, PyObject* args)
             PyErr_Clear();
             return 0;
         }
-    } catch (IncompleteRRClass icc) {
-        // Ok so one of our functions has thrown a C++ exception.
-        // We need to translate that to a Python Exception
-        // First clear any existing error that was set
-        PyErr_Clear();
-        // Now set our own exception
-        PyErr_SetString(po_InvalidRRClass, icc.what());
-        // And return negative
-        return -1;
+    /* Incomplete is never thrown, a type error would have already been raised
+     * when we try to read the 2 bytes above */
     } catch (InvalidRRClass ic) {
         PyErr_Clear();
         PyErr_SetString(po_InvalidRRClass, ic.what());

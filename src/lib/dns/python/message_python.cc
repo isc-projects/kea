@@ -627,7 +627,7 @@ Opcode_RESERVED15(s_Opcode* self UNUSED_PARAM)
 static PyObject* 
 Opcode_richcmp(s_Opcode* self, s_Opcode* other, int op)
 {
-    bool c;
+    bool c = false;
 
     // Only equals and not equals here, unorderable type
     switch (op) {
@@ -653,8 +653,6 @@ Opcode_richcmp(s_Opcode* self, s_Opcode* other, int op)
         PyErr_SetString(PyExc_TypeError, "Unorderable type; Opcode");
         return NULL;
         break;
-    default:
-        assert(0);              // XXX: should trigger an exception
     }
     if (c)
         Py_RETURN_TRUE;

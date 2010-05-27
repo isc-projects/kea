@@ -27,8 +27,8 @@
 
 //#include "buffer_python.cc"
 // order is important here! (TODO: document dependencies)
-#include "name_python.cc"
 #include "messagerenderer_python.cc"
+#include "name_python.cc"
 #include "rrclass_python.cc"
 #include "rrtype_python.cc"
 #include "rrttl_python.cc"
