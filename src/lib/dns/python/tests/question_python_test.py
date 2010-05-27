@@ -51,6 +51,10 @@ class QuestionTest(unittest.TestCase):
         self.test_question1 = Question(self.example_name1, RRClass("IN"), RRType("NS"))
         self.test_question2 = Question(self.example_name2, RRClass("CH"), RRType("A"))
 
+    def test_init(self):
+        self.assertRaises(TypeError, Question, "wrong")
+
+    # tests below based on cpp unit tests
     def test_QuestionTest_fromWire(self):
         
         q = question_from_wire("question_fromWire")
@@ -79,6 +83,7 @@ class QuestionTest(unittest.TestCase):
     def test_QuestionTest_to_text(self):
     
         self.assertEqual("foo.example.com. IN NS\n", self.test_question1.to_text())
+        self.assertEqual("foo.example.com. IN NS\n", self.test_question1.__str__())
         self.assertEqual("bar.example.com. CH A\n", self.test_question2.to_text())
     
     
@@ -96,6 +101,7 @@ class QuestionTest(unittest.TestCase):
         self.test_question2.to_wire(renderer)
         wiredata = read_wire_data("question_toWire2")
         self.assertEqual(renderer.get_data(), wiredata)
+        self.assertRaises(TypeError, self.test_question1.to_wire, 1)
     
 
 if __name__ == '__main__':

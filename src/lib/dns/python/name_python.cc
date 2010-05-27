@@ -76,9 +76,9 @@ static PyObject* NameComparisonResult_getCommonLabels(s_NameComparisonResult* se
 static PyObject* NameComparisonResult_getRelation(s_NameComparisonResult* self);
 
 static PyMethodDef NameComparisonResult_methods[] = {
-    { "getOrder", (PyCFunction)NameComparisonResult_getOrder, METH_NOARGS, "Return the order" },
-    { "getCommonLabels", (PyCFunction)NameComparisonResult_getCommonLabels, METH_NOARGS, "Return the number of common labels" },
-    { "getRelation", (PyCFunction)NameComparisonResult_getRelation, METH_NOARGS, "Return the relation" },
+    { "get_order", (PyCFunction)NameComparisonResult_getOrder, METH_NOARGS, "Return the order" },
+    { "get_common_labels", (PyCFunction)NameComparisonResult_getCommonLabels, METH_NOARGS, "Return the number of common labels" },
+    { "get_relation", (PyCFunction)NameComparisonResult_getRelation, METH_NOARGS, "Return the relation" },
     { NULL, NULL, 0, NULL }
 };
 
@@ -176,7 +176,7 @@ typedef struct {
 static int Name_init(s_Name* self, PyObject* args);
 static void Name_destroy(s_Name* self);
 
-static PyObject* Name_toWire(s_Name* self);
+static PyObject* Name_toWire(s_Name* self, PyObject* args);
 static PyObject* Name_toText(s_Name* self);
 static PyObject* Name_getLabelCount(s_Name* self);
 static PyObject* Name_at(s_Name* self, PyObject* args);
@@ -197,7 +197,7 @@ static PyMethodDef Name_methods[] = {
     { "get_length", (PyCFunction)Name_getLength, METH_NOARGS, "Return the length" },
     { "get_labelcount", (PyCFunction)Name_getLabelCount, METH_NOARGS, "Return the number of labels" },
     { "to_text", (PyCFunction)Name_toText, METH_NOARGS, "Return the string representation" },
-    { "to_wire", (PyCFunction)Name_toWire, METH_NOARGS, "Return the wire format" },
+    { "to_wire", (PyCFunction)Name_toWire, METH_VARARGS, "Return the wire format" },
     { "compare", (PyCFunction)Name_compare, METH_VARARGS, "Compare" },
     { "equals", (PyCFunction)Name_equals, METH_VARARGS, "Equals" },
     { "split", (PyCFunction)Name_split, METH_VARARGS, "split" },
@@ -305,15 +305,17 @@ Name_init(s_Name* self, PyObject* args)
     }
     PyErr_Clear();
 
-    const char* b;
+    PyObject* bytes_obj;
+    const char* bytes;
     Py_ssize_t len;
-    unsigned int position;
+    unsigned int position = 0;
 
     /* fromWire */
-    if (PyArg_ParseTuple(args, "y#I|O!", &b, &len, &position,
-                         &PyBool_Type, &downcase)) {
+    if (PyArg_ParseTuple(args, "O|IO!", &bytes_obj, &position,
+                         &PyBool_Type, &downcase) &&
+                         PyObject_AsCharBuffer(bytes_obj, &bytes, &len) != -1) {
         try {
-            InputBuffer buffer(b, len);
+            InputBuffer buffer(bytes, len);
 
             buffer.setPosition(position);
             self->name = new Name(buffer, downcase == Py_True);
@@ -322,23 +324,9 @@ Name_init(s_Name* self, PyObject* args)
             PyErr_SetString(po_InvalidBufferPosition,
                             "InvalidBufferPosition");
             return -1;
-        } catch (TooLongName) {
-            PyErr_SetString(po_TooLongName, "TooLongName");
-            return -1;
-        } catch (BadLabelType) {
-            PyErr_SetString(po_BadLabelType, "BadLabelType");
-            return -1;
         } catch (DNSMessageFORMERR) {
             PyErr_SetString(po_DNSMessageFORMERR, "DNSMessageFORMERR");
             return -1;
-        } catch (IncompleteName) {
-            PyErr_SetString(po_IncompleteName, "IncompleteName");
-            return -1;
-#ifdef CATCHMEMERR
-        } catch (std::bad_alloc) {
-            PyErr_NoMemory();
-            return -1;
-#endif
         } catch (...) {
             PyErr_SetString(po_IscException, "Unexpected?!");
             return -1;
@@ -348,7 +336,7 @@ Name_init(s_Name* self, PyObject* args)
 
     PyErr_Clear();
     PyErr_SetString(PyExc_TypeError,
-                    "fromText and fromWire Name constructors don't match");
+                    "No valid types in Name constructor (should be string or sequence and offset");
     return -1;
 }
 
@@ -394,15 +382,33 @@ Name_toText(s_Name* self)
     return Py_BuildValue("s", self->name->toText().c_str());
 }
 
-// XX TODO: renderer and direct versions
 static PyObject*
-Name_toWire(s_Name* self)
+Name_toWire(s_Name* self, PyObject* args)
 {
-    OutputBuffer buffer(255);
-
-    self->name->toWire(buffer);
-    return Py_BuildValue("y#", buffer.getData(),
-                         (Py_ssize_t) buffer.getLength());
+    PyObject* bytes;
+    s_MessageRenderer* mr;
+    
+    if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
+        PyObject* bytes_o = bytes;
+        
+        OutputBuffer buffer(255);
+        self->name->toWire(buffer);
+        PyObject* n = PyBytes_FromStringAndSize((const char*) buffer.getData(), buffer.getLength());
+        PyObject* result = PySequence_InPlaceConcat(bytes_o, n);
+        // We need to release the object we temporarily created here
+        // to prevent memory leak
+        Py_DECREF(n);
+        return result;
+    } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, (PyObject**) &mr)) {
+        self->name->toWire(*mr->messagerenderer);
+        // If we return NULL it is seen as an error, so use this for
+        // None returns
+        Py_RETURN_NONE;
+    }
+    PyErr_Clear();
+    PyErr_SetString(PyExc_TypeError,
+                    "toWire argument must be a sequence object or a MessageRenderer");
+    return NULL;
 }
 
 static PyObject*
@@ -525,7 +531,7 @@ Name_concatenate(s_Name* self, PyObject* args)
         try {
             ret->name = new Name(self->name->concatenate(*other->name));
         } catch (isc::dns::TooLongName tln) {
-            PyErr_SetString(PyExc_IndexError, tln.what());
+            PyErr_SetString(po_TooLongName, tln.what());
             ret->name = NULL;
         }
         if (ret->name == NULL) {
