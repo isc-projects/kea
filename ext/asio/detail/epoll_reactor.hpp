@@ -207,7 +207,7 @@ public:
   // Cancel all operations associated with the given descriptor. The
   // handlers associated with the descriptor will be invoked with the
   // operation_aborted error.
-  void cancel_ops(socket_type descriptor UNUSED_PARAM, per_descriptor_data& descriptor_data)
+  void cancel_ops(socket_type descriptor, per_descriptor_data& descriptor_data)
   {
     mutex::scoped_lock descriptor_lock(descriptor_data->mutex_);
 
