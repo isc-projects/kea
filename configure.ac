@@ -205,7 +205,7 @@ if test "$with_boost_system" != "no"; then
 	LDFLAGS_SAVED="$LDFLAGS"
 	LIBS_SAVED="$LIBS"
 	CPPFLAGS_SAVED="$CPPFLAGS"
-	CPPFLAGS="$CPPFLAGS -Iext"
+	CPPFLAGS="$CPPFLAGS -Iext/boost"
 
 	for BOOST_TRY_LIB in boost_system boost_system-mt; do
 		LDFLAGS="$LDFLAGS_SAVED ${BOOST_LDFLAGS}"
@@ -340,19 +340,22 @@ AC_SUBST(GTEST_LDADD)
 
 PKG_CHECK_MODULES(SQLITE, sqlite3 >= 3.3.9, enable_features="$enable_features SQLite3")
 
+# Use local ASIO headers from ext
+CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext/asio"
+
 # Check for headers from required devel kits.
 # boost/shared_ptr.hpp is in ext in svn but not in tarball.
 CPPFLAGS_SAVED=$CPPFLAGS
 if test "X$BOOST_INCLUDES" = "X"; then
 	# abs_top_srcdir not defined yet
 	# so this is only useful to check.  We'll replace it after the check.
-	CPPFLAGS="$CPPFLAGS -Iext"
+	CPPFLAGS="$CPPFLAGS -Iext/boost"
 fi
 AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp],,
   AC_MSG_ERROR([Missing required header files.]))
 CPPFLAGS=$CPPFLAGS_SAVED
 if test "X$BOOST_INCLUDES" = "X"; then
-	CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext"
+	CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext/boost"
 fi
 
 AC_ARG_ENABLE(man, [AC_HELP_STRING([--enable-man],
