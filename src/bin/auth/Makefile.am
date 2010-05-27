@@ -26,6 +26,16 @@ auth.spec: auth.spec.pre
 spec_config.h: spec_config.h.pre
 	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" spec_config.h.pre >$@
 
+# This is a wrapper library solely used for b10-auth.  The ASIO header files
+# have some code fragments that would hit gcc's unused-parameter warning,
+# which would make the build fail with -Werror (our default setting).
+# We don't want to lower the warning level for our own code just for ASIO,
+# so as a workaround we extract the ASIO related code into a separate library,
+# only for which we accept the unused-parameter warning.
+lib_LIBRARIES = libasio_link.a
+libasio_link_a_SOURCES = asio_link.cc asio_link.h
+libasio_link_a_CPPFLAGS = $(AM_CPPFLAGS) -Wno-error=unused-parameter
+
 BUILT_SOURCES = spec_config.h 
 pkglibexec_PROGRAMS = b10-auth
 b10_auth_SOURCES = auth_srv.cc auth_srv.h
@@ -36,6 +46,7 @@ b10_auth_LDADD += $(top_builddir)/src/lib/dns/.libs/libdns.a
 b10_auth_LDADD += $(top_builddir)/src/lib/config/.libs/libcfgclient.a
 b10_auth_LDADD += $(top_builddir)/src/lib/cc/libcc.a
 b10_auth_LDADD += $(top_builddir)/src/lib/exceptions/.libs/libexceptions.a
+b10_auth_LDADD += $(top_builddir)/src/bin/auth/libasio_link.a
 b10_auth_LDADD += $(SQLITE_LIBS)
 if HAVE_BOOST_PYTHON
 b10_auth_LDADD += $(top_builddir)/src/lib/xfr/.libs/libxfr.a

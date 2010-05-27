@@ -28,8 +28,6 @@
 #include <iostream>
 
 #include <boost/foreach.hpp>
-#include <boost/bind.hpp>
-#include <asio.hpp>
 
 #include <exceptions/exceptions.h>
 
@@ -49,15 +47,12 @@
 #include "spec_config.h"
 #include "common.h"
 #include "auth_srv.h"
+#include "asio_link.h"
 
 using namespace std;
 #ifdef USE_XFROUT
 using namespace isc::xfr;
 #endif
-
-using namespace asio;
-using ip::udp;
-using ip::tcp;
 
 using namespace isc::data;
 using namespace isc::cc;
@@ -76,9 +71,7 @@ const char* DNSPORT = "5300";
  * class itself? */
 AuthSrv *auth_server;
 
-// TODO: this should be a property of AuthSrv, and AuthSrv needs
-// a stop() method (so the shutdown command can be handled)
-asio::io_service io_service_;
+asio_link::IOService* io_service;
 
 ElementPtr
 my_config_handler(ElementPtr new_config) {
@@ -94,7 +87,7 @@ my_command_handler(const string& command, const ElementPtr args) {
         /* let's add that message to our answer as well */
         answer->get("result")->add(args);
     } else if (command == "shutdown") {
-        io_service_.stop();
+        io_service->stop();
     }
     
     return answer;
@@ -132,262 +125,6 @@ dispatch_axfr_query(int tcp_sock, char axfr_query[], uint16_t query_len)
     }
 }
 #endif
-
-//
-// Helper classes for asynchronous I/O using asio
-//
-class TCPClient {
-public:
-    TCPClient(io_service& io_service) :
-        socket_(io_service),
-        response_buffer_(0),
-        responselen_buffer_(TCP_MESSAGE_LENGTHSIZE),
-        response_renderer_(response_buffer_),
-        dns_message_(Message::PARSE)
-    {}
-
-    void start() {
-        async_read(socket_, asio::buffer(data_, TCP_MESSAGE_LENGTHSIZE),
-                   boost::bind(&TCPClient::headerRead, this,
-                               placeholders::error,
-                               placeholders::bytes_transferred));
-    }
-
-    tcp::socket& getSocket() { return (socket_); }
-
-    void headerRead(const asio::error_code& error,
-                    size_t bytes_transferred)
-    {
-        if (!error) {
-            InputBuffer dnsbuffer(data_, bytes_transferred);
-
-            uint16_t msglen = dnsbuffer.readUint16();
-            async_read(socket_, asio::buffer(data_, msglen),
-
-                       boost::bind(&TCPClient::requestRead, this,
-                                   placeholders::error,
-                                   placeholders::bytes_transferred));
-        } else {
-            delete this;
-        }
-    }
-
-    void requestRead(const asio::error_code& error,
-                     size_t bytes_transferred)
-    {
-        if (!error) {
-            InputBuffer dnsbuffer(data_, bytes_transferred);
-#ifdef USE_XFROUT
-            if (check_axfr_query(data_, bytes_transferred)) {
-                dispatch_axfr_query(socket_.native(), data_, bytes_transferred); 
-                // start to get new query ?
-                start();
-            } else {
-#endif          
-                if (auth_server->processMessage(dnsbuffer, dns_message_,
-                                                response_renderer_, false)) {
-                    responselen_buffer_.writeUint16(response_buffer_.getLength());
-                    async_write(socket_,
-                                asio::buffer(
-                                    responselen_buffer_.getData(),
-                                    responselen_buffer_.getLength()),
-                                boost::bind(&TCPClient::responseWrite, this,
-                                            placeholders::error));
-                } else {
-                    delete this;
-                }
-#ifdef USE_XFROUT
-            }
-#endif
-        } else {
-            delete this;
-        }
-    }
-
-    void responseWrite(const asio::error_code& error) {
-        if (!error) {
-                async_write(socket_,
-                            asio::buffer(response_buffer_.getData(),
-                                                response_buffer_.getLength()),
-                        boost::bind(&TCPClient::handleWrite, this,
-                                    placeholders::error));
-        } else {
-            delete this;
-        }
-    }
-
-    void handleWrite(const asio::error_code& error) {
-        if (!error) {
-            start();            // handle next request, if any.
-      } else {
-            delete this;
-      }
-    }
-
-private:
-    tcp::socket socket_;
-    OutputBuffer response_buffer_;
-    OutputBuffer responselen_buffer_;
-    MessageRenderer response_renderer_;
-    Message dns_message_;
-    enum { MAX_LENGTH = 65535 };
-    static const size_t TCP_MESSAGE_LENGTHSIZE = 2;
-    char data_[MAX_LENGTH];
-};
-
-class TCPServer {
-public:
-    TCPServer(io_service& io_service, int af, short port) :
-        io_service_(io_service), acceptor_(io_service_),
-        listening_(new TCPClient(io_service_))
-    {
-        tcp::endpoint endpoint(af == AF_INET6 ? tcp::v6() : tcp::v4(), port);
-        acceptor_.open(endpoint.protocol());
-        // Set v6-only (we use a different instantiation for v4,
-        // otherwise asio will bind to both v4 and v6
-        if (af == AF_INET6) {
-            acceptor_.set_option(ip::v6_only(true));
-        }
-        acceptor_.set_option(tcp::acceptor::reuse_address(true));
-        acceptor_.bind(endpoint);
-        acceptor_.listen();
-        acceptor_.async_accept(listening_->getSocket(),
-                               boost::bind(&TCPServer::handleAccept, this,
-                                           listening_, placeholders::error));
-    }
-
-    ~TCPServer() { delete listening_; }
-
-    void handleAccept(TCPClient* new_client,
-                      const asio::error_code& error)
-    {
-        if (!error) {
-            assert(new_client == listening_);
-            new_client->start();
-            listening_ = new TCPClient(io_service_);
-            acceptor_.async_accept(listening_->getSocket(),
-                                   boost::bind(&TCPServer::handleAccept,
-                                               this, listening_,
-                                               placeholders::error));
-        } else {
-            delete new_client;
-        }
-    }
-
-private:
-    io_service& io_service_;
-    tcp::acceptor acceptor_;
-    TCPClient* listening_;
-};
-
-class UDPServer {
-public:
-    UDPServer(io_service& io_service, int af, short port) :
-        io_service_(io_service),
-        socket_(io_service, af == AF_INET6 ? udp::v6() : udp::v4()),
-        response_buffer_(0),
-        response_renderer_(response_buffer_),
-        dns_message_(Message::PARSE)
-    {
-        // Set v6-only (we use a different instantiation for v4,
-        // otherwise asio will bind to both v4 and v6
-        if (af == AF_INET6) {
-            socket_.set_option(asio::ip::v6_only(true));
-            socket_.bind(udp::endpoint(udp::v6(), port));
-        } else {
-            socket_.bind(udp::endpoint(udp::v4(), port));
-        }
-        startReceive();
-    }
-
-    void handleRequest(const asio::error_code& error,
-                       size_t bytes_recvd)
-    {
-        if (!error && bytes_recvd > 0) {
-            InputBuffer request_buffer(data_, bytes_recvd);
-
-            dns_message_.clear(Message::PARSE);
-            response_renderer_.clear();
-            if (auth_server->processMessage(request_buffer, dns_message_,
-                                            response_renderer_, true)) {
-                socket_.async_send_to(
-                    asio::buffer(response_buffer_.getData(),
-                                        response_buffer_.getLength()),
-                    sender_endpoint_,
-                    boost::bind(&UDPServer::sendCompleted,
-                                this,
-                                placeholders::error,
-                                placeholders::bytes_transferred));
-            } else {
-                startReceive();
-            }
-        } else {
-            startReceive();
-        }
-    }
-
-    void sendCompleted(const asio::error_code& error UNUSED_PARAM,
-                       size_t bytes_sent UNUSED_PARAM)
-    {
-        // Even if error occurred there's nothing to do.  Simply handle
-        // the next request.
-        startReceive();
-    }
-private:
-    void startReceive() {
-        socket_.async_receive_from(
-            asio::buffer(data_, MAX_LENGTH), sender_endpoint_,
-            boost::bind(&UDPServer::handleRequest, this,
-                        placeholders::error,
-                        placeholders::bytes_transferred));
-    }
-
-private:
-    io_service& io_service_;
-    udp::socket socket_;
-    OutputBuffer response_buffer_;
-    MessageRenderer response_renderer_;
-    Message dns_message_;
-    udp::endpoint sender_endpoint_;
-    enum { MAX_LENGTH = 4096 };
-    char data_[MAX_LENGTH];
-};
-
-struct ServerSet {
-    ServerSet() : udp4_server(NULL), udp6_server(NULL),
-                  tcp4_server(NULL), tcp6_server(NULL)
-    {}
-    ~ServerSet() {
-        delete udp4_server;
-        delete udp6_server;
-        delete tcp4_server;
-        delete tcp6_server;
-    }
-    UDPServer* udp4_server;
-    UDPServer* udp6_server;
-    TCPServer* tcp4_server;
-    TCPServer* tcp6_server;
-};
-
-void
-run_server(const char* port, const bool use_ipv4, const bool use_ipv6,
-           AuthSrv* srv UNUSED_PARAM)
-{
-    ServerSet servers;
-    short portnum = atoi(port);
-
-    if (use_ipv4) {
-        servers.udp4_server = new UDPServer(io_service_, AF_INET, portnum);
-        servers.tcp4_server = new TCPServer(io_service_, AF_INET, portnum);
-    }
-    if (use_ipv6) {
-        servers.udp6_server = new UDPServer(io_service_, AF_INET6, portnum);
-        servers.tcp6_server = new TCPServer(io_service_, AF_INET6, portnum);
-    }
-
-    cout << "Server started." << endl;
-    io_service_.run();
-}
 
 void
 usage() {
@@ -455,12 +192,15 @@ main(int argc, char* argv[]) {
         auth_server->setConfigSession(&cs);
         auth_server->updateConfig(ElementPtr());
 
-        run_server(port, use_ipv4, use_ipv6, auth_server);
+        io_service = new asio_link::IOService(auth_server, port, use_ipv4,
+                                              use_ipv6);
+        io_service->run();
     } catch (const std::exception& ex) {
         cerr << ex.what() << endl;
         ret = 1;
     }
 
+    delete io_service;
     delete auth_server;
     return (ret);
 }
