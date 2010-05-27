@@ -17,7 +17,9 @@
 #include "config.h"
 #include <gtest/gtest.h>
 #include <session.h>
+#ifdef HAVE_BOOST_SYSTEM
 #include <boost/asio.hpp>
+#endif
 #include <exceptions/exceptions.h>
 
 using namespace isc::cc;
