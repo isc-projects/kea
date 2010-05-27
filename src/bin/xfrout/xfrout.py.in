@@ -26,6 +26,7 @@ from isc.datasrc import sqlite3_ds
 from socketserver import *
 import os
 from isc.config.ccsession import *
+from isc.log.log import *
 from isc.cc import SessionError
 import socket
 from optparse import OptionParser, OptionValueError
@@ -276,7 +277,7 @@ class XfroutSession(BaseRequestHandler):
 class UnixSockServer(ThreadingUnixStreamServer):
     '''The unix domain socket server which accept xfr query sent from auth server.'''
 
-    def __init__(self, sock_file, handle_class, shutdown_event, config_data):
+    def __init__(self, sock_file, handle_class, shutdown_event, config_data, log):
         try:
             os.unlink(sock_file)
         except:
@@ -287,23 +288,30 @@ class UnixSockServer(ThreadingUnixStreamServer):
         self._lock = threading.Lock()
         self._transfers_counter = 0
         self._shutdown_event = shutdown_event
+        self._log = log
         self.update_config_data(config_data)
     
 
     def shutdown(self):
+        self._log.log_message('warning', 'Xfrout process will is shutting down')
         ThreadingUnixStreamServer.shutdown(self)
         try:
             os.unlink(self._sock_file)
         except:
-            pass
+            #pass
+            self._log.log_message('error', 'OS unlink sock file exception while shutting down')
 
     def update_config_data(self, new_config):
         '''Apply the new config setting of xfrout module. '''
 
+        self._log.log_message('info', 'update config data start')
         self._lock.acquire()
         self._max_transfers_out = new_config.get('transfers_out')
+        self._log.log_message('debug', 'max transfer out : %d', self._max_transfers_out)
         self._db_file = new_config.get('db_file')
+        self._log.log_message('debug', 'db file name : %s', self._db_file)
         self._lock.release()
+        self._log.log_message('info', 'update config data complete')
 
     def get_db_file(self):
         self._lock.acquire()
@@ -339,11 +347,15 @@ def listen_on_xfr_query(unix_socket_server):
 class XfroutServer:
     def __init__(self):
         self._unix_socket_server = None
+        self._log = None
         self._listen_sock_file = UNIX_SOCKET_FILE 
         self._shutdown_event = threading.Event()
         self._cc = isc.config.ModuleCCSession(SPECFILE_LOCATION, self.config_handler, self.command_handler)
         self._config_data = self._cc.get_full_config()
         self._cc.start()
+        self._log = isc.log.ModuleLogger(self._config_data.get('log_name'), self._config_data.get('log_file'),
+                                         self._config_data.get('severity'), self._config_data.get('versions'),
+                                         self._config_data.get('max_bytes'), True)
         self._start_xfr_query_listener()
 
 
@@ -351,7 +363,8 @@ class XfroutServer:
         '''Start a new thread to accept xfr query. '''
     
         self._unix_socket_server = UnixSockServer(self._listen_sock_file, XfroutSession, 
-                                                  self._shutdown_event, self._config_data);
+                                                  self._shutdown_event, self._config_data,
+                                                  self._log);
         listener = threading.Thread(target = listen_on_xfr_query, args = (self._unix_socket_server,))
         listener.start()
 
@@ -365,6 +378,10 @@ class XfroutServer:
                 continue
             self._config_data[key] = new_config[key]
         
+        if self._log:
+            self._log.update_config(self._config_data.get('log_file'), self._config_data.get('severity'), 
+                                    self._config_data.get('max_bytes'), self._config_data.get('versions'))
+
         if self._unix_socket_server:
             self._unix_socket_server.update_config_data(self._config_data)
 
