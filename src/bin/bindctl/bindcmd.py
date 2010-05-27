@@ -49,7 +49,7 @@ try:
 except ImportError:
     my_readline = sys.stdin.readline
 
-
+CONFIG_MODULE_NAME = 'config'
 CONST_BINDCTL_HELP = """
 usage: <module name> <command name> [param1 = value1 [, param2 = value2]]
 Type Tab character to get the hint of module/command/parameters.
@@ -304,16 +304,18 @@ class BindCmdInterpreter(Cmd):
                 param_nr += 1
         
         # Convert parameter value according parameter spec file.
-        for param_name in cmd.params:
-            param_spec = command_info.get_param_with_name(param_name).param_spec
-            cmd.params[param_name] = isc.config.config_data.convert_type(param_spec, cmd.params[param_name])
+        # Ignore check for commands belongs to module 'config'
+        if cmd.module != CONFIG_MODULE_NAME:
+            for param_name in cmd.params:
+                param_spec = command_info.get_param_with_name(param_name).param_spec
+                cmd.params[param_name] = isc.config.config_data.convert_type(param_spec, cmd.params[param_name])
 
     
     def _handle_cmd(self, cmd):
         '''Handle a command entered by the user'''
         if cmd.command == "help" or ("help" in cmd.params.keys()):
             self._handle_help(cmd)
-        elif cmd.module == "config":
+        elif cmd.module == CONFIG_MODULE_NAME:
             self.apply_config_cmd(cmd)
         else:
             self.apply_cmd(cmd)
@@ -364,7 +366,7 @@ class BindCmdInterpreter(Cmd):
                 else:                       
                     hints = self._get_param_startswith(cmd.module, cmd.command,
                                                        text)
-                    if cmd.module == "config":
+                    if cmd.module == CONFIG_MODULE_NAME:
                         # grm text has been stripped of slashes...
                         my_text = self.location + "/" + cur_line.rpartition(" ")[2]
                         list = self.config_data.get_config_item_list(my_text.rpartition("/")[0], True)
