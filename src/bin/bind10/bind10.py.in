@@ -286,10 +286,12 @@ class BoB:
 
         # start the xfrout before auth-server, to make sure every xfr-query can be
         # processed properly.
+        xfrout_args = ['b10-xfrout']
         if self.verbose:
             sys.stdout.write("Starting b10-xfrout\n")
+            xfrout_args += ['-v']
         try:
-            xfrout = ProcessInfo("b10-xfrout", ["b10-xfrout"], 
+            xfrout = ProcessInfo("b10-xfrout", xfrout_args, 
                                  { 'ISC_MSGQ_PORT': str(self.c_channel_port)})
         except Exception as e:
             c_channel.process.kill()
@@ -319,10 +321,12 @@ class BoB:
             sys.stdout.write("Started b10-auth (PID %d)\n" % auth.pid)
 
         # start b10-xfrin
+        xfrin_args = ['b10-xfrin']
         if self.verbose:
             sys.stdout.write("Starting b10-xfrin\n")
+            xfrin_args += ['-v']
         try:
-            xfrind = ProcessInfo("b10-xfrin", ['b10-xfrin'],
+            xfrind = ProcessInfo("b10-xfrin", xfrin_args,
                                  { 'ISC_MSGQ_PORT': str(self.c_channel_port)})
         except Exception as e:
             c_channel.process.kill()
@@ -336,10 +340,12 @@ class BoB:
 
         # start the b10-cmdctl
         # XXX: we hardcode port 8080
+        cmdctl_args = ['b10-cmdctl']
         if self.verbose:
             sys.stdout.write("Starting b10-cmdctl on port 8080\n")
+            cmdctl_args += ['-v']
         try:
-            cmd_ctrld = ProcessInfo("b10-cmdctl", ['b10-cmdctl'],
+            cmd_ctrld = ProcessInfo("b10-cmdctl", cmdctl_args,
                                     { 'ISC_MSGQ_PORT': str(self.c_channel_port)})
         except Exception as e:
             c_channel.process.kill()
