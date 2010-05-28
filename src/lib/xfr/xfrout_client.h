@@ -17,13 +17,16 @@
 #ifndef _XFROUT_CLIENT_H
 #define _XFROUT_CLIENT_H
 
+#include <stdint.h>
+
 #include <string>
 
-#include <asio.hpp>
 #include <exceptions/exceptions.h>
 
 namespace isc {
 namespace xfr {
+
+struct XfroutClientImpl;
 
 class XfroutError: public Exception {
 public:
@@ -31,22 +34,21 @@ public:
         isc::Exception(file, line, what) {}
 };
 
-using asio::local::stream_protocol;
 class XfroutClient {
 public:
-    XfroutClient(const std::string& file):
-        socket_(io_service_), file_path_(file) {}
-
+    XfroutClient(const std::string& file);
+    ~XfroutClient();
+private:
+    // make this class non copyable
+    XfroutClient(const XfroutClient& source);
+    XfroutClient& operator=(const XfroutClient& source);
+public:
     void connect();
     void disconnect();
     int sendXfroutRequestInfo(int tcp_sock, uint8_t* msg_data,
                               uint16_t msg_len);
-
 private:
-    asio::io_service io_service_;
-    // The socket used to communicate with the xfrout server.
-    stream_protocol::socket socket_;
-    const std::string file_path_;
+    XfroutClientImpl* impl_;
 };
 
 } // End for namespace xfr

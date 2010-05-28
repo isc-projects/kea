@@ -87,9 +87,21 @@ AC_SUBST(PYTHON_LIB)
 
 # TODO: check for _sqlite3.py module
 
-# default compiler warning settings
+#
+# B10_CXXFLAGS is the default C++ compiler flags.  This will (and should) be
+# used as the default value for each specifc AM_CXXFLAGS:
+# AM_CXXFLAGS = $(B10_CXXFLAGS)
+# AM_CXXFLAGS += ... # add module specific flags
+# We need this so that we can disable some specific compiler warnings per
+# module basis; since AM_CXXFLAGS are placed before CXXFLAGS, and since
+# gcc's -Wno-XXX option must be specified after -Wall or -Wextra, we cannot
+# specify the default warning flags in CXXFLAGS and let specific modules
+# "override" the default.
+#
+B10_CXXFLAGS=
+
 if test "X$GCC" = "Xyes"; then
-CXXFLAGS="$CXXFLAGS -g -Wall -Wextra -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
+B10_CXXFLAGS="-g -Wall -Wextra -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
 UNUSED_PARAM_ATTRIBUTE='__attribute__((unused))'
 
 # Certain versions of gcc (g++) have a bug that incorrectly warns about
@@ -97,22 +109,26 @@ UNUSED_PARAM_ATTRIBUTE='__attribute__((unused))'
 # translation unit.  For these versions we have to disable -Werror.
 werror_ok=0
 CXXFLAGS_SAVED="$CXXFLAGS"
-CXXFLAGS="$CXXFLAGS -Werror"
+CXXFLAGS="$CXXFLAGS $B10_CXXFLAGS -Werror"
 AC_MSG_CHECKING(for in-TU anonymous namespace breakage)
 AC_TRY_COMPILE([namespace { class Foo {}; }
 namespace isc {class Bar {Foo foo_;};} ],,
 	[AC_MSG_RESULT(no)
-	 werror_ok=1],
+	 werror_ok=1
+	 B10_CXXFLAGS="$B10_CXXFLAGS -Werror"],
 	[AC_MSG_RESULT(yes)])
 CXXFLAGS="$CXXFLAGS_SAVED"
-fi
-AC_DEFINE_UNQUOTED(UNUSED_PARAM, $UNUSED_PARAM_ATTRIBUTE, Define to compiler keyword indicating a function argument is intentionally unused)
+fi				dnl GCC = yes
+
 AM_CONDITIONAL(GCC_WERROR_OK, test $werror_ok = 1)
+AC_DEFINE_UNQUOTED(UNUSED_PARAM, $UNUSED_PARAM_ATTRIBUTE, Define to compiler keyword indicating a function argument is intentionally unused)
 
 # produce PIC unless we disable shared libraries. need this for python bindings.
 if test $enable_shared != "no" -a "X$GCC" = "Xyes"; then
-   CXXFLAGS="$CXXFLAGS -fPIC"
+   B10_CXXFLAGS="$B10_CXXFLAGS -fPIC"
 fi
+
+AC_SUBST(B10_CXXFLAGS)
 
 # Checks for libraries.
 
@@ -192,52 +208,6 @@ AC_HELP_STRING([--with-boost-lib=PATH],
    BOOST_LDFLAGS="-L$withval"
    fi])
 AC_SUBST(BOOST_LDFLAGS)
-
-# Check availability of the Boost System library
-
-AC_MSG_CHECKING([for boost::system library])
-AC_ARG_WITH([boost-system],
-AC_HELP_STRING([--with-boost-system],
-  [specify whether to use the boost system library]),
-  [with_boost_system="$withval"], [with_boost_system="auto"])
-
-if test "$with_boost_system" != "no"; then
-	LDFLAGS_SAVED="$LDFLAGS"
-	LIBS_SAVED="$LIBS"
-	CPPFLAGS_SAVED="$CPPFLAGS"
-	CPPFLAGS="$CPPFLAGS -Iext/boost"
-
-	for BOOST_TRY_LIB in boost_system boost_system-mt; do
-		LDFLAGS="$LDFLAGS_SAVED ${BOOST_LDFLAGS}"
-		LIBS="$LIBS_SAVED -l${BOOST_TRY_LIB}"
-		AC_TRY_LINK([#include <boost/system/error_code.hpp>],
-			[ boost::system::error_code error_code;
-			std::string message(error_code.message());
-			return 0; ],
-			[ AC_MSG_RESULT(yes)
-			BOOST_SYSTEM_LIB="-l${BOOST_TRY_LIB}"
-			],[])
-		if test "X${BOOST_SYSTEM_LIB}" != X; then
-        		break
-		fi
-	done
-
-	LDFLAGS="$LDFLAGS_SAVED"
-	CPPFLAGS="$CPPFLAGS_SAVED"
-	LIBS="$LIBS_SAVED"
-fi
-
-if test "X${BOOST_SYSTEM_LIB}" = X; then
-	AC_MSG_RESULT(no)
-	if test "$with_boost_system" = "yes"; then
-	   AC_MSG_ERROR([boost system library is requested but not found])
-	fi
-else
-	AC_DEFINE(HAVE_BOOST_SYSTEM, 1, Define to 1 if boost system library is available)
-fi
-
-AM_CONDITIONAL(HAVE_BOOST_SYSTEM, test "X${BOOST_SYSTEM_LIB}" != X)
-AC_SUBST(BOOST_SYSTEM_LIB)
 
 # Check availability of the Boost Python library
 
@@ -476,9 +446,9 @@ Flags:
   CPPFLAGS:      $CPPFLAGS
   CFLAGS:        $CFLAGS
   CXXFLAGS:      $CXXFLAGS
+  B10_CXXFLAGS:  $B10_CXXFLAGS
 dnl includes too
   Boost Python:  $BOOST_PYTHON_LIB
-  Boost System:  $BOOST_SYSTEM_LIB
   SQLite:	 $SQLITE_CFLAGS
                  $SQLITE_LIBS
 

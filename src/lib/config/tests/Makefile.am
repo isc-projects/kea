@@ -1,5 +1,8 @@
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib
 
+AM_CXXFLAGS = $(B10_CXXFLAGS)
+AM_CXXFLAGS += -Wno-unused-parameter # see src/lib/cc/Makefile.am
+
 CLEANFILES = *.gcno *.gcda
 
 lib_LTLIBRARIES = libfake_session.la

@@ -2,6 +2,8 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/lib/dns -I$(top_srcdir)/src/bin
 AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(srcdir)/testdata\"
 
+AM_CXXFLAGS = $(B10_CXXFLAGS)
+
 CLEANFILES = *.gcno *.gcda
 
 TESTS =
