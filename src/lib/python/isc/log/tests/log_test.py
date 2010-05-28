@@ -29,10 +29,13 @@ class TestLogging(unittest.TestCase):
         self.syslog_logger = ModuleLogger('SysLogger', '', 'info', 5, 1024, False)
 
     def test_logging_init(self):
+        self.assertNotEqual(self.file_stream_logger.null_handler, None)
         self.assertNotEqual(self.file_stream_logger.rotating_handler, None)
         self.assertNotEqual(self.file_stream_logger.stream_handler, None)
         self.assertEqual(self.file_stream_logger.syslog_handler, None)
 
+        ret = self.file_stream_logger.null_handler in self.file_stream_logger.handlers
+        self.assertTrue(ret)
         ret = self.file_stream_logger.rotating_handler in self.file_stream_logger.handlers
         self.assertTrue(ret)
         ret = self.file_stream_logger.stream_handler in self.file_stream_logger.handlers
@@ -42,9 +45,12 @@ class TestLogging(unittest.TestCase):
         logLevel = LEVELS.get('debug', logging.NOTSET)
         self.assertEqual(self.file_stream_logger.getEffectiveLevel(), logLevel)
 
+        self.assertNotEqual(self.syslog_logger.null_handler, None)
         self.assertEqual(self.syslog_logger.rotating_handler, None)
         self.assertEqual(self.syslog_logger.stream_handler, None)
         self.assertNotEqual(self.syslog_logger.syslog_handler, None)
+        ret = self.syslog_logger.null_handler in self.syslog_logger.handlers
+        self.assertTrue(ret)
         ret = self.syslog_logger.rotating_handler in self.syslog_logger.handlers
         self.assertFalse(ret)
         ret = self.syslog_logger.stream_handler in self.syslog_logger.handlers
@@ -54,6 +60,15 @@ class TestLogging(unittest.TestCase):
 
         logLevel = LEVELS.get('info', logging.NOTSET)
         self.assertEqual(self.syslog_logger.getEffectiveLevel(), logLevel)
+
+    def test_add_null_handler(self):
+        if(self.syslog_logger.null_handler in self.syslog_logger.handlers):
+            self.syslog_logger.removeHandler(self.syslog_logger.null_handler)
+
+        self.syslog_logger.add_null_handler()
+        ret = self.syslog_logger.null_handler in self.syslog_logger.handlers
+        self.assertTrue(ret)
+    
 
     def test_add_rotate_handler(self):
         if(self.syslog_logger.rotating_handler in self.syslog_logger.handlers):
