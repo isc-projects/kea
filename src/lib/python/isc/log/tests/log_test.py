@@ -5,7 +5,8 @@ import os
 class TestRotateFileHandler(unittest.TestCase):
 
     def setUp(self):
-        self.handler = RotatingFileHandler('/var/log/rotate_file_handler.log', 1024, 5)
+        self.handler = RotatingFileHandler(filename = '/var/log/rotate_file_handler.log',
+                                           maxBytes = 1024, backupCount = 5)
 
     def test_shouldRollover(self):
         if(os.path.exists('/var/log/rotate_file_handler.log')):
@@ -15,10 +16,15 @@ class TestRotateFileHandler(unittest.TestCase):
         self.assertTrue(os.path.exists('/var/log/rotate_file_handler.log'))
 
     def test_update_config(self):
-        self.handler.update_config('/var/log/rotate_file_handler2.log', 512, 3)
+        self.handler.update_config('/var/log/rotate_file_handler2.log', 3, 512)
         self.assertEqual(self.handler.baseFilename, '/var/log/rotate_file_handler2.log')
-        self.assertEqual(self.handler.maxBytes, 3)
-        self.assertEqual(self.handler.backupCount, 512)
+        self.assertEqual(self.handler.maxBytes, 512)
+        self.assertEqual(self.handler.backupCount, 3)
+
+        self.handler.update_config('/var/ZZZXXX/rotate_file_handler2.log', 4, 1024)
+        self.assertEqual(self.handler.baseFilename, '/var/log/rotate_file_handler2.log')
+        self.assertEqual(self.handler.maxBytes, 1024)
+        self.assertEqual(self.handler.backupCount, 4)
 
 
 class TestLogging(unittest.TestCase):
@@ -74,11 +80,11 @@ class TestLogging(unittest.TestCase):
         if(self.syslog_logger.rotating_handler in self.syslog_logger.handlers):
             self.syslog_logger.removeHandler(self.syslog_logger.rotating_handler)
         
-        self.syslog_logger.add_rotate_handler('', 1024, 5)
+        self.syslog_logger.add_rotate_handler('', 5, 1024)
         ret = self.syslog_logger.rotating_handler in self.syslog_logger.handlers
         self.assertFalse(ret)
 
-        self.syslog_logger.add_rotate_handler('/var/log/RotateFile.log', 1024, 5)
+        self.syslog_logger.add_rotate_handler('/var/log/RotateFile.log', 5, 1024)
         ret = self.syslog_logger.rotating_handler in self.syslog_logger.handlers
         self.assertTrue(ret)
 
@@ -109,7 +115,7 @@ class TestLogging(unittest.TestCase):
 
         self.file_stream_logger.update_rotate_handler('/var/log/RotateFile', 4, 1024)
         ret = self.file_stream_logger.rotating_handler in self.file_stream_logger.handlers
-        self.assertFalse(ret)
+        self.assertTrue(ret)
 
     def test_update_config(self):
         self.file_stream_logger.update_config('/var/log/RotateFile','error', 4, 1024)

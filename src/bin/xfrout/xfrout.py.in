@@ -380,7 +380,7 @@ class XfroutServer:
         
         if self._log:
             self._log.update_config(self._config_data.get('log_file'), self._config_data.get('severity'), 
-                                    self._config_data.get('max_bytes'), self._config_data.get('versions'))
+                                    self._config_data.get('versions'), self._config_data.get('max_bytes'))
 
         if self._unix_socket_server:
             self._unix_socket_server.update_config_data(self._config_data)
