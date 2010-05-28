@@ -56,19 +56,17 @@ class RotatingFileHandler(logging.handlers.RotatingFileHandler):
         """
         Update RotatingFileHandler configuration.
 
+        If the file path is not exists, we will use the old configuration.
         input:
             log file name
             max backup count
             predetermined log file size
         """
-        try:
-            self._open(file_name)
-        except IOError:
-            print("The file path is not exist!")
-            return 
-        self.baseFilename = file_name
-        self.maxBytes = max_bytes
-        self.backupCount = backup_count
+        dir = os.path.split(file_name)
+        if(os.path.exists(dir[0])):
+            self.baseFilename = file_name
+            self.maxBytes = max_bytes
+            self.backupCount = backup_count
 
 class SLHandler(logging.Handler):    
     """
@@ -194,8 +192,8 @@ class ModuleLogger(logging.getLoggerClass()):
 
     def update_rotate_handler(self, log_file, max_bytes, backup_count):
         """
-        If rotate handler has been added to the logger, update its configuration,
-        else add it to logger.
+        If the rotate handler has been added to the logger, update its configuration,
+        else add it to the logger.
     
         If log file is empty, the handler will be removed.
         """
