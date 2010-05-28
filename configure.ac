@@ -310,8 +310,35 @@ AC_SUBST(GTEST_LDADD)
 
 PKG_CHECK_MODULES(SQLITE, sqlite3 >= 3.3.9, enable_features="$enable_features SQLite3")
 
+#
+# ASIO: we extensively use it as the C++ event management module.
+#
 # Use local ASIO headers from ext
+#
 CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext/asio"
+#
+# kqueue portability: ASIO uses kqueue by default if it's available (it's
+# generally available in BSD variants).  Unfortunately, some public
+# implementation of kqueue forces a conversion from a pointer to an integer,
+# which is prohibited in C++ unless reinterpret_cast, C++'s most evil beast
+# (and ASIO doesn't use it anyway) is used.  This will cause build error for
+# some of our C++ files including ASIO header files.  The following check
+# detects such cases and tells ASIO not to use kqueue if so.
+AC_CHECK_FUNC(kqueue, ac_cv_have_kqueue=yes, ac_cv_have_kqueue=no)
+case $ac_cv_have_kqueue in
+yes)
+	AC_MSG_CHECKING([whether kqueue EV_SET compiles in C++])
+	AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/event.h>],
+[char* udata;
+EV_SET(NULL, 0, 0, 0, 0, 0, udata);],
+	[AC_MSG_RESULT(yes)],
+	[AC_MSG_RESULT([no, disable kqueue for ASIO])
+	 CPPFLAGS="$CPPFLAGS -DASIO_DISABLE_KQUEUE=1"
+	])
+esac
 
 # Check for headers from required devel kits.
 # boost/shared_ptr.hpp is in ext in svn but not in tarball.
