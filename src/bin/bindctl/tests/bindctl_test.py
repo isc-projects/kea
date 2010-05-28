@@ -15,6 +15,7 @@
 
 
 import unittest
+import isc.cc.data
 from bindctl import cmdparse
 from bindctl import bindcmd
 from bindctl.moduleinfo import *
@@ -92,14 +93,21 @@ class TestCmdSyntax(unittest.TestCase):
         """Create one bindcmd"""
         
         tool = bindcmd.BindCmdInterpreter()        
-        zone_file_param = ParamInfo(name = "zone_file")
-        zone_name = ParamInfo(name = 'zone_name')
+        string_spec = { 'item_type' : 'string',
+                       'item_optional' : False,
+                       'item_default' : ''}
+        int_spec = { 'item_type' : 'integer',
+                       'item_optional' : False,
+                       'item_default' : 10}
+        zone_file_param = ParamInfo(name = "zone_file", param_spec = string_spec)
+        zone_name = ParamInfo(name = 'zone_name', param_spec = string_spec)
         load_cmd = CommandInfo(name = "load")
         load_cmd.add_param(zone_file_param)
         load_cmd.add_param(zone_name)
         
-        param_master = ParamInfo(name = "master", optional = True)                                 
-        param_allow_update = ParamInfo(name = "allow_update", optional = True)                                           
+        param_master = ParamInfo(name = "master", optional = True, param_spec = string_spec)                                 
+        param_master = ParamInfo(name = "port", optional = True, param_spec = int_spec)                                 
+        param_allow_update = ParamInfo(name = "allow_update", optional = True, param_spec = string_spec)                                           
         set_cmd = CommandInfo(name = "set")
         set_cmd.add_param(param_master)
         set_cmd.add_param(param_allow_update)
@@ -138,6 +146,7 @@ class TestCmdSyntax(unittest.TestCase):
         self.no_assert_raise("zone help help='dd' ")
         self.no_assert_raise("zone set allow_update='1.1.1.1' zone_name='cn'")
         self.no_assert_raise("zone set zone_name='cn'")
+        self.my_assert_raise(isc.cc.data.DataTypeError, "zone set zone_name ='cn', port='cn'")
         self.no_assert_raise("zone reload_all")        
         
     
