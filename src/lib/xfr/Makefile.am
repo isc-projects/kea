@@ -2,11 +2,10 @@ SUBDIRS = .
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
-AM_CPPFLAGS += -I$(top_srcdir)/ext -Wno-strict-aliasing
+AM_CPPFLAGS += -I$(top_srcdir)/ext
 
-if GCC_WERROR_OK
-AM_CPPFLAGS += -Werror
-endif
+AM_CXXFLAGS = $(B10_CXXFLAGS) -Wno-strict-aliasing
+AM_CXXFLAGS += -Wno-unused-parameter # see src/lib/cc/Makefile.am
 
 CLEANFILES = *.gcno *.gcda
 
@@ -18,10 +17,11 @@ if HAVE_BOOST_PYTHON
 pyexec_LTLIBRARIES = bind10_xfr.la
 bind10_xfr_la_SOURCES = python_xfr.cc fd_share.cc fd_share.h
 bind10_xfr_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
+bind10_xfr_la_CXXFLAGS = $(AM_CXXFLAGS)
 if GCC_WERROR_OK
 # XXX: Boost.Python triggers strict aliasing violation, so if we use -Werror
 # we need to suppress the warnings.
-bind10_xfr_la_CPPFLAGS += -fno-strict-aliasing
+bind10_xfr_la_CXXFLAGS += -fno-strict-aliasing
 endif
 bind10_xfr_la_LDFLAGS = $(BOOST_LDFLAGS) $(PYTHON_LDFLAGS)
 # Python prefers .so, while some OSes (specifically MacOS) use a different

@@ -17,46 +17,72 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+
+#include <asio.hpp>
+
 #include "fd_share.h"
 #include "xfrout_client.h"
 
+using namespace std;
 using asio::local::stream_protocol;
 
 namespace isc {
 namespace xfr {
 
+struct XfroutClientImpl {
+    XfroutClientImpl(const string& file);
+    const std::string file_path_;
+    asio::io_service io_service_;
+    // The socket used to communicate with the xfrout server.
+    stream_protocol::socket socket_;
+};
+
+XfroutClientImpl::XfroutClientImpl(const string& file) :
+    file_path_(file), socket_(io_service_)
+{}
+
+XfroutClient::XfroutClient(const string& file) :
+    impl_(new XfroutClientImpl(file))
+{}
+
+XfroutClient::~XfroutClient()
+{
+    delete impl_;
+}
+
 void
 XfroutClient::connect() {
-    socket_.connect(stream_protocol::endpoint(file_path_));
+    impl_->socket_.connect(stream_protocol::endpoint(impl_->file_path_));
 }
 
 void
 XfroutClient::disconnect() {
-    socket_.close();
+    impl_->socket_.close();
 }
 
 int 
 XfroutClient::sendXfroutRequestInfo(const int tcp_sock, uint8_t* msg_data,
                                     const uint16_t msg_len)
 {
-    if (-1 == send_fd(socket_.native(), tcp_sock)) {
+    if (-1 == send_fd(impl_->socket_.native(), tcp_sock)) {
         isc_throw(XfroutError,
                   "Fail to send socket descriptor to xfrout module");
     }
 
     // XXX: this shouldn't be blocking send, even though it's unlikely to block.
     const uint8_t lenbuf[2] = { msg_len >> 8, msg_len & 0xff };
-    if (send(socket_.native(), lenbuf, sizeof(lenbuf), 0) != sizeof(lenbuf)) {
+    if (send(impl_->socket_.native(), lenbuf, sizeof(lenbuf), 0) !=
+        sizeof(lenbuf)) {
         isc_throw(XfroutError,
                   "failed to send XFR request length to xfrout module");
     }
-    if (send(socket_.native(), msg_data, msg_len, 0) != msg_len) {
+    if (send(impl_->socket_.native(), msg_data, msg_len, 0) != msg_len) {
         isc_throw(XfroutError,
                   "failed to send XFR request data to xfrout module");
     }
     
     int databuf = 0;
-    if (recv(socket_.native(), &databuf, sizeof(int), 0) != 0) {
+    if (recv(impl_->socket_.native(), &databuf, sizeof(int), 0) != 0) {
         isc_throw(XfroutError,
                   "xfr query hasn't been processed properly by xfrout module");
     }

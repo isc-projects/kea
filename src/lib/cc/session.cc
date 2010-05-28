@@ -14,12 +14,7 @@
 
 // $Id$
 
-// Suppress "unused parameter" warnings that turn up in the ASIO code
-#ifdef __GNUC__
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#endif
-
-#include "config.h"
+#include <config.h>
 
 #include <stdint.h>
 

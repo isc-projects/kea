@@ -2,9 +2,8 @@ SUBDIRS = . tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
-if GCC_WERROR_OK
-AM_CPPFLAGS += -Werror
-endif
+
+AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 pkglibexecdir = $(libexecdir)/@PACKAGE@
 
@@ -34,7 +33,10 @@ spec_config.h: spec_config.h.pre
 # only for which we accept the unused-parameter warning.
 lib_LIBRARIES = libasio_link.a
 libasio_link_a_SOURCES = asio_link.cc asio_link.h
-libasio_link_a_CPPFLAGS = $(AM_CPPFLAGS) -Wno-error=unused-parameter
+# Note: the ordering matters: -Wno-... must follow -Wextra (defined in
+# B10_CXXFLAGS)
+libasio_link_a_CXXFLAGS = $(AM_CXXFLAGS) -Wno-unused-parameter
+libasio_link_a_CPPFLAGS = $(AM_CPPFLAGS)
 
 BUILT_SOURCES = spec_config.h 
 pkglibexec_PROGRAMS = b10-auth
