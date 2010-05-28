@@ -171,10 +171,8 @@ class ModuleLogger(logging.getLoggerClass()):
         self.addHandler(self.syslog_handler)
 
     def update_rotate_handler(self, log_file, max_bytes, backup_count):
-        # If logFile was specified
-        if (self.rotating_handler not in self.handlers):
-            pass
-        else:
+        if (self.rotating_handler in self.handlers):
+            # If logFile was specified
             if(log_file != 0 and log_file != ''):
                 self.rotating_handler.update_config(log_file, max_bytes, backup_count)
             else:
