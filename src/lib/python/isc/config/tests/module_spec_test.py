@@ -94,6 +94,24 @@ class TestModuleSpec(unittest.TestCase):
         self.assertEqual(True, self.validate_data("spec22.spec", "data22_7.data"))
         self.assertEqual(False, self.validate_data("spec22.spec", "data22_8.data"))
 
+    def validate_command_params(self, specfile_name, datafile_name, cmd_name):
+        dd = self.read_spec_file(specfile_name);
+        data_file = open(self.spec_file(datafile_name))
+        data_str = data_file.read()
+        params = isc.cc.data.parse_value_str(data_str)
+        return dd.validate_command(cmd_name, params)
+
+    def test_command_validation(self):
+        self.assertEqual(True, self.validate_command_params("spec27.spec", "data22_1.data", 'cmd1'))
+        self.assertEqual(False, self.validate_command_params("spec27.spec", "data22_2.data",'cmd1'))
+        self.assertEqual(False, self.validate_command_params("spec27.spec", "data22_3.data", 'cmd1'))
+        self.assertEqual(False, self.validate_command_params("spec27.spec", "data22_4.data", 'cmd1'))
+        self.assertEqual(False, self.validate_command_params("spec27.spec", "data22_5.data", 'cmd1'))
+        self.assertEqual(True, self.validate_command_params("spec27.spec", "data22_6.data", 'cmd1'))
+        self.assertEqual(True, self.validate_command_params("spec27.spec", "data22_7.data", 'cmd1'))
+        self.assertEqual(False, self.validate_command_params("spec27.spec", "data22_8.data", 'cmd1'))
+        self.assertEqual(False, self.validate_command_params("spec27.spec", "data22_8.data", 'cmd2'))
+
     def test_init(self):
         self.assertRaises(ModuleSpecError, ModuleSpec, 1)
         module_spec = isc.config.module_spec_from_file(self.spec_file("spec1.spec"), False)

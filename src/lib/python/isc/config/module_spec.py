@@ -83,6 +83,27 @@ class ModuleSpec:
             errors.append("No config_data specification")
             return False
 
+    def validate_command(self, cmd_name, cmd_params, errors = None):
+        '''Check whether the given piece of command conforms to this 
+        command definition. If so, it reutrns True. If not, it will 
+        return False. If errors is given, and is an array, a string
+        describing the error will be appended to it. The current version
+        stops as soon as there is one error.
+           cmd_name is command name to be validated, cmd_params includes 
+        command's parameters needs to be validated. cmd_params must 
+        be a map, with the format like:
+        {param1_name: param1_value, param2_name: param2_value}
+        '''
+        cmd_spec = self.get_commands_spec()
+        if not cmd_spec:
+            return False
+
+        for cmd in cmd_spec:
+            if cmd['command_name'] != cmd_name:
+                continue
+            return _validate_spec_list(cmd['command_args'], True, cmd_params, errors)
+
+        return False
 
     def get_module_name(self):
         """Returns a string containing the name of the module as
