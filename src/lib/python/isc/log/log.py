@@ -50,13 +50,13 @@ class RotatingFileHandler(logging.handlers.RotatingFileHandler):
         if (self.stream) and (not os.path.exists(dfn)): #Is log file exist?
             self.stream.close()
             self.stream = self._open()
-        super(RotatingFileHandler, self).shouldRollover(record)
-
+        return super(RotatingFileHandler, self).shouldRollover(record)
+    
     def update_config(self, file_name, backup_count, max_bytes):
         """
         Update RotatingFileHandler configuration.
 
-        If the file path is not exists, we will use the old configuration.
+        If the file path is not exist, we will use the old log file.
         input:
             log file name
             max backup count
@@ -65,8 +65,8 @@ class RotatingFileHandler(logging.handlers.RotatingFileHandler):
         dir = os.path.split(file_name)
         if(os.path.exists(dir[0])):
             self.baseFilename = file_name
-            self.maxBytes = max_bytes
-            self.backupCount = backup_count
+        self.maxBytes = max_bytes
+        self.backupCount = backup_count
 
 class SLHandler(logging.Handler):    
     """
@@ -122,8 +122,11 @@ class ModuleLogger(logging.getLoggerClass()):
                  log_to_console = True):
         """
         Initializes the logger with some specific parameters
+
+        If log_to_console is Ture, stream handler will be used;
+        else syslog handler will be used.
         """
-        logging.Logger.__init__(self, log_name)
+        super(ModuleLogger, self).__init__(log_name)
 
         # Set up a specific logger with our desired output level
         logLevel = LEVELS.get(severity, logging.NOTSET)
@@ -135,7 +138,7 @@ class ModuleLogger(logging.getLoggerClass()):
         self.syslog_handler = None
 
         self.add_null_handler()
-        self.add_rotate_handler(log_file, max_bytes, backup_count)
+        self.add_rotate_handler(log_file, backup_count, max_bytes)
         if log_to_console:
             self.add_stream_handler()
         else:
@@ -148,18 +151,20 @@ class ModuleLogger(logging.getLoggerClass()):
         self.null_handler = logging.NullHandler()
         self.addHandler(self.null_handler)
 
-    def add_rotate_handler(self, log_file, max_bytes, backup_count):
+    def add_rotate_handler(self, log_file, backup_count, max_bytes):
         """
         Add a rotate file handler.
    
         input:
-            log_file : the location of log file.Handler would't be created is log_file is empty
+            log_file : the location of log file. Handler wouldn't be created 
+                       if log_file is not specified
             max_bytes : limit log growth
             backup_count : max backup count
         """
         if(log_file != 0  and log_file != ''):
             try:
-                self.rotating_handler = RotatingFileHandler(filename = log_file, maxBytes = max_bytes, 
+                self.rotating_handler = RotatingFileHandler(filename = log_file, 
+                                                            maxBytes = max_bytes, 
                                                             backupCount = backup_count)
             except IOError:
                 self.rotating_handler = None
@@ -186,29 +191,31 @@ class ModuleLogger(logging.getLoggerClass()):
         """
         self.syslog_handler = SLHandler('BIND10', facility=syslog.LOG_USER)
         self.syslog_handler.setFormatter(formatter)
-        #set syslog handler level info
+        #set syslog handler severity level INFO
         self.syslog_handler.setLevel(logging.INFO)
         self.addHandler(self.syslog_handler)
 
-    def update_rotate_handler(self, log_file, max_bytes, backup_count):
+    def update_rotate_handler(self, log_file, backup_count, max_bytes):
         """
-        If the rotate handler has been added to the logger, update its configuration,
-        else add it to the logger.
+        If the rotate file handler has been added to the logger, update its 
+        configuration, or add it to the logger.
     
-        If log file is empty, the handler will be removed.
         """
         if (self.rotating_handler in self.handlers):
             if(log_file != 0 and log_file != ''):
-                self.rotating_handler.update_config(log_file, max_bytes, backup_count)
+                self.rotating_handler.update_config(log_file, backup_count, max_bytes)
             else:
+                """
+                If log file is empty, the handler will be removed.
+                """
                 self.rotating_handler.flush()
                 self.rotating_handler.close()
                 self.removeHandler(self.rotating_handler)
         else:
-            self.add_rotate_handler(log_file, max_bytes, backup_count)
+            self.add_rotate_handler(log_file, backup_count, max_bytes)
 
 
-    def update_config(self, file_name, level, max_bytes, backup_count):
+    def update_config(self, file_name, level, backup_count, max_bytes):
         """
         Update logger's configuration.
 
