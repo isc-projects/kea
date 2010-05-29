@@ -23,11 +23,6 @@
 #include <iostream>
 #include <sstream>
 
-#include <asio/io_service.hpp>
-#include <asio/ip/tcp.hpp>
-
-#include <boost/bind.hpp>
-#include <boost/function.hpp>
 #include <boost/foreach.hpp>
 
 #include <exceptions/exceptions.h>
@@ -38,11 +33,6 @@
 using namespace std;
 using namespace isc::cc;
 using namespace isc::data;
-
-// some of the asio names conflict with socket API system calls
-// (e.g. write(2)) so we don't import the entire asio namespace.
-using asio::io_service;
-using asio::ip::tcp;
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -141,7 +131,7 @@ Session::Session()
 {
 }
 
-Session::Session(io_service& io_service UNUSED_PARAM)
+Session::Session(asio::io_service& io_service UNUSED_PARAM)
 {
 }
 

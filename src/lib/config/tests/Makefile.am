@@ -20,7 +20,6 @@ run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 run_unittests_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
 run_unittests_LDADD += $(top_builddir)/src/lib/cc/data.o
 run_unittests_LDADD += libfake_session.la
-run_unittests_LDADD += -lpthread
 
 endif
 
