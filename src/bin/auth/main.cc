@@ -127,7 +127,7 @@ main(int argc, char* argv[]) {
     }
 
     if (!use_ipv4 && !use_ipv6) {
-        cerr << "-4 and -6 can't coexist" << endl;
+        cerr << "[b10-auth] Error: -4 and -6 can't coexist" << endl;
         usage();
     }
 
@@ -152,6 +152,7 @@ main(int argc, char* argv[]) {
 
         io_service = new asio_link::IOService(auth_server, port, use_ipv4,
                                               use_ipv6);
+        cout << "[b10-auth] Server started." << endl;
         io_service->run();
     } catch (const std::exception& ex) {
         cerr << ex.what() << endl;
