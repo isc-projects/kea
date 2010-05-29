@@ -110,8 +110,8 @@ void
 ASIOSession::writeData(const void* data, size_t datalen) {
     try {
         asio::write(socket_, asio::buffer(data, datalen));
-    } catch (const asio::system_error& boost_ex) {
-        isc_throw(SessionError, "ASIO write failed: " << boost_ex.what());
+    } catch (const asio::system_error& asio_ex) {
+        isc_throw(SessionError, "ASIO write failed: " << asio_ex.what());
     }
 }
 
@@ -135,10 +135,10 @@ void
 ASIOSession::readData(void* data, size_t datalen) {
     try {
         asio::read(socket_, asio::buffer(data, datalen));
-    } catch (const asio::system_error& boost_ex) {
+    } catch (const asio::system_error& asio_ex) {
         // to hide boost specific exceptions, we catch them explicitly
         // and convert it to SessionError.
-        isc_throw(SessionError, "ASIO read failed: " << boost_ex.what());
+        isc_throw(SessionError, "ASIO read failed: " << asio_ex.what());
     }
 }
 
