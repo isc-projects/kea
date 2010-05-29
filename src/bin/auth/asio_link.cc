@@ -100,6 +100,10 @@ public:
     {}
 
     void start() {
+        // Check for queued configuration commands
+        if (auth_server_->configSession()->hasQueuedMsgs()) {
+            auth_server_->configSession()->checkCommand();
+        }
         async_read(socket_, asio::buffer(data_, TCP_MESSAGE_LENGTHSIZE),
                    boost::bind(&TCPClient::headerRead, this,
                                placeholders::error,
@@ -263,6 +267,10 @@ public:
     void handleRequest(const asio::error_code& error,
                        size_t bytes_recvd)
     {
+        // Check for queued configuration commands
+        if (auth_server_->configSession()->hasQueuedMsgs()) {
+            auth_server_->configSession()->checkCommand();
+        }
         if (!error && bytes_recvd > 0) {
             InputBuffer request_buffer(data_, bytes_recvd);
 
