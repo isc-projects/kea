@@ -23,12 +23,6 @@
 #include <iostream>
 #include <sstream>
 
-#ifdef HAVE_BOOST_SYSTEM
-#include <boost/bind.hpp>
-#include <boost/function.hpp>
-#include <boost/asio.hpp>
-#endif
-
 #include <boost/foreach.hpp>
 
 #include <exceptions/exceptions.h>
@@ -39,13 +33,6 @@
 using namespace std;
 using namespace isc::cc;
 using namespace isc::data;
-
-#ifdef HAVE_BOOST_SYSTEM
-// some of the boost::asio names conflict with socket API system calls
-// (e.g. write(2)) so we don't import the entire boost::asio namespace.
-using boost::asio::io_service;
-using boost::asio::ip::tcp;
-#endif
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -144,11 +131,9 @@ Session::Session()
 {
 }
 
-#ifdef HAVE_BOOST_SYSTEM
-Session::Session(io_service& io_service UNUSED_PARAM)
+Session::Session(asio::io_service& io_service UNUSED_PARAM)
 {
 }
-#endif
 
 Session::~Session() {
 }

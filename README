@@ -38,9 +38,6 @@ See the Guide for detailed installation directions.
 
 BUILDING
 
-We recommend using the Boost libraries as it provides a safer TCP
-implementation in BIND 10.
-
 Simple build instructions:
 
   ./configure

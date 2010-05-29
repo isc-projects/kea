@@ -1,3 +1,4 @@
+AM_CXXFLAGS=$(B10_CXXFLAGS)
 
 lib_LTLIBRARIES = libexceptions.la
 libexceptions_la_SOURCES = exceptions.h exceptions.cc

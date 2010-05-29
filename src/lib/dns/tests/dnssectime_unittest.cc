@@ -64,7 +64,8 @@ TEST(DNSSECTimeTest, toText) {
 TEST(DNSSECTimeTest, overflow) {
     // Jan 1, Year 10,000.
     if (sizeof(time_t) > 4) {
-        EXPECT_THROW(timeToText(253402300800LL), InvalidTime);
+        EXPECT_THROW(timeToText(static_cast<time_t>(253402300800LL)),
+                     InvalidTime);
     }
 }
 

@@ -1,9 +1,7 @@
 SUBDIRS = . tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
-if GCC_WERROR_OK
-AM_CPPFLAGS += -Werror
-endif
+AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 CLEANFILES = *.gcno *.gcda
 CLEANFILES += rrclass.h rrtype.h rrparamregistry.cc rdataclass.h rdataclass.cc
@@ -86,10 +84,11 @@ if HAVE_BOOST_PYTHON
 pyexec_LTLIBRARIES = bind10_dns.la
 bind10_dns_la_SOURCES = python_dns.cc
 bind10_dns_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
+bind10_dns_la_CXXFLAGS = $(AM_CXXFLAGS) $(B10_CXXFLAGS)
 if GCC_WERROR_OK
 # XXX: Boost.Python triggers strict aliasing violation, so if we use -Werror
 # we need to suppress the warnings.
-bind10_dns_la_CPPFLAGS += -fno-strict-aliasing
+bind10_dns_la_CXXFLAGS += -fno-strict-aliasing
 endif
 bind10_dns_la_LDFLAGS = $(BOOST_LDFLAGS) $(PYTHON_LDFLAGS)
 # Python prefers .so, while some OSes (specifically MacOS) use a different
