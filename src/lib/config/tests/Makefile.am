@@ -1,5 +1,8 @@
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib
 
+AM_CXXFLAGS = $(B10_CXXFLAGS)
+AM_CXXFLAGS += -Wno-unused-parameter # see src/lib/cc/Makefile.am
+
 CLEANFILES = *.gcno *.gcda
 
 lib_LTLIBRARIES = libfake_session.la
@@ -17,11 +20,6 @@ run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 run_unittests_LDADD += libfake_session.la
 run_unittests_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
 run_unittests_LDADD += $(top_builddir)/src/lib/cc/data.o
-
-if HAVE_BOOST_SYSTEM
-run_unittests_LDFLAGS += $(AM_LDFLAGS) $(BOOST_LDFLAGS)
-run_unittests_LDADD += $(BOOST_SYSTEM_LIB)
-endif
 
 endif
 

@@ -24,10 +24,8 @@
 #include <cc/session.h>
 #include <cc/data.h>
 
-namespace boost {
 namespace asio {
 class io_service;
-}
 }
 
 namespace isc {
@@ -133,7 +131,7 @@ public:
                     isc::data::ElementPtr(*command_handler)(const std::string& command, const isc::data::ElementPtr args) = NULL
                     ) throw (isc::cc::SessionError);
     ModuleCCSession(std::string spec_file_name,
-                    boost::asio::io_service& io_service,
+                    asio::io_service& io_service,
                     isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config) = NULL,
                     isc::data::ElementPtr(*command_handler)(const std::string& command, const isc::data::ElementPtr args) = NULL
                     ) throw (isc::cc::SessionError);
