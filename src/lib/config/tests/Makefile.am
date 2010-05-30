@@ -1,7 +1,8 @@
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
-AM_CXXFLAGS += -Wno-unused-parameter # see src/lib/cc/Makefile.am
+# see src/lib/cc/Makefile.am for -Wno-unused-parameter
+AM_CXXFLAGS += -Wno-unused-parameter
 
 CLEANFILES = *.gcno *.gcda
 
