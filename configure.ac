@@ -343,7 +343,7 @@ fi
 # the case with Solaris).  Unfortunately its /dev/poll specific code would
 # trigger the gcc's "missing-field-initializers" warning, which would
 # subsequently make the build fail with -Werror.  Further, older versions of
-# gcc doesn't provide an optio to selectively suppress this warning.
+# gcc don't provide an option to selectively suppress this warning.
 # So, for the moment, we simply disable the use of /dev/poll.  Unless we
 # implement recursive DNS server with randomized ports, we don't need the
 # scalability that /dev/poll can provide, so this decision wouldn't affect
