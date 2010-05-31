@@ -437,6 +437,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/lib/config/tests/data_def_unittests_config.h
            src/lib/python/isc/config/tests/config_test
            src/lib/python/isc/cc/tests/cc_test
+           src/lib/python/isc/log/tests/log_test
            src/lib/dns/gen-rdatacode.py
            src/lib/dns/tests/testdata/gen-wiredata.py
           ], [

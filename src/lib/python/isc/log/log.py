@@ -37,6 +37,10 @@ formatter = logging.Formatter("%(name)s: %(levelname)s: %(message)s")
 time_formatter = logging.Formatter("%(asctime)s: %(name)s: %(levelname)s: %(message)s")
 
 class RotatingFileHandler(logging.handlers.RotatingFileHandler):
+
+    def __init__(self, filename, mode='a', maxBytes=0, backupCount=0, encoding=None, delay=0):
+        super(RotatingFileHandler, self).__init__(filename, mode, maxBytes,
+                                                  backupCount, encoding, delay)
     """
     RotatingFileHandler: replace RotatingFileHandler with a custom handler 
     """
@@ -44,7 +48,7 @@ class RotatingFileHandler(logging.handlers.RotatingFileHandler):
         """
         Rewrite RotatingFileHandler.shouldRollover. 
        
-        If the log file is deleted at run-time, a new file will be created. 
+        If the log file is deleted at runtime, a new file will be created. 
         """
         dfn = self.baseFilename                 
         if (self.stream) and (not os.path.exists(dfn)): #Is log file exist?
@@ -81,7 +85,7 @@ class SLHandler(logging.Handler):
     
         If facility is not specified, LOG_USER is used.
         """
-        super(SLHandler, self).__init__(self)
+        super(SLHandler, self).__init__()
         self.ident = ident        
         self.logopt = logopt        
         self.facility = facility        
@@ -118,8 +122,8 @@ class ModuleLogger(logging.getLoggerClass()):
     Override logging.logger behaviour
     """
     def __init__(self, log_name, log_file, 
-                 severity = 'debug', backup_count = 0, max_bytes = 0,
-                 log_to_console = True):
+                 severity='debug', backup_count=0, max_bytes=0,
+                 log_to_console=True):
         """
         Initializes the logger with some specific parameters
 
@@ -164,8 +168,7 @@ class ModuleLogger(logging.getLoggerClass()):
         if(log_file != 0  and log_file != ''):
             try:
                 self.rotating_handler = RotatingFileHandler(filename = log_file, 
-                                                            maxBytes = max_bytes, 
-                                                            backupCount = backup_count)
+                                              maxBytes = max_bytes, backupCount = backup_count)
             except IOError:
                 self.rotating_handler = None
                 return
