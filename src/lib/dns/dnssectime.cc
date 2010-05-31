@@ -18,21 +18,12 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-#include <vector>
 
 #include <stdio.h>
 #include <time.h>
 
 #include <exceptions/exceptions.h>
 
-#include <dns/base64.h>
-#include <dns/buffer.h>
-#include <dns/messagerenderer.h>
-#include <dns/name.h>
-#include <dns/rrtype.h>
-#include <dns/rrttl.h>
-#include <dns/rdata.h>
-#include <dns/rdataclass.h>
 #include <dns/dnssectime.h>
 
 using namespace std;
