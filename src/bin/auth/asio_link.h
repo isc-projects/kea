@@ -29,6 +29,7 @@ public:
     ~IOService();
     void run();
     void stop();
+    asio::io_service& get_io_service();
 private:
     IOServiceImpl* impl_;
 };

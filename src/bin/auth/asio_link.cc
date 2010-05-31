@@ -409,4 +409,9 @@ void
 IOService::stop() {
     impl_->io_service_.stop();
 }
+
+asio::io_service&
+IOService::get_io_service() {
+    return impl_->io_service_;
+}
 }
