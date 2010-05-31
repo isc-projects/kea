@@ -223,6 +223,9 @@ public:
 void
 SocketSession::establish(const char& socket_file) {
     struct sockaddr_un sun;
+#ifdef HAVE_SA_LEN
+    sun.sun_len = sizeof(struct sockaddr_un);
+#endif
 
     if (strlen(&socket_file) >= sizeof(sun.sun_path)) {
         isc_throw(SessionError, "Unable to connect to message queue; "
