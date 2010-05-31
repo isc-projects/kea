@@ -1,7 +1,7 @@
    5.	[bug]		jinmei
 	bin/xfrin: fixed several small bugs with many additional unit
 	tests.  Fixes include: IPv6 transport support, resource leak,
-	and non IN class support. (Trac #185, r2000)
+	and non IN class support. (Trac #185, svn r2000)
    4.   [bug]           each
 	bin/auth: output now prepended with "[b10-auth]" (Trac #109, svn r1985)
    3.	[func]		each
