@@ -141,13 +141,15 @@ AC_SEARCH_LIBS(recvfrom, [socket])
 AC_HEADER_STDBOOL
 AC_TYPE_SIZE_T
 
+
+
 AC_MSG_CHECKING(for sa_len in struct sockaddr)
 AC_TRY_COMPILE([
 #include <sys/types.h>
 #include <sys/socket.h>],
 [struct sockaddr sa; sa.sa_len = 0; return (0);],
         [AC_MSG_RESULT(yes)
-        AC_DEFINE(HAVE_SIN_LEN, 1, Define to 1 if sockaddr_in has a sin_len member)],
+        AC_DEFINE(HAVE_SA_LEN, 1, [Define to 1 if sockaddr has a sa_len member, and corresponding sin_len and sun_len])],
         AC_MSG_RESULT(no))
 
 AC_ARG_WITH(lcov,
@@ -310,6 +312,13 @@ AC_SUBST(GTEST_LDADD)
 
 PKG_CHECK_MODULES(SQLITE, sqlite3 >= 3.3.9, enable_features="$enable_features SQLite3")
 
+# I can't get some of the #include <asio.hpp> right without this
+# TODO: find the real cause of asio/boost wanting pthreads
+# (this currently only occurs for src/lib/cc/session_unittests)
+PTHREAD_LDFLAGS=
+AC_CHECK_LIB(pthread, pthread_create,[ PTHREAD_LDFLAGS=-lpthread ], [])
+AC_SUBST(PTHREAD_LDFLAGS)
+
 #
 # ASIO: we extensively use it as the C++ event management module.
 #
@@ -450,7 +459,9 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/lib/python/isc/config/tests/config_test
            src/lib/python/isc/cc/tests/cc_test
            src/lib/dns/gen-rdatacode.py
+           src/lib/python/isc/cc/session.py
            src/lib/dns/tests/testdata/gen-wiredata.py
+           src/lib/cc/session_config.h.pre
           ], [
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh

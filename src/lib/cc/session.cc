@@ -15,6 +15,7 @@
 // $Id$
 
 #include <config.h>
+#include "session_config.h"
 
 #include <stdint.h>
 
@@ -22,6 +23,8 @@
 #include <vector>
 #include <iostream>
 #include <sstream>
+
+#include <sys/un.h>
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
@@ -40,7 +43,7 @@ using namespace isc::cc;
 using namespace isc::data;
 
 // some of the asio names conflict with socket API system calls
-// (e.g. write(2)) so we don't import the entire boost::asio namespace.
+// (e.g. write(2)) so we don't import the entire asio namespace.
 using asio::io_service;
 using asio::ip::tcp;
 
@@ -55,7 +58,7 @@ class SessionImpl {
 public:
     SessionImpl() : sequence_(-1) { queue_ = Element::createFromString("[]"); }
     virtual ~SessionImpl() {}
-    virtual void establish() = 0; 
+    virtual void establish(const char& socket_file) = 0;
     virtual int getSocket() = 0;
     virtual void disconnect() = 0;
     virtual void writeData(const void* data, size_t datalen) = 0;
@@ -73,7 +76,7 @@ public:
     ASIOSession(io_service& io_service) :
         io_service_(io_service), socket_(io_service_), data_length_(0)
     {}
-    virtual void establish();
+    virtual void establish(const char& socket_file);
     virtual void disconnect();
     virtual int getSocket() { return (socket_.native()); }
     virtual void writeData(const void* data, size_t datalen);
@@ -86,18 +89,23 @@ private:
 
 private:
     io_service& io_service_;
-    tcp::socket socket_;
+    asio::local::stream_protocol::socket socket_;
     uint32_t data_length_;
     boost::function<void()> user_handler_;
     asio::error_code error_;
 };
 
+
+
 void
-ASIOSession::establish() {
-    socket_.connect(tcp::endpoint(asio::ip::address_v4::loopback(),
-                                  9912), error_);
+ASIOSession::establish(const char& socket_file) {
+    try {
+        socket_.connect(asio::local::stream_protocol::endpoint(&socket_file), error_);
+    } catch (asio::system_error& se) {
+        isc_throw(SessionError, se.what());
+    }
     if (error_) {
-        isc_throw(SessionError, "Unable to connect to message queue");
+        isc_throw(SessionError, "Unable to connect to message queue.");
     }
 }
 
@@ -175,7 +183,7 @@ public:
     SocketSession() : sock_(-1) {}
     virtual ~SocketSession() { disconnect(); }
     virtual int getSocket() { return (sock_); }
-    void establish();
+    void establish(const char& socket_file);
     virtual void disconnect()
     {
         if (sock_ >= 0) {
@@ -210,29 +218,25 @@ public:
 }
 
 void
-SocketSession::establish() {
-    int s;
-    struct sockaddr_in sin;
+SocketSession::establish(const char& socket_file) {
+    struct sockaddr_un sun;
+#ifdef HAVE_SA_LEN
+    sun.sun_len = sizeof(struct sockaddr_un);
+#endif
 
-    s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (strlen(&socket_file) >= sizeof(sun.sun_path)) {
+        isc_throw(SessionError, "Unable to connect to message queue; "
+                  "socket file path too long: " << socket_file);
+    }
+    sun.sun_family = AF_UNIX;
+    strncpy(sun.sun_path, &socket_file, sizeof(sun.sun_path) - 1);
+
+    int s = socket(AF_UNIX, SOCK_STREAM, 0);
     if (s < 0) {
         isc_throw(SessionError, "socket() failed");
     }
-    
-    int port = atoi(getenv("ISC_MSGQ_PORT"));
-    if (port == 0) {
-        port = 9912;
-    }
 
-    sin.sin_family = AF_INET;
-    sin.sin_port = htons(port);
-    sin.sin_addr.s_addr = INADDR_ANY;
-
-#ifdef HAVE_SIN_LEN
-    sin.sin_len = sizeof(struct sockaddr_in);
-#endif
-
-    if (connect(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
+    if (connect(s, (struct sockaddr *)&sun, sizeof(sun)) < 0) {
         close(s);
         isc_throw(SessionError, "Unable to connect to message queue");
     }
@@ -291,8 +295,15 @@ Session::startRead(boost::function<void()> read_callback) {
 }
 
 void
-Session::establish() {
-    impl_->establish();
+Session::establish(const char* socket_file) {
+    if (socket_file == NULL) {
+        socket_file = getenv("BIND10_MSGQ_SOCKET_FILE");
+    }
+    if (socket_file == NULL) {
+        socket_file = BIND10_MSGQ_SOCKET_FILE;
+    }
+
+    impl_->establish(*socket_file);
 
     // once established, encapsulate the implementation object so that we
     // can safely release the internal resource when exception happens

@@ -158,24 +158,23 @@ class ProcessInfo:
 
 class BoB:
     """Boss of BIND class."""
-    def __init__(self, c_channel_port=9912, auth_port=5300, verbose=False):
+    
+    def __init__(self, msgq_socket_file=None, auth_port=5300, verbose=False):
         """Initialize the Boss of BIND. This is a singleton (only one
         can run).
         
-        The c_channel_port specifies the TCP/IP port that the msgq
-        process listens on. If verbose is True, then the boss reports
-        what it is doing.
+        The msgq_socket_file specifies the UNIX domain socket file
+        that the msgq process listens on.
+        If verbose is True, then the boss reports what it is doing.
         """
         self.verbose = verbose
-        self.c_channel_port = c_channel_port
+        self.msgq_socket_file = msgq_socket_file
         self.auth_port = auth_port
         self.cc_session = None
         self.ccs = None
         self.processes = {}
         self.dead_processes = {}
         self.runnable = False
-        
-        os.environ['ISC_MSGQ_PORT'] = str(self.c_channel_port)
 
     def config_handler(self, new_config):
         if self.verbose:
@@ -220,20 +219,22 @@ class BoB:
         """
         # try to connect to the c-channel daemon, 
         # to see if it is already running
-        c_channel_env = { "ISC_MSGQ_PORT": str(self.c_channel_port), }
+        c_channel_env = {}
+        if self.msgq_socket_file is not None:
+             c_channel_env["BIND10_MSGQ_SOCKET_FILE"] = self.msgq_socket_file 
         if self.verbose:
             sys.stdout.write("Checking for already running b10-msgq\n")
         # try to connect, and if we can't wait a short while
         try:
-            self.cc_session = isc.cc.Session(self.c_channel_port)
-            return "b10-msgq already running, cannot start"
+            self.cc_session = isc.cc.Session(self.msgq_socket_file)
+            return "b10-msgq already running, or socket file not cleaned , cannot start"
         except isc.cc.session.SessionError:
             pass
 
         # start the c-channel daemon
         if self.verbose:
-            sys.stdout.write("Starting b10-msgq using port %d\n" % 
-                             self.c_channel_port)
+            if self.msgq_socket_file:
+                sys.stdout.write("Starting b10-msgq\n")
         try:
             c_channel = ProcessInfo("b10-msgq", ["b10-msgq"], c_channel_env,
                                     True, not self.verbose)
@@ -252,7 +253,7 @@ class BoB:
                 return "Unable to connect to c-channel after 5 seconds"
             # try to connect, and if we can't wait a short while
             try:
-                self.cc_session = isc.cc.Session(self.c_channel_port)
+                self.cc_session = isc.cc.Session(self.msgq_socket_file)
             except isc.cc.session.SessionError:
                 time.sleep(0.1)
         #self.cc_session.group_subscribe("Boss", "boss")
@@ -262,7 +263,7 @@ class BoB:
             sys.stdout.write("[bind10] Starting b10-cfgmgr\n")
         try:
             bind_cfgd = ProcessInfo("b10-cfgmgr", ["b10-cfgmgr"],
-                                    { 'ISC_MSGQ_PORT': str(self.c_channel_port)})
+                                    c_channel_env)
         except Exception as e:
             c_channel.process.kill()
             return "Unable to start b10-cfgmgr; " + str(e)
@@ -292,7 +293,7 @@ class BoB:
             xfrout_args += ['-v']
         try:
             xfrout = ProcessInfo("b10-xfrout", xfrout_args, 
-                                 { 'ISC_MSGQ_PORT': str(self.c_channel_port)})
+                                 c_channel_env )
         except Exception as e:
             c_channel.process.kill()
             bind_cfgd.process.kill()
@@ -310,7 +311,7 @@ class BoB:
             authargs += ['-v']
         try:
             auth = ProcessInfo("b10-auth", authargs,
-                               { 'ISC_MSGQ_PORT': str(self.c_channel_port)})
+                               c_channel_env)
         except Exception as e:
             c_channel.process.kill()
             bind_cfgd.process.kill()
@@ -327,7 +328,7 @@ class BoB:
             xfrin_args += ['-v']
         try:
             xfrind = ProcessInfo("b10-xfrin", xfrin_args,
-                                 { 'ISC_MSGQ_PORT': str(self.c_channel_port)})
+                                 c_channel_env)
         except Exception as e:
             c_channel.process.kill()
             bind_cfgd.process.kill()
@@ -346,7 +347,7 @@ class BoB:
             cmdctl_args += ['-v']
         try:
             cmd_ctrld = ProcessInfo("b10-cmdctl", cmdctl_args,
-                                    { 'ISC_MSGQ_PORT': str(self.c_channel_port)})
+                                    c_channel_env)
         except Exception as e:
             c_channel.process.kill()
             bind_cfgd.process.kill()
@@ -588,9 +589,9 @@ def main():
     parser.add_option("-p", "--port", dest="auth_port", type="string",
                       action="callback", callback=check_port, default="5300",
                       help="port the b10-auth daemon will use (default 5300)")
-    parser.add_option("-m", "--msgq-port", dest="msgq_port", type="string",
-                      action="callback", callback=check_port, default="9912",
-                      help="port the b10-msgq daemon will use (default 9912)")
+    parser.add_option("-m", "--msgq-socket-file", dest="msgq_socket_file",
+                      type="string", default=None,
+                      help="UNIX domain socket file the b10-msgq daemon will use")
     (options, args) = parser.parse_args()
 
     # Announce startup.
@@ -613,7 +614,7 @@ def main():
     signal.signal(signal.SIGTERM, fatal_signal)
 
     # Go bob!
-    boss_of_bind = BoB(int(options.msgq_port), int(options.auth_port),
+    boss_of_bind = BoB(options.msgq_socket_file, int(options.auth_port),
                        options.verbose)
     startup_result = boss_of_bind.startup()
     if startup_result:
