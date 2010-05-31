@@ -219,24 +219,24 @@ public:
 
 void
 SocketSession::establish(const char& socket_file) {
-    struct sockaddr_un sun;
+    struct sockaddr_un s_un;
 #ifdef HAVE_SA_LEN
-    sun.sun_len = sizeof(struct sockaddr_un);
+    s_un.sun_len = sizeof(struct sockaddr_un);
 #endif
 
-    if (strlen(&socket_file) >= sizeof(sun.sun_path)) {
+    if (strlen(&socket_file) >= sizeof(s_un.sun_path)) {
         isc_throw(SessionError, "Unable to connect to message queue; "
                   "socket file path too long: " << socket_file);
     }
-    sun.sun_family = AF_UNIX;
-    strncpy(sun.sun_path, &socket_file, sizeof(sun.sun_path) - 1);
+    s_un.sun_family = AF_UNIX;
+    strncpy(s_un.sun_path, &socket_file, sizeof(s_un.sun_path) - 1);
 
     int s = socket(AF_UNIX, SOCK_STREAM, 0);
     if (s < 0) {
         isc_throw(SessionError, "socket() failed");
     }
 
-    if (connect(s, (struct sockaddr *)&sun, sizeof(sun)) < 0) {
+    if (connect(s, (struct sockaddr *)&s_un, sizeof(s_un)) < 0) {
         close(s);
         isc_throw(SessionError, "Unable to connect to message queue");
     }
