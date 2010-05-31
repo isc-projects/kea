@@ -3,22 +3,34 @@
    occur at the same time.  (but testing it would be very difficult)
 3. It wouldn't support IPv6 because of the following line:
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
+   [FIXED in r1851]
 4. Xfrin.retransfer and refresh share most of the code.  should be unified.
+   [FIXED in r1861]
 5. class IN is hardcoded.  bad.
         query_question = question(name(self._zone_name), rr_class.IN(), query_type)
+   [FIXED in r1889]
+   Note: we still hardcode it as the fixed default value for
+   retransfer/refresh commands.
+   we should fix this so that this is specifiable, so this TODO item is 
+   still open.
 6. QID 0 should be allowed:
         query_id = random.randint(1, 0xFFFF)
+   [FIXED in r1880]
 7. what if xfrin fails after opening a new DB?  looks like garbage
    (intermediate) data remains in the DB file, although it's more about
    the data source implementation.  check it, and fix it if it's the case.
 8. Xfrin.command_handler() ignores unknown commands.  should return an error.
+   [FIXED in r1882]
 9. XfrinConnection can leak sockets. (same problem as that Jelte mentioned
    on xfrout?)
+   [FIXED in r1908]
 10. The following line of _check_soa_serial() is incorrect.
         soa_reply = self._get_request_response(int(data_size))
     Unpack the data and convert it in the host by order.
+    [FIXED in r1866]
 11. if do_xfrin fails it should probably return a non "OK" value.
     (it's currently ignored anyway, though)
+    [FIXED in r1887]
 12. XfrinConnection should probably define handle_close().  Also, the
     following part should be revised because this can also happen when the
     master closes the connection.

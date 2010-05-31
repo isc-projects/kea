@@ -50,6 +50,9 @@ SPECFILE_LOCATION = SPECFILE_PATH + "/xfrin.spec"
 __version__ = 'BIND10'
 # define xfrin rcode
 XFRIN_OK = 0
+XFRIN_FAIL = 1
+
+DEFAULT_MASTER_PORT = '53'
 
 def log_error(msg):
     sys.stderr.write("[b10-xfrin] ")
@@ -62,46 +65,48 @@ class XfrinException(Exception):
 class XfrinConnection(asyncore.dispatcher):
     '''Do xfrin in this class. '''    
 
-    def __init__(self, 
-                 zone_name, db_file, shutdown_event, master_addr, 
-                 port = 53, verbose = False, idle_timeout = 60): 
+    def __init__(self,
+                 sock_map, zone_name, rrclass, db_file, shutdown_event,
+                 master_addrinfo, verbose = False, idle_timeout = 60): 
         ''' idle_timeout: max idle time for read data from socket.
             db_file: specify the data source file.
             check_soa: when it's true, check soa first before sending xfr query
         '''
 
-        asyncore.dispatcher.__init__(self)
-        self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
+        asyncore.dispatcher.__init__(self, map=sock_map)
+        self.create_socket(master_addrinfo[0], master_addrinfo[1])
         self._zone_name = zone_name
+        self._rrclass = rrclass
         self._db_file = db_file
         self._soa_rr_count = 0
         self._idle_timeout = idle_timeout
         self.setblocking(1)
         self._shutdown_event = shutdown_event
         self._verbose = verbose
-        self._master_addr = master_addr
-        self._port = port
+        self._master_address = master_addrinfo[4]
 
     def connect_to_master(self):
         '''Connect to master in TCP.'''
 
         try:
-            self.connect((self._master_addr, self._port))
+            self.connect(self._master_address)
             return True
         except socket.error as e:
-            self.log_msg('Failed to connect:(%s:%d), %s' % (self._master_addr, self._port, str(e)))
+            self.log_msg('Failed to connect:(%s), %s' % (self._master_address,
+                                                            str(e)))
             return False
 
     def _create_query(self, query_type):
         '''Create dns query message. '''
 
         msg = message(message_mode.RENDER)
-        query_id = random.randint(1, 0xFFFF)
+        query_id = random.randint(0, 0xFFFF)
         self._query_id = query_id
         msg.set_qid(query_id)
         msg.set_opcode(op_code.QUERY())
         msg.set_rcode(rcode.NOERROR())
-        query_question = question(name(self._zone_name), rr_class.IN(), query_type)
+        query_question = question(name(self._zone_name), self._rrclass,
+                                  query_type)
         msg.add_question(query_question)
         return msg
 
@@ -155,10 +160,19 @@ involving actual communication with a remote server.
         '''
 
         self._send_query(rr_type.SOA())
-        data_size = self._get_request_response(2)
-        soa_reply = self._get_request_response(int(data_size))
-        #TODO, need select soa record from data source then compare the two 
-        #serial, current just return OK, since this function hasn't been used now 
+        data_len = self._get_request_response(2)
+        msg_len = socket.htons(struct.unpack('H', data_len)[0])
+        soa_response = self._get_request_response(msg_len)
+        msg = message(message_mode.PARSE)
+        msg.from_wire(input_buffer(soa_response))
+
+        # perform some minimal level validation.  It's an open issue how
+        # strict we should be (see the comment in _check_response_header())
+        self._check_response_header(msg)
+
+        # TODO, need select soa record from data source then compare the two 
+        # serial, current just return OK, since this function hasn't been used
+        # now.
         return XFRIN_OK
 
     def do_xfrin(self, check_soa, ixfr_first = False):
@@ -167,33 +181,52 @@ involving actual communication with a remote server.
         try:
             ret = XFRIN_OK
             if check_soa:
+                logstr = 'SOA check for \'%s\' ' % self._zone_name
                 ret =  self._check_soa_serial()
             
             logstr = 'transfer of \'%s\': AXFR ' % self._zone_name
-            if ret == XFRIN_OK:    
+            if ret == XFRIN_OK:
                 self.log_msg(logstr + 'started')
                 self._send_query(rr_type.AXFR())
                 isc.datasrc.sqlite3_ds.load(self._db_file, self._zone_name,
                                             self._handle_xfrin_response)
 
                 self.log_msg(logstr + 'succeeded')
+                ret = XFRIN_OK
 
         except XfrinException as e:
             self.log_msg(e)
             self.log_msg(logstr + 'failed')
+            ret = XFRIN_FAIL
             #TODO, recover data source.
         except isc.datasrc.sqlite3_ds.Sqlite3DSError as e:
             self.log_msg(e)
             self.log_msg(logstr + 'failed')
+            ret = XFRIN_FAIL
+        except UserWarning as e:
+            # XXX: this is an exception from our C++ library via the
+            # Boost.Python binding.  It would be better to have more more
+            # specific exceptions, but at this moment this is the finest
+            # granularity.
+            self.log_msg(e)
+            self.log_msg(logstr + 'failed')
+            ret = XFRIN_FAIL
         finally:
            self.close()
 
         return ret
-    
-    def _check_response_status(self, msg):
-        '''Check validation of xfr response. '''
 
-        #TODO, check more?
+    def _check_response_header(self, msg):
+        '''Perform minimal validation on responses'''
+
+        # It's not clear how strict we should be about response validation.
+        # BIND 9 ignores some cases where it would normally be considered a
+        # bogus response.  For example, it accepts a response even if its
+        # opcode doesn't match that of the corresponding request.
+        # According to an original developer of BIND 9 some of the missing
+        # checks are deliberate to be kind to old implementations that would
+        # cause interoperability trouble with stricter checks.
+
         msg_rcode = msg.get_rcode()
         if msg_rcode != rcode.NOERROR():
             raise XfrinException('error response: %s' % msg_rcode.to_text())
@@ -203,6 +236,11 @@ involving actual communication with a remote server.
 
         if msg.get_qid() != self._query_id:
             raise XfrinException('bad query id')
+
+    def _check_response_status(self, msg):
+        '''Check validation of xfr response. '''
+
+        self._check_response_header(msg)
 
         if msg.get_rr_count(section.ANSWER()) == 0:
             raise XfrinException('answer section is empty')
@@ -286,19 +324,19 @@ involving actual communication with a remote server.
             sys.stdout.write('\n')
 
 
-def process_xfrin(xfrin_recorder, zone_name, db_file, 
-                  shutdown_event, master_addr, port, check_soa, verbose):
-    port = int(port)
+def process_xfrin(xfrin_recorder, zone_name, rrclass, db_file, 
+                  shutdown_event, master_addrinfo, check_soa, verbose):
     xfrin_recorder.increment(zone_name)
-    conn = XfrinConnection(zone_name, db_file, shutdown_event, 
-                           master_addr, port, verbose)
+    sock_map = {}
+    conn = XfrinConnection(sock_map, zone_name, rrclass, db_file,
+                           shutdown_event, master_addrinfo, verbose)
     if conn.connect_to_master():
         conn.do_xfrin(check_soa)
 
     xfrin_recorder.decrement(zone_name)
 
 
-class XfrinRecorder():
+class XfrinRecorder:
     def __init__(self):
         self._lock = threading.Lock()
         self._zones = []
@@ -326,7 +364,7 @@ class XfrinRecorder():
         self._lock.release()
         return ret
 
-class Xfrin():
+class Xfrin:
     def __init__(self, verbose = False):
         self._cc_setup()
         self._max_transfers_in = 10
@@ -344,6 +382,13 @@ this method we can test most of this class without requiring a command channel.
                                               self.config_handler,
                                               self.command_handler)
         self._cc.start()
+
+    def _cc_check_command(self):
+        '''
+This is a straightforward wrapper for cc.check_command, but provided as
+a separate method for the convenience of unit tests.
+'''
+        self._cc.check_command()
 
     def config_handler(self, new_config):
         # TODO, process new config data
@@ -363,20 +408,20 @@ this method we can test most of this class without requiring a command channel.
 
     def command_handler(self, command, args):
         answer = create_answer(0)
-        cmd = command
         try:
-            if cmd == 'shutdown':
+            if command == 'shutdown':
                 self._shutdown_event.set()
-
-            elif cmd == 'retransfer':
-                zone_name, master, port, db_file = self._parse_cmd_params(args)
-                ret = self.xfrin_start(zone_name, db_file, master, port, False)
+            elif command == 'retransfer' or command == 'refresh':
+                # The default RR class is IN.  We should fix this so that
+                # the class is passed in the command arg (where we specify
+                # the default)
+                rrclass = rr_class.IN()
+                zone_name, master_addr, db_file = self._parse_cmd_params(args)
+                ret = self.xfrin_start(zone_name, rrclass, db_file, master_addr,
+                                   False if command == 'retransfer' else True)
                 answer = create_answer(ret[0], ret[1])
-
-            elif cmd == 'refresh':
-                zone_name, master, port, db_file = self._parse_cmd_params(args)
-                ret = self.xfrin_start(zone_name, db_file, master, port)
-                answer = create_answer(ret[0], ret[1])
+            else:
+                answer = create_answer(1, 'unknown command: ' + command)
 
         except XfrinException as err:
             answer = create_answer(1, str(err))
@@ -392,28 +437,23 @@ this method we can test most of this class without requiring a command channel.
         if not master:
             raise XfrinException('master address should be provided')
 
-        check_addr(master)
-        port = 53
         port_str = args.get('port')
-        if port_str:
-            port = int(port_str)
-            check_port(port)
+        if not port_str:
+            port_str = DEFAULT_MASTER_PORT
+        master_addrinfo = check_addr_port(master, port_str)
 
         db_file = args.get('db_file')
         if not db_file:
             #TODO, the db file path should be got in auth server's configuration
             db_file = '@@LOCALSTATEDIR@@/@PACKAGE@/zone.sqlite3'
 
-        return (zone_name, master, port, db_file)
-            
+        return (zone_name, master_addrinfo, db_file)
 
     def startup(self):
         while not self._shutdown_event.is_set():
-            self._cc.check_command()
+            self._cc_check_command()
 
-
-    def xfrin_start(self, zone_name, db_file, master_addr, 
-                    port = 53, 
+    def xfrin_start(self, zone_name, rrclass, db_file, master_addrinfo,
                     check_soa = True):
         if "bind10_dns" not in sys.modules:
             return (1, "xfrin failed, can't load dns message python library: 'bind10_dns'")
@@ -427,11 +467,11 @@ this method we can test most of this class without requiring a command channel.
 
         xfrin_thread = threading.Thread(target = process_xfrin,
                                         args = (self.recorder,
-                                                zone_name,
+                                                zone_name, rrclass,
                                                 db_file,
                                                 self._shutdown_event,
-                                                master_addr,
-                                                port, check_soa, self._verbose))
+                                                master_addrinfo, check_soa,
+                                                self._verbose))
 
         xfrin_thread.start()
         return (0, 'zone xfrin is started')
@@ -448,34 +488,53 @@ def set_signal_handler():
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
 
-def check_port(value):
-    if (value < 0) or (value > 65535):
-        raise XfrinException('requires a port number (0-65535)')
-
-def check_addr(ipstr):
-    ip_family = socket.AF_INET
-    if (ipstr.find(':') != -1):
-        ip_family = socket.AF_INET6
+def check_addr_port(addrstr, portstr):
+    # XXX: Linux (glibc)'s getaddrinfo incorrectly accepts numeric port
+    # string larger than 65535.  So we need to explicit validate it separately.
+    try:
+        portnum = int(portstr)
+        if portnum < 0 or portnum > 65535:
+            raise ValueError("invalid port number (out of range): " + portstr)
+    except ValueError as err:
+        raise XfrinException("failed to resolve master address/port=%s/%s: %s" %
+                             (addrstr, portstr, str(err)))
 
     try:
-        socket.inet_pton(ip_family, ipstr)
-    except:
-        raise XfrinException("%s invalid ip address" % ipstr)
-
+        addrinfo = socket.getaddrinfo(addrstr, portstr, socket.AF_UNSPEC,
+                                      socket.SOCK_STREAM, socket.IPPROTO_TCP,
+                                      socket.AI_NUMERICHOST|
+                                      socket.AI_NUMERICSERV)
+    except socket.gaierror as err:
+        raise XfrinException("failed to resolve master address/port=%s/%s: %s" %
+                             (addrstr, portstr, str(err)))
+    if len(addrinfo) != 1:
+        # with the parameters above the result must be uniquely determined.
+        errmsg = "unexpected result for address/port resolution for %s:%s"
+        raise XfrinException(errmsg % (addrstr, portstr))
+    return addrinfo[0]
 
 def set_cmd_options(parser):
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
             help="display more about what is going on")
 
-    
-if __name__ == '__main__':
+def main(xfrin_class, use_signal = True):
+    """The main loop of the Xfrin daemon.
+
+    @param xfrin_class: A class of the Xfrin object.  This is normally Xfrin,
+    but can be a subclass of it for customization.
+    @param use_signal: True if this process should catch signals.  This is
+    normally True, but may be disabled when this function is called in a
+    testing context."""
+    global xfrind
+
     try:
         parser = OptionParser(version = __version__)
         set_cmd_options(parser)
         (options, args) = parser.parse_args()
 
-        set_signal_handler()
-        xfrind = Xfrin(verbose = options.verbose)
+        if use_signal:
+            set_signal_handler()
+        xfrind = xfrin_class(verbose = options.verbose)
         xfrind.startup()
     except KeyboardInterrupt:
         log_error("exit b10-xfrin")
@@ -487,3 +546,6 @@ if __name__ == '__main__':
 
     if xfrind:
         xfrind.shutdown()
+
+if __name__ == '__main__':
+    main(Xfrin)
