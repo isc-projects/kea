@@ -325,8 +325,7 @@ CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext/asio"
 # some of our C++ files including ASIO header files.  The following check
 # detects such cases and tells ASIO not to use kqueue if so.
 AC_CHECK_FUNC(kqueue, ac_cv_have_kqueue=yes, ac_cv_have_kqueue=no)
-case $ac_cv_have_kqueue in
-yes)
+if test "X$ac_cv_have_kqueue" = "Xyes"; then
 	AC_MSG_CHECKING([whether kqueue EV_SET compiles in C++])
 	AC_TRY_COMPILE([
 #include <sys/types.h>
@@ -338,7 +337,22 @@ EV_SET(NULL, 0, 0, 0, 0, 0, udata);],
 	[AC_MSG_RESULT([no, disable kqueue for ASIO])
 	 CPPFLAGS="$CPPFLAGS -DASIO_DISABLE_KQUEUE=1"
 	])
-esac
+fi
+
+# /dev/poll issue: ASIO uses /dev/poll by default if it's available (generally
+# the case with Solaris).  Unfortunately its /dev/poll specific code would
+# trigger the gcc's "missing-field-initializers" warning, which would
+# subsequently make the build fail with -Werror.  Further, older versions of
+# gcc doesn't provide an optio to selectively suppress this warning.
+# So, for the moment, we simply disable the use of /dev/poll.  Unless we
+# implement recursive DNS server with randomized ports, we don't need the
+# scalability that /dev/poll can provide, so this decision wouldn't affect
+# run time performance.  Hpefully we can find a better solution or the ASIO
+# code will be updated by the time we really need it.
+AC_CHECK_HEADERS(sys/devpoll.h, ac_cv_have_devpoll=yes, ac_cv_have_devpoll=no)
+if test "X$ac_cv_have_devpoll" = "Xyes" -a "X$GCC" = "Xyes"; then
+	CPPFLAGS="$CPPFLAGS -DASIO_DISABLE_DEV_POLL=1"
+fi
 
 # Check for headers from required devel kits.
 # boost/shared_ptr.hpp is in ext in svn but not in tarball.
