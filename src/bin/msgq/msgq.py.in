@@ -86,25 +86,33 @@ class SubscriptionManager:
 
 class MsgQ:
     """Message Queue class."""
-    def __init__(self, port=0, verbose=False):
+    # did we find a better way to do this?
+    SOCKET_FILE = os.path.join("@localstatedir@",
+                               "@PACKAGE_NAME@",
+                               "msgq_socket").replace("${prefix}",
+                                                      "@prefix@")
+    
+    def __init__(self, socket_file=None, verbose=False):
         """Initialize the MsgQ master.
         
-        The port specifies the TCP/IP port that the msgq
-        process listens on. If verbose is True, then the MsgQ reports
+        The socket_file specifies the path to the UNIX domain socket
+        that the msgq process listens on. If it is None, the
+        environment variable BIND10_MSGQ_SOCKET_FILE is used. If that
+        is not set, it will default to
+        @localstatedir@/@PACKAGE_NAME@/msg_socket.
+        If verbose is True, then the MsgQ reports
         what it is doing.
         """
 
-        if port == 0:
-	        if 'ISC_MSGQ_PORT' in os.environ:
-	            port = int(os.environ["ISC_MSGQ_PORT"])
-	        else:
-	            port = 9912
-
-
-        print(port)
+        if socket_file is None:
+            if "BIND10_MSGQ_SOCKET_FILE" in os.environ:
+                self.socket_file = os.environ["BIND10_MSGQ_SOCKET_FILE"]
+            else:
+                self.socket_file = self.SOCKET_FILE
+        else:
+            self.socket_file = socket_file
 
         self.verbose = verbose
-        self.c_channel_port = port
         self.poller = None
         self.kqueue = None
         self.runnable = False
@@ -131,10 +139,21 @@ class MsgQ:
 
     def setup_listener(self):
         """Set up the listener socket.  Internal function."""
-        self.listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.listen_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.listen_socket.bind(("127.0.0.1", self.c_channel_port))
-        self.listen_socket.listen(1024)
+        self.listen_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        
+        if os.path.exists(self.socket_file):
+            os.remove(self.socket_file)
+        try:
+            print("[XX] SOCKET FILE: " + self.socket_file)
+            self.listen_socket.bind(self.socket_file)
+            print("[XX] LISTENING ON SOCKET FILE: " + self.socket_file)
+            self.listen_socket.listen(1024)
+        except Exception as e:
+            # remove the file again if something goes wrong
+            # (note this is a catch-all, but we reraise it)
+            if os.path.exists(self.socket_file):
+                os.remove(self.socket_file)
+            raise e
 
         if self.poller:
             self.poller.register(self.listen_socket, select.POLLIN)
@@ -142,7 +161,10 @@ class MsgQ:
             self.add_kqueue_socket(self.listen_socket)
 
     def setup(self):
-        """Configure listener socket, polling, etc."""
+        """Configure listener socket, polling, etc.
+           Raises a socket.error if the socket_file cannot be
+           created.
+        """
 
         self.setup_poller()
         self.setup_listener()
@@ -366,6 +388,8 @@ class MsgQ:
         if self.verbose:
             sys.stdout.write("Stopping the server.\n")
         self.listen_socket.close()
+        if os.path.exists(self.socket_file):
+            os.remove(self.socket_file)
 
 # can signal handling and calling a destructor be done without a
 # global variable?
@@ -389,9 +413,9 @@ if __name__ == "__main__":
     parser = OptionParser(version=__version__)
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
                       help="display more about what is going on")
-    parser.add_option("-m", "--msgq-port", dest="msgq_port", type="string",
-                      action="callback", callback=check_port, default="0",
-                      help="port the msgq daemon will use")
+    parser.add_option("-s", "--socket-file", dest="msgq_socket_file",
+                      type="string", default=None,
+                      help="UNIX domain socket file the msgq daemon will use")
     (options, args) = parser.parse_args()
 
     signal.signal(signal.SIGTERM, signal_handler)
@@ -400,7 +424,7 @@ if __name__ == "__main__":
     if options.verbose:
         sys.stdout.write("MsgQ %s\n" % __version__)
 
-    msgq = MsgQ(int(options.msgq_port), options.verbose)
+    msgq = MsgQ(options.msgq_socket_file, options.verbose)
 
     setup_result = msgq.setup()
     if setup_result:

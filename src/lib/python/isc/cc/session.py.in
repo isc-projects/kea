@@ -26,7 +26,12 @@ class NetworkError(Exception): pass
 class SessionError(Exception): pass
 
 class Session:
-    def __init__(self, port=0):
+    SOCKET_FILE = os.path.join("@localstatedir@",
+                               "@PACKAGE_NAME@",
+                               "msgq_socket").replace("${prefix}",
+                                                      "@prefix@")
+
+    def __init__(self, socket_file=None):
         self._socket = None
         self._lname = None
         self._recvbuffer = bytearray()
@@ -36,16 +41,18 @@ class Session:
         self._queue = []
         self._lock = threading.RLock()
 
-        if port == 0:
-	        if 'ISC_MSGQ_PORT' in os.environ:
-	            port = int(os.environ["ISC_MSGQ_PORT"])
-	        else:
-	            port = 9912
+        if socket_file is None:
+            if "BIND10_MSGQ_SOCKET_FILE" in os.environ:
+                self.socket_file = os.environ["BIND10_MSGQ_SOCKET_FILE"]
+            else:
+                self.socket_file = self.SOCKET_FILE
+        else:
+            self.socket_file = socket_file
+        
 
         try:
-            self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self._socket.connect(tuple(['127.0.0.1', port]))
-
+            self._socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            self._socket.connect(self.socket_file)
             self.sendmsg({ "type": "getlname" })
             env, msg = self.recvmsg(False)
             if not env:

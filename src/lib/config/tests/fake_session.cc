@@ -157,7 +157,7 @@ Session::startRead(boost::function<void()> read_callback UNUSED_PARAM) {
 }
 
 void
-Session::establish() {
+Session::establish(const char* socket_file) {
 }
 
 //
