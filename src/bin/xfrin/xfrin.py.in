@@ -95,7 +95,7 @@ class XfrinConnection(asyncore.dispatcher):
     def _create_query(self, query_type):
         '''Create dns query message. '''
 
-        msg = Message(RENDER)
+        msg = Message(Message.RENDER)
         query_id = random.randint(1, 0xFFFF)
         self._query_id = query_id
         msg.set_qid(query_id)
@@ -238,7 +238,7 @@ class XfrinConnection(asyncore.dispatcher):
             data_len = self._get_request_response(2)
             msg_len = socket.htons(struct.unpack('H', data_len)[0])
             recvdata = self._get_request_response(msg_len)
-            msg = Message(PARSE)
+            msg = Message(Message.PARSE)
             msg.from_wire(recvdata)
             self._check_response_status(msg)
             

@@ -205,8 +205,8 @@ class SectionTest(unittest.TestCase):
 class MessageTest(unittest.TestCase):
 
     def setUp(self):
-        self.p = Message(PARSE)
-        self.r = Message(RENDER)
+        self.p = Message(Message.PARSE)
+        self.r = Message(Message.RENDER)
         
     def test_init(self):
         self.assertRaises(TypeError, Message, 3)
@@ -254,8 +254,8 @@ class MessageTest(unittest.TestCase):
         self.assertRaises(TypeError, self.r.add_rrset, "wrong")
 
     def test_clear(self):
-        self.assertEqual(None, self.r.clear(PARSE))
-        self.assertEqual(None, self.r.clear(RENDER))
+        self.assertEqual(None, self.r.clear(Message.PARSE))
+        self.assertEqual(None, self.r.clear(Message.RENDER))
         self.assertRaises(TypeError, self.r.clear, "wrong")
         self.assertRaises(TypeError, self.r.clear, 3)
 
@@ -343,25 +343,25 @@ class ConvertedUnittests(unittest.TestCase):
         self.assertEqual(2, len(rdata))
     
     def test_GetEDNS0DOBit(self):
-        message_parse = Message(PARSE)
+        message_parse = Message(Message.PARSE)
         ## Without EDNS0, DNSSEC is considered to be unsupported.
         factoryFromFile(message_parse, "message_fromWire1")
         self.assertFalse(message_parse.is_dnssec_supported())
     
         ## If DO bit is on, DNSSEC is considered to be supported.
-        message_parse.clear(PARSE)
+        message_parse.clear(Message.PARSE)
         factoryFromFile(message_parse, "message_fromWire2")
         self.assertTrue(message_parse.is_dnssec_supported())
     
         ## If DO bit is off, DNSSEC is considered to be unsupported.
-        message_parse.clear(PARSE)
+        message_parse.clear(Message.PARSE)
         factoryFromFile(message_parse, "message_fromWire3")
         self.assertFalse(message_parse.is_dnssec_supported())
     
     def test_SetEDNS0DOBit(self):
         # By default, it's false, and we can enable/disable it.
-        message_parse = Message(PARSE)
-        message_render = Message(RENDER)
+        message_parse = Message(Message.PARSE)
+        message_render = Message(Message.RENDER)
         self.assertFalse(message_render.is_dnssec_supported())
         message_render.set_dnssec_supported(True)
         self.assertTrue(message_render.is_dnssec_supported())
@@ -369,7 +369,7 @@ class ConvertedUnittests(unittest.TestCase):
         self.assertFalse(message_render.is_dnssec_supported())
     
         ## A message in the parse mode doesn't allow this flag to be set.
-        self.assertRaises(InvalidMessageOperation,
+        self.assertRaises(Message.InvalidMessageOperation,
                           message_parse.set_dnssec_supported,
                           True)
         ## Once converted to the render mode, it works as above
@@ -382,25 +382,25 @@ class ConvertedUnittests(unittest.TestCase):
     
     def test_GetEDNS0UDPSize(self):
         # Without EDNS0, the default max UDP size is used.
-        message_parse = Message(PARSE)
+        message_parse = Message(Message.PARSE)
         factoryFromFile(message_parse, "message_fromWire1")
-        self.assertEqual(DEFAULT_MAX_UDPSIZE, message_parse.get_udp_size())
+        self.assertEqual(Message.DEFAULT_MAX_UDPSIZE, message_parse.get_udp_size())
     
         ## If the size specified in EDNS0 > default max, use it.
-        message_parse.clear(PARSE)
+        message_parse.clear(Message.PARSE)
         factoryFromFile(message_parse, "message_fromWire2")
         self.assertEqual(4096, message_parse.get_udp_size())
     
         ## If the size specified in EDNS0 < default max, keep using the default.
-        message_parse.clear(PARSE)
+        message_parse.clear(Message.PARSE)
         factoryFromFile(message_parse, "message_fromWire8")
-        self.assertEqual(DEFAULT_MAX_UDPSIZE, message_parse.get_udp_size())
+        self.assertEqual(Message.DEFAULT_MAX_UDPSIZE, message_parse.get_udp_size())
     
     def test_SetEDNS0UDPSize(self):
         # The default size if unspecified
-        message_render = Message(RENDER)
-        message_parse = Message(PARSE)
-        self.assertEqual(DEFAULT_MAX_UDPSIZE, message_render.get_udp_size())
+        message_render = Message(Message.RENDER)
+        message_parse = Message(Message.PARSE)
+        self.assertEqual(Message.DEFAULT_MAX_UDPSIZE, message_render.get_udp_size())
         # A common buffer size with EDNS, should succeed
         message_render.set_udp_size(4096)
         self.assertEqual(4096, message_render.get_udp_size())
@@ -408,31 +408,31 @@ class ConvertedUnittests(unittest.TestCase):
         message_render.set_udp_size(0xffff)
         self.assertEqual(0xffff, message_render.get_udp_size())
         # Too small is value is rejected
-        self.assertRaises(InvalidMessageUDPSize, message_render.set_udp_size, 511)
+        self.assertRaises(Message.InvalidMessageUDPSize, message_render.set_udp_size, 511)
     
         # A message in the parse mode doesn't allow the set operation.
-        self.assertRaises(InvalidMessageOperation, message_parse.set_udp_size, 4096)
+        self.assertRaises(Message.InvalidMessageOperation, message_parse.set_udp_size, 4096)
         ## Once converted to the render mode, it works as above.
         message_parse.make_response()
         message_parse.set_udp_size(4096)
         self.assertEqual(4096, message_parse.get_udp_size())
         message_parse.set_udp_size(0xffff)
         self.assertEqual(0xffff, message_parse.get_udp_size())
-        self.assertRaises(InvalidMessageUDPSize, message_parse.set_udp_size, 511)
+        self.assertRaises(Message.InvalidMessageUDPSize, message_parse.set_udp_size, 511)
     
     def test_EDNS0ExtCode(self):
         # Extended Rcode = BADVERS
-        message_parse = Message(PARSE)
+        message_parse = Message(Message.PARSE)
         factoryFromFile(message_parse, "message_fromWire10")
         self.assertEqual(Rcode.BADVERS(), message_parse.get_rcode())
     
         # Maximum extended Rcode
-        message_parse.clear(PARSE)
+        message_parse.clear(Message.PARSE)
         factoryFromFile(message_parse, "message_fromWire11")
         self.assertEqual(0xfff, message_parse.get_rcode().get_code())
     
     def test_BadEDNS0(self):
-        message_parse = Message(PARSE)
+        message_parse = Message(Message.PARSE)
         # OPT RR in the answer section
         self.assertRaises(DNSMessageFORMERR,
                           factoryFromFile,
@@ -440,14 +440,14 @@ class ConvertedUnittests(unittest.TestCase):
                           "message_fromWire4")
 
         # multiple OPT RRs (in the additional section)
-        message_parse.clear(PARSE)
+        message_parse.clear(Message.PARSE)
         self.assertRaises(DNSMessageFORMERR,
                           factoryFromFile,
                           message_parse,
                           "message_fromWire5")
 
         ## OPT RR of a non root name
-        message_parse.clear(PARSE)
+        message_parse.clear(Message.PARSE)
         self.assertRaises(DNSMessageFORMERR,
                           factoryFromFile,
                           message_parse,
@@ -456,18 +456,18 @@ class ConvertedUnittests(unittest.TestCase):
         # Compressed owner name of OPT RR points to a root name.
         # Not necessarily bogus, but very unusual and mostly pathological.
         # We accept it, but is it okay?
-        message_parse.clear(PARSE)
+        message_parse.clear(Message.PARSE)
         factoryFromFile(message_parse, "message_fromWire7")
 
         # Unsupported Version
-        message_parse.clear(PARSE)
-        self.assertRaises(DNSMessageBADVERS,
+        message_parse.clear(Message.PARSE)
+        self.assertRaises(Message.DNSMessageBADVERS,
                           factoryFromFile,
                           message_parse,
                           "message_fromWire9")
     
     def test_to_text_and_wire(self):
-        message_render = Message(RENDER)
+        message_render = Message(Message.RENDER)
         message_render.set_qid(0x1035)
         message_render.set_opcode(Opcode.QUERY())
         message_render.set_rcode(Rcode.NOERROR())

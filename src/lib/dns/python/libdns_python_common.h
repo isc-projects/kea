@@ -30,3 +30,5 @@
 // head of the sequence (even if it fails it removes everything that
 // it successfully read)
 int readDataFromSequence(uint8_t *data, size_t len, PyObject* sequence);
+
+void addClassVariable(PyTypeObject& c, const char* name, PyObject* obj);
