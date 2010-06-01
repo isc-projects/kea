@@ -24,8 +24,8 @@ except ImportError:
     from bindctl.mycollections import OrderedDict
 
 param_name_str = "^\s*(?P<param_name>[\w]+)\s*=\s*"
-param_value_str = "(?P<param_value>[\w\./-]+)"
-param_value_with_quota_str = "[\"\'](?P<param_value>[\w\., /-]+)[\"\']"
+param_value_str = "(?P<param_value>[\w\.:/-]+)"
+param_value_with_quota_str = "[\"\'](?P<param_value>[\w\.:, /-]+)[\"\']"
 next_params_str = "(?P<blank>\s*)(?P<comma>,?)(?P<next_params>.*)$"
 
 PARAM_WITH_QUOTA_PATTERN = re.compile(param_name_str + 
