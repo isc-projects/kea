@@ -116,10 +116,3 @@ class BindCmdParse:
                 if not groups.group('blank') and \
                    not groups.group('comma'):
                     raise CmdParamFormatError(self.module, self.command)
-                    
-                
-            
-            
-            
-    
-
