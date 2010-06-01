@@ -65,6 +65,11 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
         self.handler.server.user_sessions = {}
         self.handler.server.user_infos = {}
         self.handler.headers = {}
+        self.handler.rfile = open("check.tmp", 'w+b')
+
+    def tearDown(self):
+        self.handler.rfile.close()
+        os.remove('check.tmp')
 
     def test_parse_request_path(self):
         self.handler.path = ''
@@ -144,7 +149,6 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
         self.assertEqual(msg, ['invalid username or password'])
 
     def test_check_user_name_and_pwd_1(self):
-        self.handler.rfile = open("check.tmp", 'w+b')
         user_info = {'username':'root', 'password':'abc123'}
         len = self.handler.rfile.write(json.dumps(user_info).encode())
         self.handler.headers['Content-Length'] = len
@@ -154,11 +158,8 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
         ret, msg = self.handler._check_user_name_and_pwd()
         self.assertTrue(ret == False)
         self.assertEqual(msg, ['password doesn\'t match'])
-        self.handler.rfile.close()
-        os.remove('check.tmp')
 
     def test_check_user_name_and_pwd_2(self):
-        self.handler.rfile = open("check.tmp", 'w+b')
         user_info = {'username':'root', 'password':'abc123'}
         len = self.handler.rfile.write(json.dumps(user_info).encode())
         self.handler.headers['Content-Length'] = len - 1
@@ -167,11 +168,8 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
         ret, msg = self.handler._check_user_name_and_pwd()
         self.assertTrue(ret == False)
         self.assertEqual(msg, ['invalid username or password'])
-        self.handler.rfile.close()
-        os.remove('check.tmp')
 
     def test_check_user_name_and_pwd_3(self):
-        self.handler.rfile = open("check.tmp", 'w+b')
         user_info = {'usernae':'root', 'password':'abc123'}
         len = self.handler.rfile.write(json.dumps(user_info).encode())
         self.handler.headers['Content-Length'] = len
@@ -180,11 +178,8 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
         ret, msg = self.handler._check_user_name_and_pwd()
         self.assertTrue(ret == False)
         self.assertEqual(msg, ['need user name'])
-        self.handler.rfile.close()
-        os.remove('check.tmp')
 
     def test_check_user_name_and_pwd_4(self):
-        self.handler.rfile = open("check.tmp", 'w+b')
         user_info = {'username':'root', 'pssword':'abc123'}
         len = self.handler.rfile.write(json.dumps(user_info).encode())
         self.handler.headers['Content-Length'] = len
@@ -194,11 +189,8 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
         ret, msg = self.handler._check_user_name_and_pwd()
         self.assertTrue(ret == False)
         self.assertEqual(msg, ['need password'])
-        self.handler.rfile.close()
-        os.remove('check.tmp')
 
     def test_check_user_name_and_pwd_5(self):
-        self.handler.rfile = open("check.tmp", 'w+b')
         user_info = {'username':'root', 'password':'abc123'}
         len = self.handler.rfile.write(json.dumps(user_info).encode())
         self.handler.headers['Content-Length'] = len
@@ -207,8 +199,6 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
         ret, msg = self.handler._check_user_name_and_pwd()
         self.assertTrue(ret == False)
         self.assertEqual(msg, ['user doesn\'t exist'])
-        self.handler.rfile.close()
-        os.remove('check.tmp')
 
     def test_do_POST(self):
         self.handler.headers = {}
@@ -234,20 +224,45 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
         rcode, reply = self.handler._handle_post_request()
         self.assertEqual(http.client.BAD_REQUEST, rcode)
 
+    def _gen_module_spec(self):
+        spec = { 'commands': [ 
+                  { 'command_name' :'command', 
+                    'command_args': [ {
+                            'item_name' : 'param1',
+                            'item_type' : 'integer',
+                            'item_optional' : False,
+                            'item_default' : 0
+                           } ],
+                    'command_description' : 'cmd description'
+                  }
+                ] 
+               }
+        
+        return spec
+
     def test_handle_post_request_2(self):
-        self.handler.rfile = open("check.tmp", 'w+b')
-        params = {123:'param data'}
+        params = {'param1':123}
         len = self.handler.rfile.write(json.dumps(params).encode())
         self.handler.headers['Content-Length'] = len
-        self.handler.rfile.seek(0, 0)
-        self.handler.rfile.close()
-        os.remove('check.tmp')
 
+        self.handler.rfile.seek(0, 0)
         self.handler.path = '/module/command'
         self.handler.server.cmdctrl.module_spec = {}
-        self.handler.server.cmdctrl.module_spec['module'] = { 'commands': [{'command_name':'command'}, {'command_name': ['data1']} ] }
-        #rcode, reply = self.handler._handle_post_request()
-        #self.assertEqual(http.client.OK, rcode)
+        self.handler.server.cmdctrl.module_spec['module'] = self._gen_module_spec()
+        rcode, reply = self.handler._handle_post_request()
+        self.assertEqual(http.client.OK, rcode)
+
+    def test_handle_post_request_3(self):
+        params = {'param1':'abc'}
+        len = self.handler.rfile.write(json.dumps(params).encode())
+        self.handler.headers['Content-Length'] = len
+
+        self.handler.rfile.seek(0, 0)
+        self.handler.path = '/module/command'
+        self.handler.server.cmdctrl.module_spec = {}
+        self.handler.server.cmdctrl.module_spec['module'] = self._gen_module_spec()
+        rcode, reply = self.handler._handle_post_request()
+        self.assertEqual(http.client.BAD_REQUEST, rcode)
 
 if __name__== "__main__":
     unittest.main()
