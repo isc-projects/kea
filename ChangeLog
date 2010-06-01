@@ -26,6 +26,8 @@
 	and invalid parameters could cause integer overflow and make the
 	library crash. (Trac #177, svn r1806)
 
+For complete code revision history, see http://bind10.isc.org/browser 
+
 LEGEND
 [bug] general bug fix.  This is generally a backward compatible change,
 	unless it's deemed to be impossible or very hard to keep
