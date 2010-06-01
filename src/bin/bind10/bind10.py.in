@@ -49,8 +49,6 @@ else:
     DATAROOTDIR = "@datarootdir@"
     SPECFILE_LOCATION = "@datadir@/@PACKAGE@/bob.spec".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
     
-# TODO: start up statistics thingy
-
 import subprocess
 import signal
 import re
@@ -63,10 +61,7 @@ from optparse import OptionParser, OptionValueError
 import isc.cc
 
 # This is the version that gets displayed to the user.
-__version__ = "v20100310"
-
-# Nothing at all to do with the 1990-12-10 article here:
-# http://www.subgenius.com/subg-digest/v2/0056.html
+__version__ = "v20100531"
 
 class RestartSchedule:
     """
@@ -116,7 +111,18 @@ to avoid being restarted at exactly 10 seconds."""
 class ProcessInfo:
     """Information about a process"""
 
-    dev_null = open("/dev/null", "w")
+    dev_null = open(os.devnull, "w")
+
+    def __init__(self, name, args, env={}, dev_null_stdout=False,
+                 dev_null_stderr=False):
+        self.name = name 
+        self.args = args
+        self.env = env
+        self.dev_null_stdout = dev_null_stdout
+        self.dev_null_stderr = dev_null_stderr
+        self.restart_schedule = RestartSchedule()
+        self._spawn()
+
 
     def _spawn(self):
         if self.dev_null_stdout:
@@ -143,16 +149,6 @@ class ProcessInfo:
         self.pid = self.process.pid
         self.restart_schedule.set_run_start_time()
 
-    def __init__(self, name, args, env={}, dev_null_stdout=False,
-                 dev_null_stderr=False):
-        self.name = name 
-        self.args = args
-        self.env = env
-        self.dev_null_stdout = dev_null_stdout
-        self.dev_null_stderr = dev_null_stderr
-        self.restart_schedule = RestartSchedule()
-        self._spawn()
-
     def respawn(self):
         self._spawn()
 
@@ -178,37 +174,28 @@ class BoB:
 
     def config_handler(self, new_config):
         if self.verbose:
-            print("[bind10] handling new config:")
-            print(new_config)
+            sys.stdout.write("[bind10] handling new config:\n")
+            sys.stdout.write(new_config + "\n")
         answer = isc.config.ccsession.create_answer(0)
         return answer
         # TODO
 
     def command_handler(self, command, args):
         if self.verbose:
-            print("[bind10] Boss got command:")
-            print(command)
+            sys.stdout.write("[bind10] Boss got command:\n")
+            sys.stdout.write(command + "\n")
         answer = isc.config.ccsession.create_answer(1, "command not implemented")
         if type(command) != str:
             answer = isc.config.ccsession.create_answer(1, "bad command")
         else:
             cmd = command
             if cmd == "shutdown":
-                print("[bind10] got shutdown command")
+                sys.stdout.write("[bind10] got shutdown command\n")
                 self.runnable = False
                 answer = isc.config.ccsession.create_answer(0)
-            elif cmd == "print_message":
-                if args:
-                    print(args)
-                answer = isc.config.ccsession.create_answer(0, args)
-            elif cmd == "print_settings":
-                print("[bind10] Full Config:")
-                full_config = self.ccs.get_full_config()
-                for item in full_config:
-                    print(item + ": " + str(full_config[item]))
-                answer = isc.config.ccsession.create_answer(0)
             else:
-                answer = isc.config.ccsession.create_answer(1, "Unknown command")
+                answer = isc.config.ccsession.create_answer(1, 
+                                                            "Unknown command")
         return answer
     
     def startup(self):
@@ -229,6 +216,7 @@ class BoB:
             self.cc_session = isc.cc.Session(self.msgq_socket_file)
             return "b10-msgq already running, or socket file not cleaned , cannot start"
         except isc.cc.session.SessionError:
+            # this is the case we want, where the msgq is not running
             pass
 
         # start the c-channel daemon
@@ -256,7 +244,6 @@ class BoB:
                 self.cc_session = isc.cc.Session(self.msgq_socket_file)
             except isc.cc.session.SessionError:
                 time.sleep(0.1)
-        #self.cc_session.group_subscribe("Boss", "boss")
 
         # start the configuration manager
         if self.verbose:
@@ -269,24 +256,24 @@ class BoB:
             return "Unable to start b10-cfgmgr; " + str(e)
         self.processes[bind_cfgd.pid] = bind_cfgd
         if self.verbose:
-            sys.stdout.write("[bind10] Started b10-cfgmgr (PID %d)\n" % bind_cfgd.pid)
+            sys.stdout.write("[bind10] Started b10-cfgmgr (PID %d)\n" % 
+                             bind_cfgd.pid)
 
-        # TODO: once this interface is done, replace self.cc_session
-        # by this one
         # sleep until b10-cfgmgr is fully up and running, this is a good place
         # to have a (short) timeout on synchronized groupsend/receive
         # TODO: replace the sleep by a listen for ConfigManager started
         # message
         time.sleep(1)
         if self.verbose:
-            print("[bind10] starting ccsession")
-        self.ccs = isc.config.ModuleCCSession(SPECFILE_LOCATION, self.config_handler, self.command_handler)
+            sys.stdout.write("[bind10] starting ccsession\n")
+        self.ccs = isc.config.ModuleCCSession(SPECFILE_LOCATION, 
+                                      self.config_handler, self.command_handler)
         self.ccs.start()
         if self.verbose:
-            print("[bind10] ccsession started")
+            sys.stdout.write("[bind10] ccsession started\n")
 
-        # start the xfrout before auth-server, to make sure every xfr-query can be
-        # processed properly.
+        # start the xfrout before auth-server, to make sure every xfr-query can
+        # be processed properly.
         xfrout_args = ['b10-xfrout']
         if self.verbose:
             sys.stdout.write("Starting b10-xfrout\n")
@@ -442,65 +429,10 @@ class BoB:
                 if proc_info.name == "b10-msgq":
                     if self.verbose and self.runnable:
                         sys.stdout.write(
-                                     "The b10-msgq process died, shutting down.\n")
+                                 "The b10-msgq process died, shutting down.\n")
                     self.runnable = False
             else:
                 sys.stdout.write("Unknown child pid %d exited.\n" % pid)
-
-    # 'old' command style, uncommented for now
-    # move the handling below move to command_handler please
-    #def recv_and_process_cc_msg(self):
-        #"""Receive and process the next message on the c-channel,
-        #if any."""
-        #self.ccs.checkCommand()
-        #msg, envelope = self.cc_session.group_recvmsg(False)
-        #print(msg)
-        #if msg is None:
-        #    return
-        #if not ((type(msg) is dict) and (type(envelope) is dict)):
-        #    if self.verbose:
-        #        sys.stdout.write("Non-dictionary message\n")
-        #    return
-        #if not "command" in msg:
-        #    if self.verbose:
-        #        if "msg" in envelope:
-        #            del envelope['msg']
-        #        sys.stdout.write("Unknown message received\n")
-        #        sys.stdout.write(pprint.pformat(envelope) + "\n")
-        #        sys.stdout.write(pprint.pformat(msg) + "\n")
-        #    return
-
-        #cmd = msg['command']
-        #if not (type(cmd) is list):
-        #    if self.verbose:
-        #        sys.stdout.write("Non-list command\n")
-        #    return
-        #
-        # done checking and extracting... time to execute the command
-        #if cmd[0] == "shutdown":
-        #    if self.verbose:
-        #        sys.stdout.write("shutdown command received\n")
-        #    self.runnable = False
-        #    # XXX: reply here?
-        #elif cmd[0] == "getProcessList":
-        #    if self.verbose:
-        #        sys.stdout.write("getProcessList command received\n")
-        #    live_processes = [ ]
-        #    for proc_info in processes:
-        #        live_processes.append({ "name": proc_info.name, 
-        #                                "args": proc_info.args, 
-        #                                "pid": proc_info.pid, })
-        #    dead_processes = [ ]
-        #    for proc_info in dead_processes:
-        #        dead_processes.append({ "name": proc_info.name, 
-        #                                "args": proc_info.args, })
-        #    cc.group_reply(envelope, { "response": cmd,
-        #                               "sent": msg["sent"],
-        #                               "live_processes": live_processes,
-        #                               "dead_processes": dead_processes, })
-        #else:
-        #    if self.verbose:
-        #        sys.stdout.write("Unknown command %s\n" % str(cmd))
 
     def restart_processes(self):
         """Restart any dead processes."""
@@ -514,10 +446,6 @@ class BoB:
         for proc_info in self.dead_processes.values():
             restart_time = proc_info.restart_schedule.get_restart_time(now)
             if restart_time > now:
-#                if self.verbose:
-#                    sys.stdout.write("Dead %s process waiting %.1f seconds "\
-#                                     "for resurrection\n" % 
-#                                     (proc_info.name, (restart_time-now)))
                 if (next_restart is None) or (next_restart > restart_time):
                     next_restart = restart_time
                 still_dead[proc_info.pid] = proc_info

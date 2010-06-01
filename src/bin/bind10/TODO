@@ -1,4 +1,5 @@
-- Read msgq configuration from configuration manager
+- Read msgq configuration from configuration manager (Trac #213)
+  https://bind10.isc.org/ticket/213
 - Provide more administrator options:
   - Get process list
   - Get information on a process (returns list of times started & stopped, 
