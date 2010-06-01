@@ -115,5 +115,3 @@ class CmdMissParamSyntaxError(CmdSyntaxError):
     def __str__(self):
         return str("Parameter '%s' is missed for command '%s' of module '%s'" % 
                    (self.param, self.command, self.module))
-                   
-   
