@@ -26,7 +26,10 @@
 	and invalid parameters could cause integer overflow and make the
 	library crash. (Trac #177, svn r1806)
 
-For complete code revision history, see http://bind10.isc.org/browser 
+For complete code revision history, see http://bind10.isc.org/browser
+Specific subversion changesets can be accessed at:
+	http://bind10.isc.org/changeset/rrrr
+Trac tickets can be accessed at: https://bind10.isc.org/ticket/nnn
 
 LEGEND
 [bug] general bug fix.  This is generally a backward compatible change,
