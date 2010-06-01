@@ -80,7 +80,8 @@ class ModuleSpec:
             return _validate_spec_list(data_def, full, data, errors)
         else:
             # no spec, always bad
-            errors.append("No config_data specification")
+            if errors != None:
+                errors.append("No config_data specification")
             return False
 
     def validate_command(self, cmd_name, cmd_params, errors = None):
