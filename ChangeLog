@@ -1,20 +1,26 @@
    6.	[bug]		jinmei
 	bin/bindctl: fixed a bug that it didn't accept IPv6 addresses as
 	command arguments. (Trac #219, svn r2022)
+
    5.	[bug]		jinmei
 	bin/xfrin: fixed several small bugs with many additional unit
 	tests.  Fixes include: IPv6 transport support, resource leak,
 	and non IN class support. (Trac #185, svn r2000)
+
    4.   [bug]           each
-	bin/auth: output now prepended with "[b10-auth]" (Trac #109, svn r1985)
+	bin/auth: output now prepended with "[b10-auth]" (Trac
+	#109, svn r1985)
+
    3.	[func]		each
 	bin/auth: removed custom query-processing code, changed
         boost::asio code to use plain asio instead, and added asio
         headers to the source tree.  This allows building without
         using an external boost library. (Trac #163, svn r1983)
+
    2.	[func]		jinmei
 	lib/dns: added a separate signature for Name::split() as a
 	convenient wrapper for common usage. (Trac #49, svn r1903)
+
    1.	[bug]		jinmei
 	lib/dns: parameter validation of Name::split() was not sufficient,
 	and invalid parameters could cause integer overflow and make the
@@ -30,3 +36,4 @@ LEGEND
 [security] security hole fix.  This is no different than a general bug fix
 	except that it will be handled as confidential and will cause 
 	security patch releases.
+*: Backward incompatible or operational change.
