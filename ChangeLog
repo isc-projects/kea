@@ -11,7 +11,7 @@
 	bin/auth: output now prepended with "[b10-auth]" (Trac
 	#109, svn r1985)
 
-   3.	[func]		each
+   3.	[func]*		each
 	bin/auth: removed custom query-processing code, changed
         boost::asio code to use plain asio instead, and added asio
         headers to the source tree.  This allows building without
