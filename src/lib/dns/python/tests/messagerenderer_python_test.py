@@ -29,13 +29,13 @@ class MessageRendererTest(unittest.TestCase):
         t = RRType("A")
         ttl = RRTTL("3600")
         
-        message = Message(RENDER)
+        message = Message(Message.RENDER)
         message.set_qid(123)
         message.set_opcode(Opcode.QUERY())
         message.add_question(Question(name, c, t))
 
         self.message1 = message
-        message = Message(RENDER)
+        message = Message(Message.RENDER)
         message.set_qid(123)
         message.set_header_flag(MessageFlag.AA())
         message.set_header_flag(MessageFlag.QR())
@@ -48,7 +48,7 @@ class MessageRendererTest(unittest.TestCase):
         message.add_rrset(Section.AUTHORITY(), rrset)
         self.message2 = message
 
-        #message = Message(RENDER)
+        #message = Message(Message.RENDER)
         #message.set_qid(123)
         #message.set_header_flag(MessageFlag.AA())
         #message.set_header_flag(MessageFlag.QR())

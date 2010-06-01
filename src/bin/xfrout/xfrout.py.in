@@ -52,6 +52,7 @@ verbose_mode = False
 
 
 class XfroutException(Exception): pass
+class TmpException(Exception): pass
 
 class XfroutSession(BaseRequestHandler):
     def handle(self):
@@ -65,7 +66,7 @@ class XfroutSession(BaseRequestHandler):
         sock = socket.fromfd(fd, socket.AF_INET, socket.SOCK_STREAM)
         try:
             self.dns_xfrout_start(sock, msgdata)
-        except Exception as e:
+        except TmpException as e:
             if verbose_mode:
                 self.log_msg(str(e))
 
@@ -78,9 +79,9 @@ class XfroutSession(BaseRequestHandler):
         ''' parse query message to [socket,message]'''
         #TODO, need to add parseHeader() in case the message header is invalid 
         try:
-            msg = Message(PARSE)
+            msg = Message(Message.PARSE)
             msg.from_wire(mdata)
-        except Exception as err:
+        except TmpException as err:
             if verbose_mode:
                 self.log_msg(str(err))
             return Rcode.FORMERR(), None
@@ -179,7 +180,7 @@ class XfroutSession(BaseRequestHandler):
 
             if verbose_mode:
                 self.log_msg("transfer of '%s/IN': AXFR end" % zone_name)
-        except Exception as err:
+        except TmpException as err:
             if verbose_mode:
                 sys.stderr.write(str(err))
 
@@ -192,7 +193,7 @@ class XfroutSession(BaseRequestHandler):
         opcode = msg.get_opcode()
         rcode = msg.get_rcode()
         
-        msg.clear(RENDER)
+        msg.clear(Message.RENDER)
         msg.set_qid(qid)
         msg.set_opcode(opcode)
         msg.set_rcode(rcode)

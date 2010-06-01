@@ -29,13 +29,6 @@ static PyObject* po_InvalidMessageUDPSize;
 static PyObject* po_DNSMessageBADVERS;
 
 //
-// Constants
-//
-static PyObject* po_MessagePARSE;
-static PyObject* po_MessageRENDER;
-static PyObject* po_MessageDefaultMaxUDPSize;
-
-//
 // Definition of the classes
 //
 
@@ -1621,8 +1614,13 @@ Message_setQid(s_Message* self, PyObject* args)
     if (!PyArg_ParseTuple(args, "I", &id)) {
         return NULL;
     }
-    self->message->setQid(id);
-    Py_RETURN_NONE;
+    try {
+        self->message->setQid(id);
+        Py_RETURN_NONE;
+    } catch (InvalidMessageOperation imo) {
+        PyErr_SetString(po_InvalidMessageOperation, imo.what());
+        return NULL;
+    }
 }
 
 static PyObject*
@@ -1874,41 +1872,11 @@ Message_fromWire(s_Message* self, PyObject* args)
     }
 }
 
-// end of Message
-
-
 // Module Initialization, all statics are initialized here
 bool
 initModulePart_Message(PyObject* mod)
 {
-    // Add the exceptions to the module
-    po_MessageTooShort = PyErr_NewException("libdns_python.MessageTooShort", NULL, NULL);
-    Py_INCREF(po_MessageTooShort);
-    PyModule_AddObject(mod, "MessageTooShort", po_MessageTooShort);
-    po_InvalidMessageSection = PyErr_NewException("libdns_python.InvalidMessageSection", NULL, NULL);
-    Py_INCREF(po_InvalidMessageSection);
-    PyModule_AddObject(mod, "InvalidMessageSection", po_InvalidMessageSection);
-    po_InvalidMessageOperation = PyErr_NewException("libdns_python.InvalidMessageOperation", NULL, NULL);
-    Py_INCREF(po_InvalidMessageOperation);
-    PyModule_AddObject(mod, "InvalidMessageOperation", po_InvalidMessageOperation);
-    po_InvalidMessageUDPSize = PyErr_NewException("libdns_python.InvalidMessageUDPSize", NULL, NULL);
-    Py_INCREF(po_InvalidMessageUDPSize);
-    PyModule_AddObject(mod, "InvalidMessageUDPSize", po_InvalidMessageUDPSize);
-    po_DNSMessageBADVERS = PyErr_NewException("libdns_python.DNSMessageBADVERS", NULL, NULL);
-    Py_INCREF(po_DNSMessageBADVERS);
-    PyModule_AddObject(mod, "DNSMessageBADVERS", po_DNSMessageBADVERS);
-
-    // Constants. These should probably go into the Message class, but need to find out how first
-    po_MessagePARSE = Py_BuildValue("I", Message::PARSE);
-    Py_INCREF(po_MessagePARSE);
-    PyModule_AddObject(mod, "PARSE", po_MessagePARSE);
-    po_MessageRENDER = Py_BuildValue("I", Message::RENDER);
-    Py_INCREF(po_MessageRENDER);
-    PyModule_AddObject(mod, "RENDER", po_MessageRENDER);
-    po_MessageDefaultMaxUDPSize = Py_BuildValue("I", Message::DEFAULT_MAX_UDPSIZE);
-    Py_INCREF(po_MessageDefaultMaxUDPSize);
-    PyModule_AddObject(mod, "DEFAULT_MAX_UDPSIZE", po_MessageDefaultMaxUDPSize);
-
+    
     /* add methods to class */
     if (PyType_Ready(&messageflag_type) < 0) {
         return false;
@@ -1943,10 +1911,31 @@ initModulePart_Message(PyObject* mod)
     if (PyType_Ready(&message_type) < 0) {
         return false;
     }
+    
+    /* Class variables
+     * These are added to the tp_dict of the type object
+     */
+    //PyDict_SetItemString(message_type.tp_dict, "PARSE", Py_BuildValue("I", Message::PARSE));
+    addClassVariable(message_type, "PARSE", Py_BuildValue("I", Message::PARSE));
+    addClassVariable(message_type, "RENDER", Py_BuildValue("I", Message::RENDER));
+    addClassVariable(message_type, "DEFAULT_MAX_UDPSIZE", Py_BuildValue("I", Message::DEFAULT_MAX_UDPSIZE));
+
+    /* Class-specific exceptions */
+    po_MessageTooShort = PyErr_NewException("libdns_python.Message.MessageTooShort", NULL, NULL);
+    addClassVariable(message_type, "MessageTooShort", po_MessageTooShort);
+    po_InvalidMessageSection = PyErr_NewException("libdns_python.Message.InvalidMessageSection", NULL, NULL);
+    addClassVariable(message_type, "InvalidMessageSection", po_InvalidMessageSection);
+    po_InvalidMessageOperation = PyErr_NewException("libdns_python.Message.InvalidMessageOperation", NULL, NULL);
+    addClassVariable(message_type, "InvalidMessageOperation", po_InvalidMessageOperation);
+    po_InvalidMessageUDPSize = PyErr_NewException("libdns_python.Message.InvalidMessageUDPSize", NULL, NULL);
+    addClassVariable(message_type, "InvalidMessageUDPSize", po_InvalidMessageUDPSize);
+    po_DNSMessageBADVERS = PyErr_NewException("libdns_python.Message.DNSMessageBADVERS", NULL, NULL);
+    addClassVariable(message_type, "DNSMessageBADVERS", po_DNSMessageBADVERS);
+
     Py_INCREF(&message_type);
     PyModule_AddObject(mod, "Message",
                        (PyObject*) &message_type);
-    
+
 
     return true;
 }

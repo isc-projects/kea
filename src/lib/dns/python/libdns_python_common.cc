@@ -46,3 +46,7 @@ readDataFromSequence(uint8_t *data, size_t len, PyObject* sequence)
 }
 
 
+void addClassVariable(PyTypeObject& c, const char* name, PyObject* obj)
+{
+    PyDict_SetItemString(c.tp_dict, name, obj);
+}
