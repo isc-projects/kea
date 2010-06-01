@@ -62,7 +62,7 @@ class CmdParamFormatError(CmdFormatError):
         self.command = command        
 
     def __str__(self):
-        return  "Parameter format error, it should like 'key = value'"         
+        return  "Parameter format error, it should be 'key = value'"         
         
 # Begin define the exception for syntax
 
