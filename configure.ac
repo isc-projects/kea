@@ -364,19 +364,8 @@ if test "X$ac_cv_have_devpoll" = "Xyes" -a "X$GCC" = "Xyes"; then
 fi
 
 # Check for headers from required devel kits.
-# boost/shared_ptr.hpp is in ext in svn but not in tarball.
-CPPFLAGS_SAVED=$CPPFLAGS
-if test "X$BOOST_INCLUDES" = "X"; then
-	# abs_top_srcdir not defined yet
-	# so this is only useful to check.  We'll replace it after the check.
-	CPPFLAGS="$CPPFLAGS -Iext/boost"
-fi
 AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp],,
   AC_MSG_ERROR([Missing required header files.]))
-CPPFLAGS=$CPPFLAGS_SAVED
-if test "X$BOOST_INCLUDES" = "X"; then
-	CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext/boost"
-fi
 
 AC_ARG_ENABLE(man, [AC_HELP_STRING([--enable-man],
   [regenerate man pages [default=no]])] ,enable_man=yes, enable_man=no)
