@@ -37,8 +37,8 @@ except ImportError as e:
     # must keep running, so we warn about it and move forward.
     sys.stderr.write('[b10-xfrout] failed to import DNS or XFR module: %s\n' % str(e))
 
-if "B10_FROM_SOURCE" in os.environ:
-    SPECFILE_PATH = os.environ["B10_FROM_SOURCE"] + "/src/bin/xfrout"
+if "B10_FROM_BUILD" in os.environ:
+    SPECFILE_PATH = os.environ["B10_FROM_BUILD"] + "/src/bin/xfrout"
 else:
     PREFIX = "@prefix@"
     DATAROOTDIR = "@datarootdir@"

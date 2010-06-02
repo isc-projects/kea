@@ -35,11 +35,11 @@ except ImportError as e:
     # must keep running, so we warn about it and move forward.
     sys.stderr.write('[b10-xfrin] failed to import DNS module: %s\n' % str(e))
 
-# If B10_FROM_SOURCE is set in the environment, we use data files
+# If B10_FROM_BUILD is set in the environment, we use data files
 # from a directory relative to that, otherwise we use the ones
 # installed on the system
-if "B10_FROM_SOURCE" in os.environ:
-    SPECFILE_PATH = os.environ["B10_FROM_SOURCE"] + "/src/bin/xfrin"
+if "B10_FROM_BUILD" in os.environ:
+    SPECFILE_PATH = os.environ["B10_FROM_BUILD"] + "/src/bin/xfrin"
 else:
     PREFIX = "@prefix@"
     DATAROOTDIR = "@datarootdir@"

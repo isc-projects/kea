@@ -144,9 +144,7 @@ class MsgQ:
         if os.path.exists(self.socket_file):
             os.remove(self.socket_file)
         try:
-            print("[XX] SOCKET FILE: " + self.socket_file)
             self.listen_socket.bind(self.socket_file)
-            print("[XX] LISTENING ON SOCKET FILE: " + self.socket_file)
             self.listen_socket.listen(1024)
         except Exception as e:
             # remove the file again if something goes wrong
