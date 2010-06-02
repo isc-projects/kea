@@ -13,9 +13,11 @@ the five year plan is described here:
 
         http://bind10.isc.org/wiki/Year1Deliverable
 
-This release includes the bind10 master process, msgq message bus,
-b10-auth authoritative DNS server, b10-cmdctl remote control daemon,
-b10-cfgmgr configuration manager, and a new libdns library.
+This release includes the bind10 master process, b10-msgq message
+bus, b10-auth authoritative DNS server (with SQLite3 backend),
+b10-cmdctl remote control daemon, b10-cfgmgr configuration manager,
+b10-xfrin AXFR inbound service, b10-xfrout outgoing AXFR service,
+and a new libdns library.
 
 Documentation is included and also available via the BIND 10
 website at http://bind10.isc.org/
