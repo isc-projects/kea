@@ -391,7 +391,7 @@ class XfroutServer:
     def command_handler(self, cmd, args):
         if cmd == "shutdown":
             if verbose_mode:
-                log_msg("Received shutdown command")
+                print("[b10-xfrout] Received shutdown command")
             self.shutdown()
             answer = create_answer(0)
         else: 
