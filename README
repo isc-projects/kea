@@ -36,9 +36,10 @@ Bugs may be reported as tickets via the developers website:
 
         http://bind10.isc.org/
 
-See the Guide for detailed installation directions.
-
 BUILDING
+
+See the Guide for detailed installation directions at
+doc/guide/bind10-guide.html.
 
 Simple build instructions:
 
