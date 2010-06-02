@@ -376,8 +376,8 @@ TEST_F(Sqlite3DataSourceTest, reOpen) {
 
     NameMatch name_match(www_name);
     data_source.findClosestEnclosure(name_match, rrclass);
-    EXPECT_EQ(NULL, name_match.closestName());
-    EXPECT_EQ(NULL, name_match.bestDataSrc());
+    EXPECT_EQ(static_cast<void*>(NULL), name_match.closestName());
+    EXPECT_EQ(static_cast<void*>(NULL), name_match.bestDataSrc());
 }
 
 TEST_F(Sqlite3DataSourceTest, openFail) {
@@ -441,15 +441,15 @@ TEST_F(Sqlite3DataSourceTest, findClosestEnclosureAtDelegation) {
 TEST_F(Sqlite3DataSourceTest, findClosestEnclosureNoMatch) {
     NameMatch name_match(nomatch_name);
     data_source.findClosestEnclosure(name_match, rrclass);
-    EXPECT_EQ(NULL, name_match.closestName());
-    EXPECT_EQ(NULL, name_match.bestDataSrc());
+    EXPECT_EQ(static_cast<void*>(NULL), name_match.closestName());
+    EXPECT_EQ(static_cast<void*>(NULL), name_match.bestDataSrc());
 }
 
 TEST_F(Sqlite3DataSourceTest, findClosestClassMismatch) {
     NameMatch name_match(www_name);
     data_source.findClosestEnclosure(name_match, rrclass_notmatch);
-    EXPECT_EQ(NULL, name_match.closestName());
-    EXPECT_EQ(NULL, name_match.bestDataSrc());
+    EXPECT_EQ(static_cast<void*>(NULL), name_match.closestName());
+    EXPECT_EQ(static_cast<void*>(NULL), name_match.bestDataSrc());
 }
 
 // If the query class is ANY, the result should be the same as the case where
