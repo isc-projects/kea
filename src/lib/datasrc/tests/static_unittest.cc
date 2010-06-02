@@ -214,6 +214,7 @@ TEST_F(StaticDataSourceTest, findClosestEnclosureForVersionClassAny) {
 TEST_F(StaticDataSourceTest, findClosestEnclosureForVersionClassMismatch) {
     NameMatch name_match(version_name);
     data_source.findClosestEnclosure(name_match, RRClass::IN());
+    // XXX: see sqlite3_unittest.cc about the cast.
     EXPECT_EQ(static_cast<void*>(NULL), name_match.closestName());
     EXPECT_EQ(static_cast<void*>(NULL), name_match.bestDataSrc());
 }

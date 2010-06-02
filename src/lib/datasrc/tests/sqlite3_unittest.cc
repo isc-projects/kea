@@ -376,6 +376,8 @@ TEST_F(Sqlite3DataSourceTest, reOpen) {
 
     NameMatch name_match(www_name);
     data_source.findClosestEnclosure(name_match, rrclass);
+    // XXX: some deviant compilers seem to fail to recognize a NULL as a
+    // pointer type.  This explicit cast works around such compilers.
     EXPECT_EQ(static_cast<void*>(NULL), name_match.closestName());
     EXPECT_EQ(static_cast<void*>(NULL), name_match.bestDataSrc());
 }
