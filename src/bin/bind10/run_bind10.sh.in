@@ -29,7 +29,7 @@ export PYTHONPATH
 B10_FROM_SOURCE=@abs_top_srcdir@
 export B10_FROM_SOURCE
 
-BIND10_MSGQ_SOCKET_FILE=@abs_top_srcdir@/msgq_socket
+BIND10_MSGQ_SOCKET_FILE=@abs_top_builddir@/msgq_socket
 export BIND10_MSGQ_SOCKET_FILE
 
 cd ${BIND10_PATH}
