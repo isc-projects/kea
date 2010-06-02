@@ -1,5 +1,9 @@
 bind10-devel-20100602 released on June 2, 2010
 
+  50.	[bug]		zhanglikun
+	bin/xfrin: a regression in xfrin: it can't communicate with 
+	a remote server. (Trac #218, svn r2038)
+
   49.	[func]*		jelte
 	Use unix domain sockets for msgq. (Trac #183, svn r2009)
 
