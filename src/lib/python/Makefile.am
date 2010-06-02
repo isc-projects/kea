@@ -8,3 +8,5 @@ DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in bind10_config.py.in
 
 # When setting DIST_COMMON, then need to add the .in file too.
 EXTRA_DIST =  bind10_config.py.in
+
+CLEANFILES = bind10_config.pyc
