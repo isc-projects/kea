@@ -18,9 +18,9 @@
 PYTHON_EXEC=${PYTHON_EXEC:-@PYTHON@}
 export PYTHON_EXEC
 
-BINDCTL_PATH=@abs_top_srcdir@/src/bin/bindctl
+BINDCTL_PATH=@abs_top_builddir@/src/bin/bindctl
 
-PYTHONPATH=@abs_top_builddir@/src/lib/python:@abs_top_builddir@/src/bin
+PYTHONPATH=@abs_top_srcdir@/src/bin:@abs_top_builddir@/src/lib/python:@abs_top_builddir@/src/bin:@abs_top_srcdir@/src/lib/python
 export PYTHONPATH
 
 B10_FROM_SOURCE=@abs_top_srcdir@
