@@ -76,6 +76,7 @@ class XfrinConnection(asyncore.dispatcher):
         asyncore.dispatcher.__init__(self, map=sock_map)
         self.create_socket(master_addrinfo[0], master_addrinfo[1])
         self._zone_name = zone_name
+        self._sock_map = sock_map
         self._rrclass = rrclass
         self._db_file = db_file
         self._soa_rr_count = 0
@@ -131,11 +132,10 @@ class XfrinConnection(asyncore.dispatcher):
 
     def _asyncore_loop(self):
         '''
-This method is a trivial wrapper for asyncore.loop().  It's extracted from
-_get_request_response so that we can test the rest of the code without
-involving actual communication with a remote server.
-'''
-        asyncore.loop(self._idle_timeout, count = 1)
+        This method is a trivial wrapper for asyncore.loop().  It's extracted from
+        _get_request_response so that we can test the rest of the code without
+        involving actual communication with a remote server.'''
+        asyncore.loop(self._idle_timeout, map = self._sock_map, count = 1)
     
     def _get_request_response(self, size):
         recv_size = 0
