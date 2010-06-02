@@ -1,3 +1,3 @@
 SUBDIRS = isc
 
-python_PYTHON =	isc_config.py
+python_PYTHON =	bind10_config.py
