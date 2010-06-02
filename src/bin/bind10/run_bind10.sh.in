@@ -23,11 +23,17 @@ BIND10_PATH=@abs_top_builddir@/src/bin/bind10
 PATH=@abs_top_builddir@/src/bin/msgq:@abs_top_builddir@/src/bin/auth:@abs_top_builddir@/src/bin/cfgmgr:@abs_top_builddir@/src/bin/cmdctl:@abs_top_builddir@/src/bin/xfrin:@abs_top_builddir@/src/bin/xfrout:$PATH
 export PATH
 
-PYTHONPATH=@abs_top_builddir@/src/lib/python:@abs_top_builddir@/src/lib/dns/.libs:@abs_top_builddir@/src/lib/xfr/.libs
+PYTHONPATH=@abs_top_srcdir@/src/lib/python:@abs_top_builddir@/src/lib/python:@abs_top_builddir@/src/lib/dns/.libs:@abs_top_builddir@/src/lib/xfr/.libs
 export PYTHONPATH
 
 B10_FROM_SOURCE=@abs_top_srcdir@
 export B10_FROM_SOURCE
+# TODO: We need to do this feature based (ie. no general from_source)
+# But right now we need a second one because some spec files are
+# generated and hence end up under builddir
+B10_FROM_BUILD=@abs_top_builddir@
+export B10_FROM_BUILD
+
 
 BIND10_MSGQ_SOCKET_FILE=@abs_top_srcdir@/msgq_socket
 export BIND10_MSGQ_SOCKET_FILE
