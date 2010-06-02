@@ -18,6 +18,7 @@ import socket
 import struct
 import os
 import threading
+import isc_config
 
 import isc.cc.message
 
@@ -26,11 +27,6 @@ class NetworkError(Exception): pass
 class SessionError(Exception): pass
 
 class Session:
-    SOCKET_FILE = os.path.join("@localstatedir@",
-                               "@PACKAGE_NAME@",
-                               "msgq_socket").replace("${prefix}",
-                                                      "@prefix@")
-
     def __init__(self, socket_file=None):
         self._socket = None
         self._lname = None
@@ -45,7 +41,7 @@ class Session:
             if "BIND10_MSGQ_SOCKET_FILE" in os.environ:
                 self.socket_file = os.environ["BIND10_MSGQ_SOCKET_FILE"]
             else:
-                self.socket_file = self.SOCKET_FILE
+                self.socket_file = isc_config.BIND10_MSGQ_SOCKET_FILE
         else:
             self.socket_file = socket_file
         
