@@ -4,3 +4,6 @@ To build "configure" file:
 To then build from source:
     ./configure
     make
+
+For detailed installation directions, see the guide
+at doc/guide/bind10-guide.html.
