@@ -18,7 +18,7 @@ import socket
 import struct
 import os
 import threading
-import isc_config
+import bind10_config
 
 import isc.cc.message
 
@@ -41,7 +41,7 @@ class Session:
             if "BIND10_MSGQ_SOCKET_FILE" in os.environ:
                 self.socket_file = os.environ["BIND10_MSGQ_SOCKET_FILE"]
             else:
-                self.socket_file = isc_config.BIND10_MSGQ_SOCKET_FILE
+                self.socket_file = bind10_config.BIND10_MSGQ_SOCKET_FILE
         else:
             self.socket_file = socket_file
         
