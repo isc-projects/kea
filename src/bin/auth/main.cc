@@ -135,8 +135,8 @@ main(int argc, char* argv[]) {
     int ret = 0;
     try {
         string specfile;
-        if (getenv("B10_FROM_SOURCE")) {
-            specfile = string(getenv("B10_FROM_SOURCE")) +
+        if (getenv("B10_FROM_BUILD")) {
+            specfile = string(getenv("B10_FROM_BUILD")) +
                 "/src/bin/auth/auth.spec";
         } else {
             specfile = string(AUTH_SPECFILE_LOCATION);

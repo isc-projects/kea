@@ -1,5 +1,11 @@
 bind10-devel-20100602 released on June 2, 2010
 
+  51.   [build]         jelte
+	lib/python: Add bind10_config.py module for paths and
+	possibly other configure-time variables. Allow some components
+	to find spec files in build tree when ran from source.
+	(Trac #223)
+
   50.	[bug]		zhanglikun
 	bin/xfrin: a regression in xfrin: it can't communicate with 
 	a remote server. (Trac #218, svn r2038)
