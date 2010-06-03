@@ -135,7 +135,7 @@ class XfrinConnection(asyncore.dispatcher):
         This method is a trivial wrapper for asyncore.loop().  It's extracted from
         _get_request_response so that we can test the rest of the code without
         involving actual communication with a remote server.'''
-        asyncore.loop(self._idle_timeout, map = self._sock_map, count = 1)
+        asyncore.loop(self._idle_timeout, map=self._sock_map, count=1)
     
     def _get_request_response(self, size):
         recv_size = 0
