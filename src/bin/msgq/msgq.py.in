@@ -47,11 +47,11 @@ class SubscriptionManager:
         """Add a subscription."""
         target = ( group, instance )
         if target in self.subscriptions:
-            print("Appending to existing target")
+            print("[b10-msgq] Appending to existing target")
             if socket not in self.subscriptions[target]:
                 self.subscriptions[target].append(socket)
         else:
-            print("Creating new target")
+            print("[b10-msgq] Creating new target")
             self.subscriptions[target] = [ socket ]
 
     def unsubscribe(self, group, instance, socket):
@@ -168,14 +168,16 @@ class MsgQ:
         self.setup_listener()
 
         if self.verbose:
-            sys.stdout.write("Listening\n")
+            sys.stdout.write("[b10-msgq] Listening\n")
         
         self.runnable = True
 
     def process_accept(self):
         """Process an accept on the listening socket."""
         newsocket, ipaddr = self.listen_socket.accept()
-        sys.stderr.write("Connection\n")
+        # TODO: When we have logging, we might want
+        # to add a debug message here that a new connection
+        # was made
         self.sockets[newsocket.fileno()] = newsocket
         lname = self.newlname()
         self.lnames[lname] = newsocket
@@ -189,9 +191,9 @@ class MsgQ:
         """Process a read on a socket."""
         sock = self.sockets[fd]
         if sock == None:
-            sys.stderr.write("Got read on Strange Socket fd %d\n" % fd)
+            sys.stderr.write("[b10-msgq] Got read on Strange Socket fd %d\n" % fd)
             return
-#        sys.stderr.write("Got read on fd %d\n" %fd)
+#        sys.stderr.write("[b10-msgq] Got read on fd %d\n" %fd)
         self.process_packet(fd, sock)
 
     def kill_socket(self, fd, sock):
@@ -203,7 +205,7 @@ class MsgQ:
         del self.lnames[lname]
         sock.close()
         self.sockets[fd] = None
-        sys.stderr.write("Closing socket fd %d\n" % fd)
+        sys.stderr.write("[b10-msgq] Closing socket fd %d\n" % fd)
 
     def getbytes(self, fd, sock, length):
         """Get exactly the requested bytes, or raise an exception if
@@ -243,14 +245,14 @@ class MsgQ:
             routing, data = self.read_packet(fd, sock)
         except MsgQReceiveError as err:
             self.kill_socket(fd, sock)
-            sys.stderr.write("Receive error: %s\n" % err)
+            sys.stderr.write("[b10-msgq] Receive error: %s\n" % err)
             return
 
         try:
             routingmsg = isc.cc.message.from_wire(routing)
         except DecodeError as err:
             self.kill_socket(fd, sock)
-            sys.stderr.write("Routing decode error: %s\n" % err)
+            sys.stderr.write("[b10-msgq] Routing decode error: %s\n" % err)
             return
 
 #        sys.stdout.write("\t" + pprint.pformat(routingmsg) + "\n")
@@ -261,8 +263,9 @@ class MsgQ:
     def process_command(self, fd, sock, routing, data):
         """Process a single command.  This will split out into one of the
            other functions."""
-        print("[XX] got command: ")
-        print(routing)
+        # TODO: A print statement got removed here (one that prints the
+        # routing envelope). When we have logging with multiple levels,
+        # we might want to re-add that on a high debug verbosity.
         cmd = routing["type"]
         if cmd == 'send':
             self.process_command_send(sock, routing, data)
@@ -273,7 +276,7 @@ class MsgQ:
         elif cmd == 'getlname':
             self.process_command_getlname(sock, routing, data)
         else:
-            sys.stderr.write("Invalid command: %s\n" % cmd)
+            sys.stderr.write("[b10-msgq] Invalid command: %s\n" % cmd)
 
     def preparemsg(self, env, msg = None):
         if type(env) == dict:
@@ -358,7 +361,7 @@ class MsgQ:
                 if err.args[0] == errno.EINTR:
                     events = []
                 else:
-                    sys.stderr.write("Error with poll(): %s\n" % err)
+                    sys.stderr.write("[b10-msgq] Error with poll(): %s\n" % err)
                     break
             for (fd, event) in events:
                 if fd == self.listen_socket.fileno():
@@ -384,7 +387,7 @@ class MsgQ:
     def shutdown(self):
         """Stop the MsgQ master."""
         if self.verbose:
-            sys.stdout.write("Stopping the server.\n")
+            sys.stdout.write("[b10-msgq] Stopping the server.\n")
         self.listen_socket.close()
         if os.path.exists(self.socket_file):
             os.remove(self.socket_file)
@@ -420,13 +423,13 @@ if __name__ == "__main__":
 
     # Announce startup.
     if options.verbose:
-        sys.stdout.write("MsgQ %s\n" % __version__)
+        sys.stdout.write("[b10-msgq] MsgQ %s\n" % __version__)
 
     msgq = MsgQ(options.msgq_socket_file, options.verbose)
 
     setup_result = msgq.setup()
     if setup_result:
-        sys.stderr.write("Error on startup: %s\n" % setup_result)
+        sys.stderr.write("[b10-msgq] Error on startup: %s\n" % setup_result)
         sys.exit(1)
 
     try:

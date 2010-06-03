@@ -427,7 +427,6 @@ class MultiConfigData:
                         else:
                             entry['default'] = False
                         result.append(entry)
-            #print(spec)
         return result
 
     def set_value(self, identifier, value):

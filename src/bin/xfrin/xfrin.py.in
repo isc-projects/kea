@@ -55,9 +55,7 @@ XFRIN_FAIL = 1
 DEFAULT_MASTER_PORT = '53'
 
 def log_error(msg):
-    sys.stderr.write("[b10-xfrin] ")
-    sys.stderr.write(str(msg))
-    sys.stderr.write('\n')
+    sys.stderr.write("[b10-xfrin] %s\n" % str(msg))
 
 class XfrinException(Exception): 
     pass
@@ -319,9 +317,7 @@ class XfrinConnection(asyncore.dispatcher):
 
     def log_msg(self, msg):
         if self._verbose:
-            sys.stdout.write('[b10-xfrin] ')
-            sys.stdout.write(str(msg))
-            sys.stdout.write('\n')
+            sys.stdout.write('[b10-xfrin] %s\n' % str(msg))
 
 
 def process_xfrin(xfrin_recorder, zone_name, rrclass, db_file, 
