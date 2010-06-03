@@ -50,6 +50,6 @@ if __name__ == "__main__":
         print("[b10-cfgmgr] Error creating config manager, "
               "is the command channel daemon running?")
     except KeyboardInterrupt as kie:
-        print("Got ctrl-c, exit")
+        print("[b10-cfgmgr] Interrupted, exiting")
     if cm:
         cm.write_config()

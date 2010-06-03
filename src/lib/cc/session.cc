@@ -321,7 +321,6 @@ Session::establish(const char* socket_file) {
     recvmsg(routing, msg, false);
 
     impl_->lname_ = msg->get("lname")->stringValue();
-    cout << "My local name is:  " << impl_->lname_ << endl;
 
     // At this point there's no risk of resource leak.
     session_holder.clear();

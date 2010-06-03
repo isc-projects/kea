@@ -210,7 +210,7 @@ class BoB:
         if self.msgq_socket_file is not None:
              c_channel_env["BIND10_MSGQ_SOCKET_FILE"] = self.msgq_socket_file 
         if self.verbose:
-            sys.stdout.write("Checking for already running b10-msgq\n")
+            sys.stdout.write("[bind10] Checking for already running b10-msgq\n")
         # try to connect, and if we can't wait a short while
         try:
             self.cc_session = isc.cc.Session(self.msgq_socket_file)
@@ -222,7 +222,7 @@ class BoB:
         # start the c-channel daemon
         if self.verbose:
             if self.msgq_socket_file:
-                sys.stdout.write("Starting b10-msgq\n")
+                sys.stdout.write("[bind10] Starting b10-msgq\n")
         try:
             c_channel = ProcessInfo("b10-msgq", ["b10-msgq"], c_channel_env,
                                     True, not self.verbose)
@@ -230,7 +230,7 @@ class BoB:
             return "Unable to start b10-msgq; " + str(e)
         self.processes[c_channel.pid] = c_channel
         if self.verbose:
-            sys.stdout.write("Started b10-msgq (PID %d)\n" % c_channel.pid)
+            sys.stdout.write("[bind10] Started b10-msgq (PID %d)\n" % c_channel.pid)
 
         # now connect to the c-channel
         cc_connect_start = time.time()
@@ -276,7 +276,7 @@ class BoB:
         # be processed properly.
         xfrout_args = ['b10-xfrout']
         if self.verbose:
-            sys.stdout.write("Starting b10-xfrout\n")
+            sys.stdout.write("[bind10] Starting b10-xfrout\n")
             xfrout_args += ['-v']
         try:
             xfrout = ProcessInfo("b10-xfrout", xfrout_args, 
@@ -287,13 +287,13 @@ class BoB:
             return "Unable to start b10-xfrout; " + str(e)
         self.processes[xfrout.pid] = xfrout
         if self.verbose:
-            sys.stdout.write("Started b10-xfrout (PID %d)\n" % xfrout.pid)
+            sys.stdout.write("[bind10] Started b10-xfrout (PID %d)\n" % xfrout.pid)
 
         # start b10-auth
         # XXX: this must be read from the configuration manager in the future
         authargs = ['b10-auth', '-p', str(self.auth_port)]
         if self.verbose:
-            sys.stdout.write("Starting b10-auth using port %d\n" %
+            sys.stdout.write("[bind10] Starting b10-auth using port %d\n" %
                              self.auth_port)
             authargs += ['-v']
         try:
@@ -306,12 +306,12 @@ class BoB:
             return "Unable to start b10-auth; " + str(e)
         self.processes[auth.pid] = auth
         if self.verbose:
-            sys.stdout.write("Started b10-auth (PID %d)\n" % auth.pid)
+            sys.stdout.write("[bind10] Started b10-auth (PID %d)\n" % auth.pid)
 
         # start b10-xfrin
         xfrin_args = ['b10-xfrin']
         if self.verbose:
-            sys.stdout.write("Starting b10-xfrin\n")
+            sys.stdout.write("[bind10] Starting b10-xfrin\n")
             xfrin_args += ['-v']
         try:
             xfrind = ProcessInfo("b10-xfrin", xfrin_args,
@@ -324,13 +324,13 @@ class BoB:
             return "Unable to start b10-xfrin; " + str(e)
         self.processes[xfrind.pid] = xfrind
         if self.verbose:
-            sys.stdout.write("Started b10-xfrin (PID %d)\n" % xfrind.pid)
+            sys.stdout.write("[bind10] Started b10-xfrin (PID %d)\n" % xfrind.pid)
 
         # start the b10-cmdctl
         # XXX: we hardcode port 8080
         cmdctl_args = ['b10-cmdctl']
         if self.verbose:
-            sys.stdout.write("Starting b10-cmdctl on port 8080\n")
+            sys.stdout.write("[bind10] Starting b10-cmdctl on port 8080\n")
             cmdctl_args += ['-v']
         try:
             cmd_ctrld = ProcessInfo("b10-cmdctl", cmdctl_args,
@@ -344,7 +344,7 @@ class BoB:
             return "Unable to start b10-cmdctl; " + str(e)
         self.processes[cmd_ctrld.pid] = cmd_ctrld
         if self.verbose:
-            sys.stdout.write("Started b10-cmdctl (PID %d)\n" % cmd_ctrld.pid)
+            sys.stdout.write("[bind10] Started b10-cmdctl (PID %d)\n" % cmd_ctrld.pid)
 
         self.runnable = True
 
@@ -367,7 +367,7 @@ class BoB:
     def shutdown(self):
         """Stop the BoB instance."""
         if self.verbose:
-            sys.stdout.write("Stopping the server.\n")
+            sys.stdout.write("[bind10] Stopping the server.\n")
         # first try using the BIND 10 request to stop
         try:
             self.stop_all_processes()
@@ -380,7 +380,7 @@ class BoB:
         processes_to_stop = list(self.processes.values())
         for proc_info in processes_to_stop:
             if self.verbose:
-                sys.stdout.write("Sending SIGTERM to %s (PID %d).\n" % 
+                sys.stdout.write("[bind10] Sending SIGTERM to %s (PID %d).\n" % 
                                  (proc_info.name, proc_info.pid))
             try:
                 proc_info.process.terminate()
@@ -396,7 +396,7 @@ class BoB:
             processes_to_stop = list(self.processes.values())
             for proc_info in processes_to_stop:
                 if self.verbose:
-                    sys.stdout.write("Sending SIGKILL to %s (PID %d).\n" % 
+                    sys.stdout.write("[bind10] Sending SIGKILL to %s (PID %d).\n" % 
                                      (proc_info.name, proc_info.pid))
                 try:
                     proc_info.process.kill()
@@ -405,7 +405,7 @@ class BoB:
                     # finally exited)
                     pass
         if self.verbose:
-            sys.stdout.write("All processes ended, server done.\n")
+            sys.stdout.write("[bind10] All processes ended, server done.\n")
 
     def reap_children(self):
         """Check to see if any of our child processes have exited, 
@@ -424,15 +424,15 @@ class BoB:
                 proc_info.restart_schedule.set_run_stop_time()
                 self.dead_processes[proc_info.pid] = proc_info
                 if self.verbose:
-                    sys.stdout.write("Process %s (PID %d) died.\n" % 
+                    sys.stdout.write("[bind10] Process %s (PID %d) died.\n" % 
                                      (proc_info.name, proc_info.pid))
                 if proc_info.name == "b10-msgq":
                     if self.verbose and self.runnable:
                         sys.stdout.write(
-                                 "The b10-msgq process died, shutting down.\n")
+                                 "[bind10] The b10-msgq process died, shutting down.\n")
                     self.runnable = False
             else:
-                sys.stdout.write("Unknown child pid %d exited.\n" % pid)
+                sys.stdout.write("[bind10] Unknown child pid %d exited.\n" % pid)
 
     def restart_processes(self):
         """Restart any dead processes."""
@@ -546,7 +546,7 @@ def main():
                        options.verbose)
     startup_result = boss_of_bind.startup()
     if startup_result:
-        sys.stderr.write("Error on startup: %s\n" % startup_result)
+        sys.stderr.write("[bind10] Error on startup: %s\n" % startup_result)
         sys.exit(1)
 
     # In our main loop, we check for dead processes or messages 
@@ -572,7 +572,7 @@ def main():
             if err.args[0] == errno.EINTR:
                 (rlist, wlist, xlist) = ([], [], [])
             else:
-                sys.stderr.write("Error with select(); %s\n" % err)
+                sys.stderr.write("[bind10] Error with select(); %s\n" % err)
                 break
 
         for fd in rlist + xlist:

@@ -176,7 +176,7 @@ class XfroutSession(BaseRequestHandler):
                 self.log_msg("transfer of '%s/IN': AXFR end" % zone_name)
         except Exception as err:
             if verbose_mode:
-                sys.stderr.write(str(err))
+                sys.stderr.write("[b10-xfrout] %s\n" % str(err))
 
         self.server.decrease_transfers_counter()
         return    

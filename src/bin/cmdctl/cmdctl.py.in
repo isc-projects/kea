@@ -312,7 +312,7 @@ class CommandControl():
         return 1, {'error': errstr}
     
     def log_info(self, msg):
-        sys.stdout.write(msg)
+        sys.stdout.write("[b10-cmdctl] %s\n" % str(msg))
 
 class SecureHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
     '''Make the server address can be reused.'''
@@ -400,7 +400,7 @@ class SecureHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
         return self.cmdctrl.send_command_with_check(module_name, command_name, params)
    
     def log_info(self, msg):
-        sys.stdout.write(msg)
+        sys.stdout.write("[b10-cmdctl] %s\n" % str(msg))
 
 httpd = None
 
