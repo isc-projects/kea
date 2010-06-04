@@ -157,7 +157,7 @@ main(int argc, char* argv[]) {
         cout << "[b10-auth] Server started." << endl;
         io_service->run();
     } catch (const std::exception& ex) {
-        cerr << ex.what() << endl;
+        cerr << "[b10-auth] " << ex.what() << endl;
         ret = 1;
     }
 

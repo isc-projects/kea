@@ -139,7 +139,7 @@ makeErrorMessage(Message& message, MessageRenderer& renderer,
     message.toWire(renderer);
 
     if (verbose_mode) {
-        cerr << "sending an error response (" <<
+        cerr << "[b10-auth] sending an error response (" <<
             boost::lexical_cast<string>(renderer.getLength())
              << " bytes):\n" << message.toText() << endl;
     }
@@ -179,7 +179,7 @@ AuthSrv::processMessage(InputBuffer& request_buffer, Message& message,
         // Ignore all responses.
         if (message.getHeaderFlag(MessageFlag::QR())) {
             if (impl_->verbose_mode_) {
-                cerr << "received unexpected response, ignoring" << endl;
+                cerr << "[b10-auth] received unexpected response, ignoring" << endl;
             }
             return (false);
         }
@@ -192,7 +192,7 @@ AuthSrv::processMessage(InputBuffer& request_buffer, Message& message,
         message.fromWire(request_buffer);
     } catch (const DNSProtocolError& error) {
         if (impl_->verbose_mode_) {
-            cerr << "returning " <<  error.getRcode().toText() << ": "
+            cerr << "[b10-auth] returning " <<  error.getRcode().toText() << ": "
                  << error.what() << endl;
         }
         makeErrorMessage(message, response_renderer, error.getRcode(),
@@ -200,7 +200,7 @@ AuthSrv::processMessage(InputBuffer& request_buffer, Message& message,
         return (true);
     } catch (const Exception& ex) {
         if (impl_->verbose_mode_) {
-            cerr << "returning SERVFAIL: " << ex.what() << endl;
+            cerr << "[b10-auth] returning SERVFAIL: " << ex.what() << endl;
         }
         makeErrorMessage(message, response_renderer, Rcode::SERVFAIL(),
                          impl_->verbose_mode_);
@@ -208,7 +208,7 @@ AuthSrv::processMessage(InputBuffer& request_buffer, Message& message,
     } // other exceptions will be handled at a higher layer.
 
     if (impl_->verbose_mode_) {
-        cerr << "[AuthSrv] received a message:\n" << message.toText() << endl;
+        cerr << "[b10-auth] received a message:\n" << message.toText() << endl;
     }
 
     // Perform further protocol-level validation.
@@ -216,7 +216,7 @@ AuthSrv::processMessage(InputBuffer& request_buffer, Message& message,
     // In this implementation, we only support normal queries
     if (message.getOpcode() != Opcode::QUERY()) {
         if (impl_->verbose_mode_) {
-            cerr << "unsupported opcode" << endl;
+            cerr << "[b10-auth] unsupported opcode" << endl;
         }
         makeErrorMessage(message, response_renderer, Rcode::NOTIMP(),
                          impl_->verbose_mode_);
@@ -243,7 +243,7 @@ AuthSrv::processMessage(InputBuffer& request_buffer, Message& message,
         impl_->data_sources_.doQuery(query);
     } catch (const Exception& ex) {
         if (impl_->verbose_mode_) {
-            cerr << "Internal error, returning SERVFAIL: " << ex.what() << endl;
+            cerr << "[b10-auth] Internal error, returning SERVFAIL: " << ex.what() << endl;
         }
         makeErrorMessage(message, response_renderer, Rcode::SERVFAIL(),
                          impl_->verbose_mode_);
@@ -253,7 +253,7 @@ AuthSrv::processMessage(InputBuffer& request_buffer, Message& message,
     response_renderer.setLengthLimit(udp_buffer ? remote_bufsize : 65535);
     message.toWire(response_renderer);
     if (impl_->verbose_mode_) {
-        cerr << "sending a response (" <<
+        cerr << "[b10-auth] sending a response (" <<
             boost::lexical_cast<string>(response_renderer.getLength())
              << " bytes):\n" << message.toText() << endl;
     }
@@ -281,7 +281,7 @@ AuthSrvImpl::setDbFile(const isc::data::ElementPtr config) {
     }
 
     if (verbose_mode_) {
-        cerr << "[AuthSrv] Data source database file: " << db_file_ << endl;
+        cerr << "[b10-auth] Data source database file: " << db_file_ << endl;
     }
 
     // create SQL data source
@@ -313,7 +313,7 @@ AuthSrv::updateConfig(isc::data::ElementPtr new_config) {
         return answer;
     } catch (const isc::Exception& error) {
         if (impl_->verbose_mode_) {
-            cerr << "[AuthSrv] error: " << error.what() << endl;
+            cerr << "[b10-auth] error: " << error.what() << endl;
         }
         return isc::config::createAnswer(1, error.what());
     }
