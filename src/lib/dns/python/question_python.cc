@@ -18,20 +18,6 @@
 using namespace isc::dns;
 
 //
-// Declaration of the custom exceptions
-// Initialization and addition of these go in the initModulePart
-// function at the end of this file
-//
-
-//
-// Definition of the classes
-//
-
-// For each class, we need a struct, a helper functions (init, destroy,
-// and static wrappers around the methods we export), a list of methods,
-// and a type description
-
-//
 // Question
 //
 
