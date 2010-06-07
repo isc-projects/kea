@@ -71,17 +71,33 @@ static PyObject* RRset_getRdata(s_RRset* self);
 // TODO: iterator?
 
 static PyMethodDef RRset_methods[] = {
-    { "get_rdata_count", (PyCFunction)RRset_getRdataCount, METH_NOARGS, "Return the number of rdata fields" },
-    { "get_name", (PyCFunction)RRset_getName, METH_NOARGS, "Return" },
-    { "get_class", (PyCFunction)RRset_getClass, METH_NOARGS, "Return" },
-    { "get_type", (PyCFunction)RRset_getType, METH_NOARGS, "Return" },
-    { "get_ttl", (PyCFunction)RRset_getTTL, METH_NOARGS, "Return" },
-    { "set_name", (PyCFunction)RRset_setName, METH_VARARGS, "Return" },
-    { "set_ttl", (PyCFunction)RRset_setTTL, METH_VARARGS, "Return" },
-    { "to_text", (PyCFunction)RRset_toText, METH_NOARGS, "Return" },
-    { "to_wire", (PyCFunction)RRset_toWire, METH_VARARGS, "Return" },
-    { "add_rdata", (PyCFunction)RRset_addRdata, METH_VARARGS, "Return" },
-    { "get_rdata", (PyCFunction)RRset_getRdata, METH_NOARGS, "Returns a List containing all Rdata elements" },
+    { "get_rdata_count", (PyCFunction)RRset_getRdataCount, METH_NOARGS,
+      "Returns the number of rdata fields." },
+    { "get_name", (PyCFunction)RRset_getName, METH_NOARGS,
+      "Returns the name of the RRset, as a Name object." },
+    { "get_class", (PyCFunction)RRset_getClass, METH_NOARGS,
+      "Returns the class of the RRset as an RRClass object." },
+    { "get_type", (PyCFunction)RRset_getType, METH_NOARGS,
+      "Returns the type of the RRset as an RRType object." },
+    { "get_ttl", (PyCFunction)RRset_getTTL, METH_NOARGS,
+      "Returns the TTL of the RRset as an RRTTL object." },
+    { "set_name", (PyCFunction)RRset_setName, METH_VARARGS,
+      "Sets the name of the RRset.\nTakes a Name object as an argument." },
+    { "set_ttl", (PyCFunction)RRset_setTTL, METH_VARARGS,
+      "Sets the TTL of the RRset.\nTakes an RRTTL object as an argument." },
+    { "to_text", (PyCFunction)RRset_toText, METH_NOARGS,
+      "Returns the text representation of the RRset as a string" },
+    { "to_wire", (PyCFunction)RRset_toWire, METH_VARARGS,
+      "Converts the RRset object to wire format.\n"
+      "The argument can be either a MessageRenderer or an object that "
+      "implements the sequence interface. If the object is mutable "
+      "(for instance a bytearray()), the wire data is added in-place.\n"
+      "If it is not (for instance a bytes() object), a new object is "
+      "returned" },
+    { "add_rdata", (PyCFunction)RRset_addRdata, METH_VARARGS,
+      "Adds the rdata for one RR to the RRset.\nTakes an Rdata object as an argument" },
+    { "get_rdata", (PyCFunction)RRset_getRdata, METH_NOARGS,
+      "Returns a List containing all Rdata elements" },
     { NULL, NULL, 0, NULL }
 };
 
@@ -106,7 +122,22 @@ static PyTypeObject rrset_type = {
     NULL,                               /* tp_setattro */
     NULL,                               /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT,                 /* tp_flags */
-    "C++ Name Object",  /* tp_doc */
+    "The AbstractRRset class is an abstract base class that "
+    "models a DNS RRset.\n\n"
+    "An object of (a specific derived class of) AbstractRRset "
+    "models an RRset as described in the DNS standard:\n"
+    "A set of DNS resource records (RRs) of the same type and class. "
+    "The standard requires the TTL of all RRs in an RRset be the same; "
+    "this class follows that requirement.\n\n"
+    "Note about duplicate RDATA: RFC2181 states that it's meaningless that an "
+    "RRset contains two identical RRs and that name servers should suppress "
+    "such duplicates.\n"
+    "This class is not responsible for ensuring this requirement: For example, "
+    "addRdata() method doesn't check if there's already RDATA identical "
+    "to the one being added.\n"
+    "This is because such checks can be expensive, and it's often easy to "
+    "ensure the uniqueness requirement at the %data preparation phase "
+    "(e.g. when loading a zone).",
     NULL,                               /* tp_traverse */
     NULL,                               /* tp_clear */
     NULL,                               /* tp_richcompare */
@@ -366,7 +397,6 @@ initModulePart_RRset(PyObject* mod)
 {
     // Add the exceptions to the module
     po_EmptyRRset = PyErr_NewException("libdns_python.EmptyRRset", NULL, NULL);
-    Py_INCREF(po_EmptyRRset);
     PyModule_AddObject(mod, "EmptyRRset", po_EmptyRRset);
 
     // Add the enums to the module

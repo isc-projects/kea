@@ -69,9 +69,17 @@ static PyObject* RRType_richcmp(s_RRType* self, s_RRType* other, int op);
 // 3. Argument type
 // 4. Documentation
 static PyMethodDef RRType_methods[] = {
-    { "to_text", (PyCFunction)RRType_toText, METH_NOARGS, "Return the string representation" },
-    { "to_wire", (PyCFunction)RRType_toWire, METH_VARARGS, "to wire format" },
-    { "get_code", (PyCFunction)RRType_getCode, METH_NOARGS, "Return the class code as an integer" },
+    { "to_text", (PyCFunction)RRType_toText, METH_NOARGS,
+      "Returns the string representation" },
+    { "to_wire", (PyCFunction)RRType_toWire, METH_VARARGS,
+      "Converts the RRType object to wire format.\n"
+      "The argument can be either a MessageRenderer or an object that "
+      "implements the sequence interface. If the object is mutable "
+      "(for instance a bytearray()), the wire data is added in-place.\n"
+      "If it is not (for instance a bytes() object), a new object is "
+      "returned" },
+    { "get_code", (PyCFunction)RRType_getCode, METH_NOARGS,
+      "Returns the type code as an integer" },
     { NULL, NULL, 0, NULL }
 };
 
@@ -99,7 +107,10 @@ static PyTypeObject rrtype_type = {
     NULL,                               /* tp_setattro */
     NULL,                               /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT,                 /* tp_flags */
-    "C++ RRType Object",               /* tp_doc */
+    "The RRType class encapsulates DNS resource record types.\n\n"
+    "This class manages the 16-bit integer type codes in quite a straightforward "
+    "way. The only non trivial task is to handle textual representations of "
+    "RR types, such as \"A\", \"AAAA\", or \"TYPE65534\".",
     NULL,                               /* tp_traverse */
     NULL,                               /* tp_clear */
     (richcmpfunc)RRType_richcmp,       /* tp_richcompare */
@@ -287,10 +298,8 @@ initModulePart_RRType(PyObject* mod)
 {
     // Add the exceptions to the module
     po_InvalidRRType = PyErr_NewException("libdns_python.InvalidRRType", NULL, NULL);
-    Py_INCREF(po_InvalidRRType);
     PyModule_AddObject(mod, "InvalidRRType", po_InvalidRRType);
     po_IncompleteRRType = PyErr_NewException("libdns_python.IncompleteRRType", NULL, NULL);
-    Py_INCREF(po_IncompleteRRType);
     PyModule_AddObject(mod, "IncompleteRRType", po_IncompleteRRType);
 
     // We initialize the static description object with PyType_Ready(),

@@ -67,11 +67,21 @@ static PyObject* Question_toWire(s_Question* self, PyObject* args);
 // 3. Argument type
 // 4. Documentation
 static PyMethodDef Question_methods[] = {
-    { "get_name", (PyCFunction)Question_getName, METH_NOARGS, "Return the name" },
-    { "get_type", (PyCFunction)Question_getType, METH_NOARGS, "Return the rr type" },
-    { "get_class", (PyCFunction)Question_getClass, METH_NOARGS, "Return the rr class" },
-    { "to_text", (PyCFunction)Question_toText, METH_NOARGS, "Return the string representation" },
-    { "to_wire", (PyCFunction)Question_toWire, METH_VARARGS, "to wire format" },
+    { "get_name", (PyCFunction)Question_getName, METH_NOARGS,
+      "Returns the Name" },
+    { "get_type", (PyCFunction)Question_getType, METH_NOARGS,
+      "Returns the RRType" },
+    { "get_class", (PyCFunction)Question_getClass, METH_NOARGS,
+      "Returns the RRClass" },
+    { "to_text", (PyCFunction)Question_toText, METH_NOARGS,
+      "Returns the string representation" },
+    { "to_wire", (PyCFunction)Question_toWire, METH_VARARGS,
+      "Converts the Question object to wire format.\n"
+      "The argument can be either a MessageRenderer or an object that "
+      "implements the sequence interface. If the object is mutable "
+      "(for instance a bytearray()), the wire data is added in-place.\n"
+      "If it is not (for instance a bytes() object), a new object is "
+      "returned" },
     { NULL, NULL, 0, NULL }
 };
 
@@ -99,7 +109,8 @@ static PyTypeObject question_type = {
     NULL,                               /* tp_setattro */
     NULL,                               /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT,                 /* tp_flags */
-    "C++ Question Object",               /* tp_doc */
+    "The Question class encapsulates the common search key of DNS"
+    "lookup, consisting of owner name, RR type and RR class.",
     NULL,                               /* tp_traverse */
     NULL,                               /* tp_clear */
     NULL,                               /* tp_richcompare */

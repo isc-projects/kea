@@ -43,7 +43,11 @@
 static PyModuleDef libdns_python = {
     { PyObject_HEAD_INIT(NULL) NULL, 0, NULL},
     "libdns_python",
-    "Python bindings for isc.dns",
+    "Python bindings for the classes in the isc::dns namespace.\n\n"
+    "These bindings match the original C++ API as closely as possible, "
+    "but are not complete. Some classes are unnecessary (InputBuffer "
+    "and OutputBuffer for instance), and others may be necessary, but "
+    "were not up to now.",
     -1,
     NULL,
     NULL,
