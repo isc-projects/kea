@@ -77,9 +77,12 @@ static PyObject* NameComparisonResult_getCommonLabels(s_NameComparisonResult* se
 static PyObject* NameComparisonResult_getRelation(s_NameComparisonResult* self);
 
 static PyMethodDef NameComparisonResult_methods[] = {
-    { "get_order", (PyCFunction)NameComparisonResult_getOrder, METH_NOARGS, "Return the order" },
-    { "get_common_labels", (PyCFunction)NameComparisonResult_getCommonLabels, METH_NOARGS, "Return the number of common labels" },
-    { "get_relation", (PyCFunction)NameComparisonResult_getRelation, METH_NOARGS, "Return the relation" },
+    { "get_order", (PyCFunction)NameComparisonResult_getOrder, METH_NOARGS,
+      "Returns the order" },
+    { "get_common_labels", (PyCFunction)NameComparisonResult_getCommonLabels, METH_NOARGS,
+      "Returns the number of common labels" },
+    { "get_relation", (PyCFunction)NameComparisonResult_getRelation, METH_NOARGS,
+      "Returns the relation" },
     { NULL, NULL, 0, NULL }
 };
 
@@ -104,7 +107,13 @@ static PyTypeObject name_comparison_result_type = {
     NULL,                               /* tp_setattro */
     NULL,                               /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT,                 /* tp_flags */
-    "C++ NameComparisonResult Object",  /* tp_doc */
+    "This is a supplemental class used only as a return value of Name.compare(). "
+    "It encapsulate a tuple of the comparison: ordering, number of common labels, "
+    "and relationship as follows:\n"
+    "- ordering: relative ordering under the DNSSEC order relation\n"
+    "- labels: the number of common significant labels of the two names being"
+    "  compared\n"
+    "- relationship: see NameComparisonResult.NameRelation\n",
     NULL,                               /* tp_traverse */
     NULL,                               /* tp_clear */
     NULL,                               /* tp_richcompare */
@@ -194,18 +203,39 @@ static PyObject* Name_downcase(s_Name* self);
 static PyObject* Name_isWildCard(s_Name* self);
 
 static PyMethodDef Name_methods[] = {
-    { "at", (PyCFunction)Name_at, METH_VARARGS, "Return the int value of the name data at the specified position" },
-    { "get_length", (PyCFunction)Name_getLength, METH_NOARGS, "Return the length" },
-    { "get_labelcount", (PyCFunction)Name_getLabelCount, METH_NOARGS, "Return the number of labels" },
-    { "to_text", (PyCFunction)Name_toText, METH_NOARGS, "Return the string representation" },
-    { "to_wire", (PyCFunction)Name_toWire, METH_VARARGS, "Return the wire format" },
-    { "compare", (PyCFunction)Name_compare, METH_VARARGS, "Compare" },
-    { "equals", (PyCFunction)Name_equals, METH_VARARGS, "Equals" },
-    { "split", (PyCFunction)Name_split, METH_VARARGS, "split" },
-    { "reverse", (PyCFunction)Name_reverse, METH_NOARGS, "reverse" },
-    { "concatenate", (PyCFunction)Name_concatenate, METH_VARARGS, "concatenate" },
-    { "downcase", (PyCFunction)Name_downcase, METH_NOARGS, "downcase" },
-    { "is_wildcard", (PyCFunction)Name_isWildCard, METH_NOARGS, "isWildCard" },
+    { "at", (PyCFunction)Name_at, METH_VARARGS,
+      "Returns the integer value of the name data at the specified position" },
+    { "get_length", (PyCFunction)Name_getLength, METH_NOARGS,
+      "Returns the length" },
+    { "get_labelcount", (PyCFunction)Name_getLabelCount, METH_NOARGS,
+      "Returns the number of labels" },
+    { "to_text", (PyCFunction)Name_toText, METH_NOARGS,
+      "Returns the string representation" },
+    { "to_wire", (PyCFunction)Name_toWire, METH_VARARGS,
+      "Converts the Name object to wire format.\n"
+      "The argument can be either a MessageRenderer or an object that "
+      "implements the sequence interface. If the object is mutable "
+      "(for instance a bytearray()), the wire data is added in-place.\n"
+      "If it is not (for instance a bytes() object), a new object is "
+      "returned" },
+    { "compare", (PyCFunction)Name_compare, METH_VARARGS,
+      "Returns a NameComparisonResult object. The argument must be another Name object" },
+    { "equals", (PyCFunction)Name_equals, METH_VARARGS,
+      "Returns true if the given Name object is equal to this one" },
+    { "split", (PyCFunction)Name_split, METH_VARARGS,
+      "Splits the name, takes two arguments, the first is an integer "
+      "specifying the first label to place in the result. The second "
+      "is an integer specifying the number of labels to put in the "
+      "result. Returns a new Name object" },
+    { "reverse", (PyCFunction)Name_reverse, METH_NOARGS,
+      "Returns a new Name object that is the reverse of this one" },
+    { "concatenate", (PyCFunction)Name_concatenate, METH_VARARGS,
+      "Concatenates the given Name object to this one and returns the "
+      "result as a new Name object" },
+    { "downcase", (PyCFunction)Name_downcase, METH_NOARGS,
+      "Downcases this name object (in-place)." },
+    { "is_wildcard", (PyCFunction)Name_isWildCard, METH_NOARGS,
+      "Returns True if the Name object represents a wildcard name." },
     { NULL, NULL, 0, NULL }
 };
 
@@ -230,7 +260,10 @@ static PyTypeObject name_type = {
     NULL,                               /* tp_setattro */
     NULL,                               /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT,                 /* tp_flags */
-    "C++ Name Object",  /* tp_doc */
+    "The Name class encapsulates DNS names.\n"
+    "It provides interfaces to construct a name from string or wire-format data, "
+    "transform a name into a string or wire-format data, compare two names, get "
+    "access to various properties of a name, etc.",
     NULL,                               /* tp_traverse */
     NULL,                               /* tp_clear */
     (richcmpfunc)Name_richcmp,                               /* tp_richcompare */
@@ -607,26 +640,26 @@ initModulePart_Name(PyObject* mod)
     addClassVariable(name_type, "ROOT_NAME", po_ROOT_NAME);
 
     // Add the exceptions to the module
-    po_EmptyLabel = PyErr_NewException("libdns_python.Name.EmptyLabel", NULL, NULL);
-    addClassVariable(name_type, "EmptyLabel", po_EmptyLabel);
+    po_EmptyLabel = PyErr_NewException("libdns_python.EmptyLabel", NULL, NULL);
+    PyModule_AddObject(mod, "EmptyLabel", po_EmptyLabel);
 
-    po_TooLongName = PyErr_NewException("libdns_python.Name.TooLongName", NULL, NULL);
-    addClassVariable(name_type, "TooLongName", po_TooLongName);
+    po_TooLongName = PyErr_NewException("libdns_python.TooLongName", NULL, NULL);
+    PyModule_AddObject(mod, "TooLongName", po_TooLongName);
 
-    po_TooLongLabel = PyErr_NewException("libdns_python.Name.TooLongLabel", NULL, NULL);
-    addClassVariable(name_type, "TooLongLabel", po_TooLongLabel);
+    po_TooLongLabel = PyErr_NewException("libdns_python.TooLongLabel", NULL, NULL);
+    PyModule_AddObject(mod, "TooLongLabel", po_TooLongLabel);
 
-    po_BadLabelType = PyErr_NewException("libdns_python.Name.BadLabelType", NULL, NULL);
-    addClassVariable(name_type, "BadLabelType", po_BadLabelType);
+    po_BadLabelType = PyErr_NewException("libdns_python.BadLabelType", NULL, NULL);
+    PyModule_AddObject(mod, "BadLabelType", po_BadLabelType);
 
-    po_BadEscape = PyErr_NewException("libdns_python.Name.BadEscape", NULL, NULL);
-    addClassVariable(name_type, "BadEscape", po_BadEscape);
+    po_BadEscape = PyErr_NewException("libdns_python.BadEscape", NULL, NULL);
+    PyModule_AddObject(mod, "BadEscape", po_BadEscape);
 
-    po_IncompleteName = PyErr_NewException("libdns_python.Name.IncompleteName", NULL, NULL);
-    addClassVariable(name_type, "IncompleteName", po_IncompleteName);
+    po_IncompleteName = PyErr_NewException("libdns_python.IncompleteName", NULL, NULL);
+    PyModule_AddObject(mod, "IncompleteName", po_IncompleteName);
 
-    po_InvalidBufferPosition = PyErr_NewException("libdns_python.Name.InvalidBufferPosition", NULL, NULL);
-    addClassVariable(name_type, "InvalidBufferPosition", po_InvalidBufferPosition);
+    po_InvalidBufferPosition = PyErr_NewException("libdns_python.InvalidBufferPosition", NULL, NULL);
+    PyModule_AddObject(mod, "InvalidBufferPosition", po_InvalidBufferPosition);
 
     /* TODO; this one is a message-specific one, move to message? */
     po_DNSMessageFORMERR = PyErr_NewException("libdns_python.DNSMessageFORMERR", NULL, NULL);

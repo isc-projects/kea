@@ -369,7 +369,7 @@ class ConvertedUnittests(unittest.TestCase):
         self.assertFalse(message_render.is_dnssec_supported())
     
         ## A message in the parse mode doesn't allow this flag to be set.
-        self.assertRaises(Message.InvalidMessageOperation,
+        self.assertRaises(InvalidMessageOperation,
                           message_parse.set_dnssec_supported,
                           True)
         ## Once converted to the render mode, it works as above
@@ -408,17 +408,17 @@ class ConvertedUnittests(unittest.TestCase):
         message_render.set_udp_size(0xffff)
         self.assertEqual(0xffff, message_render.get_udp_size())
         # Too small is value is rejected
-        self.assertRaises(Message.InvalidMessageUDPSize, message_render.set_udp_size, 511)
+        self.assertRaises(InvalidMessageUDPSize, message_render.set_udp_size, 511)
     
         # A message in the parse mode doesn't allow the set operation.
-        self.assertRaises(Message.InvalidMessageOperation, message_parse.set_udp_size, 4096)
+        self.assertRaises(InvalidMessageOperation, message_parse.set_udp_size, 4096)
         ## Once converted to the render mode, it works as above.
         message_parse.make_response()
         message_parse.set_udp_size(4096)
         self.assertEqual(4096, message_parse.get_udp_size())
         message_parse.set_udp_size(0xffff)
         self.assertEqual(0xffff, message_parse.get_udp_size())
-        self.assertRaises(Message.InvalidMessageUDPSize, message_parse.set_udp_size, 511)
+        self.assertRaises(InvalidMessageUDPSize, message_parse.set_udp_size, 511)
     
     def test_EDNS0ExtCode(self):
         # Extended Rcode = BADVERS
@@ -461,7 +461,7 @@ class ConvertedUnittests(unittest.TestCase):
 
         # Unsupported Version
         message_parse.clear(Message.PARSE)
-        self.assertRaises(Message.DNSMessageBADVERS,
+        self.assertRaises(DNSMessageBADVERS,
                           factoryFromFile,
                           message_parse,
                           "message_fromWire9")

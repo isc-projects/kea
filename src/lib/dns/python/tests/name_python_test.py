@@ -67,19 +67,19 @@ class NameTest(unittest.TestCase):
         self.name5 = Name("*.example.com")
 
     def test_init(self):
-        self.assertRaises(Name.EmptyLabel, Name, "example..com")
-        self.assertRaises(Name.TooLongLabel, Name, "a"*64 + ".example.com")
-        self.assertRaises(Name.BadLabelType, Name, "\[asdf.example.com")
-        self.assertRaises(Name.BadEscape, Name, "\\999")
-        self.assertRaises(Name.TooLongName, Name, "example."*32 + "com")
-        self.assertRaises(Name.IncompleteName, Name, "\\")
+        self.assertRaises(EmptyLabel, Name, "example..com")
+        self.assertRaises(TooLongLabel, Name, "a"*64 + ".example.com")
+        self.assertRaises(BadLabelType, Name, "\[asdf.example.com")
+        self.assertRaises(BadEscape, Name, "\\999")
+        self.assertRaises(TooLongName, Name, "example."*32 + "com")
+        self.assertRaises(IncompleteName, Name, "\\")
         self.assertRaises(TypeError, Name, 1)
 
         b = bytearray()
         self.name1.to_wire(b)
         self.assertEqual(self.name1, Name(b))
         self.assertEqual(self.name1, Name(b, 0))
-        self.assertRaises(Name.InvalidBufferPosition, Name, b, 100)
+        self.assertRaises(InvalidBufferPosition, Name, b, 100)
         b = bytearray()
         b += b'\x07example'*32 + b'\x03com\x00'
         # no TooLong for from wire?
@@ -154,7 +154,7 @@ class NameTest(unittest.TestCase):
         self.assertEqual("example.com.", self.name1.concatenate(self.name2).to_text())
         self.assertEqual("example.com.example.com.", self.name1.concatenate(self.name1).to_text())
         self.assertRaises(TypeError, self.name1.concatenate, "wrong")
-        self.assertRaises(Name.TooLongName, self.name1.concatenate, Name("example."*31))
+        self.assertRaises(TooLongName, self.name1.concatenate, Name("example."*31))
         
 
     def test_downcase(self):

@@ -45,12 +45,18 @@ static PyObject* MessageRenderer_setLengthLimit(s_MessageRenderer* self, PyObjec
 
 
 static PyMethodDef MessageRenderer_methods[] = {
-    { "get_data", (PyCFunction)MessageRenderer_getData, METH_NOARGS, "Return the data" },
-    { "get_length", (PyCFunction)MessageRenderer_getLength, METH_NOARGS, "Return the length of the data" },
-    { "is_truncated", (PyCFunction)MessageRenderer_isTruncated, METH_NOARGS, "Returns True if the data is truncated" },
-    { "get_length_limit", (PyCFunction)MessageRenderer_getLengthLimit, METH_NOARGS, "Return the length limit of the data" },
-    { "set_truncated", (PyCFunction)MessageRenderer_setTruncated, METH_NOARGS, "Set truncated to true" },
-    { "set_length_limit", (PyCFunction)MessageRenderer_setLengthLimit, METH_VARARGS, "Set the length limit of the data" },
+    { "get_data", (PyCFunction)MessageRenderer_getData, METH_NOARGS,
+      "Returns the data as a bytes() object" },
+    { "get_length", (PyCFunction)MessageRenderer_getLength, METH_NOARGS,
+      "Returns the length of the data" },
+    { "is_truncated", (PyCFunction)MessageRenderer_isTruncated, METH_NOARGS,
+      "Returns True if the data is truncated" },
+    { "get_length_limit", (PyCFunction)MessageRenderer_getLengthLimit, METH_NOARGS,
+      "Returns the length limit of the data" },
+    { "set_truncated", (PyCFunction)MessageRenderer_setTruncated, METH_NOARGS,
+      "Sets truncated to true" },
+    { "set_length_limit", (PyCFunction)MessageRenderer_setLengthLimit, METH_VARARGS,
+      "Sets the length limit of the data to the given number" },
     { NULL, NULL, 0, NULL }
 };
 
@@ -75,7 +81,12 @@ static PyTypeObject messagerenderer_type = {
     NULL,                               /* tp_setattro */
     NULL,                               /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT,                 /* tp_flags */
-    "C++ MessageRenderer Object",  /* tp_doc */
+    "The MessageRenderer class encapsulates implementation details "
+    "of rendering a DNS message into a buffer in wire format. "
+    "In effect, it's simply responsible for name compression at least in the "
+    "current implementation. A MessageRenderer class object manages the "
+    "positions of names rendered in a buffer and uses that information to render "
+    "subsequent names with compression.",
     NULL,                               /* tp_traverse */
     NULL,                               /* tp_clear */
     NULL,                               /* tp_richcompare */
