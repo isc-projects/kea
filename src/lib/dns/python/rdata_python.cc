@@ -206,17 +206,6 @@ Rdata_toWire(s_Rdata* self, PyObject* args)
 bool
 initModulePart_Rdata(PyObject* mod)
 {
-    // Add the exceptions to the module
-    po_InvalidRdataLength = PyErr_NewException("libdns_python.InvalidRdataLength", NULL, NULL);
-    Py_INCREF(po_InvalidRdataLength);
-    PyModule_AddObject(mod, "InvalidRdataLength", po_InvalidRdataLength);
-    po_InvalidRdataText = PyErr_NewException("libdns_python.InvalidRdataText", NULL, NULL);
-    Py_INCREF(po_InvalidRdataText);
-    PyModule_AddObject(mod, "InvalidRdataText", po_InvalidRdataText);
-    po_CharStringTooLong = PyErr_NewException("libdns_python.CharStringTooLong", NULL, NULL);
-    Py_INCREF(po_CharStringTooLong);
-    PyModule_AddObject(mod, "CharStringTooLong", po_CharStringTooLong);
-
     // We initialize the static description object with PyType_Ready(),
     // then add it to the module. This is not just a check! (leaving
     // this out results in segmentation faults)
@@ -226,6 +215,17 @@ initModulePart_Rdata(PyObject* mod)
     Py_INCREF(&rdata_type);
     PyModule_AddObject(mod, "Rdata",
                        (PyObject*) &rdata_type);
+
+    // Add the exceptions to the class
+    po_InvalidRdataLength = PyErr_NewException("libdns_python.InvalidRdataLength", NULL, NULL);
+    addClassVariable(rdata_type, "InvalidRdataLength", po_InvalidRdataLength);
+
+    po_InvalidRdataText = PyErr_NewException("libdns_python.InvalidRdataText", NULL, NULL);
+    addClassVariable(rdata_type, "InvalidRdataText", po_InvalidRdataText);
+
+    po_CharStringTooLong = PyErr_NewException("libdns_python.CharStringTooLong", NULL, NULL);
+    addClassVariable(rdata_type, "CharStringTooLong", po_CharStringTooLong);
+
     
     return true;
 }
