@@ -4,27 +4,12 @@ add statics for RRClass::IN() (RRClass.IN()) etc.
 
 same for RRType? (xfrout.py.in line 256)
 
-__str__ for name, question, everything with to_text()
-rich compare for name (at least so we can have ==)
-
-should Name.downcase() return a ref to itself?
-
-All constructors based on buffers need an optional position
-argument (like question_python has now)
-
-at question.to_wire(bytes) does not seem to work right (only return
-value seems correct, while i'd like in-place addition if possible)
-
 creating a render message and not setting opcode/rcode results in a segfault later (nullpointer)
-
+(is this cpp or python problem?)
 
 The function set wrapped is not complete; for instance, in
 MessageRenderer, we really only provide the high-level readout
 functions. Do we need access to the writers? (there is one set() right
 now).
-
-All constants are now added named in the base module, while they should
-be added as class constants. Dunno how though.
-
 
 segfault when comparing with bad type like int (at least for Name and Rcode, but probably for the rest too)

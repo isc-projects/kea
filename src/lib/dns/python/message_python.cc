@@ -624,6 +624,14 @@ Opcode_richcmp(s_Opcode* self, s_Opcode* other, int op)
 {
     bool c = false;
 
+    // Check for null and if the types match. If different type,
+    // simply return False
+    if (!other ||
+        ((PyObject*)self)->ob_type != ((PyObject*)other)->ob_type
+       ) {
+        Py_RETURN_FALSE;
+    }
+
     // Only equals and not equals here, unorderable type
     switch (op) {
     case Py_LT:
@@ -1089,6 +1097,14 @@ Rcode_richcmp(s_Rcode* self, s_Rcode* other, int op)
 {
     bool c;
 
+    // Check for null and if the types match. If different type,
+    // simply return False
+    if (!other ||
+        ((PyObject*)self)->ob_type != ((PyObject*)other)->ob_type
+       ) {
+        Py_RETURN_FALSE;
+    }
+
     // Only equals and not equals here, unorderable type
     switch (op) {
     case Py_LT:
@@ -1295,6 +1311,14 @@ static PyObject*
 Section_richcmp(s_Section* self, s_Section* other, int op)
 {
     bool c;
+
+    // Check for null and if the types match. If different type,
+    // simply return False
+    if (!other ||
+        ((PyObject*)self)->ob_type != ((PyObject*)other)->ob_type
+       ) {
+        Py_RETURN_FALSE;
+    }
 
     // Only equals and not equals here, unorderable type
     switch (op) {
