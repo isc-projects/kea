@@ -44,6 +44,7 @@ static PyObject* po_NameRelation;
 // Initialization and addition of these go in the module init at the
 // end
 //
+/*
 static PyObject* po_MAX_WIRE;
 static PyObject* po_MAX_LABELS;
 static PyObject* po_MAX_LABELLEN;
@@ -51,7 +52,7 @@ static PyObject* po_MAX_COMPRESS_POINTER;
 static PyObject* po_COMPRESS_POINTER_MARK8;
 static PyObject* po_COMPRESS_POINTER_MARK16;
 static PyObject* po_ROOT_NAME;
-
+*/
 
 
 //
@@ -565,77 +566,6 @@ Name_isWildCard(s_Name* self)
 bool
 initModulePart_Name(PyObject* mod)
 {
-    // Add the exceptions to the module
-    po_EmptyLabel = PyErr_NewException("libdns_python.EmptyLabel", NULL, NULL);
-    Py_INCREF(po_EmptyLabel);
-    PyModule_AddObject(mod, "EmptyLabel", po_EmptyLabel);
-
-    po_TooLongName = PyErr_NewException("libdns_python.TooLongName", NULL, NULL);
-    Py_INCREF(po_TooLongName);
-    PyModule_AddObject(mod, "TooLongName", po_TooLongName);
-
-    po_TooLongLabel = PyErr_NewException("libdns_python.TooLongLabel", NULL, NULL);
-    Py_INCREF(po_TooLongLabel);
-    PyModule_AddObject(mod, "TooLongLabel", po_TooLongLabel);
-
-    po_BadLabelType = PyErr_NewException("libdns_python.BadLabelType", NULL, NULL);
-    Py_INCREF(po_BadLabelType);
-    PyModule_AddObject(mod, "BadLabelType", po_BadLabelType);
-
-    po_BadEscape = PyErr_NewException("libdns_python.BadEscape", NULL, NULL);
-    Py_INCREF(po_BadEscape);
-    PyModule_AddObject(mod, "BadEscape", po_BadEscape);
-
-    po_IncompleteName = PyErr_NewException("libdns_python.IncompleteName", NULL, NULL);
-    Py_INCREF(po_IncompleteName);
-    PyModule_AddObject(mod, "IncompleteName", po_IncompleteName);
-
-    po_InvalidBufferPosition = PyErr_NewException("libdns_python.InvalidBufferPosition", NULL, NULL);
-    Py_INCREF(po_InvalidBufferPosition);
-    PyModule_AddObject(mod, "InvalidBufferPosition", po_InvalidBufferPosition);
-
-    po_DNSMessageFORMERR = PyErr_NewException("libdns_python.DNSMessageFORMERR", NULL, NULL);
-    Py_INCREF(po_DNSMessageFORMERR);
-    PyModule_AddObject(mod, "DNSMessageFORMERR", po_DNSMessageFORMERR);
-
-    po_IscException = PyErr_NewException("libdns_python.IscException", NULL, NULL);
-    Py_INCREF(po_IncompleteName);
-    PyModule_AddObject(mod, "IscException", po_IscException);
-
-    // Add the enums to the module
-    po_NameRelation = Py_BuildValue("{i:s,i:s,i:s,i:s}",
-                                    0, "SUPERDOMAIN",
-                                    1, "SUBDOMAIN",
-                                    2, "EQUAL",
-                                    3, "COMMONANCESTOR");
-    Py_INCREF(po_NameRelation);
-    PyModule_AddObject(mod, "NameRelation", po_NameRelation);
-
-    // Add the constants to the module
-    po_MAX_WIRE = Py_BuildValue("I", 255U);
-    Py_INCREF(po_MAX_WIRE);
-    PyModule_AddObject(mod, "MAX_WIRE", po_MAX_WIRE);
-    po_MAX_LABELS = Py_BuildValue("I", 128U);
-    Py_INCREF(po_MAX_LABELS);
-    PyModule_AddObject(mod, "MAX_LABELS", po_MAX_LABELS);
-    po_MAX_LABELLEN = Py_BuildValue("I", 63U);
-    Py_INCREF(po_MAX_LABELLEN);
-    PyModule_AddObject(mod, "MAX_LABELLEN", po_MAX_LABELLEN);
-    po_MAX_COMPRESS_POINTER = Py_BuildValue("I", 0x3fffU);
-    Py_INCREF(po_MAX_COMPRESS_POINTER);
-    PyModule_AddObject(mod, "MAX_COMPRESS_POINTER", po_MAX_COMPRESS_POINTER);
-    po_COMPRESS_POINTER_MARK8 = Py_BuildValue("I", 0xc0U);
-    Py_INCREF(po_COMPRESS_POINTER_MARK8);
-    PyModule_AddObject(mod, "COMPRESS_POINTER_MARK8", po_COMPRESS_POINTER_MARK8);
-    po_COMPRESS_POINTER_MARK16 = Py_BuildValue("I", 0xc000U);
-    Py_INCREF(po_COMPRESS_POINTER_MARK16);
-    PyModule_AddObject(mod, "COMPRESS_POINTER_MARK16", po_COMPRESS_POINTER_MARK16);
-    s_Name* root_name = PyObject_New(s_Name, &name_type);
-    root_name->name = new Name(".");
-    po_ROOT_NAME = (PyObject*) root_name;
-    Py_INCREF(po_ROOT_NAME);
-    PyModule_AddObject(mod, "ROOT_NAME", po_ROOT_NAME);
-
     // Add the classes to the module
     // We initialize the static description object with PyType_Ready(),
     // then add it to the module
@@ -645,6 +575,15 @@ initModulePart_Name(PyObject* mod)
         return false;
     }
     Py_INCREF(&name_comparison_result_type);
+
+    // Add the enums to the module
+    po_NameRelation = Py_BuildValue("{i:s,i:s,i:s,i:s}",
+                                    0, "SUPERDOMAIN",
+                                    1, "SUBDOMAIN",
+                                    2, "EQUAL",
+                                    3, "COMMONANCESTOR");
+    addClassVariable(name_comparison_result_type, "NameRelation", po_NameRelation);
+
     PyModule_AddObject(mod, "NameComparisonResult",
                        (PyObject*) &name_comparison_result_type);
     
@@ -652,6 +591,53 @@ initModulePart_Name(PyObject* mod)
         return false;
     }
     Py_INCREF(&name_type);
+
+    // Add the constants to the module
+    addClassVariable(name_type, "MAX_WIRE", Py_BuildValue("I", 255U));
+    addClassVariable(name_type, "MAX_LABELS", Py_BuildValue("I", 128U));
+    addClassVariable(name_type, "MAX_LABELLEN", Py_BuildValue("I", 63U));
+    addClassVariable(name_type, "MAX_COMPRESS_POINTER", Py_BuildValue("I", 0x3fffU));
+    addClassVariable(name_type, "COMPRESS_POINTER_MARK8", Py_BuildValue("I", 0xc0U));
+    addClassVariable(name_type, "COMPRESS_POINTER_MARK16", Py_BuildValue("I", 0xc000U));
+
+    s_Name* root_name = PyObject_New(s_Name, &name_type);
+    root_name->name = new Name(".");
+    PyObject* po_ROOT_NAME = (PyObject*) root_name;
+    Py_INCREF(po_ROOT_NAME);
+    addClassVariable(name_type, "ROOT_NAME", po_ROOT_NAME);
+
+    // Add the exceptions to the module
+    po_EmptyLabel = PyErr_NewException("libdns_python.Name.EmptyLabel", NULL, NULL);
+    addClassVariable(name_type, "EmptyLabel", po_EmptyLabel);
+
+    po_TooLongName = PyErr_NewException("libdns_python.Name.TooLongName", NULL, NULL);
+    addClassVariable(name_type, "TooLongName", po_TooLongName);
+
+    po_TooLongLabel = PyErr_NewException("libdns_python.Name.TooLongLabel", NULL, NULL);
+    addClassVariable(name_type, "TooLongLabel", po_TooLongLabel);
+
+    po_BadLabelType = PyErr_NewException("libdns_python.Name.BadLabelType", NULL, NULL);
+    addClassVariable(name_type, "BadLabelType", po_BadLabelType);
+
+    po_BadEscape = PyErr_NewException("libdns_python.Name.BadEscape", NULL, NULL);
+    addClassVariable(name_type, "BadEscape", po_BadEscape);
+
+    po_IncompleteName = PyErr_NewException("libdns_python.Name.IncompleteName", NULL, NULL);
+    addClassVariable(name_type, "IncompleteName", po_IncompleteName);
+
+    po_InvalidBufferPosition = PyErr_NewException("libdns_python.Name.InvalidBufferPosition", NULL, NULL);
+    addClassVariable(name_type, "InvalidBufferPosition", po_InvalidBufferPosition);
+
+    /* TODO; this one is a message-specific one, move to message? */
+    po_DNSMessageFORMERR = PyErr_NewException("libdns_python.DNSMessageFORMERR", NULL, NULL);
+    Py_INCREF(po_DNSMessageFORMERR);
+    PyModule_AddObject(mod, "DNSMessageFORMERR", po_DNSMessageFORMERR);
+
+    /* TODO: this one is module-level, move to libdns_python.cc */
+    po_IscException = PyErr_NewException("libdns_python.IscException", NULL, NULL);
+    Py_INCREF(po_IncompleteName);
+    PyModule_AddObject(mod, "IscException", po_IscException);
+
     PyModule_AddObject(mod, "Name",
                        (PyObject*) &name_type);
     
