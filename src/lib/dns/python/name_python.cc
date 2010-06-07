@@ -218,7 +218,7 @@ static PyMethodDef Name_methods[] = {
       "Concatenates the given Name object to this one and returns the "
       "result as a new Name object" },
     { "downcase", (PyCFunction)Name_downcase, METH_NOARGS,
-      "Downcases this name object (in-place)." },
+      "Downcases this name object (in-place). Returns a new reference to the Name." },
     { "is_wildcard", (PyCFunction)Name_isWildCard, METH_NOARGS,
       "Returns True if the Name object represents a wildcard name." },
     { NULL, NULL, 0, NULL }
@@ -500,6 +500,14 @@ Name_richcmp(s_Name* n1, s_Name* n2, int op)
 {
     bool c;
 
+    // Check for null and if the types match. If different type,
+    // simply return False
+    if (!n2 ||
+        ((PyObject*)n1)->ob_type != ((PyObject*)n2)->ob_type
+       ) {
+        Py_RETURN_FALSE;
+    }
+
     switch (op) {
     case Py_LT:
         c = n1->name->lthan(*n2->name);
@@ -572,7 +580,8 @@ static PyObject*
 Name_downcase(s_Name* self)
 {
     self->name->downcase();
-    Py_RETURN_NONE;
+    Py_INCREF(self);
+    return (PyObject*) self;
 }
 
 static PyObject*
