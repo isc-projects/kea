@@ -58,14 +58,14 @@ static PyObject* MessageFlag_AD(s_MessageFlag* self);
 static PyObject* MessageFlag_CD(s_MessageFlag* self);
 
 static PyMethodDef MessageFlag_methods[] = {
-    { "get_bit", (PyCFunction)MessageFlag_getBit, METH_NOARGS, "Return the flag bit" },
-    { "QR", (PyCFunction)MessageFlag_QR, METH_NOARGS | METH_STATIC, "Create a QR MessageFlag" },
-    { "AA", (PyCFunction)MessageFlag_AA, METH_NOARGS | METH_STATIC, "Create a AA MessageFlag" },
-    { "TC", (PyCFunction)MessageFlag_TC, METH_NOARGS | METH_STATIC, "Create a TC MessageFlag" },
-    { "RD", (PyCFunction)MessageFlag_RD, METH_NOARGS | METH_STATIC, "Create a RD MessageFlag" },
-    { "RA", (PyCFunction)MessageFlag_RA, METH_NOARGS | METH_STATIC, "Create a RA MessageFlag" },
-    { "AD", (PyCFunction)MessageFlag_AD, METH_NOARGS | METH_STATIC, "Create a AD MessageFlag" },
-    { "CD", (PyCFunction)MessageFlag_CD, METH_NOARGS | METH_STATIC, "Create a CD MessageFlag" },
+    { "get_bit", (PyCFunction)MessageFlag_getBit, METH_NOARGS, "Returns the flag bit" },
+    { "QR", (PyCFunction)MessageFlag_QR, METH_NOARGS | METH_STATIC, "Creates a QR MessageFlag" },
+    { "AA", (PyCFunction)MessageFlag_AA, METH_NOARGS | METH_STATIC, "Creates a AA MessageFlag" },
+    { "TC", (PyCFunction)MessageFlag_TC, METH_NOARGS | METH_STATIC, "Creates a TC MessageFlag" },
+    { "RD", (PyCFunction)MessageFlag_RD, METH_NOARGS | METH_STATIC, "Creates a RD MessageFlag" },
+    { "RA", (PyCFunction)MessageFlag_RA, METH_NOARGS | METH_STATIC, "Creates a RA MessageFlag" },
+    { "AD", (PyCFunction)MessageFlag_AD, METH_NOARGS | METH_STATIC, "Creates a AD MessageFlag" },
+    { "CD", (PyCFunction)MessageFlag_CD, METH_NOARGS | METH_STATIC, "Creates a CD MessageFlag" },
     { NULL, NULL, 0, NULL }
 };
 
@@ -90,7 +90,8 @@ static PyTypeObject messageflag_type = {
     NULL,                               /* tp_setattro */
     NULL,                               /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT,                 /* tp_flags */
-    "C++ MessageFlag Object",               /* tp_doc */
+    "The MessageFlag class objects represent standard "
+    "flag bits of the header section of DNS messages.",
     NULL,                               /* tp_traverse */
     NULL,                               /* tp_clear */
     NULL,       /* tp_richcompare */
@@ -282,24 +283,24 @@ static PyObject* Opcode_RESERVED15(s_Opcode* self);
 static PyObject* Opcode_richcmp(s_Opcode* self, s_Opcode* other, int op);
 
 static PyMethodDef Opcode_methods[] = {
-    { "get_code", (PyCFunction)Opcode_getCode, METH_NOARGS, "Return the code value" },
-    { "to_text", (PyCFunction)Opcode_toText, METH_NOARGS, "Return the text representation" },
-    { "QUERY", (PyCFunction)Opcode_QUERY, METH_NOARGS | METH_STATIC, "Create a QUERY Opcode" },
-    { "IQUERY", (PyCFunction)Opcode_IQUERY, METH_NOARGS | METH_STATIC, "Create a IQUERY Opcode" },
-    { "STATUS", (PyCFunction)Opcode_STATUS, METH_NOARGS | METH_STATIC, "Create a STATUS Opcode" },
-    { "RESERVED3", (PyCFunction)Opcode_RESERVED3, METH_NOARGS | METH_STATIC, "Create a RESERVED3 Opcode" },
-    { "NOTIFY", (PyCFunction)Opcode_NOTIFY, METH_NOARGS | METH_STATIC, "Create a NOTIFY Opcode" },
-    { "UPDATE", (PyCFunction)Opcode_UPDATE, METH_NOARGS | METH_STATIC, "Create a UPDATE Opcode" },
-    { "RESERVED6", (PyCFunction)Opcode_RESERVED6, METH_NOARGS | METH_STATIC, "Create a RESERVED Opcode" },
-    { "RESERVED7", (PyCFunction)Opcode_RESERVED7, METH_NOARGS | METH_STATIC, "Create a RESERVED Opcode" },
-    { "RESERVED8", (PyCFunction)Opcode_RESERVED8, METH_NOARGS | METH_STATIC, "Create a RESERVED Opcode" },
-    { "RESERVED9", (PyCFunction)Opcode_RESERVED9, METH_NOARGS | METH_STATIC, "Create a RESERVED Opcode" },
-    { "RESERVED10", (PyCFunction)Opcode_RESERVED10, METH_NOARGS | METH_STATIC, "Create a RESERVED Opcode" },
-    { "RESERVED11", (PyCFunction)Opcode_RESERVED11, METH_NOARGS | METH_STATIC, "Create a RESERVED Opcode" },
-    { "RESERVED12", (PyCFunction)Opcode_RESERVED12, METH_NOARGS | METH_STATIC, "Create a RESERVED Opcode" },
-    { "RESERVED13", (PyCFunction)Opcode_RESERVED13, METH_NOARGS | METH_STATIC, "Create a RESERVED Opcode" },
-    { "RESERVED14", (PyCFunction)Opcode_RESERVED14, METH_NOARGS | METH_STATIC, "Create a RESERVED Opcode" },
-    { "RESERVED15", (PyCFunction)Opcode_RESERVED15, METH_NOARGS | METH_STATIC, "Create a RESERVED Opcode" },
+    { "get_code", (PyCFunction)Opcode_getCode, METH_NOARGS, "Returns the code value" },
+    { "to_text", (PyCFunction)Opcode_toText, METH_NOARGS, "Returns the text representation" },
+    { "QUERY", (PyCFunction)Opcode_QUERY, METH_NOARGS | METH_STATIC, "Creates a QUERY Opcode" },
+    { "IQUERY", (PyCFunction)Opcode_IQUERY, METH_NOARGS | METH_STATIC, "Creates a IQUERY Opcode" },
+    { "STATUS", (PyCFunction)Opcode_STATUS, METH_NOARGS | METH_STATIC, "Creates a STATUS Opcode" },
+    { "RESERVED3", (PyCFunction)Opcode_RESERVED3, METH_NOARGS | METH_STATIC, "Creates a RESERVED3 Opcode" },
+    { "NOTIFY", (PyCFunction)Opcode_NOTIFY, METH_NOARGS | METH_STATIC, "Creates a NOTIFY Opcode" },
+    { "UPDATE", (PyCFunction)Opcode_UPDATE, METH_NOARGS | METH_STATIC, "Creates a UPDATE Opcode" },
+    { "RESERVED6", (PyCFunction)Opcode_RESERVED6, METH_NOARGS | METH_STATIC, "Creates a RESERVED Opcode" },
+    { "RESERVED7", (PyCFunction)Opcode_RESERVED7, METH_NOARGS | METH_STATIC, "Creates a RESERVED Opcode" },
+    { "RESERVED8", (PyCFunction)Opcode_RESERVED8, METH_NOARGS | METH_STATIC, "Creates a RESERVED Opcode" },
+    { "RESERVED9", (PyCFunction)Opcode_RESERVED9, METH_NOARGS | METH_STATIC, "Creates a RESERVED Opcode" },
+    { "RESERVED10", (PyCFunction)Opcode_RESERVED10, METH_NOARGS | METH_STATIC, "Creates a RESERVED Opcode" },
+    { "RESERVED11", (PyCFunction)Opcode_RESERVED11, METH_NOARGS | METH_STATIC, "Creates a RESERVED Opcode" },
+    { "RESERVED12", (PyCFunction)Opcode_RESERVED12, METH_NOARGS | METH_STATIC, "Creates a RESERVED Opcode" },
+    { "RESERVED13", (PyCFunction)Opcode_RESERVED13, METH_NOARGS | METH_STATIC, "Creates a RESERVED Opcode" },
+    { "RESERVED14", (PyCFunction)Opcode_RESERVED14, METH_NOARGS | METH_STATIC, "Creates a RESERVED Opcode" },
+    { "RESERVED15", (PyCFunction)Opcode_RESERVED15, METH_NOARGS | METH_STATIC, "Creates a RESERVED Opcode" },
     { NULL, NULL, 0, NULL }
 };
 
@@ -324,7 +325,8 @@ static PyTypeObject opcode_type = {
     NULL,                               /* tp_setattro */
     NULL,                               /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT,                 /* tp_flags */
-    "C++ Opcode Object",               /* tp_doc */
+    "The Opcode class objects represent standard OPCODEs "
+    "of the header section of DNS messages.",
     NULL,                               /* tp_traverse */
     NULL,                               /* tp_clear */
     (richcmpfunc)Opcode_richcmp,       /* tp_richcompare */
@@ -700,25 +702,25 @@ static PyObject* Rcode_BADVERS(s_Rcode* self);
 static PyObject* Rcode_richcmp(s_Rcode* self, s_Rcode* other, int op);
 
 static PyMethodDef Rcode_methods[] = {
-    { "get_code", (PyCFunction)Rcode_getCode, METH_NOARGS, "Return the code value" },
-    { "to_text", (PyCFunction)Rcode_toText, METH_NOARGS, "Return the text representation" },
-    { "NOERROR", (PyCFunction)Rcode_NOERROR, METH_NOARGS | METH_STATIC, "Create a NOERROR Rcode" },
-    { "FORMERR", (PyCFunction)Rcode_FORMERR, METH_NOARGS | METH_STATIC, "Create a FORMERR Rcode" },
-    { "SERVFAIL", (PyCFunction)Rcode_SERVFAIL, METH_NOARGS | METH_STATIC, "Create a SERVFAIL Rcode" },
-    { "NXDOMAIN", (PyCFunction)Rcode_NXDOMAIN, METH_NOARGS | METH_STATIC, "Create a NXDOMAIN Rcode" },
-    { "NOTIMP", (PyCFunction)Rcode_NOTIMP, METH_NOARGS | METH_STATIC, "Create a NOTIMP Rcode" },
-    { "REFUSED", (PyCFunction)Rcode_REFUSED, METH_NOARGS | METH_STATIC, "Create a REFUSED Rcode" },
-    { "YXDOMAIN", (PyCFunction)Rcode_YXDOMAIN, METH_NOARGS | METH_STATIC, "Create a RESERVED Rcode" },
-    { "YXRRSET", (PyCFunction)Rcode_YXRRSET, METH_NOARGS | METH_STATIC, "Create a RESERVED Rcode" },
-    { "NXRRSET", (PyCFunction)Rcode_NXRRSET, METH_NOARGS | METH_STATIC, "Create a RESERVED Rcode" },
-    { "NOTAUTH", (PyCFunction)Rcode_NOTAUTH, METH_NOARGS | METH_STATIC, "Create a RESERVED Rcode" },
-    { "NOTZONE", (PyCFunction)Rcode_NOTZONE, METH_NOARGS | METH_STATIC, "Create a RESERVED Rcode" },
-    { "RESERVED11", (PyCFunction)Rcode_RESERVED11, METH_NOARGS | METH_STATIC, "Create a RESERVED Rcode" },
-    { "RESERVED12", (PyCFunction)Rcode_RESERVED12, METH_NOARGS | METH_STATIC, "Create a RESERVED Rcode" },
-    { "RESERVED13", (PyCFunction)Rcode_RESERVED13, METH_NOARGS | METH_STATIC, "Create a RESERVED Rcode" },
-    { "RESERVED14", (PyCFunction)Rcode_RESERVED14, METH_NOARGS | METH_STATIC, "Create a RESERVED Rcode" },
-    { "RESERVED15", (PyCFunction)Rcode_RESERVED15, METH_NOARGS | METH_STATIC, "Create a RESERVED Rcode" },
-    { "BADVERS", (PyCFunction)Rcode_BADVERS, METH_NOARGS | METH_STATIC, "Create a BADVERS Rcode" },
+    { "get_code", (PyCFunction)Rcode_getCode, METH_NOARGS, "Returns the code value" },
+    { "to_text", (PyCFunction)Rcode_toText, METH_NOARGS, "Returns the text representation" },
+    { "NOERROR", (PyCFunction)Rcode_NOERROR, METH_NOARGS | METH_STATIC, "Creates a NOERROR Rcode" },
+    { "FORMERR", (PyCFunction)Rcode_FORMERR, METH_NOARGS | METH_STATIC, "Creates a FORMERR Rcode" },
+    { "SERVFAIL", (PyCFunction)Rcode_SERVFAIL, METH_NOARGS | METH_STATIC, "Creates a SERVFAIL Rcode" },
+    { "NXDOMAIN", (PyCFunction)Rcode_NXDOMAIN, METH_NOARGS | METH_STATIC, "Creates a NXDOMAIN Rcode" },
+    { "NOTIMP", (PyCFunction)Rcode_NOTIMP, METH_NOARGS | METH_STATIC, "Creates a NOTIMP Rcode" },
+    { "REFUSED", (PyCFunction)Rcode_REFUSED, METH_NOARGS | METH_STATIC, "Creates a REFUSED Rcode" },
+    { "YXDOMAIN", (PyCFunction)Rcode_YXDOMAIN, METH_NOARGS | METH_STATIC, "Creates a RESERVED Rcode" },
+    { "YXRRSET", (PyCFunction)Rcode_YXRRSET, METH_NOARGS | METH_STATIC, "Creates a RESERVED Rcode" },
+    { "NXRRSET", (PyCFunction)Rcode_NXRRSET, METH_NOARGS | METH_STATIC, "Creates a RESERVED Rcode" },
+    { "NOTAUTH", (PyCFunction)Rcode_NOTAUTH, METH_NOARGS | METH_STATIC, "Creates a RESERVED Rcode" },
+    { "NOTZONE", (PyCFunction)Rcode_NOTZONE, METH_NOARGS | METH_STATIC, "Creates a RESERVED Rcode" },
+    { "RESERVED11", (PyCFunction)Rcode_RESERVED11, METH_NOARGS | METH_STATIC, "Creates a RESERVED Rcode" },
+    { "RESERVED12", (PyCFunction)Rcode_RESERVED12, METH_NOARGS | METH_STATIC, "Creates a RESERVED Rcode" },
+    { "RESERVED13", (PyCFunction)Rcode_RESERVED13, METH_NOARGS | METH_STATIC, "Creates a RESERVED Rcode" },
+    { "RESERVED14", (PyCFunction)Rcode_RESERVED14, METH_NOARGS | METH_STATIC, "Creates a RESERVED Rcode" },
+    { "RESERVED15", (PyCFunction)Rcode_RESERVED15, METH_NOARGS | METH_STATIC, "Creates a RESERVED Rcode" },
+    { "BADVERS", (PyCFunction)Rcode_BADVERS, METH_NOARGS | METH_STATIC, "Creates a BADVERS Rcode" },
     { NULL, NULL, 0, NULL }
 };
 
@@ -743,7 +745,8 @@ static PyTypeObject rcode_type = {
     NULL,                               /* tp_setattro */
     NULL,                               /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT,                 /* tp_flags */
-    "C++ Rcode Object",               /* tp_doc */
+    "The Rcode class objects represent standard RCODEs"
+    "of the header section of DNS messages.",
     NULL,                               /* tp_traverse */
     NULL,                               /* tp_clear */
     (richcmpfunc)Rcode_richcmp,       /* tp_richcompare */
@@ -1146,11 +1149,11 @@ static PyObject* Section_ADDITIONAL(s_Section* self);
 static PyObject* Section_richcmp(s_Section* self, s_Section* other, int op);
 
 static PyMethodDef Section_methods[] = {
-    { "get_code", (PyCFunction)Section_getCode, METH_NOARGS, "Return the code value" },
-    { "QUESTION", (PyCFunction)Section_QUESTION, METH_NOARGS | METH_STATIC, "Create a QUESTION Section" },
-    { "ANSWER", (PyCFunction)Section_ANSWER, METH_NOARGS | METH_STATIC, "Create a ANSWER Section" },
-    { "AUTHORITY", (PyCFunction)Section_AUTHORITY, METH_NOARGS | METH_STATIC, "Create a AUTHORITY Section" },
-    { "ADDITIONAL", (PyCFunction)Section_ADDITIONAL, METH_NOARGS | METH_STATIC, "Create a ADDITIONAL Section" },
+    { "get_code", (PyCFunction)Section_getCode, METH_NOARGS, "Returns the code value" },
+    { "QUESTION", (PyCFunction)Section_QUESTION, METH_NOARGS | METH_STATIC, "Creates a QUESTION Section" },
+    { "ANSWER", (PyCFunction)Section_ANSWER, METH_NOARGS | METH_STATIC, "Creates an ANSWER Section" },
+    { "AUTHORITY", (PyCFunction)Section_AUTHORITY, METH_NOARGS | METH_STATIC, "Creates an AUTHORITY Section" },
+    { "ADDITIONAL", (PyCFunction)Section_ADDITIONAL, METH_NOARGS | METH_STATIC, "Creates an ADDITIONAL Section" },
     { NULL, NULL, 0, NULL }
 };
 
@@ -1175,7 +1178,8 @@ static PyTypeObject section_type = {
     NULL,                               /* tp_setattro */
     NULL,                               /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT,                 /* tp_flags */
-    "C++ Section Object",               /* tp_doc */
+    "The Section class objects represent DNS message sections such "
+    "as the header, question, or answer.",
     NULL,                               /* tp_traverse */
     NULL,                               /* tp_clear */
     (richcmpfunc)Section_richcmp,       /* tp_richcompare */
@@ -1389,29 +1393,107 @@ static PyObject* Message_fromWire(s_Message* self, PyObject* args);
 // 3. Argument type
 // 4. Documentation
 static PyMethodDef Message_methods[] = {
-    { "get_header_flag", (PyCFunction)Message_getHeaderFlag, METH_VARARGS, "" },
-    { "set_header_flag", (PyCFunction)Message_setHeaderFlag, METH_VARARGS, "" },
-    { "clear_header_flag", (PyCFunction)Message_clearHeaderFlag, METH_VARARGS, "" },
-    { "is_dnssec_supported", (PyCFunction)Message_isDNSSECSupported, METH_NOARGS, "" },
-    { "set_dnssec_supported", (PyCFunction)Message_setDNSSECSupported, METH_VARARGS, "" },
-    { "get_udp_size", (PyCFunction)Message_getUDPSize, METH_NOARGS, "" },
-    { "set_udp_size", (PyCFunction)Message_setUDPSize, METH_VARARGS, "" },
-    { "get_qid", (PyCFunction)Message_getQid, METH_NOARGS, "" },
-    { "set_qid", (PyCFunction)Message_setQid, METH_VARARGS, "" },
-    { "get_rcode", (PyCFunction)Message_getRcode, METH_NOARGS, "" },
-    { "set_rcode", (PyCFunction)Message_setRcode, METH_VARARGS, "" },
-    { "get_opcode", (PyCFunction)Message_getOpcode, METH_NOARGS, "" },
-    { "set_opcode", (PyCFunction)Message_setOpcode, METH_VARARGS, "" },
-    { "get_rr_count", (PyCFunction)Message_getRRCount, METH_VARARGS, "" },
-    { "get_question", (PyCFunction)Message_getQuestion, METH_NOARGS, "Returns a list of all Question object in the message (should be 0 or 1)" },
-    { "get_section", (PyCFunction)Message_getSection, METH_VARARGS, "Returns a list of all RRset objects in the given section of the message" },
-    { "add_question", (PyCFunction)Message_addQuestion, METH_VARARGS, "" },
-    { "add_rrset", (PyCFunction)Message_addRRset, METH_VARARGS, "" },
-    { "clear", (PyCFunction)Message_clear, METH_VARARGS, "" },
-    { "make_response", (PyCFunction)Message_makeResponse, METH_NOARGS, "" },
-    { "to_text", (PyCFunction)Message_toText, METH_NOARGS, "Return the string representation" },
-    { "to_wire", (PyCFunction)Message_toWire, METH_VARARGS, "to wire format" },
-    { "from_wire", (PyCFunction)Message_fromWire, METH_VARARGS, "to wire format" },
+    { "get_header_flag", (PyCFunction)Message_getHeaderFlag, METH_VARARGS,
+      "Return whether the specified header flag bit is set in the "
+      "header section. Takes a MessageFlag object as the only argument." },
+    { "set_header_flag", (PyCFunction)Message_setHeaderFlag, METH_VARARGS,
+      "Sets the specified header flag bit to 1. The message must be in "
+      "RENDER mode. If not, an InvalidMessageOperation is raised. "
+      "Takes a MessageFlag object as the only argument." },
+    { "clear_header_flag", (PyCFunction)Message_clearHeaderFlag, METH_VARARGS, 
+      "Sets the specified header flag bit to 0. The message must be in "
+      "RENDER mode. If not, an InvalidMessageOperation is raised. "
+      "Takes a MessageFlag object as the only argument." },
+    { "is_dnssec_supported", (PyCFunction)Message_isDNSSECSupported, METH_NOARGS,
+      "Returns True if the message sender indicates DNSSEC is supported. "
+      "If EDNS is included, this corresponds to the value of the DO bit. "
+      "Otherwise, DNSSEC is considered not supported." },
+    { "set_dnssec_supported", (PyCFunction)Message_setDNSSECSupported, METH_VARARGS,
+      "Specify whether DNSSEC is supported in the message. "
+      "The message must be in RENDER mode. If not, an "
+      "InvalidMessageOperation is raised."
+      "If EDNS is included in the message, the DO bit is set or cleared "
+      "according to given argument (True or False) of this method."},
+    { "get_udp_size", (PyCFunction)Message_getUDPSize, METH_NOARGS,
+      "Return the maximum buffer size of UDP messages for the sender "
+      "of the message.\n\n"
+      "The semantics of this value is different based on the mode:\n"
+      "In the PARSE mode, it means the buffer size of the remote node;\n"
+      "in the RENDER mode, it means the buffer size of the local node.\n\n"
+      "In either case, its value is the value of the UDP payload size field "
+      "of EDNS (when it's included) or DEFAULT_MAX_UDPSIZE." },
+    { "set_udp_size", (PyCFunction)Message_setUDPSize, METH_VARARGS,
+      "Specify the maximum buffer size of UDP messages of the local "
+      "node. If the message is not in RENDER mode, an "
+      "InvalidMessageOperation is raised.\n\n"
+      "If EDNS OPT RR is included in the message, its UDP payload size field "
+      "will be set to the specified value.\n"
+      "Unless explicitly specified, DEFAULT_MAX_UDPSIZE will be assumed "
+      "for the maximum buffer size, regardless of whether EDNS OPT RR is "
+      "included or not.  This means if an application wants to send a message "
+      "with an EDNS OPT RR for specifying a larger UDP size, it must explicitly "
+      "specify the value using this method. "},
+    { "get_qid", (PyCFunction)Message_getQid, METH_NOARGS,
+      "Returns the query id" },
+    { "set_qid", (PyCFunction)Message_setQid, METH_VARARGS,
+      "Sets the query id. If the message is not in RENDER mode, an "
+      "InvalidMessageOperation is raised.\n"
+      "The argument must be an integer" },
+    { "get_rcode", (PyCFunction)Message_getRcode, METH_NOARGS,
+      "Returns the message Response code (an Rcode object)" },
+    { "set_rcode", (PyCFunction)Message_setRcode, METH_VARARGS,
+      "Sets the message Response code (an Rcode object).\n"
+      "If the message is not in RENDER mode, an "
+      "InvalidMessageOperation is raised."},
+    { "get_opcode", (PyCFunction)Message_getOpcode, METH_NOARGS,
+      "Returns the message opcode (an Opcode object)" },
+    { "set_opcode", (PyCFunction)Message_setOpcode, METH_VARARGS,
+      "Sets the message opcode (an Opcode object).\n"
+      "If the message is not in RENDER mode, an "
+      "InvalidMessageOperation is raised."},
+    { "get_rr_count", (PyCFunction)Message_getRRCount, METH_VARARGS,
+      "Returns the number of RRs contained in the given section." },
+    { "get_question", (PyCFunction)Message_getQuestion, METH_NOARGS,
+      "Returns a list of all Question objects in the message "
+      "(should be either 0 or 1)" },
+    { "get_section", (PyCFunction)Message_getSection, METH_VARARGS,
+      "Returns a list of all RRset objects in the given section of the message\n"
+      "The argument must be of type Section" },
+    { "add_question", (PyCFunction)Message_addQuestion, METH_VARARGS,
+      "Add a Question to the message."
+      "If the message is not in RENDER mode, an "
+      "InvalidMessageOperation is raised."},
+    { "add_rrset", (PyCFunction)Message_addRRset, METH_VARARGS,
+      "Add an RRset to the given section of the message.\n"
+      "The first argument is of type Section\n"
+      "The second is of type RRset\n"
+      "The third argument is an optional Boolean specifying whether "
+      "the RRset is signed"},
+    { "clear", (PyCFunction)Message_clear, METH_VARARGS,
+      "Clears the message content (if any) and reinitialize the "
+      "message in the given mode\n"
+      "The argument must be either Message.PARSE or Message.RENDER"},
+    { "make_response", (PyCFunction)Message_makeResponse, METH_NOARGS,
+      "Prepare for making a response from a request.\n"
+      "This will clear the DNS header except those fields that should be kept "
+      "for the response, and clear answer and the following sections. "
+      "See also dns_message_reply() of BIND9."},
+    { "to_text", (PyCFunction)Message_toText, METH_NOARGS,
+      "Returns the string representation of the message" },
+    { "to_wire", (PyCFunction)Message_toWire, METH_VARARGS,
+      "Render the message in wire format.\n"
+      "The argument must be a MessageRenderer.\n"
+      "If the given message is not in RENDER mode, an "
+      "InvalidMessageOperation is raised.\n"
+       },
+    { "from_wire", (PyCFunction)Message_fromWire, METH_VARARGS,
+      "Parses the given wire format to a Message object.\n"
+      "The first argument is a Message to parse the data into.\n"
+      "The second argument must implement the buffer interface.\n"
+      "If the given message is not in PARSE mode, an "
+      "InvalidMessageOperation is raised.\n"
+      "Raises MessageTooShort, DNSMessageFORMERR or DNSMessageBADVERS "
+      " if there is a problem parsing the message." },
     { NULL, NULL, 0, NULL }
 };
 
@@ -1439,7 +1521,7 @@ static PyTypeObject message_type = {
     NULL,                               /* tp_setattro */
     NULL,                               /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT,                 /* tp_flags */
-    "C++ Message Object",               /* tp_doc */
+    "The Message class encapsulates a standard DNS message.",
     NULL,                               /* tp_traverse */
     NULL,                               /* tp_clear */
     NULL,       /* tp_richcompare */
@@ -1528,9 +1610,14 @@ Message_setHeaderFlag(s_Message* self, PyObject* args)
         return NULL;
     }
 
-    self->message->setHeaderFlag(*messageflag->messageflag);
-
-    Py_RETURN_NONE;
+    try {
+        self->message->setHeaderFlag(*messageflag->messageflag);
+        Py_RETURN_NONE;
+    } catch (isc::dns::InvalidMessageOperation imo) {
+        PyErr_Clear();
+        PyErr_SetString(po_InvalidMessageOperation, imo.what());
+        return NULL;
+    }
 }
 
 static PyObject*
@@ -1541,7 +1628,14 @@ Message_clearHeaderFlag(s_Message* self, PyObject* args)
         return NULL;
     }
 
-    self->message->clearHeaderFlag(*messageflag->messageflag);
+    try {
+        self->message->clearHeaderFlag(*messageflag->messageflag);
+        Py_RETURN_NONE;
+    } catch (isc::dns::InvalidMessageOperation imo) {
+        PyErr_Clear();
+        PyErr_SetString(po_InvalidMessageOperation, imo.what());
+        return NULL;
+    }
 
     Py_RETURN_NONE;
 }
@@ -1839,14 +1933,20 @@ Message_toWire(s_Message* self, PyObject* args)
     s_MessageRenderer* mr;
     
     if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, (PyObject**) &mr)) {
-        self->message->toWire(*mr->messagerenderer);
-        // If we return NULL it is seen as an error, so use this for
-        // None returns
-        Py_RETURN_NONE;
+        try {
+            self->message->toWire(*mr->messagerenderer);
+            // If we return NULL it is seen as an error, so use this for
+            // None returns
+            Py_RETURN_NONE;
+        } catch (isc::dns::InvalidMessageOperation imo) {
+            PyErr_Clear();
+            PyErr_SetString(po_InvalidMessageOperation, imo.what());
+            return NULL;
+        }
     }
     PyErr_Clear();
     PyErr_SetString(PyExc_TypeError,
-                    "toWire argument must be a sequence object or a MessageRenderer");
+                    "toWire argument must be a MessageRenderer");
     return NULL;
 }
 
@@ -1863,11 +1963,17 @@ Message_fromWire(s_Message* self, PyObject* args)
     try {
         self->message->fromWire(inbuf);
         Py_RETURN_NONE;
+    } catch (isc::dns::InvalidMessageOperation imo) {
+        PyErr_SetString(po_InvalidMessageOperation, imo.what());
+        return NULL;
     } catch (isc::dns::DNSMessageFORMERR dmfe) {
         PyErr_SetString(po_DNSMessageFORMERR, dmfe.what());
         return NULL;
     } catch (isc::dns::DNSMessageBADVERS dmfe) {
         PyErr_SetString(po_DNSMessageBADVERS, dmfe.what());
+        return NULL;
+    } catch (isc::dns::MessageTooShort mts) {
+        PyErr_SetString(po_MessageTooShort, mts.what());
         return NULL;
     }
 }
@@ -1921,16 +2027,16 @@ initModulePart_Message(PyObject* mod)
     addClassVariable(message_type, "DEFAULT_MAX_UDPSIZE", Py_BuildValue("I", Message::DEFAULT_MAX_UDPSIZE));
 
     /* Class-specific exceptions */
-    po_MessageTooShort = PyErr_NewException("libdns_python.Message.MessageTooShort", NULL, NULL);
-    addClassVariable(message_type, "MessageTooShort", po_MessageTooShort);
-    po_InvalidMessageSection = PyErr_NewException("libdns_python.Message.InvalidMessageSection", NULL, NULL);
-    addClassVariable(message_type, "InvalidMessageSection", po_InvalidMessageSection);
-    po_InvalidMessageOperation = PyErr_NewException("libdns_python.Message.InvalidMessageOperation", NULL, NULL);
-    addClassVariable(message_type, "InvalidMessageOperation", po_InvalidMessageOperation);
-    po_InvalidMessageUDPSize = PyErr_NewException("libdns_python.Message.InvalidMessageUDPSize", NULL, NULL);
-    addClassVariable(message_type, "InvalidMessageUDPSize", po_InvalidMessageUDPSize);
-    po_DNSMessageBADVERS = PyErr_NewException("libdns_python.Message.DNSMessageBADVERS", NULL, NULL);
-    addClassVariable(message_type, "DNSMessageBADVERS", po_DNSMessageBADVERS);
+    po_MessageTooShort = PyErr_NewException("libdns_python.MessageTooShort", NULL, NULL);
+    PyModule_AddObject(mod, "MessageTooShort", po_MessageTooShort);
+    po_InvalidMessageSection = PyErr_NewException("libdns_python.InvalidMessageSection", NULL, NULL);
+    PyModule_AddObject(mod, "InvalidMessageSection", po_InvalidMessageSection);
+    po_InvalidMessageOperation = PyErr_NewException("libdns_python.InvalidMessageOperation", NULL, NULL);
+    PyModule_AddObject(mod, "InvalidMessageOperation", po_InvalidMessageOperation);
+    po_InvalidMessageUDPSize = PyErr_NewException("libdns_python.InvalidMessageUDPSize", NULL, NULL);
+    PyModule_AddObject(mod, "InvalidMessageUDPSize", po_InvalidMessageUDPSize);
+    po_DNSMessageBADVERS = PyErr_NewException("libdns_python.DNSMessageBADVERS", NULL, NULL);
+    PyModule_AddObject(mod, "DNSMessageBADVERS", po_DNSMessageBADVERS);
 
     Py_INCREF(&message_type);
     PyModule_AddObject(mod, "Message",
