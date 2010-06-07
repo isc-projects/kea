@@ -65,6 +65,7 @@ static PyObject* RRset_getTTL(s_RRset* self);
 static PyObject* RRset_setName(s_RRset* self, PyObject* args);
 static PyObject* RRset_setTTL(s_RRset* self, PyObject* args);
 static PyObject* RRset_toText(s_RRset* self);
+static PyObject* RRset_str(PyObject* self);
 static PyObject* RRset_toWire(s_RRset* self, PyObject* args);
 static PyObject* RRset_addRdata(s_RRset* self, PyObject* args);
 static PyObject* RRset_getRdata(s_RRset* self);
@@ -117,7 +118,7 @@ static PyTypeObject rrset_type = {
     NULL,                               /* tp_as_mapping */
     NULL,                               /* tp_hash  */
     NULL,                               /* tp_call */
-    NULL,                               /* tp_str */
+    RRset_str,                          /* tp_str */
     NULL,                               /* tp_getattro */
     NULL,                               /* tp_setattro */
     NULL,                               /* tp_as_buffer */
@@ -309,6 +310,13 @@ RRset_toText(s_RRset* self)
         PyErr_SetString(po_EmptyRRset, ers.what());
         return NULL;
     }
+}
+
+static PyObject*
+RRset_str(PyObject* self)
+{
+    // Simply call the to_text method we already defined
+    return PyObject_CallMethod(self, (char*)"to_text", (char*)"");
 }
 
 static PyObject*

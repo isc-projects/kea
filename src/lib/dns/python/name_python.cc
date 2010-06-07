@@ -40,22 +40,6 @@ static PyObject* po_IscException;
 static PyObject* po_NameRelation;
 
 //
-// Declaration of class constants
-// Initialization and addition of these go in the module init at the
-// end
-//
-/*
-static PyObject* po_MAX_WIRE;
-static PyObject* po_MAX_LABELS;
-static PyObject* po_MAX_LABELLEN;
-static PyObject* po_MAX_COMPRESS_POINTER;
-static PyObject* po_COMPRESS_POINTER_MARK8;
-static PyObject* po_COMPRESS_POINTER_MARK16;
-static PyObject* po_ROOT_NAME;
-*/
-
-
-//
 // Definition of the classes
 //
 
@@ -188,6 +172,7 @@ static void Name_destroy(s_Name* self);
 
 static PyObject* Name_toWire(s_Name* self, PyObject* args);
 static PyObject* Name_toText(s_Name* self);
+static PyObject* Name_str(PyObject* self);
 static PyObject* Name_getLabelCount(s_Name* self);
 static PyObject* Name_at(s_Name* self, PyObject* args);
 static PyObject* Name_getLength(s_Name* self);
@@ -255,7 +240,7 @@ static PyTypeObject name_type = {
     NULL,                               /* tp_as_mapping */
     NULL,                               /* tp_hash  */
     NULL,                               /* tp_call */
-    NULL,                               /* tp_str */
+    Name_str,                           /* tp_str */
     NULL,                               /* tp_getattro */
     NULL,                               /* tp_setattro */
     NULL,                               /* tp_as_buffer */
@@ -414,6 +399,13 @@ static PyObject*
 Name_toText(s_Name* self)
 {
     return Py_BuildValue("s", self->name->toText().c_str());
+}
+
+static PyObject*
+Name_str(PyObject* self)
+{
+    // Simply call the to_text method we already defined
+    return PyObject_CallMethod(self, (char*)"to_text", (char*)"");
 }
 
 static PyObject*
