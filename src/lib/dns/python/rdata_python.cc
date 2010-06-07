@@ -68,8 +68,15 @@ static PyObject* Rdata_toWire(s_Rdata* self, PyObject* args);
 // 3. Argument type
 // 4. Documentation
 static PyMethodDef Rdata_methods[] = {
-    { "to_text", (PyCFunction)Rdata_toText, METH_NOARGS, "Return the string representation" },
-    { "to_wire", (PyCFunction)Rdata_toWire, METH_VARARGS, "wire format" },
+    { "to_text", (PyCFunction)Rdata_toText, METH_NOARGS,
+      "Returns the string representation" },
+    { "to_wire", (PyCFunction)Rdata_toWire, METH_VARARGS,
+      "Converts the Rdata object to wire format.\n"
+      "The argument can be either a MessageRenderer or an object that "
+      "implements the sequence interface. If the object is mutable "
+      "(for instance a bytearray()), the wire data is added in-place.\n"
+      "If it is not (for instance a bytes() object), a new object is "
+      "returned" },
     { NULL, NULL, 0, NULL }
 };
 
@@ -97,7 +104,8 @@ static PyTypeObject rdata_type = {
     NULL,                               /* tp_setattro */
     NULL,                               /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT,                 /* tp_flags */
-    "C++ Rdata Object",                 /* tp_doc */
+    "The Rdata class is an abstract base class that provides "
+    "a set of common interfaces to manipulate concrete RDATA objects.",
     NULL,                               /* tp_traverse */
     NULL,                               /* tp_clear */
     NULL,                               /* tp_richcompare */
@@ -218,13 +226,13 @@ initModulePart_Rdata(PyObject* mod)
 
     // Add the exceptions to the class
     po_InvalidRdataLength = PyErr_NewException("libdns_python.InvalidRdataLength", NULL, NULL);
-    addClassVariable(rdata_type, "InvalidRdataLength", po_InvalidRdataLength);
+    PyModule_AddObject(mod, "InvalidRdataLength", po_InvalidRdataLength);
 
     po_InvalidRdataText = PyErr_NewException("libdns_python.InvalidRdataText", NULL, NULL);
-    addClassVariable(rdata_type, "InvalidRdataText", po_InvalidRdataText);
+    PyModule_AddObject(mod, "InvalidRdataText", po_InvalidRdataText);
 
     po_CharStringTooLong = PyErr_NewException("libdns_python.CharStringTooLong", NULL, NULL);
-    addClassVariable(rdata_type, "CharStringTooLong", po_CharStringTooLong);
+    PyModule_AddObject(mod, "CharStringTooLong", po_CharStringTooLong);
 
     
     return true;

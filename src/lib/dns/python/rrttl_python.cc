@@ -68,9 +68,17 @@ static PyObject* RRTTL_richcmp(s_RRTTL* self, s_RRTTL* other, int op);
 // 3. Argument type
 // 4. Documentation
 static PyMethodDef RRTTL_methods[] = {
-    { "to_text", (PyCFunction)RRTTL_toText, METH_NOARGS, "Return the string representation" },
-    { "to_wire", (PyCFunction)RRTTL_toWire, METH_VARARGS, "to wire format" },
-    { "get_value", (PyCFunction)RRTTL_getValue, METH_NOARGS, "Return the TTL as an integer" },
+    { "to_text", (PyCFunction)RRTTL_toText, METH_NOARGS,
+      "Returns the string representation" },
+    { "to_wire", (PyCFunction)RRTTL_toWire, METH_VARARGS,
+      "Converts the RRTTL object to wire format.\n"
+      "The argument can be either a MessageRenderer or an object that "
+      "implements the sequence interface. If the object is mutable "
+      "(for instance a bytearray()), the wire data is added in-place.\n"
+      "If it is not (for instance a bytes() object), a new object is "
+      "returned" },
+    { "get_value", (PyCFunction)RRTTL_getValue, METH_NOARGS,
+      "Returns the TTL as an integer" },
     { NULL, NULL, 0, NULL }
 };
 
@@ -98,7 +106,12 @@ static PyTypeObject rrttl_type = {
     NULL,                               /* tp_setattro */
     NULL,                               /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT,                 /* tp_flags */
-    "C++ RRTTL Object",               /* tp_doc */
+    "The RRTTL class encapsulates TTLs used in DNS resource records.\n\n"
+    "This is a straightforward class; an RRTTL object simply maintains a "
+    "32-bit unsigned integer corresponding to the TTL value.  The main purpose "
+    "of this class is to provide convenient interfaces to convert a textual "
+    "representation into the integer TTL value and vice versa, and to handle "
+    "wire-format representations.",
     NULL,                               /* tp_traverse */
     NULL,                               /* tp_clear */
     (richcmpfunc)RRTTL_richcmp,       /* tp_richcompare */
@@ -282,10 +295,8 @@ initModulePart_RRTTL(PyObject* mod)
 {
     // Add the exceptions to the module
     po_InvalidRRTTL = PyErr_NewException("libdns_python.InvalidRRTTL", NULL, NULL);
-    Py_INCREF(po_InvalidRRTTL);
     PyModule_AddObject(mod, "InvalidRRTTL", po_InvalidRRTTL);
     po_IncompleteRRTTL = PyErr_NewException("libdns_python.IncompleteRRTTL", NULL, NULL);
-    Py_INCREF(po_IncompleteRRTTL);
     PyModule_AddObject(mod, "IncompleteRRTTL", po_IncompleteRRTTL);
 
     // We initialize the static description object with PyType_Ready(),

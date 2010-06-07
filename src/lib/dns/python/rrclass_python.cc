@@ -68,9 +68,17 @@ static PyObject* RRClass_richcmp(s_RRClass* self, s_RRClass* other, int op);
 // 3. Argument type
 // 4. Documentation
 static PyMethodDef RRClass_methods[] = {
-    { "to_text", (PyCFunction)RRClass_toText, METH_NOARGS, "Return the string representation" },
-    { "to_wire", (PyCFunction)RRClass_toWire, METH_VARARGS, "to wire format" },
-    { "get_code", (PyCFunction)RRClass_getCode, METH_NOARGS, "Return the class code as an integer" },
+    { "to_text", (PyCFunction)RRClass_toText, METH_NOARGS,
+      "Returns the string representation" },
+    { "to_wire", (PyCFunction)RRClass_toWire, METH_VARARGS,
+      "Converts the RRClass object to wire format.\n"
+      "The argument can be either a MessageRenderer or an object that "
+      "implements the sequence interface. If the object is mutable "
+      "(for instance a bytearray()), the wire data is added in-place.\n"
+      "If it is not (for instance a bytes() object), a new object is "
+      "returned" },
+    { "get_code", (PyCFunction)RRClass_getCode, METH_NOARGS,
+      "Returns the class code as an integer" },
     { NULL, NULL, 0, NULL }
 };
 
@@ -98,7 +106,10 @@ static PyTypeObject rrclass_type = {
     NULL,                               /* tp_setattro */
     NULL,                               /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT,                 /* tp_flags */
-    "C++ RRClass Object",               /* tp_doc */
+    "The RRClass class encapsulates DNS resource record classes.\n"
+    "This class manages the 16-bit integer class codes in quite a straightforward"
+    "way.  The only non trivial task is to handle textual representations of"
+    "RR classes, such as \"IN\", \"CH\", or \"CLASS65534\".",
     NULL,                               /* tp_traverse */
     NULL,                               /* tp_clear */
     (richcmpfunc)RRClass_richcmp,       /* tp_richcompare */
