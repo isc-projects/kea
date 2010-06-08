@@ -19,7 +19,7 @@
 import unittest
 import os
 from isc.cc.session import *
-from bind10_dns import *
+from libdns_python import *
 from xfrout import *
 
 # our fake socket, where we can read and insert messages
@@ -46,8 +46,8 @@ class MySocket():
     
     def read_msg(self):
         sent_data = self.readsent()
-        get_msg = message(message_mode.PARSE)
-        get_msg.from_wire(input_buffer(bytes(sent_data[2:])))
+        get_msg = Message(Message.PARSE)
+        get_msg.from_wire(bytes(sent_data[2:]))
         return get_msg
     
     def clear_send(self):
@@ -69,15 +69,15 @@ class Dbserver:
 
 class TestXfroutSession(unittest.TestCase):
     def getmsg(self):
-        msg = message(message_mode.PARSE)
-        msg.from_wire(input_buffer(self.mdata))
+        msg = Message(Message.PARSE)
+        msg.from_wire(self.mdata)
         return msg
 
     def setUp(self):
         request = MySocket(socket.AF_INET,socket.SOCK_STREAM)
         self.xfrsess = MyXfroutSession(request, None, None)
         self.xfrsess.server = Dbserver()
-        self.mdata = b'\xd6=\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\x03com\x00\x00\xfc\x00\x01'
+        self.mdata = bytes(b'\xd6=\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\x03com\x00\x00\xfc\x00\x01')
         self.sock = MySocket(socket.AF_INET,socket.SOCK_STREAM)
         self.soa_record = (4, 3, 'example.com.', 'com.example.', 3600, 'SOA', None, 'master.example.com. admin.example.com. 1234 3600 1800 2419200 7200')
 
@@ -96,7 +96,7 @@ class TestXfroutSession(unittest.TestCase):
 
     def test_reply_xfrout_query_with_error_rcode(self):
         msg = self.getmsg()
-        self.xfrsess._reply_query_with_error_rcode(msg, self.sock, rcode(3))
+        self.xfrsess._reply_query_with_error_rcode(msg, self.sock, Rcode(3))
         get_msg = self.sock.read_msg()
         self.assertEqual(get_msg.get_rcode().to_text(), "NXDOMAIN") 
      
@@ -110,7 +110,7 @@ class TestXfroutSession(unittest.TestCase):
         self.assertEqual(msg.get_qid(), qid)
         self.assertEqual(msg.get_opcode(), opcode)
         self.assertEqual(msg.get_rcode(), rcode)
-        self.assertTrue(msg.get_header_flag(message_flag.AA()))
+        self.assertTrue(msg.get_header_flag(MessageFlag.AA()))
 
     def test_reply_query_with_format_error(self):
          
@@ -122,11 +122,10 @@ class TestXfroutSession(unittest.TestCase):
     def test_create_rrset_from_db_record(self):
         rrset = self.xfrsess._create_rrset_from_db_record(self.soa_record)
         self.assertEqual(rrset.get_name().to_text(), "example.com.")
-        self.assertEqual(rrset.get_class(), rr_class.IN())
+        self.assertEqual(rrset.get_class(), RRClass("IN"))
         self.assertEqual(rrset.get_type().to_text(), "SOA")
-        rdata_iter = rrset.get_rdata_iterator()
-        rdata_iter.first()
-        self.assertEqual(rdata_iter.get_current().to_text(), self.soa_record[7])
+        rdata = rrset.get_rdata()
+        self.assertEqual(rdata[0].to_text(), self.soa_record[7])
 
     def test_send_message_with_last_soa(self):
         rrset_soa = self.xfrsess._create_rrset_from_db_record(self.soa_record)
@@ -136,18 +135,17 @@ class TestXfroutSession(unittest.TestCase):
         self.xfrsess._send_message_with_last_soa(msg, self.sock, rrset_soa)
         get_msg = self.sock.read_msg()
 
-        self.assertEqual(get_msg.get_rr_count(section.QUESTION()), 1)
-        self.assertEqual(get_msg.get_rr_count(section.ANSWER()), 1)
-        self.assertEqual(get_msg.get_rr_count(section.AUTHORITY()), 0)
+        self.assertEqual(get_msg.get_rr_count(Section.QUESTION()), 1)
+        self.assertEqual(get_msg.get_rr_count(Section.ANSWER()), 1)
+        self.assertEqual(get_msg.get_rr_count(Section.AUTHORITY()), 0)
 
-        answer_rrset_iter = section_iter(get_msg, section.ANSWER())
-        answer = answer_rrset_iter.get_rrset()
+        #answer_rrset_iter = section_iter(get_msg, section.ANSWER())
+        answer = get_msg.get_section(Section.ANSWER())[0]#answer_rrset_iter.get_rrset()
         self.assertEqual(answer.get_name().to_text(), "example.com.")
-        self.assertEqual(answer.get_class(), rr_class.IN())
+        self.assertEqual(answer.get_class(), RRClass("IN"))
         self.assertEqual(answer.get_type().to_text(), "SOA")
-        rdata_iter = answer.get_rdata_iterator()
-        rdata_iter.first()
-        self.assertEqual(rdata_iter.get_current().to_text(), self.soa_record[7])
+        rdata = answer.get_rdata()
+        self.assertEqual(rdata[0].to_text(), self.soa_record[7])
 
     def test_get_message_len(self):
         msg = self.getmsg()
@@ -195,7 +193,7 @@ class TestXfroutSession(unittest.TestCase):
 
     def test_dns_xfrout_start_formerror(self):
         # formerror
-        self.xfrsess.dns_xfrout_start(self.sock, b"\xd6=\x00\x00\x00\x01\x00")
+        self.assertRaises(MessageTooShort, self.xfrsess.dns_xfrout_start, self.sock, b"\xd6=\x00\x00\x00\x01\x00")
         sent_data = self.sock.readsent()
         self.assertEqual(len(sent_data), 0)
     
@@ -205,7 +203,7 @@ class TestXfroutSession(unittest.TestCase):
     def test_dns_xfrout_start_notauth(self):
         self.xfrsess._get_query_zone_name = self.default
         def notauth(formpara):
-            return rcode.NOTAUTH()
+            return Rcode.NOTAUTH()
         self.xfrsess._check_xfrout_available = notauth
         self.xfrsess.dns_xfrout_start(self.sock, self.mdata)
         get_msg = self.sock.read_msg()
@@ -214,7 +212,7 @@ class TestXfroutSession(unittest.TestCase):
     def test_dns_xfrout_start_noerror(self):
         self.xfrsess._get_query_zone_name = self.default
         def noerror(form):
-            return rcode.NOERROR() 
+            return Rcode.NOERROR() 
         self.xfrsess._check_xfrout_available = noerror
         
         def myreply(msg, sock, zonename):
@@ -236,7 +234,7 @@ class TestXfroutSession(unittest.TestCase):
         sqlite3_ds.get_zone_datas = get_zone_datas
         self.xfrsess._reply_xfrout_query(self.getmsg(), self.sock, "example.com.")
         reply_msg = self.sock.read_msg()
-        self.assertEqual(reply_msg.get_rr_count(section.ANSWER()), 2)
+        self.assertEqual(reply_msg.get_rr_count(Section.ANSWER()), 2)
 
         # set event
         self.xfrsess.server._shutdown_event.set()
