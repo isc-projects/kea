@@ -48,13 +48,17 @@ SPECFILE_LOCATION = SPECFILE_PATH + "/xfrout.spec"
 UNIX_SOCKET_FILE = "@@LOCALSTATEDIR@@/auth_xfrout_conn"
 
 MAX_TRANSFERS_OUT = 10
-verbose_mode = False
+VERBOSE_MODE = False
 
 
 class XfroutException(Exception): pass
 
 
 class XfroutSession(BaseRequestHandler):
+    def __init__(self, request, client_address, server, log):
+        BaseRequestHandler.__init__(self, request, client_address, server)
+        self._log = log
+
     def handle(self):
         fd = recv_fd(self.request.fileno())
         if fd < 0:
@@ -66,10 +70,12 @@ class XfroutSession(BaseRequestHandler):
         try:
             self.dns_xfrout_start(sock, msgdata)
         except Exception as e:
-            if verbose_mode:
-                self.log_msg(str(e))
+            self._log.log_message("error", str(e))
 
         sock.close()
+
+    def setLogger(self, logger):
+        self._log = logger
 
     def _parse_query_message(self, mdata):
         ''' parse query message to [socket,message]'''
@@ -78,8 +84,7 @@ class XfroutSession(BaseRequestHandler):
             msg = message(message_mode.PARSE)
             msg.from_wire(input_buffer(mdata))
         except Exception as err:
-            if verbose_mode:
-                self.log_msg(str(err))
+            self._log.log_message("error", str(err))
             return rcode.FORMERR(), None
 
         return rcode.NOERROR(), msg
@@ -168,16 +173,11 @@ class XfroutSession(BaseRequestHandler):
             return self. _reply_query_with_error_rcode(msg, sock, rcode_)
 
         try:
-            if verbose_mode:
-                self.log_msg("transfer of '%s/IN': AXFR started" % zone_name)
-
+            self._log.log_message("info", "transfer of '%s/IN': AXFR started" % zone_name)
             self._reply_xfrout_query(msg, sock, zone_name)
-
-            if verbose_mode:
-                self.log_msg("transfer of '%s/IN': AXFR end" % zone_name)
+            self._log.log_message("info", "transfer of '%s/IN': AXFR end" % zone_name)
         except Exception as err:
-            if verbose_mode:
-                sys.stderr.write(str(err))
+            self._log.log_message("error", str(err))
 
         self.server.decrease_transfers_counter()
         return    
@@ -291,9 +291,12 @@ class UnixSockServer(ThreadingUnixStreamServer):
         self._log = log
         self.update_config_data(config_data)
     
+    def finish_request(self, request, client_address):
+        '''Finish one request by instantiating RequestHandlerClass.'''
+        self.RequestHandlerClass(request, client_address, self, self._log)
 
     def shutdown(self):
-        self._log.log_message('warning', 'Xfrout process will is shutting down')
+        self._log.log_message('warning', 'Xfrout process is shutting down!')
         ThreadingUnixStreamServer.shutdown(self)
         try:
             os.unlink(self._sock_file)
@@ -303,14 +306,14 @@ class UnixSockServer(ThreadingUnixStreamServer):
     def update_config_data(self, new_config):
         '''Apply the new config setting of xfrout module. '''
 
-        self._log.log_message('info', 'update config data start')
+        self._log.log_message('info', 'update config data start.')
         self._lock.acquire()
         self._max_transfers_out = new_config.get('transfers_out')
-        self._log.log_message('debug', 'max transfer out : %d', self._max_transfers_out)
+        self._log.log_message('info', 'max transfer out : %d', self._max_transfers_out)
         self._db_file = new_config.get('db_file')
-        self._log.log_message('debug', 'db file name : %s', self._db_file)
+        self._log.log_message('info', 'db file name : %s', self._db_file)
         self._lock.release()
-        self._log.log_message('info', 'update config data complete')
+        self._log.log_message('info', 'update config data complete.')
 
     def get_db_file(self):
         self._lock.acquire()
@@ -405,8 +408,7 @@ class XfroutServer:
 
     def command_handler(self, cmd, args):
         if cmd == "shutdown":
-            if verbose_mode:
-                self._log.log_message("info", "Received shutdown command")
+            self._log.log_message("info", "Received shut down command.")
             self.shutdown()
             answer = create_answer(0)
         else: 
@@ -441,7 +443,7 @@ if '__main__' == __name__:
         parser = OptionParser()
         set_cmd_options(parser)
         (options, args) = parser.parse_args()
-        verbose_mode = options.verbose
+        VERBOSE_MODE = options.verbose
 
         set_signal_handler()
         xfrout_server = XfroutServer()
