@@ -102,6 +102,30 @@ class TestModuleSpec(unittest.TestCase):
         self.assertFalse(RRType(100) >= RRType(65535));
 
         self.assertFalse(self.rrtype_1 == 1)
+
+    def test_statics(self):
+        self.assertEqual(RRType("NSEC3PARAM"), RRType.NSEC3PARAM())
+        self.assertEqual(RRType("DNAME"), RRType.DNAME())
+        self.assertEqual(RRType("PTR"), RRType.PTR())
+        self.assertEqual(RRType("MX"), RRType.MX())
+        self.assertEqual(RRType("DNSKEY"), RRType.DNSKEY())
+        self.assertEqual(RRType("TXT"), RRType.TXT())
+        self.assertEqual(RRType("RRSIG"), RRType.RRSIG())
+        self.assertEqual(RRType("NSEC"), RRType.NSEC())
+        self.assertEqual(RRType("AAAA"), RRType.AAAA())
+        self.assertEqual(RRType("DS"), RRType.DS())
+        self.assertEqual(RRType("OPT"), RRType.OPT())
+        self.assertEqual(RRType("A"), RRType.A())
+        self.assertEqual(RRType("NS"), RRType.NS())
+        self.assertEqual(RRType("CNAME"), RRType.CNAME())
+        self.assertEqual(RRType("SOA"), RRType.SOA())
+        self.assertEqual(RRType("NSEC3"), RRType.NSEC3())
+
+        # these can't be built with string input
+        # (see the original cpp TODO)
+        self.assertEqual(251, RRType.IXFR().get_code())
+        self.assertEqual(252, RRType.AXFR().get_code())
+        self.assertEqual(255, RRType.ANY().get_code())
         
 if __name__ == '__main__':
     unittest.main()
