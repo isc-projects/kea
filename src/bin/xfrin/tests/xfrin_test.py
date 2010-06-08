@@ -65,12 +65,12 @@ class TestXfrinConnection(unittest.TestCase):
         self.assertRaises(Exception, self.conn._handle_xfrin_response)
 
     def test_response_without_end_soa(self):
-        self.conn._send_query(rr_type.AXFR())
+        self.conn._send_query(RRType.AXFR())
         self.conn.reply_data = self.conn.create_response_data(axfr_response1) 
         self.assertRaises(XfrinException, self.conn._handle_xfrin_response)
 
     def test_response(self):
-        self.conn._send_query(rr_type.AXFR())
+        self.conn._send_query(RRType.AXFR())
         self.conn.reply_data = self.conn.create_response_data(axfr_response1) 
         self.conn.reply_data += self.conn.create_response_data(axfr_response2) 
         self.conn._handle_xfrin_response()

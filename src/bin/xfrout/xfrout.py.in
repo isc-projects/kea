@@ -80,7 +80,7 @@ class XfroutSession(BaseRequestHandler):
         #TODO, need to add parseHeader() in case the message header is invalid 
         try:
             msg = Message(Message.PARSE)
-            msg.from_wire(mdata)
+            Message.from_wire(msg, mdata)
         except TmpException as err:
             if verbose_mode:
                 self.log_msg(str(err))

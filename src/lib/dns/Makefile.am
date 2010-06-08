@@ -79,26 +79,26 @@ libdns_la_SOURCES += question.h question.cc
 libdns_la_SOURCES += sha1.h sha1.cc
 libdns_la_SOURCES += tsig.h tsig.cc
 
-if HAVE_BOOST_PYTHON
-# This is a loadable module for python scripts, so we use the prefix "pyexec"
-# to make sure the object files will be installed in the appropriate place
-# for this purpose.
-pyexec_LTLIBRARIES = bind10_dns.la
-bind10_dns_la_SOURCES = python_dns.cc
-bind10_dns_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
-if GCC_WERROR_OK
-# XXX: Boost.Python triggers strict aliasing violation, so if we use -Werror
-# we need to suppress the warnings.
-bind10_dns_la_CPPFLAGS += -fno-strict-aliasing
-endif
-bind10_dns_la_LDFLAGS = $(BOOST_LDFLAGS) $(PYTHON_LDFLAGS)
-# Python prefers .so, while some OSes (specifically MacOS) use a different
-# suffix for dynamic objects.  -module is necessary to work this around.
-bind10_dns_la_LDFLAGS += -module
-bind10_dns_la_LIBADD = $(top_builddir)/src/lib/dns/libdns.la
-bind10_dns_la_LIBADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
-bind10_dns_la_LIBADD += $(BOOST_PYTHON_LIB) $(PYTHON_LIB)
-endif
+#if HAVE_BOOST_PYTHON
+## This is a loadable module for python scripts, so we use the prefix "pyexec"
+## to make sure the object files will be installed in the appropriate place
+## for this purpose.
+#pyexec_LTLIBRARIES = bind10_dns.la
+#bind10_dns_la_SOURCES = python_dns.cc
+#bind10_dns_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
+#if GCC_WERROR_OK
+## XXX: Boost.Python triggers strict aliasing violation, so if we use -Werror
+## we need to suppress the warnings.
+#bind10_dns_la_CPPFLAGS += -fno-strict-aliasing
+#endif
+#bind10_dns_la_LDFLAGS = $(BOOST_LDFLAGS) $(PYTHON_LDFLAGS)
+## Python prefers .so, while some OSes (specifically MacOS) use a different
+## suffix for dynamic objects.  -module is necessary to work this around.
+#bind10_dns_la_LDFLAGS += -module
+#bind10_dns_la_LIBADD = $(top_builddir)/src/lib/dns/libdns.la
+#bind10_dns_la_LIBADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+#bind10_dns_la_LIBADD += $(BOOST_PYTHON_LIB) $(PYTHON_LIB)
+#endif
 
 nodist_libdns_la_SOURCES = rdataclass.cc rrclass.h rrtype.h rrparamregistry.cc
 
