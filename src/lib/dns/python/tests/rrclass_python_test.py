@@ -23,8 +23,8 @@ from libdns_python import *
 
 class RRClassTest(unittest.TestCase):
     def setUp(self):
-        self.c1 = RRClass("IN")
-        self.c2 = RRClass("CH")
+        self.c1 = RRClass.IN()
+        self.c2 = RRClass.CH()
 
     def test_init(self):
         self.assertRaises(InvalidRRClass, RRClass, "wrong")
@@ -63,6 +63,13 @@ class RRClassTest(unittest.TestCase):
         self.assertTrue(self.c1 <= self.c2)
         self.assertFalse(self.c1 > self.c2)
         self.assertFalse(self.c1 >= self.c2)
+
+    def test_statics(self):
+        self.assertEqual(RRClass.IN(), RRClass("IN"))
+        self.assertEqual(RRClass.CH(), RRClass("CH"))
+        self.assertEqual(RRClass.HS(), RRClass("HS"))
+        self.assertEqual(254, RRClass.NONE().get_code())
+        self.assertEqual(255, RRClass.ANY().get_code())
 
 if __name__ == '__main__':
     unittest.main()
