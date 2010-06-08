@@ -1,3 +1,11 @@
+  52.   [func]      zhanglikun
+	bin/xfrout: When xfrout is launched, check whether the
+	socket file is being used by one running xfrout process, 
+	if it is, exit from python.	If the file isn't a socket file 
+	or nobody is listening, it will be removed. If it can't 
+	be removed, exit from python.
+	(Trac #151, svn r2084)
+
 bind10-devel-20100602 released on June 2, 2010
 
   51.   [build]         jelte
