@@ -167,12 +167,13 @@ RRType_init(s_RRType* self, PyObject* args)
             self->rrtype = new RRType(i);
             return 0;
         } else if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
-            uint8_t data[2];
-            int result = readDataFromSequence(data, 2, bytes);
+            Py_ssize_t size = PySequence_Size(bytes);
+            uint8_t data[size];
+            int result = readDataFromSequence(data, size, bytes);
             if (result != 0) {
                 return result;
             }
-            InputBuffer ib(data, 2);
+            InputBuffer ib(data, size);
             self->rrtype = new RRType(ib);
             PyErr_Clear();
             return 0;
@@ -183,7 +184,7 @@ RRType_init(s_RRType* self, PyObject* args)
         // First clear any existing error that was set
         PyErr_Clear();
         // Now set our own exception
-        PyErr_SetString(po_InvalidRRType, icc.what());
+        PyErr_SetString(po_IncompleteRRType, icc.what());
         // And return negative
         return -1;
     } catch (InvalidRRType ic) {

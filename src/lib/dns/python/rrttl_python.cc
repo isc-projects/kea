@@ -164,12 +164,13 @@ RRTTL_init(s_RRTTL* self, PyObject* args)
             self->rrttl = new RRTTL(i);
             return 0;
         } else if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
-            uint8_t data[2];
-            int result = readDataFromSequence(data, 2, bytes);
+            Py_ssize_t size = PySequence_Size(bytes);
+            uint8_t data[size];
+            int result = readDataFromSequence(data, size, bytes);
             if (result != 0) {
                 return result;
             }
-            InputBuffer ib(data, 2);
+            InputBuffer ib(data, size);
             self->rrttl = new RRTTL(ib);
             PyErr_Clear();
             return 0;
@@ -180,7 +181,7 @@ RRTTL_init(s_RRTTL* self, PyObject* args)
         // First clear any existing error that was set
         PyErr_Clear();
         // Now set our own exception
-        PyErr_SetString(po_InvalidRRTTL, icc.what());
+        PyErr_SetString(po_IncompleteRRTTL, icc.what());
         // And return negative
         return -1;
     } catch (InvalidRRTTL ic) {
@@ -255,7 +256,7 @@ RRTTL_getValue(s_RRTTL* self)
 static PyObject* 
 RRTTL_richcmp(s_RRTTL* self, s_RRTTL* other, int op)
 {
-    bool c;
+    bool c = false;
 
     // Check for null and if the types match. If different type,
     // simply return False
@@ -286,8 +287,6 @@ RRTTL_richcmp(s_RRTTL* self, s_RRTTL* other, int op)
         c = *other->rrttl < *self->rrttl ||
             *self->rrttl == *other->rrttl;
         break;
-    default:
-        assert(0);              // XXX: should trigger an exception
     }
     if (c)
         Py_RETURN_TRUE;

@@ -30,6 +30,15 @@ class TestModuleSpec(unittest.TestCase):
     rrtype_max = RRType(0xffff);
     wiredata = bytearray(b'\x00\x01\x00\x80\x08\x00\x80\x00\xff\xff');
 
+
+    def test_init(self):
+        self.assertRaises(InvalidRRType, RRType, 65537)
+        b = bytearray(b'\x00\x01')
+        self.assertEqual(RRType("A"), RRType(b))
+        b = bytearray(b'\x01')
+        self.assertRaises(IncompleteRRType, RRType, b)
+        self.assertRaises(TypeError, RRType, Exception)
+    
     def test_from_text(self):
         self.assertEqual("A", RRType("A").to_text())
         self.assertEqual("NS", RRType("NS").to_text());
@@ -54,6 +63,7 @@ class TestModuleSpec(unittest.TestCase):
 
     def test_to_text(self):
         self.assertEqual("A", RRType(1).to_text());
+        self.assertEqual("A", RRType(1).__str__());
         self.assertEqual("TYPE65000", RRType(65000).to_text());
 
     def test_to_wire_buffer(self):
@@ -76,6 +86,9 @@ class TestModuleSpec(unittest.TestCase):
 
         self.assertEqual(self.wiredata, mr.get_data())
 
+    def test_to_wire_bad(self):
+        self.assertRaises(TypeError, self.rrtype_1.to_wire, "wrong")
+
     def test_compare(self):
         self.assertTrue(RRType(1) == RRType("A"));
         #self.assertTrue(RRType(1).equals(RRType("A")));
@@ -83,7 +96,12 @@ class TestModuleSpec(unittest.TestCase):
         #self.assertTrue(RRType(0).nequals(RRType("A")));
     
         self.assertTrue(RRType("A") < RRType("NS"));
+        self.assertTrue(RRType("A") <= RRType("NS"));
         self.assertTrue(RRType(100) < RRType(65535));
+        self.assertFalse(RRType(100) > RRType(65535));
+        self.assertFalse(RRType(100) >= RRType(65535));
+
+        self.assertFalse(self.rrtype_1 == 1)
         
 if __name__ == '__main__':
     unittest.main()

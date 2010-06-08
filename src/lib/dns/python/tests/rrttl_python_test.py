@@ -31,11 +31,18 @@ class RdataTest(unittest.TestCase):
         self.assertRaises(TypeError, RRTTL, Exception())
         b = bytearray(1)
         b[0] = 123
-        self.assertRaises(TypeError, RRTTL, b)
+        self.assertRaises(IncompleteRRTTL, RRTTL, b)
         self.assertRaises(InvalidRRTTL, RRTTL, "4294967296")
+        b = bytearray(4)
+        b[0] = 0
+        b[1] = 0
+        b[2] = 0
+        b[3] = 15
+        self.assertEqual(15, RRTTL(b).get_value())
         
     def test_rdata_to_text(self):
         self.assertEqual("1", self.t1.to_text())
+        self.assertEqual("1", self.t1.__str__())
         self.assertEqual("3600", self.t2.to_text())
 
     def test_rdata_to_wire(self):
@@ -45,6 +52,19 @@ class RdataTest(unittest.TestCase):
         b = bytearray()
         self.t2.to_wire(b)
         self.assertEqual(b'\x00\x00\x0e\x10', b)
+        mr = MessageRenderer()
+        self.t2.to_wire(mr)
+        self.assertEqual(b'\x00\x00\x0e\x10', mr.get_data())
+        self.assertRaises(TypeError, self.t1.to_wire, 1)
+
+    def test_rdata_richcmp(self):
+        self.assertTrue(self.t1 == RRTTL(1))
+        self.assertFalse(self.t1 != RRTTL(1))
+        self.assertFalse(self.t1 == 1)
+        self.assertTrue(self.t1 < self.t2)
+        self.assertTrue(self.t1 <= self.t2)
+        self.assertFalse(self.t1 > self.t2)
+        self.assertFalse(self.t1 >= self.t2)
 
 if __name__ == '__main__':
     unittest.main()

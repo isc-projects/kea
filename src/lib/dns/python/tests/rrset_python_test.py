@@ -35,6 +35,9 @@ class TestModuleSpec(unittest.TestCase):
         self.rrset_a.add_rdata(Rdata(RRType("A"), RRClass("IN"), "192.0.2.1"));
         self.rrset_a.add_rdata(Rdata(RRType("A"), RRClass("IN"), "192.0.2.2"));
 
+    def test_init(self):
+        self.assertRaises(TypeError, RRset)
+
     def test_get_rdata_count(self):
         for i in range(0, self.MAX_RDATA_COUNT):
             self.assertEqual(i, self.rrset_a_empty.get_rdata_count())
@@ -63,10 +66,12 @@ class TestModuleSpec(unittest.TestCase):
         self.assertEqual(RRTTL(86400), self.rrset_a.get_ttl());
         self.rrset_a.set_ttl(RRTTL(0));
         self.assertEqual(RRTTL(0), self.rrset_a.get_ttl());
+        self.assertRaises(TypeError, self.rrset_a.set_ttl, 1)
 
     def test_set_name(self):
         self.rrset_a.set_name(self.test_nsname);
         self.assertEqual(self.test_nsname, self.rrset_a.get_name());
+        self.assertRaises(TypeError, self.rrset_a.set_name, 1)
 
     def test_add_rdata(self):
         # no iterator to read out yet (TODO: add addition test once implemented)
@@ -78,6 +83,12 @@ class TestModuleSpec(unittest.TestCase):
         self.assertEqual("test.example.com. 3600 IN A 192.0.2.1\n"
                          "test.example.com. 3600 IN A 192.0.2.2\n",
                          self.rrset_a.to_text());
+        self.assertEqual("test.example.com. 3600 IN A 192.0.2.1\n"
+                         "test.example.com. 3600 IN A 192.0.2.2\n",
+                         self.rrset_a.__str__());
+
+        #rrset_empty = RRset(self.test_name, RRClass("IN"), RRType("A"), RRTTL(3600))
+        self.assertRaises(EmptyRRset, self.rrset_a_empty.to_text)
 
     def test_to_wire_buffer(self):
         exp_buffer = bytearray(b'\x04test\x07example\x03com\x00\x00\x01\x00\x01\x00\x00\x0e\x10\x00\x04\xc0\x00\x02\x01\x04test\x07example\x03com\x00\x00\x01\x00\x01\x00\x00\x0e\x10\x00\x04\xc0\x00\x02\x02')
@@ -86,6 +97,7 @@ class TestModuleSpec(unittest.TestCase):
         self.assertEqual(exp_buffer, buffer)
 
         self.assertRaises(EmptyRRset, self.rrset_a_empty.to_wire, buffer);
+        self.assertRaises(TypeError, self.rrset_a.to_wire, 1)
 
     def test_to_wire_renderer(self):
         exp_buffer = bytearray(b'\x04test\x07example\x03com\x00\x00\x01\x00\x01\x00\x00\x0e\x10\x00\x04\xc0\x00\x02\x01\xc0\x00\x00\x01\x00\x01\x00\x00\x0e\x10\x00\x04\xc0\x00\x02\x02')
