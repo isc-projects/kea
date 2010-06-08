@@ -1,5 +1,19 @@
+// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
 
-// Ok we want a lot of different parts of the DNS API in the python
+
+// We want a lot of different parts of the DNS API in the python
 // module, but not one big 10000-line file.
 // So we split it up in several 'mini-modules'
 // These would be the same as a single module, except for
@@ -25,7 +39,6 @@
 
 #include "libdns_python_common.h"
 
-//#include "buffer_python.cc"
 // order is important here! (TODO: document dependencies)
 #include "messagerenderer_python.cc"
 #include "name_python.cc"
