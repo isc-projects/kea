@@ -30,10 +30,12 @@ class TestRotateFileHandler(unittest.TestCase):
         self.assertEqual(self.handler.maxBytes, 512)
         self.assertEqual(self.handler.backupCount, 3)
 
-        self.handler.update_config(FILE_LOG3, 4, 1024)
-        self.assertEqual(self.handler.baseFilename, FILE_LOG2)
-        self.assertEqual(self.handler.maxBytes, 1024)
-        self.assertEqual(self.handler.backupCount, 4)
+        dir = os.path.split(FILE_LOG3)                                        
+        if not os.path.exists(dir[0]):
+            self.handler.update_config(FILE_LOG3, 4, 1024)
+            self.assertEqual(self.handler.baseFilename, FILE_LOG2)
+            self.assertEqual(self.handler.maxBytes, 1024)
+            self.assertEqual(self.handler.backupCount, 4)
 
     def tearDown(self):
         self.handler.flush()

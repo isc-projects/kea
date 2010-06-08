@@ -24,7 +24,7 @@
          "item_name": "log_file",
     	 "item_type": "string",
          "item_optional": False,
-    	 "item_default": "/var/log/xfrout.log"
+         "item_default": '@@LOCALSTATEDIR@@/Xfrout.log'
        },
        {
          "item_name": "severity",
