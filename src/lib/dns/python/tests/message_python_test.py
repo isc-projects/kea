@@ -82,6 +82,8 @@ class OpcodeTest(unittest.TestCase):
         o3 = Opcode.NOTIFY()
         self.assertTrue(o2 == o3)
         self.assertTrue(o1 != o2)
+        self.assertFalse(o1 == 1)
+        self.assertFalse(o1 == o2)
         # can't use assertRaises here...
         try:
             o1 < o2
@@ -148,6 +150,8 @@ class RcodeTest(unittest.TestCase):
         r3 = Rcode.FORMERR()
         self.assertTrue(r2 == r3)
         self.assertTrue(r1 != r2)
+        self.assertFalse(r1 == r2)
+        self.assertFalse(r1 != 1)
         # can't use assertRaises here...
         try:
             r1 < r2
@@ -183,6 +187,8 @@ class SectionTest(unittest.TestCase):
         s3 = Section.ANSWER()
         self.assertTrue(s2 == s3)
         self.assertTrue(s1 != s2)
+        self.assertFalse(s1 == s2)
+        self.assertFalse(s1 == 1)
         # can't use assertRaises here...
         try:
             s1 < s2
@@ -226,6 +232,11 @@ class MessageTest(unittest.TestCase):
         self.r.clear_header_flag(MessageFlag.AA())
         self.assertFalse(self.r.get_header_flag(MessageFlag.AA()))
 
+        self.assertRaises(InvalidMessageOperation,
+                          self.p.set_header_flag, MessageFlag.AA())
+        self.assertRaises(InvalidMessageOperation,
+                          self.p.clear_header_flag, MessageFlag.AA())
+
     def test_set_DNSSEC_supported(self):
         self.assertRaises(TypeError, self.r.set_dnssec_supported, "wrong")
 
@@ -240,6 +251,8 @@ class MessageTest(unittest.TestCase):
 
     def test_set_qid(self):
         self.assertRaises(TypeError, self.r.set_qid, "wrong")
+        self.assertRaises(InvalidMessageOperation,
+                          self.p.set_qid, 123)
 
     def test_set_rcode(self):
         self.assertRaises(TypeError, self.r.set_rcode, "wrong")
@@ -249,6 +262,12 @@ class MessageTest(unittest.TestCase):
 
     def test_get_section(self):
         self.assertRaises(TypeError, self.r.get_section, "wrong")
+
+    def test_get_rr_count(self):
+        self.assertRaises(TypeError, self.r.get_rr_count, "wrong")
+
+    def test_add_question(self):
+        self.assertRaises(TypeError, self.r.add_question, "wrong", "wrong")
 
     def test_add_rrset(self):
         self.assertRaises(TypeError, self.r.add_rrset, "wrong")
@@ -261,9 +280,15 @@ class MessageTest(unittest.TestCase):
 
     def test_to_wire(self):
         self.assertRaises(TypeError, self.r.to_wire, 1)
+        self.assertRaises(InvalidMessageOperation,
+                          self.p.to_wire, MessageRenderer())
 
     def test_from_wire(self):
         self.assertRaises(TypeError, self.r.from_wire, 1)
+        self.assertRaises(InvalidMessageOperation,
+                          Message.from_wire, self.r, bytes())
+        self.assertRaises(MessageTooShort,
+                          Message.from_wire, self.p, bytes())
 
 # helper functions for tests taken from c++ unittests
 if "TESTDATA_PATH" in os.environ:

@@ -1095,7 +1095,7 @@ Rcode_BADVERS(s_Rcode* self UNUSED_PARAM)
 static PyObject* 
 Rcode_richcmp(s_Rcode* self, s_Rcode* other, int op)
 {
-    bool c;
+    bool c = false;
 
     // Check for null and if the types match. If different type,
     // simply return False
@@ -1129,8 +1129,6 @@ Rcode_richcmp(s_Rcode* self, s_Rcode* other, int op)
         PyErr_SetString(PyExc_TypeError, "Unorderable type; Rcode");
         return NULL;
         break;
-    default:
-        assert(0);              // XXX: should trigger an exception
     }
     if (c)
         Py_RETURN_TRUE;
@@ -1310,7 +1308,7 @@ Section_ADDITIONAL(s_Section* self UNUSED_PARAM)
 static PyObject* 
 Section_richcmp(s_Section* self, s_Section* other, int op)
 {
-    bool c;
+    bool c = false;
 
     // Check for null and if the types match. If different type,
     // simply return False
@@ -1344,8 +1342,6 @@ Section_richcmp(s_Section* self, s_Section* other, int op)
         PyErr_SetString(PyExc_TypeError, "Unorderable type; Section");
         return NULL;
         break;
-    default:
-        assert(0);              // XXX: should trigger an exception
     }
     if (c)
         Py_RETURN_TRUE;
