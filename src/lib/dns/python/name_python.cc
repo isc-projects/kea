@@ -473,22 +473,37 @@ static PyObject*
 Name_split(s_Name* self, PyObject* args)
 {
     unsigned int first, n;
-
-    if (!PyArg_ParseTuple(args, "II", &first, &n))
-        return NULL;
-
-    s_Name* ret = PyObject_New(s_Name, &name_type);
-    if (ret != NULL) {
-        ret->name = NULL;
-        try {
-            ret->name = new Name(self->name->split(first, n));
-        } catch(isc::OutOfRange oor) {
-            PyErr_SetString(PyExc_IndexError, oor.what());
+    s_Name* ret = NULL;
+    
+    if (PyArg_ParseTuple(args, "II", &first, &n)) {
+        ret = PyObject_New(s_Name, &name_type);
+        if (ret != NULL) {
             ret->name = NULL;
+            try {
+                ret->name = new Name(self->name->split(first, n));
+            } catch(isc::OutOfRange oor) {
+                PyErr_SetString(PyExc_IndexError, oor.what());
+                ret->name = NULL;
+            }
+            if (ret->name == NULL) {
+                Py_DECREF(ret);
+                return NULL;
+            }
         }
-        if (ret->name == NULL) {
-            Py_DECREF(ret);
-            return NULL;
+    } else if (PyArg_ParseTuple(args, "I", &n)) {
+        ret = PyObject_New(s_Name, &name_type);
+        if (ret != NULL) {
+            ret->name = NULL;
+            try {
+                ret->name = new Name(self->name->split(n));
+            } catch(isc::OutOfRange oor) {
+                PyErr_SetString(PyExc_IndexError, oor.what());
+                ret->name = NULL;
+            }
+            if (ret->name == NULL) {
+                Py_DECREF(ret);
+                return NULL;
+            }
         }
     }
     return (PyObject*) ret;

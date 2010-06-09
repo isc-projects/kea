@@ -141,10 +141,14 @@ class NameTest(unittest.TestCase):
         self.assertEqual("completely.different.", s.to_text())
         self.assertRaises(TypeError, self.name1.split, "wrong", 1)
         self.assertRaises(TypeError, self.name1.split, 1, "wrong")
-        # TODO: this test will fail when new split(int) is added
-        self.assertRaises(TypeError, self.name1.split, 1)
         self.assertRaises(IndexError, self.name1.split, 123, 1)
         self.assertRaises(IndexError, self.name1.split, 1, 123)
+
+        s = self.name1.split(1)
+        self.assertEqual("com.", s.to_text())
+        s = self.name1.split(0)
+        self.assertEqual("example.com.", s.to_text())
+        self.assertRaises(IndexError, self.name1.split, 123)
 
     def test_reverse(self):
         self.assertEqual("com.example.", self.name1.reverse().to_text())
