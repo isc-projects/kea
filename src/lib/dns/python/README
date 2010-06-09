@@ -1,30 +1,30 @@
 
-This is a partial implementation of the python wrappers for isc::dns.
+This is an implementation of the python wrappers for isc::dns.
 
 Currently, when compiled the module is called libdns_python. If we
-decide to use it we will add a default import under lib/python/isc.
+decide to always need it we can add a default import under
+lib/python/isc.
 
 To use it from the source tree, you must add src/lib/dns/python/.libs
 to your PYTHONPATH environment variable. Within python you can then use
 > import libdns_python
 > rrc = libdns_python.RRClass("IN")
+etc.
 
 Notes:
 
-this implementation is far from complete; currently wrappers for the
-following classes are implemented:
+this implementation is not a complete 1-to-1 mapping of the C++ API;
+some of the functionality is not needed the way we use it in Python.
 
-full (though we might add some conveniences later, like __str__):
-RRType, RRClass, RRTTL, Name, and MessageRenderer
+For instance, we did not implement the buffer classes;
+everywhere in the API where buffers are used, you can pass a bytearray
+object.
 
-partial:
-RRset (doesn't have a way to iterate over rdata yet)
-Rdata (only the most basic support, you can create one from a type,
-class and string, and you can convert them to text, but that's about
-it).
+We also (currently) left out some 'lowlevel' wrappers, for instance for
+specific Rdata types.
 
-We did not implement the buffer classes; everywhere in the API where
-buffers are used, you can pass a bytearray object.
+If you have specific functionality you do need, please ask for it and we
+will add it.
 
 The 'main' module is defined in libdns_python.cc.
 There is a libdns_python_common.[cc|h] for helper functions.
@@ -41,10 +41,9 @@ rrclass.h, for reference to new readers.
 To keep it maintainable as the original API changes, we use two
 techniques;
 
-1. Full unittests. Or at least as full as possible. All unittests from
-   the C++ code will also appear in the python wrapper tests (currently
-   only done for rrtype and rrset as far as implemented), so if we
-   forget to update a wrapper our tests should fail.
+1. Full unittests. Or at least as full as possible. These unit tests
+   test the *wrapper* code, not necessarily the underlying c++ code,
+   which has its own unit tests. There is of course some overlap.
 2. Structure. I have tried to structure the wrapper files as much as
    possible, see below.
 
@@ -91,4 +90,5 @@ and enums to the module. This function is called from the init function
 in libdns_python.cc, has the name
 initModulePart_<c++ class name>, returns a boolean
 (true on success, false on failure), and takes the module as a
-PyObject*.
+PyObject*. There is a convenience function called addClassVariable to
+add constants and enums to classes.
