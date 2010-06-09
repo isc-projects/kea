@@ -32,9 +32,7 @@
 #include <sstream>
 #include <cerrno>
 
-#ifdef HAVE_BOOST_SYSTEM
 #include <boost/bind.hpp>
-#endif
 #include <boost/foreach.hpp>
 
 #include <cc/data.h>
@@ -188,7 +186,6 @@ ModuleCCSession::readModuleSpecification(const std::string& filename) {
     return module_spec;
 }
 
-#ifdef HAVE_BOOST_SYSTEM
 void
 ModuleCCSession::startCheck() {
     // data available on the command channel.  process it in the synchronous
@@ -201,7 +198,7 @@ ModuleCCSession::startCheck() {
 
 ModuleCCSession::ModuleCCSession(
     std::string spec_file_name,
-    boost::asio::io_service& io_service,
+    asio::io_service& io_service,
     isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config),
     isc::data::ElementPtr(*command_handler)(
         const std::string& command, const isc::data::ElementPtr args)
@@ -213,7 +210,6 @@ ModuleCCSession::ModuleCCSession(
     // register callback for asynchronous read
     session_.startRead(boost::bind(&ModuleCCSession::startCheck, this));
 }
-#endif
 
 ModuleCCSession::ModuleCCSession(
     std::string spec_file_name,
@@ -248,8 +244,8 @@ ModuleCCSession::init(
     //session_.subscribe("statistics", "*");
     // send the data specification
     ElementPtr spec_msg = createCommand("module_spec", module_specification_.getFullSpec());
-    session_.group_sendmsg(spec_msg, "ConfigManager");
-    session_.group_recvmsg(env, answer, false);
+    unsigned int seq = session_.group_sendmsg(spec_msg, "ConfigManager");
+    session_.group_recvmsg(env, answer, false, seq);
     int rcode;
     ElementPtr err = parseAnswer(rcode, answer);
     if (rcode != 0) {
@@ -260,8 +256,8 @@ ModuleCCSession::init(
     // get any stored configuration from the manager
     if (config_handler_) {
         ElementPtr cmd = Element::createFromString("{ \"command\": [\"get_config\", {\"module_name\":\"" + module_name_ + "\"} ] }");
-        session_.group_sendmsg(cmd, "ConfigManager");
-        session_.group_recvmsg(env, answer, false);
+        seq = session_.group_sendmsg(cmd, "ConfigManager");
+        session_.group_recvmsg(env, answer, false, seq);
         ElementPtr new_config = parseAnswer(rcode, answer);
         if (rcode == 0) {
             handleConfigUpdate(new_config);
@@ -308,6 +304,12 @@ int
 ModuleCCSession::getSocket()
 {
     return (session_.getSocket());
+}
+
+bool
+ModuleCCSession::hasQueuedMsgs()
+{
+    return (session_.hasQueuedMsgs());
 }
 
 int
@@ -365,8 +367,8 @@ ModuleCCSession::addRemoteConfig(const std::string& spec_file_name)
     ElementPtr env, answer;
     int rcode;
     
-    session_.group_sendmsg(cmd, "ConfigManager");
-    session_.group_recvmsg(env, answer, false);
+    unsigned int seq = session_.group_sendmsg(cmd, "ConfigManager");
+    session_.group_recvmsg(env, answer, false, seq);
     ElementPtr new_config = parseAnswer(rcode, answer);
     if (rcode == 0) {
         rmod_config.setLocalConfig(new_config);

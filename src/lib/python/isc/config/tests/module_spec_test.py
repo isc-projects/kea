@@ -13,6 +13,8 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+# $Id$
+
 #
 # Tests for the module_spec module
 #
@@ -73,6 +75,7 @@ class TestModuleSpec(unittest.TestCase):
         self.assertRaises(ModuleSpecError, self.read_spec_file, "spec19.spec")
         self.assertRaises(ModuleSpecError, self.read_spec_file, "spec20.spec")
         self.assertRaises(ModuleSpecError, self.read_spec_file, "spec21.spec")
+        self.assertRaises(ModuleSpecError, self.read_spec_file, "spec26.spec")
 
     def validate_data(self, specfile_name, datafile_name):
         dd = self.read_spec_file(specfile_name);
@@ -91,10 +94,32 @@ class TestModuleSpec(unittest.TestCase):
         self.assertEqual(True, self.validate_data("spec22.spec", "data22_7.data"))
         self.assertEqual(False, self.validate_data("spec22.spec", "data22_8.data"))
 
+    def validate_command_params(self, specfile_name, datafile_name, cmd_name):
+        dd = self.read_spec_file(specfile_name);
+        data_file = open(self.spec_file(datafile_name))
+        data_str = data_file.read()
+        params = isc.cc.data.parse_value_str(data_str)
+        return dd.validate_command(cmd_name, params)
+
+    def test_command_validation(self):
+        self.assertEqual(True, self.validate_command_params("spec27.spec", "data22_1.data", 'cmd1'))
+        self.assertEqual(False, self.validate_command_params("spec27.spec", "data22_2.data",'cmd1'))
+        self.assertEqual(False, self.validate_command_params("spec27.spec", "data22_3.data", 'cmd1'))
+        self.assertEqual(False, self.validate_command_params("spec27.spec", "data22_4.data", 'cmd1'))
+        self.assertEqual(False, self.validate_command_params("spec27.spec", "data22_5.data", 'cmd1'))
+        self.assertEqual(True, self.validate_command_params("spec27.spec", "data22_6.data", 'cmd1'))
+        self.assertEqual(True, self.validate_command_params("spec27.spec", "data22_7.data", 'cmd1'))
+        self.assertEqual(False, self.validate_command_params("spec27.spec", "data22_8.data", 'cmd1'))
+        self.assertEqual(False, self.validate_command_params("spec27.spec", "data22_8.data", 'cmd2'))
+
     def test_init(self):
         self.assertRaises(ModuleSpecError, ModuleSpec, 1)
         module_spec = isc.config.module_spec_from_file(self.spec_file("spec1.spec"), False)
         self.spec1(module_spec)
+
+        module_spec = isc.config.module_spec_from_file(self.spec_file("spec25.spec"), True)
+        self.assertEqual("Spec25", module_spec.get_module_name())
+        self.assertEqual("Just an empty module", module_spec.get_module_description())
 
     def test_str(self):
         module_spec = isc.config.module_spec_from_file(self.spec_file("spec1.spec"), False)

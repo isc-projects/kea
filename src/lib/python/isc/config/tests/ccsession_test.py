@@ -13,6 +13,8 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+# $Id$
+
 #
 # Tests for the ConfigData and MultiConfigData classes
 #
@@ -375,7 +377,7 @@ class fakeUIConn():
         if name in self.get_answers:
             return self.get_answers[name]
         else:
-            return None
+            return {}
     
     def send_POST(self, name, arg = None):
         if name in self.post_answers:
@@ -396,23 +398,20 @@ class TestUIModuleCCSession(unittest.TestCase):
         
     def create_uccs2(self, fake_conn):
         module_spec = isc.config.module_spec_from_file(self.spec_file("spec2.spec"))
-        fake_conn.set_get_answer('/config_spec', { module_spec.get_module_name(): module_spec.get_config_spec()})
-        fake_conn.set_get_answer('/commands', { module_spec.get_module_name(): module_spec.get_commands_spec()})
+        fake_conn.set_get_answer('/module_spec', { module_spec.get_module_name(): module_spec.get_full_spec()})
         fake_conn.set_get_answer('/config_data', { 'version': 1 })
         return UIModuleCCSession(fake_conn)
 
     def test_init(self):
         fake_conn = fakeUIConn()
-        fake_conn.set_get_answer('/config_spec', {})
-        fake_conn.set_get_answer('/commands', {})
+        fake_conn.set_get_answer('/module_spec', {})
         fake_conn.set_get_answer('/config_data', { 'version': 1 })
         uccs = UIModuleCCSession(fake_conn)
         self.assertEqual({}, uccs._specifications)
         self.assertEqual({ 'version': 1}, uccs._current_config)
 
         module_spec = isc.config.module_spec_from_file(self.spec_file("spec2.spec"))
-        fake_conn.set_get_answer('/config_spec', { module_spec.get_module_name(): module_spec.get_config_spec()})
-        fake_conn.set_get_answer('/commands', { module_spec.get_module_name(): module_spec.get_commands_spec()})
+        fake_conn.set_get_answer('/module_spec', { module_spec.get_module_name(): module_spec.get_full_spec()})
         fake_conn.set_get_answer('/config_data', { 'version': 1 })
         uccs = UIModuleCCSession(fake_conn)
         self.assertEqual(module_spec._module_spec, uccs._specifications['Spec2']._module_spec)

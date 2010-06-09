@@ -14,7 +14,8 @@
 
 // $Id$
 
-#include "config.h"
+#include <config.h>
+#include "session_config.h"
 
 #include <stdint.h>
 
@@ -23,11 +24,14 @@
 #include <iostream>
 #include <sstream>
 
-#ifdef HAVE_BOOST_SYSTEM
+#include <sys/un.h>
+
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
-#include <boost/asio.hpp>
-#endif
+
+#include <asio.hpp>
+#include <asio/error_code.hpp>
+#include <asio/system_error.hpp>
 
 #include <exceptions/exceptions.h>
 
@@ -38,12 +42,10 @@ using namespace std;
 using namespace isc::cc;
 using namespace isc::data;
 
-#ifdef HAVE_BOOST_SYSTEM
-// some of the boost::asio names conflict with socket API system calls
-// (e.g. write(2)) so we don't import the entire boost::asio namespace.
-using boost::asio::io_service;
-using boost::asio::ip::tcp;
-#endif
+// some of the asio names conflict with socket API system calls
+// (e.g. write(2)) so we don't import the entire asio namespace.
+using asio::io_service;
+using asio::ip::tcp;
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -54,27 +56,27 @@ namespace cc {
 
 class SessionImpl {
 public:
-    SessionImpl() : sequence_(-1) {}
+    SessionImpl() : sequence_(-1) { queue_ = Element::createFromString("[]"); }
     virtual ~SessionImpl() {}
-    virtual void establish() = 0; 
+    virtual void establish(const char& socket_file) = 0;
     virtual int getSocket() = 0;
     virtual void disconnect() = 0;
     virtual void writeData(const void* data, size_t datalen) = 0;
     virtual size_t readDataLength() = 0;
     virtual void readData(void* data, size_t datalen) = 0;
     virtual void startRead(boost::function<void()> user_handler) = 0;
-
+    
     int sequence_; // the next sequence number to use
     std::string lname_;
+    ElementPtr queue_;
 };
 
-#ifdef HAVE_BOOST_SYSTEM
 class ASIOSession : public SessionImpl {
 public:
     ASIOSession(io_service& io_service) :
         io_service_(io_service), socket_(io_service_), data_length_(0)
     {}
-    virtual void establish();
+    virtual void establish(const char& socket_file);
     virtual void disconnect();
     virtual int getSocket() { return (socket_.native()); }
     virtual void writeData(const void* data, size_t datalen);
@@ -82,23 +84,28 @@ public:
     virtual void readData(void* data, size_t datalen);
     virtual void startRead(boost::function<void()> user_handler);
 private:
-    void internalRead(const boost::system::error_code& error,
+    void internalRead(const asio::error_code& error,
                       size_t bytes_transferred);
 
 private:
     io_service& io_service_;
-    tcp::socket socket_;
+    asio::local::stream_protocol::socket socket_;
     uint32_t data_length_;
     boost::function<void()> user_handler_;
-    boost::system::error_code error_;
+    asio::error_code error_;
 };
 
+
+
 void
-ASIOSession::establish() {
-    socket_.connect(tcp::endpoint(boost::asio::ip::address_v4::loopback(),
-                                  9912), error_);
+ASIOSession::establish(const char& socket_file) {
+    try {
+        socket_.connect(asio::local::stream_protocol::endpoint(&socket_file), error_);
+    } catch (asio::system_error& se) {
+        isc_throw(SessionError, se.what());
+    }
     if (error_) {
-        isc_throw(SessionError, "Unable to connect to message queue");
+        isc_throw(SessionError, "Unable to connect to message queue.");
     }
 }
 
@@ -111,9 +118,9 @@ ASIOSession::disconnect() {
 void
 ASIOSession::writeData(const void* data, size_t datalen) {
     try {
-        boost::asio::write(socket_, boost::asio::buffer(data, datalen));
-    } catch (const boost::system::system_error& boost_ex) {
-        isc_throw(SessionError, "ASIO write failed: " << boost_ex.what());
+        asio::write(socket_, asio::buffer(data, datalen));
+    } catch (const asio::system_error& asio_ex) {
+        isc_throw(SessionError, "ASIO write failed: " << asio_ex.what());
     }
 }
 
@@ -136,11 +143,11 @@ ASIOSession::readDataLength() {
 void
 ASIOSession::readData(void* data, size_t datalen) {
     try {
-        boost::asio::read(socket_, boost::asio::buffer(data, datalen));
-    } catch (const boost::system::system_error& boost_ex) {
+        asio::read(socket_, asio::buffer(data, datalen));
+    } catch (const asio::system_error& asio_ex) {
         // to hide boost specific exceptions, we catch them explicitly
         // and convert it to SessionError.
-        isc_throw(SessionError, "ASIO read failed: " << boost_ex.what());
+        isc_throw(SessionError, "ASIO read failed: " << asio_ex.what());
     }
 }
 
@@ -148,15 +155,15 @@ void
 ASIOSession::startRead(boost::function<void()> user_handler) {
     data_length_ = 0;
     user_handler_ = user_handler;
-    async_read(socket_, boost::asio::buffer(&data_length_,
+    async_read(socket_, asio::buffer(&data_length_,
                                             sizeof(data_length_)),
                boost::bind(&ASIOSession::internalRead, this,
-                           boost::asio::placeholders::error,
-                           boost::asio::placeholders::bytes_transferred));
+                           asio::placeholders::error,
+                           asio::placeholders::bytes_transferred));
 }
 
 void
-ASIOSession::internalRead(const boost::system::error_code& error,
+ASIOSession::internalRead(const asio::error_code& error,
                           size_t bytes_transferred)
 {
     if (!error) {
@@ -170,14 +177,13 @@ ASIOSession::internalRead(const boost::system::error_code& error,
         isc_throw(SessionError, "asynchronous read failed");
     }
 }
-#endif
 
 class SocketSession : public SessionImpl {
 public:
     SocketSession() : sock_(-1) {}
     virtual ~SocketSession() { disconnect(); }
     virtual int getSocket() { return (sock_); }
-    void establish();
+    void establish(const char& socket_file);
     virtual void disconnect()
     {
         if (sock_ >= 0) {
@@ -212,29 +218,25 @@ public:
 }
 
 void
-SocketSession::establish() {
-    int s;
-    struct sockaddr_in sin;
+SocketSession::establish(const char& socket_file) {
+    struct sockaddr_un s_un;
+#ifdef HAVE_SA_LEN
+    s_un.sun_len = sizeof(struct sockaddr_un);
+#endif
 
-    s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (strlen(&socket_file) >= sizeof(s_un.sun_path)) {
+        isc_throw(SessionError, "Unable to connect to message queue; "
+                  "socket file path too long: " << socket_file);
+    }
+    s_un.sun_family = AF_UNIX;
+    strncpy(s_un.sun_path, &socket_file, sizeof(s_un.sun_path) - 1);
+
+    int s = socket(AF_UNIX, SOCK_STREAM, 0);
     if (s < 0) {
         isc_throw(SessionError, "socket() failed");
     }
-    
-    int port = atoi(getenv("ISC_MSGQ_PORT"));
-    if (port == 0) {
-        port = 9912;
-    }
 
-    sin.sin_family = AF_INET;
-    sin.sin_port = htons(port);
-    sin.sin_addr.s_addr = INADDR_ANY;
-
-#ifdef HAVE_SIN_LEN
-    sin.sin_len = sizeof(struct sockaddr_in);
-#endif
-
-    if (connect(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
+    if (connect(s, (struct sockaddr *)&s_un, sizeof(s_un)) < 0) {
         close(s);
         isc_throw(SessionError, "Unable to connect to message queue");
     }
@@ -270,10 +272,8 @@ SocketSession::readData(void* data, const size_t datalen) {
 Session::Session() : impl_(new SocketSession)
 {}
 
-#ifdef HAVE_BOOST_SYSTEM
 Session::Session(io_service& io_service) : impl_(new ASIOSession(io_service))
 {}
-#endif
 
 Session::~Session() {
     delete impl_;
@@ -295,8 +295,15 @@ Session::startRead(boost::function<void()> read_callback) {
 }
 
 void
-Session::establish() {
-    impl_->establish();
+Session::establish(const char* socket_file) {
+    if (socket_file == NULL) {
+        socket_file = getenv("BIND10_MSGQ_SOCKET_FILE");
+    }
+    if (socket_file == NULL) {
+        socket_file = BIND10_MSGQ_SOCKET_FILE;
+    }
+
+    impl_->establish(*socket_file);
 
     // once established, encapsulate the implementation object so that we
     // can safely release the internal resource when exception happens
@@ -314,7 +321,6 @@ Session::establish() {
     recvmsg(routing, msg, false);
 
     impl_->lname_ = msg->get("lname")->stringValue();
-    cout << "My local name is:  " << impl_->lname_ << endl;
 
     // At this point there's no risk of resource leak.
     session_holder.clear();
@@ -352,35 +358,35 @@ Session::sendmsg(ElementPtr& env, ElementPtr& msg) {
 }
 
 bool
-Session::recvmsg(ElementPtr& msg, bool nonblock UNUSED_PARAM) {
-    size_t length = impl_->readDataLength();
-
-    unsigned short header_length_net;
-    impl_->readData(&header_length_net, sizeof(header_length_net));
-
-    unsigned short header_length = ntohs(header_length_net);
-    if (header_length != length) {
-        isc_throw(SessionError, "Length parameters invalid: total=" << length
-                  << ", header=" << header_length);
-    }
-
-    std::vector<char> buffer(length);
-    impl_->readData(&buffer[0], length);
-
-    std::string wire = std::string(&buffer[0], length);
-    std::stringstream wire_stream;
-    wire_stream << wire;
-
-    msg = Element::fromWire(wire_stream, length);
-
-    return (true);
-    // XXXMLG handle non-block here, and return false for short reads
+Session::recvmsg(ElementPtr& msg, bool nonblock, int seq) {
+    ElementPtr l_env;
+    return recvmsg(l_env, msg, nonblock, seq);
 }
 
 bool
-Session::recvmsg(ElementPtr& env, ElementPtr& msg, bool nonblock UNUSED_PARAM) {
+Session::recvmsg(ElementPtr& env, ElementPtr& msg,
+                 bool nonblock, int seq) {
     size_t length = impl_->readDataLength();
-
+    ElementPtr l_env, l_msg;
+    if (hasQueuedMsgs()) {
+        ElementPtr q_el;
+        for (int i = 0; i < impl_->queue_->size(); i++) {
+            q_el = impl_->queue_->get(i);
+            if (( seq == -1 &&
+                  !q_el->get(0)->contains("reply")
+                ) || (
+                  q_el->get(0)->contains("reply") &&
+                  q_el->get(0)->get("reply")->intValue() == seq
+                )
+               ) {
+                   env = q_el->get(0);
+                   msg = q_el->get(1);
+                   impl_->queue_->remove(i);
+                   return true;
+            }
+        }
+    }
+    
     unsigned short header_length_net;
     impl_->readData(&header_length_net, sizeof(header_length_net));
 
@@ -400,13 +406,28 @@ Session::recvmsg(ElementPtr& env, ElementPtr& msg, bool nonblock UNUSED_PARAM) {
                                         length - header_length);
     std::stringstream header_wire_stream;
     header_wire_stream << header_wire;
-    env = Element::fromWire(header_wire_stream, header_length);
+    l_env = Element::fromWire(header_wire_stream, header_length);
     
     std::stringstream body_wire_stream;
     body_wire_stream << body_wire;
-    msg = Element::fromWire(body_wire_stream, length - header_length);
-
-    return (true);
+    l_msg = Element::fromWire(body_wire_stream, length - header_length);
+    if ((seq == -1 &&
+         !l_env->contains("reply")
+        ) || (
+         l_env->contains("reply") &&
+         l_env->get("reply")->intValue() == seq
+        )
+       ) {
+        env = l_env;
+        msg = l_msg;
+        return true;
+    } else {
+        ElementPtr q_el = Element::createFromString("[]");
+        q_el->add(l_env);
+        q_el->add(l_msg);
+        impl_->queue_->add(q_el);
+        return recvmsg(env, msg, nonblock, seq);
+    }
     // XXXMLG handle non-block here, and return false for short reads
 }
 
@@ -432,47 +453,55 @@ Session::unsubscribe(std::string group, std::string instance) {
     sendmsg(env);
 }
 
-unsigned int
+int
 Session::group_sendmsg(ElementPtr msg, std::string group,
                        std::string instance, std::string to)
 {
     ElementPtr env = Element::create(std::map<std::string, ElementPtr>());
-
+    int nseq = ++impl_->sequence_;
+    
     env->set("type", Element::create("send"));
     env->set("from", Element::create(impl_->lname_));
     env->set("to", Element::create(to));
     env->set("group", Element::create(group));
     env->set("instance", Element::create(instance));
-    env->set("seq", Element::create(impl_->sequence_));
+    env->set("seq", Element::create(nseq));
     //env->set("msg", Element::create(msg->toWire()));
 
     sendmsg(env, msg);
-
-    return (++impl_->sequence_);
+    return nseq;
 }
 
 bool
 Session::group_recvmsg(ElementPtr& envelope, ElementPtr& msg,
-                       bool nonblock)
+                       bool nonblock, int seq)
 {
-    return (recvmsg(envelope, msg, nonblock));
+    return (recvmsg(envelope, msg, nonblock, seq));
 }
 
-unsigned int
+int
 Session::reply(ElementPtr& envelope, ElementPtr& newmsg) {
     ElementPtr env = Element::create(std::map<std::string, ElementPtr>());
-
+    int nseq = ++impl_->sequence_;
+    
     env->set("type", Element::create("send"));
     env->set("from", Element::create(impl_->lname_));
     env->set("to", Element::create(envelope->get("from")->stringValue()));
     env->set("group", Element::create(envelope->get("group")->stringValue()));
     env->set("instance", Element::create(envelope->get("instance")->stringValue()));
-    env->set("seq", Element::create(impl_->sequence_));
+    env->set("seq", Element::create(nseq));
     env->set("reply", Element::create(envelope->get("seq")->intValue()));
 
     sendmsg(env, newmsg);
 
-    return (++impl_->sequence_);
+    return nseq;
 }
+
+bool
+Session::hasQueuedMsgs()
+{
+    return (impl_->queue_->size() > 0);
+}
+
 }
 }

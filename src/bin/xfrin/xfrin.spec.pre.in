@@ -1,6 +1,7 @@
 {
   "module_spec": {
     "module_name": "Xfrin",
+    "module_description": "XFR in daemon",
     "config_data": [
       {
         "item_name": "transfers_in",
@@ -47,5 +48,3 @@
     ]
   }
 }
-
-

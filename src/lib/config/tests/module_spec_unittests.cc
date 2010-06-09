@@ -60,6 +60,12 @@ TEST(ModuleSpec, ReadingSpecfiles) {
     dd = moduleSpecFromFile(specfile("spec2.spec"));
     EXPECT_EQ("[ {\"command_args\": [ {\"item_default\": \"\", \"item_name\": \"message\", \"item_optional\": False, \"item_type\": \"string\"} ], \"command_description\": \"Print the given message to stdout\", \"command_name\": \"print_message\"}, {\"command_args\": [  ], \"command_description\": \"Shut down BIND 10\", \"command_name\": \"shutdown\"} ]", dd.getCommandsSpec()->str());
     EXPECT_EQ("Spec2", dd.getModuleName());
+    EXPECT_EQ("", dd.getModuleDescription());
+
+    dd = moduleSpecFromFile(specfile("spec25.spec"));
+    EXPECT_EQ("Spec25", dd.getModuleName());
+    EXPECT_EQ("Just an empty module", dd.getModuleDescription());
+    EXPECT_THROW(moduleSpecFromFile(specfile("spec26.spec")), ModuleSpecError);
 
     std::ifstream file;
     file.open(specfile("spec1.spec").c_str());

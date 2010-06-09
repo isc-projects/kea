@@ -81,8 +81,7 @@ def create_answer(rcode, arg = None):
 # 'fixed' commands
 """Fixed names for command and configuration messages"""
 COMMAND_CONFIG_UPDATE = "config_update"
-COMMAND_COMMANDS_UPDATE = "commands_update"
-COMMAND_SPECIFICATION_UPDATE = "specification_update"
+COMMAND_MODULE_SPECIFICATION_UPDATE = "module_specification_update"
 
 COMMAND_GET_COMMANDS_SPEC = "get_commands_spec"
 COMMAND_GET_CONFIG = "get_config"
@@ -314,16 +313,9 @@ class UIModuleCCSession(MultiConfigData):
         # this step should be unnecessary but is the current way cmdctl returns stuff
         # so changes are needed there to make this clean (we need a command to simply get the
         # full specs for everything, including commands etc, not separate gets for that)
-        specs = self._conn.send_GET('/config_spec')
-        commands = self._conn.send_GET('/commands')
+        specs = self._conn.send_GET('/module_spec')
         for module in specs.keys():
-            cur_spec = { 'module_name': module }
-            if module in specs and specs[module]:
-                cur_spec['config_data'] = specs[module]
-            if module in commands and commands[module]:
-                cur_spec['commands'] = commands[module]
-            
-            self.set_specification(isc.config.ModuleSpec(cur_spec))
+            self.set_specification(isc.config.ModuleSpec(specs[module]))
 
     def request_current_config(self):
         """Requests the current configuration from the configuration

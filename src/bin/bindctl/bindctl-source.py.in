@@ -29,7 +29,7 @@ __version__ = 'Bindctl'
 
 def prepare_config_commands(tool):
     '''Prepare fixed commands for local configuration editing'''
-    module = ModuleInfo(name = "config", desc = "Configuration commands")
+    module = ModuleInfo(name = CONFIG_MODULE_NAME, desc = "Configuration commands")
     cmd = CommandInfo(name = "show", desc = "Show configuration")
     param = ParamInfo(name = "identifier", type = "string", optional=True)
     cmd.add_param(param)

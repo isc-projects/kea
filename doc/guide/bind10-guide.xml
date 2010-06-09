@@ -75,7 +75,8 @@
 	data source backend is SQLite3. The authoritative server
 	requires SQLite 3.3.9 or newer.
         The <command>b10-xfrin</command> and <command>b10-xfrout</command>
-	modules require the libboost library, libpython3 library,
+	modules require the libboost library,
+        Boost Python library, libpython3 library,
 	and the Python _sqlite3.so module.
       </para></note>
 <!-- TODO: this will change ... -->
@@ -98,32 +99,28 @@
       <para>
         BIND 10 is modular.  Part of this modularity is
         accomplished using multiple cooperating processes which, together,
-        provide DNS functionality.  This is a change from the previous generation
-        of BIND software, which used a single process.
+	provide the server functionality.  This is a change from
+	the previous generation of BIND software, which used a
+	single process.
       </para>
 
       <para>
-        At first, running many different processes may seem confusing.  However,
-        these processes are started, stopped, and maintained by a single command,
-        <command>bind10</command>.  Additionally, the processes started by
-        the <command>bind10</command> command have names starting with "b10-".
+	At first, running many different processes may seem confusing.
+	However, these processes are started, stopped, and maintained
+	by a single command, <command>bind10</command>.
+	This command starts a master process which will start other
+	processes as needed.
+	The processes started by the <command>bind10</command>
+	command have names starting with "b10-", including:
       </para>
       
       <para>
-        Starting and stopping the server is performed by a single command,
-        <command>bind10</command>.  This command starts a master process
-        which will start other processes as needed.
-      </para>
-      
-      <para>
-        Most of these are run automatically by a single command,
-        <command>bind10</command> and should not be run manually.
 
         <itemizedlist>
           <listitem>
             <simpara>
               <command>b10-msgq</command> &mdash;
-              message bus daemon.
+              Message bus daemon.
               This process coordinates communication between all of the other
               BIND 10 processes.
             </simpara>
@@ -131,21 +128,21 @@
           <listitem>
             <simpara>
               <command>b10-auth</command> &mdash;
-              authoritative DNS server.
+              Authoritative DNS server.
               This process serves DNS requests.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
               <command>b10-cfgmgr</command> &mdash;
-              configuration manager.
+              Configuration manager.
               This process maintains all of the configuration for BIND 10.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
               <command>b10-cmdctl</command> &mdash;
-              command and control service.
+              Command and control service.
               This process allows external control of the BIND 10 system.
             </simpara>
           </listitem>
@@ -171,6 +168,12 @@
 
         </itemizedlist>
       </para>
+
+      <para>
+	These are ran automatically by <command>bind10</command>
+	and do not need to be run manually.
+      </para>
+
     </section>
 
     <section id="managing_once_running">
@@ -269,7 +272,7 @@ var/
         </para>
 
         <para>
-	  The Boost Library, Boost Python library, Python Library,
+	  The Boost Library, Boost Python Library, Python Library,
 	  and Python _sqlite3 module are required to enable the
 	  Xfrout and Xfrin support.
         </para>
@@ -278,23 +281,6 @@ var/
           The Python related libraries and modules need to be built
           for Python 3.1.
         </simpara></note>
-
-        <para>
-          If the Boost System Library is detected at configure time,
-          BIND 10 will be built using an alternative method for
-          networking I/O using Boost ASIO support.  This provides
-          asynchrony support; with ASIO the Authoritative DNS server
-          can handle other queries while the processing of a TCP
-          transaction stalls.
-          This dependency is not required unless you need
-          <!-- TODO: want --> this feature as TCP transport support is
-          provided using alternative code.
-        </para>
-
-<note><simpara>
-We recommend using the Boost libraries as it provides a safer TCP
-implementation in BIND 10. 
-</simpara></note>
 
         <para>
           Building BIND 10 also requires a C++ compiler and
@@ -517,14 +503,6 @@ implementation in BIND 10.
           </varlistentry>
 
           <varlistentry>
-            <term>--with-boost-system</term>
-            <listitem> 
-              <simpara>Define to use the Boost System library.
-              </simpara>
-            </listitem> 
-          </varlistentry>
-
-          <varlistentry>
             <term>--with-pythonpath</term>
             <listitem> 
               <simpara>Define the path to Python 3.1 if it is not in the
@@ -549,14 +527,14 @@ implementation in BIND 10.
   <!-- TODO: lcov -->
 
         <para>
-          For example, the following configures it to build
-    with BOOST ASIO support, find the Boost headers, find the
+          For example, the following configures it
+    build with Boost Python support (for Python DNS library),
+    find the Boost headers and library, find the
     Python interpreter, and sets the installation location:
 
           <screen>$ <userinput>./configure --with-boost-lib=/usr/pkg/lib \
       --with-boost-include=/usr/pkg/include \
       --with-boost-python \
-      --with-boost-system \
       --with-pythonpath=/usr/pkg/bin/python3.1 \
       --prefix=/opt/bind10</userinput></screen>
         </para>

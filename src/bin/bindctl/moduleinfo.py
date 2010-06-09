@@ -33,17 +33,21 @@ PARAM_NODE_NAME = 'param'
 
 class ParamInfo:
     """One parameter of one command.
-    Each command parameter has four attributes:
-    parameter name, parameter type, parameter value, and parameter description
+    Each command parameter has five attributes:
+    parameter name, parameter type, parameter value,
+    parameter description and paramter's spec(got from
+    module spec file). 
     """
     def __init__(self, name, desc = '', type = STRING_TYPE, 
-                 optional = False, value = '', default_value = ''):
+                 optional = False, value = '', default_value = '', 
+                 param_spec = None):
         self.name = name
         self.type = type
         self.value = value
         self.default_value = default_value                           
         self.desc = desc
         self.is_optional = optional
+        self.param_spec = param_spec
     
     def __str__(self):        
         return str("\t%s <type: %s> \t(%s)" % (self.name, self.type, self.desc))

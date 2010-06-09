@@ -276,6 +276,70 @@ class TestUnixSockServer(unittest.TestCase):
         self.unix.decrease_transfers_counter()
         self.assertEqual(count - 1, self.unix._transfers_counter)
 
+    def _remove_file(self, sock_file):
+        try:
+            os.remove(sock_file)
+        except OSError:
+            pass
+ 
+    def test_sock_file_in_use_file_exist(self):
+        sock_file = 'temp.sock.file'
+        self._remove_file(sock_file)
+        self.assertFalse(self.unix._sock_file_in_use(sock_file))
+        self.assertFalse(os.path.exists(sock_file))
+
+    def test_sock_file_in_use_file_not_exist(self):
+        self.assertFalse(self.unix._sock_file_in_use('temp.sock.file'))
+
+    def _start_unix_sock_server(self, sock_file):
+        serv = ThreadingUnixStreamServer(sock_file, BaseRequestHandler)
+        serv_thread = threading.Thread(target=serv.serve_forever)
+        serv_thread.setDaemon(True)
+        serv_thread.start()
+
+    def test_sock_file_in_use(self):
+        sock_file = 'temp.sock.file'
+        self._remove_file(sock_file)
+        self.assertFalse(self.unix._sock_file_in_use(sock_file))
+        self._start_unix_sock_server(sock_file)
+
+        old_stdout = sys.stdout
+        sys.stdout = open(os.devnull, 'w')
+        self.assertTrue(self.unix._sock_file_in_use(sock_file))
+        sys.stdout = old_stdout
+
+    def test_remove_unused_sock_file_in_use(self):
+        sock_file = 'temp.sock.file'
+        self._remove_file(sock_file)
+        self.assertFalse(self.unix._sock_file_in_use(sock_file))
+        self._start_unix_sock_server(sock_file)
+        old_stdout = sys.stdout
+        sys.stdout = open(os.devnull, 'w')
+        try:
+            self.unix._remove_unused_sock_file(sock_file)
+        except SystemExit:
+            pass
+        else:
+            # This should never happen
+            self.assertTrue(False)
+
+        sys.stdout = old_stdout
+
+    def test_remove_unused_sock_file_dir(self):
+        import tempfile
+        dir_name = tempfile.mkdtemp()
+        old_stdout = sys.stdout
+        sys.stdout = open(os.devnull, 'w')
+        try:
+            self.unix._remove_unused_sock_file(dir_name)
+        except SystemExit:
+            pass
+        else:
+            # This should never happen
+            self.assertTrue(False)
+
+        sys.stdout = old_stdout
+        os.rmdir(dir_name)
 
 if __name__== "__main__":
     unittest.main()

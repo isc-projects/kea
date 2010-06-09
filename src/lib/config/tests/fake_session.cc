@@ -23,12 +23,6 @@
 #include <iostream>
 #include <sstream>
 
-#ifdef HAVE_BOOST_SYSTEM
-#include <boost/bind.hpp>
-#include <boost/function.hpp>
-#include <boost/asio.hpp>
-#endif
-
 #include <boost/foreach.hpp>
 
 #include <exceptions/exceptions.h>
@@ -39,13 +33,6 @@
 using namespace std;
 using namespace isc::cc;
 using namespace isc::data;
-
-#ifdef HAVE_BOOST_SYSTEM
-// some of the boost::asio names conflict with socket API system calls
-// (e.g. write(2)) so we don't import the entire boost::asio namespace.
-using boost::asio::io_service;
-using boost::asio::ip::tcp;
-#endif
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -144,13 +131,16 @@ Session::Session()
 {
 }
 
-#ifdef HAVE_BOOST_SYSTEM
-Session::Session(io_service& io_service UNUSED_PARAM)
+Session::Session(asio::io_service& io_service UNUSED_PARAM)
 {
 }
-#endif
 
 Session::~Session() {
+}
+
+bool
+Session::connect() {
+    return true;
 }
 
 void
@@ -167,7 +157,7 @@ Session::startRead(boost::function<void()> read_callback UNUSED_PARAM) {
 }
 
 void
-Session::establish() {
+Session::establish(const char* socket_file) {
 }
 
 //
@@ -188,7 +178,7 @@ Session::sendmsg(ElementPtr& env, ElementPtr& msg) {
 }
 
 bool
-Session::recvmsg(ElementPtr& msg, bool nonblock UNUSED_PARAM) {
+Session::recvmsg(ElementPtr& msg, bool nonblock UNUSED_PARAM, int seq UNUSED_PARAM) {
     //cout << "[XX] client asks for message " << endl;
     if (initial_messages &&
         initial_messages->getType() == Element::list &&
@@ -202,7 +192,7 @@ Session::recvmsg(ElementPtr& msg, bool nonblock UNUSED_PARAM) {
 }
 
 bool
-Session::recvmsg(ElementPtr& env, ElementPtr& msg, bool nonblock UNUSED_PARAM) {
+Session::recvmsg(ElementPtr& env, ElementPtr& msg, bool nonblock UNUSED_PARAM, int seq UNUSED_PARAM) {
     //cout << "[XX] client asks for message and env" << endl;
     env = ElementPtr();
     if (initial_messages &&
@@ -269,9 +259,9 @@ Session::group_sendmsg(ElementPtr msg, std::string group,
 
 bool
 Session::group_recvmsg(ElementPtr& envelope, ElementPtr& msg,
-                       bool nonblock)
+                       bool nonblock, int seq)
 {
-    return (recvmsg(envelope, msg, nonblock));
+    return (recvmsg(envelope, msg, nonblock, seq));
 }
 
 unsigned int
@@ -280,6 +270,11 @@ Session::reply(ElementPtr& envelope, ElementPtr& newmsg) {
     //cout << "[XX] env: " << envelope << endl;
     addMessage(newmsg, envelope->get("group")->stringValue(), envelope->get("to")->stringValue());
     return 1;
+}
+
+bool
+Session::hasQueuedMsgs() {
+    return false;
 }
 
 }
