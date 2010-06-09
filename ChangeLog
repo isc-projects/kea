@@ -1,3 +1,10 @@
+  53.   [bug]      zhanglikun
+	bin/bindctl: Generate a unique session ID by using 
+	socket.gethostname() instead of socket.gethostbyname(), 
+	since the latter one could make bindctl	stall if its own 
+	host name can't be resolved.
+	(Trac #228, svn r2096)
+
   52.   [func]      zhanglikun
 	bin/xfrout: When xfrout is launched, check whether the
 	socket file is being used by one running xfrout process, 
