@@ -500,6 +500,18 @@ TEST_F(NameTest, split) {
                  OutOfRange);
 }
 
+TEST_F(NameTest, split_for_suffix) {
+    EXPECT_PRED_FORMAT2(UnitTestUtil::matchName, example_name.split(1),
+                        Name("example.com"));
+    EXPECT_PRED_FORMAT2(UnitTestUtil::matchName, example_name.split(0),
+                        example_name);
+    EXPECT_PRED_FORMAT2(UnitTestUtil::matchName, example_name.split(3),
+                        Name("."));
+
+    // Invalid case: the level must be less than the original label count.
+    EXPECT_THROW(example_name.split(4), OutOfRange);
+}
+
 TEST_F(NameTest, downcase) {
     // usual case: all-upper case name to all-lower case
     compareInWireFormat(example_name_upper.downcase(), example_name);

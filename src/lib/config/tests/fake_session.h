@@ -25,10 +25,8 @@
 
 #include <cc/data.h>
 
-namespace boost {
 namespace asio {
 class io_service;
-}
 }
 
 // global variables so tests can insert
@@ -65,7 +63,7 @@ namespace isc {
             // public so tests can inspect them
         
             Session();
-            Session(boost::asio::io_service& ioservice);
+            Session(asio::io_service& ioservice);
             ~Session();
 
             // XXX: quick hack to allow the user to watch the socket directly.
@@ -73,16 +71,17 @@ namespace isc {
 
             void startRead(boost::function<void()> read_callback);
 
-            void establish();
+            void establish(const char* socket_file = NULL);
+            bool connect();
             void disconnect();
             void sendmsg(isc::data::ElementPtr& msg);
             void sendmsg(isc::data::ElementPtr& env,
                          isc::data::ElementPtr& msg);
             bool recvmsg(isc::data::ElementPtr& msg,
-                         bool nonblock = true);
+                         bool nonblock = true, int seq = -1);
             bool recvmsg(isc::data::ElementPtr& env,
                          isc::data::ElementPtr& msg,
-                         bool nonblock = true);
+                         bool nonblock = true, int seq = -1);
             void subscribe(std::string group,
                            std::string instance = "*");
             void unsubscribe(std::string group,
@@ -93,9 +92,11 @@ namespace isc {
                                        std::string to = "*");
             bool group_recvmsg(isc::data::ElementPtr& envelope,
                                isc::data::ElementPtr& msg,
-                               bool nonblock = true);
+                               bool nonblock = true,
+                               int seq = -1);
             unsigned int reply(isc::data::ElementPtr& envelope,
                                isc::data::ElementPtr& newmsg);
+            bool hasQueuedMsgs();
 
         };
     } // namespace cc

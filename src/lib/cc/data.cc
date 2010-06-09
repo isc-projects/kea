@@ -204,47 +204,27 @@ bool operator==(const isc::data::ElementPtr a, const isc::data::ElementPtr b) {
 //
 ElementPtr
 Element::create(const int i) {
-    try {
-        return ElementPtr(new IntElement(i));
-    } catch (std::bad_alloc) {
-        return ElementPtr();
-    }
+    return ElementPtr(new IntElement(i));
 }
 
 ElementPtr
 Element::create(const double d) {
-    try {
-        return ElementPtr(new DoubleElement(d));
-    } catch (std::bad_alloc) {
-        return ElementPtr();
-    }
+    return ElementPtr(new DoubleElement(d));
 }
 
 ElementPtr
 Element::create(const std::string& s) {
-    try {
-        return ElementPtr(new StringElement(s));
-    } catch (std::bad_alloc) {
-        return ElementPtr();
-    }
+    return ElementPtr(new StringElement(s));
 }
 
 ElementPtr
 Element::create(const bool b) {
-    try {
-        return ElementPtr(new BoolElement(b));
-    } catch (std::bad_alloc) {
-        return ElementPtr();
-    }
+    return ElementPtr(new BoolElement(b));
 }
 
 ElementPtr
 Element::create(const std::vector<ElementPtr>& v) {
-    try {
-        return ElementPtr(new ListElement(v));
-    } catch (std::bad_alloc) {
-        return ElementPtr();
-    }
+    return ElementPtr(new ListElement(v));
 }
 
 ElementPtr
@@ -255,11 +235,7 @@ Element::create(const std::map<std::string, ElementPtr>& m) {
             isc_throw(TypeError, "Map tag is too long");
         }
     }
-    try {
-        return ElementPtr(new MapElement(m));
-    } catch (std::bad_alloc) {
-        return ElementPtr();
-    }
+    return ElementPtr(new MapElement(m));
 }
 
 

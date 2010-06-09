@@ -13,6 +13,8 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+# $Id$
+
 #
 # Tests for the ConfigData and MultiConfigData classes
 #
@@ -92,6 +94,71 @@ class TestConfigData(unittest.TestCase):
         #self.assertRaises(isc.cc.data.DataTypeError, check_type, spec_part, { "value1": 1 })
 
         self.assertRaises(isc.cc.data.DataTypeError, check_type, config_spec, 1)
+
+    def test_convert_type(self):
+        config_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec22.spec").get_config_spec()
+        spec_part = find_spec_part(config_spec, "value1")
+        self.assertEqual(1, convert_type(spec_part, '1'))
+        self.assertEqual(2, convert_type(spec_part, 2.1))
+        self.assertEqual(2, convert_type(spec_part, '2'))
+        self.assertEqual(3, convert_type(spec_part, '3'))
+        self.assertEqual(1, convert_type(spec_part, True))
+
+        self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, "a")
+        self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, [ 1, 2 ])
+        self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, { "a": 1 })
+        
+        spec_part = find_spec_part(config_spec, "value2")
+        self.assertEqual(1.1, convert_type(spec_part, '1.1'))
+        self.assertEqual(123.0, convert_type(spec_part, '123'))
+        self.assertEqual(1.0, convert_type(spec_part, True))
+        self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, "a")
+        self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, [ 1, 2 ])
+        self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, { "a": 1 })
+
+        spec_part = find_spec_part(config_spec, "value3")
+        self.assertEqual(True, convert_type(spec_part, 'True'))
+        self.assertEqual(False, convert_type(spec_part, 'False'))
+        self.assertEqual(True, convert_type(spec_part, 1))
+        self.assertEqual(True, convert_type(spec_part, 1.1))
+        self.assertEqual(True, convert_type(spec_part, 'a'))
+        self.assertEqual(True, convert_type(spec_part, [1, 2]))
+        self.assertEqual(True, convert_type(spec_part, {'a' : 1}))
+
+        spec_part = find_spec_part(config_spec, "value4")
+        self.assertEqual('asdf', convert_type(spec_part, "asdf"))
+        self.assertEqual('1', convert_type(spec_part, 1))
+        self.assertEqual('1.1', convert_type(spec_part, 1.1))
+        self.assertEqual('True', convert_type(spec_part, True))
+        
+        spec_part = find_spec_part(config_spec, "value5")
+        self.assertEqual([1, 2], convert_type(spec_part, '1, 2'))
+        self.assertEqual([1, 2, 3], convert_type(spec_part, '1 2  3'))
+        self.assertEqual([1, 2, 3,4], convert_type(spec_part, '1 2  3, 4'))
+        self.assertEqual([1], convert_type(spec_part, [1,]))
+        self.assertEqual([1,2], convert_type(spec_part, [1,2]))
+        self.assertEqual([1,2], convert_type(spec_part, ['1', '2']))
+
+        self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, 1.1)
+        self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, True)
+        self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, "a")
+        self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, [ "a", "b" ])
+        self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, [ "1", "b" ])
+        self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, { "a": 1 })
+
+        spec_part = find_spec_part(config_spec, "value7")
+        self.assertEqual(['1', '2'], convert_type(spec_part, '1, 2'))
+        self.assertEqual(['1', '2', '3'], convert_type(spec_part, '1 2  3'))
+        self.assertEqual(['1', '2', '3','4'], convert_type(spec_part, '1 2  3, 4'))
+        self.assertEqual([1], convert_type(spec_part, [1,]))
+        self.assertEqual([1,2], convert_type(spec_part, [1,2]))
+        self.assertEqual(['1','2'], convert_type(spec_part, ['1', '2']))
+
+        self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, 1.1)
+        self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, True)
+        self.assertEqual(['a'], convert_type(spec_part, "a"))
+        self.assertEqual(['a', 'b'], convert_type(spec_part, ["a", "b" ]))
+        self.assertEqual([1, 'b'], convert_type(spec_part, [1, "b" ]))
 
     def test_find_spec_part(self):
         config_spec = self.cd.get_module_spec().get_config_spec()

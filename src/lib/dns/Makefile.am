@@ -1,9 +1,7 @@
 SUBDIRS = . tests python
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
-if GCC_WERROR_OK
-AM_CPPFLAGS += -Werror
-endif
+AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 CLEANFILES = *.gcno *.gcda
 CLEANFILES += rrclass.h rrtype.h rrparamregistry.cc rdataclass.h rdataclass.cc
@@ -79,6 +77,7 @@ libdns_la_SOURCES += question.h question.cc
 libdns_la_SOURCES += sha1.h sha1.cc
 libdns_la_SOURCES += tsig.h tsig.cc
 
+
 #if HAVE_BOOST_PYTHON
 ## This is a loadable module for python scripts, so we use the prefix "pyexec"
 ## to make sure the object files will be installed in the appropriate place
@@ -86,10 +85,11 @@ libdns_la_SOURCES += tsig.h tsig.cc
 #pyexec_LTLIBRARIES = bind10_dns.la
 #bind10_dns_la_SOURCES = python_dns.cc
 #bind10_dns_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
+#bind10_dns_la_CXXFLAGS = $(AM_CXXFLAGS) $(B10_CXXFLAGS)
 #if GCC_WERROR_OK
 ## XXX: Boost.Python triggers strict aliasing violation, so if we use -Werror
 ## we need to suppress the warnings.
-#bind10_dns_la_CPPFLAGS += -fno-strict-aliasing
+#bind10_dns_la_CXXFLAGS += -fno-strict-aliasing
 #endif
 #bind10_dns_la_LDFLAGS = $(BOOST_LDFLAGS) $(PYTHON_LDFLAGS)
 ## Python prefers .so, while some OSes (specifically MacOS) use a different
@@ -107,3 +107,29 @@ rrtype.h: rrtype-placeholder.h
 rrparamregistry.cc: rrparamregistry-placeholder.cc
 rrclass.h rrtype.h rrparamregistry.cc rdataclass.h rdataclass.cc: Makefile
 	./gen-rdatacode.py
+
+libdns_includedir = $(includedir)/dns
+libdns_include_HEADERS = \
+	buffer.h \
+	dnssectime.h \
+	exceptions.h \
+	message.h \
+	messagerenderer.h \
+	name.h \
+	question.h \
+	rdata.h \
+	rdataclass.h \
+	rrclass.h \
+	rrparamregistry.h \
+	rrset.h \
+	rrsetlist.h \
+	rrttl.h \
+	rrtype.h \
+	tsig.h
+# Purposely not installing these headers:
+# base32.h # used only internally, and not actually DNS specific
+# base64.h # used only internally, and not actually DNS specific
+# hex.h # used only internally, and not actually DNS specific
+# sha1.h # used only internally, and not actually DNS specific
+# rrclass-placeholder.h
+# rrtype-placeholder.h

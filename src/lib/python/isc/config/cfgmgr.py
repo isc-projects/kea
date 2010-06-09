@@ -25,7 +25,9 @@ import ast
 import pprint
 import os
 import copy
+import tempfile
 from isc.cc import data
+from isc.config import ccsession
 
 class ConfigManagerDataReadError(Exception):
     """This exception is thrown when there is an error while reading
@@ -84,24 +86,35 @@ class ConfigManagerData:
         """Writes the current configuration data to a file. If
            output_file_name is not specified, the file used in
            read_from_file is used."""
+        filename = None
         try:
-            tmp_filename = self.db_filename + ".tmp"
-            file = open(tmp_filename, 'w');
+            file = tempfile.NamedTemporaryFile(mode='w',
+                                               prefix="b10-config.db.",
+                                               dir=self.data_path,
+                                               delete=False)
+            filename = file.name
             pp = pprint.PrettyPrinter(indent=4)
             s = pp.pformat(self.data)
             file.write(s)
             file.write("\n")
             file.close()
             if output_file_name:
-                os.rename(tmp_filename, output_file_name)
+                os.rename(filename, output_file_name)
             else:
-                os.rename(tmp_filename, self.db_filename)
+                os.rename(filename, self.db_filename)
         except IOError as ioe:
             # TODO: log this (level critical)
             print("[b10-cfgmgr] Unable to write config file; configuration not stored: " + str(ioe))
+            # TODO: debug option to keep file?
         except OSError as ose:
             # TODO: log this (level critical)
             print("[b10-cfgmgr] Unable to write config file; configuration not stored: " + str(ose))
+        try:
+            if filename and os.path.exists(filename):
+                os.remove(filename)
+        except OSError:
+            # Ok if we really can't delete it anymore, leave it
+            pass
 
     def __eq__(self, other):
         """Returns True if the data contained is equal. data_path and
@@ -148,11 +161,23 @@ class ConfigManager:
         if module_name in self.module_specs:
             del self.module_specs[module_name]
 
-    def get_module_spec(self, module_name):
+    def get_module_spec(self, module_name = None):
         """Returns the full ModuleSpec for the module with the given
-           module_name"""
-        if module_name in self.module_specs:
-            return self.module_specs[module_name]
+           module_name. If no module name is given, a dict will
+           be returned with 'name': module_spec values. If the
+           module name is given, but does not exist, an empty dict
+           is returned"""
+        if module_name:
+            if module_name in self.module_specs:
+                return self.module_specs[module_name]
+            else:
+                # TODO: log error?
+                return {}
+        else:
+            result = {}
+            for module in self.module_specs:
+                result[module] = self.module_specs[module].get_full_spec()
+            return result
 
     def get_config_spec(self, name = None):
         """Returns a dict containing 'module_name': config_spec for
@@ -201,95 +226,112 @@ class ConfigManager:
             if type(cmd) == dict:
                 if 'module_name' in cmd and cmd['module_name'] != '':
                     module_name = cmd['module_name']
-                    answer = isc.config.ccsession.create_answer(0, self.get_config_spec(module_name))
+                    answer = ccsession.create_answer(0, self.get_module_spec(module_name))
                 else:
-                    answer = isc.config.ccsession.create_answer(1, "Bad module_name in get_module_spec command")
+                    answer = ccsession.create_answer(1, "Bad module_name in get_module_spec command")
             else:
-                answer = isc.config.ccsession.create_answer(1, "Bad get_module_spec command, argument not a dict")
+                answer = ccsession.create_answer(1, "Bad get_module_spec command, argument not a dict")
         else:
-            answer = isc.config.ccsession.create_answer(0, self.get_config_spec())
+            answer = ccsession.create_answer(0, self.get_module_spec())
         return answer
+
+    def _handle_get_config_dict(self, cmd):
+        """Private function that handles the 'get_config' command
+           where the command has been checked to be a dict"""
+        if 'module_name' in cmd and cmd['module_name'] != '':
+            module_name = cmd['module_name']
+            try:
+                return ccsession.create_answer(0, data.find(self.config.data, module_name))
+            except data.DataNotFoundError as dnfe:
+                # no data is ok, that means we have nothing that
+                # deviates from default values
+                return ccsession.create_answer(0, { 'version': self.config.CONFIG_VERSION })
+        else:
+            return ccsession.create_answer(1, "Bad module_name in get_config command")
 
     def _handle_get_config(self, cmd):
         """Private function that handles the 'get_config' command"""
-        answer = {}
         if cmd != None:
             if type(cmd) == dict:
-                if 'module_name' in cmd and cmd['module_name'] != '':
-                    module_name = cmd['module_name']
-                    try:
-                        answer = isc.config.ccsession.create_answer(0, data.find(self.config.data, module_name))
-                    except data.DataNotFoundError as dnfe:
-                        # no data is ok, that means we have nothing that
-                        # deviates from default values
-                        answer = isc.config.ccsession.create_answer(0, { 'version': self.config.CONFIG_VERSION })
-                else:
-                    answer = isc.config.ccsession.create_answer(1, "Bad module_name in get_config command")
+                return self._handle_get_config_dict(cmd)
             else:
-                answer = isc.config.ccsession.create_answer(1, "Bad get_config command, argument not a dict")
+                return ccsession.create_answer(1, "Bad get_config command, argument not a dict")
         else:
-            answer = isc.config.ccsession.create_answer(0, self.config.data)
+            return ccsession.create_answer(0, self.config.data)
+
+    def _handle_set_config_module(self, cmd):
+        # the answer comes (or does not come) from the relevant module
+        # so we need a variable to see if we got it
+        answer = None
+        # todo: use api (and check the data against the definition?)
+        old_data = copy.deepcopy(self.config.data)
+        module_name = cmd[0]
+        conf_part = data.find_no_exc(self.config.data, module_name)
+        if conf_part:
+            data.merge(conf_part, cmd[1])
+            update_cmd = ccsession.create_command(ccsession.COMMAND_CONFIG_UPDATE,
+                                                  conf_part)
+            seq = self.cc.group_sendmsg(update_cmd, module_name)
+            answer, env = self.cc.group_recvmsg(False, seq)
+        else:
+            conf_part = data.set(self.config.data, module_name, {})
+            data.merge(conf_part[module_name], cmd[1])
+            # send out changed info
+            update_cmd = ccsession.create_command(ccsession.COMMAND_CONFIG_UPDATE,
+                                                  conf_part[module_name])
+            seq = self.cc.group_sendmsg(update_cmd, module_name)
+            # replace 'our' answer with that of the module
+            answer, env = self.cc.group_recvmsg(False, seq)
+        if answer:
+            rcode, val = ccsession.parse_answer(answer)
+            if rcode == 0:
+                self.write_config()
+            else:
+                self.config.data = old_data
         return answer
+
+    def _handle_set_config_all(self, cmd):
+        old_data = copy.deepcopy(self.config.data)
+        data.merge(self.config.data, cmd[0])
+        # send out changed info
+        got_error = False
+        err_list = []
+        for module in self.config.data:
+            if module != "version" and \
+               (module not in old_data or self.config.data[module] != old_data[module]):
+                update_cmd = ccsession.create_command(ccsession.COMMAND_CONFIG_UPDATE,
+                                                      self.config.data[module])
+                seq = self.cc.group_sendmsg(update_cmd, module)
+                answer, env = self.cc.group_recvmsg(False, seq)
+                if answer == None:
+                    got_error = True
+                    err_list.append("No answer message from " + module)
+                else:
+                    rcode, val = ccsession.parse_answer(answer)
+                    if rcode != 0:
+                        got_error = True
+                        err_list.append(val)
+        if not got_error:
+            self.write_config()
+            return ccsession.create_answer(0)
+        else:
+            # TODO rollback changes that did get through, should we re-send update?
+            self.config.data = old_data
+            return ccsession.create_answer(1, " ".join(err_list))
 
     def _handle_set_config(self, cmd):
         """Private function that handles the 'set_config' command"""
         answer = None
         if cmd == None:
-            return isc.config.ccsession.create_answer(1, "Wrong number of arguments")
+            return ccsession.create_answer(1, "Wrong number of arguments")
         if len(cmd) == 2:
-            # todo: use api (and check the data against the definition?)
-            old_data = copy.deepcopy(self.config.data)
-            module_name = cmd[0]
-            conf_part = data.find_no_exc(self.config.data, module_name)
-            if conf_part:
-                data.merge(conf_part, cmd[1])
-                update_cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, conf_part)
-                seq = self.cc.group_sendmsg(update_cmd, module_name)
-                answer, env = self.cc.group_recvmsg(False, seq)
-            else:
-                conf_part = data.set(self.config.data, module_name, {})
-                data.merge(conf_part[module_name], cmd[1])
-                # send out changed info
-                update_cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, conf_part[module_name])
-                seq = self.cc.group_sendmsg(update_cmd, module_name)
-                # replace 'our' answer with that of the module
-                answer, env = self.cc.group_recvmsg(False, seq)
-            if answer:
-                rcode, val = isc.config.ccsession.parse_answer(answer)
-                if rcode == 0:
-                    self.write_config()
-                else:
-                    self.config.data = old_data
+            answer = self._handle_set_config_module(cmd)
         elif len(cmd) == 1:
-            old_data = copy.deepcopy(self.config.data)
-            data.merge(self.config.data, cmd[0])
-            # send out changed info
-            got_error = False
-            err_list = []
-            for module in self.config.data:
-                if module != "version" and (module not in old_data or self.config.data[module] != old_data[module]):
-                    update_cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, self.config.data[module])
-                    seq = self.cc.group_sendmsg(update_cmd, module)
-                    answer, env = self.cc.group_recvmsg(False, seq)
-                    if answer == None:
-                        got_error = True
-                        err_list.append("No answer message from " + module)
-                    else:
-                        rcode, val = isc.config.ccsession.parse_answer(answer)
-                        if rcode != 0:
-                            got_error = True
-                            err_list.append(val)
-            if not got_error:
-                self.write_config()
-                answer = isc.config.ccsession.create_answer(0)
-            else:
-                # TODO rollback changes that did get through, should we re-send update?
-                self.config.data = old_data
-                answer = isc.config.ccsession.create_answer(1, " ".join(err_list))
+            answer = self._handle_set_config_all(cmd)
         else:
-            answer = isc.config.ccsession.create_answer(1, "Wrong number of arguments")
+            answer = ccsession.create_answer(1, "Wrong number of arguments")
         if not answer:
-            answer = isc.config.ccsession.create_answer(1, "No answer message from " + cmd[0])
+            answer = ccsession.create_answer(1, "No answer message from " + cmd[0])
             
         return answer
 
@@ -303,42 +345,38 @@ class ConfigManager:
         
         # We should make one general 'spec update for module' that
         # passes both specification and commands at once
-        spec_update = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_SPECIFICATION_UPDATE,
-                                                          [ spec.get_module_name(), spec.get_config_spec() ])
+        spec_update = ccsession.create_command(ccsession.COMMAND_MODULE_SPECIFICATION_UPDATE,
+                                               [ spec.get_module_name(), spec.get_full_spec() ])
         self.cc.group_sendmsg(spec_update, "Cmd-Ctrld")
-        cmds_update = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_COMMANDS_UPDATE,
-                                                          [ spec.get_module_name(), spec.get_commands_spec() ])
-        self.cc.group_sendmsg(cmds_update, "Cmd-Ctrld")
-        answer = isc.config.ccsession.create_answer(0)
-        return answer
+        return ccsession.create_answer(0)
 
     def handle_msg(self, msg):
         """Handle a command from the cc channel to the configuration manager"""
         answer = {}
-        cmd, arg = isc.config.ccsession.parse_command(msg)
+        cmd, arg = ccsession.parse_command(msg)
         if cmd:
-            if cmd == isc.config.ccsession.COMMAND_GET_COMMANDS_SPEC:
-                answer = isc.config.ccsession.create_answer(0, self.get_commands_spec())
-            elif cmd == isc.config.ccsession.COMMAND_GET_MODULE_SPEC:
+            if cmd == ccsession.COMMAND_GET_COMMANDS_SPEC:
+                answer = ccsession.create_answer(0, self.get_commands_spec())
+            elif cmd == ccsession.COMMAND_GET_MODULE_SPEC:
                 answer = self._handle_get_module_spec(arg)
-            elif cmd == isc.config.ccsession.COMMAND_GET_CONFIG:
+            elif cmd == ccsession.COMMAND_GET_CONFIG:
                 answer = self._handle_get_config(arg)
-            elif cmd == isc.config.ccsession.COMMAND_SET_CONFIG:
+            elif cmd == ccsession.COMMAND_SET_CONFIG:
                 answer = self._handle_set_config(arg)
-            elif cmd == isc.config.ccsession.COMMAND_SHUTDOWN:
+            elif cmd == ccsession.COMMAND_SHUTDOWN:
                 # TODO: logging
                 #print("[b10-cfgmgr] Received shutdown command")
                 self.running = False
-                answer = isc.config.ccsession.create_answer(0)
-            elif cmd == isc.config.ccsession.COMMAND_MODULE_SPEC:
+                answer = ccsession.create_answer(0)
+            elif cmd == ccsession.COMMAND_MODULE_SPEC:
                 try:
                     answer = self._handle_module_spec(isc.config.ModuleSpec(arg))
                 except isc.config.ModuleSpecError as dde:
-                    answer = isc.config.ccsession.create_answer(1, "Error in data definition: " + str(dde))
+                    answer = ccsession.create_answer(1, "Error in data definition: " + str(dde))
             else:
-                answer = isc.config.ccsession.create_answer(1, "Unknown command: " + str(cmd))
+                answer = ccsession.create_answer(1, "Unknown command: " + str(cmd))
         else:
-            answer = isc.config.ccsession.create_answer(1, "Unknown message format: " + str(msg))
+            answer = ccsession.create_answer(1, "Unknown message format: " + str(msg))
         return answer
         
     def run(self):

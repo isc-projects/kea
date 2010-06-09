@@ -13,9 +13,11 @@ the five year plan is described here:
 
         http://bind10.isc.org/wiki/Year1Deliverable
 
-This release includes the bind10 master process, msgq message bus,
-b10-auth authoritative DNS server, b10-cmdctl remote control daemon,
-b10-cfgmgr configuration manager, and a new libdns library.
+This release includes the bind10 master process, b10-msgq message
+bus, b10-auth authoritative DNS server (with SQLite3 backend),
+b10-cmdctl remote control daemon, b10-cfgmgr configuration manager,
+b10-xfrin AXFR inbound service, b10-xfrout outgoing AXFR service,
+and a new libdns library.
 
 Documentation is included and also available via the BIND 10
 website at http://bind10.isc.org/
@@ -34,12 +36,10 @@ Bugs may be reported as tickets via the developers website:
 
         http://bind10.isc.org/
 
-See the Guide for detailed installation directions.
-
 BUILDING
 
-We recommend using the Boost libraries as it provides a safer TCP
-implementation in BIND 10.
+See the Guide for detailed installation directions at
+doc/guide/bind10-guide.html.
 
 Simple build instructions:
 

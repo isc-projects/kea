@@ -28,6 +28,7 @@ import os
 from isc.config.ccsession import *
 from isc.cc import SessionError
 import socket
+import errno
 from optparse import OptionParser, OptionValueError
 try:
     from libxfr_python import *
@@ -37,14 +38,14 @@ except ImportError as e:
     # must keep running, so we warn about it and move forward.
     sys.stderr.write('[b10-xfrout] failed to import DNS or XFR module: %s\n' % str(e))
 
-if "B10_FROM_SOURCE" in os.environ:
-    SPECFILE_PATH = os.environ["B10_FROM_SOURCE"] + "/src/bin/xfrout"
+if "B10_FROM_BUILD" in os.environ:
+    SPECFILE_PATH = os.environ["B10_FROM_BUILD"] + "/src/bin/xfrout"
     UNIX_SOCKET_FILE = os.environ["B10_FROM_SOURCE"] + "/auth_xfrout_conn"
 else:
     PREFIX = "@prefix@"
     DATAROOTDIR = "@datarootdir@"
     SPECFILE_PATH = "@datadir@/@PACKAGE@".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
-    UNIX_SOCKET_FILE = "@localstatedir@".replace("${prefix}", PREFIX) + "/auth_xfrout_conn"
+    UNIX_SOCKET_FILE = "@@LOCALSTATEDIR@@/auth_xfrout_conn"
 SPECFILE_LOCATION = SPECFILE_PATH + "/xfrout.spec"
 
 MAX_TRANSFERS_OUT = 10
@@ -59,7 +60,13 @@ class XfroutSession(BaseRequestHandler):
         fd = recv_fd(self.request.fileno())
         
         if fd < 0:
-            raise XfroutException("failed to receive the FD for XFR connection")
+            # This may happen when one xfrout process try to connect to
+            # xfrout unix socket server, to check whether there is another
+            # xfrout running. 
+            print("[b10-xfrout] Failed to receive the FD for XFR connection, "
+                  "maybe because another xfrout process was started.")
+            return
+
         data_len = self.request.recv(2)
         msg_len = struct.unpack('!H', data_len)[0]
         msgdata = self.request.recv(msg_len)
@@ -182,7 +189,7 @@ class XfroutSession(BaseRequestHandler):
                 self.log_msg("transfer of '%s/IN': AXFR end" % zone_name)
         except TmpException as err:
             if verbose_mode:
-                sys.stderr.write(str(err))
+                sys.stderr.write("[b10-xfrout] %s\n" % str(err))
 
         self.server.decrease_transfers_counter()
         return    
@@ -282,18 +289,44 @@ class UnixSockServer(ThreadingUnixStreamServer):
     '''The unix domain socket server which accept xfr query sent from auth server.'''
 
     def __init__(self, sock_file, handle_class, shutdown_event, config_data):
-        try:
-            os.unlink(sock_file)
-        except:
-            pass
- 
+        self._remove_unused_sock_file(sock_file)
         self._sock_file = sock_file
         ThreadingUnixStreamServer.__init__(self, sock_file, handle_class)
         self._lock = threading.Lock()
         self._transfers_counter = 0
         self._shutdown_event = shutdown_event
         self.update_config_data(config_data)
-    
+
+    def _remove_unused_sock_file(self, sock_file):
+        '''Try to remove the socket file. If the file is being used 
+        by one running xfrout process, exit from python. 
+        If it's not a socket file or nobody is listening
+        , it will be removed. If it can't be removed, exit from python. '''
+        if self._sock_file_in_use(sock_file):
+            print("[b10-xfrout] Fail to start xfrout process, unix socket" 
+                  " file '%s' is being used by another xfrout process" % sock_file)
+            sys.exit(0)
+        else:
+            if not os.path.exists(sock_file):
+                return
+
+            try:
+                os.unlink(sock_file)
+            except OSError as err:
+                print('[b10-xfrout] Fail to remove file ' + sock_file, err)
+                sys.exit(0)
+   
+    def _sock_file_in_use(self, sock_file):
+        '''Check whether the socket file 'sock_file' exists and 
+        is being used by one running xfrout process. If it is, 
+        return True, or else return False. '''
+        try:
+            sock = socket.socket(socket.AF_UNIX)
+            sock.connect(sock_file)
+        except socket.error as err:
+            return False
+        else:
+            return True 
 
     def shutdown(self):
         ThreadingUnixStreamServer.shutdown(self)
@@ -396,7 +429,7 @@ class XfroutServer:
     def command_handler(self, cmd, args):
         if cmd == "shutdown":
             if verbose_mode:
-                log_msg("Received shutdown command")
+                print("[b10-xfrout] Received shutdown command")
             self.shutdown()
             answer = create_answer(0)
         else: 

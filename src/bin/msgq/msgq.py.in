@@ -47,11 +47,11 @@ class SubscriptionManager:
         """Add a subscription."""
         target = ( group, instance )
         if target in self.subscriptions:
-            print("Appending to existing target")
+            print("[b10-msgq] Appending to existing target")
             if socket not in self.subscriptions[target]:
                 self.subscriptions[target].append(socket)
         else:
-            print("Creating new target")
+            print("[b10-msgq] Creating new target")
             self.subscriptions[target] = [ socket ]
 
     def unsubscribe(self, group, instance, socket):
@@ -86,25 +86,33 @@ class SubscriptionManager:
 
 class MsgQ:
     """Message Queue class."""
-    def __init__(self, port=0, verbose=False):
+    # did we find a better way to do this?
+    SOCKET_FILE = os.path.join("@localstatedir@",
+                               "@PACKAGE_NAME@",
+                               "msgq_socket").replace("${prefix}",
+                                                      "@prefix@")
+    
+    def __init__(self, socket_file=None, verbose=False):
         """Initialize the MsgQ master.
         
-        The port specifies the TCP/IP port that the msgq
-        process listens on. If verbose is True, then the MsgQ reports
+        The socket_file specifies the path to the UNIX domain socket
+        that the msgq process listens on. If it is None, the
+        environment variable BIND10_MSGQ_SOCKET_FILE is used. If that
+        is not set, it will default to
+        @localstatedir@/@PACKAGE_NAME@/msg_socket.
+        If verbose is True, then the MsgQ reports
         what it is doing.
         """
 
-        if port == 0:
-	        if 'ISC_MSGQ_PORT' in os.environ:
-	            port = int(os.environ["ISC_MSGQ_PORT"])
-	        else:
-	            port = 9912
-
-
-        print(port)
+        if socket_file is None:
+            if "BIND10_MSGQ_SOCKET_FILE" in os.environ:
+                self.socket_file = os.environ["BIND10_MSGQ_SOCKET_FILE"]
+            else:
+                self.socket_file = self.SOCKET_FILE
+        else:
+            self.socket_file = socket_file
 
         self.verbose = verbose
-        self.c_channel_port = port
         self.poller = None
         self.kqueue = None
         self.runnable = False
@@ -131,10 +139,19 @@ class MsgQ:
 
     def setup_listener(self):
         """Set up the listener socket.  Internal function."""
-        self.listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.listen_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.listen_socket.bind(("127.0.0.1", self.c_channel_port))
-        self.listen_socket.listen(1024)
+        self.listen_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        
+        if os.path.exists(self.socket_file):
+            os.remove(self.socket_file)
+        try:
+            self.listen_socket.bind(self.socket_file)
+            self.listen_socket.listen(1024)
+        except Exception as e:
+            # remove the file again if something goes wrong
+            # (note this is a catch-all, but we reraise it)
+            if os.path.exists(self.socket_file):
+                os.remove(self.socket_file)
+            raise e
 
         if self.poller:
             self.poller.register(self.listen_socket, select.POLLIN)
@@ -142,20 +159,25 @@ class MsgQ:
             self.add_kqueue_socket(self.listen_socket)
 
     def setup(self):
-        """Configure listener socket, polling, etc."""
+        """Configure listener socket, polling, etc.
+           Raises a socket.error if the socket_file cannot be
+           created.
+        """
 
         self.setup_poller()
         self.setup_listener()
 
         if self.verbose:
-            sys.stdout.write("Listening\n")
+            sys.stdout.write("[b10-msgq] Listening\n")
         
         self.runnable = True
 
     def process_accept(self):
         """Process an accept on the listening socket."""
         newsocket, ipaddr = self.listen_socket.accept()
-        sys.stderr.write("Connection\n")
+        # TODO: When we have logging, we might want
+        # to add a debug message here that a new connection
+        # was made
         self.sockets[newsocket.fileno()] = newsocket
         lname = self.newlname()
         self.lnames[lname] = newsocket
@@ -169,9 +191,9 @@ class MsgQ:
         """Process a read on a socket."""
         sock = self.sockets[fd]
         if sock == None:
-            sys.stderr.write("Got read on Strange Socket fd %d\n" % fd)
+            sys.stderr.write("[b10-msgq] Got read on Strange Socket fd %d\n" % fd)
             return
-#        sys.stderr.write("Got read on fd %d\n" %fd)
+#        sys.stderr.write("[b10-msgq] Got read on fd %d\n" %fd)
         self.process_packet(fd, sock)
 
     def kill_socket(self, fd, sock):
@@ -183,7 +205,7 @@ class MsgQ:
         del self.lnames[lname]
         sock.close()
         self.sockets[fd] = None
-        sys.stderr.write("Closing socket fd %d\n" % fd)
+        sys.stderr.write("[b10-msgq] Closing socket fd %d\n" % fd)
 
     def getbytes(self, fd, sock, length):
         """Get exactly the requested bytes, or raise an exception if
@@ -223,14 +245,14 @@ class MsgQ:
             routing, data = self.read_packet(fd, sock)
         except MsgQReceiveError as err:
             self.kill_socket(fd, sock)
-            sys.stderr.write("Receive error: %s\n" % err)
+            sys.stderr.write("[b10-msgq] Receive error: %s\n" % err)
             return
 
         try:
             routingmsg = isc.cc.message.from_wire(routing)
         except DecodeError as err:
             self.kill_socket(fd, sock)
-            sys.stderr.write("Routing decode error: %s\n" % err)
+            sys.stderr.write("[b10-msgq] Routing decode error: %s\n" % err)
             return
 
 #        sys.stdout.write("\t" + pprint.pformat(routingmsg) + "\n")
@@ -241,8 +263,9 @@ class MsgQ:
     def process_command(self, fd, sock, routing, data):
         """Process a single command.  This will split out into one of the
            other functions."""
-        print("[XX] got command: ")
-        print(routing)
+        # TODO: A print statement got removed here (one that prints the
+        # routing envelope). When we have logging with multiple levels,
+        # we might want to re-add that on a high debug verbosity.
         cmd = routing["type"]
         if cmd == 'send':
             self.process_command_send(sock, routing, data)
@@ -253,7 +276,7 @@ class MsgQ:
         elif cmd == 'getlname':
             self.process_command_getlname(sock, routing, data)
         else:
-            sys.stderr.write("Invalid command: %s\n" % cmd)
+            sys.stderr.write("[b10-msgq] Invalid command: %s\n" % cmd)
 
     def preparemsg(self, env, msg = None):
         if type(env) == dict:
@@ -338,7 +361,7 @@ class MsgQ:
                 if err.args[0] == errno.EINTR:
                     events = []
                 else:
-                    sys.stderr.write("Error with poll(): %s\n" % err)
+                    sys.stderr.write("[b10-msgq] Error with poll(): %s\n" % err)
                     break
             for (fd, event) in events:
                 if fd == self.listen_socket.fileno():
@@ -364,8 +387,10 @@ class MsgQ:
     def shutdown(self):
         """Stop the MsgQ master."""
         if self.verbose:
-            sys.stdout.write("Stopping the server.\n")
+            sys.stdout.write("[b10-msgq] Stopping the server.\n")
         self.listen_socket.close()
+        if os.path.exists(self.socket_file):
+            os.remove(self.socket_file)
 
 # can signal handling and calling a destructor be done without a
 # global variable?
@@ -389,22 +414,22 @@ if __name__ == "__main__":
     parser = OptionParser(version=__version__)
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
                       help="display more about what is going on")
-    parser.add_option("-m", "--msgq-port", dest="msgq_port", type="string",
-                      action="callback", callback=check_port, default="0",
-                      help="port the msgq daemon will use")
+    parser.add_option("-s", "--socket-file", dest="msgq_socket_file",
+                      type="string", default=None,
+                      help="UNIX domain socket file the msgq daemon will use")
     (options, args) = parser.parse_args()
 
     signal.signal(signal.SIGTERM, signal_handler)
 
     # Announce startup.
     if options.verbose:
-        sys.stdout.write("MsgQ %s\n" % __version__)
+        sys.stdout.write("[b10-msgq] MsgQ %s\n" % __version__)
 
-    msgq = MsgQ(int(options.msgq_port), options.verbose)
+    msgq = MsgQ(options.msgq_socket_file, options.verbose)
 
     setup_result = msgq.setup()
     if setup_result:
-        sys.stderr.write("Error on startup: %s\n" % setup_result)
+        sys.stderr.write("[b10-msgq] Error on startup: %s\n" % setup_result)
         sys.exit(1)
 
     try:

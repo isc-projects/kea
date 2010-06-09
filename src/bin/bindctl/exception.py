@@ -62,7 +62,7 @@ class CmdParamFormatError(CmdFormatError):
         self.command = command        
 
     def __str__(self):
-        return  "Parameter format error, it should like 'key = value'"         
+        return  "Parameter format error, it should be 'key = value'"         
         
 # Begin define the exception for syntax
 
@@ -115,5 +115,3 @@ class CmdMissParamSyntaxError(CmdSyntaxError):
     def __str__(self):
         return str("Parameter '%s' is missed for command '%s' of module '%s'" % 
                    (self.param, self.command, self.module))
-                   
-   

@@ -53,6 +53,51 @@ def check_type(spec_part, value):
         # todo: check types of map contents too
         raise isc.cc.data.DataTypeError(str(value) + " is not a map")
 
+def convert_type(spec_part, value):
+    """Convert the give value(type is string) according specification 
+    part relevant for the value. Raises an isc.cc.data.DataTypeError 
+    exception if conversion failed.
+    """
+    if type(spec_part) == dict and 'item_type' in spec_part:
+        data_type = spec_part['item_type']
+    else:
+        raise isc.cc.data.DataTypeError(str("Incorrect specification part for type convering"))
+   
+    try:
+        if data_type == "integer":
+            return int(value)
+        elif data_type == "real":
+            return float(value)
+        elif data_type == "boolean":
+            return str.lower(str(value)) != 'false'
+        elif data_type == "string":
+            return str(value)
+        elif data_type == "list":
+            ret = []
+            if type(value) == list:
+                for item in value:    
+                    ret.append(convert_type(spec_part['list_item_spec'], item))
+            elif type(value) == str:    
+                value = value.split(',')
+                for item in value:    
+                    sub_value = item.split()
+                    for sub_item in sub_value:
+                        ret.append(convert_type(spec_part['list_item_spec'], sub_item))
+
+            if ret == []:
+                raise isc.cc.data.DataTypeError(str(value) + " is not a list")
+
+            return ret
+        elif data_type == "map":
+            return dict(value)
+            # todo: check types of map contents too
+        else:
+            return value
+    except ValueError as err:
+        raise isc.cc.data.DataTypeError(str(err))
+    except TypeError as err:
+        raise isc.cc.data.DataTypeError(str(err))
+
 def find_spec_part(element, identifier):
     """find the data definition for the given identifier
        returns either a map with 'item_name' etc, or a list of those"""
@@ -382,7 +427,6 @@ class MultiConfigData:
                         else:
                             entry['default'] = False
                         result.append(entry)
-            #print(spec)
         return result
 
     def set_value(self, identifier, value):

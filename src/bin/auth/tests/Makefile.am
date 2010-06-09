@@ -1,6 +1,9 @@
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/lib/dns -I$(top_srcdir)/src/bin
+AM_CPPFLAGS += -I$(top_builddir)/src/lib/cc
 AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(srcdir)/testdata\"
+
+AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 CLEANFILES = *.gcno *.gcda
 
@@ -21,10 +24,6 @@ run_unittests_LDADD +=  $(top_builddir)/src/lib/dns/.libs/libdns.a
 run_unittests_LDADD += $(top_builddir)/src/lib/config/.libs/libcfgclient.a
 run_unittests_LDADD += $(top_builddir)/src/lib/cc/libcc.a
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/.libs/libexceptions.a
-if HAVE_BOOST_SYSTEM
-run_unittests_LDFLAGS += $(BOOST_LDFLAGS)
-run_unittests_LDADD += $(BOOST_SYSTEM_LIB)
-endif
 endif
 
 noinst_PROGRAMS = $(TESTS)

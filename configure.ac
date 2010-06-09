@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10-devel, 20100318, bind10-dev@isc.org)
+AC_INIT(bind10-devel, 20100602, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
@@ -93,9 +93,21 @@ AC_SUBST(PYTHON_LIB)
 
 # TODO: check for _sqlite3.py module
 
-# default compiler warning settings
+#
+# B10_CXXFLAGS is the default C++ compiler flags.  This will (and should) be
+# used as the default value for each specifc AM_CXXFLAGS:
+# AM_CXXFLAGS = $(B10_CXXFLAGS)
+# AM_CXXFLAGS += ... # add module specific flags
+# We need this so that we can disable some specific compiler warnings per
+# module basis; since AM_CXXFLAGS are placed before CXXFLAGS, and since
+# gcc's -Wno-XXX option must be specified after -Wall or -Wextra, we cannot
+# specify the default warning flags in CXXFLAGS and let specific modules
+# "override" the default.
+#
+B10_CXXFLAGS=
+
 if test "X$GCC" = "Xyes"; then
-CXXFLAGS="$CXXFLAGS -g -Wall -Wextra -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
+B10_CXXFLAGS="-g -Wall -Wextra -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
 UNUSED_PARAM_ATTRIBUTE='__attribute__((unused))'
 
 # Certain versions of gcc (g++) have a bug that incorrectly warns about
@@ -103,22 +115,26 @@ UNUSED_PARAM_ATTRIBUTE='__attribute__((unused))'
 # translation unit.  For these versions we have to disable -Werror.
 werror_ok=0
 CXXFLAGS_SAVED="$CXXFLAGS"
-CXXFLAGS="$CXXFLAGS -Werror"
+CXXFLAGS="$CXXFLAGS $B10_CXXFLAGS -Werror"
 AC_MSG_CHECKING(for in-TU anonymous namespace breakage)
 AC_TRY_COMPILE([namespace { class Foo {}; }
 namespace isc {class Bar {Foo foo_;};} ],,
 	[AC_MSG_RESULT(no)
-	 werror_ok=1],
+	 werror_ok=1
+	 B10_CXXFLAGS="$B10_CXXFLAGS -Werror"],
 	[AC_MSG_RESULT(yes)])
 CXXFLAGS="$CXXFLAGS_SAVED"
-fi
-AC_DEFINE_UNQUOTED(UNUSED_PARAM, $UNUSED_PARAM_ATTRIBUTE, Define to compiler keyword indicating a function argument is intentionally unused)
+fi				dnl GCC = yes
+
 AM_CONDITIONAL(GCC_WERROR_OK, test $werror_ok = 1)
+AC_DEFINE_UNQUOTED(UNUSED_PARAM, $UNUSED_PARAM_ATTRIBUTE, Define to compiler keyword indicating a function argument is intentionally unused)
 
 # produce PIC unless we disable shared libraries. need this for python bindings.
 if test $enable_shared != "no" -a "X$GCC" = "Xyes"; then
-   CXXFLAGS="$CXXFLAGS -fPIC"
+   B10_CXXFLAGS="$B10_CXXFLAGS -fPIC"
 fi
+
+AC_SUBST(B10_CXXFLAGS)
 
 # Checks for libraries.
 
@@ -131,13 +147,15 @@ AC_SEARCH_LIBS(recvfrom, [socket])
 AC_HEADER_STDBOOL
 AC_TYPE_SIZE_T
 
+
+
 AC_MSG_CHECKING(for sa_len in struct sockaddr)
 AC_TRY_COMPILE([
 #include <sys/types.h>
 #include <sys/socket.h>],
 [struct sockaddr sa; sa.sa_len = 0; return (0);],
         [AC_MSG_RESULT(yes)
-        AC_DEFINE(HAVE_SIN_LEN, 1, Define to 1 if sockaddr_in has a sin_len member)],
+        AC_DEFINE(HAVE_SA_LEN, 1, [Define to 1 if sockaddr has a sa_len member, and corresponding sin_len and sun_len])],
         AC_MSG_RESULT(no))
 
 AC_ARG_WITH(lcov,
@@ -199,52 +217,6 @@ AC_HELP_STRING([--with-boost-lib=PATH],
    fi])
 AC_SUBST(BOOST_LDFLAGS)
 
-# Check availability of the Boost System library
-
-AC_MSG_CHECKING([for boost::system library])
-AC_ARG_WITH([boost-system],
-AC_HELP_STRING([--with-boost-system],
-  [specify whether to use the boost system library]),
-  [with_boost_system="$withval"], [with_boost_system="auto"])
-
-if test "$with_boost_system" != "no"; then
-	LDFLAGS_SAVED="$LDFLAGS"
-	LIBS_SAVED="$LIBS"
-	CPPFLAGS_SAVED="$CPPFLAGS"
-	CPPFLAGS="$CPPFLAGS -Iext"
-
-	for BOOST_TRY_LIB in boost_system boost_system-mt; do
-		LDFLAGS="$LDFLAGS_SAVED ${BOOST_LDFLAGS}"
-		LIBS="$LIBS_SAVED -l${BOOST_TRY_LIB}"
-		AC_TRY_LINK([#include <boost/system/error_code.hpp>],
-			[ boost::system::error_code error_code;
-			std::string message(error_code.message());
-			return 0; ],
-			[ AC_MSG_RESULT(yes)
-			BOOST_SYSTEM_LIB="-l${BOOST_TRY_LIB}"
-			],[])
-		if test "X${BOOST_SYSTEM_LIB}" != X; then
-        		break
-		fi
-	done
-
-	LDFLAGS="$LDFLAGS_SAVED"
-	CPPFLAGS="$CPPFLAGS_SAVED"
-	LIBS="$LIBS_SAVED"
-fi
-
-if test "X${BOOST_SYSTEM_LIB}" = X; then
-	AC_MSG_RESULT(no)
-	if test "$with_boost_system" = "yes"; then
-	   AC_MSG_ERROR([boost system library is requested but not found])
-	fi
-else
-	AC_DEFINE(HAVE_BOOST_SYSTEM, 1, Define to 1 if boost system library is available)
-fi
-
-AM_CONDITIONAL(HAVE_BOOST_SYSTEM, test "X${BOOST_SYSTEM_LIB}" != X)
-AC_SUBST(BOOST_SYSTEM_LIB)
-
 # Check availability of the Boost Python library
 
 #
@@ -298,22 +270,62 @@ AC_SUBST(GTEST_INCLUDES)
 AC_SUBST(GTEST_LDFLAGS)
 AC_SUBST(GTEST_LDADD)
 
-PKG_CHECK_MODULES(SQLITE, sqlite3 >= 3.3.9)
+PKG_CHECK_MODULES(SQLITE, sqlite3 >= 3.3.9, enable_features="$enable_features SQLite3")
+
+# I can't get some of the #include <asio.hpp> right without this
+# TODO: find the real cause of asio/boost wanting pthreads
+# (this currently only occurs for src/lib/cc/session_unittests)
+PTHREAD_LDFLAGS=
+AC_CHECK_LIB(pthread, pthread_create,[ PTHREAD_LDFLAGS=-lpthread ], [])
+AC_SUBST(PTHREAD_LDFLAGS)
+
+#
+# ASIO: we extensively use it as the C++ event management module.
+#
+# Use local ASIO headers from ext
+#
+CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext/asio"
+#
+# kqueue portability: ASIO uses kqueue by default if it's available (it's
+# generally available in BSD variants).  Unfortunately, some public
+# implementation of kqueue forces a conversion from a pointer to an integer,
+# which is prohibited in C++ unless reinterpret_cast, C++'s most evil beast
+# (and ASIO doesn't use it anyway) is used.  This will cause build error for
+# some of our C++ files including ASIO header files.  The following check
+# detects such cases and tells ASIO not to use kqueue if so.
+AC_CHECK_FUNC(kqueue, ac_cv_have_kqueue=yes, ac_cv_have_kqueue=no)
+if test "X$ac_cv_have_kqueue" = "Xyes"; then
+	AC_MSG_CHECKING([whether kqueue EV_SET compiles in C++])
+	AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/event.h>],
+[char* udata;
+EV_SET(NULL, 0, 0, 0, 0, 0, udata);],
+	[AC_MSG_RESULT(yes)],
+	[AC_MSG_RESULT([no, disable kqueue for ASIO])
+	 CPPFLAGS="$CPPFLAGS -DASIO_DISABLE_KQUEUE=1"
+	])
+fi
+
+# /dev/poll issue: ASIO uses /dev/poll by default if it's available (generally
+# the case with Solaris).  Unfortunately its /dev/poll specific code would
+# trigger the gcc's "missing-field-initializers" warning, which would
+# subsequently make the build fail with -Werror.  Further, older versions of
+# gcc don't provide an option to selectively suppress this warning.
+# So, for the moment, we simply disable the use of /dev/poll.  Unless we
+# implement recursive DNS server with randomized ports, we don't need the
+# scalability that /dev/poll can provide, so this decision wouldn't affect
+# run time performance.  Hpefully we can find a better solution or the ASIO
+# code will be updated by the time we really need it.
+AC_CHECK_HEADERS(sys/devpoll.h, ac_cv_have_devpoll=yes, ac_cv_have_devpoll=no)
+if test "X$ac_cv_have_devpoll" = "Xyes" -a "X$GCC" = "Xyes"; then
+	CPPFLAGS="$CPPFLAGS -DASIO_DISABLE_DEV_POLL=1"
+fi
 
 # Check for headers from required devel kits.
-# boost/shared_ptr.hpp is in ext in svn but not in tarball.
-CPPFLAGS_SAVED=$CPPFLAGS
-if test "X$BOOST_INCLUDES" = "X"; then
-	# abs_top_srcdir not defined yet
-	# so this is only useful to check.  We'll replace it after the check.
-	CPPFLAGS="$CPPFLAGS -Iext"
-fi
 AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp],,
   AC_MSG_ERROR([Missing required header files.]))
-CPPFLAGS=$CPPFLAGS_SAVED
-if test "X$BOOST_INCLUDES" = "X"; then
-	CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext"
-fi
 
 AC_ARG_ENABLE(man, [AC_HELP_STRING([--enable-man],
   [regenerate man pages [default=no]])] ,enable_man=yes, enable_man=no)
@@ -393,13 +405,15 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/msgq/tests/msgq_test
            src/bin/msgq/run_msgq.sh
            src/bin/auth/auth.spec.pre
-           src/bin/auth/spec_config.h
+           src/bin/auth/spec_config.h.pre
            src/lib/config/tests/data_def_unittests_config.h
            src/lib/python/isc/config/tests/config_test
            src/lib/python/isc/cc/tests/cc_test
            src/lib/dns/python/tests/libdns_python_test
            src/lib/dns/gen-rdatacode.py
+           src/lib/python/bind10_config.py
            src/lib/dns/tests/testdata/gen-wiredata.py
+           src/lib/cc/session_config.h.pre
           ], [
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
@@ -419,3 +433,44 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            chmod +x src/lib/dns/python/tests/libdns_python_test
           ])
 AC_OUTPUT
+
+dnl Print the results
+dnl
+
+cat > config.report << END
+
+     BIND 10 source configure results:
+    -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+Package:
+  Name:          $PACKAGE_NAME
+  Version:       $PACKAGE_VERSION
+
+Flags:
+  DEFS:          $DEFS
+  CPPFLAGS:      $CPPFLAGS
+  CFLAGS:        $CFLAGS
+  CXXFLAGS:      $CXXFLAGS
+  B10_CXXFLAGS:  $B10_CXXFLAGS
+dnl includes too
+  Boost Python:  $BOOST_PYTHON_LIB
+  SQLite:	 $SQLITE_CFLAGS
+                 $SQLITE_LIBS
+
+Features:
+  $enable_features
+
+Developer:
+  Google Tests:  $gtest_path
+  Code Coverage: $USE_LCOV
+  Generate Manuals:  $enable_man
+
+END
+
+cat config.report
+cat <<EOF
+
+  Now you can type "make" to build BIND 10
+
+EOF
+

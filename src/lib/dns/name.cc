@@ -666,7 +666,7 @@ Name::reverse() const {
 }
 
 Name
-Name::split(unsigned int first, unsigned int n) const {
+Name::split(const unsigned int first, const unsigned int n) const {
     if (n == 0 || n > labelcount_ || first > labelcount_ - n) {
         isc_throw(OutOfRange, "Name::split: invalid split range");
     }
@@ -700,6 +700,16 @@ Name::split(unsigned int first, unsigned int n) const {
     assert(retname.labelcount_ == newlabels);
 
     return (retname);
+}
+
+Name
+Name::split(const unsigned level) const {
+    if (level >= getLabelCount()) {
+        isc_throw(OutOfRange, "invalid level for name split (" << level
+                  << ") for name " << *this);
+    }
+
+    return (split(level, getLabelCount() - level));
 }
 
 Name&

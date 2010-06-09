@@ -5,5 +5,5 @@ To then build from source:
     ./configure
     make
 
-We recommend using the Boost libraries as it provides a safer TCP
-implementation in BIND 10.
+For detailed installation directions, see the guide
+at doc/guide/bind10-guide.html.

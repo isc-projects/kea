@@ -98,6 +98,7 @@ class MySession(Session):
         self._sequence = 1
         self._closed = False
         self._queue = []
+        self._lock = threading.RLock()
 
         try:
             self._socket = MySocket(socket.AF_INET, socket.SOCK_STREAM)
@@ -178,66 +179,78 @@ class testSession(unittest.TestCase):
         # sending message {'to': 'someone', 'reply': 1}, {"hello": "a"}
         #print("sending message {'to': 'someone', 'reply': 1}, {'hello': 'a'}")
 
-        # simply get the message without asking for a specific sequence number reply
+        # get no message without asking for a specific sequence number reply
+        self.assertFalse(sess.has_queued_msgs())
         sess._socket.addrecv(b'\x00\x00\x00(\x00\x19Skan\x02to(\x07someone\x05reply&\x011Skan\x05hello(\x01a')
         env, msg = sess.recvmsg(False)
-        self.assertEqual({'to': 'someone', 'reply': 1}, env)
-        self.assertEqual({"hello": "a"}, msg)
-
-        # simply get the message, asking for a specific sequence number reply
-        sess._socket.addrecv(b'\x00\x00\x00(\x00\x19Skan\x02to(\x07someone\x05reply&\x011Skan\x05hello(\x01a')
+        self.assertEqual(None, env)
+        self.assertTrue(sess.has_queued_msgs())
         env, msg = sess.recvmsg(False, 1)
         self.assertEqual({'to': 'someone', 'reply': 1}, env)
         self.assertEqual({"hello": "a"}, msg)
+        self.assertFalse(sess.has_queued_msgs())
         
         # ask for a differe sequence number reply (that doesn't exist)
         # then ask for the one that is there
+        self.assertFalse(sess.has_queued_msgs())
         sess._socket.addrecv(b'\x00\x00\x00(\x00\x19Skan\x02to(\x07someone\x05reply&\x011Skan\x05hello(\x01a')
         env, msg = sess.recvmsg(False, 2)
         self.assertEqual(None, env)
         self.assertEqual(None, msg)
+        self.assertTrue(sess.has_queued_msgs())
         env, msg = sess.recvmsg(False, 1)
         self.assertEqual({'to': 'someone', 'reply': 1}, env)
         self.assertEqual({"hello": "a"}, msg)
+        self.assertFalse(sess.has_queued_msgs())
         
         # ask for a differe sequence number reply (that doesn't exist)
         # then ask for any message
+        self.assertFalse(sess.has_queued_msgs())
         sess._socket.addrecv(b'\x00\x00\x00(\x00\x19Skan\x02to(\x07someone\x05reply&\x011Skan\x05hello(\x01a')
         env, msg = sess.recvmsg(False, 2)
         self.assertEqual(None, env)
         self.assertEqual(None, msg)
-        env, msg = sess.recvmsg(False)
+        self.assertTrue(sess.has_queued_msgs())
+        env, msg = sess.recvmsg(False, 1)
         self.assertEqual({'to': 'someone', 'reply': 1}, env)
         self.assertEqual({"hello": "a"}, msg)
+        self.assertFalse(sess.has_queued_msgs())
         
         #print("sending message {'to': 'someone', 'reply': 1}, {'hello': 'a'}")
 
         # ask for a differe sequence number reply (that doesn't exist)
-        # send a new message, ask for any message (get the first)
+        # send a new message, ask for specific message (get the first)
         # then ask for any message (get the second)
+        self.assertFalse(sess.has_queued_msgs())
         sess._socket.addrecv(b'\x00\x00\x00(\x00\x19Skan\x02to(\x07someone\x05reply&\x011Skan\x05hello(\x01a')
         env, msg = sess.recvmsg(False, 2)
         self.assertEqual(None, env)
         self.assertEqual(None, msg)
+        self.assertTrue(sess.has_queued_msgs())
         sess._socket.addrecv(b'\x00\x00\x00\x1f\x00\x10Skan\x02to(\x07someoneSkan\x05hello(\x01b')
-        env, msg = sess.recvmsg(False)
-        self.assertEqual({'to': 'someone', 'reply': 1}, env)
+        env, msg = sess.recvmsg(False, 1)
+        self.assertEqual({'to': 'someone', 'reply': 1 }, env)
         self.assertEqual({"hello": "a"}, msg)
+        self.assertFalse(sess.has_queued_msgs())
         env, msg = sess.recvmsg(False)
         self.assertEqual({'to': 'someone'}, env)
         self.assertEqual({"hello": "b"}, msg)
+        self.assertFalse(sess.has_queued_msgs())
         
         # send a message, then one with specific reply value
         # ask for that specific message (get the second)
         # then ask for any message (get the first)
+        self.assertFalse(sess.has_queued_msgs())
         sess._socket.addrecv(b'\x00\x00\x00\x1f\x00\x10Skan\x02to(\x07someoneSkan\x05hello(\x01b')
         sess._socket.addrecv(b'\x00\x00\x00(\x00\x19Skan\x02to(\x07someone\x05reply&\x011Skan\x05hello(\x01a')
         env, msg = sess.recvmsg(False, 1)
         self.assertEqual({'to': 'someone', 'reply': 1}, env)
         self.assertEqual({"hello": "a"}, msg)
+        self.assertTrue(sess.has_queued_msgs())
         env, msg = sess.recvmsg(False)
         self.assertEqual({'to': 'someone'}, env)
         self.assertEqual({"hello": "b"}, msg)
+        self.assertFalse(sess.has_queued_msgs())
 
     def test_next_sequence(self):
         sess = MySession()

@@ -17,6 +17,8 @@ import sys
 import socket
 import struct
 import os
+import threading
+import bind10_config
 
 import isc.cc.message
 
@@ -25,7 +27,7 @@ class NetworkError(Exception): pass
 class SessionError(Exception): pass
 
 class Session:
-    def __init__(self, port=0):
+    def __init__(self, socket_file=None):
         self._socket = None
         self._lname = None
         self._recvbuffer = bytearray()
@@ -33,17 +35,20 @@ class Session:
         self._sequence = 1
         self._closed = False
         self._queue = []
+        self._lock = threading.RLock()
 
-        if port == 0:
-	        if 'ISC_MSGQ_PORT' in os.environ:
-	            port = int(os.environ["ISC_MSGQ_PORT"])
-	        else:
-	            port = 9912
+        if socket_file is None:
+            if "BIND10_MSGQ_SOCKET_FILE" in os.environ:
+                self.socket_file = os.environ["BIND10_MSGQ_SOCKET_FILE"]
+            else:
+                self.socket_file = bind10_config.BIND10_MSGQ_SOCKET_FILE
+        else:
+            self.socket_file = socket_file
+        
 
         try:
-            self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self._socket.connect(tuple(['127.0.0.1', port]))
-
+            self._socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            self._socket.connect(self.socket_file)
             self.sendmsg({ "type": "getlname" })
             env, msg = self.recvmsg(False)
             if not env:
@@ -64,56 +69,54 @@ class Session:
         self._closed = True
 
     def sendmsg(self, env, msg = None):
-        XXmsg = msg
-        XXenv = env
-        if self._closed:
-            raise SessionError("Session has been closed.")
-        if type(env) == dict:
-            env = isc.cc.message.to_wire(env)
-        if type(msg) == dict:
-            msg = isc.cc.message.to_wire(msg)
-        self._socket.setblocking(1)
-        length = 2 + len(env);
-        if msg:
-            length += len(msg)
-        self._socket.send(struct.pack("!I", length))
-        self._socket.send(struct.pack("!H", len(env)))
-        self._socket.send(env)
-        if msg:
-            self._socket.send(msg)
+        with self._lock:
+            if self._closed:
+                raise SessionError("Session has been closed.")
+            if type(env) == dict:
+                env = isc.cc.message.to_wire(env)
+            if type(msg) == dict:
+                msg = isc.cc.message.to_wire(msg)
+            self._socket.setblocking(1)
+            length = 2 + len(env);
+            if msg:
+                length += len(msg)
+            self._socket.send(struct.pack("!I", length))
+            self._socket.send(struct.pack("!H", len(env)))
+            self._socket.send(env)
+            if msg:
+                self._socket.send(msg)
 
     def recvmsg(self, nonblock = True, seq = None):
-        #print("[XX] queue len: " + str(len(self._queue)))
-        if len(self._queue) > 0:
-            if seq == None:
-                #print("[XX] return first")
-                return self._queue.pop(0)
-            else:
+        with self._lock:
+            if len(self._queue) > 0:
                 i = 0;
-                #print("[XX] check rest")
                 for env, msg in self._queue:
-                    if "reply" in env and seq == env["reply"]:
+                    if seq != None and "reply" in env and seq == env["reply"]:
+                        return self._queue.pop(i)
+                    elif seq == None and "reply" not in env:
                         return self._queue.pop(i)
                     else:
                         i = i + 1
-                #print("[XX] not found")
-        if self._closed:
-            raise SessionError("Session has been closed.")
-        data = self._receive_full_buffer(nonblock)
-        if data and len(data) > 2:
-            header_length = struct.unpack('>H', data[0:2])[0]
-            data_length = len(data) - 2 - header_length
-            if data_length > 0:
-                env = isc.cc.message.from_wire(data[2:header_length+2])
-                msg = isc.cc.message.from_wire(data[header_length + 2:])
-                if seq == None or "reply" in env and seq == env["reply"]:
-                    return env, msg
+            if self._closed:
+                raise SessionError("Session has been closed.")
+            data = self._receive_full_buffer(nonblock)
+            if data and len(data) > 2:
+                header_length = struct.unpack('>H', data[0:2])[0]
+                data_length = len(data) - 2 - header_length
+                if data_length > 0:
+                    env = isc.cc.message.from_wire(data[2:header_length+2])
+                    msg = isc.cc.message.from_wire(data[header_length + 2:])
+                    if (seq == None and "reply" not in env) or (seq != None and "reply" in env and seq == env["reply"]):
+                        return env, msg
+                    else:
+                        tmp = None
+                        if "reply" in env:
+                            tmp = env["reply"]
+                        self._queue.append((env,msg))
+                        return self.recvmsg(nonblock, seq)
                 else:
-                    self._queue.append((env,msg))
-                    return self.recvmsg(nonblock, seq)
-            else:
-                return isc.cc.message.from_wire(data[2:header_length+2]), None
-        return None, None
+                    return isc.cc.message.from_wire(data[2:header_length+2]), None
+            return None, None
 
     def _receive_full_buffer(self, nonblock):
         if nonblock:
@@ -130,7 +133,6 @@ class Session:
                 return None
             if data == "": # server closed connection
                 raise ProtocolError("Read of 0 bytes: connection closed")
-
             self._recvbuffer += data
             if len(self._recvbuffer) < 4:
                 return None
@@ -181,6 +183,9 @@ class Session:
             "seq": seq,
         }, isc.cc.message.to_wire(msg))
         return seq
+
+    def has_queued_msgs(self):
+        return len(self._queue) > 0
 
     def group_recvmsg(self, nonblock = True, seq = None):
         env, msg  = self.recvmsg(nonblock, seq)
