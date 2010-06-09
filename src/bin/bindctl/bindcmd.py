@@ -87,8 +87,8 @@ class BindCmdInterpreter(Cmd):
         '''Generate one session id for the connection. '''
         rand = os.urandom(16)
         now = time.time()
-        ip = socket.gethostbyname(socket.gethostname())
-        session_id = sha1(("%s%s%s" %(rand, now, ip)).encode())
+        session_id = sha1(("%s%s%s" %(rand, now, 
+                                      socket.gethostname())).encode())
         digest = session_id.hexdigest()
         return digest
     
