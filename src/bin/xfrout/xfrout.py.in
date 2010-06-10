@@ -40,13 +40,14 @@ except ImportError as e:
 
 if "B10_FROM_BUILD" in os.environ:
     SPECFILE_PATH = os.environ["B10_FROM_BUILD"] + "/src/bin/xfrout"
+    UNIX_SOCKET_FILE= os.environ["B10_FROM_BUILD"] + "/auth_xfrout_conn"
 else:
     PREFIX = "@prefix@"
     DATAROOTDIR = "@datarootdir@"
     SPECFILE_PATH = "@datadir@/@PACKAGE@".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
-SPECFILE_LOCATION = SPECFILE_PATH + "/xfrout.spec"
-UNIX_SOCKET_FILE = "@@LOCALSTATEDIR@@/auth_xfrout_conn"
+    UNIX_SOCKET_FILE = "@@LOCALSTATEDIR@@/auth_xfrout_conn"
 
+SPECFILE_LOCATION = SPECFILE_PATH + "/xfrout.spec"
 MAX_TRANSFERS_OUT = 10
 verbose_mode = False
 
