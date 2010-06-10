@@ -310,6 +310,11 @@ AC_SUBST(GTEST_INCLUDES)
 AC_SUBST(GTEST_LDFLAGS)
 AC_SUBST(GTEST_LDADD)
 
+dnl check for pkg-config itself so we don't try the m4 macro without pkg-config
+AC_CHECK_PROG(HAVE_PKG_CONFIG, pkg-config, yes, no)
+if test "x$HAVE_PKG_CONFIG" = "xno" ; then
+  AC_MSG_ERROR(Please install pkg-config)
+fi
 PKG_CHECK_MODULES(SQLITE, sqlite3 >= 3.3.9, enable_features="$enable_features SQLite3")
 
 # I can't get some of the #include <asio.hpp> right without this
