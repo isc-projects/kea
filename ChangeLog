@@ -1,3 +1,8 @@
+  54.   [bug]      zhanglikun
+	bin/xfrout: Enable b10-xfrout can be launched in source
+	code tree.
+	(Trac #224, svn r2103)
+
   53.   [bug]      zhanglikun
 	bin/bindctl: Generate a unique session ID by using 
 	socket.gethostname() instead of socket.gethostbyname(), 
