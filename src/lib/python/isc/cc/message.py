@@ -35,7 +35,15 @@ _ITEM_LENGTH_16   = 0x10
 _ITEM_LENGTH_8    = 0x20
 _ITEM_LENGTH_MASK = 0x30
 
+import json
+
 def to_wire(items):
+    return json.dumps(items).encode('utf8')
+
+def from_wire(data):
+    return json.loads(data.decode('utf8'))
+
+def old_to_wire(items):
     """Encode a dict into wire format.
     >>> wire_format = Message.to_wire({"a": "b"})
     """
@@ -140,7 +148,7 @@ def _encode_hash(item):
 # decode methods
 #
 
-def from_wire(data):
+def old_from_wire(data):
     if len(data) < 5:
         raise DecodeError("Data is too short to decode")
     wire_version, data = data[0:4], data[4:]
