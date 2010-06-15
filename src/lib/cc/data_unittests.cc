@@ -40,11 +40,9 @@ TEST(Element, type) {
     EXPECT_EQ(bool_el.getType(), Element::boolean);
     StringElement str_el = StringElement("foo");
     EXPECT_EQ(str_el.getType(), Element::string);
-    std::vector<ElementPtr> v;
-    ListElement list_el = ListElement(v);
+    ListElement list_el = ListElement();
     EXPECT_EQ(list_el.getType(), Element::list);
-    std::map<std::string, ElementPtr> m;
-    MapElement map_el = MapElement(m);
+    MapElement map_el = MapElement();
     EXPECT_EQ(map_el.getType(), Element::map);
 }
 
@@ -139,16 +137,14 @@ TEST(Element, create_and_value_throws) {
     EXPECT_THROW(el->listValue(), TypeError);
     EXPECT_THROW(el->mapValue(), TypeError);
 
-    std::vector<ElementPtr> v;
-    el = Element::create(v);
+    el = Element::createList();
     EXPECT_THROW(el->intValue(), TypeError);
     EXPECT_THROW(el->doubleValue(), TypeError);
     EXPECT_THROW(el->boolValue(), TypeError);
     EXPECT_THROW(el->stringValue(), TypeError);
     EXPECT_THROW(el->mapValue(), TypeError);
 
-    std::map<std::string, ElementPtr> m;
-    el = Element::create(m);
+    el = Element::createMap();
     EXPECT_THROW(el->intValue(), TypeError);
     EXPECT_THROW(el->doubleValue(), TypeError);
     EXPECT_THROW(el->boolValue(), TypeError);
@@ -222,14 +218,13 @@ TEST(Element, MapElement) {
                        "9123456789abcdefa123456789abcdefb123456789abcdef"
                        "c123456789abcdefd123456789abcdefe123456789abcdef"
                        "f123456789abcde");
-    std::map<std::string, ElementPtr> long_maptag_map;
     
     EXPECT_EQ(255, long_maptag.length()); // check prerequisite
     el = Element::createFromString("{ \"" + long_maptag + "\": \"bar\"}");
     EXPECT_EQ("bar", el->find(long_maptag)->stringValue());
 
-    long_maptag_map[long_maptag] = Element::create("bar");
-    el = Element::create(long_maptag_map);
+    el = Element::createMap();
+    el->set(long_maptag, Element::create("bar"));
     EXPECT_EQ("bar", el->find(long_maptag)->stringValue());
 
     // A one-byte longer tag should trigger an exception.
@@ -238,8 +233,7 @@ TEST(Element, MapElement) {
                                            "\": \"bar\"}"),
                  ParseError);
 
-    long_maptag_map[long_maptag] = Element::create("bar");
-    EXPECT_THROW(Element::create(long_maptag_map), TypeError);
+    EXPECT_THROW(el->set(long_maptag, Element::create("bar")), TypeError);
 
 }
 
@@ -314,27 +308,27 @@ TEST(Element, equals) {
 }
 
 TEST(Element, removeIdentical) {
-    ElementPtr a = Element::createFromString("{}");
-    ElementPtr b = Element::createFromString("{}");
-    ElementPtr c = Element::createFromString("{}");
+    ElementPtr a = Element::createMap();
+    ElementPtr b = Element::createMap();
+    ElementPtr c = Element::createMap();
     removeIdentical(a, b);
     EXPECT_TRUE(a == c);
 
     a = Element::createFromString("{ \"a\": 1 }");
     b = Element::createFromString("{ \"a\": 1 }");
-    c = Element::createFromString("{}");
+    c = Element::createMap();
     removeIdentical(a, b);
     EXPECT_TRUE(a == c);
 
     a = Element::createFromString("{ \"a\": 1, \"b\": [ 1, 2 ] }");
-    b = Element::createFromString("{}");
+    b = Element::createMap();
     c = Element::createFromString("{ \"a\": 1, \"b\": [ 1, 2 ] }");
     removeIdentical(a, b);
     EXPECT_TRUE(a == c);
 
     a = Element::createFromString("{ \"a\": 1, \"b\": [ 1, 2 ] }");
     b = Element::createFromString("{ \"a\": 1, \"b\": [ 1, 2 ] }");
-    c = Element::createFromString("{}");
+    c = Element::createMap();
     removeIdentical(a, b);
     EXPECT_TRUE(a == c);
 
@@ -345,14 +339,14 @@ TEST(Element, removeIdentical) {
     EXPECT_TRUE(a == c);
 
     a = Element::createFromString("{ \"a\": { \"b\": \"c\" } }");
-    b = Element::createFromString("{}");
+    b = Element::createMap();
     c = Element::createFromString("{ \"a\": { \"b\": \"c\" } }");
     removeIdentical(a, b);
     EXPECT_TRUE(a == c);
 
     a = Element::createFromString("{ \"a\": { \"b\": \"c\" } }");
     b = Element::createFromString("{ \"a\": { \"b\": \"c\" } }");
-    c = Element::createFromString("{}");
+    c = Element::createMap();
     removeIdentical(a, b);
     EXPECT_TRUE(a == c);
 
@@ -365,17 +359,17 @@ TEST(Element, removeIdentical) {
 
 TEST(Element, merge)
 {
-    ElementPtr a = Element::createFromString("{}");
-    ElementPtr b = Element::createFromString("{}");
-    ElementPtr c = Element::createFromString("{}");
+    ElementPtr a = Element::createMap();
+    ElementPtr b = Element::createMap();
+    ElementPtr c = Element::createMap();
     merge(a, b);
     EXPECT_TRUE(a == c);
 
     a = Element::createFromString("1");
-    b = Element::createFromString("{}");
+    b = Element::createMap();
     EXPECT_THROW(merge(a, b), TypeError);
 
-    a = Element::createFromString("{}");
+    a = Element::createMap();
     b = Element::createFromString("{ \"a\": 1 }");
     c = Element::createFromString("{ \"a\": 1 }");
     merge(a, b);

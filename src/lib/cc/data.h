@@ -272,9 +272,12 @@ public:
     static ElementPtr create(const std::string& s);
     // need both std:string and char *, since c++ will match
     // bool before std::string when you pass it a char *
-    static ElementPtr create(const char *s) { return create(std::string(s)); }; 
-    static ElementPtr create(const std::vector<ElementPtr>& v);
-    static ElementPtr create(const std::map<std::string, ElementPtr>& m);
+    static ElementPtr create(const char *s) { return create(std::string(s)); };
+
+    /// \brief Creates an empty ListElement type ElementPtr.
+    static ElementPtr createList();
+    /// \brief Creates an empty MapElement type ElementPtr.
+    static ElementPtr createMap();
     //@}
 
     /// \name Compound factory functions
@@ -404,7 +407,7 @@ class ListElement : public Element {
     std::vector<ElementPtr> l;
 
 public:
-    ListElement(std::vector<ElementPtr> v) : Element(list), l(v) {};
+    ListElement() : Element(list), l(std::vector<ElementPtr>()) {};
     const std::vector<ElementPtr>& listValue() { return l; }
     using Element::getValue;
     bool getValue(std::vector<ElementPtr>& t) { t = l; return true; };
@@ -426,7 +429,8 @@ class MapElement : public Element {
     std::map<std::string, ElementPtr> m;
 
 public:
-    MapElement(const std::map<std::string, ElementPtr>& v) : Element(map), m(v) {};
+    MapElement() : Element(map), m(std::map<std::string, ElementPtr>()) {};
+    // TODO: should we have direct iterators instead of exposing the std::map here?
     const std::map<std::string, ElementPtr>& mapValue() { return m; }
     using Element::getValue;
     bool getValue(std::map<std::string, ElementPtr>& t) { t = m; return true; };
@@ -435,7 +439,7 @@ public:
     using Element::get;
     ElementPtr get(const std::string& s) { if (contains(s)) { return m[s]; } else { return ElementPtr();} };
     using Element::set;
-    void set(const std::string& s, ElementPtr p) { m[s] = p; };
+    void set(const std::string& key, ElementPtr value);
     using Element::remove;
     void remove(const std::string& s) { m.erase(s); }
     bool contains(const std::string& s) { return m.find(s) != m.end(); }

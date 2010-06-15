@@ -158,7 +158,7 @@ ConfigData::getValue(bool& is_default, const std::string& identifier)
 ElementPtr
 ConfigData::getItemList(const std::string& identifier, bool recurse)
 {
-    ElementPtr result = Element::createFromString("[]");
+    ElementPtr result = Element::createList();
     ElementPtr spec_part = getModuleSpec().getConfigSpec();
     if (identifier != "" && identifier != "/") {
         spec_part = find_spec_part(spec_part, identifier);
@@ -172,7 +172,7 @@ ConfigData::getItemList(const std::string& identifier, bool recurse)
 ElementPtr
 ConfigData::getFullConfig()
 {
-    ElementPtr result = Element::createFromString("{}");
+    ElementPtr result = Element::createMap();
     ElementPtr items = getItemList("", true);
     BOOST_FOREACH(ElementPtr item, items->listValue()) {
         result->set(item->stringValue(), getValue(item->stringValue()));

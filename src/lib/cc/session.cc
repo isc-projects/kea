@@ -56,7 +56,7 @@ namespace cc {
 
 class SessionImpl {
 public:
-    SessionImpl() : sequence_(-1) { queue_ = Element::createFromString("[]"); }
+    SessionImpl() : sequence_(-1) { queue_ = Element::createList(); }
     virtual ~SessionImpl() {}
     virtual void establish(const char& socket_file) = 0;
     virtual int getSocket() = 0;
@@ -422,7 +422,7 @@ Session::recvmsg(ElementPtr& env, ElementPtr& msg,
         msg = l_msg;
         return true;
     } else {
-        ElementPtr q_el = Element::createFromString("[]");
+        ElementPtr q_el = Element::createList();
         q_el->add(l_env);
         q_el->add(l_msg);
         impl_->queue_->add(q_el);
@@ -433,7 +433,7 @@ Session::recvmsg(ElementPtr& env, ElementPtr& msg,
 
 void
 Session::subscribe(std::string group, std::string instance) {
-    ElementPtr env = Element::create(std::map<std::string, ElementPtr>());
+    ElementPtr env = Element::createMap();
 
     env->set("type", Element::create("subscribe"));
     env->set("group", Element::create(group));
@@ -444,7 +444,7 @@ Session::subscribe(std::string group, std::string instance) {
 
 void
 Session::unsubscribe(std::string group, std::string instance) {
-    ElementPtr env = Element::create(std::map<std::string, ElementPtr>());
+    ElementPtr env = Element::createMap();
 
     env->set("type", Element::create("unsubscribe"));
     env->set("group", Element::create(group));
@@ -457,7 +457,7 @@ int
 Session::group_sendmsg(ElementPtr msg, std::string group,
                        std::string instance, std::string to)
 {
-    ElementPtr env = Element::create(std::map<std::string, ElementPtr>());
+    ElementPtr env = Element::createMap();
     int nseq = ++impl_->sequence_;
     
     env->set("type", Element::create("send"));
@@ -481,7 +481,7 @@ Session::group_recvmsg(ElementPtr& envelope, ElementPtr& msg,
 
 int
 Session::reply(ElementPtr& envelope, ElementPtr& newmsg) {
-    ElementPtr env = Element::create(std::map<std::string, ElementPtr>());
+    ElementPtr env = Element::createMap();
     int nseq = ++impl_->sequence_;
     
     env->set("type", Element::create("send"));
