@@ -56,12 +56,13 @@ TEST(Element, from_and_to_str) {
 
     sv.push_back("12");
     sv.push_back("1.1");
-    sv.push_back("True");
-    sv.push_back("False");
+    sv.push_back("true");
+    sv.push_back("false");
     sv.push_back("\"asdf\"");
+    sv.push_back("null");
     sv.push_back("[ 1, 2, 3, 4 ]");
-    sv.push_back("{\"name\": \"foo\", \"value\": 47806}");
-    sv.push_back("[ {\"a\": 1, \"b\": \"c\"}, {\"a\": 2, \"b\": \"d\"} ]");
+    sv.push_back("{ \"name\": \"foo\", \"value\": 47806 }");
+    sv.push_back("[ { \"a\": 1, \"b\": \"c\" }, { \"a\": 2, \"b\": \"d\" } ]");
 
     BOOST_FOREACH(std::string s, sv) {
         // also test << operator, which uses Element::str()
@@ -93,6 +94,16 @@ TEST(Element, from_and_to_str) {
         EXPECT_THROW(el = Element::createFromString(s), isc::data::ParseError);
     }
 
+    // some json specific format tests, here the str() output is
+    // different from the string input
+    EXPECT_EQ("100", Element::createFromString("1e2")->str());
+    EXPECT_EQ("0.01", Element::createFromString("1e-2")->str());
+    EXPECT_EQ("1.2", Element::createFromString("1.2")->str());
+    EXPECT_EQ("1", Element::createFromString("1.0")->str());
+    EXPECT_EQ("120", Element::createFromString("1.2e2")->str());
+    EXPECT_EQ("100", Element::createFromString("1.0e2")->str());
+    EXPECT_EQ("0.01", Element::createFromString("1.0e-2")->str());
+    EXPECT_EQ("0.012", Element::createFromString("1.2e-2")->str());
 }
 
 TEST(Element, create_and_value_throws) {
@@ -233,83 +244,18 @@ TEST(Element, MapElement) {
 }
 
 TEST(Element, to_and_from_wire) {
-    ElementPtr el, decoded_el;
-    std::string wire;
-    std::vector<std::string> sv;
-    std::vector<std::string> sw;
-    std::stringstream bigstring, bigstring2;
-    std::stringstream bigwire, bigwire2;
+    // Wire format is now plain JSON.
+    ElementPtr el;
+    EXPECT_EQ("1", Element::create(1)->toWire());
+    EXPECT_EQ("1.1", Element::create(1.1)->toWire());
+    EXPECT_EQ("true", Element::create(true)->toWire());
+    EXPECT_EQ("false", Element::create(false)->toWire());
+    EXPECT_EQ("null", Element::create()->toWire());
+    EXPECT_EQ("\"a string\"", Element::create("a string")->toWire());
+    EXPECT_EQ("[ \"a\", \"list\" ]", Element::createFromString("[ \"a\", \"list\" ]")->toWire());
+    EXPECT_EQ("{ \"a\": \"map\" }", Element::createFromString("{ \"a\": \"map\" }")->toWire());
 
-    sv.push_back("{\"name\": \"foo\"}");
-    sw.push_back("Skan\004name\050\003foo");
-    sv.push_back("{\"value2\": {\"number\": 42}}");
-    sw.push_back("Skan\006value2\042\013\006number\046\00242");
-    sv.push_back("{\"bool\": False, \"bool2\": True, \"real\": 2.34, \"string\": \"foo\"}");
-    sw.push_back("Skan\004bool\045\0010\005bool2\045\0011\004real\047\0042\05634\006string\050\003foo");
-    sv.push_back("{\"list\": [ 1, 2, 3, 4 ]}");
-    sw.push_back("Skan\004list\043\014\046\0011\046\0012\046\0013\046\0014");
-
-    // some big ones
-
-    bigstring << "{\"bigstring\": \"";
-    bigwire << "Skan\011bigstring\030\001\001";
-    for (size_t i = 0; i < 257; i++) {
-        bigstring << "x";
-        bigwire << "x";
-    }
-    bigstring << "\"}";
-    sv.push_back(bigstring.str());
-    sw.push_back(bigwire.str());
-
-
-    bigstring2 << "{\"bigstring2\": \"";
-    bigwire2 << "Skan\012bigstring2\010";
-    bigwire2 << '\000' << '\001' << '\000' << '\001';
-    for (size_t i = 0; i < 65537; i++) {
-        bigstring2 << "x";
-        bigwire2 << "x";
-    }
-    bigstring2 << "\"}";
-    sv.push_back(bigstring2.str());
-    sw.push_back(bigwire2.str());
-
-
-    BOOST_FOREACH(std::string s, sv) {
-        // also test << operator, which uses Element::str()
-        el = Element::createFromString(s);
-        EXPECT_EQ(s, el->str());
-        wire = el->toWire();
-        /*
-        std::cout << "Encoded wire format:" << std::endl;
-        my_print(wire);
-        std::cout << "Expecting:" << std::endl;
-        my_print(sw.at(0));
-        */
-        EXPECT_EQ(sw.at(0), wire);
-        sw.erase(sw.begin());
-        decoded_el = Element::fromWire(wire);
-        EXPECT_EQ(s, decoded_el->str());
-    }
-    
-    //EXPECT_THROW(Element::fromWire("Skan\004name\050\003foo"), DecodeError);
-    EXPECT_THROW(Element::fromWire("Skan\004name\050"), DecodeError);
-    EXPECT_THROW(Element::fromWire("Skan\004na"), DecodeError);
-    EXPECT_THROW(Element::fromWire("Skan\004name\050\003fo"), DecodeError);
-    EXPECT_NO_THROW(Element::fromWire("Skan\004name\041\003foo"));
-    EXPECT_THROW(Element::fromWire("Skan\004name\041\003fo"), DecodeError);
-    EXPECT_NO_THROW(Element::fromWire("Skan\004name\044\001a"));
-    EXPECT_THROW(Element::fromWire("Skab\004name\050\003foo"), DecodeError);
-
-    //EXPECT_EQ("\047\0031.2", Element::create(1.2)->toWire(0));
-    EXPECT_EQ("\046\0011", Element::createFromString("[ 1 ]")->toWire(1));
-
-    std::string ddef = "{\"data_specification\": {\"config_data\": [ {\"item_default\": \"Hello, world!\", \"item_name\": \"default_name\", \"item_optional\": False, \"item_type\": \"string\"}, {\"item_default\": [  ], \"item_name\": \"zone_list\", \"item_optional\": False, \"item_type\": \"list\", \"list_item_spec\": {\"item_name\": \"zone_name\", \"item_optional\": True, \"item_type\": \"string\"}} ], \"module_name\": \"Auth\"}}";
-    //std::string ddef = "{\"aaa\": 123, \"test\": [  ], \"zzz\": 123}";
-    ElementPtr ddef_el = Element::createFromString(ddef);
-    std::string ddef_wire = ddef_el->toWire();
-    ElementPtr ddef_el2 = Element::fromWire(ddef_wire);
-    std::string ddef2 = ddef_el2->str();
-    EXPECT_EQ(ddef, ddef2);
+    EXPECT_EQ("1", Element::fromWire("1")->str());
 }
 
 ElementPtr efs(const std::string& str) {

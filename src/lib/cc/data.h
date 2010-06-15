@@ -97,7 +97,7 @@ protected:
 public:
     // any is a special type used in list specifications, specifying
     // that the elements can be of any type
-    enum types { integer, real, boolean, string, list, map, any };
+    enum types { integer, real, boolean, null, string, list, map, any };
     // base class; make dtor virtual
     virtual ~Element() {};
 
@@ -110,6 +110,8 @@ public:
     
     // pure virtuals, every derived class must implement these
 
+    virtual void toJSON(std::stringstream& ss) = 0;
+
     /// Returns a string representing the Element and all its
     /// child elements; note that this is different from stringValue(),
     /// which only returns the single value of a StringElement
@@ -118,7 +120,7 @@ public:
     /// All other elements will be represented directly
     ///
     /// \return std::string containing the string representation
-    virtual std::string str() = 0;
+    std::string str();
 
     /// Returns the wireformat for the Element and all its child
     /// elements.
@@ -126,8 +128,8 @@ public:
     /// \param omit_length If this is non-zero, the item length will
     ///        be omitted from the wire format
     /// \return std::string containing the element in wire format
-    std::string toWire(int omit_length = 1);
-    virtual void toWire(std::stringstream& out, int omit_length = 1) = 0;
+    std::string toWire();
+    void toWire(std::stringstream& out);
 
     /// \name Type-specific getters
     ///
@@ -260,7 +262,10 @@ public:
     /// If there is a memory allocation problem, these functions will
     /// return a NULL ElementPtr, which can be checked with
     /// Element::is_null(ElementPtr ep).
+    /// (Note that that is different from an NullElement, which
+    /// represents an empty value, and is created with Element::create())
     //@{
+    static ElementPtr create();
     static ElementPtr create(const int i);
     static ElementPtr create(const double d);
     static ElementPtr create(const bool b);
@@ -334,8 +339,7 @@ public:
     bool getValue(int& t) { t = i; return true; };
     using Element::setValue;
     bool setValue(const int v) { i = v; return true; };
-    std::string str();
-    void toWire(std::stringstream& ss, int omit_length = 1);
+    void toJSON(std::stringstream& ss);
     bool equals(ElementPtr other);
 };
 
@@ -349,8 +353,7 @@ public:
     bool getValue(double& t) { t = d; return true; };
     using Element::setValue;
     bool setValue(const double v) { d = v; return true; };
-    std::string str();
-    void toWire(std::stringstream& ss, int omit_length = 1);
+    void toJSON(std::stringstream& ss);
     bool equals(ElementPtr other);
 };
 
@@ -364,8 +367,14 @@ public:
     bool getValue(bool& t) { t = b; return true; };
     using Element::setValue;
     bool setValue(const bool v) { b = v; return true; };
-    std::string str();
-    void toWire(std::stringstream& ss, int omit_length = 1);
+    void toJSON(std::stringstream& ss);
+    bool equals(ElementPtr other);
+};
+
+class NullElement : public Element {
+public:
+    NullElement() : Element(null) {};
+    void toJSON(std::stringstream& ss);
     bool equals(ElementPtr other);
 };
 
@@ -379,8 +388,7 @@ public:
     bool getValue(std::string& t) { t = s; return true; };
     using Element::setValue;
     bool setValue(const std::string& v) { s = v; return true; };
-    std::string str();
-    void toWire(std::stringstream& ss, int omit_length = 1);
+    void toJSON(std::stringstream& ss);
     bool equals(ElementPtr other);
 };
 
@@ -401,8 +409,7 @@ public:
     void add(ElementPtr e) { l.push_back(e); };
     using Element::remove;
     void remove(int i) { l.erase(l.begin() + i); };
-    std::string str();
-    void toWire(std::stringstream& ss, int omit_length = 1);
+    void toJSON(std::stringstream& ss);
     size_t size() { return l.size(); }
     bool equals(ElementPtr other);
 };
@@ -424,14 +431,8 @@ public:
     using Element::remove;
     void remove(const std::string& s) { m.erase(s); }
     bool contains(const std::string& s) { return m.find(s) != m.end(); }
-    std::string str();
-    void toWire(std::stringstream& ss, int omit_length = 1);
+    void toJSON(std::stringstream& ss);
     
-    //
-    // Encode into the CC wire format.
-    //
-    void toWire(std::ostream& ss);
-
     // we should name the two finds better...
     // find the element at id; raises TypeError if one of the
     // elements at path except the one we're looking for is not a
