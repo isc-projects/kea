@@ -47,7 +47,7 @@ using namespace std;
 
 using isc::data::Element;
 using isc::data::ElementPtr;
-using isc::data::ParseError;
+using isc::data::JSONError;
 
 namespace isc {
 namespace config {
@@ -175,7 +175,7 @@ ModuleCCSession::readModuleSpecification(const std::string& filename) {
 
     try {
         module_spec = moduleSpecFromFile(file, true);
-    } catch (ParseError pe) {
+    } catch (JSONError pe) {
         cout << "Error parsing module specification file: " << pe.what() << endl;
         exit(1);
     } catch (ModuleSpecError dde) {

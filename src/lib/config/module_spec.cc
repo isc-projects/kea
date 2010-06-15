@@ -231,7 +231,7 @@ ModuleSpec::validate_config(const ElementPtr data, const bool full, ElementPtr e
 
 ModuleSpec
 moduleSpecFromFile(const std::string& file_name, const bool check)
-                   throw(ParseError, ModuleSpecError)
+                   throw(JSONError, ModuleSpecError)
 {
     std::ifstream file;
 
@@ -252,7 +252,7 @@ moduleSpecFromFile(const std::string& file_name, const bool check)
 
 ModuleSpec
 moduleSpecFromFile(std::ifstream& in, const bool check)
-                   throw(ParseError, ModuleSpecError) {
+                   throw(JSONError, ModuleSpecError) {
     ElementPtr module_spec_element = Element::fromJSON(in);
     if (module_spec_element->contains("module_spec")) {
         return ModuleSpec(module_spec_element->get("module_spec"), check);
