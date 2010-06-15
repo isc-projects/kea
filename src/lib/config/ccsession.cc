@@ -125,8 +125,8 @@ createCommand(const std::string& command)
 ElementPtr
 createCommand(const std::string& command, ElementPtr arg)
 {
-    ElementPtr cmd = Element::createFromString("{}");
-    ElementPtr cmd_parts = Element::createFromString("[]");
+    ElementPtr cmd = Element::createMap();
+    ElementPtr cmd_parts = Element::createList();
     cmd_parts->add(Element::create(command));
     if (arg) {
         cmd_parts->add(arg);
@@ -274,7 +274,7 @@ ElementPtr
 ModuleCCSession::handleConfigUpdate(ElementPtr new_config)
 {
     ElementPtr answer;
-    ElementPtr errors = Element::createFromString("[]");
+    ElementPtr errors = Element::createList();
     if (!config_handler_) {
         answer = createAnswer(1, module_name_ + " does not have a config handler");
     } else if (!module_specification_.validate_config(new_config, false, errors)) {

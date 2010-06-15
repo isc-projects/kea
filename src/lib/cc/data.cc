@@ -250,19 +250,13 @@ Element::create(const bool b) {
 }
 
 ElementPtr
-Element::create(const std::vector<ElementPtr>& v) {
-    return ElementPtr(new ListElement(v));
+Element::createList() {
+    return ElementPtr(new ListElement());
 }
 
 ElementPtr
-Element::create(const std::map<std::string, ElementPtr>& m) {
-    for (std::map<std::string, ElementPtr>::const_iterator it = m.begin();
-         it != m.end(); ++it) {
-        if ((*it).first.length() > 255) {
-            isc_throw(TypeError, "Map tag is too long");
-        }
-    }
-    return ElementPtr(new MapElement(m));
+Element::createMap() {
+    return ElementPtr(new MapElement());
 }
 
 
@@ -477,27 +471,27 @@ ElementPtr
 from_stringstream_list(std::istream &in, const std::string& file, int& line, int& pos)
 {
     char c = 0;
-    std::vector<ElementPtr> v;
+    ElementPtr list = Element::createList();
     ElementPtr cur_list_element;
 
     skip_chars(in, " \t\n", line, pos);
     while (c != EOF && c != ']') {
         if (in.peek() != ']') {
             cur_list_element = Element::createFromString(in, file, line, pos);
-            v.push_back(cur_list_element);
+            list->add(cur_list_element);
             skip_to(in, file, line, pos, ",]", " \t\n");
         }
         c = in.get();
         pos++;
     }
-    return Element::create(v);
+    return list;
 }
 
 ElementPtr
 from_stringstream_map(std::istream &in, const std::string& file, int& line,
                       int& pos)
 {
-    std::map<std::string, ElementPtr> m;
+    ElementPtr map = Element::createMap();
     skip_chars(in, " \t\n", line, pos);
     char c = in.peek();
     if (c == '}') {
@@ -505,10 +499,8 @@ from_stringstream_map(std::istream &in, const std::string& file, int& line,
         c = in.get();
     } else {
         while (c != EOF && c != '}') {
-            std::pair<std::string, ElementPtr> p;
-
-            p.first = str_from_stringstream(in, file, line, pos);
-            if (p.first.length() > 255) {
+            std::string key = str_from_stringstream(in, file, line, pos);
+            if (key.length() > 255) {
                 // Map tag has one-byte length field in wire format, so the
                 // length cannot exceed 255.
                 throwParseError("Map tag is too long", file, line, pos);
@@ -518,14 +510,16 @@ from_stringstream_map(std::istream &in, const std::string& file, int& line,
             // skip the :
             in.get();
             pos++;
-            p.second = Element::createFromString(in, file, line, pos);
-            m.insert(p);
+
+            ElementPtr value = Element::createFromString(in, file, line, pos);
+            map->set(key, value);
+            
             skip_to(in, file, line, pos, ",}", " \t\n");
             c = in.get();
             pos++;
         }
     }
-    return Element::create(m);
+    return map;
 }
 }
 
@@ -735,6 +729,15 @@ Element::fromWire(std::stringstream& in, int length) {
     //length -= 4;
     int line = 0, pos = 0;
     return createFromString(in, "<wire>", line, pos);
+}
+
+void
+MapElement::set(const std::string& key, ElementPtr value) {
+    if (key.length() <= 255) {
+        m[key] = value;
+    } else {
+        isc_throw(TypeError, "Map key too long");
+    }
 }
 
 bool

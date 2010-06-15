@@ -274,7 +274,7 @@ AuthSrvImpl::setDbFile(const isc::data::ElementPtr config) {
         string item("database_file");
         ElementPtr value = cs_->getValue(is_default, item);
         db_file_ = value->stringValue();
-        final = Element::createFromString("{}");
+        final = Element::createMap();
         final->set(item, value);
     } else {
         return (answer);
