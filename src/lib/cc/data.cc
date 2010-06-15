@@ -50,6 +50,28 @@ const unsigned char ITEM_LENGTH_MASK = 0x30;
 namespace isc {
 namespace data {
 
+std::string
+Element::str()
+{
+    std::stringstream ss;
+    toJSON(ss);
+    return ss.str();
+}
+
+std::string
+Element::toWire()
+{
+    std::stringstream ss;
+    toJSON(ss);
+    return ss.str();
+}
+
+void
+Element::toWire(std::stringstream& ss)
+{
+    toJSON(ss);
+}
+
 //
 // The following methods are effectively empty, and their parameters are
 // unused.  To silence compilers that warn unused function parameters,
@@ -203,6 +225,11 @@ bool operator==(const isc::data::ElementPtr a, const isc::data::ElementPtr b) {
 // factory functions
 //
 ElementPtr
+Element::create() {
+    return ElementPtr(new NullElement());
+}
+
+ElementPtr
 Element::create(const int i) {
     return ElementPtr(new IntElement(i));
 }
@@ -306,6 +333,8 @@ skip_to(std::istream &in, const std::string& file, int& line,
     throwParseError(std::string("EOF read, one of \"") + chars + "\" expected", file, line, pos);
 }
 
+// TODO: Should we check for all other official escapes here (and
+// error on the rest)?
 std::string
 str_from_stringstream(std::istream &in, const std::string& file, const int line,
                       int& pos) throw (ParseError)
@@ -352,26 +381,57 @@ count_chars_i(int i) {
     return result;
 }
 
-inline int
-count_chars_d(double d) {
-    int result = 1;
-    while (d < 1.0) {
-        ++result;
-        d = d * 10;
-    }
-    return result;
-}
-
+// TODO: range checks
 ElementPtr
-from_stringstream_int_or_double(std::istream &in, int &pos) {
-    int i;
+from_stringstream_number(std::istream &in, int &pos) {
+    int i, d_i;
+    double d = 0.0;
+    bool is_double = false;
+
     in >> i;
     pos += count_chars_i(i);
     if (in.peek() == '.') {
-        double d;
-        in >> d;
-        pos += count_chars_d(i);
-        d += i;
+        is_double = true;
+        in.get();
+        pos++;
+        in >> d_i;
+        d = i + (double)d_i / 10;
+        pos += count_chars_i(d_i);
+    }
+    if (in.peek() == 'e' || in.peek() == 'E') {
+        int e;
+        in.get();
+        pos++;
+        in >> e;
+        pos += count_chars_i(e);
+        if (e == 0) {
+            d = 1;
+            i = 1;
+        } else if (e < 0) {
+            if (!is_double) {
+                is_double = true;
+                d = i;
+            }
+            while (e < 0) {
+                d = d / 10;
+                e++;
+            }
+        } else {
+            if (is_double) {
+                while (e > 0) {
+                    d = d * 10;
+                    e--;
+                }
+            } else {
+                while (e > 0) {
+                    i = i * 10;
+                    e--;
+                }
+            }
+        }
+    }
+
+    if (is_double) {
         return Element::create(d);
     } else {
         return Element::create(i);
@@ -390,6 +450,19 @@ from_stringstream_bool(std::istream &in, const std::string& file,
     } else {
         throwParseError(std::string("Bad boolean value: ") + word, file, line, pos);
         // above is a throw shortcur, return empty is never reached
+        return ElementPtr();
+    }
+}
+
+ElementPtr
+from_stringstream_null(std::istream &in, const std::string& file,
+                       const int line, int& pos)
+{
+    const std::string word = word_from_stringstream(in, pos);
+    if (boost::iequals(word, "null")) {
+        return Element::create();
+    } else {
+        throwParseError(std::string("Bad null value: ") + word, file, line, pos);
         return ElementPtr();
     }
 }
@@ -491,7 +564,7 @@ Element::createFromString(std::istream &in, const std::string& file, int& line, 
             case '9':
             case '0':
                 in.putback(c);
-                element = from_stringstream_int_or_double(in, pos);
+                element = from_stringstream_number(in, pos);
                 el_read = true;
                 break;
             case 't':
@@ -500,6 +573,11 @@ Element::createFromString(std::istream &in, const std::string& file, int& line, 
             case 'F':
                 in.putback(c);
                 element = from_stringstream_bool(in, file, line, pos);
+                el_read = true;
+                break;
+            case 'n':
+                in.putback(c);
+                element = from_stringstream_null(in, file, line, pos);
                 el_read = true;
                 break;
             case '"':
@@ -536,44 +614,47 @@ Element::createFromString(const std::string &in) {
     return createFromString(ss, "<string>");
 }
 
-//
-// a general to_str() function
-//
-std::string
-IntElement::str() {
-    std::stringstream ss;
+// to JSON format
+
+void
+IntElement::toJSON(std::stringstream& ss)
+{
     ss << intValue();
-    return ss.str();
 }
 
-std::string
-DoubleElement::str() {
-    std::stringstream ss;
+void
+DoubleElement::toJSON(std::stringstream& ss)
+{
     ss << doubleValue();
-    return ss.str();
 }
 
-std::string
-BoolElement::str() {
+void
+BoolElement::toJSON(std::stringstream& ss)
+{
     if (b) {
-        return "True";
+        ss << "true";
     } else {
-        return "False";
+        ss << "false";
     }
 }
 
-std::string
-StringElement::str() {
-    std::stringstream ss;
+void
+NullElement::toJSON(std::stringstream& ss)
+{
+    ss << "null";
+}
+
+void
+StringElement::toJSON(std::stringstream& ss)
+{
     ss << "\"";
     ss << stringValue();
     ss << "\"";
-    return ss.str();
 }
 
-std::string
-ListElement::str() {
-    std::stringstream ss;
+void
+ListElement::toJSON(std::stringstream& ss)
+{
     ss << "[ ";
 
     const std::vector<ElementPtr>& v = listValue();
@@ -582,16 +663,15 @@ ListElement::str() {
         if (it != v.begin()) {
             ss << ", ";
         }
-        ss << (*it)->str();
+        (*it)->toJSON(ss);
     }
     ss << " ]";
-    return ss.str();
 }
 
-std::string
-MapElement::str() {
-    std::stringstream ss;
-    ss << "{";
+void
+MapElement::toJSON(std::stringstream& ss)
+{
+    ss << "{ ";
 
     const std::map<std::string, ElementPtr>& m = mapValue();
     for (std::map<std::string, ElementPtr>::const_iterator it = m.begin();
@@ -601,13 +681,12 @@ MapElement::str() {
         }
         ss << "\"" << (*it).first << "\": ";
         if ((*it).second) {
-            ss << (*it).second->str();
+            (*it).second->toJSON(ss);
         } else {
             ss << "None";
         }
     }
-    ss << "}";
-    return ss.str();
+    ss << " }";
 }
 
 // throws when one of the types in the path (except the one
@@ -634,169 +713,12 @@ MapElement::find(const std::string& id) {
     }
 }
 
-//
-// Decode from wire format.
-//
-namespace {
-ElementPtr decode_element(std::stringstream& in, int& in_length);
-
-unsigned char
-get_byte(std::stringstream& in) {
-    const int c = in.get();
-    if (c == EOF) {
-        throw DecodeError("End of data while decoding wire format message");
-    }
-
-    return c;
-}
-
-std::string
-decode_tag(std::stringstream& in, int& item_length) {
-    char buf[256];
-
-    const int len = get_byte(in);
-    item_length--;
-
-    in.read(buf, len);
-    if (in.fail()) {
-        throw DecodeError();
-    }
-    buf[len] = 0;
-    item_length -= len;
-
-    return std::string(buf, len);
-}
-
-ElementPtr
-decode_bool(std::stringstream& in) {
-    const char c = in.get();
-    
-    if (c == '1') {
-        return Element::create(true);
-    } else {
-        return Element::create(false);
-    }
-}
-
-ElementPtr
-decode_int(std::stringstream& in) {
-    int me;
-    return from_stringstream_int_or_double(in, me);
-}
-
-ElementPtr
-decode_real(std::stringstream& in) {
-    int me;
-    return from_stringstream_int_or_double(in, me);
-}
-
-ElementPtr
-decode_blob(std::stringstream& in, const int item_length) {
-    vector<char> buf(item_length + 1);
-
-    in.read(&buf[0], item_length);
-    if (in.fail()) {
-        throw DecodeError();
-    }
-    buf[item_length] = 0;
-
-    return Element::create(std::string(&buf[0], item_length));
-}
-
-ElementPtr
-decode_hash(std::stringstream& in, int item_length) {
-    std::map<std::string, ElementPtr> m;
-    std::pair<std::string, ElementPtr> p;
-
-    while (item_length > 0) {
-        p.first = decode_tag(in, item_length);
-        p.second = decode_element(in, item_length);
-        m.insert(p);
-    }
-
-    return Element::create(m);
-}
-
-ElementPtr
-decode_list(std::stringstream& in, int item_length) {
-    std::vector<ElementPtr> v;
-
-    while (item_length > 0) {
-        v.push_back(decode_element(in, item_length));
-    }
-    return Element::create(v);
-}
-
-ElementPtr
-decode_null() {
-    return Element::create("NULL");
-}
-
-ElementPtr
-decode_element(std::stringstream& in, int& in_length) {
-    ElementPtr element;
-
-    const unsigned char type_and_length = get_byte(in);
-    const unsigned char type = type_and_length & ITEM_MASK;
-    const unsigned char lenbytes = type_and_length & ITEM_LENGTH_MASK;
-    in_length--;
-
-    int item_length = 0;
-    switch (lenbytes) {
-    case ITEM_LENGTH_32:
-        item_length |= get_byte(in);
-        item_length <<= 8;
-        item_length |= get_byte(in);
-        item_length <<= 8;
-        in_length -= 2;  // only 2 here, we will get more later
-    case ITEM_LENGTH_16:
-        item_length |= get_byte(in);
-        item_length <<= 8;
-        in_length--;  // only 1 here
-    case ITEM_LENGTH_8:
-        item_length |= get_byte(in);
-        in_length--;
-    }
-
-    in_length -= item_length;
-
-    switch (type) {
-    case ITEM_BOOL:
-        element = decode_bool(in);
-        break;
-    case ITEM_INT:
-        element = decode_int(in);
-        break;
-    case ITEM_REAL:
-        element = decode_real(in);
-        break;
-    case ITEM_BLOB:
-        element = decode_blob(in, item_length);
-        break;
-    case ITEM_UTF8:
-        // XXXMLG currently identical to decode_blob
-        element = decode_blob(in, item_length);
-        break;
-    case ITEM_HASH:
-        element = decode_hash(in, item_length);
-        break;
-    case ITEM_LIST:
-        element = decode_list(in, item_length);
-        break;
-    case ITEM_NULL:
-        element = decode_null();
-        break;
-    }
-
-    return (element);
-}
-}
-
 ElementPtr
 Element::fromWire(const std::string& s) {
     std::stringstream ss;
     ss << s;
-    return fromWire(ss, s.length());
+    int line = 0, pos = 0;
+    return createFromString(ss, "<wire>", line, pos);
 }
 
 ElementPtr
@@ -804,159 +726,15 @@ Element::fromWire(std::stringstream& in, int length) {
     //
     // Check protocol version
     //
-    for (int i = 0 ; i < 4 ; ++i) {
-        const unsigned char version_byte = get_byte(in);
-        if (PROTOCOL_VERSION[i] != version_byte) {
-            throw DecodeError("Protocol version incorrect");
-        }
-    }
-    length -= 4;
-
-    return (decode_hash(in, length));
-}
-
-//
-// Encode into wire format.
-//
-
-std::string
-encode_length(const unsigned int length, unsigned char type) {
-    std::stringstream ss;
-
-    if (length <= 0x000000ff) {
-        const unsigned char val = (length & 0x000000ff);
-        type |= ITEM_LENGTH_8;
-        ss << type << val;
-    } else if (length <= 0x0000ffff) {
-        unsigned char val[2];
-        val[0] = (length & 0x0000ff00) >> 8;
-        val[1] = (length & 0x000000ff);
-        type |= ITEM_LENGTH_16;
-        ss << type << val[0] << val[1];
-    } else {
-        unsigned char val[4];
-        val[0] = (length & 0xff000000) >> 24;
-        val[1] = (length & 0x00ff0000) >> 16;
-        val[2] = (length & 0x0000ff00) >> 8;
-        val[3] = (length & 0x000000ff);
-        type |= ITEM_LENGTH_32;
-        ss << type << val[0] << val[1] << val[2] << val[3];
-    }
-    return ss.str();
-}
-
-std::string
-Element::toWire(const int omit_length) {
-    std::stringstream ss;
-    toWire(ss, omit_length);
-    return ss.str();
-}
-
-void
-StringElement::toWire(std::stringstream& ss,
-                      const int omit_length UNUSED_PARAM)
-{
-    unsigned int length = stringValue().length();
-    ss << encode_length(length, ITEM_UTF8) << stringValue();
-}
-
-void
-IntElement::toWire(std::stringstream& ss,
-                   const int omit_length UNUSED_PARAM)
-{
-    const std::string& s = str();
-    ss << encode_length(s.length(), ITEM_INT) << s;
-}
-
-void
-BoolElement::toWire(std::stringstream& ss,
-                    const int omit_length UNUSED_PARAM)
-{
-    ss << encode_length(1, ITEM_BOOL);
-    if (boolValue()) {
-        ss << '1';
-    } else {
-        ss << '0';
-    }
-}
-
-void
-DoubleElement::toWire(std::stringstream& ss,
-                      const int omit_length UNUSED_PARAM)
-{
-    std::stringstream text;
-
-    text << str();
-    const int length = text.str().length();
-    ss << encode_length(length, ITEM_REAL) << text.str();
-}
-
-void
-ListElement::toWire(std::stringstream& ss, const int omit_length) {
-    std::stringstream ss2;
-    const std::vector<ElementPtr>& v = listValue();
-    for (std::vector<ElementPtr>::const_iterator it = v.begin() ;
-         it != v.end() ; ++it) {
-        (*it)->toWire(ss2, 0);
-    }
-
-
-    if (omit_length) {
-        stringbuf *ss2_buf = ss2.rdbuf();
-        ss2_buf->pubseekpos(0);
-        if (ss2_buf->in_avail() > 0) {
-            ss << ss2_buf;
-        }
-    } else {
-        stringbuf *ss2_buf = ss2.rdbuf();
-        ss2_buf->pubseekpos(0);
-        ss << encode_length(ss2_buf->in_avail(), ITEM_LIST);
-        if (ss2_buf->in_avail() > 0) {
-            ss << ss2_buf;
-        }
-    }
-}
-
-void
-MapElement::toWire(std::stringstream& ss, int omit_length) {
-    std::stringstream ss2;
-
-    //
-    // If we don't want the length, we will want the protocol header
-    //
-    if (omit_length) {
-        ss2 << PROTOCOL_VERSION[0] << PROTOCOL_VERSION[1];
-        ss2 << PROTOCOL_VERSION[2] << PROTOCOL_VERSION[3];
-    }
-
-    const std::map<std::string, ElementPtr>& m = mapValue();
-    for (std::map<std::string, ElementPtr>::const_iterator it = m.begin();
-         it != m.end(); ++it) {
-        const size_t taglen = (*it).first.length();
-        assert(taglen <= 0xff);
-        const unsigned char val = (taglen & 0x000000ff);
-        ss2 << val << (*it).first;
-
-        (*it).second->toWire(ss2, 0);
-    }
-
-    //
-    // add length if needed
-    //
-    if (omit_length) {
-        stringbuf *ss2_buf = ss2.rdbuf();
-        ss2_buf->pubseekpos(0);
-        if (ss2_buf->in_avail()) {
-            ss << ss2_buf;
-        }
-    } else {
-        stringbuf *ss2_buf = ss2.rdbuf();
-        ss2_buf->pubseekpos(0);
-        ss << encode_length(ss2_buf->in_avail(), ITEM_HASH);
-        if (ss2_buf->in_avail()) {
-            ss << ss2_buf;
-        }
-    }
+    //for (int i = 0 ; i < 4 ; ++i) {
+    //    const unsigned char version_byte = get_byte(in);
+    //    if (PROTOCOL_VERSION[i] != version_byte) {
+    //        throw DecodeError("Protocol version incorrect");
+    //    }
+    //}
+    //length -= 4;
+    int line = 0, pos = 0;
+    return createFromString(in, "<wire>", line, pos);
 }
 
 bool
@@ -989,6 +767,11 @@ bool
 BoolElement::equals(ElementPtr other) {
     return (other->getType() == Element::boolean) &&
            (b == other->boolValue());
+}
+
+bool
+NullElement::equals(ElementPtr other) {
+    return other->getType() == Element::null;
 }
 
 bool
