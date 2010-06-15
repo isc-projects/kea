@@ -75,7 +75,7 @@ private:
 ///
 /// Elements should in calling functions usually be referenced through
 /// an \c ElementPtr, which can be created using the factory functions
-/// \c Element::create() and \c Element::createFromString()
+/// \c Element::create() and \c Element::fromJSON()
 ///
 /// Notes to developers: Element is a base class, implemented by a
 /// specific subclass for each type (IntElement, BoolElement, etc).
@@ -164,6 +164,7 @@ public:
     virtual bool getValue(std::vector<ElementPtr>& t);
     virtual bool getValue(std::map<std::string, ElementPtr>& t);
     //@}
+
     ///
     /// \name Exception-safe setters.
     ///
@@ -193,21 +194,26 @@ public:
     /// of bounds, this function throws an std::out_of_range exception.
     /// \param i The position of the ElementPtr to return
     virtual ElementPtr get(const int i);
+
     /// Sets the ElementPtr at the given index. If the index is out
     /// of bounds, this function throws an std::out_of_range exception.
     /// \param i The position of the ElementPtr to set
     /// \param element The ElementPtr to set at the position
     virtual void set(const size_t i, ElementPtr element);
+
     /// Adds an ElementPtr to the list
     /// \param element The ElementPtr to add
     virtual void add(ElementPtr element);
+
     /// Removes the element at the given position. If the index is out
     /// of nothing happens.
     /// \param i The index of the element to remove.
     virtual void remove(const int i);
+
     /// Returns the number of elements in the list.
     virtual size_t size();
     //@}
+
     
     /// \name MapElement functions
     ///
@@ -218,16 +224,20 @@ public:
     /// \param name The key of the Element to return
     /// \return The ElementPtr at the given key
     virtual ElementPtr get(const std::string& name);
+
     /// Sets the ElementPtr at the given key
     /// \param name The key of the Element to set
     virtual void set(const std::string& name, ElementPtr element);
+
     /// Remove the ElementPtr at the given key
     /// \param name The key of the Element to remove
     virtual void remove(const std::string& name);
+
     /// Checks if there is data at the given key
     /// \param name The key of the Element to remove
     /// \return true if there is data at the key, false if not.
     virtual bool contains(const std::string& name);
+
     /// Recursively finds any data at the given identifier. The
     /// identifier is a /-separated list of names of nested maps, with
     /// the last name being the leaf that is returned.
@@ -242,12 +252,14 @@ public:
     /// null ElementPtr if it is not found, which can be checked with
     /// Element::is_null(ElementPtr e).
     virtual ElementPtr find(const std::string& identifier);
+
     /// See \c Element::find()
     /// \param identifier The identifier of the element to find
     /// \param t Reference to store the resulting ElementPtr, if found.
     /// \return true if the element was found, false if not.
     virtual bool find(const std::string& identifier, ElementPtr& t);
     //@}
+
 
     /// \name Factory functions
     
@@ -276,9 +288,11 @@ public:
 
     /// \brief Creates an empty ListElement type ElementPtr.
     static ElementPtr createList();
+
     /// \brief Creates an empty MapElement type ElementPtr.
     static ElementPtr createMap();
     //@}
+
 
     /// \name Compound factory functions
 
@@ -287,18 +301,21 @@ public:
     /// error, an exception of the type isc::data::ParseError is thrown.
 
     //@{
-    /// Creates an Element from the given string
+    /// Creates an Element from the given JSON string
     /// \param in The string to parse the element from
     /// \return An ElementPtr that contains the element(s) specified
     /// in the given string.
-    static ElementPtr createFromString(const std::string& in);
+    static ElementPtr fromJSON(const std::string& in);
 
-    /// Creates an Element from the given input stream
+    /// Creates an Element from the given input stream containing JSON
+    /// formatted data.
+    ///
     /// \param in The string to parse the element from
     /// \return An ElementPtr that contains the element(s) specified
     /// in the given input stream.
-    static ElementPtr createFromString(std::istream& in) throw(ParseError);
-    static ElementPtr createFromString(std::istream& in, const std::string& file_name) throw(ParseError);
+    static ElementPtr fromJSON(std::istream& in) throw(ParseError);
+    static ElementPtr fromJSON(std::istream& in, const std::string& file_name) throw(ParseError);
+
     /// Creates an Element from the given input stream, where we keep
     /// track of the location in the stream for error reporting.
     ///
@@ -310,7 +327,7 @@ public:
     /// \return An ElementPtr that contains the element(s) specified
     /// in the given input stream.
     // make this one private?
-    static ElementPtr createFromString(std::istream& in, const std::string& file, int& line, int &pos) throw(ParseError);
+    static ElementPtr fromJSON(std::istream& in, const std::string& file, int& line, int &pos) throw(ParseError);
     //@}
 
     /// \name Wire format factory functions
@@ -323,7 +340,7 @@ public:
     /// Creates an Element from the wire format in the given
     /// stringstream of the given length.
     /// Since the wire format is JSON, thise is the same as
-    /// createFromString, and could be removed.
+    /// fromJSON, and could be removed.
     ///
     /// \param in The input stringstream.
     /// \param length The length of the wireformat data in the stream
@@ -332,7 +349,7 @@ public:
 
     /// Creates an Element from the wire format in the given string
     /// Since the wire format is JSON, thise is the same as
-    /// createFromString, and could be removed.
+    /// fromJSON, and could be removed.
     ///
     /// \param s The input string
     /// \return ElementPtr with the data that is parsed.

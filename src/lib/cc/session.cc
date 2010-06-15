@@ -314,7 +314,7 @@ Session::establish(const char* socket_file) {
     // send a request for our local name, and wait for a response
     //
     ElementPtr get_lname_msg =
-        Element::createFromString("{ \"type\": \"getlname\" }");
+        Element::fromJSON("{ \"type\": \"getlname\" }");
     sendmsg(get_lname_msg);
 
     ElementPtr routing, msg;

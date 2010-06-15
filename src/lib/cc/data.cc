@@ -261,7 +261,7 @@ Element::createMap() {
 
 
 //
-// helper functions for createFromString factory
+// helper functions for fromJSON factory
 //
 namespace {
 bool
@@ -477,7 +477,7 @@ from_stringstream_list(std::istream &in, const std::string& file, int& line, int
     skip_chars(in, " \t\n", line, pos);
     while (c != EOF && c != ']') {
         if (in.peek() != ']') {
-            cur_list_element = Element::createFromString(in, file, line, pos);
+            cur_list_element = Element::fromJSON(in, file, line, pos);
             list->add(cur_list_element);
             skip_to(in, file, line, pos, ",]", " \t\n");
         }
@@ -511,7 +511,7 @@ from_stringstream_map(std::istream &in, const std::string& file, int& line,
             in.get();
             pos++;
 
-            ElementPtr value = Element::createFromString(in, file, line, pos);
+            ElementPtr value = Element::fromJSON(in, file, line, pos);
             map->set(key, value);
             
             skip_to(in, file, line, pos, ",}", " \t\n");
@@ -524,20 +524,20 @@ from_stringstream_map(std::istream &in, const std::string& file, int& line,
 }
 
 ElementPtr
-Element::createFromString(std::istream& in) throw(ParseError) {
+Element::fromJSON(std::istream& in) throw(ParseError) {
     int line = 1, pos = 1;
-    return createFromString(in, "<istream>", line, pos);
+    return fromJSON(in, "<istream>", line, pos);
 }
 
 ElementPtr
-Element::createFromString(std::istream& in, const std::string& file_name) throw(ParseError)
+Element::fromJSON(std::istream& in, const std::string& file_name) throw(ParseError)
 {
     int line = 1, pos = 1;
-    return createFromString(in, file_name, line, pos);
+    return fromJSON(in, file_name, line, pos);
 }
 
 ElementPtr
-Element::createFromString(std::istream &in, const std::string& file, int& line, int& pos) throw(ParseError)
+Element::fromJSON(std::istream &in, const std::string& file, int& line, int& pos) throw(ParseError)
 {
     char c = 0;
     ElementPtr element;
@@ -602,10 +602,10 @@ Element::createFromString(std::istream &in, const std::string& file, int& line, 
 }
 
 ElementPtr
-Element::createFromString(const std::string &in) {
+Element::fromJSON(const std::string &in) {
     std::stringstream ss;
     ss << in;
-    return createFromString(ss, "<string>");
+    return fromJSON(ss, "<string>");
 }
 
 // to JSON format
@@ -712,7 +712,7 @@ Element::fromWire(const std::string& s) {
     std::stringstream ss;
     ss << s;
     int line = 0, pos = 0;
-    return createFromString(ss, "<wire>", line, pos);
+    return fromJSON(ss, "<wire>", line, pos);
 }
 
 ElementPtr
@@ -728,7 +728,7 @@ Element::fromWire(std::stringstream& in, int length) {
     //}
     //length -= 4;
     int line = 0, pos = 0;
-    return createFromString(in, "<wire>", line, pos);
+    return fromJSON(in, "<wire>", line, pos);
 }
 
 void

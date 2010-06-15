@@ -37,7 +37,7 @@ std::string ccspecfile(const std::string name) {
 static ElementPtr
 el(const std::string& str)
 {
-    return Element::createFromString(str);
+    return Element::fromJSON(str);
 }
 
 // upon creation of a ModuleCCSession, the class

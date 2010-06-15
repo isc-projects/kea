@@ -87,8 +87,8 @@ TEST(ConfigData, setLocalConfig) {
     ConfigData cd = ConfigData(spec2);
     bool is_default;
 
-    ElementPtr my_config = Element::createFromString("{ \"item1\": 2 }");
-    ElementPtr my_config2 = Element::createFromString("{ \"item6\": { \"value1\": \"a\" } }");
+    ElementPtr my_config = Element::fromJSON("{ \"item1\": 2 }");
+    ElementPtr my_config2 = Element::fromJSON("{ \"item6\": { \"value1\": \"a\" } }");
 
     EXPECT_EQ("{  }", cd.getValue("item6")->str());
 
@@ -108,11 +108,11 @@ TEST(ConfigData, getLocalConfig) {
     ConfigData cd = ConfigData(spec2);
     EXPECT_EQ("{  }", cd.getLocalConfig()->str());
     
-    ElementPtr my_config = Element::createFromString("{ \"item1\": 2 }");
+    ElementPtr my_config = Element::fromJSON("{ \"item1\": 2 }");
     cd.setLocalConfig(my_config);
     EXPECT_EQ("{ \"item1\": 2 }", cd.getLocalConfig()->str());
 
-    ElementPtr my_config2 = Element::createFromString("{ \"item6\": { \"value1\": \"a\" } }");
+    ElementPtr my_config2 = Element::fromJSON("{ \"item6\": { \"value1\": \"a\" } }");
     cd.setLocalConfig(my_config2);
     EXPECT_EQ("{ \"item6\": { \"value1\": \"a\" } }", cd.getLocalConfig()->str());
 }
@@ -131,10 +131,10 @@ TEST(ConfigData, getFullConfig) {
     ConfigData cd = ConfigData(spec2);
 
     EXPECT_EQ("{ \"item1\": 1, \"item2\": 1.1, \"item3\": true, \"item4\": \"test\", \"item5/\": [ \"a\", \"b\" ], \"item6/value1\": \"default\", \"item6/value2\": None }", cd.getFullConfig()->str());
-    ElementPtr my_config = Element::createFromString("{ \"item1\": 2 }");
+    ElementPtr my_config = Element::fromJSON("{ \"item1\": 2 }");
     cd.setLocalConfig(my_config);
     EXPECT_EQ("{ \"item1\": 2, \"item2\": 1.1, \"item3\": true, \"item4\": \"test\", \"item5/\": [ \"a\", \"b\" ], \"item6/value1\": \"default\", \"item6/value2\": None }", cd.getFullConfig()->str());
-    ElementPtr my_config2 = Element::createFromString("{ \"item6\": { \"value1\": \"a\" } }");
+    ElementPtr my_config2 = Element::fromJSON("{ \"item6\": { \"value1\": \"a\" } }");
     cd.setLocalConfig(my_config2);
     EXPECT_EQ("{ \"item1\": 1, \"item2\": 1.1, \"item3\": true, \"item4\": \"test\", \"item5/\": [ \"a\", \"b\" ], \"item6/value1\": \"a\", \"item6/value2\": None }", cd.getFullConfig()->str());
 }

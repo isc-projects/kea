@@ -236,7 +236,7 @@ updateConfig(AuthSrv* server, const char* const dbfile,
              const bool expect_success)
 {
     const ElementPtr config_answer =
-        server->updateConfig(Element::createFromString(dbfile));
+        server->updateConfig(Element::fromJSON(dbfile));
     EXPECT_EQ(Element::map, config_answer->getType());
     EXPECT_TRUE(config_answer->contains("result"));
 
