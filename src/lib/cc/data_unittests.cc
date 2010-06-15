@@ -44,9 +44,10 @@ TEST(Element, type) {
     EXPECT_EQ(list_el.getType(), Element::list);
     MapElement map_el = MapElement();
     EXPECT_EQ(map_el.getType(), Element::map);
+
 }
 
-TEST(Element, from_and_to_str) {
+TEST(Element, from_and_to_json) {
     // this test checks whether the str() method returns the same
     // string that was used for creation
     ElementPtr el;
@@ -73,7 +74,7 @@ TEST(Element, from_and_to_str) {
     // some parse errors
     try {
         Element::fromJSON("{1}");
-    } catch (isc::data::ParseError pe) {
+    } catch (isc::data::JSONError pe) {
         std::string s = std::string(pe.what());
         EXPECT_EQ(s, "String expected in <string>:1:3");
     }
@@ -89,7 +90,7 @@ TEST(Element, from_and_to_str) {
     sv.push_back("");
     BOOST_FOREACH(std::string s, sv) {
         
-        EXPECT_THROW(el = Element::fromJSON(s), isc::data::ParseError);
+        EXPECT_THROW(el = Element::fromJSON(s), isc::data::JSONError);
     }
 
     // some json specific format tests, here the str() output is
@@ -102,6 +103,13 @@ TEST(Element, from_and_to_str) {
     EXPECT_EQ("100", Element::fromJSON("1.0e2")->str());
     EXPECT_EQ("0.01", Element::fromJSON("1.0e-2")->str());
     EXPECT_EQ("0.012", Element::fromJSON("1.2e-2")->str());
+
+    EXPECT_THROW(Element::fromJSON("12345678901234567890")->str(), JSONError);
+    EXPECT_THROW(Element::fromJSON("1.12345678901234567890")->str(), JSONError);
+    EXPECT_THROW(Element::fromJSON("1.1e12345678901234567890")->str(), JSONError);
+    EXPECT_THROW(Element::fromJSON("1e12345678901234567890")->str(), JSONError);
+    EXPECT_THROW(Element::fromJSON("1e50000")->str(), JSONError);
+
 }
 
 TEST(Element, create_and_value_throws) {
@@ -231,7 +239,7 @@ TEST(Element, MapElement) {
     long_maptag.push_back('f');
     EXPECT_THROW(Element::fromJSON("{ \"" + long_maptag +
                                            "\": \"bar\"}"),
-                 ParseError);
+                 JSONError);
 
     EXPECT_THROW(el->set(long_maptag, Element::create("bar")), TypeError);
 

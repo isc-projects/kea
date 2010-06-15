@@ -26,6 +26,8 @@
 
 #include <boost/algorithm/string.hpp> // for iequals
 
+#include <cmath>
+
 using namespace std;
 
 namespace {
@@ -201,14 +203,14 @@ Element::find(const std::string& identifier UNUSED_PARAM,
 
 namespace {
 inline void
-throwParseError(const std::string& error, const std::string& file, int line = 0, int pos = 0)
+throwJSONError(const std::string& error, const std::string& file, int line = 0, int pos = 0)
 {
     if (line != 0 || pos != 0) {
         std::stringstream ss;
         ss << error << " in " + file + ":" << line << ":" << pos;
-        throw ParseError(ss.str());
+        throw JSONError(ss.str());
     } else {
-        throw ParseError(error);
+        throw JSONError(error);
     }
 }
 }
@@ -321,17 +323,17 @@ skip_to(std::istream &in, const std::string& file, int& line,
             --pos;
             return;
         } else {
-            throwParseError(std::string("'") + c + "' read, one of \"" + chars + "\" expected", file, line, pos);
+            throwJSONError(std::string("'") + c + "' read, one of \"" + chars + "\" expected", file, line, pos);
         }
     }
-    throwParseError(std::string("EOF read, one of \"") + chars + "\" expected", file, line, pos);
+    throwJSONError(std::string("EOF read, one of \"") + chars + "\" expected", file, line, pos);
 }
 
 // TODO: Should we check for all other official escapes here (and
 // error on the rest)?
 std::string
 str_from_stringstream(std::istream &in, const std::string& file, const int line,
-                      int& pos) throw (ParseError)
+                      int& pos) throw (JSONError)
 {
     char c = 0;
     std::stringstream ss;
@@ -341,7 +343,7 @@ str_from_stringstream(std::istream &in, const std::string& file, const int line,
         c = in.get();
         ++pos;
     } else {
-        throwParseError("String expected", file, line, pos);
+        throwJSONError("String expected", file, line, pos);
     }
     while (c != EOF && c != '"') {
         ss << c;
@@ -375,7 +377,9 @@ count_chars_i(int i) {
     return result;
 }
 
-// TODO: range checks
+// Should we change from IntElement and DoubleElement to NumberElement
+// that can also hold an e value? (and have specific getters if the
+// value is larger than an int can handle)
 ElementPtr
 from_stringstream_number(std::istream &in, int &pos) {
     int i, d_i;
@@ -384,43 +388,43 @@ from_stringstream_number(std::istream &in, int &pos) {
 
     in >> i;
     pos += count_chars_i(i);
+    if (in.fail()) {
+        throw JSONError("Bad integer or overflow");
+    }
     if (in.peek() == '.') {
         is_double = true;
         in.get();
         pos++;
         in >> d_i;
+        if (in.fail()) {
+            throw JSONError("Bad real or overflow");
+        }
         d = i + (double)d_i / 10;
         pos += count_chars_i(d_i);
     }
     if (in.peek() == 'e' || in.peek() == 'E') {
         int e;
+        double p;
         in.get();
         pos++;
         in >> e;
+        if (in.fail()) {
+            throw JSONError("Bad exponent or overflow");
+        }
         pos += count_chars_i(e);
-        if (e == 0) {
-            d = 1;
-            i = 1;
-        } else if (e < 0) {
-            if (!is_double) {
-                is_double = true;
-                d = i;
-            }
-            while (e < 0) {
-                d = d / 10;
-                e++;
-            }
+        p = pow(10, e);
+        if (p == HUGE_VAL) {
+            throw JSONError("Bad exponent or overflow");
+        }
+        if (is_double) {
+            d = d * p;
         } else {
-            if (is_double) {
-                while (e > 0) {
-                    d = d * 10;
-                    e--;
-                }
+            if (p > 1.0) {
+                i = i * p;
             } else {
-                while (e > 0) {
-                    i = i * 10;
-                    e--;
-                }
+                // negative exponent, so type becomes a double
+                is_double = true;
+                d = i * p;
             }
         }
     }
@@ -442,7 +446,7 @@ from_stringstream_bool(std::istream &in, const std::string& file,
     } else if (boost::iequals(word, "False")) {
         return Element::create(false);
     } else {
-        throwParseError(std::string("Bad boolean value: ") + word, file, line, pos);
+        throwJSONError(std::string("Bad boolean value: ") + word, file, line, pos);
         // above is a throw shortcur, return empty is never reached
         return ElementPtr();
     }
@@ -456,7 +460,7 @@ from_stringstream_null(std::istream &in, const std::string& file,
     if (boost::iequals(word, "null")) {
         return Element::create();
     } else {
-        throwParseError(std::string("Bad null value: ") + word, file, line, pos);
+        throwJSONError(std::string("Bad null value: ") + word, file, line, pos);
         return ElementPtr();
     }
 }
@@ -503,7 +507,7 @@ from_stringstream_map(std::istream &in, const std::string& file, int& line,
             if (key.length() > 255) {
                 // Map tag has one-byte length field in wire format, so the
                 // length cannot exceed 255.
-                throwParseError("Map tag is too long", file, line, pos);
+                throwJSONError("Map tag is too long", file, line, pos);
             }
 
             skip_to(in, file, line, pos, ":", " \t\n");
@@ -524,20 +528,20 @@ from_stringstream_map(std::istream &in, const std::string& file, int& line,
 }
 
 ElementPtr
-Element::fromJSON(std::istream& in) throw(ParseError) {
+Element::fromJSON(std::istream& in) throw(JSONError) {
     int line = 1, pos = 1;
     return fromJSON(in, "<istream>", line, pos);
 }
 
 ElementPtr
-Element::fromJSON(std::istream& in, const std::string& file_name) throw(ParseError)
+Element::fromJSON(std::istream& in, const std::string& file_name) throw(JSONError)
 {
     int line = 1, pos = 1;
     return fromJSON(in, file_name, line, pos);
 }
 
 ElementPtr
-Element::fromJSON(std::istream &in, const std::string& file, int& line, int& pos) throw(ParseError)
+Element::fromJSON(std::istream &in, const std::string& file, int& line, int& pos) throw(JSONError)
 {
     char c = 0;
     ElementPtr element;
@@ -590,14 +594,14 @@ Element::fromJSON(std::istream &in, const std::string& file, int& line, int& pos
             case EOF:
                 break;
             default:
-                throwParseError(std::string("error: unexpected character ") + c, file, line, pos);
+                throwJSONError(std::string("error: unexpected character ") + c, file, line, pos);
                 break;
         }
     }
     if (el_read) {
         return element;
     } else {
-        throw ParseError("nothing read");
+        throw JSONError("nothing read");
     }
 }
 
