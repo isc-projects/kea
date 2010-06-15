@@ -56,7 +56,7 @@ namespace config {
 ElementPtr
 createAnswer()
 {
-    ElementPtr answer = Element::createFromString("{\"result\": [] }");
+    ElementPtr answer = Element::fromJSON("{\"result\": [] }");
     ElementPtr answer_content = answer->get("result");
     answer_content->add(Element::create(0));
     return answer;
@@ -68,7 +68,7 @@ createAnswer(const int rcode, const ElementPtr arg)
     if (rcode != 0 && (!arg || arg->getType() != Element::string)) {
         isc_throw(CCSessionError, "Bad or no argument for rcode != 0");
     }
-    ElementPtr answer = Element::createFromString("{\"result\": [] }");
+    ElementPtr answer = Element::fromJSON("{\"result\": [] }");
     ElementPtr answer_content = answer->get("result");
     answer_content->add(Element::create(rcode));
     answer_content->add(arg);
@@ -78,7 +78,7 @@ createAnswer(const int rcode, const ElementPtr arg)
 ElementPtr
 createAnswer(const int rcode, const std::string& arg)
 {
-    ElementPtr answer = Element::createFromString("{\"result\": [] }");
+    ElementPtr answer = Element::fromJSON("{\"result\": [] }");
     ElementPtr answer_content = answer->get("result");
     answer_content->add(Element::create(rcode));
     answer_content->add(Element::create(arg));
@@ -252,10 +252,10 @@ ModuleCCSession::init(
         std::cerr << "[" << module_name_ << "] Error in specification: " << answer << std::endl;
     }
     
-    setLocalConfig(Element::createFromString("{}"));
+    setLocalConfig(Element::fromJSON("{}"));
     // get any stored configuration from the manager
     if (config_handler_) {
-        ElementPtr cmd = Element::createFromString("{ \"command\": [\"get_config\", {\"module_name\":\"" + module_name_ + "\"} ] }");
+        ElementPtr cmd = Element::fromJSON("{ \"command\": [\"get_config\", {\"module_name\":\"" + module_name_ + "\"} ] }");
         seq = session_.group_sendmsg(cmd, "ConfigManager");
         session_.group_recvmsg(env, answer, false, seq);
         ElementPtr new_config = parseAnswer(rcode, answer);
@@ -363,7 +363,7 @@ ModuleCCSession::addRemoteConfig(const std::string& spec_file_name)
     session_.subscribe(module_name);
 
     // Get the current configuration values for that module
-    ElementPtr cmd = Element::createFromString("{ \"command\": [\"get_config\", {\"module_name\":\"" + module_name + "\"} ] }");
+    ElementPtr cmd = Element::fromJSON("{ \"command\": [\"get_config\", {\"module_name\":\"" + module_name + "\"} ] }");
     ElementPtr env, answer;
     int rcode;
     

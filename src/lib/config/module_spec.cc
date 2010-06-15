@@ -242,7 +242,7 @@ moduleSpecFromFile(const std::string& file_name, const bool check)
         throw ModuleSpecError(errs.str());
     }
 
-    ElementPtr module_spec_element = Element::createFromString(file, file_name);
+    ElementPtr module_spec_element = Element::fromJSON(file, file_name);
     if (module_spec_element->contains("module_spec")) {
         return ModuleSpec(module_spec_element->get("module_spec"), check);
     } else {
@@ -253,7 +253,7 @@ moduleSpecFromFile(const std::string& file_name, const bool check)
 ModuleSpec
 moduleSpecFromFile(std::ifstream& in, const bool check)
                    throw(ParseError, ModuleSpecError) {
-    ElementPtr module_spec_element = Element::createFromString(in);
+    ElementPtr module_spec_element = Element::fromJSON(in);
     if (module_spec_element->contains("module_spec")) {
         return ModuleSpec(module_spec_element->get("module_spec"), check);
     } else {

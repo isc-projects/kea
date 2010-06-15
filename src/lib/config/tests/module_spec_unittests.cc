@@ -139,7 +139,7 @@ data_test(ModuleSpec dd, const std::string& data_file_name)
     std::ifstream data_file;
 
     data_file.open(specfile(data_file_name).c_str());
-    ElementPtr data = Element::createFromString(data_file, data_file_name);
+    ElementPtr data = Element::fromJSON(data_file, data_file_name);
     data_file.close();
 
     return dd.validate_config(data);
@@ -151,7 +151,7 @@ data_test_with_errors(ModuleSpec dd, const std::string& data_file_name, ElementP
     std::ifstream data_file;
 
     data_file.open(specfile(data_file_name).c_str());
-    ElementPtr data = Element::createFromString(data_file, data_file_name);
+    ElementPtr data = Element::fromJSON(data_file, data_file_name);
     data_file.close();
 
     return dd.validate_config(data, true, errors);

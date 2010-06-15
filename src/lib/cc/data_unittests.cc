@@ -65,14 +65,14 @@ TEST(Element, from_and_to_str) {
     BOOST_FOREACH(std::string s, sv) {
         // also test << operator, which uses Element::str()
         std::ostringstream stream;
-        el = Element::createFromString(s);
+        el = Element::fromJSON(s);
         stream << el;
         EXPECT_EQ(stream.str(), s);
     }
 
     // some parse errors
     try {
-        Element::createFromString("{1}");
+        Element::fromJSON("{1}");
     } catch (isc::data::ParseError pe) {
         std::string s = std::string(pe.what());
         EXPECT_EQ(s, "String expected in <string>:1:3");
@@ -80,7 +80,7 @@ TEST(Element, from_and_to_str) {
     
     sv.clear();
     sv.push_back("{1}");
-    //ElementPtr ep = Element::createFromString("\"aaa\nbbb\"err");
+    //ElementPtr ep = Element::fromJSON("\"aaa\nbbb\"err");
     //std::cout << ep << std::endl;
     sv.push_back("\n\nTru");
     sv.push_back("{ \n \"aaa\nbbb\"err:");
@@ -89,19 +89,19 @@ TEST(Element, from_and_to_str) {
     sv.push_back("");
     BOOST_FOREACH(std::string s, sv) {
         
-        EXPECT_THROW(el = Element::createFromString(s), isc::data::ParseError);
+        EXPECT_THROW(el = Element::fromJSON(s), isc::data::ParseError);
     }
 
     // some json specific format tests, here the str() output is
     // different from the string input
-    EXPECT_EQ("100", Element::createFromString("1e2")->str());
-    EXPECT_EQ("0.01", Element::createFromString("1e-2")->str());
-    EXPECT_EQ("1.2", Element::createFromString("1.2")->str());
-    EXPECT_EQ("1", Element::createFromString("1.0")->str());
-    EXPECT_EQ("120", Element::createFromString("1.2e2")->str());
-    EXPECT_EQ("100", Element::createFromString("1.0e2")->str());
-    EXPECT_EQ("0.01", Element::createFromString("1.0e-2")->str());
-    EXPECT_EQ("0.012", Element::createFromString("1.2e-2")->str());
+    EXPECT_EQ("100", Element::fromJSON("1e2")->str());
+    EXPECT_EQ("0.01", Element::fromJSON("1e-2")->str());
+    EXPECT_EQ("1.2", Element::fromJSON("1.2")->str());
+    EXPECT_EQ("1", Element::fromJSON("1.0")->str());
+    EXPECT_EQ("120", Element::fromJSON("1.2e2")->str());
+    EXPECT_EQ("100", Element::fromJSON("1.0e2")->str());
+    EXPECT_EQ("0.01", Element::fromJSON("1.0e-2")->str());
+    EXPECT_EQ("0.012", Element::fromJSON("1.2e-2")->str());
 }
 
 TEST(Element, create_and_value_throws) {
@@ -155,12 +155,12 @@ TEST(Element, create_and_value_throws) {
 
 TEST(Element, ListElement) {
     // this function checks the specific functions for ListElements
-    ElementPtr el = Element::createFromString("[ 1, \"bar\", 3 ]");
+    ElementPtr el = Element::fromJSON("[ 1, \"bar\", 3 ]");
     EXPECT_EQ(el->get(0)->intValue(), 1);
     EXPECT_EQ(el->get(1)->stringValue(), "bar");
     EXPECT_EQ(el->get(2)->intValue(), 3);
 
-    el->set(0, Element::createFromString("\"foo\""));
+    el->set(0, Element::fromJSON("\"foo\""));
     EXPECT_EQ(el->get(0)->stringValue(), "foo");
 
     el->add(Element::create(47806));
@@ -188,7 +188,7 @@ const string long_maptag("0123456789abcdef1123456789abcdef2123456789abcdef"
 
 TEST(Element, MapElement) {
     // this function checks the specific functions for ListElements
-    ElementPtr el = Element::createFromString("{ \"name\": \"foo\", \"value1\": \"bar\", \"value2\": { \"number\": 42 } }");
+    ElementPtr el = Element::fromJSON("{ \"name\": \"foo\", \"value1\": \"bar\", \"value2\": { \"number\": 42 } }");
     ElementPtr el2;
     
     EXPECT_EQ(el->get("name")->stringValue(), "foo");
@@ -220,7 +220,7 @@ TEST(Element, MapElement) {
                        "f123456789abcde");
     
     EXPECT_EQ(255, long_maptag.length()); // check prerequisite
-    el = Element::createFromString("{ \"" + long_maptag + "\": \"bar\"}");
+    el = Element::fromJSON("{ \"" + long_maptag + "\": \"bar\"}");
     EXPECT_EQ("bar", el->find(long_maptag)->stringValue());
 
     el = Element::createMap();
@@ -229,7 +229,7 @@ TEST(Element, MapElement) {
 
     // A one-byte longer tag should trigger an exception.
     long_maptag.push_back('f');
-    EXPECT_THROW(Element::createFromString("{ \"" + long_maptag +
+    EXPECT_THROW(Element::fromJSON("{ \"" + long_maptag +
                                            "\": \"bar\"}"),
                  ParseError);
 
@@ -246,14 +246,14 @@ TEST(Element, to_and_from_wire) {
     EXPECT_EQ("false", Element::create(false)->toWire());
     EXPECT_EQ("null", Element::create()->toWire());
     EXPECT_EQ("\"a string\"", Element::create("a string")->toWire());
-    EXPECT_EQ("[ \"a\", \"list\" ]", Element::createFromString("[ \"a\", \"list\" ]")->toWire());
-    EXPECT_EQ("{ \"a\": \"map\" }", Element::createFromString("{ \"a\": \"map\" }")->toWire());
+    EXPECT_EQ("[ \"a\", \"list\" ]", Element::fromJSON("[ \"a\", \"list\" ]")->toWire());
+    EXPECT_EQ("{ \"a\": \"map\" }", Element::fromJSON("{ \"a\": \"map\" }")->toWire());
 
     EXPECT_EQ("1", Element::fromWire("1")->str());
 }
 
 ElementPtr efs(const std::string& str) {
-    return Element::createFromString(str);
+    return Element::fromJSON(str);
 }
 
 TEST(Element, equals) {
@@ -314,45 +314,45 @@ TEST(Element, removeIdentical) {
     removeIdentical(a, b);
     EXPECT_TRUE(a == c);
 
-    a = Element::createFromString("{ \"a\": 1 }");
-    b = Element::createFromString("{ \"a\": 1 }");
+    a = Element::fromJSON("{ \"a\": 1 }");
+    b = Element::fromJSON("{ \"a\": 1 }");
     c = Element::createMap();
     removeIdentical(a, b);
     EXPECT_TRUE(a == c);
 
-    a = Element::createFromString("{ \"a\": 1, \"b\": [ 1, 2 ] }");
+    a = Element::fromJSON("{ \"a\": 1, \"b\": [ 1, 2 ] }");
     b = Element::createMap();
-    c = Element::createFromString("{ \"a\": 1, \"b\": [ 1, 2 ] }");
+    c = Element::fromJSON("{ \"a\": 1, \"b\": [ 1, 2 ] }");
     removeIdentical(a, b);
     EXPECT_TRUE(a == c);
 
-    a = Element::createFromString("{ \"a\": 1, \"b\": [ 1, 2 ] }");
-    b = Element::createFromString("{ \"a\": 1, \"b\": [ 1, 2 ] }");
+    a = Element::fromJSON("{ \"a\": 1, \"b\": [ 1, 2 ] }");
+    b = Element::fromJSON("{ \"a\": 1, \"b\": [ 1, 2 ] }");
     c = Element::createMap();
     removeIdentical(a, b);
     EXPECT_TRUE(a == c);
 
-    a = Element::createFromString("{ \"a\": 1, \"b\": [ 1, 2 ] }");
-    b = Element::createFromString("{ \"a\": 1, \"b\": [ 1, 3 ] }");
-    c = Element::createFromString("{ \"b\": [ 1, 2 ] }");
+    a = Element::fromJSON("{ \"a\": 1, \"b\": [ 1, 2 ] }");
+    b = Element::fromJSON("{ \"a\": 1, \"b\": [ 1, 3 ] }");
+    c = Element::fromJSON("{ \"b\": [ 1, 2 ] }");
     removeIdentical(a, b);
     EXPECT_TRUE(a == c);
 
-    a = Element::createFromString("{ \"a\": { \"b\": \"c\" } }");
+    a = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
     b = Element::createMap();
-    c = Element::createFromString("{ \"a\": { \"b\": \"c\" } }");
+    c = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
     removeIdentical(a, b);
     EXPECT_TRUE(a == c);
 
-    a = Element::createFromString("{ \"a\": { \"b\": \"c\" } }");
-    b = Element::createFromString("{ \"a\": { \"b\": \"c\" } }");
+    a = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
+    b = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
     c = Element::createMap();
     removeIdentical(a, b);
     EXPECT_TRUE(a == c);
 
-    a = Element::createFromString("{ \"a\": { \"b\": \"c\" } }");
-    b = Element::createFromString("{ \"a\": { \"b\": \"d\" } }");
-    c = Element::createFromString("{ \"a\": { \"b\": \"c\" } }");
+    a = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
+    b = Element::fromJSON("{ \"a\": { \"b\": \"d\" } }");
+    c = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
     removeIdentical(a, b);
     EXPECT_TRUE(a == c);
 }
@@ -365,25 +365,25 @@ TEST(Element, merge)
     merge(a, b);
     EXPECT_TRUE(a == c);
 
-    a = Element::createFromString("1");
+    a = Element::fromJSON("1");
     b = Element::createMap();
     EXPECT_THROW(merge(a, b), TypeError);
 
     a = Element::createMap();
-    b = Element::createFromString("{ \"a\": 1 }");
-    c = Element::createFromString("{ \"a\": 1 }");
+    b = Element::fromJSON("{ \"a\": 1 }");
+    c = Element::fromJSON("{ \"a\": 1 }");
     merge(a, b);
     EXPECT_TRUE(a == c);
 
-    a = Element::createFromString("{ \"a\": 1 }");
-    b = Element::createFromString("{ \"a\": 2 }");
-    c = Element::createFromString("{ \"a\": 2 }");
+    a = Element::fromJSON("{ \"a\": 1 }");
+    b = Element::fromJSON("{ \"a\": 2 }");
+    c = Element::fromJSON("{ \"a\": 2 }");
     merge(a, b);
     EXPECT_TRUE(a == c);
 
-    a = Element::createFromString("{ \"a\": { \"b\": \"c\" } }");
-    b = Element::createFromString("{ \"a\": { \"b\": \"d\" } }");
-    c = Element::createFromString("{ \"a\": { \"b\": \"d\" } }");
+    a = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
+    b = Element::fromJSON("{ \"a\": { \"b\": \"d\" } }");
+    c = Element::fromJSON("{ \"a\": { \"b\": \"d\" } }");
     merge(a, b);
     EXPECT_TRUE(a == c);
 
