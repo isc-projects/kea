@@ -48,9 +48,9 @@ public:
 // i'd like to use Exception here but we need one that is derived from
 // runtime_error (as this one is directly based on external data, and
 // i want to add some values to any static data string that is provided)
-class ParseError : public std::runtime_error {
+class JSONError : public std::runtime_error {
 public:
-    ParseError(const std::string &err) : std::runtime_error(err) {};
+    JSONError(const std::string &err) : std::runtime_error(err) {};
 };
 
 ///
@@ -298,7 +298,7 @@ public:
 
     /// \brief These functions will parse the given string (JSON)
     /// representation  of a compound element. If there is a parse
-    /// error, an exception of the type isc::data::ParseError is thrown.
+    /// error, an exception of the type isc::data::JSONError is thrown.
 
     //@{
     /// Creates an Element from the given JSON string
@@ -313,8 +313,8 @@ public:
     /// \param in The string to parse the element from
     /// \return An ElementPtr that contains the element(s) specified
     /// in the given input stream.
-    static ElementPtr fromJSON(std::istream& in) throw(ParseError);
-    static ElementPtr fromJSON(std::istream& in, const std::string& file_name) throw(ParseError);
+    static ElementPtr fromJSON(std::istream& in) throw(JSONError);
+    static ElementPtr fromJSON(std::istream& in, const std::string& file_name) throw(JSONError);
 
     /// Creates an Element from the given input stream, where we keep
     /// track of the location in the stream for error reporting.
@@ -327,7 +327,7 @@ public:
     /// \return An ElementPtr that contains the element(s) specified
     /// in the given input stream.
     // make this one private?
-    static ElementPtr fromJSON(std::istream& in, const std::string& file, int& line, int &pos) throw(ParseError);
+    static ElementPtr fromJSON(std::istream& in, const std::string& file, int& line, int &pos) throw(JSONError);
     //@}
 
     /// \name Wire format factory functions
