@@ -28,7 +28,7 @@ run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS) $(PTHREAD_LDFLAGS)
 
 run_unittests_LDADD = libcc.a $(GTEST_LDADD)
-run_unittests_LDADD +=  $(top_builddir)/src/lib/dns/.libs/libdns.a
+run_unittests_LDADD +=  $(top_builddir)/src/lib/dns/.libs/libdns++.a
 run_unittests_LDADD +=  $(top_builddir)/src/lib/exceptions/.libs/libexceptions.a
 
 endif
