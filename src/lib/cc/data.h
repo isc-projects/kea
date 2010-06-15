@@ -48,22 +48,10 @@ public:
 // i'd like to use Exception here but we need one that is derived from
 // runtime_error (as this one is directly based on external data, and
 // i want to add some values to any static data string that is provided)
-class JSONError : public std::runtime_error {
+class JSONError : public isc::Exception {
 public:
-    JSONError(const std::string &err) : std::runtime_error(err) {};
-};
-
-///
-/// \brief A standard Data module exception that is thrown if an error
-/// is found when decoding an Element from wire format
-///
-class DecodeError : public std::exception {
-public:
-    DecodeError(std::string m = "Wire-format data is invalid") : msg(m) {}
-    ~DecodeError() throw() {}
-    const char* what() const throw() { return msg.c_str(); }
-private:
-    std::string msg;
+    JSONError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
 };
 
 ///

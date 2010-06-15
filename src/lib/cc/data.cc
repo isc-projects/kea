@@ -208,9 +208,9 @@ throwJSONError(const std::string& error, const std::string& file, int line = 0, 
     if (line != 0 || pos != 0) {
         std::stringstream ss;
         ss << error << " in " + file + ":" << line << ":" << pos;
-        throw JSONError(ss.str());
+        isc_throw(JSONError, ss.str());
     } else {
-        throw JSONError(error);
+        isc_throw(JSONError, error);
     }
 }
 }
@@ -389,7 +389,7 @@ from_stringstream_number(std::istream &in, int &pos) {
     in >> i;
     pos += count_chars_i(i);
     if (in.fail()) {
-        throw JSONError("Bad integer or overflow");
+        isc_throw(JSONError, "Bad integer or overflow");
     }
     if (in.peek() == '.') {
         is_double = true;
@@ -397,7 +397,7 @@ from_stringstream_number(std::istream &in, int &pos) {
         pos++;
         in >> d_i;
         if (in.fail()) {
-            throw JSONError("Bad real or overflow");
+            isc_throw(JSONError, "Bad real or overflow");
         }
         d = i + (double)d_i / 10;
         pos += count_chars_i(d_i);
@@ -409,12 +409,12 @@ from_stringstream_number(std::istream &in, int &pos) {
         pos++;
         in >> e;
         if (in.fail()) {
-            throw JSONError("Bad exponent or overflow");
+            isc_throw(JSONError, "Bad exponent or overflow");
         }
         pos += count_chars_i(e);
         p = pow(10, e);
         if (p == HUGE_VAL) {
-            throw JSONError("Bad exponent or overflow");
+            isc_throw(JSONError, "Bad exponent or overflow");
         }
         if (is_double) {
             d = d * p;
@@ -601,7 +601,7 @@ Element::fromJSON(std::istream &in, const std::string& file, int& line, int& pos
     if (el_read) {
         return element;
     } else {
-        throw JSONError("nothing read");
+        isc_throw(JSONError, "nothing read");
     }
 }
 
