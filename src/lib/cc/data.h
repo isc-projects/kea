@@ -108,16 +108,11 @@ public:
     ///          value
     virtual bool equals(ElementPtr other) = 0;
     
-    // pure virtuals, every derived class must implement these
-
-    virtual void toJSON(std::stringstream& ss) = 0;
-
     /// Returns a string representing the Element and all its
     /// child elements; note that this is different from stringValue(),
     /// which only returns the single value of a StringElement
-    /// A MapElement will be represented as { "name1": \<value1\>, "name2", \<value2\>, etc }
-    /// A ListElement will be represented as [ \<item1\>, \<item2\>, etc ]
-    /// All other elements will be represented directly
+    ///
+    /// The resulting string will contain the Element in JSON format.
     ///
     /// \return std::string containing the string representation
     std::string str();
@@ -131,8 +126,13 @@ public:
     std::string toWire();
     void toWire(std::stringstream& out);
 
+    // pure virtuals, every derived class must implement these
+
+    /// Converts the Element to JSON format and appends it to
+    /// the given stringstream.
+    virtual void toJSON(std::stringstream& ss) = 0;
+
     /// \name Type-specific getters
-    ///
     ///
     /// \brief These functions only
     /// work on their corresponding Element type. For all other
@@ -279,9 +279,9 @@ public:
 
     /// \name Compound factory functions
 
-    /// \brief These functions will parse the given string representation
-    /// of a compound element. If there is a parse error, an exception
-    /// of the type isc::data::ParseError is thrown.
+    /// \brief These functions will parse the given string (JSON)
+    /// representation  of a compound element. If there is a parse
+    /// error, an exception of the type isc::data::ParseError is thrown.
 
     //@{
     /// Creates an Element from the given string
@@ -289,6 +289,7 @@ public:
     /// \return An ElementPtr that contains the element(s) specified
     /// in the given string.
     static ElementPtr createFromString(const std::string& in);
+
     /// Creates an Element from the given input stream
     /// \param in The string to parse the element from
     /// \return An ElementPtr that contains the element(s) specified
@@ -318,11 +319,18 @@ public:
     //@{
     /// Creates an Element from the wire format in the given
     /// stringstream of the given length.
+    /// Since the wire format is JSON, thise is the same as
+    /// createFromString, and could be removed.
+    ///
     /// \param in The input stringstream.
     /// \param length The length of the wireformat data in the stream
     /// \return ElementPtr with the data that is parsed.
     static ElementPtr fromWire(std::stringstream& in, int length);
+
     /// Creates an Element from the wire format in the given string
+    /// Since the wire format is JSON, thise is the same as
+    /// createFromString, and could be removed.
+    ///
     /// \param s The input string
     /// \return ElementPtr with the data that is parsed.
     static ElementPtr fromWire(const std::string& s);
