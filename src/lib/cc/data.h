@@ -118,7 +118,7 @@ public:
 
     /// Converts the Element to JSON format and appends it to
     /// the given stringstream.
-    virtual void toJSON(std::stringstream& ss) = 0;
+    virtual void toJSON(std::ostream& ss) = 0;
 
     /// \name Type-specific getters
     ///
@@ -355,7 +355,7 @@ public:
     bool getValue(int& t) { t = i; return true; };
     using Element::setValue;
     bool setValue(const int v) { i = v; return true; };
-    void toJSON(std::stringstream& ss);
+    void toJSON(std::ostream& ss);
     bool equals(ElementPtr other);
 };
 
@@ -369,7 +369,7 @@ public:
     bool getValue(double& t) { t = d; return true; };
     using Element::setValue;
     bool setValue(const double v) { d = v; return true; };
-    void toJSON(std::stringstream& ss);
+    void toJSON(std::ostream& ss);
     bool equals(ElementPtr other);
 };
 
@@ -383,14 +383,14 @@ public:
     bool getValue(bool& t) { t = b; return true; };
     using Element::setValue;
     bool setValue(const bool v) { b = v; return true; };
-    void toJSON(std::stringstream& ss);
+    void toJSON(std::ostream& ss);
     bool equals(ElementPtr other);
 };
 
 class NullElement : public Element {
 public:
     NullElement() : Element(null) {};
-    void toJSON(std::stringstream& ss);
+    void toJSON(std::ostream& ss);
     bool equals(ElementPtr other);
 };
 
@@ -404,7 +404,7 @@ public:
     bool getValue(std::string& t) { t = s; return true; };
     using Element::setValue;
     bool setValue(const std::string& v) { s = v; return true; };
-    void toJSON(std::stringstream& ss);
+    void toJSON(std::ostream& ss);
     bool equals(ElementPtr other);
 };
 
@@ -425,7 +425,7 @@ public:
     void add(ElementPtr e) { l.push_back(e); };
     using Element::remove;
     void remove(int i) { l.erase(l.begin() + i); };
-    void toJSON(std::stringstream& ss);
+    void toJSON(std::ostream& ss);
     size_t size() { return l.size(); }
     bool equals(ElementPtr other);
 };
@@ -448,7 +448,7 @@ public:
     using Element::remove;
     void remove(const std::string& s) { m.erase(s); }
     bool contains(const std::string& s) { return m.find(s) != m.end(); }
-    void toJSON(std::stringstream& ss);
+    void toJSON(std::ostream& ss);
     
     // we should name the two finds better...
     // find the element at id; raises TypeError if one of the
