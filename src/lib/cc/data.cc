@@ -615,19 +615,19 @@ Element::fromJSON(const std::string &in) {
 // to JSON format
 
 void
-IntElement::toJSON(std::stringstream& ss)
+IntElement::toJSON(std::ostream& ss)
 {
     ss << intValue();
 }
 
 void
-DoubleElement::toJSON(std::stringstream& ss)
+DoubleElement::toJSON(std::ostream& ss)
 {
     ss << doubleValue();
 }
 
 void
-BoolElement::toJSON(std::stringstream& ss)
+BoolElement::toJSON(std::ostream& ss)
 {
     if (b) {
         ss << "true";
@@ -637,13 +637,13 @@ BoolElement::toJSON(std::stringstream& ss)
 }
 
 void
-NullElement::toJSON(std::stringstream& ss)
+NullElement::toJSON(std::ostream& ss)
 {
     ss << "null";
 }
 
 void
-StringElement::toJSON(std::stringstream& ss)
+StringElement::toJSON(std::ostream& ss)
 {
     ss << "\"";
     ss << stringValue();
@@ -651,7 +651,7 @@ StringElement::toJSON(std::stringstream& ss)
 }
 
 void
-ListElement::toJSON(std::stringstream& ss)
+ListElement::toJSON(std::ostream& ss)
 {
     ss << "[ ";
 
@@ -667,7 +667,7 @@ ListElement::toJSON(std::stringstream& ss)
 }
 
 void
-MapElement::toJSON(std::stringstream& ss)
+MapElement::toJSON(std::ostream& ss)
 {
     ss << "{ ";
 
