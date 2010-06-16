@@ -1,0 +1,95 @@
+# Copyright (C) 2010  Internet Systems Consortium.
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SYSTEMS CONSORTIUM
+# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+# INTERNET SYSTEMS CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+# $Id: cfgmgr_test.py 2126 2010-06-16 14:40:22Z jelte $
+
+#
+# Tests for the configuration manager run script
+#
+
+import unittest
+import os
+import sys
+
+class MyConfigManager:
+    def __init__(self, path):
+        self._path = path
+        self.read_config_called = False
+        self.notify_boss_called = False
+        self.run_called = False
+        self.write_config_called = False
+        self.running = True
+
+    def read_config(self):
+        self.read_config_called = True
+
+    def notify_boss(self):
+        self.notify_boss_called = True
+
+    def run(self):
+        self.run_called = True
+
+    def write_config(self):
+        self.write_config_called = True
+
+class TestConfigManagerStartup(unittest.TestCase):
+    def test_cfgmgr(self):
+        # some creative module use;
+        # b10-cfgmgr has a hypen, so we use __import__
+        # this also gives us the chance to override the imported
+        # moculde ConfigManager in it.
+        b = __import__("b10-cfgmgr")
+        b.ConfigManager = MyConfigManager
+
+        b.main()
+
+        self.assertTrue(b.cm.read_config_called)
+        self.assertTrue(b.cm.notify_boss_called)
+        self.assertTrue(b.cm.run_called)
+        self.assertTrue(b.cm.write_config_called)
+
+        self.assertTrue(b.cm.running)
+        b.signal_handler(None, None)
+        self.assertFalse(b.cm.running)
+
+        # TODO: take value from the 'global config module'
+        # (and rename the .in aay from this file again)
+        data_path = "@localstatedir@/@PACKAGE@".replace("${prefix}", "@prefix@")
+        self.assertEqual(data_path, b.DATA_PATH)
+
+        # remove the 'module' again, or later tests may fail
+        # (if it is already present it won't be loaded again)
+        sys.modules.pop("b10-cfgmgr")
+
+    def test_cfgmgr_from_source(self):
+        tmp_env_var = "/just/some/dir"
+        env_var = None
+        if "B10_FROM_SOURCE" in os.environ:
+            env_var = os.environ["B10_FROM_SOURCE"]
+
+        os.environ["B10_FROM_SOURCE"] = tmp_env_var
+        b = __import__("b10-cfgmgr", globals(), locals())
+        b.ConfigManager = MyConfigManager
+        self.assertEqual(tmp_env_var, b.DATA_PATH)
+
+        if env_var != None:
+            os.environ["B10_FROM_SOURCE"] = env_var
+
+        sys.modules.pop("b10-cfgmgr")
+
+
+if __name__ == '__main__':
+    unittest.main()
+
