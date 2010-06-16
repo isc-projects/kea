@@ -69,7 +69,7 @@ Element::toWire()
 }
 
 void
-Element::toWire(std::stringstream& ss)
+Element::toWire(std::ostream& ss)
 {
     toJSON(ss);
 }
@@ -203,15 +203,11 @@ Element::find(const std::string& identifier UNUSED_PARAM,
 
 namespace {
 inline void
-throwJSONError(const std::string& error, const std::string& file, int line = 0, int pos = 0)
+throwJSONError(const std::string& error, const std::string& file, int line, int pos)
 {
-    if (line != 0 || pos != 0) {
-        std::stringstream ss;
-        ss << error << " in " + file + ":" << line << ":" << pos;
-        isc_throw(JSONError, ss.str());
-    } else {
-        isc_throw(JSONError, error);
-    }
+    std::stringstream ss;
+    ss << error << " in " + file + ":" << line << ":" << pos;
+    isc_throw(JSONError, ss.str());
 }
 }
 
@@ -447,7 +443,7 @@ from_stringstream_bool(std::istream &in, const std::string& file,
         return Element::create(false);
     } else {
         throwJSONError(std::string("Bad boolean value: ") + word, file, line, pos);
-        // above is a throw shortcur, return empty is never reached
+        // above is a throw shortcurt, return empty is never reached
         return ElementPtr();
     }
 }
@@ -872,7 +868,7 @@ merge(ElementPtr element, const ElementPtr other) {
     std::map<std::string, ElementPtr> m = other->mapValue();
     for (std::map<std::string, ElementPtr>::const_iterator it = m.begin();
          it != m.end() ; ++it) {
-        if ((*it).second) {
+        if ((*it).second && (*it).second->getType() != Element::null) {
             element->set((*it).first, (*it).second);
         } else if (element->contains((*it).first)) {
             element->remove((*it).first);

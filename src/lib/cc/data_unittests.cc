@@ -64,11 +64,16 @@ TEST(Element, from_and_to_json) {
     sv.push_back("[ { \"a\": 1, \"b\": \"c\" }, { \"a\": 2, \"b\": \"d\" } ]");
 
     BOOST_FOREACH(std::string s, sv) {
-        // also test << operator, which uses Element::str()
+        // test << operator, which uses Element::str()
         std::ostringstream stream;
         el = Element::fromJSON(s);
         stream << el;
         EXPECT_EQ(stream.str(), s);
+
+        // test toWire(ostream), which should also be the same now
+        std::ostringstream wire_stream;
+        el->toWire(wire_stream);
+        EXPECT_EQ(wire_stream.str(), s);
     }
 
     // some parse errors
@@ -88,6 +93,7 @@ TEST(Element, from_and_to_json) {
     sv.push_back("{ \t\n \"aaa\nbbb\"\t\n\n:\n True, \"\\\"");
     sv.push_back("{ \"a\": None}");
     sv.push_back("");
+    sv.push_back("nul");
     BOOST_FOREACH(std::string s, sv) {
         
         EXPECT_THROW(el = Element::fromJSON(s), isc::data::JSONError);
@@ -104,6 +110,7 @@ TEST(Element, from_and_to_json) {
     EXPECT_EQ("0.01", Element::fromJSON("1.0e-2")->str());
     EXPECT_EQ("0.012", Element::fromJSON("1.2e-2")->str());
 
+    // number overflows
     EXPECT_THROW(Element::fromJSON("12345678901234567890")->str(), JSONError);
     EXPECT_THROW(Element::fromJSON("1.12345678901234567890")->str(), JSONError);
     EXPECT_THROW(Element::fromJSON("1.1e12345678901234567890")->str(), JSONError);
@@ -116,6 +123,13 @@ TEST(Element, create_and_value_throws) {
     // this test checks whether elements throw exceptions if the
     // incorrect type is requested
     ElementPtr el;
+    int i;
+    double d;
+    bool b;
+    std::string s("asdf");
+    std::vector<ElementPtr> v;
+    std::map<std::string, ElementPtr> m;
+    
 
     el = Element::create(1);
     EXPECT_THROW(el->doubleValue(), TypeError);
@@ -123,6 +137,33 @@ TEST(Element, create_and_value_throws) {
     EXPECT_THROW(el->stringValue(), TypeError);
     EXPECT_THROW(el->listValue(), TypeError);
     EXPECT_THROW(el->mapValue(), TypeError);
+    EXPECT_TRUE(el->getValue(i));
+    EXPECT_FALSE(el->getValue(d));
+    EXPECT_FALSE(el->getValue(b));
+    EXPECT_FALSE(el->getValue(s));
+    EXPECT_FALSE(el->getValue(v));
+    EXPECT_FALSE(el->getValue(m));
+    EXPECT_EQ(i, 1);
+    i = 2;
+    EXPECT_TRUE(el->setValue(i));
+    EXPECT_EQ(2, el->intValue());
+    EXPECT_FALSE(el->setValue(d));
+    EXPECT_FALSE(el->setValue(b));
+    EXPECT_FALSE(el->setValue(s));
+    EXPECT_FALSE(el->setValue(v));
+    EXPECT_FALSE(el->setValue(m));
+    EXPECT_THROW(el->get(1), TypeError);
+    EXPECT_THROW(el->set(1, el), TypeError);
+    EXPECT_THROW(el->add(el), TypeError);
+    EXPECT_THROW(el->remove(1), TypeError);
+    EXPECT_THROW(el->size(), TypeError);
+    EXPECT_THROW(el->get("foo"), TypeError);
+    EXPECT_THROW(el->set("foo", el), TypeError);
+    EXPECT_THROW(el->remove("foo"), TypeError);
+    EXPECT_THROW(el->contains("foo"), TypeError);
+    ElementPtr tmp;
+    EXPECT_FALSE(el->find("foo", tmp));
+    
 
     el = Element::create(1.1);
     EXPECT_THROW(el->intValue(), TypeError);
@@ -130,6 +171,21 @@ TEST(Element, create_and_value_throws) {
     EXPECT_THROW(el->stringValue(), TypeError);
     EXPECT_THROW(el->listValue(), TypeError);
     EXPECT_THROW(el->mapValue(), TypeError);
+    EXPECT_FALSE(el->getValue(i));
+    EXPECT_TRUE(el->getValue(d));
+    EXPECT_FALSE(el->getValue(b));
+    EXPECT_FALSE(el->getValue(s));
+    EXPECT_FALSE(el->getValue(v));
+    EXPECT_FALSE(el->getValue(m));
+    EXPECT_EQ(d, 1.1);
+    d = 2.2;
+    EXPECT_TRUE(el->setValue(d));
+    EXPECT_EQ(2.2, el->doubleValue());
+    EXPECT_FALSE(el->setValue(i));
+    EXPECT_FALSE(el->setValue(b));
+    EXPECT_FALSE(el->setValue(s));
+    EXPECT_FALSE(el->setValue(v));
+    EXPECT_FALSE(el->setValue(m));
 
     el = Element::create(true);
     EXPECT_THROW(el->intValue(), TypeError);
@@ -137,6 +193,16 @@ TEST(Element, create_and_value_throws) {
     EXPECT_THROW(el->stringValue(), TypeError);
     EXPECT_THROW(el->listValue(), TypeError);
     EXPECT_THROW(el->mapValue(), TypeError);
+    EXPECT_FALSE(el->getValue(i));
+    EXPECT_FALSE(el->getValue(d));
+    EXPECT_TRUE(el->getValue(b));
+    EXPECT_FALSE(el->getValue(s));
+    EXPECT_FALSE(el->getValue(v));
+    EXPECT_FALSE(el->getValue(m));
+    EXPECT_EQ(b, true);
+    b = false;
+    EXPECT_TRUE(el->setValue(b));
+    EXPECT_EQ(false, el->boolValue());
 
     el = Element::create("foo");
     EXPECT_THROW(el->intValue(), TypeError);
@@ -144,6 +210,16 @@ TEST(Element, create_and_value_throws) {
     EXPECT_THROW(el->boolValue(), TypeError);
     EXPECT_THROW(el->listValue(), TypeError);
     EXPECT_THROW(el->mapValue(), TypeError);
+    EXPECT_FALSE(el->getValue(i));
+    EXPECT_FALSE(el->getValue(d));
+    EXPECT_FALSE(el->getValue(b));
+    EXPECT_TRUE(el->getValue(s));
+    EXPECT_FALSE(el->getValue(v));
+    EXPECT_FALSE(el->getValue(m));
+    EXPECT_EQ(s, "foo");
+    s = "bar";
+    EXPECT_TRUE(el->setValue(s));
+    EXPECT_EQ("bar", el->stringValue());
 
     el = Element::createList();
     EXPECT_THROW(el->intValue(), TypeError);
@@ -151,6 +227,16 @@ TEST(Element, create_and_value_throws) {
     EXPECT_THROW(el->boolValue(), TypeError);
     EXPECT_THROW(el->stringValue(), TypeError);
     EXPECT_THROW(el->mapValue(), TypeError);
+    EXPECT_FALSE(el->getValue(i));
+    EXPECT_FALSE(el->getValue(d));
+    EXPECT_FALSE(el->getValue(b));
+    EXPECT_FALSE(el->getValue(s));
+    EXPECT_TRUE(el->getValue(v));
+    EXPECT_FALSE(el->getValue(m));
+    EXPECT_EQ("[  ]", el->str());
+    v.push_back(Element::create(1));
+    EXPECT_TRUE(el->setValue(v));
+    EXPECT_EQ("[ 1 ]", el->str());
 
     el = Element::createMap();
     EXPECT_THROW(el->intValue(), TypeError);
@@ -158,6 +244,12 @@ TEST(Element, create_and_value_throws) {
     EXPECT_THROW(el->boolValue(), TypeError);
     EXPECT_THROW(el->stringValue(), TypeError);
     EXPECT_THROW(el->listValue(), TypeError);
+    EXPECT_FALSE(el->getValue(i));
+    EXPECT_FALSE(el->getValue(d));
+    EXPECT_FALSE(el->getValue(b));
+    EXPECT_FALSE(el->getValue(s));
+    EXPECT_FALSE(el->getValue(v));
+    EXPECT_TRUE(el->getValue(m));
 
 }
 
@@ -258,6 +350,10 @@ TEST(Element, to_and_from_wire) {
     EXPECT_EQ("{ \"a\": \"map\" }", Element::fromJSON("{ \"a\": \"map\" }")->toWire());
 
     EXPECT_EQ("1", Element::fromWire("1")->str());
+
+    std::stringstream ss;
+    ss << "1";
+    EXPECT_EQ("1", Element::fromWire(ss, 1)->str());
 }
 
 ElementPtr efs(const std::string& str) {
@@ -313,6 +409,9 @@ TEST(Element, equals) {
     EXPECT_FALSE(efs("{ \"foo\": \"bar\" }") == efs("\"1\""));
     EXPECT_FALSE(efs("{ \"foo\": \"bar\" }") == efs("[]"));
     EXPECT_FALSE(efs("{ \"foo\": \"bar\" }") == efs("{}"));
+    EXPECT_FALSE(efs("{ \"foo\": \"bar\" }") == efs("{ \"something\": \"different\" }"));
+
+    EXPECT_TRUE(efs("null") == Element::create());
 }
 
 TEST(Element, removeIdentical) {
@@ -363,6 +462,8 @@ TEST(Element, removeIdentical) {
     c = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
     removeIdentical(a, b);
     EXPECT_TRUE(a == c);
+
+    EXPECT_THROW(removeIdentical(Element::create(1), Element::create(2)), TypeError);
 }
 
 TEST(Element, merge)
@@ -392,6 +493,12 @@ TEST(Element, merge)
     a = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
     b = Element::fromJSON("{ \"a\": { \"b\": \"d\" } }");
     c = Element::fromJSON("{ \"a\": { \"b\": \"d\" } }");
+    merge(a, b);
+    EXPECT_TRUE(a == c);
+
+    a = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
+    b = Element::fromJSON("{ \"a\": null }");
+    c = Element::fromJSON("{  }");
     merge(a, b);
     EXPECT_TRUE(a == c);
 

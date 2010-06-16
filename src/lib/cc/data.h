@@ -112,7 +112,7 @@ public:
     ///        be omitted from the wire format
     /// \return std::string containing the element in wire format
     std::string toWire();
-    void toWire(std::stringstream& out);
+    void toWire(std::ostream& out);
 
     // pure virtuals, every derived class must implement these
 
