@@ -49,7 +49,7 @@ class TestConfigManagerStartup(unittest.TestCase):
         # some creative module use;
         # b10-cfgmgr has a hypen, so we use __import__
         # this also gives us the chance to override the imported
-        # moculde ConfigManager in it.
+        # module ConfigManager in it.
         b = __import__("b10-cfgmgr")
         b.ConfigManager = MyConfigManager
 
@@ -65,7 +65,7 @@ class TestConfigManagerStartup(unittest.TestCase):
         self.assertFalse(b.cm.running)
 
         # TODO: take value from the 'global config module'
-        # (and rename the .in aay from this file again)
+        # (and rename the .in away from this file again)
         data_path = "@localstatedir@/@PACKAGE@".replace("${prefix}", "@prefix@")
         self.assertEqual(data_path, b.DATA_PATH)
 
