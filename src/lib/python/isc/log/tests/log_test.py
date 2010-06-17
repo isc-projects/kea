@@ -7,52 +7,64 @@ import tempfile
 class TestRotateFileHandler(unittest.TestCase):
 
     def setUp(self):
-        self.FILE_LOG1 = tempfile.mkstemp()
-        self.FILE_LOG2 = tempfile.mkstemp()
-        self.FILE_LOG3 = tempfile.mkstemp()
-        self.handler = NSFileLogHandler(filename = self.FILE_LOG1[1], maxBytes = 1024, backupCount = 5)
+        self.FILE_LOG1 = tempfile.NamedTemporaryFile(mode='w',
+                                                 prefix="b10",
+                                                 delete=True)
+        self.FILE_LOG2 = tempfile.NamedTemporaryFile(mode='w',
+                                                 prefix="b10",
+                                                 delete=True)
+        self.FILE_LOG3 = tempfile.NamedTemporaryFile(mode='w',
+                                                 prefix="b10",
+                                                 delete=True)
+        self.handler = NSFileLogHandler(filename = self.FILE_LOG1.name, 
+                                        maxBytes = 1024, 
+                                        backupCount = 5)
 
     def test_shouldRollover(self):
-        if(os.path.exists(self.FILE_LOG1[1])):
-            os.remove(self.FILE_LOG1[1])
+        if(os.path.exists(self.FILE_LOG1.name)):
+            os.remove(self.FILE_LOG1.name)
         record = logging.LogRecord(None, None, "", 0, "rotate file handler", (), None, None)
         self.handler.shouldRollover(record)
-        self.assertTrue(os.path.exists(self.FILE_LOG1[1]))
+        self.assertTrue(os.path.exists(self.FILE_LOG1.name))
 
     def test_update_config(self):
-        self.handler.update_config(self.FILE_LOG2[1], 3, 512)
-        self.assertEqual(self.handler.baseFilename, self.FILE_LOG2[1])
+        self.handler.update_config(self.FILE_LOG2.name, 3, 512)
+        self.assertEqual(self.handler.baseFilename, self.FILE_LOG2.name)
         self.assertEqual(self.handler.maxBytes, 512)
         self.assertEqual(self.handler.backupCount, 3)
 
-        dir = os.path.split(self.FILE_LOG3[1])                                        
+        dir = os.path.split(self.FILE_LOG3.name)                                        
         path = dir[0] + "path_not_exists"
         update_file = os.path.join(path, dir[1])
 
         if not os.path.exists(path):
             self.handler.update_config(update_file, 4, 1024)
-            self.assertEqual(self.handler.baseFilename, self.FILE_LOG2[1])
+            self.assertEqual(self.handler.baseFilename, self.FILE_LOG2.name)
             self.assertEqual(self.handler.maxBytes, 1024)
             self.assertEqual(self.handler.backupCount, 4)
 
     def tearDown(self):
-        os.close(self.FILE_LOG1[0])
-        os.unlink(self.FILE_LOG1[1])
-        os.close(self.FILE_LOG2[0])
-        os.unlink(self.FILE_LOG2[1])
-        os.close(self.FILE_LOG3[0])
-        os.unlink(self.FILE_LOG3[1])
         self.handler.flush()
         self.handler.close()
+        self.FILE_LOG1.close()
+        self.FILE_LOG2.close()
+        self.FILE_LOG3.close()
 
 
 class TestLogging(unittest.TestCase):
     
     def setUp(self):
-        self.FILE_STREAM_LOG1 = tempfile.mkstemp()
-        self.FILE_STREAM_LOG2 = tempfile.mkstemp()
-        self.FILE_STREAM_LOG3 = tempfile.mkstemp()
-        self.file_stream_logger = NSLogger('File_Stream_Logger', self.FILE_STREAM_LOG1[1],
+        self.FILE_STREAM_LOG1= tempfile.NamedTemporaryFile(mode='w',
+                                                      prefix="b10",
+                                                      delete=True)
+        self.FILE_STREAM_LOG2= tempfile.NamedTemporaryFile(mode='w',
+                                                      prefix="b10",
+                                                      delete=True)
+        self.FILE_STREAM_LOG3= tempfile.NamedTemporaryFile(mode='w',
+                                                      prefix="b10",
+                                                      delete=True)
+        self.file_stream_logger = NSLogger('File_Stream_Logger',
+                                           self.FILE_STREAM_LOG1.name,
                                            'debug', 5, 1024, True)
         self.syslog_logger = NSLogger('SysLogger', '', 'info', 5, 1024, False)
     
@@ -91,7 +103,7 @@ class TestLogging(unittest.TestCase):
         ret = self.syslog_logger._file_handler in self.syslog_logger.handlers
         self.assertFalse(ret)
 
-        self.syslog_logger._add_rotate_handler(self.FILE_STREAM_LOG1[1], 5, 1024)
+        self.syslog_logger._add_rotate_handler(self.FILE_STREAM_LOG1.name, 5, 1024)
         ret = self.syslog_logger._file_handler in self.syslog_logger.handlers
         self.assertTrue(ret)
 
@@ -112,7 +124,7 @@ class TestLogging(unittest.TestCase):
         self.assertTrue(ret)
 
     def test_update_rotate_handler(self):
-        self.file_stream_logger._update_rotate_handler(self.FILE_STREAM_LOG2[1], 4, 1024)
+        self.file_stream_logger._update_rotate_handler(self.FILE_STREAM_LOG2.name, 4, 1024)
         ret = self.file_stream_logger._file_handler in self.file_stream_logger.handlers
         self.assertTrue(ret)
 
@@ -120,12 +132,12 @@ class TestLogging(unittest.TestCase):
         ret = self.file_stream_logger._file_handler in self.file_stream_logger.handlers
         self.assertFalse(ret)
 
-        self.file_stream_logger._update_rotate_handler(self.FILE_STREAM_LOG1[1], 4, 1024)
+        self.file_stream_logger._update_rotate_handler(self.FILE_STREAM_LOG1.name, 4, 1024)
         ret = self.file_stream_logger._file_handler in self.file_stream_logger.handlers
         self.assertTrue(ret)
 
     def test_update_config(self):
-        update_config = {'log_file' : self.FILE_STREAM_LOG1[1],
+        update_config = {'log_file' : self.FILE_STREAM_LOG1.name,
                          'log_severity' : 'error',
                          'log_versions' : 4,
                          'log_max_bytes' : 1024}
@@ -134,7 +146,7 @@ class TestLogging(unittest.TestCase):
         self.assertEqual(self.file_stream_logger.getEffectiveLevel(), logLevel)
 
     def test_log_message(self):
-        update_config = {'log_file' : self.FILE_STREAM_LOG3[1],
+        update_config = {'log_file' : self.FILE_STREAM_LOG3.name,
                          'log_severity' : 'critical',
                          'log_versions' : 4,
                          'log_max_bytes' : 1024}
@@ -143,15 +155,12 @@ class TestLogging(unittest.TestCase):
         self.file_stream_logger.log_message('info', 'info message')
         self.file_stream_logger.log_message('warning', 'warning message')
         self.file_stream_logger.log_message('error', 'error message')
-        self.assertTrue(os.path.exists(self.FILE_STREAM_LOG3[1]))
+        self.assertTrue(os.path.exists(self.FILE_STREAM_LOG3.name))
     
     def tearDown(self):
-        os.close(self.FILE_STREAM_LOG1[0])
-        os.unlink(self.FILE_STREAM_LOG1[1])
-        os.close(self.FILE_STREAM_LOG2[0])
-        os.unlink(self.FILE_STREAM_LOG2[1])
-        os.close(self.FILE_STREAM_LOG3[0])
-        os.unlink(self.FILE_STREAM_LOG3[1])
+        self.FILE_STREAM_LOG1.close()
+        self.FILE_STREAM_LOG2.close()
+        self.FILE_STREAM_LOG3.close()
 
 if __name__ == '__main__':
     unittest.main()
