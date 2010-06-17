@@ -4,7 +4,7 @@ pkglibexecdir = $(libexecdir)/@PACKAGE@
 
 pkglibexec_SCRIPTS = b10-cfgmgr
 
-CLEANFILES = b10-cfgmgr
+CLEANFILES = b10-cfgmgr b10-cfgmgr.pyc
 
 b10_cfgmgrdir = @localstatedir@/@PACKAGE@
 #B10_cfgmgr_DATA = 
