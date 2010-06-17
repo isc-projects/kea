@@ -55,27 +55,27 @@ EXTRA_DIST += rdata/hs_4/a_1.h
 BUILT_SOURCES = rrclass.h rrtype.h rrparamregistry.cc
 #TODO: check this###BUILT_SOURCES = rdataclass.h rdataclass.cc
 
-lib_LTLIBRARIES = libdns.la
+lib_LTLIBRARIES = libdns++.la
 
-libdns_la_SOURCES = base32.h base32.cc
-libdns_la_SOURCES += base64.h base64.cc
-libdns_la_SOURCES += buffer.h
-libdns_la_SOURCES += dnssectime.h dnssectime.cc
-libdns_la_SOURCES += exceptions.h exceptions.cc
-libdns_la_SOURCES += hex.h hex.cc
-libdns_la_SOURCES += message.h message.cc
-libdns_la_SOURCES += messagerenderer.h messagerenderer.cc
-libdns_la_SOURCES += name.h name.cc
-libdns_la_SOURCES += rdata.h rdata.cc
-libdns_la_SOURCES += rrclass.cc
-libdns_la_SOURCES += rrparamregistry.h
-libdns_la_SOURCES += rrset.h rrset.cc
-libdns_la_SOURCES += rrsetlist.h rrsetlist.cc
-libdns_la_SOURCES += rrttl.h rrttl.cc
-libdns_la_SOURCES += rrtype.cc
-libdns_la_SOURCES += question.h question.cc
-libdns_la_SOURCES += sha1.h sha1.cc
-libdns_la_SOURCES += tsig.h tsig.cc
+libdns___la_SOURCES = base32.h base32.cc
+libdns___la_SOURCES += base64.h base64.cc
+libdns___la_SOURCES += buffer.h
+libdns___la_SOURCES += dnssectime.h dnssectime.cc
+libdns___la_SOURCES += exceptions.h exceptions.cc
+libdns___la_SOURCES += hex.h hex.cc
+libdns___la_SOURCES += message.h message.cc
+libdns___la_SOURCES += messagerenderer.h messagerenderer.cc
+libdns___la_SOURCES += name.h name.cc
+libdns___la_SOURCES += rdata.h rdata.cc
+libdns___la_SOURCES += rrclass.cc
+libdns___la_SOURCES += rrparamregistry.h
+libdns___la_SOURCES += rrset.h rrset.cc
+libdns___la_SOURCES += rrsetlist.h rrsetlist.cc
+libdns___la_SOURCES += rrttl.h rrttl.cc
+libdns___la_SOURCES += rrtype.cc
+libdns___la_SOURCES += question.h question.cc
+libdns___la_SOURCES += sha1.h sha1.cc
+libdns___la_SOURCES += tsig.h tsig.cc
 
 if HAVE_BOOST_PYTHON
 # This is a loadable module for python scripts, so we use the prefix "pyexec"
@@ -94,12 +94,13 @@ bind10_dns_la_LDFLAGS = $(BOOST_LDFLAGS) $(PYTHON_LDFLAGS)
 # Python prefers .so, while some OSes (specifically MacOS) use a different
 # suffix for dynamic objects.  -module is necessary to work this around.
 bind10_dns_la_LDFLAGS += -module
-bind10_dns_la_LIBADD = $(top_builddir)/src/lib/dns/libdns.la
+bind10_dns_la_LIBADD = $(top_builddir)/src/lib/dns/libdns++.la
 bind10_dns_la_LIBADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 bind10_dns_la_LIBADD += $(BOOST_PYTHON_LIB) $(PYTHON_LIB)
 endif
 
-nodist_libdns_la_SOURCES = rdataclass.cc rrclass.h rrtype.h rrparamregistry.cc
+nodist_libdns___la_SOURCES = rdataclass.cc rrclass.h rrtype.h
+nodist_libdns___la_SOURCES += rrparamregistry.cc
 
 rrclass.h: rrclass-placeholder.h
 rrtype.h: rrtype-placeholder.h
@@ -107,8 +108,8 @@ rrparamregistry.cc: rrparamregistry-placeholder.cc
 rrclass.h rrtype.h rrparamregistry.cc rdataclass.h rdataclass.cc: Makefile
 	./gen-rdatacode.py
 
-libdns_includedir = $(includedir)/dns
-libdns_include_HEADERS = \
+libdns++_includedir = $(includedir)/dns
+libdns++_include_HEADERS = \
 	buffer.h \
 	dnssectime.h \
 	exceptions.h \
