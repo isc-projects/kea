@@ -31,13 +31,18 @@ LEVELS = {'debug' : logging.DEBUG,
           'error' : logging.ERROR,
           'critical' : logging.CRITICAL}
 
+
 FORMATTER = logging.Formatter("%(name)s: %(levelname)s: %(message)s")
-TIME_FORMATTER = logging.Formatter("%(asctime)s: %(name)s: %(levelname)s: %(message)s")
+TIME_FORMATTER = logging.Formatter("%(asctime)s.%(msecs)03d %(name)s: %(levelname)s: %(message)s",
+                                   "%d-%b-%Y %H:%M:%S")
 
 class NSFileLogHandler(logging.handlers.RotatingFileHandler):
     """RotatingFileHandler: replace RotatingFileHandler with a custom handler"""
 
     def __init__(self, filename, mode='a', maxBytes=0, backupCount=0, encoding=None, delay=0):
+        dir = os.path.split(filename)
+        if not (os.path.exists(dir[0])):
+            os.makedirs(dir[0])
         super(NSFileLogHandler, self).__init__(filename, mode, maxBytes,
                                                 backupCount, encoding, delay)
 
@@ -202,15 +207,15 @@ class NSLogger(logging.getLoggerClass()):
          if(log_file_str):
             self._log_file = log_file_str
          
-         severity_str = config_data.get('severity')
+         severity_str = config_data.get('log_severity')
          if(severity_str):
              self._severity = severity_str
 
-         versions_str = config_data.get('versions')
+         versions_str = config_data.get('log_versions')
          if(versions_str):
              self._versions = int(versions_str)
 
-         max_bytes_str = config_data.get('max_bytes')
+         max_bytes_str = config_data.get('log_max_bytes')
          if(max_bytes_str):
              self._max_bytes = int(max_bytes_str)
 
