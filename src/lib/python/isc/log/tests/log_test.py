@@ -1,7 +1,6 @@
 from isc.log.log import *
 import unittest
 import os
-import sys
 import tempfile
 
 
@@ -38,9 +37,11 @@ class TestRotateFileHandler(unittest.TestCase):
 
     def tearDown(self):
         os.close(self.FILE_LOG1[0])
-        os.close(self.FILE_LOG2[0])
         os.unlink(self.FILE_LOG1[1])
+        os.close(self.FILE_LOG2[0])
         os.unlink(self.FILE_LOG2[1])
+        os.close(self.FILE_LOG3[0])
+        os.unlink(self.FILE_LOG3[1])
         self.handler.flush()
         self.handler.close()
 

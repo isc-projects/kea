@@ -54,6 +54,9 @@ class NSFileLogHandler(logging.handlers.RotatingFileHandler):
         dfn = self.baseFilename                 
         if (self.stream) and (not os.path.exists(dfn)): #Is log file exist?
             self.stream.close()
+            dir = os.path.split(dfn)
+            if not (os.path.exists(dir[0])): #Is log subdirectory exist?
+                os.makedirs(dir[0])
             self.stream = self._open()
         return super(NSFileLogHandler, self).shouldRollover(record)
     
@@ -71,6 +74,7 @@ class NSFileLogHandler(logging.handlers.RotatingFileHandler):
             self.baseFilename = file_name
         self.maxBytes = max_bytes
         self.backupCount = backup_count
+
 
 class NSSysLogHandler(logging.Handler):    
     """Replace SysLogHandler with a custom handler 
