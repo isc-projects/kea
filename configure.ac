@@ -393,6 +393,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/bindctl/Makefile
                  src/bin/bindctl/tests/Makefile
                  src/bin/cfgmgr/Makefile
+                 src/bin/cfgmgr/tests/Makefile
                  src/bin/host/Makefile
                  src/bin/loadzone/Makefile
                  src/bin/msgq/Makefile
@@ -423,6 +424,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/xfr/Makefile
                ])
 AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
+           src/bin/cfgmgr/tests/b10-cfgmgr_test.py
            src/bin/cmdctl/cmdctl.py
            src/bin/cmdctl/run_b10-cmdctl.sh
            src/bin/cmdctl/tests/cmdctl_test
