@@ -416,7 +416,7 @@ def set_signal_handler():
 def run(addr = 'localhost', port = 8080, idle_timeout = 1200, verbose = False):
     ''' Start cmdctl as one https server. '''
     if verbose:
-        sys.stdout.write("[b10-cmdctl] starting on :%s port:%d\n" %(addr, port))
+        sys.stdout.write("[b10-cmdctl] starting on %s port:%d\n" %(addr, port))
     httpd = SecureHTTPServer((addr, port), SecureHTTPRequestHandler, idle_timeout, verbose)
     httpd.serve_forever()
 
