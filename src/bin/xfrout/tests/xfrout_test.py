@@ -75,7 +75,8 @@ class TestXfroutSession(unittest.TestCase):
 
     def setUp(self):
         request = MySocket(socket.AF_INET,socket.SOCK_STREAM)
-        self.xfrsess = MyXfroutSession(request, None, None)
+        self.log = isc.log.NSLogger('xfrout', '',  severity = 'critical', log_to_console = False )
+        self.xfrsess = MyXfroutSession(request, None, None, self.log)
         self.xfrsess.server = Dbserver()
         self.mdata = b'\xd6=\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\x03com\x00\x00\xfc\x00\x01'
         self.sock = MySocket(socket.AF_INET,socket.SOCK_STREAM)
@@ -238,10 +239,6 @@ class TestXfroutSession(unittest.TestCase):
         reply_msg = self.sock.read_msg()
         self.assertEqual(reply_msg.get_rr_count(section.ANSWER()), 2)
 
-        # set event
-        self.xfrsess.server._shutdown_event.set()
-        self.assertRaises(XfroutException, self.xfrsess._reply_xfrout_query, self.getmsg(), self.sock, "example.com.")
-
 class MyUnixSockServer(UnixSockServer):
     def __init__(self):
         self._lock = threading.Lock()
@@ -249,6 +246,7 @@ class MyUnixSockServer(UnixSockServer):
         self._shutdown_event = threading.Event()
         self._db_file = "initdb.file"
         self._max_transfers_out = 10
+        self._log = isc.log.NSLogger('xfrout', '', severity = 'critical', log_to_console = False )
 
 class TestUnixSockServer(unittest.TestCase):
     def setUp(self):
