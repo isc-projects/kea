@@ -28,6 +28,7 @@ import os
 from isc.config.ccsession import *
 from isc.cc import SessionError
 import socket
+import select
 import errno
 from optparse import OptionParser, OptionValueError
 try:
@@ -363,11 +364,22 @@ class UnixSockServer(ThreadingUnixStreamServer):
         self._lock.release()
 
 def listen_on_xfr_query(unix_socket_server):
-
     '''Listen xfr query in one single thread. Polls for shutdown 
     every 0.1 seconds, is there a better time?
     '''
-    unix_socket_server.serve_forever(poll_interval = 0.1)
+
+    while True:
+        try:
+            unix_socket_server.serve_forever(poll_interval = 0.1)
+        except select.error as err:
+            # serve_forever() calls select.select(), which can be 
+            # interrupted.
+            # If it is interrupted, it raises select.error with the 
+            # errno set to EINTR. We ignore this case, and let the
+            # normal program flow continue by trying serve_forever()
+            # again.
+            if err.args[0] != errno.EINTR: raise
+
    
 
 class XfroutServer:
