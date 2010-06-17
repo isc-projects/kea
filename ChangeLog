@@ -1,21 +1,26 @@
-  55.   [bug]      shane
-    bin/xfrout: xfrout exception on Ctrl-C now no longer generates
-    exception for 'Interrupted system call'
-    (Track #136, svn r2147)
+  56.	[func]*		jinmei
+	lib/dns: renamed the library name to libdns++ to avoid confusion
+	with the same name of library of BIND 9.
+	(Trac #190, svn r2153)
 
-  54.   [bug]      zhanglikun
+  55.	[bug]		shane
+	bin/xfrout: xfrout exception on Ctrl-C now no longer generates
+	exception for 'Interrupted system call'
+	(Track #136, svn r2147)
+
+  54.	[bug]		zhanglikun
 	bin/xfrout: Enable b10-xfrout can be launched in source
 	code tree.
 	(Trac #224, svn r2103)
 
-  53.   [bug]      zhanglikun
+  53.	[bug]		zhanglikun
 	bin/bindctl: Generate a unique session ID by using 
 	socket.gethostname() instead of socket.gethostbyname(), 
 	since the latter one could make bindctl	stall if its own 
 	host name can't be resolved.
 	(Trac #228, svn r2096)
 
-  52.   [func]      zhanglikun
+  52.	[func]		zhanglikun
 	bin/xfrout: When xfrout is launched, check whether the
 	socket file is being used by one running xfrout process, 
 	if it is, exit from python.	If the file isn't a socket file 
