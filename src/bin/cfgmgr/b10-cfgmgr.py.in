@@ -40,7 +40,8 @@ def signal_handler(signal, frame):
     if cm:
         cm.running = False
 
-if __name__ == "__main__":
+def main():
+    global cm
     try:
         cm = ConfigManager(DATA_PATH)
         signal.signal(signal.SIGINT, signal_handler)
@@ -55,3 +56,6 @@ if __name__ == "__main__":
         print("[b10-cfgmgr] Interrupted, exiting")
     if cm:
         cm.write_config()
+
+if __name__ == "__main__":
+    main()
