@@ -540,6 +540,15 @@ TEST_F(DataSrcTest, Dname) {
     EXPECT_TRUE(it->isLast());
 }
 
+TEST_F(DataSrcTest, DnameExact) {
+    // The example.org test zone has a DNAME RR for dname2.foo.example.org.
+    // A query for that name with a different RR type than DNAME shouldn't
+    // confuse delegation processing.
+    createAndProcessQuery(Name("dname2.foo.example.org"), RRClass::IN(),
+                          RRType::A());
+    headerCheck(msg, Rcode::NOERROR(), true, true, true, 0, 1, 0);
+}
+
 TEST_F(DataSrcTest, Cname) {
     readAndProcessQuery("q_cname");
 

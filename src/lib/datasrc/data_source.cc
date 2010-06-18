@@ -202,18 +202,18 @@ refQuery(const Name& name, const RRClass& qclass, const DataSrc* ds,
 }
 
 // Match downward, from the zone apex to the query name, looking for
-// referrals.
+// referrals.  Note that we exclude the apex name and query name themselves;
+// they'll be handled in a normal lookup in the zone.
 inline bool
 hasDelegation(const DataSrc* ds, const Name* zonename, Query& q,
               QueryTaskPtr task)
 {
-    const int nlen = task->qname.getLabelCount();
-    const int diff = nlen - zonename->getLabelCount();
+    const int diff = task->qname.getLabelCount() - zonename->getLabelCount();
     if (diff > 1) {
         bool found = false;
         RRsetList ref;
-        for (int i = diff; i > 1; --i) {
-            const Name sub(task->qname.split(i - 1, nlen - i));
+        for (int i = diff - 1; i > 0; --i) {
+            const Name sub(task->qname.split(i));
             if (refQuery(sub, q.qclass(), ds, zonename, ref)) {
                 found = true;
                 break;
@@ -360,11 +360,11 @@ proveNX(Query& q, QueryTaskPtr task, const DataSrc* ds,
 
         // Find the closest provable enclosing name for QNAME
         Name enclosure(zonename);
-        const int nlen = task->qname.getLabelCount();
-        const int diff = nlen - enclosure.getLabelCount();
+        const int diff = task->qname.getLabelCount() -
+            enclosure.getLabelCount();
         string hash2;
         for (int i = 1; i <= diff; ++i) {
-            enclosure = task->qname.split(i, nlen - i);
+            enclosure = task->qname.split(i);
             string nodehash(nsec3->getHash(enclosure));
             if (nodehash == hash1) {
                 break;
@@ -434,8 +434,7 @@ tryWildcard(Query& q, QueryTaskPtr task, const DataSrc* ds,
         return (DataSrc::SUCCESS);
     }
 
-    const int nlen = task->qname.getLabelCount();
-    const int diff = nlen - zonename->getLabelCount();
+    const int diff = task->qname.getLabelCount() - zonename->getLabelCount();
     if (diff < 1) {
         return (DataSrc::SUCCESS);
     }
@@ -445,7 +444,7 @@ tryWildcard(Query& q, QueryTaskPtr task, const DataSrc* ds,
     bool cname = false;
 
     for (int i = 1; i <= diff; ++i) {
-        const Name& wname(star.concatenate(task->qname.split(i, nlen - i)));
+        const Name& wname(star.concatenate(task->qname.split(i)));
         QueryTask newtask(wname, task->qclass, task->qtype, Section::ANSWER(),
                           QueryTask::AUTH_QUERY); 
         result = doQueryTask(ds, zonename, newtask, wild);
@@ -541,8 +540,7 @@ DataSrc::doQuery(Query& q) {
         // (Note that RRtype DS queries need to go to the parent.)
         const int nlabels = task->qname.getLabelCount() - 1;
         NameMatch match(nlabels != 0 && task->qtype == RRType::DS() ?
-                        task->qname.split(1, task->qname.getLabelCount() - 1) :
-                        task->qname);
+                        task->qname.split(1) : task->qname);
         findClosestEnclosure(match, task->qclass);
         const DataSrc* datasource = match.bestDataSrc();
         const Name* zonename = match.closestName();
