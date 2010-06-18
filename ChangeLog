@@ -1,3 +1,7 @@
+  57.	[func]		jinmei
+	lib/datasrc: used a simpler version of Name::split (change 31) for
+	better readability.  No behavior change. (Trac #200, svn r2159)
+
   56.	[func]*		jinmei
 	lib/dns: renamed the library name to libdns++ to avoid confusion
 	with the same name of library of BIND 9.
