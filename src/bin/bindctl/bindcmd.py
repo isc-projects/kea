@@ -36,6 +36,9 @@ import getpass
 from hashlib import sha1
 import csv
 import ast
+import pwd
+import getpass
+import traceback
 
 try:
     from collections import OrderedDict
@@ -49,12 +52,8 @@ try:
 except ImportError:
     my_readline = sys.stdin.readline
 
-CSV_FILE_DIR = None 
-if ('HOME' in os.environ):
-    CSV_FILE_DIR = os.environ['HOME']
-    CSV_FILE_DIR += os.sep + '.bind10' + os.sep
 CSV_FILE_NAME = 'default_user.csv'
-FAIL_TO_CONNEC_WITH_CMDCTL = "Fail to connect with b10-cmdctl module, is it running?"
+FAIL_TO_CONNECT_WITH_CMDCTL = "Fail to connect with b10-cmdctl module, is it running?"
 CONFIG_MODULE_NAME = 'config'
 CONST_BINDCTL_HELP = """
 usage: <module name> <command name> [param1 = value1 [, param2 = value2]]
@@ -110,7 +109,8 @@ class BindCmdInterpreter(Cmd):
             self.cmdloop()
         except FailToLogin as err:
             print(err)
-            print(FAIL_TO_CONNEC_WITH_CMDCTL)
+            print(FAIL_TO_CONNECT_WITH_CMDCTL)
+            traceback.print_exc()
         except KeyboardInterrupt:
             print('\nExit from bindctl')
 
@@ -119,35 +119,30 @@ class BindCmdInterpreter(Cmd):
         file(path is "dir + file_name"), Return value is one list of elements
         ['name', 'password'], If get information failed, empty list will be 
         returned.'''
-        csvfile = None
-        try:
-            if (not dir) or (not os.path.exists(dir)):
-                return []
+        if (not dir) or (not os.path.exists(dir)):
+            return []
 
+        try:
+            csvfile = None
+            users = []
             csvfile = open(dir + file_name)
             users_info = csv.reader(csvfile)
-            users = []
             for row in users_info:
                 users.append([row[0], row[1]])
-            
-            return users
         except (IOError, IndexError) as e:
             pass
         finally:
             if csvfile:
                 csvfile.close()
-            return []
+            return users
 
     def _save_user_info(self, username, passwd, dir, file_name):
         ''' Save username and password in file "dir + file_name"
         If it's saved properly, return True, or else return False. '''
         try:
-            if dir:
-                if not os.path.exists(dir):
-                    os.mkdir(dir, 0o700)
-            else:
-                print("Cannot determine location of $HOME. Not storing default user")
-                return False
+            if not os.path.exists(dir):
+                os.mkdir(dir, 0o700)
+
             csvfilepath = dir + file_name 
             csvfile = open(csvfilepath, 'w')
             os.chmod(csvfilepath, 0o600)
@@ -155,8 +150,7 @@ class BindCmdInterpreter(Cmd):
             writer.writerow([username, passwd])
             csvfile.close()
         except Exception as e:
-            # just not store it
-            print(e, "\nCannot write ~/.bind10/default_user.csv; default user is not stored")
+            print(e, "\nCannot write %s%s; default user is not stored" % (dir, file_name))
             return False
 
         return True
@@ -168,13 +162,16 @@ class BindCmdInterpreter(Cmd):
         time, username and password saved in 'default_user.csv' will be
         used first.
         '''
-        users = self._get_saved_user_info(CSV_FILE_DIR, CSV_FILE_NAME)
+        csv_file_dir = pwd.getpwnam(getpass.getuser()).pw_dir
+        csv_file_dir += os.sep + '.bind10' + os.sep
+        users = self._get_saved_user_info(csv_file_dir, CSV_FILE_NAME)
         for row in users:
             param = {'username': row[0], 'password' : row[1]}
             try:
                 response = self.send_POST('/login', param)
                 data = response.read().decode()
             except socket.error:
+                traceback.print_exc()
                 raise FailToLogin()
 
             if response.status == http.client.OK:
@@ -197,10 +194,11 @@ class BindCmdInterpreter(Cmd):
                 data = response.read().decode()
                 print(data)
             except socket.error as e:
+                traceback.print_exc()
                 raise FailToLogin()
 
             if response.status == http.client.OK:
-                self._save_user_info(username, passwd, CSV_FILE_DIR, CSV_FILE_NAME)
+                self._save_user_info(username, passwd, csv_file_dir, CSV_FILE_NAME)
                 return True
 
     def _update_commands(self):
@@ -470,7 +468,7 @@ class BindCmdInterpreter(Cmd):
             self._handle_cmd(cmd)
         except (IOError, http.client.HTTPException) as err:
             print('Error!', err)
-            print(FAIL_TO_CONNEC_WITH_CMDCTL)
+            print(FAIL_TO_CONNECT_WITH_CMDCTL)
         except BindCtlException as err:
             print("Error! ", err)
             self._print_correct_usage(err)
