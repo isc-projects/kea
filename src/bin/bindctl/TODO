@@ -18,3 +18,4 @@ functions should be updated first.):
    If the default user is saved in file, its password shouldn't be saved in plaintext.
 7. Need to think of what exactly to do with responses received to commands
    (currently it simply print the map)
+8. Remove bindctl-source.py.in(replace with bindctl-source.py) when merging to trunk.
