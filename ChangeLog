@@ -86,6 +86,10 @@ bind10-devel-20100602 released on June 2, 2010
 	Renamed libauth to libdatasrc.
 
   38.   [bug]           zhanglikun
+	Send command 'shutdown' to Xfrin and Xfrout when boss receive SIGINT.
+	Remove unused socket file when Xfrout process exits. Make sure Xfrout
+	exit by itself when it receives SIGINT, instead of being killed by the
+	signal SIGTERM or SIGKILL sent from boss.
 	(Trac #135, #151, #134, svn r1797)
 
   37.   [build]         jinmei
