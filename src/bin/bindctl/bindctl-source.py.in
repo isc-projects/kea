@@ -97,13 +97,16 @@ def check_addr(option, opt_str, value, parser):
 
 def set_bindctl_options(parser):
     parser.add_option('-p', '--port', dest = 'port', type = 'int',
-            action = 'callback', callback=check_port,
-            default = '8080', help = 'port for cmdctl of bind10')
+                      action = 'callback', callback=check_port,
+                      default = '8080', help = 'port for cmdctl of bind10')
 
     parser.add_option('-a', '--address', dest = 'addr', type = 'string',
-            action = 'callback', callback=check_addr,
-            default = '127.0.0.1', help = 'IP address for cmdctl of bind10')
+                      action = 'callback', callback=check_addr,
+                      default = '127.0.0.1', help = 'IP address for cmdctl of bind10')
 
+    parser.add_option('-c', '--certificate-chain', dest = 'cert_chain', 
+                      type = 'string', action = 'store',
+                      help = 'PEM formatted server certificate validation chain file')
 
 if __name__ == '__main__':
     try:
@@ -111,14 +114,7 @@ if __name__ == '__main__':
         set_bindctl_options(parser)
         (options, args) = parser.parse_args()
         server_addr = options.addr + ':' + str(options.port)
-        # If B10_FROM_SOURCE is set in the environment, we use PEM file
-        # from a directory relative to that, otherwise we use the one
-        # installed on the system
-        if "B10_FROM_SOURCE" in os.environ:
-            SYSCONF_PATH = os.environ["B10_FROM_SOURCE"] + "/src/bin/bindctl"
-        else:
-            SYSCONF_PATH = "@@SYSCONFDIR@@/@PACKAGE@"
-        tool = BindCmdInterpreter(server_addr, pem_file = SYSCONF_PATH + "/bindctl.pem")
+        tool = BindCmdInterpreter(server_addr, pem_file=options.cert_chain)
         prepare_config_commands(tool)
         tool.run()
     except Exception as e:
