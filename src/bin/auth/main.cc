@@ -154,7 +154,6 @@ main(int argc, char* argv[]) {
         auth_server->setConfigSession(&cs);
         auth_server->updateConfig(ElementPtr());
 
-        
         cout << "[b10-auth] Server started." << endl;
         io_service->run();
     } catch (const std::exception& ex) {
