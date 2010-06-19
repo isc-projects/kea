@@ -1,0 +1,18 @@
+#
+# various kinds of IN/AAAA RDATA stored in an input buffer
+#
+# valid RDATA for 2001:db8::1234
+#
+#RDLENGTH=16
+0010
+#IPv6 address                          (18 bytes)
+2001 0db8 0000 0000 0000 0000 0000 1234
+#
+# short length                          (36 bytes)
+0008 2001 0db8 0000 0000 0000 0000 0000 1234
+#
+# length too long                            (55 bytes)
+0011 2001 0db8 0000 0000 0000 0000 0000 1234 ff
+#
+# short buffer (this can be tested only at the end of the buffer)
+0010 2001 0db8

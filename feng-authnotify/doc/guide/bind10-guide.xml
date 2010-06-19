@@ -1,0 +1,1303 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+<!ENTITY mdash  "&#x2014;" >
+]>
+<book>
+  <?xml-stylesheet href="bind10-guide.css" type="text/css"?>
+
+  <bookinfo>
+    <title>BIND 10 Guide</title>
+    <subtitle>Administrator Reference for BIND 10</subtitle>
+
+    <copyright>
+      <year>2010</year><holder>Internet Systems Consortium, Inc.</holder>
+    </copyright>
+
+    <abstract>
+      <para>This is the reference guide for BIND 10.</para>
+      <para>
+        The most up-to-date version of this document, along with other documents
+        for BIND 10, can be found at
+        <ulink url="http://bind10.isc.org/docs"/>.
+      </para>
+    </abstract>
+  </bookinfo>
+
+  <chapter id="intro">
+    <title>Introduction</title>
+    <para>
+      BIND is the popular implementation of a DNS server, developer
+      interfaces, and DNS tools.
+      BIND 10 is a rewrite of BIND 9.  BIND 10 is written in C++ and Python
+      and provides a modular environment for serving and maintaining DNS.
+    </para>
+
+    <note>
+      <para>
+        This guide covers the experimental prototype version of
+        BIND 10.
+      </para>
+    </note>
+
+    <note>
+      <para>
+        BIND 10, at this time, does not provide an recursive
+        DNS server. It does provide a EDNS0- and DNSSEC-capable
+        authoritative DNS server.
+      </para>
+    </note>
+
+    <section>
+      <title>Supported Platforms</title>
+      <para>
+  BIND 10 builds have been tested on Debian GNU/Linux 5,
+  Ubuntu 9.10, NetBSD 5, Solaris 10, FreeBSD 7, and CentOS
+  Linux 5.3.
+
+  It has been tested on Sparc, i386, and amd64 hardware
+  platforms.
+
+        It is planned for BIND 10 to build, install and run on
+        Windows and standard Unix-type platforms.
+      </para>
+    </section>
+
+    <section>
+      <title>Required Software</title>
+      <para>
+        BIND 10 requires Python 3.1.  Later versions may work, but Python
+        3.1 is the minimum version which will work.
+      </para>
+
+      <note><para>
+	For this development prototype release, the only supported
+	data source backend is SQLite3. The authoritative server
+	requires SQLite 3.3.9 or newer.
+        The <command>b10-xfrin</command> and <command>b10-xfrout</command>
+	modules require the libboost library, libpython3 library,
+	and the Python _sqlite3.so module.
+      </para></note>
+<!-- TODO: this will change ... -->
+
+<!-- TODO: list where to get these from -->
+
+      <note>
+        <para>
+          Some operating systems do not provide these dependencies
+          in their default installation nor standard packages
+          collections.
+          You may need to install them separately.
+        </para>
+      </note>
+    </section>
+
+    <section id="starting_stopping">
+      <title>Starting and Stopping the Server</title>
+
+      <para>
+        BIND 10 is modular.  Part of this modularity is
+        accomplished using multiple cooperating processes which, together,
+	provide the server functionality.  This is a change from
+	the previous generation of BIND software, which used a
+	single process.
+      </para>
+
+      <para>
+	At first, running many different processes may seem confusing.
+	However, these processes are started, stopped, and maintained
+	by a single command, <command>bind10</command>.
+	This command starts a master process which will start other
+	processes as needed.
+	The processes started by the <command>bind10</command>
+	command have names starting with "b10-", including:
+      </para>
+      
+      <para>
+
+        <itemizedlist>
+          <listitem>
+            <simpara>
+              <command>b10-msgq</command> &mdash;
+              Message bus daemon.
+              This process coordinates communication between all of the other
+              BIND 10 processes.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <command>b10-auth</command> &mdash;
+              Authoritative DNS server.
+              This process serves DNS requests.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <command>b10-cfgmgr</command> &mdash;
+              Configuration manager.
+              This process maintains all of the configuration for BIND 10.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <command>b10-cmdctl</command> &mdash;
+              Command and control service.
+              This process allows external control of the BIND 10 system.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
+              <command>b10-xfrin</command> &mdash;
+              Incoming zone transfer service.
+              This process is used to transfer a new copy
+              of a zone into BIND 10, when acting as a secondary server.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
+              <command>b10-xfrout</command> &mdash;
+              Outgoing zone transfer service.
+	      This process is used to handle transfer requests to
+	      send a local zone to a remote secondary server,
+	      when acting as a master server.
+            </simpara>
+          </listitem>
+
+        </itemizedlist>
+      </para>
+
+      <para>
+	These are ran automatically by <command>bind10</command>
+	and do not need to be run manually.
+      </para>
+
+    </section>
+
+    <section id="managing_once_running">
+      <title>Managing BIND 10</title>
+      
+      <para>
+	Once BIND 10 is running, a few commands are used to interact
+	directly with the system:
+        <itemizedlist>
+          <listitem>
+            <simpara>
+              <command>bindctl</command> &mdash;
+              interactive administration interface.
+              This is a command-line tool which allows an administrator
+              to control BIND 10.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <command>b10-loadzone</command> &mdash;
+              zone file loader.
+              This tool will load standard masterfile-format zone files into
+              BIND 10.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <command>b10-cmdctl-usermgr</command> &mdash;
+              user access control.
+              This tool allows an administrator to authorize additional users
+              to manage BIND 10.
+            </simpara>
+          </listitem>
+  <!-- TODO usermgr -->
+        </itemizedlist>
+      </para>
+    </section>
+
+    <para>
+      The tools and modules are covered in full detail in this guide.
+<!-- TODO point to these -->
+      In addition, manual pages are also provided in the default installation.
+    </para>
+      
+<!--
+bin/
+  bindctl*
+  host*
+lib/
+  libauth
+  libdns
+  libexceptions
+  python3.1/site-packages/isc/{cc,config}
+sbin/
+  bind10
+share/
+  share/bind10/
+    auth.spec
+    b10-cmdctl.pem
+    bob.spec
+    passwd.csv
+  man/
+var/
+  bind10/b10-config.db
+-->
+
+    <para>
+      BIND 10 also provides libraries and programmer interfaces
+      for C++ and Python for the message bus, configuration backend,
+      and, of course, DNS. These include detailed developer
+      documentation and code examples.
+<!-- TODO point to this -->
+    </para>
+
+  </chapter>
+
+  <chapter id="installation">
+    <title>Installation</title>
+
+    <section>
+      <title>Building Requirements</title>
+        <note>
+          <simpara>
+            Some operating systems have split their distribution packages into
+            a run-time and a development package.  You will need to install
+            the development package versions, which include header files and
+            libraries, to build BIND 10 from source code.
+          </simpara>
+        </note>
+
+        <para>
+          Building from source code requires the Boost
+          build-time headers. At least Boost version 1.34 is required.
+  <!-- TODO: we don't check for this version -->
+  <!-- NOTE: jreed has tested with 1.34, 1.38, and 1.41. -->
+        </para>
+
+        <para>
+	  The Boost Library, Boost Python library, Python Library,
+	  and Python _sqlite3 module are required to enable the
+	  Xfrout and Xfrin support.
+        </para>
+
+        <note><simpara>
+          The Python related libraries and modules need to be built
+          for Python 3.1.
+        </simpara></note>
+
+        <para>
+          If the Boost System Library is detected at configure time,
+          BIND 10 will be built using an alternative method for
+          networking I/O using Boost ASIO support.  This provides
+          asynchrony support; with ASIO the Authoritative DNS server
+          can handle other queries while the processing of a TCP
+          transaction stalls.
+          This dependency is not required unless you need
+          <!-- TODO: want --> this feature as TCP transport support is
+          provided using alternative code.
+        </para>
+
+<note><simpara>
+We recommend using the Boost libraries as it provides a safer TCP
+implementation in BIND 10. 
+</simpara></note>
+
+        <para>
+          Building BIND 10 also requires a C++ compiler and
+          standard development headers.
+          BIND 10 builds have been tested with GCC g++ 3.4.3, 4.1.2,
+          4.1.3, 4.2.1, 4.3.2, and 4.4.1.
+        </para>
+    </section>
+
+    <section id="quickstart">
+      <title>Quick start</title>
+      <note>
+        <simpara>
+          This quickly covers the standard steps for installing
+          and deploying BIND 10 as an authoritative name server using
+          its defaults. For troubleshooting, full customizations and further
+          details, see the respective chapters in the BIND 10 guide.
+        </simpara>
+      </note>
+
+      <note>
+        <simpara>
+          The development prototype of the b10-auth server listens on
+          0.0.0.0 (all interfaces) port 5300. (This is not the standard
+          domain service port.)
+        </simpara>
+      </note>
+
+      <para>
+        To quickly get started with BIND 10, follow these steps.
+      </para>
+
+      <orderedlist>
+    
+        <listitem>
+          <simpara>
+            Install required build dependencies.
+          </simpara>
+        </listitem>
+
+        <listitem>
+          <simpara>
+            Download the BIND 10 source tar file from
+            <ulink url="ftp://ftp.isc.org/isc/bind10/"/>.
+          </simpara>
+        </listitem>
+
+        <listitem>
+          <para>Extract the tar file:
+          <screen>$ <userinput>gzcat bind10-<replaceable>VERSION</replaceable>.tar.gz | tar -xvf -</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>Go into the source and run configure:
+            <screen>$ <userinput>cd bind10-<replaceable>VERSION</replaceable></userinput>
+  $ <userinput>./configure</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>Build it:
+            <screen>$ <userinput>make</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>Install it (to default /usr/local):
+            <screen>$ <userinput>make install</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>Start the server:
+            <screen>$ <userinput>/usr/local/sbin/bind10</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+
+         <para>Test it; for example:
+            <screen>$ <userinput>dig @127.0.0.1 -p 5300 -c CH -t TXT authors.bind</userinput></screen>
+         </para>
+        </listitem>
+
+        <listitem>
+          <para>Load desired zone file(s), for example:
+            <screen>$ <userinput>b10-loadzone <replaceable>your.zone.example.org</replaceable></userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
+          <simpara>
+            Test the new zone.
+          </simpara>
+        </listitem>
+
+      </orderedlist>
+
+    </section>
+
+    <section id="install">
+      <title>Installation from source</title>
+      <para>
+        BIND 10 is open source software written in C++ and Python.
+        It is freely available in source code form from ISC via
+        the Subversion code revision control system or as a downloadable
+        tar file. It may also be available in pre-compiled ready-to-use
+        packages from operating system vendors.
+      </para>
+
+      <section>
+        <title>Download Tar File</title>
+        <para>
+          Downloading a release tar file is the recommended method to
+          obtain the source code.
+        </para>
+        
+        <para>
+          The BIND 10 releases are available as tar file downloads from
+          <ulink url="ftp://ftp.isc.org/isc/bind10/"/>.
+          Periodic development snapshots may also be available.
+        </para>
+  <!-- TODO -->
+      </section>
+
+      <section>
+        <title>Retrieve from Subversion</title>
+        <para>
+          Downloading this "bleeding edge" code is recommended only for
+          developers or advanced users.  Using development code in a production
+          environment is not recommended.
+        </para>
+
+        <note>
+          <para>
+            When using source code retrieved via Subversion additional
+            software will be required:  automake (v1.11 or newer),
+            libtoolize, and autoconf (2.59 or newer).
+            These may need to be installed.
+          </para>
+        </note>
+
+        <para>
+          The latest development code, including temporary experiments
+          and un-reviewed code, is available via the BIND 10 code revision
+          control system. This is powered by Subversion and all the BIND 10
+          development is public.
+          The leading development is done in the <quote>trunk</quote>.
+        </para>
+        <para>
+          The code can be checked out from <filename>svn://bind10.isc.org/svn/bind10</filename>; for example to check out the trunk:
+
+        <screen>$ <userinput>svn co svn://bind10.isc.org/svn/bind10/trunk</userinput></screen>
+        </para>
+
+        <para>
+          When checking out the code from
+          the code version control system, it doesn't include the
+          generated configure script, Makefile.in files, nor the
+          related configure files.
+          They can be created by running <command>autoreconf</command>
+          with the <option>--install</option> switch.
+          This will run <command>autoconf</command>,
+          <command>aclocal</command>,
+          <command>libtoolize</command>,
+          <command>autoheader</command>,
+          <command>automake</command>,
+          and related commands.
+        </para>
+
+      </section>
+
+
+      <section>
+        <title>Configure before the build</title>
+        <para>
+          BIND 10 uses the GNU Build System to discover build environment
+          details.
+          To generate the makefiles using the defaults, simply run:
+          <screen>$ <userinput>./configure</userinput></screen>
+        </para>
+        <para>
+          Run <command>./configure</command> with the <option>--help</option>
+          switch to view the different options. The commonly-used options are:
+
+          <variablelist>
+
+          <varlistentry>
+            <term>--prefix</term>
+            <listitem>
+              <simpara>Define the the installation location (the
+                default is <filename>/usr/local/</filename>).
+              </simpara>
+            </listitem> 
+          </varlistentry>
+
+          <varlistentry>
+            <term>--with-boost-include</term>
+            <listitem> 
+              <simpara>Define the path to find the Boost headers.
+              </simpara>
+            </listitem> 
+          </varlistentry>
+
+          <varlistentry>
+            <term>--with-boost-lib</term>
+            <listitem> 
+              <simpara>Define the path to find the Boost library.
+              </simpara>
+            </listitem> 
+          </varlistentry>
+
+          <varlistentry>
+            <term>--with-boost-python</term>
+            <listitem> 
+              <simpara>Define to use the Boost Python library.
+              </simpara>
+            </listitem> 
+          </varlistentry>
+
+          <varlistentry>
+            <term>--with-boost-system</term>
+            <listitem> 
+              <simpara>Define to use the Boost System library.
+              </simpara>
+            </listitem> 
+          </varlistentry>
+
+          <varlistentry>
+            <term>--with-pythonpath</term>
+            <listitem> 
+              <simpara>Define the path to Python 3.1 if it is not in the
+                standard execution path.
+              </simpara>
+            </listitem> 
+          </varlistentry>
+
+          <varlistentry>
+            <term>--with-gtest</term>
+            <listitem> 
+              <simpara>Enable building the C++ Unit Tests using the
+                Google Tests framework. Optionally this can define the
+                path to the gtest header files and library.
+              </simpara>
+            </listitem> 
+          </varlistentry>
+
+          </variablelist>
+
+        </para>
+  <!-- TODO: lcov -->
+
+        <para>
+          For example, the following configures it to build
+    with BOOST ASIO support, find the Boost headers, find the
+    Python interpreter, and sets the installation location:
+
+          <screen>$ <userinput>./configure --with-boost-lib=/usr/pkg/lib \
+      --with-boost-include=/usr/pkg/include \
+      --with-boost-python \
+      --with-boost-system \
+      --with-pythonpath=/usr/pkg/bin/python3.1 \
+      --prefix=/opt/bind10</userinput></screen>
+        </para>
+
+        <para>
+          If the configure fails, it may be due to missing or old
+          dependencies.
+        </para>
+
+      </section>
+
+      <section>
+        <title>Build</title>
+        <para>
+    After the configure step is complete, to build the executables
+    from the C++ code and prepare the Python scripts, run:
+
+          <screen>$ <userinput>make</userinput></screen>
+        </para>
+      </section>
+
+      <section>
+        <title>Install</title>
+        <para>
+          To install the BIND 10 executables, support files,
+          and documentation, run:
+          <screen>$ <userinput>make install</userinput></screen>
+        </para>
+        <note>
+          <para>The install step may require superuser privileges.</para>
+        </note>
+
+<!-- Trac #148 -->
+        <note><simpara>
+	  Depending on your system and the location of your Boost
+	  Python and Python shared libraries, you may need to
+	  configure your run-time linker to find them (such as
+	  setting LD_LIBRARY_PATH).
+        </simpara></note>
+
+      </section>
+
+  <!-- TODO: tests -->
+
+      <section>
+        <title>Install Hierarchy</title>
+        <para>
+          The following is the layout of the complete BIND 10 installation:
+          <itemizedlist>
+            <listitem>
+              <simpara>
+                <filename>bin/</filename> &mdash;
+                general tools and diagnostic clients.
+              </simpara>
+            </listitem>
+            <listitem>
+            <simpara>
+              <filename>etc/bind10-devel/</filename> &mdash;
+              configuration files.
+            </simpara>
+            </listitem>
+            <listitem>
+              <simpara>
+                <filename>lib/</filename> &mdash;
+                libraries and python modules.
+              </simpara>
+            </listitem>
+            <listitem>
+              <simpara>
+                <filename>libexec/bind10-devel/</filename> &mdash;
+                executables that a user wouldn't normally run directly and
+                are not run independently.
+                These are the BIND 10 modules which are daemons started by
+                the <command>bind10</command> tool.
+              </simpara>
+            </listitem>
+            <listitem>
+              <simpara>
+                <filename>sbin/</filename> &mdash;
+                commands used by the system administrator.
+              </simpara>
+            </listitem>
+            <listitem>
+              <simpara>
+                <filename>share/bind10-devel/</filename> &mdash;
+                configuration specifications.
+              </simpara>
+            </listitem>
+            <listitem>
+              <simpara>
+                <filename>share/man/</filename> &mdash;
+                manual pages (online documentation).
+              </simpara>
+            </listitem>
+            <listitem>
+              <simpara>
+                <filename>var/bind10-devel/</filename> &mdash;
+                data source and configuration databases.
+              </simpara>
+            </listitem>
+          </itemizedlist>
+        </para>
+      </section>
+    </section>
+
+  <!--
+      <section id="install.troubleshooting">
+        <title>Troubleshooting</title>
+        <para>
+        </para>
+      </section>
+  -->
+  
+  </chapter>
+
+  <chapter id="bind10">
+    <title>Starting BIND10 with <command>bind10</command></title>
+    <para>
+      BIND 10 provides the <command>bind10</command> command which 
+      starts up the required processes.
+      <command>bind10</command>
+      will also restart processes that exit unexpectedly.
+      This is the only command needed to start the BIND 10 system.
+    </para>
+
+    <para>
+      After starting the <command>b10-msgq</command> communications channel,
+      <command>bind10</command> connects to it, 
+      runs the configuration manager, and reads its own configuration.
+      Then it starts the other modules.
+    </para>
+
+    <para>
+      The <command>b10-msgq</command> and <command>b10-cfgmgr</command>
+      services make up the core. The <command>b10-msgq</command> daemon
+      provides the communication channel between every part of the system.
+      The <command>b10-cfgmgr</command> daemon is always needed by every
+      module, if only to send information about themselves somewhere,
+      but more importantly to ask about their own settings, and
+      about other modules.
+      The <command>bind10</command> master process will also start up
+      <command>b10-cmdctl</command> for admins to communicate with the
+      system, <command>b10-auth</command> for Authoritative DNS service,
+      <command>b10-xfrin</command> for inbound DNS zone transfers.
+      and <command>b10-xfrout</command> for outbound DNS zone transfers.
+    </para>
+
+    <section id="start">
+      <title>Starting BIND 10</title>
+      <para>
+        To start the BIND 10 service, simply run <command>bind10</command>.
+        Run it with the <option>--verbose</option> switch to
+        get additional debugging or diagnostic output.
+      </para>
+<!-- TODO: note it doesn't go into background -->
+    </section>
+
+  </chapter>
+
+  <chapter id="msgq">
+    <title>Command channel</title>
+
+      <para>
+        The BIND 10 components use the <command>b10-msgq</command>
+        message routing daemon to communicate with other BIND 10 components.
+        The <command>b10-msgq</command> implements what is called the
+        <quote>Command Channel</quote>.
+        Processes intercommunicate by sending messages on the command
+        channel.
+        Example messages include shutdown, get configurations, and set
+        configurations.
+        This Command Channel is not used for DNS message passing.
+        It is used only to control and monitor the BIND 10 system.
+      </para>
+
+      <para>
+        Administrators do not communicate directly with the
+        <command>b10-msgq</command> daemon.
+        By default, BIND 10 uses port 9912 for the
+        <command>b10-msgq</command> service.
+        It listens on 127.0.0.1.
+      </para>
+      
+<!-- TODO: this is broken, see Trac #111
+      <para>
+        To select an alternate port for the <command>b10-msgq</command> to
+        use, run <command>bind10</command> specifying the option:
+        <screen> $ <userinput>bind10 -TODO-msgq-port 9912</userinput></screen>
+      </para>
+-->
+
+<!-- TODO: upcoming plans:
+Unix domain sockets
+-->
+
+  </chapter>
+
+  <chapter id="cfgmgr">
+    <title>Configuration manager</title>
+
+      <para>
+         The configuration manager, <command>b10-cfgmgr</command>,
+         handles all BIND 10 system configuration.  It provides
+         persistent storage for configuration, and notifies running
+         modules of configuration changes.
+      </para>
+
+      <para>
+        The <command>b10-auth</command> and <command>b10-xfrin</command>
+        daemons and other components receive their configurations
+        from the configuration manager over the <command>b10-msgq</command>
+        command channel.
+      </para>
+
+      <para>The administrator doesn't connect to it directly, but
+        uses a user interface to communicate with the configuration
+        manager via <command>b10-cmdctl</command>'s REST-ful interface.
+        <command>b10-cmdctl</command> is covered in <xref linkend="cmdctl"/>.
+      </para>
+
+<!-- TODO -->
+      <note>
+        <para>
+          The development prototype release only provides the
+          <command>bindctl</command> as a user interface to
+          <command>b10-cmdctl</command>.
+          Upcoming releases will provide another interactive command-line
+          interface and a web-based interface.
+        </para>
+      </note>
+
+      <para>
+        The <command>b10-cfgmgr</command> daemon can send all
+        specifications and all current settings to the
+        <command>bindctl</command> client (via
+        <command>b10-cmdctl</command>).
+      </para>
+
+      <para>
+        <command>b10-cfgmgr</command> relays configurations received
+        from <command>b10-cmdctl</command> to the appropriate modules.
+      </para>
+<!-- TODO:
+        Configuration settings for itself are defined as ConfigManager.
+TODO: show examples
+-->
+
+<!-- TODO:
+config changes are actually commands to cfgmgr
+-->
+
+<!-- TODO: what about run time config to change this? -->
+<!-- jelte: > config set cfgmgr/config_database <file> -->
+<!-- TODO: what about command line switch to change this? -->
+      <para>
+        The stored configuration file is at
+        <filename>/usr/local/var/bind10-devel/b10-config.db</filename>.
+        (The full path is what was defined at build configure time for
+        <option>--localstatedir</option>.
+        The default is <filename>/usr/local/var/</filename>.)
+        The format is loosely based on JSON and is directly parseable
+        python, but this may change in a future version.
+        This configuration data file is not manually edited by the
+        administrator.
+      </para>
+
+<!--
+
+Well the specfiles have a more fixed format (they must contain specific
+stuff), but those are also directly parseable python structures (and
+'coincidentally', our data::element string representation is the same)
+
+loosely based on json, tweaked to be directly parseable in python, but a
+subset of that.
+wiki page is http://bind10.isc.org/wiki/DataElementDesign
+
+nope, spec files are written by module developers, and db should be done
+through bindctl and friends
+
+-->
+
+    <para>
+      The configuration manager does not have any command line arguments.
+      Normally it is not started manually, but is automatically
+      started using the <command>bind10</command> master process
+      (as covered in <xref linkend="bind10"/>).
+    </para>
+
+<!-- TODO: upcoming plans:
+configuration for configuration manager itself. And perhaps we might
+change the messaging protocol, but an admin should never see any of that
+-->
+
+<!-- TODO: show examples, test this -->
+<!--
+, so an admin can simply run bindctl,
+do config show, and it shows all modules; config show >module> shows all
+options for that module
+-->
+
+  </chapter>
+
+  <chapter id="cmdctl">
+    <title>Remote control daemon</title>
+
+    <para>
+      <command>b10-cmdctl</command> is the gateway between
+      administrators and the BIND 10 system.
+      It is a HTTPS server that uses standard HTTP Digest
+      Authentication for username and password validation.
+      It provides a REST-ful interface for accessing and controlling
+      BIND 10.
+    </para>
+<!-- TODO: copy examples from wiki, try with wget -->
+
+    <para>
+      When <command>b10-cmdctl</command> starts, it firsts
+      asks <command>b10-cfgmgr</command> about what modules are
+      running and what their configuration is (over the
+      <command>b10-msgq</command> channel). Then it will start listening
+      on HTTPS for clients &mdash; the user interface &mdash; such
+      as <command>bindctl</command>.
+    </para>
+
+    <para>
+      <command>b10-cmdctl</command> directly sends commands
+      (received from the user interface) to the specified component.
+      Configuration changes are actually commands to
+      <command>b10-cfgmgr</command> so are sent there.
+    </para>
+
+<!--
+TODO:
+"For bindctl to list a module's available configurations and
+available commands, it communicates over the cmdctl REST interface.
+cmdctl then asks cfgmgr over the msgq command channel. Then cfgmgr
+asks the module for its specification and also cfgmgr looks in its
+own configuration database for current values."
+
+(05:32:03) jelte: i think cmdctl doesn't request it upon a incoming
+GET, but rather requests it once and then listens in for updates,
+but you might wanna check with likun
+-->
+
+<!-- TODO: replace /usr/local -->
+<!-- TODO: permissions -->
+    <para>The HTTPS server requires a private key,
+      such as a RSA PRIVATE KEY.
+      The default location is at
+      <filename>/usr/local/etc/bind10-devel/cmdctl-keyfile.pem</filename>.
+      (A sample key is at
+      <filename>/usr/local/share/bind10-devel/cmdctl-keyfile.pem</filename>.)
+      It also uses a certificate located at
+      <filename>/usr/local/etc/bind10-devel/cmdctl-certfile.pem</filename>.
+      (A sample certificate is at
+      <filename>/usr/local/share/bind10-devel/cmdctl-certfile.pem</filename>.)
+      This may be a self-signed certificate or purchased from a
+      certification authority.
+    </para>
+
+    <note><para>
+      The HTTPS server doesn't support a certificate request from a
+      client (at this time).
+<!-- TODO: maybe allow request from server side -->
+      The <command>b10-cmdctl</command> daemon does not provide a
+      public service. If any client wants to control BIND 10, then
+      a certificate needs to be first received from the BIND 10
+      administrator.
+      The BIND 10 installation provides a sample PEM bundle that matches
+      the sample key and certificate.
+    </para></note>
+<!-- TODO: cross-ref -->
+
+<!-- TODO
+openssl req -new -x509 -keyout server.pem -out server.pem -days 365 -nodes
+but that is a single file, maybethis should go back to that format?
+-->
+
+<!--
+    <para>
+(08:20:56) shane: It is in theory possible to run without cmdctl.
+(08:21:02) shane: I think we discussed this.
+    </para>
+-->
+
+<!-- TODO: Please check https://bind10.isc.org/wiki/cmd-ctrld -->
+
+
+    <para>
+      The <command>b10-cmdctl</command> daemon also requires
+      the user account file located at
+      <filename>/usr/local/etc/bind10-devel/cmdctl-accounts.csv</filename>.
+      This comma-delimited file lists the accounts with a user name,
+      hashed password, and salt.
+      (A sample file is at
+      <filename>/usr/local/share/bind10-devel/cmdctl-accounts.csv</filename>.
+      It contains the user named <quote>root</quote> with the password
+      <quote>bind10</quote>.)
+    </para>
+
+    <para>
+      The administrator may create a user account with the
+      <command>b10-cmdctl-usermgr</command> tool.
+    </para>
+<!-- TODO: show example -->
+
+<!-- TODO: does cmdctl need to be restarted to change cert or key
+or accounts database -->
+
+    <para>
+      By default the HTTPS server listens on the localhost port 8080.
+      The port can be set by using the <option>--port</option> command line option.
+      The address to listen on can be set using the <option>--address</option> command
+      line argument.
+      Each HTTPS connection is stateless and timesout in 1200 seconds
+      by default.  This can be
+      redefined by using the <option>--idle-timeout</option> command line argument.
+    </para>
+
+    <section id="cmdctl.spec">
+      <title>Configuration specification for b10-cmdctl</title>
+      <para>
+        The configuration items for <command>b10-cmdctl</command> are:
+key_file
+cert_file
+accounts_file
+      </para>
+<!-- TODO -->
+
+      <para>
+        The control commands are:
+print_settings
+shutdown
+      </para>
+<!-- TODO -->
+    </section>
+
+<!--
+TODO
+(12:21:30) jinmei: I'd like to have sample session using a command line www client such as wget
+(12:21:33) jinmei: btw
+-->
+
+  </chapter>
+
+  <chapter id="bindctl">
+    <title>Control and configure user interface</title>
+
+    <note><para>
+      For this development prototype release, <command>bindctl</command>
+      is the only user interface. It is expected that upcoming
+      releases will provide another interactive command-line
+      interface and a web-based interface for controlling and
+      configuring BIND 10.
+    </para></note>
+
+    <para>
+      The <command>bindctl</command> tool provides an interactive
+      prompt for configuring, controlling, and querying the BIND 10
+      components.
+      It communicates directly with a REST-ful interface over HTTPS
+      provided by <command>b10-cmdctl</command>. It doesn't
+      communicate to any other components directly.
+    </para>
+
+<!-- TODO: explain and show interface -->
+
+    <para>
+      Configuration changes are actually commands to
+      <command>b10-cfgmgr</command>. So when <command>bindctl</command>
+      sends a configuration, it is sent to <command>b10-cmdctl</command>
+      (over a HTTPS connection); then <command>b10-cmdctl</command>
+      sends the command (over a <command>b10-msgq</command> command
+      channel) to <command>b10-cfgmgr</command> which then stores
+      the details and relays (over a <command>b10-msgq</command> command
+      channel) the configuration on to the specified module.
+    </para>
+
+    <para>
+    </para>
+
+  </chapter>
+
+  <chapter id="authserver">
+    <title>Authoritative Server</title>
+
+    <para>
+      The <command>b10-auth</command> is the authoritative DNS server.
+      It supports EDNS0 and DNSSEC. It supports IPv6.
+      Normally it is started by the <command>bind10</command> master
+      process.
+    </para>
+
+    <note><simpara>
+      This development prototype release listens on all interfaces
+      and the non-standard port 5300.
+    </simpara></note>
+
+    <section>
+      <title>Server Configurations</title>
+
+<!-- TODO: offers command line options but not used
+since we used bind10 -->
+
+      <para>
+        <command>b10-auth</command> is configured via the
+        <command>b10-cfgmgr</command> configuration manager.
+        The module name is <quote>Auth</quote>.
+        The configuration data item is:
+
+        <variablelist>
+    
+          <varlistentry>
+            <term>database_file</term>
+            <listitem> 
+              <simpara>This is an optional string to define the path to find
+                 the SQLite3 database file.
+<!-- TODO: -->
+Note: Later the DNS server will use various data source backends.
+This may be a temporary setting until then.
+              </simpara>
+            </listitem>
+          </varlistentry>
+
+        </variablelist>
+
+      </para>
+
+      <para>
+
+        The configuration command is:
+
+        <variablelist>
+
+          <varlistentry>
+            <term>shutdown</term>
+            <listitem> 
+              <simpara>Stop the authoritative DNS server.
+              </simpara>
+<!-- TODO: what happens when this is sent, will bind10 restart? -->
+            </listitem>
+          </varlistentry>
+
+        </variablelist>
+
+      </para>
+
+<!-- TODO: examples of setting or running above? -->
+
+    </section>
+
+    <section>
+      <title>Data Source Backends</title>
+
+      <note><para>
+        For the development prototype release, <command>b10-auth</command>
+        only supports the SQLite3 data source backend.
+        Upcoming versions will be able to use multiple different
+        data sources, such as MySQL, Berkeley DB, or in-memory DB.
+      </para></note>
+
+
+      <para>
+        By default, the SQLite3 backend uses the data file located at
+        <filename>/usr/local/var/bind10-devel/zone.sqlite3</filename>.
+        (The full path is what was defined at build configure time for
+        <option>--localstatedir</option>.
+        The default is <filename>/usr/local/var/</filename>.)
+  This data file location may be changed by defining the
+  <quote>database_file</quote> configuration.
+      </para>
+
+    </section>
+
+    <section>
+      <title>Loading Master Zones Files</title>
+
+      <para>
+        RFC 1035 style DNS master zone files may imported
+        into a BIND 10 data source by using the
+        <command>b10-loadzone</command> utility.
+      </para>
+
+      <para>
+        <command>b10-loadzone</command> supports the following
+        special directives (control entries):
+
+        <variablelist>
+
+          <varlistentry>
+            <term>$INCLUDE</term>
+            <listitem> 
+              <simpara>Loads an additional zone file. This may be recursive.
+              </simpara>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>$ORIGIN</term>
+            <listitem> 
+              <simpara>Defines the relative domain name.
+              </simpara>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>$TTL</term>
+            <listitem> 
+              <simpara>Defines the time-to-live value used for following
+                records that don't include a TTL.
+              </simpara>
+            </listitem>
+          </varlistentry>
+
+        </variablelist>
+
+      </para>
+
+      <para>
+        The <option>-o</option> argument may be used to define the
+        default origin for loaded zone file records.
+      </para>
+
+      <note>
+      <para>
+        In the development prototype release, only the SQLite3 back
+        end is used.
+        By default, it stores the zone data in
+        <filename>/usr/local/var/bind10-devel/zone.sqlite3</filename>
+        unless the <option>-d</option> switch is used to set the
+        database filename.
+        Multiple zones are stored in a single SQLite3 zone database.
+      </para>
+      </note>
+
+      <para>
+        If you reload a zone already existing in the database,
+        all records from that prior zone disappear and a whole new set
+        appears.
+      </para>
+
+<!--TODO: permissions for xfrin or loadzone to create the file -->
+
+    </section>
+
+<!--
+TODO
+    <section>
+      <title>Troubleshooting</title>
+      <para>
+      </para>
+    </section>
+-->
+
+  </chapter>
+
+  <chapter id="xfrin">
+    <title>Incoming Zone Transfers</title>
+
+    <para>
+      The <command>b10-xfrin</command> process is started by
+      <command>bind10</command>.
+      It can be manually triggered to request an AXFR zone
+      transfer. When received, it is stored in the BIND 10
+      data store, and its records can be served by
+      <command>b10-auth</command>.
+      This allows the BIND 10 server to provide
+      <quote>secondary</quote> service.
+    </para>
+
+    <note><simpara>
+     The current development release of BIND 10 only supports
+     AXFR. (IXFR is not supported.) 
+     It also does not yet support automated SOA checks.
+    </simpara></note>
+
+    <para>
+       To manually trigger a zone transfer to retrieve a remote zone,
+       you may use the <command>bindctl</command> utility.
+       For example, at the <command>bindctl</command> prompt run:
+
+       <screen>&gt; <userinput>Xfrin retransfer zone_name="<option>foo.example.org</option>" master=<option>192.0.2.99</option></userinput></screen>
+    </para>
+
+  </chapter>
+
+  <chapter id="xfrout">
+    <title>Outbound Zone Transfers</title>
+
+    <para>
+      The <command>b10-xfrout</command> process is started by
+      <command>bind10</command>.
+      When the <command>b10-auth</command> authoritative DNS server
+      receives an AXFR request, <command>b10-xfrout</command>
+      sends the zone.
+      This is used to provide master DNS service to share zones
+      to secondary name servers.
+    </para>
+
+    <note><simpara>
+     The current development release of BIND 10 only supports
+     AXFR. (IXFR is not supported.) 
+     It also does not yet support NOTIFY.
+     Access control is not yet provided.
+    </simpara></note>
+
+
+<!--
+TODO:
+xfrout section:
+auth servers checks for AXFR query
+sends the XFR query to the xfrout module
+uses /tmp/auth_xfrout_conn which is a socket
+what is XfroutClient xfr_client??
+/tmp/auth_xfrout_conn is not removed
+-->
+
+  </chapter>
+
+<!-- TODO: how to help: run unit tests, join lists, review trac tickets -->
+
+  <!-- <index>    <title>Index</title> </index> -->
+
+</book>
+
+<!--
+
+TODO:
+
+Overview
+
+Getting BIND 10 Installed
+  Basics
+  Dependencies
+  Optional
+  Advanced
+
+How Does Everything Work Together?
+
+Need Help?
+
+-->

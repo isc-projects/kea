@@ -1,0 +1,55 @@
+; File written on Sat Feb 20 01:45:36 2010
+; dnssec_signzone version 9.7.0
+sql1.example.com.	3600	IN SOA	master.example.com. admin.example.com. (
+					678        ; serial
+					3600       ; refresh (1 hour)
+					1800       ; retry (30 minutes)
+					2419200    ; expire (4 weeks)
+					7200       ; minimum (2 hours)
+					)
+			3600	RRSIG	SOA 5 3 3600 20100322084536 (
+					20100220084536 12447 sql1.example.com.
+					FAKEFAKEFAKEFAKE )
+			3600	NS	dns01.example.com.
+			3600	NS	dns02.example.com.
+			3600	NS	dns03.example.com.
+			3600	RRSIG	NS 5 3 3600 20100322084536 (
+					20100220084536 12447 sql1.example.com.
+					FAKEFAKEFAKEFAKE )
+			7200	NSEC	www.sql1.example.com. NS SOA RRSIG NSEC DNSKEY
+			7200	RRSIG	NSEC 5 3 7200 20100322084536 (
+					20100220084536 12447 sql1.example.com.
+					FAKEFAKEFAKEFAKE )
+			3600	DNSKEY	256 3 5 (
+					AwEAAdYdRhBAEY67R/8G1N5AjGF6asIiNh/p
+					NGeQ8xDQP13JN2lo+sNqWcmpYNhuVqRbLB+m
+					amsU1XcCICSBvAlSmfz/ZUdafX23knArTlAL
+					xMmspcfdpqun3Yr3YYnztuj06rV7RqmveYck
+					WvAUXVYMSMQZfJ305fs0dE/xLztL/CzZ
+					) ; key id = 12447
+			3600	DNSKEY	257 3 5 (
+					AwEAAbaKDSa9XEFTsjSYpUTHRotTS9Tz3krf
+					DucugW5UokGQKC26QlyHXlPTZkC+aRFUs/di
+					cJX2kopndLcnlNAPWiKnKtrsFSCnIJDBZIyv
+					cKq+9RXmV3HK3bUdHnQZ88IZWBRmWKfZ6wnz
+					Ho53kdYKAemTErkztaX3lRRPLYWpxRcDPEjy
+					sXT3Lh0vfL5D+CIO1yKw/q7C+v6+/kYAxc2l
+					fbNE3HpklSuF+dyX4nXxWgzbcFuLz5Bwfq6Z
+					J9RYe/kNkA0uMWNa1KkGeRh8gg22kgD/KT5h
+					PTnpezUWLvoY5Qc7IB3T0y4n2JIwiF2ZrZYV
+					rWgDjRWAzGsxJiJyjd6w2k0=
+					) ; key id = 33313
+			3600	RRSIG	DNSKEY 5 3 3600 20100322084536 (
+					20100220084536 12447 sql1.example.com.
+					FAKEFAKEFAKEFAKE )
+			3600	RRSIG	DNSKEY 5 3 3600 20100322084536 (
+					20100220084536 33313 sql1.example.com.
+					FAKEFAKEFAKEFAKE )
+www.sql1.example.com.	3600	IN A	192.0.2.100
+			3600	RRSIG	A 5 4 3600 20100322084536 (
+					20100220084536 12447 sql1.example.com.
+					FAKEFAKEFAKEFAKE )
+			7200	NSEC	sql1.example.com. A RRSIG NSEC
+			7200	RRSIG	NSEC 5 4 7200 20100322084536 (
+					20100220084536 12447 sql1.example.com.
+					FAKEFAKEFAKEFAKE )

@@ -1,0 +1,6 @@
+# RDLENGTH, 22 bytes
+00 16
+# NSEC record
+# www2.isc.org. CNAME RRSIG NSEC
+04 77 77 77 32 03 69 73 63 03 6f 72 67 00 00 06
+04 00 00 00 00 03
