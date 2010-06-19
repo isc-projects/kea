@@ -91,6 +91,20 @@ dispatch_axfr_query(const int tcp_sock, char const axfr_query[],
 }
 
 namespace asio_link {
+IOAddress::IOAddress(const string& address_str) :
+    asio_address_placeholder_(NULL),
+    asio_address_(*asio_address_placeholder_) // XXX
+{}
+
+IOAddress::~IOAddress() {
+    delete asio_address_placeholder_;
+}
+
+string
+IOAddress::toText() const {
+    return ("dummy");
+}
+
 //
 // Helper classes for asynchronous I/O using asio
 //
@@ -146,7 +160,15 @@ public:
                 // start to get new query ?
                 start();
             } else {
-#endif          
+#endif
+#ifdef notyet
+                IOMessage io_message(data_, bytes_transferred,
+                                     remote_endpoint, socket);
+                if (auth_server_->processMessage(IOMessage(message), ..)) {
+                    //...
+                    message.getIOService().
+                }
+#endif
                 if (auth_server_->processMessage(dnsbuffer, dns_message_,
                                                 response_renderer_, false)) {
                     responselen_buffer_.writeUint16(

@@ -17,10 +17,55 @@
 #ifndef __ASIO_LINK_H
 #define __ASIO_LINK_H 1
 
+#include <string>
+
+#include <exceptions/exceptions.h>
+
+namespace asio {
+class io_service;
+
+namespace ip {
+class address;
+}
+}
+
 class AuthSrv;
 
 namespace asio_link {
 struct IOServiceImpl;
+
+/// \brief An exception that is thrown if an error occurs with in the IO
+/// module.  This is mainly intended to be a wrapper exception class for
+/// ASIO specific exceptions.
+class IOError : public isc::Exception {
+public:
+    IOError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+class IOAddress {
+public:
+    IOAddress(const std::string& adress_str);
+    IOAddress(const asio::ip::address& asio_adress);
+    std::string toText() const;
+    ~IOAddress();
+private:
+    asio::ip::address* asio_address_placeholder_;
+    asio::ip::address& asio_address_;
+};
+
+class IOMessage {
+public:
+    IOMessage();
+    ~IOMessage();
+    const void* getData() const;
+    size_t getDataSize() const;
+    int getNative() const;
+    const IOAddress& getRemoteAddress() const;
+private:
+    class IOMessageImpl;
+    IOMessageImpl* impl_;
+};
 
 class IOService {
 public:
