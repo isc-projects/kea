@@ -1,0 +1,4 @@
+# cname-ext.example.com/A (cname to local authoritative zone)
+  ed 42 01 00 00 01 00 00 00 00 00 00 09 63 6e 61
+  6d 65 2d 65 78 74 07 65 78 61 6d 70 6c 65 03 63
+  6f 6d 00 00 01 00 01

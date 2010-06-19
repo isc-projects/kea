@@ -1,0 +1,33 @@
+#
+# Wire-format data of a sequence of DNS questions.
+# foo.example.com. IN NS
+# bar.example.com. CH A (owner name is compressed)
+# and some pathological cases
+#
+# 0  1  2  3  4  5  6  7  8  9 10  1  2  3  4  5  6 (-th byte)
+#(3) f  o  o (7) e  x  a  m  p  l  e (3) c  o  m  .
+ 03 66 6f 6f 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00
+#7  8  9 20
+# type/class: NS = 2, IN = 1
+00 02 00 01
+
+# 1  2  3  4  5  6
+#(3) b  a  r [ptr=0x04]
+ 03 62 61 72 c0 04
+#7  8  9 30
+# type/class: A = 1, CH = 3
+00 01 00 03
+
+# owner name is broken
+#1
+# invalid label type
+ff
+#2  3  4  5
+#type/class IN/A
+00 01 00 01
+
+# short buffer
+# (root name)
+00
+#class is missing
+00 01

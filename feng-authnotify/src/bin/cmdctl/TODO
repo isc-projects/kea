@@ -1,0 +1,8 @@
+. Refine code for b10-cmdctl.
+. Add value type check according module specification.
+. Add return code for RESTful API document of b10-cmdctl.
+. Add more unit tests for b10-cmdctl.
+. Update man page for b10-cmdctl?
+
+. Add id to each command, so the receiver knows if the response is what it wants.
+. Make cmdctl can be configured through bindctl.(after id is added)

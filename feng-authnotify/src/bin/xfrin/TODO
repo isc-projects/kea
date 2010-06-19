@@ -1,0 +1,53 @@
+1. When xfrin's config data is changed, new config data should be applied.
+2. mutex on recorder is not sufficient.  race can happen if two xfrin requests
+   occur at the same time.  (but testing it would be very difficult)
+3. It wouldn't support IPv6 because of the following line:
+        self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
+4. Xfrin.retransfer and refresh share most of the code.  should be unified.
+5. class IN is hardcoded.  bad.
+        query_question = question(name(self._zone_name), rr_class.IN(), query_type)
+6. QID 0 should be allowed:
+        query_id = random.randint(1, 0xFFFF)
+7. what if xfrin fails after opening a new DB?  looks like garbage
+   (intermediate) data remains in the DB file, although it's more about
+   the data source implementation.  check it, and fix it if it's the case.
+8. Xfrin.command_handler() ignores unknown commands.  should return an error.
+9. XfrinConnection can leak sockets. (same problem as that Jelte mentioned
+   on xfrout?)
+10. The following line of _check_soa_serial() is incorrect.
+        soa_reply = self._get_request_response(int(data_size))
+    Unpack the data and convert it in the host by order.
+11. if do_xfrin fails it should probably return a non "OK" value.
+    (it's currently ignored anyway, though)
+12. XfrinConnection should probably define handle_close().  Also, the
+    following part should be revised because this can also happen when the
+    master closes the connection.
+            if self._recv_time_out:
+                raise XfrinException('receive data from socket time out.')
+13. according to the source code xfrin cannot quickly terminate on shutdown
+    if some of the xfr connections stall.  on a related note, the use of
+    threading.Event() is questionable: since no threads wait() on the event,
+    it actually just works as a global flag shared by all threads.
+    this implementation should be refactored so that a shutdown command is
+    propagate to all threads immediately, whether it's via a builtin mechanism
+    of the threading module or not (it's probably "not", see below).
+14. the current use of asyncore seems to be thread unsafe because it
+    relies on a global channel map (which is the implicit default).
+    each thread should probably use its own map:
+      asyncore.dispatcher.__init__(self, map=sock_map)
+      # where sock_map is thread specific and is passed to
+      # XfrinConnection.__init__().
+15. but in the first place, it's not clear why we need asyncore.
+    since each thread is responsible for a single xfr connection,
+    socket operations can safely block (with timeouts).  this should
+    be easily implemented using the bear socket module, and the code
+    would look like more straightforward by avoiding complicated logic
+    for asynchrony.  in fact, that simplicity should be a major
+    advantage with thread over event-driven (the model asyncore
+    implements), so this mixture of two models seems awkward to me.
+16. having said all that, asyncore may still be necessary to address
+    item #13: we'd need an explicit communication channel (e.g. a
+    pipe) between the parent thread and xfr connection thread, through
+    which a shutdown notification would be sent to the child.  With
+    this approach each thread needs to watch at least two channels,
+    and then it would need some asynchronous communication mechanism.

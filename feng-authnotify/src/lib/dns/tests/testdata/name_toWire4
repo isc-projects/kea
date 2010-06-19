@@ -1,0 +1,16 @@
+#
+# Rendering 3 names with compression, including one resulting in a chain of
+# pointers (the last one).
+# legend: [x] means a compression pointer pointing to offset 'x'.
+#bytes:
+#00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e
+#(1) a (7) e  x  a  m  p  l  e (3) c  o  m  .
+ 01 61 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00
+
+#0f 10 11 12
+#(1) b  [2] (b.example.com.)
+ 01 62 c0 02
+
+#13 14
+# [0f]: (b.example.com.)
+ c0 0f

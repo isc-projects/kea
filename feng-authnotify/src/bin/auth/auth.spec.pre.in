@@ -1,0 +1,21 @@
+{
+  "module_spec": {
+    "module_name": "Auth",
+    "module_description": "Authoritative service",
+    "config_data": [
+      { "item_name": "database_file",
+        "item_type": "string",
+        "item_optional": True,
+        "item_default": "@@LOCALSTATEDIR@@/@PACKAGE@/zone.sqlite3"
+      }
+    ],
+    "commands": [
+      {
+        "command_name": "shutdown",
+        "command_description": "Shut down authoritative DNS server",
+        "command_args": []
+      }
+    ]
+  }
+}
+

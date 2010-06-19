@@ -1,0 +1,202 @@
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	       [<!ENTITY mdash "&#8212;">]>
+<!--
+ - Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+ -
+ - Permission to use, copy, modify, and/or distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
+-->
+
+<!-- $Id$ -->
+<refentry>
+
+  <refentryinfo>
+    <date>March 17, 2010</date>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle>b10-xfrin</refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo>BIND10</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>b10-xfrin</refname>
+    <refpurpose>Incoming DNS zone transfer service</refpurpose>
+  </refnamediv>
+
+  <docinfo>
+    <copyright>
+      <year>2010</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
+    </copyright>
+  </docinfo>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>b10-xfrin</command>
+<!--
+      <arg><option>-p <replaceable>number</replaceable></option></arg>
+      <arg><option>-v</option></arg>
+-->
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>DESCRIPTION</title>
+    <para>The <command>b10-xfrin</command> daemon provides the BIND 10
+      incoming DNS zone transfer service.
+      Normally it is started by the
+      <citerefentry><refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      boss process.
+      When triggered it can request and receive a zone transfer and store
+      the zone in a BIND 10 zone data store.
+    </para>
+
+    <note><simpara>
+      The Y1 prototype release only supports AXFR. IXFR is not implemented.
+    </simpara></note>
+
+    <para>
+<!-- TODO: does it really use msgq? what for? -->
+      This daemon communicates with BIND 10 over a
+      <citerefentry><refentrytitle>b10-msgq</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      C-Channel connection.  If this connection is not established,
+      <command>b10-xfrin</command> will exit.
+<!-- TODO what if connection closes later, will b10-xfrin exit? -->
+    </para>
+
+    <para>
+     <command>b10-xfrin</command> receives its configurations from
+<citerefentry><refentrytitle>b10-cfgmgr</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>CONFIGURATION AND COMMANDS</title>
+    <para>
+      The configurable setting is <varname>transfers-in</varname>
+      which defines the maximum number of inbound zone transfers
+      that can run concurrently. The default is 10.
+    </para>
+
+<!-- TODO: formating -->
+<!-- TODO: refresh is code but not in spec -->
+<!-- schedule immediate maintenance for a zone(check soa serial ) -->
+    <para>
+      The configuration commands are:
+    </para>
+    <para>
+      <command>shutdown</command> stops all incoming zone transfers
+      and exits <command>b10-xfrin</command>. (Note that the BIND 10
+      boss process will restart this service.)
+    </para>
+    <para>
+      <command>retransfer</command> triggers the transfer in for
+      a single zone without checking the zone's serial number.
+      It has the following arguments: <varname>zone_name</varname>
+      to define the zone to request and <varname>master</varname>
+      to define the IP address of the authoritative server to
+      transfer from.
+     </para>
+<!-- TODO: later hostname for master? -->
+
+<!-- TODO:
+add a usage example of xfrin -->
+
+<!-- TODO:
+
+port (defaults to 53)
+db_file (defaults to zone.sqlite3) --> <!-- TODO: fix this -->
+
+<!-- TODO:
+
+ later it will can be triggered by :
+1.  Notify message from auth server.
+2.  Schedule zone transfer (determined by Refresh/Expire time in SOA record)
+
+> - what is planned to add to or change for xfrin?
+1.  Support IXFR.
+2.  Add command "refresh"
+3.  Process zone NOTIFY message.
+4.  Schedule zone maintenance for all zones.
+
+-->
+
+    <note><para>
+      This prototype version uses SQLite3 as its data source backend.
+      Future versions will be configurable, supporting multiple
+      data storage types.
+    </para></note>
+
+<!-- TODO:
+ it can handle more than one XFR in now, 
+but the problem is If SQLITE3 datasource part support multiple write
+operation
+-->
+
+  </refsect1>
+
+<!--
+  <refsect1>
+    <title>OPTIONS</title>
+
+    <para>The arguments are as follows:</para>
+
+    <variablelist>
+      <varlistentry>
+        <term><option></option></term>
+        <listitem><para>
+        </para></listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </refsect1>
+-->
+<!--
+  <refsect1>
+    <title>FILES</title>
+    <para>
+    </para>
+  </refsect1>
+-->
+
+  <refsect1>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry>
+        <refentrytitle>b10-cfgmgr</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>b10-msgq</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citetitle>BIND 10 Guide</citetitle>.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>HISTORY</title>
+    <para>
+      The <command>b10-xfrin</command> daemon was implemented in March 2010
+      by Zhang Likun of CNNIC for the ISC BIND 10 project.
+    </para>
+  </refsect1>
+</refentry><!--
+ - Local variables:
+ - mode: sgml
+ - End:
+-->

@@ -1,0 +1,13 @@
+# generate keys for test zones (already done)
+dnssec-keygen example.com
+dnssec-keygen -fk example.com
+dnssec-keygen sql1.example.com
+dnssec-keygen -fk sql1.example.com
+
+# sign the test zones
+dnssec-signzone -S sql1.example.com
+dnssec-signzone -Sg example.com
+
+# load the zone files into the on-disk database
+../b10-loadzone example.com.signed
+../b10-loadzone sql1.example.com.signed
