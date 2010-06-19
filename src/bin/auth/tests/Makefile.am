@@ -14,6 +14,7 @@ run_unittests_SOURCES = $(top_srcdir)/src/lib/dns/tests/unittest_util.h
 run_unittests_SOURCES += $(top_srcdir)/src/lib/dns/tests/unittest_util.cc
 run_unittests_SOURCES += ../auth_srv.h ../auth_srv.cc
 run_unittests_SOURCES += auth_srv_unittest.cc
+run_unittests_SOURCES += asio_link_unittest.cc
 run_unittests_SOURCES += run_unittests.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
@@ -24,6 +25,11 @@ run_unittests_LDADD +=  $(top_builddir)/src/lib/dns/.libs/libdns++.a
 run_unittests_LDADD += $(top_builddir)/src/lib/config/.libs/libcfgclient.a
 run_unittests_LDADD += $(top_builddir)/src/lib/cc/libcc.a
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/.libs/libexceptions.a
+run_unittests_LDADD += $(top_builddir)/src/bin/auth/libasio_link.a
+if HAVE_BOOST_PYTHON
+# Note: after this refactoring this should become unnecessary.
+run_unittests_LDADD += $(top_builddir)/src/lib/xfr/.libs/libxfr.a
+endif
 endif
 
 noinst_PROGRAMS = $(TESTS)
