@@ -92,8 +92,23 @@ dispatch_axfr_query(const int tcp_sock, char const axfr_query[],
 
 namespace asio_link {
 IOAddress::IOAddress(const string& address_str) :
-    asio_address_placeholder_(NULL),
-    asio_address_(*asio_address_placeholder_) // XXX
+    // XXX: we cannot simply construct the address in the initialization list
+    // because we'd like to throw our own exception on failure.
+    asio_address_placeholder_(new ip::address()),
+    asio_address_(*asio_address_placeholder_)
+{
+    error_code err;
+    const ip::address address = ip::address::from_string(address_str, err);
+    if (err) {
+        delete asio_address_placeholder_;
+        isc_throw(IOError, "Failed to convert string to address '"
+                  << address_str << "': " << err.message());
+    }
+    *asio_address_placeholder_ = address;
+}
+
+IOAddress::IOAddress(const ip::address& asio_address) :
+    asio_address_placeholder_(NULL), asio_address_(asio_address)
 {}
 
 IOAddress::~IOAddress() {
@@ -102,7 +117,7 @@ IOAddress::~IOAddress() {
 
 string
 IOAddress::toText() const {
-    return ("dummy");
+    return (asio_address_.to_string());
 }
 
 //

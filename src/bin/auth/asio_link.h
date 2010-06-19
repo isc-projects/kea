@@ -44,6 +44,9 @@ public:
 };
 
 class IOAddress {
+private:
+    IOAddress(const IOAddress& source);
+    IOAddress& operator=(const IOAddress& source);
 public:
     IOAddress(const std::string& adress_str);
     IOAddress(const asio::ip::address& asio_adress);
@@ -51,10 +54,13 @@ public:
     ~IOAddress();
 private:
     asio::ip::address* asio_address_placeholder_;
-    asio::ip::address& asio_address_;
+    const asio::ip::address& asio_address_;
 };
 
 class IOMessage {
+private:
+    IOMessage(const IOMessage& source);
+    IOMessage& operator=(const IOMessage& source);
 public:
     IOMessage();
     ~IOMessage();
