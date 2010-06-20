@@ -19,6 +19,16 @@
 
 #include <stdint.h>
 
+// XXX: there seems to be a strange dependency between ASIO and std library
+// definitions.  On some platforms if we include std headers before ASIO
+// headers unexpected behaviors will happen.
+// A middle term solution is to generalize our local wrapper interface
+// (currently only available for the auth server), where all such portability
+// issues are hidden, and to have other modules use the wrapper.
+#include <asio.hpp>
+#include <asio/error_code.hpp>
+#include <asio/system_error.hpp>
+
 #include <cstdio>
 #include <vector>
 #include <iostream>
@@ -28,10 +38,6 @@
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
-
-#include <asio.hpp>
-#include <asio/error_code.hpp>
-#include <asio/system_error.hpp>
 
 #include <exceptions/exceptions.h>
 
