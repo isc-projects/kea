@@ -129,7 +129,7 @@ protected:
     }
 public:
     void callBack(const IOMessage& io_message) {
-        callback_protocoal_ = io_message.getSocket().getProtocol();
+        callback_protocol_ = io_message.getSocket().getProtocol();
         callback_native_ = io_message.getSocket().getNative();
         callback_address_ = io_message.getRemoteAddress().toText();
         callback_data_.assign(
@@ -140,7 +140,7 @@ public:
     }
 protected:
     IOService io_service_;
-    int callback_protocoal_;
+    int callback_protocol_;
     int callback_native_;
     string callback_address_;
     vector<uint8_t> callback_data_;
@@ -171,7 +171,7 @@ TEST_F(ASIOLinkTest, v6UDPSend) {
     // There doesn't seem to be an effective test for the validity of 'native'.
     // One thing we are sure is it must be different from our local socket.
     EXPECT_NE(callback_native_, sock_);
-    EXPECT_EQ(IPPROTO_UDP, callback_protocoal_);
+    EXPECT_EQ(IPPROTO_UDP, callback_protocol_);
     EXPECT_EQ(TEST_IPV6_ADDR, callback_address_);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, &callback_data_[0],
                         callback_data_.size(), test_data, sizeof(test_data));
@@ -180,7 +180,7 @@ TEST_F(ASIOLinkTest, v6UDPSend) {
 TEST_F(ASIOLinkTest, v6TCPSend) {
     sendTCP(AF_INET6);
     EXPECT_NE(callback_native_, sock_);
-    EXPECT_EQ(IPPROTO_TCP, callback_protocoal_);
+    EXPECT_EQ(IPPROTO_TCP, callback_protocol_);
     EXPECT_EQ(TEST_IPV6_ADDR, callback_address_);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, &callback_data_[0],
                         callback_data_.size(),
@@ -190,7 +190,7 @@ TEST_F(ASIOLinkTest, v6TCPSend) {
 TEST_F(ASIOLinkTest, v4UDPSend) {
     sendUDP(AF_INET);
     EXPECT_NE(callback_native_, sock_);
-    EXPECT_EQ(IPPROTO_UDP, callback_protocoal_);
+    EXPECT_EQ(IPPROTO_UDP, callback_protocol_);
     EXPECT_EQ(TEST_IPV4_ADDR, callback_address_);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, &callback_data_[0],
                         callback_data_.size(), test_data, sizeof(test_data));
@@ -199,7 +199,7 @@ TEST_F(ASIOLinkTest, v4UDPSend) {
 TEST_F(ASIOLinkTest, v4TCPSend) {
     sendTCP(AF_INET);
     EXPECT_NE(callback_native_, sock_);
-    EXPECT_EQ(IPPROTO_TCP, callback_protocoal_);
+    EXPECT_EQ(IPPROTO_TCP, callback_protocol_);
     EXPECT_EQ(TEST_IPV4_ADDR, callback_address_);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, &callback_data_[0],
                         callback_data_.size(),
