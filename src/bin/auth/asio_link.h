@@ -94,6 +94,9 @@ private:
 };
 
 class IOService {
+private:
+    IOService(const IOService& source);
+    IOService& operator=(const IOService& source);
 public:
     IOService(AuthSrv* auth_server, const char* port, bool use_ipv4,
               bool use_ipv6);
