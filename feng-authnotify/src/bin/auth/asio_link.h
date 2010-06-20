@@ -19,13 +19,11 @@
 
 
 #include <string.h>
-#include <asio.hpp>
 #include <dns/message.h>
 
 class AuthSrv;
 namespace asio_link {
 struct IOServiceImpl;
-using namespace asio::ip;
 
 ///\brief stands for one query client including its network information and query message
 class UserInfo
