@@ -416,7 +416,7 @@ a separate method for the convenience of unit tests.
                 ret = self.xfrin_start(zone_name, rrclass, db_file, master_addr,
                                    False if command == 'retransfer' else True)
                 answer = create_answer(ret[0], ret[1])
-            elif cmd == 'notify':
+            elif command == 'notify':
                 # This is the temp implementation for notify
                 # actually the notfiy command should be sent to 
                 # Zone Manager module.
