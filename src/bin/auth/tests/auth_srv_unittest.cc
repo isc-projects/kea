@@ -26,6 +26,7 @@
 #include <cc/data.h>
 
 #include <auth/auth_srv.h>
+#include <auth/asio_link.h>
 
 #include <dns/tests/unittest_util.h>
 
@@ -33,6 +34,7 @@ using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::dns;
 using namespace isc::data;
+using namespace asio_link;
 
 namespace {
 const char* CONFIG_TESTDB =
@@ -47,10 +49,14 @@ protected:
     AuthSrvTest() : request_message(Message::RENDER),
                     parse_message(Message::PARSE), default_qid(0x1035),
                     opcode(Opcode(Opcode::QUERY())), qname("www.example.com"),
-                    qclass(RRClass::IN()), qtype(RRType::A()), ibuffer(NULL),
-                    request_obuffer(0), request_renderer(request_obuffer),
+                    qclass(RRClass::IN()), qtype(RRType::A()),
+                    io_message(NULL), request_obuffer(0),
+                    request_renderer(request_obuffer),
                     response_obuffer(0), response_renderer(response_obuffer)
     {}
+    ~AuthSrvTest() {
+        delete io_message;
+    }
     AuthSrv server;
     Message request_message;
     Message parse_message;
@@ -59,7 +65,7 @@ protected:
     const Name qname;
     const RRClass qclass;
     const RRType qtype;
-    InputBuffer* ibuffer;
+    IOMessage *io_message;
     OutputBuffer request_obuffer;
     MessageRenderer request_renderer;
     OutputBuffer response_obuffer;
@@ -82,11 +88,12 @@ const unsigned int CD_FLAG = 0x40;
 
 void
 AuthSrvTest::createDataFromFile(const char* const datafile) {
-    delete ibuffer;
+    delete io_message;
     data.clear();
 
     UnitTestUtil::readWireData(datafile, data);
-    ibuffer = new InputBuffer(&data[0], data.size());
+    io_message = new IOMessage(&data[0], data.size(),
+                               IOSocket::getDummyUDPSocket(), "192.0.2.1");
 }
 
 void
@@ -122,8 +129,8 @@ TEST_F(AuthSrvTest, unsupportedRequest) {
         data[2] = ((i << 3) & 0xff);
 
         parse_message.clear(Message::PARSE);
-        EXPECT_EQ(true, server.processMessage(*ibuffer, parse_message,
-                                              response_renderer, true));
+        EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
+                                              response_renderer));
         headerCheck(parse_message, default_qid, Rcode::NOTIMP(), i, QR_FLAG,
                     0, 0, 0, 0);
     }
@@ -141,8 +148,8 @@ TEST_F(AuthSrvTest, verbose) {
 // Multiple questions.  Should result in FORMERR.
 TEST_F(AuthSrvTest, multiQuestion) {
     createDataFromFile("multiquestion_fromWire");
-    EXPECT_EQ(true, server.processMessage(*ibuffer, parse_message,
-                                          response_renderer, true));
+    EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
+                                          response_renderer));
     headerCheck(parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
                 QR_FLAG, 2, 0, 0, 0);
 
@@ -162,8 +169,8 @@ TEST_F(AuthSrvTest, multiQuestion) {
 // dropped.
 TEST_F(AuthSrvTest, shortMessage) {
     createDataFromFile("shortmessage_fromWire");
-    EXPECT_EQ(false, server.processMessage(*ibuffer, parse_message,
-                                           response_renderer, true));
+    EXPECT_EQ(false, server.processMessage(*io_message, parse_message,
+                                           response_renderer));
 }
 
 // Response messages.  Must be silently dropped, whether it's a valid response
@@ -171,26 +178,26 @@ TEST_F(AuthSrvTest, shortMessage) {
 TEST_F(AuthSrvTest, response) {
     // A valid (although unusual) response
     createDataFromFile("simpleresponse_fromWire");
-    EXPECT_EQ(false, server.processMessage(*ibuffer, parse_message,
-                                           response_renderer, true));
+    EXPECT_EQ(false, server.processMessage(*io_message, parse_message,
+                                           response_renderer));
 
     // A response with a broken question section.  must be dropped rather than
     // returning FORMERR.
     createDataFromFile("shortresponse_fromWire");
-    EXPECT_EQ(false, server.processMessage(*ibuffer, parse_message,
-                                           response_renderer, true));
+    EXPECT_EQ(false, server.processMessage(*io_message, parse_message,
+                                           response_renderer));
 
     // A response to iquery.  must be dropped rather than returning NOTIMP.
     createDataFromFile("iqueryresponse_fromWire");
-    EXPECT_EQ(false, server.processMessage(*ibuffer, parse_message,
-                                           response_renderer, true));
+    EXPECT_EQ(false, server.processMessage(*io_message, parse_message,
+                                           response_renderer));
 }
 
 // Query with a broken question
 TEST_F(AuthSrvTest, shortQuestion) {
     createDataFromFile("shortquestion_fromWire");
-    EXPECT_EQ(true, server.processMessage(*ibuffer, parse_message,
-                                          response_renderer, true));
+    EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
+                                          response_renderer));
     // Since the query's question is broken, the question section of the
     // response should be empty.
     headerCheck(parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
@@ -200,8 +207,8 @@ TEST_F(AuthSrvTest, shortQuestion) {
 // Query with a broken answer section
 TEST_F(AuthSrvTest, shortAnswer) {
     createDataFromFile("shortanswer_fromWire");
-    EXPECT_EQ(true, server.processMessage(*ibuffer, parse_message,
-                                          response_renderer, true));
+    EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
+                                          response_renderer));
 
     // This is a bogus query, but question section is valid.  So the response
     // should copy the question section.
@@ -219,8 +226,8 @@ TEST_F(AuthSrvTest, shortAnswer) {
 // Query with unsupported version of EDNS.
 TEST_F(AuthSrvTest, ednsBadVers) {
     createDataFromFile("queryBadEDNS_fromWire");
-    EXPECT_EQ(true, server.processMessage(*ibuffer, parse_message,
-                                          response_renderer, true));
+    EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
+                                          response_renderer));
 
     // The response must have an EDNS OPT RR in the additional section.
     // Note that the DNSSEC DO bit is cleared even if this bit in the query
@@ -253,8 +260,8 @@ TEST_F(AuthSrvTest, updateConfig) {
     // response should have the AA flag on, and have an RR in each answer
     // and authority section.
     createDataFromFile("examplequery_fromWire");
-    EXPECT_EQ(true, server.processMessage(*ibuffer, parse_message,
-                                          response_renderer, true));
+    EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
+                                          response_renderer));
     headerCheck(parse_message, default_qid, Rcode::NOERROR(), opcode.getCode(),
                 QR_FLAG | AA_FLAG, 1, 1, 1, 0);
 }
@@ -267,8 +274,8 @@ TEST_F(AuthSrvTest, datasourceFail) {
     // in a SERVFAIL response, and the answer and authority sections should
     // be empty.
     createDataFromFile("badExampleQuery_fromWire");
-    EXPECT_EQ(true, server.processMessage(*ibuffer, parse_message,
-                                          response_renderer, true));
+    EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
+                                          response_renderer));
     headerCheck(parse_message, default_qid, Rcode::SERVFAIL(), opcode.getCode(),
                 QR_FLAG, 1, 0, 0, 0);
 }
@@ -282,8 +289,8 @@ TEST_F(AuthSrvTest, updateConfigFail) {
 
     // The original data source should still exist.
     createDataFromFile("examplequery_fromWire");
-    EXPECT_EQ(true, server.processMessage(*ibuffer, parse_message,
-                                          response_renderer, true));
+    EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
+                                          response_renderer));
     headerCheck(parse_message, default_qid, Rcode::NOERROR(), opcode.getCode(),
                 QR_FLAG | AA_FLAG, 1, 1, 1, 0);
 }

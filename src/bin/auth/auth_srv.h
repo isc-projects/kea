@@ -30,6 +30,10 @@ class MessageRenderer;
 }
 }
 
+namespace asio_link {
+class IOMessage;
+}
+
 class AuthSrvImpl;
 
 class AuthSrv {
@@ -48,10 +52,9 @@ public:
     //@}
     /// \return \c true if the \message contains a response to be returned;
     /// otherwise \c false.
-    bool processMessage(isc::dns::InputBuffer& request_buffer,
+    bool processMessage(const asio_link::IOMessage& io_message,
                         isc::dns::Message& message,
-                        isc::dns::MessageRenderer& response_renderer,
-                        bool udp_buffer);
+                        isc::dns::MessageRenderer& response_renderer);
     void setVerbose(bool on);
     bool getVerbose() const;
     void serve(std::string zone_name);

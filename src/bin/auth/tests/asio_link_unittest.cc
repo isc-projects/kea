@@ -59,6 +59,13 @@ TEST(IOAddressTest, fromText) {
     EXPECT_THROW(IOAddress("2001:db8:::1234"), IOError);
 }
 
+TEST(IOSocketTest, dummySockets) {
+    EXPECT_EQ(IPPROTO_UDP, IOSocket::getDummyUDPSocket().getProtocol());
+    EXPECT_EQ(IPPROTO_TCP, IOSocket::getDummyTCPSocket().getProtocol());
+    EXPECT_EQ(-1, IOSocket::getDummyUDPSocket().getNative());
+    EXPECT_EQ(-1, IOSocket::getDummyTCPSocket().getNative());
+}
+
 struct addrinfo*
 resolveAddress(const int family, const int sock_type, const int protocol) {
     const char* const addr = (family == AF_INET6) ?

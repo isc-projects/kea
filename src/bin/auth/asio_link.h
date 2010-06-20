@@ -69,6 +69,8 @@ public:
     virtual ~IOSocket() {}
     virtual int getNative() const = 0;
     virtual int getProtocol() const = 0;
+    static IOSocket& getDummyUDPSocket();
+    static IOSocket& getDummyTCPSocket();
 };
 
 class IOMessage {
@@ -78,6 +80,8 @@ private:
 public:
     IOMessage(const void* data, size_t data_size, IOSocket& io_socket,
               const asio::ip::address& remote_address);
+    IOMessage(const void* data, size_t data_size, IOSocket& io_socket,
+              const std::string& remote_address);
     const void* getData() const { return (data_); }
     size_t getDataSize() const { return (data_size_); }
     const IOSocket& getSocket() const { return (io_socket_); }

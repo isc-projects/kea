@@ -14,6 +14,8 @@
 
 // $Id$
 
+#include <netinet/in.h>
+
 #include <algorithm>
 #include <cassert>
 #include <iostream>
@@ -40,8 +42,9 @@
 
 #include <cc/data.h>
 
-#include "common.h"
-#include "auth_srv.h"
+#include <auth/common.h>
+#include <auth/auth_srv.h>
+#include <auth/asio_link.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -53,6 +56,7 @@ using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::data;
 using namespace isc::config;
+using namespace asio_link;
 
 class AuthSrvImpl {
 private:
@@ -167,10 +171,11 @@ AuthSrv::configSession() const {
 }
 
 bool
-AuthSrv::processMessage(InputBuffer& request_buffer, Message& message,
-                        MessageRenderer& response_renderer,
-                        const bool udp_buffer)
+AuthSrv::processMessage(const IOMessage& io_message, Message& message,
+                        MessageRenderer& response_renderer)
 {
+    InputBuffer request_buffer(io_message.getData(), io_message.getDataSize());
+
     // First, check the header part.  If we fail even for the base header,
     // just drop the message.
     try {
@@ -250,6 +255,8 @@ AuthSrv::processMessage(InputBuffer& request_buffer, Message& message,
         return (true);
     }
 
+    const bool udp_buffer =
+        (io_message.getSocket().getProtocol() == IPPROTO_UDP);
     response_renderer.setLengthLimit(udp_buffer ? remote_bufsize : 65535);
     message.toWire(response_renderer);
     if (impl_->verbose_mode_) {

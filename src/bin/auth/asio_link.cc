@@ -147,8 +147,38 @@ private:
     udp::socket& socket_;
 };
 
+class DummySocket : public IOSocket {
+private:
+    DummySocket(const DummySocket& source);
+    DummySocket& operator=(const DummySocket& source);
+public:
+    DummySocket(const int protocol) : protocol_(protocol) {}
+    virtual int getNative() const { return (-1); }
+    virtual int getProtocol() const { return (protocol_); }
+private:
+    const int protocol_;
+};
+
+IOSocket&
+IOSocket::getDummyUDPSocket() {
+    static DummySocket socket(IPPROTO_UDP);
+    return (socket);
+}
+
+IOSocket&
+IOSocket::getDummyTCPSocket() {
+    static DummySocket socket(IPPROTO_TCP);
+    return (socket);
+}
+
 IOMessage::IOMessage(const void* data, const size_t data_size,
                      IOSocket& io_socket, const ip::address& remote_address) :
+    data_(data), data_size_(data_size), io_socket_(io_socket),
+    remote_io_address_(remote_address)
+{}
+
+IOMessage::IOMessage(const void* data, const size_t data_size,
+                     IOSocket& io_socket, const string& remote_address) :
     data_(data), data_size_(data_size), io_socket_(io_socket),
     remote_io_address_(remote_address)
 {}
@@ -213,7 +243,6 @@ public:
                 return;
             }
 
-            InputBuffer dnsbuffer(data_, bytes_transferred);
 #ifdef USE_XFROUT
             if (check_axfr_query(data_, bytes_transferred)) {
                 dispatch_axfr_query(socket_.native(), data_, bytes_transferred); 
@@ -221,8 +250,8 @@ public:
                 start();
             } else {
 #endif
-                if (auth_server_->processMessage(dnsbuffer, dns_message_,
-                                                response_renderer_, false)) {
+                if (auth_server_->processMessage(io_message, dns_message_,
+                                                response_renderer_)) {
                     responselen_buffer_.writeUint16(
                         response_buffer_.getLength());
                     async_write(socket_,
@@ -383,12 +412,10 @@ public:
                 return;
             }
 
-            InputBuffer request_buffer(data_, bytes_recvd);
-
             dns_message_.clear(Message::PARSE);
             response_renderer_.clear();
-            if (auth_server_->processMessage(request_buffer, dns_message_,
-                                            response_renderer_, true)) {
+            if (auth_server_->processMessage(io_message, dns_message_,
+                                             response_renderer_)) {
                 socket_.async_send_to(
                     asio::buffer(response_buffer_.getData(),
                                         response_buffer_.getLength()),
