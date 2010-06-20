@@ -61,7 +61,8 @@ XfroutClient::disconnect() {
 }
 
 int 
-XfroutClient::sendXfroutRequestInfo(const int tcp_sock, uint8_t* msg_data,
+XfroutClient::sendXfroutRequestInfo(const int tcp_sock,
+                                    const void* const msg_data,
                                     const uint16_t msg_len)
 {
     if (-1 == send_fd(impl_->socket_.native(), tcp_sock)) {

@@ -45,7 +45,7 @@ private:
 public:
     void connect();
     void disconnect();
-    int sendXfroutRequestInfo(int tcp_sock, uint8_t* msg_data,
+    int sendXfroutRequestInfo(int tcp_sock, const void* msg_data,
                               uint16_t msg_len);
 private:
     XfroutClientImpl* impl_;
