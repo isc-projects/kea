@@ -318,7 +318,7 @@ AuthSrvImpl::processAxfrQuery(const IOMessage& io_message) const {
         xfr_client.disconnect();
     } catch (const exception& err) { // XXX: avoid catch-all catch!!
         if (verbose_mode_) {
-            cerr << "[b10-auth] Error in handling XFR request:" << err.what()
+            cerr << "[b10-auth] Error in handling XFR request: " << err.what()
                  << endl;
         }
         // XXX: should return an error (SERVFAIL?)
