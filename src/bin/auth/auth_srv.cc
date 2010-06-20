@@ -14,6 +14,8 @@
 
 // $Id$
 
+#include <config.h>             // for UNUSED_PARAM
+
 #include <netinet/in.h>
 
 #include <algorithm>
@@ -42,9 +44,15 @@
 
 #include <cc/data.h>
 
+#if defined(HAVE_BOOST_PYTHON)
+#define USE_XFROUT
+#include <xfr/xfrout_client.h>
+#endif
+
 #include <auth/common.h>
 #include <auth/auth_srv.h>
 #include <auth/asio_link.h>
+#include <auth/spec_config.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -56,6 +64,9 @@ using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::data;
 using namespace isc::config;
+#ifdef USE_XFROUT
+using namespace isc::xfr;
+#endif
 using namespace asio_link;
 
 class AuthSrvImpl {
@@ -65,9 +76,13 @@ private:
     AuthSrvImpl& operator=(const AuthSrvImpl& source);
 public:
     AuthSrvImpl();
-
     isc::data::ElementPtr setDbFile(const isc::data::ElementPtr config);
 
+    bool processNormalQuery(const IOMessage& io_message, Message& message,
+                            MessageRenderer& response_renderer);
+    bool processAxfrQuery(const IOMessage& io_message) const;
+    bool processIxfrQuery(const IOMessage& io_message,
+                          const ConstQuestionPtr question) const;
     std::string db_file_;
     ModuleCCSession* cs_;
     MetaDataSrc data_sources_;
@@ -78,11 +93,14 @@ public:
 
     bool verbose_mode_;
 
+    const string xfr_path_;     // currently non configurable
+
     /// Currently non-configurable, but will be.
     static const uint16_t DEFAULT_LOCAL_UDPSIZE = 4096;
 };
 
-AuthSrvImpl::AuthSrvImpl() : cs_(NULL), verbose_mode_(false)
+AuthSrvImpl::AuthSrvImpl() : cs_(NULL), verbose_mode_(false),
+                             xfr_path_(UNIX_SOCKET_FILE)
 {
     // cur_datasrc_ is automatically initialized by the default constructor,
     // effectively being an empty (sqlite) data source.  once ccsession is up
@@ -234,6 +252,22 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
         return (true);
     }
 
+    ConstQuestionPtr question = *message.beginQuestion();
+    const RRType &qtype = question->getType();
+    if (qtype == RRType::AXFR()) {
+        return (impl_->processAxfrQuery(io_message));
+    } else if (qtype == RRType::IXFR()) {
+        return (impl_->processIxfrQuery(io_message, question));
+    } else {
+        return (impl_->processNormalQuery(io_message, message,
+                                          response_renderer));
+    }
+}
+
+bool
+AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
+                                MessageRenderer& response_renderer)
+{
     const bool dnssec_ok = message.isDNSSECSupported();
     const uint16_t remote_bufsize = message.getUDPSize();
 
@@ -245,13 +279,14 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
 
     try {
         Query query(message, dnssec_ok);
-        impl_->data_sources_.doQuery(query);
+        data_sources_.doQuery(query);
     } catch (const Exception& ex) {
-        if (impl_->verbose_mode_) {
-            cerr << "[b10-auth] Internal error, returning SERVFAIL: " << ex.what() << endl;
+        if (verbose_mode_) {
+            cerr << "[b10-auth] Internal error, returning SERVFAIL: " <<
+                ex.what() << endl;
         }
         makeErrorMessage(message, response_renderer, Rcode::SERVFAIL(),
-                         impl_->verbose_mode_);
+                         verbose_mode_);
         return (true);
     }
 
@@ -259,13 +294,85 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
         (io_message.getSocket().getProtocol() == IPPROTO_UDP);
     response_renderer.setLengthLimit(udp_buffer ? remote_bufsize : 65535);
     message.toWire(response_renderer);
-    if (impl_->verbose_mode_) {
+    if (verbose_mode_) {
         cerr << "[b10-auth] sending a response (" <<
             boost::lexical_cast<string>(response_renderer.getLength())
              << " bytes):\n" << message.toText() << endl;
     }
 
     return (true);
+}
+
+#ifdef USE_XFROUT
+bool
+AuthSrvImpl::processAxfrQuery(const IOMessage& io_message) const {
+    XfroutClient xfr_client(xfr_path_);
+
+    // XXX: should reject AXFR/UDP here.
+
+    try {
+        xfr_client.connect();
+        xfr_client.sendXfroutRequestInfo(io_message.getSocket().getNative(),
+                                         io_message.getData(),
+                                         io_message.getDataSize());
+        xfr_client.disconnect();
+    } catch (const exception& err) { // XXX: avoid catch-all catch!!
+        if (verbose_mode_) {
+            cerr << "[b10-auth] Error in handling XFR request:" << err.what()
+                 << endl;
+        }
+        // XXX: should return an error (SERVFAIL?)
+    }
+
+    return (false);
+}
+#else
+bool
+AuthSrvImpl::processAxfrQuery(const IOMessage& io_message UNUSED_PARAM) const {
+    // should better to return an error message, but hopefully this case
+    // is short term workaround.
+    return (false);
+}
+#endif
+
+bool
+AuthSrvImpl::processIxfrQuery(const IOMessage& io_message,
+                              const ConstQuestionPtr question) const
+{
+    // XXX: this function seems unacceptably expensive.  Also, error cases
+    // aren't handled at all, which is bad.
+
+    // TODO check with the conf-mgr whether current server is the auth of the
+    // zone
+    isc::cc::Session tmp_session_with_xfr;
+    // this can block, expensive, and may throw exception.  all bad.
+    tmp_session_with_xfr.establish();
+
+    // XXX: the following is super expensive.
+    const string remote_ip_address = io_message.getRemoteAddress().toText();
+    ElementPtr notify_command = Element::createFromString(
+        "{\"command\": [\"notify\", {\"zone_name\" : \"" +
+        question->getName().toText() + "\", \"master_ip\" : \"" +
+        remote_ip_address + "\"}]}");
+    // what if this fails?
+        
+    const unsigned int seq =
+        tmp_session_with_xfr.group_sendmsg(notify_command, "Xfrin");
+    // this can trigger an exception.  handle it.
+
+    ElementPtr env, answer;
+    tmp_session_with_xfr.group_recvmsg(env, answer, false, seq);
+    int rcode;
+    ElementPtr err = parseAnswer(rcode, answer);
+    if (rcode != 0) {
+        if (verbose_mode_) {
+            // XXX: should add the reason for the error
+            cerr << "[b10=auth] notify send failed" << endl;
+        }
+        // XXX: should return an error (SERVFAIL?)
+    }
+
+    return (false);
 }
 
 ElementPtr

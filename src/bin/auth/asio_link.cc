@@ -26,15 +26,9 @@
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
 
-#if defined(HAVE_BOOST_PYTHON)
-#define USE_XFROUT
-#include <xfr/xfrout_client.h>
-#endif
-
 #include <asio_link.h>
 
-#include "spec_config.h"        // for XFROUT.  should not be here.
-#include "auth_srv.h"
+#include <auth/auth_srv.h>
 
 using namespace asio;
 using asio::ip::udp;
@@ -42,56 +36,6 @@ using asio::ip::tcp;
 
 using namespace std;
 using namespace isc::dns;
-#ifdef USE_XFROUT
-using namespace isc::xfr;
-#endif
-
-namespace {
-// As a short term workaround, we have XFROUT specific code.  We should soon
-// refactor the code with some abstraction so that we can separate this level
-// details from the (AS)IO module.
-#ifdef USE_XFROUT
-//TODO. The sample way for checking axfr query, the code should be merged to auth server class
-bool
-check_axfr_query(char* const msg_data, const uint16_t msg_len) {
-    if (msg_len < 15) {
-        return false;
-    }
-
-    const uint16_t query_type = *(uint16_t *)(msg_data + (msg_len - 4));
-    if ( query_type == 0xFC00) {
-        return true;
-    }
-    
-    return false;
-}
-
-//TODO. Send the xfr query to xfrout module, the code should be merged to auth server class
-void
-dispatch_axfr_query(const int tcp_sock, char const axfr_query[],
-                    const uint16_t query_len)
-{
-    string path;
-    if (getenv("B10_FROM_BUILD")) {
-        path = string(getenv("B10_FROM_BUILD")) + "/auth_xfrout_conn";
-    } else {
-        path = UNIX_SOCKET_FILE;
-    }
-    
-    XfroutClient xfr_client(path);
-    try {
-        xfr_client.connect();
-        xfr_client.sendXfroutRequestInfo(tcp_sock, (uint8_t *)axfr_query,
-                                         query_len);
-        xfr_client.disconnect();
-    }
-    catch (const exception & err) {
-        //if (verbose_mode)
-        cerr << "error handle xfr query:" << err.what() << endl;
-    }
-}
-#endif
-}
 
 namespace asio_link {
 IOAddress::IOAddress(const string& address_str) :
@@ -243,29 +187,19 @@ public:
                 return;
             }
 
-#ifdef USE_XFROUT
-            if (check_axfr_query(data_, bytes_transferred)) {
-                dispatch_axfr_query(socket_.native(), data_, bytes_transferred); 
-                // start to get new query ?
-                start();
+            if (auth_server_->processMessage(io_message, dns_message_,
+                                             response_renderer_)) {
+                responselen_buffer_.writeUint16(
+                    response_buffer_.getLength());
+                async_write(socket_,
+                            asio::buffer(
+                                responselen_buffer_.getData(),
+                                responselen_buffer_.getLength()),
+                            boost::bind(&TCPClient::responseWrite, this,
+                                        placeholders::error));
             } else {
-#endif
-                if (auth_server_->processMessage(io_message, dns_message_,
-                                                response_renderer_)) {
-                    responselen_buffer_.writeUint16(
-                        response_buffer_.getLength());
-                    async_write(socket_,
-                                asio::buffer(
-                                    responselen_buffer_.getData(),
-                                    responselen_buffer_.getLength()),
-                                boost::bind(&TCPClient::responseWrite, this,
-                                            placeholders::error));
-                } else {
-                    delete this;
-                }
-#ifdef USE_XFROUT
+                delete this;
             }
-#endif
         } else {
             delete this;
         }
