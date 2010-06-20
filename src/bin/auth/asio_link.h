@@ -17,13 +17,15 @@
 #ifndef __ASIO_LINK_H
 #define __ASIO_LINK_H 1
 
+#include <functional>
 #include <string>
+
+#include <boost/function.hpp>
 
 #include <exceptions/exceptions.h>
 
 namespace asio {
 class io_service;
-
 namespace ip {
 class address;
 }
@@ -34,7 +36,7 @@ class AuthSrv;
 namespace asio_link {
 struct IOServiceImpl;
 
-/// \brief An exception that is thrown if an error occurs with in the IO
+/// \brief An exception that is thrown if an error occurs within the IO
 /// module.  This is mainly intended to be a wrapper exception class for
 /// ASIO specific exceptions.
 class IOError : public isc::Exception {
@@ -57,20 +59,34 @@ private:
     const asio::ip::address& asio_address_;
 };
 
+class IOSocket {
+private:
+    IOSocket(const IOSocket& source);
+    IOSocket& operator=(const IOSocket& source);
+protected:
+    IOSocket() {}
+public:
+    virtual ~IOSocket() {}
+    virtual int getNative() const = 0;
+    virtual int getProtocol() const = 0;
+};
+
 class IOMessage {
 private:
     IOMessage(const IOMessage& source);
     IOMessage& operator=(const IOMessage& source);
 public:
-    IOMessage();
-    ~IOMessage();
-    const void* getData() const;
-    size_t getDataSize() const;
-    int getNative() const;
-    const IOAddress& getRemoteAddress() const;
+    IOMessage(const void* data, size_t data_size, IOSocket& io_socket,
+              const asio::ip::address& remote_address);
+    const void* getData() const { return (data_); }
+    size_t getDataSize() const { return (data_size_); }
+    const IOSocket& getSocket() const { return (io_socket_); }
+    const IOAddress& getRemoteAddress() const { return (remote_io_address_); }
 private:
-    class IOMessageImpl;
-    IOMessageImpl* impl_;
+    const void* data_;
+    const size_t data_size_;
+    IOSocket& io_socket_;
+    IOAddress remote_io_address_;
 };
 
 class IOService {
@@ -81,6 +97,10 @@ public:
     void run();
     void stop();
     asio::io_service& get_io_service();
+    /// Right now this method is only for testing, but will eventually be
+    /// generalized.
+    typedef boost::function<void(const IOMessage& io_message)> IOCallBack;
+    void setCallBack(IOCallBack callback);
 private:
     IOServiceImpl* impl_;
 };
