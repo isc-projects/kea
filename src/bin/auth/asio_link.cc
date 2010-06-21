@@ -38,33 +38,81 @@ using namespace std;
 using namespace isc::dns;
 
 namespace asio_link {
-IOAddress::IOAddress(const string& address_str) :
+IOAddress::IOAddress(const string& address_str)
     // XXX: we cannot simply construct the address in the initialization list
     // because we'd like to throw our own exception on failure.
-    asio_address_placeholder_(new ip::address()),
-    asio_address_(*asio_address_placeholder_)
 {
     error_code err;
-    const ip::address address = ip::address::from_string(address_str, err);
+    asio_address_ = ip::address::from_string(address_str, err);
     if (err) {
-        delete asio_address_placeholder_;
         isc_throw(IOError, "Failed to convert string to address '"
                   << address_str << "': " << err.message());
     }
-    *asio_address_placeholder_ = address;
 }
 
 IOAddress::IOAddress(const ip::address& asio_address) :
-    asio_address_placeholder_(NULL), asio_address_(asio_address)
+    asio_address_(asio_address)
 {}
-
-IOAddress::~IOAddress() {
-    delete asio_address_placeholder_;
-}
 
 string
 IOAddress::toText() const {
     return (asio_address_.to_string());
+}
+
+class TCPEndpoint : public IOEndpoint {
+public:
+    TCPEndpoint(const IOAddress& address, const unsigned short port) :
+        asio_endpoint_placeholder_(
+            new tcp::endpoint(ip::address::from_string(address.toText()),
+                              port)),
+        asio_endpoint_(*asio_endpoint_placeholder_)
+    {}
+    TCPEndpoint(const tcp::endpoint& asio_endpoint) :
+        asio_endpoint_placeholder_(NULL), asio_endpoint_(asio_endpoint)
+    {}
+        
+    ~TCPEndpoint() { delete asio_endpoint_placeholder_; }
+    virtual IOAddress getAddress() const {
+        return (asio_endpoint_.address());
+    }
+private:
+    const tcp::endpoint* asio_endpoint_placeholder_;
+    const tcp::endpoint& asio_endpoint_;
+};
+
+class UDPEndpoint : public IOEndpoint {
+public:
+    UDPEndpoint(const IOAddress& address, const unsigned short port) :
+        asio_endpoint_placeholder_(
+            new udp::endpoint(ip::address::from_string(address.toText()),
+                              port)),
+        asio_endpoint_(*asio_endpoint_placeholder_)
+    {}
+    UDPEndpoint(const udp::endpoint& asio_endpoint) :
+        asio_endpoint_placeholder_(NULL), asio_endpoint_(asio_endpoint)
+    {}
+    ~UDPEndpoint() { delete asio_endpoint_placeholder_; }
+    virtual IOAddress getAddress() const {
+        return (asio_endpoint_.address());
+    }
+private:
+    const udp::endpoint* asio_endpoint_placeholder_;
+    const udp::endpoint& asio_endpoint_;
+};
+
+const IOEndpoint*
+IOEndpoint::createFromAddress(const int protocol,
+                              const IOAddress& address,
+                              const unsigned short port)
+{
+    if (protocol == IPPROTO_UDP) {
+        return (new UDPEndpoint(address, port));
+    } else if (protocol == IPPROTO_TCP) {
+        return (new TCPEndpoint(address, port));
+    }
+    isc_throw(IOError,
+              "IOEndpoint creation attempt for unsupported protocol: " <<
+              protocol);
 }
 
 class TCPSocket : public IOSocket {
@@ -116,15 +164,9 @@ IOSocket::getDummyTCPSocket() {
 }
 
 IOMessage::IOMessage(const void* data, const size_t data_size,
-                     IOSocket& io_socket, const ip::address& remote_address) :
+                     IOSocket& io_socket, const IOEndpoint& remote_endpoint) :
     data_(data), data_size_(data_size), io_socket_(io_socket),
-    remote_io_address_(remote_address)
-{}
-
-IOMessage::IOMessage(const void* data, const size_t data_size,
-                     IOSocket& io_socket, const string& remote_address) :
-    data_(data), data_size_(data_size), io_socket_(io_socket),
-    remote_io_address_(remote_address)
+    remote_endpoint_(remote_endpoint)
 {}
 
 //
@@ -165,7 +207,6 @@ public:
 
             uint16_t msglen = dnsbuffer.readUint16();
             async_read(socket_, asio::buffer(data_, msglen),
-
                        boost::bind(&TCPClient::requestRead, this,
                                    placeholders::error,
                                    placeholders::bytes_transferred));
@@ -178,8 +219,9 @@ public:
                      size_t bytes_transferred)
     {
         if (!error) {
+            const TCPEndpoint remote_endpoint(socket_.remote_endpoint());
             const IOMessage io_message(data_, bytes_transferred, io_socket_,
-                                       socket_.remote_endpoint().address());
+                                       remote_endpoint);
             // currently, for testing purpose only
             if (custom_callback_ != NULL) {
                 (*custom_callback_)(io_message);
@@ -209,9 +251,9 @@ public:
         if (!error) {
                 async_write(socket_,
                             asio::buffer(response_buffer_.getData(),
-                                                response_buffer_.getLength()),
-                        boost::bind(&TCPClient::handleWrite, this,
-                                    placeholders::error));
+                                         response_buffer_.getLength()),
+                            boost::bind(&TCPClient::handleWrite, this,
+                                        placeholders::error));
         } else {
             delete this;
         }
@@ -337,8 +379,9 @@ public:
             auth_server_->configSession()->checkCommand();
         }
         if (!error && bytes_recvd > 0) {
+            const UDPEndpoint remote_endpoint(sender_endpoint_);
             const IOMessage io_message(data_, bytes_recvd, io_socket_,
-                                       sender_endpoint_.address());
+                                       remote_endpoint);
             // currently, for testing purpose only
             if (custom_callback_ != NULL) {
                 (*custom_callback_)(io_message);
