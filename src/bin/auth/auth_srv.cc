@@ -349,7 +349,8 @@ AuthSrvImpl::processIxfrQuery(const IOMessage& io_message,
     tmp_session_with_xfr.establish();
 
     // XXX: the following is super expensive.
-    const string remote_ip_address = io_message.getRemoteAddress().toText();
+    const string remote_ip_address =
+        io_message.getRemoteEndpoint().getAddress().toText();
     ElementPtr notify_command = Element::createFromString(
         "{\"command\": [\"notify\", {\"zone_name\" : \"" +
         question->getName().toText() + "\", \"master_ip\" : \"" +
