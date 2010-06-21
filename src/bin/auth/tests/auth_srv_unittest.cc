@@ -50,12 +50,13 @@ protected:
                     parse_message(Message::PARSE), default_qid(0x1035),
                     opcode(Opcode(Opcode::QUERY())), qname("www.example.com"),
                     qclass(RRClass::IN()), qtype(RRType::A()),
-                    io_message(NULL), request_obuffer(0),
+                    io_message(NULL), endpoint(NULL), request_obuffer(0),
                     request_renderer(request_obuffer),
                     response_obuffer(0), response_renderer(response_obuffer)
     {}
     ~AuthSrvTest() {
         delete io_message;
+        delete endpoint;
     }
     AuthSrv server;
     Message request_message;
@@ -65,7 +66,8 @@ protected:
     const Name qname;
     const RRClass qclass;
     const RRType qtype;
-    IOMessage *io_message;
+    IOMessage* io_message;
+    const IOEndpoint* endpoint;
     OutputBuffer request_obuffer;
     MessageRenderer request_renderer;
     OutputBuffer response_obuffer;
@@ -91,9 +93,13 @@ AuthSrvTest::createDataFromFile(const char* const datafile) {
     delete io_message;
     data.clear();
 
+    delete endpoint;
+    endpoint = IOEndpoint::createFromAddress(IPPROTO_UDP,
+                                             IOAddress("192.0.2.1"),
+                                             5300);
     UnitTestUtil::readWireData(datafile, data);
     io_message = new IOMessage(&data[0], data.size(),
-                               IOSocket::getDummyUDPSocket(), "192.0.2.1");
+                               IOSocket::getDummyUDPSocket(), *endpoint);
 }
 
 void

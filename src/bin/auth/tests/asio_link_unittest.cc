@@ -59,6 +59,34 @@ TEST(IOAddressTest, fromText) {
     EXPECT_THROW(IOAddress("2001:db8:::1234"), IOError);
 }
 
+TEST(IOEndpointTest, createFromAddress) {
+    const IOEndpoint* ep;
+    ep = IOEndpoint::createFromAddress(IPPROTO_UDP, IOAddress("192.0.2.1"),
+                                       5300);
+    EXPECT_EQ("192.0.2.1", ep->getAddress().toText());
+    delete ep;
+
+    ep = IOEndpoint::createFromAddress(IPPROTO_TCP, IOAddress("192.0.2.1"),
+                                       5300);
+    EXPECT_EQ("192.0.2.1", ep->getAddress().toText());
+    delete ep;
+
+    ep = IOEndpoint::createFromAddress(IPPROTO_UDP,
+                                       IOAddress("2001:db8::1234"), 5300);
+    EXPECT_EQ("2001:db8::1234", ep->getAddress().toText());
+    delete ep;
+
+    ep = IOEndpoint::createFromAddress(IPPROTO_TCP,
+                                       IOAddress("2001:db8::1234"), 5300);
+    EXPECT_EQ("2001:db8::1234", ep->getAddress().toText());
+    delete ep;
+
+    EXPECT_THROW(IOEndpoint::createFromAddress(IPPROTO_IP,
+                                               IOAddress("192.0.2.1"),
+                                               5300)->getAddress().toText(),
+                 IOError);
+}
+
 TEST(IOSocketTest, dummySockets) {
     EXPECT_EQ(IPPROTO_UDP, IOSocket::getDummyUDPSocket().getProtocol());
     EXPECT_EQ(IPPROTO_TCP, IOSocket::getDummyTCPSocket().getProtocol());
@@ -131,7 +159,8 @@ public:
     void callBack(const IOMessage& io_message) {
         callback_protocol_ = io_message.getSocket().getProtocol();
         callback_native_ = io_message.getSocket().getNative();
-        callback_address_ = io_message.getRemoteAddress().toText();
+        callback_address_ =
+            io_message.getRemoteEndpoint().getAddress().toText();
         callback_data_.assign(
             static_cast<const uint8_t*>(io_message.getData()),
             static_cast<const uint8_t*>(io_message.getData()) +
