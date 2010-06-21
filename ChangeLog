@@ -1,3 +1,9 @@
+  58.	[bug]		jinmei
+	Worked around an interaction issue between ASIO and standard C++
+	library headers.  Without this ASIO didn't work: sometimes the
+	application crashes, sometimes it blocked in the ASIO module.
+	(Trac #248, svn r2187, r2190)
+
   57.	[func]		jinmei
 	lib/datasrc: used a simpler version of Name::split (change 31) for
 	better readability.  No behavior change. (Trac #200, svn r2159)
