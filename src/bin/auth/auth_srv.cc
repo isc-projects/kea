@@ -82,7 +82,7 @@ public:
     bool processNormalQuery(const IOMessage& io_message, Message& message,
                             MessageRenderer& response_renderer);
     bool processAxfrQuery(const IOMessage& io_message, Message& message,
-                            MessageRenderer& response_renderer) const;
+                            MessageRenderer& response_renderer) ;
     bool processNotify(const IOMessage& io_message, Message& message, 
                             MessageRenderer& response_renderer) ;
     std::string db_file_;
@@ -95,16 +95,20 @@ public:
 
     bool verbose_mode_;
 
-    const string xfr_path_;     // currently non configurable
-    bool is_xfrin_connection_established_;
+    bool is_xfrin_session_established_;
     isc::cc::Session session_with_xfrin_;
+
+    bool is_xfrin_connection_established_;
+    XfroutClient axfr_client_;
 
     /// Currently non-configurable, but will be.
     static const uint16_t DEFAULT_LOCAL_UDPSIZE = 4096;
 };
 
 AuthSrvImpl::AuthSrvImpl() : cs_(NULL), verbose_mode_(false),
-                             xfr_path_(UNIX_SOCKET_FILE), is_xfrin_connection_established_(false)
+                             is_xfrin_session_established_(false),
+                             is_xfrin_connection_established_(false),
+                             axfr_client_(UNIX_SOCKET_FILE)
 {
     // cur_datasrc_ is automatically initialized by the default constructor,
     // effectively being an empty (sqlite) data source.  once ccsession is up
@@ -115,8 +119,13 @@ AuthSrvImpl::AuthSrvImpl() : cs_(NULL), verbose_mode_(false),
 }
 
 AuthSrvImpl::~AuthSrvImpl() {
-    if (is_xfrin_connection_established_) {
+    if (is_xfrin_session_established_) {
         session_with_xfrin_.disconnect();
+        is_xfrin_session_established_ = false;
+    }
+
+    if (is_xfrin_connection_established_) {
+        axfr_client_.disconnect();
         is_xfrin_connection_established_ = false;
     }
 }
@@ -321,7 +330,7 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
 #ifdef USE_XFROUT
 bool
 AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, Message& message,
-                            MessageRenderer& response_renderer) const {
+                            MessageRenderer& response_renderer) {
     if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
         if (verbose_mode_) {
             cerr << "[b10-auth] user query axfr through udp which isn't allowed"
@@ -331,14 +340,20 @@ AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, Message& message,
         return true;
     }
 
-    XfroutClient xfr_client(xfr_path_);
     try {
-        xfr_client.connect();
-        xfr_client.sendXfroutRequestInfo(io_message.getSocket().getNative(),
+        if (!is_xfrin_connection_established_) {
+            axfr_client_.connect();
+            is_xfrin_connection_established_ = true;
+        }
+        axfr_client_.sendXfroutRequestInfo(io_message.getSocket().getNative(),
                                          io_message.getData(),
                                          io_message.getDataSize());
-        xfr_client.disconnect();
     } catch (const exception& err) { // XXX: avoid catch-all catch!!
+        if (is_xfrin_connection_established_) {
+            axfr_client_.disconnect();
+            is_xfrin_connection_established_ = false;
+        }
+        
         if (verbose_mode_) {
             cerr << "[b10-auth] Error in handling XFR request: " << err.what()
                  << endl;
@@ -363,10 +378,10 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
 {
     // TODO check with the conf-mgr whether current server is the auth of the
     // zone
-    if (!is_xfrin_connection_established_) {
+    if (!is_xfrin_session_established_) {
         try {
             session_with_xfrin_.establish();
-            is_xfrin_connection_established_ = true;
+            is_xfrin_session_established_ = true;
         } catch ( isc::cc::SessionError &err) {
             if (verbose_mode_) {
             cerr << "[b10-auth] Error in connection with xfrin module: " << err.what()
@@ -374,7 +389,7 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
             }
             makeErrorMessage(message, response_renderer, Rcode::SERVFAIL(),
                              verbose_mode_);
-            is_xfrin_connection_established_ = false;
+            is_xfrin_session_established_ = false;
             return (true);
         }
     }
@@ -382,14 +397,12 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
     ConstQuestionPtr question = *message.beginQuestion();
     const string remote_ip_address =
         io_message.getRemoteEndpoint().getAddress().toText();
-    static const string command_template("{\"command\": [\"notify\", {\"zone_name\" : \"*\", \"master_ip\" : \"&\"}]}");
-    static const size_t name_holder_pos = command_template.find("*");
-    static const size_t ip_addr_holder_from_end = command_template.length() - command_template.find("&");
-    string command = command_template;
-    command.replace(name_holder_pos, 1, question->getName().toText());
-    command.replace(command.length() - ip_addr_holder_from_end, 1, remote_ip_address);
-    ElementPtr notify_command = Element::createFromString(command);
-
+    static const string command_template_start = "{\"command\": [\"notify\", {\"zone_name\" : \"";
+    static const string command_template_mid = "\", \"master_ip\" : \"";
+    static const string command_template_end = "\"}]}";
+    ElementPtr notify_command = Element::createFromString(command_template_start + question->getName().toText() + 
+                                                         command_template_mid + remote_ip_address +
+                                                         command_template_end);
     try {
         const unsigned int seq =
             session_with_xfrin_.group_sendmsg(notify_command, "Xfrin");
