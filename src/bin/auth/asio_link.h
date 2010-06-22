@@ -17,7 +17,8 @@
 #ifndef __ASIO_LINK_H
 #define __ASIO_LINK_H 1
 
-// IMPORTANT NOTE: No ASIO header files can be included in this file.
+// IMPORTANT NOTE: only very few ASIO headers files can be included in
+// this file.  In particular, asio.hpp should never be included here.
 // See the description of the namespace below.
 #include <asio/ip/address.hpp>
 
@@ -62,11 +63,12 @@ class AuthSrv;
 /// this module.  The resulting interfaces are thus straightforward mapping
 /// to the ASIO counterparts.
 ///
-/// Note: currently the wrapper interface is specific to the authoritative
+/// Notes to developers:
+/// Currently the wrapper interface is specific to the authoritative
 /// server implementation.  But the plan is to generalize it and have
 /// other modules use it.
 ///
-/// Note: One obvious drawback of this approach is performance overhead
+/// One obvious drawback of this approach is performance overhead
 /// due to the additional layer.  We should eventually evaluate the cost
 /// of the wrapper abstraction in benchmark tests.
 ///
@@ -74,6 +76,13 @@ class AuthSrv;
 /// of ASIO (at least for the moment).  We should also re-evaluate the
 /// maintenance overhead of providing necessary wrappers as we develop
 /// more.
+///
+/// On the other hand, we may be able to exploit the wrapper approach to
+/// simplify the interfaces (by limiting the usage) and unify performance
+/// optimization points.
+/// As for optimization, we may want to provide a custom allocator for
+/// the placeholder of callback handlers:
+/// http://think-async.com/Asio/asio-1.3.1/doc/asio/reference/asio_handler_allocate.html
 
 namespace asio_link {
 struct IOServiceImpl;
@@ -135,19 +144,82 @@ private:
     asio::ip::address asio_address_;
 };
 
-/// \brief DESCRIPTION
+/// \brief The \c IOEndpoint class represents a communication endpoint.
+///
+/// This class is a wrapper for the ASIO \c ip::address class.
+
+/// \brief The \c IOEndpoint class is an abstract base class to represent
+/// a communication endpoint.
+///
+/// This class is a wrapper for the ASIO endpoint classes such as
+/// \c ip::tcp::endpoint and \c ip::udp::endpoint.
+///
+/// Derived class implementations are completely hidden within the
+/// implementation.  User applications only get access to concrete
+/// \c IOEndpoint objects via the abstract interfaces.
 class IOEndpoint {
+    ///
+    /// \name Constructors and Destructor
+    ///
+    /// Note: The copy constructor and the assignment operator are
+    /// intentionally defined as private, making this class non-copyable.
+    //@{
 private:
     IOEndpoint(const IOEndpoint& source);
     IOEndpoint& operator=(const IOEndpoint& source);
 protected:
+    /// \brief The default constructor.
+    ///
+    /// This is intentionally defined as \c protected as this base class
+    /// should never be instantiated (except as part of a derived class).
     IOEndpoint() {}
 public:
+    /// The destructor.
     virtual ~IOEndpoint() {}
+    //@}
+
+    /// \brief Returns the address of the endpoint.
+    ///
+    /// This method returns an IOAddress object corresponding to \c this
+    /// endpoint.
+    /// Note that the return value is not a real object, not a reference or
+    /// a pointer.
+    /// This is aligned with the interface of the ASIO counterpart:
+    /// the \c address() method of \c ip::xxx::endpoint classes returns
+    /// an \c ip::address object.
+    /// This also means handling the address of an endpoint using this method
+    /// can be expensive.  If the address information is necessary in a
+    /// performance sensitive context and there's a more efficient interface
+    /// for that purpose, it's probably better to avoid using this method.
+    ///
+    /// This method never throws an exception.
+    ///
+    /// \return A copy of \c IOAddress object corresponding to the endpoint.
     virtual IOAddress getAddress() const = 0;
-    static const IOEndpoint* createFromAddress(int protocol,
-                                               const IOAddress& address,
-                                               unsigned short port);
+
+    /// \brief A polymorphic factory of endpoint from address and port.
+    ///
+    /// This method creates a new instance of (a derived class of)
+    /// \c IOEndpoint object that identifies the pair of given address
+    /// and port.
+    /// The appropriate derived class is chosen based on the specified
+    /// transport protocol.  If the \c protocol doesn't specify a protocol
+    /// supported in this implementation, an exception of class \c IOError
+    /// will be thrown.
+    ///
+    /// Memory for the created object will be dynamically allocated.  It's
+    /// caller's responsibility to \c delete it later.
+    /// If resource allocation for the new object fails, a corresponding
+    /// standard exception will be thrown.
+    ///
+    /// \param protocol The transport protocol used for the endpoint.
+    /// Currently, only \c IPPROTO_UDP and \c IPPROTO_TCP can be specified.
+    /// \param address The (IP) address of the endpoint.
+    /// \param port The transport port number of the endpoint
+    /// \return A pointer to a newly created \c IOEndpoint object.
+    static const IOEndpoint* create(int protocol,
+                                    const IOAddress& address,
+                                    unsigned short port);
 };
 
 /// \brief The \c IOSocket class is an abstract base class to represent
@@ -156,7 +228,7 @@ public:
 /// This class is a wrapper for the ASIO socket classes such as
 /// \c ip::tcp::socket and \c ip::udp::socket.
 ///
-/// Derived class implementations are completely hidden with the
+/// Derived class implementations are completely hidden within the
 /// implementation.  User applications only get access to concrete
 /// \c IOSocket objects via the abstract interfaces.
 class IOSocket {
@@ -237,8 +309,8 @@ public:
     static IOSocket& getDummyTCPSocket();
 };
 
-/// \brief The \c IOMessage class encapsulates a message exchanged via
-/// the ASIO module.
+/// \brief The \c IOMessage class encapsulates an incoming message received
+/// on a socket.
 ///
 /// An \c IOMessage object represents a tuple of a chunk of data
 /// (a UDP packet or some segment of TCP stream), the socket over which the
@@ -248,11 +320,7 @@ public:
 /// The current design and interfaces of this class is tentative.
 /// It only provides a minimal level of support that is necessary for
 /// the current implementation of the authoritative server.
-/// A future version of this class will definitely support more
-/// Also, it may not be efficient, involving avoidable copies for example.
-/// This should be revisited in the near future, too.
-/// (e.g., we'll need a notion of "endpoint", both for generality and for
-/// efficiency).
+/// A future version of this class will definitely support more.
 class IOMessage {
     ///
     /// \name Constructors and Destructor
@@ -277,14 +345,22 @@ public:
     /// \param data A pointer to the message data.
     /// \param data_size The size of the message data in bytes.
     /// \param io_socket The socket over which the data is given.
-    /// \param remote_endpoint An ASIO address object represents the other
-    /// endpoint of the socket.
+    /// \param remote_endpoint The other endpoint of the socket, that is,
+    /// the sender of the message.
     IOMessage(const void* data, size_t data_size, IOSocket& io_socket,
               const IOEndpoint& remote_endpoint);
     //@}
+
+    /// \brief Returns a pointer to the received data.
     const void* getData() const { return (data_); }
+
+    /// \brief Returns the size of the received data in bytes.
     size_t getDataSize() const { return (data_size_); }
+
+    /// \brief Returns the socket on which the message arrives.
     const IOSocket& getSocket() const { return (io_socket_); }
+
+    /// \brief Returns the endpoint that sends the message.
     const IOEndpoint& getRemoteEndpoint() const { return (remote_endpoint_); }
 private:
     const void* data_;
@@ -293,6 +369,13 @@ private:
     const IOEndpoint& remote_endpoint_;
 };
 
+/// \brief The \c IOService class is a wrapper for the ASIO \c io_service
+/// class.
+///
+/// Currently, the interface of this class is very specific to the
+/// authoritative server implementation as indicated in the signature of
+/// the constructor, but the plan is to generalize it so that other BIND 10
+/// modules can use this interface, too.
 class IOService {
     ///
     /// \name Constructors and Destructor
@@ -304,17 +387,46 @@ private:
     IOService(const IOService& source);
     IOService& operator=(const IOService& source);
 public:
+    /// \brief The constructor.  Currently very specific to the authoritative
+    /// server implementation.
     IOService(AuthSrv* auth_server, const char* port, bool use_ipv4,
               bool use_ipv6);
     /// \brief The destructor.
     ~IOService();
     //@}
+
+    /// \brief Start the underlying event loop.
+    ///
+    /// This method blocks until the \c stop() method is called via some
+    /// handler.
     void run();
+
+    /// \brief Stop the underlying event loop.
+    ///
+    /// This will return the control to the caller of the \c run() method.
     void stop();
+
+    /// \brief Return the native \c io_service object used in this wrapper.
+    ///
+    /// This is a short term work around to support other BIND 10 modules
+    /// that shares the same \c io_service with the authoritative server.
+    /// It will eventually be removed once the wrapper interface is
+    /// generalized.
     asio::io_service& get_io_service();
+
+    /// \brief A functor(-like) class that specifies a custom call back
+    /// invoked from the event loop instead of the embedded authoritative
+    /// server callbacks.
+    ///
+    /// Currently, the callback is intended to be used only for testing
+    /// purposes.  But we'll need a generic callback type like this to
+    /// generalize the wrapper interface.
+    typedef boost::function<void(const IOMessage& io_message)> IOCallBack;
+
+    /// \brief Set the custom call back invoked from the event loop.
+    ///
     /// Right now this method is only for testing, but will eventually be
     /// generalized.
-    typedef boost::function<void(const IOMessage& io_message)> IOCallBack;
     void setCallBack(IOCallBack callback);
 private:
     IOServiceImpl* impl_;

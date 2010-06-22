@@ -101,9 +101,8 @@ private:
 };
 
 const IOEndpoint*
-IOEndpoint::createFromAddress(const int protocol,
-                              const IOAddress& address,
-                              const unsigned short port)
+IOEndpoint::create(const int protocol, const IOAddress& address,
+                   const unsigned short port)
 {
     if (protocol == IPPROTO_UDP) {
         return (new UDPEndpoint(address, port));

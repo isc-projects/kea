@@ -59,31 +59,26 @@ TEST(IOAddressTest, fromText) {
     EXPECT_THROW(IOAddress("2001:db8:::1234"), IOError);
 }
 
-TEST(IOEndpointTest, createFromAddress) {
+TEST(IOEndpointTest, create) {
     const IOEndpoint* ep;
-    ep = IOEndpoint::createFromAddress(IPPROTO_UDP, IOAddress("192.0.2.1"),
-                                       5300);
+    ep = IOEndpoint::create(IPPROTO_UDP, IOAddress("192.0.2.1"), 5300);
     EXPECT_EQ("192.0.2.1", ep->getAddress().toText());
     delete ep;
 
-    ep = IOEndpoint::createFromAddress(IPPROTO_TCP, IOAddress("192.0.2.1"),
-                                       5300);
+    ep = IOEndpoint::create(IPPROTO_TCP, IOAddress("192.0.2.1"), 5300);
     EXPECT_EQ("192.0.2.1", ep->getAddress().toText());
     delete ep;
 
-    ep = IOEndpoint::createFromAddress(IPPROTO_UDP,
-                                       IOAddress("2001:db8::1234"), 5300);
+    ep = IOEndpoint::create(IPPROTO_UDP, IOAddress("2001:db8::1234"), 5300);
     EXPECT_EQ("2001:db8::1234", ep->getAddress().toText());
     delete ep;
 
-    ep = IOEndpoint::createFromAddress(IPPROTO_TCP,
-                                       IOAddress("2001:db8::1234"), 5300);
+    ep = IOEndpoint::create(IPPROTO_TCP, IOAddress("2001:db8::1234"), 5300);
     EXPECT_EQ("2001:db8::1234", ep->getAddress().toText());
     delete ep;
 
-    EXPECT_THROW(IOEndpoint::createFromAddress(IPPROTO_IP,
-                                               IOAddress("192.0.2.1"),
-                                               5300)->getAddress().toText(),
+    EXPECT_THROW(IOEndpoint::create(IPPROTO_IP, IOAddress("192.0.2.1"),
+                                    5300)->getAddress().toText(),
                  IOError);
 }
 
