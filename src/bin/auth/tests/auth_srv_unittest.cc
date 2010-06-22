@@ -128,7 +128,9 @@ headerCheck(const Message& message, const qid_t qid, const Rcode& rcode,
 TEST_F(AuthSrvTest, unsupportedRequest) {
     for (unsigned int i = 1; i < 16; ++i) {
         // set Opcode to 'i', which iterators over all possible codes except
-        // the standard query (0)
+        // the standard query (0) and notify(4)
+        if (i == 4)
+            continue;
         createDataFromFile("simplequery_fromWire");
         data[2] = ((i << 3) & 0xff);
 
@@ -241,6 +243,17 @@ TEST_F(AuthSrvTest, ednsBadVers) {
     EXPECT_EQ(4096, parse_message.getUDPSize());
     EXPECT_FALSE(parse_message.isDNSSECSupported());
 }
+
+// notify-in teset.
+TEST_F(AuthSrvTest, notifyInTest) {
+    createDataFromFile("notifyin_fromwire");
+    parse_message.clear(Message::PARSE);
+    EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
+                                              response_renderer));
+    headerCheck(parse_message, default_qid, Rcode::NOERROR(), Opcode::NOTIFY().getCode(), QR_FLAG,
+                    1, 0, 0, 0);
+}
+
 
 void
 updateConfig(AuthSrv* server, const char* const dbfile,
