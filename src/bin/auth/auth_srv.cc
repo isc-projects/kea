@@ -348,7 +348,7 @@ AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, Message& message,
         axfr_client_.sendXfroutRequestInfo(io_message.getSocket().getNative(),
                                          io_message.getData(),
                                          io_message.getDataSize());
-    } catch (const XfroutError& err) { // XXX: avoid catch-all catch!!
+    } catch (const XfroutError& err) { 
         if (is_xfrin_connection_established_) {
             axfr_client_.disconnect();
             is_xfrin_connection_established_ = false;
