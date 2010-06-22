@@ -192,7 +192,7 @@ refQuery(const Name& name, const RRClass& qclass, const DataSrc* ds,
         // Lookup failed
         return (false);
     }
-    
+
     // Referral bit is expected, so clear it when checking flags
     if ((newtask.flags & ~DataSrc::REFERRAL) != 0) {
         return (false);
