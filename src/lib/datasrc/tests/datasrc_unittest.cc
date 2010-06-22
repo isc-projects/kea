@@ -852,8 +852,8 @@ TEST_F(DataSrcTest, AddRemoveDataSrc) {
     EXPECT_EQ(0, ds.dataSrcCount());
 }
 
-#if 0                           // currently fails
-TEST_F(DataSrcTest, synthesizedCnameTooLong) {
+// currently fails
+TEST_F(DataSrcTest, DISABLED_synthesizedCnameTooLong) {
     // qname has the possible max length (255 octets).  it matches a DNAME,
     // and the synthesized CNAME would exceed the valid length.
     createAndProcessQuery(
@@ -863,6 +863,5 @@ TEST_F(DataSrcTest, synthesizedCnameTooLong) {
              "0123456789abcdef0123456789abcdef0123456789a.dname.example.org."),
         RRClass::IN(), RRType::A());
 }
-#endif
 
 }
