@@ -94,9 +94,7 @@ AuthSrvTest::createDataFromFile(const char* const datafile) {
     data.clear();
 
     delete endpoint;
-    endpoint = IOEndpoint::createFromAddress(IPPROTO_UDP,
-                                             IOAddress("192.0.2.1"),
-                                             5300);
+    endpoint = IOEndpoint::create(IPPROTO_UDP, IOAddress("192.0.2.1"), 5300);
     UnitTestUtil::readWireData(datafile, data);
     io_message = new IOMessage(&data[0], data.size(),
                                IOSocket::getDummyUDPSocket(), *endpoint);
