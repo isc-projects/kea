@@ -243,7 +243,8 @@ AuthSrv::processMessage(InputBuffer& request_buffer, Message& message,
         impl_->data_sources_.doQuery(query);
     } catch (const Exception& ex) {
         if (impl_->verbose_mode_) {
-            cerr << "[b10-auth] Internal error, returning SERVFAIL: " << ex.what() << endl;
+            cerr << "[b10-auth] Internal error, returning SERVFAIL: " <<
+                ex.what() << endl;
         }
         makeErrorMessage(message, response_renderer, Rcode::SERVFAIL(),
                          impl_->verbose_mode_);
