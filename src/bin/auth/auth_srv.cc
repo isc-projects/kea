@@ -387,10 +387,8 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
             cerr << "[b10-auth] Error in connection with xfrin module: " << err.what()
                  << endl;
             }
-            makeErrorMessage(message, response_renderer, Rcode::SERVFAIL(),
-                             verbose_mode_);
             is_xfrin_session_established_ = false;
-            return (true);
+            return (false);
         }
     }
 
@@ -415,16 +413,12 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
             cerr << "[b10-auth] Send message to xfrin module failed: " << err.what()
                 << endl;
         }
-        makeErrorMessage(message, response_renderer, Rcode::SERVFAIL(),
-                verbose_mode_);
-        return (true);
+        return (false);
     } catch ( CCSessionError &err) {
         if (verbose_mode_) {
             cerr << "[b10-auth] Receive wrong response from xfrin module: " << err.what() << endl;
-        makeErrorMessage(message, response_renderer, Rcode::SERVFAIL(),
-                verbose_mode_);
         }
-        return (true);
+        return (false);
     }
     
     message.makeResponse();
