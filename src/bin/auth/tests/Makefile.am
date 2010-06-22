@@ -27,7 +27,6 @@ run_unittests_LDADD += $(top_builddir)/src/lib/cc/libcc.a
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/.libs/libexceptions.a
 run_unittests_LDADD += $(top_builddir)/src/bin/auth/libasio_link.a
 if HAVE_BOOST_PYTHON
-# Note: after this refactoring this should become unnecessary.
 run_unittests_LDADD += $(top_builddir)/src/lib/xfr/.libs/libxfr.a
 endif
 endif
