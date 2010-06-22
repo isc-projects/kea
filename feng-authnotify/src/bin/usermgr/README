@@ -1,6 +1,0 @@
-Create new account by running the following command:
-
-b10-cmdctl-usermgr -f filename
-
-If parameter '-f' is specified, new accounts will be appended to that file if it exists, or else the accounts will be saved in default file 'cmdctl-accounts.csv'.
-
