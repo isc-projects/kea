@@ -53,15 +53,15 @@ static PyObject* Question_toWire(s_Question* self, PyObject* args);
 // 3. Argument type
 // 4. Documentation
 static PyMethodDef Question_methods[] = {
-    { "get_name", (PyCFunction)Question_getName, METH_NOARGS,
+    { "get_name", reinterpret_cast<PyCFunction>(Question_getName), METH_NOARGS,
       "Returns the Name" },
-    { "get_type", (PyCFunction)Question_getType, METH_NOARGS,
+    { "get_type", reinterpret_cast<PyCFunction>(Question_getType), METH_NOARGS,
       "Returns the RRType" },
-    { "get_class", (PyCFunction)Question_getClass, METH_NOARGS,
+    { "get_class", reinterpret_cast<PyCFunction>(Question_getClass), METH_NOARGS,
       "Returns the RRClass" },
-    { "to_text", (PyCFunction)Question_toText, METH_NOARGS,
+    { "to_text", reinterpret_cast<PyCFunction>(Question_toText), METH_NOARGS,
       "Returns the string representation" },
-    { "to_wire", (PyCFunction)Question_toWire, METH_VARARGS,
+    { "to_wire", reinterpret_cast<PyCFunction>(Question_toWire), METH_VARARGS,
       "Converts the Question object to wire format.\n"
       "The argument can be either a MessageRenderer or an object that "
       "implements the sequence interface. If the object is mutable "
@@ -192,7 +192,7 @@ Question_getName(s_Question* self) {
     s_Name* name;
 
     // is this the best way to do this?
-    name = (s_Name*)name_type.tp_alloc(&name_type, 0);
+    name = reinterpret_cast<s_Name*>(name_type.tp_alloc(&name_type, 0));
     if (name != NULL) {
         name->name = new Name(self->question->getName());
         if (name->name == NULL)
@@ -202,14 +202,14 @@ Question_getName(s_Question* self) {
           }
     }
 
-    return (PyObject*)name;
+    return reinterpret_cast<PyObject*>(name);
 }
 
 static PyObject*
 Question_getType(s_Question* self) {
     s_RRType* rrtype;
 
-    rrtype = (s_RRType*)rrtype_type.tp_alloc(&rrtype_type, 0);
+    rrtype = reinterpret_cast<s_RRType*>(rrtype_type.tp_alloc(&rrtype_type, 0));
     if (rrtype != NULL) {
         rrtype->rrtype = new RRType(self->question->getType());
         if (rrtype->rrtype == NULL)
@@ -219,14 +219,14 @@ Question_getType(s_Question* self) {
           }
     }
 
-    return (PyObject*)rrtype;
+    return reinterpret_cast<PyObject*>(rrtype);
 }
 
 static PyObject*
 Question_getClass(s_Question* self) {
     s_RRClass* rrclass;
 
-    rrclass = (s_RRClass*)rrclass_type.tp_alloc(&rrclass_type, 0);
+    rrclass = reinterpret_cast<s_RRClass*>(rrclass_type.tp_alloc(&rrclass_type, 0));
     if (rrclass != NULL) {
         rrclass->rrclass = new RRClass(self->question->getClass());
         if (rrclass->rrclass == NULL)
@@ -236,7 +236,7 @@ Question_getClass(s_Question* self) {
           }
     }
 
-    return (PyObject*)rrclass;
+    return reinterpret_cast<PyObject*>(rrclass);
 }
 
 
@@ -249,7 +249,9 @@ Question_toText(s_Question* self) {
 static PyObject*
 Question_str(PyObject* self) {
     // Simply call the to_text method we already defined
-    return PyObject_CallMethod(self, (char*)"to_text", (char*)"");
+    return PyObject_CallMethod(self,
+                               const_cast<char*>("to_text"),
+                               const_cast<char*>(""));
 }
 
 static PyObject*
@@ -270,7 +272,7 @@ Question_toWire(s_Question* self, PyObject* args) {
         Py_DECREF(n);
         return result;
     } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type,
-                                (PyObject**) &mr)) {
+                                reinterpret_cast<PyObject**>(&mr))) {
         self->question->toWire(*mr->messagerenderer);
         // If we return NULL it is seen as an error, so use this for
         // None returns
@@ -298,7 +300,7 @@ initModulePart_Question(PyObject* mod) {
     }
     Py_INCREF(&question_type);
     PyModule_AddObject(mod, "Question",
-                       (PyObject*) &question_type);
+                       reinterpret_cast<PyObject*>(&question_type));
     
     return true;
 }

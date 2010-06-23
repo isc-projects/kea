@@ -72,32 +72,32 @@ static PyObject* RRset_getRdata(s_RRset* self);
 // TODO: iterator?
 
 static PyMethodDef RRset_methods[] = {
-    { "get_rdata_count", (PyCFunction)RRset_getRdataCount, METH_NOARGS,
+    { "get_rdata_count", reinterpret_cast<PyCFunction>(RRset_getRdataCount), METH_NOARGS,
       "Returns the number of rdata fields." },
-    { "get_name", (PyCFunction)RRset_getName, METH_NOARGS,
+    { "get_name", reinterpret_cast<PyCFunction>(RRset_getName), METH_NOARGS,
       "Returns the name of the RRset, as a Name object." },
-    { "get_class", (PyCFunction)RRset_getClass, METH_NOARGS,
+    { "get_class", reinterpret_cast<PyCFunction>(RRset_getClass), METH_NOARGS,
       "Returns the class of the RRset as an RRClass object." },
-    { "get_type", (PyCFunction)RRset_getType, METH_NOARGS,
+    { "get_type", reinterpret_cast<PyCFunction>(RRset_getType), METH_NOARGS,
       "Returns the type of the RRset as an RRType object." },
-    { "get_ttl", (PyCFunction)RRset_getTTL, METH_NOARGS,
+    { "get_ttl", reinterpret_cast<PyCFunction>(RRset_getTTL), METH_NOARGS,
       "Returns the TTL of the RRset as an RRTTL object." },
-    { "set_name", (PyCFunction)RRset_setName, METH_VARARGS,
+    { "set_name", reinterpret_cast<PyCFunction>(RRset_setName), METH_VARARGS,
       "Sets the name of the RRset.\nTakes a Name object as an argument." },
-    { "set_ttl", (PyCFunction)RRset_setTTL, METH_VARARGS,
+    { "set_ttl", reinterpret_cast<PyCFunction>(RRset_setTTL), METH_VARARGS,
       "Sets the TTL of the RRset.\nTakes an RRTTL object as an argument." },
-    { "to_text", (PyCFunction)RRset_toText, METH_NOARGS,
+    { "to_text", reinterpret_cast<PyCFunction>(RRset_toText), METH_NOARGS,
       "Returns the text representation of the RRset as a string" },
-    { "to_wire", (PyCFunction)RRset_toWire, METH_VARARGS,
+    { "to_wire", reinterpret_cast<PyCFunction>(RRset_toWire), METH_VARARGS,
       "Converts the RRset object to wire format.\n"
       "The argument can be either a MessageRenderer or an object that "
       "implements the sequence interface. If the object is mutable "
       "(for instance a bytearray()), the wire data is added in-place.\n"
       "If it is not (for instance a bytes() object), a new object is "
       "returned" },
-    { "add_rdata", (PyCFunction)RRset_addRdata, METH_VARARGS,
+    { "add_rdata", reinterpret_cast<PyCFunction>(RRset_addRdata), METH_VARARGS,
       "Adds the rdata for one RR to the RRset.\nTakes an Rdata object as an argument" },
-    { "get_rdata", (PyCFunction)RRset_getRdata, METH_NOARGS,
+    { "get_rdata", reinterpret_cast<PyCFunction>(RRset_getRdata), METH_NOARGS,
       "Returns a List containing all Rdata elements" },
     { NULL, NULL, 0, NULL }
 };
@@ -208,7 +208,7 @@ RRset_getName(s_RRset* self) {
     s_Name* name;
 
     // is this the best way to do this?
-    name = (s_Name*)name_type.tp_alloc(&name_type, 0);
+    name = reinterpret_cast<s_Name*>(name_type.tp_alloc(&name_type, 0));
     if (name != NULL) {
         name->name = new Name(self->rrset->getName());
         if (name->name == NULL)
@@ -218,14 +218,14 @@ RRset_getName(s_RRset* self) {
           }
     }
 
-    return (PyObject*)name;
+    return reinterpret_cast<PyObject*>(name);
 }
 
 static PyObject*
 RRset_getClass(s_RRset* self) {
     s_RRClass* rrclass;
 
-    rrclass = (s_RRClass*)rrclass_type.tp_alloc(&rrclass_type, 0);
+    rrclass = reinterpret_cast<s_RRClass*>(rrclass_type.tp_alloc(&rrclass_type, 0));
     if (rrclass != NULL) {
         rrclass->rrclass = new RRClass(self->rrset->getClass());
         if (rrclass->rrclass == NULL)
@@ -235,14 +235,14 @@ RRset_getClass(s_RRset* self) {
           }
     }
 
-    return (PyObject*)rrclass;
+    return reinterpret_cast<PyObject*>(rrclass);
 }
 
 static PyObject*
 RRset_getType(s_RRset* self) {
     s_RRType* rrtype;
 
-    rrtype = (s_RRType*)rrtype_type.tp_alloc(&rrtype_type, 0);
+    rrtype = reinterpret_cast<s_RRType*>(rrtype_type.tp_alloc(&rrtype_type, 0));
     if (rrtype != NULL) {
         rrtype->rrtype = new RRType(self->rrset->getType());
         if (rrtype->rrtype == NULL)
@@ -252,14 +252,14 @@ RRset_getType(s_RRset* self) {
           }
     }
 
-    return (PyObject*)rrtype;
+    return reinterpret_cast<PyObject*>(rrtype);
 }
 
 static PyObject*
 RRset_getTTL(s_RRset* self) {
     s_RRTTL* rrttl;
 
-    rrttl = (s_RRTTL*)rrttl_type.tp_alloc(&rrttl_type, 0);
+    rrttl = reinterpret_cast<s_RRTTL*>(rrttl_type.tp_alloc(&rrttl_type, 0));
     if (rrttl != NULL) {
         rrttl->rrttl = new RRTTL(self->rrset->getTTL());
         if (rrttl->rrttl == NULL)
@@ -269,7 +269,7 @@ RRset_getTTL(s_RRset* self) {
           }
     }
 
-    return (PyObject*)rrttl;
+    return reinterpret_cast<PyObject*>(rrttl);
 }
 
 static PyObject*
@@ -305,7 +305,9 @@ RRset_toText(s_RRset* self) {
 static PyObject*
 RRset_str(PyObject* self) {
     // Simply call the to_text method we already defined
-    return PyObject_CallMethod(self, (char*)"to_text", (char*)"");
+    return PyObject_CallMethod(self,
+                               const_cast<char*>("to_text"),
+                               const_cast<char*>(""));
 }
 
 static PyObject*
@@ -366,14 +368,14 @@ RRset_getRdata(s_RRset* self) {
     RdataIteratorPtr it = self->rrset->getRdataIterator();
 
     for (it->first(); !it->isLast(); it->next()) {
-        s_Rdata *rds = (s_Rdata*)rdata_type.tp_alloc(&rdata_type, 0);
+        s_Rdata *rds = reinterpret_cast<s_Rdata*>(rdata_type.tp_alloc(&rdata_type, 0));
         if (rds != NULL) {
             // hmz them iterators/shared_ptrs and private constructors
             // make this a bit weird, so we create a new one with
             // the data available
             const Rdata *rd = &it->getCurrent();
             rds->rdata = createRdata(self->rrset->getType(), self->rrset->getClass(), *rd);
-            PyList_Append(list, (PyObject*) rds);
+            PyList_Append(list, reinterpret_cast<PyObject*>(rds));
         } else {
             return NULL;
         }
@@ -406,7 +408,7 @@ initModulePart_RRset(PyObject* mod) {
     }
     Py_INCREF(&rrset_type);
     PyModule_AddObject(mod, "RRset",
-                       (PyObject*) &rrset_type);
+                       reinterpret_cast<PyObject*>(&rrset_type));
     
     return true;
 }

@@ -58,14 +58,14 @@ static PyObject* MessageFlag_AD(s_MessageFlag* self);
 static PyObject* MessageFlag_CD(s_MessageFlag* self);
 
 static PyMethodDef MessageFlag_methods[] = {
-    { "get_bit", (PyCFunction)MessageFlag_getBit, METH_NOARGS, "Returns the flag bit" },
-    { "QR", (PyCFunction)MessageFlag_QR, METH_NOARGS | METH_STATIC, "Creates a QR MessageFlag" },
-    { "AA", (PyCFunction)MessageFlag_AA, METH_NOARGS | METH_STATIC, "Creates a AA MessageFlag" },
-    { "TC", (PyCFunction)MessageFlag_TC, METH_NOARGS | METH_STATIC, "Creates a TC MessageFlag" },
-    { "RD", (PyCFunction)MessageFlag_RD, METH_NOARGS | METH_STATIC, "Creates a RD MessageFlag" },
-    { "RA", (PyCFunction)MessageFlag_RA, METH_NOARGS | METH_STATIC, "Creates a RA MessageFlag" },
-    { "AD", (PyCFunction)MessageFlag_AD, METH_NOARGS | METH_STATIC, "Creates a AD MessageFlag" },
-    { "CD", (PyCFunction)MessageFlag_CD, METH_NOARGS | METH_STATIC, "Creates a CD MessageFlag" },
+    { "get_bit", reinterpret_cast<PyCFunction>(MessageFlag_getBit), METH_NOARGS, "Returns the flag bit" },
+    { "QR", reinterpret_cast<PyCFunction>(MessageFlag_QR), METH_NOARGS | METH_STATIC, "Creates a QR MessageFlag" },
+    { "AA", reinterpret_cast<PyCFunction>(MessageFlag_AA), METH_NOARGS | METH_STATIC, "Creates a AA MessageFlag" },
+    { "TC", reinterpret_cast<PyCFunction>(MessageFlag_TC), METH_NOARGS | METH_STATIC, "Creates a TC MessageFlag" },
+    { "RD", reinterpret_cast<PyCFunction>(MessageFlag_RD), METH_NOARGS | METH_STATIC, "Creates a RD MessageFlag" },
+    { "RA", reinterpret_cast<PyCFunction>(MessageFlag_RA), METH_NOARGS | METH_STATIC, "Creates a RA MessageFlag" },
+    { "AD", reinterpret_cast<PyCFunction>(MessageFlag_AD), METH_NOARGS | METH_STATIC, "Creates a AD MessageFlag" },
+    { "CD", reinterpret_cast<PyCFunction>(MessageFlag_CD), METH_NOARGS | METH_STATIC, "Creates a CD MessageFlag" },
     { NULL, NULL, 0, NULL }
 };
 
@@ -156,7 +156,7 @@ MessageFlag_QR(s_MessageFlag* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -169,7 +169,7 @@ MessageFlag_AA(s_MessageFlag* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -182,7 +182,7 @@ MessageFlag_TC(s_MessageFlag* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -195,7 +195,7 @@ MessageFlag_RD(s_MessageFlag* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -208,7 +208,7 @@ MessageFlag_RA(s_MessageFlag* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -221,7 +221,7 @@ MessageFlag_AD(s_MessageFlag* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -234,7 +234,7 @@ MessageFlag_CD(s_MessageFlag* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 //
@@ -275,24 +275,24 @@ static PyObject* Opcode_RESERVED15(s_Opcode* self);
 static PyObject* Opcode_richcmp(s_Opcode* self, s_Opcode* other, int op);
 
 static PyMethodDef Opcode_methods[] = {
-    { "get_code", (PyCFunction)Opcode_getCode, METH_NOARGS, "Returns the code value" },
-    { "to_text", (PyCFunction)Opcode_toText, METH_NOARGS, "Returns the text representation" },
-    { "QUERY", (PyCFunction)Opcode_QUERY, METH_NOARGS | METH_STATIC, "Creates a QUERY Opcode" },
-    { "IQUERY", (PyCFunction)Opcode_IQUERY, METH_NOARGS | METH_STATIC, "Creates a IQUERY Opcode" },
-    { "STATUS", (PyCFunction)Opcode_STATUS, METH_NOARGS | METH_STATIC, "Creates a STATUS Opcode" },
-    { "RESERVED3", (PyCFunction)Opcode_RESERVED3, METH_NOARGS | METH_STATIC, "Creates a RESERVED3 Opcode" },
-    { "NOTIFY", (PyCFunction)Opcode_NOTIFY, METH_NOARGS | METH_STATIC, "Creates a NOTIFY Opcode" },
-    { "UPDATE", (PyCFunction)Opcode_UPDATE, METH_NOARGS | METH_STATIC, "Creates a UPDATE Opcode" },
-    { "RESERVED6", (PyCFunction)Opcode_RESERVED6, METH_NOARGS | METH_STATIC, "Creates a RESERVED Opcode" },
-    { "RESERVED7", (PyCFunction)Opcode_RESERVED7, METH_NOARGS | METH_STATIC, "Creates a RESERVED Opcode" },
-    { "RESERVED8", (PyCFunction)Opcode_RESERVED8, METH_NOARGS | METH_STATIC, "Creates a RESERVED Opcode" },
-    { "RESERVED9", (PyCFunction)Opcode_RESERVED9, METH_NOARGS | METH_STATIC, "Creates a RESERVED Opcode" },
-    { "RESERVED10", (PyCFunction)Opcode_RESERVED10, METH_NOARGS | METH_STATIC, "Creates a RESERVED Opcode" },
-    { "RESERVED11", (PyCFunction)Opcode_RESERVED11, METH_NOARGS | METH_STATIC, "Creates a RESERVED Opcode" },
-    { "RESERVED12", (PyCFunction)Opcode_RESERVED12, METH_NOARGS | METH_STATIC, "Creates a RESERVED Opcode" },
-    { "RESERVED13", (PyCFunction)Opcode_RESERVED13, METH_NOARGS | METH_STATIC, "Creates a RESERVED Opcode" },
-    { "RESERVED14", (PyCFunction)Opcode_RESERVED14, METH_NOARGS | METH_STATIC, "Creates a RESERVED Opcode" },
-    { "RESERVED15", (PyCFunction)Opcode_RESERVED15, METH_NOARGS | METH_STATIC, "Creates a RESERVED Opcode" },
+    { "get_code", reinterpret_cast<PyCFunction>(Opcode_getCode), METH_NOARGS, "Returns the code value" },
+    { "to_text", reinterpret_cast<PyCFunction>(Opcode_toText), METH_NOARGS, "Returns the text representation" },
+    { "QUERY", reinterpret_cast<PyCFunction>(Opcode_QUERY), METH_NOARGS | METH_STATIC, "Creates a QUERY Opcode" },
+    { "IQUERY", reinterpret_cast<PyCFunction>(Opcode_IQUERY), METH_NOARGS | METH_STATIC, "Creates a IQUERY Opcode" },
+    { "STATUS", reinterpret_cast<PyCFunction>(Opcode_STATUS), METH_NOARGS | METH_STATIC, "Creates a STATUS Opcode" },
+    { "RESERVED3", reinterpret_cast<PyCFunction>(Opcode_RESERVED3), METH_NOARGS | METH_STATIC, "Creates a RESERVED3 Opcode" },
+    { "NOTIFY", reinterpret_cast<PyCFunction>(Opcode_NOTIFY), METH_NOARGS | METH_STATIC, "Creates a NOTIFY Opcode" },
+    { "UPDATE", reinterpret_cast<PyCFunction>(Opcode_UPDATE), METH_NOARGS | METH_STATIC, "Creates a UPDATE Opcode" },
+    { "RESERVED6", reinterpret_cast<PyCFunction>(Opcode_RESERVED6), METH_NOARGS | METH_STATIC, "Creates a RESERVED Opcode" },
+    { "RESERVED7", reinterpret_cast<PyCFunction>(Opcode_RESERVED7), METH_NOARGS | METH_STATIC, "Creates a RESERVED Opcode" },
+    { "RESERVED8", reinterpret_cast<PyCFunction>(Opcode_RESERVED8), METH_NOARGS | METH_STATIC, "Creates a RESERVED Opcode" },
+    { "RESERVED9", reinterpret_cast<PyCFunction>(Opcode_RESERVED9), METH_NOARGS | METH_STATIC, "Creates a RESERVED Opcode" },
+    { "RESERVED10", reinterpret_cast<PyCFunction>(Opcode_RESERVED10), METH_NOARGS | METH_STATIC, "Creates a RESERVED Opcode" },
+    { "RESERVED11", reinterpret_cast<PyCFunction>(Opcode_RESERVED11), METH_NOARGS | METH_STATIC, "Creates a RESERVED Opcode" },
+    { "RESERVED12", reinterpret_cast<PyCFunction>(Opcode_RESERVED12), METH_NOARGS | METH_STATIC, "Creates a RESERVED Opcode" },
+    { "RESERVED13", reinterpret_cast<PyCFunction>(Opcode_RESERVED13), METH_NOARGS | METH_STATIC, "Creates a RESERVED Opcode" },
+    { "RESERVED14", reinterpret_cast<PyCFunction>(Opcode_RESERVED14), METH_NOARGS | METH_STATIC, "Creates a RESERVED Opcode" },
+    { "RESERVED15", reinterpret_cast<PyCFunction>(Opcode_RESERVED15), METH_NOARGS | METH_STATIC, "Creates a RESERVED Opcode" },
     { NULL, NULL, 0, NULL }
 };
 
@@ -379,7 +379,9 @@ Opcode_toText(s_Opcode* self) {
 static PyObject*
 Opcode_str(PyObject* self) {
     // Simply call the to_text method we already defined
-    return PyObject_CallMethod(self, (char*)"to_text", (char*)"");
+    return PyObject_CallMethod(self,
+                               const_cast<char*>("to_text"),
+                               const_cast<char*>(""));
 }
 
 static PyObject*
@@ -392,7 +394,7 @@ Opcode_QUERY(s_Opcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -405,7 +407,7 @@ Opcode_IQUERY(s_Opcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -418,7 +420,7 @@ Opcode_STATUS(s_Opcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -431,7 +433,7 @@ Opcode_RESERVED3(s_Opcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -444,7 +446,7 @@ Opcode_NOTIFY(s_Opcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -457,7 +459,7 @@ Opcode_UPDATE(s_Opcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -470,7 +472,7 @@ Opcode_RESERVED6(s_Opcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -483,7 +485,7 @@ Opcode_RESERVED7(s_Opcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -496,7 +498,7 @@ Opcode_RESERVED8(s_Opcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -509,7 +511,7 @@ Opcode_RESERVED9(s_Opcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -522,7 +524,7 @@ Opcode_RESERVED10(s_Opcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -535,7 +537,7 @@ Opcode_RESERVED11(s_Opcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -548,7 +550,7 @@ Opcode_RESERVED12(s_Opcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -561,7 +563,7 @@ Opcode_RESERVED13(s_Opcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -574,7 +576,7 @@ Opcode_RESERVED14(s_Opcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -587,7 +589,7 @@ Opcode_RESERVED15(s_Opcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject* 
@@ -597,7 +599,7 @@ Opcode_richcmp(s_Opcode* self, s_Opcode* other, int op) {
     // Check for null and if the types match. If different type,
     // simply return False
     if (!other ||
-        ((PyObject*)self)->ob_type != ((PyObject*)other)->ob_type
+        (reinterpret_cast<PyObject*>(self))->ob_type != (reinterpret_cast<PyObject*>(other))->ob_type
        ) {
         Py_RETURN_FALSE;
     }
@@ -680,25 +682,25 @@ static PyObject* Rcode_BADVERS(s_Rcode* self);
 static PyObject* Rcode_richcmp(s_Rcode* self, s_Rcode* other, int op);
 
 static PyMethodDef Rcode_methods[] = {
-    { "get_code", (PyCFunction)Rcode_getCode, METH_NOARGS, "Returns the code value" },
-    { "to_text", (PyCFunction)Rcode_toText, METH_NOARGS, "Returns the text representation" },
-    { "NOERROR", (PyCFunction)Rcode_NOERROR, METH_NOARGS | METH_STATIC, "Creates a NOERROR Rcode" },
-    { "FORMERR", (PyCFunction)Rcode_FORMERR, METH_NOARGS | METH_STATIC, "Creates a FORMERR Rcode" },
-    { "SERVFAIL", (PyCFunction)Rcode_SERVFAIL, METH_NOARGS | METH_STATIC, "Creates a SERVFAIL Rcode" },
-    { "NXDOMAIN", (PyCFunction)Rcode_NXDOMAIN, METH_NOARGS | METH_STATIC, "Creates a NXDOMAIN Rcode" },
-    { "NOTIMP", (PyCFunction)Rcode_NOTIMP, METH_NOARGS | METH_STATIC, "Creates a NOTIMP Rcode" },
-    { "REFUSED", (PyCFunction)Rcode_REFUSED, METH_NOARGS | METH_STATIC, "Creates a REFUSED Rcode" },
-    { "YXDOMAIN", (PyCFunction)Rcode_YXDOMAIN, METH_NOARGS | METH_STATIC, "Creates a RESERVED Rcode" },
-    { "YXRRSET", (PyCFunction)Rcode_YXRRSET, METH_NOARGS | METH_STATIC, "Creates a RESERVED Rcode" },
-    { "NXRRSET", (PyCFunction)Rcode_NXRRSET, METH_NOARGS | METH_STATIC, "Creates a RESERVED Rcode" },
-    { "NOTAUTH", (PyCFunction)Rcode_NOTAUTH, METH_NOARGS | METH_STATIC, "Creates a RESERVED Rcode" },
-    { "NOTZONE", (PyCFunction)Rcode_NOTZONE, METH_NOARGS | METH_STATIC, "Creates a RESERVED Rcode" },
-    { "RESERVED11", (PyCFunction)Rcode_RESERVED11, METH_NOARGS | METH_STATIC, "Creates a RESERVED Rcode" },
-    { "RESERVED12", (PyCFunction)Rcode_RESERVED12, METH_NOARGS | METH_STATIC, "Creates a RESERVED Rcode" },
-    { "RESERVED13", (PyCFunction)Rcode_RESERVED13, METH_NOARGS | METH_STATIC, "Creates a RESERVED Rcode" },
-    { "RESERVED14", (PyCFunction)Rcode_RESERVED14, METH_NOARGS | METH_STATIC, "Creates a RESERVED Rcode" },
-    { "RESERVED15", (PyCFunction)Rcode_RESERVED15, METH_NOARGS | METH_STATIC, "Creates a RESERVED Rcode" },
-    { "BADVERS", (PyCFunction)Rcode_BADVERS, METH_NOARGS | METH_STATIC, "Creates a BADVERS Rcode" },
+    { "get_code", reinterpret_cast<PyCFunction>(Rcode_getCode), METH_NOARGS, "Returns the code value" },
+    { "to_text", reinterpret_cast<PyCFunction>(Rcode_toText), METH_NOARGS, "Returns the text representation" },
+    { "NOERROR", reinterpret_cast<PyCFunction>(Rcode_NOERROR), METH_NOARGS | METH_STATIC, "Creates a NOERROR Rcode" },
+    { "FORMERR", reinterpret_cast<PyCFunction>(Rcode_FORMERR), METH_NOARGS | METH_STATIC, "Creates a FORMERR Rcode" },
+    { "SERVFAIL", reinterpret_cast<PyCFunction>(Rcode_SERVFAIL), METH_NOARGS | METH_STATIC, "Creates a SERVFAIL Rcode" },
+    { "NXDOMAIN", reinterpret_cast<PyCFunction>(Rcode_NXDOMAIN), METH_NOARGS | METH_STATIC, "Creates a NXDOMAIN Rcode" },
+    { "NOTIMP", reinterpret_cast<PyCFunction>(Rcode_NOTIMP), METH_NOARGS | METH_STATIC, "Creates a NOTIMP Rcode" },
+    { "REFUSED", reinterpret_cast<PyCFunction>(Rcode_REFUSED), METH_NOARGS | METH_STATIC, "Creates a REFUSED Rcode" },
+    { "YXDOMAIN", reinterpret_cast<PyCFunction>(Rcode_YXDOMAIN), METH_NOARGS | METH_STATIC, "Creates a RESERVED Rcode" },
+    { "YXRRSET", reinterpret_cast<PyCFunction>(Rcode_YXRRSET), METH_NOARGS | METH_STATIC, "Creates a RESERVED Rcode" },
+    { "NXRRSET", reinterpret_cast<PyCFunction>(Rcode_NXRRSET), METH_NOARGS | METH_STATIC, "Creates a RESERVED Rcode" },
+    { "NOTAUTH", reinterpret_cast<PyCFunction>(Rcode_NOTAUTH), METH_NOARGS | METH_STATIC, "Creates a RESERVED Rcode" },
+    { "NOTZONE", reinterpret_cast<PyCFunction>(Rcode_NOTZONE), METH_NOARGS | METH_STATIC, "Creates a RESERVED Rcode" },
+    { "RESERVED11", reinterpret_cast<PyCFunction>(Rcode_RESERVED11), METH_NOARGS | METH_STATIC, "Creates a RESERVED Rcode" },
+    { "RESERVED12", reinterpret_cast<PyCFunction>(Rcode_RESERVED12), METH_NOARGS | METH_STATIC, "Creates a RESERVED Rcode" },
+    { "RESERVED13", reinterpret_cast<PyCFunction>(Rcode_RESERVED13), METH_NOARGS | METH_STATIC, "Creates a RESERVED Rcode" },
+    { "RESERVED14", reinterpret_cast<PyCFunction>(Rcode_RESERVED14), METH_NOARGS | METH_STATIC, "Creates a RESERVED Rcode" },
+    { "RESERVED15", reinterpret_cast<PyCFunction>(Rcode_RESERVED15), METH_NOARGS | METH_STATIC, "Creates a RESERVED Rcode" },
+    { "BADVERS", reinterpret_cast<PyCFunction>(Rcode_BADVERS), METH_NOARGS | METH_STATIC, "Creates a BADVERS Rcode" },
     { NULL, NULL, 0, NULL }
 };
 
@@ -799,7 +801,9 @@ Rcode_toText(s_Rcode* self) {
 static PyObject*
 Rcode_str(PyObject* self) {
     // Simply call the to_text method we already defined
-    return PyObject_CallMethod(self, (char*)"to_text", (char*)"");
+    return PyObject_CallMethod(self,
+                               const_cast<char*>("to_text"),
+                               const_cast<char*>(""));
 }
 
 static PyObject*
@@ -813,7 +817,7 @@ Rcode_NOERROR(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -827,7 +831,7 @@ Rcode_FORMERR(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -841,7 +845,7 @@ Rcode_SERVFAIL(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -855,7 +859,7 @@ Rcode_NXDOMAIN(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -869,7 +873,7 @@ Rcode_NOTIMP(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -883,7 +887,7 @@ Rcode_REFUSED(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -897,7 +901,7 @@ Rcode_YXDOMAIN(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -911,7 +915,7 @@ Rcode_YXRRSET(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -925,7 +929,7 @@ Rcode_NXRRSET(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -939,7 +943,7 @@ Rcode_NOTAUTH(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -953,7 +957,7 @@ Rcode_NOTZONE(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -967,7 +971,7 @@ Rcode_RESERVED11(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -981,7 +985,7 @@ Rcode_RESERVED12(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -995,7 +999,7 @@ Rcode_RESERVED13(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -1009,7 +1013,7 @@ Rcode_RESERVED14(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -1023,7 +1027,7 @@ Rcode_RESERVED15(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -1037,7 +1041,7 @@ Rcode_BADVERS(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject* 
@@ -1047,7 +1051,7 @@ Rcode_richcmp(s_Rcode* self, s_Rcode* other, int op) {
     // Check for null and if the types match. If different type,
     // simply return False
     if (!other ||
-        ((PyObject*)self)->ob_type != ((PyObject*)other)->ob_type
+        (reinterpret_cast<PyObject*>(self))->ob_type != (reinterpret_cast<PyObject*>(other))->ob_type
        ) {
         Py_RETURN_FALSE;
     }
@@ -1110,11 +1114,11 @@ static PyObject* Section_ADDITIONAL(s_Section* self);
 static PyObject* Section_richcmp(s_Section* self, s_Section* other, int op);
 
 static PyMethodDef Section_methods[] = {
-    { "get_code", (PyCFunction)Section_getCode, METH_NOARGS, "Returns the code value" },
-    { "QUESTION", (PyCFunction)Section_QUESTION, METH_NOARGS | METH_STATIC, "Creates a QUESTION Section" },
-    { "ANSWER", (PyCFunction)Section_ANSWER, METH_NOARGS | METH_STATIC, "Creates an ANSWER Section" },
-    { "AUTHORITY", (PyCFunction)Section_AUTHORITY, METH_NOARGS | METH_STATIC, "Creates an AUTHORITY Section" },
-    { "ADDITIONAL", (PyCFunction)Section_ADDITIONAL, METH_NOARGS | METH_STATIC, "Creates an ADDITIONAL Section" },
+    { "get_code", reinterpret_cast<PyCFunction>(Section_getCode), METH_NOARGS, "Returns the code value" },
+    { "QUESTION", reinterpret_cast<PyCFunction>(Section_QUESTION), METH_NOARGS | METH_STATIC, "Creates a QUESTION Section" },
+    { "ANSWER", reinterpret_cast<PyCFunction>(Section_ANSWER), METH_NOARGS | METH_STATIC, "Creates an ANSWER Section" },
+    { "AUTHORITY", reinterpret_cast<PyCFunction>(Section_AUTHORITY), METH_NOARGS | METH_STATIC, "Creates an AUTHORITY Section" },
+    { "ADDITIONAL", reinterpret_cast<PyCFunction>(Section_ADDITIONAL), METH_NOARGS | METH_STATIC, "Creates an ADDITIONAL Section" },
     { NULL, NULL, 0, NULL }
 };
 
@@ -1205,7 +1209,7 @@ Section_QUESTION(s_Section* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -1218,7 +1222,7 @@ Section_ANSWER(s_Section* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -1231,7 +1235,7 @@ Section_AUTHORITY(s_Section* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -1244,7 +1248,7 @@ Section_ADDITIONAL(s_Section* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject* 
@@ -1254,7 +1258,7 @@ Section_richcmp(s_Section* self, s_Section* other, int op) {
     // Check for null and if the types match. If different type,
     // simply return False
     if (!other ||
-        ((PyObject*)self)->ob_type != ((PyObject*)other)->ob_type
+        (reinterpret_cast<PyObject*>(self))->ob_type != (reinterpret_cast<PyObject*>(other))->ob_type
        ) {
         Py_RETURN_FALSE;
     }
@@ -1354,28 +1358,28 @@ static PyObject* Message_fromWire(s_Message* self, PyObject* args);
 // 3. Argument type
 // 4. Documentation
 static PyMethodDef Message_methods[] = {
-    { "get_header_flag", (PyCFunction)Message_getHeaderFlag, METH_VARARGS,
+    { "get_header_flag", reinterpret_cast<PyCFunction>(Message_getHeaderFlag), METH_VARARGS,
       "Return whether the specified header flag bit is set in the "
       "header section. Takes a MessageFlag object as the only argument." },
-    { "set_header_flag", (PyCFunction)Message_setHeaderFlag, METH_VARARGS,
+    { "set_header_flag", reinterpret_cast<PyCFunction>(Message_setHeaderFlag), METH_VARARGS,
       "Sets the specified header flag bit to 1. The message must be in "
       "RENDER mode. If not, an InvalidMessageOperation is raised. "
       "Takes a MessageFlag object as the only argument." },
-    { "clear_header_flag", (PyCFunction)Message_clearHeaderFlag, METH_VARARGS, 
+    { "clear_header_flag", reinterpret_cast<PyCFunction>(Message_clearHeaderFlag), METH_VARARGS, 
       "Sets the specified header flag bit to 0. The message must be in "
       "RENDER mode. If not, an InvalidMessageOperation is raised. "
       "Takes a MessageFlag object as the only argument." },
-    { "is_dnssec_supported", (PyCFunction)Message_isDNSSECSupported, METH_NOARGS,
+    { "is_dnssec_supported", reinterpret_cast<PyCFunction>(Message_isDNSSECSupported), METH_NOARGS,
       "Returns True if the message sender indicates DNSSEC is supported. "
       "If EDNS is included, this corresponds to the value of the DO bit. "
       "Otherwise, DNSSEC is considered not supported." },
-    { "set_dnssec_supported", (PyCFunction)Message_setDNSSECSupported, METH_VARARGS,
+    { "set_dnssec_supported", reinterpret_cast<PyCFunction>(Message_setDNSSECSupported), METH_VARARGS,
       "Specify whether DNSSEC is supported in the message. "
       "The message must be in RENDER mode. If not, an "
       "InvalidMessageOperation is raised."
       "If EDNS is included in the message, the DO bit is set or cleared "
       "according to given argument (True or False) of this method."},
-    { "get_udp_size", (PyCFunction)Message_getUDPSize, METH_NOARGS,
+    { "get_udp_size", reinterpret_cast<PyCFunction>(Message_getUDPSize), METH_NOARGS,
       "Return the maximum buffer size of UDP messages for the sender "
       "of the message.\n\n"
       "The semantics of this value is different based on the mode:\n"
@@ -1383,7 +1387,7 @@ static PyMethodDef Message_methods[] = {
       "in the RENDER mode, it means the buffer size of the local node.\n\n"
       "In either case, its value is the value of the UDP payload size field "
       "of EDNS (when it's included) or DEFAULT_MAX_UDPSIZE." },
-    { "set_udp_size", (PyCFunction)Message_setUDPSize, METH_VARARGS,
+    { "set_udp_size", reinterpret_cast<PyCFunction>(Message_setUDPSize), METH_VARARGS,
       "Specify the maximum buffer size of UDP messages of the local "
       "node. If the message is not in RENDER mode, an "
       "InvalidMessageOperation is raised.\n\n"
@@ -1394,60 +1398,60 @@ static PyMethodDef Message_methods[] = {
       "included or not.  This means if an application wants to send a message "
       "with an EDNS OPT RR for specifying a larger UDP size, it must explicitly "
       "specify the value using this method. "},
-    { "get_qid", (PyCFunction)Message_getQid, METH_NOARGS,
+    { "get_qid", reinterpret_cast<PyCFunction>(Message_getQid), METH_NOARGS,
       "Returns the query id" },
-    { "set_qid", (PyCFunction)Message_setQid, METH_VARARGS,
+    { "set_qid", reinterpret_cast<PyCFunction>(Message_setQid), METH_VARARGS,
       "Sets the query id. If the message is not in RENDER mode, an "
       "InvalidMessageOperation is raised.\n"
       "The argument must be an integer" },
-    { "get_rcode", (PyCFunction)Message_getRcode, METH_NOARGS,
+    { "get_rcode", reinterpret_cast<PyCFunction>(Message_getRcode), METH_NOARGS,
       "Returns the message Response code (an Rcode object)" },
-    { "set_rcode", (PyCFunction)Message_setRcode, METH_VARARGS,
+    { "set_rcode", reinterpret_cast<PyCFunction>(Message_setRcode), METH_VARARGS,
       "Sets the message Response code (an Rcode object).\n"
       "If the message is not in RENDER mode, an "
       "InvalidMessageOperation is raised."},
-    { "get_opcode", (PyCFunction)Message_getOpcode, METH_NOARGS,
+    { "get_opcode", reinterpret_cast<PyCFunction>(Message_getOpcode), METH_NOARGS,
       "Returns the message opcode (an Opcode object)" },
-    { "set_opcode", (PyCFunction)Message_setOpcode, METH_VARARGS,
+    { "set_opcode", reinterpret_cast<PyCFunction>(Message_setOpcode), METH_VARARGS,
       "Sets the message opcode (an Opcode object).\n"
       "If the message is not in RENDER mode, an "
       "InvalidMessageOperation is raised."},
-    { "get_rr_count", (PyCFunction)Message_getRRCount, METH_VARARGS,
+    { "get_rr_count", reinterpret_cast<PyCFunction>(Message_getRRCount), METH_VARARGS,
       "Returns the number of RRs contained in the given section." },
-    { "get_question", (PyCFunction)Message_getQuestion, METH_NOARGS,
+    { "get_question", reinterpret_cast<PyCFunction>(Message_getQuestion), METH_NOARGS,
       "Returns a list of all Question objects in the message "
       "(should be either 0 or 1)" },
-    { "get_section", (PyCFunction)Message_getSection, METH_VARARGS,
+    { "get_section", reinterpret_cast<PyCFunction>(Message_getSection), METH_VARARGS,
       "Returns a list of all RRset objects in the given section of the message\n"
       "The argument must be of type Section" },
-    { "add_question", (PyCFunction)Message_addQuestion, METH_VARARGS,
+    { "add_question", reinterpret_cast<PyCFunction>(Message_addQuestion), METH_VARARGS,
       "Add a Question to the message."
       "If the message is not in RENDER mode, an "
       "InvalidMessageOperation is raised."},
-    { "add_rrset", (PyCFunction)Message_addRRset, METH_VARARGS,
+    { "add_rrset", reinterpret_cast<PyCFunction>(Message_addRRset), METH_VARARGS,
       "Add an RRset to the given section of the message.\n"
       "The first argument is of type Section\n"
       "The second is of type RRset\n"
       "The third argument is an optional Boolean specifying whether "
       "the RRset is signed"},
-    { "clear", (PyCFunction)Message_clear, METH_VARARGS,
+    { "clear", reinterpret_cast<PyCFunction>(Message_clear), METH_VARARGS,
       "Clears the message content (if any) and reinitialize the "
       "message in the given mode\n"
       "The argument must be either Message.PARSE or Message.RENDER"},
-    { "make_response", (PyCFunction)Message_makeResponse, METH_NOARGS,
+    { "make_response", reinterpret_cast<PyCFunction>(Message_makeResponse), METH_NOARGS,
       "Prepare for making a response from a request.\n"
       "This will clear the DNS header except those fields that should be kept "
       "for the response, and clear answer and the following sections. "
       "See also dns_message_reply() of BIND9."},
-    { "to_text", (PyCFunction)Message_toText, METH_NOARGS,
+    { "to_text", reinterpret_cast<PyCFunction>(Message_toText), METH_NOARGS,
       "Returns the string representation of the message" },
-    { "to_wire", (PyCFunction)Message_toWire, METH_VARARGS,
+    { "to_wire", reinterpret_cast<PyCFunction>(Message_toWire), METH_VARARGS,
       "Render the message in wire format.\n"
       "The argument must be a MessageRenderer.\n"
       "If the given message is not in RENDER mode, an "
       "InvalidMessageOperation is raised.\n"
        },
-    { "from_wire", (PyCFunction)Message_fromWire, METH_VARARGS,
+    { "from_wire", reinterpret_cast<PyCFunction>(Message_fromWire), METH_VARARGS,
       "Parses the given wire format to a Message object.\n"
       "The first argument is a Message to parse the data into.\n"
       "The second argument must implement the buffer interface.\n"
@@ -1671,7 +1675,7 @@ static PyObject*
 Message_getRcode(s_Message* self) {
     s_Rcode* rcode;
 
-    rcode = (s_Rcode*)rcode_type.tp_alloc(&rcode_type, 0);
+    rcode = reinterpret_cast<s_Rcode*>(rcode_type.tp_alloc(&rcode_type, 0));
     if (rcode != NULL) {
         rcode->rcode = new Rcode(self->message->getRcode());
         if (rcode->rcode == NULL)
@@ -1681,7 +1685,7 @@ Message_getRcode(s_Message* self) {
           }
     }
 
-    return (PyObject*)rcode;
+    return reinterpret_cast<PyObject*>(rcode);
 }
 
 static PyObject*
@@ -1698,7 +1702,7 @@ static PyObject*
 Message_getOpcode(s_Message* self) {
     s_Opcode* opcode;
 
-    opcode = (s_Opcode*)opcode_type.tp_alloc(&opcode_type, 0);
+    opcode = reinterpret_cast<s_Opcode*>(opcode_type.tp_alloc(&opcode_type, 0));
     if (opcode != NULL) {
         // Note that we do not new and delete for opcodes.
         // all rcodes point to the statics defined in
@@ -1711,7 +1715,7 @@ Message_getOpcode(s_Message* self) {
           }
     }
 
-    return (PyObject*)opcode;
+    return reinterpret_cast<PyObject*>(opcode);
 }
 
 static PyObject*
@@ -1741,7 +1745,7 @@ Message_getQuestion(s_Message* self) {
     for (QuestionIterator qi = self->message->beginQuestion();
          qi != self->message->endQuestion();
          ++qi) {
-        s_Question *question = (s_Question*)question_type.tp_alloc(&question_type, 0);
+        s_Question *question = reinterpret_cast<s_Question*>(question_type.tp_alloc(&question_type, 0));
         if (question != NULL) {
             question->question = *qi;
             if (question->question == NULL)
@@ -1750,7 +1754,7 @@ Message_getQuestion(s_Message* self) {
                 return NULL;
               }
         }
-        PyList_Append(list, (PyObject*) question);
+        PyList_Append(list, reinterpret_cast<PyObject*>(question));
     }
     return list;
 }
@@ -1767,7 +1771,7 @@ Message_getSection(s_Message* self, PyObject* args) {
          rrsi != self->message->endSection(*section->section);
          ++rrsi) {
 
-        s_RRset *rrset = (s_RRset*)rrset_type.tp_alloc(&rrset_type, 0);
+        s_RRset *rrset = reinterpret_cast<s_RRset*>(rrset_type.tp_alloc(&rrset_type, 0));
         if (rrset != NULL) {
             rrset->rrset = *rrsi;
             if (rrset->rrset == NULL)
@@ -1777,7 +1781,7 @@ Message_getSection(s_Message* self, PyObject* args) {
                 return NULL;
               }
         }
-        PyList_Append(list, (PyObject*) rrset);
+        PyList_Append(list, reinterpret_cast<PyObject*>(rrset));
         // PyList_Append increases refcount, so we remove ours since
         // we don't need it anymore
         Py_DECREF(rrset);
@@ -1861,7 +1865,9 @@ Message_toText(s_Message* self) {
 static PyObject*
 Message_str(PyObject* self) {
     // Simply call the to_text method we already defined
-    return PyObject_CallMethod(self, (char*)"to_text", (char*)"");
+    return PyObject_CallMethod(self,
+                               const_cast<char*>("to_text"),
+                               const_cast<char*>(""));
 }
 
 static PyObject*
@@ -1923,7 +1929,7 @@ initModulePart_Message(PyObject* mod) {
     }
     Py_INCREF(&messageflag_type);
     PyModule_AddObject(mod, "MessageFlag",
-                       (PyObject*) &messageflag_type);
+                       reinterpret_cast<PyObject*>(&messageflag_type));
 
     
     if (PyType_Ready(&opcode_type) < 0) {
@@ -1931,21 +1937,21 @@ initModulePart_Message(PyObject* mod) {
     }
     Py_INCREF(&opcode_type);
     PyModule_AddObject(mod, "Opcode",
-                       (PyObject*) &opcode_type);
+                       reinterpret_cast<PyObject*>(&opcode_type));
 
     if (PyType_Ready(&rcode_type) < 0) {
         return false;
     }
     Py_INCREF(&rcode_type);
     PyModule_AddObject(mod, "Rcode",
-                       (PyObject*) &rcode_type);
+                       reinterpret_cast<PyObject*>(&rcode_type));
 
     if (PyType_Ready(&section_type) < 0) {
         return false;
     }
     Py_INCREF(&section_type);
     PyModule_AddObject(mod, "Section",
-                       (PyObject*) &section_type);
+                       reinterpret_cast<PyObject*>(&section_type));
 
     
     if (PyType_Ready(&message_type) < 0) {
@@ -1973,7 +1979,7 @@ initModulePart_Message(PyObject* mod) {
 
     Py_INCREF(&message_type);
     PyModule_AddObject(mod, "Message",
-                       (PyObject*) &message_type);
+                       reinterpret_cast<PyObject*>(&message_type));
 
 
     return true;

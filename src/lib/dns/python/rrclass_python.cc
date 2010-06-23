@@ -76,22 +76,22 @@ static PyObject* RRClass_ANY(s_RRClass *self);
 // 3. Argument type
 // 4. Documentation
 static PyMethodDef RRClass_methods[] = {
-    { "to_text", (PyCFunction)RRClass_toText, METH_NOARGS,
+    { "to_text", reinterpret_cast<PyCFunction>(RRClass_toText), METH_NOARGS,
       "Returns the string representation" },
-    { "to_wire", (PyCFunction)RRClass_toWire, METH_VARARGS,
+    { "to_wire", reinterpret_cast<PyCFunction>(RRClass_toWire), METH_VARARGS,
       "Converts the RRClass object to wire format.\n"
       "The argument can be either a MessageRenderer or an object that "
       "implements the sequence interface. If the object is mutable "
       "(for instance a bytearray()), the wire data is added in-place.\n"
       "If it is not (for instance a bytes() object), a new object is "
       "returned" },
-    { "get_code", (PyCFunction)RRClass_getCode, METH_NOARGS,
+    { "get_code", reinterpret_cast<PyCFunction>(RRClass_getCode), METH_NOARGS,
       "Returns the class code as an integer" },
-    { "IN", (PyCFunction)RRClass_IN, METH_NOARGS | METH_STATIC, "Creates an IN RRClass" },
-    { "CH", (PyCFunction)RRClass_CH, METH_NOARGS | METH_STATIC, "Creates a CH RRClass" },
-    { "HS", (PyCFunction)RRClass_HS, METH_NOARGS | METH_STATIC, "Creates an HS RRClass" },
-    { "NONE", (PyCFunction)RRClass_NONE, METH_NOARGS | METH_STATIC, "Creates a NONE RRClass" },
-    { "ANY", (PyCFunction)RRClass_ANY, METH_NOARGS | METH_STATIC, "Creates an ANY RRClass" },
+    { "IN", reinterpret_cast<PyCFunction>(RRClass_IN), METH_NOARGS | METH_STATIC, "Creates an IN RRClass" },
+    { "CH", reinterpret_cast<PyCFunction>(RRClass_CH), METH_NOARGS | METH_STATIC, "Creates a CH RRClass" },
+    { "HS", reinterpret_cast<PyCFunction>(RRClass_HS), METH_NOARGS | METH_STATIC, "Creates an HS RRClass" },
+    { "NONE", reinterpret_cast<PyCFunction>(RRClass_NONE), METH_NOARGS | METH_STATIC, "Creates a NONE RRClass" },
+    { "ANY", reinterpret_cast<PyCFunction>(RRClass_ANY), METH_NOARGS | METH_STATIC, "Creates an ANY RRClass" },
     { NULL, NULL, 0, NULL }
 };
 
@@ -218,7 +218,9 @@ RRClass_toText(s_RRClass* self) {
 static PyObject*
 RRClass_str(PyObject* self) {
     // Simply call the to_text method we already defined
-    return PyObject_CallMethod(self, (char*)"to_text", (char*)"");
+    return PyObject_CallMethod(self,
+                               const_cast<char*>("to_text"),
+                               const_cast<char*>(""));
 }
 
 static PyObject*
@@ -261,7 +263,7 @@ RRClass_richcmp(s_RRClass* self, s_RRClass* other, int op) {
     // Check for null and if the types match. If different type,
     // simply return False
     if (!other ||
-        ((PyObject*)self)->ob_type != ((PyObject*)other)->ob_type
+        (reinterpret_cast<PyObject*>(self))->ob_type != (reinterpret_cast<PyObject*>(other))->ob_type
        ) {
         Py_RETURN_FALSE;
     }
@@ -305,7 +307,7 @@ static PyObject* RRClass_IN(s_RRClass *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject* RRClass_CH(s_RRClass *self UNUSED_PARAM) {
@@ -317,7 +319,7 @@ static PyObject* RRClass_CH(s_RRClass *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject* RRClass_HS(s_RRClass *self UNUSED_PARAM) {
@@ -329,7 +331,7 @@ static PyObject* RRClass_HS(s_RRClass *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject* RRClass_NONE(s_RRClass *self UNUSED_PARAM) {
@@ -341,7 +343,7 @@ static PyObject* RRClass_NONE(s_RRClass *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject* RRClass_ANY(s_RRClass *self UNUSED_PARAM) {
@@ -353,7 +355,7 @@ static PyObject* RRClass_ANY(s_RRClass *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 // end of RRClass
 
@@ -377,7 +379,7 @@ initModulePart_RRClass(PyObject* mod) {
     }
     Py_INCREF(&rrclass_type);
     PyModule_AddObject(mod, "RRClass",
-                       (PyObject*) &rrclass_type);
+                       reinterpret_cast<PyObject*>(&rrclass_type));
     
     return true;
 }

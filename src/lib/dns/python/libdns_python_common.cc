@@ -33,7 +33,7 @@ readDataFromSequence(uint8_t *data, size_t len, PyObject* sequence) {
                     "number in fromWire sequence not between 0 and 255");
                 return -1;
             }
-            data[i] = (uint8_t) PyLong_AsLong(el);
+            data[i] = static_cast<uint8_t>(PyLong_AsLong(el));
             PySequence_DelItem(sequence, 0);
         } else {
             PyErr_SetString(PyExc_TypeError,
