@@ -23,7 +23,6 @@
 //
 // And of course care has to be taken that all identifiers be unique
 
-// 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
@@ -39,16 +38,20 @@
 
 #include "libdns_python_common.h"
 
-// order is important here! (TODO: document dependencies)
+// For our 'general' isc::Exception
+static PyObject* po_IscException;
+
+// order is important here!
 #include "messagerenderer_python.cc"
-#include "name_python.cc"
-#include "rrclass_python.cc"
-#include "rrtype_python.cc"
-#include "rrttl_python.cc"
-#include "rdata_python.cc"
-#include "rrset_python.cc"
-#include "question_python.cc"
-#include "message_python.cc"
+#include "name_python.cc"           // needs Messagerenderer
+#include "rrclass_python.cc"        // needs Messagerenderer
+#include "rrtype_python.cc"         // needs Messagerenderer
+#include "rrttl_python.cc"          // needs Messagerenderer
+#include "rdata_python.cc"          // needs Type, Class
+#include "rrset_python.cc"          // needs Rdata, RRTTL
+#include "question_python.cc"       // needs RRClass, RRType, RRTTL,
+                                    //       Name
+#include "message_python.cc"        // needs RRset, Question
 
 //
 // Definition of the module
@@ -75,6 +78,9 @@ PyInit_libdns_python(void) {
     if (mod == NULL) {
         return NULL;
     }
+
+    po_IscException = PyErr_NewException("libdns_python.IscException", NULL, NULL);
+    PyModule_AddObject(mod, "IscException", po_IscException);
 
     // for each part included above, we call its specific initializer
 

@@ -255,10 +255,7 @@ RRTTL_richcmp(s_RRTTL* self, s_RRTTL* other, int op) {
 
     // Check for null and if the types match. If different type,
     // simply return False
-    if (!other ||
-        (static_cast<PyObject*>(self))->ob_type !=
-        (static_cast<PyObject*>(other))->ob_type
-       ) {
+    if (!other || (self->ob_type != other->ob_type)) {
         Py_RETURN_FALSE;
     }
 
@@ -271,10 +268,10 @@ RRTTL_richcmp(s_RRTTL* self, s_RRTTL* other, int op) {
             *self->rrttl == *other->rrttl;
         break;
     case Py_EQ:
-        c = self->rrttl->equals(*other->rrttl);
+        c = *self->rrttl == *other->rrttl;
         break;
     case Py_NE:
-        c = self->rrttl->nequals(*other->rrttl);
+        c = *self->rrttl != *other->rrttl;
         break;
     case Py_GT:
         c = *other->rrttl < *self->rrttl;

@@ -14,6 +14,8 @@
 
 // $Id$
 
+#ifndef __LIBDNS_PYTHON_COMMON_H
+#define __LIBDNS_PYTHON_COMMON_H 1
 
 //
 // Shared functions for python/c API
@@ -27,8 +29,10 @@
 // Data must be allocated and have at least len bytes available.
 //
 // The current implementation removes read items from the
-// head of the sequence (even if it fails it removes everything that
-// it successfully read)
+// head of the sequence, unless it fails (and returns -1), in which
+// case nothing is removed
 int readDataFromSequence(uint8_t *data, size_t len, PyObject* sequence);
 
 void addClassVariable(PyTypeObject& c, const char* name, PyObject* obj);
+
+#endif // __LIBDNS_PYTHON_COMMON_H

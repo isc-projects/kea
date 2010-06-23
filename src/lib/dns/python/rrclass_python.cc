@@ -262,9 +262,7 @@ RRClass_richcmp(s_RRClass* self, s_RRClass* other, int op) {
 
     // Check for null and if the types match. If different type,
     // simply return False
-    if (!other ||
-        (static_cast<PyObject*>(self))->ob_type != (static_cast<PyObject*>(other))->ob_type
-       ) {
+    if (!other || (self->ob_type != other->ob_type)) {
         Py_RETURN_FALSE;
     }
 
@@ -277,10 +275,10 @@ RRClass_richcmp(s_RRClass* self, s_RRClass* other, int op) {
             *self->rrclass == *other->rrclass;
         break;
     case Py_EQ:
-        c = self->rrclass->equals(*other->rrclass);
+        c = *self->rrclass == *other->rrclass;
         break;
     case Py_NE:
-        c = self->rrclass->nequals(*other->rrclass);
+        c = *self->rrclass != *other->rrclass;
         break;
     case Py_GT:
         c = *other->rrclass < *self->rrclass;

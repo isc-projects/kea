@@ -27,10 +27,6 @@ static PyObject* po_BadEscape;
 static PyObject* po_IncompleteName;
 static PyObject* po_InvalidBufferPosition;
 static PyObject* po_DNSMessageFORMERR;
-// This one's for our 'general' exception
-// TODO: does this need an according general class?
-// should we replace it with some more direct base exception?
-static PyObject* po_IscException;
 
 //
 // Declaration of enums
@@ -128,7 +124,6 @@ static PyTypeObject name_comparison_result_type = {
     0                                         // tp_version_tag
 };
 
-// TODO: is there also a way to just not define it?
 static int
 NameComparisonResult_init(s_NameComparisonResult* self UNUSED_PARAM,
                           PyObject* args UNUSED_PARAM)
@@ -512,31 +507,28 @@ Name_richcmp(s_Name* n1, s_Name* n2, int op) {
 
     // Check for null and if the types match. If different type,
     // simply return False
-    if (!n2 ||
-        (static_cast<PyObject*>(n1))->ob_type !=
-        (static_cast<PyObject*>(n2))->ob_type
-       ) {
+    if (!n2 || (n1->ob_type != n2->ob_type)) {
         Py_RETURN_FALSE;
     }
 
     switch (op) {
     case Py_LT:
-        c = n1->name->lthan(*n2->name);
+        c = *n1->name < *n2->name;
         break;
     case Py_LE:
-        c = n1->name->leq(*n2->name);
+        c = *n1->name <= *n2->name;
         break;
     case Py_EQ:
-        c = n1->name->equals(*n2->name);
+        c = *n1->name == *n2->name;
         break;
     case Py_NE:
-        c = n1->name->nequals(*n2->name);
+        c = *n1->name != *n2->name;
         break;
     case Py_GT:
-        c = n1->name->gthan(*n2->name);
+        c = *n1->name > *n2->name;
         break;
     case Py_GE:
-        c = n1->name->geq(*n2->name);
+        c = *n1->name >= *n2->name;
         break;
     default:
         assert(0);              // XXX: should trigger an exception
@@ -668,15 +660,10 @@ initModulePart_Name(PyObject* mod) {
     po_InvalidBufferPosition = PyErr_NewException("libdns_python.InvalidBufferPosition", NULL, NULL);
     PyModule_AddObject(mod, "InvalidBufferPosition", po_InvalidBufferPosition);
 
-    // TODO; this one is a message-specific one, move to message? 
+    // This one could have gone into the message_python.cc file, but is
+    // already needed here.
     po_DNSMessageFORMERR = PyErr_NewException("libdns_python.DNSMessageFORMERR", NULL, NULL);
-    Py_INCREF(po_DNSMessageFORMERR);
     PyModule_AddObject(mod, "DNSMessageFORMERR", po_DNSMessageFORMERR);
-
-    // TODO: this one is module-level, move to libdns_python.cc
-    po_IscException = PyErr_NewException("libdns_python.IscException", NULL, NULL);
-    Py_INCREF(po_IncompleteName);
-    PyModule_AddObject(mod, "IscException", po_IscException);
 
     PyModule_AddObject(mod, "Name",
                        reinterpret_cast<PyObject*>(&name_type));
