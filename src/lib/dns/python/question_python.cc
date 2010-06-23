@@ -128,8 +128,7 @@ static PyTypeObject question_type = {
 };
 
 static int
-Question_init(s_Question* self, PyObject* args)
-{
+Question_init(s_Question* self, PyObject* args) {
     // The constructor argument can be a string ("IN"), an integer (1),
     // or a sequence of numbers between 0 and 255 (wire code)
 
@@ -183,15 +182,13 @@ Question_init(s_Question* self, PyObject* args)
 }
 
 static void
-Question_destroy(s_Question* self)
-{
+Question_destroy(s_Question* self) {
     self->question.reset();
     Py_TYPE(self)->tp_free(self);
 }
 
 static PyObject*
-Question_getName(s_Question* self)
-{
+Question_getName(s_Question* self) {
     s_Name* name;
 
     // is this the best way to do this?
@@ -209,8 +206,7 @@ Question_getName(s_Question* self)
 }
 
 static PyObject*
-Question_getType(s_Question* self)
-{
+Question_getType(s_Question* self) {
     s_RRType* rrtype;
 
     rrtype = (s_RRType*)rrtype_type.tp_alloc(&rrtype_type, 0);
@@ -227,8 +223,7 @@ Question_getType(s_Question* self)
 }
 
 static PyObject*
-Question_getClass(s_Question* self)
-{
+Question_getClass(s_Question* self) {
     s_RRClass* rrclass;
 
     rrclass = (s_RRClass*)rrclass_type.tp_alloc(&rrclass_type, 0);
@@ -246,22 +241,19 @@ Question_getClass(s_Question* self)
 
 
 static PyObject*
-Question_toText(s_Question* self)
-{
+Question_toText(s_Question* self) {
     // Py_BuildValue makes python objects from native data
     return Py_BuildValue("s", self->question->toText().c_str());
 }
 
 static PyObject*
-Question_str(PyObject* self)
-{
+Question_str(PyObject* self) {
     // Simply call the to_text method we already defined
     return PyObject_CallMethod(self, (char*)"to_text", (char*)"");
 }
 
 static PyObject*
-Question_toWire(s_Question* self, PyObject* args)
-{
+Question_toWire(s_Question* self, PyObject* args) {
     PyObject* bytes;
     s_MessageRenderer* mr;
     
@@ -270,13 +262,15 @@ Question_toWire(s_Question* self, PyObject* args)
         
         OutputBuffer buffer(255);
         self->question->toWire(buffer);
-        PyObject* n = PyBytes_FromStringAndSize((const char*) buffer.getData(), buffer.getLength());
+        PyObject* n = PyBytes_FromStringAndSize((const char*) buffer.getData(),
+                                                buffer.getLength());
         PyObject* result = PySequence_InPlaceConcat(bytes_o, n);
         // We need to release the object we temporarily created here
         // to prevent memory leak
         Py_DECREF(n);
         return result;
-    } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, (PyObject**) &mr)) {
+    } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type,
+                                (PyObject**) &mr)) {
         self->question->toWire(*mr->messagerenderer);
         // If we return NULL it is seen as an error, so use this for
         // None returns
@@ -293,8 +287,7 @@ Question_toWire(s_Question* self, PyObject* args)
 
 // Module Initialization, all statics are initialized here
 bool
-initModulePart_Question(PyObject* mod)
-{
+initModulePart_Question(PyObject* mod) {
     // Add the exceptions to the module
 
     // We initialize the static description object with PyType_Ready(),

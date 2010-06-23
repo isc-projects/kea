@@ -37,7 +37,7 @@ static PyObject* po_IncompleteRRClass;
 // RRClass
 //
 
-// The s_* Class simply coverst one instantiation of the object
+// The s_* Class simply covers one instantiation of the object
 typedef struct {
     PyObject_HEAD
     RRClass* rrclass;
@@ -154,8 +154,7 @@ static PyTypeObject rrclass_type = {
 };
 
 static int
-RRClass_init(s_RRClass* self, PyObject* args)
-{
+RRClass_init(s_RRClass* self, PyObject* args) {
     const char* s;
     unsigned int i;
     PyObject* bytes = NULL;
@@ -203,8 +202,7 @@ RRClass_init(s_RRClass* self, PyObject* args)
 }
 
 static void
-RRClass_destroy(s_RRClass* self)
-{
+RRClass_destroy(s_RRClass* self) {
     if (self->rrclass != NULL)
         delete self->rrclass;
     self->rrclass = NULL;
@@ -212,22 +210,19 @@ RRClass_destroy(s_RRClass* self)
 }
 
 static PyObject*
-RRClass_toText(s_RRClass* self)
-{
+RRClass_toText(s_RRClass* self) {
     // Py_BuildValue makes python objects from native data
     return Py_BuildValue("s", self->rrclass->toText().c_str());
 }
 
 static PyObject*
-RRClass_str(PyObject* self)
-{
+RRClass_str(PyObject* self) {
     // Simply call the to_text method we already defined
     return PyObject_CallMethod(self, (char*)"to_text", (char*)"");
 }
 
 static PyObject*
-RRClass_toWire(s_RRClass* self, PyObject* args)
-{
+RRClass_toWire(s_RRClass* self, PyObject* args) {
     PyObject* bytes;
     s_MessageRenderer* mr;
     
@@ -255,14 +250,12 @@ RRClass_toWire(s_RRClass* self, PyObject* args)
 }
 
 static PyObject*
-RRClass_getCode(s_RRClass* self)
-{
+RRClass_getCode(s_RRClass* self) {
     return Py_BuildValue("I", self->rrclass->getCode());
 }
 
 static PyObject* 
-RRClass_richcmp(s_RRClass* self, s_RRClass* other, int op)
-{
+RRClass_richcmp(s_RRClass* self, s_RRClass* other, int op) {
     bool c;
 
     // Check for null and if the types match. If different type,
@@ -303,8 +296,7 @@ RRClass_richcmp(s_RRClass* self, s_RRClass* other, int op)
         Py_RETURN_FALSE;
 }
 
-static PyObject* RRClass_IN(s_RRClass *self UNUSED_PARAM)
-{
+static PyObject* RRClass_IN(s_RRClass *self UNUSED_PARAM) {
     s_RRClass* ret = PyObject_New(s_RRClass, &rrclass_type);
     if (ret != NULL) {
         ret->rrclass = new RRClass(RRClass::IN());
@@ -316,8 +308,7 @@ static PyObject* RRClass_IN(s_RRClass *self UNUSED_PARAM)
     return (PyObject*) ret;
 }
 
-static PyObject* RRClass_CH(s_RRClass *self UNUSED_PARAM)
-{
+static PyObject* RRClass_CH(s_RRClass *self UNUSED_PARAM) {
     s_RRClass* ret = PyObject_New(s_RRClass, &rrclass_type);
     if (ret != NULL) {
         ret->rrclass = new RRClass(RRClass::CH());
@@ -329,8 +320,7 @@ static PyObject* RRClass_CH(s_RRClass *self UNUSED_PARAM)
     return (PyObject*) ret;
 }
 
-static PyObject* RRClass_HS(s_RRClass *self UNUSED_PARAM)
-{
+static PyObject* RRClass_HS(s_RRClass *self UNUSED_PARAM) {
     s_RRClass* ret = PyObject_New(s_RRClass, &rrclass_type);
     if (ret != NULL) {
         ret->rrclass = new RRClass(RRClass::HS());
@@ -342,8 +332,7 @@ static PyObject* RRClass_HS(s_RRClass *self UNUSED_PARAM)
     return (PyObject*) ret;
 }
 
-static PyObject* RRClass_NONE(s_RRClass *self UNUSED_PARAM)
-{
+static PyObject* RRClass_NONE(s_RRClass *self UNUSED_PARAM) {
     s_RRClass* ret = PyObject_New(s_RRClass, &rrclass_type);
     if (ret != NULL) {
         ret->rrclass = new RRClass(RRClass::NONE());
@@ -355,8 +344,7 @@ static PyObject* RRClass_NONE(s_RRClass *self UNUSED_PARAM)
     return (PyObject*) ret;
 }
 
-static PyObject* RRClass_ANY(s_RRClass *self UNUSED_PARAM)
-{
+static PyObject* RRClass_ANY(s_RRClass *self UNUSED_PARAM) {
     s_RRClass* ret = PyObject_New(s_RRClass, &rrclass_type);
     if (ret != NULL) {
         ret->rrclass = new RRClass(RRClass::ANY());
@@ -372,8 +360,7 @@ static PyObject* RRClass_ANY(s_RRClass *self UNUSED_PARAM)
 
 // Module Initialization, all statics are initialized here
 bool
-initModulePart_RRClass(PyObject* mod)
-{
+initModulePart_RRClass(PyObject* mod) {
     // Add the exceptions to the module
     po_InvalidRRClass = PyErr_NewException("libdns_python.InvalidRRClass", NULL, NULL);
     Py_INCREF(po_InvalidRRClass);
