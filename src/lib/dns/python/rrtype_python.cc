@@ -38,10 +38,10 @@ static PyObject* po_IncompleteRRType;
 //
 
 // The s_* Class simply covers one instantiation of the object
-typedef struct {
-    PyObject_HEAD
+class s_RRType : public PyObject {
+public:
     const RRType* rrtype;
-} s_RRType;
+};
 
 //
 // We declare the functions here, the definitions are below
@@ -321,8 +321,8 @@ RRType_richcmp(s_RRType* self, s_RRType* other, int op) {
     // Check for null and if the types match. If different type,
     // simply return False
     if (!other ||
-        (reinterpret_cast<PyObject*>(self))->ob_type !=
-        (reinterpret_cast<PyObject*>(other))->ob_type
+        (static_cast<PyObject*>(self))->ob_type !=
+        (static_cast<PyObject*>(other))->ob_type
        ) {
         Py_RETURN_FALSE;
     }
@@ -367,7 +367,7 @@ RRType_NSEC3PARAM(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -380,7 +380,7 @@ RRType_DNAME(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -393,7 +393,7 @@ RRType_PTR(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -406,7 +406,7 @@ RRType_MX(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -419,7 +419,7 @@ RRType_DNSKEY(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -432,7 +432,7 @@ RRType_TXT(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -445,7 +445,7 @@ RRType_RRSIG(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -458,7 +458,7 @@ RRType_NSEC(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -471,7 +471,7 @@ RRType_AAAA(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -484,7 +484,7 @@ RRType_DS(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -497,7 +497,7 @@ RRType_OPT(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -510,7 +510,7 @@ RRType_A(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -523,7 +523,7 @@ RRType_NS(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -536,7 +536,7 @@ RRType_CNAME(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -549,7 +549,7 @@ RRType_SOA(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -562,7 +562,7 @@ RRType_NSEC3(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -575,7 +575,7 @@ RRType_IXFR(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -588,7 +588,7 @@ RRType_AXFR(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -601,7 +601,7 @@ RRType_ANY(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 

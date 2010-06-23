@@ -40,10 +40,10 @@ static PyObject* po_DNSMessageBADVERS;
 //
 // MessageFlag
 //
-typedef struct {
-    PyObject_HEAD
+class s_MessageFlag : public PyObject {
+public:
     const MessageFlag* messageflag;
-} s_MessageFlag;
+};
 
 static int MessageFlag_init(s_MessageFlag* self, PyObject* args);
 static void MessageFlag_destroy(s_MessageFlag* self);
@@ -156,7 +156,7 @@ MessageFlag_QR(s_MessageFlag* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -169,7 +169,7 @@ MessageFlag_AA(s_MessageFlag* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -182,7 +182,7 @@ MessageFlag_TC(s_MessageFlag* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -195,7 +195,7 @@ MessageFlag_RD(s_MessageFlag* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -208,7 +208,7 @@ MessageFlag_RA(s_MessageFlag* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -221,7 +221,7 @@ MessageFlag_AD(s_MessageFlag* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -234,7 +234,7 @@ MessageFlag_CD(s_MessageFlag* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 //
@@ -245,10 +245,10 @@ MessageFlag_CD(s_MessageFlag* self UNUSED_PARAM) {
 //
 // Opcode
 //
-typedef struct {
-    PyObject_HEAD
+class s_Opcode : public PyObject {
+public:
     const Opcode* opcode;
-} s_Opcode;
+};
 
 static int Opcode_init(s_Opcode* self, PyObject* args);
 static void Opcode_destroy(s_Opcode* self);
@@ -394,7 +394,7 @@ Opcode_QUERY(s_Opcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -407,7 +407,7 @@ Opcode_IQUERY(s_Opcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -420,7 +420,7 @@ Opcode_STATUS(s_Opcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -433,7 +433,7 @@ Opcode_RESERVED3(s_Opcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -446,7 +446,7 @@ Opcode_NOTIFY(s_Opcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -459,7 +459,7 @@ Opcode_UPDATE(s_Opcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -472,7 +472,7 @@ Opcode_RESERVED6(s_Opcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -485,7 +485,7 @@ Opcode_RESERVED7(s_Opcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -498,7 +498,7 @@ Opcode_RESERVED8(s_Opcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -511,7 +511,7 @@ Opcode_RESERVED9(s_Opcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -524,7 +524,7 @@ Opcode_RESERVED10(s_Opcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -537,7 +537,7 @@ Opcode_RESERVED11(s_Opcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -550,7 +550,7 @@ Opcode_RESERVED12(s_Opcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -563,7 +563,7 @@ Opcode_RESERVED13(s_Opcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -576,7 +576,7 @@ Opcode_RESERVED14(s_Opcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -589,7 +589,7 @@ Opcode_RESERVED15(s_Opcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject* 
@@ -599,7 +599,7 @@ Opcode_richcmp(s_Opcode* self, s_Opcode* other, int op) {
     // Check for null and if the types match. If different type,
     // simply return False
     if (!other ||
-        (reinterpret_cast<PyObject*>(self))->ob_type != (reinterpret_cast<PyObject*>(other))->ob_type
+        (static_cast<PyObject*>(self))->ob_type != (static_cast<PyObject*>(other))->ob_type
        ) {
         Py_RETURN_FALSE;
     }
@@ -650,11 +650,11 @@ Opcode_richcmp(s_Opcode* self, s_Opcode* other, int op) {
 // case Rcode_destroy should not free it (the other option is to
 // allocate new Rcodes for every use of the static ones, but this
 // seems more efficient).
-typedef struct {
-    PyObject_HEAD
+class s_Rcode : public PyObject {
+public:
     const Rcode* rcode;
     bool static_code;
-} s_Rcode;
+};
 
 static int Rcode_init(s_Rcode* self, PyObject* args);
 static void Rcode_destroy(s_Rcode* self);
@@ -817,7 +817,7 @@ Rcode_NOERROR(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -831,7 +831,7 @@ Rcode_FORMERR(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -845,7 +845,7 @@ Rcode_SERVFAIL(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -859,7 +859,7 @@ Rcode_NXDOMAIN(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -873,7 +873,7 @@ Rcode_NOTIMP(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -887,7 +887,7 @@ Rcode_REFUSED(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -901,7 +901,7 @@ Rcode_YXDOMAIN(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -915,7 +915,7 @@ Rcode_YXRRSET(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -929,7 +929,7 @@ Rcode_NXRRSET(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -943,7 +943,7 @@ Rcode_NOTAUTH(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -957,7 +957,7 @@ Rcode_NOTZONE(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -971,7 +971,7 @@ Rcode_RESERVED11(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -985,7 +985,7 @@ Rcode_RESERVED12(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -999,7 +999,7 @@ Rcode_RESERVED13(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -1013,7 +1013,7 @@ Rcode_RESERVED14(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -1027,7 +1027,7 @@ Rcode_RESERVED15(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -1041,7 +1041,7 @@ Rcode_BADVERS(s_Rcode* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject* 
@@ -1051,7 +1051,7 @@ Rcode_richcmp(s_Rcode* self, s_Rcode* other, int op) {
     // Check for null and if the types match. If different type,
     // simply return False
     if (!other ||
-        (reinterpret_cast<PyObject*>(self))->ob_type != (reinterpret_cast<PyObject*>(other))->ob_type
+        (static_cast<PyObject*>(self))->ob_type != (static_cast<PyObject*>(other))->ob_type
        ) {
         Py_RETURN_FALSE;
     }
@@ -1098,10 +1098,10 @@ Rcode_richcmp(s_Rcode* self, s_Rcode* other, int op) {
 
 // TODO: iterator?
 
-typedef struct {
-    PyObject_HEAD
+class s_Section : public PyObject {
+public:
     const Section* section;
-} s_Section;
+};
 
 static int Section_init(s_Section* self, PyObject* args);
 static void Section_destroy(s_Section* self);
@@ -1209,7 +1209,7 @@ Section_QUESTION(s_Section* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -1222,7 +1222,7 @@ Section_ANSWER(s_Section* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -1235,7 +1235,7 @@ Section_AUTHORITY(s_Section* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -1248,7 +1248,7 @@ Section_ADDITIONAL(s_Section* self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject* 
@@ -1258,7 +1258,7 @@ Section_richcmp(s_Section* self, s_Section* other, int op) {
     // Check for null and if the types match. If different type,
     // simply return False
     if (!other ||
-        (reinterpret_cast<PyObject*>(self))->ob_type != (reinterpret_cast<PyObject*>(other))->ob_type
+        (static_cast<PyObject*>(self))->ob_type != (static_cast<PyObject*>(other))->ob_type
        ) {
         Py_RETURN_FALSE;
     }
@@ -1305,10 +1305,10 @@ Section_richcmp(s_Section* self, s_Section* other, int op) {
 //
 
 // The s_* Class simply coverst one instantiation of the object
-typedef struct {
-    PyObject_HEAD
+class s_Message : public PyObject {
+public:
     Message* message;
-} s_Message;
+};
 
 //
 // We declare the functions here, the definitions are below
@@ -1675,7 +1675,7 @@ static PyObject*
 Message_getRcode(s_Message* self) {
     s_Rcode* rcode;
 
-    rcode = reinterpret_cast<s_Rcode*>(rcode_type.tp_alloc(&rcode_type, 0));
+    rcode = static_cast<s_Rcode*>(rcode_type.tp_alloc(&rcode_type, 0));
     if (rcode != NULL) {
         rcode->rcode = new Rcode(self->message->getRcode());
         if (rcode->rcode == NULL)
@@ -1685,7 +1685,7 @@ Message_getRcode(s_Message* self) {
           }
     }
 
-    return reinterpret_cast<PyObject*>(rcode);
+    return static_cast<PyObject*>(rcode);
 }
 
 static PyObject*
@@ -1702,7 +1702,7 @@ static PyObject*
 Message_getOpcode(s_Message* self) {
     s_Opcode* opcode;
 
-    opcode = reinterpret_cast<s_Opcode*>(opcode_type.tp_alloc(&opcode_type, 0));
+    opcode = static_cast<s_Opcode*>(opcode_type.tp_alloc(&opcode_type, 0));
     if (opcode != NULL) {
         // Note that we do not new and delete for opcodes.
         // all rcodes point to the statics defined in
@@ -1715,7 +1715,7 @@ Message_getOpcode(s_Message* self) {
           }
     }
 
-    return reinterpret_cast<PyObject*>(opcode);
+    return static_cast<PyObject*>(opcode);
 }
 
 static PyObject*
@@ -1745,7 +1745,7 @@ Message_getQuestion(s_Message* self) {
     for (QuestionIterator qi = self->message->beginQuestion();
          qi != self->message->endQuestion();
          ++qi) {
-        s_Question *question = reinterpret_cast<s_Question*>(question_type.tp_alloc(&question_type, 0));
+        s_Question *question = static_cast<s_Question*>(question_type.tp_alloc(&question_type, 0));
         if (question != NULL) {
             question->question = *qi;
             if (question->question == NULL)
@@ -1754,7 +1754,7 @@ Message_getQuestion(s_Message* self) {
                 return NULL;
               }
         }
-        PyList_Append(list, reinterpret_cast<PyObject*>(question));
+        PyList_Append(list, static_cast<PyObject*>(question));
     }
     return list;
 }
@@ -1771,7 +1771,7 @@ Message_getSection(s_Message* self, PyObject* args) {
          rrsi != self->message->endSection(*section->section);
          ++rrsi) {
 
-        s_RRset *rrset = reinterpret_cast<s_RRset*>(rrset_type.tp_alloc(&rrset_type, 0));
+        s_RRset *rrset = static_cast<s_RRset*>(rrset_type.tp_alloc(&rrset_type, 0));
         if (rrset != NULL) {
             rrset->rrset = *rrsi;
             if (rrset->rrset == NULL)
@@ -1781,7 +1781,7 @@ Message_getSection(s_Message* self, PyObject* args) {
                 return NULL;
               }
         }
-        PyList_Append(list, reinterpret_cast<PyObject*>(rrset));
+        PyList_Append(list, static_cast<PyObject*>(rrset));
         // PyList_Append increases refcount, so we remove ours since
         // we don't need it anymore
         Py_DECREF(rrset);

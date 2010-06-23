@@ -26,11 +26,11 @@ using namespace isc::dns;
 // since we don't use *Buffer in the python version (but work with
 // the already existing bytearray type where we use these custom buffers
 // in c++, we need to keep track of one here.
-typedef struct {
-    PyObject_HEAD
+class s_MessageRenderer : public PyObject {
+public:
     OutputBuffer* outputbuffer;
     MessageRenderer* messagerenderer;
-} s_MessageRenderer;
+};
 
 static int MessageRenderer_init(s_MessageRenderer* self);
 static void MessageRenderer_destroy(s_MessageRenderer* self);
