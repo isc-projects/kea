@@ -45,17 +45,17 @@ static PyObject* MessageRenderer_setLengthLimit(s_MessageRenderer* self, PyObjec
 
 
 static PyMethodDef MessageRenderer_methods[] = {
-    { "get_data", (PyCFunction)MessageRenderer_getData, METH_NOARGS,
+    { "get_data", reinterpret_cast<PyCFunction>(MessageRenderer_getData), METH_NOARGS,
       "Returns the data as a bytes() object" },
-    { "get_length", (PyCFunction)MessageRenderer_getLength, METH_NOARGS,
+    { "get_length", reinterpret_cast<PyCFunction>(MessageRenderer_getLength), METH_NOARGS,
       "Returns the length of the data" },
-    { "is_truncated", (PyCFunction)MessageRenderer_isTruncated, METH_NOARGS,
+    { "is_truncated", reinterpret_cast<PyCFunction>(MessageRenderer_isTruncated), METH_NOARGS,
       "Returns True if the data is truncated" },
-    { "get_length_limit", (PyCFunction)MessageRenderer_getLengthLimit, METH_NOARGS,
+    { "get_length_limit", reinterpret_cast<PyCFunction>(MessageRenderer_getLengthLimit), METH_NOARGS,
       "Returns the length limit of the data" },
-    { "set_truncated", (PyCFunction)MessageRenderer_setTruncated, METH_NOARGS,
+    { "set_truncated", reinterpret_cast<PyCFunction>(MessageRenderer_setTruncated), METH_NOARGS,
       "Sets truncated to true" },
-    { "set_length_limit", (PyCFunction)MessageRenderer_setLengthLimit, METH_VARARGS,
+    { "set_length_limit", reinterpret_cast<PyCFunction>(MessageRenderer_setLengthLimit), METH_VARARGS,
       "Sets the length limit of the data to the given number" },
     { NULL, NULL, 0, NULL }
 };
@@ -198,7 +198,7 @@ initModulePart_MessageRenderer(PyObject* mod) {
     }
     Py_INCREF(&messagerenderer_type);
     PyModule_AddObject(mod, "MessageRenderer",
-                       (PyObject*) &messagerenderer_type);
+                       reinterpret_cast<PyObject*>(&messagerenderer_type));
     
     return true;
 }

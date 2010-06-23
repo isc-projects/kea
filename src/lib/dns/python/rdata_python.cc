@@ -68,9 +68,9 @@ static PyObject* Rdata_toWire(s_Rdata* self, PyObject* args);
 // 3. Argument type
 // 4. Documentation
 static PyMethodDef Rdata_methods[] = {
-    { "to_text", (PyCFunction)Rdata_toText, METH_NOARGS,
+    { "to_text", reinterpret_cast<PyCFunction>(Rdata_toText), METH_NOARGS,
       "Returns the string representation" },
-    { "to_wire", (PyCFunction)Rdata_toWire, METH_VARARGS,
+    { "to_wire", reinterpret_cast<PyCFunction>(Rdata_toWire), METH_VARARGS,
       "Converts the Rdata object to wire format.\n"
       "The argument can be either a MessageRenderer or an object that "
       "implements the sequence interface. If the object is mutable "
@@ -171,7 +171,9 @@ Rdata_toText(s_Rdata* self) {
 static PyObject*
 Rdata_str(PyObject* self) {
     // Simply call the to_text method we already defined
-    return PyObject_CallMethod(self, (char*)"to_text", (char*)"");
+    return PyObject_CallMethod(self,
+                               const_cast<char*>("to_text"),
+                               const_cast<char*>(""));
 }
 
 static PyObject*
@@ -216,7 +218,7 @@ initModulePart_Rdata(PyObject* mod) {
     }
     Py_INCREF(&rdata_type);
     PyModule_AddObject(mod, "Rdata",
-                       (PyObject*) &rdata_type);
+                       reinterpret_cast<PyObject*>(&rdata_type));
 
     // Add the exceptions to the class
     po_InvalidRdataLength = PyErr_NewException("libdns_python.InvalidRdataLength", NULL, NULL);

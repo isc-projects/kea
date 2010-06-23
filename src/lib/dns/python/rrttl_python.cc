@@ -68,16 +68,16 @@ static PyObject* RRTTL_richcmp(s_RRTTL* self, s_RRTTL* other, int op);
 // 3. Argument type
 // 4. Documentation
 static PyMethodDef RRTTL_methods[] = {
-    { "to_text", (PyCFunction)RRTTL_toText, METH_NOARGS,
+    { "to_text", reinterpret_cast<PyCFunction>(RRTTL_toText), METH_NOARGS,
       "Returns the string representation" },
-    { "to_wire", (PyCFunction)RRTTL_toWire, METH_VARARGS,
+    { "to_wire", reinterpret_cast<PyCFunction>(RRTTL_toWire), METH_VARARGS,
       "Converts the RRTTL object to wire format.\n"
       "The argument can be either a MessageRenderer or an object that "
       "implements the sequence interface. If the object is mutable "
       "(for instance a bytearray()), the wire data is added in-place.\n"
       "If it is not (for instance a bytes() object), a new object is "
       "returned" },
-    { "get_value", (PyCFunction)RRTTL_getValue, METH_NOARGS,
+    { "get_value", reinterpret_cast<PyCFunction>(RRTTL_getValue), METH_NOARGS,
       "Returns the TTL as an integer" },
     { NULL, NULL, 0, NULL }
 };
@@ -211,7 +211,9 @@ RRTTL_toText(s_RRTTL* self) {
 static PyObject*
 RRTTL_str(PyObject* self) {
     // Simply call the to_text method we already defined
-    return PyObject_CallMethod(self, (char*)"to_text", (char*)"");
+    return PyObject_CallMethod(self,
+                               const_cast<char*>("to_text"),
+                               const_cast<char*>(""));
 }
 
 static PyObject*
@@ -254,7 +256,8 @@ RRTTL_richcmp(s_RRTTL* self, s_RRTTL* other, int op) {
     // Check for null and if the types match. If different type,
     // simply return False
     if (!other ||
-        ((PyObject*)self)->ob_type != ((PyObject*)other)->ob_type
+        (reinterpret_cast<PyObject*>(self))->ob_type !=
+        (reinterpret_cast<PyObject*>(other))->ob_type
        ) {
         Py_RETURN_FALSE;
     }
@@ -306,7 +309,7 @@ initModulePart_RRTTL(PyObject* mod) {
     }
     Py_INCREF(&rrttl_type);
     PyModule_AddObject(mod, "RRTTL",
-                       (PyObject*) &rrttl_type);
+                       reinterpret_cast<PyObject*>(&rrttl_type));
     
     return true;
 }

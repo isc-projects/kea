@@ -61,11 +61,11 @@ static PyObject* NameComparisonResult_getCommonLabels(s_NameComparisonResult* se
 static PyObject* NameComparisonResult_getRelation(s_NameComparisonResult* self);
 
 static PyMethodDef NameComparisonResult_methods[] = {
-    { "get_order", (PyCFunction)NameComparisonResult_getOrder, METH_NOARGS,
+    { "get_order", reinterpret_cast<PyCFunction>(NameComparisonResult_getOrder), METH_NOARGS,
       "Returns the order" },
-    { "get_common_labels", (PyCFunction)NameComparisonResult_getCommonLabels, METH_NOARGS,
+    { "get_common_labels", reinterpret_cast<PyCFunction>(NameComparisonResult_getCommonLabels), METH_NOARGS,
       "Returns the number of common labels" },
-    { "get_relation", (PyCFunction)NameComparisonResult_getRelation, METH_NOARGS,
+    { "get_relation", reinterpret_cast<PyCFunction>(NameComparisonResult_getRelation), METH_NOARGS,
       "Returns the relation" },
     { NULL, NULL, 0, NULL }
 };
@@ -163,6 +163,7 @@ NameComparisonResult_getRelation(s_NameComparisonResult* self) {
 // end of NameComparisonResult
 
 // Name
+
 typedef struct {
     PyObject_HEAD
     isc::dns::Name* name;
@@ -190,38 +191,38 @@ static PyObject* Name_downcase(s_Name* self);
 static PyObject* Name_isWildCard(s_Name* self);
 
 static PyMethodDef Name_methods[] = {
-    { "at", (PyCFunction)Name_at, METH_VARARGS,
+    { "at", reinterpret_cast<PyCFunction>(Name_at), METH_VARARGS,
       "Returns the integer value of the name data at the specified position" },
-    { "get_length", (PyCFunction)Name_getLength, METH_NOARGS,
+    { "get_length", reinterpret_cast<PyCFunction>(Name_getLength), METH_NOARGS,
       "Returns the length" },
-    { "get_labelcount", (PyCFunction)Name_getLabelCount, METH_NOARGS,
+    { "get_labelcount", reinterpret_cast<PyCFunction>(Name_getLabelCount), METH_NOARGS,
       "Returns the number of labels" },
-    { "to_text", (PyCFunction)Name_toText, METH_NOARGS,
+    { "to_text", reinterpret_cast<PyCFunction>(Name_toText), METH_NOARGS,
       "Returns the string representation" },
-    { "to_wire", (PyCFunction)Name_toWire, METH_VARARGS,
+    { "to_wire", reinterpret_cast<PyCFunction>(Name_toWire), METH_VARARGS,
       "Converts the Name object to wire format.\n"
       "The argument can be either a MessageRenderer or an object that "
       "implements the sequence interface. If the object is mutable "
       "(for instance a bytearray()), the wire data is added in-place.\n"
       "If it is not (for instance a bytes() object), a new object is "
       "returned" },
-    { "compare", (PyCFunction)Name_compare, METH_VARARGS,
+    { "compare", reinterpret_cast<PyCFunction>(Name_compare), METH_VARARGS,
       "Returns a NameComparisonResult object. The argument must be another Name object" },
-    { "equals", (PyCFunction)Name_equals, METH_VARARGS,
+    { "equals", reinterpret_cast<PyCFunction>(Name_equals), METH_VARARGS,
       "Returns true if the given Name object is equal to this one" },
-    { "split", (PyCFunction)Name_split, METH_VARARGS,
+    { "split", reinterpret_cast<PyCFunction>(Name_split), METH_VARARGS,
       "Splits the name, takes two arguments, the first is an integer "
       "specifying the first label to place in the result. The second "
       "is an integer specifying the number of labels to put in the "
       "result. Returns a new Name object" },
-    { "reverse", (PyCFunction)Name_reverse, METH_NOARGS,
+    { "reverse", reinterpret_cast<PyCFunction>(Name_reverse), METH_NOARGS,
       "Returns a new Name object that is the reverse of this one" },
-    { "concatenate", (PyCFunction)Name_concatenate, METH_VARARGS,
+    { "concatenate", reinterpret_cast<PyCFunction>(Name_concatenate), METH_VARARGS,
       "Concatenates the given Name object to this one and returns the "
       "result as a new Name object" },
-    { "downcase", (PyCFunction)Name_downcase, METH_NOARGS,
+    { "downcase", reinterpret_cast<PyCFunction>(Name_downcase), METH_NOARGS,
       "Downcases this name object (in-place). Returns a new reference to the Name." },
-    { "is_wildcard", (PyCFunction)Name_isWildCard, METH_NOARGS,
+    { "is_wildcard", reinterpret_cast<PyCFunction>(Name_isWildCard), METH_NOARGS,
       "Returns True if the Name object represents a wildcard name." },
     { NULL, NULL, 0, NULL }
 };
@@ -400,7 +401,9 @@ Name_toText(s_Name* self) {
 static PyObject*
 Name_str(PyObject* self) {
     // Simply call the to_text method we already defined
-    return PyObject_CallMethod(self, (char*)"to_text", (char*)"");
+    return PyObject_CallMethod(self,
+                               const_cast<char*>("to_text"),
+                               const_cast<char*>(""));
 }
 
 static PyObject*
@@ -447,7 +450,7 @@ Name_compare(s_Name* self, PyObject* args) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject* 
@@ -499,7 +502,7 @@ Name_split(s_Name* self, PyObject* args) {
             }
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 #include <iostream>
 
@@ -510,7 +513,8 @@ Name_richcmp(s_Name* n1, s_Name* n2, int op) {
     // Check for null and if the types match. If different type,
     // simply return False
     if (!n2 ||
-        ((PyObject*)n1)->ob_type != ((PyObject*)n2)->ob_type
+        (reinterpret_cast<PyObject*>(n1))->ob_type !=
+        (reinterpret_cast<PyObject*>(n2))->ob_type
        ) {
         Py_RETURN_FALSE;
     }
@@ -555,7 +559,7 @@ Name_reverse(s_Name* self) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -578,14 +582,14 @@ Name_concatenate(s_Name* self, PyObject* args) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
 Name_downcase(s_Name* self) {
     self->name->downcase();
     Py_INCREF(self);
-    return (PyObject*) self;
+    return reinterpret_cast<PyObject*>(self);
 }
 
 static PyObject*
@@ -621,7 +625,7 @@ initModulePart_Name(PyObject* mod) {
     addClassVariable(name_comparison_result_type, "NameRelation", po_NameRelation);
 
     PyModule_AddObject(mod, "NameComparisonResult",
-                       (PyObject*) &name_comparison_result_type);
+                       reinterpret_cast<PyObject*>(&name_comparison_result_type));
     
     if (PyType_Ready(&name_type) < 0) {
         return false;
@@ -638,7 +642,7 @@ initModulePart_Name(PyObject* mod) {
 
     s_Name* root_name = PyObject_New(s_Name, &name_type);
     root_name->name = new Name(".");
-    PyObject* po_ROOT_NAME = (PyObject*) root_name;
+    PyObject* po_ROOT_NAME = reinterpret_cast<PyObject*>(root_name);
     Py_INCREF(po_ROOT_NAME);
     addClassVariable(name_type, "ROOT_NAME", po_ROOT_NAME);
 
@@ -675,7 +679,7 @@ initModulePart_Name(PyObject* mod) {
     PyModule_AddObject(mod, "IscException", po_IscException);
 
     PyModule_AddObject(mod, "Name",
-                       (PyObject*) &name_type);
+                       reinterpret_cast<PyObject*>(&name_type));
     
     return true;
 }

@@ -113,36 +113,36 @@ RRType_ANY(s_RRType *self);
 // 3. Argument type
 // 4. Documentation
 static PyMethodDef RRType_methods[] = {
-    { "to_text", (PyCFunction)RRType_toText, METH_NOARGS,
+    { "to_text", reinterpret_cast<PyCFunction>(RRType_toText), METH_NOARGS,
       "Returns the string representation" },
-    { "to_wire", (PyCFunction)RRType_toWire, METH_VARARGS,
+    { "to_wire", reinterpret_cast<PyCFunction>(RRType_toWire), METH_VARARGS,
       "Converts the RRType object to wire format.\n"
       "The argument can be either a MessageRenderer or an object that "
       "implements the sequence interface. If the object is mutable "
       "(for instance a bytearray()), the wire data is added in-place.\n"
       "If it is not (for instance a bytes() object), a new object is "
       "returned" },
-    { "get_code", (PyCFunction)RRType_getCode, METH_NOARGS,
+    { "get_code", reinterpret_cast<PyCFunction>(RRType_getCode), METH_NOARGS,
       "Returns the type code as an integer" },
-    { "NSEC3PARAM", (PyCFunction)RRType_NSEC3PARAM, METH_NOARGS | METH_STATIC, "Creates an NSEC3PARAM RRType" },
-    { "DNAME", (PyCFunction)RRType_DNAME, METH_NOARGS | METH_STATIC, "Creates a DNAME RRType" },
-    { "PTR", (PyCFunction)RRType_PTR, METH_NOARGS | METH_STATIC, "Creates a PTR RRType" },
-    { "MX", (PyCFunction)RRType_MX, METH_NOARGS | METH_STATIC, "Creates an MX RRType" },
-    { "DNSKEY", (PyCFunction)RRType_DNSKEY, METH_NOARGS | METH_STATIC, "Creates a DNSKEY RRType" },
-    { "TXT", (PyCFunction)RRType_TXT, METH_NOARGS | METH_STATIC, "Creates a TXT RRType" },
-    { "RRSIG", (PyCFunction)RRType_RRSIG, METH_NOARGS | METH_STATIC, "Creates a RRSIG RRType" },
-    { "NSEC", (PyCFunction)RRType_NSEC, METH_NOARGS | METH_STATIC, "Creates a NSEC RRType" },
-    { "AAAA", (PyCFunction)RRType_AAAA, METH_NOARGS | METH_STATIC, "Creates an AAAA RRType" },
-    { "DS", (PyCFunction)RRType_DS, METH_NOARGS | METH_STATIC, "Creates a DS RRType" },
-    { "OPT", (PyCFunction)RRType_OPT, METH_NOARGS | METH_STATIC, "Creates an OPT RRType" },
-    { "A", (PyCFunction)RRType_A, METH_NOARGS | METH_STATIC, "Creates an A RRType" },
-    { "NS", (PyCFunction)RRType_NS, METH_NOARGS | METH_STATIC, "Creates an NS RRType" },
-    { "CNAME", (PyCFunction)RRType_CNAME, METH_NOARGS | METH_STATIC, "Creates a CNAME RRType" },
-    { "SOA", (PyCFunction)RRType_SOA, METH_NOARGS | METH_STATIC, "Creates a SOA RRType" },
-    { "NSEC3", (PyCFunction)RRType_NSEC3, METH_NOARGS | METH_STATIC, "Creates an NSEC3 RRType" },
-    { "IXFR", (PyCFunction)RRType_IXFR, METH_NOARGS | METH_STATIC, "Creates an IXFR RRType" },
-    { "AXFR", (PyCFunction)RRType_AXFR, METH_NOARGS | METH_STATIC, "Creates an AXFR RRType" },
-    { "ANY", (PyCFunction)RRType_ANY, METH_NOARGS | METH_STATIC, "Creates an ANY RRType" },
+    { "NSEC3PARAM", reinterpret_cast<PyCFunction>(RRType_NSEC3PARAM), METH_NOARGS | METH_STATIC, "Creates an NSEC3PARAM RRType" },
+    { "DNAME", reinterpret_cast<PyCFunction>(RRType_DNAME), METH_NOARGS | METH_STATIC, "Creates a DNAME RRType" },
+    { "PTR", reinterpret_cast<PyCFunction>(RRType_PTR), METH_NOARGS | METH_STATIC, "Creates a PTR RRType" },
+    { "MX", reinterpret_cast<PyCFunction>(RRType_MX), METH_NOARGS | METH_STATIC, "Creates an MX RRType" },
+    { "DNSKEY", reinterpret_cast<PyCFunction>(RRType_DNSKEY), METH_NOARGS | METH_STATIC, "Creates a DNSKEY RRType" },
+    { "TXT", reinterpret_cast<PyCFunction>(RRType_TXT), METH_NOARGS | METH_STATIC, "Creates a TXT RRType" },
+    { "RRSIG", reinterpret_cast<PyCFunction>(RRType_RRSIG), METH_NOARGS | METH_STATIC, "Creates a RRSIG RRType" },
+    { "NSEC", reinterpret_cast<PyCFunction>(RRType_NSEC), METH_NOARGS | METH_STATIC, "Creates a NSEC RRType" },
+    { "AAAA", reinterpret_cast<PyCFunction>(RRType_AAAA), METH_NOARGS | METH_STATIC, "Creates an AAAA RRType" },
+    { "DS", reinterpret_cast<PyCFunction>(RRType_DS), METH_NOARGS | METH_STATIC, "Creates a DS RRType" },
+    { "OPT", reinterpret_cast<PyCFunction>(RRType_OPT), METH_NOARGS | METH_STATIC, "Creates an OPT RRType" },
+    { "A", reinterpret_cast<PyCFunction>(RRType_A), METH_NOARGS | METH_STATIC, "Creates an A RRType" },
+    { "NS", reinterpret_cast<PyCFunction>(RRType_NS), METH_NOARGS | METH_STATIC, "Creates an NS RRType" },
+    { "CNAME", reinterpret_cast<PyCFunction>(RRType_CNAME), METH_NOARGS | METH_STATIC, "Creates a CNAME RRType" },
+    { "SOA", reinterpret_cast<PyCFunction>(RRType_SOA), METH_NOARGS | METH_STATIC, "Creates a SOA RRType" },
+    { "NSEC3", reinterpret_cast<PyCFunction>(RRType_NSEC3), METH_NOARGS | METH_STATIC, "Creates an NSEC3 RRType" },
+    { "IXFR", reinterpret_cast<PyCFunction>(RRType_IXFR), METH_NOARGS | METH_STATIC, "Creates an IXFR RRType" },
+    { "AXFR", reinterpret_cast<PyCFunction>(RRType_AXFR), METH_NOARGS | METH_STATIC, "Creates an AXFR RRType" },
+    { "ANY", reinterpret_cast<PyCFunction>(RRType_ANY), METH_NOARGS | METH_STATIC, "Creates an ANY RRType" },
     { NULL, NULL, 0, NULL }
 };
 
@@ -277,7 +277,8 @@ RRType_toText(s_RRType* self) {
 static PyObject*
 RRType_str(PyObject* self) {
     // Simply call the to_text method we already defined
-    return PyObject_CallMethod(self, (char*)"to_text", (char*)"");
+    return PyObject_CallMethod(self, const_cast<char*>("to_text"),
+                                     const_cast<char*>(""));
 }
 
 static PyObject*
@@ -320,7 +321,8 @@ RRType_richcmp(s_RRType* self, s_RRType* other, int op) {
     // Check for null and if the types match. If different type,
     // simply return False
     if (!other ||
-        ((PyObject*)self)->ob_type != ((PyObject*)other)->ob_type
+        (reinterpret_cast<PyObject*>(self))->ob_type !=
+        (reinterpret_cast<PyObject*>(other))->ob_type
        ) {
         Py_RETURN_FALSE;
     }
@@ -365,7 +367,7 @@ RRType_NSEC3PARAM(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -378,7 +380,7 @@ RRType_DNAME(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -391,7 +393,7 @@ RRType_PTR(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -404,7 +406,7 @@ RRType_MX(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -417,7 +419,7 @@ RRType_DNSKEY(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -430,7 +432,7 @@ RRType_TXT(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -443,7 +445,7 @@ RRType_RRSIG(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -456,7 +458,7 @@ RRType_NSEC(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -469,7 +471,7 @@ RRType_AAAA(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -482,7 +484,7 @@ RRType_DS(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -495,7 +497,7 @@ RRType_OPT(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -508,7 +510,7 @@ RRType_A(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -521,7 +523,7 @@ RRType_NS(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -534,7 +536,7 @@ RRType_CNAME(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -547,7 +549,7 @@ RRType_SOA(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -560,7 +562,7 @@ RRType_NSEC3(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -573,7 +575,7 @@ RRType_IXFR(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -586,7 +588,7 @@ RRType_AXFR(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -599,7 +601,7 @@ RRType_ANY(s_RRType *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return (PyObject*) ret;
+    return reinterpret_cast<PyObject*>(ret);
 }
 
 
@@ -623,7 +625,7 @@ initModulePart_RRType(PyObject* mod) {
     }
     Py_INCREF(&rrtype_type);
     PyModule_AddObject(mod, "RRType",
-                       (PyObject*) &rrtype_type);
+                       reinterpret_cast<PyObject*>(&rrtype_type));
     
     return true;
 }
