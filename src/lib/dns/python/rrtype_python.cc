@@ -152,56 +152,56 @@ static PyMethodDef RRType_methods[] = {
 static PyTypeObject rrtype_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "libdns_python.RRType",
-    sizeof(s_RRType),                  /* tp_basicsize */
-    0,                                  /* tp_itemsize */
-    (destructor)RRType_destroy,        /* tp_dealloc */
-    NULL,                               /* tp_print */
-    NULL,                               /* tp_getattr */
-    NULL,                               /* tp_setattr */
-    NULL,                               /* tp_reserved */
-    NULL,                               /* tp_repr */
-    NULL,                               /* tp_as_number */
-    NULL,                               /* tp_as_sequence */
-    NULL,                               /* tp_as_mapping */
-    NULL,                               /* tp_hash  */
-    NULL,                               /* tp_call */
-    RRType_str,                               /* tp_str */
-    NULL,                               /* tp_getattro */
-    NULL,                               /* tp_setattro */
-    NULL,                               /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,                 /* tp_flags */
+    sizeof(s_RRType),                   // tp_basicsize
+    0,                                  // tp_itemsize
+    (destructor)RRType_destroy,         // tp_dealloc
+    NULL,                               // tp_print
+    NULL,                               // tp_getattr
+    NULL,                               // tp_setattr
+    NULL,                               // tp_reserved
+    NULL,                               // tp_repr
+    NULL,                               // tp_as_number
+    NULL,                               // tp_as_sequence
+    NULL,                               // tp_as_mapping
+    NULL,                               // tp_hash 
+    NULL,                               // tp_call
+    RRType_str,                         // tp_str
+    NULL,                               // tp_getattro
+    NULL,                               // tp_setattro
+    NULL,                               // tp_as_buffer
+    Py_TPFLAGS_DEFAULT,                 // tp_flags
     "The RRType class encapsulates DNS resource record types.\n\n"
     "This class manages the 16-bit integer type codes in quite a straightforward "
     "way. The only non trivial task is to handle textual representations of "
     "RR types, such as \"A\", \"AAAA\", or \"TYPE65534\".",
-    NULL,                               /* tp_traverse */
-    NULL,                               /* tp_clear */
-    (richcmpfunc)RRType_richcmp,       /* tp_richcompare */
-    0,                                  /* tp_weaklistoffset */
-    NULL,                               /* tp_iter */
-    NULL,                               /* tp_iternext */
-    RRType_methods,                    /* tp_methods */
-    NULL,                               /* tp_members */
-    NULL,                               /* tp_getset */
-    NULL,                               /* tp_base */
-    NULL,                               /* tp_dict */
-    NULL,                               /* tp_descr_get */
-    NULL,                               /* tp_descr_set */
-    0,                                  /* tp_dictoffset */
-    (initproc)RRType_init,                /* tp_init */
-    NULL,                               /* tp_alloc */
-    PyType_GenericNew,                  /* tp_new */
-    NULL,                               /* tp_free */
-    NULL,                               /* tp_is_gc */
-    NULL,                               /* tp_bases */
-    NULL,                               /* tp_mro */
-    NULL,                               /* tp_cache */
-    NULL,                               /* tp_subclasses */
-    NULL,                               /* tp_weaklist */
+    NULL,                               // tp_traverse
+    NULL,                               // tp_clear
+    (richcmpfunc)RRType_richcmp,        // tp_richcompare
+    0,                                  // tp_weaklistoffset
+    NULL,                               // tp_iter
+    NULL,                               // tp_iternext
+    RRType_methods,                     // tp_methods
+    NULL,                               // tp_members
+    NULL,                               // tp_getset
+    NULL,                               // tp_base
+    NULL,                               // tp_dict
+    NULL,                               // tp_descr_get
+    NULL,                               // tp_descr_set
+    0,                                  // tp_dictoffset
+    (initproc)RRType_init,              // tp_init
+    NULL,                               // tp_alloc
+    PyType_GenericNew,                  // tp_new
+    NULL,                               // tp_free
+    NULL,                               // tp_is_gc
+    NULL,                               // tp_bases
+    NULL,                               // tp_mro
+    NULL,                               // tp_cache
+    NULL,                               // tp_subclasses
+    NULL,                               // tp_weaklist
     // Note: not sure if the following are correct.  Added them just to
     // make the compiler happy.
-    NULL,                               /* tp_del */
-    0                                   /* tp_version_tag */
+    NULL,                               // tp_del
+    0                                   // tp_version_tag
 };
 
 static int

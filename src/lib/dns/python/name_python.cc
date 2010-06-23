@@ -73,24 +73,24 @@ static PyMethodDef NameComparisonResult_methods[] = {
 static PyTypeObject name_comparison_result_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "libdns_python.NameComparisonResult",
-    sizeof(s_NameComparisonResult),                       /* tp_basicsize */
-    0,                                  /* tp_itemsize */
-    (destructor)NameComparisonResult_destroy,   /* tp_dealloc */
-    NULL,                               /* tp_print */
-    NULL,                               /* tp_getattr */
-    NULL,                               /* tp_setattr */
-    NULL,                               /* tp_reserved */
-    NULL,                               /* tp_repr */
-    NULL,                               /* tp_as_number */
-    NULL,                               /* tp_as_sequence */
-    NULL,                               /* tp_as_mapping */
-    NULL,                               /* tp_hash  */
-    NULL,                               /* tp_call */
-    NULL,                               /* tp_str */
-    NULL,                               /* tp_getattro */
-    NULL,                               /* tp_setattro */
-    NULL,                               /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,                 /* tp_flags */
+    sizeof(s_NameComparisonResult),           // tp_basicsize
+    0,                                        // tp_itemsize
+    (destructor)NameComparisonResult_destroy, // tp_dealloc
+    NULL,                                     // tp_print
+    NULL,                                     // tp_getattr
+    NULL,                                     // tp_setattr
+    NULL,                                     // tp_reserved
+    NULL,                                     // tp_repr
+    NULL,                                     // tp_as_number
+    NULL,                                     // tp_as_sequence
+    NULL,                                     // tp_as_mapping
+    NULL,                                     // tp_hash 
+    NULL,                                     // tp_call
+    NULL,                                     // tp_str
+    NULL,                                     // tp_getattro
+    NULL,                                     // tp_setattro
+    NULL,                                     // tp_as_buffer
+    Py_TPFLAGS_DEFAULT,                       // tp_flags
     "This is a supplemental class used only as a return value of Name.compare(). "
     "It encapsulate a tuple of the comparison: ordering, number of common labels, "
     "and relationship as follows:\n"
@@ -98,34 +98,34 @@ static PyTypeObject name_comparison_result_type = {
     "- labels: the number of common significant labels of the two names being"
     "  compared\n"
     "- relationship: see NameComparisonResult.NameRelation\n",
-    NULL,                               /* tp_traverse */
-    NULL,                               /* tp_clear */
-    NULL,                               /* tp_richcompare */
-    0,                                  /* tp_weaklistoffset */
-    NULL,                               /* tp_iter */
-    NULL,                               /* tp_iternext */
-    NameComparisonResult_methods,                       /* tp_methods */
-    NULL,                               /* tp_members */
-    NULL,                               /* tp_getset */
-    NULL,                               /* tp_base */
-    NULL,                               /* tp_dict */
-    NULL,                               /* tp_descr_get */
-    NULL,                               /* tp_descr_set */
-    0,                                  /* tp_dictoffset */
-    (initproc)NameComparisonResult_init,                /* tp_init */
-    NULL,                               /* tp_alloc */
-    PyType_GenericNew,                  /* tp_new */
-    NULL,                               /* tp_free */
-    NULL,                               /* tp_is_gc */
-    NULL,                               /* tp_bases */
-    NULL,                               /* tp_mro */
-    NULL,                               /* tp_cache */
-    NULL,                               /* tp_subclasses */
-    NULL,                               /* tp_weaklist */
+    NULL,                                     // tp_traverse
+    NULL,                                     // tp_clear
+    NULL,                                     // tp_richcompare
+    0,                                        // tp_weaklistoffset
+    NULL,                                     // tp_iter
+    NULL,                                     // tp_iternext
+    NameComparisonResult_methods,             // tp_methods
+    NULL,                                     // tp_members
+    NULL,                                     // tp_getset
+    NULL,                                     // tp_base
+    NULL,                                     // tp_dict
+    NULL,                                     // tp_descr_get
+    NULL,                                     // tp_descr_set
+    0,                                        // tp_dictoffset
+    (initproc)NameComparisonResult_init,      // tp_init
+    NULL,                                     // tp_alloc
+    PyType_GenericNew,                        // tp_new
+    NULL,                                     // tp_free
+    NULL,                                     // tp_is_gc
+    NULL,                                     // tp_bases
+    NULL,                                     // tp_mro
+    NULL,                                     // tp_cache
+    NULL,                                     // tp_subclasses
+    NULL,                                     // tp_weaklist
     // Note: not sure if the following are correct.  Added them just to
     // make the compiler happy.
-    NULL,                               /* tp_del */
-    0                                   /* tp_version_tag */
+    NULL,                                     // tp_del
+    0                                         // tp_version_tag
 };
 
 // TODO: is there also a way to just not define it?
@@ -229,56 +229,56 @@ static PyMethodDef Name_methods[] = {
 static PyTypeObject name_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "libdns_python.Name",
-    sizeof(s_Name),                       /* tp_basicsize */
-    0,                                  /* tp_itemsize */
-    (destructor)Name_destroy,   /* tp_dealloc */
-    NULL,                               /* tp_print */
-    NULL,                               /* tp_getattr */
-    NULL,                               /* tp_setattr */
-    NULL,                               /* tp_reserved */
-    NULL,                               /* tp_repr */
-    NULL,                               /* tp_as_number */
-    NULL,                               /* tp_as_sequence */
-    NULL,                               /* tp_as_mapping */
-    NULL,                               /* tp_hash  */
-    NULL,                               /* tp_call */
-    Name_str,                           /* tp_str */
-    NULL,                               /* tp_getattro */
-    NULL,                               /* tp_setattro */
-    NULL,                               /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,                 /* tp_flags */
+    sizeof(s_Name),                     // tp_basicsize
+    0,                                  // tp_itemsize
+    (destructor)Name_destroy,           // tp_dealloc
+    NULL,                               // tp_print
+    NULL,                               // tp_getattr
+    NULL,                               // tp_setattr
+    NULL,                               // tp_reserved
+    NULL,                               // tp_repr
+    NULL,                               // tp_as_number
+    NULL,                               // tp_as_sequence
+    NULL,                               // tp_as_mapping
+    NULL,                               // tp_hash 
+    NULL,                               // tp_call
+    Name_str,                           // tp_str
+    NULL,                               // tp_getattro
+    NULL,                               // tp_setattro
+    NULL,                               // tp_as_buffer
+    Py_TPFLAGS_DEFAULT,                 // tp_flags
     "The Name class encapsulates DNS names.\n"
     "It provides interfaces to construct a name from string or wire-format data, "
     "transform a name into a string or wire-format data, compare two names, get "
     "access to various properties of a name, etc.",
-    NULL,                               /* tp_traverse */
-    NULL,                               /* tp_clear */
-    (richcmpfunc)Name_richcmp,                               /* tp_richcompare */
-    0,                                  /* tp_weaklistoffset */
-    NULL,                               /* tp_iter */
-    NULL,                               /* tp_iternext */
-    Name_methods,                       /* tp_methods */
-    NULL,                               /* tp_members */
-    NULL,                               /* tp_getset */
-    NULL,                               /* tp_base */
-    NULL,                               /* tp_dict */
-    NULL,                               /* tp_descr_get */
-    NULL,                               /* tp_descr_set */
-    0,                                  /* tp_dictoffset */
-    (initproc)Name_init,                /* tp_init */
-    NULL,                               /* tp_alloc */
-    PyType_GenericNew,                  /* tp_new */
-    NULL,                               /* tp_free */
-    NULL,                               /* tp_is_gc */
-    NULL,                               /* tp_bases */
-    NULL,                               /* tp_mro */
-    NULL,                               /* tp_cache */
-    NULL,                               /* tp_subclasses */
-    NULL,                               /* tp_weaklist */
+    NULL,                               // tp_traverse
+    NULL,                               // tp_clear
+    (richcmpfunc)Name_richcmp,          // tp_richcompare
+    0,                                  // tp_weaklistoffset
+    NULL,                               // tp_iter
+    NULL,                               // tp_iternext
+    Name_methods,                       // tp_methods
+    NULL,                               // tp_members
+    NULL,                               // tp_getset
+    NULL,                               // tp_base
+    NULL,                               // tp_dict
+    NULL,                               // tp_descr_get
+    NULL,                               // tp_descr_set
+    0,                                  // tp_dictoffset
+    (initproc)Name_init,                // tp_init
+    NULL,                               // tp_alloc
+    PyType_GenericNew,                  // tp_new
+    NULL,                               // tp_free
+    NULL,                               // tp_is_gc
+    NULL,                               // tp_bases
+    NULL,                               // tp_mro
+    NULL,                               // tp_cache
+    NULL,                               // tp_subclasses
+    NULL,                               // tp_weaklist
     // Note: not sure if the following are correct.  Added them just to
     // make the compiler happy.
-    NULL,                               /* tp_del */
-    0                                   /* tp_version_tag */
+    NULL,                               // tp_del
+    0                                   // tp_version_tag
 };
 
 
@@ -287,7 +287,7 @@ Name_init(s_Name* self, PyObject* args) {
     const char* s;
     PyObject* downcase = Py_False;
 
-    /* fromText */
+    // fromText
     if (PyArg_ParseTuple(args, "s|O!", &s, &PyBool_Type, &downcase)) {
         try {
             const std::string n(s);
@@ -330,7 +330,7 @@ Name_init(s_Name* self, PyObject* args) {
     Py_ssize_t len;
     unsigned int position = 0;
 
-    /* fromWire */
+    // fromWire
     if (PyArg_ParseTuple(args, "O|IO!", &bytes_obj, &position,
                          &PyBool_Type, &downcase) &&
                          PyObject_AsCharBuffer(bytes_obj, &bytes, &len) != -1) {
@@ -664,12 +664,12 @@ initModulePart_Name(PyObject* mod) {
     po_InvalidBufferPosition = PyErr_NewException("libdns_python.InvalidBufferPosition", NULL, NULL);
     PyModule_AddObject(mod, "InvalidBufferPosition", po_InvalidBufferPosition);
 
-    /* TODO; this one is a message-specific one, move to message? */
+    // TODO; this one is a message-specific one, move to message? 
     po_DNSMessageFORMERR = PyErr_NewException("libdns_python.DNSMessageFORMERR", NULL, NULL);
     Py_INCREF(po_DNSMessageFORMERR);
     PyModule_AddObject(mod, "DNSMessageFORMERR", po_DNSMessageFORMERR);
 
-    /* TODO: this one is module-level, move to libdns_python.cc */
+    // TODO: this one is module-level, move to libdns_python.cc
     po_IscException = PyErr_NewException("libdns_python.IscException", NULL, NULL);
     Py_INCREF(po_IncompleteName);
     PyModule_AddObject(mod, "IscException", po_IscException);
