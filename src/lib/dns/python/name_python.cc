@@ -118,8 +118,6 @@ static PyTypeObject name_comparison_result_type = {
     NULL,                                     // tp_cache
     NULL,                                     // tp_subclasses
     NULL,                                     // tp_weaklist
-    // Note: not sure if the following are correct.  Added them just to
-    // make the compiler happy.
     NULL,                                     // tp_del
     0                                         // tp_version_tag
 };
@@ -178,7 +176,7 @@ static PyObject* Name_getLength(s_Name* self);
 static PyObject* Name_compare(s_Name* self, PyObject* args);
 static PyObject* Name_equals(s_Name* self, PyObject* args);
 
-static PyObject* Name_richcmp(s_Name* n1, s_Name* n2, int op);
+static PyObject* Name_richcmp(s_Name* self, s_Name* other, int op);
 static PyObject* Name_split(s_Name* self, PyObject* args);
 static PyObject* Name_reverse(s_Name* self);
 static PyObject* Name_concatenate(s_Name* self, PyObject* args);
@@ -283,7 +281,10 @@ Name_init(s_Name* self, PyObject* args) {
     const char* s;
     PyObject* downcase = Py_False;
 
-    // fromText
+    // Depending on the arguments in *args, we decide which of the
+    // constructors is meant. If the first argument is of type string,
+    // we use the string-based constructor. If it is a bytes object,
+    // we use the wire-based one.
     if (PyArg_ParseTuple(args, "s|O!", &s, &PyBool_Type, &downcase)) {
         try {
             const std::string n(s);
@@ -326,7 +327,8 @@ Name_init(s_Name* self, PyObject* args) {
     Py_ssize_t len;
     unsigned int position = 0;
 
-    // fromWire
+    // It was not a string (see comment above), so try bytes, and
+    // create with buffer object
     if (PyArg_ParseTuple(args, "O|IO!", &bytes_obj, &position,
                          &PyBool_Type, &downcase) &&
                          PyObject_AsCharBuffer(bytes_obj, &bytes, &len) != -1) {
@@ -396,6 +398,8 @@ Name_toText(s_Name* self) {
 static PyObject*
 Name_str(PyObject* self) {
     // Simply call the to_text method we already defined
+    // str() is not defined in the c++ version, only to_text
+    // and we already have a wrapper for that one.
     return PyObject_CallMethod(self,
                                const_cast<char*>("to_text"),
                                const_cast<char*>(""));
@@ -409,13 +413,13 @@ Name_toWire(s_Name* self, PyObject* args) {
     if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
         PyObject* bytes_o = bytes;
         
-        OutputBuffer buffer(255);
+        OutputBuffer buffer(Name::MAX_WIRE);
         self->name->toWire(buffer);
-        PyObject* n = PyBytes_FromStringAndSize((const char*) buffer.getData(), buffer.getLength());
-        PyObject* result = PySequence_InPlaceConcat(bytes_o, n);
+        PyObject* name_bytes = PyBytes_FromStringAndSize((const char*) buffer.getData(), buffer.getLength());
+        PyObject* result = PySequence_InPlaceConcat(bytes_o, name_bytes);
         // We need to release the object we temporarily created here
         // to prevent memory leak
-        Py_DECREF(n);
+        Py_DECREF(name_bytes);
         return result;
     } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, (PyObject**) &mr)) {
         self->name->toWire(*mr->messagerenderer);
@@ -440,10 +444,6 @@ Name_compare(s_Name* self, PyObject* args) {
     if (ret != NULL) {
         ret->ncr = new NameComparisonResult(
             self->name->compare(*other->name));
-        if (ret->ncr == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
     }
     return static_cast<PyObject*>(ret);
 }
@@ -501,37 +501,44 @@ Name_split(s_Name* self, PyObject* args) {
 }
 #include <iostream>
 
+//
+// richcmp defines the ==, !=, >, <, >= and <= operators in python
+// It is translated to a function that gets 3 arguments, an object,
+// an object to compare to, and an operator.
+//
 static PyObject* 
-Name_richcmp(s_Name* n1, s_Name* n2, int op) {
+Name_richcmp(s_Name* self, s_Name* other, int op) {
     bool c;
 
     // Check for null and if the types match. If different type,
     // simply return False
-    if (!n2 || (n1->ob_type != n2->ob_type)) {
+    if (!other || (self->ob_type != other->ob_type)) {
         Py_RETURN_FALSE;
     }
 
     switch (op) {
     case Py_LT:
-        c = *n1->name < *n2->name;
+        c = *self->name < *other->name;
         break;
     case Py_LE:
-        c = *n1->name <= *n2->name;
+        c = *self->name <= *other->name;
         break;
     case Py_EQ:
-        c = *n1->name == *n2->name;
+        c = *self->name == *other->name;
         break;
     case Py_NE:
-        c = *n1->name != *n2->name;
+        c = *self->name != *other->name;
         break;
     case Py_GT:
-        c = *n1->name > *n2->name;
+        c = *self->name > *other->name;
         break;
     case Py_GE:
-        c = *n1->name >= *n2->name;
+        c = *self->name >= *other->name;
         break;
     default:
-        assert(0);              // XXX: should trigger an exception
+        PyErr_SetString(PyExc_IndexError,
+                        "Unhandled rich comparison operator");
+        return NULL;
     }
     if (c) {
         Py_RETURN_TRUE;
@@ -567,10 +574,6 @@ Name_concatenate(s_Name* self, PyObject* args) {
             ret->name = new Name(self->name->concatenate(*other->name));
         } catch (isc::dns::TooLongName tln) {
             PyErr_SetString(po_TooLongName, tln.what());
-            ret->name = NULL;
-        }
-        if (ret->name == NULL) {
-            Py_DECREF(ret);
             return NULL;
         }
     }
@@ -602,7 +605,9 @@ initModulePart_Name(PyObject* mod) {
     // We initialize the static description object with PyType_Ready(),
     // then add it to the module
 
+    //
     // NameComparisonResult
+    //
     if (PyType_Ready(&name_comparison_result_type) < 0) {
         return false;
     }
@@ -610,14 +615,18 @@ initModulePart_Name(PyObject* mod) {
 
     // Add the enums to the module
     po_NameRelation = Py_BuildValue("{i:s,i:s,i:s,i:s}",
-                                    0, "SUPERDOMAIN",
-                                    1, "SUBDOMAIN",
-                                    2, "EQUAL",
-                                    3, "COMMONANCESTOR");
+                                    NameComparisonResult::SUPERDOMAIN, "SUPERDOMAIN",
+                                    NameComparisonResult::SUBDOMAIN, "SUBDOMAIN",
+                                    NameComparisonResult::EQUAL, "EQUAL",
+                                    NameComparisonResult::COMMONANCESTOR, "COMMONANCESTOR");
     addClassVariable(name_comparison_result_type, "NameRelation", po_NameRelation);
 
     PyModule_AddObject(mod, "NameComparisonResult",
                        reinterpret_cast<PyObject*>(&name_comparison_result_type));
+
+    //
+    // Name
+    //
     
     if (PyType_Ready(&name_type) < 0) {
         return false;
@@ -637,6 +646,10 @@ initModulePart_Name(PyObject* mod) {
     PyObject* po_ROOT_NAME = static_cast<PyObject*>(root_name);
     Py_INCREF(po_ROOT_NAME);
     addClassVariable(name_type, "ROOT_NAME", po_ROOT_NAME);
+
+    PyModule_AddObject(mod, "Name",
+                       reinterpret_cast<PyObject*>(&name_type));
+    
 
     // Add the exceptions to the module
     po_EmptyLabel = PyErr_NewException("libdns_python.EmptyLabel", NULL, NULL);
@@ -665,8 +678,5 @@ initModulePart_Name(PyObject* mod) {
     po_DNSMessageFORMERR = PyErr_NewException("libdns_python.DNSMessageFORMERR", NULL, NULL);
     PyModule_AddObject(mod, "DNSMessageFORMERR", po_DNSMessageFORMERR);
 
-    PyModule_AddObject(mod, "Name",
-                       reinterpret_cast<PyObject*>(&name_type));
-    
     return true;
 }

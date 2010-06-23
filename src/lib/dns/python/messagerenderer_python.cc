@@ -111,8 +111,6 @@ static PyTypeObject messagerenderer_type = {
     NULL,                               // tp_cache
     NULL,                               // tp_subclasses
     NULL,                               // tp_weaklist
-    // Note: not sure if the following are correct.  Added them just to
-    // make the compiler happy.
     NULL,                               // tp_del
     0                                   // tp_version_tag
 };
@@ -129,6 +127,7 @@ MessageRenderer_destroy(s_MessageRenderer* self) {
     delete self->messagerenderer;
     delete self->outputbuffer;
     self->messagerenderer = NULL;
+    self->outputbuffer = NULL;
     Py_TYPE(self)->tp_free(self);
 }
 

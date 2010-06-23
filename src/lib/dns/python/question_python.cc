@@ -121,8 +121,6 @@ static PyTypeObject question_type = {
     NULL,                               // tp_cache
     NULL,                               // tp_subclasses
     NULL,                               // tp_weaklist
-    // Note: not sure if the following are correct.  Added them just to
-    // make the compiler happy.
     NULL,                               // tp_del
     0                                   // tp_version_tag
 };
