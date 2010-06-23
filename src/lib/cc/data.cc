@@ -30,25 +30,6 @@
 
 using namespace std;
 
-namespace {
-const unsigned char PROTOCOL_VERSION[4] = { 0x53, 0x6b, 0x61, 0x6e };
-
-const unsigned char ITEM_BLOB = 0x01;
-const unsigned char ITEM_HASH = 0x02;
-const unsigned char ITEM_LIST = 0x03;
-const unsigned char ITEM_NULL = 0x04;
-const unsigned char ITEM_BOOL = 0x05;
-const unsigned char ITEM_INT  = 0x06;
-const unsigned char ITEM_REAL = 0x07;
-const unsigned char ITEM_UTF8 = 0x08;
-const unsigned char ITEM_MASK = 0x0f;
-
-const unsigned char ITEM_LENGTH_32   = 0x00;
-const unsigned char ITEM_LENGTH_16   = 0x10;
-const unsigned char ITEM_LENGTH_8    = 0x20;
-const unsigned char ITEM_LENGTH_MASK = 0x30;
-}
-
 namespace isc {
 namespace data {
 

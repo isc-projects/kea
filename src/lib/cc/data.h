@@ -259,9 +259,9 @@ public:
     /// \brief These functions simply wrap the given data directly
     /// in an Element object, and return a reference to it, in the form
     /// of an \c ElementPtr.
-    /// If there is a memory allocation problem, these functions will
-    /// return a NULL ElementPtr, which can be checked with
-    /// Element::is_null(ElementPtr ep).
+    /// These factory functions are exception-free (unless there is
+    /// no memory available, in which case bad_alloc is raised by the
+    /// underlying system).
     /// (Note that that is different from an NullElement, which
     /// represents an empty value, and is created with Element::create())
     //@{
