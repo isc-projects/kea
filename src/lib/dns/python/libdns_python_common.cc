@@ -17,8 +17,7 @@
 #include <Python.h>
 
 int
-readDataFromSequence(uint8_t *data, size_t len, PyObject* sequence)
-{
+readDataFromSequence(uint8_t *data, size_t len, PyObject* sequence) {
     PyObject* el = NULL;
     for (size_t i = 0; i < len; i++) {
         el = PySequence_GetItem(sequence, 0);
@@ -46,7 +45,8 @@ readDataFromSequence(uint8_t *data, size_t len, PyObject* sequence)
 }
 
 
-void addClassVariable(PyTypeObject& c, const char* name, PyObject* obj)
+void addClassVariable(PyTypeObject& c, const char* name,
+                      PyObject* obj)
 {
     PyDict_SetItemString(c.tp_dict, name, obj);
 }

@@ -70,8 +70,7 @@ static PyModuleDef libdns_python = {
 };
 
 PyMODINIT_FUNC
-PyInit_libdns_python(void)
-{
+PyInit_libdns_python(void) {
     PyObject *mod = PyModule_Create(&libdns_python);
     if (mod == NULL) {
         return NULL;

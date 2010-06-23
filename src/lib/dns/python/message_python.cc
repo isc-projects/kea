@@ -125,7 +125,8 @@ static PyTypeObject messageflag_type = {
 
 
 static int
-MessageFlag_init(s_MessageFlag* self UNUSED_PARAM, PyObject* args UNUSED_PARAM)
+MessageFlag_init(s_MessageFlag* self UNUSED_PARAM,
+                 PyObject* args UNUSED_PARAM)
 {
     PyErr_SetString(PyExc_NotImplementedError,
                     "MessageFlag can't be built directly");
@@ -133,8 +134,7 @@ MessageFlag_init(s_MessageFlag* self UNUSED_PARAM, PyObject* args UNUSED_PARAM)
 }
 
 static void
-MessageFlag_destroy(s_MessageFlag* self)
-{
+MessageFlag_destroy(s_MessageFlag* self) {
     // We only use the consts from MessageFlag, so don't
     // delete self->messageflag here
     self->messageflag = NULL;
@@ -142,14 +142,12 @@ MessageFlag_destroy(s_MessageFlag* self)
 }
 
 static PyObject*
-MessageFlag_getBit(s_MessageFlag* self)
-{
+MessageFlag_getBit(s_MessageFlag* self) {
     return Py_BuildValue("I", self->messageflag->getBit());
 }
 
 static PyObject*
-MessageFlag_QR(s_MessageFlag* self UNUSED_PARAM)
-{
+MessageFlag_QR(s_MessageFlag* self UNUSED_PARAM) {
     s_MessageFlag* ret = PyObject_New(s_MessageFlag, &messageflag_type);
     if (ret != NULL) {
         ret->messageflag = &MessageFlag::QR();
@@ -162,8 +160,7 @@ MessageFlag_QR(s_MessageFlag* self UNUSED_PARAM)
 }
 
 static PyObject*
-MessageFlag_AA(s_MessageFlag* self UNUSED_PARAM)
-{
+MessageFlag_AA(s_MessageFlag* self UNUSED_PARAM) {
     s_MessageFlag* ret = PyObject_New(s_MessageFlag, &messageflag_type);
     if (ret != NULL) {
         ret->messageflag = &MessageFlag::AA();
@@ -176,8 +173,7 @@ MessageFlag_AA(s_MessageFlag* self UNUSED_PARAM)
 }
 
 static PyObject*
-MessageFlag_TC(s_MessageFlag* self UNUSED_PARAM)
-{
+MessageFlag_TC(s_MessageFlag* self UNUSED_PARAM) {
     s_MessageFlag* ret = PyObject_New(s_MessageFlag, &messageflag_type);
     if (ret != NULL) {
         ret->messageflag = &MessageFlag::TC();
@@ -190,8 +186,7 @@ MessageFlag_TC(s_MessageFlag* self UNUSED_PARAM)
 }
 
 static PyObject*
-MessageFlag_RD(s_MessageFlag* self UNUSED_PARAM)
-{
+MessageFlag_RD(s_MessageFlag* self UNUSED_PARAM) {
     s_MessageFlag* ret = PyObject_New(s_MessageFlag, &messageflag_type);
     if (ret != NULL) {
         ret->messageflag = &MessageFlag::RD();
@@ -204,8 +199,7 @@ MessageFlag_RD(s_MessageFlag* self UNUSED_PARAM)
 }
 
 static PyObject*
-MessageFlag_RA(s_MessageFlag* self UNUSED_PARAM)
-{
+MessageFlag_RA(s_MessageFlag* self UNUSED_PARAM) {
     s_MessageFlag* ret = PyObject_New(s_MessageFlag, &messageflag_type);
     if (ret != NULL) {
         ret->messageflag = &MessageFlag::RA();
@@ -218,8 +212,7 @@ MessageFlag_RA(s_MessageFlag* self UNUSED_PARAM)
 }
 
 static PyObject*
-MessageFlag_AD(s_MessageFlag* self UNUSED_PARAM)
-{
+MessageFlag_AD(s_MessageFlag* self UNUSED_PARAM) {
     s_MessageFlag* ret = PyObject_New(s_MessageFlag, &messageflag_type);
     if (ret != NULL) {
         ret->messageflag = &MessageFlag::AD();
@@ -232,8 +225,7 @@ MessageFlag_AD(s_MessageFlag* self UNUSED_PARAM)
 }
 
 static PyObject*
-MessageFlag_CD(s_MessageFlag* self UNUSED_PARAM)
-{
+MessageFlag_CD(s_MessageFlag* self UNUSED_PARAM) {
     s_MessageFlag* ret = PyObject_New(s_MessageFlag, &messageflag_type);
     if (ret != NULL) {
         ret->messageflag = &MessageFlag::CD();
@@ -360,16 +352,14 @@ static PyTypeObject opcode_type = {
 
 
 static int
-Opcode_init(s_Opcode* self UNUSED_PARAM, PyObject* args UNUSED_PARAM)
-{
+Opcode_init(s_Opcode* self UNUSED_PARAM, PyObject* args UNUSED_PARAM) {
     PyErr_SetString(PyExc_NotImplementedError,
                     "Opcode can't be built directly");
     return -1;
 }
 
 static void
-Opcode_destroy(s_Opcode* self)
-{
+Opcode_destroy(s_Opcode* self) {
     // We only use the consts from Opcode, so don't
     // delete self->opcode here
     self->opcode = NULL;
@@ -377,27 +367,23 @@ Opcode_destroy(s_Opcode* self)
 }
 
 static PyObject*
-Opcode_getCode(s_Opcode* self)
-{
+Opcode_getCode(s_Opcode* self) {
     return Py_BuildValue("I", self->opcode->getCode());
 }
 
 static PyObject*
-Opcode_toText(s_Opcode* self)
-{
+Opcode_toText(s_Opcode* self) {
     return Py_BuildValue("s", self->opcode->toText().c_str());
 }
 
 static PyObject*
-Opcode_str(PyObject* self)
-{
+Opcode_str(PyObject* self) {
     // Simply call the to_text method we already defined
     return PyObject_CallMethod(self, (char*)"to_text", (char*)"");
 }
 
 static PyObject*
-Opcode_QUERY(s_Opcode* self UNUSED_PARAM)
-{
+Opcode_QUERY(s_Opcode* self UNUSED_PARAM) {
     s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
     if (ret != NULL) {
         ret->opcode = &Opcode::QUERY();
@@ -410,8 +396,7 @@ Opcode_QUERY(s_Opcode* self UNUSED_PARAM)
 }
 
 static PyObject*
-Opcode_IQUERY(s_Opcode* self UNUSED_PARAM)
-{
+Opcode_IQUERY(s_Opcode* self UNUSED_PARAM) {
     s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
     if (ret != NULL) {
         ret->opcode = &Opcode::IQUERY();
@@ -424,8 +409,7 @@ Opcode_IQUERY(s_Opcode* self UNUSED_PARAM)
 }
 
 static PyObject*
-Opcode_STATUS(s_Opcode* self UNUSED_PARAM)
-{
+Opcode_STATUS(s_Opcode* self UNUSED_PARAM) {
     s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
     if (ret != NULL) {
         ret->opcode = &Opcode::STATUS();
@@ -438,8 +422,7 @@ Opcode_STATUS(s_Opcode* self UNUSED_PARAM)
 }
 
 static PyObject*
-Opcode_RESERVED3(s_Opcode* self UNUSED_PARAM)
-{
+Opcode_RESERVED3(s_Opcode* self UNUSED_PARAM) {
     s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
     if (ret != NULL) {
         ret->opcode = &Opcode::RESERVED3();
@@ -452,8 +435,7 @@ Opcode_RESERVED3(s_Opcode* self UNUSED_PARAM)
 }
 
 static PyObject*
-Opcode_NOTIFY(s_Opcode* self UNUSED_PARAM)
-{
+Opcode_NOTIFY(s_Opcode* self UNUSED_PARAM) {
     s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
     if (ret != NULL) {
         ret->opcode = &Opcode::NOTIFY();
@@ -466,8 +448,7 @@ Opcode_NOTIFY(s_Opcode* self UNUSED_PARAM)
 }
 
 static PyObject*
-Opcode_UPDATE(s_Opcode* self UNUSED_PARAM)
-{
+Opcode_UPDATE(s_Opcode* self UNUSED_PARAM) {
     s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
     if (ret != NULL) {
         ret->opcode = &Opcode::UPDATE();
@@ -480,8 +461,7 @@ Opcode_UPDATE(s_Opcode* self UNUSED_PARAM)
 }
 
 static PyObject*
-Opcode_RESERVED6(s_Opcode* self UNUSED_PARAM)
-{
+Opcode_RESERVED6(s_Opcode* self UNUSED_PARAM) {
     s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
     if (ret != NULL) {
         ret->opcode = &Opcode::RESERVED6();
@@ -494,8 +474,7 @@ Opcode_RESERVED6(s_Opcode* self UNUSED_PARAM)
 }
 
 static PyObject*
-Opcode_RESERVED7(s_Opcode* self UNUSED_PARAM)
-{
+Opcode_RESERVED7(s_Opcode* self UNUSED_PARAM) {
     s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
     if (ret != NULL) {
         ret->opcode = &Opcode::RESERVED7();
@@ -508,8 +487,7 @@ Opcode_RESERVED7(s_Opcode* self UNUSED_PARAM)
 }
 
 static PyObject*
-Opcode_RESERVED8(s_Opcode* self UNUSED_PARAM)
-{
+Opcode_RESERVED8(s_Opcode* self UNUSED_PARAM) {
     s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
     if (ret != NULL) {
         ret->opcode = &Opcode::RESERVED8();
@@ -522,8 +500,7 @@ Opcode_RESERVED8(s_Opcode* self UNUSED_PARAM)
 }
 
 static PyObject*
-Opcode_RESERVED9(s_Opcode* self UNUSED_PARAM)
-{
+Opcode_RESERVED9(s_Opcode* self UNUSED_PARAM) {
     s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
     if (ret != NULL) {
         ret->opcode = &Opcode::RESERVED9();
@@ -536,8 +513,7 @@ Opcode_RESERVED9(s_Opcode* self UNUSED_PARAM)
 }
 
 static PyObject*
-Opcode_RESERVED10(s_Opcode* self UNUSED_PARAM)
-{
+Opcode_RESERVED10(s_Opcode* self UNUSED_PARAM) {
     s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
     if (ret != NULL) {
         ret->opcode = &Opcode::RESERVED10();
@@ -550,8 +526,7 @@ Opcode_RESERVED10(s_Opcode* self UNUSED_PARAM)
 }
 
 static PyObject*
-Opcode_RESERVED11(s_Opcode* self UNUSED_PARAM)
-{
+Opcode_RESERVED11(s_Opcode* self UNUSED_PARAM) {
     s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
     if (ret != NULL) {
         ret->opcode = &Opcode::RESERVED11();
@@ -564,8 +539,7 @@ Opcode_RESERVED11(s_Opcode* self UNUSED_PARAM)
 }
 
 static PyObject*
-Opcode_RESERVED12(s_Opcode* self UNUSED_PARAM)
-{
+Opcode_RESERVED12(s_Opcode* self UNUSED_PARAM) {
     s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
     if (ret != NULL) {
         ret->opcode = &Opcode::RESERVED12();
@@ -578,8 +552,7 @@ Opcode_RESERVED12(s_Opcode* self UNUSED_PARAM)
 }
 
 static PyObject*
-Opcode_RESERVED13(s_Opcode* self UNUSED_PARAM)
-{
+Opcode_RESERVED13(s_Opcode* self UNUSED_PARAM) {
     s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
     if (ret != NULL) {
         ret->opcode = &Opcode::RESERVED13();
@@ -592,8 +565,7 @@ Opcode_RESERVED13(s_Opcode* self UNUSED_PARAM)
 }
 
 static PyObject*
-Opcode_RESERVED14(s_Opcode* self UNUSED_PARAM)
-{
+Opcode_RESERVED14(s_Opcode* self UNUSED_PARAM) {
     s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
     if (ret != NULL) {
         ret->opcode = &Opcode::RESERVED14();
@@ -606,8 +578,7 @@ Opcode_RESERVED14(s_Opcode* self UNUSED_PARAM)
 }
 
 static PyObject*
-Opcode_RESERVED15(s_Opcode* self UNUSED_PARAM)
-{
+Opcode_RESERVED15(s_Opcode* self UNUSED_PARAM) {
     s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
     if (ret != NULL) {
         ret->opcode = &Opcode::RESERVED15();
@@ -620,8 +591,7 @@ Opcode_RESERVED15(s_Opcode* self UNUSED_PARAM)
 }
 
 static PyObject* 
-Opcode_richcmp(s_Opcode* self, s_Opcode* other, int op)
-{
+Opcode_richcmp(s_Opcode* self, s_Opcode* other, int op) {
     bool c = false;
 
     // Check for null and if the types match. If different type,
@@ -788,8 +758,7 @@ static PyTypeObject rcode_type = {
 
 
 static int
-Rcode_init(s_Rcode* self UNUSED_PARAM, PyObject* args UNUSED_PARAM)
-{
+Rcode_init(s_Rcode* self UNUSED_PARAM, PyObject* args UNUSED_PARAM) {
     uint16_t code = 0;
     if (PyArg_ParseTuple(args, "h", &code)) {
         try {
@@ -807,8 +776,7 @@ Rcode_init(s_Rcode* self UNUSED_PARAM, PyObject* args UNUSED_PARAM)
 }
 
 static void
-Rcode_destroy(s_Rcode* self)
-{
+Rcode_destroy(s_Rcode* self) {
     // We only use the consts from Rcode, so don't
     // delete self->rcode here
     if (!self->static_code) {
@@ -819,27 +787,23 @@ Rcode_destroy(s_Rcode* self)
 }
 
 static PyObject*
-Rcode_getCode(s_Rcode* self)
-{
+Rcode_getCode(s_Rcode* self) {
     return Py_BuildValue("I", self->rcode->getCode());
 }
 
 static PyObject*
-Rcode_toText(s_Rcode* self)
-{
+Rcode_toText(s_Rcode* self) {
     return Py_BuildValue("s", self->rcode->toText().c_str());
 }
 
 static PyObject*
-Rcode_str(PyObject* self)
-{
+Rcode_str(PyObject* self) {
     // Simply call the to_text method we already defined
     return PyObject_CallMethod(self, (char*)"to_text", (char*)"");
 }
 
 static PyObject*
-Rcode_NOERROR(s_Rcode* self UNUSED_PARAM)
-{
+Rcode_NOERROR(s_Rcode* self UNUSED_PARAM) {
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::NOERROR();
@@ -853,8 +817,7 @@ Rcode_NOERROR(s_Rcode* self UNUSED_PARAM)
 }
 
 static PyObject*
-Rcode_FORMERR(s_Rcode* self UNUSED_PARAM)
-{
+Rcode_FORMERR(s_Rcode* self UNUSED_PARAM) {
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::FORMERR();
@@ -868,8 +831,7 @@ Rcode_FORMERR(s_Rcode* self UNUSED_PARAM)
 }
 
 static PyObject*
-Rcode_SERVFAIL(s_Rcode* self UNUSED_PARAM)
-{
+Rcode_SERVFAIL(s_Rcode* self UNUSED_PARAM) {
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::SERVFAIL();
@@ -883,8 +845,7 @@ Rcode_SERVFAIL(s_Rcode* self UNUSED_PARAM)
 }
 
 static PyObject*
-Rcode_NXDOMAIN(s_Rcode* self UNUSED_PARAM)
-{
+Rcode_NXDOMAIN(s_Rcode* self UNUSED_PARAM) {
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::NXDOMAIN();
@@ -898,8 +859,7 @@ Rcode_NXDOMAIN(s_Rcode* self UNUSED_PARAM)
 }
 
 static PyObject*
-Rcode_NOTIMP(s_Rcode* self UNUSED_PARAM)
-{
+Rcode_NOTIMP(s_Rcode* self UNUSED_PARAM) {
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::NOTIMP();
@@ -913,8 +873,7 @@ Rcode_NOTIMP(s_Rcode* self UNUSED_PARAM)
 }
 
 static PyObject*
-Rcode_REFUSED(s_Rcode* self UNUSED_PARAM)
-{
+Rcode_REFUSED(s_Rcode* self UNUSED_PARAM) {
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::REFUSED();
@@ -928,8 +887,7 @@ Rcode_REFUSED(s_Rcode* self UNUSED_PARAM)
 }
 
 static PyObject*
-Rcode_YXDOMAIN(s_Rcode* self UNUSED_PARAM)
-{
+Rcode_YXDOMAIN(s_Rcode* self UNUSED_PARAM) {
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::YXDOMAIN();
@@ -943,8 +901,7 @@ Rcode_YXDOMAIN(s_Rcode* self UNUSED_PARAM)
 }
 
 static PyObject*
-Rcode_YXRRSET(s_Rcode* self UNUSED_PARAM)
-{
+Rcode_YXRRSET(s_Rcode* self UNUSED_PARAM) {
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::YXRRSET();
@@ -958,8 +915,7 @@ Rcode_YXRRSET(s_Rcode* self UNUSED_PARAM)
 }
 
 static PyObject*
-Rcode_NXRRSET(s_Rcode* self UNUSED_PARAM)
-{
+Rcode_NXRRSET(s_Rcode* self UNUSED_PARAM) {
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::NXRRSET();
@@ -973,8 +929,7 @@ Rcode_NXRRSET(s_Rcode* self UNUSED_PARAM)
 }
 
 static PyObject*
-Rcode_NOTAUTH(s_Rcode* self UNUSED_PARAM)
-{
+Rcode_NOTAUTH(s_Rcode* self UNUSED_PARAM) {
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::NOTAUTH();
@@ -988,8 +943,7 @@ Rcode_NOTAUTH(s_Rcode* self UNUSED_PARAM)
 }
 
 static PyObject*
-Rcode_NOTZONE(s_Rcode* self UNUSED_PARAM)
-{
+Rcode_NOTZONE(s_Rcode* self UNUSED_PARAM) {
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::NOTZONE();
@@ -1003,8 +957,7 @@ Rcode_NOTZONE(s_Rcode* self UNUSED_PARAM)
 }
 
 static PyObject*
-Rcode_RESERVED11(s_Rcode* self UNUSED_PARAM)
-{
+Rcode_RESERVED11(s_Rcode* self UNUSED_PARAM) {
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::RESERVED11();
@@ -1018,8 +971,7 @@ Rcode_RESERVED11(s_Rcode* self UNUSED_PARAM)
 }
 
 static PyObject*
-Rcode_RESERVED12(s_Rcode* self UNUSED_PARAM)
-{
+Rcode_RESERVED12(s_Rcode* self UNUSED_PARAM) {
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::RESERVED12();
@@ -1033,8 +985,7 @@ Rcode_RESERVED12(s_Rcode* self UNUSED_PARAM)
 }
 
 static PyObject*
-Rcode_RESERVED13(s_Rcode* self UNUSED_PARAM)
-{
+Rcode_RESERVED13(s_Rcode* self UNUSED_PARAM) {
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::RESERVED13();
@@ -1048,8 +999,7 @@ Rcode_RESERVED13(s_Rcode* self UNUSED_PARAM)
 }
 
 static PyObject*
-Rcode_RESERVED14(s_Rcode* self UNUSED_PARAM)
-{
+Rcode_RESERVED14(s_Rcode* self UNUSED_PARAM) {
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::RESERVED14();
@@ -1063,8 +1013,7 @@ Rcode_RESERVED14(s_Rcode* self UNUSED_PARAM)
 }
 
 static PyObject*
-Rcode_RESERVED15(s_Rcode* self UNUSED_PARAM)
-{
+Rcode_RESERVED15(s_Rcode* self UNUSED_PARAM) {
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::RESERVED15();
@@ -1078,8 +1027,7 @@ Rcode_RESERVED15(s_Rcode* self UNUSED_PARAM)
 }
 
 static PyObject*
-Rcode_BADVERS(s_Rcode* self UNUSED_PARAM)
-{
+Rcode_BADVERS(s_Rcode* self UNUSED_PARAM) {
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
         ret->rcode = &Rcode::BADVERS();
@@ -1093,8 +1041,7 @@ Rcode_BADVERS(s_Rcode* self UNUSED_PARAM)
 }
 
 static PyObject* 
-Rcode_richcmp(s_Rcode* self, s_Rcode* other, int op)
-{
+Rcode_richcmp(s_Rcode* self, s_Rcode* other, int op) {
     bool c = false;
 
     // Check for null and if the types match. If different type,
@@ -1227,7 +1174,8 @@ static PyTypeObject section_type = {
 
 
 static int
-Section_init(s_Section* self UNUSED_PARAM, PyObject* args UNUSED_PARAM)
+Section_init(s_Section* self UNUSED_PARAM,
+             PyObject* args UNUSED_PARAM)
 {
     PyErr_SetString(PyExc_NotImplementedError,
                     "Section can't be built directly");
@@ -1235,8 +1183,7 @@ Section_init(s_Section* self UNUSED_PARAM, PyObject* args UNUSED_PARAM)
 }
 
 static void
-Section_destroy(s_Section* self)
-{
+Section_destroy(s_Section* self) {
     // We only use the consts from Section, so don't
     // delete self->section here
     self->section = NULL;
@@ -1244,14 +1191,12 @@ Section_destroy(s_Section* self)
 }
 
 static PyObject*
-Section_getCode(s_Section* self)
-{
+Section_getCode(s_Section* self) {
     return Py_BuildValue("I", self->section->getCode());
 }
 
 static PyObject*
-Section_QUESTION(s_Section* self UNUSED_PARAM)
-{
+Section_QUESTION(s_Section* self UNUSED_PARAM) {
     s_Section* ret = PyObject_New(s_Section, &section_type);
     if (ret != NULL) {
         ret->section = &Section::QUESTION();
@@ -1264,8 +1209,7 @@ Section_QUESTION(s_Section* self UNUSED_PARAM)
 }
 
 static PyObject*
-Section_ANSWER(s_Section* self UNUSED_PARAM)
-{
+Section_ANSWER(s_Section* self UNUSED_PARAM) {
     s_Section* ret = PyObject_New(s_Section, &section_type);
     if (ret != NULL) {
         ret->section = &Section::ANSWER();
@@ -1278,8 +1222,7 @@ Section_ANSWER(s_Section* self UNUSED_PARAM)
 }
 
 static PyObject*
-Section_AUTHORITY(s_Section* self UNUSED_PARAM)
-{
+Section_AUTHORITY(s_Section* self UNUSED_PARAM) {
     s_Section* ret = PyObject_New(s_Section, &section_type);
     if (ret != NULL) {
         ret->section = &Section::AUTHORITY();
@@ -1292,8 +1235,7 @@ Section_AUTHORITY(s_Section* self UNUSED_PARAM)
 }
 
 static PyObject*
-Section_ADDITIONAL(s_Section* self UNUSED_PARAM)
-{
+Section_ADDITIONAL(s_Section* self UNUSED_PARAM) {
     s_Section* ret = PyObject_New(s_Section, &section_type);
     if (ret != NULL) {
         ret->section = &Section::ADDITIONAL();
@@ -1306,8 +1248,7 @@ Section_ADDITIONAL(s_Section* self UNUSED_PARAM)
 }
 
 static PyObject* 
-Section_richcmp(s_Section* self, s_Section* other, int op)
-{
+Section_richcmp(s_Section* self, s_Section* other, int op) {
     bool c = false;
 
     // Check for null and if the types match. If different type,
@@ -1573,8 +1514,7 @@ static PyTypeObject message_type = {
 };
 
 static int
-Message_init(s_Message* self, PyObject* args)
-{
+Message_init(s_Message* self, PyObject* args) {
     unsigned int i;
     // The constructor argument can be a string ("IN"), an integer (1),
     // or a sequence of numbers between 0 and 255 (wire code)
@@ -1599,8 +1539,7 @@ Message_init(s_Message* self, PyObject* args)
 }
 
 static void
-Message_destroy(s_Message* self)
-{
+Message_destroy(s_Message* self) {
     if (self->message != NULL)
         delete self->message;
     self->message = NULL;
@@ -1608,8 +1547,7 @@ Message_destroy(s_Message* self)
 }
 
 static PyObject*
-Message_getHeaderFlag(s_Message* self, PyObject* args)
-{
+Message_getHeaderFlag(s_Message* self, PyObject* args) {
     s_MessageFlag* messageflag;
     if (!PyArg_ParseTuple(args, "O!", &messageflag_type, &messageflag)) {
         return NULL;
@@ -1623,8 +1561,7 @@ Message_getHeaderFlag(s_Message* self, PyObject* args)
 }
 
 static PyObject*
-Message_setHeaderFlag(s_Message* self, PyObject* args)
-{
+Message_setHeaderFlag(s_Message* self, PyObject* args) {
     s_MessageFlag* messageflag;
     if (!PyArg_ParseTuple(args, "O!", &messageflag_type, &messageflag)) {
         return NULL;
@@ -1641,8 +1578,7 @@ Message_setHeaderFlag(s_Message* self, PyObject* args)
 }
 
 static PyObject*
-Message_clearHeaderFlag(s_Message* self, PyObject* args)
-{
+Message_clearHeaderFlag(s_Message* self, PyObject* args) {
     s_MessageFlag* messageflag;
     if (!PyArg_ParseTuple(args, "O!", &messageflag_type, &messageflag)) {
         return NULL;
@@ -1661,8 +1597,7 @@ Message_clearHeaderFlag(s_Message* self, PyObject* args)
 }
 
 static PyObject*
-Message_isDNSSECSupported(s_Message* self)
-{
+Message_isDNSSECSupported(s_Message* self) {
     if (self->message->isDNSSECSupported()) {
         Py_RETURN_TRUE;
     } else {
@@ -1671,8 +1606,7 @@ Message_isDNSSECSupported(s_Message* self)
 }
 
 static PyObject*
-Message_setDNSSECSupported(s_Message* self, PyObject* args)
-{
+Message_setDNSSECSupported(s_Message* self, PyObject* args) {
     PyObject *b;
     if (!PyArg_ParseTuple(args, "O!", &PyBool_Type, &b)) {
         return NULL;
@@ -1691,14 +1625,12 @@ Message_setDNSSECSupported(s_Message* self, PyObject* args)
 }
 
 static PyObject*
-Message_getUDPSize(s_Message* self)
-{
+Message_getUDPSize(s_Message* self) {
     return Py_BuildValue("I", self->message->getUDPSize());
 }
 
 static PyObject*
-Message_setUDPSize(s_Message* self, PyObject* args)
-{
+Message_setUDPSize(s_Message* self, PyObject* args) {
     uint16_t size;
     if (!PyArg_ParseTuple(args, "I", &size)) {
         return NULL;
@@ -1716,14 +1648,12 @@ Message_setUDPSize(s_Message* self, PyObject* args)
 }
 
 static PyObject*
-Message_getQid(s_Message* self)
-{
+Message_getQid(s_Message* self) {
     return Py_BuildValue("I", self->message->getQid());
 }
 
 static PyObject*
-Message_setQid(s_Message* self, PyObject* args)
-{
+Message_setQid(s_Message* self, PyObject* args) {
     uint16_t id;
     if (!PyArg_ParseTuple(args, "I", &id)) {
         return NULL;
@@ -1738,8 +1668,7 @@ Message_setQid(s_Message* self, PyObject* args)
 }
 
 static PyObject*
-Message_getRcode(s_Message* self)
-{
+Message_getRcode(s_Message* self) {
     s_Rcode* rcode;
 
     rcode = (s_Rcode*)rcode_type.tp_alloc(&rcode_type, 0);
@@ -1756,8 +1685,7 @@ Message_getRcode(s_Message* self)
 }
 
 static PyObject*
-Message_setRcode(s_Message* self, PyObject* args)
-{
+Message_setRcode(s_Message* self, PyObject* args) {
     s_Rcode* rcode;
     if (!PyArg_ParseTuple(args, "O!", &rcode_type, &rcode)) {
         return NULL;
@@ -1767,8 +1695,7 @@ Message_setRcode(s_Message* self, PyObject* args)
 }
 
 static PyObject*
-Message_getOpcode(s_Message* self)
-{
+Message_getOpcode(s_Message* self) {
     s_Opcode* opcode;
 
     opcode = (s_Opcode*)opcode_type.tp_alloc(&opcode_type, 0);
@@ -1788,8 +1715,7 @@ Message_getOpcode(s_Message* self)
 }
 
 static PyObject*
-Message_setOpcode(s_Message* self, PyObject* args)
-{
+Message_setOpcode(s_Message* self, PyObject* args) {
     s_Opcode* opcode;
     if (!PyArg_ParseTuple(args, "O!", &opcode_type, &opcode)) {
         return NULL;
@@ -1799,8 +1725,7 @@ Message_setOpcode(s_Message* self, PyObject* args)
 }
 
 static PyObject*
-Message_getRRCount(s_Message* self, PyObject* args)
-{
+Message_getRRCount(s_Message* self, PyObject* args) {
     s_Section *section;
     if (!PyArg_ParseTuple(args, "O!", &section_type, &section)) {
         return NULL;
@@ -1810,8 +1735,7 @@ Message_getRRCount(s_Message* self, PyObject* args)
 
 // TODO use direct iterators for these? (or simply lists for now?)
 static PyObject*
-Message_getQuestion(s_Message* self)
-{
+Message_getQuestion(s_Message* self) {
     PyObject* list = PyList_New(0);
     
     for (QuestionIterator qi = self->message->beginQuestion();
@@ -1832,8 +1756,7 @@ Message_getQuestion(s_Message* self)
 }
 
 static PyObject*
-Message_getSection(s_Message* self, PyObject* args)
-{
+Message_getSection(s_Message* self, PyObject* args) {
     s_Section *section;
     if (!PyArg_ParseTuple(args, "O!", &section_type, &section)) {
         return NULL;
@@ -1868,8 +1791,7 @@ Message_getSection(s_Message* self, PyObject* args)
 //static PyObject* Message_endSection(s_Message* self, PyObject* args);
 //static PyObject* Message_addQuestion(s_Message* self, PyObject* args);
 static PyObject*
-Message_addQuestion(s_Message* self, PyObject* args)
-{
+Message_addQuestion(s_Message* self, PyObject* args) {
     s_Question *question;
 
     if (!PyArg_ParseTuple(args, "O!", &question_type, &question)) {
@@ -1882,8 +1804,7 @@ Message_addQuestion(s_Message* self, PyObject* args)
 }
 
 static PyObject*
-Message_addRRset(s_Message* self, PyObject* args)
-{
+Message_addRRset(s_Message* self, PyObject* args) {
     PyObject *sign = Py_False;
     s_Section* section;
     s_RRset* rrset;
@@ -1903,8 +1824,7 @@ Message_addRRset(s_Message* self, PyObject* args)
 }
 
 static PyObject*
-Message_clear(s_Message* self, PyObject* args)
-{
+Message_clear(s_Message* self, PyObject* args) {
     unsigned int i;
     // The constructor argument can be a string ("IN"), an integer (1),
     // or a sequence of numbers between 0 and 255 (wire code)
@@ -1927,29 +1847,25 @@ Message_clear(s_Message* self, PyObject* args)
 }
 
 static PyObject*
-Message_makeResponse(s_Message* self)
-{
+Message_makeResponse(s_Message* self) {
     self->message->makeResponse();
     Py_RETURN_NONE;
 }
 
 static PyObject*
-Message_toText(s_Message* self)
-{
+Message_toText(s_Message* self) {
     // Py_BuildValue makes python objects from native data
     return Py_BuildValue("s", self->message->toText().c_str());
 }
 
 static PyObject*
-Message_str(PyObject* self)
-{
+Message_str(PyObject* self) {
     // Simply call the to_text method we already defined
     return PyObject_CallMethod(self, (char*)"to_text", (char*)"");
 }
 
 static PyObject*
-Message_toWire(s_Message* self, PyObject* args)
-{
+Message_toWire(s_Message* self, PyObject* args) {
     s_MessageRenderer* mr;
     
     if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, (PyObject**) &mr)) {
@@ -1971,8 +1887,7 @@ Message_toWire(s_Message* self, PyObject* args)
 }
 
 static PyObject*
-Message_fromWire(s_Message* self, PyObject* args)
-{
+Message_fromWire(s_Message* self, PyObject* args) {
     const char* b;
     Py_ssize_t len;
     if (!PyArg_ParseTuple(args, "y#", &b, &len)) {
@@ -2000,8 +1915,7 @@ Message_fromWire(s_Message* self, PyObject* args)
 
 // Module Initialization, all statics are initialized here
 bool
-initModulePart_Message(PyObject* mod)
-{
+initModulePart_Message(PyObject* mod) {
     
     /* add methods to class */
     if (PyType_Ready(&messageflag_type) < 0) {

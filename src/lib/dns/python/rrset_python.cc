@@ -170,8 +170,7 @@ static PyTypeObject rrset_type = {
 };
 
 static int
-RRset_init(s_RRset* self, PyObject* args UNUSED_PARAM)
-{
+RRset_init(s_RRset* self, PyObject* args UNUSED_PARAM) {
     s_Name* name;
     s_RRClass* rrclass;
     s_RRType* rrtype;
@@ -192,8 +191,7 @@ RRset_init(s_RRset* self, PyObject* args UNUSED_PARAM)
 }
 
 static void
-RRset_destroy(s_RRset* self)
-{
+RRset_destroy(s_RRset* self) {
     // Clear the shared_ptr so that its reference count is zero
     // before we call tp_free() (there is no direct release())
     self->rrset.reset();
@@ -201,14 +199,12 @@ RRset_destroy(s_RRset* self)
 }
 
 static PyObject*
-RRset_getRdataCount(s_RRset* self)
-{
+RRset_getRdataCount(s_RRset* self) {
     return Py_BuildValue("I", self->rrset->getRdataCount());
 }
 
 static PyObject*
-RRset_getName(s_RRset* self)
-{
+RRset_getName(s_RRset* self) {
     s_Name* name;
 
     // is this the best way to do this?
@@ -226,8 +222,7 @@ RRset_getName(s_RRset* self)
 }
 
 static PyObject*
-RRset_getClass(s_RRset* self)
-{
+RRset_getClass(s_RRset* self) {
     s_RRClass* rrclass;
 
     rrclass = (s_RRClass*)rrclass_type.tp_alloc(&rrclass_type, 0);
@@ -244,8 +239,7 @@ RRset_getClass(s_RRset* self)
 }
 
 static PyObject*
-RRset_getType(s_RRset* self)
-{
+RRset_getType(s_RRset* self) {
     s_RRType* rrtype;
 
     rrtype = (s_RRType*)rrtype_type.tp_alloc(&rrtype_type, 0);
@@ -262,8 +256,7 @@ RRset_getType(s_RRset* self)
 }
 
 static PyObject*
-RRset_getTTL(s_RRset* self)
-{
+RRset_getTTL(s_RRset* self) {
     s_RRTTL* rrttl;
 
     rrttl = (s_RRTTL*)rrttl_type.tp_alloc(&rrttl_type, 0);
@@ -280,8 +273,7 @@ RRset_getTTL(s_RRset* self)
 }
 
 static PyObject*
-RRset_setName(s_RRset* self, PyObject* args)
-{
+RRset_setName(s_RRset* self, PyObject* args) {
     s_Name* name;
     if (!PyArg_ParseTuple(args, "O!", &name_type, &name)) {
         return NULL;
@@ -291,8 +283,7 @@ RRset_setName(s_RRset* self, PyObject* args)
 }
 
 static PyObject*
-RRset_setTTL(s_RRset* self, PyObject* args)
-{
+RRset_setTTL(s_RRset* self, PyObject* args) {
     s_RRTTL* rrttl;
     if (!PyArg_ParseTuple(args, "O!", &rrttl_type, &rrttl)) {
         return NULL;
@@ -302,8 +293,7 @@ RRset_setTTL(s_RRset* self, PyObject* args)
 }
 
 static PyObject*
-RRset_toText(s_RRset* self)
-{
+RRset_toText(s_RRset* self) {
     try {
         return Py_BuildValue("s", self->rrset->toText().c_str());
     } catch (EmptyRRset ers) {
@@ -313,15 +303,13 @@ RRset_toText(s_RRset* self)
 }
 
 static PyObject*
-RRset_str(PyObject* self)
-{
+RRset_str(PyObject* self) {
     // Simply call the to_text method we already defined
     return PyObject_CallMethod(self, (char*)"to_text", (char*)"");
 }
 
 static PyObject*
-RRset_toWire(s_RRset* self, PyObject* args)
-{
+RRset_toWire(s_RRset* self, PyObject* args) {
     PyObject* bytes;
     s_MessageRenderer* mr;
 
@@ -355,8 +343,7 @@ RRset_toWire(s_RRset* self, PyObject* args)
 }
 
 static PyObject*
-RRset_addRdata(s_RRset* self, PyObject* args)
-{
+RRset_addRdata(s_RRset* self, PyObject* args) {
     s_Rdata* rdata;
     if (!PyArg_ParseTuple(args, "O!", &rdata_type, &rdata)) {
         return NULL;
@@ -373,8 +360,7 @@ RRset_addRdata(s_RRset* self, PyObject* args)
 }
 
 static PyObject*
-RRset_getRdata(s_RRset* self)
-{
+RRset_getRdata(s_RRset* self) {
     PyObject* list = PyList_New(0);
 
     RdataIteratorPtr it = self->rrset->getRdataIterator();
@@ -401,8 +387,7 @@ RRset_getRdata(s_RRset* self)
 
 // Module Initialization, all statics are initialized here
 bool
-initModulePart_RRset(PyObject* mod)
-{
+initModulePart_RRset(PyObject* mod) {
     // Add the exceptions to the module
     po_EmptyRRset = PyErr_NewException("libdns_python.EmptyRRset", NULL, NULL);
     PyModule_AddObject(mod, "EmptyRRset", po_EmptyRRset);

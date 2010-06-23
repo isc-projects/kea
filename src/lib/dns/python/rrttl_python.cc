@@ -37,7 +37,7 @@ static PyObject* po_IncompleteRRTTL;
 // RRTTL
 //
 
-// The s_* Class simply coverst one instantiation of the object
+// The s_* Class simply covers one instantiation of the object
 typedef struct {
     PyObject_HEAD
     RRTTL* rrttl;
@@ -143,8 +143,7 @@ static PyTypeObject rrttl_type = {
 };
 
 static int
-RRTTL_init(s_RRTTL* self, PyObject* args)
-{
+RRTTL_init(s_RRTTL* self, PyObject* args) {
     const char* s;
     unsigned long i;
     PyObject* bytes = NULL;
@@ -196,8 +195,7 @@ RRTTL_init(s_RRTTL* self, PyObject* args)
 }
 
 static void
-RRTTL_destroy(s_RRTTL* self)
-{
+RRTTL_destroy(s_RRTTL* self) {
     if (self->rrttl != NULL)
         delete self->rrttl;
     self->rrttl = NULL;
@@ -205,22 +203,19 @@ RRTTL_destroy(s_RRTTL* self)
 }
 
 static PyObject*
-RRTTL_toText(s_RRTTL* self)
-{
+RRTTL_toText(s_RRTTL* self) {
     // Py_BuildValue makes python objects from native data
     return Py_BuildValue("s", self->rrttl->toText().c_str());
 }
 
 static PyObject*
-RRTTL_str(PyObject* self)
-{
+RRTTL_str(PyObject* self) {
     // Simply call the to_text method we already defined
     return PyObject_CallMethod(self, (char*)"to_text", (char*)"");
 }
 
 static PyObject*
-RRTTL_toWire(s_RRTTL* self, PyObject* args)
-{
+RRTTL_toWire(s_RRTTL* self, PyObject* args) {
     PyObject* bytes;
     s_MessageRenderer* mr;
     
@@ -248,14 +243,12 @@ RRTTL_toWire(s_RRTTL* self, PyObject* args)
 }
 
 static PyObject*
-RRTTL_getValue(s_RRTTL* self)
-{
+RRTTL_getValue(s_RRTTL* self) {
     return Py_BuildValue("I", self->rrttl->getValue());
 }
 
 static PyObject* 
-RRTTL_richcmp(s_RRTTL* self, s_RRTTL* other, int op)
-{
+RRTTL_richcmp(s_RRTTL* self, s_RRTTL* other, int op) {
     bool c = false;
 
     // Check for null and if the types match. If different type,
@@ -298,8 +291,7 @@ RRTTL_richcmp(s_RRTTL* self, s_RRTTL* other, int op)
 
 // Module Initialization, all statics are initialized here
 bool
-initModulePart_RRTTL(PyObject* mod)
-{
+initModulePart_RRTTL(PyObject* mod) {
     // Add the exceptions to the module
     po_InvalidRRTTL = PyErr_NewException("libdns_python.InvalidRRTTL", NULL, NULL);
     PyModule_AddObject(mod, "InvalidRRTTL", po_InvalidRRTTL);

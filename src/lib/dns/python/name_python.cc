@@ -130,7 +130,9 @@ static PyTypeObject name_comparison_result_type = {
 
 // TODO: is there also a way to just not define it?
 static int
-NameComparisonResult_init(s_NameComparisonResult* self UNUSED_PARAM, PyObject* args UNUSED_PARAM) {
+NameComparisonResult_init(s_NameComparisonResult* self UNUSED_PARAM,
+                          PyObject* args UNUSED_PARAM)
+{
     PyErr_SetString(PyExc_NotImplementedError,
                     "NameComparisonResult can't be built directly");
     return -1;
@@ -281,8 +283,7 @@ static PyTypeObject name_type = {
 
 
 static int
-Name_init(s_Name* self, PyObject* args)
-{
+Name_init(s_Name* self, PyObject* args) {
     const char* s;
     PyObject* downcase = Py_False;
 
@@ -360,16 +361,14 @@ Name_init(s_Name* self, PyObject* args)
 }
 
 static void
-Name_destroy(s_Name* self)
-{
+Name_destroy(s_Name* self) {
     delete self->name;
     self->name = NULL;
     Py_TYPE(self)->tp_free(self);
 }
 
 static PyObject*
-Name_at(s_Name* self, PyObject* args)
-{
+Name_at(s_Name* self, PyObject* args) {
     size_t pos;
     if (!PyArg_ParseTuple(args, "i", &pos)) {
         return NULL;
@@ -384,33 +383,28 @@ Name_at(s_Name* self, PyObject* args)
 }
 
 static PyObject*
-Name_getLength(s_Name* self)
-{
+Name_getLength(s_Name* self) {
     return Py_BuildValue("i", self->name->getLength());
 }
 
 static PyObject*
-Name_getLabelCount(s_Name* self)
-{
+Name_getLabelCount(s_Name* self) {
     return Py_BuildValue("i", self->name->getLabelCount());
 }
 
 static PyObject*
-Name_toText(s_Name* self)
-{
+Name_toText(s_Name* self) {
     return Py_BuildValue("s", self->name->toText().c_str());
 }
 
 static PyObject*
-Name_str(PyObject* self)
-{
+Name_str(PyObject* self) {
     // Simply call the to_text method we already defined
     return PyObject_CallMethod(self, (char*)"to_text", (char*)"");
 }
 
 static PyObject*
-Name_toWire(s_Name* self, PyObject* args)
-{
+Name_toWire(s_Name* self, PyObject* args) {
     PyObject* bytes;
     s_MessageRenderer* mr;
     
@@ -470,8 +464,7 @@ Name_equals(s_Name* self, PyObject* args) {
 }
 
 static PyObject* 
-Name_split(s_Name* self, PyObject* args)
-{
+Name_split(s_Name* self, PyObject* args) {
     unsigned int first, n;
     s_Name* ret = NULL;
     
@@ -511,8 +504,7 @@ Name_split(s_Name* self, PyObject* args)
 #include <iostream>
 
 static PyObject* 
-Name_richcmp(s_Name* n1, s_Name* n2, int op)
-{
+Name_richcmp(s_Name* n1, s_Name* n2, int op) {
     bool c;
 
     // Check for null and if the types match. If different type,
@@ -553,8 +545,7 @@ Name_richcmp(s_Name* n1, s_Name* n2, int op)
 }
 
 static PyObject*
-Name_reverse(s_Name* self)
-{
+Name_reverse(s_Name* self) {
     s_Name* ret = PyObject_New(s_Name, &name_type);
 
     if (ret != NULL) {
@@ -568,8 +559,7 @@ Name_reverse(s_Name* self)
 }
 
 static PyObject*
-Name_concatenate(s_Name* self, PyObject* args)
-{
+Name_concatenate(s_Name* self, PyObject* args) {
     s_Name* other;
 
     if (!PyArg_ParseTuple(args, "O!", &name_type, (PyObject**) &other))
@@ -592,16 +582,14 @@ Name_concatenate(s_Name* self, PyObject* args)
 }
 
 static PyObject*
-Name_downcase(s_Name* self)
-{
+Name_downcase(s_Name* self) {
     self->name->downcase();
     Py_INCREF(self);
     return (PyObject*) self;
 }
 
 static PyObject*
-Name_isWildCard(s_Name* self)
-{
+Name_isWildCard(s_Name* self) {
     if (self->name->isWildcard()) {
         Py_RETURN_TRUE;
     } else {
@@ -613,8 +601,7 @@ Name_isWildCard(s_Name* self)
 
 // Module Initialization, all statics are initialized here
 bool
-initModulePart_Name(PyObject* mod)
-{
+initModulePart_Name(PyObject* mod) {
     // Add the classes to the module
     // We initialize the static description object with PyType_Ready(),
     // then add it to the module

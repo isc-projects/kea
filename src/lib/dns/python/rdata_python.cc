@@ -137,8 +137,7 @@ static PyTypeObject rdata_type = {
 };
 
 static int
-Rdata_init(s_Rdata* self, PyObject* args)
-{
+Rdata_init(s_Rdata* self, PyObject* args) {
     s_RRType* rrtype;
     s_RRClass* rrclass;
     const char* s;
@@ -156,8 +155,7 @@ Rdata_init(s_Rdata* self, PyObject* args)
 }
 
 static void
-Rdata_destroy(s_Rdata* self)
-{
+Rdata_destroy(s_Rdata* self) {
     // Clear the shared_ptr so that its reference count is zero
     // before we call tp_free() (there is no direct release())
     self->rdata.reset();
@@ -165,22 +163,19 @@ Rdata_destroy(s_Rdata* self)
 }
 
 static PyObject*
-Rdata_toText(s_Rdata* self)
-{
+Rdata_toText(s_Rdata* self) {
     // Py_BuildValue makes python objects from native data
     return Py_BuildValue("s", self->rdata->toText().c_str());
 }
 
 static PyObject*
-Rdata_str(PyObject* self)
-{
+Rdata_str(PyObject* self) {
     // Simply call the to_text method we already defined
     return PyObject_CallMethod(self, (char*)"to_text", (char*)"");
 }
 
 static PyObject*
-Rdata_toWire(s_Rdata* self, PyObject* args)
-{
+Rdata_toWire(s_Rdata* self, PyObject* args) {
     PyObject* bytes;
     s_MessageRenderer* mr;
     
@@ -212,8 +207,7 @@ Rdata_toWire(s_Rdata* self, PyObject* args)
 
 // Module Initialization, all statics are initialized here
 bool
-initModulePart_Rdata(PyObject* mod)
-{
+initModulePart_Rdata(PyObject* mod) {
     // We initialize the static description object with PyType_Ready(),
     // then add it to the module. This is not just a check! (leaving
     // this out results in segmentation faults)

@@ -118,16 +118,14 @@ static PyTypeObject messagerenderer_type = {
 };
 
 static int
-MessageRenderer_init(s_MessageRenderer* self)
-{
+MessageRenderer_init(s_MessageRenderer* self) {
     self->outputbuffer = new OutputBuffer(4096);
     self->messagerenderer = new MessageRenderer(*self->outputbuffer);
     return 0;
 }
 
 static void
-MessageRenderer_destroy(s_MessageRenderer* self)
-{
+MessageRenderer_destroy(s_MessageRenderer* self) {
     delete self->messagerenderer;
     delete self->outputbuffer;
     self->messagerenderer = NULL;
@@ -135,20 +133,19 @@ MessageRenderer_destroy(s_MessageRenderer* self)
 }
 
 static PyObject*
-MessageRenderer_getData(s_MessageRenderer* self)
-{
-    return Py_BuildValue("y#", self->messagerenderer->getData(), self->messagerenderer->getLength());
+MessageRenderer_getData(s_MessageRenderer* self) {
+    return Py_BuildValue("y#",
+                         self->messagerenderer->getData(),
+                         self->messagerenderer->getLength());
 }
 
 static PyObject*
-MessageRenderer_getLength(s_MessageRenderer* self)
-{
+MessageRenderer_getLength(s_MessageRenderer* self) {
     return Py_BuildValue("I", self->messagerenderer->getLength());
 }
 
 static PyObject*
-MessageRenderer_isTruncated(s_MessageRenderer* self)
-{
+MessageRenderer_isTruncated(s_MessageRenderer* self) {
     if (self->messagerenderer->isTruncated()) {
         Py_RETURN_TRUE;
     } else {
@@ -157,20 +154,19 @@ MessageRenderer_isTruncated(s_MessageRenderer* self)
 }
 
 static PyObject*
-MessageRenderer_getLengthLimit(s_MessageRenderer* self)
-{
+MessageRenderer_getLengthLimit(s_MessageRenderer* self) {
     return Py_BuildValue("I", self->messagerenderer->getLengthLimit());
 }
 
 static PyObject*
-MessageRenderer_setTruncated(s_MessageRenderer* self)
-{
+MessageRenderer_setTruncated(s_MessageRenderer* self) {
     self->messagerenderer->setTruncated();
     Py_RETURN_NONE;
 }
 
 static PyObject*
-MessageRenderer_setLengthLimit(s_MessageRenderer* self, PyObject* args)
+MessageRenderer_setLengthLimit(s_MessageRenderer* self,
+                               PyObject* args)
 {
     size_t lengthlimit;
     if (!PyArg_ParseTuple(args, "I", &lengthlimit)) {
@@ -185,8 +181,7 @@ MessageRenderer_setLengthLimit(s_MessageRenderer* self, PyObject* args)
 
 // Module Initialization, all statics are initialized here
 bool
-initModulePart_MessageRenderer(PyObject* mod)
-{
+initModulePart_MessageRenderer(PyObject* mod) {
     // Add the exceptions to the module
 
     // Add the enums to the module
