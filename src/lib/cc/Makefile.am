@@ -6,7 +6,9 @@ AM_CXXFLAGS = $(B10_CXXFLAGS)
 # error.  Unfortunately there doesn't seem to be an easy way to selectively
 # avoid the error.  As a short term workaround we suppress this warning
 # for the entire this module.  See also src/bin/auth/Makefile.am.
+if USE_GXX
 AM_CXXFLAGS += -Wno-unused-parameter
+endif
 
 lib_LIBRARIES = libcc.a
 libcc_a_SOURCES = data.cc data.h session.cc session.h

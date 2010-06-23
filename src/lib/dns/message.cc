@@ -923,7 +923,7 @@ SectionIterator<T>::operator*() const {
 template <typename T>
 const T*
 SectionIterator<T>::operator->() const {
-    return (impl_->it_.operator->());
+    return (&(operator*()));
 }
 
 template <typename T>

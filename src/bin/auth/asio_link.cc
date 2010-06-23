@@ -16,6 +16,7 @@
 
 #include <config.h>
 
+#include <unistd.h> 
 #include <asio.hpp>
 #include <boost/bind.hpp>
 

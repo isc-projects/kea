@@ -25,6 +25,7 @@
 // A middle term solution is to generalize our local wrapper interface
 // (currently only available for the auth server), where all such portability
 // issues are hidden, and to have other modules use the wrapper.
+#include <unistd.h>
 #include <asio.hpp>
 #include <asio/error_code.hpp>
 #include <asio/system_error.hpp>

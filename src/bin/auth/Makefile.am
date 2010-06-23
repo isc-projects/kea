@@ -36,7 +36,10 @@ lib_LIBRARIES = libasio_link.a
 libasio_link_a_SOURCES = asio_link.cc asio_link.h
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # B10_CXXFLAGS)
-libasio_link_a_CXXFLAGS = $(AM_CXXFLAGS) -Wno-unused-parameter
+libasio_link_a_CXXFLAGS = $(AM_CXXFLAGS)
+if USE_GXX
+libasio_link_a_CXXFLAGS += -Wno-unused-parameter
+endif
 libasio_link_a_CPPFLAGS = $(AM_CPPFLAGS)
 
 BUILT_SOURCES = spec_config.h 
