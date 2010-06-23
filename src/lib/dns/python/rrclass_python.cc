@@ -38,10 +38,10 @@ static PyObject* po_IncompleteRRClass;
 //
 
 // The s_* Class simply covers one instantiation of the object
-typedef struct {
-    PyObject_HEAD
+class s_RRClass : public PyObject {
+public:
     RRClass* rrclass;
-} s_RRClass;
+};
 
 //
 // We declare the functions here, the definitions are below
@@ -263,7 +263,7 @@ RRClass_richcmp(s_RRClass* self, s_RRClass* other, int op) {
     // Check for null and if the types match. If different type,
     // simply return False
     if (!other ||
-        (reinterpret_cast<PyObject*>(self))->ob_type != (reinterpret_cast<PyObject*>(other))->ob_type
+        (static_cast<PyObject*>(self))->ob_type != (static_cast<PyObject*>(other))->ob_type
        ) {
         Py_RETURN_FALSE;
     }
@@ -307,7 +307,7 @@ static PyObject* RRClass_IN(s_RRClass *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject* RRClass_CH(s_RRClass *self UNUSED_PARAM) {
@@ -319,7 +319,7 @@ static PyObject* RRClass_CH(s_RRClass *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject* RRClass_HS(s_RRClass *self UNUSED_PARAM) {
@@ -331,7 +331,7 @@ static PyObject* RRClass_HS(s_RRClass *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject* RRClass_NONE(s_RRClass *self UNUSED_PARAM) {
@@ -343,7 +343,7 @@ static PyObject* RRClass_NONE(s_RRClass *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject* RRClass_ANY(s_RRClass *self UNUSED_PARAM) {
@@ -355,7 +355,7 @@ static PyObject* RRClass_ANY(s_RRClass *self UNUSED_PARAM) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 // end of RRClass
 

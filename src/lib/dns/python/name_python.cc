@@ -49,10 +49,10 @@ static PyObject* po_NameRelation;
 using namespace isc::dns;
 
 // NameComparisonResult
-typedef struct {
-    PyObject_HEAD
+class s_NameComparisonResult : public PyObject {
+public:
     isc::dns::NameComparisonResult* ncr;
-} s_NameComparisonResult;
+};
 
 static int NameComparisonResult_init(s_NameComparisonResult* self UNUSED_PARAM, PyObject* args UNUSED_PARAM);
 static void NameComparisonResult_destroy(s_NameComparisonResult* self);
@@ -164,11 +164,11 @@ NameComparisonResult_getRelation(s_NameComparisonResult* self) {
 
 // Name
 
-typedef struct {
-    PyObject_HEAD
+class s_Name : public PyObject {
+public:
     isc::dns::Name* name;
     size_t position;
-} s_Name;
+};
 
 static int Name_init(s_Name* self, PyObject* args);
 static void Name_destroy(s_Name* self);
@@ -450,7 +450,7 @@ Name_compare(s_Name* self, PyObject* args) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject* 
@@ -502,7 +502,7 @@ Name_split(s_Name* self, PyObject* args) {
             }
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 #include <iostream>
 
@@ -513,8 +513,8 @@ Name_richcmp(s_Name* n1, s_Name* n2, int op) {
     // Check for null and if the types match. If different type,
     // simply return False
     if (!n2 ||
-        (reinterpret_cast<PyObject*>(n1))->ob_type !=
-        (reinterpret_cast<PyObject*>(n2))->ob_type
+        (static_cast<PyObject*>(n1))->ob_type !=
+        (static_cast<PyObject*>(n2))->ob_type
        ) {
         Py_RETURN_FALSE;
     }
@@ -559,7 +559,7 @@ Name_reverse(s_Name* self) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
@@ -582,14 +582,14 @@ Name_concatenate(s_Name* self, PyObject* args) {
             return NULL;
         }
     }
-    return reinterpret_cast<PyObject*>(ret);
+    return static_cast<PyObject*>(ret);
 }
 
 static PyObject*
 Name_downcase(s_Name* self) {
     self->name->downcase();
     Py_INCREF(self);
-    return reinterpret_cast<PyObject*>(self);
+    return static_cast<PyObject*>(self);
 }
 
 static PyObject*
@@ -642,7 +642,7 @@ initModulePart_Name(PyObject* mod) {
 
     s_Name* root_name = PyObject_New(s_Name, &name_type);
     root_name->name = new Name(".");
-    PyObject* po_ROOT_NAME = reinterpret_cast<PyObject*>(root_name);
+    PyObject* po_ROOT_NAME = static_cast<PyObject*>(root_name);
     Py_INCREF(po_ROOT_NAME);
     addClassVariable(name_type, "ROOT_NAME", po_ROOT_NAME);
 

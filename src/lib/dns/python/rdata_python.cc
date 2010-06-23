@@ -40,10 +40,10 @@ static PyObject* po_CharStringTooLong;
 //
 
 // The s_* Class simply coverst one instantiation of the object
-typedef struct {
-    PyObject_HEAD
+class s_Rdata : public PyObject {
+public:
     RdataPtr rdata;
-} s_Rdata;
+};
 
 //
 // We declare the functions here, the definitions are below

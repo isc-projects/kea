@@ -22,10 +22,10 @@ using namespace isc::dns;
 //
 
 // The s_* Class simply coverst one instantiation of the object
-typedef struct {
-    PyObject_HEAD
+class s_Question : public PyObject {
+public:
     QuestionPtr question;
-} s_Question;
+};
 
 //
 // We declare the functions here, the definitions are below
@@ -192,7 +192,7 @@ Question_getName(s_Question* self) {
     s_Name* name;
 
     // is this the best way to do this?
-    name = reinterpret_cast<s_Name*>(name_type.tp_alloc(&name_type, 0));
+    name = static_cast<s_Name*>(name_type.tp_alloc(&name_type, 0));
     if (name != NULL) {
         name->name = new Name(self->question->getName());
         if (name->name == NULL)
@@ -202,14 +202,14 @@ Question_getName(s_Question* self) {
           }
     }
 
-    return reinterpret_cast<PyObject*>(name);
+    return static_cast<PyObject*>(name);
 }
 
 static PyObject*
 Question_getType(s_Question* self) {
     s_RRType* rrtype;
 
-    rrtype = reinterpret_cast<s_RRType*>(rrtype_type.tp_alloc(&rrtype_type, 0));
+    rrtype = static_cast<s_RRType*>(rrtype_type.tp_alloc(&rrtype_type, 0));
     if (rrtype != NULL) {
         rrtype->rrtype = new RRType(self->question->getType());
         if (rrtype->rrtype == NULL)
@@ -219,14 +219,14 @@ Question_getType(s_Question* self) {
           }
     }
 
-    return reinterpret_cast<PyObject*>(rrtype);
+    return static_cast<PyObject*>(rrtype);
 }
 
 static PyObject*
 Question_getClass(s_Question* self) {
     s_RRClass* rrclass;
 
-    rrclass = reinterpret_cast<s_RRClass*>(rrclass_type.tp_alloc(&rrclass_type, 0));
+    rrclass = static_cast<s_RRClass*>(rrclass_type.tp_alloc(&rrclass_type, 0));
     if (rrclass != NULL) {
         rrclass->rrclass = new RRClass(self->question->getClass());
         if (rrclass->rrclass == NULL)
@@ -236,7 +236,7 @@ Question_getClass(s_Question* self) {
           }
     }
 
-    return reinterpret_cast<PyObject*>(rrclass);
+    return static_cast<PyObject*>(rrclass);
 }
 
 

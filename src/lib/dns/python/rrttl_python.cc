@@ -38,10 +38,10 @@ static PyObject* po_IncompleteRRTTL;
 //
 
 // The s_* Class simply covers one instantiation of the object
-typedef struct {
-    PyObject_HEAD
+class s_RRTTL : public PyObject {
+public:
     RRTTL* rrttl;
-} s_RRTTL;
+};
 
 //
 // We declare the functions here, the definitions are below
@@ -256,8 +256,8 @@ RRTTL_richcmp(s_RRTTL* self, s_RRTTL* other, int op) {
     // Check for null and if the types match. If different type,
     // simply return False
     if (!other ||
-        (reinterpret_cast<PyObject*>(self))->ob_type !=
-        (reinterpret_cast<PyObject*>(other))->ob_type
+        (static_cast<PyObject*>(self))->ob_type !=
+        (static_cast<PyObject*>(other))->ob_type
        ) {
         Py_RETURN_FALSE;
     }
