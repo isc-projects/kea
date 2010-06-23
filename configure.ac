@@ -9,11 +9,19 @@ AC_CONFIG_HEADERS([config.h])
 
 # Checks for programs.
 AC_PROG_CXX
-AC_PROG_CC
 AC_PROG_LIBTOOL
+
+AM_CONDITIONAL(USE_GXX, test "X${GXX}" = "Xyes")
 
 # Use C++ language
 AC_LANG_CPLUSPLUS
+
+# OS dependent compiler flags
+case "$host" in
+	*-solaris*)
+		CPPFLAGS="$CPPFLAGS -D_XPG4_2 -D__EXTENSIONS__"
+		;;
+esac
 
 m4_define([_AM_PYTHON_INTERPRETER_LIST], [python python3 python3.1])
 AC_ARG_WITH([pythonpath],
@@ -98,16 +106,16 @@ AC_SUBST(PYTHON_LIB)
 # specify the default warning flags in CXXFLAGS and let specific modules
 # "override" the default.
 #
-B10_CXXFLAGS=
+B10_CXXFLAGS=-g
 
-if test "X$GCC" = "Xyes"; then
-B10_CXXFLAGS="-g -Wall -Wextra -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
+werror_ok=0
+if test "X$GXX" = "Xyes"; then
+B10_CXXFLAGS="-Wall -Wextra -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
 UNUSED_PARAM_ATTRIBUTE='__attribute__((unused))'
 
 # Certain versions of gcc (g++) have a bug that incorrectly warns about
 # the use of anonymous name spaces even if they're closed in a single
 # translation unit.  For these versions we have to disable -Werror.
-werror_ok=0
 CXXFLAGS_SAVED="$CXXFLAGS"
 CXXFLAGS="$CXXFLAGS $B10_CXXFLAGS -Werror"
 AC_MSG_CHECKING(for in-TU anonymous namespace breakage)
@@ -118,13 +126,13 @@ namespace isc {class Bar {Foo foo_;};} ],,
 	 B10_CXXFLAGS="$B10_CXXFLAGS -Werror"],
 	[AC_MSG_RESULT(yes)])
 CXXFLAGS="$CXXFLAGS_SAVED"
-fi				dnl GCC = yes
+fi				dnl GXX = yes
 
 AM_CONDITIONAL(GCC_WERROR_OK, test $werror_ok = 1)
 AC_DEFINE_UNQUOTED(UNUSED_PARAM, $UNUSED_PARAM_ATTRIBUTE, Define to compiler keyword indicating a function argument is intentionally unused)
 
 # produce PIC unless we disable shared libraries. need this for python bindings.
-if test $enable_shared != "no" -a "X$GCC" = "Xyes"; then
+if test $enable_shared != "no" -a "X$GXX" = "Xyes"; then
    B10_CXXFLAGS="$B10_CXXFLAGS -fPIC"
 fi
 
@@ -364,7 +372,7 @@ fi
 # run time performance.  Hpefully we can find a better solution or the ASIO
 # code will be updated by the time we really need it.
 AC_CHECK_HEADERS(sys/devpoll.h, ac_cv_have_devpoll=yes, ac_cv_have_devpoll=no)
-if test "X$ac_cv_have_devpoll" = "Xyes" -a "X$GCC" = "Xyes"; then
+if test "X$ac_cv_have_devpoll" = "Xyes" -a "X$GXX" = "Xyes"; then
 	CPPFLAGS="$CPPFLAGS -DASIO_DISABLE_DEV_POLL=1"
 fi
 

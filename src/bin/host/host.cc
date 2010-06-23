@@ -19,6 +19,8 @@
 #include <sys/time.h>       // for gettimeofday
 #include <sys/socket.h>     // networking functions and definitions on FreeBSD
 
+#include <unistd.h>
+
 #include <string>
 #include <iostream>
 
