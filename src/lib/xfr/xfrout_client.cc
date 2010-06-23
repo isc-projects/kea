@@ -52,12 +52,22 @@ XfroutClient::~XfroutClient()
 
 void
 XfroutClient::connect() {
-    impl_->socket_.connect(stream_protocol::endpoint(impl_->file_path_));
+    try {
+        impl_->socket_.connect(stream_protocol::endpoint(impl_->file_path_));
+    } catch (const asio::system_error &) {
+        isc_throw(XfroutError, 
+                "socket connect failed");
+    }
 }
 
 void
 XfroutClient::disconnect() {
-    impl_->socket_.close();
+    try {
+        impl_->socket_.close();
+    } catch (const asio::system_error &) {
+        isc_throw(XfroutError,
+                "close socket failed");
+    }
 }
 
 int 
