@@ -23,22 +23,6 @@
 //
 static PyObject* po_EmptyRRset;
 
-// This one's for our 'general' exception
-// TODO: does this need an according general class?
-// should we replace it with some more direct base exception?
-
-//
-// Declaration of enums
-// Initialization and addition of these go in the module init at the
-// end
-//
-
-//
-// Declaration of class constants
-// Initialization and addition of these go in the module init at the
-// end
-//
-
 //
 // Definition of the classes
 //

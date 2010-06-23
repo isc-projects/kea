@@ -104,8 +104,6 @@ RRType_AXFR(s_RRType *self);
 static PyObject*
 RRType_ANY(s_RRType *self);
 
-//TODO: do we also want specific equals? (and perhaps not even richcmp?)
-
 // This list contains the actual set of functions we have in
 // python. Each entry has
 // 1. Python method name
@@ -320,10 +318,7 @@ RRType_richcmp(s_RRType* self, s_RRType* other, int op) {
 
     // Check for null and if the types match. If different type,
     // simply return False
-    if (!other ||
-        (static_cast<PyObject*>(self))->ob_type !=
-        (static_cast<PyObject*>(other))->ob_type
-       ) {
+    if (!other || (self->ob_type != other->ob_type)) {
         Py_RETURN_FALSE;
     }
 
@@ -336,10 +331,10 @@ RRType_richcmp(s_RRType* self, s_RRType* other, int op) {
             *self->rrtype == *other->rrtype;
         break;
     case Py_EQ:
-        c = self->rrtype->equals(*other->rrtype);
+        c = *self->rrtype == *other->rrtype;
         break;
     case Py_NE:
-        c = self->rrtype->nequals(*other->rrtype);
+        c = *self->rrtype != *other->rrtype;
         break;
     case Py_GT:
         c = *other->rrtype < *self->rrtype;

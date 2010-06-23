@@ -15,12 +15,13 @@
 // $Id$
 
 #include <Python.h>
+#include <libdns_python_common.h>
 
 int
 readDataFromSequence(uint8_t *data, size_t len, PyObject* sequence) {
     PyObject* el = NULL;
     for (size_t i = 0; i < len; i++) {
-        el = PySequence_GetItem(sequence, 0);
+        el = PySequence_GetItem(sequence, i);
         if (!el) {
             PyErr_SetString(PyExc_TypeError,
                 "sequence too short");
@@ -34,13 +35,13 @@ readDataFromSequence(uint8_t *data, size_t len, PyObject* sequence) {
                 return -1;
             }
             data[i] = static_cast<uint8_t>(PyLong_AsLong(el));
-            PySequence_DelItem(sequence, 0);
         } else {
             PyErr_SetString(PyExc_TypeError,
                 "not a number in fromWire sequence");
             return -1;
         }
     }
+    PySequence_DelSlice(sequence, 0, len);
     return 0;
 }
 

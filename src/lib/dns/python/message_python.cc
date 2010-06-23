@@ -106,7 +106,6 @@ static PyTypeObject messageflag_type = {
     NULL,                               // tp_descr_get
     NULL,                               // tp_descr_set
     0,                                  // tp_dictoffset
-    // TODO: Can we make this NULL? (no direct constructor)
     (initproc)MessageFlag_init,         // tp_init
     NULL,                               // tp_alloc
     PyType_GenericNew,                  // tp_new
@@ -333,7 +332,6 @@ static PyTypeObject opcode_type = {
     NULL,                               // tp_descr_get
     NULL,                               // tp_descr_set
     0,                                  // tp_dictoffset
-    // TODO: Can we make this NULL? (no direct constructor)
     (initproc)Opcode_init,              // tp_init
     NULL,                               // tp_alloc
     PyType_GenericNew,                  // tp_new
@@ -598,9 +596,7 @@ Opcode_richcmp(s_Opcode* self, s_Opcode* other, int op) {
 
     // Check for null and if the types match. If different type,
     // simply return False
-    if (!other ||
-        (static_cast<PyObject*>(self))->ob_type != (static_cast<PyObject*>(other))->ob_type
-       ) {
+    if (!other || (self->ob_type != other->ob_type)) {
         Py_RETURN_FALSE;
     }
 
@@ -741,7 +737,6 @@ static PyTypeObject rcode_type = {
     NULL,                               // tp_descr_get
     NULL,                               // tp_descr_set
     0,                                  // tp_dictoffset
-    // TODO: Can we make this NULL? (no direct constructor)
     (initproc)Rcode_init,               // tp_init
     NULL,                               // tp_alloc
     PyType_GenericNew,                  // tp_new
@@ -1050,9 +1045,7 @@ Rcode_richcmp(s_Rcode* self, s_Rcode* other, int op) {
 
     // Check for null and if the types match. If different type,
     // simply return False
-    if (!other ||
-        (static_cast<PyObject*>(self))->ob_type != (static_cast<PyObject*>(other))->ob_type
-       ) {
+    if (!other || (self->ob_type != other->ob_type)) {
         Py_RETURN_FALSE;
     }
 
@@ -1159,7 +1152,6 @@ static PyTypeObject section_type = {
     NULL,                               // tp_descr_get
     NULL,                               // tp_descr_set
     0,                                  // tp_dictoffset
-    // TODO: Can we make this NULL? (no direct constructor)
     (initproc)Section_init,             // tp_init
     NULL,                               // tp_alloc
     PyType_GenericNew,                  // tp_new
@@ -1257,9 +1249,7 @@ Section_richcmp(s_Section* self, s_Section* other, int op) {
 
     // Check for null and if the types match. If different type,
     // simply return False
-    if (!other ||
-        (static_cast<PyObject*>(self))->ob_type != (static_cast<PyObject*>(other))->ob_type
-       ) {
+    if (!other || (self->ob_type != other->ob_type)) {
         Py_RETURN_FALSE;
     }
 
@@ -1341,7 +1331,6 @@ static PyObject* Message_getSection(s_Message* self, PyObject* args);
 //static PyObject* Message_beginSection(s_Message* self, PyObject* args);
 //static PyObject* Message_endSection(s_Message* self, PyObject* args);
 
-// TODO: Question not wrapped yet
 static PyObject* Message_addQuestion(s_Message* self, PyObject* args);
 static PyObject* Message_addRRset(s_Message* self, PyObject* args);
 static PyObject* Message_clear(s_Message* self, PyObject* args);
