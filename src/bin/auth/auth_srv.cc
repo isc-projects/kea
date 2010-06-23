@@ -277,7 +277,8 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
     ConstQuestionPtr question = *message.beginQuestion();
     const RRType &qtype = question->getType();
     if (qtype == RRType::AXFR()) {
-        return (impl_->processAxfrQuery(io_message, message, response_renderer));
+        return (impl_->processAxfrQuery(io_message, message,
+                                        response_renderer));
     } else if (qtype == RRType::IXFR()) {
         makeErrorMessage(message, response_renderer, Rcode::NOTIMP(),
                          impl_->verbose_mode_);
@@ -333,10 +334,10 @@ AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, Message& message,
                             MessageRenderer& response_renderer) {
     if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
         if (verbose_mode_) {
-            cerr << "[b10-auth] user query axfr through udp which isn't allowed"
-                 << endl;
+            cerr << "[b10-auth] AXFR query over UDP isn't allowed" << endl;
         }
-        makeErrorMessage(message, response_renderer, Rcode::SERVFAIL(),verbose_mode_);
+        makeErrorMessage(message, response_renderer, Rcode::SERVFAIL(),
+                         verbose_mode_);
         return true;
     }
 
@@ -346,8 +347,8 @@ AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, Message& message,
             is_xfrin_connection_established_ = true;
         }
         axfr_client_.sendXfroutRequestInfo(io_message.getSocket().getNative(),
-                                         io_message.getData(),
-                                         io_message.getDataSize());
+                                           io_message.getData(),
+                                           io_message.getDataSize());
     } catch (const XfroutError& err) { 
         if (is_xfrin_connection_established_) {
             axfr_client_.disconnect();
@@ -358,14 +359,18 @@ AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, Message& message,
             cerr << "[b10-auth] Error in handling XFR request: " << err.what()
                  << endl;
         }
-        makeErrorMessage(message, response_renderer, Rcode::SERVFAIL(),verbose_mode_);
+        makeErrorMessage(message, response_renderer, Rcode::SERVFAIL(),
+                         verbose_mode_);
     }
     return (true);
 }
 #else
 bool
-AuthSrvImpl::processAxfrQuery(const IOMessage& io_message UNUSED_PARAM, Message& message UNUSED_PARAM, 
-        MessageRenderer& response_renderer UNUSED_PARAM) const {
+AuthSrvImpl::processAxfrQuery(
+    const IOMessage& io_message UNUSED_PARAM,
+    Message& message UNUSED_PARAM, 
+    MessageRenderer& response_renderer UNUSED_PARAM) const
+{
     // should better to return an error message, but hopefully this case
     // is short term workaround.
     return (false);
@@ -374,7 +379,7 @@ AuthSrvImpl::processAxfrQuery(const IOMessage& io_message UNUSED_PARAM, Message&
 
 bool
 AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message, 
-                            MessageRenderer& response_renderer) 
+                           MessageRenderer& response_renderer) 
 {
     // TODO check with the conf-mgr whether current server is the auth of the
     // zone
@@ -382,10 +387,10 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
         try {
             session_with_xfrin_.establish();
             is_xfrin_session_established_ = true;
-        } catch ( isc::cc::SessionError &err) {
+        } catch (const isc::cc::SessionError& err) {
             if (verbose_mode_) {
-            cerr << "[b10-auth] Error in connection with xfrin module: " << err.what()
-                 << endl;
+                cerr << "[b10-auth] Error in connection with xfrin module: "
+                     << err.what() << endl;
             }
             is_xfrin_session_established_ = false;
             return (false);
@@ -395,12 +400,13 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
     ConstQuestionPtr question = *message.beginQuestion();
     const string remote_ip_address =
         io_message.getRemoteEndpoint().getAddress().toText();
-    static const string command_template_start = "{\"command\": [\"notify\", {\"zone_name\" : \"";
+    static const string command_template_start =
+        "{\"command\": [\"notify\", {\"zone_name\" : \"";
     static const string command_template_mid = "\", \"master_ip\" : \"";
     static const string command_template_end = "\"}]}";
-    ElementPtr notify_command = Element::createFromString(command_template_start + question->getName().toText() + 
-                                                         command_template_mid + remote_ip_address +
-                                                         command_template_end);
+    ElementPtr notify_command = Element::createFromString(
+        command_template_start + question->getName().toText() + 
+        command_template_mid + remote_ip_address + command_template_end);
     try {
         const unsigned int seq =
             session_with_xfrin_.group_sendmsg(notify_command, "Xfrin");
@@ -408,15 +414,16 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
         session_with_xfrin_.group_recvmsg(env, answer, false, seq);
         int rcode;
         parseAnswer(rcode, answer);
-    } catch ( isc::cc::SessionError &err) {
+    } catch (const isc::cc::SessionError& err) {
         if (verbose_mode_) {
-            cerr << "[b10-auth] Send message to xfrin module failed: " << err.what()
-                << endl;
+            cerr << "[b10-auth] Send message to xfrin module failed: "
+                 << err.what() << endl;
         }
         return (false);
-    } catch ( CCSessionError &err) {
+    } catch (const CCSessionError& err) {
         if (verbose_mode_) {
-            cerr << "[b10-auth] Receive wrong response from xfrin module: " << err.what() << endl;
+            cerr << "[b10-auth] Receive wrong response from xfrin module: "
+                 << err.what() << endl;
         }
         return (false);
     }
