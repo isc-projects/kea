@@ -147,8 +147,6 @@ static PyTypeObject rrclass_type = {
     NULL,                               // tp_cache
     NULL,                               // tp_subclasses
     NULL,                               // tp_weaklist
-    // Note: not sure if the following are correct.  Added them just to
-    // make the compiler happy.
     NULL,                               // tp_del
     0                                   // tp_version_tag
 };
@@ -288,7 +286,9 @@ RRClass_richcmp(s_RRClass* self, s_RRClass* other, int op) {
             *self->rrclass == *other->rrclass;
         break;
     default:
-        assert(0);              // XXX: should trigger an exception
+        PyErr_SetString(PyExc_IndexError,
+                        "Unhandled rich comparison operator");
+        return NULL;
     }
     if (c)
         Py_RETURN_TRUE;
@@ -296,64 +296,35 @@ RRClass_richcmp(s_RRClass* self, s_RRClass* other, int op) {
         Py_RETURN_FALSE;
 }
 
-static PyObject* RRClass_IN(s_RRClass *self UNUSED_PARAM) {
+//
+// Common function for RRClass_IN/CH/etc.
+//
+static PyObject* RRClass_createStatic(RRClass stc) {
     s_RRClass* ret = PyObject_New(s_RRClass, &rrclass_type);
     if (ret != NULL) {
-        ret->rrclass = new RRClass(RRClass::IN());
-        if (ret->rrclass == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
+        ret->rrclass = new RRClass(stc);
     }
     return static_cast<PyObject*>(ret);
+}
+
+static PyObject* RRClass_IN(s_RRClass *self UNUSED_PARAM) {
+    return RRClass_createStatic(RRClass::IN());
 }
 
 static PyObject* RRClass_CH(s_RRClass *self UNUSED_PARAM) {
-    s_RRClass* ret = PyObject_New(s_RRClass, &rrclass_type);
-    if (ret != NULL) {
-        ret->rrclass = new RRClass(RRClass::CH());
-        if (ret->rrclass == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return RRClass_createStatic(RRClass::CH());
 }
 
 static PyObject* RRClass_HS(s_RRClass *self UNUSED_PARAM) {
-    s_RRClass* ret = PyObject_New(s_RRClass, &rrclass_type);
-    if (ret != NULL) {
-        ret->rrclass = new RRClass(RRClass::HS());
-        if (ret->rrclass == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return RRClass_createStatic(RRClass::HS());
 }
 
 static PyObject* RRClass_NONE(s_RRClass *self UNUSED_PARAM) {
-    s_RRClass* ret = PyObject_New(s_RRClass, &rrclass_type);
-    if (ret != NULL) {
-        ret->rrclass = new RRClass(RRClass::NONE());
-        if (ret->rrclass == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return RRClass_createStatic(RRClass::NONE());
 }
 
 static PyObject* RRClass_ANY(s_RRClass *self UNUSED_PARAM) {
-    s_RRClass* ret = PyObject_New(s_RRClass, &rrclass_type);
-    if (ret != NULL) {
-        ret->rrclass = new RRClass(RRClass::ANY());
-        if (ret->rrclass == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return RRClass_createStatic(RRClass::ANY());
 }
 // end of RRClass
 

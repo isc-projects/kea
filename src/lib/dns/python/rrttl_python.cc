@@ -136,8 +136,6 @@ static PyTypeObject rrttl_type = {
     NULL,                               // tp_cache
     NULL,                               // tp_subclasses
     NULL,                               // tp_weaklist
-    // Note: not sure if the following are correct.  Added them just to
-    // make the compiler happy.
     NULL,                               // tp_del
     0                                   // tp_version_tag
 };
@@ -147,7 +145,7 @@ RRTTL_init(s_RRTTL* self, PyObject* args) {
     const char* s;
     unsigned long i;
     PyObject* bytes = NULL;
-    // The constructor argument can be a string ("IN"), an integer (1),
+    // The constructor argument can be a string ("1234"), an integer (1),
     // or a sequence of numbers between 0 and 255 (wire code)
 
     // Note that PyArg_ParseType can set PyError, and we need to clear
@@ -224,7 +222,7 @@ RRTTL_toWire(s_RRTTL* self, PyObject* args) {
     if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
         PyObject* bytes_o = bytes;
         
-        OutputBuffer buffer(2);
+        OutputBuffer buffer(4);
         self->rrttl->toWire(buffer);
         PyObject* n = PyBytes_FromStringAndSize((const char*) buffer.getData(), buffer.getLength());
         PyObject* result = PySequence_InPlaceConcat(bytes_o, n);
