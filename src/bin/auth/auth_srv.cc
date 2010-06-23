@@ -95,10 +95,10 @@ public:
 
     bool verbose_mode_;
 
-    bool is_xfrin_session_established_;
+    bool is_notify_session_established_;
     isc::cc::Session session_with_xfrin_;
 
-    bool is_xfrin_connection_established_;
+    bool is_axfr_connection_established_;
     XfroutClient axfr_client_;
 
     /// Currently non-configurable, but will be.
@@ -106,8 +106,8 @@ public:
 };
 
 AuthSrvImpl::AuthSrvImpl() : cs_(NULL), verbose_mode_(false),
-                             is_xfrin_session_established_(false),
-                             is_xfrin_connection_established_(false),
+                             is_notify_session_established_(false),
+                             is_axfr_connection_established_(false),
                              axfr_client_(UNIX_SOCKET_FILE)
 {
     // cur_datasrc_ is automatically initialized by the default constructor,
@@ -119,14 +119,14 @@ AuthSrvImpl::AuthSrvImpl() : cs_(NULL), verbose_mode_(false),
 }
 
 AuthSrvImpl::~AuthSrvImpl() {
-    if (is_xfrin_session_established_) {
+    if (is_notify_session_established_) {
         session_with_xfrin_.disconnect();
-        is_xfrin_session_established_ = false;
+        is_notify_session_established_ = false;
     }
 
-    if (is_xfrin_connection_established_) {
+    if (is_axfr_connection_established_) {
         axfr_client_.disconnect();
-        is_xfrin_connection_established_ = false;
+        is_axfr_connection_established_ = false;
     }
 }
 
@@ -256,7 +256,6 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
 
     // Perform further protocol-level validation.
 
-    // In this implementation, we only support normal queries
     if (message.getOpcode() == Opcode::NOTIFY()) {
         return (impl_->processNotify(io_message, message, response_renderer));
     } else if (message.getOpcode() != Opcode::QUERY()) {
@@ -336,23 +335,23 @@ AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, Message& message,
         if (verbose_mode_) {
             cerr << "[b10-auth] AXFR query over UDP isn't allowed" << endl;
         }
-        makeErrorMessage(message, response_renderer, Rcode::SERVFAIL(),
+        makeErrorMessage(message, response_renderer, Rcode::FORMERR(),
                          verbose_mode_);
-        return true;
+        return (true);
     }
 
     try {
-        if (!is_xfrin_connection_established_) {
+        if (!is_axfr_connection_established_) {
             axfr_client_.connect();
-            is_xfrin_connection_established_ = true;
+            is_axfr_connection_established_ = true;
         }
         axfr_client_.sendXfroutRequestInfo(io_message.getSocket().getNative(),
                                            io_message.getData(),
                                            io_message.getDataSize());
     } catch (const XfroutError& err) { 
-        if (is_xfrin_connection_established_) {
+        if (is_axfr_connection_established_) {
             axfr_client_.disconnect();
-            is_xfrin_connection_established_ = false;
+            is_axfr_connection_established_ = false;
         }
         
         if (verbose_mode_) {
@@ -362,7 +361,7 @@ AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, Message& message,
         makeErrorMessage(message, response_renderer, Rcode::SERVFAIL(),
                          verbose_mode_);
     }
-    return (true);
+    return (false);
 }
 #else
 bool
@@ -383,16 +382,16 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
 {
     // TODO check with the conf-mgr whether current server is the auth of the
     // zone
-    if (!is_xfrin_session_established_) {
+    if (!is_notify_session_established_) {
         try {
             session_with_xfrin_.establish();
-            is_xfrin_session_established_ = true;
+            is_notify_session_established_ = true;
         } catch (const isc::cc::SessionError& err) {
             if (verbose_mode_) {
                 cerr << "[b10-auth] Error in connection with xfrin module: "
                      << err.what() << endl;
             }
-            is_xfrin_session_established_ = false;
+            is_notify_session_established_ = false;
             return (false);
         }
     }
@@ -404,30 +403,31 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
         "{\"command\": [\"notify\", {\"zone_name\" : \"";
     static const string command_template_mid = "\", \"master_ip\" : \"";
     static const string command_template_end = "\"}]}";
-    ElementPtr notify_command = Element::createFromString(
-        command_template_start + question->getName().toText() + 
-        command_template_mid + remote_ip_address + command_template_end);
+
     try {
+        ElementPtr notify_command = Element::createFromString(
+                command_template_start + question->getName().toText() + 
+                command_template_mid + remote_ip_address + command_template_end);
         const unsigned int seq =
             session_with_xfrin_.group_sendmsg(notify_command, "Xfrin");
         ElementPtr env, answer;
         session_with_xfrin_.group_recvmsg(env, answer, false, seq);
         int rcode;
         parseAnswer(rcode, answer);
-    } catch (const isc::cc::SessionError& err) {
+    } catch (const isc::data::ParseError &err) {
         if (verbose_mode_) {
-            cerr << "[b10-auth] Send message to xfrin module failed: "
-                 << err.what() << endl;
+            cerr << "create notfiy command failed: "
+                << err.what() << endl;
         }
         return (false);
-    } catch (const CCSessionError& err) {
+    } catch (const isc::Exception& err) {
         if (verbose_mode_) {
-            cerr << "[b10-auth] Receive wrong response from xfrin module: "
-                 << err.what() << endl;
+            cerr << "[b10-auth] communicate with xfrin module failed: "
+                << err.what() << endl;
         }
         return (false);
     }
-    
+
     message.makeResponse();
     message.setRcode(Rcode::NOERROR());
     message.toWire(response_renderer);
