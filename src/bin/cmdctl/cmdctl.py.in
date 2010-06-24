@@ -191,9 +191,6 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                 pass
 
         rcode, reply = self.server.send_command_to_module(mod, cmd, param)
-        if self.server._verbose:
-            print('[b10-cmdctl] Finish send message \'%s\' to module %s' % (cmd, mod))
-
         ret = http.client.OK
         if rcode != 0:
             ret = http.client.BAD_REQUEST
@@ -292,7 +289,8 @@ class CommandControl():
     def command_handler(self, command, args):
         answer = ccsession.create_answer(0)
         if command == ccsession.COMMAND_MODULE_SPECIFICATION_UPDATE:
-            self.modules_spec[arg[0]] = arg[1]
+            with self._lock:
+                self.modules_spec[args[0]] = args[1]
 
         elif command == ccsession.COMMAND_SHUTDOWN:
             self._httpserver.shutdown()
@@ -339,6 +337,11 @@ class CommandControl():
             data = self._config_data
         return data
 
+    def get_modules_spec(self):
+        with self._lock:
+            spec = self.modules_spec
+        return spec
+
     def _get_modules_specification(self):
         '''Get all the modules' specification files. '''
         rcode, reply = self.send_command('ConfigManager', ccsession.COMMAND_GET_MODULE_SPEC)
@@ -355,10 +358,11 @@ class CommandControl():
         if module_name == 'ConfigManager':
             return self.send_command(module_name, command_name, params)
 
-        if module_name not in self.modules_spec.keys():
+        specs = self.get_modules_spec()
+        if module_name not in specs.keys():
             return 1, {'error' : 'unknown module'}
        
-        spec_obj = isc.config.module_spec.ModuleSpec(self.modules_spec[module_name], False)
+        spec_obj = isc.config.module_spec.ModuleSpec(specs[module_name], False)
         errors = []
         if not spec_obj.validate_command(command_name, params, errors):
             return 1, {'error': errors[0]}
@@ -369,7 +373,7 @@ class CommandControl():
         '''Send the command from bindctl to proper module. '''
         errstr = 'unknown error'
         if self._verbose:
-            self.log_info('Begin send command \'%s\' to %s\n' %(command_name, module_name))
+            self.log_info("Begin send command '%s' to module '%s'" %(command_name, module_name))
 
         if module_name == MODULE_NAME:
             # Process the command sent to cmdctl directly. 
@@ -379,6 +383,9 @@ class CommandControl():
             seq = self._cc.group_sendmsg(msg, module_name)
             #TODO, it may be blocked, msqg need to add a new interface waiting in timeout.
             answer, env = self._cc.group_recvmsg(False, seq)
+
+        if self._verbose:
+            self.log_info("Finish send command '%s' to module '%s'" % (command_name, module_name))
 
         if answer:
             try:
@@ -509,9 +516,9 @@ class SecureHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
         rcode, reply = http.client.NO_CONTENT, []        
         if not module:
             if id == 'config_data':
-               rcode, reply = http.client.OK, self.cmdctl.get_config_data()
+                rcode, reply = http.client.OK, self.cmdctl.get_config_data()
             elif id == 'module_spec':
-                rcode, reply = http.client.OK, self.cmdctl.modules_spec
+                rcode, reply = http.client.OK, self.cmdctl.get_modules_spec()
         
         return rcode, reply 
 
