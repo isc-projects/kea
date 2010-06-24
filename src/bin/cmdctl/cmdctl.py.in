@@ -257,7 +257,9 @@ class CommandControl():
         not. '''
         errstr = None
         for key in new_config:
-            if key in ['key_file', 'cert_file']:
+            if key == 'version':
+                continue
+            elif key in ['key_file', 'cert_file']:
                 #TODO, only check whether the file exist,
                 # further check need to be done: eg. whether
                 # the private/certificate is valid.
@@ -469,8 +471,18 @@ class SecureHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
         ''' Record user's id and login time. '''
         self.user_sessions[session_id] = time.time()
         
+    def _check_key_and_cert(self, key, cert):
+        # TODO, check the content of key/certificate file 
+        if not os.path.exists(key):
+            self.log_info("Deny client's connection since key file doesn't exist " + key)
+            raise socket.error
+
+        if not os.path.exists(cert):
+            self.log_info("Deny client's connection since certificate file doesn't exist " + cert)
+            raise socket.error
+
     def _wrap_socket_in_ssl_context(self, sock, key, cert):
-        # TODO, report error when key/certificate file doesn't exist
+        self._check_key_and_cert(key, cert)
         try:
             ssl_sock = ssl.wrap_socket(sock,
                                       server_side = True,
@@ -479,7 +491,7 @@ class SecureHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
                                       ssl_version = ssl.PROTOCOL_SSLv23)
             return ssl_sock 
         except ssl.SSLError as e :
-            self.log_info("Deny client's invalid connection:%s\n" % e)
+            self.log_info("Deny client's connection:%s\n" % e)
             self.close_request(sock)
             # raise socket error to finish the request
             raise socket.error

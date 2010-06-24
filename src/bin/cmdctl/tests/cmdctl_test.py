@@ -338,14 +338,6 @@ class TestCommandControl(unittest.TestCase):
         old_env = os.environ
         os.environ['B10_FROM_SOURCE'] = '../'
         self._check_config(self.cmdctl)
-        answer = self.cmdctl.config_handler({'key_file' : self.cmdctl._cmdctl_config_data['key_file']})
-        self._check_answer(answer, 0, None)
-
-        answer = self.cmdctl.config_handler({'cert_file' : self.cmdctl._cmdctl_config_data['cert_file']})
-        self._check_answer(answer, 0, None)
-
-        answer = self.cmdctl.config_handler({'accounts_file' : self.cmdctl._cmdctl_config_data['accounts_file']})
-        self._check_answer(answer, 0, None)
         os.environ = old_env
 
         answer = self.cmdctl.config_handler({'key_file': '/user/non-exist_folder'})
