@@ -60,6 +60,7 @@ static PyObject* Rdata_toText(s_Rdata* self);
 // is a PyObject*, for the str() function in python.
 static PyObject* Rdata_str(PyObject* self);
 static PyObject* Rdata_toWire(s_Rdata* self, PyObject* args);
+static PyObject* RData_richcmp(s_Rdata* self, s_Rdata* other, int op);
 
 // This list contains the actual set of functions we have in
 // python. Each entry has
@@ -108,7 +109,7 @@ static PyTypeObject rdata_type = {
     "a set of common interfaces to manipulate concrete RDATA objects.",
     NULL,                               // tp_traverse
     NULL,                               // tp_clear
-    NULL,                               // tp_richcompare
+    (richcmpfunc)RData_richcmp,         // tp_richcompare
     0,                                  // tp_weaklistoffset
     NULL,                               // tp_iter
     NULL,                               // tp_iternext
@@ -202,6 +203,49 @@ Rdata_toWire(s_Rdata* self, PyObject* args) {
     return NULL;
 }
 
+
+
+static PyObject* 
+RData_richcmp(s_Rdata* self, s_Rdata* other, int op) {
+    bool c;
+
+    // Check for null and if the types match. If different type,
+    // simply return False
+    if (!other || (self->ob_type != other->ob_type)) {
+        Py_RETURN_FALSE;
+    }
+
+    switch (op) {
+    case Py_LT:
+        c = self->rdata->compare(*other->rdata) < 0;
+        break;
+    case Py_LE:
+        c = self->rdata->compare(*other->rdata) < 0 ||
+            self->rdata->compare(*other->rdata) == 0;
+        break;
+    case Py_EQ:
+        c = self->rdata->compare(*other->rdata) == 0;
+        break;
+    case Py_NE:
+        c = self->rdata->compare(*other->rdata) != 0;
+        break;
+    case Py_GT:
+        c = self->rdata->compare(*other->rdata) > 0;
+        break;
+    case Py_GE:
+        c = self->rdata->compare(*other->rdata) > 0 ||
+            self->rdata->compare(*other->rdata) == 0;
+        break;
+    default:
+        PyErr_SetString(PyExc_IndexError,
+                        "Unhandled rich comparison operator");
+        return NULL;
+    }
+    if (c)
+        Py_RETURN_TRUE;
+    else
+        Py_RETURN_FALSE;
+}
 // end of Rdata
 
 
