@@ -11,11 +11,12 @@ AC_CONFIG_HEADERS([config.h])
 AC_PROG_CXX
 AC_PROG_LIBTOOL
 
+# Use C++ language
+AC_LANG([C++])
+
+# Identify the compiler: this check must be after AC_PROG_CXX and AC_LANG.
 AM_CONDITIONAL(USE_GXX, test "X${GXX}" = "Xyes")
 AC_CHECK_DECL([__SUNPRO_CC], [SUNCXX="yes"], [SUNCXX="no"])
-
-# Use C++ language
-AC_LANG_CPLUSPLUS
 
 # OS dependent compiler flags
 case "$host" in
