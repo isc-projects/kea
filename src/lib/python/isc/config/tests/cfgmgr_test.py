@@ -271,9 +271,9 @@ class TestConfigManager(unittest.TestCase):
         # the name here is actually wrong (and hardcoded), but needed in the current version
         # TODO: fix that
         #self.assertEqual({'specification_update': [ self.name, self.spec ] },
-        #                 self.fake_session.get_message("Cmd-Ctrld", None))
+        #                 self.fake_session.get_message("Cmdctl", None))
         #self.assertEqual({'commands_update': [ self.name, self.commands ] },
-        #                 self.fake_session.get_message("Cmd-Ctrld", None))
+        #                 self.fake_session.get_message("Cmdctl", None))
 
         self._handle_msg_helper({ "command": 
                                   ["shutdown"]

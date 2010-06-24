@@ -19,7 +19,7 @@ b10_cmdctl_DATA += cmdctl.spec
 EXTRA_DIST = $(CMDCTL_CONFIGURATIONS)
 EXTRA_DIST += cmdctl.spec
 
-CLEANFILES=	b10-cmdctl cmdctl.pyc
+CLEANFILES=	b10-cmdctl cmdctl.pyc cmdctl.spec
 
 man_MANS = b10-cmdctl.8
 EXTRA_DIST += $(man_MANS) b10-cmdctl.xml
@@ -30,6 +30,9 @@ b10-cmdctl.8: b10-cmdctl.xml
 	xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-cmdctl.xml
 
 endif
+
+cmdctl.spec: cmdctl.spec.pre
+	$(SED) -e "s|@@SYSCONFDIR@@|$(sysconfdir)|" cmdctl.spec.pre >$@
 
 # TODO: does this need $$(DESTDIR) also?
 # this is done here since configure.ac AC_OUTPUT doesn't expand exec_prefix
