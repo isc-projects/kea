@@ -156,7 +156,7 @@ bind10-devel-20100421 released on April 21, 2010
 
   24.	[func]
 	Support case-sensitive name compression in MessageRenderer.
-	(svn r1704)
+	(Trac #142, svn r1704)
 
   23.	[func]
 	Support a simple name with possible compression. (svn r1701)
