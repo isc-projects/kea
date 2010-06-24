@@ -1364,8 +1364,13 @@ Message_setRcode(s_Message* self, PyObject* args) {
     if (!PyArg_ParseTuple(args, "O!", &rcode_type, &rcode)) {
         return NULL;
     }
-    self->message->setRcode(*rcode->rcode);
-    Py_RETURN_NONE;
+    try {
+        self->message->setRcode(*rcode->rcode);
+        Py_RETURN_NONE;
+    } catch (InvalidMessageOperation imo) {
+        PyErr_SetString(po_InvalidMessageOperation, imo.what());
+        return NULL;
+    }
 }
 
 static PyObject*
@@ -1394,8 +1399,13 @@ Message_setOpcode(s_Message* self, PyObject* args) {
     if (!PyArg_ParseTuple(args, "O!", &opcode_type, &opcode)) {
         return NULL;
     }
-    self->message->setOpcode(*opcode->opcode);
-    Py_RETURN_NONE;
+    try {
+        self->message->setOpcode(*opcode->opcode);
+        Py_RETURN_NONE;
+    } catch (InvalidMessageOperation imo) {
+        PyErr_SetString(po_InvalidMessageOperation, imo.what());
+        return NULL;
+    }
 }
 
 static PyObject*
@@ -1487,14 +1497,18 @@ Message_addRRset(s_Message* self, PyObject* args) {
                                            &PyBool_Type, &sign)) {
         return NULL;
     }
-    
-    if (sign == Py_True) {
-        self->message->addRRset(*section->section, rrset->rrset, true);
-    } else {
-        self->message->addRRset(*section->section, rrset->rrset, false);
+
+    try {
+        if (sign == Py_True) {
+            self->message->addRRset(*section->section, rrset->rrset, true);
+        } else {
+            self->message->addRRset(*section->section, rrset->rrset, false);
+        }
+        Py_RETURN_NONE;
+    } catch (InvalidMessageOperation imo) {
+        PyErr_SetString(po_InvalidMessageOperation, imo.what());
+        return NULL;
     }
-    
-    Py_RETURN_NONE;
 }
 
 static PyObject*

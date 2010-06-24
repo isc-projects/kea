@@ -21,7 +21,7 @@ import unittest
 import os
 from libdns_python import *
 
-class RdataTest(unittest.TestCase):
+class RRTTLTest(unittest.TestCase):
     def setUp(self):
         self.t1 = RRTTL(1)
         self.t2 = RRTTL(3600)
@@ -40,12 +40,12 @@ class RdataTest(unittest.TestCase):
         b[3] = 15
         self.assertEqual(15, RRTTL(b).get_value())
         
-    def test_rdata_to_text(self):
+    def test_rrttl_to_text(self):
         self.assertEqual("1", self.t1.to_text())
-        self.assertEqual("1", self.t1.__str__())
+        self.assertEqual("1", str(self.t1))
         self.assertEqual("3600", self.t2.to_text())
 
-    def test_rdata_to_wire(self):
+    def test_rrttl_to_wire(self):
         b = bytearray()
         self.t1.to_wire(b)
         self.assertEqual(b'\x00\x00\x00\x01', b)
@@ -57,7 +57,7 @@ class RdataTest(unittest.TestCase):
         self.assertEqual(b'\x00\x00\x0e\x10', mr.get_data())
         self.assertRaises(TypeError, self.t1.to_wire, 1)
 
-    def test_rdata_richcmp(self):
+    def test_rrttl_richcmp(self):
         self.assertTrue(self.t1 == RRTTL(1))
         self.assertFalse(self.t1 != RRTTL(1))
         self.assertFalse(self.t1 == 1)
@@ -65,6 +65,13 @@ class RdataTest(unittest.TestCase):
         self.assertTrue(self.t1 <= self.t2)
         self.assertFalse(self.t1 > self.t2)
         self.assertFalse(self.t1 >= self.t2)
+
+        self.assertFalse(self.t1 != RRTTL(1))
+        self.assertTrue(self.t1 == RRTTL(1))
+        self.assertFalse(self.t1 > self.t2)
+        self.assertFalse(self.t1 >= self.t2)
+        self.assertTrue(self.t1 < self.t2)
+        self.assertTrue(self.t1 <= self.t2)
 
 if __name__ == '__main__':
     unittest.main()

@@ -51,11 +51,20 @@ class RdataTest(unittest.TestCase):
         self.assertEqual(b'\x03foo', b)
         self.assertRaises(TypeError, self.rdata1.to_wire, 1)
 
+        renderer = MessageRenderer()
+        self.rdata1.to_wire(renderer)
+        self.assertEqual(b'\xc0\x00\x02b', renderer.get_data())
+
+        renderer = MessageRenderer()
+        self.rdata3.to_wire(renderer)
+        self.assertEqual(b'\x0casdfasdfasdf', renderer.get_data())
+
     def test_rdata_to_text(self):
         self.assertEqual("192.0.2.98", self.rdata1.to_text())
         self.assertEqual("192.0.2.99", self.rdata2.to_text())
         self.assertEqual("\"asdfasdfasdf\"", self.rdata3.to_text())
         self.assertEqual("\"foo\"", self.rdata4.to_text())
+        self.assertEqual("\"foo\"", str(self.rdata4))
 
     def test_richcmp(self):
         self.assertTrue(self.rdata1 < self.rdata2);
@@ -65,6 +74,14 @@ class RdataTest(unittest.TestCase):
         self.assertTrue(self.rdata3 != self.rdata4)
         other_rdata = Rdata(RRType("TXT"), RRClass("IN"), "foo")
         self.assertTrue(self.rdata4 == other_rdata)
+
+        self.assertFalse(self.rdata1 > self.rdata2);
+        self.assertFalse(self.rdata1 >= self.rdata2);
+        self.assertTrue(self.rdata1 < self.rdata2);
+        self.assertTrue(self.rdata1 <= self.rdata2);
+        self.assertFalse(self.rdata3 == self.rdata4)
+        self.assertFalse(self.rdata4 != other_rdata)
+        
 
 if __name__ == '__main__':
     unittest.main()

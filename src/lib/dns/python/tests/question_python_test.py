@@ -1,4 +1,4 @@
-# Copyright (C) 2009  Internet Systems Consortium.
+# Copyright (C) 2010  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -55,7 +55,8 @@ class QuestionTest(unittest.TestCase):
         self.assertRaises(TypeError, Question, "wrong")
 
     # tests below based on cpp unit tests
-    def test_QuestionTest_fromWire(self):
+    # also tests get_name, get_class and get_type
+    def test_from_wire(self):
         
         q = question_from_wire("question_fromWire")
 
@@ -79,15 +80,14 @@ class QuestionTest(unittest.TestCase):
                           question_from_wire,
                           "question_fromWire", 36)
     
-    
-    def test_QuestionTest_to_text(self):
+    def test_to_text(self):
     
         self.assertEqual("foo.example.com. IN NS\n", self.test_question1.to_text())
-        self.assertEqual("foo.example.com. IN NS\n", self.test_question1.__str__())
+        self.assertEqual("foo.example.com. IN NS\n", str(self.test_question1))
         self.assertEqual("bar.example.com. CH A\n", self.test_question2.to_text())
     
     
-    def test_QuestionTest_to_wireBuffer(self):
+    def test_to_wire_buffer(self):
         obuffer = bytes()
         obuffer = self.test_question1.to_wire(obuffer)
         obuffer = self.test_question2.to_wire(obuffer)
@@ -95,7 +95,7 @@ class QuestionTest(unittest.TestCase):
         self.assertEqual(obuffer, wiredata)
     
     
-    def test_QuestionTest_to_wireRenderer(self):
+    def test_to_wire_renderer(self):
         renderer = MessageRenderer()
         self.test_question1.to_wire(renderer)
         self.test_question2.to_wire(renderer)

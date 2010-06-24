@@ -1,4 +1,4 @@
-# Copyright (C) 2009  Internet Systems Consortium.
+# Copyright (C) 2010  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -85,9 +85,8 @@ class TestModuleSpec(unittest.TestCase):
                          self.rrset_a.to_text());
         self.assertEqual("test.example.com. 3600 IN A 192.0.2.1\n"
                          "test.example.com. 3600 IN A 192.0.2.2\n",
-                         self.rrset_a.__str__());
+                         str(self.rrset_a));
 
-        #rrset_empty = RRset(self.test_name, RRClass("IN"), RRType("A"), RRTTL(3600))
         self.assertRaises(EmptyRRset, self.rrset_a_empty.to_text)
 
     def test_to_wire_buffer(self):
@@ -104,6 +103,13 @@ class TestModuleSpec(unittest.TestCase):
         mr = MessageRenderer()
         self.rrset_a.to_wire(mr)
         self.assertEqual(exp_buffer, mr.get_data())
+
+    def test_get_rdata(self):
+        rdata = [ Rdata(RRType("A"), RRClass("IN"), "192.0.2.1"),
+                  Rdata(RRType("A"), RRClass("IN"), "192.0.2.2")
+                ]
+        self.assertEqual(rdata, self.rrset_a.get_rdata())
+        self.assertEqual([], self.rrset_a_empty.get_rdata())
         
 if __name__ == '__main__':
     unittest.main()

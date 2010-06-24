@@ -48,19 +48,6 @@ class MessageRendererTest(unittest.TestCase):
         message.add_rrset(Section.AUTHORITY(), rrset)
         self.message2 = message
 
-        #message = Message(Message.RENDER)
-        #message.set_qid(123)
-        #message.set_header_flag(MessageFlag.AA())
-        #message.set_header_flag(MessageFlag.QR())
-        #message.set_opcode(Opcode.QUERY())
-        #message.set_rcode(Rcode.NOERROR())
-        #message.add_question(Question(name, c, t))
-        #rrset = RRset(name, c, t, ttl)
-        #for i in range(1, 99):
-        #    rrset.add_rdata(Rdata(t, c, "192.0.2." + str(i)))
-        #message.add_rrset(Section.AUTHORITY(), rrset)
-        #self.message3 = message
-
         self.renderer1 = MessageRenderer()
         self.renderer2 = MessageRenderer()
         self.renderer3 = MessageRenderer()
