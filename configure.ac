@@ -12,6 +12,7 @@ AC_PROG_CXX
 AC_PROG_LIBTOOL
 
 AM_CONDITIONAL(USE_GXX, test "X${GXX}" = "Xyes")
+AC_CHECK_DECL([__SUNPRO_CC], [SUNCXX="yes"], [SUNCXX="no"])
 
 # Use C++ language
 AC_LANG_CPLUSPLUS
@@ -97,8 +98,8 @@ AC_SUBST(PYTHON_LIB)
 
 # TODO: check for _sqlite3.py module
 
-#
-# B10_CXXFLAGS is the default C++ compiler flags.  This will (and should) be
+# Compiler dependent settings: define some mandatory CXXFLAGS here.
+# We also use a separate variable B10_CXXFLAGS.  This will (and should) be
 # used as the default value for each specifc AM_CXXFLAGS:
 # AM_CXXFLAGS = $(B10_CXXFLAGS)
 # AM_CXXFLAGS += ... # add module specific flags
@@ -107,10 +108,17 @@ AC_SUBST(PYTHON_LIB)
 # gcc's -Wno-XXX option must be specified after -Wall or -Wextra, we cannot
 # specify the default warning flags in CXXFLAGS and let specific modules
 # "override" the default.
-#
-B10_CXXFLAGS=-g
 
+CXXFLAGS=-g
 werror_ok=0
+
+# SunStudio compiler requires special compiler options for boost
+# (http://blogs.sun.com/sga/entry/boost_mini_howto)
+if test "$SUNCXX" = "yes"; then
+CXXFLAGS="$CXXFLAGS -library=stlport4 -features=tmplife -features=tmplrefstatic"
+fi
+
+# gcc specific settings:
 if test "X$GXX" = "Xyes"; then
 B10_CXXFLAGS="-Wall -Wextra -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
 UNUSED_PARAM_ATTRIBUTE='__attribute__((unused))'
