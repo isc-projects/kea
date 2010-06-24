@@ -353,7 +353,7 @@ class BoB:
     def stop_all_processes(self):
         """Stop all processes."""
         cmd = { "command": ['shutdown']}
-        self.cc_session.group_sendmsg(cmd, 'Boss', 'Cmd-Ctrld')
+        self.cc_session.group_sendmsg(cmd, 'Boss', 'Cmdctl')
         self.cc_session.group_sendmsg(cmd, "Boss", "ConfigManager")
         self.cc_session.group_sendmsg(cmd, "Boss", "Auth")
         self.cc_session.group_sendmsg(cmd, "Boss", "Xfrout")
