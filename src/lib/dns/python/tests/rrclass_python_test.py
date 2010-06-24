@@ -40,7 +40,7 @@ class RRClassTest(unittest.TestCase):
         
     def test_rrclass_to_text(self):
         self.assertEqual("IN", self.c1.to_text())
-        self.assertEqual("IN", self.c1.__str__())
+        self.assertEqual("IN", str(self.c1))
         self.assertEqual("CH", self.c2.to_text())
 
     def test_rrclass_to_wire(self):
@@ -63,6 +63,15 @@ class RRClassTest(unittest.TestCase):
         self.assertTrue(self.c1 <= self.c2)
         self.assertFalse(self.c1 > self.c2)
         self.assertFalse(self.c1 >= self.c2)
+        other_rrclass = RRClass("IN")
+        self.assertTrue(self.c1 == other_rrclass)
+
+        self.assertFalse(self.c1 == self.c2)
+        self.assertFalse(self.c1 > self.c2)
+        self.assertFalse(self.c1 >= self.c2)
+        self.assertTrue(self.c1 < self.c2)
+        self.assertTrue(self.c1 <= self.c2)
+        self.assertFalse(self.c1 != other_rrclass)
 
     def test_statics(self):
         self.assertEqual(RRClass.IN(), RRClass("IN"))

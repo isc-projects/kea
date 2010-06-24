@@ -1,4 +1,4 @@
-# Copyright (C) 2009  Internet Systems Consortium.
+# Copyright (C) 2010  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -39,9 +39,10 @@ class TestModuleSpec(unittest.TestCase):
         self.assertRaises(IncompleteRRType, RRType, b)
         self.assertRaises(TypeError, RRType, Exception)
     
-    def test_from_text(self):
+    def test_init_from_text(self):
         self.assertEqual("A", RRType("A").to_text())
         self.assertEqual("NS", RRType("NS").to_text());
+        self.assertEqual("NS", str(RRType("NS")));
     
         self.assertEqual("TYPE65535", RRType("TYPE65535").to_text());
     
@@ -100,6 +101,14 @@ class TestModuleSpec(unittest.TestCase):
         self.assertTrue(RRType(100) < RRType(65535));
         self.assertFalse(RRType(100) > RRType(65535));
         self.assertFalse(RRType(100) >= RRType(65535));
+
+        self.assertFalse(RRType(1) != RRType("A"));
+        self.assertFalse(RRType(0) == RRType("A"));
+        self.assertFalse(RRType("A") > RRType("NS"));
+        self.assertFalse(RRType("A") >= RRType("NS"));
+        self.assertFalse(RRType(100) > RRType(65535));
+        self.assertTrue(RRType(100) < RRType(65535));
+        self.assertTrue(RRType(100) <= RRType(65535));
 
         self.assertFalse(self.rrtype_1 == 1)
 

@@ -58,6 +58,18 @@ class NameComparisonTest(unittest.TestCase):
         self.assertEqual("COMMONANCESTOR", NameComparisonResult.NameRelation[self.ncr12.get_relation()])
         self.assertEqual("COMMONANCESTOR", NameComparisonResult.NameRelation[self.ncr15.get_relation()])
 
+        superdomain = Name("com")
+        relation = superdomain.compare(self.name1)
+        self.assertEqual("SUPERDOMAIN", NameComparisonResult.NameRelation[relation.get_relation()])
+
+        subdomain = Name("sub.aaaa.example.com")
+        relation = subdomain.compare(self.name1)
+        self.assertEqual("SUBDOMAIN", NameComparisonResult.NameRelation[relation.get_relation()])
+
+        same = Name("aaaa.example.com")
+        relation = same.compare(self.name1)
+        self.assertEqual("EQUAL", NameComparisonResult.NameRelation[relation.get_relation()])
+
 class NameTest(unittest.TestCase):
     def setUp(self):
         self.name1 = Name("example.com")
@@ -82,7 +94,6 @@ class NameTest(unittest.TestCase):
         self.assertRaises(InvalidBufferPosition, Name, b, 100)
         b = bytearray()
         b += b'\x07example'*32 + b'\x03com\x00'
-        # no TooLong for from wire?
         self.assertRaises(DNSMessageFORMERR, Name, b, 0)
 
     def test_at(self):
@@ -104,6 +115,7 @@ class NameTest(unittest.TestCase):
     def test_to_text(self):
         self.assertEqual("example.com.", self.name1.to_text())
         self.assertEqual(".", self.name2.to_text())
+        self.assertEqual(".", str(self.name2))
         self.assertEqual("something.completely.different.", self.name3.to_text())
 
     def test_to_wire(self):
@@ -129,8 +141,6 @@ class NameTest(unittest.TestCase):
         self.assertFalse(self.name1.equals(self.name2))
         self.assertFalse(self.name1.equals(self.name3))
         self.assertTrue(self.name1.equals(self.name4))
-        #TODO: == not yet defined
-        #self.assertEqual(self.name1, self.name2)
 
     def test_split(self):
         s = self.name1.split(1,1)
@@ -173,10 +183,18 @@ class NameTest(unittest.TestCase):
     def test_richcmp(self):
         self.assertTrue(self.name1 > self.name2)
         self.assertFalse(self.name1 < self.name2)
+        self.assertFalse(self.name2 > self.name1)
+        self.assertTrue(self.name2 < self.name1)
         self.assertTrue(self.name1 == self.name4)
+        self.assertFalse(self.name1 != self.name4)
+        self.assertTrue(self.name1 != self.name2)
+        self.assertFalse(self.name1 == self.name2)
         self.assertTrue(self.name1 <= self.name4)
         self.assertTrue(self.name1 >= self.name4)
         self.assertFalse(self.name1 <= self.name2)
+        self.assertTrue(self.name4 >= self.name1)
+        self.assertTrue(self.name4 <= self.name1)
+        self.assertFalse(self.name2 >= self.name1)
 
 if __name__ == '__main__':
     unittest.main()
