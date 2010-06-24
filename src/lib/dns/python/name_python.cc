@@ -128,7 +128,7 @@ NameComparisonResult_init(s_NameComparisonResult* self UNUSED_PARAM,
 {
     PyErr_SetString(PyExc_NotImplementedError,
                     "NameComparisonResult can't be built directly");
-    return -1;
+    return (-1);
 }
 
 static void
@@ -140,17 +140,17 @@ NameComparisonResult_destroy(s_NameComparisonResult* self) {
 
 static PyObject* 
 NameComparisonResult_getOrder(s_NameComparisonResult* self) {
-    return Py_BuildValue("i", self->ncr->getOrder());
+    return (Py_BuildValue("i", self->ncr->getOrder()));
 }
 
 static PyObject* 
 NameComparisonResult_getCommonLabels(s_NameComparisonResult* self) {
-    return Py_BuildValue("I", self->ncr->getCommonLabels());
+    return (Py_BuildValue("I", self->ncr->getCommonLabels()));
 }
 
 static PyObject* 
 NameComparisonResult_getRelation(s_NameComparisonResult* self) {
-    return Py_BuildValue("I", self->ncr->getRelation());
+    return (Py_BuildValue("I", self->ncr->getRelation()));
 }
 
 // end of NameComparisonResult
@@ -293,32 +293,32 @@ Name_init(s_Name* self, PyObject* args) {
             self->position = 0;
         } catch (EmptyLabel) {
             PyErr_SetString(po_EmptyLabel, "EmptyLabel");
-            return -1;
+            return (-1);
         } catch (TooLongLabel) {
             PyErr_SetString(po_TooLongLabel, "TooLongLabel");
-            return -1;
+            return (-1);
         } catch (BadLabelType) {
             PyErr_SetString(po_BadLabelType, "BadLabelType");
-            return -1;
+            return (-1);
         } catch (BadEscape) {
             PyErr_SetString(po_BadEscape, "BadEscape");
-            return -1;
+            return (-1);
         } catch (TooLongName) {
             PyErr_SetString(po_TooLongName, "TooLongName");
-            return -1;
+            return (-1);
         } catch (IncompleteName) {
             PyErr_SetString(po_IncompleteName, "IncompleteName");
-            return -1;
+            return (-1);
 #ifdef CATCHMEMERR
         } catch (std::bad_alloc) {
             PyErr_NoMemory();
-            return -1;
+            return (-1);
 #endif
         } catch (...) {
             PyErr_SetString(po_IscException, "Unexpected?!");
-            return -1;
+            return (-1);
         }
-        return 0;
+        return (0);
     }
     PyErr_Clear();
 
@@ -341,21 +341,21 @@ Name_init(s_Name* self, PyObject* args) {
         } catch (InvalidBufferPosition) {
             PyErr_SetString(po_InvalidBufferPosition,
                             "InvalidBufferPosition");
-            return -1;
+            return (-1);
         } catch (DNSMessageFORMERR) {
             PyErr_SetString(po_DNSMessageFORMERR, "DNSMessageFORMERR");
-            return -1;
+            return (-1);
         } catch (...) {
             PyErr_SetString(po_IscException, "Unexpected?!");
-            return -1;
+            return (-1);
         }
-        return 0;
+        return (0);
     }
 
     PyErr_Clear();
     PyErr_SetString(PyExc_TypeError,
                     "No valid types in Name constructor (should be string or sequence and offset");
-    return -1;
+    return (-1);
 }
 
 static void
@@ -369,30 +369,30 @@ static PyObject*
 Name_at(s_Name* self, PyObject* args) {
     size_t pos;
     if (!PyArg_ParseTuple(args, "i", &pos)) {
-        return NULL;
+        return (NULL);
     }
     try {
-        return Py_BuildValue("i", self->name->at(pos));
+        return (Py_BuildValue("i", self->name->at(pos)));
     } catch (isc::OutOfRange oor) {
         PyErr_SetString(PyExc_IndexError,
                         "name index out of range");
-        return NULL;
+        return (NULL);
     }
 }
 
 static PyObject*
 Name_getLength(s_Name* self) {
-    return Py_BuildValue("i", self->name->getLength());
+    return (Py_BuildValue("i", self->name->getLength()));
 }
 
 static PyObject*
 Name_getLabelCount(s_Name* self) {
-    return Py_BuildValue("i", self->name->getLabelCount());
+    return (Py_BuildValue("i", self->name->getLabelCount()));
 }
 
 static PyObject*
 Name_toText(s_Name* self) {
-    return Py_BuildValue("s", self->name->toText().c_str());
+    return (Py_BuildValue("s", self->name->toText().c_str()));
 }
 
 static PyObject*
@@ -420,7 +420,7 @@ Name_toWire(s_Name* self, PyObject* args) {
         // We need to release the object we temporarily created here
         // to prevent memory leak
         Py_DECREF(name_bytes);
-        return result;
+        return (result);
     } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, (PyObject**) &mr)) {
         self->name->toWire(*mr->messagerenderer);
         // If we return NULL it is seen as an error, so use this for
@@ -430,7 +430,7 @@ Name_toWire(s_Name* self, PyObject* args) {
     PyErr_Clear();
     PyErr_SetString(PyExc_TypeError,
                     "toWire argument must be a sequence object or a MessageRenderer");
-    return NULL;
+    return (NULL);
 }
 
 static PyObject*
@@ -438,14 +438,14 @@ Name_compare(s_Name* self, PyObject* args) {
     s_Name* other;
 
     if (!PyArg_ParseTuple(args, "O!", &name_type, (PyObject* *) &other))
-        return NULL;
+        return (NULL);
 
     s_NameComparisonResult* ret = PyObject_New(s_NameComparisonResult, &name_comparison_result_type);
     if (ret != NULL) {
         ret->ncr = new NameComparisonResult(
             self->name->compare(*other->name));
     }
-    return static_cast<PyObject*>(ret);
+    return (ret);
 }
 
 static PyObject* 
@@ -453,7 +453,7 @@ Name_equals(s_Name* self, PyObject* args) {
     s_Name* other;
 
     if (!PyArg_ParseTuple(args, "O!", &name_type, (PyObject* *) &other))
-        return NULL;
+        return (NULL);
 
     if (self->name->equals(*other->name))
         Py_RETURN_TRUE;
@@ -478,7 +478,7 @@ Name_split(s_Name* self, PyObject* args) {
             }
             if (ret->name == NULL) {
                 Py_DECREF(ret);
-                return NULL;
+                return (NULL);
             }
         }
     } else if (PyArg_ParseTuple(args, "I", &n)) {
@@ -493,11 +493,11 @@ Name_split(s_Name* self, PyObject* args) {
             }
             if (ret->name == NULL) {
                 Py_DECREF(ret);
-                return NULL;
+                return (NULL);
             }
         }
     }
-    return static_cast<PyObject*>(ret);
+    return (ret);
 }
 #include <iostream>
 
@@ -538,7 +538,7 @@ Name_richcmp(s_Name* self, s_Name* other, int op) {
     default:
         PyErr_SetString(PyExc_IndexError,
                         "Unhandled rich comparison operator");
-        return NULL;
+        return (NULL);
     }
     if (c) {
         Py_RETURN_TRUE;
@@ -555,10 +555,10 @@ Name_reverse(s_Name* self) {
         ret->name = new Name(self->name->reverse());
         if (ret->name == NULL) {
             Py_DECREF(ret);
-            return NULL;
+            return (NULL);
         }
     }
-    return static_cast<PyObject*>(ret);
+    return (ret);
 }
 
 static PyObject*
@@ -566,7 +566,7 @@ Name_concatenate(s_Name* self, PyObject* args) {
     s_Name* other;
 
     if (!PyArg_ParseTuple(args, "O!", &name_type, (PyObject**) &other))
-        return NULL;
+        return (NULL);
 
     s_Name* ret = PyObject_New(s_Name, &name_type);
     if (ret != NULL) {
@@ -574,17 +574,17 @@ Name_concatenate(s_Name* self, PyObject* args) {
             ret->name = new Name(self->name->concatenate(*other->name));
         } catch (isc::dns::TooLongName tln) {
             PyErr_SetString(po_TooLongName, tln.what());
-            return NULL;
+            return (NULL);
         }
     }
-    return static_cast<PyObject*>(ret);
+    return (ret);
 }
 
 static PyObject*
 Name_downcase(s_Name* self) {
     self->name->downcase();
     Py_INCREF(self);
-    return static_cast<PyObject*>(self);
+    return (self);
 }
 
 static PyObject*
@@ -609,7 +609,7 @@ initModulePart_Name(PyObject* mod) {
     // NameComparisonResult
     //
     if (PyType_Ready(&name_comparison_result_type) < 0) {
-        return false;
+        return (false);
     }
     Py_INCREF(&name_comparison_result_type);
 
@@ -629,7 +629,7 @@ initModulePart_Name(PyObject* mod) {
     //
     
     if (PyType_Ready(&name_type) < 0) {
-        return false;
+        return (false);
     }
     Py_INCREF(&name_type);
 
@@ -643,7 +643,7 @@ initModulePart_Name(PyObject* mod) {
 
     s_Name* root_name = PyObject_New(s_Name, &name_type);
     root_name->name = new Name(".");
-    PyObject* po_ROOT_NAME = static_cast<PyObject*>(root_name);
+    PyObject* po_ROOT_NAME = root_name;
     Py_INCREF(po_ROOT_NAME);
     addClassVariable(name_type, "ROOT_NAME", po_ROOT_NAME);
 
@@ -678,5 +678,5 @@ initModulePart_Name(PyObject* mod) {
     po_DNSMessageFORMERR = PyErr_NewException("libdns_python.DNSMessageFORMERR", NULL, NULL);
     PyModule_AddObject(mod, "DNSMessageFORMERR", po_DNSMessageFORMERR);
 
-    return true;
+    return (true);
 }

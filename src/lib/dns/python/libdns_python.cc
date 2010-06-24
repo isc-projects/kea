@@ -76,7 +76,7 @@ PyMODINIT_FUNC
 PyInit_libdns_python(void) {
     PyObject *mod = PyModule_Create(&libdns_python);
     if (mod == NULL) {
-        return NULL;
+        return (NULL);
     }
 
     po_IscException = PyErr_NewException("libdns_python.IscException", NULL, NULL);
@@ -85,41 +85,41 @@ PyInit_libdns_python(void) {
     // for each part included above, we call its specific initializer
 
     if (!initModulePart_Name(mod)) {
-        return NULL;
+        return (NULL);
     }
 
     if (!initModulePart_MessageRenderer(mod)) {
-        return NULL;
+        return (NULL);
     }
 
     if (!initModulePart_RRClass(mod)) {
-        return NULL;
+        return (NULL);
     }
 
     if (!initModulePart_RRType(mod)) {
-        return NULL;
+        return (NULL);
     }
 
     if (!initModulePart_RRTTL(mod)) {
-        return NULL;
+        return (NULL);
     }
 
     if (!initModulePart_Rdata(mod)) {
-        return NULL;
+        return (NULL);
     }
 
     if (!initModulePart_RRset(mod)) {
-        return NULL;
+        return (NULL);
     }
 
     if (!initModulePart_Question(mod)) {
-        return NULL;
+        return (NULL);
     }
 
     if (!initModulePart_Message(mod)) {
-        return NULL;
+        return (NULL);
     }
 
-    return mod;
+    return (mod);
 }
 

@@ -127,7 +127,7 @@ MessageFlag_init(s_MessageFlag* self UNUSED_PARAM,
 {
     PyErr_SetString(PyExc_NotImplementedError,
                     "MessageFlag can't be built directly");
-    return -1;
+    return (-1);
 }
 
 static void
@@ -140,7 +140,7 @@ MessageFlag_destroy(s_MessageFlag* self) {
 
 static PyObject*
 MessageFlag_getBit(s_MessageFlag* self) {
-    return Py_BuildValue("I", self->messageflag->getBit());
+    return (Py_BuildValue("I", self->messageflag->getBit()));
 }
 
 static PyObject*
@@ -154,37 +154,37 @@ MessageFlag_createStatic(const MessageFlag& flag) {
 
 static PyObject*
 MessageFlag_QR(s_MessageFlag* self UNUSED_PARAM) {
-    return MessageFlag_createStatic(MessageFlag::QR());
+    return (MessageFlag_createStatic(MessageFlag::QR()));
 }
 
 static PyObject*
 MessageFlag_AA(s_MessageFlag* self UNUSED_PARAM) {
-    return MessageFlag_createStatic(MessageFlag::AA());
+    return (MessageFlag_createStatic(MessageFlag::AA()));
 }
 
 static PyObject*
 MessageFlag_TC(s_MessageFlag* self UNUSED_PARAM) {
-    return MessageFlag_createStatic(MessageFlag::TC());
+    return (MessageFlag_createStatic(MessageFlag::TC()));
 }
 
 static PyObject*
 MessageFlag_RD(s_MessageFlag* self UNUSED_PARAM) {
-    return MessageFlag_createStatic(MessageFlag::RD());
+    return (MessageFlag_createStatic(MessageFlag::RD()));
 }
 
 static PyObject*
 MessageFlag_RA(s_MessageFlag* self UNUSED_PARAM) {
-    return MessageFlag_createStatic(MessageFlag::RA());
+    return (MessageFlag_createStatic(MessageFlag::RA()));
 }
 
 static PyObject*
 MessageFlag_AD(s_MessageFlag* self UNUSED_PARAM) {
-    return MessageFlag_createStatic(MessageFlag::AD());
+    return (MessageFlag_createStatic(MessageFlag::AD()));
 }
 
 static PyObject*
 MessageFlag_CD(s_MessageFlag* self UNUSED_PARAM) {
-    return MessageFlag_createStatic(MessageFlag::CD());
+    return (MessageFlag_createStatic(MessageFlag::CD()));
 }
 
 //
@@ -302,7 +302,7 @@ static int
 Opcode_init(s_Opcode* self UNUSED_PARAM, PyObject* args UNUSED_PARAM) {
     PyErr_SetString(PyExc_NotImplementedError,
                     "Opcode can't be built directly");
-    return -1;
+    return (-1);
 }
 
 static void
@@ -315,12 +315,12 @@ Opcode_destroy(s_Opcode* self) {
 
 static PyObject*
 Opcode_getCode(s_Opcode* self) {
-    return Py_BuildValue("I", self->opcode->getCode());
+    return (Py_BuildValue("I", self->opcode->getCode()));
 }
 
 static PyObject*
 Opcode_toText(s_Opcode* self) {
-    return Py_BuildValue("s", self->opcode->toText().c_str());
+    return (Py_BuildValue("s", self->opcode->toText().c_str()));
 }
 
 static PyObject*
@@ -342,82 +342,82 @@ Opcode_createStatic(const Opcode& opcode) {
 
 static PyObject*
 Opcode_QUERY(s_Opcode* self UNUSED_PARAM) {
-    return Opcode_createStatic(Opcode::QUERY());
+    return (Opcode_createStatic(Opcode::QUERY()));
 }
 
 static PyObject*
 Opcode_IQUERY(s_Opcode* self UNUSED_PARAM) {
-    return Opcode_createStatic(Opcode::IQUERY());
+    return (Opcode_createStatic(Opcode::IQUERY()));
 }
 
 static PyObject*
 Opcode_STATUS(s_Opcode* self UNUSED_PARAM) {
-    return Opcode_createStatic(Opcode::STATUS());
+    return (Opcode_createStatic(Opcode::STATUS()));
 }
 
 static PyObject*
 Opcode_RESERVED3(s_Opcode* self UNUSED_PARAM) {
-    return Opcode_createStatic(Opcode::RESERVED3());
+    return (Opcode_createStatic(Opcode::RESERVED3()));
 }
 
 static PyObject*
 Opcode_NOTIFY(s_Opcode* self UNUSED_PARAM) {
-    return Opcode_createStatic(Opcode::NOTIFY());
+    return (Opcode_createStatic(Opcode::NOTIFY()));
 }
 
 static PyObject*
 Opcode_UPDATE(s_Opcode* self UNUSED_PARAM) {
-    return Opcode_createStatic(Opcode::UPDATE());
+    return (Opcode_createStatic(Opcode::UPDATE()));
 }
 
 static PyObject*
 Opcode_RESERVED6(s_Opcode* self UNUSED_PARAM) {
-    return Opcode_createStatic(Opcode::RESERVED6());
+    return (Opcode_createStatic(Opcode::RESERVED6()));
 }
 
 static PyObject*
 Opcode_RESERVED7(s_Opcode* self UNUSED_PARAM) {
-    return Opcode_createStatic(Opcode::RESERVED7());
+    return (Opcode_createStatic(Opcode::RESERVED7()));
 }
 
 static PyObject*
 Opcode_RESERVED8(s_Opcode* self UNUSED_PARAM) {
-    return Opcode_createStatic(Opcode::RESERVED8());
+    return (Opcode_createStatic(Opcode::RESERVED8()));
 }
 
 static PyObject*
 Opcode_RESERVED9(s_Opcode* self UNUSED_PARAM) {
-    return Opcode_createStatic(Opcode::RESERVED9());
+    return (Opcode_createStatic(Opcode::RESERVED9()));
 }
 
 static PyObject*
 Opcode_RESERVED10(s_Opcode* self UNUSED_PARAM) {
-    return Opcode_createStatic(Opcode::RESERVED10());
+    return (Opcode_createStatic(Opcode::RESERVED10()));
 }
 
 static PyObject*
 Opcode_RESERVED11(s_Opcode* self UNUSED_PARAM) {
-    return Opcode_createStatic(Opcode::RESERVED11());
+    return (Opcode_createStatic(Opcode::RESERVED11()));
 }
 
 static PyObject*
 Opcode_RESERVED12(s_Opcode* self UNUSED_PARAM) {
-    return Opcode_createStatic(Opcode::RESERVED12());
+    return (Opcode_createStatic(Opcode::RESERVED12()));
 }
 
 static PyObject*
 Opcode_RESERVED13(s_Opcode* self UNUSED_PARAM) {
-    return Opcode_createStatic(Opcode::RESERVED13());
+    return (Opcode_createStatic(Opcode::RESERVED13()));
 }
 
 static PyObject*
 Opcode_RESERVED14(s_Opcode* self UNUSED_PARAM) {
-    return Opcode_createStatic(Opcode::RESERVED14());
+    return (Opcode_createStatic(Opcode::RESERVED14()));
 }
 
 static PyObject*
 Opcode_RESERVED15(s_Opcode* self UNUSED_PARAM) {
-    return Opcode_createStatic(Opcode::RESERVED15());
+    return (Opcode_createStatic(Opcode::RESERVED15()));
 }
 
 static PyObject* 
@@ -434,11 +434,11 @@ Opcode_richcmp(s_Opcode* self, s_Opcode* other, int op) {
     switch (op) {
     case Py_LT:
         PyErr_SetString(PyExc_TypeError, "Unorderable type; Opcode");
-        return NULL;
+        return (NULL);
         break;
     case Py_LE:
         PyErr_SetString(PyExc_TypeError, "Unorderable type; Opcode");
-        return NULL;
+        return (NULL);
         break;
     case Py_EQ:
         c = (*self->opcode == *other->opcode);
@@ -448,11 +448,11 @@ Opcode_richcmp(s_Opcode* self, s_Opcode* other, int op) {
         break;
     case Py_GT:
         PyErr_SetString(PyExc_TypeError, "Unorderable type; Opcode");
-        return NULL;
+        return (NULL);
         break;
     case Py_GE:
         PyErr_SetString(PyExc_TypeError, "Unorderable type; Opcode");
-        return NULL;
+        return (NULL);
         break;
     }
     if (c)
@@ -592,11 +592,11 @@ Rcode_init(s_Rcode* self UNUSED_PARAM, PyObject* args UNUSED_PARAM) {
         } catch (isc::OutOfRange) {
             PyErr_SetString(PyExc_OverflowError,
                             "rcode out of range");
-            return -1;
+            return (-1);
         }
-        return 0;
+        return (0);
     } else {
-        return -1;
+        return (-1);
     }
 }
 
@@ -613,12 +613,12 @@ Rcode_destroy(s_Rcode* self) {
 
 static PyObject*
 Rcode_getCode(s_Rcode* self) {
-    return Py_BuildValue("I", self->rcode->getCode());
+    return (Py_BuildValue("I", self->rcode->getCode()));
 }
 
 static PyObject*
 Rcode_toText(s_Rcode* self) {
-    return Py_BuildValue("s", self->rcode->toText().c_str());
+    return (Py_BuildValue("s", self->rcode->toText().c_str()));
 }
 
 static PyObject*
@@ -641,87 +641,87 @@ Rcode_createStatic(const Rcode& rcode) {
 
 static PyObject*
 Rcode_NOERROR(s_Rcode* self UNUSED_PARAM) {
-    return Rcode_createStatic(Rcode::NOERROR());
+    return (Rcode_createStatic(Rcode::NOERROR()));
 }
 
 static PyObject*
 Rcode_FORMERR(s_Rcode* self UNUSED_PARAM) {
-    return Rcode_createStatic(Rcode::FORMERR());
+    return (Rcode_createStatic(Rcode::FORMERR()));
 }
 
 static PyObject*
 Rcode_SERVFAIL(s_Rcode* self UNUSED_PARAM) {
-    return Rcode_createStatic(Rcode::SERVFAIL());
+    return (Rcode_createStatic(Rcode::SERVFAIL()));
 }
 
 static PyObject*
 Rcode_NXDOMAIN(s_Rcode* self UNUSED_PARAM) {
-    return Rcode_createStatic(Rcode::NXDOMAIN());
+    return (Rcode_createStatic(Rcode::NXDOMAIN()));
 }
 
 static PyObject*
 Rcode_NOTIMP(s_Rcode* self UNUSED_PARAM) {
-    return Rcode_createStatic(Rcode::NOTIMP());
+    return (Rcode_createStatic(Rcode::NOTIMP()));
 }
 
 static PyObject*
 Rcode_REFUSED(s_Rcode* self UNUSED_PARAM) {
-    return Rcode_createStatic(Rcode::REFUSED());
+    return (Rcode_createStatic(Rcode::REFUSED()));
 }
 
 static PyObject*
 Rcode_YXDOMAIN(s_Rcode* self UNUSED_PARAM) {
-    return Rcode_createStatic(Rcode::YXDOMAIN());
+    return (Rcode_createStatic(Rcode::YXDOMAIN()));
 }
 
 static PyObject*
 Rcode_YXRRSET(s_Rcode* self UNUSED_PARAM) {
-    return Rcode_createStatic(Rcode::YXRRSET());
+    return (Rcode_createStatic(Rcode::YXRRSET()));
 }
 
 static PyObject*
 Rcode_NXRRSET(s_Rcode* self UNUSED_PARAM) {
-    return Rcode_createStatic(Rcode::NXRRSET());
+    return (Rcode_createStatic(Rcode::NXRRSET()));
 }
 
 static PyObject*
 Rcode_NOTAUTH(s_Rcode* self UNUSED_PARAM) {
-    return Rcode_createStatic(Rcode::NOTAUTH());
+    return (Rcode_createStatic(Rcode::NOTAUTH()));
 }
 
 static PyObject*
 Rcode_NOTZONE(s_Rcode* self UNUSED_PARAM) {
-    return Rcode_createStatic(Rcode::NOTZONE());
+    return (Rcode_createStatic(Rcode::NOTZONE()));
 }
 
 static PyObject*
 Rcode_RESERVED11(s_Rcode* self UNUSED_PARAM) {
-    return Rcode_createStatic(Rcode::RESERVED11());
+    return (Rcode_createStatic(Rcode::RESERVED11()));
 }
 
 static PyObject*
 Rcode_RESERVED12(s_Rcode* self UNUSED_PARAM) {
-    return Rcode_createStatic(Rcode::RESERVED12());
+    return (Rcode_createStatic(Rcode::RESERVED12()));
 }
 
 static PyObject*
 Rcode_RESERVED13(s_Rcode* self UNUSED_PARAM) {
-    return Rcode_createStatic(Rcode::RESERVED13());
+    return (Rcode_createStatic(Rcode::RESERVED13()));
 }
 
 static PyObject*
 Rcode_RESERVED14(s_Rcode* self UNUSED_PARAM) {
-    return Rcode_createStatic(Rcode::RESERVED14());
+    return (Rcode_createStatic(Rcode::RESERVED14()));
 }
 
 static PyObject*
 Rcode_RESERVED15(s_Rcode* self UNUSED_PARAM) {
-    return Rcode_createStatic(Rcode::RESERVED15());
+    return (Rcode_createStatic(Rcode::RESERVED15()));
 }
 
 static PyObject*
 Rcode_BADVERS(s_Rcode* self UNUSED_PARAM) {
-    return Rcode_createStatic(Rcode::BADVERS());
+    return (Rcode_createStatic(Rcode::BADVERS()));
 }
 
 static PyObject* 
@@ -738,11 +738,11 @@ Rcode_richcmp(s_Rcode* self, s_Rcode* other, int op) {
     switch (op) {
     case Py_LT:
         PyErr_SetString(PyExc_TypeError, "Unorderable type; Rcode");
-        return NULL;
+        return (NULL);
         break;
     case Py_LE:
         PyErr_SetString(PyExc_TypeError, "Unorderable type; Rcode");
-        return NULL;
+        return (NULL);
         break;
     case Py_EQ:
         c = (*self->rcode == *other->rcode);
@@ -752,11 +752,11 @@ Rcode_richcmp(s_Rcode* self, s_Rcode* other, int op) {
         break;
     case Py_GT:
         PyErr_SetString(PyExc_TypeError, "Unorderable type; Rcode");
-        return NULL;
+        return (NULL);
         break;
     case Py_GE:
         PyErr_SetString(PyExc_TypeError, "Unorderable type; Rcode");
-        return NULL;
+        return (NULL);
         break;
     }
     if (c)
@@ -858,7 +858,7 @@ Section_init(s_Section* self UNUSED_PARAM,
 {
     PyErr_SetString(PyExc_NotImplementedError,
                     "Section can't be built directly");
-    return -1;
+    return (-1);
 }
 
 static void
@@ -871,59 +871,37 @@ Section_destroy(s_Section* self) {
 
 static PyObject*
 Section_getCode(s_Section* self) {
-    return Py_BuildValue("I", self->section->getCode());
+    return (Py_BuildValue("I", self->section->getCode()));
 }
 
 static PyObject*
-Section_QUESTION(s_Section* self UNUSED_PARAM) {
+Section_createStatic(const Section& section) {
     s_Section* ret = PyObject_New(s_Section, &section_type);
     if (ret != NULL) {
-        ret->section = &Section::QUESTION();
-        if (ret->section == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
+        ret->section = &section;
     }
-    return static_cast<PyObject*>(ret);
+    return (ret);
+}
+
+
+static PyObject*
+Section_QUESTION(s_Section* self UNUSED_PARAM) {
+    return Section_createStatic(Section::QUESTION());
 }
 
 static PyObject*
 Section_ANSWER(s_Section* self UNUSED_PARAM) {
-    s_Section* ret = PyObject_New(s_Section, &section_type);
-    if (ret != NULL) {
-        ret->section = &Section::ANSWER();
-        if (ret->section == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Section_createStatic(Section::ANSWER());
 }
 
 static PyObject*
 Section_AUTHORITY(s_Section* self UNUSED_PARAM) {
-    s_Section* ret = PyObject_New(s_Section, &section_type);
-    if (ret != NULL) {
-        ret->section = &Section::AUTHORITY();
-        if (ret->section == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Section_createStatic(Section::AUTHORITY());
 }
 
 static PyObject*
 Section_ADDITIONAL(s_Section* self UNUSED_PARAM) {
-    s_Section* ret = PyObject_New(s_Section, &section_type);
-    if (ret != NULL) {
-        ret->section = &Section::ADDITIONAL();
-        if (ret->section == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Section_createStatic(Section::ADDITIONAL());
 }
 
 static PyObject* 
@@ -940,11 +918,11 @@ Section_richcmp(s_Section* self, s_Section* other, int op) {
     switch (op) {
     case Py_LT:
         PyErr_SetString(PyExc_TypeError, "Unorderable type; Section");
-        return NULL;
+        return (NULL);
         break;
     case Py_LE:
         PyErr_SetString(PyExc_TypeError, "Unorderable type; Section");
-        return NULL;
+        return (NULL);
         break;
     case Py_EQ:
         c = (*self->section == *other->section);
@@ -954,11 +932,11 @@ Section_richcmp(s_Section* self, s_Section* other, int op) {
         break;
     case Py_GT:
         PyErr_SetString(PyExc_TypeError, "Unorderable type; Section");
-        return NULL;
+        return (NULL);
         break;
     case Py_GE:
         PyErr_SetString(PyExc_TypeError, "Unorderable type; Section");
-        return NULL;
+        return (NULL);
         break;
     }
     if (c)
@@ -1197,19 +1175,19 @@ Message_init(s_Message* self, PyObject* args) {
         PyErr_Clear();
         if (i == Message::PARSE) {
             self->message = new Message(Message::PARSE);
-            return 0;
+            return (0);
         } else if (i == Message::RENDER) {
             self->message = new Message(Message::RENDER);
-            return 0;
+            return (0);
         } else {
             PyErr_SetString(PyExc_TypeError, "Message mode must be Message.PARSE or Message.RENDER");
-            return -1;
+            return (-1);
         }
     }
     PyErr_Clear();
     PyErr_SetString(PyExc_TypeError,
                     "no valid type in constructor argument");
-    return -1;
+    return (-1);
 }
 
 static void
@@ -1224,7 +1202,7 @@ static PyObject*
 Message_getHeaderFlag(s_Message* self, PyObject* args) {
     s_MessageFlag* messageflag;
     if (!PyArg_ParseTuple(args, "O!", &messageflag_type, &messageflag)) {
-        return NULL;
+        return (NULL);
     }
     
     if (self->message->getHeaderFlag(*messageflag->messageflag)) {
@@ -1238,7 +1216,7 @@ static PyObject*
 Message_setHeaderFlag(s_Message* self, PyObject* args) {
     s_MessageFlag* messageflag;
     if (!PyArg_ParseTuple(args, "O!", &messageflag_type, &messageflag)) {
-        return NULL;
+        return (NULL);
     }
 
     try {
@@ -1247,7 +1225,7 @@ Message_setHeaderFlag(s_Message* self, PyObject* args) {
     } catch (isc::dns::InvalidMessageOperation imo) {
         PyErr_Clear();
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
-        return NULL;
+        return (NULL);
     }
 }
 
@@ -1255,7 +1233,7 @@ static PyObject*
 Message_clearHeaderFlag(s_Message* self, PyObject* args) {
     s_MessageFlag* messageflag;
     if (!PyArg_ParseTuple(args, "O!", &messageflag_type, &messageflag)) {
-        return NULL;
+        return (NULL);
     }
 
     try {
@@ -1264,7 +1242,7 @@ Message_clearHeaderFlag(s_Message* self, PyObject* args) {
     } catch (isc::dns::InvalidMessageOperation imo) {
         PyErr_Clear();
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
-        return NULL;
+        return (NULL);
     }
 
     Py_RETURN_NONE;
@@ -1283,7 +1261,7 @@ static PyObject*
 Message_setDNSSECSupported(s_Message* self, PyObject* args) {
     PyObject *b;
     if (!PyArg_ParseTuple(args, "O!", &PyBool_Type, &b)) {
-        return NULL;
+        return (NULL);
     }
     try {
         if (b == Py_True) {
@@ -1294,50 +1272,50 @@ Message_setDNSSECSupported(s_Message* self, PyObject* args) {
         Py_RETURN_NONE;
     } catch (isc::dns::InvalidMessageOperation imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
-        return NULL;
+        return (NULL);
     }
 }
 
 static PyObject*
 Message_getUDPSize(s_Message* self) {
-    return Py_BuildValue("I", self->message->getUDPSize());
+    return (Py_BuildValue("I", self->message->getUDPSize()));
 }
 
 static PyObject*
 Message_setUDPSize(s_Message* self, PyObject* args) {
     uint16_t size;
     if (!PyArg_ParseTuple(args, "I", &size)) {
-        return NULL;
+        return (NULL);
     }
     try {
         self->message->setUDPSize(size);
         Py_RETURN_NONE;
     } catch (isc::dns::InvalidMessageUDPSize imus) {
         PyErr_SetString(po_InvalidMessageUDPSize, imus.what());
-        return NULL;
+        return (NULL);
     } catch (isc::dns::InvalidMessageOperation imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
-        return NULL;
+        return (NULL);
     }
 }
 
 static PyObject*
 Message_getQid(s_Message* self) {
-    return Py_BuildValue("I", self->message->getQid());
+    return (Py_BuildValue("I", self->message->getQid()));
 }
 
 static PyObject*
 Message_setQid(s_Message* self, PyObject* args) {
     uint16_t id;
     if (!PyArg_ParseTuple(args, "I", &id)) {
-        return NULL;
+        return (NULL);
     }
     try {
         self->message->setQid(id);
         Py_RETURN_NONE;
     } catch (InvalidMessageOperation imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
-        return NULL;
+        return (NULL);
     }
 }
 
@@ -1351,25 +1329,25 @@ Message_getRcode(s_Message* self) {
         if (rcode->rcode == NULL)
           {
             Py_DECREF(rcode);
-            return NULL;
+            return (NULL);
           }
     }
 
-    return static_cast<PyObject*>(rcode);
+    return (rcode);
 }
 
 static PyObject*
 Message_setRcode(s_Message* self, PyObject* args) {
     s_Rcode* rcode;
     if (!PyArg_ParseTuple(args, "O!", &rcode_type, &rcode)) {
-        return NULL;
+        return (NULL);
     }
     try {
         self->message->setRcode(*rcode->rcode);
         Py_RETURN_NONE;
     } catch (InvalidMessageOperation imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
-        return NULL;
+        return (NULL);
     }
 }
 
@@ -1386,25 +1364,25 @@ Message_getOpcode(s_Message* self) {
         if (opcode->opcode == NULL)
           {
             Py_DECREF(opcode);
-            return NULL;
+            return (NULL);
           }
     }
 
-    return static_cast<PyObject*>(opcode);
+    return (opcode);
 }
 
 static PyObject*
 Message_setOpcode(s_Message* self, PyObject* args) {
     s_Opcode* opcode;
     if (!PyArg_ParseTuple(args, "O!", &opcode_type, &opcode)) {
-        return NULL;
+        return (NULL);
     }
     try {
         self->message->setOpcode(*opcode->opcode);
         Py_RETURN_NONE;
     } catch (InvalidMessageOperation imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
-        return NULL;
+        return (NULL);
     }
 }
 
@@ -1412,9 +1390,9 @@ static PyObject*
 Message_getRRCount(s_Message* self, PyObject* args) {
     s_Section *section;
     if (!PyArg_ParseTuple(args, "O!", &section_type, &section)) {
-        return NULL;
+        return (NULL);
     }
-    return Py_BuildValue("I", self->message->getRRCount(*section->section));
+    return (Py_BuildValue("I", self->message->getRRCount(*section->section)));
 }
 
 // TODO use direct iterators for these? (or simply lists for now?)
@@ -1431,19 +1409,19 @@ Message_getQuestion(s_Message* self) {
             if (question->question == NULL)
               {
                 Py_DECREF(question);
-                return NULL;
+                return (NULL);
               }
         }
-        PyList_Append(list, static_cast<PyObject*>(question));
+        PyList_Append(list, question);
     }
-    return list;
+    return (list);
 }
 
 static PyObject*
 Message_getSection(s_Message* self, PyObject* args) {
     s_Section *section;
     if (!PyArg_ParseTuple(args, "O!", &section_type, &section)) {
-        return NULL;
+        return (NULL);
     }
     PyObject* list = PyList_New(0);
     
@@ -1458,15 +1436,15 @@ Message_getSection(s_Message* self, PyObject* args) {
               {
                 Py_DECREF(rrset);
                 Py_DECREF(list);
-                return NULL;
+                return (NULL);
               }
         }
-        PyList_Append(list, static_cast<PyObject*>(rrset));
+        PyList_Append(list, rrset);
         // PyList_Append increases refcount, so we remove ours since
         // we don't need it anymore
         Py_DECREF(rrset);
     }
-    return list;
+    return (list);
 }
 
 //static PyObject* Message_beginQuestion(s_Message* self, PyObject* args);
@@ -1479,7 +1457,7 @@ Message_addQuestion(s_Message* self, PyObject* args) {
     s_Question *question;
 
     if (!PyArg_ParseTuple(args, "O!", &question_type, &question)) {
-        return NULL;
+        return (NULL);
     }
 
     self->message->addQuestion(question->question);
@@ -1495,7 +1473,7 @@ Message_addRRset(s_Message* self, PyObject* args) {
     if (!PyArg_ParseTuple(args, "O!O!|O!", &section_type, &section,
                                            &rrset_type, &rrset,
                                            &PyBool_Type, &sign)) {
-        return NULL;
+        return (NULL);
     }
 
     try {
@@ -1507,7 +1485,7 @@ Message_addRRset(s_Message* self, PyObject* args) {
         Py_RETURN_NONE;
     } catch (InvalidMessageOperation imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
-        return NULL;
+        return (NULL);
     }
 }
 
@@ -1527,10 +1505,10 @@ Message_clear(s_Message* self, PyObject* args) {
             Py_RETURN_NONE;
         } else {
             PyErr_SetString(PyExc_TypeError, "Message mode must be Message.PARSE or Message.RENDER");
-            return NULL;
+            return (NULL);
         }
     } else {
-        return NULL;
+        return (NULL);
     }
 }
 
@@ -1543,7 +1521,7 @@ Message_makeResponse(s_Message* self) {
 static PyObject*
 Message_toText(s_Message* self) {
     // Py_BuildValue makes python objects from native data
-    return Py_BuildValue("s", self->message->toText().c_str());
+    return (Py_BuildValue("s", self->message->toText().c_str()));
 }
 
 static PyObject*
@@ -1567,13 +1545,13 @@ Message_toWire(s_Message* self, PyObject* args) {
         } catch (isc::dns::InvalidMessageOperation imo) {
             PyErr_Clear();
             PyErr_SetString(po_InvalidMessageOperation, imo.what());
-            return NULL;
+            return (NULL);
         }
     }
     PyErr_Clear();
     PyErr_SetString(PyExc_TypeError,
                     "toWire argument must be a MessageRenderer");
-    return NULL;
+    return (NULL);
 }
 
 static PyObject*
@@ -1581,7 +1559,7 @@ Message_fromWire(s_Message* self, PyObject* args) {
     const char* b;
     Py_ssize_t len;
     if (!PyArg_ParseTuple(args, "y#", &b, &len)) {
-        return NULL;
+        return (NULL);
     }
     
     InputBuffer inbuf(b, len);
@@ -1590,16 +1568,16 @@ Message_fromWire(s_Message* self, PyObject* args) {
         Py_RETURN_NONE;
     } catch (isc::dns::InvalidMessageOperation imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
-        return NULL;
+        return (NULL);
     } catch (isc::dns::DNSMessageFORMERR dmfe) {
         PyErr_SetString(po_DNSMessageFORMERR, dmfe.what());
-        return NULL;
+        return (NULL);
     } catch (isc::dns::DNSMessageBADVERS dmfe) {
         PyErr_SetString(po_DNSMessageBADVERS, dmfe.what());
-        return NULL;
+        return (NULL);
     } catch (isc::dns::MessageTooShort mts) {
         PyErr_SetString(po_MessageTooShort, mts.what());
-        return NULL;
+        return (NULL);
     }
 }
 
@@ -1609,7 +1587,7 @@ initModulePart_Message(PyObject* mod) {
     
     // add methods to class
     if (PyType_Ready(&messageflag_type) < 0) {
-        return false;
+        return (false);
     }
     Py_INCREF(&messageflag_type);
     PyModule_AddObject(mod, "MessageFlag",
@@ -1617,21 +1595,21 @@ initModulePart_Message(PyObject* mod) {
 
     
     if (PyType_Ready(&opcode_type) < 0) {
-        return false;
+        return (false);
     }
     Py_INCREF(&opcode_type);
     PyModule_AddObject(mod, "Opcode",
                        reinterpret_cast<PyObject*>(&opcode_type));
 
     if (PyType_Ready(&rcode_type) < 0) {
-        return false;
+        return (false);
     }
     Py_INCREF(&rcode_type);
     PyModule_AddObject(mod, "Rcode",
                        reinterpret_cast<PyObject*>(&rcode_type));
 
     if (PyType_Ready(&section_type) < 0) {
-        return false;
+        return (false);
     }
     Py_INCREF(&section_type);
     PyModule_AddObject(mod, "Section",
@@ -1639,7 +1617,7 @@ initModulePart_Message(PyObject* mod) {
 
     
     if (PyType_Ready(&message_type) < 0) {
-        return false;
+        return (false);
     }
     
     // Class variables
@@ -1666,5 +1644,5 @@ initModulePart_Message(PyObject* mod) {
                        reinterpret_cast<PyObject*>(&message_type));
 
 
-    return true;
+    return (true);
 }

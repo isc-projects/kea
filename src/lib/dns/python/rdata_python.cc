@@ -151,10 +151,10 @@ Rdata_init(s_Rdata* self, PyObject* args) {
                                         &rrclass_type, &rrclass,
                                         &s)) {
         self->rdata = createRdata(*rrtype->rrtype, *rrclass->rrclass, s);
-        return 0;
+        return (0);
     }
 
-    return -1;
+    return (-1);
 }
 
 static void
@@ -168,7 +168,7 @@ Rdata_destroy(s_Rdata* self) {
 static PyObject*
 Rdata_toText(s_Rdata* self) {
     // Py_BuildValue makes python objects from native data
-    return Py_BuildValue("s", self->rdata->toText().c_str());
+    return (Py_BuildValue("s", self->rdata->toText().c_str()));
 }
 
 static PyObject*
@@ -194,7 +194,7 @@ Rdata_toWire(s_Rdata* self, PyObject* args) {
         // We need to release the object we temporarily created here
         // to prevent memory leak
         Py_DECREF(rd_bytes);
-        return result;
+        return (result);
     } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, (PyObject**) &mr)) {
         self->rdata->toWire(*mr->messagerenderer);
         // If we return NULL it is seen as an error, so use this for
@@ -204,7 +204,7 @@ Rdata_toWire(s_Rdata* self, PyObject* args) {
     PyErr_Clear();
     PyErr_SetString(PyExc_TypeError,
                     "toWire argument must be a sequence object or a MessageRenderer");
-    return NULL;
+    return (NULL);
 }
 
 
@@ -243,7 +243,7 @@ RData_richcmp(s_Rdata* self, s_Rdata* other, int op) {
     default:
         PyErr_SetString(PyExc_IndexError,
                         "Unhandled rich comparison operator");
-        return NULL;
+        return (NULL);
     }
     if (c)
         Py_RETURN_TRUE;
@@ -260,7 +260,7 @@ initModulePart_Rdata(PyObject* mod) {
     // then add it to the module. This is not just a check! (leaving
     // this out results in segmentation faults)
     if (PyType_Ready(&rdata_type) < 0) {
-        return false;
+        return (false);
     }
     Py_INCREF(&rdata_type);
     PyModule_AddObject(mod, "Rdata",
@@ -277,5 +277,5 @@ initModulePart_Rdata(PyObject* mod) {
     PyModule_AddObject(mod, "CharStringTooLong", po_CharStringTooLong);
 
     
-    return true;
+    return (true);
 }

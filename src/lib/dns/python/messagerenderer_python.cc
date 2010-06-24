@@ -119,7 +119,7 @@ static int
 MessageRenderer_init(s_MessageRenderer* self) {
     self->outputbuffer = new OutputBuffer(4096);
     self->messagerenderer = new MessageRenderer(*self->outputbuffer);
-    return 0;
+    return (0);
 }
 
 static void
@@ -140,7 +140,7 @@ MessageRenderer_getData(s_MessageRenderer* self) {
 
 static PyObject*
 MessageRenderer_getLength(s_MessageRenderer* self) {
-    return Py_BuildValue("I", self->messagerenderer->getLength());
+    return (Py_BuildValue("I", self->messagerenderer->getLength()));
 }
 
 static PyObject*
@@ -154,7 +154,7 @@ MessageRenderer_isTruncated(s_MessageRenderer* self) {
 
 static PyObject*
 MessageRenderer_getLengthLimit(s_MessageRenderer* self) {
-    return Py_BuildValue("I", self->messagerenderer->getLengthLimit());
+    return (Py_BuildValue("I", self->messagerenderer->getLengthLimit()));
 }
 
 static PyObject*
@@ -169,7 +169,7 @@ MessageRenderer_setLengthLimit(s_MessageRenderer* self,
 {
     size_t lengthlimit;
     if (!PyArg_ParseTuple(args, "I", &lengthlimit)) {
-        return NULL;
+        return (NULL);
     }
     self->messagerenderer->setLengthLimit(lengthlimit);
     Py_RETURN_NONE;
@@ -193,13 +193,13 @@ initModulePart_MessageRenderer(PyObject* mod) {
 
     // NameComparisonResult
     if (PyType_Ready(&messagerenderer_type) < 0) {
-        return false;
+        return (false);
     }
     Py_INCREF(&messagerenderer_type);
     PyModule_AddObject(mod, "MessageRenderer",
                        reinterpret_cast<PyObject*>(&messagerenderer_type));
     
-    return true;
+    return (true);
 }
 
 
