@@ -249,6 +249,7 @@ RData_richcmp(s_Rdata* self, s_Rdata* other, int op) {
 // end of Rdata
 
 
+
 // Module Initialization, all statics are initialized here
 bool
 initModulePart_Rdata(PyObject* mod) {
