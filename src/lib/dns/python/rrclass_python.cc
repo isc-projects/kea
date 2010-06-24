@@ -166,37 +166,37 @@ RRClass_init(s_RRClass* self, PyObject* args) {
     try {
         if (PyArg_ParseTuple(args, "s", &s)) {
             self->rrclass = new RRClass(s);
-            return 0;
+            return (0);
         } else if (PyArg_ParseTuple(args, "I", &i)) {
             PyErr_Clear();
             if (i > 65535) {
                 PyErr_SetString(po_InvalidRRClass, "Class number too high");
-                return -1;
+                return (-1);
             }
             self->rrclass = new RRClass(i);
-            return 0;
+            return (0);
         } else if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
             uint8_t data[2];
             int result = readDataFromSequence(data, 2, bytes);
             if (result != 0) {
-                return result;
+                return (result);
             }
             InputBuffer ib(data, 2);
             self->rrclass = new RRClass(ib);
             PyErr_Clear();
-            return 0;
+            return (0);
         }
     // Incomplete is never thrown, a type error would have already been raised
     //when we try to read the 2 bytes above
     } catch (InvalidRRClass ic) {
         PyErr_Clear();
         PyErr_SetString(po_InvalidRRClass, ic.what());
-        return -1;
+        return (-1);
     }
     PyErr_Clear();
     PyErr_SetString(PyExc_TypeError,
                     "no valid type in constructor argument");
-    return -1;
+    return (-1);
 }
 
 static void
@@ -210,7 +210,7 @@ RRClass_destroy(s_RRClass* self) {
 static PyObject*
 RRClass_toText(s_RRClass* self) {
     // Py_BuildValue makes python objects from native data
-    return Py_BuildValue("s", self->rrclass->toText().c_str());
+    return (Py_BuildValue("s", self->rrclass->toText().c_str()));
 }
 
 static PyObject*
@@ -236,7 +236,7 @@ RRClass_toWire(s_RRClass* self, PyObject* args) {
         // We need to release the object we temporarily created here
         // to prevent memory leak
         Py_DECREF(n);
-        return result;
+        return (result);
     } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, (PyObject**) &mr)) {
         self->rrclass->toWire(*mr->messagerenderer);
         // If we return NULL it is seen as an error, so use this for
@@ -246,12 +246,12 @@ RRClass_toWire(s_RRClass* self, PyObject* args) {
     PyErr_Clear();
     PyErr_SetString(PyExc_TypeError,
                     "toWire argument must be a sequence object or a MessageRenderer");
-    return NULL;
+    return (NULL);
 }
 
 static PyObject*
 RRClass_getCode(s_RRClass* self) {
-    return Py_BuildValue("I", self->rrclass->getCode());
+    return (Py_BuildValue("I", self->rrclass->getCode()));
 }
 
 static PyObject* 
@@ -288,7 +288,7 @@ RRClass_richcmp(s_RRClass* self, s_RRClass* other, int op) {
     default:
         PyErr_SetString(PyExc_IndexError,
                         "Unhandled rich comparison operator");
-        return NULL;
+        return (NULL);
     }
     if (c)
         Py_RETURN_TRUE;
@@ -304,27 +304,27 @@ static PyObject* RRClass_createStatic(RRClass stc) {
     if (ret != NULL) {
         ret->rrclass = new RRClass(stc);
     }
-    return static_cast<PyObject*>(ret);
+    return (ret);
 }
 
 static PyObject* RRClass_IN(s_RRClass *self UNUSED_PARAM) {
-    return RRClass_createStatic(RRClass::IN());
+    return (RRClass_createStatic(RRClass::IN()));
 }
 
 static PyObject* RRClass_CH(s_RRClass *self UNUSED_PARAM) {
-    return RRClass_createStatic(RRClass::CH());
+    return (RRClass_createStatic(RRClass::CH()));
 }
 
 static PyObject* RRClass_HS(s_RRClass *self UNUSED_PARAM) {
-    return RRClass_createStatic(RRClass::HS());
+    return (RRClass_createStatic(RRClass::HS()));
 }
 
 static PyObject* RRClass_NONE(s_RRClass *self UNUSED_PARAM) {
-    return RRClass_createStatic(RRClass::NONE());
+    return (RRClass_createStatic(RRClass::NONE()));
 }
 
 static PyObject* RRClass_ANY(s_RRClass *self UNUSED_PARAM) {
-    return RRClass_createStatic(RRClass::ANY());
+    return (RRClass_createStatic(RRClass::ANY()));
 }
 // end of RRClass
 
@@ -344,11 +344,11 @@ initModulePart_RRClass(PyObject* mod) {
     // then add it to the module. This is not just a check! (leaving
     // this out results in segmentation faults)
     if (PyType_Ready(&rrclass_type) < 0) {
-        return false;
+        return (false);
     }
     Py_INCREF(&rrclass_type);
     PyModule_AddObject(mod, "RRClass",
                        reinterpret_cast<PyObject*>(&rrclass_type));
     
-    return true;
+    return (true);
 }

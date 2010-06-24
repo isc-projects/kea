@@ -171,11 +171,11 @@ RRset_init(s_RRset* self, PyObject* args UNUSED_PARAM) {
        )) {
         self->rrset = RRsetPtr(new RRset(*name->name, *rrclass->rrclass,
                                 *rrtype->rrtype, *rrttl->rrttl));
-        return 0;
+        return (0);
     }
 
     self->rrset = RRsetPtr();
-    return -1;
+    return (-1);
 }
 
 static void
@@ -188,7 +188,7 @@ RRset_destroy(s_RRset* self) {
 
 static PyObject*
 RRset_getRdataCount(s_RRset* self) {
-    return Py_BuildValue("I", self->rrset->getRdataCount());
+    return (Py_BuildValue("I", self->rrset->getRdataCount()));
 }
 
 static PyObject*
@@ -202,11 +202,11 @@ RRset_getName(s_RRset* self) {
         if (name->name == NULL)
           {
             Py_DECREF(name);
-            return NULL;
+            return (NULL);
           }
     }
 
-    return static_cast<PyObject*>(name);
+    return (name);
 }
 
 static PyObject*
@@ -219,11 +219,11 @@ RRset_getClass(s_RRset* self) {
         if (rrclass->rrclass == NULL)
           {
             Py_DECREF(rrclass);
-            return NULL;
+            return (NULL);
           }
     }
 
-    return static_cast<PyObject*>(rrclass);
+    return (rrclass);
 }
 
 static PyObject*
@@ -236,11 +236,11 @@ RRset_getType(s_RRset* self) {
         if (rrtype->rrtype == NULL)
           {
             Py_DECREF(rrtype);
-            return NULL;
+            return (NULL);
           }
     }
 
-    return static_cast<PyObject*>(rrtype);
+    return (rrtype);
 }
 
 static PyObject*
@@ -253,18 +253,18 @@ RRset_getTTL(s_RRset* self) {
         if (rrttl->rrttl == NULL)
           {
             Py_DECREF(rrttl);
-            return NULL;
+            return (NULL);
           }
     }
 
-    return static_cast<PyObject*>(rrttl);
+    return (rrttl);
 }
 
 static PyObject*
 RRset_setName(s_RRset* self, PyObject* args) {
     s_Name* name;
     if (!PyArg_ParseTuple(args, "O!", &name_type, &name)) {
-        return NULL;
+        return (NULL);
     }
     self->rrset->setName(*name->name);
     Py_RETURN_NONE;
@@ -274,7 +274,7 @@ static PyObject*
 RRset_setTTL(s_RRset* self, PyObject* args) {
     s_RRTTL* rrttl;
     if (!PyArg_ParseTuple(args, "O!", &rrttl_type, &rrttl)) {
-        return NULL;
+        return (NULL);
     }
     self->rrset->setTTL(*rrttl->rrttl);
     Py_RETURN_NONE;
@@ -283,10 +283,10 @@ RRset_setTTL(s_RRset* self, PyObject* args) {
 static PyObject*
 RRset_toText(s_RRset* self) {
     try {
-        return Py_BuildValue("s", self->rrset->toText().c_str());
+        return (Py_BuildValue("s", self->rrset->toText().c_str()));
     } catch (EmptyRRset ers) {
         PyErr_SetString(po_EmptyRRset, ers.what());
-        return NULL;
+        return (NULL);
     }
 }
 
@@ -314,7 +314,7 @@ RRset_toWire(s_RRset* self, PyObject* args) {
             // We need to release the object we temporarily created here
             // to prevent memory leak
             Py_DECREF(n);
-            return result;
+            return (result);
         } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, (PyObject**) &mr)) {
             self->rrset->toWire(*mr->messagerenderer);
             // If we return NULL it is seen as an error, so use this for
@@ -324,19 +324,19 @@ RRset_toWire(s_RRset* self, PyObject* args) {
     } catch (EmptyRRset ers) {
         PyErr_Clear();
         PyErr_SetString(po_EmptyRRset, ers.what());
-        return NULL;
+        return (NULL);
     }
     PyErr_Clear();
     PyErr_SetString(PyExc_TypeError,
                     "toWire argument must be a sequence object or a MessageRenderer");
-    return NULL;
+    return (NULL);
 }
 
 static PyObject*
 RRset_addRdata(s_RRset* self, PyObject* args) {
     s_Rdata* rdata;
     if (!PyArg_ParseTuple(args, "O!", &rdata_type, &rdata)) {
-        return NULL;
+        return (NULL);
     }
     try {
         self->rrset->addRdata(*rdata->rdata);
@@ -345,7 +345,7 @@ RRset_addRdata(s_RRset* self, PyObject* args) {
         PyErr_Clear();
         PyErr_SetString(PyExc_TypeError,
                         "Rdata type to add must match type of RRset");
-        return NULL;
+        return (NULL);
     }
 }
 
@@ -363,13 +363,13 @@ RRset_getRdata(s_RRset* self) {
             // the data available
             const Rdata *rd = &it->getCurrent();
             rds->rdata = createRdata(self->rrset->getType(), self->rrset->getClass(), *rd);
-            PyList_Append(list, static_cast<PyObject*>(rds));
+            PyList_Append(list, rds);
         } else {
-            return NULL;
+            return (NULL);
         }
     }
     
-    return list;
+    return (list);
 }
 
 // end of RRset
@@ -392,12 +392,12 @@ initModulePart_RRset(PyObject* mod) {
 
     // NameComparisonResult
     if (PyType_Ready(&rrset_type) < 0) {
-        return false;
+        return (false);
     }
     Py_INCREF(&rrset_type);
     PyModule_AddObject(mod, "RRset",
                        reinterpret_cast<PyObject*>(&rrset_type));
     
-    return true;
+    return (true);
 }
 

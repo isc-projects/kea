@@ -192,26 +192,26 @@ RRType_init(s_RRType* self, PyObject* args) {
     try {
         if (PyArg_ParseTuple(args, "s", &s)) {
             self->rrtype = new RRType(s);
-            return 0;
+            return (0);
         } else if (PyArg_ParseTuple(args, "I", &i)) {
             PyErr_Clear();
             if (i > 65535) {
                 PyErr_SetString(po_InvalidRRType, "Class number too high");
-                return -1;
+                return (-1);
             }
             self->rrtype = new RRType(i);
-            return 0;
+            return (0);
         } else if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
             Py_ssize_t size = PySequence_Size(bytes);
             uint8_t data[size];
             int result = readDataFromSequence(data, size, bytes);
             if (result != 0) {
-                return result;
+                return (result);
             }
             InputBuffer ib(data, size);
             self->rrtype = new RRType(ib);
             PyErr_Clear();
-            return 0;
+            return (0);
         }
     } catch (IncompleteRRType icc) {
         // Ok so one of our functions has thrown a C++ exception.
@@ -221,16 +221,16 @@ RRType_init(s_RRType* self, PyObject* args) {
         // Now set our own exception
         PyErr_SetString(po_IncompleteRRType, icc.what());
         // And return negative
-        return -1;
+        return (-1);
     } catch (InvalidRRType ic) {
         PyErr_Clear();
         PyErr_SetString(po_InvalidRRType, ic.what());
-        return -1;
+        return (-1);
     }
     PyErr_Clear();
     PyErr_SetString(PyExc_TypeError,
                     "no valid type in constructor argument");
-    return -1;
+    return (-1);
 }
 
 static void
@@ -244,7 +244,7 @@ RRType_destroy(s_RRType* self) {
 static PyObject*
 RRType_toText(s_RRType* self) {
     // Py_BuildValue makes python objects from native data
-    return Py_BuildValue("s", self->rrtype->toText().c_str());
+    return (Py_BuildValue("s", self->rrtype->toText().c_str()));
 }
 
 static PyObject*
@@ -269,7 +269,7 @@ RRType_toWire(s_RRType* self, PyObject* args) {
         // We need to release the object we temporarily created here
         // to prevent memory leak
         Py_DECREF(n);
-        return result;
+        return (result);
     } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, (PyObject**) &mr)) {
         self->rrtype->toWire(*mr->messagerenderer);
         // If we return NULL it is seen as an error, so use this for
@@ -279,12 +279,12 @@ RRType_toWire(s_RRType* self, PyObject* args) {
     PyErr_Clear();
     PyErr_SetString(PyExc_TypeError,
                     "toWire argument must be a sequence object or a MessageRenderer");
-    return NULL;
+    return (NULL);
 }
 
 static PyObject*
 RRType_getCode(s_RRType* self) {
-    return Py_BuildValue("I", self->rrtype->getCode());
+    return (Py_BuildValue("I", self->rrtype->getCode()));
 }
 
 static PyObject* 
@@ -321,7 +321,7 @@ RRType_richcmp(s_RRType* self, s_RRType* other, int op) {
     default:
         PyErr_SetString(PyExc_IndexError,
                         "Unhandled rich comparison operator");
-        return NULL;
+        return (NULL);
     }
     if (c)
         Py_RETURN_TRUE;
@@ -337,103 +337,102 @@ static PyObject* RRType_createStatic(RRType stc) {
     if (ret != NULL) {
         ret->rrtype = new RRType(stc);
     }
-    //return static_cast<PyObject*>(ret);
     return (ret);
 }
 
 static PyObject*
 RRType_NSEC3PARAM(s_RRType *self UNUSED_PARAM) {
-    return RRType_createStatic(RRType::NSEC3PARAM());
+    return (RRType_createStatic(RRType::NSEC3PARAM()));
 }
 
 static PyObject*
 RRType_DNAME(s_RRType *self UNUSED_PARAM) {
-    return RRType_createStatic(RRType::DNAME());
+    return (RRType_createStatic(RRType::DNAME()));
 }
 
 static PyObject*
 RRType_PTR(s_RRType *self UNUSED_PARAM) {
-    return RRType_createStatic(RRType::PTR());
+    return (RRType_createStatic(RRType::PTR()));
 }
 
 static PyObject*
 RRType_MX(s_RRType *self UNUSED_PARAM) {
-    return RRType_createStatic(RRType::MX());
+    return (RRType_createStatic(RRType::MX()));
 }
 
 static PyObject*
 RRType_DNSKEY(s_RRType *self UNUSED_PARAM) {
-    return RRType_createStatic(RRType::DNSKEY());
+    return (RRType_createStatic(RRType::DNSKEY()));
 }
 
 static PyObject*
 RRType_TXT(s_RRType *self UNUSED_PARAM) {
-    return RRType_createStatic(RRType::TXT());
+    return (RRType_createStatic(RRType::TXT()));
 }
 
 static PyObject*
 RRType_RRSIG(s_RRType *self UNUSED_PARAM) {
-    return RRType_createStatic(RRType::RRSIG());
+    return (RRType_createStatic(RRType::RRSIG()));
 }
 
 static PyObject*
 RRType_NSEC(s_RRType *self UNUSED_PARAM) {
-    return RRType_createStatic(RRType::NSEC());
+    return (RRType_createStatic(RRType::NSEC()));
 }
 
 static PyObject*
 RRType_AAAA(s_RRType *self UNUSED_PARAM) {
-    return RRType_createStatic(RRType::AAAA());
+    return (RRType_createStatic(RRType::AAAA()));
 }
 
 static PyObject*
 RRType_DS(s_RRType *self UNUSED_PARAM) {
-    return RRType_createStatic(RRType::DS());
+    return (RRType_createStatic(RRType::DS()));
 }
 
 static PyObject*
 RRType_OPT(s_RRType *self UNUSED_PARAM) {
-    return RRType_createStatic(RRType::OPT());
+    return (RRType_createStatic(RRType::OPT()));
 }
 
 static PyObject*
 RRType_A(s_RRType *self UNUSED_PARAM) {
-    return RRType_createStatic(RRType::A());
+    return (RRType_createStatic(RRType::A()));
 }
 
 static PyObject*
 RRType_NS(s_RRType *self UNUSED_PARAM) {
-    return RRType_createStatic(RRType::NS());
+    return (RRType_createStatic(RRType::NS()));
 }
 
 static PyObject*
 RRType_CNAME(s_RRType *self UNUSED_PARAM) {
-    return RRType_createStatic(RRType::CNAME());
+    return (RRType_createStatic(RRType::CNAME()));
 }
 
 static PyObject*
 RRType_SOA(s_RRType *self UNUSED_PARAM) {
-    return RRType_createStatic(RRType::SOA());
+    return (RRType_createStatic(RRType::SOA()));
 }
 
 static PyObject*
 RRType_NSEC3(s_RRType *self UNUSED_PARAM) {
-    return RRType_createStatic(RRType::NSEC3());
+    return (RRType_createStatic(RRType::NSEC3()));
 }
 
 static PyObject*
 RRType_IXFR(s_RRType *self UNUSED_PARAM) {
-    return RRType_createStatic(RRType::IXFR());
+    return (RRType_createStatic(RRType::IXFR()));
 }
 
 static PyObject*
 RRType_AXFR(s_RRType *self UNUSED_PARAM) {
-    return RRType_createStatic(RRType::AXFR());
+    return (RRType_createStatic(RRType::AXFR()));
 }
 
 static PyObject*
 RRType_ANY(s_RRType *self UNUSED_PARAM) {
-    return RRType_createStatic(RRType::ANY());
+    return (RRType_createStatic(RRType::ANY()));
 }
 
 
@@ -453,11 +452,11 @@ initModulePart_RRType(PyObject* mod) {
     // then add it to the module. This is not just a check! (leaving
     // this out results in segmentation faults)
     if (PyType_Ready(&rrtype_type) < 0) {
-        return false;
+        return (false);
     }
     Py_INCREF(&rrtype_type);
     PyModule_AddObject(mod, "RRType",
                        reinterpret_cast<PyObject*>(&rrtype_type));
     
-    return true;
+    return (true);
 }

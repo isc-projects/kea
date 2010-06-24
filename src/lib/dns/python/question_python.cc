@@ -148,26 +148,26 @@ Question_init(s_Question* self, PyObject* args) {
            )) {
             self->question = QuestionPtr(new Question(*name->name, *rrclass->rrclass,
                                           *rrtype->rrtype));
-            return 0;
+            return (0);
         } else if (PyArg_ParseTuple(args, "y#|I", &b, &len, &position)) {
             PyErr_Clear();
             InputBuffer inbuf(b, len);
             inbuf.setPosition(position);
             self->question = QuestionPtr(new Question(inbuf));
-            return 0;
+            return (0);
         }
     } catch (isc::dns::DNSMessageFORMERR dmfe) {
         PyErr_Clear();
         PyErr_SetString(po_DNSMessageFORMERR, dmfe.what());
-        return -1;
+        return (-1);
     } catch (isc::dns::IncompleteRRClass irc) {
         PyErr_Clear();
         PyErr_SetString(po_IncompleteRRClass, irc.what());
-        return -1;
+        return (-1);
     } catch (isc::dns::IncompleteRRType irt) {
         PyErr_Clear();
         PyErr_SetString(po_IncompleteRRType, irt.what());
-        return -1;
+        return (-1);
     }
 
     self->question = QuestionPtr();
@@ -175,7 +175,7 @@ Question_init(s_Question* self, PyObject* args) {
     PyErr_Clear();
     PyErr_SetString(PyExc_TypeError,
                     "no valid type in constructor argument");
-    return -1;
+    return (-1);
 }
 
 static void
@@ -194,7 +194,7 @@ Question_getName(s_Question* self) {
         name->name = new Name(self->question->getName());
     }
 
-    return static_cast<PyObject*>(name);
+    return (name);
 }
 
 static PyObject*
@@ -206,7 +206,7 @@ Question_getType(s_Question* self) {
         rrtype->rrtype = new RRType(self->question->getType());
     }
 
-    return static_cast<PyObject*>(rrtype);
+    return (rrtype);
 }
 
 static PyObject*
@@ -218,14 +218,14 @@ Question_getClass(s_Question* self) {
         rrclass->rrclass = new RRClass(self->question->getClass());
     }
 
-    return static_cast<PyObject*>(rrclass);
+    return (rrclass);
 }
 
 
 static PyObject*
 Question_toText(s_Question* self) {
     // Py_BuildValue makes python objects from native data
-    return Py_BuildValue("s", self->question->toText().c_str());
+    return (Py_BuildValue("s", self->question->toText().c_str()));
 }
 
 static PyObject*
@@ -253,7 +253,7 @@ Question_toWire(s_Question* self, PyObject* args) {
         // We need to release the object we temporarily created here
         // to prevent memory leak
         Py_DECREF(n);
-        return result;
+        return (result);
     } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type,
                                 reinterpret_cast<PyObject**>(&mr))) {
         self->question->toWire(*mr->messagerenderer);
@@ -264,7 +264,7 @@ Question_toWire(s_Question* self, PyObject* args) {
     PyErr_Clear();
     PyErr_SetString(PyExc_TypeError,
                     "toWire argument must be a sequence object or a MessageRenderer");
-    return NULL;
+    return (NULL);
 }
 
 // end of Question
@@ -279,11 +279,11 @@ initModulePart_Question(PyObject* mod) {
     // then add it to the module. This is not just a check! (leaving
     // this out results in segmentation faults)
     if (PyType_Ready(&question_type) < 0) {
-        return false;
+        return (false);
     }
     Py_INCREF(&question_type);
     PyModule_AddObject(mod, "Question",
                        reinterpret_cast<PyObject*>(&question_type));
     
-    return true;
+    return (true);
 }

@@ -155,22 +155,22 @@ RRTTL_init(s_RRTTL* self, PyObject* args) {
     try {
         if (PyArg_ParseTuple(args, "s", &s)) {
             self->rrttl = new RRTTL(s);
-            return 0;
+            return (0);
         } else if (PyArg_ParseTuple(args, "I", &i)) {
             PyErr_Clear();
             self->rrttl = new RRTTL(i);
-            return 0;
+            return (0);
         } else if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
             Py_ssize_t size = PySequence_Size(bytes);
             uint8_t data[size];
             int result = readDataFromSequence(data, size, bytes);
             if (result != 0) {
-                return result;
+                return (result);
             }
             InputBuffer ib(data, size);
             self->rrttl = new RRTTL(ib);
             PyErr_Clear();
-            return 0;
+            return (0);
         }
     } catch (IncompleteRRTTL icc) {
         // Ok so one of our functions has thrown a C++ exception.
@@ -180,16 +180,16 @@ RRTTL_init(s_RRTTL* self, PyObject* args) {
         // Now set our own exception
         PyErr_SetString(po_IncompleteRRTTL, icc.what());
         // And return negative
-        return -1;
+        return (-1);
     } catch (InvalidRRTTL ic) {
         PyErr_Clear();
         PyErr_SetString(po_InvalidRRTTL, ic.what());
-        return -1;
+        return (-1);
     }
     PyErr_Clear();
     PyErr_SetString(PyExc_TypeError,
                     "no valid type in constructor argument");
-    return -1;
+    return (-1);
 }
 
 static void
@@ -203,7 +203,7 @@ RRTTL_destroy(s_RRTTL* self) {
 static PyObject*
 RRTTL_toText(s_RRTTL* self) {
     // Py_BuildValue makes python objects from native data
-    return Py_BuildValue("s", self->rrttl->toText().c_str());
+    return (Py_BuildValue("s", self->rrttl->toText().c_str()));
 }
 
 static PyObject*
@@ -229,7 +229,7 @@ RRTTL_toWire(s_RRTTL* self, PyObject* args) {
         // We need to release the object we temporarily created here
         // to prevent memory leak
         Py_DECREF(n);
-        return result;
+        return (result);
     } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, (PyObject**) &mr)) {
         self->rrttl->toWire(*mr->messagerenderer);
         // If we return NULL it is seen as an error, so use this for
@@ -239,12 +239,12 @@ RRTTL_toWire(s_RRTTL* self, PyObject* args) {
     PyErr_Clear();
     PyErr_SetString(PyExc_TypeError,
                     "toWire argument must be a sequence object or a MessageRenderer");
-    return NULL;
+    return (NULL);
 }
 
 static PyObject*
 RRTTL_getValue(s_RRTTL* self) {
-    return Py_BuildValue("I", self->rrttl->getValue());
+    return (Py_BuildValue("I", self->rrttl->getValue()));
 }
 
 static PyObject* 
@@ -300,11 +300,11 @@ initModulePart_RRTTL(PyObject* mod) {
     // then add it to the module. This is not just a check! (leaving
     // this out results in segmentation faults)
     if (PyType_Ready(&rrttl_type) < 0) {
-        return false;
+        return (false);
     }
     Py_INCREF(&rrttl_type);
     PyModule_AddObject(mod, "RRTTL",
                        reinterpret_cast<PyObject*>(&rrttl_type));
     
-    return true;
+    return (true);
 }

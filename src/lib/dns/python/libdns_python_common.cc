@@ -25,24 +25,24 @@ readDataFromSequence(uint8_t *data, size_t len, PyObject* sequence) {
         if (!el) {
             PyErr_SetString(PyExc_TypeError,
                 "sequence too short");
-            return -1;
+            return (-1);
         }
         if (PyLong_Check(el)) {
             long l = PyLong_AsLong(el);
             if (l < 0 || l > 255) {
                 PyErr_SetString(PyExc_TypeError,
                     "number in fromWire sequence not between 0 and 255");
-                return -1;
+                return (-1);
             }
             data[i] = static_cast<uint8_t>(PyLong_AsLong(el));
         } else {
             PyErr_SetString(PyExc_TypeError,
                 "not a number in fromWire sequence");
-            return -1;
+            return (-1);
         }
     }
     PySequence_DelSlice(sequence, 0, len);
-    return 0;
+    return (0);
 }
 
 
