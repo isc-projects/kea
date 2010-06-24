@@ -57,52 +57,29 @@ static PyObject*
 RRType_toText(s_RRType* self);
 // This is a second version of toText, we need one where the argument
 // is a PyObject*, for the str() function in python.
-static PyObject*
-RRType_str(PyObject* self);
-static PyObject*
-RRType_toWire(s_RRType* self, PyObject* args);
-static PyObject*
-RRType_getCode(s_RRType* self);
-static PyObject*
-RRType_richcmp(s_RRType* self, s_RRType* other, int op);
-static PyObject*
-RRType_NSEC3PARAM(s_RRType *self);
-static PyObject*
-RRType_DNAME(s_RRType *self);
-static PyObject*
-RRType_PTR(s_RRType *self);
-static PyObject*
-RRType_MX(s_RRType *self);
-static PyObject*
-RRType_DNSKEY(s_RRType *self);
-static PyObject*
-RRType_TXT(s_RRType *self);
-static PyObject*
-RRType_RRSIG(s_RRType *self);
-static PyObject*
-RRType_NSEC(s_RRType *self);
-static PyObject*
-RRType_AAAA(s_RRType *self);
-static PyObject*
-RRType_DS(s_RRType *self);
-static PyObject*
-RRType_OPT(s_RRType *self);
-static PyObject*
-RRType_A(s_RRType *self);
-static PyObject*
-RRType_NS(s_RRType *self);
-static PyObject*
-RRType_CNAME(s_RRType *self);
-static PyObject*
-RRType_SOA(s_RRType *self);
-static PyObject*
-RRType_NSEC3(s_RRType *self);
-static PyObject*
-RRType_IXFR(s_RRType *self);
-static PyObject*
-RRType_AXFR(s_RRType *self);
-static PyObject*
-RRType_ANY(s_RRType *self);
+static PyObject* RRType_str(PyObject* self);
+static PyObject* RRType_toWire(s_RRType* self, PyObject* args);
+static PyObject* RRType_getCode(s_RRType* self);
+static PyObject* RRType_richcmp(s_RRType* self, s_RRType* other, int op);
+static PyObject* RRType_NSEC3PARAM(s_RRType *self);
+static PyObject* RRType_DNAME(s_RRType *self);
+static PyObject* RRType_PTR(s_RRType *self);
+static PyObject* RRType_MX(s_RRType *self);
+static PyObject* RRType_DNSKEY(s_RRType *self);
+static PyObject* RRType_TXT(s_RRType *self);
+static PyObject* RRType_RRSIG(s_RRType *self);
+static PyObject* RRType_NSEC(s_RRType *self);
+static PyObject* RRType_AAAA(s_RRType *self);
+static PyObject* RRType_DS(s_RRType *self);
+static PyObject* RRType_OPT(s_RRType *self);
+static PyObject* RRType_A(s_RRType *self);
+static PyObject* RRType_NS(s_RRType *self);
+static PyObject* RRType_CNAME(s_RRType *self);
+static PyObject* RRType_SOA(s_RRType *self);
+static PyObject* RRType_NSEC3(s_RRType *self);
+static PyObject* RRType_IXFR(s_RRType *self);
+static PyObject* RRType_AXFR(s_RRType *self);
+static PyObject* RRType_ANY(s_RRType *self);
 
 // This list contains the actual set of functions we have in
 // python. Each entry has
@@ -356,11 +333,12 @@ RRType_richcmp(s_RRType* self, s_RRType* other, int op) {
 // Common function for RRType_A/NS/etc.
 //
 static PyObject* RRType_createStatic(RRType stc) {
-    s_RRType* ret = PyObject_New(s_RRType, &rrclass_type);
+    s_RRType* ret = PyObject_New(s_RRType, &rrtype_type);
     if (ret != NULL) {
         ret->rrtype = new RRType(stc);
     }
-    return static_cast<PyObject*>(ret);
+    //return static_cast<PyObject*>(ret);
+    return (ret);
 }
 
 static PyObject*

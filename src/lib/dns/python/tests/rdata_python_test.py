@@ -57,5 +57,14 @@ class RdataTest(unittest.TestCase):
         self.assertEqual("\"asdfasdfasdf\"", self.rdata3.to_text())
         self.assertEqual("\"foo\"", self.rdata4.to_text())
 
+    def test_richcmp(self):
+        self.assertTrue(self.rdata1 < self.rdata2);
+        self.assertTrue(self.rdata1 <= self.rdata2);
+        self.assertFalse(self.rdata1 > self.rdata2);
+        self.assertFalse(self.rdata1 >= self.rdata2);
+        self.assertTrue(self.rdata3 != self.rdata4)
+        other_rdata = Rdata(RRType("TXT"), RRClass("IN"), "foo")
+        self.assertTrue(self.rdata4 == other_rdata)
+
 if __name__ == '__main__':
     unittest.main()
