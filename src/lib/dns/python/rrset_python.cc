@@ -33,6 +33,12 @@ static PyObject* po_EmptyRRset;
 using namespace isc::dns;
 
 // RRset
+
+// Using a shared_ptr here should not really be necessary (PyObject
+// is already reference-counted), however internally on the cpp side,
+// not doing so might result in problems, since we can't copy construct
+// rrsets, adding them to messages results in a problem when the
+// message is destroyed or cleared later
 class s_RRset : public PyObject {
 public:
     RRsetPtr rrset;

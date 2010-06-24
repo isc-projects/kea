@@ -40,6 +40,12 @@ static PyObject* po_CharStringTooLong;
 //
 
 // The s_* Class simply coverst one instantiation of the object
+
+// Using a shared_ptr here should not really be necessary (PyObject
+// is already reference-counted), however internally on the cpp side,
+// not doing so might result in problems, since we can't copy construct
+// rdata field, adding them to rrsets results in a problem when the
+// rrset is destroyed later
 class s_Rdata : public PyObject {
 public:
     RdataPtr rdata;
@@ -143,9 +149,7 @@ Rdata_init(s_Rdata* self, PyObject* args) {
     
     if (PyArg_ParseTuple(args, "O!O!s", &rrtype_type, &rrtype,
                                         &rrclass_type, &rrclass,
-                                        &s, &s
-       )) {
-        const std::string str(s);
+                                        &s)) {
         self->rdata = createRdata(*rrtype->rrtype, *rrclass->rrclass, s);
         return 0;
     }
@@ -183,13 +187,13 @@ Rdata_toWire(s_Rdata* self, PyObject* args) {
     if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
         PyObject* bytes_o = bytes;
         
-        OutputBuffer buffer(2);
+        OutputBuffer buffer(4);
         self->rdata->toWire(buffer);
-        PyObject* n = PyBytes_FromStringAndSize((const char*) buffer.getData(), buffer.getLength());
-        PyObject* result = PySequence_InPlaceConcat(bytes_o, n);
+        PyObject* rd_bytes = PyBytes_FromStringAndSize((const char*) buffer.getData(), buffer.getLength());
+        PyObject* result = PySequence_InPlaceConcat(bytes_o, rd_bytes);
         // We need to release the object we temporarily created here
         // to prevent memory leak
-        Py_DECREF(n);
+        Py_DECREF(rd_bytes);
         return result;
     } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, (PyObject**) &mr)) {
         self->rdata->toWire(*mr->messagerenderer);
@@ -247,7 +251,6 @@ RData_richcmp(s_Rdata* self, s_Rdata* other, int op) {
         Py_RETURN_FALSE;
 }
 // end of Rdata
-
 
 
 // Module Initialization, all statics are initialized here
