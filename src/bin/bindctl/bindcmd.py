@@ -113,9 +113,6 @@ class BindCmdInterpreter(Cmd):
             if not self.login_to_cmdctl():
                 return False
 
-            # Get all module information from cmd-ctrld
-            self.config_data = isc.config.UIModuleCCSession(self)
-            self._update_commands()
             self.cmdloop()
         except KeyboardInterrupt:
             return True
@@ -226,7 +223,19 @@ class BindCmdInterpreter(Cmd):
         headers = {"cookie" : self.session_id}
         self.conn.request('POST', url, param, headers)
         return self.conn.getresponse()
-        
+
+    def _update_all_modules_info(self):
+        ''' Get all modules' information from cmdctl, including
+        specification file and configuration data. This function
+        should be called before interpreting command line or complete-key
+        is entered. This may not be the best way to keep bindctl
+        and cmdctl share same modules information, but it works.'''
+        self.config_data = isc.config.UIModuleCCSession(self)
+        self._update_commands()
+
+    def precmd(self, line):
+        self._update_all_modules_info()
+        return line 
 
     def postcmd(self, stop, line):
         '''Update the prompt after every command'''
@@ -371,6 +380,7 @@ class BindCmdInterpreter(Cmd):
 
     def complete(self, text, state):
         if 0 == state:
+            self._update_all_modules_info()
             text = text.strip()
             hints = []
             cur_line = my_readline()
