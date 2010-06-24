@@ -18,9 +18,11 @@ AC_LANG_CPLUSPLUS
 
 # OS dependent compiler flags
 case "$host" in
-	*-solaris*)
-		CPPFLAGS="$CPPFLAGS -D_XPG4_2 -D__EXTENSIONS__"
-		;;
+*-solaris*)
+	# Solaris requires special definitions to get some standard libraries
+	# (e.g. getopt(3)) available with common used header files.
+	CPPFLAGS="$CPPFLAGS -D_XPG4_2 -D__EXTENSIONS__"
+	;;
 esac
 
 m4_define([_AM_PYTHON_INTERPRETER_LIST], [python python3 python3.1])
