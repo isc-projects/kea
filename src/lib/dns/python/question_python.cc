@@ -127,9 +127,8 @@ static PyTypeObject question_type = {
 
 static int
 Question_init(s_Question* self, PyObject* args) {
-    // The constructor argument can be a string ("IN"), an integer (1),
-    // or a sequence of numbers between 0 and 255 (wire code)
-
+    // Try out the various combinations of arguments to call the
+    // correct cpp constructor.
     // Note that PyArg_ParseType can set PyError, and we need to clear
     // that if we try several like here. Otherwise the *next* python
     // call will suddenly appear to throw an exception.
@@ -193,11 +192,6 @@ Question_getName(s_Question* self) {
     name = static_cast<s_Name*>(name_type.tp_alloc(&name_type, 0));
     if (name != NULL) {
         name->name = new Name(self->question->getName());
-        if (name->name == NULL)
-          {
-            Py_DECREF(name);
-            return NULL;
-          }
     }
 
     return static_cast<PyObject*>(name);
@@ -210,11 +204,6 @@ Question_getType(s_Question* self) {
     rrtype = static_cast<s_RRType*>(rrtype_type.tp_alloc(&rrtype_type, 0));
     if (rrtype != NULL) {
         rrtype->rrtype = new RRType(self->question->getType());
-        if (rrtype->rrtype == NULL)
-          {
-            Py_DECREF(rrtype);
-            return NULL;
-          }
     }
 
     return static_cast<PyObject*>(rrtype);
@@ -227,11 +216,6 @@ Question_getClass(s_Question* self) {
     rrclass = static_cast<s_RRClass*>(rrclass_type.tp_alloc(&rrclass_type, 0));
     if (rrclass != NULL) {
         rrclass->rrclass = new RRClass(self->question->getClass());
-        if (rrclass->rrclass == NULL)
-          {
-            Py_DECREF(rrclass);
-            return NULL;
-          }
     }
 
     return static_cast<PyObject*>(rrclass);
@@ -259,8 +243,9 @@ Question_toWire(s_Question* self, PyObject* args) {
     
     if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
         PyObject* bytes_o = bytes;
-        
-        OutputBuffer buffer(255);
+
+        // Max length is Name::MAX_WIRE + rrclass (2) + rrtype (2)
+        OutputBuffer buffer(Name::MAX_WIRE + 4);
         self->question->toWire(buffer);
         PyObject* n = PyBytes_FromStringAndSize((const char*) buffer.getData(),
                                                 buffer.getLength());

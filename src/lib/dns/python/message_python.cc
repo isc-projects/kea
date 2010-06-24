@@ -144,94 +144,47 @@ MessageFlag_getBit(s_MessageFlag* self) {
 }
 
 static PyObject*
-MessageFlag_QR(s_MessageFlag* self UNUSED_PARAM) {
+MessageFlag_createStatic(const MessageFlag& flag) {
     s_MessageFlag* ret = PyObject_New(s_MessageFlag, &messageflag_type);
     if (ret != NULL) {
-        ret->messageflag = &MessageFlag::QR();
-        if (ret->messageflag == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
+        ret->messageflag = &flag;
     }
-    return static_cast<PyObject*>(ret);
+    return (ret);
+}
+
+static PyObject*
+MessageFlag_QR(s_MessageFlag* self UNUSED_PARAM) {
+    return MessageFlag_createStatic(MessageFlag::QR());
 }
 
 static PyObject*
 MessageFlag_AA(s_MessageFlag* self UNUSED_PARAM) {
-    s_MessageFlag* ret = PyObject_New(s_MessageFlag, &messageflag_type);
-    if (ret != NULL) {
-        ret->messageflag = &MessageFlag::AA();
-        if (ret->messageflag == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return MessageFlag_createStatic(MessageFlag::AA());
 }
 
 static PyObject*
 MessageFlag_TC(s_MessageFlag* self UNUSED_PARAM) {
-    s_MessageFlag* ret = PyObject_New(s_MessageFlag, &messageflag_type);
-    if (ret != NULL) {
-        ret->messageflag = &MessageFlag::TC();
-        if (ret->messageflag == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return MessageFlag_createStatic(MessageFlag::TC());
 }
 
 static PyObject*
 MessageFlag_RD(s_MessageFlag* self UNUSED_PARAM) {
-    s_MessageFlag* ret = PyObject_New(s_MessageFlag, &messageflag_type);
-    if (ret != NULL) {
-        ret->messageflag = &MessageFlag::RD();
-        if (ret->messageflag == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return MessageFlag_createStatic(MessageFlag::RD());
 }
 
 static PyObject*
 MessageFlag_RA(s_MessageFlag* self UNUSED_PARAM) {
-    s_MessageFlag* ret = PyObject_New(s_MessageFlag, &messageflag_type);
-    if (ret != NULL) {
-        ret->messageflag = &MessageFlag::RA();
-        if (ret->messageflag == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return MessageFlag_createStatic(MessageFlag::RA());
 }
 
 static PyObject*
 MessageFlag_AD(s_MessageFlag* self UNUSED_PARAM) {
-    s_MessageFlag* ret = PyObject_New(s_MessageFlag, &messageflag_type);
-    if (ret != NULL) {
-        ret->messageflag = &MessageFlag::AD();
-        if (ret->messageflag == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return MessageFlag_createStatic(MessageFlag::AD());
 }
 
 static PyObject*
 MessageFlag_CD(s_MessageFlag* self UNUSED_PARAM) {
-    s_MessageFlag* ret = PyObject_New(s_MessageFlag, &messageflag_type);
-    if (ret != NULL) {
-        ret->messageflag = &MessageFlag::CD();
-        if (ret->messageflag == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return MessageFlag_createStatic(MessageFlag::CD());
 }
 
 //
@@ -379,211 +332,92 @@ Opcode_str(PyObject* self) {
 }
 
 static PyObject*
-Opcode_QUERY(s_Opcode* self UNUSED_PARAM) {
+Opcode_createStatic(const Opcode& opcode) {
     s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
     if (ret != NULL) {
-        ret->opcode = &Opcode::QUERY();
-        if (ret->opcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
+        ret->opcode = &opcode;
     }
-    return static_cast<PyObject*>(ret);
+    return (ret);
+}
+
+static PyObject*
+Opcode_QUERY(s_Opcode* self UNUSED_PARAM) {
+    return Opcode_createStatic(Opcode::QUERY());
 }
 
 static PyObject*
 Opcode_IQUERY(s_Opcode* self UNUSED_PARAM) {
-    s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
-    if (ret != NULL) {
-        ret->opcode = &Opcode::IQUERY();
-        if (ret->opcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Opcode_createStatic(Opcode::IQUERY());
 }
 
 static PyObject*
 Opcode_STATUS(s_Opcode* self UNUSED_PARAM) {
-    s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
-    if (ret != NULL) {
-        ret->opcode = &Opcode::STATUS();
-        if (ret->opcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Opcode_createStatic(Opcode::STATUS());
 }
 
 static PyObject*
 Opcode_RESERVED3(s_Opcode* self UNUSED_PARAM) {
-    s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
-    if (ret != NULL) {
-        ret->opcode = &Opcode::RESERVED3();
-        if (ret->opcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Opcode_createStatic(Opcode::RESERVED3());
 }
 
 static PyObject*
 Opcode_NOTIFY(s_Opcode* self UNUSED_PARAM) {
-    s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
-    if (ret != NULL) {
-        ret->opcode = &Opcode::NOTIFY();
-        if (ret->opcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Opcode_createStatic(Opcode::NOTIFY());
 }
 
 static PyObject*
 Opcode_UPDATE(s_Opcode* self UNUSED_PARAM) {
-    s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
-    if (ret != NULL) {
-        ret->opcode = &Opcode::UPDATE();
-        if (ret->opcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Opcode_createStatic(Opcode::UPDATE());
 }
 
 static PyObject*
 Opcode_RESERVED6(s_Opcode* self UNUSED_PARAM) {
-    s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
-    if (ret != NULL) {
-        ret->opcode = &Opcode::RESERVED6();
-        if (ret->opcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Opcode_createStatic(Opcode::RESERVED6());
 }
 
 static PyObject*
 Opcode_RESERVED7(s_Opcode* self UNUSED_PARAM) {
-    s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
-    if (ret != NULL) {
-        ret->opcode = &Opcode::RESERVED7();
-        if (ret->opcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Opcode_createStatic(Opcode::RESERVED7());
 }
 
 static PyObject*
 Opcode_RESERVED8(s_Opcode* self UNUSED_PARAM) {
-    s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
-    if (ret != NULL) {
-        ret->opcode = &Opcode::RESERVED8();
-        if (ret->opcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Opcode_createStatic(Opcode::RESERVED8());
 }
 
 static PyObject*
 Opcode_RESERVED9(s_Opcode* self UNUSED_PARAM) {
-    s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
-    if (ret != NULL) {
-        ret->opcode = &Opcode::RESERVED9();
-        if (ret->opcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Opcode_createStatic(Opcode::RESERVED9());
 }
 
 static PyObject*
 Opcode_RESERVED10(s_Opcode* self UNUSED_PARAM) {
-    s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
-    if (ret != NULL) {
-        ret->opcode = &Opcode::RESERVED10();
-        if (ret->opcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Opcode_createStatic(Opcode::RESERVED10());
 }
 
 static PyObject*
 Opcode_RESERVED11(s_Opcode* self UNUSED_PARAM) {
-    s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
-    if (ret != NULL) {
-        ret->opcode = &Opcode::RESERVED11();
-        if (ret->opcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Opcode_createStatic(Opcode::RESERVED11());
 }
 
 static PyObject*
 Opcode_RESERVED12(s_Opcode* self UNUSED_PARAM) {
-    s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
-    if (ret != NULL) {
-        ret->opcode = &Opcode::RESERVED12();
-        if (ret->opcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Opcode_createStatic(Opcode::RESERVED12());
 }
 
 static PyObject*
 Opcode_RESERVED13(s_Opcode* self UNUSED_PARAM) {
-    s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
-    if (ret != NULL) {
-        ret->opcode = &Opcode::RESERVED13();
-        if (ret->opcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Opcode_createStatic(Opcode::RESERVED13());
 }
 
 static PyObject*
 Opcode_RESERVED14(s_Opcode* self UNUSED_PARAM) {
-    s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
-    if (ret != NULL) {
-        ret->opcode = &Opcode::RESERVED14();
-        if (ret->opcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Opcode_createStatic(Opcode::RESERVED14());
 }
 
 static PyObject*
 Opcode_RESERVED15(s_Opcode* self UNUSED_PARAM) {
-    s_Opcode* ret = PyObject_New(s_Opcode, &opcode_type);
-    if (ret != NULL) {
-        ret->opcode = &Opcode::RESERVED15();
-        if (ret->opcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Opcode_createStatic(Opcode::RESERVED15());
 }
 
 static PyObject* 
@@ -768,8 +602,8 @@ Rcode_init(s_Rcode* self UNUSED_PARAM, PyObject* args UNUSED_PARAM) {
 
 static void
 Rcode_destroy(s_Rcode* self) {
-    // We only use the consts from Rcode, so don't
-    // delete self->rcode here
+    // Depending on whether we created the rcode or are referring
+    // to a global static one, we do or do not delete self->rcode here
     if (!self->static_code) {
         delete self->rcode;
     }
@@ -796,241 +630,98 @@ Rcode_str(PyObject* self) {
 }
 
 static PyObject*
-Rcode_NOERROR(s_Rcode* self UNUSED_PARAM) {
+Rcode_createStatic(const Rcode& rcode) {
     s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
     if (ret != NULL) {
-        ret->rcode = &Rcode::NOERROR();
+        ret->rcode = &rcode;
         ret->static_code = true;
-        if (ret->rcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
     }
-    return static_cast<PyObject*>(ret);
+    return (ret);
+}
+
+static PyObject*
+Rcode_NOERROR(s_Rcode* self UNUSED_PARAM) {
+    return Rcode_createStatic(Rcode::NOERROR());
 }
 
 static PyObject*
 Rcode_FORMERR(s_Rcode* self UNUSED_PARAM) {
-    s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
-    if (ret != NULL) {
-        ret->rcode = &Rcode::FORMERR();
-        ret->static_code = true;
-        if (ret->rcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Rcode_createStatic(Rcode::FORMERR());
 }
 
 static PyObject*
 Rcode_SERVFAIL(s_Rcode* self UNUSED_PARAM) {
-    s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
-    if (ret != NULL) {
-        ret->rcode = &Rcode::SERVFAIL();
-        ret->static_code = true;
-        if (ret->rcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Rcode_createStatic(Rcode::SERVFAIL());
 }
 
 static PyObject*
 Rcode_NXDOMAIN(s_Rcode* self UNUSED_PARAM) {
-    s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
-    if (ret != NULL) {
-        ret->rcode = &Rcode::NXDOMAIN();
-        ret->static_code = true;
-        if (ret->rcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Rcode_createStatic(Rcode::NXDOMAIN());
 }
 
 static PyObject*
 Rcode_NOTIMP(s_Rcode* self UNUSED_PARAM) {
-    s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
-    if (ret != NULL) {
-        ret->rcode = &Rcode::NOTIMP();
-        ret->static_code = true;
-        if (ret->rcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Rcode_createStatic(Rcode::NOTIMP());
 }
 
 static PyObject*
 Rcode_REFUSED(s_Rcode* self UNUSED_PARAM) {
-    s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
-    if (ret != NULL) {
-        ret->rcode = &Rcode::REFUSED();
-        ret->static_code = true;
-        if (ret->rcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Rcode_createStatic(Rcode::REFUSED());
 }
 
 static PyObject*
 Rcode_YXDOMAIN(s_Rcode* self UNUSED_PARAM) {
-    s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
-    if (ret != NULL) {
-        ret->rcode = &Rcode::YXDOMAIN();
-        ret->static_code = true;
-        if (ret->rcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Rcode_createStatic(Rcode::YXDOMAIN());
 }
 
 static PyObject*
 Rcode_YXRRSET(s_Rcode* self UNUSED_PARAM) {
-    s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
-    if (ret != NULL) {
-        ret->rcode = &Rcode::YXRRSET();
-        ret->static_code = true;
-        if (ret->rcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Rcode_createStatic(Rcode::YXRRSET());
 }
 
 static PyObject*
 Rcode_NXRRSET(s_Rcode* self UNUSED_PARAM) {
-    s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
-    if (ret != NULL) {
-        ret->rcode = &Rcode::NXRRSET();
-        ret->static_code = true;
-        if (ret->rcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Rcode_createStatic(Rcode::NXRRSET());
 }
 
 static PyObject*
 Rcode_NOTAUTH(s_Rcode* self UNUSED_PARAM) {
-    s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
-    if (ret != NULL) {
-        ret->rcode = &Rcode::NOTAUTH();
-        ret->static_code = true;
-        if (ret->rcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Rcode_createStatic(Rcode::NOTAUTH());
 }
 
 static PyObject*
 Rcode_NOTZONE(s_Rcode* self UNUSED_PARAM) {
-    s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
-    if (ret != NULL) {
-        ret->rcode = &Rcode::NOTZONE();
-        ret->static_code = true;
-        if (ret->rcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Rcode_createStatic(Rcode::NOTZONE());
 }
 
 static PyObject*
 Rcode_RESERVED11(s_Rcode* self UNUSED_PARAM) {
-    s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
-    if (ret != NULL) {
-        ret->rcode = &Rcode::RESERVED11();
-        ret->static_code = true;
-        if (ret->rcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Rcode_createStatic(Rcode::RESERVED11());
 }
 
 static PyObject*
 Rcode_RESERVED12(s_Rcode* self UNUSED_PARAM) {
-    s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
-    if (ret != NULL) {
-        ret->rcode = &Rcode::RESERVED12();
-        ret->static_code = true;
-        if (ret->rcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Rcode_createStatic(Rcode::RESERVED12());
 }
 
 static PyObject*
 Rcode_RESERVED13(s_Rcode* self UNUSED_PARAM) {
-    s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
-    if (ret != NULL) {
-        ret->rcode = &Rcode::RESERVED13();
-        ret->static_code = true;
-        if (ret->rcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Rcode_createStatic(Rcode::RESERVED13());
 }
 
 static PyObject*
 Rcode_RESERVED14(s_Rcode* self UNUSED_PARAM) {
-    s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
-    if (ret != NULL) {
-        ret->rcode = &Rcode::RESERVED14();
-        ret->static_code = true;
-        if (ret->rcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Rcode_createStatic(Rcode::RESERVED14());
 }
 
 static PyObject*
 Rcode_RESERVED15(s_Rcode* self UNUSED_PARAM) {
-    s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
-    if (ret != NULL) {
-        ret->rcode = &Rcode::RESERVED15();
-        ret->static_code = true;
-        if (ret->rcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Rcode_createStatic(Rcode::RESERVED15());
 }
 
 static PyObject*
 Rcode_BADVERS(s_Rcode* self UNUSED_PARAM) {
-    s_Rcode* ret = PyObject_New(s_Rcode, &rcode_type);
-    if (ret != NULL) {
-        ret->rcode = &Rcode::BADVERS();
-        ret->static_code = true;
-        if (ret->rcode == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-    return static_cast<PyObject*>(ret);
+    return Rcode_createStatic(Rcode::BADVERS());
 }
 
 static PyObject* 
