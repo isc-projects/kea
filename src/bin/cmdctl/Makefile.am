@@ -17,7 +17,6 @@ b10_cmdctl_DATA = $(CMDCTL_CONFIGURATIONS)
 b10_cmdctl_DATA += cmdctl.spec
  
 EXTRA_DIST = $(CMDCTL_CONFIGURATIONS)
-EXTRA_DIST += cmdctl.spec
 
 CLEANFILES=	b10-cmdctl cmdctl.pyc cmdctl.spec
 
