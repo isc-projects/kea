@@ -22,6 +22,8 @@
 #include <asio.hpp>
 #include <boost/bind.hpp>
 
+#include <boost/shared_ptr.hpp>
+
 #include <dns/buffer.h>
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
@@ -445,37 +447,19 @@ private:
     const IOService::IOCallBack* custom_callback_;
 };
 
-// This is a helper structure just to make the construction of IOServiceImpl
-// exception safe.  If the constructor of {UDP/TCP}Server throws an exception,
-// the destructor of this class will automatically perform the necessary
-// cleanup.
-struct ServerSet {
-    ServerSet() : udp4_server(NULL), udp6_server(NULL),
-                  tcp4_server(NULL), tcp6_server(NULL)
-    {}
-    ~ServerSet() {
-        delete udp4_server;
-        delete udp6_server;
-        delete tcp4_server;
-        delete tcp6_server;
-    }
-    UDPServer* udp4_server;
-    UDPServer* udp6_server;
-    TCPServer* tcp4_server;
-    TCPServer* tcp6_server;
-};
-
 class IOServiceImpl {
 public:
     IOServiceImpl(AuthSrv* auth_server, const char* port,
                   const bool use_ipv4, const bool use_ipv6);
-    ~IOServiceImpl();
     asio::io_service io_service_;
     AuthSrv* auth_server_;
-    UDPServer* udp4_server_;
-    UDPServer* udp6_server_;
-    TCPServer* tcp4_server_;
-    TCPServer* tcp6_server_;
+
+    typedef boost::shared_ptr<UDPServer> UDPServerPtr;
+    typedef boost::shared_ptr<TCPServer> TCPServerPtr;
+    UDPServerPtr udp4_server_;
+    UDPServerPtr udp6_server_;
+    TCPServerPtr tcp4_server_;
+    TCPServerPtr tcp6_server_;
 
     // This member is used only for testing at the moment.
     IOService::IOCallBack callback_;
@@ -483,42 +467,24 @@ public:
 
 IOServiceImpl::IOServiceImpl(AuthSrv* auth_server, const char* const port,
                              const bool use_ipv4, const bool use_ipv6) :
-    auth_server_(auth_server), udp4_server_(NULL), udp6_server_(NULL),
-    tcp4_server_(NULL), tcp6_server_(NULL)
+    auth_server_(auth_server),
+    udp4_server_(UDPServerPtr()), udp6_server_(UDPServerPtr()),
+    tcp4_server_(TCPServerPtr()), tcp6_server_(TCPServerPtr())
 {
-    ServerSet servers;
     short portnum = atoi(port);
 
     if (use_ipv4) {
-        servers.udp4_server = new UDPServer(auth_server, io_service_,
-                                            AF_INET, portnum);
-        udp4_server_ = servers.udp4_server;
-        servers.tcp4_server = new TCPServer(auth_server, io_service_,
-                                            AF_INET, portnum);
-        tcp4_server_ = servers.tcp4_server;
+        udp4_server_ = UDPServerPtr(new UDPServer(auth_server, io_service_,
+                                                  AF_INET, portnum));
+        tcp4_server_ = TCPServerPtr(new TCPServer(auth_server, io_service_,
+                                                  AF_INET, portnum));
     }
     if (use_ipv6) {
-        servers.udp6_server = new UDPServer(auth_server, io_service_,
-                                            AF_INET6, portnum);
-        udp6_server_ = servers.udp6_server;
-        servers.tcp6_server = new TCPServer(auth_server, io_service_,
-                                            AF_INET6, portnum);
-        tcp6_server_ = servers.tcp6_server;
+        udp6_server_ = UDPServerPtr(new UDPServer(auth_server, io_service_,
+                                                  AF_INET6, portnum));
+        tcp6_server_ = TCPServerPtr(new TCPServer(auth_server, io_service_,
+                                                  AF_INET6, portnum));
     }
-
-    // Now we don't have to worry about exception, and need to make sure that
-    // the server objects won't be accidentally cleaned up.
-    servers.udp4_server = NULL;
-    servers.udp6_server = NULL;
-    servers.tcp4_server = NULL;
-    servers.tcp6_server = NULL;
-}
-
-IOServiceImpl::~IOServiceImpl() {
-    delete udp4_server_;
-    delete udp6_server_;
-    delete tcp4_server_;
-    delete tcp6_server_;
 }
 
 IOService::IOService(AuthSrv* auth_server, const char* const port,
