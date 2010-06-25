@@ -279,7 +279,7 @@ class MyCommandControl(CommandControl):
         return {}
 
     def _setup_session(self):
-        module_spec = isc.config.module_spec_from_file(SPECFILE_LOCATION)
+        module_spec = isc.config.module_spec_from_file("../cmdctl.spec.pre.in")
         config = isc.config.config_data.ConfigData(module_spec)
         self._cmdctl_config_data = config.get_full_config()
 
@@ -329,7 +329,9 @@ class TestCommandControl(unittest.TestCase):
         self._check_answer(answer, 1, 'unknown command: unknown-command')
 
         answer = self.cmdctl.command_handler('print_settings', None)
-        self._check_answer(answer, 0, None) 
+        rcode, msg = ccsession.parse_answer(answer)
+        self.assertEqual(rcode, 0)
+        self.assertTrue(msg != None)
 
     def test_check_config_handler(self):
         answer = self.cmdctl.config_handler({'non-exist': 123})
@@ -389,9 +391,15 @@ class TestSecureHTTPServer(unittest.TestCase):
 
     def test_wrap_sock_in_ssl_context(self):
         sock = socket.socket()
+        self.assertRaises(socket.error, 
+                          self.server._wrap_socket_in_ssl_context,
+                          sock, 
+                          '../cmdctl-keyfile',
+                          '../cmdctl-certfile')
+
         self.server._wrap_socket_in_ssl_context(sock, 
-                                          '../cmdctl-keyfile',
-                                          '../cmdctl-certfile')
+                          '../cmdctl-keyfile.pem',
+                          '../cmdctl-certfile.pem')
 
 class TestFuncNotInClass(unittest.TestCase):
     def test_check_port(self):
