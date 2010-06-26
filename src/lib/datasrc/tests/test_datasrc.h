@@ -96,6 +96,7 @@ private:
         ADDRESS,
         DELEGATION
     };
+    class RRsetMatch;
 
     void findRecords(const isc::dns::Name& name, const isc::dns::RRType& rdtype,
                      isc::dns::RRsetList& target,

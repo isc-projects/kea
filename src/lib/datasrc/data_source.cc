@@ -613,9 +613,12 @@ DataSrc::doQuery(Query& q) {
                     // the authority section.
                     RRsetList auth;
                     if (!refQuery(*zonename, q.qclass(), datasource, zonename,
-                                  auth)) {
-                        m.setRcode(Rcode::SERVFAIL());
-                        return;
+                                  auth) ||
+                        !auth.findRRset(RRType::NS(),
+                                        datasource->getClass())) {
+                        isc_throw(DataSourceError,
+                                  "NS RR not found in " << *zonename << "/" <<
+                                  datasource->getClass());
                     }
 
                     copyAuth(q, auth);
@@ -704,8 +707,9 @@ DataSrc::doQuery(Query& q) {
 
                 result = addSOA(q, zonename, datasource);
                 if (result != SUCCESS) {
-                    m.setRcode(Rcode::SERVFAIL());
-                    return;
+                    isc_throw(DataSourceError,
+                              "SOA RR not found in" << *zonename <<
+                              "/" << datasource->getClass());
                 }
             }
 
