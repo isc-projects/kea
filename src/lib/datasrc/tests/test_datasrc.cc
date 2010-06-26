@@ -260,7 +260,7 @@ const struct RRData nonsdname_example_records[] = {
 };
 
 //
-// zone data for nons-dname.example
+// zone data for nosoa.example
 //
 const struct RRData nosoa_example_records[] = {
     {"nosoa.example", "NS", "ns.nosoa.example"},
