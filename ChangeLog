@@ -1,3 +1,10 @@
+  59.	[bug]		jinmei
+	lib/datasrc,bin/auth: The authoritative server could return a
+	SERVFAIL with a partial answer if it finds a data source broken
+	while looking for an answer.  This can happen, for example, if a
+	zone that doesn't have an NS RR is configured and loaded as a
+	sqlite3 data source. (Trac #249, r2286)
+
   58.	[bug]		jinmei
 	Worked around an interaction issue between ASIO and standard C++
 	library headers.  Without this ASIO didn't work: sometimes the
