@@ -362,7 +362,8 @@ TestDataSrc::init() {
 
 void
 TestDataSrc::findClosestEnclosure(NameMatch& match,
-                                  const RRClass& qclass) const {
+                                  const RRClass& qclass) const
+{
     const Name& qname = match.qname();
 
     if (qclass != getClass() && qclass != RRClass::ANY()) {
