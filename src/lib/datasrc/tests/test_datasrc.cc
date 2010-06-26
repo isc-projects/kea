@@ -515,7 +515,7 @@ TestDataSrc::findRecords(const Name& name, const RRType& rdtype,
 
 DataSrc::Result
 TestDataSrc::findRRset(const Name& qname,
-                       const RRClass& qclass UNUSED_PARAM,
+                       const RRClass& qclass,
                        const RRType& qtype,
                        RRsetList& target,
                        uint32_t& flags,
@@ -531,7 +531,7 @@ TestDataSrc::findRRset(const Name& qname,
 
 DataSrc::Result
 TestDataSrc::findExactRRset(const Name& qname,
-                            const RRClass& qclass UNUSED_PARAM,
+                            const RRClass& qclass,
                             const RRType& qtype,
                             RRsetList& target,
                             uint32_t& flags,
@@ -556,7 +556,7 @@ TestDataSrc::findExactRRset(const Name& qname,
 
 DataSrc::Result
 TestDataSrc::findAddrs(const Name& qname,
-                       const RRClass& qclass UNUSED_PARAM,
+                       const RRClass& qclass,
                        RRsetList& target,
                        uint32_t& flags,
                        const Name* zonename) const
@@ -571,7 +571,7 @@ TestDataSrc::findAddrs(const Name& qname,
 
 DataSrc::Result
 TestDataSrc::findReferral(const Name& qname,
-                          const RRClass& qclass UNUSED_PARAM,
+                          const RRClass& qclass,
                           RRsetList& target,
                           uint32_t& flags,
                           const Name* zonename) const
