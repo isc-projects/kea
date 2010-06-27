@@ -26,6 +26,16 @@ using namespace isc::data;
 namespace isc {
 namespace config {
 
+//
+// Return a part of a specification, as identified by the
+// '/'-separated identifier.
+// If it cannot be found, a DataNotFound error is thrown.
+//
+// Recursively goes through the Element. If it is a List,
+// we search it contents to have 'items' (i.e. contain item_name)
+// If it is a map, we search through the list contained in its
+// 'map_item_spec' value. This code assumes the data has been
+// validated and conforms to the specification.
 static ElementPtr
 find_spec_part(ElementPtr spec, const std::string& identifier)
 {
@@ -97,6 +107,11 @@ find_spec_part(ElementPtr spec, const std::string& identifier)
     return spec_part;
 }
 
+//
+// Adds the names of the items in the given specification part.
+// If recurse is true, maps will also have their children added.
+// Result must be a ListElement
+//
 static void
 spec_name_list(ElementPtr result, ElementPtr spec_part, std::string prefix, bool recurse = false)
 {
@@ -129,6 +144,8 @@ spec_name_list(ElementPtr result, ElementPtr spec_part, std::string prefix, bool
 ElementPtr
 ConfigData::getValue(const std::string& identifier)
 {
+    // 'fake' is set, but dropped by this function and
+    // serves no further purpose.
     bool fake;
     return getValue(fake, identifier);
 }
