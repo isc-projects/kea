@@ -39,8 +39,8 @@ class MySocket():
         pass
 
     def send(self, data):
-        #print("[XX] send called:")
-        #print(data)
+        print("[XX] send called:")
+        print(data)
         self.sendqueue.extend(data);
         pass
 
