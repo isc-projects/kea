@@ -30,6 +30,8 @@
 
 using namespace std;
 
+#define MAX_LABEL_LENGTH 255
+
 namespace isc {
 namespace data {
 
@@ -347,6 +349,11 @@ word_from_stringstream(std::istream &in, int& pos) {
 inline int
 count_chars_i(int i) {
     int result = 1;
+    if (i < 0) {
+        i = -i;
+        // account for the '-' symbol
+        result += 1;
+    }
     while (i > 10) {
         ++result;
         i = i / 10;
@@ -359,7 +366,7 @@ count_chars_i(int i) {
 // value is larger than an int can handle)
 ElementPtr
 from_stringstream_number(std::istream &in, int &pos) {
-    int i, d_i;
+    int i = 0;
     double d = 0.0;
     bool is_double = false;
 
@@ -369,6 +376,7 @@ from_stringstream_number(std::istream &in, int &pos) {
         isc_throw(JSONError, "Bad integer or overflow");
     }
     if (in.peek() == '.') {
+        int d_i = 0;
         is_double = true;
         in.get();
         pos++;
@@ -376,7 +384,14 @@ from_stringstream_number(std::istream &in, int &pos) {
         if (in.fail()) {
             isc_throw(JSONError, "Bad real or overflow");
         }
-        d = i + (double)d_i / 10;
+        d = (double)d_i / 10;
+        while (d > 1.0) {
+            d = d / 10;
+        }
+        if (i < 0) {
+            d = - d;
+        }
+        d += i;
         pos += count_chars_i(d_i);
     }
     if (in.peek() == 'e' || in.peek() == 'E') {
@@ -481,11 +496,6 @@ from_stringstream_map(std::istream &in, const std::string& file, int& line,
     } else {
         while (c != EOF && c != '}') {
             std::string key = str_from_stringstream(in, file, line, pos);
-            if (key.length() > 255) {
-                // Map tag has one-byte length field in wire format, so the
-                // length cannot exceed 255.
-                throwJSONError("Map tag is too long", file, line, pos);
-            }
 
             skip_to(in, file, line, pos, ":", " \t\n");
             // skip the :
@@ -502,6 +512,54 @@ from_stringstream_map(std::istream &in, const std::string& file, int& line,
     }
     return map;
 }
+}
+
+std::string
+Element::typeToName(Element::types type)
+{
+    switch(type) {
+    case Element::integer:
+        return std::string("integer");
+    case Element::real:
+        return std::string("real");
+    case Element::boolean:
+        return std::string("boolean");
+    case Element::string:
+        return std::string("string");
+    case Element::list:
+        return std::string("list");
+    case Element::map:
+        return std::string("map");
+    case Element::null:
+        return std::string("null");
+    case Element::any:
+        return std::string("any");
+    default:
+        return std::string("unknown");
+    }
+}
+
+Element::types
+Element::nameToType(const std::string& type_name) {
+    if (type_name == "integer") {
+        return Element::integer;
+    } else if (type_name == "real") {
+        return Element::real;
+    } else if (type_name == "boolean") {
+        return Element::boolean;
+    } else if (type_name == "string") {
+        return Element::string;
+    } else if (type_name == "list") {
+        return Element::list;
+    } else if (type_name == "map") {
+        return Element::map;
+    } else if (type_name == "null") {
+        return Element::null;
+    } else if (type_name == "any") {
+        return Element::any;
+    } else {
+        isc_throw(TypeError, type_name + " is not a valid type name");
+    }
 }
 
 ElementPtr
@@ -538,7 +596,12 @@ Element::fromJSON(std::istream &in, const std::string& file, int& line, int& pos
             case '8':
             case '9':
             case '0':
+            case '-':
                 in.putback(c);
+                element = from_stringstream_number(in, pos);
+                el_read = true;
+                break;
+            case '+':
                 element = from_stringstream_number(in, pos);
                 el_read = true;
                 break;
@@ -551,6 +614,7 @@ Element::fromJSON(std::istream &in, const std::string& file, int& line, int& pos
                 el_read = true;
                 break;
             case 'n':
+            case 'N':
                 in.putback(c);
                 element = from_stringstream_null(in, file, line, pos);
                 el_read = true;
@@ -606,7 +670,7 @@ DoubleElement::toJSON(std::ostream& ss)
 void
 BoolElement::toJSON(std::ostream& ss)
 {
-    if (b) {
+    if (boolValue()) {
         ss << "true";
     } else {
         ss << "false";
@@ -714,11 +778,7 @@ Element::fromWire(std::stringstream& in, int length) {
 
 void
 MapElement::set(const std::string& key, ElementPtr value) {
-    if (key.length() <= 255) {
-        m[key] = value;
-    } else {
-        isc_throw(TypeError, "Map key too long");
-    }
+    m[key] = value;
 }
 
 bool

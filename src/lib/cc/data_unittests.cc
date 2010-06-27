@@ -47,6 +47,28 @@ TEST(Element, type) {
 
 }
 
+TEST(Element, TypeNameConversion) {
+    EXPECT_EQ(Element::integer, Element::nameToType("integer"));
+    EXPECT_EQ(Element::real, Element::nameToType("real"));
+    EXPECT_EQ(Element::boolean, Element::nameToType("boolean"));
+    EXPECT_EQ(Element::string, Element::nameToType("string"));
+    EXPECT_EQ(Element::list, Element::nameToType("list"));
+    EXPECT_EQ(Element::map, Element::nameToType("map"));
+    EXPECT_EQ(Element::null, Element::nameToType("null"));
+    EXPECT_EQ(Element::any, Element::nameToType("any"));
+    EXPECT_THROW(Element::nameToType("somethingunknown"), TypeError);
+
+    EXPECT_EQ("integer", Element::typeToName(Element::integer));
+    EXPECT_EQ("real", Element::typeToName(Element::real));
+    EXPECT_EQ("boolean", Element::typeToName(Element::boolean));
+    EXPECT_EQ("string", Element::typeToName(Element::string));
+    EXPECT_EQ("list", Element::typeToName(Element::list));
+    EXPECT_EQ("map", Element::typeToName(Element::map));
+    EXPECT_EQ("null", Element::typeToName(Element::null));
+    EXPECT_EQ("any", Element::typeToName(Element::any));
+    EXPECT_EQ("unknown", Element::typeToName((Element::types)123));
+}
+
 TEST(Element, from_and_to_json) {
     // this test checks whether the str() method returns the same
     // string that was used for creation
@@ -62,7 +84,13 @@ TEST(Element, from_and_to_json) {
     sv.push_back("[ 1, 2, 3, 4 ]");
     sv.push_back("{ \"name\": \"foo\", \"value\": 47806 }");
     sv.push_back("[ { \"a\": 1, \"b\": \"c\" }, { \"a\": 2, \"b\": \"d\" } ]");
-
+    sv.push_back("8.23");
+    sv.push_back("123.456");
+    sv.push_back("null");
+    sv.push_back("-1");
+    sv.push_back("-1.234");
+    sv.push_back("-123.456");
+    
     BOOST_FOREACH(std::string s, sv) {
         // test << operator, which uses Element::str()
         std::ostringstream stream;
@@ -101,8 +129,12 @@ TEST(Element, from_and_to_json) {
 
     // some json specific format tests, here the str() output is
     // different from the string input
+    EXPECT_EQ("100", Element::fromJSON("+100")->str());
     EXPECT_EQ("100", Element::fromJSON("1e2")->str());
+    EXPECT_EQ("100", Element::fromJSON("+1e2")->str());
+    EXPECT_EQ("-100", Element::fromJSON("-1e2")->str());
     EXPECT_EQ("0.01", Element::fromJSON("1e-2")->str());
+    EXPECT_EQ("-0.01", Element::fromJSON("-1e-2")->str());
     EXPECT_EQ("1.2", Element::fromJSON("1.2")->str());
     EXPECT_EQ("1", Element::fromJSON("1.0")->str());
     EXPECT_EQ("120", Element::fromJSON("1.2e2")->str());
@@ -111,6 +143,12 @@ TEST(Element, from_and_to_json) {
     EXPECT_EQ("0.01", Element::fromJSON("1.0e-2")->str());
     EXPECT_EQ("0.012", Element::fromJSON("1.2e-2")->str());
     EXPECT_EQ("0.012", Element::fromJSON("1.2E-2")->str());
+    EXPECT_EQ("null", Element::fromJSON("Null")->str());
+    EXPECT_EQ("null", Element::fromJSON("NULL")->str());
+    EXPECT_EQ("false", Element::fromJSON("False")->str());
+    EXPECT_EQ("false", Element::fromJSON("FALSE")->str());
+    EXPECT_EQ("true", Element::fromJSON("True")->str());
+    EXPECT_EQ("true", Element::fromJSON("TRUE")->str());
 
     // number overflows
     EXPECT_THROW(Element::fromJSON("12345678901234567890")->str(), JSONError);
@@ -326,13 +364,11 @@ TEST(Element, MapElement) {
     el->set(long_maptag, Element::create("bar"));
     EXPECT_EQ("bar", el->find(long_maptag)->stringValue());
 
-    // A one-byte longer tag should trigger an exception.
+    // A one-byte longer tag should still be allowed
     long_maptag.push_back('f');
-    EXPECT_THROW(Element::fromJSON("{ \"" + long_maptag +
-                                           "\": \"bar\"}"),
-                 JSONError);
-
-    EXPECT_THROW(el->set(long_maptag, Element::create("bar")), TypeError);
+    el = Element::fromJSON("{ \"" + long_maptag + "\": \"bar\"}");
+    el->set(long_maptag, Element::create("bar"));
+    EXPECT_EQ("bar", el->find(long_maptag)->stringValue());
 
 }
 
