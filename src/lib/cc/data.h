@@ -316,6 +316,22 @@ public:
     static ElementPtr fromJSON(std::istream& in, const std::string& file, int& line, int &pos) throw(JSONError);
     //@}
 
+    /// \name Type name conversion functions
+
+    /// Returns the name of the given type as a string
+    ///
+    /// \param type The type to return the name of
+    /// \return The name of the type, or "unknown" if the type
+    ///         is not known.
+    static std::string typeToName(Element::types type);
+
+    /// Converts the string to the corresponding type
+    /// Throws a TypeError if the name is unknown.
+    ///
+    /// \param type_name The name to get the type of
+    /// \return the corresponding type value
+    static Element::types nameToType(const std::string& type_name);
+
     /// \name Wire format factory functions
 
     /// These function pparse the wireformat at the given stringstream
