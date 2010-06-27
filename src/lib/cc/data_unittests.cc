@@ -107,8 +107,10 @@ TEST(Element, from_and_to_json) {
     EXPECT_EQ("1", Element::fromJSON("1.0")->str());
     EXPECT_EQ("120", Element::fromJSON("1.2e2")->str());
     EXPECT_EQ("100", Element::fromJSON("1.0e2")->str());
+    EXPECT_EQ("100", Element::fromJSON("1.0E2")->str());
     EXPECT_EQ("0.01", Element::fromJSON("1.0e-2")->str());
     EXPECT_EQ("0.012", Element::fromJSON("1.2e-2")->str());
+    EXPECT_EQ("0.012", Element::fromJSON("1.2E-2")->str());
 
     // number overflows
     EXPECT_THROW(Element::fromJSON("12345678901234567890")->str(), JSONError);
@@ -132,6 +134,7 @@ TEST(Element, create_and_value_throws) {
     
 
     el = Element::create(1);
+    EXPECT_NO_THROW(el->intValue());
     EXPECT_THROW(el->doubleValue(), TypeError);
     EXPECT_THROW(el->boolValue(), TypeError);
     EXPECT_THROW(el->stringValue(), TypeError);
@@ -167,6 +170,7 @@ TEST(Element, create_and_value_throws) {
 
     el = Element::create(1.1);
     EXPECT_THROW(el->intValue(), TypeError);
+    EXPECT_NO_THROW(el->doubleValue());
     EXPECT_THROW(el->boolValue(), TypeError);
     EXPECT_THROW(el->stringValue(), TypeError);
     EXPECT_THROW(el->listValue(), TypeError);
@@ -190,6 +194,7 @@ TEST(Element, create_and_value_throws) {
     el = Element::create(true);
     EXPECT_THROW(el->intValue(), TypeError);
     EXPECT_THROW(el->doubleValue(), TypeError);
+    EXPECT_NO_THROW(el->boolValue());
     EXPECT_THROW(el->stringValue(), TypeError);
     EXPECT_THROW(el->listValue(), TypeError);
     EXPECT_THROW(el->mapValue(), TypeError);
@@ -208,6 +213,7 @@ TEST(Element, create_and_value_throws) {
     EXPECT_THROW(el->intValue(), TypeError);
     EXPECT_THROW(el->doubleValue(), TypeError);
     EXPECT_THROW(el->boolValue(), TypeError);
+    EXPECT_NO_THROW(el->stringValue());
     EXPECT_THROW(el->listValue(), TypeError);
     EXPECT_THROW(el->mapValue(), TypeError);
     EXPECT_FALSE(el->getValue(i));
@@ -226,6 +232,7 @@ TEST(Element, create_and_value_throws) {
     EXPECT_THROW(el->doubleValue(), TypeError);
     EXPECT_THROW(el->boolValue(), TypeError);
     EXPECT_THROW(el->stringValue(), TypeError);
+    EXPECT_NO_THROW(el->listValue());
     EXPECT_THROW(el->mapValue(), TypeError);
     EXPECT_FALSE(el->getValue(i));
     EXPECT_FALSE(el->getValue(d));
@@ -244,6 +251,7 @@ TEST(Element, create_and_value_throws) {
     EXPECT_THROW(el->boolValue(), TypeError);
     EXPECT_THROW(el->stringValue(), TypeError);
     EXPECT_THROW(el->listValue(), TypeError);
+    EXPECT_NO_THROW(el->mapValue());
     EXPECT_FALSE(el->getValue(i));
     EXPECT_FALSE(el->getValue(d));
     EXPECT_FALSE(el->getValue(b));
@@ -275,15 +283,6 @@ TEST(Element, ListElement) {
 
     el->add(Element::create(32));
     EXPECT_EQ(el->get(2)->intValue(), 32);
-}
-
-namespace {
-const string long_maptag("0123456789abcdef1123456789abcdef2123456789abcdef"
-                         "3123456789abcdef4123456789abcdef5123456789abcdef"
-                         "6123456789abcdef7123456789abcdef8123456789abcdef"
-                         "9123456789abcdefa123456789abcdefb123456789abcdef"
-                         "c123456789abcdefd123456789abcdefe123456789abcdef"
-                         "f123456789abcdef");
 }
 
 TEST(Element, MapElement) {
@@ -362,56 +361,56 @@ ElementPtr efs(const std::string& str) {
 
 TEST(Element, equals) {
     // why does EXPECT_EQ not work?
-    EXPECT_TRUE(efs("1") == efs("1"));
-    EXPECT_FALSE(efs("1") == efs("2"));
-    EXPECT_FALSE(efs("1") == efs("\"1\""));
-    EXPECT_FALSE(efs("1") == efs("[]"));
-    EXPECT_FALSE(efs("1") == efs("True"));
-    EXPECT_FALSE(efs("1") == efs("{}"));
+    EXPECT_EQ(efs("1"), efs("1"));
+    EXPECT_NE(efs("1"), efs("2"));
+    EXPECT_NE(efs("1"), efs("\"1\""));
+    EXPECT_NE(efs("1"), efs("[]"));
+    EXPECT_NE(efs("1"), efs("True"));
+    EXPECT_NE(efs("1"), efs("{}"));
 
-    EXPECT_TRUE(efs("1.1") == efs("1.1"));
-    EXPECT_FALSE(efs("1.0") == efs("1"));
-    EXPECT_FALSE(efs("1.1") == efs("\"1\""));
-    EXPECT_FALSE(efs("1.1") == efs("[]"));
-    EXPECT_FALSE(efs("1.1") == efs("True"));
-    EXPECT_FALSE(efs("1.1") == efs("{}"));
+    EXPECT_EQ(efs("1.1"), efs("1.1"));
+    EXPECT_NE(efs("1.0"), efs("1"));
+    EXPECT_NE(efs("1.1"), efs("\"1\""));
+    EXPECT_NE(efs("1.1"), efs("[]"));
+    EXPECT_NE(efs("1.1"), efs("True"));
+    EXPECT_NE(efs("1.1"), efs("{}"));
 
-    EXPECT_TRUE(efs("True") == efs("True"));
-    EXPECT_FALSE(efs("True") == efs("False"));
-    EXPECT_FALSE(efs("True") == efs("1"));
-    EXPECT_FALSE(efs("True") == efs("\"1\""));
-    EXPECT_FALSE(efs("True") == efs("[]"));
-    EXPECT_FALSE(efs("True") == efs("{}"));
+    EXPECT_EQ(efs("True"), efs("True"));
+    EXPECT_NE(efs("True"), efs("False"));
+    EXPECT_NE(efs("True"), efs("1"));
+    EXPECT_NE(efs("True"), efs("\"1\""));
+    EXPECT_NE(efs("True"), efs("[]"));
+    EXPECT_NE(efs("True"), efs("{}"));
 
-    EXPECT_TRUE(efs("\"foo\"") == efs("\"foo\""));
-    EXPECT_FALSE(efs("\"foo\"") == efs("\"bar\""));
-    EXPECT_FALSE(efs("\"foo\"") == efs("1"));
-    EXPECT_FALSE(efs("\"foo\"") == efs("\"1\""));
-    EXPECT_FALSE(efs("\"foo\"") == efs("True"));
-    EXPECT_FALSE(efs("\"foo\"") == efs("[]"));
-    EXPECT_FALSE(efs("\"foo\"") == efs("{}"));
+    EXPECT_EQ(efs("\"foo\""), efs("\"foo\""));
+    EXPECT_NE(efs("\"foo\""), efs("\"bar\""));
+    EXPECT_NE(efs("\"foo\""), efs("1"));
+    EXPECT_NE(efs("\"foo\""), efs("\"1\""));
+    EXPECT_NE(efs("\"foo\""), efs("True"));
+    EXPECT_NE(efs("\"foo\""), efs("[]"));
+    EXPECT_NE(efs("\"foo\""), efs("{}"));
 
-    EXPECT_TRUE(efs("[]") == efs("[]"));
-    EXPECT_TRUE(efs("[ 1, 2, 3 ]") == efs("[ 1, 2, 3 ]"));
-    EXPECT_TRUE(efs("[ \"a\", [ True, 1], 2.2 ]") == efs("[ \"a\", [ True, 1], 2.2 ]"));
-    EXPECT_FALSE(efs("[ \"a\", [ True, 1], 2.2 ]") == efs("[ \"a\", [ True, 2], 2.2 ]"));
-    EXPECT_FALSE(efs("[]") == efs("[1]"));
-    EXPECT_FALSE(efs("[]") == efs("1"));
-    EXPECT_FALSE(efs("[]") == efs("\"1\""));
-    EXPECT_FALSE(efs("[]") == efs("{}"));
+    EXPECT_EQ(efs("[]"), efs("[]"));
+    EXPECT_EQ(efs("[ 1, 2, 3 ]"), efs("[ 1, 2, 3 ]"));
+    EXPECT_EQ(efs("[ \"a\", [ True, 1], 2.2 ]"), efs("[ \"a\", [ True, 1], 2.2 ]"));
+    EXPECT_NE(efs("[ \"a\", [ True, 1], 2.2 ]"), efs("[ \"a\", [ True, 2], 2.2 ]"));
+    EXPECT_NE(efs("[]"), efs("[1]"));
+    EXPECT_NE(efs("[]"), efs("1"));
+    EXPECT_NE(efs("[]"), efs("\"1\""));
+    EXPECT_NE(efs("[]"), efs("{}"));
 
-    EXPECT_TRUE(efs("{}") == efs("{}"));
-    EXPECT_TRUE(efs("{ \"foo\": \"bar\" }") == efs("{ \"foo\": \"bar\" }"));
-    EXPECT_TRUE(efs("{ \"item1\": 1, \"item2\": [ \"a\", \"list\" ], \"item3\": { \"foo\": \"bar\" } }") == efs("{ \"item1\": 1, \"item2\": [ \"a\", \"list\" ], \"item3\": { \"foo\": \"bar\" } }"));
-    EXPECT_FALSE(efs("{ \"item1\": 1, \"item2\": [ \"a\", \"list\" ], \"item3\": { \"foo\": \"bar\" } }") == efs("{ \"item1\": 1, \"item2\": [ \"a\", \"list\" ], \"item3\": { \"foo\": \"bar2\" } }"));
-    EXPECT_FALSE(efs("{ \"item1\": 1, \"item2\": [ \"a\", \"list\" ], \"item3\": { \"foo\": \"bar\" } }") == efs("{ \"item1\": 1, \"item2\": [ \"a\", \"list\", 1 ], \"item3\": { \"foo\": \"bar\" } }"));
-    EXPECT_FALSE(efs("{ \"foo\": \"bar\" }") == efs("1"));
-    EXPECT_FALSE(efs("{ \"foo\": \"bar\" }") == efs("\"1\""));
-    EXPECT_FALSE(efs("{ \"foo\": \"bar\" }") == efs("[]"));
-    EXPECT_FALSE(efs("{ \"foo\": \"bar\" }") == efs("{}"));
-    EXPECT_FALSE(efs("{ \"foo\": \"bar\" }") == efs("{ \"something\": \"different\" }"));
+    EXPECT_EQ(efs("{}"), efs("{}"));
+    EXPECT_EQ(efs("{ \"foo\": \"bar\" }"), efs("{ \"foo\": \"bar\" }"));
+    EXPECT_EQ(efs("{ \"item1\": 1, \"item2\": [ \"a\", \"list\" ], \"item3\": { \"foo\": \"bar\" } }"), efs("{ \"item1\": 1, \"item2\": [ \"a\", \"list\" ], \"item3\": { \"foo\": \"bar\" } }"));
+    EXPECT_NE(efs("{ \"item1\": 1, \"item2\": [ \"a\", \"list\" ], \"item3\": { \"foo\": \"bar\" } }"), efs("{ \"item1\": 1, \"item2\": [ \"a\", \"list\" ], \"item3\": { \"foo\": \"bar2\" } }"));
+    EXPECT_NE(efs("{ \"item1\": 1, \"item2\": [ \"a\", \"list\" ], \"item3\": { \"foo\": \"bar\" } }"), efs("{ \"item1\": 1, \"item2\": [ \"a\", \"list\", 1 ], \"item3\": { \"foo\": \"bar\" } }"));
+    EXPECT_NE(efs("{ \"foo\": \"bar\" }"), efs("1"));
+    EXPECT_NE(efs("{ \"foo\": \"bar\" }"), efs("\"1\""));
+    EXPECT_NE(efs("{ \"foo\": \"bar\" }"), efs("[]"));
+    EXPECT_NE(efs("{ \"foo\": \"bar\" }"), efs("{}"));
+    EXPECT_NE(efs("{ \"foo\": \"bar\" }"), efs("{ \"something\": \"different\" }"));
 
-    EXPECT_TRUE(efs("null") == Element::create());
+    EXPECT_EQ(efs("null"), Element::create());
 }
 
 TEST(Element, removeIdentical) {
@@ -419,49 +418,49 @@ TEST(Element, removeIdentical) {
     ElementPtr b = Element::createMap();
     ElementPtr c = Element::createMap();
     removeIdentical(a, b);
-    EXPECT_TRUE(a == c);
+    EXPECT_EQ(a, c);
 
     a = Element::fromJSON("{ \"a\": 1 }");
     b = Element::fromJSON("{ \"a\": 1 }");
     c = Element::createMap();
     removeIdentical(a, b);
-    EXPECT_TRUE(a == c);
+    EXPECT_EQ(a, c);
 
     a = Element::fromJSON("{ \"a\": 1, \"b\": [ 1, 2 ] }");
     b = Element::createMap();
     c = Element::fromJSON("{ \"a\": 1, \"b\": [ 1, 2 ] }");
     removeIdentical(a, b);
-    EXPECT_TRUE(a == c);
+    EXPECT_EQ(a, c);
 
     a = Element::fromJSON("{ \"a\": 1, \"b\": [ 1, 2 ] }");
     b = Element::fromJSON("{ \"a\": 1, \"b\": [ 1, 2 ] }");
     c = Element::createMap();
     removeIdentical(a, b);
-    EXPECT_TRUE(a == c);
+    EXPECT_EQ(a, c);
 
     a = Element::fromJSON("{ \"a\": 1, \"b\": [ 1, 2 ] }");
     b = Element::fromJSON("{ \"a\": 1, \"b\": [ 1, 3 ] }");
     c = Element::fromJSON("{ \"b\": [ 1, 2 ] }");
     removeIdentical(a, b);
-    EXPECT_TRUE(a == c);
+    EXPECT_EQ(a, c);
 
     a = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
     b = Element::createMap();
     c = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
     removeIdentical(a, b);
-    EXPECT_TRUE(a == c);
+    EXPECT_EQ(a, c);
 
     a = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
     b = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
     c = Element::createMap();
     removeIdentical(a, b);
-    EXPECT_TRUE(a == c);
+    EXPECT_EQ(a, c);
 
     a = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
     b = Element::fromJSON("{ \"a\": { \"b\": \"d\" } }");
     c = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
     removeIdentical(a, b);
-    EXPECT_TRUE(a == c);
+    EXPECT_EQ(a, c);
 
     EXPECT_THROW(removeIdentical(Element::create(1), Element::create(2)), TypeError);
 }
@@ -472,7 +471,7 @@ TEST(Element, merge)
     ElementPtr b = Element::createMap();
     ElementPtr c = Element::createMap();
     merge(a, b);
-    EXPECT_TRUE(a == c);
+    EXPECT_EQ(a, c);
 
     a = Element::fromJSON("1");
     b = Element::createMap();
@@ -482,24 +481,73 @@ TEST(Element, merge)
     b = Element::fromJSON("{ \"a\": 1 }");
     c = Element::fromJSON("{ \"a\": 1 }");
     merge(a, b);
-    EXPECT_TRUE(a == c);
+    EXPECT_EQ(a, c);
+
+    a = Element::createMap();
+    b = Element::fromJSON("{ \"a\": 1 }");
+    c = Element::fromJSON("{ \"a\": 1 }");
+    merge(b, a);
+    EXPECT_EQ(b, c);
 
     a = Element::fromJSON("{ \"a\": 1 }");
     b = Element::fromJSON("{ \"a\": 2 }");
     c = Element::fromJSON("{ \"a\": 2 }");
     merge(a, b);
-    EXPECT_TRUE(a == c);
+    EXPECT_EQ(a, c);
+
+    a = Element::fromJSON("{ \"a\": 1 }");
+    b = Element::fromJSON("{ \"a\": 2 }");
+    c = Element::fromJSON("{ \"a\": 1 }");
+    merge(b, a);
+    EXPECT_EQ(b, c);
 
     a = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
     b = Element::fromJSON("{ \"a\": { \"b\": \"d\" } }");
     c = Element::fromJSON("{ \"a\": { \"b\": \"d\" } }");
     merge(a, b);
-    EXPECT_TRUE(a == c);
+    EXPECT_EQ(a, c);
+
+    a = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
+    b = Element::fromJSON("{ \"a\": { \"b\": \"d\" } }");
+    c = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
+    merge(b, a);
+    EXPECT_EQ(b, c);
 
     a = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
     b = Element::fromJSON("{ \"a\": null }");
     c = Element::fromJSON("{  }");
     merge(a, b);
-    EXPECT_TRUE(a == c);
+    EXPECT_EQ(a, c);
+
+    a = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
+    b = Element::fromJSON("{ \"a\": null }");
+    c = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
+    merge(b, a);
+    EXPECT_EQ(b, c);
+    
+    // And some tests with multiple values
+    a = Element::fromJSON("{ \"a\": 1, \"b\": true, \"c\": null }");
+    b = Element::fromJSON("{ \"a\": 1, \"b\": null, \"c\": \"a string\" }");
+    c = Element::fromJSON("{ \"a\": 1, \"c\": \"a string\" }");
+    merge(a, b);
+    EXPECT_EQ(a, c);
+
+    a = Element::fromJSON("{ \"a\": 1, \"b\": true, \"c\": null }");
+    b = Element::fromJSON("{ \"a\": 1, \"b\": null, \"c\": \"a string\" }");
+    c = Element::fromJSON("{ \"a\": 1, \"b\": true }");
+    merge(b, a);
+    EXPECT_EQ(b, c);
+
+    a = Element::fromJSON("{ \"a\": 1, \"b\": 2, \"c\": 3 }");
+    b = Element::fromJSON("{ \"a\": 3, \"b\": 2, \"c\": 1 }");
+    c = Element::fromJSON("{ \"a\": 3, \"b\": 2, \"c\": 1 }");
+    merge(a, b);
+    EXPECT_EQ(a, c);
+
+    a = Element::fromJSON("{ \"a\": 1, \"b\": 2, \"c\": 3 }");
+    b = Element::fromJSON("{ \"a\": 3, \"b\": 2, \"c\": 1 }");
+    c = Element::fromJSON("{ \"a\": 1, \"b\": 2, \"c\": 3 }");
+    merge(b, a);
+    EXPECT_EQ(b, c);
 
 }

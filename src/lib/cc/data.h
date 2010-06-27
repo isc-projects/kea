@@ -92,10 +92,6 @@ public:
     /// \return the type of this element
     int getType() { return type; };
 
-    /// \returns true if the other ElementPtr has the same type and
-    ///          value
-    virtual bool equals(ElementPtr other) = 0;
-    
     /// Returns a string representing the Element and all its
     /// child elements; note that this is different from stringValue(),
     /// which only returns the single value of a StringElement
@@ -108,14 +104,16 @@ public:
     /// Returns the wireformat for the Element and all its child
     /// elements.
     ///
-    /// \param omit_length If this is non-zero, the item length will
-    ///        be omitted from the wire format
     /// \return std::string containing the element in wire format
     std::string toWire();
     void toWire(std::ostream& out);
 
-    // pure virtuals, every derived class must implement these
+    /// \name pure virtuals, every derived class must implement these
 
+    /// \returns true if the other ElementPtr has the same type and
+    ///          value
+    virtual bool equals(ElementPtr other) = 0;
+    
     /// Converts the Element to JSON format and appends it to
     /// the given stringstream.
     virtual void toJSON(std::ostream& ss) = 0;
