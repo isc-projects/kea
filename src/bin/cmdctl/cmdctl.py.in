@@ -51,7 +51,9 @@ except ImportError:
 
 __version__ = 'BIND10'
 URL_PATTERN = re.compile('/([\w]+)(?:/([\w]+))?/?')
-MODULE_NAME = 'Cmdctl'
+CONFIG_DATA_URL = 'config_data'
+MODULE_SPEC_URL = 'module_spec'
+
 
 # If B10_FROM_SOURCE is set in the environment, we use data files
 # from a directory relative to that, otherwise we use the ones
@@ -63,6 +65,9 @@ else:
     DATAROOTDIR = "@datarootdir@"
     SPECFILE_PATH = "@datadir@/@PACKAGE@".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
 SPECFILE_LOCATION = SPECFILE_PATH + os.sep + "cmdctl.spec"
+
+class CmdctlException(Exception):
+    pass
        
 class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     '''https connection request handler.
@@ -206,8 +211,8 @@ class CommandControl():
     receive command from client and resend it to proper module.
     '''
     def __init__(self, httpserver, verbose = False):
-        '''When cmdctl get 'shutdown' command from boss, 
-        shutdown the outer httpserver. '''
+        ''' httpserver: the http server which use the object of
+        CommandControl to communicate with other modules. '''
         self._verbose = verbose
         self._httpserver = httpserver
         self._lock = threading.Lock()
@@ -228,6 +233,7 @@ class CommandControl():
         self._module_cc = isc.config.ModuleCCSession(SPECFILE_LOCATION,
                                               self.config_handler,
                                               self.command_handler)
+        self._module_name = self._module_cc.get_module_spec().get_module_name()
         self._cmdctl_config_data = self._module_cc.get_full_config()
         self._module_cc.start()
     
@@ -293,6 +299,8 @@ class CommandControl():
                 self.modules_spec[args[0]] = args[1]
 
         elif command == ccsession.COMMAND_SHUTDOWN:
+            #When cmdctl get 'shutdown' command from boss, 
+            #shutdown the outer httpserver.
             self._httpserver.shutdown()
             self._serving = False
 
@@ -375,7 +383,7 @@ class CommandControl():
         if self._verbose:
             self.log_info("Begin send command '%s' to module '%s'" %(command_name, module_name))
 
-        if module_name == MODULE_NAME:
+        if module_name == self._module_name:
             # Process the command sent to cmdctl directly. 
             answer = self.command_handler(command_name, params)
         else:
@@ -481,24 +489,22 @@ class SecureHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
     def _check_key_and_cert(self, key, cert):
         # TODO, check the content of key/certificate file 
         if not os.path.exists(key):
-            self.log_info("Deny client's connection since key file doesn't exist " + key)
-            raise socket.error
+            raise CmdctlException("key file '%s' doesn't exist " % key)
 
         if not os.path.exists(cert):
-            self.log_info("Deny client's connection since certificate file doesn't exist " + cert)
-            raise socket.error
+            raise CmdctlException("certificate file '%s' doesn't exist " % cert)
 
     def _wrap_socket_in_ssl_context(self, sock, key, cert):
-        self._check_key_and_cert(key, cert)
         try:
+            self._check_key_and_cert(key, cert)
             ssl_sock = ssl.wrap_socket(sock,
                                       server_side = True,
                                       certfile = cert,
                                       keyfile = key,
                                       ssl_version = ssl.PROTOCOL_SSLv23)
             return ssl_sock 
-        except ssl.SSLError as e :
-            self.log_info("Deny client's connection:%s\n" % e)
+        except (ssl.SSLError, CmdctlException) as err :
+            self.log_info("Deny client's connection because %s" % str(err))
             self.close_request(sock)
             # raise socket error to finish the request
             raise socket.error
@@ -515,9 +521,9 @@ class SecureHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
         '''Currently only support the following three url GET request '''
         rcode, reply = http.client.NO_CONTENT, []        
         if not module:
-            if id == 'config_data':
+            if id == CONFIG_DATA_URL:
                 rcode, reply = http.client.OK, self.cmdctl.get_config_data()
-            elif id == 'module_spec':
+            elif id == MODULE_SPEC_URL:
                 rcode, reply = http.client.OK, self.cmdctl.get_modules_spec()
         
         return rcode, reply 

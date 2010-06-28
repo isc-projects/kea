@@ -2,4 +2,5 @@
 . Update man page for b10-cmdctl?
 . Add check for the content of key/certificate file
   (when cmdctl starts or is configured by bindctl).
+. Use only one msgq/session to communicate with other modules?
 
