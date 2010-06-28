@@ -30,8 +30,6 @@
 
 using namespace std;
 
-#define MAX_LABEL_LENGTH 255
-
 namespace isc {
 namespace data {
 

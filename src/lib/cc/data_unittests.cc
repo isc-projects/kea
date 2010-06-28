@@ -70,8 +70,9 @@ TEST(Element, TypeNameConversion) {
 }
 
 TEST(Element, from_and_to_json) {
-    // this test checks whether the str() method returns the same
-    // string that was used for creation
+    // a set of inputs that are the same when converted to json and
+    // back to a string (tests for inputs that have equivalent, but
+    // different string representations when converted back are below)
     ElementPtr el;
     std::vector<std::string> sv;
 
@@ -389,9 +390,15 @@ TEST(Element, to_and_from_wire) {
     std::stringstream ss;
     ss << "1";
     EXPECT_EQ("1", Element::fromWire(ss, 1)->str());
+
+    // Some malformed JSON input
+    EXPECT_THROW(Element::fromJSON("{\":"), isc::data::JSONError);
+    EXPECT_THROW(Element::fromJSON("]"), isc::data::JSONError);
+    EXPECT_THROW(Element::fromJSON("[ 1, 2, }"), isc::data::JSONError);
 }
 
-ElementPtr efs(const std::string& str) {
+static ElementPtr
+efs(const std::string& str) {
     return Element::fromJSON(str);
 }
 
