@@ -52,10 +52,10 @@ class NSFileLogHandler(logging.handlers.RotatingFileHandler):
         If the log file is deleted at runtime, a new file will be created.
         """
         dfn = self.baseFilename                 
-        if (self.stream) and (not os.path.exists(dfn)): #Is log file exist?
+        if (self.stream) and (not os.path.exists(dfn)): #Does log file exist?
             self.stream.close()
             dir = os.path.split(dfn)
-            if not (os.path.exists(dir[0])): #Is log subdirectory exist?
+            if not (os.path.exists(dir[0])): #Does log subdirectory exist?
                 os.makedirs(dir[0])
             self.stream = self._open()
         return super(NSFileLogHandler, self).shouldRollover(record)
@@ -63,7 +63,7 @@ class NSFileLogHandler(logging.handlers.RotatingFileHandler):
     def update_config(self, file_name, backup_count, max_bytes):
         """Update RotatingFileHandler configuration.
 
-        If the file path is not exist, we will use the old log file.
+        If the file path does not exist, we will use the old log file.
         input:
             log file name
             max backup count
@@ -153,7 +153,7 @@ class NSLogger(logging.getLoggerClass()):
         """Add a rotate file handler.
    
         input:
-            log_file : the location of log file. Handler wouldn't be created 
+            log_file : the location of log file. Handler will not be created 
                        if log_file=''
             max_bytes : limit log growth
             backup_count : max backup count
@@ -205,7 +205,7 @@ class NSLogger(logging.getLoggerClass()):
             self._add_rotate_handler(log_file, backup_count, max_bytes)
 
     def _get_config(self, config_data):
-         """Get config data from module configration"""
+         """Get config data from module configuration"""
          
          log_file_str = config_data.get('log_file')
          if(log_file_str):
