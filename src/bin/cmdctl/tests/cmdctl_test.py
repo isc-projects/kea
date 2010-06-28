@@ -19,6 +19,11 @@ import socket
 import tempfile
 from cmdctl import *
 
+if 'CMDCTL_SPEC_PATH' in os.environ:
+    FILE_PATH = os.environ['CMDCTL_SPEC_PATH'] + os.sep
+else:
+    FILE_PATH = '..' + os.sep
+
 # Rewrite the class for unittest.
 class MySecureHTTPRequestHandler(SecureHTTPRequestHandler):
     def __init__(self):
@@ -279,7 +284,8 @@ class MyCommandControl(CommandControl):
         return {}
 
     def _setup_session(self):
-        module_spec = isc.config.module_spec_from_file("../cmdctl.spec.pre.in")
+        spec_file = FILE_PATH + 'cmdctl.spec'
+        module_spec = isc.config.module_spec_from_file(spec_file)
         config = isc.config.config_data.ConfigData(module_spec)
         self._cmdctl_config_data = config.get_full_config()
 
@@ -385,7 +391,7 @@ class TestSecureHTTPServer(unittest.TestCase):
         self.server._create_user_info('/local/not-exist')
         self.assertEqual(0, len(self.server._user_infos))
 
-        self.server._create_user_info('../cmdctl-accounts.csv')
+        self.server._create_user_info(FILE_PATH + 'cmdctl-accounts.csv')
         self.assertEqual(1, len(self.server._user_infos))
         self.assertTrue('root' in self.server._user_infos)
 
@@ -398,8 +404,8 @@ class TestSecureHTTPServer(unittest.TestCase):
                           '../cmdctl-certfile')
 
         self.server._wrap_socket_in_ssl_context(sock, 
-                          '../cmdctl-keyfile.pem',
-                          '../cmdctl-certfile.pem')
+                          FILE_PATH + 'cmdctl-keyfile.pem',
+                          FILE_PATH + 'cmdctl-certfile.pem')
 
 class TestFuncNotInClass(unittest.TestCase):
     def test_check_port(self):
