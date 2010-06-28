@@ -1,3 +1,7 @@
+  60.	[build]		jinmei
+	Supported SunStudio C++ compiler.  Note: gtest still doesn't work.
+	(Trac #251, svn r2310)
+
   59.	[bug]		jinmei
 	lib/datasrc,bin/auth: The authoritative server could return a
 	SERVFAIL with a partial answer if it finds a data source broken
