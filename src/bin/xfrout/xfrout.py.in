@@ -58,7 +58,7 @@ class XfroutSession(BaseRequestHandler):
     def handle(self):
         fd = recv_fd(self.request.fileno())
         if fd < 0:
-            self._log.log_message("error", "Failed to receive the FD for XFR connection")
+            self._log.log_message("error", "Failed to receive the file descriptor for XFR connection")
         data_len = self.request.recv(2)
         msg_len = struct.unpack('!H', data_len)[0]
         msgdata = self.request.recv(msg_len)
@@ -397,7 +397,7 @@ class XfroutServer:
 
     def command_handler(self, cmd, args):
         if cmd == "shutdown":
-            self._log.log_message("info", "Received shut down command.")
+            self._log.log_message("info", "Received shutdown command.")
             self.shutdown()
             answer = create_answer(0)
         else: 
