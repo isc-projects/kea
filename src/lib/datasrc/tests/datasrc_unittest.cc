@@ -770,7 +770,7 @@ TEST_F(DataSrcTest, DS) {
 }
 
 TEST_F(DataSrcTest, CNAMELoop) {
-    createAndProcessQuery(Name("loop1.example.com"), RRClass::IN(),
+    createAndProcessQuery(Name("one.loop.example"), RRClass::IN(),
                           RRType::A());
 }
 
@@ -862,6 +862,24 @@ TEST_F(DataSrcTest, DISABLED_synthesizedCnameTooLong) {
              "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcde."
              "0123456789abcdef0123456789abcdef0123456789a.dname.example.org."),
         RRClass::IN(), RRType::A());
+}
+
+TEST_F(DataSrcTest, noNSZone) {
+    EXPECT_THROW(createAndProcessQuery(Name("www.nons.example"),
+                                       RRClass::IN(), RRType::A()),
+                 DataSourceError);
+}
+
+TEST_F(DataSrcTest, noNSButDnameZone) {
+    EXPECT_THROW(createAndProcessQuery(Name("www.nons-dname.example"),
+                                       RRClass::IN(), RRType::A()),
+                 DataSourceError);
+}
+
+TEST_F(DataSrcTest, noSOAZone) {
+    EXPECT_THROW(createAndProcessQuery(Name("notexist.nosoa.example"),
+                                       RRClass::IN(), RRType::A()),
+                 DataSourceError);
 }
 
 }
