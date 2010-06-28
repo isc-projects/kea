@@ -74,9 +74,10 @@ protected:
     MessageRenderer response_renderer;
     vector<uint8_t> data;
 
-    void createDataFromFile(const char* const datafile);
+    void createDataFromFile(const char* const datafile, int protocol);
     void createRequest(const Opcode& opcode, const Name& request_name,
-                       const RRClass& rrclass, const RRType& rrtype);
+                       const RRClass& rrclass, const RRType& rrtype,
+                       int protocol);
 };
 
 // These are flags to indicate whether the corresponding flag bit of the
@@ -91,12 +92,14 @@ const unsigned int AD_FLAG = 0x20;
 const unsigned int CD_FLAG = 0x40;
 
 void
-AuthSrvTest::createDataFromFile(const char* const datafile) {
+AuthSrvTest::createDataFromFile(const char* const datafile,
+                                const int protocol = IPPROTO_UDP)
+{
     delete io_message;
     data.clear();
 
     delete endpoint;
-    endpoint = IOEndpoint::create(IPPROTO_UDP, IOAddress("192.0.2.1"), 5300);
+    endpoint = IOEndpoint::create(protocol, IOAddress("192.0.2.1"), 5300);
     UnitTestUtil::readWireData(datafile, data);
     io_message = new IOMessage(&data[0], data.size(),
                                IOSocket::getDummyUDPSocket(), *endpoint);
@@ -104,14 +107,16 @@ AuthSrvTest::createDataFromFile(const char* const datafile) {
 
 void
 AuthSrvTest::createRequest(const Opcode& opcode, const Name& request_name,
-                           const RRClass& rrclass, const RRType& rrtype) 
+                           const RRClass& rrclass, const RRType& rrtype,
+                           const int protocol = IPPROTO_UDP)
 {
     request_message.setOpcode(opcode);
+    request_message.setQid(default_qid);
     request_message.addQuestion(Question(request_name, rrclass, rrtype));
     request_message.toWire(request_renderer);
 
     delete io_message;
-    endpoint = IOEndpoint::create(IPPROTO_UDP, IOAddress("192.0.2.1"), 5300);
+    endpoint = IOEndpoint::create(protocol, IOAddress("192.0.2.1"), 5300);
     io_message = new IOMessage(request_renderer.getData(),
                                request_renderer.getLength(),
                                IOSocket::getDummyUDPSocket(), *endpoint);
@@ -261,11 +266,19 @@ TEST_F(AuthSrvTest, ednsBadVers) {
     EXPECT_FALSE(parse_message.isDNSSECSupported());
 }
 
-// notify-in teset.
+TEST_F(AuthSrvTest, AXFROverUDP) {
+    // AXFR over UDP is invalid and should result in FORMERR.
+    createRequest(opcode, Name("example.com"), RRClass::IN(), RRType::AXFR(),
+                  IPPROTO_UDP);
+    EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
+                                          response_renderer));
+    headerCheck(parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
+                QR_FLAG, 1, 0, 0, 0);
+}
+
 TEST_F(AuthSrvTest, notifyInTest) {
     createRequest(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
                   RRType::SOA());
-    parse_message.clear(Message::PARSE);
     EXPECT_EQ(false, server.processMessage(*io_message, parse_message,
                                            response_renderer));
 }
