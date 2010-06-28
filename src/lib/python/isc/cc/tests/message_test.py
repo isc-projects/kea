@@ -21,11 +21,6 @@
 import unittest
 import isc.cc
 
-#
-# Umz, do we need anything more than abstraction from JSON?
-# (i.e. a encode and decode function?)
-#
-
 class MessageTest(unittest.TestCase):
     def setUp(self):
         self.msg1 = { "just": [ "an", "arbitrary", "structure" ] }
@@ -40,14 +35,20 @@ class MessageTest(unittest.TestCase):
         self.assertEqual(self.msg1_wire, isc.cc.message.to_wire(self.msg1))
         self.assertEqual(self.msg2_wire, isc.cc.message.to_wire(self.msg2))
 
+        self.assertRaises(TypeError, isc.cc.message.to_wire, NotImplemented)
+        
     def test_decode_json(self):
         self.assertEqual(self.msg1, isc.cc.message.from_wire(self.msg1_wire))
         self.assertEqual(self.msg2, isc.cc.message.from_wire(self.msg2_wire))
 
+        self.assertRaises(AttributeError, isc.cc.message.from_wire, 1)
+        self.assertRaises(ValueError, isc.cc.message.from_wire, b'\x001')
+        self.assertRaises(ValueError, isc.cc.message.from_wire, b'')
+        self.assertRaises(ValueError, isc.cc.message.from_wire, b'{"a": ')
+        self.assertRaises(ValueError, isc.cc.message.from_wire, b'[ 1 ')
+        self.assertRaises(ValueError, isc.cc.message.from_wire, b']')
+
 if __name__ == '__main__':
-    #if not 'CONFIG_TESTDATA_PATH' in os.environ:
-    #    print("You need to set the environment variable CONFIG_TESTDATA_PATH to point to the directory containing the test data files")
-    #    exit(1)
     unittest.main()
 
 

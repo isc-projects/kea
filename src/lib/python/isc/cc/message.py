@@ -24,9 +24,17 @@ import struct
 import json
 
 def to_wire(items):
+    '''Encodes the given python structure in JSON, and converts the
+       result to bytes. Raises a TypeError if the given structure is
+       not serializable with JSON.'''
     return json.dumps(items).encode('utf8')
 
 def from_wire(data):
+    '''Decodes the given bytes and parses it with the builtin JSON
+       parser. Raises a ValueError if the data is not valid JSON.
+       Raises an AttributeError if the given object has no decode()
+       method (which should return a string).
+       '''
     return json.loads(data.decode('utf8'))
 
 if __name__ == "__main__":
