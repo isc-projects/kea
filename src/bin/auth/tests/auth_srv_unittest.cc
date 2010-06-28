@@ -75,6 +75,8 @@ protected:
     vector<uint8_t> data;
 
     void createDataFromFile(const char* const datafile);
+    void createRequest(const Opcode& opcode, const Name& request_name,
+                       const RRClass& rrclass, const RRType& rrtype);
 };
 
 // These are flags to indicate whether the corresponding flag bit of the
@@ -97,6 +99,21 @@ AuthSrvTest::createDataFromFile(const char* const datafile) {
     endpoint = IOEndpoint::create(IPPROTO_UDP, IOAddress("192.0.2.1"), 5300);
     UnitTestUtil::readWireData(datafile, data);
     io_message = new IOMessage(&data[0], data.size(),
+                               IOSocket::getDummyUDPSocket(), *endpoint);
+}
+
+void
+AuthSrvTest::createRequest(const Opcode& opcode, const Name& request_name,
+                           const RRClass& rrclass, const RRType& rrtype) 
+{
+    request_message.setOpcode(opcode);
+    request_message.addQuestion(Question(request_name, rrclass, rrtype));
+    request_message.toWire(request_renderer);
+
+    delete io_message;
+    endpoint = IOEndpoint::create(IPPROTO_UDP, IOAddress("192.0.2.1"), 5300);
+    io_message = new IOMessage(request_renderer.getData(),
+                               request_renderer.getLength(),
                                IOSocket::getDummyUDPSocket(), *endpoint);
 }
 
@@ -246,14 +263,12 @@ TEST_F(AuthSrvTest, ednsBadVers) {
 
 // notify-in teset.
 TEST_F(AuthSrvTest, notifyInTest) {
-    createDataFromFile("notifyin_fromwire");
+    createRequest(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
+                  RRType::SOA());
     parse_message.clear(Message::PARSE);
     EXPECT_EQ(false, server.processMessage(*io_message, parse_message,
-                                              response_renderer));
-    //headerCheck(parse_message, default_qid, Rcode::SERVFAIL(), Opcode::NOTIFY().getCode(), QR_FLAG,
-    //                1, 0, 0, 0);
+                                           response_renderer));
 }
-
 
 void
 updateConfig(AuthSrv* server, const char* const dbfile,
