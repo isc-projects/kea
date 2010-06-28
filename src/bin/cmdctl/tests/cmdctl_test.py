@@ -157,7 +157,7 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
     def test_check_user_name_and_pwd(self):
         self.handler.headers = {}
         ret, msg = self.handler._check_user_name_and_pwd()
-        self.assertTrue(ret == False)
+        self.assertFalse(ret)
         self.assertEqual(msg, ['invalid username or password'])
 
     def test_check_user_name_and_pwd_1(self):
@@ -168,7 +168,7 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
 
         self.handler.server._user_infos['root'] = ['aa', 'aaa']
         ret, msg = self.handler._check_user_name_and_pwd()
-        self.assertTrue(ret == False)
+        self.assertFalse(ret)
         self.assertEqual(msg, ['password doesn\'t match'])
 
     def test_check_user_name_and_pwd_2(self):
@@ -178,7 +178,7 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
         self.handler.rfile.seek(0, 0)
 
         ret, msg = self.handler._check_user_name_and_pwd()
-        self.assertTrue(ret == False)
+        self.assertFalse(ret)
         self.assertEqual(msg, ['invalid username or password'])
 
     def test_check_user_name_and_pwd_3(self):
@@ -188,7 +188,7 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
         self.handler.rfile.seek(0, 0)
 
         ret, msg = self.handler._check_user_name_and_pwd()
-        self.assertTrue(ret == False)
+        self.assertFalse(ret)
         self.assertEqual(msg, ['need user name'])
 
     def test_check_user_name_and_pwd_4(self):
@@ -199,7 +199,7 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
 
         self.handler.server._user_infos['root'] = ['aa', 'aaa']
         ret, msg = self.handler._check_user_name_and_pwd()
-        self.assertTrue(ret == False)
+        self.assertFalse(ret)
         self.assertEqual(msg, ['need password'])
 
     def test_check_user_name_and_pwd_5(self):
@@ -209,7 +209,7 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
         self.handler.rfile.seek(0, 0)
 
         ret, msg = self.handler._check_user_name_and_pwd()
-        self.assertTrue(ret == False)
+        self.assertFalse(ret)
         self.assertEqual(msg, ['user doesn\'t exist'])
 
     def test_do_POST(self):
@@ -287,6 +287,7 @@ class MyCommandControl(CommandControl):
         spec_file = FILE_PATH + 'cmdctl.spec'
         module_spec = isc.config.module_spec_from_file(spec_file)
         config = isc.config.config_data.ConfigData(module_spec)
+        self._module_name = 'Cmdctl'
         self._cmdctl_config_data = config.get_full_config()
 
     def _handle_msg_from_msgq(self): 
@@ -369,7 +370,7 @@ class TestCommandControl(unittest.TestCase):
         os.remove(file_name)
     
     def test_send_command(self):
-        rcode, value = self.cmdctl.send_command(MODULE_NAME, 'print_settings', None)
+        rcode, value = self.cmdctl.send_command('Cmdctl', 'print_settings', None)
         self.assertEqual(rcode, 0)
 
 class MySecureHTTPServer(SecureHTTPServer):
@@ -395,6 +396,13 @@ class TestSecureHTTPServer(unittest.TestCase):
         self.assertEqual(1, len(self.server._user_infos))
         self.assertTrue('root' in self.server._user_infos)
 
+    def test_check_key_and_cert(self):
+        self.assertRaises(CmdctlException, self.server._check_key_and_cert,
+                         '/local/not-exist', 'cmdctl-keyfile.pem')
+
+        self.server._check_key_and_cert(FILE_PATH + 'cmdctl-keyfile.pem',
+                                        FILE_PATH + 'cmdctl-certfile.pem')
+
     def test_wrap_sock_in_ssl_context(self):
         sock = socket.socket()
         self.assertRaises(socket.error, 
@@ -403,7 +411,8 @@ class TestSecureHTTPServer(unittest.TestCase):
                           '../cmdctl-keyfile',
                           '../cmdctl-certfile')
 
-        self.server._wrap_socket_in_ssl_context(sock, 
+        sock1 = socket.socket()
+        self.server._wrap_socket_in_ssl_context(sock1, 
                           FILE_PATH + 'cmdctl-keyfile.pem',
                           FILE_PATH + 'cmdctl-certfile.pem')
 

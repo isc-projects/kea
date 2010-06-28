@@ -108,7 +108,7 @@ class BindCmdInterpreter(Cmd):
         return digest
     
     def run(self):
-        '''Parse commands inputted from user and send them to cmdctl. '''
+        '''Parse commands from user and send them to cmdctl. '''
         try:
             if not self.login_to_cmdctl():
                 return False
