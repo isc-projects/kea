@@ -16,6 +16,7 @@
 
 #include <config.h>
 
+#include <unistd.h>             // for some IPC/network system calls
 #include <asio.hpp>
 #include <boost/bind.hpp>
 
