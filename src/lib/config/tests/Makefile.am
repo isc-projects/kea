@@ -22,7 +22,10 @@ run_unittests_LDADD =  $(GTEST_LDADD)
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 run_unittests_LDADD += libfake_session.la
 run_unittests_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
-run_unittests_LDADD += $(top_builddir)/src/lib/cc/libcc.la
+# link *only* to data.o from lib/cc (more importantly, don't link in
+# the session class provided there, since we use our own fake_session
+# here)
+run_unittests_LDADD += $(top_builddir)/src/lib/cc/data.o
 
 endif
 
