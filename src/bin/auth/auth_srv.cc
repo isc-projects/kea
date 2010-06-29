@@ -427,6 +427,7 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
     }
 
     message.makeResponse();
+    message.setHeaderFlag(MessageFlag::AA());
     message.setRcode(Rcode::NOERROR());
     message.toWire(response_renderer);
     return (true);
