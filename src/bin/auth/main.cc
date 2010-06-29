@@ -39,16 +39,19 @@
 #include <cc/data.h>
 #include <config/ccsession.h>
 
-#include "spec_config.h"
-#include "common.h"
-#include "auth_srv.h"
-#include "asio_link.h"
+#include <xfr/xfrout_client.h>
+
+#include <auth/spec_config.h>
+#include <auth/common.h>
+#include <auth/auth_srv.h>
+#include <auth/asio_link.h>
 
 using namespace std;
 using namespace isc::data;
 using namespace isc::cc;
 using namespace isc::config;
 using namespace isc::dns;
+using namespace isc::xfr;
 
 namespace {
 
@@ -133,6 +136,8 @@ main(int argc, char* argv[]) {
 
     // initialize command channel
     int ret = 0;
+
+    XfroutClient xfrout_client(UNIX_SOCKET_FILE);
     try {
         string specfile;
         if (getenv("B10_FROM_BUILD")) {
@@ -142,7 +147,7 @@ main(int argc, char* argv[]) {
             specfile = string(AUTH_SPECFILE_LOCATION);
         }
 
-        auth_server = new AuthSrv;
+        auth_server = new AuthSrv(xfrout_client);
         auth_server->setVerbose(verbose_mode);
 
         io_service = new asio_link::IOService(auth_server, port, use_ipv4,

@@ -28,6 +28,10 @@ class InputBuffer;
 class Message;
 class MessageRenderer;
 }
+
+namespace xfr {
+class AbstractXfroutClient;
+};
 }
 
 namespace asio_link {
@@ -47,7 +51,7 @@ private:
     AuthSrv(const AuthSrv& source);
     AuthSrv& operator=(const AuthSrv& source);
 public:
-    explicit AuthSrv();
+    explicit AuthSrv(isc::xfr::AbstractXfroutClient& xfrout_client);
     ~AuthSrv();
     //@}
     /// \return \c true if the \message contains a response to be returned;
