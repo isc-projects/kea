@@ -1,3 +1,8 @@
+  63.  [func]       shane
+    Added initial support for setuid(), using the "-u" flag. This will
+    be replaced in the future, but for now provides a reasonable 
+    starting point.
+    (Trac #180, svn r2330)
 
   62.  [func]		jelte
 	bin/xfrin: Use the database_file as configured in Auth to transfers
