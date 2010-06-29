@@ -2,7 +2,9 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 # see src/lib/cc/Makefile.am for -Wno-unused-parameter
+if USE_GXX
 AM_CXXFLAGS += -Wno-unused-parameter
+endif
 
 CLEANFILES = *.gcno *.gcda
 
@@ -20,7 +22,7 @@ run_unittests_LDADD =  $(GTEST_LDADD)
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 run_unittests_LDADD += libfake_session.la
 run_unittests_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
-run_unittests_LDADD += $(top_builddir)/src/lib/cc/data.o
+run_unittests_LDADD += $(top_builddir)/src/lib/cc/libcc.la
 
 endif
 
