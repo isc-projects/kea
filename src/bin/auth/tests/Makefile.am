@@ -22,7 +22,7 @@ run_unittests_LDADD += $(SQLITE_LIBS)
 run_unittests_LDADD +=  $(top_builddir)/src/lib/datasrc/.libs/libdatasrc.a
 run_unittests_LDADD +=  $(top_builddir)/src/lib/dns/.libs/libdns++.a
 run_unittests_LDADD += $(top_builddir)/src/lib/config/.libs/libcfgclient.a
-run_unittests_LDADD += $(top_builddir)/src/lib/cc/libcc.a
+run_unittests_LDADD += $(top_builddir)/src/lib/cc/.libs/libcc.a
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/.libs/libexceptions.a
 endif
 
