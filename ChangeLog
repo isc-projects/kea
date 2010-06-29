@@ -1,3 +1,12 @@
+
+  62.  [func]		jelte
+	bin/xfrin: Use the database_file as configured in Auth to transfers
+	bin/xfrout: Use the database_file as configured in Auth to transfers
+
+  61.  [bug]		jelte
+	bin/auth: Enable b10-auth to be launched in source tree
+	(i.e. use a zone database file relative to that)
+
   60.	[build]		jinmei
 	Supported SunStudio C++ compiler.  Note: gtest still doesn't work.
 	(Trac #251, svn r2310)

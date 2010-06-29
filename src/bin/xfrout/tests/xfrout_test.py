@@ -242,22 +242,32 @@ class TestXfroutSession(unittest.TestCase):
         self.xfrsess.server._shutdown_event.set()
         self.assertRaises(XfroutException, self.xfrsess._reply_xfrout_query, self.getmsg(), self.sock, "example.com.")
 
+class MyCCSession():
+    def __init__(self):
+        pass
+
+    def get_remote_config_value(self, module_name, identifier):
+        if module_name == "Auth" and identifier == "database_file":
+            return "initdb.file", False
+        else:
+            return "unknown", False
+    
+
 class MyUnixSockServer(UnixSockServer):
     def __init__(self):
         self._lock = threading.Lock()
         self._transfers_counter = 0
         self._shutdown_event = threading.Event()
-        self._db_file = "initdb.file"
         self._max_transfers_out = 10
+        self._cc = MyCCSession()
 
 class TestUnixSockServer(unittest.TestCase):
     def setUp(self):
         self.unix = MyUnixSockServer()
      
     def test_updata_config_data(self):
-        self.unix.update_config_data({'transfers_out':10, 'db_file':"db.file"})
+        self.unix.update_config_data({'transfers_out':10 })
         self.assertEqual(self.unix._max_transfers_out, 10)
-        self.assertEqual(self.unix._db_file, "db.file")
 
     def test_get_db_file(self):
         self.assertEqual(self.unix.get_db_file(), "initdb.file")
