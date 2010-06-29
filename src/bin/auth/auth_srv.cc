@@ -161,8 +161,9 @@ makeErrorMessage(Message& message, MessageRenderer& renderer,
     const Opcode& opcode = message.getOpcode();
     vector<QuestionPtr> questions;
 
-    // If this is an error to a query, we should also copy the question section.
-    if (opcode == Opcode::QUERY()) {
+    // If this is an error to a query or notify, we should also copy the
+    // question section.
+    if (opcode == Opcode::QUERY() || opcode == Opcode::NOTIFY()) {
         questions.assign(message.beginQuestion(), message.endQuestion());
     }
 
@@ -377,6 +378,32 @@ bool
 AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message, 
                            MessageRenderer& response_renderer) 
 {
+    // The incoming notify must contain exactly one question for SOA of the
+    // zone name.
+    if (message.getRRCount(Section::QUESTION()) != 1) {
+        if (verbose_mode_) {
+                cerr << "[b10-auth] invalid number of questions in notify: "
+                     << message.getRRCount(Section::QUESTION()) << endl;
+        }
+        makeErrorMessage(message, response_renderer, Rcode::FORMERR(),
+                         verbose_mode_);
+        return (true);
+    }
+    ConstQuestionPtr question = *message.beginQuestion();
+    if (question->getType() != RRType::SOA()) {
+        if (verbose_mode_) {
+                cerr << "[b10-auth] invalid question RR type in notify: "
+                     << question->getType() << endl;
+        }
+        makeErrorMessage(message, response_renderer, Rcode::FORMERR(),
+                         verbose_mode_);
+        return (true);
+    }
+
+    // According to RFC 1996, rcode should be "no error" and AA bit should be
+    // on, but we don't check these conditions.  This behavior is compatible
+    // with BIND 9.
+
     // TODO check with the conf-mgr whether current server is the auth of the
     // zone
     if (!is_notify_session_established_) {
@@ -392,8 +419,7 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
             return (false);
         }
     }
-
-    ConstQuestionPtr question = *message.beginQuestion();
+    
     const string remote_ip_address =
         io_message.getRemoteEndpoint().getAddress().toText();
     static const string command_template_start =
