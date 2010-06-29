@@ -137,6 +137,7 @@ main(int argc, char* argv[]) {
     // initialize command channel
     int ret = 0;
 
+    Session session_with_xfrin;
     XfroutClient xfrout_client(UNIX_SOCKET_FILE);
     try {
         string specfile;
@@ -147,7 +148,7 @@ main(int argc, char* argv[]) {
             specfile = string(AUTH_SPECFILE_LOCATION);
         }
 
-        auth_server = new AuthSrv(xfrout_client);
+        auth_server = new AuthSrv(session_with_xfrin, xfrout_client);
         auth_server->setVerbose(verbose_mode);
 
         io_service = new asio_link::IOService(auth_server, port, use_ipv4,

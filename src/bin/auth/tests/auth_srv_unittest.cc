@@ -26,6 +26,7 @@
 #include <dns/rrtype.h>
 
 #include <cc/data.h>
+#include <cc/session.h>
 
 #include <xfr/xfrout_client.h>
 
@@ -36,6 +37,7 @@
 
 using isc::UnitTestUtil;
 using namespace std;
+using namespace isc::cc;
 using namespace isc::dns;
 using namespace isc::data;
 using namespace isc::xfr;
@@ -72,8 +74,27 @@ private:
         bool send_ok_;
         bool disconnect_ok_;
     };
+
+    class MockSession : public AbstractSession {
+    public:
+        MockSession() :
+            // by default we return a simple "success" message.
+            msg_(Element::createFromString("{\"result\": [0, \"SUCCESS\"]}"))
+        {}
+        virtual void establish(const char* socket_file);
+        virtual void disconnect();
+        virtual int group_sendmsg(ElementPtr msg, string group,
+                                  string instance, string to);
+        virtual bool group_recvmsg(ElementPtr& envelope, ElementPtr& msg,
+                                   bool nonblock, int seq);
+        void setMessage(ElementPtr msg) { msg_ = msg; }
+    private:
+        ElementPtr msg_;
+    };
+
 protected:
-    AuthSrvTest() : server(xfrout), request_message(Message::RENDER),
+    AuthSrvTest() : server(notify_session, xfrout),
+                    request_message(Message::RENDER),
                     parse_message(Message::PARSE), default_qid(0x1035),
                     opcode(Opcode(Opcode::QUERY())), qname("www.example.com"),
                     qclass(RRClass::IN()), qtype(RRType::A()),
@@ -85,6 +106,7 @@ protected:
         delete io_message;
         delete endpoint;
     }
+    MockSession notify_session;
     MockXfroutClient xfrout;
     AuthSrv server;
     Message request_message;
@@ -107,6 +129,33 @@ protected:
                        const RRClass& rrclass, const RRType& rrtype,
                        int protocol);
 };
+
+void
+AuthSrvTest::MockSession::establish(const char* socket_file UNUSED_PARAM) {
+}
+
+void
+AuthSrvTest::MockSession::disconnect() {
+}
+
+int
+AuthSrvTest::MockSession::group_sendmsg(ElementPtr msg UNUSED_PARAM,
+                                        string group UNUSED_PARAM,
+                                        string instance UNUSED_PARAM,
+                                        string to UNUSED_PARAM)
+{
+    return (0);
+}
+
+bool
+AuthSrvTest::MockSession::group_recvmsg(ElementPtr& envelope UNUSED_PARAM,
+                                        ElementPtr& msg,
+                                        bool nonblock UNUSED_PARAM,
+                                        int seq UNUSED_PARAM)
+{
+    msg = msg_;
+    return (true);
+}
 
 void
 AuthSrvTest::MockXfroutClient::connect() {
@@ -136,6 +185,7 @@ AuthSrvTest::MockXfroutClient::sendXfroutRequestInfo(
     }
     return (0);
 }
+
 
 // These are flags to indicate whether the corresponding flag bit of the
 // DNS header is to be set in the test cases.  (Note that the flag values
@@ -402,8 +452,10 @@ TEST_F(AuthSrvTest, AXFRDisconnectFail) {
 TEST_F(AuthSrvTest, notifyInTest) {
     createRequest(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
                   RRType::SOA());
-    EXPECT_EQ(false, server.processMessage(*io_message, parse_message,
+    EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
                                            response_renderer));
+    headerCheck(parse_message, default_qid, Rcode::NOERROR(),
+                Opcode::NOTIFY().getCode(), QR_FLAG | AA_FLAG, 1, 0, 0, 0);
 }
 
 void

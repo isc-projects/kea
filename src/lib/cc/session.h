@@ -40,7 +40,43 @@ namespace isc {
                 isc::Exception(file, line, what) {}
         };
 
-        class Session {
+        /// \brief The AbstractSession class is an abstract base class that
+        /// defines the interfaces of Session.
+        /// The intended primary usage of abstraction is to allow tests for the
+        /// user class of Session without requiring actual communication
+        /// channels.
+        /// For simplicity we only define the methods that are necessary for
+        /// existing test cases that use this base class.  Eventually we'll
+        /// probably have to extend them.
+        class AbstractSession {
+            ///
+            /// \name Constructors, Assignment Operator and Destructor.
+            ///
+            /// Note: The copy constructor and the assignment operator are
+            /// intentionally defined as private to make it explicit that
+            /// this is a pure base class.
+            //@{
+        private:
+            AbstractSession(const AbstractSession& source);
+            AbstractSession& operator=(const AbstractSession& source);
+        protected:
+            AbstractSession() {}
+        public:
+            virtual ~AbstractSession() {}
+            //@}
+            virtual void establish(const char* socket_file) = 0;
+            virtual void disconnect() = 0;
+            virtual int group_sendmsg(isc::data::ElementPtr msg,
+                                      std::string group,
+                                      std::string instance,
+                                      std::string to) = 0;
+            virtual bool group_recvmsg(isc::data::ElementPtr& envelope,
+                                       isc::data::ElementPtr& msg,
+                                       bool nonblock,
+                                       int seq) = 0;
+        };
+
+    class Session : public AbstractSession {
         private:
             SessionImpl* impl_;
 
@@ -51,14 +87,14 @@ namespace isc {
         public:
             Session();
             Session(asio::io_service& ioservice);
-            ~Session();
+            virtual ~Session();
 
             // XXX: quick hack to allow the user to watch the socket directly.
             int getSocket() const;
 
             void startRead(boost::function<void()> read_callback);
 
-            void establish(const char* socket_file = NULL);
+            virtual void establish(const char* socket_file = NULL);
             void disconnect();
             void sendmsg(isc::data::ElementPtr& msg);
             void sendmsg(isc::data::ElementPtr& env,
@@ -74,14 +110,14 @@ namespace isc {
                            std::string instance = "*");
             void unsubscribe(std::string group,
                              std::string instance = "*");
-            int group_sendmsg(isc::data::ElementPtr msg,
-                                       std::string group,
-                                       std::string instance = "*",
-                                       std::string to = "*");
-            bool group_recvmsg(isc::data::ElementPtr& envelope,
-                               isc::data::ElementPtr& msg,
-                               bool nonblock = true,
-                               int seq = -1);
+            virtual int group_sendmsg(isc::data::ElementPtr msg,
+                                      std::string group,
+                                      std::string instance = "*",
+                                      std::string to = "*");
+            virtual bool group_recvmsg(isc::data::ElementPtr& envelope,
+                                       isc::data::ElementPtr& msg,
+                                       bool nonblock = true,
+                                       int seq = -1);
             int reply(isc::data::ElementPtr& envelope,
                                isc::data::ElementPtr& newmsg);
             bool hasQueuedMsgs();
