@@ -415,7 +415,6 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
                 cerr << "[b10-auth] Error in connection with xfrin module: "
                      << err.what() << endl;
             }
-            is_notify_session_established_ = false;
             return (false);
         }
     }

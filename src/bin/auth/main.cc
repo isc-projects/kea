@@ -137,7 +137,7 @@ main(int argc, char* argv[]) {
     // initialize command channel
     int ret = 0;
 
-    Session session_with_xfrin;
+    Session session_with_xfrin; // we should eventually pass io_service here.
     XfroutClient xfrout_client(UNIX_SOCKET_FILE);
     try {
         string specfile;
