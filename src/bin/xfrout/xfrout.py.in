@@ -41,14 +41,17 @@ except ImportError as e:
 
 if "B10_FROM_BUILD" in os.environ:
     SPECFILE_PATH = os.environ["B10_FROM_BUILD"] + "/src/bin/xfrout"
+    AUTH_SPECFILE_PATH = os.environ["B10_FROM_BUILD"] + "/src/bin/auth"
     UNIX_SOCKET_FILE= os.environ["B10_FROM_BUILD"] + "/auth_xfrout_conn"
 else:
     PREFIX = "@prefix@"
     DATAROOTDIR = "@datarootdir@"
     SPECFILE_PATH = "@datadir@/@PACKAGE@".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
+    AUTH_SPECFILE_PATH = SPECFILE_PATH
     UNIX_SOCKET_FILE = "@@LOCALSTATEDIR@@/auth_xfrout_conn"
 
 SPECFILE_LOCATION = SPECFILE_PATH + "/xfrout.spec"
+AUTH_SPECFILE_LOCATION = AUTH_SPECFILE_PATH + os.sep + "auth.spec"
 MAX_TRANSFERS_OUT = 10
 verbose_mode = False
 
@@ -285,7 +288,7 @@ class XfroutSession(BaseRequestHandler):
 class UnixSockServer(ThreadingUnixStreamServer):
     '''The unix domain socket server which accept xfr query sent from auth server.'''
 
-    def __init__(self, sock_file, handle_class, shutdown_event, config_data):
+    def __init__(self, sock_file, handle_class, shutdown_event, config_data, cc):
         self._remove_unused_sock_file(sock_file)
         self._sock_file = sock_file
         ThreadingUnixStreamServer.__init__(self, sock_file, handle_class)
@@ -293,6 +296,7 @@ class UnixSockServer(ThreadingUnixStreamServer):
         self._transfers_counter = 0
         self._shutdown_event = shutdown_event
         self.update_config_data(config_data)
+        self._cc = cc
 
     def _remove_unused_sock_file(self, sock_file):
         '''Try to remove the socket file. If the file is being used 
@@ -334,17 +338,19 @@ class UnixSockServer(ThreadingUnixStreamServer):
 
     def update_config_data(self, new_config):
         '''Apply the new config setting of xfrout module. '''
-
         self._lock.acquire()
         self._max_transfers_out = new_config.get('transfers_out')
-        self._db_file = new_config.get('db_file')
         self._lock.release()
 
     def get_db_file(self):
-        self._lock.acquire()
-        file = self._db_file
-        self._lock.release()
+        file, is_default = self._cc.get_remote_config_value("Auth", "database_file")
+        # this too should be unnecessary, but currently the
+        # 'from build' override isn't stored in the config
+        # (and we don't have indirect python access to datasources yet)
+        if is_default and "B10_FROM_BUILD" in os.environ:
+            file = os.environ["B10_FROM_BUILD"] + os.sep + "bind10_zones.sqlite3"
         return file
+
 
     def increase_transfers_counter(self):
         '''Return False, if counter + 1 > max_transfers_out, or else
@@ -388,16 +394,16 @@ class XfroutServer:
         self._listen_sock_file = UNIX_SOCKET_FILE 
         self._shutdown_event = threading.Event()
         self._cc = isc.config.ModuleCCSession(SPECFILE_LOCATION, self.config_handler, self.command_handler)
+        self._cc.add_remote_config(AUTH_SPECFILE_LOCATION);
         self._config_data = self._cc.get_full_config()
         self._cc.start()
         self._start_xfr_query_listener()
-
 
     def _start_xfr_query_listener(self):
         '''Start a new thread to accept xfr query. '''
     
         self._unix_socket_server = UnixSockServer(self._listen_sock_file, XfroutSession, 
-                                                  self._shutdown_event, self._config_data);
+                                                  self._shutdown_event, self._config_data, self._cc);
         listener = threading.Thread(target = listen_on_xfr_query, args = (self._unix_socket_server,))
         listener.start()
 
