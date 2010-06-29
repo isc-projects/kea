@@ -55,6 +55,7 @@
 using namespace std;
 
 using namespace isc;
+using namespace isc::cc;
 using namespace isc::datasrc;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
@@ -69,7 +70,8 @@ private:
     AuthSrvImpl(const AuthSrvImpl& source);
     AuthSrvImpl& operator=(const AuthSrvImpl& source);
 public:
-    AuthSrvImpl(AbstractXfroutClient& xfrout_client);
+    AuthSrvImpl(AbstractSession& session_with_xfrin,
+                AbstractXfroutClient& xfrout_client);
     ~AuthSrvImpl();
     isc::data::ElementPtr setDbFile(const isc::data::ElementPtr config);
 
@@ -90,7 +92,7 @@ public:
     bool verbose_mode_;
 
     bool is_notify_session_established_;
-    isc::cc::Session session_with_xfrin_;
+    AbstractSession& session_with_xfrin_;
 
     bool is_axfr_connection_established_;
     AbstractXfroutClient& xfrout_client_;
@@ -99,9 +101,11 @@ public:
     static const uint16_t DEFAULT_LOCAL_UDPSIZE = 4096;
 };
 
-AuthSrvImpl::AuthSrvImpl(AbstractXfroutClient& xfrout_client) :
+AuthSrvImpl::AuthSrvImpl(AbstractSession& session_with_xfrin,
+                         AbstractXfroutClient& xfrout_client) :
     cs_(NULL), verbose_mode_(false),
     is_notify_session_established_(false),
+    session_with_xfrin_(session_with_xfrin),
     is_axfr_connection_established_(false),
     xfrout_client_(xfrout_client)
 {
@@ -125,8 +129,9 @@ AuthSrvImpl::~AuthSrvImpl() {
     }
 }
 
-AuthSrv::AuthSrv(AbstractXfroutClient& xfrout_client) :
-    impl_(new AuthSrvImpl(xfrout_client))
+AuthSrv::AuthSrv(AbstractSession& session_with_xfrin,
+                 AbstractXfroutClient& xfrout_client) :
+    impl_(new AuthSrvImpl(session_with_xfrin, xfrout_client))
 {}
 
 AuthSrv::~AuthSrv() {
@@ -218,7 +223,8 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
         // Ignore all responses.
         if (message.getHeaderFlag(MessageFlag::QR())) {
             if (impl_->verbose_mode_) {
-                cerr << "[b10-auth] received unexpected response, ignoring" << endl;
+                cerr << "[b10-auth] received unexpected response, ignoring"
+                     << endl;
             }
             return (false);
         }
@@ -231,8 +237,8 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
         message.fromWire(request_buffer);
     } catch (const DNSProtocolError& error) {
         if (impl_->verbose_mode_) {
-            cerr << "[b10-auth] returning " <<  error.getRcode().toText() << ": "
-                 << error.what() << endl;
+            cerr << "[b10-auth] returning " <<  error.getRcode().toText()
+                 << ": " << error.what() << endl;
         }
         makeErrorMessage(message, response_renderer, error.getRcode(),
                          impl_->verbose_mode_);
@@ -375,7 +381,7 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
     // zone
     if (!is_notify_session_established_) {
         try {
-            session_with_xfrin_.establish();
+            session_with_xfrin_.establish(NULL);
             is_notify_session_established_ = true;
         } catch (const isc::cc::SessionError& err) {
             if (verbose_mode_) {
@@ -398,17 +404,18 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
     try {
         ElementPtr notify_command = Element::createFromString(
                 command_template_start + question->getName().toText() + 
-                command_template_mid + remote_ip_address + command_template_end);
+                command_template_mid + remote_ip_address +
+                command_template_end);
         const unsigned int seq =
-            session_with_xfrin_.group_sendmsg(notify_command, "Xfrin");
+            session_with_xfrin_.group_sendmsg(notify_command, "Xfrin",
+                                              "*", "*");
         ElementPtr env, answer;
         session_with_xfrin_.group_recvmsg(env, answer, false, seq);
         int rcode;
         parseAnswer(rcode, answer);
     } catch (const isc::data::ParseError &err) {
         if (verbose_mode_) {
-            cerr << "create notfiy command failed: "
-                << err.what() << endl;
+            cerr << "create notfiy command failed: " << err.what() << endl;
         }
         return (false);
     } catch (const isc::Exception& err) {

@@ -51,7 +51,8 @@ private:
     AuthSrv(const AuthSrv& source);
     AuthSrv& operator=(const AuthSrv& source);
 public:
-    explicit AuthSrv(isc::xfr::AbstractXfroutClient& xfrout_client);
+    AuthSrv(isc::cc::AbstractSession& session_with_xfrin,
+            isc::xfr::AbstractXfroutClient& xfrout_client);
     ~AuthSrv();
     //@}
     /// \return \c true if the \message contains a response to be returned;
