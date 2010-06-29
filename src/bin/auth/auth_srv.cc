@@ -434,19 +434,20 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
         const unsigned int seq =
             session_with_xfrin_.group_sendmsg(notify_command, "Xfrin",
                                               "*", "*");
-        ElementPtr env, answer;
+        ElementPtr env, answer, parsed_answer;
         session_with_xfrin_.group_recvmsg(env, answer, false, seq);
         int rcode;
-        parseAnswer(rcode, answer);
-    } catch (const isc::data::ParseError &err) {
-        if (verbose_mode_) {
-            cerr << "create notfiy command failed: " << err.what() << endl;
+        parsed_answer = parseAnswer(rcode, answer);
+        if (rcode != 0) {
+            if (verbose_mode_) {
+                cerr << "[b10-auth] failed to notify Xfrin: "
+                     << parsed_answer->str() << endl; 
+            }
+            return (false);
         }
-        return (false);
-    } catch (const isc::Exception& err) {
+    } catch (const Exception& ex) {
         if (verbose_mode_) {
-            cerr << "[b10-auth] communicate with xfrin module failed: "
-                << err.what() << endl;
+            cerr << "[b10-auth] failed to notify Xfrin: " << ex.what() << endl;
         }
         return (false);
     }
