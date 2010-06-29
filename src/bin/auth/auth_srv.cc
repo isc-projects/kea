@@ -44,10 +44,7 @@
 
 #include <cc/data.h>
 
-#if defined(HAVE_BOOST_PYTHON)
-#define USE_XFROUT
 #include <xfr/xfrout_client.h>
-#endif
 
 #include <auth/common.h>
 #include <auth/auth_srv.h>
@@ -63,9 +60,7 @@ using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::data;
 using namespace isc::config;
-#ifdef USE_XFROUT
 using namespace isc::xfr;
-#endif
 using namespace asio_link;
 
 class AuthSrvImpl {
@@ -81,9 +76,9 @@ public:
     bool processNormalQuery(const IOMessage& io_message, Message& message,
                             MessageRenderer& response_renderer);
     bool processAxfrQuery(const IOMessage& io_message, Message& message,
-                            MessageRenderer& response_renderer) ;
+                            MessageRenderer& response_renderer);
     bool processNotify(const IOMessage& io_message, Message& message, 
-                            MessageRenderer& response_renderer) ;
+                            MessageRenderer& response_renderer);
     std::string db_file_;
     ModuleCCSession* cs_;
     MetaDataSrc data_sources_;
@@ -328,7 +323,7 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
     return (true);
 }
 
-#ifdef USE_XFROUT
+
 bool
 AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, Message& message,
                             MessageRenderer& response_renderer)
@@ -371,18 +366,6 @@ AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, Message& message,
     }
     return (false);
 }
-#else
-bool
-AuthSrvImpl::processAxfrQuery(
-    const IOMessage& io_message UNUSED_PARAM,
-    Message& message UNUSED_PARAM, 
-    MessageRenderer& response_renderer UNUSED_PARAM) const
-{
-    // should better to return an error message, but hopefully this case
-    // is short term workaround.
-    return (false);
-}
-#endif
 
 bool
 AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message, 
