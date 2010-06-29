@@ -224,7 +224,8 @@ RRTTL_toWire(s_RRTTL* self, PyObject* args) {
         
         OutputBuffer buffer(4);
         self->rrttl->toWire(buffer);
-        PyObject* n = PyBytes_FromStringAndSize((const char*) buffer.getData(), buffer.getLength());
+        PyObject* n = PyBytes_FromStringAndSize(static_cast<const char*>(buffer.getData()),
+                                                buffer.getLength());
         PyObject* result = PySequence_InPlaceConcat(bytes_o, n);
         // We need to release the object we temporarily created here
         // to prevent memory leak

@@ -64,7 +64,7 @@ class TestModuleSpec(unittest.TestCase):
 
     def test_to_text(self):
         self.assertEqual("A", RRType(1).to_text());
-        self.assertEqual("A", RRType(1).__str__());
+        self.assertEqual("A", str(RRType(1)));
         self.assertEqual("TYPE65000", RRType(65000).to_text());
 
     def test_to_wire_buffer(self):

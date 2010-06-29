@@ -141,7 +141,7 @@ class RcodeTest(unittest.TestCase):
 
     def test_to_text(self):
         self.assertEqual("NOERROR", Rcode(0).to_text())
-        self.assertEqual("NOERROR", Rcode(0).__str__())
+        self.assertEqual("NOERROR", str(Rcode(0)))
         self.assertEqual("FORMERR", Rcode(1).to_text())
         self.assertEqual("SERVFAIL", Rcode(2).to_text())
         self.assertEqual("NXDOMAIN", Rcode(3).to_text())

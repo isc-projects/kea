@@ -415,7 +415,7 @@ Name_toWire(s_Name* self, PyObject* args) {
         
         OutputBuffer buffer(Name::MAX_WIRE);
         self->name->toWire(buffer);
-        PyObject* name_bytes = PyBytes_FromStringAndSize((const char*) buffer.getData(), buffer.getLength());
+        PyObject* name_bytes = PyBytes_FromStringAndSize(static_cast<const char*>(buffer.getData()), buffer.getLength());
         PyObject* result = PySequence_InPlaceConcat(bytes_o, name_bytes);
         // We need to release the object we temporarily created here
         // to prevent memory leak
@@ -634,17 +634,18 @@ initModulePart_Name(PyObject* mod) {
     Py_INCREF(&name_type);
 
     // Add the constants to the module
-    addClassVariable(name_type, "MAX_WIRE", Py_BuildValue("I", 255U));
-    addClassVariable(name_type, "MAX_LABELS", Py_BuildValue("I", 128U));
-    addClassVariable(name_type, "MAX_LABELLEN", Py_BuildValue("I", 63U));
-    addClassVariable(name_type, "MAX_COMPRESS_POINTER", Py_BuildValue("I", 0x3fffU));
-    addClassVariable(name_type, "COMPRESS_POINTER_MARK8", Py_BuildValue("I", 0xc0U));
-    addClassVariable(name_type, "COMPRESS_POINTER_MARK16", Py_BuildValue("I", 0xc000U));
+    addClassVariable(name_type, "MAX_WIRE", Py_BuildValue("I", Name::MAX_WIRE));
+    addClassVariable(name_type, "MAX_LABELS", Py_BuildValue("I", Name::MAX_LABELS));
+    addClassVariable(name_type, "MAX_LABELLEN", Py_BuildValue("I", Name::MAX_LABELLEN));
+    addClassVariable(name_type, "MAX_COMPRESS_POINTER", Py_BuildValue("I", Name::MAX_COMPRESS_POINTER));
+    addClassVariable(name_type, "COMPRESS_POINTER_MARK8", Py_BuildValue("I", Name::COMPRESS_POINTER_MARK8));
+    addClassVariable(name_type, "COMPRESS_POINTER_MARK16", Py_BuildValue("I", Name::COMPRESS_POINTER_MARK16));
 
     s_Name* root_name = PyObject_New(s_Name, &name_type);
-    root_name->name = new Name(".");
+    // casting const away here should be safe, as it should be impossible
+    // to modify attributes of built-in/extension types.
+    root_name->name = const_cast<Name*>(&Name::ROOT_NAME());
     PyObject* po_ROOT_NAME = root_name;
-    Py_INCREF(po_ROOT_NAME);
     addClassVariable(name_type, "ROOT_NAME", po_ROOT_NAME);
 
     PyModule_AddObject(mod, "Name",
