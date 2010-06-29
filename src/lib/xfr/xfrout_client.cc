@@ -52,19 +52,19 @@ XfroutClient::~XfroutClient()
 
 void
 XfroutClient::connect() {
-    try {
-        impl_->socket_.connect(stream_protocol::endpoint(impl_->file_path_));
-    } catch (const asio::system_error& ex) {
-        isc_throw(XfroutError, "socket connect failed: " << ex.what());
+    asio::error_code err;
+    impl_->socket_.connect(stream_protocol::endpoint(impl_->file_path_), err);
+    if (err) {
+        isc_throw(XfroutError, "socket connect failed: " << err.message());
     }
 }
 
 void
 XfroutClient::disconnect() {
-    try {
-        impl_->socket_.close();
-    } catch (const asio::system_error& ex) {
-        isc_throw(XfroutError, "close socket failed: " << ex.what());
+    asio::error_code err;
+    impl_->socket_.close(err);
+    if (err) {
+        isc_throw(XfroutError, "close socket failed: " << err.message());
     }
 }
 
@@ -78,7 +78,8 @@ XfroutClient::sendXfroutRequestInfo(const int tcp_sock,
                   "Fail to send socket descriptor to xfrout module");
     }
 
-    // XXX: this shouldn't be blocking send, even though it's unlikely to block.
+    // XXX: this shouldn't be blocking send, even though it's unlikely to
+    // block.
     const uint8_t lenbuf[2] = { msg_len >> 8, msg_len & 0xff };
     if (send(impl_->socket_.native(), lenbuf, sizeof(lenbuf), 0) !=
         sizeof(lenbuf)) {
