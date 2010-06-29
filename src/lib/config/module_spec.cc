@@ -31,49 +31,6 @@ namespace config {
 // static functions
 //
 
-// todo: is there a direct way to get a std::string from an enum label?
-static std::string
-getType_string(Element::types type)
-{
-    switch(type) {
-    case Element::integer:
-        return std::string("integer");
-    case Element::real:
-        return std::string("real");
-    case Element::boolean:
-        return std::string("boolean");
-    case Element::string:
-        return std::string("string");
-    case Element::list:
-        return std::string("list");
-    case Element::map:
-        return std::string("map");
-    default:
-        return std::string("unknown");
-    }
-}
-
-static Element::types
-getType_value(const std::string& type_name) {
-    if (type_name == "integer") {
-        return Element::integer;
-    } else if (type_name == "real") {
-        return Element::real;
-    } else if (type_name == "boolean") {
-        return Element::boolean;
-    } else if (type_name == "string") {
-        return Element::string;
-    } else if (type_name == "list") {
-        return Element::list;
-    } else if (type_name == "map") {
-        return Element::map;
-    } else if (type_name == "any") {
-        return Element::any;
-    } else {
-        throw ModuleSpecError(type_name + " is not a valid type name");
-    }
-}
-
 static void
 check_leaf_item(const ElementPtr& spec, const std::string& name, Element::types type, bool mandatory)
 {
@@ -81,7 +38,7 @@ check_leaf_item(const ElementPtr& spec, const std::string& name, Element::types 
         if (spec->get(name)->getType() == type) {
             return;
         } else {
-            throw ModuleSpecError(name + " not of type " + getType_string(type));
+            throw ModuleSpecError(name + " not of type " + Element::typeToName(type));
         }
     } else if (mandatory) {
         // todo: want parent item name, and perhaps some info about location
@@ -99,17 +56,17 @@ check_config_item(const ElementPtr& spec) {
     check_leaf_item(spec, "item_type", Element::string, true);
     check_leaf_item(spec, "item_optional", Element::boolean, true);
     check_leaf_item(spec, "item_default",
-                    getType_value(spec->get("item_type")->stringValue()),
+                    Element::nameToType(spec->get("item_type")->stringValue()),
                     !spec->get("item_optional")->boolValue()
                    );
 
     // if list, check the list specification
-    if (getType_value(spec->get("item_type")->stringValue()) == Element::list) {
+    if (Element::nameToType(spec->get("item_type")->stringValue()) == Element::list) {
         check_leaf_item(spec, "list_item_spec", Element::map, true);
         check_config_item(spec->get("list_item_spec"));
     }
     // todo: add stuff for type map
-    if (getType_value(spec->get("item_type")->stringValue()) == Element::map) {
+    if (Element::nameToType(spec->get("item_type")->stringValue()) == Element::map) {
         check_leaf_item(spec, "map_item_spec", Element::list, true);
         check_config_item_list(spec->get("map_item_spec"));
     }
@@ -161,7 +118,11 @@ check_data_specification(const ElementPtr& spec) {
 static void
 check_module_specification(const ElementPtr& def)
 {
-    check_data_specification(def);
+    try {
+        check_data_specification(def);
+    } catch (TypeError te) {
+        throw ModuleSpecError(te.what());
+    }
 }
 
 //
