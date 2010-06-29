@@ -125,9 +125,12 @@ protected:
     vector<uint8_t> data;
 
     void createDataFromFile(const char* const datafile, int protocol);
-    void createRequest(const Opcode& opcode, const Name& request_name,
-                       const RRClass& rrclass, const RRType& rrtype,
-                       int protocol);
+    void createRequestMessage(const Opcode& opcode, const Name& request_name,
+                              const RRClass& rrclass, const RRType& rrtype);
+    void createRequestPacket(const Opcode& opcode, const Name& request_name,
+                             const RRClass& rrclass, const RRType& rrtype,
+                             int protocol);
+    void createRequestPacket(int protocol);
 };
 
 void
@@ -215,14 +218,29 @@ AuthSrvTest::createDataFromFile(const char* const datafile,
 }
 
 void
-AuthSrvTest::createRequest(const Opcode& opcode, const Name& request_name,
-                           const RRClass& rrclass, const RRType& rrtype,
-                           const int protocol = IPPROTO_UDP)
+AuthSrvTest::createRequestMessage(const Opcode& opcode,
+                                  const Name& request_name,
+                                  const RRClass& rrclass,
+                                  const RRType& rrtype)
 {
     request_message.clear(Message::RENDER);
     request_message.setOpcode(opcode);
     request_message.setQid(default_qid);
     request_message.addQuestion(Question(request_name, rrclass, rrtype));
+}
+
+void
+AuthSrvTest::createRequestPacket(const Opcode& opcode,
+                                 const Name& request_name,
+                                 const RRClass& rrclass, const RRType& rrtype,
+                                 const int protocol = IPPROTO_UDP)
+{
+    createRequestMessage(opcode, request_name, rrclass, rrtype);
+    createRequestPacket(protocol);
+}
+
+void
+AuthSrvTest::createRequestPacket(const int protocol = IPPROTO_UDP) {
     request_message.toWire(request_renderer);
 
     delete io_message;
@@ -263,8 +281,9 @@ TEST_F(AuthSrvTest, unsupportedRequest) {
     for (unsigned int i = 1; i < 16; ++i) {
         // set Opcode to 'i', which iterators over all possible codes except
         // the standard query (0) and notify(4)
-        if (i == 4)
+        if (i == Opcode::NOTIFY().getCode()) {
             continue;
+        }
         createDataFromFile("simplequery_fromWire");
         data[2] = ((i << 3) & 0xff);
 
@@ -380,8 +399,8 @@ TEST_F(AuthSrvTest, ednsBadVers) {
 
 TEST_F(AuthSrvTest, AXFROverUDP) {
     // AXFR over UDP is invalid and should result in FORMERR.
-    createRequest(opcode, Name("example.com"), RRClass::IN(), RRType::AXFR(),
-                  IPPROTO_UDP);
+    createRequestPacket(opcode, Name("example.com"), RRClass::IN(),
+                        RRType::AXFR(), IPPROTO_UDP);
     EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
                                           response_renderer));
     headerCheck(parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
@@ -390,8 +409,8 @@ TEST_F(AuthSrvTest, AXFROverUDP) {
 
 TEST_F(AuthSrvTest, AXFRSuccess) {
     EXPECT_FALSE(xfrout.isConnected());
-    createRequest(opcode, Name("example.com"), RRClass::IN(), RRType::AXFR(),
-                  IPPROTO_TCP);
+    createRequestPacket(opcode, Name("example.com"), RRClass::IN(),
+                        RRType::AXFR(), IPPROTO_TCP);
     // On success, the AXFR query has been passed to a separate process,
     // so we shouldn't have to respond.
     EXPECT_EQ(false, server.processMessage(*io_message, parse_message,
@@ -402,8 +421,8 @@ TEST_F(AuthSrvTest, AXFRSuccess) {
 TEST_F(AuthSrvTest, AXFRConnectFail) {
     EXPECT_FALSE(xfrout.isConnected()); // check prerequisite
     xfrout.disableConnect();
-    createRequest(opcode, Name("example.com"), RRClass::IN(), RRType::AXFR(),
-                  IPPROTO_TCP);
+    createRequestPacket(opcode, Name("example.com"), RRClass::IN(),
+                        RRType::AXFR(), IPPROTO_TCP);
     EXPECT_TRUE(server.processMessage(*io_message, parse_message,
                                       response_renderer));
     headerCheck(parse_message, default_qid, Rcode::SERVFAIL(),
@@ -414,16 +433,16 @@ TEST_F(AuthSrvTest, AXFRConnectFail) {
 TEST_F(AuthSrvTest, AXFRSendFail) {
     // first send a valid query, making the connection with the xfr process
     // open.
-    createRequest(opcode, Name("example.com"), RRClass::IN(), RRType::AXFR(),
-                  IPPROTO_TCP);
+    createRequestPacket(opcode, Name("example.com"), RRClass::IN(),
+                        RRType::AXFR(), IPPROTO_TCP);
     server.processMessage(*io_message, parse_message, response_renderer);
     EXPECT_TRUE(xfrout.isConnected());
 
     xfrout.disableSend();
     parse_message.clear(Message::PARSE);
     response_renderer.clear();
-    createRequest(opcode, Name("example.com"), RRClass::IN(), RRType::AXFR(),
-                  IPPROTO_TCP);
+    createRequestPacket(opcode, Name("example.com"), RRClass::IN(),
+                        RRType::AXFR(), IPPROTO_TCP);
     EXPECT_TRUE(server.processMessage(*io_message, parse_message,
                                       response_renderer));
     headerCheck(parse_message, default_qid, Rcode::SERVFAIL(),
@@ -438,8 +457,8 @@ TEST_F(AuthSrvTest, AXFRDisconnectFail) {
     // should it be thrown.
     xfrout.disableSend();
     xfrout.disableDisconnect();
-    createRequest(opcode, Name("example.com"), RRClass::IN(), RRType::AXFR(),
-                  IPPROTO_TCP);
+    createRequestPacket(opcode, Name("example.com"), RRClass::IN(),
+                        RRType::AXFR(), IPPROTO_TCP);
     EXPECT_THROW(server.processMessage(*io_message, parse_message,
                                        response_renderer),
                  XfroutError);
@@ -449,11 +468,79 @@ TEST_F(AuthSrvTest, AXFRDisconnectFail) {
     xfrout.enableDisconnect();
 }
 
-TEST_F(AuthSrvTest, notifyInTest) {
-    createRequest(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
-                  RRType::SOA());
+TEST_F(AuthSrvTest, notify) {
+    createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
+                        RRType::SOA());
+    createRequestPacket(IPPROTO_UDP);
+    request_message.setHeaderFlag(MessageFlag::AA());
     EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
-                                           response_renderer));
+                                          response_renderer));
+    headerCheck(parse_message, default_qid, Rcode::NOERROR(),
+                Opcode::NOTIFY().getCode(), QR_FLAG | AA_FLAG, 1, 0, 0, 0);
+
+    // The question must be identical of the notify
+    ConstQuestionPtr question = *parse_message.beginQuestion();
+    EXPECT_EQ(Name("example.com"), question->getName());
+    EXPECT_EQ(RRClass::IN(), question->getClass());
+    EXPECT_EQ(RRType::SOA(), question->getType());
+}
+
+TEST_F(AuthSrvTest, notifyEmptyQuestion) {
+    request_message.clear(Message::RENDER);
+    request_message.setOpcode(Opcode::NOTIFY());
+    request_message.setHeaderFlag(MessageFlag::AA());
+    request_message.setQid(default_qid);
+    request_message.toWire(request_renderer);
+    createRequestPacket(IPPROTO_UDP);
+    EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
+                                          response_renderer));
+    headerCheck(parse_message, default_qid, Rcode::FORMERR(),
+                Opcode::NOTIFY().getCode(), QR_FLAG, 0, 0, 0, 0);
+}
+
+TEST_F(AuthSrvTest, notifyMultiQuestions) {
+    createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
+                        RRType::SOA());
+    // add one more SOA question
+    request_message.addQuestion(Question(Name("example.com"), RRClass::IN(),
+                                         RRType::SOA()));
+    request_message.setHeaderFlag(MessageFlag::AA());
+    createRequestPacket(IPPROTO_UDP);
+    EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
+                                          response_renderer));
+    headerCheck(parse_message, default_qid, Rcode::FORMERR(),
+                Opcode::NOTIFY().getCode(), QR_FLAG, 2, 0, 0, 0);
+}
+
+TEST_F(AuthSrvTest, notifyNonSOAQuestion) {
+    createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
+                        RRType::NS());
+    request_message.setHeaderFlag(MessageFlag::AA());
+    createRequestPacket(IPPROTO_UDP);
+    EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
+                                          response_renderer));
+    headerCheck(parse_message, default_qid, Rcode::FORMERR(),
+                Opcode::NOTIFY().getCode(), QR_FLAG, 1, 0, 0, 0);
+}
+
+TEST_F(AuthSrvTest, notifyWithoutAA) {
+    // implicitly leave the AA bit off.  our implementation will accept it.
+    createRequestPacket(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
+                        RRType::SOA());
+    EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
+                                          response_renderer));
+    headerCheck(parse_message, default_qid, Rcode::NOERROR(),
+                Opcode::NOTIFY().getCode(), QR_FLAG | AA_FLAG, 1, 0, 0, 0);
+}
+
+TEST_F(AuthSrvTest, notifyWithErrorRcode) {
+    createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
+                        RRType::SOA());
+    request_message.setHeaderFlag(MessageFlag::AA());
+    request_message.setRcode(Rcode::SERVFAIL());
+    createRequestPacket(IPPROTO_UDP);
+    EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
+                                          response_renderer));
     headerCheck(parse_message, default_qid, Rcode::NOERROR(),
                 Opcode::NOTIFY().getCode(), QR_FLAG | AA_FLAG, 1, 0, 0, 0);
 }
