@@ -465,7 +465,7 @@ class SecureHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
                 for row in reader:
                     self._user_infos[row[0]] = [row[1], row[2]]
             except (IOError, IndexError) as e:
-                self.log_info("Fail to read user database:'%s'\n" % e)                
+                self.log_info("Fail to read user database, %s" % e)                
             finally:
                 if csvfile:
                     csvfile.close()
