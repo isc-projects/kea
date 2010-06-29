@@ -19,10 +19,13 @@ import socket
 import tempfile
 from cmdctl import *
 
+SPEC_FILE_PATH = '..' + os.sep
 if 'CMDCTL_SPEC_PATH' in os.environ:
-    FILE_PATH = os.environ['CMDCTL_SPEC_PATH'] + os.sep
-else:
-    FILE_PATH = '..' + os.sep
+    SPEC_FILE_PATH = os.environ['CMDCTL_SPEC_PATH'] + os.sep
+
+SRC_FILE_PATH = '..' + os.sep
+if 'CMDCTL_SRC_PATH' in os.environ:
+    SRC_FILE_PATH = os.environ['CMDCTL_SRC_PATH'] + os.sep
 
 # Rewrite the class for unittest.
 class MySecureHTTPRequestHandler(SecureHTTPRequestHandler):
@@ -284,7 +287,7 @@ class MyCommandControl(CommandControl):
         return {}
 
     def _setup_session(self):
-        spec_file = FILE_PATH + 'cmdctl.spec'
+        spec_file = SPEC_FILE_PATH + 'cmdctl.spec'
         module_spec = isc.config.module_spec_from_file(spec_file)
         config = isc.config.config_data.ConfigData(module_spec)
         self._module_name = 'Cmdctl'
@@ -392,7 +395,7 @@ class TestSecureHTTPServer(unittest.TestCase):
         self.server._create_user_info('/local/not-exist')
         self.assertEqual(0, len(self.server._user_infos))
 
-        self.server._create_user_info(FILE_PATH + 'cmdctl-accounts.csv')
+        self.server._create_user_info(SRC_FILE_PATH + 'cmdctl-accounts.csv')
         self.assertEqual(1, len(self.server._user_infos))
         self.assertTrue('root' in self.server._user_infos)
 
@@ -400,8 +403,8 @@ class TestSecureHTTPServer(unittest.TestCase):
         self.assertRaises(CmdctlException, self.server._check_key_and_cert,
                          '/local/not-exist', 'cmdctl-keyfile.pem')
 
-        self.server._check_key_and_cert(FILE_PATH + 'cmdctl-keyfile.pem',
-                                        FILE_PATH + 'cmdctl-certfile.pem')
+        self.server._check_key_and_cert(SRC_FILE_PATH + 'cmdctl-keyfile.pem',
+                                        SRC_FILE_PATH + 'cmdctl-certfile.pem')
 
     def test_wrap_sock_in_ssl_context(self):
         sock = socket.socket()
@@ -413,8 +416,8 @@ class TestSecureHTTPServer(unittest.TestCase):
 
         sock1 = socket.socket()
         self.server._wrap_socket_in_ssl_context(sock1, 
-                          FILE_PATH + 'cmdctl-keyfile.pem',
-                          FILE_PATH + 'cmdctl-certfile.pem')
+                          SRC_FILE_PATH + 'cmdctl-keyfile.pem',
+                          SRC_FILE_PATH + 'cmdctl-certfile.pem')
 
 class TestFuncNotInClass(unittest.TestCase):
     def test_check_port(self):
