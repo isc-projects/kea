@@ -189,7 +189,7 @@ Rdata_toWire(s_Rdata* self, PyObject* args) {
         
         OutputBuffer buffer(4);
         self->rdata->toWire(buffer);
-        PyObject* rd_bytes = PyBytes_FromStringAndSize((const char*) buffer.getData(), buffer.getLength());
+        PyObject* rd_bytes = PyBytes_FromStringAndSize(static_cast<const char*>(buffer.getData()), buffer.getLength());
         PyObject* result = PySequence_InPlaceConcat(bytes_o, rd_bytes);
         // We need to release the object we temporarily created here
         // to prevent memory leak

@@ -247,7 +247,7 @@ Question_toWire(s_Question* self, PyObject* args) {
         // Max length is Name::MAX_WIRE + rrclass (2) + rrtype (2)
         OutputBuffer buffer(Name::MAX_WIRE + 4);
         self->question->toWire(buffer);
-        PyObject* n = PyBytes_FromStringAndSize((const char*) buffer.getData(),
+        PyObject* n = PyBytes_FromStringAndSize(static_cast<const char*>(buffer.getData()),
                                                 buffer.getLength());
         PyObject* result = PySequence_InPlaceConcat(bytes_o, n);
         // We need to release the object we temporarily created here
