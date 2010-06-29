@@ -79,7 +79,9 @@ private:
     public:
         MockSession() :
             // by default we return a simple "success" message.
-            msg_(Element::createFromString("{\"result\": [0, \"SUCCESS\"]}"))
+            msg_(Element::createFromString("{\"result\": [0, \"SUCCESS\"]}")),
+            is_established_(false), establish_ok_(true), send_ok_(true),
+            receive_ok_(true)
         {}
         virtual void establish(const char* socket_file);
         virtual void disconnect();
@@ -88,8 +90,16 @@ private:
         virtual bool group_recvmsg(ElementPtr& envelope, ElementPtr& msg,
                                    bool nonblock, int seq);
         void setMessage(ElementPtr msg) { msg_ = msg; }
+        bool isEstablished() const { return (is_established_); }
+        void disableEstablish() { establish_ok_ = false; }
+        void disableSend() { send_ok_ = false; }
+        void disableReceive() { receive_ok_ = false; }
     private:
         ElementPtr msg_;
+        bool is_established_;
+        bool establish_ok_;
+        bool send_ok_;
+        bool receive_ok_;
     };
 
 protected:
@@ -135,11 +145,14 @@ protected:
 
 void
 AuthSrvTest::MockSession::establish(const char* socket_file UNUSED_PARAM) {
+    if (!establish_ok_) {
+        isc_throw(SessionError, "mock session is disabled for test");
+    }
+    is_established_ = true;
 }
 
 void
-AuthSrvTest::MockSession::disconnect() {
-}
+AuthSrvTest::MockSession::disconnect() {}
 
 int
 AuthSrvTest::MockSession::group_sendmsg(ElementPtr msg UNUSED_PARAM,
@@ -147,6 +160,9 @@ AuthSrvTest::MockSession::group_sendmsg(ElementPtr msg UNUSED_PARAM,
                                         string instance UNUSED_PARAM,
                                         string to UNUSED_PARAM)
 {
+    if (!send_ok_) {
+        isc_throw(XfroutError, "mock session send is disabled for test");
+    }
     return (0);
 }
 
@@ -156,6 +172,10 @@ AuthSrvTest::MockSession::group_recvmsg(ElementPtr& envelope UNUSED_PARAM,
                                         bool nonblock UNUSED_PARAM,
                                         int seq UNUSED_PARAM)
 {
+    if (!receive_ok_) {
+        isc_throw(XfroutError, "mock session receive is disabled for test");
+    }
+
     msg = msg_;
     return (true);
 }
@@ -184,7 +204,7 @@ AuthSrvTest::MockXfroutClient::sendXfroutRequestInfo(
     const uint16_t msg_len UNUSED_PARAM)
 {
     if (!send_ok_) {
-        isc_throw(XfroutError, "xfrout connection send for test");
+        isc_throw(XfroutError, "xfrout connection send is disabled for test");
     }
     return (0);
 }
@@ -471,8 +491,8 @@ TEST_F(AuthSrvTest, AXFRDisconnectFail) {
 TEST_F(AuthSrvTest, notify) {
     createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
                         RRType::SOA());
-    createRequestPacket(IPPROTO_UDP);
     request_message.setHeaderFlag(MessageFlag::AA());
+    createRequestPacket(IPPROTO_UDP);
     EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
                                           response_renderer));
     headerCheck(parse_message, default_qid, Rcode::NOERROR(),
@@ -543,6 +563,69 @@ TEST_F(AuthSrvTest, notifyWithErrorRcode) {
                                           response_renderer));
     headerCheck(parse_message, default_qid, Rcode::NOERROR(),
                 Opcode::NOTIFY().getCode(), QR_FLAG | AA_FLAG, 1, 0, 0, 0);
+}
+
+TEST_F(AuthSrvTest, notifyEstablishFail) {
+    EXPECT_FALSE(notify_session.isEstablished()); // check prerequisite
+    notify_session.disableEstablish();
+
+    createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
+                        RRType::SOA());
+    request_message.setHeaderFlag(MessageFlag::AA());
+    createRequestPacket(IPPROTO_UDP);
+
+    // we simply ignore the notify and let it be resent if an internal error
+    // happens.
+    EXPECT_FALSE(server.processMessage(*io_message, parse_message,
+                                       response_renderer));
+    EXPECT_FALSE(notify_session.isEstablished());
+}
+
+TEST_F(AuthSrvTest, notifySendFail) {
+    notify_session.disableSend();
+
+    createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
+                        RRType::SOA());
+    request_message.setHeaderFlag(MessageFlag::AA());
+    createRequestPacket(IPPROTO_UDP);
+    EXPECT_FALSE(server.processMessage(*io_message, parse_message,
+                                       response_renderer));
+    // we don't disconnect the session due to a send error.
+    EXPECT_TRUE(notify_session.isEstablished());
+}
+
+TEST_F(AuthSrvTest, notifyReceiveFail) {
+    notify_session.disableReceive();
+
+    createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
+                        RRType::SOA());
+    request_message.setHeaderFlag(MessageFlag::AA());
+    createRequestPacket(IPPROTO_UDP);
+    EXPECT_FALSE(server.processMessage(*io_message, parse_message,
+                                       response_renderer));
+}
+
+TEST_F(AuthSrvTest, notifyWithBogusSessionMessage) {
+    notify_session.setMessage(Element::createFromString("{\"foo\": 1}"));
+
+    createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
+                        RRType::SOA());
+    request_message.setHeaderFlag(MessageFlag::AA());
+    createRequestPacket(IPPROTO_UDP);
+    EXPECT_FALSE(server.processMessage(*io_message, parse_message,
+                                       response_renderer));
+}
+
+TEST_F(AuthSrvTest, notifyWithSessionMessageError) {
+    notify_session.setMessage(
+        Element::createFromString("{\"result\": [1, \"FAIL\"]}"));
+
+    createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
+                        RRType::SOA());
+    request_message.setHeaderFlag(MessageFlag::AA());
+    createRequestPacket(IPPROTO_UDP);
+    EXPECT_FALSE(server.processMessage(*io_message, parse_message,
+                                       response_renderer));
 }
 
 void
