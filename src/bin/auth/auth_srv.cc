@@ -406,6 +406,11 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
 
     // TODO check with the conf-mgr whether current server is the auth of the
     // zone
+
+    // In the code that follows, we simply ignore the notify if any internal
+    // error happens rather than returning (e.g.) SERVFAIL.  RFC 1996 is
+    // silent about such cases, but there doesn't seem to be anything we can
+    // improve at the primary server side by sending an error anyway.
     if (!is_notify_session_established_) {
         try {
             session_with_xfrin_.establish(NULL);
