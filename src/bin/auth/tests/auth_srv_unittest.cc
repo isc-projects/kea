@@ -14,6 +14,8 @@
 
 // $Id$
 
+#include <config.h>
+
 #include <gtest/gtest.h>
 
 #include <dns/buffer.h>
@@ -25,6 +27,8 @@
 
 #include <cc/data.h>
 
+#include <xfr/xfrout_client.h>
+
 #include <auth/auth_srv.h>
 #include <auth/asio_link.h>
 
@@ -34,6 +38,7 @@ using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::dns;
 using namespace isc::data;
+using namespace isc::xfr;
 using namespace asio_link;
 
 namespace {
@@ -45,8 +50,30 @@ const char* BADCONFIG_TESTDB =
     "{ \"database_file\": \"" TEST_DATA_DIR "/nodir/notexist\"}";
 
 class AuthSrvTest : public ::testing::Test {
+private:
+    class MockXfroutClient : public AbstractXfroutClient {
+    public:
+        MockXfroutClient() :
+            is_connected_(false), connect_ok_(true), send_ok_(true),
+            disconnect_ok_(true)
+        {}
+        virtual void connect();
+        virtual void disconnect();
+        virtual int sendXfroutRequestInfo(int tcp_sock, const void* msg_data,
+                                          uint16_t msg_len);
+        bool isConnected() const { return (is_connected_); }
+        void disableConnect() { connect_ok_ = false; }
+        void disableDisconnect() { disconnect_ok_ = false; }
+        void enableDisconnect() { disconnect_ok_ = true; }
+        void disableSend() { send_ok_ = false; }
+    private:
+        bool is_connected_;
+        bool connect_ok_;
+        bool send_ok_;
+        bool disconnect_ok_;
+    };
 protected:
-    AuthSrvTest() : request_message(Message::RENDER),
+    AuthSrvTest() : server(xfrout), request_message(Message::RENDER),
                     parse_message(Message::PARSE), default_qid(0x1035),
                     opcode(Opcode(Opcode::QUERY())), qname("www.example.com"),
                     qclass(RRClass::IN()), qtype(RRType::A()),
@@ -58,6 +85,7 @@ protected:
         delete io_message;
         delete endpoint;
     }
+    MockXfroutClient xfrout;
     AuthSrv server;
     Message request_message;
     Message parse_message;
@@ -79,6 +107,35 @@ protected:
                        const RRClass& rrclass, const RRType& rrtype,
                        int protocol);
 };
+
+void
+AuthSrvTest::MockXfroutClient::connect() {
+    if (!connect_ok_) {
+        isc_throw(XfroutError, "xfrout connection disabled for test");
+    }
+    is_connected_ = true;
+}
+
+void
+AuthSrvTest::MockXfroutClient::disconnect() {
+    if (!disconnect_ok_) {
+        isc_throw(XfroutError,
+                  "closing xfrout connection is disabled for test");
+    }
+    is_connected_ = false;
+}
+
+int
+AuthSrvTest::MockXfroutClient::sendXfroutRequestInfo(
+    const int tcp_sock UNUSED_PARAM,
+    const void* msg_data UNUSED_PARAM,
+    const uint16_t msg_len UNUSED_PARAM)
+{
+    if (!send_ok_) {
+        isc_throw(XfroutError, "xfrout connection send for test");
+    }
+    return (0);
+}
 
 // These are flags to indicate whether the corresponding flag bit of the
 // DNS header is to be set in the test cases.  (Note that the flag values
@@ -102,7 +159,9 @@ AuthSrvTest::createDataFromFile(const char* const datafile,
     endpoint = IOEndpoint::create(protocol, IOAddress("192.0.2.1"), 5300);
     UnitTestUtil::readWireData(datafile, data);
     io_message = new IOMessage(&data[0], data.size(),
-                               IOSocket::getDummyUDPSocket(), *endpoint);
+                               protocol == IPPROTO_UDP ?
+                               IOSocket::getDummyUDPSocket() :
+                               IOSocket::getDummyTCPSocket(), *endpoint);
 }
 
 void
@@ -110,6 +169,7 @@ AuthSrvTest::createRequest(const Opcode& opcode, const Name& request_name,
                            const RRClass& rrclass, const RRType& rrtype,
                            const int protocol = IPPROTO_UDP)
 {
+    request_message.clear(Message::RENDER);
     request_message.setOpcode(opcode);
     request_message.setQid(default_qid);
     request_message.addQuestion(Question(request_name, rrclass, rrtype));
@@ -119,7 +179,9 @@ AuthSrvTest::createRequest(const Opcode& opcode, const Name& request_name,
     endpoint = IOEndpoint::create(protocol, IOAddress("192.0.2.1"), 5300);
     io_message = new IOMessage(request_renderer.getData(),
                                request_renderer.getLength(),
-                               IOSocket::getDummyUDPSocket(), *endpoint);
+                               protocol == IPPROTO_UDP ?
+                               IOSocket::getDummyUDPSocket() :
+                               IOSocket::getDummyTCPSocket(), *endpoint);
 }
 
 void
@@ -274,6 +336,67 @@ TEST_F(AuthSrvTest, AXFROverUDP) {
                                           response_renderer));
     headerCheck(parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
                 QR_FLAG, 1, 0, 0, 0);
+}
+
+TEST_F(AuthSrvTest, AXFRSuccess) {
+    EXPECT_FALSE(xfrout.isConnected());
+    createRequest(opcode, Name("example.com"), RRClass::IN(), RRType::AXFR(),
+                  IPPROTO_TCP);
+    // On success, the AXFR query has been passed to a separate process,
+    // so we shouldn't have to respond.
+    EXPECT_EQ(false, server.processMessage(*io_message, parse_message,
+                                           response_renderer));
+    EXPECT_TRUE(xfrout.isConnected());
+}
+
+TEST_F(AuthSrvTest, AXFRConnectFail) {
+    EXPECT_FALSE(xfrout.isConnected()); // check prerequisite
+    xfrout.disableConnect();
+    createRequest(opcode, Name("example.com"), RRClass::IN(), RRType::AXFR(),
+                  IPPROTO_TCP);
+    EXPECT_TRUE(server.processMessage(*io_message, parse_message,
+                                      response_renderer));
+    headerCheck(parse_message, default_qid, Rcode::SERVFAIL(),
+                opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
+    EXPECT_FALSE(xfrout.isConnected());
+}
+
+TEST_F(AuthSrvTest, AXFRSendFail) {
+    // first send a valid query, making the connection with the xfr process
+    // open.
+    createRequest(opcode, Name("example.com"), RRClass::IN(), RRType::AXFR(),
+                  IPPROTO_TCP);
+    server.processMessage(*io_message, parse_message, response_renderer);
+    EXPECT_TRUE(xfrout.isConnected());
+
+    xfrout.disableSend();
+    parse_message.clear(Message::PARSE);
+    response_renderer.clear();
+    createRequest(opcode, Name("example.com"), RRClass::IN(), RRType::AXFR(),
+                  IPPROTO_TCP);
+    EXPECT_TRUE(server.processMessage(*io_message, parse_message,
+                                      response_renderer));
+    headerCheck(parse_message, default_qid, Rcode::SERVFAIL(),
+                opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
+
+    // The connection should have been closed due to the send failure.
+    EXPECT_FALSE(xfrout.isConnected());
+}
+
+TEST_F(AuthSrvTest, AXFRDisconnectFail) {
+    // In our usage disconnect() shouldn't fail.  So we'll see the exception
+    // should it be thrown.
+    xfrout.disableSend();
+    xfrout.disableDisconnect();
+    createRequest(opcode, Name("example.com"), RRClass::IN(), RRType::AXFR(),
+                  IPPROTO_TCP);
+    EXPECT_THROW(server.processMessage(*io_message, parse_message,
+                                       response_renderer),
+                 XfroutError);
+    EXPECT_TRUE(xfrout.isConnected());
+    // XXX: we need to re-enable disconnect.  otherwise an exception would be
+    // thrown via the destructor of the server.
+    xfrout.enableDisconnect();
 }
 
 TEST_F(AuthSrvTest, notifyInTest) {

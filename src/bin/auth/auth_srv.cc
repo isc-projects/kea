@@ -52,7 +52,6 @@
 #include <auth/common.h>
 #include <auth/auth_srv.h>
 #include <auth/asio_link.h>
-#include <auth/spec_config.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -75,7 +74,7 @@ private:
     AuthSrvImpl(const AuthSrvImpl& source);
     AuthSrvImpl& operator=(const AuthSrvImpl& source);
 public:
-    AuthSrvImpl();
+    AuthSrvImpl(AbstractXfroutClient& xfrout_client);
     ~AuthSrvImpl();
     isc::data::ElementPtr setDbFile(const isc::data::ElementPtr config);
 
@@ -99,16 +98,17 @@ public:
     isc::cc::Session session_with_xfrin_;
 
     bool is_axfr_connection_established_;
-    XfroutClient axfr_client_;
+    AbstractXfroutClient& xfrout_client_;
 
     /// Currently non-configurable, but will be.
     static const uint16_t DEFAULT_LOCAL_UDPSIZE = 4096;
 };
 
-AuthSrvImpl::AuthSrvImpl() : cs_(NULL), verbose_mode_(false),
-                             is_notify_session_established_(false),
-                             is_axfr_connection_established_(false),
-                             axfr_client_(UNIX_SOCKET_FILE)
+AuthSrvImpl::AuthSrvImpl(AbstractXfroutClient& xfrout_client) :
+    cs_(NULL), verbose_mode_(false),
+    is_notify_session_established_(false),
+    is_axfr_connection_established_(false),
+    xfrout_client_(xfrout_client)
 {
     // cur_datasrc_ is automatically initialized by the default constructor,
     // effectively being an empty (sqlite) data source.  once ccsession is up
@@ -125,13 +125,14 @@ AuthSrvImpl::~AuthSrvImpl() {
     }
 
     if (is_axfr_connection_established_) {
-        axfr_client_.disconnect();
+        xfrout_client_.disconnect();
         is_axfr_connection_established_ = false;
     }
 }
 
-AuthSrv::AuthSrv() : impl_(new AuthSrvImpl) {
-}
+AuthSrv::AuthSrv(AbstractXfroutClient& xfrout_client) :
+    impl_(new AuthSrvImpl(xfrout_client))
+{}
 
 AuthSrv::~AuthSrv() {
     delete impl_;
@@ -342,15 +343,20 @@ AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, Message& message,
 
     try {
         if (!is_axfr_connection_established_) {
-            axfr_client_.connect();
+            xfrout_client_.connect();
             is_axfr_connection_established_ = true;
         }
-        axfr_client_.sendXfroutRequestInfo(io_message.getSocket().getNative(),
-                                           io_message.getData(),
-                                           io_message.getDataSize());
+        xfrout_client_.sendXfroutRequestInfo(
+            io_message.getSocket().getNative(),
+            io_message.getData(),
+            io_message.getDataSize());
     } catch (const XfroutError& err) { 
         if (is_axfr_connection_established_) {
-            axfr_client_.disconnect();
+            // discoonect() may trigger an exception, but since we try it
+            // only if we've successfully opened it, it shouldn't happen in
+            // normal condition.  Should this occur, we'll propagate it to the
+            // upper layer.
+            xfrout_client_.disconnect();
             is_axfr_connection_established_ = false;
         }
         
@@ -360,6 +366,7 @@ AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, Message& message,
         }
         makeErrorMessage(message, response_renderer, Rcode::SERVFAIL(),
                          verbose_mode_);
+        return (true);
     }
     return (false);
 }

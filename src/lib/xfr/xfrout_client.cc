@@ -54,9 +54,8 @@ void
 XfroutClient::connect() {
     try {
         impl_->socket_.connect(stream_protocol::endpoint(impl_->file_path_));
-    } catch (const asio::system_error &) {
-        isc_throw(XfroutError, 
-                "socket connect failed");
+    } catch (const asio::system_error& ex) {
+        isc_throw(XfroutError, "socket connect failed: " << ex.what());
     }
 }
 
@@ -64,9 +63,8 @@ void
 XfroutClient::disconnect() {
     try {
         impl_->socket_.close();
-    } catch (const asio::system_error &) {
-        isc_throw(XfroutError,
-                "close socket failed");
+    } catch (const asio::system_error& ex) {
+        isc_throw(XfroutError, "close socket failed: " << ex.what());
     }
 }
 
