@@ -331,7 +331,8 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
 #ifdef USE_XFROUT
 bool
 AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, Message& message,
-                            MessageRenderer& response_renderer) {
+                            MessageRenderer& response_renderer)
+{
     if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
         if (verbose_mode_) {
             cerr << "[b10-auth] AXFR query over UDP isn't allowed" << endl;
