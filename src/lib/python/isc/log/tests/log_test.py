@@ -50,6 +50,18 @@ class TestRotateFileHandler(unittest.TestCase):
         self.FILE_LOG2.close()
         self.FILE_LOG3.close()
 
+class TestSysLogHandler(unittest.TestCase):
+    def setUp(self):
+        self.handler = NSSysLogHandler("BIND10")
+
+    def test_encodeLevel(self):
+        sysLevel = self.handler._encodeLevel(logging.ERROR)
+        self.assertEqual(sysLevel, syslog.LOG_ERR)
+
+    def test_emit(self):
+        record = logging.LogRecord(None, None, "", 0, "syslog handler", (), None, None)
+        self.handler.emit(record)
+
 
 class TestLogging(unittest.TestCase):
     

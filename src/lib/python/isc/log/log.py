@@ -177,13 +177,13 @@ class NSLogger(logging.getLoggerClass()):
         self._stream_handler.setFormatter(TIME_FORMATTER)
         self.addHandler(self._stream_handler)
 
-    def _add_syslog_handler(self, facility=syslog.LOG_USER):
+    def _add_syslog_handler(self, nsfacility=syslog.LOG_USER):
         """Add a syslog handler.
    
         If facility is not specified, LOG_USER is used.
         The default severity level is INFO.
         """
-        self._syslog_handler = NSSysLogHandler('BIND10', facility)
+        self._syslog_handler = NSSysLogHandler('BIND10', facility = nsfacility)
         self._syslog_handler.setFormatter(FORMATTER)
         #set syslog handler severity level INFO
         self._syslog_handler.setLevel(logging.INFO)
