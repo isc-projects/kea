@@ -55,11 +55,11 @@ CONFIG_DATA_URL = 'config_data'
 MODULE_SPEC_URL = 'module_spec'
 
 
-# If B10_FROM_SOURCE is set in the environment, we use data files
+# If B10_FROM_BUILD is set in the environment, we use data files
 # from a directory relative to that, otherwise we use the ones
 # installed on the system
-if "B10_FROM_SOURCE" in os.environ:
-    SPECFILE_PATH = os.environ["B10_FROM_SOURCE"] + "/src/bin/cmdctl"
+if "B10_FROM_BUILD" in os.environ:
+    SPECFILE_PATH = os.environ["B10_FROM_BUILD"] + "/src/bin/cmdctl"
 else:
     PREFIX = "@prefix@"
     DATAROOTDIR = "@datarootdir@"
