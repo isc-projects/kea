@@ -150,6 +150,11 @@ class ModuleCCSession(ConfigData):
 
         self._remote_module_configs = {}
 
+    def __del__(self):
+        self._session.group_unsubscribe(self._module_name, "*")
+        for module_name in self._remote_module_configs:
+            self._session.group_unsubscribe(module_name)
+
     def start(self):
         """Send the specification for this module to the configuration
            manager, and request the current non-default configuration.
@@ -244,7 +249,7 @@ class ModuleCCSession(ConfigData):
         self._session.group_subscribe(module_name);
 
         # Get the current config for that module now
-        seq = self._session.group_sendmsg({ "command": [ "get_config", { "module_name": module_name } ] }, "ConfigManager")
+        seq = self._session.group_sendmsg(create_command(COMMAND_GET_CONFIG, { "module_name": module_name }), "ConfigManager")
         answer, env = self._session.group_recvmsg(False, seq)
         if answer:
             rcode, value = parse_answer(answer)
@@ -259,6 +264,7 @@ class ModuleCCSession(ConfigData):
     def remove_remote_config(self, module_name):
         """Removes the remote configuration access for this module"""
         if module_name in self._remote_module_configs:
+            self._session.group_unsubscribe(module_name)
             del self._remote_module_configs[module_name]
 
     def get_remote_config_value(self, module_name, identifier):
@@ -280,7 +286,7 @@ class ModuleCCSession(ConfigData):
     def __request_config(self):
         """Asks the configuration manager for the current configuration, and call the config handler if set.
            Raises a ModuleCCSessionError if there is no answer from the configuration manager"""
-        seq = self._session.group_sendmsg({ "command": [ "get_config", { "module_name": self._module_name } ] }, "ConfigManager")
+        seq = self._session.group_sendmsg(create_command(COMMAND_GET_CONFIG, { "module_name": self._module_name }), "ConfigManager")
         answer, env = self._session.group_recvmsg(False, seq)
         if answer:
             rcode, value = parse_answer(answer)
