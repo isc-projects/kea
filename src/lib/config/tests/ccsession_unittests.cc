@@ -37,7 +37,7 @@ std::string ccspecfile(const std::string name) {
 static ElementPtr
 el(const std::string& str)
 {
-    return Element::createFromString(str);
+    return Element::fromJSON(str);
 }
 
 // upon creation of a ModuleCCSession, the class
@@ -66,16 +66,16 @@ TEST(CCSession, createAnswer)
 {
     ElementPtr answer;
     answer = createAnswer();
-    EXPECT_EQ("{\"result\": [ 0 ]}", answer->str());
+    EXPECT_EQ("{ \"result\": [ 0 ] }", answer->str());
     answer = createAnswer(1, "error");
-    EXPECT_EQ("{\"result\": [ 1, \"error\" ]}", answer->str());
+    EXPECT_EQ("{ \"result\": [ 1, \"error\" ] }", answer->str());
 
     EXPECT_THROW(createAnswer(1, ElementPtr()), CCSessionError);
     EXPECT_THROW(createAnswer(1, Element::create(1)), CCSessionError);
 
     ElementPtr arg = el("[ \"just\", \"some\", \"data\" ]");
     answer = createAnswer(0, arg);
-    EXPECT_EQ("{\"result\": [ 0, [ \"just\", \"some\", \"data\" ] ]}", answer->str());
+    EXPECT_EQ("{ \"result\": [ 0, [ \"just\", \"some\", \"data\" ] ] }", answer->str());
 }
 
 TEST(CCSession, parseAnswer)
@@ -87,24 +87,24 @@ TEST(CCSession, parseAnswer)
     EXPECT_THROW(parseAnswer(rcode, ElementPtr()), CCSessionError);
     EXPECT_THROW(parseAnswer(rcode, el("1")), CCSessionError);
     EXPECT_THROW(parseAnswer(rcode, el("[]")), CCSessionError);
-    EXPECT_THROW(parseAnswer(rcode, el("{}")), CCSessionError);
+    EXPECT_THROW(parseAnswer(rcode, el("{  }")), CCSessionError);
     EXPECT_THROW(parseAnswer(rcode, el("{ \"something\": 1 }")), CCSessionError);
     EXPECT_THROW(parseAnswer(rcode, el("{ \"result\": 0 }")), CCSessionError);
     EXPECT_THROW(parseAnswer(rcode, el("{ \"result\": 1 }")), CCSessionError);
-    EXPECT_THROW(parseAnswer(rcode, el("{ \"result\": [ 1 ]}")), CCSessionError);
-    EXPECT_THROW(parseAnswer(rcode, el("{ \"result\": [ 1, 1 ]}")), CCSessionError);
+    EXPECT_THROW(parseAnswer(rcode, el("{ \"result\": [ 1 ] }")), CCSessionError);
+    EXPECT_THROW(parseAnswer(rcode, el("{ \"result\": [ 1, 1 ] }")), CCSessionError);
     
-    answer = el("{\"result\": [ 0 ]}");
+    answer = el("{ \"result\": [ 0 ] }");
     arg = parseAnswer(rcode, answer);
     EXPECT_EQ(0, rcode);
     EXPECT_TRUE(isNull(arg));
 
-    answer = el("{\"result\": [ 1, \"error\"]}");
+    answer = el("{ \"result\": [ 1, \"error\"] }");
     arg = parseAnswer(rcode, answer);
     EXPECT_EQ(1, rcode);
     EXPECT_EQ("error", arg->stringValue());
 
-    answer = el("{\"result\": [ 0, [ \"just\", \"some\", \"data\" ] ] }");
+    answer = el("{ \"result\": [ 0, [ \"just\", \"some\", \"data\" ] ] }");
     arg = parseAnswer(rcode, answer);
     EXPECT_EQ(0, rcode);
     EXPECT_EQ("[ \"just\", \"some\", \"data\" ]", arg->str());
@@ -116,19 +116,19 @@ TEST(CCSession, createCommand)
     ElementPtr arg;
 
     command = createCommand("my_command");
-    ASSERT_EQ("{\"command\": [ \"my_command\" ]}", command->str());
+    ASSERT_EQ("{ \"command\": [ \"my_command\" ] }", command->str());
 
     arg = el("1");
     command = createCommand("my_command", arg);
-    ASSERT_EQ("{\"command\": [ \"my_command\", 1 ]}", command->str());
+    ASSERT_EQ("{ \"command\": [ \"my_command\", 1 ] }", command->str());
 
     arg = el("[ \"a\", \"b\" ]");
     command = createCommand("my_cmd", arg);
-    ASSERT_EQ("{\"command\": [ \"my_cmd\", [ \"a\", \"b\" ] ]}", command->str());
+    ASSERT_EQ("{ \"command\": [ \"my_cmd\", [ \"a\", \"b\" ] ] }", command->str());
 
     arg = el("{ \"a\": \"map\" }");
     command = createCommand("foo", arg);
-    ASSERT_EQ("{\"command\": [ \"foo\", {\"a\": \"map\"} ]}", command->str());
+    ASSERT_EQ("{ \"command\": [ \"foo\", { \"a\": \"map\" } ] }", command->str());
 }
 
 TEST(CCSession, parseCommand)
@@ -139,21 +139,21 @@ TEST(CCSession, parseCommand)
     // should throw
     EXPECT_THROW(parseCommand(arg, ElementPtr()), CCSessionError);
     EXPECT_THROW(parseCommand(arg, el("1")), CCSessionError);
-    EXPECT_THROW(parseCommand(arg, el("{}")), CCSessionError);
-    EXPECT_THROW(parseCommand(arg, el("{\"not a command\": 1 }")), CCSessionError);
-    EXPECT_THROW(parseCommand(arg, el("{\"command\": 1 }")), CCSessionError);
-    EXPECT_THROW(parseCommand(arg, el("{\"command\": [] }")), CCSessionError);
-    EXPECT_THROW(parseCommand(arg, el("{\"command\": [ 1 ] }")), CCSessionError);
+    EXPECT_THROW(parseCommand(arg, el("{  }")), CCSessionError);
+    EXPECT_THROW(parseCommand(arg, el("{ \"not a command\": 1 }")), CCSessionError);
+    EXPECT_THROW(parseCommand(arg, el("{ \"command\": 1 }")), CCSessionError);
+    EXPECT_THROW(parseCommand(arg, el("{ \"command\": [] }")), CCSessionError);
+    EXPECT_THROW(parseCommand(arg, el("{ \"command\": [ 1 ] }")), CCSessionError);
 
-    cmd = parseCommand(arg, el("{\"command\": [ \"my_command\" ] }"));
+    cmd = parseCommand(arg, el("{ \"command\": [ \"my_command\" ] }"));
     EXPECT_EQ("my_command", cmd);
     EXPECT_TRUE(isNull(arg));
 
-    cmd = parseCommand(arg, el("{\"command\": [ \"my_command\", 1 ] }"));
+    cmd = parseCommand(arg, el("{ \"command\": [ \"my_command\", 1 ] }"));
     EXPECT_EQ("my_command", cmd);
     EXPECT_EQ("1", arg->str());
 
-    parseCommand(arg, el("{\"command\": [ \"my_command\", [ \"some\", \"argument\", \"list\" ] ] }"));
+    parseCommand(arg, el("{ \"command\": [ \"my_command\", [ \"some\", \"argument\", \"list\" ] ] }"));
     EXPECT_EQ("my_command", cmd);
     EXPECT_EQ("[ \"some\", \"argument\", \"list\" ]", arg->str());
 
@@ -170,7 +170,7 @@ TEST(CCSession, session1)
     ElementPtr msg;
     std::string group, to;
     msg = getFirstMessage(group, to);
-    EXPECT_EQ("{\"command\": [ \"module_spec\", {\"module_name\": \"Spec1\"} ]}", msg->str());
+    EXPECT_EQ("{ \"command\": [ \"module_spec\", { \"module_name\": \"Spec1\" } ] }", msg->str());
     EXPECT_EQ("ConfigManager", group);
     EXPECT_EQ("*", to);
     EXPECT_EQ(0, msg_queue->size());
@@ -188,7 +188,7 @@ TEST(CCSession, session2)
     ElementPtr msg;
     std::string group, to;
     msg = getFirstMessage(group, to);
-    EXPECT_EQ("{\"command\": [ \"module_spec\", {\"commands\": [ {\"command_args\": [ {\"item_default\": \"\", \"item_name\": \"message\", \"item_optional\": False, \"item_type\": \"string\"} ], \"command_description\": \"Print the given message to stdout\", \"command_name\": \"print_message\"}, {\"command_args\": [  ], \"command_description\": \"Shut down BIND 10\", \"command_name\": \"shutdown\"} ], \"config_data\": [ {\"item_default\": 1, \"item_name\": \"item1\", \"item_optional\": False, \"item_type\": \"integer\"}, {\"item_default\": 1.1, \"item_name\": \"item2\", \"item_optional\": False, \"item_type\": \"real\"}, {\"item_default\": True, \"item_name\": \"item3\", \"item_optional\": False, \"item_type\": \"boolean\"}, {\"item_default\": \"test\", \"item_name\": \"item4\", \"item_optional\": False, \"item_type\": \"string\"}, {\"item_default\": [ \"a\", \"b\" ], \"item_name\": \"item5\", \"item_optional\": False, \"item_type\": \"list\", \"list_item_spec\": {\"item_default\": \"\", \"item_name\": \"list_element\", \"item_optional\": False, \"item_type\": \"string\"}}, {\"item_default\": {}, \"item_name\": \"item6\", \"item_optional\": False, \"item_type\": \"map\", \"map_item_spec\": [ {\"item_default\": \"default\", \"item_name\": \"value1\", \"item_optional\": True, \"item_type\": \"string\"}, {\"item_name\": \"value2\", \"item_optional\": True, \"item_type\": \"integer\"} ]} ], \"module_name\": \"Spec2\"} ]}", msg->str());
+    EXPECT_EQ("{ \"command\": [ \"module_spec\", { \"commands\": [ { \"command_args\": [ { \"item_default\": \"\", \"item_name\": \"message\", \"item_optional\": false, \"item_type\": \"string\" } ], \"command_description\": \"Print the given message to stdout\", \"command_name\": \"print_message\" }, { \"command_args\": [  ], \"command_description\": \"Shut down BIND 10\", \"command_name\": \"shutdown\" } ], \"config_data\": [ { \"item_default\": 1, \"item_name\": \"item1\", \"item_optional\": false, \"item_type\": \"integer\" }, { \"item_default\": 1.1, \"item_name\": \"item2\", \"item_optional\": false, \"item_type\": \"real\" }, { \"item_default\": true, \"item_name\": \"item3\", \"item_optional\": false, \"item_type\": \"boolean\" }, { \"item_default\": \"test\", \"item_name\": \"item4\", \"item_optional\": false, \"item_type\": \"string\" }, { \"item_default\": [ \"a\", \"b\" ], \"item_name\": \"item5\", \"item_optional\": false, \"item_type\": \"list\", \"list_item_spec\": { \"item_default\": \"\", \"item_name\": \"list_element\", \"item_optional\": false, \"item_type\": \"string\" } }, { \"item_default\": {  }, \"item_name\": \"item6\", \"item_optional\": false, \"item_type\": \"map\", \"map_item_spec\": [ { \"item_default\": \"default\", \"item_name\": \"value1\", \"item_optional\": true, \"item_type\": \"string\" }, { \"item_name\": \"value2\", \"item_optional\": true, \"item_type\": \"integer\" } ] } ], \"module_name\": \"Spec2\" } ] }", msg->str());
     EXPECT_EQ("ConfigManager", group);
     EXPECT_EQ("*", to);
     EXPECT_EQ(0, msg_queue->size());
@@ -227,7 +227,7 @@ TEST(CCSession, session3)
 {
     initFakeSession();
     // client will ask for config
-    initial_messages->add(createAnswer(0, el("{}")));
+    initial_messages->add(createAnswer(0, el("{  }")));
 
     EXPECT_EQ(false, haveSubscription("Spec2", "*"));
     ModuleCCSession mccs(ccspecfile("spec2.spec"), my_config_handler, my_command_handler);
@@ -237,12 +237,12 @@ TEST(CCSession, session3)
     ElementPtr msg;
     std::string group, to;
     msg = getFirstMessage(group, to);
-    EXPECT_EQ("{\"command\": [ \"module_spec\", {\"commands\": [ {\"command_args\": [ {\"item_default\": \"\", \"item_name\": \"message\", \"item_optional\": False, \"item_type\": \"string\"} ], \"command_description\": \"Print the given message to stdout\", \"command_name\": \"print_message\"}, {\"command_args\": [  ], \"command_description\": \"Shut down BIND 10\", \"command_name\": \"shutdown\"} ], \"config_data\": [ {\"item_default\": 1, \"item_name\": \"item1\", \"item_optional\": False, \"item_type\": \"integer\"}, {\"item_default\": 1.1, \"item_name\": \"item2\", \"item_optional\": False, \"item_type\": \"real\"}, {\"item_default\": True, \"item_name\": \"item3\", \"item_optional\": False, \"item_type\": \"boolean\"}, {\"item_default\": \"test\", \"item_name\": \"item4\", \"item_optional\": False, \"item_type\": \"string\"}, {\"item_default\": [ \"a\", \"b\" ], \"item_name\": \"item5\", \"item_optional\": False, \"item_type\": \"list\", \"list_item_spec\": {\"item_default\": \"\", \"item_name\": \"list_element\", \"item_optional\": False, \"item_type\": \"string\"}}, {\"item_default\": {}, \"item_name\": \"item6\", \"item_optional\": False, \"item_type\": \"map\", \"map_item_spec\": [ {\"item_default\": \"default\", \"item_name\": \"value1\", \"item_optional\": True, \"item_type\": \"string\"}, {\"item_name\": \"value2\", \"item_optional\": True, \"item_type\": \"integer\"} ]} ], \"module_name\": \"Spec2\"} ]}", msg->str());
+    EXPECT_EQ("{ \"command\": [ \"module_spec\", { \"commands\": [ { \"command_args\": [ { \"item_default\": \"\", \"item_name\": \"message\", \"item_optional\": false, \"item_type\": \"string\" } ], \"command_description\": \"Print the given message to stdout\", \"command_name\": \"print_message\" }, { \"command_args\": [  ], \"command_description\": \"Shut down BIND 10\", \"command_name\": \"shutdown\" } ], \"config_data\": [ { \"item_default\": 1, \"item_name\": \"item1\", \"item_optional\": false, \"item_type\": \"integer\" }, { \"item_default\": 1.1, \"item_name\": \"item2\", \"item_optional\": false, \"item_type\": \"real\" }, { \"item_default\": true, \"item_name\": \"item3\", \"item_optional\": false, \"item_type\": \"boolean\" }, { \"item_default\": \"test\", \"item_name\": \"item4\", \"item_optional\": false, \"item_type\": \"string\" }, { \"item_default\": [ \"a\", \"b\" ], \"item_name\": \"item5\", \"item_optional\": false, \"item_type\": \"list\", \"list_item_spec\": { \"item_default\": \"\", \"item_name\": \"list_element\", \"item_optional\": false, \"item_type\": \"string\" } }, { \"item_default\": {  }, \"item_name\": \"item6\", \"item_optional\": false, \"item_type\": \"map\", \"map_item_spec\": [ { \"item_default\": \"default\", \"item_name\": \"value1\", \"item_optional\": true, \"item_type\": \"string\" }, { \"item_name\": \"value2\", \"item_optional\": true, \"item_type\": \"integer\" } ] } ], \"module_name\": \"Spec2\" } ] }", msg->str());
     EXPECT_EQ("ConfigManager", group);
     EXPECT_EQ("*", to);
     EXPECT_EQ(1, msg_queue->size());
     msg = getFirstMessage(group, to);
-    EXPECT_EQ("{\"command\": [ \"get_config\", {\"module_name\": \"Spec2\"} ]}", msg->str());
+    EXPECT_EQ("{ \"command\": [ \"get_config\", { \"module_name\": \"Spec2\" } ] }", msg->str());
     EXPECT_EQ("ConfigManager", group);
     EXPECT_EQ("*", to);
     EXPECT_EQ(0, msg_queue->size());
@@ -253,7 +253,7 @@ TEST(CCSession, checkCommand)
 {
     initFakeSession();
     // client will ask for config
-    initial_messages->add(createAnswer(0, el("{}")));
+    initial_messages->add(createAnswer(0, el("{  }")));
 
     EXPECT_EQ(false, haveSubscription("Spec2", "*"));
     ModuleCCSession mccs(ccspecfile("spec2.spec"), my_config_handler, my_command_handler);
@@ -279,42 +279,42 @@ TEST(CCSession, checkCommand)
     result = mccs.checkCommand();
     EXPECT_EQ(1, msg_queue->size());
     msg = getFirstMessage(group, to);
-    EXPECT_EQ("{\"result\": [ 0 ]}", msg->str());
+    EXPECT_EQ("{ \"result\": [ 0 ] }", msg->str());
     EXPECT_EQ(0, result);
 
     addMessage(el("{ \"command\": \"bad_command\" }"), "Spec2", "*");
     result = mccs.checkCommand();
     EXPECT_EQ(1, msg_queue->size());
     msg = getFirstMessage(group, to);
-    EXPECT_EQ("{\"result\": [ 1, \"Command part in command message missing, empty, or not a list\" ]}", msg->str());
+    EXPECT_EQ("{ \"result\": [ 1, \"Command part in command message missing, empty, or not a list\" ] }", msg->str());
     EXPECT_EQ(0, result);
 
     addMessage(el("{ \"command\": [ \"bad_command\" ] }"), "Spec2", "*");
     result = mccs.checkCommand();
     EXPECT_EQ(1, msg_queue->size());
     msg = getFirstMessage(group, to);
-    EXPECT_EQ("{\"result\": [ 1, \"bad command\" ]}", msg->str());
+    EXPECT_EQ("{ \"result\": [ 1, \"bad command\" ] }", msg->str());
     EXPECT_EQ(0, result);
 
     addMessage(el("{ \"command\": [ \"command_with_arg\", 1 ] }"), "Spec2", "*");
     result = mccs.checkCommand();
     EXPECT_EQ(1, msg_queue->size());
     msg = getFirstMessage(group, to);
-    EXPECT_EQ("{\"result\": [ 0, 2 ]}", msg->str());
+    EXPECT_EQ("{ \"result\": [ 0, 2 ] }", msg->str());
     EXPECT_EQ(0, result);
 
     addMessage(el("{ \"command\": [ \"command_with_arg\" ] }"), "Spec2", "*");
     result = mccs.checkCommand();
     EXPECT_EQ(1, msg_queue->size());
     msg = getFirstMessage(group, to);
-    EXPECT_EQ("{\"result\": [ 1, \"arg missing\" ]}", msg->str());
+    EXPECT_EQ("{ \"result\": [ 1, \"arg missing\" ] }", msg->str());
     EXPECT_EQ(0, result);
 
     addMessage(el("{ \"command\": [ \"command_with_arg\", \"asdf\" ] }"), "Spec2", "*");
     result = mccs.checkCommand();
     EXPECT_EQ(1, msg_queue->size());
     msg = getFirstMessage(group, to);
-    EXPECT_EQ("{\"result\": [ 1, \"arg bad type\" ]}", msg->str());
+    EXPECT_EQ("{ \"result\": [ 1, \"arg bad type\" ] }", msg->str());
     EXPECT_EQ(0, result);
 
     mccs.setCommandHandler(NULL);
@@ -322,7 +322,7 @@ TEST(CCSession, checkCommand)
     result = mccs.checkCommand();
     EXPECT_EQ(1, msg_queue->size());
     msg = getFirstMessage(group, to);
-    EXPECT_EQ("{\"result\": [ 1, \"Command given but no command handler for module\" ]}", msg->str());
+    EXPECT_EQ("{ \"result\": [ 1, \"Command given but no command handler for module\" ] }", msg->str());
     EXPECT_EQ(0, result);
 
     EXPECT_EQ(1, mccs.getValue("item1")->intValue());
@@ -330,7 +330,7 @@ TEST(CCSession, checkCommand)
     result = mccs.checkCommand();
     EXPECT_EQ(1, msg_queue->size());
     msg = getFirstMessage(group, to);
-    EXPECT_EQ("{\"result\": [ 0 ]}", msg->str());
+    EXPECT_EQ("{ \"result\": [ 0 ] }", msg->str());
     EXPECT_EQ(0, result);
     EXPECT_EQ(2, mccs.getValue("item1")->intValue());
 
@@ -338,7 +338,7 @@ TEST(CCSession, checkCommand)
     result = mccs.checkCommand();
     EXPECT_EQ(1, msg_queue->size());
     msg = getFirstMessage(group, to);
-    EXPECT_EQ("{\"result\": [ 2, \"Error in config validation: Type mismatch\" ]}", msg->str());
+    EXPECT_EQ("{ \"result\": [ 2, \"Error in config validation: Type mismatch\" ] }", msg->str());
     EXPECT_EQ(0, result);
     EXPECT_EQ(2, mccs.getValue("item1")->intValue());
 
@@ -346,7 +346,7 @@ TEST(CCSession, checkCommand)
     result = mccs.checkCommand();
     EXPECT_EQ(1, msg_queue->size());
     msg = getFirstMessage(group, to);
-    EXPECT_EQ("{\"result\": [ 6, \"I do not like the number 5\" ]}", msg->str());
+    EXPECT_EQ("{ \"result\": [ 6, \"I do not like the number 5\" ] }", msg->str());
     EXPECT_EQ(0, result);
     EXPECT_EQ(2, mccs.getValue("item1")->intValue());
 
@@ -364,7 +364,7 @@ TEST(CCSession, remoteConfig)
     
     // first simply connect, with no config values, and see we get
     // the default
-    initial_messages->add(createAnswer(0, el("{}")));
+    initial_messages->add(createAnswer(0, el("{  }")));
 
     EXPECT_EQ(false, haveSubscription("Spec2", "*"));
     module_name = mccs.addRemoteConfig(ccspecfile("spec2.spec"));
@@ -393,7 +393,7 @@ TEST(CCSession, remoteConfig)
 
     // remove, re-add, now with a *bad* config request answer
     mccs.removeRemoteConfig(module_name);
-    initial_messages->add(el("{}"));
+    initial_messages->add(el("{  }"));
     EXPECT_THROW(mccs.addRemoteConfig(ccspecfile("spec2.spec")), CCSessionError);
     
     initial_messages->add(createAnswer(1, "my_error"));

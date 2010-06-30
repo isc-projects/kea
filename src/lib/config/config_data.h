@@ -39,12 +39,12 @@ class ConfigData {
 public:
     /// Constructs a ConfigData option with no specification and an
     /// empty configuration.
-    ConfigData() { _config = Element::createFromString("{}"); };
+    ConfigData() { _config = Element::createMap(); };
     
     /// Constructs a ConfigData option with the given specification
     /// and an empty configuration.
     /// \param module_spec A ModuleSpec for the relevant module
-    ConfigData(const ModuleSpec& module_spec) : _module_spec(module_spec) { _config = Element::createFromString("{}"); }
+    ConfigData(const ModuleSpec& module_spec) : _module_spec(module_spec) { _config = Element::createMap(); }
 
     virtual ~ConfigData() {};
 

@@ -49,7 +49,7 @@ using namespace isc::datasrc;
 using namespace isc::data;
 
 namespace {
-const ElementPtr SQLITE_DBFILE_EXAMPLE = Element::createFromString(
+const ElementPtr SQLITE_DBFILE_EXAMPLE = Element::fromJSON(
     "{ \"database_file\": \"" TEST_DATA_DIR "/example.org.sqlite3\"}");
 
 class DataSrcTest : public ::testing::Test {

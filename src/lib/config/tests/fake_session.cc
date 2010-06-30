@@ -92,12 +92,12 @@ getFirstMessage(std::string& group, std::string& to)
 void
 addMessage(ElementPtr msg, const std::string& group, const std::string& to)
 {
-    ElementPtr m_el = Element::createFromString("[]");
+    ElementPtr m_el = Element::createList();
     m_el->add(Element::create(group));
     m_el->add(Element::create(to));
     m_el->add(msg);
     if (!msg_queue) {
-        msg_queue = Element::createFromString("[]");
+        msg_queue = Element::createList();
     }
     msg_queue->add(m_el);
 }
@@ -108,8 +108,8 @@ haveSubscription(const std::string& group, const std::string& instance)
     if (!subscriptions) {
         return false;
     }
-    ElementPtr s1 = Element::createFromString("[]");
-    ElementPtr s2 = Element::createFromString("[]");
+    ElementPtr s1 = Element::createList();
+    ElementPtr s2 = Element::createList();
     s1->add(Element::create(group));
     s1->add(Element::create(instance));
     s2->add(Element::create(group));
@@ -206,7 +206,7 @@ Session::recvmsg(ElementPtr& env, ElementPtr& msg, bool nonblock UNUSED_PARAM, i
         BOOST_FOREACH(ElementPtr c_m, msg_queue->listValue()) {
             ElementPtr to_remove = ElementPtr();
             if (haveSubscription(c_m->get(0), c_m->get(1))) {
-                env = Element::createFromString("{}");
+                env = Element::createMap();
                 env->set("group", c_m->get(0));
                 env->set("to", c_m->get(1));
                 msg = c_m->get(2);
@@ -226,11 +226,11 @@ Session::recvmsg(ElementPtr& env, ElementPtr& msg, bool nonblock UNUSED_PARAM, i
 void
 Session::subscribe(std::string group, std::string instance) {
     //cout << "[XX] client subscribes to " << group << " . " << instance << endl;
-    ElementPtr s_el = Element::createFromString("[]");
+    ElementPtr s_el = Element::createList();
     s_el->add(Element::create(group));
     s_el->add(Element::create(instance));
     if (!subscriptions) {
-        subscriptions = Element::createFromString("[]");
+        subscriptions = Element::createList();
     }
     subscriptions->add(s_el);
 }
@@ -238,7 +238,7 @@ Session::subscribe(std::string group, std::string instance) {
 void
 Session::unsubscribe(std::string group, std::string instance) {
     //cout << "[XX] client unsubscribes from " << group << " . " << instance << endl;
-    ElementPtr s_el = Element::createFromString("[]");
+    ElementPtr s_el = Element::createList();
     s_el->add(Element::create(group));
     s_el->add(Element::create(instance));
     if (!subscriptions) {
