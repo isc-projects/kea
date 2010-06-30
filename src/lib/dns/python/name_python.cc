@@ -367,12 +367,12 @@ Name_destroy(s_Name* self) {
 
 static PyObject*
 Name_at(s_Name* self, PyObject* args) {
-    size_t pos;
-    if (!PyArg_ParseTuple(args, "i", &pos)) {
+    unsigned int pos;
+    if (!PyArg_ParseTuple(args, "I", &pos)) {
         return (NULL);
     }
     try {
-        return (Py_BuildValue("i", self->name->at(pos)));
+        return (Py_BuildValue("I", self->name->at(pos)));
     } catch (isc::OutOfRange oor) {
         PyErr_SetString(PyExc_IndexError,
                         "name index out of range");

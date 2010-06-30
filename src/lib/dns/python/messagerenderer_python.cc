@@ -167,7 +167,7 @@ static PyObject*
 MessageRenderer_setLengthLimit(s_MessageRenderer* self,
                                PyObject* args)
 {
-    size_t lengthlimit;
+    unsigned int lengthlimit;
     if (!PyArg_ParseTuple(args, "I", &lengthlimit)) {
         return (NULL);
     }
