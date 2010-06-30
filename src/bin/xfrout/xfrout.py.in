@@ -58,8 +58,10 @@ VERBOSE_MODE = False
 
 class XfroutSession(BaseRequestHandler):
     def __init__(self, request, client_address, server, log):
-        BaseRequestHandler.__init__(self, request, client_address, server)
+        # The initializer for the superclass may call functions
+        # that need _log to be set, so we set it first
         self._log = log
+        BaseRequestHandler.__init__(self, request, client_address, server)
 
     def handle(self):
         fd = recv_fd(self.request.fileno())
