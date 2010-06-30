@@ -1284,7 +1284,7 @@ Message_getUDPSize(s_Message* self) {
 static PyObject*
 Message_setUDPSize(s_Message* self, PyObject* args) {
     uint16_t size;
-    if (!PyArg_ParseTuple(args, "I", &size)) {
+    if (!PyArg_ParseTuple(args, "H", &size)) {
         return (NULL);
     }
     try {
@@ -1307,7 +1307,7 @@ Message_getQid(s_Message* self) {
 static PyObject*
 Message_setQid(s_Message* self, PyObject* args) {
     uint16_t id;
-    if (!PyArg_ParseTuple(args, "I", &id)) {
+    if (!PyArg_ParseTuple(args, "H", &id)) {
         return (NULL);
     }
     try {
