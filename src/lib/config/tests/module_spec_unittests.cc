@@ -58,7 +58,7 @@ TEST(ModuleSpec, ReadingSpecfiles) {
                    ": No such file or directory");
 
     dd = moduleSpecFromFile(specfile("spec2.spec"));
-    EXPECT_EQ("[ {\"command_args\": [ {\"item_default\": \"\", \"item_name\": \"message\", \"item_optional\": False, \"item_type\": \"string\"} ], \"command_description\": \"Print the given message to stdout\", \"command_name\": \"print_message\"}, {\"command_args\": [  ], \"command_description\": \"Shut down BIND 10\", \"command_name\": \"shutdown\"} ]", dd.getCommandsSpec()->str());
+    EXPECT_EQ("[ { \"command_args\": [ { \"item_default\": \"\", \"item_name\": \"message\", \"item_optional\": false, \"item_type\": \"string\" } ], \"command_description\": \"Print the given message to stdout\", \"command_name\": \"print_message\" }, { \"command_args\": [  ], \"command_description\": \"Shut down BIND 10\", \"command_name\": \"shutdown\" } ]", dd.getCommandsSpec()->str());
     EXPECT_EQ("Spec2", dd.getModuleName());
     EXPECT_EQ("", dd.getModuleDescription());
 
@@ -82,13 +82,13 @@ TEST(ModuleSpec, ReadingSpecfiles) {
 
 TEST(ModuleSpec, SpecfileItems) {
     module_spec_error("spec3.spec",
-                   "item_name missing in {\"item_default\": 1, \"item_optional\": False, \"item_type\": \"integer\"}");
+                   "item_name missing in { \"item_default\": 1, \"item_optional\": false, \"item_type\": \"integer\" }");
     module_spec_error("spec4.spec",
-                   "item_type missing in {\"item_default\": 1, \"item_name\": \"item1\", \"item_optional\": False}");
+                   "item_type missing in { \"item_default\": 1, \"item_name\": \"item1\", \"item_optional\": false }");
     module_spec_error("spec5.spec",
-                   "item_optional missing in {\"item_default\": 1, \"item_name\": \"item1\", \"item_type\": \"integer\"}");
+                   "item_optional missing in { \"item_default\": 1, \"item_name\": \"item1\", \"item_type\": \"integer\" }");
     module_spec_error("spec6.spec",
-                   "item_default missing in {\"item_name\": \"item1\", \"item_optional\": False, \"item_type\": \"integer\"}");
+                   "item_default missing in { \"item_name\": \"item1\", \"item_optional\": false, \"item_type\": \"integer\" }");
     module_spec_error("spec9.spec",
                    "item_default not of type integer");
     module_spec_error("spec10.spec",
@@ -108,7 +108,7 @@ TEST(ModuleSpec, SpecfileItems) {
 TEST(ModuleSpec, SpecfileConfigData)
 {
     module_spec_error("spec7.spec",
-                   "module_name missing in {}");
+                   "module_name missing in {  }");
     module_spec_error("spec8.spec",
                    "No module_spec in specification");
     module_spec_error("spec16.spec",
@@ -120,9 +120,9 @@ TEST(ModuleSpec, SpecfileConfigData)
 TEST(ModuleSpec, SpecfileCommands)
 {
     module_spec_error("spec17.spec",
-                   "command_name missing in {\"command_args\": [ {\"item_default\": \"\", \"item_name\": \"message\", \"item_optional\": False, \"item_type\": \"string\"} ], \"command_description\": \"Print the given message to stdout\"}");
+                   "command_name missing in { \"command_args\": [ { \"item_default\": \"\", \"item_name\": \"message\", \"item_optional\": false, \"item_type\": \"string\" } ], \"command_description\": \"Print the given message to stdout\" }");
     module_spec_error("spec18.spec",
-                   "command_args missing in {\"command_description\": \"Print the given message to stdout\", \"command_name\": \"print_message\"}");
+                   "command_args missing in { \"command_description\": \"Print the given message to stdout\", \"command_name\": \"print_message\" }");
     module_spec_error("spec19.spec",
                    "command_args not of type list");
     module_spec_error("spec20.spec",
@@ -139,7 +139,7 @@ data_test(ModuleSpec dd, const std::string& data_file_name)
     std::ifstream data_file;
 
     data_file.open(specfile(data_file_name).c_str());
-    ElementPtr data = Element::createFromString(data_file, data_file_name);
+    ElementPtr data = Element::fromJSON(data_file, data_file_name);
     data_file.close();
 
     return dd.validate_config(data);
@@ -151,7 +151,7 @@ data_test_with_errors(ModuleSpec dd, const std::string& data_file_name, ElementP
     std::ifstream data_file;
 
     data_file.open(specfile(data_file_name).c_str());
-    ElementPtr data = Element::createFromString(data_file, data_file_name);
+    ElementPtr data = Element::fromJSON(data_file, data_file_name);
     data_file.close();
 
     return dd.validate_config(data, true, errors);
@@ -169,7 +169,7 @@ TEST(ModuleSpec, DataValidation) {
     EXPECT_TRUE(data_test(dd, "data22_7.data"));
     EXPECT_FALSE(data_test(dd, "data22_8.data"));
 
-    ElementPtr errors = Element::createFromString("[]");
+    ElementPtr errors = Element::createList();
     EXPECT_FALSE(data_test_with_errors(dd, "data22_8.data", errors));
     EXPECT_EQ("[ \"Type mismatch\" ]", errors->str());
 }

@@ -274,7 +274,7 @@ AuthSrvImpl::setDbFile(const isc::data::ElementPtr config) {
         bool is_default;
         string item("database_file");
         ElementPtr value = cs_->getValue(is_default, item);
-        final = Element::createFromString("{}");
+        final = Element::createMap();
 
         // If the value is the default, and we are running from
         // a specific directory ('from build'), we need to use

@@ -26,29 +26,34 @@
 
 #include <boost/algorithm/string.hpp> // for iequals
 
+#include <cmath>
+
 using namespace std;
-
-namespace {
-const unsigned char PROTOCOL_VERSION[4] = { 0x53, 0x6b, 0x61, 0x6e };
-
-const unsigned char ITEM_BLOB = 0x01;
-const unsigned char ITEM_HASH = 0x02;
-const unsigned char ITEM_LIST = 0x03;
-const unsigned char ITEM_NULL = 0x04;
-const unsigned char ITEM_BOOL = 0x05;
-const unsigned char ITEM_INT  = 0x06;
-const unsigned char ITEM_REAL = 0x07;
-const unsigned char ITEM_UTF8 = 0x08;
-const unsigned char ITEM_MASK = 0x0f;
-
-const unsigned char ITEM_LENGTH_32   = 0x00;
-const unsigned char ITEM_LENGTH_16   = 0x10;
-const unsigned char ITEM_LENGTH_8    = 0x20;
-const unsigned char ITEM_LENGTH_MASK = 0x30;
-}
 
 namespace isc {
 namespace data {
+
+std::string
+Element::str()
+{
+    std::stringstream ss;
+    toJSON(ss);
+    return ss.str();
+}
+
+std::string
+Element::toWire()
+{
+    std::stringstream ss;
+    toJSON(ss);
+    return ss.str();
+}
+
+void
+Element::toWire(std::ostream& ss)
+{
+    toJSON(ss);
+}
 
 //
 // The following methods are effectively empty, and their parameters are
@@ -58,7 +63,7 @@ namespace data {
 // installed files we define the methods here.
 //
 bool
-Element::getValue(int& t UNUSED_PARAM) {
+Element::getValue(long int& t UNUSED_PARAM) {
     return false;
 }
 
@@ -88,7 +93,7 @@ Element::getValue(std::map<std::string, ElementPtr>& t UNUSED_PARAM) {
 }
 
 bool
-Element::setValue(const int v UNUSED_PARAM) {
+Element::setValue(const long int v UNUSED_PARAM) {
     return false;
 }
 
@@ -179,15 +184,11 @@ Element::find(const std::string& identifier UNUSED_PARAM,
 
 namespace {
 inline void
-throwParseError(const std::string& error, const std::string& file, int line = 0, int pos = 0)
+throwJSONError(const std::string& error, const std::string& file, int line, int pos)
 {
-    if (line != 0 || pos != 0) {
-        std::stringstream ss;
-        ss << error << " in " + file + ":" << line << ":" << pos;
-        throw ParseError(ss.str());
-    } else {
-        throw ParseError(error);
-    }
+    std::stringstream ss;
+    ss << error << " in " + file + ":" << line << ":" << pos;
+    isc_throw(JSONError, ss.str());
 }
 }
 
@@ -203,7 +204,12 @@ bool operator==(const isc::data::ElementPtr a, const isc::data::ElementPtr b) {
 // factory functions
 //
 ElementPtr
-Element::create(const int i) {
+Element::create() {
+    return ElementPtr(new NullElement());
+}
+
+ElementPtr
+Element::create(const long int i) {
     return ElementPtr(new IntElement(i));
 }
 
@@ -223,24 +229,18 @@ Element::create(const bool b) {
 }
 
 ElementPtr
-Element::create(const std::vector<ElementPtr>& v) {
-    return ElementPtr(new ListElement(v));
+Element::createList() {
+    return ElementPtr(new ListElement());
 }
 
 ElementPtr
-Element::create(const std::map<std::string, ElementPtr>& m) {
-    for (std::map<std::string, ElementPtr>::const_iterator it = m.begin();
-         it != m.end(); ++it) {
-        if ((*it).first.length() > 255) {
-            isc_throw(TypeError, "Map tag is too long");
-        }
-    }
-    return ElementPtr(new MapElement(m));
+Element::createMap() {
+    return ElementPtr(new MapElement());
 }
 
 
 //
-// helper functions for createFromString factory
+// helper functions for fromJSON factory
 //
 namespace {
 bool
@@ -300,15 +300,17 @@ skip_to(std::istream &in, const std::string& file, int& line,
             --pos;
             return;
         } else {
-            throwParseError(std::string("'") + c + "' read, one of \"" + chars + "\" expected", file, line, pos);
+            throwJSONError(std::string("'") + c + "' read, one of \"" + chars + "\" expected", file, line, pos);
         }
     }
-    throwParseError(std::string("EOF read, one of \"") + chars + "\" expected", file, line, pos);
+    throwJSONError(std::string("EOF read, one of \"") + chars + "\" expected", file, line, pos);
 }
 
+// TODO: Should we check for all other official escapes here (and
+// error on the rest)?
 std::string
 str_from_stringstream(std::istream &in, const std::string& file, const int line,
-                      int& pos) throw (ParseError)
+                      int& pos) throw (JSONError)
 {
     char c = 0;
     std::stringstream ss;
@@ -318,7 +320,7 @@ str_from_stringstream(std::istream &in, const std::string& file, const int line,
         c = in.get();
         ++pos;
     } else {
-        throwParseError("String expected", file, line, pos);
+        throwJSONError("String expected", file, line, pos);
     }
     while (c != EOF && c != '"') {
         ss << c;
@@ -342,36 +344,47 @@ word_from_stringstream(std::istream &in, int& pos) {
     return ss.str();
 }
 
-inline int
-count_chars_i(int i) {
-    int result = 1;
-    while (i > 10) {
-        ++result;
-        i = i / 10;
+static std::string
+number_from_stringstream(std::istream &in, int& pos) {
+    std::stringstream ss;
+    while (isdigit(in.peek()) || in.peek() == '+' || in.peek() == '-' ||
+           in.peek() == '.' || in.peek() == 'e' || in.peek() == 'E') {
+        ss << (char) in.get();
     }
-    return result;
+    pos += ss.str().size();
+    return ss.str();
 }
 
-inline int
-count_chars_d(double d) {
-    int result = 1;
-    while (d < 1.0) {
-        ++result;
-        d = d * 10;
-    }
-    return result;
-}
-
+// Should we change from IntElement and DoubleElement to NumberElement
+// that can also hold an e value? (and have specific getters if the
+// value is larger than an int can handle)
 ElementPtr
-from_stringstream_int_or_double(std::istream &in, int &pos) {
-    int i;
-    in >> i;
-    pos += count_chars_i(i);
-    if (in.peek() == '.') {
-        double d;
-        in >> d;
-        pos += count_chars_d(i);
-        d += i;
+from_stringstream_number(std::istream &in, int &pos) {
+    long int i = 0;
+    double d = 0.0;
+    bool is_double = false;
+    char *endptr;
+
+    std::string number = number_from_stringstream(in, pos);
+
+    i = strtol(number.c_str(), &endptr, 10);
+    if (*endptr != '\0') {
+        d = strtod(number.c_str(), &endptr);
+        is_double = true;
+        if (*endptr != '\0') {
+            isc_throw(JSONError, std::string("Bad number: ") + number);
+        } else {
+            if (d == HUGE_VAL || d == -HUGE_VAL) {
+                isc_throw(JSONError, std::string("Number overflow: ") + number);
+            }
+        }
+    } else {
+        if (i == LONG_MAX || i == LONG_MIN) {
+            isc_throw(JSONError, std::string("Number overflow: ") + number);
+        }
+    }
+    
+    if (is_double) {
         return Element::create(d);
     } else {
         return Element::create(i);
@@ -388,8 +401,21 @@ from_stringstream_bool(std::istream &in, const std::string& file,
     } else if (boost::iequals(word, "False")) {
         return Element::create(false);
     } else {
-        throwParseError(std::string("Bad boolean value: ") + word, file, line, pos);
-        // above is a throw shortcur, return empty is never reached
+        throwJSONError(std::string("Bad boolean value: ") + word, file, line, pos);
+        // above is a throw shortcurt, return empty is never reached
+        return ElementPtr();
+    }
+}
+
+ElementPtr
+from_stringstream_null(std::istream &in, const std::string& file,
+                       const int line, int& pos)
+{
+    const std::string word = word_from_stringstream(in, pos);
+    if (boost::iequals(word, "null")) {
+        return Element::create();
+    } else {
+        throwJSONError(std::string("Bad null value: ") + word, file, line, pos);
         return ElementPtr();
     }
 }
@@ -404,27 +430,27 @@ ElementPtr
 from_stringstream_list(std::istream &in, const std::string& file, int& line, int& pos)
 {
     char c = 0;
-    std::vector<ElementPtr> v;
+    ElementPtr list = Element::createList();
     ElementPtr cur_list_element;
 
     skip_chars(in, " \t\n", line, pos);
     while (c != EOF && c != ']') {
         if (in.peek() != ']') {
-            cur_list_element = Element::createFromString(in, file, line, pos);
-            v.push_back(cur_list_element);
+            cur_list_element = Element::fromJSON(in, file, line, pos);
+            list->add(cur_list_element);
             skip_to(in, file, line, pos, ",]", " \t\n");
         }
         c = in.get();
         pos++;
     }
-    return Element::create(v);
+    return list;
 }
 
 ElementPtr
 from_stringstream_map(std::istream &in, const std::string& file, int& line,
                       int& pos)
 {
-    std::map<std::string, ElementPtr> m;
+    ElementPtr map = Element::createMap();
     skip_chars(in, " \t\n", line, pos);
     char c = in.peek();
     if (c == '}') {
@@ -432,45 +458,88 @@ from_stringstream_map(std::istream &in, const std::string& file, int& line,
         c = in.get();
     } else {
         while (c != EOF && c != '}') {
-            std::pair<std::string, ElementPtr> p;
-
-            p.first = str_from_stringstream(in, file, line, pos);
-            if (p.first.length() > 255) {
-                // Map tag has one-byte length field in wire format, so the
-                // length cannot exceed 255.
-                throwParseError("Map tag is too long", file, line, pos);
-            }
+            std::string key = str_from_stringstream(in, file, line, pos);
 
             skip_to(in, file, line, pos, ":", " \t\n");
             // skip the :
             in.get();
             pos++;
-            p.second = Element::createFromString(in, file, line, pos);
-            m.insert(p);
+
+            ElementPtr value = Element::fromJSON(in, file, line, pos);
+            map->set(key, value);
+            
             skip_to(in, file, line, pos, ",}", " \t\n");
             c = in.get();
             pos++;
         }
     }
-    return Element::create(m);
+    return map;
 }
 }
 
+std::string
+Element::typeToName(Element::types type)
+{
+    switch(type) {
+    case Element::integer:
+        return std::string("integer");
+    case Element::real:
+        return std::string("real");
+    case Element::boolean:
+        return std::string("boolean");
+    case Element::string:
+        return std::string("string");
+    case Element::list:
+        return std::string("list");
+    case Element::map:
+        return std::string("map");
+    case Element::null:
+        return std::string("null");
+    case Element::any:
+        return std::string("any");
+    default:
+        return std::string("unknown");
+    }
+}
+
+Element::types
+Element::nameToType(const std::string& type_name) {
+    if (type_name == "integer") {
+        return Element::integer;
+    } else if (type_name == "real") {
+        return Element::real;
+    } else if (type_name == "boolean") {
+        return Element::boolean;
+    } else if (type_name == "string") {
+        return Element::string;
+    } else if (type_name == "list") {
+        return Element::list;
+    } else if (type_name == "map") {
+        return Element::map;
+    } else if (type_name == "null") {
+        return Element::null;
+    } else if (type_name == "any") {
+        return Element::any;
+    } else {
+        isc_throw(TypeError, type_name + " is not a valid type name");
+    }
+}
+
 ElementPtr
-Element::createFromString(std::istream& in) throw(ParseError) {
+Element::fromJSON(std::istream& in) throw(JSONError) {
     int line = 1, pos = 1;
-    return createFromString(in, "<istream>", line, pos);
+    return fromJSON(in, "<istream>", line, pos);
 }
 
 ElementPtr
-Element::createFromString(std::istream& in, const std::string& file_name) throw(ParseError)
+Element::fromJSON(std::istream& in, const std::string& file_name) throw(JSONError)
 {
     int line = 1, pos = 1;
-    return createFromString(in, file_name, line, pos);
+    return fromJSON(in, file_name, line, pos);
 }
 
 ElementPtr
-Element::createFromString(std::istream &in, const std::string& file, int& line, int& pos) throw(ParseError)
+Element::fromJSON(std::istream &in, const std::string& file, int& line, int& pos) throw(JSONError)
 {
     char c = 0;
     ElementPtr element;
@@ -490,8 +559,11 @@ Element::createFromString(std::istream &in, const std::string& file, int& line, 
             case '8':
             case '9':
             case '0':
+            case '-':
+            case '+':
+            case '.':
                 in.putback(c);
-                element = from_stringstream_int_or_double(in, pos);
+                element = from_stringstream_number(in, pos);
                 el_read = true;
                 break;
             case 't':
@@ -500,6 +572,12 @@ Element::createFromString(std::istream &in, const std::string& file, int& line, 
             case 'F':
                 in.putback(c);
                 element = from_stringstream_bool(in, file, line, pos);
+                el_read = true;
+                break;
+            case 'n':
+            case 'N':
+                in.putback(c);
+                element = from_stringstream_null(in, file, line, pos);
                 el_read = true;
                 break;
             case '"':
@@ -518,62 +596,65 @@ Element::createFromString(std::istream &in, const std::string& file, int& line, 
             case EOF:
                 break;
             default:
-                throwParseError(std::string("error: unexpected character ") + c, file, line, pos);
+                throwJSONError(std::string("error: unexpected character ") + c, file, line, pos);
                 break;
         }
     }
     if (el_read) {
         return element;
     } else {
-        throw ParseError("nothing read");
+        isc_throw(JSONError, "nothing read");
     }
 }
 
 ElementPtr
-Element::createFromString(const std::string &in) {
+Element::fromJSON(const std::string &in) {
     std::stringstream ss;
     ss << in;
-    return createFromString(ss, "<string>");
+    return fromJSON(ss, "<string>");
 }
 
-//
-// a general to_str() function
-//
-std::string
-IntElement::str() {
-    std::stringstream ss;
+// to JSON format
+
+void
+IntElement::toJSON(std::ostream& ss)
+{
     ss << intValue();
-    return ss.str();
 }
 
-std::string
-DoubleElement::str() {
-    std::stringstream ss;
+void
+DoubleElement::toJSON(std::ostream& ss)
+{
     ss << doubleValue();
-    return ss.str();
 }
 
-std::string
-BoolElement::str() {
-    if (b) {
-        return "True";
+void
+BoolElement::toJSON(std::ostream& ss)
+{
+    if (boolValue()) {
+        ss << "true";
     } else {
-        return "False";
+        ss << "false";
     }
 }
 
-std::string
-StringElement::str() {
-    std::stringstream ss;
+void
+NullElement::toJSON(std::ostream& ss)
+{
+    ss << "null";
+}
+
+void
+StringElement::toJSON(std::ostream& ss)
+{
     ss << "\"";
     ss << stringValue();
     ss << "\"";
-    return ss.str();
 }
 
-std::string
-ListElement::str() {
-    std::stringstream ss;
+void
+ListElement::toJSON(std::ostream& ss)
+{
     ss << "[ ";
 
     const std::vector<ElementPtr>& v = listValue();
@@ -582,16 +663,15 @@ ListElement::str() {
         if (it != v.begin()) {
             ss << ", ";
         }
-        ss << (*it)->str();
+        (*it)->toJSON(ss);
     }
     ss << " ]";
-    return ss.str();
 }
 
-std::string
-MapElement::str() {
-    std::stringstream ss;
-    ss << "{";
+void
+MapElement::toJSON(std::ostream& ss)
+{
+    ss << "{ ";
 
     const std::map<std::string, ElementPtr>& m = mapValue();
     for (std::map<std::string, ElementPtr>::const_iterator it = m.begin();
@@ -601,13 +681,12 @@ MapElement::str() {
         }
         ss << "\"" << (*it).first << "\": ";
         if ((*it).second) {
-            ss << (*it).second->str();
+            (*it).second->toJSON(ss);
         } else {
             ss << "None";
         }
     }
-    ss << "}";
-    return ss.str();
+    ss << " }";
 }
 
 // throws when one of the types in the path (except the one
@@ -634,169 +713,12 @@ MapElement::find(const std::string& id) {
     }
 }
 
-//
-// Decode from wire format.
-//
-namespace {
-ElementPtr decode_element(std::stringstream& in, int& in_length);
-
-unsigned char
-get_byte(std::stringstream& in) {
-    const int c = in.get();
-    if (c == EOF) {
-        throw DecodeError("End of data while decoding wire format message");
-    }
-
-    return c;
-}
-
-std::string
-decode_tag(std::stringstream& in, int& item_length) {
-    char buf[256];
-
-    const int len = get_byte(in);
-    item_length--;
-
-    in.read(buf, len);
-    if (in.fail()) {
-        throw DecodeError();
-    }
-    buf[len] = 0;
-    item_length -= len;
-
-    return std::string(buf, len);
-}
-
-ElementPtr
-decode_bool(std::stringstream& in) {
-    const char c = in.get();
-    
-    if (c == '1') {
-        return Element::create(true);
-    } else {
-        return Element::create(false);
-    }
-}
-
-ElementPtr
-decode_int(std::stringstream& in) {
-    int me;
-    return from_stringstream_int_or_double(in, me);
-}
-
-ElementPtr
-decode_real(std::stringstream& in) {
-    int me;
-    return from_stringstream_int_or_double(in, me);
-}
-
-ElementPtr
-decode_blob(std::stringstream& in, const int item_length) {
-    vector<char> buf(item_length + 1);
-
-    in.read(&buf[0], item_length);
-    if (in.fail()) {
-        throw DecodeError();
-    }
-    buf[item_length] = 0;
-
-    return Element::create(std::string(&buf[0], item_length));
-}
-
-ElementPtr
-decode_hash(std::stringstream& in, int item_length) {
-    std::map<std::string, ElementPtr> m;
-    std::pair<std::string, ElementPtr> p;
-
-    while (item_length > 0) {
-        p.first = decode_tag(in, item_length);
-        p.second = decode_element(in, item_length);
-        m.insert(p);
-    }
-
-    return Element::create(m);
-}
-
-ElementPtr
-decode_list(std::stringstream& in, int item_length) {
-    std::vector<ElementPtr> v;
-
-    while (item_length > 0) {
-        v.push_back(decode_element(in, item_length));
-    }
-    return Element::create(v);
-}
-
-ElementPtr
-decode_null() {
-    return Element::create("NULL");
-}
-
-ElementPtr
-decode_element(std::stringstream& in, int& in_length) {
-    ElementPtr element;
-
-    const unsigned char type_and_length = get_byte(in);
-    const unsigned char type = type_and_length & ITEM_MASK;
-    const unsigned char lenbytes = type_and_length & ITEM_LENGTH_MASK;
-    in_length--;
-
-    int item_length = 0;
-    switch (lenbytes) {
-    case ITEM_LENGTH_32:
-        item_length |= get_byte(in);
-        item_length <<= 8;
-        item_length |= get_byte(in);
-        item_length <<= 8;
-        in_length -= 2;  // only 2 here, we will get more later
-    case ITEM_LENGTH_16:
-        item_length |= get_byte(in);
-        item_length <<= 8;
-        in_length--;  // only 1 here
-    case ITEM_LENGTH_8:
-        item_length |= get_byte(in);
-        in_length--;
-    }
-
-    in_length -= item_length;
-
-    switch (type) {
-    case ITEM_BOOL:
-        element = decode_bool(in);
-        break;
-    case ITEM_INT:
-        element = decode_int(in);
-        break;
-    case ITEM_REAL:
-        element = decode_real(in);
-        break;
-    case ITEM_BLOB:
-        element = decode_blob(in, item_length);
-        break;
-    case ITEM_UTF8:
-        // XXXMLG currently identical to decode_blob
-        element = decode_blob(in, item_length);
-        break;
-    case ITEM_HASH:
-        element = decode_hash(in, item_length);
-        break;
-    case ITEM_LIST:
-        element = decode_list(in, item_length);
-        break;
-    case ITEM_NULL:
-        element = decode_null();
-        break;
-    }
-
-    return (element);
-}
-}
-
 ElementPtr
 Element::fromWire(const std::string& s) {
     std::stringstream ss;
     ss << s;
-    return fromWire(ss, s.length());
+    int line = 0, pos = 0;
+    return fromJSON(ss, "<wire>", line, pos);
 }
 
 ElementPtr
@@ -804,159 +726,20 @@ Element::fromWire(std::stringstream& in, int length) {
     //
     // Check protocol version
     //
-    for (int i = 0 ; i < 4 ; ++i) {
-        const unsigned char version_byte = get_byte(in);
-        if (PROTOCOL_VERSION[i] != version_byte) {
-            throw DecodeError("Protocol version incorrect");
-        }
-    }
-    length -= 4;
-
-    return (decode_hash(in, length));
-}
-
-//
-// Encode into wire format.
-//
-
-std::string
-encode_length(const unsigned int length, unsigned char type) {
-    std::stringstream ss;
-
-    if (length <= 0x000000ff) {
-        const unsigned char val = (length & 0x000000ff);
-        type |= ITEM_LENGTH_8;
-        ss << type << val;
-    } else if (length <= 0x0000ffff) {
-        unsigned char val[2];
-        val[0] = (length & 0x0000ff00) >> 8;
-        val[1] = (length & 0x000000ff);
-        type |= ITEM_LENGTH_16;
-        ss << type << val[0] << val[1];
-    } else {
-        unsigned char val[4];
-        val[0] = (length & 0xff000000) >> 24;
-        val[1] = (length & 0x00ff0000) >> 16;
-        val[2] = (length & 0x0000ff00) >> 8;
-        val[3] = (length & 0x000000ff);
-        type |= ITEM_LENGTH_32;
-        ss << type << val[0] << val[1] << val[2] << val[3];
-    }
-    return ss.str();
-}
-
-std::string
-Element::toWire(const int omit_length) {
-    std::stringstream ss;
-    toWire(ss, omit_length);
-    return ss.str();
+    //for (int i = 0 ; i < 4 ; ++i) {
+    //    const unsigned char version_byte = get_byte(in);
+    //    if (PROTOCOL_VERSION[i] != version_byte) {
+    //        throw DecodeError("Protocol version incorrect");
+    //    }
+    //}
+    //length -= 4;
+    int line = 0, pos = 0;
+    return fromJSON(in, "<wire>", line, pos);
 }
 
 void
-StringElement::toWire(std::stringstream& ss,
-                      const int omit_length UNUSED_PARAM)
-{
-    unsigned int length = stringValue().length();
-    ss << encode_length(length, ITEM_UTF8) << stringValue();
-}
-
-void
-IntElement::toWire(std::stringstream& ss,
-                   const int omit_length UNUSED_PARAM)
-{
-    const std::string& s = str();
-    ss << encode_length(s.length(), ITEM_INT) << s;
-}
-
-void
-BoolElement::toWire(std::stringstream& ss,
-                    const int omit_length UNUSED_PARAM)
-{
-    ss << encode_length(1, ITEM_BOOL);
-    if (boolValue()) {
-        ss << '1';
-    } else {
-        ss << '0';
-    }
-}
-
-void
-DoubleElement::toWire(std::stringstream& ss,
-                      const int omit_length UNUSED_PARAM)
-{
-    std::stringstream text;
-
-    text << str();
-    const int length = text.str().length();
-    ss << encode_length(length, ITEM_REAL) << text.str();
-}
-
-void
-ListElement::toWire(std::stringstream& ss, const int omit_length) {
-    std::stringstream ss2;
-    const std::vector<ElementPtr>& v = listValue();
-    for (std::vector<ElementPtr>::const_iterator it = v.begin() ;
-         it != v.end() ; ++it) {
-        (*it)->toWire(ss2, 0);
-    }
-
-
-    if (omit_length) {
-        stringbuf *ss2_buf = ss2.rdbuf();
-        ss2_buf->pubseekpos(0);
-        if (ss2_buf->in_avail() > 0) {
-            ss << ss2_buf;
-        }
-    } else {
-        stringbuf *ss2_buf = ss2.rdbuf();
-        ss2_buf->pubseekpos(0);
-        ss << encode_length(ss2_buf->in_avail(), ITEM_LIST);
-        if (ss2_buf->in_avail() > 0) {
-            ss << ss2_buf;
-        }
-    }
-}
-
-void
-MapElement::toWire(std::stringstream& ss, int omit_length) {
-    std::stringstream ss2;
-
-    //
-    // If we don't want the length, we will want the protocol header
-    //
-    if (omit_length) {
-        ss2 << PROTOCOL_VERSION[0] << PROTOCOL_VERSION[1];
-        ss2 << PROTOCOL_VERSION[2] << PROTOCOL_VERSION[3];
-    }
-
-    const std::map<std::string, ElementPtr>& m = mapValue();
-    for (std::map<std::string, ElementPtr>::const_iterator it = m.begin();
-         it != m.end(); ++it) {
-        const size_t taglen = (*it).first.length();
-        assert(taglen <= 0xff);
-        const unsigned char val = (taglen & 0x000000ff);
-        ss2 << val << (*it).first;
-
-        (*it).second->toWire(ss2, 0);
-    }
-
-    //
-    // add length if needed
-    //
-    if (omit_length) {
-        stringbuf *ss2_buf = ss2.rdbuf();
-        ss2_buf->pubseekpos(0);
-        if (ss2_buf->in_avail()) {
-            ss << ss2_buf;
-        }
-    } else {
-        stringbuf *ss2_buf = ss2.rdbuf();
-        ss2_buf->pubseekpos(0);
-        ss << encode_length(ss2_buf->in_avail(), ITEM_HASH);
-        if (ss2_buf->in_avail()) {
-            ss << ss2_buf;
-        }
-    }
+MapElement::set(const std::string& key, ElementPtr value) {
+    m[key] = value;
 }
 
 bool
@@ -989,6 +772,11 @@ bool
 BoolElement::equals(ElementPtr other) {
     return (other->getType() == Element::boolean) &&
            (b == other->boolValue());
+}
+
+bool
+NullElement::equals(ElementPtr other) {
+    return other->getType() == Element::null;
 }
 
 bool
@@ -1082,7 +870,7 @@ merge(ElementPtr element, const ElementPtr other) {
     std::map<std::string, ElementPtr> m = other->mapValue();
     for (std::map<std::string, ElementPtr>::const_iterator it = m.begin();
          it != m.end() ; ++it) {
-        if ((*it).second) {
+        if ((*it).second && (*it).second->getType() != Element::null) {
             element->set((*it).first, (*it).second);
         } else if (element->contains((*it).first)) {
             element->remove((*it).first);

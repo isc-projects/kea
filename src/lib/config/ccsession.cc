@@ -47,7 +47,7 @@ using namespace std;
 
 using isc::data::Element;
 using isc::data::ElementPtr;
-using isc::data::ParseError;
+using isc::data::JSONError;
 
 namespace isc {
 namespace config {
@@ -56,7 +56,7 @@ namespace config {
 ElementPtr
 createAnswer()
 {
-    ElementPtr answer = Element::createFromString("{\"result\": [] }");
+    ElementPtr answer = Element::fromJSON("{\"result\": [] }");
     ElementPtr answer_content = answer->get("result");
     answer_content->add(Element::create(0));
     return answer;
@@ -68,7 +68,7 @@ createAnswer(const int rcode, const ElementPtr arg)
     if (rcode != 0 && (!arg || arg->getType() != Element::string)) {
         isc_throw(CCSessionError, "Bad or no argument for rcode != 0");
     }
-    ElementPtr answer = Element::createFromString("{\"result\": [] }");
+    ElementPtr answer = Element::fromJSON("{\"result\": [] }");
     ElementPtr answer_content = answer->get("result");
     answer_content->add(Element::create(rcode));
     answer_content->add(arg);
@@ -78,7 +78,7 @@ createAnswer(const int rcode, const ElementPtr arg)
 ElementPtr
 createAnswer(const int rcode, const std::string& arg)
 {
-    ElementPtr answer = Element::createFromString("{\"result\": [] }");
+    ElementPtr answer = Element::fromJSON("{\"result\": [] }");
     ElementPtr answer_content = answer->get("result");
     answer_content->add(Element::create(rcode));
     answer_content->add(Element::create(arg));
@@ -125,8 +125,8 @@ createCommand(const std::string& command)
 ElementPtr
 createCommand(const std::string& command, ElementPtr arg)
 {
-    ElementPtr cmd = Element::createFromString("{}");
-    ElementPtr cmd_parts = Element::createFromString("[]");
+    ElementPtr cmd = Element::createMap();
+    ElementPtr cmd_parts = Element::createList();
     cmd_parts->add(Element::create(command));
     if (arg) {
         cmd_parts->add(arg);
@@ -175,7 +175,7 @@ ModuleCCSession::readModuleSpecification(const std::string& filename) {
 
     try {
         module_spec = moduleSpecFromFile(file, true);
-    } catch (ParseError pe) {
+    } catch (JSONError pe) {
         cout << "Error parsing module specification file: " << pe.what() << endl;
         exit(1);
     } catch (ModuleSpecError dde) {
@@ -252,10 +252,10 @@ ModuleCCSession::init(
         std::cerr << "[" << module_name_ << "] Error in specification: " << answer << std::endl;
     }
     
-    setLocalConfig(Element::createFromString("{}"));
+    setLocalConfig(Element::fromJSON("{}"));
     // get any stored configuration from the manager
     if (config_handler_) {
-        ElementPtr cmd = Element::createFromString("{ \"command\": [\"get_config\", {\"module_name\":\"" + module_name_ + "\"} ] }");
+        ElementPtr cmd = Element::fromJSON("{ \"command\": [\"get_config\", {\"module_name\":\"" + module_name_ + "\"} ] }");
         seq = session_.group_sendmsg(cmd, "ConfigManager");
         session_.group_recvmsg(env, answer, false, seq);
         ElementPtr new_config = parseAnswer(rcode, answer);
@@ -274,7 +274,7 @@ ElementPtr
 ModuleCCSession::handleConfigUpdate(ElementPtr new_config)
 {
     ElementPtr answer;
-    ElementPtr errors = Element::createFromString("[]");
+    ElementPtr errors = Element::createList();
     if (!config_handler_) {
         answer = createAnswer(1, module_name_ + " does not have a config handler");
     } else if (!module_specification_.validate_config(new_config, false, errors)) {
@@ -363,7 +363,7 @@ ModuleCCSession::addRemoteConfig(const std::string& spec_file_name)
     session_.subscribe(module_name);
 
     // Get the current configuration values for that module
-    ElementPtr cmd = Element::createFromString("{ \"command\": [\"get_config\", {\"module_name\":\"" + module_name + "\"} ] }");
+    ElementPtr cmd = Element::fromJSON("{ \"command\": [\"get_config\", {\"module_name\":\"" + module_name + "\"} ] }");
     ElementPtr env, answer;
     int rcode;
     
