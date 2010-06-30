@@ -1,12 +1,12 @@
 
-  69.  [func]*	    jelte
+  69.  [func]*		jelte
 	Added python wrappers for libdns++ (isc::dns), and libxfr. This
 	removes the dependency on Boost.Python. The wrappers don't
 	completely implement all functionality, but the high-level API
 	is wrapped, and current modules use it now.
 	(Trac #181, svn r2361)
 
-  68.  [func]	    zhanglikun
+  68.  [func]		zhanglikun
 	Add options -c(--certificate-chain) to bindctl. Override class
 	HTTPSConnection to support server certificate validation.
 	Add support to cmdctl.spec file, now there are three configurable 
@@ -14,36 +14,42 @@
 	all of them can be changed in runtime.
 	(Trac #127, svn r2357)
 
-  67.  [func]	    zhanglikun
-	Make bindctl's command parser only do minimal check. Parameter 
-	value can be a sequence of non-space characters, or a string 
-	surrounded by quotation	marks(these marks can be a part of the 
-	value string in escaped form). Make	error message be more 
-	friendly.(if there is some error in parameter's value, the 
-	parameter name will be provided). Refactor function login_to_cmdctl() 
-	in class BindCmdInterpreter: avoid using Exception to catch all 
-	exceptions.
+  67.  [func]		zhanglikun
+	Make bindctl's command parser only do minimal check.
+	Parameter value can be a sequence of non-space characters,
+	or a string surrounded by quotation marks (these marks can
+	be a part of the value string in escaped form). Make error
+	message be more friendly. (If there is some error in
+	parameter's value, the parameter name will be provided).
+	Refactor function login_to_cmdctl() in class BindCmdInterpreter:
+	avoid using Exception to catch all exceptions.
 	(Trac #220, svn r2356)
 
-  66.  [bug]        each
+  66.  [bug]		each
 	Check for duplicate RRsets before inserting data into a message
 	section; this, among other things, will prevent multiple copies
 	of the same CNAME from showing up when there's a loop.  (Trac #69,
 	svn r2350)
     
-  65.  [func]       shentingting
-	Added verbose options to exactly what is happening with loadzone.
-	Added loadzone test suite of different file formats to load.
+  65.  [func]		shentingting
+	Various loadzone improvements: allow optional comment for
+	$TTL, allow optional origin and comment for $INCLUDE, allow
+	optional comment for $ORIGIN, support BIND9 extension of
+	time units for TTLs, and fix bug to not use class as part
+	of label name when records don't have a label but do have
+	a class.  Added verbose options to exactly what is happening
+	with loadzone.  Added loadzone test suite of different file
+	formats to load.
 	(Trac #197, #199, #244, #161, #198, #174, #175, svn r2340)
 
-  64.  [func]       jerry
-	Added python logging framework. It is for testing and experimenting
-	with logging ideas. Currently, it supports three channels(file, 
-	syslog and stderr) and five levels(debug, info, warning, error and
-	critical).
+  64.  [func]		jerry
+	Added python logging framework. It is for testing and
+	experimenting with logging ideas. Currently, it supports
+	three channels (file, syslog and stderr) and five levels
+	(debug, info, warning, error and critical).
 	(Trac #176, svn r2338)
 
-  63.  [func]       shane
+  63.  [func]		shane
 	Added initial support for setuid(), using the "-u" flag. This will
 	be replaced in the future, but for now provides a reasonable 
 	starting point.
@@ -110,7 +116,7 @@
 
 bind10-devel-20100602 released on June 2, 2010
 
-  51.   [build]         jelte
+  51.   [build]		jelte
 	lib/python: Add bind10_config.py module for paths and
 	possibly other configure-time variables. Allow some components
 	to find spec files in build tree when ran from source.
