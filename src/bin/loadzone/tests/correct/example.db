@@ -1,0 +1,14 @@
+;This file includes all kinds of rr form. missing name, ttl and class or not.
+$ORIGIN example.com.
+$TTL 60
+@    IN SOA   ns1.example.com. hostmaster.example.com. (1 43200 900 1814400 7200)
+     IN     20      NS  ns1
+                    NS  ns2
+ns1  IN     30      A   192.168.1.102
+            70      NS  ns3
+     IN             NS  ns4
+     10     IN      MX  10  mail.example.com.
+ns2         80      A   1.1.1.1
+ns3  IN             A   2.2.2.2
+ns4                 A   3.3.3.3
+ns5  90     IN      A   4.4.4.4

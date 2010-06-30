@@ -1,0 +1,3 @@
+f                       TXT     "default  ttl 3"
+$TTL 5
+g                       TXT     "default  ttl 5"

@@ -18,10 +18,10 @@
 PYTHON_EXEC=${PYTHON_EXEC:-@PYTHON@}
 export PYTHON_EXEC
 
-BINDCTL_TEST_PATH=@abs_top_srcdir@/src/bin/cmdctl/tests
+CMDCTL_TEST_PATH=@abs_top_srcdir@/src/bin/cmdctl/tests
 PYTHONPATH=@abs_top_srcdir@/src/bin/cmdctl
 export PYTHONPATH
 
-cd ${BINDCTL_TEST_PATH}
+cd ${CMDCTL_TEST_PATH}
 exec ${PYTHON_EXEC} -O cmdctl_test.py $*
 

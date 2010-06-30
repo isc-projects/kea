@@ -9,8 +9,6 @@ python_PYTHON = __init__.py bindcmd.py cmdparse.py exception.py moduleinfo.py my
 pythondir = $(pyexecdir)/bindctl
 
 bindctldir = $(DESTDIR)$(pkgdatadir)
-bindctl_DATA = bindctl.pem
-EXTRA_DIST += bindctl.pem
 
 CLEANFILES = bindctl
 
@@ -26,14 +24,3 @@ bindctl: bindctl-source.py
 	       -e "s|@@SYSCONFDIR@@|@sysconfdir@|" \
 	       -e "s|@@LIBEXECDIR@@|$(pkglibexecdir)|" bindctl-source.py >$@
 	chmod a+x $@
-
-if INSTALL_CONFIGURATIONS
-
-# TODO: permissions handled later
-install-data-local:
-	$(mkinstalldirs) $(DESTDIR)/@sysconfdir@/@PACKAGE@   
-	if test ! -f $(DESTDIR)$(sysconfdir)/@PACKAGE@/bindctl.pem; then	\
-	  $(INSTALL_DATA) $(srcdir)/bindctl.pem $(DESTDIR)$(sysconfdir)/@PACKAGE@/ ;	\
-	fi
-
-endif
