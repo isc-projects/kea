@@ -347,7 +347,7 @@ class ConfigManager:
         # passes both specification and commands at once
         spec_update = ccsession.create_command(ccsession.COMMAND_MODULE_SPECIFICATION_UPDATE,
                                                [ spec.get_module_name(), spec.get_full_spec() ])
-        self.cc.group_sendmsg(spec_update, "Cmd-Ctrld")
+        self.cc.group_sendmsg(spec_update, "Cmdctl")
         return ccsession.create_answer(0)
 
     def handle_msg(self, msg):
