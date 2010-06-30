@@ -63,7 +63,7 @@ Element::toWire(std::ostream& ss)
 // installed files we define the methods here.
 //
 bool
-Element::getValue(int& t UNUSED_PARAM) {
+Element::getValue(long int& t UNUSED_PARAM) {
     return false;
 }
 
@@ -93,7 +93,7 @@ Element::getValue(std::map<std::string, ElementPtr>& t UNUSED_PARAM) {
 }
 
 bool
-Element::setValue(const int v UNUSED_PARAM) {
+Element::setValue(const long int v UNUSED_PARAM) {
     return false;
 }
 
@@ -209,7 +209,7 @@ Element::create() {
 }
 
 ElementPtr
-Element::create(const int i) {
+Element::create(const long int i) {
     return ElementPtr(new IntElement(i));
 }
 
@@ -344,19 +344,15 @@ word_from_stringstream(std::istream &in, int& pos) {
     return ss.str();
 }
 
-inline int
-count_chars_i(int i) {
-    int result = 1;
-    if (i < 0) {
-        i = -i;
-        // account for the '-' symbol
-        result += 1;
+static std::string
+number_from_stringstream(std::istream &in, int& pos) {
+    std::stringstream ss;
+    while (isdigit(in.peek()) || in.peek() == '+' || in.peek() == '-' ||
+           in.peek() == '.' || in.peek() == 'e' || in.peek() == 'E') {
+        ss << (char) in.get();
     }
-    while (i > 10) {
-        ++result;
-        i = i / 10;
-    }
-    return result;
+    pos += ss.str().size();
+    return ss.str();
 }
 
 // Should we change from IntElement and DoubleElement to NumberElement
@@ -364,61 +360,30 @@ count_chars_i(int i) {
 // value is larger than an int can handle)
 ElementPtr
 from_stringstream_number(std::istream &in, int &pos) {
-    int i = 0;
+    long int i = 0;
     double d = 0.0;
     bool is_double = false;
+    char *endptr;
 
-    in >> i;
-    pos += count_chars_i(i);
-    if (in.fail()) {
-        isc_throw(JSONError, "Bad integer or overflow");
-    }
-    if (in.peek() == '.') {
-        int d_i = 0;
+    std::string number = number_from_stringstream(in, pos);
+
+    i = strtol(number.c_str(), &endptr, 10);
+    if (*endptr != '\0') {
+        d = strtod(number.c_str(), &endptr);
         is_double = true;
-        in.get();
-        pos++;
-        in >> d_i;
-        if (in.fail()) {
-            isc_throw(JSONError, "Bad real or overflow");
-        }
-        d = (double)d_i / 10;
-        while (d > 1.0) {
-            d = d / 10;
-        }
-        if (i < 0) {
-            d = - d;
-        }
-        d += i;
-        pos += count_chars_i(d_i);
-    }
-    if (in.peek() == 'e' || in.peek() == 'E') {
-        int e;
-        double p;
-        in.get();
-        pos++;
-        in >> e;
-        if (in.fail()) {
-            isc_throw(JSONError, "Bad exponent or overflow");
-        }
-        pos += count_chars_i(e);
-        p = pow(10, e);
-        if (p == HUGE_VAL) {
-            isc_throw(JSONError, "Bad exponent or overflow");
-        }
-        if (is_double) {
-            d = d * p;
+        if (*endptr != '\0') {
+            isc_throw(JSONError, std::string("Bad number: ") + number);
         } else {
-            if (p > 1.0) {
-                i = i * p;
-            } else {
-                // negative exponent, so type becomes a double
-                is_double = true;
-                d = i * p;
+            if (d == HUGE_VAL) {
+                isc_throw(JSONError, std::string("Number overflow: ") + number);
             }
         }
+    } else {
+        if (i == LONG_MAX || i == LONG_MIN) {
+            isc_throw(JSONError, std::string("Number overflow: ") + number);
+        }
     }
-
+    
     if (is_double) {
         return Element::create(d);
     } else {
@@ -595,11 +560,9 @@ Element::fromJSON(std::istream &in, const std::string& file, int& line, int& pos
             case '9':
             case '0':
             case '-':
-                in.putback(c);
-                element = from_stringstream_number(in, pos);
-                el_read = true;
-                break;
             case '+':
+            case '.':
+                in.putback(c);
                 element = from_stringstream_number(in, pos);
                 el_read = true;
                 break;
