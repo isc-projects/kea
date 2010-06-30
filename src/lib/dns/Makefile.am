@@ -1,4 +1,4 @@
-SUBDIRS = . tests
+SUBDIRS = . tests python
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CXXFLAGS = $(B10_CXXFLAGS)
@@ -76,28 +76,6 @@ libdns___la_SOURCES += rrtype.cc
 libdns___la_SOURCES += question.h question.cc
 libdns___la_SOURCES += sha1.h sha1.cc
 libdns___la_SOURCES += tsig.h tsig.cc
-
-if HAVE_BOOST_PYTHON
-# This is a loadable module for python scripts, so we use the prefix "pyexec"
-# to make sure the object files will be installed in the appropriate place
-# for this purpose.
-pyexec_LTLIBRARIES = bind10_dns.la
-bind10_dns_la_SOURCES = python_dns.cc
-bind10_dns_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
-bind10_dns_la_CXXFLAGS = $(AM_CXXFLAGS) $(B10_CXXFLAGS)
-if GCC_WERROR_OK
-# XXX: Boost.Python triggers strict aliasing violation, so if we use -Werror
-# we need to suppress the warnings.
-bind10_dns_la_CXXFLAGS += -fno-strict-aliasing
-endif
-bind10_dns_la_LDFLAGS = $(BOOST_LDFLAGS) $(PYTHON_LDFLAGS)
-# Python prefers .so, while some OSes (specifically MacOS) use a different
-# suffix for dynamic objects.  -module is necessary to work this around.
-bind10_dns_la_LDFLAGS += -module
-bind10_dns_la_LIBADD = $(top_builddir)/src/lib/dns/libdns++.la
-bind10_dns_la_LIBADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
-bind10_dns_la_LIBADD += $(BOOST_PYTHON_LIB) $(PYTHON_LIB)
-endif
 
 nodist_libdns___la_SOURCES = rdataclass.cc rrclass.h rrtype.h
 nodist_libdns___la_SOURCES += rrparamregistry.cc

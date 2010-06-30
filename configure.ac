@@ -86,6 +86,12 @@ fi
 AC_SUBST(PYTHON_INCLUDES)
 AC_SUBST(PYTHON_LDFLAGS)
 
+CPPFLAGS_SAVED="$CPPFLAGS"
+CPPFLAGS="$CPPFLAGS ${PYTHON_INCLUDES}"
+AC_CHECK_HEADERS([Python.h],, AC_MSG_ERROR([Missing Python.h]))
+CPPFLAGS="$CPPFLAGS_SAVED"
+
+
 # Check for python library (not absolutely mandatory, but needed for
 # Boost.Python when we use it.  See below.)
 LDFLAGS_SAVED="$LDFLAGS"
@@ -231,52 +237,6 @@ AC_HELP_STRING([--with-boost-lib=PATH],
 AC_SUBST(BOOST_LDFLAGS)
 
 # Check availability of the Boost Python library
-
-AC_MSG_CHECKING([for boost::python library])
-AC_ARG_WITH([boost-python],
-AC_HELP_STRING([--with-boost-python],
-  [specify whether to use the boost python library]),
-  [with_boost_python="$withval"], [with_boost_python="auto"])
-if test "$with_boost_python" != "no"; then
-	if test "$with_boost_python" != "auto" -a "X$PYTHON_LIB" = X; then
-		AC_MSG_ERROR([Boost.Python requested but python library is not available])
-	fi
-	LDFLAGS_SAVED="$LDFLAGS"
-	LIBS_SAVED="$LIBS"
-	CPPFLAGS_SAVED="$CPPFLAGS"
-	CPPFLAGS="$CPPFLAGS $PYTHON_INCLUDES"
-
-	for BOOST_TRY_LIB in boost_python boost_python-mt; do
-		LDFLAGS="$LDFLAGS_SAVED ${BOOST_LDFLAGS} ${PYTHON_LDFLAGS}"
-		LIBS="$LIBS_SAVED -l${BOOST_TRY_LIB} ${PYTHON_LIB}"
-		AC_TRY_LINK([#include <boost/python/module.hpp>
-	      using namespace boost::python;
-	      BOOST_PYTHON_MODULE(test) { throw "Boost::Python test."; }],
-			[ return 0; ],
-			[ AC_MSG_RESULT(yes)
-			BOOST_PYTHON_LIB="-l${BOOST_TRY_LIB}"
-			],[])
-		if test "X${BOOST_PYTHON_LIB}" != X; then
-        		break
-		fi
-	done
-
-	LDFLAGS="$LDFLAGS_SAVED"
-	CPPFLAGS="$CPPFLAGS_SAVED"
-	LIBS="$LIBS_SAVED"
-fi
-
-if test "X${BOOST_PYTHON_LIB}" = X; then
-	AC_MSG_RESULT(no)
-	if test "$with_boost_python" = "yes"; then
-	   AC_MSG_ERROR([boost python library is requested but not found])
-	fi
-else
-	AC_DEFINE(HAVE_BOOST_PYTHON, 1, Define to 1 if boost python library is available)
-fi
-
-AM_CONDITIONAL(HAVE_BOOST_PYTHON, test "X${BOOST_PYTHON_LIB}" != X)
-AC_SUBST(BOOST_PYTHON_LIB)
 
 #
 # Check availability of gtest, which will be used for unit tests.
@@ -441,6 +401,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/config/tests/Makefile
                  src/lib/dns/Makefile
                  src/lib/dns/tests/Makefile
+                 src/lib/dns/python/Makefile
+                 src/lib/dns/python/tests/Makefile
                  src/lib/exceptions/Makefile
                  src/lib/datasrc/Makefile
                  src/lib/datasrc/tests/Makefile
@@ -503,6 +465,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            chmod +x src/bin/msgq/tests/msgq_test
            chmod +x src/lib/dns/gen-rdatacode.py
            chmod +x src/lib/dns/tests/testdata/gen-wiredata.py
+           chmod +x src/lib/dns/python/tests/libdns_python_test
           ])
 AC_OUTPUT
 

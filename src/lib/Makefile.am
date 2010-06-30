@@ -1,4 +1,1 @@
-SUBDIRS = exceptions dns cc config datasrc python
-if HAVE_BOOST_PYTHON
-SUBDIRS += xfr
-endif
+SUBDIRS = exceptions dns cc config datasrc python xfr
