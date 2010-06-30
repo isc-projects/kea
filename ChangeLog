@@ -1,5 +1,5 @@
 
-  69.  [func]	    jelte
+  69.  [func]*	    jelte
 	Added python wrappers for libdns++ (isc::dns), and libxfr. This
 	removes the dependency on Boost.Python. The wrappers don't
 	completely implement all functionality, but the high-level API
