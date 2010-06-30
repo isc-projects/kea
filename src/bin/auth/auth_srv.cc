@@ -243,7 +243,8 @@ AuthSrv::processMessage(InputBuffer& request_buffer, Message& message,
         impl_->data_sources_.doQuery(query);
     } catch (const Exception& ex) {
         if (impl_->verbose_mode_) {
-            cerr << "[b10-auth] Internal error, returning SERVFAIL: " << ex.what() << endl;
+            cerr << "[b10-auth] Internal error, returning SERVFAIL: " <<
+                ex.what() << endl;
         }
         makeErrorMessage(message, response_renderer, Rcode::SERVFAIL(),
                          impl_->verbose_mode_);
@@ -273,9 +274,22 @@ AuthSrvImpl::setDbFile(const isc::data::ElementPtr config) {
         bool is_default;
         string item("database_file");
         ElementPtr value = cs_->getValue(is_default, item);
-        db_file_ = value->stringValue();
         final = Element::createMap();
+
+        // If the value is the default, and we are running from
+        // a specific directory ('from build'), we need to use
+        // a different value than the default (which may not exist)
+        // (btw, this should not be done here in the end, i think
+        //  the from-source script should have a check for this,
+        //  but for that we need offline access to config, so for
+        //  now this is a decent solution)
+        if (is_default && getenv("B10_FROM_BUILD")) {
+            value = Element::create(string(getenv("B10_FROM_BUILD")) +
+                                    "/bind10_zones.sqlite3");
+        }
         final->set(item, value);
+
+        db_file_ = value->stringValue();
     } else {
         return (answer);
     }

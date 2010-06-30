@@ -15,10 +15,13 @@
 // $Id: data_unittests.cc 1899 2010-05-21 12:03:59Z jelte $
 
 #include "config.h"
+
+// XXX: the ASIO header must be included before others.  See session.cc.
+#include <asio.hpp>
+
 #include <gtest/gtest.h>
 #include <session.h>
 
-#include <asio.hpp>
 #include <exceptions/exceptions.h>
 
 using namespace isc::cc;

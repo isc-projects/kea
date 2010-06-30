@@ -739,7 +739,15 @@ public:
     /// \c rrset.  This interface design needs to be revisited later.
     ///
     /// Only allowed in the \c RENDER mode.
+    ///
+    /// Note that addRRset() does not currently check for duplicate
+    /// data before inserting RRsets.  The caller is responsible for
+    /// checking for these (see hasRRset() below).
     void addRRset(const Section& section, RRsetPtr rrset, bool sign = false);
+
+    /// \brief Determine whether the given section already has an RRset
+    /// matching the name and type of this one
+    bool hasRRset(const Section& section, RRsetPtr rrset);
 
     // The following methods are not currently implemented.
     //void removeQuestion(QuestionPtr question);

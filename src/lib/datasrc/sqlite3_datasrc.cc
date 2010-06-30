@@ -330,7 +330,7 @@ int
 Sqlite3DataSrc::findClosest(const Name& name, unsigned int* position) const {
     const unsigned int nlabels = name.getLabelCount();
     for (unsigned int i = 0; i < nlabels; ++i) {
-        const Name matchname(name.split(i, nlabels - i));
+        const Name matchname(name.split(i));
         const int rc = hasExactZone(matchname.toText().c_str());
         if (rc >= 0) {
             if (position != NULL) {
@@ -356,9 +356,7 @@ Sqlite3DataSrc::findClosestEnclosure(NameMatch& match,
         return;
     }
 
-    match.update(*this, match.qname().split(position,
-                                            match.qname().getLabelCount() -
-                                            position));
+    match.update(*this, match.qname().split(position));
 }
 
 DataSrc::Result

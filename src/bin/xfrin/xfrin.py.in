@@ -29,7 +29,7 @@ import random
 from optparse import OptionParser, OptionValueError
 from isc.config.ccsession import *
 try:
-    from bind10_dns import *
+    from libdns_python import *
 except ImportError as e:
     # C++ loadable module may not be installed; even so the xfrin process
     # must keep running, so we warn about it and move forward.
@@ -40,11 +40,14 @@ except ImportError as e:
 # installed on the system
 if "B10_FROM_BUILD" in os.environ:
     SPECFILE_PATH = os.environ["B10_FROM_BUILD"] + "/src/bin/xfrin"
+    AUTH_SPECFILE_PATH = os.environ["B10_FROM_BUILD"] + "/src/bin/auth"
 else:
     PREFIX = "@prefix@"
     DATAROOTDIR = "@datarootdir@"
     SPECFILE_PATH = "@datadir@/@PACKAGE@".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
+    AUTH_SPECFILE_PATH = SPECFILE_PATH
 SPECFILE_LOCATION = SPECFILE_PATH + "/xfrin.spec"
+AUTH_SPECFILE_LOCATION = AUTH_SPECFILE_PATH + "/auth.spec"
 
 
 __version__ = 'BIND10'
@@ -98,14 +101,13 @@ class XfrinConnection(asyncore.dispatcher):
     def _create_query(self, query_type):
         '''Create dns query message. '''
 
-        msg = message(message_mode.RENDER)
+        msg = Message(Message.RENDER)
         query_id = random.randint(0, 0xFFFF)
         self._query_id = query_id
         msg.set_qid(query_id)
-        msg.set_opcode(op_code.QUERY())
-        msg.set_rcode(rcode.NOERROR())
-        query_question = question(name(self._zone_name), self._rrclass,
-                                  query_type)
+        msg.set_opcode(Opcode.QUERY())
+        msg.set_rcode(Rcode.NOERROR())
+        query_question = Question(Name(self._zone_name), self._rrclass, query_type)
         msg.add_question(query_question)
         return msg
 
@@ -120,13 +122,12 @@ class XfrinConnection(asyncore.dispatcher):
         '''Send query message over TCP. '''
 
         msg = self._create_query(query_type)
-        obuf = output_buffer(0)
-        render = message_render(obuf)
+        render = MessageRenderer()
         msg.to_wire(render)
-        header_len = struct.pack('H', socket.htons(obuf.get_length()))
+        header_len = struct.pack('H', socket.htons(render.get_length()))
 
         self._send_data(header_len)
-        self._send_data(obuf.get_data())
+        self._send_data(render.get_data())
 
     def _asyncore_loop(self):
         '''
@@ -157,12 +158,12 @@ class XfrinConnection(asyncore.dispatcher):
         True: soa serial in master is bigger
         '''
 
-        self._send_query(rr_type.SOA())
+        self._send_query(RRType("SOA"))
         data_len = self._get_request_response(2)
         msg_len = socket.htons(struct.unpack('H', data_len)[0])
         soa_response = self._get_request_response(msg_len)
-        msg = message(message_mode.PARSE)
-        msg.from_wire(input_buffer(soa_response))
+        msg = Message(Message.PARSE)
+        msg.from_wire(soa_response)
 
         # perform some minimal level validation.  It's an open issue how
         # strict we should be (see the comment in _check_response_header())
@@ -181,11 +182,12 @@ class XfrinConnection(asyncore.dispatcher):
             if check_soa:
                 logstr = 'SOA check for \'%s\' ' % self._zone_name
                 ret =  self._check_soa_serial()
-            
+
             logstr = 'transfer of \'%s\': AXFR ' % self._zone_name
             if ret == XFRIN_OK:
                 self.log_msg(logstr + 'started')
-                self._send_query(rr_type.AXFR())
+                # TODO: .AXFR() RRType.AXFR()
+                self._send_query(RRType(252))
                 isc.datasrc.sqlite3_ds.load(self._db_file, self._zone_name,
                                             self._handle_xfrin_response)
 
@@ -226,10 +228,10 @@ class XfrinConnection(asyncore.dispatcher):
         # cause interoperability trouble with stricter checks.
 
         msg_rcode = msg.get_rcode()
-        if msg_rcode != rcode.NOERROR():
+        if msg_rcode != Rcode.NOERROR():
             raise XfrinException('error response: %s' % msg_rcode.to_text())
 
-        if not msg.get_header_flag(message_flag.QR()):
+        if not msg.get_header_flag(MessageFlag.QR()):
             raise XfrinException('response is not a response ')
 
         if msg.get_qid() != self._query_id:
@@ -240,28 +242,24 @@ class XfrinConnection(asyncore.dispatcher):
 
         self._check_response_header(msg)
 
-        if msg.get_rr_count(section.ANSWER()) == 0:
+        if msg.get_rr_count(Section.ANSWER()) == 0:
             raise XfrinException('answer section is empty')
 
-        if msg.get_rr_count(section.QUESTION()) > 1:
+        if msg.get_rr_count(Section.QUESTION()) > 1:
             raise XfrinException('query section count greater than 1')
 
-    def _handle_answer_section(self, rrset_iter):
+    def _handle_answer_section(self, answer_section):
         '''Return a generator for the reponse in one tcp package to a zone transfer.'''
 
-        while not rrset_iter.is_last():
-            rrset = rrset_iter.get_rrset()
-            rrset_iter.next()
+        for rrset in answer_section:
             rrset_name = rrset.get_name().to_text()
             rrset_ttl = int(rrset.get_ttl().to_text())
             rrset_class = rrset.get_class().to_text()
             rrset_type = rrset.get_type().to_text()
 
-            rdata_iter = rrset.get_rdata_iterator()
-            rdata_iter.first()
-            while not rdata_iter.is_last():
+            for rdata in rrset.get_rdata():
                 # Count the soa record count
-                if rrset.get_type() == rr_type.SOA():
+                if rrset.get_type() == RRType("SOA"):
                     self._soa_rr_count += 1
 
                     # XXX: the current DNS message parser can't preserve the
@@ -273,24 +271,22 @@ class XfrinConnection(asyncore.dispatcher):
                         # Avoid inserting soa record twice
                         break
 
-                rdata_text = rdata_iter.get_current().to_text()
+                rdata_text = rdata.to_text()
                 yield (rrset_name, rrset_ttl, rrset_class, rrset_type,
                        rdata_text)
-                rdata_iter.next()
 
     def _handle_xfrin_response(self):
         '''Return a generator for the response to a zone transfer. '''
-
         while True:
             data_len = self._get_request_response(2)
             msg_len = socket.htons(struct.unpack('H', data_len)[0])
             recvdata = self._get_request_response(msg_len)
-            msg = message(message_mode.PARSE)
-            msg.from_wire(input_buffer(recvdata))
+            msg = Message(Message.PARSE)
+            msg.from_wire(recvdata)
             self._check_response_status(msg)
-
-            rrset_iter = section_iter(msg, section.ANSWER())
-            for rr in self._handle_answer_section(rrset_iter):
+            
+            answer_section = msg.get_section(Section.ANSWER())
+            for rr in self._handle_answer_section(answer_section):
                 yield rr
 
             if self._soa_rr_count == 2:
@@ -411,7 +407,7 @@ a separate method for the convenience of unit tests.
                 # The default RR class is IN.  We should fix this so that
                 # the class is passed in the command arg (where we specify
                 # the default)
-                rrclass = rr_class.IN()
+                rrclass = RRClass.IN()
                 zone_name, master_addr, db_file = self._parse_cmd_params(args)
                 ret = self.xfrin_start(zone_name, rrclass, db_file, master_addr,
                                    False if command == 'retransfer' else True)
@@ -441,7 +437,18 @@ a separate method for the convenience of unit tests.
         db_file = args.get('db_file')
         if not db_file:
             #TODO, the db file path should be got in auth server's configuration
-            db_file = '@@LOCALSTATEDIR@@/@PACKAGE@/zone.sqlite3'
+            # if we need access to this configuration more often, we
+            # should add it on start, and not remove it here
+            # (or, if we have writable ds, we might not need this in
+            # the first place)
+            self._cc.add_remote_config(AUTH_SPECFILE_LOCATION)
+            db_file, is_default = self._cc.get_remote_config_value("Auth", "database_file")
+            if is_default and "B10_FROM_BUILD" in os.environ:
+                # this too should be unnecessary, but currently the
+                # 'from build' override isn't stored in the config
+                # (and we don't have writable datasources yet)
+                db_file = os.environ["B10_FROM_BUILD"] + os.sep + "bind10_zones.sqlite3"
+            self._cc.remove_remote_config(AUTH_SPECFILE_LOCATION)
 
         return (zone_name, master_addrinfo, db_file)
 
@@ -451,8 +458,8 @@ a separate method for the convenience of unit tests.
 
     def xfrin_start(self, zone_name, rrclass, db_file, master_addrinfo,
                     check_soa = True):
-        if "bind10_dns" not in sys.modules:
-            return (1, "xfrin failed, can't load dns message python library: 'bind10_dns'")
+        if "libdns_python" not in sys.modules:
+            return (1, "xfrin failed, can't load dns message python library: 'libdns_python'")
 
         # check max_transfer_in, else return quota error
         if self.recorder.count() >= self._max_transfers_in:

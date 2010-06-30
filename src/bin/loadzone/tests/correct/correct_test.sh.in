@@ -1,0 +1,75 @@
+#! /bin/sh
+
+# Copyright (C) 2010  Internet Systems Consortium.
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SYSTEMS CONSORTIUM
+# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+# INTERNET SYSTEMS CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+PYTHON_EXEC=${PYTHON_EXEC:-@PYTHON@}
+export PYTHON_EXEC
+
+PYTHONPATH=@abs_top_srcdir@/src/lib/python:@abs_top_builddir@/src/lib/python
+export PYTHONPATH
+
+LOADZONE_PATH=@abs_top_builddir@/src/bin/loadzone
+TEST_FILE_PATH=@abs_top_srcdir@/src/bin/loadzone/tests/correct
+TEST_OUTPUT_PATH=@abs_top_builddir@/src/bin/loadzone//tests/correct
+
+status=0
+echo "Loadzone include. from include.db file"
+cd ${TEST_FILE_PATH}
+${LOADZONE_PATH}/b10-loadzone -d ${TEST_OUTPUT_PATH}/zone.sqlite3 include.db >> /dev/null
+
+echo "loadzone  ttl1. from ttl1.db file"
+${LOADZONE_PATH}/b10-loadzone -d ${TEST_OUTPUT_PATH}/zone.sqlite3 ttl1.db >> /dev/null
+
+echo "loadzone ttl2. from ttl2.db file"
+${LOADZONE_PATH}/b10-loadzone -d ${TEST_OUTPUT_PATH}/zone.sqlite3 ttl2.db >> /dev/null
+
+echo "loadzone mix1. from mix1.db"
+${LOADZONE_PATH}/b10-loadzone -d ${TEST_OUTPUT_PATH}/zone.sqlite3 mix1.db >> /dev/null
+
+echo "loadzone mix2. from mix2.db"
+${LOADZONE_PATH}/b10-loadzone -d ${TEST_OUTPUT_PATH}/zone.sqlite3 mix2.db >> /dev/null
+
+echo "loadzone ttlext. from ttlext.db"
+${LOADZONE_PATH}/b10-loadzone -d ${TEST_OUTPUT_PATH}/zone.sqlite3 ttlext.db >> /dev/null
+
+echo "loadzone example.com. from example.db"
+${LOADZONE_PATH}/b10-loadzone -d ${TEST_OUTPUT_PATH}/zone.sqlite3 example.db >> /dev/null
+
+echo "I:test master file \$INCLUDE semantics"
+echo "I:test master file BIND 8 compatibility TTL and \$TTL semantics"
+echo "I:test master file RFC1035 TTL and \$TTL semantics"
+echo "I:test master file BIND8 compatibility and mixed \$INCLUDE with \$TTL semantics"
+echo "I:test master file RFC1035 TTL and mixed \$INCLUDE with \$TTL semantics"
+echo "I:test master file BIND9 extenstion of TTL"
+echo "I:test master file RFC1035 missing CLASS, TTL, NAME semantics"
+
+${PYTHON_EXEC} ${TEST_FILE_PATH}/get_zonedatas.py ${TEST_OUTPUT_PATH}/zone.sqlite3 > ${TEST_OUTPUT_PATH}/test.out
+echo "Compare test results."
+diff ${TEST_OUTPUT_PATH}/test.out ${TEST_FILE_PATH}/known.test.out || status=1
+
+echo "Clean tmp files."
+rm -f ${TEST_OUTPUT_PATH}/zone.sqlite3
+rm -f ${TEST_OUTPUT_PATH}/test.out
+echo "I:exit status: $status"
+echo "------------------------------------------------------------------------------"
+echo "Ran 7 test files"
+echo ""
+if [ "$status" -eq 1 ] ;then
+    echo "ERROR"
+else
+    echo "OK"
+fi
+exit $status

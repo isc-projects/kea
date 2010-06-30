@@ -60,7 +60,7 @@ public:
     }
     P operator->() const
     {
-        return (it_.operator->());
+        return (&(operator*()));
     }
     bool operator==(const RRsetListIterator& other)
     {
