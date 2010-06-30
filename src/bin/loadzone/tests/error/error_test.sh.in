@@ -1,0 +1,75 @@
+#! /bin/sh
+
+# Copyright (C) 2010  Internet Systems Consortium.
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SYSTEMS CONSORTIUM
+# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+# INTERNET SYSTEMS CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+PYTHON_EXEC=${PYTHON_EXEC:-@PYTHON@}
+export PYTHON_EXEC
+
+PYTHONPATH=@abs_top_builddir@/src/lib/python
+export PYTHONPATH
+
+LOADZONE_PATH=@abs_top_srcdir@/src/bin/loadzone
+export LOADZONE_PATH
+status=0
+cd ${LOADZONE_PATH}/tests/error
+
+echo "Test no \$ORIGIN error in zone file"
+${LOADZONE_PATH}/b10-loadzone -d zone.sqlite3  originerr1.db 1> /dev/null 2> error.out
+${LOADZONE_PATH}/b10-loadzone -d zone.sqlite3  originerr2.db 1> /dev/null 2>> error.out
+
+echo "Test: key word TTL spell error"
+${LOADZONE_PATH}/b10-loadzone -d zone.sqlite3  keyerror1.db 1> /dev/null 2>> error.out
+
+echo "Test: key word ORIGIN spell error"
+${LOADZONE_PATH}/b10-loadzone -d zone.sqlite3  keyerror2.db 1> /dev/null 2>> error.out
+
+echo "Test: key INCLUDE spell error"
+${LOADZONE_PATH}/b10-loadzone -d zone.sqlite3  keyerror3.db 1> /dev/null 2>> error.out
+
+echo "Test: include formal error, miss filename"
+${LOADZONE_PATH}/b10-loadzone -d zone.sqlite3  formerr1.db 1> /dev/null 2>>error.out
+
+echo "Test: include form error, domain is not absolute"
+${LOADZONE_PATH}/b10-loadzone -d zone.sqlite3  formerr2.db 1> /dev/null 2>> error.out
+
+echo "Test: TTL form error, no ttl value"
+${LOADZONE_PATH}/b10-loadzone -d zone.sqlite3  formerr3.db 1> /dev/null 2>> error.out
+
+echo "Test: TTL form error, ttl value error"
+${LOADZONE_PATH}/b10-loadzone -d zone.sqlite3  formerr4.db 1> /dev/null 2>> error.out
+
+echo "Test: rr form error, no type"
+${LOADZONE_PATH}/b10-loadzone -d zone.sqlite3  formerr5.db 1> /dev/null 2>> error.out
+
+echo "Test: zone file is bogus"
+${LOADZONE_PATH}/b10-loadzone -d zone.sqlite3  bogusfile 1> /dev/null 2>> error.out
+
+diff error.out error.known || status=1
+
+echo "Clean tmp file."
+rm -f error.out
+rm -f zone.sqlite3
+
+echo "I:exit status:$status"
+echo "-----------------------------------------------------------------------------"
+echo "Ran 11 test files"
+echo ""
+if [ "$status" -eq 1 ];then
+    echo "ERROR"
+else 
+    echo "OK"
+fi
+exit $status

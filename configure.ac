@@ -415,6 +415,8 @@ AC_CONFIG_FILES([Makefile
                  src/bin/cfgmgr/tests/Makefile
                  src/bin/host/Makefile
                  src/bin/loadzone/Makefile
+                 src/bin/loadzone/tests/correct/Makefile
+                 src/bin/loadzone/tests/error/Makefile
                  src/bin/msgq/Makefile
                  src/bin/msgq/tests/Makefile
                  src/bin/auth/Makefile
@@ -464,6 +466,8 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/bindctl/bindctl-source.py
            src/bin/bindctl/tests/bindctl_test
            src/bin/loadzone/run_loadzone.sh
+           src/bin/loadzone/tests/correct/correct_test.sh
+           src/bin/loadzone/tests/error/error_test.sh
            src/bin/loadzone/b10-loadzone.py
            src/bin/usermgr/run_b10-cmdctl-usermgr.sh
            src/bin/usermgr/b10-cmdctl-usermgr.py
@@ -491,6 +495,8 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            chmod +x src/bin/bindctl/tests/bindctl_test
            chmod +x src/bin/bindctl/run_bindctl.sh
            chmod +x src/bin/loadzone/run_loadzone.sh
+           chmod +x src/bin/loadzone/tests/correct/correct_test.sh
+           chmod +x src/bin/loadzone/tests/error/error_test.sh
            chmod +x src/bin/usermgr/run_b10-cmdctl-usermgr.sh
            chmod +x src/bin/msgq/run_msgq.sh
            chmod +x src/bin/msgq/tests/msgq_test

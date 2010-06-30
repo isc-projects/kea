@@ -1,0 +1,17 @@
+$ORIGIN ttl2.
+@		1	IN SOA	ns hostmaster (
+				1        ; serial
+				3600
+				1800
+				1814400
+				3
+				)
+			NS	ns
+ns			A	10.53.0.1
+a			TXT	"inherited ttl 1"
+b		2	TXT	"explicit ttl 2"
+c			TXT	"inherited ttl 2"
+$TTL 3    ; a new ttl
+d			TXT	"default ttl 3"
+e		2	TXT	"explicit ttl 2"
+f			TXT	"default ttl 3"
