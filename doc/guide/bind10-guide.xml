@@ -284,7 +284,7 @@ var/
 
         <para>
           Building BIND 10 also requires a C++ compiler and
-          standard development headers.
+          standard development headers, make, and pkg-config.
           BIND 10 builds have been tested with GCC g++ 3.4.3, 4.1.2,
           4.1.3, 4.2.1, 4.3.2, and 4.4.1.
         </para>
