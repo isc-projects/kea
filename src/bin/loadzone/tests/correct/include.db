@@ -1,0 +1,23 @@
+$ORIGIN include.   ; initialize origin
+$TTL 300
+@			IN SOA	ns hostmaster (
+				1        ; serial
+				3600
+				1800
+				1814400
+				3600
+				)
+			NS	ns
+
+ns			A	127.0.0.1
+
+a			A	10.0.0.1
+$INCLUDE inclsub.db sub   ;  a.include. is the relative domain name origin for the included file
+; use the current domain name
+            A	99.99.99.99
+b			A	10.0.0.2
+$ORIGIN b
+$INCLUDE inclsub.db
+; use the current domain name
+			A	10.0.0.99
+c			A	10.0.0.3

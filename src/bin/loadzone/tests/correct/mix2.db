@@ -1,0 +1,21 @@
+$ORIGIN mix2.
+@		1	IN SOA	ns hostmaster (
+				1        ; serial
+				3600
+				1800
+				1814400
+				3
+				)
+			NS	ns
+ns			A	10.53.0.1
+a			TXT	"inherited ttl 1"
+$INCLUDE mix2sub1.txt
+b			TXT	"explicit ttl 6"
+c		2	TXT	"inherited ttl 2"
+m           TXT "explicit ttl 6"
+$TTL 3
+d			TXT	"default ttl 3"
+e		2	TXT	"explicit ttl 2"
+n           TXT "default ttl 3"
+$INCLUDE mix2sub2.txt
+f			TXT	"default ttl 5"

@@ -1,0 +1,18 @@
+; $Id: ttl1.db,v 1.6 2007/06/19 23:47:04 tbox Exp $
+$ORIGIN ttlext.
+@			IN SOA	ns hostmaster (
+				1        ; serial
+				3600
+				1800
+				1814400
+				3
+				)
+			NS	ns
+ns			A	10.53.0.1
+a			TXT	"soa minttl 3"
+b		2S	TXT	"explicit ttl 2"
+c			TXT	"soa minttl 3"
+$TTL 10M  ; bind9 extention ttl
+d			TXT	"default ttl 600"
+e		4	TXT	"explicit ttl 4"
+f			TXT	"default ttl 600"
