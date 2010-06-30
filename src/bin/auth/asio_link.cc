@@ -24,10 +24,7 @@
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
 
-#if defined(HAVE_BOOST_PYTHON)
-#define USE_XFROUT
 #include <xfr/xfrout_client.h>
-#endif
 
 #include <asio_link.h>
 
@@ -40,15 +37,15 @@ using ip::tcp;
 
 using namespace std;
 using namespace isc::dns;
-#ifdef USE_XFROUT
 using namespace isc::xfr;
-#endif
 
 namespace {
 // As a short term workaround, we have XFROUT specific code.  We should soon
 // refactor the code with some abstraction so that we can separate this level
 // details from the (AS)IO module.
-#ifdef USE_XFROUT
+
+// This was contained in an ifdef USE_XFROUT, but we should really check
+// live if we do xfrout
 //TODO. The sample way for checking axfr query, the code should be merged to auth server class
 bool
 check_axfr_query(char* const msg_data, const uint16_t msg_len) {
@@ -65,6 +62,7 @@ check_axfr_query(char* const msg_data, const uint16_t msg_len) {
 }
 
 //TODO. Send the xfr query to xfrout module, the code should be merged to auth server class
+//BIGGERTODO: stop using hardcoded install-path locations! 
 void
 dispatch_axfr_query(const int tcp_sock, char const axfr_query[],
                     const uint16_t query_len)
@@ -76,6 +74,9 @@ dispatch_axfr_query(const int tcp_sock, char const axfr_query[],
         path = UNIX_SOCKET_FILE;
     }
     
+    if (getenv("B10_FROM_BUILD")) {
+        path = string(getenv("B10_FROM_BUILD")) + "/auth_xfrout_conn";
+    }
     XfroutClient xfr_client(path);
     try {
         xfr_client.connect();
@@ -85,10 +86,9 @@ dispatch_axfr_query(const int tcp_sock, char const axfr_query[],
     }
     catch (const exception & err) {
         //if (verbose_mode)
-        cerr << "error handle xfr query:" << err.what() << endl;
+        cerr << "error handle xfr query " << UNIX_SOCKET_FILE << ":" << err.what() << endl;
     }
 }
-#endif
 }
 
 namespace asio_link {
@@ -141,13 +141,11 @@ public:
     {
         if (!error) {
             InputBuffer dnsbuffer(data_, bytes_transferred);
-#ifdef USE_XFROUT
             if (check_axfr_query(data_, bytes_transferred)) {
                 dispatch_axfr_query(socket_.native(), data_, bytes_transferred); 
                 // start to get new query ?
                 start();
             } else {
-#endif          
                 if (auth_server_->processMessage(dnsbuffer, dns_message_,
                                                 response_renderer_, false)) {
                     responselen_buffer_.writeUint16(
@@ -161,9 +159,7 @@ public:
                 } else {
                     delete this;
                 }
-#ifdef USE_XFROUT
             }
-#endif
         } else {
             delete this;
         }

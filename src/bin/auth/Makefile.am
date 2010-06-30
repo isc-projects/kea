@@ -54,9 +54,7 @@ b10_auth_LDADD += $(top_builddir)/src/lib/cc/.libs/libcc.a
 b10_auth_LDADD += $(top_builddir)/src/lib/exceptions/.libs/libexceptions.a
 b10_auth_LDADD += $(top_builddir)/src/bin/auth/libasio_link.a
 b10_auth_LDADD += $(SQLITE_LIBS)
-if HAVE_BOOST_PYTHON
 b10_auth_LDADD += $(top_builddir)/src/lib/xfr/.libs/libxfr.a
-endif
 
 # TODO: config.h.in is wrong because doesn't honor pkgdatadir
 # and can't use @datadir@ because doesn't expand default ${prefix}
