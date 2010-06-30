@@ -21,6 +21,7 @@
 #include <sstream>
 #include <vector>
 
+#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
 
@@ -370,7 +371,6 @@ Message::addRRset(const Section& section, RRsetPtr rrset, const bool sign) {
                   "addRRset performed in non-render mode");
     }
 
-    // Note: should check duplicate (TBD)
     impl_->rrsets_[sectionCodeToId(section)].push_back(rrset);
     impl_->counts_[section.getCode()] += rrset->getRdataCount();
 
@@ -379,6 +379,20 @@ Message::addRRset(const Section& section, RRsetPtr rrset, const bool sign) {
         impl_->rrsets_[sectionCodeToId(section)].push_back(sp);
         impl_->counts_[section.getCode()] += sp->getRdataCount();
     }
+}
+
+bool
+Message::hasRRset(const Section& section, RRsetPtr rrset) {
+    BOOST_FOREACH(RRsetPtr r, impl_->rrsets_[sectionCodeToId(section)]) {
+        if (r->getType() == rrset->getType() &&
+            r->getName() == rrset->getName())
+        {
+            return (true);
+
+        }
+    }
+
+    return (false);
 }
 
 void

@@ -1,20 +1,26 @@
+  66.  [bug]        each
+	Check for duplicate RRsets before inserting data into a message
+	section; this, among other things, will prevent multiple copies
+	of the same CNAME from showing up when there's a loop.  (Trac #69,
+	svn r2350)
+    
   65.  [func]       shentingting
-    Added verbose options to exactly what is happening with loadzone.
+	Added verbose options to exactly what is happening with loadzone.
 	Added loadzone test suite of different file formats to load.
 	(Trac #197, #199, #244, #161, #198, #174, #175, svn r2340)
 
   64.  [func]       jerry
-    Added python logging framework. It is for testing and experimenting
+	Added python logging framework. It is for testing and experimenting
 	with logging ideas. Currently, it supports three channels(file, 
 	syslog and stderr) and five levels(debug, info, warning, error and
 	critical).
 	(Trac #176, svn r2338)
 
   63.  [func]       shane
-    Added initial support for setuid(), using the "-u" flag. This will
-    be replaced in the future, but for now provides a reasonable 
-    starting point.
-    (Trac #180, svn r2330)
+	Added initial support for setuid(), using the "-u" flag. This will
+	be replaced in the future, but for now provides a reasonable 
+	starting point.
+	(Trac #180, svn r2330)
 
   62.  [func]		jelte
 	bin/xfrin: Use the database_file as configured in Auth to transfers

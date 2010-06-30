@@ -772,6 +772,12 @@ TEST_F(DataSrcTest, DS) {
 TEST_F(DataSrcTest, CNAMELoop) {
     createAndProcessQuery(Name("one.loop.example"), RRClass::IN(),
                           RRType::A());
+    EXPECT_EQ(Rcode::NOERROR(), msg.getRcode());
+
+    // one.loop.example points to two.loop.example, which points back
+    // to one.loop.example, so there should be exactly two CNAME records
+    // in the answer.
+    EXPECT_EQ(2, msg.getRRCount(Section::ANSWER()));
 }
 
 // NSEC query for the name of a zone cut for non-secure delegation.
