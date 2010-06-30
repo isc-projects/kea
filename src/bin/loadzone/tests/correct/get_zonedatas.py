@@ -1,6 +1,6 @@
 from isc.datasrc import sqlite3_ds
 import sys
-ZONE_FILE = "zone.sqlite3"
+ZONE_FILE = sys.argv[1]
 zonename_set = ["include.", "ttl1.", "ttl2.", "mix1.", "mix2.", "ttlext.", "example.com."]
 for zone_name in zonename_set:
     for rr_data in sqlite3_ds.get_zone_datas(zone_name, ZONE_FILE):
