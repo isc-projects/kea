@@ -2,7 +2,7 @@
 	Check for duplicate RRsets before inserting data into a message
 	section; this, among other things, will prevent multiple copies
 	of the same CNAME from showing up when there's a loop.  (Trac #69,
-	svn r2349)
+	svn r2350)
     
   65.  [func]       shentingting
 	Added verbose options to exactly what is happening with loadzone.
