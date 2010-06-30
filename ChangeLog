@@ -1,7 +1,7 @@
   65.  [func]       shentingting
     Added verbose options to exactly what is happening with loadzone.
 	Added loadzone test suite of different file formats to load.
-	(tingting-loadzone, svn r2339)
+	(Trac #197, #199, #244, #161, #198, #174, #175, svn r2340)
 
   64.  [func]       jerry
     Added python logging framework. It is for testing and experimenting
