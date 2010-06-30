@@ -86,7 +86,7 @@ my_command_handler(const string& command, const ElementPtr args) {
 
 void
 usage() {
-    cerr << "Usage: b10-auth [-p port] [-4|-6]" << endl;
+    cerr << "Usage: b10-auth [-p port] [-4|-6] [-nv]" << endl;
     exit(1);
 }
 } // end of anonymous namespace
@@ -95,9 +95,9 @@ int
 main(int argc, char* argv[]) {
     int ch;
     const char* port = DNSPORT;
-    bool use_ipv4 = true, use_ipv6 = true;
+    bool use_ipv4 = true, use_ipv6 = true, cache = true;
 
-    while ((ch = getopt(argc, argv, "46p:v")) != -1) {
+    while ((ch = getopt(argc, argv, "46np:v")) != -1) {
         switch (ch) {
         case '4':
             // Note that -4 means "ipv4 only", we need to set "use_ipv6" here,
@@ -109,6 +109,9 @@ main(int argc, char* argv[]) {
         case '6':
             // The same note as -4 applies.
             use_ipv4 = false;
+            break;
+        case 'n':
+            cache = false;
             break;
         case 'p':
             port = optarg;
@@ -142,7 +145,7 @@ main(int argc, char* argv[]) {
             specfile = string(AUTH_SPECFILE_LOCATION);
         }
 
-        auth_server = new AuthSrv;
+        auth_server = new AuthSrv(cache);
         auth_server->setVerbose(verbose_mode);
 
         io_service = new asio_link::IOService(auth_server, port, use_ipv4,

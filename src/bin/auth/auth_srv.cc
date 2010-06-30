@@ -60,7 +60,7 @@ private:
     AuthSrvImpl(const AuthSrvImpl& source);
     AuthSrvImpl& operator=(const AuthSrvImpl& source);
 public:
-    AuthSrvImpl();
+    AuthSrvImpl(const bool use_cache);
 
     isc::data::ElementPtr setDbFile(const isc::data::ElementPtr config);
 
@@ -76,9 +76,13 @@ public:
 
     /// Currently non-configurable, but will be.
     static const uint16_t DEFAULT_LOCAL_UDPSIZE = 4096;
+
+    /// Hot spot cache
+    isc::datasrc::HotCache cache_;
 };
 
-AuthSrvImpl::AuthSrvImpl() : cs_(NULL), verbose_mode_(false)
+AuthSrvImpl::AuthSrvImpl(const bool use_cache) :
+    cs_(NULL), verbose_mode_(false)
 {
     // cur_datasrc_ is automatically initialized by the default constructor,
     // effectively being an empty (sqlite) data source.  once ccsession is up
@@ -86,9 +90,12 @@ AuthSrvImpl::AuthSrvImpl() : cs_(NULL), verbose_mode_(false)
 
     // add static data source
     data_sources_.addDataSrc(ConstDataSrcPtr(new StaticDataSrc));
+
+    // enable or disable the cache
+    cache_.setEnabled(use_cache);
 }
 
-AuthSrv::AuthSrv() : impl_(new AuthSrvImpl) {
+AuthSrv::AuthSrv(const bool use_cache) : impl_(new AuthSrvImpl(use_cache)) {
 }
 
 AuthSrv::~AuthSrv() {
@@ -239,7 +246,7 @@ AuthSrv::processMessage(InputBuffer& request_buffer, Message& message,
     message.setUDPSize(AuthSrvImpl::DEFAULT_LOCAL_UDPSIZE);
 
     try {
-        Query query(message, dnssec_ok);
+        Query query(message, impl_->cache_, dnssec_ok);
         impl_->data_sources_.doQuery(query);
     } catch (const Exception& ex) {
         if (impl_->verbose_mode_) {

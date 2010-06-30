@@ -129,11 +129,10 @@ isSubdomain(const Name& qname, const Name& zone) {
 }
 
 void
-StaticDataSrc::findClosestEnclosure(NameMatch& match,
-                                    const RRClass& qclass) const {
-    const Name& qname = match.qname();
+StaticDataSrc::findClosestEnclosure(DataSrcMatch& match) const {
+    const Name& qname = match.getName();
 
-    if (qclass != getClass() && qclass != RRClass::ANY()) {
+    if (match.getClass() != getClass() && match.getClass() != RRClass::ANY()) {
         return;
     }
 

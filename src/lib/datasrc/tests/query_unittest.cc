@@ -16,43 +16,61 @@
 
 #include <gtest/gtest.h>
 
+#include <dns/buffer.h>
+#include <dns/message.h>
 #include <dns/name.h>
 #include <dns/rrtype.h>
 #include <dns/rrclass.h>
 
 #include <datasrc/query.h>
 
-namespace {
+#include <dns/tests/unittest_util.h>
 
+using isc::UnitTestUtil;
 using namespace isc::dns;
 using namespace isc::datasrc;
 
+namespace {
 
 class QueryTest : public ::testing::Test {
 protected:
-    QueryTest() :
-        name(Name("www.example.com")),
-        rrtype(RRType::A()),
-        rrclass(RRClass::IN())
-    {}
-    const Name name;
-    const RRType rrtype;
-    const RRClass rrclass;
+    void readQuery(Message& m, const char* datafile);
+
+    HotCache cache;
 };
 
+void
+QueryTest::readQuery(Message& m, const char* datafile) {
+    std::vector<unsigned char> data;
+    UnitTestUtil::readWireData(datafile, data);
+
+    InputBuffer buffer(&data[0], data.size());
+    m.fromWire(buffer);
+}
+
 QueryTaskPtr
-createTask(const Name& name, const RRClass& rrclass0, const RRType& rrtype0) {
+createTask(Message& m, const Name& name, const RRType& rrtype0, HotCache& c) {
     RRType rrtype(rrtype0);
-    return (QueryTaskPtr(new QueryTask(name, rrclass0, rrtype,
+    Query q(m, c, true);
+    return (QueryTaskPtr(new QueryTask(q, name, rrtype,
                                        QueryTask::SIMPLE_QUERY)));
 }
 
 // Check the QueryTask created using a temporary RRType object will remain
 // valid.
 TEST_F(QueryTest, constructWithTemporary) {
-    QueryTaskPtr task_a = createTask(name, rrclass, RRType::A());
-    QueryTaskPtr task_aaaa = createTask(name, rrclass, RRType::AAAA());
-    EXPECT_EQ(rrtype, task_a->qtype);
+    Message m1(Message::PARSE);
+    readQuery(m1, "q_wild_a");
+    QueryTaskPtr task_a = createTask(m1, Name("www.wild.example.com"),
+                                        RRType::A(), cache);
+    EXPECT_EQ(RRType::A(), task_a->qtype);
+
+    Message m2(Message::PARSE);
+    readQuery(m2, "q_wild_aaaa");
+    QueryTaskPtr task_aaaa = createTask(m2, Name("www.wild.example.com"),
+                                        RRType::AAAA(), cache);
+    EXPECT_EQ(RRType::AAAA(), task_aaaa->qtype);
+
 }
 
 }

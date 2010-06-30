@@ -119,4 +119,35 @@ TEST_F(QuestionTest, LeftShiftOperator)
     oss << test_question1;
     EXPECT_EQ(test_question1.toText(), oss.str());
 }
+
+TEST_F(QuestionTest, comparison)
+{
+    const Name a("a"), b("b");
+    const RRClass in(RRClass::IN()), ch(RRClass::CH());
+    const RRType ns(RRType::NS()), aaaa(RRType::AAAA());
+
+    EXPECT_TRUE(Question(a, in, ns) < Question(a, in, aaaa));
+    EXPECT_FALSE(Question(a, in, aaaa) < Question(a, in, ns));
+
+    EXPECT_TRUE(Question(a, in, ns) < Question(a, ch, ns));
+    EXPECT_FALSE(Question(a, ch, ns) < Question(a, in, ns));
+
+    EXPECT_TRUE(Question(a, in, ns) < Question(a, ch, aaaa));
+    EXPECT_FALSE(Question(a, ch, aaaa) < Question(a, in, ns));
+
+    EXPECT_TRUE(Question(a, in, ns) < Question(b, in, ns));
+    EXPECT_FALSE(Question(a, in, ns) < Question(a, in, ns));
+
+    EXPECT_TRUE(Question(a, in, ns) < Question(b, ch, ns));
+    EXPECT_FALSE(Question(b, ch, ns) < Question(a, in, ns));
+
+    EXPECT_TRUE(Question(a, in, ns) < Question(b, ch, aaaa));
+    EXPECT_FALSE(Question(b, ch, aaaa) < Question(a, in, ns));
+
+    EXPECT_FALSE(Question(a, in, ns) < Question(a, in, ns));
+    EXPECT_FALSE(Question(a, ch, ns) < Question(a, ch, ns));
+    EXPECT_FALSE(Question(b, in, ns) < Question(b, in, ns));
+    EXPECT_FALSE(Question(b, in, aaaa) < Question(b, in, aaaa));
+}
+
 }

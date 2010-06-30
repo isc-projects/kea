@@ -48,6 +48,7 @@ const generic::NS rdata_ns("ns.example.com");
 const generic::SOA rdata_soa(Name("ns.example.com"), Name("root.example.com"),
                              2010012601, 3600, 300, 3600000, 1200);
 const generic::CNAME rdata_cname("target.example.com");
+const generic::DNAME rdata_dname("dtarget.example.com");
 
 void
 RRsetListTest::setupList(RRsetList& list) {
@@ -84,6 +85,24 @@ TEST_F(RRsetListTest, addRRsets) {
     RRsetList list;
     setupList(list);
     EXPECT_EQ(list.size(), 5);
+}
+
+TEST_F(RRsetListTest, append) {
+    RRsetList list1;
+    setupList(list1);
+    RRsetList list2;
+    RRsetPtr dname(new RRset(Name("example.com"), RRClass::IN(),
+                             RRType::DNAME(), example_ttl));
+    dname->addRdata(rdata_dname);
+    list2.addRRset(dname);
+    list1.append(list2);
+    EXPECT_EQ(list2.size(), 1);
+    EXPECT_EQ(list1.size(), 6);
+
+    RRsetPtr rrset = list1.findRRset(RRType::DNAME(), RRClass::IN());
+    EXPECT_EQ(RRType::DNAME(), rrset->getType());
+
+    EXPECT_THROW(list1.append(list2), DuplicateRRset);
 }
 
 TEST_F(RRsetListTest, extraRRset) {

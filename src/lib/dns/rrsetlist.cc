@@ -40,6 +40,14 @@ RRsetList::addRRset(RRsetPtr rrsetptr) {
     rrsets_.push_back(rrsetptr);
 }
 
+void
+RRsetList::append(RRsetList& source)
+{
+    BOOST_FOREACH(RRsetPtr rrset, source) {
+        addRRset(rrset);
+    }
+}
+
 RRsetPtr
 RRsetList::findRRset(const RRType& rrtype, const RRClass& rrclass) {
     BOOST_FOREACH(RRsetPtr rrsetptr, rrsets_) {

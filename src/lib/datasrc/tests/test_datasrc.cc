@@ -65,8 +65,9 @@ namespace {
 // {"example.com", "AAAA", "2001:db8::2"},
 // ...
 // If an RRset is associated with an RRSIG, the RRSIG must immediately follow
-// the RRset to be signed.  Currently, only one (or zero) RRSIG can be
-// specified per RRset.
+// the RRset to be signed.  Multiple RRSIGs can follow the RRset.  RRSIG
+// records will always be attached to the most recent non-RRSIG RRset;
+// consequently, the first RR listed must not be an RRSIG record.
 //
 // Names are sorted internally, and don't have to be sorted in the data.
 //
@@ -107,6 +108,10 @@ const struct RRData example_com_records[] = {
     {"example.com", "RRSIG", "SOA 5 2 3600 20100322084538 20100220084538 33495 example.com.  KUun66Qaw36osk2BJS6U1fAy3PPDkNo2QK4meGNbDBY8q8b+f2o+IXJ14YCvssGl1ORW0CcLnDRxssnk8V/Svmj5iFhO+8HC2hnVBdi2zewvdVtwRb+lWwKN7pkXXwuy6g1t9WCd/j5FCc/wgxqtZUTPb6XgZcnHrORDMOTqLs4="},
     {"example.com", "NSEC", "cname-ext.example.com. NS SOA MX RRSIG NSEC DNSKEY"},
     {"example.com", "RRSIG", "NSEC 5 2 7200 20100322084538 20100220084538 33495 example.com. KxuVaPPKNPJzr/q+cJPiNlkHVTQK0LVsgTbSqruXQc25lAd0wn5oKUtxL1bEAchHkfA8eLzcYCj2ZqqAv9OJubw53mfskTad7UHs4Uj2RTrIsNGMCiZGgOpvNb9JcWpQtoyXVT1uNse+Qsbeir0eyeYIufUynFU041jtNrlJMio="},
+    {"example.com", "DNSKEY", "257 3 5 AwEAAe5WFbxdCPq2jZrZhlMj7oJdff3W7syJtbvzg62tRx0gkoCDoBI9DPjlOQG0UAbj+xUV4HQZJStJaZ+fHU5AwVNT+bBZdtV+NujSikhdTHb4FYLg2b3Cx9NyJvAVukHp/91HnWuG4T36CzAFrfPwsHIrBz9BsaIQ21VRkcmj7DswfI/iDGd8j6bqiODyNZYQ+ZrLmF0KIJ2yPN3iO6Zq23TaOrVTjB7d1a/h31ODfiHAxFHrkY3t3D5JR9Nsl/7fdRmSznwtcSDgLXBoFEYmw6p86AcvRyoYNcL1SXjaKVLG5jyU3UR+LcGZT5t/0xGfoIK/aKwENrsjcKZZj660b1M="},
+    {"example.com", "DNSKEY", "256 3 5 AwEAAcOUBllYc1hf7ND9uDy+Yz1BF3sI0m4qNGV7WcTD0WEiuV7IjXgHE36fCmS9QsUxSSOVo1I/FMxI2PJVqTYHkXFBS7AzLGsQYMU7UjBZSotBJ6Imt5pXMu+lEDNy8TOUzG3xm7g0qcbWYF6qCEfvZoBtAqi5Rk7Mlrqs8agxYyMx"},
+    {"example.com", "RRSIG", "DNSKEY 5 2 3600 20100416210049 20100317210049 4456 example.com. 37FC0rcwOZVarTMjft0BMbvv8hbJU7OHNsvO7R1q6OgsLTj7QGMX3sC42JGbwUrYI/OwnZblNcv1eim0g0jX5k+sVr2OJsEubngRjVqLo54qV8rBC14tLk9PGKxxjQG0IBJU866uHxzXYBO2a1r2g93/qyTtrT7iPLu/2Ce1WRKMBPK0yf4nW2usFU/PXesXFWpZ7HLGZL73/NWv8wcezBDuU0B2PlHLjSu7k6poq6JWDC02o5SYnEBwsJ5Chi+3/NZmzKTiNP7g0H4t6QhunkEXxL3z0617mwwQt00ypXsNunnPy4Ub5Kllk1SKJl8ZkEDKkJtSvuXJhcAZsLyMQw=="},
+    {"example.com", "RRSIG", "DNSKEY 5 2 3600 20100416210049 20100317210049 33495 example.com. h3OM5r3roBsgnEQk9fcjTg5L7p3yDptDpVzDN/lgjqpaWxtlz5LsulBH3YzwYyXzT7pG7L0/qT6dcuRECc/rniECviWvmJMJZzEAMry0Of/pk/8ekuGTxABpqwAoCwM5as30sc0cfMJTS7umpJVDA4lRB2zoKGefWnJ3+pREDiY="},
 
     // dns01.example.com
     {"dns01.example.com", "A", "192.0.2.1"},
@@ -335,8 +340,9 @@ buildZone(Zone& zone, const RRData* records, const bool is_glue) {
         rrset->addRdata(createRdata(rrtype, zone.rrclass, records[i].rdata));
         if (rrtype == RRType::RRSIG()) {
             prev_rrset->addRRsig(rrset);
+        } else {
+            prev_rrset = rrset;
         }
-        prev_rrset = rrset;
     }
 }
 
@@ -361,12 +367,10 @@ TestDataSrc::init() {
 }
 
 void
-TestDataSrc::findClosestEnclosure(NameMatch& match,
-                                  const RRClass& qclass) const
-{
-    const Name& qname = match.qname();
+TestDataSrc::findClosestEnclosure(DataSrcMatch& match) const {
+    const Name& qname = match.getName();
 
-    if (qclass != getClass() && qclass != RRClass::ANY()) {
+    if (match.getClass() != getClass() && match.getClass() != RRClass::ANY()) {
         return;
     }
 

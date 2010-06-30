@@ -229,6 +229,20 @@ public:
     unsigned int toWire(OutputBuffer& buffer) const;
     //@}
 
+    ///
+    /// \name Comparison Operator
+    ///
+    //@{
+    /// A comparison operator is needed for this class so it can
+    /// function as an index to std::map.
+    bool operator <(const Question& rhs) const {
+        return (rrclass_ < rhs.rrclass_ ||
+                (rrclass_ == rhs.rrclass_ &&
+                 (rrtype_ < rhs.rrtype_ ||
+                  (rrtype_ == rhs.rrtype_ && (name_ < rhs.name_)))));
+    }
+    //@}
+
 private:
     Name name_;
     RRType rrtype_;

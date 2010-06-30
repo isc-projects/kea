@@ -69,6 +69,7 @@ protected:
     void createAndProcessQuery(const Name& qname, const RRClass& qclass,
                                const RRType& qtype);
 
+    HotCache cache;
     MetaDataSrc meta_source;
     OutputBuffer obuffer;
     MessageRenderer renderer;
@@ -76,10 +77,10 @@ protected:
 };
 
 void
-performQuery(DataSrc& data_source, Message& message) {
+performQuery(DataSrc& data_source, HotCache& cache, Message& message) {
     message.setHeaderFlag(MessageFlag::AA());
     message.setRcode(Rcode::NOERROR());
-    Query q(message, true);
+    Query q(message, cache, true);
     data_source.doQuery(q);
 }
 
@@ -92,7 +93,7 @@ DataSrcTest::readAndProcessQuery(const char* datafile) {
     msg.fromWire(buffer);
 
     msg.makeResponse();
-    performQuery(meta_source, msg);
+    performQuery(meta_source, cache, msg);
 }
 
 void
@@ -103,7 +104,7 @@ DataSrcTest::createAndProcessQuery(const Name& qname, const RRClass& qclass,
     msg.setOpcode(Opcode::QUERY());
     msg.addQuestion(Question(qname, qclass, qtype));
     msg.setHeaderFlag(MessageFlag::RD());
-    performQuery(meta_source, msg);
+    performQuery(meta_source, cache, msg);
 }
 
 void
@@ -211,6 +212,83 @@ TEST_F(DataSrcTest, NSQuery) {
     EXPECT_EQ("dns03.example.com.", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
+}
+
+// Make sure two successive queries have the same result
+TEST_F(DataSrcTest, DuplicateQuery) {
+    readAndProcessQuery("q_example_ns");
+    headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 0, 6);
+
+    RRsetIterator rit = msg.beginSection(Section::ANSWER());
+    RRsetPtr rrset = *rit;
+    EXPECT_EQ(Name("example.com"), rrset->getName());
+    EXPECT_EQ(RRType::NS(), rrset->getType());
+    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+
+    RdataIteratorPtr it = rrset->getRdataIterator();
+    it->first();
+    EXPECT_EQ("dns01.example.com.", it->getCurrent().toText());
+    it->next();
+    EXPECT_EQ("dns02.example.com.", it->getCurrent().toText());
+    it->next();
+    EXPECT_EQ("dns03.example.com.", it->getCurrent().toText());
+    it->next();
+    EXPECT_TRUE(it->isLast());
+
+    msg.clear(Message::PARSE);
+    readAndProcessQuery("q_example_ns");
+    headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 0, 6);
+
+    rit = msg.beginSection(Section::ANSWER());
+    rrset = *rit;
+    EXPECT_EQ(Name("example.com"), rrset->getName());
+    EXPECT_EQ(RRType::NS(), rrset->getType());
+    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+
+    it = rrset->getRdataIterator();
+    it->first();
+    EXPECT_EQ("dns01.example.com.", it->getCurrent().toText());
+    it->next();
+    EXPECT_EQ("dns02.example.com.", it->getCurrent().toText());
+    it->next();
+    EXPECT_EQ("dns03.example.com.", it->getCurrent().toText());
+    it->next();
+    EXPECT_TRUE(it->isLast());
+}
+
+TEST_F(DataSrcTest, DNSKEYQuery) {
+    readAndProcessQuery("q_example_dnskey");
+    headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 4, 6);
+
+    RRsetIterator rit = msg.beginSection(Section::ANSWER());
+    RRsetPtr rrset = *rit;
+    EXPECT_EQ(Name("example.com"), rrset->getName());
+    EXPECT_EQ(RRType::DNSKEY(), rrset->getType());
+    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+}
+
+// Repeat the previous query to check that cache is working correctly.
+// We query for a record at a zone cut to ensure the REFERRAL flag doesn't
+// cause incorrect behavior.
+TEST_F(DataSrcTest, DNSKEYDuplicateQuery) {
+    readAndProcessQuery("q_example_dnskey");
+    headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 4, 6);
+
+    RRsetIterator rit = msg.beginSection(Section::ANSWER());
+    RRsetPtr rrset = *rit;
+    EXPECT_EQ(Name("example.com"), rrset->getName());
+    EXPECT_EQ(RRType::DNSKEY(), rrset->getType());
+    EXPECT_EQ(RRClass::IN(), rrset->getClass());
+
+    msg.clear(Message::PARSE);
+    readAndProcessQuery("q_example_dnskey");
+    headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 4, 6);
+
+    rit = msg.beginSection(Section::ANSWER());
+    rrset = *rit;
+    EXPECT_EQ(Name("example.com"), rrset->getName());
+    EXPECT_EQ(RRType::DNSKEY(), rrset->getType());
+    EXPECT_EQ(RRClass::IN(), rrset->getClass());
 }
 
 TEST_F(DataSrcTest, NxRRset) {
@@ -858,18 +936,6 @@ TEST_F(DataSrcTest, AddRemoveDataSrc) {
     EXPECT_EQ(0, ds.dataSrcCount());
 }
 
-// currently fails
-TEST_F(DataSrcTest, DISABLED_synthesizedCnameTooLong) {
-    // qname has the possible max length (255 octets).  it matches a DNAME,
-    // and the synthesized CNAME would exceed the valid length.
-    createAndProcessQuery(
-        Name("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcde."
-             "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcde."
-             "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcde."
-             "0123456789abcdef0123456789abcdef0123456789a.dname.example.org."),
-        RRClass::IN(), RRType::A());
-}
-
 TEST_F(DataSrcTest, noNSZone) {
     EXPECT_THROW(createAndProcessQuery(Name("www.nons.example"),
                                        RRClass::IN(), RRType::A()),
@@ -886,6 +952,116 @@ TEST_F(DataSrcTest, noSOAZone) {
     EXPECT_THROW(createAndProcessQuery(Name("notexist.nosoa.example"),
                                        RRClass::IN(), RRType::A()),
                  DataSourceError);
+}
+
+// currently fails
+TEST_F(DataSrcTest, DISABLED_synthesizedCnameTooLong) {
+    // qname has the possible max length (255 octets).  it matches a DNAME,
+    // and the synthesized CNAME would exceed the valid length.
+    createAndProcessQuery(
+        Name("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcde."
+             "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcde."
+             "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcde."
+             "0123456789abcdef0123456789abcdef0123456789a.dname.example.org."),
+        RRClass::IN(), RRType::A());
+}
+
+// Tests of the DataSrcMatch class start here
+class DataSrcMatchTest : public ::testing::Test {
+protected:
+    DataSrcMatchTest() {
+        datasrc1.init();
+    }
+    // test data source serves example.com/IN.
+    TestDataSrc datasrc1;
+    // this data source is dummy.  Its content doesn't matter in the tests.
+    TestDataSrc datasrc2;
+};
+
+TEST_F(DataSrcMatchTest, match) {
+    DataSrcMatch match(Name("very.very.long.example.com"), RRClass::IN());
+    datasrc1.findClosestEnclosure(match);
+    EXPECT_EQ(Name("example.com"), *match.getEnclosingZone());
+    EXPECT_EQ(&datasrc1, match.getDataSource());
+}
+
+TEST_F(DataSrcMatchTest, matchWithWrongClass) {
+    DataSrcMatch match(Name("very.very.long.example.com"), RRClass::CH());
+    datasrc1.findClosestEnclosure(match);
+    EXPECT_EQ(NULL, match.getEnclosingZone());
+    EXPECT_EQ(NULL, match.getDataSource());
+}
+
+TEST_F(DataSrcMatchTest, matchWithAnyClass) {
+    DataSrcMatch match(Name("very.very.long.example.com"), RRClass::ANY());
+    datasrc1.findClosestEnclosure(match);
+    EXPECT_EQ(Name("example.com"), *match.getEnclosingZone());
+    EXPECT_EQ(&datasrc1, match.getDataSource());
+}
+
+TEST_F(DataSrcMatchTest, updateWithWrongClass) {
+    DataSrcMatch match(Name("www.example.com"), RRClass::CH());
+
+    EXPECT_EQ(RRClass::IN(), datasrc2.getClass());
+    match.update(datasrc2, Name("com"));
+    EXPECT_EQ(NULL, match.getEnclosingZone());
+    EXPECT_EQ(NULL, match.getDataSource());
+
+    EXPECT_EQ(RRClass::IN(), datasrc1.getClass());
+    match.update(datasrc1, Name("example.com"));
+    EXPECT_EQ(NULL, match.getEnclosingZone());
+    EXPECT_EQ(NULL, match.getDataSource());
+}
+
+TEST_F(DataSrcMatchTest, updateAgainstAnyClass) {
+    DataSrcMatch match(Name("www.example.com"), RRClass::ANY());
+    match.update(datasrc2, Name("com"));
+    EXPECT_EQ(Name("com"), *match.getEnclosingZone());
+    EXPECT_EQ(&datasrc2, match.getDataSource());
+
+    // the given class for search is ANY, so update should be okay.
+    EXPECT_EQ(RRClass::IN(), datasrc1.getClass());
+    match.update(datasrc1, Name("example.com"));
+    EXPECT_EQ(Name("example.com"), *match.getEnclosingZone());
+    EXPECT_EQ(&datasrc1, match.getDataSource());
+}
+
+TEST_F(DataSrcMatchTest, updateWithNoMatch) {
+    DataSrcMatch match(Name("www.example.com"), RRClass::IN());
+    match.update(datasrc1, Name("com"));
+    EXPECT_EQ(Name("com"), *match.getEnclosingZone());
+    EXPECT_EQ(&datasrc1, match.getDataSource());
+
+    // An attempt of update with a name that doesn't match.  This attempt
+    // should be ignored.
+    match.update(datasrc2, Name("example.org"));
+    EXPECT_EQ(Name("com"), *match.getEnclosingZone());
+    EXPECT_EQ(&datasrc1, match.getDataSource());
+}
+
+// This test currently fails.
+TEST_F(DataSrcMatchTest, initialUpdateWithNoMatch) {
+    DataSrcMatch match(Name("www.example.com"), RRClass::IN());
+
+    // An initial attempt of update with a name that doesn't match.
+    // Should be ignored.
+    match.update(datasrc1, Name("example.org"));
+    EXPECT_EQ(NULL, match.getEnclosingZone());
+    EXPECT_EQ(NULL, match.getDataSource());
+}
+
+TEST_F(DataSrcMatchTest, updateWithShorterMatch) {
+    DataSrcMatch match(Name("www.example.com"), RRClass::IN());
+
+    match.update(datasrc1, Name("example.com"));
+    EXPECT_EQ(Name("example.com"), *match.getEnclosingZone());
+    EXPECT_EQ(&datasrc1, match.getDataSource());
+
+    // An attempt of update with a name that gives a shorter match.
+    // This attempt should be ignored.
+    match.update(datasrc2, Name("com"));
+    EXPECT_EQ(Name("example.com"), *match.getEnclosingZone());
+    EXPECT_EQ(&datasrc1, match.getDataSource());
 }
 
 }
