@@ -76,7 +76,7 @@
 	requires SQLite 3.3.9 or newer.
         The <command>b10-xfrin</command> and <command>b10-xfrout</command>
 	modules require the libboost library,
-        Boost Python library, libpython3 library,
+        libpython3 library,
 	and the Python _sqlite3.so module.
       </para></note>
 <!-- TODO: this will change ... -->
@@ -272,7 +272,7 @@ var/
         </para>
 
         <para>
-	  The Boost Library, Boost Python Library, Python Library,
+	  The Boost Library, Python Library,
 	  and Python _sqlite3 module are required to enable the
 	  Xfrout and Xfrin support.
         </para>
@@ -495,14 +495,6 @@ var/
           </varlistentry>
 
           <varlistentry>
-            <term>--with-boost-python</term>
-            <listitem> 
-              <simpara>Define to use the Boost Python library.
-              </simpara>
-            </listitem> 
-          </varlistentry>
-
-          <varlistentry>
             <term>--with-pythonpath</term>
             <listitem> 
               <simpara>Define the path to Python 3.1 if it is not in the
@@ -527,14 +519,12 @@ var/
   <!-- TODO: lcov -->
 
         <para>
-          For example, the following configures it
-    build with Boost Python support (for Python DNS library),
+          For example, the following configures it to
     find the Boost headers and library, find the
     Python interpreter, and sets the installation location:
 
           <screen>$ <userinput>./configure --with-boost-lib=/usr/pkg/lib \
       --with-boost-include=/usr/pkg/include \
-      --with-boost-python \
       --with-pythonpath=/usr/pkg/bin/python3.1 \
       --prefix=/opt/bind10</userinput></screen>
         </para>
