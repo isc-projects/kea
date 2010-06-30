@@ -19,6 +19,7 @@
 #include "data.h"
 
 #include <cassert>
+#include <climits>
 #include <cstdio>
 #include <iostream>
 #include <string>
