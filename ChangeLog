@@ -1,3 +1,4 @@
+bind10-devel-20100701 released on July 1, 2010
 
   69.  [func]*		jelte
 	Added python wrappers for libdns++ (isc::dns), and libxfr. This
