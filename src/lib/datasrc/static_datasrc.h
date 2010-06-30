@@ -39,8 +39,6 @@ class RRsetList;
 
 namespace datasrc {
 
-class Query;
-class NameMatch;
 struct StaticDataSrcImpl;
 
 class StaticDataSrc : public DataSrc {
@@ -58,8 +56,7 @@ public:
     ~StaticDataSrc();
     //@}
 
-    void findClosestEnclosure(NameMatch& match,
-                              const isc::dns::RRClass& qclass) const;
+    void findClosestEnclosure(DataSrcMatch& match) const;
 
     Result findRRset(const isc::dns::Name& qname,
                      const isc::dns::RRClass& qclass,

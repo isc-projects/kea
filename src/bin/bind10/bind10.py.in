@@ -176,8 +176,8 @@ class ProcessInfo:
 class BoB:
     """Boss of BIND class."""
     
-    def __init__(self, msgq_socket_file=None, auth_port=5300, verbose=False,
-                 setuid=None, username=None):
+    def __init__(self, msgq_socket_file=None, auth_port=5300, nocache=False,
+                 verbose=False, setuid=None, username=None):
         """Initialize the Boss of BIND. This is a singleton (only one
         can run).
         
@@ -195,6 +195,7 @@ class BoB:
         self.runnable = False
         self.uid = setuid
         self.username = username
+        self.nocache = nocache
 
     def config_handler(self, new_config):
         if self.verbose:
@@ -302,6 +303,8 @@ class BoB:
         # start b10-auth
         # XXX: this must be read from the configuration manager in the future
         authargs = ['b10-auth', '-p', str(self.auth_port)]
+        if self.nocache:
+            authargs += ['-n']
         if self.verbose:
             sys.stdout.write("[bind10] Starting b10-auth using port %d\n" %
                              self.auth_port)
@@ -557,6 +560,8 @@ def main():
     parser = OptionParser(version=__version__)
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
                       help="display more about what is going on")
+    parser.add_option("-n", "--no-cache", action="store_true", dest="nocache",
+                      default=False, help="disable hot-spot cache in b10-auth")
     parser.add_option("-p", "--port", dest="auth_port", type="string",
                       action="callback", callback=check_port, default="5300",
                       help="port the b10-auth daemon will use (default 5300)")
@@ -621,7 +626,7 @@ def main():
 
     # Go bob!
     boss_of_bind = BoB(options.msgq_socket_file, int(options.auth_port),
-                       options.verbose, setuid, username)
+                       options.nocache, options.verbose, setuid, username)
     startup_result = boss_of_bind.startup()
     if startup_result:
         sys.stderr.write("[bind10] Error on startup: %s\n" % startup_result)

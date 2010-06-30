@@ -1,3 +1,11 @@
+  70.  [func]		each
+  	Added a hot-spot cache to libdatasrc to speed up access to
+	repeatedly-queried data and reduce the number of queries to
+	the underlying database; this should substantially improve
+	performance.  Also added a "-n" ("no cache") option to
+	bind10 and b10-auth to disable the cache if needed.
+	(Trac #192, svn r2383)
+
 bind10-devel-20100701 released on July 1, 2010
 
   69.  [func]*		jelte

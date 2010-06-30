@@ -44,7 +44,7 @@ const char* BADCONFIG_TESTDB =
 
 class AuthSrvTest : public ::testing::Test {
 protected:
-    AuthSrvTest() : request_message(Message::RENDER),
+    AuthSrvTest() : server(true), request_message(Message::RENDER),
                     parse_message(Message::PARSE), default_qid(0x1035),
                     opcode(Opcode(Opcode::QUERY())), qname("www.example.com"),
                     qclass(RRClass::IN()), qtype(RRType::A()), ibuffer(NULL),

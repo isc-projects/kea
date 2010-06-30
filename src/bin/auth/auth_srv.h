@@ -43,7 +43,7 @@ private:
     AuthSrv(const AuthSrv& source);
     AuthSrv& operator=(const AuthSrv& source);
 public:
-    explicit AuthSrv();
+    explicit AuthSrv(const bool use_cache);
     ~AuthSrv();
     //@}
     /// \return \c true if the \message contains a response to be returned;

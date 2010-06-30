@@ -374,12 +374,10 @@ TEST_F(Sqlite3DataSourceTest, reOpen) {
     EXPECT_EQ(DataSrc::SUCCESS, data_source.close());
     EXPECT_EQ(DataSrc::SUCCESS, data_source.init(SQLITE_DBFILE_EXAMPLE2));
 
-    NameMatch name_match(www_name);
-    data_source.findClosestEnclosure(name_match, rrclass);
-    // XXX: some deviant compilers seem to fail to recognize a NULL as a
-    // pointer type.  This explicit cast works around such compilers.
-    EXPECT_EQ(static_cast<void*>(NULL), name_match.closestName());
-    EXPECT_EQ(static_cast<void*>(NULL), name_match.bestDataSrc());
+    DataSrcMatch match(www_name, rrclass);
+    data_source.findClosestEnclosure(match);
+    EXPECT_EQ(NULL, match.getEnclosingZone());
+    EXPECT_EQ(NULL, match.getDataSource());
 }
 
 TEST_F(Sqlite3DataSourceTest, openFail) {
@@ -415,52 +413,52 @@ TEST_F(Sqlite3DataSourceTest, memoryDB) {
 }
 
 TEST_F(Sqlite3DataSourceTest, findClosestEnclosure) {
-    NameMatch name_match(www_name);
-    data_source.findClosestEnclosure(name_match, rrclass);
-    EXPECT_EQ(zone_name, *name_match.closestName());
-    EXPECT_EQ(&data_source, name_match.bestDataSrc());
+    DataSrcMatch match(www_name, rrclass);
+    data_source.findClosestEnclosure(match);
+    EXPECT_EQ(zone_name, *match.getEnclosingZone());
+    EXPECT_EQ(&data_source, match.getDataSource());
 }
 
 TEST_F(Sqlite3DataSourceTest, findClosestEnclosureMatchRoot) {
     EXPECT_EQ(DataSrc::SUCCESS, data_source.close());
     EXPECT_EQ(DataSrc::SUCCESS, data_source.init(SQLITE_DBFILE_EXAMPLE_ROOT));
 
-    NameMatch name_match(Name("org."));
-    data_source.findClosestEnclosure(name_match, rrclass);
-    EXPECT_EQ(Name("."), *name_match.closestName());
-    EXPECT_EQ(&data_source, name_match.bestDataSrc());
+    DataSrcMatch match(Name("org."), rrclass);
+    data_source.findClosestEnclosure(match);
+    EXPECT_EQ(Name("."), *match.getEnclosingZone());
+    EXPECT_EQ(&data_source, match.getDataSource());
 }
 
 TEST_F(Sqlite3DataSourceTest, findClosestEnclosureAtDelegation) {
     // The search name exists both in the parent and child zones, but
     // child has a better match.
-    NameMatch name_match(child_name);
-    data_source.findClosestEnclosure(name_match, rrclass);
-    EXPECT_EQ(child_name, *name_match.closestName());
-    EXPECT_EQ(&data_source, name_match.bestDataSrc());
+    DataSrcMatch match(child_name, rrclass);
+    data_source.findClosestEnclosure(match);
+    EXPECT_EQ(child_name, *match.getEnclosingZone());
+    EXPECT_EQ(&data_source, match.getDataSource());
 }
 
 TEST_F(Sqlite3DataSourceTest, findClosestEnclosureNoMatch) {
-    NameMatch name_match(nomatch_name);
-    data_source.findClosestEnclosure(name_match, rrclass);
-    EXPECT_EQ(static_cast<void*>(NULL), name_match.closestName());
-    EXPECT_EQ(static_cast<void*>(NULL), name_match.bestDataSrc());
+    DataSrcMatch match(nomatch_name, rrclass);
+    data_source.findClosestEnclosure(match);
+    EXPECT_EQ(NULL, match.getEnclosingZone());
+    EXPECT_EQ(NULL, match.getDataSource());
 }
 
 TEST_F(Sqlite3DataSourceTest, findClosestClassMismatch) {
-    NameMatch name_match(www_name);
-    data_source.findClosestEnclosure(name_match, rrclass_notmatch);
-    EXPECT_EQ(static_cast<void*>(NULL), name_match.closestName());
-    EXPECT_EQ(static_cast<void*>(NULL), name_match.bestDataSrc());
+    DataSrcMatch match(nomatch_name, rrclass);
+    data_source.findClosestEnclosure(match);
+    EXPECT_EQ(NULL, match.getEnclosingZone());
+    EXPECT_EQ(NULL, match.getDataSource());
 }
 
 // If the query class is ANY, the result should be the same as the case where
 // the class exactly matches.
 TEST_F(Sqlite3DataSourceTest, findClosestClassAny) {
-    NameMatch name_match(www_name);
-    data_source.findClosestEnclosure(name_match, RRClass::ANY());
-    EXPECT_EQ(zone_name, *name_match.closestName());
-    EXPECT_EQ(&data_source, name_match.bestDataSrc());
+    DataSrcMatch match(www_name, RRClass::ANY());
+    data_source.findClosestEnclosure(match);
+    EXPECT_EQ(zone_name, *match.getEnclosingZone());
+    EXPECT_EQ(&data_source, match.getDataSource());
 }
 
 TEST_F(Sqlite3DataSourceTest, findRRsetNormal) {

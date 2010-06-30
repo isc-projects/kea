@@ -40,7 +40,7 @@ class RRsetList;
 
 namespace datasrc {
 
-class NameMatch;
+class DataSrcMatch;
 class Query;
 
 class DataSrc;
@@ -89,12 +89,15 @@ public:
     // NAME_NOT_FOUND: The node does not exist in the data source.
     // TYPE_NOT_FOUND: The node does not contain the requested RRType
     // NO_SUCH_ZONE:   The zone does not exist in this data source.
+    //
+    // DATA_NOT_FOUND: A combination of the last three, for coding convenience
     enum QueryResponseFlags {
         REFERRAL = 0x01,
         CNAME_FOUND = 0x02,
         NAME_NOT_FOUND = 0x04,
         TYPE_NOT_FOUND = 0x08,
-        NO_SUCH_ZONE = 0x10
+        NO_SUCH_ZONE = 0x10,
+        DATA_NOT_FOUND = (NAME_NOT_FOUND|TYPE_NOT_FOUND|NO_SUCH_ZONE)
     };
 
     // 'High-level' methods.  These will be implemented by the
@@ -107,9 +110,7 @@ public:
 
     // 'Medium-level' methods.  This will be implemented by the general
     // DataSrc class but MAY be overwritten by subclasses.
-    virtual void findClosestEnclosure(NameMatch& match,
-                                      const isc::dns::RRClass& qclasss)
-                                      const = 0;
+    virtual void findClosestEnclosure(DataSrcMatch& match) const = 0;
 
     // Optional 'low-level' methods.  These will have stub implementations
     // in the general DataSrc class but MAY be overwritten by subclasses
@@ -179,9 +180,7 @@ public:
 
     virtual void doQuery(Query& q);
 
-    virtual void findClosestEnclosure(NameMatch& match,
-                                      const isc::dns::RRClass& qclass)
-                                      const = 0;
+    virtual void findClosestEnclosure(DataSrcMatch& match) const = 0;
 
     const isc::dns::RRClass& getClass() const { return rrclass; }
     void setClass(isc::dns::RRClass& c) { rrclass = c; }
@@ -250,8 +249,7 @@ public:
     void removeDataSrc(ConstDataSrcPtr data_src);
     size_t dataSrcCount() { return data_sources.size(); };
     
-    void findClosestEnclosure(NameMatch& match,
-                              const isc::dns::RRClass& qclass) const;
+    void findClosestEnclosure(DataSrcMatch& match) const;
 
     // Actual queries for data should not be sent to a MetaDataSrc object,
     // so we return NOT_IMPLEMENTED if we receive any.
@@ -298,31 +296,107 @@ private:
     std::vector<ConstDataSrcPtr> data_sources;
 };
 
-class NameMatch {
+/// \brief Information about the zone along with the %data source that best
+/// matches a give name and RR class.
+///
+/// A \c DataSrcMatch object is created with a domain name and RR class to
+/// hold the search state of looking for the zone and the %data source that
+/// stores the zone that best match the given name and RR class.
+/// The application of this class passes an object of \c DataSrcMatch to
+/// one or more ^data sources via their \c findClosestEnclosure() method.
+/// The %data source searches its content for the given key, and update
+/// the state if it finds a better zone than the currently recorded one.
+///
+/// The state of a \c DataSrcMatch object should be updated if and only if:
+///  - The specified RR class and the RR class of the %data source are the
+//     same, or the specified RR class is ANY; and
+///  - There is no matching %data source and name found (which is probably
+///    wrong, see below), or the given enclosing name gives a longer match
+///    than the currently stored enclosing name against the specified name.
+class DataSrcMatch {
     ///
     /// \name Constructors, Assignment Operator and Destructor.
     ///
-    /// Note: The copy constructor and the assignment operator are intentionally
-    /// defined as private.
+    /// Note: The copy constructor and the assignment operator are
+    /// intentionally defined as private.
+    //@{
 private:
-    NameMatch(const NameMatch& source);
-    NameMatch& operator=(const NameMatch& source);
+    DataSrcMatch(const DataSrcMatch& source);
+    DataSrcMatch& operator=(const DataSrcMatch& source);
 public:
-    NameMatch(const isc::dns::Name& qname) :
-        closest_name_(NULL), best_source_(NULL), qname_(qname) {}
-    ~NameMatch();
+    /// \brief The constructor.
+    ///
+    /// This constructor normally doesn't throw an exception.  However,
+    /// it creates a copy of the given name object, which may require memory
+    /// allocation, and if it fails the corresponding standard exception will
+    /// be thrown.
+    ///
+    /// \param name The domain name to be matched.
+    /// \param rrclass The RR class to be matched
+    DataSrcMatch(const isc::dns::Name& name,
+                 const isc::dns::RRClass& rrclass) :
+        closest_name_(NULL), best_source_(NULL),
+        name_(name), rrclass_(rrclass)
+    {}
+    ~DataSrcMatch();
     //@}
 
+    /// \name Getter and Setter Methods
+    //@{
+    /// \brief Returns the name to be matched.
+    const isc::dns::Name& getName() const { return (name_); }
+
+    /// \brief Returns the RR class to be matched.
+    ///
+    /// This method never throws an exception.
+    const isc::dns::RRClass& getClass() const { return (rrclass_); }
+
+    /// \brief Returns the best enclosing zone name found for the given
+    // name and RR class so far.
+    /// 
+    /// \return A pointer to the zone apex \c Name, NULL if none found yet.
+    ///
+    /// This method never throws an exception.
+    const isc::dns::Name* getEnclosingZone() const { return (closest_name_); }
+
+    /// \brief Returns the best %data source found for the given name and
+    /// RR class so far.
+    ///
+    /// This method never throws an exception.
+    ///
+    /// \return A pointer to a concrete %data source, NULL if none found yet.
+    const DataSrc* getDataSource() const { return (best_source_); }
+    //@}
+
+    /// \brief Update the object state with better information if possible.
+    ///
+    /// This method is intended to be called by a concrete %data source's
+    /// \c findClosestEnclosure() method to store the best match for
+    /// the given name and class that has been found so far.
+    ///
+    /// It compares the best name (if found) and \c container, and if the
+    /// latter gives a longer match, it will install the given %data source
+    /// and the enclosing name as the best match;
+    /// if there is no known pair of %data source and enclosing name,
+    /// this method will install the given pair unconditionally.
+    /// (which is probably BAD);
+    /// otherwise this method does nothing.
+    ///
+    /// In any case, if a new pair of %data source and enclosing name are
+    /// installed, a new name object will be internally allocated.
+    /// And, if memory allocation fails the corresponding standard exception
+    /// will be thrown.
+    ///
+    /// \param new_source A candidate %data source that gives a better match.
+    /// \param container The enclosing name of the matching zone in
+    /// \c new_source.
     void update(const DataSrc& new_source, const isc::dns::Name& container);
 
-    const isc::dns::Name& qname() const { return (qname_); }
-    const isc::dns::Name* closestName() const { return (closest_name_); }
-    const DataSrc* bestDataSrc() const { return (best_source_); }
-
 private:
-    const isc::dns::Name* closest_name_;
+    isc::dns::Name* closest_name_;
     const DataSrc* best_source_;
-    const isc::dns::Name qname_;
+    const isc::dns::Name name_;
+    const isc::dns::RRClass& rrclass_;
 };
 
 class Nsec3Param {

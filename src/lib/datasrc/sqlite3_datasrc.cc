@@ -344,19 +344,17 @@ Sqlite3DataSrc::findClosest(const Name& name, unsigned int* position) const {
 }
 
 void
-Sqlite3DataSrc::findClosestEnclosure(NameMatch& match,
-                                     const RRClass& qclass) const
-{
-    if (qclass != getClass() && qclass != RRClass::ANY()) {
+Sqlite3DataSrc::findClosestEnclosure(DataSrcMatch& match) const {
+    if (match.getClass() != getClass() && match.getClass() != RRClass::ANY()) {
         return;
     }
 
     unsigned int position;
-    if (findClosest(match.qname(), &position) == -1) {
+    if (findClosest(match.getName(), &position) == -1) {
         return;
     }
 
-    match.update(*this, match.qname().split(position));
+    match.update(*this, match.getName().split(position));
 }
 
 DataSrc::Result
