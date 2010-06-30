@@ -465,7 +465,6 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            chmod +x src/bin/msgq/tests/msgq_test
            chmod +x src/lib/dns/gen-rdatacode.py
            chmod +x src/lib/dns/tests/testdata/gen-wiredata.py
-           chmod +x src/lib/dns/python/tests/libdns_python_test
           ])
 AC_OUTPUT
 
