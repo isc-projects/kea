@@ -10,7 +10,7 @@ EXTRA_DIST += include.txt
 EXTRA_DIST += keyerror1.db
 EXTRA_DIST += keyerror2.db
 EXTRA_DIST += keyerror3.db
-EXTRA_DIST += nofilenane.db
+#EXTRA_DIST += nofilenane.db
 EXTRA_DIST += originerr1.db
 EXTRA_DIST += originerr2.db
 
@@ -21,5 +21,5 @@ check-local:
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
 	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/bin/loadzone \
-	$(SHELL) $(abs_srcdir)/$$pytest ; \
+	$(SHELL) $(abs_builddir)/$$pytest ; \
 	done

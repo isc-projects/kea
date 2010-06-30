@@ -25,7 +25,7 @@ install-data-local:
 # TODO: permissions handled later
 
 EXTRA_DIST += tests/normal/README
-EXTRA_DIST += tests/normal/dsset-subzone.example.com.
+EXTRA_DIST += tests/normal/dsset-subzone.example.com
 EXTRA_DIST += tests/normal/example.com
 EXTRA_DIST += tests/normal/example.com.signed
 EXTRA_DIST += tests/normal/Kexample.com.+005+04456.key

@@ -12,6 +12,7 @@ EXTRA_DIST += mix2sub2.txt
 EXTRA_DIST += ttl1.db
 EXTRA_DIST += ttl2.db
 EXTRA_DIST += ttlext.db
+EXTRA_DIST += example.db
 
 # later will have configure option to choose this, like: coverage run --branch
 PYCOVERAGE = $(PYTHON)
@@ -19,6 +20,6 @@ PYCOVERAGE = $(PYTHON)
 check-local:
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
-	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/bin/loadzone \
-	$(SHELL) $(abs_srcdir)/$$pytest ; \
+	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/bin/loadzone \
+	$(SHELL) $(abs_builddir)/$$pytest ; \
 	done
