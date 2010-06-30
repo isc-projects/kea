@@ -642,9 +642,7 @@ initModulePart_Name(PyObject* mod) {
     addClassVariable(name_type, "COMPRESS_POINTER_MARK16", Py_BuildValue("I", Name::COMPRESS_POINTER_MARK16));
 
     s_Name* root_name = PyObject_New(s_Name, &name_type);
-    // casting const away here should be safe, as it should be impossible
-    // to modify attributes of built-in/extension types.
-    root_name->name = const_cast<Name*>(&Name::ROOT_NAME());
+    root_name->name = new Name(Name::ROOT_NAME());
     PyObject* po_ROOT_NAME = root_name;
     addClassVariable(name_type, "ROOT_NAME", po_ROOT_NAME);
 
