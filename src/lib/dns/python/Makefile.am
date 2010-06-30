@@ -13,17 +13,22 @@ libdns_python_la_SOURCES = libdns_python.cc libdns_python_common.cc
 libdns_python_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
 libdns_python_la_LDFLAGS = $(PYTHON_LDFLAGS)
 
-#libdns_python_rrset_la_SOURCES = rrset_python.cc
-#libdns_python_rrset_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
-#libdns_python_rrset_la_LDFLAGS = $(PYTHON_LDFLAGS) libdns_python_name.la
-
-#libdns_python_rrset_la_SOURCES = rrset_python.cc
-#libdns_python_rrset_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
-#libdns_python_rrset_la_LDFLAGS = $(PYTHON_LDFLAGS)
+# directly included from source files, so these don't have their own
+# rules
+EXTRA_DIST = libdns_python_common.h
+EXTRA_DIST += messagerenderer_python.cc
+EXTRA_DIST += message_python.cc
+EXTRA_DIST += rrclass_python.cc
+EXTRA_DIST += name_python.cc
+EXTRA_DIST += rrset_python.cc
+EXTRA_DIST += question_python.cc
+EXTRA_DIST += rrttl_python.cc
+EXTRA_DIST += rdata_python.cc
+EXTRA_DIST += rrtype_python.cc
 
 # Python prefers .so, while some OSes (specifically MacOS) use a different
 # suffix for dynamic objects.  -module is necessary to work this around.
 libdns_python_la_LDFLAGS += -module
-libdns_python_la_LIBADD = $(top_builddir)/src/lib/dns/libdns.la
+libdns_python_la_LIBADD = $(top_builddir)/src/lib/dns/libdns++.la
 libdns_python_la_LIBADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 libdns_python_la_LIBADD += $(PYTHON_LIB)

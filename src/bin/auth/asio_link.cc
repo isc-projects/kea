@@ -16,6 +16,7 @@
 
 #include <config.h>
 
+#include <unistd.h>             // for some IPC/network system calls
 #include <asio.hpp>
 #include <boost/bind.hpp>
 
@@ -66,7 +67,13 @@ void
 dispatch_axfr_query(const int tcp_sock, char const axfr_query[],
                     const uint16_t query_len)
 {
-    string path(UNIX_SOCKET_FILE);
+    string path;
+    if (getenv("B10_FROM_BUILD")) {
+        path = string(getenv("B10_FROM_BUILD")) + "/auth_xfrout_conn";
+    } else {
+        path = UNIX_SOCKET_FILE;
+    }
+    
     if (getenv("B10_FROM_BUILD")) {
         path = string(getenv("B10_FROM_BUILD")) + "/auth_xfrout_conn";
     }

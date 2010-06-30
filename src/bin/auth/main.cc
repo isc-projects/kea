@@ -148,12 +148,12 @@ main(int argc, char* argv[]) {
         io_service = new asio_link::IOService(auth_server, port, use_ipv4,
                                               use_ipv6);
 
-        ModuleCCSession cs(specfile, io_service->get_io_service(), my_config_handler, my_command_handler);
+        ModuleCCSession cs(specfile, io_service->get_io_service(),
+                           my_config_handler, my_command_handler);
 
         auth_server->setConfigSession(&cs);
         auth_server->updateConfig(ElementPtr());
 
-        
         cout << "[b10-auth] Server started." << endl;
         io_service->run();
     } catch (const std::exception& ex) {

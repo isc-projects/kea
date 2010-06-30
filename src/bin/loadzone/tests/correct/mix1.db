@@ -1,0 +1,21 @@
+; $Id: ttl1.db,v 1.6 2007/06/19 23:47:04 tbox Exp $
+$ORIGIN mix1.
+@			IN SOA	ns hostmaster (
+				1        ; serial
+				3600
+				1800
+				1814400
+				3
+				)
+			NS	ns
+ns			A	10.53.0.1
+a			TXT	"soa minttl 3"
+b		2	TXT	"explicit ttl 2"
+$INCLUDE mix1sub1.db
+c			TXT	"soa minttl 3"
+$TTL 1
+d			TXT	"default ttl 1"
+e		4	TXT	"explicit ttl 4"
+f			TXT	"default ttl 1"
+$INCLUDE mix1sub2.db
+h       5   TXT "the include ttl 5"

@@ -540,6 +540,15 @@ TEST_F(DataSrcTest, Dname) {
     EXPECT_TRUE(it->isLast());
 }
 
+TEST_F(DataSrcTest, DnameExact) {
+    // The example.org test zone has a DNAME RR for dname2.foo.example.org.
+    // A query for that name with a different RR type than DNAME shouldn't
+    // confuse delegation processing.
+    createAndProcessQuery(Name("dname2.foo.example.org"), RRClass::IN(),
+                          RRType::A());
+    headerCheck(msg, Rcode::NOERROR(), true, true, true, 0, 1, 0);
+}
+
 TEST_F(DataSrcTest, Cname) {
     readAndProcessQuery("q_cname");
 
@@ -761,7 +770,7 @@ TEST_F(DataSrcTest, DS) {
 }
 
 TEST_F(DataSrcTest, CNAMELoop) {
-    createAndProcessQuery(Name("loop1.example.com"), RRClass::IN(),
+    createAndProcessQuery(Name("one.loop.example"), RRClass::IN(),
                           RRType::A());
 }
 
@@ -843,8 +852,8 @@ TEST_F(DataSrcTest, AddRemoveDataSrc) {
     EXPECT_EQ(0, ds.dataSrcCount());
 }
 
-#if 0                           // currently fails
-TEST_F(DataSrcTest, synthesizedCnameTooLong) {
+// currently fails
+TEST_F(DataSrcTest, DISABLED_synthesizedCnameTooLong) {
     // qname has the possible max length (255 octets).  it matches a DNAME,
     // and the synthesized CNAME would exceed the valid length.
     createAndProcessQuery(
@@ -854,6 +863,23 @@ TEST_F(DataSrcTest, synthesizedCnameTooLong) {
              "0123456789abcdef0123456789abcdef0123456789a.dname.example.org."),
         RRClass::IN(), RRType::A());
 }
-#endif
+
+TEST_F(DataSrcTest, noNSZone) {
+    EXPECT_THROW(createAndProcessQuery(Name("www.nons.example"),
+                                       RRClass::IN(), RRType::A()),
+                 DataSourceError);
+}
+
+TEST_F(DataSrcTest, noNSButDnameZone) {
+    EXPECT_THROW(createAndProcessQuery(Name("www.nons-dname.example"),
+                                       RRClass::IN(), RRType::A()),
+                 DataSourceError);
+}
+
+TEST_F(DataSrcTest, noSOAZone) {
+    EXPECT_THROW(createAndProcessQuery(Name("notexist.nosoa.example"),
+                                       RRClass::IN(), RRType::A()),
+                 DataSourceError);
+}
 
 }

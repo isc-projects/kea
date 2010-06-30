@@ -40,11 +40,14 @@ except ImportError as e:
 # installed on the system
 if "B10_FROM_BUILD" in os.environ:
     SPECFILE_PATH = os.environ["B10_FROM_BUILD"] + "/src/bin/xfrin"
+    AUTH_SPECFILE_PATH = os.environ["B10_FROM_BUILD"] + "/src/bin/auth"
 else:
     PREFIX = "@prefix@"
     DATAROOTDIR = "@datarootdir@"
     SPECFILE_PATH = "@datadir@/@PACKAGE@".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
+    AUTH_SPECFILE_PATH = SPECFILE_PATH
 SPECFILE_LOCATION = SPECFILE_PATH + "/xfrin.spec"
+AUTH_SPECFILE_LOCATION = AUTH_SPECFILE_PATH + "/auth.spec"
 
 
 __version__ = 'BIND10'
@@ -434,7 +437,18 @@ a separate method for the convenience of unit tests.
         db_file = args.get('db_file')
         if not db_file:
             #TODO, the db file path should be got in auth server's configuration
-            db_file = '@@LOCALSTATEDIR@@/@PACKAGE@/zone.sqlite3'
+            # if we need access to this configuration more often, we
+            # should add it on start, and not remove it here
+            # (or, if we have writable ds, we might not need this in
+            # the first place)
+            self._cc.add_remote_config(AUTH_SPECFILE_LOCATION)
+            db_file, is_default = self._cc.get_remote_config_value("Auth", "database_file")
+            if is_default and "B10_FROM_BUILD" in os.environ:
+                # this too should be unnecessary, but currently the
+                # 'from build' override isn't stored in the config
+                # (and we don't have writable datasources yet)
+                db_file = os.environ["B10_FROM_BUILD"] + os.sep + "bind10_zones.sqlite3"
+            self._cc.remove_remote_config(AUTH_SPECFILE_LOCATION)
 
         return (zone_name, master_addrinfo, db_file)
 

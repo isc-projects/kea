@@ -75,7 +75,8 @@ class TestXfroutSession(unittest.TestCase):
 
     def setUp(self):
         request = MySocket(socket.AF_INET,socket.SOCK_STREAM)
-        self.xfrsess = MyXfroutSession(request, None, None)
+        self.log = isc.log.NSLogger('xfrout', '',  severity = 'critical', log_to_console = False )
+        self.xfrsess = MyXfroutSession(request, None, None, self.log)
         self.xfrsess.server = Dbserver()
         self.mdata = bytes(b'\xd6=\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\x03com\x00\x00\xfc\x00\x01')
         self.sock = MySocket(socket.AF_INET,socket.SOCK_STREAM)
@@ -193,7 +194,7 @@ class TestXfroutSession(unittest.TestCase):
 
     def test_dns_xfrout_start_formerror(self):
         # formerror
-        self.assertRaises(MessageTooShort, self.xfrsess.dns_xfrout_start, self.sock, b"\xd6=\x00\x00\x00\x01\x00")
+        self.xfrsess.dns_xfrout_start(self.sock, b"\xd6=\x00\x00\x00\x01\x00")
         sent_data = self.sock.readsent()
         self.assertEqual(len(sent_data), 0)
     
@@ -236,26 +237,33 @@ class TestXfroutSession(unittest.TestCase):
         reply_msg = self.sock.read_msg()
         self.assertEqual(reply_msg.get_rr_count(Section.ANSWER()), 2)
 
-        # set event
-        self.xfrsess.server._shutdown_event.set()
-        self.assertRaises(XfroutException, self.xfrsess._reply_xfrout_query, self.getmsg(), self.sock, "example.com.")
+class MyCCSession():
+    def __init__(self):
+        pass
+
+    def get_remote_config_value(self, module_name, identifier):
+        if module_name == "Auth" and identifier == "database_file":
+            return "initdb.file", False
+        else:
+            return "unknown", False
+    
 
 class MyUnixSockServer(UnixSockServer):
     def __init__(self):
         self._lock = threading.Lock()
         self._transfers_counter = 0
         self._shutdown_event = threading.Event()
-        self._db_file = "initdb.file"
         self._max_transfers_out = 10
+        self._cc = MyCCSession()
+        self._log = isc.log.NSLogger('xfrout', '', severity = 'critical', log_to_console = False )
 
 class TestUnixSockServer(unittest.TestCase):
     def setUp(self):
         self.unix = MyUnixSockServer()
      
     def test_updata_config_data(self):
-        self.unix.update_config_data({'transfers_out':10, 'db_file':"db.file"})
+        self.unix.update_config_data({'transfers_out':10 })
         self.assertEqual(self.unix._max_transfers_out, 10)
-        self.assertEqual(self.unix._db_file, "db.file")
 
     def test_get_db_file(self):
         self.assertEqual(self.unix.get_db_file(), "initdb.file")

@@ -11,3 +11,4 @@ mail.example.org. A 192.0.2.10
 sub.example.org. NS ns.sub.example.org.
 ns.sub.example.org. A 192.0.2.101
 dname.example.org. DNAME dname.example.info.
+dname2.foo.example.org. DNAME dname2.example.info.
