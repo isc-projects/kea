@@ -181,6 +181,8 @@ class XfroutSession(BaseRequestHandler):
         zone_name = self._get_query_zone_name(msg)
         rcode_ = self._check_xfrout_available(zone_name)
         if rcode_ != Rcode.NOERROR():
+            self._log.log_message("info", "transfer of '%s/IN' failed: %s",
+                                  zone_name, rcode_.to_text())
             return self. _reply_query_with_error_rcode(msg, sock, rcode_)
 
         try:
