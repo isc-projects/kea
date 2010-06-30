@@ -11,6 +11,9 @@ libxfr_la_SOURCES = xfrout_client.h xfrout_client.cc
 libxfr_la_SOURCES += fd_share.h fd_share.cc
 
 pyexec_LTLIBRARIES = libxfr_python.la
+# Python prefers .so, while some OSes (specifically MacOS) use a different
+# suffix for dynamic objects.  -module is necessary to work this around.
+libxfr_python_la_LDFLAGS = -module
 libxfr_python_la_SOURCES = fdshare_python.cc fd_share.cc fd_share.h
 libxfr_python_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
 libxfr_python_la_CXXFLAGS = $(AM_CXXFLAGS)
