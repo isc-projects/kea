@@ -155,6 +155,7 @@ TEST(Element, from_and_to_json) {
     // number overflows
     EXPECT_THROW(Element::fromJSON("12345678901234567890")->str(), JSONError);
     EXPECT_THROW(Element::fromJSON("1.1e12345678901234567890")->str(), JSONError);
+    EXPECT_THROW(Element::fromJSON("-1.1e12345678901234567890")->str(), JSONError);
     EXPECT_THROW(Element::fromJSON("1e12345678901234567890")->str(), JSONError);
     EXPECT_THROW(Element::fromJSON("1e50000")->str(), JSONError);
 

@@ -374,7 +374,7 @@ from_stringstream_number(std::istream &in, int &pos) {
         if (*endptr != '\0') {
             isc_throw(JSONError, std::string("Bad number: ") + number);
         } else {
-            if (d == HUGE_VAL) {
+            if (d == HUGE_VAL || d == -HUGE_VAL) {
                 isc_throw(JSONError, std::string("Number overflow: ") + number);
             }
         }
