@@ -1,3 +1,11 @@
+  68.  [func]	    zhanglikun
+	Add options -c(--certificate-chain) to bindctl. Override class
+	HTTPSConnection to support server certificate validation.
+	Add support to cmdctl.spec file, now there are three configurable 
+	items for cmdctl: 'key_file', 'cert_file' and 'accounts_file', 
+	all of them can be changed in runtime.
+	(Trac #127, svn r2357)
+
   67.  [func]	    zhanglikun
 	Make bindctl's command parser only do minimal check. Parameter 
 	value can be a sequence of non-space characters, or a string 

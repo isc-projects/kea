@@ -63,10 +63,34 @@ Type \"<module_name> help\" for help on the specific module.
 Type \"<module_name> <command_name> help\" for help on the specific command.
 \nAvailable module names: """
 
+class ValidatedHTTPSConnection(http.client.HTTPSConnection):
+    '''Overrides HTTPSConnection to support certification 
+    validation. '''
+    def __init__(self, host, ca_certs):
+        http.client.HTTPSConnection.__init__(self, host)
+        self.ca_certs = ca_certs
+
+    def connect(self):
+        ''' Overrides the connect() so that we do 
+        certificate validation. '''
+        sock = socket.create_connection((self.host, self.port),
+                                        self.timeout)
+        if self._tunnel_host:
+            self.sock = sock
+            self._tunnel()
+       
+        req_cert = ssl.CERT_NONE
+        if self.ca_certs:
+            req_cert = ssl.CERT_REQUIRED
+        self.sock = ssl.wrap_socket(sock, self.key_file,
+                                    self.cert_file,
+                                    cert_reqs=req_cert,
+                                    ca_certs=self.ca_certs)
+
 class BindCmdInterpreter(Cmd):
     """simple bindctl example."""    
 
-    def __init__(self, server_port = 'localhost:8080', pem_file = "bindctl.pem"):
+    def __init__(self, server_port = 'localhost:8080', pem_file = None):
         Cmd.__init__(self)
         self.location = ""
         self.prompt_end = '> '
@@ -75,18 +99,9 @@ class BindCmdInterpreter(Cmd):
         self.modules = OrderedDict()
         self.add_module_info(ModuleInfo("help", desc = "Get help for bindctl"))
         self.server_port = server_port
-        self.pem_file = pem_file
-        self._connect_to_cmd_ctrld()
+        self.conn = ValidatedHTTPSConnection(self.server_port,
+                                             ca_certs=pem_file)
         self.session_id = self._get_session_id()
-
-    def _connect_to_cmd_ctrld(self):
-        '''Connect to cmdctl in SSL context. '''
-        try:
-            self.conn = http.client.HTTPSConnection(self.server_port,
-                          cert_file=self.pem_file)
-        except  Exception as e:
-            print(e, "can't connect to %s, please make sure cmd-ctrld is running" %
-                  self.server_port)
 
     def _get_session_id(self):
         '''Generate one session id for the connection. '''
@@ -98,14 +113,11 @@ class BindCmdInterpreter(Cmd):
         return digest
     
     def run(self):
-        '''Parse commands inputted from user and send them to cmdctl. '''
+        '''Parse commands from user and send them to cmdctl. '''
         try:
             if not self.login_to_cmdctl():
                 return 
 
-            # Get all module information from cmd-ctrld
-            self.config_data = isc.config.UIModuleCCSession(self)
-            self._update_commands()
             self.cmdloop()
         except FailToLogin as err:
             print(err)
@@ -233,7 +245,19 @@ class BindCmdInterpreter(Cmd):
         headers = {"cookie" : self.session_id}
         self.conn.request('POST', url, param, headers)
         return self.conn.getresponse()
-        
+
+    def _update_all_modules_info(self):
+        ''' Get all modules' information from cmdctl, including
+        specification file and configuration data. This function
+        should be called before interpreting command line or complete-key
+        is entered. This may not be the best way to keep bindctl
+        and cmdctl share same modules information, but it works.'''
+        self.config_data = isc.config.UIModuleCCSession(self)
+        self._update_commands()
+
+    def precmd(self, line):
+        self._update_all_modules_info()
+        return line 
 
     def postcmd(self, stop, line):
         '''Update the prompt after every command'''
@@ -381,6 +405,7 @@ class BindCmdInterpreter(Cmd):
 
     def complete(self, text, state):
         if 0 == state:
+            self._update_all_modules_info()
             text = text.strip()
             hints = []
             cur_line = my_readline()
