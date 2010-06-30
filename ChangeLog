@@ -1,3 +1,10 @@
+  64.  [func]       jerry
+    Added python logging framework. It is for testing and experimenting
+	with logging ideas. Currently, it supports three channels(file, 
+	syslog and stderr) and five levels(debug, info, warning, error and
+	critical).
+	(Trac #176, svn r2338)
+
   63.  [func]       shane
     Added initial support for setuid(), using the "-u" flag. This will
     be replaced in the future, but for now provides a reasonable 
