@@ -66,7 +66,7 @@ public:
     virtual void readData(void* data, size_t datalen) = 0;
     virtual void startRead(boost::function<void()> user_handler) = 0;
     
-    int sequence_; // the next sequence number to use
+    long int sequence_; // the next sequence number to use
     std::string lname_;
     ElementPtr queue_;
 };
@@ -458,7 +458,7 @@ Session::group_sendmsg(ElementPtr msg, std::string group,
                        std::string instance, std::string to)
 {
     ElementPtr env = Element::createMap();
-    int nseq = ++impl_->sequence_;
+    long int nseq = ++impl_->sequence_;
     
     env->set("type", Element::create("send"));
     env->set("from", Element::create(impl_->lname_));
@@ -482,7 +482,7 @@ Session::group_recvmsg(ElementPtr& envelope, ElementPtr& msg,
 int
 Session::reply(ElementPtr& envelope, ElementPtr& newmsg) {
     ElementPtr env = Element::createMap();
-    int nseq = ++impl_->sequence_;
+    long int nseq = ++impl_->sequence_;
     
     env->set("type", Element::create("send"));
     env->set("from", Element::create(impl_->lname_));

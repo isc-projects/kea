@@ -126,7 +126,7 @@ public:
     /// If you want an exception-safe getter method, use
     /// getValue() below
     //@{
-    virtual int intValue() { isc_throw(TypeError, "intValue() called on non-integer Element"); };
+    virtual long int intValue() { isc_throw(TypeError, "intValue() called on non-integer Element"); };
     virtual double doubleValue() { isc_throw(TypeError, "doubleValue() called on non-double Element"); };
     virtual bool boolValue() { isc_throw(TypeError, "boolValue() called on non-Bool Element"); };
     virtual std::string stringValue() { isc_throw(TypeError, "stringValue() called on non-string Element"); };
@@ -143,7 +143,7 @@ public:
     /// data to the given reference and returning true
     ///
     //@{
-    virtual bool getValue(int& t);
+    virtual bool getValue(long int& t);
     virtual bool getValue(double& t);
     virtual bool getValue(bool& t);
     virtual bool getValue(std::string& t);
@@ -159,7 +159,7 @@ public:
     /// is of the correct type
     ///
     //@{
-    virtual bool setValue(const int v);
+    virtual bool setValue(const long int v);
     virtual bool setValue(const double v);
     virtual bool setValue(const bool t);
     virtual bool setValue(const std::string& v);
@@ -264,7 +264,8 @@ public:
     /// represents an empty value, and is created with Element::create())
     //@{
     static ElementPtr create();
-    static ElementPtr create(const int i);
+    static ElementPtr create(const long int i);
+    static ElementPtr create(const int i) { return create(static_cast<long int>(i)); };
     static ElementPtr create(const double d);
     static ElementPtr create(const bool b);
     static ElementPtr create(const std::string& s);
@@ -360,15 +361,15 @@ public:
 };
 
 class IntElement : public Element {
-    int i;
+    long int i;
 
 public:
-    IntElement(int v) : Element(integer), i(v) { };
-    int intValue() { return i; }
+    IntElement(long int v) : Element(integer), i(v) { };
+    long int intValue() { return i; }
     using Element::getValue;
-    bool getValue(int& t) { t = i; return true; };
+    bool getValue(long int& t) { t = i; return true; };
     using Element::setValue;
-    bool setValue(const int v) { i = v; return true; };
+    bool setValue(const long int v) { i = v; return true; };
     void toJSON(std::ostream& ss);
     bool equals(ElementPtr other);
 };
@@ -499,8 +500,12 @@ void removeIdentical(ElementPtr a, const ElementPtr b);
 /// MapElements.
 /// Every string,value pair in other is copied into element
 /// (the ElementPtr of value is copied, this is not a new object)
-/// Unless the value is an empty ElementPtr, in which case the
-/// whole key is removed from element.
+/// Unless the value is a NullElement, in which case the
+/// key is removed from element, rather than setting the value to
+/// the given NullElement.
+/// This way, we can remove values from for instance maps with
+/// configuration data (which would then result in reverting back
+/// to the default).
 /// Raises a TypeError if either ElementPtr is not a MapElement
 void merge(ElementPtr element, const ElementPtr other);
 

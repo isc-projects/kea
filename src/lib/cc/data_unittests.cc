@@ -135,6 +135,7 @@ TEST(Element, from_and_to_json) {
     EXPECT_EQ("100", Element::fromJSON("+1e2")->str());
     EXPECT_EQ("-100", Element::fromJSON("-1e2")->str());
     EXPECT_EQ("0.01", Element::fromJSON("1e-2")->str());
+    EXPECT_EQ("0.01", Element::fromJSON(".01")->str());
     EXPECT_EQ("-0.01", Element::fromJSON("-1e-2")->str());
     EXPECT_EQ("1.2", Element::fromJSON("1.2")->str());
     EXPECT_EQ("1", Element::fromJSON("1.0")->str());
@@ -153,7 +154,6 @@ TEST(Element, from_and_to_json) {
 
     // number overflows
     EXPECT_THROW(Element::fromJSON("12345678901234567890")->str(), JSONError);
-    EXPECT_THROW(Element::fromJSON("1.12345678901234567890")->str(), JSONError);
     EXPECT_THROW(Element::fromJSON("1.1e12345678901234567890")->str(), JSONError);
     EXPECT_THROW(Element::fromJSON("1e12345678901234567890")->str(), JSONError);
     EXPECT_THROW(Element::fromJSON("1e50000")->str(), JSONError);
@@ -164,7 +164,7 @@ TEST(Element, create_and_value_throws) {
     // this test checks whether elements throw exceptions if the
     // incorrect type is requested
     ElementPtr el;
-    int i;
+    long int i;
     double d;
     bool b;
     std::string s("asdf");
