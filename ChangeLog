@@ -1,3 +1,11 @@
+
+  69.  [func]	    jelte
+	Added python wrappers for libdns++ (isc::dns), and libxfr. This
+	removes the dependency on Boost.Python. The wrappers don't
+	completely implement all functionality, but the high-level API
+	is wrapped, and current modules use it now.
+	(Trac #181, svn r2361)
+
   68.  [func]	    zhanglikun
 	Add options -c(--certificate-chain) to bindctl. Override class
 	HTTPSConnection to support server certificate validation.
