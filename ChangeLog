@@ -1,3 +1,14 @@
+  67.  [func]	    zhanglikun
+	Make bindctl's command parser only do minimal check. Parameter 
+	value can be a sequence of non-space characters, or a string 
+	surrounded by quotation	marks(these marks can be a part of the 
+	value string in escaped form). Make	error message be more 
+	friendly.(if there is some error in parameter's value, the 
+	parameter name will be provided). Refactor function login_to_cmdctl() 
+	in class BindCmdInterpreter: avoid using Exception to catch all 
+	exceptions.
+	(Trac #220, svn r2356)
+
   66.  [bug]        each
 	Check for duplicate RRsets before inserting data into a message
 	section; this, among other things, will prevent multiple copies

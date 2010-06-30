@@ -16,6 +16,7 @@
 
 import unittest
 import isc.cc.data
+import os
 from bindctl import cmdparse
 from bindctl import bindcmd
 from bindctl.moduleinfo import *
@@ -50,12 +51,31 @@ class TestCmdLex(unittest.TestCase):
             assert cmd.params["zone_name"] == "cnnic.cn"
             assert cmd.params["file"] == "cnnic.cn.file"
             assert cmd.params["master"] == '1.1.1.1'
+
+    def testCommandWithParamters_2(self):
+        '''Test whether the parameters in key=value can be parsed properly.'''
+        cmd = cmdparse.BindCmdParse('zone cmd name = 1:34::2')
+        self.assertEqual(cmd.params['name'], '1:34::2')
+
+        cmd = cmdparse.BindCmdParse('zone cmd name = 1\"\'34**&2 value=44\"\'\"')
+        self.assertEqual(cmd.params['name'], '1\"\'34**&2')
+        self.assertEqual(cmd.params['value'], '44\"\'\"')
+
+        cmd = cmdparse.BindCmdParse('zone cmd name = 1\"\'34**&2 ,value=  44\"\'\"')
+        self.assertEqual(cmd.params['name'], '1\"\'34**&2')
+        self.assertEqual(cmd.params['value'], '44\"\'\"')
             
+        cmd = cmdparse.BindCmdParse('zone cmd name =  1\'34**&2value=44\"\'\" value = \"==============\'')
+        self.assertEqual(cmd.params['name'], '1\'34**&2value=44\"\'\"')
+        self.assertEqual(cmd.params['value'], '==============')
+
+        cmd = cmdparse.BindCmdParse('zone cmd name =    \"1234, 567890 \" value ==&*/')
+        self.assertEqual(cmd.params['name'], '1234, 567890 ')
+        self.assertEqual(cmd.params['value'], '=&*/')
             
     def testCommandWithListParam(self):
-            cmd = cmdparse.BindCmdParse("zone set zone_name='cnnic.cn', master='1.1.1.1, 2.2.2.2'")
-            assert cmd.params["master"] == '1.1.1.1, 2.2.2.2'            
-        
+        cmd = cmdparse.BindCmdParse("zone set zone_name='cnnic.cn', master='1.1.1.1, 2.2.2.2'")
+        assert cmd.params["master"] == '1.1.1.1, 2.2.2.2'            
         
     def testCommandWithHelpParam(self):
         cmd = cmdparse.BindCmdParse("zone add help")
@@ -217,8 +237,32 @@ class TestNameSequence(unittest.TestCase):
             assert self.random_names[i] == cmd_names[i+1]
             assert self.random_names[i] == module_names[i+1]
             i = i + 1
-        
     
+class FakeBindCmdInterpreter(bindcmd.BindCmdInterpreter):
+    def __init__(self):
+        pass
+
+class TestBindCmdInterpreter(unittest.TestCase):
+
+    def _create_invalid_csv_file(self, csvfilename):
+        import csv
+        csvfile = open(csvfilename, 'w')
+        writer = csv.writer(csvfile)
+        writer.writerow(['name1'])
+        writer.writerow(['name2'])
+        csvfile.close()
+
+    def test_get_saved_user_info(self):
+        cmd = FakeBindCmdInterpreter()
+        users = cmd._get_saved_user_info('/notexist', 'cvs_file.cvs')
+        self.assertEqual([], users)
+        
+        csvfilename = 'csv_file.csv'
+        self._create_invalid_csv_file(csvfilename)
+        users = cmd._get_saved_user_info('./', csvfilename)
+        self.assertEqual([], users)
+        os.remove(csvfilename)
+
 if __name__== "__main__":
     unittest.main()
     
