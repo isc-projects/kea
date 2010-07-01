@@ -1,3 +1,7 @@
+  71.  [func]		each
+  	Add "-a" (address) option to bind10 to specify an address for
+	the auth server to listen on.
+
   70.  [func]		each
   	Added a hot-spot cache to libdatasrc to speed up access to
 	repeatedly-queried data and reduce the number of queries to
