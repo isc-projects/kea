@@ -18,6 +18,8 @@
 #include <cstring>
 #include <iostream>
 
+// for some IPC/network system calls in asio/detail/pipe_select_interrupter.hpp
+#include <unistd.h>
 #include <asio.hpp>
 
 #include "fd_share.h"
