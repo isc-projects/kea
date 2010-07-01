@@ -41,6 +41,7 @@ EXTRA_DIST += testdata/q_cname
 EXTRA_DIST += testdata/q_cname_ext
 EXTRA_DIST += testdata/q_cname_int
 EXTRA_DIST += testdata/q_dname
+EXTRA_DIST += testdata/q_example_dnskey
 EXTRA_DIST += testdata/q_example_ns
 EXTRA_DIST += testdata/q_example_ptr
 EXTRA_DIST += testdata/q_glork
