@@ -66,7 +66,7 @@ XfroutClient::sendXfroutRequestInfo(const int tcp_sock, uint8_t* msg_data,
 {
     if (-1 == send_fd(impl_->socket_.native(), tcp_sock)) {
         isc_throw(XfroutError,
-                  "Fail to send socket descriptor to xfrout module");
+                  "Fail to send the socket file descriptor to xfrout module");
     }
 
     // XXX: this shouldn't be blocking send, even though it's unlikely to block.
