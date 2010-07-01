@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
+#include <stdlib.h>             // for malloc and free
 #include "fd_share.h"
 
 namespace isc {

@@ -16,6 +16,8 @@
 
 #include "config.h"
 
+// for some IPC/network system calls in asio/detail/pipe_select_interrupter.hpp 
+#include <unistd.h>
 // XXX: the ASIO header must be included before others.  See session.cc.
 #include <asio.hpp>
 
