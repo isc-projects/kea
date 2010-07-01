@@ -198,27 +198,17 @@ ModuleCCSession::startCheck() {
 
 ModuleCCSession::ModuleCCSession(
     std::string spec_file_name,
-    asio::io_service& io_service,
+    isc::cc::AbstractSession& session,
     isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config),
     isc::data::ElementPtr(*command_handler)(
         const std::string& command, const isc::data::ElementPtr args)
     ) throw (isc::cc::SessionError) :
-    session_(io_service)
+    session_(session)
 {
     init(spec_file_name, config_handler, command_handler);
 
     // register callback for asynchronous read
     session_.startRead(boost::bind(&ModuleCCSession::startCheck, this));
-}
-
-ModuleCCSession::ModuleCCSession(
-    std::string spec_file_name,
-    isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config),
-    isc::data::ElementPtr(*command_handler)(
-        const std::string& command, const isc::data::ElementPtr args)
-    ) throw (isc::cc::SessionError)
-{
-    init(spec_file_name, config_handler, command_handler);
 }
 
 void
@@ -238,7 +228,7 @@ ModuleCCSession::init(
 
     ElementPtr answer, env;
 
-    session_.establish();
+    session_.establish(NULL);
     session_.subscribe(module_name_, "*");
     //session_.subscribe("Boss", "*");
     //session_.subscribe("statistics", "*");
@@ -298,12 +288,6 @@ ModuleCCSession::handleConfigUpdate(ElementPtr new_config)
         }
     }
     return answer;
-}
-
-int
-ModuleCCSession::getSocket()
-{
-    return (session_.getSocket());
 }
 
 bool

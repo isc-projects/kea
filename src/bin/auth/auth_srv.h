@@ -51,8 +51,7 @@ private:
     AuthSrv(const AuthSrv& source);
     AuthSrv& operator=(const AuthSrv& source);
 public:
-    AuthSrv(isc::cc::AbstractSession& session_with_xfrin,
-            isc::xfr::AbstractXfroutClient& xfrout_client);
+    AuthSrv(isc::xfr::AbstractXfroutClient& xfrout_client);
     ~AuthSrv();
     //@}
     /// \return \c true if the \message contains a response to be returned;
@@ -64,6 +63,7 @@ public:
     bool getVerbose() const;
     void serve(std::string zone_name);
     isc::data::ElementPtr updateConfig(isc::data::ElementPtr config);
+    void setSession(isc::cc::AbstractSession* session);
     isc::config::ModuleCCSession* configSession() const;
     void setConfigSession(isc::config::ModuleCCSession* cs);
 private:

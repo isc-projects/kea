@@ -15,7 +15,7 @@
 // $Id$
 
 #include <config.h>
-#include "session_config.h"
+#include <cc/session_config.h>
 
 #include <stdint.h>
 
@@ -41,8 +41,8 @@
 
 #include <exceptions/exceptions.h>
 
-#include "data.h"
-#include "session.h"
+#include <cc/data.h>
+#include <cc/session.h>
 
 using namespace std;
 using namespace isc::cc;
@@ -51,44 +51,26 @@ using namespace isc::data;
 // some of the asio names conflict with socket API system calls
 // (e.g. write(2)) so we don't import the entire asio namespace.
 using asio::io_service;
-using asio::ip::tcp;
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 
 namespace isc {
 namespace cc {
-
 class SessionImpl {
 public:
-    SessionImpl() : sequence_(-1) { queue_ = Element::createFromString("[]"); }
-    virtual ~SessionImpl() {}
-    virtual void establish(const char& socket_file) = 0;
-    virtual int getSocket() = 0;
-    virtual void disconnect() = 0;
-    virtual void writeData(const void* data, size_t datalen) = 0;
-    virtual size_t readDataLength() = 0;
-    virtual void readData(void* data, size_t datalen) = 0;
-    virtual void startRead(boost::function<void()> user_handler) = 0;
-    
+    SessionImpl(io_service& io_service) :
+        sequence_(-1), queue_(Element::createFromString("[]")),
+        io_service_(io_service), socket_(io_service_), data_length_(0)
+    {}
+    void establish(const char& socket_file);
+    void disconnect();
+    void writeData(const void* data, size_t datalen);
+    size_t readDataLength();
+    void readData(void* data, size_t datalen);
+    void startRead(boost::function<void()> user_handler);
+
     int sequence_; // the next sequence number to use
     std::string lname_;
     ElementPtr queue_;
-};
 
-class ASIOSession : public SessionImpl {
-public:
-    ASIOSession(io_service& io_service) :
-        io_service_(io_service), socket_(io_service_), data_length_(0)
-    {}
-    virtual void establish(const char& socket_file);
-    virtual void disconnect();
-    virtual int getSocket() { return (socket_.native()); }
-    virtual void writeData(const void* data, size_t datalen);
-    virtual size_t readDataLength();
-    virtual void readData(void* data, size_t datalen);
-    virtual void startRead(boost::function<void()> user_handler);
 private:
     void internalRead(const asio::error_code& error,
                       size_t bytes_transferred);
@@ -101,28 +83,28 @@ private:
     asio::error_code error_;
 };
 
-
-
 void
-ASIOSession::establish(const char& socket_file) {
+SessionImpl::establish(const char& socket_file) {
     try {
-        socket_.connect(asio::local::stream_protocol::endpoint(&socket_file), error_);
-    } catch (asio::system_error& se) {
+        socket_.connect(asio::local::stream_protocol::endpoint(&socket_file),
+                        error_);
+    } catch(const asio::system_error& se) {
         isc_throw(SessionError, se.what());
     }
     if (error_) {
-        isc_throw(SessionError, "Unable to connect to message queue.");
+        isc_throw(SessionError, "Unable to connect to message queue: " <<
+                  error_.message());
     }
 }
 
 void
-ASIOSession::disconnect() {
+SessionImpl::disconnect() {
     socket_.close();
     data_length_ = 0;
 }
 
 void
-ASIOSession::writeData(const void* data, size_t datalen) {
+SessionImpl::writeData(const void* data, size_t datalen) {
     try {
         asio::write(socket_, asio::buffer(data, datalen));
     } catch (const asio::system_error& asio_ex) {
@@ -131,7 +113,7 @@ ASIOSession::writeData(const void* data, size_t datalen) {
 }
 
 size_t
-ASIOSession::readDataLength() {
+SessionImpl::readDataLength() {
     size_t ret_len = data_length_;
     
     if (ret_len == 0) {
@@ -147,7 +129,7 @@ ASIOSession::readDataLength() {
 }
 
 void
-ASIOSession::readData(void* data, size_t datalen) {
+SessionImpl::readData(void* data, size_t datalen) {
     try {
         asio::read(socket_, asio::buffer(data, datalen));
     } catch (const asio::system_error& asio_ex) {
@@ -158,18 +140,18 @@ ASIOSession::readData(void* data, size_t datalen) {
 }
 
 void
-ASIOSession::startRead(boost::function<void()> user_handler) {
+SessionImpl::startRead(boost::function<void()> user_handler) {
     data_length_ = 0;
     user_handler_ = user_handler;
     async_read(socket_, asio::buffer(&data_length_,
                                             sizeof(data_length_)),
-               boost::bind(&ASIOSession::internalRead, this,
+               boost::bind(&SessionImpl::internalRead, this,
                            asio::placeholders::error,
                            asio::placeholders::bytes_transferred));
 }
 
 void
-ASIOSession::internalRead(const asio::error_code& error,
+SessionImpl::internalRead(const asio::error_code& error,
                           size_t bytes_transferred)
 {
     if (!error) {
@@ -184,27 +166,22 @@ ASIOSession::internalRead(const asio::error_code& error,
     }
 }
 
-class SocketSession : public SessionImpl {
-public:
-    SocketSession() : sock_(-1) {}
-    virtual ~SocketSession() { disconnect(); }
-    virtual int getSocket() { return (sock_); }
-    void establish(const char& socket_file);
-    virtual void disconnect()
-    {
-        if (sock_ >= 0) {
-            close(sock_);
-        }
-        sock_ = -1;
-    }
-    virtual void writeData(const void* data, size_t datalen);
-    virtual void readData(void* data, size_t datalen);
-    virtual size_t readDataLength();
-    virtual void startRead(boost::function<void()> user_handler UNUSED_PARAM)
-    {} // nothing to do for this class
-private:
-    int sock_;
-};
+Session::Session(io_service& io_service) : impl_(new SessionImpl(io_service))
+{}
+
+Session::~Session() {
+    delete impl_;
+}
+
+void
+Session::disconnect() {
+    impl_->disconnect();
+}
+
+void
+Session::startRead(boost::function<void()> read_callback) {
+    impl_->startRead(read_callback);
+}
 
 namespace {                     // maybe unnecessary.
 // This is a helper class to make the establish() method (below) exception-safe
@@ -221,83 +198,6 @@ public:
     void clear() { impl_obj_ = NULL; }
     SessionImpl* impl_obj_;
 };
-}
-
-void
-SocketSession::establish(const char& socket_file) {
-    struct sockaddr_un s_un;
-#ifdef HAVE_SA_LEN
-    s_un.sun_len = sizeof(struct sockaddr_un);
-#endif
-
-    if (strlen(&socket_file) >= sizeof(s_un.sun_path)) {
-        isc_throw(SessionError, "Unable to connect to message queue; "
-                  "socket file path too long: " << socket_file);
-    }
-    s_un.sun_family = AF_UNIX;
-    strncpy(s_un.sun_path, &socket_file, sizeof(s_un.sun_path) - 1);
-
-    int s = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (s < 0) {
-        isc_throw(SessionError, "socket() failed");
-    }
-
-    if (connect(s, (struct sockaddr *)&s_un, sizeof(s_un)) < 0) {
-        close(s);
-        isc_throw(SessionError, "Unable to connect to message queue");
-    }
-
-    sock_ = s;
-}
-
-void
-SocketSession::writeData(const void* data, const size_t datalen) {
-    int cc = write(sock_, data, datalen);
-    if (cc != datalen) {
-        isc_throw(SessionError, "Write failed: expect " << datalen <<
-                  ", actual " << cc);
-    }
-}
-
-size_t
-SocketSession::readDataLength() {
-    uint32_t length;
-    readData(&length, sizeof(length));
-    return (ntohl(length));
-}
-
-void
-SocketSession::readData(void* data, const size_t datalen) {
-    int cc = read(sock_, data, datalen);
-    if (cc != datalen) {
-        isc_throw(SessionError, "Read failed: expect " << datalen <<
-                  ", actual " << cc);
-    }
-}
-
-Session::Session() : impl_(new SocketSession)
-{}
-
-Session::Session(io_service& io_service) : impl_(new ASIOSession(io_service))
-{}
-
-Session::~Session() {
-    delete impl_;
-}
-
-void
-Session::disconnect() {
-    impl_->disconnect();
-}
-
-int
-Session::getSocket() const {
-    return (impl_->getSocket());
-}
-
-void
-Session::startRead(boost::function<void()> read_callback) {
-    impl_->startRead(read_callback);
 }
 
 void
@@ -333,7 +233,8 @@ Session::establish(const char* socket_file) {
 }
 
 //
-// Convert to wire format and send this on the TCP stream with its length prefix
+// Convert to wire format and send this via the stream socket with its length
+// prefix.
 //
 void
 Session::sendmsg(ElementPtr& msg) {

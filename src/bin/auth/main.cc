@@ -134,10 +134,10 @@ main(int argc, char* argv[]) {
         usage();
     }
 
-    // initialize command channel
     int ret = 0;
 
-    Session session_with_xfrin; // we should eventually pass io_service here.
+    Session* cc_session = NULL;
+    ModuleCCSession* cs = NULL;
     XfroutClient xfrout_client(UNIX_SOCKET_FILE);
     try {
         string specfile;
@@ -148,26 +148,39 @@ main(int argc, char* argv[]) {
             specfile = string(AUTH_SPECFILE_LOCATION);
         }
 
-        auth_server = new AuthSrv(session_with_xfrin, xfrout_client);
+        auth_server = new AuthSrv(xfrout_client);
         auth_server->setVerbose(verbose_mode);
+        cout << "[b10-auth] Server created." << endl;
 
         io_service = new asio_link::IOService(auth_server, port, use_ipv4,
                                               use_ipv6);
+        cout << "[b10-auth] IOService created." << endl;
 
-        ModuleCCSession cs(specfile, io_service->get_io_service(),
-                           my_config_handler, my_command_handler);
+        cc_session = new Session(io_service->get_io_service());
+        cout << "[b10-auth] Session channel created." << endl;
 
-        auth_server->setConfigSession(&cs);
+        cs = new ModuleCCSession(specfile, *cc_session, my_config_handler,
+                                 my_command_handler);
+        cout << "[b10-auth] Configuration channel established." << endl;
+
+        // XXX: with the current interface to asio_link we have to create
+        // auth_server before io_service while Session needs io_service.
+        // In a next step of refactoring we should make asio_link independent
+        // from auth_server, and create io_service, auth_server, and
+        // cc_session in that order.
+        auth_server->setSession(cc_session);
+        auth_server->setConfigSession(cs);
         auth_server->updateConfig(ElementPtr());
 
-        
         cout << "[b10-auth] Server started." << endl;
         io_service->run();
     } catch (const std::exception& ex) {
-        cerr << "[b10-auth] " << ex.what() << endl;
+        cerr << "[b10-auth] Initialization failed: " << ex.what() << endl;
         ret = 1;
     }
 
+    delete cs;
+    delete cc_session;
     delete io_service;
     delete auth_server;
     return (ret);
