@@ -1025,7 +1025,7 @@ DataSrc::doQuery(Query& q) {
                 result = addSOA(q, zoneinfo);
                 if (result != SUCCESS) {
                     isc_throw(DataSourceError,
-                              "SOA RR not found in" << *zonename <<
+                              "SOA RR not found in " << *zonename <<
                               "/" << q.qclass());
                 }
             }
