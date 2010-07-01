@@ -24,7 +24,8 @@ struct IOServiceImpl;
 
 class IOService {
 public:
-    IOService(AuthSrv* auth_server, const char* const port,
+    IOService(AuthSrv* auth_server,
+              const char* const address, const char* const port,
               const bool use_ipv4, const bool use_ipv6);
     ~IOService();
     void run();

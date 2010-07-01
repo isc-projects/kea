@@ -1,4 +1,4 @@
-from bind10 import ProcessInfo, BoB
+from bind10 import ProcessInfo, BoB, IPAddr
 
 # XXX: environment tests are currently disabled, due to the preprocessor
 #      setup that we have now complicating the environment
@@ -7,6 +7,7 @@ import unittest
 import sys
 import os
 import signal
+import socket
 
 class TestProcessInfo(unittest.TestCase):
     def setUp(self):
@@ -71,12 +72,36 @@ class TestProcessInfo(unittest.TestCase):
         self.assertTrue(type(pi.pid) is int)
         self.assertNotEqual(pi.pid, old_pid)
 
+class TestIPAddr(unittest.TestCase):
+    def test_v6ok(self):
+        addr = IPAddr('2001:4f8::1')
+        self.assertEqual(addr.family, socket.AF_INET6)
+        self.assertEqual(addr.addr, socket.inet_pton(socket.AF_INET6, '2001:4f8::1'))
+
+    def test_v4ok(self):
+        addr = IPAddr('127.127.127.127')
+        self.assertEqual(addr.family, socket.AF_INET)
+        self.assertEqual(addr.addr, socket.inet_aton('127.127.127.127'))
+
+    def test_badaddr(self):
+        self.assertRaises(socket.error, IPAddr, 'foobar')
+        self.assertRaises(socket.error, IPAddr, 'foo::bar')
+        self.assertRaises(socket.error, IPAddr, '123')
+        self.assertRaises(socket.error, IPAddr, '123.456.789.0')
+        self.assertRaises(socket.error, IPAddr, '127/8')
+        self.assertRaises(socket.error, IPAddr, '0/0')
+        self.assertRaises(socket.error, IPAddr, '1.2.3.4/32')
+        self.assertRaises(socket.error, IPAddr, '0')
+        self.assertRaises(socket.error, IPAddr, '')
+
 class TestBoB(unittest.TestCase):
     def test_init(self):
         bob = BoB()
         self.assertEqual(bob.verbose, False)
         self.assertEqual(bob.msgq_socket_file, None)
+        self.assertEqual(bob.auth_port, 5300)
         self.assertEqual(bob.cc_session, None)
+        self.assertEqual(bob.address, None)
         self.assertEqual(bob.processes, {})
         self.assertEqual(bob.dead_processes, {})
         self.assertEqual(bob.runnable, False)
@@ -90,6 +115,27 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.dead_processes, {})
         self.assertEqual(bob.runnable, False)
 
+    def test_init_alternate_auth_port(self):
+        bob = BoB(None, 9999)
+        self.assertEqual(bob.verbose, False)
+        self.assertEqual(bob.msgq_socket_file, None)
+        self.assertEqual(bob.auth_port, 9999)
+        self.assertEqual(bob.cc_session, None)
+        self.assertEqual(bob.address, None)
+        self.assertEqual(bob.processes, {})
+        self.assertEqual(bob.dead_processes, {})
+        self.assertEqual(bob.runnable, False)
+
+    def test_init_alternate_address(self):
+        bob = BoB(None, 5300, '127.127.127.127')
+        self.assertEqual(bob.verbose, False)
+        self.assertEqual(bob.auth_port, 5300)
+        self.assertEqual(bob.msgq_socket_file, None)
+        self.assertEqual(bob.cc_session, None)
+        self.assertEqual(bob.address.addr, socket.inet_aton('127.127.127.127'))
+        self.assertEqual(bob.processes, {})
+        self.assertEqual(bob.dead_processes, {})
+        self.assertEqual(bob.runnable, False)
     # verbose testing...
 
 if __name__ == '__main__':

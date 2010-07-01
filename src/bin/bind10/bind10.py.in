@@ -56,6 +56,7 @@ import errno
 import time
 import select
 import random
+import socket
 from optparse import OptionParser, OptionValueError
 import io
 import pwd
@@ -173,11 +174,36 @@ class ProcessInfo:
     def respawn(self):
         self._spawn()
 
+class IPAddr:
+    """Stores an IPv4 or IPv6 address."""
+    family = None
+    addr = None
+
+    def __init__(self, addr):
+        try:
+            a = socket.inet_pton(socket.AF_INET, addr)
+            self.family = socket.AF_INET
+            self.addr = a
+            return
+        except:
+            pass
+
+        try:
+            a = socket.inet_pton(socket.AF_INET6, addr)
+            self.family = socket.AF_INET6
+            self.addr = a
+            return
+        except Exception as e:
+            raise e
+    
+    def __str__(self):
+        return socket.inet_ntop(self.family, self.addr)
+
 class BoB:
     """Boss of BIND class."""
     
-    def __init__(self, msgq_socket_file=None, auth_port=5300, nocache=False,
-                 verbose=False, setuid=None, username=None):
+    def __init__(self, msgq_socket_file=None, auth_port=5300, address='',
+                 nocache=False, verbose=False, setuid=None, username=None):
         """Initialize the Boss of BIND. This is a singleton (only one
         can run).
         
@@ -188,6 +214,9 @@ class BoB:
         self.verbose = verbose
         self.msgq_socket_file = msgq_socket_file
         self.auth_port = auth_port
+        self.address = None
+        if address:
+            self.address = IPAddr(address)
         self.cc_session = None
         self.ccs = None
         self.processes = {}
@@ -303,12 +332,17 @@ class BoB:
         # start b10-auth
         # XXX: this must be read from the configuration manager in the future
         authargs = ['b10-auth', '-p', str(self.auth_port)]
+        if self.address:
+            authargs += ['-a', str(self.address)]
         if self.nocache:
             authargs += ['-n']
         if self.verbose:
-            sys.stdout.write("[bind10] Starting b10-auth using port %d\n" %
-                             self.auth_port)
             authargs += ['-v']
+            sys.stdout.write("Starting b10-auth using port %d" %
+                             self.auth_port)
+            if self.address:
+                sys.stdout.write(" on %s" % str(self.address))
+            sys.stdout.write("\n")
         try:
             auth = ProcessInfo("b10-auth", authargs,
                                c_channel_env)
@@ -549,6 +583,18 @@ def check_port(option, opt_str, value, parser):
     else:
         raise OptionValueError("Unknown option " + opt_str)
   
+def check_addr(option, opt_str, value, parser):
+    """Function to insure that the address we are passed is actually 
+    a valid address. Used by OptionParser() on startup."""
+    try:
+        IPAddr(value)
+    except:
+        raise OptionValueError("%s requires a valid IPv4 or IPv6 address" % opt_str)
+    if (opt_str == '-a' or opt_str == '--address'):
+        parser.values.address = value
+    else:
+        raise OptionValueError("Unknown option " + opt_str)
+  
 def main():
     global options
     global boss_of_bind
@@ -558,19 +604,22 @@ def main():
 
     # Parse any command-line options.
     parser = OptionParser(version=__version__)
-    parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
-                      help="display more about what is going on")
+    parser.add_option("-a", "--address", dest="address", type="string",
+                      action="callback", callback=check_addr, default='',
+                      help="address the b10-auth daemon will use (default: listen on all addresses)")
+    parser.add_option("-m", "--msgq-socket-file", dest="msgq_socket_file",
+                      type="string", default=None,
+                      help="UNIX domain socket file the b10-msgq daemon will use")
     parser.add_option("-n", "--no-cache", action="store_true", dest="nocache",
                       default=False, help="disable hot-spot cache in b10-auth")
     parser.add_option("-p", "--port", dest="auth_port", type="string",
                       action="callback", callback=check_port, default="5300",
                       help="port the b10-auth daemon will use (default 5300)")
-    parser.add_option("-m", "--msgq-socket-file", dest="msgq_socket_file",
-                      type="string", default=None,
-                      help="UNIX domain socket file the b10-msgq daemon will use")
     parser.add_option("-u", "--user", dest="user",
                       type="string", default=None,
                       help="Change user after startup (must run as root)")
+    parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
+                      help="display more about what is going on")
     (options, args) = parser.parse_args()
     if args:
         parser.print_help()
@@ -626,7 +675,8 @@ def main():
 
     # Go bob!
     boss_of_bind = BoB(options.msgq_socket_file, int(options.auth_port),
-                       options.nocache, options.verbose, setuid, username)
+                       options.address, options.nocache, options.verbose,
+                       setuid, username)
     startup_result = boss_of_bind.startup()
     if startup_result:
         sys.stderr.write("[bind10] Error on startup: %s\n" % startup_result)

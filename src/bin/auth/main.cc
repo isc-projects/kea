@@ -95,6 +95,7 @@ int
 main(int argc, char* argv[]) {
     int ch;
     const char* port = DNSPORT;
+    const char* address = NULL;
     bool use_ipv4 = true, use_ipv6 = true, cache = true;
 
     while ((ch = getopt(argc, argv, "46np:v")) != -1) {
@@ -112,6 +113,9 @@ main(int argc, char* argv[]) {
             break;
         case 'n':
             cache = false;
+            break;
+        case 'a':
+            address = optarg;
             break;
         case 'p':
             port = optarg;
@@ -148,8 +152,8 @@ main(int argc, char* argv[]) {
         auth_server = new AuthSrv(cache);
         auth_server->setVerbose(verbose_mode);
 
-        io_service = new asio_link::IOService(auth_server, port, use_ipv4,
-                                              use_ipv6);
+        io_service = new asio_link::IOService(auth_server, address, port,
+                                              use_ipv4, use_ipv6);
 
         ModuleCCSession cs(specfile, io_service->get_io_service(),
                            my_config_handler, my_command_handler);

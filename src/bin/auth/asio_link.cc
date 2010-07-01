@@ -18,6 +18,7 @@
 
 #include <unistd.h>             // for some IPC/network system calls
 #include <asio.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/bind.hpp>
 
 #include <dns/buffer.h>
@@ -30,6 +31,7 @@
 
 #include "spec_config.h"        // for XFROUT.  should not be here.
 #include "auth_srv.h"
+#include "common.h"
 
 using namespace asio;
 using ip::udp;
@@ -200,7 +202,7 @@ private:
 class TCPServer {
 public:
     TCPServer(AuthSrv* auth_server, io_service& io_service,
-              int af, short port) :
+              int af, uint16_t port) :
         auth_server_(auth_server), io_service_(io_service),
         acceptor_(io_service_), listening_(new TCPClient(auth_server_,
                                                          io_service_))
@@ -212,6 +214,23 @@ public:
         if (af == AF_INET6) {
             acceptor_.set_option(ip::v6_only(true));
         }
+        acceptor_.set_option(tcp::acceptor::reuse_address(true));
+        acceptor_.bind(endpoint);
+        acceptor_.listen();
+        acceptor_.async_accept(listening_->getSocket(),
+                               boost::bind(&TCPServer::handleAccept, this,
+                                           listening_, placeholders::error));
+    }
+
+    TCPServer(AuthSrv* auth_server, io_service& io_service,
+              asio::ip::address addr, uint16_t port) :
+        auth_server_(auth_server),
+        io_service_(io_service), acceptor_(io_service_),
+        listening_(new TCPClient(auth_server, io_service_))
+    {
+        tcp::endpoint endpoint(addr, port);
+        acceptor_.open(endpoint.protocol());
+
         acceptor_.set_option(tcp::acceptor::reuse_address(true));
         acceptor_.bind(endpoint);
         acceptor_.listen();
@@ -248,7 +267,7 @@ private:
 class UDPServer {
 public:
     UDPServer(AuthSrv* auth_server, io_service& io_service,
-              int af, short port) :
+              int af, uint16_t port) :
         auth_server_(auth_server),
         io_service_(io_service),
         socket_(io_service, af == AF_INET6 ? udp::v6() : udp::v4()),
@@ -264,6 +283,18 @@ public:
         } else {
             socket_.bind(udp::endpoint(udp::v4(), port));
         }
+        startReceive();
+    }
+
+    UDPServer(AuthSrv* auth_server, io_service& io_service,
+              asio::ip::address addr, uint16_t port) :
+        auth_server_(auth_server), io_service_(io_service),
+        socket_(io_service, addr.is_v6() ? udp::v6() : udp::v4()),
+        response_buffer_(0),
+        response_renderer_(response_buffer_),
+        dns_message_(Message::PARSE)
+    {
+        socket_.bind(udp::endpoint(addr, port));
         startReceive();
     }
 
@@ -347,7 +378,7 @@ struct ServerSet {
 
 class IOServiceImpl {
 public:
-    IOServiceImpl(AuthSrv* auth_server, const char* port,
+    IOServiceImpl(AuthSrv* auth_server, const char* address, const char* port,
                   const bool use_ipv4, const bool use_ipv6);
     ~IOServiceImpl();
     asio::io_service io_service_;
@@ -358,25 +389,59 @@ public:
     TCPServer* tcp6_server_;
 };
 
-IOServiceImpl::IOServiceImpl(AuthSrv* auth_server, const char* const port,
-                             const bool use_ipv4, const bool use_ipv6) :
+IOServiceImpl::IOServiceImpl(AuthSrv* auth_server, const char* const address,
+                             const char* const port, const bool use_ipv4,
+                             const bool use_ipv6) :
     auth_server_(auth_server), udp4_server_(NULL), udp6_server_(NULL),
     tcp4_server_(NULL), tcp6_server_(NULL)
 {
     ServerSet servers;
-    short portnum = atoi(port);
+    uint16_t portnum = atoi(port);
 
-    if (use_ipv4) {
-        servers.udp4_server = new UDPServer(auth_server, io_service_,
-                                            AF_INET, portnum);
-        servers.tcp4_server = new TCPServer(auth_server, io_service_,
-                                            AF_INET, portnum);
+    try {
+        portnum = boost::lexical_cast<uint16_t>(port);
+    } catch (const std::exception& ex) {
+        isc_throw(FatalError, "[b10-auth] Invalid port number '"
+                              << port << "'");
     }
-    if (use_ipv6) {
-        servers.udp6_server = new UDPServer(auth_server, io_service_,
-                                            AF_INET6, portnum);
-        servers.tcp6_server = new TCPServer(auth_server, io_service_,
-                                            AF_INET6, portnum);
+
+    if (address != NULL) {
+        asio::ip::address addr = asio::ip::address::from_string(address);
+
+        if ((addr.is_v6() && !use_ipv6)) {
+            isc_throw(FatalError,
+                      "[b10-auth] Error: -4 conflicts with " << addr);
+        }
+
+        if ((addr.is_v4() && !use_ipv4)) {
+            isc_throw(FatalError,
+                      "[b10-auth] Error: -6 conflicts with " << addr);
+        }
+
+        if (addr.is_v4()) {
+            servers.udp4_server = new UDPServer(auth_server, io_service_,
+                                                addr, portnum);
+            servers.tcp4_server = new TCPServer(auth_server, io_service_,
+                                                addr, portnum);
+         } else {
+            servers.udp6_server = new UDPServer(auth_server, io_service_,
+                                                addr, portnum);
+            servers.tcp6_server = new TCPServer(auth_server, io_service_,
+                                                addr, portnum);
+        }
+    } else {
+        if (use_ipv4) {
+            servers.udp4_server = new UDPServer(auth_server, io_service_,
+                                                AF_INET, portnum);
+            servers.tcp4_server = new TCPServer(auth_server, io_service_,
+                                                AF_INET, portnum);
+        }
+        if (use_ipv6) {
+            servers.udp6_server = new UDPServer(auth_server, io_service_,
+                                                AF_INET6, portnum);
+            servers.tcp6_server = new TCPServer(auth_server, io_service_,
+                                                AF_INET6, portnum);
+        }
     }
 
     // Now we don't have to worry about exception, and need to make sure that
@@ -394,9 +459,10 @@ IOServiceImpl::~IOServiceImpl() {
     delete tcp6_server_;
 }
 
-IOService::IOService(AuthSrv* auth_server, const char* const port,
-                     const bool use_ipv4, const bool use_ipv6) {
-    impl_ = new IOServiceImpl(auth_server, port, use_ipv4, use_ipv6);
+IOService::IOService(AuthSrv* auth_server, const char* const address,
+                     const char* const port, const bool use_ipv4,
+                     const bool use_ipv6) {
+    impl_ = new IOServiceImpl(auth_server, address, port, use_ipv4, use_ipv6);
 }
 
 IOService::~IOService() {
