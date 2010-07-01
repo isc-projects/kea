@@ -82,8 +82,7 @@ private:
         MockSession() :
             // by default we return a simple "success" message.
             msg_(Element::createFromString("{\"result\": [0, \"SUCCESS\"]}")),
-            is_established_(false), establish_ok_(true), send_ok_(true),
-            receive_ok_(true)
+            send_ok_(true), receive_ok_(true)
         {}
         virtual void establish(const char* socket_file);
         virtual void disconnect();
@@ -106,14 +105,10 @@ private:
         virtual bool hasQueuedMsgs() { return (false); }
 
         void setMessage(ElementPtr msg) { msg_ = msg; }
-        bool isEstablished() const { return (is_established_); }
-        void disableEstablish() { establish_ok_ = false; }
         void disableSend() { send_ok_ = false; }
         void disableReceive() { receive_ok_ = false; }
     private:
         ElementPtr msg_;
-        bool is_established_;
-        bool establish_ok_;
         bool send_ok_;
         bool receive_ok_;
     };
@@ -162,12 +157,7 @@ protected:
 };
 
 void
-AuthSrvTest::MockSession::establish(const char* socket_file UNUSED_PARAM) {
-    if (!establish_ok_) {
-        isc_throw(SessionError, "mock session is disabled for test");
-    }
-    is_established_ = true;
-}
+AuthSrvTest::MockSession::establish(const char* socket_file UNUSED_PARAM) {}
 
 void
 AuthSrvTest::MockSession::disconnect() {}
@@ -583,9 +573,8 @@ TEST_F(AuthSrvTest, notifyWithErrorRcode) {
                 Opcode::NOTIFY().getCode(), QR_FLAG | AA_FLAG, 1, 0, 0, 0);
 }
 
-TEST_F(AuthSrvTest, notifyEstablishFail) {
-    EXPECT_FALSE(notify_session.isEstablished()); // check prerequisite
-    notify_session.disableEstablish();
+TEST_F(AuthSrvTest, notifyWithoutSession) {
+    server.setSession(NULL);
 
     createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
                         RRType::SOA());
@@ -596,7 +585,6 @@ TEST_F(AuthSrvTest, notifyEstablishFail) {
     // happens.
     EXPECT_FALSE(server.processMessage(*io_message, parse_message,
                                        response_renderer));
-    EXPECT_FALSE(notify_session.isEstablished());
 }
 
 TEST_F(AuthSrvTest, notifySendFail) {
@@ -606,10 +594,9 @@ TEST_F(AuthSrvTest, notifySendFail) {
                         RRType::SOA());
     request_message.setHeaderFlag(MessageFlag::AA());
     createRequestPacket(IPPROTO_UDP);
+
     EXPECT_FALSE(server.processMessage(*io_message, parse_message,
                                        response_renderer));
-    // we don't disconnect the session due to a send error.
-    EXPECT_TRUE(notify_session.isEstablished());
 }
 
 TEST_F(AuthSrvTest, notifyReceiveFail) {
