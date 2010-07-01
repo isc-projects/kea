@@ -988,8 +988,10 @@ TEST_F(DataSrcMatchTest, match) {
 TEST_F(DataSrcMatchTest, matchWithWrongClass) {
     DataSrcMatch match(Name("very.very.long.example.com"), RRClass::CH());
     datasrc1.findClosestEnclosure(match);
-    EXPECT_EQ(NULL, match.getEnclosingZone());
-    EXPECT_EQ(NULL, match.getDataSource());
+    // XXX: some deviant compilers seem to fail to recognize a NULL as a
+    // pointer type.  This explicit cast works around such compilers.
+    EXPECT_EQ(static_cast<void*>(NULL), match.getEnclosingZone());
+    EXPECT_EQ(static_cast<void*>(NULL), match.getDataSource());
 }
 
 TEST_F(DataSrcMatchTest, matchWithAnyClass) {
@@ -1004,13 +1006,13 @@ TEST_F(DataSrcMatchTest, updateWithWrongClass) {
 
     EXPECT_EQ(RRClass::IN(), datasrc2.getClass());
     match.update(datasrc2, Name("com"));
-    EXPECT_EQ(NULL, match.getEnclosingZone());
-    EXPECT_EQ(NULL, match.getDataSource());
+    EXPECT_EQ(static_cast<void*>(NULL), match.getEnclosingZone());
+    EXPECT_EQ(static_cast<void*>(NULL), match.getDataSource());
 
     EXPECT_EQ(RRClass::IN(), datasrc1.getClass());
     match.update(datasrc1, Name("example.com"));
-    EXPECT_EQ(NULL, match.getEnclosingZone());
-    EXPECT_EQ(NULL, match.getDataSource());
+    EXPECT_EQ(static_cast<void*>(NULL), match.getEnclosingZone());
+    EXPECT_EQ(static_cast<void*>(NULL), match.getDataSource());
 }
 
 TEST_F(DataSrcMatchTest, updateAgainstAnyClass) {
@@ -1046,8 +1048,8 @@ TEST_F(DataSrcMatchTest, initialUpdateWithNoMatch) {
     // An initial attempt of update with a name that doesn't match.
     // Should be ignored.
     match.update(datasrc1, Name("example.org"));
-    EXPECT_EQ(NULL, match.getEnclosingZone());
-    EXPECT_EQ(NULL, match.getDataSource());
+    EXPECT_EQ(static_cast<void*>(NULL), match.getEnclosingZone());
+    EXPECT_EQ(static_cast<void*>(NULL), match.getDataSource());
 }
 
 TEST_F(DataSrcMatchTest, updateWithShorterMatch) {
