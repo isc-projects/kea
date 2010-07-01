@@ -68,12 +68,20 @@ namespace isc {
             virtual void disconnect() = 0;
             virtual int group_sendmsg(isc::data::ElementPtr msg,
                                       std::string group,
-                                      std::string instance,
-                                      std::string to) = 0;
+                                      std::string instance = "*",
+                                      std::string to = "*") = 0;
             virtual bool group_recvmsg(isc::data::ElementPtr& envelope,
                                        isc::data::ElementPtr& msg,
-                                       bool nonblock,
-                                       int seq) = 0;
+                                       bool nonblock = true,
+                                       int seq = -1) = 0;
+            virtual void subscribe(std::string group,
+                                   std::string instance = "*") = 0;
+            virtual void unsubscribe(std::string group,
+                             std::string instance = "*") = 0;
+            virtual void startRead(boost::function<void()> read_callback) = 0;
+            virtual int reply(isc::data::ElementPtr& envelope,
+                               isc::data::ElementPtr& newmsg) = 0;
+            virtual bool hasQueuedMsgs() = 0;
         };
 
     class Session : public AbstractSession {
@@ -85,14 +93,10 @@ namespace isc {
             Session& operator=(const Session& source);
 
         public:
-            Session();
             Session(asio::io_service& ioservice);
             virtual ~Session();
 
-            // XXX: quick hack to allow the user to watch the socket directly.
-            int getSocket() const;
-
-            void startRead(boost::function<void()> read_callback);
+            virtual void startRead(boost::function<void()> read_callback);
 
             virtual void establish(const char* socket_file = NULL);
             void disconnect();
@@ -106,9 +110,9 @@ namespace isc {
                          isc::data::ElementPtr& msg,
                          bool nonblock = true,
                          int seq = -1);
-            void subscribe(std::string group,
-                           std::string instance = "*");
-            void unsubscribe(std::string group,
+            virtual void subscribe(std::string group,
+                                   std::string instance = "*");
+            virtual void unsubscribe(std::string group,
                              std::string instance = "*");
             virtual int group_sendmsg(isc::data::ElementPtr msg,
                                       std::string group,
@@ -118,9 +122,9 @@ namespace isc {
                                        isc::data::ElementPtr& msg,
                                        bool nonblock = true,
                                        int seq = -1);
-            int reply(isc::data::ElementPtr& envelope,
-                               isc::data::ElementPtr& newmsg);
-            bool hasQueuedMsgs();
+            virtual int reply(isc::data::ElementPtr& envelope,
+                              isc::data::ElementPtr& newmsg);
+            virtual bool hasQueuedMsgs();
         };
     } // namespace cc
 } // namespace isc

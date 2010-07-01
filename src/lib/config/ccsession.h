@@ -24,10 +24,6 @@
 #include <cc/session.h>
 #include <cc/data.h>
 
-namespace asio {
-class io_service;
-}
-
 namespace isc {
 namespace config {
 
@@ -127,25 +123,13 @@ public:
      *                        module specification.
      */
     ModuleCCSession(std::string spec_file_name,
-                    isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config) = NULL,
-                    isc::data::ElementPtr(*command_handler)(const std::string& command, const isc::data::ElementPtr args) = NULL
+                    isc::cc::AbstractSession& session,
+                    isc::data::ElementPtr(*config_handler)(
+                        isc::data::ElementPtr new_config) = NULL,
+                    isc::data::ElementPtr(*command_handler)(
+                        const std::string& command,
+                        const isc::data::ElementPtr args) = NULL
                     ) throw (isc::cc::SessionError);
-    ModuleCCSession(std::string spec_file_name,
-                    asio::io_service& io_service,
-                    isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config) = NULL,
-                    isc::data::ElementPtr(*command_handler)(const std::string& command, const isc::data::ElementPtr args) = NULL
-                    ) throw (isc::cc::SessionError);
-
-    /**
-     * Returns the socket that is used to communicate with the msgq
-     * command channel. This socket should *only* be used to run a
-     * select() loop over it. And if not time-critical, it is strongly
-     * recommended to only use checkCommand() to check for messages
-     *
-     * @return The socket used to communicate with the msgq command
-     *         channel.
-     */
-    int getSocket();
 
     /**
      * Optional optimization for checkCommand loop; returns true
@@ -238,7 +222,7 @@ private:
     void startCheck();
     
     std::string module_name_;
-    isc::cc::Session session_;
+    isc::cc::AbstractSession& session_;
     ModuleSpec module_specification_;
     ElementPtr handleConfigUpdate(ElementPtr new_config);
 

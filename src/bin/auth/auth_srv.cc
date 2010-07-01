@@ -70,8 +70,7 @@ private:
     AuthSrvImpl(const AuthSrvImpl& source);
     AuthSrvImpl& operator=(const AuthSrvImpl& source);
 public:
-    AuthSrvImpl(AbstractSession& session_with_xfrin,
-                AbstractXfroutClient& xfrout_client);
+    AuthSrvImpl(AbstractXfroutClient& xfrout_client);
     ~AuthSrvImpl();
     isc::data::ElementPtr setDbFile(const isc::data::ElementPtr config);
 
@@ -91,8 +90,7 @@ public:
 
     bool verbose_mode_;
 
-    bool is_notify_session_established_;
-    AbstractSession& session_with_xfrin_;
+    AbstractSession* session_with_xfrin_;
 
     bool is_axfr_connection_established_;
     AbstractXfroutClient& xfrout_client_;
@@ -101,11 +99,9 @@ public:
     static const uint16_t DEFAULT_LOCAL_UDPSIZE = 4096;
 };
 
-AuthSrvImpl::AuthSrvImpl(AbstractSession& session_with_xfrin,
-                         AbstractXfroutClient& xfrout_client) :
+AuthSrvImpl::AuthSrvImpl(AbstractXfroutClient& xfrout_client) :
     cs_(NULL), verbose_mode_(false),
-    is_notify_session_established_(false),
-    session_with_xfrin_(session_with_xfrin),
+    session_with_xfrin_(NULL),
     is_axfr_connection_established_(false),
     xfrout_client_(xfrout_client)
 {
@@ -118,20 +114,14 @@ AuthSrvImpl::AuthSrvImpl(AbstractSession& session_with_xfrin,
 }
 
 AuthSrvImpl::~AuthSrvImpl() {
-    if (is_notify_session_established_) {
-        session_with_xfrin_.disconnect();
-        is_notify_session_established_ = false;
-    }
-
     if (is_axfr_connection_established_) {
         xfrout_client_.disconnect();
         is_axfr_connection_established_ = false;
     }
 }
 
-AuthSrv::AuthSrv(AbstractSession& session_with_xfrin,
-                 AbstractXfroutClient& xfrout_client) :
-    impl_(new AuthSrvImpl(session_with_xfrin, xfrout_client))
+AuthSrv::AuthSrv(AbstractXfroutClient& xfrout_client) :
+    impl_(new AuthSrvImpl(xfrout_client))
 {}
 
 AuthSrv::~AuthSrv() {
@@ -198,6 +188,11 @@ AuthSrv::setVerbose(const bool on) {
 bool
 AuthSrv::getVerbose() const {
     return (impl_->verbose_mode_);
+}
+
+void
+AuthSrv::setSession(AbstractSession* session) {
+    impl_->session_with_xfrin_ = session;
 }
 
 void
@@ -411,19 +406,14 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
     // error happens rather than returning (e.g.) SERVFAIL.  RFC 1996 is
     // silent about such cases, but there doesn't seem to be anything we can
     // improve at the primary server side by sending an error anyway.
-    if (!is_notify_session_established_) {
-        try {
-            session_with_xfrin_.establish(NULL);
-            is_notify_session_established_ = true;
-        } catch (const isc::cc::SessionError& err) {
+    if (session_with_xfrin_ == NULL) {
             if (verbose_mode_) {
-                cerr << "[b10-auth] Error in connection with xfrin module: "
-                     << err.what() << endl;
+                cerr << "[b10-auth] "
+                    "session interface for xfrin is not available" << endl;
             }
             return (false);
-        }
     }
-    
+
     const string remote_ip_address =
         io_message.getRemoteEndpoint().getAddress().toText();
     static const string command_template_start =
@@ -437,10 +427,10 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
                 command_template_mid + remote_ip_address +
                 command_template_end);
         const unsigned int seq =
-            session_with_xfrin_.group_sendmsg(notify_command, "Xfrin",
+            session_with_xfrin_->group_sendmsg(notify_command, "Xfrin",
                                               "*", "*");
         ElementPtr env, answer, parsed_answer;
-        session_with_xfrin_.group_recvmsg(env, answer, false, seq);
+        session_with_xfrin_->group_recvmsg(env, answer, false, seq);
         int rcode;
         parsed_answer = parseAnswer(rcode, answer);
         if (rcode != 0) {

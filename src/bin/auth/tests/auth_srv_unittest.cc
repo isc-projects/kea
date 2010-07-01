@@ -16,6 +16,8 @@
 
 #include <config.h>
 
+#include <boost/function.hpp>
+
 #include <gtest/gtest.h>
 
 #include <dns/buffer.h>
@@ -89,6 +91,20 @@ private:
                                   string instance, string to);
         virtual bool group_recvmsg(ElementPtr& envelope, ElementPtr& msg,
                                    bool nonblock, int seq);
+        virtual void subscribe(string group UNUSED_PARAM,
+                               string instance UNUSED_PARAM)
+        {}
+        virtual void unsubscribe(string group UNUSED_PARAM,
+                                 string instance UNUSED_PARAM)
+        {}
+        virtual void startRead(
+            boost::function<void()> read_callback UNUSED_PARAM)
+        {}
+        virtual int reply(ElementPtr& envelope UNUSED_PARAM,
+                          ElementPtr& newmsg UNUSED_PARAM)
+        { return (0); }
+        virtual bool hasQueuedMsgs() { return (false); }
+
         void setMessage(ElementPtr msg) { msg_ = msg; }
         bool isEstablished() const { return (is_established_); }
         void disableEstablish() { establish_ok_ = false; }
@@ -103,7 +119,7 @@ private:
     };
 
 protected:
-    AuthSrvTest() : server(notify_session, xfrout),
+    AuthSrvTest() : server(xfrout),
                     request_message(Message::RENDER),
                     parse_message(Message::PARSE), default_qid(0x1035),
                     opcode(Opcode(Opcode::QUERY())), qname("www.example.com"),
@@ -111,7 +127,9 @@ protected:
                     io_message(NULL), endpoint(NULL), request_obuffer(0),
                     request_renderer(request_obuffer),
                     response_obuffer(0), response_renderer(response_obuffer)
-    {}
+    {
+        server.setSession(&notify_session);
+    }
     ~AuthSrvTest() {
         delete io_message;
         delete endpoint;
