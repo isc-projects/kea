@@ -1,6 +1,9 @@
 SUBDIRS = tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
+if USE_GXX
+AM_CPPFLAGS += -Wno-write-strings
+endif
 
 #lib_LTLIBRARIES = libdns_python_name.la libdns_python_rrset.la
 #libdns_python_name_la_SOURCES = name_python.cc
