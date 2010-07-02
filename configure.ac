@@ -92,8 +92,7 @@ AC_CHECK_HEADERS([Python.h],, AC_MSG_ERROR([Missing Python.h]))
 CPPFLAGS="$CPPFLAGS_SAVED"
 
 
-# Check for python library (not absolutely mandatory, but needed for
-# Boost.Python when we use it.  See below.)
+# Check for python library.  Needed for Python-wrapper libraries.
 LDFLAGS_SAVED="$LDFLAGS"
 LDFLAGS="$LDFLAGS $PYTHON_LDFLAGS"
 python_bin="python${PYTHON_VERSION}"
@@ -235,8 +234,6 @@ AC_HELP_STRING([--with-boost-lib=PATH],
    BOOST_LDFLAGS="-L$withval"
    fi])
 AC_SUBST(BOOST_LDFLAGS)
-
-# Check availability of the Boost Python library
 
 #
 # Check availability of gtest, which will be used for unit tests.
@@ -487,7 +484,6 @@ Flags:
   CXXFLAGS:      $CXXFLAGS
   B10_CXXFLAGS:  $B10_CXXFLAGS
 dnl includes too
-  Boost Python:  $BOOST_PYTHON_LIB
   SQLite:	 $SQLITE_CFLAGS
                  $SQLITE_LIBS
 
