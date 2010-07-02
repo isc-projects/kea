@@ -228,7 +228,7 @@ class MasterFile:
             percent = (self.__cur * 100)/self.__filesize
 
         sys.stdout.write("\r" + (80 * " "))
-        sys.stdout.write("\r%d RR(s) loaded in %d second(s) (%.2f%% of %s%s)"\
+        sys.stdout.write("\r%d RR(s) loaded in %.2f second(s) (%.2f%% of %s%s)"\
                 % (MasterFile.__records_num, interval, percent, MasterFile.__file_type, self.__datafile))
 
     def __del__(self):
