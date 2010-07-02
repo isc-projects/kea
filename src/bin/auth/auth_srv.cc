@@ -348,7 +348,7 @@ AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, Message& message,
             io_message.getSocket().getNative(),
             io_message.getData(),
             io_message.getDataSize());
-    } catch (const XfroutError& err) { 
+    } catch (const XfroutError& err) {
         if (is_axfr_connection_established_) {
             // discoonect() may trigger an exception, but since we try it
             // only if we've successfully opened it, it shouldn't happen in
