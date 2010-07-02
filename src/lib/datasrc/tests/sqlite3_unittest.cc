@@ -376,8 +376,8 @@ TEST_F(Sqlite3DataSourceTest, reOpen) {
 
     DataSrcMatch match(www_name, rrclass);
     data_source.findClosestEnclosure(match);
-    EXPECT_EQ(NULL, match.getEnclosingZone());
-    EXPECT_EQ(NULL, match.getDataSource());
+    EXPECT_EQ(static_cast<void*>(NULL), match.getEnclosingZone());
+    EXPECT_EQ(static_cast<void*>(NULL), match.getDataSource());
 }
 
 TEST_F(Sqlite3DataSourceTest, openFail) {
@@ -441,15 +441,15 @@ TEST_F(Sqlite3DataSourceTest, findClosestEnclosureAtDelegation) {
 TEST_F(Sqlite3DataSourceTest, findClosestEnclosureNoMatch) {
     DataSrcMatch match(nomatch_name, rrclass);
     data_source.findClosestEnclosure(match);
-    EXPECT_EQ(NULL, match.getEnclosingZone());
-    EXPECT_EQ(NULL, match.getDataSource());
+    EXPECT_EQ(static_cast<void*>(NULL), match.getEnclosingZone());
+    EXPECT_EQ(static_cast<void*>(NULL), match.getDataSource());
 }
 
 TEST_F(Sqlite3DataSourceTest, findClosestClassMismatch) {
     DataSrcMatch match(nomatch_name, rrclass);
     data_source.findClosestEnclosure(match);
-    EXPECT_EQ(NULL, match.getEnclosingZone());
-    EXPECT_EQ(NULL, match.getDataSource());
+    EXPECT_EQ(static_cast<void*>(NULL), match.getEnclosingZone());
+    EXPECT_EQ(static_cast<void*>(NULL), match.getDataSource());
 }
 
 // If the query class is ANY, the result should be the same as the case where
