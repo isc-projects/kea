@@ -198,36 +198,12 @@ ModuleCCSession::startCheck() {
 
 ModuleCCSession::ModuleCCSession(
     std::string spec_file_name,
-    asio::io_service& io_service,
+    isc::cc::AbstractSession& session,
     isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config),
     isc::data::ElementPtr(*command_handler)(
         const std::string& command, const isc::data::ElementPtr args)
     ) throw (isc::cc::SessionError) :
-    session_(io_service)
-{
-    init(spec_file_name, config_handler, command_handler);
-
-    // register callback for asynchronous read
-    session_.startRead(boost::bind(&ModuleCCSession::startCheck, this));
-}
-
-ModuleCCSession::ModuleCCSession(
-    std::string spec_file_name,
-    isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config),
-    isc::data::ElementPtr(*command_handler)(
-        const std::string& command, const isc::data::ElementPtr args)
-    ) throw (isc::cc::SessionError)
-{
-    init(spec_file_name, config_handler, command_handler);
-}
-
-void
-ModuleCCSession::init(
-    std::string spec_file_name,
-    isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config),
-    isc::data::ElementPtr(*command_handler)(
-        const std::string& command, const isc::data::ElementPtr args)
-    ) throw (isc::cc::SessionError)
+    session_(session)
 {
     module_specification_ = readModuleSpecification(spec_file_name);
     setModuleSpec(module_specification_);
@@ -238,7 +214,7 @@ ModuleCCSession::init(
 
     ElementPtr answer, env;
 
-    session_.establish();
+    session_.establish(NULL);
     session_.subscribe(module_name_, "*");
     //session_.subscribe("Boss", "*");
     //session_.subscribe("statistics", "*");
@@ -265,6 +241,9 @@ ModuleCCSession::init(
             std::cerr << "[" << module_name_ << "] Error getting config: " << new_config << std::endl;
         }
     }
+
+    // register callback for asynchronous read
+    session_.startRead(boost::bind(&ModuleCCSession::startCheck, this));
 }
 
 /// Validates the new config values, if they are correct,
@@ -298,12 +277,6 @@ ModuleCCSession::handleConfigUpdate(ElementPtr new_config)
         }
     }
     return answer;
-}
-
-int
-ModuleCCSession::getSocket()
-{
-    return (session_.getSocket());
 }
 
 bool
