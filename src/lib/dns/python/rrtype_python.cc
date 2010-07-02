@@ -14,7 +14,11 @@
 
 // $Id$
 
+#include <vector>
+
 #include <dns/rrtype.h>
+
+using namespace std;
 using namespace isc::dns;
 
 //
@@ -203,12 +207,12 @@ RRType_init(s_RRType* self, PyObject* args) {
             return (0);
         } else if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
             Py_ssize_t size = PySequence_Size(bytes);
-            uint8_t data[size];
-            int result = readDataFromSequence(data, size, bytes);
+            vector<uint8_t> data(size);
+            int result = readDataFromSequence(&data[0], size, bytes);
             if (result != 0) {
                 return (result);
             }
-            InputBuffer ib(data, size);
+            InputBuffer ib(&data[0], size);
             self->rrtype = new RRType(ib);
             PyErr_Clear();
             return (0);
