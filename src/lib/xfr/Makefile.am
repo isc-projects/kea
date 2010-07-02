@@ -17,12 +17,3 @@ libxfr_python_la_LDFLAGS = -module
 libxfr_python_la_SOURCES = fdshare_python.cc fd_share.cc fd_share.h
 libxfr_python_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
 libxfr_python_la_CXXFLAGS = $(AM_CXXFLAGS)
-
-#bind10_xfr_la_LDFLAGS = $(BOOST_LDFLAGS) $(PYTHON_LDFLAGS)
-
-# Python prefers .so, while some OSes (specifically MacOS) use a different
-# suffix for dynamic objects.  -module is necessary to work this around.
-#bind10_xfr_la_LDFLAGS += -module
-#bind10_xfr_la_LIBADD = $(BOOST_PYTHON_LIB) $(PYTHON_LIB)
-#endif
-
