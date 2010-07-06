@@ -83,6 +83,28 @@ else
 		AC_MSG_WARN([${PYTHON}-config does not exist or is not executable, so we could not detect python development environment.  Your system may require an additional package (e.g. "python3-dev").  Alternatively, if you are sure you have python headers and libraries, define PYTHON_INCLUDES and PYTHON_LDFLAGS and run this script.])
 	fi
 fi
+
+rpath_available=no
+if test "X$GXX" = "Xyes"; then
+	AC_MSG_CHECKING([whether -R flag is available in linker])
+	LDFLAGS_SAVED="$LDFLAGS"
+	LDFLAGS="$LDFLAGS -Wl,-R/usr/lib"
+	AC_TRY_LINK([],[],
+		[ AC_MSG_RESULT(yes)
+			rpath_available=yes
+		],[ AC_MSG_RESULT(no)
+		rpath_available=no
+		])
+	LDFLAGS=$LDFLAGS_SAVED
+fi
+if test $rpath_available = yes; then
+	python_rpath=
+	for flag in ${PYTHON_LDFLAGS}; do
+		python_rpath="${python_rpath} -Wl,`echo $flag | sed -ne 's/^\(\-L\)/-R/p'`"
+	done
+	PYTHON_LDFLAGS="${PYTHON_LDFLAGS} ${python_rpath}"
+fi
+
 AC_SUBST(PYTHON_INCLUDES)
 AC_SUBST(PYTHON_LDFLAGS)
 
@@ -101,6 +123,7 @@ if test $python_lib != "no"; then
 	PYTHON_LIB="-l$python_lib"
 fi
 AC_SUBST(PYTHON_LIB)
+LDFLAGS=$LDFLAGS_SAVED
 
 # TODO: check for _sqlite3.py module
 
@@ -142,6 +165,7 @@ namespace isc {class Bar {Foo foo_;};} ],,
 	 B10_CXXFLAGS="$B10_CXXFLAGS -Werror"],
 	[AC_MSG_RESULT(yes)])
 CXXFLAGS="$CXXFLAGS_SAVED"
+
 fi				dnl GXX = yes
 
 AM_CONDITIONAL(GCC_WERROR_OK, test $werror_ok = 1)
