@@ -327,8 +327,8 @@ ModuleCCSession::checkCommand()
         ElementPtr answer;
         try {
             std::string cmd_str = parseCommand(arg, data);
+            std::string target_module = routing->get("group")->stringValue();
             if (cmd_str == "config_update") {
-                std::string target_module = routing->get("group")->stringValue();
                 if (target_module == module_name_) {
                     answer = handleConfigUpdate(arg);
                 } else {
@@ -339,16 +339,22 @@ ModuleCCSession::checkCommand()
                     return 0;
                 }
             } else {
-                if (command_handler_) {
-                    answer = command_handler_(cmd_str, arg);
-                } else {
-                    answer = createAnswer(1, "Command given but no command handler for module");
+                if (target_module == module_name_) {
+                    if (command_handler_) {
+                        answer = command_handler_(cmd_str, arg);
+                    } else {
+                        answer = createAnswer(1, "Command given but no command handler for module");
+                    }
                 }
             }
         } catch (CCSessionError re) {
+            // TODO: Once we have logging and timeouts, we should not
+            // answer here (potential interference)
             answer = createAnswer(1, re.what());
         }
-        session_.reply(routing, answer);
+        if (!isNull(answer)) {
+            session_.reply(routing, answer);
+        }
     }
     
     return 0;

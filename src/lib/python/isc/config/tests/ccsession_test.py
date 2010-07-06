@@ -377,7 +377,34 @@ class TestModuleCCSession(unittest.TestCase):
         mccs = None
         self.assertFalse("Spec2" in fake_session.subscriptions)
         
-    
+    def test_ignore_command_remote_module(self):
+        # Create a Spec1 module and subscribe to remote config for Spec2
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec1.spec", None, None, fake_session)
+        mccs.set_command_handler(self.my_command_handler_ok)
+        rmodname = mccs.add_remote_config(self.spec_file("spec2.spec"))
+
+        # remove the 'get config' from the queue
+        self.assertEqual(len(fake_session.message_queue), 1)
+        fake_session.get_message("ConfigManager")
+
+        # check if the command for the module itself is received
+        cmd = isc.config.ccsession.create_command("just_some_command", { 'foo': 'a' })
+        fake_session.group_sendmsg(cmd, 'Spec1')
+        self.assertEqual(len(fake_session.message_queue), 1)
+        mccs.check_command()
+        self.assertEqual(len(fake_session.message_queue), 1)
+        self.assertEqual({'result': [ 0 ]},
+                         fake_session.get_message('Spec1', None))
+
+        # check if the command for the other module is ignored
+        cmd = isc.config.ccsession.create_command("just_some_command", { 'foo': 'a' })
+        fake_session.group_sendmsg(cmd, 'Spec2')
+        self.assertEqual(len(fake_session.message_queue), 1)
+        mccs.check_command()
+        self.assertEqual(len(fake_session.message_queue), 0)
+        
+
 class fakeUIConn():
     def __init__(self):
         self.get_answers = {}
