@@ -90,8 +90,7 @@ getFirstMessage(std::string& group, std::string& to)
 }
 
 void
-addMessage(ElementPtr msg, const std::string& group, const std::string& to)
-{
+addMessage(ElementPtr msg, const std::string& group, const std::string& to) {
     ElementPtr m_el = Element::createList();
     m_el->add(Element::create(group));
     m_el->add(Element::create(to));
@@ -247,7 +246,7 @@ Session::unsubscribe(std::string group, std::string instance) {
     listRemove(subscriptions, s_el);
 }
 
-unsigned int
+int
 Session::group_sendmsg(ElementPtr msg, std::string group,
                        std::string to, std::string instance UNUSED_PARAM)
 {
@@ -264,7 +263,7 @@ Session::group_recvmsg(ElementPtr& envelope, ElementPtr& msg,
     return (recvmsg(envelope, msg, nonblock, seq));
 }
 
-unsigned int
+int
 Session::reply(ElementPtr& envelope, ElementPtr& newmsg) {
     //cout << "[XX] client sends reply: " << newmsg << endl;
     //cout << "[XX] env: " << envelope << endl;
