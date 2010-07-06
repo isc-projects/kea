@@ -405,3 +405,41 @@ TEST(CCSession, remoteConfig)
     endFakeSession();
 }
 
+TEST(CCSession, ignoreRemoteConfigCommands) {
+
+    initFakeSession();
+    // client will ask for config
+    initial_messages->add(createAnswer(0, el("{  }")));
+
+    EXPECT_EQ(false, haveSubscription("Spec2", "*"));
+    ModuleCCSession mccs(ccspecfile("spec2.spec"), my_config_handler, my_command_handler);
+    EXPECT_EQ(true, haveSubscription("Spec2", "*"));
+
+    EXPECT_EQ(2, msg_queue->size());
+    ElementPtr msg;
+    std::string group, to;
+    // drop the module_spec and config commands
+    getFirstMessage(group, to);
+    getFirstMessage(group, to);
+
+    initial_messages->add(createAnswer(0, el("{  }")));
+    mccs.addRemoteConfig(ccspecfile("spec1.spec"));
+    EXPECT_EQ(1, msg_queue->size());
+    msg = getFirstMessage(group, to);
+
+    // Check if commands for the module are handled
+    addMessage(el("{ \"command\": [ \"good_command\" ] }"), "Spec2", "*");
+    int result = mccs.checkCommand();
+    EXPECT_EQ(1, msg_queue->size());
+    msg = getFirstMessage(group, to);
+    EXPECT_EQ("{ \"result\": [ 0 ] }", msg->str());
+    EXPECT_EQ(0, result);
+
+    // Check if commands for the other module are ignored
+    addMessage(el("{ \"command\": [ \"good_command\" ] }"), "Spec1", "*");
+    EXPECT_EQ(1, msg_queue->size());
+    result = mccs.checkCommand();
+    EXPECT_EQ(0, msg_queue->size());
+    
+    endFakeSession();
+}
