@@ -18,6 +18,20 @@ AC_LANG([C++])
 AM_CONDITIONAL(USE_GXX, test "X${GXX}" = "Xyes")
 AC_CHECK_DECL([__SUNPRO_CC], [SUNCXX="yes"], [SUNCXX="no"])
 
+# Linker options
+
+# check -R rather than gcc specific -rpath to be as portable as possible.
+AC_MSG_CHECKING([whether -R flag is available in linker])
+LDFLAGS_SAVED="$LDFLAGS"
+LDFLAGS="$LDFLAGS -R/usr/lib"
+AC_TRY_LINK([],[],
+	[ AC_MSG_RESULT(yes)
+		rpath_available=yes
+	],[ AC_MSG_RESULT(no)
+	rpath_available=no
+	])
+LDFLAGS=$LDFLAGS_SAVED
+
 # OS dependent compiler flags
 case "$host" in
 *-solaris*)
@@ -84,23 +98,15 @@ else
 	fi
 fi
 
-rpath_available=no
-if test "X$GXX" = "Xyes"; then
-	AC_MSG_CHECKING([whether -R flag is available in linker])
-	LDFLAGS_SAVED="$LDFLAGS"
-	LDFLAGS="$LDFLAGS -Wl,-R/usr/lib"
-	AC_TRY_LINK([],[],
-		[ AC_MSG_RESULT(yes)
-			rpath_available=yes
-		],[ AC_MSG_RESULT(no)
-		rpath_available=no
-		])
-	LDFLAGS=$LDFLAGS_SAVED
-fi
+# Some OSes including NetBSD don't install libpython.so in a well known path.
+# To avoid requiring dynamic library path with our python wrapper loadable
+# modules, we embed the path to the modules when possible.  We do this even
+# when the path is known in the common operational environment (e.g. when
+#it's stored in a comon "hint" file) for simplicity.
 if test $rpath_available = yes; then
 	python_rpath=
 	for flag in ${PYTHON_LDFLAGS}; do
-		python_rpath="${python_rpath} -Wl,`echo $flag | sed -ne 's/^\(\-L\)/-R/p'`"
+		python_rpath="${python_rpath} `echo $flag | sed -ne 's/^\(\-L\)/-R/p'`"
 	done
 	PYTHON_LDFLAGS="${PYTHON_LDFLAGS} ${python_rpath}"
 fi
@@ -112,7 +118,6 @@ CPPFLAGS_SAVED="$CPPFLAGS"
 CPPFLAGS="$CPPFLAGS ${PYTHON_INCLUDES}"
 AC_CHECK_HEADERS([Python.h],, AC_MSG_ERROR([Missing Python.h]))
 CPPFLAGS="$CPPFLAGS_SAVED"
-
 
 # Check for python library.  Needed for Python-wrapper libraries.
 LDFLAGS_SAVED="$LDFLAGS"
