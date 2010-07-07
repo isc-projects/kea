@@ -102,7 +102,7 @@ fi
 # To avoid requiring dynamic library path with our python wrapper loadable
 # modules, we embed the path to the modules when possible.  We do this even
 # when the path is known in the common operational environment (e.g. when
-#it's stored in a comon "hint" file) for simplicity.
+# it's stored in a common "hint" file) for simplicity.
 if test $rpath_available = yes; then
 	python_rpath=
 	for flag in ${PYTHON_LDFLAGS}; do
