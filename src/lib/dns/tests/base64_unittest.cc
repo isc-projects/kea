@@ -54,8 +54,7 @@ decodeCheck(const string& input_string, vector<uint8_t>& output,
     EXPECT_EQ(expected, string(&output[0], &output[0] + output.size()));
 }
 
-TEST_F(Base64Test, decode)
-{
+TEST_F(Base64Test, decode) {
     for (vector<StringPair>::const_iterator it = test_sequence.begin();
          it != test_sequence.end();
          ++it) {
@@ -82,8 +81,7 @@ TEST_F(Base64Test, decode)
     EXPECT_THROW(decodeBase64("Zm==", decoded_data), BadBase64String);
 }
 
-TEST_F(Base64Test, encode)
-{
+TEST_F(Base64Test, encode) {
     for (vector<StringPair>::const_iterator it = test_sequence.begin();
          it != test_sequence.end();
          ++it) {
