@@ -508,7 +508,10 @@ Flags:
   CXXFLAGS:      $CXXFLAGS
   B10_CXXFLAGS:  $B10_CXXFLAGS
 dnl includes too
-  SQLite:	 $SQLITE_CFLAGS
+  Python:        ${PYTHON_INCLUDES}
+                 ${PYTHON_LDFLAGS}
+                 ${PYTHON_LIB}
+  SQLite:        $SQLITE_CFLAGS
                  $SQLITE_LIBS
 
 Features:
