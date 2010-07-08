@@ -123,6 +123,8 @@ public:
      * data are exchanged.
      * @param config_handler A callback function pointer to be called when
      * configuration of the local module needs to be updated.
+     * This must refer to a valid object of a concrete derived class of
+     * AbstractSession without establishing the session.
      * @param command_handler A callback function pointer to be called when
      * a control command from a remote agent needs to be performed on the
      * local module.
