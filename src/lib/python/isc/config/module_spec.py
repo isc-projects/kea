@@ -21,7 +21,7 @@
    set of data against the specification
 """
 
-import ast
+import json
 
 import isc.cc.data
 
@@ -34,22 +34,30 @@ class ModuleSpecError(Exception):
        file"""
     pass
 
+import sys
 def module_spec_from_file(spec_file, check = True):
     """Returns a ModuleSpec object defined by the file at spec_file.
        If check is True, the contents are verified. If there is an error
        in those contents, a ModuleSpecError is raised."""
     module_spec = None
     if hasattr(spec_file, 'read'):
-        module_spec = ast.literal_eval(spec_file.read(-1))
+        
+        json_str = spec_file.read(-1)
+        module_spec = json.loads(json_str)
     elif type(spec_file) == str:
         file = open(spec_file)
-        module_spec = ast.literal_eval(file.read(-1))
+        json_str = file.read(-1)
+        try:
+            module_spec = json.loads(json_str)
+        except Exception as err:
+            module_spec = {}
+        
         file.close()
     else:
         raise ModuleSpecError("spec_file not a str or file-like object")
     if 'module_spec' not in module_spec:
         raise ModuleSpecError("Data definition has no module_spec element")
-        
+
     result = ModuleSpec(module_spec['module_spec'], check)
     return result
 

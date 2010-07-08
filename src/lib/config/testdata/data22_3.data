@@ -1,8 +1,8 @@
 {
     "value1": 1,
-    "value2": False,
-    "value3": True,
+    "value2": false,
+    "value3": true,
     "value4": "foo",
     "value5": [ 1, 2, 3 ],
-    "value6": { "v61": "bar", "v62": True }
+    "value6": { "v61": "bar", "v62": true }
 }
