@@ -79,10 +79,17 @@ class XfroutSession(BaseRequestHandler):
         sock = socket.fromfd(fd, socket.AF_INET, socket.SOCK_STREAM)
         try:
             self.dns_xfrout_start(sock, msgdata)
+            #TODO, avoid catching all exceptions
         except Exception as e:
             self._log.log_message("error", str(e))
 
-        sock.shutdown(socket.SHUT_RDWR)
+        try:
+            sock.shutdown(socket.SHUT_RDWR)
+        except socket.error:
+            # Avoid socket error caused by shutting down 
+            # one non-connected socket.
+            pass
+
         sock.close()
         os.close(fd)
         pass
