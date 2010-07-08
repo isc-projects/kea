@@ -83,8 +83,24 @@ namespace isc {
 
             virtual void startRead(boost::function<void()> read_callback);
 
-            void establish(const char* socket_file = NULL);
-            void disconnect();
+            virtual void establish(const char* socket_file = NULL);
+            virtual void disconnect();
+            virtual void subscribe(std::string group,
+                                   std::string instance = "*");
+            virtual void unsubscribe(std::string group,
+                             std::string instance = "*");
+            virtual int group_sendmsg(isc::data::ElementPtr msg,
+                                      std::string group,
+                                      std::string instance = "*",
+                                      std::string to = "*");
+            virtual bool group_recvmsg(isc::data::ElementPtr& envelope,
+                                       isc::data::ElementPtr& msg,
+                                       bool nonblock = true,
+                                       int seq = -1);
+            virtual int reply(isc::data::ElementPtr& envelope,
+                              isc::data::ElementPtr& newmsg);
+            virtual bool hasQueuedMsgs();
+    private:
             void sendmsg(isc::data::ElementPtr& msg);
             void sendmsg(isc::data::ElementPtr& env,
                          isc::data::ElementPtr& msg);
@@ -95,21 +111,6 @@ namespace isc {
                          isc::data::ElementPtr& msg,
                          bool nonblock = true,
                          int seq = -1);
-            virtual void subscribe(std::string group,
-                                   std::string instance = "*");
-            virtual void unsubscribe(std::string group,
-                             std::string instance = "*");
-            int group_sendmsg(isc::data::ElementPtr msg,
-                                       std::string group,
-                                       std::string instance = "*",
-                                       std::string to = "*");
-            bool group_recvmsg(isc::data::ElementPtr& envelope,
-                               isc::data::ElementPtr& msg,
-                               bool nonblock = true,
-                               int seq = -1);
-            virtual int reply(isc::data::ElementPtr& envelope,
-                              isc::data::ElementPtr& newmsg);
-            virtual bool hasQueuedMsgs();
         };
     } // namespace cc
 } // namespace isc
