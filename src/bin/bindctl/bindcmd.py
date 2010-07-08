@@ -35,7 +35,7 @@ import os, time, random, re
 import getpass
 from hashlib import sha1
 import csv
-import ast
+import json
 import pwd
 import getpass
 import traceback
@@ -564,7 +564,7 @@ class BindCmdInterpreter(Cmd):
                 else:
                     parsed_value = None
                     try:
-                        parsed_value = ast.literal_eval(cmd.params['value'])
+                        parsed_value = json.loads(cmd.params['value'])
                     except Exception as exc:
                         # ok could be an unquoted string, interpret as such
                         parsed_value = cmd.params['value']
