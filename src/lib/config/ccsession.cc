@@ -197,7 +197,7 @@ ModuleCCSession::startCheck() {
 }
 
 ModuleCCSession::ModuleCCSession(
-    std::string spec_file_name,
+    const std::string& spec_file_name,
     isc::cc::AbstractSession& session,
     isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config),
     isc::data::ElementPtr(*command_handler)(
