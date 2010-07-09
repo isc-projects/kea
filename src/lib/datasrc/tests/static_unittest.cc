@@ -214,8 +214,8 @@ TEST_F(StaticDataSourceTest, findClosestEnclosureForVersionClassAny) {
 TEST_F(StaticDataSourceTest, findClosestEnclosureForVersionClassMismatch) {
     DataSrcMatch match(version_name, RRClass::IN());
     data_source.findClosestEnclosure(match);
-    EXPECT_EQ(NULL, match.getEnclosingZone());
-    EXPECT_EQ(NULL, match.getDataSource());
+    EXPECT_EQ(static_cast<void*>(NULL), match.getEnclosingZone());
+    EXPECT_EQ(static_cast<void*>(NULL), match.getDataSource());
 }
 
 TEST_F(StaticDataSourceTest, findClosestEnclosureForVersionPartial) {
@@ -242,8 +242,8 @@ TEST_F(StaticDataSourceTest, findClosestEnclosureForAuthorsPartial) {
 TEST_F(StaticDataSourceTest, findClosestEnclosureNoMatch) {
     DataSrcMatch match(nomatch_name, rrclass);
     data_source.findClosestEnclosure(match);
-    EXPECT_EQ(NULL, match.getEnclosingZone());
-    EXPECT_EQ(NULL, match.getDataSource());
+    EXPECT_EQ(static_cast<void*>(NULL), match.getEnclosingZone());
+    EXPECT_EQ(static_cast<void*>(NULL), match.getDataSource());
 }
 
 TEST_F(StaticDataSourceTest, findRRsetVersionTXT) {
