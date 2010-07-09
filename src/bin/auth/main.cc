@@ -138,8 +138,9 @@ main(int argc, char* argv[]) {
         usage();
     }
 
-    // initialize command channel
     int ret = 0;
+    Session* cc_session = NULL;
+    ModuleCCSession* cs = NULL;
     try {
         string specfile;
         if (getenv("B10_FROM_BUILD")) {
@@ -151,23 +152,31 @@ main(int argc, char* argv[]) {
 
         auth_server = new AuthSrv(cache);
         auth_server->setVerbose(verbose_mode);
+        cout << "[b10-auth] Server created." << endl;
 
         io_service = new asio_link::IOService(auth_server, address, port,
                                               use_ipv4, use_ipv6);
+        cout << "[b10-auth] IOService created." << endl;
 
-        ModuleCCSession cs(specfile, io_service->get_io_service(),
-                           my_config_handler, my_command_handler);
+        cc_session = new Session(io_service->get_io_service());
+        cout << "[b10-auth] Session channel created." << endl;
 
-        auth_server->setConfigSession(&cs);
+        cs = new ModuleCCSession(specfile, *cc_session, my_config_handler,
+                                 my_command_handler);
+        cout << "[b10-auth] Configuration channel established." << endl;
+
+        auth_server->setConfigSession(cs);
         auth_server->updateConfig(ElementPtr());
 
         cout << "[b10-auth] Server started." << endl;
         io_service->run();
     } catch (const std::exception& ex) {
-        cerr << "[b10-auth] " << ex.what() << endl;
+        cerr << "[b10-auth] Initialization failed: " << ex.what() << endl;
         ret = 1;
     }
 
+    delete cs;
+    delete cc_session;
     delete io_service;
     delete auth_server;
     return (ret);

@@ -24,10 +24,6 @@
 #include <cc/session.h>
 #include <cc/data.h>
 
-namespace asio {
-class io_service;
-}
-
 namespace isc {
 namespace config {
 
@@ -112,7 +108,7 @@ public:
 };
 
 ///
-/// \brief This modules keeps a connection to the command channel,
+/// \brief This module keeps a connection to the command channel,
 /// holds configuration information, and handles messages from
 /// the command channel
 ///
@@ -120,32 +116,29 @@ class ModuleCCSession : public ConfigData {
 public:
     /**
      * Initialize a config/command session
-     * @param module_name: The name of this module. This is not a
-     *                     reference because we expect static strings
-     *                     to be passed here.
-     * @param spec_file_name: The name of the file containing the
-     *                        module specification.
-     */
-    ModuleCCSession(std::string spec_file_name,
-                    isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config) = NULL,
-                    isc::data::ElementPtr(*command_handler)(const std::string& command, const isc::data::ElementPtr args) = NULL
-                    ) throw (isc::cc::SessionError);
-    ModuleCCSession(std::string spec_file_name,
-                    asio::io_service& io_service,
-                    isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config) = NULL,
-                    isc::data::ElementPtr(*command_handler)(const std::string& command, const isc::data::ElementPtr args) = NULL
-                    ) throw (isc::cc::SessionError);
-
-    /**
-     * Returns the socket that is used to communicate with the msgq
-     * command channel. This socket should *only* be used to run a
-     * select() loop over it. And if not time-critical, it is strongly
-     * recommended to only use checkCommand() to check for messages
      *
-     * @return The socket used to communicate with the msgq command
-     *         channel.
+     * @param spec_file_name The name of the file containing the
+     *                        module specification.
+     * @param session A Session object over which configuration and command
+     * data are exchanged.
+     * @param config_handler A callback function pointer to be called when
+     * configuration of the local module needs to be updated.
+     * This must refer to a valid object of a concrete derived class of
+     * AbstractSession without establishing the session.
+     * Note: the design decision on who is responsible for establishing the
+     * session is in flux, and may change in near future.
+     * @param command_handler A callback function pointer to be called when
+     * a control command from a remote agent needs to be performed on the
+     * local module.
      */
-    int getSocket();
+    ModuleCCSession(const std::string& spec_file_name,
+                    isc::cc::AbstractSession& session,
+                    isc::data::ElementPtr(*config_handler)(
+                        isc::data::ElementPtr new_config) = NULL,
+                    isc::data::ElementPtr(*command_handler)(
+                        const std::string& command,
+                        const isc::data::ElementPtr args) = NULL
+                    ) throw (isc::cc::SessionError);
 
     /**
      * Optional optimization for checkCommand loop; returns true
@@ -227,18 +220,11 @@ public:
     ElementPtr getRemoteConfigValue(const std::string& module_name, const std::string& identifier);
     
 private:
-    void init(
-        std::string spec_file_name,
-        isc::data::ElementPtr(*config_handler)(
-            isc::data::ElementPtr new_config),
-        isc::data::ElementPtr(*command_handler)(
-            const std::string& command, const isc::data::ElementPtr args)
-        ) throw (isc::cc::SessionError);
     ModuleSpec readModuleSpecification(const std::string& filename);
     void startCheck();
     
     std::string module_name_;
-    isc::cc::Session session_;
+    isc::cc::AbstractSession& session_;
     ModuleSpec module_specification_;
     ElementPtr handleConfigUpdate(ElementPtr new_config);
 
