@@ -40,7 +40,36 @@ namespace isc {
                 isc::Exception(file, line, what) {}
         };
 
-        class Session {
+        class AbstractSession {
+        private:
+            AbstractSession(const AbstractSession& source);
+            AbstractSession& operator=(const AbstractSession& source);
+        protected:
+            AbstractSession() {}
+        public:
+            virtual ~AbstractSession() {}
+            //@}
+            virtual void establish(const char* socket_file) = 0;
+            virtual void disconnect() = 0;
+            virtual int group_sendmsg(isc::data::ElementPtr msg,
+                                      std::string group,
+                                      std::string instance = "*",
+                                      std::string to = "*") = 0;
+            virtual bool group_recvmsg(isc::data::ElementPtr& envelope,
+                                       isc::data::ElementPtr& msg,
+                                       bool nonblock = true,
+                                       int seq = -1) = 0;
+            virtual void subscribe(std::string group,
+                                   std::string instance = "*") = 0;
+            virtual void unsubscribe(std::string group,
+                             std::string instance = "*") = 0;
+            virtual void startRead(boost::function<void()> read_callback) = 0;
+            virtual int reply(isc::data::ElementPtr& envelope,
+                               isc::data::ElementPtr& newmsg) = 0;
+            virtual bool hasQueuedMsgs() = 0;
+        };
+
+    class Session : public AbstractSession {
         private:
             SessionImpl* impl_;
 
@@ -49,17 +78,29 @@ namespace isc {
             Session& operator=(const Session& source);
 
         public:
-            Session();
             Session(asio::io_service& ioservice);
             ~Session();
 
-            // XXX: quick hack to allow the user to watch the socket directly.
-            int getSocket() const;
+            virtual void startRead(boost::function<void()> read_callback);
 
-            void startRead(boost::function<void()> read_callback);
-
-            void establish(const char* socket_file = NULL);
-            void disconnect();
+            virtual void establish(const char* socket_file = NULL);
+            virtual void disconnect();
+            virtual void subscribe(std::string group,
+                                   std::string instance = "*");
+            virtual void unsubscribe(std::string group,
+                             std::string instance = "*");
+            virtual int group_sendmsg(isc::data::ElementPtr msg,
+                                      std::string group,
+                                      std::string instance = "*",
+                                      std::string to = "*");
+            virtual bool group_recvmsg(isc::data::ElementPtr& envelope,
+                                       isc::data::ElementPtr& msg,
+                                       bool nonblock = true,
+                                       int seq = -1);
+            virtual int reply(isc::data::ElementPtr& envelope,
+                              isc::data::ElementPtr& newmsg);
+            virtual bool hasQueuedMsgs();
+    private:
             void sendmsg(isc::data::ElementPtr& msg);
             void sendmsg(isc::data::ElementPtr& env,
                          isc::data::ElementPtr& msg);
@@ -70,21 +111,6 @@ namespace isc {
                          isc::data::ElementPtr& msg,
                          bool nonblock = true,
                          int seq = -1);
-            void subscribe(std::string group,
-                           std::string instance = "*");
-            void unsubscribe(std::string group,
-                             std::string instance = "*");
-            int group_sendmsg(isc::data::ElementPtr msg,
-                                       std::string group,
-                                       std::string instance = "*",
-                                       std::string to = "*");
-            bool group_recvmsg(isc::data::ElementPtr& envelope,
-                               isc::data::ElementPtr& msg,
-                               bool nonblock = true,
-                               int seq = -1);
-            int reply(isc::data::ElementPtr& envelope,
-                               isc::data::ElementPtr& newmsg);
-            bool hasQueuedMsgs();
         };
     } // namespace cc
 } // namespace isc
