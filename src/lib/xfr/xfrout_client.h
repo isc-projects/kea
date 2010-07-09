@@ -34,7 +34,34 @@ public:
         isc::Exception(file, line, what) {}
 };
 
-class XfroutClient {
+/// \brief The AbstractXfroutClient class is an abstract base class that
+/// defines the interfaces of XfroutClient.
+///
+/// The intended primary usage of abstraction is to allow tests for the
+/// user class of XfroutClient without requiring actual communication.
+class AbstractXfroutClient {
+    ///
+    /// \name Constructors, Assignment Operator and Destructor.
+    ///
+    /// Note: The copy constructor and the assignment operator are
+    /// intentionally defined as private to make it explicit that this is a
+    /// pure base class.
+    //@{
+private:
+    AbstractXfroutClient(const AbstractXfroutClient& source);
+    AbstractXfroutClient& operator=(const AbstractXfroutClient& source);
+protected:
+    AbstractXfroutClient() {}
+public:
+    virtual ~AbstractXfroutClient() {}
+    //@}
+    virtual void connect() = 0;
+    virtual void disconnect() = 0;
+    virtual int sendXfroutRequestInfo(int tcp_sock, const void* msg_data,
+                                      uint16_t msg_len) = 0;
+};
+
+class XfroutClient : public AbstractXfroutClient {
 public:
     XfroutClient(const std::string& file);
     ~XfroutClient();
@@ -43,10 +70,10 @@ private:
     XfroutClient(const XfroutClient& source);
     XfroutClient& operator=(const XfroutClient& source);
 public:
-    void connect();
-    void disconnect();
-    int sendXfroutRequestInfo(int tcp_sock, uint8_t* msg_data,
-                              uint16_t msg_len);
+    virtual void connect();
+    virtual void disconnect();
+    virtual int sendXfroutRequestInfo(int tcp_sock, const void* msg_data,
+                                      uint16_t msg_len);
 private:
     XfroutClientImpl* impl_;
 };

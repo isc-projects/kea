@@ -40,7 +40,22 @@ namespace isc {
                 isc::Exception(file, line, what) {}
         };
 
+        /// \brief The AbstractSession class is an abstract base class that
+        /// defines the interfaces of Session.
+        /// The intended primary usage of abstraction is to allow tests for the
+        /// user class of Session without requiring actual communication
+        /// channels.
+        /// For simplicity we only define the methods that are necessary for
+        /// existing test cases that use this base class.  Eventually we'll
+        /// probably have to extend them.
         class AbstractSession {
+            ///
+            /// \name Constructors, Assignment Operator and Destructor.
+            ///
+            /// Note: The copy constructor and the assignment operator are
+            /// intentionally defined as private to make it explicit that
+            /// this is a pure base class.
+            //@{
         private:
             AbstractSession(const AbstractSession& source);
             AbstractSession& operator=(const AbstractSession& source);
@@ -79,7 +94,7 @@ namespace isc {
 
         public:
             Session(asio::io_service& ioservice);
-            ~Session();
+            virtual ~Session();
 
             virtual void startRead(boost::function<void()> read_callback);
 

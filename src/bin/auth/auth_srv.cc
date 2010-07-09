@@ -14,6 +14,10 @@
 
 // $Id$
 
+#include <config.h>             // for UNUSED_PARAM
+
+#include <netinet/in.h>
+
 #include <algorithm>
 #include <cassert>
 #include <iostream>
@@ -40,19 +44,25 @@
 
 #include <cc/data.h>
 
-#include "common.h"
-#include "auth_srv.h"
+#include <xfr/xfrout_client.h>
+
+#include <auth/common.h>
+#include <auth/auth_srv.h>
+#include <auth/asio_link.h>
 
 #include <boost/lexical_cast.hpp>
 
 using namespace std;
 
 using namespace isc;
+using namespace isc::cc;
 using namespace isc::datasrc;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::data;
 using namespace isc::config;
+using namespace isc::xfr;
+using namespace asio_link;
 
 class AuthSrvImpl {
 private:
@@ -60,12 +70,18 @@ private:
     AuthSrvImpl(const AuthSrvImpl& source);
     AuthSrvImpl& operator=(const AuthSrvImpl& source);
 public:
-    AuthSrvImpl(const bool use_cache);
-
+    AuthSrvImpl(const bool use_cache, AbstractXfroutClient& xfrout_client);
+    ~AuthSrvImpl();
     isc::data::ElementPtr setDbFile(const isc::data::ElementPtr config);
 
+    bool processNormalQuery(const IOMessage& io_message, Message& message,
+                            MessageRenderer& response_renderer);
+    bool processAxfrQuery(const IOMessage& io_message, Message& message,
+                            MessageRenderer& response_renderer);
+    bool processNotify(const IOMessage& io_message, Message& message, 
+                            MessageRenderer& response_renderer);
     std::string db_file_;
-    ModuleCCSession* cs_;
+    ModuleCCSession* config_session_;
     MetaDataSrc data_sources_;
     /// We keep a pointer to the currently running sqlite datasource
     /// so that we can specifically remove that one should the database
@@ -74,6 +90,11 @@ public:
 
     bool verbose_mode_;
 
+    AbstractSession* xfrin_session_;
+
+    bool is_axfr_connection_established_;
+    AbstractXfroutClient& xfrout_client_;
+
     /// Currently non-configurable, but will be.
     static const uint16_t DEFAULT_LOCAL_UDPSIZE = 4096;
 
@@ -81,8 +102,12 @@ public:
     isc::datasrc::HotCache cache_;
 };
 
-AuthSrvImpl::AuthSrvImpl(const bool use_cache) :
-    cs_(NULL), verbose_mode_(false)
+AuthSrvImpl::AuthSrvImpl(const bool use_cache,
+                         AbstractXfroutClient& xfrout_client) :
+    config_session_(NULL), verbose_mode_(false),
+    xfrin_session_(NULL),
+    is_axfr_connection_established_(false),
+    xfrout_client_(xfrout_client)
 {
     // cur_datasrc_ is automatically initialized by the default constructor,
     // effectively being an empty (sqlite) data source.  once ccsession is up
@@ -95,8 +120,16 @@ AuthSrvImpl::AuthSrvImpl(const bool use_cache) :
     cache_.setEnabled(use_cache);
 }
 
-AuthSrv::AuthSrv(const bool use_cache) : impl_(new AuthSrvImpl(use_cache)) {
+AuthSrvImpl::~AuthSrvImpl() {
+    if (is_axfr_connection_established_) {
+        xfrout_client_.disconnect();
+        is_axfr_connection_established_ = false;
+    }
 }
+
+AuthSrv::AuthSrv(const bool use_cache, AbstractXfroutClient& xfrout_client) :
+    impl_(new AuthSrvImpl(use_cache, xfrout_client))
+{}
 
 AuthSrv::~AuthSrv() {
     delete impl_;
@@ -125,8 +158,9 @@ makeErrorMessage(Message& message, MessageRenderer& renderer,
     const Opcode& opcode = message.getOpcode();
     vector<QuestionPtr> questions;
 
-    // If this is an error to a query, we should also copy the question section.
-    if (opcode == Opcode::QUERY()) {
+    // If this is an error to a query or notify, we should also copy the
+    // question section.
+    if (opcode == Opcode::QUERY() || opcode == Opcode::NOTIFY()) {
         questions.assign(message.beginQuestion(), message.endQuestion());
     }
 
@@ -164,20 +198,26 @@ AuthSrv::getVerbose() const {
 }
 
 void
-AuthSrv::setConfigSession(ModuleCCSession* cs) {
-    impl_->cs_ = cs;
+AuthSrv::setXfrinSession(AbstractSession* xfrin_session) {
+    impl_->xfrin_session_ = xfrin_session;
+}
+
+void
+AuthSrv::setConfigSession(ModuleCCSession* config_session) {
+    impl_->config_session_ = config_session;
 }
 
 ModuleCCSession*
 AuthSrv::configSession() const {
-    return (impl_->cs_);
+    return (impl_->config_session_);
 }
 
 bool
-AuthSrv::processMessage(InputBuffer& request_buffer, Message& message,
-                        MessageRenderer& response_renderer,
-                        const bool udp_buffer)
+AuthSrv::processMessage(const IOMessage& io_message, Message& message,
+                        MessageRenderer& response_renderer)
 {
+    InputBuffer request_buffer(io_message.getData(), io_message.getDataSize());
+
     // First, check the header part.  If we fail even for the base header,
     // just drop the message.
     try {
@@ -186,7 +226,8 @@ AuthSrv::processMessage(InputBuffer& request_buffer, Message& message,
         // Ignore all responses.
         if (message.getHeaderFlag(MessageFlag::QR())) {
             if (impl_->verbose_mode_) {
-                cerr << "[b10-auth] received unexpected response, ignoring" << endl;
+                cerr << "[b10-auth] received unexpected response, ignoring"
+                     << endl;
             }
             return (false);
         }
@@ -199,8 +240,8 @@ AuthSrv::processMessage(InputBuffer& request_buffer, Message& message,
         message.fromWire(request_buffer);
     } catch (const DNSProtocolError& error) {
         if (impl_->verbose_mode_) {
-            cerr << "[b10-auth] returning " <<  error.getRcode().toText() << ": "
-                 << error.what() << endl;
+            cerr << "[b10-auth] returning " <<  error.getRcode().toText()
+                 << ": " << error.what() << endl;
         }
         makeErrorMessage(message, response_renderer, error.getRcode(),
                          impl_->verbose_mode_);
@@ -220,8 +261,9 @@ AuthSrv::processMessage(InputBuffer& request_buffer, Message& message,
 
     // Perform further protocol-level validation.
 
-    // In this implementation, we only support normal queries
-    if (message.getOpcode() != Opcode::QUERY()) {
+    if (message.getOpcode() == Opcode::NOTIFY()) {
+        return (impl_->processNotify(io_message, message, response_renderer));
+    } else if (message.getOpcode() != Opcode::QUERY()) {
         if (impl_->verbose_mode_) {
             cerr << "[b10-auth] unsupported opcode" << endl;
         }
@@ -236,6 +278,25 @@ AuthSrv::processMessage(InputBuffer& request_buffer, Message& message,
         return (true);
     }
 
+    ConstQuestionPtr question = *message.beginQuestion();
+    const RRType &qtype = question->getType();
+    if (qtype == RRType::AXFR()) {
+        return (impl_->processAxfrQuery(io_message, message,
+                                        response_renderer));
+    } else if (qtype == RRType::IXFR()) {
+        makeErrorMessage(message, response_renderer, Rcode::NOTIMP(),
+                         impl_->verbose_mode_);
+        return (true);
+    } else {
+        return (impl_->processNormalQuery(io_message, message,
+                                          response_renderer));
+    }
+}
+
+bool
+AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
+                                MessageRenderer& response_renderer)
+{
     const bool dnssec_ok = message.isDNSSECSupported();
     const uint16_t remote_bufsize = message.getUDPSize();
 
@@ -246,26 +307,157 @@ AuthSrv::processMessage(InputBuffer& request_buffer, Message& message,
     message.setUDPSize(AuthSrvImpl::DEFAULT_LOCAL_UDPSIZE);
 
     try {
-        Query query(message, impl_->cache_, dnssec_ok);
-        impl_->data_sources_.doQuery(query);
+        Query query(message, cache_, dnssec_ok);
+        data_sources_.doQuery(query);
     } catch (const Exception& ex) {
-        if (impl_->verbose_mode_) {
+        if (verbose_mode_) {
             cerr << "[b10-auth] Internal error, returning SERVFAIL: " <<
                 ex.what() << endl;
         }
         makeErrorMessage(message, response_renderer, Rcode::SERVFAIL(),
-                         impl_->verbose_mode_);
+                         verbose_mode_);
         return (true);
     }
 
+    const bool udp_buffer =
+        (io_message.getSocket().getProtocol() == IPPROTO_UDP);
     response_renderer.setLengthLimit(udp_buffer ? remote_bufsize : 65535);
     message.toWire(response_renderer);
-    if (impl_->verbose_mode_) {
+    if (verbose_mode_) {
         cerr << "[b10-auth] sending a response (" <<
             boost::lexical_cast<string>(response_renderer.getLength())
              << " bytes):\n" << message.toText() << endl;
     }
 
+    return (true);
+}
+
+
+bool
+AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, Message& message,
+                            MessageRenderer& response_renderer)
+{
+    if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
+        if (verbose_mode_) {
+            cerr << "[b10-auth] AXFR query over UDP isn't allowed" << endl;
+        }
+        makeErrorMessage(message, response_renderer, Rcode::FORMERR(),
+                         verbose_mode_);
+        return (true);
+    }
+
+    try {
+        if (!is_axfr_connection_established_) {
+            xfrout_client_.connect();
+            is_axfr_connection_established_ = true;
+        }
+        xfrout_client_.sendXfroutRequestInfo(
+            io_message.getSocket().getNative(),
+            io_message.getData(),
+            io_message.getDataSize());
+    } catch (const XfroutError& err) {
+        if (is_axfr_connection_established_) {
+            // discoonect() may trigger an exception, but since we try it
+            // only if we've successfully opened it, it shouldn't happen in
+            // normal condition.  Should this occur, we'll propagate it to the
+            // upper layer.
+            xfrout_client_.disconnect();
+            is_axfr_connection_established_ = false;
+        }
+        
+        if (verbose_mode_) {
+            cerr << "[b10-auth] Error in handling XFR request: " << err.what()
+                 << endl;
+        }
+        makeErrorMessage(message, response_renderer, Rcode::SERVFAIL(),
+                         verbose_mode_);
+        return (true);
+    }
+    return (false);
+}
+
+bool
+AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message, 
+                           MessageRenderer& response_renderer) 
+{
+    // The incoming notify must contain exactly one question for SOA of the
+    // zone name.
+    if (message.getRRCount(Section::QUESTION()) != 1) {
+        if (verbose_mode_) {
+                cerr << "[b10-auth] invalid number of questions in notify: "
+                     << message.getRRCount(Section::QUESTION()) << endl;
+        }
+        makeErrorMessage(message, response_renderer, Rcode::FORMERR(),
+                         verbose_mode_);
+        return (true);
+    }
+    ConstQuestionPtr question = *message.beginQuestion();
+    if (question->getType() != RRType::SOA()) {
+        if (verbose_mode_) {
+                cerr << "[b10-auth] invalid question RR type in notify: "
+                     << question->getType() << endl;
+        }
+        makeErrorMessage(message, response_renderer, Rcode::FORMERR(),
+                         verbose_mode_);
+        return (true);
+    }
+
+    // According to RFC 1996, rcode should be "no error" and AA bit should be
+    // on, but we don't check these conditions.  This behavior is compatible
+    // with BIND 9.
+
+    // TODO check with the conf-mgr whether current server is the auth of the
+    // zone
+
+    // In the code that follows, we simply ignore the notify if any internal
+    // error happens rather than returning (e.g.) SERVFAIL.  RFC 1996 is
+    // silent about such cases, but there doesn't seem to be anything we can
+    // improve at the primary server side by sending an error anyway.
+    if (xfrin_session_ == NULL) {
+            if (verbose_mode_) {
+                cerr << "[b10-auth] "
+                    "session interface for xfrin is not available" << endl;
+            }
+            return (false);
+    }
+    
+    const string remote_ip_address =
+        io_message.getRemoteEndpoint().getAddress().toText();
+    static const string command_template_start =
+        "{\"command\": [\"notify\", {\"zone_name\" : \"";
+    static const string command_template_mid = "\", \"master_ip\" : \"";
+    static const string command_template_end = "\"}]}";
+
+    try {
+        ElementPtr notify_command = Element::fromJSON(
+                command_template_start + question->getName().toText() + 
+                command_template_mid + remote_ip_address +
+                command_template_end);
+        const unsigned int seq =
+            xfrin_session_->group_sendmsg(notify_command, "Xfrin",
+                                          "*", "*");
+        ElementPtr env, answer, parsed_answer;
+        xfrin_session_->group_recvmsg(env, answer, false, seq);
+        int rcode;
+        parsed_answer = parseAnswer(rcode, answer);
+        if (rcode != 0) {
+            if (verbose_mode_) {
+                cerr << "[b10-auth] failed to notify Xfrin: "
+                     << parsed_answer->str() << endl; 
+            }
+            return (false);
+        }
+    } catch (const Exception& ex) {
+        if (verbose_mode_) {
+            cerr << "[b10-auth] failed to notify Xfrin: " << ex.what() << endl;
+        }
+        return (false);
+    }
+
+    message.makeResponse();
+    message.setHeaderFlag(MessageFlag::AA());
+    message.setRcode(Rcode::NOERROR());
+    message.toWire(response_renderer);
     return (true);
 }
 
@@ -277,10 +469,10 @@ AuthSrvImpl::setDbFile(const isc::data::ElementPtr config) {
     if (config && config->contains("database_file")) {
         db_file_ = config->get("database_file")->stringValue();
         final = config;
-    } else if (cs_ != NULL) {
+    } else if (config_session_ != NULL) {
         bool is_default;
         string item("database_file");
-        ElementPtr value = cs_->getValue(is_default, item);
+        ElementPtr value = config_session_->getValue(is_default, item);
         final = Element::createMap();
 
         // If the value is the default, and we are running from

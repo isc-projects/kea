@@ -17,83 +17,162 @@
 #include <config.h>
 
 #include <unistd.h>             // for some IPC/network system calls
+#include <sys/socket.h>
+#include <netinet/in.h>
+
 #include <asio.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/bind.hpp>
+
+#include <boost/shared_ptr.hpp>
 
 #include <dns/buffer.h>
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
 
-#include <xfr/xfrout_client.h>
-
 #include <asio_link.h>
 
-#include "spec_config.h"        // for XFROUT.  should not be here.
-#include "auth_srv.h"
+#include <auth/auth_srv.h>
 #include "common.h"
 
 using namespace asio;
-using ip::udp;
-using ip::tcp;
+using asio::ip::udp;
+using asio::ip::tcp;
 
 using namespace std;
 using namespace isc::dns;
-using namespace isc::xfr;
-
-namespace {
-// As a short term workaround, we have XFROUT specific code.  We should soon
-// refactor the code with some abstraction so that we can separate this level
-// details from the (AS)IO module.
-
-// This was contained in an ifdef USE_XFROUT, but we should really check
-// live if we do xfrout
-//TODO. The sample way for checking axfr query, the code should be merged to auth server class
-bool
-check_axfr_query(char* const msg_data, const uint16_t msg_len) {
-    if (msg_len < 15) {
-        return false;
-    }
-
-    const uint16_t query_type = *(uint16_t *)(msg_data + (msg_len - 4));
-    if ( query_type == 0xFC00) {
-        return true;
-    }
-    
-    return false;
-}
-
-//TODO. Send the xfr query to xfrout module, the code should be merged to auth server class
-//BIGGERTODO: stop using hardcoded install-path locations! 
-void
-dispatch_axfr_query(const int tcp_sock, char const axfr_query[],
-                    const uint16_t query_len)
-{
-    string path;
-    if (getenv("B10_FROM_BUILD")) {
-        path = string(getenv("B10_FROM_BUILD")) + "/auth_xfrout_conn";
-    } else {
-        path = UNIX_SOCKET_FILE;
-    }
-    
-    if (getenv("B10_FROM_BUILD")) {
-        path = string(getenv("B10_FROM_BUILD")) + "/auth_xfrout_conn";
-    }
-    XfroutClient xfr_client(path);
-    try {
-        xfr_client.connect();
-        xfr_client.sendXfroutRequestInfo(tcp_sock, (uint8_t *)axfr_query,
-                                         query_len);
-        xfr_client.disconnect();
-    }
-    catch (const exception & err) {
-        //if (verbose_mode)
-        cerr << "error handle xfr query " << UNIX_SOCKET_FILE << ":" << err.what() << endl;
-    }
-}
-}
 
 namespace asio_link {
+IOAddress::IOAddress(const string& address_str)
+    // XXX: we cannot simply construct the address in the initialization list
+    // because we'd like to throw our own exception on failure.
+{
+    error_code err;
+    asio_address_ = ip::address::from_string(address_str, err);
+    if (err) {
+        isc_throw(IOError, "Failed to convert string to address '"
+                  << address_str << "': " << err.message());
+    }
+}
+
+IOAddress::IOAddress(const ip::address& asio_address) :
+    asio_address_(asio_address)
+{}
+
+string
+IOAddress::toText() const {
+    return (asio_address_.to_string());
+}
+
+class TCPEndpoint : public IOEndpoint {
+public:
+    TCPEndpoint(const IOAddress& address, const unsigned short port) :
+        asio_endpoint_placeholder_(
+            new tcp::endpoint(ip::address::from_string(address.toText()),
+                              port)),
+        asio_endpoint_(*asio_endpoint_placeholder_)
+    {}
+    TCPEndpoint(const tcp::endpoint& asio_endpoint) :
+        asio_endpoint_placeholder_(NULL), asio_endpoint_(asio_endpoint)
+    {}
+        
+    ~TCPEndpoint() { delete asio_endpoint_placeholder_; }
+    virtual IOAddress getAddress() const {
+        return (asio_endpoint_.address());
+    }
+private:
+    const tcp::endpoint* asio_endpoint_placeholder_;
+    const tcp::endpoint& asio_endpoint_;
+};
+
+class UDPEndpoint : public IOEndpoint {
+public:
+    UDPEndpoint(const IOAddress& address, const unsigned short port) :
+        asio_endpoint_placeholder_(
+            new udp::endpoint(ip::address::from_string(address.toText()),
+                              port)),
+        asio_endpoint_(*asio_endpoint_placeholder_)
+    {}
+    UDPEndpoint(const udp::endpoint& asio_endpoint) :
+        asio_endpoint_placeholder_(NULL), asio_endpoint_(asio_endpoint)
+    {}
+    ~UDPEndpoint() { delete asio_endpoint_placeholder_; }
+    virtual IOAddress getAddress() const {
+        return (asio_endpoint_.address());
+    }
+private:
+    const udp::endpoint* asio_endpoint_placeholder_;
+    const udp::endpoint& asio_endpoint_;
+};
+
+const IOEndpoint*
+IOEndpoint::create(const int protocol, const IOAddress& address,
+                   const unsigned short port)
+{
+    if (protocol == IPPROTO_UDP) {
+        return (new UDPEndpoint(address, port));
+    } else if (protocol == IPPROTO_TCP) {
+        return (new TCPEndpoint(address, port));
+    }
+    isc_throw(IOError,
+              "IOEndpoint creation attempt for unsupported protocol: " <<
+              protocol);
+}
+
+class TCPSocket : public IOSocket {
+private:
+    TCPSocket(const TCPSocket& source);
+    TCPSocket& operator=(const TCPSocket& source);
+public:
+    TCPSocket(tcp::socket& socket) : socket_(socket) {}
+    virtual int getNative() const { return (socket_.native()); }
+    virtual int getProtocol() const { return (IPPROTO_TCP); }
+private:
+    tcp::socket& socket_;
+};
+
+class UDPSocket : public IOSocket {
+private:
+    UDPSocket(const UDPSocket& source);
+    UDPSocket& operator=(const UDPSocket& source);
+public:
+    UDPSocket(udp::socket& socket) : socket_(socket) {}
+    virtual int getNative() const { return (socket_.native()); }
+    virtual int getProtocol() const { return (IPPROTO_UDP); }
+private:
+    udp::socket& socket_;
+};
+
+class DummySocket : public IOSocket {
+private:
+    DummySocket(const DummySocket& source);
+    DummySocket& operator=(const DummySocket& source);
+public:
+    DummySocket(const int protocol) : protocol_(protocol) {}
+    virtual int getNative() const { return (-1); }
+    virtual int getProtocol() const { return (protocol_); }
+private:
+    const int protocol_;
+};
+
+IOSocket&
+IOSocket::getDummyUDPSocket() {
+    static DummySocket socket(IPPROTO_UDP);
+    return (socket);
+}
+
+IOSocket&
+IOSocket::getDummyTCPSocket() {
+    static DummySocket socket(IPPROTO_TCP);
+    return (socket);
+}
+
+IOMessage::IOMessage(const void* data, const size_t data_size,
+                     IOSocket& io_socket, const IOEndpoint& remote_endpoint) :
+    data_(data), data_size_(data_size), io_socket_(io_socket),
+    remote_endpoint_(remote_endpoint)
+{}
+
 //
 // Helper classes for asynchronous I/O using asio
 //
@@ -102,15 +181,18 @@ public:
     TCPClient(AuthSrv* auth_server, io_service& io_service) :
         auth_server_(auth_server),
         socket_(io_service),
+        io_socket_(socket_),
         response_buffer_(0),
         responselen_buffer_(TCP_MESSAGE_LENGTHSIZE),
         response_renderer_(response_buffer_),
-        dns_message_(Message::PARSE)
+        dns_message_(Message::PARSE),
+        custom_callback_(NULL)
     {}
 
     void start() {
         // Check for queued configuration commands
-        if (auth_server_->configSession()->hasQueuedMsgs()) {
+        if (auth_server_ != NULL &&
+            auth_server_->configSession()->hasQueuedMsgs()) {
             auth_server_->configSession()->checkCommand();
         }
         async_read(socket_, asio::buffer(data_, TCP_MESSAGE_LENGTHSIZE),
@@ -119,7 +201,7 @@ public:
                                placeholders::bytes_transferred));
     }
 
-    tcp::socket& getSocket() { return (socket_); }
+    ip::tcp::socket& getSocket() { return (socket_); }
 
     void headerRead(const asio::error_code& error,
                     size_t bytes_transferred)
@@ -129,7 +211,6 @@ public:
 
             uint16_t msglen = dnsbuffer.readUint16();
             async_read(socket_, asio::buffer(data_, msglen),
-
                        boost::bind(&TCPClient::requestRead, this,
                                    placeholders::error,
                                    placeholders::bytes_transferred));
@@ -142,25 +223,28 @@ public:
                      size_t bytes_transferred)
     {
         if (!error) {
-            InputBuffer dnsbuffer(data_, bytes_transferred);
-            if (check_axfr_query(data_, bytes_transferred)) {
-                dispatch_axfr_query(socket_.native(), data_, bytes_transferred); 
-                // start to get new query ?
+            const TCPEndpoint remote_endpoint(socket_.remote_endpoint());
+            const IOMessage io_message(data_, bytes_transferred, io_socket_,
+                                       remote_endpoint);
+            // currently, for testing purpose only
+            if (custom_callback_ != NULL) {
+                (*custom_callback_)(io_message);
                 start();
+                return;
+            }
+
+            if (auth_server_->processMessage(io_message, dns_message_,
+                                             response_renderer_)) {
+                responselen_buffer_.writeUint16(
+                    response_buffer_.getLength());
+                async_write(socket_,
+                            asio::buffer(
+                                responselen_buffer_.getData(),
+                                responselen_buffer_.getLength()),
+                            boost::bind(&TCPClient::responseWrite, this,
+                                        placeholders::error));
             } else {
-                if (auth_server_->processMessage(dnsbuffer, dns_message_,
-                                                response_renderer_, false)) {
-                    responselen_buffer_.writeUint16(
-                        response_buffer_.getLength());
-                    async_write(socket_,
-                                asio::buffer(
-                                    responselen_buffer_.getData(),
-                                    responselen_buffer_.getLength()),
-                                boost::bind(&TCPClient::responseWrite, this,
-                                            placeholders::error));
-                } else {
-                    delete this;
-                }
+                delete this;
             }
         } else {
             delete this;
@@ -171,9 +255,9 @@ public:
         if (!error) {
                 async_write(socket_,
                             asio::buffer(response_buffer_.getData(),
-                                                response_buffer_.getLength()),
-                        boost::bind(&TCPClient::handleWrite, this,
-                                    placeholders::error));
+                                         response_buffer_.getLength()),
+                            boost::bind(&TCPClient::handleWrite, this,
+                                        placeholders::error));
         } else {
             delete this;
         }
@@ -187,9 +271,15 @@ public:
       }
     }
 
+    // Currently this is for tests only
+    void setCallBack(const IOService::IOCallBack* callback) {
+        custom_callback_ = callback;
+    }
+
 private:
     AuthSrv* auth_server_;
     tcp::socket socket_;
+    TCPSocket io_socket_;
     OutputBuffer response_buffer_;
     OutputBuffer responselen_buffer_;
     MessageRenderer response_renderer_;
@@ -197,6 +287,9 @@ private:
     enum { MAX_LENGTH = 65535 };
     static const size_t TCP_MESSAGE_LENGTHSIZE = 2;
     char data_[MAX_LENGTH];
+
+    // currently, for testing purpose only.
+    const IOService::IOCallBack* custom_callback_;
 };
 
 class TCPServer {
@@ -205,7 +298,8 @@ public:
               int af, uint16_t port) :
         auth_server_(auth_server), io_service_(io_service),
         acceptor_(io_service_), listening_(new TCPClient(auth_server_,
-                                                         io_service_))
+                                                         io_service_)),
+        custom_callback_(NULL)
     {
         tcp::endpoint endpoint(af == AF_INET6 ? tcp::v6() : tcp::v4(), port);
         acceptor_.open(endpoint.protocol());
@@ -246,6 +340,7 @@ public:
     {
         if (!error) {
             assert(new_client == listening_);
+            new_client->setCallBack(custom_callback_);
             new_client->start();
             listening_ = new TCPClient(auth_server_, io_service_);
             acceptor_.async_accept(listening_->getSocket(),
@@ -257,11 +352,19 @@ public:
         }
     }
 
+    // Currently this is for tests only
+    void setCallBack(const IOService::IOCallBack* callback) {
+        custom_callback_ = callback;
+    }
+
 private:
     AuthSrv* auth_server_;
     io_service& io_service_;
     tcp::acceptor acceptor_;
     TCPClient* listening_;
+
+    // currently, for testing purpose only.
+    const IOService::IOCallBack* custom_callback_;
 };
 
 class UDPServer {
@@ -271,9 +374,11 @@ public:
         auth_server_(auth_server),
         io_service_(io_service),
         socket_(io_service, af == AF_INET6 ? udp::v6() : udp::v4()),
+        io_socket_(socket_),
         response_buffer_(0),
         response_renderer_(response_buffer_),
-        dns_message_(Message::PARSE)
+        dns_message_(Message::PARSE),
+        custom_callback_(NULL)
     {
         // Set v6-only (we use a different instantiation for v4,
         // otherwise asio will bind to both v4 and v6
@@ -290,9 +395,11 @@ public:
               asio::ip::address addr, uint16_t port) :
         auth_server_(auth_server), io_service_(io_service),
         socket_(io_service, addr.is_v6() ? udp::v6() : udp::v4()),
+        io_socket_(socket_),
         response_buffer_(0),
         response_renderer_(response_buffer_),
-        dns_message_(Message::PARSE)
+        dns_message_(Message::PARSE),
+        custom_callback_(NULL)
     {
         socket_.bind(udp::endpoint(addr, port));
         startReceive();
@@ -302,16 +409,25 @@ public:
                        size_t bytes_recvd)
     {
         // Check for queued configuration commands
-        if (auth_server_->configSession()->hasQueuedMsgs()) {
+        if (auth_server_ != NULL &&
+            auth_server_->configSession()->hasQueuedMsgs()) {
             auth_server_->configSession()->checkCommand();
         }
         if (!error && bytes_recvd > 0) {
-            InputBuffer request_buffer(data_, bytes_recvd);
+            const UDPEndpoint remote_endpoint(sender_endpoint_);
+            const IOMessage io_message(data_, bytes_recvd, io_socket_,
+                                       remote_endpoint);
+            // currently, for testing purpose only
+            if (custom_callback_ != NULL) {
+                (*custom_callback_)(io_message);
+                startReceive();
+                return;
+            }
 
             dns_message_.clear(Message::PARSE);
             response_renderer_.clear();
-            if (auth_server_->processMessage(request_buffer, dns_message_,
-                                            response_renderer_, true)) {
+            if (auth_server_->processMessage(io_message, dns_message_,
+                                             response_renderer_)) {
                 socket_.async_send_to(
                     asio::buffer(response_buffer_.getData(),
                                         response_buffer_.getLength()),
@@ -335,6 +451,11 @@ public:
         // the next request.
         startReceive();
     }
+
+    // Currently this is for tests only
+    void setCallBack(const IOService::IOCallBack* callback) {
+        custom_callback_ = callback;
+    }
 private:
     void startReceive() {
         socket_.async_receive_from(
@@ -348,55 +469,44 @@ private:
     AuthSrv* auth_server_;
     io_service& io_service_;
     udp::socket socket_;
+    UDPSocket io_socket_;
     OutputBuffer response_buffer_;
     MessageRenderer response_renderer_;
     Message dns_message_;
     udp::endpoint sender_endpoint_;
     enum { MAX_LENGTH = 4096 };
     char data_[MAX_LENGTH];
-};
 
-// This is a helper structure just to make the construction of IOServiceImpl
-// exception safe.  If the constructor of {UDP/TCP}Server throws an exception,
-// the destructor of this class will automatically perform the necessary
-// cleanup.
-struct ServerSet {
-    ServerSet() : udp4_server(NULL), udp6_server(NULL),
-                  tcp4_server(NULL), tcp6_server(NULL)
-    {}
-    ~ServerSet() {
-        delete udp4_server;
-        delete udp6_server;
-        delete tcp4_server;
-        delete tcp6_server;
-    }
-    UDPServer* udp4_server;
-    UDPServer* udp6_server;
-    TCPServer* tcp4_server;
-    TCPServer* tcp6_server;
+    // currently, for testing purpose only.
+    const IOService::IOCallBack* custom_callback_;
 };
 
 class IOServiceImpl {
 public:
     IOServiceImpl(AuthSrv* auth_server, const char* address, const char* port,
                   const bool use_ipv4, const bool use_ipv6);
-    ~IOServiceImpl();
     asio::io_service io_service_;
     AuthSrv* auth_server_;
-    UDPServer* udp4_server_;
-    UDPServer* udp6_server_;
-    TCPServer* tcp4_server_;
-    TCPServer* tcp6_server_;
+
+    typedef boost::shared_ptr<UDPServer> UDPServerPtr;
+    typedef boost::shared_ptr<TCPServer> TCPServerPtr;
+    UDPServerPtr udp4_server_;
+    UDPServerPtr udp6_server_;
+    TCPServerPtr tcp4_server_;
+    TCPServerPtr tcp6_server_;
+
+    // This member is used only for testing at the moment.
+    IOService::IOCallBack callback_;
 };
 
 IOServiceImpl::IOServiceImpl(AuthSrv* auth_server, const char* const address,
                              const char* const port, const bool use_ipv4,
                              const bool use_ipv6) :
-    auth_server_(auth_server), udp4_server_(NULL), udp6_server_(NULL),
-    tcp4_server_(NULL), tcp6_server_(NULL)
+    auth_server_(auth_server),
+    udp4_server_(UDPServerPtr()), udp6_server_(UDPServerPtr()),
+    tcp4_server_(TCPServerPtr()), tcp6_server_(TCPServerPtr())
 {
-    ServerSet servers;
-    uint16_t portnum = atoi(port);
+    uint16_t portnum;
 
     try {
         portnum = boost::lexical_cast<uint16_t>(port);
@@ -408,55 +518,41 @@ IOServiceImpl::IOServiceImpl(AuthSrv* auth_server, const char* const address,
     if (address != NULL) {
         asio::ip::address addr = asio::ip::address::from_string(address);
 
-        if ((addr.is_v6() && !use_ipv6)) {
+        if (addr.is_v6() && !use_ipv6) {
             isc_throw(FatalError,
                       "[b10-auth] Error: -4 conflicts with " << addr);
         }
 
-        if ((addr.is_v4() && !use_ipv4)) {
+        if (addr.is_v4() && !use_ipv4) {
             isc_throw(FatalError,
                       "[b10-auth] Error: -6 conflicts with " << addr);
         }
 
         if (addr.is_v4()) {
-            servers.udp4_server = new UDPServer(auth_server, io_service_,
-                                                addr, portnum);
-            servers.tcp4_server = new TCPServer(auth_server, io_service_,
-                                                addr, portnum);
+            udp4_server_ = UDPServerPtr(new UDPServer(auth_server, io_service_,
+                                                      addr, portnum));
+            tcp4_server_ = TCPServerPtr(new TCPServer(auth_server, io_service_,
+                                                      addr, portnum));
          } else {
-            servers.udp6_server = new UDPServer(auth_server, io_service_,
-                                                addr, portnum);
-            servers.tcp6_server = new TCPServer(auth_server, io_service_,
-                                                addr, portnum);
+            udp6_server_ = UDPServerPtr(new UDPServer(auth_server, io_service_,
+                                                      addr, portnum));
+            tcp6_server_ = TCPServerPtr(new TCPServer(auth_server, io_service_,
+                                                      addr, portnum));
         }
     } else {
         if (use_ipv4) {
-            servers.udp4_server = new UDPServer(auth_server, io_service_,
-                                                AF_INET, portnum);
-            servers.tcp4_server = new TCPServer(auth_server, io_service_,
-                                                AF_INET, portnum);
+            udp4_server_ = UDPServerPtr(new UDPServer(auth_server, io_service_,
+                                                      AF_INET, portnum));
+            tcp4_server_ = TCPServerPtr(new TCPServer(auth_server, io_service_,
+                                                      AF_INET, portnum));
         }
         if (use_ipv6) {
-            servers.udp6_server = new UDPServer(auth_server, io_service_,
-                                                AF_INET6, portnum);
-            servers.tcp6_server = new TCPServer(auth_server, io_service_,
-                                                AF_INET6, portnum);
+            udp6_server_ = UDPServerPtr(new UDPServer(auth_server, io_service_,
+                                                      AF_INET6, portnum));
+            tcp6_server_ = TCPServerPtr(new TCPServer(auth_server, io_service_,
+                                                      AF_INET6, portnum));
         }
     }
-
-    // Now we don't have to worry about exception, and need to make sure that
-    // the server objects won't be accidentally cleaned up.
-    servers.udp4_server = NULL;
-    servers.udp6_server = NULL;
-    servers.tcp4_server = NULL;
-    servers.tcp6_server = NULL;
-}
-
-IOServiceImpl::~IOServiceImpl() {
-    delete udp4_server_;
-    delete udp6_server_;
-    delete tcp4_server_;
-    delete tcp6_server_;
 }
 
 IOService::IOService(AuthSrv* auth_server, const char* const address,
@@ -482,5 +578,22 @@ IOService::stop() {
 asio::io_service&
 IOService::get_io_service() {
     return impl_->io_service_;
+}
+
+void
+IOService::setCallBack(const IOCallBack callback) {
+    impl_->callback_ = callback;
+    if (impl_->udp4_server_ != NULL) {
+        impl_->udp4_server_->setCallBack(&impl_->callback_);
+    }
+    if (impl_->udp6_server_ != NULL) {
+        impl_->udp6_server_->setCallBack(&impl_->callback_);
+    }
+    if (impl_->tcp4_server_ != NULL) {
+        impl_->tcp4_server_->setCallBack(&impl_->callback_);
+    }
+    if (impl_->tcp6_server_ != NULL) {
+        impl_->tcp6_server_->setCallBack(&impl_->callback_);
+    }
 }
 }

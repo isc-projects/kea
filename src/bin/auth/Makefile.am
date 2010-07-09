@@ -1,6 +1,7 @@
 SUBDIRS = . tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
+AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
 AM_CPPFLAGS += -I$(top_builddir)/src/lib/cc
 
@@ -53,8 +54,8 @@ b10_auth_LDADD += $(top_builddir)/src/lib/config/.libs/libcfgclient.a
 b10_auth_LDADD += $(top_builddir)/src/lib/cc/.libs/libcc.a
 b10_auth_LDADD += $(top_builddir)/src/lib/exceptions/.libs/libexceptions.a
 b10_auth_LDADD += $(top_builddir)/src/bin/auth/libasio_link.a
-b10_auth_LDADD += $(SQLITE_LIBS)
 b10_auth_LDADD += $(top_builddir)/src/lib/xfr/.libs/libxfr.a
+b10_auth_LDADD += $(SQLITE_LIBS)
 
 # TODO: config.h.in is wrong because doesn't honor pkgdatadir
 # and can't use @datadir@ because doesn't expand default ${prefix}
