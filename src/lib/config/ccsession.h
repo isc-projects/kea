@@ -125,6 +125,8 @@ public:
      * configuration of the local module needs to be updated.
      * This must refer to a valid object of a concrete derived class of
      * AbstractSession without establishing the session.
+     * Note: the design decision on who is responsible for establishing the
+     * session is in flux, and may change in near future.
      * @param command_handler A callback function pointer to be called when
      * a control command from a remote agent needs to be performed on the
      * local module.
