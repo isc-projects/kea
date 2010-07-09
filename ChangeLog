@@ -1,3 +1,10 @@
+  74.	[func]*		jinmei
+	Refactored the cc::Session class by introducing an abstract base
+	class.  Test code can use their own derived mock class so that
+	tests can be done without establishing a real CC session.  This
+	change also modified some public APIs, mainly in the config
+	module. (Trac #275, r2459)
+
   73.	[bug]		jelte
   	Fixed a bug where in bindctl, locally changed settings were
 	reset when the list of running modules is updated. (Trac #285,
