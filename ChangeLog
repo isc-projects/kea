@@ -1,3 +1,14 @@
+  73.	[bug]		jelte
+  	Fixed a bug where in bindctl, locally changed settings were
+	reset when the list of running modules is updated. (Trac #285,
+	r2452)
+
+  72.	[build]		jinmei
+	Added -R when linking python wrapper modules to libpython when
+	possible.  This helps build BIND 10 on platforms that install
+	libpython whose path is unknown to run-time loader.  NetBSD is a
+	known such platform. (Trac #148, r2427)
+
   71.  [func]		each
   	Add "-a" (address) option to bind10 to specify an address for
 	the auth server to listen on.

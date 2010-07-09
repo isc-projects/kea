@@ -102,7 +102,8 @@ class BindCmdInterpreter(Cmd):
         self.conn = ValidatedHTTPSConnection(self.server_port,
                                              ca_certs=pem_file)
         self.session_id = self._get_session_id()
-
+        self.config_data = None
+        
     def _get_session_id(self):
         '''Generate one session id for the connection. '''
         rand = os.urandom(16)
@@ -252,7 +253,10 @@ class BindCmdInterpreter(Cmd):
         should be called before interpreting command line or complete-key
         is entered. This may not be the best way to keep bindctl
         and cmdctl share same modules information, but it works.'''
-        self.config_data = isc.config.UIModuleCCSession(self)
+        if self.config_data is not None:
+            self.config_data.update_specs_and_config()
+        else:
+            self.config_data = isc.config.UIModuleCCSession(self)
         self._update_commands()
 
     def precmd(self, line):
