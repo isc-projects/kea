@@ -323,6 +323,10 @@ class UIModuleCCSession(MultiConfigData):
         for module in specs.keys():
             self.set_specification(isc.config.ModuleSpec(specs[module]))
 
+    def update_specs_and_config(self):
+        self.request_specifications();
+        self.request_current_config();
+
     def request_current_config(self):
         """Requests the current configuration from the configuration
            manager through b10-cmdctl, and stores those as CURRENT"""
@@ -330,6 +334,7 @@ class UIModuleCCSession(MultiConfigData):
         if 'version' not in config or config['version'] != 1:
             raise ModuleCCSessionError("Bad config version")
         self._set_current_config(config)
+
 
     def add_value(self, identifier, value_str):
         """Add a value to a configuration list. Raises a DataTypeError

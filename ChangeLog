@@ -1,3 +1,8 @@
+  73.	[bug]		jelte
+  	Fixed a bug where in bindctl, locally changed settings were
+	reset when the list of running modules is updated. (Trac #285,
+	r2452)
+
   72.	[build]		jinmei
 	Added -R when linking python wrapper modules to libpython when
 	possible.  This helps build BIND 10 on platforms that install
