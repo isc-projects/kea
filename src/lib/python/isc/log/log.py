@@ -70,7 +70,7 @@ class NSFileLogHandler(logging.handlers.RotatingFileHandler):
             predetermined log file size
         """
         dir = os.path.split(file_name)
-        if(os.path.exists(dir[0])):
+        if (os.path.exists(dir[0])):
             self.baseFilename = file_name
         self.maxBytes = max_bytes
         self.backupCount = backup_count
@@ -194,7 +194,7 @@ class NSLogger(logging.getLoggerClass()):
         configuration, or add it to the logger.
         """
         if (self._file_handler in self.handlers):
-            if(log_file != 0 and log_file != ''):
+            if (log_file != 0 and log_file != ''):
                 self._file_handler.update_config(log_file, backup_count, max_bytes)
             else:
                 """If log file is empty, the handler will be removed."""
@@ -208,19 +208,19 @@ class NSLogger(logging.getLoggerClass()):
          """Get config data from module configuration"""
          
          log_file_str = config_data.get('log_file')
-         if(log_file_str):
+         if (log_file_str):
             self._log_file = log_file_str
          
          severity_str = config_data.get('log_severity')
-         if(severity_str):
+         if (severity_str):
              self._severity = severity_str
 
          versions_str = config_data.get('log_versions')
-         if(versions_str):
+         if (versions_str):
              self._versions = int(versions_str)
 
          max_bytes_str = config_data.get('log_max_bytes')
-         if(max_bytes_str):
+         if (max_bytes_str):
              self._max_bytes = int(max_bytes_str)
 
     def update_config(self, config_data):
@@ -231,7 +231,7 @@ class NSLogger(logging.getLoggerClass()):
         self._get_config(config_data)
 
         logLevel = LEVELS.get(self._severity, logging.NOTSET)
-        if(logLevel != self.getEffectiveLevel()):
+        if (logLevel != self.getEffectiveLevel()):
             self.setLevel(logLevel)
         self._update_rotate_handler(self._log_file, self._versions, self._max_bytes)
 
