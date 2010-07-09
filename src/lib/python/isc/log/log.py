@@ -158,7 +158,7 @@ class NSLogger(logging.getLoggerClass()):
             max_bytes : limit log growth
             backup_count : max backup count
         """
-        if(log_file != 0  and log_file != ''):
+        if (log_file != 0  and log_file != ''):
             try:
                 self._file_handler = NSFileLogHandler(filename = log_file,
                                           maxBytes = max_bytes, backupCount = backup_count)
