@@ -89,7 +89,7 @@ my_command_handler(const string& command, const ElementPtr args) {
 
 void
 usage() {
-    cerr << "Usage: b10-auth [-p port] [-4|-6] [-nv]" << endl;
+    cerr << "Usage: b10-auth [-a address] [-p port] [-4|-6] [-nv]" << endl;
     exit(1);
 }
 } // end of anonymous namespace
@@ -168,6 +168,12 @@ main(int argc, char* argv[]) {
         cout << "[b10-auth] Server created." << endl;
 
         if (address != NULL) {
+            // XXX: we can only specify at most one explicit address.
+            // This also means the server cannot run in the dual address
+            // family mode if explicit addresses need to be specified.
+            // We don't bother to fix this problem, however.  The -a option
+            // is a short term workaround until we support dynamic listening
+            // port allocation.
             io_service = new asio_link::IOService(auth_server, *port,
                                                   *address);
         } else {
