@@ -425,13 +425,15 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
         io_message.getRemoteEndpoint().getAddress().toText();
     static const string command_template_start =
         "{\"command\": [\"notify\", {\"zone_name\" : \"";
-    static const string command_template_mid = "\", \"master\" : \"";
+    static const string command_template_master = "\", \"master\" : \"";
+    static const string command_template_rrclass = "\", \"rrclass\" : \"";
     static const string command_template_end = "\"}]}";
 
     try {
         ElementPtr notify_command = Element::fromJSON(
                 command_template_start + question->getName().toText() + 
-                command_template_mid + remote_ip_address +
+                command_template_master + remote_ip_address +
+                command_template_rrclass + question->getClass().toText() +
                 command_template_end);
         const unsigned int seq =
             xfrin_session_->group_sendmsg(notify_command, "Xfrin",
