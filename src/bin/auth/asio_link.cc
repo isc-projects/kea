@@ -453,7 +453,7 @@ private:
 class IOServiceImpl {
 public:
     IOServiceImpl(AuthSrv* auth_server, const char& port,
-                  const ip::address& v4addr, const ip::address& v6addr);
+                  const ip::address* v4addr, const ip::address* v6addr);
     asio::io_service io_service_;
     AuthSrv* auth_server_;
 
@@ -469,8 +469,8 @@ public:
 };
 
 IOServiceImpl::IOServiceImpl(AuthSrv* auth_server, const char& port,
-                             const ip::address& v4addr,
-                             const ip::address& v6addr) :
+                             const ip::address* const v4addr,
+                             const ip::address* const v6addr) :
     auth_server_(auth_server),
     udp4_server_(UDPServerPtr()), udp6_server_(UDPServerPtr()),
     tcp4_server_(TCPServerPtr()), tcp6_server_(TCPServerPtr())
@@ -485,17 +485,17 @@ IOServiceImpl::IOServiceImpl(AuthSrv* auth_server, const char& port,
     }
 
     try {
-        if (v4addr.is_v4()) {
+        if (v4addr != NULL) {
             udp4_server_ = UDPServerPtr(new UDPServer(auth_server, io_service_,
-                                                      v4addr, portnum));
+                                                      *v4addr, portnum));
             tcp4_server_ = TCPServerPtr(new TCPServer(auth_server, io_service_,
-                                                      v4addr, portnum));
+                                                      *v4addr, portnum));
         }
-        if (v6addr.is_v6()) {
+        if (v6addr != NULL) {
             udp6_server_ = UDPServerPtr(new UDPServer(auth_server, io_service_,
-                                                      v6addr, portnum));
+                                                      *v6addr, portnum));
             tcp6_server_ = TCPServerPtr(new TCPServer(auth_server, io_service_,
-                                                      v6addr, portnum));
+                                                      *v6addr, portnum));
         }
     } catch (const asio::system_error& err) {
         // We need to catch and convert any ASIO level exceptions.
@@ -518,19 +518,19 @@ IOService::IOService(AuthSrv* auth_server, const char& port,
     }
 
     impl_ = new IOServiceImpl(auth_server, port,
-                              addr.is_v4() ? addr : ip::address::address(),
-                              addr.is_v6() ? addr : ip::address::address());
+                              addr.is_v4() ? &addr : NULL,
+                              addr.is_v6() ? &addr : NULL);
 }
 
 IOService::IOService(AuthSrv* auth_server, const char& port,
                      const bool use_ipv4, const bool use_ipv6) :
     impl_(NULL)
 {
-    const ip::address v4addr = use_ipv4 ? ip::address(ip::address_v4::any()) :
-        ip::address::address();
-    const ip::address v6addr = use_ipv6 ? ip::address(ip::address_v6::any()) :
-        ip::address::address();
-    impl_ = new IOServiceImpl(auth_server, port, v4addr, v6addr);
+    const ip::address v4addr_any = ip::address(ip::address_v4::any());
+    const ip::address* const v4addrp = use_ipv4 ? &v4addr_any : NULL; 
+    const ip::address v6addr_any = ip::address(ip::address_v6::any());
+    const ip::address* const v6addrp = use_ipv6 ? &v6addr_any : NULL;
+    impl_ = new IOServiceImpl(auth_server, port, v4addrp, v6addrp);
 }
 
 IOService::~IOService() {

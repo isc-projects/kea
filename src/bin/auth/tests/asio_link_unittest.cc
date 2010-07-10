@@ -156,6 +156,18 @@ resolveAddress(const int family, const int sock_type, const int protocol) {
     return (res);
 }
 
+// This fixture is a framework for various types of network operations
+// using the ASIO interfaces.  Each test case creates an IOService object,
+// opens a local "client" socket for testing, sends data via the local socket
+// to the service that would run in the IOService object.
+// A mock callback function (an ASIOCallBack object) is registered with the
+// IOService object, so the test code should be able to examine the data
+// receives on the server side.  It then checks the received data matches
+// expected parameters.
+// If initialization parameters of the IOService should be modified, the test
+// case can do it using the setIOService() method.
+// Note: the set of tests in ASIOLinkTest use actual network services and may
+// involve undesirable side effect such as blocking.
 class ASIOLinkTest : public ::testing::Test {
 protected:
     ASIOLinkTest();
@@ -166,6 +178,7 @@ protected:
         if (sock_ != -1) {
             close(sock_);
         }
+        delete io_service_;
     }
     void sendUDP(const int family) {
         res_ = resolveAddress(family, SOCK_DGRAM, IPPROTO_UDP);
@@ -179,7 +192,7 @@ protected:
         if (cc != sizeof(test_data)) {
             isc_throw(IOError, "unexpected sendto result: " << cc);
         }
-        io_service_.run();
+        io_service_->run();
     }
     void sendTCP(const int family) {
         res_ = resolveAddress(family, SOCK_STREAM, IPPROTO_TCP);
@@ -195,9 +208,54 @@ protected:
         if (cc != sizeof(test_data)) {
             isc_throw(IOError, "unexpected sendto result: " << cc);
         }
-        io_service_.run();
+        io_service_->run();
     }
-public:
+    void setIOService(const char& address) {
+        delete io_service_;
+        io_service_ = NULL;
+        io_service_ = new IOService(NULL, *TEST_PORT, address);
+        io_service_->setCallBack(ASIOCallBack(this));
+    }
+    void setIOService(const bool use_ipv4, const bool use_ipv6) {
+        delete io_service_;
+        io_service_ = NULL;
+        io_service_ = new IOService(NULL, *TEST_PORT, use_ipv4, use_ipv6);
+        io_service_->setCallBack(ASIOCallBack(this));
+    }
+    void doTest(const int family, const int protocol) {
+        if (protocol == IPPROTO_UDP) {
+            sendUDP(family);
+        } else {
+            sendTCP(family);
+        }
+
+        // There doesn't seem to be an effective test for the validity of
+        // 'native'.
+        // One thing we are sure is it must be different from our local socket.
+        EXPECT_NE(sock_, callback_native_);
+        EXPECT_EQ(protocol, callback_protocol_);
+        EXPECT_EQ(family == AF_INET6 ? TEST_IPV6_ADDR : TEST_IPV4_ADDR,
+                  callback_address_);
+
+        const uint8_t* expected_data =
+            protocol == IPPROTO_UDP ? test_data : test_data + 2;
+        const size_t expected_datasize =
+            protocol == IPPROTO_UDP ? sizeof(test_data) :
+            sizeof(test_data) - 2;
+        EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, &callback_data_[0],
+                            callback_data_.size(),
+                            expected_data, expected_datasize);
+    }
+private:
+    class ASIOCallBack : public std::unary_function<IOMessage, void> {
+    public:
+        ASIOCallBack(ASIOLinkTest* test_obj) : test_obj_(test_obj) {}
+        void operator()(const IOMessage& io_message) const {
+            test_obj_->callBack(io_message);
+        }
+    private:
+        ASIOLinkTest* test_obj_;
+    };
     void callBack(const IOMessage& io_message) {
         callback_protocol_ = io_message.getSocket().getProtocol();
         callback_native_ = io_message.getSocket().getNative();
@@ -207,10 +265,10 @@ public:
             static_cast<const uint8_t*>(io_message.getData()),
             static_cast<const uint8_t*>(io_message.getData()) +
             io_message.getDataSize());
-        io_service_.stop();
+        io_service_->stop();
     }
 protected:
-    IOService io_service_;
+    IOService* io_service_;
     int callback_protocol_;
     int callback_native_;
     string callback_address_;
@@ -220,61 +278,74 @@ private:
     struct addrinfo* res_;
 };
 
-class ASIOCallBack : public std::unary_function<IOMessage, void> {
-public:
-    ASIOCallBack(ASIOLinkTest* test_obj) : test_obj_(test_obj) {}
-    void operator()(const IOMessage& io_message) const {
-        test_obj_->callBack(io_message);
-    }
-private:
-    ASIOLinkTest* test_obj_;
-};
-
 ASIOLinkTest::ASIOLinkTest() :
-    io_service_(NULL, *TEST_PORT, true, true),
-    sock_(-1), res_(NULL)
+    io_service_(NULL), sock_(-1), res_(NULL)
 {
-    io_service_.setCallBack(ASIOCallBack(this));
+    setIOService(true, true);
 }
 
 TEST_F(ASIOLinkTest, v6UDPSend) {
-    sendUDP(AF_INET6);
-    // There doesn't seem to be an effective test for the validity of 'native'.
-    // One thing we are sure is it must be different from our local socket.
-    EXPECT_NE(callback_native_, sock_);
-    EXPECT_EQ(IPPROTO_UDP, callback_protocol_);
-    EXPECT_EQ(TEST_IPV6_ADDR, callback_address_);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, &callback_data_[0],
-                        callback_data_.size(), test_data, sizeof(test_data));
+    doTest(AF_INET6, IPPROTO_UDP);
 }
 
 TEST_F(ASIOLinkTest, v6TCPSend) {
-    sendTCP(AF_INET6);
-    EXPECT_NE(callback_native_, sock_);
-    EXPECT_EQ(IPPROTO_TCP, callback_protocol_);
-    EXPECT_EQ(TEST_IPV6_ADDR, callback_address_);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, &callback_data_[0],
-                        callback_data_.size(),
-                        test_data + 2, sizeof(test_data) - 2);
+    doTest(AF_INET6, IPPROTO_TCP);
 }
 
 TEST_F(ASIOLinkTest, v4UDPSend) {
-    sendUDP(AF_INET);
-    EXPECT_NE(callback_native_, sock_);
-    EXPECT_EQ(IPPROTO_UDP, callback_protocol_);
-    EXPECT_EQ(TEST_IPV4_ADDR, callback_address_);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, &callback_data_[0],
-                        callback_data_.size(), test_data, sizeof(test_data));
+    doTest(AF_INET, IPPROTO_UDP);
 }
 
 TEST_F(ASIOLinkTest, v4TCPSend) {
-    sendTCP(AF_INET);
-    EXPECT_NE(callback_native_, sock_);
-    EXPECT_EQ(IPPROTO_TCP, callback_protocol_);
-    EXPECT_EQ(TEST_IPV4_ADDR, callback_address_);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, &callback_data_[0],
-                        callback_data_.size(),
-                        test_data + 2, sizeof(test_data) - 2);
+    doTest(AF_INET, IPPROTO_TCP);
+}
+
+TEST_F(ASIOLinkTest, v6UDPSendSpecific) {
+    // Explicitly set a specific address to be bound to the socket.
+    // The subsequent test does not directly ensures the underlying socket
+    // is bound to the expected address, but the success of the tests should
+    // reasonably suggest it works as intended.
+    // Specifying an address also implicitly means the service runs in a
+    // single address-family mode.  In tests using TCP we can confirm that
+    // by trying to make a connection and seeing a failure.  In UDP, it'd be
+    // more complicated because we need to use a connected socket and catch
+    // an error on a subsequent read operation.  We could do it, but for
+    // simplicity we only tests the easier cases for now.
+
+    setIOService(*TEST_IPV6_ADDR);
+    doTest(AF_INET6, IPPROTO_UDP);
+}
+
+TEST_F(ASIOLinkTest, v6TCPSendSpecific) {
+    setIOService(*TEST_IPV6_ADDR);
+    doTest(AF_INET6, IPPROTO_TCP);
+
+    EXPECT_THROW(sendTCP(AF_INET), IOError);
+}
+
+TEST_F(ASIOLinkTest, v4UDPSendSpecific) {
+    setIOService(*TEST_IPV4_ADDR);
+    doTest(AF_INET, IPPROTO_UDP);
+}
+
+TEST_F(ASIOLinkTest, v4TCPSendSpecific) {
+    setIOService(*TEST_IPV4_ADDR);
+    doTest(AF_INET, IPPROTO_TCP);
+
+    EXPECT_THROW(sendTCP(AF_INET6), IOError);
+}
+
+TEST_F(ASIOLinkTest, v6TCPOnly) {
+    // Open only IPv6 TCP socket.  A subsequent attempt of establishing an
+    // IPv4/TCP connection should fail.  See above for why we only test this
+    // for TCP.
+    setIOService(false, true);
+    EXPECT_THROW(sendTCP(AF_INET), IOError);
+}
+
+TEST_F(ASIOLinkTest, v4TCPOnly) {
+    setIOService(true, false);
+    EXPECT_THROW(sendTCP(AF_INET6), IOError);
 }
 
 }

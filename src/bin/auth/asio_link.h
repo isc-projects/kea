@@ -380,6 +380,9 @@ class IOService {
     ///
     /// \name Constructors and Destructor
     ///
+    /// These are currently very specific to the authoritative server
+    /// implementation.
+    ///
     /// Note: The copy constructor and the assignment operator are
     /// intentionally defined as private, making this class non-copyable.
     //@{
@@ -387,9 +390,15 @@ private:
     IOService(const IOService& source);
     IOService& operator=(const IOService& source);
 public:
-    /// \brief The constructor.  Currently very specific to the authoritative
-    /// server implementation.
-    IOService(AuthSrv* auth_server, const char& address, const char& port);
+    /// \brief The constructor with a specific IP address and port on which
+    /// the services listen on.
+    IOService(AuthSrv* auth_server, const char& port, const char& address);
+    /// \brief The constructor with a specific port on which the services
+    /// listen on.
+    ///
+    /// It effectively listens on "any" IPv4 and/or IPv6 addresses.
+    /// IPv4/IPv6 services will be available if and only if \c use_ipv4
+    /// or \c use_ipv6 is \c true, respectively.
     IOService(AuthSrv* auth_server, const char& port,
               const bool use_ipv4, const bool use_ipv6);
     /// \brief The destructor.
