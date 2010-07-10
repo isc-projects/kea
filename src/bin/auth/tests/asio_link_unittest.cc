@@ -89,6 +89,13 @@ TEST(IOSocketTest, dummySockets) {
     EXPECT_EQ(-1, IOSocket::getDummyTCPSocket().getNative());
 }
 
+TEST(IOServiceTest, badPort) {
+    EXPECT_THROW(IOService(NULL, NULL, "65536", true, false), IOError);
+    EXPECT_THROW(IOService(NULL, NULL, "5300.0", true, false), IOError);
+    EXPECT_THROW(IOService(NULL, NULL, "-1", true, false), IOError);
+    EXPECT_THROW(IOService(NULL, NULL, "domain", true, false), IOError);
+}
+
 struct addrinfo*
 resolveAddress(const int family, const int sock_type, const int protocol) {
     const char* const addr = (family == AF_INET6) ?
