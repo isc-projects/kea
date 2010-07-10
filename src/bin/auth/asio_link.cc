@@ -524,13 +524,15 @@ IOServiceImpl::IOServiceImpl(AuthSrv* auth_server, const char* const address,
         }
 
         if (addr.is_v6() && !use_ipv6) {
-            isc_throw(FatalError,
-                      "[b10-auth] Error: -4 conflicts with " << addr);
+            isc_throw(IOError,
+                      "IPv6 address is specified while IPv6 is disabled: "
+                      << addr);
         }
 
         if (addr.is_v4() && !use_ipv4) {
-            isc_throw(FatalError,
-                      "[b10-auth] Error: -6 conflicts with " << addr);
+            isc_throw(IOError,
+                      "IPv4 address is specified while IPv4 is disabled: "
+                      << addr);
         }
 
         if (addr.is_v4()) {
