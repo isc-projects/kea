@@ -44,12 +44,13 @@ using namespace isc::xfr;
 using namespace asio_link;
 
 namespace {
-const char* CONFIG_TESTDB =
+const char* const CONFIG_TESTDB =
     "{\"database_file\": \"" TEST_DATA_DIR "/example.sqlite3\"}";
 // The following file must be non existent and must be non"creatable" (see
 // the sqlite3 test).
-const char* BADCONFIG_TESTDB =
+const char* const BADCONFIG_TESTDB =
     "{ \"database_file\": \"" TEST_DATA_DIR "/nodir/notexist\"}";
+const char* const DEFAULT_REMOTE_ADDRESS = "192.0.2.1";
 
 class AuthSrvTest : public ::testing::Test {
 private:
@@ -97,6 +98,9 @@ private:
         void setMessage(ElementPtr msg) { msg_ = msg; }
         void disableSend() { send_ok_ = false; }
         void disableReceive() { receive_ok_ = false; }
+
+        ElementPtr sent_msg;
+        string msg_destination;
     private:
         ElementPtr msg_;
         bool send_ok_;
@@ -180,14 +184,16 @@ AuthSrvTest::MockSession::hasQueuedMsgs() {
 }
 
 int
-AuthSrvTest::MockSession::group_sendmsg(ElementPtr msg UNUSED_PARAM,
-                                        string group UNUSED_PARAM,
+AuthSrvTest::MockSession::group_sendmsg(ElementPtr msg, string group,
                                         string instance UNUSED_PARAM,
                                         string to UNUSED_PARAM)
 {
     if (!send_ok_) {
         isc_throw(XfroutError, "mock session send is disabled for test");
     }
+
+    sent_msg = msg;
+    msg_destination = group;
     return (0);
 }
 
@@ -254,7 +260,8 @@ AuthSrvTest::createDataFromFile(const char* const datafile,
     data.clear();
 
     delete endpoint;
-    endpoint = IOEndpoint::create(protocol, IOAddress("192.0.2.1"), 5300);
+    endpoint = IOEndpoint::create(protocol,
+                                  IOAddress(DEFAULT_REMOTE_ADDRESS), 5300);
     UnitTestUtil::readWireData(datafile, data);
     io_message = new IOMessage(&data[0], data.size(),
                                protocol == IPPROTO_UDP ?
@@ -289,7 +296,8 @@ AuthSrvTest::createRequestPacket(const int protocol = IPPROTO_UDP) {
     request_message.toWire(request_renderer);
 
     delete io_message;
-    endpoint = IOEndpoint::create(protocol, IOAddress("192.0.2.1"), 5300);
+    endpoint = IOEndpoint::create(protocol,
+                                  IOAddress(DEFAULT_REMOTE_ADDRESS), 5300);
     io_message = new IOMessage(request_renderer.getData(),
                                request_renderer.getLength(),
                                protocol == IPPROTO_UDP ?
@@ -521,14 +529,42 @@ TEST_F(AuthSrvTest, notify) {
     createRequestPacket(IPPROTO_UDP);
     EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
                                           response_renderer));
+
+    // An internal command message should have been created and sent to an
+    // external module.  Check them.
+    EXPECT_EQ("Xfrin", notify_session.msg_destination);
+    EXPECT_EQ("notify",
+              notify_session.sent_msg->get("command")->get(0)->stringValue());
+    ElementPtr notify_args = notify_session.sent_msg->get("command")->get(1);
+    EXPECT_EQ("example.com.", notify_args->get("zone_name")->stringValue());
+    EXPECT_EQ(DEFAULT_REMOTE_ADDRESS,
+              notify_args->get("master")->stringValue());
+    EXPECT_EQ("IN", notify_args->get("rrclass")->stringValue());
+
+    // On success, the server should return a response to the notify.
     headerCheck(parse_message, default_qid, Rcode::NOERROR(),
                 Opcode::NOTIFY().getCode(), QR_FLAG | AA_FLAG, 1, 0, 0, 0);
 
-    // The question must be identical of the notify
+    // The question must be identical to that of the received notify
     ConstQuestionPtr question = *parse_message.beginQuestion();
     EXPECT_EQ(Name("example.com"), question->getName());
     EXPECT_EQ(RRClass::IN(), question->getClass());
     EXPECT_EQ(RRType::SOA(), question->getType());
+}
+
+TEST_F(AuthSrvTest, notifyForCHClass) {
+    // Same as the previous test, but for the CH RRClass.
+    createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::CH(),
+                        RRType::SOA());
+    request_message.setHeaderFlag(MessageFlag::AA());
+    createRequestPacket(IPPROTO_UDP);
+    EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
+                                          response_renderer));
+
+    // Other conditions should be the same, so simply confirm the RR class is
+    // set correctly.
+    ElementPtr notify_args = notify_session.sent_msg->get("command")->get(1);
+    EXPECT_EQ("CH", notify_args->get("rrclass")->stringValue());
 }
 
 TEST_F(AuthSrvTest, notifyEmptyQuestion) {
