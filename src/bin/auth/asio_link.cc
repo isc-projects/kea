@@ -510,9 +510,8 @@ IOServiceImpl::IOServiceImpl(AuthSrv* auth_server, const char* const address,
 
     try {
         portnum = boost::lexical_cast<uint16_t>(port);
-    } catch (const std::exception& ex) {
-        isc_throw(FatalError, "[b10-auth] Invalid port number '"
-                              << port << "'");
+    } catch (const boost::bad_lexical_cast& ex) {
+        isc_throw(IOError, "[b10-auth] Invalid port number '" << port << "'");
     }
 
     if (address != NULL) {

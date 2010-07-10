@@ -390,7 +390,7 @@ public:
     /// \brief The constructor.  Currently very specific to the authoritative
     /// server implementation.
     IOService(AuthSrv* auth_server, const char* const address,
-              const char* port, bool use_ipv4, bool use_ipv6);
+              const char* const port, bool use_ipv4, bool use_ipv6);
     /// \brief The destructor.
     ~IOService();
     //@}
