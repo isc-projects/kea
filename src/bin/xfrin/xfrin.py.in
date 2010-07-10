@@ -409,7 +409,8 @@ a separate method for the convenience of unit tests.
                 # the default)
                 rrclass = RRClass.IN()
                 zone_name, master_addr, db_file = self._parse_cmd_params(args)
-                ret = self.xfrin_start(zone_name, rrclass, db_file, master_addr,
+                ret = self.xfrin_start(zone_name, rrclass, db_file,
+                                       master_addr,
                                    False if command == 'retransfer' else True)
                 answer = create_answer(ret[0], ret[1])
             elif command == 'notify':
@@ -418,7 +419,7 @@ a separate method for the convenience of unit tests.
                 # Zone Manager module.
                 db_file = '@@LOCALSTATEDIR@@/@PACKAGE@/zone.sqlite3'
                 ret = self.xfrin_start(args['zone_name'], db_file,
-                                       args['master_ip'], port=53)
+                                       args['master'], port=53)
                 answer = create_answer(ret[0], ret[1])
             else:
                 answer = create_answer(1, 'unknown command: ' + command)

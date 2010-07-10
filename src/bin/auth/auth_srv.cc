@@ -425,7 +425,7 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
         io_message.getRemoteEndpoint().getAddress().toText();
     static const string command_template_start =
         "{\"command\": [\"notify\", {\"zone_name\" : \"";
-    static const string command_template_mid = "\", \"master_ip\" : \"";
+    static const string command_template_mid = "\", \"master\" : \"";
     static const string command_template_end = "\"}]}";
 
     try {
