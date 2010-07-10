@@ -201,7 +201,7 @@ public:
                                placeholders::bytes_transferred));
     }
 
-    ip::tcp::socket& getSocket() { return (socket_); }
+    tcp::socket& getSocket() { return (socket_); }
 
     void headerRead(const asio::error_code& error,
                     size_t bytes_transferred)
