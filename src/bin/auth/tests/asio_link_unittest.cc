@@ -90,25 +90,18 @@ TEST(IOSocketTest, dummySockets) {
 }
 
 TEST(IOServiceTest, badPort) {
-    EXPECT_THROW(IOService(NULL, NULL, *"65536", true, false), IOError);
-    EXPECT_THROW(IOService(NULL, NULL, *"5300.0", true, false), IOError);
-    EXPECT_THROW(IOService(NULL, NULL, *"-1", true, false), IOError);
-    EXPECT_THROW(IOService(NULL, NULL, *"domain", true, false), IOError);
+    EXPECT_THROW(IOService(NULL, *"65536", true, false), IOError);
+    EXPECT_THROW(IOService(NULL, *"5300.0", true, false), IOError);
+    EXPECT_THROW(IOService(NULL, *"-1", true, false), IOError);
+    EXPECT_THROW(IOService(NULL, *"domain", true, false), IOError);
 }
 
 TEST(IOServiceTest, badAddress) {
-    EXPECT_THROW(IOService(NULL, "192.0.2.1.1", *TEST_PORT, true, false),
+    EXPECT_THROW(IOService(NULL, *TEST_PORT, *"192.0.2.1.1"),
                  IOError);
-    EXPECT_THROW(IOService(NULL, "2001:db8:::1", *TEST_PORT, true, false),
+    EXPECT_THROW(IOService(NULL, *TEST_PORT, *"2001:db8:::1"),
                  IOError);
-    EXPECT_THROW(IOService(NULL, "localhost", *TEST_PORT, true, false),
-                 IOError);
-}
-
-TEST(IOServiceTest, addressFamilyMismatch) {
-    EXPECT_THROW(IOService(NULL, "192.0.2.1", *TEST_PORT, false, true),
-                 IOError);
-    EXPECT_THROW(IOService(NULL, "2001:db8::1", *TEST_PORT, true, false),
+    EXPECT_THROW(IOService(NULL, *TEST_PORT, *"localhost"),
                  IOError);
 }
 
@@ -207,7 +200,7 @@ private:
 };
 
 ASIOLinkTest::ASIOLinkTest() :
-    io_service_(NULL, NULL, *TEST_PORT, true, true),
+    io_service_(NULL, *TEST_PORT, true, true),
     sock_(-1), res_(NULL)
 {
     io_service_.setCallBack(ASIOCallBack(this));
