@@ -511,11 +511,17 @@ IOServiceImpl::IOServiceImpl(AuthSrv* auth_server, const char* const address,
     try {
         portnum = boost::lexical_cast<uint16_t>(&port);
     } catch (const boost::bad_lexical_cast& ex) {
-        isc_throw(IOError, "[b10-auth] Invalid port number '" << port << "'");
+        isc_throw(IOError, "Invalid port number '" << &port << "': " <<
+                  ex.what());
     }
 
     if (address != NULL) {
-        asio::ip::address addr = asio::ip::address::from_string(address);
+        error_code err;
+        const ip::address addr = ip::address::from_string(address, err);
+        if (err) {
+            isc_throw(IOError, "Invalid IP address '" << address << "': "
+                      << err.message());
+        }
 
         if (addr.is_v6() && !use_ipv6) {
             isc_throw(FatalError,

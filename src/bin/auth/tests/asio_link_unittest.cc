@@ -96,6 +96,15 @@ TEST(IOServiceTest, badPort) {
     EXPECT_THROW(IOService(NULL, NULL, *"domain", true, false), IOError);
 }
 
+TEST(IOServiceTest, badAddress) {
+    EXPECT_THROW(IOService(NULL, "192.0.2.1.1", *TEST_PORT, true, false),
+                 IOError);
+    EXPECT_THROW(IOService(NULL, "2001:db8:::1", *TEST_PORT, true, false),
+                 IOError);
+    EXPECT_THROW(IOService(NULL, "localhost", *TEST_PORT, true, false),
+                 IOError);
+}
+
 struct addrinfo*
 resolveAddress(const int family, const int sock_type, const int protocol) {
     const char* const addr = (family == AF_INET6) ?
