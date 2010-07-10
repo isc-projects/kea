@@ -105,6 +105,14 @@ TEST(IOServiceTest, badAddress) {
                  IOError);
 }
 
+TEST(IOServiceTest, addressFamilyMismatch) {
+    IOService(NULL, "192.0.2.1", *TEST_PORT, false, true);
+    EXPECT_THROW(IOService(NULL, "192.0.2.1", *TEST_PORT, false, true),
+                 IOError);
+    EXPECT_THROW(IOService(NULL, "2001:db8::1", *TEST_PORT, true, false),
+                 IOError);
+}
+
 struct addrinfo*
 resolveAddress(const int family, const int sock_type, const int protocol) {
     const char* const addr = (family == AF_INET6) ?
