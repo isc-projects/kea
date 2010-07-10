@@ -90,10 +90,10 @@ TEST(IOSocketTest, dummySockets) {
 }
 
 TEST(IOServiceTest, badPort) {
-    EXPECT_THROW(IOService(NULL, NULL, "65536", true, false), IOError);
-    EXPECT_THROW(IOService(NULL, NULL, "5300.0", true, false), IOError);
-    EXPECT_THROW(IOService(NULL, NULL, "-1", true, false), IOError);
-    EXPECT_THROW(IOService(NULL, NULL, "domain", true, false), IOError);
+    EXPECT_THROW(IOService(NULL, NULL, *"65536", true, false), IOError);
+    EXPECT_THROW(IOService(NULL, NULL, *"5300.0", true, false), IOError);
+    EXPECT_THROW(IOService(NULL, NULL, *"-1", true, false), IOError);
+    EXPECT_THROW(IOService(NULL, NULL, *"domain", true, false), IOError);
 }
 
 struct addrinfo*
@@ -191,7 +191,7 @@ private:
 };
 
 ASIOLinkTest::ASIOLinkTest() :
-    io_service_(NULL, NULL, TEST_PORT, true, true),
+    io_service_(NULL, NULL, *TEST_PORT, true, true),
     sock_(-1), res_(NULL)
 {
     io_service_.setCallBack(ASIOCallBack(this));

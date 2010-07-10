@@ -483,7 +483,7 @@ private:
 
 class IOServiceImpl {
 public:
-    IOServiceImpl(AuthSrv* auth_server, const char* address, const char* port,
+    IOServiceImpl(AuthSrv* auth_server, const char* address, const char& port,
                   const bool use_ipv4, const bool use_ipv6);
     asio::io_service io_service_;
     AuthSrv* auth_server_;
@@ -500,7 +500,7 @@ public:
 };
 
 IOServiceImpl::IOServiceImpl(AuthSrv* auth_server, const char* const address,
-                             const char* const port, const bool use_ipv4,
+                             const char& port, const bool use_ipv4,
                              const bool use_ipv6) :
     auth_server_(auth_server),
     udp4_server_(UDPServerPtr()), udp6_server_(UDPServerPtr()),
@@ -509,7 +509,7 @@ IOServiceImpl::IOServiceImpl(AuthSrv* auth_server, const char* const address,
     uint16_t portnum;
 
     try {
-        portnum = boost::lexical_cast<uint16_t>(port);
+        portnum = boost::lexical_cast<uint16_t>(&port);
     } catch (const boost::bad_lexical_cast& ex) {
         isc_throw(IOError, "[b10-auth] Invalid port number '" << port << "'");
     }
@@ -555,7 +555,7 @@ IOServiceImpl::IOServiceImpl(AuthSrv* auth_server, const char* const address,
 }
 
 IOService::IOService(AuthSrv* auth_server, const char* const address,
-                     const char* const port, const bool use_ipv4,
+                     const char& port, const bool use_ipv4,
                      const bool use_ipv6) {
     impl_ = new IOServiceImpl(auth_server, address, port, use_ipv4, use_ipv6);
 }

@@ -162,7 +162,7 @@ main(int argc, char* argv[]) {
         auth_server->setVerbose(verbose_mode);
         cout << "[b10-auth] Server created." << endl;
 
-        io_service = new asio_link::IOService(auth_server, address, port,
+        io_service = new asio_link::IOService(auth_server, address, *port,
                                               use_ipv4, use_ipv6);
         cout << "[b10-auth] IOService created." << endl;
 
