@@ -440,6 +440,11 @@ a separate method for the convenience of unit tests.
             # the class is passed in the command arg (where we specify
             # the default)
             rrclass = RRClass.IN()
+        else:
+            try:
+                rrclass = RRClass(rrclass)
+            except InvalidRRClass as e:
+                raise XfrinException('invalid RRClass: ' + rrclass)
 
         master = args.get('master')
         if not master:
