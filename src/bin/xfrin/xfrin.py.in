@@ -404,22 +404,22 @@ a separate method for the convenience of unit tests.
             if command == 'shutdown':
                 self._shutdown_event.set()
             elif command == 'retransfer' or command == 'refresh':
-                # The default RR class is IN.  We should fix this so that
-                # the class is passed in the command arg (where we specify
-                # the default)
-                rrclass = RRClass.IN()
-                zone_name, master_addr, db_file = self._parse_cmd_params(args)
+                (zone_name, rrclass,
+                 master_addr, db_file) = self._parse_cmd_params(args)
                 ret = self.xfrin_start(zone_name, rrclass, db_file,
                                        master_addr,
                                    False if command == 'retransfer' else True)
                 answer = create_answer(ret[0], ret[1])
             elif command == 'notify':
-                # This is the temp implementation for notify
-                # actually the notfiy command should be sent to 
-                # Zone Manager module.
-                db_file = '@@LOCALSTATEDIR@@/@PACKAGE@/zone.sqlite3'
-                ret = self.xfrin_start(args['zone_name'], db_file,
-                                       args['master'], port=53)
+                # This is the temporary implementation for notify.
+                # actually the notfiy command should be sent to the
+                # Zone Manager module.  Being temporary, we separate this case
+                # from refresh/retransfer while we could (and should otherwise)
+                # share the code.
+                (zone_name, rrclass,
+                 master_addr, db_file) = self._parse_cmd_params(args)
+                ret = self.xfrin_start(zone_name, rrclass, db_file,
+                                       master_addr, True)
                 answer = create_answer(ret[0], ret[1])
             else:
                 answer = create_answer(1, 'unknown command: ' + command)
@@ -433,6 +433,13 @@ a separate method for the convenience of unit tests.
         zone_name = args.get('zone_name')
         if not zone_name:
             raise XfrinException('zone name should be provided')
+
+        rrclass = args.get('rrclass')
+        if not rrclass:
+            # The default RR class is IN.  We should fix this so that
+            # the class is passed in the command arg (where we specify
+            # the default)
+            rrclass = RRClass.IN()
 
         master = args.get('master')
         if not master:
@@ -459,7 +466,7 @@ a separate method for the convenience of unit tests.
                 db_file = os.environ["B10_FROM_BUILD"] + os.sep + "bind10_zones.sqlite3"
             self._cc.remove_remote_config(AUTH_SPECFILE_LOCATION)
 
-        return (zone_name, master_addrinfo, db_file)
+        return (zone_name, rrclass, master_addrinfo, db_file)
 
     def startup(self):
         while not self._shutdown_event.is_set():
