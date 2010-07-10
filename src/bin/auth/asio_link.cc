@@ -484,17 +484,25 @@ IOServiceImpl::IOServiceImpl(AuthSrv* auth_server, const char& port,
                   ex.what());
     }
 
-    if (v4addr.is_v4()) {
-        udp4_server_ = UDPServerPtr(new UDPServer(auth_server, io_service_,
-                                                  v4addr, portnum));
-        tcp4_server_ = TCPServerPtr(new TCPServer(auth_server, io_service_,
-                                                  v4addr, portnum));
-    }
-    if (v6addr.is_v6()) {
-        udp6_server_ = UDPServerPtr(new UDPServer(auth_server, io_service_,
-                                                  v6addr, portnum));
-        tcp6_server_ = TCPServerPtr(new TCPServer(auth_server, io_service_,
-                                                  v6addr, portnum));
+    try {
+        if (v4addr.is_v4()) {
+            udp4_server_ = UDPServerPtr(new UDPServer(auth_server, io_service_,
+                                                      v4addr, portnum));
+            tcp4_server_ = TCPServerPtr(new TCPServer(auth_server, io_service_,
+                                                      v4addr, portnum));
+        }
+        if (v6addr.is_v6()) {
+            udp6_server_ = UDPServerPtr(new UDPServer(auth_server, io_service_,
+                                                      v6addr, portnum));
+            tcp6_server_ = TCPServerPtr(new TCPServer(auth_server, io_service_,
+                                                      v6addr, portnum));
+        }
+    } catch (const asio::system_error& err) {
+        // We need to catch and convert any ASIO level exceptions.
+        // This can happen for unavailable address, binding a privilege port
+        // without the privilege, etc.
+        isc_throw(IOError, "Failed to initialize network servers: " <<
+                  err.what());
     }
 }
 

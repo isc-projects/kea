@@ -105,6 +105,37 @@ TEST(IOServiceTest, badAddress) {
                  IOError);
 }
 
+TEST(IOServiceTest, unavailableAddress) {
+    // These addresses should generally be unavailable as a valid local
+    // address, although there's no guarantee in theory.
+    EXPECT_THROW(IOService(NULL, *TEST_PORT, *"ffff:ffff::"), IOError);
+    EXPECT_THROW(IOService(NULL, *TEST_PORT, *"255.255.255.255"), IOError);
+}
+
+TEST(IOServiceTest, duplicateBind) {
+    // In each sub test case, second attempt should fail due to duplicate bind
+
+    // IPv6, "any" address
+    IOService* io_service = new IOService(NULL, *TEST_PORT, false, true);
+    EXPECT_THROW(IOService(NULL, *TEST_PORT, false, true), IOError);
+    delete io_service;
+
+    // IPv6, specific address
+    io_service = new IOService(NULL, *TEST_PORT, *TEST_IPV6_ADDR);
+    EXPECT_THROW(IOService(NULL, *TEST_PORT, *TEST_IPV6_ADDR), IOError);
+    delete io_service;
+
+    // IPv4, "any" address
+    io_service = new IOService(NULL, *TEST_PORT, true, false);
+    EXPECT_THROW(IOService(NULL, *TEST_PORT, true, false), IOError);
+    delete io_service;
+
+    // IPv4, specific address
+    io_service = new IOService(NULL, *TEST_PORT, *TEST_IPV4_ADDR);
+    EXPECT_THROW(IOService(NULL, *TEST_PORT, *TEST_IPV4_ADDR), IOError);
+    delete io_service;
+}
+
 struct addrinfo*
 resolveAddress(const int family, const int sock_type, const int protocol) {
     const char* const addr = (family == AF_INET6) ?
