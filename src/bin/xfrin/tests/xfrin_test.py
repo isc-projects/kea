@@ -430,8 +430,12 @@ class TestXfrin(unittest.TestCase):
         self.assertEqual(master_addrinfo[4][0], TEST_MASTER_IPV6_ADDRESS)
 
     def test_parse_cmd_params_chclass(self):
-        self.args['rrclass'] = RRClass.CH()
+        self.args['rrclass'] = 'CH'
         self.assertEqual(self._do_parse()[1], RRClass.CH())
+
+    def test_parse_cmd_params_bogusclass(self):
+        self.args['rrclass'] = 'XXX'
+        self.assertRaises(XfrinException, self._do_parse)
 
     def test_parse_cmd_params_nozone(self):
         # zone name is mandatory.
