@@ -418,8 +418,22 @@ a separate method for the convenience of unit tests.
                 # share the code.
                 (zone_name, rrclass,
                  master_addr, db_file) = self._parse_cmd_params(args)
-                ret = self.xfrin_start(zone_name, rrclass, db_file,
-                                       master_addr, True)
+
+                # XXX: master_addr is the sender of the notify message.
+                # It's very dangerous to naively trust it as the source of
+                # subsequent zone transfer; any remote node can easily exploit
+                # it to mount zone poisoning or DoS attacks.  We should
+                # locally identify the appropriate set of master servers.
+                # For now, we disable the code below.
+                master_is_valid = False
+
+                if master_is_valid:
+                    ret = self.xfrin_start(zone_name, rrclass, db_file,
+                                           master_addr, True)
+                else:
+                    errmsg = 'Failed to validate the master address ('
+                    errmsg += args['master'] + '), ignoring notify'
+                    ret = [1, errmsg]
                 answer = create_answer(ret[0], ret[1])
             else:
                 answer = create_answer(1, 'unknown command: ' + command)
