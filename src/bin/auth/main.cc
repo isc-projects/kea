@@ -101,7 +101,7 @@ main(int argc, char* argv[]) {
     const char* address = NULL;
     bool use_ipv4 = true, use_ipv6 = true, cache = true;
 
-    while ((ch = getopt(argc, argv, "46np:v")) != -1) {
+    while ((ch = getopt(argc, argv, "a:46np:v")) != -1) {
         switch (ch) {
         case '4':
             // Note that -4 means "ipv4 only", we need to set "use_ipv6" here,
@@ -141,6 +141,11 @@ main(int argc, char* argv[]) {
         usage();
     }
 
+    if ((!use_ipv4 || !use_ipv6) && address != NULL) {
+        cerr << "[b10-auth] Error: -4|-6 and -a can't coexist" << endl;
+        usage();
+    }
+
     int ret = 0;
 
     // XXX: we should eventually pass io_service here.
@@ -162,8 +167,13 @@ main(int argc, char* argv[]) {
         auth_server->setVerbose(verbose_mode);
         cout << "[b10-auth] Server created." << endl;
 
-        io_service = new asio_link::IOService(auth_server, address, *port,
-                                              use_ipv4, use_ipv6);
+        if (address != NULL) {
+            io_service = new asio_link::IOService(auth_server, *port,
+                                                  *address);
+        } else {
+            io_service = new asio_link::IOService(auth_server, *port,
+                                                  use_ipv4, use_ipv6);
+        }
         cout << "[b10-auth] IOService created." << endl;
 
         cc_session = new Session(io_service->get_io_service());

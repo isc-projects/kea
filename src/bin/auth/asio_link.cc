@@ -295,36 +295,19 @@ private:
 class TCPServer {
 public:
     TCPServer(AuthSrv* auth_server, io_service& io_service,
-              int af, uint16_t port) :
+              const ip::address& addr, const uint16_t port) :
         auth_server_(auth_server), io_service_(io_service),
         acceptor_(io_service_), listening_(new TCPClient(auth_server_,
                                                          io_service_)),
         custom_callback_(NULL)
     {
-        tcp::endpoint endpoint(af == AF_INET6 ? tcp::v6() : tcp::v4(), port);
+        tcp::endpoint endpoint(addr, port);
         acceptor_.open(endpoint.protocol());
         // Set v6-only (we use a different instantiation for v4,
         // otherwise asio will bind to both v4 and v6
-        if (af == AF_INET6) {
+        if (addr.is_v6()) {
             acceptor_.set_option(ip::v6_only(true));
         }
-        acceptor_.set_option(tcp::acceptor::reuse_address(true));
-        acceptor_.bind(endpoint);
-        acceptor_.listen();
-        acceptor_.async_accept(listening_->getSocket(),
-                               boost::bind(&TCPServer::handleAccept, this,
-                                           listening_, placeholders::error));
-    }
-
-    TCPServer(AuthSrv* auth_server, io_service& io_service,
-              asio::ip::address addr, uint16_t port) :
-        auth_server_(auth_server),
-        io_service_(io_service), acceptor_(io_service_),
-        listening_(new TCPClient(auth_server, io_service_))
-    {
-        tcp::endpoint endpoint(addr, port);
-        acceptor_.open(endpoint.protocol());
-
         acceptor_.set_option(tcp::acceptor::reuse_address(true));
         acceptor_.bind(endpoint);
         acceptor_.listen();
@@ -370,10 +353,10 @@ private:
 class UDPServer {
 public:
     UDPServer(AuthSrv* auth_server, io_service& io_service,
-              int af, uint16_t port) :
+              const ip::address& addr, const uint16_t port) :
         auth_server_(auth_server),
         io_service_(io_service),
-        socket_(io_service, af == AF_INET6 ? udp::v6() : udp::v4()),
+        socket_(io_service, addr.is_v6() ? udp::v6() : udp::v4()),
         io_socket_(socket_),
         response_buffer_(0),
         response_renderer_(response_buffer_),
@@ -382,26 +365,12 @@ public:
     {
         // Set v6-only (we use a different instantiation for v4,
         // otherwise asio will bind to both v4 and v6
-        if (af == AF_INET6) {
+        if (addr.is_v6()) {
             socket_.set_option(asio::ip::v6_only(true));
-            socket_.bind(udp::endpoint(udp::v6(), port));
+            socket_.bind(udp::endpoint(addr, port));
         } else {
-            socket_.bind(udp::endpoint(udp::v4(), port));
+            socket_.bind(udp::endpoint(addr, port));
         }
-        startReceive();
-    }
-
-    UDPServer(AuthSrv* auth_server, io_service& io_service,
-              asio::ip::address addr, uint16_t port) :
-        auth_server_(auth_server), io_service_(io_service),
-        socket_(io_service, addr.is_v6() ? udp::v6() : udp::v4()),
-        io_socket_(socket_),
-        response_buffer_(0),
-        response_renderer_(response_buffer_),
-        dns_message_(Message::PARSE),
-        custom_callback_(NULL)
-    {
-        socket_.bind(udp::endpoint(addr, port));
         startReceive();
     }
 
@@ -483,8 +452,8 @@ private:
 
 class IOServiceImpl {
 public:
-    IOServiceImpl(AuthSrv* auth_server, const char* address, const char& port,
-                  const bool use_ipv4, const bool use_ipv6);
+    IOServiceImpl(AuthSrv* auth_server, const char& port,
+                  const ip::address& v4addr, const ip::address& v6addr);
     asio::io_service io_service_;
     AuthSrv* auth_server_;
 
@@ -499,9 +468,9 @@ public:
     IOService::IOCallBack callback_;
 };
 
-IOServiceImpl::IOServiceImpl(AuthSrv* auth_server, const char* const address,
-                             const char& port, const bool use_ipv4,
-                             const bool use_ipv6) :
+IOServiceImpl::IOServiceImpl(AuthSrv* auth_server, const char& port,
+                             const ip::address& v4addr,
+                             const ip::address& v6addr) :
     auth_server_(auth_server),
     udp4_server_(UDPServerPtr()), udp6_server_(UDPServerPtr()),
     tcp4_server_(TCPServerPtr()), tcp6_server_(TCPServerPtr())
@@ -515,57 +484,45 @@ IOServiceImpl::IOServiceImpl(AuthSrv* auth_server, const char* const address,
                   ex.what());
     }
 
-    if (address != NULL) {
-        error_code err;
-        const ip::address addr = ip::address::from_string(address, err);
-        if (err) {
-            isc_throw(IOError, "Invalid IP address '" << address << "': "
-                      << err.message());
-        }
-
-        if (addr.is_v6() && !use_ipv6) {
-            isc_throw(IOError,
-                      "IPv6 address is specified while IPv6 is disabled: "
-                      << addr);
-        }
-
-        if (addr.is_v4() && !use_ipv4) {
-            isc_throw(IOError,
-                      "IPv4 address is specified while IPv4 is disabled: "
-                      << addr);
-        }
-
-        if (addr.is_v4()) {
-            udp4_server_ = UDPServerPtr(new UDPServer(auth_server, io_service_,
-                                                      addr, portnum));
-            tcp4_server_ = TCPServerPtr(new TCPServer(auth_server, io_service_,
-                                                      addr, portnum));
-         } else {
-            udp6_server_ = UDPServerPtr(new UDPServer(auth_server, io_service_,
-                                                      addr, portnum));
-            tcp6_server_ = TCPServerPtr(new TCPServer(auth_server, io_service_,
-                                                      addr, portnum));
-        }
-    } else {
-        if (use_ipv4) {
-            udp4_server_ = UDPServerPtr(new UDPServer(auth_server, io_service_,
-                                                      AF_INET, portnum));
-            tcp4_server_ = TCPServerPtr(new TCPServer(auth_server, io_service_,
-                                                      AF_INET, portnum));
-        }
-        if (use_ipv6) {
-            udp6_server_ = UDPServerPtr(new UDPServer(auth_server, io_service_,
-                                                      AF_INET6, portnum));
-            tcp6_server_ = TCPServerPtr(new TCPServer(auth_server, io_service_,
-                                                      AF_INET6, portnum));
-        }
+    if (v4addr.is_v4()) {
+        udp4_server_ = UDPServerPtr(new UDPServer(auth_server, io_service_,
+                                                  v4addr, portnum));
+        tcp4_server_ = TCPServerPtr(new TCPServer(auth_server, io_service_,
+                                                  v4addr, portnum));
+    }
+    if (v6addr.is_v6()) {
+        udp6_server_ = UDPServerPtr(new UDPServer(auth_server, io_service_,
+                                                  v6addr, portnum));
+        tcp6_server_ = TCPServerPtr(new TCPServer(auth_server, io_service_,
+                                                  v6addr, portnum));
     }
 }
 
-IOService::IOService(AuthSrv* auth_server, const char* const address,
-                     const char& port, const bool use_ipv4,
-                     const bool use_ipv6) {
-    impl_ = new IOServiceImpl(auth_server, address, port, use_ipv4, use_ipv6);
+IOService::IOService(AuthSrv* auth_server, const char& port,
+                     const char& address) :
+    impl_(NULL)
+{
+    error_code err;
+    const ip::address addr = ip::address::from_string(&address, err);
+    if (err) {
+        isc_throw(IOError, "Invalid IP address '" << &address << "': "
+                  << err.message());
+    }
+
+    impl_ = new IOServiceImpl(auth_server, port,
+                              addr.is_v4() ? addr : ip::address::address(),
+                              addr.is_v6() ? addr : ip::address::address());
+}
+
+IOService::IOService(AuthSrv* auth_server, const char& port,
+                     const bool use_ipv4, const bool use_ipv6) :
+    impl_(NULL)
+{
+    const ip::address v4addr = use_ipv4 ? ip::address(ip::address_v4::any()) :
+        ip::address::address();
+    const ip::address v6addr = use_ipv6 ? ip::address(ip::address_v6::any()) :
+        ip::address::address();
+    impl_ = new IOServiceImpl(auth_server, port, v4addr, v6addr);
 }
 
 IOService::~IOService() {
