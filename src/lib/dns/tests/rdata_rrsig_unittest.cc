@@ -14,7 +14,8 @@
 
 // $Id$
 
-#include <dns/base64.h>
+#include <exceptions/exceptions.h>
+
 #include <dns/buffer.h>
 #include <dns/dnssectime.h>
 #include <dns/messagerenderer.h>
@@ -30,6 +31,7 @@
 
 using isc::UnitTestUtil;
 using namespace std;
+using namespace isc;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 
@@ -50,8 +52,7 @@ TEST_F(Rdata_RRSIG_Test, fromText)
 
 }
 
-TEST_F(Rdata_RRSIG_Test, badText)
-{
+TEST_F(Rdata_RRSIG_Test, badText) {
     EXPECT_THROW(const generic::RRSIG sig("SPORK"), InvalidRdataText);
     EXPECT_THROW(const generic::RRSIG sig("A 555 4 43200 "
                      "20100223214617 20100222214617 8496 isc.org. "
@@ -83,16 +84,17 @@ TEST_F(Rdata_RRSIG_Test, badText)
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
                      "NbuacJM25fQXfv5mO3Af7TOoow3AjMaVG9icjCW0V55WcWQU"
                      "f49t+sXKPzbipN9g+s1ZPiIyofc="), InvalidRdataText);
-    EXPECT_THROW(const generic::RRSIG sig("A 5 4 43200 "
+    EXPECT_THROW(const generic::RRSIG sig(
+                     "A 5 4 43200 "
                      "20100223214617 20100222214617 8496 isc.org. "
                      "EEeeeeeeEEEeeeeeeGaaahAAAAAAAAHHHHHHHHHHH!="),
-                     BadBase64String);
+                 BadValue);     // bad base64 input
+}
 
-#if 0                           // this currently fails
+TEST_F(Rdata_RRSIG_Test, DISABLED_badText) { // this currently fails
     // no space between the tag and signer
     EXPECT_THROW(generic::RRSIG("A 5 4 43200 20100223214617 20100222214617 "
                                 "8496isc.org. ofc="), InvalidRdataText);
-#endif
 }
 
 TEST_F(Rdata_RRSIG_Test, toWireRenderer)

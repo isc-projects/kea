@@ -19,7 +19,7 @@
 #include <vector>
 #include <string>
 
-#include <dns/hex.h>
+#include <dns/util/hex.h>
 
 #include <gtest/gtest.h>
 

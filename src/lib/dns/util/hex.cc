@@ -28,7 +28,7 @@
 #include <ctype.h>
 #include <stdint.h>
 
-#include <dns/hex.h>
+#include <dns/util/hex.h>
 
 using namespace std;
 

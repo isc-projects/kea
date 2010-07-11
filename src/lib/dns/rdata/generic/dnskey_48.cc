@@ -22,7 +22,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
 
-#include <dns/base64.h>
+#include <dns/util/base64.h>
 #include <dns/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>

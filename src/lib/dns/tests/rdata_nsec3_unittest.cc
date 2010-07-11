@@ -16,10 +16,11 @@
 
 #include <string>
 
-#include <dns/base32.h>
+#include <exceptions/exceptions.h>
+
 #include <dns/buffer.h>
 #include <dns/exceptions.h>
-#include <dns/hex.h>
+#include <dns/util/hex.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
@@ -33,16 +34,19 @@
 
 using isc::UnitTestUtil;
 using namespace std;
+using namespace isc;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 
 namespace {
 class Rdata_NSEC3_Test : public RdataTest {
     // there's nothing to specialize
+public:
+    Rdata_NSEC3_Test() :
+        nsec3_txt("1 1 1 D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6 "
+                  "NS SOA RRSIG DNSKEY NSEC3PARAM") {}
+    string nsec3_txt;
 };
-string nsec3_txt("1 1 1 D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6 "
-                 "NS SOA RRSIG DNSKEY NSEC3PARAM");
-
 
 TEST_F(Rdata_NSEC3_Test, toText)
 {
@@ -50,8 +54,7 @@ TEST_F(Rdata_NSEC3_Test, toText)
     EXPECT_EQ(nsec3_txt, rdata_nsec3.toText());
 }
 
-TEST_F(Rdata_NSEC3_Test, badText)
-{
+TEST_F(Rdata_NSEC3_Test, badText) {
     EXPECT_THROW(generic::NSEC3 rdata_nsec3("1 1 1 ADDAFEE "
                                             "0123456789ABCDEFGHIJKLMNOPQRSTUV "
                                             "BIFF POW SPOON"),
@@ -59,7 +62,7 @@ TEST_F(Rdata_NSEC3_Test, badText)
     EXPECT_THROW(generic::NSEC3 rdata_nsec3("1 1 1 ADDAFEE "
                                             "WXYZWXYZWXYZ=WXYZWXYZ==WXYZWXYZW "
                                             "A NS SOA"),
-                 BadBase32String);
+                 BadValue);     // bad base32hex
     EXPECT_THROW(generic::NSEC3 rdata_nsec3("1000000 1 1 ADDAFEE "
                                             "0123456789ABCDEFGHIJKLMNOPQRSTUV "
                                             "A NS SOA"),
@@ -72,12 +75,12 @@ TEST_F(Rdata_NSEC3_Test, badText)
                                             "0123456789ABCDEFGHIJKLMNOPQRSTUV "
                                             "A NS SOA"),
                  InvalidRdataText);
+}
 
-#if 0 // this currently fails
+TEST_F(Rdata_NSEC3_Test, DISABLED_badText) { // this currently fails
     EXPECT_THROW(generic::NSEC3(
                      "1 1 1D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6 "
                      "NS SOA RRSIG DNSKEY NSEC3PARAM"), InvalidRdataText);
-#endif
 }
 
 TEST_F(Rdata_NSEC3_Test, createFromWire)
