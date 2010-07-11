@@ -28,6 +28,9 @@
 #include <dns/util/base32hex_from_binary.h>
 #include <dns/util/binary_from_base32hex.h>
 
+#include <dns/util/base16_from_binary.h>
+#include <dns/util/binary_from_base16.h>
+
 #include <exceptions/exceptions.h>
 
 #include <dns/util/base32hex.h>
@@ -279,6 +282,17 @@ transform_width<binary_from_base32hex<DecodeNormalizer, char>, 8, 5, char>
 base32hex_decoder;
 typedef BaseNTransformer<5, '0', base32hex_encoder, base32hex_decoder>
 Base32HexTransformer;
+
+//
+// Instantiation for BASE-16 (HEX)
+//
+typedef
+base16_from_binary<transform_width<EncodeNormalizer, 4, 8> > base16_encoder;
+typedef
+transform_width<binary_from_base16<DecodeNormalizer, char>, 8, 4, char>
+base16_decoder;
+typedef BaseNTransformer<4, '0', base16_encoder, base16_decoder>
+Base16Transformer;
 }
 
 string
@@ -299,6 +313,16 @@ encodeBase32Hex(const vector<uint8_t>& binary) {
 void
 decodeBase32Hex(const string& input, vector<uint8_t>& result) {
     Base32HexTransformer::decode("base32hex", input, result);
+}
+
+string
+encodeHex(const vector<uint8_t>& binary) {
+    return (Base16Transformer::encode(binary));
+}
+
+void
+decodeHex(const string& input, vector<uint8_t>& result) {
+    Base16Transformer::decode("base16", input, result);
 }
 
 }

@@ -48,30 +48,33 @@ public:
     string nsec3_txt;
 };
 
-TEST_F(Rdata_NSEC3_Test, toText)
-{
+TEST_F(Rdata_NSEC3_Test, toText) {
     const generic::NSEC3 rdata_nsec3(nsec3_txt);
     EXPECT_EQ(nsec3_txt, rdata_nsec3.toText());
 }
 
 TEST_F(Rdata_NSEC3_Test, badText) {
-    EXPECT_THROW(generic::NSEC3 rdata_nsec3("1 1 1 ADDAFEE "
+    EXPECT_THROW(generic::NSEC3 rdata_nsec3("1 1 1 ADDAFEEE "
                                             "0123456789ABCDEFGHIJKLMNOPQRSTUV "
                                             "BIFF POW SPOON"),
                  InvalidRdataText);
     EXPECT_THROW(generic::NSEC3 rdata_nsec3("1 1 1 ADDAFEE "
                                             "WXYZWXYZWXYZ=WXYZWXYZ==WXYZWXYZW "
                                             "A NS SOA"),
+                 BadValue);     // bad hex
+    EXPECT_THROW(generic::NSEC3 rdata_nsec3("1 1 1 ADDAFEEE "
+                                            "WXYZWXYZWXYZ=WXYZWXYZ==WXYZWXYZW "
+                                            "A NS SOA"),
                  BadValue);     // bad base32hex
-    EXPECT_THROW(generic::NSEC3 rdata_nsec3("1000000 1 1 ADDAFEE "
+    EXPECT_THROW(generic::NSEC3 rdata_nsec3("1000000 1 1 ADDAFEEE "
                                             "0123456789ABCDEFGHIJKLMNOPQRSTUV "
                                             "A NS SOA"),
                  InvalidRdataText);
-    EXPECT_THROW(generic::NSEC3 rdata_nsec3("1 1000000 1 ADDAFEE "
+    EXPECT_THROW(generic::NSEC3 rdata_nsec3("1 1000000 1 ADDAFEEE "
                                             "0123456789ABCDEFGHIJKLMNOPQRSTUV "
                                             "A NS SOA"),
                  InvalidRdataText);
-    EXPECT_THROW(generic::NSEC3 rdata_nsec3("1 1 1000000 ADDAFEE "
+    EXPECT_THROW(generic::NSEC3 rdata_nsec3("1 1 1000000 ADDAFEEE "
                                             "0123456789ABCDEFGHIJKLMNOPQRSTUV "
                                             "A NS SOA"),
                  InvalidRdataText);
@@ -83,8 +86,7 @@ TEST_F(Rdata_NSEC3_Test, DISABLED_badText) { // this currently fails
                      "NS SOA RRSIG DNSKEY NSEC3PARAM"), InvalidRdataText);
 }
 
-TEST_F(Rdata_NSEC3_Test, createFromWire)
-{
+TEST_F(Rdata_NSEC3_Test, createFromWire) {
     const generic::NSEC3 rdata_nsec3(nsec3_txt);
     EXPECT_EQ(0, rdata_nsec3.compare(
                   *rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
@@ -101,8 +103,7 @@ TEST_F(Rdata_NSEC3_Test, createFromWire)
                  DNSMessageFORMERR);
 }
 
-TEST_F(Rdata_NSEC3_Test, toWireRenderer)
-{
+TEST_F(Rdata_NSEC3_Test, toWireRenderer) {
     renderer.skip(2);
     const generic::NSEC3 rdata_nsec3(nsec3_txt);
     rdata_nsec3.toWire(renderer);
@@ -114,14 +115,12 @@ TEST_F(Rdata_NSEC3_Test, toWireRenderer)
                         obuffer.getLength() - 2, &data[2], data.size() - 2);
 }
 
-TEST_F(Rdata_NSEC3_Test, toWireBuffer)
-{
+TEST_F(Rdata_NSEC3_Test, toWireBuffer) {
     const generic::NSEC3 rdata_nsec3(nsec3_txt);
     rdata_nsec3.toWire(obuffer);
 }
 
-TEST_F(Rdata_NSEC3_Test, assign)
-{
+TEST_F(Rdata_NSEC3_Test, assign) {
     generic::NSEC3 rdata_nsec3(nsec3_txt);
     generic::NSEC3 other_nsec3 = rdata_nsec3;
     EXPECT_EQ(0, rdata_nsec3.compare(other_nsec3));
