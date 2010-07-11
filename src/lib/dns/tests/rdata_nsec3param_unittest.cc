@@ -16,6 +16,8 @@
 
 #include <string>
 
+#include <exceptions/exceptions.h>
+
 #include <dns/util/base32hex.h>
 #include <dns/buffer.h>
 #include <dns/util/hex.h>
@@ -32,6 +34,7 @@
 
 using isc::UnitTestUtil;
 using namespace std;
+using namespace isc;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 
@@ -49,7 +52,7 @@ TEST_F(Rdata_NSEC3PARAM_Test, toText)
 
 TEST_F(Rdata_NSEC3PARAM_Test, badText)
 {
-    EXPECT_THROW(generic::NSEC3PARAM("1 1 1 SPORK"), BadHexString);
+    EXPECT_THROW(generic::NSEC3PARAM("1 1 1 SPORK"), BadValue); // bad hex
     EXPECT_THROW(generic::NSEC3PARAM("100000 1 1 ADDAFEE"), InvalidRdataText);
     EXPECT_THROW(generic::NSEC3PARAM("1 100000 1 ADDAFEE"), InvalidRdataText);
     EXPECT_THROW(generic::NSEC3PARAM("1 1 100000 ADDAFEE"), InvalidRdataText);
