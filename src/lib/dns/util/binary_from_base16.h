@@ -48,15 +48,14 @@ struct to_4_bit {
              0, 1, 2, 3, 4, 5, 6, 7, 8, 9,-1,-1,-1,-1,-1,-1, // 30-3f
             -1,10,11,12,13,14,15,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 40-4f
             -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 50-5f
-            -1,10,11,12,13,14,15,-1,-1,-1,-1,-1,-1,-1,-1,-1, // 60-6f
-            -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1  // 70-7f
+            -1,10,11,12,13,14,15,-1,-1,-1,-1,-1,-1,-1,-1,-1  // 60-6f
         };
         // metrowerks trips this assertion - how come?
         #if ! defined(__MWERKS__)
-        BOOST_STATIC_ASSERT(128 == sizeof(lookup_table));
+        BOOST_STATIC_ASSERT(0x70 == sizeof(lookup_table));
         #endif
         signed char value = -1;
-        if((unsigned)t <= 127)
+        if((unsigned)t < sizeof(lookup_table))
             value = lookup_table[(unsigned)t];
         if(-1 == value) { 
             isc_throw(isc::BadValue,
