@@ -1,0 +1,12 @@
+This "util" directory is provided for utility header files and
+implementations that are internally used in the DNS library
+(libdns++).
+
+The header files in this directory are not intended to be installed.
+Likewise, classes and public functions defined in this directory are
+not intended to be used outside libdns++, although we cannot prohibit
+it at the language level.
+
+They are not even expected to be used in other modules of BIND 10 than
+libdns++.  Although there seem to be some violations as of this
+writing, we should eventually fix it.
