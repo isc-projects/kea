@@ -104,14 +104,13 @@ private:
     bool in_pad_;
 };
 
-// BaseZeroCode is the byte character that represents a value of '0' in
-// the corresponding encoding.  For example, BaseZeroCode is 'A' for base64.
-template <char BaseZeroCode>
 class DecodeNormalizer : public iterator<input_iterator_tag, char> {
 public:
-    DecodeNormalizer(const string::const_iterator& base,
+    DecodeNormalizer(const char base_zero_code,
+                     const string::const_iterator& base,
                      const string::const_iterator& base_beginpad,
                      const string::const_iterator& base_end) :
+        base_zero_code_(base_zero_code),
         base_(base), base_beginpad_(base_beginpad), base_end_(base_end),
         in_pad_(false)
     {}
@@ -127,7 +126,7 @@ public:
     }
     const char& operator*() const {
         if (in_pad_ && *base_ == BASE_PADDING_CHAR) {
-            return (BASE_ZERO_CODE);
+            return (base_zero_code_);
         } else {
             return (*base_);
         }
@@ -136,11 +135,11 @@ public:
         return (base_ == other.base_);
     }
 private:
+    const char base_zero_code_;
     string::const_iterator base_;
     const string::const_iterator base_beginpad_;
     const string::const_iterator base_end_;
     bool in_pad_;
-    static const char BASE_ZERO_CODE = BaseZeroCode;
 };
 
 // BitsPerChunk: number of bits to be converted using the baseN mapping table.
@@ -234,12 +233,10 @@ BaseNTransformer<BitsPerChunk, BaseZeroCode, Encoder, Decoder>::decode(
     const size_t padbytes = padbits / 8;
 
     try {
-        result.assign(Decoder(DecodeNormalizer<BaseZeroCode>(input.begin(),
-                                                             srit.base(),
-                                                             input.end())),
-                      Decoder(DecodeNormalizer<BaseZeroCode>(input.end(),
-                                                             input.end(),
-                                                             input.end())));
+        result.assign(Decoder(DecodeNormalizer(BaseZeroCode, input.begin(),
+                                               srit.base(), input.end())),
+                      Decoder(DecodeNormalizer(BaseZeroCode, input.end(),
+                                               input.end(), input.end())));
     } catch (const dataflow_exception& ex) {
         // convert any boost exceptions into our local one.
         isc_throw(BadValue, ex.what());
@@ -266,7 +263,7 @@ BaseNTransformer<BitsPerChunk, BaseZeroCode, Encoder, Decoder>::decode(
 typedef
 base64_from_binary<transform_width<EncodeNormalizer, 6, 8> > base64_encoder;
 typedef
-transform_width<binary_from_base64<DecodeNormalizer<'A'>, char>, 8, 6, char>
+transform_width<binary_from_base64<DecodeNormalizer, char>, 8, 6, char>
 base64_decoder;
 typedef BaseNTransformer<6, 'A', base64_encoder, base64_decoder>
 Base64Transformer;
@@ -278,7 +275,7 @@ typedef
 base32hex_from_binary<transform_width<EncodeNormalizer, 5, 8> >
 base32hex_encoder;
 typedef
-transform_width<binary_from_base32hex<DecodeNormalizer<'0'>, char>, 8, 5, char>
+transform_width<binary_from_base32hex<DecodeNormalizer, char>, 8, 5, char>
 base32hex_decoder;
 typedef BaseNTransformer<5, '0', base32hex_encoder, base32hex_decoder>
 Base32HexTransformer;
