@@ -16,9 +16,9 @@
 
 #include <string>
 
-#include <dns/base32.h>
+#include <dns/util/base32hex.h>
 #include <dns/buffer.h>
-#include <dns/hex.h>
+#include <dns/util/hex.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
