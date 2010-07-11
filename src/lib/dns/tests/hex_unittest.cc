@@ -30,16 +30,11 @@ using namespace std;
 using namespace isc::dns;
 
 namespace {
-class HexTest : public ::testing::Test {
-protected:
-    HexTest() {}
-};
+const string hex_txt("DEADBEEFDECADE");
+const string hex_txt_space("DEAD BEEF DECADE");
+const string hex_txt_lower("deadbeefdecade");
 
-const std::string hex_txt("DEADBEEFDECADE");
-const std::string hex_txt_space("DEAD BEEF DECADE");
-const std::string hex_txt_lower("deadbeefdecade");
-
-TEST_F(HexTest, encodeHex) {
+TEST(HexTest, encodeHex) {
     std::vector<uint8_t> data;
 
     data.push_back(0xde);
@@ -53,8 +48,7 @@ TEST_F(HexTest, encodeHex) {
 }
 
 void
-compareData(const std::vector<uint8_t>& data)
-{
+compareData(const std::vector<uint8_t>& data) {
     EXPECT_EQ(0xde, data[0]);
     EXPECT_EQ(0xad, data[1]);
     EXPECT_EQ(0xbe, data[2]);
@@ -64,7 +58,7 @@ compareData(const std::vector<uint8_t>& data)
     EXPECT_EQ(0xde, data[6]);
 }
 
-TEST_F(HexTest, decodeHex) {
+TEST(HexTest, decodeHex) {
     std::vector<uint8_t> result;
 
     decodeHex(hex_txt, result);
@@ -83,6 +77,10 @@ TEST_F(HexTest, decodeHex) {
     // Bogus input: should fail
     result.clear();
     EXPECT_THROW(decodeHex("1x", result), BadHexString);
+
+    // Bogus input: encoded string must have an even number of characters.
+    result.clear();
+    EXPECT_THROW(decodeHex("dea", result), BadHexString);
 }
 
 }
