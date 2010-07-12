@@ -62,7 +62,8 @@ namespace dns {
 //                     => baseXX_from_binary (convert each bit group to an
 //                                            encoded byte using the mapping)
 // Decoding:
-//   input baseXX text => Normalizer (convert '=' to 0 bits)
+//   input baseXX text => Normalizer (convert '='s to the encoded characters
+//                                    corresponding to 0, e.g. 'A's in base64)
 //                     => binary_from_baseXX (convert each encoded byte into
 //                                            the original group bit)
 //                     => transform_width (build original byte stream by
