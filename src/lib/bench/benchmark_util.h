@@ -17,16 +17,31 @@
 #ifndef __BENCHMARK_UTIL_H
 #define __BENCHMARK_UTIL_H 1
 
+#include <istream>
 #include <vector>
+
+#include <exceptions/exceptions.h>
 
 namespace isc {
 namespace dns {
 class RRClass;
 }
+
 namespace bench {
+class BenchMarkError : public Exception {
+public:
+    BenchMarkError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 typedef std::vector<std::vector<unsigned char> > BenchQueries; 
+
+/// Describe exception guarantee.  This function only offers the basic
+/// exception guarantee.
 void loadQueryData(const char* input_file, BenchQueries& queries,
-                   const isc::dns::RRClass& qclass);
+                   const isc::dns::RRClass& qclass, const bool strict = false);
+void loadQueryData(std::istream& input, BenchQueries& queries,
+                   const isc::dns::RRClass& qclass, const bool strict = false);
 }
 }
 #endif  // __BENCHMARK_UTIL_H

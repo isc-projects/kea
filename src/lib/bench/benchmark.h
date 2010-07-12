@@ -28,8 +28,20 @@ namespace bench {
 template <typename T>
 class BenchMark {
 public:
-    BenchMark(const int iterations, T& target) :
-        iterations_(iterations), sub_iterations_(0), target_(target) {}
+    BenchMark(const int iterations, T target) :
+        iterations_(iterations), sub_iterations_(0), target_(target)
+    {
+        run();
+        printResult();
+    }
+    BenchMark(const int iterations, T& target, const bool immediate = true) :
+        iterations_(iterations), sub_iterations_(0), target_(target)
+    {
+        if (immediate) {
+            run();
+            printResult();
+        }
+    }
     void setUp() {}
     void tearDown() {}
     void run() {
@@ -43,7 +55,6 @@ public:
         gettimeofday(&end, NULL);
         tv_diff_ = tv_subtract(end, beg);
 
-        printResult();
         tearDown();
     }
     void printResult() const {
@@ -60,15 +71,24 @@ public:
                 static_cast<double>(tv_diff_.tv_usec) / ONE_MILLION);
     }
     double getAverageTime() const {
+        if (sub_iterations_ == 0) {
+            return (TIME_FAILURE);
+        }
         return ((tv_diff_.tv_sec +
                  static_cast<double>(tv_diff_.tv_usec) / ONE_MILLION ) /
                 sub_iterations_);
     }
     double getIterationPerSecond() const {
-        return (sub_iterations_ /
-                (tv_diff_.tv_sec +
-                 static_cast<double>(tv_diff_.tv_usec) / ONE_MILLION));
+        const double duration_usec = tv_diff_.tv_sec +
+            static_cast<double>(tv_diff_.tv_usec) / ONE_MILLION;
+        if (duration_usec == 0) {
+            return (ITERATION_FAILURE);
+        }
+        return (sub_iterations_ / duration_usec);
     }
+public:
+    static const double TIME_FAILURE = -1;
+    static const double ITERATION_FAILURE = -1;
 private:
     // return t1 - t2
     struct timeval tv_subtract(const struct timeval& t1,

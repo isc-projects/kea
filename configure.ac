@@ -405,6 +405,9 @@ AC_CONFIG_FILES([Makefile
                  src/bin/xfrout/tests/Makefile
                  src/bin/usermgr/Makefile
                  src/lib/Makefile
+                 src/lib/bench/Makefile
+                 src/lib/bench/example/Makefile
+                 src/lib/bench/tests/Makefile
                  src/lib/cc/Makefile
                  src/lib/python/Makefile
                  src/lib/python/isc/Makefile

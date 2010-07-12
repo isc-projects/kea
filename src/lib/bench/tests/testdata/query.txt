@@ -1,0 +1,6 @@
+# This is sample query data for benchmark.
+# The format is the same as BIND 9's queryperf.
+
+www.example.com TXT
+www.example.org SOA
+ftp.example.org RRSIG
