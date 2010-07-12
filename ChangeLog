@@ -1,3 +1,8 @@
+  75.	[bug]		jinmei
+	Fixed a bug in the sqlite3 data source where temporary strings
+	could be referenced after destruction.  It caused various lookup
+	failures with SunStudio build. (Trac #2882, r2494)
+
   74.	[func]*		jinmei
 	Refactored the cc::Session class by introducing an abstract base
 	class.  Test code can use their own derived mock class so that
