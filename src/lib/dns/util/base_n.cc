@@ -184,7 +184,7 @@ struct BaseNTransformer {
 template <int BitsPerChunk, char BaseZeroCode,
           typename Encoder, typename Decoder>
 string
-BaseNTransformer<BitsPerChunk, BaseZeroCode,Encoder, Decoder>::encode(
+BaseNTransformer<BitsPerChunk, BaseZeroCode, Encoder, Decoder>::encode(
     const vector<uint8_t>& binary)
 {
     // calculate the resulting length.
