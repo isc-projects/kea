@@ -40,25 +40,32 @@ namespace isc {
 namespace bench {
 void
 loadQueryData(const char* const input_file, BenchQueries& queries,
-              const RRClass& qclass)
+              const RRClass& qclass, const bool strict)
 {
     ifstream ifs;
 
     ifs.open(input_file, ios_base::in);
     if ((ifs.rdstate() & istream::failbit) != 0) {
-        isc_throw(Exception, "failed to query data file: " +
+        isc_throw(BenchMarkError, "failed to load query data file: " +
                   string(input_file));
     }
+    loadQueryData(ifs, queries, qclass, strict);
+    ifs.close();
+}
 
+void
+loadQueryData(istream& input, BenchQueries& queries, const RRClass& qclass,
+              const bool strict)
+{
     string line;
     unsigned int linenum = 0;
     Message query_message(Message::RENDER);
     OutputBuffer buffer(128); // this should be sufficiently large
     MessageRenderer renderer(buffer);
-    while (getline(ifs, line), !ifs.eof()) {
+    while (getline(input, line), !input.eof()) {
         ++linenum;
-        if (ifs.bad() || ifs.fail()) {
-            isc_throw(Exception,
+        if (input.bad() || input.fail()) {
+            isc_throw(BenchMarkError,
                       "Unexpected line in query data file around line " <<
                       linenum);
         }
@@ -70,22 +77,23 @@ loadQueryData(const char* const input_file, BenchQueries& queries,
         string qname_string, qtype_string;
         iss >> qname_string >> qtype_string;
         if (iss.bad() || iss.fail()) {
-            cerr << "unexpected input around line " << linenum << " (ignored)"
-                 << endl;
+            if (strict) {
+                isc_throw(BenchMarkError,
+                          "load query: unexpected input around line " <<
+                          linenum);
+            }
             continue;
         }
 
         // We expect broken lines of data, which will be ignored with a
         // warning message.
         try {
-            Name qname(qname_string);
-            RRType qtype(qtype_string);
-
             query_message.clear(Message::RENDER);
             query_message.setQid(0);
             query_message.setOpcode(Opcode::QUERY());
             query_message.setRcode(Rcode::NOERROR());
-            query_message.addQuestion(Question(qname, qclass, qtype));
+            query_message.addQuestion(Question(Name(qname_string), qclass,
+                                               RRType(qtype_string)));
 
             renderer.clear();
             query_message.toWire(renderer);
@@ -95,8 +103,11 @@ loadQueryData(const char* const input_file, BenchQueries& queries,
                 buffer.getLength());
             queries.push_back(query_data);
         } catch (const Exception& error) {
-            cerr << "failed to parse/create query around line " << linenum <<
-                ": " << error.what() << " (ignored)" << endl;
+            if (strict) {
+                isc_throw(BenchMarkError,
+                          "failed to parse/create query around line " <<
+                          linenum);
+            }
             continue;
         }
     }
