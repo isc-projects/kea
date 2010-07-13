@@ -75,6 +75,29 @@ TEST(BenchMarkTest, run) {
     const int duration_margin = 10000; // 10ms
     const int ONE_MILLION = 1000000;
 
+    // Prerequisite check: since the tests in this case may depend on subtle
+    // timing, it may result in false positives.  There are reportedly systems
+    // where usleep() doesn't work as this test expects.  So we check the
+    // conditions before the tests, and if it fails skip the tests at the
+    // risk of overlooking possible bugs.
+    struct timeval check_begin, check_end;
+    gettimeofday(&check_begin, NULL);
+    usleep(sleep_time);
+    gettimeofday(&check_end, NULL);
+    check_end.tv_sec -= check_begin.tv_sec;
+    if (check_end.tv_usec >= check_begin.tv_usec) {
+        check_end.tv_usec = check_end.tv_usec - check_begin.tv_usec;
+    } else {
+        check_end.tv_usec = ONE_MILLION + check_begin.tv_usec -
+            check_end.tv_usec;
+        --check_end.tv_sec;
+    }
+    if (check_end.tv_sec != 0 ||
+        sleep_time - duration_margin > check_end.tv_usec ||
+        sleep_time + duration_margin < check_end.tv_usec) {
+        cerr << "Prerequisite check failed.  skipping test" << endl;
+    }
+
     TestBenchMark test_bench(sub_iterations, sleep_time);
     BenchMark<TestBenchMark> bench(1, test_bench, false);
     // Check pre-test conditions.
