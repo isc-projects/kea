@@ -96,6 +96,7 @@ TEST(BenchMarkTest, run) {
         sleep_time - duration_margin > check_end.tv_usec ||
         sleep_time + duration_margin < check_end.tv_usec) {
         cerr << "Prerequisite check failed.  skipping test" << endl;
+        return;
     }
 
     TestBenchMark test_bench(sub_iterations, sleep_time);
