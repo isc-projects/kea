@@ -1,3 +1,9 @@
+  76.	[bug]		jelte
+	Fixed a bug in the handling of 'remote' config modules (i.e.
+	modules that peek at the configuration of other modules), where
+	they answered 'unknown command' to commands for those other
+	modules. (Trac #278, r2506)
+
   75.	[bug]		jinmei
 	Fixed a bug in the sqlite3 data source where temporary strings
 	could be referenced after destruction.  It caused various lookup
