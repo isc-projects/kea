@@ -32,20 +32,13 @@ using namespace isc::datasrc;
 
 namespace {
 
-class QueryTest : public ::testing::Test {
-protected:
-    void readQuery(Message& m, const char* datafile);
-
-    HotCache cache;
-};
-
 void
-QueryTest::readQuery(Message& m, const char* datafile) {
-    std::vector<unsigned char> data;
-    UnitTestUtil::readWireData(datafile, data);
-
-    InputBuffer buffer(&data[0], data.size());
-    m.fromWire(buffer);
+createQuery(Message& m, const Name& qname, const RRClass& qclass,
+            const RRType& qtype)
+{
+    m.setOpcode(Opcode::QUERY());
+    m.setHeaderFlag(MessageFlag::RD());
+    m.addQuestion(Question(qname, qclass, qtype));
 }
 
 QueryTaskPtr
@@ -58,15 +51,18 @@ createTask(Message& m, const Name& name, const RRType& rrtype0, HotCache& c) {
 
 // Check the QueryTask created using a temporary RRType object will remain
 // valid.
-TEST_F(QueryTest, constructWithTemporary) {
-    Message m1(Message::PARSE);
-    readQuery(m1, "q_wild_a");
+TEST(QueryTest, constructWithTemporary) {
+    HotCache cache;
+
+    Message m1(Message::RENDER);
+    createQuery(m1, Name("www.wild.example.com"), RRClass::IN(), RRType::A()); 
     QueryTaskPtr task_a = createTask(m1, Name("www.wild.example.com"),
                                         RRType::A(), cache);
     EXPECT_EQ(RRType::A(), task_a->qtype);
 
-    Message m2(Message::PARSE);
-    readQuery(m2, "q_wild_aaaa");
+    Message m2(Message::RENDER);
+    createQuery(m2, Name("www.wild.example.com"), RRClass::IN(),
+                RRType::AAAA());
     QueryTaskPtr task_aaaa = createTask(m2, Name("www.wild.example.com"),
                                         RRType::AAAA(), cache);
     EXPECT_EQ(RRType::AAAA(), task_aaaa->qtype);
