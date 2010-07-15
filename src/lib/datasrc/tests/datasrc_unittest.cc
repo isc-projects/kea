@@ -381,6 +381,14 @@ TEST_F(DataSrcTest, WildcardNodata) {
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 0, 2, 0);
 }
 
+TEST_F(DataSrcTest, DISABLED_WildcardAgainstMultiLabel) {
+    // this qname shouldn't match *.wild.com.com (because * can only match
+    // a single label), and it should result in NXDOMAIN.
+    createAndProcessQuery(Name("www.xxx.wild.example.com"), RRClass::IN(),
+                          RRType::A());
+    headerCheck(msg, Rcode::NXDOMAIN(), true, true, true, 0, 1, 0);
+}
+
 TEST_F(DataSrcTest, WildcardCname) {
     // Check that wildcard answers containing CNAMES are followed
     // correctly
