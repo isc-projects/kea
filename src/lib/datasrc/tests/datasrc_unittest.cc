@@ -65,7 +65,6 @@ protected:
         meta_source.addDataSrc(static_source);
     }
     void QueryCommon(const RRClass& qclass);
-    void readAndProcessQuery(const char* datafile);
     void createAndProcessQuery(const Name& qname, const RRClass& qclass,
                                const RRType& qtype);
 
@@ -82,18 +81,6 @@ performQuery(DataSrc& data_source, HotCache& cache, Message& message) {
     message.setRcode(Rcode::NOERROR());
     Query q(message, cache, true);
     data_source.doQuery(q);
-}
-
-void
-DataSrcTest::readAndProcessQuery(const char* datafile) {
-    std::vector<unsigned char> data;
-    UnitTestUtil::readWireData(datafile, data);
-
-    InputBuffer buffer(&data[0], data.size());
-    msg.fromWire(buffer);
-
-    msg.makeResponse();
-    performQuery(meta_source, cache, msg);
 }
 
 void
