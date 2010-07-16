@@ -403,7 +403,8 @@ class TestSecureHTTPServer(unittest.TestCase):
         except CmdctlException:
             pass
         else:
-            self.assertRaises(CmdctlException, SecureHTTPServer, ('localhost', 53531), 
+            self.assertRaises(CmdctlException, SecureHTTPServer,
+                              ('localhost', 53531),
                               MySecureHTTPRequestHandler, MyCommandControl)
         if server_one:
             server_one.server_close()
