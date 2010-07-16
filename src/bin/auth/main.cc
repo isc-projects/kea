@@ -96,9 +96,10 @@ main(int argc, char* argv[]) {
     int ch;
     const char* port = DNSPORT;
     const char* address = NULL;
+    const char* uid = NULL;
     bool use_ipv4 = true, use_ipv6 = true, cache = true;
 
-    while ((ch = getopt(argc, argv, "46a:np:v")) != -1) {
+    while ((ch = getopt(argc, argv, "46a:np:u:v")) != -1) {
         switch (ch) {
         case '4':
             // Note that -4 means "ipv4 only", we need to set "use_ipv6" here,
@@ -119,6 +120,9 @@ main(int argc, char* argv[]) {
             break;
         case 'p':
             port = optarg;
+            break;
+        case 'u':
+            uid = optarg;
             break;
         case 'v':
             verbose_mode = true;
@@ -164,6 +168,10 @@ main(int argc, char* argv[]) {
         cs = new ModuleCCSession(specfile, *cc_session, my_config_handler,
                                  my_command_handler);
         cout << "[b10-auth] Configuration channel established." << endl;
+
+        if (uid != NULL) {
+            changeUser(uid);
+        }
 
         auth_server->setConfigSession(cs);
         auth_server->updateConfig(ElementPtr());
