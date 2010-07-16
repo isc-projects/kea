@@ -397,13 +397,13 @@ class TestSecureHTTPServer(unittest.TestCase):
     def test_addr_in_use(self):
         server_one = None
         try:
-            server_one = SecureHTTPServer(('localhost', 8080),
+            server_one = SecureHTTPServer(('localhost', 53531),
                                         MySecureHTTPRequestHandler,
                                         MyCommandControl)
-        except SystemExit:
+        except CmdctlException:
             pass
         else:
-            self.assertRaises(SystemExit, SecureHTTPServer, ('localhost', 8080), 
+            self.assertRaises(CmdctlException, SecureHTTPServer, ('localhost', 53531), 
                               MySecureHTTPRequestHandler, MyCommandControl)
         if server_one:
             server_one.server_close()
