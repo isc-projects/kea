@@ -20,7 +20,7 @@
 //               react on config change announcements)
 //
 
-#include "config.h"
+#include <config.h>
 
 #include <stdexcept>
 #include <stdlib.h>
@@ -40,8 +40,7 @@
 #include <cc/session.h>
 #include <exceptions/exceptions.h>
 
-#include "ccsession.h"
-#include "config.h"
+#include <config/ccsession.h>
 
 using namespace std;
 

@@ -21,7 +21,7 @@
 
 #include <exceptions/exceptions.h>
 
-#include "data_source.h"
+#include <datasrc/data_source.h>
 
 namespace isc {
 

@@ -29,9 +29,9 @@
 
 #include <asio_link.h>
 
-#include "spec_config.h"        // for XFROUT.  should not be here.
-#include "auth_srv.h"
-#include "common.h"
+#include <auth/spec_config.h>   // for XFROUT.  should not be here.
+#include <auth/auth_srv.h>
+#include <auth/common.h>
 
 using namespace asio;
 using ip::udp;
