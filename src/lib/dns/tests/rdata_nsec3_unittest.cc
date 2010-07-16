@@ -44,14 +44,12 @@ string nsec3_txt("1 1 1 D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6 "
                  "NS SOA RRSIG DNSKEY NSEC3PARAM");
 
 
-TEST_F(Rdata_NSEC3_Test, toText)
-{
+TEST_F(Rdata_NSEC3_Test, toText) {
     const generic::NSEC3 rdata_nsec3(nsec3_txt);
     EXPECT_EQ(nsec3_txt, rdata_nsec3.toText());
 }
 
-TEST_F(Rdata_NSEC3_Test, badText)
-{
+TEST_F(Rdata_NSEC3_Test, badText) {
     EXPECT_THROW(generic::NSEC3 rdata_nsec3("1 1 1 ADDAFEE "
                                             "0123456789ABCDEFGHIJKLMNOPQRSTUV "
                                             "BIFF POW SPOON"),
@@ -72,16 +70,16 @@ TEST_F(Rdata_NSEC3_Test, badText)
                                             "0123456789ABCDEFGHIJKLMNOPQRSTUV "
                                             "A NS SOA"),
                  InvalidRdataText);
+}
 
-#if 0 // this currently fails
+TEST_F(Rdata_NSEC3_Test, DISABLED_badText) {
+    // this currently fails
     EXPECT_THROW(generic::NSEC3(
                      "1 1 1D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6 "
                      "NS SOA RRSIG DNSKEY NSEC3PARAM"), InvalidRdataText);
-#endif
 }
 
-TEST_F(Rdata_NSEC3_Test, createFromWire)
-{
+TEST_F(Rdata_NSEC3_Test, createFromWire) {
     const generic::NSEC3 rdata_nsec3(nsec3_txt);
     EXPECT_EQ(0, rdata_nsec3.compare(
                   *rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
@@ -98,8 +96,7 @@ TEST_F(Rdata_NSEC3_Test, createFromWire)
                  DNSMessageFORMERR);
 }
 
-TEST_F(Rdata_NSEC3_Test, toWireRenderer)
-{
+TEST_F(Rdata_NSEC3_Test, toWireRenderer) {
     renderer.skip(2);
     const generic::NSEC3 rdata_nsec3(nsec3_txt);
     rdata_nsec3.toWire(renderer);
@@ -111,14 +108,12 @@ TEST_F(Rdata_NSEC3_Test, toWireRenderer)
                         obuffer.getLength() - 2, &data[2], data.size() - 2);
 }
 
-TEST_F(Rdata_NSEC3_Test, toWireBuffer)
-{
+TEST_F(Rdata_NSEC3_Test, toWireBuffer) {
     const generic::NSEC3 rdata_nsec3(nsec3_txt);
     rdata_nsec3.toWire(obuffer);
 }
 
-TEST_F(Rdata_NSEC3_Test, assign)
-{
+TEST_F(Rdata_NSEC3_Test, assign) {
     generic::NSEC3 rdata_nsec3(nsec3_txt);
     generic::NSEC3 other_nsec3 = rdata_nsec3;
     EXPECT_EQ(0, rdata_nsec3.compare(other_nsec3));

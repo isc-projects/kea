@@ -38,8 +38,7 @@ class Rdata_RRSIG_Test : public RdataTest {
     // there's nothing to specialize
 };
 
-TEST_F(Rdata_RRSIG_Test, fromText)
-{
+TEST_F(Rdata_RRSIG_Test, fromText) {
     string rrsig_txt("A 5 4 43200 20100223214617 20100222214617 8496 isc.org. "
                      "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
@@ -50,8 +49,7 @@ TEST_F(Rdata_RRSIG_Test, fromText)
 
 }
 
-TEST_F(Rdata_RRSIG_Test, badText)
-{
+TEST_F(Rdata_RRSIG_Test, badText) {
     EXPECT_THROW(const generic::RRSIG sig("SPORK"), InvalidRdataText);
     EXPECT_THROW(const generic::RRSIG sig("A 555 4 43200 "
                      "20100223214617 20100222214617 8496 isc.org. "
@@ -87,16 +85,16 @@ TEST_F(Rdata_RRSIG_Test, badText)
                      "20100223214617 20100222214617 8496 isc.org. "
                      "EEeeeeeeEEEeeeeeeGaaahAAAAAAAAHHHHHHHHHHH!="),
                      BadBase64String);
+}
 
-#if 0                           // this currently fails
+TEST_F(Rdata_RRSIG_Test, DISABLED_badText) {
+    // this currently fails
     // no space between the tag and signer
     EXPECT_THROW(generic::RRSIG("A 5 4 43200 20100223214617 20100222214617 "
                                 "8496isc.org. ofc="), InvalidRdataText);
-#endif
 }
 
-TEST_F(Rdata_RRSIG_Test, toWireRenderer)
-{
+TEST_F(Rdata_RRSIG_Test, toWireRenderer) {
     string rrsig_txt("A 5 4 43200 20100223214617 20100222214617 8496 isc.org. "
                      "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
@@ -106,8 +104,7 @@ TEST_F(Rdata_RRSIG_Test, toWireRenderer)
     rdata_rrsig.toWire(renderer);
 }
 
-TEST_F(Rdata_RRSIG_Test, toWireBuffer)
-{
+TEST_F(Rdata_RRSIG_Test, toWireBuffer) {
     string rrsig_txt("A 5 4 43200 20100223214617 20100222214617 8496 isc.org. "
                      "evxhlGx13mpKLVkKsjpGzycS5twtIoxOmlN14w9t5AgzGBmz"
                      "diGdLIrFabqr72af2rUq+UDBKMWXujwZTZUTws32sVldDPk/"
@@ -117,8 +114,7 @@ TEST_F(Rdata_RRSIG_Test, toWireBuffer)
     rdata_rrsig.toWire(obuffer);
 }
 
-TEST_F(Rdata_RRSIG_Test, createFromWire)
-{
+TEST_F(Rdata_RRSIG_Test, createFromWire) {
     string rrsig_txt("A 5 2 43200 20100327070149 20100225070149 2658 isc.org. "
                 "HkJk/xZTvzePU8NENl/ley8bbUumhk1hXciyqhLnz1VQFzkDooej6neX"
                 "ZgWZzQKeTKPOYWrnYtdZW4PnPQFeUl3orgLev7F8J6FZlDn0y/J/ThR5"
