@@ -1,3 +1,7 @@
+  77.	[func]		zhanglikun
+	Make error message be more friendly when running cmdctl and it's 
+	already running(listening on same port)(Trac #277, rTBD)
+
   76.	[bug]		jelte
 	Fixed a bug in the handling of 'remote' config modules (i.e.
 	modules that peek at the configuration of other modules), where
