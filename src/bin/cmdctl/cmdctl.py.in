@@ -595,8 +595,10 @@ if __name__ == '__main__':
     parser = OptionParser(version = __version__)
     set_cmd_options(parser)
     (options, args) = parser.parse_args()
+    result = 1                  # in case of failure
     try:
         run(options.addr, options.port, options.idle_timeout, options.verbose)
+        result = 0
     except isc.cc.SessionError as err:
         sys.stderr.write("[b10-cmdctl] Error creating b10-cmdctl, "
                          "is the command channel daemon running?\n")        
@@ -608,5 +610,4 @@ if __name__ == '__main__':
     if httpd:
         httpd.shutdown()
 
-
-
+    sys.exit(result)
