@@ -383,13 +383,30 @@ class MySecureHTTPServer(SecureHTTPServer):
 class TestSecureHTTPServer(unittest.TestCase):
     def setUp(self):
         self.old_stdout = sys.stdout
+        self.old_stderr = sys.stderr
         sys.stdout = open(os.devnull, 'w')
+        sys.stderr = sys.stdout
         self.server = MySecureHTTPServer(('localhost', 8080), 
                                          MySecureHTTPRequestHandler,
                                          MyCommandControl, verbose=True)
 
     def tearDown(self):
         sys.stdout = self.old_stdout
+        sys.stderr = self.old_stderr
+
+    def test_addr_in_use(self):
+        server_one = None
+        try:
+            server_one = SecureHTTPServer(('localhost', 8080),
+                                        MySecureHTTPRequestHandler,
+                                        MyCommandControl)
+        except SystemExit:
+            pass
+        else:
+            self.assertRaises(SystemExit, SecureHTTPServer, ('localhost', 8080), 
+                              MySecureHTTPRequestHandler, MyCommandControl)
+        if server_one:
+            server_one.server_close()
 
     def test_create_user_info(self):
         self.server._create_user_info('/local/not-exist')
