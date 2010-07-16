@@ -19,7 +19,7 @@
 
 #include <sqlite3.h>
 
-#include "sqlite3_datasrc.h"
+#include <datasrc/sqlite3_datasrc.h>
 
 #include <dns/rrttl.h>
 #include <dns/rdata.h>

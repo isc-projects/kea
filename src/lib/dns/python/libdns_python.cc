@@ -27,7 +27,7 @@
 #include <Python.h>
 #include <structmember.h>
 
-#include "config.h"
+#include <config.h>
 
 #include <exceptions/exceptions.h>
 
@@ -36,22 +36,22 @@
 #include <dns/name.h>
 #include <dns/messagerenderer.h>
 
-#include "libdns_python_common.h"
+#include <dns/python/libdns_python_common.h>
 
 // For our 'general' isc::Exception
 static PyObject* po_IscException;
 
 // order is important here!
-#include "messagerenderer_python.cc"
-#include "name_python.cc"           // needs Messagerenderer
-#include "rrclass_python.cc"        // needs Messagerenderer
-#include "rrtype_python.cc"         // needs Messagerenderer
-#include "rrttl_python.cc"          // needs Messagerenderer
-#include "rdata_python.cc"          // needs Type, Class
-#include "rrset_python.cc"          // needs Rdata, RRTTL
-#include "question_python.cc"       // needs RRClass, RRType, RRTTL,
-                                    //       Name
-#include "message_python.cc"        // needs RRset, Question
+#include <dns/python/messagerenderer_python.cc>
+#include <dns/python/name_python.cc>           // needs Messagerenderer
+#include <dns/python/rrclass_python.cc>        // needs Messagerenderer
+#include <dns/python/rrtype_python.cc>         // needs Messagerenderer
+#include <dns/python/rrttl_python.cc>          // needs Messagerenderer
+#include <dns/python/rdata_python.cc>          // needs Type, Class
+#include <dns/python/rrset_python.cc>          // needs Rdata, RRTTL
+#include <dns/python/question_python.cc>       // needs RRClass, RRType, RRTTL,
+                                               // Name
+#include <dns/python/message_python.cc>        // needs RRset, Question
 
 //
 // Definition of the module

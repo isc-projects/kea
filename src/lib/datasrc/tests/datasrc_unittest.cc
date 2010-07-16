@@ -39,7 +39,7 @@
 #include <datasrc/static_datasrc.h>
 
 #include <dns/tests/unittest_util.h>
-#include "test_datasrc.h"
+#include <datasrc/tests/test_datasrc.h>
 
 using isc::UnitTestUtil;
 using namespace std;

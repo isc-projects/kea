@@ -14,14 +14,14 @@
 
 // $Id$
 
-#include "config.h"
+#include <config.h>
 
 #include <cassert>
 
 #include <algorithm>
 
 #include <dns/tests/unittest_util.h>
-#include "test_datasrc.h"
+#include <datasrc/tests/test_datasrc.h>
 
 #include <datasrc/data_source.h>
 

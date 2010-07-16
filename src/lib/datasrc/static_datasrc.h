@@ -25,7 +25,7 @@
 #ifndef __STATIC_DATA_SOURCE_H
 #define __STATIC_DATA_SOURCE_H
 
-#include "data_source.h"
+#include <datasrc/data_source.h>
 
 namespace isc {
 

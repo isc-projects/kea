@@ -14,7 +14,7 @@
 
 // $Id$
 
-#include "config.h"
+#include <config.h>
 
 #include <cassert>
 
@@ -26,8 +26,8 @@
 #include <dns/rrtype.h>
 #include <dns/rrttl.h>
 
-#include "data_source.h"
-#include "static_datasrc.h"
+#include <datasrc/data_source.h>
+#include <datasrc/static_datasrc.h>
 
 using namespace std;
 using namespace isc::dns;

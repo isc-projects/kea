@@ -18,9 +18,9 @@
 #include <Python.h>
 #include <structmember.h>
 
-#include "config.h"
+#include <config.h>
 
-#include "fd_share.h"
+#include <xfr/fd_share.h>
 
 static PyObject*
 fdshare_recv_fd(PyObject *self UNUSED_PARAM, PyObject *args)

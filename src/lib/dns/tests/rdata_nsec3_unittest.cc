@@ -28,8 +28,8 @@
 
 #include <gtest/gtest.h>
 
-#include "unittest_util.h"
-#include "rdata_unittest.h"
+#include <dns/tests/unittest_util.h>
+#include <dns/tests/rdata_unittest.h>
 
 using isc::UnitTestUtil;
 using namespace std;
