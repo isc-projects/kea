@@ -41,6 +41,7 @@
 
 #include <auth/spec_config.h>
 #include <auth/common.h>
+#include <auth/change_user.h>
 #include <auth/auth_srv.h>
 #include <auth/asio_link.h>
 
