@@ -336,6 +336,8 @@ class BoB:
             authargs += ['-a', str(self.address)]
         if self.nocache:
             authargs += ['-n']
+        if self.uid:
+            authargs += ['-u', str(self.uid)]
         if self.verbose:
             authargs += ['-v']
             sys.stdout.write("Starting b10-auth using port %d" %
