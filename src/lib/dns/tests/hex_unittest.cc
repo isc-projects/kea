@@ -95,6 +95,7 @@ TEST_F(HexTest, decodeHex) {
 TEST_F(HexTest, decodeMap) {
     string input("00");       // input placeholder
 
+    // See Base32HexTest.decodeMap for details of the following tests.
     for (int i = 0; i < 256; ++i) {
         input[1] = i;
 

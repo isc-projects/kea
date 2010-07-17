@@ -118,6 +118,19 @@ TEST_F(Base32HexTest, encode) {
 TEST_F(Base32HexTest, decodeMap) {
     string input(8, '0');       // input placeholder
 
+    // We're going to populate an input string with only the last character
+    // not equal to the zero character ('0') for each valid base32hex encoding
+    // character.  Decoding that input should result in a data stream with
+    // the last byte equal to the numeric value represented by the that
+    // character.  For example, we'll generate and confirm the following:
+    // "00000000" => should be 0 (as a 40bit integer)
+    // "00000001" => should be 1 (as a 40bit integer)
+    // ...
+    // "0000000V" => should be 31 (as a 40bit integer)
+    // We also check the use of an invalid character for the last character
+    // surely fails. '=' should be accepted as a valid padding in this
+    // context; space characters shouldn't be allowed in this context.
+
     for (int i = 0; i < 256; ++i) {
         input[7] = i;
 
