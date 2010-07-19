@@ -22,7 +22,6 @@
 import isc
 import signal
 import ast
-import pprint
 import os
 import copy
 import tempfile
@@ -94,8 +93,6 @@ class ConfigManagerData:
                                                dir=self.data_path,
                                                delete=False)
             filename = file.name
-            #pp = pprint.PrettyPrinter(indent=4)
-            #s = pp.pformat(self.data)
             file.write(json.dumps(self.data))
             file.write("\n")
             file.close()
