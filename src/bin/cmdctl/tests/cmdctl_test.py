@@ -17,6 +17,7 @@
 import unittest
 import socket
 import tempfile
+import sys
 from cmdctl import *
 
 SPEC_FILE_PATH = '..' + os.sep
@@ -279,7 +280,6 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
         rcode, reply = self.handler._handle_post_request()
         self.assertEqual(http.client.BAD_REQUEST, rcode)
 
-import sys
 class MyCommandControl(CommandControl):
     def _get_modules_specification(self):
         return {}
