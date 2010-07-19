@@ -48,7 +48,7 @@ def module_spec_from_file(spec_file, check = True):
             module_spec = json.loads(json_str)
         elif type(spec_file) == str:
             file = open(spec_file)
-            json_str = file.read(-1)
+            json_str = file.read()
             module_spec = json.loads(json_str)
             file.close()
         else:
