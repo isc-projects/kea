@@ -1,10 +1,10 @@
 {
     "value1": 1,
     "value2": 2.3,
-    "value3": True,
+    "value3": true,
     "value4": "foo",
     "value5": [ 1, 2, 3 ],
-    "value6": { "v61": "bar", "v62": True },
-    "value7": [ 1, 2.2, "str", True ],
+    "value6": { "v61": "bar", "v62": true },
+    "value7": [ 1, 2.2, "str", true ],
     "value9": { "v91": "hi", "v92": { "v92a": "Hi", "v92b": 3 } }
 }
