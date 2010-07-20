@@ -441,7 +441,11 @@ class SecureHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
                  CommandControlClass,
                  idle_timeout = 1200, verbose = False):
         '''idle_timeout: the max idle time for login'''
-        http.server.HTTPServer.__init__(self, server_address, RequestHandlerClass)
+        try:
+            http.server.HTTPServer.__init__(self, server_address, RequestHandlerClass)
+        except socket.error as err:
+            raise CmdctlException("Error creating server, because: %s \n" % str(err))
+
         self.user_sessions = {}
         self.idle_timeout = idle_timeout
         self.cmdctl = CommandControlClass(self, verbose)
@@ -587,20 +591,23 @@ def set_cmd_options(parser):
             help="display more about what is going on")
 
 if __name__ == '__main__':
+    set_signal_handler()
+    parser = OptionParser(version = __version__)
+    set_cmd_options(parser)
+    (options, args) = parser.parse_args()
+    result = 1                  # in case of failure
     try:
-        set_signal_handler()
-        parser = OptionParser(version = __version__)
-        set_cmd_options(parser)
-        (options, args) = parser.parse_args()
         run(options.addr, options.port, options.idle_timeout, options.verbose)
-    except isc.cc.SessionError as se:
+        result = 0
+    except isc.cc.SessionError as err:
         sys.stderr.write("[b10-cmdctl] Error creating b10-cmdctl, "
-                "is the command channel daemon running?\n")        
+                         "is the command channel daemon running?\n")        
     except KeyboardInterrupt:
-        sys.stderr.write("[b10-cmdctl] exit http server\n")
+        sys.stderr.write("[b10-cmdctl] exit from Cmdctl\n")
+    except CmdctlException as err:
+        sys.stderr.write("[b10-cmdctl] " + str(err) + "\n")
 
     if httpd:
         httpd.shutdown()
 
-
-
+    sys.exit(result)
