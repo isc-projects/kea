@@ -18,13 +18,10 @@
 
 #include <cassert>
 
-#include <boost/config.hpp> // for BOOST_DEDUCED_TYPENAME
-#include <boost/serialization/throw_exception.hpp>
-#include <boost/serialization/pfto.hpp>
-#include <boost/static_assert.hpp>
-
-#include <boost/iterator/transform_iterator.hpp>
-#include <boost/archive/iterators/dataflow_exception.hpp>
+// We use the same boost header files used in "_from_base64".  Since the
+// precise path to these headers may vary depending on the boost version we
+// simply include the base64 header here.
+#include <boost/archive/iterators/binary_from_base64.hpp>
 
 #include <exceptions/exceptions.h>
 

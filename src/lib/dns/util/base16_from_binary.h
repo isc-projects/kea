@@ -26,10 +26,8 @@ namespace std{
 } // namespace std
 #endif
 
-#include <boost/serialization/pfto.hpp>
-
-#include <boost/iterator/transform_iterator.hpp>
-#include <boost/archive/iterators/dataflow_exception.hpp>
+// See base32hex_from_binary.h for why we need base64_from...hpp here.
+#include <boost/archive/iterators/base64_from_binary.hpp>
 
 namespace boost { 
 namespace archive {

@@ -26,10 +26,10 @@ namespace std{
 } // namespace std
 #endif
 
-#include <boost/serialization/pfto.hpp>
-
-#include <boost/iterator/transform_iterator.hpp>
-#include <boost/archive/iterators/dataflow_exception.hpp>
+// We use the same boost header files used in "base64_from_".  Since the
+// precise path to these headers may vary depending on the boost version we
+// simply include the base64 header here.
+#include <boost/archive/iterators/base64_from_binary.hpp>
 
 namespace boost { 
 namespace archive {
