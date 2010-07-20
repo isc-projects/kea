@@ -51,3 +51,4 @@ EXTRA_DIST += testdata/spec24.spec
 EXTRA_DIST += testdata/spec25.spec
 EXTRA_DIST += testdata/spec26.spec
 EXTRA_DIST += testdata/spec27.spec
+EXTRA_DIST += testdata/spec28.spec
