@@ -17,6 +17,7 @@
 import unittest
 import socket
 import tempfile
+import sys
 from cmdctl import *
 
 SPEC_FILE_PATH = '..' + os.sep
@@ -383,13 +384,31 @@ class MySecureHTTPServer(SecureHTTPServer):
 class TestSecureHTTPServer(unittest.TestCase):
     def setUp(self):
         self.old_stdout = sys.stdout
+        self.old_stderr = sys.stderr
         sys.stdout = open(os.devnull, 'w')
+        sys.stderr = sys.stdout
         self.server = MySecureHTTPServer(('localhost', 8080), 
                                          MySecureHTTPRequestHandler,
                                          MyCommandControl, verbose=True)
 
     def tearDown(self):
         sys.stdout = self.old_stdout
+        sys.stderr = self.old_stderr
+
+    def test_addr_in_use(self):
+        server_one = None
+        try:
+            server_one = SecureHTTPServer(('localhost', 53531),
+                                        MySecureHTTPRequestHandler,
+                                        MyCommandControl)
+        except CmdctlException:
+            pass
+        else:
+            self.assertRaises(CmdctlException, SecureHTTPServer,
+                              ('localhost', 53531),
+                              MySecureHTTPRequestHandler, MyCommandControl)
+        if server_one:
+            server_one.server_close()
 
     def test_create_user_info(self):
         self.server._create_user_info('/local/not-exist')

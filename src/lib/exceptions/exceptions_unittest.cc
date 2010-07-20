@@ -17,7 +17,7 @@
 #include <stdexcept>
 #include <string>
 
-#include "exceptions.h"
+#include <exceptions/exceptions.h>
 
 #include <gtest/gtest.h>
 

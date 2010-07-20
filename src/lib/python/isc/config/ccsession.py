@@ -183,10 +183,10 @@ class ModuleCCSession(ConfigData):
         if msg and not 'result' in msg:
             answer = None
             try:
+                module_name = env['group']
                 cmd, arg = isc.config.ccsession.parse_command(msg)
                 if cmd == COMMAND_CONFIG_UPDATE:
                     new_config = arg
-                    module_name = env['group']
                     # If the target channel was not this module
                     # it might be in the remote_module_configs
                     if module_name != self._module_name:
@@ -213,10 +213,12 @@ class ModuleCCSession(ConfigData):
                             isc.cc.data.merge(newc, new_config)
                             self.set_local_config(newc)
                 else:
-                    if self._command_handler:
-                        answer = self._command_handler(cmd, arg)
-                    else:
-                        answer = create_answer(2, self._module_name + " has no command handler")
+                    # ignore commands for 'remote' modules
+                    if module_name == self._module_name:
+                        if self._command_handler:
+                            answer = self._command_handler(cmd, arg)
+                        else:
+                            answer = create_answer(2, self._module_name + " has no command handler")
             except Exception as exc:
                 answer = create_answer(1, str(exc))
             if answer:

@@ -40,8 +40,8 @@
 
 #include <cc/data.h>
 
-#include "common.h"
-#include "auth_srv.h"
+#include <auth/common.h>
+#include <auth/auth_srv.h>
 
 #include <boost/lexical_cast.hpp>
 

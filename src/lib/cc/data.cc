@@ -14,9 +14,9 @@
 
 // $Id$
 
-#include "config.h"
+#include <config.h>
 
-#include "data.h"
+#include <cc/data.h>
 
 #include <cassert>
 #include <climits>

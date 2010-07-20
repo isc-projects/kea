@@ -20,7 +20,7 @@
 
 #include <fstream>
 
-#include "data_def_unittests_config.h"
+#include <config/tests/data_def_unittests_config.h>
 
 using namespace isc::data;
 using namespace isc::config;
