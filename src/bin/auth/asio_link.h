@@ -43,20 +43,24 @@ class AuthSrv;
 ///
 /// The \c asio_link namespace is used to define a set of wrapper interfaces
 /// for the ASIO library.
-/// BIND 10 uses non Boost version of ASIO because it's header only, i.e.
-/// does not require a separate library object to be linked, and thus
+///
+/// BIND 10 uses the non-Boost version of ASIO because it's header-only,
+/// i.e., does not require a separate library object to be linked, and thus
 /// lowers the bar for introduction.
-/// But the advantage comes with its own costs: since the header only version
+///
+/// But the advantage comes with its own costs: since the header-only version
 /// includes more definitions in public header files, it tends to trigger
 /// more compiler warnings for our own sources, and, depending on the
 /// compiler options, may make the build fail.
+///
 /// We also found it may be tricky to use ASIO and standard C++ libraries
 /// in a single translation unit, i.e., a .cc file: depending on the order
-/// of including header files ASIO may or may not work on some platforms.
-/// This wrapper interfaces are intended to centralize points of these
+/// of including header files, ASIO may or may not work on some platforms.
+///
+/// This wrapper interface is intended to centralize these
 /// problematic issues in a single sub module.  Other BIND 10 modules should
-/// simply include \c asio_link.h and use the wrapper APIs instead of
-/// including ASIO header files and using ASIO specific classes directly.
+/// simply include \c asio_link.h and use the wrapper API instead of
+/// including ASIO header files and using ASIO-specific classes directly.
 ///
 /// This wrapper may be used for other IO libraries if and when we want to
 /// switch, but generality for that purpose is not the primary goal of
@@ -70,16 +74,16 @@ class AuthSrv;
 ///
 /// One obvious drawback of this approach is performance overhead
 /// due to the additional layer.  We should eventually evaluate the cost
-/// of the wrapper abstraction in benchmark tests.
-///
-/// Another drawback is that the wrapper interfaces don't provide all features
-/// of ASIO (at least for the moment).  We should also re-evaluate the
+/// of the wrapper abstraction in benchmark tests. Another drawback is
+/// that the wrapper interfaces don't provide all features of ASIO
+/// (at least for the moment).  We should also re-evaluate the
 /// maintenance overhead of providing necessary wrappers as we develop
 /// more.
 ///
 /// On the other hand, we may be able to exploit the wrapper approach to
 /// simplify the interfaces (by limiting the usage) and unify performance
 /// optimization points.
+///
 /// As for optimization, we may want to provide a custom allocator for
 /// the placeholder of callback handlers:
 /// http://think-async.com/Asio/asio-1.3.1/doc/asio/reference/asio_handler_allocate.html
@@ -144,10 +148,6 @@ private:
     asio::ip::address asio_address_;
 };
 
-/// \brief The \c IOEndpoint class represents a communication endpoint.
-///
-/// This class is a wrapper for the ASIO \c ip::address class.
-
 /// \brief The \c IOEndpoint class is an abstract base class to represent
 /// a communication endpoint.
 ///
@@ -182,7 +182,7 @@ public:
     ///
     /// This method returns an IOAddress object corresponding to \c this
     /// endpoint.
-    /// Note that the return value is not a real object, not a reference or
+    /// Note that the return value is a real object, not a reference or
     /// a pointer.
     /// This is aligned with the interface of the ASIO counterpart:
     /// the \c address() method of \c ip::xxx::endpoint classes returns
@@ -407,8 +407,8 @@ public:
 
     /// \brief Start the underlying event loop.
     ///
-    /// This method blocks until the \c stop() method is called via some
-    /// handler.
+    /// This method does not return control to the caller until
+    /// the \c stop() method is called via some handler.
     void run();
 
     /// \brief Stop the underlying event loop.
