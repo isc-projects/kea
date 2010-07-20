@@ -60,6 +60,7 @@ lib_LTLIBRARIES = libdns++.la
 libdns___la_SOURCES = util/base32hex.h util/base64.h util/base_n.cc
 libdns___la_SOURCES += util/base32hex_from_binary.h
 libdns___la_SOURCES += util/binary_from_base32hex.h
+libdns___la_SOURCES += util/base16_from_binary.h util/binary_from_base16.h
 libdns___la_SOURCES += buffer.h
 libdns___la_SOURCES += dnssectime.h dnssectime.cc
 libdns___la_SOURCES += exceptions.h exceptions.cc
