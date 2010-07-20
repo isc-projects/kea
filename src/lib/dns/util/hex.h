@@ -17,10 +17,9 @@
 #ifndef __HEX_H
 #define __HEX_H 1
 
+#include <stdint.h>
 #include <string>
 #include <vector>
-
-#include <exceptions/exceptions.h>
 
 //
 // Note: this helper module isn't specific to the DNS protocol per se.
@@ -30,19 +29,31 @@
 
 namespace isc {
 namespace dns {
-
+/// \brief Encode binary data in the base16 ('hex') format.
 ///
-/// \brief A standard DNS (or ISC) module exception that is thrown if a hex
-/// decoder encounters an invalid input.
+/// The underlying implementation is shared with \c encodeBase64, and most of
+/// the description except the format (base16) equally applies.
+/// Another notable exception is that the base16 encoding doesn't require
+/// padding, so padding related considerations and the notion of canonical
+/// encoding don't apply.
 ///
-class BadHexString : public Exception {
-public:
-    BadHexString(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
-};
-
+/// \param binary A vector object storing the data to be encoded. 
+/// \return A newly created string that stores base16 encoded value for
+/// binary.
 std::string encodeHex(const std::vector<uint8_t>& binary);
-void decodeHex(const std::string& hex, std::vector<uint8_t>& result);
+
+/// \brief Decode a text encoded in the base16 ('hex') format into the
+/// original %data.
+///
+/// The underlying implementation is shared with \c decodeBase64, and most
+/// of the description except the format (base16) equally applies.
+/// Another notable exception is that the base16 encoding doesn't require
+/// padding, so padding related considerations and the notion of canonical
+/// encoding don't apply.
+///
+/// \param input A text encoded in the base16 format.
+/// \param result A vector in which the decoded %data is to be stored.
+void decodeHex(const std::string& input, std::vector<uint8_t>& result);
 }
 }
 
