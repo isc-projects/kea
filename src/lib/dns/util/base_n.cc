@@ -45,13 +45,29 @@ namespace dns {
 // In the following anonymous namespace, we provide a generic framework
 // to encode/decode baseN format.  We use the following tools:
 // - boost base64_from_binary/binary_from_base64: provide mapping table for
-//   base64
-// - base32hex_from_binary/binary_from_base32hex: provide mapping table for
-//   base32hex.  A straightforward variation of their base64 counterparts.
+//   base64.
+//   These classes take another iterator (Base) as a template argument, and
+//   their dereference operator (operator*()) first retrieves an input value
+//   from Base via Base::operator* and converts the value using their mapping
+//   table.  The converted value is returned as their own operator*.
+// - base{32hex,16}_from_binary/binary_from_base{32hex,16}: provide mapping
+//   table for base32hex and base16.  A straightforward variation of their
+//   base64 counterparts.
 // - EncodeNormalizer/DecodeNormalizer: supplemental filter handling baseN
 //   padding characters (=)
 // - boost transform_width: an iterator framework for handling data stream
-//   per bit-group
+//   per bit-group.  It takes another iterator (Base) and output/input bit
+//   numbers (BitsOut/BitsIn) template arguments.  A transform_width object
+//   internally maintains a bit stream, which can be retrieved per BitsOut
+//   bits via its dereference operator (operator*()).  It builds the stream
+//   by internally iterating over the Base object via Base::operator++ and
+//   Base::operator*, using the least BitsIn bits of the result of
+//   Base::operator*.  In our usage BitsIn for encoding and BitsOut for
+//   decoding are always 8 (# of bits for one byte).
+//
+// Its dereference operator
+//   retrieves BitsIn bits from the result of "*Base" (if necessary it
+//   internally calls ++Base) 
 //
 // A conceptual description of how the encoding and decoding work is as
 // follows:
@@ -77,6 +93,20 @@ namespace {
 const char BASE_PADDING_CHAR = '=';
 const uint8_t BINARY_ZERO_CODE = 0;
   
+// EncodeNormalizer is an input iterator intended to be used as a filter
+// between the binary stream and baseXX_from_binary translator (via
+// transform_width).  An EncodeNormalizer object is configured with two
+// iterators (base and base_end), specifying the head and end of the input
+// stream.  It internally iterators over the original stream, and return
+// each byte of the stream intact via its dereference operator until it
+// reaches the end of the stream.  After that the EncodeNormalizer object
+// will return 0 no matter how many times it is subsequently incremented.
+// This is necessary because the input binary stream may not contain
+// sufficient bits for a full encoded text while baseXX_from_binary expects
+// a sufficient length of input.
+// Note: this class is intended to be used within this implementation file,
+// and assumes "base < base_end" on construction without validating the
+// arguments.  The behavior is undefined if this assumption doesn't hold.
 class EncodeNormalizer : public iterator<input_iterator_tag, uint8_t> {
 public:
     EncodeNormalizer(const vector<uint8_t>::const_iterator& base,
@@ -108,6 +138,22 @@ private:
     bool in_pad_;
 };
 
+// DecodeNormalizer is an input iterator intended to be used as a filter
+// between the encoded baseX stream and binary_from_baseXX.
+// A DecodeNormalizer object is configured with three string iterators
+// (base, base_beinpad, and base_beginpad), specifying the head of the string,
+// the beginning position of baseX padding (when there's padding), and
+// end of the string, respectively.  It internally iterators over the original
+// stream, and return each character of the encoded string via its dereference
+// operator until it reaches base_beginpad.  After that the DecodeNormalizer
+// will return the encoding character corresponding to the all-0 value
+// (which is specified on construction via base_zero_code.  see also
+// BaseZeroCode below).  This translation is necessary because
+// binary_from_baseXX doesn't accept the padding character (i.e. '=').
+// Note: this class is intended to be used within this implementation file,
+// and for simplicity assumes "base < base_beginpad <= base_end" on
+// construction without validating the arguments.  The behavior is undefined
+// if this assumption doesn't hold.
 class DecodeNormalizer : public iterator<input_iterator_tag, char> {
 public:
     DecodeNormalizer(const char base_zero_code,
@@ -152,8 +198,8 @@ private:
 //               the corresponding encoding.  e.g. 'A' for base64.
 // Encoder: baseX_from_binary<transform_width<EncodeNormalizer,
 //                                            BitsPerChunk, 8> >
-// Decoder: transform_width<binary_from_baseX<DecodeNormalizer<BaseZeroCode>,
-//                                           char>, 8, BitsPerChunk, char>
+// Decoder: transform_width<binary_from_baseX<DecodeNormalizer>,
+//                          8, BitsPerChunk>
 template <int BitsPerChunk, char BaseZeroCode,
           typename Encoder, typename Decoder>
 struct BaseNTransformer {
@@ -230,10 +276,34 @@ BaseNTransformer<BitsPerChunk, BaseZeroCode, Encoder, Decoder>::decode(
         }
         ++srit;
     }
+    // then calculate the number of padding bits corresponding to the padding
+    // characters.  In general, the padding bits consists of an all-zero
+    // trailing bits of the last encoded character followed by zero bits
+    // represented by the padding characters:
+    // 1st pad  2nd pad  3rd pad...
+    // +++===== =======  ===...    (+: from encoded chars, =: from pad chars)
+    // 0000...0 0......0 000...
+    // 0      7 8     15 16.... (bits)
+    // The number of bits for the '==...' part is padchars * BitsPerChunk.
+    // So the total number of padding bits is the smallest multiple of 8 
+    // that is >= padchars * BitsPerChunk.
     const size_t padbits = (padchars * BitsPerChunk + 7) & ~7;
+
+    // In some encoding algorithm, it could happen that a padding byte would
+    // contain a full set of encoded bits, which is not allowed by definition
+    // of padding.  For example, if BitsPerChunk is 5, the following
+    // representation could happen:
+    // ++00000= (+: from encoded chars, 0: encoded chars for '0', =: pad chars)
+    // 0      7 (bits)
+    // This must actually be encoded as follows:
+    // ++======
+    // 0      7 (bits)
+    // The following check rejects this type of invalid encoding.
     if (padbits > BitsPerChunk * (padchars + 1)) {
         isc_throw(BadValue, "Invalid " << algorithm << "padding: " << input);
     }
+
+    // convert the number of bits in bytes for convenience.
     const size_t padbytes = padbits / 8;
 
     try {
@@ -247,14 +317,13 @@ BaseNTransformer<BitsPerChunk, BaseZeroCode, Encoder, Decoder>::decode(
     }
 
     // Confirm the original BaseX text is the canonical encoding of the
-    // data.
+    // data, that is, that the first byte of padding is indeed 0.
+    // (DecodeNormalizer and binary_from_baseXX ensure that the rest of the
+    // padding is all zero).
     assert(result.size() >= padbytes);
-    vector<uint8_t>::const_reverse_iterator rit = result.rbegin();
-    for (int i = 0; i < padbytes; ++i, ++rit) {
-        if (*rit != 0) {
+    if (padbytes > 0 && *(result.end() - padbytes) != 0) {
             isc_throw(BadValue, "Non 0 bits included in " << algorithm
                       << " padding: " << input);
-        }
     }
 
     // strip the padded zero-bit fields
@@ -267,8 +336,7 @@ BaseNTransformer<BitsPerChunk, BaseZeroCode, Encoder, Decoder>::decode(
 typedef
 base64_from_binary<transform_width<EncodeNormalizer, 6, 8> > base64_encoder;
 typedef
-transform_width<binary_from_base64<DecodeNormalizer, char>, 8, 6, char>
-base64_decoder;
+transform_width<binary_from_base64<DecodeNormalizer>, 8, 6> base64_decoder;
 typedef BaseNTransformer<6, 'A', base64_encoder, base64_decoder>
 Base64Transformer;
 
@@ -279,7 +347,7 @@ typedef
 base32hex_from_binary<transform_width<EncodeNormalizer, 5, 8> >
 base32hex_encoder;
 typedef
-transform_width<binary_from_base32hex<DecodeNormalizer, char>, 8, 5, char>
+transform_width<binary_from_base32hex<DecodeNormalizer>, 8, 5>
 base32hex_decoder;
 typedef BaseNTransformer<5, '0', base32hex_encoder, base32hex_decoder>
 Base32HexTransformer;
@@ -290,8 +358,7 @@ Base32HexTransformer;
 typedef
 base16_from_binary<transform_width<EncodeNormalizer, 4, 8> > base16_encoder;
 typedef
-transform_width<binary_from_base16<DecodeNormalizer, char>, 8, 4, char>
-base16_decoder;
+transform_width<binary_from_base16<DecodeNormalizer>, 8, 4> base16_decoder;
 typedef BaseNTransformer<4, '0', base16_encoder, base16_decoder>
 Base16Transformer;
 }
