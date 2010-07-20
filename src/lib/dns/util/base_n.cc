@@ -277,7 +277,7 @@ BaseNTransformer<BitsPerChunk, BaseZeroCode, Encoder, Decoder>::decode(
         ++srit;
     }
     // then calculate the number of padding bits corresponding to the padding
-    // characters.  In general, the padding bits consists of an all-zero
+    // characters.  In general, the padding bits consist of all-zero
     // trailing bits of the last encoded character followed by zero bits
     // represented by the padding characters:
     // 1st pad  2nd pad  3rd pad...
@@ -287,13 +287,16 @@ BaseNTransformer<BitsPerChunk, BaseZeroCode, Encoder, Decoder>::decode(
     // The number of bits for the '==...' part is padchars * BitsPerChunk.
     // So the total number of padding bits is the smallest multiple of 8 
     // that is >= padchars * BitsPerChunk.
+    // (Below, note the common idiom of the bitwise AND with ~7.  It clears the
+    // lowest three bits, so has the effect of rounding the result down to the
+    // nearest multiple of 8)
     const size_t padbits = (padchars * BitsPerChunk + 7) & ~7;
 
     // In some encoding algorithm, it could happen that a padding byte would
     // contain a full set of encoded bits, which is not allowed by definition
     // of padding.  For example, if BitsPerChunk is 5, the following
     // representation could happen:
-    // ++00000= (+: from encoded chars, 0: encoded chars for '0', =: pad chars)
+    // ++00000= (+: from encoded chars, 0: encoded char for '0', =: pad chars)
     // 0      7 (bits)
     // This must actually be encoded as follows:
     // ++======
