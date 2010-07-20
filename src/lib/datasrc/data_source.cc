@@ -28,14 +28,14 @@
 #include <datasrc/data_source.h>
 #include <datasrc/query.h>
 
-#include <dns/base32.h>
+#include <dns/util/base32hex.h>
 #include <dns/buffer.h>
 #include <dns/message.h>
 #include <dns/name.h>
 #include <dns/rdataclass.h>
 #include <dns/rrset.h>
 #include <dns/rrsetlist.h>
-#include <dns/sha1.h>
+#include <dns/util/sha1.h>
 
 #include <cc/data.h>
 
@@ -1234,7 +1234,7 @@ Nsec3Param::getHash(const Name& name) const {
         inlength = SHA1_HASHSIZE;
     } while (n++ < iterations_);
 
-    return (encodeBase32(vector<uint8_t>(digest, digest + SHA1_HASHSIZE)));
+    return (encodeBase32Hex(vector<uint8_t>(digest, digest + SHA1_HASHSIZE)));
 }
 
 //

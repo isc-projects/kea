@@ -16,7 +16,8 @@
 
 #include <string>
 
-#include <dns/base64.h>
+#include <exceptions/exceptions.h>
+
 #include <dns/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
@@ -31,6 +32,7 @@
 
 using isc::UnitTestUtil;
 using namespace std;
+using namespace isc;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 
@@ -68,8 +70,7 @@ TEST_F(Rdata_DNSKEY_Test, badText) {
                  InvalidRdataText);
     EXPECT_THROW(generic::DNSKEY("257 3 500 BAAAAAAAAAAAD"),
                  InvalidRdataText);
-    EXPECT_THROW(generic::DNSKEY("257 3 5 BAAAAAAAAAAAD"),
-                 BadBase64String);
+    EXPECT_THROW(generic::DNSKEY("257 3 5 BAAAAAAAAAAAD"), BadValue);
 }
 
 TEST_F(Rdata_DNSKEY_Test, DISABLED_badText) {
