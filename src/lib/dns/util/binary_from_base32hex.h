@@ -53,10 +53,10 @@ struct to_5_bit {
         };
         // metrowerks trips this assertion - how come?
         #if ! defined(__MWERKS__)
-        BOOST_STATIC_ASSERT(128 == sizeof(lookup_table));
+        BOOST_STATIC_ASSERT(0x80 == sizeof(lookup_table));
         #endif
         signed char value = -1;
-        if((unsigned)t <= 127)
+        if((unsigned)t < sizeof(lookup_table))
             value = lookup_table[(unsigned)t];
         if(-1 == value) { 
             isc_throw(isc::BadValue,
