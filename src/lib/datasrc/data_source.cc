@@ -14,7 +14,7 @@
 
 // $Id$
 
-#include "config.h"
+#include <config.h>
 
 #include <cassert>
 #include <iomanip>

@@ -23,7 +23,7 @@
 #include <boost/python/copy_const_reference.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include "fd_share.h"
+#include <xfr/fd_share.h>
 
 using namespace isc::xfr;
 using namespace boost::python;

@@ -29,8 +29,8 @@
 
 #include <gtest/gtest.h>
 
-#include "unittest_util.h"
-#include "rdata_unittest.h"
+#include <dns/tests/unittest_util.h>
+#include <dns/tests/rdata_unittest.h>
 
 using isc::UnitTestUtil;
 using namespace std;
@@ -44,35 +44,32 @@ class Rdata_NSEC3PARAM_Test : public RdataTest {
 };
 string nsec3param_txt("1 0 1 D399EAAB");
 
-TEST_F(Rdata_NSEC3PARAM_Test, toText)
-{
+TEST_F(Rdata_NSEC3PARAM_Test, toText) {
     const generic::NSEC3PARAM rdata_nsec3param(nsec3param_txt);
     EXPECT_EQ(nsec3param_txt, rdata_nsec3param.toText());
 }
 
-TEST_F(Rdata_NSEC3PARAM_Test, badText)
-{
+TEST_F(Rdata_NSEC3PARAM_Test, badText) {
     EXPECT_THROW(generic::NSEC3PARAM("1 1 1 SPORK"), BadValue); // bad hex
     EXPECT_THROW(generic::NSEC3PARAM("100000 1 1 ADDAFEE"), InvalidRdataText);
     EXPECT_THROW(generic::NSEC3PARAM("1 100000 1 ADDAFEE"), InvalidRdataText);
     EXPECT_THROW(generic::NSEC3PARAM("1 1 100000 ADDAFEE"), InvalidRdataText);
     EXPECT_THROW(generic::NSEC3PARAM("1"), InvalidRdataText);
-
-#if 0                           // this currently fails
-    EXPECT_THROW(generic::NSEC3PARAM("1 0 1D399EAAB"), InvalidRdataText);
-#endif
 }
 
-TEST_F(Rdata_NSEC3PARAM_Test, createFromWire)
-{
+TEST_F(Rdata_NSEC3PARAM_Test, DISABLED_badText) {
+    // this currently fails
+    EXPECT_THROW(generic::NSEC3PARAM("1 0 1D399EAAB"), InvalidRdataText);
+}
+
+TEST_F(Rdata_NSEC3PARAM_Test, createFromWire) {
     const generic::NSEC3PARAM rdata_nsec3param(nsec3param_txt);
     EXPECT_EQ(0, rdata_nsec3param.compare(
                   *rdataFactoryFromFile(RRType::NSEC3PARAM(), RRClass::IN(),
                                        "rdata_nsec3param_fromWire1")));
 }
 
-TEST_F(Rdata_NSEC3PARAM_Test, toWireRenderer)
-{
+TEST_F(Rdata_NSEC3PARAM_Test, toWireRenderer) {
     renderer.skip(2);
     const generic::NSEC3PARAM rdata_nsec3param(nsec3param_txt);
     rdata_nsec3param.toWire(renderer);
@@ -84,14 +81,12 @@ TEST_F(Rdata_NSEC3PARAM_Test, toWireRenderer)
                         obuffer.getLength() - 2, &data[2], data.size() - 2);
 }
 
-TEST_F(Rdata_NSEC3PARAM_Test, toWireBuffer)
-{
+TEST_F(Rdata_NSEC3PARAM_Test, toWireBuffer) {
     const generic::NSEC3PARAM rdata_nsec3param(nsec3param_txt);
     rdata_nsec3param.toWire(obuffer);
 }
 
-TEST_F(Rdata_NSEC3PARAM_Test, assign)
-{
+TEST_F(Rdata_NSEC3PARAM_Test, assign) {
     generic::NSEC3PARAM rdata_nsec3param(nsec3param_txt);
     generic::NSEC3PARAM other_nsec3param = rdata_nsec3param;
     EXPECT_EQ(0, rdata_nsec3param.compare(other_nsec3param));

@@ -14,7 +14,7 @@
 
 // $Id: data_unittests.cc 1899 2010-05-21 12:03:59Z jelte $
 
-#include "config.h"
+#include <config.h>
 
 // for some IPC/network system calls in asio/detail/pipe_select_interrupter.hpp 
 #include <unistd.h>

@@ -19,7 +19,7 @@
 
 #include <sqlite3.h>
 
-#include "sqlite3_datasrc.h"
+#include <datasrc/sqlite3_datasrc.h>
 
 #include <dns/rrttl.h>
 #include <dns/rdata.h>
@@ -263,15 +263,16 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
         isc_throw(Sqlite3Error, "Could not bind zone ID " << zone_id <<
                   " to SQL statement (query)");
     }
-    const string s_name = name.toText();
-    rc = sqlite3_bind_text(query, 2, s_name.c_str(), -1, SQLITE_STATIC);
+    const string name_text = name.toText();
+    rc = sqlite3_bind_text(query, 2, name_text.c_str(), -1, SQLITE_STATIC);
     if (rc != SQLITE_OK) {
-        isc_throw(Sqlite3Error, "Could not bind name " << s_name <<
+        isc_throw(Sqlite3Error, "Could not bind name " << name_text <<
                   " to SQL statement (query)");
     }
 
+    const string rdtype_text = rdtype.toText();
     if (query == dbparameters->q_record_) {
-        rc = sqlite3_bind_text(query, 3, rdtype.toText().c_str(), -1,
+        rc = sqlite3_bind_text(query, 3, rdtype_text.c_str(), -1,
                                SQLITE_STATIC);
         if (rc != SQLITE_OK) {
             isc_throw(Sqlite3Error, "Could not bind RR type " <<
@@ -300,8 +301,9 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
                   " to SQL statement (qcount)");
     }
 
-    rc = sqlite3_bind_text(dbparameters->q_count_, 2,
-                           name.reverse().toText().c_str(), -1, SQLITE_STATIC);
+    const string revname_text = name.reverse().toText();
+    rc = sqlite3_bind_text(dbparameters->q_count_, 2, revname_text.c_str(),
+                           -1, SQLITE_STATIC);
     if (rc != SQLITE_OK) {
         isc_throw(Sqlite3Error, "Could not bind name " << name.reverse() <<
                   " to SQL statement (qcount)");
@@ -376,8 +378,9 @@ Sqlite3DataSrc::findPreviousName(const Name& qname,
         isc_throw(Sqlite3Error, "Could not bind zone ID " << zone_id <<
                   " to SQL statement (qprevious)");        
     }
+    const string revname_text = qname.reverse().toText();
     rc = sqlite3_bind_text(dbparameters->q_previous_, 2,
-                           qname.reverse().toText().c_str(), -1, SQLITE_STATIC);
+                           revname_text.c_str(), -1, SQLITE_STATIC);
     if (rc != SQLITE_OK) {
         isc_throw(Sqlite3Error, "Could not bind name " << qname <<
                   " to SQL statement (qprevious)");

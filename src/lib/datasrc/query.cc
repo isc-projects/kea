@@ -21,7 +21,7 @@
 
 #include <cc/data.h>
 
-#include "query.h"
+#include <datasrc/query.h>
 
 using namespace isc::dns;
 

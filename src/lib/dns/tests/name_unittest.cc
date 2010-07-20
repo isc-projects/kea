@@ -26,7 +26,7 @@
 #include <dns/name.h>
 #include <dns/messagerenderer.h>
 
-#include "unittest_util.h"
+#include <dns/tests/unittest_util.h>
 
 #include <gtest/gtest.h>
 

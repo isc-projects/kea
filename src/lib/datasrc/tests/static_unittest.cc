@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-#include "config.h"
+#include <config.h>
 
 #include <gtest/gtest.h>
 

@@ -13,7 +13,7 @@
 // NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 // WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-#include "module_spec.h"
+#include <config/module_spec.h>
 
 #include <sstream>
 #include <iostream>

@@ -14,7 +14,7 @@
 
 // $Id$
 
-#include "config.h"
+#include <config.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -39,10 +39,10 @@
 #include <cc/data.h>
 #include <config/ccsession.h>
 
-#include "spec_config.h"
-#include "common.h"
-#include "auth_srv.h"
-#include "asio_link.h"
+#include <auth/spec_config.h>
+#include <auth/common.h>
+#include <auth/auth_srv.h>
+#include <auth/asio_link.h>
 
 using namespace std;
 using namespace isc::data;

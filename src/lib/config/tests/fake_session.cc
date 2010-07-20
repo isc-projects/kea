@@ -14,7 +14,7 @@
 
 // $Id: session.cc 1250 2010-03-09 22:52:15Z jinmei $
 
-#include "config.h"
+#include <config.h>
 
 #include <stdint.h>
 
@@ -28,7 +28,7 @@
 #include <exceptions/exceptions.h>
 
 #include <cc/data.h>
-#include "fake_session.h"
+#include <config/tests/fake_session.h>
 
 using namespace std;
 using namespace isc::cc;
