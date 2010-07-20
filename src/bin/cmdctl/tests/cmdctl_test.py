@@ -17,6 +17,7 @@
 import unittest
 import socket
 import tempfile
+import sys
 from cmdctl import *
 
 SPEC_FILE_PATH = '..' + os.sep
