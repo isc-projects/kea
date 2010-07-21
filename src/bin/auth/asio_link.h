@@ -229,6 +229,10 @@ public:
 /// Derived class implementations are completely hidden within the
 /// implementation.  User applications only get access to concrete
 /// \c IOSocket objects via the abstract interfaces.
+/// We may revisit this decision when we generalize the wrapper and more
+/// modules use it.  Also, at that point we may define a separate (visible)
+/// derived class for testing purposes rather than providing factory methods
+/// (i.e., getDummy variants below).
 class IOSocket {
     ///
     /// \name Constructors and Destructor
