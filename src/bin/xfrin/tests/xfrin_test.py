@@ -412,21 +412,30 @@ class TestXfrin(unittest.TestCase):
         return self.xfr._parse_cmd_params(self.args)
 
     def test_parse_cmd_params(self):
-        name, master_addrinfo, db_file = self._do_parse()
+        name, rrclass, master_addrinfo, db_file = self._do_parse()
         self.assertEqual(master_addrinfo[4][1], int(TEST_MASTER_PORT))
         self.assertEqual(name, TEST_ZONE_NAME)
+        self.assertEqual(rrclass, TEST_RRCLASS)
         self.assertEqual(master_addrinfo[4][0], TEST_MASTER_IPV4_ADDRESS)
         self.assertEqual(db_file, TEST_DB_FILE)
 
     def test_parse_cmd_params_default_port(self):
         del self.args['port']
-        master_addrinfo = self._do_parse()[1]
+        master_addrinfo = self._do_parse()[2]
         self.assertEqual(master_addrinfo[4][1], 53)
 
     def test_parse_cmd_params_ip6master(self):
         self.args['master'] = TEST_MASTER_IPV6_ADDRESS
-        master_addrinfo = self._do_parse()[1]
+        master_addrinfo = self._do_parse()[2]
         self.assertEqual(master_addrinfo[4][0], TEST_MASTER_IPV6_ADDRESS)
+
+    def test_parse_cmd_params_chclass(self):
+        self.args['rrclass'] = 'CH'
+        self.assertEqual(self._do_parse()[1], RRClass.CH())
+
+    def test_parse_cmd_params_bogusclass(self):
+        self.args['rrclass'] = 'XXX'
+        self.assertRaises(XfrinException, self._do_parse)
 
     def test_parse_cmd_params_nozone(self):
         # zone name is mandatory.
@@ -503,6 +512,13 @@ class TestXfrin(unittest.TestCase):
         self.args['master'] = TEST_MASTER_IPV6_ADDRESS
         self.assertEqual(self.xfr.command_handler("refresh",
                                                   self.args)['result'][0], 0)
+
+    def test_command_handler_notify(self):
+        # at this level, refresh is no different than retransfer.
+        self.args['master'] = TEST_MASTER_IPV6_ADDRESS
+        # ...but right now we disable the feature due to security concerns.
+        self.assertEqual(self.xfr.command_handler("notify",
+                                                  self.args)['result'][0], 1)
 
     def test_command_handler_unknown(self):
         self.assertEqual(self.xfr.command_handler("xxx", None)['result'][0], 1)
