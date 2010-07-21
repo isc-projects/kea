@@ -60,8 +60,14 @@ namespace isc {
             AbstractSession(const AbstractSession& source);
             AbstractSession& operator=(const AbstractSession& source);
         protected:
+            /// \brief The default constructor.
+            ///
+            /// This is intentionally defined as \c protected as this base
+            /// class should never be instantiated (except as part of a
+            /// derived class).
             AbstractSession() {}
         public:
+            /// \brief The destructor.
             virtual ~AbstractSession() {}
             //@}
             virtual void establish(const char* socket_file) = 0;
