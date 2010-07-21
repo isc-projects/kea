@@ -1,3 +1,15 @@
+  79.	[func]		feng, jinmei
+	Refactored the ASIO link interfaces to move incoming XFR and
+	NOTIFY processing to the auth server class.  Wrapper classes for
+	ASIO specific concepts were also provided, so that other BIND 10
+	modules can (eventually) use the interface without including the
+	ASIO header file directly.  On top of these changes, AXFR and
+	NOTIFY processing was massively improved in terms of message
+	validation and protocol conformance.  Detailed tests were provided
+	to confirm the behavior.
+	Note: Right now, NOTIFY doesn't actually trigger subsequent zone
+	transfer due to security reasons. (Trac #221, r2565)
+
   78.	[bug]		jinmei
 	lib/dns: Fixed miscellaneous bugs in the base32 (hex) and hex
 	(base16) implementation, including incorrect padding handling,
