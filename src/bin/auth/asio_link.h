@@ -30,10 +30,8 @@
 #include <exceptions/exceptions.h>
 
 namespace asio {
+// forward declaration forIOService::get_io_service() below
 class io_service;
-namespace ip {
-class address;
-}
 }
 
 class AuthSrv;
