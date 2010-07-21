@@ -92,7 +92,7 @@ public:
 
     AbstractSession* xfrin_session_;
 
-    bool is_axfr_connection_established_;
+    bool xfrout_connected_;
     AbstractXfroutClient& xfrout_client_;
 
     /// Currently non-configurable, but will be.
@@ -106,7 +106,7 @@ AuthSrvImpl::AuthSrvImpl(const bool use_cache,
                          AbstractXfroutClient& xfrout_client) :
     config_session_(NULL), verbose_mode_(false),
     xfrin_session_(NULL),
-    is_axfr_connection_established_(false),
+    xfrout_connected_(false),
     xfrout_client_(xfrout_client)
 {
     // cur_datasrc_ is automatically initialized by the default constructor,
@@ -121,9 +121,9 @@ AuthSrvImpl::AuthSrvImpl(const bool use_cache,
 }
 
 AuthSrvImpl::~AuthSrvImpl() {
-    if (is_axfr_connection_established_) {
+    if (xfrout_connected_) {
         xfrout_client_.disconnect();
-        is_axfr_connection_established_ = false;
+        xfrout_connected_ = false;
     }
 }
 
@@ -347,22 +347,22 @@ AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, Message& message,
     }
 
     try {
-        if (!is_axfr_connection_established_) {
+        if (!xfrout_connected_) {
             xfrout_client_.connect();
-            is_axfr_connection_established_ = true;
+            xfrout_connected_ = true;
         }
         xfrout_client_.sendXfroutRequestInfo(
             io_message.getSocket().getNative(),
             io_message.getData(),
             io_message.getDataSize());
     } catch (const XfroutError& err) {
-        if (is_axfr_connection_established_) {
+        if (xfrout_connected_) {
             // discoonect() may trigger an exception, but since we try it
             // only if we've successfully opened it, it shouldn't happen in
             // normal condition.  Should this occur, we'll propagate it to the
             // upper layer.
             xfrout_client_.disconnect();
-            is_axfr_connection_established_ = false;
+            xfrout_connected_ = false;
         }
         
         if (verbose_mode_) {
