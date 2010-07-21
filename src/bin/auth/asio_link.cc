@@ -64,6 +64,11 @@ IOAddress::toText() const {
     return (asio_address_.to_string());
 }
 
+// Note: this implementation is optimized for the case where this object
+// is created from an ASIO endpoint object in a receiving code path
+// by avoiding to make a copy of the base endpoint.  For TCP it may not be
+// a bug deal, but when we receive UDP packets at a high rate, the copy
+// overhead might be significant.
 class TCPEndpoint : public IOEndpoint {
 public:
     TCPEndpoint(const IOAddress& address, const unsigned short port) :
