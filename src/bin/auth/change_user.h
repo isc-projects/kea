@@ -19,8 +19,8 @@
 
 /// \brief Change the run time user.
 ///
-/// This function changes the effective user of the authoritative server
-/// process.
+/// This function changes the user of the authoritative server process.
+///
 /// \c username can be either a textual user name or its numeric ID.
 /// If the specified user name (or ID) doesn't specify a local user ID
 /// or the user originally starting the process doesn't have a permission

@@ -32,12 +32,13 @@ changeUser(const char* const username) {
     const struct passwd *runas_pw = NULL;
 
     runas_pw = getpwnam(username);
+    endpwent();
     if (runas_pw == NULL) {
         try {
             runas_pw = getpwuid(lexical_cast<uid_t>(username));
-        } catch (const bad_lexical_cast& err) {
-            isc_throw(FatalError,
-                      "Failed to parse user name or UID:" << username);
+            endpwent();
+        } catch (const bad_lexical_cast&) {
+            ;                   // fall through to isc_throw below.
         }
     }
     if (runas_pw == NULL) {
