@@ -39,7 +39,7 @@
 #include <datasrc/static_datasrc.h>
 
 #include <dns/tests/unittest_util.h>
-#include "test_datasrc.h"
+#include <datasrc/tests/test_datasrc.h>
 
 using isc::UnitTestUtil;
 using namespace std;
@@ -65,7 +65,6 @@ protected:
         meta_source.addDataSrc(static_source);
     }
     void QueryCommon(const RRClass& qclass);
-    void readAndProcessQuery(const char* datafile);
     void createAndProcessQuery(const Name& qname, const RRClass& qclass,
                                const RRType& qtype);
 
@@ -82,18 +81,6 @@ performQuery(DataSrc& data_source, HotCache& cache, Message& message) {
     message.setRcode(Rcode::NOERROR());
     Query q(message, cache, true);
     data_source.doQuery(q);
-}
-
-void
-DataSrcTest::readAndProcessQuery(const char* datafile) {
-    std::vector<unsigned char> data;
-    UnitTestUtil::readWireData(datafile, data);
-
-    InputBuffer buffer(&data[0], data.size());
-    msg.fromWire(buffer);
-
-    msg.makeResponse();
-    performQuery(meta_source, cache, msg);
 }
 
 void
@@ -193,8 +180,8 @@ TEST_F(DataSrcTest, QueryClassAny) {
 }
 
 TEST_F(DataSrcTest, NSQuery) {
-    readAndProcessQuery("q_example_ns");
-
+    createAndProcessQuery(Name("example.com"), RRClass::IN(),
+                          RRType::NS());
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 0, 6);
 
     RRsetIterator rit = msg.beginSection(Section::ANSWER());
@@ -216,7 +203,8 @@ TEST_F(DataSrcTest, NSQuery) {
 
 // Make sure two successive queries have the same result
 TEST_F(DataSrcTest, DuplicateQuery) {
-    readAndProcessQuery("q_example_ns");
+    createAndProcessQuery(Name("example.com"), RRClass::IN(),
+                          RRType::NS());
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 0, 6);
 
     RRsetIterator rit = msg.beginSection(Section::ANSWER());
@@ -236,7 +224,8 @@ TEST_F(DataSrcTest, DuplicateQuery) {
     EXPECT_TRUE(it->isLast());
 
     msg.clear(Message::PARSE);
-    readAndProcessQuery("q_example_ns");
+    createAndProcessQuery(Name("example.com"), RRClass::IN(),
+                          RRType::NS());
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 0, 6);
 
     rit = msg.beginSection(Section::ANSWER());
@@ -257,7 +246,8 @@ TEST_F(DataSrcTest, DuplicateQuery) {
 }
 
 TEST_F(DataSrcTest, DNSKEYQuery) {
-    readAndProcessQuery("q_example_dnskey");
+    createAndProcessQuery(Name("example.com"), RRClass::IN(),
+                          RRType::DNSKEY());
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 4, 6);
 
     RRsetIterator rit = msg.beginSection(Section::ANSWER());
@@ -271,7 +261,8 @@ TEST_F(DataSrcTest, DNSKEYQuery) {
 // We query for a record at a zone cut to ensure the REFERRAL flag doesn't
 // cause incorrect behavior.
 TEST_F(DataSrcTest, DNSKEYDuplicateQuery) {
-    readAndProcessQuery("q_example_dnskey");
+    createAndProcessQuery(Name("example.com"), RRClass::IN(),
+                          RRType::DNSKEY());
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 4, 6);
 
     RRsetIterator rit = msg.beginSection(Section::ANSWER());
@@ -281,9 +272,8 @@ TEST_F(DataSrcTest, DNSKEYDuplicateQuery) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     msg.clear(Message::PARSE);
-    readAndProcessQuery("q_example_dnskey");
-    headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 4, 6);
-
+    createAndProcessQuery(Name("example.com"), RRClass::IN(),
+                          RRType::DNSKEY());
     rit = msg.beginSection(Section::ANSWER());
     rrset = *rit;
     EXPECT_EQ(Name("example.com"), rrset->getName());
@@ -292,7 +282,8 @@ TEST_F(DataSrcTest, DNSKEYDuplicateQuery) {
 }
 
 TEST_F(DataSrcTest, NxRRset) {
-    readAndProcessQuery("q_example_ptr");
+    createAndProcessQuery(Name("example.com"), RRClass::IN(),
+                          RRType::PTR());
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 0, 4, 0);
 
@@ -303,7 +294,8 @@ TEST_F(DataSrcTest, NxRRset) {
 }
 
 TEST_F(DataSrcTest, Nxdomain) {
-    readAndProcessQuery("q_glork");
+    createAndProcessQuery(Name("glork.example.com"), RRClass::IN(),
+                          RRType::A());
 
     headerCheck(msg, Rcode::NXDOMAIN(), true, true, true, 0, 6, 0);
 
@@ -316,7 +308,8 @@ TEST_F(DataSrcTest, Nxdomain) {
 }
 
 TEST_F(DataSrcTest, NxZone) {
-    readAndProcessQuery("q_spork");
+    createAndProcessQuery(Name("spork.example"), RRClass::IN(),
+                          RRType::A());
 
     headerCheck(msg, Rcode::REFUSED(), true, false, true, 0, 0, 0);
 
@@ -327,7 +320,8 @@ TEST_F(DataSrcTest, NxZone) {
 }
 
 TEST_F(DataSrcTest, Wildcard) {
-    readAndProcessQuery("q_wild_a");
+    createAndProcessQuery(Name("www.wild.example.com"), RRClass::IN(),
+                          RRType::A());
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 6, 6);
 
@@ -380,17 +374,26 @@ TEST_F(DataSrcTest, Wildcard) {
 }
 
 TEST_F(DataSrcTest, WildcardNodata) {
-
     // Check that a query for a data type not covered by the wildcard
     // returns NOERROR
-    readAndProcessQuery("q_wild_aaaa");
+    createAndProcessQuery(Name("www.wild.example.com"), RRClass::IN(),
+                          RRType::AAAA());
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 0, 2, 0);
+}
+
+TEST_F(DataSrcTest, DISABLED_WildcardAgainstMultiLabel) {
+    // this qname shouldn't match *.wild.com.com (because * can only match
+    // a single label), and it should result in NXDOMAIN.
+    createAndProcessQuery(Name("www.xxx.wild.example.com"), RRClass::IN(),
+                          RRType::A());
+    headerCheck(msg, Rcode::NXDOMAIN(), true, true, true, 0, 1, 0);
 }
 
 TEST_F(DataSrcTest, WildcardCname) {
     // Check that wildcard answers containing CNAMES are followed
     // correctly
-    readAndProcessQuery("q_wild2_a");
+    createAndProcessQuery(Name("www.wild2.example.com"), RRClass::IN(),
+                          RRType::A());
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 6, 6);
 
@@ -458,7 +461,8 @@ TEST_F(DataSrcTest, WildcardCname) {
 TEST_F(DataSrcTest, WildcardCnameNodata) {
     // A wildcard containing a CNAME whose target does not include
     // data of this type.
-    readAndProcessQuery("q_wild2_aaaa");
+    createAndProcessQuery(Name("www.wild2.example.com"), RRClass::IN(),
+                          RRType::AAAA());
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 4, 0);
 
     RRsetIterator rit = msg.beginSection(Section::ANSWER());
@@ -489,7 +493,8 @@ TEST_F(DataSrcTest, WildcardCnameNodata) {
 
 TEST_F(DataSrcTest, WildcardCnameNxdomain) {
     // A wildcard containing a CNAME whose target does not exist
-    readAndProcessQuery("q_wild3_a");
+    createAndProcessQuery(Name("www.wild3.example.com"), RRClass::IN(),
+                          RRType::A());
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 6, 0);
 
     RRsetIterator rit = msg.beginSection(Section::ANSWER());
@@ -525,7 +530,8 @@ TEST_F(DataSrcTest, WildcardCnameNxdomain) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 }
 TEST_F(DataSrcTest, AuthDelegation) {
-    readAndProcessQuery("q_sql1");
+    createAndProcessQuery(Name("www.sql1.example.com"), RRClass::IN(),
+                          RRType::A());
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 4, 6);
 
@@ -571,7 +577,8 @@ TEST_F(DataSrcTest, AuthDelegation) {
 }
 
 TEST_F(DataSrcTest, Dname) {
-    readAndProcessQuery("q_dname");
+    createAndProcessQuery(Name("www.dname.example.com"), RRClass::IN(),
+                          RRType::A());
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 5, 4, 6);
 
@@ -628,7 +635,8 @@ TEST_F(DataSrcTest, DnameExact) {
 }
 
 TEST_F(DataSrcTest, Cname) {
-    readAndProcessQuery("q_cname");
+    createAndProcessQuery(Name("foo.example.com"), RRClass::IN(),
+                          RRType::A());
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 0, 0);
 
@@ -646,7 +654,8 @@ TEST_F(DataSrcTest, Cname) {
 }
 
 TEST_F(DataSrcTest, CnameInt) {
-    readAndProcessQuery("q_cname_int");
+    createAndProcessQuery(Name("cname-int.example.com"), RRClass::IN(),
+                          RRType::A());
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 4, 6);
 
@@ -672,7 +681,8 @@ TEST_F(DataSrcTest, CnameInt) {
 }
 
 TEST_F(DataSrcTest, CnameExt) {
-    readAndProcessQuery("q_cname_ext");
+    createAndProcessQuery(Name("cname-ext.example.com"), RRClass::IN(),
+                          RRType::A());
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 4, 6);
 
@@ -696,7 +706,8 @@ TEST_F(DataSrcTest, CnameExt) {
 }
 
 TEST_F(DataSrcTest, Delegation) {
-    readAndProcessQuery("q_subzone");
+    createAndProcessQuery(Name("www.subzone.example.com"), RRClass::IN(),
+                          RRType::A());
 
     headerCheck(msg, Rcode::NOERROR(), true, false, true, 0, 5, 2);
 
@@ -726,7 +737,8 @@ TEST_F(DataSrcTest, Delegation) {
 }
 
 TEST_F(DataSrcTest, NSDelegation) {
-    readAndProcessQuery("q_subzone_ns");
+    createAndProcessQuery(Name("subzone.example.com"), RRClass::IN(),
+                          RRType::NS());
 
     headerCheck(msg, Rcode::NOERROR(), true, false, true, 0, 5, 2);
 
@@ -758,12 +770,13 @@ TEST_F(DataSrcTest, NSDelegation) {
 TEST_F(DataSrcTest, ANYZonecut) {
     // An ANY query at a zone cut should behave the same as any other
     // delegation
-    readAndProcessQuery("q_subzone_any");
-
+    createAndProcessQuery(Name("subzone.example.com"), RRClass::IN(),
+                          RRType::ANY());
 }
 
 TEST_F(DataSrcTest, NSECZonecut) {
-    readAndProcessQuery("q_subzone_nsec");
+    createAndProcessQuery(Name("subzone.example.com"), RRClass::IN(),
+                          RRType::NSEC());
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 4, 6);
 
@@ -791,7 +804,8 @@ TEST_F(DataSrcTest, NSECZonecut) {
 }
 
 TEST_F(DataSrcTest, DNAMEZonecut) {
-    readAndProcessQuery("q_subzone_dname");
+    createAndProcessQuery(Name("subzone.example.com"), RRClass::IN(),
+                          RRType::DNAME());
 
     headerCheck(msg, Rcode::NOERROR(), true, false, true, 0, 5, 2);
     RRsetIterator rit = msg.beginSection(Section::AUTHORITY());
@@ -820,7 +834,8 @@ TEST_F(DataSrcTest, DNAMEZonecut) {
 }
 
 TEST_F(DataSrcTest, DS) {
-    readAndProcessQuery("q_subzone_ds");
+    createAndProcessQuery(Name("subzone.example.com"), RRClass::IN(),
+                          RRType::DS());
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 3, 4, 6);
 

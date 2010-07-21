@@ -14,7 +14,7 @@
 
 // $Id$
 
-#include "config.h"
+#include <config.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -101,7 +101,7 @@ main(int argc, char* argv[]) {
     const char* address = NULL;
     bool use_ipv4 = true, use_ipv6 = true, cache = true;
 
-    while ((ch = getopt(argc, argv, "a:46np:v")) != -1) {
+    while ((ch = getopt(argc, argv, "46a:np:v")) != -1) {
         switch (ch) {
         case '4':
             // Note that -4 means "ipv4 only", we need to set "use_ipv6" here,

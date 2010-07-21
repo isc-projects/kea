@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I$(top_srcdir)/src/lib
+AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 # see src/lib/cc/Makefile.am for -Wno-unused-parameter

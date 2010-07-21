@@ -24,7 +24,7 @@
 
 #include <fstream>
 
-#include "data_def_unittests_config.h"
+#include <config/tests/data_def_unittests_config.h>
 
 using namespace isc::data;
 using namespace isc::config;
@@ -383,4 +383,40 @@ TEST_F(CCSessionTest, remoteConfig) {
     session.getMessages()->add(createAnswer());
     mccs.addRemoteConfig(ccspecfile("spec2.spec"));
 }
+
+TEST_F(CCSessionTest, ignoreRemoteConfigCommands) {
+    // client will ask for config
+    session.getMessages()->add(createAnswer(0, el("{  }")));
+
+    EXPECT_EQ(false, session.haveSubscription("Spec2", "*"));
+    ModuleCCSession mccs(ccspecfile("spec2.spec"), session, my_config_handler, my_command_handler);
+    EXPECT_EQ(true, session.haveSubscription("Spec2", "*"));
+
+    EXPECT_EQ(2, session.getMsgQueue()->size());
+    ElementPtr msg;
+    std::string group, to;
+    // drop the module_spec and config commands
+    session.getFirstMessage(group, to);
+    session.getFirstMessage(group, to);
+
+    session.getMessages()->add(createAnswer(0, el("{  }")));
+    mccs.addRemoteConfig(ccspecfile("spec1.spec"));
+    EXPECT_EQ(1, session.getMsgQueue()->size());
+    msg = session.getFirstMessage(group, to);
+
+    // Check if commands for the module are handled
+    session.addMessage(el("{ \"command\": [ \"good_command\" ] }"), "Spec2", "*");
+    int result = mccs.checkCommand();
+    EXPECT_EQ(1, session.getMsgQueue()->size());
+    msg = session.getFirstMessage(group, to);
+    EXPECT_EQ("{ \"result\": [ 0 ] }", msg->str());
+    EXPECT_EQ(0, result);
+
+    // Check if commands for the other module are ignored
+    session.addMessage(el("{ \"command\": [ \"good_command\" ] }"), "Spec1", "*");
+    EXPECT_EQ(1, session.getMsgQueue()->size());
+    result = mccs.checkCommand();
+    EXPECT_EQ(0, session.getMsgQueue()->size());
+}
+
 }

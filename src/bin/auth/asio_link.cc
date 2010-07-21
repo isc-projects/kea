@@ -33,7 +33,7 @@
 #include <asio_link.h>
 
 #include <auth/auth_srv.h>
-#include "common.h"
+#include <auth/common.h>
 
 using namespace asio;
 using asio::ip::udp;

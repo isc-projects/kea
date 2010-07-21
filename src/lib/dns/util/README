@@ -1,0 +1,31 @@
+This "util" directory is provided for utility header files and
+implementations that are internally used in the DNS library
+(libdns++).
+
+The functionality provided in these tools is generally available in
+other external or perhaps system supplied libraries.  The basic
+development policy of BIND 10 is to avoid "reinventing wheels" unless
+they belong to the exact technology area that BIND 10 targets (e.g.,
+DNS).  However, libdns++ is a very core part of BIND 10, and is also
+intended to be used as a public library, so dependency from libdns++
+to external libraries should be minimized.  The utilities in this
+directory are provided balancing two policies and as a kind of
+compromise.
+
+The header files in this directory are therefore not intended to be
+installed.  Likewise, classes and public functions defined in this
+directory are not intended to be used outside libdns++, although we
+cannot prohibit it at the language level.
+
+They are not even expected to be used in other modules of BIND 10 than
+libdns++ based on the basic policy explained above.  Other modules
+should only rely on the DNS specific interface that may internally
+rely on these utility interfaces, or should use external libraries if
+the other module really needs to use the utility feature directly.
+There seem to be some violations as of this writing, but we should
+eventually fix it.  A notable example is the SHA1 interfaces.  They
+are defined here in the context of NSEC3 processing, but, in fact,
+they are not even used from any of the other libdns++ classes or
+functions.  The SHA1 related interfaces should be moved to the
+application that needs it or the application should only access it
+through DNS specific interfaces defined in libdns++.

@@ -21,7 +21,7 @@
 #include <sys/socket.h>
 #include <sys/uio.h>
 #include <stdlib.h>             // for malloc and free
-#include "fd_share.h"
+#include <xfr/fd_share.h>
 
 namespace isc {
 namespace xfr {
