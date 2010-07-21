@@ -516,8 +516,9 @@ class TestXfrin(unittest.TestCase):
     def test_command_handler_notify(self):
         # at this level, refresh is no different than retransfer.
         self.args['master'] = TEST_MASTER_IPV6_ADDRESS
+        # ...but right now we disable the feature due to security concerns.
         self.assertEqual(self.xfr.command_handler("notify",
-                                                  self.args)['result'][0], 0)
+                                                  self.args)['result'][0], 1)
 
     def test_command_handler_unknown(self):
         self.assertEqual(self.xfr.command_handler("xxx", None)['result'][0], 1)
