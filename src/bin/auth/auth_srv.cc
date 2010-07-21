@@ -414,11 +414,11 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
     // silent about such cases, but there doesn't seem to be anything we can
     // improve at the primary server side by sending an error anyway.
     if (xfrin_session_ == NULL) {
-            if (verbose_mode_) {
-                cerr << "[b10-auth] "
-                    "session interface for xfrin is not available" << endl;
-            }
-            return (false);
+        if (verbose_mode_) {
+            cerr << "[b10-auth] "
+                "session interface for xfrin is not available" << endl;
+        }
+        return (false);
     }
     
     const string remote_ip_address =
