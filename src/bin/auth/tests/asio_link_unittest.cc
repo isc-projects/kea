@@ -109,7 +109,7 @@ TEST(IOServiceTest, unavailableAddress) {
     // These addresses should generally be unavailable as a valid local
     // address, although there's no guarantee in theory.
     EXPECT_THROW(IOService(NULL, *TEST_PORT, *"ffff:ffff::"), IOError);
-    EXPECT_THROW(IOService(NULL, *TEST_PORT, *"255.255.255.255"), IOError);
+    EXPECT_THROW(IOService(NULL, *TEST_PORT, *"255.255.0.0"), IOError);
 }
 
 TEST(IOServiceTest, duplicateBind) {
