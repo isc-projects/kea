@@ -30,7 +30,7 @@
 #include <exceptions/exceptions.h>
 
 namespace asio {
-// forward declaration forIOService::get_io_service() below
+// forward declaration for IOService::get_io_service() below
 class io_service;
 }
 
