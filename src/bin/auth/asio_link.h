@@ -263,7 +263,7 @@ public:
     ///
     /// In general, the application should avoid using this method;
     /// it essentially discloses an implementation specific "handle" that
-    /// can change the internal state of the socket (e.g. consider the
+    /// can change the internal state of the socket (consider the
     /// application closes it, for example).
     /// But we sometimes need to perform very low-level operations that
     /// requires the native representation.  Passing the file descriptor
@@ -421,7 +421,7 @@ public:
     /// \brief Return the native \c io_service object used in this wrapper.
     ///
     /// This is a short term work around to support other BIND 10 modules
-    /// that shares the same \c io_service with the authoritative server.
+    /// that share the same \c io_service with the authoritative server.
     /// It will eventually be removed once the wrapper interface is
     /// generalized.
     asio::io_service& get_io_service();
