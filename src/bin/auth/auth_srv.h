@@ -51,6 +51,13 @@ private:
     AuthSrv(const AuthSrv& source);
     AuthSrv& operator=(const AuthSrv& source);
 public:
+    /// The constructor.
+    ///
+    /// \param use_cache Whether to enable hot spot cache for lookup results.
+    /// \param xfrout_client Communication interface with a separate xfrout
+    /// process.  It's normally a reference to an xfr::XfroutClient object,
+    /// but can refer to a local mock object for testing (or other
+    /// experimental) purposes.
     AuthSrv(const bool use_cache,
             isc::xfr::AbstractXfroutClient& xfrout_client);
     ~AuthSrv();
