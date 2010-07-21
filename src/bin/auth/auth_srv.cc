@@ -357,7 +357,7 @@ AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, Message& message,
             io_message.getDataSize());
     } catch (const XfroutError& err) {
         if (xfrout_connected_) {
-            // discoonect() may trigger an exception, but since we try it
+            // disconnect() may trigger an exception, but since we try it
             // only if we've successfully opened it, it shouldn't happen in
             // normal condition.  Should this occur, we'll propagate it to the
             // upper layer.
