@@ -29,7 +29,7 @@
 
 #include <gtest/gtest.h>
 
-#include "unittest_util.h"
+#include <dns/tests/unittest_util.h>
 
 using isc::UnitTestUtil;
 using namespace std;

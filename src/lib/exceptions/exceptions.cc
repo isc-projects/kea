@@ -16,7 +16,7 @@
 
 #include <string>
 
-#include "exceptions.h"
+#include <exceptions/exceptions.h>
 
 using isc::Exception;
 

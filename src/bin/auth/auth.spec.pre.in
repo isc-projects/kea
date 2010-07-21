@@ -5,7 +5,7 @@
     "config_data": [
       { "item_name": "database_file",
         "item_type": "string",
-        "item_optional": True,
+        "item_optional": true,
         "item_default": "@@LOCALSTATEDIR@@/@PACKAGE@/zone.sqlite3"
       }
     ],

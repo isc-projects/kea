@@ -16,7 +16,8 @@
 
 #include <string>
 
-#include <dns/base64.h>
+#include <exceptions/exceptions.h>
+
 #include <dns/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
@@ -26,11 +27,12 @@
 
 #include <gtest/gtest.h>
 
-#include "unittest_util.h"
-#include "rdata_unittest.h"
+#include <dns/tests/unittest_util.h>
+#include <dns/tests/rdata_unittest.h>
 
 using isc::UnitTestUtil;
 using namespace std;
+using namespace isc;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 
@@ -48,21 +50,18 @@ string dnskey_txt("257 3 5 BEAAAAOhHQDBrhQbtphgq2wQUpEQ5t4DtUHxoMV"
                   "7+ysyLKOOedS39Z7SDmsn2eA0FKtQpwA6LXeG2w+jxmw3oA"
                   "8lVUgEf/rzeC/bByBNsO70aEFTd");
 
-TEST_F(Rdata_DNSKEY_Test, fromText)
-{
+TEST_F(Rdata_DNSKEY_Test, fromText) {
     generic::DNSKEY rdata_dnskey(dnskey_txt);
     EXPECT_EQ(dnskey_txt, rdata_dnskey.toText());
 }
 
-TEST_F(Rdata_DNSKEY_Test, assign)
-{
+TEST_F(Rdata_DNSKEY_Test, assign) {
     generic::DNSKEY rdata_dnskey(dnskey_txt);
     generic::DNSKEY rdata_dnskey2 = rdata_dnskey;
     EXPECT_EQ(0, rdata_dnskey.compare(rdata_dnskey2));
 }
 
-TEST_F(Rdata_DNSKEY_Test, badText)
-{
+TEST_F(Rdata_DNSKEY_Test, badText) {
     EXPECT_THROW(generic::DNSKEY("257 3 5"),
                  InvalidRdataText);
     EXPECT_THROW(generic::DNSKEY("99999 3 5 BAAAAAAAAAAAD"),
@@ -71,9 +70,10 @@ TEST_F(Rdata_DNSKEY_Test, badText)
                  InvalidRdataText);
     EXPECT_THROW(generic::DNSKEY("257 3 500 BAAAAAAAAAAAD"),
                  InvalidRdataText);
-    EXPECT_THROW(generic::DNSKEY("257 3 5 BAAAAAAAAAAAD"),
-                 BadBase64String);
-#if 0
+    EXPECT_THROW(generic::DNSKEY("257 3 5 BAAAAAAAAAAAD"), BadValue);
+}
+
+TEST_F(Rdata_DNSKEY_Test, DISABLED_badText) {
     // Should this be allowed?  Probably not.  But the test currently fails.
     EXPECT_THROW(generic::DNSKEY("257 3 5BEAAEFTd"),
                  InvalidRdataText);
@@ -81,11 +81,9 @@ TEST_F(Rdata_DNSKEY_Test, badText)
     // it could be ambiguous '51 EAAA' vs '5 1EAA..'
     EXPECT_THROW(generic::DNSKEY("257 3 51EAAEFTd"),
                  InvalidRdataText);
-#endif
 }
 
-TEST_F(Rdata_DNSKEY_Test, toWireRenderer)
-{
+TEST_F(Rdata_DNSKEY_Test, toWireRenderer) {
     renderer.skip(2);
     generic::DNSKEY rdata_dnskey(dnskey_txt);
     rdata_dnskey.toWire(renderer);
@@ -97,34 +95,29 @@ TEST_F(Rdata_DNSKEY_Test, toWireRenderer)
                         obuffer.getLength() - 2, &data[2], data.size() - 2);
 }
 
-TEST_F(Rdata_DNSKEY_Test, toWireBuffer)
-{
+TEST_F(Rdata_DNSKEY_Test, toWireBuffer) {
     generic::DNSKEY rdata_dnskey(dnskey_txt);
     rdata_dnskey.toWire(obuffer);
 }
 
-TEST_F(Rdata_DNSKEY_Test, createFromWire)
-{
+TEST_F(Rdata_DNSKEY_Test, createFromWire) {
     generic::DNSKEY rdata_dnskey(dnskey_txt);
     EXPECT_EQ(0, rdata_dnskey.compare(
                   *rdataFactoryFromFile(RRType("DNSKEY"), RRClass("IN"),
                                         "rdata_dnskey_fromWire")));
 }
 
-TEST_F(Rdata_DNSKEY_Test, getTag)
-{
+TEST_F(Rdata_DNSKEY_Test, getTag) {
     generic::DNSKEY rdata_dnskey(dnskey_txt);
     EXPECT_EQ(12892, rdata_dnskey.getTag());
 }
 
-TEST_F(Rdata_DNSKEY_Test, getAlgorithm)
-{
+TEST_F(Rdata_DNSKEY_Test, getAlgorithm) {
     generic::DNSKEY rdata_dnskey(dnskey_txt);
     EXPECT_EQ(5, rdata_dnskey.getAlgorithm());
 }
 
-TEST_F(Rdata_DNSKEY_Test, getFlags)
-{
+TEST_F(Rdata_DNSKEY_Test, getFlags) {
     generic::DNSKEY rdata_dnskey(dnskey_txt);
     EXPECT_EQ(257, rdata_dnskey.getFlags());
 }

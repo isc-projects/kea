@@ -22,8 +22,8 @@
 #include <unistd.h>
 #include <asio.hpp>
 
-#include "fd_share.h"
-#include "xfrout_client.h"
+#include <xfr/fd_share.h>
+#include <xfr/xfrout_client.h>
 
 using namespace std;
 using asio::local::stream_protocol;

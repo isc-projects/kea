@@ -240,8 +240,7 @@ HotCacheImpl::promote(CacheNodePtr node) {
     if (node->lru_entry_ == lru_.begin()) {
         return;
     }
-    lru_.erase(node->lru_entry_);
-    lru_.push_front(node);
+    lru_.splice(lru_.begin(), lru_, node->lru_entry_); // move node to front
     node->lru_entry_ = lru_.begin();
 }
 

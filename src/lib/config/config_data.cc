@@ -14,7 +14,7 @@
 
 // $Id$
 
-#include "config_data.h"
+#include <config/config_data.h>
 
 #include <boost/foreach.hpp>
 

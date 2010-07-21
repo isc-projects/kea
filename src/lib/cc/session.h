@@ -23,8 +23,8 @@
 
 #include <exceptions/exceptions.h>
 
-#include "data.h"
-#include "session_config.h"
+#include <cc/data.h>
+#include <cc/session_config.h>
 
 namespace asio {
 class io_service;

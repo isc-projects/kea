@@ -1,3 +1,29 @@
+  78.	[bug]		jinmei
+	lib/dns: Fixed miscellaneous bugs in the base32 (hex) and hex
+	(base16) implementation, including incorrect padding handling,
+	parser failure in decoding with a SunStudio build, missing
+	validation on the length of encoded hex string.  Test cases were
+	more detailed to identify these bugs and confirm the fix.  Also
+	renamed the incorrect term of "base32" to "base32hex".  This
+	changed the API, but they are not intended to be used outside
+	libdns++, so we don't consider it a backward incompatible change.
+	(Trac #256, r2549)
+
+  77.	[func]		zhanglikun
+	Make error message be more friendly when running cmdctl and it's 
+	already running(listening on same port)(Trac #277, r2540)
+
+  76.	[bug]		jelte
+	Fixed a bug in the handling of 'remote' config modules (i.e.
+	modules that peek at the configuration of other modules), where
+	they answered 'unknown command' to commands for those other
+	modules. (Trac #278, r2506)
+
+  75.	[bug]		jinmei
+	Fixed a bug in the sqlite3 data source where temporary strings
+	could be referenced after destruction.  It caused various lookup
+	failures with SunStudio build. (Trac #288, r2494)
+
   74.	[func]*		jinmei
 	Refactored the cc::Session class by introducing an abstract base
 	class.  Test code can use their own derived mock class so that
