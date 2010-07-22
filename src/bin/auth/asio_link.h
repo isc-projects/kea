@@ -20,6 +20,7 @@
 // IMPORTANT NOTE: only very few ASIO headers files can be included in
 // this file.  In particular, asio.hpp should never be included here.
 // See the description of the namespace below.
+#include <unistd.h>
 #include <asio/ip/address.hpp>
 
 #include <functional>
@@ -215,9 +216,9 @@ public:
     /// \param address The (IP) address of the endpoint.
     /// \param port The transport port number of the endpoint
     /// \return A pointer to a newly created \c IOEndpoint object.
-    static const IOEndpoint* create(int protocol,
+    static const IOEndpoint* create(const int protocol,
                                     const IOAddress& address,
-                                    unsigned short port);
+                                    const unsigned short port);
 };
 
 /// \brief The \c IOSocket class is an abstract base class to represent
@@ -349,7 +350,7 @@ public:
     /// \param io_socket The socket over which the data is given.
     /// \param remote_endpoint The other endpoint of the socket, that is,
     /// the sender of the message.
-    IOMessage(const void* data, size_t data_size, IOSocket& io_socket,
+    IOMessage(const void* data, const size_t data_size, IOSocket& io_socket,
               const IOEndpoint& remote_endpoint);
     //@}
 
