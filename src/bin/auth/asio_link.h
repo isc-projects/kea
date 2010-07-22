@@ -20,7 +20,7 @@
 // IMPORTANT NOTE: only very few ASIO headers files can be included in
 // this file.  In particular, asio.hpp should never be included here.
 // See the description of the namespace below.
-#include <unistd.h>
+#include <unistd.h>             // for some network system calls
 #include <asio/ip/address.hpp>
 
 #include <functional>
