@@ -14,8 +14,6 @@
 
 // $Id$
 
-#include <config.h>             // for UNUSED_PARAM
-
 #include <netinet/in.h>
 
 #include <algorithm>
