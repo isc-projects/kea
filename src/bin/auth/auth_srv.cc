@@ -48,8 +48,6 @@
 #include <auth/auth_srv.h>
 #include <auth/asio_link.h>
 
-#include <boost/lexical_cast.hpp>
-
 using namespace std;
 
 using namespace isc;
@@ -179,8 +177,7 @@ makeErrorMessage(Message& message, MessageRenderer& renderer,
 
     if (verbose_mode) {
         cerr << "[b10-auth] sending an error response (" <<
-            boost::lexical_cast<string>(renderer.getLength())
-             << " bytes):\n" << message.toText() << endl;
+            renderer.getLength() << " bytes):\n" << message.toText() << endl;
     }
 }
 }
@@ -322,8 +319,8 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
     response_renderer.setLengthLimit(udp_buffer ? remote_bufsize : 65535);
     message.toWire(response_renderer);
     if (verbose_mode_) {
-        cerr << "[b10-auth] sending a response (" <<
-            boost::lexical_cast<string>(response_renderer.getLength())
+        cerr << "[b10-auth] sending a response ("
+             << response_renderer.getLength()
              << " bytes):\n" << message.toText() << endl;
     }
 
