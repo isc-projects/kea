@@ -487,7 +487,7 @@ IOServiceImpl::IOServiceImpl(AuthSrv* auth_server, const char& port,
         // representation such as "-1" by lexical_cast<uint16_t>, so
         // we convert it into a signed integer of a larger size and perform
         // range check ourselves.
-        int32_t portnum32 = boost::lexical_cast<int32_t>(&port);
+        const int32_t portnum32 = boost::lexical_cast<int32_t>(&port);
         if (portnum32 < 0 || portnum32 > 65535) {
             isc_throw(IOError, "Invalid port number '" << &port);
         }
