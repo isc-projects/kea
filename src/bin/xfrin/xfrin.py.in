@@ -28,6 +28,7 @@ import socket
 import random
 from optparse import OptionParser, OptionValueError
 from isc.config.ccsession import *
+from isc.notify import notify_out
 try:
     from libdns_python import *
 except ImportError as e:
@@ -49,7 +50,7 @@ else:
 SPECFILE_LOCATION = SPECFILE_PATH + "/xfrin.spec"
 AUTH_SPECFILE_LOCATION = AUTH_SPECFILE_PATH + "/auth.spec"
 
-
+XFROUT_MODULE_NAME = 'Xfrout'
 __version__ = 'BIND10'
 # define xfrin rcode
 XFRIN_OK = 0
@@ -66,7 +67,7 @@ class XfrinException(Exception):
 class XfrinConnection(asyncore.dispatcher):
     '''Do xfrin in this class. '''    
 
-    def __init__(self,
+    def __init__(self, server_,
                  sock_map, zone_name, rrclass, db_file, shutdown_event,
                  master_addrinfo, verbose = False, idle_timeout = 60): 
         ''' idle_timeout: max idle time for read data from socket.
@@ -77,6 +78,7 @@ class XfrinConnection(asyncore.dispatcher):
         asyncore.dispatcher.__init__(self, map=sock_map)
         self.create_socket(master_addrinfo[0], master_addrinfo[1])
         self._zone_name = zone_name
+        self._server = server_
         self._sock_map = sock_map
         self._rrclass = rrclass
         self._db_file = db_file
@@ -192,6 +194,7 @@ class XfrinConnection(asyncore.dispatcher):
                                             self._handle_xfrin_response)
 
                 self.log_msg(logstr + 'succeeded')
+                self._server.send_notify_command(self._zone_name)
                 ret = XFRIN_OK
 
         except XfrinException as e:
@@ -316,11 +319,11 @@ class XfrinConnection(asyncore.dispatcher):
             sys.stdout.write('[b10-xfrin] %s\n' % str(msg))
 
 
-def process_xfrin(xfrin_recorder, zone_name, rrclass, db_file, 
+def process_xfrin(server, xfrin_recorder, zone_name, rrclass, db_file, 
                   shutdown_event, master_addrinfo, check_soa, verbose):
     xfrin_recorder.increment(zone_name)
     sock_map = {}
-    conn = XfrinConnection(sock_map, zone_name, rrclass, db_file,
+    conn = XfrinConnection(server, sock_map, zone_name, rrclass, db_file,
                            shutdown_event, master_addrinfo, verbose)
     if conn.connect_to_master():
         conn.do_xfrin(check_soa)
@@ -370,17 +373,20 @@ This method is used only as part of initialization, but is implemented
 separately for convenience of unit tests; by letting the test code override
 this method we can test most of this class without requiring a command channel.
 '''
-        self._cc = isc.config.ModuleCCSession(SPECFILE_LOCATION,
+        # Create one session for sending command to other modules, because the 
+        # listening session will block the send operation.
+        self._send_cc_session = isc.cc.Session()
+        self._module_cc = isc.config.ModuleCCSession(SPECFILE_LOCATION,
                                               self.config_handler,
                                               self.command_handler)
-        self._cc.start()
+        self._module_cc.start()
 
     def _cc_check_command(self):
         '''
 This is a straightforward wrapper for cc.check_command, but provided as
 a separate method for the convenience of unit tests.
 '''
-        self._cc.check_command()
+        self._module_cc.check_command()
 
     def config_handler(self, new_config):
         # TODO, process new config data
@@ -420,6 +426,12 @@ a separate method for the convenience of unit tests.
 
         return answer
 
+    def send_notify_command(self, zone_name):
+        '''Send Notify command to xfrout module.'''
+        param = {'zone_name': zone_name}
+        msg = create_command(notify_out.ZONE_NOTIFY_CMD, param)
+        self._send_cc_session.group_sendmsg(msg, XFROUT_MODULE_NAME)
+
     def _parse_cmd_params(self, args):
         zone_name = args.get('zone_name')
         if not zone_name:
@@ -441,14 +453,14 @@ a separate method for the convenience of unit tests.
             # should add it on start, and not remove it here
             # (or, if we have writable ds, we might not need this in
             # the first place)
-            self._cc.add_remote_config(AUTH_SPECFILE_LOCATION)
-            db_file, is_default = self._cc.get_remote_config_value("Auth", "database_file")
+            self._module_cc.add_remote_config(AUTH_SPECFILE_LOCATION)
+            db_file, is_default = self._module_cc.get_remote_config_value("Auth", "database_file")
             if is_default and "B10_FROM_BUILD" in os.environ:
                 # this too should be unnecessary, but currently the
                 # 'from build' override isn't stored in the config
                 # (and we don't have writable datasources yet)
                 db_file = os.environ["B10_FROM_BUILD"] + os.sep + "bind10_zones.sqlite3"
-            self._cc.remove_remote_config(AUTH_SPECFILE_LOCATION)
+            self._module_cc.remove_remote_config(AUTH_SPECFILE_LOCATION)
 
         return (zone_name, master_addrinfo, db_file)
 
@@ -469,7 +481,8 @@ a separate method for the convenience of unit tests.
             return (1, 'zone xfrin is in progress')
 
         xfrin_thread = threading.Thread(target = process_xfrin,
-                                        args = (self.recorder,
+                                        args = (self,
+                                                self.recorder,
                                                 zone_name, rrclass,
                                                 db_file,
                                                 self._shutdown_event,
