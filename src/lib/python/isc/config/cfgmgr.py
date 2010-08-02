@@ -63,31 +63,36 @@ class ConfigManagerData:
            the second exception, the best way is probably to report the
            error and stop loading the system."""
         config = ConfigManagerData(data_path, file_name)
+        file = None
         try:
             file = open(config.db_filename, 'r')
-            try:
-                file_config = json.loads(file.read())
-                # handle different versions here
-                # 
-                if 'version' in file_config:
-                    if file_config['version'] == config_data.BIND10_CONFIG_DATA_VERSION:
-                        config.data = file_config
-                    elif file_config['version'] == 1:
-                        # only format change, no other changes necessary
-                        file_config['version'] = 2
-                        print("[b10-cfgmgr] Updating configuration database version from 1 to 2")
-                        config.data = file_config
-                    else:
-                        # We can put in a migration path here for old data
-                        raise ConfigManagerDataReadError("Old version of data found")
+            file_config = json.loads(file.read())
+            # handle different versions here
+            # If possible, we automatically convert to the new
+            # scheme and update the configuration
+            # If not, we raise an exception
+            if 'version' in file_config:
+                if file_config['version'] == config_data.BIND10_CONFIG_DATA_VERSION:
+                    config.data = file_config
+                elif file_config['version'] == 1:
+                    # only format change, no other changes necessary
+                    file_config['version'] = 2
+                    print("[b10-cfgmgr] Updating configuration database version from 1 to 2")
+                    config.data = file_config
                 else:
-                    raise ConfigManagerDataReadError("No version information in configuration file " + config.db_filename)
-            except:
-                raise ConfigManagerDataReadError("Config file out of date or corrupt, please update or remove " + config.db_filename)
-            finally:
-                file.close();
+                    if config_data.BIND10_CONFIG_DATA_VERSION > file_config['version']:
+                        raise ConfigManagerDataReadError("Version of config data too old")
+                    else:
+                        raise ConfigManagerDataReadError("Version of config data too new")
+            else:
+                raise ConfigManagerDataReadError("No version information in configuration file " + config.db_filename)
         except IOError as ioe:
             raise ConfigManagerDataEmpty("No config file found")
+        except:
+            raise ConfigManagerDataReadError("Config file out of date or corrupt, please update or remove " + config.db_filename)
+        finally:
+            if file:
+                file.close();
         return config
         
     def write_to_file(self, output_file_name = None):
