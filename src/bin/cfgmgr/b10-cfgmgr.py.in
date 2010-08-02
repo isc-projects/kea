@@ -56,7 +56,7 @@ def main():
     except KeyboardInterrupt as kie:
         print("[b10-cfgmgr] Interrupted, exiting")
     except ConfigManagerDataReadError as cmdre:
-        print(str(cmdre))
+        print("[b10-cfgmgr] " + str(cmdre))
         return 2
     if cm:
         return cm.write_config()
