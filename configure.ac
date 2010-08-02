@@ -411,6 +411,8 @@ AC_CONFIG_FILES([Makefile
                  src/bin/xfrin/tests/Makefile
                  src/bin/xfrout/Makefile
                  src/bin/xfrout/tests/Makefile
+                 src/bin/zonemgr/Makefile
+                 src/bin/zonemgr/tests/Makefile
                  src/bin/usermgr/Makefile
                  src/lib/Makefile
                  src/lib/cc/Makefile
@@ -448,6 +450,10 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/xfrout/xfrout.spec.pre
            src/bin/xfrout/tests/xfrout_test
            src/bin/xfrout/run_b10-xfrout.sh
+           src/bin/zonemgr/zonemgr.py
+           src/bin/zonemgr/zonemgr.spec.pre
+           src/bin/zonemgr/tests/zonemgr_test
+           src/bin/zonemgr/run_b10-zonemgr.sh
            src/bin/bind10/bind10.py
            src/bin/bind10/tests/bind10_test
            src/bin/bind10/run_bind10.sh
@@ -477,10 +483,12 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
            chmod +x src/bin/xfrout/run_b10-xfrout.sh
+           chmod +x src/bin/zonemgr/run_b10-zonemgr.sh
            chmod +x src/bin/bind10/run_bind10.sh
            chmod +x src/bin/cmdctl/tests/cmdctl_test
            chmod +x src/bin/xfrin/tests/xfrin_test
            chmod +x src/bin/xfrout/tests/xfrout_test
+           chmod +x src/bin/zonemgr/tests/zonemgr_test
            chmod +x src/bin/bindctl/tests/bindctl_test
            chmod +x src/bin/bindctl/run_bindctl.sh
            chmod +x src/bin/loadzone/run_loadzone.sh

@@ -1,0 +1,15 @@
+{
+  "module_spec": {
+     "module_name": "Zonemgr",
+      "config_data":[
+      ],
+      "commands": [
+        {
+          "command_name": "shutdown",
+          "command_description": "Shut down Zonemgr",
+          "command_args": []
+        }
+      ]
+  }
+}
+     

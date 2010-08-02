@@ -132,6 +132,19 @@ def get_zoneid(zone, cur):
         return row[0]
     else:
         return ''
+    
+#########################################################################
+# get_zone_names:
+#   returns all zone names of datasrc 
+#########################################################################
+def get_zone_names(dbfile):
+    conn, cur = open(dbfile)
+    cur.execute("SELECT distinct name from zones")
+    zone_names = cur.fetchall()
+    cur.close()
+    conn.close()
+                           
+    return zone_names
 
 #########################################################################
 # reverse_name:

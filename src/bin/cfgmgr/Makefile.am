@@ -6,7 +6,7 @@ pkglibexec_SCRIPTS = b10-cfgmgr
 
 CLEANFILES = b10-cfgmgr b10-cfgmgr.pyc
 
-b10_cfgmgrdir = @localstatedir@/@PACKAGE@
+b10_cfgmgrdir = $(DESTDIR)$(pkgdatadir)
 #B10_cfgmgr_DATA = 
 
 man_MANS = b10-cfgmgr.8
