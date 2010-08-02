@@ -22,6 +22,7 @@
 import unittest
 import os
 from isc.config.ccsession import *
+from isc.config.config_data import BIND10_CONFIG_DATA_VERSION
 from unittest_fakesession import FakeModuleCCSession
 
 class TestHelperFunctions(unittest.TestCase):
@@ -442,20 +443,20 @@ class TestUIModuleCCSession(unittest.TestCase):
     def create_uccs2(self, fake_conn):
         module_spec = isc.config.module_spec_from_file(self.spec_file("spec2.spec"))
         fake_conn.set_get_answer('/module_spec', { module_spec.get_module_name(): module_spec.get_full_spec()})
-        fake_conn.set_get_answer('/config_data', { 'version': 1 })
+        fake_conn.set_get_answer('/config_data', { 'version': BIND10_CONFIG_DATA_VERSION })
         return UIModuleCCSession(fake_conn)
 
     def test_init(self):
         fake_conn = fakeUIConn()
         fake_conn.set_get_answer('/module_spec', {})
-        fake_conn.set_get_answer('/config_data', { 'version': 1 })
+        fake_conn.set_get_answer('/config_data', { 'version': BIND10_CONFIG_DATA_VERSION })
         uccs = UIModuleCCSession(fake_conn)
         self.assertEqual({}, uccs._specifications)
-        self.assertEqual({ 'version': 1}, uccs._current_config)
+        self.assertEqual({ 'version': BIND10_CONFIG_DATA_VERSION}, uccs._current_config)
 
         module_spec = isc.config.module_spec_from_file(self.spec_file("spec2.spec"))
         fake_conn.set_get_answer('/module_spec', { module_spec.get_module_name(): module_spec.get_full_spec()})
-        fake_conn.set_get_answer('/config_data', { 'version': 1 })
+        fake_conn.set_get_answer('/config_data', { 'version': BIND10_CONFIG_DATA_VERSION })
         uccs = UIModuleCCSession(fake_conn)
         self.assertEqual(module_spec._module_spec, uccs._specifications['Spec2']._module_spec)
 

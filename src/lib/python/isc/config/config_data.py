@@ -25,6 +25,8 @@ import isc.config.module_spec
 
 class ConfigDataError(Exception): pass
 
+BIND10_CONFIG_DATA_VERSION = 2
+
 def check_type(spec_part, value):
     """Does nothing if the value is of the correct type given the
        specification part relevant for the value. Raises an
