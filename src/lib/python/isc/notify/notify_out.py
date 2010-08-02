@@ -133,13 +133,11 @@ class NotifyOut:
         return addr_list
 
     def send_notify(self, zone_name):
-        print('=============begin to send notify', zone_name, '===', self._notify_infos)
-        print(self._notify_infos)
+        if zone_name[len(zone_name) - 1] != '.':
+            zone_name += '.'
         if zone_name not in self._notify_infos:
-            print('=============not eixst')
             return
 
-        print('=============begin to send notify')
         with self._lock:
             if (self.notify_num >= _MAX_NOTIFY_NUM) or (zone_name in self._notifying_zones):
                 if zone_name not in self._waiting_zones:

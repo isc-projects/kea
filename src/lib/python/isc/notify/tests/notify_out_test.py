@@ -58,11 +58,11 @@ class TestNotifyOut(unittest.TestCase):
         os.unlink(self._db_file.name)
 
     def test_send_notify(self):
-        self._notify.send_notify('cn.')
+        self._notify.send_notify('cn')
         self.assertEqual(self._notify.notify_num, 1)
         self.assertEqual(self._notify._notifying_zones[0], 'cn.')
 
-        self._notify.send_notify('com.')
+        self._notify.send_notify('com')
         self.assertEqual(self._notify.notify_num, 2)
         self.assertEqual(self._notify._notifying_zones[1], 'com.')
     
