@@ -78,7 +78,6 @@ class ConfigManagerData:
                         config.data = file_config
                     else:
                         # We can put in a migration path here for old data
-                        file.close();
                         raise ConfigManagerDataReadError("[b10-cfgmgr] Old version of data found")
                 else:
                     raise ConfigManagerDataReadError("No version information in configuration file " + config.db_filename)
