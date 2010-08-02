@@ -27,7 +27,7 @@ import copy
 import tempfile
 import json
 from isc.cc import data
-from isc.config import ccsession
+from isc.config import ccsession, config_data
 
 class ConfigManagerDataReadError(Exception):
     """This exception is thrown when there is an error while reading
@@ -43,15 +43,13 @@ class ConfigManagerData:
     """This class hold the actual configuration information, and
        reads it from and writes it to persistent storage"""
 
-    CONFIG_VERSION = 1
-
     def __init__(self, data_path, file_name = "b10-config.db"):
         """Initialize the data for the configuration manager, and
            set the version and path for the data store. Initializing
            this does not yet read the database, a call to
            read_from_file is needed for that."""
         self.data = {}
-        self.data['version'] = ConfigManagerData.CONFIG_VERSION
+        self.data['version'] = config_data.BIND10_CONFIG_DATA_VERSION
         self.data_path = data_path
         self.db_filename = data_path + os.sep + file_name
 
@@ -67,19 +65,29 @@ class ConfigManagerData:
         config = ConfigManagerData(data_path, file_name)
         try:
             file = open(config.db_filename, 'r')
-            file_config = json.loads(file.read())
-            if 'version' in file_config and \
-                file_config['version'] == ConfigManagerData.CONFIG_VERSION:
-                config.data = file_config
-            else:
-                # We can put in a migration path here for old data
-                raise ConfigManagerDataReadError("[b10-cfgmgr] Old version of data found")
-            file.close()
+            try:
+                file_config = json.loads(file.read())
+                # handle different versions here
+                # 
+                if 'version' in file_config:
+                    if file_config['version'] == config_data.BIND10_CONFIG_DATA_VERSION:
+                        config.data = file_config
+                    elif file_config['version'] == 1:
+                        # only format change, no other changes necessary
+                        file_config['version'] = 2
+                        config.data = file_config
+                    else:
+                        # We can put in a migration path here for old data
+                        file.close();
+                        raise ConfigManagerDataReadError("[b10-cfgmgr] Old version of data found")
+                else:
+                    raise ConfigManagerDataReadError("No version information in configuration file " + config.db_filename)
+            except:
+                raise ConfigManagerDataReadError("Config file out of date or corrupt, please update or remove " + config.db_filename)
+            finally:
+                file.close();
         except IOError as ioe:
             raise ConfigManagerDataEmpty("No config file found")
-        except:
-            raise ConfigManagerDataReadError("Config file unreadable")
-
         return config
         
     def write_to_file(self, output_file_name = None):
@@ -243,7 +251,7 @@ class ConfigManager:
             except data.DataNotFoundError as dnfe:
                 # no data is ok, that means we have nothing that
                 # deviates from default values
-                return ccsession.create_answer(0, { 'version': self.config.CONFIG_VERSION })
+                return ccsession.create_answer(0, { 'version': config_data.BIND10_CONFIG_DATA_VERSION })
         else:
             return ccsession.create_answer(1, "Bad module_name in get_config command")
 
