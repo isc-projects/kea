@@ -423,6 +423,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/python/isc/config/tests/Makefile
                  src/lib/python/isc/log/Makefile
                  src/lib/python/isc/log/tests/Makefile
+                 src/lib/python/isc/notify/Makefile
+                 src/lib/python/isc/notify/tests/Makefile
                  src/lib/config/Makefile
                  src/lib/config/tests/Makefile
                  src/lib/dns/Makefile
@@ -469,6 +471,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/lib/python/isc/config/tests/config_test
            src/lib/python/isc/cc/tests/cc_test
            src/lib/python/isc/log/tests/log_test
+           src/lib/python/isc/notify/tests/notify_out_test
            src/lib/dns/gen-rdatacode.py
            src/lib/python/bind10_config.py
            src/lib/dns/tests/testdata/gen-wiredata.py
