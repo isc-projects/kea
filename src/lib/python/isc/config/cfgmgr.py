@@ -75,6 +75,7 @@ class ConfigManagerData:
                     elif file_config['version'] == 1:
                         # only format change, no other changes necessary
                         file_config['version'] = 2
+                        print("[b10-cfgmgr] Updating configuration database version from 1 to 2")
                         config.data = file_config
                     else:
                         # We can put in a migration path here for old data
