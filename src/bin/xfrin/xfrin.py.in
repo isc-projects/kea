@@ -51,6 +51,7 @@ SPECFILE_LOCATION = SPECFILE_PATH + "/xfrin.spec"
 AUTH_SPECFILE_LOCATION = AUTH_SPECFILE_PATH + "/auth.spec"
 
 XFROUT_MODULE_NAME = 'Xfrout'
+ZONE_MANAGER_MODULE_NAME = 'Zonemgr'
 __version__ = 'BIND10'
 # define xfrin rcode
 XFRIN_OK = 0
@@ -194,7 +195,7 @@ class XfrinConnection(asyncore.dispatcher):
                                             self._handle_xfrin_response)
 
                 self.log_msg(logstr + 'succeeded')
-                self._server.send_notify_command(self._zone_name)
+                self._server.publish_xfr_finish_news(self._zone_name)
                 ret = XFRIN_OK
 
         except XfrinException as e:
@@ -449,11 +450,13 @@ a separate method for the convenience of unit tests.
 
         return answer
 
-    def send_notify_command(self, zone_name):
-        '''Send Notify command to xfrout module.'''
+    def publish_xfr_finish_news(self, zone_name):
+        '''Send command to xfrout/zone manager module, that 
+        xfr has finished for one zone, new zone data is ready.'''
         param = {'zone_name': zone_name}
-        msg = create_command(notify_out.ZONE_NOTIFY_CMD, param)
+        msg = create_command(notify_out.ZONE_NEW_DATA_READY_CMD, param)
         self._send_cc_session.group_sendmsg(msg, XFROUT_MODULE_NAME)
+        self._send_cc_session.group_sendmsg(msg, ZONE_MANAGER_MODULE_NAME)
 
     def _parse_cmd_params(self, args):
         zone_name = args.get('zone_name')

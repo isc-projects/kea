@@ -11,7 +11,7 @@ except ImportError as e:
     # C++ loadable module may not be installed; 
     sys.stderr.write('[b10-xfrout] failed to import DNS or XFR module: %s\n' % str(e)) 
 
-ZONE_NOTIFY_CMD = 'zone_new_data_ready'
+ZONE_NEW_DATA_READY_CMD = 'zone_new_data_ready'
 _MAX_NOTIFY_NUM = 30
 _MAX_NOTIFY_TRY_NUM = 5
 _EVENT_NONE = 0
