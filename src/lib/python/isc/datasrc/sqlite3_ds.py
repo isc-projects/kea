@@ -165,7 +165,7 @@ def get_zoneid(zone, cur):
         return row[0]
     else:
         return ''
-
+    
 #########################################################################
 # reverse_name:
 #   reverse the labels of a DNS name.  (for example,
