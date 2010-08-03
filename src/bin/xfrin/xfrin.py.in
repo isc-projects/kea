@@ -432,7 +432,7 @@ a separate method for the convenience of unit tests.
                 # it to mount zone poisoning or DoS attacks.  We should
                 # locally identify the appropriate set of master servers.
                 # For now, we disable the code below.
-                master_is_valid = False
+                master_is_valid = False 
 
                 if master_is_valid:
                     ret = self.xfrin_start(zone_name, rrclass, db_file,
