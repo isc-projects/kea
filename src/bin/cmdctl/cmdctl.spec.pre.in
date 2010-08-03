@@ -6,20 +6,20 @@
       {
         "item_name": "key_file",
         "item_type": "string",
-        "item_optional": False,
-        "item_default": '@@SYSCONFDIR@@/@PACKAGE@/cmdctl-keyfile.pem'
+        "item_optional": false,
+        "item_default": "@@SYSCONFDIR@@/@PACKAGE@/cmdctl-keyfile.pem"
       },
       {
         "item_name": "cert_file",
         "item_type": "string",
-        "item_optional": False,
-        "item_default": '@@SYSCONFDIR@@/@PACKAGE@/cmdctl-certfile.pem'
+        "item_optional": false,
+        "item_default": "@@SYSCONFDIR@@/@PACKAGE@/cmdctl-certfile.pem"
       },
       {
         "item_name": "accounts_file",
         "item_type": "string",
-        "item_optional": False,
-        "item_default": '@@SYSCONFDIR@@/@PACKAGE@/cmdctl-accounts.csv'
+        "item_optional": false,
+        "item_default": "@@SYSCONFDIR@@/@PACKAGE@/cmdctl-accounts.csv"
       }
     ],
     "commands": [
@@ -32,7 +32,7 @@
         "command_name": "shutdown",
         "command_description": "shutdown cmdctl",
         "command_args": []
-      },
+      }
     ]
   }
 }

@@ -1192,8 +1192,7 @@ Message_init(s_Message* self, PyObject* args) {
 
 static void
 Message_destroy(s_Message* self) {
-    if (self->message != NULL)
-        delete self->message;
+    delete self->message;
     self->message = NULL;
     Py_TYPE(self)->tp_free(self);
 }

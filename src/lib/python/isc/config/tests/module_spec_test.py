@@ -54,6 +54,13 @@ class TestModuleSpec(unittest.TestCase):
 
     def test_open_bad_file_obj(self):
         self.assertRaises(ModuleSpecError, isc.config.module_spec_from_file, 1)
+        # contains single quotes which json parser does not accept
+        
+        self.assertRaises(ModuleSpecError, isc.config.module_spec_from_file, self.spec_file("spec28.spec"), False)
+        my_spec_file = open(self.spec_file("spec28.spec"))
+        self.assertRaises(ModuleSpecError, isc.config.module_spec_from_file, my_spec_file, False)
+
+        self.assertRaises(ModuleSpecError, isc.config.module_spec_from_file, self.spec_file("does_not_exist"), False)
 
     def test_bad_specfiles(self):
         self.assertRaises(ModuleSpecError, self.read_spec_file, "spec3.spec")

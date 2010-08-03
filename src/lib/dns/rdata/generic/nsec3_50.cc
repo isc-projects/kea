@@ -22,10 +22,10 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include <dns/base32.h>
+#include <dns/util/base32hex.h>
 #include <dns/buffer.h>
 #include <dns/exceptions.h>
-#include <dns/hex.h>
+#include <dns/util/hex.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/rrtype.h>
@@ -88,7 +88,7 @@ NSEC3::NSEC3(const string& nsec3_str) :
     if (iss.bad() || iss.fail()) {
         isc_throw(InvalidRdataText, "Invalid NSEC3 hash algorithm");
     }
-    decodeBase32(nextstr, next);
+    decodeBase32Hex(nextstr, next);
 
     uint8_t bitmap[8 * 1024];       // 64k bits
     vector<uint8_t> typebits;
@@ -237,7 +237,7 @@ NSEC3::toText() const
         " " + lexical_cast<string>(static_cast<int>(impl_->flags_)) +
         " " + lexical_cast<string>(static_cast<int>(impl_->iterations_)) +
         " " + encodeHex(impl_->salt_) +
-        " " + encodeBase32(impl_->next_) + s.str());
+        " " + encodeBase32Hex(impl_->next_) + s.str());
 }
 
 void

@@ -88,7 +88,7 @@ public:
         AUTH_QUERY,
         GLUE_QUERY,
         NOGLUE_QUERY,
-        REF_QUERY,
+        REF_QUERY
     } op;
 
     // The state field indicates the state of the query; it controls
