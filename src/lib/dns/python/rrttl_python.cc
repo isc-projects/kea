@@ -199,8 +199,7 @@ RRTTL_init(s_RRTTL* self, PyObject* args) {
 
 static void
 RRTTL_destroy(s_RRTTL* self) {
-    if (self->rrttl != NULL)
-        delete self->rrttl;
+    delete self->rrttl;
     self->rrttl = NULL;
     Py_TYPE(self)->tp_free(self);
 }

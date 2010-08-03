@@ -201,8 +201,7 @@ RRClass_init(s_RRClass* self, PyObject* args) {
 
 static void
 RRClass_destroy(s_RRClass* self) {
-    if (self->rrclass != NULL)
-        delete self->rrclass;
+    delete self->rrclass;
     self->rrclass = NULL;
     Py_TYPE(self)->tp_free(self);
 }

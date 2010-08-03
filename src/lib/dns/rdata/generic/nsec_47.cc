@@ -19,7 +19,7 @@
 #include <sstream>
 #include <vector>
 
-#include <dns/base64.h>
+#include <dns/util/base64.h>
 #include <dns/buffer.h>
 #include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
