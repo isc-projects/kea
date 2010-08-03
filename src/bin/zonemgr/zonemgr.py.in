@@ -56,6 +56,12 @@ AUTH_SPECFILE_LOCATION = AUTH_SPECFILE_PATH + "/auth.spec"
 
 __version__ = "BIND10"
 
+XFRIN_MODULE_NAME = 'Xfrin'
+AUTH_MODULE_NAME = 'Auth'
+ZONE_XFRIN_FAILED_COMMAND = 'zone_xfrin_failed'
+ZONE_XFRIN_SUCCESS_COMMAND = 'zone_new_data_ready'
+ZONE_NOTIFY_COMMAND = 'notify'
+ZONE_REFRESH_COMMAND = 'refresh'
 #default master port
 DEFAULT_MASTER_PORT = "53"
 
@@ -262,12 +268,12 @@ class ZoneRefreshInfo:
                      "master" : notify_master[0],
                      "port" : notify_master[1]
                      }
-            self._send_command("Xfrin", "notify", param) 
+            self._send_command(XFRIN_MODULE_NAME, ZONE_NOTIFY_COMMAND, param) 
             self._clear_zone_notifier_master(zone_index)
         # Send refresh command to xfrin module
         else:
             param = {"zone_name" : zone_name}
-            self._send_command("Xfrin", "refresh", param)
+            self._send_command(XFRIN_MODULE_NAME, ZONE_REFRESH_COMMAND, param)
 
     def _connect_server(self):
         """Connect to unix domain socket"""
@@ -365,7 +371,7 @@ class Zonemgr:
         self._module_cc.start()
 
     def get_db_file(self):
-        db_file, is_default = self._module_cc.get_remote_config_value("Auth", "database_file")
+        db_file, is_default = self._module_cc.get_remote_config_value(AUTH_MODULE_NAME, "database_file")
         if is_default and "B10_FROM_BUILD" in os.environ:
             db_file = os.environ["B10_FROM_BUILD"] + "/bind10_zones.sqlite3"
         return db_file
@@ -439,19 +445,19 @@ class Zonemgr:
 
     def command_handler(self, command, args):
         answer = create_answer(0)
-        if command == "notify":
+        if command == ZONE_NOTIFY_COMMAND:
             zone_name, master, port = self._parse_cmd_params(args)
             self._zone_refresh_info.zone_handle_notify(zone_name, master ,port)
             data = struct.pack('s', " ")
             self._conn.send(data)
 
-        elif command == "zone_new_data_ready":
+        elif command == ZONE_XFRIN_SUCCESS_COMMAND:
             zone_name = args.get("zone_name")
             if not zone_name:
                 sys.stderr.write("zone name should be provided")
             self._zone_refresh_info.zone_refresh_success(zone_name)
 
-        elif command == "zone_xfr_fail":
+        elif command == ZONE_XFRIN_FAILED_COMMAND:
             zone_name = args.get("zone_name")
             if not zone_name:
                 sys.stderr.write("zone name should be provided")
