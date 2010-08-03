@@ -52,6 +52,7 @@ AUTH_SPECFILE_LOCATION = AUTH_SPECFILE_PATH + "/auth.spec"
 
 XFROUT_MODULE_NAME = 'Xfrout'
 ZONE_MANAGER_MODULE_NAME = 'Zonemgr'
+ZONE_XFRIN_FAILED = 'zone_xfrin_failed'
 __version__ = 'BIND10'
 # define xfrin rcode
 XFRIN_OK = 0
@@ -68,7 +69,7 @@ class XfrinException(Exception):
 class XfrinConnection(asyncore.dispatcher):
     '''Do xfrin in this class. '''    
 
-    def __init__(self, server_,
+    def __init__(self,
                  sock_map, zone_name, rrclass, db_file, shutdown_event,
                  master_addrinfo, verbose = False, idle_timeout = 60): 
         ''' idle_timeout: max idle time for read data from socket.
@@ -79,7 +80,6 @@ class XfrinConnection(asyncore.dispatcher):
         asyncore.dispatcher.__init__(self, map=sock_map)
         self.create_socket(master_addrinfo[0], master_addrinfo[1])
         self._zone_name = zone_name
-        self._server = server_
         self._sock_map = sock_map
         self._rrclass = rrclass
         self._db_file = db_file
@@ -195,7 +195,6 @@ class XfrinConnection(asyncore.dispatcher):
                                             self._handle_xfrin_response)
 
                 self.log_msg(logstr + 'succeeded')
-                self._server.publish_xfr_finish_news(self._zone_name)
                 ret = XFRIN_OK
 
         except XfrinException as e:
@@ -324,10 +323,11 @@ def process_xfrin(server, xfrin_recorder, zone_name, rrclass, db_file,
                   shutdown_event, master_addrinfo, check_soa, verbose):
     xfrin_recorder.increment(zone_name)
     sock_map = {}
-    conn = XfrinConnection(server, sock_map, zone_name, rrclass, db_file,
+    conn = XfrinConnection(sock_map, zone_name, rrclass, db_file,
                            shutdown_event, master_addrinfo, verbose)
     if conn.connect_to_master():
-        conn.do_xfrin(check_soa)
+        ret = conn.do_xfrin(check_soa)
+        server.publish_xfrin_news(zone_name, ret)
 
     xfrin_recorder.decrement(zone_name)
 
@@ -450,13 +450,20 @@ a separate method for the convenience of unit tests.
 
         return answer
 
-    def publish_xfr_finish_news(self, zone_name):
-        '''Send command to xfrout/zone manager module, that 
-        xfr has finished for one zone, new zone data is ready.'''
+    def publish_xfrin_news(self, zone_name, xfr_result):
+        '''Send command to xfrout/zone manager module.
+        If xfrin has finished successfully for one zone, tell the good 
+        news(command: zone_new_data_ready) to zone manager and xfrout.
+        if xfrin failed, just tell the bad news to zone manager, so that 
+        it can reset the refresh timer for that zone. '''
         param = {'zone_name': zone_name}
-        msg = create_command(notify_out.ZONE_NEW_DATA_READY_CMD, param)
-        self._send_cc_session.group_sendmsg(msg, XFROUT_MODULE_NAME)
-        self._send_cc_session.group_sendmsg(msg, ZONE_MANAGER_MODULE_NAME)
+        if xfr_result == XFRIN_OK:
+            msg = create_command(notify_out.ZONE_NEW_DATA_READY_CMD, param)
+            self._send_cc_session.group_sendmsg(msg, XFROUT_MODULE_NAME)
+            self._send_cc_session.group_sendmsg(msg, ZONE_MANAGER_MODULE_NAME)
+        else:
+            msg = create_command(ZONE_XFRIN_FAILED, param)
+            self._send_cc_session.group_sendmsg(msg, ZONE_MANAGER_MODULE_NAME)
 
     def _parse_cmd_params(self, args):
         zone_name = args.get('zone_name')
