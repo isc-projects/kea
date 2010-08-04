@@ -470,7 +470,7 @@ a separate method for the convenience of unit tests.
         if not zone_name:
             raise XfrinException('zone name should be provided')
 
-        rrclass = args.get('rrclass')
+        rrclass = args.get('zone_class')
         if not rrclass:
             # The default RR class is IN.  We should fix this so that
             # the class is always passed in the command arg (where we specify
