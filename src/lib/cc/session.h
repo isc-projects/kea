@@ -40,6 +40,15 @@ namespace isc {
                 isc::Exception(file, line, what) {}
         };
 
+        /// \brief A standard Exception class that is thrown when a
+        /// blocking readData call does not read the given number of
+        /// bytes before the timeout expires
+        class SessionTimeout : public isc::Exception {
+        public:
+            SessionTimeout(const char* file, size_t line, const char* what) :
+                isc::Exception(file, line, what) {}
+        };
+
         /// \brief The AbstractSession class is an abstract base class that
         /// defines the interfaces of Session.
         /// The intended primary usage of abstraction is to allow tests for the

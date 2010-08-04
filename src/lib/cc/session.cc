@@ -28,6 +28,7 @@
 #include <unistd.h>             // for some IPC/network system calls
 #include <asio.hpp>
 #include <asio/error_code.hpp>
+#include <asio/deadline_timer.hpp>
 #include <asio/system_error.hpp>
 
 #include <cstdio>
@@ -39,6 +40,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 
 #include <exceptions/exceptions.h>
 
@@ -65,7 +67,9 @@ public:
     void disconnect();
     void writeData(const void* data, size_t datalen);
     size_t readDataLength();
-    void readData(void* data, size_t datalen);
+    // Blocking read. Will throw a SessionTimeout if the timeout value
+    // (in seconds) is thrown. If timeout is 0 it will block forever
+    void readData(void* data, size_t datalen, size_t timeout = 5);
     void startRead(boost::function<void()> user_handler);
 
     long int sequence_; // the next sequence number to use
@@ -75,6 +79,10 @@ public:
 private:
     void internalRead(const asio::error_code& error,
                       size_t bytes_transferred);
+    // Sets the boolean pointed to by result to true, unless
+    // the given error code is operation_aborted
+    // Used as a callback for emulating sync reads with async calls
+    void setResult(bool* result, asio::error_code b);
 
 private:
     io_service& io_service_;
@@ -130,9 +138,39 @@ SessionImpl::readDataLength() {
 }
 
 void
-SessionImpl::readData(void* data, size_t datalen) {
+SessionImpl::setResult(bool* result, asio::error_code b)
+{
+    if (b != asio::error::operation_aborted) {
+        *result = true;
+    }
+}
+
+void
+SessionImpl::readData(void* data, size_t datalen, size_t timeout) {
+    bool timer_result = false;
+    bool read_result = false;
     try {
-        asio::read(socket_, asio::buffer(data, datalen));
+        async_read(socket_, asio::buffer(data, datalen), asio::transfer_at_least( datalen ),
+            boost::bind(&SessionImpl::setResult, this, &read_result, _1));
+        asio::deadline_timer timer(socket_.io_service());
+    
+        if (timeout != 0) {
+            timer.expires_from_now(boost::posix_time::seconds(timeout));
+            timer.async_wait(boost::bind(&SessionImpl::setResult, this, &timer_result, _1));
+        }
+    
+        while (!read_result && !timer_result) {
+            socket_.io_service().run_one();
+            if (read_result) {
+                timer.cancel();
+            } else if (timer_result) {
+                socket_.cancel();
+            }
+        }
+    
+        if (!read_result) {
+            isc_throw(SessionTimeout, "Timeout or error on ");
+        }
     } catch (const asio::system_error& asio_ex) {
         // to hide boost specific exceptions, we catch them explicitly
         // and convert it to SessionError.
