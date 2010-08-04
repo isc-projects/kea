@@ -430,11 +430,11 @@ class TestXfrin(unittest.TestCase):
         self.assertEqual(master_addrinfo[4][0], TEST_MASTER_IPV6_ADDRESS)
 
     def test_parse_cmd_params_chclass(self):
-        self.args['rrclass'] = 'CH'
+        self.args['zone_class'] = 'CH'
         self.assertEqual(self._do_parse()[1], RRClass.CH())
 
     def test_parse_cmd_params_bogusclass(self):
-        self.args['rrclass'] = 'XXX'
+        self.args['zone_class'] = 'XXX'
         self.assertRaises(XfrinException, self._do_parse)
 
     def test_parse_cmd_params_nozone(self):
@@ -518,10 +518,31 @@ class TestXfrin(unittest.TestCase):
         self.args['master'] = TEST_MASTER_IPV6_ADDRESS
         # ...but right now we disable the feature due to security concerns.
         self.assertEqual(self.xfr.command_handler("notify",
-                                                  self.args)['result'][0], 1)
+                                                  self.args)['result'][0], 0)
 
     def test_command_handler_unknown(self):
         self.assertEqual(self.xfr.command_handler("xxx", None)['result'][0], 1)
+
+    def test_command_handler_transfers_in(self):
+        self.assertEqual(self.xfr.config_handler({})['result'][0], 0)
+        self.assertEqual(self.xfr.config_handler({'transfers_in': 3})['result'][0], 0)
+        self.assertEqual(self.xfr._max_transfers_in, 3)
+
+    def test_command_handler_masters(self):
+        master_info = {'masters': {'address': '1.1.1.1', 'port':53} }
+        self.assertEqual(self.xfr.config_handler(master_info)['result'][0], 0)
+
+        master_info = {'masters': {'address': '1111.1.1.1', 'port':53 } }
+        self.assertEqual(self.xfr.config_handler(master_info)['result'][0], 1)
+
+        master_info = {'masters': {'address': '2.2.2.2', 'port':530000 } }
+        self.assertEqual(self.xfr.config_handler(master_info)['result'][0], 1)
+
+        master_info = {'masters': {'address': '2.2.2.2', 'port':53 } }
+        self.xfr.config_handler(master_info)
+        self.assertEqual(self.xfr._masters['address'], '2.2.2.2')
+        self.assertEqual(self.xfr._masters['port'], 53)
+
 
 def raise_interrupt():
     raise KeyboardInterrupt()
