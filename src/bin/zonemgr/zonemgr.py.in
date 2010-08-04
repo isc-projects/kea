@@ -60,8 +60,8 @@ XFRIN_MODULE_NAME = 'Xfrin'
 AUTH_MODULE_NAME = 'Auth'
 ZONE_XFRIN_FAILED_COMMAND = 'zone_xfrin_failed'
 ZONE_XFRIN_SUCCESS_COMMAND = 'zone_new_data_ready'
+ZONE_REFRESH_COMMAND = 'refresh_from_zonemgr'
 ZONE_NOTIFY_COMMAND = 'notify'
-ZONE_REFRESH_COMMAND = 'refresh'
 #default master port
 DEFAULT_MASTER_PORT = "53"
 
@@ -83,12 +83,13 @@ class ZonemgrException(Exception):
 class ZoneRefreshInfo:
     """This class will maintain and manage zone refresh info"""
 
-    def __init__(self, cc, db_file, sock_file):
+    def __init__(self, cc, db_file, slave_socket):
         self._cc = cc
-        self._sock_file = sock_file
+        self._socket = slave_socket 
         self._db_file = db_file
         self._zone_name_list = []
         self._zones_refresh_info = []
+        self._build_zonemgr_refresh_info()
     
     def _random_jitter(self, max, jitter):
         """Imposes some random jitters for refresh and
@@ -101,27 +102,27 @@ class ZoneRefreshInfo:
     def _get_current_time(self):
         return time.time()
 
-    def _set_timer(self, zone_index, max, jitter):
-        self._zones_refresh_info[zone_index]["timeout"] = self._get_current_time() + \
-                                                          self._random_jitter(max, jitter)
+    def _set_zone_timer(self, zone_index, max, jitter):
+        self._set_zone_next_refresh_time(zone_index, self._get_current_time() + \
+                                            self._random_jitter(max, jitter))
 
-    def _set_timer_refresh(self, zone_index):
+    def _set_zone_refresh_timer(self, zone_index):
         """Set timer for zone refresh timeout after zone refresh success."""
         zone_refresh_time = float(self._get_zone_soa_rdata(zone_index).split(" ")[3])
         if (zone_refresh_time < LOWERBOUND_REFRESH):
             zone_refresh_time = LOWERBOUND_REFRESH
-        self._set_timer(zone_index, zone_refresh_time, (1 * zone_refresh_time) / 4)
+        self._set_zone_timer(zone_index, zone_refresh_time, (1 * zone_refresh_time) / 4)
 
-    def _set_timer_retry(self, zone_index):
+    def _set_zone_retry_timer(self, zone_index):
         """Set timer for zone retry timeout after zone refresh fail."""
         zone_retry_time = float(self._get_zone_soa_rdata(zone_index).split(" ")[4])
         if (zone_retry_time < LOWERBOUND_RETRY):
             zone_retry_time = LOWERBOUND_RETRY
-        self._set_timer(zone_index, zone_retry_time, (1 * zone_retry_time) / 4)
+        self._set_zone_timer(zone_index, zone_retry_time, (1 * zone_retry_time) / 4)
 
-    def _set_timer_notify(self, zone_index):
+    def _set_zone_notify_timer(self, zone_index):
         """Set timer for a zone after receiving notify"""
-        self._set_timer(zone_index, 0, 0)
+        self._set_zone_timer(zone_index, 0, 0)
 
     def zone_refresh_success(self, zone_name):
         """Update zone update info after zone refresh success"""
@@ -130,7 +131,7 @@ class ZoneRefreshInfo:
             raise ZonemgrException("[b10-zonemgr] Zone %s doesn't belong to zonemgr" % zone_name)
             return
         self._zonemgr_reload_zone(zone_index)
-        self._set_timer_refresh(zone_index)
+        self._set_zone_refresh_timer(zone_index)
         self._set_zone_state(zone_index, ZONE_OK)
         self._set_zone_last_refresh_time(zone_index, self._get_current_time())
 
@@ -141,7 +142,7 @@ class ZoneRefreshInfo:
             raise ZonemgrException("[b10-zonemgr] Zone %s doesn't belong to zonemgr" % zone_name)
             return
         self._set_zone_state(zone_index, ZONE_OK)
-        self._set_timer_retry(zone_index)
+        self._set_zone_retry_timer(zone_index)
 
     def zone_handle_notify(self, zone_name, master, port):
         """Handle zone notify"""
@@ -150,7 +151,7 @@ class ZoneRefreshInfo:
             raise ZonemgrException("[b10-zonemgr] Notified zone %s doesn't belong to zonemgr" % zone_name)
             return
         self._set_zone_notifier_master(zone_index, [master, port])
-        self._set_timer_notify(zone_index)
+        self._set_zone_notify_timer(zone_index)
 
     def _build_zonemgr_refresh_info(self):
         for zone_name, zone_class in sqlite3_ds.get_zones_info(self._db_file):
@@ -160,7 +161,7 @@ class ZoneRefreshInfo:
             zone_info["zone_soa_rdata"] = zone_soa[7]
             zone_info["zone_state"] = ZONE_OK
             zone_info["last_refresh_time"] = self._get_current_time() 
-            zone_info["timeout"] = self._get_current_time() + float(zone_soa[7].split(" ")[3])
+            zone_info["next_refresh_time"] = self._get_current_time() + float(zone_soa[7].split(" ")[3])
             self._zones_refresh_info.append(zone_info)
 
     def _get_zone_index(self, zone_name):
@@ -214,16 +215,16 @@ class ZoneRefreshInfo:
         self._zones_refresh_info[zone_index]["zone_state"] = zone_state 
 
     def _get_zone_refresh_timeout(self, zone_index):
-        return self._zones_refresh_info[zone_index]["fresh_timeout"]
+        return self._zones_refresh_info[zone_index]["refresh_timeout"]
 
     def _set_zone_refresh_timeout(self, zone_index, time):
-        self._zones_refresh_info[zone_index]["fresh_timeout"] = time
+        self._zones_refresh_info[zone_index]["refresh_timeout"] = time
 
-    def _get_zone_timeout(self, zone_index):
-        return self._zones_refresh_info[zone_index]["timeout"]
+    def _get_zone_next_refresh_time(self, zone_index):
+        return self._zones_refresh_info[zone_index]["next_refresh_time"]
 
-    def _set_zone_timeout(self, zone_index, timeout):
-        self._zones_refresh_info[zone_index]["timeout"] = timeout
+    def _set_zone_next_refresh_time(self, zone_index, time):
+        self._zones_refresh_info[zone_index]["next_refresh_time"] = time
 
     def _send_command(self, module_name, command_name, params):
         msg = create_command(command_name, params)
@@ -250,7 +251,7 @@ class ZoneRefreshInfo:
                     
             # Get the zone with minimum timeout
             if ((-1 == minimum_index) or 
-                (self._get_zone_timeout(i) < self._get_zone_timeout(minimum_index))):
+                (self._get_zone_next_refresh_time(i) < self._get_zone_next_refresh_time(minimum_index))):
                 minimum_index = i
 
         return minimum_index
@@ -275,14 +276,6 @@ class ZoneRefreshInfo:
             param = {"zone_name" : zone_name}
             self._send_command(XFRIN_MODULE_NAME, ZONE_REFRESH_COMMAND, param)
 
-    def _connect_server(self):
-        """Connect to unix domain socket"""
-        try:
-            self._socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            self._socket.connect(self._sock_file)
-        except socket.error as err:
-            raise ZonemgrException("Can't connect to socket")
-
     def _zone_mgr_is_empty(self):
         """Does zone manager has no zone?"""
         if not len(self._zones_refresh_info):
@@ -292,18 +285,17 @@ class ZoneRefreshInfo:
 
     def run_timer(self):
         """Keep track of zone timers"""
-        self._build_zonemgr_refresh_info()
-        self._connect_server()
         while True:
             if self._zone_mgr_is_empty():
+                time.sleep(1) # A better time?
                 continue
 
             minimum_index = self._find_minimum_timeout_zone()
             # If don't get zone with minimum timeout, timer will wait LOWERBOUND_REFRESH
             if (-1 == minimum_index):
-                timeout = LOWERBOUND_REFRESH
+                timeout = LOWERBOUND_REFRESH 
             else:
-                timeout = self._get_zone_timeout(minimum_index) - self._get_current_time()
+                timeout = self._get_zone_next_refresh_time(minimum_index) - self._get_current_time()
                 if (timeout < 0):
                     self._do_refresh(minimum_index)
                     continue
@@ -341,24 +333,18 @@ class Zonemgr:
         self._db_file = self.get_db_file()
         self._sock_file = UNIX_SOCKET_FILE 
 
-        self._create_notify_socket(self._sock_file)
+        self._master_socket, self._slave_scoket = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
+        self._zone_refresh_info = ZoneRefreshInfo(self._cc, self._db_file, self._slave_scoket)
         self._start_zone_refresh_timer()
 
-        self._conn, addr = self._socket.accept()
+        self._lock = threading.Lock()
         self._shutdown_event = threading.Event()
         self._verbose = verbose
 
-    def _create_notify_socket(self, sock_file):
-        """Create a unix domain socket to inform timer a new notify has arrived"""
-        self._remove_unused_sock_file(sock_file)
-        self._socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self._socket.bind(sock_file)
-        self._socket.listen(2)
-
     def _start_zone_refresh_timer(self):
         """Start a new thread to run zone refresh timer"""
-        self._zone_refresh_info = ZoneRefreshInfo(self._cc, self._db_file, self._sock_file)
         listener = threading.Thread(target = start_timer, args = (self._zone_refresh_info,))
+        listener.setDaemon(True)
         listener.start()
 
     def _setup_session(self):
@@ -372,40 +358,18 @@ class Zonemgr:
 
     def get_db_file(self):
         db_file, is_default = self._module_cc.get_remote_config_value(AUTH_MODULE_NAME, "database_file")
+        # this too should be unnecessary, but currently the
+        # 'from build' override isn't stored in the config
+        # (and we don't have indirect python access to datasources yet)
         if is_default and "B10_FROM_BUILD" in os.environ:
             db_file = os.environ["B10_FROM_BUILD"] + "/bind10_zones.sqlite3"
         return db_file
-
-    def _remove_unused_sock_file(self, sock_file):
-        if self._sock_file_in_use(sock_file):
-            sys.stderr.write("[b10-zonemgr] Fail to start zonemgr process, unix socket" 
-                  " file '%s' is being used by another zonemgr process" % sock_file)
-            sys.exit(0)
-        else:
-            if not os.path.exists(sock_file):
-                return
-            try:
-                os.unlink(sock_file)
-            except OSError as err:
-                sys.stderr.write("[b10-zonemgr] Fail to remove file " + self._sock_file, err)
-                sys.exit(0)
-   
-    def _sock_file_in_use(self, sock_file):
-        try:
-            sock = socket.socket(socket.AF_UNIX)
-            sock.connect(sock_file)
-        except socket.error as err:
-            return False
-        
-        return True 
 
     def shutdown(self):
 
         self._zone_refresh_info.shutdown()
         try:
-            if (os.path.exists(self._sock_file)):
-                os.unlink(self._sock_file)
-            self._conn.close()
+            self._master_socket.close()
         except Exception as e:
             sys.stderr.write(str(e))
 
@@ -428,40 +392,45 @@ class Zonemgr:
     def _parse_cmd_params(self, args):
         zone_name = args.get("zone_name")
         if not zone_name:
-            sys.stderr.write("zone name should be provided")
+            raise ZonemgrException("zone name should be provided")
 
-        master = args.get("master")
-        if not master:
-            sys.stderr.write("master address should be provided")
-        check_addr(master)
+        master_str = args.get("master")
+        if not master_str:
+            raise ZonemgrException("master address should be provided")
 
         port_str = args.get("port")
         if not port_str:
             port_str = DEFAULT_MASTER_PORT
-        check_port(port_str)
 
-        return (zone_name, master, port_str)
+        return (zone_name, master_str, port_str)
 
 
     def command_handler(self, command, args):
         answer = create_answer(0)
         if command == ZONE_NOTIFY_COMMAND:
             zone_name, master, port = self._parse_cmd_params(args)
+            self._lock.acquire()
             self._zone_refresh_info.zone_handle_notify(zone_name, master ,port)
-            data = struct.pack('s', " ")
-            self._conn.send(data)
+            self._lock.release()
+            self._master_socket.send(b" ")
 
         elif command == ZONE_XFRIN_SUCCESS_COMMAND:
             zone_name = args.get("zone_name")
             if not zone_name:
-                sys.stderr.write("zone name should be provided")
-            self._zone_refresh_info.zone_refresh_success(zone_name)
+                raise ZonemgrException("zone name should be provided")
+            else:
+                self._lock.acquire()
+                self._zone_refresh_info.zone_refresh_success(zone_name)
+                self._lock.release()
 
         elif command == ZONE_XFRIN_FAILED_COMMAND:
             zone_name = args.get("zone_name")
             if not zone_name:
-                sys.stderr.write("zone name should be provided")
-            self._zone_refresh_info.zone_refresh_fail(zone_name)
+                raise ZonemgrException("zone name should be provided")
+            else:
+                self._lock.acquire()
+                self._zone_refresh_info.zone_refresh_fail(zone_name)
+                self._lock.release()
 
         elif command == "shutdown":
             self.shutdown()
@@ -476,28 +445,6 @@ class Zonemgr:
             self._module_cc.check_command()
 
 zonemgrd = None
-
-def check_port(portstr):
-    try:
-        portnum = int(portstr)
-        if portnum < 0 or portnum > 65535:
-            raise ValueError("invalid port number (out of range): " + portstr)
-    except ValueError as err:
-        raise ZonemgrException("failed to resolve master addr=%s: %s" %
-                             ( portstr, str(err)))
-
-def check_addr(addrstr):
-    try:
-        addr = socket.inet_pton(socket.AF_INET, addrstr)
-        return
-    except:
-        pass
-
-    try:
-        addr = socket.inet_pton(socket.AF_INET6, addrstr)
-    except Exception as err:
-        raise ZonemgrException("failed to resolve master addr=%s: %s" %
-                             ( addrstr, str(err)))
 
 def signal_handler(signal, frame):
     if zonemgrd:
