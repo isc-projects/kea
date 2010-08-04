@@ -138,8 +138,7 @@ SessionImpl::readDataLength() {
 }
 
 void
-SessionImpl::setResult(bool* result, asio::error_code b)
-{
+SessionImpl::setResult(bool* result, const asio::error_code b) {
     if (b != asio::error::operation_aborted) {
         *result = true;
     }
@@ -150,13 +149,15 @@ SessionImpl::readData(void* data, size_t datalen, size_t timeout) {
     bool timer_result = false;
     bool read_result = false;
     try {
-        async_read(socket_, asio::buffer(data, datalen), asio::transfer_at_least( datalen ),
-            boost::bind(&SessionImpl::setResult, this, &read_result, _1));
+        asio::async_read(socket_, asio::buffer(data, datalen),
+                         boost::bind(&SessionImpl::setResult, this,
+                                     &read_result, _1));
         asio::deadline_timer timer(socket_.io_service());
     
         if (timeout != 0) {
             timer.expires_from_now(boost::posix_time::seconds(timeout));
-            timer.async_wait(boost::bind(&SessionImpl::setResult, this, &timer_result, _1));
+            timer.async_wait(boost::bind(&SessionImpl::setResult,
+                                         this, &timer_result, _1));
         }
     
         while (!read_result && !timer_result) {
@@ -169,7 +170,7 @@ SessionImpl::readData(void* data, size_t datalen, size_t timeout) {
         }
     
         if (!read_result) {
-            isc_throw(SessionTimeout, "Timeout or error on ");
+            isc_throw(SessionTimeout, "Timeout or error while reading data from cc session");
         }
     } catch (const asio::system_error& asio_ex) {
         // to hide boost specific exceptions, we catch them explicitly
@@ -182,11 +183,11 @@ void
 SessionImpl::startRead(boost::function<void()> user_handler) {
     data_length_ = 0;
     user_handler_ = user_handler;
-    async_read(socket_, asio::buffer(&data_length_,
-                                            sizeof(data_length_)),
-               boost::bind(&SessionImpl::internalRead, this,
-                           asio::placeholders::error,
-                           asio::placeholders::bytes_transferred));
+    asio::async_read(socket_, asio::buffer(&data_length_,
+                                           sizeof(data_length_)),
+                     boost::bind(&SessionImpl::internalRead, this,
+                                 asio::placeholders::error,
+                                 asio::placeholders::bytes_transferred));
 }
 
 void
