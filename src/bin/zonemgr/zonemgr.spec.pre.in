@@ -2,12 +2,6 @@
   "module_spec": {
      "module_name": "Zonemgr",
       "config_data":[
-      {
-        "item_name": "transfers_in",
-        "item_type": "integer",
-        "item_optional": false,
-        "item_default": 10
-      }
       ],
       "commands": [
         {

@@ -24,24 +24,6 @@ from zonemgr import *
 class ZonemgrTestException(Exception):
     pass
 
-class MySocket():
-    def __init__(self, family, type):
-        self.family = family
-        self.type = type
-
-    def recv(self, len):
-        data = struct.pack('s', " ")
-        return data
-
-    def send(self, data):
-        pass
-
-    def connect(self):
-        pass
-
-    def close(self):
-        pass
-
 class MySession():
     def __init__(self):
         pass
@@ -58,11 +40,11 @@ class MyZoneRefreshInfo(ZoneRefreshInfo):
         self._zone_name_list = ['sd.cn.', 'tw.cn']
         self._zones_refresh_info = [
         {'last_refresh_time': 1280474398.822142,
-         'timeout': 1280481598.822153, 
+         'next_refresh_time': 1280481598.822153, 
          'zone_soa_rdata': 'a.dns.cn. root.cnnic.cn. 2009073105 7200 3600 2419200 21600', 
          'zone_state': 0},
         {'last_refresh_time': 1280474399.116421, 
-         'timeout': 1280481599.116433, 
+         'next_refresh_time': 1280481599.116433, 
          'zone_soa_rdata': 'a.dns.cn. root.cnnic.cn. 2009073112 7200 3600 2419200 21600', 
          'zone_state': 0}
         ]
@@ -84,36 +66,36 @@ class TestZoneRefreshInfo(unittest.TestCase):
     def test_get_current_time(self):
         pass
 
-    def test_set_timer(self):
+    def test_set_zone_timer(self):
         max = 3600
         jitter = 900
         time1 = time.time()
-        self.zoneinfo._set_timer(0, 3600, 900)
+        self.zoneinfo._set_zone_timer(0, 3600, 900)
         time2 = time.time()
-        zone_timeout = float(self.zoneinfo._zones_refresh_info[0]["timeout"])
+        zone_timeout = float(self.zoneinfo._zones_refresh_info[0]["next_refresh_time"])
         self.assertTrue((3600 - 900) <= (zone_timeout - time1))
         self.assertTrue((zone_timeout - time2) <= 3600)
 
-    def test_set_timer_refresh(self):
+    def test_set_zone_refresh_timer(self):
         time1 = time.time()
-        self.zoneinfo._set_timer_refresh(0)
-        zone_timeout = self.zoneinfo._zones_refresh_info[0]["timeout"]
+        self.zoneinfo._set_zone_refresh_timer(0)
+        zone_timeout = self.zoneinfo._zones_refresh_info[0]["next_refresh_time"]
         time2 = time.time()
         self.assertTrue((time1 + 7200 * 3 / 4) <= zone_timeout)
         self.assertTrue(zone_timeout <= time2 + 7200)
         
-    def test_set_timer_retry(self):
+    def test_set_zone_retry_timer(self):
         time1 = time.time()
-        self.zoneinfo._set_timer_retry(0)
-        zone_timeout = self.zoneinfo._zones_refresh_info[0]["timeout"]
+        self.zoneinfo._set_zone_retry_timer(0)
+        zone_timeout = self.zoneinfo._zones_refresh_info[0]["next_refresh_time"]
         time2 = time.time()
         self.assertTrue((time1 + 3600 * 3 / 4) <= zone_timeout)
         self.assertTrue(zone_timeout <= time2 + 3600)
 
-    def test_set_timer_notify(self):
+    def test_set_zone_notify_timer(self):
         time1 = time.time()
-        self.zoneinfo._set_timer_notify(0)
-        zone_timeout = self.zoneinfo._zones_refresh_info[0]["timeout"]
+        self.zoneinfo._set_zone_notify_timer(0)
+        zone_timeout = self.zoneinfo._zones_refresh_info[0]["next_refresh_time"]
         time2 = time.time()
         self.assertTrue(time1 <= zone_timeout)
         self.assertTrue(zone_timeout <= time2)
@@ -180,24 +162,24 @@ class TestZoneRefreshInfo(unittest.TestCase):
 
     def test_get_zone_refresh_timeout(self):
         current_time = time.time()
-        self.assertFalse("fresh_timeout" in self.zoneinfo._zones_refresh_info[0].keys())
-        self.zoneinfo._zones_refresh_info[0]["fresh_timeout"] = current_time
+        self.assertFalse("refresh_timeout" in self.zoneinfo._zones_refresh_info[0].keys())
+        self.zoneinfo._zones_refresh_info[0]["refresh_timeout"] = current_time
         self.assertEqual(current_time, self.zoneinfo._get_zone_refresh_timeout(0))
 
     def test_set_zone_refresh_timeout(self):
         current_time = time.time()
         self.zoneinfo._set_zone_refresh_timeout(0, current_time)
-        self.assertEqual(current_time, self.zoneinfo._zones_refresh_info[0]["fresh_timeout"])
+        self.assertEqual(current_time, self.zoneinfo._zones_refresh_info[0]["refresh_timeout"])
 
-    def test_get_zone_timeout(self):
+    def test_get_zone_next_refresh_time(self):
         current_time = time.time()
-        self.zoneinfo._zones_refresh_info[0]["timeout"] = current_time
-        self.assertEqual(current_time, self.zoneinfo._get_zone_timeout(0))
+        self.zoneinfo._zones_refresh_info[0]["next_refresh_time"] = current_time
+        self.assertEqual(current_time, self.zoneinfo._get_zone_next_refresh_time(0))
 
-    def test_set_zone_timeout(self):
+    def test_set_zone_next_refresh_time(self):
         current_time = time.time()
-        self.zoneinfo._set_zone_timeout(0, current_time)
-        self.assertEqual(current_time, self.zoneinfo._zones_refresh_info[0]["timeout"])
+        self.zoneinfo._set_zone_next_refresh_time(0, current_time)
+        self.assertEqual(current_time, self.zoneinfo._zones_refresh_info[0]["next_refresh_time"])
 
     def test_get_zone_last_refresh_time(self):
         current_time = time.time()
@@ -237,12 +219,12 @@ class TestZoneRefreshInfo(unittest.TestCase):
         self.assertEqual(soa_rdata, self.zoneinfo._zones_refresh_info[0]["zone_soa_rdata"])
         self.assertEqual(ZONE_OK, self.zoneinfo._zones_refresh_info[0]["zone_state"])
         self.assertTrue("last_refresh_time" in self.zoneinfo._zones_refresh_info[0].keys())
-        self.assertTrue("timeout" in self.zoneinfo._zones_refresh_info[0].keys())
+        self.assertTrue("next_refresh_time" in self.zoneinfo._zones_refresh_info[0].keys())
 
     def test_zone_handle_notify(self):
         self.zoneinfo.zone_handle_notify("sd.cn.", "127.0.0.1", 53)
         self.assertEqual(["127.0.0.1", 53], self.zoneinfo._zones_refresh_info[0]["notify_master"])
-        zone_timeout = float(self.zoneinfo._zones_refresh_info[0]["timeout"])
+        zone_timeout = float(self.zoneinfo._zones_refresh_info[0]["next_refresh_time"])
         current_time = time.time()
         self.assertTrue(zone_timeout <= current_time)
         self.assertRaises(ZonemgrException, self.zoneinfo.zone_handle_notify,
@@ -259,8 +241,8 @@ class TestZoneRefreshInfo(unittest.TestCase):
         self.zoneinfo.zone_refresh_success("sd.cn.")
         time2 = time.time()
         self.assertEqual(soa_rdata, self.zoneinfo._zones_refresh_info[0]["zone_soa_rdata"])
-        self.assertTrue((time1 + 3 * 1800 / 4) <= self.zoneinfo._zones_refresh_info[0]["timeout"])
-        self.assertTrue(self.zoneinfo._zones_refresh_info[0]["timeout"] <= time2 + 1800)
+        self.assertTrue((time1 + 3 * 1800 / 4) <= self.zoneinfo._zones_refresh_info[0]["next_refresh_time"])
+        self.assertTrue(self.zoneinfo._zones_refresh_info[0]["next_refresh_time"] <= time2 + 1800)
         self.assertEqual(ZONE_OK, self.zoneinfo._zones_refresh_info[0]["zone_state"])
         self.assertTrue(time1 <= self.zoneinfo._zones_refresh_info[0]["last_refresh_time"])
         self.assertTrue(self.zoneinfo._zones_refresh_info[0]["last_refresh_time"] <= time2)
@@ -273,8 +255,8 @@ class TestZoneRefreshInfo(unittest.TestCase):
         self.zoneinfo.zone_refresh_fail("sd.cn.")
         time2 = time.time()
         self.assertEqual(soa_rdata, self.zoneinfo._zones_refresh_info[0]["zone_soa_rdata"])
-        self.assertTrue((time1 + 3 * 3600 / 4) <= self.zoneinfo._zones_refresh_info[0]["timeout"])
-        self.assertTrue(self.zoneinfo._zones_refresh_info[0]["timeout"] <= time2 + 3600)
+        self.assertTrue((time1 + 3 * 3600 / 4) <= self.zoneinfo._zones_refresh_info[0]["next_refresh_time"])
+        self.assertTrue(self.zoneinfo._zones_refresh_info[0]["next_refresh_time"] <= time2 + 3600)
         self.assertEqual(ZONE_OK, self.zoneinfo._zones_refresh_info[0]["zone_state"])
         self.assertRaises(ZonemgrException, self.zoneinfo.zone_refresh_success, "org.cn.")
 
@@ -282,12 +264,12 @@ class TestZoneRefreshInfo(unittest.TestCase):
         time1 = time.time()
         self.zoneinfo._zones_refresh_info = [
         {'last_refresh_time': time1,
-         'timeout': time1 + 7200, 
+         'next_refresh_time': time1 + 7200, 
          'zone_soa_rdata': 'a.dns.cn. root.cnnic.cn. 2009073105 7200 3600 2419200 21600', 
          'zone_state': ZONE_OK},
         {'last_refresh_time': time1 - 7200, 
-         'timeout': time1, 
-         'fresh_timeout': time1 + MAX_TRANSFER_TIMEOUT, 
+         'next_refresh_time': time1, 
+         'refresh_timeout': time1 + MAX_TRANSFER_TIMEOUT, 
          'zone_soa_rdata': 'a.dns.cn. root.cnnic.cn. 2009073112 7200 3600 2419200 21600', 
          'zone_state': ZONE_REFRESHING}
         ]
@@ -305,7 +287,7 @@ class TestZoneRefreshInfo(unittest.TestCase):
         self.assertEqual(0, zone_index)
         self.assertEqual(ZONE_EXPIRED, self.zoneinfo._zones_refresh_info[0]["zone_state"])
 
-        self.zoneinfo._zones_refresh_info[1]["fresh_timeout"] = time1 
+        self.zoneinfo._zones_refresh_info[1]["refresh_timeout"] = time1 
         zone_index = self.zoneinfo._find_minimum_timeout_zone()
         self.assertEqual(1, zone_index)
 
@@ -313,7 +295,7 @@ class TestZoneRefreshInfo(unittest.TestCase):
         time1 = time.time()
         self.zoneinfo._zones_refresh_info = [
         {'last_refresh_time': time1 - 7200,
-         'timeout': time1 - 1, 
+         'next_refresh_time': time1 - 1, 
          'zone_soa_rdata': 'a.dns.cn. root.cnnic.cn. 2009073105 7200 3600 2419200 21600', 
          'zone_state': ZONE_OK}
         ]
@@ -321,21 +303,18 @@ class TestZoneRefreshInfo(unittest.TestCase):
         time2 = time.time()
         self.assertEqual(ZONE_REFRESHING, self.zoneinfo._zones_refresh_info[0]["zone_state"])
         self.assertTrue(time1 + MAX_TRANSFER_TIMEOUT <= 
-                        self.zoneinfo._zones_refresh_info[0]["fresh_timeout"])
+                        self.zoneinfo._zones_refresh_info[0]["refresh_timeout"])
         self.assertTrue(time2 + MAX_TRANSFER_TIMEOUT >= 
-                        self.zoneinfo._zones_refresh_info[0]["fresh_timeout"])
+                        self.zoneinfo._zones_refresh_info[0]["refresh_timeout"])
         self.zoneinfo._zones_refresh_info[0]["notify_master"] = ["127.0.0.1", 53]
         self.zoneinfo._do_refresh(0)
         time2 = time.time()
         self.assertEqual(ZONE_REFRESHING, self.zoneinfo._zones_refresh_info[0]["zone_state"])
         self.assertTrue(time1 + MAX_TRANSFER_TIMEOUT <= 
-                        self.zoneinfo._zones_refresh_info[0]["fresh_timeout"])
+                        self.zoneinfo._zones_refresh_info[0]["refresh_timeout"])
         self.assertTrue(time2 + MAX_TRANSFER_TIMEOUT >= 
-                        self.zoneinfo._zones_refresh_info[0]["fresh_timeout"])
+                        self.zoneinfo._zones_refresh_info[0]["refresh_timeout"])
         self.assertFalse("notify_master" in self.zoneinfo._zones_refresh_info[0].keys())
-
-    def test_connect_server(self):
-        self.assertRaises(ZonemgrException, self.zoneinfo._connect_server)
 
     def test_shutdown(self):
         pass
@@ -359,7 +338,6 @@ class MyZonemgr(Zonemgr):
 
     def __init__(self):
         self._db_file = "initdb.file"
-        self._conn, addr = (None, None)
         self._shutdown_event = threading.Event()
         self._cc = MySession()
         self._module_cc = MyCCSession()
@@ -381,18 +359,6 @@ class TestZonemgr(unittest.TestCase):
     def test_get_db_file(self):
         self.assertEqual("initdb.file", self.zonemgr.get_db_file())
     
-    def test_sock_file_in_use(self):
-        sock_file = tempfile.NamedTemporaryFile(mode='w',
-                                                prefix="b10",
-                                                delete=True)
-        sock_file_name = sock_file.name
-        if (os.path.exists(sock_file_name)):
-            os.unlink(sock_file_name)
-        self.assertFalse(self.zonemgr._sock_file_in_use(sock_file_name))
-        self.zonemgr._create_notify_socket(sock_file_name)
-        self.assertTrue(self.zonemgr._sock_file_in_use(sock_file_name))
-        sock_file.close()
-
     def test_parse_cmd_params(self):
         params1 = {"zone_name" : "org.cn", "master" : "127.0.0.1", "port" : "53"}
         answer = ("org.cn", "127.0.0.1", "53")
@@ -400,27 +366,8 @@ class TestZonemgr(unittest.TestCase):
         params2 = {"zone_name" : "org.cn", "master" : "127.0.0.1"}
         self.assertEqual(answer, self.zonemgr._parse_cmd_params(params2))
 
-    def test_remove_unused_sock_file(self):
-        sock_file = tempfile.NamedTemporaryFile(mode='w',
-                                                prefix="b10",
-                                                delete=True)
-        sock_file_name = sock_file.name
-        self.assertFalse(self.zonemgr._sock_file_in_use(sock_file_name))
-
     def tearDown(self):
         pass
-
-class TestAddr(unittest.TestCase):
-
-    def test_check_port(self):
-        self.assertRaises(ZonemgrException, check_port, "-1")
-        self.assertRaises(ZonemgrException, check_port, "65536")
-        self.assertRaises(ZonemgrException, check_port, "OK")
-
-    def test_check_addr(self):
-        self.assertRaises(ZonemgrException, check_addr, "192.168.256.222")
-        self.assertRaises(ZonemgrException, check_addr, "ff:00:00::ge")
-        self.assertRaises(ZonemgrException, check_addr, "OK")
 
 if __name__== "__main__":
     unittest.main()
