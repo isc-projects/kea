@@ -109,7 +109,7 @@ class NotifyOut:
         return rr[7].strip()
 
     def _get_notify_slaves_from_ns(self, zone_name):
-        '''The simplest way to get the address of slaves, but now correct.
+        '''The simplest way to get the address of slaves, but not correct.
         TODO. the function should be provided by one library.'''
         ns_rrset = sqlite3_ds.get_zone_rrset(zone_name, zone_name, 'NS', self._db_file)
         soa_rrset = sqlite3_ds.get_zone_rrset(zone_name, zone_name, 'SOA', self._db_file)

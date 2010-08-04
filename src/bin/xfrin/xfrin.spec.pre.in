@@ -21,6 +21,12 @@
             "item_default": ""
           },
           {
+            "item_name": "zone_class",
+            "item_type": "string",
+            "item_optional": true,
+            "item_default": "IN"
+          },
+          {
             "item_name": "master",
             "item_type": "string",
             "item_optional": false,
