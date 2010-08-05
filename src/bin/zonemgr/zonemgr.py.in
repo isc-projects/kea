@@ -407,15 +407,14 @@ class Zonemgr:
         if not master_str:
             raise ZonemgrException("master address should be provided")
 
-        return (zone_name, zone_class, master_str)
+        return ((zone_name, zone_class), master_str)
 
 
     def command_handler(self, command, args):
         answer = create_answer(0)
         if command == ZONE_NOTIFY_COMMAND:
             """ Handle Auth notify command"""
-            zone_name, zone_class, master = self._parse_cmd_params(args, command)
-            zone_name_class = (zone_name, zone_class)
+            zone_name_class, master = self._parse_cmd_params(args, command)
             with self._lock:
                 self._zone_refresh_info.zone_handle_notify(zone_name_class, master)
             # Send notification to zonemgr timer thread
@@ -423,16 +422,14 @@ class Zonemgr:
 
         elif command == ZONE_XFRIN_SUCCESS_COMMAND:
             """ Handle xfrin succes command"""
-            zone_name, zone_class = self._parse_cmd_params(args, command)
-            zone_name_class = (zone_name, zone_class)
+            zone_name_class = self._parse_cmd_params(args, command)
             with self._lock:
                 self._zone_refresh_info.zone_refresh_success(zone_name_class)
             self._master_socket.send(b" ")
 
         elif command == ZONE_XFRIN_FAILED_COMMAND:
             """ Handle xfrin fail command"""
-            zone_name, zone_class = self._parse_cmd_params(args, command)
-            zone_name_class = (zone_name, zone_class)
+            zone_name_class = self._parse_cmd_params(args, command)
             with self._lock:
                 self._zone_refresh_info.zone_refresh_fail(zone_name_class)
             self._master_socket.send(b" ")
