@@ -305,8 +305,8 @@ class ZoneMgrRefreshInfo:
             if not zone_need_refresh:
                 timeout = LOWERBOUND_REFRESH 
             else:
-                timeout = self._get_zone_next_refresh_time(zone_need_refresh)
-                if (timeout < self._get_current_time()):
+                timeout = self._get_zone_next_refresh_time(zone_need_refresh) - self._get_current_time()
+                if (timeout < 0):
                     self._do_refresh(zone_need_refresh)
                     continue
 
@@ -416,9 +416,8 @@ class Zonemgr:
             """ Handle Auth notify command"""
             zone_name, zone_class, master = self._parse_cmd_params(args, command)
             zone_name_class = (zone_name, zone_class)
-            self._lock.acquire()
-            self._zone_refresh_info.zone_handle_notify(zone_name_class, master)
-            self._lock.release()
+            with self._lock:
+                self._zone_refresh_info.zone_handle_notify(zone_name_class, master)
             # Send notification to zonemgr timer thread
             self._master_socket.send(b" ")
 
@@ -426,17 +425,17 @@ class Zonemgr:
             """ Handle xfrin succes command"""
             zone_name, zone_class = self._parse_cmd_params(args, command)
             zone_name_class = (zone_name, zone_class)
-            self._lock.acquire()
-            self._zone_refresh_info.zone_refresh_success(zone_name_class)
-            self._lock.release()
+            with self._lock:
+                self._zone_refresh_info.zone_refresh_success(zone_name_class)
+            self._master_socket.send(b" ")
 
         elif command == ZONE_XFRIN_FAILED_COMMAND:
             """ Handle xfrin fail command"""
             zone_name, zone_class = self._parse_cmd_params(args, command)
             zone_name_class = (zone_name, zone_class)
-            self._lock.acquire()
-            self._zone_refresh_info.zone_refresh_fail(zone_name_class)
-            self._lock.release()
+            with self._lock:
+                self._zone_refresh_info.zone_refresh_fail(zone_name_class)
+            self._master_socket.send(b" ")
 
         elif command == "shutdown":
             self.shutdown()
