@@ -82,7 +82,7 @@ class ZoneNotifyInfo:
 
 class NotifyOut:
     def __init__(self, datasrc_file, log=None, verbose=True):
-        self._notify_infos = {}
+        self._notify_infos = {} # key is (zone_name, zone_class)
         self._waiting_zones = []
         self._notifying_zones = []
         self._log = log
@@ -100,10 +100,11 @@ class NotifyOut:
         mechanism to cover the changed datasrc.'''
         self._db_file = datasrc_file
         for zone_name, zone_class in sqlite3_ds.get_zones_info(datasrc_file):
-            self._notify_infos[zone_name] = ZoneNotifyInfo(zone_name, zone_class)
+            zone_id = (zone_name, zone_class)
+            self._notify_infos[zone_id] = ZoneNotifyInfo(zone_name, zone_class)
             slaves = self._get_notify_slaves_from_ns(zone_name)
             for item in slaves:
-                self._notify_infos[zone_name]._notify_slaves.append((item, 53))
+                self._notify_infos[zone_id]._notify_slaves.append((item, 53))
 
     def _get_rdata_data(self, rr):
         return rr[7].strip()
@@ -132,20 +133,22 @@ class NotifyOut:
 
         return addr_list
 
-    def send_notify(self, zone_name):
+    def send_notify(self, zone_name, zone_class='IN'):
         if zone_name[len(zone_name) - 1] != '.':
             zone_name += '.'
-        if zone_name not in self._notify_infos:
+
+        zone_id = (zone_name, zone_class)
+        if zone_id not in self._notify_infos:
             return
 
         with self._lock:
-            if (self.notify_num >= _MAX_NOTIFY_NUM) or (zone_name in self._notifying_zones):
-                if zone_name not in self._waiting_zones:
-                    self._waiting_zones.append(zone_name)
+            if (self.notify_num >= _MAX_NOTIFY_NUM) or (zone_id in self._notifying_zones):
+                if zone_id not in self._waiting_zones:
+                    self._waiting_zones.append(zone_id)
             else:
-                self._notify_infos[zone_name].prepare_notify_out()
+                self._notify_infos[zone_id].prepare_notify_out()
                 self.notify_num += 1 
-                self._notifying_zones.append(zone_name)
+                self._notifying_zones.append(zone_id)
 
     def _wait_for_notify_reply(self):
         '''receive notify replies in specified time. returned value 
@@ -217,11 +220,12 @@ class NotifyOut:
             zone_notify_info.finish_notify_out()
             with self._lock:
                 self.notify_num -= 1 
-                self._notifying_zones.remove(zone_notify_info.zone_name) 
+                self._notifying_zones.remove((zone_notify_info.zone_name, 
+                                              zone_notify_info.zone_class)) 
                 # trigger notify out for waiting zones
                 if len(self._waiting_zones) > 0:
-                    zone_name = self._waiting_zones.pop(0) 
-                    self._notify_infos[zone_name].prepare_notify_out()
+                    zone_id = self._waiting_zones.pop(0) 
+                    self._notify_infos[zone_id].prepare_notify_out()
                     self.notify_num += 1 
 
     def _send_notify_message_udp(self, zone_notify_info, addrinfo):
@@ -268,15 +272,13 @@ class NotifyOut:
 
     def _handle_notify_reply(self, zone_notify_info, msg_data):
         '''Parse the notify reply message.
-        TODO, the error message should be refined properly.'''
+        TODO, the error message should be refined properly.
+        rcode will not checked here, If we get the response
+        from the slave, it means the slaves has got the notify.'''
         msg = Message(Message.PARSE)
         try:
             errstr = 'notify reply error: '
             msg.from_wire(msg_data)
-            if (msg.get_rcode() != Rcode.NOERROR()):
-                self._log_msg('error', errstr + 'bad rcode')
-                return False
-
             if not msg.get_header_flag(MessageFlag.QR()):
                 self._log_msg('error', errstr + 'bad flags')
                 return False
