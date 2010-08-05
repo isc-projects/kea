@@ -342,8 +342,27 @@ class TestZoneMgrRefreshInfo(unittest.TestCase):
         self.assertTrue(time2 + MAX_TRANSFER_TIMEOUT >= refresh_timeout)
         self.assertFalse("notify_master" in self.zoneinfo._zonemgr_refresh_info[ZONE_NAME_CLASS1].keys())
 
-    def test_shutdown(self):
-        pass
+    def test_run_timer(self):
+        time1 = time.time()
+        self.zoneinfo._zonemgr_refresh_info = {
+                ("sd.cn.", "IN"):{
+                    'last_refresh_time': time1 - 7200,
+                    'next_refresh_time': time1 - 1, 
+                    'zone_soa_rdata': 'a.dns.cn. root.cnnic.cn. 2009073105 7200 3600 2419200 21600', 
+                    'zone_state': ZONE_OK}
+                }
+        master_socket, slave_socket = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.zoneinfo._socket = slave_socket
+        # Run timer in daemon thread
+        listener = threading.Thread(target = self.zoneinfo.run_timer, args = ())
+        listener.setDaemon(True)
+        listener.start()
+        slave_socket.close()
+        zone_state = self.zoneinfo._zonemgr_refresh_info[ZONE_NAME_CLASS1]["zone_state"]
+        self.assertTrue("refresh_timeout" in self.zoneinfo._zonemgr_refresh_info[ZONE_NAME_CLASS1].keys())
+        self.assertTrue(zone_state == ZONE_REFRESHING)
+
+        self.assertRaises(ZonemgrException, self.zoneinfo.run_timer)
 
     def tearDown(self):
         sys.stdout = self.stdout_backup
@@ -390,7 +409,7 @@ class TestZonemgr(unittest.TestCase):
     
     def test_parse_cmd_params(self):
         params1 = {"zone_name" : "org.cn", "zone_class" : "IN", "master" : "127.0.0.1"}
-        answer1 = ("org.cn", "IN", "127.0.0.1")
+        answer1 = (("org.cn", "IN"), "127.0.0.1")
         self.assertEqual(answer1, self.zonemgr._parse_cmd_params(params1, ZONE_NOTIFY_COMMAND))
         params2 = {"zone_name" : "org.cn", "zone_class" : "IN"}
         answer2 = ("org.cn", "IN")
