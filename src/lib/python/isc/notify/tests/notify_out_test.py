@@ -44,11 +44,13 @@ class TestNotifyOut(unittest.TestCase):
         sqlite3_ds.load(self._db_file.name, 'cn.', self._cn_data_reader)
         sqlite3_ds.load(self._db_file.name, 'com.', self._com_data_reader)
         self._notify = notify_out.NotifyOut(self._db_file.name)
-        self._notify._notify_infos['com.'] = notify_out.ZoneNotifyInfo('com.', 'IN')
-        self._notify._notify_infos['cn.'] = notify_out.ZoneNotifyInfo('cn.', 'IN')
-        self._notify._notify_infos['org.'] = notify_out.ZoneNotifyInfo('org.', 'IN')
+        self._notify._notify_infos[('com.', 'IN')] = notify_out.ZoneNotifyInfo('com.', 'IN')
+        self._notify._notify_infos[('com.', 'CH')] = notify_out.ZoneNotifyInfo('com.', 'CH')
+        self._notify._notify_infos[('cn.', 'IN')] = notify_out.ZoneNotifyInfo('cn.', 'IN')
+        self._notify._notify_infos[('org.', 'IN')] = notify_out.ZoneNotifyInfo('org.', 'IN')
+        self._notify._notify_infos[('org.', 'CH')] = notify_out.ZoneNotifyInfo('org.', 'CH')
         
-        info = self._notify._notify_infos['cn.']
+        info = self._notify._notify_infos[('cn.', 'IN')]
         info._notify_slaves.append(('127.0.0.1', 53))
         info._notify_slaves.append(('1.1.1.1', 5353))
 
@@ -60,17 +62,25 @@ class TestNotifyOut(unittest.TestCase):
     def test_send_notify(self):
         self._notify.send_notify('cn')
         self.assertEqual(self._notify.notify_num, 1)
-        self.assertEqual(self._notify._notifying_zones[0], 'cn.')
+        self.assertEqual(self._notify._notifying_zones[0], ('cn.','IN'))
 
         self._notify.send_notify('com')
         self.assertEqual(self._notify.notify_num, 2)
-        self.assertEqual(self._notify._notifying_zones[1], 'com.')
+        self.assertEqual(self._notify._notifying_zones[1], ('com.','IN'))
+
+        notify_out._MAX_NOTIFY_NUM = 3
+        self._notify.send_notify('com', 'CH')
+        self.assertEqual(self._notify.notify_num, 3)
+        self.assertEqual(self._notify._notifying_zones[2], ('com.','CH'))
     
-        notify_out._MAX_NOTIFY_NUM = 2
         self._notify.send_notify('org.')
-        self.assertEqual(self._notify._waiting_zones[0], 'org.')
+        self.assertEqual(self._notify._waiting_zones[0], ('org.', 'IN'))
         self._notify.send_notify('org.')
         self.assertEqual(1, len(self._notify._waiting_zones))
+
+        self._notify.send_notify('org.', 'CH')
+        self.assertEqual(2, len(self._notify._waiting_zones))
+        self.assertEqual(self._notify._waiting_zones[1], ('org.', 'CH'))
 
     def test_wait_for_notify_reply(self):
         self._notify.send_notify('cn.')
@@ -84,9 +94,9 @@ class TestNotifyOut(unittest.TestCase):
 
         # Now make one socket be readable
         addr = ('localhost', 12340)
-        self._notify._notify_infos['cn.']._sock.bind(addr)
-        self._notify._notify_infos['cn.'].notify_timeout = time.time() + 10
-        self._notify._notify_infos['com.'].notify_timeout = time.time() + 10
+        self._notify._notify_infos[('cn.', 'IN')]._sock.bind(addr)
+        self._notify._notify_infos[('cn.', 'IN')].notify_timeout = time.time() + 10
+        self._notify._notify_infos[('com.', 'IN')].notify_timeout = time.time() + 10
         
         send_fd = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         #Send some data to socket 12340, to make the target socket be readable
@@ -94,17 +104,18 @@ class TestNotifyOut(unittest.TestCase):
         replied_zones, timeout_zones = self._notify._wait_for_notify_reply()
         self.assertEqual(len(replied_zones), 1)
         self.assertEqual(len(timeout_zones), 1)
-        self.assertTrue('cn.' in replied_zones.keys())
-        self.assertTrue('com.' in timeout_zones.keys())
-        self.assertLess(time.time(), self._notify._notify_infos['com.'].notify_timeout)
+        self.assertTrue(('cn.', 'IN') in replied_zones.keys())
+        self.assertTrue(('com.', 'IN') in timeout_zones.keys())
+        self.assertLess(time.time(), self._notify._notify_infos[('com.', 'IN')].notify_timeout)
     
     def test_notify_next_target(self):
         self._notify.send_notify('cn.')
         self._notify.send_notify('com.')
         notify_out._MAX_NOTIFY_NUM = 2
         self._notify.send_notify('org.')
+        self._notify.send_notify('com.', 'CH')
 
-        info = self._notify._notify_infos['cn.']
+        info = self._notify._notify_infos[('cn.', 'IN')]
         self._notify._notify_next_target(info)
         self.assertEqual(0, info.notify_try_num)
         self.assertEqual(info.get_current_notify_target(), ('1.1.1.1', 5353))
@@ -114,22 +125,22 @@ class TestNotifyOut(unittest.TestCase):
         self.assertEqual(0, info.notify_try_num)
         self.assertIsNone(info.get_current_notify_target())
         self.assertEqual(2, self._notify.notify_num)
-        self.assertEqual(0, len(self._notify._waiting_zones))
+        self.assertEqual(1, len(self._notify._waiting_zones))
 
-        com_info = self._notify._notify_infos['com.']
+        com_info = self._notify._notify_infos[('com.', 'IN')]
         self._notify._notify_next_target(com_info)
-        self.assertEqual(1, self._notify.notify_num)
+        self.assertEqual(2, self._notify.notify_num)
         self.assertEqual(0, len(self._notify._notifying_zones))
     
     def test_handle_notify_reply(self):
         self.assertFalse(self._notify._handle_notify_reply(None, b'badmsg'))
-        com_info = self._notify._notify_infos['com.']
+        com_info = self._notify._notify_infos[('com.', 'IN')]
         com_info.notify_msg_id = 0X2f18
         data = b'\x2f\x18\xa0\x00\x00\x01\x00\x00\x00\x00\x00\x00\x02tw\x02cn\x00\x00\x06\x00\x01'
         self.assertTrue(self._notify._handle_notify_reply(com_info, data))
 
     def test_send_notify_message_udp(self):
-        com_info = self._notify._notify_infos['cn.']
+        com_info = self._notify._notify_infos[('cn.', 'IN')]
         com_info.prepare_notify_out()
         ret = self._notify._send_notify_message_udp(com_info, ('1.1.1.1', 53))
         self.assertTrue(ret)
@@ -144,7 +155,7 @@ class TestNotifyOut(unittest.TestCase):
         notify_out._MAX_NOTIFY_NUM = 2
         self._notify.send_notify('org.')
 
-        cn_info = self._notify._notify_infos['cn.']
+        cn_info = self._notify._notify_infos[('cn.', 'IN')]
         cn_info.prepare_notify_out()
 
         cn_info.notify_try_num = 2
@@ -211,7 +222,7 @@ class TestNotifyOut(unittest.TestCase):
     def test_init_notify_out(self):
         self._notify._init_notify_out(self._db_file.name)
         self.assertListEqual([('3.3.3.3', 53), ('4:4.4.4', 53), ('5:5.5.5', 53)], 
-                             self._notify._notify_infos['com.']._notify_slaves)
+                             self._notify._notify_infos[('com.', 'IN')]._notify_slaves)
         
 if __name__== "__main__":
     unittest.main()

@@ -433,8 +433,8 @@ class XfroutServer:
         td.daemon = True
         td.start()
 
-    def send_notify(self, zone_name):
-        self._notifier.send_notify(zone_name)
+    def send_notify(self, zone_name, zone_class):
+        self._notifier.send_notify(zone_name, zone_class)
 
     def config_handler(self, new_config):
         '''Update config data. TODO. Do error check'''
@@ -479,9 +479,11 @@ class XfroutServer:
         
         elif cmd == notify_out.ZONE_NEW_DATA_READY_CMD:
             zone_name = args.get('zone_name')
-            if zone_name:
-                self._log.log_message("info", "Receive notify command for zone: '" + zone_name + "'")
-                self.send_notify(zone_name)
+            zone_class = args.get('zone_class')
+            if zone_name and zone_class:
+                self._log.log_message("info", "Receive notify command for zone:'%s/%s'" \
+                                     % (zone_name, zone_class))
+                self.send_notify(zone_name, zone_class)
                 answer = create_answer(0)
             else:
                 answer = create_answer(1, "Bad command parameter:" + str(args))
