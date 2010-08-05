@@ -237,6 +237,11 @@ class TestNameSequence(unittest.TestCase):
             assert self.random_names[i] == cmd_names[i+1]
             assert self.random_names[i] == module_names[i+1]
             i = i + 1
+
+    def test_apply_cfg_command(self):
+        self.tool.location = '/'
+        cmd = cmdparse.BindCmdParse("config set identifier=\"foo/bar\" value=\"5\"")
+        self.tool.apply_config_cmd(cmd)
     
 class FakeBindCmdInterpreter(bindcmd.BindCmdInterpreter):
     def __init__(self):

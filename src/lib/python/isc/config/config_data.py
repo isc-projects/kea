@@ -251,6 +251,11 @@ class MultiConfigData:
         if module_name in self._specifications:
             del self._specifications[module_name]
 
+    def have_specification(self, module_name):
+        """Returns True if we have a specification for the module with the given name.
+           Returns False if we do not."""
+        return module_name in self._specifications
+
     def get_module_spec(self, module):
         """Returns the ModuleSpec for the module with the given name.
            If there is no such module, it returns None"""
