@@ -421,7 +421,7 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
     static const string command_template_start =
         "{\"command\": [\"notify\", {\"zone_name\" : \"";
     static const string command_template_master = "\", \"master\" : \"";
-    static const string command_template_rrclass = "\", \"rrclass\" : \"";
+    static const string command_template_rrclass = "\", \"zone_class\" : \"";
     static const string command_template_end = "\"}]}";
 
     try {
