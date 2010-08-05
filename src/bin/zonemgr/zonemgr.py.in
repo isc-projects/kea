@@ -67,9 +67,9 @@ ZONE_REFRESHING = 1
 ZONE_EXPIRED = 2
 
 # smallest refresh timeout
-LOWERBOUND_REFRESH = 1
+LOWERBOUND_REFRESH = 10
 # smallest retry timeout
-LOWERBOUND_RETRY = 1
+LOWERBOUND_RETRY = 5
 # max zone transfer timeout
 MAX_TRANSFER_TIMEOUT = 14400
 
@@ -297,18 +297,19 @@ class ZoneMgrRefreshInfo:
         while True:
             # Zonemgr has no zone.
             if self._zone_mgr_is_empty():
-                time.sleep(1) # A better time?
+                time.sleep(LOWERBOUND_RETRY) # A better time?
                 continue
 
             zone_need_refresh = self._find_need_do_refresh_zone()
             # If don't get zone with minimum next refresh time, set timer timeout = LOWERBOUND_REFRESH
             if not zone_need_refresh:
-                timeout = LOWERBOUND_REFRESH 
+                timeout = LOWERBOUND_RETRY
             else:
                 timeout = self._get_zone_next_refresh_time(zone_need_refresh) - self._get_current_time()
                 if (timeout < 0):
                     self._do_refresh(zone_need_refresh)
                     continue
+
 
             """ Wait for the socket notification for a maximum time of timeout 
             in seconds (as float)."""
@@ -317,20 +318,14 @@ class ZoneMgrRefreshInfo:
                 if rlist:
                     self._socket.recv(32)
             except ValueError as e:
-                sys.stderr.write("[b10-zonemgr] Socket has been closed\n")
+                raise ZonemgrException("[b10-zonemgr] Socket has been closed\n")
                 break
             except select.error as e:
                 if e.args[0] == errno.EINTR:
                     (rlist, wlist, xlist) = ([], [], [])
                 else:
-                    sys.stderr.write("[b10-zonemgr] Error with select(): %s\n" % err)
+                    raise ZonemgrException("[b10-zonemgr] Error with select(): %s\n" % err)
                     break
-
-
-def start_timer(zone_refresh_info):
-    """Keep track of zone timers"""
-    zone_refresh_info.run_timer()
-
 
 class Zonemgr:
 
@@ -338,8 +333,8 @@ class Zonemgr:
         self._setup_session()
         self._db_file = self.get_db_file()
         # Create socket pair for communicating between main thread and zonemgr timer thread 
-        self._master_socket, self._slave_scoket = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
-        self._zone_refresh_info = ZoneMgrRefreshInfo(self._cc, self._db_file, self._slave_scoket)
+        self._master_socket, self._slave_socket = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
+        self._zone_refresh_info = ZoneMgrRefreshInfo(self._cc, self._db_file, self._slave_socket)
         self._start_zone_refresh_timer()
 
         self._lock = threading.Lock()
@@ -347,8 +342,8 @@ class Zonemgr:
         self._verbose = verbose
 
     def _start_zone_refresh_timer(self):
-        """Start a new thread to run zonemgr refresh timer"""
-        listener = threading.Thread(target = start_timer, args = (self._zone_refresh_info,))
+        """Start a new thread to keep track of zone timers"""
+        listener = threading.Thread(target = self._zone_refresh_info.run_timer, args = ())
         listener.setDaemon(True)
         listener.start()
 
@@ -372,7 +367,7 @@ class Zonemgr:
 
     def shutdown(self):
 
-        self._slave_scoket.close()
+        self._slave_socket.close()
         self._master_socket.close()
 
         self._shutdown_event.set()
