@@ -477,10 +477,10 @@ class XfroutServer:
             self.shutdown()
             answer = create_answer(0)
         
-        elif cmd == notify_out.ZONE_NOTIFY_CMD:
+        elif cmd == notify_out.ZONE_NEW_DATA_READY_CMD:
             zone_name = args.get('zone_name')
             if zone_name:
-                self._log.log_message("info", "Receive notify command for zone " + zone_name)
+                self._log.log_message("info", "Receive notify command for zone: '" + zone_name + "'")
                 self.send_notify(zone_name)
                 answer = create_answer(0)
             else:

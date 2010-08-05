@@ -59,7 +59,7 @@ AUTH_MODULE_NAME = 'Auth'
 # define command name
 ZONE_XFRIN_FAILED_COMMAND = 'zone_xfrin_failed'
 ZONE_XFRIN_SUCCESS_COMMAND = 'zone_new_data_ready'
-ZONE_REFRESH_COMMAND = 'refresh'
+ZONE_REFRESH_COMMAND = 'refresh_from_zonemgr'
 ZONE_NOTIFY_COMMAND = 'notify'
 # define zone state
 ZONE_OK = 0

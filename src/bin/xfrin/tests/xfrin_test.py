@@ -63,6 +63,9 @@ class MockXfrin(Xfrin):
 
     def _cc_setup(self):
         pass
+
+    def _get_db_file(self):
+        pass
     
     def _cc_check_command(self):
         self._shutdown_event.set()
@@ -408,11 +411,16 @@ class TestXfrin(unittest.TestCase):
     def tearDown(self):
         self.xfr.shutdown()
 
-    def _do_parse(self):
-        return self.xfr._parse_cmd_params(self.args)
+    def _do_parse_zone_name_class(self):
+        return self.xfr._parse_zone_name_and_class(self.args)
+
+    def _do_parse_master_port(self):
+        return self.xfr._parse_master_and_port(self.args)
 
     def test_parse_cmd_params(self):
-        name, rrclass, master_addrinfo, db_file = self._do_parse()
+        name, rrclass = self._do_parse_zone_name_class()
+        master_addrinfo = self._do_parse_master_port()
+        db_file = self.args.get('db_file')
         self.assertEqual(master_addrinfo[4][1], int(TEST_MASTER_PORT))
         self.assertEqual(name, TEST_ZONE_NAME)
         self.assertEqual(rrclass, TEST_RRCLASS)
@@ -421,49 +429,50 @@ class TestXfrin(unittest.TestCase):
 
     def test_parse_cmd_params_default_port(self):
         del self.args['port']
-        master_addrinfo = self._do_parse()[2]
+        master_addrinfo = self._do_parse_master_port()
         self.assertEqual(master_addrinfo[4][1], 53)
 
     def test_parse_cmd_params_ip6master(self):
         self.args['master'] = TEST_MASTER_IPV6_ADDRESS
-        master_addrinfo = self._do_parse()[2]
+        master_addrinfo = self._do_parse_master_port()
         self.assertEqual(master_addrinfo[4][0], TEST_MASTER_IPV6_ADDRESS)
 
     def test_parse_cmd_params_chclass(self):
         self.args['zone_class'] = 'CH'
-        self.assertEqual(self._do_parse()[1], RRClass.CH())
+        self.assertEqual(self._do_parse_zone_name_class()[1], RRClass.CH())
 
     def test_parse_cmd_params_bogusclass(self):
         self.args['zone_class'] = 'XXX'
-        self.assertRaises(XfrinException, self._do_parse)
+        self.assertRaises(XfrinException, self._do_parse_zone_name_class)
 
     def test_parse_cmd_params_nozone(self):
         # zone name is mandatory.
         del self.args['zone_name']
-        self.assertRaises(XfrinException, self._do_parse)
+        self.assertRaises(XfrinException, self._do_parse_zone_name_class)
 
     def test_parse_cmd_params_nomaster(self):
         # master address is mandatory.
         del self.args['master']
-        self.assertRaises(XfrinException, self._do_parse)
+        master_addrinfo = self._do_parse_master_port()
+        self.assertEqual(master_addrinfo[4][0], DEFAULT_MASTER)
 
     def test_parse_cmd_params_bad_ip4(self):
         self.args['master'] = '3.3.3.3.3'
-        self.assertRaises(XfrinException, self._do_parse)
+        self.assertRaises(XfrinException, self._do_parse_master_port)
 
     def test_parse_cmd_params_bad_ip6(self):
         self.args['master'] = '1::1::1'
-        self.assertRaises(XfrinException, self._do_parse)
+        self.assertRaises(XfrinException, self._do_parse_master_port)
 
     def test_parse_cmd_params_bad_port(self):
         self.args['port'] = '-1'
-        self.assertRaises(XfrinException, self._do_parse)
+        self.assertRaises(XfrinException, self._do_parse_master_port)
 
         self.args['port'] = '65536'
-        self.assertRaises(XfrinException, self._do_parse)
+        self.assertRaises(XfrinException, self._do_parse_master_port)
 
         self.args['port'] = 'http'
-        self.assertRaises(XfrinException, self._do_parse)
+        self.assertRaises(XfrinException, self._do_parse_master_port)
 
     def test_command_handler_shutdown(self):
         self.assertEqual(self.xfr.command_handler("shutdown",
@@ -529,19 +538,19 @@ class TestXfrin(unittest.TestCase):
         self.assertEqual(self.xfr._max_transfers_in, 3)
 
     def test_command_handler_masters(self):
-        master_info = {'masters': {'address': '1.1.1.1', 'port':53} }
+        master_info = {'master_addr': '1.1.1.1', 'master_port':53}
         self.assertEqual(self.xfr.config_handler(master_info)['result'][0], 0)
 
-        master_info = {'masters': {'address': '1111.1.1.1', 'port':53 } }
+        master_info = {'master_addr': '1111.1.1.1', 'master_port':53 }
         self.assertEqual(self.xfr.config_handler(master_info)['result'][0], 1)
 
-        master_info = {'masters': {'address': '2.2.2.2', 'port':530000 } }
+        master_info = {'master_addr': '2.2.2.2', 'master_port':530000 }
         self.assertEqual(self.xfr.config_handler(master_info)['result'][0], 1)
 
-        master_info = {'masters': {'address': '2.2.2.2', 'port':53 } }
+        master_info = {'master_addr': '2.2.2.2', 'master_port':53 } 
         self.xfr.config_handler(master_info)
-        self.assertEqual(self.xfr._masters['address'], '2.2.2.2')
-        self.assertEqual(self.xfr._masters['port'], 53)
+        self.assertEqual(self.xfr._master_addr, '2.2.2.2')
+        self.assertEqual(self.xfr._master_port, 53)
 
 
 def raise_interrupt():
