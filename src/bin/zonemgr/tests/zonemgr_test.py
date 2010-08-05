@@ -23,6 +23,8 @@ from zonemgr import *
 
 ZONE_NAME_CLASS1 = ("sd.cn.", "IN")
 ZONE_NAME_CLASS2 = ("tw.cn", "IN")
+ZONE_NAME_CLASS3 = ("example.com", "IN")
+
 class ZonemgrTestException(Exception):
     pass
 
@@ -37,7 +39,6 @@ class MySession():
 class MyZoneMgrRefreshInfo(ZoneMgrRefreshInfo):
     def __init__(self):
         self._cc = MySession()
-        self._sock_file = UNIX_SOCKET_FILE
         self._db_file = "initdb.file"
         self._zonemgr_refresh_info = { 
          ('sd.cn.', 'IN'): {
@@ -98,7 +99,6 @@ class TestZoneMgrRefreshInfo(unittest.TestCase):
     def test_zone_not_exist(self):
         self.assertFalse(self.zoneinfo._zone_not_exist(ZONE_NAME_CLASS1))
         self.assertFalse(self.zoneinfo._zone_not_exist(ZONE_NAME_CLASS2))
-        ZONE_NAME_CLASS3 = ("example.com", "IN")
         self.assertTrue(self.zoneinfo._zone_not_exist(ZONE_NAME_CLASS3))
 
     def test_set_zone_notify_timer(self):
@@ -240,8 +240,10 @@ class TestZoneMgrRefreshInfo(unittest.TestCase):
         zone_timeout = float(self.zoneinfo._zonemgr_refresh_info[ZONE_NAME_CLASS1]["next_refresh_time"])
         current_time = time.time()
         self.assertTrue(zone_timeout <= current_time)
-        self.assertRaises(ZonemgrException, self.zoneinfo.zone_handle_notify,
+        self.assertRaises(ZonemgrException, self.zoneinfo.zone_handle_notify,\
                           "org.cn.", "127.0.0.1")
+        self.assertRaises(ZonemgrException, self.zoneinfo.zone_handle_notify,\
+                          ZONE_NAME_CLASS3, "127.0.0.1")
 
     def test_zone_refresh_success(self):
         soa_rdata = 'a.dns.cn. root.cnnic.cn. 2009073106 1800 900 2419200 21600'
@@ -263,6 +265,7 @@ class TestZoneMgrRefreshInfo(unittest.TestCase):
         self.assertTrue(time1 <= last_refresh_time)
         self.assertTrue(last_refresh_time <= time2)
         self.assertRaises(ZonemgrException, self.zoneinfo.zone_refresh_success, "org.cn.")
+        self.assertRaises(ZonemgrException, self.zoneinfo.zone_refresh_success, ZONE_NAME_CLASS3) 
 
     def test_zone_refresh_fail(self):
         soa_rdata = 'a.dns.cn. root.cnnic.cn. 2009073105 7200 3600 2419200 21600' 
@@ -276,9 +279,10 @@ class TestZoneMgrRefreshInfo(unittest.TestCase):
         self.assertTrue((time1 + 3 * 3600 / 4) <= next_refresh_time)
         self.assertTrue(next_refresh_time <= time2 + 3600)
         self.assertEqual(ZONE_OK, self.zoneinfo._zonemgr_refresh_info[ZONE_NAME_CLASS1]["zone_state"])
-        self.assertRaises(ZonemgrException, self.zoneinfo.zone_refresh_success, "org.cn.")
+        self.assertRaises(ZonemgrException, self.zoneinfo.zone_refresh_fail, "org.cn.")
+        self.assertRaises(ZonemgrException, self.zoneinfo.zone_refresh_fail, ZONE_NAME_CLASS3) 
 
-    def test_find_minimum_timeout_zone(self):
+    def test_find_need_do_refresh_zone(self):
         time1 = time.time()
         self.zoneinfo._zonemgr_refresh_info = { 
                 ("sd.cn.","IN"):{
@@ -374,9 +378,12 @@ class TestZonemgr(unittest.TestCase):
         self.zonemgr = MyZonemgr()
 
     def test_config_handler(self):
-        config_data = {"zone_name" : "sd.cn.", "zone_class" : "IN", "master" : "192.168.1.1"}
-        self.zonemgr.config_handler(config_data)
-        self.assertEqual(config_data, self.zonemgr._config_data)
+        config_data1 = {"zone_name" : "sd.cn.", "zone_class" : "IN", "master" : "192.168.1.1"}
+        self.zonemgr.config_handler(config_data1)
+        self.assertEqual(config_data1, self.zonemgr._config_data)
+        config_data2 = {"zone_name" : "sd.cn.", "port" : "53", "master" : "192.168.1.1"}
+        self.zonemgr.config_handler(config_data2)
+        self.assertEqual(config_data1, self.zonemgr._config_data)
 
     def test_get_db_file(self):
         self.assertEqual("initdb.file", self.zonemgr.get_db_file())
@@ -388,6 +395,8 @@ class TestZonemgr(unittest.TestCase):
         params2 = {"zone_name" : "org.cn", "zone_class" : "IN"}
         answer2 = ("org.cn", "IN")
         self.assertEqual(answer2, self.zonemgr._parse_cmd_params(params2, ZONE_XFRIN_SUCCESS_COMMAND))
+        self.assertRaises(ZonemgrException, self.zonemgr._parse_cmd_params, params2, ZONE_NOTIFY_COMMAND)
+        params1 = {"zone_class" : "IN"}
         self.assertRaises(ZonemgrException, self.zonemgr._parse_cmd_params, params2, ZONE_NOTIFY_COMMAND)
 
     def tearDown(self):
