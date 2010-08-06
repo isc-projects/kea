@@ -190,3 +190,22 @@ TEST(Session, connect_ok) {
     sess.establish("/tmp/mysock.sock");
 }
 
+TEST(Session, connect_ok2) {
+    asio::io_service my_io_service;
+    ::unlink("/tmp/mysock.sock");
+    Session sess(my_io_service);
+
+    // Create a fake socket in a smaller scope, so we can
+    // connect the session to it, but later calls on the
+    // underlying socket will fail
+    {
+        TestDomainSocket tds(my_io_service, "/tmp/mysock.sock");
+        tds.setSendLname();
+    
+        sess.establish("/tmp/mysock.sock");
+    }
+    
+    isc::data::ElementPtr env, msg;
+    EXPECT_THROW(sess.group_recvmsg(env, msg, false, -1), isc::cc::SessionError);
+}
+
