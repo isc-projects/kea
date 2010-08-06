@@ -72,6 +72,8 @@ public:
     virtual int reply(isc::data::ElementPtr& envelope,
                       isc::data::ElementPtr& newmsg);
     virtual bool hasQueuedMsgs();
+    virtual void setTimeout(size_t milliseconds) {};
+    virtual size_t getTimeout() { return 0; };
     isc::data::ElementPtr getFirstMessage(std::string& group, std::string& to);
     void addMessage(isc::data::ElementPtr, const std::string& group,
                     const std::string& to);
