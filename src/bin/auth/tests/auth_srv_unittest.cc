@@ -94,6 +94,8 @@ private:
         virtual void startRead(boost::function<void()> read_callback);
         virtual int reply(ElementPtr& envelope, ElementPtr& newmsg);
         virtual bool hasQueuedMsgs();
+        virtual void setTimeout(size_t timeout UNUSED_PARAM) {};
+        virtual size_t getTimeout() { return 0; };
 
         void setMessage(ElementPtr msg) { msg_ = msg; }
         void disableSend() { send_ok_ = false; }

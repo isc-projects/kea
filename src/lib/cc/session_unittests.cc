@@ -30,6 +30,8 @@
 #include <asio.hpp>
 #include <boost/bind.hpp>
 
+#include "session_unittests_config.h"
+
 using namespace isc::cc;
 
 TEST(AsioSession, establish) {
@@ -109,6 +111,10 @@ private:
 };
 */
 
+// This class sets up a domain socket for the session to connect to
+// it will impersonate the msgq a tiny bit (if setSendLname() has
+// been called, it will send an 'answer' to the lname query that is
+// sent in the initialization of Session objects)
 class TestDomainSocket {
 
 public:
@@ -124,6 +130,7 @@ public:
     
     ~TestDomainSocket() {
         socket_.close();
+        ::unlink(BIND10_TEST_SOCKET_FILE);
     }
 
     void
@@ -169,40 +176,39 @@ private:
 
 TEST(Session, timeout_on_connect) {
     asio::io_service my_io_service;
-    ::unlink("/tmp/mysock.sock");
-    TestDomainSocket tds(my_io_service, "/tmp/mysock.sock");
+    ::unlink(BIND10_TEST_SOCKET_FILE);
+    TestDomainSocket tds(my_io_service, BIND10_TEST_SOCKET_FILE);
     Session sess(my_io_service);
     // set to a short timeout so the test doesn't take too long
     EXPECT_EQ(4000, sess.getTimeout());
     sess.setTimeout(100);
     EXPECT_EQ(100, sess.getTimeout());
     // no answer, should timeout
-    EXPECT_THROW(sess.establish("/tmp/mysock.sock"), isc::cc::SessionTimeout);
+    EXPECT_THROW(sess.establish(BIND10_TEST_SOCKET_FILE), isc::cc::SessionTimeout);
 }
 
 TEST(Session, connect_ok) {
     asio::io_service my_io_service;
-    ::unlink("/tmp/mysock.sock");
-    TestDomainSocket tds(my_io_service, "/tmp/mysock.sock");
+    ::unlink(BIND10_TEST_SOCKET_FILE);
+    TestDomainSocket tds(my_io_service, BIND10_TEST_SOCKET_FILE);
     tds.setSendLname();
 
     Session sess(my_io_service);
-    sess.establish("/tmp/mysock.sock");
+    sess.establish(BIND10_TEST_SOCKET_FILE);
 }
 
-TEST(Session, connect_ok2) {
+TEST(Session, connect_ok_connection_reset) {
     asio::io_service my_io_service;
-    ::unlink("/tmp/mysock.sock");
+    ::unlink(BIND10_TEST_SOCKET_FILE);
     Session sess(my_io_service);
 
-    // Create a fake socket in a smaller scope, so we can
+    // Create a fake msgq in a smaller scope, so we can
     // connect the session to it, but later calls on the
     // underlying socket will fail
     {
-        TestDomainSocket tds(my_io_service, "/tmp/mysock.sock");
+        TestDomainSocket tds(my_io_service, BIND10_TEST_SOCKET_FILE);
         tds.setSendLname();
-    
-        sess.establish("/tmp/mysock.sock");
+        sess.establish(BIND10_TEST_SOCKET_FILE);
     }
     
     isc::data::ElementPtr env, msg;
