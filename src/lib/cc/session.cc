@@ -86,7 +86,7 @@ private:
     // Sets the boolean pointed to by result to true, unless
     // the given error code is operation_aborted
     // Used as a callback for emulating sync reads with async calls
-    void setResult(bool* result, asio::error_code* result_code, asio::error_code b);
+    void setResult(bool* result, asio::error_code* result_code, const asio::error_code& b);
 
 private:
     io_service& io_service_;
@@ -144,12 +144,11 @@ SessionImpl::readDataLength() {
 }
 
 void
-SessionImpl::setResult(bool* result, asio::error_code* result_code, const asio::error_code b) {
-    *result_code = b;
-
+SessionImpl::setResult(bool* result, asio::error_code* result_code, const asio::error_code& b) {
     // if the 'error' is operation_aborted (i.e. a call to cancel()),
     // we do not consider the read or the wait 'done'.
     if (b != asio::error::operation_aborted) {
+        *result_code = b;
         *result = true;
     }
 }
@@ -476,7 +475,7 @@ Session::setTimeout(size_t milliseconds) {
 
 size_t
 Session::getTimeout() {
-    return impl_->getTimeout();
+    return (impl_->getTimeout());
 }
 }
 }
