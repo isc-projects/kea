@@ -172,7 +172,10 @@ TEST(Session, timeout_on_connect) {
     ::unlink("/tmp/mysock.sock");
     TestDomainSocket tds(my_io_service, "/tmp/mysock.sock");
     Session sess(my_io_service);
-
+    // set to a short timeout so the test doesn't take too long
+    EXPECT_EQ(4000, sess.getTimeout());
+    sess.setTimeout(100);
+    EXPECT_EQ(100, sess.getTimeout());
     // no answer, should timeout
     EXPECT_THROW(sess.establish("/tmp/mysock.sock"), isc::cc::SessionTimeout);
 }
