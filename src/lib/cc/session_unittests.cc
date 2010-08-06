@@ -53,64 +53,6 @@ TEST(AsioSession, establish) {
     );
 }
 
-
-void
-my_data_handler_no_answer(const asio::error_code& error, size_t bytes_transferred) {
-    std::cout << "[XX] got data" << std::endl;
-}
-
-void
-my_accept_handler(const asio::error_code& error) {
-    std::cout << "[XX] accepted" << std::endl;
-}
-
-/*
-class TestDomainSocket {
-
-public:
-    TestDomainSocket(asio::io_service& io_service, const char* file) : io_service_(io_service).
-                                                                       ep_(file),
-                                                                       acceptor_(io_service_, ep_),
-                                                                       socket_(io_service_) {
-        acceptor_.async_accept(socket_,
-                               boost::bind(&TestDomainSocket::acceptHandler,
-                                           this, _1));
-    }
-    
-    ~TestDomainSocket() {
-        std::cout << "[XX] destroy test domain socket" << std::endl;
-    }
-
-    void
-    start(const char* file)
-    {
-    }
-
-    void
-    acceptHandler(const asio::error_code& error) {
-        std::cout << "[XX] accepted" << std::endl;
-    }
-    
-    
-    void
-    my_data_handler_echo(const asio::error_code& error, size_t bytes_transferred, asio::local::stream_protocol::socket& socket) {
-        char data[4] = {0x01, 0x02, 0x03, 0x04};
-        socket.send(asio::buffer(data, 4));
-    }
-
-    void
-    close() {
-        //socket_.close();
-    }
-
-private:
-    asio::io_service& io_service_;
-    asio::local::stream_protocol::endpoint ep_;
-    asio::local::stream_protocol::acceptor acceptor_;
-    asio::local::stream_protocol::socket socket_;
-};
-*/
-
 // This class sets up a domain socket for the session to connect to
 // it will impersonate the msgq a tiny bit (if setSendLname() has
 // been called, it will send an 'answer' to the lname query that is
