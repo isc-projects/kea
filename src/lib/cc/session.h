@@ -97,6 +97,8 @@ namespace isc {
             virtual int reply(isc::data::ElementPtr& envelope,
                                isc::data::ElementPtr& newmsg) = 0;
             virtual bool hasQueuedMsgs() = 0;
+            virtual void setTimeout(size_t milliseconds) = 0;
+            virtual size_t getTimeout() = 0;
         };
 
     class Session : public AbstractSession {
@@ -130,6 +132,15 @@ namespace isc {
             virtual int reply(isc::data::ElementPtr& envelope,
                               isc::data::ElementPtr& newmsg);
             virtual bool hasQueuedMsgs();
+            /// \brief Set the default timeout for blocking reads
+            ///        in this session to the given number of milliseconds
+            /// \param milliseconds the timeout for blocking reads in
+            ///        milliseconds, if this is set to 0, reads will block
+            ///        forever. Defaults to 4000.
+            virtual void setTimeout(size_t milliseconds);
+            /// \brief Returns the current timeout for blocking reads
+            /// \return The timeout (in milliseconds)
+            virtual size_t getTimeout();
     private:
             void sendmsg(isc::data::ElementPtr& msg);
             void sendmsg(isc::data::ElementPtr& env,

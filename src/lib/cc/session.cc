@@ -61,7 +61,8 @@ class SessionImpl {
 public:
     SessionImpl(io_service& io_service) :
         sequence_(-1), queue_(Element::createList()),
-        io_service_(io_service), socket_(io_service_), data_length_(0)
+        io_service_(io_service), socket_(io_service_), data_length_(0),
+        timeout_(4000)
     {}
     void establish(const char& socket_file);
     void disconnect();
@@ -69,8 +70,10 @@ public:
     size_t readDataLength();
     // Blocking read. Will throw a SessionTimeout if the timeout value
     // (in seconds) is thrown. If timeout is 0 it will block forever
-    void readData(void* data, size_t datalen, size_t timeout = 5);
+    void readData(void* data, size_t datalen);
     void startRead(boost::function<void()> user_handler);
+    virtual void setTimeout(size_t seconds) { timeout_ = seconds; };
+    virtual size_t getTimeout() { return timeout_; };
 
     long int sequence_; // the next sequence number to use
     std::string lname_;
@@ -90,6 +93,8 @@ private:
     uint32_t data_length_;
     boost::function<void()> user_handler_;
     asio::error_code error_;
+    // timeout for blocking reads (in seconds, defaults to 4)
+    size_t timeout_;
 };
 
 void
@@ -145,7 +150,7 @@ SessionImpl::setResult(bool* result, const asio::error_code b) {
 }
 
 void
-SessionImpl::readData(void* data, size_t datalen, size_t timeout) {
+SessionImpl::readData(void* data, size_t datalen) {
     bool timer_result = false;
     bool read_result = false;
     try {
@@ -154,8 +159,8 @@ SessionImpl::readData(void* data, size_t datalen, size_t timeout) {
                                      &read_result, _1));
         asio::deadline_timer timer(socket_.io_service());
     
-        if (timeout != 0) {
-            timer.expires_from_now(boost::posix_time::seconds(timeout));
+        if (getTimeout() != 0) {
+            timer.expires_from_now(boost::posix_time::milliseconds(getTimeout()));
             timer.async_wait(boost::bind(&SessionImpl::setResult,
                                          this, &timer_result, _1));
         }
@@ -445,10 +450,18 @@ Session::reply(ElementPtr& envelope, ElementPtr& newmsg) {
 }
 
 bool
-Session::hasQueuedMsgs()
-{
+Session::hasQueuedMsgs() {
     return (impl_->queue_->size() > 0);
 }
 
+void
+Session::setTimeout(size_t milliseconds) {
+    impl_->setTimeout(milliseconds);
+}
+
+size_t
+Session::getTimeout() {
+    return impl_->getTimeout();
+}
 }
 }
