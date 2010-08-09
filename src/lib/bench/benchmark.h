@@ -175,6 +175,18 @@ namespace bench {
 /// It should also be noted that the corresponding \c SetSearchBenchMark
 /// object can be accessed (through its public interfaces) via the \c target_
 /// member variable of \c BenchMark.
+///
+/// <b>Future Plans and Compatibility Notes</b>
+///
+/// Currently, benchmark developers need to write supplemental code that is
+/// not directly related to benchmarks (such as \c %main()) by hand.
+/// It would be better if we could minimize such development overhead.
+/// In future versions we may provide a common \c %main() function and
+/// option parsers, thereby allowing the developer to only write the benchmark
+/// classes and invoke them, just like what various unit test frameworks do.
+///
+/// If and when we implement it, some existing benchmark cases may need to be
+/// adjusted.
 template <typename T>
 class BenchMark {
     ///
