@@ -20,7 +20,7 @@
 # (int, real, bool, string, list and dict respectively)
 #
 
-import ast
+import json
 
 class DataNotFoundError(Exception): pass
 class DataTypeError(Exception): pass
@@ -134,7 +134,7 @@ def parse_value_str(value_str):
     if type(value_str) != str:
         return None
     try:
-        return ast.literal_eval(value_str)
+        return json.loads(value_str)
     except ValueError as ve:
         # simply return the string itself
         return value_str

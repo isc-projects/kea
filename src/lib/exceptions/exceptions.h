@@ -104,7 +104,7 @@ private:
 };
 
 ///
-/// \brief A standard DNS module exception that is thrown if a parameter give
+/// \brief A generic exception that is thrown if a parameter given
 /// to a method would refer to or modify out-of-range data.
 ///
 class OutOfRange : public Exception {
@@ -114,7 +114,17 @@ public:
 };
 
 ///
-/// \brief A standard DNS module exception that is thrown when an unexpected
+/// \brief A generic exception that is thrown if a parameter given
+/// to a method is considered invalid in that context.
+///
+class BadValue : public Exception {
+public:
+    BadValue(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+///
+/// \brief A generic exception that is thrown when an unexpected
 /// error condition occurs.
 ///
 class Unexpected : public Exception {
