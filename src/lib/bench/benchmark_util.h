@@ -17,6 +17,18 @@
 #ifndef __BENCHMARK_UTIL_H
 #define __BENCHMARK_UTIL_H 1
 
+/// \file
+/// Utilities to help write benchmark cases.
+///
+/// The initial version of this library only contains utilities for very
+/// specific benchmark cases, that is, building DNS query data.
+/// It's not clear if we have more utilities including scenario-independent
+/// ones in future, but we have them here for now.
+/// If we find we only need utilities specific to individual benchmark
+/// scenarios, we may move them to more specific places.
+/// For example, the query generator may go to benchmarks for DNS server
+/// implementations.
+
 #include <istream>
 #include <vector>
 
