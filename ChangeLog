@@ -1,3 +1,10 @@
+  80.	[bug]		jelte
+	bindctl no longer accepts configuration changes for unknown or
+	non-running modules (for the latter, this is until we have a
+	way to verify those options, at which point it'll be allowed
+	again).
+	(Trac #99)
+
   79.	[func]		feng, jinmei
 	Refactored the ASIO link interfaces to move incoming XFR and
 	NOTIFY processing to the auth server class.  Wrapper classes for
