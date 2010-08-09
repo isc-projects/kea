@@ -4,7 +4,7 @@
     "config_data": [
       { "item_name": "item1",
         "item_type": "list",
-        "item_optional": False,
+        "item_optional": false,
         "item_default": 1
       }
     ]

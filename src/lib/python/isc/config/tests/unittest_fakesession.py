@@ -16,6 +16,16 @@ class FakeModuleCCSession:
         if instance_name:
             self.subscriptions[group_name].append(instance_name)
             
+    def group_unsubscribe(self, group_name, instance_name = None):
+        if group_name in self.subscriptions:
+            if instance_name:
+                if len(self.subscriptions[group_name]) > 1:
+                    del self.subscriptions[group_name][instance_name]
+                else:
+                    del self.subscriptions[group_name]
+            else:
+                del self.subscriptions[group_name]
+            
 
     def has_subscription(self, group_name, instance_name = None):
         if group_name in self.subscriptions:

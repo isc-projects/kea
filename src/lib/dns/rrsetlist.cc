@@ -29,8 +29,7 @@ namespace isc {
 namespace dns {
 
 void
-RRsetList::addRRset(RRsetPtr rrsetptr)
-{
+RRsetList::addRRset(RRsetPtr rrsetptr) {
     ConstRRsetPtr rrset_found = findRRset(rrsetptr->getType(),
                                           rrsetptr->getClass());
     if (rrset_found != NULL) {
@@ -41,9 +40,16 @@ RRsetList::addRRset(RRsetPtr rrsetptr)
     rrsets_.push_back(rrsetptr);
 }
 
-RRsetPtr
-RRsetList::findRRset(const RRType& rrtype, const RRClass& rrclass)
+void
+RRsetList::append(RRsetList& source)
 {
+    BOOST_FOREACH(RRsetPtr rrset, source) {
+        addRRset(rrset);
+    }
+}
+
+RRsetPtr
+RRsetList::findRRset(const RRType& rrtype, const RRClass& rrclass) {
     BOOST_FOREACH(RRsetPtr rrsetptr, rrsets_) {
         if ((rrsetptr->getClass() == rrclass) &&
             (rrsetptr->getType() == rrtype)) {

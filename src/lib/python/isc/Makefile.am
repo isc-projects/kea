@@ -1,4 +1,4 @@
-SUBDIRS = datasrc cc config # Util
+SUBDIRS = datasrc cc config log # Util
 
 python_PYTHON = __init__.py
 

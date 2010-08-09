@@ -6,37 +6,37 @@
       {
         "item_name": "transfers_in",
         "item_type": "integer",
-        "item_optional": False,
+        "item_optional": false,
         "item_default": 10
       }
     ],
     "commands": [
      {
-        'command_name': 'retransfer',
-        "command_description": 'retransfer a single zone without checking zone serial number',
-        'command_args': [ {
+        "command_name": "retransfer",
+        "command_description": "retransfer a single zone without checking zone serial number",
+        "command_args": [ {
             "item_name": "zone_name",
             "item_type": "string",
-            "item_optional": False,
+            "item_optional": false,
             "item_default": ""
           },
           {
             "item_name": "master",
             "item_type": "string",
-            "item_optional": False,
+            "item_optional": false,
             "item_default": ""
           },
           {
             "item_name": "port",
             "item_type": "integer",
-            "item_optional": True,
+            "item_optional": true,
             "item_default": 53
           },
           {
             "item_name": "db_file",
             "item_type": "string",
-            "item_optional": True,
-            "item_default": '@@LOCALSTATEDIR@@/@PACKAGE@/zone.sqlite3'
+            "item_optional": true,
+            "item_default": "@@LOCALSTATEDIR@@/@PACKAGE@/zone.sqlite3"
           }
         ]
       },

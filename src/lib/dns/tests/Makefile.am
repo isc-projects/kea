@@ -31,7 +31,7 @@ run_unittests_SOURCES += rrset_unittest.cc rrsetlist_unittest.cc
 run_unittests_SOURCES += question_unittest.cc
 run_unittests_SOURCES += rrparamregistry_unittest.cc
 run_unittests_SOURCES += message_unittest.cc
-run_unittests_SOURCES += base32_unittest.cc
+run_unittests_SOURCES += base32hex_unittest.cc
 run_unittests_SOURCES += base64_unittest.cc
 run_unittests_SOURCES += hex_unittest.cc
 run_unittests_SOURCES += sha1_unittest.cc
@@ -40,7 +40,7 @@ run_unittests_SOURCES += run_unittests.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 run_unittests_LDADD = $(GTEST_LDADD)
-run_unittests_LDADD += $(top_builddir)/src/lib/dns/.libs/libdns.a
+run_unittests_LDADD += $(top_builddir)/src/lib/dns/.libs/libdns++.a
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/.libs/libexceptions.a
 endif
 

@@ -20,7 +20,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
-#include "fd_share.h"
+#include <stdlib.h>             // for malloc and free
+#include <xfr/fd_share.h>
 
 namespace isc {
 namespace xfr {

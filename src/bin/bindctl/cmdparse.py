@@ -24,15 +24,19 @@ except ImportError:
     from bindctl.mycollections import OrderedDict
 
 param_name_str = "^\s*(?P<param_name>[\w]+)\s*=\s*"
-param_value_str = "(?P<param_value>[\w\.:/-]+)"
-param_value_with_quota_str = "[\"\'](?P<param_value>[\w\.:, /-]+)[\"\']"
+
+# The value string can be a sequence without space or comma 
+# characters, or a string surroundedby quotation marks(such marks
+# can be part of string in an escaped form)
+#param_value_str  = "(?P<param_value>[\"\'].+?(?<!\\\)[\"\']|[^\'\"][^, ]+)"
+param_value_str  = "(?P<param_value>[^\'\" ][^, ]+)"
+param_value_with_quota_str  = "[\"\'](?P<param_value>.+?)(?<!\\\)[\"\']"
 next_params_str = "(?P<blank>\s*)(?P<comma>,?)(?P<next_params>.*)$"
 
 PARAM_WITH_QUOTA_PATTERN = re.compile(param_name_str + 
-                                      param_value_with_quota_str +
+                                      param_value_with_quota_str + 
                                       next_params_str)
 PARAM_PATTERN = re.compile(param_name_str + param_value_str + next_params_str)
-                           
 # Used for module and command name
 NAME_PATTERN = re.compile("^\s*(?P<name>[\w]+)(?P<blank>\s*)(?P<others>.*)$")
 
@@ -98,7 +102,6 @@ class BindCmdParse:
                 
             groups = PARAM_PATTERN.match(param_text) or \
                      PARAM_WITH_QUOTA_PATTERN.match(param_text)
-            
             if not groups:
                 # ok, fill in the params in the order entered
                 params = re.findall("([^\" ]+|\".*\")", param_text)

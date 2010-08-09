@@ -267,7 +267,7 @@ Name::Name(const std::string &namestring, bool downcase) {
         if (state == ft_ordinary) {
             assert(count != 0);
             ndata.at(offsets.back()) = count;
-            
+
             offsets.push_back(ndata.size());
             // add a trailing \0
             ndata.push_back('\0');

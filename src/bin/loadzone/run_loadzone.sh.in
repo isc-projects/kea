@@ -21,5 +21,5 @@ export PYTHON_EXEC
 PYTHONPATH=@abs_top_builddir@/src/lib/python
 export PYTHONPATH
 
-LOADZONE_PATH=@abs_top_srcdir@/src/bin/loadzone
+LOADZONE_PATH=@abs_top_builddir@/src/bin/loadzone
 exec ${LOADZONE_PATH}/b10-loadzone $*

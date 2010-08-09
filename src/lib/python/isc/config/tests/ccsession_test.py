@@ -119,7 +119,10 @@ class TestModuleCCSession(unittest.TestCase):
 
     def test_start1(self):
         fake_session = FakeModuleCCSession()
+        self.assertFalse("Spec1" in fake_session.subscriptions)
         mccs = self.create_session("spec1.spec", None, None, fake_session)
+        self.assertTrue("Spec1" in fake_session.subscriptions)
+
         self.assertEqual(len(fake_session.message_queue), 0)
         self.assertRaises(ModuleCCSessionError, mccs.start)
         self.assertEqual(len(fake_session.message_queue), 2)
@@ -138,6 +141,9 @@ class TestModuleCCSession(unittest.TestCase):
                          fake_session.get_message('ConfigManager', None))
         self.assertEqual({'command': ['get_config', {'module_name': 'Spec1'}]},
                          fake_session.get_message('ConfigManager', None))
+
+        mccs = None
+        self.assertFalse("Spec1" in fake_session.subscriptions)
 
     def test_start2(self):
         fake_session = FakeModuleCCSession()
@@ -352,7 +358,9 @@ class TestModuleCCSession(unittest.TestCase):
 
         self.assertRaises(ModuleCCSessionError, mccs.get_remote_config_value, "Spec2", "item1")
 
+        self.assertFalse("Spec2" in fake_session.subscriptions)
         rmodname = mccs.add_remote_config(self.spec_file("spec2.spec"))
+        self.assertTrue("Spec2" in fake_session.subscriptions)
         self.assertEqual("Spec2", rmodname)
         self.assertRaises(isc.cc.data.DataNotFoundError, mccs.get_remote_config_value, rmodname, "asdf")
         value, default = mccs.get_remote_config_value(rmodname, "item1")
@@ -360,8 +368,43 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertEqual(True, default)
 
         mccs.remove_remote_config(rmodname)
+        self.assertFalse("Spec2" in fake_session.subscriptions)
         self.assertRaises(ModuleCCSessionError, mccs.get_remote_config_value, "Spec2", "item1")
-    
+
+        # test if unsubscription is alse sent when object is deleted
+        rmodname = mccs.add_remote_config(self.spec_file("spec2.spec"))
+        self.assertTrue("Spec2" in fake_session.subscriptions)
+        mccs = None
+        self.assertFalse("Spec2" in fake_session.subscriptions)
+        
+    def test_ignore_command_remote_module(self):
+        # Create a Spec1 module and subscribe to remote config for Spec2
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec1.spec", None, None, fake_session)
+        mccs.set_command_handler(self.my_command_handler_ok)
+        rmodname = mccs.add_remote_config(self.spec_file("spec2.spec"))
+
+        # remove the 'get config' from the queue
+        self.assertEqual(len(fake_session.message_queue), 1)
+        fake_session.get_message("ConfigManager")
+
+        # check if the command for the module itself is received
+        cmd = isc.config.ccsession.create_command("just_some_command", { 'foo': 'a' })
+        fake_session.group_sendmsg(cmd, 'Spec1')
+        self.assertEqual(len(fake_session.message_queue), 1)
+        mccs.check_command()
+        self.assertEqual(len(fake_session.message_queue), 1)
+        self.assertEqual({'result': [ 0 ]},
+                         fake_session.get_message('Spec1', None))
+
+        # check if the command for the other module is ignored
+        cmd = isc.config.ccsession.create_command("just_some_command", { 'foo': 'a' })
+        fake_session.group_sendmsg(cmd, 'Spec2')
+        self.assertEqual(len(fake_session.message_queue), 1)
+        mccs.check_command()
+        self.assertEqual(len(fake_session.message_queue), 0)
+        
+
 class fakeUIConn():
     def __init__(self):
         self.get_answers = {}

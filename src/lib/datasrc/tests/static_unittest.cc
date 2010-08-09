@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-#include "config.h"
+#include <config.h>
 
 #include <gtest/gtest.h>
 
@@ -54,6 +54,7 @@ protected:
         version_data.push_back(PACKAGE_STRING);
 
         // XXX: in addition, the order the following items matter.
+        authors_data.push_back("Chen Zhengzhang");
         authors_data.push_back("Evan Hunt");
         authors_data.push_back("Han Feng");
         authors_data.push_back("Jelte Jansen");
@@ -64,6 +65,8 @@ protected:
         authors_data.push_back("Michael Graff");
         authors_data.push_back("Naoki Kambe");
         authors_data.push_back("Shane Kerr");
+        authors_data.push_back("Shen Tingting");
+        authors_data.push_back("Stephen Morris");
         authors_data.push_back("Zhang Likun");
 
         version_ns_data.push_back("version.bind.");
@@ -196,55 +199,54 @@ TEST_F(StaticDataSourceTest, close) {
 }
 
 TEST_F(StaticDataSourceTest, findClosestEnclosureForVersion) {
-    NameMatch name_match(version_name);
-    data_source.findClosestEnclosure(name_match, rrclass);
-    EXPECT_EQ(version_name, *name_match.closestName());
-    EXPECT_EQ(&data_source, name_match.bestDataSrc());
+    DataSrcMatch match(version_name, rrclass);
+    data_source.findClosestEnclosure(match);
+    EXPECT_EQ(version_name, *match.getEnclosingZone());
+    EXPECT_EQ(&data_source, match.getDataSource());
 }
 
 // Class Any query should result in the same answer.
 TEST_F(StaticDataSourceTest, findClosestEnclosureForVersionClassAny) {
-    NameMatch name_match(version_name);
-    data_source.findClosestEnclosure(name_match, RRClass::ANY());
-    EXPECT_EQ(version_name, *name_match.closestName());
-    EXPECT_EQ(&data_source, name_match.bestDataSrc());
+    DataSrcMatch match(version_name, RRClass::ANY());
+    data_source.findClosestEnclosure(match);
+    EXPECT_EQ(version_name, *match.getEnclosingZone());
+    EXPECT_EQ(&data_source, match.getDataSource());
 }
 
 // If class doesn't match the lookup should fail.
 TEST_F(StaticDataSourceTest, findClosestEnclosureForVersionClassMismatch) {
-    NameMatch name_match(version_name);
-    data_source.findClosestEnclosure(name_match, RRClass::IN());
-    // XXX: see sqlite3_unittest.cc about the cast.
-    EXPECT_EQ(static_cast<void*>(NULL), name_match.closestName());
-    EXPECT_EQ(static_cast<void*>(NULL), name_match.bestDataSrc());
+    DataSrcMatch match(version_name, RRClass::IN());
+    data_source.findClosestEnclosure(match);
+    EXPECT_EQ(static_cast<void*>(NULL), match.getEnclosingZone());
+    EXPECT_EQ(static_cast<void*>(NULL), match.getDataSource());
 }
 
 TEST_F(StaticDataSourceTest, findClosestEnclosureForVersionPartial) {
-    NameMatch name_match(Name("foo").concatenate(version_name));
-    data_source.findClosestEnclosure(name_match, rrclass);
-    EXPECT_EQ(version_name, *name_match.closestName());
-    EXPECT_EQ(&data_source, name_match.bestDataSrc());
+    DataSrcMatch match(Name("foo").concatenate(version_name), rrclass);
+    data_source.findClosestEnclosure(match);
+    EXPECT_EQ(version_name, *match.getEnclosingZone());
+    EXPECT_EQ(&data_source, match.getDataSource());
 }
 
 TEST_F(StaticDataSourceTest, findClosestEnclosureForAuthors) {
-    NameMatch name_match(authors_name);
-    data_source.findClosestEnclosure(name_match, rrclass);
-    EXPECT_EQ(authors_name, *name_match.closestName());
-    EXPECT_EQ(&data_source, name_match.bestDataSrc());
+    DataSrcMatch match(authors_name, rrclass);
+    data_source.findClosestEnclosure(match);
+    EXPECT_EQ(authors_name, *match.getEnclosingZone());
+    EXPECT_EQ(&data_source, match.getDataSource());
 }
 
 TEST_F(StaticDataSourceTest, findClosestEnclosureForAuthorsPartial) {
-    NameMatch name_match(Name("foo").concatenate(authors_name));
-    data_source.findClosestEnclosure(name_match, rrclass);
-    EXPECT_EQ(authors_name, *name_match.closestName());
-    EXPECT_EQ(&data_source, name_match.bestDataSrc());
+    DataSrcMatch match(Name("foo").concatenate(authors_name), rrclass);
+    data_source.findClosestEnclosure(match);
+    EXPECT_EQ(authors_name, *match.getEnclosingZone());
+    EXPECT_EQ(&data_source, match.getDataSource());
 }
 
 TEST_F(StaticDataSourceTest, findClosestEnclosureNoMatch) {
-    NameMatch name_match(nomatch_name);
-    data_source.findClosestEnclosure(name_match, rrclass);
-    EXPECT_EQ(static_cast<void*>(NULL), name_match.closestName());
-    EXPECT_EQ(static_cast<void*>(NULL), name_match.bestDataSrc());
+    DataSrcMatch match(nomatch_name, rrclass);
+    data_source.findClosestEnclosure(match);
+    EXPECT_EQ(static_cast<void*>(NULL), match.getEnclosingZone());
+    EXPECT_EQ(static_cast<void*>(NULL), match.getDataSource());
 }
 
 TEST_F(StaticDataSourceTest, findRRsetVersionTXT) {

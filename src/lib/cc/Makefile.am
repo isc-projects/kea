@@ -6,10 +6,12 @@ AM_CXXFLAGS = $(B10_CXXFLAGS)
 # error.  Unfortunately there doesn't seem to be an easy way to selectively
 # avoid the error.  As a short term workaround we suppress this warning
 # for the entire this module.  See also src/bin/auth/Makefile.am.
+if USE_GXX
 AM_CXXFLAGS += -Wno-unused-parameter
+endif
 
-lib_LIBRARIES = libcc.a
-libcc_a_SOURCES = data.cc data.h session.cc session.h
+lib_LTLIBRARIES = libcc.la
+libcc_la_SOURCES = data.cc data.h session.cc session.h
 
 CLEANFILES = *.gcno *.gcda session_config.h
 
@@ -27,8 +29,8 @@ run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 # TODO: remove PTHREAD_LDFLAGS (and from configure too)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS) $(PTHREAD_LDFLAGS)
 
-run_unittests_LDADD = libcc.a $(GTEST_LDADD)
-run_unittests_LDADD +=  $(top_builddir)/src/lib/dns/.libs/libdns.a
+run_unittests_LDADD = libcc.la $(GTEST_LDADD)
+run_unittests_LDADD +=  $(top_builddir)/src/lib/dns/.libs/libdns++.a
 run_unittests_LDADD +=  $(top_builddir)/src/lib/exceptions/.libs/libexceptions.a
 
 endif

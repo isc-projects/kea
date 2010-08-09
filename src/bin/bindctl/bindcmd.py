@@ -35,7 +35,10 @@ import os, time, random, re
 import getpass
 from hashlib import sha1
 import csv
-import ast
+import json
+import pwd
+import getpass
+import traceback
 
 try:
     from collections import OrderedDict
@@ -49,6 +52,8 @@ try:
 except ImportError:
     my_readline = sys.stdin.readline
 
+CSV_FILE_NAME = 'default_user.csv'
+FAIL_TO_CONNECT_WITH_CMDCTL = "Fail to connect with b10-cmdctl module, is it running?"
 CONFIG_MODULE_NAME = 'config'
 CONST_BINDCTL_HELP = """
 usage: <module name> <command name> [param1 = value1 [, param2 = value2]]
@@ -58,10 +63,34 @@ Type \"<module_name> help\" for help on the specific module.
 Type \"<module_name> <command_name> help\" for help on the specific command.
 \nAvailable module names: """
 
+class ValidatedHTTPSConnection(http.client.HTTPSConnection):
+    '''Overrides HTTPSConnection to support certification 
+    validation. '''
+    def __init__(self, host, ca_certs):
+        http.client.HTTPSConnection.__init__(self, host)
+        self.ca_certs = ca_certs
+
+    def connect(self):
+        ''' Overrides the connect() so that we do 
+        certificate validation. '''
+        sock = socket.create_connection((self.host, self.port),
+                                        self.timeout)
+        if self._tunnel_host:
+            self.sock = sock
+            self._tunnel()
+       
+        req_cert = ssl.CERT_NONE
+        if self.ca_certs:
+            req_cert = ssl.CERT_REQUIRED
+        self.sock = ssl.wrap_socket(sock, self.key_file,
+                                    self.cert_file,
+                                    cert_reqs=req_cert,
+                                    ca_certs=self.ca_certs)
+
 class BindCmdInterpreter(Cmd):
     """simple bindctl example."""    
 
-    def __init__(self, server_port = 'localhost:8080', pem_file = "bindctl.pem"):
+    def __init__(self, server_port = 'localhost:8080', pem_file = None):
         Cmd.__init__(self)
         self.location = ""
         self.prompt_end = '> '
@@ -70,19 +99,11 @@ class BindCmdInterpreter(Cmd):
         self.modules = OrderedDict()
         self.add_module_info(ModuleInfo("help", desc = "Get help for bindctl"))
         self.server_port = server_port
-        self.pem_file = pem_file
-        self._connect_to_cmd_ctrld()
+        self.conn = ValidatedHTTPSConnection(self.server_port,
+                                             ca_certs=pem_file)
         self.session_id = self._get_session_id()
-
-    def _connect_to_cmd_ctrld(self):
-        '''Connect to cmdctl in SSL context. '''
-        try:
-            self.conn = http.client.HTTPSConnection(self.server_port,
-                          cert_file=self.pem_file)
-        except  Exception as e:
-            print(e, "can't connect to %s, please make sure cmd-ctrld is running" %
-                  self.server_port)
-
+        self.config_data = None
+        
     def _get_session_id(self):
         '''Generate one session id for the connection. '''
         rand = os.urandom(16)
@@ -93,17 +114,59 @@ class BindCmdInterpreter(Cmd):
         return digest
     
     def run(self):
-        '''Parse commands inputted from user and send them to cmdctl. '''
+        '''Parse commands from user and send them to cmdctl. '''
         try:
             if not self.login_to_cmdctl():
-                return False
+                return 
 
-            # Get all module information from cmd-ctrld
-            self.config_data = isc.config.UIModuleCCSession(self)
-            self._update_commands()
             self.cmdloop()
+        except FailToLogin as err:
+            print(err)
+            print(FAIL_TO_CONNECT_WITH_CMDCTL)
+            traceback.print_exc()
         except KeyboardInterrupt:
-            return True
+            print('\nExit from bindctl')
+
+    def _get_saved_user_info(self, dir, file_name):
+        ''' Read all the available username and password pairs saved in 
+        file(path is "dir + file_name"), Return value is one list of elements
+        ['name', 'password'], If get information failed, empty list will be 
+        returned.'''
+        if (not dir) or (not os.path.exists(dir)):
+            return []
+
+        try:
+            csvfile = None
+            users = []
+            csvfile = open(dir + file_name)
+            users_info = csv.reader(csvfile)
+            for row in users_info:
+                users.append([row[0], row[1]])
+        except (IOError, IndexError) as e:
+            pass
+        finally:
+            if csvfile:
+                csvfile.close()
+            return users
+
+    def _save_user_info(self, username, passwd, dir, file_name):
+        ''' Save username and password in file "dir + file_name"
+        If it's saved properly, return True, or else return False. '''
+        try:
+            if not os.path.exists(dir):
+                os.mkdir(dir, 0o700)
+
+            csvfilepath = dir + file_name 
+            csvfile = open(csvfilepath, 'w')
+            os.chmod(csvfilepath, 0o600)
+            writer = csv.writer(csvfile)
+            writer.writerow([username, passwd])
+            csvfile.close()
+        except Exception as e:
+            print(e, "\nCannot write %s%s; default user is not stored" % (dir, file_name))
+            return False
+
+        return True
 
     def login_to_cmdctl(self):
         '''Login to cmdctl with the username and password inputted 
@@ -112,33 +175,21 @@ class BindCmdInterpreter(Cmd):
         time, username and password saved in 'default_user.csv' will be
         used first.
         '''
-        csvfile = None
-        bsuccess = False
-        try:
-            cvsfilepath = ""
-            if ('HOME' in os.environ):
-                cvsfilepath = os.environ['HOME']
-                cvsfilepath += os.sep + '.bind10' + os.sep
-            cvsfilepath += 'default_user.csv'
-            csvfile = open(cvsfilepath)
-            users = csv.reader(csvfile)
-            for row in users:
-                param = {'username': row[0], 'password' : row[1]}
+        csv_file_dir = pwd.getpwnam(getpass.getuser()).pw_dir
+        csv_file_dir += os.sep + '.bind10' + os.sep
+        users = self._get_saved_user_info(csv_file_dir, CSV_FILE_NAME)
+        for row in users:
+            param = {'username': row[0], 'password' : row[1]}
+            try:
                 response = self.send_POST('/login', param)
                 data = response.read().decode()
-                if response.status == http.client.OK:
-                    print(data + ' login as ' + row[0] )
-                    bsuccess = True
-                    break
-        except IOError as e:
-            pass
-        except Exception as e:
-            print(e)
-        finally:
-            if csvfile:
-                csvfile.close()
-            if bsuccess:
-                return True
+            except socket.error:
+                traceback.print_exc()
+                raise FailToLogin()
+
+            if response.status == http.client.OK:
+                print(data + ' login as ' + row[0] )
+                return True 
 
         count = 0
         print("[TEMP MESSAGE]: username :root  password :bind10")
@@ -151,33 +202,17 @@ class BindCmdInterpreter(Cmd):
             username = input("Username:")
             passwd = getpass.getpass()
             param = {'username': username, 'password' : passwd}
-            response = self.send_POST('/login', param)
-            data = response.read().decode()
-            print(data)
-            
-            if response.status == http.client.OK:
-                cvsfilepath = ""
-                try:
-                    if ('HOME' in os.environ):
-                        cvsfilepath = os.environ['HOME']
-                        cvsfilepath += os.sep + '.bind10' + os.sep
-                        if not os.path.exists(cvsfilepath):
-                                os.mkdir(cvsfilepath, 0o700)
-                    else:
-                        print("Cannot determine location of $HOME. Not storing default user")
-                        return True
-                    cvsfilepath += 'default_user.csv'
-                    csvfile = open(cvsfilepath, 'w')
-                    os.chmod(cvsfilepath, 0o600)
-                    writer = csv.writer(csvfile)
-                    writer.writerow([username, passwd])
-                    csvfile.close()
-                except Exception as e:
-                    # just not store it
-                    print("Cannot write ~/.bind10/default_user.csv; default user is not stored")
-                    print(e)
-                return True
+            try:
+                response = self.send_POST('/login', param)
+                data = response.read().decode()
+                print(data)
+            except socket.error as e:
+                traceback.print_exc()
+                raise FailToLogin()
 
+            if response.status == http.client.OK:
+                self._save_user_info(username, passwd, csv_file_dir, CSV_FILE_NAME)
+                return True
 
     def _update_commands(self):
         '''Update the commands of all modules. '''
@@ -211,7 +246,22 @@ class BindCmdInterpreter(Cmd):
         headers = {"cookie" : self.session_id}
         self.conn.request('POST', url, param, headers)
         return self.conn.getresponse()
-        
+
+    def _update_all_modules_info(self):
+        ''' Get all modules' information from cmdctl, including
+        specification file and configuration data. This function
+        should be called before interpreting command line or complete-key
+        is entered. This may not be the best way to keep bindctl
+        and cmdctl share same modules information, but it works.'''
+        if self.config_data is not None:
+            self.config_data.update_specs_and_config()
+        else:
+            self.config_data = isc.config.UIModuleCCSession(self)
+        self._update_commands()
+
+    def precmd(self, line):
+        self._update_all_modules_info()
+        return line 
 
     def postcmd(self, stop, line):
         '''Update the prompt after every command'''
@@ -308,8 +358,11 @@ class BindCmdInterpreter(Cmd):
         if cmd.module != CONFIG_MODULE_NAME:
             for param_name in cmd.params:
                 param_spec = command_info.get_param_with_name(param_name).param_spec
-                cmd.params[param_name] = isc.config.config_data.convert_type(param_spec, cmd.params[param_name])
-
+                try:
+                    cmd.params[param_name] = isc.config.config_data.convert_type(param_spec, cmd.params[param_name])
+                except isc.cc.data.DataTypeError as e:
+                    raise isc.cc.data.DataTypeError('Invalid parameter value for \"%s\", the type should be \"%s\" \n' 
+                                                     % (param_name, param_spec['item_type']) + str(e))
     
     def _handle_cmd(self, cmd):
         '''Handle a command entered by the user'''
@@ -356,6 +409,7 @@ class BindCmdInterpreter(Cmd):
 
     def complete(self, text, state):
         if 0 == state:
+            self._update_all_modules_info()
             text = text.strip()
             hints = []
             cur_line = my_readline()
@@ -441,13 +495,14 @@ class BindCmdInterpreter(Cmd):
             cmd = BindCmdParse(line)
             self._validate_cmd(cmd)
             self._handle_cmd(cmd)
-        except BindCtlException as e:
-            print("Error! ", e)
-            self._print_correct_usage(e)
-        except isc.cc.data.DataTypeError as e:
-            print("Error! ", e)
-            self._print_correct_usage(e)
-            
+        except (IOError, http.client.HTTPException) as err:
+            print('Error!', err)
+            print(FAIL_TO_CONNECT_WITH_CMDCTL)
+        except BindCtlException as err:
+            print("Error! ", err)
+            self._print_correct_usage(err)
+        except isc.cc.data.DataTypeError as err:
+            print("Error! ", err)
             
     def _print_correct_usage(self, ept):        
         if isinstance(ept, CmdUnknownModuleSyntaxError):
@@ -488,6 +543,16 @@ class BindCmdInterpreter(Cmd):
                     identifier = cmd.params['identifier']
                 else:
                     identifier += cmd.params['identifier']
+
+                # Check if the module is known; for unknown modules
+                # we currently deny setting preferences, as we have
+                # no way yet to determine if they are ok.
+                module_name = identifier.split('/')[1]
+                if self.config_data is None or \
+                   not self.config_data.have_specification(module_name):
+                    print("Error: Module '" + module_name + "' unknown or not running")
+                    return
+
             if cmd.command == "show":
                 values = self.config_data.get_value_maps(identifier)
                 for value_map in values:
@@ -513,7 +578,7 @@ class BindCmdInterpreter(Cmd):
                 else:
                     parsed_value = None
                     try:
-                        parsed_value = ast.literal_eval(cmd.params['value'])
+                        parsed_value = json.loads(cmd.params['value'])
                     except Exception as exc:
                         # ok could be an unquoted string, interpret as such
                         parsed_value = cmd.params['value']
@@ -556,7 +621,7 @@ class BindCmdInterpreter(Cmd):
         if (len(cmd.params) != 0):
             cmd_params = json.dumps(cmd.params)
 
-        print("send the message to cmd-ctrld")        
+        print("send the command to cmd-ctrld")        
         reply = self.send_POST(url, cmd.params)
         data = reply.read().decode()
         print("received reply:", data)
