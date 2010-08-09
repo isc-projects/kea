@@ -14,7 +14,7 @@
 
 // $Id$
 
-#include "config.h"
+#include <config.h>
 
 #include <cassert>
 
@@ -26,8 +26,8 @@
 #include <dns/rrtype.h>
 #include <dns/rrttl.h>
 
-#include "data_source.h"
-#include "static_datasrc.h"
+#include <datasrc/data_source.h>
+#include <datasrc/static_datasrc.h>
 
 using namespace std;
 using namespace isc::dns;
@@ -70,6 +70,7 @@ StaticDataSrcImpl::StaticDataSrcImpl() :
 {
     authors = RRsetPtr(new RRset(authors_name, RRClass::CH(),
                                  RRType::TXT(), RRTTL(0)));
+    authors->addRdata(generic::TXT("Chen Zhengzhang")); // Jerry
     authors->addRdata(generic::TXT("Evan Hunt"));
     authors->addRdata(generic::TXT("Han Feng"));
     authors->addRdata(generic::TXT("Jelte Jansen"));
@@ -80,6 +81,8 @@ StaticDataSrcImpl::StaticDataSrcImpl() :
     authors->addRdata(generic::TXT("Michael Graff"));
     authors->addRdata(generic::TXT("Naoki Kambe"));
     authors->addRdata(generic::TXT("Shane Kerr"));
+    authors->addRdata(generic::TXT("Shen Tingting"));
+    authors->addRdata(generic::TXT("Stephen Morris"));
     authors->addRdata(generic::TXT("Zhang Likun"));
 
     authors_ns = RRsetPtr(new RRset(authors_name, RRClass::CH(),
@@ -129,11 +132,10 @@ isSubdomain(const Name& qname, const Name& zone) {
 }
 
 void
-StaticDataSrc::findClosestEnclosure(NameMatch& match,
-                                    const RRClass& qclass) const {
-    const Name& qname = match.qname();
+StaticDataSrc::findClosestEnclosure(DataSrcMatch& match) const {
+    const Name& qname = match.getName();
 
-    if (qclass != getClass() && qclass != RRClass::ANY()) {
+    if (match.getClass() != getClass() && match.getClass() != RRClass::ANY()) {
         return;
     }
 

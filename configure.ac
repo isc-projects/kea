@@ -2,18 +2,44 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10-devel, 20100602, bind10-dev@isc.org)
+AC_INIT(bind10-devel, 20100701, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
 
 # Checks for programs.
 AC_PROG_CXX
-AC_PROG_CC
 AC_PROG_LIBTOOL
 
 # Use C++ language
-AC_LANG_CPLUSPLUS
+AC_LANG([C++])
+
+# Identify the compiler: this check must be after AC_PROG_CXX and AC_LANG.
+AM_CONDITIONAL(USE_GXX, test "X${GXX}" = "Xyes")
+AC_CHECK_DECL([__SUNPRO_CC], [SUNCXX="yes"], [SUNCXX="no"])
+
+# Linker options
+
+# check -R rather than gcc specific -rpath to be as portable as possible.
+AC_MSG_CHECKING([whether -R flag is available in linker])
+LDFLAGS_SAVED="$LDFLAGS"
+LDFLAGS="$LDFLAGS -R/usr/lib"
+AC_TRY_LINK([],[],
+	[ AC_MSG_RESULT(yes)
+		rpath_available=yes
+	],[ AC_MSG_RESULT(no)
+	rpath_available=no
+	])
+LDFLAGS=$LDFLAGS_SAVED
+
+# OS dependent compiler flags
+case "$host" in
+*-solaris*)
+	# Solaris requires special definitions to get some standard libraries
+	# (e.g. getopt(3)) available with common used header files.
+	CPPFLAGS="$CPPFLAGS -D_XPG4_2 -D__EXTENSIONS__"
+	;;
+esac
 
 m4_define([_AM_PYTHON_INTERPRETER_LIST], [python python3 python3.1])
 AC_ARG_WITH([pythonpath],
@@ -71,11 +97,29 @@ else
 		AC_MSG_WARN([${PYTHON}-config does not exist or is not executable, so we could not detect python development environment.  Your system may require an additional package (e.g. "python3-dev").  Alternatively, if you are sure you have python headers and libraries, define PYTHON_INCLUDES and PYTHON_LDFLAGS and run this script.])
 	fi
 fi
+
+# Some OSes including NetBSD don't install libpython.so in a well known path.
+# To avoid requiring dynamic library path with our python wrapper loadable
+# modules, we embed the path to the modules when possible.  We do this even
+# when the path is known in the common operational environment (e.g. when
+# it's stored in a common "hint" file) for simplicity.
+if test $rpath_available = yes; then
+	python_rpath=
+	for flag in ${PYTHON_LDFLAGS}; do
+		python_rpath="${python_rpath} `echo $flag | sed -ne 's/^\(\-L\)/-R/p'`"
+	done
+	PYTHON_LDFLAGS="${PYTHON_LDFLAGS} ${python_rpath}"
+fi
+
 AC_SUBST(PYTHON_INCLUDES)
 AC_SUBST(PYTHON_LDFLAGS)
 
-# Check for python library (not absolutely mandatory, but needed for
-# Boost.Python when we use it.  See below.)
+CPPFLAGS_SAVED="$CPPFLAGS"
+CPPFLAGS="$CPPFLAGS ${PYTHON_INCLUDES}"
+AC_CHECK_HEADERS([Python.h],, AC_MSG_ERROR([Missing Python.h]))
+CPPFLAGS="$CPPFLAGS_SAVED"
+
+# Check for python library.  Needed for Python-wrapper libraries.
 LDFLAGS_SAVED="$LDFLAGS"
 LDFLAGS="$LDFLAGS $PYTHON_LDFLAGS"
 python_bin="python${PYTHON_VERSION}"
@@ -84,11 +128,12 @@ if test $python_lib != "no"; then
 	PYTHON_LIB="-l$python_lib"
 fi
 AC_SUBST(PYTHON_LIB)
+LDFLAGS=$LDFLAGS_SAVED
 
 # TODO: check for _sqlite3.py module
 
-#
-# B10_CXXFLAGS is the default C++ compiler flags.  This will (and should) be
+# Compiler dependent settings: define some mandatory CXXFLAGS here.
+# We also use a separate variable B10_CXXFLAGS.  This will (and should) be
 # used as the default value for each specifc AM_CXXFLAGS:
 # AM_CXXFLAGS = $(B10_CXXFLAGS)
 # AM_CXXFLAGS += ... # add module specific flags
@@ -97,17 +142,24 @@ AC_SUBST(PYTHON_LIB)
 # gcc's -Wno-XXX option must be specified after -Wall or -Wextra, we cannot
 # specify the default warning flags in CXXFLAGS and let specific modules
 # "override" the default.
-#
-B10_CXXFLAGS=
 
-if test "X$GCC" = "Xyes"; then
-B10_CXXFLAGS="-g -Wall -Wextra -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
+CXXFLAGS=-g
+werror_ok=0
+
+# SunStudio compiler requires special compiler options for boost
+# (http://blogs.sun.com/sga/entry/boost_mini_howto)
+if test "$SUNCXX" = "yes"; then
+CXXFLAGS="$CXXFLAGS -library=stlport4 -features=tmplife -features=tmplrefstatic"
+fi
+
+# gcc specific settings:
+if test "X$GXX" = "Xyes"; then
+B10_CXXFLAGS="-Wall -Wextra -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
 UNUSED_PARAM_ATTRIBUTE='__attribute__((unused))'
 
 # Certain versions of gcc (g++) have a bug that incorrectly warns about
 # the use of anonymous name spaces even if they're closed in a single
 # translation unit.  For these versions we have to disable -Werror.
-werror_ok=0
 CXXFLAGS_SAVED="$CXXFLAGS"
 CXXFLAGS="$CXXFLAGS $B10_CXXFLAGS -Werror"
 AC_MSG_CHECKING(for in-TU anonymous namespace breakage)
@@ -118,13 +170,14 @@ namespace isc {class Bar {Foo foo_;};} ],,
 	 B10_CXXFLAGS="$B10_CXXFLAGS -Werror"],
 	[AC_MSG_RESULT(yes)])
 CXXFLAGS="$CXXFLAGS_SAVED"
-fi				dnl GCC = yes
+
+fi				dnl GXX = yes
 
 AM_CONDITIONAL(GCC_WERROR_OK, test $werror_ok = 1)
 AC_DEFINE_UNQUOTED(UNUSED_PARAM, $UNUSED_PARAM_ATTRIBUTE, Define to compiler keyword indicating a function argument is intentionally unused)
 
 # produce PIC unless we disable shared libraries. need this for python bindings.
-if test $enable_shared != "no" -a "X$GCC" = "Xyes"; then
+if test $enable_shared != "no" -a "X$GXX" = "Xyes"; then
    B10_CXXFLAGS="$B10_CXXFLAGS -fPIC"
 fi
 
@@ -210,54 +263,6 @@ AC_HELP_STRING([--with-boost-lib=PATH],
    BOOST_LDFLAGS="-L$withval"
    fi])
 AC_SUBST(BOOST_LDFLAGS)
-
-# Check availability of the Boost Python library
-
-AC_MSG_CHECKING([for boost::python library])
-AC_ARG_WITH([boost-python],
-AC_HELP_STRING([--with-boost-python],
-  [specify whether to use the boost python library]),
-  [with_boost_python="$withval"], [with_boost_python="auto"])
-if test "$with_boost_python" != "no"; then
-	if test "$with_boost_python" != "auto" -a "X$PYTHON_LIB" = X; then
-		AC_MSG_ERROR([Boost.Python requested but python library is not available])
-	fi
-	LDFLAGS_SAVED="$LDFLAGS"
-	LIBS_SAVED="$LIBS"
-	CPPFLAGS_SAVED="$CPPFLAGS"
-	CPPFLAGS="$CPPFLAGS $PYTHON_INCLUDES"
-
-	for BOOST_TRY_LIB in boost_python boost_python-mt; do
-		LDFLAGS="$LDFLAGS_SAVED ${BOOST_LDFLAGS} ${PYTHON_LDFLAGS}"
-		LIBS="$LIBS_SAVED -l${BOOST_TRY_LIB} ${PYTHON_LIB}"
-		AC_TRY_LINK([#include <boost/python/module.hpp>
-	      using namespace boost::python;
-	      BOOST_PYTHON_MODULE(test) { throw "Boost::Python test."; }],
-			[ return 0; ],
-			[ AC_MSG_RESULT(yes)
-			BOOST_PYTHON_LIB="-l${BOOST_TRY_LIB}"
-			],[])
-		if test "X${BOOST_PYTHON_LIB}" != X; then
-        		break
-		fi
-	done
-
-	LDFLAGS="$LDFLAGS_SAVED"
-	CPPFLAGS="$CPPFLAGS_SAVED"
-	LIBS="$LIBS_SAVED"
-fi
-
-if test "X${BOOST_PYTHON_LIB}" = X; then
-	AC_MSG_RESULT(no)
-	if test "$with_boost_python" = "yes"; then
-	   AC_MSG_ERROR([boost python library is requested but not found])
-	fi
-else
-	AC_DEFINE(HAVE_BOOST_PYTHON, 1, Define to 1 if boost python library is available)
-fi
-
-AM_CONDITIONAL(HAVE_BOOST_PYTHON, test "X${BOOST_PYTHON_LIB}" != X)
-AC_SUBST(BOOST_PYTHON_LIB)
 
 #
 # Check availability of gtest, which will be used for unit tests.
@@ -364,7 +369,7 @@ fi
 # run time performance.  Hpefully we can find a better solution or the ASIO
 # code will be updated by the time we really need it.
 AC_CHECK_HEADERS(sys/devpoll.h, ac_cv_have_devpoll=yes, ac_cv_have_devpoll=no)
-if test "X$ac_cv_have_devpoll" = "Xyes" -a "X$GCC" = "Xyes"; then
+if test "X$ac_cv_have_devpoll" = "Xyes" -a "X$GXX" = "Xyes"; then
 	CPPFLAGS="$CPPFLAGS -DASIO_DISABLE_DEV_POLL=1"
 fi
 
@@ -393,8 +398,11 @@ AC_CONFIG_FILES([Makefile
                  src/bin/bindctl/Makefile
                  src/bin/bindctl/tests/Makefile
                  src/bin/cfgmgr/Makefile
+                 src/bin/cfgmgr/tests/Makefile
                  src/bin/host/Makefile
                  src/bin/loadzone/Makefile
+                 src/bin/loadzone/tests/correct/Makefile
+                 src/bin/loadzone/tests/error/Makefile
                  src/bin/msgq/Makefile
                  src/bin/msgq/tests/Makefile
                  src/bin/auth/Makefile
@@ -416,19 +424,25 @@ AC_CONFIG_FILES([Makefile
                  src/lib/python/isc/cc/tests/Makefile
                  src/lib/python/isc/config/Makefile
                  src/lib/python/isc/config/tests/Makefile
+                 src/lib/python/isc/log/Makefile
+                 src/lib/python/isc/log/tests/Makefile
                  src/lib/config/Makefile
                  src/lib/config/tests/Makefile
                  src/lib/dns/Makefile
                  src/lib/dns/tests/Makefile
+                 src/lib/dns/python/Makefile
+                 src/lib/dns/python/tests/Makefile
                  src/lib/exceptions/Makefile
                  src/lib/datasrc/Makefile
                  src/lib/datasrc/tests/Makefile
                  src/lib/xfr/Makefile
                ])
 AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
+           src/bin/cfgmgr/tests/b10-cfgmgr_test.py
            src/bin/cmdctl/cmdctl.py
            src/bin/cmdctl/run_b10-cmdctl.sh
            src/bin/cmdctl/tests/cmdctl_test
+           src/bin/cmdctl/cmdctl.spec.pre
            src/bin/xfrin/tests/xfrin_test
            src/bin/xfrin/xfrin.py
            src/bin/xfrin/xfrin.spec.pre
@@ -444,6 +458,8 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/bindctl/bindctl-source.py
            src/bin/bindctl/tests/bindctl_test
            src/bin/loadzone/run_loadzone.sh
+           src/bin/loadzone/tests/correct/correct_test.sh
+           src/bin/loadzone/tests/error/error_test.sh
            src/bin/loadzone/b10-loadzone.py
            src/bin/usermgr/run_b10-cmdctl-usermgr.sh
            src/bin/usermgr/b10-cmdctl-usermgr.py
@@ -455,6 +471,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/lib/config/tests/data_def_unittests_config.h
            src/lib/python/isc/config/tests/config_test
            src/lib/python/isc/cc/tests/cc_test
+           src/lib/python/isc/log/tests/log_test
            src/lib/dns/gen-rdatacode.py
            src/lib/python/bind10_config.py
            src/lib/dns/tests/testdata/gen-wiredata.py
@@ -470,6 +487,8 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            chmod +x src/bin/bindctl/tests/bindctl_test
            chmod +x src/bin/bindctl/run_bindctl.sh
            chmod +x src/bin/loadzone/run_loadzone.sh
+           chmod +x src/bin/loadzone/tests/correct/correct_test.sh
+           chmod +x src/bin/loadzone/tests/error/error_test.sh
            chmod +x src/bin/usermgr/run_b10-cmdctl-usermgr.sh
            chmod +x src/bin/msgq/run_msgq.sh
            chmod +x src/bin/msgq/tests/msgq_test
@@ -497,8 +516,10 @@ Flags:
   CXXFLAGS:      $CXXFLAGS
   B10_CXXFLAGS:  $B10_CXXFLAGS
 dnl includes too
-  Boost Python:  $BOOST_PYTHON_LIB
-  SQLite:	 $SQLITE_CFLAGS
+  Python:        ${PYTHON_INCLUDES}
+                 ${PYTHON_LDFLAGS}
+                 ${PYTHON_LIB}
+  SQLite:        $SQLITE_CFLAGS
                  $SQLITE_LIBS
 
 Features:

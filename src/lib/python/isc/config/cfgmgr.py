@@ -22,10 +22,10 @@
 import isc
 import signal
 import ast
-import pprint
 import os
 import copy
 import tempfile
+import json
 from isc.cc import data
 from isc.config import ccsession
 
@@ -67,7 +67,7 @@ class ConfigManagerData:
         config = ConfigManagerData(data_path, file_name)
         try:
             file = open(config.db_filename, 'r')
-            file_config = ast.literal_eval(file.read())
+            file_config = json.loads(file.read())
             if 'version' in file_config and \
                 file_config['version'] == ConfigManagerData.CONFIG_VERSION:
                 config.data = file_config
@@ -93,9 +93,7 @@ class ConfigManagerData:
                                                dir=self.data_path,
                                                delete=False)
             filename = file.name
-            pp = pprint.PrettyPrinter(indent=4)
-            s = pp.pformat(self.data)
-            file.write(s)
+            file.write(json.dumps(self.data))
             file.write("\n")
             file.close()
             if output_file_name:
@@ -347,7 +345,7 @@ class ConfigManager:
         # passes both specification and commands at once
         spec_update = ccsession.create_command(ccsession.COMMAND_MODULE_SPECIFICATION_UPDATE,
                                                [ spec.get_module_name(), spec.get_full_spec() ])
-        self.cc.group_sendmsg(spec_update, "Cmd-Ctrld")
+        self.cc.group_sendmsg(spec_update, "Cmdctl")
         return ccsession.create_answer(0)
 
     def handle_msg(self, msg):

@@ -7,7 +7,7 @@ CLEANFILES = *.gcno *.gcda
 
 bin_PROGRAMS = host
 host_SOURCES = host.cc
-host_LDADD = $(top_builddir)/src/lib/dns/.libs/libdns.a
+host_LDADD = $(top_builddir)/src/lib/dns/.libs/libdns++.a
 host_LDADD += $(top_builddir)/src/lib/exceptions/.libs/libexceptions.a
 
 #man_MANS = host.1

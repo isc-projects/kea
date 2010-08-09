@@ -41,6 +41,7 @@ import csv
 import random
 import time
 import signal
+from isc.config import ccsession
 from optparse import OptionParser, OptionValueError
 from hashlib import sha1
 try:
@@ -50,29 +51,27 @@ except ImportError:
 
 __version__ = 'BIND10'
 URL_PATTERN = re.compile('/([\w]+)(?:/([\w]+))?/?')
+CONFIG_DATA_URL = 'config_data'
+MODULE_SPEC_URL = 'module_spec'
 
-# If B10_FROM_SOURCE is set in the environment, we use data files
+
+# If B10_FROM_BUILD is set in the environment, we use data files
 # from a directory relative to that, otherwise we use the ones
 # installed on the system
-if "B10_FROM_SOURCE" in os.environ:
-    SPECFILE_PATH = os.environ["B10_FROM_SOURCE"] + "/src/bin/cmdctl"
-    SYSCONF_PATH = os.environ["B10_FROM_SOURCE"] + "/src/bin/cmdctl"
+if "B10_FROM_BUILD" in os.environ:
+    SPECFILE_PATH = os.environ["B10_FROM_BUILD"] + "/src/bin/cmdctl"
 else:
     PREFIX = "@prefix@"
     DATAROOTDIR = "@datarootdir@"
     SPECFILE_PATH = "@datadir@/@PACKAGE@".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
-    SYSCONF_PATH = "@sysconfdir@/@PACKAGE@".replace("${prefix}", PREFIX)
 SPECFILE_LOCATION = SPECFILE_PATH + os.sep + "cmdctl.spec"
-USER_INFO_FILE = SYSCONF_PATH + os.sep + "cmdctl-accounts.csv"
-PRIVATE_KEY_FILE = SYSCONF_PATH + os.sep + "cmdctl-keyfile.pem"
-CERTIFICATE_FILE = SYSCONF_PATH + os.sep + "cmdctl-certfile.pem"
-        
+
+class CmdctlException(Exception):
+    pass
+       
 class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     '''https connection request handler.
-    Currently only GET and POST are supported.
-
-    '''
-
+    Currently only GET and POST are supported.  '''
     def do_GET(self):
         '''The client should send its session id in header with 
         the name 'cookie'
@@ -167,13 +166,13 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         user_name = user_info.get('username')
         if not user_name:
             return False, ["need user name"]
-        if not self.server.user_infos.get(user_name):
+        if not self.server.get_user_info(user_name):
             return False, ["user doesn't exist"]
 
         user_pwd = user_info.get('password')
         if not user_pwd:
             return False, ["need password"]
-        local_info = self.server.user_infos.get(user_name)
+        local_info = self.server.get_user_info(user_name)
         pwd_hashval = sha1((user_pwd + local_info[1]).encode())
         if pwd_hashval.hexdigest() != local_info[0]:
             return False, ["password doesn't match"] 
@@ -197,9 +196,6 @@ class SecureHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                 pass
 
         rcode, reply = self.server.send_command_to_module(mod, cmd, param)
-        if self.server._verbose:
-            print('[b10-cmdctl] Finish send message \'%s\' to module %s' % (cmd, mod))
-
         ret = http.client.OK
         if rcode != 0:
             ret = http.client.BAD_REQUEST
@@ -214,65 +210,167 @@ class CommandControl():
     '''Get all modules' config data/specification from configmanager.
     receive command from client and resend it to proper module.
     '''
-
-    def __init__(self, verbose = False):
+    def __init__(self, httpserver, verbose = False):
+        ''' httpserver: the http server which use the object of
+        CommandControl to communicate with other modules. '''
         self._verbose = verbose
-        self.cc = isc.cc.Session()
-        self.cc.group_subscribe('Cmd-Ctrld')
-        self.module_spec = self.get_module_specification()
-        self.config_data = self.get_config_data()
+        self._httpserver = httpserver
+        self._lock = threading.Lock()
+        self._setup_session()
+        self.modules_spec = self._get_modules_specification()
+        self._config_data = self._get_config_data_from_config_manager()
+        self._serving = True
+        self._start_msg_handle_thread()
 
+    def _setup_session(self):
+        '''Setup the session for receving the commands
+        sent from other modules. There are two sessions 
+        for cmdctl, one(self.module_cc) is used for receiving 
+        commands sent from other modules, another one (self._cc) 
+        is used to send the command from Bindctl or other tools 
+        to proper modules.''' 
+        self._cc = isc.cc.Session()
+        self._module_cc = isc.config.ModuleCCSession(SPECFILE_LOCATION,
+                                              self.config_handler,
+                                              self.command_handler)
+        self._module_name = self._module_cc.get_module_spec().get_module_name()
+        self._cmdctl_config_data = self._module_cc.get_full_config()
+        self._module_cc.start()
+    
+    def _accounts_file_check(self, filepath):
+        ''' Check whether the accounts file is valid, each row
+        should be a list with 3 items.'''
+        csvfile = None
+        errstr = None
+        try:
+            csvfile = open(filepath)
+            reader = csv.reader(csvfile)
+            for row in reader:
+                a = (row[0], row[1], row[2])
+        except (IOError, IndexError) as e:
+            errstr = 'Invalid accounts file: ' + str(e)
+        finally:
+            if csvfile:
+                csvfile.close()
+
+        return errstr
+
+    def _config_data_check(self, new_config):
+        ''' Check whether the new config data is valid or
+        not. '''
+        errstr = None
+        for key in new_config:
+            if key == 'version':
+                continue
+            elif key in ['key_file', 'cert_file']:
+                #TODO, only check whether the file exist,
+                # further check need to be done: eg. whether
+                # the private/certificate is valid.
+                path = new_config[key]
+                if not os.path.exists(path):
+                    errstr = "the file doesn't exist: " + path
+            elif key == 'accounts_file':
+                errstr = self._accounts_file_check(new_config[key])
+            else:
+                errstr = 'unknown config item: ' + key
+            
+            if errstr != None:
+                self.log_info('Fail to apply config data, ' + errstr) 
+                return ccsession.create_answer(1, errstr)
+
+        return ccsession.create_answer(0)
+
+    def config_handler(self, new_config):
+        answer = self._config_data_check(new_config)
+        rcode, val = ccsession.parse_answer(answer)
+        if rcode != 0:
+            return answer
+
+        with self._lock:
+            for key in new_config:
+                if key in self._cmdctl_config_data:
+                    self._cmdctl_config_data[key] = new_config[key]
+        return answer
+
+    def command_handler(self, command, args):
+        answer = ccsession.create_answer(0)
+        if command == ccsession.COMMAND_MODULE_SPECIFICATION_UPDATE:
+            with self._lock:
+                self.modules_spec[args[0]] = args[1]
+
+        elif command == ccsession.COMMAND_SHUTDOWN:
+            #When cmdctl get 'shutdown' command from boss, 
+            #shutdown the outer httpserver.
+            self._httpserver.shutdown()
+            self._serving = False
+
+        elif command == 'print_settings':
+            answer = ccsession.create_answer(0, self._cmdctl_config_data)
+        else:
+            answer = ccsession.create_answer(1, 'unknown command: ' + command)
+
+        return answer
+
+    def _start_msg_handle_thread(self):
+        ''' Start one thread to handle received message from msgq.'''
+        td = threading.Thread(target=self._handle_msg_from_msgq)
+        td.daemon = True
+        td.start()
+
+    def _handle_msg_from_msgq(self):
+        '''Process all the received commands with module session. '''
+        while self._serving:
+            self._module_cc.check_command() 
+ 
     def _parse_command_result(self, rcode, reply):
         '''Ignore the error reason when command rcode isn't 0, '''
         if rcode != 0:
             return {}
         return reply
 
-    def get_config_data(self):
+    def _get_config_data_from_config_manager(self):
         '''Get config data for all modules from configmanager '''
-        rcode, reply = self.send_command('ConfigManager', isc.config.ccsession.COMMAND_GET_CONFIG)
+        rcode, reply = self.send_command('ConfigManager', ccsession.COMMAND_GET_CONFIG)
         return self._parse_command_result(rcode, reply)
 
-
-    def update_config_data(self, module_name, command_name):
+    def _update_config_data(self, module_name, command_name):
         '''Get lastest config data for all modules from configmanager '''
-        if module_name == 'ConfigManager' and command_name == isc.config.ccsession.COMMAND_SET_CONFIG:
-            self.config_data = self.get_config_data()
+        if module_name == 'ConfigManager' and command_name == ccsession.COMMAND_SET_CONFIG:
+            data = self._get_config_data_from_config_manager()
+            with self._lock:
+                self._config_data = data
 
-    def get_module_specification(self):
-        rcode, reply = self.send_command('ConfigManager', isc.config.ccsession.COMMAND_GET_MODULE_SPEC)
+    def get_config_data(self):
+        with self._lock:
+            data = self._config_data
+        return data
+
+    def get_modules_spec(self):
+        with self._lock:
+            spec = self.modules_spec
+        return spec
+
+    def _get_modules_specification(self):
+        '''Get all the modules' specification files. '''
+        rcode, reply = self.send_command('ConfigManager', ccsession.COMMAND_GET_MODULE_SPEC)
         return self._parse_command_result(rcode, reply)
 
-    def handle_recv_msg(self):
-        '''Handle received message, if 'shutdown' is received, return False'''
-        (message, env) = self.cc.group_recvmsg(True)
-        command, arg = isc.config.ccsession.parse_command(message)
-        while command:
-            if command == isc.config.ccsession.COMMAND_MODULE_SPECIFICATION_UPDATE:
-                self.module_spec[arg[0]] = arg[1]
-            elif command == isc.config.ccsession.COMMAND_SHUTDOWN:
-                return False
-            (message, env) = self.cc.group_recvmsg(True)
-            command, arg = isc.config.ccsession.parse_command(message)
-        
-        return True
-    
     def send_command_with_check(self, module_name, command_name, params = None):
         '''Before send the command to modules, check if module_name, command_name
         parameters are legal according the spec file of the module.
-        Return rcode, dict.
+        Return rcode, dict. TODO, the rcode should be defined properly.
         rcode = 0: dict is the correct returned value.
         rcode > 0: dict is : { 'error' : 'error reason' }
         '''
-
         # core module ConfigManager does not have a specification file
         if module_name == 'ConfigManager':
             return self.send_command(module_name, command_name, params)
 
-        if module_name not in self.module_spec.keys():
+        specs = self.get_modules_spec()
+        if module_name not in specs.keys():
             return 1, {'error' : 'unknown module'}
        
-        spec_obj = isc.config.module_spec.ModuleSpec(self.module_spec[module_name], False)
+        spec_obj = isc.config.module_spec.ModuleSpec(specs[module_name], False)
         errors = []
         if not spec_obj.validate_command(command_name, params, errors):
             return 1, {'error': errors[0]}
@@ -281,123 +379,161 @@ class CommandControl():
 
     def send_command(self, module_name, command_name, params = None):
         '''Send the command from bindctl to proper module. '''
-        
-        errstr = 'no error'
+        errstr = 'unknown error'
         if self._verbose:
-            self.log_info('[b10-cmdctl] send command \'%s\' to %s\n' %(command_name, module_name))
-        try:
-            msg = isc.config.ccsession.create_command(command_name, params)
-            seq = self.cc.group_sendmsg(msg, module_name)
+            self.log_info("Begin send command '%s' to module '%s'" %(command_name, module_name))
+
+        if module_name == self._module_name:
+            # Process the command sent to cmdctl directly. 
+            answer = self.command_handler(command_name, params)
+        else:
+            msg = ccsession.create_command(command_name, params)
+            seq = self._cc.group_sendmsg(msg, module_name)
             #TODO, it may be blocked, msqg need to add a new interface waiting in timeout.
-            answer, env = self.cc.group_recvmsg(False, seq)
-            if answer:
-                try:
-                    rcode, arg = isc.config.ccsession.parse_answer(answer)
-                    if rcode == 0:
-                        self.update_config_data(module_name, command_name)
-                        if arg != None:
-                            return rcode, arg
-                        else:
-                            return rcode, {}
+            answer, env = self._cc.group_recvmsg(False, seq)
+
+        if self._verbose:
+            self.log_info("Finish send command '%s' to module '%s'" % (command_name, module_name))
+
+        if answer:
+            try:
+                rcode, arg = ccsession.parse_answer(answer)
+                if rcode == 0:
+                    self._update_config_data(module_name, command_name)
+                    if arg != None:
+                        return rcode, arg
                     else:
-                        # todo: exception
-                        errstr = str(answer['result'][1])
-                except isc.config.ccsession.ModuleCCSessionError as mcse:
-                    errstr = str("Error in ccsession answer:") + str(mcse)
-                    self.log_info(answer)
-        except Exception as e:
-            errstr = str(e)
-            self.log_info('\'%s\':[b10-cmdctl] fail send command \'%s\' to %s\n' % (e, command_name, module_name))
+                        return rcode, {}
+                else:
+                    # TODO: exception
+                    errstr = str(answer['result'][1])
+            except ccsession.ModuleCCSessionError as mcse:
+                errstr = str("Error in ccsession answer:") + str(mcse)
+                self.log_info(errstr)
         
         return 1, {'error': errstr}
     
     def log_info(self, msg):
         sys.stdout.write("[b10-cmdctl] %s\n" % str(msg))
 
+    def get_cmdctl_config_data(self):
+        ''' If running in source code tree, use keyfile, certificate
+        and user accounts file in source code. '''
+        if "B10_FROM_SOURCE" in os.environ:
+            sysconf_path = os.environ["B10_FROM_SOURCE"] + "/src/bin/cmdctl/"
+            accountsfile  = sysconf_path + "cmdctl-accounts.csv"
+            keyfile = sysconf_path + "cmdctl-keyfile.pem"
+            certfile = sysconf_path + "cmdctl-certfile.pem"
+            return (keyfile, certfile, accountsfile)
+
+        with self._lock:
+            keyfile = self._cmdctl_config_data.get('key_file')
+            certfile = self._cmdctl_config_data.get('cert_file')
+            accountsfile = self._cmdctl_config_data.get('accounts_file')
+
+        return (keyfile, certfile, accountsfile)
+
 class SecureHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
     '''Make the server address can be reused.'''
     allow_reuse_address = True
 
-    def __init__(self, server_address, RequestHandlerClass, idle_timeout = 1200, verbose = False):
+    def __init__(self, server_address, RequestHandlerClass, 
+                 CommandControlClass,
+                 idle_timeout = 1200, verbose = False):
         '''idle_timeout: the max idle time for login'''
-        http.server.HTTPServer.__init__(self, server_address, RequestHandlerClass)
+        try:
+            http.server.HTTPServer.__init__(self, server_address, RequestHandlerClass)
+        except socket.error as err:
+            raise CmdctlException("Error creating server, because: %s \n" % str(err))
+
         self.user_sessions = {}
         self.idle_timeout = idle_timeout
-        self.cmdctrl = CommandControl()
-        self.__is_shut_down = threading.Event()
-        self.__serving = False
+        self.cmdctl = CommandControlClass(self, verbose)
         self._verbose = verbose
-        self.user_infos = {}
-        self._read_user_info()
+        self._lock = threading.Lock()
+        self._user_infos = {}
+        self._accounts_file = None
 
-    def _read_user_info(self):
-        '''Read all user's name and its' password from csv file.'''
-        csvfile = None
-        try:
-            csvfile = open(USER_INFO_FILE)
-            reader = csv.reader(csvfile)
-            for row in reader:
-                self.user_infos[row[0]] = [row[1], row[2]]
-        except Exception as e:
-            self.log_info('[b10-cmdctl] Fail to read user information :\'%s\'\n' % e)                
-        finally:
-            if csvfile:
-                csvfile.close()
-        
+    def _create_user_info(self, accounts_file):
+        '''Read all user's name and its' salt, hashed password 
+        from accounts file.'''
+        if (self._accounts_file == accounts_file) and (len(self._user_infos) > 0): 
+            return
+
+        with self._lock:
+            self._user_infos = {}
+            csvfile = None
+            try:
+                csvfile = open(accounts_file)
+                reader = csv.reader(csvfile)
+                for row in reader:
+                    self._user_infos[row[0]] = [row[1], row[2]]
+            except (IOError, IndexError) as e:
+                self.log_info("Fail to read user database, %s" % e)                
+            finally:
+                if csvfile:
+                    csvfile.close()
+
+        self._accounts_file = accounts_file
+        if len(self._user_infos) == 0:
+            self.log_info("Fail to get user information, will deny any user")                
+         
+    def get_user_info(self, username):
+        '''Get user's salt and hashed string. If the user
+        doesn't exist, return None, or else, the list 
+        [salt, hashed password] will be returned.'''
+        with self._lock:
+            info = self._user_infos.get(username)
+        return info
+
     def save_user_session_id(self, session_id):
-        # Record user's id and login time.
+        ''' Record user's id and login time. '''
         self.user_sessions[session_id] = time.time()
         
-    def get_request(self):
-        '''Get client request socket and wrap it in SSL context. '''
-        newsocket, fromaddr = self.socket.accept()
+    def _check_key_and_cert(self, key, cert):
+        # TODO, check the content of key/certificate file 
+        if not os.path.exists(key):
+            raise CmdctlException("key file '%s' doesn't exist " % key)
+
+        if not os.path.exists(cert):
+            raise CmdctlException("certificate file '%s' doesn't exist " % cert)
+
+    def _wrap_socket_in_ssl_context(self, sock, key, cert):
         try:
-            connstream = ssl.wrap_socket(newsocket,
-                                     server_side = True,
-                                     certfile = CERTIFICATE_FILE,
-                                     keyfile = PRIVATE_KEY_FILE,
-                                     ssl_version = ssl.PROTOCOL_SSLv23)
-            return (connstream, fromaddr)
-        except ssl.SSLError as e :
-            self.log_info('[b10-cmdctl] deny client\'s invalid connection:\'%s\'\n' % e)
-            self.close_request(newsocket)
+            self._check_key_and_cert(key, cert)
+            ssl_sock = ssl.wrap_socket(sock,
+                                      server_side = True,
+                                      certfile = cert,
+                                      keyfile = key,
+                                      ssl_version = ssl.PROTOCOL_SSLv23)
+            return ssl_sock 
+        except (ssl.SSLError, CmdctlException) as err :
+            self.log_info("Deny client's connection because %s" % str(err))
+            self.close_request(sock)
             # raise socket error to finish the request
             raise socket.error
-            
+
+    def get_request(self):
+        '''Get client request socket and wrap it in SSL context. '''
+        key, cert, account_file = self.cmdctl.get_cmdctl_config_data()
+        self._create_user_info(account_file)
+        newsocket, fromaddr = self.socket.accept()
+        ssl_sock = self._wrap_socket_in_ssl_context(newsocket, key, cert)
+        return (ssl_sock, fromaddr)
 
     def get_reply_data_for_GET(self, id, module):
         '''Currently only support the following three url GET request '''
         rcode, reply = http.client.NO_CONTENT, []        
         if not module:
-            if id == 'config_data':
-               rcode, reply = http.client.OK, self.cmdctrl.config_data
-            elif id == 'module_spec':
-                rcode, reply = http.client.OK, self.cmdctrl.module_spec
+            if id == CONFIG_DATA_URL:
+                rcode, reply = http.client.OK, self.cmdctl.get_config_data()
+            elif id == MODULE_SPEC_URL:
+                rcode, reply = http.client.OK, self.cmdctl.get_modules_spec()
         
         return rcode, reply 
 
-        
-    def serve_forever(self, poll_interval = 0.5):
-        '''Start cmdctl as one tcp server. '''
-        self.__serving = True
-        self.__is_shut_down.clear()
-        while self.__serving:
-            if not self.cmdctrl.handle_recv_msg():
-                break
-
-            r, w, e = select.select([self], [], [], poll_interval)
-            if r:
-                self._handle_request_noblock()
-
-        self.__is_shut_down.set()
-    
-    def shutdown(self):
-        self.__serving = False
-        self.__is_shut_down.wait()
-
-
     def send_command_to_module(self, module_name, command_name, params):
-        return self.cmdctrl.send_command_with_check(module_name, command_name, params)
+        return self.cmdctl.send_command_with_check(module_name, command_name, params)
    
     def log_info(self, msg):
         sys.stdout.write("[b10-cmdctl] %s\n" % str(msg))
@@ -417,7 +553,8 @@ def run(addr = 'localhost', port = 8080, idle_timeout = 1200, verbose = False):
     ''' Start cmdctl as one https server. '''
     if verbose:
         sys.stdout.write("[b10-cmdctl] starting on %s port:%d\n" %(addr, port))
-    httpd = SecureHTTPServer((addr, port), SecureHTTPRequestHandler, idle_timeout, verbose)
+    httpd = SecureHTTPServer((addr, port), SecureHTTPRequestHandler, 
+                             CommandControl, idle_timeout, verbose)
     httpd.serve_forever()
 
 def check_port(option, opt_str, value, parser):
@@ -453,22 +590,24 @@ def set_cmd_options(parser):
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true", default=False,
             help="display more about what is going on")
 
-
 if __name__ == '__main__':
+    set_signal_handler()
+    parser = OptionParser(version = __version__)
+    set_cmd_options(parser)
+    (options, args) = parser.parse_args()
+    result = 1                  # in case of failure
     try:
-        parser = OptionParser(version = __version__)
-        set_cmd_options(parser)
-        (options, args) = parser.parse_args()
-        set_signal_handler()
         run(options.addr, options.port, options.idle_timeout, options.verbose)
-    except isc.cc.SessionError as se:
+        result = 0
+    except isc.cc.SessionError as err:
         sys.stderr.write("[b10-cmdctl] Error creating b10-cmdctl, "
-                "is the command channel daemon running?\n")        
+                         "is the command channel daemon running?\n")        
     except KeyboardInterrupt:
-        sys.stderr.write("[b10-cmdctl] exit http server\n")
+        sys.stderr.write("[b10-cmdctl] exit from Cmdctl\n")
+    except CmdctlException as err:
+        sys.stderr.write("[b10-cmdctl] " + str(err) + "\n")
 
     if httpd:
         httpd.shutdown()
 
-
-
+    sys.exit(result)

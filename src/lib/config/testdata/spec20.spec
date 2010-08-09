@@ -8,7 +8,7 @@
         "command_args": [ {
           "item_name": "message",
           "item_type": "somethingbad",
-          "item_optional": False,
+          "item_optional": false,
           "item_default": ""
         } ]
       }

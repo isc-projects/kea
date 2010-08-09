@@ -21,43 +21,44 @@
 
 #include <cc/data.h>
 
-#include "query.h"
+#include <datasrc/query.h>
 
 using namespace isc::dns;
 
 namespace isc {
 namespace datasrc {
 
-QueryTask::QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
+QueryTask::QueryTask(const Query& qry, const isc::dns::Name& n,
                      const isc::dns::RRType& t, const isc::dns::Section& sect) :
-    qname(n), qclass(c), qtype(t), section(sect), op(AUTH_QUERY),
-    state(GETANSWER), flags(0)
+    q(qry), qname(n), qclass(qry.qclass()), qtype(t), section(sect),
+    op(AUTH_QUERY), state(GETANSWER), flags(0)
 {}
 
-QueryTask::QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
+QueryTask::QueryTask(const Query& qry, const isc::dns::Name& n, 
                      const isc::dns::RRType& t, const isc::dns::Section& sect,
                      const Op o) :
-    qname(n), qclass(c), qtype(t), section(sect), op(o), state(GETANSWER),
-    flags(0)
+    q(qry), qname(n), qclass(qry.qclass()), qtype(t), section(sect), op(o),
+    state(GETANSWER), flags(0)
 {}
 
-QueryTask::QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
+QueryTask::QueryTask(const Query& qry, const isc::dns::Name& n,
                      const isc::dns::RRType& t, const isc::dns::Section& sect,
                      const State st) :
-    qname(n), qclass(c), qtype(t), section(sect), op(AUTH_QUERY), state(st),
-    flags(0)
+    q(qry), qname(n), qclass(qry.qclass()), qtype(t), section(sect),
+    op(AUTH_QUERY), state(st), flags(0)
 {}
 
-QueryTask::QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
+QueryTask::QueryTask(const Query& qry, const isc::dns::Name& n,
                      const isc::dns::RRType& t, const isc::dns::Section& sect,
                      const Op o, const State st) :
-    qname(n), qclass(c), qtype(t), section(sect), op(o), state(st), flags(0) 
+    q(qry), qname(n), qclass(qry.qclass()), qtype(t), section(sect), op(o),
+    state(st), flags(0) 
 {}
 
-QueryTask::QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
+QueryTask::QueryTask(const Query& qry, const isc::dns::Name& n, 
                      const isc::dns::RRType& t, const Op o) :
-    qname(n), qclass(c), qtype(t), section(Section::ANSWER()), op(o),
-    state(GETANSWER), flags(0)
+    q(qry), qname(n), qclass(qry.qclass()), qtype(t),
+    section(Section::ANSWER()), op(o), state(GETANSWER), flags(0)
 {
     if (op != SIMPLE_QUERY) {
         isc_throw(Unexpected, "invalid constructor for this task operation");
@@ -65,21 +66,20 @@ QueryTask::QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
 }
 
 // A referral query doesn't need to specify section, state, or type.
-QueryTask::QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
-                     const Op o) :
-    qname(n), qclass(c), qtype(RRType::ANY()), section(Section::ANSWER()),
-    op(o), state(GETANSWER), flags(0)
+QueryTask::QueryTask(const Query& qry, const isc::dns::Name& n, const Op o) :
+    q(qry), qname(n), qclass(qry.qclass()), qtype(RRType::ANY()),
+    section(Section::ANSWER()), op(o), state(GETANSWER), flags(0)
 {
     if (op != REF_QUERY) {
         isc_throw(Unexpected, "invalid constructor for this task operation");
     }
 }
 
-QueryTask::QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
+QueryTask::QueryTask(const Query& qry, const isc::dns::Name& n,
                      const isc::dns::Section& sect, const Op o,
                      const State st) :
-        qname(n), qclass(c), qtype(RRType::ANY()), section(sect), op(o),
-        state(st), flags(0)
+        q(qry), qname(n), qclass(qry.qclass()), qtype(RRType::ANY()),
+        section(sect), op(o), state(st), flags(0)
 {
     if (op != GLUE_QUERY && op != NOGLUE_QUERY) {
         isc_throw(Unexpected, "invalid constructor for this task operation");
@@ -88,9 +88,9 @@ QueryTask::QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
 
 QueryTask::~QueryTask() {}
 
-Query::Query(Message& m, bool dnssec) :
+Query::Query(Message& m, HotCache& c, bool dnssec) :
     status_(PENDING), qname_(NULL), qclass_(NULL), qtype_(NULL),
-    message_(&m), want_additional_(true), want_dnssec_(dnssec)
+    cache_(&c), message_(&m), want_additional_(true), want_dnssec_(dnssec)
 {
     // Check message formatting
     if (message_->getRRCount(Section::QUESTION()) != 1) {
@@ -104,7 +104,7 @@ Query::Query(Message& m, bool dnssec) :
     qtype_ = &question->getType();
     restarts_ = 0;
 
-    querytasks_.push(QueryTaskPtr(new QueryTask(*qname_, *qclass_, *qtype_,
+    querytasks_.push(QueryTaskPtr(new QueryTask(*this, *qname_, *qtype_,
                                                 Section::ANSWER())));
 }
 

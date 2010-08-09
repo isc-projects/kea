@@ -1,16 +1,189 @@
-  54.   [bug]      zhanglikun
+  80.	[bug]		jelte
+	bindctl no longer accepts configuration changes for unknown or
+	non-running modules (for the latter, this is until we have a
+	way to verify those options, at which point it'll be allowed
+	again).
+	(Trac #99, r2657)
+
+  79.	[func]		feng, jinmei
+	Refactored the ASIO link interfaces to move incoming XFR and
+	NOTIFY processing to the auth server class.  Wrapper classes for
+	ASIO specific concepts were also provided, so that other BIND 10
+	modules can (eventually) use the interface without including the
+	ASIO header file directly.  On top of these changes, AXFR and
+	NOTIFY processing was massively improved in terms of message
+	validation and protocol conformance.  Detailed tests were provided
+	to confirm the behavior.
+	Note: Right now, NOTIFY doesn't actually trigger subsequent zone
+	transfer due to security reasons. (Trac #221, r2565)
+
+  78.	[bug]		jinmei
+	lib/dns: Fixed miscellaneous bugs in the base32 (hex) and hex
+	(base16) implementation, including incorrect padding handling,
+	parser failure in decoding with a SunStudio build, missing
+	validation on the length of encoded hex string.  Test cases were
+	more detailed to identify these bugs and confirm the fix.  Also
+	renamed the incorrect term of "base32" to "base32hex".  This
+	changed the API, but they are not intended to be used outside
+	libdns++, so we don't consider it a backward incompatible change.
+	(Trac #256, r2549)
+
+  77.	[func]		zhanglikun
+	Make error message be more friendly when running cmdctl and it's 
+	already running(listening on same port)(Trac #277, r2540)
+
+  76.	[bug]		jelte
+	Fixed a bug in the handling of 'remote' config modules (i.e.
+	modules that peek at the configuration of other modules), where
+	they answered 'unknown command' to commands for those other
+	modules. (Trac #278, r2506)
+
+  75.	[bug]		jinmei
+	Fixed a bug in the sqlite3 data source where temporary strings
+	could be referenced after destruction.  It caused various lookup
+	failures with SunStudio build. (Trac #288, r2494)
+
+  74.	[func]*		jinmei
+	Refactored the cc::Session class by introducing an abstract base
+	class.  Test code can use their own derived mock class so that
+	tests can be done without establishing a real CC session.  This
+	change also modified some public APIs, mainly in the config
+	module. (Trac #275, r2459)
+
+  73.	[bug]		jelte
+  	Fixed a bug where in bindctl, locally changed settings were
+	reset when the list of running modules is updated. (Trac #285,
+	r2452)
+
+  72.	[build]		jinmei
+	Added -R when linking python wrapper modules to libpython when
+	possible.  This helps build BIND 10 on platforms that install
+	libpython whose path is unknown to run-time loader.  NetBSD is a
+	known such platform. (Trac #148, r2427)
+
+  71.  [func]		each
+  	Add "-a" (address) option to bind10 to specify an address for
+	the auth server to listen on.
+
+  70.  [func]		each
+  	Added a hot-spot cache to libdatasrc to speed up access to
+	repeatedly-queried data and reduce the number of queries to
+	the underlying database; this should substantially improve
+	performance.  Also added a "-n" ("no cache") option to
+	bind10 and b10-auth to disable the cache if needed.
+	(Trac #192, svn r2383)
+
+bind10-devel-20100701 released on July 1, 2010
+
+  69.  [func]*		jelte
+	Added python wrappers for libdns++ (isc::dns), and libxfr. This
+	removes the dependency on Boost.Python. The wrappers don't
+	completely implement all functionality, but the high-level API
+	is wrapped, and current modules use it now.
+	(Trac #181, svn r2361)
+
+  68.  [func]		zhanglikun
+	Add options -c(--certificate-chain) to bindctl. Override class
+	HTTPSConnection to support server certificate validation.
+	Add support to cmdctl.spec file, now there are three configurable 
+	items for cmdctl: 'key_file', 'cert_file' and 'accounts_file', 
+	all of them can be changed in runtime.
+	(Trac #127, svn r2357)
+
+  67.  [func]		zhanglikun
+	Make bindctl's command parser only do minimal check.
+	Parameter value can be a sequence of non-space characters,
+	or a string surrounded by quotation marks (these marks can
+	be a part of the value string in escaped form). Make error
+	message be more friendly. (If there is some error in
+	parameter's value, the parameter name will be provided).
+	Refactor function login_to_cmdctl() in class BindCmdInterpreter:
+	avoid using Exception to catch all exceptions.
+	(Trac #220, svn r2356)
+
+  66.  [bug]		each
+	Check for duplicate RRsets before inserting data into a message
+	section; this, among other things, will prevent multiple copies
+	of the same CNAME from showing up when there's a loop.  (Trac #69,
+	svn r2350)
+    
+  65.  [func]		shentingting
+	Various loadzone improvements: allow optional comment for
+	$TTL, allow optional origin and comment for $INCLUDE, allow
+	optional comment for $ORIGIN, support BIND9 extension of
+	time units for TTLs, and fix bug to not use class as part
+	of label name when records don't have a label but do have
+	a class.  Added verbose options to exactly what is happening
+	with loadzone.  Added loadzone test suite of different file
+	formats to load.
+	(Trac #197, #199, #244, #161, #198, #174, #175, svn r2340)
+
+  64.  [func]		jerry
+	Added python logging framework. It is for testing and
+	experimenting with logging ideas. Currently, it supports
+	three channels (file, syslog and stderr) and five levels
+	(debug, info, warning, error and critical).
+	(Trac #176, svn r2338)
+
+  63.  [func]		shane
+	Added initial support for setuid(), using the "-u" flag. This will
+	be replaced in the future, but for now provides a reasonable 
+	starting point.
+	(Trac #180, svn r2330)
+
+  62.  [func]		jelte
+	bin/xfrin: Use the database_file as configured in Auth to transfers
+	bin/xfrout: Use the database_file as configured in Auth to transfers
+
+  61.  [bug]		jelte
+	bin/auth: Enable b10-auth to be launched in source tree
+	(i.e. use a zone database file relative to that)
+
+  60.	[build]		jinmei
+	Supported SunStudio C++ compiler.  Note: gtest still doesn't work.
+	(Trac #251, svn r2310)
+
+  59.	[bug]		jinmei
+	lib/datasrc,bin/auth: The authoritative server could return a
+	SERVFAIL with a partial answer if it finds a data source broken
+	while looking for an answer.  This can happen, for example, if a
+	zone that doesn't have an NS RR is configured and loaded as a
+	sqlite3 data source. (Trac #249, r2286)
+
+  58.	[bug]		jinmei
+	Worked around an interaction issue between ASIO and standard C++
+	library headers.  Without this ASIO didn't work: sometimes the
+	application crashes, sometimes it blocked in the ASIO module.
+	(Trac #248, svn r2187, r2190)
+
+  57.	[func]		jinmei
+	lib/datasrc: used a simpler version of Name::split (change 31) for
+	better readability.  No behavior change. (Trac #200, svn r2159)
+
+  56.	[func]*		jinmei
+	lib/dns: renamed the library name to libdns++ to avoid confusion
+	with the same name of library of BIND 9.
+	(Trac #190, svn r2153)
+
+  55.	[bug]		shane
+	bin/xfrout: xfrout exception on Ctrl-C now no longer generates
+	exception for 'Interrupted system call'
+	(Track #136, svn r2147)
+
+  54.	[bug]		zhanglikun
+>>>>>>> .merge-right.r2662
 	bin/xfrout: Enable b10-xfrout can be launched in source
 	code tree.
 	(Trac #224, svn r2103)
 
-  53.   [bug]      zhanglikun
+  53.	[bug]		zhanglikun
 	bin/bindctl: Generate a unique session ID by using 
 	socket.gethostname() instead of socket.gethostbyname(), 
 	since the latter one could make bindctl	stall if its own 
 	host name can't be resolved.
 	(Trac #228, svn r2096)
 
-  52.   [func]      zhanglikun
+  52.	[func]		zhanglikun
 	bin/xfrout: When xfrout is launched, check whether the
 	socket file is being used by one running xfrout process, 
 	if it is, exit from python.	If the file isn't a socket file 
@@ -20,7 +193,7 @@
 
 bind10-devel-20100602 released on June 2, 2010
 
-  51.   [build]         jelte
+  51.   [build]		jelte
 	lib/python: Add bind10_config.py module for paths and
 	possibly other configure-time variables. Allow some components
 	to find spec files in build tree when ran from source.
@@ -72,6 +245,10 @@ bind10-devel-20100602 released on June 2, 2010
 	Renamed libauth to libdatasrc.
 
   38.   [bug]           zhanglikun
+	Send command 'shutdown' to Xfrin and Xfrout when boss receive SIGINT.
+	Remove unused socket file when Xfrout process exits. Make sure Xfrout
+	exit by itself when it receives SIGINT, instead of being killed by the
+	signal SIGTERM or SIGKILL sent from boss.
 	(Trac #135, #151, #134, svn r1797)
 
   37.   [build]         jinmei
@@ -132,7 +309,7 @@ bind10-devel-20100421 released on April 21, 2010
 
   24.	[func]
 	Support case-sensitive name compression in MessageRenderer.
-	(svn r1704)
+	(Trac #142, svn r1704)
 
   23.	[func]
 	Support a simple name with possible compression. (svn r1701)

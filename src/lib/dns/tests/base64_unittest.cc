@@ -18,11 +18,14 @@
 #include <utility>
 #include <vector>
 
-#include <dns/base64.h>
+#include <exceptions/exceptions.h>
+
+#include <dns/util/base64.h>
 
 #include <gtest/gtest.h>
 
 using namespace std;
+using namespace isc;
 using namespace isc::dns;
 
 namespace {
@@ -54,8 +57,7 @@ decodeCheck(const string& input_string, vector<uint8_t>& output,
     EXPECT_EQ(expected, string(&output[0], &output[0] + output.size()));
 }
 
-TEST_F(Base64Test, decode)
-{
+TEST_F(Base64Test, decode) {
     for (vector<StringPair>::const_iterator it = test_sequence.begin();
          it != test_sequence.end();
          ++it) {
@@ -68,22 +70,21 @@ TEST_F(Base64Test, decode)
     decodeCheck("Zm9vYmE=\n", decoded_data, "fooba");
 
     // only up to 2 padding characters are allowed
-    EXPECT_THROW(decodeBase64("A===", decoded_data), BadBase64String);
-    EXPECT_THROW(decodeBase64("A= ==", decoded_data), BadBase64String);
+    EXPECT_THROW(decodeBase64("A===", decoded_data), BadValue);
+    EXPECT_THROW(decodeBase64("A= ==", decoded_data), BadValue);
 
     // intermediate padding isn't allowed
-    EXPECT_THROW(decodeBase64("YmE=YmE=", decoded_data), BadBase64String);
+    EXPECT_THROW(decodeBase64("YmE=YmE=", decoded_data), BadValue);
 
     // Non canonical form isn't allowed.
     // Z => 25(011001), m => 38(100110), 9 => 60(111101), so the padding
     // byte would be 0100 0000.
-    EXPECT_THROW(decodeBase64("Zm9=", decoded_data), BadBase64String);
+    EXPECT_THROW(decodeBase64("Zm9=", decoded_data), BadValue);
     // Same for the 1st padding byte.  This would make it 01100000.
-    EXPECT_THROW(decodeBase64("Zm==", decoded_data), BadBase64String);
+    EXPECT_THROW(decodeBase64("Zm==", decoded_data), BadValue);
 }
 
-TEST_F(Base64Test, encode)
-{
+TEST_F(Base64Test, encode) {
     for (vector<StringPair>::const_iterator it = test_sequence.begin();
          it != test_sequence.end();
          ++it) {

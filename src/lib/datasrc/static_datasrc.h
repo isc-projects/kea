@@ -25,7 +25,7 @@
 #ifndef __STATIC_DATA_SOURCE_H
 #define __STATIC_DATA_SOURCE_H
 
-#include "data_source.h"
+#include <datasrc/data_source.h>
 
 namespace isc {
 
@@ -39,8 +39,6 @@ class RRsetList;
 
 namespace datasrc {
 
-class Query;
-class NameMatch;
 struct StaticDataSrcImpl;
 
 class StaticDataSrc : public DataSrc {
@@ -58,8 +56,7 @@ public:
     ~StaticDataSrc();
     //@}
 
-    void findClosestEnclosure(NameMatch& match,
-                              const isc::dns::RRClass& qclass) const;
+    void findClosestEnclosure(DataSrcMatch& match) const;
 
     Result findRRset(const isc::dns::Name& qname,
                      const isc::dns::RRClass& qclass,

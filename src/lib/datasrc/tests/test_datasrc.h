@@ -48,8 +48,7 @@ public:
     ~TestDataSrc() {}
     //@}
 
-    void findClosestEnclosure(NameMatch& match,
-                              const isc::dns::RRClass& qclass) const;
+    void findClosestEnclosure(DataSrcMatch& match) const;
 
     Result findRRset(const isc::dns::Name& qname,
                      const isc::dns::RRClass& qclass,
@@ -96,6 +95,7 @@ private:
         ADDRESS,
         DELEGATION
     };
+    class RRsetMatch;
 
     void findRecords(const isc::dns::Name& name, const isc::dns::RRType& rdtype,
                      isc::dns::RRsetList& target,

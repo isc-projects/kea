@@ -48,22 +48,10 @@ public:
 // i'd like to use Exception here but we need one that is derived from
 // runtime_error (as this one is directly based on external data, and
 // i want to add some values to any static data string that is provided)
-class ParseError : public std::runtime_error {
+class JSONError : public isc::Exception {
 public:
-    ParseError(const std::string &err) : std::runtime_error(err) {};
-};
-
-///
-/// \brief A standard Data module exception that is thrown if an error
-/// is found when decoding an Element from wire format
-///
-class DecodeError : public std::exception {
-public:
-    DecodeError(std::string m = "Wire-format data is invalid") : msg(m) {}
-    ~DecodeError() throw() {}
-    const char* what() const throw() { return msg.c_str(); }
-private:
-    std::string msg;
+    JSONError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
 };
 
 ///
@@ -75,7 +63,7 @@ private:
 ///
 /// Elements should in calling functions usually be referenced through
 /// an \c ElementPtr, which can be created using the factory functions
-/// \c Element::create() and \c Element::createFromString()
+/// \c Element::create() and \c Element::fromJSON()
 ///
 /// Notes to developers: Element is a base class, implemented by a
 /// specific subclass for each type (IntElement, BoolElement, etc).
@@ -97,40 +85,40 @@ protected:
 public:
     // any is a special type used in list specifications, specifying
     // that the elements can be of any type
-    enum types { integer, real, boolean, string, list, map, any };
+    enum types { integer, real, boolean, null, string, list, map, any };
     // base class; make dtor virtual
     virtual ~Element() {};
 
     /// \return the type of this element
     int getType() { return type; };
 
-    /// \returns true if the other ElementPtr has the same type and
-    ///          value
-    virtual bool equals(ElementPtr other) = 0;
-    
-    // pure virtuals, every derived class must implement these
-
     /// Returns a string representing the Element and all its
     /// child elements; note that this is different from stringValue(),
     /// which only returns the single value of a StringElement
-    /// A MapElement will be represented as { "name1": \<value1\>, "name2", \<value2\>, etc }
-    /// A ListElement will be represented as [ \<item1\>, \<item2\>, etc ]
-    /// All other elements will be represented directly
+    ///
+    /// The resulting string will contain the Element in JSON format.
     ///
     /// \return std::string containing the string representation
-    virtual std::string str() = 0;
+    std::string str();
 
     /// Returns the wireformat for the Element and all its child
     /// elements.
     ///
-    /// \param omit_length If this is non-zero, the item length will
-    ///        be omitted from the wire format
     /// \return std::string containing the element in wire format
-    std::string toWire(int omit_length = 1);
-    virtual void toWire(std::stringstream& out, int omit_length = 1) = 0;
+    std::string toWire();
+    void toWire(std::ostream& out);
+
+    /// \name pure virtuals, every derived class must implement these
+
+    /// \returns true if the other ElementPtr has the same type and
+    ///          value
+    virtual bool equals(ElementPtr other) = 0;
+    
+    /// Converts the Element to JSON format and appends it to
+    /// the given stringstream.
+    virtual void toJSON(std::ostream& ss) = 0;
 
     /// \name Type-specific getters
-    ///
     ///
     /// \brief These functions only
     /// work on their corresponding Element type. For all other
@@ -138,7 +126,7 @@ public:
     /// If you want an exception-safe getter method, use
     /// getValue() below
     //@{
-    virtual int intValue() { isc_throw(TypeError, "intValue() called on non-integer Element"); };
+    virtual long int intValue() { isc_throw(TypeError, "intValue() called on non-integer Element"); };
     virtual double doubleValue() { isc_throw(TypeError, "doubleValue() called on non-double Element"); };
     virtual bool boolValue() { isc_throw(TypeError, "boolValue() called on non-Bool Element"); };
     virtual std::string stringValue() { isc_throw(TypeError, "stringValue() called on non-string Element"); };
@@ -155,13 +143,14 @@ public:
     /// data to the given reference and returning true
     ///
     //@{
-    virtual bool getValue(int& t);
+    virtual bool getValue(long int& t);
     virtual bool getValue(double& t);
     virtual bool getValue(bool& t);
     virtual bool getValue(std::string& t);
     virtual bool getValue(std::vector<ElementPtr>& t);
     virtual bool getValue(std::map<std::string, ElementPtr>& t);
     //@}
+
     ///
     /// \name Exception-safe setters.
     ///
@@ -170,7 +159,7 @@ public:
     /// is of the correct type
     ///
     //@{
-    virtual bool setValue(const int v);
+    virtual bool setValue(const long int v);
     virtual bool setValue(const double v);
     virtual bool setValue(const bool t);
     virtual bool setValue(const std::string& v);
@@ -191,21 +180,26 @@ public:
     /// of bounds, this function throws an std::out_of_range exception.
     /// \param i The position of the ElementPtr to return
     virtual ElementPtr get(const int i);
+
     /// Sets the ElementPtr at the given index. If the index is out
     /// of bounds, this function throws an std::out_of_range exception.
     /// \param i The position of the ElementPtr to set
     /// \param element The ElementPtr to set at the position
     virtual void set(const size_t i, ElementPtr element);
+
     /// Adds an ElementPtr to the list
     /// \param element The ElementPtr to add
     virtual void add(ElementPtr element);
+
     /// Removes the element at the given position. If the index is out
     /// of nothing happens.
     /// \param i The index of the element to remove.
     virtual void remove(const int i);
+
     /// Returns the number of elements in the list.
     virtual size_t size();
     //@}
+
     
     /// \name MapElement functions
     ///
@@ -216,16 +210,20 @@ public:
     /// \param name The key of the Element to return
     /// \return The ElementPtr at the given key
     virtual ElementPtr get(const std::string& name);
+
     /// Sets the ElementPtr at the given key
     /// \param name The key of the Element to set
     virtual void set(const std::string& name, ElementPtr element);
+
     /// Remove the ElementPtr at the given key
     /// \param name The key of the Element to remove
     virtual void remove(const std::string& name);
+
     /// Checks if there is data at the given key
     /// \param name The key of the Element to remove
     /// \return true if there is data at the key, false if not.
     virtual bool contains(const std::string& name);
+
     /// Recursively finds any data at the given identifier. The
     /// identifier is a /-separated list of names of nested maps, with
     /// the last name being the leaf that is returned.
@@ -240,12 +238,14 @@ public:
     /// null ElementPtr if it is not found, which can be checked with
     /// Element::is_null(ElementPtr e).
     virtual ElementPtr find(const std::string& identifier);
+
     /// See \c Element::find()
     /// \param identifier The identifier of the element to find
     /// \param t Reference to store the resulting ElementPtr, if found.
     /// \return true if the element was found, false if not.
     virtual bool find(const std::string& identifier, ElementPtr& t);
     //@}
+
 
     /// \name Factory functions
     
@@ -257,39 +257,52 @@ public:
     /// \brief These functions simply wrap the given data directly
     /// in an Element object, and return a reference to it, in the form
     /// of an \c ElementPtr.
-    /// If there is a memory allocation problem, these functions will
-    /// return a NULL ElementPtr, which can be checked with
-    /// Element::is_null(ElementPtr ep).
+    /// These factory functions are exception-free (unless there is
+    /// no memory available, in which case bad_alloc is raised by the
+    /// underlying system).
+    /// (Note that that is different from an NullElement, which
+    /// represents an empty value, and is created with Element::create())
     //@{
-    static ElementPtr create(const int i);
+    static ElementPtr create();
+    static ElementPtr create(const long int i);
+    static ElementPtr create(const int i) { return create(static_cast<long int>(i)); };
     static ElementPtr create(const double d);
     static ElementPtr create(const bool b);
     static ElementPtr create(const std::string& s);
     // need both std:string and char *, since c++ will match
     // bool before std::string when you pass it a char *
-    static ElementPtr create(const char *s) { return create(std::string(s)); }; 
-    static ElementPtr create(const std::vector<ElementPtr>& v);
-    static ElementPtr create(const std::map<std::string, ElementPtr>& m);
+    static ElementPtr create(const char *s) { return create(std::string(s)); };
+
+    /// \brief Creates an empty ListElement type ElementPtr.
+    static ElementPtr createList();
+
+    /// \brief Creates an empty MapElement type ElementPtr.
+    static ElementPtr createMap();
     //@}
+
 
     /// \name Compound factory functions
 
-    /// \brief These functions will parse the given string representation
-    /// of a compound element. If there is a parse error, an exception
-    /// of the type isc::data::ParseError is thrown.
+    /// \brief These functions will parse the given string (JSON)
+    /// representation  of a compound element. If there is a parse
+    /// error, an exception of the type isc::data::JSONError is thrown.
 
     //@{
-    /// Creates an Element from the given string
+    /// Creates an Element from the given JSON string
     /// \param in The string to parse the element from
     /// \return An ElementPtr that contains the element(s) specified
     /// in the given string.
-    static ElementPtr createFromString(const std::string& in);
-    /// Creates an Element from the given input stream
+    static ElementPtr fromJSON(const std::string& in);
+
+    /// Creates an Element from the given input stream containing JSON
+    /// formatted data.
+    ///
     /// \param in The string to parse the element from
     /// \return An ElementPtr that contains the element(s) specified
     /// in the given input stream.
-    static ElementPtr createFromString(std::istream& in) throw(ParseError);
-    static ElementPtr createFromString(std::istream& in, const std::string& file_name) throw(ParseError);
+    static ElementPtr fromJSON(std::istream& in) throw(JSONError);
+    static ElementPtr fromJSON(std::istream& in, const std::string& file_name) throw(JSONError);
+
     /// Creates an Element from the given input stream, where we keep
     /// track of the location in the stream for error reporting.
     ///
@@ -301,8 +314,24 @@ public:
     /// \return An ElementPtr that contains the element(s) specified
     /// in the given input stream.
     // make this one private?
-    static ElementPtr createFromString(std::istream& in, const std::string& file, int& line, int &pos) throw(ParseError);
+    static ElementPtr fromJSON(std::istream& in, const std::string& file, int& line, int &pos) throw(JSONError);
     //@}
+
+    /// \name Type name conversion functions
+
+    /// Returns the name of the given type as a string
+    ///
+    /// \param type The type to return the name of
+    /// \return The name of the type, or "unknown" if the type
+    ///         is not known.
+    static std::string typeToName(Element::types type);
+
+    /// Converts the string to the corresponding type
+    /// Throws a TypeError if the name is unknown.
+    ///
+    /// \param type_name The name to get the type of
+    /// \return the corresponding type value
+    static Element::types nameToType(const std::string& type_name);
 
     /// \name Wire format factory functions
 
@@ -313,11 +342,18 @@ public:
     //@{
     /// Creates an Element from the wire format in the given
     /// stringstream of the given length.
+    /// Since the wire format is JSON, thise is the same as
+    /// fromJSON, and could be removed.
+    ///
     /// \param in The input stringstream.
     /// \param length The length of the wireformat data in the stream
     /// \return ElementPtr with the data that is parsed.
     static ElementPtr fromWire(std::stringstream& in, int length);
+
     /// Creates an Element from the wire format in the given string
+    /// Since the wire format is JSON, thise is the same as
+    /// fromJSON, and could be removed.
+    ///
     /// \param s The input string
     /// \return ElementPtr with the data that is parsed.
     static ElementPtr fromWire(const std::string& s);
@@ -325,17 +361,16 @@ public:
 };
 
 class IntElement : public Element {
-    int i;
+    long int i;
 
 public:
-    IntElement(int v) : Element(integer), i(v) { };
-    int intValue() { return i; }
+    IntElement(long int v) : Element(integer), i(v) { };
+    long int intValue() { return i; }
     using Element::getValue;
-    bool getValue(int& t) { t = i; return true; };
+    bool getValue(long int& t) { t = i; return true; };
     using Element::setValue;
-    bool setValue(const int v) { i = v; return true; };
-    std::string str();
-    void toWire(std::stringstream& ss, int omit_length = 1);
+    bool setValue(const long int v) { i = v; return true; };
+    void toJSON(std::ostream& ss);
     bool equals(ElementPtr other);
 };
 
@@ -349,8 +384,7 @@ public:
     bool getValue(double& t) { t = d; return true; };
     using Element::setValue;
     bool setValue(const double v) { d = v; return true; };
-    std::string str();
-    void toWire(std::stringstream& ss, int omit_length = 1);
+    void toJSON(std::ostream& ss);
     bool equals(ElementPtr other);
 };
 
@@ -364,8 +398,14 @@ public:
     bool getValue(bool& t) { t = b; return true; };
     using Element::setValue;
     bool setValue(const bool v) { b = v; return true; };
-    std::string str();
-    void toWire(std::stringstream& ss, int omit_length = 1);
+    void toJSON(std::ostream& ss);
+    bool equals(ElementPtr other);
+};
+
+class NullElement : public Element {
+public:
+    NullElement() : Element(null) {};
+    void toJSON(std::ostream& ss);
     bool equals(ElementPtr other);
 };
 
@@ -379,8 +419,7 @@ public:
     bool getValue(std::string& t) { t = s; return true; };
     using Element::setValue;
     bool setValue(const std::string& v) { s = v; return true; };
-    std::string str();
-    void toWire(std::stringstream& ss, int omit_length = 1);
+    void toJSON(std::ostream& ss);
     bool equals(ElementPtr other);
 };
 
@@ -388,7 +427,7 @@ class ListElement : public Element {
     std::vector<ElementPtr> l;
 
 public:
-    ListElement(std::vector<ElementPtr> v) : Element(list), l(v) {};
+    ListElement() : Element(list), l(std::vector<ElementPtr>()) {};
     const std::vector<ElementPtr>& listValue() { return l; }
     using Element::getValue;
     bool getValue(std::vector<ElementPtr>& t) { t = l; return true; };
@@ -401,8 +440,7 @@ public:
     void add(ElementPtr e) { l.push_back(e); };
     using Element::remove;
     void remove(int i) { l.erase(l.begin() + i); };
-    std::string str();
-    void toWire(std::stringstream& ss, int omit_length = 1);
+    void toJSON(std::ostream& ss);
     size_t size() { return l.size(); }
     bool equals(ElementPtr other);
 };
@@ -411,7 +449,8 @@ class MapElement : public Element {
     std::map<std::string, ElementPtr> m;
 
 public:
-    MapElement(const std::map<std::string, ElementPtr>& v) : Element(map), m(v) {};
+    MapElement() : Element(map), m(std::map<std::string, ElementPtr>()) {};
+    // TODO: should we have direct iterators instead of exposing the std::map here?
     const std::map<std::string, ElementPtr>& mapValue() { return m; }
     using Element::getValue;
     bool getValue(std::map<std::string, ElementPtr>& t) { t = m; return true; };
@@ -420,18 +459,12 @@ public:
     using Element::get;
     ElementPtr get(const std::string& s) { if (contains(s)) { return m[s]; } else { return ElementPtr();} };
     using Element::set;
-    void set(const std::string& s, ElementPtr p) { m[s] = p; };
+    void set(const std::string& key, ElementPtr value);
     using Element::remove;
     void remove(const std::string& s) { m.erase(s); }
     bool contains(const std::string& s) { return m.find(s) != m.end(); }
-    std::string str();
-    void toWire(std::stringstream& ss, int omit_length = 1);
+    void toJSON(std::ostream& ss);
     
-    //
-    // Encode into the CC wire format.
-    //
-    void toWire(std::ostream& ss);
-
     // we should name the two finds better...
     // find the element at id; raises TypeError if one of the
     // elements at path except the one we're looking for is not a
@@ -467,8 +500,12 @@ void removeIdentical(ElementPtr a, const ElementPtr b);
 /// MapElements.
 /// Every string,value pair in other is copied into element
 /// (the ElementPtr of value is copied, this is not a new object)
-/// Unless the value is an empty ElementPtr, in which case the
-/// whole key is removed from element.
+/// Unless the value is a NullElement, in which case the
+/// key is removed from element, rather than setting the value to
+/// the given NullElement.
+/// This way, we can remove values from for instance maps with
+/// configuration data (which would then result in reverting back
+/// to the default).
 /// Raises a TypeError if either ElementPtr is not a MapElement
 void merge(ElementPtr element, const ElementPtr other);
 

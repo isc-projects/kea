@@ -1,0 +1,79 @@
+include.		300	IN	SOA	ns.include. hostmaster.include. 1 3600 1800 1814400 3600
+include.		300	IN	NS	ns.include.
+ns.include.		300	IN	A	127.0.0.1
+a.include.		300	IN	A	10.0.0.1
+a.sub.include.		300	IN	A	10.0.1.1
+b.foo.sub.include.		300	IN	A	10.0.2.2
+a.include.		300	IN	A	99.99.99.99
+b.include.		300	IN	A	10.0.0.2
+a.b.include.		300	IN	A	10.0.1.1
+b.foo.b.include.		300	IN	A	10.0.2.2
+b.include.		300	IN	A	10.0.0.99
+c.b.include.		300	IN	A	10.0.0.3
+ttl1.		3	IN	SOA	ns.ttl1. hostmaster.ttl1. 1 3600 1800 1814400 3
+ttl1.		3	IN	NS	ns.ttl1.
+ns.ttl1.		3	IN	A	10.53.0.1
+a.ttl1.		3	IN	TXT	"soa minttl 3"
+b.ttl1.		2	IN	TXT	"explicit ttl 2"
+c.ttl1.		3	IN	TXT	"soa minttl 3"
+d.ttl1.		1	IN	TXT	"default ttl 1"
+e.ttl1.		4	IN	TXT	"explicit ttl 4"
+f.ttl1.		1	IN	TXT	"default ttl 1"
+ttl2.		1	IN	SOA	ns.ttl2. hostmaster.ttl2. 1 3600 1800 1814400 3
+ttl2.		1	IN	NS	ns.ttl2.
+ns.ttl2.		1	IN	A	10.53.0.1
+a.ttl2.		1	IN	TXT	"inherited ttl 1"
+b.ttl2.		2	IN	TXT	"explicit ttl 2"
+c.ttl2.		2	IN	TXT	"inherited ttl 2"
+d.ttl2.		3	IN	TXT	"default ttl 3"
+e.ttl2.		2	IN	TXT	"explicit ttl 2"
+f.ttl2.		3	IN	TXT	"default ttl 3"
+mix1.		3	IN	SOA	ns.mix1. hostmaster.mix1. 1 3600 1800 1814400 3
+mix1.		3	IN	NS	ns.mix1.
+ns.mix1.		3	IN	A	10.53.0.1
+a.mix1.		3	IN	TXT	"soa minttl 3"
+b.mix1.		2	IN	TXT	"explicit ttl 2"
+a.mix1.		3	IN	TXT	"soa minttl 3"
+b.foo.mix1.		3	IN	TXT	"soa minttl 3"
+c.mix1.		3	IN	TXT	"soa minttl 3"
+d.mix1.		1	IN	TXT	"default ttl 1"
+e.mix1.		4	IN	TXT	"explicit ttl 4"
+f.mix1.		1	IN	TXT	"default ttl 1"
+i.mix1.		1	IN	TXT	"default ttl 1"
+g.mix1.		5	IN	TXT	"default ttl 5"
+h.mix1.		5	IN	TXT	"the include ttl 5"
+mix2.		1	IN	SOA	ns.mix2. hostmaster.mix2. 1 3600 1800 1814400 3
+mix2.		1	IN	NS	ns.mix2.
+ns.mix2.		1	IN	A	10.53.0.1
+a.mix2.		1	IN	TXT	"inherited ttl 1"
+h.mix2.		1	IN	TXT	"inherited ttl 1"
+g.mix2.		6	IN	TXT	"inherited ttl 6"
+b.mix2.		6	IN	TXT	"explicit ttl 6"
+c.mix2.		2	IN	TXT	"inherited ttl 2"
+m.mix2.		6	IN	TXT	"explicit ttl 6"
+d.mix2.		3	IN	TXT	"default ttl 3"
+e.mix2.		2	IN	TXT	"explicit ttl 2"
+n.mix2.		3	IN	TXT	"default ttl 3"
+f.mix2.		3	IN	TXT	"default ttl 3"
+g.mix2.		5	IN	TXT	"default ttl 5"
+f.mix2.		5	IN	TXT	"default ttl 5"
+ttlext.		3	IN	SOA	ns.ttlext. hostmaster.ttlext. 1 3600 1800 1814400 3
+ttlext.		3	IN	NS	ns.ttlext.
+ns.ttlext.		3	IN	A	10.53.0.1
+a.ttlext.		3	IN	TXT	"soa minttl 3"
+b.ttlext.		2	IN	TXT	"explicit ttl 2"
+c.ttlext.		3	IN	TXT	"soa minttl 3"
+d.ttlext.		600	IN	TXT	"default ttl 600"
+e.ttlext.		4	IN	TXT	"explicit ttl 4"
+f.ttlext.		600	IN	TXT	"default ttl 600"
+example.com.		60	IN	SOA	ns1.example.com. hostmaster.example.com. 1 43200 900 1814400 7200
+example.com.		20	IN	NS	ns1.example.com.
+example.com.		60	IN	NS	ns2.example.com.
+ns1.example.com.		30	IN	A	192.168.1.102
+ns1.example.com.		70	IN	NS	ns3.example.com.
+ns1.example.com.		60	IN	NS	ns4.example.com.
+ns1.example.com.		10	IN	MX	10 mail.example.com.
+ns2.example.com.		80	IN	A	1.1.1.1
+ns3.example.com.		60	IN	A	2.2.2.2
+ns4.example.com.		60	IN	A	3.3.3.3
+ns5.example.com.		90	IN	A	4.4.4.4

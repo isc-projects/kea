@@ -19,6 +19,9 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <datasrc/cache.h>
+#include <datasrc/data_source.h>
+
 #include <dns/name.h>
 #include <dns/message.h>
 #include <dns/rrtype.h>
@@ -27,8 +30,10 @@
 #include <queue>
 
 namespace isc {
-
 namespace datasrc {
+
+class Query;
+typedef boost::shared_ptr<Query> QueryPtr;
 
 // An individual task to be carried out by the query logic
 class QueryTask {
@@ -40,6 +45,9 @@ private:
 public:
     // XXX: Members are currently public, but should probably be
     // moved to private and wrapped in get() functions later.
+
+    // The \c Query that this \c QueryTask was created to service.
+    const Query& q;
 
     // The standard query tuple: qname/qclass/qtype.
     // Note that qtype is ignored in the GLUE_QUERY/NOGLUE_QUERY case.
@@ -80,7 +88,7 @@ public:
         AUTH_QUERY,
         GLUE_QUERY,
         NOGLUE_QUERY,
-        REF_QUERY,
+        REF_QUERY
     } op;
 
     // The state field indicates the state of the query; it controls
@@ -118,15 +126,14 @@ public:
     uint32_t flags;
 
     // Constructors
-    QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
+    QueryTask(const Query& q, const isc::dns::Name& n,
               const isc::dns::RRType& t, const isc::dns::Section& sect);
-    QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
-              const isc::dns::RRType& t, const isc::dns::Section& sect,
-              Op o);
-    QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
+    QueryTask(const Query& q, const isc::dns::Name& n,
+              const isc::dns::RRType& t, const isc::dns::Section& sect, Op o);
+    QueryTask(const Query& q, const isc::dns::Name& n,
               const isc::dns::RRType& t, const isc::dns::Section& sect,
               const State st);
-    QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
+    QueryTask(const Query& q, const isc::dns::Name& n,
               const isc::dns::RRType& t, const isc::dns::Section& sect,
               Op o, State st);
 
@@ -134,12 +141,12 @@ public:
     // to simplify the code.
     //
     // A simple query doesn't need to specify section or state.
-    QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
+    QueryTask(const Query& q, const isc::dns::Name& n,
               const isc::dns::RRType& t, Op o);
     // A referral query doesn't need to specify section, state, or type.
-    QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c, Op o);
+    QueryTask(const Query& q, const isc::dns::Name& n, Op o);
     // A glue (or noglue) query doesn't need to specify type.
-    QueryTask(const isc::dns::Name& n, const isc::dns::RRClass& c,
+    QueryTask(const Query& q, const isc::dns::Name& n,
               const isc::dns::Section& sect, Op o, State st);
 
     ~QueryTask();
@@ -147,9 +154,6 @@ public:
 
 typedef boost::shared_ptr<QueryTask> QueryTaskPtr;
 typedef std::queue<QueryTaskPtr> QueryTaskQueue;
-
-class Query;
-typedef boost::shared_ptr<Query> QueryPtr;
 
 // Data Source query
 class Query {
@@ -171,7 +175,7 @@ private:
     Query& operator=(const Query& source);
 public:
     // Query constructor
-    Query(isc::dns::Message& m, bool dnssec);
+    Query(isc::dns::Message& m, HotCache& c, bool dnssec);
     /// \brief The destructor.
     virtual ~Query();
     //@}
@@ -179,17 +183,17 @@ public:
     // wantAdditional() == true indicates that additional-section data
     // should be looked up while processing this query.  false indicates
     // that we're only interested in answer-section data
-    bool wantAdditional() { return want_additional_; }
+    bool wantAdditional() { return (want_additional_); }
     void setWantAdditional(bool d) { want_additional_ = d; }
 
     // wantDnssec() == true indicates that DNSSEC data should be retrieved
     // from the data source when this query is being processed
-    bool wantDnssec() const { return want_dnssec_; }
+    bool wantDnssec() const { return (want_dnssec_); }
     void setWantDnssec(bool d) { want_dnssec_ = d; }
 
-    const isc::dns::Name& qname() const { return *qname_; }
-    const isc::dns::RRClass& qclass() const { return *qclass_; }
-    const isc::dns::RRType& qtype() const { return *qtype_; }
+    const isc::dns::Name& qname() const { return (*qname_); }
+    const isc::dns::RRClass& qclass() const { return (*qclass_); }
+    const isc::dns::RRType& qtype() const { return (*qtype_); }
 
     // Note: these can't be constant member functions because they expose
     // writable 'handles' of internal member variables.  It's questionable
@@ -197,10 +201,10 @@ public:
     // corresponding members are public (which itself is not a good practice
     // but it's a different topic), but at the moment we keep them.
     // We should definitely revisit the design later.
-    isc::dns::Message& message() { return *message_; }
-    QueryTaskQueue& tasks() { return querytasks_; }
+    isc::dns::Message& message() { return (*message_); }
+    QueryTaskQueue& tasks() { return (querytasks_); }
 
-    Status status() const { return status_; }
+    Status status() const { return (status_); }
     void setStatus(Status s) { status_ = s; }
 
     // Limit CNAME chains to 16 per query, to avoid loops
@@ -211,12 +215,22 @@ public:
         return (false);
     }
 
+    void setDatasrc(DataSrc* ds) { datasrc_ = ds; }
+    DataSrc* datasrc() const { return (datasrc_); }
+
+    // \brief The query cache.  This is a static member of class \c Query;
+    // the same cache will be used by all instances.
+    HotCache& getCache() const { return (*cache_); }
+
 private:
     Status status_;
 
     const isc::dns::Name* qname_;
     const isc::dns::RRClass* qclass_;
     const isc::dns::RRType* qtype_;
+
+    HotCache* cache_;
+    DataSrc* datasrc_;
 
     isc::dns::Message* message_;
     QueryTaskQueue querytasks_;

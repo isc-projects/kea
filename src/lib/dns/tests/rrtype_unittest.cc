@@ -20,7 +20,7 @@
 #include <dns/messagerenderer.h>
 #include <dns/rrtype.h>
 
-#include "unittest_util.h"
+#include <dns/tests/unittest_util.h>
 
 using namespace std;
 using namespace isc;

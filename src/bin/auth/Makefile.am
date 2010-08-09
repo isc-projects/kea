@@ -1,8 +1,10 @@
 SUBDIRS = . tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
+AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
 AM_CPPFLAGS += -I$(top_builddir)/src/lib/cc
+AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
@@ -36,7 +38,10 @@ lib_LIBRARIES = libasio_link.a
 libasio_link_a_SOURCES = asio_link.cc asio_link.h
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # B10_CXXFLAGS)
-libasio_link_a_CXXFLAGS = $(AM_CXXFLAGS) -Wno-unused-parameter
+libasio_link_a_CXXFLAGS = $(AM_CXXFLAGS)
+if USE_GXX
+libasio_link_a_CXXFLAGS += -Wno-unused-parameter
+endif
 libasio_link_a_CPPFLAGS = $(AM_CPPFLAGS)
 
 BUILT_SOURCES = spec_config.h 
@@ -45,15 +50,13 @@ b10_auth_SOURCES = auth_srv.cc auth_srv.h
 b10_auth_SOURCES += common.h
 b10_auth_SOURCES += main.cc
 b10_auth_LDADD =  $(top_builddir)/src/lib/datasrc/.libs/libdatasrc.a
-b10_auth_LDADD += $(top_builddir)/src/lib/dns/.libs/libdns.a
+b10_auth_LDADD += $(top_builddir)/src/lib/dns/.libs/libdns++.a
 b10_auth_LDADD += $(top_builddir)/src/lib/config/.libs/libcfgclient.a
-b10_auth_LDADD += $(top_builddir)/src/lib/cc/libcc.a
+b10_auth_LDADD += $(top_builddir)/src/lib/cc/.libs/libcc.a
 b10_auth_LDADD += $(top_builddir)/src/lib/exceptions/.libs/libexceptions.a
 b10_auth_LDADD += $(top_builddir)/src/bin/auth/libasio_link.a
-b10_auth_LDADD += $(SQLITE_LIBS)
-if HAVE_BOOST_PYTHON
 b10_auth_LDADD += $(top_builddir)/src/lib/xfr/.libs/libxfr.a
-endif
+b10_auth_LDADD += $(SQLITE_LIBS)
 
 # TODO: config.h.in is wrong because doesn't honor pkgdatadir
 # and can't use @datadir@ because doesn't expand default ${prefix}

@@ -17,11 +17,11 @@
 #include <stdint.h>
 #include <string>
 
-#include <dns/sha1.h>
+#include <dns/util/sha1.h>
 
 #include <gtest/gtest.h>
 
-#include "unittest_util.h"
+#include <dns/tests/unittest_util.h>
 
 using isc::UnitTestUtil;
 using namespace std;

@@ -150,6 +150,11 @@ class ModuleCCSession(ConfigData):
 
         self._remote_module_configs = {}
 
+    def __del__(self):
+        self._session.group_unsubscribe(self._module_name, "*")
+        for module_name in self._remote_module_configs:
+            self._session.group_unsubscribe(module_name)
+
     def start(self):
         """Send the specification for this module to the configuration
            manager, and request the current non-default configuration.
@@ -178,10 +183,10 @@ class ModuleCCSession(ConfigData):
         if msg and not 'result' in msg:
             answer = None
             try:
+                module_name = env['group']
                 cmd, arg = isc.config.ccsession.parse_command(msg)
                 if cmd == COMMAND_CONFIG_UPDATE:
                     new_config = arg
-                    module_name = env['group']
                     # If the target channel was not this module
                     # it might be in the remote_module_configs
                     if module_name != self._module_name:
@@ -208,10 +213,12 @@ class ModuleCCSession(ConfigData):
                             isc.cc.data.merge(newc, new_config)
                             self.set_local_config(newc)
                 else:
-                    if self._command_handler:
-                        answer = self._command_handler(cmd, arg)
-                    else:
-                        answer = create_answer(2, self._module_name + " has no command handler")
+                    # ignore commands for 'remote' modules
+                    if module_name == self._module_name:
+                        if self._command_handler:
+                            answer = self._command_handler(cmd, arg)
+                        else:
+                            answer = create_answer(2, self._module_name + " has no command handler")
             except Exception as exc:
                 answer = create_answer(1, str(exc))
             if answer:
@@ -244,7 +251,7 @@ class ModuleCCSession(ConfigData):
         self._session.group_subscribe(module_name);
 
         # Get the current config for that module now
-        seq = self._session.group_sendmsg({ "command": [ "get_config", { "module_name": module_name } ] }, "ConfigManager")
+        seq = self._session.group_sendmsg(create_command(COMMAND_GET_CONFIG, { "module_name": module_name }), "ConfigManager")
         answer, env = self._session.group_recvmsg(False, seq)
         if answer:
             rcode, value = parse_answer(answer)
@@ -259,6 +266,7 @@ class ModuleCCSession(ConfigData):
     def remove_remote_config(self, module_name):
         """Removes the remote configuration access for this module"""
         if module_name in self._remote_module_configs:
+            self._session.group_unsubscribe(module_name)
             del self._remote_module_configs[module_name]
 
     def get_remote_config_value(self, module_name, identifier):
@@ -280,7 +288,7 @@ class ModuleCCSession(ConfigData):
     def __request_config(self):
         """Asks the configuration manager for the current configuration, and call the config handler if set.
            Raises a ModuleCCSessionError if there is no answer from the configuration manager"""
-        seq = self._session.group_sendmsg({ "command": [ "get_config", { "module_name": self._module_name } ] }, "ConfigManager")
+        seq = self._session.group_sendmsg(create_command(COMMAND_GET_CONFIG, { "module_name": self._module_name }), "ConfigManager")
         answer, env = self._session.group_recvmsg(False, seq)
         if answer:
             rcode, value = parse_answer(answer)
@@ -317,6 +325,10 @@ class UIModuleCCSession(MultiConfigData):
         for module in specs.keys():
             self.set_specification(isc.config.ModuleSpec(specs[module]))
 
+    def update_specs_and_config(self):
+        self.request_specifications();
+        self.request_current_config();
+
     def request_current_config(self):
         """Requests the current configuration from the configuration
            manager through b10-cmdctl, and stores those as CURRENT"""
@@ -324,6 +336,7 @@ class UIModuleCCSession(MultiConfigData):
         if 'version' not in config or config['version'] != 1:
             raise ModuleCCSessionError("Bad config version")
         self._set_current_config(config)
+
 
     def add_value(self, identifier, value_str):
         """Add a value to a configuration list. Raises a DataTypeError

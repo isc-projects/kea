@@ -14,11 +14,16 @@
 
 // $Id: data_unittests.cc 1899 2010-05-21 12:03:59Z jelte $
 
-#include "config.h"
+#include <config.h>
+
+// for some IPC/network system calls in asio/detail/pipe_select_interrupter.hpp 
+#include <unistd.h>
+// XXX: the ASIO header must be included before others.  See session.cc.
+#include <asio.hpp>
+
 #include <gtest/gtest.h>
 #include <session.h>
 
-#include <asio.hpp>
 #include <exceptions/exceptions.h>
 
 using namespace isc::cc;
@@ -26,25 +31,6 @@ using namespace isc::cc;
 TEST(AsioSession, establish) {
     asio::io_service io_service_;
     Session sess(io_service_);
-
-    EXPECT_THROW(
-        sess.establish("/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/"
-                       "/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/"
-                       "/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/"
-                       "/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/"
-                       "/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/"
-                       "/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/"
-                       "/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/"
-                       "/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/"
-                       "/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/"
-                       "/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/"
-                  ), isc::cc::SessionError
-    );
-                  
-}
-
-TEST(Session, establish) {
-    Session sess;
 
     EXPECT_THROW(
         sess.establish("/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/"

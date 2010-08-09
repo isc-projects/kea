@@ -26,7 +26,7 @@
 #include <gtest/gtest.h>
 
 #include <dns/name.h>
-#include "unittest_util.h"
+#include <dns/tests/unittest_util.h>
 
 using namespace std;
 

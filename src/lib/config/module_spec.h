@@ -110,7 +110,7 @@ namespace isc { namespace config {
     /// is checked to be of the correct form
     ModuleSpec
     moduleSpecFromFile(const std::string& file_name, const bool check = true)
-                       throw(ParseError, ModuleSpecError);
+                       throw(JSONError, ModuleSpecError);
 
     /// Creates a \c ModuleSpec instance from the given input
     /// stream that contains the contents of a .spec file.
@@ -122,7 +122,7 @@ namespace isc { namespace config {
     /// to be of the correct form
     ModuleSpec
     moduleSpecFromFile(std::ifstream& in, const bool check = true)
-                       throw(ParseError, ModuleSpecError);
+                       throw(JSONError, ModuleSpecError);
 } }
 
 #endif // _DATA_DEF_H

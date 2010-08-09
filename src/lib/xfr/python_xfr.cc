@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -23,7 +23,7 @@
 #include <boost/python/copy_const_reference.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include "fd_share.h"
+#include <xfr/fd_share.h>
 
 using namespace isc::xfr;
 using namespace boost::python;
