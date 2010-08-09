@@ -20,3 +20,5 @@ run_unittests_LDADD += $(GTEST_LDADD)
 endif
 
 noinst_PROGRAMS = $(TESTS)
+
+EXTRA_DIST = testdata/query.txt
