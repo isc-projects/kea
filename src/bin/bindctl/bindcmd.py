@@ -543,6 +543,16 @@ class BindCmdInterpreter(Cmd):
                     identifier = cmd.params['identifier']
                 else:
                     identifier += cmd.params['identifier']
+
+                # Check if the module is known; for unknown modules
+                # we currently deny setting preferences, as we have
+                # no way yet to determine if they are ok.
+                module_name = identifier.split('/')[1]
+                if self.config_data is None or \
+                   not self.config_data.have_specification(module_name):
+                    print("Error: Module '" + module_name + "' unknown or not running")
+                    return
+
             if cmd.command == "show":
                 values = self.config_data.get_value_maps(identifier)
                 for value_map in values:
