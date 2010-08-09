@@ -14,8 +14,6 @@
 
 // $Id$
 
-#include <config.h>
-
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/select.h>
@@ -39,6 +37,8 @@
 #include <cc/data.h>
 #include <config/ccsession.h>
 
+#include <xfr/xfrout_client.h>
+
 #include <auth/spec_config.h>
 #include <auth/common.h>
 #include <auth/change_user.h>
@@ -50,6 +50,7 @@ using namespace isc::data;
 using namespace isc::cc;
 using namespace isc::config;
 using namespace isc::dns;
+using namespace isc::xfr;
 
 namespace {
 
@@ -87,7 +88,7 @@ my_command_handler(const string& command, const ElementPtr args) {
 
 void
 usage() {
-    cerr << "Usage: b10-auth [-p port] [-4|-6] [-nv]" << endl;
+    cerr << "Usage: b10-auth [-a address] [-p port] [-4|-6] [-nv]" << endl;
     exit(1);
 }
 } // end of anonymous namespace
@@ -143,9 +144,19 @@ main(int argc, char* argv[]) {
         usage();
     }
 
+    if ((!use_ipv4 || !use_ipv6) && address != NULL) {
+        cerr << "[b10-auth] Error: -4|-6 and -a can't coexist" << endl;
+        usage();
+    }
+
     int ret = 0;
+
+    // XXX: we should eventually pass io_service here.
     Session* cc_session = NULL;
-    ModuleCCSession* cs = NULL;
+    Session* xfrin_session = NULL;
+    bool xfrin_session_established = false; // XXX (see Trac #287)
+    ModuleCCSession* config_session = NULL;
+    XfroutClient xfrout_client(UNIX_SOCKET_FILE);
     try {
         string specfile;
         if (getenv("B10_FROM_BUILD")) {
@@ -155,26 +166,50 @@ main(int argc, char* argv[]) {
             specfile = string(AUTH_SPECFILE_LOCATION);
         }
 
-        auth_server = new AuthSrv(cache);
+        auth_server = new AuthSrv(cache, xfrout_client);
         auth_server->setVerbose(verbose_mode);
         cout << "[b10-auth] Server created." << endl;
 
-        io_service = new asio_link::IOService(auth_server, address, port,
-                                              use_ipv4, use_ipv6);
+        if (address != NULL) {
+            // XXX: we can only specify at most one explicit address.
+            // This also means the server cannot run in the dual address
+            // family mode if explicit addresses need to be specified.
+            // We don't bother to fix this problem, however.  The -a option
+            // is a short term workaround until we support dynamic listening
+            // port allocation.
+            io_service = new asio_link::IOService(auth_server, *port,
+                                                  *address);
+        } else {
+            io_service = new asio_link::IOService(auth_server, *port,
+                                                  use_ipv4, use_ipv6);
+        }
         cout << "[b10-auth] IOService created." << endl;
 
         cc_session = new Session(io_service->get_io_service());
-        cout << "[b10-auth] Session channel created." << endl;
+        cout << "[b10-auth] Configuration session channel created." << endl;
 
-        cs = new ModuleCCSession(specfile, *cc_session, my_config_handler,
-                                 my_command_handler);
+        config_session = new ModuleCCSession(specfile, *cc_session,
+                                             my_config_handler,
+                                             my_command_handler);
         cout << "[b10-auth] Configuration channel established." << endl;
 
         if (uid != NULL) {
             changeUser(uid);
         }
 
-        auth_server->setConfigSession(cs);
+        xfrin_session = new Session(io_service->get_io_service());
+        cout << "[b10-auth] Xfrin session channel created." << endl;
+        xfrin_session->establish(NULL);
+        xfrin_session_established = true;
+        cout << "[b10-auth] Xfrin session channel established." << endl;
+
+        // XXX: with the current interface to asio_link we have to create
+        // auth_server before io_service while Session needs io_service.
+        // In a next step of refactoring we should make asio_link independent
+        // from auth_server, and create io_service, auth_server, and
+        // sessions in that order.
+        auth_server->setXfrinSession(xfrin_session);
+        auth_server->setConfigSession(config_session);
         auth_server->updateConfig(ElementPtr());
 
         cout << "[b10-auth] Server started." << endl;
@@ -184,9 +219,15 @@ main(int argc, char* argv[]) {
         ret = 1;
     }
 
-    delete cs;
+    if (xfrin_session_established) {
+        xfrin_session->disconnect();
+    }
+
+    delete xfrin_session;
+    delete config_session;
     delete cc_session;
     delete io_service;
     delete auth_server;
+
     return (ret);
 }

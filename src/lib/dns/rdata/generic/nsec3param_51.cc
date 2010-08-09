@@ -22,7 +22,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include <dns/buffer.h>
-#include <dns/hex.h>
+#include <dns/util/hex.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/rdata.h>

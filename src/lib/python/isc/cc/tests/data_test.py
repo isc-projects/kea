@@ -137,13 +137,13 @@ class TestData(unittest.TestCase):
         
     def test_parse_value_str(self):
         self.assertEqual(data.parse_value_str("1"), 1)
-        self.assertEqual(data.parse_value_str("True"), True)
-        self.assertEqual(data.parse_value_str("None"), None)
+        self.assertEqual(data.parse_value_str("true"), True)
+        self.assertEqual(data.parse_value_str("null"), None)
         self.assertEqual(data.parse_value_str("1.1"), 1.1)
         self.assertEqual(data.parse_value_str("[]"), [])
-        self.assertEqual(data.parse_value_str("[ 1, None, 'asdf' ]"), [ 1, None, "asdf" ])
+        self.assertEqual(data.parse_value_str("[ 1, null, \"asdf\" ]"), [ 1, None, "asdf" ])
         self.assertEqual(data.parse_value_str("{}"), {})
-        self.assertEqual(data.parse_value_str("{ 'a': 'b', 'c': 1 }"), { 'a': 'b', 'c': 1 })
+        self.assertEqual(data.parse_value_str("{ \"a\": \"b\", \"c\": 1 }"), { 'a': 'b', 'c': 1 })
         self.assertEqual(data.parse_value_str("[ a c"), "[ a c")
 
 if __name__ == '__main__':

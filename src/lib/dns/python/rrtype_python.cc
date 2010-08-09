@@ -239,8 +239,7 @@ RRType_init(s_RRType* self, PyObject* args) {
 
 static void
 RRType_destroy(s_RRType* self) {
-    if (self->rrtype != NULL)
-        delete self->rrtype;
+    delete self->rrtype;
     self->rrtype = NULL;
     Py_TYPE(self)->tp_free(self);
 }

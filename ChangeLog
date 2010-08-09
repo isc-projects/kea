@@ -1,3 +1,42 @@
+  81.	[func]		jinmei
+	Added a C++ framework for micro benchmark tests.  A supplemental
+	library functions to build query data for the tests were also
+	provided. (Trac #241, svn r2664)
+
+  80.	[bug]		jelte
+	bindctl no longer accepts configuration changes for unknown or
+	non-running modules (for the latter, this is until we have a
+	way to verify those options, at which point it'll be allowed
+	again).
+	(Trac #99, r2657)
+
+  79.	[func]		feng, jinmei
+	Refactored the ASIO link interfaces to move incoming XFR and
+	NOTIFY processing to the auth server class.  Wrapper classes for
+	ASIO specific concepts were also provided, so that other BIND 10
+	modules can (eventually) use the interface without including the
+	ASIO header file directly.  On top of these changes, AXFR and
+	NOTIFY processing was massively improved in terms of message
+	validation and protocol conformance.  Detailed tests were provided
+	to confirm the behavior.
+	Note: Right now, NOTIFY doesn't actually trigger subsequent zone
+	transfer due to security reasons. (Trac #221, r2565)
+
+  78.	[bug]		jinmei
+	lib/dns: Fixed miscellaneous bugs in the base32 (hex) and hex
+	(base16) implementation, including incorrect padding handling,
+	parser failure in decoding with a SunStudio build, missing
+	validation on the length of encoded hex string.  Test cases were
+	more detailed to identify these bugs and confirm the fix.  Also
+	renamed the incorrect term of "base32" to "base32hex".  This
+	changed the API, but they are not intended to be used outside
+	libdns++, so we don't consider it a backward incompatible change.
+	(Trac #256, r2549)
+
+  77.	[func]		zhanglikun
+	Make error message be more friendly when running cmdctl and it's 
+	already running(listening on same port)(Trac #277, r2540)
+
   76.	[bug]		jelte
 	Fixed a bug in the handling of 'remote' config modules (i.e.
 	modules that peek at the configuration of other modules), where

@@ -5,43 +5,43 @@
        {
          "item_name": "transfers_out",
          "item_type": "integer",
-         "item_optional": False,
+         "item_optional": false,
          "item_default": 10
        },
        {
          "item_name": "db_file",
          "item_type": "string",
-         "item_optional": False,
+         "item_optional": false,
          "item_default": "@@LOCALSTATEDIR@@/@PACKAGE@/zone.sqlite3"
        },
        {
          "item_name": "log_name",
          "item_type": "string",
-         "item_optional": False,
+         "item_optional": false,
          "item_default": "Xfrout"
        },
        {
          "item_name": "log_file",
     	 "item_type": "string",
-         "item_optional": False,
+         "item_optional": false,
          "item_default": "@@LOCALSTATEDIR@@/@PACKAGE@/log/Xfrout.log"
        },
        {
          "item_name": "log_severity",
     	 "item_type": "string",
-         "item_optional": False,
+         "item_optional": false,
     	 "item_default": "debug"
        },
        {
          "item_name": "log_versions",
     	 "item_type": "integer",
-         "item_optional": False,
+         "item_optional": false,
     	 "item_default": 5
        },
        {
          "item_name": "log_max_bytes",
     	 "item_type": "integer",
-         "item_optional": False,
+         "item_optional": false,
     	 "item_default": 1048576
        }
       ],

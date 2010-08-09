@@ -57,12 +57,14 @@ BUILT_SOURCES = rrclass.h rrtype.h rrparamregistry.cc
 
 lib_LTLIBRARIES = libdns++.la
 
-libdns___la_SOURCES = base32.h base32.cc
-libdns___la_SOURCES += base64.h base64.cc
+libdns___la_SOURCES = util/base32hex.h util/base64.h util/base_n.cc
+libdns___la_SOURCES += util/base32hex_from_binary.h
+libdns___la_SOURCES += util/binary_from_base32hex.h
+libdns___la_SOURCES += util/base16_from_binary.h util/binary_from_base16.h
 libdns___la_SOURCES += buffer.h
 libdns___la_SOURCES += dnssectime.h dnssectime.cc
 libdns___la_SOURCES += exceptions.h exceptions.cc
-libdns___la_SOURCES += hex.h hex.cc
+libdns___la_SOURCES += util/hex.h
 libdns___la_SOURCES += message.h message.cc
 libdns___la_SOURCES += messagerenderer.h messagerenderer.cc
 libdns___la_SOURCES += name.h name.cc
@@ -74,7 +76,7 @@ libdns___la_SOURCES += rrsetlist.h rrsetlist.cc
 libdns___la_SOURCES += rrttl.h rrttl.cc
 libdns___la_SOURCES += rrtype.cc
 libdns___la_SOURCES += question.h question.cc
-libdns___la_SOURCES += sha1.h sha1.cc
+libdns___la_SOURCES += util/sha1.h util/sha1.cc
 libdns___la_SOURCES += tsig.h tsig.cc
 
 nodist_libdns___la_SOURCES = rdataclass.cc rrclass.h rrtype.h
@@ -105,9 +107,6 @@ libdns++_include_HEADERS = \
 	rrtype.h \
 	tsig.h
 # Purposely not installing these headers:
-# base32.h # used only internally, and not actually DNS specific
-# base64.h # used only internally, and not actually DNS specific
-# hex.h # used only internally, and not actually DNS specific
-# sha1.h # used only internally, and not actually DNS specific
+# util/*.h: used only internally, and not actually DNS specific
 # rrclass-placeholder.h
 # rrtype-placeholder.h
