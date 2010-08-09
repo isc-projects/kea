@@ -3,7 +3,7 @@
 	non-running modules (for the latter, this is until we have a
 	way to verify those options, at which point it'll be allowed
 	again).
-	(Trac #99)
+	(Trac #99, r2657)
 
   79.	[func]		feng, jinmei
 	Refactored the ASIO link interfaces to move incoming XFR and
