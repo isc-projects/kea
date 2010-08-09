@@ -204,6 +204,7 @@ public:
     {
         initialize(true);
     }
+
     /// \bench Constructor for finer-grained control.
     ///
     /// This constructor takes the third parameter, \c immediate, to control
@@ -224,18 +225,21 @@ public:
         initialize(immediate);
     }
     //@}
+
     /// \brief Hook to be called before starting benchmark.
     ///
     /// This method will be called from \c run() before starting the benchmark.
     /// By default it's empty, but can be customized via template
     /// specialization.
     void setUp() {}
+
     /// \brief Hook to be called after benchmark.
     ///
     /// This method will be called from \c run() when the benchmark completes.
     /// By default it's empty, but can be customized via template
     /// specialization.
     void tearDown() {}
+
     /// \brief Perform benchmark.
     ///
     /// This method first calls \c setUp().
@@ -255,6 +259,7 @@ public:
 
         tearDown();
     }
+
     /// \brief Print the benchmark result.
     ///
     /// This method prints the benchmark result in a common style to the
@@ -272,6 +277,7 @@ public:
         std::cout << " (" << std::fixed << getIterationPerSecond() << "ips)"
                   << std::endl;
     }
+
     /// \brief Return the number of iterations.
     ///
     /// It returns the total iterations of benchmark, which is the sum
@@ -282,6 +288,7 @@ public:
     /// A call to this method is only meaningful after the completion of
     /// \c run().  The behavior is undefined in other cases.
     unsigned int getIteration() const { return (sub_iterations_); }
+
     /// \brief Return the duration of benchmark in seconds.
     ///
     /// The highest possible precision of this value is microseconds.
@@ -292,6 +299,7 @@ public:
         return (tv_diff_.tv_sec +
                 static_cast<double>(tv_diff_.tv_usec) / ONE_MILLION);
     }
+
     /// \brief Return the average duration per iteration in seconds.
     ///
     /// The highest possible precision of this value is microseconds.
@@ -311,6 +319,7 @@ public:
                  static_cast<double>(tv_diff_.tv_usec) / ONE_MILLION ) /
                 sub_iterations_);
     }
+
     /// \brief Return the number of possible iterations per second based on
     /// the benchmark result.
     ///
@@ -329,6 +338,7 @@ public:
 public:
     /// \brief A constant that indicates a failure in \c getAverageTime().
     static const double TIME_FAILURE = -1;
+
     /// \brief A constant that indicates a failure in
     /// \c getIterationPerSecond().
     static const double ITERATION_FAILURE = -1;
