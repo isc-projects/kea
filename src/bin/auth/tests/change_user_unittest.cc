@@ -15,6 +15,7 @@
 // $Id$
 
 #include <stdlib.h>
+#include <unistd.h>             // for getuid
 
 #include <string>
 
@@ -49,8 +50,7 @@ TEST_F(ChangeUserTest, badUID) {
 
 TEST_F(ChangeUserTest, promotionAttempt) {
     // change to root should fail unless the running user is a super user.
-
-    if (my_username == "root") {
+    if (getuid() == 0) {
         cerr << "Already a super user, skipping the test" << endl;
         return;
     }
