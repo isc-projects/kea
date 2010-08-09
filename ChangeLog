@@ -1,3 +1,8 @@
+  81.	[func]		jinmei
+	Added a C++ framework for micro benchmark tests.  A supplemental
+	library functions to build query data for the tests were also
+	provided. (Trac #241, svn r2664)
+
   80.	[bug]		jelte
 	bindctl no longer accepts configuration changes for unknown or
 	non-running modules (for the latter, this is until we have a
