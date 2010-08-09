@@ -349,11 +349,19 @@ public:
     }
 public:
     /// \brief A constant that indicates a failure in \c getAverageTime().
-    static const double TIME_FAILURE = -1;
+    ///
+    /// This constant be used as double but is defined as int so that it can
+    /// be initialized within the class definition.  Type conversion will be
+    /// performed implicitly.
+    static const int TIME_FAILURE = -1;
 
     /// \brief A constant that indicates a failure in
     /// \c getIterationPerSecond().
-    static const double ITERATION_FAILURE = -1;
+    ///
+    /// This constant be used as double but is defined as int so that it can
+    /// be initialized within the class definition.  Type conversion will be
+    /// performed implicitly.
+    static const int ITERATION_FAILURE = -1;
 private:
     void initialize(const bool immediate) {
         if (immediate) {
