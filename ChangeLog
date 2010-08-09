@@ -1,3 +1,9 @@
+  82.	[func]		jinmei
+	bin/auth: Added -u option to allow the effective process user
+	of the authoritative server after invocation.  The same option to
+	the boss process will be propagated to b10-auth, too.
+	(Trac #268, svn r2675)
+
   81.	[func]		jinmei
 	Added a C++ framework for micro benchmark tests.  A supplemental
 	library functions to build query data for the tests were also
