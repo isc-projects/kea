@@ -110,7 +110,7 @@ typedef std::vector<std::vector<unsigned char> > BenchQueries;
 /// is used for all queries.
 /// \param strict If \c true, apply stricter validation on the query name and
 /// query RR types; otherwise invalid inputs will be ignored.
-void loadQueryData(const char* input_file, BenchQueries& queries,
+void loadQueryData(const char* const input_file, BenchQueries& queries,
                    const isc::dns::RRClass& qclass, const bool strict = false);
 
 /// \brief Load query %data from an input stream into a vector.
