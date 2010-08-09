@@ -60,7 +60,7 @@ BenchMark<TestBenchMark>::tearDown() {
 // XXX: some compilers cannot find class static constants used in
 // EXPECT_xxx macross, for which we need an explicit definition.
 template <typename T>
-const double BenchMark<T>::TIME_FAILURE;
+const int BenchMark<T>::TIME_FAILURE;
 }
 }
 
