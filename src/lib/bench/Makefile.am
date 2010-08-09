@@ -7,3 +7,4 @@ CLEANFILES = *.gcno *.gcda
 
 lib_LTLIBRARIES = libbench.la
 libbench_la_SOURCES = benchmark_util.h benchmark_util.cc
+EXTRA_DIST = benchmark.h
