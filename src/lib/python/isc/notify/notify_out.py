@@ -1,3 +1,18 @@
+# Copyright (C) 2010  Internet Systems Consortium.
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SYSTEMS CONSORTIUM
+# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+# INTERNET SYSTEMS CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
 import select
 import random
 import socket
@@ -117,10 +132,11 @@ class NotifyOut:
         ns_rr_name = []
         for ns in ns_rrset:
             ns_rr_name.append(self._get_rdata_data(ns)) 
-        
-        sname = (soa_rrset[0][7].split(' '))[0].strip() #TODO, bad hardcode to get rdata part
-        if sname in ns_rr_name:
-            ns_rr_name.remove(sname)
+       
+        if len(soa_rrset) > 0:
+            sname = (soa_rrset[0][7].split(' '))[0].strip() #TODO, bad hardcode to get rdata part
+            if sname in ns_rr_name:
+                ns_rr_name.remove(sname)
 
         addr_list = []
         for rr_name in ns_rr_name:
