@@ -81,14 +81,14 @@ class ConfigManagerData:
                     config.data = file_config
                 else:
                     if config_data.BIND10_CONFIG_DATA_VERSION > file_config['version']:
-                        raise ConfigManagerDataReadError("Version of config data too old")
+                        raise ConfigManagerDataReadError("Cannot load configuration file: version %d no longer supported" % file_config['version'])
                     else:
-                        raise ConfigManagerDataReadError("Version of config data too new")
+                        raise ConfigManagerDataReadError("Cannot load configuration file: version %d not yet supported" % file_config['version'])
             else:
                 raise ConfigManagerDataReadError("No version information in configuration file " + config.db_filename)
         except IOError as ioe:
-            raise ConfigManagerDataEmpty("No config file found")
-        except:
+            raise ConfigManagerDataEmpty("No configuration file found")
+        except ValueError:
             raise ConfigManagerDataReadError("Config file out of date or corrupt, please update or remove " + config.db_filename)
         finally:
             if file:
