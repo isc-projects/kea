@@ -260,7 +260,7 @@ class ZonemgrRefresh:
         try:
             self._cc.group_sendmsg(msg, module_name)
         except socket.error:
-            std.err.write("[b10-zonemgr] Failed to send to module %s, the session has been closed." % module_name) 
+            sys.err.write("[b10-zonemgr] Failed to send to module %s, the session has been closed." % module_name) 
 
     def _find_need_do_refresh_zone(self):
         """Find the first zone need do refresh, if no zone need
