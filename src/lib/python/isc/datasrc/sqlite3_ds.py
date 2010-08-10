@@ -18,6 +18,13 @@
 import sqlite3, re, random
 import isc
 
+
+#define the index of different part of one record
+RR_TYPE_INDEX = 5
+RR_NAME_INDEX = 2
+RR_TTL_INDEX = 4
+RR_RDATA_INDEX = 7
+
 #########################################################################
 # define exceptions
 #########################################################################
