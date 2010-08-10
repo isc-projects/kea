@@ -37,7 +37,7 @@
 """
 
 from isc.cc import Session
-from isc.config.config_data import ConfigData, MultiConfigData
+from isc.config.config_data import ConfigData, MultiConfigData, BIND10_CONFIG_DATA_VERSION
 import isc
 
 class ModuleCCSessionError(Exception): pass
@@ -333,7 +333,7 @@ class UIModuleCCSession(MultiConfigData):
         """Requests the current configuration from the configuration
            manager through b10-cmdctl, and stores those as CURRENT"""
         config = self._conn.send_GET('/config_data')
-        if 'version' not in config or config['version'] != 1:
+        if 'version' not in config or config['version'] != BIND10_CONFIG_DATA_VERSION:
             raise ModuleCCSessionError("Bad config version")
         self._set_current_config(config)
 
