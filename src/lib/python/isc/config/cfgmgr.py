@@ -89,7 +89,7 @@ class ConfigManagerData:
         except IOError as ioe:
             raise ConfigManagerDataEmpty("No configuration file found")
         except ValueError:
-            raise ConfigManagerDataReadError("Config file out of date or corrupt, please update or remove " + config.db_filename)
+            raise ConfigManagerDataReadError("Configuration file out of date or corrupt, please update or remove " + config.db_filename)
         finally:
             if file:
                 file.close();
@@ -115,11 +115,11 @@ class ConfigManagerData:
                 os.rename(filename, self.db_filename)
         except IOError as ioe:
             # TODO: log this (level critical)
-            print("[b10-cfgmgr] Unable to write config file; configuration not stored: " + str(ioe))
+            print("[b10-cfgmgr] Unable to write configuration file; configuration not stored: " + str(ioe))
             # TODO: debug option to keep file?
         except OSError as ose:
             # TODO: log this (level critical)
-            print("[b10-cfgmgr] Unable to write config file; configuration not stored: " + str(ose))
+            print("[b10-cfgmgr] Unable to write configuration file; configuration not stored: " + str(ose))
         try:
             if filename and os.path.exists(filename):
                 os.remove(filename)
