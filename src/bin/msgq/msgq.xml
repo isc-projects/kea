@@ -21,7 +21,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>April 19, 2010</date>
+    <date>August 4, 2010</date>
   </refentryinfo>
 
   <refmeta>
@@ -45,9 +45,9 @@
   <refsynopsisdiv>
     <cmdsynopsis>
       <command>b10-msgq</command>
-      <arg><option>-m <replaceable>number</replaceable></option></arg>
+      <arg><option>-s <replaceable>file</replaceable></option></arg>
       <arg><option>-v</option></arg>
-      <arg><option>--msgq-port <replaceable>number</replaceable></option></arg>
+      <arg><option>--socket-file <replaceable>file</replaceable></option></arg>
       <arg><option>--verbose</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -111,12 +111,14 @@
 
     <variablelist>
       <varlistentry>
-        <term><option>-m <replaceable>number</replaceable></option>,
-          <option>--msgq-port <replaceable>number</replaceable></option></term>
+        <term><option>-s <replaceable>file</replaceable></option>,
+          <option>--socket-file <replaceable>file</replaceable></option></term>
         <listitem><para>
-          The port number that <command>b10-msgq</command> will listen on.
-          The default is 9912.</para>
-        </listitem>
+          The UNIX domain socket file this daemon will use.
+          The default is
+          <filename>/usr/local/var/bind10-devel/msg_socket</filename>.
+<!-- @localstatedir@/@PACKAGE_NAME@/msg_socket -->
+          </para></listitem>
       </varlistentry>
 
       <varlistentry>
