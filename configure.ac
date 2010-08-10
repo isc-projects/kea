@@ -256,14 +256,6 @@ if test "${boost_include_path}" ; then
 fi
 AC_SUBST(BOOST_INCLUDES)
 
-AC_ARG_WITH([boost-lib],
-AC_HELP_STRING([--with-boost-lib=PATH],
-  [specify exact directory for Boost libraries]),
-  [if test "$withval" != "yes" -a "$withval" != "no"; then
-   BOOST_LDFLAGS="-L$withval"
-   fi])
-AC_SUBST(BOOST_LDFLAGS)
-
 #
 # Check availability of gtest, which will be used for unit tests.
 #
