@@ -70,9 +70,9 @@ TEST(BenchMarkTest, run) {
     const int sub_iterations = 23;
     const int sleep_time = 50000; // will sleep for 50ms
     // we cannot expect particular accuracy on the measured duration, so
-    // we'll include some conservative margin (20%) and perform range
+    // we'll include some conservative margin (25%) and perform range
     // comparison below.
-    const int duration_margin = 10000; // 10ms
+    const int duration_margin = 12500; // 12.5ms
     const int ONE_MILLION = 1000000;
 
     // Prerequisite check: since the tests in this case may depend on subtle
