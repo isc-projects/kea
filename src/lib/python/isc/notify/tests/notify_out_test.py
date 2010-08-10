@@ -35,8 +35,8 @@ class TestZoneNotifyInfo(unittest.TestCase):
         self.assertEqual(self.info._sock, None)
 
     def test_set_next_notify_target(self):
-        self.info._notify_slaves.append(('127.0.0.1', 53))
-        self.info._notify_slaves.append(('1.1.1.1', 5353))
+        self.info.notify_slaves.append(('127.0.0.1', 53))
+        self.info.notify_slaves.append(('1.1.1.1', 5353))
         self.info.prepare_notify_out()
         self.assertEqual(self.info.get_current_notify_target(), ('127.0.0.1', 53))
 
@@ -66,8 +66,8 @@ class TestNotifyOut(unittest.TestCase):
         self._notify._notify_infos[('org.', 'CH')] = notify_out.ZoneNotifyInfo('org.', 'CH')
         
         info = self._notify._notify_infos[('cn.', 'IN')]
-        info._notify_slaves.append(('127.0.0.1', 53))
-        info._notify_slaves.append(('1.1.1.1', 5353))
+        info.notify_slaves.append(('127.0.0.1', 53))
+        info.notify_slaves.append(('1.1.1.1', 5353))
 
     def tearDown(self):
         sys.stdout = self.old_stdout
@@ -148,11 +148,29 @@ class TestNotifyOut(unittest.TestCase):
         self.assertEqual(0, len(self._notify._notifying_zones))
     
     def test_handle_notify_reply(self):
-        self.assertFalse(self._notify._handle_notify_reply(None, b'badmsg'))
+        self.assertEqual(notify_out._BAD_REPLY_PACKET, self._notify._handle_notify_reply(None, b'badmsg'))
         com_info = self._notify._notify_infos[('com.', 'IN')]
         com_info.notify_msg_id = 0X2f18
-        data = b'\x2f\x18\xa0\x00\x00\x01\x00\x00\x00\x00\x00\x00\x02tw\x02cn\x00\x00\x06\x00\x01'
-        self.assertTrue(self._notify._handle_notify_reply(com_info, data))
+
+        # test with right notify reply message
+        data = b'\x2f\x18\xa0\x00\x00\x01\x00\x00\x00\x00\x00\x00\x03com\x00\x00\x06\x00\x01'
+        self.assertEqual(notify_out._REPLY_OK, self._notify._handle_notify_reply(com_info, data))
+
+        # test with unright query id
+        data = b'\x2e\x18\xa0\x00\x00\x01\x00\x00\x00\x00\x00\x00\x03com\x00\x00\x06\x00\x01'
+        self.assertEqual(notify_out._BAD_QUERY_ID, self._notify._handle_notify_reply(com_info, data))
+
+        # test with unright query name
+        data = b'\x2f\x18\xa0\x00\x00\x01\x00\x00\x00\x00\x00\x00\x02cn\x00\x00\x06\x00\x01'
+        self.assertEqual(notify_out._BAD_QUERY_NAME, self._notify._handle_notify_reply(com_info, data))
+
+        # test with unright opcode
+        data = b'\x2f\x18\x80\x00\x00\x01\x00\x00\x00\x00\x00\x00\x03com\x00\x00\x06\x00\x01'
+        self.assertEqual(notify_out._BAD_OPCODE, self._notify._handle_notify_reply(com_info, data))
+
+        # test with unright qr
+        data = b'\x2f\x18\x10\x10\x00\x01\x00\x00\x00\x00\x00\x00\x03com\x00\x00\x06\x00\x01'
+        self.assertEqual(notify_out._BAD_QR, self._notify._handle_notify_reply(com_info, data))
 
     def test_send_notify_message_udp(self):
         com_info = self._notify._notify_infos[('cn.', 'IN')]
@@ -194,13 +212,13 @@ class TestNotifyOut(unittest.TestCase):
         ('cn.',         '1000',  'IN',  'NS',  'b.dns.cn.'),
         ('cn.',         '1000',  'IN',  'NS',  'c.dns.cn.'),
         ('a.dns.cn.',   '1000',  'IN',  'A',    '1.1.1.1'),
-        ('a.dns.cn.',   '1000',  'IN',  'AAAA', '2.2.2.2'),
+        ('a.dns.cn.',   '1000',  'IN',  'AAAA', '2:2::2:2'),
         ('b.dns.cn.',   '1000',  'IN',  'A',    '3.3.3.3'),
-        ('b.dns.cn.',   '1000',  'IN',  'AAAA', '4:4.4.4'),
-        ('b.dns.cn.',   '1000',  'IN',  'AAAA', '5:5.5.5'),
+        ('b.dns.cn.',   '1000',  'IN',  'AAAA', '4:4::4:4'),
+        ('b.dns.cn.',   '1000',  'IN',  'AAAA', '5:5::5:5'),
         ('c.dns.cn.',   '1000',  'IN',  'A',    '6.6.6.6'),
         ('c.dns.cn.',   '1000',  'IN',  'A',    '7.7.7.7'),
-        ('c.dns.cn.',   '1000',  'IN',  'AAAA', '8:8.8.8')]
+        ('c.dns.cn.',   '1000',  'IN',  'AAAA', '8:8::8:8')]
         for item in zone_data:
             yield item
 
@@ -212,33 +230,55 @@ class TestNotifyOut(unittest.TestCase):
         ('com.',         '1000',  'IN',  'NS',  'c.dns.com.'),
         ('a.dns.com.',   '1000',  'IN',  'A',    '1.1.1.1'),
         ('b.dns.com.',   '1000',  'IN',  'A',    '3.3.3.3'),
-        ('b.dns.com.',   '1000',  'IN',  'AAAA', '4:4.4.4'),
-        ('b.dns.com.',   '1000',  'IN',  'AAAA', '5:5.5.5')]
+        ('b.dns.com.',   '1000',  'IN',  'AAAA', '4:4::4:4'),
+        ('b.dns.com.',   '1000',  'IN',  'AAAA', '5:5::5:5')]
         for item in zone_data:
             yield item
 
     def test_get_notify_slaves_from_ns(self):
         records = self._notify._get_notify_slaves_from_ns('cn.')
         self.assertEqual(6, len(records))
-        self.assertEqual('8:8.8.8', records[5])
+        self.assertEqual('8:8::8:8', records[5])
         self.assertEqual('7.7.7.7', records[4])
         self.assertEqual('6.6.6.6', records[3])
-        self.assertEqual('5:5.5.5', records[2])
-        self.assertEqual('4:4.4.4', records[1])
+        self.assertEqual('5:5::5:5', records[2])
+        self.assertEqual('4:4::4:4', records[1])
         self.assertEqual('3.3.3.3', records[0])
 
         records = self._notify._get_notify_slaves_from_ns('com.')
-        print('=============', records)
         self.assertEqual(3, len(records))
-        self.assertEqual('5:5.5.5', records[2])
-        self.assertEqual('4:4.4.4', records[1])
+        self.assertEqual('5:5::5:5', records[2])
+        self.assertEqual('4:4::4:4', records[1])
         self.assertEqual('3.3.3.3', records[0])
     
     def test_init_notify_out(self):
         self._notify._init_notify_out(self._db_file.name)
-        self.assertListEqual([('3.3.3.3', 53), ('4:4.4.4', 53), ('5:5.5.5', 53)], 
-                             self._notify._notify_infos[('com.', 'IN')]._notify_slaves)
+        self.assertListEqual([('3.3.3.3', 53), ('4:4::4:4', 53), ('5:5::5:5', 53)], 
+                             self._notify._notify_infos[('com.', 'IN')].notify_slaves)
         
+    def test_prepare_select_info(self):
+        timeout, valid_fds, notifying_zones = self._notify._prepare_select_info()
+        self.assertEqual(0, timeout)
+        self.assertListEqual([], valid_fds)
+
+        self._notify._notify_infos[('cn.', 'IN')]._sock = 1
+        self._notify._notify_infos[('cn.', 'IN')].notify_timeout = time.time() + 5
+        timeout, valid_fds, notifying_zones = self._notify._prepare_select_info()
+        self.assertGreater(timeout, 0)
+        self.assertListEqual([1], valid_fds)
+
+        self._notify._notify_infos[('cn.', 'IN')]._sock = 1
+        self._notify._notify_infos[('cn.', 'IN')].notify_timeout = time.time() - 5
+        timeout, valid_fds, notifying_zones = self._notify._prepare_select_info()
+        self.assertEqual(timeout, 0)
+        self.assertListEqual([1], valid_fds)
+
+        self._notify._notify_infos[('com.', 'IN')]._sock = 2
+        self._notify._notify_infos[('com.', 'IN')].notify_timeout = time.time() + 5
+        timeout, valid_fds, notifying_zones = self._notify._prepare_select_info()
+        self.assertEqual(timeout, 0)
+        self.assertListEqual([2, 1], valid_fds)
+
 if __name__== "__main__":
     unittest.main()
 
