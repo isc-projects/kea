@@ -1,6 +1,6 @@
   83.	[build]*
 	The configure --with-boost-lib option is removed. It was not
-	used since the build included ASIO. (svn r2683)
+	used since the build included ASIO. (svn r2684)
 
   82.	[func]		jinmei
 	bin/auth: Added -u option to allow the effective process user
