@@ -19,6 +19,8 @@
 
 #include <string>
 
+#include <boost/lexical_cast.hpp>
+
 #include <gtest/gtest.h>
 
 #include <auth/common.h>
@@ -27,28 +29,34 @@
 using namespace std;
 
 namespace {
-class ChangeUserTest : public ::testing::Test {
-protected:
-    // normally the USER environment variable should be set to the name
-    // of the local user running this test.  If we encounter a case where
-    // this doesn't hold, we'll need to add a prerequisite check in each
-    // test.  For now we assume this is valid for simplicity.
-    ChangeUserTest() : my_username(getenv("USER")) {}
-    const string my_username;
-};
+TEST(ChangeUserTest, changeToTheSameUser) {
+    const char* const my_username = getenv("USER");
 
-TEST_F(ChangeUserTest, changeToTheSameUser) {
+    // normally the USER environment variable should be set to the name
+    // of the local user running this test, but it's not always the case.
+    if (my_username == NULL) {
+        cerr << "Environment variable USER is undefined, skipping the test"
+             << endl;
+        return;
+    }
+
     // changing to the run time user should succeed.
-    EXPECT_NO_THROW(changeUser(my_username.c_str()));
+    EXPECT_NO_THROW(changeUser(my_username));
 }
 
-TEST_F(ChangeUserTest, badUID) {
+TEST(ChangeUserTest, changeToTheSameUserId) {
+    // same as above, but using numeric user ID
+    EXPECT_NO_THROW(changeUser(
+                        (boost::lexical_cast<string>(getuid())).c_str()));
+}
+
+TEST(ChangeUserTest, badUID) {
     // -1 should be an invalid numeric UID, and (hopefully) shouldn't be
     // a valid textual username.
     EXPECT_THROW(changeUser("-1"), FatalError);
 }
 
-TEST_F(ChangeUserTest, promotionAttempt) {
+TEST(ChangeUserTest, promotionAttempt) {
     // change to root should fail unless the running user is a super user.
     if (getuid() == 0) {
         cerr << "Already a super user, skipping the test" << endl;
