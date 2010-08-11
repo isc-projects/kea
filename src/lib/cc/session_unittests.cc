@@ -72,7 +72,7 @@ public:
     
     ~TestDomainSocket() {
         socket_.close();
-        ::unlink(BIND10_TEST_SOCKET_FILE);
+        unlink(BIND10_TEST_SOCKET_FILE);
     }
 
     void
