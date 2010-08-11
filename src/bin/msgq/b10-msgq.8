@@ -2,12 +2,12 @@
 .\"     Title: b10-msgq
 .\"    Author: [see the "AUTHORS" section]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: April 19, 2010
+.\"      Date: August 4, 2010
 .\"    Manual: BIND10
 .\"    Source: BIND10
 .\"  Language: English
 .\"
-.TH "B10\-MSGQ" "8" "April 19, 2010" "BIND10" "BIND10"
+.TH "B10\-MSGQ" "8" "August 4, 2010" "BIND10" "BIND10"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -22,7 +22,7 @@
 b10-msgq \- message routing daemon for the Command Channel
 .SH "SYNOPSIS"
 .HP \w'\fBb10\-msgq\fR\ 'u
-\fBb10\-msgq\fR [\fB\-m\ \fR\fB\fInumber\fR\fR] [\fB\-v\fR] [\fB\-\-msgq\-port\ \fR\fB\fInumber\fR\fR] [\fB\-\-verbose\fR]
+\fBb10\-msgq\fR [\fB\-s\ \fR\fB\fIfile\fR\fR] [\fB\-v\fR] [\fB\-\-socket\-file\ \fR\fB\fIfile\fR\fR] [\fB\-\-verbose\fR]
 .SH "DESCRIPTION"
 .PP
 The
@@ -96,11 +96,10 @@ daemon may be cleanly stopped by sending the SIGTERM signal to the process\&. Th
 .PP
 The arguments are as follows:
 .PP
-\fB\-m \fR\fB\fInumber\fR\fR, \fB\-\-msgq\-port \fR\fB\fInumber\fR\fR
+\fB\-s \fR\fB\fIfile\fR\fR, \fB\-\-socket\-file \fR\fB\fIfile\fR\fR
 .RS 4
-The port number that
-\fBb10\-msgq\fR
-will listen on\&. The default is 9912\&.
+The UNIX domain socket file this daemon will use\&. The default is
+/usr/local/var/bind10\-devel/msg_socket\&.
 .RE
 .PP
 \fB\-v\fR, \fB\-\-verbose\fR
