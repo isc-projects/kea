@@ -56,6 +56,16 @@ using namespace isc::data;
 // (e.g. write(2)) so we don't import the entire asio namespace.
 using asio::io_service;
 
+// By default, unless changed or disabled, blocking reads on
+// the msgq channel will time out after 4 seconds in this
+// implementation.
+// This number is chosen to be low enough so that whatever
+// component is blocking does not seem to be hanging, but
+// still gives enough time for other modules to respond if they
+// are busy. If this choice turns out to be a bad one, we can
+// change it later.
+#define BIND10_MSGQ_DEFAULT_TIMEOUT 4000
+
 namespace isc {
 namespace cc {
 class SessionImpl {
@@ -63,7 +73,7 @@ public:
     SessionImpl(io_service& io_service) :
         sequence_(-1), queue_(Element::createList()),
         io_service_(io_service), socket_(io_service_), data_length_(0),
-        timeout_(4000)
+        timeout_(BIND10_MSGQ_DEFAULT_TIMEOUT)
     {}
     void establish(const char& socket_file);
     void disconnect();
@@ -73,8 +83,8 @@ public:
     // (in seconds) is thrown. If timeout is 0 it will block forever
     void readData(void* data, size_t datalen);
     void startRead(boost::function<void()> user_handler);
-    virtual void setTimeout(size_t seconds) { timeout_ = seconds; };
-    virtual size_t getTimeout() { return timeout_; };
+    void setTimeout(size_t seconds) { timeout_ = seconds; };
+    size_t getTimeout() const { return timeout_; };
 
     long int sequence_; // the next sequence number to use
     std::string lname_;
@@ -474,7 +484,7 @@ Session::setTimeout(size_t milliseconds) {
 }
 
 size_t
-Session::getTimeout() {
+Session::getTimeout() const {
     return (impl_->getTimeout());
 }
 }

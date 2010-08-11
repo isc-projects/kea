@@ -120,12 +120,26 @@ private:
     char data_buf[1024];
 };
 
+class SessionTest : public ::testing::Test {
+protected:
+    SessionTest() {
+        // The TestDomainSocket is held as a 'new'-ed pointer,
+        // so we can call unlink() first.
+        unlink(BIND10_TEST_SOCKET_FILE);
+        tds = new TestDomainSocket(my_io_service, BIND10_TEST_SOCKET_FILE);
+    }
 
-TEST(Session, timeout_on_connect) {
+    ~SessionTest() {
+        delete tds;
+    }
+
     asio::io_service my_io_service;
-    ::unlink(BIND10_TEST_SOCKET_FILE);
-    TestDomainSocket tds(my_io_service, BIND10_TEST_SOCKET_FILE);
+    TestDomainSocket* tds;
+};
+
+TEST_F(SessionTest, timeout_on_connect) {
     Session sess(my_io_service);
+    
     // set to a short timeout so the test doesn't take too long
     EXPECT_EQ(4000, sess.getTimeout());
     sess.setTimeout(100);
@@ -134,31 +148,21 @@ TEST(Session, timeout_on_connect) {
     EXPECT_THROW(sess.establish(BIND10_TEST_SOCKET_FILE), SessionTimeout);
 }
 
-TEST(Session, connect_ok) {
-    asio::io_service my_io_service;
-    ::unlink(BIND10_TEST_SOCKET_FILE);
-    TestDomainSocket tds(my_io_service, BIND10_TEST_SOCKET_FILE);
-    tds.setSendLname();
+TEST_F(SessionTest, connect_ok) {
+    tds->setSendLname();
 
     Session sess(my_io_service);
     sess.establish(BIND10_TEST_SOCKET_FILE);
 }
 
-TEST(Session, connect_ok_connection_reset) {
-    asio::io_service my_io_service;
-    ::unlink(BIND10_TEST_SOCKET_FILE);
-    Session sess(my_io_service);
+TEST_F(SessionTest, connect_ok_connection_reset) {
+    tds->setSendLname();
 
-    // Create a fake msgq in a smaller scope, so we can
-    // connect the session to it, but later calls on the
-    // underlying socket will fail
-    {
-        TestDomainSocket tds(my_io_service, BIND10_TEST_SOCKET_FILE);
-        tds.setSendLname();
-        sess.establish(BIND10_TEST_SOCKET_FILE);
-    }
-    
+    Session sess(my_io_service);
+    sess.establish(BIND10_TEST_SOCKET_FILE);
+    // Close the session again, so the next recv() should throw
+    sess.disconnect();
+
     isc::data::ElementPtr env, msg;
     EXPECT_THROW(sess.group_recvmsg(env, msg, false, -1), SessionError);
 }
-
