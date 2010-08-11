@@ -27,10 +27,9 @@
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
 
-#include <asio.hpp>
 #include <boost/bind.hpp>
 
-#include "session_unittests_config.h"
+#include <session_unittests_config.h>
 
 using namespace isc::cc;
 
@@ -49,7 +48,7 @@ TEST(AsioSession, establish) {
                        "/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/"
                        "/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/"
                        "/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/"
-                  ), isc::cc::SessionError
+                  ), SessionError
     );
 }
 
@@ -60,10 +59,11 @@ TEST(AsioSession, establish) {
 class TestDomainSocket {
 
 public:
-    TestDomainSocket(asio::io_service& io_service, const char* file) : io_service_(io_service),
-                                                                       ep_(file),
-                                                                       acceptor_(io_service_, ep_),
-                                                                       socket_(io_service_)
+    TestDomainSocket(asio::io_service& io_service, const char* file) :
+        io_service_(io_service),
+        ep_(file),
+        acceptor_(io_service_, ep_),
+        socket_(io_service_)
     {
         acceptor_.async_accept(socket_,
                                boost::bind(&TestDomainSocket::acceptHandler,
@@ -76,35 +76,40 @@ public:
     }
 
     void
-    acceptHandler(const asio::error_code& error) {
+    acceptHandler(const asio::error_code& error UNUSED_PARAM) {
     }
 
     void
     sendmsg(isc::data::ElementPtr& env, isc::data::ElementPtr& msg) {
-        std::string header_wire = env->toWire();
-        std::string body_wire = msg->toWire();
-        unsigned int length = 2 + header_wire.length() + body_wire.length();
-        unsigned int length_net = htonl(length);
-        unsigned short header_length = header_wire.length();
-        unsigned short header_length_net = htons(header_length);
+        const std::string header_wire = env->toWire();
+        const std::string body_wire = msg->toWire();
+        const unsigned int length = 2 + header_wire.length() +
+            body_wire.length();
+        const unsigned int length_net = htonl(length);
+        const unsigned short header_length = header_wire.length();
+        const unsigned short header_length_net = htons(header_length);
     
         socket_.send(asio::buffer(&length_net, sizeof(length_net)));
-        socket_.send(asio::buffer(&header_length_net, sizeof(header_length_net)));
+        socket_.send(asio::buffer(&header_length_net,
+                                  sizeof(header_length_net)));
         socket_.send(asio::buffer(header_wire.data(), header_length));
         socket_.send(asio::buffer(body_wire.data(), body_wire.length()));
     }
 
     void
     sendLname() {
-        isc::data::ElementPtr lname_answer1 = isc::data::Element::fromJSON("{ \"type\": \"lname\" }");
-        isc::data::ElementPtr lname_answer2 = isc::data::Element::fromJSON("{ \"lname\": \"foobar\" }");
+        isc::data::ElementPtr lname_answer1 =
+            isc::data::Element::fromJSON("{ \"type\": \"lname\" }");
+        isc::data::ElementPtr lname_answer2 =
+            isc::data::Element::fromJSON("{ \"lname\": \"foobar\" }");
         sendmsg(lname_answer1, lname_answer2);
     }
 
     void
     setSendLname() {
         // ignore whatever data we get, send back an lname
-        asio::async_read(socket_,  asio::buffer(data_buf, 1024), boost::bind(&TestDomainSocket::sendLname, this));
+        asio::async_read(socket_,  asio::buffer(data_buf, 1024),
+                         boost::bind(&TestDomainSocket::sendLname, this));
     }
     
 private:
@@ -126,7 +131,7 @@ TEST(Session, timeout_on_connect) {
     sess.setTimeout(100);
     EXPECT_EQ(100, sess.getTimeout());
     // no answer, should timeout
-    EXPECT_THROW(sess.establish(BIND10_TEST_SOCKET_FILE), isc::cc::SessionTimeout);
+    EXPECT_THROW(sess.establish(BIND10_TEST_SOCKET_FILE), SessionTimeout);
 }
 
 TEST(Session, connect_ok) {
@@ -154,6 +159,6 @@ TEST(Session, connect_ok_connection_reset) {
     }
     
     isc::data::ElementPtr env, msg;
-    EXPECT_THROW(sess.group_recvmsg(env, msg, false, -1), isc::cc::SessionError);
+    EXPECT_THROW(sess.group_recvmsg(env, msg, false, -1), SessionError);
 }
 

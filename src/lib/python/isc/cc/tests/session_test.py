@@ -100,7 +100,7 @@ class MySocket():
 # to override the __init__() method, which wants a socket,
 # and we need to use our fake socket
 class MySession(Session):
-    def __init__(self, port=9912, s = None):
+    def __init__(self, port=9912, s=None):
         self._socket = None
         self._socket_timeout = 1
         self._lname = None
