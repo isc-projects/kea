@@ -1,3 +1,8 @@
+  84.   [bug]       jinmei, jerry
+    This is a quick fix patch for the issue: AXFR fails half the 
+	time because of connection problems. xfrout client will make
+	a new connection every time. (svn r2697)
+
   83.	[build]*
 	The configure --with-boost-lib option is removed. It was not
 	used since the build included ASIO. (svn r2684)
