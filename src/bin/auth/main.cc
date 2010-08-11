@@ -156,7 +156,13 @@ main(int argc, char* argv[]) {
     Session* xfrin_session = NULL;
     bool xfrin_session_established = false; // XXX (see Trac #287)
     ModuleCCSession* config_session = NULL;
-    XfroutClient xfrout_client(UNIX_SOCKET_FILE);
+    string xfrout_socket_path;
+    if (getenv("B10_FROM_BUILD") != NULL) {
+        xfrout_socket_path = string(getenv("B10_FROM_BUILD")) + "/auth_xfrout_conn";
+    } else {
+        xfrout_socket_path = UNIX_SOCKET_FILE;
+    }
+    XfroutClient xfrout_client(xfrout_socket_path);
     try {
         string specfile;
         if (getenv("B10_FROM_BUILD")) {
