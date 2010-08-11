@@ -65,7 +65,7 @@ import posix
 import isc.cc
 
 # This is the version that gets displayed to the user.
-__version__ = "v20100531"
+__version__ = "20100809"
 
 class RestartSchedule:
     """

@@ -35,7 +35,7 @@ from optparse import OptionParser, OptionValueError
 import isc.cc
 
 # This is the version that gets displayed to the user.
-__version__ = "v20091030 (Paving the DNS Parking Lot)"
+__version__ = "20100630"
 
 class MsgQReceiveError(Exception): pass
 
