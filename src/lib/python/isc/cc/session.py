@@ -40,7 +40,7 @@ class Session:
         self._closed = False
         self._queue = []
         self._lock = threading.RLock()
-        
+
         if socket_file is None:
             if "BIND10_MSGQ_SOCKET_FILE" in os.environ:
                 self.socket_file = os.environ["BIND10_MSGQ_SOCKET_FILE"]
@@ -48,7 +48,6 @@ class Session:
                 self.socket_file = bind10_config.BIND10_MSGQ_SOCKET_FILE
         else:
             self.socket_file = socket_file
-        
 
         try:
             self._socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)

@@ -269,7 +269,7 @@ Session::establish(const char* socket_file) {
     }
 
     impl_->establish(*socket_file);
-    
+
     // once established, encapsulate the implementation object so that we
     // can safely release the internal resource when exception happens
     // below.
