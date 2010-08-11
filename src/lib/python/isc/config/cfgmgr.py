@@ -382,8 +382,9 @@ class ConfigManager:
         self.running = True
         while (self.running):
             msg, env = self.cc.group_recvmsg(False)
-            if msg and not 'result' in msg:
+            # ignore 'None' value (current result of timeout)
+            # and messages that are answers to questions we did
+            # not ask
+            if msg is not None and not 'result' in msg:
                 answer = self.handle_msg(msg);
                 self.cc.group_reply(env, answer)
-            else:
-                self.running = False
