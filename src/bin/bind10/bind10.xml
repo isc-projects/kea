@@ -21,7 +21,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>April 19, 2010</date>
+    <date>July 29, 2010</date>
   </refentryinfo>
 
   <refmeta>
@@ -45,12 +45,18 @@
   <refsynopsisdiv>
     <cmdsynopsis>
       <command>bind10</command>    
-      <arg><option>-m <replaceable>number</replaceable></option></arg>
+      <arg><option>-a <replaceable>address</replaceable></option></arg>
+      <arg><option>-m <replaceable>file</replaceable></option></arg>
+      <arg><option>-n</option></arg>
       <arg><option>-p <replaceable>number</replaceable></option></arg>
+      <arg><option>-u <replaceable>user</replaceable></option></arg>
       <arg><option>-v</option></arg>
-      <arg><option>-msgq-port <replaceable>number</replaceable></option></arg>
-      <arg><option>-port <replaceable>number</replaceable></option></arg>
-      <arg><option>-verbose</option></arg>
+      <arg><option>--address <replaceable>address</replaceable></option></arg>
+      <arg><option>--msgq-socket-file <replaceable>file</replaceable></option></arg>
+      <arg><option>--no-cache</option></arg>
+      <arg><option>--port <replaceable>number</replaceable></option></arg>
+      <arg><option>--user <replaceable>user</replaceable></option></arg>
+      <arg><option>--verbose</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -80,14 +86,40 @@
     <variablelist>
 
       <varlistentry>
-        <term><option>-m</option> <replaceable>number</replaceable>, <option>--msgq-port</option> <replaceable>number</replaceable></term>
+        <term><option>-a</option> <replaceable>address</replaceable>, <option>--address</option> <replaceable>address</replaceable></term>
 
         <listitem>
-          <para>The port number for the
-	    <citerefentry><refentrytitle>b10-msgq</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+	  <para>The IPv4 or IPv6 address for the
+	    <citerefentry><refentrytitle>b10-auth</refentrytitle><manvolnum>8</manvolnum></citerefentry>
             daemon to listen on.
-            The default is 9912.</para>
+            The default is to listen on all addresses. 
+            (This is a short term workaround. This argument may change.)
+          </para>
          </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-m</option> <replaceable>file</replaceable>,
+           <option>--msgq-socket-file</option> <replaceable>file</replaceable></term>
+
+        <listitem>
+          <para>The UNIX domain socket file for the
+	    <citerefentry><refentrytitle>b10-msgq</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+            daemon to use.
+            The default is
+            <filename>/usr/local/var/bind10-devel/msg_socket</filename>.
+<!-- @localstatedir@/@PACKAGE_NAME@/msg_socket -->
+           </para>
+         </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-n</option>, <option>--no-cache</option></term>
+        <listitem>
+	  <para>Disables the hot-spot caching used by the
+	    <citerefentry><refentrytitle>b10-auth</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+	  daemon.</para>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
@@ -105,6 +137,18 @@
       </varlistentry>
 
       <varlistentry>
+        <term><option>-u</option> <replaceable>user</replaceable>, <option>--user</option> <replaceable>name</replaceable></term>
+
+        <listitem>
+          <para>The username for <command>bind10</command> to run as.
+<!-- TODO: example more detail. -->
+            <command>bind10</command> must be initially ran as the
+            root user to use this option.
+            The default is to run as the current user.</para>
+         </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term><option>-v</option>, <option>--verbose</option></term>
         <listitem>
 	  <para>Display more about what is going on for
@@ -112,6 +156,7 @@
 <!-- TODO: not true about all children yet -->
         </listitem>
       </varlistentry>
+
     </variablelist>
   </refsect1>
 

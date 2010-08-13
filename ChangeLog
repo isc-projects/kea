@@ -1,3 +1,32 @@
+bind10-devel-20100812 released on August 12, 2010
+
+  84.   [bug]       jinmei, jerry
+	This is a quick fix patch for the issue: AXFR fails half the 
+	time because of connection problems. xfrout client will make
+	a new connection every time. (Trac #299, svn r2697)
+
+  83.	[build]*
+	The configure --with-boost-lib option is removed. It was not
+	used since the build included ASIO. (svn r2684)
+
+  82.	[func]		jinmei
+	bin/auth: Added -u option to allow the effective process user
+	of the authoritative server after invocation.  The same option to
+	the boss process will be propagated to b10-auth, too.
+	(Trac #268, svn r2675)
+
+  81.	[func]		jinmei
+	Added a C++ framework for micro benchmark tests.  A supplemental
+	library functions to build query data for the tests were also
+	provided. (Trac #241, svn r2664)
+
+  80.	[bug]		jelte
+	bindctl no longer accepts configuration changes for unknown or
+	non-running modules (for the latter, this is until we have a
+	way to verify those options, at which point it'll be allowed
+	again).
+	(Trac #99, r2657)
+
   79.	[func]		feng, jinmei
 	Refactored the ASIO link interfaces to move incoming XFR and
 	NOTIFY processing to the auth server class.  Wrapper classes for
@@ -196,7 +225,11 @@ bind10-devel-20100602 released on June 2, 2010
 	a remote server. (Trac #218, svn r2038)
 
   49.	[func]*		jelte
-	Use unix domain sockets for msgq. (Trac #183, svn r2009)
+	Use unix domain sockets for msgq. For b10-msgq, the command
+	line options --msgq-port and -m were removed. For bind10,
+	the -msgq-port option was removed, and the -m command line
+	option was changed to be a filename (instead of port number).
+	(Trac #183, svn r2009)
 
   48.	[func]		jelte
 	bin/auth: Use asio's io_service for the msgq handling.

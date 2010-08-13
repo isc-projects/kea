@@ -334,6 +334,8 @@ class ZonemgrRefresh:
                 time.sleep(LOWERBOUND_RETRY) # A better time?
                 continue
 
+            print (self._zonemgr_refresh_info)
+
             zone_need_refresh = self._find_need_do_refresh_zone()
             # If don't get zone with minimum next refresh time, set timer timeout = LOWERBOUND_REFRESH
             if not zone_need_refresh:
