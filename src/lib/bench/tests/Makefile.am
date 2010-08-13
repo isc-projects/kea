@@ -2,6 +2,10 @@ AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(srcdir)/testdata\"
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
+if USE_STATIC_LINK
+AM_LDFLAGS = -static
+endif
+
 CLEANFILES = *.gcno *.gcda
 
 TESTS =
