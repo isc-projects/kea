@@ -399,6 +399,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/msgq/tests/Makefile
                  src/bin/auth/Makefile
                  src/bin/auth/tests/Makefile
+                 src/bin/auth/benchmarks/Makefile
                  src/bin/xfrin/Makefile
                  src/bin/xfrin/tests/Makefile
                  src/bin/xfrout/Makefile
