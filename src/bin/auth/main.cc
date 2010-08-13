@@ -200,6 +200,7 @@ main(int argc, char* argv[]) {
         // from auth_server, and create io_service, auth_server, and
         // sessions in that order.
         auth_server->setXfrinSession(xfrin_session);
+
         auth_server->setConfigSession(config_session);
         auth_server->updateConfig(ElementPtr());
 
