@@ -282,6 +282,7 @@ class TestConfigManager(unittest.TestCase):
 
     def test_run(self):
         self.fake_session.group_sendmsg({ "command": [ "get_commands_spec" ] }, "ConfigManager")
+        self.fake_session.group_sendmsg({ "command": [ "shutdown" ] }, "ConfigManager")
         self.cm.run()
         pass
 
