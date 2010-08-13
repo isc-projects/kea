@@ -25,6 +25,8 @@ import isc.config.module_spec
 
 class ConfigDataError(Exception): pass
 
+BIND10_CONFIG_DATA_VERSION = 2
+
 def check_type(spec_part, value):
     """Does nothing if the value is of the correct type given the
        specification part relevant for the value. Raises an
@@ -250,6 +252,11 @@ class MultiConfigData:
         """Removes the specification with the given module name. Does nothing if it wasn't there."""
         if module_name in self._specifications:
             del self._specifications[module_name]
+
+    def have_specification(self, module_name):
+        """Returns True if we have a specification for the module with the given name.
+           Returns False if we do not."""
+        return module_name in self._specifications
 
     def get_module_spec(self, module):
         """Returns the ModuleSpec for the module with the given name.

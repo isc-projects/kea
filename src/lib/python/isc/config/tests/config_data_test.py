@@ -267,12 +267,16 @@ class TestMultiConfigData(unittest.TestCase):
         self.assertEqual({}, self.mcd._current_config)
         self.assertEqual({}, self.mcd._local_changes)
 
-    def test_set_specification(self):
+    def test_set_remove_specification(self):
         module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec1.spec")
+        self.assertFalse(self.mcd.have_specification(module_spec.get_module_name()))
         self.mcd.set_specification(module_spec)
+        self.assertTrue(self.mcd.have_specification(module_spec.get_module_name()))
         self.assert_(module_spec.get_module_name() in self.mcd._specifications)
         self.assertEquals(module_spec, self.mcd._specifications[module_spec.get_module_name()])
         self.assertRaises(ConfigDataError, self.mcd.set_specification, "asdf")
+        self.mcd.remove_specification(module_spec.get_module_name())
+        self.assertFalse(self.mcd.have_specification(module_spec.get_module_name()))
 
     def test_get_module_spec(self):
         module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec1.spec")

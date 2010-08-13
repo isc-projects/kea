@@ -19,7 +19,7 @@
 
 import sys; sys.path.append ('@@PYTHONPATH@@')
 
-from isc.config.cfgmgr import ConfigManager
+from isc.config.cfgmgr import ConfigManager, ConfigManagerDataReadError
 from isc.cc import SessionError
 import signal
 import os
@@ -52,10 +52,15 @@ def main():
     except SessionError as se:
         print("[b10-cfgmgr] Error creating config manager, "
               "is the command channel daemon running?")
+        return 1
     except KeyboardInterrupt as kie:
         print("[b10-cfgmgr] Interrupted, exiting")
+    except ConfigManagerDataReadError as cmdre:
+        print("[b10-cfgmgr] " + str(cmdre))
+        return 2
     if cm:
-        cm.write_config()
+        return cm.write_config()
+    return 0
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
