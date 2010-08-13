@@ -1,16 +1,16 @@
 bind10-devel-20100812 released on August 12, 2010
 
-  84.   [bug]       jinmei, jerry
+  84.	[bug]		jinmei, jerry
 	This is a quick fix patch for the issue: AXFR fails half the 
 	time because of connection problems. xfrout client will make
 	a new connection every time. (Trac #299, svn r2697)
 
-  83.	[build]*
+  83.	[build]*	jreed
 	The configure --with-boost-lib option is removed. It was not
 	used since the build included ASIO. (svn r2684)
 
   82.	[func]		jinmei
-	bin/auth: Added -u option to allow the effective process user
+	bin/auth: Added -u option to change the effective process user
 	of the authoritative server after invocation.  The same option to
 	the boss process will be propagated to b10-auth, too.
 	(Trac #268, svn r2675)
