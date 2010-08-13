@@ -22,9 +22,10 @@
 #include <asio.hpp>
 
 #include <gtest/gtest.h>
-#include <session.h>
 
 #include <exceptions/exceptions.h>
+
+#include <cc/session.h>
 
 using namespace isc::cc;
 

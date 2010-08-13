@@ -6,6 +6,10 @@ if USE_GXX
 AM_CXXFLAGS += -Wno-unused-parameter
 endif
 
+if USE_STATIC_LINK
+AM_LDFLAGS = -static
+endif
+
 CLEANFILES = *.gcno *.gcda
 
 lib_LTLIBRARIES = libfake_session.la
