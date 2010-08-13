@@ -1,3 +1,10 @@
+  85.	[build]*	jinmei
+	Build programs using dynamic link by default.  A new configure
+	option --enable-static-link is provided to force static link for
+	executable programs.  Statically linked programs can be run on a
+	debugger more easily and would be convenient for developers.
+	(Trac #309, svn r2723)
+
 bind10-devel-20100812 released on August 12, 2010
 
   84.	[bug]		jinmei, jerry
