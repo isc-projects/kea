@@ -1056,7 +1056,6 @@ TEST_F(DataSrcMatchTest, updateWithNoMatch) {
     EXPECT_EQ(&datasrc1, match.getDataSource());
 }
 
-// This test currently fails.
 TEST_F(DataSrcMatchTest, initialUpdateWithNoMatch) {
     DataSrcMatch match(Name("www.example.com"), RRClass::IN());
 
