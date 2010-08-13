@@ -54,10 +54,10 @@ private:
     typedef boost::shared_ptr<AuthSrv> AuthSrvPtr;
     typedef boost::shared_ptr<const IOEndpoint> IOEndpointPtr;
 public:
-    QueryBenchMark(const size_t cache_slots, const char* const datasrc_file,
+    QueryBenchMark(const int cache_slots, const char* const datasrc_file,
                    const BenchQueries& queries, Message& query_message,
                    MessageRenderer& renderer) :
-        server_(AuthSrvPtr(new AuthSrv(cache_slots > 0 ? true : false,
+        server_(AuthSrvPtr(new AuthSrv(cache_slots >= 0 ? true : false,
                                        xfrout_client))),
         queries_(queries),
         query_message_(query_message),
@@ -67,7 +67,7 @@ public:
                                                         IOAddress("192.0.2.1"),
                                                         5300)))
     {
-        if (cache_slots > 0) {
+        if (cache_slots >= 0) {
             server_->setCacheSlots(cache_slots);
         }
         server_->updateConfig(Element::fromJSON("{\"database_file\": \"" +
@@ -153,6 +153,12 @@ main(int argc, char* argv[]) {
     cout << "  Query data: file=" << query_data_file << " (" << queries.size()
          << " queries)" << endl << endl;
 
+    cout << "Benchmark enabling Hot Spot Cache with unlimited slots "
+         << endl;
+    BenchMark<QueryBenchMark>(iteration,
+                              QueryBenchMark(0, datasrc_file, queries, message,
+                                             renderer));
+
     cout << "Benchmark enabling Hot Spot Cache with 10*#queries slots "
          << endl;
     BenchMark<QueryBenchMark>(iteration,
@@ -167,7 +173,7 @@ main(int argc, char* argv[]) {
 
     cout << "Benchmark disabling Hot Spot Cache" << endl;
     BenchMark<QueryBenchMark>(iteration,
-                              QueryBenchMark(0, datasrc_file, queries,
+                              QueryBenchMark(-1, datasrc_file, queries,
                                              message, renderer));    
 
     return (0);
