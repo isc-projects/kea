@@ -68,6 +68,16 @@ using asio::io_service;
 
 namespace isc {
 namespace cc {
+
+/// \brief Sets the given Optional 'result' to the given error code
+/// Used as a callback for emulating sync reads with async calls
+/// \param result Pointer to the optional to set
+/// \param err The error code to set it to
+void
+setResult(boost::optional<asio::error_code>* result, const asio::error_code& err) {
+    result->reset(err);
+}
+
 class SessionImpl {
 public:
     SessionImpl(io_service& io_service) :
@@ -93,11 +103,6 @@ public:
 private:
     void internalRead(const asio::error_code& error,
                       size_t bytes_transferred);
-    // Sets the boolean pointed to by result to true, unless
-    // the given error code is operation_aborted
-    // Used as a callback for emulating sync reads with async calls
-    void setReadResult(const asio::error_code& b);
-    void setTimerResult(const asio::error_code& b);
 
 private:
     io_service& io_service_;
@@ -105,13 +110,8 @@ private:
     uint32_t data_length_;
     boost::function<void()> user_handler_;
     asio::error_code error_;
-    // timeout for blocking reads (in seconds, defaults to 4)
+    // timeout for blocking reads (in seconds, defaults to 4000)
     size_t timeout_;
-
-    // used in blocking reads to determine if data has been
-    // read or a timeout occurred, and/or if there was an error
-    bool read_result, timer_result;
-    asio::error_code read_result_code, timer_result_code;
 };
 
 void
@@ -160,57 +160,51 @@ SessionImpl::readDataLength() {
 }
 
 void
-SessionImpl::setReadResult(const asio::error_code& b) {
-    // if the 'error' is operation_aborted (i.e. a call to cancel()),
-    // we do not consider the read or the wait 'done'.
-    if (b != asio::error::operation_aborted) {
-        read_result_code = b;
-        read_result = true;
-    }
-}
-
-void
-SessionImpl::setTimerResult(const asio::error_code& b) {
-    // if the 'error' is operation_aborted (i.e. a call to cancel()),
-    // we do not consider the read or the wait 'done'.
-    if (b != asio::error::operation_aborted) {
-        timer_result_code = b;
-        timer_result = true;
-    }
-}
-
-void
 SessionImpl::readData(void* data, size_t datalen) {
-    timer_result = false;
-    read_result = false;
+    boost::optional<asio::error_code> read_result;
+    boost::optional<asio::error_code> timer_result;
+
     try {
+        socket_.io_service().reset();
+
         asio::async_read(socket_, asio::buffer(data, datalen),
-                         boost::bind(&SessionImpl::setReadResult, this, _1));
+                         boost::bind(&setResult, &read_result, _1));
         asio::deadline_timer timer(socket_.io_service());
     
         if (getTimeout() != 0) {
             timer.expires_from_now(boost::posix_time::milliseconds(getTimeout()));
-            timer.async_wait(boost::bind(&SessionImpl::setTimerResult, this, _1));
+            timer.async_wait(boost::bind(&setResult, &timer_result, _1));
         }
 
-        // wait until either we have read the data we want, or the
-        // timer expires
+        // wait until either we have read the data we want, the
+        // timer expires, or one of the two is triggered with an error.
+        // When one of them has a result, cancel the other, and wait
+        // until the cancel is processed before we continue
         while (!read_result && !timer_result) {
             socket_.io_service().run_one();
-            if (read_result) {
+            if (read_result && getTimeout() != 0) {
                 timer.cancel();
+                while (!timer_result) {
+                    socket_.io_service().run_one();
+                }
             } else if (timer_result) {
                 socket_.cancel();
+                while (!read_result) {
+                    socket_.io_service().run_one();
+                }
             }
+
         }
-        if (read_result_code) {
-            isc_throw(SessionError,
-                      "Error while reading data from cc session: " <<
-                      read_result_code.message());
-        }
-        if (!read_result) {
-            isc_throw(SessionTimeout,
-                      "Timeout or error while reading data from cc session");
+
+        if (read_result->value() != 0) {
+            if (*read_result == asio::error::operation_aborted) {
+                isc_throw(SessionTimeout,
+                          "Timeout while reading data from cc session");
+            } else {
+                isc_throw(SessionError,
+                          "Error while reading data from cc session: " <<
+                          read_result->message());
+            }
         }
     } catch (const asio::system_error& asio_ex) {
         // to hide boost specific exceptions, we catch them explicitly

@@ -108,7 +108,7 @@ public:
     void
     setSendLname() {
         // ignore whatever data we get, send back an lname
-        asio::async_read(socket_,  asio::buffer(data_buf, 1024),
+        asio::async_read(socket_,  asio::buffer(data_buf, 0),
                          boost::bind(&TestDomainSocket::sendLname, this));
     }
     
@@ -152,6 +152,14 @@ TEST_F(SessionTest, connect_ok) {
     tds->setSendLname();
 
     Session sess(my_io_service);
+    sess.establish(BIND10_TEST_SOCKET_FILE);
+}
+
+TEST_F(SessionTest, connect_ok_no_timeout) {
+    tds->setSendLname();
+
+    Session sess(my_io_service);
+    sess.setTimeout(0);
     sess.establish(BIND10_TEST_SOCKET_FILE);
 }
 
