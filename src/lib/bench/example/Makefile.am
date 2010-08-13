@@ -1,5 +1,9 @@
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 
+if USE_STATIC_LINK
+AM_LDFLAGS = -static
+endif
+
 CLEANFILES = *.gcno *.gcda
 
 noinst_PROGRAMS = search_bench

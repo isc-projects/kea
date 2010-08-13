@@ -32,6 +32,14 @@ AC_TRY_LINK([],[],
 	])
 LDFLAGS=$LDFLAGS_SAVED
 
+# allow building programs with static link.  we need to make it selective
+# because loadable modules cannot be statically linked.
+AC_ARG_ENABLE([static-link],
+AC_HELP_STRING([--enable-static-link],
+  [build programs with static link [[default=no]]]),
+  [enable_static_link=yes], [enable_static_link=no])
+AM_CONDITIONAL(USE_STATIC_LINK, test $enable_static_link = yes)
+
 # OS dependent compiler flags
 case "$host" in
 *-solaris*)
@@ -409,6 +417,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/bench/example/Makefile
                  src/lib/bench/tests/Makefile
                  src/lib/cc/Makefile
+                 src/lib/cc/tests/Makefile
                  src/lib/python/Makefile
                  src/lib/python/isc/Makefile
                  src/lib/python/isc/datasrc/Makefile
@@ -425,6 +434,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/dns/python/Makefile
                  src/lib/dns/python/tests/Makefile
                  src/lib/exceptions/Makefile
+                 src/lib/exceptions/tests/Makefile
                  src/lib/datasrc/Makefile
                  src/lib/datasrc/tests/Makefile
                  src/lib/xfr/Makefile
