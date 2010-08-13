@@ -18,7 +18,7 @@
 #include <boost/foreach.hpp>
 #include <boost/assign/std/vector.hpp>
 
-#include <data.h>
+#include <cc/data.h>
 
 using namespace isc::data;
 
