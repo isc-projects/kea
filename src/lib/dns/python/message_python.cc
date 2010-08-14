@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id: message_python.cc 1711 2010-04-14 15:14:53Z jelte $
+// $Id$
 
 #include <dns/message.h>
 using namespace isc::dns;
