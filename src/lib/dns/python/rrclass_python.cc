@@ -188,7 +188,7 @@ RRClass_init(s_RRClass* self, PyObject* args) {
         }
     // Incomplete is never thrown, a type error would have already been raised
     //when we try to read the 2 bytes above
-    } catch (InvalidRRClass ic) {
+    } catch (const InvalidRRClass& ic) {
         PyErr_Clear();
         PyErr_SetString(po_InvalidRRClass, ic.what());
         return (-1);
