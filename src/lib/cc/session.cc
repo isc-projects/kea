@@ -74,7 +74,9 @@ namespace cc {
 /// \param result Pointer to the optional to set
 /// \param err The error code to set it to
 void
-setResult(boost::optional<asio::error_code>* result, const asio::error_code& err) {
+setResult(boost::optional<asio::error_code>* result,
+          const asio::error_code& err)
+{
     result->reset(err);
 }
 
@@ -193,7 +195,6 @@ SessionImpl::readData(void* data, size_t datalen) {
                     socket_.io_service().run_one();
                 }
             }
-
         }
 
         if (read_result->value() != 0) {
