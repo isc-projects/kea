@@ -521,11 +521,11 @@ AuthSrv::updateConfig(isc::data::ElementPtr new_config) {
         ElementPtr answer = isc::config::createAnswer();
         answer = impl_->setDbFile(new_config);
 
-        return answer;
+        return (answer);
     } catch (const isc::Exception& error) {
         if (impl_->verbose_mode_) {
             cerr << "[b10-auth] error: " << error.what() << endl;
         }
-        return isc::config::createAnswer(1, error.what());
+        return (isc::config::createAnswer(1, error.what()));
     }
 }

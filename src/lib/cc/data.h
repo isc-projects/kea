@@ -90,7 +90,7 @@ public:
     virtual ~Element() {};
 
     /// \return the type of this element
-    int getType() { return type; };
+    int getType() { return (type); }
 
     /// Returns a string representing the Element and all its
     /// child elements; note that this is different from stringValue(),
@@ -265,13 +265,13 @@ public:
     //@{
     static ElementPtr create();
     static ElementPtr create(const long int i);
-    static ElementPtr create(const int i) { return create(static_cast<long int>(i)); };
+    static ElementPtr create(const int i) { return (create(static_cast<long int>(i))); };
     static ElementPtr create(const double d);
     static ElementPtr create(const bool b);
     static ElementPtr create(const std::string& s);
     // need both std:string and char *, since c++ will match
     // bool before std::string when you pass it a char *
-    static ElementPtr create(const char *s) { return create(std::string(s)); };
+    static ElementPtr create(const char *s) { return (create(std::string(s))); }
 
     /// \brief Creates an empty ListElement type ElementPtr.
     static ElementPtr createList();
@@ -364,12 +364,12 @@ class IntElement : public Element {
     long int i;
 
 public:
-    IntElement(long int v) : Element(integer), i(v) { };
-    long int intValue() { return i; }
+    IntElement(long int v) : Element(integer), i(v) { }
+    long int intValue() { return (i); }
     using Element::getValue;
-    bool getValue(long int& t) { t = i; return true; };
+    bool getValue(long int& t) { t = i; return (true); }
     using Element::setValue;
-    bool setValue(const long int v) { i = v; return true; };
+    bool setValue(const long int v) { i = v; return (true); }
     void toJSON(std::ostream& ss);
     bool equals(ElementPtr other);
 };
@@ -379,11 +379,11 @@ class DoubleElement : public Element {
 
 public:
     DoubleElement(double v) : Element(real), d(v) {};
-    double doubleValue() { return d; }
+    double doubleValue() { return (d); }
     using Element::getValue;
-    bool getValue(double& t) { t = d; return true; };
+    bool getValue(double& t) { t = d; return (true); }
     using Element::setValue;
-    bool setValue(const double v) { d = v; return true; };
+    bool setValue(const double v) { d = v; return (true); }
     void toJSON(std::ostream& ss);
     bool equals(ElementPtr other);
 };
@@ -393,11 +393,11 @@ class BoolElement : public Element {
 
 public:
     BoolElement(const bool v) : Element(boolean), b(v) {};
-    bool boolValue() { return b; }
+    bool boolValue() { return (b); }
     using Element::getValue;
-    bool getValue(bool& t) { t = b; return true; };
+    bool getValue(bool& t) { t = b; return (true); }
     using Element::setValue;
-    bool setValue(const bool v) { b = v; return true; };
+    bool setValue(const bool v) { b = v; return (true); }
     void toJSON(std::ostream& ss);
     bool equals(ElementPtr other);
 };
@@ -414,11 +414,11 @@ class StringElement : public Element {
 
 public:
     StringElement(std::string v) : Element(string), s(v) {};
-    std::string stringValue() { return s; };
+    std::string stringValue() { return (s); }
     using Element::getValue;
-    bool getValue(std::string& t) { t = s; return true; };
+    bool getValue(std::string& t) { t = s; return (true); }
     using Element::setValue;
-    bool setValue(const std::string& v) { s = v; return true; };
+    bool setValue(const std::string& v) { s = v; return (true); }
     void toJSON(std::ostream& ss);
     bool equals(ElementPtr other);
 };
@@ -428,20 +428,20 @@ class ListElement : public Element {
 
 public:
     ListElement() : Element(list), l(std::vector<ElementPtr>()) {};
-    const std::vector<ElementPtr>& listValue() { return l; }
+    const std::vector<ElementPtr>& listValue() { return (l); }
     using Element::getValue;
-    bool getValue(std::vector<ElementPtr>& t) { t = l; return true; };
+    bool getValue(std::vector<ElementPtr>& t) { t = l; return (true); }
     using Element::setValue;
-    bool setValue(const std::vector<ElementPtr>& v) { l = v; return true; };
+    bool setValue(const std::vector<ElementPtr>& v) { l = v; return (true); }
     using Element::get;
-    ElementPtr get(int i) { return l.at(i); };
+    ElementPtr get(int i) { return (l.at(i)); }
     using Element::set;
     void set(size_t i, ElementPtr e) { if (i <= l.size()) {l[i] = e;} else { throw std::out_of_range("vector::_M_range_check"); } };
     void add(ElementPtr e) { l.push_back(e); };
     using Element::remove;
     void remove(int i) { l.erase(l.begin() + i); };
     void toJSON(std::ostream& ss);
-    size_t size() { return l.size(); }
+    size_t size() { return (l.size()); }
     bool equals(ElementPtr other);
 };
 
@@ -451,18 +451,18 @@ class MapElement : public Element {
 public:
     MapElement() : Element(map), m(std::map<std::string, ElementPtr>()) {};
     // TODO: should we have direct iterators instead of exposing the std::map here?
-    const std::map<std::string, ElementPtr>& mapValue() { return m; }
+    const std::map<std::string, ElementPtr>& mapValue() { return (m); }
     using Element::getValue;
-    bool getValue(std::map<std::string, ElementPtr>& t) { t = m; return true; };
+    bool getValue(std::map<std::string, ElementPtr>& t) { t = m; return (true); }
     using Element::setValue;
-    bool setValue(std::map<std::string, ElementPtr>& v) { m = v; return true; };
+    bool setValue(std::map<std::string, ElementPtr>& v) { m = v; return (true); }
     using Element::get;
-    ElementPtr get(const std::string& s) { if (contains(s)) { return m[s]; } else { return ElementPtr();} };
+    ElementPtr get(const std::string& s) { if (contains(s)) { return (m[s]); } else { return (ElementPtr());} }
     using Element::set;
     void set(const std::string& key, ElementPtr value);
     using Element::remove;
     void remove(const std::string& s) { m.erase(s); }
-    bool contains(const std::string& s) { return m.find(s) != m.end(); }
+    bool contains(const std::string& s) { return (m.find(s) != m.end()); }
     void toJSON(std::ostream& ss);
     
     // we should name the two finds better...

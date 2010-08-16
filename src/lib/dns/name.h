@@ -406,7 +406,7 @@ public:
     /// This method simply negates the result of \c equal() method, and in that
     /// sense it's redundant.  The separate method is provided just for
     /// convenience.
-    bool nequals(const Name& other) const { return !(equals(other)); }
+    bool nequals(const Name& other) const { return (!(equals(other))); }
 
     /// Same as nequals()
     bool operator!=(const Name& other) const { return (nequals(other)); }

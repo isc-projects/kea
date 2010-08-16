@@ -253,8 +253,8 @@ RRType_toText(s_RRType* self) {
 static PyObject*
 RRType_str(PyObject* self) {
     // Simply call the to_text method we already defined
-    return PyObject_CallMethod(self, const_cast<char*>("to_text"),
-                                     const_cast<char*>(""));
+    return (PyObject_CallMethod(self, const_cast<char*>("to_text"),
+                                const_cast<char*>("")));
 }
 
 static PyObject*

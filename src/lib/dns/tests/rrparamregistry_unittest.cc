@@ -107,11 +107,11 @@ TEST_F(RRParamRegistryTest, addError)
 class TestRdataFactory : public AbstractRdataFactory {
 public:
     virtual RdataPtr create(const string& rdata_str) const
-    { return RdataPtr(new in::A(rdata_str)); }
+    { return (RdataPtr(new in::A(rdata_str))); }
     virtual RdataPtr create(InputBuffer& buffer, size_t rdata_len) const
-    { return RdataPtr(new in::A(buffer, rdata_len)); }
+    { return (RdataPtr(new in::A(buffer, rdata_len))); }
     virtual RdataPtr create(const Rdata& source) const
-    { return RdataPtr(new in::A(dynamic_cast<const in::A&>(source))); }
+    { return (RdataPtr(new in::A(dynamic_cast<const in::A&>(source)))); }
 };
 
 TEST_F(RRParamRegistryTest, addRemoveFactory)

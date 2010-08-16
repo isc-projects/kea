@@ -261,7 +261,7 @@ StaticDataSrc::init() {
 // is intentionally ignored.
 DataSrc::Result
 StaticDataSrc::init(const isc::data::ElementPtr config UNUSED_PARAM) {
-    return init();
+    return (init());
 }
 
 DataSrc::Result

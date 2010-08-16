@@ -141,53 +141,49 @@ ModuleSpec::ModuleSpec(ElementPtr module_spec_element,
 }
 
 const ElementPtr
-ModuleSpec::getCommandsSpec() const
-{
+ModuleSpec::getCommandsSpec() const {
     if (module_specification->contains("commands")) {
-        return module_specification->get("commands");
+        return (module_specification->get("commands"));
     } else {
-        return ElementPtr();
+        return (ElementPtr());
     }
 }
 
 const ElementPtr
-ModuleSpec::getConfigSpec() const
-{
+ModuleSpec::getConfigSpec() const {
     if (module_specification->contains("config_data")) {
-        return module_specification->get("config_data");
+        return (module_specification->get("config_data"));
     } else {
-        return ElementPtr();
+        return (ElementPtr());
     }
 }
 
 const std::string
-ModuleSpec::getModuleName() const
-{
-    return module_specification->get("module_name")->stringValue();
+ModuleSpec::getModuleName() const {
+    return (module_specification->get("module_name")->stringValue());
 }
 
 const std::string
-ModuleSpec::getModuleDescription() const
-{
+ModuleSpec::getModuleDescription() const {
     if (module_specification->contains("module_description")) {
-        return module_specification->get("module_description")->stringValue();
+        return (module_specification->get("module_description")->stringValue());
     } else {
-        return std::string("");
+        return (std::string(""));
     }
 }
 
 bool
-ModuleSpec::validate_config(const ElementPtr data, const bool full)
-{
+ModuleSpec::validate_config(const ElementPtr data, const bool full) {
     ElementPtr spec = module_specification->find("config_data");
-    return validate_spec_list(spec, data, full, ElementPtr());
+    return (validate_spec_list(spec, data, full, ElementPtr()));
 }
 
 bool
-ModuleSpec::validate_config(const ElementPtr data, const bool full, ElementPtr errors)
+ModuleSpec::validate_config(const ElementPtr data, const bool full,
+                            ElementPtr errors)
 {
     ElementPtr spec = module_specification->find("config_data");
-    return validate_spec_list(spec, data, full, errors);
+    return (validate_spec_list(spec, data, full, errors));
 }
 
 ModuleSpec
@@ -205,7 +201,7 @@ moduleSpecFromFile(const std::string& file_name, const bool check)
 
     ElementPtr module_spec_element = Element::fromJSON(file, file_name);
     if (module_spec_element->contains("module_spec")) {
-        return ModuleSpec(module_spec_element->get("module_spec"), check);
+        return (ModuleSpec(module_spec_element->get("module_spec"), check));
     } else {
         throw ModuleSpecError("No module_spec in specification");
     }
@@ -213,10 +209,11 @@ moduleSpecFromFile(const std::string& file_name, const bool check)
 
 ModuleSpec
 moduleSpecFromFile(std::ifstream& in, const bool check)
-                   throw(JSONError, ModuleSpecError) {
+                   throw(JSONError, ModuleSpecError)
+{
     ElementPtr module_spec_element = Element::fromJSON(in);
     if (module_spec_element->contains("module_spec")) {
-        return ModuleSpec(module_spec_element->get("module_spec"), check);
+        return (ModuleSpec(module_spec_element->get("module_spec"), check));
     } else {
         throw ModuleSpecError("No module_spec in specification");
     }
@@ -236,29 +233,29 @@ check_type(ElementPtr spec, ElementPtr element)
     std::string cur_item_type;
     cur_item_type = spec->get("item_type")->stringValue();
     if (cur_item_type == "any") {
-        return true;
+        return (true);
     }
     switch (element->getType()) {
         case Element::integer:
-            return cur_item_type == "integer";
+            return (cur_item_type == "integer");
             break;
         case Element::real:
-            return cur_item_type == "real";
+            return (cur_item_type == "real");
             break;
         case Element::boolean:
-            return cur_item_type == "boolean";
+            return (cur_item_type == "boolean");
             break;
         case Element::string:
-            return cur_item_type == "string";
+            return (cur_item_type == "string");
             break;
         case Element::list:
-            return cur_item_type == "list";
+            return (cur_item_type == "list");
             break;
         case Element::map:
-            return cur_item_type == "map";
+            return (cur_item_type == "map");
             break;
     }
-    return false;
+    return (false);
 }
 
 bool
@@ -270,7 +267,7 @@ ModuleSpec::validate_item(const ElementPtr spec, const ElementPtr data, const bo
         if (errors) {
             errors->add(Element::create("Type mismatch"));
         }
-        return false;
+        return (false);
     }
     if (data->getType() == Element::list) {
         ElementPtr list_spec = spec->get("list_item_spec");
@@ -279,21 +276,21 @@ ModuleSpec::validate_item(const ElementPtr spec, const ElementPtr data, const bo
                 if (errors) {
                     errors->add(Element::create("Type mismatch"));
                 }
-                return false;
+                return (false);
             }
             if (list_spec->get("item_type")->stringValue() == "map") {
                 if (!validate_item(list_spec, list_el, full, errors)) {
-                    return false;
+                    return (false);
                 }
             }
         }
     }
     if (data->getType() == Element::map) {
         if (!validate_spec_list(spec->get("map_item_spec"), data, full, errors)) {
-            return false;
+            return (false);
         }
     }
-    return true;
+    return (true);
 }
 
 // spec is a map with item_name etc, data is a map
@@ -306,17 +303,17 @@ ModuleSpec::validate_spec(const ElementPtr spec, const ElementPtr data, const bo
     
     if (data_el) {
         if (!validate_item(spec, data_el, full, errors)) {
-            return false;
+            return (false);
         }
     } else {
         if (!optional && full) {
             if (errors) {
                 errors->add(Element::create("Non-optional value missing"));
             }
-            return false;
+            return (false);
         }
     }
-    return true;
+    return (true);
 }
 
 // spec is a list of maps, data is a map
@@ -326,10 +323,10 @@ ModuleSpec::validate_spec_list(const ElementPtr spec, const ElementPtr data, con
     std::string cur_item_name;
     BOOST_FOREACH(ElementPtr cur_spec_el, spec->listValue()) {
         if (!validate_spec(cur_spec_el, data, full, errors)) {
-            return false;
+            return (false);
         }
     }
-    return true;
+    return (true);
 }
 
 }

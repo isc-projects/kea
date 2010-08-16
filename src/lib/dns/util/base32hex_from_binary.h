@@ -48,7 +48,7 @@ struct from_5_bit {
             "0123456789"
             "ABCDEFGHIJKLMNOPQRSTUV";
         assert(t < 32);
-        return lookup_table[static_cast<size_t>(t)];
+        return (lookup_table[static_cast<size_t>(t)]);
     }
 };
 

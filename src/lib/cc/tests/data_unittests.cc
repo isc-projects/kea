@@ -400,7 +400,7 @@ TEST(Element, to_and_from_wire) {
 
 static ElementPtr
 efs(const std::string& str) {
-    return Element::fromJSON(str);
+    return (Element::fromJSON(str));
 }
 
 TEST(Element, equals) {
