@@ -93,10 +93,10 @@ def open(dbfile):
 
     return conn, cur
 
-
 #########################################################################
 # get_zone_datas
-#   returns all the records for one zone with the given zone name. 
+#   a generator function producing an iterable set of 
+#   the records in the zone with the given zone name.
 #########################################################################
 def get_zone_datas(zonename, dbfile):
     conn, cur = open(dbfile)
