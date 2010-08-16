@@ -134,7 +134,7 @@ SessionImpl::readData(void* data, size_t datalen) {
     try {
         asio::read(socket_, asio::buffer(data, datalen));
     } catch (const asio::system_error& asio_ex) {
-        // to hide boost specific exceptions, we catch them explicitly
+        // to hide ASIO specific exceptions, we catch them explicitly
         // and convert it to SessionError.
         isc_throw(SessionError, "ASIO read failed: " << asio_ex.what());
     }

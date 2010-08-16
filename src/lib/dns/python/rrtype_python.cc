@@ -217,7 +217,7 @@ RRType_init(s_RRType* self, PyObject* args) {
             PyErr_Clear();
             return (0);
         }
-    } catch (IncompleteRRType icc) {
+    } catch (const IncompleteRRType& icc) {
         // Ok so one of our functions has thrown a C++ exception.
         // We need to translate that to a Python Exception
         // First clear any existing error that was set
@@ -226,7 +226,7 @@ RRType_init(s_RRType* self, PyObject* args) {
         PyErr_SetString(po_IncompleteRRType, icc.what());
         // And return negative
         return (-1);
-    } catch (InvalidRRType ic) {
+    } catch (const InvalidRRType& ic) {
         PyErr_Clear();
         PyErr_SetString(po_InvalidRRType, ic.what());
         return (-1);

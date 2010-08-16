@@ -2,12 +2,12 @@
 .\"     Title: bind10
 .\"    Author: [see the "AUTHORS" section]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: April 19, 2010
+.\"      Date: July 29, 2010
 .\"    Manual: BIND10
 .\"    Source: BIND10
 .\"  Language: English
 .\"
-.TH "BIND10" "8" "April 19, 2010" "BIND10" "BIND10"
+.TH "BIND10" "8" "July 29, 2010" "BIND10" "BIND10"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -22,7 +22,7 @@
 bind10 \- BIND 10 boss process
 .SH "SYNOPSIS"
 .HP \w'\fBbind10\fR\ 'u
-\fBbind10\fR [\fB\-m\ \fR\fB\fInumber\fR\fR] [\fB\-p\ \fR\fB\fInumber\fR\fR] [\fB\-v\fR] [\fB\-msgq\-port\ \fR\fB\fInumber\fR\fR] [\fB\-port\ \fR\fB\fInumber\fR\fR] [\fB\-verbose\fR]
+\fBbind10\fR [\fB\-a\ \fR\fB\fIaddress\fR\fR] [\fB\-m\ \fR\fB\fIfile\fR\fR] [\fB\-n\fR] [\fB\-p\ \fR\fB\fInumber\fR\fR] [\fB\-u\ \fR\fB\fIuser\fR\fR] [\fB\-v\fR] [\fB\-\-address\ \fR\fB\fIaddress\fR\fR] [\fB\-\-msgq\-socket\-file\ \fR\fB\fIfile\fR\fR] [\fB\-\-no\-cache\fR] [\fB\-\-port\ \fR\fB\fInumber\fR\fR] [\fB\-\-user\ \fR\fB\fIuser\fR\fR] [\fB\-\-verbose\fR]
 .SH "DESCRIPTION"
 .PP
 The
@@ -32,11 +32,26 @@ daemon starts up other BIND 10 required daemons\&. It handles restarting of exit
 .PP
 The arguments are as follows:
 .PP
-\fB\-m\fR \fInumber\fR, \fB\-\-msgq\-port\fR \fInumber\fR
+\fB\-a\fR \fIaddress\fR, \fB\-\-address\fR \fIaddress\fR
 .RS 4
-The port number for the
+The IPv4 or IPv6 address for the
+\fBb10-auth\fR(8)
+daemon to listen on\&. The default is to listen on all addresses\&. (This is a short term workaround\&. This argument may change\&.)
+.RE
+.PP
+\fB\-m\fR \fIfile\fR, \fB\-\-msgq\-socket\-file\fR \fIfile\fR
+.RS 4
+The UNIX domain socket file for the
 \fBb10-msgq\fR(8)
-daemon to listen on\&. The default is 9912\&.
+daemon to use\&. The default is
+/usr/local/var/bind10\-devel/msg_socket\&.
+.RE
+.PP
+\fB\-n\fR, \fB\-\-no\-cache\fR
+.RS 4
+Disables the hot\-spot caching used by the
+\fBb10-auth\fR(8)
+daemon\&.
 .RE
 .PP
 \fB\-p\fR \fInumber\fR, \fB\-\-port\fR \fInumber\fR
@@ -59,6 +74,16 @@ daemon to listen on\&. The default is 5300\&.
 The Y1 prototype release uses a non\-default port for domain service\&.
 .sp .5v
 .RE
+.RE
+.PP
+\fB\-u\fR \fIuser\fR, \fB\-\-user\fR \fIname\fR
+.RS 4
+The username for
+\fBbind10\fR
+to run as\&.
+
+\fBbind10\fR
+must be initially ran as the root user to use this option\&. The default is to run as the current user\&.
 .RE
 .PP
 \fB\-v\fR, \fB\-\-verbose\fR

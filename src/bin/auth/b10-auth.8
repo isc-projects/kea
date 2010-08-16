@@ -2,12 +2,12 @@
 .\"     Title: b10-auth
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: March 16, 2010
+.\"      Date: July 29, 2010
 .\"    Manual: BIND10
 .\"    Source: BIND10
 .\"  Language: English
 .\"
-.TH "B10\-AUTH" "8" "March 16, 2010" "BIND10" "BIND10"
+.TH "B10\-AUTH" "8" "July 29, 2010" "BIND10" "BIND10"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -22,7 +22,7 @@
 b10-auth \- Authoritative DNS server
 .SH "SYNOPSIS"
 .HP \w'\fBb10\-auth\fR\ 'u
-\fBb10\-auth\fR [\fB\-4\fR] [\fB\-6\fR] [\fB\-p\ \fR\fB\fInumber\fR\fR] [\fB\-v\fR]
+\fBb10\-auth\fR [\fB\-4\fR] [\fB\-6\fR] [\fB\-a\ \fR\fB\fIaddress\fR\fR] [\fB\-n\fR] [\fB\-p\ \fR\fB\fInumber\fR\fR] [\fB\-u\ \fR\fB\fIusername\fR\fR] [\fB\-v\fR]
 .SH "DESCRIPTION"
 .PP
 The
@@ -64,13 +64,30 @@ The arguments are as follows:
 \fB\-4\fR
 .RS 4
 Enables IPv4 only mode\&. This switch may not be used with
-\fB\-6\fR\&. By default, it listens on both IPv4 and IPv6 (if capable)\&.
+\fB\-6\fR
+nor
+\fB\-a\fR\&. By default, it listens on both IPv4 and IPv6 (if capable)\&.
 .RE
 .PP
 \fB\-6\fR
 .RS 4
 Enables IPv6 only mode\&. This switch may not be used with
-\fB\-4\fR\&. By default, it listens on both IPv4 and IPv6 (if capable)\&.
+\fB\-4\fR
+nor
+\fB\-a\fR\&. By default, it listens on both IPv4 and IPv6 (if capable)\&.
+.RE
+.PP
+\fB\-a \fR\fB\fIaddress\fR\fR
+.RS 4
+The IPv4 or IPv6 address to listen on\&. This switch may not be used with
+\fB\-4\fR
+nor
+\fB\-6\fR\&. The default is to listen on all addresses\&. (This is a short term workaround\&. This argument may change\&.)
+.RE
+.PP
+\fB\-n\fR
+.RS 4
+Do not cache answers in memory\&. The default is to use the cache for faster responses\&. The cache keeps the most recent 30,000 answers (positive and negative) in memory for 30 seconds (instead of querying the data source, such as SQLite3 database, each time)\&.
 .RE
 .PP
 \fB\-p \fR\fB\fInumber\fR\fR
@@ -91,6 +108,15 @@ The port number it listens on\&. The default is 5300\&.
 The Y1 prototype runs on all interfaces and on this nonstandard port\&.
 .sp .5v
 .RE
+.RE
+.PP
+\fB\-u \fR\fB\fIusername\fR\fR
+.RS 4
+The user name of the
+\fBb10\-auth\fR
+daemon\&. If specified, the daemon changes the process owner to the specified user\&. The
+\fIusername\fR
+must be either a valid numeric user ID or a valid user name\&. By default the daemon runs as the user who invokes it\&.
 .RE
 .PP
 \fB\-v\fR
