@@ -35,24 +35,21 @@ namespace isc {
 namespace data {
 
 std::string
-Element::str()
-{
+Element::str() {
     std::stringstream ss;
     toJSON(ss);
-    return ss.str();
+    return (ss.str());
 }
 
 std::string
-Element::toWire()
-{
+Element::toWire() {
     std::stringstream ss;
     toJSON(ss);
-    return ss.str();
+    return (ss.str());
 }
 
 void
-Element::toWire(std::ostream& ss)
-{
+Element::toWire(std::ostream& ss) {
     toJSON(ss);
 }
 
@@ -65,63 +62,62 @@ Element::toWire(std::ostream& ss)
 //
 bool
 Element::getValue(long int& t UNUSED_PARAM) {
-    return false;
+    return (false);
 }
 
 bool
 Element::getValue(double& t UNUSED_PARAM) {
-    return false;
+    return (false);
 }
 
 bool
 Element::getValue(bool& t UNUSED_PARAM) {
-    return false;
+    return (false);
 }
 
 bool
 Element::getValue(std::string& t UNUSED_PARAM) {
-    return false;
+    return (false);
 }
 
 bool
 Element::getValue(std::vector<ElementPtr>& t UNUSED_PARAM) {
-    return false;
+    return (false);
 }
 
 bool
 Element::getValue(std::map<std::string, ElementPtr>& t UNUSED_PARAM) {
-    return false;
+    return (false);
 }
 
 bool
 Element::setValue(const long int v UNUSED_PARAM) {
-    return false;
+    return (false);
 }
 
 bool
 Element::setValue(const double v UNUSED_PARAM) {
-    return false;
+    return (false);
 }
 
 bool
 Element::setValue(const bool t UNUSED_PARAM) {
-    return false;
+    return (false);
 }
 
 bool
 Element::setValue(const std::string& v UNUSED_PARAM) {
-    return false;
+    return (false);
 }
 
 bool
 Element::setValue(const std::vector<ElementPtr>& v UNUSED_PARAM) {
-    return false;
+    return (false);
 }
 
 bool
-Element::setValue(const std::map<std::string, ElementPtr>& v UNUSED_PARAM)
-{
-    return false;
+Element::setValue(const std::map<std::string, ElementPtr>& v UNUSED_PARAM) {
+    return (false);
 }
 
 ElementPtr
@@ -180,7 +176,7 @@ bool
 Element::find(const std::string& identifier UNUSED_PARAM,
               ElementPtr& t UNUSED_PARAM)
 {
-    return false;
+    return (false);
 }
 
 namespace {
@@ -194,11 +190,11 @@ throwJSONError(const std::string& error, const std::string& file, int line, int 
 }
 
 std::ostream& operator <<(std::ostream &out, const isc::data::ElementPtr& e) {
-    return out << e->str();
+    return (out << e->str());
 }
 
 bool operator==(const isc::data::ElementPtr a, const isc::data::ElementPtr b) {
-    return a->equals(b);
+    return (a->equals(b));
 };
 
 //
@@ -206,37 +202,37 @@ bool operator==(const isc::data::ElementPtr a, const isc::data::ElementPtr b) {
 //
 ElementPtr
 Element::create() {
-    return ElementPtr(new NullElement());
+    return (ElementPtr(new NullElement()));
 }
 
 ElementPtr
 Element::create(const long int i) {
-    return ElementPtr(new IntElement(i));
+    return (ElementPtr(new IntElement(i)));
 }
 
 ElementPtr
 Element::create(const double d) {
-    return ElementPtr(new DoubleElement(d));
+    return (ElementPtr(new DoubleElement(d)));
 }
 
 ElementPtr
 Element::create(const std::string& s) {
-    return ElementPtr(new StringElement(s));
+    return (ElementPtr(new StringElement(s)));
 }
 
 ElementPtr
 Element::create(const bool b) {
-    return ElementPtr(new BoolElement(b));
+    return (ElementPtr(new BoolElement(b)));
 }
 
 ElementPtr
 Element::createList() {
-    return ElementPtr(new ListElement());
+    return (ElementPtr(new ListElement()));
 }
 
 ElementPtr
 Element::createMap() {
-    return ElementPtr(new MapElement());
+    return (ElementPtr(new MapElement()));
 }
 
 
@@ -248,10 +244,10 @@ bool
 char_in(const char c, const char *chars) {
     for (size_t i = 0; i < strlen(chars); ++i) {
         if (chars[i] == c) {
-            return true;
+            return (true);
         }
     }
-    return false;
+    return (false);
 }
 
 void
@@ -332,7 +328,7 @@ str_from_stringstream(std::istream &in, const std::string& file, const int line,
         c = in.get();
         ++pos;
     }
-    return ss.str();
+    return (ss.str());
 }
 
 std::string
@@ -342,7 +338,7 @@ word_from_stringstream(std::istream &in, int& pos) {
         ss << (char) in.get();
     }
     pos += ss.str().size();
-    return ss.str();
+    return (ss.str());
 }
 
 static std::string
@@ -353,7 +349,7 @@ number_from_stringstream(std::istream &in, int& pos) {
         ss << (char) in.get();
     }
     pos += ss.str().size();
-    return ss.str();
+    return (ss.str());
 }
 
 // Should we change from IntElement and DoubleElement to NumberElement
@@ -386,9 +382,9 @@ from_stringstream_number(std::istream &in, int &pos) {
     }
     
     if (is_double) {
-        return Element::create(d);
+        return (Element::create(d));
     } else {
-        return Element::create(i);
+        return (Element::create(i));
     }
 }
 
@@ -398,13 +394,13 @@ from_stringstream_bool(std::istream &in, const std::string& file,
 {
     const std::string word = word_from_stringstream(in, pos);
     if (boost::iequals(word, "True")) {
-        return Element::create(true);
+        return (Element::create(true));
     } else if (boost::iequals(word, "False")) {
-        return Element::create(false);
+        return (Element::create(false));
     } else {
         throwJSONError(std::string("Bad boolean value: ") + word, file, line, pos);
         // above is a throw shortcurt, return empty is never reached
-        return ElementPtr();
+        return (ElementPtr());
     }
 }
 
@@ -414,17 +410,17 @@ from_stringstream_null(std::istream &in, const std::string& file,
 {
     const std::string word = word_from_stringstream(in, pos);
     if (boost::iequals(word, "null")) {
-        return Element::create();
+        return (Element::create());
     } else {
         throwJSONError(std::string("Bad null value: ") + word, file, line, pos);
-        return ElementPtr();
+        return (ElementPtr());
     }
 }
 
 ElementPtr
 from_stringstream_string(std::istream& in, const std::string& file, int& line, int& pos)
 {
-    return Element::create(str_from_stringstream(in, file, line, pos));
+    return (Element::create(str_from_stringstream(in, file, line, pos)));
 }
 
 ElementPtr
@@ -444,7 +440,7 @@ from_stringstream_list(std::istream &in, const std::string& file, int& line, int
         c = in.get();
         pos++;
     }
-    return list;
+    return (list);
 }
 
 ElementPtr
@@ -474,53 +470,53 @@ from_stringstream_map(std::istream &in, const std::string& file, int& line,
             pos++;
         }
     }
-    return map;
+    return (map);
 }
 }
 
 std::string
 Element::typeToName(Element::types type)
 {
-    switch(type) {
+    switch (type) {
     case Element::integer:
-        return std::string("integer");
+        return (std::string("integer"));
     case Element::real:
-        return std::string("real");
+        return (std::string("real"));
     case Element::boolean:
-        return std::string("boolean");
+        return (std::string("boolean"));
     case Element::string:
-        return std::string("string");
+        return (std::string("string"));
     case Element::list:
-        return std::string("list");
+        return (std::string("list"));
     case Element::map:
-        return std::string("map");
+        return (std::string("map"));
     case Element::null:
-        return std::string("null");
+        return (std::string("null"));
     case Element::any:
-        return std::string("any");
+        return (std::string("any"));
     default:
-        return std::string("unknown");
+        return (std::string("unknown"));
     }
 }
 
 Element::types
 Element::nameToType(const std::string& type_name) {
     if (type_name == "integer") {
-        return Element::integer;
+        return (Element::integer);
     } else if (type_name == "real") {
-        return Element::real;
+        return (Element::real);
     } else if (type_name == "boolean") {
-        return Element::boolean;
+        return (Element::boolean);
     } else if (type_name == "string") {
-        return Element::string;
+        return (Element::string);
     } else if (type_name == "list") {
-        return Element::list;
+        return (Element::list);
     } else if (type_name == "map") {
-        return Element::map;
+        return (Element::map);
     } else if (type_name == "null") {
-        return Element::null;
+        return (Element::null);
     } else if (type_name == "any") {
-        return Element::any;
+        return (Element::any);
     } else {
         isc_throw(TypeError, type_name + " is not a valid type name");
     }
@@ -529,14 +525,14 @@ Element::nameToType(const std::string& type_name) {
 ElementPtr
 Element::fromJSON(std::istream& in) throw(JSONError) {
     int line = 1, pos = 1;
-    return fromJSON(in, "<istream>", line, pos);
+    return (fromJSON(in, "<istream>", line, pos));
 }
 
 ElementPtr
 Element::fromJSON(std::istream& in, const std::string& file_name) throw(JSONError)
 {
     int line = 1, pos = 1;
-    return fromJSON(in, file_name, line, pos);
+    return (fromJSON(in, file_name, line, pos));
 }
 
 ElementPtr
@@ -602,7 +598,7 @@ Element::fromJSON(std::istream &in, const std::string& file, int& line, int& pos
         }
     }
     if (el_read) {
-        return element;
+        return (element);
     } else {
         isc_throw(JSONError, "nothing read");
     }
@@ -612,7 +608,7 @@ ElementPtr
 Element::fromJSON(const std::string &in) {
     std::stringstream ss;
     ss << in;
-    return fromJSON(ss, "<string>");
+    return (fromJSON(ss, "<string>"));
 }
 
 // to JSON format
@@ -698,18 +694,18 @@ ElementPtr
 MapElement::find(const std::string& id) {
     const size_t sep = id.find('/');
     if (sep == std::string::npos) {
-        return get(id);
+        return (get(id));
     } else {
         ElementPtr ce = get(id.substr(0, sep));
         if (ce) {
             // ignore trailing slash
             if  (sep + 1 != id.size()) {
-                return ce->find(id.substr(sep + 1));
+                return (ce->find(id.substr(sep + 1)));
             } else {
-                return ce;
+                return (ce);
             }
         } else {
-            return ElementPtr();
+            return (ElementPtr());
         }
     }
 }
@@ -719,7 +715,7 @@ Element::fromWire(const std::string& s) {
     std::stringstream ss;
     ss << s;
     int line = 0, pos = 0;
-    return fromJSON(ss, "<wire>", line, pos);
+    return (fromJSON(ss, "<wire>", line, pos));
 }
 
 ElementPtr
@@ -735,7 +731,7 @@ Element::fromWire(std::stringstream& in, int length) {
     //}
     //length -= 4;
     int line = 0, pos = 0;
-    return fromJSON(in, "<wire>", line, pos);
+    return (fromJSON(in, "<wire>", line, pos));
 }
 
 void
@@ -749,12 +745,12 @@ MapElement::find(const std::string& id, ElementPtr& t) {
         ElementPtr p = find(id);
         if (p) {
             t = p;
-            return true;
+            return (true);
         }
     } catch (const TypeError& e) {
         // ignore
     }
-    return false;
+    return (false);
 }
 
 bool
@@ -777,7 +773,7 @@ BoolElement::equals(ElementPtr other) {
 
 bool
 NullElement::equals(ElementPtr other) {
-    return other->getType() == Element::null;
+    return (other->getType() == Element::null);
 }
 
 bool
@@ -791,16 +787,16 @@ ListElement::equals(ElementPtr other) {
     if (other->getType() == Element::list) {
         const int s = size();
         if (s != other->size()) {
-            return false;
+            return (false);
         }
         for (int i = 0; i < s; ++i) {
             if (!get(i)->equals(other->get(i))) {
-                return false;
+                return (false);
             }
         }
-        return true;
+        return (true);
     } else {
-        return false;
+        return (false);
     }
 }
 
@@ -812,10 +808,10 @@ MapElement::equals(ElementPtr other) {
              it != m.end() ; ++it) {
             if (other->contains((*it).first)) {
                 if (!get((*it).first)->equals(other->get((*it).first))) {
-                    return false;
+                    return (false);
                 }
             } else {
-                return false;
+                return (false);
             }
         }
         // quickly walk through the other map too, to see if there's
@@ -827,18 +823,18 @@ MapElement::equals(ElementPtr other) {
         for (std::map<std::string, ElementPtr>::const_iterator it = m.begin();
              it != m.end() ; ++it) {
             if (!contains((*it).first)) {
-                return false;
+                return (false);
             }
         }
-        return true;
+        return (true);
     } else {
-        return false;
+        return (false);
     }
 }
 
 bool
 isNull(ElementPtr p) {
-    return !p;
+    return (!p);
 }
 
 void

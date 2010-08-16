@@ -145,7 +145,7 @@ FakeSession::recvmsg(ElementPtr& env, ElementPtr& msg,
         // do we need initial message to have env[group] and [to] too?
         msg = messages_->get(0);
         messages_->remove(0);
-        return true;
+        return (true);
     } else if (msg_queue_) {
         BOOST_FOREACH(ElementPtr c_m, msg_queue_->listValue()) {
             ElementPtr to_remove = ElementPtr();
@@ -158,13 +158,13 @@ FakeSession::recvmsg(ElementPtr& env, ElementPtr& msg,
             }
             if (to_remove) {
                 listRemove(msg_queue_, to_remove);
-                return true;
+                return (true);
             }
         }
     }
     msg = ElementPtr();
     env = ElementPtr();
-    return false;
+    return (false);
 }
 
 void
@@ -198,7 +198,7 @@ FakeSession::group_sendmsg(ElementPtr msg, std::string group,
     //cout << "[XX] client sends message: " << msg << endl;
     //cout << "[XX] to: " << group << " . " << instance << "." << to << endl;
     addMessage(msg, group, to);
-    return 1;
+    return (1);
 }
 
 bool
@@ -213,12 +213,12 @@ FakeSession::reply(ElementPtr& envelope, ElementPtr& newmsg) {
     //cout << "[XX] client sends reply: " << newmsg << endl;
     //cout << "[XX] env: " << envelope << endl;
     addMessage(newmsg, envelope->get("group")->stringValue(), envelope->get("to")->stringValue());
-    return 1;
+    return (1);
 }
 
 bool
 FakeSession::hasQueuedMsgs() {
-    return false;
+    return (false);
 }
 
 ElementPtr
@@ -229,7 +229,7 @@ FakeSession::getFirstMessage(std::string& group, std::string& to) {
         msg_queue_->remove(0);
         group = el->get(0)->stringValue();
         to = el->get(1)->stringValue();
-        return el->get(2);
+        return (el->get(2));
     } else {
         group = "";
         to = "";

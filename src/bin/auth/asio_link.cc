@@ -563,7 +563,7 @@ IOService::stop() {
 
 asio::io_service&
 IOService::get_io_service() {
-    return impl_->io_service_;
+    return (impl_->io_service_);
 }
 
 void

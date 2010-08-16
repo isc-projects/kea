@@ -70,7 +70,7 @@ public:
     ElementPtr getValue(bool &is_default, const std::string& identifier);
 
     /// Returns the ModuleSpec associated with this ConfigData object
-    const ModuleSpec getModuleSpec() { return _module_spec; };
+    const ModuleSpec getModuleSpec() { return (_module_spec); }
     
     /// Set the ModuleSpec associated with this ConfigData object
     void setModuleSpec(ModuleSpec module_spec) { _module_spec = module_spec; };
@@ -84,7 +84,7 @@ public:
     /// Returns the local (i.e. non-default) configuration.
     /// \returns An ElementPtr pointing to a MapElement containing all
     ///          non-default configuration options.
-    ElementPtr getLocalConfig() { return _config; }
+    ElementPtr getLocalConfig() { return (_config); }
     
     /// Returns a list of all possible configuration options as specified
     ///         by the ModuleSpec.

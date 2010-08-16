@@ -101,7 +101,7 @@ XfroutClient::sendXfroutRequestInfo(const int tcp_sock,
                   "xfr query hasn't been processed properly by xfrout module");
     }
 
-    return 0;
+    return (0);
 }
 
 } // End for xfr

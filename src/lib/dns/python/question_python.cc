@@ -231,9 +231,9 @@ Question_toText(s_Question* self) {
 static PyObject*
 Question_str(PyObject* self) {
     // Simply call the to_text method we already defined
-    return PyObject_CallMethod(self,
+    return (PyObject_CallMethod(self,
                                const_cast<char*>("to_text"),
-                               const_cast<char*>(""));
+                                const_cast<char*>("")));
 }
 
 static PyObject*

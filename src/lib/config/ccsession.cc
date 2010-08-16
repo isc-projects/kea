@@ -53,17 +53,15 @@ namespace config {
 
 /// Creates a standard config/command protocol answer message
 ElementPtr
-createAnswer()
-{
+createAnswer() {
     ElementPtr answer = Element::fromJSON("{\"result\": [] }");
     ElementPtr answer_content = answer->get("result");
     answer_content->add(Element::create(0));
-    return answer;
+    return (answer);
 }
 
 ElementPtr
-createAnswer(const int rcode, const ElementPtr arg)
-{
+createAnswer(const int rcode, const ElementPtr arg) {
     if (rcode != 0 && (!arg || arg->getType() != Element::string)) {
         isc_throw(CCSessionError, "Bad or no argument for rcode != 0");
     }
@@ -71,22 +69,20 @@ createAnswer(const int rcode, const ElementPtr arg)
     ElementPtr answer_content = answer->get("result");
     answer_content->add(Element::create(rcode));
     answer_content->add(arg);
-    return answer;
+    return (answer);
 }
 
 ElementPtr
-createAnswer(const int rcode, const std::string& arg)
-{
+createAnswer(const int rcode, const std::string& arg) {
     ElementPtr answer = Element::fromJSON("{\"result\": [] }");
     ElementPtr answer_content = answer->get("result");
     answer_content->add(Element::create(rcode));
     answer_content->add(Element::create(arg));
-    return answer;
+    return (answer);
 }
 
 ElementPtr
-parseAnswer(int &rcode, const ElementPtr msg)
-{
+parseAnswer(int &rcode, const ElementPtr msg) {
     if (msg &&
         msg->getType() == Element::map &&
         msg->contains("result")) {
@@ -99,13 +95,13 @@ parseAnswer(int &rcode, const ElementPtr msg)
         rcode = result->get(0)->intValue();
         if (result->size() > 1) {
             if (rcode == 0 || result->get(1)->getType() == Element::string) {
-                return result->get(1);
+                return (result->get(1));
             } else {
                 isc_throw(CCSessionError, "Error description in result with rcode != 0 is not a string");
             }
         } else {
             if (rcode == 0) {
-                return ElementPtr();
+                return (ElementPtr());
             } else {
                 isc_throw(CCSessionError, "Result with rcode != 0 does not have an error description");
             }
@@ -116,14 +112,12 @@ parseAnswer(int &rcode, const ElementPtr msg)
 }
 
 ElementPtr
-createCommand(const std::string& command)
-{
-    return createCommand(command, ElementPtr());
+createCommand(const std::string& command) {
+    return (createCommand(command, ElementPtr()));
 }
 
 ElementPtr
-createCommand(const std::string& command, ElementPtr arg)
-{
+createCommand(const std::string& command, ElementPtr arg) {
     ElementPtr cmd = Element::createMap();
     ElementPtr cmd_parts = Element::createList();
     cmd_parts->add(Element::create(command));
@@ -131,7 +125,7 @@ createCommand(const std::string& command, ElementPtr arg)
         cmd_parts->add(arg);
     }
     cmd->set("command", cmd_parts);
-    return cmd;
+    return (cmd);
 }
 
 /// Returns "" and empty ElementPtr() if this does not
@@ -151,7 +145,7 @@ parseCommand(ElementPtr& arg, const ElementPtr command)
             } else {
                 arg = ElementPtr();
             }
-            return cmd->get(0)->stringValue();
+            return (cmd->get(0)->stringValue());
         } else {
             isc_throw(CCSessionError, "Command part in command message missing, empty, or not a list");
         }
@@ -182,7 +176,7 @@ ModuleCCSession::readModuleSpecification(const std::string& filename) {
         exit(1);
     }
     file.close();
-    return module_spec;
+    return (module_spec);
 }
 
 void
@@ -275,7 +269,7 @@ ModuleCCSession::handleConfigUpdate(ElementPtr new_config)
             setLocalConfig(local_config);
         }
     }
-    return answer;
+    return (answer);
 }
 
 bool
@@ -293,7 +287,7 @@ ModuleCCSession::checkCommand()
         /* ignore result messages (in case we're out of sync, to prevent
          * pingpongs */
         if (data->getType() != Element::map || data->contains("result")) {
-            return 0;
+            return (0);
         }
         ElementPtr arg;
         ElementPtr answer;
@@ -308,7 +302,7 @@ ModuleCCSession::checkCommand()
                     // in our remote config list, update that
                     updateRemoteConfig(target_module, arg);
                     // we're not supposed to answer to this, so return
-                    return 0;
+                    return (0);
                 }
             } else {
                 if (target_module == module_name_) {
@@ -329,7 +323,7 @@ ModuleCCSession::checkCommand()
         }
     }
     
-    return 0;
+    return (0);
 }
 
 std::string
@@ -356,7 +350,7 @@ ModuleCCSession::addRemoteConfig(const std::string& spec_file_name)
 
     // all ok, add it
     remote_module_configs_[module_name] = rmod_config;
-    return module_name;
+    return (module_name);
 }
 
 void
@@ -378,7 +372,7 @@ ModuleCCSession::getRemoteConfigValue(const std::string& module_name, const std:
 
     it = remote_module_configs_.find(module_name);
     if (it != remote_module_configs_.end()) {
-        return remote_module_configs_[module_name].getValue(identifier);
+        return (remote_module_configs_[module_name].getValue(identifier));
     } else {
         isc_throw(CCSessionError, "Remote module " + module_name + " not found.");
     }

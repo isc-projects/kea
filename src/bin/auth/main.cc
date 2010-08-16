@@ -68,7 +68,7 @@ asio_link::IOService* io_service;
 
 ElementPtr
 my_config_handler(ElementPtr new_config) {
-    return auth_server->updateConfig(new_config);
+    return (auth_server->updateConfig(new_config));
 }
 
 ElementPtr
@@ -83,7 +83,7 @@ my_command_handler(const string& command, const ElementPtr args) {
         io_service->stop();
     }
     
-    return answer;
+    return (answer);
 }
 
 void

@@ -400,9 +400,9 @@ Name_str(PyObject* self) {
     // Simply call the to_text method we already defined
     // str() is not defined in the c++ version, only to_text
     // and we already have a wrapper for that one.
-    return PyObject_CallMethod(self,
+    return (PyObject_CallMethod(self,
                                const_cast<char*>("to_text"),
-                               const_cast<char*>(""));
+                                const_cast<char*>("")));
 }
 
 static PyObject*

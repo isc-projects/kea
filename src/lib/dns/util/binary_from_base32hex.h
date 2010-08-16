@@ -59,7 +59,7 @@ struct to_5_bit {
             isc_throw(isc::BadValue,
                       "attempt to decode a value not in base32hex char set");
         }
-        return value;
+        return (value);
     }
 };
 

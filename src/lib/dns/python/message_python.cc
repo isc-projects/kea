@@ -326,9 +326,9 @@ Opcode_toText(s_Opcode* self) {
 static PyObject*
 Opcode_str(PyObject* self) {
     // Simply call the to_text method we already defined
-    return PyObject_CallMethod(self,
+    return (PyObject_CallMethod(self,
                                const_cast<char*>("to_text"),
-                               const_cast<char*>(""));
+                                const_cast<char*>("")));
 }
 
 static PyObject*
@@ -624,9 +624,9 @@ Rcode_toText(s_Rcode* self) {
 static PyObject*
 Rcode_str(PyObject* self) {
     // Simply call the to_text method we already defined
-    return PyObject_CallMethod(self,
+    return (PyObject_CallMethod(self,
                                const_cast<char*>("to_text"),
-                               const_cast<char*>(""));
+                                const_cast<char*>("")));
 }
 
 static PyObject*
@@ -886,22 +886,22 @@ Section_createStatic(const Section& section) {
 
 static PyObject*
 Section_QUESTION(s_Section* self UNUSED_PARAM) {
-    return Section_createStatic(Section::QUESTION());
+    return (Section_createStatic(Section::QUESTION()));
 }
 
 static PyObject*
 Section_ANSWER(s_Section* self UNUSED_PARAM) {
-    return Section_createStatic(Section::ANSWER());
+    return (Section_createStatic(Section::ANSWER()));
 }
 
 static PyObject*
 Section_AUTHORITY(s_Section* self UNUSED_PARAM) {
-    return Section_createStatic(Section::AUTHORITY());
+    return (Section_createStatic(Section::AUTHORITY()));
 }
 
 static PyObject*
 Section_ADDITIONAL(s_Section* self UNUSED_PARAM) {
-    return Section_createStatic(Section::ADDITIONAL());
+    return (Section_createStatic(Section::ADDITIONAL()));
 }
 
 static PyObject* 
@@ -1526,9 +1526,9 @@ Message_toText(s_Message* self) {
 static PyObject*
 Message_str(PyObject* self) {
     // Simply call the to_text method we already defined
-    return PyObject_CallMethod(self,
+    return (PyObject_CallMethod(self,
                                const_cast<char*>("to_text"),
-                               const_cast<char*>(""));
+                                const_cast<char*>("")));
 }
 
 static PyObject*
