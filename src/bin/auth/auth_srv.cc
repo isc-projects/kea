@@ -68,7 +68,7 @@ private:
 public:
     AuthSrvImpl(const bool use_cache, AbstractXfroutClient& xfrout_client);
     ~AuthSrvImpl();
-    isc::data::ElementPtr setDbFile(const isc::data::ElementPtr config);
+    isc::data::ConstElementPtr setDbFile(isc::data::ConstElementPtr config);
 
     bool processNormalQuery(const IOMessage& io_message, Message& message,
                             MessageRenderer& response_renderer);
@@ -426,7 +426,7 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
     static const string command_template_end = "\"}]}";
 
     try {
-        ElementPtr notify_command = Element::fromJSON(
+        ConstElementPtr notify_command = Element::fromJSON(
                 command_template_start + question->getName().toText() + 
                 command_template_master + remote_ip_address +
                 command_template_rrclass + question->getClass().toText() +
@@ -434,7 +434,7 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
         const unsigned int seq =
             xfrin_session_->group_sendmsg(notify_command, "Zonemgr",
                                           "*", "*");
-        ElementPtr env, answer, parsed_answer;
+        ConstElementPtr env, answer, parsed_answer;
         xfrin_session_->group_recvmsg(env, answer, false, seq);
         int rcode;
         parsed_answer = parseAnswer(rcode, answer);
@@ -459,19 +459,17 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
     return (true);
 }
 
-ElementPtr
-AuthSrvImpl::setDbFile(const isc::data::ElementPtr config) {
-    ElementPtr answer = isc::config::createAnswer();
-    ElementPtr final;
+ConstElementPtr
+AuthSrvImpl::setDbFile(ConstElementPtr config) {
+    ConstElementPtr answer = isc::config::createAnswer();
 
     if (config && config->contains("database_file")) {
         db_file_ = config->get("database_file")->stringValue();
-        final = config;
     } else if (config_session_ != NULL) {
         bool is_default;
         string item("database_file");
-        ElementPtr value = config_session_->getValue(is_default, item);
-        final = Element::createMap();
+        ConstElementPtr value = config_session_->getValue(is_default, item);
+        ElementPtr final = Element::createMap();
 
         // If the value is the default, and we are running from
         // a specific directory ('from build'), we need to use
@@ -485,6 +483,7 @@ AuthSrvImpl::setDbFile(const isc::data::ElementPtr config) {
                                     "/bind10_zones.sqlite3");
         }
         final->set(item, value);
+        config = final;
 
         db_file_ = value->stringValue();
     } else {
@@ -501,7 +500,7 @@ AuthSrvImpl::setDbFile(const isc::data::ElementPtr config) {
     // fail, while acquiring resources in the RAII manner.  We then perform
     // delete and swap operations which should not fail.
     DataSrcPtr datasrc_ptr(DataSrcPtr(new Sqlite3DataSrc));
-    datasrc_ptr->init(final);
+    datasrc_ptr->init(config);
     data_sources_.addDataSrc(datasrc_ptr);
 
     // The following code should be exception free.
@@ -513,15 +512,12 @@ AuthSrvImpl::setDbFile(const isc::data::ElementPtr config) {
     return (answer);
 }
 
-ElementPtr
-AuthSrv::updateConfig(isc::data::ElementPtr new_config) {
+ConstElementPtr
+AuthSrv::updateConfig(ConstElementPtr new_config) {
     try {
         // the ModuleCCSession has already checked if we have
         // the correct ElementPtr type as specified in our .spec file
-        ElementPtr answer = isc::config::createAnswer();
-        answer = impl_->setDbFile(new_config);
-
-        return (answer);
+        return (impl_->setDbFile(new_config));
     } catch (const isc::Exception& error) {
         if (impl_->verbose_mode_) {
             cerr << "[b10-auth] error: " << error.what() << endl;

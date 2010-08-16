@@ -43,22 +43,22 @@ using namespace isc::datasrc;
 using namespace isc::data;
 
 namespace {
-ElementPtr SQLITE_DBFILE_EXAMPLE = Element::fromJSON(
+ConstElementPtr SQLITE_DBFILE_EXAMPLE = Element::fromJSON(
     "{ \"database_file\": \"" TEST_DATA_DIR "/test.sqlite3\"}");
-ElementPtr SQLITE_DBFILE_EXAMPLE2 = Element::fromJSON(
+ConstElementPtr SQLITE_DBFILE_EXAMPLE2 = Element::fromJSON(
     "{ \"database_file\": \"" TEST_DATA_DIR "/example2.com.sqlite3\"}");
-ElementPtr SQLITE_DBFILE_EXAMPLE_ROOT = Element::fromJSON(
+ConstElementPtr SQLITE_DBFILE_EXAMPLE_ROOT = Element::fromJSON(
     "{ \"database_file\": \"" TEST_DATA_DIR "/test-root.sqlite3\"}");
-ElementPtr SQLITE_DBFILE_BROKENDB = Element::fromJSON(
+ConstElementPtr SQLITE_DBFILE_BROKENDB = Element::fromJSON(
     "{ \"database_file\": \"" TEST_DATA_DIR "/brokendb.sqlite3\"}");
-ElementPtr SQLITE_DBFILE_MEMORY = Element::fromJSON(
+ConstElementPtr SQLITE_DBFILE_MEMORY = Element::fromJSON(
     "{ \"database_file\": \":memory:\"}");
 
 // The following file must be non existent and must be non"creatable";
 // the sqlite3 library will try to create a new DB file if it doesn't exist,
 // so to test a failure case the create operation should also fail.
 // The "nodir", a non existent directory, is inserted for this purpose.
-ElementPtr SQLITE_DBFILE_NOTEXIST = Element::fromJSON(
+ConstElementPtr SQLITE_DBFILE_NOTEXIST = Element::fromJSON(
     "{ \"database_file\": \"" TEST_DATA_DIR "/nodir/notexist\"}");
 
 const string sigdata_common(" 20100322084538 20100220084538 "

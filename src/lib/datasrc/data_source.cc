@@ -1245,7 +1245,7 @@ Nsec3Param::getHash(const Name& name) const {
 // installed files we define the methods here.
 //
 DataSrc::Result
-DataSrc::init(const isc::data::ElementPtr config UNUSED_PARAM) {
+DataSrc::init(isc::data::ConstElementPtr config UNUSED_PARAM) {
     return (NOT_IMPLEMENTED);
 }
 
