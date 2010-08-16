@@ -69,7 +69,7 @@ public:
                         isc::dns::MessageRenderer& response_renderer);
     void setVerbose(bool on);
     bool getVerbose() const;
-    isc::data::ElementPtr updateConfig(isc::data::ElementPtr config);
+    isc::data::ConstElementPtr updateConfig(isc::data::ConstElementPtr config);
     isc::config::ModuleCCSession* configSession() const;
     void setConfigSession(isc::config::ModuleCCSession* config_session);
 

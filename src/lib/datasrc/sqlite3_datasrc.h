@@ -95,7 +95,7 @@ public:
                              isc::dns::RRsetList& target) const;
 
     Result init() { return (init(isc::data::ElementPtr())); }
-    Result init(const isc::data::ElementPtr config);
+    Result init(const isc::data::ConstElementPtr config);
     Result close();
 
 private:
