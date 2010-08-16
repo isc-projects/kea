@@ -58,10 +58,11 @@ class TestConfigManagerData(unittest.TestCase):
                           self.data_path, "b10-config-bad4.db")
 
     def test_write_to_file(self):
-        output_file_name = "b10-config-write-test";
+        output_file_name = "b10-config-write-test"
         self.config_manager_data.write_to_file(output_file_name)
         new_config = ConfigManagerData(self.data_path, output_file_name)
         self.assertEqual(self.config_manager_data, new_config)
+        os.remove(output_file_name)
 
     def test_equality(self):
         # tests the __eq__ function. Equality is only defined
