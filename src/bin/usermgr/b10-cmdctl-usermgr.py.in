@@ -69,8 +69,8 @@ def usage():
 def main():
     filename = DEFAULT_FILE
     try: 
-        opts, args = getopt.getopt(sys.argv[1:], 'hvf:', 
-                                   ['help', 'file=', 'version=']) 
+        opts, args = getopt.getopt(sys.argv[1:], 'f:hv', 
+                                   ['file=', 'help', 'version']) 
     except getopt.GetoptError as err: 
         print(err) 
         usage() 

@@ -156,15 +156,15 @@ Question_init(s_Question* self, PyObject* args) {
             self->question = QuestionPtr(new Question(inbuf));
             return (0);
         }
-    } catch (isc::dns::DNSMessageFORMERR dmfe) {
+    } catch (const DNSMessageFORMERR& dmfe) {
         PyErr_Clear();
         PyErr_SetString(po_DNSMessageFORMERR, dmfe.what());
         return (-1);
-    } catch (isc::dns::IncompleteRRClass irc) {
+    } catch (const IncompleteRRClass& irc) {
         PyErr_Clear();
         PyErr_SetString(po_IncompleteRRClass, irc.what());
         return (-1);
-    } catch (isc::dns::IncompleteRRType irt) {
+    } catch (const IncompleteRRType& irt) {
         PyErr_Clear();
         PyErr_SetString(po_IncompleteRRType, irt.what());
         return (-1);

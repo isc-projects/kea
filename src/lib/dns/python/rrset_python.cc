@@ -284,7 +284,7 @@ static PyObject*
 RRset_toText(s_RRset* self) {
     try {
         return (Py_BuildValue("s", self->rrset->toText().c_str()));
-    } catch (EmptyRRset ers) {
+    } catch (const EmptyRRset& ers) {
         PyErr_SetString(po_EmptyRRset, ers.what());
         return (NULL);
     }
@@ -321,7 +321,7 @@ RRset_toWire(s_RRset* self, PyObject* args) {
             // None returns
             Py_RETURN_NONE;
         }
-    } catch (EmptyRRset ers) {
+    } catch (const EmptyRRset& ers) {
         PyErr_Clear();
         PyErr_SetString(po_EmptyRRset, ers.what());
         return (NULL);
@@ -341,7 +341,7 @@ RRset_addRdata(s_RRset* self, PyObject* args) {
     try {
         self->rrset->addRdata(*rdata->rdata);
         Py_RETURN_NONE;
-    } catch (std::bad_cast) {
+    } catch (const std::bad_cast&) {
         PyErr_Clear();
         PyErr_SetString(PyExc_TypeError,
                         "Rdata type to add must match type of RRset");

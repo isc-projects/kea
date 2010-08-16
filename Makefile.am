@@ -41,8 +41,8 @@ report-coverage:
 coverage: clean-coverage perform-coverage report-coverage
 
 #### include external sources in the distributed tarball:
-# EXTRA_DIST = ext/asio/README
-EXTRA_DIST = ext/asio/asio/local/stream_protocol.hpp
+EXTRA_DIST = ext/asio/README
+EXTRA_DIST += ext/asio/asio/local/stream_protocol.hpp
 EXTRA_DIST += ext/asio/asio/local/basic_endpoint.hpp
 EXTRA_DIST += ext/asio/asio/local/datagram_protocol.hpp
 EXTRA_DIST += ext/asio/asio/local/connect_pair.hpp
