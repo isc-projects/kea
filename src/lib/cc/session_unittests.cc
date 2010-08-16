@@ -122,7 +122,7 @@ private:
 
 class SessionTest : public ::testing::Test {
 protected:
-    SessionTest() {
+    SessionTest() : sess(my_io_service) {
         // The TestDomainSocket is held as a 'new'-ed pointer,
         // so we can call unlink() first.
         unlink(BIND10_TEST_SOCKET_FILE);
@@ -135,11 +135,10 @@ protected:
 
     asio::io_service my_io_service;
     TestDomainSocket* tds;
+    Session sess;
 };
 
 TEST_F(SessionTest, timeout_on_connect) {
-    Session sess(my_io_service);
-    
     // set to a short timeout so the test doesn't take too long
     EXPECT_EQ(4000, sess.getTimeout());
     sess.setTimeout(100);
@@ -151,14 +150,12 @@ TEST_F(SessionTest, timeout_on_connect) {
 TEST_F(SessionTest, connect_ok) {
     tds->setSendLname();
 
-    Session sess(my_io_service);
     sess.establish(BIND10_TEST_SOCKET_FILE);
 }
 
 TEST_F(SessionTest, connect_ok_no_timeout) {
     tds->setSendLname();
 
-    Session sess(my_io_service);
     sess.setTimeout(0);
     sess.establish(BIND10_TEST_SOCKET_FILE);
 }
@@ -166,7 +163,6 @@ TEST_F(SessionTest, connect_ok_no_timeout) {
 TEST_F(SessionTest, connect_ok_connection_reset) {
     tds->setSendLname();
 
-    Session sess(my_io_service);
     sess.establish(BIND10_TEST_SOCKET_FILE);
     // Close the session again, so the next recv() should throw
     sess.disconnect();
