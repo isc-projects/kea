@@ -342,8 +342,10 @@ AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, Message& message,
     }
 
     try {
-        xfrout_client_.connect();
-        xfrout_connected_ = true;
+        if (!xfrout_connected_) {
+            xfrout_client_.connect();
+            xfrout_connected_ = true;
+        }
         xfrout_client_.sendXfroutRequestInfo(
             io_message.getSocket().getNative(),
             io_message.getData(),
@@ -366,10 +368,6 @@ AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, Message& message,
                          verbose_mode_);
         return (true);
     }
-
-    xfrout_client_.disconnect();
-    xfrout_connected_ = false;
-
     return (false);
 }
 
