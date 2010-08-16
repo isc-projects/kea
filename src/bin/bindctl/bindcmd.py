@@ -38,6 +38,7 @@ import csv
 import json
 import pwd
 import getpass
+import traceback
 
 try:
     from collections import OrderedDict
@@ -122,6 +123,7 @@ class BindCmdInterpreter(Cmd):
         except FailToLogin as err:
             print(err)
             print(FAIL_TO_CONNECT_WITH_CMDCTL)
+            traceback.print_exc()
         except KeyboardInterrupt:
             print('\nExit from bindctl')
 
@@ -140,8 +142,8 @@ class BindCmdInterpreter(Cmd):
             users_info = csv.reader(csvfile)
             for row in users_info:
                 users.append([row[0], row[1]])
-        except (IOError, IndexError) as err:
-            print("Error reading saved username and password from %s%s: %s" % (dir, file_name, err))
+        except (IOError, IndexError) as e:
+            pass
         finally:
             if csvfile:
                 csvfile.close()
@@ -160,9 +162,8 @@ class BindCmdInterpreter(Cmd):
             writer = csv.writer(csvfile)
             writer.writerow([username, passwd])
             csvfile.close()
-        except IOError as err:
-            print("Error saving user information:", err)
-            print("user info file name: %s%s" % (dir, file_name))
+        except Exception as e:
+            print(e, "\nCannot write %s%s; default user is not stored" % (dir, file_name))
             return False
 
         return True
@@ -182,8 +183,8 @@ class BindCmdInterpreter(Cmd):
             try:
                 response = self.send_POST('/login', param)
                 data = response.read().decode()
-            except socket.error as err:
-                print("Socket error while sending login information:", err)
+            except socket.error:
+                traceback.print_exc()
                 raise FailToLogin()
 
             if response.status == http.client.OK:
@@ -205,8 +206,8 @@ class BindCmdInterpreter(Cmd):
                 response = self.send_POST('/login', param)
                 data = response.read().decode()
                 print(data)
-            except socket.error as err:
-                print("Socket error while sending login information:", err)
+            except socket.error as e:
+                traceback.print_exc()
                 raise FailToLogin()
 
             if response.status == http.client.OK:
@@ -542,16 +543,6 @@ class BindCmdInterpreter(Cmd):
                     identifier = cmd.params['identifier']
                 else:
                     identifier += cmd.params['identifier']
-
-                # Check if the module is known; for unknown modules
-                # we currently deny setting preferences, as we have
-                # no way yet to determine if they are ok.
-                module_name = identifier.split('/')[1]
-                if self.config_data is None or \
-                   not self.config_data.have_specification(module_name):
-                    print("Error: Module '" + module_name + "' unknown or not running")
-                    return
-
             if cmd.command == "show":
                 values = self.config_data.get_value_maps(identifier)
                 for value_map in values:

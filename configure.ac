@@ -256,6 +256,14 @@ if test "${boost_include_path}" ; then
 fi
 AC_SUBST(BOOST_INCLUDES)
 
+AC_ARG_WITH([boost-lib],
+AC_HELP_STRING([--with-boost-lib=PATH],
+  [specify exact directory for Boost libraries]),
+  [if test "$withval" != "yes" -a "$withval" != "no"; then
+   BOOST_LDFLAGS="-L$withval"
+   fi])
+AC_SUBST(BOOST_LDFLAGS)
+
 #
 # Check availability of gtest, which will be used for unit tests.
 #
@@ -407,9 +415,6 @@ AC_CONFIG_FILES([Makefile
                  src/bin/zonemgr/tests/Makefile
                  src/bin/usermgr/Makefile
                  src/lib/Makefile
-                 src/lib/bench/Makefile
-                 src/lib/bench/example/Makefile
-                 src/lib/bench/tests/Makefile
                  src/lib/cc/Makefile
                  src/lib/python/Makefile
                  src/lib/python/isc/Makefile

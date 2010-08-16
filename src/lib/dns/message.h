@@ -80,7 +80,7 @@ typedef uint16_t qid_t;
 class InputBuffer;
 class MessageRenderer;
 class Message;
-class MessageImpl;
+struct MessageImpl;
 
 template <typename T>
 struct SectionIteratorImpl;
