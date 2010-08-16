@@ -534,14 +534,15 @@ TEST_F(AuthSrvTest, notify) {
 
     // An internal command message should have been created and sent to an
     // external module.  Check them.
-    EXPECT_EQ("Xfrin", notify_session.msg_destination);
+    EXPECT_EQ("Zonemgr", notify_session.msg_destination);
     EXPECT_EQ("notify",
               notify_session.sent_msg->get("command")->get(0)->stringValue());
     ElementPtr notify_args = notify_session.sent_msg->get("command")->get(1);
     EXPECT_EQ("example.com.", notify_args->get("zone_name")->stringValue());
     EXPECT_EQ(DEFAULT_REMOTE_ADDRESS,
               notify_args->get("master")->stringValue());
-    EXPECT_EQ("IN", notify_args->get("rrclass")->stringValue());
+    cout << "[XX] ARGS: " << notify_args << endl;
+    EXPECT_EQ("IN", notify_args->get("zone_class")->stringValue());
 
     // On success, the server should return a response to the notify.
     headerCheck(parse_message, default_qid, Rcode::NOERROR(),
@@ -566,7 +567,7 @@ TEST_F(AuthSrvTest, notifyForCHClass) {
     // Other conditions should be the same, so simply confirm the RR class is
     // set correctly.
     ElementPtr notify_args = notify_session.sent_msg->get("command")->get(1);
-    EXPECT_EQ("CH", notify_args->get("rrclass")->stringValue());
+    EXPECT_EQ("CH", notify_args->get("zone_class")->stringValue());
 }
 
 TEST_F(AuthSrvTest, notifyEmptyQuestion) {
