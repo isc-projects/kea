@@ -81,8 +81,9 @@ XfroutClient::sendXfroutRequestInfo(const int tcp_sock,
                   "to xfrout module");
     }
 
-    // XXX: this shouldn't be blocking send, even though it's unlikely to
+    // TODO: this shouldn't be blocking send, even though it's unlikely to
     // block.
+    // converting the 16-bit word to network byte order.
     const uint8_t lenbuf[2] = { msg_len >> 8, msg_len & 0xff };
     if (send(impl_->socket_.native(), lenbuf, sizeof(lenbuf), 0) !=
         sizeof(lenbuf)) {
