@@ -28,6 +28,7 @@ import os
 from isc.config.ccsession import *
 from isc.log.log import *
 from isc.cc import SessionError
+from isc.notify import notify_out
 import socket
 import select
 import errno
@@ -303,7 +304,7 @@ class UnixSockServer(ThreadingUnixStreamServer):
         self._log = log
         self.update_config_data(config_data)
         self._cc = cc
-
+        
     def finish_request(self, request, client_address):
         '''Finish one request by instantiating RequestHandlerClass.'''
         self.RequestHandlerClass(request, client_address, self, self._log)
@@ -415,16 +416,25 @@ class XfroutServer:
                                 self._config_data.get('log_severity'), self._config_data.get('log_versions'),
                                 self._config_data.get('log_max_bytes'), True)
         self._start_xfr_query_listener()
+        self._start_notifier()
 
     def _start_xfr_query_listener(self):
         '''Start a new thread to accept xfr query. '''
-    
         self._unix_socket_server = UnixSockServer(self._listen_sock_file, XfroutSession, 
                                                   self._shutdown_event, self._config_data,
                                                   self._cc, self._log);
         listener = threading.Thread(target = listen_on_xfr_query, args = (self._unix_socket_server,))
         listener.start()
+        
+    def _start_notifier(self):
+        datasrc = self._unix_socket_server.get_db_file()
+        self._notifier = notify_out.NotifyOut(datasrc, self._log)
+        td = threading.Thread(target = notify_out.dispatcher, args = (self._notifier,))
+        td.daemon = True
+        td.start()
 
+    def send_notify(self, zone_name, zone_class):
+        self._notifier.send_notify(zone_name, zone_class)
 
     def config_handler(self, new_config):
         '''Update config data. TODO. Do error check'''
@@ -466,11 +476,22 @@ class XfroutServer:
             self._log.log_message("info", "Received shutdown command.")
             self.shutdown()
             answer = create_answer(0)
+        
+        elif cmd == notify_out.ZONE_NEW_DATA_READY_CMD:
+            zone_name = args.get('zone_name')
+            zone_class = args.get('zone_class')
+            if zone_name and zone_class:
+                self._log.log_message("info", "Receive notify command for zone:'%s/%s'" \
+                                     % (zone_name, zone_class))
+                self.send_notify(zone_name, zone_class)
+                answer = create_answer(0)
+            else:
+                answer = create_answer(1, "Bad command parameter:" + str(args))
+
         else: 
             answer = create_answer(1, "Unknown command:" + str(cmd))
 
         return answer    
- 
 
     def run(self):
         '''Get and process all commands sent from cfgmgr or other modules. '''
