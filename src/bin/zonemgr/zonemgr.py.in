@@ -32,6 +32,7 @@ import random
 import threading
 import select
 import socket
+import errno
 from isc.datasrc import sqlite3_ds
 from optparse import OptionParser, OptionValueError
 from isc.config.ccsession import *
@@ -357,7 +358,7 @@ class ZonemgrRefresh:
                 if e.args[0] == errno.EINTR:
                     (rlist, wlist, xlist) = ([], [], [])
                 else:
-                    raise ZonemgrException("[b10-zonemgr] Error with select(): %s\n" % err)
+                    raise ZonemgrException("[b10-zonemgr] Error with select(): %s\n" % e)
                     break
 
 
