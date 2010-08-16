@@ -56,19 +56,7 @@ using namespace isc::data;
 // (e.g. write(2)) so we don't import the entire asio namespace.
 using asio::io_service;
 
-// By default, unless changed or disabled, blocking reads on
-// the msgq channel will time out after 4 seconds in this
-// implementation.
-// This number is chosen to be low enough so that whatever
-// component is blocking does not seem to be hanging, but
-// still gives enough time for other modules to respond if they
-// are busy. If this choice turns out to be a bad one, we can
-// change it later.
-#define BIND10_MSGQ_DEFAULT_TIMEOUT 4000
-
-namespace isc {
-namespace cc {
-
+namespace {
 /// \brief Sets the given Optional 'result' to the given error code
 /// Used as a callback for emulating sync reads with async calls
 /// \param result Pointer to the optional to set
@@ -79,13 +67,17 @@ setResult(boost::optional<asio::error_code>* result,
 {
     result->reset(err);
 }
+}
+
+namespace isc {
+namespace cc {
 
 class SessionImpl {
 public:
     SessionImpl(io_service& io_service) :
         sequence_(-1), queue_(Element::createList()),
         io_service_(io_service), socket_(io_service_), data_length_(0),
-        timeout_(BIND10_MSGQ_DEFAULT_TIMEOUT)
+        timeout_(MSGQ_DEFAULT_TIMEOUT)
     {}
     void establish(const char& socket_file);
     void disconnect();
@@ -112,8 +104,17 @@ private:
     uint32_t data_length_;
     boost::function<void()> user_handler_;
     asio::error_code error_;
-    // timeout for blocking reads (in seconds, defaults to 4000)
     size_t timeout_;
+
+    // By default, unless changed or disabled, blocking reads on
+    // the msgq channel will time out after 4 seconds in this
+    // implementation.
+    // This number is chosen to be low enough so that whatever
+    // component is blocking does not seem to be hanging, but
+    // still gives enough time for other modules to respond if they
+    // are busy. If this choice turns out to be a bad one, we can
+    // change it later.
+    static const size_t MSGQ_DEFAULT_TIMEOUT = 4000;
 };
 
 void
@@ -184,6 +185,8 @@ SessionImpl::readData(void* data, size_t datalen) {
         // until the cancel is processed before we continue
         while (!read_result && !timer_result) {
             socket_.io_service().run_one();
+
+            // Don't cancel the timer if we haven't set it
             if (read_result && getTimeout() != 0) {
                 timer.cancel();
                 while (!timer_result) {
