@@ -198,7 +198,8 @@ SessionImpl::readData(void* data, size_t datalen) {
             }
         }
 
-        if (read_result->value() != 0) {
+        // asio::error_code evaluates to false if there was no error
+        if (*read_result) {
             if (*read_result == asio::error::operation_aborted) {
                 isc_throw(SessionTimeout,
                           "Timeout while reading data from cc session");
