@@ -136,7 +136,7 @@ protected:
 public:
     // used in the handler test
     // This handler first reads (and ignores) whatever message caused
-    // it to be invoked. Then it call group_recv for a second message.
+    // it to be invoked. Then it calls group_recv for a second message.
     // If this message is { "command": "stop" } it'll tell the
     // io_service it is done. Otherwise it'll re-register this handler
     void someHandler() {
