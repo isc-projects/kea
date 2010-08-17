@@ -388,16 +388,20 @@ class TestZonemgrRefresh(unittest.TestCase):
                     'zone_state': ZONE_OK}
                 }
         master_socket, slave_socket = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.zone_refresh._socket = master_socket 
+        master_socket.close()
+        self.assertRaises(ZonemgrException, self.zone_refresh.run_timer)
+
         self.zone_refresh._socket = slave_socket
         listener = threading.Thread(target = self.zone_refresh.run_timer, args = ())
         listener.setDaemon(True)
         listener.start()
-        slave_socket.close()
+        time.sleep(1)
+
         zone_state = self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_state"]
         self.assertTrue("refresh_timeout" in self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN].keys())
         self.assertTrue(zone_state == ZONE_REFRESHING)
 
-        self.assertRaises(ZonemgrException, self.zone_refresh.run_timer)
 
     def tearDown(self):
         sys.stdout = self.stdout_backup
