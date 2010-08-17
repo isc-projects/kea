@@ -168,8 +168,6 @@ SessionImpl::readData(void* data, size_t datalen) {
     boost::optional<asio::error_code> timer_result;
 
     try {
-        socket_.io_service().reset();
-
         asio::async_read(socket_, asio::buffer(data, datalen),
                          boost::bind(&setResult, &read_result, _1));
         asio::deadline_timer timer(socket_.io_service());

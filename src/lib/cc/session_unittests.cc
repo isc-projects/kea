@@ -122,7 +122,7 @@ private:
 
 class SessionTest : public ::testing::Test {
 protected:
-    SessionTest() : sess(my_io_service) {
+    SessionTest() : sess(my_io_service), work(my_io_service) {
         // The TestDomainSocket is held as a 'new'-ed pointer,
         // so we can call unlink() first.
         unlink(BIND10_TEST_SOCKET_FILE);
@@ -133,9 +133,31 @@ protected:
         delete tds;
     }
 
+public:
+    // used in the handler test
+    // This handler first reads (and ignores) whatever message caused
+    // it to be invoked. Then it call group_recv for a second message.
+    // If this message is { "command": "stop" } it'll tell the
+    // io_service it is done. Otherwise it'll re-register this handler
+    void someHandler() {
+        isc::data::ElementPtr env, msg;
+        sess.group_recvmsg(env, msg, false, -1);
+
+        sess.group_recvmsg(env, msg, false, -1);
+        if (msg && msg->contains("command") &&
+            msg->get("command")->stringValue() == "stop") {
+            my_io_service.stop();
+        } else {
+            sess.startRead(boost::bind(&SessionTest::someHandler, this));
+        }
+    }
+
+protected:
     asio::io_service my_io_service;
     TestDomainSocket* tds;
     Session sess;
+    // Keep run() from stopping right away by informing it it has work to do
+    asio::io_service::work work;
 };
 
 TEST_F(SessionTest, timeout_on_connect) {
@@ -149,7 +171,6 @@ TEST_F(SessionTest, timeout_on_connect) {
 
 TEST_F(SessionTest, connect_ok) {
     tds->setSendLname();
-
     sess.establish(BIND10_TEST_SOCKET_FILE);
 }
 
@@ -170,3 +191,50 @@ TEST_F(SessionTest, connect_ok_connection_reset) {
     isc::data::ElementPtr env, msg;
     EXPECT_THROW(sess.group_recvmsg(env, msg, false, -1), SessionError);
 }
+
+TEST_F(SessionTest, run_with_handler) {
+    tds->setSendLname();
+
+    sess.establish(BIND10_TEST_SOCKET_FILE);
+    sess.startRead(boost::bind(&SessionTest::someHandler, this));
+
+    isc::data::ElementPtr env = isc::data::Element::fromJSON("{ \"to\": \"me\" }");
+    isc::data::ElementPtr msg = isc::data::Element::fromJSON("{ \"some\": \"message\" }");
+    tds->sendmsg(env, msg);
+
+    msg = isc::data::Element::fromJSON("{ \"another\": \"message\" }");
+    tds->sendmsg(env, msg);
+
+    msg = isc::data::Element::fromJSON("{ \"a third\": \"message\" }");
+    tds->sendmsg(env, msg);
+
+    msg = isc::data::Element::fromJSON("{ \"command\": \"stop\" }");
+    tds->sendmsg(env, msg);
+
+
+    size_t count = my_io_service.run();
+    ASSERT_EQ(2, count);
+}
+
+TEST_F(SessionTest, run_with_handler_timeout) {
+    tds->setSendLname();
+
+    sess.establish(BIND10_TEST_SOCKET_FILE);
+    sess.startRead(boost::bind(&SessionTest::someHandler, this));
+    sess.setTimeout(100);
+
+    isc::data::ElementPtr env = isc::data::Element::fromJSON("{ \"to\": \"me\" }");
+    isc::data::ElementPtr msg = isc::data::Element::fromJSON("{ \"some\": \"message\" }");
+    tds->sendmsg(env, msg);
+
+    msg = isc::data::Element::fromJSON("{ \"another\": \"message\" }");
+    tds->sendmsg(env, msg);
+
+    msg = isc::data::Element::fromJSON("{ \"a third\": \"message\" }");
+    tds->sendmsg(env, msg);
+
+    // No followup message, should time out.
+    ASSERT_THROW(my_io_service.run(), SessionTimeout);
+}
+
+
