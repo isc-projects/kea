@@ -541,7 +541,6 @@ TEST_F(AuthSrvTest, notify) {
     EXPECT_EQ("example.com.", notify_args->get("zone_name")->stringValue());
     EXPECT_EQ(DEFAULT_REMOTE_ADDRESS,
               notify_args->get("master")->stringValue());
-    cout << "[XX] ARGS: " << notify_args << endl;
     EXPECT_EQ("IN", notify_args->get("zone_class")->stringValue());
 
     // On success, the server should return a response to the notify.
