@@ -29,6 +29,10 @@ class SessionError(Exception): pass
 class Session:
     def __init__(self, socket_file=None):
         self._socket = None
+        # store the current timeout value in seconds (the way
+        # settimeout() wants them, our API takes milliseconds
+        # so that it is consistent with the C++ version)
+        self._socket_timeout = 4;
         self._lname = None
         self._recvbuffer = bytearray()
         self._recvlength = 0
@@ -44,7 +48,6 @@ class Session:
                 self.socket_file = bind10_config.BIND10_MSGQ_SOCKET_FILE
         else:
             self.socket_file = socket_file
-        
 
         try:
             self._socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -123,6 +126,10 @@ class Session:
             self._socket.setblocking(0)
         else:
             self._socket.setblocking(1)
+            if self._socket_timeout == 0.0:
+                self._socket.settimeout(None)
+            else:
+                self._socket.settimeout(self._socket_timeout)
 
         if self._recvlength == 0:
             length = 4
@@ -207,6 +214,15 @@ class Session:
             "reply": routing["seq"],
         }, isc.cc.message.to_wire(msg))
         return seq
+
+    def set_timeout(self, milliseconds):
+        """Sets the socket timeout for blocking reads to the given
+           number of milliseconds"""
+        self._socket_timeout = milliseconds / 1000.0
+
+    def get_timeout(self):
+        """Returns the current timeout for blocking reads (in milliseconds)"""
+        return self._socket_timeout * 1000.0
 
 if __name__ == "__main__":
     import doctest
