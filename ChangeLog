@@ -1,3 +1,10 @@
+  88.   [func]		jelte
+	Blocking reads on the msgq command channel now have a timeout
+	(defaults to 4 seconds, modifiable as needed by modules).
+	Because of this, modules will no longer block indefinitely
+	if they are waiting for a message that is not sent for whatever
+	reason. (Trac #296, r2761)
+
   87.   [func]		zhanglikun
 	lib/python/isc/notifyout: Add the feature of notify-out, when 
 	zone axfr/ixfr finishing, the server will notify its slaves.
