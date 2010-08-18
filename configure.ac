@@ -487,6 +487,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/lib/python/bind10_config.py
            src/lib/dns/tests/testdata/gen-wiredata.py
            src/lib/cc/session_config.h.pre
+           src/lib/cc/tests/session_unittests_config.h
           ], [
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh

@@ -195,7 +195,7 @@ ModuleCCSession::ModuleCCSession(
     isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config),
     isc::data::ElementPtr(*command_handler)(
         const std::string& command, const isc::data::ElementPtr args)
-    ) throw (isc::cc::SessionError) :
+    ) :
     session_(session)
 {
     module_specification_ = readModuleSpecification(spec_file_name);
