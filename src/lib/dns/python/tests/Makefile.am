@@ -10,6 +10,13 @@ PYTESTS += rrtype_python_test.py
 
 EXTRA_DIST = $(PYTESTS)
 
+# If necessary (rare cases), explicitly specify paths to dynamic libraries
+# required by loadable python modules.
+B10_LIBRARY_PATH =
+if SET_ENV_LIBRARY_PATH
+B10_LIBRARY_PATH += $(ENV_LIBRARY_PATH)=$(abs_top_builddir)/src/lib/dns/.libs:$(abs_top_builddir)/src/lib/exceptions/.libs:$$$(ENV_LIBRARY_PATH)
+endif
+
 # later will have configure option to choose this, like: coverage run --branch
 PYCOVERAGE = $(PYTHON)
 # test using command-line arguments, so use check-local target instead of TESTS
@@ -18,5 +25,6 @@ check-local:
 	echo Running test: $$pytest ; \
 	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/lib/dns/python/.libs \
 	TESTDATA_PATH=$(abs_top_srcdir)/src/lib/dns/tests/testdata \
+	$(B10_LIBRARY_PATH) \
 	$(PYCOVERAGE) $(abs_srcdir)/$$pytest ; \
 	done
