@@ -210,7 +210,7 @@ SessionImpl::readData(void* data, size_t datalen) {
             }
         }
     } catch (const asio::system_error& asio_ex) {
-        // to hide boost specific exceptions, we catch them explicitly
+        // to hide ASIO specific exceptions, we catch them explicitly
         // and convert it to SessionError.
         isc_throw(SessionError, "ASIO read failed: " << asio_ex.what());
     }
@@ -344,7 +344,7 @@ Session::sendmsg(ElementPtr& env, ElementPtr& msg) {
 bool
 Session::recvmsg(ElementPtr& msg, bool nonblock, int seq) {
     ElementPtr l_env;
-    return recvmsg(l_env, msg, nonblock, seq);
+    return (recvmsg(l_env, msg, nonblock, seq));
 }
 
 bool
@@ -366,7 +366,7 @@ Session::recvmsg(ElementPtr& env, ElementPtr& msg,
                    env = q_el->get(0);
                    msg = q_el->get(1);
                    impl_->queue_->remove(i);
-                   return true;
+                   return (true);
             }
         }
     }
@@ -404,13 +404,13 @@ Session::recvmsg(ElementPtr& env, ElementPtr& msg,
        ) {
         env = l_env;
         msg = l_msg;
-        return true;
+        return (true);
     } else {
         ElementPtr q_el = Element::createList();
         q_el->add(l_env);
         q_el->add(l_msg);
         impl_->queue_->add(q_el);
-        return recvmsg(env, msg, nonblock, seq);
+        return (recvmsg(env, msg, nonblock, seq));
     }
     // XXXMLG handle non-block here, and return false for short reads
 }
@@ -453,7 +453,7 @@ Session::group_sendmsg(ElementPtr msg, std::string group,
     //env->set("msg", Element::create(msg->toWire()));
 
     sendmsg(env, msg);
-    return nseq;
+    return (nseq);
 }
 
 bool
@@ -478,7 +478,7 @@ Session::reply(ElementPtr& envelope, ElementPtr& newmsg) {
 
     sendmsg(env, newmsg);
 
-    return nseq;
+    return (nseq);
 }
 
 bool

@@ -34,7 +34,7 @@ namespace isc { namespace config {
     public:
         ModuleSpecError(std::string m = "Module specification is invalid") : msg(m) {}
         ~ModuleSpecError() throw() {}
-        const char* what() const throw() { return msg.c_str(); }
+        const char* what() const throw() { return (msg.c_str()); }
     private:
         std::string msg;
     };
@@ -72,7 +72,7 @@ namespace isc { namespace config {
 
         /// Returns the full module specification as an ElementPtr
         /// \return ElementPtr Shared pointer to the specification
-        const ElementPtr getFullSpec() const { return module_specification; };
+        const ElementPtr getFullSpec() const { return (module_specification); }
 
         /// Returns the module name as specified by the specification
         const std::string getModuleName() const;

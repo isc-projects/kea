@@ -53,10 +53,10 @@ RRsetList::findRRset(const RRType& rrtype, const RRClass& rrclass) {
     BOOST_FOREACH(RRsetPtr rrsetptr, rrsets_) {
         if ((rrsetptr->getClass() == rrclass) &&
             (rrsetptr->getType() == rrtype)) {
-            return rrsetptr;
+            return (rrsetptr);
         }
     }
-    return RRsetPtr();
+    return (RRsetPtr());
 }
 
 }

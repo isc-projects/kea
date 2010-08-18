@@ -41,6 +41,7 @@
 
 #include <auth/spec_config.h>
 #include <auth/common.h>
+#include <auth/change_user.h>
 #include <auth/auth_srv.h>
 #include <auth/asio_link.h>
 
@@ -67,7 +68,7 @@ asio_link::IOService* io_service;
 
 ElementPtr
 my_config_handler(ElementPtr new_config) {
-    return auth_server->updateConfig(new_config);
+    return (auth_server->updateConfig(new_config));
 }
 
 ElementPtr
@@ -82,7 +83,7 @@ my_command_handler(const string& command, const ElementPtr args) {
         io_service->stop();
     }
     
-    return answer;
+    return (answer);
 }
 
 void
@@ -97,9 +98,10 @@ main(int argc, char* argv[]) {
     int ch;
     const char* port = DNSPORT;
     const char* address = NULL;
+    const char* uid = NULL;
     bool use_ipv4 = true, use_ipv6 = true, cache = true;
 
-    while ((ch = getopt(argc, argv, "46a:np:v")) != -1) {
+    while ((ch = getopt(argc, argv, "46a:np:u:v")) != -1) {
         switch (ch) {
         case '4':
             // Note that -4 means "ipv4 only", we need to set "use_ipv6" here,
@@ -120,6 +122,9 @@ main(int argc, char* argv[]) {
             break;
         case 'p':
             port = optarg;
+            break;
+        case 'u':
+            uid = optarg;
             break;
         case 'v':
             verbose_mode = true;
@@ -151,7 +156,13 @@ main(int argc, char* argv[]) {
     Session* xfrin_session = NULL;
     bool xfrin_session_established = false; // XXX (see Trac #287)
     ModuleCCSession* config_session = NULL;
-    XfroutClient xfrout_client(UNIX_SOCKET_FILE);
+    string xfrout_socket_path;
+    if (getenv("B10_FROM_BUILD") != NULL) {
+        xfrout_socket_path = string(getenv("B10_FROM_BUILD")) + "/auth_xfrout_conn";
+    } else {
+        xfrout_socket_path = UNIX_SOCKET_FILE;
+    }
+    XfroutClient xfrout_client(xfrout_socket_path);
     try {
         string specfile;
         if (getenv("B10_FROM_BUILD")) {
@@ -187,6 +198,10 @@ main(int argc, char* argv[]) {
                                              my_config_handler,
                                              my_command_handler);
         cout << "[b10-auth] Configuration channel established." << endl;
+
+        if (uid != NULL) {
+            changeUser(uid);
+        }
 
         xfrin_session = new Session(io_service->get_io_service());
         cout << "[b10-auth] Xfrin session channel created." << endl;

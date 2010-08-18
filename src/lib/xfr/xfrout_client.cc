@@ -77,11 +77,13 @@ XfroutClient::sendXfroutRequestInfo(const int tcp_sock,
 {
     if (-1 == send_fd(impl_->socket_.native(), tcp_sock)) {
         isc_throw(XfroutError,
-                  "Fail to send the socket file descriptor to xfrout module");
+                  "Failed to send the socket file descriptor "
+                  "to xfrout module");
     }
 
-    // XXX: this shouldn't be blocking send, even though it's unlikely to
+    // TODO: this shouldn't be blocking send, even though it's unlikely to
     // block.
+    // converting the 16-bit word to network byte order.
     const uint8_t lenbuf[2] = { msg_len >> 8, msg_len & 0xff };
     if (send(impl_->socket_.native(), lenbuf, sizeof(lenbuf), 0) !=
         sizeof(lenbuf)) {
@@ -99,7 +101,7 @@ XfroutClient::sendXfroutRequestInfo(const int tcp_sock,
                   "xfr query hasn't been processed properly by xfrout module");
     }
 
-    return 0;
+    return (0);
 }
 
 } // End for xfr

@@ -18,7 +18,7 @@
 #include <boost/foreach.hpp>
 #include <boost/assign/std/vector.hpp>
 
-#include <data.h>
+#include <cc/data.h>
 
 using namespace isc::data;
 
@@ -400,7 +400,7 @@ TEST(Element, to_and_from_wire) {
 
 static ElementPtr
 efs(const std::string& str) {
-    return Element::fromJSON(str);
+    return (Element::fromJSON(str));
 }
 
 TEST(Element, equals) {

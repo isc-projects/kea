@@ -336,6 +336,8 @@ class BoB:
             authargs += ['-a', str(self.address)]
         if self.nocache:
             authargs += ['-n']
+        if self.uid:
+            authargs += ['-u', str(self.uid)]
         if self.verbose:
             authargs += ['-v']
             sys.stdout.write("Starting b10-auth using port %d" %
@@ -396,6 +398,26 @@ class BoB:
             sys.stdout.write("[bind10] Started b10-xfrin (PID %d)\n" % 
                              xfrind.pid)
 
+        # start b10-zonemgr
+        zonemgr_args = ['b10-zonemgr']
+        if self.verbose:
+            sys.stdout.write("[bind10] Starting b10-zonemgr\n")
+            zonemgr_args += ['-v']
+        try:
+            zonemgr = ProcessInfo("b10-zonemgr", zonemgr_args,
+                                 c_channel_env)
+        except Exception as e:
+            c_channel.process.kill()
+            bind_cfgd.process.kill()
+            xfrout.process.kill()
+            auth.process.kill()
+            xfrind.process.kill()
+            return "Unable to start b10-zonemgr; " + str(e)
+        self.processes[zonemgr.pid] = zonemgr 
+        if self.verbose:
+            sys.stdout.write("[bind10] Started b10-zonemgr(PID %d)\n" % 
+                             zonemgr.pid)
+
         # start the b10-cmdctl
         # XXX: we hardcode port 8080
         cmdctl_args = ['b10-cmdctl']
@@ -411,6 +433,7 @@ class BoB:
             xfrout.process.kill()
             auth.process.kill()
             xfrind.process.kill()
+            zonemgr.process.kill()
             return "Unable to start b10-cmdctl; " + str(e)
         self.processes[cmd_ctrld.pid] = cmd_ctrld
         if self.verbose:
@@ -429,6 +452,7 @@ class BoB:
         self.cc_session.group_sendmsg(cmd, "Boss", "Auth")
         self.cc_session.group_sendmsg(cmd, "Boss", "Xfrout")
         self.cc_session.group_sendmsg(cmd, "Boss", "Xfrin")
+        self.cc_session.group_sendmsg(cmd, "Boss", "Zonemgr")
 
     def stop_process(self, process):
         """Stop the given process, friendly-like."""

@@ -133,9 +133,9 @@ MessageRenderer_destroy(s_MessageRenderer* self) {
 
 static PyObject*
 MessageRenderer_getData(s_MessageRenderer* self) {
-    return Py_BuildValue("y#",
+    return (Py_BuildValue("y#",
                          self->messagerenderer->getData(),
-                         self->messagerenderer->getLength());
+                          self->messagerenderer->getLength()));
 }
 
 static PyObject*

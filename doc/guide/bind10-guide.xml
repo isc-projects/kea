@@ -75,9 +75,8 @@
 	data source backend is SQLite3. The authoritative server
 	requires SQLite 3.3.9 or newer.
         The <command>b10-xfrin</command> and <command>b10-xfrout</command>
-	modules require the libboost library,
-        libpython3 library,
-	and the Python _sqlite3.so module.
+        modules require the libpython3 library and the Python
+        _sqlite3.so module.
       </para></note>
 <!-- TODO: this will change ... -->
 
@@ -272,9 +271,8 @@ var/
         </para>
 
         <para>
-	  The Boost Library, Python Library,
-	  and Python _sqlite3 module are required to enable the
-	  Xfrout and Xfrin support.
+	  The Python Library and Python _sqlite3 module are required to
+          enable the Xfrout and Xfrin support.
         </para>
 
         <note><simpara>
@@ -487,14 +485,6 @@ var/
           </varlistentry>
 
           <varlistentry>
-            <term>--with-boost-lib</term>
-            <listitem> 
-              <simpara>Define the path to find the Boost library.
-              </simpara>
-            </listitem> 
-          </varlistentry>
-
-          <varlistentry>
             <term>--with-pythonpath</term>
             <listitem> 
               <simpara>Define the path to Python 3.1 if it is not in the
@@ -520,10 +510,10 @@ var/
 
         <para>
           For example, the following configures it to
-    find the Boost headers and library, find the
+    find the Boost headers, find the
     Python interpreter, and sets the installation location:
 
-          <screen>$ <userinput>./configure --with-boost-lib=/usr/pkg/lib \
+          <screen>$ <userinput>./configure \
       --with-boost-include=/usr/pkg/include \
       --with-pythonpath=/usr/pkg/bin/python3.1 \
       --prefix=/opt/bind10</userinput></screen>
@@ -556,14 +546,6 @@ var/
         <note>
           <para>The install step may require superuser privileges.</para>
         </note>
-
-<!-- Trac #148 -->
-        <note><simpara>
-	  Depending on your system and the location of your Boost
-	  Python and Python shared libraries, you may need to
-	  configure your run-time linker to find them (such as
-	  setting LD_LIBRARY_PATH).
-        </simpara></note>
 
       </section>
 

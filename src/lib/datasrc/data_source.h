@@ -182,13 +182,13 @@ public:
 
     virtual void findClosestEnclosure(DataSrcMatch& match) const = 0;
 
-    const isc::dns::RRClass& getClass() const { return rrclass; }
+    const isc::dns::RRClass& getClass() const { return (rrclass); }
     void setClass(isc::dns::RRClass& c) { rrclass = c; }
     void setClass(const isc::dns::RRClass& c) { rrclass = c; }
 
-    Result init() { return NOT_IMPLEMENTED; }
+    Result init() { return (NOT_IMPLEMENTED); }
     Result init(const isc::data::ElementPtr config);
-    Result close() { return NOT_IMPLEMENTED; }
+    Result close() { return (NOT_IMPLEMENTED); }
 
     virtual Result findRRset(const isc::dns::Name& qname,
                              const isc::dns::RRClass& qclass,
@@ -247,7 +247,7 @@ public:
 
     void addDataSrc(ConstDataSrcPtr data_src);
     void removeDataSrc(ConstDataSrcPtr data_src);
-    size_t dataSrcCount() { return data_sources.size(); };
+    size_t dataSrcCount() { return (data_sources.size()); }
     
     void findClosestEnclosure(DataSrcMatch& match) const;
 

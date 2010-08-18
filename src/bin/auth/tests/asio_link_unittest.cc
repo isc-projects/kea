@@ -108,8 +108,14 @@ TEST(IOServiceTest, badAddress) {
 TEST(IOServiceTest, unavailableAddress) {
     // These addresses should generally be unavailable as a valid local
     // address, although there's no guarantee in theory.
-    EXPECT_THROW(IOService(NULL, *TEST_PORT, *"ffff:ffff::"), IOError);
     EXPECT_THROW(IOService(NULL, *TEST_PORT, *"255.255.0.0"), IOError);
+
+    // Some OSes would simply reject binding attempt for an AF_INET6 socket
+    // to an IPv4-mapped IPv6 address.  Even if those that allow it, since
+    // the corresponding IPv4 address is the same as the one used in the
+    // AF_INET socket case above, it should at least show the same result
+    // as the previous one.
+    EXPECT_THROW(IOService(NULL, *TEST_PORT, *"::ffff:255.255.0.0"), IOError);
 }
 
 TEST(IOServiceTest, duplicateBind) {

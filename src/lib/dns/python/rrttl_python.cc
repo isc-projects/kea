@@ -177,7 +177,7 @@ RRTTL_init(s_RRTTL* self, PyObject* args) {
             PyErr_Clear();
             return (0);
         }
-    } catch (IncompleteRRTTL icc) {
+    } catch (const IncompleteRRTTL& icc) {
         // Ok so one of our functions has thrown a C++ exception.
         // We need to translate that to a Python Exception
         // First clear any existing error that was set
@@ -186,7 +186,7 @@ RRTTL_init(s_RRTTL* self, PyObject* args) {
         PyErr_SetString(po_IncompleteRRTTL, icc.what());
         // And return negative
         return (-1);
-    } catch (InvalidRRTTL ic) {
+    } catch (const InvalidRRTTL& ic) {
         PyErr_Clear();
         PyErr_SetString(po_InvalidRRTTL, ic.what());
         return (-1);
@@ -213,9 +213,9 @@ RRTTL_toText(s_RRTTL* self) {
 static PyObject*
 RRTTL_str(PyObject* self) {
     // Simply call the to_text method we already defined
-    return PyObject_CallMethod(self,
+    return (PyObject_CallMethod(self,
                                const_cast<char*>("to_text"),
-                               const_cast<char*>(""));
+                                const_cast<char*>("")));
 }
 
 static PyObject*

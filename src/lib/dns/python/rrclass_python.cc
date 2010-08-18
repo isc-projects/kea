@@ -188,7 +188,7 @@ RRClass_init(s_RRClass* self, PyObject* args) {
         }
     // Incomplete is never thrown, a type error would have already been raised
     //when we try to read the 2 bytes above
-    } catch (InvalidRRClass ic) {
+    } catch (const InvalidRRClass& ic) {
         PyErr_Clear();
         PyErr_SetString(po_InvalidRRClass, ic.what());
         return (-1);
@@ -215,9 +215,9 @@ RRClass_toText(s_RRClass* self) {
 static PyObject*
 RRClass_str(PyObject* self) {
     // Simply call the to_text method we already defined
-    return PyObject_CallMethod(self,
+    return (PyObject_CallMethod(self,
                                const_cast<char*>("to_text"),
-                               const_cast<char*>(""));
+                                const_cast<char*>("")));
 }
 
 static PyObject*

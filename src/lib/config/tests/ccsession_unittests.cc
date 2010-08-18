@@ -34,12 +34,12 @@ using namespace std;
 namespace {
 std::string
 ccspecfile(const std::string name) {
-    return std::string(TEST_DATA_PATH) + "/" + name;
+    return (std::string(TEST_DATA_PATH) + "/" + name);
 }
 
 ElementPtr
 el(const std::string& str) {
-    return Element::fromJSON(str);
+    return (Element::fromJSON(str));
 }
 
 class CCSessionTest : public ::testing::Test {
@@ -183,28 +183,28 @@ TEST_F(CCSessionTest, session2)
 ElementPtr my_config_handler(ElementPtr new_config) {
     if (new_config && new_config->contains("item1") &&
         new_config->get("item1")->intValue() == 5) {
-        return createAnswer(6, "I do not like the number 5");
+        return (createAnswer(6, "I do not like the number 5"));
     }
-    return createAnswer();
+    return (createAnswer());
 }
 
 ElementPtr my_command_handler(const std::string& command,
                               ElementPtr arg UNUSED_PARAM)
 {
     if (command == "good_command") {
-        return createAnswer();
+        return (createAnswer());
     } else if (command == "command_with_arg") {
         if (arg) {
             if (arg->getType() == Element::integer) {
-                return createAnswer(0, el("2"));
+                return (createAnswer(0, el("2")));
             } else {
-                return createAnswer(1, "arg bad type");
+                return (createAnswer(1, "arg bad type"));
             }
         } else {
-            return createAnswer(1, "arg missing");
+            return (createAnswer(1, "arg missing"));
         }
     } else {
-        return createAnswer(1, "bad command");
+        return (createAnswer(1, "bad command"));
     }
 }
 

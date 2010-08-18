@@ -1246,7 +1246,7 @@ Nsec3Param::getHash(const Name& name) const {
 //
 DataSrc::Result
 DataSrc::init(const isc::data::ElementPtr config UNUSED_PARAM) {
-    return NOT_IMPLEMENTED;
+    return (NOT_IMPLEMENTED);
 }
 
 DataSrc::Result
