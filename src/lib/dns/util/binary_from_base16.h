@@ -56,7 +56,7 @@ struct to_4_bit {
             isc_throw(isc::BadValue,
                       "attempt to decode a value not in base16 char set");
         }
-        return value;
+        return (value);
     }
 };
 

@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id: message_python.cc 1711 2010-04-14 15:14:53Z jelte $
+// $Id$
 
 #include <dns/message.h>
 using namespace isc::dns;
@@ -326,9 +326,9 @@ Opcode_toText(s_Opcode* self) {
 static PyObject*
 Opcode_str(PyObject* self) {
     // Simply call the to_text method we already defined
-    return PyObject_CallMethod(self,
+    return (PyObject_CallMethod(self,
                                const_cast<char*>("to_text"),
-                               const_cast<char*>(""));
+                                const_cast<char*>("")));
 }
 
 static PyObject*
@@ -589,7 +589,7 @@ Rcode_init(s_Rcode* self UNUSED_PARAM, PyObject* args UNUSED_PARAM) {
         try {
             self->rcode = new Rcode(code);
             self->static_code = false;
-        } catch (isc::OutOfRange) {
+        } catch (const isc::OutOfRange&) {
             PyErr_SetString(PyExc_OverflowError,
                             "rcode out of range");
             return (-1);
@@ -624,9 +624,9 @@ Rcode_toText(s_Rcode* self) {
 static PyObject*
 Rcode_str(PyObject* self) {
     // Simply call the to_text method we already defined
-    return PyObject_CallMethod(self,
+    return (PyObject_CallMethod(self,
                                const_cast<char*>("to_text"),
-                               const_cast<char*>(""));
+                                const_cast<char*>("")));
 }
 
 static PyObject*
@@ -886,22 +886,22 @@ Section_createStatic(const Section& section) {
 
 static PyObject*
 Section_QUESTION(s_Section* self UNUSED_PARAM) {
-    return Section_createStatic(Section::QUESTION());
+    return (Section_createStatic(Section::QUESTION()));
 }
 
 static PyObject*
 Section_ANSWER(s_Section* self UNUSED_PARAM) {
-    return Section_createStatic(Section::ANSWER());
+    return (Section_createStatic(Section::ANSWER()));
 }
 
 static PyObject*
 Section_AUTHORITY(s_Section* self UNUSED_PARAM) {
-    return Section_createStatic(Section::AUTHORITY());
+    return (Section_createStatic(Section::AUTHORITY()));
 }
 
 static PyObject*
 Section_ADDITIONAL(s_Section* self UNUSED_PARAM) {
-    return Section_createStatic(Section::ADDITIONAL());
+    return (Section_createStatic(Section::ADDITIONAL()));
 }
 
 static PyObject* 
@@ -1221,7 +1221,7 @@ Message_setHeaderFlag(s_Message* self, PyObject* args) {
     try {
         self->message->setHeaderFlag(*messageflag->messageflag);
         Py_RETURN_NONE;
-    } catch (isc::dns::InvalidMessageOperation imo) {
+    } catch (const InvalidMessageOperation& imo) {
         PyErr_Clear();
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
         return (NULL);
@@ -1238,7 +1238,7 @@ Message_clearHeaderFlag(s_Message* self, PyObject* args) {
     try {
         self->message->clearHeaderFlag(*messageflag->messageflag);
         Py_RETURN_NONE;
-    } catch (isc::dns::InvalidMessageOperation imo) {
+    } catch (const InvalidMessageOperation& imo) {
         PyErr_Clear();
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
         return (NULL);
@@ -1269,7 +1269,7 @@ Message_setDNSSECSupported(s_Message* self, PyObject* args) {
             self->message->setDNSSECSupported(false);
         }
         Py_RETURN_NONE;
-    } catch (isc::dns::InvalidMessageOperation imo) {
+    } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
         return (NULL);
     }
@@ -1289,10 +1289,10 @@ Message_setUDPSize(s_Message* self, PyObject* args) {
     try {
         self->message->setUDPSize(size);
         Py_RETURN_NONE;
-    } catch (isc::dns::InvalidMessageUDPSize imus) {
+    } catch (const InvalidMessageUDPSize& imus) {
         PyErr_SetString(po_InvalidMessageUDPSize, imus.what());
         return (NULL);
-    } catch (isc::dns::InvalidMessageOperation imo) {
+    } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
         return (NULL);
     }
@@ -1312,7 +1312,7 @@ Message_setQid(s_Message* self, PyObject* args) {
     try {
         self->message->setQid(id);
         Py_RETURN_NONE;
-    } catch (InvalidMessageOperation imo) {
+    } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
         return (NULL);
     }
@@ -1344,7 +1344,7 @@ Message_setRcode(s_Message* self, PyObject* args) {
     try {
         self->message->setRcode(*rcode->rcode);
         Py_RETURN_NONE;
-    } catch (InvalidMessageOperation imo) {
+    } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
         return (NULL);
     }
@@ -1379,7 +1379,7 @@ Message_setOpcode(s_Message* self, PyObject* args) {
     try {
         self->message->setOpcode(*opcode->opcode);
         Py_RETURN_NONE;
-    } catch (InvalidMessageOperation imo) {
+    } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
         return (NULL);
     }
@@ -1482,7 +1482,7 @@ Message_addRRset(s_Message* self, PyObject* args) {
             self->message->addRRset(*section->section, rrset->rrset, false);
         }
         Py_RETURN_NONE;
-    } catch (InvalidMessageOperation imo) {
+    } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
         return (NULL);
     }
@@ -1526,9 +1526,9 @@ Message_toText(s_Message* self) {
 static PyObject*
 Message_str(PyObject* self) {
     // Simply call the to_text method we already defined
-    return PyObject_CallMethod(self,
+    return (PyObject_CallMethod(self,
                                const_cast<char*>("to_text"),
-                               const_cast<char*>(""));
+                                const_cast<char*>("")));
 }
 
 static PyObject*
@@ -1541,7 +1541,7 @@ Message_toWire(s_Message* self, PyObject* args) {
             // If we return NULL it is seen as an error, so use this for
             // None returns
             Py_RETURN_NONE;
-        } catch (isc::dns::InvalidMessageOperation imo) {
+        } catch (const InvalidMessageOperation& imo) {
             PyErr_Clear();
             PyErr_SetString(po_InvalidMessageOperation, imo.what());
             return (NULL);
@@ -1565,16 +1565,16 @@ Message_fromWire(s_Message* self, PyObject* args) {
     try {
         self->message->fromWire(inbuf);
         Py_RETURN_NONE;
-    } catch (isc::dns::InvalidMessageOperation imo) {
+    } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
         return (NULL);
-    } catch (isc::dns::DNSMessageFORMERR dmfe) {
+    } catch (const DNSMessageFORMERR& dmfe) {
         PyErr_SetString(po_DNSMessageFORMERR, dmfe.what());
         return (NULL);
-    } catch (isc::dns::DNSMessageBADVERS dmfe) {
+    } catch (const DNSMessageBADVERS& dmfe) {
         PyErr_SetString(po_DNSMessageBADVERS, dmfe.what());
         return (NULL);
-    } catch (isc::dns::MessageTooShort mts) {
+    } catch (const MessageTooShort& mts) {
         PyErr_SetString(po_MessageTooShort, mts.what());
         return (NULL);
     }

@@ -327,7 +327,6 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
     return (true);
 }
 
-
 bool
 AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, Message& message,
                             MessageRenderer& response_renderer)
@@ -342,10 +341,8 @@ AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, Message& message,
     }
 
     try {
-        if (!xfrout_connected_) {
-            xfrout_client_.connect();
-            xfrout_connected_ = true;
-        }
+        xfrout_client_.connect();
+        xfrout_connected_ = true;
         xfrout_client_.sendXfroutRequestInfo(
             io_message.getSocket().getNative(),
             io_message.getData(),
@@ -368,6 +365,10 @@ AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, Message& message,
                          verbose_mode_);
         return (true);
     }
+
+    xfrout_client_.disconnect();
+    xfrout_connected_ = false;
+
     return (false);
 }
 
@@ -421,7 +422,7 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
     static const string command_template_start =
         "{\"command\": [\"notify\", {\"zone_name\" : \"";
     static const string command_template_master = "\", \"master\" : \"";
-    static const string command_template_rrclass = "\", \"rrclass\" : \"";
+    static const string command_template_rrclass = "\", \"zone_class\" : \"";
     static const string command_template_end = "\"}]}";
 
     try {
@@ -431,7 +432,7 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
                 command_template_rrclass + question->getClass().toText() +
                 command_template_end);
         const unsigned int seq =
-            xfrin_session_->group_sendmsg(notify_command, "Xfrin",
+            xfrin_session_->group_sendmsg(notify_command, "Zonemgr",
                                           "*", "*");
         ElementPtr env, answer, parsed_answer;
         xfrin_session_->group_recvmsg(env, answer, false, seq);
@@ -439,14 +440,14 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
         parsed_answer = parseAnswer(rcode, answer);
         if (rcode != 0) {
             if (verbose_mode_) {
-                cerr << "[b10-auth] failed to notify Xfrin: "
+                cerr << "[b10-auth] failed to notify Zonemgr: "
                      << parsed_answer->str() << endl; 
             }
             return (false);
         }
     } catch (const Exception& ex) {
         if (verbose_mode_) {
-            cerr << "[b10-auth] failed to notify Xfrin: " << ex.what() << endl;
+            cerr << "[b10-auth] failed to notify Zonemgr: " << ex.what() << endl;
         }
         return (false);
     }
@@ -520,11 +521,11 @@ AuthSrv::updateConfig(isc::data::ElementPtr new_config) {
         ElementPtr answer = isc::config::createAnswer();
         answer = impl_->setDbFile(new_config);
 
-        return answer;
+        return (answer);
     } catch (const isc::Exception& error) {
         if (impl_->verbose_mode_) {
             cerr << "[b10-auth] error: " << error.what() << endl;
         }
-        return isc::config::createAnswer(1, error.what());
+        return (isc::config::createAnswer(1, error.what()));
     }
 }

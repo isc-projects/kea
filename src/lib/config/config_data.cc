@@ -104,7 +104,7 @@ find_spec_part(ElementPtr spec, const std::string& identifier)
         }
     }
     //std::cout << "[XX] found spec part: " << std::endl << spec_part << std::endl;
-    return spec_part;
+    return (spec_part);
 }
 
 //
@@ -142,17 +142,15 @@ spec_name_list(ElementPtr result, ElementPtr spec_part, std::string prefix, bool
 }
 
 ElementPtr
-ConfigData::getValue(const std::string& identifier)
-{
+ConfigData::getValue(const std::string& identifier) {
     // 'fake' is set, but dropped by this function and
     // serves no further purpose.
     bool fake;
-    return getValue(fake, identifier);
+    return (getValue(fake, identifier));
 }
 
 ElementPtr
-ConfigData::getValue(bool& is_default, const std::string& identifier)
-{
+ConfigData::getValue(bool& is_default, const std::string& identifier) {
     ElementPtr value = _config->find(identifier);
     if (value) {
         is_default = false;
@@ -166,7 +164,7 @@ ConfigData::getValue(bool& is_default, const std::string& identifier)
             value = ElementPtr();
         }
     }
-    return value;
+    return (value);
 }
 
 /// Returns an ElementPtr pointing to a ListElement containing
@@ -181,7 +179,7 @@ ConfigData::getItemList(const std::string& identifier, bool recurse)
         spec_part = find_spec_part(spec_part, identifier);
     }
     spec_name_list(result, spec_part, identifier, recurse);
-    return result;
+    return (result);
 }
 
 /// Returns an ElementPtr containing a MapElement with identifier->value
@@ -194,7 +192,7 @@ ConfigData::getFullConfig()
     BOOST_FOREACH(ElementPtr item, items->listValue()) {
         result->set(item->stringValue(), getValue(item->stringValue()));
     }
-    return result;
+    return (result);
 }
 
 }

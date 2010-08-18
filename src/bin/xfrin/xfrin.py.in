@@ -28,6 +28,7 @@ import socket
 import random
 from optparse import OptionParser, OptionValueError
 from isc.config.ccsession import *
+from isc.notify import notify_out
 try:
     from libdns_python import *
 except ImportError as e:
@@ -49,13 +50,17 @@ else:
 SPECFILE_LOCATION = SPECFILE_PATH + "/xfrin.spec"
 AUTH_SPECFILE_LOCATION = AUTH_SPECFILE_PATH + "/auth.spec"
 
-
+XFROUT_MODULE_NAME = 'Xfrout'
+ZONE_MANAGER_MODULE_NAME = 'Zonemgr'
+REFRESH_FROM_ZONEMGR = 'refresh_from_zonemgr'
+ZONE_XFRIN_FAILED = 'zone_xfrin_failed'
 __version__ = 'BIND10'
 # define xfrin rcode
 XFRIN_OK = 0
 XFRIN_FAIL = 1
 
 DEFAULT_MASTER_PORT = '53'
+DEFAULT_MASTER = '127.0.0.1'
 
 def log_error(msg):
     sys.stderr.write("[b10-xfrin] %s\n" % str(msg))
@@ -316,14 +321,15 @@ class XfrinConnection(asyncore.dispatcher):
             sys.stdout.write('[b10-xfrin] %s\n' % str(msg))
 
 
-def process_xfrin(xfrin_recorder, zone_name, rrclass, db_file, 
+def process_xfrin(server, xfrin_recorder, zone_name, rrclass, db_file, 
                   shutdown_event, master_addrinfo, check_soa, verbose):
     xfrin_recorder.increment(zone_name)
     sock_map = {}
     conn = XfrinConnection(sock_map, zone_name, rrclass, db_file,
                            shutdown_event, master_addrinfo, verbose)
     if conn.connect_to_master():
-        conn.do_xfrin(check_soa)
+        ret = conn.do_xfrin(check_soa)
+        server.publish_xfrin_news(zone_name, rrclass, ret)
 
     xfrin_recorder.decrement(zone_name)
 
@@ -358,32 +364,54 @@ class XfrinRecorder:
 
 class Xfrin:
     def __init__(self, verbose = False):
-        self._cc_setup()
         self._max_transfers_in = 10
+        #TODO, this is the temp way to set the zone's master.
+        self._master_addr = DEFAULT_MASTER
+        self._master_port = DEFAULT_MASTER_PORT
+        self._cc_setup()
         self.recorder = XfrinRecorder()
         self._shutdown_event = threading.Event()
         self._verbose = verbose
 
     def _cc_setup(self):
-        '''
-This method is used only as part of initialization, but is implemented
-separately for convenience of unit tests; by letting the test code override
-this method we can test most of this class without requiring a command channel.
-'''
-        self._cc = isc.config.ModuleCCSession(SPECFILE_LOCATION,
+        '''This method is used only as part of initialization, but is 
+        implemented separately for convenience of unit tests; by letting 
+        the test code override this method we can test most of this class 
+        without requiring a command channel.'''
+        # Create one session for sending command to other modules, because the 
+        # listening session will block the send operation.
+        self._send_cc_session = isc.cc.Session()
+        self._module_cc = isc.config.ModuleCCSession(SPECFILE_LOCATION,
                                               self.config_handler,
                                               self.command_handler)
-        self._cc.start()
+        self._module_cc.start()
+        config_data = self._module_cc.get_full_config()
+        self._max_transfers_in = config_data.get("transfers_in")
+        self._master_addr = config_data.get('master_addr') or self._master_addr
+        self._master_port = config_data.get('master_port') or self._master_port
 
     def _cc_check_command(self):
-        '''
-This is a straightforward wrapper for cc.check_command, but provided as
-a separate method for the convenience of unit tests.
-'''
-        self._cc.check_command()
+        '''This is a straightforward wrapper for cc.check_command, 
+        but provided as a separate method for the convenience 
+        of unit tests.'''
+        self._module_cc.check_command()
 
     def config_handler(self, new_config):
-        # TODO, process new config data
+        self._max_transfers_in = new_config.get("transfers_in") or self._max_transfers_in
+        if ('master_addr' in new_config) or ('master_port' in new_config):
+            # Check if the new master is valid, there should be library for check it.
+            # and user should change the port and address together.
+            try:
+                addr = new_config.get('master_addr') or self._master_addr
+                port = new_config.get('master_port') or self._master_port
+                check_addr_port(addr, port)
+                self._master_addr = addr
+                self._master_port = port
+            except:
+                errmsg = "bad format for zone's master: " + str(new_config)
+                log_error(errmsg)
+                return create_answer(1, errmsg)
+
         return create_answer(0)
 
     def shutdown(self):
@@ -397,95 +425,97 @@ a separate method for the convenience of unit tests.
                 continue
             th.join()
 
-
     def command_handler(self, command, args):
         answer = create_answer(0)
         try:
             if command == 'shutdown':
                 self._shutdown_event.set()
-            elif command == 'retransfer' or command == 'refresh':
-                (zone_name, rrclass,
-                 master_addr, db_file) = self._parse_cmd_params(args)
-                ret = self.xfrin_start(zone_name, rrclass, db_file,
+            elif command == 'notify' or command == REFRESH_FROM_ZONEMGR:
+                # Xfrin receives the refresh/notify command from zone manager. 
+                # notify command maybe has the parameters which 
+                # specify the notifyfrom address and port, according the RFC1996, zone
+                # transfer should starts first from the notifyfrom, but now, let 'TODO' it.
+                (zone_name, rrclass) = self._parse_zone_name_and_class(args)
+                (master_addr) = check_addr_port(self._master_addr, self._master_port)
+                ret = self.xfrin_start(zone_name, 
+                                       rrclass, 
+                                       self._get_db_file(),
                                        master_addr,
-                                   False if command == 'retransfer' else True)
+                                       True)
                 answer = create_answer(ret[0], ret[1])
-            elif command == 'notify':
-                # This is the temporary implementation for notify.
-                # actually the notfiy command should be sent to the
-                # Zone Manager module.  Being temporary, we separate this case
-                # from refresh/retransfer while we could (and should otherwise)
-                # share the code.
-                (zone_name, rrclass,
-                 master_addr, db_file) = self._parse_cmd_params(args)
 
-                # XXX: master_addr is the sender of the notify message.
-                # It's very dangerous to naively trust it as the source of
-                # subsequent zone transfer; any remote node can easily exploit
-                # it to mount zone poisoning or DoS attacks.  We should
-                # locally identify the appropriate set of master servers.
-                # For now, we disable the code below.
-                master_is_valid = False
-
-                if master_is_valid:
-                    ret = self.xfrin_start(zone_name, rrclass, db_file,
-                                           master_addr, True)
-                else:
-                    errmsg = 'Failed to validate the master address ('
-                    errmsg += args['master'] + '), ignoring notify'
-                    ret = [1, errmsg]
+            elif command == 'retransfer' or command == 'refresh':
+                # Xfrin receives the retransfer/refresh from cmdctl(sent by bindctl).
+                # If the command has specified master address, do transfer from the 
+                # master address, or else do transfer from the configured masters.                
+                (zone_name, rrclass) = self._parse_zone_name_and_class(args)
+                master_addr = self._parse_master_and_port(args)
+                db_file = args.get('db_file') or self._get_db_file()
+                ret = self.xfrin_start(zone_name, 
+                                       rrclass, 
+                                       db_file, 
+                                       master_addr,
+                                       (False if command == 'retransfer' else True))
                 answer = create_answer(ret[0], ret[1])
+
             else:
                 answer = create_answer(1, 'unknown command: ' + command)
-
         except XfrinException as err:
+            log_error('error happened for command: %s, %s' % (command, str(err)) )
             answer = create_answer(1, str(err))
-
         return answer
 
-    def _parse_cmd_params(self, args):
+    def _parse_zone_name_and_class(self, args):
         zone_name = args.get('zone_name')
         if not zone_name:
             raise XfrinException('zone name should be provided')
 
-        rrclass = args.get('rrclass')
+        rrclass = args.get('zone_class')
         if not rrclass:
-            # The default RR class is IN.  We should fix this so that
-            # the class is always passed in the command arg (where we specify
-            # the default)
             rrclass = RRClass.IN()
         else:
             try:
                 rrclass = RRClass(rrclass)
             except InvalidRRClass as e:
                 raise XfrinException('invalid RRClass: ' + rrclass)
+        
+        return zone_name, rrclass
 
-        master = args.get('master')
-        if not master:
-            raise XfrinException('master address should be provided')
-
-        port_str = args.get('port')
-        if not port_str:
-            port_str = DEFAULT_MASTER_PORT
-        master_addrinfo = check_addr_port(master, port_str)
-
-        db_file = args.get('db_file')
-        if not db_file:
-            #TODO, the db file path should be got in auth server's configuration
-            # if we need access to this configuration more often, we
-            # should add it on start, and not remove it here
-            # (or, if we have writable ds, we might not need this in
-            # the first place)
-            self._cc.add_remote_config(AUTH_SPECFILE_LOCATION)
-            db_file, is_default = self._cc.get_remote_config_value("Auth", "database_file")
-            if is_default and "B10_FROM_BUILD" in os.environ:
-                # this too should be unnecessary, but currently the
-                # 'from build' override isn't stored in the config
-                # (and we don't have writable datasources yet)
-                db_file = os.environ["B10_FROM_BUILD"] + os.sep + "bind10_zones.sqlite3"
-            self._cc.remove_remote_config(AUTH_SPECFILE_LOCATION)
-
-        return (zone_name, rrclass, master_addrinfo, db_file)
+    def _parse_master_and_port(self, args):
+        port = args.get('port') or self._master_port
+        master = args.get('master') or self._master_addr
+        return check_addr_port(master, port)
+ 
+    def _get_db_file(self):
+        #TODO, the db file path should be got in auth server's configuration
+        # if we need access to this configuration more often, we
+        # should add it on start, and not remove it here
+        # (or, if we have writable ds, we might not need this in
+        # the first place)
+        self._module_cc.add_remote_config(AUTH_SPECFILE_LOCATION)
+        db_file, is_default = self._module_cc.get_remote_config_value("Auth", "database_file")
+        if is_default and "B10_FROM_BUILD" in os.environ:
+            # this too should be unnecessary, but currently the
+            # 'from build' override isn't stored in the config
+            # (and we don't have writable datasources yet)
+            db_file = os.environ["B10_FROM_BUILD"] + os.sep + "bind10_zones.sqlite3"
+        self._module_cc.remove_remote_config(AUTH_SPECFILE_LOCATION)
+        return db_file
+       
+    def publish_xfrin_news(self, zone_name, zone_class,  xfr_result):
+        '''Send command to xfrout/zone manager module.
+        If xfrin has finished successfully for one zone, tell the good 
+        news(command: zone_new_data_ready) to zone manager and xfrout.
+        if xfrin failed, just tell the bad news to zone manager, so that 
+        it can reset the refresh timer for that zone. '''
+        param = {'zone_name': zone_name, 'zone_class': zone_class.to_text()}
+        if xfr_result == XFRIN_OK:
+            msg = create_command(notify_out.ZONE_NEW_DATA_READY_CMD, param)
+            self._send_cc_session.group_sendmsg(msg, XFROUT_MODULE_NAME)
+            self._send_cc_session.group_sendmsg(msg, ZONE_MANAGER_MODULE_NAME)
+        else:
+            msg = create_command(ZONE_XFRIN_FAILED, param)
+            self._send_cc_session.group_sendmsg(msg, ZONE_MANAGER_MODULE_NAME)
 
     def startup(self):
         while not self._shutdown_event.is_set():
@@ -504,7 +534,8 @@ a separate method for the convenience of unit tests.
             return (1, 'zone xfrin is in progress')
 
         xfrin_thread = threading.Thread(target = process_xfrin,
-                                        args = (self.recorder,
+                                        args = (self,
+                                                self.recorder,
                                                 zone_name, rrclass,
                                                 db_file,
                                                 self._shutdown_event,

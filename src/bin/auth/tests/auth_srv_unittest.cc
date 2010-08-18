@@ -471,7 +471,7 @@ TEST_F(AuthSrvTest, AXFRSuccess) {
     // so we shouldn't have to respond.
     EXPECT_EQ(false, server.processMessage(*io_message, parse_message,
                                            response_renderer));
-    EXPECT_TRUE(xfrout.isConnected());
+    EXPECT_FALSE(xfrout.isConnected());
 }
 
 TEST_F(AuthSrvTest, AXFRConnectFail) {
@@ -483,6 +483,8 @@ TEST_F(AuthSrvTest, AXFRConnectFail) {
                                       response_renderer));
     headerCheck(parse_message, default_qid, Rcode::SERVFAIL(),
                 opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
+    // For a shot term workaround with xfrout we currently close the connection
+    // for each AXFR attempt
     EXPECT_FALSE(xfrout.isConnected());
 }
 
@@ -492,7 +494,7 @@ TEST_F(AuthSrvTest, AXFRSendFail) {
     createRequestPacket(opcode, Name("example.com"), RRClass::IN(),
                         RRType::AXFR(), IPPROTO_TCP);
     server.processMessage(*io_message, parse_message, response_renderer);
-    EXPECT_TRUE(xfrout.isConnected());
+    EXPECT_FALSE(xfrout.isConnected()); // see above
 
     xfrout.disableSend();
     parse_message.clear(Message::PARSE);
@@ -534,14 +536,14 @@ TEST_F(AuthSrvTest, notify) {
 
     // An internal command message should have been created and sent to an
     // external module.  Check them.
-    EXPECT_EQ("Xfrin", notify_session.msg_destination);
+    EXPECT_EQ("Zonemgr", notify_session.msg_destination);
     EXPECT_EQ("notify",
               notify_session.sent_msg->get("command")->get(0)->stringValue());
     ElementPtr notify_args = notify_session.sent_msg->get("command")->get(1);
     EXPECT_EQ("example.com.", notify_args->get("zone_name")->stringValue());
     EXPECT_EQ(DEFAULT_REMOTE_ADDRESS,
               notify_args->get("master")->stringValue());
-    EXPECT_EQ("IN", notify_args->get("rrclass")->stringValue());
+    EXPECT_EQ("IN", notify_args->get("zone_class")->stringValue());
 
     // On success, the server should return a response to the notify.
     headerCheck(parse_message, default_qid, Rcode::NOERROR(),
@@ -566,7 +568,7 @@ TEST_F(AuthSrvTest, notifyForCHClass) {
     // Other conditions should be the same, so simply confirm the RR class is
     // set correctly.
     ElementPtr notify_args = notify_session.sent_msg->get("command")->get(1);
-    EXPECT_EQ("CH", notify_args->get("rrclass")->stringValue());
+    EXPECT_EQ("CH", notify_args->get("zone_class")->stringValue());
 }
 
 TEST_F(AuthSrvTest, notifyEmptyQuestion) {

@@ -368,6 +368,7 @@ public:
         dns_message_(Message::PARSE),
         custom_callback_(NULL)
     {
+        socket_.set_option(socket_base::reuse_address(true));
         // Set v6-only (we use a different instantiation for v4,
         // otherwise asio will bind to both v4 and v6
         if (addr.is_v6()) {
@@ -562,7 +563,7 @@ IOService::stop() {
 
 asio::io_service&
 IOService::get_io_service() {
-    return impl_->io_service_;
+    return (impl_->io_service_);
 }
 
 void
