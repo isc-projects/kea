@@ -28,19 +28,20 @@ from unittest_fakesession import FakeModuleCCSession
 class TestConfigManagerData(unittest.TestCase):
     def setUp(self):
         self.data_path = os.environ['CONFIG_TESTDATA_PATH']
-        self.config_manager_data = ConfigManagerData(self.data_path)
+        self.writable_data_path = os.environ['CONFIG_WR_TESTDATA_PATH']
+        self.config_manager_data = ConfigManagerData(self.writable_data_path)
         self.assert_(self.config_manager_data)
 
     def test_init(self):
         self.assertEqual(self.config_manager_data.data['version'],
                          config_data.BIND10_CONFIG_DATA_VERSION)
         self.assertEqual(self.config_manager_data.data_path,
-                         self.data_path)
+                         self.writable_data_path)
         self.assertEqual(self.config_manager_data.db_filename,
-                         self.data_path + os.sep + "b10-config.db")
+                         self.writable_data_path + os.sep + "b10-config.db")
 
     def test_read_from_file(self):
-        ConfigManagerData.read_from_file(self.data_path)
+        ConfigManagerData.read_from_file(self.writable_data_path)
         self.assertRaises(ConfigManagerDataEmpty,
                           ConfigManagerData.read_from_file,
                           "doesnotexist")
@@ -84,14 +85,15 @@ class TestConfigManager(unittest.TestCase):
 
     def setUp(self):
         self.data_path = os.environ['CONFIG_TESTDATA_PATH']
+        self.writable_data_path = os.environ['CONFIG_WR_TESTDATA_PATH']
         self.fake_session = FakeModuleCCSession()
-        self.cm = ConfigManager(self.data_path, self.fake_session)
+        self.cm = ConfigManager(self.writable_data_path, self.fake_session)
         self.name = "TestModule"
         self.spec = isc.config.module_spec_from_file(self.data_path + os.sep + "/spec2.spec")
     
     def test_init(self):
         self.assert_(self.cm.module_specs == {})
-        self.assert_(self.cm.data_path == self.data_path)
+        self.assert_(self.cm.data_path == self.writable_data_path)
         self.assert_(self.cm.config != None)
         self.assert_(self.fake_session.has_subscription("ConfigManager"))
         self.assert_(self.fake_session.has_subscription("Boss", "ConfigManager"))
@@ -293,8 +295,8 @@ class TestConfigManager(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    if not 'CONFIG_TESTDATA_PATH' in os.environ:
-        print("You need to set the environment variable CONFIG_TESTDATA_PATH to point to the directory containing the test data files")
+    if not 'CONFIG_TESTDATA_PATH' in os.environ or not 'CONFIG_WR_TESTDATA_PATH' in os.environ:
+        print("You need to set the environment variable CONFIG_TESTDATA_PATH and CONFIG_WR_TESTDATA_PATH to point to the directory containing the test data files")
         exit(1)
     unittest.main()
 
