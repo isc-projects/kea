@@ -1,4 +1,4 @@
-SUBDIRS = . tests
+SUBDIRS = . testdata tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/lib/cc
@@ -13,7 +13,7 @@ EXTRA_DIST =  testdata/b10-config-bad1.db
 EXTRA_DIST += testdata/b10-config-bad2.db
 EXTRA_DIST += testdata/b10-config-bad3.db
 EXTRA_DIST += testdata/b10-config-bad4.db
-EXTRA_DIST += testdata/b10-config.db
+EXTRA_DIST += testdata/b10-config.db.master #.db will be auto-generated
 EXTRA_DIST += testdata/data22_1.data
 EXTRA_DIST += testdata/data22_2.data
 EXTRA_DIST += testdata/data22_3.data

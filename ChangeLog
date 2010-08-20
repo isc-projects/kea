@@ -1,3 +1,7 @@
+  89.	[build]		jinmei
+	Generate b10-config.db for tests at build time so that the source
+	tree does not have to be writable. (Trac #315, r2776)
+
   88.   [func]		jelte
 	Blocking reads on the msgq command channel now have a timeout
 	(defaults to 4 seconds, modifiable as needed by modules).
