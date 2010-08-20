@@ -3,9 +3,9 @@ EXTRA_DIST = $(PYTESTS)
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
 # required by loadable python modules.
-B10_LIBRARY_PATH =
+LIBRARY_PATH_PLACEHOLDER =
 if SET_ENV_LIBRARY_PATH
-B10_LIBRARY_PATH += $(ENV_LIBRARY_PATH)=$(abs_top_builddir)/src/lib/dns/.libs:$(abs_top_builddir)/src/lib/exceptions/.libs:$$$(ENV_LIBRARY_PATH)
+LIBRARY_PATH_PLACEHOLDER += $(ENV_LIBRARY_PATH)=$(abs_top_builddir)/src/lib/dns/.libs:$(abs_top_builddir)/src/lib/exceptions/.libs:$$$(ENV_LIBRARY_PATH)
 endif
 
 # later will have configure option to choose this, like: coverage run --branch
@@ -15,6 +15,6 @@ check-local:
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
 	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/lib/dns/python/.libs \
-	$(B10_LIBRARY_PATH) \
+	$(LIBRARY_PATH_PLACEHOLDER) \
 	$(PYCOVERAGE) $(abs_srcdir)/$$pytest ; \
 	done
