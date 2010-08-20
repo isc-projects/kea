@@ -46,5 +46,5 @@ EXTRA_DIST += tests/normal/sql2.example.com
 EXTRA_DIST += tests/normal/sql2.example.com.signed
 
 pytest:
-	$(SHELL) tests/correct/correct_test.sh-NOEXIST
+	$(SHELL) tests/correct/correct_test.sh
 	$(SHELL) tests/error/error_test.sh
