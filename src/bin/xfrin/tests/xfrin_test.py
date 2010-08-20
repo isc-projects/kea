@@ -559,7 +559,7 @@ def raise_interrupt():
 def raise_ccerror():
     raise isc.cc.session.SessionError('test error')
 
-def raise_excpetion():
+def raise_exception():
     raise Exception('test exception')
 
 class TestMain(unittest.TestCase):
@@ -581,7 +581,7 @@ class TestMain(unittest.TestCase):
         main(MockXfrin, False)
 
     def test_startup_generalerror(self):
-        MockXfrin.check_command_hook = raise_excpetion
+        MockXfrin.check_command_hook = raise_exception
         main(MockXfrin, False)
 
 if __name__== "__main__":
