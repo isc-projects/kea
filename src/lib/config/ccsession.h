@@ -138,7 +138,7 @@ public:
                     isc::data::ElementPtr(*command_handler)(
                         const std::string& command,
                         const isc::data::ElementPtr args) = NULL
-                    ) throw (isc::cc::SessionError);
+                    );
 
     /**
      * Optional optimization for checkCommand loop; returns true
