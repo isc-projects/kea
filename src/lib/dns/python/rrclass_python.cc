@@ -157,7 +157,7 @@ RRClass_init(s_RRClass* self, PyObject* args) {
     unsigned int i;
     PyObject* bytes = NULL;
     // The constructor argument can be a string ("IN"), an integer (1),
-    // or a sequence of numbers between 0 and 255 (wire code)
+    // or a sequence of numbers between 0 and 65535 (wire code)
 
     // Note that PyArg_ParseType can set PyError, and we need to clear
     // that if we try several like here. Otherwise the *next* python
@@ -170,7 +170,7 @@ RRClass_init(s_RRClass* self, PyObject* args) {
         } else if (PyArg_ParseTuple(args, "I", &i)) {
             PyErr_Clear();
             if (i > 65535) {
-                PyErr_SetString(po_InvalidRRClass, "Class number too high");
+                PyErr_SetString(po_InvalidRRClass, "RR class number too high");
                 return (-1);
             }
             self->rrclass = new RRClass(i);
