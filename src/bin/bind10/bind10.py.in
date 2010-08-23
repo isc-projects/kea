@@ -18,7 +18,7 @@
 """\
 This file implements the Boss of Bind (BoB, or bob) program.
 
-It's purpose is to start up the BIND 10 system, and then manage the
+Its purpose is to start up the BIND 10 system, and then manage the
 processes, by starting and stopping processes, plus restarting
 processes that exit.
 
