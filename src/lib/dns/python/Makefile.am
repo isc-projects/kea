@@ -1,8 +1,11 @@
 SUBDIRS = tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
+
+AM_CXXFLAGS = $(B10_CXXFLAGS)
+
 if USE_GXX
-AM_CPPFLAGS += -Wno-write-strings
+AM_CXXFLAGS += -Wno-write-strings
 endif
 
 #lib_LTLIBRARIES = libdns_python_name.la libdns_python_rrset.la
@@ -19,6 +22,7 @@ libdns_python_la_LDFLAGS = $(PYTHON_LDFLAGS)
 # directly included from source files, so these don't have their own
 # rules
 EXTRA_DIST = libdns_python_common.h
+EXTRA_DIST += edns_python.h
 EXTRA_DIST += messagerenderer_python.cc
 EXTRA_DIST += message_python.cc
 EXTRA_DIST += rrclass_python.cc

@@ -24,6 +24,7 @@
 #include <exceptions/exceptions.h>
 
 #include <dns/buffer.h>
+#include <dns/edns.h>
 #include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
@@ -164,7 +165,6 @@ makeErrorMessage(Message& message, MessageRenderer& renderer,
     message.setQid(qid);
     message.setOpcode(opcode);
     message.setHeaderFlag(MessageFlag::QR());
-    message.setUDPSize(AuthSrvImpl::DEFAULT_LOCAL_UDPSIZE);
     if (rd) {
         message.setHeaderFlag(MessageFlag::RD());
     }
@@ -292,14 +292,21 @@ bool
 AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
                                 MessageRenderer& response_renderer)
 {
-    const bool dnssec_ok = message.isDNSSECSupported();
-    const uint16_t remote_bufsize = message.getUDPSize();
+    ConstEDNSPtr remote_edns = message.getEDNS();
+    const bool dnssec_ok = remote_edns && remote_edns->isDNSSECSupported();
+    const uint16_t remote_bufsize = remote_edns ? remote_edns->getUDPSize() :
+        Message::DEFAULT_MAX_UDPSIZE; 
 
     message.makeResponse();
     message.setHeaderFlag(MessageFlag::AA());
     message.setRcode(Rcode::NOERROR());
-    message.setDNSSECSupported(dnssec_ok);
-    message.setUDPSize(AuthSrvImpl::DEFAULT_LOCAL_UDPSIZE);
+
+    if (remote_edns) {
+        EDNSPtr local_edns = EDNSPtr(new EDNS());
+        local_edns->setDNSSECSupported(dnssec_ok);
+        local_edns->setUDPSize(AuthSrvImpl::DEFAULT_LOCAL_UDPSIZE);
+        message.setEDNS(local_edns);
+    }
 
     try {
         Query query(message, cache_, dnssec_ok);

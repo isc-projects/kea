@@ -120,7 +120,6 @@ static PyTypeObject messageflag_type = {
     0                                   // tp_version_tag
 };
 
-
 static int
 MessageFlag_init(s_MessageFlag* self UNUSED_PARAM,
                  PyObject* args UNUSED_PARAM)
@@ -486,6 +485,7 @@ static int Rcode_init(s_Rcode* self, PyObject* args);
 static void Rcode_destroy(s_Rcode* self);
 
 static PyObject* Rcode_getCode(s_Rcode* self);
+static PyObject* Rcode_getExtendedCode(const s_Rcode* self);
 static PyObject* Rcode_toText(s_Rcode* self);
 static PyObject* Rcode_str(PyObject* self);
 static PyObject* Rcode_NOERROR(s_Rcode* self);
@@ -509,6 +509,9 @@ static PyObject* Rcode_richcmp(s_Rcode* self, s_Rcode* other, int op);
 
 static PyMethodDef Rcode_methods[] = {
     { "get_code", reinterpret_cast<PyCFunction>(Rcode_getCode), METH_NOARGS, "Returns the code value" },
+    { "get_extended_code",
+      reinterpret_cast<PyCFunction>(Rcode_getExtendedCode),
+      METH_NOARGS, "Returns the extended code value." },
     { "to_text", reinterpret_cast<PyCFunction>(Rcode_toText), METH_NOARGS, "Returns the text representation" },
     { "NOERROR", reinterpret_cast<PyCFunction>(Rcode_NOERROR), METH_NOARGS | METH_STATIC, "Creates a NOERROR Rcode" },
     { "FORMERR", reinterpret_cast<PyCFunction>(Rcode_FORMERR), METH_NOARGS | METH_STATIC, "Creates a FORMERR Rcode" },
@@ -614,6 +617,11 @@ Rcode_destroy(s_Rcode* self) {
 static PyObject*
 Rcode_getCode(s_Rcode* self) {
     return (Py_BuildValue("I", self->rcode->getCode()));
+}
+
+static PyObject*
+Rcode_getExtendedCode(const s_Rcode* self) {
+    return (Py_BuildValue("B", self->rcode->getExtendedCode()));
 }
 
 static PyObject*
@@ -973,10 +981,6 @@ static void Message_destroy(s_Message* self);
 static PyObject* Message_getHeaderFlag(s_Message* self, PyObject* args);
 static PyObject* Message_setHeaderFlag(s_Message* self, PyObject* args);
 static PyObject* Message_clearHeaderFlag(s_Message* self, PyObject* args);
-static PyObject* Message_isDNSSECSupported(s_Message* self);
-static PyObject* Message_setDNSSECSupported(s_Message* self, PyObject* args);
-static PyObject* Message_getUDPSize(s_Message* self);
-static PyObject* Message_setUDPSize(s_Message* self, PyObject* args);
 static PyObject* Message_getQid(s_Message* self);
 static PyObject* Message_setQid(s_Message* self, PyObject* args);
 static PyObject* Message_getRcode(s_Message* self);
@@ -1019,35 +1023,6 @@ static PyMethodDef Message_methods[] = {
       "Sets the specified header flag bit to 0. The message must be in "
       "RENDER mode. If not, an InvalidMessageOperation is raised. "
       "Takes a MessageFlag object as the only argument." },
-    { "is_dnssec_supported", reinterpret_cast<PyCFunction>(Message_isDNSSECSupported), METH_NOARGS,
-      "Returns True if the message sender indicates DNSSEC is supported. "
-      "If EDNS is included, this corresponds to the value of the DO bit. "
-      "Otherwise, DNSSEC is considered not supported." },
-    { "set_dnssec_supported", reinterpret_cast<PyCFunction>(Message_setDNSSECSupported), METH_VARARGS,
-      "Specify whether DNSSEC is supported in the message. "
-      "The message must be in RENDER mode. If not, an "
-      "InvalidMessageOperation is raised."
-      "If EDNS is included in the message, the DO bit is set or cleared "
-      "according to given argument (True or False) of this method."},
-    { "get_udp_size", reinterpret_cast<PyCFunction>(Message_getUDPSize), METH_NOARGS,
-      "Return the maximum buffer size of UDP messages for the sender "
-      "of the message.\n\n"
-      "The semantics of this value is different based on the mode:\n"
-      "In the PARSE mode, it means the buffer size of the remote node;\n"
-      "in the RENDER mode, it means the buffer size of the local node.\n\n"
-      "In either case, its value is the value of the UDP payload size field "
-      "of EDNS (when it's included) or DEFAULT_MAX_UDPSIZE." },
-    { "set_udp_size", reinterpret_cast<PyCFunction>(Message_setUDPSize), METH_VARARGS,
-      "Specify the maximum buffer size of UDP messages of the local "
-      "node. If the message is not in RENDER mode, an "
-      "InvalidMessageOperation is raised.\n\n"
-      "If EDNS OPT RR is included in the message, its UDP payload size field "
-      "will be set to the specified value.\n"
-      "Unless explicitly specified, DEFAULT_MAX_UDPSIZE will be assumed "
-      "for the maximum buffer size, regardless of whether EDNS OPT RR is "
-      "included or not.  This means if an application wants to send a message "
-      "with an EDNS OPT RR for specifying a larger UDP size, it must explicitly "
-      "specify the value using this method. "},
     { "get_qid", reinterpret_cast<PyCFunction>(Message_getQid), METH_NOARGS,
       "Returns the query id" },
     { "set_qid", reinterpret_cast<PyCFunction>(Message_setQid), METH_VARARGS,
@@ -1245,57 +1220,6 @@ Message_clearHeaderFlag(s_Message* self, PyObject* args) {
     }
 
     Py_RETURN_NONE;
-}
-
-static PyObject*
-Message_isDNSSECSupported(s_Message* self) {
-    if (self->message->isDNSSECSupported()) {
-        Py_RETURN_TRUE;
-    } else {
-        Py_RETURN_FALSE;
-    }
-}
-
-static PyObject*
-Message_setDNSSECSupported(s_Message* self, PyObject* args) {
-    PyObject *b;
-    if (!PyArg_ParseTuple(args, "O!", &PyBool_Type, &b)) {
-        return (NULL);
-    }
-    try {
-        if (b == Py_True) {
-            self->message->setDNSSECSupported(true);
-        } else {
-            self->message->setDNSSECSupported(false);
-        }
-        Py_RETURN_NONE;
-    } catch (const InvalidMessageOperation& imo) {
-        PyErr_SetString(po_InvalidMessageOperation, imo.what());
-        return (NULL);
-    }
-}
-
-static PyObject*
-Message_getUDPSize(s_Message* self) {
-    return (Py_BuildValue("I", self->message->getUDPSize()));
-}
-
-static PyObject*
-Message_setUDPSize(s_Message* self, PyObject* args) {
-    uint16_t size;
-    if (!PyArg_ParseTuple(args, "H", &size)) {
-        return (NULL);
-    }
-    try {
-        self->message->setUDPSize(size);
-        Py_RETURN_NONE;
-    } catch (const InvalidMessageUDPSize& imus) {
-        PyErr_SetString(po_InvalidMessageUDPSize, imus.what());
-        return (NULL);
-    } catch (const InvalidMessageOperation& imo) {
-        PyErr_SetString(po_InvalidMessageOperation, imo.what());
-        return (NULL);
-    }
 }
 
 static PyObject*

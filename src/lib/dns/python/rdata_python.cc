@@ -146,11 +146,20 @@ Rdata_init(s_Rdata* self, PyObject* args) {
     s_RRType* rrtype;
     s_RRClass* rrclass;
     const char* s;
-    
+    const char* data;
+    Py_ssize_t len;
+
+    // Create from string
     if (PyArg_ParseTuple(args, "O!O!s", &rrtype_type, &rrtype,
                                         &rrclass_type, &rrclass,
                                         &s)) {
         self->rdata = createRdata(*rrtype->rrtype, *rrclass->rrclass, s);
+        return (0);
+    } else if (PyArg_ParseTuple(args, "O!O!y#", &rrtype_type, &rrtype,
+                                &rrclass_type, &rrclass, &data, &len)) {
+        InputBuffer input_buffer(data, len);
+        self->rdata = createRdata(*rrtype->rrtype, *rrclass->rrclass,
+                                  input_buffer, len);
         return (0);
     }
 

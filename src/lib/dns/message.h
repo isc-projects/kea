@@ -25,6 +25,7 @@
 
 #include <exceptions/exceptions.h>
 
+#include <dns/edns.h>
 #include <dns/question.h>
 #include <dns/rrset.h>
 
@@ -314,8 +315,10 @@ Opcode::RESERVED15()
 /// Constant objects are defined for standard flags.
 class Rcode {
 public:
-    Rcode(uint16_t code);
+    Rcode(const uint16_t code);
+    Rcode(const uint8_t code, const uint8_t extended_code);
     uint16_t getCode() const { return (code_); }
+    uint8_t getExtendedCode() const;
     bool operator==(const Rcode& other) const { return (code_ == other.code_); }
     bool operator!=(const Rcode& other) const { return (code_ != other.code_); }
     std::string toText() const;
@@ -627,45 +630,6 @@ public:
     /// \c setHeaderFlag() with an additional argument.
     void clearHeaderFlag(const MessageFlag& flag);
 
-    /// \brief Return whether the message sender indicates DNSSEC is supported.
-    /// If EDNS is included, this corresponds to the value of the DO bit.
-    /// Otherwise, DNSSEC is considered not supported.
-    bool isDNSSECSupported() const;
-
-    /// \brief Specify whether DNSSEC is supported in the message.
-    ///
-    /// Only allowed in the \c RENDER mode.
-    /// If EDNS is included in the message, the DO bit is set or cleared
-    /// according to the specified value of this method.
-    void setDNSSECSupported(bool on);
-
-    /// \brief Return the maximum buffer size of UDP messages for the sender
-    /// of the message.
-    ///
-    /// The semantics of this value is different based on the mode:
-    /// In the \c PARSE mode, it means the buffer size of the remote node;
-    /// in the \c RENDER mode, it means the buffer size of the local node.
-    ///
-    /// In either case, its value is the value of the UDP payload size field
-    /// of EDNS (when it's included) or \c DEFAULT_MAX_UDPSIZE.
-    ///
-    /// Note: this interface may be confusing and may have to be revisited.
-    uint16_t getUDPSize() const;
-
-    /// \brief Specify the maximum buffer size of UDP messages of the local
-    /// node.
-    ///
-    /// Only allowed in the \c RENDER mode.
-    /// If EDNS OPT RR is included in the message, its UDP payload size field
-    /// will be set to the specified value.
-    ///
-    /// Unless explicitly specified, \c DEFAULT_MAX_UDPSIZE will be assumed
-    /// for the maximum buffer size, regardless of whether EDNS OPT RR is
-    /// included or not.  This means if an application wants to send a message
-    /// with an EDNS OPT RR for specifying a larger UDP size, it must explicitly
-    /// specify the value using this method.
-    void setUDPSize(uint16_t size);
-
     /// \brief Return the query ID given in the header section of the message.
     qid_t getQid() const;
 
@@ -696,6 +660,14 @@ public:
     ///
     /// Only allowed in the \c RENDER mode.
     void setOpcode(const Opcode& opcode);
+
+    /// \brief TBD
+    ConstEDNSPtr getEDNS() const;
+
+    /// \brief TBD
+    ///
+    /// Only allowed in the \c RENDER mode.
+    void setEDNS(ConstEDNSPtr edns);
 
     /// \brief Returns the number of RRs contained in the given section.
     unsigned int getRRCount(const Section& section) const;

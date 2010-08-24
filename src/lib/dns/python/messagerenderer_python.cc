@@ -42,7 +42,7 @@ static PyObject* MessageRenderer_getLengthLimit(s_MessageRenderer* self);
 // TODO: set/get compressmode
 static PyObject* MessageRenderer_setTruncated(s_MessageRenderer* self);
 static PyObject* MessageRenderer_setLengthLimit(s_MessageRenderer* self, PyObject* args);
-
+static PyObject* MessageRenderer_clear(s_MessageRenderer* self);
 
 static PyMethodDef MessageRenderer_methods[] = {
     { "get_data", reinterpret_cast<PyCFunction>(MessageRenderer_getData), METH_NOARGS,
@@ -57,6 +57,9 @@ static PyMethodDef MessageRenderer_methods[] = {
       "Sets truncated to true" },
     { "set_length_limit", reinterpret_cast<PyCFunction>(MessageRenderer_setLengthLimit), METH_VARARGS,
       "Sets the length limit of the data to the given number" },
+    { "clear", reinterpret_cast<PyCFunction>(MessageRenderer_clear),
+      METH_NOARGS,
+      "Clear the internal buffer and other internal resources." },
     { NULL, NULL, 0, NULL }
 };
 
@@ -172,6 +175,12 @@ MessageRenderer_setLengthLimit(s_MessageRenderer* self,
         return (NULL);
     }
     self->messagerenderer->setLengthLimit(lengthlimit);
+    Py_RETURN_NONE;
+}
+
+static PyObject*
+MessageRenderer_clear(s_MessageRenderer* self) {
+    self->messagerenderer->clear();
     Py_RETURN_NONE;
 }
 
