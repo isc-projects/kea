@@ -17,6 +17,7 @@
 #include <exceptions/exceptions.h>
 
 #include <dns/buffer.h>
+#include <dns/edns.h>
 #include <dns/exceptions.h>
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
@@ -93,6 +94,25 @@ TEST_F(MessageTest, RcodeToText) {
     EXPECT_EQ("4095", Rcode(Rcode(0xfff)).toText());
 }
 
+TEST_F(MessageTest, getEDNS) {
+    EXPECT_FALSE(message_parse.getEDNS()); // by default EDNS isn't set
+
+    factoryFromFile(message_parse, "message_fromWire10");
+    EXPECT_TRUE(message_parse.getEDNS());
+    EXPECT_EQ(0, message_parse.getEDNS()->getVersion());
+    EXPECT_EQ(4096, message_parse.getEDNS()->getUDPSize());
+    EXPECT_TRUE(message_parse.getEDNS()->isDNSSECSupported());
+}
+
+TEST_F(MessageTest, setEDNS) {
+    // setEDNS() isn't allowed in the parse mode
+    EXPECT_THROW(message_parse.setEDNS(EDNSPtr(new EDNS())),
+                 InvalidMessageOperation);
+
+    EDNSPtr edns = EDNSPtr(new EDNS());
+    message_render.setEDNS(edns);
+    EXPECT_EQ(edns, message_render.getEDNS());
+}
 
 TEST_F(MessageTest, fromWire) {
     factoryFromFile(message_parse, "message_fromWire1");

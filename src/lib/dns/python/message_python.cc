@@ -26,7 +26,6 @@ static PyObject* po_MessageTooShort;
 static PyObject* po_InvalidMessageSection;
 static PyObject* po_InvalidMessageOperation;
 static PyObject* po_InvalidMessageUDPSize;
-static PyObject* po_DNSMessageBADVERS;
 
 //
 // Definition of the classes
@@ -987,6 +986,8 @@ static PyObject* Message_getRcode(s_Message* self);
 static PyObject* Message_setRcode(s_Message* self, PyObject* args);
 static PyObject* Message_getOpcode(s_Message* self);
 static PyObject* Message_setOpcode(s_Message* self, PyObject* args);
+static PyObject* Message_getEDNS(s_Message* self);
+static PyObject* Message_setEDNS(s_Message* self, PyObject* args);
 static PyObject* Message_getRRCount(s_Message* self, PyObject* args);
 // use direct iterators for these? (or simply lists for now?)
 static PyObject* Message_getQuestion(s_Message* self);
@@ -1041,6 +1042,12 @@ static PyMethodDef Message_methods[] = {
       "Sets the message opcode (an Opcode object).\n"
       "If the message is not in RENDER mode, an "
       "InvalidMessageOperation is raised."},
+    { "get_edns", reinterpret_cast<PyCFunction>(Message_getEDNS), METH_NOARGS,
+      "Return, if any, the EDNS associated with the message."
+    },
+    { "set_edns", reinterpret_cast<PyCFunction>(Message_setEDNS), METH_VARARGS,
+      "Set EDNS for the message."
+    },
     { "get_rr_count", reinterpret_cast<PyCFunction>(Message_getRRCount), METH_VARARGS,
       "Returns the number of RRs contained in the given section." },
     { "get_question", reinterpret_cast<PyCFunction>(Message_getQuestion), METH_NOARGS,
@@ -1310,6 +1317,41 @@ Message_setOpcode(s_Message* self, PyObject* args) {
 }
 
 static PyObject*
+Message_getEDNS(s_Message* self) {
+    s_EDNS* edns;
+    EDNS* edns_body;
+    ConstEDNSPtr src = self->message->getEDNS();
+
+    if (!src) {
+        Py_RETURN_NONE;
+    }
+    if ((edns_body = new(nothrow) EDNS(*src)) == NULL) {
+        return (PyErr_NoMemory());
+    }
+    edns = static_cast<s_EDNS*>(opcode_type.tp_alloc(&edns_type, 0));
+    if (edns != NULL) {
+        edns->edns = edns_body;
+    }
+
+    return (edns);
+}
+
+static PyObject*
+Message_setEDNS(s_Message* self, PyObject* args) {
+    s_EDNS* edns;
+    if (!PyArg_ParseTuple(args, "O!", &edns_type, &edns)) {
+        return (NULL);
+    }
+    try {
+        self->message->setEDNS(EDNSPtr(new EDNS(*edns->edns)));
+        Py_RETURN_NONE;
+    } catch (const InvalidMessageOperation& imo) {
+        PyErr_SetString(po_InvalidMessageOperation, imo.what());
+        return (NULL);
+    }
+}
+
+static PyObject*
 Message_getRRCount(s_Message* self, PyObject* args) {
     s_Section *section;
     if (!PyArg_ParseTuple(args, "O!", &section_type, &section)) {
@@ -1559,8 +1601,6 @@ initModulePart_Message(PyObject* mod) {
     PyModule_AddObject(mod, "InvalidMessageOperation", po_InvalidMessageOperation);
     po_InvalidMessageUDPSize = PyErr_NewException("libdns_python.InvalidMessageUDPSize", NULL, NULL);
     PyModule_AddObject(mod, "InvalidMessageUDPSize", po_InvalidMessageUDPSize);
-    po_DNSMessageBADVERS = PyErr_NewException("libdns_python.DNSMessageBADVERS", NULL, NULL);
-    PyModule_AddObject(mod, "DNSMessageBADVERS", po_DNSMessageBADVERS);
 
     Py_INCREF(&message_type);
     PyModule_AddObject(mod, "Message",
