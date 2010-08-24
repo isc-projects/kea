@@ -646,9 +646,10 @@ public:
     /// returned.
     const Rcode& getRcode() const;
 
-    /// \brief Return the Response Code of the message.
+    /// \brief Set the Response Code of the message.
     ///
     /// Only allowed in the \c RENDER mode.
+    ///
     /// If the specified code is an EDNS extended RCODE, an EDNS OPT RR will be
     /// included in the message.
     void setRcode(const Rcode& rcode);
@@ -661,12 +662,21 @@ public:
     /// Only allowed in the \c RENDER mode.
     void setOpcode(const Opcode& opcode);
 
-    /// \brief TBD
+    /// \brief Return, if any, the EDNS associated with the message.
+    ///
+    /// This method never throws an exception.
+    ///
+    /// \return A shared pointer to the EDNS.  This will be a null shared
+    /// pointer if the message is not associated with EDNS.
     ConstEDNSPtr getEDNS() const;
 
-    /// \brief TBD
+    /// \brief Set EDNS for the message.
     ///
-    /// Only allowed in the \c RENDER mode.
+    /// Only allowed in the \c RENDER mode; otherwise an exception of class
+    /// \c InvalidMessageOperation will be thrown.
+    ///
+    /// \param edns A shared pointer to an \c EDNS object to be set in
+    /// \c Message.
     void setEDNS(ConstEDNSPtr edns);
 
     /// \brief Returns the number of RRs contained in the given section.

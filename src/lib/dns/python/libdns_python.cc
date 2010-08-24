@@ -44,6 +44,9 @@
 static PyObject* po_IscException;
 static PyObject* po_InvalidParameter;
 
+// For our own isc::dns::Exception
+static PyObject* po_DNSMessageBADVERS;
+
 // order is important here!
 #include <dns/python/messagerenderer_python.cc>
 #include <dns/python/name_python.cc>           // needs Messagerenderer
@@ -54,8 +57,8 @@ static PyObject* po_InvalidParameter;
 #include <dns/python/rrset_python.cc>          // needs Rdata, RRTTL
 #include <dns/python/question_python.cc>       // needs RRClass, RRType, RRTTL,
                                                // Name
-#include <dns/python/message_python.cc>        // needs RRset, Question
 #include <dns/python/edns_python.cc>           // needs Messagerenderer, Rcode
+#include <dns/python/message_python.cc>        // needs RRset, Question, EDNS
 
 //
 // Definition of the module
@@ -91,6 +94,10 @@ PyInit_libdns_python(void) {
     po_InvalidParameter = PyErr_NewException("libdns_python.InvalidParameter",
                                              NULL, NULL);
     PyModule_AddObject(mod, "InvalidParameter", po_InvalidParameter);
+
+    po_DNSMessageBADVERS = PyErr_NewException(
+        "libdns_python.DNSMessageBADVERS", NULL, NULL);
+    PyModule_AddObject(mod, "DNSMessageBADVERS", po_DNSMessageBADVERS);
 
     // for each part included above, we call its specific initializer
 

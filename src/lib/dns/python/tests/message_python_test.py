@@ -331,6 +331,24 @@ class MessageTest(unittest.TestCase):
         self.assertRaises(InvalidMessageOperation,
                           self.p.set_opcode, opcode)
 
+    def test_get_edns(self):
+        self.assertEqual(None, self.p.get_edns())
+
+        message_parse = Message(Message.PARSE)
+        factoryFromFile(message_parse, "message_fromWire10")
+        edns = message_parse.get_edns()
+        self.assertEqual(0, edns.get_version())
+        self.assertEqual(4096, edns.get_udp_size())
+        self.assertTrue(edns.is_dnssec_supported())
+
+    def test_set_edns(self):
+        self.assertRaises(InvalidMessageOperation, self.p.set_edns, EDNS())
+
+        edns = EDNS()
+        edns.set_udp_size(1024)
+        self.r.set_edns(edns)
+        self.assertEqual(1024, self.r.get_edns().get_udp_size())
+
     def test_get_section(self):
         self.assertRaises(TypeError, self.r.get_section, "wrong")
 
