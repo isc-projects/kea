@@ -485,8 +485,8 @@ public:
     }
     using Element::get;
     ConstElementPtr get(const std::string& s) const {
-        return (contains(s) ? m.find(s)->second : ElementPtr());
-    };
+        return (contains(s) ? m.find(s)->second : ConstElementPtr());
+    }
     using Element::set;
     void set(const std::string& key, ConstElementPtr value);
     using Element::remove;
