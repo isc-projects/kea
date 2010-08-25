@@ -1,4 +1,3 @@
-#PYTESTS = args_test.py bind10_test.py
 PYTESTS = bind10_test.py
 EXTRA_DIST = $(PYTESTS)
 

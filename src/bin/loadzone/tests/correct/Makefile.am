@@ -1,4 +1,3 @@
-# TODO: this is a not a python script!
 PYTESTS = correct_test.sh
 EXTRA_DIST = get_zonedatas.py
 EXTRA_DIST += include.db
