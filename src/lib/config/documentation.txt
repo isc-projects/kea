@@ -53,7 +53,7 @@ isc::data::ElementPtr my_config_handler(isc::data::ElementPtr new_config);
 
 The new_config is a ElementPtr pointing to a MapElement containing data in the form as specified by the specification file. It only contains values that were changed.
 
-The module can walk through this set and alter it's behaviour accordingly if necessary. It can also simply check them and return success (see below) and reference the needed configuration values directly when necessary by calling get_config_value(std::string identifier).
+The module can walk through this set and alter its behaviour accordingly if necessary. It can also simply check them and return success (see below) and reference the needed configuration values directly when necessary by calling get_config_value(std::string identifier).
 
 The callback function must return an answer message, which is created with isc::config::createAnswer(). For successful handling of the configuration, it should return the result of createAnswer(0) (0 being the result code for success). If there is a problem, the function can return the result of createAnswer(non-zero, "string_with_error_message"). In this case, the new configuration is not stored, and the error is fed back to the configuration manager.
 

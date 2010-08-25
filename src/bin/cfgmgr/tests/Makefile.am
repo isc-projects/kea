@@ -9,5 +9,5 @@ check-local:
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
 	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/bin/cfgmgr \
-	$(PYCOVERAGE) $(abs_builddir)/$$pytest ; \
+	$(PYCOVERAGE) $(abs_builddir)/$$pytest || exit ; \
 	done

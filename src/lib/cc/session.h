@@ -40,6 +40,15 @@ namespace isc {
                 isc::Exception(file, line, what) {}
         };
 
+        /// \brief A standard Exception class that is thrown when a
+        /// blocking readData call does not read the given number of
+        /// bytes before the timeout expires
+        class SessionTimeout : public isc::Exception {
+        public:
+            SessionTimeout(const char* file, size_t line, const char* what) :
+                isc::Exception(file, line, what) {}
+        };
+
         /// \brief The AbstractSession class is an abstract base class that
         /// defines the interfaces of Session.
         /// The intended primary usage of abstraction is to allow tests for the
@@ -88,6 +97,17 @@ namespace isc {
             virtual int reply(isc::data::ConstElementPtr envelope,
                                isc::data::ConstElementPtr newmsg) = 0;
             virtual bool hasQueuedMsgs() const = 0;
+
+            /// \brief Sets the default timeout for blocking reads
+            ///        in this session to the given number of milliseconds
+            /// \param milliseconds the timeout for blocking reads in
+            ///        milliseconds, if this is set to 0, reads will block
+            ///        forever.
+            virtual void setTimeout(size_t milliseconds) = 0;
+
+            /// \brief Returns the current timeout for blocking reads
+            /// \return The timeout (in milliseconds)
+            virtual size_t getTimeout() const = 0;
         };
 
     class Session : public AbstractSession {
@@ -121,6 +141,8 @@ namespace isc {
             virtual int reply(isc::data::ConstElementPtr envelope,
                               isc::data::ConstElementPtr newmsg);
             virtual bool hasQueuedMsgs() const;
+            virtual void setTimeout(size_t milliseconds);
+            virtual size_t getTimeout() const;
     private:
             void sendmsg(isc::data::ConstElementPtr msg);
             void sendmsg(isc::data::ConstElementPtr env,

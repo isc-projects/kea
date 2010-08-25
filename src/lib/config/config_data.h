@@ -40,7 +40,7 @@ public:
     /// Constructs a ConfigData option with no specification and an
     /// empty configuration.
     ConfigData() { _config = Element::createMap(); };
-    
+
     /// Constructs a ConfigData option with the given specification
     /// and an empty configuration.
     /// \param module_spec A ModuleSpec for the relevant module
@@ -75,18 +75,18 @@ public:
 
     /// Set the ModuleSpec associated with this ConfigData object
     void setModuleSpec(ModuleSpec module_spec) { _module_spec = module_spec; };
-    
+
     /// Set the local configuration (i.e. all non-default values)
     /// \param config An ElementPtr pointing to a MapElement containing
     ///        *all* non-default configuration values. Existing values
     ///        will be removed.
     void setLocalConfig(ElementPtr config) { _config = config; }
-    
+
     /// Returns the local (i.e. non-default) configuration.
     /// \returns An ElementPtr pointing to a MapElement containing all
     ///          non-default configuration options.
     ElementPtr getLocalConfig() { return (_config); }
-    
+
     /// Returns a list of all possible configuration options as specified
     ///         by the ModuleSpec.
     /// \param identifier If given, show the items at the given identifier
@@ -99,7 +99,7 @@ public:
     ///         and recurse==false)
     ConstElementPtr getItemList(const std::string& identifier = "",
                                 bool recurse = false) const;
-    
+
     /// Returns all current configuration settings (both non-default and default).
     /// \return An ElementPtr pointing to a MapElement containing
     ///         string->value elements, where the string is the

@@ -28,6 +28,7 @@ report-coverage:
 			c++/4.4\*/ext/\* \
 			c++/4.4\*/\*-\*/bits/\* \
 			boost/\* \
+			ext/asio/\* \
 			gtest/\* \
 			usr/include/\* \
 			tests/\* \
