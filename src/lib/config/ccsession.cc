@@ -52,41 +52,47 @@ namespace isc {
 namespace config {
 
 /// Creates a standard config/command protocol answer message
-ElementPtr
+ConstElementPtr
 createAnswer() {
     ElementPtr answer = Element::fromJSON("{\"result\": [] }");
-    ElementPtr answer_content = answer->get("result");
+    ElementPtr answer_content = Element::createList();
     answer_content->add(Element::create(0));
+    answer->set("result", answer_content);
+
     return (answer);
 }
 
-ElementPtr
-createAnswer(const int rcode, const ElementPtr arg) {
+ConstElementPtr
+createAnswer(const int rcode, ConstElementPtr arg) {
     if (rcode != 0 && (!arg || arg->getType() != Element::string)) {
         isc_throw(CCSessionError, "Bad or no argument for rcode != 0");
     }
     ElementPtr answer = Element::fromJSON("{\"result\": [] }");
-    ElementPtr answer_content = answer->get("result");
+    ElementPtr answer_content = Element::createList();
     answer_content->add(Element::create(rcode));
     answer_content->add(arg);
+    answer->set("result", answer_content);
+
     return (answer);
 }
 
-ElementPtr
+ConstElementPtr
 createAnswer(const int rcode, const std::string& arg) {
     ElementPtr answer = Element::fromJSON("{\"result\": [] }");
-    ElementPtr answer_content = answer->get("result");
+    ElementPtr answer_content = Element::createList();
     answer_content->add(Element::create(rcode));
     answer_content->add(Element::create(arg));
+    answer->set("result", answer_content);
+
     return (answer);
 }
 
-ElementPtr
-parseAnswer(int &rcode, const ElementPtr msg) {
+ConstElementPtr
+parseAnswer(int &rcode, ConstElementPtr msg) {
     if (msg &&
         msg->getType() == Element::map &&
         msg->contains("result")) {
-        ElementPtr result = msg->get("result");
+        ConstElementPtr result = msg->get("result");
         if (result->getType() != Element::list) {
             isc_throw(CCSessionError, "Result element in answer message is not a list");
         } else if (result->get(0)->getType() != Element::integer) {
@@ -111,13 +117,13 @@ parseAnswer(int &rcode, const ElementPtr msg) {
     }
 }
 
-ElementPtr
+ConstElementPtr
 createCommand(const std::string& command) {
     return (createCommand(command, ElementPtr()));
 }
 
-ElementPtr
-createCommand(const std::string& command, ElementPtr arg) {
+ConstElementPtr
+createCommand(const std::string& command, ConstElementPtr arg) {
     ElementPtr cmd = Element::createMap();
     ElementPtr cmd_parts = Element::createList();
     cmd_parts->add(Element::create(command));
@@ -130,13 +136,12 @@ createCommand(const std::string& command, ElementPtr arg) {
 
 /// Returns "" and empty ElementPtr() if this does not
 /// look like a command
-const std::string
-parseCommand(ElementPtr& arg, const ElementPtr command)
-{
+std::string
+parseCommand(ConstElementPtr& arg, ConstElementPtr command) {
     if (command &&
         command->getType() == Element::map &&
         command->contains("command")) {
-        ElementPtr cmd = command->get("command");
+        ConstElementPtr cmd = command->get("command");
         if (cmd->getType() == Element::list &&
             cmd->size() > 0 &&
             cmd->get(0)->getType() == Element::string) {
@@ -192,9 +197,10 @@ ModuleCCSession::startCheck() {
 ModuleCCSession::ModuleCCSession(
     const std::string& spec_file_name,
     isc::cc::AbstractSession& session,
-    isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config),
-    isc::data::ElementPtr(*command_handler)(
-        const std::string& command, const isc::data::ElementPtr args)
+    isc::data::ConstElementPtr(*config_handler)(
+        isc::data::ConstElementPtr new_config),
+    isc::data::ConstElementPtr(*command_handler)(
+        const std::string& command, isc::data::ConstElementPtr args)
     ) :
     session_(session)
 {
@@ -205,18 +211,20 @@ ModuleCCSession::ModuleCCSession(
     config_handler_ = config_handler;
     command_handler_ = command_handler;
 
-    ElementPtr answer, env;
-
     session_.establish(NULL);
     session_.subscribe(module_name_, "*");
     //session_.subscribe("Boss", "*");
     //session_.subscribe("statistics", "*");
     // send the data specification
-    ElementPtr spec_msg = createCommand("module_spec", module_specification_.getFullSpec());
+
+    ConstElementPtr spec_msg = createCommand("module_spec",
+                                             module_specification_.getFullSpec());
     unsigned int seq = session_.group_sendmsg(spec_msg, "ConfigManager");
+
+    ConstElementPtr answer, env;
     session_.group_recvmsg(env, answer, false, seq);
     int rcode;
-    ElementPtr err = parseAnswer(rcode, answer);
+    ConstElementPtr err = parseAnswer(rcode, answer);
     if (rcode != 0) {
         std::cerr << "[" << module_name_ << "] Error in specification: " << answer << std::endl;
     }
@@ -224,10 +232,10 @@ ModuleCCSession::ModuleCCSession(
     setLocalConfig(Element::fromJSON("{}"));
     // get any stored configuration from the manager
     if (config_handler_) {
-        ElementPtr cmd = Element::fromJSON("{ \"command\": [\"get_config\", {\"module_name\":\"" + module_name_ + "\"} ] }");
+        ConstElementPtr cmd = Element::fromJSON("{ \"command\": [\"get_config\", {\"module_name\":\"" + module_name_ + "\"} ] }");
         seq = session_.group_sendmsg(cmd, "ConfigManager");
         session_.group_recvmsg(env, answer, false, seq);
-        ElementPtr new_config = parseAnswer(rcode, answer);
+        ConstElementPtr new_config = parseAnswer(rcode, answer);
         if (rcode == 0) {
             handleConfigUpdate(new_config);
         } else {
@@ -242,30 +250,30 @@ ModuleCCSession::ModuleCCSession(
 /// Validates the new config values, if they are correct,
 /// call the config handler with the values that have changed
 /// If that results in success, store the new config
-ElementPtr
-ModuleCCSession::handleConfigUpdate(ElementPtr new_config)
-{
-    ElementPtr answer;
+ConstElementPtr
+ModuleCCSession::handleConfigUpdate(ConstElementPtr new_config) {
+    ConstElementPtr answer;
     ElementPtr errors = Element::createList();
     if (!config_handler_) {
         answer = createAnswer(1, module_name_ + " does not have a config handler");
-    } else if (!module_specification_.validate_config(new_config, false, errors)) {
+    } else if (!module_specification_.validate_config(new_config, false,
+                                                      errors)) {
         std::stringstream ss;
         ss << "Error in config validation: ";
-        BOOST_FOREACH(ElementPtr error, errors->listValue()) {
+        BOOST_FOREACH(ConstElementPtr error, errors->listValue()) {
             ss << error->stringValue();
         }
         answer = createAnswer(2, ss.str());
     } else {
         // remove the values that have not changed
-        isc::data::removeIdentical(new_config, getLocalConfig());
+        ConstElementPtr diff = removeIdentical(new_config, getLocalConfig());
         // handle config update
-        answer = config_handler_(new_config);
+        answer = config_handler_(diff);
         int rcode;
         parseAnswer(rcode, answer);
         if (rcode == 0) {
             ElementPtr local_config = getLocalConfig();
-            isc::data::merge(local_config, new_config);
+            isc::data::merge(local_config, diff);
             setLocalConfig(local_config);
         }
     }
@@ -273,15 +281,13 @@ ModuleCCSession::handleConfigUpdate(ElementPtr new_config)
 }
 
 bool
-ModuleCCSession::hasQueuedMsgs()
-{
+ModuleCCSession::hasQueuedMsgs() const {
     return (session_.hasQueuedMsgs());
 }
 
 int
-ModuleCCSession::checkCommand()
-{
-    ElementPtr cmd, routing, data;
+ModuleCCSession::checkCommand() {
+    ConstElementPtr cmd, routing, data;
     if (session_.group_recvmsg(routing, data, true)) {
         
         /* ignore result messages (in case we're out of sync, to prevent
@@ -289,8 +295,8 @@ ModuleCCSession::checkCommand()
         if (data->getType() != Element::map || data->contains("result")) {
             return (0);
         }
-        ElementPtr arg;
-        ElementPtr answer;
+        ConstElementPtr arg;
+        ConstElementPtr answer;
         try {
             std::string cmd_str = parseCommand(arg, data);
             std::string target_module = routing->get("group")->stringValue();
@@ -313,7 +319,7 @@ ModuleCCSession::checkCommand()
                     }
                 }
             }
-        } catch (CCSessionError re) {
+        } catch (const CCSessionError& re) {
             // TODO: Once we have logging and timeouts, we should not
             // answer here (potential interference)
             answer = createAnswer(1, re.what());
@@ -335,15 +341,17 @@ ModuleCCSession::addRemoteConfig(const std::string& spec_file_name)
     session_.subscribe(module_name);
 
     // Get the current configuration values for that module
-    ElementPtr cmd = Element::fromJSON("{ \"command\": [\"get_config\", {\"module_name\":\"" + module_name + "\"} ] }");
-    ElementPtr env, answer;
-    int rcode;
-    
+    ConstElementPtr cmd = Element::fromJSON("{ \"command\": [\"get_config\", {\"module_name\":\"" + module_name + "\"} ] }");
     unsigned int seq = session_.group_sendmsg(cmd, "ConfigManager");
+
+    ConstElementPtr env, answer;
     session_.group_recvmsg(env, answer, false, seq);
-    ElementPtr new_config = parseAnswer(rcode, answer);
-    if (rcode == 0) {
-        rmod_config.setLocalConfig(new_config);
+    int rcode;
+    ConstElementPtr new_config = parseAnswer(rcode, answer);
+    if (rcode == 0 && new_config) {
+        ElementPtr local_config = rmod_config.getLocalConfig();
+        isc::data::merge(local_config, new_config);
+        rmod_config.setLocalConfig(local_config);
     } else {
         isc_throw(CCSessionError, "Error getting config for " + module_name + ": " + answer->str());
     }
@@ -365,21 +373,24 @@ ModuleCCSession::removeRemoteConfig(const std::string& module_name)
     }
 }
 
-ElementPtr
-ModuleCCSession::getRemoteConfigValue(const std::string& module_name, const std::string& identifier)
+ConstElementPtr
+ModuleCCSession::getRemoteConfigValue(const std::string& module_name,
+                                      const std::string& identifier) const
 {
-    std::map<std::string, ConfigData>::iterator it;
+    std::map<std::string, ConfigData>::const_iterator it =
+        remote_module_configs_.find(module_name);
 
-    it = remote_module_configs_.find(module_name);
     if (it != remote_module_configs_.end()) {
-        return (remote_module_configs_[module_name].getValue(identifier));
+        return ((*it).second.getValue(identifier));
     } else {
-        isc_throw(CCSessionError, "Remote module " + module_name + " not found.");
+        isc_throw(CCSessionError,
+                  "Remote module " + module_name + " not found.");
     }
 }
 
 void
-ModuleCCSession::updateRemoteConfig(const std::string& module_name, ElementPtr new_config)
+ModuleCCSession::updateRemoteConfig(const std::string& module_name,
+                                    ConstElementPtr new_config)
 {
     std::map<std::string, ConfigData>::iterator it;
 

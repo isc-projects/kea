@@ -140,7 +140,7 @@ public:
     // If this message is { "command": "stop" } it'll tell the
     // io_service it is done. Otherwise it'll re-register this handler
     void someHandler() {
-        isc::data::ElementPtr env, msg;
+        isc::data::ConstElementPtr env, msg;
         sess.group_recvmsg(env, msg, false, -1);
 
         sess.group_recvmsg(env, msg, false, -1);
@@ -188,7 +188,7 @@ TEST_F(SessionTest, connect_ok_connection_reset) {
     // Close the session again, so the next recv() should throw
     sess.disconnect();
 
-    isc::data::ElementPtr env, msg;
+    isc::data::ConstElementPtr env, msg;
     EXPECT_THROW(sess.group_recvmsg(env, msg, false, -1), SessionError);
 }
 
