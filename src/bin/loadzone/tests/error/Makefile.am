@@ -1,4 +1,3 @@
-# TODO: this is not a python script
 PYTESTS = error_test.sh
 
 EXTRA_DIST = error.known
