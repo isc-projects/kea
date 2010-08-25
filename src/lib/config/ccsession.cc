@@ -119,7 +119,7 @@ parseAnswer(int &rcode, ConstElementPtr msg) {
 
 ConstElementPtr
 createCommand(const std::string& command) {
-    return createCommand(command, ElementPtr());
+    return (createCommand(command, ElementPtr()));
 }
 
 ConstElementPtr
