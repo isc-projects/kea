@@ -40,14 +40,30 @@ AC_HELP_STRING([--enable-static-link],
   [enable_static_link=yes], [enable_static_link=no])
 AM_CONDITIONAL(USE_STATIC_LINK, test $enable_static_link = yes)
 
-# OS dependent compiler flags
+# OS dependent configuration
+SET_ENV_LIBRARY_PATH=no
+ENV_LIBRARY_PATH=LD_LIBRARY_PATH
+
 case "$host" in
 *-solaris*)
 	# Solaris requires special definitions to get some standard libraries
 	# (e.g. getopt(3)) available with common used header files.
 	CPPFLAGS="$CPPFLAGS -D_XPG4_2 -D__EXTENSIONS__"
 	;;
+*-apple-darwin*)
+	# libtool doesn't work pefectly with Darwin: libtool embeds the
+	# final install path in dynamic libraries and our loadable python
+	# modules always refer to that path even if it's loaded within the
+	# source tree.  This prevents pre-install tests from working.
+	# To work around this problem we explicitly specify paths to dynamic
+	# libraries when we use them in the source tree.
+	SET_ENV_LIBRARY_PATH=yes
+	ENV_LIBRARY_PATH=DYLD_LIBRARY_PATH
+	;;
 esac
+AM_CONDITIONAL(SET_ENV_LIBRARY_PATH, test $SET_ENV_LIBRARY_PATH = yes)
+AC_SUBST(SET_ENV_LIBRARY_PATH)
+AC_SUBST(ENV_LIBRARY_PATH)
 
 m4_define([_AM_PYTHON_INTERPRETER_LIST], [python python3 python3.1])
 AC_ARG_WITH([pythonpath],
@@ -433,6 +449,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/python/isc/notify/tests/Makefile
                  src/lib/config/Makefile
                  src/lib/config/tests/Makefile
+                 src/lib/config/testdata/Makefile
                  src/lib/dns/Makefile
                  src/lib/dns/tests/Makefile
                  src/lib/dns/python/Makefile
@@ -487,6 +504,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/lib/python/bind10_config.py
            src/lib/dns/tests/testdata/gen-wiredata.py
            src/lib/cc/session_config.h.pre
+           src/lib/cc/tests/session_unittests_config.h
           ], [
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh

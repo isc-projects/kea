@@ -89,13 +89,20 @@ class MySocket():
         if msg:
             self.recvqueue.extend(msg)
 
+    def settimeout(self, val):
+        pass
+
+    def gettimeout(self):
+        return 0
+
 #
 # We subclass the Session class we're testing here, only
 # to override the __init__() method, which wants a socket,
 # and we need to use our fake socket
 class MySession(Session):
-    def __init__(self, port=9912):
+    def __init__(self, port=9912, s=None):
         self._socket = None
+        self._socket_timeout = 1
         self._lname = None
         self._recvbuffer = bytearray()
         self._recvlength = 0
@@ -104,13 +111,16 @@ class MySession(Session):
         self._queue = []
         self._lock = threading.RLock()
 
-        try:
-            self._socket = MySocket(socket.AF_INET, socket.SOCK_STREAM)
-            self._socket.connect(tuple(['127.0.0.1', port]))
-            self._lname = "test_name"
-            # testing getlname here isn't useful, code removed
-        except socket.error as se:
-                raise SessionError(se)
+        if s is not None:
+            self._socket = s
+        else:
+            try:
+                self._socket = MySocket(socket.AF_INET, socket.SOCK_STREAM)
+                self._socket.connect(tuple(['127.0.0.1', port]))
+                self._lname = "test_name"
+                # testing getlname here isn't useful, code removed
+            except socket.error as se:
+                    raise SessionError(se)
 
 class testSession(unittest.TestCase):
 
@@ -323,7 +333,27 @@ class testSession(unittest.TestCase):
         sess.group_reply({ 'from': 'me', 'group': 'our_group', 'instance': 'other_instance', 'seq': 9}, {"hello": "a"})
         sent = sess._socket.readsentmsg();
         self.assertEqual(sent, b'\x00\x00\x00\x8b\x00{{"from": "test_name", "seq": 3, "to": "me", "instance": "other_instance", "reply": 9, "group": "our_group", "type": "send"}{"hello": "a"}')
-        
+
+    def test_timeout(self):
+        if "BIND10_TEST_SOCKET_FILE" not in os.environ:
+            self.assertEqual("", "This test can only run if the value BIND10_TEST_SOCKET_FILE is set in the environment")
+        TEST_SOCKET_FILE = os.environ["BIND10_TEST_SOCKET_FILE"]
+
+        # create a read domain socket to pass into the session
+        s1 = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        if os.path.exists(TEST_SOCKET_FILE):
+            os.remove(TEST_SOCKET_FILE)
+        s1.bind(TEST_SOCKET_FILE)
+        s1.listen(1)
+
+        s2 = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        s2.connect(TEST_SOCKET_FILE)
+        sess = MySession(1, s2)
+        # set timeout to 100 msec, so test does not take too long
+        sess.set_timeout(100)
+        env, msg = sess.group_recvmsg(False)
+        self.assertEqual(None, env)
+        self.assertEqual(None, msg)
         
 if __name__ == "__main__":
     unittest.main()

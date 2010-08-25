@@ -95,6 +95,8 @@ private:
         virtual void startRead(boost::function<void()> read_callback);
         virtual int reply(ConstElementPtr envelope, ConstElementPtr newmsg);
         virtual bool hasQueuedMsgs() const;
+        virtual void setTimeout(size_t timeout UNUSED_PARAM) {};
+        virtual size_t getTimeout() const { return 0; };
 
         void setMessage(ConstElementPtr msg) { msg_ = msg; }
         void disableSend() { send_ok_ = false; }
@@ -543,7 +545,6 @@ TEST_F(AuthSrvTest, notify) {
     EXPECT_EQ("example.com.", notify_args->get("zone_name")->stringValue());
     EXPECT_EQ(DEFAULT_REMOTE_ADDRESS,
               notify_args->get("master")->stringValue());
-    cout << "[XX] ARGS: " << notify_args << endl;
     EXPECT_EQ("IN", notify_args->get("zone_class")->stringValue());
 
     // On success, the server should return a response to the notify.

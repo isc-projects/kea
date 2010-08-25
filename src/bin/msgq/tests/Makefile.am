@@ -8,6 +8,6 @@ check-local:
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
 	env PYTHONPATH=$(abs_top_builddir)/src/bin/msgq:$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python \
-	$(PYCOVERAGE) $(abs_srcdir)/$$pytest ; \
+	$(PYCOVERAGE) $(abs_srcdir)/$$pytest || exit ; \
 	done
 

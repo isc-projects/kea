@@ -201,7 +201,7 @@ ModuleCCSession::ModuleCCSession(
         isc::data::ConstElementPtr new_config),
     isc::data::ConstElementPtr(*command_handler)(
         const std::string& command, isc::data::ConstElementPtr args)
-    ) throw (isc::cc::SessionError) :
+    ) :
     session_(session)
 {
     module_specification_ = readModuleSpecification(spec_file_name);
