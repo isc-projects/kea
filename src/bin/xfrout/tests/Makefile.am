@@ -16,5 +16,5 @@ check-local:
 	echo Running test: $$pytest ; \
 	env PYTHONPATH=$(abs_top_builddir)/src/bin/xfrout:$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/lib/dns/python/.libs:$(abs_top_builddir)/src/lib/xfr/.libs \
 	$(LIBRARY_PATH_PLACEHOLDER) \
-	$(PYCOVERAGE) $(abs_srcdir)/$$pytest ; \
+	$(PYCOVERAGE) $(abs_srcdir)/$$pytest || exit ; \
 	done

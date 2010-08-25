@@ -21,5 +21,5 @@ check-local:
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
 	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/bin/loadzone \
-	$(SHELL) $(abs_builddir)/$$pytest ; \
+	$(SHELL) $(abs_builddir)/$$pytest || exit ; \
 	done
