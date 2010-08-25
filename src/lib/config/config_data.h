@@ -71,7 +71,7 @@ public:
                              const std::string& identifier) const;
 
     /// Returns the ModuleSpec associated with this ConfigData object
-    const ModuleSpec getModuleSpec() const { return (_module_spec); }
+    const ModuleSpec& getModuleSpec() const { return (_module_spec); }
 
     /// Set the ModuleSpec associated with this ConfigData object
     void setModuleSpec(ModuleSpec module_spec) { _module_spec = module_spec; };
