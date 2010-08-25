@@ -26,5 +26,5 @@ check-local:
 	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/lib/dns/python/.libs \
 	TESTDATA_PATH=$(abs_top_srcdir)/src/lib/dns/tests/testdata \
 	$(LIBRARY_PATH_PLACEHOLDER) \
-	$(PYCOVERAGE) $(abs_srcdir)/$$pytest ; \
+	$(PYCOVERAGE) $(abs_srcdir)/$$pytest || exit ; \
 	done
