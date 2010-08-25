@@ -1,3 +1,11 @@
+  91.	[func]*		jinmei
+	lib/cc: Use const pointers and const member functions for the API
+	as much as possible for safer operations.  Basically this does
+	change the observable behavior, but some of the API were changed
+	in a backward incompatible manner.  This change also involves more
+	copies, but at this moment the overhead is deemed acceptable.
+	(Trac #310, r2803)
+
   90.	[build]		jinmei
 	(Darwin/Mac OS X specific) Specify DYLD_LIBRARY_PATH for tests and
 	experimental run under the source tree.  Without this loadable
