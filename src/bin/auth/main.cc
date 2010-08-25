@@ -66,19 +66,19 @@ AuthSrv *auth_server;
 
 asio_link::IOService* io_service;
 
-ElementPtr
-my_config_handler(ElementPtr new_config) {
+ConstElementPtr
+my_config_handler(ConstElementPtr new_config) {
     return (auth_server->updateConfig(new_config));
 }
 
-ElementPtr
-my_command_handler(const string& command, const ElementPtr args) {
-    ElementPtr answer = createAnswer();
+ConstElementPtr
+my_command_handler(const string& command, ConstElementPtr args) {
+    ConstElementPtr answer = createAnswer();
 
     if (command == "print_message") {
         cout << args << endl;
         /* let's add that message to our answer as well */
-        answer->get("result")->add(args);
+        answer = createAnswer(0, args);
     } else if (command == "shutdown") {
         io_service->stop();
     }

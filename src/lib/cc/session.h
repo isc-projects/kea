@@ -81,12 +81,12 @@ namespace isc {
             //@}
             virtual void establish(const char* socket_file) = 0;
             virtual void disconnect() = 0;
-            virtual int group_sendmsg(isc::data::ElementPtr msg,
+            virtual int group_sendmsg(isc::data::ConstElementPtr msg,
                                       std::string group,
                                       std::string instance = "*",
                                       std::string to = "*") = 0;
-            virtual bool group_recvmsg(isc::data::ElementPtr& envelope,
-                                       isc::data::ElementPtr& msg,
+            virtual bool group_recvmsg(isc::data::ConstElementPtr& envelope,
+                                       isc::data::ConstElementPtr& msg,
                                        bool nonblock = true,
                                        int seq = -1) = 0;
             virtual void subscribe(std::string group,
@@ -94,9 +94,9 @@ namespace isc {
             virtual void unsubscribe(std::string group,
                              std::string instance = "*") = 0;
             virtual void startRead(boost::function<void()> read_callback) = 0;
-            virtual int reply(isc::data::ElementPtr& envelope,
-                               isc::data::ElementPtr& newmsg) = 0;
-            virtual bool hasQueuedMsgs() = 0;
+            virtual int reply(isc::data::ConstElementPtr envelope,
+                               isc::data::ConstElementPtr newmsg) = 0;
+            virtual bool hasQueuedMsgs() const = 0;
 
             /// \brief Sets the default timeout for blocking reads
             ///        in this session to the given number of milliseconds
@@ -130,28 +130,28 @@ namespace isc {
                                    std::string instance = "*");
             virtual void unsubscribe(std::string group,
                              std::string instance = "*");
-            virtual int group_sendmsg(isc::data::ElementPtr msg,
+            virtual int group_sendmsg(isc::data::ConstElementPtr msg,
                                       std::string group,
                                       std::string instance = "*",
                                       std::string to = "*");
-            virtual bool group_recvmsg(isc::data::ElementPtr& envelope,
-                                       isc::data::ElementPtr& msg,
+            virtual bool group_recvmsg(isc::data::ConstElementPtr& envelope,
+                                       isc::data::ConstElementPtr& msg,
                                        bool nonblock = true,
                                        int seq = -1);
-            virtual int reply(isc::data::ElementPtr& envelope,
-                              isc::data::ElementPtr& newmsg);
-            virtual bool hasQueuedMsgs();
+            virtual int reply(isc::data::ConstElementPtr envelope,
+                              isc::data::ConstElementPtr newmsg);
+            virtual bool hasQueuedMsgs() const;
             virtual void setTimeout(size_t milliseconds);
             virtual size_t getTimeout() const;
     private:
-            void sendmsg(isc::data::ElementPtr& msg);
-            void sendmsg(isc::data::ElementPtr& env,
-                         isc::data::ElementPtr& msg);
-            bool recvmsg(isc::data::ElementPtr& msg,
+            void sendmsg(isc::data::ConstElementPtr msg);
+            void sendmsg(isc::data::ConstElementPtr env,
+                         isc::data::ConstElementPtr msg);
+            bool recvmsg(isc::data::ConstElementPtr& msg,
                          bool nonblock = true,
                          int seq = -1);
-            bool recvmsg(isc::data::ElementPtr& env,
-                         isc::data::ElementPtr& msg,
+            bool recvmsg(isc::data::ConstElementPtr& env,
+                         isc::data::ConstElementPtr& msg,
                          bool nonblock = true,
                          int seq = -1);
         };
