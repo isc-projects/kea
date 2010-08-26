@@ -25,6 +25,7 @@ import isc.cc.message
 class ProtocolError(Exception): pass
 class NetworkError(Exception): pass
 class SessionError(Exception): pass
+class SessionTimeout(Exception): pass
 
 class Session:
     def __init__(self, socket_file=None):
@@ -136,6 +137,8 @@ class Session:
             length -= len(self._recvbuffer)
             try:
                 data = self._socket.recv(length)
+            except socket.timeout:
+                raise SessionTimeout("recv() on cc session timed out")
             except:
                 return None
             if data == "": # server closed connection
@@ -150,6 +153,8 @@ class Session:
         while (length > 0):
             try:
                 data = self._socket.recv(length)
+            except socket.timeout:
+                raise SessionTimeout("recv() on cc session timed out")
             except:
                 return None
             if data == "": # server closed connection

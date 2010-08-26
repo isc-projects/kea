@@ -602,6 +602,9 @@ if __name__ == '__main__':
     except isc.cc.SessionError as err:
         sys.stderr.write("[b10-cmdctl] Error creating b10-cmdctl, "
                          "is the command channel daemon running?\n")        
+    except isc.cc.SessionTimeout:
+        sys.stderr.write("[b10-cmdctl] Error creating b10-cmdctl, "
+                         "is the configuration manager running?\n")        
     except KeyboardInterrupt:
         sys.stderr.write("[b10-cmdctl] exit from Cmdctl\n")
     except CmdctlException as err:

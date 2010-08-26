@@ -27,7 +27,7 @@ from socketserver import *
 import os
 from isc.config.ccsession import *
 from isc.log.log import *
-from isc.cc import SessionError
+from isc.cc import SessionError, SessionTimeout
 from isc.notify import notify_out
 import socket
 import select
@@ -409,9 +409,9 @@ class XfroutServer:
         self._listen_sock_file = UNIX_SOCKET_FILE 
         self._shutdown_event = threading.Event()
         self._cc = isc.config.ModuleCCSession(SPECFILE_LOCATION, self.config_handler, self.command_handler)
-        self._cc.add_remote_config(AUTH_SPECFILE_LOCATION);
         self._config_data = self._cc.get_full_config()
         self._cc.start()
+        self._cc.add_remote_config(AUTH_SPECFILE_LOCATION);
         self._log = isc.log.NSLogger(self._config_data.get('log_name'), self._config_data.get('log_file'),
                                 self._config_data.get('log_severity'), self._config_data.get('log_versions'),
                                 self._config_data.get('log_max_bytes'), True)
@@ -529,6 +529,9 @@ if '__main__' == __name__:
     except SessionError as e:
         sys.stderr.write("[b10-xfrout] Error creating xfrout," 
                            "is the command channel daemon running?")
+    except SessionTimeout as e:
+        sys.stderr.write("[b10-xfrout] Error creating xfrout," 
+                           "is the configuration manager running?")
     except ModuleCCSessionError as e:
         sys.stderr.write("info", '[b10-xfrout] exit xfrout process:', e)
 
