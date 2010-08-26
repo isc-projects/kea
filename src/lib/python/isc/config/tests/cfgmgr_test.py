@@ -258,7 +258,7 @@ class TestConfigManager(unittest.TestCase):
         self._handle_msg_helper({ "command": [ "set_config", [ ] ] },
                                 {'result': [1, 'Wrong number of arguments']} )
         self._handle_msg_helper({ "command": [ "set_config", [ self.name, { "test": 125 }] ] },
-                                { 'result': [1, 'No answer message from TestModule']} )
+                                { 'result': [1, 'Timeout waiting for answer from TestModule']} )
 
         #self.assertEqual(len(self.fake_session.message_queue), 1)
         #self.assertEqual({'config_update': {'test': 124}},
