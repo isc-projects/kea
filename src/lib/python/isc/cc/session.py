@@ -28,12 +28,10 @@ class SessionError(Exception): pass
 class SessionTimeout(Exception): pass
 
 class Session:
+    MSGQ_DEFAULT_TIMEOUT = 4000
+    
     def __init__(self, socket_file=None):
         self._socket = None
-        # store the current timeout value in seconds (the way
-        # settimeout() wants them, our API takes milliseconds
-        # so that it is consistent with the C++ version)
-        self._socket_timeout = 4;
         self._lname = None
         self._recvbuffer = bytearray()
         self._recvlength = 0
@@ -41,6 +39,7 @@ class Session:
         self._closed = False
         self._queue = []
         self._lock = threading.RLock()
+        self.set_timeout(self.MSGQ_DEFAULT_TIMEOUT);
 
         if socket_file is None:
             if "BIND10_MSGQ_SOCKET_FILE" in os.environ:

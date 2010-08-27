@@ -177,18 +177,11 @@ class ModuleCCSession(ConfigData):
     def check_command(self):
         """Check whether there is a command or configuration update
            on the channel. Call the corresponding callback function if
-           there is."""
-        msg, env = None, None
-        
-        # the module may have set timeout to zero (if it knows it will
-        # simply be doing nothing until it gets a command), but we
-        # cannot be sure of that (and we should change it at this
-        # level), so if we get a timeout, there is simply nothing to
-        # do and we return.
-        try:
-            msg, env = self._session.group_recvmsg(False)
-        except isc.cc.SessionTimeout:
-            return
+           there is. This function does a non-blocking read on the
+           cc session, and returns nothing. It will respond to any
+           command by either an error or the answer message returned
+           by the callback, unless the latter is None."""
+        msg, env = self._session.group_recvmsg(True)
         
         # should we default to an answer? success-by-default? unhandled error?
         if msg is not None and not 'result' in msg:
