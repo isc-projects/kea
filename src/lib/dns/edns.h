@@ -60,13 +60,26 @@ typedef boost::shared_ptr<const EDNS> ConstEDNSPtr;
 /// MEMO: performance consideration: toWire() can be optimized by caching
 /// the rendered image and reuse EDNS
 ///
+/// This version of this class is copyable, but we may want to change it
+/// once we support EDNS options.
+/// (Note to ourselves: the python binding assumes this class is copyable).
+///
 ///TBD: how to manage options is an open issue.
 class EDNS {
 public:
+    ///
+    /// \name Constructors and Destructor
+    ///
+    /// We use the default copy constructor, default copy assignment operator,
+    /// and default destructors intentionally.
+    ///
+    //@{
+    /// By default, the highest supported version is assumed.
     explicit EDNS(const uint8_t version = SUPPORTED_VERSION);
 
     EDNS(const Name& name, const RRClass& rrclass, const RRType& rrtype,
          const RRTTL& ttl, const rdata::Rdata& rdata);
+    //@}
 
     /// \brief Returns the version of EDNS.
     uint8_t getVersion() const { return (version_); }
@@ -105,8 +118,9 @@ public:
     /// TBD
     std::string toText() const;
 
-    // TBD: currently not implemented.
-    void addOption();
+    // TBD: currently not implemented.  We'll eventually need something like
+    // this.
+    //void addOption();
 
 private:
     /// Helper method to define unified implementation for the public versions
@@ -135,10 +149,8 @@ private:
 /// exception is thrown \c extended_code won't be modified.
 EDNS* createEDNSFromRR(const Name& name, const RRClass& rrclass,
                        const RRType& rrtype, const RRTTL& ttl,
-                       const rdata::Rdata& rdata,
-                       uint8_t& extended_rcode);
+                       const rdata::Rdata& rdata, uint8_t& extended_rcode);
 
-/// Should we define this?
 std::ostream& operator<<(std::ostream& os, const EDNS& edns);
 }
 }
