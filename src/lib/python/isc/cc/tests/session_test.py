@@ -344,17 +344,21 @@ class testSession(unittest.TestCase):
         if os.path.exists(TEST_SOCKET_FILE):
             os.remove(TEST_SOCKET_FILE)
         s1.bind(TEST_SOCKET_FILE)
-        s1.listen(1)
 
-        s2 = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        s2.connect(TEST_SOCKET_FILE)
-        sess = MySession(1, s2)
-        # set timeout to 100 msec, so test does not take too long
-        sess.set_timeout(100)
-        env, msg = sess.group_recvmsg(False)
-        self.assertEqual(None, env)
-        self.assertEqual(None, msg)
-        
+        try:
+            s1.listen(1)
+
+            s2 = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            s2.connect(TEST_SOCKET_FILE)
+            sess = MySession(1, s2)
+            # set timeout to 100 msec, so test does not take too long
+            sess.set_timeout(100)
+            env, msg = sess.group_recvmsg(False)
+            self.assertEqual(None, env)
+            self.assertEqual(None, msg)
+        finally:
+            os.remove(TEST_SOCKET_FILE)
+
 if __name__ == "__main__":
     unittest.main()
 
