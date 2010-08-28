@@ -35,7 +35,6 @@ import os, time, random, re
 import getpass
 from hashlib import sha1
 import csv
-import json
 import pwd
 import getpass
 
