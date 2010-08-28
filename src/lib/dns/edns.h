@@ -38,6 +38,8 @@ class Rcode;
 
 /// \brief A pointer-like type pointing to an \c EDNS object.
 typedef boost::shared_ptr<EDNS> EDNSPtr;
+
+/// \brief A pointer-like type pointing to an immutable \c EDNS object.
 typedef boost::shared_ptr<const EDNS> ConstEDNSPtr;
 
 /// Document why this is separated from \c Message.
