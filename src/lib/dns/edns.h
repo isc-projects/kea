@@ -226,15 +226,62 @@ private:
     bool dnssec_ok_;
 };
 
-/// \brief Create a new EDNS object from a set of RR parameters, also providing
-/// the extended RCODE value.
+/// \brief Create a new \c EDNS object from a set of RR parameters, also
+/// providing the extended RCODE value.
 ///
-/// Document why this function isn't a constructor.
-/// Document why this function does two things: create an EDNS and adjust
-/// Rcode.
+/// This function is similar to the EDNS class constructor
+/// \c EDNS::EDNS(const Name&, const RRClass&, const RRType&, const RRTTL&, const rdata::Rdata&)
+/// but is different in that
+/// - It dynamically creates a new object
+/// - It returns (via a reference argument) the topmost 8 bits of the extended
+/// RCODE encoded in the \c ttl.
+///
+/// On success, \c extended_rcode will be updated with the 8-bit part of
+/// the extended RCODE encoded in the TTL of the OPT RR.
+///
+/// The intended usage of this function is to parse an OPT RR of an incoming
+/// DNS message, while updating the RCODE of the message.
+/// One common usage patter is as follows:
+///
+/// \code Message msg;
+/// ...
+/// uint8_t extended_rcode;
+/// ConstEDNSPtr edns = ConstEDNSPtr(createEDNSFromRR(..., extended_rcode));
+/// rcode = Rcode(msg.getRcode().getCode(), extended_rcode);
+/// \endcode
+/// (although, like the \c EDNS constructor, normal applications wouldn't have
+/// to use this function directly).
 ///
 /// This function provides the strong exception guarantee: Unless an
 /// exception is thrown \c extended_code won't be modified.
+///
+/// This function validates the given parameters and throws exceptions on
+/// failure in the same way as the \c EDNS class constructor.
+/// In addition, if memory allocation for the new object fails it throws the
+/// corresponding standard exception.
+///
+/// Note that this function returns a bare pointer to the newly allocated
+/// object, not a shared pointer object enclosing the pointer.
+/// The caller is responsible for deleting the object after the use of it
+/// (typically, the caller would immediately encapsulate the returned pointer
+/// in a shared pointer object, \c EDNSPtr or \c ConstEDNSPtr).
+/// It returns a bare pointer so that it can be used where the use of a shared
+/// pointer is impossible or not desirable.
+///
+/// Note to developers: there is no strong technical reason why this function
+/// cannot be a constructor of the \c EDNS class or even integrated into the
+/// constructor.  But we decided to make it a separate free function so that
+/// constructors will be free from side effects (which is in itself a matter
+/// of preference).
+///
+/// \param name The owner name of the OPT RR.  This must be the root name.
+/// \param rrclass The RR class of the OPT RR.
+/// \param rrtype This must specify the OPT RR type.
+/// \param rrttl The TTL of the OPT RR.
+/// \param rdata The RDATA of the OPT RR.
+/// \param extended_rcode A placeholder to store the topmost 8 bits of the
+/// extended Rcode.
+/// \return A pointer to the created \c EDNS object.
 EDNS* createEDNSFromRR(const Name& name, const RRClass& rrclass,
                        const RRType& rrtype, const RRTTL& ttl,
                        const rdata::Rdata& rdata, uint8_t& extended_rcode);
