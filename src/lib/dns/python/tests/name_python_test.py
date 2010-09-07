@@ -14,12 +14,12 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #
-# Tests for the messagerenderer part of the libdns_python module
+# Tests for the messagerenderer part of the pydnspp module
 #
 
 import unittest
 import os
-from libdns_python import *
+from pydnspp import *
 
 class NameComparisonTest(unittest.TestCase):
     def setUp(self):

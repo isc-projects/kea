@@ -14,12 +14,12 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #
-# Tests for the message part of the libdns_python module
+# Tests for the message part of the pydnspp module
 #
 
 import unittest
 import os
-from libdns_python import *
+from pydnspp import *
 
 
 class MessageFlagTest(unittest.TestCase):
