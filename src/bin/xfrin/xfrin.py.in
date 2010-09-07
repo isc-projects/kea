@@ -30,7 +30,7 @@ from optparse import OptionParser, OptionValueError
 from isc.config.ccsession import *
 from isc.notify import notify_out
 try:
-    from libdns_python import *
+    from pydnspp import *
 except ImportError as e:
     # C++ loadable module may not be installed; even so the xfrin process
     # must keep running, so we warn about it and move forward.
@@ -523,8 +523,8 @@ class Xfrin:
 
     def xfrin_start(self, zone_name, rrclass, db_file, master_addrinfo,
                     check_soa = True):
-        if "libdns_python" not in sys.modules:
-            return (1, "xfrin failed, can't load dns message python library: 'libdns_python'")
+        if "pydnspp" not in sys.modules:
+            return (1, "xfrin failed, can't load dns message python library: 'pydnspp'")
 
         # check max_transfer_in, else return quota error
         if self.recorder.count() >= self._max_transfers_in:

@@ -19,7 +19,7 @@
 import unittest
 import os
 from isc.cc.session import *
-from libdns_python import *
+from pydnspp import *
 from xfrout import *
 
 # our fake socket, where we can read and insert messages

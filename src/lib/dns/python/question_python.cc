@@ -76,7 +76,7 @@ static PyMethodDef Question_methods[] = {
 // Most of the functions are not actually implemented and NULL here.
 static PyTypeObject question_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.Question",
+    "pydnspp.Question",
     sizeof(s_Question),                 // tp_basicsize
     0,                                  // tp_itemsize
     (destructor)Question_destroy,       // tp_dealloc

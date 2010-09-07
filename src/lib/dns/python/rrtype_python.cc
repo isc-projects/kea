@@ -130,7 +130,7 @@ static PyMethodDef RRType_methods[] = {
 // Most of the functions are not actually implemented and NULL here.
 static PyTypeObject rrtype_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.RRType",
+    "pydnspp.RRType",
     sizeof(s_RRType),                   // tp_basicsize
     0,                                  // tp_itemsize
     (destructor)RRType_destroy,         // tp_dealloc
@@ -446,9 +446,9 @@ RRType_ANY(s_RRType *self UNUSED_PARAM) {
 bool
 initModulePart_RRType(PyObject* mod) {
     // Add the exceptions to the module
-    po_InvalidRRType = PyErr_NewException("libdns_python.InvalidRRType", NULL, NULL);
+    po_InvalidRRType = PyErr_NewException("pydnspp.InvalidRRType", NULL, NULL);
     PyModule_AddObject(mod, "InvalidRRType", po_InvalidRRType);
-    po_IncompleteRRType = PyErr_NewException("libdns_python.IncompleteRRType", NULL, NULL);
+    po_IncompleteRRType = PyErr_NewException("pydnspp.IncompleteRRType", NULL, NULL);
     PyModule_AddObject(mod, "IncompleteRRType", po_IncompleteRRType);
 
     // We initialize the static description object with PyType_Ready(),

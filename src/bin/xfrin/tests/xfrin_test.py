@@ -508,12 +508,12 @@ class TestXfrin(unittest.TestCase):
                                                   self.args)['result'][0], 1)
 
     def test_command_handler_retransfer_nomodule(self):
-        dns_module = sys.modules['libdns_python'] # this must exist
-        del sys.modules['libdns_python']
+        dns_module = sys.modules['pydnspp'] # this must exist
+        del sys.modules['pydnspp']
         self.assertEqual(self.xfr.command_handler("retransfer",
                                                   self.args)['result'][0], 1)
         # sys.modules is global, so we must recover it
-        sys.modules['libdns_python'] = dns_module
+        sys.modules['pydnspp'] = dns_module
 
     def test_command_handler_refresh(self):
         # at this level, refresh is no different than retransfer.

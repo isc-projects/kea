@@ -35,7 +35,7 @@ import errno
 from optparse import OptionParser, OptionValueError
 try:
     from libxfr_python import *
-    from libdns_python import *
+    from pydnspp import *
 except ImportError as e:
     # C++ loadable module may not be installed; even so the xfrout process
     # must keep running, so we warn about it and move forward.

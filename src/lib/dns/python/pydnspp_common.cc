@@ -15,7 +15,7 @@
 // $Id$
 
 #include <Python.h>
-#include <libdns_python_common.h>
+#include <pydnspp_common.h>
 
 int
 readDataFromSequence(uint8_t *data, size_t len, PyObject* sequence) {
