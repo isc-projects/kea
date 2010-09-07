@@ -284,7 +284,6 @@ class ConfigManager:
                                                   conf_part)
             seq = self.cc.group_sendmsg(update_cmd, module_name)
             try:
-                # We have set the timeout to forever, set it now so we won't hang
                 answer, env = self.cc.group_recvmsg(False, seq)
             except isc.cc.SessionTimeout:
                 answer = ccsession.create_answer(1, "Timeout waiting for answer from " + module_name)
@@ -296,7 +295,6 @@ class ConfigManager:
                                                   conf_part[module_name])
             seq = self.cc.group_sendmsg(update_cmd, module_name)
             # replace 'our' answer with that of the module
-            # We have set the timeout to forever, set it now so we won't hang
             try:
                 answer, env = self.cc.group_recvmsg(False, seq)
             except isc.cc.SessionTimeout:
