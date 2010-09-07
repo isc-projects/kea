@@ -248,6 +248,8 @@ class ModuleCCSession(ConfigData):
            also subscribes to the channel of the remote module name
            to receive the relevant updates. It is not possible to
            specify your own handler for this right now.
+           start() must have been called on this CCSession
+           prior to the call to this method.
            Returns the name of the module."""
         module_spec = isc.config.module_spec_from_file(spec_file_name)
         module_cfg = ConfigData(module_spec)
