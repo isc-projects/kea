@@ -515,7 +515,7 @@ if '__main__' == __name__:
     except KeyboardInterrupt:
         sys.stderr.write("[b10-zonemgr] exit zonemgr process")
     except isc.cc.session.SessionError as e:
-        sys.stderr.write("[b10-zonemgr] Error creating ,zonemgr" 
+        sys.stderr.write("[b10-zonemgr] Error creating zonemgr, " 
                            "is the command channel daemon running?")
     except isc.config.ModuleCCSessionError as e:
         sys.stderr.write("info", "[b10-zonemgr] exit zonemgr process:", e)
