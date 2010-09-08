@@ -93,15 +93,15 @@
       The configurable settings are:
     </para>
     <para>
-      <varname>transfers-out</varname>
-      defines the maximum number of outgoing zone transfers
-      that can run concurrently. The default is 10.
-    </para>
-    <para>
       <varname>db_file</varname>
       defines the path to the SQLite3 data store file.
       The default is
       <filename>/usr/local/var/bind10-devel/zone.sqlite3</filename>.
+    </para>
+    <para>
+      <varname>transfers_out</varname>
+      defines the maximum number of outgoing zone transfers
+      that can run concurrently. The default is 10.
     </para>
 
     <note><simpara>
