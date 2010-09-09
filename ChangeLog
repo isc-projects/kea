@@ -1,3 +1,8 @@
+  91.	[bug]		zhang likun
+	When xfrin can't connect with one zone's master, it should tell 
+	the bad news to zonemgr, so that zonemgr can reset the timer for
+	that zone. (Trac #329, rTBD)
+
   91.	[func]*		jinmei
 	lib/cc: Use const pointers and const member functions for the API
 	as much as possible for safer operations.  Basically this does
