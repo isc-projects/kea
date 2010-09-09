@@ -197,7 +197,6 @@ class XfrinConnection(asyncore.dispatcher):
                                             self._handle_xfrin_response)
 
                 self.log_msg(logstr + 'succeeded')
-                ret = XFRIN_OK
 
         except XfrinException as e:
             self.log_msg(e)
