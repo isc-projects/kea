@@ -1,3 +1,9 @@
+  92.	[func]*		jelte
+	libdns_python (the python wrappers for libdns++) has been renamed
+	to pydnspp (Python DNS++). Programs and libraries that used
+	'import libdns_python' now need to use 'import pydnspp'.
+	(Trac #314, r2902)
+
   91.	[func]*		jinmei
 	lib/cc: Use const pointers and const member functions for the API
 	as much as possible for safer operations.  Basically this does
