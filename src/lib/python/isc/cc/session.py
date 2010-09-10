@@ -16,6 +16,7 @@
 import sys
 import socket
 import struct
+import errno
 import os
 import threading
 import bind10_config
@@ -33,8 +34,6 @@ class Session:
     def __init__(self, socket_file=None):
         self._socket = None
         self._lname = None
-        self._recvbuffer = bytearray()
-        self._recvlength = 0
         self._sequence = 1
         self._closed = False
         self._queue = []
@@ -121,6 +120,27 @@ class Session:
                     return isc.cc.message.from_wire(data[2:header_length+2]), None
             return None, None
 
+    def _receive_bytes(self, length, nonblock):
+        """Returns a bytearray of length bytes as read from the socket.
+           Raises a ProtocolError if it reads 0 bytes, unless nonblock
+           is True.
+           Re-raises errors raised by recv().
+           Returns either a bytearray of length bytes, or None (if
+           nonblock is True, and less than length bytes of data is
+           available)
+        """
+        data = bytearray()
+        while length > 0:
+            new_data = self._socket.recv(length)
+            if len(new_data) == 0: # server closed connection
+                if nonblock:
+                    return None
+                else:
+                    raise ProtocolError("Read of 0 bytes: connection closed")
+            data += new_data
+            length -= len(new_data)
+        return data
+
     def _receive_full_buffer(self, nonblock):
         if nonblock:
             self._socket.setblocking(0)
@@ -131,39 +151,19 @@ class Session:
             else:
                 self._socket.settimeout(self._socket_timeout)
 
-        if self._recvlength == 0:
-            length = 4
-            length -= len(self._recvbuffer)
-            try:
-                data = self._socket.recv(length)
-            except socket.timeout:
-                raise SessionTimeout("recv() on cc session timed out")
-            except:
+        try:
+            data = self._receive_bytes(4, nonblock)
+            if data is not None:
+                data_length = struct.unpack('>I', data)[0]
+                data = self._receive_bytes(data_length, nonblock)
+            return (data)
+        except socket.timeout:
+            raise SessionTimeout("recv() on cc session timed out")
+        except socket.error as se:
+            if se.errno == errno.EINTR or \
+               (nonblock and se.errno) == errno.EAGAIN:
                 return None
-            if data == "": # server closed connection
-                raise ProtocolError("Read of 0 bytes: connection closed")
-            self._recvbuffer += data
-            if len(self._recvbuffer) < 4:
-                return None
-            self._recvlength = struct.unpack('>I', self._recvbuffer)[0]
-            self._recvbuffer = bytearray()
-
-        length = self._recvlength - len(self._recvbuffer)
-        while (length > 0):
-            try:
-                data = self._socket.recv(length)
-            except socket.timeout:
-                raise SessionTimeout("recv() on cc session timed out")
-            except:
-                return None
-            if data == "": # server closed connection
-                raise ProtocolError("Read of 0 bytes: connection closed")
-            self._recvbuffer += data
-            length -= len(data)
-        data = self._recvbuffer
-        self._recvbuffer = bytearray()
-        self._recvlength = 0
-        return (data)
+            raise se
 
     def _next_sequence(self):
         self._sequence += 1
