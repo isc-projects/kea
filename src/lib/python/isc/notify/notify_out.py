@@ -22,7 +22,7 @@ import time
 from isc.datasrc import sqlite3_ds
 import isc
 try: 
-    from libdns_python import * 
+    from pydnspp import * 
 except ImportError as e: 
     # C++ loadable module may not be installed; 
     sys.stderr.write('[b10-xfrout] failed to import DNS or XFR module: %s\n' % str(e)) 
