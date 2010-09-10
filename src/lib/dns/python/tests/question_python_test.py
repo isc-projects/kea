@@ -14,12 +14,12 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #
-# Tests for the rrtype part of the libdns_python module
+# Tests for the rrtype part of the pydnspp module
 #
 
 import unittest
 import os
-from libdns_python import *
+from pydnspp import *
 
 if "TESTDATA_PATH" in os.environ:
     testdata_path = os.environ["TESTDATA_PATH"]

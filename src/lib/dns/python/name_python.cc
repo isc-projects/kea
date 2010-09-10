@@ -68,7 +68,7 @@ static PyMethodDef NameComparisonResult_methods[] = {
 
 static PyTypeObject name_comparison_result_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.NameComparisonResult",
+    "pydnspp.NameComparisonResult",
     sizeof(s_NameComparisonResult),           // tp_basicsize
     0,                                        // tp_itemsize
     (destructor)NameComparisonResult_destroy, // tp_dealloc
@@ -222,7 +222,7 @@ static PyMethodDef Name_methods[] = {
 
 static PyTypeObject name_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.Name",
+    "pydnspp.Name",
     sizeof(s_Name),                     // tp_basicsize
     0,                                  // tp_itemsize
     (destructor)Name_destroy,           // tp_dealloc
@@ -651,30 +651,30 @@ initModulePart_Name(PyObject* mod) {
     
 
     // Add the exceptions to the module
-    po_EmptyLabel = PyErr_NewException("libdns_python.EmptyLabel", NULL, NULL);
+    po_EmptyLabel = PyErr_NewException("pydnspp.EmptyLabel", NULL, NULL);
     PyModule_AddObject(mod, "EmptyLabel", po_EmptyLabel);
 
-    po_TooLongName = PyErr_NewException("libdns_python.TooLongName", NULL, NULL);
+    po_TooLongName = PyErr_NewException("pydnspp.TooLongName", NULL, NULL);
     PyModule_AddObject(mod, "TooLongName", po_TooLongName);
 
-    po_TooLongLabel = PyErr_NewException("libdns_python.TooLongLabel", NULL, NULL);
+    po_TooLongLabel = PyErr_NewException("pydnspp.TooLongLabel", NULL, NULL);
     PyModule_AddObject(mod, "TooLongLabel", po_TooLongLabel);
 
-    po_BadLabelType = PyErr_NewException("libdns_python.BadLabelType", NULL, NULL);
+    po_BadLabelType = PyErr_NewException("pydnspp.BadLabelType", NULL, NULL);
     PyModule_AddObject(mod, "BadLabelType", po_BadLabelType);
 
-    po_BadEscape = PyErr_NewException("libdns_python.BadEscape", NULL, NULL);
+    po_BadEscape = PyErr_NewException("pydnspp.BadEscape", NULL, NULL);
     PyModule_AddObject(mod, "BadEscape", po_BadEscape);
 
-    po_IncompleteName = PyErr_NewException("libdns_python.IncompleteName", NULL, NULL);
+    po_IncompleteName = PyErr_NewException("pydnspp.IncompleteName", NULL, NULL);
     PyModule_AddObject(mod, "IncompleteName", po_IncompleteName);
 
-    po_InvalidBufferPosition = PyErr_NewException("libdns_python.InvalidBufferPosition", NULL, NULL);
+    po_InvalidBufferPosition = PyErr_NewException("pydnspp.InvalidBufferPosition", NULL, NULL);
     PyModule_AddObject(mod, "InvalidBufferPosition", po_InvalidBufferPosition);
 
     // This one could have gone into the message_python.cc file, but is
     // already needed here.
-    po_DNSMessageFORMERR = PyErr_NewException("libdns_python.DNSMessageFORMERR", NULL, NULL);
+    po_DNSMessageFORMERR = PyErr_NewException("pydnspp.DNSMessageFORMERR", NULL, NULL);
     PyModule_AddObject(mod, "DNSMessageFORMERR", po_DNSMessageFORMERR);
 
     return (true);
