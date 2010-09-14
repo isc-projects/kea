@@ -206,6 +206,11 @@ checkCache(QueryTask& task, RRsetList& target) {
         if (!hit || !rrset || (flags & DataSrc::CNAME_FOUND) != 0) {
             hit = cache.retrieve(task.qname, task.qclass, RRType::CNAME(),
                                  rrset, flags);
+            if (!rrset) {
+                // If we don't have a positive cache, forget it; otherwise the
+                // intermediate result may confuse the subsequent processing.
+                hit = false;
+            }
         }
 
         if (hit) {
