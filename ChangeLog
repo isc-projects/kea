@@ -1,3 +1,8 @@
+  91.	[bug]		jinmei
+	lib/datasrc: A DS query could crash the library (and therefore,
+	e.g. the authoritative server) if some RR of the same apex name
+	is stored in the hot spot cache.  (Trac #307, svn r2923)
+
   92.	[func]*		jelte
 	libdns_python (the python wrappers for libdns++) has been renamed
 	to pydnspp (Python DNS++). Programs and libraries that used
