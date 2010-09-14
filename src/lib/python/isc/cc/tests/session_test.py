@@ -28,6 +28,7 @@ class MySocket():
         self.type = type
         self.recvqueue = bytearray()
         self.sendqueue = bytearray()
+        self._blocking = True
 
     def connect(self, to):
         pass
@@ -36,7 +37,7 @@ class MySocket():
         pass
 
     def setblocking(self, val):
-        pass
+        self._blocking = val
 
     def send(self, data):
         self.sendqueue.extend(data);
@@ -68,7 +69,10 @@ class MySocket():
 
     def recv(self, length):
         if len(self.recvqueue) == 0:
-            return bytes()
+            if self._blocking:
+                return bytes()
+            else:
+                raise socket.error(errno.EAGAIN, "Resource temporarily unavailable")
         if length > len(self.recvqueue):
             raise Exception("Buffer underrun in test, does the test provide the right data?")
         result = self.recvqueue[:length]
@@ -107,7 +111,8 @@ class MySession(Session):
         self._socket_timeout = 1
         self._lname = None
         self._recvbuffer = bytearray()
-        self._recvlength = 0
+        self._recv_len_size = 0
+        self._recv_size = 0
         self._sequence = 1
         self._closed = False
         self._queue = []
