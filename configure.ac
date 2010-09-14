@@ -468,7 +468,6 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/cmdctl/cmdctl.spec.pre
            src/bin/xfrin/tests/xfrin_test
            src/bin/xfrin/xfrin.py
-           src/bin/xfrin/xfrin.spec.pre
            src/bin/xfrin/run_b10-xfrin.sh
            src/bin/xfrout/xfrout.py
            src/bin/xfrout/xfrout.spec.pre

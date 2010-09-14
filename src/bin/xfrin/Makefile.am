@@ -7,7 +7,7 @@ pkglibexec_SCRIPTS = b10-xfrin
 b10_xfrindir = $(DESTDIR)$(pkgdatadir)
 b10_xfrin_DATA = xfrin.spec
 
-CLEANFILES = b10-xfrin xfrin.pyc xfrin.spec
+CLEANFILES = b10-xfrin xfrin.pyc 
 
 man_MANS = b10-xfrin.8
 EXTRA_DIST = $(man_MANS) b10-xfrin.xml
@@ -18,9 +18,6 @@ b10-xfrin.8: b10-xfrin.xml
 	xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-xfrin.xml
 
 endif
-
-xfrin.spec: xfrin.spec.pre
-	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" xfrin.spec.pre >$@
 
 # TODO: does this need $$(DESTDIR) also?
 # this is done here since configure.ac AC_OUTPUT doesn't expand exec_prefix
