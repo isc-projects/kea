@@ -315,8 +315,8 @@ class UnixSockServer(ThreadingUnixStreamServer):
         If it's not a socket file or nobody is listening
         , it will be removed. If it can't be removed, exit from python. '''
         if self._sock_file_in_use(sock_file):
-            print("[b10-xfrout] Fail to start xfrout process, unix socket" 
-                  " file '%s' is being used by another xfrout process" % sock_file)
+            sys.stderr.write("[b10-xfrout] Fail to start xfrout process, unix socket" 
+                  " file '%s' is being used by another xfrout process\n" % sock_file)
             sys.exit(0)
         else:
             if not os.path.exists(sock_file):
@@ -325,7 +325,7 @@ class UnixSockServer(ThreadingUnixStreamServer):
             try:
                 os.unlink(sock_file)
             except OSError as err:
-                print('[b10-xfrout] Fail to remove file ' + sock_file, err)
+                sys.stderr.write('[b10-xfrout] Fail to remove file %s: %s' % (sock_file, err))
                 sys.exit(0)
    
     def _sock_file_in_use(self, sock_file):
@@ -527,10 +527,10 @@ if '__main__' == __name__:
     except KeyboardInterrupt:
         sys.stderr.write("[b10-xfrout] exit xfrout process")
     except SessionError as e:
-        sys.stderr.write("[b10-xfrout] Error creating xfrout," 
+        sys.stderr.write("[b10-xfrout] Error creating xfrout, "
                            "is the command channel daemon running?")
     except SessionTimeout as e:
-        sys.stderr.write("[b10-xfrout] Error creating xfrout," 
+        sys.stderr.write("[b10-xfrout] Error creating xfrout, " 
                            "is the configuration manager running?")
     except ModuleCCSessionError as e:
         sys.stderr.write("info", '[b10-xfrout] exit xfrout process:', e)

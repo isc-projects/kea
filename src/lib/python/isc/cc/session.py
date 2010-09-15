@@ -173,6 +173,10 @@ class Session:
             # we might be in a call following an EAGAIN, in which case
             # we simply continue. In the first case, either
             # recv_size or recv_len size are not zero
+            # they may never both be non-zero (we are either starting
+            # a full read, or continuing one of the reads
+            assert self._recv_size == 0 or self._recv_len_size == 0
+            
             if self._recv_size == 0:
                 if self._recv_len_size == 0:
                     # both zero, start a new full read
