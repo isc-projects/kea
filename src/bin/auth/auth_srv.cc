@@ -123,12 +123,56 @@ AuthSrvImpl::~AuthSrvImpl() {
     }
 }
 
+// This is a derived class of \c DNSProvider, to serve as a
+// callback in the asio_link module.  It calls
+// AuthSrv::processMessage() on a single DNS message.
+class MessageProcessor : public DNSProvider {
+public:
+    MessageProcessor(AuthSrv* srv) : server_(srv) {}
+    virtual bool operator()(const IOMessage& io_message,
+                            isc::dns::Message& dns_message,
+                            isc::dns::MessageRenderer& renderer) const {
+        return (server_->processMessage(io_message, dns_message, renderer));
+    }
+private:
+    AuthSrv* server_;
+};
+
+// This is a derived class of \c CheckinProvider, to serve
+// as a callback in the asio_link module.  It checks for queued
+// configuration messages, and executes them if found.
+class ConfigChecker : public CheckinProvider {
+public:
+    ConfigChecker(AuthSrv* srv) : server_(srv) {}
+    virtual void operator()(void) const {
+        if (server_->configSession()->hasQueuedMsgs()) {
+            server_->configSession()->checkCommand();
+        }
+    }
+private:
+    AuthSrv* server_;
+};
+
 AuthSrv::AuthSrv(const bool use_cache, AbstractXfroutClient& xfrout_client) :
-    impl_(new AuthSrvImpl(use_cache, xfrout_client))
+    impl_(new AuthSrvImpl(use_cache, xfrout_client)),
+    checkin_provider_(new ConfigChecker(this)),
+    dns_provider_(new MessageProcessor(this))
 {}
 
 AuthSrv::~AuthSrv() {
     delete impl_;
+    delete checkin_provider_;
+    delete dns_provider_;
+}
+
+asio_link::CheckinProvider*
+AuthSrv::getCheckinProvider() {
+    return (checkin_provider_);
+}
+
+asio_link::DNSProvider*
+AuthSrv::getDNSProvider() {
+    return (dns_provider_);
 }
 
 namespace {

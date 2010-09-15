@@ -176,6 +176,9 @@ main(int argc, char* argv[]) {
         auth_server->setVerbose(verbose_mode);
         cout << "[b10-auth] Server created." << endl;
 
+        asio_link::CheckinProvider* checkin = auth_server->getCheckinProvider();
+        asio_link::DNSProvider* process = auth_server->getDNSProvider();
+
         if (address != NULL) {
             // XXX: we can only specify at most one explicit address.
             // This also means the server cannot run in the dual address
@@ -183,11 +186,11 @@ main(int argc, char* argv[]) {
             // We don't bother to fix this problem, however.  The -a option
             // is a short term workaround until we support dynamic listening
             // port allocation.
-            io_service = new asio_link::IOService(auth_server, *port,
-                                                  *address);
+            io_service = new asio_link::IOService(*port, *address,
+                                                  checkin, process);
         } else {
-            io_service = new asio_link::IOService(auth_server, *port,
-                                                  use_ipv4, use_ipv6);
+            io_service = new asio_link::IOService(*port, use_ipv4, use_ipv6,
+                                                  checkin, process);
         }
         cout << "[b10-auth] IOService created." << endl;
 
@@ -221,7 +224,7 @@ main(int argc, char* argv[]) {
         cout << "[b10-auth] Server started." << endl;
         io_service->run();
     } catch (const std::exception& ex) {
-        cerr << "[b10-auth] Initialization failed: " << ex.what() << endl;
+        cerr << "[b10-auth] Server failed: " << ex.what() << endl;
         ret = 1;
     }
 

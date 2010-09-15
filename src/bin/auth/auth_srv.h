@@ -22,6 +22,8 @@
 #include <cc/data.h>
 #include <config/ccsession.h>
 
+#include <auth/asio_link.h>
+
 namespace isc {
 namespace dns {
 class InputBuffer;
@@ -72,6 +74,8 @@ public:
     isc::data::ConstElementPtr updateConfig(isc::data::ConstElementPtr config);
     isc::config::ModuleCCSession* configSession() const;
     void setConfigSession(isc::config::ModuleCCSession* config_session);
+    asio_link::CheckinProvider* getCheckinProvider();
+    asio_link::DNSProvider* getDNSProvider();
 
     ///
     /// Note: this interface is tentative.  We'll revisit the ASIO and session
@@ -89,6 +93,8 @@ public:
     void setXfrinSession(isc::cc::AbstractSession* xfrin_session);
 private:
     AuthSrvImpl* impl_;
+    asio_link::CheckinProvider* checkin_provider_;
+    asio_link::DNSProvider* dns_provider_;
 };
 
 #endif // __AUTH_SRV_H
