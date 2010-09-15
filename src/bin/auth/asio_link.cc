@@ -32,8 +32,8 @@
 
 #include <asio_link.h>
 
-#include <auth/auth_srv.h>
-#include <auth/common.h>
+#include "coroutine.h"
+#include "yield.h"
 
 using namespace asio;
 using asio::ip::udp;
@@ -43,6 +43,26 @@ using namespace std;
 using namespace isc::dns;
 
 namespace asio_link {
+
+// Constructors and destructors for the callback provider base classes.
+DNSProvider::DNSProvider() {}
+DNSProvider::~DNSProvider() {}
+
+bool
+DNSProvider::operator()(const IOMessage& io_message,
+                        isc::dns::Message& dns_message,
+                        isc::dns::MessageRenderer& renderer) const
+{
+    return (false);
+}
+
+CheckinProvider::CheckinProvider() {}
+CheckinProvider::~CheckinProvider() {}
+
+void
+CheckinProvider::operator()(void) const {}
+
+
 IOAddress::IOAddress(const string& address_str)
     // XXX: we cannot simply construct the address in the initialization list
     // because we'd like to throw our own exception on failure.
@@ -179,289 +199,225 @@ IOMessage::IOMessage(const void* data, const size_t data_size,
 {}
 
 //
-// Helper classes for asynchronous I/O using asio
+// Asynchronous TCP server coroutine
 //
-class TCPClient {
+class TCPServer : public coroutine {
 public:
-    TCPClient(AuthSrv* auth_server, io_service& io_service) :
-        auth_server_(auth_server),
-        socket_(io_service),
-        io_socket_(socket_),
-        response_buffer_(0),
-        responselen_buffer_(TCP_MESSAGE_LENGTHSIZE),
-        response_renderer_(response_buffer_),
-        dns_message_(Message::PARSE),
-        custom_callback_(NULL)
-    {}
+    explicit TCPServer(io_service& io_service,
+                       const ip::address& addr, const uint16_t port, 
+                       CheckinProvider* checkin = NULL,
+                       DNSProvider* process = NULL) :
+        checkin_callback_(checkin), dns_callback_(process)
+    {
 
-    void start() {
-        // Check for queued configuration commands
-        if (auth_server_ != NULL &&
-            auth_server_->configSession()->hasQueuedMsgs()) {
-            auth_server_->configSession()->checkCommand();
+        tcp::endpoint endpoint(addr, port);
+        acceptor_.reset(new tcp::acceptor(io_service));
+        acceptor_->open(endpoint.protocol());
+        // Set v6-only (we use a different instantiation for v4,
+        // otherwise asio will bind to both v4 and v6
+        if (addr.is_v6()) {
+            acceptor_->set_option(ip::v6_only(true));
         }
-        async_read(socket_, asio::buffer(data_, TCP_MESSAGE_LENGTHSIZE),
-                   boost::bind(&TCPClient::headerRead, this,
-                               placeholders::error,
-                               placeholders::bytes_transferred));
+        acceptor_->set_option(tcp::acceptor::reuse_address(true));
+        acceptor_->bind(endpoint);
+        acceptor_->listen();
     }
 
-    tcp::socket& getSocket() { return (socket_); }
-
-    void headerRead(const asio::error_code& error,
-                    size_t bytes_transferred)
-    {
-        if (!error) {
-            InputBuffer dnsbuffer(data_, bytes_transferred);
-
-            uint16_t msglen = dnsbuffer.readUint16();
-            async_read(socket_, asio::buffer(data_, msglen),
-                       boost::bind(&TCPClient::requestRead, this,
-                                   placeholders::error,
-                                   placeholders::bytes_transferred));
-        } else {
-            delete this;
+    void operator()(error_code ec = error_code(), size_t length = 0) {
+        if (ec) {
+            return;
         }
-    }
 
-    void requestRead(const asio::error_code& error,
-                     size_t bytes_transferred)
-    {
-        if (!error) {
-            const TCPEndpoint remote_endpoint(socket_.remote_endpoint());
-            const IOMessage io_message(data_, bytes_transferred, io_socket_,
-                                       remote_endpoint);
-            // currently, for testing purpose only
-            if (custom_callback_ != NULL) {
-                (*custom_callback_)(io_message);
-                start();
-                return;
+        reenter (this) {
+            do {
+                socket_.reset(new tcp::socket(acceptor_->get_io_service()));
+                yield acceptor_->async_accept(*socket_, *this);
+                fork TCPServer(*this)();
+            } while (is_parent());
+
+            // Perform any necessary operations prior to processing
+            // an incoming packet (e.g., checking for queued
+            // configuration messages).
+            if (checkin_callback_ != NULL) {
+                (*checkin_callback_)();
             }
 
-            if (auth_server_->processMessage(io_message, dns_message_,
-                                             response_renderer_)) {
-                responselen_buffer_.writeUint16(
-                    response_buffer_.getLength());
-                async_write(socket_,
-                            asio::buffer(
-                                responselen_buffer_.getData(),
-                                responselen_buffer_.getLength()),
-                            boost::bind(&TCPClient::responseWrite, this,
-                                        placeholders::error));
-            } else {
-                delete this;
+            // Instantiate the data buffer that will be used by the
+            // asynchronous read calls.
+            // data_.reset(new boost::array<char, MAX_LENGTH>);
+            data_ = boost::shared_ptr<char>(new char[MAX_LENGTH]);
+
+            yield async_read(*socket_,
+                             asio::buffer(data_.get(), TCP_MESSAGE_LENGTHSIZE),
+                             *this);
+
+            yield {
+                InputBuffer dnsbuffer((const void *) data_.get(), length);
+                uint16_t msglen = dnsbuffer.readUint16();
+                async_read(*socket_, asio::buffer(data_.get(), msglen), *this);
             }
-        } else {
-            delete this;
+
+            // Stop here if we don't have a DNS callback function
+            if (dns_callback_ == NULL) {
+                yield return;
+            }
+
+            // Instantiate the objects that will be used by the
+            // asynchronous write calls.
+            dns_message_.reset(new Message(Message::PARSE));
+            response_.reset(new OutputBuffer(0));
+            responselen_buffer_.reset(new OutputBuffer(TCP_MESSAGE_LENGTHSIZE));
+            renderer_.reset(new MessageRenderer(*response_));
+            io_socket_.reset(new TCPSocket(*socket_));
+            io_endpoint_.reset(new TCPEndpoint(socket_->remote_endpoint()));
+            io_message_.reset(new IOMessage(data_.get(), length, *io_socket_,
+                                            *io_endpoint_));
+
+            // Process the DNS message
+            if (! (*dns_callback_)(*io_message_, *dns_message_, *renderer_)) {
+                yield return;
+            }
+
+            responselen_buffer_->writeUint16(response_->getLength());
+            yield async_write(*socket_,
+                              asio::buffer(responselen_buffer_->getData(),
+                                           responselen_buffer_->getLength()),
+                              *this);
+            yield async_write(*socket_,
+                              asio::buffer(response_->getData(),
+                                           response_->getLength()),
+                              *this);
         }
-    }
-
-    void responseWrite(const asio::error_code& error) {
-        if (!error) {
-                async_write(socket_,
-                            asio::buffer(response_buffer_.getData(),
-                                         response_buffer_.getLength()),
-                            boost::bind(&TCPClient::handleWrite, this,
-                                        placeholders::error));
-        } else {
-            delete this;
-        }
-    }
-
-    void handleWrite(const asio::error_code& error) {
-        if (!error) {
-            start();            // handle next request, if any.
-      } else {
-            delete this;
-      }
-    }
-
-    // Currently this is for tests only
-    void setCallBack(const IOService::IOCallBack* callback) {
-        custom_callback_ = callback;
     }
 
 private:
-    AuthSrv* auth_server_;
-    tcp::socket socket_;
-    TCPSocket io_socket_;
-    OutputBuffer response_buffer_;
-    OutputBuffer responselen_buffer_;
-    MessageRenderer response_renderer_;
-    Message dns_message_;
     enum { MAX_LENGTH = 65535 };
     static const size_t TCP_MESSAGE_LENGTHSIZE = 2;
-    char data_[MAX_LENGTH];
 
-    // currently, for testing purpose only.
-    const IOService::IOCallBack* custom_callback_;
+    // All class member variables which are expected to persist across
+    // multiple invocations of the coroutine must be declared here as
+    // shared pointers, and instantiated in the constructor or in the
+    // coroutine itself.  When the coroutine is deleted, its destructor
+    // will free the memory.
+    boost::shared_ptr<tcp::acceptor> acceptor_;
+    boost::shared_ptr<tcp::socket> socket_;
+    boost::shared_ptr<OutputBuffer> response_;
+    boost::shared_ptr<OutputBuffer> responselen_buffer_;
+    boost::shared_ptr<MessageRenderer> renderer_;
+    boost::shared_ptr<Message> dns_message_;
+    boost::shared_ptr<IOMessage> io_message_;
+    boost::shared_ptr<TCPSocket> io_socket_;
+    boost::shared_ptr<TCPEndpoint> io_endpoint_;
+    boost::shared_ptr<char> data_;
+
+    // Callbacks
+    const CheckinProvider* checkin_callback_;
+    const DNSProvider* dns_callback_;
 };
 
-class TCPServer {
+//
+// Asynchronous UDP server coroutine
+//
+class UDPServer : public coroutine {
 public:
-    TCPServer(AuthSrv* auth_server, io_service& io_service,
-              const ip::address& addr, const uint16_t port) :
-        auth_server_(auth_server), io_service_(io_service),
-        acceptor_(io_service_), listening_(new TCPClient(auth_server_,
-                                                         io_service_)),
-        custom_callback_(NULL)
+    explicit UDPServer(io_service& io_service,
+                       const ip::address& addr, const uint16_t port,
+                       CheckinProvider* checkin = NULL,
+                       DNSProvider* process = NULL) :
+        checkin_callback_(checkin), dns_callback_(process)
     {
-        tcp::endpoint endpoint(addr, port);
-        acceptor_.open(endpoint.protocol());
-        // Set v6-only (we use a different instantiation for v4,
+        // Wwe use a different instantiation for v4,
         // otherwise asio will bind to both v4 and v6
         if (addr.is_v6()) {
-            acceptor_.set_option(ip::v6_only(true));
-        }
-        acceptor_.set_option(tcp::acceptor::reuse_address(true));
-        acceptor_.bind(endpoint);
-        acceptor_.listen();
-        acceptor_.async_accept(listening_->getSocket(),
-                               boost::bind(&TCPServer::handleAccept, this,
-                                           listening_, placeholders::error));
-    }
-
-    ~TCPServer() { delete listening_; }
-
-    void handleAccept(TCPClient* new_client,
-                      const asio::error_code& error)
-    {
-        if (!error) {
-            assert(new_client == listening_);
-            new_client->setCallBack(custom_callback_);
-            new_client->start();
-            listening_ = new TCPClient(auth_server_, io_service_);
-            acceptor_.async_accept(listening_->getSocket(),
-                                   boost::bind(&TCPServer::handleAccept,
-                                               this, listening_,
-                                               placeholders::error));
+            socket_.reset(new udp::socket(io_service, udp::v6()));
+            socket_->set_option(socket_base::reuse_address(true));
+            socket_->set_option(asio::ip::v6_only(true));
+            socket_->bind(udp::endpoint(udp::v6(), port));
         } else {
-            delete new_client;
+            socket_.reset(new udp::socket(io_service, udp::v4()));
+            socket_->set_option(socket_base::reuse_address(true));
+            socket_->bind(udp::endpoint(udp::v6(), port));
         }
     }
 
-    // Currently this is for tests only
-    void setCallBack(const IOService::IOCallBack* callback) {
-        custom_callback_ = callback;
-    }
-
-private:
-    AuthSrv* auth_server_;
-    io_service& io_service_;
-    tcp::acceptor acceptor_;
-    TCPClient* listening_;
-
-    // currently, for testing purpose only.
-    const IOService::IOCallBack* custom_callback_;
-};
-
-class UDPServer {
-public:
-    UDPServer(AuthSrv* auth_server, io_service& io_service,
-              const ip::address& addr, const uint16_t port) :
-        auth_server_(auth_server),
-        io_service_(io_service),
-        socket_(io_service, addr.is_v6() ? udp::v6() : udp::v4()),
-        io_socket_(socket_),
-        response_buffer_(0),
-        response_renderer_(response_buffer_),
-        dns_message_(Message::PARSE),
-        custom_callback_(NULL)
-    {
-        socket_.set_option(socket_base::reuse_address(true));
-        // Set v6-only (we use a different instantiation for v4,
-        // otherwise asio will bind to both v4 and v6
-        if (addr.is_v6()) {
-            socket_.set_option(asio::ip::v6_only(true));
-            socket_.bind(udp::endpoint(addr, port));
-        } else {
-            socket_.bind(udp::endpoint(addr, port));
-        }
-        startReceive();
-    }
-
-    void handleRequest(const asio::error_code& error,
-                       size_t bytes_recvd)
-    {
-        // Check for queued configuration commands
-        if (auth_server_ != NULL &&
-            auth_server_->configSession()->hasQueuedMsgs()) {
-            auth_server_->configSession()->checkCommand();
-        }
-        if (!error && bytes_recvd > 0) {
-            const UDPEndpoint remote_endpoint(sender_endpoint_);
-            const IOMessage io_message(data_, bytes_recvd, io_socket_,
-                                       remote_endpoint);
-            // currently, for testing purpose only
-            if (custom_callback_ != NULL) {
-                (*custom_callback_)(io_message);
-                startReceive();
-                return;
+    void operator()(error_code ec = error_code(), size_t length = 0) {
+        reenter (this) for (;;) {
+            // Instantiate the data buffer that will be used by the
+            // asynchronous read calls.
+            // data_.reset(new boost::array<char, MAX_LENGTH>);
+            data_ = boost::shared_ptr<char>(new char[MAX_LENGTH]);
+            sender_.reset(new udp::endpoint());
+            yield socket_->async_receive_from(asio::buffer(data_.get(),
+                                                           MAX_LENGTH),
+                                              *sender_, *this);
+            if (ec || length == 0) {
+                yield continue;
             }
 
-            dns_message_.clear(Message::PARSE);
-            response_renderer_.clear();
-            if (auth_server_->processMessage(io_message, dns_message_,
-                                             response_renderer_)) {
-                socket_.async_send_to(
-                    asio::buffer(response_buffer_.getData(),
-                                        response_buffer_.getLength()),
-                    sender_endpoint_,
-                    boost::bind(&UDPServer::sendCompleted,
-                                this,
-                                placeholders::error,
-                                placeholders::bytes_transferred));
-            } else {
-                startReceive();
+            bytes_ = length;
+            fork UDPServer(*this)();
+            if (is_child()) {
+                // Perform any necessary operations prior to processing
+                // an incoming packet (e.g., checking for queued
+                // configuration messages).
+                if (checkin_callback_ != NULL) {
+                    (*checkin_callback_)();
+                }
+
+                // Stop here if we don't have a DNS callback function
+                if (dns_callback_ == NULL) {
+                    yield return;
+                }
+    
+                // Instantiate the objects that will be used by the
+                // asynchronous write calls.
+                dns_message_.reset(new Message(Message::PARSE));
+                response_.reset(new OutputBuffer(0));
+                renderer_.reset(new MessageRenderer(*response_));
+                io_socket_.reset(new UDPSocket(*socket_));
+                io_endpoint_.reset(new UDPEndpoint(*sender_));
+                io_message_.reset(new IOMessage(data_.get(), bytes_,
+                                                *io_socket_,
+                                                *io_endpoint_));
+
+                // Process the DNS message
+                if (! (*dns_callback_)(*io_message_, *dns_message_, *renderer_))
+                {
+                    yield return;
+                }
+
+                yield socket_->async_send_to(asio::buffer(response_->getData(),
+                                                        response_->getLength()),
+                                             *sender_, *this);
             }
-        } else {
-            startReceive();
         }
     }
 
-    void sendCompleted(const asio::error_code& error UNUSED_PARAM,
-                       size_t bytes_sent UNUSED_PARAM)
-    {
-        // Even if error occurred there's nothing to do.  Simply handle
-        // the next request.
-        startReceive();
-    }
-
-    // Currently this is for tests only
-    void setCallBack(const IOService::IOCallBack* callback) {
-        custom_callback_ = callback;
-    }
 private:
-    void startReceive() {
-        socket_.async_receive_from(
-            asio::buffer(data_, MAX_LENGTH), sender_endpoint_,
-            boost::bind(&UDPServer::handleRequest, this,
-                        placeholders::error,
-                        placeholders::bytes_transferred));
-    }
-
-private:
-    AuthSrv* auth_server_;
-    io_service& io_service_;
-    udp::socket socket_;
-    UDPSocket io_socket_;
-    OutputBuffer response_buffer_;
-    MessageRenderer response_renderer_;
-    Message dns_message_;
-    udp::endpoint sender_endpoint_;
     enum { MAX_LENGTH = 4096 };
-    char data_[MAX_LENGTH];
 
-    // currently, for testing purpose only.
-    const IOService::IOCallBack* custom_callback_;
+    boost::shared_ptr<udp::socket> socket_;
+    boost::shared_ptr<udp::endpoint> sender_;
+    boost::shared_ptr<UDPEndpoint> io_endpoint_;
+    boost::shared_ptr<OutputBuffer> response_;
+    boost::shared_ptr<MessageRenderer> renderer_;
+    boost::shared_ptr<Message> dns_message_;
+    boost::shared_ptr<IOMessage> io_message_;
+    boost::shared_ptr<UDPSocket> io_socket_;
+    boost::shared_ptr<char> data_;
+    size_t bytes_;
+
+    // Callbacks
+    const CheckinProvider* checkin_callback_;
+    const DNSProvider* dns_callback_;
 };
 
 class IOServiceImpl {
 public:
-    IOServiceImpl(AuthSrv* auth_server, const char& port,
-                  const ip::address* v4addr, const ip::address* v6addr);
+    IOServiceImpl(const char& port,
+                  const ip::address* v4addr, const ip::address* v6addr,
+                  CheckinProvider* checkin, DNSProvider* process);
     asio::io_service io_service_;
-    AuthSrv* auth_server_;
 
     typedef boost::shared_ptr<UDPServer> UDPServerPtr;
     typedef boost::shared_ptr<TCPServer> TCPServerPtr;
@@ -469,15 +425,12 @@ public:
     UDPServerPtr udp6_server_;
     TCPServerPtr tcp4_server_;
     TCPServerPtr tcp6_server_;
-
-    // This member is used only for testing at the moment.
-    IOService::IOCallBack callback_;
 };
 
-IOServiceImpl::IOServiceImpl(AuthSrv* auth_server, const char& port,
+IOServiceImpl::IOServiceImpl(const char& port,
                              const ip::address* const v4addr,
-                             const ip::address* const v6addr) :
-    auth_server_(auth_server),
+                             const ip::address* const v6addr,
+                             CheckinProvider* checkin, DNSProvider* process) :
     udp4_server_(UDPServerPtr()), udp6_server_(UDPServerPtr()),
     tcp4_server_(TCPServerPtr()), tcp6_server_(TCPServerPtr())
 {
@@ -500,16 +453,24 @@ IOServiceImpl::IOServiceImpl(AuthSrv* auth_server, const char& port,
 
     try {
         if (v4addr != NULL) {
-            udp4_server_ = UDPServerPtr(new UDPServer(auth_server, io_service_,
-                                                      *v4addr, portnum));
-            tcp4_server_ = TCPServerPtr(new TCPServer(auth_server, io_service_,
-                                                      *v4addr, portnum));
+            udp4_server_ = UDPServerPtr(new UDPServer(io_service_,
+                                                      *v4addr, portnum,
+                                                      checkin, process));
+            (*udp4_server_)();
+            tcp4_server_ = TCPServerPtr(new TCPServer(io_service_,
+                                                      *v4addr, portnum,
+                                                      checkin, process));
+            (*tcp4_server_)();
         }
         if (v6addr != NULL) {
-            udp6_server_ = UDPServerPtr(new UDPServer(auth_server, io_service_,
-                                                      *v6addr, portnum));
-            tcp6_server_ = TCPServerPtr(new TCPServer(auth_server, io_service_,
-                                                      *v6addr, portnum));
+            udp6_server_ = UDPServerPtr(new UDPServer(io_service_,
+                                                      *v6addr, portnum,
+                                                      checkin, process));
+            (*udp6_server_)();
+            tcp6_server_ = TCPServerPtr(new TCPServer(io_service_,
+                                                      *v6addr, portnum,
+                                                      checkin, process));
+            (*tcp6_server_)();
         }
     } catch (const asio::system_error& err) {
         // We need to catch and convert any ASIO level exceptions.
@@ -520,8 +481,8 @@ IOServiceImpl::IOServiceImpl(AuthSrv* auth_server, const char& port,
     }
 }
 
-IOService::IOService(AuthSrv* auth_server, const char& port,
-                     const char& address) :
+IOService::IOService(const char& port, const char& address,
+                     CheckinProvider* checkin, DNSProvider* process) :
     impl_(NULL)
 {
     error_code err;
@@ -531,20 +492,23 @@ IOService::IOService(AuthSrv* auth_server, const char& port,
                   << err.message());
     }
 
-    impl_ = new IOServiceImpl(auth_server, port,
+    impl_ = new IOServiceImpl(port,
                               addr.is_v4() ? &addr : NULL,
-                              addr.is_v6() ? &addr : NULL);
+                              addr.is_v6() ? &addr : NULL,
+                              checkin, process);
 }
 
-IOService::IOService(AuthSrv* auth_server, const char& port,
-                     const bool use_ipv4, const bool use_ipv6) :
+IOService::IOService(const char& port,
+                     const bool use_ipv4, const bool use_ipv6,
+                     CheckinProvider* checkin, DNSProvider* process) :
     impl_(NULL)
 {
     const ip::address v4addr_any = ip::address(ip::address_v4::any());
     const ip::address* const v4addrp = use_ipv4 ? &v4addr_any : NULL; 
     const ip::address v6addr_any = ip::address(ip::address_v6::any());
     const ip::address* const v6addrp = use_ipv6 ? &v6addr_any : NULL;
-    impl_ = new IOServiceImpl(auth_server, port, v4addrp, v6addrp);
+    impl_ = new IOServiceImpl(port, v4addrp, v6addrp,
+                              checkin, process);
 }
 
 IOService::~IOService() {
@@ -566,20 +530,4 @@ IOService::get_io_service() {
     return (impl_->io_service_);
 }
 
-void
-IOService::setCallBack(const IOCallBack callback) {
-    impl_->callback_ = callback;
-    if (impl_->udp4_server_ != NULL) {
-        impl_->udp4_server_->setCallBack(&impl_->callback_);
-    }
-    if (impl_->udp6_server_ != NULL) {
-        impl_->udp6_server_->setCallBack(&impl_->callback_);
-    }
-    if (impl_->tcp4_server_ != NULL) {
-        impl_->tcp4_server_->setCallBack(&impl_->callback_);
-    }
-    if (impl_->tcp6_server_ != NULL) {
-        impl_->tcp6_server_->setCallBack(&impl_->callback_);
-    }
-}
 }

@@ -28,14 +28,15 @@
 
 #include <boost/function.hpp>
 
+#include <dns/message.h>
+#include <dns/messagerenderer.h>
+
 #include <exceptions/exceptions.h>
 
 namespace asio {
 // forward declaration for IOService::get_io_service() below
 class io_service;
 }
-
-class AuthSrv;
 
 /// \namespace asio_link
 /// \brief A wrapper interface for the ASIO library.
@@ -372,6 +373,71 @@ private:
     const IOEndpoint& remote_endpoint_;
 };
 
+/// \brief The \c DNSProvider class is an abstract base class for a DNS
+/// provider function.
+///
+/// Specific derived class implementations are hidden within the
+/// implementation.  Instances of the derived classes can be called
+/// as functions via the operator() interface.  Pointers to these
+/// instances can then be provided to the \c IOService class
+/// via its constructor.
+class DNSProvider {
+    ///
+    /// \name Constructors and Destructor
+    ///
+    /// Note: The copy constructor and the assignment operator are
+    /// intentionally defined as private, making this class non-copyable.
+    //@{
+private:
+    DNSProvider(const DNSProvider& source);
+    DNSProvider& operator=(const DNSProvider& source);
+protected:
+    /// \brief The default constructor.
+    ///
+    /// This is intentionally defined as \c protected as this base class
+    /// should never be instantiated (except as part of a derived class).
+    DNSProvider();
+public:
+    /// \brief The destructor
+    virtual ~DNSProvider();
+    //@}
+    virtual bool operator()(const IOMessage& io_message,
+                            isc::dns::Message& dns_message,
+                            isc::dns::MessageRenderer& renderer) const;
+};
+
+/// \brief The \c CheckinProvider class is an abstract base class for a
+/// checkin function.
+///
+/// Specific derived class implementations are hidden within the
+/// implementation.  Instances of the derived classes can be called
+/// as functions via the operator() interface.  Pointers to these
+/// instances can then be provided to the \c IOService class
+/// via its constructor.
+class CheckinProvider {
+    ///
+    /// \name Constructors and Destructor
+    ///
+    /// Note: The copy constructor and the assignment operator are
+    /// intentionally defined as private, making this class non-copyable.
+    //@{
+private:
+    CheckinProvider(const CheckinProvider& source);
+    CheckinProvider& operator=(const CheckinProvider& source);
+protected:
+    /// \brief The default constructor.
+    ///
+    /// This is intentionally defined as \c protected as this base class
+    /// should never be instantiated (except as part of a derived class).
+    CheckinProvider();
+    //@}
+public:
+    /// \brief The destructor
+    virtual ~CheckinProvider();
+    //@}
+    virtual void operator()(void) const;
+};
+
 /// \brief The \c IOService class is a wrapper for the ASIO \c io_service
 /// class.
 ///
@@ -395,15 +461,16 @@ private:
 public:
     /// \brief The constructor with a specific IP address and port on which
     /// the services listen on.
-    IOService(AuthSrv* auth_server, const char& port, const char& address);
+    IOService(const char& port, const char& address,
+              CheckinProvider* checkin, DNSProvider* process);
     /// \brief The constructor with a specific port on which the services
     /// listen on.
     ///
     /// It effectively listens on "any" IPv4 and/or IPv6 addresses.
     /// IPv4/IPv6 services will be available if and only if \c use_ipv4
     /// or \c use_ipv6 is \c true, respectively.
-    IOService(AuthSrv* auth_server, const char& port,
-              const bool use_ipv4, const bool use_ipv6);
+    IOService(const char& port, const bool use_ipv4, const bool use_ipv6,
+              CheckinProvider* checkin, DNSProvider* process);
     /// \brief The destructor.
     ~IOService();
     //@}
@@ -426,24 +493,10 @@ public:
     /// It will eventually be removed once the wrapper interface is
     /// generalized.
     asio::io_service& get_io_service();
-
-    /// \brief A functor(-like) class that specifies a custom call back
-    /// invoked from the event loop instead of the embedded authoritative
-    /// server callbacks.
-    ///
-    /// Currently, the callback is intended to be used only for testing
-    /// purposes.  But we'll need a generic callback type like this to
-    /// generalize the wrapper interface.
-    typedef boost::function<void(const IOMessage& io_message)> IOCallBack;
-
-    /// \brief Set the custom call back invoked from the event loop.
-    ///
-    /// Right now this method is only for testing, but will eventually be
-    /// generalized.
-    void setCallBack(IOCallBack callback);
 private:
     IOServiceImpl* impl_;
 };
+
 }      // asio_link
 #endif // __ASIO_LINK_H
 

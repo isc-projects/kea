@@ -14,15 +14,8 @@
 
 // $Id$
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
 
-#include <stdint.h>
-
-#include <functional>
-#include <string>
-#include <vector>
+#include <config.h>
 
 #include <gtest/gtest.h>
 
@@ -90,55 +83,52 @@ TEST(IOSocketTest, dummySockets) {
 }
 
 TEST(IOServiceTest, badPort) {
-    EXPECT_THROW(IOService(NULL, *"65536", true, false), IOError);
-    EXPECT_THROW(IOService(NULL, *"5300.0", true, false), IOError);
-    EXPECT_THROW(IOService(NULL, *"-1", true, false), IOError);
-    EXPECT_THROW(IOService(NULL, *"domain", true, false), IOError);
+    EXPECT_THROW(IOService(*"65536", true, false, NULL, NULL), IOError);
+    EXPECT_THROW(IOService(*"5300.0", true, false, NULL, NULL), IOError);
+    EXPECT_THROW(IOService(*"-1", true, false, NULL, NULL), IOError);
+    EXPECT_THROW(IOService(*"domain", true, false, NULL, NULL), IOError);
 }
 
 TEST(IOServiceTest, badAddress) {
-    EXPECT_THROW(IOService(NULL, *TEST_PORT, *"192.0.2.1.1"),
-                 IOError);
-    EXPECT_THROW(IOService(NULL, *TEST_PORT, *"2001:db8:::1"),
-                 IOError);
-    EXPECT_THROW(IOService(NULL, *TEST_PORT, *"localhost"),
-                 IOError);
+    EXPECT_THROW(IOService(*TEST_PORT, *"192.0.2.1.1", NULL, NULL), IOError);
+    EXPECT_THROW(IOService(*TEST_PORT, *"2001:db8:::1", NULL, NULL), IOError);
+    EXPECT_THROW(IOService(*TEST_PORT, *"localhost", NULL, NULL), IOError);
 }
 
 TEST(IOServiceTest, unavailableAddress) {
     // These addresses should generally be unavailable as a valid local
     // address, although there's no guarantee in theory.
-    EXPECT_THROW(IOService(NULL, *TEST_PORT, *"255.255.0.0"), IOError);
+    EXPECT_THROW(IOService(*TEST_PORT, *"255.255.0.0", NULL, NULL), IOError);
 
     // Some OSes would simply reject binding attempt for an AF_INET6 socket
     // to an IPv4-mapped IPv6 address.  Even if those that allow it, since
     // the corresponding IPv4 address is the same as the one used in the
     // AF_INET socket case above, it should at least show the same result
     // as the previous one.
-    EXPECT_THROW(IOService(NULL, *TEST_PORT, *"::ffff:255.255.0.0"), IOError);
+    EXPECT_THROW(IOService(*TEST_PORT, *"::ffff:255.255.0.0", NULL, NULL), IOError);
 }
 
 TEST(IOServiceTest, duplicateBind) {
     // In each sub test case, second attempt should fail due to duplicate bind
 
     // IPv6, "any" address
-    IOService* io_service = new IOService(NULL, *TEST_PORT, false, true);
-    EXPECT_THROW(IOService(NULL, *TEST_PORT, false, true), IOError);
+    IOService* io_service = new IOService(*TEST_PORT, false, true, NULL, NULL);
+    EXPECT_THROW(IOService(*TEST_PORT, false, true, NULL, NULL), IOError);
     delete io_service;
 
     // IPv6, specific address
-    io_service = new IOService(NULL, *TEST_PORT, *TEST_IPV6_ADDR);
-    EXPECT_THROW(IOService(NULL, *TEST_PORT, *TEST_IPV6_ADDR), IOError);
+    io_service = new IOService(*TEST_PORT, *TEST_IPV6_ADDR, NULL, NULL);
+    EXPECT_THROW(IOService(*TEST_PORT, *TEST_IPV6_ADDR, NULL, NULL), IOError);
     delete io_service;
 
     // IPv4, "any" address
-    io_service = new IOService(NULL, *TEST_PORT, true, false);
-    EXPECT_THROW(IOService(NULL, *TEST_PORT, true, false), IOError);
+    io_service = new IOService(*TEST_PORT, true, false, NULL, NULL);
+    EXPECT_THROW(IOService(*TEST_PORT, true, false, NULL, NULL), IOError);
     delete io_service;
 
     // IPv4, specific address
-    io_service = new IOService(NULL, *TEST_PORT, *TEST_IPV4_ADDR);
-    EXPECT_THROW(IOService(NULL, *TEST_PORT, *TEST_IPV4_ADDR), IOError);
+    io_service = new IOService(*TEST_PORT, *TEST_IPV4_ADDR, NULL, NULL);
+    EXPECT_THROW(IOService(*TEST_PORT, *TEST_IPV4_ADDR, NULL, NULL), IOError);
     delete io_service;
 }
 
@@ -168,12 +158,12 @@ resolveAddress(const int family, const int sock_type, const int protocol) {
 // to the service that would run in the IOService object.
 // A mock callback function (an ASIOCallBack object) is registered with the
 // IOService object, so the test code should be able to examine the data
-// receives on the server side.  It then checks the received data matches
+// received on the server side.  It then checks the received data matches
 // expected parameters.
 // If initialization parameters of the IOService should be modified, the test
 // case can do it using the setIOService() method.
 // Note: the set of tests in ASIOLinkTest use actual network services and may
-// involve undesirable side effect such as blocking.
+// involve undesirable side effects such as blocking.
 class ASIOLinkTest : public ::testing::Test {
 protected:
     ASIOLinkTest();
@@ -219,14 +209,14 @@ protected:
     void setIOService(const char& address) {
         delete io_service_;
         io_service_ = NULL;
-        io_service_ = new IOService(NULL, *TEST_PORT, address);
-        io_service_->setCallBack(ASIOCallBack(this));
+        ASIOCallBack* cb = new ASIOCallBack(this);
+        io_service_ = new IOService(*TEST_PORT, address, NULL, cb);
     }
     void setIOService(const bool use_ipv4, const bool use_ipv6) {
         delete io_service_;
         io_service_ = NULL;
-        io_service_ = new IOService(NULL, *TEST_PORT, use_ipv4, use_ipv6);
-        io_service_->setCallBack(ASIOCallBack(this));
+        ASIOCallBack* cb = new ASIOCallBack(this);
+        io_service_ = new IOService(*TEST_PORT, use_ipv4, use_ipv6, NULL, cb);
     }
     void doTest(const int family, const int protocol) {
         if (protocol == IPPROTO_UDP) {
@@ -253,11 +243,15 @@ protected:
                             expected_data, expected_datasize);
     }
 private:
-    class ASIOCallBack : public std::unary_function<IOMessage, void> {
+    class ASIOCallBack : public DNSProvider {
     public:
         ASIOCallBack(ASIOLinkTest* test_obj) : test_obj_(test_obj) {}
-        void operator()(const IOMessage& io_message) const {
+        bool operator()(const IOMessage& io_message,
+                        isc::dns::Message& dns_message UNUSED_PARAM,
+                        isc::dns::MessageRenderer& renderer UNUSED_PARAM) const
+        {
             test_obj_->callBack(io_message);
+            return (true);
         }
     private:
         ASIOLinkTest* test_obj_;
