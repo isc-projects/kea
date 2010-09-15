@@ -1,4 +1,9 @@
-  91.	[bug]		jinmei
+  94.	[bug]		jelte
+  	bin/xfrout:  Fixed a problem in xfrout where only 2 or 3 RRs
+	were used per DNS message in the xfrout stream.
+	(Trac #334, r2931)
+
+  93.	[bug]		jinmei
 	lib/datasrc: A DS query could crash the library (and therefore,
 	e.g. the authoritative server) if some RR of the same apex name
 	is stored in the hot spot cache.  (Trac #307, svn r2923)
