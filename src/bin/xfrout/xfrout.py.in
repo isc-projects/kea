@@ -481,8 +481,8 @@ class XfroutServer:
             zone_name = args.get('zone_name')
             zone_class = args.get('zone_class')
             if zone_name and zone_class:
-                self._log.log_message("info", "Receive notify command for zone:'%s/%s'" \
-                                     % (zone_name, zone_class))
+                self._log.log_message("info", "zone '%s/%s': receive notify others command" \
+                                       % (zone_name, zone_class))
                 self.send_notify(zone_name, zone_class)
                 answer = create_answer(0)
             else:
