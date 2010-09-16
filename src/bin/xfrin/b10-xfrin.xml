@@ -103,34 +103,53 @@
     </para>
 
 <!-- TODO: formating -->
-<!-- TODO: refresh is code but not in spec -->
-<!-- schedule immediate maintenance for a zone(check soa serial ) -->
     <para>
       The configuration commands are:
     </para>
 
     <para>
-     <command>notify</command>
-TODO: what is difference from refresh_from_zonemgr ?
+      <command>notify</command> is sent by
+      <citerefentry><refentrytitle>b10-zonemgr</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      when a DNS NOTIFY message is received to initiate a zone
+      transfer.
+<!-- TODO: document that zonemgr or xfrin checks if it needs to or not -->
+      This is an internal command and not exposed to the administrator.
+<!-- not defined in spec -->
     </para>
 
     <para>
-      <command>refresh</command>
-Same as retransfer except it checks the SOA serial first.
-TODO more detail
+      <command>refresh</command> triggers the transfer in for
+      a single zone.
+      It is the same as <command>retransfer</command> except it
+      checks the SOA serial first.
+<!-- TODO more detail -->
+      This is an internal command and not exposed to the administrator.
+<!-- not defined in spec -->
+<!-- TODO: refresh is code but not in spec, see trac ticket #328 -->
     </para>
 
     <para>
-      <command>refresh_from_zonemgr</command>
+      <command>refresh_from_zonemgr</command> is sent by
+      <citerefentry><refentrytitle>b10-zonemgr</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      according to the SOA's REFRESH time
+      to tell <command>b10-xfrin</command> that the zone needs to do
+      a zone refresh.
+      This is an internal command and not exposed to the administrator. 
+<!-- not defined in spec -->
     </para>
 
     <para>
       <command>retransfer</command> triggers the transfer in for
       a single zone without checking the zone's serial number.
       It has the following arguments: <varname>zone_name</varname>
-      to define the zone to request and <varname>master</varname>
-      to define the IP address of the authoritative server to
-      transfer from.
+      to define the zone to request,
+      <varname>zone_class</varname> to define the class (defaults to
+      <quote>IN</quote>),
+      <varname>master</varname> to define the IP address of
+      the authoritative server to transfer from,
+      and <varname>port</varname> to define the port number on the
+      authoritative server (defaults to 53).
+<!-- TODO: note: not documenting db_file since that will be removed. -->
      </para>
 <!-- TODO: later hostname for master? -->
 
@@ -141,11 +160,6 @@ TODO more detail
     </para>
 <!-- TODO:
 add a usage example of xfrin -->
-
-<!-- TODO:
-
-port (defaults to 53)
-db_file (defaults to zone.sqlite3) --> <!-- TODO: fix this -->
 
 <!-- TODO:
 
