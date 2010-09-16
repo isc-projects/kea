@@ -44,25 +44,6 @@ using namespace isc::dns;
 
 namespace asiolink {
 
-// Constructors and destructors for the callback provider base classes.
-DNSProvider::DNSProvider() {}
-DNSProvider::~DNSProvider() {}
-
-bool
-DNSProvider::operator()(const IOMessage& io_message,
-                        isc::dns::Message& dns_message,
-                        isc::dns::MessageRenderer& renderer) const
-{
-    return (false);
-}
-
-CheckinProvider::CheckinProvider() {}
-CheckinProvider::~CheckinProvider() {}
-
-void
-CheckinProvider::operator()(void) const {}
-
-
 IOAddress::IOAddress(const string& address_str)
     // XXX: we cannot simply construct the address in the initialization list
     // because we'd like to throw our own exception on failure.
@@ -294,11 +275,15 @@ private:
     enum { MAX_LENGTH = 65535 };
     static const size_t TCP_MESSAGE_LENGTHSIZE = 2;
 
-    // All class member variables which are expected to persist across
-    // multiple invocations of the coroutine must be declared here as
-    // shared pointers, and instantiated in the constructor or in the
-    // coroutine itself.  When the coroutine is deleted, its destructor
-    // will free the memory.
+    // Class member variables which are dynamic, and changes to which
+    // are expected to be accessible from both sides of a coroutine fork,
+    // should be declared here as shared pointers and allocated in the
+    // constructor or in the coroutine itself.  (Forking a new coroutine
+    // causes class members to be copied, not referenced, so without using
+    // this approach, when a variable is changed by a "parent" coroutine
+    // the change might not be visible to the "child".  Using shared_ptr<>
+    // ensures that when all coroutines using this data are deleted, the
+    // memory will be freed.)
     boost::shared_ptr<tcp::acceptor> acceptor_;
     boost::shared_ptr<tcp::socket> socket_;
     boost::shared_ptr<OutputBuffer> response_;
@@ -347,55 +332,62 @@ public:
             // data_.reset(new boost::array<char, MAX_LENGTH>);
             data_ = boost::shared_ptr<char>(new char[MAX_LENGTH]);
             sender_.reset(new udp::endpoint());
-            yield socket_->async_receive_from(asio::buffer(data_.get(),
-                                                           MAX_LENGTH),
-                                              *sender_, *this);
-            if (ec || length == 0) {
-                yield continue;
-            }
+
+            do {
+                yield socket_->async_receive_from(asio::buffer(data_.get(),
+                                                               MAX_LENGTH),
+                                                  *sender_, *this);
+            } while (ec || length == 0);
 
             bytes_ = length;
             fork UDPServer(*this)();
-            if (is_child()) {
-                // Perform any necessary operations prior to processing
-                // an incoming packet (e.g., checking for queued
-                // configuration messages).
-                if (checkin_callback_ != NULL) {
-                    (*checkin_callback_)();
-                }
-
-                // Stop here if we don't have a DNS callback function
-                if (dns_callback_ == NULL) {
-                    yield return;
-                }
-    
-                // Instantiate the objects that will be used by the
-                // asynchronous write calls.
-                dns_message_.reset(new Message(Message::PARSE));
-                response_.reset(new OutputBuffer(0));
-                renderer_.reset(new MessageRenderer(*response_));
-                io_socket_.reset(new UDPSocket(*socket_));
-                io_endpoint_.reset(new UDPEndpoint(*sender_));
-                io_message_.reset(new IOMessage(data_.get(), bytes_,
-                                                *io_socket_,
-                                                *io_endpoint_));
-
-                // Process the DNS message
-                if (! (*dns_callback_)(*io_message_, *dns_message_, *renderer_))
-                {
-                    yield return;
-                }
-
-                yield socket_->async_send_to(asio::buffer(response_->getData(),
-                                                        response_->getLength()),
-                                             *sender_, *this);
+            if (is_parent()) {
+                continue;
             }
+
+            // Perform any necessary operations prior to processing
+            // an incoming packet (e.g., checking for queued
+            // configuration messages).
+            if (checkin_callback_ != NULL) {
+                (*checkin_callback_)();
+            }
+
+            // Stop here if we don't have a DNS callback function
+            if (dns_callback_ == NULL) {
+                yield return;
+            }
+
+            // Instantiate the objects that will be used by the
+            // asynchronous write calls.
+            dns_message_.reset(new Message(Message::PARSE));
+            response_.reset(new OutputBuffer(0));
+            renderer_.reset(new MessageRenderer(*response_));
+            io_socket_.reset(new UDPSocket(*socket_));
+            io_endpoint_.reset(new UDPEndpoint(*sender_));
+            io_message_.reset(new IOMessage(data_.get(), bytes_,
+                                            *io_socket_,
+                                            *io_endpoint_));
+
+            // Process the DNS message
+            if (! (*dns_callback_)(*io_message_, *dns_message_, *renderer_))
+            {
+                yield return;
+            }
+
+            yield socket_->async_send_to(asio::buffer(response_->getData(),
+                                                    response_->getLength()),
+                                         *sender_, *this);
         }
     }
 
 private:
     enum { MAX_LENGTH = 4096 };
 
+    // As mentioned in the comments to TCPServer, class member variables
+    // which are dynamic, and changes to which are expected to be
+    // accessible from both sides of a coroutine fork, should be
+    // declared here as shared pointers and allocated in the
+    // constructor or in the coroutine.
     boost::shared_ptr<udp::socket> socket_;
     boost::shared_ptr<udp::endpoint> sender_;
     boost::shared_ptr<UDPEndpoint> io_endpoint_;

@@ -74,8 +74,13 @@ public:
     isc::data::ConstElementPtr updateConfig(isc::data::ConstElementPtr config);
     isc::config::ModuleCCSession* configSession() const;
     void setConfigSession(isc::config::ModuleCCSession* config_session);
-    asiolink::CheckinProvider* getCheckinProvider();
-    asiolink::DNSProvider* getDNSProvider();
+
+    asiolink::DNSProvider* getDNSProvider() {
+        return (dns_provider_);
+    }
+    asiolink::CheckinProvider* getCheckinProvider() {
+        return (checkin_provider_);
+    }
 
     ///
     /// Note: this interface is tentative.  We'll revisit the ASIO and session
