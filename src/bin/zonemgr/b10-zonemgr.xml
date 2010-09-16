@@ -25,14 +25,14 @@
   </refentryinfo>
 
   <refmeta>
-    <refentrytitle>b10-xfrin</refentrytitle>
+    <refentrytitle>b10-zonemgr</refentrytitle>
     <manvolnum>8</manvolnum>
     <refmiscinfo>BIND10</refmiscinfo>
   </refmeta>
 
   <refnamediv>
-    <refname>b10-xfrin</refname>
-    <refpurpose>Incoming DNS zone transfer service</refpurpose>
+    <refname>b10-zonemgr</refname>
+    <refpurpose>BIND 10 Secondary zone manager</refpurpose>
   </refnamediv>
 
   <docinfo>
@@ -44,41 +44,48 @@
 
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>b10-xfrin</command>
-<!--
-      <arg><option>-p <replaceable>number</replaceable></option></arg>
+      <command>b10-zonemgr</command>
       <arg><option>-v</option></arg>
--->
+      <arg><option>--verbose</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
   <refsect1>
     <title>DESCRIPTION</title>
-    <para>The <command>b10-xfrin</command> daemon provides the BIND 10
-      incoming DNS zone transfer service.
+    <para>The <command>b10-zonemgr</command> daemon, also known
+      as the BIND 10 secondary manager, keeps track of timers
+      and other information necessary for BIND 10 to act as a DNS slave.
       Normally it is started by the
       <citerefentry><refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum></citerefentry>
       boss process.
-      When triggered it can request and receive a zone transfer and store
-      the zone in a BIND 10 zone data store.
     </para>
-
-    <note><simpara>
-      The Y1 prototype release only supports AXFR. IXFR is not implemented.
-    </simpara></note>
 
     <para>
       This daemon communicates with BIND 10 over a
       <citerefentry><refentrytitle>b10-msgq</refentrytitle><manvolnum>8</manvolnum></citerefentry>
       C-Channel connection.  If this connection is not established,
-      <command>b10-xfrin</command> will exit.
-<!-- TODO what if connection closes later, will b10-xfrin exit? -->
+      <command>b10-zonemgr</command> will exit.
+<!-- TODO what if connection closes later, will b10-zonemgr exit? -->
     </para>
 
     <para>
-     <command>b10-xfrin</command> receives its configurations from
+     <command>b10-zonemgr</command> receives its configurations from
 <citerefentry><refentrytitle>b10-cfgmgr</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
     </para>
+
+<!--
+
+            self._send_command(XFRIN_MODULE_NAME, ZONE_NOTIFY_COMMAND, param) 
+            self._clear_zone_notifier_master(zone_name_class)
+        # Send refresh command to xfrin module
+        else:
+            param = {"zone_name" : zone_name_class[0],
+                     "zone_class" : zone_name_class[1]
+                    }
+            self._send_command(XFRIN_MODULE_NAME, ZONE_REFRESH_COMMAND, param)
+
+-->
+
   </refsect1>
 
   <refsect1>
@@ -86,92 +93,48 @@
     <para>
       The configurable settings are:
     </para>
-
-    <para><varname>master_addr</varname>
-<!-- TODO: how can there be a single setting for this? -->
-       The default is 127.0.0.1.
-    </para>
-
-    <para><varname>master_port</varname>
-<!-- TODO: what if custom is needed per zone? -->
-      The default is 53.
-    </para>
-
-    <para><varname>transfers-in</varname>
-      defines the maximum number of inbound zone transfers
+<!--
+    <para>
+      <varname>transfers-out</varname>
+      defines the maximum number of outgoing zone transfers
       that can run concurrently. The default is 10.
     </para>
+-->
 
 <!-- TODO: formating -->
-<!-- TODO: refresh is code but not in spec -->
-<!-- schedule immediate maintenance for a zone(check soa serial ) -->
     <para>
       The configuration commands are:
     </para>
-
     <para>
-     <command>notify</command>
-TODO: what is difference from refresh_from_zonemgr ?
+      <command>notify</command> (sent by
+      <command>b10-auth</command>) tells <command>b10-zonemgr</command>
+      the zone name and class, and the IP address for the master
+      (source of the NOTIFY message).
+      This will set the zone's refresh time to now.
+<!-- TODO reword this -->
     </para>
 
     <para>
-      <command>refresh</command>
-Same as retransfer except it checks the SOA serial first.
-TODO more detail
+      <command>shutdown</command> exits <command>b10-zonemgr</command>.
+      (Note that the BIND 10 boss process will restart this service.)
     </para>
 
     <para>
-      <command>refresh_from_zonemgr</command>
+      <command>zone_new_data_ready</command> is sent from
+      <command>b10-xfrin</command> to indicate that the zone transferred
+      in successfully.
     </para>
 
     <para>
-      <command>retransfer</command> triggers the transfer in for
-      a single zone without checking the zone's serial number.
-      It has the following arguments: <varname>zone_name</varname>
-      to define the zone to request and <varname>master</varname>
-      to define the IP address of the authoritative server to
-      transfer from.
-     </para>
-<!-- TODO: later hostname for master? -->
-
-    <para>
-      <command>shutdown</command> stops all incoming zone transfers
-      and exits <command>b10-xfrin</command>. (Note that the BIND 10
-      boss process will restart this service.)
-    </para>
-<!-- TODO:
-add a usage example of xfrin -->
-
-<!-- TODO:
-
-port (defaults to 53)
-db_file (defaults to zone.sqlite3) --> <!-- TODO: fix this -->
-
-<!-- TODO:
-
- later it will can be triggered by :
-1.  Notify message from auth server.
-2.  Schedule zone transfer (determined by Refresh/Expire time in SOA record)
-
-> - what is planned to add to or change for xfrin?
-1.  Support IXFR.
-2.  Add command "refresh"
-3.  Process zone NOTIFY message.
-4.  Schedule zone maintenance for all zones.
-
+      <command>zone_xfrin_failed</command> is sent from
+      <command>b10-xfrin</command> to indicate a failure
+      (such as transfer-in was incomplete).
+      The refresh timer for the zone is reset.
+<!--
+        """Set zone next refresh time after zone refresh fail.
+           now + retry*3/4 <= next_refresh_time <= now + retry
 -->
-
-    <note><para>
-      This prototype version uses SQLite3 as its data source backend.
-      Future versions will be configurable, supporting multiple
-      data storage types.
-    </para></note>
-
-<!-- TODO:
- it can handle more than one XFR in now, 
-but the problem is If SQLITE3 datasource part support multiple write
-operation
--->
+    </para>
 
   </refsect1>
 
@@ -196,6 +159,7 @@ operation
   <refsect1>
     <title>FILES</title>
     <para>
+    <filename>/tmp/auth_xfrout_conn</filename>
     </para>
   </refsect1>
 -->
@@ -204,13 +168,19 @@ operation
     <title>SEE ALSO</title>
     <para>
       <citerefentry>
+        <refentrytitle>b10-auth</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
         <refentrytitle>b10-cfgmgr</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
         <refentrytitle>b10-msgq</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
-        <refentrytitle>b10-zonemgr</refentrytitle><manvolnum>8</manvolnum>
+        <refentrytitle>b10-xfrin</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>b10-xfrout</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
         <refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum>
@@ -222,8 +192,8 @@ operation
   <refsect1>
     <title>HISTORY</title>
     <para>
-      The <command>b10-xfrin</command> daemon was implemented in March 2010
-      by Zhang Likun of CNNIC for the ISC BIND 10 project.
+      The <command>b10-zonemgr</command> daemon was designed in July 2010
+      by CNNIC for the ISC BIND 10 project.
     </para>
   </refsect1>
 </refentry><!--
