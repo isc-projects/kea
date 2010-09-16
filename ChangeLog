@@ -1,3 +1,7 @@
+  95.	[doc]		jreed
+	Add b10-zonemgr manual page. Update other docs to introduce
+	this secondary manager. (Trac #341, svn r2951)
+
   95.	[bug]		jreed
 	bin/xfrout and bin/zonemgr: Fixed some stderr output.
 	(Trac #342, svn r2949)
