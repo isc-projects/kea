@@ -320,7 +320,7 @@ class UnixSockServer(ThreadingUnixStreamServer):
             try:
                 os.unlink(sock_file)
             except OSError as err:
-                sys.stderr.write('[b10-xfrout] Fail to remove file %s: %s' % (sock_file, err))
+                sys.stderr.write('[b10-xfrout] Fail to remove file %s: %s\n' % (sock_file, err))
                 sys.exit(0)
    
     def _sock_file_in_use(self, sock_file):
@@ -520,15 +520,15 @@ if '__main__' == __name__:
         xfrout_server = XfroutServer()
         xfrout_server.run()
     except KeyboardInterrupt:
-        sys.stderr.write("[b10-xfrout] exit xfrout process")
+        sys.stderr.write("[b10-xfrout] exit xfrout process\n")
     except SessionError as e:
         sys.stderr.write("[b10-xfrout] Error creating xfrout, "
-                           "is the command channel daemon running?")
+                           "is the command channel daemon running?\n")
     except SessionTimeout as e:
         sys.stderr.write("[b10-xfrout] Error creating xfrout, " 
-                           "is the configuration manager running?")
+                           "is the configuration manager running?\n")
     except ModuleCCSessionError as e:
-        sys.stderr.write("info", '[b10-xfrout] exit xfrout process:', e)
+        sys.stderr.write("[b10-xfrout] exit xfrout process:%s\n" % str(e))
 
     if xfrout_server:
         xfrout_server.shutdown()

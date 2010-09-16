@@ -513,15 +513,15 @@ if '__main__' == __name__:
         zonemgrd = Zonemgr()
         zonemgrd.run()
     except KeyboardInterrupt:
-        sys.stderr.write("[b10-zonemgr] exit zonemgr process")
+        sys.stderr.write("[b10-zonemgr] exit zonemgr process\n")
     except isc.cc.session.SessionError as e:
         sys.stderr.write("[b10-zonemgr] Error creating zonemgr, " 
-                           "is the command channel daemon running?")
+                           "is the command channel daemon running?\n")
     except isc.cc.session.SessionTimeout as e:
         sys.stderr.write("[b10-zonemgr] Error creating zonemgr, " 
-                           "is the configuration manager running?")
+                           "is the configuration manager running?\n")
     except isc.config.ModuleCCSessionError as e:
-        sys.stderr.write("info", "[b10-zonemgr] exit zonemgr process:", e)
+        sys.stderr.write("[b10-zonemgr] exit zonemgr process: %s\n" % str(e))
 
     if zonemgrd:
         zonemgrd.shutdown()
