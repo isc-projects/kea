@@ -735,7 +735,12 @@ def main():
 
         for fd in rlist + xlist:
             if fd == ccs_fd:
-                boss_of_bind.ccs.check_command()
+                try:
+                    boss_of_bind.ccs.check_command()
+                except isc.cc.session.ProtocolError:
+                    if options.verbose:
+                        sys.stderr.write("[bind10] msgq channel disappeared.\n")
+                    break
             elif fd == wakeup_fd:
                 os.read(wakeup_fd, 32)
 
