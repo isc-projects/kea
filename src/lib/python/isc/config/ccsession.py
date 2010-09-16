@@ -177,10 +177,14 @@ class ModuleCCSession(ConfigData):
     def check_command(self):
         """Check whether there is a command or configuration update
            on the channel. Call the corresponding callback function if
-           there is."""
-        msg, env = self._session.group_recvmsg(False)
+           there is. This function does a non-blocking read on the
+           cc session, and returns nothing. It will respond to any
+           command by either an error or the answer message returned
+           by the callback, unless the latter is None."""
+        msg, env = self._session.group_recvmsg(True)
+        
         # should we default to an answer? success-by-default? unhandled error?
-        if msg and not 'result' in msg:
+        if msg is not None and not 'result' in msg:
             answer = None
             try:
                 module_name = env['group']
@@ -244,6 +248,8 @@ class ModuleCCSession(ConfigData):
            also subscribes to the channel of the remote module name
            to receive the relevant updates. It is not possible to
            specify your own handler for this right now.
+           start() must have been called on this CCSession
+           prior to the call to this method.
            Returns the name of the module."""
         module_spec = isc.config.module_spec_from_file(spec_file_name)
         module_cfg = ConfigData(module_spec)
@@ -252,7 +258,13 @@ class ModuleCCSession(ConfigData):
 
         # Get the current config for that module now
         seq = self._session.group_sendmsg(create_command(COMMAND_GET_CONFIG, { "module_name": module_name }), "ConfigManager")
-        answer, env = self._session.group_recvmsg(False, seq)
+
+        try:
+            answer, env = self._session.group_recvmsg(False, seq)
+        except isc.cc.SessionTimeout:
+            raise ModuleCCSessionError("No answer from ConfigManager when "
+                                       "asking about Remote module " +
+                                       module_name)
         if answer:
             rcode, value = parse_answer(answer)
             if rcode == 0:
@@ -283,25 +295,32 @@ class ModuleCCSession(ConfigData):
         """Sends the data specification to the configuration manager"""
         msg = create_command(COMMAND_MODULE_SPEC, self.get_module_spec().get_full_spec())
         seq = self._session.group_sendmsg(msg, "ConfigManager")
-        answer, env = self._session.group_recvmsg(False, seq)
+        try:
+            answer, env = self._session.group_recvmsg(False, seq)
+        except isc.cc.SessionTimeout:
+            # TODO: log an error?
+            pass
         
     def __request_config(self):
         """Asks the configuration manager for the current configuration, and call the config handler if set.
            Raises a ModuleCCSessionError if there is no answer from the configuration manager"""
         seq = self._session.group_sendmsg(create_command(COMMAND_GET_CONFIG, { "module_name": self._module_name }), "ConfigManager")
-        answer, env = self._session.group_recvmsg(False, seq)
-        if answer:
-            rcode, value = parse_answer(answer)
-            if rcode == 0:
-                if value != None and self.get_module_spec().validate_config(False, value):
-                    self.set_local_config(value);
-                    if self._config_handler:
-                        self._config_handler(value)
+        try:
+            answer, env = self._session.group_recvmsg(False, seq)
+            if answer:
+                rcode, value = parse_answer(answer)
+                if rcode == 0:
+                    if value != None and self.get_module_spec().validate_config(False, value):
+                        self.set_local_config(value);
+                        if self._config_handler:
+                            self._config_handler(value)
+                else:
+                    # log error
+                    print("[" + self._module_name + "] Error requesting configuration: " + value)
             else:
-                # log error
-                print("[" + self._module_name + "] Error requesting configuration: " + value)
-        else:
-            raise ModuleCCSessionError("No answer from configuration manager")
+                raise ModuleCCSessionError("No answer from configuration manager")
+        except isc.cc.SessionTimeout:
+            raise ModuleCCSessionError("CC Session timeout waiting for configuration manager")
 
 
 class UIModuleCCSession(MultiConfigData):
