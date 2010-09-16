@@ -21,7 +21,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>April 20, 2010</date>
+    <date>September 8, 2010</date>
   </refentryinfo>
 
   <refmeta>
@@ -112,13 +112,22 @@
 
 <!-- TODO: formating -->
     <para>
-      The configuration command is:
+      The configuration commands are:
     </para>
     <para>
       <command>shutdown</command> stops all outbound zone transfers
       and exits <command>b10-xfrout</command>. (Note that the BIND 10
       boss process will restart this service.)
     </para>
+
+    <para>
+      <command>zone_new_data_ready</command> is sent from
+      <command>b10-xfrin</command> to indicate that the zone transferred
+      in successfully.
+      This triggers <command>b10-xfrout</command> to send NOTIFY
+      message(s).
+    </para>
+
 
   </refsect1>
 
@@ -159,6 +168,9 @@
       </citerefentry>,
       <citerefentry>
         <refentrytitle>b10-msgq</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>b10-xfrin</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
         <refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum>
