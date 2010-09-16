@@ -23,11 +23,11 @@
 
 #include <dns/tests/unittest_util.h>
 
-#include <auth/asio_link.h>
+#include <asiolink/asiolink.h>
 
 using isc::UnitTestUtil;
 using namespace std;
-using namespace asio_link;
+using namespace asiolink;
 
 namespace {
 const char* const TEST_PORT = "53535";

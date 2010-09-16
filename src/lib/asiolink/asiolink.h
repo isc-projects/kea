@@ -14,8 +14,8 @@
 
 // $Id$
 
-#ifndef __ASIO_LINK_H
-#define __ASIO_LINK_H 1
+#ifndef __ASIOLINK_H
+#define __ASIOLINK_H 1
 
 // IMPORTANT NOTE: only very few ASIO headers files can be included in
 // this file.  In particular, asio.hpp should never be included here.
@@ -38,10 +38,10 @@ namespace asio {
 class io_service;
 }
 
-/// \namespace asio_link
+/// \namespace asiolink
 /// \brief A wrapper interface for the ASIO library.
 ///
-/// The \c asio_link namespace is used to define a set of wrapper interfaces
+/// The \c asiolink namespace is used to define a set of wrapper interfaces
 /// for the ASIO library.
 ///
 /// BIND 10 uses the non-Boost version of ASIO because it's header-only,
@@ -59,7 +59,7 @@ class io_service;
 ///
 /// This wrapper interface is intended to centralize these
 /// problematic issues in a single sub module.  Other BIND 10 modules should
-/// simply include \c asio_link.h and use the wrapper API instead of
+/// simply include \c asiolink.h and use the wrapper API instead of
 /// including ASIO header files and using ASIO-specific classes directly.
 ///
 /// This wrapper may be used for other IO libraries if and when we want to
@@ -88,7 +88,7 @@ class io_service;
 /// the placeholder of callback handlers:
 /// http://think-async.com/Asio/asio-1.3.1/doc/asio/reference/asio_handler_allocate.html
 
-namespace asio_link {
+namespace asiolink {
 struct IOServiceImpl;
 
 /// \brief An exception that is thrown if an error occurs within the IO
@@ -497,8 +497,8 @@ private:
     IOServiceImpl* impl_;
 };
 
-}      // asio_link
-#endif // __ASIO_LINK_H
+}      // asiolink
+#endif // __ASIOLINK_H
 
 // Local Variables: 
 // mode: c++

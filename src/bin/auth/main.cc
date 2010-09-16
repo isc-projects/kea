@@ -43,7 +43,7 @@
 #include <auth/common.h>
 #include <auth/change_user.h>
 #include <auth/auth_srv.h>
-#include <auth/asio_link.h>
+#include <asiolink/asiolink.h>
 
 using namespace std;
 using namespace isc::data;
@@ -64,7 +64,7 @@ const char* DNSPORT = "5300";
  * class itself? */
 AuthSrv *auth_server;
 
-asio_link::IOService* io_service;
+asiolink::IOService* io_service;
 
 ConstElementPtr
 my_config_handler(ConstElementPtr new_config) {
@@ -176,8 +176,8 @@ main(int argc, char* argv[]) {
         auth_server->setVerbose(verbose_mode);
         cout << "[b10-auth] Server created." << endl;
 
-        asio_link::CheckinProvider* checkin = auth_server->getCheckinProvider();
-        asio_link::DNSProvider* process = auth_server->getDNSProvider();
+        asiolink::CheckinProvider* checkin = auth_server->getCheckinProvider();
+        asiolink::DNSProvider* process = auth_server->getDNSProvider();
 
         if (address != NULL) {
             // XXX: we can only specify at most one explicit address.
@@ -186,11 +186,11 @@ main(int argc, char* argv[]) {
             // We don't bother to fix this problem, however.  The -a option
             // is a short term workaround until we support dynamic listening
             // port allocation.
-            io_service = new asio_link::IOService(*port, *address,
-                                                  checkin, process);
+            io_service = new asiolink::IOService(*port, *address,
+                                                 checkin, process);
         } else {
-            io_service = new asio_link::IOService(*port, use_ipv4, use_ipv6,
-                                                  checkin, process);
+            io_service = new asiolink::IOService(*port, use_ipv4, use_ipv6,
+                                                 checkin, process);
         }
         cout << "[b10-auth] IOService created." << endl;
 
@@ -212,9 +212,9 @@ main(int argc, char* argv[]) {
         xfrin_session_established = true;
         cout << "[b10-auth] Xfrin session channel established." << endl;
 
-        // XXX: with the current interface to asio_link we have to create
+        // XXX: with the current interface to asiolink we have to create
         // auth_server before io_service while Session needs io_service.
-        // In a next step of refactoring we should make asio_link independent
+        // In a next step of refactoring we should make asiolink independent
         // from auth_server, and create io_service, auth_server, and
         // sessions in that order.
         auth_server->setXfrinSession(xfrin_session);
