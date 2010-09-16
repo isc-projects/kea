@@ -659,8 +659,8 @@ var/
       The <command>bind10</command> master process will also start up
       <command>b10-cmdctl</command> for admins to communicate with the
       system, <command>b10-auth</command> for Authoritative DNS service,
-      <command>b10-xfrin</command> for inbound DNS zone transfers.
-      <command>b10-xfrout</command> for outbound DNS zone transfers.
+      <command>b10-xfrin</command> for inbound DNS zone transfers,
+      <command>b10-xfrout</command> for outbound DNS zone transfers,
       and <command>b10-zonemgr</command> for secondary service.
     </para>
 
