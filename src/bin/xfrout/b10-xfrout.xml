@@ -54,6 +54,7 @@
     <title>DESCRIPTION</title>
     <para>The <command>b10-xfrout</command> daemon provides the BIND 10
       outgoing DNS zone transfer service.
+      It also used to send outgoing NOTIFY messages.
       Normally it is started by the
       <citerefentry><refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum></citerefentry>
       boss process.
@@ -97,12 +98,16 @@
       defines the path to the SQLite3 data store file.
       The default is
       <filename>/usr/local/var/bind10-devel/zone.sqlite3</filename>.
+<!-- TODO: db_file will be removed -->
     </para>
     <para>
       <varname>transfers_out</varname>
       defines the maximum number of outgoing zone transfers
       that can run concurrently. The default is 10.
     </para>
+
+<!-- TODO: log configurations not documented yet in here. jreed
+     has some but waiting on decisions ... -->
 
     <note><simpara>
       This prototype version uses SQLite3 as its data source backend.
@@ -122,12 +127,13 @@
 
     <para>
       <command>zone_new_data_ready</command> is sent from
-      <command>b10-xfrin</command> to indicate that the zone transferred
-      in successfully.
+      <citerefentry><refentrytitle>b10-xfrin</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      to indicate that the zone transferred in successfully.
       This triggers <command>b10-xfrout</command> to send NOTIFY
       message(s).
+      This is an internal command and not exposed to the administrator.
+<!-- not defined in spec -->
     </para>
-
 
   </refsect1>
 
@@ -182,8 +188,8 @@
   <refsect1>
     <title>HISTORY</title>
     <para>
-      The <command>b10-xfrout</command> daemon was implemented in March 2010
-      by Zhang Likun of CNNIC for the ISC BIND 10 project.
+      The <command>b10-xfrout</command> daemon was first implemented
+      in March 2010 by Zhang Likun of CNNIC for the ISC BIND 10 project.
     </para>
   </refsect1>
 </refentry><!--

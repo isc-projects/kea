@@ -90,14 +90,9 @@
 
   <refsect1>
     <title>CONFIGURATION AND COMMANDS</title>
-    <para>
-      The configurable settings are:
-    </para>
 <!--
     <para>
-      <varname>transfers-out</varname>
-      defines the maximum number of outgoing zone transfers
-      that can run concurrently. The default is 10.
+      The configurable settings are:
     </para>
 -->
 
@@ -107,11 +102,14 @@
     </para>
     <para>
       <command>notify</command> (sent by
-      <command>b10-auth</command>) tells <command>b10-zonemgr</command>
+      <citerefentry><refentrytitle>b10-auth</refentrytitle><manvolnum>8</manvolnum></citerefentry>)
+      tells <command>b10-zonemgr</command>
       the zone name and class, and the IP address for the master
       (source of the NOTIFY message).
       This will set the zone's refresh time to now.
 <!-- TODO reword this -->
+      This is an internal command and not exposed to the administrator.
+<!-- not defined in spec -->
     </para>
 
     <para>
@@ -121,19 +119,23 @@
 
     <para>
       <command>zone_new_data_ready</command> is sent from
-      <command>b10-xfrin</command> to indicate that the zone transferred
-      in successfully.
+      <citerefentry><refentrytitle>b10-xfrin</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      to indicate that the zone transferred in successfully.
+      This is an internal command and not exposed to the administrator.
+<!-- not defined in spec -->
     </para>
 
     <para>
       <command>zone_xfrin_failed</command> is sent from
-      <command>b10-xfrin</command> to indicate a failure
-      (such as transfer-in was incomplete).
+      <citerefentry><refentrytitle>b10-xfrin</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      to indicate a failure (such as a transfer-in was incomplete).
       The refresh timer for the zone is reset.
 <!--
         """Set zone next refresh time after zone refresh fail.
            now + retry*3/4 <= next_refresh_time <= now + retry
 -->
+      This is an internal command and not exposed to the administrator.
+<!-- not defined in spec -->
     </para>
 
   </refsect1>
