@@ -54,7 +54,7 @@
     <title>DESCRIPTION</title>
     <para>The <command>b10-xfrout</command> daemon provides the BIND 10
       outgoing DNS zone transfer service.
-      It also used to send outgoing NOTIFY messages.
+      It is also used to send outgoing NOTIFY messages.
       Normally it is started by the
       <citerefentry><refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum></citerefentry>
       boss process.
