@@ -22,7 +22,7 @@
 #include <cc/data.h>
 #include <config/ccsession.h>
 
-#include <auth/asio_link.h>
+#include <asiolink/asiolink.h>
 
 namespace isc {
 namespace dns {
@@ -36,7 +36,7 @@ class AbstractXfroutClient;
 };
 }
 
-namespace asio_link {
+namespace asiolink {
 class IOMessage;
 }
 
@@ -66,7 +66,7 @@ public:
     //@}
     /// \return \c true if the \message contains a response to be returned;
     /// otherwise \c false.
-    bool processMessage(const asio_link::IOMessage& io_message,
+    bool processMessage(const asiolink::IOMessage& io_message,
                         isc::dns::Message& message,
                         isc::dns::MessageRenderer& response_renderer);
     void setVerbose(bool on);
@@ -74,8 +74,8 @@ public:
     isc::data::ConstElementPtr updateConfig(isc::data::ConstElementPtr config);
     isc::config::ModuleCCSession* configSession() const;
     void setConfigSession(isc::config::ModuleCCSession* config_session);
-    asio_link::CheckinProvider* getCheckinProvider();
-    asio_link::DNSProvider* getDNSProvider();
+    asiolink::CheckinProvider* getCheckinProvider();
+    asiolink::DNSProvider* getDNSProvider();
 
     ///
     /// Note: this interface is tentative.  We'll revisit the ASIO and session
@@ -93,8 +93,8 @@ public:
     void setXfrinSession(isc::cc::AbstractSession* xfrin_session);
 private:
     AuthSrvImpl* impl_;
-    asio_link::CheckinProvider* checkin_provider_;
-    asio_link::DNSProvider* dns_provider_;
+    asiolink::CheckinProvider* checkin_provider_;
+    asiolink::DNSProvider* dns_provider_;
 };
 
 #endif // __AUTH_SRV_H

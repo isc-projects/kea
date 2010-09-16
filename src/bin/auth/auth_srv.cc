@@ -21,6 +21,12 @@
 #include <iostream>
 #include <vector>
 
+#include <asiolink/asiolink.h>
+
+#include <config/ccsession.h>
+
+#include <cc/data.h>
+
 #include <exceptions/exceptions.h>
 
 #include <dns/buffer.h>
@@ -31,22 +37,16 @@
 #include <dns/rrset.h>
 #include <dns/rrttl.h>
 #include <dns/message.h>
-#include <config/ccsession.h>
-#include <cc/data.h>
-#include <exceptions/exceptions.h>
 
 #include <datasrc/query.h>
 #include <datasrc/data_source.h>
 #include <datasrc/static_datasrc.h>
 #include <datasrc/sqlite3_datasrc.h>
 
-#include <cc/data.h>
-
 #include <xfr/xfrout_client.h>
 
 #include <auth/common.h>
 #include <auth/auth_srv.h>
-#include <auth/asio_link.h>
 
 using namespace std;
 
@@ -58,7 +58,7 @@ using namespace isc::dns::rdata;
 using namespace isc::data;
 using namespace isc::config;
 using namespace isc::xfr;
-using namespace asio_link;
+using namespace asiolink;
 
 class AuthSrvImpl {
 private:
@@ -124,7 +124,7 @@ AuthSrvImpl::~AuthSrvImpl() {
 }
 
 // This is a derived class of \c DNSProvider, to serve as a
-// callback in the asio_link module.  It calls
+// callback in the asiolink module.  It calls
 // AuthSrv::processMessage() on a single DNS message.
 class MessageProcessor : public DNSProvider {
 public:
@@ -139,7 +139,7 @@ private:
 };
 
 // This is a derived class of \c CheckinProvider, to serve
-// as a callback in the asio_link module.  It checks for queued
+// as a callback in the asiolink module.  It checks for queued
 // configuration messages, and executes them if found.
 class ConfigChecker : public CheckinProvider {
 public:
@@ -165,12 +165,12 @@ AuthSrv::~AuthSrv() {
     delete dns_provider_;
 }
 
-asio_link::CheckinProvider*
+asiolink::CheckinProvider*
 AuthSrv::getCheckinProvider() {
     return (checkin_provider_);
 }
 
-asio_link::DNSProvider*
+asiolink::DNSProvider*
 AuthSrv::getDNSProvider() {
     return (dns_provider_);
 }

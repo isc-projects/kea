@@ -30,7 +30,7 @@
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
 
-#include <asio_link.h>
+#include <asiolink.h>
 
 #include "coroutine.h"
 #include "yield.h"
@@ -42,7 +42,7 @@ using asio::ip::tcp;
 using namespace std;
 using namespace isc::dns;
 
-namespace asio_link {
+namespace asiolink {
 
 // Constructors and destructors for the callback provider base classes.
 DNSProvider::DNSProvider() {}

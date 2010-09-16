@@ -3,8 +3,9 @@ SUBDIRS = . tests
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
-AM_CPPFLAGS += -I$(top_builddir)/src/lib/cc
-AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
+AM_CPPFLAGS += -I$(top_srcdir)/src/lib/cc -I$(top_builddir)/src/lib/cc
+AM_CPPFLAGS += -I$(top_srcdir)/src/lib/asiolink
+AM_CPPFLAGS += -I$(top_builddir)/src/lib/asiolink
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
@@ -32,22 +33,6 @@ auth.spec: auth.spec.pre
 spec_config.h: spec_config.h.pre
 	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" spec_config.h.pre >$@
 
-# This is a wrapper library solely used for b10-auth.  The ASIO header files
-# have some code fragments that would hit gcc's unused-parameter warning,
-# which would make the build fail with -Werror (our default setting).
-# We don't want to lower the warning level for our own code just for ASIO,
-# so as a workaround we extract the ASIO related code into a separate library,
-# only for which we accept the unused-parameter warning.
-lib_LIBRARIES = libasio_link.a
-libasio_link_a_SOURCES = asio_link.cc asio_link.h
-# Note: the ordering matters: -Wno-... must follow -Wextra (defined in
-# B10_CXXFLAGS)
-libasio_link_a_CXXFLAGS = $(AM_CXXFLAGS)
-if USE_GXX
-libasio_link_a_CXXFLAGS += -Wno-unused-parameter
-endif
-libasio_link_a_CPPFLAGS = $(AM_CPPFLAGS)
-
 BUILT_SOURCES = spec_config.h 
 pkglibexec_PROGRAMS = b10-auth
 b10_auth_SOURCES = auth_srv.cc auth_srv.h
@@ -59,7 +44,7 @@ b10_auth_LDADD += $(top_builddir)/src/lib/dns/libdns++.la
 b10_auth_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
 b10_auth_LDADD += $(top_builddir)/src/lib/cc/libcc.la
 b10_auth_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
-b10_auth_LDADD += libasio_link.a
+b10_auth_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.a
 b10_auth_LDADD += $(top_builddir)/src/lib/xfr/libxfr.la
 b10_auth_LDADD += $(SQLITE_LIBS)
 

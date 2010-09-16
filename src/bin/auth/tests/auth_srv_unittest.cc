@@ -31,7 +31,7 @@
 #include <xfr/xfrout_client.h>
 
 #include <auth/auth_srv.h>
-#include <auth/asio_link.h>
+#include <asiolink/asiolink.h>
 
 #include <dns/tests/unittest_util.h>
 
@@ -41,7 +41,7 @@ using namespace isc::cc;
 using namespace isc::dns;
 using namespace isc::data;
 using namespace isc::xfr;
-using namespace asio_link;
+using namespace asiolink;
 
 namespace {
 const char* const CONFIG_TESTDB =
