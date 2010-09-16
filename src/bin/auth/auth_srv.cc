@@ -165,16 +165,6 @@ AuthSrv::~AuthSrv() {
     delete dns_provider_;
 }
 
-asiolink::CheckinProvider*
-AuthSrv::getCheckinProvider() {
-    return (checkin_provider_);
-}
-
-asiolink::DNSProvider*
-AuthSrv::getDNSProvider() {
-    return (dns_provider_);
-}
-
 namespace {
 class QuestionInserter {
 public:

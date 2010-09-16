@@ -396,14 +396,14 @@ protected:
     ///
     /// This is intentionally defined as \c protected as this base class
     /// should never be instantiated (except as part of a derived class).
-    DNSProvider();
+    DNSProvider() {}
 public:
     /// \brief The destructor
-    virtual ~DNSProvider();
+    virtual ~DNSProvider() {}
     //@}
     virtual bool operator()(const IOMessage& io_message,
                             isc::dns::Message& dns_message,
-                            isc::dns::MessageRenderer& renderer) const;
+                            isc::dns::MessageRenderer& renderer) const = 0;
 };
 
 /// \brief The \c CheckinProvider class is an abstract base class for a
@@ -429,13 +429,13 @@ protected:
     ///
     /// This is intentionally defined as \c protected as this base class
     /// should never be instantiated (except as part of a derived class).
-    CheckinProvider();
+    CheckinProvider() {}
     //@}
 public:
     /// \brief The destructor
-    virtual ~CheckinProvider();
+    virtual ~CheckinProvider() {}
     //@}
-    virtual void operator()(void) const;
+    virtual void operator()(void) const = 0;
 };
 
 /// \brief The \c IOService class is a wrapper for the ASIO \c io_service
