@@ -1,3 +1,7 @@
+  95.	[bug]		jreed
+	bin/xfrout and bin/zonemgr: Fixed some stderr output.
+	(Trac #342, svn r2949)
+
   94.	[bug]		jelte
   	bin/xfrout:  Fixed a problem in xfrout where only 2 or 3 RRs
 	were used per DNS message in the xfrout stream.

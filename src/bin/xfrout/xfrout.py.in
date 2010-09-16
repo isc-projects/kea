@@ -27,7 +27,7 @@ from socketserver import *
 import os
 from isc.config.ccsession import *
 from isc.log.log import *
-from isc.cc import SessionError
+from isc.cc import SessionError, SessionTimeout
 from isc.notify import notify_out
 import socket
 import select
@@ -310,8 +310,8 @@ class UnixSockServer(ThreadingUnixStreamServer):
         If it's not a socket file or nobody is listening
         , it will be removed. If it can't be removed, exit from python. '''
         if self._sock_file_in_use(sock_file):
-            print("[b10-xfrout] Fail to start xfrout process, unix socket" 
-                  " file '%s' is being used by another xfrout process" % sock_file)
+            sys.stderr.write("[b10-xfrout] Fail to start xfrout process, unix socket" 
+                  " file '%s' is being used by another xfrout process\n" % sock_file)
             sys.exit(0)
         else:
             if not os.path.exists(sock_file):
@@ -320,7 +320,7 @@ class UnixSockServer(ThreadingUnixStreamServer):
             try:
                 os.unlink(sock_file)
             except OSError as err:
-                print('[b10-xfrout] Fail to remove file ' + sock_file, err)
+                sys.stderr.write('[b10-xfrout] Fail to remove file %s: %s\n' % (sock_file, err))
                 sys.exit(0)
    
     def _sock_file_in_use(self, sock_file):
@@ -404,9 +404,9 @@ class XfroutServer:
         self._listen_sock_file = UNIX_SOCKET_FILE 
         self._shutdown_event = threading.Event()
         self._cc = isc.config.ModuleCCSession(SPECFILE_LOCATION, self.config_handler, self.command_handler)
-        self._cc.add_remote_config(AUTH_SPECFILE_LOCATION);
         self._config_data = self._cc.get_full_config()
         self._cc.start()
+        self._cc.add_remote_config(AUTH_SPECFILE_LOCATION);
         self._log = isc.log.NSLogger(self._config_data.get('log_name'), self._config_data.get('log_file'),
                                 self._config_data.get('log_severity'), self._config_data.get('log_versions'),
                                 self._config_data.get('log_max_bytes'), True)
@@ -520,12 +520,15 @@ if '__main__' == __name__:
         xfrout_server = XfroutServer()
         xfrout_server.run()
     except KeyboardInterrupt:
-        sys.stderr.write("[b10-xfrout] exit xfrout process")
+        sys.stderr.write("[b10-xfrout] exit xfrout process\n")
     except SessionError as e:
-        sys.stderr.write("[b10-xfrout] Error creating xfrout," 
-                           "is the command channel daemon running?")
+        sys.stderr.write("[b10-xfrout] Error creating xfrout, "
+                           "is the command channel daemon running?\n")
+    except SessionTimeout as e:
+        sys.stderr.write("[b10-xfrout] Error creating xfrout, " 
+                           "is the configuration manager running?\n")
     except ModuleCCSessionError as e:
-        sys.stderr.write("info", '[b10-xfrout] exit xfrout process:', e)
+        sys.stderr.write("[b10-xfrout] exit xfrout process:%s\n" % str(e))
 
     if xfrout_server:
         xfrout_server.shutdown()
