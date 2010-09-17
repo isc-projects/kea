@@ -64,24 +64,50 @@ IOAddress::toText() const {
     return (asio_address_.to_string());
 }
 
-// Note: this implementation is optimized for the case where this object
-// is created from an ASIO endpoint object in a receiving code path
-// by avoiding to make a copy of the base endpoint.  For TCP it may not be
-// a bug deal, but when we receive UDP packets at a high rate, the copy
-// overhead might be significant.
+/// \brief The \c TCPEndpoint class is a concrete derived class of
+/// \c IOEndpoint that represents an endpoint of a TCP connection.
+///
+/// In the current implementation, an object of this class is always
+/// instantiated within the wrapper routines.  Applications are expected to
+/// get access to the object via the abstract base class, \c IOEndpoint.
+/// This design may be changed when we generalize the wrapper interface.
+///
+/// Note: this implementation is optimized for the case where this object
+/// is created from an ASIO endpoint object in a receiving code path
+/// by avoiding to make a copy of the base endpoint.  For TCP it may not be
+/// a bug deal, but when we receive UDP packets at a high rate, the copy
+/// overhead might be significant.
 class TCPEndpoint : public IOEndpoint {
 public:
+    ///
+    /// \name Constructors and Destructor
+    ///
+    //@{
+    /// \brief Constructor from a pair of address and port.
+    ///
+    /// \param address The IP address of the endpoint.
+    /// \param port The TCP port number of the endpoint.
     TCPEndpoint(const IOAddress& address, const unsigned short port) :
         asio_endpoint_placeholder_(
             new tcp::endpoint(ip::address::from_string(address.toText()),
                               port)),
         asio_endpoint_(*asio_endpoint_placeholder_)
     {}
+
+    /// \brief Constructor from an ASIO TCP endpoint.
+    ///
+    /// This constructor is designed to be an efficient wrapper for the
+    /// corresponding ASIO class, \c tcp::endpoint.
+    ///
+    /// \param asio_endpoint The ASIO representation of the TCP endpoint.
     TCPEndpoint(const tcp::endpoint& asio_endpoint) :
         asio_endpoint_placeholder_(NULL), asio_endpoint_(asio_endpoint)
     {}
-        
+
+    /// \brief The destructor.        
     ~TCPEndpoint() { delete asio_endpoint_placeholder_; }
+    //@}
+
     virtual IOAddress getAddress() const {
         return (asio_endpoint_.address());
     }
@@ -90,18 +116,41 @@ private:
     const tcp::endpoint& asio_endpoint_;
 };
 
+/// \brief The \c UDPEndpoint class is a concrete derived class of
+/// \c IOEndpoint that represents an endpoint of a UDP packet.
+///
+/// Other notes about \c TCPEndpoint applies to this class, too.
 class UDPEndpoint : public IOEndpoint {
 public:
+    ///
+    /// \name Constructors and Destructor.
+    ///
+    //@{
+    /// \brief Constructor from a pair of address and port.
+    ///
+    /// \param address The IP address of the endpoint.
+    /// \param port The UDP port number of the endpoint.
     UDPEndpoint(const IOAddress& address, const unsigned short port) :
         asio_endpoint_placeholder_(
             new udp::endpoint(ip::address::from_string(address.toText()),
                               port)),
         asio_endpoint_(*asio_endpoint_placeholder_)
     {}
+
+    /// \brief Constructor from an ASIO UDP endpoint.
+    ///
+    /// This constructor is designed to be an efficient wrapper for the
+    /// corresponding ASIO class, \c udp::endpoint.
+    ///
+    /// \param asio_endpoint The ASIO representation of the UDP endpoint.
     UDPEndpoint(const udp::endpoint& asio_endpoint) :
         asio_endpoint_placeholder_(NULL), asio_endpoint_(asio_endpoint)
     {}
+
+    /// \brief The destructor.
     ~UDPEndpoint() { delete asio_endpoint_placeholder_; }
+    //@}
+
     virtual IOAddress getAddress() const {
         return (asio_endpoint_.address());
     }
@@ -124,37 +173,74 @@ IOEndpoint::create(const int protocol, const IOAddress& address,
               protocol);
 }
 
+/// \brief The \c TCPSocket class is a concrete derived class of
+/// \c IOSocket that represents a TCP socket.
+///
+/// In the current implementation, an object of this class is always
+/// instantiated within the wrapper routines.  Applications are expected to
+/// get access to the object via the abstract base class, \c IOSocket.
+/// This design may be changed when we generalize the wrapper interface.
 class TCPSocket : public IOSocket {
 private:
     TCPSocket(const TCPSocket& source);
     TCPSocket& operator=(const TCPSocket& source);
 public:
+    /// \brief Constructor from an ASIO TCP socket.
+    ///
+    /// \param socket The ASIO representation of the TCP socket.
     TCPSocket(tcp::socket& socket) : socket_(socket) {}
+
     virtual int getNative() const { return (socket_.native()); }
     virtual int getProtocol() const { return (IPPROTO_TCP); }
 private:
     tcp::socket& socket_;
 };
 
+/// \brief The \c UDPSocket class is a concrete derived class of
+/// \c IOSocket that represents a UDP socket.
+///
+/// Other notes about \c TCPSocket applies to this class, too.
 class UDPSocket : public IOSocket {
 private:
     UDPSocket(const UDPSocket& source);
     UDPSocket& operator=(const UDPSocket& source);
 public:
+    /// \brief Constructor from an ASIO UDP socket.
+    ///
+    /// \param socket The ASIO representation of the UDP socket.
     UDPSocket(udp::socket& socket) : socket_(socket) {}
+
     virtual int getNative() const { return (socket_.native()); }
     virtual int getProtocol() const { return (IPPROTO_UDP); }
 private:
     udp::socket& socket_;
 };
 
+/// \brief The \c DummySocket class is a concrete derived class of
+/// \c IOSocket that is not associated with any real socket.
+///
+/// This main purpose of this class is tests, where it may be desirable to
+/// instantiate an \c IOSocket object without involving system resource
+/// allocation such as real network sockets.
 class DummySocket : public IOSocket {
 private:
     DummySocket(const DummySocket& source);
     DummySocket& operator=(const DummySocket& source);
 public:
+    /// \brief Constructor from the protocol number.
+    ///
+    /// The protocol must validly identify a standard network protocol.
+    /// For example, to specify TCP \c protocol must be \c IPPROTO_TCP.
+    ///
+    /// \param protocol The network protocol number for the socket.
     DummySocket(const int protocol) : protocol_(protocol) {}
+
+    /// \brief A dummy derived method of \c IOSocket::getNative().
+    ///
+    /// This version of method always returns -1 as the object is not
+    /// associated with a real (native) socket.
     virtual int getNative() const { return (-1); }
+
     virtual int getProtocol() const { return (protocol_); }
 private:
     const int protocol_;
@@ -197,8 +283,8 @@ public:
     void start() {
         // Check for queued configuration commands
         if (auth_server_ != NULL &&
-            auth_server_->configSession()->hasQueuedMsgs()) {
-            auth_server_->configSession()->checkCommand();
+            auth_server_->getConfigSession()->hasQueuedMsgs()) {
+            auth_server_->getConfigSession()->checkCommand();
         }
         async_read(socket_, asio::buffer(data_, TCP_MESSAGE_LENGTHSIZE),
                    boost::bind(&TCPClient::headerRead, this,
@@ -385,8 +471,8 @@ public:
     {
         // Check for queued configuration commands
         if (auth_server_ != NULL &&
-            auth_server_->configSession()->hasQueuedMsgs()) {
-            auth_server_->configSession()->checkCommand();
+            auth_server_->getConfigSession()->hasQueuedMsgs()) {
+            auth_server_->getConfigSession()->checkCommand();
         }
         if (!error && bytes_recvd > 0) {
             const UDPEndpoint remote_endpoint(sender_endpoint_);
