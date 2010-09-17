@@ -174,11 +174,18 @@ class ModuleCCSession(ConfigData):
         """Close the session to the command channel"""
         self._session.close()
 
-    def check_command(self):
-        """Check whether there is a command or configuration update
-           on the channel. Call the corresponding callback function if
-           there is."""
-        msg, env = self._session.group_recvmsg(False)
+    def check_command(self, nonblock = False):
+        """Check whether there is a command or configuration update on
+           the channel. Calls check_command_without_recvmsg() to parse
+           the received message."""
+        msg, env = self._session.group_recvmsg(nonblock)
+        self.check_command_without_recvmsg(msg, env)
+
+    def check_command_without_recvmsg(self, msg, env):
+        """Parse the given message to see if there is a command or a
+           configuration update. Calls the corresponding handler
+           functions if present. Responds on the channel if the
+           handler returns a message.""" 
         # should we default to an answer? success-by-default? unhandled error?
         if msg and not 'result' in msg:
             answer = None
