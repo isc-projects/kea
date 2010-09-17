@@ -17,14 +17,12 @@ pkglibexecdir = $(libexecdir)/@PACKAGE@
 
 CLEANFILES = *.gcno *.gcda auth.spec spec_config.h
 
+if ENABLE_MAN
 man_MANS = b10-auth.8
 EXTRA_DIST = $(man_MANS) b10-auth.xml
 
-if ENABLE_MAN
-
 b10-auth.8: b10-auth.xml
 	xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-auth.xml
-
 endif
 
 auth.spec: auth.spec.pre

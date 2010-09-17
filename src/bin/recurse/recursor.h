@@ -14,8 +14,8 @@
 
 // $Id$
 
-#ifndef __AUTH_SRV_H
-#define __AUTH_SRV_H 1
+#ifndef __RECURSOR_H
+#define __RECURSOR_H 1
 
 #include <string>
 
@@ -30,19 +30,15 @@ class InputBuffer;
 class Message;
 class MessageRenderer;
 }
-
-namespace xfr {
-class AbstractXfroutClient;
-}
 }
 
 namespace asiolink {
 class IOMessage;
 }
 
-class AuthSrvImpl;
+class RecursorImpl;
 
-class AuthSrv {
+class Recursor {
     ///
     /// \name Constructors, Assignment Operator and Destructor.
     ///
@@ -50,8 +46,8 @@ class AuthSrv {
     /// intentionally defined as private.
     //@{
 private:
-    AuthSrv(const AuthSrv& source);
-    AuthSrv& operator=(const AuthSrv& source);
+    Recursor(const Recursor& source);
+    Recursor& operator=(const Recursor& source);
 public:
     /// The constructor.
     ///
@@ -60,9 +56,8 @@ public:
     /// process.  It's normally a reference to an xfr::XfroutClient object,
     /// but can refer to a local mock object for testing (or other
     /// experimental) purposes.
-    AuthSrv(const bool use_cache,
-            isc::xfr::AbstractXfroutClient& xfrout_client);
-    ~AuthSrv();
+    Recursor();
+    ~Recursor();
     //@}
     /// \return \c true if the \message contains a response to be returned;
     /// otherwise \c false.
@@ -82,27 +77,13 @@ public:
         return (checkin_provider_);
     }
 
-    ///
-    /// Note: this interface is tentative.  We'll revisit the ASIO and session
-    /// frameworks, at which point the session will probably be passed on
-    /// construction of the server.
-    ///
-    /// \param xfrin_session A Session object over which NOTIFY message
-    /// information is exchanged with a XFRIN handler.
-    /// The session must be established before setting in the server
-    /// object.
-    /// Ownership isn't transferred: the caller is responsible for keeping
-    /// this object to be valid while the server object is working and for
-    /// disconnecting the session and destroying the object when the server
-    ///
-    void setXfrinSession(isc::cc::AbstractSession* xfrin_session);
 private:
-    AuthSrvImpl* impl_;
+    RecursorImpl* impl_;
     asiolink::CheckinProvider* checkin_provider_;
     asiolink::DNSProvider* dns_provider_;
 };
 
-#endif // __AUTH_SRV_H
+#endif // __RECURSOR_H
 
 // Local Variables: 
 // mode: c++

@@ -1,0 +1,145 @@
+'\" t
+.\"     Title: b10-recurse
+.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
+.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
+.\"      Date: September 16, 2010
+.\"    Manual: BIND10
+.\"    Source: BIND10
+.\"  Language: English
+.\"
+.TH "B10\-RECURSE" "8" "September 16, 2010" "BIND10" "BIND10"
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+b10-recurse \- Recursive DNS server
+.SH "SYNOPSIS"
+.HP \w'\fBb10\-recurse\fR\ 'u
+\fBb10\-recurse\fR [\fB\-4\fR] [\fB\-6\fR] [\fB\-a\ \fR\fB\fIaddress\fR\fR] [\fB\-n\fR] [\fB\-p\ \fR\fB\fInumber\fR\fR] [\fB\-u\ \fR\fB\fIusername\fR\fR] [\fB\-v\fR]
+.SH "DESCRIPTION"
+.PP
+The
+\fBb10\-recurse\fR
+daemon provides the BIND 10 recursive DNS server\&. Normally it is started by the
+\fBbind10\fR(8)
+boss process\&.
+.PP
+This daemon communicates with other BIND 10 components over a
+\fBb10-msgq\fR(8)
+C\-Channel connection\&. If this connection is not established,
+\fBb10\-recurse\fR
+will exit\&.
+.PP
+It also receives its configurations from
+\fBb10-cfgmgr\fR(8)\&. Currently no configuration commands are defined\&.
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBNote\fR
+.ps -1
+.br
+.PP
+This prototype version only supports forwarding\&. Future versions will introduce full recursion, cache, lookup of local authoritative data (as in
+\fBb10\-auth\fR), and DNSSEC validation\&.
+.sp .5v
+.RE
+.SH "OPTIONS"
+.PP
+The arguments are as follows:
+.PP
+\fB\-4\fR
+.RS 4
+Enables IPv4 only mode\&. This switch may not be used with
+\fB\-6\fR
+nor
+\fB\-a\fR\&. By default, it listens on both IPv4 and IPv6 (if capable)\&.
+.RE
+.PP
+\fB\-6\fR
+.RS 4
+Enables IPv6 only mode\&. This switch may not be used with
+\fB\-4\fR
+nor
+\fB\-a\fR\&. By default, it listens on both IPv4 and IPv6 (if capable)\&.
+.RE
+.PP
+\fB\-a \fR\fB\fIaddress\fR\fR
+.RS 4
+The IPv4 or IPv6 address to listen on\&. This switch may not be used with
+\fB\-4\fR
+nor
+\fB\-6\fR\&. The default is to listen on all addresses\&. (This is a short term workaround\&. This argument may change\&.)
+.RE
+.PP
+\fB\-n\fR
+.RS 4
+Do not cache answers in memory\&. The default is to use the cache for faster responses\&. The cache keeps the most recent 30,000 answers (positive and negative) in memory for 30 seconds (instead of querying the data source, such as SQLite3 database, each time)\&.
+.RE
+.PP
+\fB\-p \fR\fB\fInumber\fR\fR
+.RS 4
+The port number it listens on\&. The default is 5300\&.
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBNote\fR
+.ps -1
+.br
+The Y1 prototype runs on all interfaces and on this nonstandard port\&.
+.sp .5v
+.RE
+.RE
+.PP
+\fB\-u \fR\fB\fIusername\fR\fR
+.RS 4
+The user name of the
+\fBb10\-recurse\fR
+daemon\&. If specified, the daemon changes the process owner to the specified user\&. The
+\fIusername\fR
+must be either a valid numeric user ID or a valid user name\&. By default the daemon runs as the user who invokes it\&.
+.RE
+.PP
+\fB\-v\fR
+.RS 4
+Enabled verbose mode\&. This enables diagnostic messages to STDERR\&.
+.RE
+.SH "FILES"
+.PP
+None\&.
+.SH "SEE ALSO"
+.PP
+
+\fBb10-cfgmgr\fR(8),
+\fBb10-cmdctl\fR(8),
+\fBb10-loadzone\fR(8),
+\fBb10-msgq\fR(8),
+\fBbind10\fR(8),
+BIND 10 Guide\&.
+.SH "HISTORY"
+.PP
+The
+\fBb10\-recurse\fR
+daemon was first coded in September 2010\&.
+.SH "COPYRIGHT"
+.br
+Copyright \(co 2010 Internet Systems Consortium, Inc. ("ISC")
+.br
