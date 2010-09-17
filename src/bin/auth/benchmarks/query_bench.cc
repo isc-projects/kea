@@ -57,8 +57,7 @@ public:
     QueryBenchMark(const int cache_slots, const char* const datasrc_file,
                    const BenchQueries& queries, Message& query_message,
                    MessageRenderer& renderer) :
-        server_(AuthSrvPtr(new AuthSrv(cache_slots >= 0 ? true : false,
-                                       xfrout_client))),
+        server_(new AuthSrv(cache_slots >= 0 ? true : false, xfrout_client)),
         queries_(queries),
         query_message_(query_message),
         renderer_(renderer),
