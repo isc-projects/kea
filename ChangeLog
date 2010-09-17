@@ -1,3 +1,5 @@
+bind10-devel-20100917 released on September 17, 2010 
+
   95.	[doc]		jreed
 	Add b10-zonemgr manual page. Update other docs to introduce
 	this secondary manager. (Trac #341, svn r2951)
