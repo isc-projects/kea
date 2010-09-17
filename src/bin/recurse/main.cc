@@ -27,6 +27,8 @@
 
 #include <boost/foreach.hpp>
 
+#include <asiolink/asiolink.h>
+
 #include <exceptions/exceptions.h>
 
 #include <dns/buffer.h>
@@ -39,11 +41,10 @@
 
 #include <xfr/xfrout_client.h>
 
-#include <auth/spec_config.h>
-#include <auth/common.h>
-#include <auth/change_user.h>
-#include <auth/auth_srv.h>
-#include <asiolink/asiolink.h>
+#include <recurse/spec_config.h>
+#include <recurse/common.h>
+#include <recurse/change_user.h>
+#include <recurse/recursor.h>
 
 using namespace std;
 using namespace isc::data;
@@ -57,19 +58,15 @@ namespace {
 
 bool verbose_mode = false;
 
-const string PROGRAM = "Auth";
+const string PROGRAM = "Recurse";
 const char* DNSPORT = "5300";
 
-/* need global var for config/command handlers.
- * todo: turn this around, and put handlers in the authserver
- * class itself? */
-AuthSrv *auth_server;
-
+Recursor *recursor;
 IOService* io_service;
 
 ConstElementPtr
 my_config_handler(ConstElementPtr new_config) {
-    return (auth_server->updateConfig(new_config));
+    return (recursor->updateConfig(new_config));
 }
 
 ConstElementPtr
@@ -89,7 +86,7 @@ my_command_handler(const string& command, ConstElementPtr args) {
 
 void
 usage() {
-    cerr << "Usage: b10-auth [-a address] [-p port] [-4|-6] [-nv]" << endl;
+    cerr << "Usage: b10-recurse [-a address] [-p port] [-4|-6] [-nv]" << endl;
     exit(1);
 }
 } // end of anonymous namespace
@@ -141,12 +138,12 @@ main(int argc, char* argv[]) {
     }
 
     if (!use_ipv4 && !use_ipv6) {
-        cerr << "[b10-auth] Error: -4 and -6 can't coexist" << endl;
+        cerr << "[b10-recurse] Error: -4 and -6 can't coexist" << endl;
         usage();
     }
 
     if ((!use_ipv4 || !use_ipv6) && address != NULL) {
-        cerr << "[b10-auth] Error: -4|-6 and -a can't coexist" << endl;
+        cerr << "[b10-recurse] Error: -4|-6 and -a can't coexist" << endl;
         usage();
     }
 
@@ -154,31 +151,22 @@ main(int argc, char* argv[]) {
 
     // XXX: we should eventually pass io_service here.
     Session* cc_session = NULL;
-    Session* xfrin_session = NULL;
-    bool xfrin_session_established = false; // XXX (see Trac #287)
     ModuleCCSession* config_session = NULL;
-    string xfrout_socket_path;
-    if (getenv("B10_FROM_BUILD") != NULL) {
-        xfrout_socket_path = string(getenv("B10_FROM_BUILD")) + "/auth_xfrout_conn";
-    } else {
-        xfrout_socket_path = UNIX_SOCKET_FILE;
-    }
-    XfroutClient xfrout_client(xfrout_socket_path);
     try {
         string specfile;
         if (getenv("B10_FROM_BUILD")) {
             specfile = string(getenv("B10_FROM_BUILD")) +
-                "/src/bin/auth/auth.spec";
+                "/src/bin/recurse/recurse.spec";
         } else {
-            specfile = string(AUTH_SPECFILE_LOCATION);
+            specfile = string(RECURSE_SPECFILE_LOCATION);
         }
 
-        auth_server = new AuthSrv(cache, xfrout_client);
-        auth_server->setVerbose(verbose_mode);
-        cout << "[b10-auth] Server created." << endl;
+        recursor = new Recursor();
+        recursor ->setVerbose(verbose_mode);
+        cout << "[b10-recurse] Server created." << endl;
 
-        CheckinProvider* checkin = auth_server->getCheckinProvider();
-        DNSProvider* process = auth_server->getDNSProvider();
+        CheckinProvider* checkin = recursor->getCheckinProvider();
+        DNSProvider* process = recursor->getDNSProvider();
 
         if (address != NULL) {
             // XXX: we can only specify at most one explicit address.
@@ -193,51 +181,34 @@ main(int argc, char* argv[]) {
             io_service = new IOService(*port, use_ipv4, use_ipv6,
                                                  checkin, process);
         }
-        cout << "[b10-auth] IOService created." << endl;
+        cout << "[b10-recurse] IOService created." << endl;
 
         cc_session = new Session(io_service->get_io_service());
-        cout << "[b10-auth] Configuration session channel created." << endl;
+        cout << "[b10-recurse] Configuration session channel created." << endl;
 
         config_session = new ModuleCCSession(specfile, *cc_session,
                                              my_config_handler,
                                              my_command_handler);
-        cout << "[b10-auth] Configuration channel established." << endl;
+        cout << "[b10-recurse] Configuration channel established." << endl;
 
         if (uid != NULL) {
             changeUser(uid);
         }
 
-        xfrin_session = new Session(io_service->get_io_service());
-        cout << "[b10-auth] Xfrin session channel created." << endl;
-        xfrin_session->establish(NULL);
-        xfrin_session_established = true;
-        cout << "[b10-auth] Xfrin session channel established." << endl;
+        recursor->setConfigSession(config_session);
+        recursor->updateConfig(ElementPtr());
 
-        // XXX: with the current interface to asiolink we have to create
-        // auth_server before io_service while Session needs io_service.
-        // In a next step of refactoring we should make asiolink independent
-        // from auth_server, and create io_service, auth_server, and
-        // sessions in that order.
-        auth_server->setXfrinSession(xfrin_session);
-        auth_server->setConfigSession(config_session);
-        auth_server->updateConfig(ElementPtr());
-
-        cout << "[b10-auth] Server started." << endl;
+        cout << "[b10-recurse] Server started." << endl;
         io_service->run();
     } catch (const std::exception& ex) {
-        cerr << "[b10-auth] Server failed: " << ex.what() << endl;
+        cerr << "[b10-recurse] Server failed: " << ex.what() << endl;
         ret = 1;
     }
 
-    if (xfrin_session_established) {
-        xfrin_session->disconnect();
-    }
-
-    delete xfrin_session;
     delete config_session;
     delete cc_session;
     delete io_service;
-    delete auth_server;
+    delete recursor;
 
     return (ret);
 }
