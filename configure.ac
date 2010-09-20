@@ -40,6 +40,14 @@ AC_HELP_STRING([--enable-static-link],
   [enable_static_link=yes], [enable_static_link=no])
 AM_CONDITIONAL(USE_STATIC_LINK, test $enable_static_link = yes)
 
+# Check validity about some libtool options
+if test $enable_static_link = yes -a $enable_static = no; then
+	AC_MSG_ERROR([--enable-static-link requires --enable-static])
+fi
+if test $enable_shared = no; then
+	AC_MSG_ERROR([BIND 10 requires shared libraries to be built])
+fi
+
 # OS dependent configuration
 SET_ENV_LIBRARY_PATH=no
 ENV_LIBRARY_PATH=LD_LIBRARY_PATH
@@ -167,7 +175,6 @@ LDFLAGS=$LDFLAGS_SAVED
 # specify the default warning flags in CXXFLAGS and let specific modules
 # "override" the default.
 
-CXXFLAGS=-g
 werror_ok=0
 
 # SunStudio compiler requires special compiler options for boost
@@ -543,7 +550,6 @@ Package:
 Flags:
   DEFS:          $DEFS
   CPPFLAGS:      $CPPFLAGS
-  CFLAGS:        $CFLAGS
   CXXFLAGS:      $CXXFLAGS
   B10_CXXFLAGS:  $B10_CXXFLAGS
 dnl includes too
