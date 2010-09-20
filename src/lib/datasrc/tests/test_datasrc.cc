@@ -307,9 +307,8 @@ vector<Zone> zones;
 }
 
 DataSrc::Result
-TestDataSrc::init(const isc::data::ElementPtr config UNUSED_PARAM)
-{
-    return init();
+TestDataSrc::init(isc::data::ConstElementPtr config UNUSED_PARAM) {
+    return (init());
 }
 
 void

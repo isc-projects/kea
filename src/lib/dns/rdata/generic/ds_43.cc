@@ -173,7 +173,7 @@ DS::compare(const Rdata& other) const
 
 uint16_t
 DS::getTag() const {
-    return impl_->tag_;
+    return (impl_->tag_);
 }
 
 // END_RDATA_NAMESPACE

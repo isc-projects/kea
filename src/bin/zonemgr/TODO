@@ -1,0 +1,5 @@
+1. Zonemgr should support adding/deleting zones dynamically.
+2. Make zonemgr  has customizable configurations for LOWERBOUND_REFRESH, LOWERBOUND_RETRY, MAX_TRANSFER_TIMEOUT, REFRESH_OFFSET, RETRY_OFFSET, EXPIRED_OFFSET, and/or jitter?
+3. There should be one way to see the current counters/timers and other data for each zone managed by zonemgr.
+
+

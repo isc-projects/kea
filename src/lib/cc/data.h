@@ -29,6 +29,7 @@ namespace isc { namespace data {
 class Element;
 // todo: describe the rationale behind ElementPtr?
 typedef boost::shared_ptr<Element> ElementPtr;
+typedef boost::shared_ptr<const Element> ConstElementPtr;
 
 ///
 /// \brief A standard Data module exception that is thrown if a function
@@ -90,7 +91,7 @@ public:
     virtual ~Element() {};
 
     /// \return the type of this element
-    int getType() { return type; };
+    int getType() const { return (type); }
 
     /// Returns a string representing the Element and all its
     /// child elements; note that this is different from stringValue(),
@@ -99,24 +100,24 @@ public:
     /// The resulting string will contain the Element in JSON format.
     ///
     /// \return std::string containing the string representation
-    std::string str();
+    std::string str() const;
 
     /// Returns the wireformat for the Element and all its child
     /// elements.
     ///
     /// \return std::string containing the element in wire format
-    std::string toWire();
-    void toWire(std::ostream& out);
+    std::string toWire() const;
+    void toWire(std::ostream& out) const;
 
     /// \name pure virtuals, every derived class must implement these
 
     /// \returns true if the other ElementPtr has the same type and
     ///          value
-    virtual bool equals(ElementPtr other) = 0;
+    virtual bool equals(const Element& other) const = 0;
     
     /// Converts the Element to JSON format and appends it to
     /// the given stringstream.
-    virtual void toJSON(std::ostream& ss) = 0;
+    virtual void toJSON(std::ostream& ss) const = 0;
 
     /// \name Type-specific getters
     ///
@@ -126,12 +127,22 @@ public:
     /// If you want an exception-safe getter method, use
     /// getValue() below
     //@{
-    virtual long int intValue() { isc_throw(TypeError, "intValue() called on non-integer Element"); };
-    virtual double doubleValue() { isc_throw(TypeError, "doubleValue() called on non-double Element"); };
-    virtual bool boolValue() { isc_throw(TypeError, "boolValue() called on non-Bool Element"); };
-    virtual std::string stringValue() { isc_throw(TypeError, "stringValue() called on non-string Element"); };
-    virtual const std::vector<boost::shared_ptr<Element> >& listValue() { isc_throw(TypeError, "listValue() called on non-list Element"); }; // replace with real exception or empty vector?
-    virtual const std::map<std::string, boost::shared_ptr<Element> >& mapValue() { isc_throw(TypeError, "mapValue() called on non-map Element"); }; // replace with real exception or empty map?
+    virtual long int intValue() const
+    { isc_throw(TypeError, "intValue() called on non-integer Element"); };
+    virtual double doubleValue() const
+    { isc_throw(TypeError, "doubleValue() called on non-double Element"); };
+    virtual bool boolValue() const
+    { isc_throw(TypeError, "boolValue() called on non-Bool Element"); };
+    virtual std::string stringValue() const
+    { isc_throw(TypeError, "stringValue() called on non-string Element"); };
+    virtual const std::vector<ConstElementPtr>& listValue() const {
+        // replace with real exception or empty vector?
+        isc_throw(TypeError, "listValue() called on non-list Element");
+    };
+    virtual const std::map<std::string, ConstElementPtr>& mapValue() const {
+        // replace with real exception or empty map?
+        isc_throw(TypeError, "mapValue() called on non-map Element");
+    };
     //@}
 
     /// \name Exception-safe getters
@@ -147,8 +158,8 @@ public:
     virtual bool getValue(double& t);
     virtual bool getValue(bool& t);
     virtual bool getValue(std::string& t);
-    virtual bool getValue(std::vector<ElementPtr>& t);
-    virtual bool getValue(std::map<std::string, ElementPtr>& t);
+    virtual bool getValue(std::vector<ConstElementPtr>& t);
+    virtual bool getValue(std::map<std::string, ConstElementPtr>& t);
     //@}
 
     ///
@@ -163,8 +174,8 @@ public:
     virtual bool setValue(const double v);
     virtual bool setValue(const bool t);
     virtual bool setValue(const std::string& v);
-    virtual bool setValue(const std::vector<ElementPtr>& v);
-    virtual bool setValue(const std::map<std::string, ElementPtr>& v);
+    virtual bool setValue(const std::vector<ConstElementPtr>& v);
+    virtual bool setValue(const std::map<std::string, ConstElementPtr>& v);
     //@}
 
 
@@ -179,17 +190,17 @@ public:
     /// Returns the ElementPtr at the given index. If the index is out
     /// of bounds, this function throws an std::out_of_range exception.
     /// \param i The position of the ElementPtr to return
-    virtual ElementPtr get(const int i);
+    virtual ConstElementPtr get(const int i) const;
 
     /// Sets the ElementPtr at the given index. If the index is out
     /// of bounds, this function throws an std::out_of_range exception.
     /// \param i The position of the ElementPtr to set
     /// \param element The ElementPtr to set at the position
-    virtual void set(const size_t i, ElementPtr element);
+    virtual void set(const size_t i, ConstElementPtr element);
 
     /// Adds an ElementPtr to the list
     /// \param element The ElementPtr to add
-    virtual void add(ElementPtr element);
+    virtual void add(ConstElementPtr element);
 
     /// Removes the element at the given position. If the index is out
     /// of nothing happens.
@@ -197,7 +208,7 @@ public:
     virtual void remove(const int i);
 
     /// Returns the number of elements in the list.
-    virtual size_t size();
+    virtual size_t size() const;
     //@}
 
     
@@ -209,11 +220,11 @@ public:
     /// Returns the ElementPtr at the given key
     /// \param name The key of the Element to return
     /// \return The ElementPtr at the given key
-    virtual ElementPtr get(const std::string& name);
+    virtual ConstElementPtr get(const std::string& name) const;
 
     /// Sets the ElementPtr at the given key
     /// \param name The key of the Element to set
-    virtual void set(const std::string& name, ElementPtr element);
+    virtual void set(const std::string& name, ConstElementPtr element);
 
     /// Remove the ElementPtr at the given key
     /// \param name The key of the Element to remove
@@ -222,7 +233,7 @@ public:
     /// Checks if there is data at the given key
     /// \param name The key of the Element to remove
     /// \return true if there is data at the key, false if not.
-    virtual bool contains(const std::string& name);
+    virtual bool contains(const std::string& name) const;
 
     /// Recursively finds any data at the given identifier. The
     /// identifier is a /-separated list of names of nested maps, with
@@ -237,13 +248,13 @@ public:
     /// \return The ElementPtr at the given identifier. Returns a
     /// null ElementPtr if it is not found, which can be checked with
     /// Element::is_null(ElementPtr e).
-    virtual ElementPtr find(const std::string& identifier);
+    virtual ConstElementPtr find(const std::string& identifier) const;
 
     /// See \c Element::find()
     /// \param identifier The identifier of the element to find
     /// \param t Reference to store the resulting ElementPtr, if found.
     /// \return true if the element was found, false if not.
-    virtual bool find(const std::string& identifier, ElementPtr& t);
+    virtual bool find(const std::string& identifier, ConstElementPtr t) const;
     //@}
 
 
@@ -265,13 +276,13 @@ public:
     //@{
     static ElementPtr create();
     static ElementPtr create(const long int i);
-    static ElementPtr create(const int i) { return create(static_cast<long int>(i)); };
+    static ElementPtr create(const int i) { return (create(static_cast<long int>(i))); };
     static ElementPtr create(const double d);
     static ElementPtr create(const bool b);
     static ElementPtr create(const std::string& s);
     // need both std:string and char *, since c++ will match
     // bool before std::string when you pass it a char *
-    static ElementPtr create(const char *s) { return create(std::string(s)); };
+    static ElementPtr create(const char *s) { return (create(std::string(s))); }
 
     /// \brief Creates an empty ListElement type ElementPtr.
     static ElementPtr createList();
@@ -364,14 +375,14 @@ class IntElement : public Element {
     long int i;
 
 public:
-    IntElement(long int v) : Element(integer), i(v) { };
-    long int intValue() { return i; }
+    IntElement(long int v) : Element(integer), i(v) { }
+    long int intValue() const { return (i); }
     using Element::getValue;
-    bool getValue(long int& t) { t = i; return true; };
+    bool getValue(long int& t) { t = i; return (true); }
     using Element::setValue;
-    bool setValue(const long int v) { i = v; return true; };
-    void toJSON(std::ostream& ss);
-    bool equals(ElementPtr other);
+    bool setValue(const long int v) { i = v; return (true); }
+    void toJSON(std::ostream& ss) const;
+    bool equals(const Element& other) const;
 };
 
 class DoubleElement : public Element {
@@ -379,13 +390,13 @@ class DoubleElement : public Element {
 
 public:
     DoubleElement(double v) : Element(real), d(v) {};
-    double doubleValue() { return d; }
+    double doubleValue() const { return (d); }
     using Element::getValue;
-    bool getValue(double& t) { t = d; return true; };
+    bool getValue(double& t) { t = d; return (true); }
     using Element::setValue;
-    bool setValue(const double v) { d = v; return true; };
-    void toJSON(std::ostream& ss);
-    bool equals(ElementPtr other);
+    bool setValue(const double v) { d = v; return (true); }
+    void toJSON(std::ostream& ss) const;
+    bool equals(const Element& other) const;
 };
 
 class BoolElement : public Element {
@@ -393,20 +404,20 @@ class BoolElement : public Element {
 
 public:
     BoolElement(const bool v) : Element(boolean), b(v) {};
-    bool boolValue() { return b; }
+    bool boolValue() const { return (b); }
     using Element::getValue;
-    bool getValue(bool& t) { t = b; return true; };
+    bool getValue(bool& t) { t = b; return (true); }
     using Element::setValue;
-    bool setValue(const bool v) { b = v; return true; };
-    void toJSON(std::ostream& ss);
-    bool equals(ElementPtr other);
+    bool setValue(const bool v) { b = v; return (true); }
+    void toJSON(std::ostream& ss) const;
+    bool equals(const Element& other) const;
 };
 
 class NullElement : public Element {
 public:
     NullElement() : Element(null) {};
-    void toJSON(std::ostream& ss);
-    bool equals(ElementPtr other);
+    void toJSON(std::ostream& ss) const;
+    bool equals(const Element& other) const;
 };
 
 class StringElement : public Element {
@@ -414,77 +425,97 @@ class StringElement : public Element {
 
 public:
     StringElement(std::string v) : Element(string), s(v) {};
-    std::string stringValue() { return s; };
+    std::string stringValue() const { return (s); }
     using Element::getValue;
-    bool getValue(std::string& t) { t = s; return true; };
+    bool getValue(std::string& t) { t = s; return (true); }
     using Element::setValue;
-    bool setValue(const std::string& v) { s = v; return true; };
-    void toJSON(std::ostream& ss);
-    bool equals(ElementPtr other);
+    bool setValue(const std::string& v) { s = v; return (true); }
+    void toJSON(std::ostream& ss) const;
+    bool equals(const Element& other) const;
 };
 
 class ListElement : public Element {
-    std::vector<ElementPtr> l;
+    std::vector<ConstElementPtr> l;
 
 public:
-    ListElement() : Element(list), l(std::vector<ElementPtr>()) {};
-    const std::vector<ElementPtr>& listValue() { return l; }
+    ListElement() : Element(list) {}
+    const std::vector<ConstElementPtr>& listValue() const { return (l); }
     using Element::getValue;
-    bool getValue(std::vector<ElementPtr>& t) { t = l; return true; };
+    bool getValue(std::vector<ConstElementPtr>& t) {
+        t = l;
+        return (true);
+    }
     using Element::setValue;
-    bool setValue(const std::vector<ElementPtr>& v) { l = v; return true; };
+    bool setValue(const std::vector<ConstElementPtr>& v) {
+        l = v;
+        return (true);
+    }
     using Element::get;
-    ElementPtr get(int i) { return l.at(i); };
+    ConstElementPtr get(int i) const { return (l.at(i)); }
     using Element::set;
-    void set(size_t i, ElementPtr e) { if (i <= l.size()) {l[i] = e;} else { throw std::out_of_range("vector::_M_range_check"); } };
-    void add(ElementPtr e) { l.push_back(e); };
+    void set(size_t i, ConstElementPtr e) {
+        l.at(i) = e;
+    }
+    void add(ConstElementPtr e) { l.push_back(e); };
     using Element::remove;
     void remove(int i) { l.erase(l.begin() + i); };
-    void toJSON(std::ostream& ss);
-    size_t size() { return l.size(); }
-    bool equals(ElementPtr other);
+    void toJSON(std::ostream& ss) const;
+    size_t size() const { return (l.size()); }
+    bool equals(const Element& other) const;
 };
 
 class MapElement : public Element {
-    std::map<std::string, ElementPtr> m;
+    std::map<std::string, ConstElementPtr> m;
 
 public:
-    MapElement() : Element(map), m(std::map<std::string, ElementPtr>()) {};
+    MapElement() : Element(map) {}
     // TODO: should we have direct iterators instead of exposing the std::map here?
-    const std::map<std::string, ElementPtr>& mapValue() { return m; }
+    const std::map<std::string, ConstElementPtr>& mapValue() const {
+        return (m);
+    }
     using Element::getValue;
-    bool getValue(std::map<std::string, ElementPtr>& t) { t = m; return true; };
+    bool getValue(std::map<std::string, ConstElementPtr>& t) {
+        t = m;
+        return (true);
+    }
     using Element::setValue;
-    bool setValue(std::map<std::string, ElementPtr>& v) { m = v; return true; };
+    bool setValue(std::map<std::string, ConstElementPtr>& v) {
+        m = v;
+        return (true);
+    }
     using Element::get;
-    ElementPtr get(const std::string& s) { if (contains(s)) { return m[s]; } else { return ElementPtr();} };
+    ConstElementPtr get(const std::string& s) const {
+        return (contains(s) ? m.find(s)->second : ConstElementPtr());
+    }
     using Element::set;
-    void set(const std::string& key, ElementPtr value);
+    void set(const std::string& key, ConstElementPtr value);
     using Element::remove;
     void remove(const std::string& s) { m.erase(s); }
-    bool contains(const std::string& s) { return m.find(s) != m.end(); }
-    void toJSON(std::ostream& ss);
+    bool contains(const std::string& s) const {
+        return (m.find(s) != m.end());
+    }
+    void toJSON(std::ostream& ss) const;
     
     // we should name the two finds better...
     // find the element at id; raises TypeError if one of the
     // elements at path except the one we're looking for is not a
     // mapelement.
     // returns an empty element if the item could not be found
-    ElementPtr find(const std::string& id);
+    ConstElementPtr find(const std::string& id) const;
 
     // find the Element at 'id', and store the element pointer in t
     // returns true if found, or false if not found (either because
     // it doesnt exist or one of the elements in the path is not
     // a MapElement)
-    bool find(const std::string& id, ElementPtr& t);
+    bool find(const std::string& id, ConstElementPtr t) const;
 
-    bool equals(ElementPtr other);
+    bool equals(const Element& other) const;
 };
 
 /// Checks whether the given ElementPtr is a NULL pointer
 /// \param p The ElementPtr to check
 /// \return true if it is NULL, false if not.
-bool isNull(ElementPtr p);
+bool isNull(ConstElementPtr p);
 
 ///
 /// \brief Remove all values from the first ElementPtr that are
@@ -493,7 +524,14 @@ bool isNull(ElementPtr p);
 /// only contains new and changed values (for ModuleCCSession and
 /// configuration update handlers)
 /// Raises a TypeError if a or b are not MapElements
-void removeIdentical(ElementPtr a, const ElementPtr b);
+void removeIdentical(ElementPtr a, ConstElementPtr b);
+
+/// \brief Create a new ElementPtr from the first ElementPtr, removing all
+/// values that are equal in the second. Both ElementPtrs MUST be MapElements.
+/// The returned ElementPtr will be a MapElement that only contains new and
+/// changed values (for ModuleCCSession and configuration update handlers).
+/// Raises a TypeError if a or b are not MapElements
+ConstElementPtr removeIdentical(ConstElementPtr a, ConstElementPtr b);
 
 /// \brief Merges the data from other into element.
 /// (on the first level). Both elements must be
@@ -507,7 +545,7 @@ void removeIdentical(ElementPtr a, const ElementPtr b);
 /// configuration data (which would then result in reverting back
 /// to the default).
 /// Raises a TypeError if either ElementPtr is not a MapElement
-void merge(ElementPtr element, const ElementPtr other);
+void merge(ElementPtr element, ConstElementPtr other);
 
 ///
 /// \brief Insert the Element as a string into stream.
@@ -524,11 +562,11 @@ void merge(ElementPtr element, const ElementPtr other);
 /// \param e The \c ElementPtr object to insert.
 /// \return A reference to the same \c std::ostream object referenced by
 /// parameter \c os after the insertion operation.
-std::ostream& operator <<(std::ostream &out, const isc::data::ElementPtr& e);
+std::ostream& operator<<(std::ostream& out, const Element& e);
 
-bool operator==(const isc::data::ElementPtr a, const isc::data::ElementPtr b);
+bool operator==(const Element& a, const Element& b);
+bool operator!=(const Element& a, const Element& b);
 } }
-
 #endif // _ISC_DATA_H
 
 // Local Variables: 

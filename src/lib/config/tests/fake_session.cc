@@ -40,12 +40,12 @@ using namespace isc::data;
 
 // ok i want these in cc/data 
 bool
-listContains(ElementPtr list, ElementPtr el) {
+listContains(ConstElementPtr list, ConstElementPtr el) {
     if (!list) {
         return (false);
     }
-    BOOST_FOREACH(ElementPtr l_el, list->listValue()) {
-        if (l_el == el) {
+    BOOST_FOREACH(ConstElementPtr l_el, list->listValue()) {
+        if (*l_el == *el) {
             return (true);
         }
     }
@@ -53,10 +53,10 @@ listContains(ElementPtr list, ElementPtr el) {
 }
 
 void
-listRemove(ElementPtr list, ElementPtr el) {
+listRemove(ElementPtr list, ConstElementPtr el) {
     int i = -1;
-    BOOST_FOREACH(ElementPtr s_el, list->listValue()) {
-        if (el == s_el) {
+    BOOST_FOREACH(ConstElementPtr s_el, list->listValue()) {
+        if (*el == *s_el) {
             i = 0;
         }
         i++;
@@ -82,11 +82,6 @@ FakeSession::FakeSession(isc::data::ElementPtr initial_messages,
 FakeSession::~FakeSession() {
 }
 
-bool
-FakeSession::connect() {
-    return (true);
-}
-
 void
 FakeSession::disconnect() {
 }
@@ -99,25 +94,8 @@ void
 FakeSession::establish(const char* socket_file) {
 }
 
-//
-// Convert to wire format and send this on the TCP stream with its length prefix
-//
-void
-FakeSession::sendmsg(ElementPtr& msg) {
-    //cout << "[XX] client sends message: " << msg << endl;
-    // err, to where?
-    addMessage(msg, "*", "*");
-}
-
-void
-FakeSession::sendmsg(ElementPtr& env, ElementPtr& msg) {
-    //cout << "[XX] client sends message: " << msg << endl;
-    //cout << "[XX] env: " << env << endl;
-    addMessage(msg, env->get("group")->stringValue(), env->get("to")->stringValue());
-}
-
 bool
-FakeSession::recvmsg(ElementPtr& msg, bool nonblock UNUSED_PARAM,
+FakeSession::recvmsg(ConstElementPtr& msg, bool nonblock UNUSED_PARAM,
                      int seq UNUSED_PARAM)
 {
     //cout << "[XX] client asks for message " << endl;
@@ -133,7 +111,7 @@ FakeSession::recvmsg(ElementPtr& msg, bool nonblock UNUSED_PARAM,
 }
 
 bool
-FakeSession::recvmsg(ElementPtr& env, ElementPtr& msg,
+FakeSession::recvmsg(ConstElementPtr& env, ConstElementPtr& msg,
                      bool nonblock UNUSED_PARAM,
                      int seq UNUSED_PARAM)
 {
@@ -145,26 +123,27 @@ FakeSession::recvmsg(ElementPtr& env, ElementPtr& msg,
         // do we need initial message to have env[group] and [to] too?
         msg = messages_->get(0);
         messages_->remove(0);
-        return true;
+        return (true);
     } else if (msg_queue_) {
-        BOOST_FOREACH(ElementPtr c_m, msg_queue_->listValue()) {
-            ElementPtr to_remove = ElementPtr();
+        BOOST_FOREACH(ConstElementPtr c_m, msg_queue_->listValue()) {
+            ConstElementPtr to_remove = ElementPtr();
             if (haveSubscription(c_m->get(0), c_m->get(1))) {
-                env = Element::createMap();
-                env->set("group", c_m->get(0));
-                env->set("to", c_m->get(1));
+                ElementPtr new_env = Element::createMap();
+                new_env->set("group", c_m->get(0));
+                new_env->set("to", c_m->get(1));
+                env = new_env;
                 msg = c_m->get(2);
                 to_remove = c_m;
             }
             if (to_remove) {
                 listRemove(msg_queue_, to_remove);
-                return true;
+                return (true);
             }
         }
     }
     msg = ElementPtr();
     env = ElementPtr();
-    return false;
+    return (false);
 }
 
 void
@@ -192,44 +171,45 @@ FakeSession::unsubscribe(std::string group, std::string instance) {
 }
 
 int
-FakeSession::group_sendmsg(ElementPtr msg, std::string group,
+FakeSession::group_sendmsg(ConstElementPtr msg, std::string group,
                            std::string to, std::string instance UNUSED_PARAM)
 {
     //cout << "[XX] client sends message: " << msg << endl;
     //cout << "[XX] to: " << group << " . " << instance << "." << to << endl;
     addMessage(msg, group, to);
-    return 1;
+    return (1);
 }
 
 bool
-FakeSession::group_recvmsg(ElementPtr& envelope, ElementPtr& msg,
+FakeSession::group_recvmsg(ConstElementPtr& envelope, ConstElementPtr& msg,
                            bool nonblock, int seq)
 {
     return (recvmsg(envelope, msg, nonblock, seq));
 }
 
 int
-FakeSession::reply(ElementPtr& envelope, ElementPtr& newmsg) {
+FakeSession::reply(ConstElementPtr envelope, ConstElementPtr newmsg) {
     //cout << "[XX] client sends reply: " << newmsg << endl;
     //cout << "[XX] env: " << envelope << endl;
-    addMessage(newmsg, envelope->get("group")->stringValue(), envelope->get("to")->stringValue());
-    return 1;
+    addMessage(newmsg, envelope->get("group")->stringValue(),
+               envelope->get("to")->stringValue());
+    return (1);
 }
 
 bool
-FakeSession::hasQueuedMsgs() {
-    return false;
+FakeSession::hasQueuedMsgs() const {
+    return (false);
 }
 
-ElementPtr
-FakeSession::getFirstMessage(std::string& group, std::string& to) {
-    ElementPtr el;
+ConstElementPtr
+FakeSession::getFirstMessage(std::string& group, std::string& to) const {
+    ConstElementPtr el;
     if (msg_queue_ && msg_queue_->size() > 0) {
         el = msg_queue_->get(0);
         msg_queue_->remove(0);
         group = el->get(0)->stringValue();
         to = el->get(1)->stringValue();
-        return el->get(2);
+        return (el->get(2));
     } else {
         group = "";
         to = "";
@@ -238,7 +218,7 @@ FakeSession::getFirstMessage(std::string& group, std::string& to) {
 }
 
 void
-FakeSession::addMessage(ElementPtr msg, const std::string& group,
+FakeSession::addMessage(ConstElementPtr msg, const std::string& group,
                         const std::string& to)
 {
     ElementPtr m_el = Element::createList();
@@ -270,8 +250,7 @@ FakeSession::haveSubscription(const std::string& group,
 }
 
 bool
-FakeSession::haveSubscription(const ElementPtr group,
-                              const ElementPtr instance)
+FakeSession::haveSubscription(ConstElementPtr group, ConstElementPtr instance)
 {
     return (haveSubscription(group->stringValue(), instance->stringValue()));
 }

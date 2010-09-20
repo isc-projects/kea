@@ -206,6 +206,11 @@ checkCache(QueryTask& task, RRsetList& target) {
         if (!hit || !rrset || (flags & DataSrc::CNAME_FOUND) != 0) {
             hit = cache.retrieve(task.qname, task.qclass, RRType::CNAME(),
                                  rrset, flags);
+            if (!rrset) {
+                // If we don't have a positive cache, forget it; otherwise the
+                // intermediate result may confuse the subsequent processing.
+                hit = false;
+            }
         }
 
         if (hit) {
@@ -1245,8 +1250,8 @@ Nsec3Param::getHash(const Name& name) const {
 // installed files we define the methods here.
 //
 DataSrc::Result
-DataSrc::init(const isc::data::ElementPtr config UNUSED_PARAM) {
-    return NOT_IMPLEMENTED;
+DataSrc::init(isc::data::ConstElementPtr config UNUSED_PARAM) {
+    return (NOT_IMPLEMENTED);
 }
 
 DataSrc::Result

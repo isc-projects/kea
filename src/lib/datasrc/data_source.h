@@ -115,7 +115,7 @@ public:
     // Optional 'low-level' methods.  These will have stub implementations
     // in the general DataSrc class but MAY be overwritten by subclasses
     virtual Result init() = 0;
-    virtual Result init(const isc::data::ElementPtr config) = 0;
+    virtual Result init(isc::data::ConstElementPtr config) = 0;
     virtual Result close() = 0;
 
     // Mandatory 'low-level' methods: These will NOT be implemented by
@@ -182,13 +182,13 @@ public:
 
     virtual void findClosestEnclosure(DataSrcMatch& match) const = 0;
 
-    const isc::dns::RRClass& getClass() const { return rrclass; }
+    const isc::dns::RRClass& getClass() const { return (rrclass); }
     void setClass(isc::dns::RRClass& c) { rrclass = c; }
     void setClass(const isc::dns::RRClass& c) { rrclass = c; }
 
-    Result init() { return NOT_IMPLEMENTED; }
-    Result init(const isc::data::ElementPtr config);
-    Result close() { return NOT_IMPLEMENTED; }
+    Result init() { return (NOT_IMPLEMENTED); }
+    Result init(isc::data::ConstElementPtr config);
+    Result close() { return (NOT_IMPLEMENTED); }
 
     virtual Result findRRset(const isc::dns::Name& qname,
                              const isc::dns::RRClass& qclass,
@@ -247,7 +247,7 @@ public:
 
     void addDataSrc(ConstDataSrcPtr data_src);
     void removeDataSrc(ConstDataSrcPtr data_src);
-    size_t dataSrcCount() { return data_sources.size(); };
+    size_t dataSrcCount() { return (data_sources.size()); }
     
     void findClosestEnclosure(DataSrcMatch& match) const;
 

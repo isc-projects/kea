@@ -34,12 +34,12 @@ using namespace std;
 namespace {
 std::string
 ccspecfile(const std::string name) {
-    return std::string(TEST_DATA_PATH) + "/" + name;
+    return (std::string(TEST_DATA_PATH) + "/" + name);
 }
 
 ElementPtr
 el(const std::string& str) {
-    return Element::fromJSON(str);
+    return (Element::fromJSON(str));
 }
 
 class CCSessionTest : public ::testing::Test {
@@ -57,7 +57,7 @@ protected:
 };
 
 TEST_F(CCSessionTest, createAnswer) {
-    ElementPtr answer;
+    ConstElementPtr answer;
     answer = createAnswer();
     EXPECT_EQ("{ \"result\": [ 0 ] }", answer->str());
     answer = createAnswer(1, "error");
@@ -66,14 +66,14 @@ TEST_F(CCSessionTest, createAnswer) {
     EXPECT_THROW(createAnswer(1, ElementPtr()), CCSessionError);
     EXPECT_THROW(createAnswer(1, Element::create(1)), CCSessionError);
 
-    ElementPtr arg = el("[ \"just\", \"some\", \"data\" ]");
+    ConstElementPtr arg = el("[ \"just\", \"some\", \"data\" ]");
     answer = createAnswer(0, arg);
     EXPECT_EQ("{ \"result\": [ 0, [ \"just\", \"some\", \"data\" ] ] }", answer->str());
 }
 
 TEST_F(CCSessionTest, parseAnswer) {
-    ElementPtr answer;
-    ElementPtr arg;
+    ConstElementPtr answer;
+    ConstElementPtr arg;
     int rcode;
 
     EXPECT_THROW(parseAnswer(rcode, ElementPtr()), CCSessionError);
@@ -103,8 +103,8 @@ TEST_F(CCSessionTest, parseAnswer) {
 }
 
 TEST_F(CCSessionTest, createCommand) {
-    ElementPtr command;
-    ElementPtr arg;
+    ConstElementPtr command;
+    ConstElementPtr arg;
 
     command = createCommand("my_command");
     ASSERT_EQ("{ \"command\": [ \"my_command\" ] }", command->str());
@@ -123,7 +123,7 @@ TEST_F(CCSessionTest, createCommand) {
 }
 
 TEST_F(CCSessionTest, parseCommand) {
-    ElementPtr arg;
+    ConstElementPtr arg;
     std::string cmd;
 
     // should throw
@@ -155,7 +155,7 @@ TEST_F(CCSessionTest, session1) {
     EXPECT_EQ(true, session.haveSubscription("Spec1", "*"));
 
     EXPECT_EQ(1, session.getMsgQueue()->size());
-    ElementPtr msg;
+    ConstElementPtr msg;
     std::string group, to;
     msg = session.getFirstMessage(group, to);
     EXPECT_EQ("{ \"command\": [ \"module_spec\", { \"module_name\": \"Spec1\" } ] }", msg->str());
@@ -171,7 +171,7 @@ TEST_F(CCSessionTest, session2)
     EXPECT_EQ(true, session.haveSubscription("Spec2", "*"));
 
     EXPECT_EQ(1, session.getMsgQueue()->size());
-    ElementPtr msg;
+    ConstElementPtr msg;
     std::string group, to;
     msg = session.getFirstMessage(group, to);
     EXPECT_EQ("{ \"command\": [ \"module_spec\", { \"commands\": [ { \"command_args\": [ { \"item_default\": \"\", \"item_name\": \"message\", \"item_optional\": false, \"item_type\": \"string\" } ], \"command_description\": \"Print the given message to stdout\", \"command_name\": \"print_message\" }, { \"command_args\": [  ], \"command_description\": \"Shut down BIND 10\", \"command_name\": \"shutdown\" } ], \"config_data\": [ { \"item_default\": 1, \"item_name\": \"item1\", \"item_optional\": false, \"item_type\": \"integer\" }, { \"item_default\": 1.1, \"item_name\": \"item2\", \"item_optional\": false, \"item_type\": \"real\" }, { \"item_default\": true, \"item_name\": \"item3\", \"item_optional\": false, \"item_type\": \"boolean\" }, { \"item_default\": \"test\", \"item_name\": \"item4\", \"item_optional\": false, \"item_type\": \"string\" }, { \"item_default\": [ \"a\", \"b\" ], \"item_name\": \"item5\", \"item_optional\": false, \"item_type\": \"list\", \"list_item_spec\": { \"item_default\": \"\", \"item_name\": \"list_element\", \"item_optional\": false, \"item_type\": \"string\" } }, { \"item_default\": {  }, \"item_name\": \"item6\", \"item_optional\": false, \"item_type\": \"map\", \"map_item_spec\": [ { \"item_default\": \"default\", \"item_name\": \"value1\", \"item_optional\": true, \"item_type\": \"string\" }, { \"item_name\": \"value2\", \"item_optional\": true, \"item_type\": \"integer\" } ] } ], \"module_name\": \"Spec2\" } ] }", msg->str());
@@ -180,31 +180,31 @@ TEST_F(CCSessionTest, session2)
     EXPECT_EQ(0, session.getMsgQueue()->size());
 }
 
-ElementPtr my_config_handler(ElementPtr new_config) {
+ConstElementPtr my_config_handler(ConstElementPtr new_config) {
     if (new_config && new_config->contains("item1") &&
         new_config->get("item1")->intValue() == 5) {
-        return createAnswer(6, "I do not like the number 5");
+        return (createAnswer(6, "I do not like the number 5"));
     }
-    return createAnswer();
+    return (createAnswer());
 }
 
-ElementPtr my_command_handler(const std::string& command,
-                              ElementPtr arg UNUSED_PARAM)
+ConstElementPtr my_command_handler(const std::string& command,
+                                   ConstElementPtr arg UNUSED_PARAM)
 {
     if (command == "good_command") {
-        return createAnswer();
+        return (createAnswer());
     } else if (command == "command_with_arg") {
         if (arg) {
             if (arg->getType() == Element::integer) {
-                return createAnswer(0, el("2"));
+                return (createAnswer(0, el("2")));
             } else {
-                return createAnswer(1, "arg bad type");
+                return (createAnswer(1, "arg bad type"));
             }
         } else {
-            return createAnswer(1, "arg missing");
+            return (createAnswer(1, "arg missing"));
         }
     } else {
-        return createAnswer(1, "bad command");
+        return (createAnswer(1, "bad command"));
     }
 }
 
@@ -218,7 +218,7 @@ TEST_F(CCSessionTest, session3) {
     EXPECT_EQ(true, session.haveSubscription("Spec2", "*"));
 
     EXPECT_EQ(2, session.getMsgQueue()->size());
-    ElementPtr msg;
+    ConstElementPtr msg;
     std::string group, to;
     msg = session.getFirstMessage(group, to);
     EXPECT_EQ("{ \"command\": [ \"module_spec\", { \"commands\": [ { \"command_args\": [ { \"item_default\": \"\", \"item_name\": \"message\", \"item_optional\": false, \"item_type\": \"string\" } ], \"command_description\": \"Print the given message to stdout\", \"command_name\": \"print_message\" }, { \"command_args\": [  ], \"command_description\": \"Shut down BIND 10\", \"command_name\": \"shutdown\" } ], \"config_data\": [ { \"item_default\": 1, \"item_name\": \"item1\", \"item_optional\": false, \"item_type\": \"integer\" }, { \"item_default\": 1.1, \"item_name\": \"item2\", \"item_optional\": false, \"item_type\": \"real\" }, { \"item_default\": true, \"item_name\": \"item3\", \"item_optional\": false, \"item_type\": \"boolean\" }, { \"item_default\": \"test\", \"item_name\": \"item4\", \"item_optional\": false, \"item_type\": \"string\" }, { \"item_default\": [ \"a\", \"b\" ], \"item_name\": \"item5\", \"item_optional\": false, \"item_type\": \"list\", \"list_item_spec\": { \"item_default\": \"\", \"item_name\": \"list_element\", \"item_optional\": false, \"item_type\": \"string\" } }, { \"item_default\": {  }, \"item_name\": \"item6\", \"item_optional\": false, \"item_type\": \"map\", \"map_item_spec\": [ { \"item_default\": \"default\", \"item_name\": \"value1\", \"item_optional\": true, \"item_type\": \"string\" }, { \"item_name\": \"value2\", \"item_optional\": true, \"item_type\": \"integer\" } ] } ], \"module_name\": \"Spec2\" } ] }", msg->str());
@@ -242,7 +242,7 @@ TEST_F(CCSessionTest, checkCommand) {
     EXPECT_EQ(true, session.haveSubscription("Spec2", "*"));
 
     EXPECT_EQ(2, session.getMsgQueue()->size());
-    ElementPtr msg;
+    ConstElementPtr msg;
     std::string group, to;
     // checked above, drop em
     msg = session.getFirstMessage(group, to);
@@ -381,7 +381,7 @@ TEST_F(CCSessionTest, remoteConfig) {
     EXPECT_THROW(mccs.addRemoteConfig(ccspecfile("spec2.spec")), CCSessionError);
     
     session.getMessages()->add(createAnswer());
-    mccs.addRemoteConfig(ccspecfile("spec2.spec"));
+    EXPECT_THROW(mccs.addRemoteConfig(ccspecfile("spec2.spec")), CCSessionError);
 }
 
 TEST_F(CCSessionTest, ignoreRemoteConfigCommands) {
@@ -393,7 +393,7 @@ TEST_F(CCSessionTest, ignoreRemoteConfigCommands) {
     EXPECT_EQ(true, session.haveSubscription("Spec2", "*"));
 
     EXPECT_EQ(2, session.getMsgQueue()->size());
-    ElementPtr msg;
+    ConstElementPtr msg;
     std::string group, to;
     // drop the module_spec and config commands
     session.getFirstMessage(group, to);

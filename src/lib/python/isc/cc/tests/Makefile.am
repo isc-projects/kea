@@ -11,5 +11,6 @@ check-local:
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
 	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python \
-	$(PYCOVERAGE) $(abs_srcdir)/$$pytest ; \
+	BIND10_TEST_SOCKET_FILE=$(builddir)/test_socket.sock \
+	$(PYCOVERAGE) $(abs_srcdir)/$$pytest || exit ; \
 	done

@@ -32,14 +32,46 @@ AC_TRY_LINK([],[],
 	])
 LDFLAGS=$LDFLAGS_SAVED
 
-# OS dependent compiler flags
+# allow building programs with static link.  we need to make it selective
+# because loadable modules cannot be statically linked.
+AC_ARG_ENABLE([static-link],
+AC_HELP_STRING([--enable-static-link],
+  [build programs with static link [[default=no]]]),
+  [enable_static_link=yes], [enable_static_link=no])
+AM_CONDITIONAL(USE_STATIC_LINK, test $enable_static_link = yes)
+
+# Check validity about some libtool options
+if test $enable_static_link = yes -a $enable_static = no; then
+	AC_MSG_ERROR([--enable-static-link requires --enable-static])
+fi
+if test $enable_shared = no; then
+	AC_MSG_ERROR([BIND 10 requires shared libraries to be built])
+fi
+
+# OS dependent configuration
+SET_ENV_LIBRARY_PATH=no
+ENV_LIBRARY_PATH=LD_LIBRARY_PATH
+
 case "$host" in
 *-solaris*)
 	# Solaris requires special definitions to get some standard libraries
 	# (e.g. getopt(3)) available with common used header files.
 	CPPFLAGS="$CPPFLAGS -D_XPG4_2 -D__EXTENSIONS__"
 	;;
+*-apple-darwin*)
+	# libtool doesn't work pefectly with Darwin: libtool embeds the
+	# final install path in dynamic libraries and our loadable python
+	# modules always refer to that path even if it's loaded within the
+	# source tree.  This prevents pre-install tests from working.
+	# To work around this problem we explicitly specify paths to dynamic
+	# libraries when we use them in the source tree.
+	SET_ENV_LIBRARY_PATH=yes
+	ENV_LIBRARY_PATH=DYLD_LIBRARY_PATH
+	;;
 esac
+AM_CONDITIONAL(SET_ENV_LIBRARY_PATH, test $SET_ENV_LIBRARY_PATH = yes)
+AC_SUBST(SET_ENV_LIBRARY_PATH)
+AC_SUBST(ENV_LIBRARY_PATH)
 
 m4_define([_AM_PYTHON_INTERPRETER_LIST], [python python3 python3.1])
 AC_ARG_WITH([pythonpath],
@@ -143,7 +175,6 @@ LDFLAGS=$LDFLAGS_SAVED
 # specify the default warning flags in CXXFLAGS and let specific modules
 # "override" the default.
 
-CXXFLAGS=-g
 werror_ok=0
 
 # SunStudio compiler requires special compiler options for boost
@@ -404,12 +435,15 @@ AC_CONFIG_FILES([Makefile
                  src/bin/xfrin/tests/Makefile
                  src/bin/xfrout/Makefile
                  src/bin/xfrout/tests/Makefile
+                 src/bin/zonemgr/Makefile
+                 src/bin/zonemgr/tests/Makefile
                  src/bin/usermgr/Makefile
                  src/lib/Makefile
                  src/lib/bench/Makefile
                  src/lib/bench/example/Makefile
                  src/lib/bench/tests/Makefile
                  src/lib/cc/Makefile
+                 src/lib/cc/tests/Makefile
                  src/lib/python/Makefile
                  src/lib/python/isc/Makefile
                  src/lib/python/isc/datasrc/Makefile
@@ -419,13 +453,17 @@ AC_CONFIG_FILES([Makefile
                  src/lib/python/isc/config/tests/Makefile
                  src/lib/python/isc/log/Makefile
                  src/lib/python/isc/log/tests/Makefile
+                 src/lib/python/isc/notify/Makefile
+                 src/lib/python/isc/notify/tests/Makefile
                  src/lib/config/Makefile
                  src/lib/config/tests/Makefile
+                 src/lib/config/testdata/Makefile
                  src/lib/dns/Makefile
                  src/lib/dns/tests/Makefile
                  src/lib/dns/python/Makefile
                  src/lib/dns/python/tests/Makefile
                  src/lib/exceptions/Makefile
+                 src/lib/exceptions/tests/Makefile
                  src/lib/datasrc/Makefile
                  src/lib/datasrc/tests/Makefile
                  src/lib/xfr/Makefile
@@ -444,6 +482,10 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/xfrout/xfrout.spec.pre
            src/bin/xfrout/tests/xfrout_test
            src/bin/xfrout/run_b10-xfrout.sh
+           src/bin/zonemgr/zonemgr.py
+           src/bin/zonemgr/zonemgr.spec.pre
+           src/bin/zonemgr/tests/zonemgr_test
+           src/bin/zonemgr/run_b10-zonemgr.sh
            src/bin/bind10/bind10.py
            src/bin/bind10/tests/bind10_test
            src/bin/bind10/run_bind10.sh
@@ -465,18 +507,22 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/lib/python/isc/config/tests/config_test
            src/lib/python/isc/cc/tests/cc_test
            src/lib/python/isc/log/tests/log_test
+           src/lib/python/isc/notify/tests/notify_out_test
            src/lib/dns/gen-rdatacode.py
            src/lib/python/bind10_config.py
            src/lib/dns/tests/testdata/gen-wiredata.py
            src/lib/cc/session_config.h.pre
+           src/lib/cc/tests/session_unittests_config.h
           ], [
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
            chmod +x src/bin/xfrout/run_b10-xfrout.sh
+           chmod +x src/bin/zonemgr/run_b10-zonemgr.sh
            chmod +x src/bin/bind10/run_bind10.sh
            chmod +x src/bin/cmdctl/tests/cmdctl_test
            chmod +x src/bin/xfrin/tests/xfrin_test
            chmod +x src/bin/xfrout/tests/xfrout_test
+           chmod +x src/bin/zonemgr/tests/zonemgr_test
            chmod +x src/bin/bindctl/tests/bindctl_test
            chmod +x src/bin/bindctl/run_bindctl.sh
            chmod +x src/bin/loadzone/run_loadzone.sh
@@ -505,7 +551,6 @@ Package:
 Flags:
   DEFS:          $DEFS
   CPPFLAGS:      $CPPFLAGS
-  CFLAGS:        $CFLAGS
   CXXFLAGS:      $CXXFLAGS
   B10_CXXFLAGS:  $B10_CXXFLAGS
 dnl includes too

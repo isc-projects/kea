@@ -49,7 +49,7 @@ using namespace isc::datasrc;
 using namespace isc::data;
 
 namespace {
-const ElementPtr SQLITE_DBFILE_EXAMPLE = Element::fromJSON(
+ConstElementPtr SQLITE_DBFILE_EXAMPLE = Element::fromJSON(
     "{ \"database_file\": \"" TEST_DATA_DIR "/example.org.sqlite3\"}");
 
 class DataSrcTest : public ::testing::Test {
@@ -912,6 +912,24 @@ TEST_F(DataSrcTest, NSECZonecutOfNonsecureZone) {
 TEST_F(DataSrcTest, RootDSQuery) {
     EXPECT_NO_THROW(createAndProcessQuery(Name("."), RRClass::IN(),
                                           RRType::DS()));
+    headerCheck(msg, Rcode::REFUSED(), true, false, true, 0, 0, 0);
+}
+
+TEST_F(DataSrcTest, DSQueryFromCache) {
+    // explicitly enable hot spot cache
+    cache.setEnabled(true);
+
+    // The first query will create a negative cache for example.org/CNAME
+    createAndProcessQuery(Name("example.org"), RRClass::IN(), RRType::SOA());
+
+    // the cached CNAME shouldn't confuse subsequent query.
+    // there may be several different possible cases that could trigger a bug,
+    // but DS query is the only known example.
+    msg.clear(Message::PARSE);
+    createAndProcessQuery(Name("example.org"), RRClass::IN(), RRType::DS());
+
+    // returning refused is probably a bad behavior, but it's a different
+    // issue -- see Trac Ticket #306.
     headerCheck(msg, Rcode::REFUSED(), true, false, true, 0, 0, 0);
 }
 

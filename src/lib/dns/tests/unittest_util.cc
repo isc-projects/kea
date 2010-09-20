@@ -158,7 +158,7 @@ UnitTestUtil::matchWireData(const char* dataexp1 UNUSED_PARAM,
             << "Expected: " << len2 << "\n";
         return (::testing::AssertionFailure(msg));
     }
-    return ::testing::AssertionSuccess();
+    return (::testing::AssertionSuccess());
 }
 
 ::testing::AssertionResult
@@ -177,5 +177,5 @@ UnitTestUtil::matchName(const char* nameexp1 UNUSED_PARAM,
             << "Other: " << name2 << "\n";
         return (::testing::AssertionFailure(msg));
     }
-    return ::testing::AssertionSuccess();
+    return (::testing::AssertionSuccess());
 }

@@ -20,6 +20,7 @@
 
 #include <cassert>
 #include <climits>
+#include <map>
 #include <cstdio>
 #include <iostream>
 #include <string>
@@ -35,24 +36,21 @@ namespace isc {
 namespace data {
 
 std::string
-Element::str()
-{
+Element::str() const {
     std::stringstream ss;
     toJSON(ss);
-    return ss.str();
+    return (ss.str());
 }
 
 std::string
-Element::toWire()
-{
+Element::toWire() const {
     std::stringstream ss;
     toJSON(ss);
-    return ss.str();
+    return (ss.str());
 }
 
 void
-Element::toWire(std::ostream& ss)
-{
+Element::toWire(std::ostream& ss) const {
     toJSON(ss);
 }
 
@@ -65,77 +63,78 @@ Element::toWire(std::ostream& ss)
 //
 bool
 Element::getValue(long int& t UNUSED_PARAM) {
-    return false;
+    return (false);
 }
 
 bool
 Element::getValue(double& t UNUSED_PARAM) {
-    return false;
+    return (false);
 }
 
 bool
 Element::getValue(bool& t UNUSED_PARAM) {
-    return false;
+    return (false);
 }
 
 bool
 Element::getValue(std::string& t UNUSED_PARAM) {
-    return false;
+    return (false);
 }
 
 bool
-Element::getValue(std::vector<ElementPtr>& t UNUSED_PARAM) {
-    return false;
+Element::getValue(std::vector<ConstElementPtr>& t UNUSED_PARAM) {
+    return (false);
 }
 
 bool
-Element::getValue(std::map<std::string, ElementPtr>& t UNUSED_PARAM) {
-    return false;
+Element::getValue(std::map<std::string, ConstElementPtr>& t UNUSED_PARAM) {
+    return (false);
 }
 
 bool
 Element::setValue(const long int v UNUSED_PARAM) {
-    return false;
+    return (false);
 }
 
 bool
 Element::setValue(const double v UNUSED_PARAM) {
-    return false;
+    return (false);
 }
 
 bool
 Element::setValue(const bool t UNUSED_PARAM) {
-    return false;
+    return (false);
 }
 
 bool
 Element::setValue(const std::string& v UNUSED_PARAM) {
-    return false;
+    return (false);
 }
 
 bool
-Element::setValue(const std::vector<ElementPtr>& v UNUSED_PARAM) {
-    return false;
+Element::setValue(const std::vector<ConstElementPtr>& v UNUSED_PARAM) {
+    return (false);
 }
 
 bool
-Element::setValue(const std::map<std::string, ElementPtr>& v UNUSED_PARAM)
+Element::setValue(const std::map<std::string,
+                  ConstElementPtr>& v UNUSED_PARAM)
 {
-    return false;
+    return (false);
 }
 
-ElementPtr
-Element::get(const int i UNUSED_PARAM) {
+ConstElementPtr
+Element::get(const int i UNUSED_PARAM) const {
     isc_throw(TypeError, "get(int) called on a non-list Element");
 }
 
 void
-Element::set(const size_t i UNUSED_PARAM, ElementPtr element UNUSED_PARAM) {
+Element::set(const size_t i UNUSED_PARAM, ConstElementPtr element UNUSED_PARAM) {
     isc_throw(TypeError, "set(int, element) called on a non-list Element");
 }
 
 void
-Element::add(ElementPtr element UNUSED_PARAM) {
+Element::add(ConstElementPtr element UNUSED_PARAM) {
     isc_throw(TypeError, "add() called on a non-list Element");
 }
 
@@ -145,18 +144,18 @@ Element::remove(const int i UNUSED_PARAM) {
 }
 
 size_t
-Element::size() {
+Element::size() const {
     isc_throw(TypeError, "size() called on a non-list Element");
 }
 
-ElementPtr
-Element::get(const std::string& name UNUSED_PARAM) {
+ConstElementPtr
+Element::get(const std::string& name UNUSED_PARAM) const {
     isc_throw(TypeError, "get(string) called on a non-map Element");
 }
 
 void
 Element::set(const std::string& name UNUSED_PARAM,
-             ElementPtr element UNUSED_PARAM)
+             ConstElementPtr element UNUSED_PARAM)
 {
     isc_throw(TypeError, "set(name, element) called on a non-map Element");
 }
@@ -167,20 +166,20 @@ Element::remove(const std::string& name UNUSED_PARAM) {
 }
 
 bool
-Element::contains(const std::string& name UNUSED_PARAM) {
+Element::contains(const std::string& name UNUSED_PARAM) const {
     isc_throw(TypeError, "contains(string) called on a non-map Element");
 }
 
-ElementPtr
-Element::find(const std::string& identifier UNUSED_PARAM) {
+ConstElementPtr
+Element::find(const std::string& identifier UNUSED_PARAM) const {
     isc_throw(TypeError, "find(string) called on a non-map Element");
 }
 
 bool
 Element::find(const std::string& identifier UNUSED_PARAM,
-              ElementPtr& t UNUSED_PARAM)
+              ConstElementPtr t UNUSED_PARAM) const
 {
-    return false;
+    return (false);
 }
 
 namespace {
@@ -193,12 +192,18 @@ throwJSONError(const std::string& error, const std::string& file, int line, int 
 }
 }
 
-std::ostream& operator <<(std::ostream &out, const isc::data::ElementPtr& e) {
-    return out << e->str();
+std::ostream&
+operator<<(std::ostream &out, const Element& e) {
+    return (out << e.str());
 }
 
-bool operator==(const isc::data::ElementPtr a, const isc::data::ElementPtr b) {
-    return a->equals(b);
+bool
+operator==(const Element& a, const Element& b) {
+    return (a.equals(b));
+}
+
+bool operator!=(const Element& a, const Element& b) {
+    return (!a.equals(b));
 };
 
 //
@@ -206,37 +211,37 @@ bool operator==(const isc::data::ElementPtr a, const isc::data::ElementPtr b) {
 //
 ElementPtr
 Element::create() {
-    return ElementPtr(new NullElement());
+    return (ElementPtr(new NullElement()));
 }
 
 ElementPtr
 Element::create(const long int i) {
-    return ElementPtr(new IntElement(i));
+    return (ElementPtr(new IntElement(i)));
 }
 
 ElementPtr
 Element::create(const double d) {
-    return ElementPtr(new DoubleElement(d));
+    return (ElementPtr(new DoubleElement(d)));
 }
 
 ElementPtr
 Element::create(const std::string& s) {
-    return ElementPtr(new StringElement(s));
+    return (ElementPtr(new StringElement(s)));
 }
 
 ElementPtr
 Element::create(const bool b) {
-    return ElementPtr(new BoolElement(b));
+    return (ElementPtr(new BoolElement(b)));
 }
 
 ElementPtr
 Element::createList() {
-    return ElementPtr(new ListElement());
+    return (ElementPtr(new ListElement()));
 }
 
 ElementPtr
 Element::createMap() {
-    return ElementPtr(new MapElement());
+    return (ElementPtr(new MapElement()));
 }
 
 
@@ -248,10 +253,10 @@ bool
 char_in(const char c, const char *chars) {
     for (size_t i = 0; i < strlen(chars); ++i) {
         if (chars[i] == c) {
-            return true;
+            return (true);
         }
     }
-    return false;
+    return (false);
 }
 
 void
@@ -332,7 +337,7 @@ str_from_stringstream(std::istream &in, const std::string& file, const int line,
         c = in.get();
         ++pos;
     }
-    return ss.str();
+    return (ss.str());
 }
 
 std::string
@@ -342,7 +347,7 @@ word_from_stringstream(std::istream &in, int& pos) {
         ss << (char) in.get();
     }
     pos += ss.str().size();
-    return ss.str();
+    return (ss.str());
 }
 
 static std::string
@@ -353,7 +358,7 @@ number_from_stringstream(std::istream &in, int& pos) {
         ss << (char) in.get();
     }
     pos += ss.str().size();
-    return ss.str();
+    return (ss.str());
 }
 
 // Should we change from IntElement and DoubleElement to NumberElement
@@ -386,9 +391,9 @@ from_stringstream_number(std::istream &in, int &pos) {
     }
     
     if (is_double) {
-        return Element::create(d);
+        return (Element::create(d));
     } else {
-        return Element::create(i);
+        return (Element::create(i));
     }
 }
 
@@ -398,13 +403,13 @@ from_stringstream_bool(std::istream &in, const std::string& file,
 {
     const std::string word = word_from_stringstream(in, pos);
     if (boost::iequals(word, "True")) {
-        return Element::create(true);
+        return (Element::create(true));
     } else if (boost::iequals(word, "False")) {
-        return Element::create(false);
+        return (Element::create(false));
     } else {
         throwJSONError(std::string("Bad boolean value: ") + word, file, line, pos);
         // above is a throw shortcurt, return empty is never reached
-        return ElementPtr();
+        return (ElementPtr());
     }
 }
 
@@ -414,17 +419,17 @@ from_stringstream_null(std::istream &in, const std::string& file,
 {
     const std::string word = word_from_stringstream(in, pos);
     if (boost::iequals(word, "null")) {
-        return Element::create();
+        return (Element::create());
     } else {
         throwJSONError(std::string("Bad null value: ") + word, file, line, pos);
-        return ElementPtr();
+        return (ElementPtr());
     }
 }
 
 ElementPtr
 from_stringstream_string(std::istream& in, const std::string& file, int& line, int& pos)
 {
-    return Element::create(str_from_stringstream(in, file, line, pos));
+    return (Element::create(str_from_stringstream(in, file, line, pos)));
 }
 
 ElementPtr
@@ -432,7 +437,7 @@ from_stringstream_list(std::istream &in, const std::string& file, int& line, int
 {
     char c = 0;
     ElementPtr list = Element::createList();
-    ElementPtr cur_list_element;
+    ConstElementPtr cur_list_element;
 
     skip_chars(in, " \t\n", line, pos);
     while (c != EOF && c != ']') {
@@ -444,7 +449,7 @@ from_stringstream_list(std::istream &in, const std::string& file, int& line, int
         c = in.get();
         pos++;
     }
-    return list;
+    return (list);
 }
 
 ElementPtr
@@ -466,7 +471,7 @@ from_stringstream_map(std::istream &in, const std::string& file, int& line,
             in.get();
             pos++;
 
-            ElementPtr value = Element::fromJSON(in, file, line, pos);
+            ConstElementPtr value = Element::fromJSON(in, file, line, pos);
             map->set(key, value);
             
             skip_to(in, file, line, pos, ",}", " \t\n");
@@ -474,53 +479,53 @@ from_stringstream_map(std::istream &in, const std::string& file, int& line,
             pos++;
         }
     }
-    return map;
+    return (map);
 }
 }
 
 std::string
 Element::typeToName(Element::types type)
 {
-    switch(type) {
+    switch (type) {
     case Element::integer:
-        return std::string("integer");
+        return (std::string("integer"));
     case Element::real:
-        return std::string("real");
+        return (std::string("real"));
     case Element::boolean:
-        return std::string("boolean");
+        return (std::string("boolean"));
     case Element::string:
-        return std::string("string");
+        return (std::string("string"));
     case Element::list:
-        return std::string("list");
+        return (std::string("list"));
     case Element::map:
-        return std::string("map");
+        return (std::string("map"));
     case Element::null:
-        return std::string("null");
+        return (std::string("null"));
     case Element::any:
-        return std::string("any");
+        return (std::string("any"));
     default:
-        return std::string("unknown");
+        return (std::string("unknown"));
     }
 }
 
 Element::types
 Element::nameToType(const std::string& type_name) {
     if (type_name == "integer") {
-        return Element::integer;
+        return (Element::integer);
     } else if (type_name == "real") {
-        return Element::real;
+        return (Element::real);
     } else if (type_name == "boolean") {
-        return Element::boolean;
+        return (Element::boolean);
     } else if (type_name == "string") {
-        return Element::string;
+        return (Element::string);
     } else if (type_name == "list") {
-        return Element::list;
+        return (Element::list);
     } else if (type_name == "map") {
-        return Element::map;
+        return (Element::map);
     } else if (type_name == "null") {
-        return Element::null;
+        return (Element::null);
     } else if (type_name == "any") {
-        return Element::any;
+        return (Element::any);
     } else {
         isc_throw(TypeError, type_name + " is not a valid type name");
     }
@@ -529,14 +534,14 @@ Element::nameToType(const std::string& type_name) {
 ElementPtr
 Element::fromJSON(std::istream& in) throw(JSONError) {
     int line = 1, pos = 1;
-    return fromJSON(in, "<istream>", line, pos);
+    return (fromJSON(in, "<istream>", line, pos));
 }
 
 ElementPtr
 Element::fromJSON(std::istream& in, const std::string& file_name) throw(JSONError)
 {
     int line = 1, pos = 1;
-    return fromJSON(in, file_name, line, pos);
+    return (fromJSON(in, file_name, line, pos));
 }
 
 ElementPtr
@@ -602,7 +607,7 @@ Element::fromJSON(std::istream &in, const std::string& file, int& line, int& pos
         }
     }
     if (el_read) {
-        return element;
+        return (element);
     } else {
         isc_throw(JSONError, "nothing read");
     }
@@ -612,26 +617,23 @@ ElementPtr
 Element::fromJSON(const std::string &in) {
     std::stringstream ss;
     ss << in;
-    return fromJSON(ss, "<string>");
+    return (fromJSON(ss, "<string>"));
 }
 
 // to JSON format
 
 void
-IntElement::toJSON(std::ostream& ss)
-{
+IntElement::toJSON(std::ostream& ss) const {
     ss << intValue();
 }
 
 void
-DoubleElement::toJSON(std::ostream& ss)
-{
+DoubleElement::toJSON(std::ostream& ss) const {
     ss << doubleValue();
 }
 
 void
-BoolElement::toJSON(std::ostream& ss)
-{
+BoolElement::toJSON(std::ostream& ss) const {
     if (boolValue()) {
         ss << "true";
     } else {
@@ -640,26 +642,23 @@ BoolElement::toJSON(std::ostream& ss)
 }
 
 void
-NullElement::toJSON(std::ostream& ss)
-{
+NullElement::toJSON(std::ostream& ss) const {
     ss << "null";
 }
 
 void
-StringElement::toJSON(std::ostream& ss)
-{
+StringElement::toJSON(std::ostream& ss) const {
     ss << "\"";
     ss << stringValue();
     ss << "\"";
 }
 
 void
-ListElement::toJSON(std::ostream& ss)
-{
+ListElement::toJSON(std::ostream& ss) const {
     ss << "[ ";
 
-    const std::vector<ElementPtr>& v = listValue();
-    for (std::vector<ElementPtr>::const_iterator it = v.begin();
+    const std::vector<ConstElementPtr>& v = listValue();
+    for (std::vector<ConstElementPtr>::const_iterator it = v.begin();
          it != v.end(); ++it) {
         if (it != v.begin()) {
             ss << ", ";
@@ -670,12 +669,11 @@ ListElement::toJSON(std::ostream& ss)
 }
 
 void
-MapElement::toJSON(std::ostream& ss)
-{
+MapElement::toJSON(std::ostream& ss) const {
     ss << "{ ";
 
-    const std::map<std::string, ElementPtr>& m = mapValue();
-    for (std::map<std::string, ElementPtr>::const_iterator it = m.begin();
+    const std::map<std::string, ConstElementPtr>& m = mapValue();
+    for (std::map<std::string, ConstElementPtr>::const_iterator it = m.begin();
          it != m.end(); ++it) {
         if (it != m.begin()) {
             ss << ", ";
@@ -694,22 +692,22 @@ MapElement::toJSON(std::ostream& ss)
 // we're looking for) is not a MapElement
 // returns 0 if it could simply not be found
 // should that also be an exception?
-ElementPtr
-MapElement::find(const std::string& id) {
+ConstElementPtr
+MapElement::find(const std::string& id) const {
     const size_t sep = id.find('/');
     if (sep == std::string::npos) {
-        return get(id);
+        return (get(id));
     } else {
-        ElementPtr ce = get(id.substr(0, sep));
+        ConstElementPtr ce = get(id.substr(0, sep));
         if (ce) {
             // ignore trailing slash
             if  (sep + 1 != id.size()) {
-                return ce->find(id.substr(sep + 1));
+                return (ce->find(id.substr(sep + 1)));
             } else {
-                return ce;
+                return (ce);
             }
         } else {
-            return ElementPtr();
+            return (ElementPtr());
         }
     }
 }
@@ -719,7 +717,7 @@ Element::fromWire(const std::string& s) {
     std::stringstream ss;
     ss << s;
     int line = 0, pos = 0;
-    return fromJSON(ss, "<wire>", line, pos);
+    return (fromJSON(ss, "<wire>", line, pos));
 }
 
 ElementPtr
@@ -735,87 +733,88 @@ Element::fromWire(std::stringstream& in, int length) {
     //}
     //length -= 4;
     int line = 0, pos = 0;
-    return fromJSON(in, "<wire>", line, pos);
+    return (fromJSON(in, "<wire>", line, pos));
 }
 
 void
-MapElement::set(const std::string& key, ElementPtr value) {
+MapElement::set(const std::string& key, ConstElementPtr value) {
     m[key] = value;
 }
 
 bool
-MapElement::find(const std::string& id, ElementPtr& t) {
+MapElement::find(const std::string& id, ConstElementPtr t) const {
     try {
-        ElementPtr p = find(id);
+        ConstElementPtr p = find(id);
         if (p) {
             t = p;
-            return true;
+            return (true);
         }
     } catch (const TypeError& e) {
         // ignore
     }
-    return false;
+    return (false);
 }
 
 bool
-IntElement::equals(ElementPtr other) {
-    return (other->getType() == Element::integer) &&
-           (i == other->intValue());
+IntElement::equals(const Element& other) const {
+    return (other.getType() == Element::integer) &&
+           (i == other.intValue());
 }
 
 bool
-DoubleElement::equals(ElementPtr other) {
-    return (other->getType() == Element::real) &&
-           (d == other->doubleValue());
+DoubleElement::equals(const Element& other) const {
+    return (other.getType() == Element::real) &&
+           (d == other.doubleValue());
 }
 
 bool
-BoolElement::equals(ElementPtr other) {
-    return (other->getType() == Element::boolean) &&
-           (b == other->boolValue());
+BoolElement::equals(const Element& other) const {
+    return (other.getType() == Element::boolean) &&
+           (b == other.boolValue());
 }
 
 bool
-NullElement::equals(ElementPtr other) {
-    return other->getType() == Element::null;
+NullElement::equals(const Element& other) const {
+    return (other.getType() == Element::null);
 }
 
 bool
-StringElement::equals(ElementPtr other) {
-    return (other->getType() == Element::string) &&
-           (s == other->stringValue());
+StringElement::equals(const Element& other) const {
+    return (other.getType() == Element::string) &&
+           (s == other.stringValue());
 }
 
 bool
-ListElement::equals(ElementPtr other) {
-    if (other->getType() == Element::list) {
+ListElement::equals(const Element& other) const {
+    if (other.getType() == Element::list) {
         const int s = size();
-        if (s != other->size()) {
-            return false;
+        if (s != other.size()) {
+            return (false);
         }
         for (int i = 0; i < s; ++i) {
-            if (!get(i)->equals(other->get(i))) {
-                return false;
+            if (!get(i)->equals(*other.get(i))) {
+                return (false);
             }
         }
-        return true;
+        return (true);
     } else {
-        return false;
+        return (false);
     }
 }
 
 bool
-MapElement::equals(ElementPtr other) {
-    if (other->getType() == Element::map) {
-        std::map<std::string, ElementPtr> m = mapValue();
-        for (std::map<std::string, ElementPtr>::const_iterator it = m.begin();
+MapElement::equals(const Element& other) const {
+    if (other.getType() == Element::map) {
+        const std::map<std::string, ConstElementPtr>& m = mapValue();
+        for (std::map<std::string, ConstElementPtr>::const_iterator it =
+                 m.begin();
              it != m.end() ; ++it) {
-            if (other->contains((*it).first)) {
-                if (!get((*it).first)->equals(other->get((*it).first))) {
-                    return false;
+            if (other.contains((*it).first)) {
+                if (!get((*it).first)->equals(*other.get((*it).first))) {
+                    return (false);
                 }
             } else {
-                return false;
+                return (false);
             }
         }
         // quickly walk through the other map too, to see if there's
@@ -823,26 +822,27 @@ MapElement::equals(ElementPtr other) {
         // compare those elements; if one of them is missing we
         // differ (and if it's not missing the loop above has checked
         // it)
-        m = other->mapValue();
-        for (std::map<std::string, ElementPtr>::const_iterator it = m.begin();
-             it != m.end() ; ++it) {
+        std::map<std::string, ConstElementPtr>::const_iterator it;
+        for (it = other.mapValue().begin();
+             it != other.mapValue().end();
+             ++it) {
             if (!contains((*it).first)) {
-                return false;
+                return (false);
             }
         }
-        return true;
+        return (true);
     } else {
-        return false;
+        return (false);
     }
 }
 
 bool
-isNull(ElementPtr p) {
-    return !p;
+isNull(ConstElementPtr p) {
+    return (!p);
 }
 
 void
-removeIdentical(ElementPtr a, const ElementPtr b) {
+removeIdentical(ElementPtr a, ConstElementPtr b) {
     if (!b) {
         return;
     }
@@ -850,26 +850,50 @@ removeIdentical(ElementPtr a, const ElementPtr b) {
         isc_throw(TypeError, "Non-map Elements passed to removeIdentical");
     }
 
-    std::map<std::string, ElementPtr> m = a->mapValue();
-    for (std::map<std::string, ElementPtr>::const_iterator it = m.begin();
+    const std::map<std::string, ConstElementPtr>& m = a->mapValue();
+    for (std::map<std::string, ConstElementPtr>::const_iterator it = m.begin();
          it != m.end() ; ++it) {
         if (b->contains((*it).first)) {
-            if (a->get((*it).first)->equals(b->get((*it).first))) {
+            if (a->get((*it).first)->equals(*b->get((*it).first))) {
                 a->remove((*it).first);
             }
         }
     }
 }
 
+ConstElementPtr
+removeIdentical(ConstElementPtr a, ConstElementPtr b) {
+    ElementPtr result = Element::createMap();
+
+    if (!b) {
+        return (result);
+    }
+    
+    if (a->getType() != Element::map || b->getType() != Element::map) {
+        isc_throw(TypeError, "Non-map Elements passed to removeIdentical");
+    }
+
+    const std::map<std::string, ConstElementPtr>& m = a->mapValue();
+    for (std::map<std::string, ConstElementPtr>::const_iterator it = m.begin();
+         it != m.end() ; ++it) {
+        if (!b->contains((*it).first) ||
+            !a->get((*it).first)->equals(*b->get((*it).first))) {
+            result->set((*it).first, (*it).second);
+        }
+    }
+
+    return (result);
+}
+
 void
-merge(ElementPtr element, const ElementPtr other) {
+merge(ElementPtr element, ConstElementPtr other) {
     if (element->getType() != Element::map ||
         other->getType() != Element::map) {
         isc_throw(TypeError, "merge arguments not MapElements");
     }
     
-    std::map<std::string, ElementPtr> m = other->mapValue();
-    for (std::map<std::string, ElementPtr>::const_iterator it = m.begin();
+    std::map<std::string, ConstElementPtr> m = other->mapValue();
+    for (std::map<std::string, ConstElementPtr>::const_iterator it = m.begin();
          it != m.end() ; ++it) {
         if ((*it).second && (*it).second->getType() != Element::null) {
             element->set((*it).first, (*it).second);

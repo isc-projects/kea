@@ -601,17 +601,17 @@ Name::isWildcard() const {
 
 Name
 Name::concatenate(const Name& suffix) const {
-    assert(this->length_ > 0 && suffix.length_ > 0);
-    assert(this->labelcount_ > 0 && suffix.labelcount_ > 0);
+    assert(length_ > 0 && suffix.length_ > 0);
+    assert(labelcount_ > 0 && suffix.labelcount_ > 0);
 
-    unsigned int length = this->length_ + suffix.length_ - 1;
+    unsigned int length = length_ + suffix.length_ - 1;
     if (length > Name::MAX_WIRE) {
         isc_throw(TooLongName, "names are too long to concatenate");
     }
 
     Name retname;
     retname.ndata_.reserve(length);
-    retname.ndata_.assign(this->ndata_, 0, this->length_ - 1);
+    retname.ndata_.assign(ndata_, 0, length_ - 1);
     retname.ndata_.insert(retname.ndata_.end(),
                           suffix.ndata_.begin(), suffix.ndata_.end());
     assert(retname.ndata_.size() == length);
@@ -622,14 +622,13 @@ Name::concatenate(const Name& suffix) const {
     // excluding that for the trailing dot, and append the offsets of the
     // suffix name with the additional offset of the length of the prefix.
     //
-    unsigned int labels = this->labelcount_ + suffix.labelcount_ - 1;
+    unsigned int labels = labelcount_ + suffix.labelcount_ - 1;
     assert(labels <= Name::MAX_LABELS);
     retname.offsets_.reserve(labels);
-    retname.offsets_.assign(&this->offsets_[0],
-                            &this->offsets_[0] + this->labelcount_ - 1);
+    retname.offsets_.assign(&offsets_[0], &offsets_[0] + labelcount_ - 1);
     transform(suffix.offsets_.begin(), suffix.offsets_.end(),
               back_inserter(retname.offsets_),
-              bind2nd(plus<char>(), this->length_ - 1));
+              bind2nd(plus<char>(), length_ - 1));
     assert(retname.offsets_.size() == labels);
     retname.labelcount_ = labels;
 

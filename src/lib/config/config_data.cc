@@ -36,15 +36,14 @@ namespace config {
 // If it is a map, we search through the list contained in its
 // 'map_item_spec' value. This code assumes the data has been
 // validated and conforms to the specification.
-static ElementPtr
-find_spec_part(ElementPtr spec, const std::string& identifier)
-{
+static ConstElementPtr
+find_spec_part(ConstElementPtr spec, const std::string& identifier) {
     //std::cout << "[XX] find_spec_part for " << identifier << std::endl;
     if (!spec) {
         isc_throw(DataNotFoundError, "Empty specification");
     }
     //std::cout << "in: " << std::endl << spec << std::endl;
-    ElementPtr spec_part = spec;
+    ConstElementPtr spec_part = spec;
     if (identifier == "") {
         isc_throw(DataNotFoundError, "Empty identifier");
     }
@@ -55,7 +54,7 @@ find_spec_part(ElementPtr spec, const std::string& identifier)
         //std::cout << "[XX] id part: " << part << std::endl;
         if (spec_part->getType() == Element::list) {
             bool found = false;
-            BOOST_FOREACH(ElementPtr list_el, spec_part->listValue()) {
+            BOOST_FOREACH(ConstElementPtr list_el, spec_part->listValue()) {
                 if (list_el->getType() == Element::map &&
                     list_el->contains("item_name") &&
                     list_el->get("item_name")->stringValue() == part) {
@@ -73,7 +72,7 @@ find_spec_part(ElementPtr spec, const std::string& identifier)
     if (id != "" && id != "/") {
         if (spec_part->getType() == Element::list) {
             bool found = false;
-            BOOST_FOREACH(ElementPtr list_el, spec_part->listValue()) {
+            BOOST_FOREACH(ConstElementPtr list_el, spec_part->listValue()) {
                 if (list_el->getType() == Element::map &&
                     list_el->contains("item_name") &&
                     list_el->get("item_name")->stringValue() == id) {
@@ -87,7 +86,8 @@ find_spec_part(ElementPtr spec, const std::string& identifier)
         } else if (spec_part->getType() == Element::map) {
             if (spec_part->contains("map_item_spec")) {
                 bool found = false;
-                BOOST_FOREACH(ElementPtr list_el, spec_part->get("map_item_spec")->listValue()) {
+                BOOST_FOREACH(ConstElementPtr list_el,
+                              spec_part->get("map_item_spec")->listValue()) {
                     if (list_el->getType() == Element::map &&
                         list_el->contains("item_name") &&
                         list_el->get("item_name")->stringValue() == id) {
@@ -104,7 +104,7 @@ find_spec_part(ElementPtr spec, const std::string& identifier)
         }
     }
     //std::cout << "[XX] found spec part: " << std::endl << spec_part << std::endl;
-    return spec_part;
+    return (spec_part);
 }
 
 //
@@ -113,10 +113,11 @@ find_spec_part(ElementPtr spec, const std::string& identifier)
 // Result must be a ListElement
 //
 static void
-spec_name_list(ElementPtr result, ElementPtr spec_part, std::string prefix, bool recurse = false)
+spec_name_list(ElementPtr result, ConstElementPtr spec_part,
+               const std::string& prefix, bool recurse = false)
 {
     if (spec_part->getType() == Element::list) {
-        BOOST_FOREACH(ElementPtr list_el, spec_part->listValue()) {
+        BOOST_FOREACH(ConstElementPtr list_el, spec_part->listValue()) {
             if (list_el->getType() == Element::map &&
                 list_el->contains("item_name")) {
                 std::string new_prefix = prefix;
@@ -136,28 +137,29 @@ spec_name_list(ElementPtr result, ElementPtr spec_part, std::string prefix, bool
                 }
             }
         }
-    } else if (spec_part->getType() == Element::map && spec_part->contains("map_item_spec")) {
-        spec_name_list(result, spec_part->get("map_item_spec"), prefix, recurse);
+    } else if (spec_part->getType() == Element::map &&
+               spec_part->contains("map_item_spec")) {
+        spec_name_list(result, spec_part->get("map_item_spec"), prefix,
+                       recurse);
     }
 }
 
-ElementPtr
-ConfigData::getValue(const std::string& identifier)
-{
+ConstElementPtr
+ConfigData::getValue(const std::string& identifier) const {
     // 'fake' is set, but dropped by this function and
     // serves no further purpose.
     bool fake;
-    return getValue(fake, identifier);
+    return (getValue(fake, identifier));
 }
 
-ElementPtr
-ConfigData::getValue(bool& is_default, const std::string& identifier)
-{
-    ElementPtr value = _config->find(identifier);
+ConstElementPtr
+ConfigData::getValue(bool& is_default, const std::string& identifier) const {
+    ConstElementPtr value = _config->find(identifier);
     if (value) {
         is_default = false;
     } else {
-        ElementPtr spec_part = find_spec_part(_module_spec.getConfigSpec(), identifier);
+        ConstElementPtr spec_part =
+            find_spec_part(_module_spec.getConfigSpec(), identifier);
         if (spec_part->contains("item_default")) {
             value = spec_part->get("item_default");
             is_default = true;
@@ -166,35 +168,33 @@ ConfigData::getValue(bool& is_default, const std::string& identifier)
             value = ElementPtr();
         }
     }
-    return value;
+    return (value);
 }
 
 /// Returns an ElementPtr pointing to a ListElement containing
 /// StringElements with the names of the options at the given
 /// identifier. If recurse is true, maps will be expanded as well
-ElementPtr
-ConfigData::getItemList(const std::string& identifier, bool recurse)
-{
+ConstElementPtr
+ConfigData::getItemList(const std::string& identifier, bool recurse) const {
     ElementPtr result = Element::createList();
-    ElementPtr spec_part = getModuleSpec().getConfigSpec();
+    ConstElementPtr spec_part = getModuleSpec().getConfigSpec();
     if (identifier != "" && identifier != "/") {
         spec_part = find_spec_part(spec_part, identifier);
     }
     spec_name_list(result, spec_part, identifier, recurse);
-    return result;
+    return (result);
 }
 
 /// Returns an ElementPtr containing a MapElement with identifier->value
 /// pairs.
-ElementPtr
-ConfigData::getFullConfig()
-{
+ConstElementPtr
+ConfigData::getFullConfig() const {
     ElementPtr result = Element::createMap();
-    ElementPtr items = getItemList("", true);
-    BOOST_FOREACH(ElementPtr item, items->listValue()) {
+    ConstElementPtr items = getItemList("", true);
+    BOOST_FOREACH(ConstElementPtr item, items->listValue()) {
         result->set(item->stringValue(), getValue(item->stringValue()));
     }
-    return result;
+    return (result);
 }
 
 }

@@ -221,7 +221,7 @@ public:
     bool equals(const RRType& other) const
     { return (typecode_ == other.typecode_); }
     /// \brief Same as \c equals().
-    bool operator==(const RRType& other) const { return equals(other); }
+    bool operator==(const RRType& other) const { return (equals(other)); }
 
     /// \brief Return true iff two RRTypes are equal.
     ///
@@ -232,7 +232,7 @@ public:
     bool nequals(const RRType& other) const 
     { return (typecode_ != other.typecode_); }
     /// \brief Same as \c nequals().
-    bool operator!=(const RRType& other) const { return nequals(other); }
+    bool operator!=(const RRType& other) const { return (nequals(other)); }
  
     /// \brief Less-than comparison for RRType against \c other
     ///

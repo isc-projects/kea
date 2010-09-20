@@ -68,7 +68,7 @@ static PyMethodDef NameComparisonResult_methods[] = {
 
 static PyTypeObject name_comparison_result_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.NameComparisonResult",
+    "pydnspp.NameComparisonResult",
     sizeof(s_NameComparisonResult),           // tp_basicsize
     0,                                        // tp_itemsize
     (destructor)NameComparisonResult_destroy, // tp_dealloc
@@ -222,7 +222,7 @@ static PyMethodDef Name_methods[] = {
 
 static PyTypeObject name_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.Name",
+    "pydnspp.Name",
     sizeof(s_Name),                     // tp_basicsize
     0,                                  // tp_itemsize
     (destructor)Name_destroy,           // tp_dealloc
@@ -291,26 +291,26 @@ Name_init(s_Name* self, PyObject* args) {
 
             self->name = new Name(n, downcase == Py_True);
             self->position = 0;
-        } catch (EmptyLabel) {
+        } catch (const EmptyLabel&) {
             PyErr_SetString(po_EmptyLabel, "EmptyLabel");
             return (-1);
-        } catch (TooLongLabel) {
+        } catch (const TooLongLabel&) {
             PyErr_SetString(po_TooLongLabel, "TooLongLabel");
             return (-1);
-        } catch (BadLabelType) {
+        } catch (const BadLabelType&) {
             PyErr_SetString(po_BadLabelType, "BadLabelType");
             return (-1);
-        } catch (BadEscape) {
+        } catch (const BadEscape&) {
             PyErr_SetString(po_BadEscape, "BadEscape");
             return (-1);
-        } catch (TooLongName) {
+        } catch (const TooLongName&) {
             PyErr_SetString(po_TooLongName, "TooLongName");
             return (-1);
-        } catch (IncompleteName) {
+        } catch (const IncompleteName&) {
             PyErr_SetString(po_IncompleteName, "IncompleteName");
             return (-1);
 #ifdef CATCHMEMERR
-        } catch (std::bad_alloc) {
+        } catch (const std::bad_alloc&) {
             PyErr_NoMemory();
             return (-1);
 #endif
@@ -338,11 +338,11 @@ Name_init(s_Name* self, PyObject* args) {
             buffer.setPosition(position);
             self->name = new Name(buffer, downcase == Py_True);
             self->position = buffer.getPosition();
-        } catch (InvalidBufferPosition) {
+        } catch (const InvalidBufferPosition&) {
             PyErr_SetString(po_InvalidBufferPosition,
                             "InvalidBufferPosition");
             return (-1);
-        } catch (DNSMessageFORMERR) {
+        } catch (const DNSMessageFORMERR&) {
             PyErr_SetString(po_DNSMessageFORMERR, "DNSMessageFORMERR");
             return (-1);
         } catch (...) {
@@ -373,7 +373,7 @@ Name_at(s_Name* self, PyObject* args) {
     }
     try {
         return (Py_BuildValue("I", self->name->at(pos)));
-    } catch (isc::OutOfRange oor) {
+    } catch (const isc::OutOfRange&) {
         PyErr_SetString(PyExc_IndexError,
                         "name index out of range");
         return (NULL);
@@ -400,9 +400,9 @@ Name_str(PyObject* self) {
     // Simply call the to_text method we already defined
     // str() is not defined in the c++ version, only to_text
     // and we already have a wrapper for that one.
-    return PyObject_CallMethod(self,
+    return (PyObject_CallMethod(self,
                                const_cast<char*>("to_text"),
-                               const_cast<char*>(""));
+                                const_cast<char*>("")));
 }
 
 static PyObject*
@@ -472,7 +472,7 @@ Name_split(s_Name* self, PyObject* args) {
             ret->name = NULL;
             try {
                 ret->name = new Name(self->name->split(first, n));
-            } catch(isc::OutOfRange oor) {
+            } catch(const isc::OutOfRange& oor) {
                 PyErr_SetString(PyExc_IndexError, oor.what());
                 ret->name = NULL;
             }
@@ -487,7 +487,7 @@ Name_split(s_Name* self, PyObject* args) {
             ret->name = NULL;
             try {
                 ret->name = new Name(self->name->split(n));
-            } catch(isc::OutOfRange oor) {
+            } catch(const isc::OutOfRange& oor) {
                 PyErr_SetString(PyExc_IndexError, oor.what());
                 ret->name = NULL;
             }
@@ -572,7 +572,7 @@ Name_concatenate(s_Name* self, PyObject* args) {
     if (ret != NULL) {
         try {
             ret->name = new Name(self->name->concatenate(*other->name));
-        } catch (isc::dns::TooLongName tln) {
+        } catch (const TooLongName& tln) {
             PyErr_SetString(po_TooLongName, tln.what());
             return (NULL);
         }
@@ -651,30 +651,30 @@ initModulePart_Name(PyObject* mod) {
     
 
     // Add the exceptions to the module
-    po_EmptyLabel = PyErr_NewException("libdns_python.EmptyLabel", NULL, NULL);
+    po_EmptyLabel = PyErr_NewException("pydnspp.EmptyLabel", NULL, NULL);
     PyModule_AddObject(mod, "EmptyLabel", po_EmptyLabel);
 
-    po_TooLongName = PyErr_NewException("libdns_python.TooLongName", NULL, NULL);
+    po_TooLongName = PyErr_NewException("pydnspp.TooLongName", NULL, NULL);
     PyModule_AddObject(mod, "TooLongName", po_TooLongName);
 
-    po_TooLongLabel = PyErr_NewException("libdns_python.TooLongLabel", NULL, NULL);
+    po_TooLongLabel = PyErr_NewException("pydnspp.TooLongLabel", NULL, NULL);
     PyModule_AddObject(mod, "TooLongLabel", po_TooLongLabel);
 
-    po_BadLabelType = PyErr_NewException("libdns_python.BadLabelType", NULL, NULL);
+    po_BadLabelType = PyErr_NewException("pydnspp.BadLabelType", NULL, NULL);
     PyModule_AddObject(mod, "BadLabelType", po_BadLabelType);
 
-    po_BadEscape = PyErr_NewException("libdns_python.BadEscape", NULL, NULL);
+    po_BadEscape = PyErr_NewException("pydnspp.BadEscape", NULL, NULL);
     PyModule_AddObject(mod, "BadEscape", po_BadEscape);
 
-    po_IncompleteName = PyErr_NewException("libdns_python.IncompleteName", NULL, NULL);
+    po_IncompleteName = PyErr_NewException("pydnspp.IncompleteName", NULL, NULL);
     PyModule_AddObject(mod, "IncompleteName", po_IncompleteName);
 
-    po_InvalidBufferPosition = PyErr_NewException("libdns_python.InvalidBufferPosition", NULL, NULL);
+    po_InvalidBufferPosition = PyErr_NewException("pydnspp.InvalidBufferPosition", NULL, NULL);
     PyModule_AddObject(mod, "InvalidBufferPosition", po_InvalidBufferPosition);
 
     // This one could have gone into the message_python.cc file, but is
     // already needed here.
-    po_DNSMessageFORMERR = PyErr_NewException("libdns_python.DNSMessageFORMERR", NULL, NULL);
+    po_DNSMessageFORMERR = PyErr_NewException("pydnspp.DNSMessageFORMERR", NULL, NULL);
     PyModule_AddObject(mod, "DNSMessageFORMERR", po_DNSMessageFORMERR);
 
     return (true);

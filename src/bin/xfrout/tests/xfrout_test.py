@@ -19,7 +19,7 @@
 import unittest
 import os
 from isc.cc.session import *
-from libdns_python import *
+from pydnspp import *
 from xfrout import *
 
 # our fake socket, where we can read and insert messages
@@ -40,8 +40,12 @@ class MySocket():
         return len(data)
 
     def readsent(self):
-        result = self.sendqueue[:]
-        del self.sendqueue[:]
+        if len(self.sendqueue) >= 2:
+            size = 2 + struct.unpack("!H", self.sendqueue[:2])[0]
+        else:
+            size = 0
+        result = self.sendqueue[:size]
+        self.sendqueue = self.sendqueue[size:]
         return result
     
     def read_msg(self):
@@ -133,7 +137,7 @@ class TestXfroutSession(unittest.TestCase):
 
         msg = self.getmsg()
         msg.make_response()
-        self.xfrsess._send_message_with_last_soa(msg, self.sock, rrset_soa)
+        self.xfrsess._send_message_with_last_soa(msg, self.sock, rrset_soa, 0)
         get_msg = self.sock.read_msg()
 
         self.assertEqual(get_msg.get_rr_count(Section.QUESTION()), 1)
@@ -148,10 +152,52 @@ class TestXfroutSession(unittest.TestCase):
         rdata = answer.get_rdata()
         self.assertEqual(rdata[0].to_text(), self.soa_record[7])
 
-    def test_get_message_len(self):
+    def test_trigger_send_message_with_last_soa(self):
+        rrset_a = RRset(Name("example.com"), RRClass.IN(), RRType.A(), RRTTL(3600))
+        rrset_a.add_rdata(Rdata(RRType.A(), RRClass.IN(), "192.0.2.1"))
+        rrset_soa = self.xfrsess._create_rrset_from_db_record(self.soa_record)
+
         msg = self.getmsg()
-        msg.make_response()  
-        self.assertEqual(self.xfrsess._get_message_len(msg), 29)
+        msg.make_response()
+
+        msg.add_rrset(Section.ANSWER(), rrset_a)
+        # give the function a value that is larger than MAX-len(rrset)
+        self.xfrsess._send_message_with_last_soa(msg, self.sock, rrset_soa, 65520)
+
+        # this should have triggered the sending of two messages
+        # (1 with the rrset we added manually, and 1 that triggered
+        # the sending in _with_last_soa)
+        get_msg = self.sock.read_msg()
+        self.assertEqual(get_msg.get_rr_count(Section.QUESTION()), 1)
+        self.assertEqual(get_msg.get_rr_count(Section.ANSWER()), 1)
+        self.assertEqual(get_msg.get_rr_count(Section.AUTHORITY()), 0)
+
+        answer = get_msg.get_section(Section.ANSWER())[0]
+        self.assertEqual(answer.get_name().to_text(), "example.com.")
+        self.assertEqual(answer.get_class(), RRClass("IN"))
+        self.assertEqual(answer.get_type().to_text(), "A")
+        rdata = answer.get_rdata()
+        self.assertEqual(rdata[0].to_text(), "192.0.2.1")
+
+        get_msg = self.sock.read_msg()
+        self.assertEqual(get_msg.get_rr_count(Section.QUESTION()), 0)
+        self.assertEqual(get_msg.get_rr_count(Section.ANSWER()), 1)
+        self.assertEqual(get_msg.get_rr_count(Section.AUTHORITY()), 0)
+
+        #answer_rrset_iter = section_iter(get_msg, section.ANSWER())
+        answer = get_msg.get_section(Section.ANSWER())[0]
+        self.assertEqual(answer.get_name().to_text(), "example.com.")
+        self.assertEqual(answer.get_class(), RRClass("IN"))
+        self.assertEqual(answer.get_type().to_text(), "SOA")
+        rdata = answer.get_rdata()
+        self.assertEqual(rdata[0].to_text(), self.soa_record[7])
+
+        # and it should not have sent anything else
+        self.assertEqual(0, len(self.sock.sendqueue))
+
+    def test_get_rrset_len(self):
+        rrset_soa = self.xfrsess._create_rrset_from_db_record(self.soa_record)
+        self.assertEqual(82, get_rrset_len(rrset_soa))
 
     def test_zone_is_empty(self):
         global sqlite3_ds

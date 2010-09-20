@@ -26,10 +26,9 @@ using namespace isc::data;
 using namespace isc::config;
 
 ConfigData
-setupSpec2()
-{
+setupSpec2() {
     ModuleSpec spec2 = moduleSpecFromFile(std::string(TEST_DATA_PATH) + "/spec22.spec");
-    return ConfigData(spec2);
+    return (ConfigData(spec2));
 }
 
 TEST(ConfigData, Creation) {

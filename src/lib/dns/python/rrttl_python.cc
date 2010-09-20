@@ -91,7 +91,7 @@ static PyMethodDef RRTTL_methods[] = {
 // Most of the functions are not actually implemented and NULL here.
 static PyTypeObject rrttl_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.RRTTL",
+    "pydnspp.RRTTL",
     sizeof(s_RRTTL),                    // tp_basicsize
     0,                                  // tp_itemsize
     (destructor)RRTTL_destroy,          // tp_dealloc
@@ -177,7 +177,7 @@ RRTTL_init(s_RRTTL* self, PyObject* args) {
             PyErr_Clear();
             return (0);
         }
-    } catch (IncompleteRRTTL icc) {
+    } catch (const IncompleteRRTTL& icc) {
         // Ok so one of our functions has thrown a C++ exception.
         // We need to translate that to a Python Exception
         // First clear any existing error that was set
@@ -186,7 +186,7 @@ RRTTL_init(s_RRTTL* self, PyObject* args) {
         PyErr_SetString(po_IncompleteRRTTL, icc.what());
         // And return negative
         return (-1);
-    } catch (InvalidRRTTL ic) {
+    } catch (const InvalidRRTTL& ic) {
         PyErr_Clear();
         PyErr_SetString(po_InvalidRRTTL, ic.what());
         return (-1);
@@ -213,9 +213,9 @@ RRTTL_toText(s_RRTTL* self) {
 static PyObject*
 RRTTL_str(PyObject* self) {
     // Simply call the to_text method we already defined
-    return PyObject_CallMethod(self,
+    return (PyObject_CallMethod(self,
                                const_cast<char*>("to_text"),
-                               const_cast<char*>(""));
+                                const_cast<char*>("")));
 }
 
 static PyObject*
@@ -296,9 +296,9 @@ RRTTL_richcmp(s_RRTTL* self, s_RRTTL* other, int op) {
 bool
 initModulePart_RRTTL(PyObject* mod) {
     // Add the exceptions to the module
-    po_InvalidRRTTL = PyErr_NewException("libdns_python.InvalidRRTTL", NULL, NULL);
+    po_InvalidRRTTL = PyErr_NewException("pydnspp.InvalidRRTTL", NULL, NULL);
     PyModule_AddObject(mod, "InvalidRRTTL", po_InvalidRRTTL);
-    po_IncompleteRRTTL = PyErr_NewException("libdns_python.IncompleteRRTTL", NULL, NULL);
+    po_IncompleteRRTTL = PyErr_NewException("pydnspp.IncompleteRRTTL", NULL, NULL);
     PyModule_AddObject(mod, "IncompleteRRTTL", po_IncompleteRRTTL);
 
     // We initialize the static description object with PyType_Ready(),

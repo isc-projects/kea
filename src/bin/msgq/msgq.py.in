@@ -212,7 +212,10 @@ class MsgQ:
            EOF."""
         received = b''
         while len(received) < length:
-            data = sock.recv(length - len(received))
+            try:
+                data = sock.recv(length - len(received))
+            except socket.error:
+                raise MsgQReceiveError(socket.error)
             if len(data) == 0:
                 raise MsgQReceiveError("EOF")
             received += data

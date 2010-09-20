@@ -130,7 +130,7 @@ static PyMethodDef RRType_methods[] = {
 // Most of the functions are not actually implemented and NULL here.
 static PyTypeObject rrtype_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.RRType",
+    "pydnspp.RRType",
     sizeof(s_RRType),                   // tp_basicsize
     0,                                  // tp_itemsize
     (destructor)RRType_destroy,         // tp_dealloc
@@ -186,8 +186,8 @@ RRType_init(s_RRType* self, PyObject* args) {
     const char* s;
     unsigned int i;
     PyObject* bytes = NULL;
-    // The constructor argument can be a string ("IN"), an integer (1),
-    // or a sequence of numbers between 0 and 255 (wire code)
+    // The constructor argument can be a string ("A"), an integer (1),
+    // or a sequence of numbers between 0 and 65535 (wire code)
 
     // Note that PyArg_ParseType can set PyError, and we need to clear
     // that if we try several like here. Otherwise the *next* python
@@ -200,7 +200,7 @@ RRType_init(s_RRType* self, PyObject* args) {
         } else if (PyArg_ParseTuple(args, "I", &i)) {
             PyErr_Clear();
             if (i > 65535) {
-                PyErr_SetString(po_InvalidRRType, "Class number too high");
+                PyErr_SetString(po_InvalidRRType, "RR Type number too high");
                 return (-1);
             }
             self->rrtype = new RRType(i);
@@ -217,7 +217,7 @@ RRType_init(s_RRType* self, PyObject* args) {
             PyErr_Clear();
             return (0);
         }
-    } catch (IncompleteRRType icc) {
+    } catch (const IncompleteRRType& icc) {
         // Ok so one of our functions has thrown a C++ exception.
         // We need to translate that to a Python Exception
         // First clear any existing error that was set
@@ -226,7 +226,7 @@ RRType_init(s_RRType* self, PyObject* args) {
         PyErr_SetString(po_IncompleteRRType, icc.what());
         // And return negative
         return (-1);
-    } catch (InvalidRRType ic) {
+    } catch (const InvalidRRType& ic) {
         PyErr_Clear();
         PyErr_SetString(po_InvalidRRType, ic.what());
         return (-1);
@@ -253,8 +253,8 @@ RRType_toText(s_RRType* self) {
 static PyObject*
 RRType_str(PyObject* self) {
     // Simply call the to_text method we already defined
-    return PyObject_CallMethod(self, const_cast<char*>("to_text"),
-                                     const_cast<char*>(""));
+    return (PyObject_CallMethod(self, const_cast<char*>("to_text"),
+                                const_cast<char*>("")));
 }
 
 static PyObject*
@@ -446,9 +446,9 @@ RRType_ANY(s_RRType *self UNUSED_PARAM) {
 bool
 initModulePart_RRType(PyObject* mod) {
     // Add the exceptions to the module
-    po_InvalidRRType = PyErr_NewException("libdns_python.InvalidRRType", NULL, NULL);
+    po_InvalidRRType = PyErr_NewException("pydnspp.InvalidRRType", NULL, NULL);
     PyModule_AddObject(mod, "InvalidRRType", po_InvalidRRType);
-    po_IncompleteRRType = PyErr_NewException("libdns_python.IncompleteRRType", NULL, NULL);
+    po_IncompleteRRType = PyErr_NewException("pydnspp.IncompleteRRType", NULL, NULL);
     PyModule_AddObject(mod, "IncompleteRRType", po_IncompleteRRType);
 
     // We initialize the static description object with PyType_Ready(),
