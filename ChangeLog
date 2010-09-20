@@ -4,7 +4,7 @@
 
 96.	[bug]		jinmei
 	Fixed two small issues with configure: Do not set CXXFLAGS so that
-	it can be customized; Made sure --disable-static works.
+	it can be customized; Make sure --disable-static works.
 	(Trac #325, r2976)
 
 bind10-devel-20100917 released on September 17, 2010 
