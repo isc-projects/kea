@@ -193,6 +193,16 @@ AuthSrv::getVerbose() const {
 }
 
 void
+AuthSrv::setCacheSlots(const size_t slots) {
+    impl_->cache_.setSlots(slots);
+}
+
+size_t
+AuthSrv::getCacheSlots() const {
+    return (impl_->cache_.getSlots());
+}
+
+void
 AuthSrv::setXfrinSession(AbstractSession* xfrin_session) {
     impl_->xfrin_session_ = xfrin_session;
 }

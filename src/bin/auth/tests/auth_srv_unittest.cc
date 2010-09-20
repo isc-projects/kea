@@ -750,4 +750,14 @@ TEST_F(AuthSrvTest, updateConfigFail) {
     headerCheck(parse_message, default_qid, Rcode::NOERROR(), opcode.getCode(),
                 QR_FLAG | AA_FLAG, 1, 1, 1, 0);
 }
+
+TEST_F(AuthSrvTest, cacheSlots) {
+    // simple check for the get/set operations
+    server.setCacheSlots(10);    // 10 = arbitrary choice
+    EXPECT_EQ(10, server.getCacheSlots());
+
+    // 0 is a valid size
+    server.setCacheSlots(0);
+    EXPECT_EQ(00, server.getCacheSlots());
+}
 }
