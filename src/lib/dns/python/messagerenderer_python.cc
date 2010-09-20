@@ -62,7 +62,7 @@ static PyMethodDef MessageRenderer_methods[] = {
 
 static PyTypeObject messagerenderer_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.MessageRenderer",
+    "pydnspp.MessageRenderer",
     sizeof(s_MessageRenderer),          // tp_basicsize
     0,                                  // tp_itemsize
     (destructor)MessageRenderer_destroy,// tp_dealloc
@@ -133,9 +133,9 @@ MessageRenderer_destroy(s_MessageRenderer* self) {
 
 static PyObject*
 MessageRenderer_getData(s_MessageRenderer* self) {
-    return Py_BuildValue("y#",
+    return (Py_BuildValue("y#",
                          self->messagerenderer->getData(),
-                         self->messagerenderer->getLength());
+                          self->messagerenderer->getLength()));
 }
 
 static PyObject*

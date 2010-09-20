@@ -20,12 +20,19 @@ export PYTHON_EXEC
 
 BIND10_PATH=@abs_top_builddir@/src/bin/bind10
 
-PATH=@abs_top_builddir@/src/bin/msgq:@abs_top_builddir@/src/bin/auth:@abs_top_builddir@/src/bin/cfgmgr:@abs_top_builddir@/src/bin/cmdctl:@abs_top_builddir@/src/bin/xfrin:@abs_top_builddir@/src/bin/xfrout:$PATH
+PATH=@abs_top_builddir@/src/bin/msgq:@abs_top_builddir@/src/bin/auth:@abs_top_builddir@/src/bin/cfgmgr:@abs_top_builddir@/src/bin/cmdctl:@abs_top_builddir@/src/bin/xfrin:@abs_top_builddir@/src/bin/xfrout:@abs_top_builddir@/src/bin/zonemgr:$PATH
 export PATH
 
 PYTHONPATH=@abs_top_builddir@/src/lib/python:@abs_top_builddir@/src/lib/dns/python/.libs:@abs_top_builddir@/src/lib/xfr/.libs
-#PYTHONPATH=@abs_top_srcdir@/src/lib/python:@abs_top_builddir@/src/lib/python:@abs_top_builddir@/src/lib/dns/.libs:@abs_top_builddir@/src/lib/xfr/.libs
 export PYTHONPATH
+
+# If necessary (rare cases), explicitly specify paths to dynamic libraries
+# required by loadable python modules.
+SET_ENV_LIBRARY_PATH=@SET_ENV_LIBRARY_PATH@
+if test $SET_ENV_LIBRARY_PATH = yes; then
+	@ENV_LIBRARY_PATH@=@abs_top_builddir@/src/lib/dns/.libs:@abs_top_builddir@/src/lib/exceptions/.libs:$@ENV_LIBRARY_PATH@
+	export @ENV_LIBRARY_PATH@
+fi
 
 B10_FROM_SOURCE=@abs_top_srcdir@
 export B10_FROM_SOURCE

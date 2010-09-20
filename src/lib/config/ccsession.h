@@ -31,7 +31,7 @@ namespace config {
 /// \brief Creates a standard config/command level success answer message
 ///        (i.e. of the form { "result": [ 0 ] }
 /// \return Standard command/config success answer message
-ElementPtr createAnswer();
+ConstElementPtr createAnswer();
 
 ///
 /// \brief Creates a standard config/command level answer message
@@ -43,7 +43,7 @@ ElementPtr createAnswer();
 ///            Element type. For rcode == 1, this argument is mandatory,
 ///            and must be a StringElement containing an error description
 /// \return Standard command/config answer message
-ElementPtr createAnswer(const int rcode, const ElementPtr arg);
+ConstElementPtr createAnswer(const int rcode, ConstElementPtr arg);
 
 ///
 /// \brief Creates a standard config/command level answer message
@@ -52,7 +52,7 @@ ElementPtr createAnswer(const int rcode, const ElementPtr arg);
 /// \param rcode The return code (0 for success)
 /// \param arg A string to put into the StringElement argument
 /// \return Standard command/config answer message
-ElementPtr createAnswer(const int rcode, const std::string& arg);
+ConstElementPtr createAnswer(const int rcode, const std::string& arg);
 
 ///
 /// Parses a standard config/command level answer message
@@ -63,8 +63,7 @@ ElementPtr createAnswer(const int rcode, const std::string& arg);
 /// \return The optional argument in the message, or an empty ElementPtr
 ///         if there was no argument. If rcode != 0, this contains a
 ///         StringElement with the error description.
-ElementPtr parseAnswer(int &rcode, const ElementPtr msg);
-
+ConstElementPtr parseAnswer(int &rcode, ConstElementPtr msg);
 
 ///
 /// \brief Creates a standard config/command command message with no
@@ -72,7 +71,7 @@ ElementPtr parseAnswer(int &rcode, const ElementPtr msg);
 /// 
 /// \param command The command string
 /// \return The created message
-ElementPtr createCommand(const std::string& command);
+ConstElementPtr createCommand(const std::string& command);
 
 ///
 /// \brief Creates a standard config/command command message with the
@@ -82,7 +81,7 @@ ElementPtr createCommand(const std::string& command);
 /// \param arg The optional argument for the command. This can be of 
 ///        any Element type, but it should conform to the .spec file.
 /// \return The created message
-ElementPtr createCommand(const std::string& command, ElementPtr arg);
+ConstElementPtr createCommand(const std::string& command, ConstElementPtr arg);
 
 ///
 /// \brief Parses the given command into a string containing the actual
@@ -93,7 +92,7 @@ ElementPtr createCommand(const std::string& command, ElementPtr arg);
 /// \param command The command message containing the command (as made
 ///        by createCommand()
 /// \return The command string
-const std::string parseCommand(ElementPtr& arg, const ElementPtr command);
+std::string parseCommand(ConstElementPtr& arg, ConstElementPtr command);
 
 
 ///
@@ -133,12 +132,12 @@ public:
      */
     ModuleCCSession(const std::string& spec_file_name,
                     isc::cc::AbstractSession& session,
-                    isc::data::ElementPtr(*config_handler)(
-                        isc::data::ElementPtr new_config) = NULL,
-                    isc::data::ElementPtr(*command_handler)(
+                    isc::data::ConstElementPtr(*config_handler)(
+                        isc::data::ConstElementPtr new_config) = NULL,
+                    isc::data::ConstElementPtr(*command_handler)(
                         const std::string& command,
-                        const isc::data::ElementPtr args) = NULL
-                    ) throw (isc::cc::SessionError);
+                        isc::data::ConstElementPtr args) = NULL
+                    );
 
     /**
      * Optional optimization for checkCommand loop; returns true
@@ -148,7 +147,7 @@ public:
      * 
      * @return true if there are unhandled queued messages
      */
-    bool hasQueuedMsgs();
+    bool hasQueuedMsgs() const;
 
     /**
      * Check if there is a command or config change on the command
@@ -167,7 +166,11 @@ public:
      * 100000 zones, where the whole list is passed every time a single
      * thing changes)
      */
-    void setConfigHandler(isc::data::ElementPtr(*config_handler)(isc::data::ElementPtr new_config)) { config_handler_ = config_handler; };
+    void setConfigHandler(isc::data::ConstElementPtr(*config_handler)(
+                              isc::data::ConstElementPtr new_config))
+    {
+        config_handler_ = config_handler;
+    }
 
     /**
      * Set a command handler; the function that is passed takes an
@@ -179,7 +182,12 @@ public:
      *
      * This protocol is very likely to change.
      */
-    void setCommandHandler(isc::data::ElementPtr(*command_handler)(const std::string& command, const isc::data::ElementPtr args)) { command_handler_ = command_handler; };
+    void setCommandHandler(isc::data::ConstElementPtr(*command_handler)(
+                               const std::string& command,
+                               isc::data::ConstElementPtr args))
+    {
+        command_handler_ = command_handler;
+    }
 
     /**
      * Gives access to the configuration values of a different module
@@ -217,7 +225,8 @@ public:
      * \param identifier The identifier of the config value
      * \return The configuration setting at the given identifier
      */
-    ElementPtr getRemoteConfigValue(const std::string& module_name, const std::string& identifier);
+    ConstElementPtr getRemoteConfigValue(const std::string& module_name,
+                                         const std::string& identifier) const;
     
 private:
     ModuleSpec readModuleSpecification(const std::string& filename);
@@ -226,13 +235,17 @@ private:
     std::string module_name_;
     isc::cc::AbstractSession& session_;
     ModuleSpec module_specification_;
-    ElementPtr handleConfigUpdate(ElementPtr new_config);
+    ConstElementPtr handleConfigUpdate(ConstElementPtr new_config);
 
-    isc::data::ElementPtr(*config_handler_)(isc::data::ElementPtr new_config);
-    isc::data::ElementPtr(*command_handler_)(const std::string& command, const isc::data::ElementPtr args);
+    isc::data::ConstElementPtr(*config_handler_)(
+        isc::data::ConstElementPtr new_config);
+    isc::data::ConstElementPtr(*command_handler_)(
+        const std::string& command,
+        isc::data::ConstElementPtr args);
 
     std::map<std::string, ConfigData> remote_module_configs_;
-    void updateRemoteConfig(const std::string& module_name, ElementPtr new_config);
+    void updateRemoteConfig(const std::string& module_name,
+                            ConstElementPtr new_config);
 };
 
 }

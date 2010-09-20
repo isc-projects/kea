@@ -34,7 +34,7 @@ namespace isc { namespace config {
     public:
         ModuleSpecError(std::string m = "Module specification is invalid") : msg(m) {}
         ~ModuleSpecError() throw() {}
-        const char* what() const throw() { return msg.c_str(); }
+        const char* what() const throw() { return (msg.c_str()); }
     private:
         std::string msg;
     };
@@ -51,28 +51,28 @@ namespace isc { namespace config {
     ///
     class ModuleSpec {
     public:
-        explicit ModuleSpec() {};
+        ModuleSpec() {};
         /// Create a \c ModuleSpec instance with the given data as
         /// the specification
         /// \param e The Element containing the data specification
-        explicit ModuleSpec(ElementPtr e, const bool check = true)
-                            throw(ModuleSpecError);
+        explicit ModuleSpec(ConstElementPtr e, const bool check = true)
+            throw(ModuleSpecError);
 
         /// Returns the commands part of the specification as an
         /// ElementPtr, returns an empty ElementPtr if there is none
         /// \return ElementPtr Shared pointer to the commands
         ///                    part of the specification
-        const ElementPtr getCommandsSpec() const;
+        ConstElementPtr getCommandsSpec() const;
 
         /// Returns the configuration part of the specification as an
         /// ElementPtr
         /// \return ElementPtr Shared pointer to the configuration
         ///                    part of the specification
-        const ElementPtr getConfigSpec() const;
+        ConstElementPtr getConfigSpec() const;
 
         /// Returns the full module specification as an ElementPtr
         /// \return ElementPtr Shared pointer to the specification
-        const ElementPtr getFullSpec() const { return module_specification; };
+        ConstElementPtr getFullSpec() const { return module_specification; }
 
         /// Returns the module name as specified by the specification
         const std::string getModuleName() const;
@@ -87,17 +87,22 @@ namespace isc { namespace config {
         /// \param data The base \c Element of the data to check
         /// \return true if the data conforms to the specification,
         /// false otherwise.
-        bool validate_config(const ElementPtr data, const bool full = false);
+        bool validate_config(ConstElementPtr data,
+                             const bool full = false) const;
 
         /// errors must be of type ListElement
-        bool validate_config(const ElementPtr data, const bool full, ElementPtr errors);
+        bool validate_config(ConstElementPtr data, const bool full,
+                             ElementPtr errors) const;
 
     private:
-        bool validate_item(const ElementPtr spec, const ElementPtr data, const bool full, ElementPtr errors);
-        bool validate_spec(const ElementPtr spec, const ElementPtr data, const bool full, ElementPtr errors);
-        bool validate_spec_list(const ElementPtr spec, const ElementPtr data, const bool full, ElementPtr errors);
+        bool validate_item(ConstElementPtr spec, ConstElementPtr data,
+                           const bool full, ElementPtr errors) const;
+        bool validate_spec(ConstElementPtr spec, ConstElementPtr data,
+                           const bool full, ElementPtr errors) const;
+        bool validate_spec_list(ConstElementPtr spec, ConstElementPtr data,
+                                const bool full, ElementPtr errors) const;
 
-        ElementPtr module_specification;
+        ConstElementPtr module_specification;
     };
 
     /// Creates a \c ModuleSpec instance from the contents
@@ -126,3 +131,7 @@ namespace isc { namespace config {
 } }
 
 #endif // _DATA_DEF_H
+
+// Local Variables: 
+// mode: c++
+// End: 

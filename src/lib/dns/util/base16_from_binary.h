@@ -46,7 +46,7 @@ struct from_4_bit {
             "0123456789"
             "ABCDEF";
         assert(t < 16);
-        return lookup_table[static_cast<size_t>(t)];
+        return (lookup_table[static_cast<size_t>(t)]);
     }
 };
 

@@ -23,6 +23,8 @@
 //
 // And of course care has to be taken that all identifiers be unique
 
+// $Id$
+
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
@@ -36,7 +38,7 @@
 #include <dns/name.h>
 #include <dns/messagerenderer.h>
 
-#include <dns/python/libdns_python_common.h>
+#include <dns/python/pydnspp_common.h>
 
 // For our 'general' isc::Exception
 static PyObject* po_IscException;
@@ -56,9 +58,9 @@ static PyObject* po_IscException;
 //
 // Definition of the module
 //
-static PyModuleDef libdns_python = {
+static PyModuleDef pydnspp = {
     { PyObject_HEAD_INIT(NULL) NULL, 0, NULL},
-    "libdns_python",
+    "pydnspp",
     "Python bindings for the classes in the isc::dns namespace.\n\n"
     "These bindings match the original C++ API as closely as possible, "
     "but are not complete. Some classes are unnecessary (InputBuffer "
@@ -73,13 +75,13 @@ static PyModuleDef libdns_python = {
 };
 
 PyMODINIT_FUNC
-PyInit_libdns_python(void) {
-    PyObject *mod = PyModule_Create(&libdns_python);
+PyInit_pydnspp(void) {
+    PyObject *mod = PyModule_Create(&pydnspp);
     if (mod == NULL) {
         return (NULL);
     }
 
-    po_IscException = PyErr_NewException("libdns_python.IscException", NULL, NULL);
+    po_IscException = PyErr_NewException("pydnspp.IscException", NULL, NULL);
     PyModule_AddObject(mod, "IscException", po_IscException);
 
     // for each part included above, we call its specific initializer

@@ -323,22 +323,22 @@ NSEC3::compare(const Rdata& other) const
 
 uint8_t
 NSEC3::getHashalg() const {
-    return impl_->hashalg_;
+    return (impl_->hashalg_);
 }
 
 uint8_t
 NSEC3::getFlags() const {
-    return impl_->flags_;
+    return (impl_->flags_);
 }
 
 uint16_t
 NSEC3::getIterations() const {
-    return impl_->iterations_;
+    return (impl_->iterations_);
 }
 
 vector<uint8_t>&
 NSEC3::getSalt() const {
-    return impl_->salt_;
+    return (impl_->salt_);
 }
 
 // END_RDATA_NAMESPACE

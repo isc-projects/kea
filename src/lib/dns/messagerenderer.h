@@ -109,7 +109,7 @@ public:
     /// The destructor does nothing on the given \c buffer on construction;
     /// in fact, it is expected that the user will use the resulting buffer
     /// for some post rendering purposes (e.g., send the data to the network).
-    /// It's user's responsibility to do any necessary cleanup for the
+    /// It's the user's responsibility to do any necessary cleanup for the
     /// \c buffer.
     ~MessageRenderer();
     //@}

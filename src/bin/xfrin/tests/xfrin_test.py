@@ -63,6 +63,9 @@ class MockXfrin(Xfrin):
 
     def _cc_setup(self):
         pass
+
+    def _get_db_file(self):
+        pass
     
     def _cc_check_command(self):
         self._shutdown_event.set()
@@ -408,11 +411,16 @@ class TestXfrin(unittest.TestCase):
     def tearDown(self):
         self.xfr.shutdown()
 
-    def _do_parse(self):
-        return self.xfr._parse_cmd_params(self.args)
+    def _do_parse_zone_name_class(self):
+        return self.xfr._parse_zone_name_and_class(self.args)
+
+    def _do_parse_master_port(self):
+        return self.xfr._parse_master_and_port(self.args)
 
     def test_parse_cmd_params(self):
-        name, rrclass, master_addrinfo, db_file = self._do_parse()
+        name, rrclass = self._do_parse_zone_name_class()
+        master_addrinfo = self._do_parse_master_port()
+        db_file = self.args.get('db_file')
         self.assertEqual(master_addrinfo[4][1], int(TEST_MASTER_PORT))
         self.assertEqual(name, TEST_ZONE_NAME)
         self.assertEqual(rrclass, TEST_RRCLASS)
@@ -421,49 +429,50 @@ class TestXfrin(unittest.TestCase):
 
     def test_parse_cmd_params_default_port(self):
         del self.args['port']
-        master_addrinfo = self._do_parse()[2]
+        master_addrinfo = self._do_parse_master_port()
         self.assertEqual(master_addrinfo[4][1], 53)
 
     def test_parse_cmd_params_ip6master(self):
         self.args['master'] = TEST_MASTER_IPV6_ADDRESS
-        master_addrinfo = self._do_parse()[2]
+        master_addrinfo = self._do_parse_master_port()
         self.assertEqual(master_addrinfo[4][0], TEST_MASTER_IPV6_ADDRESS)
 
     def test_parse_cmd_params_chclass(self):
-        self.args['rrclass'] = 'CH'
-        self.assertEqual(self._do_parse()[1], RRClass.CH())
+        self.args['zone_class'] = 'CH'
+        self.assertEqual(self._do_parse_zone_name_class()[1], RRClass.CH())
 
     def test_parse_cmd_params_bogusclass(self):
-        self.args['rrclass'] = 'XXX'
-        self.assertRaises(XfrinException, self._do_parse)
+        self.args['zone_class'] = 'XXX'
+        self.assertRaises(XfrinException, self._do_parse_zone_name_class)
 
     def test_parse_cmd_params_nozone(self):
         # zone name is mandatory.
         del self.args['zone_name']
-        self.assertRaises(XfrinException, self._do_parse)
+        self.assertRaises(XfrinException, self._do_parse_zone_name_class)
 
     def test_parse_cmd_params_nomaster(self):
         # master address is mandatory.
         del self.args['master']
-        self.assertRaises(XfrinException, self._do_parse)
+        master_addrinfo = self._do_parse_master_port()
+        self.assertEqual(master_addrinfo[4][0], DEFAULT_MASTER)
 
     def test_parse_cmd_params_bad_ip4(self):
         self.args['master'] = '3.3.3.3.3'
-        self.assertRaises(XfrinException, self._do_parse)
+        self.assertRaises(XfrinException, self._do_parse_master_port)
 
     def test_parse_cmd_params_bad_ip6(self):
         self.args['master'] = '1::1::1'
-        self.assertRaises(XfrinException, self._do_parse)
+        self.assertRaises(XfrinException, self._do_parse_master_port)
 
     def test_parse_cmd_params_bad_port(self):
         self.args['port'] = '-1'
-        self.assertRaises(XfrinException, self._do_parse)
+        self.assertRaises(XfrinException, self._do_parse_master_port)
 
         self.args['port'] = '65536'
-        self.assertRaises(XfrinException, self._do_parse)
+        self.assertRaises(XfrinException, self._do_parse_master_port)
 
         self.args['port'] = 'http'
-        self.assertRaises(XfrinException, self._do_parse)
+        self.assertRaises(XfrinException, self._do_parse_master_port)
 
     def test_command_handler_shutdown(self):
         self.assertEqual(self.xfr.command_handler("shutdown",
@@ -499,12 +508,12 @@ class TestXfrin(unittest.TestCase):
                                                   self.args)['result'][0], 1)
 
     def test_command_handler_retransfer_nomodule(self):
-        dns_module = sys.modules['libdns_python'] # this must exist
-        del sys.modules['libdns_python']
+        dns_module = sys.modules['pydnspp'] # this must exist
+        del sys.modules['pydnspp']
         self.assertEqual(self.xfr.command_handler("retransfer",
                                                   self.args)['result'][0], 1)
         # sys.modules is global, so we must recover it
-        sys.modules['libdns_python'] = dns_module
+        sys.modules['pydnspp'] = dns_module
 
     def test_command_handler_refresh(self):
         # at this level, refresh is no different than retransfer.
@@ -518,10 +527,31 @@ class TestXfrin(unittest.TestCase):
         self.args['master'] = TEST_MASTER_IPV6_ADDRESS
         # ...but right now we disable the feature due to security concerns.
         self.assertEqual(self.xfr.command_handler("notify",
-                                                  self.args)['result'][0], 1)
+                                                  self.args)['result'][0], 0)
 
     def test_command_handler_unknown(self):
         self.assertEqual(self.xfr.command_handler("xxx", None)['result'][0], 1)
+
+    def test_command_handler_transfers_in(self):
+        self.assertEqual(self.xfr.config_handler({})['result'][0], 0)
+        self.assertEqual(self.xfr.config_handler({'transfers_in': 3})['result'][0], 0)
+        self.assertEqual(self.xfr._max_transfers_in, 3)
+
+    def test_command_handler_masters(self):
+        master_info = {'master_addr': '1.1.1.1', 'master_port':53}
+        self.assertEqual(self.xfr.config_handler(master_info)['result'][0], 0)
+
+        master_info = {'master_addr': '1111.1.1.1', 'master_port':53 }
+        self.assertEqual(self.xfr.config_handler(master_info)['result'][0], 1)
+
+        master_info = {'master_addr': '2.2.2.2', 'master_port':530000 }
+        self.assertEqual(self.xfr.config_handler(master_info)['result'][0], 1)
+
+        master_info = {'master_addr': '2.2.2.2', 'master_port':53 } 
+        self.xfr.config_handler(master_info)
+        self.assertEqual(self.xfr._master_addr, '2.2.2.2')
+        self.assertEqual(self.xfr._master_port, 53)
+
 
 def raise_interrupt():
     raise KeyboardInterrupt()
@@ -529,7 +559,7 @@ def raise_interrupt():
 def raise_ccerror():
     raise isc.cc.session.SessionError('test error')
 
-def raise_excpetion():
+def raise_exception():
     raise Exception('test exception')
 
 class TestMain(unittest.TestCase):
@@ -551,7 +581,7 @@ class TestMain(unittest.TestCase):
         main(MockXfrin, False)
 
     def test_startup_generalerror(self):
-        MockXfrin.check_command_hook = raise_excpetion
+        MockXfrin.check_command_hook = raise_exception
         main(MockXfrin, False)
 
 if __name__== "__main__":

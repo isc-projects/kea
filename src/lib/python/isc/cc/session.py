@@ -16,6 +16,7 @@
 import sys
 import socket
 import struct
+import errno
 import os
 import threading
 import bind10_config
@@ -25,17 +26,21 @@ import isc.cc.message
 class ProtocolError(Exception): pass
 class NetworkError(Exception): pass
 class SessionError(Exception): pass
+class SessionTimeout(Exception): pass
 
 class Session:
+    MSGQ_DEFAULT_TIMEOUT = 4000
+    
     def __init__(self, socket_file=None):
         self._socket = None
         self._lname = None
-        self._recvbuffer = bytearray()
-        self._recvlength = 0
         self._sequence = 1
         self._closed = False
         self._queue = []
         self._lock = threading.RLock()
+        self.set_timeout(self.MSGQ_DEFAULT_TIMEOUT);
+        self._recv_len_size = 0
+        self._recv_size = 0
 
         if socket_file is None:
             if "BIND10_MSGQ_SOCKET_FILE" in os.environ:
@@ -44,7 +49,6 @@ class Session:
                 self.socket_file = bind10_config.BIND10_MSGQ_SOCKET_FILE
         else:
             self.socket_file = socket_file
-        
 
         try:
             self._socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -118,41 +122,94 @@ class Session:
                     return isc.cc.message.from_wire(data[2:header_length+2]), None
             return None, None
 
+    def _receive_bytes(self, size):
+        """Try to get size bytes of data from the socket.
+           Raises a ProtocolError if the size is 0.
+           Raises any error from recv().
+           Returns whatever data was available (if >0 bytes).
+           """
+        data = self._socket.recv(size)
+        if len(data) == 0: # server closed connection
+            raise ProtocolError("Read of 0 bytes: connection closed")
+        return data
+        
+    def _receive_len_data(self):
+        """Reads self._recv_len_size bytes of data from the socket into
+           self._recv_len_data
+           This is done through class variables so in the case of
+           an EAGAIN we can continue on a subsequent call.
+           Raises a ProtocolError, a socket.error (which may be
+           timeout or eagain), or reads until we have all data we need.
+           """
+        while self._recv_len_size > 0:
+            new_data = self._receive_bytes(self._recv_len_size)
+            self._recv_len_data += new_data
+            self._recv_len_size -= len(new_data)
+
+    def _receive_data(self):
+        """Reads self._recv_size bytes of data from the socket into
+           self._recv_data.
+           This is done through class variables so in the case of
+           an EAGAIN we can continue on a subsequent call.
+           Raises a ProtocolError, a socket.error (which may be
+           timeout or eagain), or reads until we have all data we need.
+        """
+        while self._recv_size > 0:
+            new_data = self._receive_bytes(self._recv_size)
+            self._recv_data += new_data
+            self._recv_size -= len(new_data)
+
     def _receive_full_buffer(self, nonblock):
         if nonblock:
             self._socket.setblocking(0)
         else:
             self._socket.setblocking(1)
+            if self._socket_timeout == 0.0:
+                self._socket.settimeout(None)
+            else:
+                self._socket.settimeout(self._socket_timeout)
 
-        if self._recvlength == 0:
-            length = 4
-            length -= len(self._recvbuffer)
-            try:
-                data = self._socket.recv(length)
-            except:
-                return None
-            if data == "": # server closed connection
-                raise ProtocolError("Read of 0 bytes: connection closed")
-            self._recvbuffer += data
-            if len(self._recvbuffer) < 4:
-                return None
-            self._recvlength = struct.unpack('>I', self._recvbuffer)[0]
-            self._recvbuffer = bytearray()
+        try:
+            # we might be in a call following an EAGAIN, in which case
+            # we simply continue. In the first case, either
+            # recv_size or recv_len size are not zero
+            # they may never both be non-zero (we are either starting
+            # a full read, or continuing one of the reads
+            assert self._recv_size == 0 or self._recv_len_size == 0
+            
+            if self._recv_size == 0:
+                if self._recv_len_size == 0:
+                    # both zero, start a new full read
+                    self._recv_len_size = 4
+                    self._recv_len_data = bytearray()
+                self._receive_len_data()
 
-        length = self._recvlength - len(self._recvbuffer)
-        while (length > 0):
-            try:
-                data = self._socket.recv(length)
-            except:
+                self._recv_size = struct.unpack('>I', self._recv_len_data)[0]
+                self._recv_data = bytearray()
+            self._receive_data()
+
+            # no EAGAIN, so copy data and reset internal counters
+            data = self._recv_data
+
+            self._recv_len_size = 0
+            self._recv_size = 0
+
+            return (data)
+
+        except socket.timeout:
+            raise SessionTimeout("recv() on cc session timed out")
+        except socket.error as se:
+            # Only keep data in case of EAGAIN
+            if se.errno == errno.EAGAIN:
                 return None
-            if data == "": # server closed connection
-                raise ProtocolError("Read of 0 bytes: connection closed")
-            self._recvbuffer += data
-            length -= len(data)
-        data = self._recvbuffer
-        self._recvbuffer = bytearray()
-        self._recvlength = 0
-        return (data)
+            # unknown state otherwise, best to drop data
+            self._recv_len_size = 0
+            self._recv_size = 0
+            # ctrl-c can result in EINTR, return None to prevent
+            # stacktrace output
+            if se.errno == errno.EINTR:
+                return None
+            raise se
 
     def _next_sequence(self):
         self._sequence += 1
@@ -207,6 +264,15 @@ class Session:
             "reply": routing["seq"],
         }, isc.cc.message.to_wire(msg))
         return seq
+
+    def set_timeout(self, milliseconds):
+        """Sets the socket timeout for blocking reads to the given
+           number of milliseconds"""
+        self._socket_timeout = milliseconds / 1000.0
+
+    def get_timeout(self):
+        """Returns the current timeout for blocking reads (in milliseconds)"""
+        return self._socket_timeout * 1000.0
 
 if __name__ == "__main__":
     import doctest

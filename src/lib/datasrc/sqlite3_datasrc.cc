@@ -558,7 +558,7 @@ Sqlite3DataSrc::~Sqlite3DataSrc() {
 }
 
 DataSrc::Result
-Sqlite3DataSrc::init(const isc::data::ElementPtr config) {
+Sqlite3DataSrc::init(isc::data::ConstElementPtr config) {
     if (config && config->contains("database_file")) {
         open(config->get("database_file")->stringValue());
     } else {

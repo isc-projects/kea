@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id: message_python.cc 1711 2010-04-14 15:14:53Z jelte $
+// $Id$
 
 #include <dns/message.h>
 using namespace isc::dns;
@@ -71,7 +71,7 @@ static PyMethodDef MessageFlag_methods[] = {
 
 static PyTypeObject messageflag_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.MessageFlag",
+    "pydnspp.MessageFlag",
     sizeof(s_MessageFlag),              // tp_basicsize
     0,                                  // tp_itemsize
     (destructor)MessageFlag_destroy,    // tp_dealloc
@@ -248,7 +248,7 @@ static PyMethodDef Opcode_methods[] = {
 
 static PyTypeObject opcode_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.Opcode",
+    "pydnspp.Opcode",
     sizeof(s_Opcode),                   // tp_basicsize
     0,                                  // tp_itemsize
     (destructor)Opcode_destroy,         // tp_dealloc
@@ -326,9 +326,9 @@ Opcode_toText(s_Opcode* self) {
 static PyObject*
 Opcode_str(PyObject* self) {
     // Simply call the to_text method we already defined
-    return PyObject_CallMethod(self,
+    return (PyObject_CallMethod(self,
                                const_cast<char*>("to_text"),
-                               const_cast<char*>(""));
+                                const_cast<char*>("")));
 }
 
 static PyObject*
@@ -532,7 +532,7 @@ static PyMethodDef Rcode_methods[] = {
 
 static PyTypeObject rcode_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.Rcode",
+    "pydnspp.Rcode",
     sizeof(s_Rcode),                    // tp_basicsize
     0,                                  // tp_itemsize
     (destructor)Rcode_destroy,          // tp_dealloc
@@ -589,7 +589,7 @@ Rcode_init(s_Rcode* self UNUSED_PARAM, PyObject* args UNUSED_PARAM) {
         try {
             self->rcode = new Rcode(code);
             self->static_code = false;
-        } catch (isc::OutOfRange) {
+        } catch (const isc::OutOfRange&) {
             PyErr_SetString(PyExc_OverflowError,
                             "rcode out of range");
             return (-1);
@@ -624,9 +624,9 @@ Rcode_toText(s_Rcode* self) {
 static PyObject*
 Rcode_str(PyObject* self) {
     // Simply call the to_text method we already defined
-    return PyObject_CallMethod(self,
+    return (PyObject_CallMethod(self,
                                const_cast<char*>("to_text"),
-                               const_cast<char*>(""));
+                                const_cast<char*>("")));
 }
 
 static PyObject*
@@ -802,7 +802,7 @@ static PyMethodDef Section_methods[] = {
 
 static PyTypeObject section_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.Section",
+    "pydnspp.Section",
     sizeof(s_Section),                  // tp_basicsize
     0,                                  // tp_itemsize
     (destructor)Section_destroy,        // tp_dealloc
@@ -886,22 +886,22 @@ Section_createStatic(const Section& section) {
 
 static PyObject*
 Section_QUESTION(s_Section* self UNUSED_PARAM) {
-    return Section_createStatic(Section::QUESTION());
+    return (Section_createStatic(Section::QUESTION()));
 }
 
 static PyObject*
 Section_ANSWER(s_Section* self UNUSED_PARAM) {
-    return Section_createStatic(Section::ANSWER());
+    return (Section_createStatic(Section::ANSWER()));
 }
 
 static PyObject*
 Section_AUTHORITY(s_Section* self UNUSED_PARAM) {
-    return Section_createStatic(Section::AUTHORITY());
+    return (Section_createStatic(Section::AUTHORITY()));
 }
 
 static PyObject*
 Section_ADDITIONAL(s_Section* self UNUSED_PARAM) {
-    return Section_createStatic(Section::ADDITIONAL());
+    return (Section_createStatic(Section::ADDITIONAL()));
 }
 
 static PyObject* 
@@ -1117,7 +1117,7 @@ static PyMethodDef Message_methods[] = {
 // Most of the functions are not actually implemented and NULL here.
 static PyTypeObject message_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.Message",
+    "pydnspp.Message",
     sizeof(s_Message),                  // tp_basicsize
     0,                                  // tp_itemsize
     (destructor)Message_destroy,        // tp_dealloc
@@ -1221,7 +1221,7 @@ Message_setHeaderFlag(s_Message* self, PyObject* args) {
     try {
         self->message->setHeaderFlag(*messageflag->messageflag);
         Py_RETURN_NONE;
-    } catch (isc::dns::InvalidMessageOperation imo) {
+    } catch (const InvalidMessageOperation& imo) {
         PyErr_Clear();
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
         return (NULL);
@@ -1238,7 +1238,7 @@ Message_clearHeaderFlag(s_Message* self, PyObject* args) {
     try {
         self->message->clearHeaderFlag(*messageflag->messageflag);
         Py_RETURN_NONE;
-    } catch (isc::dns::InvalidMessageOperation imo) {
+    } catch (const InvalidMessageOperation& imo) {
         PyErr_Clear();
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
         return (NULL);
@@ -1269,7 +1269,7 @@ Message_setDNSSECSupported(s_Message* self, PyObject* args) {
             self->message->setDNSSECSupported(false);
         }
         Py_RETURN_NONE;
-    } catch (isc::dns::InvalidMessageOperation imo) {
+    } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
         return (NULL);
     }
@@ -1289,10 +1289,10 @@ Message_setUDPSize(s_Message* self, PyObject* args) {
     try {
         self->message->setUDPSize(size);
         Py_RETURN_NONE;
-    } catch (isc::dns::InvalidMessageUDPSize imus) {
+    } catch (const InvalidMessageUDPSize& imus) {
         PyErr_SetString(po_InvalidMessageUDPSize, imus.what());
         return (NULL);
-    } catch (isc::dns::InvalidMessageOperation imo) {
+    } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
         return (NULL);
     }
@@ -1312,7 +1312,7 @@ Message_setQid(s_Message* self, PyObject* args) {
     try {
         self->message->setQid(id);
         Py_RETURN_NONE;
-    } catch (InvalidMessageOperation imo) {
+    } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
         return (NULL);
     }
@@ -1344,7 +1344,7 @@ Message_setRcode(s_Message* self, PyObject* args) {
     try {
         self->message->setRcode(*rcode->rcode);
         Py_RETURN_NONE;
-    } catch (InvalidMessageOperation imo) {
+    } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
         return (NULL);
     }
@@ -1379,7 +1379,7 @@ Message_setOpcode(s_Message* self, PyObject* args) {
     try {
         self->message->setOpcode(*opcode->opcode);
         Py_RETURN_NONE;
-    } catch (InvalidMessageOperation imo) {
+    } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
         return (NULL);
     }
@@ -1482,7 +1482,7 @@ Message_addRRset(s_Message* self, PyObject* args) {
             self->message->addRRset(*section->section, rrset->rrset, false);
         }
         Py_RETURN_NONE;
-    } catch (InvalidMessageOperation imo) {
+    } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
         return (NULL);
     }
@@ -1526,9 +1526,9 @@ Message_toText(s_Message* self) {
 static PyObject*
 Message_str(PyObject* self) {
     // Simply call the to_text method we already defined
-    return PyObject_CallMethod(self,
+    return (PyObject_CallMethod(self,
                                const_cast<char*>("to_text"),
-                               const_cast<char*>(""));
+                                const_cast<char*>("")));
 }
 
 static PyObject*
@@ -1541,7 +1541,7 @@ Message_toWire(s_Message* self, PyObject* args) {
             // If we return NULL it is seen as an error, so use this for
             // None returns
             Py_RETURN_NONE;
-        } catch (isc::dns::InvalidMessageOperation imo) {
+        } catch (const InvalidMessageOperation& imo) {
             PyErr_Clear();
             PyErr_SetString(po_InvalidMessageOperation, imo.what());
             return (NULL);
@@ -1565,16 +1565,16 @@ Message_fromWire(s_Message* self, PyObject* args) {
     try {
         self->message->fromWire(inbuf);
         Py_RETURN_NONE;
-    } catch (isc::dns::InvalidMessageOperation imo) {
+    } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
         return (NULL);
-    } catch (isc::dns::DNSMessageFORMERR dmfe) {
+    } catch (const DNSMessageFORMERR& dmfe) {
         PyErr_SetString(po_DNSMessageFORMERR, dmfe.what());
         return (NULL);
-    } catch (isc::dns::DNSMessageBADVERS dmfe) {
+    } catch (const DNSMessageBADVERS& dmfe) {
         PyErr_SetString(po_DNSMessageBADVERS, dmfe.what());
         return (NULL);
-    } catch (isc::dns::MessageTooShort mts) {
+    } catch (const MessageTooShort& mts) {
         PyErr_SetString(po_MessageTooShort, mts.what());
         return (NULL);
     }
@@ -1627,15 +1627,15 @@ initModulePart_Message(PyObject* mod) {
     addClassVariable(message_type, "DEFAULT_MAX_UDPSIZE", Py_BuildValue("I", Message::DEFAULT_MAX_UDPSIZE));
 
     /* Class-specific exceptions */
-    po_MessageTooShort = PyErr_NewException("libdns_python.MessageTooShort", NULL, NULL);
+    po_MessageTooShort = PyErr_NewException("pydnspp.MessageTooShort", NULL, NULL);
     PyModule_AddObject(mod, "MessageTooShort", po_MessageTooShort);
-    po_InvalidMessageSection = PyErr_NewException("libdns_python.InvalidMessageSection", NULL, NULL);
+    po_InvalidMessageSection = PyErr_NewException("pydnspp.InvalidMessageSection", NULL, NULL);
     PyModule_AddObject(mod, "InvalidMessageSection", po_InvalidMessageSection);
-    po_InvalidMessageOperation = PyErr_NewException("libdns_python.InvalidMessageOperation", NULL, NULL);
+    po_InvalidMessageOperation = PyErr_NewException("pydnspp.InvalidMessageOperation", NULL, NULL);
     PyModule_AddObject(mod, "InvalidMessageOperation", po_InvalidMessageOperation);
-    po_InvalidMessageUDPSize = PyErr_NewException("libdns_python.InvalidMessageUDPSize", NULL, NULL);
+    po_InvalidMessageUDPSize = PyErr_NewException("pydnspp.InvalidMessageUDPSize", NULL, NULL);
     PyModule_AddObject(mod, "InvalidMessageUDPSize", po_InvalidMessageUDPSize);
-    po_DNSMessageBADVERS = PyErr_NewException("libdns_python.DNSMessageBADVERS", NULL, NULL);
+    po_DNSMessageBADVERS = PyErr_NewException("pydnspp.DNSMessageBADVERS", NULL, NULL);
     PyModule_AddObject(mod, "DNSMessageBADVERS", po_DNSMessageBADVERS);
 
     Py_INCREF(&message_type);

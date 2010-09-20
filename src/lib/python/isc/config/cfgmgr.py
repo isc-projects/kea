@@ -283,7 +283,10 @@ class ConfigManager:
             update_cmd = ccsession.create_command(ccsession.COMMAND_CONFIG_UPDATE,
                                                   conf_part)
             seq = self.cc.group_sendmsg(update_cmd, module_name)
-            answer, env = self.cc.group_recvmsg(False, seq)
+            try:
+                answer, env = self.cc.group_recvmsg(False, seq)
+            except isc.cc.SessionTimeout:
+                answer = ccsession.create_answer(1, "Timeout waiting for answer from " + module_name)
         else:
             conf_part = data.set(self.config.data, module_name, {})
             data.merge(conf_part[module_name], cmd[1])
@@ -292,7 +295,10 @@ class ConfigManager:
                                                   conf_part[module_name])
             seq = self.cc.group_sendmsg(update_cmd, module_name)
             # replace 'our' answer with that of the module
-            answer, env = self.cc.group_recvmsg(False, seq)
+            try:
+                answer, env = self.cc.group_recvmsg(False, seq)
+            except isc.cc.SessionTimeout:
+                answer = ccsession.create_answer(1, "Timeout waiting for answer from " + module_name)
         if answer:
             rcode, val = ccsession.parse_answer(answer)
             if rcode == 0:
@@ -313,15 +319,19 @@ class ConfigManager:
                 update_cmd = ccsession.create_command(ccsession.COMMAND_CONFIG_UPDATE,
                                                       self.config.data[module])
                 seq = self.cc.group_sendmsg(update_cmd, module)
-                answer, env = self.cc.group_recvmsg(False, seq)
-                if answer == None:
-                    got_error = True
-                    err_list.append("No answer message from " + module)
-                else:
-                    rcode, val = ccsession.parse_answer(answer)
-                    if rcode != 0:
+                try:
+                    answer, env = self.cc.group_recvmsg(False, seq)
+                    if answer == None:
                         got_error = True
-                        err_list.append(val)
+                        err_list.append("No answer message from " + module)
+                    else:
+                        rcode, val = ccsession.parse_answer(answer)
+                        if rcode != 0:
+                            got_error = True
+                            err_list.append(val)
+                except isc.cc.SessionTimeout:
+                    got_error = True
+                    err_list.append("CC Timeout waiting on answer message from " + module)
         if not got_error:
             self.write_config()
             return ccsession.create_answer(0)
@@ -394,9 +404,15 @@ class ConfigManager:
         """Runs the configuration manager."""
         self.running = True
         while (self.running):
+            # we just wait eternally for any command here, so disable
+            # timeouts for this specific recv
+            self.cc.set_timeout(0)
             msg, env = self.cc.group_recvmsg(False)
-            if msg and not 'result' in msg:
+            # and set it back to whatever we default to
+            self.cc.set_timeout(isc.cc.Session.MSGQ_DEFAULT_TIMEOUT)
+            # ignore 'None' value (even though they should not occur)
+            # and messages that are answers to questions we did
+            # not ask
+            if msg is not None and not 'result' in msg:
                 answer = self.handle_msg(msg);
                 self.cc.group_reply(env, answer)
-            else:
-                self.running = False

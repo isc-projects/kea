@@ -1,16 +1,91 @@
+96.	[bug]		jinmei
+	Fixed two small issues with configure: Do not set CXXFLAGS so that
+	it can be customized; Made sure --disable-static works.
+	(Trac #325, r2976)
+
+bind10-devel-20100917 released on September 17, 2010 
+
+  95.	[doc]		jreed
+	Add b10-zonemgr manual page. Update other docs to introduce
+	this secondary manager. (Trac #341, svn r2951)
+
+  95.	[bug]		jreed
+	bin/xfrout and bin/zonemgr: Fixed some stderr output.
+	(Trac #342, svn r2949)
+
+  94.	[bug]		jelte
+  	bin/xfrout:  Fixed a problem in xfrout where only 2 or 3 RRs
+	were used per DNS message in the xfrout stream.
+	(Trac #334, r2931)
+
+  93.	[bug]		jinmei
+	lib/datasrc: A DS query could crash the library (and therefore,
+	e.g. the authoritative server) if some RR of the same apex name
+	is stored in the hot spot cache.  (Trac #307, svn r2923)
+
+  92.	[func]*		jelte
+	libdns_python (the python wrappers for libdns++) has been renamed
+	to pydnspp (Python DNS++). Programs and libraries that used
+	'import libdns_python' now need to use 'import pydnspp'.
+	(Trac #314, r2902)
+
+  91.	[func]*		jinmei
+	lib/cc: Use const pointers and const member functions for the API
+	as much as possible for safer operations.  Basically this does not
+	change the observable behavior, but some of the API were changed
+	in a backward incompatible manner.  This change also involves more
+	copies, but at this moment the overhead is deemed acceptable.
+	(Trac #310, r2803)
+
+  90.	[build]		jinmei
+	(Darwin/Mac OS X specific) Specify DYLD_LIBRARY_PATH for tests and
+	experimental run under the source tree.  Without this loadable
+	python modules refer to installation paths, which may confuse the
+	operation due to version mismatch or even trigger run time errors
+	due to missing libraries. (Trac #313, r2782)
+
+  89.	[build]		jinmei
+	Generate b10-config.db for tests at build time so that the source
+	tree does not have to be writable. (Trac #315, r2776)
+
+  88.   [func]		jelte
+	Blocking reads on the msgq command channel now have a timeout
+	(defaults to 4 seconds, modifiable as needed by modules).
+	Because of this, modules will no longer block indefinitely
+	if they are waiting for a message that is not sent for whatever
+	reason. (Trac #296, r2761)
+
+  87.   [func]		zhanglikun
+	lib/python/isc/notifyout: Add the feature of notify-out, when 
+	zone axfr/ixfr finishing, the server will notify its slaves.
+	(Trac #289, svn r2737)
+
+  86.   [func]		jerry
+    	bin/zonemgr: Added zone manager module. The zone manager is one 
+	of the co-operating processes of BIND10, which keeps track of 
+	timers and other information necessary for BIND10 to act as a 
+	slave. (Trac #215, svn r2737)
+
+  85.	[build]*	jinmei
+	Build programs using dynamic link by default.  A new configure
+	option --enable-static-link is provided to force static link for
+	executable programs.  Statically linked programs can be run on a
+	debugger more easily and would be convenient for developers.
+	(Trac #309, svn r2723)
+
 bind10-devel-20100812 released on August 12, 2010
 
-  84.   [bug]       jinmei, jerry
+  84.	[bug]		jinmei, jerry
 	This is a quick fix patch for the issue: AXFR fails half the 
 	time because of connection problems. xfrout client will make
 	a new connection every time. (Trac #299, svn r2697)
 
-  83.	[build]*
+  83.	[build]*	jreed
 	The configure --with-boost-lib option is removed. It was not
 	used since the build included ASIO. (svn r2684)
 
   82.	[func]		jinmei
-	bin/auth: Added -u option to allow the effective process user
+	bin/auth: Added -u option to change the effective process user
 	of the authoritative server after invocation.  The same option to
 	the boss process will be propagated to b10-auth, too.
 	(Trac #268, svn r2675)

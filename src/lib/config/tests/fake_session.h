@@ -47,38 +47,32 @@ public:
     virtual void startRead(boost::function<void()> read_callback);
 
     virtual void establish(const char* socket_file = NULL);
-    bool connect();
     virtual void disconnect();
-    void sendmsg(isc::data::ElementPtr& msg);
-    void sendmsg(isc::data::ElementPtr& env,
-                 isc::data::ElementPtr& msg);
-    bool recvmsg(isc::data::ElementPtr& msg,
-                 bool nonblock = true, int seq = -1);
-    bool recvmsg(isc::data::ElementPtr& env,
-                 isc::data::ElementPtr& msg,
-                 bool nonblock = true, int seq = -1);
     virtual void subscribe(std::string group,
                            std::string instance = "*");
     virtual void unsubscribe(std::string group,
                              std::string instance = "*");
-    virtual int group_sendmsg(isc::data::ElementPtr msg,
+    virtual int group_sendmsg(isc::data::ConstElementPtr msg,
                               std::string group,
                               std::string instance = "*",
                               std::string to = "*");
-    virtual bool group_recvmsg(isc::data::ElementPtr& envelope,
-                               isc::data::ElementPtr& msg,
+    virtual bool group_recvmsg(isc::data::ConstElementPtr& envelope,
+                               isc::data::ConstElementPtr& msg,
                                bool nonblock = true,
                                int seq = -1);
-    virtual int reply(isc::data::ElementPtr& envelope,
-                      isc::data::ElementPtr& newmsg);
-    virtual bool hasQueuedMsgs();
-    isc::data::ElementPtr getFirstMessage(std::string& group, std::string& to);
-    void addMessage(isc::data::ElementPtr, const std::string& group,
+    virtual int reply(isc::data::ConstElementPtr envelope,
+                      isc::data::ConstElementPtr newmsg);
+    virtual bool hasQueuedMsgs() const;
+    virtual void setTimeout(size_t milliseconds) {}
+    virtual size_t getTimeout() const { return (0); }
+    isc::data::ConstElementPtr getFirstMessage(std::string& group,
+                                               std::string& to) const;
+    void addMessage(isc::data::ConstElementPtr, const std::string& group,
                     const std::string& to);
     bool haveSubscription(const std::string& group,
                           const std::string& instance);
-    bool haveSubscription(const isc::data::ElementPtr group,
-                          const isc::data::ElementPtr instance);
+    bool haveSubscription(const isc::data::ConstElementPtr group,
+                          const isc::data::ConstElementPtr instance);
 
     // For the convenience of tests, we share these internal members
     // with the tester.  The test code may insert update and check,
@@ -88,6 +82,12 @@ public:
     isc::data::ElementPtr getMsgQueue() { return (msg_queue_); }
 
 private:
+    bool recvmsg(isc::data::ConstElementPtr& msg,
+                 bool nonblock = true, int seq = -1);
+    bool recvmsg(isc::data::ConstElementPtr& env,
+                 isc::data::ConstElementPtr& msg,
+                 bool nonblock = true, int seq = -1);
+
     const isc::data::ElementPtr messages_;
     isc::data::ElementPtr subscriptions_;
     isc::data::ElementPtr msg_queue_;

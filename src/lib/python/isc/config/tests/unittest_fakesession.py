@@ -1,4 +1,21 @@
+# Copyright (C) 2010  Internet Systems Consortium.
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SYSTEMS CONSORTIUM
+# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+# INTERNET SYSTEMS CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+# $Id$
+
+import isc
 
 #
 # We can probably use a more general version of this
@@ -9,6 +26,10 @@ class FakeModuleCCSession:
         # each entry is of the form [ channel, instance, message ]
         self.message_queue = []
         self._socket = "ok we just need something not-None here atm"
+        # if self.timeout is set to anything other than 0, and
+        # the message_queue is empty when receive is called, throw
+        # a SessionTimeout
+        self._timeout = 0
 
     def group_subscribe(self, group_name, instance_name = None):
         if not group_name in self.subscriptions:
@@ -48,7 +69,11 @@ class FakeModuleCCSession:
             if qm[0] in self.subscriptions and (qm[1] == None or qm[1] in self.subscriptions[qm[0]]):
                 self.message_queue.remove(qm)
                 return qm[2], {'group': qm[0], 'from': qm[1]}
-        return None, None
+        if self._timeout == 0:
+            return None, None
+        else:
+            raise isc.cc.SessionTimeout("Timeout set but no data to "
+                                 "return to group_recvmsg()")
 
     def get_message(self, channel, target = None):
         for qm in self.message_queue:
@@ -60,4 +85,6 @@ class FakeModuleCCSession:
     def close(self):
         # need to pass along somehow that this function has been called,
         self._socket = "closed"
-        pass
+
+    def set_timeout(self, timeout):
+        self._timeout = timeout

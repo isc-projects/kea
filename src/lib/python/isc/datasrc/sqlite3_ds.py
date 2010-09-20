@@ -18,6 +18,13 @@
 import sqlite3, re, random
 import isc
 
+
+#define the index of different part of one record
+RR_TYPE_INDEX = 5
+RR_NAME_INDEX = 2
+RR_TTL_INDEX = 4
+RR_RDATA_INDEX = 7
+
 #########################################################################
 # define exceptions
 #########################################################################
@@ -86,10 +93,10 @@ def open(dbfile):
 
     return conn, cur
 
-
 #########################################################################
 # get_zone_datas
-#   returns all the records for one zone with the given zone name. 
+#   a generator function producing an iterable set of 
+#   the records in the zone with the given zone name.
 #########################################################################
 def get_zone_datas(zonename, dbfile):
     conn, cur = open(dbfile)
@@ -120,6 +127,39 @@ def get_zone_soa(zonename, dbfile):
 
     return datas
 
+
+#########################################################################
+# get_zone_rrset
+#   returns the rrset of the zone with the given zone name, rrset name 
+#   and given rd type. 
+#   If the zone doesn't exist or rd type doesn't exist, return an empty list. 
+#########################################################################
+def get_zone_rrset(zonename, rr_name, rdtype, dbfile):
+    conn, cur = open(dbfile)
+    id = get_zoneid(zonename, cur)
+    cur.execute("SELECT * FROM records WHERE name = ? and zone_id = ? and rdtype = ?", 
+                [rr_name, id, rdtype])
+    datas = cur.fetchall()
+    cur.close()
+    conn.close()
+    return datas
+
+
+#########################################################################
+# get_zones_info:
+#   returns all the zones' information.
+#########################################################################
+def get_zones_info(db_file):
+    conn, cur = open(db_file)
+    cur.execute("SELECT name, rdclass FROM zones")
+    info = cur.fetchone()
+    while info:
+        yield info
+        info = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
 #########################################################################
 # get_zoneid:
 #   returns the zone_id for a given zone name, or an empty
@@ -132,7 +172,7 @@ def get_zoneid(zone, cur):
         return row[0]
     else:
         return ''
-
+    
 #########################################################################
 # reverse_name:
 #   reverse the labels of a DNS name.  (for example,
