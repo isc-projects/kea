@@ -480,7 +480,7 @@ Message::toWire(MessageRenderer& renderer) {
     // has been explicitly set.  However, if the RCODE would require it and
     // no EDNS has been set we generate a temporary local EDNS and use it.
     if (!renderer.isTruncated()) {
-        ConstEDNSPtr local_edns = this->impl_->edns_;
+        ConstEDNSPtr local_edns = impl_->edns_;
         if (!local_edns && impl_->rcode_.getExtendedCode() != 0) {
             local_edns = ConstEDNSPtr(new EDNS());
         }
@@ -752,6 +752,7 @@ Message::toText() const {
     s += ", ADDITIONAL: " + lexical_cast<string>(arcount) + "\n";
 
     if (impl_->edns_ != NULL) {
+        s += "\n;; OPT PSEUDOSECTION:\n";
         s += impl_->edns_->toText();
     }
 

@@ -40,21 +40,21 @@ class EDNSTest(unittest.TestCase):
     def test_dnssec_dobit(self):
         edns = EDNS(Name.ROOT_NAME, self.rrclass, self.rrtype,
                     self.rrttl_do_on, self.opt_rdata)
-        self.assertTrue(edns.is_dnssec_supported())
+        self.assertTrue(edns.get_dnssec_awareness())
 
         edns = EDNS(Name.ROOT_NAME, self.rrclass, self.rrtype,
                     self.rrttl_do_off, self.opt_rdata)
-        self.assertFalse(edns.is_dnssec_supported())
+        self.assertFalse(edns.get_dnssec_awareness())
 
         edns = EDNS()
-        self.assertFalse(edns.is_dnssec_supported())
-        edns.set_dnssec_supported(True)
-        self.assertTrue(edns.is_dnssec_supported())
-        edns.set_dnssec_supported(False);
-        self.assertFalse(edns.is_dnssec_supported())
+        self.assertFalse(edns.get_dnssec_awareness())
+        edns.set_dnssec_awareness(True)
+        self.assertTrue(edns.get_dnssec_awareness())
+        edns.set_dnssec_awareness(False);
+        self.assertFalse(edns.get_dnssec_awareness())
 
-        self.assertRaises(TypeError, edns.set_dnssec_supported, "wrong")
-        self.assertRaises(TypeError, edns.set_dnssec_supported, 1)
+        self.assertRaises(TypeError, edns.set_dnssec_awareness, "wrong")
+        self.assertRaises(TypeError, edns.set_dnssec_awareness, 1)
 
     def test_udpsize(self):
         edns = EDNS(Name.ROOT_NAME, self.rrclass, self.rrtype,
@@ -93,19 +93,19 @@ class EDNSTest(unittest.TestCase):
     def test_to_text(self):
         edns = EDNS()
         edns.set_udp_size(4096)
-        expected_str = "; EDNS: version: 0, flags:; udp: 4096"
+        expected_str = "; EDNS: version: 0, flags:; udp: 4096\n"
         self.assertEqual(expected_str, edns.to_text())
         self.assertEqual(expected_str, str(edns))
 
-        edns.set_dnssec_supported(True)
-        self.assertEqual("; EDNS: version: 0, flags: do; udp: 4096",
+        edns.set_dnssec_awareness(True)
+        self.assertEqual("; EDNS: version: 0, flags: do; udp: 4096\n",
                          edns.to_text())
 
-        self.assertEqual("; EDNS: version: 0, flags: do; udp: 4096",
+        self.assertEqual("; EDNS: version: 0, flags: do; udp: 4096\n",
                          EDNS(Name.ROOT_NAME, self.rrclass, self.rrtype,
                               RRTTL(0x01008000), self.opt_rdata).to_text())
 
-        self.assertEqual("; EDNS: version: 0, flags: do; udp: 4096",
+        self.assertEqual("; EDNS: version: 0, flags: do; udp: 4096\n",
                          EDNS(Name.ROOT_NAME, self.rrclass, self.rrtype,
                               RRTTL(0x00008001), self.opt_rdata).to_text())
 
@@ -119,19 +119,19 @@ class EDNSTest(unittest.TestCase):
         self.assertEqual(wiredata, renderer.get_data())
 
         renderer.clear()
-        self.edns_base.set_dnssec_supported(True)
+        self.edns_base.set_dnssec_awareness(True)
         self.assertEqual(1, self.edns_base.to_wire(renderer, extrcode_noerror))
         wiredata = read_wire_data("edns_toWire2.wire")
         self.assertEqual(wiredata, renderer.get_data())
 
         renderer.clear()
-        self.edns_base.set_dnssec_supported(True)
+        self.edns_base.set_dnssec_awareness(True)
         self.assertEqual(1, self.edns_base.to_wire(renderer, extrcode_badvers))
         wiredata = read_wire_data("edns_toWire3.wire")
         self.assertEqual(wiredata, renderer.get_data())
 
         renderer.clear()
-        self.edns_base.set_dnssec_supported(True)
+        self.edns_base.set_dnssec_awareness(True)
         self.edns_base.set_udp_size(511)
         self.assertEqual(1, self.edns_base.to_wire(renderer, extrcode_noerror))
         wiredata = read_wire_data("edns_toWire4.wire")
@@ -146,7 +146,7 @@ class EDNSTest(unittest.TestCase):
 
         renderer.clear()
         renderer.set_length_limit(10)
-        self.edns_base.set_dnssec_supported(True)
+        self.edns_base.set_dnssec_awareness(True)
         self.assertEqual(0, self.edns_base.to_wire(renderer, extrcode_noerror))
         self.assertEqual(0, renderer.get_length())
 
@@ -163,7 +163,7 @@ class EDNSTest(unittest.TestCase):
                                                self.rrtype, self.rrttl_do_on,
                                                self.opt_rdata)
         self.assertEqual(EDNS.SUPPORTED_VERSION, edns.get_version())
-        self.assertTrue(edns.is_dnssec_supported())
+        self.assertTrue(edns.get_dnssec_awareness())
         self.assertEqual(4096, edns.get_udp_size())
         self.assertEqual(0, extrcode)
 

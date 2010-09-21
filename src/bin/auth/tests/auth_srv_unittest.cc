@@ -457,7 +457,7 @@ TEST_F(AuthSrvTest, ednsBadVers) {
     parse_message.fromWire(ib);
     EXPECT_EQ(Rcode::BADVERS(), parse_message.getRcode());
     EXPECT_TRUE(parse_message.getEDNS());
-    EXPECT_FALSE(parse_message.getEDNS()->isDNSSECSupported());
+    EXPECT_FALSE(parse_message.getEDNS()->getDNSSECAwareness());
 }
 
 TEST_F(AuthSrvTest, AXFROverUDP) {

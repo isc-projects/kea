@@ -43,29 +43,27 @@ namespace isc {
 namespace dns {
 
 namespace {
+// This diagram shows the wire-format representation of the TTL field of
+// OPT RR and its relationship with implementation specific parameters.
+//
 //           0             7               15                              31
 //          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 //          | EXTENDED-RCODE|    VERSION     |D|               Z             |
 //          +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 //                                          <= VERSION_SHIFT (16 bits)
+//                          <= EXTRCODE_SHIFT (24 bits)
 //EXTFLAG_DO:0 0 0 ....................... 0 1 0 0 0 0.....................0
+
 const uint32_t VERSION_MASK = 0x00ff0000;
 const unsigned int VERSION_SHIFT = 16;
-const uint32_t EXTFLAG_DO = 0x00008000;
-
-//     0             7       11                                      31
-//    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//    | EXTENDED-RCODE| RCODE  |                                       |
-//    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//                    <= EXTRCODE_SHIFT
-const uint32_t EXTRCODE_MASK = 0xff000000;
 const unsigned int EXTRCODE_SHIFT = 24;
+const uint32_t EXTFLAG_DO = 0x00008000;
 }
 
 EDNS::EDNS(const uint8_t version) :
     version_(version),
     udp_size_(Message::DEFAULT_MAX_UDPSIZE),
-    dnssec_ok_(false)
+    dnssec_aware_(false)
 {
     if (version_ > SUPPORTED_VERSION) {
         isc_throw(isc::InvalidParameter,
@@ -94,7 +92,7 @@ EDNS::EDNS(const Name& name, const RRClass& rrclass, const RRType& rrtype,
                   name);
     }
 
-    dnssec_ok_ = ((ttl.getValue() & EXTFLAG_DO) != 0);
+    dnssec_aware_ = ((ttl.getValue() & EXTFLAG_DO) != 0);
     udp_size_ = rrclass.getCode();
 }
 
@@ -104,11 +102,11 @@ EDNS::toText() const {
 
     ret += lexical_cast<string>(static_cast<int>(getVersion()));
     ret += ", flags:";
-    if (isDNSSECSupported()) {
+    if (getDNSSECAwareness()) {
         ret += " do";
     }
-    ret += "; udp: " + lexical_cast<string>(getUDPSize());
-    
+    ret += "; udp: " + lexical_cast<string>(getUDPSize()) + "\n";
+
     return (ret);
 }
 
@@ -118,15 +116,14 @@ EDNS::toWire(Output& output, const uint8_t extended_rcode) const {
     // Render EDNS OPT RR
     uint32_t extrcode_flags = extended_rcode << EXTRCODE_SHIFT;
     extrcode_flags |= (version_ << VERSION_SHIFT) & VERSION_MASK;
-    if (dnssec_ok_) {
+    if (dnssec_aware_) {
         extrcode_flags |= EXTFLAG_DO;
     }
 
     // Construct an RRset corresponding to the EDNS.
     // We don't support any options for now, so the OPT RR can be empty.
-    RRsetPtr edns_rrset = RRsetPtr(new RRset(Name::ROOT_NAME(),
-                                             RRClass(udp_size_), RRType::OPT(),
-                                             RRTTL(extrcode_flags)));
+    RRsetPtr edns_rrset(new RRset(Name::ROOT_NAME(), RRClass(udp_size_),
+                                  RRType::OPT(), RRTTL(extrcode_flags)));
     edns_rrset->addRdata(ConstRdataPtr(new generic::OPT()));
 
     edns_rrset->toWire(output);

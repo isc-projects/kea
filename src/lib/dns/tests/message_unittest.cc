@@ -101,7 +101,7 @@ TEST_F(MessageTest, getEDNS) {
     EXPECT_TRUE(message_parse.getEDNS());
     EXPECT_EQ(0, message_parse.getEDNS()->getVersion());
     EXPECT_EQ(4096, message_parse.getEDNS()->getUDPSize());
-    EXPECT_TRUE(message_parse.getEDNS()->isDNSSECSupported());
+    EXPECT_TRUE(message_parse.getEDNS()->getDNSSECAwareness());
 }
 
 TEST_F(MessageTest, setEDNS) {

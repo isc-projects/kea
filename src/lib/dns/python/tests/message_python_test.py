@@ -339,7 +339,7 @@ class MessageTest(unittest.TestCase):
         edns = message_parse.get_edns()
         self.assertEqual(0, edns.get_version())
         self.assertEqual(4096, edns.get_udp_size())
-        self.assertTrue(edns.is_dnssec_supported())
+        self.assertTrue(edns.get_dnssec_awareness())
 
     def test_set_edns(self):
         self.assertRaises(InvalidMessageOperation, self.p.set_edns, EDNS())

@@ -293,7 +293,7 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
                                 MessageRenderer& response_renderer)
 {
     ConstEDNSPtr remote_edns = message.getEDNS();
-    const bool dnssec_ok = remote_edns && remote_edns->isDNSSECSupported();
+    const bool dnssec_ok = remote_edns && remote_edns->getDNSSECAwareness();
     const uint16_t remote_bufsize = remote_edns ? remote_edns->getUDPSize() :
         Message::DEFAULT_MAX_UDPSIZE; 
 
@@ -303,7 +303,7 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
 
     if (remote_edns) {
         EDNSPtr local_edns = EDNSPtr(new EDNS());
-        local_edns->setDNSSECSupported(dnssec_ok);
+        local_edns->setDNSSECAwareness(dnssec_ok);
         local_edns->setUDPSize(AuthSrvImpl::DEFAULT_LOCAL_UDPSIZE);
         message.setEDNS(local_edns);
     }
