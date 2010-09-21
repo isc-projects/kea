@@ -166,11 +166,14 @@ Opcode::toText() const {
 }
 
 namespace {
+// This diagram shows the wire-format representation of the 12-bit extended
+// form RCODEs and its relationship with implementation specific parameters.
+//
 //     0     3               11      15
 //    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 //    |UNUSED | EXTENDED-RCODE | RCODE |
 //    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//                            <= EXTRCODE_SHIFT
+//                            <= EXTRCODE_SHIFT (4 bits)
 const unsigned int EXTRCODE_SHIFT = 4;
 }
 

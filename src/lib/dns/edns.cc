@@ -53,10 +53,11 @@ namespace {
 //                                          <= VERSION_SHIFT (16 bits)
 //                          <= EXTRCODE_SHIFT (24 bits)
 //EXTFLAG_DO:0 0 0 ....................... 0 1 0 0 0 0.....................0
+//VER_MASK:  0 0 0 ........0 1 1 1 1 1 1 1 1 0 0 ..........................0
 
-const uint32_t VERSION_MASK = 0x00ff0000;
 const unsigned int VERSION_SHIFT = 16;
 const unsigned int EXTRCODE_SHIFT = 24;
+const uint32_t VERSION_MASK = 0x00ff0000;
 const uint32_t EXTFLAG_DO = 0x00008000;
 }
 
