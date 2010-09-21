@@ -76,18 +76,18 @@ TEST_F(EDNSTest, DNSSECDOBit) {
 
     // DO bit is on, so DNSSEC should be considered to be supported.
     EXPECT_TRUE(EDNS(Name::ROOT_NAME(), rrclass, rrtype,
-                     rrttl_do_on, *opt_rdata).isDNSSECSupported());
+                     rrttl_do_on, *opt_rdata).getDNSSECAwareness());
 
     // DO bit is off.  DNSSEC should be considered to be unsupported.
     EXPECT_FALSE(EDNS(Name::ROOT_NAME(), rrclass, rrtype,
-                      rrttl_do_off, *opt_rdata).isDNSSECSupported());
+                      rrttl_do_off, *opt_rdata).getDNSSECAwareness());
 
     // tests for EDNS constructed by hand
-    EXPECT_FALSE(edns_base.isDNSSECSupported()); // false by default
-    edns_base.setDNSSECSupported(true);          // enable by hand
-    EXPECT_TRUE(edns_base.isDNSSECSupported());
-    edns_base.setDNSSECSupported(false); // disable by hand
-    EXPECT_FALSE(edns_base.isDNSSECSupported());
+    EXPECT_FALSE(edns_base.getDNSSECAwareness()); // false by default
+    edns_base.setDNSSECAwareness(true);          // enable by hand
+    EXPECT_TRUE(edns_base.getDNSSECAwareness());
+    edns_base.setDNSSECAwareness(false); // disable by hand
+    EXPECT_FALSE(edns_base.getDNSSECAwareness());
 }
 
 TEST_F(EDNSTest, UDPSize) {
@@ -135,29 +135,29 @@ TEST_F(EDNSTest, BadWireData) {
 
 TEST_F(EDNSTest, toText) {
     // Typical case, disabling DNSSEC
-    EXPECT_EQ("; EDNS: version: 0, flags:; udp: 4096",
+    EXPECT_EQ("; EDNS: version: 0, flags:; udp: 4096\n",
               EDNS(Name::ROOT_NAME(), rrclass, rrtype, rrttl_do_off,
                    *opt_rdata).toText());
 
     // Typical case, enabling DNSSEC
-    EXPECT_EQ("; EDNS: version: 0, flags: do; udp: 4096",
+    EXPECT_EQ("; EDNS: version: 0, flags: do; udp: 4096\n",
               EDNS(Name::ROOT_NAME(), rrclass, rrtype, rrttl_do_on,
                    *opt_rdata).toText());
 
     // Non-0 extended Rcode: ignored in the toText() output.
-    EXPECT_EQ("; EDNS: version: 0, flags: do; udp: 4096",
+    EXPECT_EQ("; EDNS: version: 0, flags: do; udp: 4096\n",
               EDNS(Name::ROOT_NAME(), rrclass, rrtype,
                    RRTTL(0x01008000), *opt_rdata).toText());
 
     // Unknown flag: ignored in the toText() output.
-    EXPECT_EQ("; EDNS: version: 0, flags: do; udp: 4096",
+    EXPECT_EQ("; EDNS: version: 0, flags: do; udp: 4096\n",
               EDNS(Name::ROOT_NAME(), rrclass, rrtype,
                    RRTTL(0x00008001), *opt_rdata).toText());
 }
 
 TEST_F(EDNSTest, toWireRenderer) {
     // Typical case, (explicitly) disabling DNSSEC
-    edns_base.setDNSSECSupported(false);
+    edns_base.setDNSSECAwareness(false);
     EXPECT_EQ(1, edns_base.toWire(renderer,
                                   Rcode::NOERROR().getExtendedCode()));
     UnitTestUtil::readWireData("edns_toWire1.wire", wiredata);
@@ -167,7 +167,7 @@ TEST_F(EDNSTest, toWireRenderer) {
     // Typical case, enabling DNSSEC
     renderer.clear();
     wiredata.clear();
-    edns_base.setDNSSECSupported(true);
+    edns_base.setDNSSECAwareness(true);
     EXPECT_EQ(1, edns_base.toWire(renderer,
                                   Rcode::NOERROR().getExtendedCode()));
     UnitTestUtil::readWireData("edns_toWire2.wire", wiredata);
@@ -177,7 +177,7 @@ TEST_F(EDNSTest, toWireRenderer) {
     // Non-0 extended Rcode
     renderer.clear();
     wiredata.clear();
-    edns_base.setDNSSECSupported(true);
+    edns_base.setDNSSECAwareness(true);
     EXPECT_EQ(1, edns_base.toWire(renderer,
                                   Rcode::BADVERS().getExtendedCode()));
     UnitTestUtil::readWireData("edns_toWire3.wire", wiredata);
@@ -187,7 +187,7 @@ TEST_F(EDNSTest, toWireRenderer) {
     // Uncommon UDP buffer size
     renderer.clear();
     wiredata.clear();
-    edns_base.setDNSSECSupported(true);
+    edns_base.setDNSSECAwareness(true);
     edns_base.setUDPSize(511);
     EXPECT_EQ(1, edns_base.toWire(renderer,
                                   Rcode::NOERROR().getExtendedCode()));
@@ -210,7 +210,7 @@ TEST_F(EDNSTest, toWireRenderer) {
     // RR, it shouldn't be inserted.
     renderer.clear();
     renderer.setLengthLimit(10); // 10 = minimum length of OPT RR - 1
-    edns_base.setDNSSECSupported(true);
+    edns_base.setDNSSECAwareness(true);
     edns_base.setUDPSize(4096);
     EXPECT_EQ(0, edns_base.toWire(renderer,
                                   Rcode::NOERROR().getExtendedCode()));
@@ -236,7 +236,7 @@ TEST_F(EDNSTest, createFromRR) {
                                          rrttl_do_on, *opt_rdata,
                                          extended_rcode));
     EXPECT_EQ(EDNS::SUPPORTED_VERSION, edns->getVersion());
-    EXPECT_TRUE(edns->isDNSSECSupported());
+    EXPECT_TRUE(edns->getDNSSECAwareness());
     EXPECT_EQ(4096, edns->getUDPSize());
     EXPECT_EQ(0, static_cast<int>(extended_rcode));
 

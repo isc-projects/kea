@@ -57,8 +57,8 @@ PyObject* EDNS_toText(const s_EDNS* self);
 PyObject* EDNS_str(PyObject* self);
 PyObject* EDNS_toWire(const s_EDNS* self, PyObject* args);
 PyObject* EDNS_getVersion(const s_EDNS* self);
-PyObject* EDNS_isDNSSECSupported(const s_EDNS* self);
-PyObject* EDNS_setDNSSECSupported(s_EDNS* self, PyObject* args);
+PyObject* EDNS_getDNSSECAwareness(const s_EDNS* self);
+PyObject* EDNS_setDNSSECAwareness(s_EDNS* self, PyObject* args);
 PyObject* EDNS_getUDPSize(const s_EDNS* self);
 PyObject* EDNS_setUDPSize(s_EDNS* self, PyObject* args);
 PyObject* EDNS_createFromRR(const s_EDNS* null_self, PyObject* args);
@@ -82,14 +82,13 @@ PyMethodDef EDNS_methods[] = {
     { "get_version",
       reinterpret_cast<PyCFunction>(EDNS_getVersion), METH_NOARGS,
       "Returns the version of EDNS." },
-    { "is_dnssec_supported",
-      reinterpret_cast<PyCFunction>(EDNS_isDNSSECSupported), METH_NOARGS,
-      "Returns True if the message sender indicates DNSSEC is supported. "
-      "If EDNS is included, this corresponds to the value of the DO bit. "
-      "Otherwise, DNSSEC is considered not supported." },
-    { "set_dnssec_supported",
-      reinterpret_cast<PyCFunction>(EDNS_setDNSSECSupported), METH_VARARGS,
-      "Specify whether DNSSEC is supported in the message." },
+    { "get_dnssec_awareness",
+      reinterpret_cast<PyCFunction>(EDNS_getDNSSECAwareness), METH_NOARGS,
+      "Returns whether the message sender is DNSSEC aware." },
+    { "set_dnssec_awareness",
+      reinterpret_cast<PyCFunction>(EDNS_setDNSSECAwareness), METH_VARARGS,
+      "Specifies whether the sender of the message containing this "
+      "EDNS is DNSSEC aware." },
     { "get_udp_size",
       reinterpret_cast<PyCFunction>(EDNS_getUDPSize), METH_NOARGS,
       "Return the maximum buffer size of UDP messages for the sender "
@@ -275,8 +274,8 @@ EDNS_getVersion(const s_EDNS* const self) {
 }
 
 PyObject*
-EDNS_isDNSSECSupported(const s_EDNS* const self) {
-    if (self->edns->isDNSSECSupported()) {
+EDNS_getDNSSECAwareness(const s_EDNS* const self) {
+    if (self->edns->getDNSSECAwareness()) {
         Py_RETURN_TRUE;
     } else {
         Py_RETURN_FALSE;
@@ -284,12 +283,12 @@ EDNS_isDNSSECSupported(const s_EDNS* const self) {
 }
 
 PyObject*
-EDNS_setDNSSECSupported(s_EDNS* self, PyObject* args) {
+EDNS_setDNSSECAwareness(s_EDNS* self, PyObject* args) {
     const PyObject *b;
     if (!PyArg_ParseTuple(args, "O!", &PyBool_Type, &b)) {
         return (NULL);
     }
-    self->edns->setDNSSECSupported(b == Py_True);
+    self->edns->setDNSSECAwareness(b == Py_True);
     Py_RETURN_NONE;
 }
 
