@@ -1,8 +1,8 @@
-97.	[func]		jinmei
+  97.	[func]		jinmei
 	Added a micro benchmark test for query processing of b10-auth.
 	(Trac #308, svn r2982)
 
-96.	[bug]		jinmei
+  96.	[bug]		jinmei
 	Fixed two small issues with configure: Do not set CXXFLAGS so that
 	it can be customized; Make sure --disable-static works.
 	(Trac #325, r2976)
