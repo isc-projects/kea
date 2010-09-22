@@ -254,8 +254,7 @@ Question_toWire(s_Question* self, PyObject* args) {
         // to prevent memory leak
         Py_DECREF(n);
         return (result);
-    } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type,
-                                reinterpret_cast<PyObject**>(&mr))) {
+    } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
         self->question->toWire(*mr->messagerenderer);
         // If we return NULL it is seen as an error, so use this for
         // None returns
