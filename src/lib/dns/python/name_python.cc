@@ -421,7 +421,7 @@ Name_toWire(s_Name* self, PyObject* args) {
         // to prevent memory leak
         Py_DECREF(name_bytes);
         return (result);
-    } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, (PyObject**) &mr)) {
+    } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
         self->name->toWire(*mr->messagerenderer);
         // If we return NULL it is seen as an error, so use this for
         // None returns
@@ -437,7 +437,7 @@ static PyObject*
 Name_compare(s_Name* self, PyObject* args) {
     s_Name* other;
 
-    if (!PyArg_ParseTuple(args, "O!", &name_type, (PyObject* *) &other))
+    if (!PyArg_ParseTuple(args, "O!", &name_type, &other))
         return (NULL);
 
     s_NameComparisonResult* ret = PyObject_New(s_NameComparisonResult, &name_comparison_result_type);
@@ -452,7 +452,7 @@ static PyObject*
 Name_equals(s_Name* self, PyObject* args) {
     s_Name* other;
 
-    if (!PyArg_ParseTuple(args, "O!", &name_type, (PyObject* *) &other))
+    if (!PyArg_ParseTuple(args, "O!", &name_type, &other))
         return (NULL);
 
     if (self->name->equals(*other->name))
@@ -565,7 +565,7 @@ static PyObject*
 Name_concatenate(s_Name* self, PyObject* args) {
     s_Name* other;
 
-    if (!PyArg_ParseTuple(args, "O!", &name_type, (PyObject**) &other))
+    if (!PyArg_ParseTuple(args, "O!", &name_type, &other))
         return (NULL);
 
     s_Name* ret = PyObject_New(s_Name, &name_type);

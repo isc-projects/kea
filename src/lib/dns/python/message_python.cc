@@ -1535,7 +1535,7 @@ static PyObject*
 Message_toWire(s_Message* self, PyObject* args) {
     s_MessageRenderer* mr;
     
-    if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, (PyObject**) &mr)) {
+    if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
         try {
             self->message->toWire(*mr->messagerenderer);
             // If we return NULL it is seen as an error, so use this for

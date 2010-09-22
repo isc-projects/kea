@@ -195,7 +195,7 @@ Rdata_toWire(s_Rdata* self, PyObject* args) {
         // to prevent memory leak
         Py_DECREF(rd_bytes);
         return (result);
-    } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, (PyObject**) &mr)) {
+    } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
         self->rdata->toWire(*mr->messagerenderer);
         // If we return NULL it is seen as an error, so use this for
         // None returns
