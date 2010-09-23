@@ -88,3 +88,6 @@ class FakeModuleCCSession:
 
     def set_timeout(self, timeout):
         self._timeout = timeout
+
+    def get_timeout(self):
+        return self._timeout
