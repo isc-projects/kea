@@ -277,14 +277,31 @@ if test "$lcov" != "no"; then
 fi
 AC_SUBST(USE_LCOV)
 
+#
+# Configure Boost header path
+#
+# If explicitly specified, use it.
 AC_ARG_WITH([boost-include],
   AC_HELP_STRING([--with-boost-include=PATH],
     [specify exact directory for Boost headers]),
     [boost_include_path="$withval"])
+# If not specified, try some common paths.
+if test -z "$with_boost_include"; then
+	boostdirs="/usr/local /usr/pkg /opt /opt/local"
+	for d in $boostdirs
+	do
+		if test -f $d/include/boost/shared_ptr.hpp; then
+			boost_include_path=$d/include
+			break
+		fi
+	done
+fi
 if test "${boost_include_path}" ; then
 	BOOST_INCLUDES="-I${boost_include_path}"
 	CPPFLAGS="$CPPFLAGS $BOOST_INCLUDES"
 fi
+AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp],,
+  AC_MSG_ERROR([Missing required header files.]))
 AC_SUBST(BOOST_INCLUDES)
 
 #
@@ -395,10 +412,6 @@ AC_CHECK_HEADERS(sys/devpoll.h, ac_cv_have_devpoll=yes, ac_cv_have_devpoll=no)
 if test "X$ac_cv_have_devpoll" = "Xyes" -a "X$GXX" = "Xyes"; then
 	CPPFLAGS="$CPPFLAGS -DASIO_DISABLE_DEV_POLL=1"
 fi
-
-# Check for headers from required devel kits.
-AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp],,
-  AC_MSG_ERROR([Missing required header files.]))
 
 AC_ARG_ENABLE(man, [AC_HELP_STRING([--enable-man],
   [regenerate man pages [default=no]])] ,enable_man=yes, enable_man=no)
