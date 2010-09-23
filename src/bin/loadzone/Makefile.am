@@ -1,5 +1,4 @@
-SUBDIRS = tests/correct
-SUBDIRS += tests/error
+SUBDIRS = . tests/correct tests/error
 bin_SCRIPTS = b10-loadzone
 
 CLEANFILES = b10-loadzone
