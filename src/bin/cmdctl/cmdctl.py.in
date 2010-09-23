@@ -1,6 +1,7 @@
 #!@PYTHON@
 
 # Copyright (C) 2010  Internet Systems Consortium.
+# Copyright (C) 2010  CZ NIC
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -320,8 +321,8 @@ class CommandControl():
     def _handle_msg_from_msgq(self):
         '''Process all the received commands with module session. '''
         while self._serving:
-            self._module_cc.check_command() 
- 
+            self._module_cc.check_command(False)
+
     def _parse_command_result(self, rcode, reply):
         '''Ignore the error reason when command rcode isn't 0, '''
         if rcode != 0:
