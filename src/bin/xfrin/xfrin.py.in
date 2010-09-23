@@ -1,6 +1,7 @@
 #!@PYTHON@
 
 # Copyright (C) 2010  Internet Systems Consortium.
+# Copyright (C) 2010  CZ NIC
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -393,7 +394,7 @@ class Xfrin:
         '''This is a straightforward wrapper for cc.check_command, 
         but provided as a separate method for the convenience 
         of unit tests.'''
-        self._module_cc.check_command()
+        self._module_cc.check_command(False)
 
     def config_handler(self, new_config):
         self._max_transfers_in = new_config.get("transfers_in") or self._max_transfers_in
