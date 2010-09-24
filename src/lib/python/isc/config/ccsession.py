@@ -175,13 +175,18 @@ class ModuleCCSession(ConfigData):
         """Close the session to the command channel"""
         self._session.close()
 
-    def check_command(self, nonblock = True):
+    def check_command(self, nonblock=True):
         """Check whether there is a command or configuration update
            on the channel. Call the corresponding callback function if
            there is. This function does a read on the cc session, and
            returns nothing. It will respond to any command by either
            an error or the answer message returned by the callback,
-           unless the latter is None."""
+           unless the latter is None.
+
+           If nonblock is True, it just checks if there's a command
+           and does nothing if there isn't. If nonblock is False, it
+           waits until it arrives. It temporarily sets timeout to infinity,
+           because commands may not come in arbitrary long time."""
         timeout_orig = self._session.get_timeout()
         self._session.set_timeout(0)
         try:
