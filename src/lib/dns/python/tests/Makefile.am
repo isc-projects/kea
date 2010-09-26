@@ -1,4 +1,5 @@
-PYTESTS = message_python_test.py
+PYTESTS = edns_python_test.py
+PYTESTS += message_python_test.py
 PYTESTS += messagerenderer_python_test.py
 PYTESTS += name_python_test.py
 PYTESTS += question_python_test.py
@@ -23,8 +24,8 @@ PYCOVERAGE = $(PYTHON)
 check-local:
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
-	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/lib/dns/python/.libs \
-	TESTDATA_PATH=$(abs_top_srcdir)/src/lib/dns/tests/testdata \
+	env PYTHONPATH=$(abs_top_srcdir)/src/lib/dns/.libs:$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/lib/dns/python/.libs \
+	TESTDATA_PATH=$(abs_top_srcdir)/src/lib/dns/tests/testdata:$(abs_top_builddir)/src/lib/dns/tests/testdata \
 	$(LIBRARY_PATH_PLACEHOLDER) \
 	$(PYCOVERAGE) $(abs_srcdir)/$$pytest || exit ; \
 	done

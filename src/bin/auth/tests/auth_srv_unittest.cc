@@ -445,13 +445,20 @@ TEST_F(AuthSrvTest, ednsBadVers) {
     EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
                                           response_renderer));
 
-    // The response must have an EDNS OPT RR in the additional section.
+    // The response must have an EDNS OPT RR in the additional section, but
+    // it will be added automatically at the render time.
     // Note that the DNSSEC DO bit is cleared even if this bit in the query
     // is set.  This is a limitation of the current implementation.
     headerCheck(parse_message, default_qid, Rcode::BADVERS(), opcode.getCode(),
                 QR_FLAG, 1, 0, 0, 1);
-    EXPECT_EQ(4096, parse_message.getUDPSize());
-    EXPECT_FALSE(parse_message.isDNSSECSupported());
+    EXPECT_FALSE(parse_message.getEDNS()); // EDNS isn't added at this point
+
+    parse_message.clear(Message::PARSE);
+    InputBuffer ib(response_renderer.getData(), response_renderer.getLength());
+    parse_message.fromWire(ib);
+    EXPECT_EQ(Rcode::BADVERS(), parse_message.getRcode());
+    EXPECT_TRUE(parse_message.getEDNS());
+    EXPECT_FALSE(parse_message.getEDNS()->getDNSSECAwareness());
 }
 
 TEST_F(AuthSrvTest, AXFROverUDP) {
