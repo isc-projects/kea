@@ -260,7 +260,7 @@ StaticDataSrc::init() {
 // Static data source is "configuration less", so the \c config parameter
 // is intentionally ignored.
 DataSrc::Result
-StaticDataSrc::init(const isc::data::ElementPtr config UNUSED_PARAM) {
+StaticDataSrc::init(isc::data::ConstElementPtr config UNUSED_PARAM) {
     return (init());
 }
 

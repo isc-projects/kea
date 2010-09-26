@@ -24,15 +24,16 @@
 
 // todo: add more context to thrown ModuleSpecErrors?
 
-namespace isc {
-namespace config {
+using namespace isc::config;
 
+namespace {
 //
-// static functions
+// Private functions
 //
 
-static void
-check_leaf_item(const ElementPtr& spec, const std::string& name, Element::types type, bool mandatory)
+void
+check_leaf_item(ConstElementPtr spec, const std::string& name,
+                Element::types type, bool mandatory)
 {
     if (spec->contains(name)) {
         if (spec->get(name)->getType() == type) {
@@ -48,10 +49,10 @@ check_leaf_item(const ElementPtr& spec, const std::string& name, Element::types 
     }
 }
 
-static void check_config_item_list(const ElementPtr& spec);
+void check_config_item_list(ConstElementPtr spec);
 
-static void
-check_config_item(const ElementPtr& spec) {
+void
+check_config_item(ConstElementPtr spec) {
     check_leaf_item(spec, "item_name", Element::string, true);
     check_leaf_item(spec, "item_type", Element::string, true);
     check_leaf_item(spec, "item_optional", Element::boolean, true);
@@ -72,35 +73,35 @@ check_config_item(const ElementPtr& spec) {
     }
 }
 
-static void
-check_config_item_list(const ElementPtr& spec) {
+void
+check_config_item_list(ConstElementPtr spec) {
     if (spec->getType() != Element::list) {
         throw ModuleSpecError("config_data is not a list of elements");
     }
-    BOOST_FOREACH(ElementPtr item, spec->listValue()) {
+    BOOST_FOREACH(ConstElementPtr item, spec->listValue()) {
         check_config_item(item);
     }
 }
 
-static void
-check_command(const ElementPtr& spec) {
+void
+check_command(ConstElementPtr spec) {
     check_leaf_item(spec, "command_name", Element::string, true);
     check_leaf_item(spec, "command_args", Element::list, true);
     check_config_item_list(spec->get("command_args"));
 }
 
-static void
-check_command_list(const ElementPtr& spec) {
+void
+check_command_list(ConstElementPtr spec) {
     if (spec->getType() != Element::list) {
         throw ModuleSpecError("commands is not a list of elements");
     }
-    BOOST_FOREACH(ElementPtr item, spec->listValue()) {
+    BOOST_FOREACH(ConstElementPtr item, spec->listValue()) {
         check_command(item);
     }
 }
 
-static void
-check_data_specification(const ElementPtr& spec) {
+void
+check_data_specification(ConstElementPtr spec) {
     check_leaf_item(spec, "module_name", Element::string, true);
     check_leaf_item(spec, "module_description", Element::string, false);
     // config_data is not mandatory; module could just define
@@ -115,21 +116,23 @@ check_data_specification(const ElementPtr& spec) {
 
 // checks whether the given element is a valid module specification
 // throws a ModuleSpecError if the specification is bad
-static void
-check_module_specification(const ElementPtr& def)
-{
+void
+check_module_specification(ConstElementPtr def) {
     try {
         check_data_specification(def);
     } catch (TypeError te) {
         throw ModuleSpecError(te.what());
     }
 }
+}
 
+namespace isc {
+namespace config {
 //
 // Public functions
 //
 
-ModuleSpec::ModuleSpec(ElementPtr module_spec_element,
+ModuleSpec::ModuleSpec(ConstElementPtr module_spec_element,
                        const bool check)
                        throw(ModuleSpecError)
                        
@@ -140,7 +143,7 @@ ModuleSpec::ModuleSpec(ElementPtr module_spec_element,
     }
 }
 
-const ElementPtr
+ConstElementPtr
 ModuleSpec::getCommandsSpec() const {
     if (module_specification->contains("commands")) {
         return (module_specification->get("commands"));
@@ -149,7 +152,7 @@ ModuleSpec::getCommandsSpec() const {
     }
 }
 
-const ElementPtr
+ConstElementPtr
 ModuleSpec::getConfigSpec() const {
     if (module_specification->contains("config_data")) {
         return (module_specification->get("config_data"));
@@ -173,16 +176,16 @@ ModuleSpec::getModuleDescription() const {
 }
 
 bool
-ModuleSpec::validate_config(const ElementPtr data, const bool full) {
-    ElementPtr spec = module_specification->find("config_data");
+ModuleSpec::validate_config(ConstElementPtr data, const bool full) const {
+    ConstElementPtr spec = module_specification->find("config_data");
     return (validate_spec_list(spec, data, full, ElementPtr()));
 }
 
 bool
-ModuleSpec::validate_config(const ElementPtr data, const bool full,
-                            ElementPtr errors)
+ModuleSpec::validate_config(ConstElementPtr data, const bool full,
+                            ElementPtr errors) const
 {
-    ElementPtr spec = module_specification->find("config_data");
+    ConstElementPtr spec = module_specification->find("config_data");
     return (validate_spec_list(spec, data, full, errors));
 }
 
@@ -199,7 +202,7 @@ moduleSpecFromFile(const std::string& file_name, const bool check)
         throw ModuleSpecError(errs.str());
     }
 
-    ElementPtr module_spec_element = Element::fromJSON(file, file_name);
+    ConstElementPtr module_spec_element = Element::fromJSON(file, file_name);
     if (module_spec_element->contains("module_spec")) {
         return (ModuleSpec(module_spec_element->get("module_spec"), check));
     } else {
@@ -211,7 +214,7 @@ ModuleSpec
 moduleSpecFromFile(std::ifstream& in, const bool check)
                    throw(JSONError, ModuleSpecError)
 {
-    ElementPtr module_spec_element = Element::fromJSON(in);
+    ConstElementPtr module_spec_element = Element::fromJSON(in);
     if (module_spec_element->contains("module_spec")) {
         return (ModuleSpec(module_spec_element->get("module_spec"), check));
     } else {
@@ -220,6 +223,7 @@ moduleSpecFromFile(std::ifstream& in, const bool check)
 }
 
 
+namespace {
 //
 // private functions
 //
@@ -227,9 +231,8 @@ moduleSpecFromFile(std::ifstream& in, const bool check)
 //
 // helper functions for validation
 //
-static bool
-check_type(ElementPtr spec, ElementPtr element)
-{
+bool
+check_type(ConstElementPtr spec, ConstElementPtr element) {
     std::string cur_item_type;
     cur_item_type = spec->get("item_type")->stringValue();
     if (cur_item_type == "any") {
@@ -257,9 +260,12 @@ check_type(ElementPtr spec, ElementPtr element)
     }
     return (false);
 }
+}
 
 bool
-ModuleSpec::validate_item(const ElementPtr spec, const ElementPtr data, const bool full, ElementPtr errors) {
+ModuleSpec::validate_item(ConstElementPtr spec, ConstElementPtr data,
+                          const bool full, ElementPtr errors) const
+{
     if (!check_type(spec, data)) {
         // we should do some proper error feedback here
         // std::cout << "type mismatch; not " << spec->get("item_type") << ": " << data << std::endl;
@@ -270,8 +276,8 @@ ModuleSpec::validate_item(const ElementPtr spec, const ElementPtr data, const bo
         return (false);
     }
     if (data->getType() == Element::list) {
-        ElementPtr list_spec = spec->get("list_item_spec");
-        BOOST_FOREACH(ElementPtr list_el, data->listValue()) {
+        ConstElementPtr list_spec = spec->get("list_item_spec");
+        BOOST_FOREACH(ConstElementPtr list_el, data->listValue()) {
             if (!check_type(list_spec, list_el)) {
                 if (errors) {
                     errors->add(Element::create("Type mismatch"));
@@ -295,10 +301,12 @@ ModuleSpec::validate_item(const ElementPtr spec, const ElementPtr data, const bo
 
 // spec is a map with item_name etc, data is a map
 bool
-ModuleSpec::validate_spec(const ElementPtr spec, const ElementPtr data, const bool full, ElementPtr errors) {
+ModuleSpec::validate_spec(ConstElementPtr spec, ConstElementPtr data,
+                          const bool full, ElementPtr errors) const
+{
     std::string item_name = spec->get("item_name")->stringValue();
     bool optional = spec->get("item_optional")->boolValue();
-    ElementPtr data_el;
+    ConstElementPtr data_el;
     data_el = data->get(item_name);
     
     if (data_el) {
@@ -318,10 +326,11 @@ ModuleSpec::validate_spec(const ElementPtr spec, const ElementPtr data, const bo
 
 // spec is a list of maps, data is a map
 bool
-ModuleSpec::validate_spec_list(const ElementPtr spec, const ElementPtr data, const bool full, ElementPtr errors) {
-    ElementPtr cur_data_el;
+ModuleSpec::validate_spec_list(ConstElementPtr spec, ConstElementPtr data,
+                               const bool full, ElementPtr errors) const
+{
     std::string cur_item_name;
-    BOOST_FOREACH(ElementPtr cur_spec_el, spec->listValue()) {
+    BOOST_FOREACH(ConstElementPtr cur_spec_el, spec->listValue()) {
         if (!validate_spec(cur_spec_el, data, full, errors)) {
             return (false);
         }

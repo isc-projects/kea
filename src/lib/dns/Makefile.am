@@ -89,8 +89,8 @@ rrparamregistry.cc: rrparamregistry-placeholder.cc
 rrclass.h rrtype.h rrparamregistry.cc rdataclass.h rdataclass.cc: Makefile
 	./gen-rdatacode.py
 
-libdns++_includedir = $(includedir)/dns
-libdns++_include_HEADERS = \
+libdns___includedir = $(includedir)/dns
+libdns___include_HEADERS = \
 	buffer.h \
 	dnssectime.h \
 	exceptions.h \

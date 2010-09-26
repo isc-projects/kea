@@ -18,7 +18,7 @@
 """\
 This file implements the Boss of Bind (BoB, or bob) program.
 
-It's purpose is to start up the BIND 10 system, and then manage the
+Its purpose is to start up the BIND 10 system, and then manage the
 processes, by starting and stopping processes, plus restarting
 processes that exit.
 
@@ -65,7 +65,9 @@ import posix
 import isc.cc
 
 # This is the version that gets displayed to the user.
-__version__ = "v20100531"
+# The VERSION string consists of the module name, the module version
+# number, and the overall BIND 10 version number (set in configure.ac).
+VERSION = "bind10 20100916 (BIND 10 @PACKAGE_VERSION@)"
 
 class RestartSchedule:
     """
@@ -627,7 +629,7 @@ def main():
 
 
     # Parse any command-line options.
-    parser = OptionParser(version=__version__)
+    parser = OptionParser(version=VERSION)
     parser.add_option("-a", "--address", dest="address", type="string",
                       action="callback", callback=check_addr, default='',
                       help="address the b10-auth daemon will use (default: listen on all addresses)")
@@ -680,7 +682,7 @@ def main():
 
     # Announce startup.
     if options.verbose:
-        sys.stdout.write("BIND 10 %s\n" % __version__)
+        sys.stdout.write("%s\n" % VERSION)
 
     # TODO: set process name, perhaps by:
     #       http://code.google.com/p/procname/
@@ -735,7 +737,12 @@ def main():
 
         for fd in rlist + xlist:
             if fd == ccs_fd:
-                boss_of_bind.ccs.check_command()
+                try:
+                    boss_of_bind.ccs.check_command()
+                except isc.cc.session.ProtocolError:
+                    if options.verbose:
+                        sys.stderr.write("[bind10] msgq channel disappeared.\n")
+                    break
             elif fd == wakeup_fd:
                 os.read(wakeup_fd, 32)
 

@@ -153,8 +153,8 @@ class ZonemgrRefresh:
     def zone_refresh_success(self, zone_name_class):
         """Update zone info after zone refresh success"""
         if (self._zone_not_exist(zone_name_class)):
-            raise ZonemgrException("[b10-zonemgr] Zone (%s, %s) doesn't \
-                                    belong to zonemgr" % zone_name_class)
+            raise ZonemgrException("[b10-zonemgr] Zone (%s, %s) doesn't "
+                                   "belong to zonemgr" % zone_name_class)
             return
         self.zonemgr_reload_zone(zone_name_class)
         self._set_zone_refresh_timer(zone_name_class)
@@ -164,8 +164,8 @@ class ZonemgrRefresh:
     def zone_refresh_fail(self, zone_name_class):
         """Update zone info after zone refresh fail"""
         if (self._zone_not_exist(zone_name_class)):
-            raise ZonemgrException("[b10-zonemgr] Zone (%s, %s) doesn't \
-                                    belong to zonemgr" % zone_name_class)
+            raise ZonemgrException("[b10-zonemgr] Zone (%s, %s) doesn't "
+                                   "belong to zonemgr" % zone_name_class)
             return
         self._set_zone_state(zone_name_class, ZONE_OK)
         self._set_zone_retry_timer(zone_name_class)
@@ -173,8 +173,8 @@ class ZonemgrRefresh:
     def zone_handle_notify(self, zone_name_class, master):
         """Handle zone notify"""
         if (self._zone_not_exist(zone_name_class)):
-            raise ZonemgrException("[b10-zonemgr] Notified zone (%s, %s) doesn't \
-                                    belong to zonemgr" % zone_name_class)
+            raise ZonemgrException("[b10-zonemgr] Notified zone (%s, %s) "
+                                   "doesn't belong to zonemgr" % zone_name_class)
             return
         self._set_zone_notifier_master(zone_name_class, master)
         self._set_zone_notify_timer(zone_name_class)
@@ -513,12 +513,15 @@ if '__main__' == __name__:
         zonemgrd = Zonemgr()
         zonemgrd.run()
     except KeyboardInterrupt:
-        sys.stderr.write("[b10-zonemgr] exit zonemgr process")
+        sys.stderr.write("[b10-zonemgr] exit zonemgr process\n")
     except isc.cc.session.SessionError as e:
-        sys.stderr.write("[b10-zonemgr] Error creating ,zonemgr" 
-                           "is the command channel daemon running?")
+        sys.stderr.write("[b10-zonemgr] Error creating zonemgr, " 
+                           "is the command channel daemon running?\n")
+    except isc.cc.session.SessionTimeout as e:
+        sys.stderr.write("[b10-zonemgr] Error creating zonemgr, " 
+                           "is the configuration manager running?\n")
     except isc.config.ModuleCCSessionError as e:
-        sys.stderr.write("info", "[b10-zonemgr] exit zonemgr process:", e)
+        sys.stderr.write("[b10-zonemgr] exit zonemgr process: %s\n" % str(e))
 
     if zonemgrd:
         zonemgrd.shutdown()

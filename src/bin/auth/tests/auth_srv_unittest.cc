@@ -85,26 +85,27 @@ private:
         {}
         virtual void establish(const char* socket_file);
         virtual void disconnect();
-        virtual int group_sendmsg(ElementPtr msg, string group,
+        virtual int group_sendmsg(ConstElementPtr msg, string group,
                                   string instance, string to);
-        virtual bool group_recvmsg(ElementPtr& envelope, ElementPtr& msg,
+        virtual bool group_recvmsg(ConstElementPtr& envelope,
+                                   ConstElementPtr& msg,
                                    bool nonblock, int seq);
         virtual void subscribe(string group, string instance);
         virtual void unsubscribe(string group, string instance);
         virtual void startRead(boost::function<void()> read_callback);
-        virtual int reply(ElementPtr& envelope, ElementPtr& newmsg);
-        virtual bool hasQueuedMsgs();
+        virtual int reply(ConstElementPtr envelope, ConstElementPtr newmsg);
+        virtual bool hasQueuedMsgs() const;
         virtual void setTimeout(size_t timeout UNUSED_PARAM) {};
         virtual size_t getTimeout() const { return 0; };
 
-        void setMessage(ElementPtr msg) { msg_ = msg; }
+        void setMessage(ConstElementPtr msg) { msg_ = msg; }
         void disableSend() { send_ok_ = false; }
         void disableReceive() { receive_ok_ = false; }
 
-        ElementPtr sent_msg;
+        ConstElementPtr sent_msg;
         string msg_destination;
     private:
-        ElementPtr msg_;
+        ConstElementPtr msg_;
         bool send_ok_;
         bool receive_ok_;
     };
@@ -174,19 +175,19 @@ AuthSrvTest::MockSession::startRead(
 {}
 
 int
-AuthSrvTest::MockSession::reply(ElementPtr& envelope UNUSED_PARAM,
-                                ElementPtr& newmsg UNUSED_PARAM)
+AuthSrvTest::MockSession::reply(ConstElementPtr envelope UNUSED_PARAM,
+                                ConstElementPtr newmsg UNUSED_PARAM)
 {
     return (-1);
 }
 
 bool
-AuthSrvTest::MockSession::hasQueuedMsgs() {
+AuthSrvTest::MockSession::hasQueuedMsgs() const {
     return (false);
 }
 
 int
-AuthSrvTest::MockSession::group_sendmsg(ElementPtr msg, string group,
+AuthSrvTest::MockSession::group_sendmsg(ConstElementPtr msg, string group,
                                         string instance UNUSED_PARAM,
                                         string to UNUSED_PARAM)
 {
@@ -200,8 +201,8 @@ AuthSrvTest::MockSession::group_sendmsg(ElementPtr msg, string group,
 }
 
 bool
-AuthSrvTest::MockSession::group_recvmsg(ElementPtr& envelope UNUSED_PARAM,
-                                        ElementPtr& msg,
+AuthSrvTest::MockSession::group_recvmsg(ConstElementPtr& envelope UNUSED_PARAM,
+                                        ConstElementPtr& msg,
                                         bool nonblock UNUSED_PARAM,
                                         int seq UNUSED_PARAM)
 {
@@ -546,7 +547,8 @@ TEST_F(AuthSrvTest, notify) {
     EXPECT_EQ("Zonemgr", notify_session.msg_destination);
     EXPECT_EQ("notify",
               notify_session.sent_msg->get("command")->get(0)->stringValue());
-    ElementPtr notify_args = notify_session.sent_msg->get("command")->get(1);
+    ConstElementPtr notify_args =
+        notify_session.sent_msg->get("command")->get(1);
     EXPECT_EQ("example.com.", notify_args->get("zone_name")->stringValue());
     EXPECT_EQ(DEFAULT_REMOTE_ADDRESS,
               notify_args->get("master")->stringValue());
@@ -574,7 +576,8 @@ TEST_F(AuthSrvTest, notifyForCHClass) {
 
     // Other conditions should be the same, so simply confirm the RR class is
     // set correctly.
-    ElementPtr notify_args = notify_session.sent_msg->get("command")->get(1);
+    ConstElementPtr notify_args =
+        notify_session.sent_msg->get("command")->get(1);
     EXPECT_EQ("CH", notify_args->get("zone_class")->stringValue());
 }
 
@@ -702,12 +705,12 @@ void
 updateConfig(AuthSrv* server, const char* const dbfile,
              const bool expect_success)
 {
-    const ElementPtr config_answer =
+    ConstElementPtr config_answer =
         server->updateConfig(Element::fromJSON(dbfile));
     EXPECT_EQ(Element::map, config_answer->getType());
     EXPECT_TRUE(config_answer->contains("result"));
 
-    const ElementPtr result = config_answer->get("result");
+    ConstElementPtr result = config_answer->get("result");
     EXPECT_EQ(Element::list, result->getType());
     EXPECT_EQ(expect_success ? 0 : 1, result->get(0)->intValue());
 }
@@ -753,5 +756,15 @@ TEST_F(AuthSrvTest, updateConfigFail) {
                                           response_renderer));
     headerCheck(parse_message, default_qid, Rcode::NOERROR(), opcode.getCode(),
                 QR_FLAG | AA_FLAG, 1, 1, 1, 0);
+}
+
+TEST_F(AuthSrvTest, cacheSlots) {
+    // simple check for the get/set operations
+    server.setCacheSlots(10);    // 10 = arbitrary choice
+    EXPECT_EQ(10, server.getCacheSlots());
+
+    // 0 is a valid size
+    server.setCacheSlots(0);
+    EXPECT_EQ(00, server.getCacheSlots());
 }
 }

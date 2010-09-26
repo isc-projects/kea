@@ -207,7 +207,7 @@ public:
     /// will be thrown.
     ///
     /// Memory for the created object will be dynamically allocated.  It's
-    /// caller's responsibility to \c delete it later.
+    /// the caller's responsibility to \c delete it later.
     /// If resource allocation for the new object fails, a corresponding
     /// standard exception will be thrown.
     ///
