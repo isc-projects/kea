@@ -28,6 +28,7 @@ class MySocket():
         self.type = type
         self.recvqueue = bytearray()
         self.sendqueue = bytearray()
+        self._blocking = True
 
     def connect(self, to):
         pass
@@ -36,7 +37,7 @@ class MySocket():
         pass
 
     def setblocking(self, val):
-        pass
+        self._blocking = val
 
     def send(self, data):
         self.sendqueue.extend(data);
@@ -67,6 +68,11 @@ class MySocket():
         return result
 
     def recv(self, length):
+        if len(self.recvqueue) == 0:
+            if self._blocking:
+                return bytes()
+            else:
+                raise socket.error(errno.EAGAIN, "Resource temporarily unavailable")
         if length > len(self.recvqueue):
             raise Exception("Buffer underrun in test, does the test provide the right data?")
         result = self.recvqueue[:length]
@@ -105,7 +111,8 @@ class MySession(Session):
         self._socket_timeout = 1
         self._lname = None
         self._recvbuffer = bytearray()
-        self._recvlength = 0
+        self._recv_len_size = 0
+        self._recv_size = 0
         self._sequence = 1
         self._closed = False
         self._queue = []
@@ -192,10 +199,10 @@ class testSession(unittest.TestCase):
         # get no message without asking for a specific sequence number reply
         self.assertFalse(sess.has_queued_msgs())
         sess._socket.addrecv({'to': 'someone', 'reply': 1}, {"hello": "a"})
-        env, msg = sess.recvmsg(False)
+        env, msg = sess.recvmsg(True)
         self.assertEqual(None, env)
         self.assertTrue(sess.has_queued_msgs())
-        env, msg = sess.recvmsg(False, 1)
+        env, msg = sess.recvmsg(True, 1)
         self.assertEqual({'to': 'someone', 'reply': 1}, env)
         self.assertEqual({"hello": "a"}, msg)
         self.assertFalse(sess.has_queued_msgs())
@@ -204,11 +211,11 @@ class testSession(unittest.TestCase):
         # then ask for the one that is there
         self.assertFalse(sess.has_queued_msgs())
         sess._socket.addrecv({'to': 'someone', 'reply': 1}, {"hello": "a"})
-        env, msg = sess.recvmsg(False, 2)
+        env, msg = sess.recvmsg(True, 2)
         self.assertEqual(None, env)
         self.assertEqual(None, msg)
         self.assertTrue(sess.has_queued_msgs())
-        env, msg = sess.recvmsg(False, 1)
+        env, msg = sess.recvmsg(True, 1)
         self.assertEqual({'to': 'someone', 'reply': 1}, env)
         self.assertEqual({"hello": "a"}, msg)
         self.assertFalse(sess.has_queued_msgs())
@@ -217,11 +224,11 @@ class testSession(unittest.TestCase):
         # then ask for any message
         self.assertFalse(sess.has_queued_msgs())
         sess._socket.addrecv({'to': 'someone', 'reply': 1}, {"hello": "a"})
-        env, msg = sess.recvmsg(False, 2)
+        env, msg = sess.recvmsg(True, 2)
         self.assertEqual(None, env)
         self.assertEqual(None, msg)
         self.assertTrue(sess.has_queued_msgs())
-        env, msg = sess.recvmsg(False, 1)
+        env, msg = sess.recvmsg(True, 1)
         self.assertEqual({'to': 'someone', 'reply': 1}, env)
         self.assertEqual({"hello": "a"}, msg)
         self.assertFalse(sess.has_queued_msgs())
@@ -233,16 +240,16 @@ class testSession(unittest.TestCase):
         # then ask for any message (get the second)
         self.assertFalse(sess.has_queued_msgs())
         sess._socket.addrecv({'to': 'someone', 'reply': 1}, {'hello': 'a'})
-        env, msg = sess.recvmsg(False, 2)
+        env, msg = sess.recvmsg(True, 2)
         self.assertEqual(None, env)
         self.assertEqual(None, msg)
         self.assertTrue(sess.has_queued_msgs())
         sess._socket.addrecv({'to': 'someone' }, {'hello': 'b'})
-        env, msg = sess.recvmsg(False, 1)
+        env, msg = sess.recvmsg(True, 1)
         self.assertEqual({'to': 'someone', 'reply': 1 }, env)
         self.assertEqual({"hello": "a"}, msg)
         self.assertFalse(sess.has_queued_msgs())
-        env, msg = sess.recvmsg(False)
+        env, msg = sess.recvmsg(True)
         self.assertEqual({'to': 'someone'}, env)
         self.assertEqual({"hello": "b"}, msg)
         self.assertFalse(sess.has_queued_msgs())
@@ -253,11 +260,11 @@ class testSession(unittest.TestCase):
         self.assertFalse(sess.has_queued_msgs())
         sess._socket.addrecv({'to': 'someone' }, {'hello': 'b'})
         sess._socket.addrecv({'to': 'someone', 'reply': 1}, {'hello': 'a'})
-        env, msg = sess.recvmsg(False, 1)
+        env, msg = sess.recvmsg(True, 1)
         self.assertEqual({'to': 'someone', 'reply': 1}, env)
         self.assertEqual({"hello": "a"}, msg)
         self.assertTrue(sess.has_queued_msgs())
-        env, msg = sess.recvmsg(False)
+        env, msg = sess.recvmsg(True)
         self.assertEqual({'to': 'someone'}, env)
         self.assertEqual({"hello": "b"}, msg)
         self.assertFalse(sess.has_queued_msgs())
@@ -344,17 +351,19 @@ class testSession(unittest.TestCase):
         if os.path.exists(TEST_SOCKET_FILE):
             os.remove(TEST_SOCKET_FILE)
         s1.bind(TEST_SOCKET_FILE)
-        s1.listen(1)
 
-        s2 = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        s2.connect(TEST_SOCKET_FILE)
-        sess = MySession(1, s2)
-        # set timeout to 100 msec, so test does not take too long
-        sess.set_timeout(100)
-        env, msg = sess.group_recvmsg(False)
-        self.assertEqual(None, env)
-        self.assertEqual(None, msg)
-        
+        try:
+            s1.listen(1)
+
+            s2 = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            s2.connect(TEST_SOCKET_FILE)
+            sess = MySession(1, s2)
+            # set timeout to 100 msec, so test does not take too long
+            sess.set_timeout(100)
+            self.assertRaises(SessionTimeout, sess.group_recvmsg, False)
+        finally:
+            os.remove(TEST_SOCKET_FILE)
+
 if __name__ == "__main__":
     unittest.main()
 

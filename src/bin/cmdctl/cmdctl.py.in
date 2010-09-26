@@ -380,6 +380,7 @@ class CommandControl():
     def send_command(self, module_name, command_name, params = None):
         '''Send the command from bindctl to proper module. '''
         errstr = 'unknown error'
+        answer = None
         if self._verbose:
             self.log_info("Begin send command '%s' to module '%s'" %(command_name, module_name))
 
@@ -390,7 +391,10 @@ class CommandControl():
             msg = ccsession.create_command(command_name, params)
             seq = self._cc.group_sendmsg(msg, module_name)
             #TODO, it may be blocked, msqg need to add a new interface waiting in timeout.
-            answer, env = self._cc.group_recvmsg(False, seq)
+            try:
+                answer, env = self._cc.group_recvmsg(False, seq)
+            except isc.cc.session.SessionTimeout:
+                errstr = "Module '%s' not responding" % module_name
 
         if self._verbose:
             self.log_info("Finish send command '%s' to module '%s'" % (command_name, module_name))
@@ -410,7 +414,6 @@ class CommandControl():
             except ccsession.ModuleCCSessionError as mcse:
                 errstr = str("Error in ccsession answer:") + str(mcse)
                 self.log_info(errstr)
-        
         return 1, {'error': errstr}
     
     def log_info(self, msg):
@@ -602,6 +605,9 @@ if __name__ == '__main__':
     except isc.cc.SessionError as err:
         sys.stderr.write("[b10-cmdctl] Error creating b10-cmdctl, "
                          "is the command channel daemon running?\n")        
+    except isc.cc.SessionTimeout:
+        sys.stderr.write("[b10-cmdctl] Error creating b10-cmdctl, "
+                         "is the configuration manager running?\n")        
     except KeyboardInterrupt:
         sys.stderr.write("[b10-cmdctl] exit from Cmdctl\n")
     except CmdctlException as err:

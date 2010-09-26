@@ -25,14 +25,14 @@
   </refentryinfo>
 
   <refmeta>
-    <refentrytitle>b10-xfrout</refentrytitle>
+    <refentrytitle>b10-zonemgr</refentrytitle>
     <manvolnum>8</manvolnum>
     <refmiscinfo>BIND10</refmiscinfo>
   </refmeta>
 
   <refnamediv>
-    <refname>b10-xfrout</refname>
-    <refpurpose>Outbound DNS zone transfer service</refpurpose>
+    <refname>b10-zonemgr</refname>
+    <refpurpose>BIND 10 Secondary zone manager</refpurpose>
   </refnamediv>
 
   <docinfo>
@@ -44,7 +44,7 @@
 
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>b10-xfrout</command>
+      <command>b10-zonemgr</command>
       <arg><option>-v</option></arg>
       <arg><option>--verbose</option></arg>
     </cmdsynopsis>
@@ -52,85 +52,88 @@
 
   <refsect1>
     <title>DESCRIPTION</title>
-    <para>The <command>b10-xfrout</command> daemon provides the BIND 10
-      outgoing DNS zone transfer service.
-      It is also used to send outgoing NOTIFY messages.
+    <para>The <command>b10-zonemgr</command> daemon, also known
+      as the BIND 10 secondary manager, keeps track of timers
+      and other information necessary for BIND 10 to act as a DNS slave.
       Normally it is started by the
       <citerefentry><refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum></citerefentry>
       boss process.
-      When the <command>b10-auth</command> DNS server receives
-      a transfer request, <command>b10-xfrout</command> sends the
-      zone as found in the BIND 10 zone data store.
     </para>
 
-<!-- TODO
- BTW, do we need to mention that the xfr request is received by auth
- process?, and then the socket and xfr request is sent to xfrout.
--->
-
-    <note><simpara>
-      This development prototype release only supports AXFR.
-      IXFR is not implemented.
-    </simpara></note>
-
     <para>
-<!-- TODO: does it really use msgq? what for? -->
       This daemon communicates with BIND 10 over a
       <citerefentry><refentrytitle>b10-msgq</refentrytitle><manvolnum>8</manvolnum></citerefentry>
       C-Channel connection.  If this connection is not established,
-      <command>b10-xfrout</command> will exit.
-<!-- TODO what if connection closes later, will b10-xfrout exit? -->
+      <command>b10-zonemgr</command> will exit.
+<!-- TODO what if connection closes later, will b10-zonemgr exit? -->
     </para>
 
     <para>
-     <command>b10-xfrout</command> receives its configurations from
+     <command>b10-zonemgr</command> receives its configurations from
 <citerefentry><refentrytitle>b10-cfgmgr</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
     </para>
+
+<!--
+
+            self._send_command(XFRIN_MODULE_NAME, ZONE_NOTIFY_COMMAND, param) 
+            self._clear_zone_notifier_master(zone_name_class)
+        # Send refresh command to xfrin module
+        else:
+            param = {"zone_name" : zone_name_class[0],
+                     "zone_class" : zone_name_class[1]
+                    }
+            self._send_command(XFRIN_MODULE_NAME, ZONE_REFRESH_COMMAND, param)
+
+-->
+
   </refsect1>
 
   <refsect1>
     <title>CONFIGURATION AND COMMANDS</title>
+<!--
     <para>
       The configurable settings are:
     </para>
-    <para>
-      <varname>db_file</varname>
-      defines the path to the SQLite3 data store file.
-      The default is
-      <filename>/usr/local/var/bind10-devel/zone.sqlite3</filename>.
-<!-- TODO: db_file will be removed -->
-    </para>
-    <para>
-      <varname>transfers_out</varname>
-      defines the maximum number of outgoing zone transfers
-      that can run concurrently. The default is 10.
-    </para>
-
-<!-- TODO: log configurations not documented yet in here. jreed
-     has some but waiting on decisions ... -->
-
-    <note><simpara>
-      This prototype version uses SQLite3 as its data source backend.
-      Future versions will be configurable, supporting multiple
-      data storage types.
-    </simpara></note>
+-->
 
 <!-- TODO: formating -->
     <para>
       The configuration commands are:
     </para>
     <para>
-      <command>shutdown</command> stops all outbound zone transfers
-      and exits <command>b10-xfrout</command>. (Note that the BIND 10
-      boss process will restart this service.)
+      <command>notify</command> (sent by
+      <citerefentry><refentrytitle>b10-auth</refentrytitle><manvolnum>8</manvolnum></citerefentry>)
+      tells <command>b10-zonemgr</command>
+      the zone name and class, and the IP address for the master
+      (source of the NOTIFY message).
+      This will set the zone's refresh time to now.
+<!-- TODO reword this -->
+      This is an internal command and not exposed to the administrator.
+<!-- not defined in spec -->
+    </para>
+
+    <para>
+      <command>shutdown</command> exits <command>b10-zonemgr</command>.
+      (Note that the BIND 10 boss process will restart this service.)
     </para>
 
     <para>
       <command>zone_new_data_ready</command> is sent from
       <citerefentry><refentrytitle>b10-xfrin</refentrytitle><manvolnum>8</manvolnum></citerefentry>
       to indicate that the zone transferred in successfully.
-      This triggers <command>b10-xfrout</command> to send NOTIFY
-      message(s).
+      This is an internal command and not exposed to the administrator.
+<!-- not defined in spec -->
+    </para>
+
+    <para>
+      <command>zone_xfrin_failed</command> is sent from
+      <citerefentry><refentrytitle>b10-xfrin</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      to indicate a failure (such as a transfer-in was incomplete).
+      The refresh timer for the zone is reset.
+<!--
+        """Set zone next refresh time after zone refresh fail.
+           now + retry*3/4 <= next_refresh_time <= now + retry
+-->
       This is an internal command and not exposed to the administrator.
 <!-- not defined in spec -->
     </para>
@@ -179,6 +182,9 @@
         <refentrytitle>b10-xfrin</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
+        <refentrytitle>b10-xfrout</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
         <refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citetitle>BIND 10 Guide</citetitle>.
@@ -188,8 +194,8 @@
   <refsect1>
     <title>HISTORY</title>
     <para>
-      The <command>b10-xfrout</command> daemon was first implemented
-      in March 2010 by Zhang Likun of CNNIC for the ISC BIND 10 project.
+      The <command>b10-zonemgr</command> daemon was designed in July 2010
+      by CNNIC for the ISC BIND 10 project.
     </para>
   </refsect1>
 </refentry><!--

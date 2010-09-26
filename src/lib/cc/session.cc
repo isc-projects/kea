@@ -296,11 +296,11 @@ Session::establish(const char* socket_file) {
     //
     // send a request for our local name, and wait for a response
     //
-    ElementPtr get_lname_msg =
+    ConstElementPtr get_lname_msg =
         Element::fromJSON("{ \"type\": \"getlname\" }");
     sendmsg(get_lname_msg);
 
-    ElementPtr routing, msg;
+    ConstElementPtr routing, msg;
     recvmsg(routing, msg, false);
 
     impl_->lname_ = msg->get("lname")->stringValue();
@@ -314,7 +314,7 @@ Session::establish(const char* socket_file) {
 // prefix.
 //
 void
-Session::sendmsg(ElementPtr& msg) {
+Session::sendmsg(ConstElementPtr msg) {
     std::string header_wire = msg->toWire();
     unsigned int length = 2 + header_wire.length();
     unsigned int length_net = htonl(length);
@@ -327,7 +327,7 @@ Session::sendmsg(ElementPtr& msg) {
 }
 
 void
-Session::sendmsg(ElementPtr& env, ElementPtr& msg) {
+Session::sendmsg(ConstElementPtr env, ConstElementPtr msg) {
     std::string header_wire = env->toWire();
     std::string body_wire = msg->toWire();
     unsigned int length = 2 + header_wire.length() + body_wire.length();
@@ -342,18 +342,18 @@ Session::sendmsg(ElementPtr& env, ElementPtr& msg) {
 }
 
 bool
-Session::recvmsg(ElementPtr& msg, bool nonblock, int seq) {
-    ElementPtr l_env;
+Session::recvmsg(ConstElementPtr& msg, bool nonblock, int seq) {
+    ConstElementPtr l_env;
     return (recvmsg(l_env, msg, nonblock, seq));
 }
 
 bool
-Session::recvmsg(ElementPtr& env, ElementPtr& msg,
-                 bool nonblock, int seq) {
+Session::recvmsg(ConstElementPtr& env, ConstElementPtr& msg,
+                 bool nonblock, int seq)
+{
     size_t length = impl_->readDataLength();
-    ElementPtr l_env, l_msg;
     if (hasQueuedMsgs()) {
-        ElementPtr q_el;
+        ConstElementPtr q_el;
         for (int i = 0; i < impl_->queue_->size(); i++) {
             q_el = impl_->queue_->get(i);
             if (( seq == -1 &&
@@ -390,11 +390,13 @@ Session::recvmsg(ElementPtr& env, ElementPtr& msg,
                                         length - header_length);
     std::stringstream header_wire_stream;
     header_wire_stream << header_wire;
-    l_env = Element::fromWire(header_wire_stream, header_length);
+    ConstElementPtr l_env =
+        Element::fromWire(header_wire_stream, header_length);
     
     std::stringstream body_wire_stream;
     body_wire_stream << body_wire;
-    l_msg = Element::fromWire(body_wire_stream, length - header_length);
+    ConstElementPtr l_msg =
+        Element::fromWire(body_wire_stream, length - header_length);
     if ((seq == -1 &&
          !l_env->contains("reply")
         ) || (
@@ -438,7 +440,7 @@ Session::unsubscribe(std::string group, std::string instance) {
 }
 
 int
-Session::group_sendmsg(ElementPtr msg, std::string group,
+Session::group_sendmsg(ConstElementPtr msg, std::string group,
                        std::string instance, std::string to)
 {
     ElementPtr env = Element::createMap();
@@ -457,14 +459,14 @@ Session::group_sendmsg(ElementPtr msg, std::string group,
 }
 
 bool
-Session::group_recvmsg(ElementPtr& envelope, ElementPtr& msg,
+Session::group_recvmsg(ConstElementPtr& envelope, ConstElementPtr& msg,
                        bool nonblock, int seq)
 {
     return (recvmsg(envelope, msg, nonblock, seq));
 }
 
 int
-Session::reply(ElementPtr& envelope, ElementPtr& newmsg) {
+Session::reply(ConstElementPtr envelope, ConstElementPtr newmsg) {
     ElementPtr env = Element::createMap();
     long int nseq = ++impl_->sequence_;
     
@@ -482,7 +484,7 @@ Session::reply(ElementPtr& envelope, ElementPtr& newmsg) {
 }
 
 bool
-Session::hasQueuedMsgs() {
+Session::hasQueuedMsgs() const {
     return (impl_->queue_->size() > 0);
 }
 

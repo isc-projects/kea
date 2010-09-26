@@ -22,7 +22,7 @@ import time
 from isc.datasrc import sqlite3_ds
 import isc
 try: 
-    from libdns_python import * 
+    from pydnspp import * 
 except ImportError as e: 
     # C++ loadable module may not be installed; 
     sys.stderr.write('[b10-xfrout] failed to import DNS or XFR module: %s\n' % str(e)) 
@@ -256,7 +256,7 @@ class NotifyOut:
     def _zone_notify_handler(self, zone_notify_info, event_type):
         '''Notify handler for one zone. The first notify message is 
         always triggered by the event "_EVENT_TIMEOUT" since when 
-        one zone prepares to notify its slaves, it's notify_timeout 
+        one zone prepares to notify its slaves, its notify_timeout 
         is set to now, which is used to trigger sending notify 
         message when dispatcher() scanning zones. '''
         tgt = zone_notify_info.get_current_notify_target()

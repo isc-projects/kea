@@ -27,7 +27,7 @@ from socketserver import *
 import os
 from isc.config.ccsession import *
 from isc.log.log import *
-from isc.cc import SessionError
+from isc.cc import SessionError, SessionTimeout
 from isc.notify import notify_out
 import socket
 import select
@@ -35,7 +35,7 @@ import errno
 from optparse import OptionParser, OptionValueError
 try:
     from libxfr_python import *
-    from libdns_python import *
+    from pydnspp import *
 except ImportError as e:
     # C++ loadable module may not be installed; even so the xfrout process
     # must keep running, so we warn about it and move forward.
@@ -56,6 +56,15 @@ SPECFILE_LOCATION = SPECFILE_PATH + "/xfrout.spec"
 AUTH_SPECFILE_LOCATION = AUTH_SPECFILE_PATH + os.sep + "auth.spec"
 MAX_TRANSFERS_OUT = 10
 VERBOSE_MODE = False
+
+XFROUT_MAX_MESSAGE_SIZE = 65535
+
+def get_rrset_len(rrset):
+    """Returns the wire length of the given RRset"""
+    bytes = bytearray()
+    rrset.to_wire(bytes)
+    return len(bytes)
+
 
 class XfroutSession(BaseRequestHandler):
     def __init__(self, request, client_address, server, log):
@@ -121,10 +130,8 @@ class XfroutSession(BaseRequestHandler):
 
 
     def _send_message(self, sock, msg):
-        #obuf = output_buffer(0)
-        #render = message_render(obuf)
         render = MessageRenderer()
-        render.set_length_limit(65535)
+        render.set_length_limit(XFROUT_MAX_MESSAGE_SIZE)
         msg.to_wire(render)
         header_len = struct.pack('H', socket.htons(render.get_length()))
         self._send_data(sock, header_len)
@@ -227,34 +234,20 @@ class XfroutSession(BaseRequestHandler):
         rrset_.add_rdata(rdata_)
         return rrset_
          
-    def _send_message_with_last_soa(self, msg, sock, rrset_soa):
+    def _send_message_with_last_soa(self, msg, sock, rrset_soa, message_upper_len):
         '''Add the SOA record to the end of message. If it can't be
         added, a new message should be created to send out the last soa .
         '''
+        rrset_len = get_rrset_len(rrset_soa)
 
-        render = MessageRenderer()
-        msg.to_wire(render)
-        old_message_len = render.get_length()
-        msg.add_rrset(Section.ANSWER(), rrset_soa)
-
-        msg.to_wire(render)
-        message_len = render.get_length()
-
-        if message_len != old_message_len:
-            self._send_message(sock, msg)
+        if message_upper_len + rrset_len < XFROUT_MAX_MESSAGE_SIZE:
+            msg.add_rrset(Section.ANSWER(), rrset_soa)
         else:
+            self._send_message(sock, msg)
             msg = self._clear_message(msg)
             msg.add_rrset(Section.ANSWER(), rrset_soa)
-            self._send_message(sock, msg)
 
-    def _get_message_len(self, msg):
-        '''Get message length, every time need do like this? Actually there should be 
-        a better way, I need check with jinmei later.
-        '''
-
-        render = MessageRenderer()
-        msg.to_wire(render)
-        return render.get_length()
+        self._send_message(sock, msg)
 
 
     def _reply_xfrout_query(self, msg, sock, zone_name):
@@ -265,9 +258,8 @@ class XfroutSession(BaseRequestHandler):
         rrset_soa = self._create_rrset_from_db_record(soa_record)
         msg.add_rrset(Section.ANSWER(), rrset_soa)
 
-        old_message_len = 0
-        # TODO, Since add_rrset() return nothing when rrset can't be added, so I have to compare
-        # the message length to know if the rrset has been added sucessfully.
+        message_upper_len = get_rrset_len(rrset_soa)
+
         for rr_data in sqlite3_ds.get_zone_datas(zone_name, self.server.get_db_file()):
             if  self.server._shutdown_event.is_set(): # Check if xfrout is shutdown
                 self._log.log_message("error", "shutdown!")
@@ -277,19 +269,22 @@ class XfroutSession(BaseRequestHandler):
                 continue
 
             rrset_ = self._create_rrset_from_db_record(rr_data)
-            msg.add_rrset(Section.ANSWER(), rrset_)
-            message_len = self._get_message_len(msg)
-            if message_len != old_message_len:
-                old_message_len = message_len
+
+            # We calculate the maximum size of the RRset (i.e. the
+            # size without compression) and use that to see if we
+            # may have reached the limit
+            rrset_len = get_rrset_len(rrset_)
+            if message_upper_len + rrset_len < XFROUT_MAX_MESSAGE_SIZE:
+                msg.add_rrset(Section.ANSWER(), rrset_)
+                message_upper_len += rrset_len
                 continue
 
             self._send_message(sock, msg)
             msg = self._clear_message(msg)
             msg.add_rrset(Section.ANSWER(), rrset_) # Add the rrset to the new message
-            old_message_len = 0
+            message_upper_len = rrset_len
 
-        self._send_message_with_last_soa(msg, sock, rrset_soa)
-
+        self._send_message_with_last_soa(msg, sock, rrset_soa, message_upper_len)
 
 class UnixSockServer(ThreadingUnixStreamServer):
     '''The unix domain socket server which accept xfr query sent from auth server.'''
@@ -315,8 +310,8 @@ class UnixSockServer(ThreadingUnixStreamServer):
         If it's not a socket file or nobody is listening
         , it will be removed. If it can't be removed, exit from python. '''
         if self._sock_file_in_use(sock_file):
-            print("[b10-xfrout] Fail to start xfrout process, unix socket" 
-                  " file '%s' is being used by another xfrout process" % sock_file)
+            sys.stderr.write("[b10-xfrout] Fail to start xfrout process, unix socket" 
+                  " file '%s' is being used by another xfrout process\n" % sock_file)
             sys.exit(0)
         else:
             if not os.path.exists(sock_file):
@@ -325,7 +320,7 @@ class UnixSockServer(ThreadingUnixStreamServer):
             try:
                 os.unlink(sock_file)
             except OSError as err:
-                print('[b10-xfrout] Fail to remove file ' + sock_file, err)
+                sys.stderr.write('[b10-xfrout] Fail to remove file %s: %s\n' % (sock_file, err))
                 sys.exit(0)
    
     def _sock_file_in_use(self, sock_file):
@@ -409,9 +404,9 @@ class XfroutServer:
         self._listen_sock_file = UNIX_SOCKET_FILE 
         self._shutdown_event = threading.Event()
         self._cc = isc.config.ModuleCCSession(SPECFILE_LOCATION, self.config_handler, self.command_handler)
-        self._cc.add_remote_config(AUTH_SPECFILE_LOCATION);
         self._config_data = self._cc.get_full_config()
         self._cc.start()
+        self._cc.add_remote_config(AUTH_SPECFILE_LOCATION);
         self._log = isc.log.NSLogger(self._config_data.get('log_name'), self._config_data.get('log_file'),
                                 self._config_data.get('log_severity'), self._config_data.get('log_versions'),
                                 self._config_data.get('log_max_bytes'), True)
@@ -481,8 +476,8 @@ class XfroutServer:
             zone_name = args.get('zone_name')
             zone_class = args.get('zone_class')
             if zone_name and zone_class:
-                self._log.log_message("info", "Receive notify command for zone:'%s/%s'" \
-                                     % (zone_name, zone_class))
+                self._log.log_message("info", "zone '%s/%s': receive notify others command" \
+                                       % (zone_name, zone_class))
                 self.send_notify(zone_name, zone_class)
                 answer = create_answer(0)
             else:
@@ -525,12 +520,15 @@ if '__main__' == __name__:
         xfrout_server = XfroutServer()
         xfrout_server.run()
     except KeyboardInterrupt:
-        sys.stderr.write("[b10-xfrout] exit xfrout process")
+        sys.stderr.write("[b10-xfrout] exit xfrout process\n")
     except SessionError as e:
-        sys.stderr.write("[b10-xfrout] Error creating xfrout," 
-                           "is the command channel daemon running?")
+        sys.stderr.write("[b10-xfrout] Error creating xfrout, "
+                           "is the command channel daemon running?\n")
+    except SessionTimeout as e:
+        sys.stderr.write("[b10-xfrout] Error creating xfrout, " 
+                           "is the configuration manager running?\n")
     except ModuleCCSessionError as e:
-        sys.stderr.write("info", '[b10-xfrout] exit xfrout process:', e)
+        sys.stderr.write("[b10-xfrout] exit xfrout process:%s\n" % str(e))
 
     if xfrout_server:
         xfrout_server.shutdown()

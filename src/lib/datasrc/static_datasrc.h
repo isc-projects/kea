@@ -81,7 +81,7 @@ public:
                             isc::dns::RRsetList& target) const;
 
     Result init();
-    Result init(const isc::data::ElementPtr config);
+    Result init(isc::data::ConstElementPtr config);
     Result close();
 private:
     StaticDataSrcImpl* impl_;

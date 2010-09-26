@@ -70,7 +70,7 @@ static PyMethodDef MessageFlag_methods[] = {
 
 static PyTypeObject messageflag_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.MessageFlag",
+    "pydnspp.MessageFlag",
     sizeof(s_MessageFlag),              // tp_basicsize
     0,                                  // tp_itemsize
     (destructor)MessageFlag_destroy,    // tp_dealloc
@@ -246,7 +246,7 @@ static PyMethodDef Opcode_methods[] = {
 
 static PyTypeObject opcode_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.Opcode",
+    "pydnspp.Opcode",
     sizeof(s_Opcode),                   // tp_basicsize
     0,                                  // tp_itemsize
     (destructor)Opcode_destroy,         // tp_dealloc
@@ -534,7 +534,7 @@ static PyMethodDef Rcode_methods[] = {
 
 static PyTypeObject rcode_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.Rcode",
+    "pydnspp.Rcode",
     sizeof(s_Rcode),                    // tp_basicsize
     0,                                  // tp_itemsize
     (destructor)Rcode_destroy,          // tp_dealloc
@@ -809,7 +809,7 @@ static PyMethodDef Section_methods[] = {
 
 static PyTypeObject section_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.Section",
+    "pydnspp.Section",
     sizeof(s_Section),                  // tp_basicsize
     0,                                  // tp_itemsize
     (destructor)Section_destroy,        // tp_dealloc
@@ -1099,7 +1099,7 @@ static PyMethodDef Message_methods[] = {
 // Most of the functions are not actually implemented and NULL here.
 static PyTypeObject message_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.Message",
+    "pydnspp.Message",
     sizeof(s_Message),                  // tp_basicsize
     0,                                  // tp_itemsize
     (destructor)Message_destroy,        // tp_dealloc
@@ -1501,7 +1501,7 @@ static PyObject*
 Message_toWire(s_Message* self, PyObject* args) {
     s_MessageRenderer* mr;
     
-    if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, (PyObject**) &mr)) {
+    if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
         try {
             self->message->toWire(*mr->messagerenderer);
             // If we return NULL it is seen as an error, so use this for
@@ -1593,14 +1593,16 @@ initModulePart_Message(PyObject* mod) {
     addClassVariable(message_type, "DEFAULT_MAX_UDPSIZE", Py_BuildValue("I", Message::DEFAULT_MAX_UDPSIZE));
 
     /* Class-specific exceptions */
-    po_MessageTooShort = PyErr_NewException("libdns_python.MessageTooShort", NULL, NULL);
+    po_MessageTooShort = PyErr_NewException("pydnspp.MessageTooShort", NULL, NULL);
     PyModule_AddObject(mod, "MessageTooShort", po_MessageTooShort);
-    po_InvalidMessageSection = PyErr_NewException("libdns_python.InvalidMessageSection", NULL, NULL);
+    po_InvalidMessageSection = PyErr_NewException("pydnspp.InvalidMessageSection", NULL, NULL);
     PyModule_AddObject(mod, "InvalidMessageSection", po_InvalidMessageSection);
-    po_InvalidMessageOperation = PyErr_NewException("libdns_python.InvalidMessageOperation", NULL, NULL);
+    po_InvalidMessageOperation = PyErr_NewException("pydnspp.InvalidMessageOperation", NULL, NULL);
     PyModule_AddObject(mod, "InvalidMessageOperation", po_InvalidMessageOperation);
-    po_InvalidMessageUDPSize = PyErr_NewException("libdns_python.InvalidMessageUDPSize", NULL, NULL);
+    po_InvalidMessageUDPSize = PyErr_NewException("pydnspp.InvalidMessageUDPSize", NULL, NULL);
     PyModule_AddObject(mod, "InvalidMessageUDPSize", po_InvalidMessageUDPSize);
+    po_DNSMessageBADVERS = PyErr_NewException("pydnspp.DNSMessageBADVERS", NULL, NULL);
+    PyModule_AddObject(mod, "DNSMessageBADVERS", po_DNSMessageBADVERS);
 
     Py_INCREF(&message_type);
     PyModule_AddObject(mod, "Message",
