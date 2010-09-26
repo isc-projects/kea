@@ -63,6 +63,7 @@ libdns___la_SOURCES += util/binary_from_base32hex.h
 libdns___la_SOURCES += util/base16_from_binary.h util/binary_from_base16.h
 libdns___la_SOURCES += buffer.h
 libdns___la_SOURCES += dnssectime.h dnssectime.cc
+libdns___la_SOURCES += edns.h edns.cc
 libdns___la_SOURCES += exceptions.h exceptions.cc
 libdns___la_SOURCES += util/hex.h
 libdns___la_SOURCES += message.h message.cc
