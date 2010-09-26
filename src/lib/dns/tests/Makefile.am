@@ -57,7 +57,8 @@ noinst_PROGRAMS = $(TESTS)
 # NOTE: keep this in sync with real file listing
 # so is included in tarball
 EXTRA_DIST = testdata/gen-wiredata.py.in
-EXTRA_DIST += testdata/edns_toWire1.spec
+EXTRA_DIST += testdata/edns_toWire1.spec testdata/edns_toWire2.spec
+EXTRA_DIST += testdata/edns_toWire3.spec testdata/edns_toWire4.spec
 EXTRA_DIST += testdata/message_fromWire1
 EXTRA_DIST += testdata/message_fromWire10
 EXTRA_DIST += testdata/message_fromWire10.spec
