@@ -23,6 +23,7 @@
 #include <dns/message.h>
 #include <dns/name.h>
 #include <dns/opcode.h>
+#include <dns/rcode.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
 
@@ -80,7 +81,6 @@ public:
         // Check if the header part indicates an expected standard query.
         EXPECT_EQ(0, message.getQid());
         EXPECT_EQ(Opcode::QUERY(), message.getOpcode());
-        EXPECT_EQ(Rcode::NOERROR(), message.getRcode());
         EXPECT_EQ(Rcode::NOERROR(), message.getRcode());
         EXPECT_FALSE(message.getHeaderFlag(MessageFlag::QR()));
         EXPECT_FALSE(message.getHeaderFlag(MessageFlag::AA()));

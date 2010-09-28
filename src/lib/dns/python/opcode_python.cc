@@ -46,22 +46,22 @@ void Opcode_destroy(s_Opcode* const self);
 PyObject* Opcode_getCode(const s_Opcode* const self);
 PyObject* Opcode_toText(const s_Opcode* const self);
 PyObject* Opcode_str(PyObject* const self);
-PyObject* Opcode_QUERY(s_Opcode* self);
-PyObject* Opcode_IQUERY(s_Opcode* self);
-PyObject* Opcode_STATUS(s_Opcode* self);
-PyObject* Opcode_RESERVED3(s_Opcode* self);
-PyObject* Opcode_NOTIFY(s_Opcode* self);
-PyObject* Opcode_UPDATE(s_Opcode* self);
-PyObject* Opcode_RESERVED6(s_Opcode* self);
-PyObject* Opcode_RESERVED7(s_Opcode* self);
-PyObject* Opcode_RESERVED8(s_Opcode* self);
-PyObject* Opcode_RESERVED9(s_Opcode* self);
-PyObject* Opcode_RESERVED10(s_Opcode* self);
-PyObject* Opcode_RESERVED11(s_Opcode* self);
-PyObject* Opcode_RESERVED12(s_Opcode* self);
-PyObject* Opcode_RESERVED13(s_Opcode* self);
-PyObject* Opcode_RESERVED14(s_Opcode* self);
-PyObject* Opcode_RESERVED15(s_Opcode* self);
+PyObject* Opcode_QUERY(const s_Opcode* self);
+PyObject* Opcode_IQUERY(const s_Opcode* self);
+PyObject* Opcode_STATUS(const s_Opcode* self);
+PyObject* Opcode_RESERVED3(const s_Opcode* self);
+PyObject* Opcode_NOTIFY(const s_Opcode* self);
+PyObject* Opcode_UPDATE(const s_Opcode* self);
+PyObject* Opcode_RESERVED6(const s_Opcode* self);
+PyObject* Opcode_RESERVED7(const s_Opcode* self);
+PyObject* Opcode_RESERVED8(const s_Opcode* self);
+PyObject* Opcode_RESERVED9(const s_Opcode* self);
+PyObject* Opcode_RESERVED10(const s_Opcode* self);
+PyObject* Opcode_RESERVED11(const s_Opcode* self);
+PyObject* Opcode_RESERVED12(const s_Opcode* self);
+PyObject* Opcode_RESERVED13(const s_Opcode* self);
+PyObject* Opcode_RESERVED14(const s_Opcode* self);
+PyObject* Opcode_RESERVED15(const s_Opcode* self);
 PyObject* Opcode_richcmp(const s_Opcode* const self,
                          const s_Opcode* const other, int op);
 
@@ -220,82 +220,82 @@ Opcode_createStatic(const Opcode& opcode) {
 }
 
 PyObject*
-Opcode_QUERY(s_Opcode* self UNUSED_PARAM) {
+Opcode_QUERY(const s_Opcode* self UNUSED_PARAM) {
     return (Opcode_createStatic(Opcode::QUERY()));
 }
 
 PyObject*
-Opcode_IQUERY(s_Opcode* self UNUSED_PARAM) {
+Opcode_IQUERY(const s_Opcode* self UNUSED_PARAM) {
     return (Opcode_createStatic(Opcode::IQUERY()));
 }
 
 PyObject*
-Opcode_STATUS(s_Opcode* self UNUSED_PARAM) {
+Opcode_STATUS(const s_Opcode* self UNUSED_PARAM) {
     return (Opcode_createStatic(Opcode::STATUS()));
 }
 
 PyObject*
-Opcode_RESERVED3(s_Opcode* self UNUSED_PARAM) {
+Opcode_RESERVED3(const s_Opcode* self UNUSED_PARAM) {
     return (Opcode_createStatic(Opcode::RESERVED3()));
 }
 
 PyObject*
-Opcode_NOTIFY(s_Opcode* self UNUSED_PARAM) {
+Opcode_NOTIFY(const s_Opcode* self UNUSED_PARAM) {
     return (Opcode_createStatic(Opcode::NOTIFY()));
 }
 
 PyObject*
-Opcode_UPDATE(s_Opcode* self UNUSED_PARAM) {
+Opcode_UPDATE(const s_Opcode* self UNUSED_PARAM) {
     return (Opcode_createStatic(Opcode::UPDATE()));
 }
 
 PyObject*
-Opcode_RESERVED6(s_Opcode* self UNUSED_PARAM) {
+Opcode_RESERVED6(const s_Opcode* self UNUSED_PARAM) {
     return (Opcode_createStatic(Opcode::RESERVED6()));
 }
 
 PyObject*
-Opcode_RESERVED7(s_Opcode* self UNUSED_PARAM) {
+Opcode_RESERVED7(const s_Opcode* self UNUSED_PARAM) {
     return (Opcode_createStatic(Opcode::RESERVED7()));
 }
 
 PyObject*
-Opcode_RESERVED8(s_Opcode* self UNUSED_PARAM) {
+Opcode_RESERVED8(const s_Opcode* self UNUSED_PARAM) {
     return (Opcode_createStatic(Opcode::RESERVED8()));
 }
 
 PyObject*
-Opcode_RESERVED9(s_Opcode* self UNUSED_PARAM) {
+Opcode_RESERVED9(const s_Opcode* self UNUSED_PARAM) {
     return (Opcode_createStatic(Opcode::RESERVED9()));
 }
 
 PyObject*
-Opcode_RESERVED10(s_Opcode* self UNUSED_PARAM) {
+Opcode_RESERVED10(const s_Opcode* self UNUSED_PARAM) {
     return (Opcode_createStatic(Opcode::RESERVED10()));
 }
 
 PyObject*
-Opcode_RESERVED11(s_Opcode* self UNUSED_PARAM) {
+Opcode_RESERVED11(const s_Opcode* self UNUSED_PARAM) {
     return (Opcode_createStatic(Opcode::RESERVED11()));
 }
 
 PyObject*
-Opcode_RESERVED12(s_Opcode* self UNUSED_PARAM) {
+Opcode_RESERVED12(const s_Opcode* self UNUSED_PARAM) {
     return (Opcode_createStatic(Opcode::RESERVED12()));
 }
 
 PyObject*
-Opcode_RESERVED13(s_Opcode* self UNUSED_PARAM) {
+Opcode_RESERVED13(const s_Opcode* self UNUSED_PARAM) {
     return (Opcode_createStatic(Opcode::RESERVED13()));
 }
 
 PyObject*
-Opcode_RESERVED14(s_Opcode* self UNUSED_PARAM) {
+Opcode_RESERVED14(const s_Opcode* self UNUSED_PARAM) {
     return (Opcode_createStatic(Opcode::RESERVED14()));
 }
 
 PyObject*
-Opcode_RESERVED15(s_Opcode* self UNUSED_PARAM) {
+Opcode_RESERVED15(const s_Opcode* self UNUSED_PARAM) {
     return (Opcode_createStatic(Opcode::RESERVED15()));
 }
 
@@ -337,9 +337,6 @@ Opcode_richcmp(const s_Opcode* const self, const s_Opcode* const other,
     else
         Py_RETURN_FALSE;
 }
-
-} // end of unnamed namespace
-// end of Opcode
 
 // Module Initialization, all statics are initialized here
 bool
@@ -394,3 +391,4 @@ initModulePart_Opcode(PyObject* mod) {
 
     return (true);
 }
+} // end of unnamed namespace
