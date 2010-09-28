@@ -24,7 +24,7 @@ class OpcodeTest(unittest.TestCase):
     def test_init(self):
         self.assertRaises(TypeError, Opcode, "wrong")
         self.assertEqual(Rcode(0).get_code(), 0)
-        self.assertEqual(Rcode(Opcode.MAX_CODE).get_code(), 15)
+        self.assertEqual(Rcode(Opcode.RESERVED15_CODE).get_code(), 15)
         self.assertRaises(OverflowError, Opcode, 16)
 
     def test_constants(self):
