@@ -745,12 +745,18 @@ Message_getRcode(s_Message* self) {
 
     rcode = static_cast<s_Rcode*>(rcode_type.tp_alloc(&rcode_type, 0));
     if (rcode != NULL) {
-        rcode->rcode = new Rcode(self->message->getRcode());
-        if (rcode->rcode == NULL)
-          {
+        rcode->rcode = NULL;
+        try {
+            rcode->rcode = new Rcode(self->message->getRcode());
+        } catch (const InvalidMessageOperation& imo) {
+            PyErr_SetString(po_InvalidMessageOperation, imo.what());
+        } catch (...) {
+            PyErr_SetString(po_IscException, "Unexpected exception");
+        }
+        if (rcode->rcode == NULL) {
             Py_DECREF(rcode);
             return (NULL);
-          }
+        }
     }
 
     return (rcode);
@@ -777,7 +783,14 @@ Message_getOpcode(s_Message* self) {
 
     opcode = static_cast<s_Opcode*>(opcode_type.tp_alloc(&opcode_type, 0));
     if (opcode != NULL) {
-        opcode->opcode = new Opcode(self->message->getOpcode());
+        opcode->opcode = NULL;
+        try {
+            opcode->opcode = new Opcode(self->message->getOpcode());
+        } catch (const InvalidMessageOperation& imo) {
+            PyErr_SetString(po_InvalidMessageOperation, imo.what());
+        } catch (...) {
+            PyErr_SetString(po_IscException, "Unexpected exception");
+        }
         if (opcode->opcode == NULL) {
             Py_DECREF(opcode);
             return (NULL);
@@ -937,7 +950,16 @@ Message_makeResponse(s_Message* self) {
 static PyObject*
 Message_toText(s_Message* self) {
     // Py_BuildValue makes python objects from native data
-    return (Py_BuildValue("s", self->message->toText().c_str()));
+    try {
+        return (Py_BuildValue("s", self->message->toText().c_str()));
+    } catch (const InvalidMessageOperation& imo) {
+        PyErr_Clear();
+        PyErr_SetString(po_InvalidMessageOperation, imo.what());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(po_IscException, "Unexpected exception");
+        return (NULL);
+    }
 }
 
 static PyObject*

@@ -378,6 +378,11 @@ public:
     /// included).  In the \c PARSE mode, if the received message contains
     /// an EDNS OPT RR, the corresponding extended code is identified and
     /// returned.
+    ///
+    /// The message must have been properly parsed (in the case of the
+    /// \c PARSE mode) or an \c Rcode has been set (in the case of the
+    /// \c RENDER mode) beforehand.  Otherwise, an exception of class
+    /// \c InvalidMessageOperation will be thrown.
     const Rcode& getRcode() const;
 
     /// \brief Return the Response Code of the message.
@@ -388,6 +393,11 @@ public:
     void setRcode(const Rcode& rcode);
 
     /// \brief Return the OPCODE given in the header section of the message.
+    ///
+    /// The message must have been properly parsed (in the case of the
+    /// \c PARSE mode) or an \c Opcode has been set (in the case of the
+    /// \c RENDER mode) beforehand.  Otherwise, an exception of class
+    /// \c InvalidMessageOperation will be thrown.
     const Opcode& getOpcode() const;
 
     /// \brief Set the OPCODE of the header section of the message.
@@ -466,10 +476,19 @@ public:
     void makeResponse();
 
     /// \brief Convert the Message to a string.
+    ///
+    /// At least \c Opcode and \c Rcode must be validly set in the \c Message
+    /// (as a result of parse in the \c PARSE mode or by explicitly setting
+    /// in the \c RENDER mode);  otherwise, an exception of
+    /// class \c InvalidMessageOperation will be thrown.
     std::string toText() const;
 
     /// \brief Render the message in wire formant into a \c MessageRenderer
     /// object.
+    ///
+    /// This \c Message must be in the \c RENDER mode and both \c Opcode and
+    /// \c Rcode must have been set beforehand; otherwise, an exception of
+    /// class \c InvalidMessageOperation will be thrown.
     void toWire(MessageRenderer& renderer);
 
     /// \brief Parse the header section of the \c Message.

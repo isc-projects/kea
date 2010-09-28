@@ -259,6 +259,9 @@ Message::setQid(qid_t qid) {
 
 const Rcode&
 Message::getRcode() const {
+    if (impl_->rcode_ == NULL) {
+        isc_throw(InvalidMessageOperation, "getRcode attempted before set");
+    }
     return (*impl_->rcode_);
 }
 
@@ -273,6 +276,9 @@ Message::setRcode(const Rcode& rcode) {
 
 const Opcode&
 Message::getOpcode() const {
+    if (impl_->opcode_ == NULL) {
+        isc_throw(InvalidMessageOperation, "getOpcode attempted before set");
+    }
     return (*impl_->opcode_);
 }
 
@@ -424,11 +430,11 @@ Message::toWire(MessageRenderer& renderer) {
     }
     if (impl_->rcode_ == NULL) {
         isc_throw(InvalidMessageOperation,
-                  "Message rendering attempted without Rcode");
+                  "Message rendering attempted without Rcode set");
     }
     if (impl_->opcode_ == NULL) {
         isc_throw(InvalidMessageOperation,
-                  "Message rendering attempted without Opcode");
+                  "Message rendering attempted without Opcode set");
     }
 
     // reserve room for the header
@@ -690,6 +696,15 @@ struct SectionFormatter {
 
 string
 Message::toText() const {
+    if (impl_->rcode_ == NULL) {
+        isc_throw(InvalidMessageOperation,
+                  "Message::toText() attempted without Rcode set");
+    }
+    if (impl_->opcode_ == NULL) {
+        isc_throw(InvalidMessageOperation,
+                  "Message::toText() attempted without Opcode set");
+    }
+
     string s;
 
     s += ";; ->>HEADER<<- opcode: " + impl_->opcode_->toText();

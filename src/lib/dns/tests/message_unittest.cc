@@ -111,6 +111,22 @@ TEST_F(MessageTest, fromWire) {
     EXPECT_TRUE(it->isLast());
 }
 
+TEST_F(MessageTest, opcode) {    // for get/setOpcode
+    EXPECT_THROW(message_parse.setOpcode(Opcode::NOTIFY()),
+                 InvalidMessageOperation);
+    message_render.setOpcode(Opcode::UPDATE());
+    EXPECT_EQ(Opcode::UPDATE(), message_render.getOpcode());
+    EXPECT_THROW(message_parse.getOpcode(), InvalidMessageOperation);
+}
+
+TEST_F(MessageTest, rcode) {    // for get/setRcode
+    EXPECT_THROW(message_parse.setRcode(Rcode::BADVERS()),
+                 InvalidMessageOperation);
+    message_render.setRcode(Rcode::BADVERS());
+    EXPECT_EQ(Rcode::BADVERS(), message_render.getRcode());
+    EXPECT_THROW(message_parse.getRcode(), InvalidMessageOperation);
+}
+
 TEST_F(MessageTest, GetEDNS0DOBit) {
     // Without EDNS0, DNSSEC is considered to be unsupported.
     factoryFromFile(message_parse, "message_fromWire1");
@@ -245,5 +261,30 @@ TEST_F(MessageTest, toWire) {
     UnitTestUtil::readWireData("message_toWire1", data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, obuffer.getData(),
                         obuffer.getLength(), &data[0], data.size());
+}
+
+TEST_F(MessageTest, toWireInParseMode) {
+    // toWire() isn't allowed in the parse mode.
+    EXPECT_THROW(message_parse.toWire(renderer), InvalidMessageOperation);
+}
+
+TEST_F(MessageTest, toWireWithoutOpcode) {
+    message_render.setRcode(Rcode::NOERROR());
+    EXPECT_THROW(message_render.toWire(renderer), InvalidMessageOperation);
+}
+
+TEST_F(MessageTest, toWireWithoutRcode) {
+    message_render.setOpcode(Opcode::QUERY());
+    EXPECT_THROW(message_render.toWire(renderer), InvalidMessageOperation);
+}
+
+TEST_F(MessageTest, toTextWithoutOpcode) {
+    message_render.setRcode(Rcode::NOERROR());
+    EXPECT_THROW(message_render.toText(), InvalidMessageOperation);
+}
+
+TEST_F(MessageTest, toTextWithoutRcode) {
+    message_render.setOpcode(Opcode::QUERY());
+    EXPECT_THROW(message_render.toText(), InvalidMessageOperation);
 }
 }
