@@ -30,7 +30,7 @@ namespace {
 TEST(OpcodeTest, construct) {
     // This test also tests getCode()
     EXPECT_EQ(0, Opcode(0).getCode());
-    EXPECT_EQ(15, Opcode(Opcode::MAX_CODE).getCode());
+    EXPECT_EQ(15, Opcode(Opcode::RESERVED15_CODE).getCode());
 
     EXPECT_THROW(Opcode(16), isc::OutOfRange);
 }
@@ -76,7 +76,7 @@ TEST(OpcodeTest, nequal) {
 
 TEST(OpcodeTest, toText) {
     vector<const char*> expects;
-    expects.resize(Opcode::MAX_CODE);
+    expects.resize(Opcode::RESERVED15_CODE + 1);
     expects[Opcode::QUERY_CODE] = "QUERY";
     expects[Opcode::IQUERY_CODE] = "IQUERY";
     expects[Opcode::STATUS_CODE] = "STATUS";
@@ -94,7 +94,7 @@ TEST(OpcodeTest, toText) {
     expects[Opcode::RESERVED14_CODE] = "RESERVED14";
     expects[Opcode::RESERVED15_CODE] = "RESERVED15";
 
-    for (unsigned int i = 0; i < Opcode::MAX_CODE; ++i) {
+    for (unsigned int i = 0; i <= Opcode::RESERVED15_CODE; ++i) {
         EXPECT_EQ(expects.at(i), Opcode(i).toText());
     }
 }

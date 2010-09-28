@@ -160,7 +160,7 @@ PyTypeObject opcode_type = {
 int
 Opcode_init(s_Opcode* const self, PyObject* args) {
     uint16_t code = 0;
-    if (PyArg_ParseTuple(args, "h", &code)) {
+    if (PyArg_ParseTuple(args, "b", &code)) {
         try {
             self->opcode = new Opcode(code);
             self->static_code = false;
@@ -386,8 +386,6 @@ initModulePart_Opcode(PyObject* mod) {
                      Py_BuildValue("h", Opcode::RESERVED14_CODE));
     addClassVariable(opcode_type, "RESERVED15_CODE",
                      Py_BuildValue("h", Opcode::RESERVED15_CODE));
-    addClassVariable(opcode_type, "MAX_CODE",
-                     Py_BuildValue("h", Opcode::MAX_CODE));
 
     return (true);
 }
