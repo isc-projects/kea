@@ -117,25 +117,6 @@ const char *rcodetext[] = {
     "BADVERS"
 };
 
-const Opcode* opcodes[] = {
-    &Opcode::QUERY(),
-    &Opcode::IQUERY(),
-    &Opcode::STATUS(),
-    &Opcode::RESERVED3(),
-    &Opcode::NOTIFY(),
-    &Opcode::UPDATE(),
-    &Opcode::RESERVED6(),
-    &Opcode::RESERVED7(),
-    &Opcode::RESERVED8(),
-    &Opcode::RESERVED9(),
-    &Opcode::RESERVED10(),
-    &Opcode::RESERVED11(),
-    &Opcode::RESERVED12(),
-    &Opcode::RESERVED13(),
-    &Opcode::RESERVED14(),
-    &Opcode::RESERVED15()
-};
-
 const char *sectiontext[] = {
     "QUESTION",
     "ANSWER",
@@ -178,6 +159,9 @@ public:
     Message::Mode mode_;
     qid_t qid_;
     Rcode rcode_;
+    // We want to use NULL for opcode_ to mean Opcode isn't correctly parsed or
+    // set.  We store the real Opcode object in opcode_placeholder_ and have
+    // opcode_ refer to it when the object is valid.
     const Opcode* opcode_;
     Opcode opcode_placeholder_;
     flags_t flags_;
@@ -204,7 +188,9 @@ public:
 };
 
 MessageImpl::MessageImpl(Message::Mode mode) :
-    mode_(mode), rcode_(Rcode::NOERROR()), opcode_placeholder_(Opcode(0))
+    mode_(mode),
+    rcode_(Rcode::NOERROR()),
+    opcode_placeholder_(Opcode(0)) // as a placeholder the value doesn't matter
 {
     init();
 }
