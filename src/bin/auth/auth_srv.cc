@@ -28,6 +28,7 @@
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/question.h>
+#include <dns/opcode.h>
 #include <dns/rrset.h>
 #include <dns/rrttl.h>
 #include <dns/message.h>

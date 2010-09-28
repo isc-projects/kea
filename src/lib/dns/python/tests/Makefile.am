@@ -2,6 +2,7 @@ PYTESTS = message_python_test.py
 PYTESTS += messagerenderer_python_test.py
 PYTESTS += name_python_test.py
 PYTESTS += question_python_test.py
+PYTESTS += opcode_python_test.py
 PYTESTS += rdata_python_test.py
 PYTESTS += rrclass_python_test.py
 PYTESTS += rrset_python_test.py

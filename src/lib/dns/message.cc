@@ -32,6 +32,7 @@
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
+#include <dns/opcode.h>
 #include <dns/question.h>
 #include <dns/rdataclass.h>
 #include <dns/rrclass.h>
@@ -135,36 +136,12 @@ const Opcode* opcodes[] = {
     &Opcode::RESERVED15()
 };
 
-const char *opcodetext[] = {
-    "QUERY",
-    "IQUERY",
-    "STATUS",
-    "RESERVED3",
-    "NOTIFY",
-    "UPDATE",
-    "RESERVED6",
-    "RESERVED7",
-    "RESERVED8",
-    "RESERVED9",
-    "RESERVED10",
-    "RESERVED11",
-    "RESERVED12",
-    "RESERVED13",
-    "RESERVED14",
-    "RESERVED15"
-};
-
 const char *sectiontext[] = {
     "QUESTION",
     "ANSWER",
     "AUTHORITY",
     "ADDITIONAL"
 };
-}
-
-string
-Opcode::toText() const {
-    return (opcodetext[code_]);
 }
 
 Rcode::Rcode(uint16_t code) : code_(code) {
@@ -202,6 +179,7 @@ public:
     qid_t qid_;
     Rcode rcode_;
     const Opcode* opcode_;
+    Opcode opcode_placeholder_;
     flags_t flags_;
     bool dnssec_ok_;
 
@@ -226,7 +204,7 @@ public:
 };
 
 MessageImpl::MessageImpl(Message::Mode mode) :
-    mode_(mode), rcode_(Rcode::NOERROR())
+    mode_(mode), rcode_(Rcode::NOERROR()), opcode_placeholder_(Opcode(0))
 {
     init();
 }
@@ -356,7 +334,8 @@ Message::setOpcode(const Opcode& opcode) {
         isc_throw(InvalidMessageOperation,
                   "setOpcode performed in non-render mode");
     }
-    impl_->opcode_ = &opcode;
+    impl_->opcode_placeholder_ = opcode;
+    impl_->opcode_ = &impl_->opcode_placeholder_;
 }
 
 unsigned int
@@ -582,7 +561,9 @@ Message::parseHeader(InputBuffer& buffer) {
 
     impl_->qid_ = buffer.readUint16();
     const uint16_t codes_and_flags = buffer.readUint16();
-    impl_->opcode_ = opcodes[((codes_and_flags & OPCODE_MASK) >> OPCODE_SHIFT)];
+    impl_->opcode_placeholder_ =
+        Opcode((codes_and_flags & OPCODE_MASK) >> OPCODE_SHIFT);
+    impl_->opcode_ = &impl_->opcode_placeholder_;
     impl_->rcode_ = rcodes[(codes_and_flags & RCODE_MASK)];
     impl_->flags_ = (codes_and_flags & FLAG_MASK);
     impl_->counts_[Section::QUESTION().getCode()] = buffer.readUint16();
@@ -1002,11 +983,6 @@ Message::endSection(const Section& section) const {
     return (RRsetIterator(
                 RRsetIteratorImpl(
                     impl_->rrsets_[sectionCodeToId(section)].end())));
-}
-
-ostream&
-operator<<(ostream& os, const Opcode& opcode) {
-    return (os << opcode.toText());
 }
 
 ostream&

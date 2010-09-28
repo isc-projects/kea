@@ -22,6 +22,7 @@
 #include <dns/buffer.h>
 #include <dns/message.h>
 #include <dns/name.h>
+#include <dns/opcode.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
 

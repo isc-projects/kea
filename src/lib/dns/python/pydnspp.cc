@@ -53,6 +53,7 @@ static PyObject* po_IscException;
 #include <dns/python/rrset_python.cc>          // needs Rdata, RRTTL
 #include <dns/python/question_python.cc>       // needs RRClass, RRType, RRTTL,
                                                // Name
+#include <dns/python/opcode_python.cc>
 #include <dns/python/message_python.cc>        // needs RRset, Question
 
 //
@@ -115,6 +116,10 @@ PyInit_pydnspp(void) {
     }
 
     if (!initModulePart_Question(mod)) {
+        return (NULL);
+    }
+
+    if (!initModulePart_Opcode(mod)) {
         return (NULL);
     }
 
