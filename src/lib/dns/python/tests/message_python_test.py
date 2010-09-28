@@ -335,7 +335,7 @@ class MessageTest(unittest.TestCase):
         self.assertEqual(None, self.p.get_edns())
 
         message_parse = Message(Message.PARSE)
-        factoryFromFile(message_parse, "message_fromWire10")
+        factoryFromFile(message_parse, "message_fromWire10.wire")
         edns = message_parse.get_edns()
         self.assertEqual(0, edns.get_version())
         self.assertEqual(4096, edns.get_udp_size())
@@ -473,12 +473,12 @@ test.example.com. 3600 IN A 192.0.2.2
     def test_EDNS0ExtCode(self):
         # Extended Rcode = BADVERS
         message_parse = Message(Message.PARSE)
-        factoryFromFile(message_parse, "message_fromWire10")
+        factoryFromFile(message_parse, "message_fromWire10.wire")
         self.assertEqual(Rcode.BADVERS(), message_parse.get_rcode())
     
         # Maximum extended Rcode
         message_parse.clear(Message.PARSE)
-        factoryFromFile(message_parse, "message_fromWire11")
+        factoryFromFile(message_parse, "message_fromWire11.wire")
         self.assertEqual(0xfff, message_parse.get_rcode().get_code())
     
     def test_BadEDNS0(self):
