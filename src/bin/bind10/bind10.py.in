@@ -471,7 +471,7 @@ class BoB:
         except:
             pass
         # XXX: some delay probably useful... how much is uncertain
-        time.sleep(0.5)  
+        time.sleep(1)  
         self.reap_children()
         # next try sending a SIGTERM
         processes_to_stop = list(self.processes.values())
