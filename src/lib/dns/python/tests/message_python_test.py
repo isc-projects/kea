@@ -198,6 +198,7 @@ class MessageTest(unittest.TestCase):
         self.assertRaises(InvalidMessageOperation,
                           self.p.set_rcode, rcode)
         
+        self.assertRaises(InvalidMessageOperation, self.p.get_rcode)
 
     def test_set_opcode(self):
         self.assertRaises(TypeError, self.r.set_opcode, "wrong")
@@ -208,6 +209,8 @@ class MessageTest(unittest.TestCase):
 
         self.assertRaises(InvalidMessageOperation,
                           self.p.set_opcode, opcode)
+
+        self.assertRaises(InvalidMessageOperation, self.p.get_opcode)
 
     def test_get_section(self):
         self.assertRaises(TypeError, self.r.get_section, "wrong")
@@ -273,6 +276,16 @@ class MessageTest(unittest.TestCase):
         self.assertEqual(b'\x105\x85\x00\x00\x01\x00\x02\x00\x00\x00\x00\x04test\x07example\x03com\x00\x00\x01\x00\x01\xc0\x0c\x00\x01\x00\x01\x00\x00\x0e\x10\x00\x04\xc0\x00\x02\x01\xc0\x0c\x00\x01\x00\x01\x00\x00\x0e\x10\x00\x04\xc0\x00\x02\x02',
                          renderer.get_data())
 
+    def test_to_wire_without_opcode(self):
+        self.r.set_rcode(Rcode.NOERROR())
+        self.assertRaises(InvalidMessageOperation, self.r.to_wire,
+                          MessageRenderer())
+
+    def test_to_wire_without_rcode(self):
+        self.r.set_opcode(Opcode.QUERY())
+        self.assertRaises(InvalidMessageOperation, self.r.to_wire,
+                          MessageRenderer())
+
     def test_to_text(self):
         message_render = create_message()
         
@@ -289,6 +302,14 @@ test.example.com. 3600 IN A 192.0.2.2
 """
         self.assertEqual(msg_str, message_render.to_text())
         self.assertEqual(msg_str, str(message_render))
+
+    def test_to_text_without_opcode(self):
+        self.r.set_rcode(Rcode.NOERROR())
+        self.assertRaises(InvalidMessageOperation, self.r.to_text)
+
+    def test_to_text_without_rcode(self):
+        self.r.set_opcode(Opcode.QUERY())
+        self.assertRaises(InvalidMessageOperation, self.r.to_text)
 
     def test_from_wire(self):
         self.assertRaises(TypeError, self.r.from_wire, 1)
