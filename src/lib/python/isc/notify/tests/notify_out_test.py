@@ -53,8 +53,6 @@ class TestZoneNotifyInfo(unittest.TestCase):
 
 class TestNotifyOut(unittest.TestCase):
     def setUp(self):
-        self.old_stdout = sys.stdout
-        sys.stdout = open(os.devnull, 'w')
         self._db_file = tempfile.NamedTemporaryFile(delete=False)
         sqlite3_ds.load(self._db_file.name, 'cn.', self._cn_data_reader)
         sqlite3_ds.load(self._db_file.name, 'com.', self._com_data_reader)
@@ -70,7 +68,6 @@ class TestNotifyOut(unittest.TestCase):
         info.notify_slaves.append(('1.1.1.1', 5353))
 
     def tearDown(self):
-        sys.stdout = self.old_stdout
         self._db_file.close()
         os.unlink(self._db_file.name)
 
@@ -123,6 +120,19 @@ class TestNotifyOut(unittest.TestCase):
         self.assertTrue(('com.', 'IN') in timeout_zones.keys())
         self.assertLess(time.time(), self._notify._notify_infos[('com.', 'IN')].notify_timeout)
     
+    def test_wait_for_notify_reply_2(self):
+        # Test the returned value when the read_side socket is readable.
+        self._notify.send_notify('cn.')
+        self._notify.send_notify('com.')
+
+        # Now make one socket be readable
+        self._notify._notify_infos[('cn.', 'IN')].notify_timeout = time.time() + 10
+        self._notify._notify_infos[('com.', 'IN')].notify_timeout = time.time() + 10
+        self._notify._write_sock.send(b'shutdown')    
+        replied_zones, timeout_zones = self._notify._wait_for_notify_reply()
+        self.assertIsNone(replied_zones) 
+        self.assertIsNone(timeout_zones) 
+
     def test_notify_next_target(self):
         self._notify.send_notify('cn.')
         self._notify.send_notify('com.')
@@ -278,6 +288,14 @@ class TestNotifyOut(unittest.TestCase):
         timeout, valid_fds, notifying_zones = self._notify._prepare_select_info()
         self.assertEqual(timeout, 0)
         self.assertListEqual([2, 1], valid_fds)
+
+    def test_shutdown(self):
+        import threading
+        td = threading.Thread(target=self._notify.dispatcher)
+        td.start()
+        self.assertTrue(td.is_alive())
+        self._notify.shutdown()
+        self.assertFalse(td.is_alive())
 
 if __name__== "__main__":
     unittest.main()

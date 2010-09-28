@@ -47,26 +47,7 @@ _BAD_REPLY_PACKET = 5
 def addr_to_str(addr):
     return '%s#%s' % (addr[0], addr[1])
 
-def dispatcher(notifier):
-    '''The loop function for handling notify related events.
-    If one zone get the notify reply before timeout, call the
-    handle to process the reply. If one zone can't get the notify
-    before timeout, call the handler to resend notify or notify 
-    next slave.  
-    notifier: one object of class NotifyOut. '''
-    while True:
-        replied_zones, not_replied_zones = notifier._wait_for_notify_reply()
-        if len(replied_zones) == 0 and len(not_replied_zones) == 0:
-            time.sleep(_IDLE_SLEEP_TIME) #TODO set a better time for idle sleep
-            continue
 
-        for name_ in replied_zones:
-            notifier._zone_notify_handler(replied_zones[name_], _EVENT_READ)
-            
-        for name_ in not_replied_zones:
-            if not_replied_zones[name_].notify_timeout <= time.time():
-                notifier._zone_notify_handler(not_replied_zones[name_], _EVENT_TIMEOUT)
- 
 class ZoneNotifyInfo:
     '''This class keeps track of notify-out information for one zone.'''
 
@@ -115,14 +96,17 @@ class ZoneNotifyInfo:
 
 class NotifyOut:
     '''This class is used to handle notify logic for all zones(sending
-    notify message to its slaves).The only interface provided to 
-    the user is send_notify(). the object of this class should be 
-    used together with function dispatcher(). '''
+    notify message to its slaves). notify service can be started by 
+    calling  dispatcher(), and it can be stoped by calling shutdown()
+    in another thread. ''' 
     def __init__(self, datasrc_file, log=None, verbose=True):
         self._notify_infos = {} # key is (zone_name, zone_class)
         self._waiting_zones = []
         self._notifying_zones = []
         self._log = log
+        self._serving = False
+        self._is_shut_down = threading.Event()
+        self._read_sock, self._write_sock = socket.socketpair()
         self.notify_num = 0  # the count of in progress notifies
         self._verbose = verbose
         self._lock = threading.Lock()
@@ -164,6 +148,42 @@ class NotifyOut:
                 self._notify_infos[zone_id].prepare_notify_out()
                 self.notify_num += 1 
                 self._notifying_zones.append(zone_id)
+
+    def dispatcher(self):
+        '''The loop function for handling notify related events.
+        If one zone get the notify reply before timeout, call the
+        handle to process the reply. If one zone can't get the notify
+        before timeout, call the handler to resend notify or notify 
+        next slave.  
+           The loop can be stoped by calling shutdown() in another 
+        thread. '''
+        self._serving = True
+        self._is_shut_down.clear()
+        while self._serving:
+            replied_zones, not_replied_zones = self._wait_for_notify_reply()
+            if replied_zones is None:
+                break
+
+            if len(replied_zones) == 0 and len(not_replied_zones) == 0:
+                time.sleep(_IDLE_SLEEP_TIME) #TODO set a better time for idle sleep
+                continue
+
+            for name_ in replied_zones:
+                self._zone_notify_handler(replied_zones[name_], _EVENT_READ)
+
+            for name_ in not_replied_zones:
+                if not_replied_zones[name_].notify_timeout <= time.time():
+                    self._zone_notify_handler(not_replied_zones[name_], _EVENT_TIMEOUT)
+
+        self._is_shut_down.set()
+
+    def shutdown(self):
+        '''Stop the dispatcher() loop. Blocks until the loop has finished. This
+        must be called when dispatcher() is running in anther thread, or it
+        will deadlock.  '''
+        self._serving = False
+        self._write_sock.send(b'shutdown') # make self._read_sock be readable.
+        self._is_shut_down.wait()
 
     def _get_rdata_data(self, rr):
         return rr[7].strip()
@@ -232,16 +252,23 @@ class NotifyOut:
 
     def _wait_for_notify_reply(self):
         '''receive notify replies in specified time. returned value 
-        is one tuple:(replied_zones, not_replied_zones)
+        is one tuple:(replied_zones, not_replied_zones). (None, None)
+        will be returned when self._read_sock is readable, since user
+        has called shutdown().
         replied_zones: the zones which receive notify reply.
         not_replied_zones: the zones which haven't got notify reply.
+
         '''
         (block_timeout, valid_socks, notifying_zones) = self._prepare_select_info()
+        valid_socks.append(self._read_sock)
         try:
             r_fds, w, e = select.select(valid_socks, [], [], block_timeout)
         except select.error as err:
             if err.args[0] != EINTR:
-                return [], []
+                return {}, {}
+        
+        if self._read_sock in r_fds:
+            return None, None # user has called shutdown()
         
         not_replied_zones = {}
         replied_zones = {}
