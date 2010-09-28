@@ -262,7 +262,8 @@ class XfroutSession(BaseRequestHandler):
 
         for rr_data in sqlite3_ds.get_zone_datas(zone_name, self.server.get_db_file()):
             if  self.server._shutdown_event.is_set(): # Check if xfrout is shutdown
-                self._log.log_message("error", "shutdown!")
+                self._log.log_message("info", "xfrout process is being shutdown")
+                return
 
             # TODO: RRType.SOA() ?
             if RRType(rr_data[5]) == RRType("SOA"): #ignore soa record
@@ -394,8 +395,9 @@ def listen_on_xfr_query(unix_socket_server):
             # normal program flow continue by trying serve_forever()
             # again.
             if err.args[0] != errno.EINTR: raise
-
-   
+        else:
+            # serve_forever() loop has been stoped normally.
+            break
 
 class XfroutServer:
     def __init__(self):
@@ -424,8 +426,7 @@ class XfroutServer:
     def _start_notifier(self):
         datasrc = self._unix_socket_server.get_db_file()
         self._notifier = notify_out.NotifyOut(datasrc, self._log)
-        td = threading.Thread(target = notify_out.dispatcher, args = (self._notifier,))
-        td.daemon = True
+        td = threading.Thread(target=self._notifier.dispatcher)
         td.start()
 
     def send_notify(self, zone_name, zone_class):
@@ -457,10 +458,12 @@ class XfroutServer:
         global xfrout_server
         xfrout_server = None #Avoid shutdown is called twice
         self._shutdown_event.set()
+        self._notifier.shutdown()
         if self._unix_socket_server:
             self._unix_socket_server.shutdown()
 
         main_thread = threading.currentThread()
+        # close the thread which's doing zone transfer.
         for th in threading.enumerate():
             if th is main_thread:
                 continue
