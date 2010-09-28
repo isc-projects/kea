@@ -55,6 +55,7 @@ public:
     explicit Opcode(const uint16_t code);
     CodeValue getCode() const { return (code_); }
 
+    /// \brief Return true iff two Opcodes are equal.
     bool equals(const Opcode& other) const
     { return (code_ == other.code_); }
 
