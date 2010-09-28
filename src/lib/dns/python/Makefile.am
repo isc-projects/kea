@@ -15,6 +15,7 @@ EXTRA_DIST += messagerenderer_python.cc
 EXTRA_DIST += message_python.cc
 EXTRA_DIST += rrclass_python.cc
 EXTRA_DIST += name_python.cc
+EXTRA_DIST += opcode_python.cc
 EXTRA_DIST += rrset_python.cc
 EXTRA_DIST += question_python.cc
 EXTRA_DIST += rrttl_python.cc

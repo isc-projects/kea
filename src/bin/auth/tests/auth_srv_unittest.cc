@@ -22,6 +22,7 @@
 #include <dns/name.h>
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
+#include <dns/opcode.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
 
@@ -114,7 +115,7 @@ protected:
     AuthSrvTest() : server(true, xfrout),
                     request_message(Message::RENDER),
                     parse_message(Message::PARSE), default_qid(0x1035),
-                    opcode(Opcode(Opcode::QUERY())), qname("www.example.com"),
+                    opcode(Opcode::QUERY()), qname("www.example.com"),
                     qclass(RRClass::IN()), qtype(RRType::A()),
                     io_message(NULL), endpoint(NULL), request_obuffer(0),
                     request_renderer(request_obuffer),
