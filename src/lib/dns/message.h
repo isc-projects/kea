@@ -82,6 +82,7 @@ class MessageRenderer;
 class Message;
 class MessageImpl;
 class Opcode;
+class Rcode;
 
 template <typename T>
 struct SectionIteratorImpl;
@@ -158,162 +159,6 @@ MessageFlag::CD()
 {
     static MessageFlag f(0x0010);
     return (f);
-}
-
-/// \brief The \c Rcode class objects represent standard Response Codes
-/// (RCODEs) of the header section of DNS messages, and extended response
-/// codes as defined in the EDNS specification.
-///
-/// Constant objects are defined for standard flags.
-class Rcode {
-public:
-    Rcode(uint16_t code);
-    uint16_t getCode() const { return (code_); }
-    bool operator==(const Rcode& other) const { return (code_ == other.code_); }
-    bool operator!=(const Rcode& other) const { return (code_ != other.code_); }
-    std::string toText() const;
-    static const Rcode& NOERROR();
-    static const Rcode& FORMERR();
-    static const Rcode& SERVFAIL();
-    static const Rcode& NXDOMAIN();
-    static const Rcode& NOTIMP();
-    static const Rcode& REFUSED();
-    static const Rcode& YXDOMAIN();
-    static const Rcode& YXRRSET();
-    static const Rcode& NXRRSET();
-    static const Rcode& NOTAUTH();
-    static const Rcode& NOTZONE();
-    static const Rcode& RESERVED11();
-    static const Rcode& RESERVED12();
-    static const Rcode& RESERVED13();
-    static const Rcode& RESERVED14();
-    static const Rcode& RESERVED15();
-    // Extended Rcodes follow (EDNS required):
-    static const Rcode& BADVERS();
-private:
-    uint16_t code_;
-
-    // EDNS-extended RCODEs are 12-bit unsigned integers.
-    static const uint16_t MAX_RCODE = 0xfff;
-};
-
-inline const Rcode&
-Rcode::NOERROR()
-{
-    static Rcode c(0);
-    return (c);
-}
-
-inline const Rcode&
-Rcode::FORMERR()
-{
-    static Rcode c(1);
-    return (c);
-}
-
-inline const Rcode&
-Rcode::SERVFAIL()
-{
-    static Rcode c(2);
-    return (c);
-}
-
-inline const Rcode&
-Rcode::NXDOMAIN()
-{
-    static Rcode c(3);
-    return (c);
-}
-
-inline const Rcode&
-Rcode::NOTIMP()
-{
-    static Rcode c(4);
-    return (c);
-}
-
-inline const Rcode&
-Rcode::REFUSED()
-{
-    static Rcode c(5);
-    return (c);
-}
-
-inline const Rcode&
-Rcode::YXDOMAIN()
-{
-    static Rcode c(6);
-    return (c);
-}
-
-inline const Rcode&
-Rcode::YXRRSET()
-{
-    static Rcode c(7);
-    return (c);
-}
-
-inline const Rcode&
-Rcode::NXRRSET()
-{
-    static Rcode c(8);
-    return (c);
-}
-
-inline const Rcode&
-Rcode::NOTAUTH()
-{
-    static Rcode c(9);
-    return (c);
-}
-
-inline const Rcode&
-Rcode::NOTZONE()
-{
-    static Rcode c(10);
-    return (c);
-}
-
-inline const Rcode&
-Rcode::RESERVED11()
-{
-    static Rcode c(11);
-    return (c);
-}
-
-inline const Rcode&
-Rcode::RESERVED12()
-{
-    static Rcode c(12);
-    return (c);
-}
-
-inline const Rcode&
-Rcode::RESERVED13()
-{
-    static Rcode c(13);
-    return (c);
-}
-
-inline const Rcode&
-Rcode::RESERVED14()
-{
-    static Rcode c(14);
-    return (c);
-}
-
-inline const Rcode&
-Rcode::RESERVED15()
-{
-    static Rcode c(15);
-    return (c);
-}
-
-inline const Rcode&
-Rcode::BADVERS()
-{
-    static Rcode c(16);
-    return (c);
 }
 
 /// \brief The \c Section class objects represent DNS message sections such
@@ -651,8 +496,6 @@ private:
     MessageImpl* impl_;
 };
 
-std::ostream& operator<<(std::ostream& os, const Opcode& opcode);
-std::ostream& operator<<(std::ostream& os, const Rcode& rcode);
 std::ostream& operator<<(std::ostream& os, const Message& message);
 }
 }

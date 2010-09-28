@@ -33,6 +33,7 @@
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/opcode.h>
+#include <dns/rcode.h>
 #include <dns/question.h>
 #include <dns/rdataclass.h>
 #include <dns/rrclass.h>
@@ -63,11 +64,11 @@ const flags_t FLAG_AD = 0x0020;
 const flags_t FLAG_CD = 0x0010;
 
 //
-// EDNS related constants
+// EDNS related constants (THESE SHOULD BE REMOVED ON MERGE)
 //
+const uint32_t EXTRCODE_MASK = 0xff000000;
 const flags_t EXTFLAG_MASK = 0xffff;
 const flags_t EXTFLAG_DO = 0x8000;
-const uint32_t EXTRCODE_MASK = 0xff000000; 
 const uint32_t EDNSVERSION_MASK = 0x00ff0000;
 
 const unsigned int OPCODE_MASK = 0x7800;
@@ -77,69 +78,12 @@ const unsigned int FLAG_MASK = 0x8ff0;
 
 const unsigned int MESSAGE_REPLYPRESERVE = (FLAG_RD | FLAG_CD);
 
-const Rcode rcodes[] = {
-    Rcode::NOERROR(),
-    Rcode::FORMERR(),
-    Rcode::SERVFAIL(),
-    Rcode::NXDOMAIN(),
-    Rcode::NOTIMP(),
-    Rcode::REFUSED(),
-    Rcode::YXDOMAIN(),
-    Rcode::YXRRSET(),
-    Rcode::NXRRSET(),
-    Rcode::NOTAUTH(),
-    Rcode::NOTZONE(),
-    Rcode::RESERVED11(),
-    Rcode::RESERVED12(),
-    Rcode::RESERVED13(),
-    Rcode::RESERVED14(),
-    Rcode::RESERVED15(),
-    Rcode::BADVERS()
-};
-
-const char *rcodetext[] = {
-    "NOERROR",
-    "FORMERR",
-    "SERVFAIL",
-    "NXDOMAIN",
-    "NOTIMP",
-    "REFUSED",
-    "YXDOMAIN",
-    "YXRRSET",
-    "NXRRSET",
-    "NOTAUTH",
-    "NOTZONE",
-    "RESERVED11",
-    "RESERVED12",
-    "RESERVED13",
-    "RESERVED14",
-    "RESERVED15",
-    "BADVERS"
-};
-
 const char *sectiontext[] = {
     "QUESTION",
     "ANSWER",
     "AUTHORITY",
     "ADDITIONAL"
 };
-}
-
-Rcode::Rcode(uint16_t code) : code_(code) {
-    if (code_ > MAX_RCODE) {
-        isc_throw(OutOfRange, "Rcode is too large to construct");
-    }
-}
-
-string
-Rcode::toText() const {
-    if (code_ < sizeof(rcodetext) / sizeof (const char *)) {
-        return (rcodetext[code_]);
-    }
-
-    ostringstream oss;
-    oss << code_;
-    return (oss.str());
 }
 
 namespace {
@@ -158,12 +102,16 @@ public:
     // for efficiency?
     Message::Mode mode_;
     qid_t qid_;
-    Rcode rcode_;
-    // We want to use NULL for opcode_ to mean Opcode isn't correctly parsed or
-    // set.  We store the real Opcode object in opcode_placeholder_ and have
-    // opcode_ refer to it when the object is valid.
+
+    // We want to use NULL for [op,r]code_ to mean the code being not
+    // correctly parsed or set.  We store the real code object in
+    // xxcode_placeholder_ and have xxcode_ refer to it when the object
+    // is valid.
+    const Rcode* rcode_;
+    Rcode rcode_placeholder_;
     const Opcode* opcode_;
     Opcode opcode_placeholder_;
+
     flags_t flags_;
     bool dnssec_ok_;
 
@@ -184,14 +132,15 @@ public:
 
     void init();
     void setOpcode(const Opcode& opcode);
+    void setRcode(const Rcode& rcode);
     int parseQuestion(InputBuffer& buffer);
     int parseSection(const Section& section, InputBuffer& buffer);
 };
 
 MessageImpl::MessageImpl(Message::Mode mode) :
     mode_(mode),
-    rcode_(Rcode::NOERROR()),
-    opcode_placeholder_(Opcode(0)) // as a placeholder the value doesn't matter
+    rcode_placeholder_(Rcode(0)), // as a placeholder the value doesn't matter
+    opcode_placeholder_(Opcode(0)) // ditto
 {
     init();
 }
@@ -200,7 +149,7 @@ void
 MessageImpl::init() {
     flags_ = 0;
     qid_ = 0;
-    rcode_ = Rcode::NOERROR();  // XXX
+    rcode_ = NULL;
     opcode_ = NULL;
     dnssec_ok_ = false;
     remote_edns_ = RRsetPtr();
@@ -223,6 +172,12 @@ void
 MessageImpl::setOpcode(const Opcode& opcode) {
     opcode_placeholder_ = opcode;
     opcode_ = &opcode_placeholder_;
+}
+
+void
+MessageImpl::setRcode(const Rcode& rcode) {
+    rcode_placeholder_ = rcode;
+    rcode_ = &rcode_placeholder_;
 }
 
 Message::Message(Mode mode) :
@@ -304,7 +259,7 @@ Message::setQid(qid_t qid) {
 
 const Rcode&
 Message::getRcode() const {
-    return (impl_->rcode_);
+    return (*impl_->rcode_);
 }
 
 void
@@ -313,7 +268,7 @@ Message::setRcode(const Rcode& rcode) {
         isc_throw(InvalidMessageOperation,
                   "setRcode performed in non-render mode");
     }
-    impl_->rcode_ = rcode;
+    impl_->setRcode(rcode);
 }
 
 const Opcode&
@@ -421,7 +376,8 @@ addEDNS(MessageImpl* mimpl, MessageRenderer& renderer) {
     // if the Rcode is BADVERS, which is EDNS specific.
     // XXX: this logic is tricky.  We should revisit this later.
     if (!is_query) {
-        if (mimpl->remote_edns_ == NULL && mimpl->rcode_ != Rcode::BADVERS()) {
+        if (mimpl->remote_edns_ == NULL &&
+            *mimpl->rcode_ != Rcode::BADVERS()) {
             return (false);
         }
     } else {
@@ -431,7 +387,7 @@ addEDNS(MessageImpl* mimpl, MessageRenderer& renderer) {
         // Extended Rcode is to be specified.
         if (mimpl->udpsize_ == Message::DEFAULT_MAX_UDPSIZE &&
             !mimpl->dnssec_ok_ &&
-            mimpl->rcode_.getCode() < 0x10) {
+            mimpl->rcode_->getCode() < 0x10) {
             return (false);
         }
     }
@@ -444,7 +400,7 @@ addEDNS(MessageImpl* mimpl, MessageRenderer& renderer) {
     }
 
     // Render EDNS OPT RR
-    uint32_t extrcode_flags = ((mimpl->rcode_.getCode() & 0xff0) << 24);
+    uint32_t extrcode_flags = ((mimpl->rcode_->getCode() & 0xff0) << 24);
     if (mimpl->dnssec_ok_) {
         extrcode_flags |= 0x8000; // set DO bit
     }
@@ -465,6 +421,14 @@ Message::toWire(MessageRenderer& renderer) {
     if (impl_->mode_ != Message::RENDER) {
         isc_throw(InvalidMessageOperation,
                   "Message rendering attempted in non render mode");
+    }
+    if (impl_->rcode_ == NULL) {
+        isc_throw(InvalidMessageOperation,
+                  "Message rendering attempted without Rcode");
+    }
+    if (impl_->opcode_ == NULL) {
+        isc_throw(InvalidMessageOperation,
+                  "Message rendering attempted without Opcode");
     }
 
     // reserve room for the header
@@ -524,7 +488,7 @@ Message::toWire(MessageRenderer& renderer) {
 
     uint16_t codes_and_flags =
         (impl_->opcode_->getCode() << OPCODE_SHIFT) & OPCODE_MASK;
-    codes_and_flags |= (impl_->rcode_.getCode() & RCODE_MASK);
+    codes_and_flags |= (impl_->rcode_->getCode() & RCODE_MASK);
     codes_and_flags |= (impl_->flags_ & FLAG_MASK);
     renderer.writeUint16At(codes_and_flags, header_pos);
     header_pos += sizeof(uint16_t);
@@ -554,7 +518,7 @@ Message::parseHeader(InputBuffer& buffer) {
     impl_->qid_ = buffer.readUint16();
     const uint16_t codes_and_flags = buffer.readUint16();
     impl_->setOpcode(Opcode((codes_and_flags & OPCODE_MASK) >> OPCODE_SHIFT));
-    impl_->rcode_ = rcodes[(codes_and_flags & RCODE_MASK)];
+    impl_->setRcode(Rcode(codes_and_flags & RCODE_MASK));
     impl_->flags_ = (codes_and_flags & FLAG_MASK);
     impl_->counts_[Section::QUESTION().getCode()] = buffer.readUint16();
     impl_->counts_[Section::ANSWER().getCode()] = buffer.readUint16();
@@ -685,8 +649,8 @@ MessageImpl::parseSection(const Section& section, InputBuffer& buffer) {
             if (rrclass.getCode() > Message::DEFAULT_MAX_UDPSIZE) {
                 udpsize_ = rrclass.getCode();
             }
-            rcode_ = Rcode(((ttl.getValue() & EXTRCODE_MASK) >> 20) |
-                           rcode_.getCode());
+            setRcode(Rcode(((ttl.getValue() & EXTRCODE_MASK) >> 20) |
+                           rcode_->getCode()));
             continue;
         }
 
@@ -730,7 +694,7 @@ Message::toText() const {
 
     s += ";; ->>HEADER<<- opcode: " + impl_->opcode_->toText();
     // for simplicity we don't consider extended rcode (unlike BIND9)
-    s += ", status: " + impl_->rcode_.toText();
+    s += ", status: " + impl_->rcode_->toText();
     s += ", id: " + boost::lexical_cast<string>(impl_->qid_);
     s += "\n;; flags: ";
     if (getHeaderFlag(MessageFlag::QR()))
@@ -973,11 +937,6 @@ Message::endSection(const Section& section) const {
     return (RRsetIterator(
                 RRsetIteratorImpl(
                     impl_->rrsets_[sectionCodeToId(section)].end())));
-}
-
-ostream&
-operator<<(ostream& os, const Rcode& rcode) {
-    return (os << rcode.toText());
 }
 
 ostream&

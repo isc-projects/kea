@@ -69,6 +69,7 @@ libdns___la_SOURCES += message.h message.cc
 libdns___la_SOURCES += messagerenderer.h messagerenderer.cc
 libdns___la_SOURCES += name.h name.cc
 libdns___la_SOURCES += opcode.h opcode.cc
+libdns___la_SOURCES += rcode.h rcode.cc
 libdns___la_SOURCES += rdata.h rdata.cc
 libdns___la_SOURCES += rrclass.cc
 libdns___la_SOURCES += rrparamregistry.h

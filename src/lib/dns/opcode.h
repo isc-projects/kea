@@ -16,6 +16,8 @@
 
 /* $Id$ */
 
+#include <stdint.h>
+
 #include <ostream>
 
 #ifndef __OPCODE_H
@@ -186,7 +188,7 @@ Opcode::RESERVED15() {
 
 /// \brief Insert the \c Opcode as a string into stream.
 ///
-/// This method convert \c edns into a string and inserts it into the
+/// This method convert \c opcode into a string and inserts it into the
 /// output stream \c os.
 ///
 /// \param os A \c std::ostream object on which the insertion operation is
