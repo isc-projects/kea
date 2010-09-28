@@ -183,6 +183,7 @@ public:
 #endif
 
     void init();
+    void setOpcode(const Opcode& opcode);
     int parseQuestion(InputBuffer& buffer);
     int parseSection(const Section& section, InputBuffer& buffer);
 };
@@ -216,6 +217,12 @@ MessageImpl::init() {
     rrsets_[sectionCodeToId(Section::ANSWER())].clear();
     rrsets_[sectionCodeToId(Section::AUTHORITY())].clear();
     rrsets_[sectionCodeToId(Section::ADDITIONAL())].clear();
+}
+
+void
+MessageImpl::setOpcode(const Opcode& opcode) {
+    opcode_placeholder_ = opcode;
+    opcode_ = &opcode_placeholder_;
 }
 
 Message::Message(Mode mode) :
@@ -320,8 +327,7 @@ Message::setOpcode(const Opcode& opcode) {
         isc_throw(InvalidMessageOperation,
                   "setOpcode performed in non-render mode");
     }
-    impl_->opcode_placeholder_ = opcode;
-    impl_->opcode_ = &impl_->opcode_placeholder_;
+    impl_->setOpcode(opcode);
 }
 
 unsigned int
@@ -547,9 +553,7 @@ Message::parseHeader(InputBuffer& buffer) {
 
     impl_->qid_ = buffer.readUint16();
     const uint16_t codes_and_flags = buffer.readUint16();
-    impl_->opcode_placeholder_ =
-        Opcode((codes_and_flags & OPCODE_MASK) >> OPCODE_SHIFT);
-    impl_->opcode_ = &impl_->opcode_placeholder_;
+    impl_->setOpcode(Opcode((codes_and_flags & OPCODE_MASK) >> OPCODE_SHIFT));
     impl_->rcode_ = rcodes[(codes_and_flags & RCODE_MASK)];
     impl_->flags_ = (codes_and_flags & FLAG_MASK);
     impl_->counts_[Section::QUESTION().getCode()] = buffer.readUint16();
