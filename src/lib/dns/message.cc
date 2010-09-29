@@ -33,6 +33,8 @@
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
+#include <dns/opcode.h>
+#include <dns/rcode.h>
 #include <dns/question.h>
 #include <dns/rdataclass.h>
 #include <dns/rrclass.h>
@@ -62,11 +64,6 @@ const flags_t FLAG_RA = 0x0080;
 const flags_t FLAG_AD = 0x0020;
 const flags_t FLAG_CD = 0x0010;
 
-//
-// EDNS related constants
-//
-const uint32_t EXTRCODE_MASK = 0xff000000; 
-
 const unsigned int OPCODE_MASK = 0x7800;
 const unsigned int OPCODE_SHIFT = 11;
 const unsigned int RCODE_MASK = 0x000f;
@@ -74,139 +71,12 @@ const unsigned int FLAG_MASK = 0x8ff0;
 
 const unsigned int MESSAGE_REPLYPRESERVE = (FLAG_RD | FLAG_CD);
 
-const Rcode rcodes[] = {
-    Rcode::NOERROR(),
-    Rcode::FORMERR(),
-    Rcode::SERVFAIL(),
-    Rcode::NXDOMAIN(),
-    Rcode::NOTIMP(),
-    Rcode::REFUSED(),
-    Rcode::YXDOMAIN(),
-    Rcode::YXRRSET(),
-    Rcode::NXRRSET(),
-    Rcode::NOTAUTH(),
-    Rcode::NOTZONE(),
-    Rcode::RESERVED11(),
-    Rcode::RESERVED12(),
-    Rcode::RESERVED13(),
-    Rcode::RESERVED14(),
-    Rcode::RESERVED15(),
-    Rcode::BADVERS()
-};
-
-const char *rcodetext[] = {
-    "NOERROR",
-    "FORMERR",
-    "SERVFAIL",
-    "NXDOMAIN",
-    "NOTIMP",
-    "REFUSED",
-    "YXDOMAIN",
-    "YXRRSET",
-    "NXRRSET",
-    "NOTAUTH",
-    "NOTZONE",
-    "RESERVED11",
-    "RESERVED12",
-    "RESERVED13",
-    "RESERVED14",
-    "RESERVED15",
-    "BADVERS"
-};
-
-const Opcode* opcodes[] = {
-    &Opcode::QUERY(),
-    &Opcode::IQUERY(),
-    &Opcode::STATUS(),
-    &Opcode::RESERVED3(),
-    &Opcode::NOTIFY(),
-    &Opcode::UPDATE(),
-    &Opcode::RESERVED6(),
-    &Opcode::RESERVED7(),
-    &Opcode::RESERVED8(),
-    &Opcode::RESERVED9(),
-    &Opcode::RESERVED10(),
-    &Opcode::RESERVED11(),
-    &Opcode::RESERVED12(),
-    &Opcode::RESERVED13(),
-    &Opcode::RESERVED14(),
-    &Opcode::RESERVED15()
-};
-
-const char *opcodetext[] = {
-    "QUERY",
-    "IQUERY",
-    "STATUS",
-    "RESERVED3",
-    "NOTIFY",
-    "UPDATE",
-    "RESERVED6",
-    "RESERVED7",
-    "RESERVED8",
-    "RESERVED9",
-    "RESERVED10",
-    "RESERVED11",
-    "RESERVED12",
-    "RESERVED13",
-    "RESERVED14",
-    "RESERVED15"
-};
-
 const char *sectiontext[] = {
     "QUESTION",
     "ANSWER",
     "AUTHORITY",
     "ADDITIONAL"
 };
-}
-
-string
-Opcode::toText() const {
-    return (opcodetext[code_]);
-}
-
-namespace {
-// This diagram shows the wire-format representation of the 12-bit extended
-// form RCODEs and its relationship with implementation specific parameters.
-//
-//     0     3               11      15
-//    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//    |UNUSED | EXTENDED-RCODE | RCODE |
-//    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//                            <= EXTRCODE_SHIFT (4 bits)
-const unsigned int EXTRCODE_SHIFT = 4;
-}
-
-Rcode::Rcode(const uint16_t code) : code_(code) {
-    if (code_ > MAX_RCODE) {
-        isc_throw(OutOfRange, "Rcode is too large to construct: " << code_);
-    }
-}
-
-Rcode::Rcode(const uint8_t code, const uint8_t extended_code) :
-    code_((extended_code << EXTRCODE_SHIFT) | (code & RCODE_MASK))
-{
-    if (code > RCODE_MASK) {
-        isc_throw(OutOfRange,
-                  "Base Rcode is too large to construct: "
-                  << static_cast<unsigned int>(code));
-    }
-}
-
-uint8_t
-Rcode::getExtendedCode() const {
-    return (code_ >> EXTRCODE_SHIFT);
-}
-
-string
-Rcode::toText() const {
-    if (code_ < sizeof(rcodetext) / sizeof (const char *)) {
-        return (rcodetext[code_]);
-    }
-
-    ostringstream oss;
-    oss << code_;
-    return (oss.str());
 }
 
 namespace {
@@ -225,8 +95,16 @@ public:
     // for efficiency?
     Message::Mode mode_;
     qid_t qid_;
-    Rcode rcode_;
+
+    // We want to use NULL for [op,r]code_ to mean the code being not
+    // correctly parsed or set.  We store the real code object in
+    // xxcode_placeholder_ and have xxcode_ refer to it when the object
+    // is valid.
+    const Rcode* rcode_;
+    Rcode rcode_placeholder_;
     const Opcode* opcode_;
+    Opcode opcode_placeholder_;
+
     flags_t flags_;
 
     bool header_parsed_;
@@ -242,12 +120,16 @@ public:
 #endif
 
     void init();
+    void setOpcode(const Opcode& opcode);
+    void setRcode(const Rcode& rcode);
     int parseQuestion(InputBuffer& buffer);
     int parseSection(const Section& section, InputBuffer& buffer);
 };
 
 MessageImpl::MessageImpl(Message::Mode mode) :
-    mode_(mode), rcode_(Rcode::NOERROR())
+    mode_(mode),
+    rcode_placeholder_(Rcode(0)), // as a placeholder the value doesn't matter
+    opcode_placeholder_(Opcode(0)) // ditto
 {
     init();
 }
@@ -256,7 +138,7 @@ void
 MessageImpl::init() {
     flags_ = 0;
     qid_ = 0;
-    rcode_ = Rcode::NOERROR();  // XXX
+    rcode_ = NULL;
     opcode_ = NULL;
     edns_ = EDNSPtr();
 
@@ -269,6 +151,18 @@ MessageImpl::init() {
     rrsets_[sectionCodeToId(Section::ANSWER())].clear();
     rrsets_[sectionCodeToId(Section::AUTHORITY())].clear();
     rrsets_[sectionCodeToId(Section::ADDITIONAL())].clear();
+}
+
+void
+MessageImpl::setOpcode(const Opcode& opcode) {
+    opcode_placeholder_ = opcode;
+    opcode_ = &opcode_placeholder_;
+}
+
+void
+MessageImpl::setRcode(const Rcode& rcode) {
+    rcode_placeholder_ = rcode;
+    rcode_ = &rcode_placeholder_;
 }
 
 Message::Message(Mode mode) :
@@ -318,7 +212,10 @@ Message::setQid(qid_t qid) {
 
 const Rcode&
 Message::getRcode() const {
-    return (impl_->rcode_);
+    if (impl_->rcode_ == NULL) {
+        isc_throw(InvalidMessageOperation, "getRcode attempted before set");
+    }
+    return (*impl_->rcode_);
 }
 
 void
@@ -327,11 +224,14 @@ Message::setRcode(const Rcode& rcode) {
         isc_throw(InvalidMessageOperation,
                   "setRcode performed in non-render mode");
     }
-    impl_->rcode_ = rcode;
+    impl_->setRcode(rcode);
 }
 
 const Opcode&
 Message::getOpcode() const {
+    if (impl_->opcode_ == NULL) {
+        isc_throw(InvalidMessageOperation, "getOpcode attempted before set");
+    }
     return (*impl_->opcode_);
 }
 
@@ -341,7 +241,7 @@ Message::setOpcode(const Opcode& opcode) {
         isc_throw(InvalidMessageOperation,
                   "setOpcode performed in non-render mode");
     }
-    impl_->opcode_ = &opcode;
+    impl_->setOpcode(opcode);
 }
 
 ConstEDNSPtr
@@ -446,6 +346,14 @@ Message::toWire(MessageRenderer& renderer) {
         isc_throw(InvalidMessageOperation,
                   "Message rendering attempted in non render mode");
     }
+    if (impl_->rcode_ == NULL) {
+        isc_throw(InvalidMessageOperation,
+                  "Message rendering attempted without Rcode set");
+    }
+    if (impl_->opcode_ == NULL) {
+        isc_throw(InvalidMessageOperation,
+                  "Message rendering attempted without Opcode set");
+    }
 
     // reserve room for the header
     renderer.skip(HEADERLEN);
@@ -484,12 +392,12 @@ Message::toWire(MessageRenderer& renderer) {
     // no EDNS has been set we generate a temporary local EDNS and use it.
     if (!renderer.isTruncated()) {
         ConstEDNSPtr local_edns = impl_->edns_;
-        if (!local_edns && impl_->rcode_.getExtendedCode() != 0) {
+        if (!local_edns && impl_->rcode_->getExtendedCode() != 0) {
             local_edns = ConstEDNSPtr(new EDNS());
         }
         if (local_edns) {
             arcount += local_edns->toWire(renderer,
-                                          impl_->rcode_.getExtendedCode());
+                                          impl_->rcode_->getExtendedCode());
         }
     }
  
@@ -512,7 +420,7 @@ Message::toWire(MessageRenderer& renderer) {
 
     uint16_t codes_and_flags =
         (impl_->opcode_->getCode() << OPCODE_SHIFT) & OPCODE_MASK;
-    codes_and_flags |= (impl_->rcode_.getCode() & RCODE_MASK);
+    codes_and_flags |= (impl_->rcode_->getCode() & RCODE_MASK);
     codes_and_flags |= (impl_->flags_ & FLAG_MASK);
     renderer.writeUint16At(codes_and_flags, header_pos);
     header_pos += sizeof(uint16_t);
@@ -541,8 +449,8 @@ Message::parseHeader(InputBuffer& buffer) {
 
     impl_->qid_ = buffer.readUint16();
     const uint16_t codes_and_flags = buffer.readUint16();
-    impl_->opcode_ = opcodes[((codes_and_flags & OPCODE_MASK) >> OPCODE_SHIFT)];
-    impl_->rcode_ = rcodes[(codes_and_flags & RCODE_MASK)];
+    impl_->setOpcode(Opcode((codes_and_flags & OPCODE_MASK) >> OPCODE_SHIFT));
+    impl_->setRcode(Rcode(codes_and_flags & RCODE_MASK));
     impl_->flags_ = (codes_and_flags & FLAG_MASK);
     impl_->counts_[Section::QUESTION().getCode()] = buffer.readUint16();
     impl_->counts_[Section::ANSWER().getCode()] = buffer.readUint16();
@@ -677,7 +585,7 @@ MessageImpl::parseSection(const Section& section, InputBuffer& buffer) {
             uint8_t extended_rcode;
             edns_ = ConstEDNSPtr(createEDNSFromRR(name, rrclass, rrtype, ttl,
                                                   *rdata, extended_rcode));
-            rcode_ = Rcode(rcode_.getCode(), extended_rcode);
+            setRcode(Rcode(rcode_->getCode(), extended_rcode));
             continue;
         } else {
             vector<RRsetPtr>::iterator it =
@@ -718,11 +626,20 @@ struct SectionFormatter {
 
 string
 Message::toText() const {
+    if (impl_->rcode_ == NULL) {
+        isc_throw(InvalidMessageOperation,
+                  "Message::toText() attempted without Rcode set");
+    }
+    if (impl_->opcode_ == NULL) {
+        isc_throw(InvalidMessageOperation,
+                  "Message::toText() attempted without Opcode set");
+    }
+
     string s;
 
     s += ";; ->>HEADER<<- opcode: " + impl_->opcode_->toText();
     // for simplicity we don't consider extended rcode (unlike BIND9)
-    s += ", status: " + impl_->rcode_.toText();
+    s += ", status: " + impl_->rcode_->toText();
     s += ", id: " + boost::lexical_cast<string>(impl_->qid_);
     s += "\n;; flags: ";
     if (getHeaderFlag(MessageFlag::QR()))
@@ -945,16 +862,6 @@ Message::endSection(const Section& section) const {
     return (RRsetIterator(
                 RRsetIteratorImpl(
                     impl_->rrsets_[sectionCodeToId(section)].end())));
-}
-
-ostream&
-operator<<(ostream& os, const Opcode& opcode) {
-    return (os << opcode.toText());
-}
-
-ostream&
-operator<<(ostream& os, const Rcode& rcode) {
-    return (os << rcode.toText());
 }
 
 ostream&

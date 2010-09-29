@@ -24,6 +24,7 @@
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
+#include <dns/rcode.h>
 #include <dns/rdataclass.h>
 #include <dns/rrclass.h>
 #include <dns/rrttl.h>
