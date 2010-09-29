@@ -1,3 +1,8 @@
+  101.	[func]		jinmei
+	src/lib/dns: Completed Opcode and Rcode implementation with more
+	tests and documentation.  API is mostly the same but the
+	validation was a bit tightened. (Trac #351, svn r3056)
+
   100.  [func]      Michal Vaner
 	Python processes: support naming of python processes so
 	they're not all called python3.
