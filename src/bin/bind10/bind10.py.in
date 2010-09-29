@@ -63,6 +63,7 @@ import pwd
 import posix
 
 import isc.cc
+from isc.net.addr import IPAddr
 import isc.utils.process
 
 # Assign this process some longer name
@@ -179,31 +180,6 @@ class ProcessInfo:
 
     def respawn(self):
         self._spawn()
-
-class IPAddr:
-    """Stores an IPv4 or IPv6 address."""
-    family = None
-    addr = None
-
-    def __init__(self, addr):
-        try:
-            a = socket.inet_pton(socket.AF_INET, addr)
-            self.family = socket.AF_INET
-            self.addr = a
-            return
-        except:
-            pass
-
-        try:
-            a = socket.inet_pton(socket.AF_INET6, addr)
-            self.family = socket.AF_INET6
-            self.addr = a
-            return
-        except Exception as e:
-            raise e
-    
-    def __str__(self):
-        return socket.inet_ntop(self.family, self.addr)
 
 class BoB:
     """Boss of BIND class."""
