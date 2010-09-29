@@ -17,7 +17,7 @@ import threading
 import socket
 import select
 
-class ServeMixIn():
+class ServeMixIn:
     '''Mix-In class to override the function serve_forever()
     and shutdown() in class socketserver. 
     '''

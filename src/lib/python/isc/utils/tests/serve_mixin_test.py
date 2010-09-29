@@ -14,13 +14,51 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 import unittest
-import isc.utils.serve_mixin
+from isc.utils.serve_mixin import ServeMixIn
+import socketserver
+import threading
+import socket
+import time
+
+class MyHandler(socketserver.BaseRequestHandler):
+    def handle(self):
+        data = self.request.recv(20)
+        self.request.send(data)
+
+class MyServer(ServeMixIn, 
+               socketserver.ThreadingMixIn,
+               socketserver.TCPServer):
+    pass
+
+
+def send_and_get_reply(ip, port, msg):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect((ip, port))
+    sock.send(msg)
+    response = sock.recv(20)
+    sock.close()
+    return response
 
 class TestServeMixIn(unittest.TestCase):
     def test_serve_forever(self):
-        pass
+        # use port 0 to select an arbitrary unused port.
+        server = MyServer(('localhost', 0), MyHandler)
+        ip, port = server.server_address
+        server_thread = threading.Thread(target=server.serve_forever)
+        server_thread.setDaemon(True)
+        server_thread.start()
 
-   if __name__== "__main__":
+        msg = b'senddata'
+        self.assertEqual(msg, send_and_get_reply(ip, port, msg))
+        self.assertTrue(server_thread.is_alive())
+
+        # Now shutdown the server
+        server.shutdown()
+        # Sleep a while, make sure the thread has finished.
+        time.sleep(0.1)
+        self.assertFalse(server_thread.is_alive())
+
+if __name__== "__main__":
     unittest.main()
 
 
