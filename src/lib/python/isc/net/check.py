@@ -23,7 +23,14 @@ def port_check(port):
     the port as int. If it is not a valid port (the string doesn't contain
     number or it is not in the valid range), it raises ValueError.
     """
-    pass
+    inted = int(port)
+    if inted < 0:
+        raise ValueError("Port value " + str(inted) +
+            " too small, allower range is 0-65535")
+    if inted > 65535:
+        raise ValueError("Port value " + str(inted) +
+            " too large, allowed range is 0-65535")
+    return inted
 
 def addr_check(addr):
     """
