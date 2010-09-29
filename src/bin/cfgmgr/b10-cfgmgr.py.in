@@ -21,8 +21,11 @@ import sys; sys.path.append ('@@PYTHONPATH@@')
 
 from isc.config.cfgmgr import ConfigManager, ConfigManagerDataReadError
 from isc.cc import SessionError
+import isc.utils.process
 import signal
 import os
+
+isc.utils.process.rename()
 
 # If B10_FROM_SOURCE is set in the environment, we use data files
 # from a directory relative to that, otherwise we use the ones

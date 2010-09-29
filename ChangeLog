@@ -1,3 +1,14 @@
+  100.  [func]      Michal Vaner
+	Python processes: support naming of python processes so
+	they're not all called python3.
+	(Trac #322, svn r3052)
+
+  99.	[func]*		jinmei
+	Introduced a separate EDNS class to encapsulate EDNS related
+	information more cleanly.  The related APIs are changed a bit,
+	although it won't affect most of higher level applications.
+	(Trac #311, svn r3020)
+
   98.	[build]		jinmei
 	The ./configure script now tries to search some common include
 	paths for boost header files to minimize the need for explicit
