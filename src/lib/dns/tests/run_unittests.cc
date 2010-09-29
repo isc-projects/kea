@@ -21,7 +21,8 @@
 int
 main(int argc, char* argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
-    isc::UnitTestUtil::addDataPath(TEST_DATA_DIR);
+    isc::UnitTestUtil::addDataPath(TEST_DATA_SRCDIR);
+    isc::UnitTestUtil::addDataPath(TEST_DATA_BUILDDIR);
 
     return (RUN_ALL_TESTS());
 }

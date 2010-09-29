@@ -11,6 +11,7 @@ pydnspp_la_LDFLAGS = $(PYTHON_LDFLAGS)
 # directly included from source files, so these don't have their own
 # rules
 EXTRA_DIST = pydnspp_common.h
+EXTRA_DIST += edns_python.cc
 EXTRA_DIST += messagerenderer_python.cc
 EXTRA_DIST += message_python.cc
 EXTRA_DIST += rrclass_python.cc

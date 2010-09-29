@@ -18,9 +18,13 @@
 import sys; sys.path.append ('@@PYTHONPATH@@')
 import re, getopt
 import isc.datasrc
+import isc.utils.process
 from isc.datasrc.master import MasterFile
 import time
 import os
+
+isc.utils.process.rename()
+
 #########################################################################
 # usage: print usage note and exit
 #########################################################################

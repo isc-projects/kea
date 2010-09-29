@@ -1,6 +1,9 @@
+SUBDIRS = testdata .
+
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
-AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(srcdir)/testdata\"
+AM_CPPFLAGS += -DTEST_DATA_SRCDIR=\"$(srcdir)/testdata\"
+AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(top_builddir)/src/lib/dns/tests/testdata\"
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 if USE_STATIC_LINK
@@ -14,6 +17,7 @@ if HAVE_GTEST
 TESTS += run_unittests
 run_unittests_SOURCES = unittest_util.h unittest_util.cc
 run_unittests_SOURCES += buffer_unittest.cc name_unittest.cc
+run_unittests_SOURCES += edns_unittest.cc
 run_unittests_SOURCES += messagerenderer_unittest.cc
 run_unittests_SOURCES += rrclass_unittest.cc rrtype_unittest.cc
 run_unittests_SOURCES += rrttl_unittest.cc
@@ -55,6 +59,8 @@ noinst_PROGRAMS = $(TESTS)
 # NOTE: keep this in sync with real file listing
 # so is included in tarball
 EXTRA_DIST = testdata/gen-wiredata.py.in
+EXTRA_DIST += testdata/edns_toWire1.spec testdata/edns_toWire2.spec
+EXTRA_DIST += testdata/edns_toWire3.spec testdata/edns_toWire4.spec
 EXTRA_DIST += testdata/message_fromWire1
 EXTRA_DIST += testdata/message_fromWire10
 EXTRA_DIST += testdata/message_fromWire10.spec
