@@ -42,6 +42,9 @@ class MyZonemgrRefresh(ZonemgrRefresh):
     def __init__(self):
         self._cc = MySession()
         self._db_file = "initdb.file"
+        self._is_shut_down = threading.Event()
+        self._read_sock, self._write_sock = socket.socketpair()
+        self._master_socket, self._slave_socket = socket.socketpair()
         self._zonemgr_refresh_info = { 
          ('sd.cn.', 'IN'): {
          'last_refresh_time': 1280474398.822142,
@@ -54,11 +57,11 @@ class MyZonemgrRefresh(ZonemgrRefresh):
          'zone_soa_rdata': 'a.dns.cn. root.cnnic.cn. 2009073112 7200 3600 2419200 21600', 
          'zone_state': 0}
         } 
-
+        
 class TestZonemgrRefresh(unittest.TestCase):
     def setUp(self):
-        self.stdout_backup = sys.stdout
-        sys.stdout = open(os.devnull, 'w')
+        self.stderr_backup = sys.stderr
+        sys.stderr = open(os.devnull, 'w')
         self.zone_refresh = MyZonemgrRefresh()
 
     def test_random_jitter(self):
@@ -387,24 +390,34 @@ class TestZonemgrRefresh(unittest.TestCase):
                     'zone_soa_rdata': 'a.dns.cn. root.cnnic.cn. 2009073105 7200 3600 2419200 21600', 
                     'zone_state': ZONE_OK}
                 }
-        master_socket, slave_socket = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.zone_refresh._socket = master_socket 
-        master_socket.close()
-        self.assertRaises(ZonemgrException, self.zone_refresh.run_timer)
-
-        self.zone_refresh._socket = slave_socket
+        self.zone_refresh._check_sock = self.zone_refresh._master_socket 
         listener = threading.Thread(target = self.zone_refresh.run_timer, args = ())
         listener.setDaemon(True)
         listener.start()
         time.sleep(1)
-
+        self.zone_refresh.shutdown()
+        self.assertFalse(listener.is_alive())
+        # After running timer, the zone's state should become "refreshing".
         zone_state = self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_state"]
         self.assertTrue("refresh_timeout" in self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN].keys())
         self.assertTrue(zone_state == ZONE_REFRESHING)
 
+        # test select.error by using bad file descriptor 
+        bad_file_descriptor = self.zone_refresh._master_socket.fileno()
+        self.zone_refresh._check_sock = bad_file_descriptor  
+        self.zone_refresh._master_socket.close()
+        self.assertRaises(None, self.zone_refresh.run_timer()) 
+
+    def test_shutdown(self):
+        self.zone_refresh._check_sock = self.zone_refresh._master_socket 
+        listener = threading.Thread(target=self.zone_refresh.run_timer)
+        listener.start()
+        self.assertTrue(listener.is_alive())
+        self.zone_refresh.shutdown()
+        self.assertFalse(listener.is_alive())
 
     def tearDown(self):
-        sys.stdout = self.stdout_backup
+        sys.stderr= self.stderr_backup
 
 
 class MyCCSession():
