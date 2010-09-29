@@ -17,6 +17,9 @@
 Checking and parsing of ports and IP addresses.
 """
 
+from isc.net.addr import IPAddr
+import socket
+
 def port_check(port):
     """
     Takes a port as an int or string and checks if it is valid. It returns
@@ -38,4 +41,8 @@ def addr_check(addr):
     the IPAddr object. It raises ValueError if the passed string is not
     valid IP address.
     """
-    pass
+    try:
+        return IPAddr(addr)
+    except socket.error:
+        raise ValueError('Value ' + addr +
+            ' is not valid IPv4 or IPv6 address')
