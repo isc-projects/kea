@@ -159,7 +159,7 @@ PyTypeObject opcode_type = {
 
 int
 Opcode_init(s_Opcode* const self, PyObject* args) {
-    uint16_t code = 0;
+    uint8_t code = 0;
     if (PyArg_ParseTuple(args, "b", &code)) {
         try {
             self->opcode = new Opcode(code);
