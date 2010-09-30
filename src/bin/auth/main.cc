@@ -177,8 +177,9 @@ main(int argc, char* argv[]) {
         auth_server->setVerbose(verbose_mode);
         cout << "[b10-auth] Server created." << endl;
 
-        CheckinProvider* checkin = auth_server->getCheckinProvider();
-        DNSProvider* process = auth_server->getDNSProvider();
+        IOCallback* checkin = auth_server->getCheckinProvider();
+        DNSLookup* lookup = auth_server->getDNSLookupProvider();
+        DNSAnswer* answer = auth_server->getDNSAnswerProvider();
 
         if (address != NULL) {
             // XXX: we can only specify at most one explicit address.
@@ -188,11 +189,12 @@ main(int argc, char* argv[]) {
             // is a short term workaround until we support dynamic listening
             // port allocation.
             io_service = new IOService(*port, *address,
-                                                 checkin, process);
+                                       checkin, lookup, answer);
         } else {
             io_service = new IOService(*port, use_ipv4, use_ipv6,
-                                                 checkin, process);
+                                       checkin, lookup, answer);
         }
+        auth_server->setIOService(*io_service);
         cout << "[b10-auth] IOService created." << endl;
 
         cc_session = new Session(io_service->get_io_service());

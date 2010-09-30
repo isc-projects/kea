@@ -73,19 +73,25 @@ private:
 //
 // Asynchronous TCP server coroutine
 //
-class TCPServer : public coroutine {
+class TCPServer : public virtual BasicServer, public virtual coroutine {
 public:
     explicit TCPServer(asio::io_service& io_service,
                        const asio::ip::address& addr, const uint16_t port, 
-                       CheckinProvider* checkin = NULL,
-                       DNSProvider* process = NULL);
+                       const IOCallback* checkin = NULL,
+                       const DNSLookup* lookup = NULL,
+                       const DNSAnswer* answer = NULL);
 
     void operator()(asio::error_code ec = asio::error_code(),
                     size_t length = 0);
 
+    void doLookup();
+    void resume();
+
 private:
     enum { MAX_LENGTH = 65535 };
     static const size_t TCP_MESSAGE_LENGTHSIZE = 2;
+
+    asio::io_service& io_;
 
     // Class member variables which are dynamic, and changes to which
     // need to accessible from both sides of a coroutine fork or from
@@ -95,16 +101,22 @@ private:
     boost::shared_ptr<asio::ip::tcp::acceptor> acceptor_;
     boost::shared_ptr<asio::ip::tcp::socket> socket_;
     boost::shared_ptr<isc::dns::MessageRenderer> renderer_;
+    boost::shared_ptr<isc::dns::OutputBuffer> lenbuf_;
+    boost::shared_ptr<isc::dns::OutputBuffer> respbuf_;
+    boost::shared_ptr<asiolink::IOEndpoint> peer_;
+    boost::shared_ptr<asiolink::IOSocket> iosock_;
+    boost::shared_ptr<asiolink::IOMessage> io_message_;
     boost::shared_ptr<char> data_;
 
     // State information that is entirely internal to a given instance
     // of the coroutine can be declared here.
-    isc::dns::OutputBuffer respbuf_;
-    isc::dns::OutputBuffer lenbuf_;
+    size_t bytes_;
+    bool done_;
 
     // Callbacks
-    const CheckinProvider* checkin_callback_;
-    const DNSProvider* dns_callback_;
+    const IOCallback* checkin_callback_;
+    const DNSLookup* lookup_callback_;
+    const DNSAnswer* answer_callback_;
 };
 
 }

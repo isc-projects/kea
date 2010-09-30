@@ -61,41 +61,78 @@ private:
     RecursorImpl(const RecursorImpl& source);
     RecursorImpl& operator=(const RecursorImpl& source);
 public:
-    RecursorImpl();
-    bool processNormalQuery(const IOMessage& io_message, Message& message,
-                            MessageRenderer& response_renderer);
+    RecursorImpl(asiolink::IOService& io_service);
+    bool processNormalQuery(const IOMessage& io_message,
+                            const Question& question, Message& message,
+                            MessageRenderer& renderer,
+                            BasicServer* server);
     ModuleCCSession* config_session_;
 
     bool verbose_mode_;
+
+    /// Object to handle upstream queries
+    IOQuery ioquery_;
 
     /// Currently non-configurable, but will be.
     static const uint16_t DEFAULT_LOCAL_UDPSIZE = 4096;
 };
 
-RecursorImpl::RecursorImpl() : config_session_(NULL), verbose_mode_(false) {}
+RecursorImpl::RecursorImpl(asiolink::IOService& io_service) :
+    config_session_(NULL), verbose_mode_(false), ioquery_(io_service)
+{}
 
-// This is a derived class of \c DNSProvider, to serve as a
+// This is a derived class of \c DNSLookup, to serve as a
 // callback in the asiolink module.  It calls
 // Recursor::processMessage() on a single DNS message.
-class MessageProcessor : public DNSProvider {
+class MessageLookup : public DNSLookup {
 public:
-    MessageProcessor(Recursor* srv) : server_(srv) {}
-    virtual bool operator()(const IOMessage& io_message,
+    MessageLookup(Recursor* srv) : server_(srv) {}
+    virtual void operator()(const IOMessage& io_message,
                             isc::dns::Message& dns_message,
-                            isc::dns::MessageRenderer& renderer) const {
-        return (server_->processMessage(io_message, dns_message, renderer));
+                            isc::dns::MessageRenderer& renderer,
+                            BasicServer* server, bool& complete) const
+    {
+        server_->processMessage(io_message, dns_message, renderer,
+                                server, complete);
     }
 private:
     Recursor* server_;
 };
 
-// This is a derived class of \c CheckinProvider, to serve
+// This is a derived class of \c DNSAnswer, to serve as a
+// callback in the asiolink module.  It takes a completed
+// set of answer data from the DNS lookup and assembles it
+// into a wire-format response.
+class MessageAnswer : public DNSAnswer {
+public:
+    MessageAnswer(Recursor* srv) : server_(srv) {}
+    virtual void operator()(const IOMessage& io_message,
+                            isc::dns::Message& message,
+                            isc::dns::MessageRenderer& renderer) const
+    {
+        if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
+            renderer.setLengthLimit(message.getUDPSize());
+        } else {
+            renderer.setLengthLimit(65535);
+        }
+        message.toWire(renderer);
+        if (server_->getVerbose()) {
+            cerr << "[b10-recurse] sending a response (" << renderer.getLength()
+                 << " bytes):\n" << message.toText() << endl;
+        }
+    }
+
+private:
+    Recursor* server_;
+};
+
+// This is a derived class of \c IOCallback, to serve
 // as a callback in the asiolink module.  It checks for queued
 // configuration messages, and executes them if found.
-class ConfigChecker : public CheckinProvider {
+class ConfigChecker : public IOCallback {
 public:
     ConfigChecker(Recursor* srv) : server_(srv) {}
-    virtual void operator()(void) const {
+    virtual void operator()(const IOMessage& io_message UNUSED_PARAM) const {
         if (server_->configSession()->hasQueuedMsgs()) {
             server_->configSession()->checkCommand();
         }
@@ -104,16 +141,18 @@ private:
     Recursor* server_;
 };
 
-Recursor::Recursor() :
-    impl_(new RecursorImpl()),
-    checkin_provider_(new ConfigChecker(this)),
-    dns_provider_(new MessageProcessor(this))
+Recursor::Recursor(asiolink::IOService& io_service) :
+    impl_(new RecursorImpl(io_service)),
+    checkin_(new ConfigChecker(this)),
+    dns_lookup_(new MessageLookup(this)),
+    dns_answer_(new MessageAnswer(this))
 {}
 
 Recursor::~Recursor() {
     delete impl_;
-    delete checkin_provider_;
-    delete dns_provider_;
+    delete checkin_;
+    delete dns_lookup_;
+    delete dns_answer_;
 }
 
 namespace {
@@ -187,9 +226,10 @@ Recursor::configSession() const {
     return (impl_->config_session_);
 }
 
-bool
+void
 Recursor::processMessage(const IOMessage& io_message, Message& message,
-                        MessageRenderer& response_renderer)
+                        MessageRenderer& renderer,
+                        BasicServer* server, bool& complete)
 {
     InputBuffer request_buffer(io_message.getData(), io_message.getDataSize());
 
@@ -204,10 +244,17 @@ Recursor::processMessage(const IOMessage& io_message, Message& message,
                 cerr << "[b10-recurse] received unexpected response, ignoring"
                      << endl;
             }
-            return (false);
+            complete = false;
+            server->resume();
+            return;
         }
     } catch (const Exception& ex) {
-        return (false);
+        if (impl_->verbose_mode_) {
+            cerr << "[b10-recurse] DNS packet exception: " << ex.what() << endl;
+        }
+        complete = false;
+        server->resume();
+        return;
     }
 
     // Parse the message.  On failure, return an appropriate error.
@@ -218,16 +265,20 @@ Recursor::processMessage(const IOMessage& io_message, Message& message,
             cerr << "[b10-recurse] returning " <<  error.getRcode().toText()
                  << ": " << error.what() << endl;
         }
-        makeErrorMessage(message, response_renderer, error.getRcode(),
+        makeErrorMessage(message, renderer, error.getRcode(),
                          impl_->verbose_mode_);
-        return (true);
+        complete = true;
+        server->resume();
+        return;
     } catch (const Exception& ex) {
         if (impl_->verbose_mode_) {
             cerr << "[b10-recurse] returning SERVFAIL: " << ex.what() << endl;
         }
-        makeErrorMessage(message, response_renderer, Rcode::SERVFAIL(),
+        makeErrorMessage(message, renderer, Rcode::SERVFAIL(),
                          impl_->verbose_mode_);
-        return (true);
+        complete = true;
+        server->resume();
+        return;
     } // other exceptions will be handled at a higher layer.
 
     if (impl_->verbose_mode_) {
@@ -237,79 +288,58 @@ Recursor::processMessage(const IOMessage& io_message, Message& message,
 
     // Perform further protocol-level validation.
     if (message.getOpcode() == Opcode::NOTIFY()) {
-        makeErrorMessage(message, response_renderer, Rcode::NOTAUTH(),
+        makeErrorMessage(message, renderer, Rcode::NOTAUTH(),
                          impl_->verbose_mode_);
-        return (true);
+        complete = true;
     } else if (message.getOpcode() != Opcode::QUERY()) {
         if (impl_->verbose_mode_) {
             cerr << "[b10-recurse] unsupported opcode" << endl;
         }
-        makeErrorMessage(message, response_renderer, Rcode::NOTIMP(),
+        makeErrorMessage(message, renderer, Rcode::NOTIMP(),
                          impl_->verbose_mode_);
-        return (true);
-    }
-
-    if (message.getRRCount(Section::QUESTION()) != 1) {
-        makeErrorMessage(message, response_renderer, Rcode::FORMERR(),
+        complete = true;
+    } else if (message.getRRCount(Section::QUESTION()) != 1) {
+        makeErrorMessage(message, renderer, Rcode::FORMERR(),
                          impl_->verbose_mode_);
-        return (true);
-    }
-
-    ConstQuestionPtr question = *message.beginQuestion();
-    const RRType &qtype = question->getType();
-    if (qtype == RRType::AXFR()) {
-        if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
-            makeErrorMessage(message, response_renderer, Rcode::FORMERR(),
-                             impl_->verbose_mode_);
-        } else {
-            makeErrorMessage(message, response_renderer, Rcode::NOTIMP(),
-                             impl_->verbose_mode_);
-        }
-        return (true);
-    } else if (qtype == RRType::IXFR()) {
-        makeErrorMessage(message, response_renderer, Rcode::NOTIMP(),
-                         impl_->verbose_mode_);
-        return (true);
+        complete = true;
     } else {
-        return (impl_->processNormalQuery(io_message, message,
-                                          response_renderer));
+        ConstQuestionPtr question = *message.beginQuestion();
+        const RRType &qtype = question->getType();
+        if (qtype == RRType::AXFR()) {
+            if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
+                makeErrorMessage(message, renderer, Rcode::FORMERR(),
+                                 impl_->verbose_mode_);
+            } else {
+                makeErrorMessage(message, renderer, Rcode::NOTIMP(),
+                                 impl_->verbose_mode_);
+            }
+            complete = true;
+        } else if (qtype == RRType::IXFR()) {
+            makeErrorMessage(message, renderer, Rcode::NOTIMP(),
+                         impl_->verbose_mode_);
+            complete = true;
+        } else {
+            complete = impl_->processNormalQuery(io_message, *question,
+                                                 message, renderer, server);
+        }
     }
+
+    server->resume();
 }
 
 bool
-RecursorImpl::processNormalQuery(const IOMessage& io_message, Message& message,
-                                MessageRenderer& response_renderer)
+RecursorImpl::processNormalQuery(const IOMessage& io_message,
+                                 const Question& question, Message& message,
+                                 MessageRenderer& renderer,
+                                 BasicServer* server)
 {
     const bool dnssec_ok = message.isDNSSECSupported();
-    const uint16_t remote_bufsize = message.getUDPSize();
 
     message.makeResponse();
     message.setRcode(Rcode::NOERROR());
     message.setDNSSECSupported(dnssec_ok);
     message.setUDPSize(RecursorImpl::DEFAULT_LOCAL_UDPSIZE);
-
-    try {
-        // HERE: initiate forward query, construct a reply
-    } catch (const Exception& ex) {
-        if (verbose_mode_) {
-            cerr << "[b10-recurse] Internal error, returning SERVFAIL: " <<
-                ex.what() << endl;
-        }
-        makeErrorMessage(message, response_renderer, Rcode::SERVFAIL(),
-                         verbose_mode_);
-        return (true);
-    }
-
-    const bool udp_buffer =
-        (io_message.getSocket().getProtocol() == IPPROTO_UDP);
-    response_renderer.setLengthLimit(udp_buffer ? remote_bufsize : 65535);
-    message.toWire(response_renderer);
-    if (verbose_mode_) {
-        cerr << "[b10-recurse] sending a response ("
-             << response_renderer.getLength()
-             << " bytes):\n" << message.toText() << endl;
-    }
-
+    ioquery_.sendQuery(io_message, question, renderer, server);
     return (true);
 }
 

@@ -22,6 +22,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+#include <boost/bind.hpp>
+
 #include <asio.hpp>
 #include <boost/lexical_cast.hpp>
 
@@ -75,8 +77,12 @@ UDPSocket::getProtocol() const {
 
 UDPServer::UDPServer(io_service& io_service,
                      const ip::address& addr, const uint16_t port,
-                     CheckinProvider* checkin, DNSProvider* process) :
-    respbuf_(0), checkin_callback_(checkin), dns_callback_(process)
+                     IOCallback* checkin,
+                     DNSLookup* lookup,
+                     DNSAnswer* answer) :
+    io_(io_service), respbuf_(0), done_(false),
+    checkin_callback_(checkin), lookup_callback_(lookup),
+    answer_callback_(answer)
 {
     // Wwe use a different instantiation for v4,
     // otherwise asio will bind to both v4 and v6
@@ -91,7 +97,6 @@ UDPServer::UDPServer(io_service& io_service,
 
 void
 UDPServer::operator()(error_code ec, size_t length) {
-    bool done = false;
     CORO_REENTER (this) {
         do {
             // Instantiate the data buffer and endpoint that will
@@ -105,8 +110,13 @@ UDPServer::operator()(error_code ec, size_t length) {
             } while (ec || length == 0);
 
             bytes_ = length;
-            CORO_FORK UDPServer(*this)();
-        } while (is_child());
+            CORO_FORK io_.post(UDPServer(*this));
+        } while (is_parent());
+
+        // Store the io_message data.
+        peer_.reset(new UDPEndpoint(*sender_));
+        iosock_.reset(new UDPSocket(*socket_));
+        io_message_.reset(new IOMessage(data_.get(), bytes_, *iosock_, *peer_));
 
         // Perform any necessary operations prior to processing an incoming
         // packet (e.g., checking for queued configuration messages).
@@ -115,11 +125,11 @@ UDPServer::operator()(error_code ec, size_t length) {
         // every single incoming packet; we may wish to throttle it somehow
         // in the future.)
         if (checkin_callback_ != NULL) {
-            (*checkin_callback_)();
+            (*checkin_callback_)(*io_message_);
         }
 
         // Stop here if we don't have a DNS callback function
-        if (dns_callback_ == NULL) {
+        if (lookup_callback_ == NULL) {
             CORO_YIELD return;
         }
 
@@ -127,26 +137,70 @@ UDPServer::operator()(error_code ec, size_t length) {
         // asynchronous send call.
         respbuf_.clear();
         renderer_.reset(new MessageRenderer(respbuf_));
+        message_.reset(new Message(Message::PARSE));
 
-        // Process the DNS message.  (Must be done in a separate scope 
-        // because CORO_REENTER is implemented with a switch statement,
-        // and thus normal inline variable declaration isn't allowed.)
-        {
-            UDPEndpoint peer(*sender_);
-            UDPSocket iosock(*socket_);
-            IOMessage io_message(data_.get(), bytes_, iosock, peer);
-            Message message(Message::PARSE);
-            done = (*dns_callback_)(io_message, message, *renderer_);
-        }
+        CORO_YIELD io_.post(LookupHandler<UDPServer>(*this));
 
-        if (!done) {
+        if (!done_) {
             CORO_YIELD return;
         }
 
+        (*answer_callback_)(*io_message_, *message_, *renderer_);
         CORO_YIELD socket_->async_send_to(buffer(respbuf_.getData(),
                                                  respbuf_.getLength()),
                                      *sender_, *this);
     }
+}
+
+void
+UDPServer::doLookup() {
+    (*lookup_callback_)(*io_message_, *message_, *renderer_, this, done_);
+}
+
+void
+UDPServer::resume() {
+    io_.post(*this);
+}
+
+UDPQuery::UDPQuery(io_service& io_service, const IOMessage& io_message,
+                   const Question& q, const ip::address& addr,
+                   MessageRenderer& renderer, BasicServer* caller) :
+    question_(q),
+    data_((char*) renderer.getData()), datalen_(renderer.getLength()),
+    msgbuf_(512), caller_(caller)
+{
+    udp proto = addr.is_v4() ? udp::v4() : udp::v6();
+    socket_.reset(new udp::socket(io_service, proto));
+    server_ = udp::endpoint(addr, 53);
+}
+
+void
+UDPQuery::operator()(error_code ec, size_t length) {
+    if (ec) {
+        return;
+    }
+
+    CORO_REENTER (this) {
+        {
+            Message msg(Message::RENDER);
+            msg.setQid(0);
+            msg.setOpcode(Opcode::QUERY());
+            msg.setRcode(Rcode::NOERROR());
+            msg.setHeaderFlag(MessageFlag::RD());
+            msg.addQuestion(question_);
+            MessageRenderer renderer(msgbuf_);
+            msg.toWire(renderer);
+        }
+
+        CORO_YIELD socket_->async_send_to(buffer(msgbuf_.getData(),
+                                                 msgbuf_.getLength()),
+                                           server_, *this);
+
+        CORO_YIELD socket_->async_receive_from(buffer(data_, datalen_),
+                                               server_, *this);
+    }
+
+    caller_->resume();
 }
 
 }

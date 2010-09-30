@@ -66,19 +66,26 @@ public:
     //@}
     /// \return \c true if the \message contains a response to be returned;
     /// otherwise \c false.
-    bool processMessage(const asiolink::IOMessage& io_message,
+    void processMessage(const asiolink::IOMessage& io_message,
                         isc::dns::Message& message,
-                        isc::dns::MessageRenderer& response_renderer);
+                        isc::dns::MessageRenderer& response_renderer,
+                        asiolink::BasicServer* server, bool& complete);
     void setVerbose(bool on);
     bool getVerbose() const;
     isc::data::ConstElementPtr updateConfig(isc::data::ConstElementPtr config);
     isc::config::ModuleCCSession* configSession() const;
     void setConfigSession(isc::config::ModuleCCSession* config_session);
 
-    asiolink::DNSProvider* getDNSProvider() {
-        return (dns_provider_);
+    void setIOService(asiolink::IOService& ios) { io_service_ = &ios; }
+    asiolink::IOService& getIOService() const { return (*io_service_); }
+
+    asiolink::DNSLookup* getDNSLookupProvider() const {
+        return (dns_lookup_);
     }
-    asiolink::CheckinProvider* getCheckinProvider() {
+    asiolink::DNSAnswer* getDNSAnswerProvider() const {
+        return (dns_answer_);
+    }
+    asiolink::IOCallback* getCheckinProvider() const {
         return (checkin_provider_);
     }
 
@@ -98,8 +105,10 @@ public:
     void setXfrinSession(isc::cc::AbstractSession* xfrin_session);
 private:
     AuthSrvImpl* impl_;
-    asiolink::CheckinProvider* checkin_provider_;
-    asiolink::DNSProvider* dns_provider_;
+    asiolink::IOService* io_service_;
+    asiolink::IOCallback* checkin_provider_;
+    asiolink::DNSLookup* dns_lookup_;
+    asiolink::DNSAnswer* dns_answer_;
 };
 
 #endif // __AUTH_SRV_H

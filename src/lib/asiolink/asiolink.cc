@@ -94,11 +94,32 @@ IOMessage::IOMessage(const void* data, const size_t data_size,
     remote_endpoint_(remote_endpoint)
 {}
 
+IOQuery::IOQuery(IOService& io_service) : io_service_(io_service) {}
+
+void
+IOQuery::sendQuery(const IOMessage& io_message,
+                   const Question& question, MessageRenderer& renderer,
+                   BasicServer* completer)
+{
+    error_code err;
+    // XXX: hard-code the address for now:
+    const ip::address addr = ip::address::from_string("192.168.1.12", err);
+
+    // XXX: eventually we will need to be able to determine whether
+    // the message should be sent via TCP or UDP, or sent initially via
+    // UDP and then fall back to TCP on failure, but for the moment
+    // we're only going to handle UDP.
+    UDPQuery* query = new UDPQuery(io_service_.get_io_service(), io_message,
+                                   question, addr, renderer, completer);
+    (*query)();
+}
+
 class IOServiceImpl {
 public:
     IOServiceImpl(const char& port,
                   const ip::address* v4addr, const ip::address* v6addr,
-                  CheckinProvider* checkin, DNSProvider* process);
+                  IOCallback* checkin, DNSLookup* lookup,
+                  DNSAnswer* answer);
     asio::io_service io_service_;
 
     typedef boost::shared_ptr<UDPServer> UDPServerPtr;
@@ -112,12 +133,13 @@ public:
 IOServiceImpl::IOServiceImpl(const char& port,
                              const ip::address* const v4addr,
                              const ip::address* const v6addr,
-                             CheckinProvider* checkin, DNSProvider* process) :
+                             IOCallback* checkin,
+                             DNSLookup* lookup,
+                             DNSAnswer* answer) :
     udp4_server_(UDPServerPtr()), udp6_server_(UDPServerPtr()),
     tcp4_server_(TCPServerPtr()), tcp6_server_(TCPServerPtr())
 {
     uint16_t portnum;
-
     try {
         // XXX: SunStudio with stlport4 doesn't reject some invalid
         // representation such as "-1" by lexical_cast<uint16_t>, so
@@ -137,21 +159,21 @@ IOServiceImpl::IOServiceImpl(const char& port,
         if (v4addr != NULL) {
             udp4_server_ = UDPServerPtr(new UDPServer(io_service_,
                                                       *v4addr, portnum,
-                                                      checkin, process));
+                                                      checkin, lookup, answer));
             (*udp4_server_)();
             tcp4_server_ = TCPServerPtr(new TCPServer(io_service_,
                                                       *v4addr, portnum,
-                                                      checkin, process));
+                                                      checkin, lookup, answer));
             (*tcp4_server_)();
         }
         if (v6addr != NULL) {
             udp6_server_ = UDPServerPtr(new UDPServer(io_service_,
                                                       *v6addr, portnum,
-                                                      checkin, process));
+                                                      checkin, lookup, answer));
             (*udp6_server_)();
             tcp6_server_ = TCPServerPtr(new TCPServer(io_service_,
                                                       *v6addr, portnum,
-                                                      checkin, process));
+                                                      checkin, lookup, answer));
             (*tcp6_server_)();
         }
     } catch (const asio::system_error& err) {
@@ -164,7 +186,9 @@ IOServiceImpl::IOServiceImpl(const char& port,
 }
 
 IOService::IOService(const char& port, const char& address,
-                     CheckinProvider* checkin, DNSProvider* process) :
+                     IOCallback* checkin,
+                     DNSLookup* lookup,
+                     DNSAnswer* answer) :
     impl_(NULL)
 {
     error_code err;
@@ -177,20 +201,21 @@ IOService::IOService(const char& port, const char& address,
     impl_ = new IOServiceImpl(port,
                               addr.is_v4() ? &addr : NULL,
                               addr.is_v6() ? &addr : NULL,
-                              checkin, process);
+                              checkin, lookup, answer);
 }
 
 IOService::IOService(const char& port,
                      const bool use_ipv4, const bool use_ipv6,
-                     CheckinProvider* checkin, DNSProvider* process) :
+                     IOCallback* checkin,
+                     DNSLookup* lookup,
+                     DNSAnswer* answer) :
     impl_(NULL)
 {
     const ip::address v4addr_any = ip::address(ip::address_v4::any());
     const ip::address* const v4addrp = use_ipv4 ? &v4addr_any : NULL; 
     const ip::address v6addr_any = ip::address(ip::address_v6::any());
     const ip::address* const v6addrp = use_ipv6 ? &v6addr_any : NULL;
-    impl_ = new IOServiceImpl(port, v4addrp, v6addrp,
-                              checkin, process);
+    impl_ = new IOServiceImpl(port, v4addrp, v6addrp, checkin, lookup, answer);
 }
 
 IOService::~IOService() {

@@ -57,7 +57,6 @@ private:
     const asio::ip::udp::endpoint& asio_endpoint_;
 };
 
-class UDPBuffers;
 class UDPSocket : public IOSocket {
 private:
     UDPSocket(const UDPSocket& source);
@@ -69,20 +68,30 @@ public:
 private:
     asio::ip::udp::socket& socket_;
 };
+
 //
 // Asynchronous UDP server coroutine
 //
-class UDPServer : public coroutine {
+class UDPServer : public virtual BasicServer, public virtual coroutine {
 public:
     explicit UDPServer(asio::io_service& io_service,
                        const asio::ip::address& addr, const uint16_t port,
-                       CheckinProvider* checkin = NULL,
-                       DNSProvider* process = NULL);
+                       IOCallback* checkin = NULL,
+                       DNSLookup* lookup = NULL,
+                       DNSAnswer* answer = NULL);
+
     void operator()(asio::error_code ec = asio::error_code(),
                     size_t length = 0);
 
-private:
     enum { MAX_LENGTH = 4096 };
+    char answer[MAX_LENGTH];
+    asio::ip::udp::endpoint peer;
+
+    void doLookup();
+    void resume();
+
+private:
+    asio::io_service& io_;
 
     // Class member variables which are dynamic, and changes to which
     // need to accessible from both sides of a coroutine fork or from
@@ -93,17 +102,45 @@ private:
     boost::shared_ptr<char> data_;
     boost::shared_ptr<asio::ip::udp::endpoint> sender_;
     boost::shared_ptr<isc::dns::MessageRenderer> renderer_;
+    boost::shared_ptr<isc::dns::Message> message_;
+    boost::shared_ptr<asiolink::IOEndpoint> peer_;
+    boost::shared_ptr<asiolink::IOSocket> iosock_;
+    boost::shared_ptr<asiolink::IOMessage> io_message_;
 
     // State information that is entirely internal to a given instance
     // of the coroutine can be declared here.
     isc::dns::OutputBuffer respbuf_;
     size_t bytes_;
+    bool done_;
 
     // Callbacks
-    const CheckinProvider* checkin_callback_;
-    const DNSProvider* dns_callback_;
+    const IOCallback* checkin_callback_;
+    const DNSLookup* lookup_callback_;
+    const DNSAnswer* answer_callback_;
 };
 
+//
+// Asynchronous UDP coroutine for upstream queries
+//
+class UDPQuery : public coroutine {
+public:
+    explicit UDPQuery(asio::io_service& io_service,
+                      const IOMessage& io_message,
+                      const isc::dns::Question& q,
+                      const asio::ip::address& addr,
+                      isc::dns::MessageRenderer& renderer,
+                      BasicServer* caller);
+    void operator()(asio::error_code ec = asio::error_code(),
+                    size_t length = 0); 
+private:
+    boost::shared_ptr<asio::ip::udp::socket> socket_;
+    asio::ip::udp::endpoint server_;
+    isc::dns::Question question_;
+    char* data_;
+    size_t datalen_;
+    isc::dns::OutputBuffer msgbuf_;
+    BasicServer* caller_;
+};
 }
 
 #endif // __UDPDNS_H

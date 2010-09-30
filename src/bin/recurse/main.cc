@@ -61,8 +61,8 @@ bool verbose_mode = false;
 const string PROGRAM = "Recurse";
 const char* DNSPORT = "5300";
 
-Recursor *recursor;
 IOService* io_service;
+Recursor *recursor;
 
 ConstElementPtr
 my_config_handler(ConstElementPtr new_config) {
@@ -161,12 +161,9 @@ main(int argc, char* argv[]) {
             specfile = string(RECURSE_SPECFILE_LOCATION);
         }
 
-        recursor = new Recursor();
-        recursor ->setVerbose(verbose_mode);
-        cout << "[b10-recurse] Server created." << endl;
-
-        CheckinProvider* checkin = recursor->getCheckinProvider();
-        DNSProvider* process = recursor->getDNSProvider();
+        IOCallback* checkin = recursor->getCheckinProvider();
+        DNSLookup* lookup = recursor->getDNSLookupProvider();
+        DNSAnswer* answer = recursor->getDNSAnswerProvider();
 
         if (address != NULL) {
             // XXX: we can only specify at most one explicit address.
@@ -176,12 +173,16 @@ main(int argc, char* argv[]) {
             // is a short term workaround until we support dynamic listening
             // port allocation.
             io_service = new IOService(*port, *address,
-                                                 checkin, process);
+                                       checkin, lookup, answer);
         } else {
             io_service = new IOService(*port, use_ipv4, use_ipv6,
-                                                 checkin, process);
+                                       checkin, lookup, answer);
         }
         cout << "[b10-recurse] IOService created." << endl;
+
+        recursor = new Recursor(*io_service);
+        recursor ->setVerbose(verbose_mode);
+        cout << "[b10-recurse] Server created." << endl;
 
         cc_session = new Session(io_service->get_io_service());
         cout << "[b10-recurse] Configuration session channel created." << endl;
