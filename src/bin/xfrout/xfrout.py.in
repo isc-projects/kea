@@ -34,6 +34,8 @@ import socket
 import select
 import errno
 from optparse import OptionParser, OptionValueError
+from isc.utils import serve_mixin
+
 try:
     from libxfr_python import *
     from pydnspp import *
@@ -289,7 +291,7 @@ class XfroutSession(BaseRequestHandler):
 
         self._send_message_with_last_soa(msg, sock, rrset_soa, message_upper_len)
 
-class UnixSockServer(ThreadingUnixStreamServer):
+class UnixSockServer(serve_mixin.ServeMixIn, ThreadingUnixStreamServer):
     '''The unix domain socket server which accept xfr query sent from auth server.'''
 
     def __init__(self, sock_file, handle_class, shutdown_event, config_data, cc, log):
@@ -339,7 +341,7 @@ class UnixSockServer(ThreadingUnixStreamServer):
             return True 
 
     def shutdown(self):
-        ThreadingUnixStreamServer.shutdown(self)
+        super().shutdown() # call the shutdown() of class serve_mixin.ServeMinIn
         try:
             os.unlink(self._sock_file)
         except Exception as e:
@@ -381,25 +383,6 @@ class UnixSockServer(ThreadingUnixStreamServer):
         self._transfers_counter -= 1
         self._lock.release()
 
-def listen_on_xfr_query(unix_socket_server):
-    '''Listen xfr query in one single thread. Polls for shutdown 
-    every 0.1 seconds, is there a better time?
-    '''
-
-    while True:
-        try:
-            unix_socket_server.serve_forever(poll_interval = 0.1)
-        except select.error as err:
-            # serve_forever() calls select.select(), which can be 
-            # interrupted.
-            # If it is interrupted, it raises select.error with the 
-            # errno set to EINTR. We ignore this case, and let the
-            # normal program flow continue by trying serve_forever()
-            # again.
-            if err.args[0] != errno.EINTR: raise
-
-   
-
 class XfroutServer:
     def __init__(self):
         self._unix_socket_server = None
@@ -421,7 +404,7 @@ class XfroutServer:
         self._unix_socket_server = UnixSockServer(self._listen_sock_file, XfroutSession, 
                                                   self._shutdown_event, self._config_data,
                                                   self._cc, self._log);
-        listener = threading.Thread(target = listen_on_xfr_query, args = (self._unix_socket_server,))
+        listener = threading.Thread(target=self._unix_socket_server.serve_forever)
         listener.start()
         
     def _start_notifier(self):
