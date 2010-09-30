@@ -46,7 +46,7 @@ void Opcode_destroy(s_Opcode* const self);
 PyObject* Opcode_getCode(const s_Opcode* const self);
 PyObject* Opcode_toText(const s_Opcode* const self);
 PyObject* Opcode_str(PyObject* self);
-PyObject* Opcode_QUERY(const Opcode* self);
+PyObject* Opcode_QUERY(const s_Opcode* self);
 PyObject* Opcode_IQUERY(const s_Opcode* self);
 PyObject* Opcode_STATUS(const s_Opcode* self);
 PyObject* Opcode_RESERVED3(const s_Opcode* self);
