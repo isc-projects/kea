@@ -144,6 +144,10 @@ public:
     ///
     /// \return A string representation of the address.
     std::string toText() const;
+
+    /// \brief Returns the address family.
+    virtual short getFamily() const;
+
 private:
     asio::ip::address asio_address_;
 };
@@ -196,6 +200,15 @@ public:
     ///
     /// \return A copy of \c IOAddress object corresponding to the endpoint.
     virtual IOAddress getAddress() const = 0;
+
+    /// \brief Returns the port of the endpoint.
+    virtual uint16_t getPort() const = 0;
+
+    /// \brief Returns the protocol number of the endpoint (TCP, UDP...)
+    virtual short getProtocol() const = 0;
+
+    /// \brief Returns the address family of the endpoint.
+    virtual short getFamily() const = 0;
 
     /// \brief A polymorphic factory of endpoint from address and port.
     ///

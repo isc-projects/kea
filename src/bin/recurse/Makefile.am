@@ -44,7 +44,7 @@ b10_recurse_LDADD =  $(top_builddir)/src/lib/dns/libdns++.la
 b10_recurse_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
 b10_recurse_LDADD += $(top_builddir)/src/lib/cc/libcc.la
 b10_recurse_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
-b10_recurse_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.a
+b10_recurse_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 b10_recurse_LDADD += $(top_builddir)/src/lib/xfr/libxfr.la
 b10_recurse_LDFLAGS = -pthread
 

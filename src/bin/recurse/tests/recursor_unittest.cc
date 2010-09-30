@@ -45,6 +45,18 @@ using namespace asiolink;
 namespace {
 const char* const DEFAULT_REMOTE_ADDRESS = "192.0.2.1";
 
+class DummySocket : public IOSocket {
+private:
+    DummySocket(const DummySocket& source);
+    DummySocket& operator=(const DummySocket& source);
+public:
+    DummySocket(const int protocol) : protocol_(protocol) {}
+    virtual int getNative() const { return (-1); }
+    virtual int getProtocol() const { return (protocol_); }
+private:
+    const int protocol_;
+};
+
 class RecursorTest : public ::testing::Test {
 private:
     class MockSession : public AbstractSession {
@@ -105,6 +117,7 @@ protected:
     const RRClass qclass;
     const RRType qtype;
     IOMessage* io_message;
+    IOSocket* io_sock;
     const IOEndpoint* endpoint;
     OutputBuffer request_obuffer;
     MessageRenderer request_renderer;
@@ -204,10 +217,8 @@ RecursorTest::createDataFromFile(const char* const datafile,
     endpoint = IOEndpoint::create(protocol,
                                   IOAddress(DEFAULT_REMOTE_ADDRESS), 5300);
     UnitTestUtil::readWireData(datafile, data);
-    io_message = new IOMessage(&data[0], data.size(),
-                               protocol == IPPROTO_UDP ?
-                               IOSocket::getDummyUDPSocket() :
-                               IOSocket::getDummyTCPSocket(), *endpoint);
+    io_sock = new DummySocket(protocol);
+    io_message = new IOMessage(&data[0], data.size(), *io_sock, *endpoint);
 }
 
 void
@@ -237,13 +248,13 @@ RecursorTest::createRequestPacket(const int protocol = IPPROTO_UDP) {
     request_message.toWire(request_renderer);
 
     delete io_message;
+
     endpoint = IOEndpoint::create(protocol,
                                   IOAddress(DEFAULT_REMOTE_ADDRESS), 5300);
+    io_sock = new DummySocket(protocol);
     io_message = new IOMessage(request_renderer.getData(),
                                request_renderer.getLength(),
-                               protocol == IPPROTO_UDP ?
-                               IOSocket::getDummyUDPSocket() :
-                               IOSocket::getDummyTCPSocket(), *endpoint);
+                               *io_sock, *endpoint);
 }
 
 void
@@ -410,37 +421,6 @@ TEST_F(RecursorTest, AXFRFail) {
                                            response_renderer));
     headerCheck(parse_message, default_qid, Rcode::NOTIMP(), opcode.getCode(),
                 QR_FLAG, 1, 0, 0, 0);
-}
-
-TEST_F(RecursorTest, DISABLED_notify) {
-    createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
-                        RRType::SOA());
-    request_message.setHeaderFlag(MessageFlag::AA());
-    createRequestPacket(IPPROTO_UDP);
-    EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
-                                          response_renderer));
-
-    // An internal command message should have been created and sent to an
-    // external module.  Check them.
-    EXPECT_EQ("Zonemgr", notify_session.msg_destination);
-    EXPECT_EQ("notify",
-              notify_session.sent_msg->get("command")->get(0)->stringValue());
-    ConstElementPtr notify_args =
-        notify_session.sent_msg->get("command")->get(1);
-    EXPECT_EQ("example.com.", notify_args->get("zone_name")->stringValue());
-    EXPECT_EQ(DEFAULT_REMOTE_ADDRESS,
-              notify_args->get("master")->stringValue());
-    EXPECT_EQ("IN", notify_args->get("zone_class")->stringValue());
-
-    // On success, the server should return a response to the notify.
-    headerCheck(parse_message, default_qid, Rcode::NOERROR(),
-                Opcode::NOTIFY().getCode(), QR_FLAG | AA_FLAG, 1, 0, 0, 0);
-
-    // The question must be identical to that of the received notify
-    ConstQuestionPtr question = *parse_message.beginQuestion();
-    EXPECT_EQ(Name("example.com"), question->getName());
-    EXPECT_EQ(RRClass::IN(), question->getClass());
-    EXPECT_EQ(RRType::SOA(), question->getType());
 }
 
 TEST_F(RecursorTest, notifyFail) {
