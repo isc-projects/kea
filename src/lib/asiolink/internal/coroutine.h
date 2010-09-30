@@ -75,5 +75,5 @@ private:
       break; \
     } \
     else
-
 #endif // COROUTINE_HPP
+
