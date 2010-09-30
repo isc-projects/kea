@@ -45,6 +45,8 @@ from isc.config import ccsession
 import isc.utils.process
 from optparse import OptionParser, OptionValueError
 from hashlib import sha1
+from isc.utils import serve_mixin
+
 try:
     import threading
 except ImportError:
@@ -439,7 +441,7 @@ class CommandControl():
 
         return (keyfile, certfile, accountsfile)
 
-class SecureHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
+class SecureHTTPServer(serve_mixin.ServeMixIn, socketserver.ThreadingMixIn, http.server.HTTPServer):
     '''Make the server address can be reused.'''
     allow_reuse_address = True
 
