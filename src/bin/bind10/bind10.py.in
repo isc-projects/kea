@@ -449,12 +449,12 @@ class BoB:
     def stop_all_processes(self):
         """Stop all processes."""
         cmd = { "command": ['shutdown']}
-        self.cc_session.group_sendmsg(cmd, 'Boss', 'Cmdctl')
-        self.cc_session.group_sendmsg(cmd, "Boss", "ConfigManager")
-        self.cc_session.group_sendmsg(cmd, "Boss", "Auth")
-        self.cc_session.group_sendmsg(cmd, "Boss", "Xfrout")
-        self.cc_session.group_sendmsg(cmd, "Boss", "Xfrin")
-        self.cc_session.group_sendmsg(cmd, "Boss", "Zonemgr")
+        self.cc_session.group_sendmsg(cmd, 'Cmdctl', 'Cmdctl')
+        self.cc_session.group_sendmsg(cmd, "ConfigManager", "ConfigManager")
+        self.cc_session.group_sendmsg(cmd, "Auth", "Auth")
+        self.cc_session.group_sendmsg(cmd, "Xfrout", "Xfrout")
+        self.cc_session.group_sendmsg(cmd, "Xfrin", "Xfrin")
+        self.cc_session.group_sendmsg(cmd, "Zonemgr", "Zonemgr")
 
     def stop_process(self, process):
         """Stop the given process, friendly-like."""
