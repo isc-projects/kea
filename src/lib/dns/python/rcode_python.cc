@@ -54,7 +54,7 @@ void Rcode_destroy(s_Rcode* const self);
 PyObject* Rcode_getCode(const s_Rcode* const self);
 PyObject* Rcode_getExtendedCode(const s_Rcode* const self);
 PyObject* Rcode_toText(const s_Rcode* const self);
-PyObject* Rcode_str(PyObject* const self);
+PyObject* Rcode_str(PyObject* self);
 PyObject* Rcode_NOERROR(const s_Rcode* self);
 PyObject* Rcode_FORMERR(const s_Rcode* self);
 PyObject* Rcode_SERVFAIL(const s_Rcode* self);
@@ -237,7 +237,7 @@ Rcode_toText(const s_Rcode* const self) {
 }
 
 PyObject*
-Rcode_str(PyObject* const self) {
+Rcode_str(PyObject* self) {
     // Simply call the to_text method we already defined
     return (PyObject_CallMethod(self, const_cast<char*>("to_text"),
                                 const_cast<char*>("")));
