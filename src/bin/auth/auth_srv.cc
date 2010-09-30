@@ -14,6 +14,8 @@
 
 // $Id$
 
+#include <config.h>
+
 #include <netinet/in.h>
 
 #include <algorithm>
@@ -123,28 +125,58 @@ AuthSrvImpl::~AuthSrvImpl() {
     }
 }
 
-// This is a derived class of \c DNSProvider, to serve as a
+// This is a derived class of \c DNSLookup, to serve as a
 // callback in the asiolink module.  It calls
 // AuthSrv::processMessage() on a single DNS message.
-class MessageProcessor : public DNSProvider {
+class MessageLookup : public DNSLookup {
 public:
-    MessageProcessor(AuthSrv* srv) : server_(srv) {}
-    virtual bool operator()(const IOMessage& io_message,
+    MessageLookup(AuthSrv* srv) : server_(srv) {}
+    virtual void operator()(const IOMessage& io_message,
                             isc::dns::Message& dns_message,
-                            isc::dns::MessageRenderer& renderer) const {
-        return (server_->processMessage(io_message, dns_message, renderer));
+                            isc::dns::MessageRenderer& renderer,
+                            BasicServer* server, bool& complete) const
+    {
+        server_->processMessage(io_message, dns_message, renderer,
+                                server, complete);
     }
 private:
     AuthSrv* server_;
 };
 
-// This is a derived class of \c CheckinProvider, to serve
+// This is a derived class of \c DNSAnswer, to serve as a
+// callback in the asiolink module.  It takes a completed
+// set of answer data from the DNS lookup and assembles it
+// into a wire-format response.
+class MessageAnswer : public DNSAnswer {
+public:
+    MessageAnswer(AuthSrv* srv) : server_(srv) {}
+    virtual void operator()(const IOMessage& io_message,
+                            isc::dns::Message& message,
+                            isc::dns::MessageRenderer& renderer) const
+    {
+        if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
+            renderer.setLengthLimit(message.getUDPSize());
+        } else {
+            renderer.setLengthLimit(65535);
+        }
+        message.toWire(renderer);
+        if (server_->getVerbose()) {
+            cerr << "[b10-recurse] sending a response (" << renderer.getLength()
+                 << " bytes):\n" << message.toText() << endl;
+        }
+    }
+
+private:
+    AuthSrv* server_;
+};
+
+// This is a derived class of \c IOCallback, to serve
 // as a callback in the asiolink module.  It checks for queued
 // configuration messages, and executes them if found.
-class ConfigChecker : public CheckinProvider {
+class ConfigChecker : public IOCallback {
 public:
     ConfigChecker(AuthSrv* srv) : server_(srv) {}
-    virtual void operator()(void) const {
+    virtual void operator()(const IOMessage& io_message UNUSED_PARAM) const {
         if (server_->configSession()->hasQueuedMsgs()) {
             server_->configSession()->checkCommand();
         }
@@ -156,13 +188,15 @@ private:
 AuthSrv::AuthSrv(const bool use_cache, AbstractXfroutClient& xfrout_client) :
     impl_(new AuthSrvImpl(use_cache, xfrout_client)),
     checkin_provider_(new ConfigChecker(this)),
-    dns_provider_(new MessageProcessor(this))
+    dns_lookup_(new MessageLookup(this)),
+    dns_answer_(new MessageAnswer(this))
 {}
 
 AuthSrv::~AuthSrv() {
     delete impl_;
     delete checkin_provider_;
-    delete dns_provider_;
+    delete dns_lookup_;
+    delete dns_answer_;
 }
 
 namespace {
@@ -241,9 +275,10 @@ AuthSrv::configSession() const {
     return (impl_->config_session_);
 }
 
-bool
+void
 AuthSrv::processMessage(const IOMessage& io_message, Message& message,
-                        MessageRenderer& response_renderer)
+                        MessageRenderer& response_renderer,
+                        BasicServer* server, bool& complete)
 {
     InputBuffer request_buffer(io_message.getData(), io_message.getDataSize());
 
@@ -258,14 +293,21 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
                 cerr << "[b10-auth] received unexpected response, ignoring"
                      << endl;
             }
-            return (false);
+            complete = false;
+            server->resume();
+            return;
         }
     } catch (const Exception& ex) {
-        return (false);
+        if (impl_->verbose_mode_) {
+            cerr << "[b10-auth] DNS packet exception: " << ex.what() << endl;
+        }
+        complete = false;
+        server->resume();
+        return;
     }
 
-    // Parse the message.  On failure, return an appropriate error.
     try {
+        // Parse the message.
         message.fromWire(request_buffer);
     } catch (const DNSProtocolError& error) {
         if (impl_->verbose_mode_) {
@@ -274,14 +316,18 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
         }
         makeErrorMessage(message, response_renderer, error.getRcode(),
                          impl_->verbose_mode_);
-        return (true);
+        complete = true;
+        server->resume();
+        return;
     } catch (const Exception& ex) {
         if (impl_->verbose_mode_) {
             cerr << "[b10-auth] returning SERVFAIL: " << ex.what() << endl;
         }
         makeErrorMessage(message, response_renderer, Rcode::SERVFAIL(),
                          impl_->verbose_mode_);
-        return (true);
+        complete = true;
+        server->resume();
+        return;
     } // other exceptions will be handled at a higher layer.
 
     if (impl_->verbose_mode_) {
@@ -291,35 +337,36 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
     // Perform further protocol-level validation.
 
     if (message.getOpcode() == Opcode::NOTIFY()) {
-        return (impl_->processNotify(io_message, message, response_renderer));
+        complete = impl_->processNotify(io_message, message,
+                                         response_renderer);
     } else if (message.getOpcode() != Opcode::QUERY()) {
         if (impl_->verbose_mode_) {
             cerr << "[b10-auth] unsupported opcode" << endl;
         }
         makeErrorMessage(message, response_renderer, Rcode::NOTIMP(),
                          impl_->verbose_mode_);
-        return (true);
-    }
-
-    if (message.getRRCount(Section::QUESTION()) != 1) {
+        complete = true;
+    } else if (message.getRRCount(Section::QUESTION()) != 1) {
         makeErrorMessage(message, response_renderer, Rcode::FORMERR(),
                          impl_->verbose_mode_);
-        return (true);
+        complete = true;
+    } else {
+        ConstQuestionPtr question = *message.beginQuestion();
+        const RRType &qtype = question->getType();
+        if (qtype == RRType::AXFR()) {
+            complete = impl_->processAxfrQuery(io_message, message,
+                                                response_renderer);
+        } else if (qtype == RRType::IXFR()) {
+            makeErrorMessage(message, response_renderer, Rcode::NOTIMP(),
+                         impl_->verbose_mode_);
+            complete = true;
+        } else {
+            complete = impl_->processNormalQuery(io_message, message,
+                                               response_renderer);
+        }
     }
 
-    ConstQuestionPtr question = *message.beginQuestion();
-    const RRType &qtype = question->getType();
-    if (qtype == RRType::AXFR()) {
-        return (impl_->processAxfrQuery(io_message, message,
-                                        response_renderer));
-    } else if (qtype == RRType::IXFR()) {
-        makeErrorMessage(message, response_renderer, Rcode::NOTIMP(),
-                         impl_->verbose_mode_);
-        return (true);
-    } else {
-        return (impl_->processNormalQuery(io_message, message,
-                                          response_renderer));
-    }
+    server->resume();
 }
 
 bool

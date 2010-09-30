@@ -120,52 +120,52 @@ TEST(IOSocketTest, dummySockets) {
 }
 
 TEST(IOServiceTest, badPort) {
-    EXPECT_THROW(IOService(*"65536", true, false, NULL, NULL), IOError);
-    EXPECT_THROW(IOService(*"5300.0", true, false, NULL, NULL), IOError);
-    EXPECT_THROW(IOService(*"-1", true, false, NULL, NULL), IOError);
-    EXPECT_THROW(IOService(*"domain", true, false, NULL, NULL), IOError);
+    EXPECT_THROW(IOService(*"65536", true, false, NULL, NULL, NULL), IOError);
+    EXPECT_THROW(IOService(*"5300.0", true, false, NULL, NULL, NULL), IOError);
+    EXPECT_THROW(IOService(*"-1", true, false, NULL, NULL, NULL), IOError);
+    EXPECT_THROW(IOService(*"domain", true, false, NULL, NULL, NULL), IOError);
 }
 
 TEST(IOServiceTest, badAddress) {
-    EXPECT_THROW(IOService(*TEST_PORT, *"192.0.2.1.1", NULL, NULL), IOError);
-    EXPECT_THROW(IOService(*TEST_PORT, *"2001:db8:::1", NULL, NULL), IOError);
-    EXPECT_THROW(IOService(*TEST_PORT, *"localhost", NULL, NULL), IOError);
+    EXPECT_THROW(IOService(*TEST_PORT, *"192.0.2.1.1", NULL, NULL, NULL), IOError);
+    EXPECT_THROW(IOService(*TEST_PORT, *"2001:db8:::1", NULL, NULL, NULL), IOError);
+    EXPECT_THROW(IOService(*TEST_PORT, *"localhost", NULL, NULL, NULL), IOError);
 }
 
 TEST(IOServiceTest, unavailableAddress) {
     // These addresses should generally be unavailable as a valid local
     // address, although there's no guarantee in theory.
-    EXPECT_THROW(IOService(*TEST_PORT, *"255.255.0.0", NULL, NULL), IOError);
+    EXPECT_THROW(IOService(*TEST_PORT, *"255.255.0.0", NULL, NULL, NULL), IOError);
 
     // Some OSes would simply reject binding attempt for an AF_INET6 socket
     // to an IPv4-mapped IPv6 address.  Even if those that allow it, since
     // the corresponding IPv4 address is the same as the one used in the
     // AF_INET socket case above, it should at least show the same result
     // as the previous one.
-    EXPECT_THROW(IOService(*TEST_PORT, *"::ffff:255.255.0.0", NULL, NULL), IOError);
+    EXPECT_THROW(IOService(*TEST_PORT, *"::ffff:255.255.0.0", NULL, NULL, NULL), IOError);
 }
 
 TEST(IOServiceTest, duplicateBind) {
     // In each sub test case, second attempt should fail due to duplicate bind
 
     // IPv6, "any" address
-    IOService* io_service = new IOService(*TEST_PORT, false, true, NULL, NULL);
-    EXPECT_THROW(IOService(*TEST_PORT, false, true, NULL, NULL), IOError);
+    IOService* io_service = new IOService(*TEST_PORT, false, true, NULL, NULL, NULL);
+    EXPECT_THROW(IOService(*TEST_PORT, false, true, NULL, NULL, NULL), IOError);
     delete io_service;
 
     // IPv6, specific address
-    io_service = new IOService(*TEST_PORT, *TEST_IPV6_ADDR, NULL, NULL);
-    EXPECT_THROW(IOService(*TEST_PORT, *TEST_IPV6_ADDR, NULL, NULL), IOError);
+    io_service = new IOService(*TEST_PORT, *TEST_IPV6_ADDR, NULL, NULL, NULL);
+    EXPECT_THROW(IOService(*TEST_PORT, *TEST_IPV6_ADDR, NULL, NULL, NULL), IOError);
     delete io_service;
 
     // IPv4, "any" address
-    io_service = new IOService(*TEST_PORT, true, false, NULL, NULL);
-    EXPECT_THROW(IOService(*TEST_PORT, true, false, NULL, NULL), IOError);
+    io_service = new IOService(*TEST_PORT, true, false, NULL, NULL, NULL);
+    EXPECT_THROW(IOService(*TEST_PORT, true, false, NULL, NULL, NULL), IOError);
     delete io_service;
 
     // IPv4, specific address
-    io_service = new IOService(*TEST_PORT, *TEST_IPV4_ADDR, NULL, NULL);
-    EXPECT_THROW(IOService(*TEST_PORT, *TEST_IPV4_ADDR, NULL, NULL), IOError);
+    io_service = new IOService(*TEST_PORT, *TEST_IPV4_ADDR, NULL, NULL, NULL);
+    EXPECT_THROW(IOService(*TEST_PORT, *TEST_IPV4_ADDR, NULL, NULL, NULL), IOError);
     delete io_service;
 }
 
@@ -211,7 +211,12 @@ protected:
         if (sock_ != -1) {
             close(sock_);
         }
-        delete io_service_;
+        if (io_service_ != NULL) {
+            delete io_service_;
+        }
+        if (callback_ != NULL) {
+            delete callback_;
+        }
     }
     void sendUDP(const int family) {
         res_ = resolveAddress(family, SOCK_DGRAM, IPPROTO_UDP);
@@ -246,14 +251,15 @@ protected:
     void setIOService(const char& address) {
         delete io_service_;
         io_service_ = NULL;
-        ASIOCallBack* cb = new ASIOCallBack(this);
-        io_service_ = new IOService(*TEST_PORT, address, NULL, cb);
+        callback_ = new ASIOCallBack(this);
+        io_service_ = new IOService(*TEST_PORT, address, callback_, NULL, NULL);
     }
     void setIOService(const bool use_ipv4, const bool use_ipv6) {
         delete io_service_;
         io_service_ = NULL;
-        ASIOCallBack* cb = new ASIOCallBack(this);
-        io_service_ = new IOService(*TEST_PORT, use_ipv4, use_ipv6, NULL, cb);
+        callback_ = new ASIOCallBack(this);
+        io_service_ = new IOService(*TEST_PORT, use_ipv4, use_ipv6, callback_,
+                                    NULL, NULL);
     }
     void doTest(const int family, const int protocol) {
         if (protocol == IPPROTO_UDP) {
@@ -280,15 +286,11 @@ protected:
                             expected_data, expected_datasize);
     }
 private:
-    class ASIOCallBack : public DNSProvider {
+    class ASIOCallBack : public IOCallback {
     public:
         ASIOCallBack(ASIOLinkTest* test_obj) : test_obj_(test_obj) {}
-        bool operator()(const IOMessage& io_message,
-                        isc::dns::Message& dns_message UNUSED_PARAM,
-                        isc::dns::MessageRenderer& renderer UNUSED_PARAM) const
-        {
+        void operator()(const IOMessage& io_message) const {
             test_obj_->callBack(io_message);
-            return (true);
         }
     private:
         ASIOLinkTest* test_obj_;
@@ -306,6 +308,7 @@ private:
     }
 protected:
     IOService* io_service_;
+    ASIOCallBack* callback_;
     int callback_protocol_;
     int callback_native_;
     string callback_address_;
@@ -316,7 +319,7 @@ private:
 };
 
 ASIOLinkTest::ASIOLinkTest() :
-    io_service_(NULL), sock_(-1), res_(NULL)
+    io_service_(NULL), callback_(NULL), sock_(-1), res_(NULL)
 {
     setIOService(true, true);
 }

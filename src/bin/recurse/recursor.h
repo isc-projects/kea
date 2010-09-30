@@ -56,31 +56,36 @@ public:
     /// process.  It's normally a reference to an xfr::XfroutClient object,
     /// but can refer to a local mock object for testing (or other
     /// experimental) purposes.
-    Recursor();
+    Recursor(asiolink::IOService& io_service);
     ~Recursor();
     //@}
     /// \return \c true if the \message contains a response to be returned;
     /// otherwise \c false.
-    bool processMessage(const asiolink::IOMessage& io_message,
+    void processMessage(const asiolink::IOMessage& io_message,
                         isc::dns::Message& message,
-                        isc::dns::MessageRenderer& response_renderer);
+                        isc::dns::MessageRenderer& response_renderer,
+                        asiolink::BasicServer* server, bool& complete);
     void setVerbose(bool on);
     bool getVerbose() const;
     isc::data::ConstElementPtr updateConfig(isc::data::ConstElementPtr config);
     isc::config::ModuleCCSession* configSession() const;
     void setConfigSession(isc::config::ModuleCCSession* config_session);
 
-    asiolink::DNSProvider* getDNSProvider() {
-        return (dns_provider_);
+    asiolink::DNSLookup* getDNSLookupProvider() {
+        return (dns_lookup_);
     }
-    asiolink::CheckinProvider* getCheckinProvider() {
-        return (checkin_provider_);
+    asiolink::DNSAnswer* getDNSAnswerProvider() {
+        return (dns_answer_);
+    }
+    asiolink::IOCallback* getCheckinProvider() {
+        return (checkin_);
     }
 
 private:
     RecursorImpl* impl_;
-    asiolink::CheckinProvider* checkin_provider_;
-    asiolink::DNSProvider* dns_provider_;
+    asiolink::IOCallback* checkin_;
+    asiolink::DNSLookup* dns_lookup_;
+    asiolink::DNSAnswer* dns_answer_;
 };
 
 #endif // __RECURSOR_H

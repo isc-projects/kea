@@ -18,6 +18,7 @@ public:
   bool is_child() const { return value_ < 0; }
   bool is_parent() const { return !is_child(); }
   bool is_complete() const { return value_ == -1; }
+  int get_value() const { return value_; }
 private:
   friend class coroutine_ref;
   int value_;

@@ -76,9 +76,12 @@ TCPSocket::getProtocol() const {
 
 TCPServer::TCPServer(io_service& io_service,
                      const ip::address& addr, const uint16_t port, 
-                     CheckinProvider* checkin, DNSProvider* process) :
-    respbuf_(0), lenbuf_(TCP_MESSAGE_LENGTHSIZE),
-    checkin_callback_(checkin), dns_callback_(process)
+                     const IOCallback* checkin,
+                     const DNSLookup* lookup,
+                     const DNSAnswer* answer) :
+    io_(io_service), done_(false),
+    checkin_callback_(checkin), lookup_callback_(lookup),
+    answer_callback_(answer)
 {
     tcp::endpoint endpoint(addr, port);
     acceptor_.reset(new tcp::acceptor(io_service));
@@ -91,6 +94,8 @@ TCPServer::TCPServer(io_service& io_service,
     acceptor_->set_option(tcp::acceptor::reuse_address(true));
     acceptor_->bind(endpoint);
     acceptor_->listen();
+    lenbuf_.reset(new OutputBuffer(TCP_MESSAGE_LENGTHSIZE));
+    respbuf_.reset(new OutputBuffer(0));
 }
 
 void
@@ -99,71 +104,83 @@ TCPServer::operator()(error_code ec, size_t length) {
         return;
     }
 
-    bool done = false;
+    boost::array<const_buffer,2> bufs;
     CORO_REENTER (this) {
         do {
             socket_.reset(new tcp::socket(acceptor_->get_io_service()));
             CORO_YIELD acceptor_->async_accept(*socket_, *this);
-            CORO_FORK TCPServer(*this)();
-        } while (is_child());
-
-        // Perform any necessary operations prior to processing an incoming
-        // packet (e.g., checking for queued configuration messages).
-        //
-        // (XXX: it may be a performance issue to have this called for
-        // every single incoming packet; we may wish to throttle it somehow
-        // in the future.)
-        if (checkin_callback_ != NULL) {
-            (*checkin_callback_)();
-        }
+            CORO_FORK io_.post(TCPServer(*this));
+        } while (is_parent());
 
         // Instantiate the data buffer that will be used by the
         // asynchronous read call.
         data_ = boost::shared_ptr<char>(new char[MAX_LENGTH]);
-        CORO_YIELD async_read(*socket_, asio::buffer(data_.get(),
-                                                     TCP_MESSAGE_LENGTHSIZE),
-                              *this);
 
+        // Read the message length.
+        CORO_YIELD async_read(*socket_, asio::buffer(data_.get(),
+                              TCP_MESSAGE_LENGTHSIZE), *this);
+
+        // Now read the message itself. (This is done in a different scope
+        // because CORO_REENTER is implemented as a switch statement; the
+        // inline variable declaration of "msglen" and "dnsbuffer" are
+        // therefore not permitted in this scope.)
         CORO_YIELD {
             InputBuffer dnsbuffer((const void *) data_.get(), length);
             uint16_t msglen = dnsbuffer.readUint16();
             async_read(*socket_, asio::buffer(data_.get(), msglen), *this);
         }
 
-        // Stop here if we don't have a DNS callback function
-        if (dns_callback_ == NULL) {
+        // Store the io_message data.
+        peer_.reset(new TCPEndpoint(socket_->remote_endpoint()));
+        iosock_.reset(new TCPSocket(*socket_));
+        io_message_.reset(new IOMessage(data_.get(), length, *iosock_, *peer_));
+
+        // Perform any necessary operations prior to processing the incoming
+        // packet (e.g., checking for queued configuration messages).
+        //
+        // (XXX: it may be a performance issue to have this called for
+        // every single incoming packet; we may wish to throttle it somehow
+        // in the future.)
+        if (checkin_callback_ != NULL) {
+            (*checkin_callback_)(*io_message_);
+        }
+
+        // Just stop here if we don't have a DNS callback function.
+        if (lookup_callback_ == NULL) {
             CORO_YIELD return;
         }
 
-        // Instantiate the objects that will be needed by the
-        // DNS callback and the asynchronous write calls.
-        respbuf_.clear();
-        renderer_.reset(new MessageRenderer(respbuf_));
+        // Reset or instantiate objects that will be needed by the
+        // DNS lookup and the write call.
+        respbuf_->clear();
+        renderer_.reset(new MessageRenderer(*respbuf_));
 
-        // Process the DNS message.  (Must be done in a separate scope 
-        // because CORO_REENTER is implemented with a switch statement
-        // and inline variable declaration isn't allowed.)
-        {
-            TCPEndpoint peer(socket_->remote_endpoint());
-            TCPSocket iosock(*socket_);
-            IOMessage io_message(data_.get(), length, iosock, peer);
-            Message message(Message::PARSE);
-            done = (*dns_callback_)(io_message, message, *renderer_);
-        }
+        // Process the DNS message.
+        bytes_ = length;
+        CORO_YIELD io_.post(LookupHandler<TCPServer>(*this));
 
-        if (!done) {
+        if (!done_) {
             CORO_YIELD return;
         }
 
-        CORO_YIELD {
-            lenbuf_.clear();
-            lenbuf_.writeUint16(respbuf_.getLength());
-            boost::array<const_buffer,2> bufs;
-            bufs[0] = buffer(lenbuf_.getData(), lenbuf_.getLength());
-            bufs[1] = buffer(respbuf_.getData(), respbuf_.getLength());
-            async_write(*socket_, bufs, *this);
-        }
+        // Send the response.
+        lenbuf_->clear();
+        lenbuf_->writeUint16(respbuf_->getLength());
+        bufs[0] = buffer(lenbuf_->getData(), lenbuf_->getLength());
+        bufs[1] = buffer(respbuf_->getData(), respbuf_->getLength());
+        CORO_YIELD async_write(*socket_, bufs, *this);
     }
+}
+
+void
+TCPServer::doLookup() {
+    Message message(Message::PARSE);
+    (*lookup_callback_)(*io_message_, message, *renderer_, this, done_);
+}
+
+void
+TCPServer::resume() {
+    io_.post(*this);
 }
 
 }
