@@ -57,6 +57,7 @@ private:
     const asio::ip::udp::endpoint& asio_endpoint_;
 };
 
+class UDPBuffers;
 class UDPSocket : public IOSocket {
 private:
     UDPSocket(const UDPSocket& source);
@@ -83,20 +84,19 @@ public:
 private:
     enum { MAX_LENGTH = 4096 };
 
-    // As mentioned in the comments to TCPServer, class member variables
-    // which are dynamic, and changes to which are expected to be
-    // accessible from both sides of a coroutine fork, should be
-    // declared here as shared pointers and allocated in the
+    // Class member variables which are dynamic, and changes to which
+    // need to accessible from both sides of a coroutine fork or from
+    // outside of the coroutine (i.e., from an asynchronous I/O call),
+    // should be declared here as pointers and allocated in the
     // constructor or in the coroutine.
     boost::shared_ptr<asio::ip::udp::socket> socket_;
-    boost::shared_ptr<asio::ip::udp::endpoint> sender_;
-    boost::shared_ptr<isc::dns::OutputBuffer> response_;
-    boost::shared_ptr<isc::dns::MessageRenderer> renderer_;
-    boost::shared_ptr<isc::dns::Message> dns_message_;
-    boost::shared_ptr<UDPEndpoint> io_endpoint_;
-    boost::shared_ptr<IOMessage> io_message_;
-    boost::shared_ptr<UDPSocket> io_socket_;
     boost::shared_ptr<char> data_;
+    boost::shared_ptr<asio::ip::udp::endpoint> sender_;
+    boost::shared_ptr<isc::dns::MessageRenderer> renderer_;
+
+    // State information that is entirely internal to a given instance
+    // of the coroutine can be declared here.
+    isc::dns::OutputBuffer respbuf_;
     size_t bytes_;
 
     // Callbacks

@@ -88,24 +88,19 @@ private:
     static const size_t TCP_MESSAGE_LENGTHSIZE = 2;
 
     // Class member variables which are dynamic, and changes to which
-    // are expected to be accessible from both sides of a coroutine fork,
-    // should be declared here as shared pointers and allocated in the
-    // constructor or in the coroutine itself.  (Forking a new coroutine
-    // causes class members to be copied, not referenced, so without using
-    // this approach, when a variable is changed by a "parent" coroutine
-    // the change might not be visible to the "child".  Using shared_ptr<>
-    // ensures that when all coroutines using this data are deleted, the
-    // memory will be freed.)
+    // need to accessible from both sides of a coroutine fork or from
+    // outside of the coroutine (i.e., from an asynchronous I/O call),
+    // should be declared here as pointers and allocated in the
+    // constructor or in the coroutine.
     boost::shared_ptr<asio::ip::tcp::acceptor> acceptor_;
     boost::shared_ptr<asio::ip::tcp::socket> socket_;
-    boost::shared_ptr<isc::dns::OutputBuffer> response_;
-    boost::shared_ptr<isc::dns::OutputBuffer> lenbuf_;
     boost::shared_ptr<isc::dns::MessageRenderer> renderer_;
-    boost::shared_ptr<isc::dns::Message> dns_message_;
-    boost::shared_ptr<IOMessage> io_message_;
-    boost::shared_ptr<TCPSocket> io_socket_;
-    boost::shared_ptr<TCPEndpoint> io_endpoint_;
     boost::shared_ptr<char> data_;
+
+    // State information that is entirely internal to a given instance
+    // of the coroutine can be declared here.
+    isc::dns::OutputBuffer respbuf_;
+    isc::dns::OutputBuffer lenbuf_;
 
     // Callbacks
     const CheckinProvider* checkin_callback_;

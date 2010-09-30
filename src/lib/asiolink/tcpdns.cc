@@ -23,6 +23,7 @@
 #include <asio.hpp>
 #include <asio/ip/address.hpp>
 
+#include <boost/array.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
 
@@ -76,12 +77,13 @@ TCPSocket::getProtocol() const {
 TCPServer::TCPServer(io_service& io_service,
                      const ip::address& addr, const uint16_t port, 
                      CheckinProvider* checkin, DNSProvider* process) :
+    respbuf_(0), lenbuf_(TCP_MESSAGE_LENGTHSIZE),
     checkin_callback_(checkin), dns_callback_(process)
 {
     tcp::endpoint endpoint(addr, port);
     acceptor_.reset(new tcp::acceptor(io_service));
     acceptor_->open(endpoint.protocol());
-    // Set v6-only (we use a different instantiation for v4,
+    // Set v6-only (we use a separate instantiation for v4,
     // otherwise asio will bind to both v4 and v6
     if (addr.is_v6()) {
         acceptor_->set_option(ip::v6_only(true));
@@ -97,20 +99,20 @@ TCPServer::operator()(error_code ec, size_t length) {
         return;
     }
 
+    bool done = false;
     CORO_REENTER (this) {
         do {
             socket_.reset(new tcp::socket(acceptor_->get_io_service()));
             CORO_YIELD acceptor_->async_accept(*socket_, *this);
             CORO_FORK TCPServer(*this)();
-        } while (is_parent());
+        } while (is_child());
 
-        // Perform any necessary operations prior to processing
-        // an incoming packet (e.g., checking for queued
-        // configuration messages).
+        // Perform any necessary operations prior to processing an incoming
+        // packet (e.g., checking for queued configuration messages).
         //
-        // (XXX: it may be a performance issue to have this
-        // called for every single incoming packet; we may wish to
-        // throttle it somehow in the future.)
+        // (XXX: it may be a performance issue to have this called for
+        // every single incoming packet; we may wish to throttle it somehow
+        // in the future.)
         if (checkin_callback_ != NULL) {
             (*checkin_callback_)();
         }
@@ -118,7 +120,6 @@ TCPServer::operator()(error_code ec, size_t length) {
         // Instantiate the data buffer that will be used by the
         // asynchronous read call.
         data_ = boost::shared_ptr<char>(new char[MAX_LENGTH]);
-
         CORO_YIELD async_read(*socket_, asio::buffer(data_.get(),
                                                      TCP_MESSAGE_LENGTHSIZE),
                               *this);
@@ -136,28 +137,32 @@ TCPServer::operator()(error_code ec, size_t length) {
 
         // Instantiate the objects that will be needed by the
         // DNS callback and the asynchronous write calls.
-        dns_message_.reset(new Message(Message::PARSE));
-        response_.reset(new OutputBuffer(0));
-        lenbuf_.reset(new OutputBuffer(TCP_MESSAGE_LENGTHSIZE));
-        renderer_.reset(new MessageRenderer(*response_));
-        io_socket_.reset(new TCPSocket(*socket_));
-        io_endpoint_.reset(new TCPEndpoint(socket_->remote_endpoint()));
-        io_message_.reset(new IOMessage(data_.get(), length, *io_socket_,
-                                        *io_endpoint_));
+        respbuf_.clear();
+        renderer_.reset(new MessageRenderer(respbuf_));
 
-        // Process the DNS message
-        if (! (*dns_callback_)(*io_message_, *dns_message_, *renderer_)) {
+        // Process the DNS message.  (Must be done in a separate scope 
+        // because CORO_REENTER is implemented with a switch statement
+        // and inline variable declaration isn't allowed.)
+        {
+            TCPEndpoint peer(socket_->remote_endpoint());
+            TCPSocket iosock(*socket_);
+            IOMessage io_message(data_.get(), length, iosock, peer);
+            Message message(Message::PARSE);
+            done = (*dns_callback_)(io_message, message, *renderer_);
+        }
+
+        if (!done) {
             CORO_YIELD return;
         }
 
-        lenbuf_->writeUint16(response_->getLength());
-        CORO_YIELD async_write(*socket_,
-                               buffer(lenbuf_->getData(), lenbuf_->getLength()),
-                               *this);
-        CORO_YIELD async_write(*socket_,
-                               buffer(response_->getData(),
-                                      response_->getLength()),
-                               *this);
+        CORO_YIELD {
+            lenbuf_.clear();
+            lenbuf_.writeUint16(respbuf_.getLength());
+            boost::array<const_buffer,2> bufs;
+            bufs[0] = buffer(lenbuf_.getData(), lenbuf_.getLength());
+            bufs[1] = buffer(respbuf_.getData(), respbuf_.getLength());
+            async_write(*socket_, bufs, *this);
+        }
     }
 }
 

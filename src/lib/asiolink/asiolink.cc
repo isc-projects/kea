@@ -88,7 +88,8 @@ IOEndpoint::create(const int protocol, const IOAddress& address,
 }
 
 IOMessage::IOMessage(const void* data, const size_t data_size,
-                     IOSocket& io_socket, const IOEndpoint& remote_endpoint) :
+                     const IOSocket& io_socket,
+                     const IOEndpoint& remote_endpoint) :
     data_(data), data_size_(data_size), io_socket_(io_socket),
     remote_endpoint_(remote_endpoint)
 {}
