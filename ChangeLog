@@ -1,4 +1,10 @@
-  101.	[func]		jinmei
+102.	[func]		zhang likun
+	Add one mixin class to override the naive serve_forever() provided
+	in python library socketserver. Instead of polling for shutdwon
+	every poll_interval seconds, one socketpair is used to wake up
+	the waiting server.(Trac #352, svn TBD)
+
+101.	[func]		jinmei
 	src/lib/dns: Completed Opcode and Rcode implementation with more
 	tests and documentation.  API is mostly the same but the
 	validation was a bit tightened. (Trac #351, svn r3056)
