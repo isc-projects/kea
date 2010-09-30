@@ -364,8 +364,8 @@ public:
     /// \param io_socket The socket over which the data is given.
     /// \param remote_endpoint The other endpoint of the socket, that is,
     /// the sender of the message.
-    IOMessage(const void* data, const size_t data_size, IOSocket& io_socket,
-              const IOEndpoint& remote_endpoint);
+    IOMessage(const void* data, const size_t data_size,
+              const IOSocket& io_socket, const IOEndpoint& remote_endpoint);
     //@}
 
     /// \brief Returns a pointer to the received data.
@@ -382,7 +382,7 @@ public:
 private:
     const void* data_;
     const size_t data_size_;
-    IOSocket& io_socket_;
+    const IOSocket& io_socket_;
     const IOEndpoint& remote_endpoint_;
 };
 

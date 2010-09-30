@@ -16,6 +16,8 @@
 
 #include <config.h>
 
+#include <list>
+
 #include <unistd.h>             // for some IPC/network system calls
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -74,49 +76,44 @@ UDPSocket::getProtocol() const {
 UDPServer::UDPServer(io_service& io_service,
                      const ip::address& addr, const uint16_t port,
                      CheckinProvider* checkin, DNSProvider* process) :
-    checkin_callback_(checkin), dns_callback_(process)
+    respbuf_(0), checkin_callback_(checkin), dns_callback_(process)
 {
     // Wwe use a different instantiation for v4,
     // otherwise asio will bind to both v4 and v6
+    udp proto = addr.is_v4() ? udp::v4() : udp::v6();
+    socket_.reset(new udp::socket(io_service, proto));
+    socket_->set_option(socket_base::reuse_address(true));
     if (addr.is_v6()) {
-        socket_.reset(new udp::socket(io_service, udp::v6()));
-        socket_->set_option(socket_base::reuse_address(true));
         socket_->set_option(asio::ip::v6_only(true));
-        socket_->bind(udp::endpoint(udp::v6(), port));
-    } else {
-        socket_.reset(new udp::socket(io_service, udp::v4()));
-        socket_->set_option(socket_base::reuse_address(true));
-        socket_->bind(udp::endpoint(udp::v6(), port));
     }
+    socket_->bind(udp::endpoint(proto, port));
 }
 
 void
 UDPServer::operator()(error_code ec, size_t length) {
-    CORO_REENTER (this) for (;;) {
-        // Instantiate the data buffer that will be used by the
-        // asynchronous read calls.
-        data_ = boost::shared_ptr<char>(new char[MAX_LENGTH]);
-        sender_.reset(new udp::endpoint());
-
+    bool done = false;
+    CORO_REENTER (this) {
         do {
-            CORO_YIELD socket_->async_receive_from(asio::buffer(data_.get(),
-                                                                MAX_LENGTH),
-                                              *sender_, *this);
-        } while (ec || length == 0);
+            // Instantiate the data buffer and endpoint that will
+            // be used by the asynchronous receive call.
+            data_.reset(new char[MAX_LENGTH]);
+            sender_.reset(new udp::endpoint());
+            do {
+                CORO_YIELD socket_->async_receive_from(buffer(data_.get(),
+                                                              MAX_LENGTH),
+                                                  *sender_, *this);
+            } while (ec || length == 0);
 
-        bytes_ = length;
-        CORO_FORK UDPServer(*this)();
-        if (is_parent()) {
-            continue;
-        }
+            bytes_ = length;
+            CORO_FORK UDPServer(*this)();
+        } while (is_child());
 
-        // Perform any necessary operations prior to processing
-        // an incoming packet (e.g., checking for queued
-        // configuration messages).
+        // Perform any necessary operations prior to processing an incoming
+        // packet (e.g., checking for queued configuration messages).
         //
-        // (XXX: it may be a performance issue to have this
-        // called for every single incoming packet; we may wish to
-        // throttle it somehow in the future.)
+        // (XXX: it may be a performance issue to have this called for
+        // every single incoming packet; we may wish to throttle it somehow
+        // in the future.)
         if (checkin_callback_ != NULL) {
             (*checkin_callback_)();
         }
@@ -126,25 +123,28 @@ UDPServer::operator()(error_code ec, size_t length) {
             CORO_YIELD return;
         }
 
-        // Instantialize objects that will be needed by the
-        // DNS callback function and the async write.
-        dns_message_.reset(new Message(Message::PARSE));
-        response_.reset(new OutputBuffer(0));
-        renderer_.reset(new MessageRenderer(*response_));
-        io_socket_.reset(new UDPSocket(*socket_));
-        io_endpoint_.reset(new UDPEndpoint(*sender_));
-        io_message_.reset(new IOMessage(data_.get(), bytes_,
-                                        *io_socket_,
-                                        *io_endpoint_));
+        // Instantiate objects that will be needed by the
+        // asynchronous send call.
+        respbuf_.clear();
+        renderer_.reset(new MessageRenderer(respbuf_));
 
-        // Process the DNS message
-        if (! (*dns_callback_)(*io_message_, *dns_message_, *renderer_))
+        // Process the DNS message.  (Must be done in a separate scope 
+        // because CORO_REENTER is implemented with a switch statement,
+        // and thus normal inline variable declaration isn't allowed.)
         {
+            UDPEndpoint peer(*sender_);
+            UDPSocket iosock(*socket_);
+            IOMessage io_message(data_.get(), bytes_, iosock, peer);
+            Message message(Message::PARSE);
+            done = (*dns_callback_)(io_message, message, *renderer_);
+        }
+
+        if (!done) {
             CORO_YIELD return;
         }
 
-        CORO_YIELD socket_->async_send_to(asio::buffer(response_->getData(),
-                                                       response_->getLength()),
+        CORO_YIELD socket_->async_send_to(buffer(respbuf_.getData(),
+                                                 respbuf_.getLength()),
                                      *sender_, *this);
     }
 }
