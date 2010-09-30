@@ -8,6 +8,7 @@ import sys
 import os
 import signal
 import socket
+from isc.net.addr import IPAddr
 
 class TestProcessInfo(unittest.TestCase):
     def setUp(self):
@@ -105,7 +106,7 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.runnable, False)
 
     def test_init_alternate_address(self):
-        bob = BoB(None, 5300, '127.127.127.127')
+        bob = BoB(None, 5300, IPAddr('127.127.127.127'))
         self.assertEqual(bob.verbose, False)
         self.assertEqual(bob.auth_port, 5300)
         self.assertEqual(bob.msgq_socket_file, None)
