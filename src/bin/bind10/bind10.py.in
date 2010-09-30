@@ -471,6 +471,8 @@ class BoB:
         except:
             pass
         # XXX: some delay probably useful... how much is uncertain
+        # I have changed the delay from 0.5 to 1, but sometime it's 
+        # still not enough.
         time.sleep(1)  
         self.reap_children()
         # next try sending a SIGTERM

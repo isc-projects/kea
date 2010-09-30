@@ -510,11 +510,19 @@ class Xfrin:
         param = {'zone_name': zone_name, 'zone_class': zone_class.to_text()}
         if xfr_result == XFRIN_OK:
             msg = create_command(notify_out.ZONE_NEW_DATA_READY_CMD, param)
-            self._send_cc_session.group_sendmsg(msg, XFROUT_MODULE_NAME)
-            self._send_cc_session.group_sendmsg(msg, ZONE_MANAGER_MODULE_NAME)
+            # catch the exception, in case msgq has been killed.
+            try:
+                self._send_cc_session.group_sendmsg(msg, XFROUT_MODULE_NAME)
+                self._send_cc_session.group_sendmsg(msg, ZONE_MANAGER_MODULE_NAME)
+            except: 
+                pass
         else:
             msg = create_command(ZONE_XFRIN_FAILED, param)
-            self._send_cc_session.group_sendmsg(msg, ZONE_MANAGER_MODULE_NAME)
+            # catch the exception, in case msgq has been killed.
+            try:
+                self._send_cc_session.group_sendmsg(msg, ZONE_MANAGER_MODULE_NAME)
+            except:
+                pass
 
     def startup(self):
         while not self._shutdown_event.is_set():
