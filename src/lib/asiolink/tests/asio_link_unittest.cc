@@ -24,6 +24,8 @@
 #include <dns/tests/unittest_util.h>
 
 #include <asiolink/asiolink.h>
+#include <asiolink/internal/tcpdns.h>
+#include <asiolink/internal/udpdns.h>
 
 using isc::UnitTestUtil;
 using namespace std;
