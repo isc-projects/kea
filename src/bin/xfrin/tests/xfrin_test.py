@@ -421,21 +421,21 @@ class TestXfrin(unittest.TestCase):
         name, rrclass = self._do_parse_zone_name_class()
         master_addrinfo = self._do_parse_master_port()
         db_file = self.args.get('db_file')
-        self.assertEqual(master_addrinfo[4][1], int(TEST_MASTER_PORT))
+        self.assertEqual(master_addrinfo[2][1], int(TEST_MASTER_PORT))
         self.assertEqual(name, TEST_ZONE_NAME)
         self.assertEqual(rrclass, TEST_RRCLASS)
-        self.assertEqual(master_addrinfo[4][0], TEST_MASTER_IPV4_ADDRESS)
+        self.assertEqual(master_addrinfo[2][0], TEST_MASTER_IPV4_ADDRESS)
         self.assertEqual(db_file, TEST_DB_FILE)
 
     def test_parse_cmd_params_default_port(self):
         del self.args['port']
         master_addrinfo = self._do_parse_master_port()
-        self.assertEqual(master_addrinfo[4][1], 53)
+        self.assertEqual(master_addrinfo[2][1], 53)
 
     def test_parse_cmd_params_ip6master(self):
         self.args['master'] = TEST_MASTER_IPV6_ADDRESS
         master_addrinfo = self._do_parse_master_port()
-        self.assertEqual(master_addrinfo[4][0], TEST_MASTER_IPV6_ADDRESS)
+        self.assertEqual(master_addrinfo[2][0], TEST_MASTER_IPV6_ADDRESS)
 
     def test_parse_cmd_params_chclass(self):
         self.args['zone_class'] = 'CH'
@@ -454,7 +454,7 @@ class TestXfrin(unittest.TestCase):
         # master address is mandatory.
         del self.args['master']
         master_addrinfo = self._do_parse_master_port()
-        self.assertEqual(master_addrinfo[4][0], DEFAULT_MASTER)
+        self.assertEqual(master_addrinfo[2][0], DEFAULT_MASTER)
 
     def test_parse_cmd_params_bad_ip4(self):
         self.args['master'] = '3.3.3.3.3'
