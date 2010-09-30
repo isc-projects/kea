@@ -65,10 +65,19 @@ IOAddress::toText() const {
     return (asio_address_.to_string());
 }
 
+short
+IOAddress::getFamily() const {
+    if (asio_address_.is_v4()) {
+        return (AF_INET);
+    } else {
+        return (AF_INET6);
+    }
+}
+
 // Note: this implementation is optimized for the case where this object
 // is created from an ASIO endpoint object in a receiving code path
 // by avoiding to make a copy of the base endpoint.  For TCP it may not be
-// a bug deal, but when we receive UDP packets at a high rate, the copy
+// a big deal, but when we receive UDP packets at a high rate, the copy
 // overhead might be significant.
 class TCPEndpoint : public IOEndpoint {
 public:
@@ -86,6 +95,15 @@ public:
     virtual IOAddress getAddress() const {
         return (asio_endpoint_.address());
     }
+    virtual uint16_t getPort() const {
+        return (asio_endpoint_.port());
+    }
+    virtual short getProtocol() const {
+        return (asio_endpoint_.protocol().protocol());
+    }
+    virtual short getFamily() const {
+        return (asio_endpoint_.protocol().family());
+    }
 private:
     const tcp::endpoint* asio_endpoint_placeholder_;
     const tcp::endpoint& asio_endpoint_;
@@ -102,9 +120,19 @@ public:
     UDPEndpoint(const udp::endpoint& asio_endpoint) :
         asio_endpoint_placeholder_(NULL), asio_endpoint_(asio_endpoint)
     {}
+
     ~UDPEndpoint() { delete asio_endpoint_placeholder_; }
     virtual IOAddress getAddress() const {
         return (asio_endpoint_.address());
+    }
+    virtual uint16_t getPort() const {
+        return (asio_endpoint_.port());
+    }
+    virtual short getProtocol() const {
+        return (asio_endpoint_.protocol().protocol());
+    }
+    virtual short getFamily() const {
+        return (asio_endpoint_.protocol().family());
     }
 private:
     const udp::endpoint* asio_endpoint_placeholder_;
@@ -148,30 +176,6 @@ public:
 private:
     udp::socket& socket_;
 };
-
-class DummySocket : public IOSocket {
-private:
-    DummySocket(const DummySocket& source);
-    DummySocket& operator=(const DummySocket& source);
-public:
-    DummySocket(const int protocol) : protocol_(protocol) {}
-    virtual int getNative() const { return (-1); }
-    virtual int getProtocol() const { return (protocol_); }
-private:
-    const int protocol_;
-};
-
-IOSocket&
-IOSocket::getDummyUDPSocket() {
-    static DummySocket socket(IPPROTO_UDP);
-    return (socket);
-}
-
-IOSocket&
-IOSocket::getDummyTCPSocket() {
-    static DummySocket socket(IPPROTO_TCP);
-    return (socket);
-}
 
 IOMessage::IOMessage(const void* data, const size_t data_size,
                      IOSocket& io_socket, const IOEndpoint& remote_endpoint) :

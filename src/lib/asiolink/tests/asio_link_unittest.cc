@@ -38,6 +38,18 @@ const char* const TEST_IPV4_ADDR = "127.0.0.1";
 // for the tests below.
 const uint8_t test_data[] = {0, 4, 1, 2, 3, 4};
 
+class DummySocket : public IOSocket {
+private:
+    DummySocket(const DummySocket& source);
+    DummySocket& operator=(const DummySocket& source);
+public:
+    DummySocket(const int protocol) : protocol_(protocol) {}
+    virtual int getNative() const { return (-1); }
+    virtual int getProtocol() const { return (protocol_); }
+private:
+    const int protocol_;
+};
+
 TEST(IOAddressTest, fromText) {
     IOAddress io_address_v4("192.0.2.1");
     EXPECT_EQ("192.0.2.1", io_address_v4.toText());
@@ -52,34 +64,57 @@ TEST(IOAddressTest, fromText) {
     EXPECT_THROW(IOAddress("2001:db8:::1234"), IOError);
 }
 
-TEST(IOEndpointTest, create) {
+TEST(IOEndpointTest, createUDPv4) {
     const IOEndpoint* ep;
     ep = IOEndpoint::create(IPPROTO_UDP, IOAddress("192.0.2.1"), 5300);
     EXPECT_EQ("192.0.2.1", ep->getAddress().toText());
-    delete ep;
+    EXPECT_EQ(5300, ep->getPort());
+    EXPECT_EQ(AF_INET, ep->getFamily());
+    EXPECT_EQ(AF_INET, ep->getAddress().getFamily());
+    EXPECT_EQ(IPPROTO_UDP, ep->getProtocol());
+}
 
-    ep = IOEndpoint::create(IPPROTO_TCP, IOAddress("192.0.2.1"), 5300);
+TEST(IOEndpointTest, createTCPv4) {
+    const IOEndpoint* ep;
+    ep = IOEndpoint::create(IPPROTO_TCP, IOAddress("192.0.2.1"), 5301);
     EXPECT_EQ("192.0.2.1", ep->getAddress().toText());
-    delete ep;
+    EXPECT_EQ(5301, ep->getPort());
+    EXPECT_EQ(AF_INET, ep->getFamily());
+    EXPECT_EQ(AF_INET, ep->getAddress().getFamily());
+    EXPECT_EQ(IPPROTO_TCP, ep->getProtocol());
+}
 
-    ep = IOEndpoint::create(IPPROTO_UDP, IOAddress("2001:db8::1234"), 5300);
+TEST(IOEndpointTest, createUDPv6) {
+    const IOEndpoint* ep;
+    ep = IOEndpoint::create(IPPROTO_UDP, IOAddress("2001:db8::1234"), 5302);
     EXPECT_EQ("2001:db8::1234", ep->getAddress().toText());
-    delete ep;
+    EXPECT_EQ(5302, ep->getPort());
+    EXPECT_EQ(AF_INET6, ep->getFamily());
+    EXPECT_EQ(AF_INET6, ep->getAddress().getFamily());
+    EXPECT_EQ(IPPROTO_UDP, ep->getProtocol());
+}
 
-    ep = IOEndpoint::create(IPPROTO_TCP, IOAddress("2001:db8::1234"), 5300);
+TEST(IOEndpointTest, createTCPv6) {
+    const IOEndpoint* ep;
+    ep = IOEndpoint::create(IPPROTO_TCP, IOAddress("2001:db8::1234"), 5303);
     EXPECT_EQ("2001:db8::1234", ep->getAddress().toText());
-    delete ep;
+    EXPECT_EQ(5303, ep->getPort());
+    EXPECT_EQ(AF_INET6, ep->getFamily());
+    EXPECT_EQ(AF_INET6, ep->getAddress().getFamily());
+    EXPECT_EQ(IPPROTO_TCP, ep->getProtocol());
+}
 
+TEST(IOEndpointTest, createIPProto) {
     EXPECT_THROW(IOEndpoint::create(IPPROTO_IP, IOAddress("192.0.2.1"),
                                     5300)->getAddress().toText(),
                  IOError);
 }
 
 TEST(IOSocketTest, dummySockets) {
-    EXPECT_EQ(IPPROTO_UDP, IOSocket::getDummyUDPSocket().getProtocol());
-    EXPECT_EQ(IPPROTO_TCP, IOSocket::getDummyTCPSocket().getProtocol());
-    EXPECT_EQ(-1, IOSocket::getDummyUDPSocket().getNative());
-    EXPECT_EQ(-1, IOSocket::getDummyTCPSocket().getNative());
+    EXPECT_EQ(IPPROTO_UDP, DummySocket(IPPROTO_UDP).getProtocol());
+    EXPECT_EQ(IPPROTO_TCP, DummySocket(IPPROTO_TCP).getProtocol());
+    EXPECT_EQ(-1, DummySocket(IPPROTO_UDP).getNative());
+    EXPECT_EQ(-1, DummySocket(IPPROTO_TCP).getNative());
 }
 
 TEST(IOServiceTest, badPort) {

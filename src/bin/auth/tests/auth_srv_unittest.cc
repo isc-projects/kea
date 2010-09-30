@@ -52,6 +52,18 @@ const char* const BADCONFIG_TESTDB =
     "{ \"database_file\": \"" TEST_DATA_DIR "/nodir/notexist\"}";
 const char* const DEFAULT_REMOTE_ADDRESS = "192.0.2.1";
 
+class DummySocket : public IOSocket {
+private:
+    DummySocket(const DummySocket& source);
+    DummySocket& operator=(const DummySocket& source);
+public:
+    DummySocket(const int protocol) : protocol_(protocol) {}
+    virtual int getNative() const { return (-1); }
+    virtual int getProtocol() const { return (protocol_); }
+private:
+    const int protocol_;
+};
+
 class AuthSrvTest : public ::testing::Test {
 private:
     class MockXfroutClient : public AbstractXfroutClient {
@@ -136,6 +148,7 @@ protected:
     const Name qname;
     const RRClass qclass;
     const RRType qtype;
+    IOSocket* io_sock;
     IOMessage* io_message;
     const IOEndpoint* endpoint;
     OutputBuffer request_obuffer;
@@ -260,16 +273,16 @@ AuthSrvTest::createDataFromFile(const char* const datafile,
                                 const int protocol = IPPROTO_UDP)
 {
     delete io_message;
+    delete io_sock;
     data.clear();
 
     delete endpoint;
+
     endpoint = IOEndpoint::create(protocol,
                                   IOAddress(DEFAULT_REMOTE_ADDRESS), 5300);
     UnitTestUtil::readWireData(datafile, data);
-    io_message = new IOMessage(&data[0], data.size(),
-                               protocol == IPPROTO_UDP ?
-                               IOSocket::getDummyUDPSocket() :
-                               IOSocket::getDummyTCPSocket(), *endpoint);
+    io_sock = new DummySocket(protocol);
+    io_message = new IOMessage(&data[0], data.size(), *io_sock, *endpoint);
 }
 
 void
@@ -299,13 +312,14 @@ AuthSrvTest::createRequestPacket(const int protocol = IPPROTO_UDP) {
     request_message.toWire(request_renderer);
 
     delete io_message;
+    delete io_sock;
+
     endpoint = IOEndpoint::create(protocol,
                                   IOAddress(DEFAULT_REMOTE_ADDRESS), 5300);
+    io_sock = new DummySocket(protocol);
     io_message = new IOMessage(request_renderer.getData(),
                                request_renderer.getLength(),
-                               protocol == IPPROTO_UDP ?
-                               IOSocket::getDummyUDPSocket() :
-                               IOSocket::getDummyTCPSocket(), *endpoint);
+                               *io_sock, *endpoint);
 }
 
 void
