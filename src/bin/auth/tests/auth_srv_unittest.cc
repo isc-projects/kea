@@ -344,7 +344,7 @@ TEST_F(AuthSrvTest, unsupportedRequest) {
             i == Opcode::NOTIFY().getCode()) {
             continue;
         }
-        createDataFromFile("simplequery_fromWire");
+        createDataFromFile("simplequery_fromWire.wire");
         data[2] = ((i << 3) & 0xff);
 
         parse_message.clear(Message::PARSE);
@@ -366,7 +366,7 @@ TEST_F(AuthSrvTest, verbose) {
 
 // Multiple questions.  Should result in FORMERR.
 TEST_F(AuthSrvTest, multiQuestion) {
-    createDataFromFile("multiquestion_fromWire");
+    createDataFromFile("multiquestion_fromWire.wire");
     EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
                                           response_renderer));
     headerCheck(parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
@@ -396,7 +396,7 @@ TEST_F(AuthSrvTest, shortMessage) {
 // or malformed or could otherwise cause a protocol error.
 TEST_F(AuthSrvTest, response) {
     // A valid (although unusual) response
-    createDataFromFile("simpleresponse_fromWire");
+    createDataFromFile("simpleresponse_fromWire.wire");
     EXPECT_EQ(false, server.processMessage(*io_message, parse_message,
                                            response_renderer));
 
@@ -407,7 +407,7 @@ TEST_F(AuthSrvTest, response) {
                                            response_renderer));
 
     // A response to iquery.  must be dropped rather than returning NOTIMP.
-    createDataFromFile("iqueryresponse_fromWire");
+    createDataFromFile("iqueryresponse_fromWire.wire");
     EXPECT_EQ(false, server.processMessage(*io_message, parse_message,
                                            response_renderer));
 }
@@ -425,7 +425,7 @@ TEST_F(AuthSrvTest, shortQuestion) {
 
 // Query with a broken answer section
 TEST_F(AuthSrvTest, shortAnswer) {
-    createDataFromFile("shortanswer_fromWire");
+    createDataFromFile("shortanswer_fromWire.wire");
     EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
                                           response_renderer));
 
@@ -444,7 +444,7 @@ TEST_F(AuthSrvTest, shortAnswer) {
 
 // Query with unsupported version of EDNS.
 TEST_F(AuthSrvTest, ednsBadVers) {
-    createDataFromFile("queryBadEDNS_fromWire");
+    createDataFromFile("queryBadEDNS_fromWire.wire");
     EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
                                           response_renderer));
 
@@ -726,7 +726,7 @@ TEST_F(AuthSrvTest, updateConfig) {
     // query for existent data in the installed data source.  The resulting
     // response should have the AA flag on, and have an RR in each answer
     // and authority section.
-    createDataFromFile("examplequery_fromWire");
+    createDataFromFile("examplequery_fromWire.wire");
     EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
                                           response_renderer));
     headerCheck(parse_message, default_qid, Rcode::NOERROR(), opcode.getCode(),
@@ -740,7 +740,7 @@ TEST_F(AuthSrvTest, datasourceFail) {
     // tool and the data source itself naively accept it).  This will result
     // in a SERVFAIL response, and the answer and authority sections should
     // be empty.
-    createDataFromFile("badExampleQuery_fromWire");
+    createDataFromFile("badExampleQuery_fromWire.wire");
     EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
                                           response_renderer));
     headerCheck(parse_message, default_qid, Rcode::SERVFAIL(),
@@ -755,7 +755,7 @@ TEST_F(AuthSrvTest, updateConfigFail) {
     updateConfig(&server, BADCONFIG_TESTDB, false);
 
     // The original data source should still exist.
-    createDataFromFile("examplequery_fromWire");
+    createDataFromFile("examplequery_fromWire.wire");
     EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
                                           response_renderer));
     headerCheck(parse_message, default_qid, Rcode::NOERROR(), opcode.getCode(),

@@ -82,7 +82,7 @@ MessageTest::factoryFromFile(Message& message, const char* datafile) {
 TEST_F(MessageTest, getEDNS) {
     EXPECT_FALSE(message_parse.getEDNS()); // by default EDNS isn't set
 
-    factoryFromFile(message_parse, "message_fromWire10");
+    factoryFromFile(message_parse, "message_fromWire10.wire");
     EXPECT_TRUE(message_parse.getEDNS());
     EXPECT_EQ(0, message_parse.getEDNS()->getVersion());
     EXPECT_EQ(4096, message_parse.getEDNS()->getUDPSize());
@@ -134,12 +134,12 @@ TEST_F(MessageTest, fromWire) {
 
 TEST_F(MessageTest, EDNS0ExtRcode) {
     // Extended Rcode = BADVERS
-    factoryFromFile(message_parse, "message_fromWire10");
+    factoryFromFile(message_parse, "message_fromWire10.wire");
     EXPECT_EQ(Rcode::BADVERS(), message_parse.getRcode());
 
     // Maximum extended Rcode
     message_parse.clear(Message::PARSE);
-    factoryFromFile(message_parse, "message_fromWire11");
+    factoryFromFile(message_parse, "message_fromWire11.wire");
     EXPECT_EQ(0xfff, message_parse.getRcode().getCode());
 }
 
