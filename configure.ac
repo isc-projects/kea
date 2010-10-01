@@ -394,6 +394,9 @@ AC_SUBST(PTHREAD_LDFLAGS)
 #
 CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext/asio"
 #
+# Disable threads: Currently we don't use them.
+CPPFLAGS="$CPPFLAGS -DASIO_DISABLE_THREADS=1"
+#
 # kqueue portability: ASIO uses kqueue by default if it's available (it's
 # generally available in BSD variants).  Unfortunately, some public
 # implementation of kqueue forces a conversion from a pointer to an integer,
