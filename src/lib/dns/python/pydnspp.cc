@@ -40,8 +40,12 @@
 
 #include <dns/python/pydnspp_common.h>
 
-// For our 'general' isc::Exception
+// For our 'general' isc::Exceptions
 static PyObject* po_IscException;
+static PyObject* po_InvalidParameter;
+
+// For our own isc::dns::Exception
+static PyObject* po_DNSMessageBADVERS;
 
 // order is important here!
 #include <dns/python/messagerenderer_python.cc>
@@ -53,6 +57,9 @@ static PyObject* po_IscException;
 #include <dns/python/rrset_python.cc>          // needs Rdata, RRTTL
 #include <dns/python/question_python.cc>       // needs RRClass, RRType, RRTTL,
                                                // Name
+#include <dns/python/opcode_python.cc>
+#include <dns/python/rcode_python.cc>
+#include <dns/python/edns_python.cc>           // needs Messagerenderer, Rcode
 #include <dns/python/message_python.cc>        // needs RRset, Question
 
 //
@@ -81,8 +88,13 @@ PyInit_pydnspp(void) {
         return (NULL);
     }
 
+    // Add the exceptions to the class
     po_IscException = PyErr_NewException("pydnspp.IscException", NULL, NULL);
     PyModule_AddObject(mod, "IscException", po_IscException);
+
+    po_InvalidParameter = PyErr_NewException("pydnspp.InvalidParameter",
+                                             NULL, NULL);
+    PyModule_AddObject(mod, "InvalidParameter", po_InvalidParameter);
 
     // for each part included above, we call its specific initializer
 
@@ -118,7 +130,19 @@ PyInit_pydnspp(void) {
         return (NULL);
     }
 
+    if (!initModulePart_Opcode(mod)) {
+        return (NULL);
+    }
+
+    if (!initModulePart_Rcode(mod)) {
+        return (NULL);
+    }
+
     if (!initModulePart_Message(mod)) {
+        return (NULL);
+    }
+
+    if (!initModulePart_EDNS(mod)) {
         return (NULL);
     }
 
