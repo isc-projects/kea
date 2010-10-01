@@ -42,12 +42,15 @@ import random
 import time
 import signal
 from isc.config import ccsession
+import isc.utils.process
 from optparse import OptionParser, OptionValueError
 from hashlib import sha1
 try:
     import threading
 except ImportError:
     import dummy_threading as threading
+
+isc.utils.process.rename()
 
 __version__ = 'BIND10'
 URL_PATTERN = re.compile('/([\w]+)(?:/([\w]+))?/?')

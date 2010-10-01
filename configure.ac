@@ -48,6 +48,12 @@ if test $enable_shared = no; then
 	AC_MSG_ERROR([BIND 10 requires shared libraries to be built])
 fi
 
+# allow configuring without setproctitle.
+AC_ARG_ENABLE(setproctitle-check,
+AC_HELP_STRING([--disable-setproctitle-check],
+  [do not check for python setproctitle module (used to give nice names to python processes)]),
+  setproctitle_check=$enableval, setproctitle_check=yes)
+
 # OS dependent configuration
 SET_ENV_LIBRARY_PATH=no
 ENV_LIBRARY_PATH=LD_LIBRARY_PATH
@@ -161,6 +167,18 @@ if test $python_lib != "no"; then
 fi
 AC_SUBST(PYTHON_LIB)
 LDFLAGS=$LDFLAGS_SAVED
+
+# Check for the setproctitle module
+if test "$setproctitle_check" = "yes" ; then
+    AC_MSG_CHECKING(for setproctitle module)
+    if "$PYTHON" -c 'import setproctitle' 2>/dev/null ; then
+        AC_MSG_RESULT(ok)
+    else
+        AC_MSG_RESULT(missing)
+        AC_MSG_ERROR([Missing setproctitle module. Either install it or provide --disable-setproctitle-check.
+In that case we will continue, but naming of python processes will not work.])
+    fi
+fi
 
 # TODO: check for _sqlite3.py module
 
@@ -452,6 +470,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/zonemgr/Makefile
                  src/bin/zonemgr/tests/Makefile
                  src/bin/usermgr/Makefile
+                 src/bin/tests/Makefile
                  src/lib/Makefile
                  src/lib/bench/Makefile
                  src/lib/bench/example/Makefile
@@ -460,6 +479,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/cc/tests/Makefile
                  src/lib/python/Makefile
                  src/lib/python/isc/Makefile
+                 src/lib/python/isc/utils/Makefile
+                 src/lib/python/isc/utils/tests/Makefile
                  src/lib/python/isc/datasrc/Makefile
                  src/lib/python/isc/cc/Makefile
                  src/lib/python/isc/cc/tests/Makefile
@@ -518,6 +539,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/msgq/run_msgq.sh
            src/bin/auth/auth.spec.pre
            src/bin/auth/spec_config.h.pre
+           src/bin/tests/process_rename_test.py
            src/lib/config/tests/data_def_unittests_config.h
            src/lib/python/isc/config/tests/config_test
            src/lib/python/isc/cc/tests/cc_test

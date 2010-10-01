@@ -36,6 +36,9 @@ import errno
 from isc.datasrc import sqlite3_ds
 from optparse import OptionParser, OptionValueError
 from isc.config.ccsession import *
+import isc.utils.process
+
+isc.utils.process.rename()
 
 # If B10_FROM_BUILD is set in the environment, we use data files
 # from a directory relative to that, otherwise we use the ones
