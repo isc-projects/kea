@@ -34,7 +34,7 @@ class TestRename(unittest.TestCase):
         """
         Test if every script renames itself.
 
-        Scan all Makefile.in and look for scripts.
+        Scan all Makefile and look for scripts.
         Then scan them by looking at the source text
         (without actually running them)
         """
@@ -48,11 +48,11 @@ class TestRename(unittest.TestCase):
         fun = re.compile(r'^\s*isc\.utils\.process\.rename\s*\(.*\)\s*(|#.*)$',
             re.MULTILINE)
 
-        # Find all Makefile.in and extract names of scripts
-        for (d, _, fs) in os.walk('@top_srcdir@'):
-            if 'Makefile.in' in fs:
+        # Find all Makefile and extract names of scripts
+        for (d, _, fs) in os.walk('@top_builddir@'):
+            if 'Makefile' in fs:
                 makefile = ''.join(open(os.path.join(d,
-                    "Makefile.in")).readlines())
+                    "Makefile")).readlines())
                 for (var, _) in lines.findall(makefile):
                     for (script, _) in scripts.findall(var):
                         self.__scan(d, script, fun)
