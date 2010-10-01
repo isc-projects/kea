@@ -12,6 +12,7 @@ PYTESTS += rrttl_python_test.py
 PYTESTS += rrtype_python_test.py
 
 EXTRA_DIST = $(PYTESTS)
+EXTRA_DIST += testutil.py
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
 # required by loadable python modules.

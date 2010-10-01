@@ -65,7 +65,7 @@ TEST_F(Rdata_SOA_Test, toWireBuffer) {
     obuffer.skip(2);
     rdata_soa.toWire(obuffer);
     vector<unsigned char> data;
-    UnitTestUtil::readWireData("rdata_soa_toWireUncompressed", data);
+    UnitTestUtil::readWireData("rdata_soa_toWireUncompressed.wire", data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         static_cast<const uint8_t *>(obuffer.getData()) + 2,
                         obuffer.getLength() - 2, &data[2], data.size() - 2);
