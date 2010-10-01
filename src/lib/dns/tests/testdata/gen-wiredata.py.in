@@ -19,9 +19,9 @@ import configparser, re, time, sys
 from datetime import datetime
 from optparse import OptionParser
 
-re_hex = re.compile('0x[0-9a-fA-F]+')
-re_decimal = re.compile('\d+$')
-re_string = re.compile("\'(.*)\'$")
+re_hex = re.compile(r'0x[0-9a-fA-F]+')
+re_decimal = re.compile(r'\d+$')
+re_string = re.compile(r"\'(.*)\'$")
 
 dnssec_timefmt = '%Y%m%d%H%M%S'
 
@@ -365,9 +365,6 @@ if __name__ == "__main__":
     parser.add_option('-o', '--output', action='store', dest='output',
                       default=None, metavar='FILE',
                       help='output file name [default: prefix of input_file]')
-    parser.add_option('-m', '--mode', action='store', dest='mode',
-                      default='message', metavar='[message|custom]',
-                      help='specify dump mode [default: %default]')
     (options, args) = parser.parse_args()
 
     if len(args) == 0:
@@ -389,9 +386,10 @@ if __name__ == "__main__":
 
     print_header(output, configfile)
 
-    if options.mode == 'custom':
+    # First try the 'custom' mode; if it fails assume the standard mode.
+    try:
         sections = config.get('custom', 'sections').split(':')
-    else:
+    except configparser.NoSectionError:
         sections = ['header', 'question', 'edns']
 
     for s in sections:

@@ -1,4 +1,4 @@
-SUBDIRS = tests
+SUBDIRS = . tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CXXFLAGS = $(B10_CXXFLAGS)
@@ -11,10 +11,13 @@ pydnspp_la_LDFLAGS = $(PYTHON_LDFLAGS)
 # directly included from source files, so these don't have their own
 # rules
 EXTRA_DIST = pydnspp_common.h
+EXTRA_DIST += edns_python.cc
 EXTRA_DIST += messagerenderer_python.cc
 EXTRA_DIST += message_python.cc
 EXTRA_DIST += rrclass_python.cc
 EXTRA_DIST += name_python.cc
+EXTRA_DIST += opcode_python.cc
+EXTRA_DIST += rcode_python.cc
 EXTRA_DIST += rrset_python.cc
 EXTRA_DIST += question_python.cc
 EXTRA_DIST += rrttl_python.cc

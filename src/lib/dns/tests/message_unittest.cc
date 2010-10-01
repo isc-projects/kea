@@ -17,10 +17,13 @@
 #include <exceptions/exceptions.h>
 
 #include <dns/buffer.h>
+#include <dns/edns.h>
 #include <dns/exceptions.h>
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
 #include <dns/question.h>
+#include <dns/opcode.h>
+#include <dns/rcode.h>
 #include <dns/rdataclass.h>
 #include <dns/rrclass.h>
 #include <dns/rrttl.h>
@@ -76,23 +79,25 @@ MessageTest::factoryFromFile(Message& message, const char* datafile) {
     message.fromWire(buffer);
 }
 
-TEST_F(MessageTest, RcodeConstruct) {
-    // normal cases
-    EXPECT_EQ(0, Rcode(0).getCode());
-    EXPECT_EQ(0xfff, Rcode(0xfff).getCode()); // possible max code
+TEST_F(MessageTest, getEDNS) {
+    EXPECT_FALSE(message_parse.getEDNS()); // by default EDNS isn't set
 
-    // should fail on attempt of construction with an out of range code
-    EXPECT_THROW(Rcode(0x1000), isc::OutOfRange);
-    EXPECT_THROW(Rcode(0xffff), isc::OutOfRange);
+    factoryFromFile(message_parse, "message_fromWire10.wire");
+    EXPECT_TRUE(message_parse.getEDNS());
+    EXPECT_EQ(0, message_parse.getEDNS()->getVersion());
+    EXPECT_EQ(4096, message_parse.getEDNS()->getUDPSize());
+    EXPECT_TRUE(message_parse.getEDNS()->getDNSSECAwareness());
 }
 
-TEST_F(MessageTest, RcodeToText) {
-    EXPECT_EQ("NOERROR", Rcode::NOERROR().toText());
-    EXPECT_EQ("BADVERS", Rcode::BADVERS().toText());
-    EXPECT_EQ("17", Rcode(Rcode::BADVERS().getCode() + 1).toText());
-    EXPECT_EQ("4095", Rcode(Rcode(0xfff)).toText());
-}
+TEST_F(MessageTest, setEDNS) {
+    // setEDNS() isn't allowed in the parse mode
+    EXPECT_THROW(message_parse.setEDNS(EDNSPtr(new EDNS())),
+                 InvalidMessageOperation);
 
+    EDNSPtr edns = EDNSPtr(new EDNS());
+    message_render.setEDNS(edns);
+    EXPECT_EQ(edns, message_render.getEDNS());
+}
 
 TEST_F(MessageTest, fromWire) {
     factoryFromFile(message_parse, "message_fromWire1");
@@ -127,89 +132,14 @@ TEST_F(MessageTest, fromWire) {
     EXPECT_TRUE(it->isLast());
 }
 
-TEST_F(MessageTest, GetEDNS0DOBit) {
-    // Without EDNS0, DNSSEC is considered to be unsupported.
-    factoryFromFile(message_parse, "message_fromWire1");
-    EXPECT_FALSE(message_parse.isDNSSECSupported());
-
-    // If DO bit is on, DNSSEC is considered to be supported.
-    message_parse.clear(Message::PARSE);
-    factoryFromFile(message_parse, "message_fromWire2");
-    EXPECT_TRUE(message_parse.isDNSSECSupported());
-
-    // If DO bit is off, DNSSEC is considered to be unsupported.
-    message_parse.clear(Message::PARSE);
-    factoryFromFile(message_parse, "message_fromWire3");
-    EXPECT_FALSE(message_parse.isDNSSECSupported());
-}
-
-TEST_F(MessageTest, SetEDNS0DOBit) {
-    // By default, it's false, and we can enable/disable it.
-    EXPECT_FALSE(message_render.isDNSSECSupported());
-    message_render.setDNSSECSupported(true);
-    EXPECT_TRUE(message_render.isDNSSECSupported());
-    message_render.setDNSSECSupported(false);
-    EXPECT_FALSE(message_render.isDNSSECSupported());
-
-    // A message in the parse mode doesn't allow this flag to be set.
-    EXPECT_THROW(message_parse.setDNSSECSupported(true),
-                 InvalidMessageOperation);
-    // Once converted to the render mode, it works as above
-    message_parse.makeResponse();
-    EXPECT_FALSE(message_parse.isDNSSECSupported());
-    message_parse.setDNSSECSupported(true);
-    EXPECT_TRUE(message_parse.isDNSSECSupported());
-    message_parse.setDNSSECSupported(false);
-    EXPECT_FALSE(message_parse.isDNSSECSupported());
-}
-
-TEST_F(MessageTest, GetEDNS0UDPSize) {
-    // Without EDNS0, the default max UDP size is used.
-    factoryFromFile(message_parse, "message_fromWire1");
-    EXPECT_EQ(Message::DEFAULT_MAX_UDPSIZE, message_parse.getUDPSize());
-
-    // If the size specified in EDNS0 > default max, use it.
-    message_parse.clear(Message::PARSE);
-    factoryFromFile(message_parse, "message_fromWire2");
-    EXPECT_EQ(4096, message_parse.getUDPSize());
-
-    // If the size specified in EDNS0 < default max, keep using the default.
-    message_parse.clear(Message::PARSE);
-    factoryFromFile(message_parse, "message_fromWire8");
-    EXPECT_EQ(Message::DEFAULT_MAX_UDPSIZE, message_parse.getUDPSize());
-}
-
-TEST_F(MessageTest, SetEDNS0UDPSize) {
-    // The default size if unspecified
-    EXPECT_EQ(Message::DEFAULT_MAX_UDPSIZE, message_render.getUDPSize());
-    // A common buffer size with EDNS, should succeed
-    message_render.setUDPSize(4096);
-    EXPECT_EQ(4096, message_render.getUDPSize());
-    // Unusual large value, but accepted
-    message_render.setUDPSize(0xffff);
-    EXPECT_EQ(0xffff, message_render.getUDPSize());
-    // Too small is value is rejected
-    EXPECT_THROW(message_render.setUDPSize(511), InvalidMessageUDPSize);
-
-    // A message in the parse mode doesn't allow the set operation.
-    EXPECT_THROW(message_parse.setUDPSize(4096), InvalidMessageOperation);
-    // Once converted to the render mode, it works as above.
-    message_parse.makeResponse();
-    message_parse.setUDPSize(4096);
-    EXPECT_EQ(4096, message_parse.getUDPSize());
-    message_parse.setUDPSize(0xffff);
-    EXPECT_EQ(0xffff, message_parse.getUDPSize());
-    EXPECT_THROW(message_parse.setUDPSize(511), InvalidMessageUDPSize);
-}
-
-TEST_F(MessageTest, EDNS0ExtCode) {
+TEST_F(MessageTest, EDNS0ExtRcode) {
     // Extended Rcode = BADVERS
-    factoryFromFile(message_parse, "message_fromWire10");
+    factoryFromFile(message_parse, "message_fromWire10.wire");
     EXPECT_EQ(Rcode::BADVERS(), message_parse.getRcode());
 
     // Maximum extended Rcode
     message_parse.clear(Message::PARSE);
-    factoryFromFile(message_parse, "message_fromWire11");
+    factoryFromFile(message_parse, "message_fromWire11.wire");
     EXPECT_EQ(0xfff, message_parse.getRcode().getCode());
 }
 
@@ -221,19 +151,6 @@ TEST_F(MessageTest, BadEDNS0) {
     message_parse.clear(Message::PARSE);
     EXPECT_THROW(factoryFromFile(message_parse, "message_fromWire5"),
                  DNSMessageFORMERR);
-    // OPT RR of a non root name
-    message_parse.clear(Message::PARSE);
-    EXPECT_THROW(factoryFromFile(message_parse, "message_fromWire6"),
-                 DNSMessageFORMERR);
-    // Compressed owner name of OPT RR points to a root name.
-    // Not necessarily bogus, but very unusual and mostly pathological.
-    // We accept it, but is it okay?
-    message_parse.clear(Message::PARSE);
-    EXPECT_NO_THROW(factoryFromFile(message_parse, "message_fromWire7"));
-    // Unsupported Version
-    message_parse.clear(Message::PARSE);
-    EXPECT_THROW(factoryFromFile(message_parse, "message_fromWire9"),
-                 DNSMessageBADVERS);
 }
 
 TEST_F(MessageTest, toWire) {
@@ -261,5 +178,30 @@ TEST_F(MessageTest, toWire) {
     UnitTestUtil::readWireData("message_toWire1", data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, obuffer.getData(),
                         obuffer.getLength(), &data[0], data.size());
+}
+
+TEST_F(MessageTest, toWireInParseMode) {
+    // toWire() isn't allowed in the parse mode.
+    EXPECT_THROW(message_parse.toWire(renderer), InvalidMessageOperation);
+}
+
+TEST_F(MessageTest, toWireWithoutOpcode) {
+    message_render.setRcode(Rcode::NOERROR());
+    EXPECT_THROW(message_render.toWire(renderer), InvalidMessageOperation);
+}
+
+TEST_F(MessageTest, toWireWithoutRcode) {
+    message_render.setOpcode(Opcode::QUERY());
+    EXPECT_THROW(message_render.toWire(renderer), InvalidMessageOperation);
+}
+
+TEST_F(MessageTest, toTextWithoutOpcode) {
+    message_render.setRcode(Rcode::NOERROR());
+    EXPECT_THROW(message_render.toText(), InvalidMessageOperation);
+}
+
+TEST_F(MessageTest, toTextWithoutRcode) {
+    message_render.setOpcode(Opcode::QUERY());
+    EXPECT_THROW(message_render.toText(), InvalidMessageOperation);
 }
 }

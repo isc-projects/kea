@@ -1,3 +1,24 @@
+  101.	[func]		jinmei
+	src/lib/dns: Completed Opcode and Rcode implementation with more
+	tests and documentation.  API is mostly the same but the
+	validation was a bit tightened. (Trac #351, svn r3056)
+
+  100.  [func]      Michal Vaner
+	Python processes: support naming of python processes so
+	they're not all called python3.
+	(Trac #322, svn r3052)
+
+  99.	[func]*		jinmei
+	Introduced a separate EDNS class to encapsulate EDNS related
+	information more cleanly.  The related APIs are changed a bit,
+	although it won't affect most of higher level applications.
+	(Trac #311, svn r3020)
+
+  98.	[build]		jinmei
+	The ./configure script now tries to search some common include
+	paths for boost header files to minimize the need for explicit
+	configuration with --with-boost-include. (Trac #323, svn r3006)
+
   97.	[func]		jinmei
 	Added a micro benchmark test for query processing of b10-auth.
 	(Trac #308, svn r2982)

@@ -211,7 +211,7 @@ public:
     /// \brief Same as \c equals().
     bool operator==(const RRClass& other) const { return (equals(other)); }
 
-    /// \brief Return true iff two RRClasses are equal.
+    /// \brief Return true iff two RRClasses are not equal.
     ///
     /// This method never throws an exception.
     ///
