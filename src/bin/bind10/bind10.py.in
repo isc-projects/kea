@@ -63,6 +63,10 @@ import pwd
 import posix
 
 import isc.cc
+import isc.utils.process
+
+# Assign this process some longer name
+isc.utils.process.rename(sys.argv[0])
 
 # This is the version that gets displayed to the user.
 # The VERSION string consists of the module name, the module version
@@ -620,7 +624,11 @@ def check_addr(option, opt_str, value, parser):
         parser.values.address = value
     else:
         raise OptionValueError("Unknown option " + opt_str)
-  
+
+def process_rename(option, opt_str, value, parser):
+    """Function that renames the process if it is requested by a option."""
+    isc.utils.process.rename(value)
+
 def main():
     global options
     global boss_of_bind
@@ -646,6 +654,9 @@ def main():
                       help="Change user after startup (must run as root)")
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
                       help="display more about what is going on")
+    parser.add_option("--pretty-name", type="string", action="callback",
+                      callback=process_rename,
+                      help="Set the process name (displayed in ps, top, ...)")
     (options, args) = parser.parse_args()
     if args:
         parser.print_help()

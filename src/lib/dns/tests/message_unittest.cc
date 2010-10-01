@@ -22,6 +22,8 @@
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
 #include <dns/question.h>
+#include <dns/opcode.h>
+#include <dns/rcode.h>
 #include <dns/rdataclass.h>
 #include <dns/rrclass.h>
 #include <dns/rrttl.h>
@@ -75,23 +77,6 @@ MessageTest::factoryFromFile(Message& message, const char* datafile) {
 
     InputBuffer buffer(&data[0], data.size());
     message.fromWire(buffer);
-}
-
-TEST_F(MessageTest, RcodeConstruct) {
-    // normal cases
-    EXPECT_EQ(0, Rcode(0).getCode());
-    EXPECT_EQ(0xfff, Rcode(0xfff).getCode()); // possible max code
-
-    // should fail on attempt of construction with an out of range code
-    EXPECT_THROW(Rcode(0x1000), isc::OutOfRange);
-    EXPECT_THROW(Rcode(0xffff), isc::OutOfRange);
-}
-
-TEST_F(MessageTest, RcodeToText) {
-    EXPECT_EQ("NOERROR", Rcode::NOERROR().toText());
-    EXPECT_EQ("BADVERS", Rcode::BADVERS().toText());
-    EXPECT_EQ("17", Rcode(Rcode::BADVERS().getCode() + 1).toText());
-    EXPECT_EQ("4095", Rcode(Rcode(0xfff)).toText());
 }
 
 TEST_F(MessageTest, getEDNS) {
@@ -193,5 +178,30 @@ TEST_F(MessageTest, toWire) {
     UnitTestUtil::readWireData("message_toWire1", data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, obuffer.getData(),
                         obuffer.getLength(), &data[0], data.size());
+}
+
+TEST_F(MessageTest, toWireInParseMode) {
+    // toWire() isn't allowed in the parse mode.
+    EXPECT_THROW(message_parse.toWire(renderer), InvalidMessageOperation);
+}
+
+TEST_F(MessageTest, toWireWithoutOpcode) {
+    message_render.setRcode(Rcode::NOERROR());
+    EXPECT_THROW(message_render.toWire(renderer), InvalidMessageOperation);
+}
+
+TEST_F(MessageTest, toWireWithoutRcode) {
+    message_render.setOpcode(Opcode::QUERY());
+    EXPECT_THROW(message_render.toWire(renderer), InvalidMessageOperation);
+}
+
+TEST_F(MessageTest, toTextWithoutOpcode) {
+    message_render.setRcode(Rcode::NOERROR());
+    EXPECT_THROW(message_render.toText(), InvalidMessageOperation);
+}
+
+TEST_F(MessageTest, toTextWithoutRcode) {
+    message_render.setOpcode(Opcode::QUERY());
+    EXPECT_THROW(message_render.toText(), InvalidMessageOperation);
 }
 }

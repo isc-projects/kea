@@ -29,6 +29,7 @@ from isc.config.ccsession import *
 from isc.log.log import *
 from isc.cc import SessionError, SessionTimeout
 from isc.notify import notify_out
+import isc.utils.process
 import socket
 import select
 import errno
@@ -40,6 +41,8 @@ except ImportError as e:
     # C++ loadable module may not be installed; even so the xfrout process
     # must keep running, so we warn about it and move forward.
     sys.stderr.write('[b10-xfrout] failed to import DNS or XFR module: %s\n' % str(e))
+
+isc.utils.process.rename()
 
 if "B10_FROM_BUILD" in os.environ:
     SPECFILE_PATH = os.environ["B10_FROM_BUILD"] + "/src/bin/xfrout"

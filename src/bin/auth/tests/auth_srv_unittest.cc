@@ -22,6 +22,8 @@
 #include <dns/name.h>
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
+#include <dns/opcode.h>
+#include <dns/rcode.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
 
@@ -114,7 +116,7 @@ protected:
     AuthSrvTest() : server(true, xfrout),
                     request_message(Message::RENDER),
                     parse_message(Message::PARSE), default_qid(0x1035),
-                    opcode(Opcode(Opcode::QUERY())), qname("www.example.com"),
+                    opcode(Opcode::QUERY()), qname("www.example.com"),
                     qclass(RRClass::IN()), qtype(RRType::A()),
                     io_message(NULL), endpoint(NULL), request_obuffer(0),
                     request_renderer(request_obuffer),
@@ -280,6 +282,7 @@ AuthSrvTest::createRequestMessage(const Opcode& opcode,
 {
     request_message.clear(Message::RENDER);
     request_message.setOpcode(opcode);
+    request_message.setRcode(Rcode::NOERROR());
     request_message.setQid(default_qid);
     request_message.addQuestion(Question(request_name, rrclass, rrtype));
 }
@@ -584,6 +587,7 @@ TEST_F(AuthSrvTest, notifyForCHClass) {
 TEST_F(AuthSrvTest, notifyEmptyQuestion) {
     request_message.clear(Message::RENDER);
     request_message.setOpcode(Opcode::NOTIFY());
+    request_message.setRcode(Rcode::NOERROR());
     request_message.setHeaderFlag(MessageFlag::AA());
     request_message.setQid(default_qid);
     request_message.toWire(request_renderer);
