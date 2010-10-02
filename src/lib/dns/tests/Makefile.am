@@ -1,6 +1,9 @@
+SUBDIRS = testdata .
+
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
-AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(srcdir)/testdata\"
+AM_CPPFLAGS += -DTEST_DATA_SRCDIR=\"$(srcdir)/testdata\"
+AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(top_builddir)/src/lib/dns/tests/testdata\"
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 if USE_STATIC_LINK
@@ -14,10 +17,13 @@ if HAVE_GTEST
 TESTS += run_unittests
 run_unittests_SOURCES = unittest_util.h unittest_util.cc
 run_unittests_SOURCES += buffer_unittest.cc name_unittest.cc
+run_unittests_SOURCES += edns_unittest.cc
 run_unittests_SOURCES += messagerenderer_unittest.cc
 run_unittests_SOURCES += rrclass_unittest.cc rrtype_unittest.cc
 run_unittests_SOURCES += rrttl_unittest.cc
 run_unittests_SOURCES += dnssectime_unittest.cc
+run_unittests_SOURCES += opcode_unittest.cc
+run_unittests_SOURCES += rcode_unittest.cc
 run_unittests_SOURCES += rdata_unittest.h rdata_unittest.cc
 run_unittests_SOURCES += rdata_in_a_unittest.cc rdata_in_aaaa_unittest.cc
 run_unittests_SOURCES += rdata_ns_unittest.cc rdata_soa_unittest.cc
@@ -49,99 +55,3 @@ run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 endif
 
 noinst_PROGRAMS = $(TESTS)
-
-# NOTE: keep this in sync with real file listing
-# so is included in tarball
-EXTRA_DIST = testdata/gen-wiredata.py.in
-EXTRA_DIST += testdata/message_fromWire1
-EXTRA_DIST += testdata/message_fromWire10
-EXTRA_DIST += testdata/message_fromWire10.spec
-EXTRA_DIST += testdata/message_fromWire11
-EXTRA_DIST += testdata/message_fromWire11.spec
-EXTRA_DIST += testdata/message_fromWire2
-EXTRA_DIST += testdata/message_fromWire3
-EXTRA_DIST += testdata/message_fromWire4
-EXTRA_DIST += testdata/message_fromWire5
-EXTRA_DIST += testdata/message_fromWire6
-EXTRA_DIST += testdata/message_fromWire7
-EXTRA_DIST += testdata/message_fromWire8
-EXTRA_DIST += testdata/message_fromWire9
-EXTRA_DIST += testdata/message_toWire1
-EXTRA_DIST += testdata/name_fromWire1
-EXTRA_DIST += testdata/name_fromWire10
-EXTRA_DIST += testdata/name_fromWire11
-EXTRA_DIST += testdata/name_fromWire12
-EXTRA_DIST += testdata/name_fromWire13
-EXTRA_DIST += testdata/name_fromWire14
-EXTRA_DIST += testdata/name_fromWire2
-EXTRA_DIST += testdata/name_fromWire3_1
-EXTRA_DIST += testdata/name_fromWire3_2
-EXTRA_DIST += testdata/name_fromWire4
-EXTRA_DIST += testdata/name_fromWire6
-EXTRA_DIST += testdata/name_fromWire7
-EXTRA_DIST += testdata/name_fromWire8
-EXTRA_DIST += testdata/name_fromWire9
-EXTRA_DIST += testdata/name_toWire1
-EXTRA_DIST += testdata/name_toWire2
-EXTRA_DIST += testdata/name_toWire3
-EXTRA_DIST += testdata/name_toWire4
-EXTRA_DIST += testdata/name_toWire5
-EXTRA_DIST += testdata/name_toWire5.spec
-EXTRA_DIST += testdata/name_toWire6
-EXTRA_DIST += testdata/name_toWire6.spec
-EXTRA_DIST += testdata/question_fromWire
-EXTRA_DIST += testdata/question_toWire1
-EXTRA_DIST += testdata/question_toWire2
-EXTRA_DIST += testdata/rdata_cname_fromWire
-EXTRA_DIST += testdata/rdata_dname_fromWire
-EXTRA_DIST += testdata/rdata_dnskey_fromWire
-EXTRA_DIST += testdata/rdata_ds_fromWire
-EXTRA_DIST += testdata/rdata_in_a_fromWire
-EXTRA_DIST += testdata/rdata_in_aaaa_fromWire
-EXTRA_DIST += testdata/rdata_mx_fromWire
-EXTRA_DIST += testdata/rdata_mx_toWire1
-EXTRA_DIST += testdata/rdata_ns_fromWire
-EXTRA_DIST += testdata/rdata_nsec3_fromWire1
-EXTRA_DIST += testdata/rdata_nsec3_fromWire2
-EXTRA_DIST += testdata/rdata_nsec3_fromWire3
-EXTRA_DIST += testdata/rdata_nsec3param_fromWire1
-EXTRA_DIST += testdata/rdata_nsec_fromWire1
-EXTRA_DIST += testdata/rdata_nsec_fromWire10
-EXTRA_DIST += testdata/rdata_nsec_fromWire10.spec
-EXTRA_DIST += testdata/rdata_nsec_fromWire2
-EXTRA_DIST += testdata/rdata_nsec_fromWire3
-EXTRA_DIST += testdata/rdata_nsec_fromWire4
-EXTRA_DIST += testdata/rdata_nsec_fromWire4.spec
-EXTRA_DIST += testdata/rdata_nsec_fromWire5
-EXTRA_DIST += testdata/rdata_nsec_fromWire5.spec
-EXTRA_DIST += testdata/rdata_nsec_fromWire6
-EXTRA_DIST += testdata/rdata_nsec_fromWire6.spec
-EXTRA_DIST += testdata/rdata_nsec_fromWire7
-EXTRA_DIST += testdata/rdata_nsec_fromWire7.spec
-EXTRA_DIST += testdata/rdata_nsec_fromWire8
-EXTRA_DIST += testdata/rdata_nsec_fromWire8.spec
-EXTRA_DIST += testdata/rdata_nsec_fromWire9
-EXTRA_DIST += testdata/rdata_nsec_fromWire9.spec
-EXTRA_DIST += testdata/rdata_opt_fromWire
-EXTRA_DIST += testdata/rdata_rrsig_fromWire1
-EXTRA_DIST += testdata/rdata_rrsig_fromWire2
-EXTRA_DIST += testdata/rdata_rrsig_fromWire2.spec
-EXTRA_DIST += testdata/rdata_soa_fromWire
-EXTRA_DIST += testdata/rdata_soa_toWireUncompressed
-EXTRA_DIST += testdata/rdata_soa_toWireUncompressed.spec
-EXTRA_DIST += testdata/rdata_txt_fromWire1
-EXTRA_DIST += testdata/rdata_txt_fromWire2
-EXTRA_DIST += testdata/rdata_txt_fromWire2.spec
-EXTRA_DIST += testdata/rdata_txt_fromWire3
-EXTRA_DIST += testdata/rdata_txt_fromWire3.spec
-EXTRA_DIST += testdata/rdata_txt_fromWire4
-EXTRA_DIST += testdata/rdata_txt_fromWire4.spec
-EXTRA_DIST += testdata/rdata_txt_fromWire5
-EXTRA_DIST += testdata/rdata_txt_fromWire5.spec
-EXTRA_DIST += testdata/rdata_unknown_fromWire
-EXTRA_DIST += testdata/rrcode16_fromWire1
-EXTRA_DIST += testdata/rrcode16_fromWire2
-EXTRA_DIST += testdata/rrcode32_fromWire1
-EXTRA_DIST += testdata/rrcode32_fromWire2
-EXTRA_DIST += testdata/rrset_toWire1
-EXTRA_DIST += testdata/rrset_toWire2

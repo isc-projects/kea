@@ -73,6 +73,26 @@ public:
     isc::config::ModuleCCSession* configSession() const;
     void setConfigSession(isc::config::ModuleCCSession* config_session);
 
+    /// \brief Set or update the size (number of slots) of hot spot cache.
+    ///
+    /// If the specified size is 0, it means the size will be unlimited.
+    /// The specified size is recorded even if the cache is disabled; the
+    /// new size will be effective when the cache is enabled.
+    ///
+    /// This method never throws an exception.
+    ///
+    /// \param slots The number of cache slots.
+    void setCacheSlots(const size_t slots);
+
+    /// \brief Get the current size (number of slots) of hot spot cache.
+    ///
+    /// It always returns the recorded size regardless of the cache is enabled.
+    ///
+    /// This method never throws an exception.
+    ///
+    /// \return The current number of cache slots.
+    size_t getCacheSlots() const;
+
     ///
     /// Note: this interface is tentative.  We'll revisit the ASIO and session
     /// frameworks, at which point the session will probably be passed on

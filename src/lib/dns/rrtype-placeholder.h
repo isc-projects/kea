@@ -223,7 +223,7 @@ public:
     /// \brief Same as \c equals().
     bool operator==(const RRType& other) const { return (equals(other)); }
 
-    /// \brief Return true iff two RRTypes are equal.
+    /// \brief Return true iff two RRTypes are not equal.
     ///
     /// This method never throws an exception.
     ///
