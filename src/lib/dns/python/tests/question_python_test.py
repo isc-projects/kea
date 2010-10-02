@@ -20,24 +20,12 @@
 import unittest
 import os
 from pydnspp import *
+from testutil import *
 
 if "TESTDATA_PATH" in os.environ:
     testdata_path = os.environ["TESTDATA_PATH"]
 else:
     testdata_path = "../tests/testdata"
-
-def read_wire_data(filename):
-    data = bytes()
-    file = open(testdata_path + os.sep + filename, "r")
-    for line in file:
-        line = line.strip()
-        if line == "" or line.startswith("#"):
-            pass
-        else:
-            cur_data = bytes.fromhex(line)
-            data += cur_data
-
-    return data
 
 def question_from_wire(file, position = 0):
     data = read_wire_data(file)
@@ -102,7 +90,6 @@ class QuestionTest(unittest.TestCase):
         wiredata = read_wire_data("question_toWire2")
         self.assertEqual(renderer.get_data(), wiredata)
         self.assertRaises(TypeError, self.test_question1.to_wire, 1)
-    
 
 if __name__ == '__main__':
     unittest.main()
