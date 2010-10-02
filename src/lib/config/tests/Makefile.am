@@ -1,3 +1,5 @@
+SUBDIRS = testdata .
+
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
