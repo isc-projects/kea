@@ -25,6 +25,8 @@
 
 #include <asiolink/asiolink.h>
 
+#include <boost/foreach.hpp>
+
 #include <config/ccsession.h>
 
 #include <cc/data.h>
@@ -33,7 +35,6 @@
 
 #include <dns/buffer.h>
 #include <dns/exceptions.h>
-#include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/question.h>
 #include <dns/rrset.h>
@@ -61,25 +62,105 @@ private:
     RecursorImpl(const RecursorImpl& source);
     RecursorImpl& operator=(const RecursorImpl& source);
 public:
-    RecursorImpl(asiolink::IOService& io_service);
-    bool processNormalQuery(const IOMessage& io_message,
-                            const Question& question, Message& message,
-                            MessageRenderer& renderer,
-                            BasicServer* server);
+    RecursorImpl(const char& forward) :
+        config_session_(NULL), verbose_mode_(false),
+        forward_(forward), ioquery_()
+    {}
+
+    ~RecursorImpl() {
+        queryShutdown();
+    }
+
+    void querySetup(IOService& ios) {
+        ioquery_ = new IOQuery(ios, forward_);
+    }
+
+    void queryShutdown() {
+        if (ioquery_) {
+            delete ioquery_;
+        }
+    }
+
+    void processNormalQuery(const IOMessage& io_message,
+                            const Question& question, MessagePtr message,
+                            OutputBufferPtr buffer,
+                            IOServer* server);
     ModuleCCSession* config_session_;
 
     bool verbose_mode_;
 
+    /// Address of the forward nameserver
+    const char& forward_;
+
     /// Object to handle upstream queries
-    IOQuery ioquery_;
+    IOQuery* ioquery_;
 
     /// Currently non-configurable, but will be.
     static const uint16_t DEFAULT_LOCAL_UDPSIZE = 4096;
 };
 
-RecursorImpl::RecursorImpl(asiolink::IOService& io_service) :
-    config_session_(NULL), verbose_mode_(false), ioquery_(io_service)
-{}
+class QuestionInserter {
+public:
+    QuestionInserter(MessagePtr message) : message_(message) {}
+    void operator()(const QuestionPtr question) {
+        message_->addQuestion(question);
+    }
+    MessagePtr message_;
+};
+
+class SectionInserter {
+public:
+    SectionInserter(MessagePtr message, const Section& sect, bool sign) :
+        message_(message), section_(sect), sign_(sign)
+    {}
+    void operator()(const RRsetPtr rrset) {
+        message_->addRRset(section_, rrset, true);
+    }
+    MessagePtr message_;
+    const Section& section_;
+    bool sign_;
+};
+
+void
+makeErrorMessage(MessagePtr message, OutputBufferPtr buffer,
+                 const Rcode& rcode, const bool verbose_mode)
+{
+    // extract the parameters that should be kept.
+    // XXX: with the current implementation, it's not easy to set EDNS0
+    // depending on whether the query had it.  So we'll simply omit it.
+    const qid_t qid = message->getQid();
+    const bool rd = message->getHeaderFlag(MessageFlag::RD());
+    const bool cd = message->getHeaderFlag(MessageFlag::CD());
+    const Opcode& opcode = message->getOpcode();
+    vector<QuestionPtr> questions;
+
+    // If this is an error to a query or notify, we should also copy the
+    // question section.
+    if (opcode == Opcode::QUERY() || opcode == Opcode::NOTIFY()) {
+        questions.assign(message->beginQuestion(), message->endQuestion());
+    }
+
+    message->clear(Message::RENDER);
+    message->setQid(qid);
+    message->setOpcode(opcode);
+    message->setHeaderFlag(MessageFlag::QR());
+    message->setUDPSize(RecursorImpl::DEFAULT_LOCAL_UDPSIZE);
+    if (rd) {
+        message->setHeaderFlag(MessageFlag::RD());
+    }
+    if (cd) {
+        message->setHeaderFlag(MessageFlag::CD());
+    }
+    for_each(questions.begin(), questions.end(), QuestionInserter(message));
+    message->setRcode(rcode);
+    MessageRenderer renderer(*buffer);
+    message->toWire(renderer);
+
+    if (verbose_mode) {
+        cerr << "[b10-recurse] sending an error response (" <<
+            renderer.getLength() << " bytes):\n" << message->toText() << endl;
+    }
+}
 
 // This is a derived class of \c DNSLookup, to serve as a
 // callback in the asiolink module.  It calls
@@ -87,13 +168,12 @@ RecursorImpl::RecursorImpl(asiolink::IOService& io_service) :
 class MessageLookup : public DNSLookup {
 public:
     MessageLookup(Recursor* srv) : server_(srv) {}
-    virtual void operator()(const IOMessage& io_message,
-                            isc::dns::Message& dns_message,
-                            isc::dns::MessageRenderer& renderer,
-                            BasicServer* server, bool& complete) const
+
+    // \brief Handle the DNS Lookup
+    virtual void operator()(const IOMessage& io_message, MessagePtr message,
+                            OutputBufferPtr buffer, IOServer* server) const
     {
-        server_->processMessage(io_message, dns_message, renderer,
-                                server, complete);
+        server_->processMessage(io_message, message, buffer, server);
     }
 private:
     Recursor* server_;
@@ -107,18 +187,76 @@ class MessageAnswer : public DNSAnswer {
 public:
     MessageAnswer(Recursor* srv) : server_(srv) {}
     virtual void operator()(const IOMessage& io_message,
-                            isc::dns::Message& message,
-                            isc::dns::MessageRenderer& renderer) const
+                            MessagePtr message,
+                            OutputBufferPtr buffer) const
     {
+        const qid_t qid = message->getQid();
+        const bool rd = message->getHeaderFlag(MessageFlag::RD());
+        const bool cd = message->getHeaderFlag(MessageFlag::CD());
+        const Opcode& opcode = message->getOpcode();
+        const Rcode& rcode = message->getRcode();
+        vector<QuestionPtr> questions;
+        questions.assign(message->beginQuestion(), message->endQuestion());
+
+        message->clear(Message::RENDER);
+        message->setQid(qid);
+        message->setOpcode(opcode);
+        message->setRcode(rcode);
+        message->setUDPSize(RecursorImpl::DEFAULT_LOCAL_UDPSIZE);
+
+        message->setHeaderFlag(MessageFlag::QR());
+        message->setHeaderFlag(MessageFlag::RA());
+        if (rd) {
+            message->setHeaderFlag(MessageFlag::RD());
+        }
+        if (cd) {
+            message->setHeaderFlag(MessageFlag::CD());
+        }
+
+
+        // Copy the question section.
+        for_each(questions.begin(), questions.end(), QuestionInserter(message));
+
+        // If the buffer already has an answer in it, copy RRsets from
+        // that into the new message, then clear the buffer and render
+        // the new message into it.
+        if (buffer->getLength() != 0) {
+            try {
+                Message incoming(Message::PARSE);
+                InputBuffer ibuf(buffer->getData(), buffer->getLength());
+                incoming.fromWire(ibuf);
+                for_each(incoming.beginSection(Section::ANSWER()), 
+                         incoming.endSection(Section::ANSWER()),
+                         SectionInserter(message, Section::ANSWER(), true));
+                for_each(incoming.beginSection(Section::ADDITIONAL()), 
+                         incoming.endSection(Section::ADDITIONAL()),
+                         SectionInserter(message, Section::ADDITIONAL(), true));
+                for_each(incoming.beginSection(Section::AUTHORITY()), 
+                         incoming.endSection(Section::AUTHORITY()),
+                         SectionInserter(message, Section::AUTHORITY(), true));
+            } catch (const Exception& ex) {
+                // Incoming message couldn't be read, we just SERVFAIL
+                message->setRcode(Rcode::SERVFAIL());
+            }
+
+        }
+
+        // Now we can clear the buffer and render the new message into it
+        buffer->clear();
+        MessageRenderer renderer(*buffer);
+
         if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
-            renderer.setLengthLimit(message.getUDPSize());
+            renderer.setLengthLimit(message->getUDPSize());
         } else {
             renderer.setLengthLimit(65535);
         }
-        message.toWire(renderer);
+
+        message->toWire(renderer);
+
         if (server_->getVerbose()) {
-            cerr << "[b10-recurse] sending a response (" << renderer.getLength()
-                 << " bytes):\n" << message.toText() << endl;
+            cerr << "[b10-recurse] sending a response ("
+                 << renderer.getLength() << " bytes):\n"
+                 << message->toText() << endl;
         }
     }
 
@@ -129,9 +267,9 @@ private:
 // This is a derived class of \c IOCallback, to serve
 // as a callback in the asiolink module.  It checks for queued
 // configuration messages, and executes them if found.
-class ConfigChecker : public IOCallback {
+class ConfigCheck : public IOCallback {
 public:
-    ConfigChecker(Recursor* srv) : server_(srv) {}
+    ConfigCheck(Recursor* srv) : server_(srv) {}
     virtual void operator()(const IOMessage& io_message UNUSED_PARAM) const {
         if (server_->configSession()->hasQueuedMsgs()) {
             server_->configSession()->checkCommand();
@@ -141,9 +279,9 @@ private:
     Recursor* server_;
 };
 
-Recursor::Recursor(asiolink::IOService& io_service) :
-    impl_(new RecursorImpl(io_service)),
-    checkin_(new ConfigChecker(this)),
+Recursor::Recursor(const char& forward) :
+    impl_(new RecursorImpl(forward)),
+    checkin_(new ConfigCheck(this)),
     dns_lookup_(new MessageLookup(this)),
     dns_answer_(new MessageAnswer(this))
 {}
@@ -155,55 +293,11 @@ Recursor::~Recursor() {
     delete dns_answer_;
 }
 
-namespace {
-class QuestionInserter {
-public:
-    QuestionInserter(Message* message) : message_(message) {}
-    void operator()(const QuestionPtr question) {
-        message_->addQuestion(question);
-    }
-    Message* message_;
-};
-
 void
-makeErrorMessage(Message& message, MessageRenderer& renderer,
-                 const Rcode& rcode, const bool verbose_mode)
-{
-    // extract the parameters that should be kept.
-    // XXX: with the current implementation, it's not easy to set EDNS0
-    // depending on whether the query had it.  So we'll simply omit it.
-    const qid_t qid = message.getQid();
-    const bool rd = message.getHeaderFlag(MessageFlag::RD());
-    const bool cd = message.getHeaderFlag(MessageFlag::CD());
-    const Opcode& opcode = message.getOpcode();
-    vector<QuestionPtr> questions;
-
-    // If this is an error to a query or notify, we should also copy the
-    // question section.
-    if (opcode == Opcode::QUERY() || opcode == Opcode::NOTIFY()) {
-        questions.assign(message.beginQuestion(), message.endQuestion());
-    }
-
-    message.clear(Message::RENDER);
-    message.setQid(qid);
-    message.setOpcode(opcode);
-    message.setHeaderFlag(MessageFlag::QR());
-    message.setUDPSize(RecursorImpl::DEFAULT_LOCAL_UDPSIZE);
-    if (rd) {
-        message.setHeaderFlag(MessageFlag::RD());
-    }
-    if (cd) {
-        message.setHeaderFlag(MessageFlag::CD());
-    }
-    for_each(questions.begin(), questions.end(), QuestionInserter(&message));
-    message.setRcode(rcode);
-    message.toWire(renderer);
-
-    if (verbose_mode) {
-        cerr << "[b10-recurse] sending an error response (" <<
-            renderer.getLength() << " bytes):\n" << message.toText() << endl;
-    }
-}
+Recursor::setIOService(asiolink::IOService& ios) {
+    impl_->queryShutdown();
+    impl_->querySetup(ios);
+    io_ = &ios;
 }
 
 void
@@ -227,120 +321,114 @@ Recursor::configSession() const {
 }
 
 void
-Recursor::processMessage(const IOMessage& io_message, Message& message,
-                        MessageRenderer& renderer,
-                        BasicServer* server, bool& complete)
+Recursor::processMessage(const IOMessage& io_message, MessagePtr message,
+                        OutputBufferPtr buffer, IOServer* server)
 {
     InputBuffer request_buffer(io_message.getData(), io_message.getDataSize());
-
     // First, check the header part.  If we fail even for the base header,
     // just drop the message.
     try {
-        message.parseHeader(request_buffer);
+        message->parseHeader(request_buffer);
 
         // Ignore all responses.
-        if (message.getHeaderFlag(MessageFlag::QR())) {
+        if (message->getHeaderFlag(MessageFlag::QR())) {
             if (impl_->verbose_mode_) {
                 cerr << "[b10-recurse] received unexpected response, ignoring"
                      << endl;
             }
-            complete = false;
-            server->resume();
+            server->resume(false);
             return;
         }
     } catch (const Exception& ex) {
         if (impl_->verbose_mode_) {
             cerr << "[b10-recurse] DNS packet exception: " << ex.what() << endl;
         }
-        complete = false;
-        server->resume();
+        server->resume(false);
         return;
     }
 
     // Parse the message.  On failure, return an appropriate error.
     try {
-        message.fromWire(request_buffer);
+        message->fromWire(request_buffer);
     } catch (const DNSProtocolError& error) {
         if (impl_->verbose_mode_) {
             cerr << "[b10-recurse] returning " <<  error.getRcode().toText()
                  << ": " << error.what() << endl;
         }
-        makeErrorMessage(message, renderer, error.getRcode(),
+        makeErrorMessage(message, buffer, error.getRcode(),
                          impl_->verbose_mode_);
-        complete = true;
-        server->resume();
+        server->resume(true);
         return;
     } catch (const Exception& ex) {
         if (impl_->verbose_mode_) {
             cerr << "[b10-recurse] returning SERVFAIL: " << ex.what() << endl;
         }
-        makeErrorMessage(message, renderer, Rcode::SERVFAIL(),
+        makeErrorMessage(message, buffer, Rcode::SERVFAIL(),
                          impl_->verbose_mode_);
-        complete = true;
-        server->resume();
+        server->resume(true);
         return;
     } // other exceptions will be handled at a higher layer.
 
     if (impl_->verbose_mode_) {
         cerr << "[b10-recurse] received a message:\n"
-             << message.toText() << endl;
+             << message->toText() << endl;
     }
 
     // Perform further protocol-level validation.
-    if (message.getOpcode() == Opcode::NOTIFY()) {
-        makeErrorMessage(message, renderer, Rcode::NOTAUTH(),
+    bool sendAnswer = true;
+    if (message->getOpcode() == Opcode::NOTIFY()) {
+        makeErrorMessage(message, buffer, Rcode::NOTAUTH(),
                          impl_->verbose_mode_);
-        complete = true;
-    } else if (message.getOpcode() != Opcode::QUERY()) {
+    } else if (message->getOpcode() != Opcode::QUERY()) {
         if (impl_->verbose_mode_) {
             cerr << "[b10-recurse] unsupported opcode" << endl;
         }
-        makeErrorMessage(message, renderer, Rcode::NOTIMP(),
+        makeErrorMessage(message, buffer, Rcode::NOTIMP(),
                          impl_->verbose_mode_);
-        complete = true;
-    } else if (message.getRRCount(Section::QUESTION()) != 1) {
-        makeErrorMessage(message, renderer, Rcode::FORMERR(),
+    } else if (message->getRRCount(Section::QUESTION()) != 1) {
+        makeErrorMessage(message, buffer, Rcode::FORMERR(),
                          impl_->verbose_mode_);
-        complete = true;
     } else {
-        ConstQuestionPtr question = *message.beginQuestion();
+        ConstQuestionPtr question = *message->beginQuestion();
         const RRType &qtype = question->getType();
         if (qtype == RRType::AXFR()) {
             if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
-                makeErrorMessage(message, renderer, Rcode::FORMERR(),
+                makeErrorMessage(message, buffer, Rcode::FORMERR(),
                                  impl_->verbose_mode_);
             } else {
-                makeErrorMessage(message, renderer, Rcode::NOTIMP(),
+                makeErrorMessage(message, buffer, Rcode::NOTIMP(),
                                  impl_->verbose_mode_);
             }
-            complete = true;
         } else if (qtype == RRType::IXFR()) {
-            makeErrorMessage(message, renderer, Rcode::NOTIMP(),
+            makeErrorMessage(message, buffer, Rcode::NOTIMP(),
                          impl_->verbose_mode_);
-            complete = true;
         } else {
-            complete = impl_->processNormalQuery(io_message, *question,
-                                                 message, renderer, server);
+            // The IOQuery object will post the "resume" event to the
+            // IOServer when an answer arrives, so we don't have to do it now.
+            sendAnswer = false;
+            impl_->processNormalQuery(io_message, *question, message,
+                                      buffer, server);
         }
     }
 
-    server->resume();
+    if (sendAnswer) {
+        server->resume(true);
+    }
 }
 
-bool
+void
 RecursorImpl::processNormalQuery(const IOMessage& io_message,
-                                 const Question& question, Message& message,
-                                 MessageRenderer& renderer,
-                                 BasicServer* server)
+                                 const Question& question, MessagePtr message,
+                                 OutputBufferPtr buffer, IOServer* server)
 {
-    const bool dnssec_ok = message.isDNSSECSupported();
+    const bool dnssec_ok = message->isDNSSECSupported();
 
-    message.makeResponse();
-    message.setRcode(Rcode::NOERROR());
-    message.setDNSSECSupported(dnssec_ok);
-    message.setUDPSize(RecursorImpl::DEFAULT_LOCAL_UDPSIZE);
-    ioquery_.sendQuery(io_message, question, renderer, server);
-    return (true);
+    message->makeResponse();
+    message->setHeaderFlag(MessageFlag::RA());
+    message->setRcode(Rcode::NOERROR());
+    message->setDNSSECSupported(dnssec_ok);
+    message->setUDPSize(RecursorImpl::DEFAULT_LOCAL_UDPSIZE);
+    ioquery_->sendQuery(io_message, question, buffer, server);
 }
 
 ConstElementPtr

@@ -25,12 +25,6 @@
 #include <asiolink/asiolink.h>
 
 namespace isc {
-namespace dns {
-class InputBuffer;
-class Message;
-class MessageRenderer;
-}
-
 namespace xfr {
 class AbstractXfroutClient;
 }
@@ -67,9 +61,9 @@ public:
     /// \return \c true if the \message contains a response to be returned;
     /// otherwise \c false.
     void processMessage(const asiolink::IOMessage& io_message,
-                        isc::dns::Message& message,
-                        isc::dns::MessageRenderer& response_renderer,
-                        asiolink::BasicServer* server, bool& complete);
+                        isc::dns::MessagePtr message,
+                        isc::dns::OutputBufferPtr buffer,
+                        asiolink::IOServer* server);
     void setVerbose(bool on);
     bool getVerbose() const;
     isc::data::ConstElementPtr updateConfig(isc::data::ConstElementPtr config);

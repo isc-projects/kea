@@ -25,7 +25,6 @@
 
 #include <dns/buffer.h>
 #include <dns/message.h>
-#include <dns/messagerenderer.h>
 
 #include <asiolink/asiolink.h>
 #include <asiolink/internal/coroutine.h>
@@ -73,7 +72,7 @@ private:
 //
 // Asynchronous TCP server coroutine
 //
-class TCPServer : public virtual BasicServer, public virtual coroutine {
+class TCPServer : public virtual IOServer, public virtual coroutine {
 public:
     explicit TCPServer(asio::io_service& io_service,
                        const asio::ip::address& addr, const uint16_t port, 
@@ -85,7 +84,15 @@ public:
                     size_t length = 0);
 
     void doLookup();
-    void resume();
+    void resume(const bool done);
+    bool hasAnswer() { return (done_); }
+    int value() { return (get_value()); }
+
+    IOServer* clone() {
+        TCPServer* s = new TCPServer(*this);
+        s->cloned_ = true;
+        return (s);
+    }
 
 private:
     enum { MAX_LENGTH = 65535 };
@@ -100,12 +107,12 @@ private:
     // constructor or in the coroutine.
     boost::shared_ptr<asio::ip::tcp::acceptor> acceptor_;
     boost::shared_ptr<asio::ip::tcp::socket> socket_;
-    boost::shared_ptr<isc::dns::MessageRenderer> renderer_;
     boost::shared_ptr<isc::dns::OutputBuffer> lenbuf_;
     boost::shared_ptr<isc::dns::OutputBuffer> respbuf_;
     boost::shared_ptr<asiolink::IOEndpoint> peer_;
     boost::shared_ptr<asiolink::IOSocket> iosock_;
     boost::shared_ptr<asiolink::IOMessage> io_message_;
+    isc::dns::MessagePtr message_;
     boost::shared_ptr<char> data_;
 
     // State information that is entirely internal to a given instance

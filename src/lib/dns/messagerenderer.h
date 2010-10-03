@@ -258,6 +258,7 @@ public:
     /// \param name A \c Name object to be written.
     /// \param compress A boolean indicating whether to enable name compression.
     void writeName(const Name& name, bool compress = true);
+    //@}
 private:
     struct MessageRendererImpl;
     MessageRendererImpl* impl_;

@@ -25,6 +25,8 @@
 
 #include <exceptions/exceptions.h>
 
+#include <boost/shared_ptr.hpp>
+
 namespace isc {
 namespace dns {
 
@@ -412,6 +414,16 @@ public:
 private:
     std::vector<uint8_t> data_;
 };
+
+/// \brief Pointer-like types pointing to \c InputBuffer or \c OutputBuffer
+///
+/// These types are expected to be used as an argument in asynchronous
+/// callback functions.  The internal reference-counting will ensure that
+/// that ongoing state information will not be lost if the object
+/// that originated the asynchronous call falls out of scope.
+typedef boost::shared_ptr<InputBuffer> InputBufferPtr;
+typedef boost::shared_ptr<OutputBuffer> OutputBufferPtr;
+
 }
 }
 #endif  // __BUFFER_H
