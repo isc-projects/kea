@@ -27,8 +27,6 @@
 namespace isc {
 namespace dns {
 class InputBuffer;
-class Message;
-class MessageRenderer;
 }
 }
 
@@ -51,25 +49,27 @@ private:
 public:
     /// The constructor.
     ///
-    /// \param use_cache Whether to enable hot spot cache for lookup results.
-    /// \param xfrout_client Communication interface with a separate xfrout
-    /// process.  It's normally a reference to an xfr::XfroutClient object,
-    /// but can refer to a local mock object for testing (or other
-    /// experimental) purposes.
-    Recursor(asiolink::IOService& io_service);
+    /// \param forward The address of the name server to which requests
+    /// should be forwarded.  (In the future, when the server is running
+    /// in forwarding mode, the forward nameserver addresses will be set
+    /// via the config channel instaed.)
+    Recursor(const char& forward);
     ~Recursor();
     //@}
     /// \return \c true if the \message contains a response to be returned;
     /// otherwise \c false.
     void processMessage(const asiolink::IOMessage& io_message,
-                        isc::dns::Message& message,
-                        isc::dns::MessageRenderer& response_renderer,
-                        asiolink::BasicServer* server, bool& complete);
+                        isc::dns::MessagePtr message,
+                        isc::dns::OutputBufferPtr buffer,
+                        asiolink::IOServer* server);
     void setVerbose(bool on);
     bool getVerbose() const;
     isc::data::ConstElementPtr updateConfig(isc::data::ConstElementPtr config);
     isc::config::ModuleCCSession* configSession() const;
     void setConfigSession(isc::config::ModuleCCSession* config_session);
+
+    void setIOService(asiolink::IOService& ios);
+    asiolink::IOService& getIOService() const { return (*io_); }
 
     asiolink::DNSLookup* getDNSLookupProvider() {
         return (dns_lookup_);
@@ -83,6 +83,7 @@ public:
 
 private:
     RecursorImpl* impl_;
+    asiolink::IOService* io_;
     asiolink::IOCallback* checkin_;
     asiolink::DNSLookup* dns_lookup_;
     asiolink::DNSAnswer* dns_answer_;

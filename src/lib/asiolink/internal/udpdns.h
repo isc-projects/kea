@@ -20,6 +20,7 @@
 #include <config.h>
 
 #include <asio.hpp>
+#include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <dns/buffer.h>
@@ -72,7 +73,7 @@ private:
 //
 // Asynchronous UDP server coroutine
 //
-class UDPServer : public virtual BasicServer, public virtual coroutine {
+class UDPServer : public virtual IOServer, public virtual coroutine {
 public:
     explicit UDPServer(asio::io_service& io_service,
                        const asio::ip::address& addr, const uint16_t port,
@@ -84,11 +85,18 @@ public:
                     size_t length = 0);
 
     enum { MAX_LENGTH = 4096 };
-    char answer[MAX_LENGTH];
     asio::ip::udp::endpoint peer;
 
     void doLookup();
-    void resume();
+    void resume(const bool done);
+    bool hasAnswer() { return (done_); }
+    int value() { return (get_value()); }
+
+    IOServer* clone() {
+        UDPServer* s = new UDPServer(*this);
+        s->cloned_ = true;
+        return (s);
+    }
 
 private:
     asio::io_service& io_;
@@ -101,15 +109,14 @@ private:
     boost::shared_ptr<asio::ip::udp::socket> socket_;
     boost::shared_ptr<char> data_;
     boost::shared_ptr<asio::ip::udp::endpoint> sender_;
-    boost::shared_ptr<isc::dns::MessageRenderer> renderer_;
-    boost::shared_ptr<isc::dns::Message> message_;
     boost::shared_ptr<asiolink::IOEndpoint> peer_;
     boost::shared_ptr<asiolink::IOSocket> iosock_;
     boost::shared_ptr<asiolink::IOMessage> io_message_;
+    isc::dns::MessagePtr message_;
+    isc::dns::OutputBufferPtr respbuf_;
 
     // State information that is entirely internal to a given instance
     // of the coroutine can be declared here.
-    isc::dns::OutputBuffer respbuf_;
     size_t bytes_;
     bool done_;
 
@@ -128,20 +135,26 @@ public:
                       const IOMessage& io_message,
                       const isc::dns::Question& q,
                       const asio::ip::address& addr,
-                      isc::dns::MessageRenderer& renderer,
-                      BasicServer* caller);
+                      isc::dns::OutputBufferPtr buffer,
+                      IOServer* server);
     void operator()(asio::error_code ec = asio::error_code(),
                     size_t length = 0); 
 private:
+    enum { MAX_LENGTH = 4096 };
+
     boost::shared_ptr<asio::ip::udp::socket> socket_;
-    asio::ip::udp::endpoint server_;
+    asio::ip::udp::endpoint remote_;
     isc::dns::Question question_;
-    char* data_;
-    size_t datalen_;
     isc::dns::OutputBuffer msgbuf_;
-    BasicServer* caller_;
+    isc::dns::OutputBufferPtr buffer_;;
+    boost::shared_array<char> data_;
+
+    /// \brief The UDP or TCP Server object from which the query originated.
+    // IOServerPtr server_;
+    IOServer* server_;
 };
 }
+
 
 #endif // __UDPDNS_H
 

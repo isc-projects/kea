@@ -95,34 +95,42 @@ private:
     };
 
     // A nonoperative task object to be used in calls to processMessage()
-    class MockTask : public BasicServer {
+    class MockTask : public IOServer {
+    public:
+        MockTask() : done_(false) {}
         void operator()(asio::error_code ec UNUSED_PARAM,
                         size_t length UNUSED_PARAM)
         {}
+        // virtual void doLookup() { return; }
+        virtual void resume(const bool done) { done_ = done; }
+        virtual bool hasAnswer() { return (done_); }
+        virtual int value() { return (0); }
+    private:
+        bool done_;
     };
 
 protected:
     RecursorTest() : ios(*TEST_PORT, true, false, NULL, NULL, NULL),
-                    server(ios),
+                    server(*DEFAULT_REMOTE_ADDRESS),
                     request_message(Message::RENDER),
-                    parse_message(Message::PARSE),
+                    parse_message(new Message(Message::PARSE)),
                     default_qid(0x1035), opcode(Opcode(Opcode::QUERY())),
                     qname("www.example.com"),
                     qclass(RRClass::IN()), qtype(RRType::A()),
                     io_message(NULL), endpoint(NULL), request_obuffer(0),
                     request_renderer(request_obuffer),
-                    response_obuffer(0), response_renderer(response_obuffer)
+                    response_obuffer(new OutputBuffer(0))
     {}
     ~RecursorTest() {
         delete io_message;
         delete endpoint;
     }
     MockSession notify_session;
-    MockTask noOp;
+    MockTask task;
     IOService ios;
     Recursor server;
     Message request_message;
-    Message parse_message;
+    MessagePtr parse_message;
     const qid_t default_qid;
     const Opcode opcode;
     const Name qname;
@@ -133,8 +141,7 @@ protected:
     const IOEndpoint* endpoint;
     OutputBuffer request_obuffer;
     MessageRenderer request_renderer;
-    OutputBuffer response_obuffer;
-    MessageRenderer response_renderer;
+    OutputBufferPtr response_obuffer;
     vector<uint8_t> data;
 
     void createDataFromFile(const char* const datafile, int protocol);
@@ -305,13 +312,11 @@ TEST_F(RecursorTest, unsupportedRequest) {
         createDataFromFile("simplequery_fromWire");
         data[2] = ((i << 3) & 0xff);
 
-        parse_message.clear(Message::PARSE);
-        bool done;
+        parse_message->clear(Message::PARSE);
         server.processMessage(*io_message, parse_message,
-                              response_renderer, &noOp,
-                              done);
-        EXPECT_TRUE(done);
-        headerCheck(parse_message, default_qid, Rcode::NOTIMP(), i, QR_FLAG,
+                              response_obuffer, &task);
+        EXPECT_TRUE(task.hasAnswer());
+        headerCheck(*parse_message, default_qid, Rcode::NOTIMP(), i, QR_FLAG,
                     0, 0, 0, 0);
     }
 }
@@ -328,13 +333,12 @@ TEST_F(RecursorTest, verbose) {
 // Multiple questions.  Should result in FORMERR.
 TEST_F(RecursorTest, multiQuestion) {
     createDataFromFile("multiquestion_fromWire");
-    bool done;
-    server.processMessage(*io_message, parse_message, response_renderer, &noOp, done);
-    EXPECT_TRUE(done);
-    headerCheck(parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
+    server.processMessage(*io_message, parse_message, response_obuffer, &task);
+    EXPECT_TRUE(task.hasAnswer());
+    headerCheck(*parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
                 QR_FLAG, 2, 0, 0, 0);
 
-    QuestionIterator qit = parse_message.beginQuestion();
+    QuestionIterator qit = parse_message->beginQuestion();
     EXPECT_EQ(Name("example.com"), (*qit)->getName());
     EXPECT_EQ(RRClass::IN(), (*qit)->getClass());
     EXPECT_EQ(RRType::A(), (*qit)->getType());
@@ -343,16 +347,15 @@ TEST_F(RecursorTest, multiQuestion) {
     EXPECT_EQ(RRClass::IN(), (*qit)->getClass());
     EXPECT_EQ(RRType::AAAA(), (*qit)->getType());
     ++qit;
-    EXPECT_TRUE(qit == parse_message.endQuestion());
+    EXPECT_TRUE(qit == parse_message->endQuestion());
 }
 
 // Incoming data doesn't even contain the complete header.  Must be silently
 // dropped.
 TEST_F(RecursorTest, shortMessage) {
     createDataFromFile("shortmessage_fromWire");
-    bool done;
-    server.processMessage(*io_message, parse_message, response_renderer, &noOp, done);
-    EXPECT_FALSE(done);
+    server.processMessage(*io_message, parse_message, response_obuffer, &task);
+    EXPECT_FALSE(task.hasAnswer());
 }
 
 // Response messages.  Must be silently dropped, whether it's a valid response
@@ -360,78 +363,73 @@ TEST_F(RecursorTest, shortMessage) {
 TEST_F(RecursorTest, response) {
     // A valid (although unusual) response
     createDataFromFile("simpleresponse_fromWire");
-    bool done;
-    server.processMessage(*io_message, parse_message, response_renderer, &noOp, done);
-    EXPECT_FALSE(done);
+    server.processMessage(*io_message, parse_message, response_obuffer, &task);
+    EXPECT_FALSE(task.hasAnswer());
 
     // A response with a broken question section.  must be dropped rather than
     // returning FORMERR.
     createDataFromFile("shortresponse_fromWire");
-    server.processMessage(*io_message, parse_message, response_renderer, &noOp, done);
-    EXPECT_FALSE(done);
+    server.processMessage(*io_message, parse_message, response_obuffer, &task);
+    EXPECT_FALSE(task.hasAnswer());
 
     // A response to iquery.  must be dropped rather than returning NOTIMP.
     createDataFromFile("iqueryresponse_fromWire");
-    server.processMessage(*io_message, parse_message, response_renderer, &noOp, done);
-    EXPECT_FALSE(done);
+    server.processMessage(*io_message, parse_message, response_obuffer, &task);
+    EXPECT_FALSE(task.hasAnswer());
 }
 
 // Query with a broken question
 TEST_F(RecursorTest, shortQuestion) {
     createDataFromFile("shortquestion_fromWire");
-    bool done;
-    server.processMessage(*io_message, parse_message, response_renderer, &noOp, done);
-    EXPECT_TRUE(done);
+    server.processMessage(*io_message, parse_message, response_obuffer, &task);
+    EXPECT_TRUE(task.hasAnswer());
     // Since the query's question is broken, the question section of the
     // response should be empty.
-    headerCheck(parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
+    headerCheck(*parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
                 QR_FLAG, 0, 0, 0, 0);
 }
 
 // Query with a broken answer section
 TEST_F(RecursorTest, shortAnswer) {
     createDataFromFile("shortanswer_fromWire");
-    bool done;
-    server.processMessage(*io_message, parse_message, response_renderer, &noOp, done);
-    EXPECT_TRUE(done);
+    server.processMessage(*io_message, parse_message, response_obuffer, &task);
+    EXPECT_TRUE(task.hasAnswer());
 
     // This is a bogus query, but question section is valid.  So the response
     // should copy the question section.
-    headerCheck(parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
+    headerCheck(*parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
                 QR_FLAG, 1, 0, 0, 0);
 
-    QuestionIterator qit = parse_message.beginQuestion();
+    QuestionIterator qit = parse_message->beginQuestion();
     EXPECT_EQ(Name("example.com"), (*qit)->getName());
     EXPECT_EQ(RRClass::IN(), (*qit)->getClass());
     EXPECT_EQ(RRType::A(), (*qit)->getType());
     ++qit;
-    EXPECT_TRUE(qit == parse_message.endQuestion());
+    EXPECT_TRUE(qit == parse_message->endQuestion());
 }
 
 // Query with unsupported version of EDNS.
 TEST_F(RecursorTest, ednsBadVers) {
     createDataFromFile("queryBadEDNS_fromWire");
-    bool done;
-    server.processMessage(*io_message, parse_message, response_renderer, &noOp, done);
-    EXPECT_TRUE(done);
+    server.processMessage(*io_message, parse_message, response_obuffer, &task);
+    EXPECT_TRUE(task.hasAnswer());
 
     // The response must have an EDNS OPT RR in the additional section.
     // Note that the DNSSEC DO bit is cleared even if this bit in the query
     // is set.  This is a limitation of the current implementation.
-    headerCheck(parse_message, default_qid, Rcode::BADVERS(), opcode.getCode(),
+    headerCheck(*parse_message, default_qid, Rcode::BADVERS(), opcode.getCode(),
                 QR_FLAG, 1, 0, 0, 1);
-    EXPECT_EQ(4096, parse_message.getUDPSize());
-    EXPECT_FALSE(parse_message.isDNSSECSupported());
+    EXPECT_EQ(4096, parse_message->getUDPSize());
+    EXPECT_FALSE(parse_message->isDNSSECSupported());
 }
 
 TEST_F(RecursorTest, AXFROverUDP) {
     // AXFR over UDP is invalid and should result in FORMERR.
     createRequestPacket(opcode, Name("example.com"), RRClass::IN(),
                         RRType::AXFR(), IPPROTO_UDP);
-    bool done;
-    server.processMessage(*io_message, parse_message, response_renderer, &noOp, done);
-    EXPECT_TRUE(done);
-    headerCheck(parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
+    server.processMessage(*io_message, parse_message, response_obuffer, &task);
+    EXPECT_TRUE(task.hasAnswer());
+    headerCheck(*parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
                 QR_FLAG, 1, 0, 0, 0);
 }
 
@@ -439,10 +437,9 @@ TEST_F(RecursorTest, AXFRFail) {
     createRequestPacket(opcode, Name("example.com"), RRClass::IN(),
                         RRType::AXFR(), IPPROTO_TCP);
     // AXFR is not implemented and should always send NOTIMP.
-    bool done;
-    server.processMessage(*io_message, parse_message, response_renderer, &noOp, done);
-    EXPECT_TRUE(done);
-    headerCheck(parse_message, default_qid, Rcode::NOTIMP(), opcode.getCode(),
+    server.processMessage(*io_message, parse_message, response_obuffer, &task);
+    EXPECT_TRUE(task.hasAnswer());
+    headerCheck(*parse_message, default_qid, Rcode::NOTIMP(), opcode.getCode(),
                 QR_FLAG, 1, 0, 0, 0);
 }
 
@@ -454,10 +451,9 @@ TEST_F(RecursorTest, notifyFail) {
     request_message.setQid(default_qid);
     request_message.toWire(request_renderer);
     createRequestPacket(IPPROTO_UDP);
-    bool done;
-    server.processMessage(*io_message, parse_message, response_renderer, &noOp, done);
-    EXPECT_TRUE(done);
-    headerCheck(parse_message, default_qid, Rcode::NOTAUTH(),
+    server.processMessage(*io_message, parse_message, response_obuffer, &task);
+    EXPECT_TRUE(task.hasAnswer());
+    headerCheck(*parse_message, default_qid, Rcode::NOTAUTH(),
                 Opcode::NOTIFY().getCode(), QR_FLAG, 0, 0, 0, 0);
 }
 

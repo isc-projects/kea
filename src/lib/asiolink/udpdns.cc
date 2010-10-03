@@ -80,7 +80,7 @@ UDPServer::UDPServer(io_service& io_service,
                      IOCallback* checkin,
                      DNSLookup* lookup,
                      DNSAnswer* answer) :
-    io_(io_service), respbuf_(0), done_(false),
+    io_(io_service), done_(false),
     checkin_callback_(checkin), lookup_callback_(lookup),
     answer_callback_(answer)
 {
@@ -135,8 +135,7 @@ UDPServer::operator()(error_code ec, size_t length) {
 
         // Instantiate objects that will be needed by the
         // asynchronous send call.
-        respbuf_.clear();
-        renderer_.reset(new MessageRenderer(respbuf_));
+        respbuf_.reset(new OutputBuffer(0));
         message_.reset(new Message(Message::PARSE));
 
         CORO_YIELD io_.post(LookupHandler<UDPServer>(*this));
@@ -145,33 +144,32 @@ UDPServer::operator()(error_code ec, size_t length) {
             CORO_YIELD return;
         }
 
-        (*answer_callback_)(*io_message_, *message_, *renderer_);
-        CORO_YIELD socket_->async_send_to(buffer(respbuf_.getData(),
-                                                 respbuf_.getLength()),
+        (*answer_callback_)(*io_message_, message_, respbuf_);
+        CORO_YIELD socket_->async_send_to(buffer(respbuf_->getData(),
+                                                 respbuf_->getLength()),
                                      *sender_, *this);
     }
 }
 
 void
 UDPServer::doLookup() {
-    (*lookup_callback_)(*io_message_, *message_, *renderer_, this, done_);
+    (*lookup_callback_)(*io_message_, message_, respbuf_, this);
 }
 
 void
-UDPServer::resume() {
+UDPServer::resume(const bool done) {
+    done_ = done;
     io_.post(*this);
 }
 
 UDPQuery::UDPQuery(io_service& io_service, const IOMessage& io_message,
                    const Question& q, const ip::address& addr,
-                   MessageRenderer& renderer, BasicServer* caller) :
-    question_(q),
-    data_((char*) renderer.getData()), datalen_(renderer.getLength()),
-    msgbuf_(512), caller_(caller)
+                   OutputBufferPtr buffer, IOServer* server) :
+    question_(q), msgbuf_(512), buffer_(buffer), server_(server->clone())
 {
     udp proto = addr.is_v4() ? udp::v4() : udp::v6();
     socket_.reset(new udp::socket(io_service, proto));
-    server_ = udp::endpoint(addr, 53);
+    remote_ = udp::endpoint(addr, 53);
 }
 
 void
@@ -194,13 +192,16 @@ UDPQuery::operator()(error_code ec, size_t length) {
 
         CORO_YIELD socket_->async_send_to(buffer(msgbuf_.getData(),
                                                  msgbuf_.getLength()),
-                                           server_, *this);
+                                           remote_, *this);
 
-        CORO_YIELD socket_->async_receive_from(buffer(data_, datalen_),
-                                               server_, *this);
+        data_.reset(new char[MAX_LENGTH]);
+        CORO_YIELD socket_->async_receive_from(buffer(data_.get(), MAX_LENGTH),
+                                               remote_, *this);
+
+        buffer_->writeData(data_.get(), length);
+        server_->resume(true);
     }
 
-    caller_->resume();
 }
 
 }

@@ -86,7 +86,8 @@ my_command_handler(const string& command, ConstElementPtr args) {
 
 void
 usage() {
-    cerr << "Usage: b10-recurse [-a address] [-p port] [-4|-6] [-nv]" << endl;
+    cerr << "Usage: b10-recurse -f nameserver [-a address] [-p port] "
+            "[-4|-6] [-nv]" << endl;
     exit(1);
 }
 } // end of anonymous namespace
@@ -96,10 +97,11 @@ main(int argc, char* argv[]) {
     int ch;
     const char* port = DNSPORT;
     const char* address = NULL;
+    const char* forward = NULL;
     const char* uid = NULL;
     bool use_ipv4 = true, use_ipv6 = true, cache = true;
 
-    while ((ch = getopt(argc, argv, "46a:np:u:v")) != -1) {
+    while ((ch = getopt(argc, argv, "46a:f:np:u:v")) != -1) {
         switch (ch) {
         case '4':
             // Note that -4 means "ipv4 only", we need to set "use_ipv6" here,
@@ -117,6 +119,9 @@ main(int argc, char* argv[]) {
             break;
         case 'a':
             address = optarg;
+            break;
+        case 'f':
+            forward = optarg;
             break;
         case 'p':
             port = optarg;
@@ -147,6 +152,11 @@ main(int argc, char* argv[]) {
         usage();
     }
 
+    if (forward == NULL) {
+        cerr << "[b10-recurse] No forward name server specified" << endl;
+        usage();
+    }
+
     int ret = 0;
 
     // XXX: we should eventually pass io_service here.
@@ -160,6 +170,10 @@ main(int argc, char* argv[]) {
         } else {
             specfile = string(RECURSE_SPECFILE_LOCATION);
         }
+
+        recursor = new Recursor(*forward);
+        recursor ->setVerbose(verbose_mode);
+        cout << "[b10-recurse] Server created." << endl;
 
         IOCallback* checkin = recursor->getCheckinProvider();
         DNSLookup* lookup = recursor->getDNSLookupProvider();
@@ -178,11 +192,8 @@ main(int argc, char* argv[]) {
             io_service = new IOService(*port, use_ipv4, use_ipv6,
                                        checkin, lookup, answer);
         }
+        recursor->setIOService(*io_service);
         cout << "[b10-recurse] IOService created." << endl;
-
-        recursor = new Recursor(*io_service);
-        recursor ->setVerbose(verbose_mode);
-        cout << "[b10-recurse] Server created." << endl;
 
         cc_session = new Session(io_service->get_io_service());
         cout << "[b10-recurse] Configuration session channel created." << endl;

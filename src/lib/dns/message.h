@@ -798,6 +798,14 @@ private:
     MessageImpl* impl_;
 };
 
+/// \brief Pointer-like type pointing to a \c Message
+///
+/// This type is expected to be used as an argument in asynchronous
+/// callback functions.  The internal reference-counting will ensure that
+/// that ongoing state information will not be lost if the object
+/// that originated the asynchronous call falls out of scope.
+typedef boost::shared_ptr<Message> MessagePtr;
+
 std::ostream& operator<<(std::ostream& os, const Opcode& opcode);
 std::ostream& operator<<(std::ostream& os, const Rcode& rcode);
 std::ostream& operator<<(std::ostream& os, const Message& message);

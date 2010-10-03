@@ -29,7 +29,6 @@
 
 #include <dns/buffer.h>
 #include <dns/message.h>
-#include <dns/messagerenderer.h>
 
 #include <asiolink.h>
 #include <internal/coroutine.h>
@@ -153,7 +152,7 @@ TCPServer::operator()(error_code ec, size_t length) {
         // Reset or instantiate objects that will be needed by the
         // DNS lookup and the write call.
         respbuf_->clear();
-        renderer_.reset(new MessageRenderer(*respbuf_));
+        message_.reset(new Message(Message::PARSE));
 
         // Process the DNS message.
         bytes_ = length;
@@ -162,6 +161,8 @@ TCPServer::operator()(error_code ec, size_t length) {
         if (!done_) {
             CORO_YIELD return;
         }
+
+        (*answer_callback_)(*io_message_, message_, respbuf_);
 
         // Send the response.
         lenbuf_->clear();
@@ -174,12 +175,12 @@ TCPServer::operator()(error_code ec, size_t length) {
 
 void
 TCPServer::doLookup() {
-    Message message(Message::PARSE);
-    (*lookup_callback_)(*io_message_, message, *renderer_, this, done_);
+    (*lookup_callback_)(*io_message_, message_, respbuf_, this);
 }
 
 void
-TCPServer::resume() {
+TCPServer::resume(const bool done) {
+    done_ = done;
     io_.post(*this);
 }
 

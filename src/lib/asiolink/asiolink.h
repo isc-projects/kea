@@ -28,6 +28,7 @@
 
 #include <boost/function.hpp>
 
+#include <dns/buffer.h>
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
 #include <dns/question.h>
@@ -388,19 +389,29 @@ private:
 };
 
 /// XXX: need to add doc
-class BasicServer {
+class IOServer;
+typedef boost::shared_ptr<IOServer> IOServerPtr;
+class IOServer {
 public:
-    BasicServer() : self(this) {}
+    IOServer() : self_(this), cloned_(false) {}
+
     virtual void operator()(asio::error_code ec = asio::error_code(),
                             size_t length = 0)
     {
-        (*self)(ec, length);
+        (*self_)(ec, length);
     }
 
-    virtual void doLookup() {}
-    virtual void resume() {}
+    virtual void doLookup() { self_->doLookup(); }
+    virtual void resume(const bool done) { self_->resume(done); }
+    virtual bool hasAnswer() { return (self_->hasAnswer()); }
+    virtual int value() { return (self_->value()); }
+    virtual IOServer* clone() { return (self_->clone()); }
+
 private:
-    BasicServer* self;
+    IOServer* self_;
+
+protected:
+    bool cloned_;
 };
 
 template <typename T>
@@ -437,7 +448,7 @@ protected:
     ///
     /// This is intentionally defined as \c protected as this base class
     /// should never be instantiated (except as part of a derived class).
-    DNSLookup() : self(this) {}
+    DNSLookup() : self_(this) {}
 public:
     /// \brief The destructor
     virtual ~DNSLookup() {}
@@ -447,16 +458,15 @@ public:
     /// that the function ultimately invoked will be the one in the derived
     /// class.
     virtual void operator()(const IOMessage& io_message,
-                            isc::dns::Message& dns_message,
-                            isc::dns::MessageRenderer& renderer,
-                            BasicServer* server, bool& success)
-                            const
+                            isc::dns::MessagePtr message,
+                            isc::dns::OutputBufferPtr buffer,
+                            IOServer* server) const
     {
-        (*self)(io_message, dns_message, renderer, server, success);
+        (*self_)(io_message, message, buffer, server);
     }
     //@}
 private:
-    DNSLookup* self;
+    DNSLookup* self_;
 };
 
 /// \brief The \c DNSAnswer class is an abstract base class for a DNS
@@ -488,8 +498,8 @@ public:
     virtual ~DNSAnswer() {}
     /// \brief The function operator
     virtual void operator()(const IOMessage& io_message,
-                            isc::dns::Message& dns_message,
-                            isc::dns::MessageRenderer& renderer) const = 0;
+                            isc::dns::MessagePtr message,
+                            isc::dns::OutputBufferPtr buffer) const = 0;
     //@}
 };
 
@@ -516,7 +526,7 @@ protected:
     ///
     /// This is intentionally defined as \c protected as this base class
     /// should never be instantiated (except as part of a derived class).
-    IOCallback() : self(this) {}
+    IOCallback() : self_(this) {}
 public:
     /// \brief The destructor
     virtual ~IOCallback() {}
@@ -526,11 +536,11 @@ public:
     /// that the function ultimately invoked will be the one in the derived
     /// class.
     virtual void operator()(const IOMessage& io_message) const {
-        (*self)(io_message);
+        (*self_)(io_message);
     }
     //@}
 private:
-    IOCallback* self;
+    IOCallback* self_;
 };
 
 /// \brief The \c IOService class is a wrapper for the ASIO \c io_service
@@ -600,13 +610,16 @@ private:
 /// the ASIO code that carries out upstream queries.
 class IOQuery {
 public:
-    IOQuery(IOService& io_service);
+    IOQuery(IOService& io_service, const char& forward);
+
+    /// \brief Sends a query to the IOQuery object.
     void sendQuery(const IOMessage& io_message,
                    const isc::dns::Question& question,
-                   isc::dns::MessageRenderer& renderer,
-                   BasicServer* caller);
+                   isc::dns::OutputBufferPtr buffer,
+                   IOServer* server);
 private:
     IOService& io_service_;
+    asio::ip::address ns_addr_;
 };
 
 }      // asiolink

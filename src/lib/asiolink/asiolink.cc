@@ -28,7 +28,6 @@
 
 #include <dns/buffer.h>
 #include <dns/message.h>
-#include <dns/messagerenderer.h>
 
 #include <asiolink/asiolink.h>
 #include <asiolink/internal/tcpdns.h>
@@ -94,24 +93,30 @@ IOMessage::IOMessage(const void* data, const size_t data_size,
     remote_endpoint_(remote_endpoint)
 {}
 
-IOQuery::IOQuery(IOService& io_service) : io_service_(io_service) {}
+IOQuery::IOQuery(IOService& io_service, const char& forward) :
+    io_service_(io_service)
+{
+    error_code err;
+    ns_addr_ = ip::address::from_string(&forward, err);
+    if (err) {
+        isc_throw(IOError, "Invalid IP address '" << &ns_addr_ << "': "
+                  << err.message());
+    }
+}
 
 void
 IOQuery::sendQuery(const IOMessage& io_message,
-                   const Question& question, MessageRenderer& renderer,
-                   BasicServer* completer)
+                   const Question& question, OutputBufferPtr buffer,
+                   IOServer* server)
 {
-    error_code err;
-    // XXX: hard-code the address for now:
-    const ip::address addr = ip::address::from_string("192.168.1.12", err);
 
     // XXX: eventually we will need to be able to determine whether
     // the message should be sent via TCP or UDP, or sent initially via
     // UDP and then fall back to TCP on failure, but for the moment
     // we're only going to handle UDP.
-    UDPQuery* query = new UDPQuery(io_service_.get_io_service(), io_message,
-                                   question, addr, renderer, completer);
-    (*query)();
+    asio::io_service& io = io_service_.get_io_service();
+    UDPQuery q(io, io_message, question, ns_addr_, buffer, server);
+    io.post(q);
 }
 
 class IOServiceImpl {
