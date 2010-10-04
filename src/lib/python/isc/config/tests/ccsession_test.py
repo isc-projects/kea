@@ -23,7 +23,7 @@ import unittest
 import os
 from isc.config.ccsession import *
 from isc.config.config_data import BIND10_CONFIG_DATA_VERSION
-from unittest_fakesession import FakeModuleCCSession
+from unittest_fakesession import FakeModuleCCSession, WouldBlockForever
 
 class TestHelperFunctions(unittest.TestCase):
     def test_parse_answer(self):
@@ -361,8 +361,8 @@ class TestModuleCCSession(unittest.TestCase):
             self.my_command_handler_no_answer)
         self.assertEqual(len(fake_session.message_queue), 0)
 
-    """See if the message gets there even in blocking mode."""
     def test_check_command_block(self):
+        """See if the message gets there even in blocking mode."""
         fake_session = self.common_check_command_check(
             self.my_command_handler_ok,
             lambda mccs, _: mccs.check_command(False))
@@ -370,8 +370,8 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertEqual({'result': [0]},
                          fake_session.get_message('Spec2', None))
 
-    """Check it works if session has timeout and it sets it back."""
     def test_check_command_block_timeout(self):
+        """Check it works if session has timeout and it sets it back."""
         def cmd_check(mccs, session):
             session.set_timeout(1)
             mccs.check_command(False)
@@ -381,6 +381,13 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertEqual({'result': [0]},
                          fake_session.get_message('Spec2', None))
         self.assertEqual(fake_session.get_timeout(), 1)
+
+    def test_check_command_blocks_forever(self):
+        """Check it would wait forever checking a command."""
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec2.spec", None, None, fake_session)
+        mccs.set_command_handler(self.my_command_handler_ok)
+        self.assertRaises(WouldBlockForever, lambda: mccs.check_command(False))
 
     def test_remote_module(self):
         fake_session = FakeModuleCCSession()
