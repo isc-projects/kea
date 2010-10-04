@@ -389,6 +389,14 @@ class TestModuleCCSession(unittest.TestCase):
         mccs.set_command_handler(self.my_command_handler_ok)
         self.assertRaises(WouldBlockForever, lambda: mccs.check_command(False))
 
+    def test_check_command_blocks_forever_timeout(self):
+        """Like above, but it should wait forever even with timeout here."""
+        fake_session = FakeModuleCCSession()
+        fake_session.set_timeout(1)
+        mccs = self.create_session("spec2.spec", None, None, fake_session)
+        mccs.set_command_handler(self.my_command_handler_ok)
+        self.assertRaises(WouldBlockForever, lambda: mccs.check_command(False))
+
     def test_remote_module(self):
         fake_session = FakeModuleCCSession()
         mccs = self.create_session("spec1.spec", None, None, fake_session)
