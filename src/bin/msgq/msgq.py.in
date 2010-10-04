@@ -142,6 +142,10 @@ class MsgQ:
 
     def setup_listener(self):
         """Set up the listener socket.  Internal function."""
+        if self.verbose:
+            sys.stdout.write("[b10-msgq] Setting up socket at %s\n" %
+                             self.socket_file)
+
         self.listen_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         
         if os.path.exists(self.socket_file):
