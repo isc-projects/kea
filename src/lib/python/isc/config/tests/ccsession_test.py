@@ -125,6 +125,8 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertTrue("Spec1" in fake_session.subscriptions)
 
         self.assertEqual(len(fake_session.message_queue), 0)
+        fake_session.group_sendmsg(None, 'Spec1')
+        fake_session.group_sendmsg(None, 'Spec1')
         self.assertRaises(ModuleCCSessionError, mccs.start)
         self.assertEqual(len(fake_session.message_queue), 2)
         self.assertEqual({'command': ['module_spec', {'module_name': 'Spec1'}]},
@@ -150,6 +152,8 @@ class TestModuleCCSession(unittest.TestCase):
         fake_session = FakeModuleCCSession()
         mccs = self.create_session("spec2.spec", None, None, fake_session)
         self.assertEqual(len(fake_session.message_queue), 0)
+        fake_session.group_sendmsg(None, 'Spec2')
+        fake_session.group_sendmsg(None, 'Spec2')
         self.assertRaises(ModuleCCSessionError, mccs.start)
         self.assertEqual(len(fake_session.message_queue), 2)
         self.assertEqual({'command': ['module_spec', mccs.specification._module_spec]},
@@ -173,6 +177,8 @@ class TestModuleCCSession(unittest.TestCase):
         mccs = self.create_session("spec2.spec", None, None, fake_session)
         mccs.set_config_handler(self.my_config_handler_ok)
         self.assertEqual(len(fake_session.message_queue), 0)
+        fake_session.group_sendmsg(None, 'Spec2')
+        fake_session.group_sendmsg(None, 'Spec2')
         self.assertRaises(ModuleCCSessionError, mccs.start)
         self.assertEqual(len(fake_session.message_queue), 2)
         self.assertEqual({'command': ['module_spec', mccs.specification._module_spec]},
@@ -196,6 +202,8 @@ class TestModuleCCSession(unittest.TestCase):
         mccs = self.create_session("spec2.spec", None, None, fake_session)
         mccs.set_config_handler(self.my_config_handler_ok)
         self.assertEqual(len(fake_session.message_queue), 0)
+        fake_session.group_sendmsg(None, 'Spec2')
+        fake_session.group_sendmsg(None, 'Spec2')
         self.assertRaises(ModuleCCSessionError, mccs.start)
         self.assertEqual(len(fake_session.message_queue), 2)
         self.assertEqual({'command': ['module_spec', mccs.specification._module_spec]},
@@ -382,6 +390,7 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertRaises(ModuleCCSessionError, mccs.get_remote_config_value, "Spec2", "item1")
 
         self.assertFalse("Spec2" in fake_session.subscriptions)
+        fake_session.group_sendmsg(None, 'Spec2')
         rmodname = mccs.add_remote_config(self.spec_file("spec2.spec"))
         self.assertTrue("Spec2" in fake_session.subscriptions)
         self.assertEqual("Spec2", rmodname)
@@ -395,6 +404,7 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertRaises(ModuleCCSessionError, mccs.get_remote_config_value, "Spec2", "item1")
 
         # test if unsubscription is alse sent when object is deleted
+        fake_session.group_sendmsg({'result' : [0]}, 'Spec2')
         rmodname = mccs.add_remote_config(self.spec_file("spec2.spec"))
         self.assertTrue("Spec2" in fake_session.subscriptions)
         mccs = None
@@ -405,6 +415,7 @@ class TestModuleCCSession(unittest.TestCase):
         fake_session = FakeModuleCCSession()
         mccs = self.create_session("spec1.spec", None, None, fake_session)
         mccs.set_command_handler(self.my_command_handler_ok)
+        fake_session.group_sendmsg(None, 'Spec2')
         rmodname = mccs.add_remote_config(self.spec_file("spec2.spec"))
 
         # remove the 'get config' from the queue
