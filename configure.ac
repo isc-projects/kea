@@ -466,6 +466,8 @@ AC_CONFIG_FILES([Makefile
                  src/bin/auth/tests/Makefile
                  src/bin/auth/tests/testdata/Makefile
                  src/bin/auth/benchmarks/Makefile
+                 src/bin/sockcreator/Makefile
+                 src/bin/sockcreator/tests/Makefile
                  src/bin/xfrin/Makefile
                  src/bin/xfrin/tests/Makefile
                  src/bin/xfrout/Makefile
