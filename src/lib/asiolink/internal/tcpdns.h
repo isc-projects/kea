@@ -29,12 +29,18 @@
 #include <asiolink/asiolink.h>
 #include <asiolink/internal/coroutine.h>
 
+// This file contains TCP-specific implementations of generic classes 
+// defined in asiolink.h.  It is *not* intended to be part of the public
+// API.
+
 namespace asiolink {
-// Note: this implementation is optimized for the case where this object
-// is created from an ASIO endpoint object in a receiving code path
-// by avoiding to make a copy of the base endpoint.  For TCP it may not be
-// a big deal, but when we receive UDP packets at a high rate, the copy
-// overhead might be significant.
+/// \brief A TCP-specific \c IOEndpoint object.
+///
+/// Note: this implementation is optimized for the case where this object
+/// is created from an ASIO endpoint object in a receiving code path
+/// by avoiding the need to copy of the base endpoint.  For TCP, it may
+/// not be a big deal, but when we receive UDP packets at a high rate,
+/// the copy overhead could be significant.
 class TCPEndpoint : public IOEndpoint {
 public:
     TCPEndpoint(const IOAddress& address, const unsigned short port) :
@@ -57,6 +63,7 @@ private:
     const asio::ip::tcp::endpoint& asio_endpoint_;
 };
 
+/// \brief A TCP-specific \c IOSocket object.
 class TCPSocket : public IOSocket {
 private:
     TCPSocket(const TCPSocket& source);
@@ -69,28 +76,27 @@ private:
     asio::ip::tcp::socket& socket_;
 };
 
-//
-// Asynchronous TCP server coroutine
-//
-class TCPServer : public virtual IOServer, public virtual coroutine {
+/// \brief A TCP-specific \c DNSServer object.
+///
+/// This class inherits from both \c DNSServer and from \c coroutine,
+/// defined in coroutine.h. 
+class TCPServer : public virtual DNSServer, public virtual coroutine {
 public:
     explicit TCPServer(asio::io_service& io_service,
                        const asio::ip::address& addr, const uint16_t port, 
-                       const IOCallback* checkin = NULL,
+                       const SimpleCallback* checkin = NULL,
                        const DNSLookup* lookup = NULL,
                        const DNSAnswer* answer = NULL);
 
     void operator()(asio::error_code ec = asio::error_code(),
                     size_t length = 0);
-
-    void doLookup();
+    void asyncLookup();
     void resume(const bool done);
     bool hasAnswer() { return (done_); }
     int value() { return (get_value()); }
 
-    IOServer* clone() {
+    DNSServer* clone() {
         TCPServer* s = new TCPServer(*this);
-        s->cloned_ = true;
         return (s);
     }
 
@@ -98,21 +104,59 @@ private:
     enum { MAX_LENGTH = 65535 };
     static const size_t TCP_MESSAGE_LENGTHSIZE = 2;
 
+    // The ASIO service object
     asio::io_service& io_;
 
     // Class member variables which are dynamic, and changes to which
     // need to accessible from both sides of a coroutine fork or from
     // outside of the coroutine (i.e., from an asynchronous I/O call),
     // should be declared here as pointers and allocated in the
-    // constructor or in the coroutine.
+    // constructor or in the coroutine.  This allows state information
+    // to persist when an individual copy of the coroutine falls out
+    // scope while waiting for an event, *so long as* there is another
+    // object that is referencing the same data.  As a side-benefit, using
+    // pointers also reduces copy overhead for coroutine objects.
+    //
+    // Note: Currently these objects are allocated by "new" in the
+    // constructor, or in the function operator while processing a query.
+    // Repeated allocations from the heap for every incoming query is
+    // clearly a performance issue; this must be optimized in the future.
+    // The plan is to have a structure pre-allocate several "server state"
+    // objects which can be pulled off a free list and placed on an in-use
+    // list whenever a query comes in.  This will serve the dual purpose
+    // of improving performance and guaranteeing that state information
+    // will *not* be destroyed when any one instance of the coroutine
+    // falls out of scope while waiting for an event.
+    //
+    // An ASIO acceptor object to handle new connections.  Created in
+    // the constructor.
     boost::shared_ptr<asio::ip::tcp::acceptor> acceptor_;
+
+    // Socket used to for listen for queries.  Created in the
+    // constructor and stored in a shared_ptr because socket objects
+    // are not copyable.
     boost::shared_ptr<asio::ip::tcp::socket> socket_;
-    boost::shared_ptr<isc::dns::OutputBuffer> lenbuf_;
-    boost::shared_ptr<isc::dns::OutputBuffer> respbuf_;
-    boost::shared_ptr<asiolink::IOEndpoint> peer_;
+
+    // An \c IOSocket object to wrap socket_
     boost::shared_ptr<asiolink::IOSocket> iosock_;
+
+    // An \c IOEndpoint object to wrap the remote endpoint of socket_
+    boost::shared_ptr<asiolink::IOEndpoint> peer_;
+
+    // A small buffer for writing the length of a DNS message;
+    // this is prepended to the actual response buffer when sending a reply
+    // to the client.
+    boost::shared_ptr<isc::dns::OutputBuffer> lenbuf_;
+
+    // The buffer into which the response is written
+    boost::shared_ptr<isc::dns::OutputBuffer> respbuf_;
+
+    // \c IOMessage and \c Message objects to be passed to the
+    // DNS lookup and answer providers
     boost::shared_ptr<asiolink::IOMessage> io_message_;
     isc::dns::MessagePtr message_;
+
+    // The buffer into which the query packet is written
     boost::shared_ptr<char> data_;
 
     // State information that is entirely internal to a given instance
@@ -120,8 +164,8 @@ private:
     size_t bytes_;
     bool done_;
 
-    // Callbacks
-    const IOCallback* checkin_callback_;
+    // Callback functions provided by the caller
+    const SimpleCallback* checkin_callback_;
     const DNSLookup* lookup_callback_;
     const DNSAnswer* answer_callback_;
 };

@@ -64,7 +64,7 @@ private:
 public:
     RecursorImpl(const char& forward) :
         config_session_(NULL), verbose_mode_(false),
-        forward_(forward), ioquery_()
+        forward_(forward), rec_query_()
     {}
 
     ~RecursorImpl() {
@@ -72,19 +72,19 @@ public:
     }
 
     void querySetup(IOService& ios) {
-        ioquery_ = new IOQuery(ios, forward_);
+        rec_query_ = new RecursiveQuery(ios, forward_);
     }
 
     void queryShutdown() {
-        if (ioquery_) {
-            delete ioquery_;
+        if (rec_query_) {
+            delete rec_query_;
         }
     }
 
     void processNormalQuery(const IOMessage& io_message,
                             const Question& question, MessagePtr message,
                             OutputBufferPtr buffer,
-                            IOServer* server);
+                            DNSServer* server);
     ModuleCCSession* config_session_;
 
     bool verbose_mode_;
@@ -93,7 +93,7 @@ public:
     const char& forward_;
 
     /// Object to handle upstream queries
-    IOQuery* ioquery_;
+    RecursiveQuery* rec_query_;
 
     /// Currently non-configurable, but will be.
     static const uint16_t DEFAULT_LOCAL_UDPSIZE = 4096;
@@ -171,7 +171,7 @@ public:
 
     // \brief Handle the DNS Lookup
     virtual void operator()(const IOMessage& io_message, MessagePtr message,
-                            OutputBufferPtr buffer, IOServer* server) const
+                            OutputBufferPtr buffer, DNSServer* server) const
     {
         server_->processMessage(io_message, message, buffer, server);
     }
@@ -264,10 +264,10 @@ private:
     Recursor* server_;
 };
 
-// This is a derived class of \c IOCallback, to serve
+// This is a derived class of \c SimpleCallback, to serve
 // as a callback in the asiolink module.  It checks for queued
 // configuration messages, and executes them if found.
-class ConfigCheck : public IOCallback {
+class ConfigCheck : public SimpleCallback {
 public:
     ConfigCheck(Recursor* srv) : server_(srv) {}
     virtual void operator()(const IOMessage& io_message UNUSED_PARAM) const {
@@ -322,7 +322,7 @@ Recursor::configSession() const {
 
 void
 Recursor::processMessage(const IOMessage& io_message, MessagePtr message,
-                        OutputBufferPtr buffer, IOServer* server)
+                        OutputBufferPtr buffer, DNSServer* server)
 {
     InputBuffer request_buffer(io_message.getData(), io_message.getDataSize());
     // First, check the header part.  If we fail even for the base header,
@@ -403,8 +403,8 @@ Recursor::processMessage(const IOMessage& io_message, MessagePtr message,
             makeErrorMessage(message, buffer, Rcode::NOTIMP(),
                          impl_->verbose_mode_);
         } else {
-            // The IOQuery object will post the "resume" event to the
-            // IOServer when an answer arrives, so we don't have to do it now.
+            // The RecursiveQuery object will post the "resume" event to the
+            // DNSServer when an answer arrives, so we don't have to do it now.
             sendAnswer = false;
             impl_->processNormalQuery(io_message, *question, message,
                                       buffer, server);
@@ -419,7 +419,7 @@ Recursor::processMessage(const IOMessage& io_message, MessagePtr message,
 void
 RecursorImpl::processNormalQuery(const IOMessage& io_message,
                                  const Question& question, MessagePtr message,
-                                 OutputBufferPtr buffer, IOServer* server)
+                                 OutputBufferPtr buffer, DNSServer* server)
 {
     const bool dnssec_ok = message->isDNSSECSupported();
 
@@ -428,7 +428,7 @@ RecursorImpl::processNormalQuery(const IOMessage& io_message,
     message->setRcode(Rcode::NOERROR());
     message->setDNSSECSupported(dnssec_ok);
     message->setUDPSize(RecursorImpl::DEFAULT_LOCAL_UDPSIZE);
-    ioquery_->sendQuery(io_message, question, buffer, server);
+    rec_query_->sendQuery(io_message, question, buffer, server);
 }
 
 ConstElementPtr

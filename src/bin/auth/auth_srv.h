@@ -63,7 +63,7 @@ public:
     void processMessage(const asiolink::IOMessage& io_message,
                         isc::dns::MessagePtr message,
                         isc::dns::OutputBufferPtr buffer,
-                        asiolink::IOServer* server);
+                        asiolink::DNSServer* server);
     void setVerbose(bool on);
     bool getVerbose() const;
     isc::data::ConstElementPtr updateConfig(isc::data::ConstElementPtr config);
@@ -79,8 +79,8 @@ public:
     asiolink::DNSAnswer* getDNSAnswerProvider() const {
         return (dns_answer_);
     }
-    asiolink::IOCallback* getCheckinProvider() const {
-        return (checkin_provider_);
+    asiolink::SimpleCallback* getCheckinProvider() const {
+        return (checkin_);
     }
 
     ///
@@ -100,7 +100,7 @@ public:
 private:
     AuthSrvImpl* impl_;
     asiolink::IOService* io_service_;
-    asiolink::IOCallback* checkin_provider_;
+    asiolink::SimpleCallback* checkin_;
     asiolink::DNSLookup* dns_lookup_;
     asiolink::DNSAnswer* dns_answer_;
 };

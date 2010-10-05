@@ -30,12 +30,15 @@
 #include <asiolink/asiolink.h>
 #include <asiolink/internal/coroutine.h>
 
+// This file contains UDP-specific implementations of generic classes 
+// defined in asiolink.h.  It is *not* intended to be part of the public
+// API.
+
 namespace asiolink {
 // Note: this implementation is optimized for the case where this object
 // is created from an ASIO endpoint object in a receiving code path
-// by avoiding to make a copy of the base endpoint.  For TCP it may not be
-// a big deal, but when we receive UDP packets at a high rate, the copy
-// overhead might be significant.
+// by avoiding to make a copy of the base endpoint.  Otherwise, when we
+// receive UDP packets at a high rate, the copy overhead might be significant.
 class UDPEndpoint : public IOEndpoint {
 public:
     UDPEndpoint(const IOAddress& address, const unsigned short port) :
@@ -73,55 +76,86 @@ private:
 //
 // Asynchronous UDP server coroutine
 //
-class UDPServer : public virtual IOServer, public virtual coroutine {
+class UDPServer : public virtual DNSServer, public virtual coroutine {
 public:
     explicit UDPServer(asio::io_service& io_service,
                        const asio::ip::address& addr, const uint16_t port,
-                       IOCallback* checkin = NULL,
+                       SimpleCallback* checkin = NULL,
                        DNSLookup* lookup = NULL,
                        DNSAnswer* answer = NULL);
 
     void operator()(asio::error_code ec = asio::error_code(),
                     size_t length = 0);
 
-    enum { MAX_LENGTH = 4096 };
-    asio::ip::udp::endpoint peer;
-
-    void doLookup();
+    void asyncLookup();
     void resume(const bool done);
     bool hasAnswer() { return (done_); }
     int value() { return (get_value()); }
 
-    IOServer* clone() {
+    DNSServer* clone() {
         UDPServer* s = new UDPServer(*this);
-        s->cloned_ = true;
         return (s);
     }
 
 private:
+    enum { MAX_LENGTH = 4096 };
+
+    // The ASIO service object
     asio::io_service& io_;
 
     // Class member variables which are dynamic, and changes to which
     // need to accessible from both sides of a coroutine fork or from
     // outside of the coroutine (i.e., from an asynchronous I/O call),
     // should be declared here as pointers and allocated in the
-    // constructor or in the coroutine.
+    // constructor or in the coroutine.  This allows state information
+    // to persist when an individual copy of the coroutine falls out
+    // scope while waiting for an event, *so long as* there is another
+    // object that is referencing the same data.  As a side-benefit, using
+    // pointers also reduces copy overhead for coroutine objects.
+    //
+    // Note: Currently these objects are allocated by "new" in the
+    // constructor, or in the function operator while processing a query.
+    // Repeated allocations from the heap for every incoming query is
+    // clearly a performance issue; this must be optimized in the future.
+    // The plan is to have a structure pre-allocate several "server state"
+    // objects which can be pulled off a free list and placed on an in-use
+    // list whenever a query comes in.  This will serve the dual purpose
+    // of improving performance and guaranteeing that state information
+    // will *not* be destroyed when any one instance of the coroutine
+    // falls out of scope while waiting for an event.
+    //
+    // Socket used to for listen for queries.  Created in the
+    // constructor and stored in a shared_ptr because socket objects
+    // are not copyable.
     boost::shared_ptr<asio::ip::udp::socket> socket_;
-    boost::shared_ptr<char> data_;
-    boost::shared_ptr<asio::ip::udp::endpoint> sender_;
-    boost::shared_ptr<asiolink::IOEndpoint> peer_;
+
+    // An \c IOSocket object to wrap socket_
     boost::shared_ptr<asiolink::IOSocket> iosock_;
+
+    // The ASIO-enternal endpoint object representing the client
+    boost::shared_ptr<asio::ip::udp::endpoint> sender_;
+
+    // An \c IOEndpoint object to wrap sender_
+    boost::shared_ptr<asiolink::IOEndpoint> peer_;
+
+    // \c IOMessage and \c Message objects to be passed to the
+    // DNS lookup and answer providers
     boost::shared_ptr<asiolink::IOMessage> io_message_;
     isc::dns::MessagePtr message_;
+
+    // The buffer into which the response is written
     isc::dns::OutputBufferPtr respbuf_;
+    
+    // The buffer into which the query packet is written
+    boost::shared_ptr<char> data_;
 
     // State information that is entirely internal to a given instance
     // of the coroutine can be declared here.
     size_t bytes_;
     bool done_;
 
-    // Callbacks
-    const IOCallback* checkin_callback_;
+    // Callback functions provided by the caller
+    const SimpleCallback* checkin_callback_;
     const DNSLookup* lookup_callback_;
     const DNSAnswer* answer_callback_;
 };
@@ -136,22 +170,47 @@ public:
                       const isc::dns::Question& q,
                       const asio::ip::address& addr,
                       isc::dns::OutputBufferPtr buffer,
-                      IOServer* server);
+                      DNSServer* server);
     void operator()(asio::error_code ec = asio::error_code(),
                     size_t length = 0); 
 private:
     enum { MAX_LENGTH = 4096 };
 
+    // The \c UDPQuery coroutine never forks, but it is copied whenever
+    // it calls an async_*() function, so it's best to keep copy overhead
+    // small by using pointers or references when possible.  However, this
+    // is not always possible.
+    //
+    // Socket used to for upstream queries. Created in the
+    // constructor and stored in a shared_ptr because socket objects
+    // are not copyable.
     boost::shared_ptr<asio::ip::udp::socket> socket_;
+
+    // The remote endpoint.  Instantiated in the constructor.  Not
+    // stored as a shared_ptr because copy overhead of an endpoint
+    // object is no larger than that of a shared_ptr.
     asio::ip::udp::endpoint remote_;
+
+    // The question being answered.  Copied rather than referenced
+    // because the object that created it is not guaranteed to persist.
     isc::dns::Question question_;
-    isc::dns::OutputBuffer msgbuf_;
+
+    // The output buffer supplied by the caller.  The resposne frmo
+    // the upstream server will be copied here.
     isc::dns::OutputBufferPtr buffer_;;
+
+    // These are allocated for each new query and are stored as
+    // shared pointers to minimize copy overhead.
+    isc::dns::OutputBufferPtr msgbuf_;
     boost::shared_array<char> data_;
 
-    /// \brief The UDP or TCP Server object from which the query originated.
-    // IOServerPtr server_;
-    IOServer* server_;
+    // The UDP or TCP Server object from which the query originated.
+    // Note: Using a shared_ptr for this can cause problems when
+    // control is being transferred from this coroutine to the server;
+    // the reference count can drop to zero and cause the server to be
+    // destroyed before it executes.  Consequently in this case it's
+    // safer to use a raw pointer.
+    DNSServer* server_;
 };
 }
 

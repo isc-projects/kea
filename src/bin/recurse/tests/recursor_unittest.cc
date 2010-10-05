@@ -95,7 +95,7 @@ private:
     };
 
     // A nonoperative task object to be used in calls to processMessage()
-    class MockTask : public IOServer {
+    class MockTask : public DNSServer {
     public:
         MockTask() : done_(false) {}
         void operator()(asio::error_code ec UNUSED_PARAM,

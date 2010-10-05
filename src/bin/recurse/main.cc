@@ -175,7 +175,7 @@ main(int argc, char* argv[]) {
         recursor ->setVerbose(verbose_mode);
         cout << "[b10-recurse] Server created." << endl;
 
-        IOCallback* checkin = recursor->getCheckinProvider();
+        SimpleCallback* checkin = recursor->getCheckinProvider();
         DNSLookup* lookup = recursor->getDNSLookupProvider();
         DNSAnswer* answer = recursor->getDNSAnswerProvider();
 

@@ -93,7 +93,7 @@ IOMessage::IOMessage(const void* data, const size_t data_size,
     remote_endpoint_(remote_endpoint)
 {}
 
-IOQuery::IOQuery(IOService& io_service, const char& forward) :
+RecursiveQuery::RecursiveQuery(IOService& io_service, const char& forward) :
     io_service_(io_service)
 {
     error_code err;
@@ -105,9 +105,9 @@ IOQuery::IOQuery(IOService& io_service, const char& forward) :
 }
 
 void
-IOQuery::sendQuery(const IOMessage& io_message,
-                   const Question& question, OutputBufferPtr buffer,
-                   IOServer* server)
+RecursiveQuery::sendQuery(const IOMessage& io_message,
+                          const Question& question, OutputBufferPtr buffer,
+                          DNSServer* server)
 {
 
     // XXX: eventually we will need to be able to determine whether
@@ -123,7 +123,7 @@ class IOServiceImpl {
 public:
     IOServiceImpl(const char& port,
                   const ip::address* v4addr, const ip::address* v6addr,
-                  IOCallback* checkin, DNSLookup* lookup,
+                  SimpleCallback* checkin, DNSLookup* lookup,
                   DNSAnswer* answer);
     asio::io_service io_service_;
 
@@ -138,7 +138,7 @@ public:
 IOServiceImpl::IOServiceImpl(const char& port,
                              const ip::address* const v4addr,
                              const ip::address* const v6addr,
-                             IOCallback* checkin,
+                             SimpleCallback* checkin,
                              DNSLookup* lookup,
                              DNSAnswer* answer) :
     udp4_server_(UDPServerPtr()), udp6_server_(UDPServerPtr()),
@@ -191,7 +191,7 @@ IOServiceImpl::IOServiceImpl(const char& port,
 }
 
 IOService::IOService(const char& port, const char& address,
-                     IOCallback* checkin,
+                     SimpleCallback* checkin,
                      DNSLookup* lookup,
                      DNSAnswer* answer) :
     impl_(NULL)
@@ -211,7 +211,7 @@ IOService::IOService(const char& port, const char& address,
 
 IOService::IOService(const char& port,
                      const bool use_ipv4, const bool use_ipv6,
-                     IOCallback* checkin,
+                     SimpleCallback* checkin,
                      DNSLookup* lookup,
                      DNSAnswer* answer) :
     impl_(NULL)
