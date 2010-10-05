@@ -41,17 +41,17 @@ namespace socket_creator {
  *     errno is set (or better, left intact from socket() or bind()).
  * \param type The type of socket to create (SOCK_STREAM, SOCK_DGRAM, etc).
  * \param bind_addr The address to bind.
- * \param addrlen The actual length of bind_addr.
+ * \param addr_len The actual length of bind_addr.
  */
 int
-get_sock(const int type, struct sockaddr *bind_addr, const socklen_t addrlen);
+get_sock(const int type, struct sockaddr *bind_addr, const socklen_t addr_len);
 
 /**
  * Type of the get_sock function, to pass it as parameter.
  */
 typedef
 int
-(*get_sock_t)(const int, struct sockaddr, const socklen_t);
+(*get_sock_t)(const int, struct sockaddr *, const socklen_t);
 
 /**
  * Sends a payload socket file descriptor to destination file descriptor.
@@ -96,7 +96,7 @@ run(const int input_fd, const int output_fd,
     const get_sock_t get_sock_fun = get_sock,
     const send_fd_t send_fd_fun = send_fd);
 
-}
+} // End of the namespaces
 }
 
 #endif // __SOCKCREATOR_H
