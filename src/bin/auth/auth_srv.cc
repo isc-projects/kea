@@ -132,7 +132,7 @@ class MessageLookup : public DNSLookup {
 public:
     MessageLookup(AuthSrv* srv) : server_(srv) {}
     virtual void operator()(const IOMessage& io_message, MessagePtr message,
-                            OutputBufferPtr buffer, IOServer* server) const
+                            OutputBufferPtr buffer, DNSServer* server) const
     {
         server_->processMessage(io_message, message, buffer, server);
     }
@@ -167,10 +167,10 @@ private:
     AuthSrv* server_;
 };
 
-// This is a derived class of \c IOCallback, to serve
+// This is a derived class of \c SimpleCallback, to serve
 // as a callback in the asiolink module.  It checks for queued
 // configuration messages, and executes them if found.
-class ConfigChecker : public IOCallback {
+class ConfigChecker : public SimpleCallback {
 public:
     ConfigChecker(AuthSrv* srv) : server_(srv) {}
     virtual void operator()(const IOMessage& io_message UNUSED_PARAM) const {
@@ -184,14 +184,14 @@ private:
 
 AuthSrv::AuthSrv(const bool use_cache, AbstractXfroutClient& xfrout_client) :
     impl_(new AuthSrvImpl(use_cache, xfrout_client)),
-    checkin_provider_(new ConfigChecker(this)),
+    checkin_(new ConfigChecker(this)),
     dns_lookup_(new MessageLookup(this)),
     dns_answer_(new MessageAnswer(this))
 {}
 
 AuthSrv::~AuthSrv() {
     delete impl_;
-    delete checkin_provider_;
+    delete checkin_;
     delete dns_lookup_;
     delete dns_answer_;
 }
@@ -276,7 +276,7 @@ AuthSrv::configSession() const {
 
 void
 AuthSrv::processMessage(const IOMessage& io_message, MessagePtr message,
-                        OutputBufferPtr buffer, IOServer* server)
+                        OutputBufferPtr buffer, DNSServer* server)
 {
     InputBuffer request_buffer(io_message.getData(), io_message.getDataSize());
 

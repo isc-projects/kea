@@ -286,7 +286,7 @@ protected:
                             expected_data, expected_datasize);
     }
 private:
-    class ASIOCallBack : public IOCallback {
+    class ASIOCallBack : public SimpleCallback {
     public:
         ASIOCallBack(ASIOLinkTest* test_obj) : test_obj_(test_obj) {}
         void operator()(const IOMessage& io_message) const {

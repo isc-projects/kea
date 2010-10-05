@@ -177,7 +177,7 @@ main(int argc, char* argv[]) {
         auth_server->setVerbose(verbose_mode);
         cout << "[b10-auth] Server created." << endl;
 
-        IOCallback* checkin = auth_server->getCheckinProvider();
+        SimpleCallback* checkin = auth_server->getCheckinProvider();
         DNSLookup* lookup = auth_server->getDNSLookupProvider();
         DNSAnswer* answer = auth_server->getDNSAnswerProvider();
 

@@ -70,9 +70,9 @@ class io_service;
 /// to the ASIO counterparts.
 ///
 /// Notes to developers:
-/// Currently the wrapper interface is specific to the authoritative
-/// server implementation.  But the plan is to generalize it and have
-/// other modules use it.
+/// Currently the wrapper interface is fairly specific to use by a
+/// DNS server, i.e., b10-auth or b10-recurse.  But the plan is to
+/// generalize it and have other modules use it as well.
 ///
 /// One obvious drawback of this approach is performance overhead
 /// due to the additional layer.  We should eventually evaluate the cost
@@ -101,6 +101,11 @@ public:
     IOError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
+
+/// \brief Forward declarations for classes used below
+class SimpleCallback;
+class DNSLookup;
+class DNSAnswer;
 
 /// \brief The \c IOAddress class represents an IP addresses (version
 /// agnostic)
@@ -188,11 +193,14 @@ public:
     ///
     /// This method returns an IOAddress object corresponding to \c this
     /// endpoint.
+    ///
     /// Note that the return value is a real object, not a reference or
     /// a pointer.
+    ///
     /// This is aligned with the interface of the ASIO counterpart:
     /// the \c address() method of \c ip::xxx::endpoint classes returns
     /// an \c ip::address object.
+    ///
     /// This also means handling the address of an endpoint using this method
     /// can be expensive.  If the address information is necessary in a
     /// performance sensitive context and there's a more efficient interface
@@ -246,6 +254,7 @@ public:
 /// Derived class implementations are completely hidden within the
 /// implementation.  User applications only get access to concrete
 /// \c IOSocket objects via the abstract interfaces.
+///
 /// We may revisit this decision when we generalize the wrapper and more
 /// modules use it.  Also, at that point we may define a separate (visible)
 /// derived class for testing purposes rather than providing factory methods
@@ -381,6 +390,7 @@ public:
 
     /// \brief Returns the endpoint that sends the message.
     const IOEndpoint& getRemoteEndpoint() const { return (remote_endpoint_); }
+
 private:
     const void* data_;
     const size_t data_size_;
@@ -388,167 +398,13 @@ private:
     const IOEndpoint& remote_endpoint_;
 };
 
-/// XXX: need to add doc
-class IOServer;
-typedef boost::shared_ptr<IOServer> IOServerPtr;
-class IOServer {
-public:
-    IOServer() : self_(this), cloned_(false) {}
-
-    virtual void operator()(asio::error_code ec = asio::error_code(),
-                            size_t length = 0)
-    {
-        (*self_)(ec, length);
-    }
-
-    virtual void doLookup() { self_->doLookup(); }
-    virtual void resume(const bool done) { self_->resume(done); }
-    virtual bool hasAnswer() { return (self_->hasAnswer()); }
-    virtual int value() { return (self_->value()); }
-    virtual IOServer* clone() { return (self_->clone()); }
-
-private:
-    IOServer* self_;
-
-protected:
-    bool cloned_;
-};
-
-template <typename T>
-class LookupHandler {
-public:
-    LookupHandler(T caller) : caller_(caller) {}
-    void operator()() {
-        caller_.doLookup();
-    }
-private:
-    T caller_;
-};
-
-/// \brief The \c DNSLookup class is an abstract base class for a DNS
-/// provider function.
-///
-/// Specific derived class implementations are hidden within the
-/// implementation.  Instances of the derived classes can be called
-/// as functions via the operator() interface.  Pointers to these
-/// instances can then be provided to the \c IOService class
-/// via its constructor.
-class DNSLookup {
-    ///
-    /// \name Constructors and Destructor
-    ///
-    /// Note: The copy constructor and the assignment operator are
-    /// intentionally defined as private, making this class non-copyable.
-    //@{
-private:
-    DNSLookup(const DNSLookup& source);
-    DNSLookup& operator=(const DNSLookup& source);
-protected:
-    /// \brief The default constructor.
-    ///
-    /// This is intentionally defined as \c protected as this base class
-    /// should never be instantiated (except as part of a derived class).
-    DNSLookup() : self_(this) {}
-public:
-    /// \brief The destructor
-    virtual ~DNSLookup() {}
-    /// \brief The function operator
-    ///
-    /// This makes its call indirectly via the "self" pointer, ensuring
-    /// that the function ultimately invoked will be the one in the derived
-    /// class.
-    virtual void operator()(const IOMessage& io_message,
-                            isc::dns::MessagePtr message,
-                            isc::dns::OutputBufferPtr buffer,
-                            IOServer* server) const
-    {
-        (*self_)(io_message, message, buffer, server);
-    }
-    //@}
-private:
-    DNSLookup* self_;
-};
-
-/// \brief The \c DNSAnswer class is an abstract base class for a DNS
-/// provider function.
-///
-/// Specific derived class implementations are hidden within the
-/// implementation.  Instances of the derived classes can be called
-/// as functions via the operator() interface.  Pointers to these
-/// instances can then be provided to the \c IOService class
-/// via its constructor.
-class DNSAnswer {
-    ///
-    /// \name Constructors and Destructor
-    ///
-    /// Note: The copy constructor and the assignment operator are
-    /// intentionally defined as private, making this class non-copyable.
-    //@{
-private:
-    DNSAnswer(const DNSAnswer& source);
-    DNSAnswer& operator=(const DNSAnswer& source);
-protected:
-    /// \brief The default constructor.
-    ///
-    /// This is intentionally defined as \c protected as this base class
-    /// should never be instantiated (except as part of a derived class).
-    DNSAnswer() {}
-public:
-    /// \brief The destructor
-    virtual ~DNSAnswer() {}
-    /// \brief The function operator
-    virtual void operator()(const IOMessage& io_message,
-                            isc::dns::MessagePtr message,
-                            isc::dns::OutputBufferPtr buffer) const = 0;
-    //@}
-};
-
-/// \brief The \c IOCallback class is an abstract base class for a
-/// simple callback function with the signature:
-///
-/// Specific derived class implementations are hidden within the
-/// implementation.  Instances of the derived classes can be called
-/// as functions via the operator() interface.  Pointers to these
-/// instances can then be provided to the \c IOService class
-/// via its constructor.
-class IOCallback {
-    ///
-    /// \name Constructors and Destructor
-    ///
-    /// Note: The copy constructor and the assignment operator are
-    /// intentionally defined as private, making this class non-copyable.
-    //@{
-private:
-    IOCallback(const IOCallback& source);
-    IOCallback& operator=(const IOCallback& source);
-protected:
-    /// \brief The default constructor.
-    ///
-    /// This is intentionally defined as \c protected as this base class
-    /// should never be instantiated (except as part of a derived class).
-    IOCallback() : self_(this) {}
-public:
-    /// \brief The destructor
-    virtual ~IOCallback() {}
-    /// \brief The function operator
-    ///
-    /// This makes its call indirectly via the "self" pointer, ensuring
-    /// that the function ultimately invoked will be the one in the derived
-    /// class.
-    virtual void operator()(const IOMessage& io_message) const {
-        (*self_)(io_message);
-    }
-    //@}
-private:
-    IOCallback* self_;
-};
-
 /// \brief The \c IOService class is a wrapper for the ASIO \c io_service
 /// class.
 ///
 /// Currently, the interface of this class is very specific to the
-/// authoritative server implementation as indicated in the signature of
-/// the constructor, but the plan is to generalize it so that other BIND 10
+/// authoritative/recursive DNS server implementationss in b10-auth
+/// and b10-recurse; this is reflected in the constructor signatures.
+/// Ultimately the plan is to generalize it so that other BIND 10
 /// modules can use this interface, too.
 class IOService {
     ///
@@ -567,7 +423,7 @@ public:
     /// \brief The constructor with a specific IP address and port on which
     /// the services listen on.
     IOService(const char& port, const char& address,
-              IOCallback* checkin,
+              SimpleCallback* checkin,
               DNSLookup* lookup,
               DNSAnswer* answer);
     /// \brief The constructor with a specific port on which the services
@@ -577,7 +433,7 @@ public:
     /// IPv4/IPv6 services will be available if and only if \c use_ipv4
     /// or \c use_ipv6 is \c true, respectively.
     IOService(const char& port, const bool use_ipv4, const bool use_ipv6,
-              IOCallback* checkin,
+              SimpleCallback* checkin,
               DNSLookup* lookup,
               DNSAnswer* answer);
     /// \brief The destructor.
@@ -606,17 +462,289 @@ private:
     IOServiceImpl* impl_;
 };
 
-/// \brief The \c IOQuery class provides a layer of abstraction around
-/// the ASIO code that carries out upstream queries.
-class IOQuery {
+/// \brief The \c DNSServer class is a wrapper (and base class) for
+/// classes which provide DNS server functionality.
+/// 
+/// The classes derived from this one, \c TCPServer and \c UDPServer,
+/// act as the interface layer between clients sending queries, and
+/// functions defined elsewhere that provide answers to those queries.
+/// Those functions are described in more detail below under
+/// \c SimpleCallback, \c DNSLookup, and \c DNSAnswer.
+///
+/// Notes to developers:
+/// When constructed, this class (and its derived classes) will have its
+/// "self_" member set to point to "this".  Calls to methods in the base
+/// class are then rerouted via this pointer to methods in the derived
+/// class.  This allows code from outside asiolink, with no specific
+/// knowledge of \c TCPServer or \c UDPServer, to access their methods.
+///
+/// This class is both assignable and copy-constructable.  Its subclasses
+/// use the "stackless coroutine" pattern, meaning that it will copy itself
+/// when "forking", and that instances will be posted as ASIO handler
+/// objects, which are always copied.
+///
+/// Because these objects are frequently copied, it is recommended 
+/// that derived classes be kept small to reduce copy overhead.
+class DNSServer {
+protected: 
+    ///
+    /// \name Constructors and destructors
+    ///
+    /// This is intentionally defined as \c protected, as this base class
+    /// should never be instantiated except as part of a derived class.
+    //@{
+    DNSServer() : self_(this) {}
 public:
-    IOQuery(IOService& io_service, const char& forward);
+    /// \brief The destructor
+    virtual ~DNSServer() {}
+    //@}
 
-    /// \brief Sends a query to the IOQuery object.
+    ///
+    /// \name Class methods
+    ///
+    /// These methods all make their calls indirectly via the "self_"
+    /// pointer, ensuring that the functions ultimately invoked will be
+    /// the ones in the derived class.
+    ///
+    //@{
+    /// \brief The funtion operator
+    virtual void operator()(asio::error_code ec = asio::error_code(),
+                            size_t length = 0)
+    {
+        (*self_)(ec, length);
+    }
+
+    /// \brief Resume processing of the server coroutine after an 
+    /// asynchronous call (e.g., to the DNS Lookup provider) has completed.
+    virtual inline void resume(const bool done) { self_->resume(done); }
+
+    /// \brief Indicate whether the server is able to send an answer
+    /// to a query.
+    /// 
+    /// This is presently used only for testing purposes.
+    virtual inline bool hasAnswer() { return (self_->hasAnswer()); }
+
+    /// \brief Returns the current value of the 'coroutine' object
+    ///
+    /// This is a temporary method, intended to be used for debugging
+    /// purposes during development and removed later.  It allows
+    /// callers from outside the coroutine object to retrieve information
+    /// about its current state.
+    virtual inline int value() { return (self_->value()); }
+
+    /// \brief Returns a pointer to a clone of this DNSServer object.
+    ///
+    /// When a \c DNSServer object is copied or assigned, the result will
+    /// normally be another \c DNSServer object containing a copy
+    /// of the original "self_" pointer.  Calling clone() guarantees
+    /// that the underlying object is also correctly copied.
+    virtual inline DNSServer* clone() { return (self_->clone()); }
+    //@}
+
+protected:
+    /// \brief Lookup handler object.
+    ///
+    /// This is a protected class; it can only be instantiated
+    /// from within a derived class of \c DNSServer.
+    ///
+    /// A server object that has received a query creates an instance
+    /// of this class and scheudles it on the ASIO service queue
+    /// using asio::io_service::post().  When the handler executes, it
+    /// calls the asyncLookup() method in the server object to start a
+    /// DNS lookup.  When the lookup is complete, the server object is
+    /// scheduled to resume, again using io_service::post().
+    ///
+    /// Note that the calling object is copied into the handler object,
+    /// not referenced.  This is because, once the calling object yields
+    /// control to the handler, it falls out of scope and may disappear
+    template <typename T>
+    class AsyncLookup {
+    public:
+        AsyncLookup(T caller) : caller_(caller) {}
+        inline void operator()() { caller_.asyncLookup(); }
+    private:
+        T caller_;
+    };
+
+    /// \brief Carries out a DNS lookup.
+    ///
+    /// This function calls the \c DNSLookup object specified by the
+    /// DNS server when the \c IOService was created, passing along
+    /// the details of the query and a pointer back to the current
+    /// server object.  It is called asynchronously via the AsyncLookup
+    /// handler class.
+    virtual inline void asyncLookup() { self_->asyncLookup(); }
+
+private:
+    DNSServer* self_;
+};
+
+/// \brief The \c DNSLookup class is an abstract base class for a DNS
+/// Lookup provider function.
+///
+/// Specific derived class implementations are hidden within the
+/// implementation.  Instances of the derived classes can be called
+/// as functions via the operator() interface.  Pointers to these
+/// instances can then be provided to the \c IOService class
+/// via its constructor.
+///
+/// A DNS Lookup provider function obtains the data needed to answer
+/// a DNS query (e.g., from authoritative data source, cache, or upstream
+/// query).  After it has run, the OutputBuffer object passed to it
+/// should contain the answer to the query, in an internal representation.
+class DNSLookup {
+    ///
+    /// \name Constructors and Destructor
+    ///
+    /// Note: The copy constructor and the assignment operator are
+    /// intentionally defined as private, making this class non-copyable.
+    //@{
+private:
+    DNSLookup(const DNSLookup& source);
+    DNSLookup& operator=(const DNSLookup& source);
+protected:
+    /// \brief The default constructor.
+    ///
+    /// This is intentionally defined as \c protected as this base class
+    /// should never be instantiated (except as part of a derived class).
+    DNSLookup() : self_(this) {}
+public:
+    /// \brief The destructor
+    virtual ~DNSLookup() {}
+    //@}
+    /// \brief The function operator
+    ///
+    /// This makes its call indirectly via the "self" pointer, ensuring
+    /// that the function ultimately invoked will be the one in the derived
+    /// class.
+    virtual void operator()(const IOMessage& io_message,
+                            isc::dns::MessagePtr message,
+                            isc::dns::OutputBufferPtr buffer,
+                            DNSServer* server) const
+    {
+        (*self_)(io_message, message, buffer, server);
+    }
+private:
+    DNSLookup* self_;
+};
+
+/// \brief The \c DNSAnswer class is an abstract base class for a DNS
+/// Answer provider function.
+///
+/// Specific derived class implementations are hidden within the
+/// implementation.  Instances of the derived classes can be called
+/// as functions via the operator() interface.  Pointers to these
+/// instances can then be provided to the \c IOService class
+/// via its constructor.
+///
+/// A DNS Answer provider function takes answer data that has been obtained
+/// from a DNS Lookup provider functon and readies it to be sent to the
+/// client.  After it has run, the OutputBuffer object passed to it should
+/// contain the answer to the query rendered into wire format.
+class DNSAnswer {
+    ///
+    /// \name Constructors and Destructor
+    ///
+    /// Note: The copy constructor and the assignment operator are
+    /// intentionally defined as private, making this class non-copyable.
+    //@{
+private:
+    DNSAnswer(const DNSAnswer& source);
+    DNSAnswer& operator=(const DNSAnswer& source);
+protected:
+    /// \brief The default constructor.
+    ///
+    /// This is intentionally defined as \c protected as this base class
+    /// should never be instantiated (except as part of a derived class).
+    DNSAnswer() {}
+public:
+    /// \brief The destructor
+    virtual ~DNSAnswer() {}
+    //@}
+    /// \brief The function operator
+    virtual void operator()(const IOMessage& io_message,
+                            isc::dns::MessagePtr message,
+                            isc::dns::OutputBufferPtr buffer) const = 0;
+};
+
+/// \brief The \c SimpleCallback class is an abstract base class for a
+/// simple callback function with the signature:
+///
+/// Specific derived class implementations are hidden within the
+/// implementation.  Instances of the derived classes can be called
+/// as functions via the operator() interface.  Pointers to these
+/// instances can then be provided to the \c IOService class
+/// via its constructor.
+///
+/// The \c SimpleCallback is expected to be used for basic, generic
+/// tasks such as checking for configuration changes.  It may also be
+/// used for testing purposes.
+class SimpleCallback {
+    ///
+    /// \name Constructors and Destructor
+    ///
+    /// Note: The copy constructor and the assignment operator are
+    /// intentionally defined as private, making this class non-copyable.
+    //@{
+private:
+    SimpleCallback(const SimpleCallback& source);
+    SimpleCallback& operator=(const SimpleCallback& source);
+protected:
+    /// \brief The default constructor.
+    ///
+    /// This is intentionally defined as \c protected as this base class
+    /// should never be instantiated (except as part of a derived class).
+    SimpleCallback() : self_(this) {}
+public:
+    /// \brief The destructor
+    virtual ~SimpleCallback() {}
+    /// \brief The function operator
+    //@}
+    ///
+    /// This makes its call indirectly via the "self" pointer, ensuring
+    /// that the function ultimately invoked will be the one in the derived
+    /// class.
+    virtual void operator()(const IOMessage& io_message) const {
+        (*self_)(io_message);
+    }
+private:
+    SimpleCallback* self_;
+};
+
+/// \brief The \c RecursiveQuery class provides a layer of abstraction around
+/// the ASIO code that carries out an upstream query.
+///
+/// This design is very preliminary; currently it is only capable of
+/// handling simple forward requests to a single resolver.
+class RecursiveQuery {
+    ///
+    /// \name Constructors
+    ///
+    //@{
+public:
+    /// \brief Constructor for use when acting as a forwarder
+    ///
+    /// This is currently the only way to construct \c RecursiveQuery
+    /// object.  The address of the forward nameserver is specified,
+    /// and all upstream queries will be sent to that one address.
+    RecursiveQuery(IOService& io_service, const char& forward);
+    //@}
+
+    /// \brief Initiates an upstream query in the \c RecursiveQuery object.
+    ///
+    /// \param io_message The message from the original client
+    /// \param question The question being answered <qname/qclass/qtype>
+    /// \param buffer An output buffer into which the response can be copied
+    /// \param server A pointer to the \c DNSServer object handling the client
+    ///
+    /// When sendQuery() is called, a message is sent asynchronously to
+    /// the upstream name server.  When a reply arrives, 'server'
+    /// is placed on the ASIO service queue via io_service::post(), so
+    /// that the original \c DNSServer objct can resume processing.
     void sendQuery(const IOMessage& io_message,
                    const isc::dns::Question& question,
                    isc::dns::OutputBufferPtr buffer,
-                   IOServer* server);
+                   DNSServer* server);
 private:
     IOService& io_service_;
     asio::ip::address ns_addr_;
