@@ -446,6 +446,13 @@ public:
     /// the \c stop() method is called via some handler.
     void run();
 
+    /// \brief Run the underlying event loop for a single event.
+    ///
+    /// This method return control to the caller as soon as the
+    /// first handler has completed.  (If no handlers are ready when
+    /// it is run, it will block until one is.)
+    void run_one();
+
     /// \brief Stop the underlying event loop.
     ///
     /// This will return the control to the caller of the \c run() method.
@@ -727,12 +734,12 @@ public:
     /// This is currently the only way to construct \c RecursiveQuery
     /// object.  The address of the forward nameserver is specified,
     /// and all upstream queries will be sent to that one address.
-    RecursiveQuery(IOService& io_service, const char& forward);
+    RecursiveQuery(IOService& io_service, const char& forward,
+                   uint16_t port = 53);
     //@}
 
     /// \brief Initiates an upstream query in the \c RecursiveQuery object.
     ///
-    /// \param io_message The message from the original client
     /// \param question The question being answered <qname/qclass/qtype>
     /// \param buffer An output buffer into which the response can be copied
     /// \param server A pointer to the \c DNSServer object handling the client
@@ -741,13 +748,13 @@ public:
     /// the upstream name server.  When a reply arrives, 'server'
     /// is placed on the ASIO service queue via io_service::post(), so
     /// that the original \c DNSServer objct can resume processing.
-    void sendQuery(const IOMessage& io_message,
-                   const isc::dns::Question& question,
+    void sendQuery(const isc::dns::Question& question,
                    isc::dns::OutputBufferPtr buffer,
                    DNSServer* server);
 private:
     IOService& io_service_;
     asio::ip::address ns_addr_;
+    uint16_t port_;
 };
 
 }      // asiolink

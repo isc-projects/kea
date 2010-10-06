@@ -81,8 +81,7 @@ public:
         }
     }
 
-    void processNormalQuery(const IOMessage& io_message,
-                            const Question& question, MessagePtr message,
+    void processNormalQuery(const Question& question, MessagePtr message,
                             OutputBufferPtr buffer,
                             DNSServer* server);
     ModuleCCSession* config_session_;
@@ -406,8 +405,7 @@ Recursor::processMessage(const IOMessage& io_message, MessagePtr message,
             // The RecursiveQuery object will post the "resume" event to the
             // DNSServer when an answer arrives, so we don't have to do it now.
             sendAnswer = false;
-            impl_->processNormalQuery(io_message, *question, message,
-                                      buffer, server);
+            impl_->processNormalQuery(*question, message, buffer, server);
         }
     }
 
@@ -417,8 +415,7 @@ Recursor::processMessage(const IOMessage& io_message, MessagePtr message,
 }
 
 void
-RecursorImpl::processNormalQuery(const IOMessage& io_message,
-                                 const Question& question, MessagePtr message,
+RecursorImpl::processNormalQuery(const Question& question, MessagePtr message,
                                  OutputBufferPtr buffer, DNSServer* server)
 {
     const bool dnssec_ok = message->isDNSSECSupported();
@@ -428,7 +425,7 @@ RecursorImpl::processNormalQuery(const IOMessage& io_message,
     message->setRcode(Rcode::NOERROR());
     message->setDNSSECSupported(dnssec_ok);
     message->setUDPSize(RecursorImpl::DEFAULT_LOCAL_UDPSIZE);
-    rec_query_->sendQuery(io_message, question, buffer, server);
+    rec_query_->sendQuery(question, buffer, server);
 }
 
 ConstElementPtr

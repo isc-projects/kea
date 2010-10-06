@@ -207,15 +207,15 @@ UDPServer::resume(const bool done) {
 /// The following functions implement the \c UDPQuery class.
 ///
 /// The constructor
-UDPQuery::UDPQuery(io_service& io_service, const IOMessage& io_message,
-                   const Question& q, const ip::address& addr,
+UDPQuery::UDPQuery(io_service& io_service,
+                   const Question& q, const ip::address& addr, uint16_t port,
                    OutputBufferPtr buffer, DNSServer* server) :
     question_(q), buffer_(buffer), server_(server->clone())
 {
     udp proto = addr.is_v4() ? udp::v4() : udp::v6();
     socket_.reset(new udp::socket(io_service, proto));
     msgbuf_.reset(new OutputBuffer(512));
-    remote_ = udp::endpoint(addr, 53);
+    remote_ = udp::endpoint(addr, port);
 }
 
 /// The function operator is implemented with the "stackless coroutine"

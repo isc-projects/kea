@@ -166,9 +166,9 @@ private:
 class UDPQuery : public coroutine {
 public:
     explicit UDPQuery(asio::io_service& io_service,
-                      const IOMessage& io_message,
                       const isc::dns::Question& q,
                       const asio::ip::address& addr,
+                      uint16_t port,
                       isc::dns::OutputBufferPtr buffer,
                       DNSServer* server);
     void operator()(asio::error_code ec = asio::error_code(),

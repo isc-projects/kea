@@ -17,11 +17,18 @@
 
 #include <config.h>
 
+#include <string.h>
+
+#include <boost/lexical_cast.hpp>
+
 #include <gtest/gtest.h>
 
 #include <exceptions/exceptions.h>
 
 #include <dns/tests/unittest_util.h>
+
+#include <dns/buffer.h>
+#include <dns/message.h>
 
 #include <asiolink/asiolink.h>
 #include <asiolink/internal/tcpdns.h>
@@ -30,9 +37,11 @@
 using isc::UnitTestUtil;
 using namespace std;
 using namespace asiolink;
+using namespace isc::dns;
 
 namespace {
-const char* const TEST_PORT = "53535";
+const char* const TEST_SERVER_PORT = "53535";
+const char* const TEST_CLIENT_PORT = "53535";
 const char* const TEST_IPV6_ADDR = "::1";
 const char* const TEST_IPV4_ADDR = "127.0.0.1";
 // This data is intended to be valid as a DNS/TCP-like message: the first
@@ -127,52 +136,54 @@ TEST(IOServiceTest, badPort) {
 }
 
 TEST(IOServiceTest, badAddress) {
-    EXPECT_THROW(IOService(*TEST_PORT, *"192.0.2.1.1", NULL, NULL, NULL), IOError);
-    EXPECT_THROW(IOService(*TEST_PORT, *"2001:db8:::1", NULL, NULL, NULL), IOError);
-    EXPECT_THROW(IOService(*TEST_PORT, *"localhost", NULL, NULL, NULL), IOError);
+    EXPECT_THROW(IOService(*TEST_SERVER_PORT, *"192.0.2.1.1", NULL, NULL, NULL), IOError);
+    EXPECT_THROW(IOService(*TEST_SERVER_PORT, *"2001:db8:::1", NULL, NULL, NULL), IOError);
+    EXPECT_THROW(IOService(*TEST_SERVER_PORT, *"localhost", NULL, NULL, NULL), IOError);
 }
 
 TEST(IOServiceTest, unavailableAddress) {
     // These addresses should generally be unavailable as a valid local
     // address, although there's no guarantee in theory.
-    EXPECT_THROW(IOService(*TEST_PORT, *"255.255.0.0", NULL, NULL, NULL), IOError);
+    EXPECT_THROW(IOService(*TEST_SERVER_PORT, *"255.255.0.0", NULL, NULL, NULL), IOError);
 
     // Some OSes would simply reject binding attempt for an AF_INET6 socket
     // to an IPv4-mapped IPv6 address.  Even if those that allow it, since
     // the corresponding IPv4 address is the same as the one used in the
     // AF_INET socket case above, it should at least show the same result
     // as the previous one.
-    EXPECT_THROW(IOService(*TEST_PORT, *"::ffff:255.255.0.0", NULL, NULL, NULL), IOError);
+    EXPECT_THROW(IOService(*TEST_SERVER_PORT, *"::ffff:255.255.0.0", NULL, NULL, NULL), IOError);
 }
 
 TEST(IOServiceTest, duplicateBind) {
     // In each sub test case, second attempt should fail due to duplicate bind
 
     // IPv6, "any" address
-    IOService* io_service = new IOService(*TEST_PORT, false, true, NULL, NULL, NULL);
-    EXPECT_THROW(IOService(*TEST_PORT, false, true, NULL, NULL, NULL), IOError);
+    IOService* io_service = new IOService(*TEST_SERVER_PORT, false, true, NULL, NULL, NULL);
+    EXPECT_THROW(IOService(*TEST_SERVER_PORT, false, true, NULL, NULL, NULL), IOError);
     delete io_service;
 
     // IPv6, specific address
-    io_service = new IOService(*TEST_PORT, *TEST_IPV6_ADDR, NULL, NULL, NULL);
-    EXPECT_THROW(IOService(*TEST_PORT, *TEST_IPV6_ADDR, NULL, NULL, NULL), IOError);
+    io_service = new IOService(*TEST_SERVER_PORT, *TEST_IPV6_ADDR, NULL, NULL, NULL);
+    EXPECT_THROW(IOService(*TEST_SERVER_PORT, *TEST_IPV6_ADDR, NULL, NULL, NULL), IOError);
     delete io_service;
 
     // IPv4, "any" address
-    io_service = new IOService(*TEST_PORT, true, false, NULL, NULL, NULL);
-    EXPECT_THROW(IOService(*TEST_PORT, true, false, NULL, NULL, NULL), IOError);
+    io_service = new IOService(*TEST_SERVER_PORT, true, false, NULL, NULL, NULL);
+    EXPECT_THROW(IOService(*TEST_SERVER_PORT, true, false, NULL, NULL, NULL), IOError);
     delete io_service;
 
     // IPv4, specific address
-    io_service = new IOService(*TEST_PORT, *TEST_IPV4_ADDR, NULL, NULL, NULL);
-    EXPECT_THROW(IOService(*TEST_PORT, *TEST_IPV4_ADDR, NULL, NULL, NULL), IOError);
+    io_service = new IOService(*TEST_SERVER_PORT, *TEST_IPV4_ADDR, NULL, NULL, NULL);
+    EXPECT_THROW(IOService(*TEST_SERVER_PORT, *TEST_IPV4_ADDR, NULL, NULL, NULL), IOError);
     delete io_service;
 }
 
 struct addrinfo*
-resolveAddress(const int family, const int sock_type, const int protocol) {
+resolveAddress(const int family, const int sock_type, const int protocol,
+               const bool client) {
     const char* const addr = (family == AF_INET6) ?
         TEST_IPV6_ADDR : TEST_IPV4_ADDR;
+    const char* const port = client ? TEST_CLIENT_PORT : TEST_SERVER_PORT;
 
     struct addrinfo hints;
     memset(&hints, 0, sizeof(hints));
@@ -181,7 +192,7 @@ resolveAddress(const int family, const int sock_type, const int protocol) {
     hints.ai_protocol = protocol;
 
     struct addrinfo* res;
-    const int error = getaddrinfo(addr, TEST_PORT, &hints, &res);
+    const int error = getaddrinfo(addr, port, &hints, &res);
     if (error != 0) {
         isc_throw(IOError, "getaddrinfo failed: " << gai_strerror(error));
     }
@@ -219,7 +230,7 @@ protected:
         }
     }
     void sendUDP(const int family) {
-        res_ = resolveAddress(family, SOCK_DGRAM, IPPROTO_UDP);
+        res_ = resolveAddress(family, SOCK_DGRAM, IPPROTO_UDP, false);
 
         sock_ = socket(res_->ai_family, res_->ai_socktype, res_->ai_protocol);
         if (sock_ < 0) {
@@ -233,7 +244,7 @@ protected:
         io_service_->run();
     }
     void sendTCP(const int family) {
-        res_ = resolveAddress(family, SOCK_STREAM, IPPROTO_TCP);
+        res_ = resolveAddress(family, SOCK_STREAM, IPPROTO_TCP, false);
 
         sock_ = socket(res_->ai_family, res_->ai_socktype, res_->ai_protocol);
         if (sock_ < 0) {
@@ -244,21 +255,51 @@ protected:
         }
         const int cc = send(sock_, test_data, sizeof(test_data), 0);
         if (cc != sizeof(test_data)) {
-            isc_throw(IOError, "unexpected sendto result: " << cc);
+            isc_throw(IOError, "unexpected send result: " << cc);
         }
         io_service_->run();
+    }
+    void recvUDP(const int family, void* buffer, size_t size) {
+        res_ = resolveAddress(family, SOCK_DGRAM, IPPROTO_UDP, true);
+
+        sock_ = socket(res_->ai_family, res_->ai_socktype, res_->ai_protocol);
+        if (sock_ < 0) {
+            isc_throw(IOError, "failed to open test socket");
+        }
+
+        if (bind(sock_, res_->ai_addr, res_->ai_addrlen) < 0) {
+            isc_throw(IOError, "bind failed: " << gai_strerror(errno));
+        }
+
+        // The IO service queue should have a RecursiveQuery object scheduled
+        // to run at this point.  This call will cause it to begin an
+        // async send, then return.
+        io_service_->run_one();
+
+        // ... and this completes the send().
+        io_service_->run_one();
+
+        // Now we attempt to recv() whatever was sent
+        struct sockaddr addr;
+        socklen_t addrlen;
+        fcntl(sock_, F_SETFD, O_NONBLOCK);
+        const int cc = recvfrom(sock_, buffer, size, MSG_DONTWAIT,
+                                &addr, &addrlen);
+        if (cc < 0) {
+            isc_throw(IOError, "recvfrom failed");
+        }
     }
     void setIOService(const char& address) {
         delete io_service_;
         io_service_ = NULL;
         callback_ = new ASIOCallBack(this);
-        io_service_ = new IOService(*TEST_PORT, address, callback_, NULL, NULL);
+        io_service_ = new IOService(*TEST_SERVER_PORT, address, callback_, NULL, NULL);
     }
     void setIOService(const bool use_ipv4, const bool use_ipv6) {
         delete io_service_;
         io_service_ = NULL;
         callback_ = new ASIOCallBack(this);
-        io_service_ = new IOService(*TEST_PORT, use_ipv4, use_ipv6, callback_,
+        io_service_ = new IOService(*TEST_SERVER_PORT, use_ipv4, use_ipv6, callback_,
                                     NULL, NULL);
     }
     void doTest(const int family, const int protocol) {
@@ -285,6 +326,51 @@ protected:
                             callback_data_.size(),
                             expected_data, expected_datasize);
     }
+
+protected:
+    class MockServer : public DNSServer {
+    public:
+        explicit MockServer(asio::io_service& io_service,
+                            const asio::ip::address& addr, const uint16_t port,
+                            SimpleCallback* checkin = NULL,
+                            DNSLookup* lookup = NULL,
+                            DNSAnswer* answer = NULL) :
+            io_(io_service),
+            checkin_(checkin), lookup_(lookup), answer_(answer)
+        {
+        // HERE set up address
+        }
+
+        void operator()(asio::error_code ec = asio::error_code(),
+                        size_t length = 0)
+        {
+            // Do some stuff
+        }
+
+        void resume(const bool done) {
+            done_ = done;
+            io_.post(*this);
+        }
+
+        DNSServer* clone() {
+            MockServer* s = new MockServer(*this);
+            return (s);
+        }
+
+        inline void asyncLookup() {
+            // (*lookup_)(*io_message_, message_, respbuf_, this);
+        }
+
+    private:
+        asio::io_service& io_;
+        bool done_;
+
+        // Callback functions provided by the caller
+        const SimpleCallback* checkin_;
+        const DNSLookup* lookup_;
+        const DNSAnswer* answer_;
+    };
+
 private:
     class ASIOCallBack : public SimpleCallback {
     public:
@@ -386,6 +472,39 @@ TEST_F(ASIOLinkTest, v6TCPOnly) {
 TEST_F(ASIOLinkTest, v4TCPOnly) {
     setIOService(true, false);
     EXPECT_THROW(sendTCP(AF_INET6), IOError);
+}
+
+TEST_F(ASIOLinkTest, recursiveSetupV4) {
+    setIOService(true, false);
+    uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
+    EXPECT_NO_THROW(RecursiveQuery(*io_service_, *TEST_IPV4_ADDR, port));
+}
+
+TEST_F(ASIOLinkTest, recursiveSetupV6) {
+    setIOService(false, true);
+    uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
+    EXPECT_NO_THROW(RecursiveQuery(*io_service_, *TEST_IPV6_ADDR, port));
+}
+
+// Test disabled because recvUDP() isn't working yet
+TEST_F(ASIOLinkTest, DISABLED_recursiveSend) {
+    setIOService(true, false);
+    asio::io_service& io = io_service_->get_io_service();
+
+    // Note: We use the test prot plus one to ensure we aren't binding
+    // to the same port as the actual server
+    uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
+    asio::ip::address addr = asio::ip::address::from_string(TEST_IPV4_ADDR);
+
+    MockServer server(io, addr, port, NULL, NULL, NULL);
+    RecursiveQuery rq(*io_service_, *TEST_IPV4_ADDR, port);
+
+    Question q(Name("example.com"), RRClass::IN(), RRType::TXT());
+    OutputBufferPtr buffer(new OutputBuffer(0));
+    rq.sendQuery(q, buffer, &server);
+
+    char data[4096];
+    EXPECT_NO_THROW(recvUDP(AF_INET, data, sizeof(data)));
 }
 
 }

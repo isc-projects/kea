@@ -99,7 +99,7 @@ class TestBoB(unittest.TestCase):
         bob = BoB()
         self.assertEqual(bob.verbose, False)
         self.assertEqual(bob.msgq_socket_file, None)
-        self.assertEqual(bob.auth_port, 5300)
+        self.assertEqual(bob.dns_port, 5300)
         self.assertEqual(bob.cc_session, None)
         self.assertEqual(bob.address, None)
         self.assertEqual(bob.processes, {})
@@ -115,11 +115,11 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.dead_processes, {})
         self.assertEqual(bob.runnable, False)
 
-    def test_init_alternate_auth_port(self):
+    def test_init_alternate_dns_port(self):
         bob = BoB(None, 9999)
         self.assertEqual(bob.verbose, False)
         self.assertEqual(bob.msgq_socket_file, None)
-        self.assertEqual(bob.auth_port, 9999)
+        self.assertEqual(bob.dns_port, 9999)
         self.assertEqual(bob.cc_session, None)
         self.assertEqual(bob.address, None)
         self.assertEqual(bob.processes, {})
@@ -129,7 +129,7 @@ class TestBoB(unittest.TestCase):
     def test_init_alternate_address(self):
         bob = BoB(None, 5300, '127.127.127.127')
         self.assertEqual(bob.verbose, False)
-        self.assertEqual(bob.auth_port, 5300)
+        self.assertEqual(bob.dns_port, 5300)
         self.assertEqual(bob.msgq_socket_file, None)
         self.assertEqual(bob.cc_session, None)
         self.assertEqual(bob.address.addr, socket.inet_aton('127.127.127.127'))
