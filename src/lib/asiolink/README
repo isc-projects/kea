@@ -1,0 +1,100 @@
+The asiolink library is intended to provide an abstraction layer between
+BIND10 modules and the socket I/O subsystem we are using (currently, the
+headers-only version of ASIO, release 1.43).  This has several benefits,
+including:
+
+  - Simple interface
+
+  - Back-end flexibility:  It would be easy to switch from using
+    ASIO to boost::asio, and even relatively straightforward to switch
+    to any other asynchronous I/O system.
+
+  - Cleaner compilation:  The ASIO headers include code which can
+    generate warnings in some compilers due to unused parameters and
+    such.  Including ASIO header files throughout the BIND 10 tree would
+    require us to relax the strictness of our error checking.  Including
+    them in only one place allows us to relax strictness here, while
+    leaving it in place elsewhere.
+
+Currently, the asiolink library only supports DNS servers (i.e., b10-auth
+and b10-recurse).  The plan is to make it more generic and allow it to
+support other modules as well.
+
+Some of the classes defined here--for example, IOSocket, IOEndpoint,
+and IOAddress--are to be used by BIND 10 modules as wrappers around
+ASIO-specific classes.
+
+Other classes implement the DNS protocol on behalf of BIND 10 modules.
+
+These DNS server and client routines are written using the "stackless
+coroutine" pattern invented by Chris Kohlhoff and described at
+http://blog.think-async.com/2010/03/potted-guide-to-stackless-coroutines.html.
+This is intended to simplify development a bit, since it allows the
+routines to be written in a straightfowrard step-step-step fashion rather
+than as a complex chain of separate handler functions.
+
+Coroutine objects (i.e., UDPServer, TCPServer and UDPQuery) are objects
+with reenterable operator() members.  When an instance of one of these
+classes is called as a function, it resumes at the position where it left
+off.  Thus, a UDPServer can issue an asynchronous I/O call and specify
+itself as the handler object; when the call completes, the UDPServer
+carries on at the same position.  As a result, the code can look as
+if it were using synchronous, not asynchronous, I/O, providing some of
+the benefit of threading but with minimal switching overhead.
+
+So, in simplified form, the behavior of a DNS Server is:
+
+  REENTER:
+    while true:
+      YIELD packet = read_packet
+      FORK
+      if not parent:
+        break
+
+    # This callback informs the caller that a packet has arrived, and
+    # gives it a chance to update configuration, etc
+    SimpleCallback(packet)
+    YIELD answer = DNSLookup(packet, this)
+    response = DNSAnswer(answer)
+    YIELD send(response)
+
+At each "YIELD" point, the coroutine initiates an asynchronous operation,
+then pauses and turns over control to some other task on the ASIO service
+queue.  When the operation completes, the coroutine resumes.
+
+DNSLookup, DNSAnswer and SimpleCallback define callback methods
+used by a DNS Server to communicate with the module that called it.
+They are abstract-only classes whose concrete implementations
+are supplied by the calling module.
+
+Note that the DNSLookup callback runs asynchronously.  A concrete
+implementation must be sure to call the server's "resume" method when
+it is finished.
+
+In an authoritative server, the DNSLookup implementation would examine
+the query, look up the answer, then call "resume".  In a recursive server,
+it would initiate a DNSQuery, which in turn would be responsible for
+calling the server's "resume" method.
+
+A DNSQuery object is intended to handle resolution of a query over
+the network when the local authoritative data sources or cache are not
+sufficient.  The plan is that it will make use of subsidiary DNSFetch
+calls to get data from particular authoritative servers, and when it has
+gotten a complete answer, it calls "resume".
+
+In current form, however, DNSQuery is much simpler; it forwards queries
+to a single upstream resolver and passes the answers back to the client.
+It is constructed with the address of the forward server.  Queries are
+initiated with the question to ask the forward server, a buffer into
+which to write the answer, and a pointer to the coroutine to be resumed
+when the answer has arrived.  In simplified form, the DNSQuery routine is:
+
+  REENTER:
+    render the question into a wire-format query packet
+    YIELD send(query)
+    YIELD response = read_packet
+    server->resume
+
+Currently, DNSQuery is only implemented for UDP queries.  In future work
+it will be necessary to write code to fall back to TCP when circumstances
+require it.
