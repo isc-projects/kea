@@ -93,8 +93,9 @@ IOMessage::IOMessage(const void* data, const size_t data_size,
     remote_endpoint_(remote_endpoint)
 {}
 
-RecursiveQuery::RecursiveQuery(IOService& io_service, const char& forward) :
-    io_service_(io_service)
+RecursiveQuery::RecursiveQuery(IOService& io_service, const char& forward,
+                               uint16_t port) :
+    io_service_(io_service), port_(port)
 {
     error_code err;
     ns_addr_ = ip::address::from_string(&forward, err);
@@ -105,8 +106,7 @@ RecursiveQuery::RecursiveQuery(IOService& io_service, const char& forward) :
 }
 
 void
-RecursiveQuery::sendQuery(const IOMessage& io_message,
-                          const Question& question, OutputBufferPtr buffer,
+RecursiveQuery::sendQuery(const Question& question, OutputBufferPtr buffer,
                           DNSServer* server)
 {
 
@@ -115,7 +115,7 @@ RecursiveQuery::sendQuery(const IOMessage& io_message,
     // UDP and then fall back to TCP on failure, but for the moment
     // we're only going to handle UDP.
     asio::io_service& io = io_service_.get_io_service();
-    UDPQuery q(io, io_message, question, ns_addr_, buffer, server);
+    UDPQuery q(io, question, ns_addr_, port_, buffer, server);
     io.post(q);
 }
 
@@ -230,6 +230,11 @@ IOService::~IOService() {
 void
 IOService::run() {
     impl_->io_service_.run();
+}
+
+void
+IOService::run_one() {
+    impl_->io_service_.run_one();
 }
 
 void
