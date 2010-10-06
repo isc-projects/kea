@@ -41,7 +41,7 @@ using namespace isc::dns;
 
 namespace {
 const char* const TEST_SERVER_PORT = "53535";
-const char* const TEST_CLIENT_PORT = "53535";
+const char* const TEST_CLIENT_PORT = "53536";
 const char* const TEST_IPV6_ADDR = "::1";
 const char* const TEST_IPV4_ADDR = "127.0.0.1";
 // This data is intended to be valid as a DNS/TCP-like message: the first
@@ -190,6 +190,7 @@ resolveAddress(const int family, const int sock_type, const int protocol,
     hints.ai_family = family;
     hints.ai_socktype = sock_type;
     hints.ai_protocol = protocol;
+    hints.ai_flags = AI_NUMERICSERV;
 
     struct addrinfo* res;
     const int error = getaddrinfo(addr, port, &hints, &res);
@@ -259,7 +260,7 @@ protected:
         }
         io_service_->run();
     }
-    void recvUDP(const int family, void* buffer, size_t size) {
+    void recvUDP(const int family, void* buffer, size_t& size) {
         res_ = resolveAddress(family, SOCK_DGRAM, IPPROTO_UDP, true);
 
         sock_ = socket(res_->ai_family, res_->ai_socktype, res_->ai_protocol);
@@ -268,7 +269,7 @@ protected:
         }
 
         if (bind(sock_, res_->ai_addr, res_->ai_addrlen) < 0) {
-            isc_throw(IOError, "bind failed: " << gai_strerror(errno));
+            isc_throw(IOError, "bind failed: " << strerror(errno));
         }
 
         // The IO service queue should have a RecursiveQuery object scheduled
@@ -276,18 +277,17 @@ protected:
         // async send, then return.
         io_service_->run_one();
 
-        // ... and this completes the send().
+        // ... and this one will block until the send has completed
         io_service_->run_one();
 
         // Now we attempt to recv() whatever was sent
-        struct sockaddr addr;
-        socklen_t addrlen;
-        fcntl(sock_, F_SETFD, O_NONBLOCK);
-        const int cc = recvfrom(sock_, buffer, size, MSG_DONTWAIT,
-                                &addr, &addrlen);
-        if (cc < 0) {
+        const int ret = recv(sock_, buffer, size, MSG_DONTWAIT);
+        if (ret < 0) {
             isc_throw(IOError, "recvfrom failed");
         }
+        
+        // Pass the message size back via the size parameter
+        size = ret;
     }
     void setIOService(const char& address) {
         delete io_service_;
@@ -486,8 +486,12 @@ TEST_F(ASIOLinkTest, recursiveSetupV6) {
     EXPECT_NO_THROW(RecursiveQuery(*io_service_, *TEST_IPV6_ADDR, port));
 }
 
-// Test disabled because recvUDP() isn't working yet
-TEST_F(ASIOLinkTest, DISABLED_recursiveSend) {
+// XXX:
+// This is very inadequate unit testing.  It should be generalized into
+// a routine that can do this with variable address family, address, and
+// port, and with the various callbacks defined in such a way as to ensure
+// full code coverage including error cases.
+TEST_F(ASIOLinkTest, recursiveSend) {
     setIOService(true, false);
     asio::io_service& io = io_service_->get_io_service();
 
@@ -504,7 +508,21 @@ TEST_F(ASIOLinkTest, DISABLED_recursiveSend) {
     rq.sendQuery(q, buffer, &server);
 
     char data[4096];
-    EXPECT_NO_THROW(recvUDP(AF_INET, data, sizeof(data)));
+    size_t size = sizeof(data);
+    EXPECT_NO_THROW(recvUDP(AF_INET, data, size));
+
+    Message m(Message::PARSE);
+    InputBuffer ibuf(data, size);
+
+    // Make sure we can parse the message that was sent
+    EXPECT_NO_THROW(m.parseHeader(ibuf));
+    EXPECT_NO_THROW(m.fromWire(ibuf));
+
+    // Check that the question sent matches the one we wanted
+    QuestionPtr q2 = *m.beginQuestion();
+    EXPECT_EQ(q.getName(), q2->getName());
+    EXPECT_EQ(q.getType(), q2->getType());
+    EXPECT_EQ(q.getClass(), q2->getClass());
 }
 
 }
