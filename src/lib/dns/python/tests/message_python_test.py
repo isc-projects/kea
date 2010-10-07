@@ -20,7 +20,7 @@
 import unittest
 import os
 from pydnspp import *
-
+from testutil import *
 
 class MessageFlagTest(unittest.TestCase):
     def test_init(self):
@@ -34,163 +34,6 @@ class MessageFlagTest(unittest.TestCase):
         self.assertEqual(0x0080, MessageFlag.RA().get_bit())
         self.assertEqual(0x0020, MessageFlag.AD().get_bit())
         self.assertEqual(0x0010, MessageFlag.CD().get_bit())
-
-class OpcodeTest(unittest.TestCase):
-    def test_init(self):
-        self.assertRaises(NotImplementedError, Opcode)
-
-    def test_get_code(self):
-        self.assertEqual(0, Opcode.QUERY().get_code())
-        self.assertEqual(1, Opcode.IQUERY().get_code())
-        self.assertEqual(2, Opcode.STATUS().get_code())
-        self.assertEqual(3, Opcode.RESERVED3().get_code())
-        self.assertEqual(4, Opcode.NOTIFY().get_code())
-        self.assertEqual(5, Opcode.UPDATE().get_code())
-        self.assertEqual(6, Opcode.RESERVED6().get_code())
-        self.assertEqual(7, Opcode.RESERVED7().get_code())
-        self.assertEqual(8, Opcode.RESERVED8().get_code())
-        self.assertEqual(9, Opcode.RESERVED9().get_code())
-        self.assertEqual(10, Opcode.RESERVED10().get_code())
-        self.assertEqual(11, Opcode.RESERVED11().get_code())
-        self.assertEqual(12, Opcode.RESERVED12().get_code())
-        self.assertEqual(13, Opcode.RESERVED13().get_code())
-        self.assertEqual(14, Opcode.RESERVED14().get_code())
-        self.assertEqual(15, Opcode.RESERVED15().get_code())
-
-    def test_to_text(self):
-        self.assertEqual("QUERY", Opcode.QUERY().to_text())
-        self.assertEqual("QUERY", str(Opcode.QUERY()))
-        self.assertEqual("IQUERY", Opcode.IQUERY().to_text())
-        self.assertEqual("STATUS", Opcode.STATUS().to_text())
-        self.assertEqual("RESERVED3", Opcode.RESERVED3().to_text())
-        self.assertEqual("NOTIFY", Opcode.NOTIFY().to_text())
-        self.assertEqual("UPDATE", Opcode.UPDATE().to_text())
-        self.assertEqual("RESERVED6", Opcode.RESERVED6().to_text())
-        self.assertEqual("RESERVED7", Opcode.RESERVED7().to_text())
-        self.assertEqual("RESERVED8", Opcode.RESERVED8().to_text())
-        self.assertEqual("RESERVED9", Opcode.RESERVED9().to_text())
-        self.assertEqual("RESERVED10", Opcode.RESERVED10().to_text())
-        self.assertEqual("RESERVED11", Opcode.RESERVED11().to_text())
-        self.assertEqual("RESERVED12", Opcode.RESERVED12().to_text())
-        self.assertEqual("RESERVED13", Opcode.RESERVED13().to_text())
-        self.assertEqual("RESERVED14", Opcode.RESERVED14().to_text())
-        self.assertEqual("RESERVED15", Opcode.RESERVED15().to_text())
-
-    def test_richcmp(self):
-        o1 = Opcode.QUERY()
-        o2 = Opcode.NOTIFY()
-        o3 = Opcode.NOTIFY()
-        self.assertTrue(o2 == o3)
-        self.assertFalse(o2 != o3)
-        self.assertTrue(o1 != o2)
-        self.assertFalse(o1 == 1)
-        self.assertFalse(o1 == o2)
-        # can't use assertRaises here...
-        try:
-            o1 < o2
-            self.fail("operation that should have raised an error unexpectedly succeeded")
-        except Exception as err:
-            self.assertEqual(TypeError, type(err))
-        try:
-            o1 <= o2
-            self.fail("operation that should have raised an error unexpectedly succeeded")
-        except Exception as err:
-            self.assertEqual(TypeError, type(err))
-        try:
-            o1 > o2
-            self.fail("operation that should have raised an error unexpectedly succeeded")
-        except Exception as err:
-            self.assertEqual(TypeError, type(err))
-        try:
-            o1 >= o2
-            self.fail("operation that should have raised an error unexpectedly succeeded")
-        except Exception as err:
-            self.assertEqual(TypeError, type(err))
-
-class RcodeTest(unittest.TestCase):
-    def test_init(self):
-        self.assertRaises(TypeError, Rcode, "wrong")
-        self.assertRaises(OverflowError, Rcode, 65536)
-        self.assertEqual(Rcode(0).get_code(), 0)
-    
-        self.assertEqual(0, Rcode(0).get_code())
-        self.assertEqual(0xfff, Rcode(0xfff).get_code()) # possible max code
-    
-        # should fail on attempt of construction with an out of range code
-        self.assertRaises(OverflowError, Rcode, 0x1000)
-        self.assertRaises(OverflowError, Rcode, 0xffff)
-
-    def test_get_code(self):
-        self.assertEqual(0, Rcode.NOERROR().get_code())
-        self.assertEqual(1, Rcode.FORMERR().get_code())
-        self.assertEqual(2, Rcode.SERVFAIL().get_code())
-        self.assertEqual(3, Rcode.NXDOMAIN().get_code())
-        self.assertEqual(4, Rcode.NOTIMP().get_code())
-        self.assertEqual(5, Rcode.REFUSED().get_code())
-        self.assertEqual(6, Rcode.YXDOMAIN().get_code())
-        self.assertEqual(7, Rcode.YXRRSET().get_code())
-        self.assertEqual(8, Rcode.NXRRSET().get_code())
-        self.assertEqual(9, Rcode.NOTAUTH().get_code())
-        self.assertEqual(10, Rcode.NOTZONE().get_code())
-        self.assertEqual(11, Rcode.RESERVED11().get_code())
-        self.assertEqual(12, Rcode.RESERVED12().get_code())
-        self.assertEqual(13, Rcode.RESERVED13().get_code())
-        self.assertEqual(14, Rcode.RESERVED14().get_code())
-        self.assertEqual(15, Rcode.RESERVED15().get_code())
-        self.assertEqual(16, Rcode.BADVERS().get_code())
-
-    def test_to_text(self):
-        self.assertEqual("NOERROR", Rcode(0).to_text())
-        self.assertEqual("NOERROR", str(Rcode(0)))
-        self.assertEqual("FORMERR", Rcode(1).to_text())
-        self.assertEqual("SERVFAIL", Rcode(2).to_text())
-        self.assertEqual("NXDOMAIN", Rcode(3).to_text())
-        self.assertEqual("NOTIMP", Rcode(4).to_text())
-        self.assertEqual("REFUSED", Rcode(5).to_text())
-        self.assertEqual("YXDOMAIN", Rcode(6).to_text())
-        self.assertEqual("YXRRSET", Rcode(7).to_text())
-        self.assertEqual("NXRRSET", Rcode(8).to_text())
-        self.assertEqual("NOTAUTH", Rcode(9).to_text())
-        self.assertEqual("NOTZONE", Rcode(10).to_text())
-        self.assertEqual("RESERVED11", Rcode(11).to_text())
-        self.assertEqual("RESERVED12", Rcode(12).to_text())
-        self.assertEqual("RESERVED13", Rcode(13).to_text())
-        self.assertEqual("RESERVED14", Rcode(14).to_text())
-        self.assertEqual("RESERVED15", Rcode(15).to_text())
-        self.assertEqual("BADVERS", Rcode(16).to_text())
-        
-        self.assertEqual("17", Rcode(Rcode.BADVERS().get_code() + 1).to_text())
-        self.assertEqual("4095", Rcode(0xfff).to_text())
-
-    def test_richcmp(self):
-        r1 = Rcode.NOERROR()
-        r2 = Rcode.FORMERR()
-        r3 = Rcode.FORMERR()
-        self.assertTrue(r2 == r3)
-        self.assertTrue(r1 != r2)
-        self.assertFalse(r1 == r2)
-        self.assertFalse(r1 != 1)
-        # can't use assertRaises here...
-        try:
-            r1 < r2
-            self.fail("operation that should have raised an error unexpectedly succeeded")
-        except Exception as err:
-            self.assertEqual(TypeError, type(err))
-        try:
-            r1 <= r2
-            self.fail("operation that should have raised an error unexpectedly succeeded")
-        except Exception as err:
-            self.assertEqual(TypeError, type(err))
-        try:
-            r1 > r2
-            self.fail("operation that should have raised an error unexpectedly succeeded")
-        except Exception as err:
-            self.assertEqual(TypeError, type(err))
-        try:
-            r1 >= r2
-            self.fail("operation that should have raised an error unexpectedly succeeded")
-        except Exception as err:
-            self.assertEqual(TypeError, type(err))
 
 class SectionTest(unittest.TestCase):
 
@@ -239,19 +82,6 @@ if "TESTDATA_PATH" in os.environ:
     testdata_path = os.environ["TESTDATA_PATH"]
 else:
     testdata_path = "../tests/testdata"
-
-def read_wire_data(filename):
-    data = bytes()
-    file = open(testdata_path + os.sep + filename, "r")
-    for line in file:
-        line = line.strip()
-        if line == "" or line.startswith("#"):
-            pass
-        else:
-            cur_data = bytes.fromhex(line)
-            data += cur_data
-
-    return data
 
 def factoryFromFile(message, file):
     data = read_wire_data(file)
@@ -316,28 +146,6 @@ class MessageTest(unittest.TestCase):
         self.assertRaises(InvalidMessageOperation,
                           self.p.clear_header_flag, MessageFlag.AA())
 
-    def test_set_DNSSEC_supported(self):
-        self.assertRaises(TypeError, self.r.set_dnssec_supported, "wrong")
-
-        self.assertFalse(self.r.is_dnssec_supported())
-        self.r.set_dnssec_supported(True)
-        self.assertTrue(self.r.is_dnssec_supported())
-        self.r.set_dnssec_supported(False)
-        self.assertFalse(self.r.is_dnssec_supported())
-
-        self.assertRaises(InvalidMessageOperation,
-                          self.p.set_dnssec_supported, True)
-        self.assertRaises(InvalidMessageOperation,
-                          self.p.set_dnssec_supported, False)
-
-    def test_set_udp_size(self):
-        self.assertRaises(TypeError, self.r.set_udp_size, "wrong")
-        self.assertRaises(InvalidMessageUDPSize, self.r.set_udp_size, 0)
-        self.assertRaises(InvalidMessageUDPSize, self.r.set_udp_size, 65536)
-        self.assertRaises(InvalidMessageOperation, self.p.set_udp_size, 1024)
-        self.r.set_udp_size(2048)
-        self.assertEqual(2048, self.r.get_udp_size())
-
     def test_set_qid(self):
         self.assertRaises(TypeError, self.r.set_qid, "wrong")
         self.assertRaises(InvalidMessageOperation,
@@ -355,6 +163,7 @@ class MessageTest(unittest.TestCase):
         self.assertRaises(InvalidMessageOperation,
                           self.p.set_rcode, rcode)
         
+        self.assertRaises(InvalidMessageOperation, self.p.get_rcode)
 
     def test_set_opcode(self):
         self.assertRaises(TypeError, self.r.set_opcode, "wrong")
@@ -365,6 +174,26 @@ class MessageTest(unittest.TestCase):
 
         self.assertRaises(InvalidMessageOperation,
                           self.p.set_opcode, opcode)
+
+        self.assertRaises(InvalidMessageOperation, self.p.get_opcode)
+
+    def test_get_edns(self):
+        self.assertEqual(None, self.p.get_edns())
+
+        message_parse = Message(Message.PARSE)
+        factoryFromFile(message_parse, "message_fromWire10.wire")
+        edns = message_parse.get_edns()
+        self.assertEqual(0, edns.get_version())
+        self.assertEqual(4096, edns.get_udp_size())
+        self.assertTrue(edns.get_dnssec_awareness())
+
+    def test_set_edns(self):
+        self.assertRaises(InvalidMessageOperation, self.p.set_edns, EDNS())
+
+        edns = EDNS()
+        edns.set_udp_size(1024)
+        self.r.set_edns(edns)
+        self.assertEqual(1024, self.r.get_edns().get_udp_size())
 
     def test_get_section(self):
         self.assertRaises(TypeError, self.r.get_section, "wrong")
@@ -430,6 +259,16 @@ class MessageTest(unittest.TestCase):
         self.assertEqual(b'\x105\x85\x00\x00\x01\x00\x02\x00\x00\x00\x00\x04test\x07example\x03com\x00\x00\x01\x00\x01\xc0\x0c\x00\x01\x00\x01\x00\x00\x0e\x10\x00\x04\xc0\x00\x02\x01\xc0\x0c\x00\x01\x00\x01\x00\x00\x0e\x10\x00\x04\xc0\x00\x02\x02',
                          renderer.get_data())
 
+    def test_to_wire_without_opcode(self):
+        self.r.set_rcode(Rcode.NOERROR())
+        self.assertRaises(InvalidMessageOperation, self.r.to_wire,
+                          MessageRenderer())
+
+    def test_to_wire_without_rcode(self):
+        self.r.set_opcode(Opcode.QUERY())
+        self.assertRaises(InvalidMessageOperation, self.r.to_wire,
+                          MessageRenderer())
+
     def test_to_text(self):
         message_render = create_message()
         
@@ -446,6 +285,14 @@ test.example.com. 3600 IN A 192.0.2.2
 """
         self.assertEqual(msg_str, message_render.to_text())
         self.assertEqual(msg_str, str(message_render))
+
+    def test_to_text_without_opcode(self):
+        self.r.set_rcode(Rcode.NOERROR())
+        self.assertRaises(InvalidMessageOperation, self.r.to_text)
+
+    def test_to_text_without_rcode(self):
+        self.r.set_opcode(Opcode.QUERY())
+        self.assertRaises(InvalidMessageOperation, self.r.to_text)
 
     def test_from_wire(self):
         self.assertRaises(TypeError, self.r.from_wire, 1)
@@ -487,93 +334,15 @@ test.example.com. 3600 IN A 192.0.2.2
         self.assertEqual("192.0.2.2", rdata[1].to_text())
         self.assertEqual(2, len(rdata))
 
-    def test_GetEDNS0DOBit(self):
-        message_parse = Message(Message.PARSE)
-        ## Without EDNS0, DNSSEC is considered to be unsupported.
-        factoryFromFile(message_parse, "message_fromWire1")
-        self.assertFalse(message_parse.is_dnssec_supported())
-    
-        ## If DO bit is on, DNSSEC is considered to be supported.
-        message_parse.clear(Message.PARSE)
-        factoryFromFile(message_parse, "message_fromWire2")
-        self.assertTrue(message_parse.is_dnssec_supported())
-    
-        ## If DO bit is off, DNSSEC is considered to be unsupported.
-        message_parse.clear(Message.PARSE)
-        factoryFromFile(message_parse, "message_fromWire3")
-        self.assertFalse(message_parse.is_dnssec_supported())
-    
-    def test_SetEDNS0DOBit(self):
-        # By default, it's false, and we can enable/disable it.
-        message_parse = Message(Message.PARSE)
-        message_render = Message(Message.RENDER)
-        self.assertFalse(message_render.is_dnssec_supported())
-        message_render.set_dnssec_supported(True)
-        self.assertTrue(message_render.is_dnssec_supported())
-        message_render.set_dnssec_supported(False)
-        self.assertFalse(message_render.is_dnssec_supported())
-    
-        ## A message in the parse mode doesn't allow this flag to be set.
-        self.assertRaises(InvalidMessageOperation,
-                          message_parse.set_dnssec_supported,
-                          True)
-        ## Once converted to the render mode, it works as above
-        message_parse.make_response()
-        self.assertFalse(message_parse.is_dnssec_supported())
-        message_parse.set_dnssec_supported(True)
-        self.assertTrue(message_parse.is_dnssec_supported())
-        message_parse.set_dnssec_supported(False)
-        self.assertFalse(message_parse.is_dnssec_supported())
-    
-    def test_GetEDNS0UDPSize(self):
-        # Without EDNS0, the default max UDP size is used.
-        message_parse = Message(Message.PARSE)
-        factoryFromFile(message_parse, "message_fromWire1")
-        self.assertEqual(Message.DEFAULT_MAX_UDPSIZE, message_parse.get_udp_size())
-    
-        ## If the size specified in EDNS0 > default max, use it.
-        message_parse.clear(Message.PARSE)
-        factoryFromFile(message_parse, "message_fromWire2")
-        self.assertEqual(4096, message_parse.get_udp_size())
-    
-        ## If the size specified in EDNS0 < default max, keep using the default.
-        message_parse.clear(Message.PARSE)
-        factoryFromFile(message_parse, "message_fromWire8")
-        self.assertEqual(Message.DEFAULT_MAX_UDPSIZE, message_parse.get_udp_size())
-    
-    def test_SetEDNS0UDPSize(self):
-        # The default size if unspecified
-        message_render = Message(Message.RENDER)
-        message_parse = Message(Message.PARSE)
-        self.assertEqual(Message.DEFAULT_MAX_UDPSIZE, message_render.get_udp_size())
-        # A common buffer size with EDNS, should succeed
-        message_render.set_udp_size(4096)
-        self.assertEqual(4096, message_render.get_udp_size())
-        # Unusual large value, but accepted
-        message_render.set_udp_size(0xffff)
-        self.assertEqual(0xffff, message_render.get_udp_size())
-        # Too small is value is rejected
-        self.assertRaises(InvalidMessageUDPSize, message_render.set_udp_size, 511)
-    
-        # A message in the parse mode doesn't allow the set operation.
-        self.assertRaises(InvalidMessageOperation, message_parse.set_udp_size, 4096)
-        ## Once converted to the render mode, it works as above.
-        message_parse.make_response()
-        message_parse.set_udp_size(4096)
-        self.assertEqual(4096, message_parse.get_udp_size())
-        message_parse.set_udp_size(0xffff)
-        self.assertEqual(0xffff, message_parse.get_udp_size())
-        self.assertRaises(InvalidMessageUDPSize, message_parse.set_udp_size, 511)
-    
     def test_EDNS0ExtCode(self):
         # Extended Rcode = BADVERS
         message_parse = Message(Message.PARSE)
-        factoryFromFile(message_parse, "message_fromWire10")
+        factoryFromFile(message_parse, "message_fromWire10.wire")
         self.assertEqual(Rcode.BADVERS(), message_parse.get_rcode())
     
         # Maximum extended Rcode
         message_parse.clear(Message.PARSE)
-        factoryFromFile(message_parse, "message_fromWire11")
+        factoryFromFile(message_parse, "message_fromWire11.wire")
         self.assertEqual(0xfff, message_parse.get_rcode().get_code())
     
     def test_BadEDNS0(self):

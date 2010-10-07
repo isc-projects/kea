@@ -29,12 +29,15 @@ import random
 from optparse import OptionParser, OptionValueError
 from isc.config.ccsession import *
 from isc.notify import notify_out
+import isc.utils.process
 try:
     from pydnspp import *
 except ImportError as e:
     # C++ loadable module may not be installed; even so the xfrin process
     # must keep running, so we warn about it and move forward.
     sys.stderr.write('[b10-xfrin] failed to import DNS module: %s\n' % str(e))
+
+isc.utils.process.rename()
 
 # If B10_FROM_BUILD is set in the environment, we use data files
 # from a directory relative to that, otherwise we use the ones

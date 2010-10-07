@@ -236,7 +236,7 @@ RRClass_toWire(s_RRClass* self, PyObject* args) {
         // to prevent memory leak
         Py_DECREF(n);
         return (result);
-    } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, (PyObject**) &mr)) {
+    } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
         self->rrclass->toWire(*mr->messagerenderer);
         // If we return NULL it is seen as an error, so use this for
         // None returns

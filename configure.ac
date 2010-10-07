@@ -40,6 +40,20 @@ AC_HELP_STRING([--enable-static-link],
   [enable_static_link=yes], [enable_static_link=no])
 AM_CONDITIONAL(USE_STATIC_LINK, test $enable_static_link = yes)
 
+# Check validity about some libtool options
+if test $enable_static_link = yes -a $enable_static = no; then
+	AC_MSG_ERROR([--enable-static-link requires --enable-static])
+fi
+if test $enable_shared = no; then
+	AC_MSG_ERROR([BIND 10 requires shared libraries to be built])
+fi
+
+# allow configuring without setproctitle.
+AC_ARG_ENABLE(setproctitle-check,
+AC_HELP_STRING([--disable-setproctitle-check],
+  [do not check for python setproctitle module (used to give nice names to python processes)]),
+  setproctitle_check=$enableval, setproctitle_check=yes)
+
 # OS dependent configuration
 SET_ENV_LIBRARY_PATH=no
 ENV_LIBRARY_PATH=LD_LIBRARY_PATH
@@ -154,6 +168,18 @@ fi
 AC_SUBST(PYTHON_LIB)
 LDFLAGS=$LDFLAGS_SAVED
 
+# Check for the setproctitle module
+if test "$setproctitle_check" = "yes" ; then
+    AC_MSG_CHECKING(for setproctitle module)
+    if "$PYTHON" -c 'import setproctitle' 2>/dev/null ; then
+        AC_MSG_RESULT(ok)
+    else
+        AC_MSG_RESULT(missing)
+        AC_MSG_ERROR([Missing setproctitle module. Either install it or provide --disable-setproctitle-check.
+In that case we will continue, but naming of python processes will not work.])
+    fi
+fi
+
 # TODO: check for _sqlite3.py module
 
 # Compiler dependent settings: define some mandatory CXXFLAGS here.
@@ -167,7 +193,6 @@ LDFLAGS=$LDFLAGS_SAVED
 # specify the default warning flags in CXXFLAGS and let specific modules
 # "override" the default.
 
-CXXFLAGS=-g
 werror_ok=0
 
 # SunStudio compiler requires special compiler options for boost
@@ -270,14 +295,31 @@ if test "$lcov" != "no"; then
 fi
 AC_SUBST(USE_LCOV)
 
+#
+# Configure Boost header path
+#
+# If explicitly specified, use it.
 AC_ARG_WITH([boost-include],
   AC_HELP_STRING([--with-boost-include=PATH],
     [specify exact directory for Boost headers]),
     [boost_include_path="$withval"])
+# If not specified, try some common paths.
+if test -z "$with_boost_include"; then
+	boostdirs="/usr/local /usr/pkg /opt /opt/local"
+	for d in $boostdirs
+	do
+		if test -f $d/include/boost/shared_ptr.hpp; then
+			boost_include_path=$d/include
+			break
+		fi
+	done
+fi
 if test "${boost_include_path}" ; then
 	BOOST_INCLUDES="-I${boost_include_path}"
 	CPPFLAGS="$CPPFLAGS $BOOST_INCLUDES"
 fi
+AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp],,
+  AC_MSG_ERROR([Missing required header files.]))
 AC_SUBST(BOOST_INCLUDES)
 
 #
@@ -352,6 +394,9 @@ AC_SUBST(PTHREAD_LDFLAGS)
 #
 CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext/asio"
 #
+# Disable threads: Currently we don't use them.
+CPPFLAGS="$CPPFLAGS -DASIO_DISABLE_THREADS=1"
+#
 # kqueue portability: ASIO uses kqueue by default if it's available (it's
 # generally available in BSD variants).  Unfortunately, some public
 # implementation of kqueue forces a conversion from a pointer to an integer,
@@ -389,10 +434,6 @@ if test "X$ac_cv_have_devpoll" = "Xyes" -a "X$GXX" = "Xyes"; then
 	CPPFLAGS="$CPPFLAGS -DASIO_DISABLE_DEV_POLL=1"
 fi
 
-# Check for headers from required devel kits.
-AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp],,
-  AC_MSG_ERROR([Missing required header files.]))
-
 AC_ARG_ENABLE(man, [AC_HELP_STRING([--enable-man],
   [regenerate man pages [default=no]])] ,enable_man=yes, enable_man=no)
 
@@ -423,6 +464,8 @@ AC_CONFIG_FILES([Makefile
                  src/bin/msgq/tests/Makefile
                  src/bin/auth/Makefile
                  src/bin/auth/tests/Makefile
+                 src/bin/auth/tests/testdata/Makefile
+                 src/bin/auth/benchmarks/Makefile
                  src/bin/xfrin/Makefile
                  src/bin/xfrin/tests/Makefile
                  src/bin/xfrout/Makefile
@@ -430,6 +473,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/zonemgr/Makefile
                  src/bin/zonemgr/tests/Makefile
                  src/bin/usermgr/Makefile
+                 src/bin/tests/Makefile
                  src/lib/Makefile
                  src/lib/bench/Makefile
                  src/lib/bench/example/Makefile
@@ -438,6 +482,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/cc/tests/Makefile
                  src/lib/python/Makefile
                  src/lib/python/isc/Makefile
+                 src/lib/python/isc/utils/Makefile
+                 src/lib/python/isc/utils/tests/Makefile
                  src/lib/python/isc/datasrc/Makefile
                  src/lib/python/isc/cc/Makefile
                  src/lib/python/isc/cc/tests/Makefile
@@ -449,9 +495,10 @@ AC_CONFIG_FILES([Makefile
                  src/lib/python/isc/notify/tests/Makefile
                  src/lib/config/Makefile
                  src/lib/config/tests/Makefile
-                 src/lib/config/testdata/Makefile
+                 src/lib/config/tests/testdata/Makefile
                  src/lib/dns/Makefile
                  src/lib/dns/tests/Makefile
+                 src/lib/dns/tests/testdata/Makefile
                  src/lib/dns/python/Makefile
                  src/lib/dns/python/tests/Makefile
                  src/lib/exceptions/Makefile
@@ -495,6 +542,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/msgq/run_msgq.sh
            src/bin/auth/auth.spec.pre
            src/bin/auth/spec_config.h.pre
+           src/bin/tests/process_rename_test.py
            src/lib/config/tests/data_def_unittests_config.h
            src/lib/python/isc/config/tests/config_test
            src/lib/python/isc/cc/tests/cc_test
@@ -543,7 +591,6 @@ Package:
 Flags:
   DEFS:          $DEFS
   CPPFLAGS:      $CPPFLAGS
-  CFLAGS:        $CFLAGS
   CXXFLAGS:      $CXXFLAGS
   B10_CXXFLAGS:  $B10_CXXFLAGS
 dnl includes too
