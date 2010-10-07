@@ -215,7 +215,7 @@ AuthSrv::setConfigSession(ModuleCCSession* config_session) {
 }
 
 ModuleCCSession*
-AuthSrv::configSession() const {
+AuthSrv::getConfigSession() const {
     return (impl_->config_session_);
 }
 
