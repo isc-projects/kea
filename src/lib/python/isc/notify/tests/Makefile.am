@@ -1,3 +1,4 @@
+PYCOVERAGE=@PYCOVERAGE@
 PYTESTS = notify_out_test.py
 EXTRA_DIST = $(PYTESTS)
 
@@ -8,10 +9,13 @@ if SET_ENV_LIBRARY_PATH
 LIBRARY_PATH_PLACEHOLDER += $(ENV_LIBRARY_PATH)=$(abs_top_builddir)/src/lib/dns/.libs:$(abs_top_builddir)/src/lib/exceptions/.libs:$$$(ENV_LIBRARY_PATH)
 endif
 
-# later will have configure option to choose this, like: coverage run --branch
-PYCOVERAGE = $(PYTHON)
 # test using command-line arguments, so use check-local target instead of TESTS
 check-local:
+if ENABLE_PYTHON_COVERAGE
+	touch $(abs_top_srcdir)/.coverage
+	rm -f .coverage
+	${LN_S} $(abs_top_srcdir)/.coverage .coverage
+endif
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
 	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/lib/dns/python/.libs \
