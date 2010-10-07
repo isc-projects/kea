@@ -24,6 +24,9 @@ from bindctl.moduleinfo import *
 from bindctl.bindcmd import *
 import pprint
 from optparse import OptionParser, OptionValueError
+import isc.utils.process
+
+isc.utils.process.rename()
 
 __version__ = 'Bindctl'
 

@@ -28,6 +28,8 @@
 #include <dns/name.h>
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
+#include <dns/opcode.h>
+#include <dns/rcode.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
 #include <dns/rrset.h>
