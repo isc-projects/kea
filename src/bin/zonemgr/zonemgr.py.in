@@ -369,7 +369,7 @@ class ZonemgrRefresh:
             if not rlist: # timer timeout 
                 continue
             if self._read_sock in rlist: # awaken by shutdown socket 
-                break 
+                continue 
             if self._check_sock in rlist: # awaken by check socket
                 self._check_sock.recv(5)
 

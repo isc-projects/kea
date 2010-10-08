@@ -394,6 +394,7 @@ class TestZonemgrRefresh(unittest.TestCase):
         listener = threading.Thread(target = self.zone_refresh.run_timer, args = ())
         listener.setDaemon(True)
         listener.start()
+        # Sleep 1 sec to ensure that the timer thread has enough time to run.
         time.sleep(1)
         self.zone_refresh.shutdown()
         self.assertFalse(listener.is_alive())
@@ -402,18 +403,14 @@ class TestZonemgrRefresh(unittest.TestCase):
         self.assertTrue("refresh_timeout" in self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN].keys())
         self.assertTrue(zone_state == ZONE_REFRESHING)
 
-        # test select.error by using bad file descriptor 
-        bad_file_descriptor = self.zone_refresh._master_socket.fileno()
-        self.zone_refresh._check_sock = bad_file_descriptor  
-        self.zone_refresh._master_socket.close()
-        self.assertRaises(None, self.zone_refresh.run_timer()) 
-
     def test_shutdown(self):
         self.zone_refresh._check_sock = self.zone_refresh._master_socket 
         listener = threading.Thread(target=self.zone_refresh.run_timer)
         listener.start()
         self.assertTrue(listener.is_alive())
         self.zone_refresh.shutdown()
+        # Sleep 1 sec to ensure that the timer thread has enough time to exit.
+        time.sleep(1)
         self.assertFalse(listener.is_alive())
 
     def tearDown(self):
