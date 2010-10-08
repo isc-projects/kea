@@ -1,6 +1,6 @@
   104.	[bug]		jerry
 	bin/zonemgr: zonemgr should be attempting to refresh expired zones.
-	(Trac #336, r3138) 
+	(Trac #336, r3139) 
 				   
   103.	[bug]		jerry
 	lib/python/isc/log: Fixed an issue with python logging,
