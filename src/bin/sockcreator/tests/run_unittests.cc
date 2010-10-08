@@ -12,15 +12,11 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "sockcreator.h"
-
-using namespace isc::socket_creator;
+#include <gtest/gtest.h>
 
 int
-main() {
-    /*
-     * TODO Maybe use some OS-specific caps interface and drop everything
-     * but ability to bind ports? It would be nice.
-     */
-    return run(0, 1); // Read commands from stdin, output to stdout
+main(int argc, char *argv[]) {
+    ::testing::InitGoogleTest(&argc, argv);
+
+    return RUN_ALL_TESTS();
 }
