@@ -14,6 +14,9 @@
 
 #include "sockcreator.h"
 
+#include <unistd.h>
+#include <cerrno>
+
 namespace isc {
 namespace socket_creator {
 
@@ -33,6 +36,48 @@ run(const int input_fd, const int output_fd, const get_sock_t get_sock,
     const send_fd_t send_fd)
 {
     // TODO Implement
+}
+
+bool
+write_data(const int fd, const char *buffer, const size_t length) {
+    size_t rest(length);
+    // Just keep writing until all is written
+    while(rest) {
+        ssize_t written(write(fd, buffer, rest));
+        if(rest == -1) {
+            if(errno == EINTR) { // Just keep going
+                continue;
+            } else {
+                return false;
+            }
+        } else { // Wrote something
+            rest -= written;
+            buffer += written;
+        }
+    }
+    return true;
+}
+
+ssize_t
+read_data(const int fd, char *buffer, const size_t length) {
+    size_t rest(length), already(0);
+    while(rest) { // Stil something to read
+        ssize_t amount(read(fd, buffer, rest));
+        if(rest == -1) {
+            if(errno == EINTR) { // Continue on interrupted call
+                continue;
+            } else {
+                return -1;
+            }
+        } else if(amount) {
+            already += amount;
+            rest -= amount;
+            buffer += amount;
+        } else { // EOF
+            return already;
+        }
+    }
+    return already;
 }
 
 } // End of the namespaces
