@@ -1,3 +1,7 @@
+  103.	[bug]		jerry
+	lib/python/isc/log: Fixed an issue with python logging,
+	python log shouldn't die with OSError.(Trac #267, r3137)
+				   
   102.	[build]		jinmei
 	Disable threads in ASIO to minimize build time dependency.
 	(Trac #345, r3100)
@@ -89,8 +93,8 @@ bind10-devel-20100917 released on September 17, 2010
 	zone axfr/ixfr finishing, the server will notify its slaves.
 	(Trac #289, svn r2737)
 
-  86.   [func]		jerry
-    	bin/zonemgr: Added zone manager module. The zone manager is one 
+  86.	[func]		jerry
+	bin/zonemgr: Added zone manager module. The zone manager is one 
 	of the co-operating processes of BIND10, which keeps track of 
 	timers and other information necessary for BIND10 to act as a 
 	slave. (Trac #215, svn r2737)
