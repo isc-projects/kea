@@ -170,7 +170,11 @@ class ZonemgrRefresh:
             raise ZonemgrException("[b10-zonemgr] Zone (%s, %s) doesn't "
                                    "belong to zonemgr" % zone_name_class)
             return
-        self._set_zone_state(zone_name_class, ZONE_OK)
+        # Is zone expired?
+        if (self._zone_is_expired(zone_name_class)):
+            self._set_zone_state(zone_name_class, ZONE_EXPIRED)
+        else:
+            self._set_zone_state(zone_name_class, ZONE_OK)
         self._set_zone_retry_timer(zone_name_class)
 
     def zone_handle_notify(self, zone_name_class, master):
@@ -272,25 +276,14 @@ class ZonemgrRefresh:
         """
         zone_need_refresh = None
         for zone_name_class in self._zonemgr_refresh_info.keys():
-            # Does the zone expired?
-            if (ZONE_EXPIRED != self._get_zone_state(zone_name_class) and 
-                self._zone_is_expired(zone_name_class)):
-                log_msg("Zone (%s, %s) is expired." % zone_name_class)
-                self._set_zone_state(zone_name_class, ZONE_EXPIRED)
-
             zone_state = self._get_zone_state(zone_name_class)
-            # If zone is expired and doesn't receive notify, skip the zone
-            if (ZONE_EXPIRED == zone_state and 
-                (not self._get_zone_notifier_master(zone_name_class))):
-                continue
-
             # If hasn't received refresh response but are within refresh timeout, skip the zone
             if (ZONE_REFRESHING == zone_state and
                 (self._get_zone_refresh_timeout(zone_name_class) > self._get_current_time())):
                 continue
                     
             # Get the zone with minimum next_refresh_time 
-            if ((None == zone_need_refresh) or 
+            if ((zone_need_refresh is None) or 
                 (self._get_zone_next_refresh_time(zone_name_class) < 
                  self._get_zone_next_refresh_time(zone_need_refresh))):
                 zone_need_refresh = zone_name_class

@@ -42,15 +42,16 @@ class MyZonemgrRefresh(ZonemgrRefresh):
     def __init__(self):
         self._cc = MySession()
         self._db_file = "initdb.file"
+        current_time = time.time()
         self._zonemgr_refresh_info = { 
          ('sd.cn.', 'IN'): {
-         'last_refresh_time': 1280474398.822142,
-         'next_refresh_time': 1280481598.822153, 
+         'last_refresh_time': current_time,
+         'next_refresh_time': current_time + 6500, 
          'zone_soa_rdata': 'a.dns.cn. root.cnnic.cn. 2009073105 7200 3600 2419200 21600', 
          'zone_state': 0},
          ('tw.cn', 'CH'): {
-         'last_refresh_time': 1280474399.116421, 
-         'next_refresh_time': 1280481599.116433, 
+         'last_refresh_time': current_time, 
+         'next_refresh_time': current_time + 6900, 
          'zone_soa_rdata': 'a.dns.cn. root.cnnic.cn. 2009073112 7200 3600 2419200 21600', 
          'zone_state': 0}
         } 
@@ -311,6 +312,11 @@ class TestZonemgrRefresh(unittest.TestCase):
         self.assertTrue((time1 + 3 * 3600 / 4) <= next_refresh_time)
         self.assertTrue(next_refresh_time <= time2 + 3600)
         self.assertEqual(ZONE_OK, self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_state"])
+
+        self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["last_refresh_time"] = time1 - 2419200 
+        self.zone_refresh.zone_refresh_fail(ZONE_NAME_CLASS1_IN)
+        self.assertEqual(ZONE_EXPIRED, self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_state"])
+
         self.assertRaises(ZonemgrException, self.zone_refresh.zone_refresh_fail, ("org.cn.", "CH"))
         self.assertRaises(ZonemgrException, self.zone_refresh.zone_refresh_fail, ZONE_NAME_CLASS3_IN) 
 
@@ -331,17 +337,6 @@ class TestZonemgrRefresh(unittest.TestCase):
                 }
         zone_need_refresh = self.zone_refresh._find_need_do_refresh_zone()
         self.assertEqual(ZONE_NAME_CLASS1_IN, zone_need_refresh)
-
-        self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["last_refresh_time"] = time1 - 2419200
-        self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_state"] = ZONE_EXPIRED
-        zone_need_refresh = self.zone_refresh._find_need_do_refresh_zone()
-        self.assertEqual(None, zone_need_refresh)
-
-        self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_state"] = ZONE_REFRESHING
-        self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["notify_master"] = "192.168.0.1"
-        zone_need_refresh = self.zone_refresh._find_need_do_refresh_zone()
-        self.assertEqual(ZONE_NAME_CLASS1_IN, zone_need_refresh)
-        self.assertEqual(ZONE_EXPIRED, self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_state"])
 
         self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS2_CH]["refresh_timeout"] = time1 
         zone_need_refresh = self.zone_refresh._find_need_do_refresh_zone()
