@@ -1,3 +1,7 @@
+  104.	[bug]		jerry
+	bin/zonemgr: zonemgr should be attempting to refresh expired zones.
+	(Trac #336, r3138) 
+				   
   103.	[bug]		jerry
 	lib/python/isc/log: Fixed an issue with python logging,
 	python log shouldn't die with OSError.(Trac #267, r3137)
