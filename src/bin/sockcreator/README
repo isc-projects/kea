@@ -34,3 +34,13 @@ what it does), followed by parameters.
   'S' or 'B' (either socket() or bind() call failed). Then there is one int
   (architecture-dependent length and endianess), which is the errno value
   after the failure.
+
+The creator may also send these messages at any time (but not in the middle
+of another message):
+
+* 'F': A fatal error has been detected. It is followed by one byte of error
+  condition code and then the creator terminates with non-zero status.
+
+  The conditions are:
+  * 'I': Invalid input (eg. someone sent a wrong letter and it does not
+    understand it).
