@@ -17,44 +17,54 @@ import threading
 import socket
 import select
 
+SOCK_DATA = b'somedata'
 class ServeMixIn:
     '''Mix-In class to override the function serve_forever()
-    and shutdown() in class socketserver. 
+    and shutdown() in class socketserver.TCPServer. 
+      ServeMixIn should be used together with socketserver.TCPServer
+    or some derived classes of it, and ServeMixIn must be the first 
+    base class in multiple inheritance, eg. MyClass(ServeMixIn, 
+    socketserver.TCPServer). ServeMixIn.__init__() should be called
+    explicitely in derived class.
     '''
-    _serving = False
-    _is_shut_down = threading.Event()
-    _read_sock, _write_sock = socket.socketpair()
+    def __init__(self):
+        self.__serving = False
+        self.__is_shut_down = threading.Event()
+        self.__read_sock, self.__write_sock = socket.socketpair()
 
     def serve_forever(self, poll_interval=0.5):
-        ''' Override the serve_forever() in class BaseServer.
-        use one socket pair to wake up the select when shutdown()
-        is called in anther thread.
+        ''' Override the serve_forever([poll_interval]) in class 
+        socketserver.TCPServer. use one socket pair to wake up 
+        the select when shutdown() is called in anther thread.
+          Note, parameter 'poll_interval' is just used to keep the
+        interface, it's never used in this function.
         '''        
-        self._serving = True
-        self._is_shut_down.clear()
-        while self._serving:
-            # block until the self.socket or self._read_sock is readable 
+        self.__serving = True
+        self.__is_shut_down.clear()
+        while self.__serving:
+            # block until the self.socket or self.__read_sock is readable 
             try:
-                r, w, e = select.select([self, self._read_sock], [], [])
+                r, w, e = select.select([self, self.__read_sock], [], [])
             except select.error as err:
                 if err.args[0] != EINTR:
                     raise
                 else:
                     continue
             if r:
-                if self._read_sock in r:
+                if (self.__read_sock in r) and \
+                   (self.__read_sock.recv(len(SOCK_DATA)) == SOCK_DATA):
                     break
                 else:
                     self._handle_request_noblock()
 
-        self._is_shut_down.set()
+        self.__is_shut_down.set()
 
     def shutdown(self):
         '''Stops the serve_forever loop.
         Blocks until the loop has finished, the function should be called
         in another thread when serve_forever is running, or it will block.
         '''
-        self._serving = False
-        self._write_sock.send(b'anydata') # make self._read_sock readable.
-        self._is_shut_down.wait()
+        self.__serving = False
+        self.__write_sock.send(SOCK_DATA) # make self.__read_sock readable.
+        self.__is_shut_down.wait()
 
