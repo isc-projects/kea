@@ -17,6 +17,13 @@
 
 import isc
 
+class WouldBlockForever(Exception):
+    """
+    This is thrown by the FakeModuleCCSession if it would need
+    to block forever for incoming message.
+    """
+    pass
+
 #
 # We can probably use a more general version of this
 #
@@ -64,13 +71,18 @@ class FakeModuleCCSession:
         if 'group' in env:
             self.message_queue.append([ env['group'], None, msg])
 
-    def group_recvmsg(self, blocking, seq = None):
+    def group_recvmsg(self, nonblock=True, seq = None):
         for qm in self.message_queue:
-            if qm[0] in self.subscriptions and (qm[1] == None or qm[1] in self.subscriptions[qm[0]]):
+            if qm[0] in self.subscriptions and (qm[1] == None or qm[1] in
+                self.subscriptions[qm[0]]):
                 self.message_queue.remove(qm)
                 return qm[2], {'group': qm[0], 'from': qm[1]}
         if self._timeout == 0:
-            return None, None
+            if nonblock:
+                return None, None
+            else:
+                raise WouldBlockForever(
+                    "Blocking read without timeout and no message ready")
         else:
             raise isc.cc.SessionTimeout("Timeout set but no data to "
                                  "return to group_recvmsg()")
@@ -88,3 +100,6 @@ class FakeModuleCCSession:
 
     def set_timeout(self, timeout):
         self._timeout = timeout
+
+    def get_timeout(self):
+        return self._timeout

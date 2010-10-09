@@ -1,4 +1,5 @@
 # Copyright (C) 2009  Internet Systems Consortium.
+# Copyright (C) 2010  CZ NIC
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -169,20 +170,30 @@ class ModuleCCSession(ConfigData):
            time-critical, it is strongly recommended to only use
            check_command(), and not look at the socket at all."""
         return self._session._socket
-    
+
     def close(self):
         """Close the session to the command channel"""
         self._session.close()
 
-    def check_command(self):
+    def check_command(self, nonblock=True):
         """Check whether there is a command or configuration update
            on the channel. Call the corresponding callback function if
-           there is. This function does a non-blocking read on the
-           cc session, and returns nothing. It will respond to any
-           command by either an error or the answer message returned
-           by the callback, unless the latter is None."""
-        msg, env = self._session.group_recvmsg(True)
-        
+           there is. This function does a read on the cc session, and
+           returns nothing. It will respond to any command by either
+           an error or the answer message returned by the callback,
+           unless the latter is None.
+
+           If nonblock is True, it just checks if there's a command
+           and does nothing if there isn't. If nonblock is False, it
+           waits until it arrives. It temporarily sets timeout to infinity,
+           because commands may not come in arbitrary long time."""
+        timeout_orig = self._session.get_timeout()
+        self._session.set_timeout(0)
+        try:
+            msg, env = self._session.group_recvmsg(nonblock)
+        finally:
+            self._session.set_timeout(timeout_orig)
+
         # should we default to an answer? success-by-default? unhandled error?
         if msg is not None and not 'result' in msg:
             answer = None

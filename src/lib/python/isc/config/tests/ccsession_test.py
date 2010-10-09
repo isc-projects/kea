@@ -23,7 +23,7 @@ import unittest
 import os
 from isc.config.ccsession import *
 from isc.config.config_data import BIND10_CONFIG_DATA_VERSION
-from unittest_fakesession import FakeModuleCCSession
+from unittest_fakesession import FakeModuleCCSession, WouldBlockForever
 
 class TestHelperFunctions(unittest.TestCase):
     def test_parse_answer(self):
@@ -125,6 +125,8 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertTrue("Spec1" in fake_session.subscriptions)
 
         self.assertEqual(len(fake_session.message_queue), 0)
+        fake_session.group_sendmsg(None, 'Spec1')
+        fake_session.group_sendmsg(None, 'Spec1')
         self.assertRaises(ModuleCCSessionError, mccs.start)
         self.assertEqual(len(fake_session.message_queue), 2)
         self.assertEqual({'command': ['module_spec', {'module_name': 'Spec1'}]},
@@ -150,6 +152,8 @@ class TestModuleCCSession(unittest.TestCase):
         fake_session = FakeModuleCCSession()
         mccs = self.create_session("spec2.spec", None, None, fake_session)
         self.assertEqual(len(fake_session.message_queue), 0)
+        fake_session.group_sendmsg(None, 'Spec2')
+        fake_session.group_sendmsg(None, 'Spec2')
         self.assertRaises(ModuleCCSessionError, mccs.start)
         self.assertEqual(len(fake_session.message_queue), 2)
         self.assertEqual({'command': ['module_spec', mccs.specification._module_spec]},
@@ -173,6 +177,8 @@ class TestModuleCCSession(unittest.TestCase):
         mccs = self.create_session("spec2.spec", None, None, fake_session)
         mccs.set_config_handler(self.my_config_handler_ok)
         self.assertEqual(len(fake_session.message_queue), 0)
+        fake_session.group_sendmsg(None, 'Spec2')
+        fake_session.group_sendmsg(None, 'Spec2')
         self.assertRaises(ModuleCCSessionError, mccs.start)
         self.assertEqual(len(fake_session.message_queue), 2)
         self.assertEqual({'command': ['module_spec', mccs.specification._module_spec]},
@@ -196,6 +202,8 @@ class TestModuleCCSession(unittest.TestCase):
         mccs = self.create_session("spec2.spec", None, None, fake_session)
         mccs.set_config_handler(self.my_config_handler_ok)
         self.assertEqual(len(fake_session.message_queue), 0)
+        fake_session.group_sendmsg(None, 'Spec2')
+        fake_session.group_sendmsg(None, 'Spec2')
         self.assertRaises(ModuleCCSessionError, mccs.start)
         self.assertEqual(len(fake_session.message_queue), 2)
         self.assertEqual({'command': ['module_spec', mccs.specification._module_spec]},
@@ -327,30 +335,67 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertEqual(len(fake_session.message_queue), 1)
         self.assertEqual({'result': [2, 'Spec2 has no command handler']},
                          fake_session.get_message('Spec2', None))
-        
-    def test_check_command7(self):
+
+    """Many check_command tests look too similar, this is common body."""
+    def common_check_command_check(self, cmd_handler,
+            cmd_check=lambda mccs, _: mccs.check_command()):
         fake_session = FakeModuleCCSession()
         mccs = self.create_session("spec2.spec", None, None, fake_session)
-        mccs.set_command_handler(self.my_command_handler_ok)
+        mccs.set_command_handler(cmd_handler)
         self.assertEqual(len(fake_session.message_queue), 0)
         cmd = isc.config.ccsession.create_command("print_message", "just a message")
         fake_session.group_sendmsg(cmd, 'Spec2')
         self.assertEqual(len(fake_session.message_queue), 1)
-        mccs.check_command()
+        cmd_check(mccs, fake_session)
+        return fake_session
+
+    def test_check_command7(self):
+        fake_session = self.common_check_command_check(
+            self.my_command_handler_ok)
         self.assertEqual(len(fake_session.message_queue), 1)
         self.assertEqual({'result': [0]},
                          fake_session.get_message('Spec2', None))
-        
+
     def test_check_command8(self):
+        fake_session = self.common_check_command_check(
+            self.my_command_handler_no_answer)
+        self.assertEqual(len(fake_session.message_queue), 0)
+
+    def test_check_command_block(self):
+        """See if the message gets there even in blocking mode."""
+        fake_session = self.common_check_command_check(
+            self.my_command_handler_ok,
+            lambda mccs, _: mccs.check_command(False))
+        self.assertEqual(len(fake_session.message_queue), 1)
+        self.assertEqual({'result': [0]},
+                         fake_session.get_message('Spec2', None))
+
+    def test_check_command_block_timeout(self):
+        """Check it works if session has timeout and it sets it back."""
+        def cmd_check(mccs, session):
+            session.set_timeout(1)
+            mccs.check_command(False)
+        fake_session = self.common_check_command_check(
+            self.my_command_handler_ok, cmd_check)
+        self.assertEqual(len(fake_session.message_queue), 1)
+        self.assertEqual({'result': [0]},
+                         fake_session.get_message('Spec2', None))
+        self.assertEqual(fake_session.get_timeout(), 1)
+
+    def test_check_command_blocks_forever(self):
+        """Check it would wait forever checking a command."""
         fake_session = FakeModuleCCSession()
         mccs = self.create_session("spec2.spec", None, None, fake_session)
-        mccs.set_command_handler(self.my_command_handler_no_answer)
-        self.assertEqual(len(fake_session.message_queue), 0)
-        cmd = isc.config.ccsession.create_command("print_message", "just a message")
-        fake_session.group_sendmsg(cmd, 'Spec2')
-        self.assertEqual(len(fake_session.message_queue), 1)
-        mccs.check_command()
-        self.assertEqual(len(fake_session.message_queue), 0)
+        mccs.set_command_handler(self.my_command_handler_ok)
+        self.assertRaises(WouldBlockForever, lambda: mccs.check_command(False))
+
+    def test_check_command_blocks_forever_timeout(self):
+        """Like above, but it should wait forever even with timeout here."""
+        fake_session = FakeModuleCCSession()
+        fake_session.set_timeout(1)
+        mccs = self.create_session("spec2.spec", None, None, fake_session)
+        mccs.set_command_handler(self.my_command_handler_ok)
+        self.assertRaises(WouldBlockForever, lambda: mccs.check_command(False))
 
     def test_remote_module(self):
         fake_session = FakeModuleCCSession()
@@ -360,6 +405,7 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertRaises(ModuleCCSessionError, mccs.get_remote_config_value, "Spec2", "item1")
 
         self.assertFalse("Spec2" in fake_session.subscriptions)
+        fake_session.group_sendmsg(None, 'Spec2')
         rmodname = mccs.add_remote_config(self.spec_file("spec2.spec"))
         self.assertTrue("Spec2" in fake_session.subscriptions)
         self.assertEqual("Spec2", rmodname)
@@ -373,6 +419,7 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertRaises(ModuleCCSessionError, mccs.get_remote_config_value, "Spec2", "item1")
 
         # test if unsubscription is alse sent when object is deleted
+        fake_session.group_sendmsg({'result' : [0]}, 'Spec2')
         rmodname = mccs.add_remote_config(self.spec_file("spec2.spec"))
         self.assertTrue("Spec2" in fake_session.subscriptions)
         mccs = None
@@ -383,6 +430,7 @@ class TestModuleCCSession(unittest.TestCase):
         fake_session = FakeModuleCCSession()
         mccs = self.create_session("spec1.spec", None, None, fake_session)
         mccs.set_command_handler(self.my_command_handler_ok)
+        fake_session.group_sendmsg(None, 'Spec2')
         rmodname = mccs.add_remote_config(self.spec_file("spec2.spec"))
 
         # remove the 'get config' from the queue
