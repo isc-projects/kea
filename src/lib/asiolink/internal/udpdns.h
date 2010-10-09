@@ -129,14 +129,8 @@ private:
     // are not copyable.
     boost::shared_ptr<asio::ip::udp::socket> socket_;
 
-    // An \c IOSocket object to wrap socket_
-    boost::shared_ptr<asiolink::IOSocket> iosock_;
-
     // The ASIO-enternal endpoint object representing the client
     boost::shared_ptr<asio::ip::udp::endpoint> sender_;
-
-    // An \c IOEndpoint object to wrap sender_
-    boost::shared_ptr<asiolink::IOEndpoint> peer_;
 
     // \c IOMessage and \c Message objects to be passed to the
     // DNS lookup and answer providers

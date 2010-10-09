@@ -24,7 +24,6 @@
 #include <asio/ip/address.hpp>
 
 #include <boost/array.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <dns/buffer.h>
@@ -105,13 +104,11 @@ TCPServer::TCPServer(io_service& io_service,
     acceptor_->set_option(tcp::acceptor::reuse_address(true));
     acceptor_->bind(endpoint);
     acceptor_->listen();
-
-    lenbuf_.reset(new OutputBuffer(TCP_MESSAGE_LENGTHSIZE));
-    respbuf_.reset(new OutputBuffer(0));
 }
 
 void
 TCPServer::operator()(error_code ec, size_t length) {
+    /// In the event of an error, just exit.  The coroutine will be deleted.
     if (ec) {
         return;
     }
@@ -120,6 +117,9 @@ TCPServer::operator()(error_code ec, size_t length) {
     /// a switch statement, inline variable declarations are not
     /// permitted.  Certain variables used below can be declared here.
     boost::array<const_buffer,2> bufs;
+    OutputBuffer* lenbuf;
+    IOEndpoint* peer;
+    IOSocket* iosock;
 
     CORO_REENTER (this) {
         do {
@@ -153,9 +153,13 @@ TCPServer::operator()(error_code ec, size_t length) {
         }
 
         // Create an \c IOMessage object to store the query.
-        peer_.reset(new TCPEndpoint(socket_->remote_endpoint()));
-        iosock_.reset(new TCPSocket(*socket_));
-        io_message_.reset(new IOMessage(data_.get(), length, *iosock_, *peer_));
+        //
+        // (XXX: It would be good to write a factory function
+        // that would quickly generate an IOMessage object without
+        // all these calls to "new".)
+        peer = new TCPEndpoint(socket_->remote_endpoint());
+        iosock = new TCPSocket(*socket_);
+        io_message_.reset(new IOMessage(data_.get(), length, *iosock, *peer));
         bytes_ = length;
 
         // Perform any necessary operations prior to processing the incoming
@@ -176,7 +180,7 @@ TCPServer::operator()(error_code ec, size_t length) {
 
         // Reset or instantiate objects that will be needed by the
         // DNS lookup and the write call.
-        respbuf_->clear();
+        respbuf_.reset(new OutputBuffer(0));
         message_.reset(new Message(Message::PARSE));
 
         // Schedule a DNS lookup, and yield.  When the lookup is
@@ -195,9 +199,9 @@ TCPServer::operator()(error_code ec, size_t length) {
         (*answer_callback_)(*io_message_, message_, respbuf_);
 
         // Set up the response, beginning with two length bytes.
-        lenbuf_->clear();
-        lenbuf_->writeUint16(respbuf_->getLength());
-        bufs[0] = buffer(lenbuf_->getData(), lenbuf_->getLength());
+        lenbuf = new OutputBuffer(TCP_MESSAGE_LENGTHSIZE);
+        lenbuf->writeUint16(respbuf_->getLength());
+        bufs[0] = buffer(lenbuf->getData(), lenbuf->getLength());
         bufs[1] = buffer(respbuf_->getData(), respbuf_->getLength());
 
         // Begin an asynchronous send, and then yield.  When the
