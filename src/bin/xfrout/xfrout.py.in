@@ -297,6 +297,7 @@ class UnixSockServer(serve_mixin.ServeMixIn, ThreadingUnixStreamServer):
     def __init__(self, sock_file, handle_class, shutdown_event, config_data, cc, log):
         self._remove_unused_sock_file(sock_file)
         self._sock_file = sock_file
+        serve_mixin.ServeMixIn.__init__(self)
         ThreadingUnixStreamServer.__init__(self, sock_file, handle_class)
         self._lock = threading.Lock()
         self._transfers_counter = 0

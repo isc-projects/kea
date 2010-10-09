@@ -28,8 +28,10 @@ class MyHandler(socketserver.BaseRequestHandler):
 class MyServer(ServeMixIn, 
                socketserver.ThreadingMixIn,
                socketserver.TCPServer):
-    pass
 
+    def __init__(self, server_addr, handler_class):
+        ServeMixIn.__init__(self)
+        socketserver.TCPServer.__init__(self, server_addr, handler_class)
 
 def send_and_get_reply(ip, port, msg):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -42,7 +44,7 @@ def send_and_get_reply(ip, port, msg):
 class TestServeMixIn(unittest.TestCase):
     def test_serve_forever(self):
         # use port 0 to select an arbitrary unused port.
-        server = MyServer(('localhost', 0), MyHandler)
+        server = MyServer(('127.0.0.1', 0), MyHandler)
         ip, port = server.server_address
         server_thread = threading.Thread(target=server.serve_forever)
         server_thread.setDaemon(True)
