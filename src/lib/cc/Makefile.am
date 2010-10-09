@@ -12,6 +12,10 @@ if USE_GXX
 AM_CXXFLAGS += -Wno-unused-parameter
 endif
 
+#for clang++
+AM_CXXFLAGS += -Wno-unused-function
+AM_CXXFLAGS += -Wno-char-subscripts
+
 lib_LTLIBRARIES = libcc.la
 libcc_la_SOURCES = data.cc data.h session.cc session.h
 

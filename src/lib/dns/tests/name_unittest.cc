@@ -443,9 +443,10 @@ TEST_F(NameTest, equal) {
 }
 
 TEST_F(NameTest, isWildcard) {
-    EXPECT_EQ(false, example_name.isWildcard());
+    //EXPECT_EQ(false, example_name.isWildcard());
+    EXPECT_FALSE(example_name.isWildcard());
     EXPECT_EQ(true, Name("*.a.example.com").isWildcard());
-    EXPECT_EQ(false, Name("a.*.example.com").isWildcard());
+    EXPECT_FALSE(Name("a.*.example.com").isWildcard());
 }
 
 TEST_F(NameTest, concatenate) {
