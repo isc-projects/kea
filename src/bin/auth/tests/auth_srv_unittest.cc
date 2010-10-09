@@ -388,8 +388,8 @@ TEST_F(AuthSrvTest, multiQuestion) {
 // dropped.
 TEST_F(AuthSrvTest, shortMessage) {
     createDataFromFile("shortmessage_fromWire");
-    EXPECT_EQ(false, server.processMessage(*io_message, parse_message,
-                                           response_renderer));
+    EXPECT_FALSE(server.processMessage(*io_message, parse_message,
+                                       response_renderer));
 }
 
 // Response messages.  Must be silently dropped, whether it's a valid response
@@ -397,19 +397,19 @@ TEST_F(AuthSrvTest, shortMessage) {
 TEST_F(AuthSrvTest, response) {
     // A valid (although unusual) response
     createDataFromFile("simpleresponse_fromWire.wire");
-    EXPECT_EQ(false, server.processMessage(*io_message, parse_message,
-                                           response_renderer));
+    EXPECT_FALSE(server.processMessage(*io_message, parse_message,
+                                       response_renderer));
 
     // A response with a broken question section.  must be dropped rather than
     // returning FORMERR.
     createDataFromFile("shortresponse_fromWire");
-    EXPECT_EQ(false, server.processMessage(*io_message, parse_message,
-                                           response_renderer));
+    EXPECT_FALSE(server.processMessage(*io_message, parse_message,
+                                       response_renderer));
 
     // A response to iquery.  must be dropped rather than returning NOTIMP.
     createDataFromFile("iqueryresponse_fromWire.wire");
-    EXPECT_EQ(false, server.processMessage(*io_message, parse_message,
-                                           response_renderer));
+    EXPECT_FALSE(server.processMessage(*io_message, parse_message,
+                                       response_renderer));
 }
 
 // Query with a broken question
@@ -480,8 +480,8 @@ TEST_F(AuthSrvTest, AXFRSuccess) {
                         RRType::AXFR(), IPPROTO_TCP);
     // On success, the AXFR query has been passed to a separate process,
     // so we shouldn't have to respond.
-    EXPECT_EQ(false, server.processMessage(*io_message, parse_message,
-                                           response_renderer));
+    EXPECT_FALSE(server.processMessage(*io_message, parse_message,
+                                       response_renderer));
     EXPECT_FALSE(xfrout.isConnected());
 }
 

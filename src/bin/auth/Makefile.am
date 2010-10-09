@@ -46,6 +46,8 @@ libasio_link_a_CXXFLAGS = $(AM_CXXFLAGS)
 if USE_GXX
 libasio_link_a_CXXFLAGS += -Wno-unused-parameter
 endif
+libasio_link_a_CXXFLAGS += -Wno-unused-function
+libasio_link_a_CXXFLAGS += -Wno-char-subscripts
 libasio_link_a_CPPFLAGS = $(AM_CPPFLAGS)
 
 BUILT_SOURCES = spec_config.h 
