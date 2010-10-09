@@ -397,7 +397,6 @@ class TestZonemgrRefresh(unittest.TestCase):
         # Sleep 1 sec to ensure that the timer thread has enough time to run.
         time.sleep(1)
         self.zone_refresh.shutdown()
-        self.assertFalse(listener.is_alive())
         # After running timer, the zone's state should become "refreshing".
         zone_state = self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_state"]
         self.assertTrue("refresh_timeout" in self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN].keys())
