@@ -514,15 +514,17 @@ class Xfrin:
             try:
                 self._send_cc_session.group_sendmsg(msg, XFROUT_MODULE_NAME)
                 self._send_cc_session.group_sendmsg(msg, ZONE_MANAGER_MODULE_NAME)
-            except: 
-                pass
+            except socket.error as err: 
+                log_error("Fail to send message to %s and %s, msgq may has been killed" 
+                          % (XFROUT_MODULE_NAME, ZONE_MANAGER_MODULE_NAME))
         else:
             msg = create_command(ZONE_XFRIN_FAILED, param)
             # catch the exception, in case msgq has been killed.
             try:
                 self._send_cc_session.group_sendmsg(msg, ZONE_MANAGER_MODULE_NAME)
-            except:
-                pass
+            except socket.error as err:
+                log_error("Fail to send message to %s, msgq may has been killed" 
+                          % ZONE_MANAGER_MODULE_NAME)
 
     def startup(self):
         while not self._shutdown_event.is_set():
