@@ -40,6 +40,7 @@
 #include <dns/rrset.h>
 #include <dns/rrttl.h>
 #include <dns/message.h>
+#include <dns/messagerenderer.h>
 
 #include <xfr/xfrout_client.h>
 

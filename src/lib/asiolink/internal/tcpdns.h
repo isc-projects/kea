@@ -137,17 +137,6 @@ private:
     // are not copyable.
     boost::shared_ptr<asio::ip::tcp::socket> socket_;
 
-    // An \c IOSocket object to wrap socket_
-    boost::shared_ptr<asiolink::IOSocket> iosock_;
-
-    // An \c IOEndpoint object to wrap the remote endpoint of socket_
-    boost::shared_ptr<asiolink::IOEndpoint> peer_;
-
-    // A small buffer for writing the length of a DNS message;
-    // this is prepended to the actual response buffer when sending a reply
-    // to the client.
-    boost::shared_ptr<isc::dns::OutputBuffer> lenbuf_;
-
     // The buffer into which the response is written
     boost::shared_ptr<isc::dns::OutputBuffer> respbuf_;
 

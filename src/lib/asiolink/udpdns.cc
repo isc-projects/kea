@@ -16,8 +16,6 @@
 
 #include <config.h>
 
-#include <list>
-
 #include <unistd.h>             // for some IPC/network system calls
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -25,7 +23,6 @@
 #include <boost/bind.hpp>
 
 #include <asio.hpp>
-#include <boost/lexical_cast.hpp>
 
 #include <boost/shared_ptr.hpp>
 
@@ -113,6 +110,12 @@ UDPServer::UDPServer(io_service& io_service,
 /// pattern; see internal/coroutine.h for details.
 void
 UDPServer::operator()(error_code ec, size_t length) {
+    /// Because the coroutine reeentry block is implemented as
+    /// a switch statement, inline variable declarations are not
+    /// permitted.  Certain variables used below can be declared here.
+    IOEndpoint* peer;
+    IOSocket* iosock;
+
     CORO_REENTER (this) {
         do {
             // Instantiate the data buffer and endpoint that will
@@ -139,9 +142,13 @@ UDPServer::operator()(error_code ec, size_t length) {
         } while (is_parent());
 
         // Create an \c IOMessage object to store the query.
-        peer_.reset(new UDPEndpoint(*sender_));
-        iosock_.reset(new UDPSocket(*socket_));
-        io_message_.reset(new IOMessage(data_.get(), bytes_, *iosock_, *peer_));
+        //
+        // (XXX: It would be good to write a factory function
+        // that would quickly generate an IOMessage object without
+        // all these calls to "new".)
+        peer = new UDPEndpoint(*sender_);
+        iosock = new UDPSocket(*socket_);
+        io_message_.reset(new IOMessage(data_.get(), bytes_, *iosock, *peer));
 
         // Perform any necessary operations prior to processing an incoming
         // query (e.g., checking for queued configuration messages).

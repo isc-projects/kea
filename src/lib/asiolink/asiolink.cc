@@ -42,83 +42,6 @@ using namespace isc::dns;
 
 namespace asiolink {
 
-IOAddress::IOAddress(const string& address_str)
-    // XXX: we cannot simply construct the address in the initialization list
-    // because we'd like to throw our own exception on failure.
-{
-    error_code err;
-    asio_address_ = ip::address::from_string(address_str, err);
-    if (err) {
-        isc_throw(IOError, "Failed to convert string to address '"
-                  << address_str << "': " << err.message());
-    }
-}
-
-IOAddress::IOAddress(const ip::address& asio_address) :
-    asio_address_(asio_address)
-{}
-
-string
-IOAddress::toText() const {
-    return (asio_address_.to_string());
-}
-
-short
-IOAddress::getFamily() const {
-    if (asio_address_.is_v4()) {
-        return (AF_INET);
-    } else {
-        return (AF_INET6);
-    }
-}
-
-const IOEndpoint*
-IOEndpoint::create(const int protocol, const IOAddress& address,
-                   const unsigned short port)
-{
-    if (protocol == IPPROTO_UDP) {
-        return (new UDPEndpoint(address, port));
-    } else if (protocol == IPPROTO_TCP) {
-        return (new TCPEndpoint(address, port));
-    }
-    isc_throw(IOError,
-              "IOEndpoint creation attempt for unsupported protocol: " <<
-              protocol);
-}
-
-IOMessage::IOMessage(const void* data, const size_t data_size,
-                     const IOSocket& io_socket,
-                     const IOEndpoint& remote_endpoint) :
-    data_(data), data_size_(data_size), io_socket_(io_socket),
-    remote_endpoint_(remote_endpoint)
-{}
-
-RecursiveQuery::RecursiveQuery(IOService& io_service, const char& forward,
-                               uint16_t port) :
-    io_service_(io_service), port_(port)
-{
-    error_code err;
-    ns_addr_ = ip::address::from_string(&forward, err);
-    if (err) {
-        isc_throw(IOError, "Invalid IP address '" << &ns_addr_ << "': "
-                  << err.message());
-    }
-}
-
-void
-RecursiveQuery::sendQuery(const Question& question, OutputBufferPtr buffer,
-                          DNSServer* server)
-{
-
-    // XXX: eventually we will need to be able to determine whether
-    // the message should be sent via TCP or UDP, or sent initially via
-    // UDP and then fall back to TCP on failure, but for the moment
-    // we're only going to handle UDP.
-    asio::io_service& io = io_service_.get_io_service();
-    UDPQuery q(io, question, ns_addr_, port_, buffer, server);
-    io.post(q);
-}
-
 class IOServiceImpl {
 public:
     IOServiceImpl(const char& port,
@@ -245,6 +168,32 @@ IOService::stop() {
 asio::io_service&
 IOService::get_io_service() {
     return (impl_->io_service_);
+}
+
+RecursiveQuery::RecursiveQuery(IOService& io_service, const char& forward,
+                               uint16_t port) :
+    io_service_(io_service), port_(port)
+{
+    error_code err;
+    ns_addr_ = ip::address::from_string(&forward, err);
+    if (err) {
+        isc_throw(IOError, "Invalid IP address '" << &ns_addr_ << "': "
+                  << err.message());
+    }
+}
+
+void
+RecursiveQuery::sendQuery(const Question& question, OutputBufferPtr buffer,
+                          DNSServer* server)
+{
+
+    // XXX: eventually we will need to be able to determine whether
+    // the message should be sent via TCP or UDP, or sent initially via
+    // UDP and then fall back to TCP on failure, but for the moment
+    // we're only going to handle UDP.
+    asio::io_service& io = io_service_.get_io_service();
+    UDPQuery q(io, question, ns_addr_, port_, buffer, server);
+    io.post(q);
 }
 
 }
