@@ -24,10 +24,10 @@ int
 get_sock(const int type, struct sockaddr *bind_addr, const socklen_t addr_len)
 {
     int sock(socket(bind_addr->sa_family, type, 0));
-    if(sock == -1) {
+    if (sock == -1) {
         return -1;
     }
-    if(bind(sock, bind_addr, addr_len) == -1) {
+    if (bind(sock, bind_addr, addr_len) == -1) {
         return -2;
     }
     return sock;
@@ -49,10 +49,10 @@ bool
 write_data(const int fd, const char *buffer, const size_t length) {
     size_t rest(length);
     // Just keep writing until all is written
-    while(rest) {
+    while (rest) {
         ssize_t written(write(fd, buffer, rest));
-        if(rest == -1) {
-            if(errno == EINTR) { // Just keep going
+        if (rest == -1) {
+            if (errno == EINTR) { // Just keep going
                 continue;
             } else {
                 return false;
@@ -68,15 +68,15 @@ write_data(const int fd, const char *buffer, const size_t length) {
 ssize_t
 read_data(const int fd, char *buffer, const size_t length) {
     size_t rest(length), already(0);
-    while(rest) { // Stil something to read
+    while (rest) { // Stil something to read
         ssize_t amount(read(fd, buffer, rest));
-        if(rest == -1) {
-            if(errno == EINTR) { // Continue on interrupted call
+        if (rest == -1) {
+            if (errno == EINTR) { // Continue on interrupted call
                 continue;
             } else {
                 return -1;
             }
-        } else if(amount) {
+        } else if (amount) {
             already += amount;
             rest -= amount;
             buffer += amount;

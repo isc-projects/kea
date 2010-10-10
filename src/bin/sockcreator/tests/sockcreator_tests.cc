@@ -58,15 +58,15 @@ namespace {
             << socket << " and errno " << errno; \
         CHECK_SOCK(ADDR_TYPE, socket); \
         EXPECT_EQ(0, close(socket)); \
-    } while(0)
+    } while (0)
 
 // Just helper macros
-#define INADDR_SET(WHAT) do { WHAT.sin_addr.s_addr = INADDR_ANY; } while(0)
-#define IN6ADDR_SET(WHAT) do { WHAT.sin6_addr = in6addr_any; } while(0)
+#define INADDR_SET(WHAT) do { WHAT.sin_addr.s_addr = INADDR_ANY; } while (0)
+#define IN6ADDR_SET(WHAT) do { WHAT.sin6_addr = in6addr_any; } while (0)
 // If the get_sock returned something useful, listen must work
 #define TCP_CHECK(UNUSED, SOCKET) do { \
         EXPECT_EQ(0, listen(SOCKET, 1)); \
-    } while(0)
+    } while (0)
 // More complicated with UDP, so we send a packet to ourselfs and se if it
 // arrives
 #define UDP_CHECK(ADDR_TYPE, SOCKET) do { \
@@ -81,7 +81,7 @@ namespace {
         char buffer[5]; \
         ASSERT_EQ(5, recv(SOCKET, buffer, 5, 0)); \
         EXPECT_STREQ("test", buffer); \
-    } while(0)
+    } while (0)
 
 /*
  * Several tests to ensure we can create the sockets.
@@ -121,16 +121,16 @@ TEST(get_sock, fail_with_nonsense) {
 pid_t
 provide_input(int *read_pipe, const char *input, const size_t length) {
     int pipes[2];
-    if(pipe(pipes)) {
+    if (pipe(pipes)) {
         return -1;
     }
     *read_pipe = pipes[0];
     pid_t pid(fork());
-    if(pid) { // We are in the parent
+    if (pid) { // We are in the parent
         return pid;
     } else { // This is in the child, just puth the data there
         close(pipes[0]);
-        if(!write_data(pipes[1], input, length)) {
+        if (!write_data(pipes[1], input, length)) {
             exit(1);
         } else {
             close(pipes[1]);
@@ -146,18 +146,18 @@ provide_input(int *read_pipe, const char *input, const size_t length) {
 pid_t
 check_output(int *write_pipe, const char *output, const size_t length) {
     int pipes[2];
-    if(pipe(pipes)) {
+    if (pipe(pipes)) {
         return -1;
     }
     *write_pipe = pipes[1];
     pid_t pid(fork());
-    if(pid) { // We are in parent
+    if (pid) { // We are in parent
         return pid;
     } else {
         close(pipes[1]);
         char buffer[length + 1];
         // Try to read one byte more to see if the output ends here
-        if(read_data(pipes[0], buffer, length + 1) != length)
+        if (read_data(pipes[0], buffer, length + 1) != length)
             exit(1);
         // Normalize the return value - return 0 on equality, 1 on nonequality
         exit(!!memcmp(buffer, output, length));
@@ -177,8 +177,8 @@ process_ok(pid_t process) {
      * but we might have another tests to run.
      */
     alarm(3);
-    if(waitpid(process, &status, 0) == -1) {
-        if(errno == EINTR)
+    if (waitpid(process, &status, 0) == -1) {
+        if (errno == EINTR)
             kill(process, SIGTERM);
         return false;
     }
@@ -200,7 +200,7 @@ get_sock_dummy(const int type, struct sockaddr *addr, const socklen_t addr_len)
      * The familly is similar - third bit is known address family,
      * the fourth is the family.
      */
-    switch(type) {
+    switch (type) {
         case SOCK_STREAM:
             result += 1;
             break;
@@ -208,7 +208,7 @@ get_sock_dummy(const int type, struct sockaddr *addr, const socklen_t addr_len)
             result += 3;
             break;
     }
-    switch(addr->sa_family) {
+    switch (addr->sa_family) {
         case AF_INET:
             result += 4;
             port = static_cast<struct sockaddr_in *>(
@@ -225,11 +225,11 @@ get_sock_dummy(const int type, struct sockaddr *addr, const socklen_t addr_len)
      * The port of 0xbbbb means bind should fail and 0xcccc means
      * socket should fail.
      */
-    if(port != 0xffff) {
+    if (port != 0xffff) {
         errno = 0;
-        if(port == 0xbbbb) {
+        if (port == 0xbbbb) {
             return -2;
-        } else if(port == 0xcccc) {
+        } else if (port == 0xcccc) {
             return -1;
         } else {
             result += 16;
@@ -246,7 +246,7 @@ send_fd_dummy(const int destination, const int what)
      * the test anyway.
      */
     char fd_data(what);
-    if(!write_data(destination, &fd_data, 1))
+    if (!write_data(destination, &fd_data, 1))
         return -1;
 }
 
@@ -268,7 +268,7 @@ void run_test(const char *input_data, const size_t input_size,
     ASSERT_NE(-1, output) << "Couldn't start output checker";
     // Run the body
     int result(run(input_fd, output_fd, get_sock_dummy, send_fd_dummy));
-    if(should_succeed) {
+    if (should_succeed) {
         EXPECT_EQ(0, result);
     } else {
         EXPECT_NE(0, result);
