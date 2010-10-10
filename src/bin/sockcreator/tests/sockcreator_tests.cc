@@ -24,6 +24,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <cerrno>
+#include <cstdio>
 
 using namespace isc::socket_creator;
 
@@ -157,10 +158,28 @@ check_output(int *write_pipe, const char *output, const size_t length) {
         close(pipes[1]);
         char buffer[length + 1];
         // Try to read one byte more to see if the output ends here
-        if (read_data(pipes[0], buffer, length + 1) != length)
+        size_t got_length(read_data(pipes[0], buffer, length + 1));
+        bool ok(true);
+        if (got_length != length) {
+            fprintf(stderr, "Different length (expected %u, got %u)\n",
+                static_cast<unsigned>(length),
+                static_cast<unsigned>(got_length));
+            ok = false;
+        }
+        if(!ok || memcmp(buffer, output, length)) {
+            // If the differ, print what we have
+            for(size_t i(0); i != got_length; ++ i) {
+                fprintf(stderr, "%02hhx", buffer[i]);
+            }
+            fprintf(stderr, "\n");
+            for(size_t i(0); i != length; ++ i) {
+                fprintf(stderr, "%02hhx", output[i]);
+            }
+            fprintf(stderr, "\n");
             exit(1);
-        // Normalize the return value - return 0 on equality, 1 on nonequality
-        exit(!!memcmp(buffer, output, length));
+        } else {
+            exit(0);
+        }
     }
 }
 
@@ -268,6 +287,10 @@ void run_test(const char *input_data, const size_t input_size,
     ASSERT_NE(-1, output) << "Couldn't start output checker";
     // Run the body
     int result(run(input_fd, output_fd, get_sock_dummy, send_fd_dummy));
+    // Close the pipes
+    close(input_fd);
+    close(output_fd);
+    // Did it run well?
     if (should_succeed) {
         EXPECT_EQ(0, result);
     } else {
