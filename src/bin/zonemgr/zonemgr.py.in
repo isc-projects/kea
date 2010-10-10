@@ -103,8 +103,6 @@ class ZonemgrRefresh:
     def __init__(self, cc, db_file, slave_socket):
         self._cc = cc
         self._check_sock = slave_socket 
-        self._runnable = False
-        self._is_shut_down = threading.Event()
         self._read_sock, self._write_sock = socket.socketpair()
         self._db_file = db_file
         self._zonemgr_refresh_info = {} 
@@ -337,9 +335,8 @@ class ZonemgrRefresh:
         """Keep track of zone timers. The loop can be stopped by calling shutdown() in 
         another thread.
         """
-        self._runnable = True
-        self._is_shut_down.clear()
-        while self._runnable:
+        runnable = True
+        while runnable:
             # Zonemgr has no zone.
             if self._zone_mgr_is_empty():
                 time.sleep(LOWERBOUND_RETRY) # A better time?
@@ -370,18 +367,15 @@ class ZonemgrRefresh:
                 continue
             if self._read_sock in rlist: # awaken by shutdown socket 
                 self._read_sock.recv(32)
+                runnable = False
                 continue 
             if self._check_sock in rlist: # awaken by check socket
                 self._check_sock.recv(32)
 
-        self._is_shut_down.set()
-
     def shutdown(self):
         """Stop the run_timer() loop. Block until the loop has finished. This must be
         called when run_timer() is running in another thread, or it will deadlock."""
-        self._runnable = False
         self._write_sock.send(b'shutdown') # make self._read_sock readble
-        self._is_shut_down.wait()
 
 class Zonemgr:
     """Zone manager class."""
