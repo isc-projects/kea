@@ -81,6 +81,7 @@ int
  * - 1: Read error
  * - 2: Write error
  * - 3: Protocol error (unknown command, etc)
+ * - 4: Some internal inconsistency detected
  *
  * It terminates either if a command asks it to or when unrecoverable
  * error happens.
