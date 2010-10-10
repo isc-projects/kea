@@ -14,12 +14,16 @@
 
 #include "sockcreator.h"
 
+#include <util/io/fd.h>
+
 #include <unistd.h>
 #include <cerrno>
 #include <cstring>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+
+using namespace isc::util::io;
 
 namespace isc {
 namespace socket_creator {
@@ -38,8 +42,8 @@ get_sock(const int type, struct sockaddr *bind_addr, const socklen_t addr_len)
 }
 
 int
-send_fd(const int destination, const int payload) {
-    // TODO Steal
+send_fd(const int, const int) {
+    return 0;
 }
 
 int
@@ -54,7 +58,6 @@ run(const int input_fd, const int output_fd, const get_sock_t get_sock,
         } \
     } while (0)
 #define WRITE(WHAT, HOW_MANY) do { \
-        size_t how_many = (HOW_MANY); \
         if (!write_data(output_fd, (WHAT), (HOW_MANY))) { \
             return 2; \
         } \
@@ -121,6 +124,7 @@ run(const int input_fd, const int output_fd, const get_sock_t get_sock,
                 int result(get_sock(sock_type, addr, addr_len));
                 if (result >= 0) { // We got the socket
                     WRITE("S", 1);
+                    // FIXME: Check the output and write a test for it
                     send_fd(output_fd, result);
                 } else {
                     WRITE("E", 1);
@@ -143,48 +147,6 @@ run(const int input_fd, const int output_fd, const get_sock_t get_sock,
             DEFAULT
         }
     }
-}
-
-bool
-write_data(const int fd, const char *buffer, const size_t length) {
-    size_t rest(length);
-    // Just keep writing until all is written
-    while (rest) {
-        ssize_t written(write(fd, buffer, rest));
-        if (rest == -1) {
-            if (errno == EINTR) { // Just keep going
-                continue;
-            } else {
-                return false;
-            }
-        } else { // Wrote something
-            rest -= written;
-            buffer += written;
-        }
-    }
-    return true;
-}
-
-ssize_t
-read_data(const int fd, char *buffer, const size_t length) {
-    size_t rest(length), already(0);
-    while (rest) { // Stil something to read
-        ssize_t amount(read(fd, buffer, rest));
-        if (rest == -1) {
-            if (errno == EINTR) { // Continue on interrupted call
-                continue;
-            } else {
-                return -1;
-            }
-        } else if (amount) {
-            already += amount;
-            rest -= amount;
-            buffer += amount;
-        } else { // EOF
-            return already;
-        }
-    }
-    return already;
 }
 
 } // End of the namespaces
