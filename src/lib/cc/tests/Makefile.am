@@ -1,13 +1,14 @@
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
+AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 if USE_GXX			#XXX: see ../Makefile.am
 AM_CXXFLAGS += -Wno-unused-parameter
 endif
-#for clang++
-AM_CXXFLAGS += -Wno-unused-function
-AM_CXXFLAGS += -Wno-char-subscripts
+if USE_CLANGPP
+AM_CXXFLAGS += -Wno-error
+endif
 
 if USE_STATIC_LINK
 AM_LDFLAGS = -static

@@ -1,11 +1,12 @@
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
+AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 AM_CXXFLAGS = $(B10_CXXFLAGS) -Wno-strict-aliasing
 AM_CXXFLAGS += -Wno-unused-parameter # see src/lib/cc/Makefile.am
-#for clang++
-AM_CXXFLAGS += -Wno-unused-function
-AM_CXXFLAGS += -Wno-char-subscripts
+if USE_CLANGPP
+AM_CXXFLAGS += -Wno-error
+endif
 
 CLEANFILES = *.gcno *.gcda
 
