@@ -77,6 +77,11 @@ int
  * file descriptor, creates sockets and writes the results (socket or
  * error) to output_fd.
  *
+ * Current errors are:
+ * - 1: Read error
+ * - 2: Write error
+ * - 3: Protocol error (unknown command, etc)
+ *
  * It terminates either if a command asks it to or when unrecoverable
  * error happens.
  *
