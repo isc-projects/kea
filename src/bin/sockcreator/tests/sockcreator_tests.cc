@@ -14,19 +14,20 @@
 
 #include "../sockcreator.h"
 
+#include <util/unittests/fork.h>
+#include <util/io/fd.h>
+
 #include <gtest/gtest.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/wait.h>
-#include <signal.h>
 #include <netinet/in.h>
 #include <unistd.h>
 #include <cstring>
-#include <cstdlib>
 #include <cerrno>
-#include <cstdio>
 
 using namespace isc::socket_creator;
+using namespace isc::util::unittests;
+using namespace isc::util::io;
 
 namespace {
 
@@ -116,102 +117,13 @@ TEST(get_sock, fail_with_nonsense) {
 }
 
 /*
- * This creates a pipe, forks and feeds the pipe with given data.
- * Used to provide the input in non-blocking/asynchronous way.
- */
-pid_t
-provide_input(int *read_pipe, const char *input, const size_t length) {
-    int pipes[2];
-    if (pipe(pipes)) {
-        return -1;
-    }
-    *read_pipe = pipes[0];
-    pid_t pid(fork());
-    if (pid) { // We are in the parent
-        return pid;
-    } else { // This is in the child, just puth the data there
-        close(pipes[0]);
-        if (!write_data(pipes[1], input, length)) {
-            exit(1);
-        } else {
-            close(pipes[1]);
-            exit(0);
-        }
-    }
-}
-
-/*
- * This creates a pipe, forks and reads the pipe and compares it
- * with given data. Used to check output of run in asynchronous way.
- */
-pid_t
-check_output(int *write_pipe, const char *output, const size_t length) {
-    int pipes[2];
-    if (pipe(pipes)) {
-        return -1;
-    }
-    *write_pipe = pipes[1];
-    pid_t pid(fork());
-    if (pid) { // We are in parent
-        return pid;
-    } else {
-        close(pipes[1]);
-        char buffer[length + 1];
-        // Try to read one byte more to see if the output ends here
-        size_t got_length(read_data(pipes[0], buffer, length + 1));
-        bool ok(true);
-        if (got_length != length) {
-            fprintf(stderr, "Different length (expected %u, got %u)\n",
-                static_cast<unsigned>(length),
-                static_cast<unsigned>(got_length));
-            ok = false;
-        }
-        if(!ok || memcmp(buffer, output, length)) {
-            // If the differ, print what we have
-            for(size_t i(0); i != got_length; ++ i) {
-                fprintf(stderr, "%02hhx", buffer[i]);
-            }
-            fprintf(stderr, "\n");
-            for(size_t i(0); i != length; ++ i) {
-                fprintf(stderr, "%02hhx", output[i]);
-            }
-            fprintf(stderr, "\n");
-            exit(1);
-        } else {
-            exit(0);
-        }
-    }
-}
-
-/*
- * Waits for pid to terminate and checks it terminates successfully (with 0).
- */
-bool
-process_ok(pid_t process) {
-    int status;
-    // Make sure it does terminate when the output is shorter than expected
-    /*
-     * FIXME: if the timeout is reached, this kill the whole test, not just
-     * the waitpid call. Should have signal handler. This is no show-stopper,
-     * but we might have another tests to run.
-     */
-    alarm(3);
-    if (waitpid(process, &status, 0) == -1) {
-        if (errno == EINTR)
-            kill(process, SIGTERM);
-        return false;
-    }
-    return WIFEXITED(status) && WEXITSTATUS(status) == 0;
-}
-
-/*
  * Helper functions to pass to run during testing.
  */
 int
-get_sock_dummy(const int type, struct sockaddr *addr, const socklen_t addr_len)
+get_sock_dummy(const int type, struct sockaddr *addr, const socklen_t)
 {
     int result(0);
-    int port;
+    int port(0);
     /*
      * We encode the type and address family into the int and return it.
      * Lets ignore the port and address for now
@@ -265,8 +177,11 @@ send_fd_dummy(const int destination, const int what)
      * the test anyway.
      */
     char fd_data(what);
-    if (!write_data(destination, &fd_data, 1))
+    if (!write_data(destination, &fd_data, 1)) {
         return -1;
+    } else {
+        return 0;
+    }
 }
 
 /*
@@ -280,7 +195,7 @@ void run_test(const char *input_data, const size_t input_size,
     bool should_succeed = true)
 {
     // Prepare the input feeder and output checker processes
-    int input_fd, output_fd;
+    int input_fd(0), output_fd(0);
     pid_t input(provide_input(&input_fd, input_data, input_size)),
         output(check_output(&output_fd, output_data, output_size));
     ASSERT_NE(-1, input) << "Couldn't start input feeder";

@@ -102,38 +102,6 @@ run(const int input_fd, const int output_fd,
     const get_sock_t get_sock_fun = get_sock,
     const send_fd_t send_fd_fun = send_fd);
 
-/*
- * \short write() that writes everything.
- * Wrapper around write(). The difference is, it never writes less data
- * and looks successfull (eg. it blocks until all data are written).
- * Retries on signals.
- *
- * \return True if sucessfull, false otherwise. The errno variable is left
- *     intact.
- * \param fd Where to write.
- * \param data The buffer to write.
- * \param length How much data is there to write.
- *
- * TODO: Shouldn't this be in some kind of library?
- */
-bool
-write_data(const int fd, const char *data, const size_t length);
-
-/*
- * \short read() that reads everything.
- * Wrapper around read(). It does not do short reads, if it returns less,
- * it means there was EOF. It retries on signals.
- *
- * \return Number of bytes read or -1 on error.
- * \param fd Where to read data from.
- * \param data Where to put the data.
- * \param length How many of them.
- *
- * TODO: Shouldn't this be in some kind of library?
- */
-ssize_t
-read_data(const int fd, char *buffer, const size_t length);
-
 } // End of the namespaces
 }
 
