@@ -369,9 +369,10 @@ class ZonemgrRefresh:
             if not rlist: # timer timeout 
                 continue
             if self._read_sock in rlist: # awaken by shutdown socket 
+                self._read_sock.recv(32)
                 continue 
             if self._check_sock in rlist: # awaken by check socket
-                self._check_sock.recv(5)
+                self._check_sock.recv(32)
 
         self._is_shut_down.set()
 
@@ -389,7 +390,7 @@ class Zonemgr:
         self._db_file = self.get_db_file()
         # Create socket pair for communicating between main thread and zonemgr timer thread 
         self._master_socket, self._slave_socket = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
-        self._zone_refresh= ZonemgrRefresh(self._cc, self._db_file, self._slave_socket)
+        self._zone_refresh = ZonemgrRefresh(self._cc, self._db_file, self._slave_socket)
         self._start_zone_refresh_timer()
 
         self._lock = threading.Lock()
