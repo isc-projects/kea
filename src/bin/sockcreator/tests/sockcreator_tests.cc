@@ -109,7 +109,9 @@ TEST(get_sock, tcp6_create) {
  * is able to report error.
  */
 TEST(get_sock, fail_with_nonsense) {
-    ASSERT_LT(get_sock(0, NULL, 0), 0);
+    struct sockaddr addr;
+    memset(&addr, 0, sizeof addr);
+    ASSERT_LT(get_sock(0, &addr, sizeof addr), 0);
 }
 
 /*

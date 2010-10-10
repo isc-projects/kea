@@ -23,7 +23,14 @@ namespace socket_creator {
 int
 get_sock(const int type, struct sockaddr *bind_addr, const socklen_t addr_len)
 {
-    // TODO Implement
+    int sock(socket(bind_addr->sa_family, type, 0));
+    if(sock == -1) {
+        return -1;
+    }
+    if(bind(sock, bind_addr, addr_len) == -1) {
+        return -2;
+    }
+    return sock;
 }
 
 int
