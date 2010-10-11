@@ -52,10 +52,29 @@ public:
     {}
         
     ~UDPEndpoint() { delete asio_endpoint_placeholder_; }
-    virtual IOAddress getAddress() const;
-    virtual uint16_t getPort() const;
-    virtual short getProtocol() const;
-    virtual short getFamily() const;
+
+    inline IOAddress getAddress() const {
+        return (asio_endpoint_.address());
+    }
+
+    inline uint16_t getPort() const {
+        return (asio_endpoint_.port());
+    }
+
+    inline short getProtocol() const {
+        return (asio_endpoint_.protocol().protocol());
+    }
+
+    inline short getFamily() const {
+        return (asio_endpoint_.protocol().family());
+    }
+
+    // This is not part of the exosed IOEndpoint API but allows
+    // direct access to the ASIO implementation of the endpoint
+    inline const asio::ip::udp::endpoint& getASIOEndpoint() const {
+        return (asio_endpoint_);
+    }
+
 private:
     const asio::ip::udp::endpoint* asio_endpoint_placeholder_;
     const asio::ip::udp::endpoint& asio_endpoint_;
@@ -67,8 +86,10 @@ private:
     UDPSocket& operator=(const UDPSocket& source);
 public:
     UDPSocket(asio::ip::udp::socket& socket) : socket_(socket) {}
-    virtual int getNative() const;
-    virtual int getProtocol() const;
+
+    virtual int getNative() const { return (socket_.native()); }
+    virtual int getProtocol() const { return (IPPROTO_UDP); }
+
 private:
     asio::ip::udp::socket& socket_;
 };
@@ -161,8 +182,7 @@ class UDPQuery : public coroutine {
 public:
     explicit UDPQuery(asio::io_service& io_service,
                       const isc::dns::Question& q,
-                      const asio::ip::address& addr,
-                      uint16_t port,
+                      const IOAddress& addr, uint16_t port,
                       isc::dns::OutputBufferPtr buffer,
                       DNSServer* server);
     void operator()(asio::error_code ec = asio::error_code(),

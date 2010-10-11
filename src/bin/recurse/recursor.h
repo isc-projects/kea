@@ -24,16 +24,6 @@
 
 #include <asiolink/asiolink.h>
 
-namespace isc {
-namespace dns {
-class InputBuffer;
-}
-}
-
-namespace asiolink {
-class IOMessage;
-}
-
 class RecursorImpl;
 
 class Recursor {
@@ -56,30 +46,38 @@ public:
     Recursor(const char& forward);
     ~Recursor();
     //@}
-    /// \return \c true if the \message contains a response to be returned;
-    /// otherwise \c false.
+
+    /// \brief Process an incoming DNS message, then signal 'server' to resume 
     void processMessage(const asiolink::IOMessage& io_message,
                         isc::dns::MessagePtr message,
                         isc::dns::OutputBufferPtr buffer,
                         asiolink::DNSServer* server);
+
+    // \brief Set and get verbose mode
     void setVerbose(bool on);
     bool getVerbose() const;
-    isc::data::ConstElementPtr updateConfig(isc::data::ConstElementPtr config);
-    isc::config::ModuleCCSession* configSession() const;
+
+    /// \brief Set and get the config session
+    isc::config::ModuleCCSession* getConfigSession() const;
     void setConfigSession(isc::config::ModuleCCSession* config_session);
 
+    /// \brief Handle commands from the config session
+    isc::data::ConstElementPtr updateConfig(isc::data::ConstElementPtr config);
+
+    /// \brief Assign an ASIO IO Service queue to this Recursor object
     void setIOService(asiolink::IOService& ios);
+
+    /// \brief Return this object's ASIO IO Service queue
     asiolink::IOService& getIOService() const { return (*io_); }
 
-    asiolink::DNSLookup* getDNSLookupProvider() {
-        return (dns_lookup_);
-    }
-    asiolink::DNSAnswer* getDNSAnswerProvider() {
-        return (dns_answer_);
-    }
-    asiolink::SimpleCallback* getCheckinProvider() {
-        return (checkin_);
-    }
+    /// \brief Return pointer to the DNS Lookup callback function
+    asiolink::DNSLookup* getDNSLookupProvider() { return (dns_lookup_); }
+
+    /// \brief Return pointer to the DNS Answer callback function
+    asiolink::DNSAnswer* getDNSAnswerProvider() { return (dns_answer_); }
+
+    /// \brief Return pointer to the Checkin callback function
+    asiolink::SimpleCallback* getCheckinProvider() { return (checkin_); }
 
 private:
     RecursorImpl* impl_;

@@ -56,13 +56,13 @@ using namespace asiolink;
 
 namespace {
 
-bool verbose_mode = false;
+static bool verbose_mode = false;
 
-const string PROGRAM = "Recurse";
-const char* DNSPORT = "5300";
+static const string PROGRAM = "Recurse";
+static const char* DNSPORT = "5300";
 
-IOService* io_service;
-Recursor *recursor;
+static IOService* io_service;
+static Recursor *recursor;
 
 ConstElementPtr
 my_config_handler(ConstElementPtr new_config) {
@@ -86,8 +86,16 @@ my_command_handler(const string& command, ConstElementPtr args) {
 
 void
 usage() {
-    cerr << "Usage: b10-recurse -f nameserver [-a address] [-p port] "
-            "[-4|-6] [-nv]" << endl;
+    cerr << "Usage:  b10-recurse -f nameserver [-a address] [-p port] "
+                     "[-4|-6] [-v]" << endl;
+    cerr << "\t-f: specify the nameserver to which queries should be forwarded"
+         << endl;
+    cerr << "\t-a: specify the address to listen on (default: all)" << endl;
+    cerr << "\t-p: specify the port to listen on (default: 5300)" << endl;
+    cerr << "\t-4: listen on all IPv4 addresses (incompatible with -a)" << endl;
+    cerr << "\t-4: listen on all IPv6 addresses (incompatible with -a)" << endl;
+    cerr << "\t-u: change process UID to the specified user" << endl;
+    cerr << "\t-v: verbose output" << endl;
     exit(1);
 }
 } // end of anonymous namespace
@@ -99,9 +107,9 @@ main(int argc, char* argv[]) {
     const char* address = NULL;
     const char* forward = NULL;
     const char* uid = NULL;
-    bool use_ipv4 = true, use_ipv6 = true, cache = true;
+    bool use_ipv4 = true, use_ipv6 = true;
 
-    while ((ch = getopt(argc, argv, "46a:f:np:u:v")) != -1) {
+    while ((ch = getopt(argc, argv, "46a:f:p:u:v")) != -1) {
         switch (ch) {
         case '4':
             // Note that -4 means "ipv4 only", we need to set "use_ipv6" here,
@@ -113,9 +121,6 @@ main(int argc, char* argv[]) {
         case '6':
             // The same note as -4 applies.
             use_ipv4 = false;
-            break;
-        case 'n':
-            cache = false;
             break;
         case 'a':
             address = optarg;
@@ -143,12 +148,14 @@ main(int argc, char* argv[]) {
     }
 
     if (!use_ipv4 && !use_ipv6) {
-        cerr << "[b10-recurse] Error: -4 and -6 can't coexist" << endl;
+        cerr << "[b10-auth] Error: Cannot specify both -4 and -6 "
+             << "at the same time" << endl;
         usage();
     }
 
     if ((!use_ipv4 || !use_ipv6) && address != NULL) {
-        cerr << "[b10-recurse] Error: -4|-6 and -a can't coexist" << endl;
+        cerr << "[b10-auth] Error: Cannot specify -4 or -6 "
+             << "at the same time as -a" << endl;
         usage();
     }
 
@@ -172,7 +179,7 @@ main(int argc, char* argv[]) {
         }
 
         recursor = new Recursor(*forward);
-        recursor ->setVerbose(verbose_mode);
+        recursor->setVerbose(verbose_mode);
         cout << "[b10-recurse] Server created." << endl;
 
         SimpleCallback* checkin = recursor->getCheckinProvider();

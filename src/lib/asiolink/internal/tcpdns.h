@@ -54,10 +54,29 @@ public:
     {}
         
     ~TCPEndpoint() { delete asio_endpoint_placeholder_; }
-    virtual IOAddress getAddress() const;
-    virtual uint16_t getPort() const;
-    virtual short getProtocol() const;
-    virtual short getFamily() const;
+
+    inline IOAddress getAddress() const {
+        return (asio_endpoint_.address());
+    }
+
+    inline uint16_t getPort() const {
+        return (asio_endpoint_.port());
+    }
+
+    inline short getProtocol() const {
+        return (asio_endpoint_.protocol().protocol());
+    }
+
+    inline short getFamily() const {
+        return (asio_endpoint_.protocol().family());
+    }
+
+    // This is not part of the exosed IOEndpoint API but allows
+    // direct access to the ASIO implementation of the endpoint
+    inline const asio::ip::tcp::endpoint& getASIOEndpoint() const {
+        return (asio_endpoint_);
+    }
+
 private:
     const asio::ip::tcp::endpoint* asio_endpoint_placeholder_;
     const asio::ip::tcp::endpoint& asio_endpoint_;
@@ -70,8 +89,10 @@ private:
     TCPSocket& operator=(const TCPSocket& source);
 public:
     TCPSocket(asio::ip::tcp::socket& socket) : socket_(socket) {}
-    virtual int getNative() const;
-    virtual int getProtocol() const;
+
+    inline int getNative() const { return (socket_.native()); }
+    inline int getProtocol() const { return (IPPROTO_TCP); }
+
 private:
     asio::ip::tcp::socket& socket_;
 };

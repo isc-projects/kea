@@ -457,19 +457,4 @@ TEST_F(RecursorTest, notifyFail) {
                 Opcode::NOTIFY().getCode(), QR_FLAG, 0, 0, 0, 0);
 }
 
-
-void
-updateConfig(Recursor* server, const char* const dbfile,
-             const bool expect_success)
-{
-    ConstElementPtr config_answer =
-        server->updateConfig(Element::fromJSON(dbfile));
-    EXPECT_EQ(Element::map, config_answer->getType());
-    EXPECT_TRUE(config_answer->contains("result"));
-
-    ConstElementPtr result = config_answer->get("result");
-    EXPECT_EQ(Element::list, result->getType());
-    EXPECT_EQ(expect_success ? 0 : 1, result->get(0)->intValue());
-}
-
 }

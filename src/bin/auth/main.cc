@@ -55,17 +55,17 @@ using namespace asiolink;
 
 namespace {
 
-bool verbose_mode = false;
+static bool verbose_mode = false;
 
-const string PROGRAM = "Auth";
-const char* DNSPORT = "5300";
+static const string PROGRAM = "Auth";
+static const char* DNSPORT = "5300";
 
 /* need global var for config/command handlers.
  * todo: turn this around, and put handlers in the authserver
  * class itself? */
-AuthSrv *auth_server;
+static AuthSrv *auth_server;
 
-IOService* io_service;
+static IOService* io_service;
 
 ConstElementPtr
 my_config_handler(ConstElementPtr new_config) {
@@ -89,7 +89,14 @@ my_command_handler(const string& command, ConstElementPtr args) {
 
 void
 usage() {
-    cerr << "Usage: b10-auth [-a address] [-p port] [-4|-6] [-nv]" << endl;
+    cerr << "Usage:  b10-auth [-a address] [-p port] [-4|-6] [-nv]" << endl;
+    cerr << "\t-a: specify the address to listen on (default: all) " << endl;
+    cerr << "\t-p: specify the port to listen on (default: 5300)" << endl;
+    cerr << "\t-4: listen on all IPv4 addresses (incompatible with -a)" << endl;
+    cerr << "\t-4: listen on all IPv6 addresses (incompatible with -a)" << endl;
+    cerr << "\t-n: do not cache answers in memory" << endl;
+    cerr << "\t-u: change process UID to the specified user" << endl;
+    cerr << "\t-v: verbose output" << endl;
     exit(1);
 }
 } // end of anonymous namespace
@@ -141,12 +148,14 @@ main(int argc, char* argv[]) {
     }
 
     if (!use_ipv4 && !use_ipv6) {
-        cerr << "[b10-auth] Error: -4 and -6 can't coexist" << endl;
+        cerr << "[b10-auth] Error: Cannot specify both -4 and -6 "
+             << "at the same time" << endl;
         usage();
     }
 
     if ((!use_ipv4 || !use_ipv6) && address != NULL) {
-        cerr << "[b10-auth] Error: -4|-6 and -a can't coexist" << endl;
+        cerr << "[b10-auth] Error: Cannot specify -4 or -6 "
+             << "at the same time as -a" << endl;
         usage();
     }
 

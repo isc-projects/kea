@@ -174,8 +174,8 @@ class ConfigChecker : public SimpleCallback {
 public:
     ConfigChecker(AuthSrv* srv) : server_(srv) {}
     virtual void operator()(const IOMessage& io_message UNUSED_PARAM) const {
-        if (server_->configSession()->hasQueuedMsgs()) {
-            server_->configSession()->checkCommand();
+        if (server_->getConfigSession()->hasQueuedMsgs()) {
+            server_->getConfigSession()->checkCommand();
         }
     }
 private:
@@ -270,7 +270,7 @@ AuthSrv::setConfigSession(ModuleCCSession* config_session) {
 }
 
 ModuleCCSession*
-AuthSrv::configSession() const {
+AuthSrv::getConfigSession() const {
     return (impl_->config_session_);
 }
 

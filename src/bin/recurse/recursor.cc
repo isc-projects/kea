@@ -85,6 +85,7 @@ public:
     void processNormalQuery(const Question& question, MessagePtr message,
                             OutputBufferPtr buffer,
                             DNSServer* server);
+
     ModuleCCSession* config_session_;
 
     bool verbose_mode_;
@@ -271,8 +272,8 @@ class ConfigCheck : public SimpleCallback {
 public:
     ConfigCheck(Recursor* srv) : server_(srv) {}
     virtual void operator()(const IOMessage& io_message UNUSED_PARAM) const {
-        if (server_->configSession()->hasQueuedMsgs()) {
-            server_->configSession()->checkCommand();
+        if (server_->getConfigSession()->hasQueuedMsgs()) {
+            server_->getConfigSession()->checkCommand();
         }
     }
 private:
@@ -316,7 +317,7 @@ Recursor::setConfigSession(ModuleCCSession* config_session) {
 }
 
 ModuleCCSession*
-Recursor::configSession() const {
+Recursor::getConfigSession() const {
     return (impl_->config_session_);
 }
 
