@@ -1,1 +1,1 @@
-SUBDIRS = exceptions dns cc config datasrc python xfr bench util
+SUBDIRS = exceptions dns cc config datasrc bench util xfr python

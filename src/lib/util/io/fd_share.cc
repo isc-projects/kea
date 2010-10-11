@@ -21,10 +21,11 @@
 #include <sys/socket.h>
 #include <sys/uio.h>
 #include <stdlib.h>             // for malloc and free
-#include <xfr/fd_share.h>
+#include "fd_share.h"
 
 namespace isc {
-namespace xfr {
+namespace util {
+namespace io {
 
 namespace {
 // Not all OSes support advanced CMSG macros: CMSG_LEN and CMSG_SPACE.
@@ -135,5 +136,6 @@ send_fd(const int sock, const int fd) {
     return (ret >= 0 ? 0 : -1);
 }
 
-} // End for namespace xfr
+} // End for namespace io
+} // End for namespace util
 } // End for namespace isc

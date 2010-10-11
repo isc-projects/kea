@@ -22,10 +22,11 @@
 #include <unistd.h>
 #include <asio.hpp>
 
-#include <xfr/fd_share.h>
+#include <util/io/fd_share.h>
 #include <xfr/xfrout_client.h>
 
 using namespace std;
+using namespace isc::util::io;
 using asio::local::stream_protocol;
 
 namespace isc {
