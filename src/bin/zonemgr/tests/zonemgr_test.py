@@ -57,6 +57,16 @@ class MyZonemgrRefresh(ZonemgrRefresh):
          'zone_soa_rdata': 'a.dns.cn. root.cnnic.cn. 2009073112 7200 3600 2419200 21600', 
          'zone_state': 0}
         } 
+
+    def stop_timer(self):
+        ''' Exit timer thread '''
+        self.shutdown()
+        main_thread = threading.currentThread()
+        for th in threading.enumerate():
+            if th is main_thread:
+                continue
+            th.join()
+
         
 class TestZonemgrRefresh(unittest.TestCase):
     def setUp(self):
@@ -397,12 +407,7 @@ class TestZonemgrRefresh(unittest.TestCase):
         # Sleep 1 sec to ensure that the timer thread has enough time to run.
         time.sleep(1)
         # Shut down the timer thread
-        self.zone_refresh.shutdown()
-        main_thread = threading.currentThread()
-        for th in threading.enumerate():
-            if th is main_thread:
-                continue
-            th.join()
+        self.zone_refresh.stop_timer()
         # After running timer, the zone's state should become "refreshing".
         zone_state = self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_state"]
         self.assertTrue("refresh_timeout" in self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN].keys())
@@ -414,12 +419,7 @@ class TestZonemgrRefresh(unittest.TestCase):
         listener.start()
         self.assertTrue(listener.is_alive())
         # Shut down the timer thread
-        self.zone_refresh.shutdown()
-        main_thread = threading.currentThread()
-        for th in threading.enumerate():
-            if th is main_thread:
-                continue
-            th.join()
+        self.zone_refresh.stop_timer()
         self.assertFalse(listener.is_alive())
 
     def tearDown(self):
