@@ -335,8 +335,7 @@ class ZonemgrRefresh:
         """Keep track of zone timers. The loop can be stopped by calling shutdown() in 
         another thread.
         """
-        runnable = True
-        while runnable:
+        while True:
             # Zonemgr has no zone.
             if self._zone_mgr_is_empty():
                 time.sleep(LOWERBOUND_RETRY) # A better time?
@@ -367,8 +366,7 @@ class ZonemgrRefresh:
                 continue
             if self._read_sock in rlist: # awaken by shutdown socket 
                 self._read_sock.recv(32)
-                runnable = False
-                continue 
+                return
             if self._check_sock in rlist: # awaken by check socket
                 self._check_sock.recv(32)
 
