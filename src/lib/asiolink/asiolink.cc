@@ -172,15 +172,8 @@ IOService::get_io_service() {
 
 RecursiveQuery::RecursiveQuery(IOService& io_service, const char& forward,
                                uint16_t port) :
-    io_service_(io_service), port_(port)
-{
-    error_code err;
-    ns_addr_ = ip::address::from_string(&forward, err);
-    if (err) {
-        isc_throw(IOError, "Invalid IP address '" << &ns_addr_ << "': "
-                  << err.message());
-    }
-}
+    io_service_(io_service), ns_addr_(&forward), port_(port) 
+{}
 
 void
 RecursiveQuery::sendQuery(const Question& question, OutputBufferPtr buffer,

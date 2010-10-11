@@ -42,46 +42,6 @@ using namespace std;
 using namespace isc::dns;
 
 namespace asiolink {
-/// The following functions provide UDP-specific concrete implementations
-/// of the \c IOEndpoint and \c IOSocket classes.
-///
-/// \brief Returns the address of an endpoint
-IOAddress
-UDPEndpoint::getAddress() const {
-    return (asio_endpoint_.address());
-}
-
-/// \brief Returns the port of an endpoint
-uint16_t
-UDPEndpoint::getPort() const {
-    return (asio_endpoint_.port());
-}
-
-/// \brief Returns the protocol number of an endpoint.
-short
-UDPEndpoint::getProtocol() const {
-    return (asio_endpoint_.protocol().protocol());
-}
-
-/// \brief Returns the address family of an endpoint.
-short
-UDPEndpoint::getFamily() const {
-    return (asio_endpoint_.protocol().family());
-}
-
-/// \brief Returns the native socket descriptor for a socket.
-int
-UDPSocket::getNative() const {
-    return (socket_.native());
-}
-
-/// \brief Returns the protocol number for a socket (since this 
-/// is the UDP-specific implementation, that is always IPPROTO_UDP).
-int
-UDPSocket::getProtocol() const {
-    return (IPPROTO_UDP);
-}
-
 /// The following functions implement the \c UDPServer class.
 ///
 /// The constructor
@@ -215,14 +175,14 @@ UDPServer::resume(const bool done) {
 ///
 /// The constructor
 UDPQuery::UDPQuery(io_service& io_service,
-                   const Question& q, const ip::address& addr, uint16_t port,
+                   const Question& q, const IOAddress& addr, uint16_t port,
                    OutputBufferPtr buffer, DNSServer* server) :
     question_(q), buffer_(buffer), server_(server->clone())
 {
-    udp proto = addr.is_v4() ? udp::v4() : udp::v6();
+    udp proto = (addr.getFamily() == AF_INET) ? udp::v4() : udp::v6();
     socket_.reset(new udp::socket(io_service, proto));
     msgbuf_.reset(new OutputBuffer(512));
-    remote_ = udp::endpoint(addr, port);
+    remote_ = UDPEndpoint(addr, port).getASIOEndpoint();
 }
 
 /// The function operator is implemented with the "stackless coroutine"
@@ -260,7 +220,7 @@ UDPQuery::operator()(error_code ec, size_t length) {
         /// optimized by maintaining a free list of pre-allocated blocks)
         data_.reset(new char[MAX_LENGTH]);
 
-        /// Begin an asynchronous receive, and yield.  When the send
+        /// Begin an asynchronous receive, and yield.  When the receive
         /// completes, we will resume immediately after this point.
         CORO_YIELD socket_->async_receive_from(buffer(data_.get(), MAX_LENGTH),
                                                remote_, *this);

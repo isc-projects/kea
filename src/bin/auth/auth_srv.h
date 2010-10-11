@@ -30,10 +30,6 @@ class AbstractXfroutClient;
 }
 }
 
-namespace asiolink {
-class IOMessage;
-}
-
 class AuthSrvImpl;
 
 class AuthSrv {
@@ -58,30 +54,37 @@ public:
             isc::xfr::AbstractXfroutClient& xfrout_client);
     ~AuthSrv();
     //@}
-    /// \return \c true if the \message contains a response to be returned;
-    /// otherwise \c false.
+
+    /// \brief Process an incoming DNS message, then signal 'server' to resume 
     void processMessage(const asiolink::IOMessage& io_message,
                         isc::dns::MessagePtr message,
                         isc::dns::OutputBufferPtr buffer,
                         asiolink::DNSServer* server);
+    // \brief Set and get verbose mode
     void setVerbose(bool on);
     bool getVerbose() const;
-    isc::data::ConstElementPtr updateConfig(isc::data::ConstElementPtr config);
-    isc::config::ModuleCCSession* configSession() const;
-    void setConfigSession(isc::config::ModuleCCSession* config_session);
 
+    /// \brief Set and get the config session
+    void setConfigSession(isc::config::ModuleCCSession* config_session);
+    isc::config::ModuleCCSession* getConfigSession() const;
+
+    /// \brief Handle commands from the config session
+    isc::data::ConstElementPtr updateConfig(isc::data::ConstElementPtr config);
+
+    /// \brief Assign an ASIO IO Service queue to this Recursor object
     void setIOService(asiolink::IOService& ios) { io_service_ = &ios; }
+
+    /// \brief Return this object's ASIO IO Service queue
     asiolink::IOService& getIOService() const { return (*io_service_); }
 
-    asiolink::DNSLookup* getDNSLookupProvider() const {
-        return (dns_lookup_);
-    }
-    asiolink::DNSAnswer* getDNSAnswerProvider() const {
-        return (dns_answer_);
-    }
-    asiolink::SimpleCallback* getCheckinProvider() const {
-        return (checkin_);
-    }
+    /// \brief Return pointer to the DNS Lookup callback function
+    asiolink::DNSLookup* getDNSLookupProvider() const { return (dns_lookup_); }
+
+    /// \brief Return pointer to the DNS Answer callback function
+    asiolink::DNSAnswer* getDNSAnswerProvider() const { return (dns_answer_); }
+
+    /// \brief Return pointer to the Checkin callback function
+    asiolink::SimpleCallback* getCheckinProvider() const { return (checkin_); }
 
     ///
     /// Note: this interface is tentative.  We'll revisit the ASIO and session

@@ -67,14 +67,17 @@ used by a DNS Server to communicate with the module that called it.
 They are abstract-only classes whose concrete implementations
 are supplied by the calling module.
 
-Note that the DNSLookup callback runs asynchronously.  A concrete
-implementation must be sure to call the server's "resume" method when
+The DNSLookup callback always runs asynchronously.  Concrete
+implementations must be sure to call the server's "resume" method when
 it is finished.
 
 In an authoritative server, the DNSLookup implementation would examine
-the query, look up the answer, then call "resume".  In a recursive server,
-it would initiate a DNSQuery, which in turn would be responsible for
-calling the server's "resume" method.
+the query, look up the answer, then call "resume".  (See the diagram
+in doc/auth_process.jpg.)
+
+In a recursive server, the DNSLookup impelemtation would initiate a
+DNSQuery, which in turn would be responsible for calling the server's
+"resume" method.  (See the diagram in doc/recursive_process.jpg.)
 
 A DNSQuery object is intended to handle resolution of a query over
 the network when the local authoritative data sources or cache are not

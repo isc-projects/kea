@@ -41,46 +41,6 @@ using namespace std;
 using namespace isc::dns;
 
 namespace asiolink {
-/// The following functions provide TCP-specific concrete implementations
-/// of the \c IOEndpoint and \c IOSocket classes.
-///
-/// \brief Returns the address of an endpoint
-IOAddress
-TCPEndpoint::getAddress() const {
-    return (asio_endpoint_.address());
-}
-
-/// \brief Returns the port of an endpoint
-uint16_t
-TCPEndpoint::getPort() const {
-    return (asio_endpoint_.port());
-}
-
-/// \brief Returns the protocol number of an endpoint.
-short
-TCPEndpoint::getProtocol() const {
-    return (asio_endpoint_.protocol().protocol());
-}
-
-/// \brief Returns the address family of an endpoint.
-short
-TCPEndpoint::getFamily() const {
-    return (asio_endpoint_.protocol().family());
-}
-
-/// \brief Returns the native socket descriptor for a socket.
-int
-TCPSocket::getNative() const {
-    return (socket_.native());
-}
-
-/// \brief Returns the protocol number for a socket (since this 
-/// is the TCP-specific implementation, that is always IPPROTO_TCP).
-int
-TCPSocket::getProtocol() const {
-    return (IPPROTO_TCP);
-}
-
 /// The following functions implement the \c UDPServer class.
 ///
 /// The constructor
@@ -108,11 +68,6 @@ TCPServer::TCPServer(io_service& io_service,
 
 void
 TCPServer::operator()(error_code ec, size_t length) {
-    /// In the event of an error, just exit.  The coroutine will be deleted.
-    if (ec) {
-        return;
-    }
-
     /// Because the coroutine reeentry block is implemented as
     /// a switch statement, inline variable declarations are not
     /// permitted.  Certain variables used below can be declared here.
@@ -126,8 +81,11 @@ TCPServer::operator()(error_code ec, size_t length) {
             /// Create a socket to listen for connections
             socket_.reset(new tcp::socket(acceptor_->get_io_service()));
 
-            /// Wait for new connections
-            CORO_YIELD acceptor_->async_accept(*socket_, *this);
+            /// Wait for new connections. In the event of error,
+            /// try again
+            do {
+                CORO_YIELD acceptor_->async_accept(*socket_, *this);
+            } while (!ec);
 
             /// Fork the coroutine by creating a copy of this one and
             /// scheduling it on the ASIO service queue.  The parent
@@ -140,9 +98,12 @@ TCPServer::operator()(error_code ec, size_t length) {
         /// asynchronous read call.
         data_ = boost::shared_ptr<char>(new char[MAX_LENGTH]);
 
-        /// First, read the message length.
+        /// Read the message, in two parts.  First, the message length:
         CORO_YIELD async_read(*socket_, asio::buffer(data_.get(),
                               TCP_MESSAGE_LENGTHSIZE), *this);
+        if (ec) {
+            CORO_YIELD return;
+        }
 
         /// Now read the message itself. (This is done in a different scope
         /// to allow inline variable declarations.)
@@ -150,6 +111,10 @@ TCPServer::operator()(error_code ec, size_t length) {
             InputBuffer dnsbuffer((const void *) data_.get(), length);
             uint16_t msglen = dnsbuffer.readUint16();
             async_read(*socket_, asio::buffer(data_.get(), msglen), *this);
+        }
+
+        if (ec) {
+            CORO_YIELD return;
         }
 
         // Create an \c IOMessage object to store the query.

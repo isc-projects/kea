@@ -222,8 +222,10 @@ public:
     ///
     /// These methods all make their calls indirectly via the "self_"
     /// pointer, ensuring that the functions ultimately invoked will be
-    /// the ones in the derived class.
-    ///
+    /// the ones in the derived class.  This makes it possible to pass
+    /// instances of derived classes as references to this base class
+    /// without losing access to derived class data.
+    /// 
     //@{
     /// \brief The funtion operator
     virtual void operator()(asio::error_code ec = asio::error_code(),
@@ -464,7 +466,7 @@ public:
                    DNSServer* server);
 private:
     IOService& io_service_;
-    asio::ip::address ns_addr_;
+    IOAddress ns_addr_;
     uint16_t port_;
 };
 
