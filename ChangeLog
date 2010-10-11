@@ -1,3 +1,8 @@
+  106.  [bug]       zhang likun
+	When xfrin can't connect with one zone's master, it should tell
+	the bad news to zonemgr, so that zonemgr can reset the timer for
+	that zone. (Trac #329, r3169)
+
   105.  [bug]       Michal Vaner
 	Python processes: they no longer take 100% CPU while idle
 	due to a busy loop in reading command session in a nonblocking way.
