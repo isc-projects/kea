@@ -48,12 +48,6 @@
             "item_type": "integer",
             "item_optional": true,
             "item_default": 53
-          },
-          {
-            "item_name": "db_file",
-            "item_type": "string",
-            "item_optional": true,
-            "item_default": "@@LOCALSTATEDIR@@/@PACKAGE@/zone.sqlite3"
           }
         ]
       },
