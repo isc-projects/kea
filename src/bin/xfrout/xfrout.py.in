@@ -35,12 +35,12 @@ import select
 import errno
 from optparse import OptionParser, OptionValueError
 try:
-    from libxfr_python import *
+    from libutil_io_python import *
     from pydnspp import *
 except ImportError as e:
     # C++ loadable module may not be installed; even so the xfrout process
     # must keep running, so we warn about it and move forward.
-    sys.stderr.write('[b10-xfrout] failed to import DNS or XFR module: %s\n' % str(e))
+    sys.stderr.write('[b10-xfrout] failed to import DNS or isc.util.io module: %s\n' % str(e))
 
 isc.utils.process.rename()
 

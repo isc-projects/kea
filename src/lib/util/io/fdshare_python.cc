@@ -20,7 +20,7 @@
 
 #include <config.h>
 
-#include <xfr/fd_share.h>
+#include "fd_share.h"
 
 static PyObject*
 fdshare_recv_fd(PyObject *self UNUSED_PARAM, PyObject *args) {
@@ -28,7 +28,7 @@ fdshare_recv_fd(PyObject *self UNUSED_PARAM, PyObject *args) {
     if (!PyArg_ParseTuple(args, "i", &sock)) {
         return (NULL);
     }
-    fd = isc::xfr::recv_fd(sock);
+    fd = isc::util::io::recv_fd(sock);
     return (Py_BuildValue("i", fd));
 }
 
@@ -38,7 +38,7 @@ fdshare_send_fd(PyObject *self UNUSED_PARAM, PyObject *args) {
     if (!PyArg_ParseTuple(args, "ii", &sock, &fd)) {
         return (NULL);
     }
-    result = isc::xfr::send_fd(sock, fd);
+    result = isc::util::io::send_fd(sock, fd);
     return (Py_BuildValue("i", result));
 }
 
@@ -62,7 +62,7 @@ static PyModuleDef bind10_fdshare_python = {
 };
 
 PyMODINIT_FUNC
-PyInit_libxfr_python(void) {
+PyInit_libutil_io_python(void) {
     PyObject *mod = PyModule_Create(&bind10_fdshare_python);
     if (mod == NULL) {
         return (NULL);

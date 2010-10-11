@@ -14,22 +14,29 @@
 
 // $Id$
 
-#include <boost/python.hpp>
-#include <boost/python/class.hpp>
-#include <boost/python/module.hpp>
-#include <boost/python/def.hpp>
-#include <boost/python/exception_translator.hpp>
-#include <boost/python/return_internal_reference.hpp>
-#include <boost/python/copy_const_reference.hpp>
-#include <boost/shared_ptr.hpp>
+#ifndef FD_SHARE_H_
+#define FD_SHARE_H_
 
-#include <xfr/fd_share.h>
+namespace isc {
+namespace util {
+namespace io {
 
-using namespace isc::xfr;
-using namespace boost::python;
+// Receive socket descriptor on unix domain socket 'sock'.
+// Returned value is the socket descriptor received.
+// Errors are indicated by a return value of -1.
+int recv_fd(const int sock);
 
-BOOST_PYTHON_MODULE(bind10_xfr)
-{
-    def("recv_fd", &recv_fd);
-    def("send_fd", &send_fd);
-}
+// Send socket descriptor "fd" to server over unix domain socket 'sock', 
+// the connection from socket 'sock' to unix domain server should be established first.
+// Errors are indicated by a return value of -1.
+int send_fd(const int sock, const int fd);
+
+} // End for namespace io
+} // End for namespace util
+} // End for namespace isc
+
+#endif
+
+// Local Variables: 
+// mode: c++
+// End: 
