@@ -362,13 +362,12 @@ class ZonemgrRefresh:
                     sys.stderr.write("[b10-zonemgr] Error with select(); %s\n" % e)
                     break
 
-            if not rlist: # timer timeout 
-                continue
-            if self._read_sock in rlist: # awaken by shutdown socket 
-                self._read_sock.recv(32)
-                return
-            if self._check_sock in rlist: # awaken by check socket
-                self._check_sock.recv(32)
+            for fd in rlist:
+                if fd == self._read_sock: # awaken by shutdown socket 
+                    self._read_sock.recv(32)
+                    return
+                if fd == self._check_sock: # awaken by check socket
+                    self._check_sock.recv(32)
 
     def shutdown(self):
         """Stop the run_timer() loop. Block until the loop has finished. This must be
