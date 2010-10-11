@@ -330,10 +330,14 @@ def process_xfrin(server, xfrin_recorder, zone_name, rrclass, db_file,
     sock_map = {}
     conn = XfrinConnection(sock_map, zone_name, rrclass, db_file,
                            shutdown_event, master_addrinfo, verbose)
+    ret = XFRIN_FAIL
     if conn.connect_to_master():
         ret = conn.do_xfrin(check_soa)
-        server.publish_xfrin_news(zone_name, rrclass, ret)
-
+    
+    # Publish the zone transfer result news, so zonemgr can reset the
+    # zone timer, and xfrout can notify the zone's slaves if the result
+    # is success.
+    server.publish_xfrin_news(zone_name, rrclass, ret)
     xfrin_recorder.decrement(zone_name)
 
 
