@@ -23,6 +23,8 @@
 #ifndef __SOCKCREATOR_H
 #define __SOCKCREATOR_H 1
 
+#include <util/io/fd_share.h>
+
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -52,16 +54,6 @@ get_sock(const int type, struct sockaddr *bind_addr, const socklen_t addr_len);
 typedef
 int
 (*get_sock_t)(const int, struct sockaddr *, const socklen_t);
-
-/**
- * Sends a payload socket file descriptor to destination file descriptor.
- * This is temporary and it will be stolen somewhere in the surrounding code,
- * since it is there already somewhere.
- *
- * TODO Actually steal it.
- */
-int
-send_fd(const int destination, const int payload);
 
 /**
  * Type of the send_fd() function, so it can be passed as a parameter.
@@ -100,7 +92,7 @@ int
 int
 run(const int input_fd, const int output_fd,
     const get_sock_t get_sock_fun = get_sock,
-    const send_fd_t send_fd_fun = send_fd);
+    const send_fd_t send_fd_fun = isc::util::io::send_fd);
 
 } // End of the namespaces
 }
