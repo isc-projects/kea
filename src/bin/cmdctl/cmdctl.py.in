@@ -441,8 +441,8 @@ class CommandControl():
 
         return (keyfile, certfile, accountsfile)
 
-class SecureHTTPServer(serve_mixin.ServeMixIn, 
-                       socketserver.ThreadingMixIn, 
+class SecureHTTPServer(serve_mixin.ServeMixIn,
+                       socketserver.ThreadingMixIn,
                        http.server.HTTPServer):
     '''Make the server address can be reused.'''
     allow_reuse_address = True

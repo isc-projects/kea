@@ -20,10 +20,10 @@ import select
 SOCK_DATA = b'somedata'
 class ServeMixIn:
     '''Mix-In class to override the function serve_forever()
-    and shutdown() in class socketserver.TCPServer. 
+    and shutdown() in class socketserver.TCPServer.
       ServeMixIn should be used together with socketserver.TCPServer
-    or some derived classes of it, and ServeMixIn must be the first 
-    base class in multiple inheritance, eg. MyClass(ServeMixIn, 
+    or some derived classes of it, and ServeMixIn must be the first
+    base class in multiple inheritance, eg. MyClass(ServeMixIn,
     socketserver.TCPServer). ServeMixIn.__init__() should be called
     explicitely in derived class.
     '''
@@ -33,8 +33,8 @@ class ServeMixIn:
         self.__read_sock, self.__write_sock = socket.socketpair()
 
     def serve_forever(self, poll_interval=0.5):
-        ''' Override the serve_forever([poll_interval]) in class 
-        socketserver.TCPServer. use one socket pair to wake up 
+        ''' Override the serve_forever([poll_interval]) in class
+        socketserver.TCPServer. use one socket pair to wake up
         the select when shutdown() is called in anther thread.
           Note, parameter 'poll_interval' is just used to keep the
         interface, it's never used in this function.
@@ -42,7 +42,7 @@ class ServeMixIn:
         self.__serving = True
         self.__is_shut_down.clear()
         while self.__serving:
-            # block until the self.socket or self.__read_sock is readable 
+            # block until the self.socket or self.__read_sock is readable
             try:
                 r, w, e = select.select([self, self.__read_sock], [], [])
             except select.error as err:
