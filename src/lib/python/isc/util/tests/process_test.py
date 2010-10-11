@@ -13,9 +13,9 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-"""Tests for isc.utils.process."""
+"""Tests for isc.util.process."""
 import unittest
-import isc.utils.process
+import isc.util.process
 run_tests = True
 try:
     import setproctitle
@@ -30,9 +30,9 @@ class TestRename(unittest.TestCase):
     @unittest.skipIf(not run_tests, "Setproctitle not installed, not testing")
     def test_rename(self):
         """Test if the renaming function works."""
-        isc.utils.process.rename("rename-test")
+        isc.util.process.rename("rename-test")
         self.assertEqual("rename-test", self.__get_self_name())
-        isc.utils.process.rename()
+        isc.util.process.rename()
         self.assertEqual("process_test.py", self.__get_self_name())
 
 if __name__ == "__main__":
