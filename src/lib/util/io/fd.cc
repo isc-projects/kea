@@ -22,7 +22,8 @@ namespace util {
 namespace io {
 
 bool
-write_data(const int fd, const char *buffer, const size_t length) {
+write_data(const int fd, const void *buffer_v, const size_t length) {
+    const unsigned char *buffer(static_cast<const unsigned char *>(buffer_v));
     size_t rest(length);
     // Just keep writing until all is written
     while (rest) {
@@ -42,7 +43,8 @@ write_data(const int fd, const char *buffer, const size_t length) {
 }
 
 ssize_t
-read_data(const int fd, char *buffer, const size_t length) {
+read_data(const int fd, void *buffer_v, const size_t length) {
+    unsigned char *buffer(static_cast<unsigned char *>(buffer_v));
     size_t rest(length), already(0);
     while (rest) { // Stil something to read
         ssize_t amount(read(fd, buffer, rest));

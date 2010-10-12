@@ -39,8 +39,8 @@ namespace {
  * This is a macro so ASSERT_* does abort the TEST, not just the
  * function inside.
  */
-#define TEST_ANY_CREATE(SOCK_TYPE, ADDR_TYPE, ADDR_FAMILY, ADDR_SET, \
-    CHECK_SOCK) \
+#define TEST_ANY_CREATE(SOCK_TYPE, ADDR_TYPE, ADDR_FAMILY, FAMILY_FIELD, \
+    ADDR_SET, CHECK_SOCK) \
     do { \
         /*
          * This should create an address that binds on all interfaces
@@ -49,9 +49,9 @@ namespace {
         struct ADDR_TYPE addr; \
         memset(&addr, 0, sizeof addr); \
         ADDR_SET(addr); \
+        addr.FAMILY_FIELD = ADDR_FAMILY; \
         struct sockaddr *addr_ptr = static_cast<struct sockaddr *>( \
             static_cast<void *>(&addr)); \
-        addr_ptr->sa_family = ADDR_FAMILY; \
         \
         int socket = get_sock(SOCK_TYPE, addr_ptr, sizeof addr); \
         /* Provide even nice error message. */ \
@@ -89,21 +89,23 @@ namespace {
  * Several tests to ensure we can create the sockets.
  */
 TEST(get_sock, udp4_create) {
-    TEST_ANY_CREATE(SOCK_DGRAM, sockaddr_in, AF_INET, INADDR_SET, UDP_CHECK);
-}
-
-TEST(get_sock, tcp4_create) {
-    TEST_ANY_CREATE(SOCK_STREAM, sockaddr_in, AF_INET, INADDR_SET, TCP_CHECK);
-}
-
-TEST(get_sock, udp6_create) {
-    TEST_ANY_CREATE(SOCK_DGRAM, sockaddr_in6, AF_INET6, IN6ADDR_SET,
+    TEST_ANY_CREATE(SOCK_DGRAM, sockaddr_in, AF_INET, sin_family, INADDR_SET,
         UDP_CHECK);
 }
 
-TEST(get_sock, tcp6_create) {
-    TEST_ANY_CREATE(SOCK_STREAM, sockaddr_in6, AF_INET6, IN6ADDR_SET,
+TEST(get_sock, tcp4_create) {
+    TEST_ANY_CREATE(SOCK_STREAM, sockaddr_in, AF_INET, sin_family, INADDR_SET,
         TCP_CHECK);
+}
+
+TEST(get_sock, udp6_create) {
+    TEST_ANY_CREATE(SOCK_DGRAM, sockaddr_in6, AF_INET6, sin6_family,
+        IN6ADDR_SET, UDP_CHECK);
+}
+
+TEST(get_sock, tcp6_create) {
+    TEST_ANY_CREATE(SOCK_STREAM, sockaddr_in6, AF_INET6, sin6_family,
+        IN6ADDR_SET, TCP_CHECK);
 }
 
 /*

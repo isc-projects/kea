@@ -69,7 +69,8 @@ process_ok(pid_t process) {
  * Used to provide the input in non-blocking/asynchronous way.
  */
 pid_t
-provide_input(int *read_pipe, const char *input, const size_t length) {
+provide_input(int *read_pipe, const void *input, const size_t length)
+{
     int pipes[2];
     if (pipe(pipes)) {
         return -1;
@@ -94,7 +95,8 @@ provide_input(int *read_pipe, const char *input, const size_t length) {
  * with given data. Used to check output of run in asynchronous way.
  */
 pid_t
-check_output(int *write_pipe, const char *output, const size_t length) {
+check_output(int *write_pipe, const void *output, const size_t length)
+{
     int pipes[2];
     if (pipe(pipes)) {
         return -1;
@@ -105,7 +107,7 @@ check_output(int *write_pipe, const char *output, const size_t length) {
         return pid;
     } else {
         close(pipes[1]);
-        char buffer[length + 1];
+        unsigned char buffer[length + 1];
         // Try to read one byte more to see if the output ends here
         size_t got_length(read_data(pipes[0], buffer, length + 1));
         bool ok(true);
@@ -116,13 +118,15 @@ check_output(int *write_pipe, const char *output, const size_t length) {
             ok = false;
         }
         if(!ok || memcmp(buffer, output, length)) {
+            const unsigned char *output_c(static_cast<const unsigned char *>(
+                output));
             // If the differ, print what we have
             for(size_t i(0); i != got_length; ++ i) {
                 fprintf(stderr, "%02hhx", buffer[i]);
             }
             fprintf(stderr, "\n");
             for(size_t i(0); i != length; ++ i) {
-                fprintf(stderr, "%02hhx", output[i]);
+                fprintf(stderr, "%02hhx", output_c[i]);
             }
             fprintf(stderr, "\n");
             exit(1);

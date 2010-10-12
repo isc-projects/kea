@@ -40,10 +40,10 @@ bool
 process_ok(pid_t process);
 
 pid_t
-provide_input(int *read_pipe, const char *input, const size_t length);
+provide_input(int *read_pipe, const void *input, const size_t length);
 
 pid_t
-check_output(int *write_pipe, const char *output, const size_t length);
+check_output(int *write_pipe, const void *output, const size_t length);
 
 } // End of the namespace
 }
