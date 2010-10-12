@@ -40,11 +40,9 @@ class MySession():
 
 class MyZonemgrRefresh(ZonemgrRefresh):
     def __init__(self):
-        self._cc = MySession()
-        self._db_file = "initdb.file"
-        self._is_shut_down = threading.Event()
-        self._read_sock, self._write_sock = socket.socketpair()
         self._master_socket, self._slave_socket = socket.socketpair()
+        ZonemgrRefresh.__init__(self, MySession(), "initdb.file",
+            self._slave_socket)
         self._zonemgr_refresh_info = { 
          ('sd.cn.', 'IN'): {
          'last_refresh_time': 1280474398.822142,
@@ -58,16 +56,6 @@ class MyZonemgrRefresh(ZonemgrRefresh):
          'zone_state': 0}
         } 
 
-    def stop_timer(self):
-        ''' Exit timer thread '''
-        self.shutdown()
-        main_thread = threading.currentThread()
-        for th in threading.enumerate():
-            if th is main_thread:
-                continue
-            th.join()
-
-        
 class TestZonemgrRefresh(unittest.TestCase):
     def setUp(self):
         self.stderr_backup = sys.stderr
@@ -104,7 +92,7 @@ class TestZonemgrRefresh(unittest.TestCase):
         time2 = time.time()
         self.assertTrue((time1 + 7200 * 3 / 4) <= zone_timeout)
         self.assertTrue(zone_timeout <= time2 + 7200)
-        
+
     def test_set_zone_retry_timer(self):
         time1 = time.time()
         self.zone_refresh._set_zone_retry_timer(ZONE_NAME_CLASS1_IN)
@@ -150,6 +138,8 @@ class TestZonemgrRefresh(unittest.TestCase):
          
     def test_zonemgr_reload_zone(self):
         soa_rdata = 'a.dns.cn. root.cnnic.cn. 2009073106 1800 900 2419200 21600'
+        # We need to restore this not to harm other tests
+        old_get_zone_soa = sqlite3_ds.get_zone_soa
         def get_zone_soa(zone_name, db_file):
             return (1, 2, 'sd.cn.', 'cn.sd.', 21600, 'SOA', None, 
                     'a.dns.cn. root.cnnic.cn. 2009073106 1800 900 2419200 21600')
@@ -157,6 +147,7 @@ class TestZonemgrRefresh(unittest.TestCase):
 
         self.zone_refresh.zonemgr_reload_zone(ZONE_NAME_CLASS1_IN)
         self.assertEqual(soa_rdata, self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_soa_rdata"])
+        sqlite3_ds.get_zone_soa = old_get_zone_soa
 
     def test_get_zone_notifier_master(self):
         notify_master = "192.168.1.1"
@@ -234,6 +225,9 @@ class TestZonemgrRefresh(unittest.TestCase):
 
     def test_zonemgr_add_zone(self):
         soa_rdata = 'a.dns.cn. root.cnnic.cn. 2009073106 1800 900 2419200 21600'
+        # This needs to be restored. The following test actually failed if we left
+        # this unclean
+        old_get_zone_soa = sqlite3_ds.get_zone_soa
 
         def get_zone_soa(zone_name, db_file):
             return (1, 2, 'sd.cn.', 'cn.sd.', 21600, 'SOA', None, 
@@ -254,7 +248,8 @@ class TestZonemgrRefresh(unittest.TestCase):
             return None
         sqlite3_ds.get_zone_soa = get_zone_soa2
         self.assertRaises(ZonemgrException, self.zone_refresh.zonemgr_add_zone, \
-                                          ZONE_NAME_CLASS1_IN)
+                                         ZONE_NAME_CLASS1_IN)
+        sqlite3_ds.get_zone_soa = old_get_zone_soa
 
     def test_build_zonemgr_refresh_info(self):
         soa_rdata = 'a.dns.cn. root.cnnic.cn. 2009073106 1800 900 2419200 21600'
@@ -391,7 +386,7 @@ class TestZonemgrRefresh(unittest.TestCase):
         """This case will run timer in daemon thread. 
         The zone's next_refresh_time is less than now, so zonemgr will do zone refresh 
         immediately. The zone's state will become "refreshing". 
-        Then closing the socket ,the timer will stop, and throw a ZonemgrException."""
+        """
         time1 = time.time()
         self.zone_refresh._zonemgr_refresh_info = {
                 ("sd.cn.", "IN"):{
@@ -401,13 +396,9 @@ class TestZonemgrRefresh(unittest.TestCase):
                     'zone_state': ZONE_OK}
                 }
         self.zone_refresh._check_sock = self.zone_refresh._master_socket 
-        listener = threading.Thread(target = self.zone_refresh.run_timer, args = ())
-        listener.setDaemon(True)
-        listener.start()
-        # Sleep 1 sec to ensure that the timer thread has enough time to run.
-        time.sleep(1)
+        listener = self.zone_refresh.run_timer(daemon=True)
         # Shut down the timer thread
-        self.zone_refresh.stop_timer()
+        self.zone_refresh.shutdown()
         # After running timer, the zone's state should become "refreshing".
         zone_state = self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_state"]
         self.assertTrue("refresh_timeout" in self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN].keys())
@@ -415,11 +406,10 @@ class TestZonemgrRefresh(unittest.TestCase):
 
     def test_shutdown(self):
         self.zone_refresh._check_sock = self.zone_refresh._master_socket 
-        listener = threading.Thread(target = self.zone_refresh.run_timer)
-        listener.start()
+        listener = self.zone_refresh.run_timer()
         self.assertTrue(listener.is_alive())
         # Shut down the timer thread
-        self.zone_refresh.stop_timer()
+        self.zone_refresh.shutdown()
         self.assertFalse(listener.is_alive())
 
     def tearDown(self):
