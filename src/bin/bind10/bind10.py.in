@@ -710,6 +710,9 @@ def main():
     signal.signal(signal.SIGINT, fatal_signal)
     signal.signal(signal.SIGTERM, fatal_signal)
 
+    # Block SIGPIPE, as we don't want it to end this process
+    signal.signal(signal.SIGPIPE, signal.SIG_IGN)
+
     # Go bob!
     boss_of_bind = BoB(options.msgq_socket_file, int(options.auth_port),
                        options.address, options.nocache, options.verbose,
