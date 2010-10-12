@@ -17,18 +17,37 @@
 #ifndef FD_SHARE_H_
 #define FD_SHARE_H_
 
+/**
+ * \file fd_share.h
+ * \short Support to transfer file descriptors between processes.
+ */
+
 namespace isc {
 namespace util {
 namespace io {
 
-// Receive socket descriptor on unix domain socket 'sock'.
-// Returned value is the socket descriptor received.
-// Errors are indicated by a return value of -1.
+/**
+ * \short Receives a file descriptor.
+ * This receives a file descriptor sent over an unix domain socket. This
+ * is the counterpart of send_fd().
+ *
+ * @return -1 on error, the socket descriptor on success.
+ * @param sock The unix domain socket to read from. Tested and it does
+ *     not work with a pipe.
+ */
 int recv_fd(const int sock);
 
-// Send socket descriptor "fd" to server over unix domain socket 'sock', 
-// the connection from socket 'sock' to unix domain server should be established first.
-// Errors are indicated by a return value of -1.
+/**
+ * \short Sends a file descriptor.
+ * This sends a file descriptor over an unix domain socket. This is the
+ * counterpart of recv_fd().
+ *
+ * @return -1 on error, 0 otherwise.
+ * @param sock The unix domain socket to send to. Tested and it does not
+ *     work with a pipe.
+ * @param fd The file descriptor to send. It should work with any valid
+ *     file descriptor.
+ */
 int send_fd(const int sock, const int fd);
 
 } // End for namespace io
