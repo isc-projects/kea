@@ -15,7 +15,7 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-"""\
+"""
 This file implements the Secondary Manager program.
 
 The secondary manager is one of the co-operating processes
@@ -103,10 +103,10 @@ class ZonemgrRefresh:
     def __init__(self, cc, db_file, slave_socket):
         self._cc = cc
         self._check_sock = slave_socket 
-        self._read_sock, self._write_sock = socket.socketpair()
         self._db_file = db_file
         self._zonemgr_refresh_info = {} 
         self._build_zonemgr_refresh_info()
+        self._running = False
     
     def _random_jitter(self, max, jitter):
         """Imposes some random jitters for refresh and
@@ -331,25 +331,21 @@ class ZonemgrRefresh:
 
         return False
 
-    def run_timer(self):
-        """Keep track of zone timers. The loop can be stopped by calling shutdown() in 
-        another thread.
-        """
-        while True:
+    def _run_timer(self):
+        while self._running:
             # Zonemgr has no zone.
             if self._zone_mgr_is_empty():
-                time.sleep(LOWERBOUND_RETRY) # A better time?
-                continue
-
-            zone_need_refresh = self._find_need_do_refresh_zone()
-            # If don't get zone with minimum next refresh time, set timer timeout = LOWERBOUND_REFRESH
-            if not zone_need_refresh:
                 timeout = LOWERBOUND_RETRY
             else:
-                timeout = self._get_zone_next_refresh_time(zone_need_refresh) - self._get_current_time()
-                if (timeout < 0):
-                    self._do_refresh(zone_need_refresh)
-                    continue
+                zone_need_refresh = self._find_need_do_refresh_zone()
+                # If don't get zone with minimum next refresh time, set timer timeout = LOWERBOUND_REFRESH
+                if not zone_need_refresh:
+                    timeout = LOWERBOUND_RETRY
+                else:
+                    timeout = self._get_zone_next_refresh_time(zone_need_refresh) - self._get_current_time()
+                    if (timeout < 0):
+                        self._do_refresh(zone_need_refresh)
+                        continue
 
             """ Wait for the socket notification for a maximum time of timeout 
             in seconds (as float)."""
@@ -364,15 +360,52 @@ class ZonemgrRefresh:
 
             for fd in rlist:
                 if fd == self._read_sock: # awaken by shutdown socket 
-                    self._read_sock.recv(32)
-                    return
+                    # self._running will be False by now, if it is not a false
+                    # alarm
+                    continue
                 if fd == self._check_sock: # awaken by check socket
                     self._check_sock.recv(32)
 
+    def run_timer(self, daemon=False):
+        """
+        Keep track of zone timers. Spawns and starts a thread. The thread object is returned.
+
+        You can stop it by calling shutdown().
+        """
+        # Small sanity check
+        if self._running:
+            raise RuntimeError("Trying to run the timers twice at the same time")
+
+        # Prepare the launch
+        self._running = True
+        (self._read_sock, self._write_sock) = socket.socketpair()
+
+        # Start the thread
+        self._thread = threading.Thread(target = self._run_timer, args = ())
+        if daemon:
+            self._thread.setDaemon(True)
+        self._thread.start()
+
+        # Return the thread to anyone interested
+        return self._thread
+
     def shutdown(self):
-        """Stop the run_timer() loop. Block until the loop has finished. This must be
-        called when run_timer() is running in another thread, or it will deadlock."""
+        """
+        Stop the run_timer() thread. Block until it finished. This must be
+        called from a different thread.
+        """
+        if not self._running:
+            raise RuntimeError("Trying to shutdown, but not running")
+
+        # Ask the thread to stop
+        self._running = False
         self._write_sock.send(b'shutdown') # make self._read_sock readble
+        # Wait for it to actually finnish
+        self._thread.join()
+        # Wipe out what we do not need
+        self._thread = None
+        self._read_sock = None
+        self._write_sock = None
 
 class Zonemgr:
     """Zone manager class."""
@@ -382,15 +415,10 @@ class Zonemgr:
         # Create socket pair for communicating between main thread and zonemgr timer thread 
         self._master_socket, self._slave_socket = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
         self._zone_refresh = ZonemgrRefresh(self._cc, self._db_file, self._slave_socket)
-        self._start_zone_refresh_timer()
+        self._zone_refresh.run_timer()
 
         self._lock = threading.Lock()
         self._shutdown_event = threading.Event()
-
-    def _start_zone_refresh_timer(self):
-        """Start a new thread to keep track of zone timers"""
-        listener = threading.Thread(target = self._zone_refresh.run_timer, args = ())
-        listener.start()
 
     def _setup_session(self):
         """Setup two sessions for zonemgr, one(self._module_cc) is used for receiving 
@@ -422,12 +450,6 @@ class Zonemgr:
         self._slave_socket.close()
         self._master_socket.close()
         self._shutdown_event.set()
-        main_thread = threading.currentThread()
-        for th in threading.enumerate():
-        # Stop the thread  which is running zone refresh timer
-            if th is main_thread:
-                continue
-            th.join()
 
     def config_handler(self, new_config):
         """Update config data."""
