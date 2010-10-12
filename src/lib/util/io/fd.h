@@ -39,7 +39,7 @@ namespace io {
  * \param length How much data is there to write.
  */
 bool
-write_data(const int fd, const char *data, const size_t length);
+write_data(const int fd, const void *data, const size_t length);
 
 /*
  * \short read() that reads everything.
@@ -52,7 +52,7 @@ write_data(const int fd, const char *data, const size_t length);
  * \param length How many of them.
  */
 ssize_t
-read_data(const int fd, char *buffer, const size_t length);
+read_data(const int fd, void *buffer, const size_t length);
 
 }
 }
