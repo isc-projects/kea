@@ -426,8 +426,7 @@ class XfroutServer:
     def _start_notifier(self):
         datasrc = self._unix_socket_server.get_db_file()
         self._notifier = notify_out.NotifyOut(datasrc, self._log)
-        td = threading.Thread(target=self._notifier.dispatcher)
-        td.start()
+        self._notifier.dispatcher()
 
     def send_notify(self, zone_name, zone_class):
         self._notifier.send_notify(zone_name, zone_class)
@@ -440,7 +439,7 @@ class XfroutServer:
                 answer = create_answer(1, "Unknown config data: " + str(key))
                 continue
             self._config_data[key] = new_config[key]
-        
+
         if self._log:
             self._log.update_config(new_config)
 
@@ -462,19 +461,12 @@ class XfroutServer:
         if self._unix_socket_server:
             self._unix_socket_server.shutdown()
 
-        main_thread = threading.currentThread()
-        # close the thread which's doing zone transfer.
-        for th in threading.enumerate():
-            if th is main_thread:
-                continue
-            th.join()
-
     def command_handler(self, cmd, args):
         if cmd == "shutdown":
             self._log.log_message("info", "Received shutdown command.")
             self.shutdown()
             answer = create_answer(0)
-        
+
         elif cmd == notify_out.ZONE_NEW_DATA_READY_CMD:
             zone_name = args.get('zone_name')
             zone_class = args.get('zone_class')
@@ -489,7 +481,7 @@ class XfroutServer:
         else: 
             answer = create_answer(1, "Unknown command:" + str(cmd))
 
-        return answer    
+        return answer
 
     def run(self):
         '''Get and process all commands sent from cfgmgr or other modules. '''
