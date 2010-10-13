@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10-devel, 20100701, bind10-dev@isc.org)
+AC_INIT(bind10-devel, 20101013, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
@@ -261,7 +261,6 @@ AC_ARG_WITH(gtest,
 [  --with-gtest=PATH       specify a path to gtest header files (PATH/include) and library (PATH/lib)],
     gtest_path="$withval", gtest_path="no")
 
-
 USE_LCOV="no"
 if test "$lcov" != "no"; then
 	# force gtest if not set
@@ -435,7 +434,7 @@ if test "X$ac_cv_have_devpoll" = "Xyes" -a "X$GXX" = "Xyes"; then
 fi
 
 AC_ARG_ENABLE(man, [AC_HELP_STRING([--enable-man],
-  [regenerate man pages [default=no]])] ,enable_man=yes, enable_man=no)
+  [regenerate man pages [default=no]])], enable_man=yes, enable_man=no)
 
 AM_CONDITIONAL(ENABLE_MAN, test x$enable_man != xno)
 
