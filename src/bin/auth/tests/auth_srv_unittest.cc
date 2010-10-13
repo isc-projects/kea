@@ -348,8 +348,8 @@ TEST_F(AuthSrvTest, unsupportedRequest) {
         data[2] = ((i << 3) & 0xff);
 
         parse_message.clear(Message::PARSE);
-        EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
-                                              response_renderer));
+        EXPECT_TRUE(server.processMessage(*io_message, parse_message,
+                                          response_renderer));
         headerCheck(parse_message, default_qid, Rcode::NOTIMP(), i, QR_FLAG,
                     0, 0, 0, 0);
     }
@@ -367,8 +367,8 @@ TEST_F(AuthSrvTest, verbose) {
 // Multiple questions.  Should result in FORMERR.
 TEST_F(AuthSrvTest, multiQuestion) {
     createDataFromFile("multiquestion_fromWire.wire");
-    EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
-                                          response_renderer));
+    EXPECT_TRUE(server.processMessage(*io_message, parse_message,
+                                      response_renderer));
     headerCheck(parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
                 QR_FLAG, 2, 0, 0, 0);
 
@@ -415,8 +415,8 @@ TEST_F(AuthSrvTest, response) {
 // Query with a broken question
 TEST_F(AuthSrvTest, shortQuestion) {
     createDataFromFile("shortquestion_fromWire");
-    EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
-                                          response_renderer));
+    EXPECT_TRUE(server.processMessage(*io_message, parse_message,
+                                      response_renderer));
     // Since the query's question is broken, the question section of the
     // response should be empty.
     headerCheck(parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
@@ -426,8 +426,8 @@ TEST_F(AuthSrvTest, shortQuestion) {
 // Query with a broken answer section
 TEST_F(AuthSrvTest, shortAnswer) {
     createDataFromFile("shortanswer_fromWire.wire");
-    EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
-                                          response_renderer));
+    EXPECT_TRUE(server.processMessage(*io_message, parse_message,
+                                      response_renderer));
 
     // This is a bogus query, but question section is valid.  So the response
     // should copy the question section.
@@ -445,8 +445,8 @@ TEST_F(AuthSrvTest, shortAnswer) {
 // Query with unsupported version of EDNS.
 TEST_F(AuthSrvTest, ednsBadVers) {
     createDataFromFile("queryBadEDNS_fromWire.wire");
-    EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
-                                          response_renderer));
+    EXPECT_TRUE(server.processMessage(*io_message, parse_message,
+                                      response_renderer));
 
     // The response must have an EDNS OPT RR in the additional section, but
     // it will be added automatically at the render time.
@@ -468,8 +468,8 @@ TEST_F(AuthSrvTest, AXFROverUDP) {
     // AXFR over UDP is invalid and should result in FORMERR.
     createRequestPacket(opcode, Name("example.com"), RRClass::IN(),
                         RRType::AXFR(), IPPROTO_UDP);
-    EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
-                                          response_renderer));
+    EXPECT_TRUE(server.processMessage(*io_message, parse_message,
+                                      response_renderer));
     headerCheck(parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
                 QR_FLAG, 1, 0, 0, 0);
 }
@@ -542,8 +542,8 @@ TEST_F(AuthSrvTest, notify) {
                         RRType::SOA());
     request_message.setHeaderFlag(MessageFlag::AA());
     createRequestPacket(IPPROTO_UDP);
-    EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
-                                          response_renderer));
+    EXPECT_TRUE(server.processMessage(*io_message, parse_message,
+                                      response_renderer));
 
     // An internal command message should have been created and sent to an
     // external module.  Check them.
@@ -574,8 +574,8 @@ TEST_F(AuthSrvTest, notifyForCHClass) {
                         RRType::SOA());
     request_message.setHeaderFlag(MessageFlag::AA());
     createRequestPacket(IPPROTO_UDP);
-    EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
-                                          response_renderer));
+    EXPECT_TRUE(server.processMessage(*io_message, parse_message,
+                                      response_renderer));
 
     // Other conditions should be the same, so simply confirm the RR class is
     // set correctly.
@@ -592,8 +592,8 @@ TEST_F(AuthSrvTest, notifyEmptyQuestion) {
     request_message.setQid(default_qid);
     request_message.toWire(request_renderer);
     createRequestPacket(IPPROTO_UDP);
-    EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
-                                          response_renderer));
+    EXPECT_TRUE(server.processMessage(*io_message, parse_message,
+                                      response_renderer));
     headerCheck(parse_message, default_qid, Rcode::FORMERR(),
                 Opcode::NOTIFY().getCode(), QR_FLAG, 0, 0, 0, 0);
 }
@@ -606,8 +606,8 @@ TEST_F(AuthSrvTest, notifyMultiQuestions) {
                                          RRType::SOA()));
     request_message.setHeaderFlag(MessageFlag::AA());
     createRequestPacket(IPPROTO_UDP);
-    EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
-                                          response_renderer));
+    EXPECT_TRUE(server.processMessage(*io_message, parse_message,
+                                      response_renderer));
     headerCheck(parse_message, default_qid, Rcode::FORMERR(),
                 Opcode::NOTIFY().getCode(), QR_FLAG, 2, 0, 0, 0);
 }
@@ -617,8 +617,8 @@ TEST_F(AuthSrvTest, notifyNonSOAQuestion) {
                         RRType::NS());
     request_message.setHeaderFlag(MessageFlag::AA());
     createRequestPacket(IPPROTO_UDP);
-    EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
-                                          response_renderer));
+    EXPECT_TRUE(server.processMessage(*io_message, parse_message,
+                                      response_renderer));
     headerCheck(parse_message, default_qid, Rcode::FORMERR(),
                 Opcode::NOTIFY().getCode(), QR_FLAG, 1, 0, 0, 0);
 }
@@ -627,8 +627,8 @@ TEST_F(AuthSrvTest, notifyWithoutAA) {
     // implicitly leave the AA bit off.  our implementation will accept it.
     createRequestPacket(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
                         RRType::SOA());
-    EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
-                                          response_renderer));
+    EXPECT_TRUE(server.processMessage(*io_message, parse_message,
+                                      response_renderer));
     headerCheck(parse_message, default_qid, Rcode::NOERROR(),
                 Opcode::NOTIFY().getCode(), QR_FLAG | AA_FLAG, 1, 0, 0, 0);
 }
@@ -639,8 +639,8 @@ TEST_F(AuthSrvTest, notifyWithErrorRcode) {
     request_message.setHeaderFlag(MessageFlag::AA());
     request_message.setRcode(Rcode::SERVFAIL());
     createRequestPacket(IPPROTO_UDP);
-    EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
-                                          response_renderer));
+    EXPECT_TRUE(server.processMessage(*io_message, parse_message,
+                                      response_renderer));
     headerCheck(parse_message, default_qid, Rcode::NOERROR(),
                 Opcode::NOTIFY().getCode(), QR_FLAG | AA_FLAG, 1, 0, 0, 0);
 }
@@ -727,8 +727,8 @@ TEST_F(AuthSrvTest, updateConfig) {
     // response should have the AA flag on, and have an RR in each answer
     // and authority section.
     createDataFromFile("examplequery_fromWire.wire");
-    EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
-                                          response_renderer));
+    EXPECT_TRUE(server.processMessage(*io_message, parse_message,
+                                      response_renderer));
     headerCheck(parse_message, default_qid, Rcode::NOERROR(), opcode.getCode(),
                 QR_FLAG | AA_FLAG, 1, 1, 1, 0);
 }
@@ -741,8 +741,8 @@ TEST_F(AuthSrvTest, datasourceFail) {
     // in a SERVFAIL response, and the answer and authority sections should
     // be empty.
     createDataFromFile("badExampleQuery_fromWire.wire");
-    EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
-                                          response_renderer));
+    EXPECT_TRUE(server.processMessage(*io_message, parse_message,
+                                      response_renderer));
     headerCheck(parse_message, default_qid, Rcode::SERVFAIL(),
                 opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
 }
@@ -756,8 +756,8 @@ TEST_F(AuthSrvTest, updateConfigFail) {
 
     // The original data source should still exist.
     createDataFromFile("examplequery_fromWire.wire");
-    EXPECT_EQ(true, server.processMessage(*io_message, parse_message,
-                                          response_renderer));
+    EXPECT_TRUE(server.processMessage(*io_message, parse_message,
+                                      response_renderer));
     headerCheck(parse_message, default_qid, Rcode::NOERROR(), opcode.getCode(),
                 QR_FLAG | AA_FLAG, 1, 1, 1, 0);
 }
