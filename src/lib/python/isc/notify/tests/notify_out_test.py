@@ -128,10 +128,11 @@ class TestNotifyOut(unittest.TestCase):
         # Now make one socket be readable
         self._notify._notify_infos[('cn.', 'IN')].notify_timeout = time.time() + 10
         self._notify._notify_infos[('com.', 'IN')].notify_timeout = time.time() + 10
-        self._notify._write_sock.send(b'shutdown')    
+        self._notify._read_sock, self._notify._write_sock = socket.socketpair()
+        self._notify._write_sock.send(b'shutdown')
         replied_zones, timeout_zones = self._notify._wait_for_notify_reply()
-        self.assertIsNone(replied_zones) 
-        self.assertIsNone(timeout_zones) 
+        self.assertEqual(0, len(replied_zones))
+        self.assertEqual(0, len(timeout_zones))
 
     def test_notify_next_target(self):
         self._notify.send_notify('cn.')
@@ -268,7 +269,7 @@ class TestNotifyOut(unittest.TestCase):
         
     def test_prepare_select_info(self):
         timeout, valid_fds, notifying_zones = self._notify._prepare_select_info()
-        self.assertEqual(0, timeout)
+        self.assertEqual(notify_out._IDLE_SLEEP_TIME, timeout)
         self.assertListEqual([], valid_fds)
 
         self._notify._notify_infos[('cn.', 'IN')]._sock = 1
@@ -290,12 +291,10 @@ class TestNotifyOut(unittest.TestCase):
         self.assertListEqual([2, 1], valid_fds)
 
     def test_shutdown(self):
-        import threading
-        td = threading.Thread(target=self._notify.dispatcher)
-        td.start()
-        self.assertTrue(td.is_alive())
+        thread = self._notify.dispatcher()
+        self.assertTrue(thread.is_alive())
         self._notify.shutdown()
-        self.assertFalse(td.is_alive())
+        self.assertFalse(thread.is_alive())
 
 if __name__== "__main__":
     unittest.main()
