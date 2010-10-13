@@ -1,7 +1,11 @@
-100 [bug]   zhanglikun
-	Make sure process xfrin/xfrout/zonemgr/cmdctl can be stoped 
-	properly when user enter "ctrl+c" or 'Boss shutdown' command 
-	through	bindctl. (Trac #335, svn rTBD)
+  100.	[bug]*   zhanglikun, Michal Vaner
+	Make sure process xfrin/xfrout/zonemgr/cmdctl can be stoped
+	properly when user enter "ctrl+c" or 'Boss shutdown' command
+	through	bindctl.
+
+	The ZonemgrRefresh.run_timer and NotifyOut.dispatcher spawn
+	a thread themself.
+	(Trac #335, svn rTBD)
 
 99.	[func]*		jinmei
 	Introduced a separate EDNS class to encapsulate EDNS related
