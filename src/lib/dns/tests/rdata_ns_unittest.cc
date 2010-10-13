@@ -118,7 +118,7 @@ TEST_F(Rdata_NS_Test, compare)
 {
     generic::NS small("a.example");
     generic::NS large("example");
-    EXPECT_EQ(true, Name("a.example") > Name("example"));
+    EXPECT_TRUE(Name("a.example") > Name("example"));
     EXPECT_GT(0, small.compare(large));
 }
 

@@ -298,7 +298,7 @@ TEST_F(RdataTest, compareNames)
 
     // Check the case where the order is different from the owner name
     // comparison:
-    EXPECT_EQ(true, small > large);
+    EXPECT_TRUE(small > large);
     EXPECT_EQ(-1, compareNames(small, large));
     EXPECT_EQ(1, compareNames(large, small));
 
