@@ -333,12 +333,12 @@ class ZonemgrRefresh:
 
     def _run_timer(self):
         while self._running:
-            # Zonemgr has no zone.
+            # If zonemgr has no zone, set timer timeout to LOWERBOUND_RETRY.
             if self._zone_mgr_is_empty():
                 timeout = LOWERBOUND_RETRY
             else:
                 zone_need_refresh = self._find_need_do_refresh_zone()
-                # If don't get zone with minimum next refresh time, set timer timeout = LOWERBOUND_REFRESH
+                # If don't get zone with minimum next refresh time, set timer timeout to LOWERBOUND_RETRY
                 if not zone_need_refresh:
                     timeout = LOWERBOUND_RETRY
                 else:
