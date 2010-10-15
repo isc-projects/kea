@@ -113,7 +113,7 @@ class MessageRenderer;\n\n'''
         if re.match('\s+// BEGIN_COMMON_MEMBERS$', line):
             content += '''
     explicit ''' + type_utxt + '''(const std::string& type_str);
-    explicit ''' + type_utxt + '''(InputBuffer& buffer, size_t rdata_len);
+    ''' + type_utxt + '''(InputBuffer& buffer, size_t rdata_len);
     ''' + type_utxt + '''(const ''' + type_utxt + '''& other);
     virtual std::string toText() const;
     virtual void toWire(OutputBuffer& buffer) const;
