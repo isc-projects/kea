@@ -184,7 +184,8 @@ Element::find(const std::string& identifier UNUSED_PARAM,
 
 namespace {
 inline void
-throwJSONError(const std::string& error, const std::string& file, int line, int pos)
+throwJSONError(const std::string& error, const std::string& file, int line,
+               int pos)
 {
     std::stringstream ss;
     ss << error << " in " + file + ":" << line << ":" << pos;
@@ -427,13 +428,15 @@ from_stringstream_null(std::istream &in, const std::string& file,
 }
 
 ElementPtr
-from_stringstream_string(std::istream& in, const std::string& file, int& line, int& pos)
+from_stringstream_string(std::istream& in, const std::string& file, int& line,
+                         int& pos)
 {
     return (Element::create(str_from_stringstream(in, file, line, pos)));
 }
 
 ElementPtr
-from_stringstream_list(std::istream &in, const std::string& file, int& line, int& pos)
+from_stringstream_list(std::istream &in, const std::string& file, int& line,
+                       int& pos)
 {
     char c = 0;
     ElementPtr list = Element::createList();
@@ -484,8 +487,7 @@ from_stringstream_map(std::istream &in, const std::string& file, int& line,
 }
 
 std::string
-Element::typeToName(Element::types type)
-{
+Element::typeToName(Element::types type) {
     switch (type) {
     case Element::integer:
         return (std::string("integer"));
@@ -538,14 +540,16 @@ Element::fromJSON(std::istream& in) throw(JSONError) {
 }
 
 ElementPtr
-Element::fromJSON(std::istream& in, const std::string& file_name) throw(JSONError)
+Element::fromJSON(std::istream& in, const std::string& file_name)
+    throw(JSONError)
 {
     int line = 1, pos = 1;
     return (fromJSON(in, file_name, line, pos));
 }
 
 ElementPtr
-Element::fromJSON(std::istream &in, const std::string& file, int& line, int& pos) throw(JSONError)
+Element::fromJSON(std::istream &in, const std::string& file, int& line,
+                  int& pos) throw(JSONError)
 {
     char c = 0;
     ElementPtr element;

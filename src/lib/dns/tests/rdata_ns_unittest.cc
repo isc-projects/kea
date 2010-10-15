@@ -50,8 +50,7 @@ const uint8_t wiredata_ns2[] = {
     // compressed.
     0x03, 0x6e, 0x73, 0x32, 0xc0, 0x03 };
 
-TEST_F(Rdata_NS_Test, createFromText)
-{
+TEST_F(Rdata_NS_Test, createFromText) {
     EXPECT_EQ(0, rdata_ns.compare(generic::NS("ns.example.com")));
     // explicitly add a trailing dot.  should be the same RDATA.
     EXPECT_EQ(0, rdata_ns.compare(generic::NS("ns.example.com.")));
@@ -63,8 +62,7 @@ TEST_F(Rdata_NS_Test, createFromText)
                                                "ns.example.com")));
 }
 
-TEST_F(Rdata_NS_Test, createFromWire)
-{
+TEST_F(Rdata_NS_Test, createFromWire) {
     EXPECT_EQ(0, rdata_ns.compare(
                   *rdataFactoryFromFile(RRType("NS"), RRClass("IN"),
                                         "rdata_ns_fromWire")));
@@ -89,16 +87,14 @@ TEST_F(Rdata_NS_Test, createFromWire)
                  InvalidRdataLength);
 }
 
-TEST_F(Rdata_NS_Test, toWireBuffer)
-{
+TEST_F(Rdata_NS_Test, toWireBuffer) {
     rdata_ns.toWire(obuffer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         obuffer.getData(), obuffer.getLength(),
                         wiredata_ns, sizeof(wiredata_ns));
 }
 
-TEST_F(Rdata_NS_Test, toWireRenderer)
-{
+TEST_F(Rdata_NS_Test, toWireRenderer) {
     rdata_ns.toWire(renderer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         obuffer.getData(), obuffer.getLength(),
@@ -109,21 +105,18 @@ TEST_F(Rdata_NS_Test, toWireRenderer)
                         wiredata_ns2, sizeof(wiredata_ns2));
 }
 
-TEST_F(Rdata_NS_Test, toText)
-{
+TEST_F(Rdata_NS_Test, toText) {
     EXPECT_EQ("ns.example.com.", rdata_ns.toText());
 }
 
-TEST_F(Rdata_NS_Test, compare)
-{
+TEST_F(Rdata_NS_Test, compare) {
     generic::NS small("a.example");
     generic::NS large("example");
     EXPECT_EQ(true, Name("a.example") > Name("example"));
     EXPECT_GT(0, small.compare(large));
 }
 
-TEST_F(Rdata_NS_Test, getNSName)
-{
+TEST_F(Rdata_NS_Test, getNSName) {
     EXPECT_EQ(Name("ns.example.com"), rdata_ns.getNSName());
 }
 }
