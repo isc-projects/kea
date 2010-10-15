@@ -16,7 +16,7 @@
 """Tests for the isc.net.addr module."""
 import unittest
 import socket
-from isc.net.addr import IPAddr
+from isc.net.addr import IPAddr, InvalidAddress
 
 class TestIPAddr(unittest.TestCase):
     """Test for the IPAddr class."""
@@ -34,15 +34,15 @@ class TestIPAddr(unittest.TestCase):
 
     def test_badaddr(self):
         """Test if we raise on wrong address."""
-        self.assertRaises(socket.error, IPAddr, 'foobar')
-        self.assertRaises(socket.error, IPAddr, 'foo::bar')
-        self.assertRaises(socket.error, IPAddr, '123')
-        self.assertRaises(socket.error, IPAddr, '123.456.789.0')
-        self.assertRaises(socket.error, IPAddr, '127/8')
-        self.assertRaises(socket.error, IPAddr, '0/0')
-        self.assertRaises(socket.error, IPAddr, '1.2.3.4/32')
-        self.assertRaises(socket.error, IPAddr, '0')
-        self.assertRaises(socket.error, IPAddr, '')
+        self.assertRaises(InvalidAddress, IPAddr, 'foobar')
+        self.assertRaises(InvalidAddress, IPAddr, 'foo::bar')
+        self.assertRaises(InvalidAddress, IPAddr, '123')
+        self.assertRaises(InvalidAddress, IPAddr, '123.456.789.0')
+        self.assertRaises(InvalidAddress, IPAddr, '127/8')
+        self.assertRaises(InvalidAddress, IPAddr, '0/0')
+        self.assertRaises(InvalidAddress, IPAddr, '1.2.3.4/32')
+        self.assertRaises(InvalidAddress, IPAddr, '0')
+        self.assertRaises(InvalidAddress, IPAddr, '')
 
 if __name__ == '__main__':
     unittest.main()
