@@ -29,7 +29,7 @@ import random
 from optparse import OptionParser, OptionValueError
 from isc.config.ccsession import *
 from isc.notify import notify_out
-import isc.net.check
+import isc.net.parse
 import isc.utils.process
 try:
     from pydnspp import *
@@ -402,13 +402,12 @@ class Xfrin:
     def config_handler(self, new_config):
         self._max_transfers_in = new_config.get("transfers_in") or self._max_transfers_in
         if ('master_addr' in new_config) or ('master_port' in new_config):
-            # Check if the new master is valid, there should be library for check it.
-            # and user should change the port and address together.
+            # User should change the port and address together.
             try:
                 addr = new_config.get('master_addr') or self._master_addr
                 port = new_config.get('master_port') or self._master_port
-                isc.net.check.addr_check(addr)
-                isc.net.check.port_check(port)
+                isc.net.parse.addr_parse(addr)
+                isc.net.parse.port_parse(port)
                 self._master_addr = addr
                 self._master_port = port
             except ValueError:
@@ -568,8 +567,8 @@ def build_addr_info(addrstr, portstr):
     (address, port). The socktype is socket.SOCK_STREAM for now.
     """
     try:
-        port = isc.net.check.port_check(portstr)
-        addr = isc.net.check.addr_check(addrstr)
+        port = isc.net.parse.port_parse(portstr)
+        addr = isc.net.parse.addr_parse(addrstr)
         return (addr.family, socket.SOCK_STREAM, (addrstr, port))
     except ValueError as err:
         raise XfrinException("failed to resolve master address/port=%s/%s: %s" %

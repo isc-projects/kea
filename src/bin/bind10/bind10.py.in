@@ -63,7 +63,7 @@ import pwd
 import posix
 
 import isc.cc
-import isc.net.check
+import isc.net.parse
 import isc.utils.process
 
 # Assign this process some longer name
@@ -582,7 +582,7 @@ def check_port(option, opt_str, value, parser):
     a valid port number. Used by OptionParser() on startup."""
     try:
         if opt_str in ['-p', '--port']:
-            parser.values.auth_port = isc.net.check.port_check(value)
+            parser.values.auth_port = isc.net.parse.port_parse(value)
         else:
             raise OptionValueError("Unknown option " + opt_str)
     except ValueError as e:
@@ -593,7 +593,7 @@ def check_addr(option, opt_str, value, parser):
     a valid address. Used by OptionParser() on startup."""
     try:
         if opt_str in ['-a', '--address']:
-            parser.values.address = isc.net.check.addr_check(value)
+            parser.values.address = isc.net.parse.addr_parse(value)
         else:
             raise OptionValueError("Unknown option " + opt_str)
     except ValueError:

@@ -1,4 +1,4 @@
-PYTESTS = addr_test.py check_test.py
+PYTESTS = addr_test.py parse_test.py
 EXTRA_DIST = $(PYTESTS)
 
 # later will have configure option to choose this, like: coverage run --branch

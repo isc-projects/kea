@@ -20,7 +20,7 @@ Checking and parsing of ports and IP addresses.
 from isc.net.addr import IPAddr
 import socket
 
-def port_check(port):
+def port_parse(port):
     """
     Takes a port as an int or string and checks if it is valid. It returns
     the port as int. If it is not a valid port (the string doesn't contain
@@ -35,7 +35,7 @@ def port_check(port):
             " too large, allowed range is 0-65535")
     return inted
 
-def addr_check(addr):
+def addr_parse(addr):
     """
     Checks and parses an IP address (either IPv4 or IPv6) and returns
     the IPAddr object. It raises ValueError if the passed string is not
