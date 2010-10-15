@@ -129,12 +129,13 @@ def import_definitions(classcode2txt, typecode2txt, typeandclass):
     global rdatadef_mtime
     global rdatahdr_mtime
 
+    if classdir_mtime < getmtime('@srcdir@/rdata'):
+        classdir_mtime = getmtime('@srcdir@/rdata')
+
     for dir in list(os.listdir('@srcdir@/rdata')):
         classdir = '@srcdir@/rdata' + os.sep + dir
         m = re_typecode.match(dir)
         if os.path.isdir(classdir) and (m != None or dir == 'generic'):
-            if classdir_mtime < getmtime(classdir):
-                classdir_mtime = getmtime(classdir)
             if dir == 'generic':
                 class_txt = 'generic'
                 class_code = generic_code
@@ -283,9 +284,7 @@ if __name__ == "__main__":
         generate_rdatadef('@builddir@/rdataclass.cc', rdatadef_mtime)
         generate_rdatahdr('@builddir@/rdataclass.h', rdata_declarations,
                           rdatahdr_mtime)
-        generate_typeclasscode('rrtype',
-                               max(rdatadef_mtime, rdatahdr_mtime),
-                               typecode2txt, 'Type')
+        generate_typeclasscode('rrtype', rdatahdr_mtime, typecode2txt, 'Type')
         generate_typeclasscode('rrclass', classdir_mtime,
                                classcode2txt, 'Class')
         generate_rrparam('rrparamregistry', rdatahdr_mtime)
