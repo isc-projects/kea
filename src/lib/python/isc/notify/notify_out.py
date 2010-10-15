@@ -164,8 +164,7 @@ class NotifyOut:
                     self._zone_notify_handler(not_replied_zones[name_], _EVENT_TIMEOUT)
 
     def dispatcher(self, daemon=False):
-        """
-        Spawns a thread that will handle notify related events.
+        """Spawns a thread that will handle notify related events.
 
         If one zone get the notify reply before timeout, call the
         handle to process the reply. If one zone can't get the notify
@@ -200,9 +199,7 @@ class NotifyOut:
         return self._thread
 
     def shutdown(self):
-        """
-        Stop the dispatcher() thread. Blocks until the thread stopped.
-        """
+        """Stop the dispatcher() thread. Blocks until the thread stopped."""
 
         if not self._serving:
             raise RuntimeError('Tried to stop while not running')
