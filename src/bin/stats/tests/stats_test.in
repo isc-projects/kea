@@ -18,7 +18,7 @@
 PYTHON_EXEC=${PYTHON_EXEC:-@PYTHON@}
 export PYTHON_EXEC
 
-PYTHONPATH=@abs_top_builddir@/src/lib/python:@abs_top_srcdir@/src/bin/stats
+PYTHONPATH=@abs_top_builddir@/src/lib/python:@abs_top_srcdir@/src/bin/stats:@abs_top_srcdir@/src/bin/stats/tests
 export PYTHONPATH
 
 B10_FROM_BUILD=@abs_top_builddir@
