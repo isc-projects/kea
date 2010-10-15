@@ -16,12 +16,20 @@
 """Module where address representations live."""
 import socket
 
+class InvalidAddress(ValueError):
+    """Exception for invalid addresses."""
+    pass
+
 class IPAddr:
     """Stores an IPv4 or IPv6 address."""
     family = None
     addr = None
 
     def __init__(self, addr):
+        """
+        Creates the address object from a string representation. It raises
+        an InvalidAddr exception if the provided string isn't valid address.
+        """
         try:
             a = socket.inet_pton(socket.AF_INET, addr)
             self.family = socket.AF_INET
@@ -35,8 +43,8 @@ class IPAddr:
             self.family = socket.AF_INET6
             self.addr = a
             return
-        except Exception as e:
-            raise e
+        except socket.error as e:
+            raise InvalidAddress(str(e))
 
     def __str__(self):
         return socket.inet_ntop(self.family, self.addr)

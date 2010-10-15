@@ -17,7 +17,7 @@
 Checking and parsing of ports and IP addresses.
 """
 
-from isc.net.addr import IPAddr
+from isc.net.addr import IPAddr, InvalidAddress
 import socket
 
 def port_parse(port):
@@ -43,6 +43,6 @@ def addr_parse(addr):
     """
     try:
         return IPAddr(addr)
-    except socket.error:
+    except InvalidAddress:
         raise ValueError('Value ' + addr +
             ' is not valid IPv4 or IPv6 address')
