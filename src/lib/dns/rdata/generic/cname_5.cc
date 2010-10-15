@@ -49,34 +49,29 @@ CNAME::CNAME(const Name& cname) :
 {}
 
 void
-CNAME::toWire(OutputBuffer& buffer) const
-{
+CNAME::toWire(OutputBuffer& buffer) const {
     cname_.toWire(buffer);
 }
 
 void
-CNAME::toWire(MessageRenderer& renderer) const
-{
+CNAME::toWire(MessageRenderer& renderer) const {
     renderer.writeName(cname_);
 }
 
 string
-CNAME::toText() const
-{
+CNAME::toText() const {
     return (cname_.toText());
 }
 
 int
-CNAME::compare(const Rdata& other) const
-{
+CNAME::compare(const Rdata& other) const {
     const CNAME& other_cname = dynamic_cast<const CNAME&>(other);
 
     return (compareNames(cname_, other_cname.cname_));
 }
 
 const Name&
-CNAME::getCname() const
-{
+CNAME::getCname() const {
     return (cname_);
 }
 

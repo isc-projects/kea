@@ -50,8 +50,7 @@ const uint8_t wiredata_dname2[] = {
     // compressed.
     0x03, 0x64, 0x6e, 0x32, 0xc0, 0x03 };
 
-TEST_F(Rdata_DNAME_Test, createFromText)
-{
+TEST_F(Rdata_DNAME_Test, createFromText) {
     EXPECT_EQ(0, rdata_dname.compare(generic::DNAME("dn.example.com")));
     // explicitly add a trailing dot.  should be the same RDATA.
     EXPECT_EQ(0, rdata_dname.compare(generic::DNAME("dn.example.com.")));
@@ -64,8 +63,7 @@ TEST_F(Rdata_DNAME_Test, createFromText)
                                                   "dn.example.com")));
 }
 
-TEST_F(Rdata_DNAME_Test, createFromWire)
-{
+TEST_F(Rdata_DNAME_Test, createFromWire) {
     EXPECT_EQ(0, rdata_dname.compare(
                   *rdataFactoryFromFile(RRType("DNAME"), RRClass("IN"),
                                         "rdata_dname_fromWire")));
@@ -90,16 +88,14 @@ TEST_F(Rdata_DNAME_Test, createFromWire)
                  InvalidRdataLength);
 }
 
-TEST_F(Rdata_DNAME_Test, toWireBuffer)
-{
+TEST_F(Rdata_DNAME_Test, toWireBuffer) {
     rdata_dname.toWire(obuffer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         obuffer.getData(), obuffer.getLength(),
                         wiredata_dname, sizeof(wiredata_dname));
 }
 
-TEST_F(Rdata_DNAME_Test, toWireRenderer)
-{
+TEST_F(Rdata_DNAME_Test, toWireRenderer) {
     rdata_dname.toWire(renderer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         obuffer.getData(), obuffer.getLength(),
@@ -110,13 +106,11 @@ TEST_F(Rdata_DNAME_Test, toWireRenderer)
                         wiredata_dname2, sizeof(wiredata_dname2));
 }
 
-TEST_F(Rdata_DNAME_Test, toText)
-{
+TEST_F(Rdata_DNAME_Test, toText) {
     EXPECT_EQ("dn.example.com.", rdata_dname.toText());
 }
 
-TEST_F(Rdata_DNAME_Test, getDname)
-{
+TEST_F(Rdata_DNAME_Test, getDname) {
     EXPECT_EQ(Name("dn.example.com."), rdata_dname.getDname());
 }
 }

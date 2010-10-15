@@ -219,8 +219,7 @@ def generate_typeclasscode(fileprefix, basemtime, code2txt, type_or_class):
         codetxt = code2txt[code].upper()
         declarationtxt += ' ' * 4 + 'static const RR' + cap_key + '& ' + codetxt + '();\n'
         deftxt += '''inline const RR''' + cap_key + '''&
-RR''' + cap_key + '''::''' + codetxt + '''()
-{
+RR''' + cap_key + '''::''' + codetxt + '''() {
     static RR''' + cap_key + ''' ''' + lower_key + '''(''' + code + ''');
     return (''' + lower_key + ''');
 }\n

@@ -51,8 +51,7 @@ const uint8_t RRTypeTest::wiredata[] = { 0x00, 0x01, 0x00, 0x80, 0x08,
                                          0x00, 0x80, 0x00, 0xff, 0xff };
 
 RRType
-RRTypeTest::rrtypeFactoryFromWire(const char* datafile)
-{
+RRTypeTest::rrtypeFactoryFromWire(const char* datafile) {
     std::vector<unsigned char> data;
     UnitTestUtil::readWireData(datafile, data);
 
@@ -61,8 +60,7 @@ RRTypeTest::rrtypeFactoryFromWire(const char* datafile)
     return (RRType(buffer));
 }
 
-TEST_F(RRTypeTest, fromText)
-{
+TEST_F(RRTypeTest, fromText) {
     EXPECT_EQ("A", RRType("A").toText());
     EXPECT_EQ("NS", RRType("NS").toText());
 
@@ -85,29 +83,25 @@ TEST_F(RRTypeTest, fromText)
     EXPECT_THROW(RRType("TYPE65000 "), InvalidRRType);
 }
 
-TEST_F(RRTypeTest, fromWire)
-{
+TEST_F(RRTypeTest, fromWire) {
     EXPECT_EQ(0x1234,
               rrtypeFactoryFromWire("rrcode16_fromWire1").getCode());
     EXPECT_THROW(rrtypeFactoryFromWire("rrcode16_fromWire2"), IncompleteRRType);
 }
 
 // from string, lower case
-TEST_F(RRTypeTest, caseConstruct)
-{
+TEST_F(RRTypeTest, caseConstruct) {
     EXPECT_EQ("A", RRType("a").toText());
     EXPECT_EQ("NS", RRType("ns").toText());
     EXPECT_EQ("TYPE65535", RRType("type65535").toText());
 }
 
-TEST_F(RRTypeTest, toText)
-{
+TEST_F(RRTypeTest, toText) {
     EXPECT_EQ("A", RRType(1).toText());
     EXPECT_EQ("TYPE65000", RRType(65000).toText());
 }
 
-TEST_F(RRTypeTest, toWireBuffer)
-{
+TEST_F(RRTypeTest, toWireBuffer) {
     rrtype_1.toWire(obuffer);
     rrtype_0x80.toWire(obuffer);
     rrtype_0x800.toWire(obuffer);
@@ -119,8 +113,7 @@ TEST_F(RRTypeTest, toWireBuffer)
                         wiredata, sizeof(wiredata));
 }
 
-TEST_F(RRTypeTest, toWireRenderer)
-{
+TEST_F(RRTypeTest, toWireRenderer) {
     rrtype_1.toWire(renderer);
     rrtype_0x80.toWire(renderer);
     rrtype_0x800.toWire(renderer);
@@ -132,14 +125,12 @@ TEST_F(RRTypeTest, toWireRenderer)
                         wiredata, sizeof(wiredata));
 }
 
-TEST_F(RRTypeTest, wellKnownTypes)
-{
+TEST_F(RRTypeTest, wellKnownTypes) {
     EXPECT_EQ(1, RRType::A().getCode());
     EXPECT_EQ("A", RRType::A().toText());
 }
 
-TEST_F(RRTypeTest, compare)
-{
+TEST_F(RRTypeTest, compare) {
     EXPECT_TRUE(RRType(1) == RRType("A"));
     EXPECT_TRUE(RRType(1).equals(RRType("A")));
     EXPECT_TRUE(RRType(0) != RRType("A"));
@@ -150,8 +141,7 @@ TEST_F(RRTypeTest, compare)
 }
 
 // test operator<<.  We simply confirm it appends the result of toText().
-TEST_F(RRTypeTest, LeftShiftOperator)
-{
+TEST_F(RRTypeTest, LeftShiftOperator) {
     ostringstream oss;
     oss << RRType::A();
     EXPECT_EQ(RRType::A().toText(), oss.str());

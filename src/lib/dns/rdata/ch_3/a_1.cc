@@ -30,13 +30,11 @@ using namespace std;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
-A::A(const string& addrstr UNUSED_PARAM)
-{
+A::A(const string& addrstr UNUSED_PARAM) {
     // TBD
 }
 
-A::A(InputBuffer& buffer UNUSED_PARAM, size_t rdata_len UNUSED_PARAM)
-{
+A::A(InputBuffer& buffer UNUSED_PARAM, size_t rdata_len UNUSED_PARAM) {
     // TBD
 }
 
@@ -45,27 +43,23 @@ A::A(const A& source UNUSED_PARAM) : Rdata() {
 }
 
 void
-A::toWire(OutputBuffer& buffer UNUSED_PARAM) const
-{
+A::toWire(OutputBuffer& buffer UNUSED_PARAM) const {
     // TBD
 }
 
 void
-A::toWire(MessageRenderer& renderer UNUSED_PARAM) const
-{
+A::toWire(MessageRenderer& renderer UNUSED_PARAM) const {
     // TBD
 }
 
 string
-A::toText() const
-{
+A::toText() const {
     // TBD
     isc_throw(InvalidRdataText, "Not implemented yet");
 }
 
 int
-A::compare(const Rdata& other UNUSED_PARAM) const
-{
+A::compare(const Rdata& other UNUSED_PARAM) const {
     return (0);                 // dummy.  TBD
 }
 
