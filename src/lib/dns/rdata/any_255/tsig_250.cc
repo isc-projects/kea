@@ -440,7 +440,7 @@ TSIG::compare(const Rdata& other) const {
     if (impl_->error_ != other_tsig.impl_->error_) {
         return (impl_->error_ < other_tsig.impl_->error_ ? -1 : 1);
     }
-    return (vectorComp(impl_->other_data_, other_tsig.impl_->other_data_)); 
+    return (vectorComp(impl_->other_data_, other_tsig.impl_->other_data_));
 }
 
 const Name&

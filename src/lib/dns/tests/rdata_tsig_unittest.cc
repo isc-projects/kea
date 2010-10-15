@@ -353,7 +353,7 @@ TEST_F(Rdata_TSIG_Test, compare) {
     compare_set.push_back(any::TSIG("example 1 600 3 FAKE 16021 1 3 FAKE"));
 
     EXPECT_EQ(0, compare_set[0].compare(
-                  any::TSIG("A.EXAMPLE 0 300 0 16020 0 0"))); 
+                  any::TSIG("A.EXAMPLE 0 300 0 16020 0 0")));
 
     vector<any::TSIG>::const_iterator it;
     vector<any::TSIG>::const_iterator it_end = compare_set.end();
