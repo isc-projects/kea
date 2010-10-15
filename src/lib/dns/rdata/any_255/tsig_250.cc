@@ -35,7 +35,7 @@ using namespace boost;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
-// This is a straightforward representation of TSIG RDATA fields.
+/// This is a straightforward representation of TSIG RDATA fields.
 struct TSIG::TSIGImpl {
     TSIGImpl(const Name& algorithm, uint64_t time_signed, uint16_t fudge,
              vector<uint8_t>& mac, uint16_t original_id, uint16_t error,
@@ -103,7 +103,47 @@ tokenToNum(const string& num_token) {
 }
 }
 
-/// \brief Constructor from string
+/// \brief Constructor from string.
+///
+/// \c tsig_str must be formatted as follows:
+/// \code <Alg> <Time> <Fudge> <MACsize> [<MAC>] <OrigID> <Error> <OtherLen> [<OtherData>]
+/// \endcode
+/// where
+/// - <Alg> is a valid textual representation of domain name.
+/// - <Time> is an unsigned 48-bit decimal integer.
+/// - <MACSize>, <OrigID>, and <OtherLen> are an unsigned 16-bit decimal
+///   integer.
+/// - <Error> is an unsigned 16-bit decimal integer or a valid mnemonic for
+///   the Error field specified in RFC2845.  Currently, "BADSIG", "BADKEY",
+///   and "BADTIME" are supported (case sensitive).  In future versions
+///   other representations that are compatible with the DNS RCODE will be
+///   supported.
+/// - <MAC> and <OtherData> is a BASE-64 encoded string that does not contain
+///   space characters.
+///   When <MACSize> and <OtherLen> is 0, <MAC> and <OtherData> must not
+///   appear %in \c tsgi_str, respectively.
+/// - The decoded %data of <MAC> is <MACSize> bytes of binary stream.
+/// - The decoded %data of <OtherData> is <OtherLen> bytes of binary stream.
+///
+/// An example of valid string is:
+/// \code "hmac-sha256. 853804800 300 3 AAAA 2845 0 0" \endcode
+/// In this example <OtherData> is missing because <OtherLen> is 0.
+///
+/// Note that RFC2845 does not define the standard presentation format
+/// of %TSIG RR, so the above syntax is implementation specific.
+/// This is, however, compatible with the format acceptable to BIND 9's
+/// RDATA parser.
+///
+/// <b>Exceptions</b>
+///
+/// If <Alg> is not a valid domain name, a corresponding exception from
+/// the \c Name class will be thrown;
+/// if <MAC> or <OtherData> is not validly encoded %in BASE-64, an exception
+/// of class \c isc::BadValue will be thrown;
+/// if %any of the other bullet points above is not met, an exception of
+/// class \c InvalidRdataText will be thrown.
+/// This constructor internally involves resource allocation, and if it fails
+/// a corresponding standard exception will be thrown.
 TSIG::TSIG(const std::string& tsig_str) : impl_(NULL) {
     istringstream iss(tsig_str);
 
@@ -124,8 +164,10 @@ TSIG::TSIG(const std::string& tsig_str) : impl_(NULL) {
 
     const string error_txt = getToken(iss, tsig_str);
     int32_t error = 0;
+    // XXX: In the initial implementation we hardcode the mnemonics.
+    // We'll soon generalize this.
     if (error_txt == "BADSIG") {
-        error = 16;             // FIXIT: hardcode
+        error = 16;
     } else if (error_txt == "BADKEY") {
         error = 17;
     } else if (error_txt == "BADTIME") {
@@ -148,10 +190,27 @@ TSIG::TSIG(const std::string& tsig_str) : impl_(NULL) {
                          error, other_data);
 }
 
+/// \brief Constructor from wire-format %data.
+///
+/// When a read operation on \c buffer fails (e.g., due to a corrupted
+/// message) a corresponding exception from the \c InputBuffer class will
+/// be thrown.
+/// If the wire-format %data does not begin with a valid domain name,
+/// a corresponding exception from the \c Name class will be thrown.
+/// In addition, this constructor internally involves resource allocation,
+/// and if it fails a corresponding standard exception will be thrown.
+///
+/// According to RFC3597, the Algorithm field must be a non compressed form
+/// of domain name.  But this implementation accepts a %TSIG RR even if that
+/// field is compressed.
+///
+/// \param buffer A buffer storing the wire format %data.
+/// \param rdata_len The length of the RDATA %in bytes, normally expected
+/// to be the value of the RDLENGTH field of the corresponding RR.
+/// But this constructor does not use this parameter; if necessary, the caller
+/// must check consistency between the length parameter and the actual
+/// RDATA length.
 TSIG::TSIG(InputBuffer& buffer, size_t rdata_len UNUSED_PARAM) : impl_(NULL) {
-    // we don't need rdata_len for parsing.  if necessary, the caller will
-    // check consistency.
-
     Name algorithm(buffer);
 
     uint8_t time_signed_buf[6];
@@ -186,8 +245,8 @@ TSIG::TSIG(InputBuffer& buffer, size_t rdata_len UNUSED_PARAM) : impl_(NULL) {
 }
 
 TSIG::TSIG(const Name& algorithm, uint64_t time_signed, uint16_t fudge,
-           size_t mac_size, const void* mac, uint16_t original_id,
-           uint16_t error, size_t other_len, const void* other_data) :
+           uint16_t mac_size, const void* mac, uint16_t original_id,
+           uint16_t error, uint16_t other_len, const void* other_data) :
     impl_(NULL)
 {
     if (time_signed > 0xffffffffffff) {
@@ -206,6 +265,11 @@ TSIG::TSIG(const Name& algorithm, uint64_t time_signed, uint16_t fudge,
                          original_id, error, other_len, other_data);
 }
 
+/// \brief The copy constructor.
+///
+/// It internally allocates a resource, and if it fails a corresponding
+/// standard exception will be thrown.
+/// This constructor never throws an exception otherwise.
 TSIG::TSIG(const TSIG& source) : Rdata(), impl_(new TSIGImpl(*source.impl_))
 {}
 
@@ -226,6 +290,15 @@ TSIG::~TSIG() {
     delete impl_;
 }
 
+/// \brief Convert the \c TSIG to a string.
+///
+/// The output of this method is formatted as described %in the "from string"
+/// constructor (\c TSIG(const std::string&))).
+///
+/// If internal resource allocation fails, a corresponding
+/// standard exception will be thrown.
+///
+/// \return A \c string object that represents the \c TSIG object.
 std::string
 TSIG::toText() const {
     string result;
@@ -255,6 +328,8 @@ TSIG::toText() const {
     return (result);
 }
 
+// Common sequence of toWire() operations used for the two versions of
+// toWire().
 template <typename Output>
 void
 toWireCommon(const TSIG::TSIGImpl& impl, Output& output) {
@@ -275,18 +350,40 @@ toWireCommon(const TSIG::TSIGImpl& impl, Output& output) {
     }
 }
 
+/// \brief Render the \c TSIG in the wire format without name compression.
+///
+/// If internal resource allocation fails, a corresponding
+/// standard exception will be thrown.
+/// This method never throws an exception otherwise.
+///
+/// \param buffer An output buffer to store the wire data.
 void
 TSIG::toWire(OutputBuffer& buffer) const {
     impl_->algorithm_.toWire(buffer);
     toWireCommon<OutputBuffer>(*impl_, buffer);
 }
 
+/// \brief Render the \c TSIG in the wire format with taking into account
+/// compression.
+///
+/// As specified %in RFC3597, the Algorithm field (a domain name) will not
+/// be compressed.  However, the domain name could be a target of compression
+/// of other compressible names (though pretty unlikely), the offset
+/// information of the algorithm name may be recorded %in \c renderer.
+///
+/// If internal resource allocation fails, a corresponding
+/// standard exception will be thrown.
+/// This method never throws an exception otherwise.
+///
+/// \param renderer DNS message rendering context that encapsulates the
+/// output buffer and name compression information.
 void
 TSIG::toWire(MessageRenderer& renderer) const {
     renderer.writeName(impl_->algorithm_, false);
     toWireCommon<MessageRenderer>(*impl_, renderer);
 }
 
+// A helper function commonly used for TSIG::compare().
 int
 vectorComp(const vector<uint8_t>& v1, const vector<uint8_t>& v2) {
     const size_t this_size = v1.size();
@@ -300,6 +397,23 @@ vectorComp(const vector<uint8_t>& v1, const vector<uint8_t>& v2) {
     return (0);
 }
 
+/// \brief Compare two instances of \c TSIG RDATA.
+///
+/// This method compares \c this and the \c other \c TSIG objects
+/// %in terms of the DNSSEC sorting order as defined %in RFC4034, and returns
+/// the result as an integer.
+///
+/// This method is expected to be used %in a polymorphic way, and the
+/// parameter to compare against is therefore of the abstract \c Rdata class.
+/// However, comparing two \c Rdata objects of different RR types
+/// is meaningless, and \c other must point to a \c TSIG object;
+/// otherwise, the standard \c bad_cast exception will be thrown.
+/// This method never throws an exception otherwise.
+///
+/// \param other the right-hand operand to compare against.
+/// \return < 0 if \c this would be sorted before \c other.
+/// \return 0 if \c this is identical to \c other in terms of sorting order.
+/// \return > 0 if \c this would be sorted after \c other.
 int
 TSIG::compare(const Rdata& other) const {
     const TSIG& other_tsig = dynamic_cast<const TSIG&>(other);
