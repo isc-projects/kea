@@ -12,6 +12,7 @@ EXTRA_DIST += rrtype-placeholder.h
 
 # TODO: double-check that this is the only way
 # NOTE: when an rdata file is added, please also add to this list:
+EXTRA_DIST += rdata/any/tsig_250.cc
 EXTRA_DIST += rdata/in_1/aaaa_28.cc
 EXTRA_DIST += rdata/in_1/aaaa_28.h
 EXTRA_DIST += rdata/in_1/a_1.cc

@@ -244,14 +244,12 @@ public:
     // END_WELL_KNOWN_CLASS_DECLARATIONS
     
     static const RRClass& NONE();
-    static const RRClass& ANY();
 
 private:
     // \brief Meta-classes
     enum {
         RRCLASS_RESERVED0 = 0,
-        RRCLASS_NONE = 254,
-        RRCLASS_ANY = 255
+        RRCLASS_NONE = 254
     };
     uint16_t classcode_;
 };
@@ -263,14 +261,6 @@ inline const RRClass&
 RRClass::NONE()
 {
     static RRClass rrclass(RRCLASS_NONE);
-
-    return (rrclass);
-}
-
-inline const RRClass&
-RRClass::ANY()
-{
-    static RRClass rrclass(RRCLASS_ANY);
 
     return (rrclass);
 }
