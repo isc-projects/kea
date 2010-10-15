@@ -73,6 +73,9 @@ isc.utils.process.rename(sys.argv[0])
 # number, and the overall BIND 10 version number (set in configure.ac).
 VERSION = "bind10 20100916 (BIND 10 @PACKAGE_VERSION@)"
 
+# This is for bind10.boottime of stats module
+_BASETIME = time.gmtime()
+
 class RestartSchedule:
     """
 Keeps state when restarting something (in this case, a process).
@@ -424,6 +427,27 @@ class BoB:
             sys.stdout.write("[bind10] Started b10-zonemgr(PID %d)\n" % 
                              zonemgr.pid)
 
+        # start b10-stats
+        stats_args = ['b10-stats']
+        if self.verbose:
+            sys.stdout.write("[bind10] Starting b10-stats\n")
+            stats_args += ['-v']
+        try:
+            statsd = ProcessInfo("b10-stats", stats_args,
+                                 c_channel_env)
+        except Exception as e:
+            c_channel.process.kill()
+            bind_cfgd.process.kill()
+            xfrout.process.kill()
+            auth.process.kill()
+            xfrind.process.kill()
+            zonemgr.process.kill()
+            return "Unable to start b10-stats; " + str(e)
+
+        self.processes[statsd.pid] = statsd
+        if self.verbose:
+            sys.stdout.write("[bind10] Started b10-stats (PID %d)\n" % statsd.pid)
+
         # start the b10-cmdctl
         # XXX: we hardcode port 8080
         cmdctl_args = ['b10-cmdctl']
@@ -440,6 +464,7 @@ class BoB:
             auth.process.kill()
             xfrind.process.kill()
             zonemgr.process.kill()
+            statsd.process.kill()
             return "Unable to start b10-cmdctl; " + str(e)
         self.processes[cmd_ctrld.pid] = cmd_ctrld
         if self.verbose:
@@ -459,6 +484,7 @@ class BoB:
         self.cc_session.group_sendmsg(cmd, "Boss", "Xfrout")
         self.cc_session.group_sendmsg(cmd, "Boss", "Xfrin")
         self.cc_session.group_sendmsg(cmd, "Boss", "Zonemgr")
+        self.cc_session.group_sendmsg(cmd, "Boss", "Stats")
 
     def stop_process(self, process):
         """Stop the given process, friendly-like."""
@@ -722,6 +748,17 @@ def main():
         sys.stderr.write("[bind10] Error on startup: %s\n" % startup_result)
         sys.exit(1)
     sys.stdout.write("[bind10] BIND 10 started\n")
+
+    # send "bind10.boot_time" to b10-stats
+    time.sleep(1) # wait a second
+    if options.verbose:
+        sys.stdout.write("[bind10] send \"bind10.boot_time\" to b10-stats\n")
+    cmd = isc.config.ccsession.create_command('set', 
+            { "stats_data": {
+              'bind10.boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', _BASETIME)
+              }
+            })
+    boss_of_bind.cc_session.group_sendmsg(cmd, 'Stats')
 
     # In our main loop, we check for dead processes or messages 
     # on the c-channel.
