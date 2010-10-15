@@ -1,5 +1,5 @@
 PYTESTS = b10-stats_test.py b10-stats_stub_test.py
-EXTRA_DIST = $(PYTESTS)
+EXTRA_DIST = $(PYTESTS) fake_time.py isc testdata
 CLEANFILES = fake_time.pyc
 
 # later will have configure option to choose this, like: coverage run --branch
