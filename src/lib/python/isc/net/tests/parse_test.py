@@ -15,6 +15,7 @@
 
 """Tests for isc.net.parse."""
 import unittest
+import socket
 from isc.net.parse import port_parse, addr_parse
 
 class TestCheckPort(unittest.TestCase):
@@ -50,7 +51,13 @@ class TestCheckIP(unittest.TestCase):
         self.assertRaises(ValueError, addr_parse, "123.0.0.")
         # Address range not allowed
         self.assertRaises(ValueError, addr_parse, "192.0.2.0/24")
-        self.assertRaises(ValueError, addr_parse, "0000.0.0.0")
+        try:
+            # XXX: MacOS X's inet_pton() doesn't reject this form, so we
+            # check the behavior of the underlying library implementation
+            # before the actual test
+            socket.inet_pton(socket.AF_INET, "0000.0.0.0")
+        except socket.error:
+            self.assertRaises(ValueError, addr_parse, "0000.0.0.0")
         self.assertRaises(ValueError, addr_parse, "bada:ddr0::")
         self.assertRaises(ValueError, addr_parse, "2001:db8::/32")
         # This should be one part too long (eg. 9 segments)
@@ -72,6 +79,7 @@ class TestCheckIP(unittest.TestCase):
         # It should strip the unnecesarry parts
         self.assertEqual("2001:bd8::", str(addr_parse("2001:bd8:0:0:0:0:0:0")))
         self.assertEqual("::", str(addr_parse("::")))
+        self.assertEqual("2001:bd8::", str(addr_parse("2001:bd8::0.0.0.0")))
 
 if __name__ == "__main__":
     unittest.main()

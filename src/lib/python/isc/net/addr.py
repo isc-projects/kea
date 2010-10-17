@@ -17,13 +17,6 @@
 import socket
 import re
 
-# These regular expressions are not validating. They are supposed to
-# guess which kind of address it is and throw away just obvious nonsense.
-# It is expected that inet_pton will complain if it isn't an address, so
-# they can have false positives.
-isv4 = re.compile(r'^([0-9]{1,3}\.){3}[0-9]{1,3}$')
-isv6 = re.compile(r'^([0-9a-f]{,4}:){,7}[0-9a-f]{,4}$', re.IGNORECASE)
-
 class InvalidAddress(ValueError):
     """Exception for invalid addresses."""
     pass
@@ -39,17 +32,13 @@ class IPAddr:
         an InvalidAddr exception if the provided string isn't valid address.
         """
         try:
-            if isv4.match(addr):
-                a = socket.inet_pton(socket.AF_INET, addr)
-                self.family = socket.AF_INET
-                self.addr = a
-            elif isv6.match(addr):
-                a = socket.inet_pton(socket.AF_INET6, addr)
-                self.family = socket.AF_INET6
-                self.addr = a
-            else:
-                raise InvalidAddress(addr +
-                    ' is not a valid IPv4 nor IPv6 address')
+            addrinfo = socket.getaddrinfo(addr, None, 0, 0, 0,
+                socket.AI_NUMERICHOST)[0]
+            self.family = addrinfo[0]
+            if not self.family in [socket.AF_INET, socket.AF_INET6]:
+                raise InvalidAddress(
+                    'IPAddr can hold only IPv4 or IPv6 address')
+            self.addr = socket.inet_pton(self.family, addr)
         except socket.error as e:
             raise InvalidAddress(str(e))
 
