@@ -64,6 +64,10 @@ class TestCheckIP(unittest.TestCase):
         the same.
         """
         self.assertEqual("192.0.2.0", str(addr_parse("192.0.2.0")))
+        # The OS could return something else than canonical form, in which
+        # case the test would fail. However, I do not see an easy way to fix
+        # the test, so it is left this way unless someone finds an OS that
+        # does return something else.
         self.assertEqual("2001:bd8::", str(addr_parse("2001:bd8::")))
         # It should strip the unnecesarry parts
         self.assertEqual("2001:bd8::", str(addr_parse("2001:bd8:0:0:0:0:0:0")))
