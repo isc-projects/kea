@@ -113,7 +113,7 @@ class MessageRenderer;\n\n'''
         if re.match('\s+// BEGIN_COMMON_MEMBERS$', line):
             content += '''
     explicit ''' + type_utxt + '''(const std::string& type_str);
-    explicit ''' + type_utxt + '''(InputBuffer& buffer, size_t rdata_len);
+    ''' + type_utxt + '''(InputBuffer& buffer, size_t rdata_len);
     ''' + type_utxt + '''(const ''' + type_utxt + '''& other);
     virtual std::string toText() const;
     virtual void toWire(OutputBuffer& buffer) const;
@@ -129,12 +129,13 @@ def import_definitions(classcode2txt, typecode2txt, typeandclass):
     global rdatadef_mtime
     global rdatahdr_mtime
 
+    if classdir_mtime < getmtime('@srcdir@/rdata'):
+        classdir_mtime = getmtime('@srcdir@/rdata')
+
     for dir in list(os.listdir('@srcdir@/rdata')):
         classdir = '@srcdir@/rdata' + os.sep + dir
         m = re_typecode.match(dir)
         if os.path.isdir(classdir) and (m != None or dir == 'generic'):
-            if classdir_mtime < getmtime(classdir):
-                classdir_mtime = getmtime(classdir)
             if dir == 'generic':
                 class_txt = 'generic'
                 class_code = generic_code
@@ -219,8 +220,7 @@ def generate_typeclasscode(fileprefix, basemtime, code2txt, type_or_class):
         codetxt = code2txt[code].upper()
         declarationtxt += ' ' * 4 + 'static const RR' + cap_key + '& ' + codetxt + '();\n'
         deftxt += '''inline const RR''' + cap_key + '''&
-RR''' + cap_key + '''::''' + codetxt + '''()
-{
+RR''' + cap_key + '''::''' + codetxt + '''() {
     static RR''' + cap_key + ''' ''' + lower_key + '''(''' + code + ''');
     return (''' + lower_key + ''');
 }\n
@@ -284,9 +284,7 @@ if __name__ == "__main__":
         generate_rdatadef('@builddir@/rdataclass.cc', rdatadef_mtime)
         generate_rdatahdr('@builddir@/rdataclass.h', rdata_declarations,
                           rdatahdr_mtime)
-        generate_typeclasscode('rrtype',
-                               max(rdatadef_mtime, rdatahdr_mtime),
-                               typecode2txt, 'Type')
+        generate_typeclasscode('rrtype', rdatahdr_mtime, typecode2txt, 'Type')
         generate_typeclasscode('rrclass', classdir_mtime,
                                classcode2txt, 'Class')
         generate_rrparam('rrparamregistry', rdatahdr_mtime)

@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10-devel, 20100701, bind10-dev@isc.org)
+AC_INIT(bind10-devel, 20101013, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
@@ -261,7 +261,6 @@ AC_ARG_WITH(gtest,
 [  --with-gtest=PATH       specify a path to gtest header files (PATH/include) and library (PATH/lib)],
     gtest_path="$withval", gtest_path="no")
 
-
 USE_LCOV="no"
 if test "$lcov" != "no"; then
 	# force gtest if not set
@@ -435,7 +434,7 @@ if test "X$ac_cv_have_devpoll" = "Xyes" -a "X$GXX" = "Xyes"; then
 fi
 
 AC_ARG_ENABLE(man, [AC_HELP_STRING([--enable-man],
-  [regenerate man pages [default=no]])] ,enable_man=yes, enable_man=no)
+  [regenerate man pages [default=no]])], enable_man=yes, enable_man=no)
 
 AM_CONDITIONAL(ENABLE_MAN, test x$enable_man != xno)
 
@@ -474,6 +473,13 @@ AC_CONFIG_FILES([Makefile
                  src/bin/xfrout/tests/Makefile
                  src/bin/zonemgr/Makefile
                  src/bin/zonemgr/tests/Makefile
+                 src/bin/stats/Makefile
+                 src/bin/stats/tests/Makefile
+                 src/bin/stats/tests/isc/Makefile
+                 src/bin/stats/tests/isc/cc/Makefile
+                 src/bin/stats/tests/isc/config/Makefile
+                 src/bin/stats/tests/isc/utils/Makefile
+                 src/bin/stats/tests/testdata/Makefile
                  src/bin/usermgr/Makefile
                  src/bin/tests/Makefile
                  src/lib/Makefile
@@ -493,6 +499,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/python/isc/config/tests/Makefile
                  src/lib/python/isc/log/Makefile
                  src/lib/python/isc/log/tests/Makefile
+                 src/lib/python/isc/net/Makefile
+                 src/lib/python/isc/net/tests/Makefile
                  src/lib/python/isc/notify/Makefile
                  src/lib/python/isc/notify/tests/Makefile
                  src/lib/config/Makefile
@@ -521,7 +529,6 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/cmdctl/cmdctl.spec.pre
            src/bin/xfrin/tests/xfrin_test
            src/bin/xfrin/xfrin.py
-           src/bin/xfrin/xfrin.spec.pre
            src/bin/xfrin/run_b10-xfrin.sh
            src/bin/xfrout/xfrout.py
            src/bin/xfrout/xfrout.spec.pre
@@ -531,6 +538,12 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/zonemgr/zonemgr.spec.pre
            src/bin/zonemgr/tests/zonemgr_test
            src/bin/zonemgr/run_b10-zonemgr.sh
+           src/bin/stats/stats.py
+           src/bin/stats/stats_stub.py
+           src/bin/stats/stats.spec.pre
+           src/bin/stats/run_b10-stats.sh
+           src/bin/stats/run_b10-stats_stub.sh
+           src/bin/stats/tests/stats_test
            src/bin/bind10/bind10.py
            src/bin/bind10/tests/bind10_test
            src/bin/bind10/run_bind10.sh
@@ -564,6 +577,9 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
            chmod +x src/bin/xfrout/run_b10-xfrout.sh
            chmod +x src/bin/zonemgr/run_b10-zonemgr.sh
+           chmod +x src/bin/stats/tests/stats_test
+           chmod +x src/bin/stats/run_b10-stats.sh
+           chmod +x src/bin/stats/run_b10-stats_stub.sh
            chmod +x src/bin/bind10/run_bind10.sh
            chmod +x src/bin/cmdctl/tests/cmdctl_test
            chmod +x src/bin/xfrin/tests/xfrin_test

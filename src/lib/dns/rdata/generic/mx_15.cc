@@ -67,28 +67,24 @@ MX::MX(const MX& other) :
 {}
 
 void
-MX::toWire(OutputBuffer& buffer) const
-{
+MX::toWire(OutputBuffer& buffer) const {
     buffer.writeUint16(preference_);
     mxname_.toWire(buffer);
 }
 
 void
-MX::toWire(MessageRenderer& renderer) const
-{
+MX::toWire(MessageRenderer& renderer) const {
     renderer.writeUint16(preference_);
     renderer.writeName(mxname_);
 }
 
 string
-MX::toText() const
-{
+MX::toText() const {
     return (lexical_cast<string>(preference_) + " " + mxname_.toText());
 }
 
 int
-MX::compare(const Rdata& other) const
-{
+MX::compare(const Rdata& other) const {
     const MX& other_mx = dynamic_cast<const MX&>(other);
 
     if (preference_ < other_mx.preference_) {
@@ -101,14 +97,12 @@ MX::compare(const Rdata& other) const
 }
 
 const Name&
-MX::getMXName() const
-{
+MX::getMXName() const {
     return (mxname_);
 }
 
 uint16_t
-MX::getMXPref() const
-{
+MX::getMXPref() const {
     return (preference_);
 }
 

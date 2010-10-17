@@ -19,8 +19,7 @@
 #include <dns/tests/unittest_util.h>
 
 int
-main(int argc, char* argv[])
-{
+main(int argc, char* argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
     isc::UnitTestUtil::addDataPath(TEST_DATA_DIR);
     isc::UnitTestUtil::addDataPath(TEST_DATA_BUILDDIR);

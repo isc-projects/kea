@@ -1,6 +1,7 @@
 #!@PYTHON@
 
 # Copyright (C) 2010  Internet Systems Consortium.
+# Copyright (C) 2010  CZ NIC
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -42,6 +43,7 @@ import random
 import time
 import signal
 from isc.config import ccsession
+import isc.net.parse
 import isc.utils.process
 from optparse import OptionParser, OptionValueError
 from hashlib import sha1
@@ -323,8 +325,8 @@ class CommandControl():
     def _handle_msg_from_msgq(self):
         '''Process all the received commands with module session. '''
         while self._serving:
-            self._module_cc.check_command() 
- 
+            self._module_cc.check_command(False)
+
     def _parse_command_result(self, rcode, reply):
         '''Ignore the error reason when command rcode isn't 0, '''
         if rcode != 0:
@@ -564,22 +566,17 @@ def run(addr = 'localhost', port = 8080, idle_timeout = 1200, verbose = False):
     httpd.serve_forever()
 
 def check_port(option, opt_str, value, parser):
-    if (value < 0) or (value > 65535):
-        raise OptionValueError('%s requires a port number (0-65535)' % opt_str)
-    parser.values.port = value
+    try:
+        parser.values.port = isc.net.parse.port_parse(value)
+    except ValueError as e:
+        raise OptionValueError(str(e))
 
 def check_addr(option, opt_str, value, parser):
-    ipstr = value
-    ip_family = socket.AF_INET
-    if (ipstr.find(':') != -1):
-        ip_family = socket.AF_INET6
-
     try:
-        socket.inet_pton(ip_family, ipstr)
-    except:
-        raise OptionValueError("%s invalid ip address" % ipstr)
-
-    parser.values.addr = value
+        isc.net.parse.addr_parse(value)
+        parser.values.addr = value
+    except ValueError as e:
+        raise OptionValueError(str(e))
 
 def set_cmd_options(parser):
     parser.add_option('-p', '--port', dest = 'port', type = 'int',

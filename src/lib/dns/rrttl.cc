@@ -29,8 +29,7 @@ using namespace isc::dns;
 namespace isc {
 namespace dns {
 
-RRTTL::RRTTL(const string& ttlstr)
-{
+RRTTL::RRTTL(const string& ttlstr) {
     // Some systems (at least gcc-4.4) flow negative values over into
     // unsigned integer, where older systems failed to parse. We want
     // that failure here, so we extract into int64 and check the value
@@ -45,8 +44,7 @@ RRTTL::RRTTL(const string& ttlstr)
     }
 }
 
-RRTTL::RRTTL(InputBuffer& buffer)
-{
+RRTTL::RRTTL(InputBuffer& buffer) {
     if (buffer.getLength() - buffer.getPosition() < sizeof(uint32_t)) {
         isc_throw(IncompleteRRTTL, "incomplete wire-format TTL value");
     }
@@ -54,28 +52,24 @@ RRTTL::RRTTL(InputBuffer& buffer)
 }
 
 const string
-RRTTL::toText() const
-{
+RRTTL::toText() const {
     ostringstream oss;
     oss << ttlval_;
     return (oss.str());
 }
 
 void
-RRTTL::toWire(OutputBuffer& buffer) const
-{
+RRTTL::toWire(OutputBuffer& buffer) const {
     buffer.writeUint32(ttlval_);
 }
 
 void
-RRTTL::toWire(MessageRenderer& renderer) const
-{
+RRTTL::toWire(MessageRenderer& renderer) const {
     renderer.writeUint32(ttlval_);
 }
 
 ostream&
-operator<<(ostream& os, const RRTTL& rrttl)
-{
+operator<<(ostream& os, const RRTTL& rrttl) {
     os << rrttl.toText();
     return (os);
 }

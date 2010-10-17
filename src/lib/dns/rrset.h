@@ -530,8 +530,8 @@ public:
     /// \param rrclass The RR class of the RRset.
     /// \param rrtype The RR type of the RRset.
     /// \param ttl The TTL of the RRset.
-    explicit BasicRRset(const Name& name, const RRClass& rrclass,
-                        const RRType& rrtype, const RRTTL& ttl);
+    BasicRRset(const Name& name, const RRClass& rrclass,
+               const RRType& rrtype, const RRTTL& ttl);
     /// \brief The destructor.
     virtual ~BasicRRset();
     //@}
@@ -668,7 +668,7 @@ private:
 /// QNAME/QTYPE/QCLASS as a single object.
 class RRset : public BasicRRset {
 public:
-    explicit RRset(const Name& name, const RRClass& rrclass,
+    RRset(const Name& name, const RRClass& rrclass,
           const RRType& rrtype, const RRTTL& ttl);
 
     virtual ~RRset();

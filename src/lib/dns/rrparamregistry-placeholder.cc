@@ -49,8 +49,7 @@ namespace {
 /// containers below.
 ///
 bool
-CICharLess(char c1, char c2)
-{
+CICharLess(char c1, char c2) {
     return (tolower(static_cast<unsigned char>(c1)) <
             tolower(static_cast<unsigned char>(c2)));
 }
@@ -84,29 +83,25 @@ typedef map<string, RRTypeParamPtr, CIStringLess> StrRRTypeMap;
 typedef map<uint16_t, RRTypeParamPtr> CodeRRTypeMap;
 
 inline const string&
-RRTypeParam::UNKNOWN_PREFIX()
-{
+RRTypeParam::UNKNOWN_PREFIX() {
     static const string p("TYPE");
     return (p);
 }
 
 inline size_t
-RRTypeParam::UNKNOWN_PREFIXLEN()
-{
+RRTypeParam::UNKNOWN_PREFIXLEN() {
     static size_t plen = UNKNOWN_PREFIX().size();
     return (plen);
 }
 
 inline const string&
-RRTypeParam::UNKNOWN_MAX()
-{
+RRTypeParam::UNKNOWN_MAX() {
     static const string p("TYPE65535");
     return (p);
 }
 
 inline size_t
-RRTypeParam::UNKNOWN_MAXLEN()
-{
+RRTypeParam::UNKNOWN_MAXLEN() {
     static size_t plen = UNKNOWN_MAX().size();
     return (plen);
 }
@@ -130,29 +125,25 @@ typedef map<string, RRClassParamPtr, CIStringLess> StrRRClassMap;
 typedef map<uint16_t, RRClassParamPtr> CodeRRClassMap;
 
 inline const string&
-RRClassParam::UNKNOWN_PREFIX()
-{
+RRClassParam::UNKNOWN_PREFIX() {
     static const string p("CLASS");
     return (p);
 }
 
 inline size_t
-RRClassParam::UNKNOWN_PREFIXLEN()
-{
+RRClassParam::UNKNOWN_PREFIXLEN() {
     static size_t plen = UNKNOWN_PREFIX().size();
     return (plen);
 }
 
 inline const string&
-RRClassParam::UNKNOWN_MAX()
-{
+RRClassParam::UNKNOWN_MAX() {
     static const string p("CLASS65535");
     return (p);
 }
 
 inline size_t
-RRClassParam::UNKNOWN_MAXLEN()
-{
+RRClassParam::UNKNOWN_MAXLEN() {
     static size_t plen = UNKNOWN_MAX().size();
     return (plen);
 }
@@ -209,8 +200,7 @@ struct RRParamRegistryImpl {
     GenericRdataFactoryMap genericrdata_factories;
 };
 
-RRParamRegistry::RRParamRegistry()
-{
+RRParamRegistry::RRParamRegistry() {
     impl_ = new RRParamRegistryImpl;
 
     // set up parameters for well-known RRs
@@ -223,14 +213,12 @@ RRParamRegistry::RRParamRegistry()
     }
 }
 
-RRParamRegistry::~RRParamRegistry()
-{
+RRParamRegistry::~RRParamRegistry() {
     delete impl_;
 }
 
 RRParamRegistry&
-RRParamRegistry::getRegistry()
-{
+RRParamRegistry::getRegistry() {
     static RRParamRegistry registry;
 
     return (registry);
@@ -301,8 +289,7 @@ RRParamRegistry::removeRdataFactory(const RRType& rrtype,
 }
 
 bool
-RRParamRegistry::removeRdataFactory(const RRType& rrtype)
-{
+RRParamRegistry::removeRdataFactory(const RRType& rrtype) {
     GenericRdataFactoryMap::iterator found =
         impl_->genericrdata_factories.find(rrtype);
     if (found != impl_->genericrdata_factories.end()) {
@@ -320,15 +307,13 @@ namespace {
 /// included in <cstring>.  To be as much as portable within the C++ standard
 /// we take the "in house" approach here.
 /// 
-bool CICharEqual(char c1, char c2)
-{
+bool CICharEqual(char c1, char c2) {
     return (tolower(static_cast<unsigned char>(c1)) ==
             tolower(static_cast<unsigned char>(c2)));
 }
 
 bool
-caseStringEqual(const string& s1, const string& s2, size_t n)
-{
+caseStringEqual(const string& s1, const string& s2, size_t n) {
     assert(s1.size() >= n && s2.size() >= n);
 
     return (mismatch(s1.begin(), s1.begin() + n, s2.begin(), CICharEqual).first
@@ -378,8 +363,7 @@ addParam(const string& code_string, uint16_t code, MC& codemap, MS& stringmap)
 
 template <typename MC, typename MS>
 inline bool
-removeParam(uint16_t code, MC& codemap, MS& stringmap)
-{
+removeParam(uint16_t code, MC& codemap, MS& stringmap) {
     typename MC::iterator found = codemap.find(code);
 
     if (found != codemap.end()) {
@@ -397,8 +381,7 @@ removeParam(uint16_t code, MC& codemap, MS& stringmap)
 
 template <typename PT, typename MS, typename ET>
 inline uint16_t
-textToCode(const string& code_str, MS& stringmap)
-{
+textToCode(const string& code_str, MS& stringmap) {
     typename MS::const_iterator found;
 
     found = stringmap.find(code_str);
@@ -424,8 +407,7 @@ textToCode(const string& code_str, MS& stringmap)
 
 template <typename PT, typename MC>
 inline string
-codeToText(uint16_t code, MC& codemap)
-{
+codeToText(uint16_t code, MC& codemap) {
     typename MC::const_iterator found;
 
     found = codemap.find(code);
@@ -440,57 +422,49 @@ codeToText(uint16_t code, MC& codemap)
 }
 
 bool
-RRParamRegistry::addType(const string& type_string, uint16_t code)
-{
+RRParamRegistry::addType(const string& type_string, uint16_t code) {
     return (addParam<RRTypeParam, CodeRRTypeMap, StrRRTypeMap, RRTypeExists>
             (type_string, code, impl_->code2typemap, impl_->str2typemap));
 }
 
 bool
-RRParamRegistry::removeType(uint16_t code)
-{
+RRParamRegistry::removeType(uint16_t code) {
     return (removeParam<CodeRRTypeMap, StrRRTypeMap>(code, impl_->code2typemap,
                                                      impl_->str2typemap));
 }
 
 uint16_t
-RRParamRegistry::textToTypeCode(const string& type_string) const
-{
+RRParamRegistry::textToTypeCode(const string& type_string) const {
     return (textToCode<RRTypeParam, StrRRTypeMap,
             InvalidRRType>(type_string, impl_->str2typemap));
 }
 
 string
-RRParamRegistry::codeToTypeText(uint16_t code) const
-{
+RRParamRegistry::codeToTypeText(uint16_t code) const {
     return (codeToText<RRTypeParam, CodeRRTypeMap>(code, impl_->code2typemap));
 }
 
 bool
-RRParamRegistry::addClass(const string& class_string, uint16_t code)
-{
+RRParamRegistry::addClass(const string& class_string, uint16_t code) {
     return (addParam<RRClassParam, CodeRRClassMap, StrRRClassMap, RRClassExists>
             (class_string, code, impl_->code2classmap, impl_->str2classmap));
 }
 
 bool
-RRParamRegistry::removeClass(uint16_t code)
-{
+RRParamRegistry::removeClass(uint16_t code) {
     return (removeParam<CodeRRClassMap, StrRRClassMap>(code,
                                                        impl_->code2classmap,
                                                        impl_->str2classmap));
 }
 
 uint16_t
-RRParamRegistry::textToClassCode(const string& class_string) const
-{
+RRParamRegistry::textToClassCode(const string& class_string) const {
     return (textToCode<RRClassParam, StrRRClassMap,
             InvalidRRClass>(class_string, impl_->str2classmap));
 }
 
 string
-RRParamRegistry::codeToClassText(uint16_t code) const
-{
+RRParamRegistry::codeToClassText(uint16_t code) const {
     return (codeToText<RRClassParam, CodeRRClassMap>(code,
                                                      impl_->code2classmap));
 }

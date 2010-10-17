@@ -73,8 +73,7 @@ NSEC3PARAM::NSEC3PARAM(const string& nsec3param_str) :
     impl_ = new NSEC3PARAMImpl(hashalg, flags, iterations, salt);
 }
 
-NSEC3PARAM::NSEC3PARAM(InputBuffer& buffer, size_t rdata_len)
-{
+NSEC3PARAM::NSEC3PARAM(InputBuffer& buffer, size_t rdata_len) {
     if (rdata_len < 4) {
         isc_throw(InvalidRdataLength, "NSEC3PARAM too short");
     }
@@ -102,8 +101,7 @@ NSEC3PARAM::NSEC3PARAM(const NSEC3PARAM& source) :
 {}
 
 NSEC3PARAM&
-NSEC3PARAM::operator=(const NSEC3PARAM& source)
-{
+NSEC3PARAM::operator=(const NSEC3PARAM& source) {
     if (impl_ == source.impl_) {
         return (*this);
     }
@@ -115,14 +113,12 @@ NSEC3PARAM::operator=(const NSEC3PARAM& source)
     return (*this);
 }
 
-NSEC3PARAM::~NSEC3PARAM()
-{
+NSEC3PARAM::~NSEC3PARAM() {
     delete impl_;
 }
 
 string
-NSEC3PARAM::toText() const
-{
+NSEC3PARAM::toText() const {
     using namespace boost;
     return (lexical_cast<string>(static_cast<int>(impl_->hashalg_)) +
         " " + lexical_cast<string>(static_cast<int>(impl_->flags_)) +
@@ -131,8 +127,7 @@ NSEC3PARAM::toText() const
 }
 
 void
-NSEC3PARAM::toWire(OutputBuffer& buffer) const
-{
+NSEC3PARAM::toWire(OutputBuffer& buffer) const {
     buffer.writeUint8(impl_->hashalg_);
     buffer.writeUint8(impl_->flags_);
     buffer.writeUint16(impl_->iterations_);
@@ -141,8 +136,7 @@ NSEC3PARAM::toWire(OutputBuffer& buffer) const
 }
 
 void
-NSEC3PARAM::toWire(MessageRenderer& renderer) const
-{
+NSEC3PARAM::toWire(MessageRenderer& renderer) const {
     renderer.writeUint8(impl_->hashalg_);
     renderer.writeUint8(impl_->flags_);
     renderer.writeUint16(impl_->iterations_);
@@ -151,8 +145,7 @@ NSEC3PARAM::toWire(MessageRenderer& renderer) const
 }
 
 int
-NSEC3PARAM::compare(const Rdata& other) const
-{
+NSEC3PARAM::compare(const Rdata& other) const {
     const NSEC3PARAM& other_param = dynamic_cast<const NSEC3PARAM&>(other);
 
     if (impl_->hashalg_ != other_param.impl_->hashalg_) {

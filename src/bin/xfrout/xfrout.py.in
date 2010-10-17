@@ -1,6 +1,7 @@
 #!@PYTHON@
 
 # Copyright (C) 2010  Internet Systems Consortium.
+# Copyright (C) 2010  CZ NIC
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -494,7 +495,7 @@ class XfroutServer:
     def run(self):
         '''Get and process all commands sent from cfgmgr or other modules. '''
         while not self._shutdown_event.is_set():
-            self._cc.check_command()
+            self._cc.check_command(False)
 
 
 xfrout_server = None

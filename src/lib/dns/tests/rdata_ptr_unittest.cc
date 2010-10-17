@@ -54,8 +54,7 @@ const uint8_t wiredata_ptr2[] = {
     // compressed.
     0x03, 0x6e, 0x73, 0x32, 0xc0, 0x03 };
 
-TEST_F(Rdata_PTR_Test, createFromText)
-{
+TEST_F(Rdata_PTR_Test, createFromText) {
     EXPECT_EQ(0, rdata_ptr.compare(generic::PTR("ns.example.com")));
     // explicitly add a trailing dot.  should be the same RDATA.
     EXPECT_EQ(0, rdata_ptr.compare(generic::PTR("ns.example.com.")));
@@ -67,8 +66,7 @@ TEST_F(Rdata_PTR_Test, createFromText)
                                                "ns.example.com")));
 }
 
-TEST_F(Rdata_PTR_Test, createFromWire)
-{
+TEST_F(Rdata_PTR_Test, createFromWire) {
     EXPECT_EQ(0, rdata_ptr.compare(
                   *rdataFactoryFromFile(RRType("PTR"), RRClass("IN"),
                                         "rdata_ns_fromWire")));
@@ -93,16 +91,14 @@ TEST_F(Rdata_PTR_Test, createFromWire)
                  InvalidRdataLength);
 }
 
-TEST_F(Rdata_PTR_Test, toWireBuffer)
-{
+TEST_F(Rdata_PTR_Test, toWireBuffer) {
     rdata_ptr.toWire(obuffer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         obuffer.getData(), obuffer.getLength(),
                         wiredata_ptr, sizeof(wiredata_ptr));
 }
 
-TEST_F(Rdata_PTR_Test, toWireRenderer)
-{
+TEST_F(Rdata_PTR_Test, toWireRenderer) {
     rdata_ptr.toWire(renderer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         obuffer.getData(), obuffer.getLength(),
@@ -113,21 +109,18 @@ TEST_F(Rdata_PTR_Test, toWireRenderer)
                         wiredata_ptr2, sizeof(wiredata_ptr2));
 }
 
-TEST_F(Rdata_PTR_Test, toText)
-{
+TEST_F(Rdata_PTR_Test, toText) {
     EXPECT_EQ("ns.example.com.", rdata_ptr.toText());
 }
 
-TEST_F(Rdata_PTR_Test, compare)
-{
+TEST_F(Rdata_PTR_Test, compare) {
     generic::PTR small("a.example");
     generic::PTR large("example");
     EXPECT_EQ(true, Name("a.example") > Name("example"));
     EXPECT_GT(0, small.compare(large));
 }
 
-TEST_F(Rdata_PTR_Test, getPTRName)
-{
+TEST_F(Rdata_PTR_Test, getPTRName) {
     EXPECT_EQ(Name("ns.example.com"), rdata_ptr.getPTRName());
 }
 }
