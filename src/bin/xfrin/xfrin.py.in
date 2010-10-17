@@ -30,6 +30,7 @@ import random
 from optparse import OptionParser, OptionValueError
 from isc.config.ccsession import *
 from isc.notify import notify_out
+import isc.net.parse
 import isc.utils.process
 try:
     from pydnspp import *
@@ -94,7 +95,7 @@ class XfrinConnection(asyncore.dispatcher):
         self.setblocking(1)
         self._shutdown_event = shutdown_event
         self._verbose = verbose
-        self._master_address = master_addrinfo[4]
+        self._master_address = master_addrinfo[2]
 
     def connect_to_master(self):
         '''Connect to master in TCP.'''
@@ -406,15 +407,15 @@ class Xfrin:
     def config_handler(self, new_config):
         self._max_transfers_in = new_config.get("transfers_in") or self._max_transfers_in
         if ('master_addr' in new_config) or ('master_port' in new_config):
-            # Check if the new master is valid, there should be library for check it.
-            # and user should change the port and address together.
+            # User should change the port and address together.
             try:
                 addr = new_config.get('master_addr') or self._master_addr
                 port = new_config.get('master_port') or self._master_port
-                check_addr_port(addr, port)
+                isc.net.parse.addr_parse(addr)
+                isc.net.parse.port_parse(port)
                 self._master_addr = addr
                 self._master_port = port
-            except:
+            except ValueError:
                 errmsg = "bad format for zone's master: " + str(new_config)
                 log_error(errmsg)
                 return create_answer(1, errmsg)
@@ -443,7 +444,7 @@ class Xfrin:
                 # specify the notifyfrom address and port, according the RFC1996, zone
                 # transfer should starts first from the notifyfrom, but now, let 'TODO' it.
                 (zone_name, rrclass) = self._parse_zone_name_and_class(args)
-                (master_addr) = check_addr_port(self._master_addr, self._master_port)
+                (master_addr) = build_addr_info(self._master_addr, self._master_port)
                 ret = self.xfrin_start(zone_name, 
                                        rrclass, 
                                        self._get_db_file(),
@@ -491,7 +492,7 @@ class Xfrin:
     def _parse_master_and_port(self, args):
         port = args.get('port') or self._master_port
         master = args.get('master') or self._master_addr
-        return check_addr_port(master, port)
+        return build_addr_info(master, port)
  
     def _get_db_file(self):
         #TODO, the db file path should be got in auth server's configuration
@@ -564,30 +565,19 @@ def set_signal_handler():
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
 
-def check_addr_port(addrstr, portstr):
-    # XXX: Linux (glibc)'s getaddrinfo incorrectly accepts numeric port
-    # string larger than 65535.  So we need to explicit validate it separately.
+def build_addr_info(addrstr, portstr):
+    """
+    Return tuple (family, socktype, sockaddr) for given address and port.
+    IPv4 and IPv6 are the only supported addresses now, so sockaddr will be
+    (address, port). The socktype is socket.SOCK_STREAM for now.
+    """
     try:
-        portnum = int(portstr)
-        if portnum < 0 or portnum > 65535:
-            raise ValueError("invalid port number (out of range): " + portstr)
+        port = isc.net.parse.port_parse(portstr)
+        addr = isc.net.parse.addr_parse(addrstr)
+        return (addr.family, socket.SOCK_STREAM, (addrstr, port))
     except ValueError as err:
         raise XfrinException("failed to resolve master address/port=%s/%s: %s" %
                              (addrstr, portstr, str(err)))
-
-    try:
-        addrinfo = socket.getaddrinfo(addrstr, portstr, socket.AF_UNSPEC,
-                                      socket.SOCK_STREAM, socket.IPPROTO_TCP,
-                                      socket.AI_NUMERICHOST|
-                                      socket.AI_NUMERICSERV)
-    except socket.gaierror as err:
-        raise XfrinException("failed to resolve master address/port=%s/%s: %s" %
-                             (addrstr, portstr, str(err)))
-    if len(addrinfo) != 1:
-        # with the parameters above the result must be uniquely determined.
-        errmsg = "unexpected result for address/port resolution for %s:%s"
-        raise XfrinException(errmsg % (addrstr, portstr))
-    return addrinfo[0]
 
 def set_cmd_options(parser):
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
