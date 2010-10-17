@@ -896,7 +896,7 @@ merge(ElementPtr element, ConstElementPtr other) {
         isc_throw(TypeError, "merge arguments not MapElements");
     }
     
-    std::map<std::string, ConstElementPtr> m = other->mapValue();
+    const std::map<std::string, ConstElementPtr>& m = other->mapValue();
     for (std::map<std::string, ConstElementPtr>::const_iterator it = m.begin();
          it != m.end() ; ++it) {
         if ((*it).second && (*it).second->getType() != Element::null) {
