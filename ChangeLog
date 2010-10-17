@@ -1,3 +1,9 @@
+  110.  [func]      Michal Vaner
+	Added isc.net.check module to check ip addresses and ports for correctness
+	and isc.net.addr to hold IP address. The bind10, xfrin and cmdctl programs
+	are modified to use it.
+	(Trac #353, svn r3240)
+
   109.  [func]		naokikambe
 	Added the initial version of the stats module for the statistics
 	feature of BIND 10, which supports the restricted features and
