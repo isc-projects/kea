@@ -4,7 +4,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/lib/dns -I$(top_srcdir)/src/bin
 AM_CPPFLAGS += -I$(top_builddir)/src/lib/cc
 AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(srcdir)/testdata\"
-AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(top_builddir)/src/bin/auth/tests/testdata\"
+AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/bin/auth/tests/testdata\"
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 

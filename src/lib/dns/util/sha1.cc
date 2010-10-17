@@ -312,8 +312,7 @@ SHA1Result(SHA1Context *context, uint8_t Message_Digest[SHA1_HASHSIZE]) {
  *   sha Error Code.
  *
  */
-static void SHA1Finalize(SHA1Context *context, uint8_t Pad_Byte)
-{
+static void SHA1Finalize(SHA1Context *context, uint8_t Pad_Byte) {
     int i;
     SHA1PadMessage(context, Pad_Byte);
     /* message may be sensitive, clear it out */
@@ -350,8 +349,7 @@ static void SHA1Finalize(SHA1Context *context, uint8_t Pad_Byte)
  *      Nothing.
  *
  */
-static void SHA1PadMessage(SHA1Context *context, uint8_t Pad_Byte)
-{
+static void SHA1PadMessage(SHA1Context *context, uint8_t Pad_Byte) {
     /*
      * Check to see if the current message block is too small to hold
      * the initial padding bits and length. If so, we will pad the

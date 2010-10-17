@@ -1,6 +1,7 @@
 #!@PYTHON@
 
 # Copyright (C) 2010  Internet Systems Consortium.
+# Copyright (C) 2010  CZ NIC
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -72,13 +73,6 @@ ZONE_OK = 0
 ZONE_REFRESHING = 1
 ZONE_EXPIRED = 2
 
-# smallest refresh timeout
-LOWERBOUND_REFRESH = 10
-# smallest retry timeout
-LOWERBOUND_RETRY = 5
-# max zone transfer timeout
-MAX_TRANSFER_TIMEOUT = 14400
-
 # offsets of fields in the SOA RDATA
 REFRESH_OFFSET = 3
 RETRY_OFFSET = 4
@@ -100,10 +94,11 @@ class ZonemgrRefresh:
     do zone refresh.
     """
 
-    def __init__(self, cc, db_file, slave_socket):
+    def __init__(self, cc, db_file, slave_socket, config_data):
         self._cc = cc
         self._socket = slave_socket 
         self._db_file = db_file
+        self.update_config_data(config_data)
         self._zonemgr_refresh_info = {} 
         self._build_zonemgr_refresh_info()
     
@@ -121,25 +116,26 @@ class ZonemgrRefresh:
         return time.time()
 
     def _set_zone_timer(self, zone_name_class, max, jitter):
-        """Set zone next refresh time."""
+        """Set zone next refresh time. 
+        jitter should not be bigger than half the original value."""
         self._set_zone_next_refresh_time(zone_name_class, self._get_current_time() + \
                                             self._random_jitter(max, jitter))
 
     def _set_zone_refresh_timer(self, zone_name_class):
         """Set zone next refresh time after zone refresh success.
-           now + refresh*3/4 <= next_refresh_time <= now + refresh
+           now + refresh - jitter  <= next_refresh_time <= now + refresh
            """
         zone_refresh_time = float(self._get_zone_soa_rdata(zone_name_class).split(" ")[REFRESH_OFFSET])
-        zone_refresh_time = max(LOWERBOUND_REFRESH, zone_refresh_time)
-        self._set_zone_timer(zone_name_class, zone_refresh_time, (1 * zone_refresh_time) / 4)
+        zone_refresh_time = max(self._lowerbound_refresh, zone_refresh_time)
+        self._set_zone_timer(zone_name_class, zone_refresh_time, self._jitter_scope * zone_refresh_time)
 
     def _set_zone_retry_timer(self, zone_name_class):
         """Set zone next refresh time after zone refresh fail.
-           now + retry*3/4 <= next_refresh_time <= now + retry
+           now + retry - jitter <= next_refresh_time <= now + retry
            """
         zone_retry_time = float(self._get_zone_soa_rdata(zone_name_class).split(" ")[RETRY_OFFSET])
-        zone_retry_time = max(LOWERBOUND_RETRY, zone_retry_time)
-        self._set_zone_timer(zone_name_class, zone_retry_time, (1 * zone_retry_time) / 4)
+        zone_retry_time = max(self._lowerbound_retry, zone_retry_time)
+        self._set_zone_timer(zone_name_class, zone_retry_time, self._jitter_scope * zone_retry_time)
 
     def _set_zone_notify_timer(self, zone_name_class):
         """Set zone next refresh time after receiving notify
@@ -170,7 +166,11 @@ class ZonemgrRefresh:
             raise ZonemgrException("[b10-zonemgr] Zone (%s, %s) doesn't "
                                    "belong to zonemgr" % zone_name_class)
             return
-        self._set_zone_state(zone_name_class, ZONE_OK)
+        # Is zone expired?
+        if (self._zone_is_expired(zone_name_class)):
+            self._set_zone_state(zone_name_class, ZONE_EXPIRED)
+        else:
+            self._set_zone_state(zone_name_class, ZONE_OK)
         self._set_zone_retry_timer(zone_name_class)
 
     def zone_handle_notify(self, zone_name_class, master):
@@ -272,25 +272,14 @@ class ZonemgrRefresh:
         """
         zone_need_refresh = None
         for zone_name_class in self._zonemgr_refresh_info.keys():
-            # Does the zone expired?
-            if (ZONE_EXPIRED != self._get_zone_state(zone_name_class) and 
-                self._zone_is_expired(zone_name_class)):
-                log_msg("Zone (%s, %s) is expired." % zone_name_class)
-                self._set_zone_state(zone_name_class, ZONE_EXPIRED)
-
             zone_state = self._get_zone_state(zone_name_class)
-            # If zone is expired and doesn't receive notify, skip the zone
-            if (ZONE_EXPIRED == zone_state and 
-                (not self._get_zone_notifier_master(zone_name_class))):
-                continue
-
             # If hasn't received refresh response but are within refresh timeout, skip the zone
             if (ZONE_REFRESHING == zone_state and
                 (self._get_zone_refresh_timeout(zone_name_class) > self._get_current_time())):
                 continue
                     
             # Get the zone with minimum next_refresh_time 
-            if ((None == zone_need_refresh) or 
+            if ((zone_need_refresh is None) or 
                 (self._get_zone_next_refresh_time(zone_name_class) < 
                  self._get_zone_next_refresh_time(zone_need_refresh))):
                 zone_need_refresh = zone_name_class
@@ -306,7 +295,7 @@ class ZonemgrRefresh:
         """Do zone refresh."""
         log_msg("Do refresh for zone (%s, %s)." % zone_name_class)
         self._set_zone_state(zone_name_class, ZONE_REFRESHING)
-        self._set_zone_refresh_timeout(zone_name_class, self._get_current_time() + MAX_TRANSFER_TIMEOUT) 
+        self._set_zone_refresh_timeout(zone_name_class, self._get_current_time() + self._max_transfer_timeout) 
         notify_master = self._get_zone_notifier_master(zone_name_class)
         # If the zone has notify master, send notify command to xfrin module
         if notify_master:
@@ -335,13 +324,13 @@ class ZonemgrRefresh:
         while True:
             # Zonemgr has no zone.
             if self._zone_mgr_is_empty():
-                time.sleep(LOWERBOUND_RETRY) # A better time?
+                time.sleep(self._lowerbound_retry) # A better time?
                 continue
 
             zone_need_refresh = self._find_need_do_refresh_zone()
-            # If don't get zone with minimum next refresh time, set timer timeout = LOWERBOUND_REFRESH
+            # If don't get zone with minimum next refresh time, set timer timeout = lowerbound_retry 
             if not zone_need_refresh:
-                timeout = LOWERBOUND_RETRY
+                timeout = self._lowerbound_retry 
             else:
                 timeout = self._get_zone_next_refresh_time(zone_need_refresh) - self._get_current_time()
                 if (timeout < 0):
@@ -364,15 +353,23 @@ class ZonemgrRefresh:
                     raise ZonemgrException("[b10-zonemgr] Error with select(): %s\n" % e)
                     break
 
+    def update_config_data(self, new_config):
+        """ update ZonemgrRefresh config """
+        self._lowerbound_refresh = new_config.get('lowerbound_refresh')
+        self._lowerbound_retry = new_config.get('lowerbound_retry')
+        self._max_transfer_timeout = new_config.get('max_transfer_timeout')
+        self._jitter_scope = new_config.get('jitter_scope')
+
 
 class Zonemgr:
     """Zone manager class."""
     def __init__(self):
+        self._zone_refresh = None
         self._setup_session()
         self._db_file = self.get_db_file()
         # Create socket pair for communicating between main thread and zonemgr timer thread 
         self._master_socket, self._slave_socket = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
-        self._zone_refresh= ZonemgrRefresh(self._cc, self._db_file, self._slave_socket)
+        self._zone_refresh = ZonemgrRefresh(self._cc, self._db_file, self._slave_socket, self._config_data)
         self._start_zone_refresh_timer()
 
         self._lock = threading.Lock()
@@ -394,6 +391,10 @@ class Zonemgr:
                                                   self.command_handler)
         self._module_cc.add_remote_config(AUTH_SPECFILE_LOCATION)
         self._config_data = self._module_cc.get_full_config()
+        # jitter should not be bigger than half of the original value
+        if self._config_data.get('jitter_scope') > 0.5:
+            self._config_data['jitter_scope'] = 0.5
+            log_msg("[b10-zonemgr] jitter_scope should not be bigger than 0.5.") 
         self._module_cc.start()
 
     def get_db_file(self):
@@ -420,13 +421,22 @@ class Zonemgr:
             th.join()
 
     def config_handler(self, new_config):
-        """Update config data."""
+        """ Update config data. """
         answer = create_answer(0)
         for key in new_config:
             if key not in self._config_data:
                 answer = create_answer(1, "Unknown config data: " + str(key))
                 continue
+            # jitter should not be bigger than half of the original value
+            if key == 'jitter_scope':
+                if new_config.get(key) > 0.5:
+                    new_config[key] = 0.5
+                    log_msg("[b10-zonemgr] jitter_scope should not be bigger than 0.5.") 
             self._config_data[key] = new_config[key]
+
+        if (self._zone_refresh):
+            self._zone_refresh.update_config_data(self._config_data)
+
         return answer
 
     def _parse_cmd_params(self, args, command):
@@ -488,7 +498,7 @@ class Zonemgr:
 
     def run(self):
         while not self._shutdown_event.is_set():
-            self._module_cc.check_command()
+            self._module_cc.check_command(False)
 
 zonemgrd = None
 

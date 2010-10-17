@@ -48,8 +48,7 @@ XfroutClient::XfroutClient(const string& file) :
     impl_(new XfroutClientImpl(file))
 {}
 
-XfroutClient::~XfroutClient()
-{
+XfroutClient::~XfroutClient() {
     delete impl_;
 }
 
