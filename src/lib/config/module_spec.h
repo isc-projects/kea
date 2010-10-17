@@ -20,8 +20,6 @@
 
 #include <sstream>
 
-using namespace isc::data;
-
 namespace isc { namespace config {
 
     ///
@@ -55,24 +53,27 @@ namespace isc { namespace config {
         /// Create a \c ModuleSpec instance with the given data as
         /// the specification
         /// \param e The Element containing the data specification
-        explicit ModuleSpec(ConstElementPtr e, const bool check = true)
+        explicit ModuleSpec(isc::data::ConstElementPtr e,
+                            const bool check = true)
             throw(ModuleSpecError);
 
         /// Returns the commands part of the specification as an
         /// ElementPtr, returns an empty ElementPtr if there is none
         /// \return ElementPtr Shared pointer to the commands
         ///                    part of the specification
-        ConstElementPtr getCommandsSpec() const;
+        isc::data::ConstElementPtr getCommandsSpec() const;
 
         /// Returns the configuration part of the specification as an
         /// ElementPtr
         /// \return ElementPtr Shared pointer to the configuration
         ///                    part of the specification
-        ConstElementPtr getConfigSpec() const;
+        isc::data::ConstElementPtr getConfigSpec() const;
 
         /// Returns the full module specification as an ElementPtr
         /// \return ElementPtr Shared pointer to the specification
-        ConstElementPtr getFullSpec() const { return module_specification; }
+        isc::data::ConstElementPtr getFullSpec() const {
+            return module_specification;
+        }
 
         /// Returns the module name as specified by the specification
         const std::string getModuleName() const;
@@ -87,22 +88,28 @@ namespace isc { namespace config {
         /// \param data The base \c Element of the data to check
         /// \return true if the data conforms to the specification,
         /// false otherwise.
-        bool validate_config(ConstElementPtr data,
+        bool validate_config(isc::data::ConstElementPtr data,
                              const bool full = false) const;
 
         /// errors must be of type ListElement
-        bool validate_config(ConstElementPtr data, const bool full,
-                             ElementPtr errors) const;
+        bool validate_config(isc::data::ConstElementPtr data, const bool full,
+                             isc::data::ElementPtr errors) const;
 
     private:
-        bool validate_item(ConstElementPtr spec, ConstElementPtr data,
-                           const bool full, ElementPtr errors) const;
-        bool validate_spec(ConstElementPtr spec, ConstElementPtr data,
-                           const bool full, ElementPtr errors) const;
-        bool validate_spec_list(ConstElementPtr spec, ConstElementPtr data,
-                                const bool full, ElementPtr errors) const;
+        bool validate_item(isc::data::ConstElementPtr spec,
+                           isc::data::ConstElementPtr data,
+                           const bool full,
+                           isc::data::ElementPtr errors) const;
+        bool validate_spec(isc::data::ConstElementPtr spec,
+                           isc::data::ConstElementPtr data,
+                           const bool full,
+                           isc::data::ElementPtr errors) const;
+        bool validate_spec_list(isc::data::ConstElementPtr spec,
+                                isc::data::ConstElementPtr data,
+                                const bool full,
+                                isc::data::ElementPtr errors) const;
 
-        ConstElementPtr module_specification;
+        isc::data::ConstElementPtr module_specification;
     };
 
     /// Creates a \c ModuleSpec instance from the contents
@@ -115,7 +122,7 @@ namespace isc { namespace config {
     /// is checked to be of the correct form
     ModuleSpec
     moduleSpecFromFile(const std::string& file_name, const bool check = true)
-                       throw(JSONError, ModuleSpecError);
+        throw(isc::data::JSONError, ModuleSpecError);
 
     /// Creates a \c ModuleSpec instance from the given input
     /// stream that contains the contents of a .spec file.
@@ -127,7 +134,7 @@ namespace isc { namespace config {
     /// to be of the correct form
     ModuleSpec
     moduleSpecFromFile(std::ifstream& in, const bool check = true)
-                       throw(JSONError, ModuleSpecError);
+                       throw(isc::data::JSONError, ModuleSpecError);
 } }
 
 #endif // _DATA_DEF_H
