@@ -149,11 +149,11 @@ class NotifyOut:
                 self.notify_num += 1 
                 self._notifying_zones.append(zone_id)
 
-    def _dispatcher(self):
+    def _dispatcher(self, started_event):
         while self._serving:
             # Let the master know we are alive already
-            if self._started_event:
-                self._started_event.set()
+            if started_event:
+                started_event.set()
 
             replied_zones, not_replied_zones = self._wait_for_notify_reply()
 
@@ -183,18 +183,18 @@ class NotifyOut:
 
         # Prepare for launch
         self._serving = True
-        self._started_event = threading.Event()
         self._read_sock, self._write_sock = socket.socketpair()
+        started_event = threading.Event()
 
         # Start
-        self._thread = threading.Thread(target=self._dispatcher, args=())
+        self._thread = threading.Thread(target=self._dispatcher,
+            args=[started_event])
         if daemon:
             self._thread.daemon = daemon
         self._thread.start()
 
         # Wait for it to get started
-        self._started_event.wait()
-        self._started_event = None
+        started_event.wait()
 
         # Return it to anyone listening
         return self._thread
