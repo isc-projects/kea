@@ -419,6 +419,7 @@ class Zonemgr:
 
         self._lock = threading.Lock()
         self._shutdown_event = threading.Event()
+        self.running = False
 
     def _setup_session(self):
         """Setup two sessions for zonemgr, one(self._module_cc) is used for receiving 
@@ -450,6 +451,7 @@ class Zonemgr:
         self._slave_socket.close()
         self._master_socket.close()
         self._shutdown_event.set()
+        self.running = False
 
     def config_handler(self, new_config):
         """Update config data."""
@@ -519,6 +521,7 @@ class Zonemgr:
         return answer
 
     def run(self):
+        self.running = True
         while not self._shutdown_event.is_set():
             self._module_cc.check_command()
 
@@ -558,6 +561,6 @@ if '__main__' == __name__:
     except isc.config.ModuleCCSessionError as e:
         sys.stderr.write("[b10-zonemgr] exit zonemgr process: %s\n" % str(e))
 
-    if zonemgrd:
+    if zonemgrd and zonemgrd.running:
         zonemgrd.shutdown()
 
