@@ -434,7 +434,6 @@ class TestModuleCCSession(unittest.TestCase):
         env = { 'group':'Spec2', 'from':None }
         self.assertEqual(len(fake_session.message_queue), 0)
         mccs.check_command_without_recvmsg(cmd, env)
-        self.assertEqual(len(fake_session.message_queue), 1)
         self.assertEqual({'result': [0]},
                          fake_session.get_message('Spec2', None))
  
@@ -452,6 +451,33 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertEqual({'result': [0]},
                           fake_session.get_message('Spec2', None))
  
+    def test_check_command_block_timeout(self):
+        """Check it works if session has timeout and it sets it back."""
+        def cmd_check(mccs, session):
+            session.set_timeout(1)
+            mccs.check_command(False)
+        fake_session = self.common_check_command_check(
+            self.my_command_handler_ok, cmd_check)
+        self.assertEqual(len(fake_session.message_queue), 1)
+        self.assertEqual({'result': [0]},
+                         fake_session.get_message('Spec2', None))
+        self.assertEqual(fake_session.get_timeout(), 1)
+
+    def test_check_command_blocks_forever(self):
+        """Check it would wait forever checking a command."""
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec2.spec", None, None, fake_session)
+        mccs.set_command_handler(self.my_command_handler_ok)
+        self.assertRaises(WouldBlockForever, lambda: mccs.check_command(False))
+
+    def test_check_command_blocks_forever_timeout(self):
+        """Like above, but it should wait forever even with timeout here."""
+        fake_session = FakeModuleCCSession()
+        fake_session.set_timeout(1)
+        mccs = self.create_session("spec2.spec", None, None, fake_session)
+        mccs.set_command_handler(self.my_command_handler_ok)
+        self.assertRaises(WouldBlockForever, lambda: mccs.check_command(False))
+
     def test_remote_module(self):
         fake_session = FakeModuleCCSession()
         mccs = self.create_session("spec1.spec", None, None, fake_session)
