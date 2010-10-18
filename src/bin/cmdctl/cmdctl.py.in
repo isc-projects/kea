@@ -1,6 +1,7 @@
 #!@PYTHON@
 
 # Copyright (C) 2010  Internet Systems Consortium.
+# Copyright (C) 2010  CZ NIC
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -42,12 +43,16 @@ import random
 import time
 import signal
 from isc.config import ccsession
+import isc.net.parse
+import isc.utils.process
 from optparse import OptionParser, OptionValueError
 from hashlib import sha1
 try:
     import threading
 except ImportError:
     import dummy_threading as threading
+
+isc.utils.process.rename()
 
 __version__ = 'BIND10'
 URL_PATTERN = re.compile('/([\w]+)(?:/([\w]+))?/?')
@@ -320,8 +325,8 @@ class CommandControl():
     def _handle_msg_from_msgq(self):
         '''Process all the received commands with module session. '''
         while self._serving:
-            self._module_cc.check_command() 
- 
+            self._module_cc.check_command(False)
+
     def _parse_command_result(self, rcode, reply):
         '''Ignore the error reason when command rcode isn't 0, '''
         if rcode != 0:
@@ -380,6 +385,7 @@ class CommandControl():
     def send_command(self, module_name, command_name, params = None):
         '''Send the command from bindctl to proper module. '''
         errstr = 'unknown error'
+        answer = None
         if self._verbose:
             self.log_info("Begin send command '%s' to module '%s'" %(command_name, module_name))
 
@@ -390,7 +396,10 @@ class CommandControl():
             msg = ccsession.create_command(command_name, params)
             seq = self._cc.group_sendmsg(msg, module_name)
             #TODO, it may be blocked, msqg need to add a new interface waiting in timeout.
-            answer, env = self._cc.group_recvmsg(False, seq)
+            try:
+                answer, env = self._cc.group_recvmsg(False, seq)
+            except isc.cc.session.SessionTimeout:
+                errstr = "Module '%s' not responding" % module_name
 
         if self._verbose:
             self.log_info("Finish send command '%s' to module '%s'" % (command_name, module_name))
@@ -410,7 +419,6 @@ class CommandControl():
             except ccsession.ModuleCCSessionError as mcse:
                 errstr = str("Error in ccsession answer:") + str(mcse)
                 self.log_info(errstr)
-        
         return 1, {'error': errstr}
     
     def log_info(self, msg):
@@ -558,22 +566,17 @@ def run(addr = 'localhost', port = 8080, idle_timeout = 1200, verbose = False):
     httpd.serve_forever()
 
 def check_port(option, opt_str, value, parser):
-    if (value < 0) or (value > 65535):
-        raise OptionValueError('%s requires a port number (0-65535)' % opt_str)
-    parser.values.port = value
+    try:
+        parser.values.port = isc.net.parse.port_parse(value)
+    except ValueError as e:
+        raise OptionValueError(str(e))
 
 def check_addr(option, opt_str, value, parser):
-    ipstr = value
-    ip_family = socket.AF_INET
-    if (ipstr.find(':') != -1):
-        ip_family = socket.AF_INET6
-
     try:
-        socket.inet_pton(ip_family, ipstr)
-    except:
-        raise OptionValueError("%s invalid ip address" % ipstr)
-
-    parser.values.addr = value
+        isc.net.parse.addr_parse(value)
+        parser.values.addr = value
+    except ValueError as e:
+        raise OptionValueError(str(e))
 
 def set_cmd_options(parser):
     parser.add_option('-p', '--port', dest = 'port', type = 'int',
@@ -602,6 +605,9 @@ if __name__ == '__main__':
     except isc.cc.SessionError as err:
         sys.stderr.write("[b10-cmdctl] Error creating b10-cmdctl, "
                          "is the command channel daemon running?\n")        
+    except isc.cc.SessionTimeout:
+        sys.stderr.write("[b10-cmdctl] Error creating b10-cmdctl, "
+                         "is the configuration manager running?\n")        
     except KeyboardInterrupt:
         sys.stderr.write("[b10-cmdctl] exit from Cmdctl\n")
     except CmdctlException as err:

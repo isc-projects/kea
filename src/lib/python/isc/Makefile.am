@@ -1,4 +1,4 @@
-SUBDIRS = datasrc cc config log notify # Util
+SUBDIRS = datasrc cc config log net notify utils # Util
 
 python_PYTHON = __init__.py
 

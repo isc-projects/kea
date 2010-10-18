@@ -38,8 +38,30 @@ namespace asio_link {
 class IOMessage;
 }
 
+/// \brief The implementation class for the \c AuthSrv class using the pimpl
+/// idiom.
 class AuthSrvImpl;
 
+/// \brief The authoritative nameserver class.
+///
+/// \c AuthSrv is a concrete class that implements authoritative DNS server
+/// protocol processing.
+/// An \c AuthSrv object is primarily responsible for handling incoming DNS
+/// requests: It parses the request and dispatches subsequent processing to
+/// the corresponding module (which may be an internal library or a separate
+/// process) depending on the request type.  For normal queries, the
+/// \c AuthSrv object searches configured data sources for the answer to the
+/// query, and builds a response containing the answer.
+///
+/// This class uses the "pimpl" idiom, and hides detailed implementation
+/// through the \c impl_ pointer (which points to an instance of the
+/// \c AuthSrvImpl class).  An \c AuthSrv object is supposed to exist for quite
+/// a long period, and only a few \c AuthSrv objects will be created (in fact,
+/// in this current implementation there will only be one object), so the
+/// construction overhead of this approach should be acceptable.
+///
+/// The design of this class is still in flux.  It's quite likely to change
+/// in future versions.
 class AuthSrv {
     ///
     /// \name Constructors, Assignment Operator and Destructor.
@@ -67,12 +89,101 @@ public:
     bool processMessage(const asio_link::IOMessage& io_message,
                         isc::dns::Message& message,
                         isc::dns::MessageRenderer& response_renderer);
-    void setVerbose(bool on);
+
+    /// \brief Enable or disable verbose logging.
+    ///
+    /// This method never throws an exception.
+    ///
+    /// \param on \c true to enable verbose logging; \c false to disable
+    /// verbose logging.
+    void setVerbose(const bool on);
+
+    /// \brief Returns the logging verbosity of the \c AuthSrv object.
+    ///
+    /// This method never throws an exception.
+    ///
+    /// \return \c true if verbose logging is enabled; otherwise \c false.
     bool getVerbose() const;
+
+    /// \brief Updates the data source for the \c AuthSrv object.
+    ///
+    /// This method installs or replaces the data source that the \c AuthSrv
+    /// object refers to for query processing.
+    /// Although the method name is generic, the only thing it does is to
+    /// update the data source information.
+    /// If there is a data source installed, it will be replaced with the
+    /// new one.
+    ///
+    /// In the current implementation, the SQLite data source is assumed.
+    /// The \c config parameter will simply be passed to the initialization
+    /// routine of the \c Sqlite3DataSrc class.
+    ///
+    /// On success this method returns a data \c Element (in the form of a
+    /// pointer like object) indicating the successful result,
+    /// i.e., {"result": [0]}.
+    /// Otherwise, it returns a data \c Element explaining the error:
+    /// {"result": [1, <error-description>]}.
+    ///
+    /// This method is mostly exception free (error conditions are represented
+    /// via the return value).  But it may still throw a standard exception
+    /// if memory allocation fails inside the method.
+    /// When a standard exception is thrown or an implementation specific
+    /// exception is triggered and caught internally, this function provides
+    /// the strong exception guarantee: Unless everything succeeds, currently
+    /// installed data source (if any) won't be replaced.
+    ///
+    /// \param config An immutable pointer-like object to a data \c Element,
+    /// possibly containing the data source information to be used.
+    /// \return An immutable pointer-like object to a data \c Element
+    /// containing the result of the update operation.
     isc::data::ConstElementPtr updateConfig(isc::data::ConstElementPtr config);
-    isc::config::ModuleCCSession* configSession() const;
+
+    /// \param Returns the command and configuration session for the
+    /// \c AuthSrv.
+    ///
+    /// This method never throws an exception.
+    ///
+    /// \return A pointer to \c ModuleCCSession object stored in the
+    /// \c AuthSrv object.  In this implementation it could be NULL.
+    isc::config::ModuleCCSession* getConfigSession() const;
+
+    /// \brief Set the command and configuration session for the \c AuthSrv.
+    ///
+    /// Note: this interface is tentative.  We'll revisit the ASIO and session
+    /// frameworks, at which point the session will probably be passed on
+    /// construction of the server.
+    /// In the current implementation, this method is expected to be called
+    /// exactly once as part of initialization.  If this method is called
+    /// multiple times, previously specified session is silently overridden.
+    ///
+    /// This method never throws an exception.
+    ///
+    /// \param config_session A pointer to \c ModuleCCSession object to receive
+    /// control commands and configuration updates.
     void setConfigSession(isc::config::ModuleCCSession* config_session);
 
+    /// \brief Set or update the size (number of slots) of hot spot cache.
+    ///
+    /// If the specified size is 0, it means the size will be unlimited.
+    /// The specified size is recorded even if the cache is disabled; the
+    /// new size will be effective when the cache is enabled.
+    ///
+    /// This method never throws an exception.
+    ///
+    /// \param slots The number of cache slots.
+    void setCacheSlots(const size_t slots);
+
+    /// \brief Get the current size (number of slots) of hot spot cache.
+    ///
+    /// It always returns the recorded size regardless of the cache is enabled.
+    ///
+    /// This method never throws an exception.
+    ///
+    /// \return The current number of cache slots.
+    size_t getCacheSlots() const;
+
+    /// \brief Set the communication session with a separate process for
+    /// outgoing zone transfers.
     ///
     /// Note: this interface is tentative.  We'll revisit the ASIO and session
     /// frameworks, at which point the session will probably be passed on
@@ -85,6 +196,7 @@ public:
     /// Ownership isn't transferred: the caller is responsible for keeping
     /// this object to be valid while the server object is working and for
     /// disconnecting the session and destroying the object when the server
+    /// is shutdown.
     ///
     void setXfrinSession(isc::cc::AbstractSession* xfrin_session);
 private:

@@ -27,6 +27,11 @@ ZONE_NAME_CLASS3_IN = ("example.com", "IN")
 ZONE_NAME_CLASS1_CH = ("sd.cn.", "CH")
 ZONE_NAME_CLASS2_IN = ("tw.cn", "IN")
 
+MAX_TRANSFER_TIMEOUT = 14400
+LOWERBOUND_REFRESH = 10
+LOWERBOUND_RETRY = 5 
+JITTER_SCOPE = 0.10
+
 class ZonemgrTestException(Exception):
     pass
 
@@ -42,15 +47,20 @@ class MyZonemgrRefresh(ZonemgrRefresh):
     def __init__(self):
         self._cc = MySession()
         self._db_file = "initdb.file"
+        current_time = time.time()
+        self._max_transfer_timeout = MAX_TRANSFER_TIMEOUT
+        self._lowerbound_refresh = LOWERBOUND_REFRESH
+        self._lowerbound_retry = LOWERBOUND_RETRY
+        self._jitter_scope = JITTER_SCOPE
         self._zonemgr_refresh_info = { 
          ('sd.cn.', 'IN'): {
-         'last_refresh_time': 1280474398.822142,
-         'next_refresh_time': 1280481598.822153, 
+         'last_refresh_time': current_time,
+         'next_refresh_time': current_time + 6500, 
          'zone_soa_rdata': 'a.dns.cn. root.cnnic.cn. 2009073105 7200 3600 2419200 21600', 
          'zone_state': 0},
          ('tw.cn', 'CH'): {
-         'last_refresh_time': 1280474399.116421, 
-         'next_refresh_time': 1280481599.116433, 
+         'last_refresh_time': current_time, 
+         'next_refresh_time': current_time + 6900, 
          'zone_soa_rdata': 'a.dns.cn. root.cnnic.cn. 2009073112 7200 3600 2419200 21600', 
          'zone_state': 0}
         } 
@@ -311,6 +321,11 @@ class TestZonemgrRefresh(unittest.TestCase):
         self.assertTrue((time1 + 3 * 3600 / 4) <= next_refresh_time)
         self.assertTrue(next_refresh_time <= time2 + 3600)
         self.assertEqual(ZONE_OK, self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_state"])
+
+        self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["last_refresh_time"] = time1 - 2419200 
+        self.zone_refresh.zone_refresh_fail(ZONE_NAME_CLASS1_IN)
+        self.assertEqual(ZONE_EXPIRED, self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_state"])
+
         self.assertRaises(ZonemgrException, self.zone_refresh.zone_refresh_fail, ("org.cn.", "CH"))
         self.assertRaises(ZonemgrException, self.zone_refresh.zone_refresh_fail, ZONE_NAME_CLASS3_IN) 
 
@@ -331,17 +346,6 @@ class TestZonemgrRefresh(unittest.TestCase):
                 }
         zone_need_refresh = self.zone_refresh._find_need_do_refresh_zone()
         self.assertEqual(ZONE_NAME_CLASS1_IN, zone_need_refresh)
-
-        self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["last_refresh_time"] = time1 - 2419200
-        self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_state"] = ZONE_EXPIRED
-        zone_need_refresh = self.zone_refresh._find_need_do_refresh_zone()
-        self.assertEqual(None, zone_need_refresh)
-
-        self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_state"] = ZONE_REFRESHING
-        self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["notify_master"] = "192.168.0.1"
-        zone_need_refresh = self.zone_refresh._find_need_do_refresh_zone()
-        self.assertEqual(ZONE_NAME_CLASS1_IN, zone_need_refresh)
-        self.assertEqual(ZONE_EXPIRED, self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_state"])
 
         self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS2_CH]["refresh_timeout"] = time1 
         zone_need_refresh = self.zone_refresh._find_need_do_refresh_zone()
@@ -402,6 +406,19 @@ class TestZonemgrRefresh(unittest.TestCase):
         self.assertTrue("refresh_timeout" in self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN].keys())
         self.assertTrue(zone_state == ZONE_REFRESHING)
 
+    def test_update_config_data(self):
+        config_data = {
+                    "lowerbound_refresh" : 60,
+                    "lowerbound_retry" : 30,
+                    "max_transfer_timeout" : 19800,
+                    "jitter_scope" : 0.25
+                }
+        self.zone_refresh.update_config_data(config_data)
+        self.assertEqual(60, self.zone_refresh._lowerbound_refresh)
+        self.assertEqual(30, self.zone_refresh._lowerbound_retry)
+        self.assertEqual(19800, self.zone_refresh._max_transfer_timeout)
+        self.assertEqual(0.25, self.zone_refresh._jitter_scope)
+
 
     def tearDown(self):
         sys.stdout = self.stdout_backup
@@ -422,10 +439,16 @@ class MyZonemgr(Zonemgr):
 
     def __init__(self):
         self._db_file = "initdb.file"
+        self._zone_refresh = None
         self._shutdown_event = threading.Event()
         self._cc = MySession()
         self._module_cc = MyCCSession()
-        self._config_data = {"zone_name" : "org.cn", "zone_class" : "CH", "master" : "127.0.0.1"}
+        self._config_data = {
+                    "lowerbound_refresh" : 10, 
+                    "lowerbound_retry" : 5, 
+                    "max_transfer_timeout" : 14400,
+                    "jitter_scope" : 0.1
+                    }
 
     def _start_zone_refresh_timer(self):
         pass
@@ -436,12 +459,21 @@ class TestZonemgr(unittest.TestCase):
         self.zonemgr = MyZonemgr()
 
     def test_config_handler(self):
-        config_data1 = {"zone_name" : "sd.cn.", "zone_class" : "CH", "master" : "192.168.1.1"}
+        config_data1 = {
+                    "lowerbound_refresh" : 60, 
+                    "lowerbound_retry" : 30, 
+                    "max_transfer_timeout" : 14400,
+                    "jitter_scope" : 0.1
+                    }
         self.zonemgr.config_handler(config_data1)
         self.assertEqual(config_data1, self.zonemgr._config_data)
         config_data2 = {"zone_name" : "sd.cn.", "port" : "53", "master" : "192.168.1.1"}
         self.zonemgr.config_handler(config_data2)
         self.assertEqual(config_data1, self.zonemgr._config_data)
+        # jitter should not be bigger than half of the original value
+        config_data3 = {"jitter_scope" : 0.7}
+        self.zonemgr.config_handler(config_data3)
+        self.assertEqual(0.5, self.zonemgr._config_data.get("jitter_scope"))
 
     def test_get_db_file(self):
         self.assertEqual("initdb.file", self.zonemgr.get_db_file())

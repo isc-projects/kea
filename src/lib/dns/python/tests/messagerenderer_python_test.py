@@ -32,6 +32,7 @@ class MessageRendererTest(unittest.TestCase):
         message = Message(Message.RENDER)
         message.set_qid(123)
         message.set_opcode(Opcode.QUERY())
+        message.set_rcode(Rcode.NOERROR())
         message.add_question(Question(name, c, t))
 
         self.message1 = message

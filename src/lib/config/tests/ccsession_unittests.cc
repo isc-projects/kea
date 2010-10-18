@@ -164,8 +164,7 @@ TEST_F(CCSessionTest, session1) {
     EXPECT_EQ(0, session.getMsgQueue()->size());
 }
 
-TEST_F(CCSessionTest, session2)
-{
+TEST_F(CCSessionTest, session2) {
     EXPECT_EQ(false, session.haveSubscription("Spec2", "*"));
     ModuleCCSession mccs(ccspecfile("spec2.spec"), session, NULL, NULL);
     EXPECT_EQ(true, session.haveSubscription("Spec2", "*"));

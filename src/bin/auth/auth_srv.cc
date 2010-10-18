@@ -24,10 +24,13 @@
 #include <exceptions/exceptions.h>
 
 #include <dns/buffer.h>
+#include <dns/edns.h>
 #include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/question.h>
+#include <dns/opcode.h>
+#include <dns/rcode.h>
 #include <dns/rrset.h>
 #include <dns/rrttl.h>
 #include <dns/message.h>
@@ -164,7 +167,6 @@ makeErrorMessage(Message& message, MessageRenderer& renderer,
     message.setQid(qid);
     message.setOpcode(opcode);
     message.setHeaderFlag(MessageFlag::QR());
-    message.setUDPSize(AuthSrvImpl::DEFAULT_LOCAL_UDPSIZE);
     if (rd) {
         message.setHeaderFlag(MessageFlag::RD());
     }
@@ -193,6 +195,16 @@ AuthSrv::getVerbose() const {
 }
 
 void
+AuthSrv::setCacheSlots(const size_t slots) {
+    impl_->cache_.setSlots(slots);
+}
+
+size_t
+AuthSrv::getCacheSlots() const {
+    return (impl_->cache_.getSlots());
+}
+
+void
 AuthSrv::setXfrinSession(AbstractSession* xfrin_session) {
     impl_->xfrin_session_ = xfrin_session;
 }
@@ -203,7 +215,7 @@ AuthSrv::setConfigSession(ModuleCCSession* config_session) {
 }
 
 ModuleCCSession*
-AuthSrv::configSession() const {
+AuthSrv::getConfigSession() const {
     return (impl_->config_session_);
 }
 
@@ -292,14 +304,21 @@ bool
 AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
                                 MessageRenderer& response_renderer)
 {
-    const bool dnssec_ok = message.isDNSSECSupported();
-    const uint16_t remote_bufsize = message.getUDPSize();
+    ConstEDNSPtr remote_edns = message.getEDNS();
+    const bool dnssec_ok = remote_edns && remote_edns->getDNSSECAwareness();
+    const uint16_t remote_bufsize = remote_edns ? remote_edns->getUDPSize() :
+        Message::DEFAULT_MAX_UDPSIZE; 
 
     message.makeResponse();
     message.setHeaderFlag(MessageFlag::AA());
     message.setRcode(Rcode::NOERROR());
-    message.setDNSSECSupported(dnssec_ok);
-    message.setUDPSize(AuthSrvImpl::DEFAULT_LOCAL_UDPSIZE);
+
+    if (remote_edns) {
+        EDNSPtr local_edns = EDNSPtr(new EDNS());
+        local_edns->setDNSSECAwareness(dnssec_ok);
+        local_edns->setUDPSize(AuthSrvImpl::DEFAULT_LOCAL_UDPSIZE);
+        message.setEDNS(local_edns);
+    }
 
     try {
         Query query(message, cache_, dnssec_ok);

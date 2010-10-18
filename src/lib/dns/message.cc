@@ -28,10 +28,13 @@
 #include <exceptions/exceptions.h>
 
 #include <dns/buffer.h>
+#include <dns/edns.h>
 #include <dns/exceptions.h>
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
+#include <dns/opcode.h>
+#include <dns/rcode.h>
 #include <dns/question.h>
 #include <dns/rdataclass.h>
 #include <dns/rrclass.h>
@@ -61,14 +64,6 @@ const flags_t FLAG_RA = 0x0080;
 const flags_t FLAG_AD = 0x0020;
 const flags_t FLAG_CD = 0x0010;
 
-//
-// EDNS related constants
-//
-const flags_t EXTFLAG_MASK = 0xffff;
-const flags_t EXTFLAG_DO = 0x8000;
-const uint32_t EXTRCODE_MASK = 0xff000000; 
-const uint32_t EDNSVERSION_MASK = 0x00ff0000;
-
 const unsigned int OPCODE_MASK = 0x7800;
 const unsigned int OPCODE_SHIFT = 11;
 const unsigned int RCODE_MASK = 0x000f;
@@ -76,112 +71,12 @@ const unsigned int FLAG_MASK = 0x8ff0;
 
 const unsigned int MESSAGE_REPLYPRESERVE = (FLAG_RD | FLAG_CD);
 
-const Rcode rcodes[] = {
-    Rcode::NOERROR(),
-    Rcode::FORMERR(),
-    Rcode::SERVFAIL(),
-    Rcode::NXDOMAIN(),
-    Rcode::NOTIMP(),
-    Rcode::REFUSED(),
-    Rcode::YXDOMAIN(),
-    Rcode::YXRRSET(),
-    Rcode::NXRRSET(),
-    Rcode::NOTAUTH(),
-    Rcode::NOTZONE(),
-    Rcode::RESERVED11(),
-    Rcode::RESERVED12(),
-    Rcode::RESERVED13(),
-    Rcode::RESERVED14(),
-    Rcode::RESERVED15(),
-    Rcode::BADVERS()
-};
-
-const char *rcodetext[] = {
-    "NOERROR",
-    "FORMERR",
-    "SERVFAIL",
-    "NXDOMAIN",
-    "NOTIMP",
-    "REFUSED",
-    "YXDOMAIN",
-    "YXRRSET",
-    "NXRRSET",
-    "NOTAUTH",
-    "NOTZONE",
-    "RESERVED11",
-    "RESERVED12",
-    "RESERVED13",
-    "RESERVED14",
-    "RESERVED15",
-    "BADVERS"
-};
-
-const Opcode* opcodes[] = {
-    &Opcode::QUERY(),
-    &Opcode::IQUERY(),
-    &Opcode::STATUS(),
-    &Opcode::RESERVED3(),
-    &Opcode::NOTIFY(),
-    &Opcode::UPDATE(),
-    &Opcode::RESERVED6(),
-    &Opcode::RESERVED7(),
-    &Opcode::RESERVED8(),
-    &Opcode::RESERVED9(),
-    &Opcode::RESERVED10(),
-    &Opcode::RESERVED11(),
-    &Opcode::RESERVED12(),
-    &Opcode::RESERVED13(),
-    &Opcode::RESERVED14(),
-    &Opcode::RESERVED15()
-};
-
-const char *opcodetext[] = {
-    "QUERY",
-    "IQUERY",
-    "STATUS",
-    "RESERVED3",
-    "NOTIFY",
-    "UPDATE",
-    "RESERVED6",
-    "RESERVED7",
-    "RESERVED8",
-    "RESERVED9",
-    "RESERVED10",
-    "RESERVED11",
-    "RESERVED12",
-    "RESERVED13",
-    "RESERVED14",
-    "RESERVED15"
-};
-
 const char *sectiontext[] = {
     "QUESTION",
     "ANSWER",
     "AUTHORITY",
     "ADDITIONAL"
 };
-}
-
-string
-Opcode::toText() const {
-    return (opcodetext[code_]);
-}
-
-Rcode::Rcode(uint16_t code) : code_(code) {
-    if (code_ > MAX_RCODE) {
-        isc_throw(OutOfRange, "Rcode is too large to construct");
-    }
-}
-
-string
-Rcode::toText() const {
-    if (code_ < sizeof(rcodetext) / sizeof (const char *)) {
-        return (rcodetext[code_]);
-    }
-
-    ostringstream oss;
-    oss << code_;
-    return (oss.str());
 }
 
 namespace {
@@ -200,20 +95,24 @@ public:
     // for efficiency?
     Message::Mode mode_;
     qid_t qid_;
-    Rcode rcode_;
+
+    // We want to use NULL for [op,r]code_ to mean the code being not
+    // correctly parsed or set.  We store the real code object in
+    // xxcode_placeholder_ and have xxcode_ refer to it when the object
+    // is valid.
+    const Rcode* rcode_;
+    Rcode rcode_placeholder_;
     const Opcode* opcode_;
+    Opcode opcode_placeholder_;
+
     flags_t flags_;
-    bool dnssec_ok_;
 
     bool header_parsed_;
     static const unsigned int SECTION_MAX = 4; // TODO: revisit this design
     int counts_[SECTION_MAX];   // TODO: revisit this definition
     vector<QuestionPtr> questions_;
     vector<RRsetPtr> rrsets_[SECTION_MAX];
-    RRsetPtr remote_edns_;
-    uint16_t remote_udpsize_;
-    RRsetPtr local_edns_;
-    uint16_t udpsize_;
+    ConstEDNSPtr edns_;
 
 #ifdef notyet
     // tsig/sig0: TODO
@@ -221,12 +120,16 @@ public:
 #endif
 
     void init();
+    void setOpcode(const Opcode& opcode);
+    void setRcode(const Rcode& rcode);
     int parseQuestion(InputBuffer& buffer);
     int parseSection(const Section& section, InputBuffer& buffer);
 };
 
 MessageImpl::MessageImpl(Message::Mode mode) :
-    mode_(mode), rcode_(Rcode::NOERROR())
+    mode_(mode),
+    rcode_placeholder_(Rcode(0)), // as a placeholder the value doesn't matter
+    opcode_placeholder_(Opcode(0)) // ditto
 {
     init();
 }
@@ -235,13 +138,9 @@ void
 MessageImpl::init() {
     flags_ = 0;
     qid_ = 0;
-    rcode_ = Rcode::NOERROR();  // XXX
+    rcode_ = NULL;
     opcode_ = NULL;
-    dnssec_ok_ = false;
-    remote_edns_ = RRsetPtr();
-    remote_udpsize_ = Message::DEFAULT_MAX_UDPSIZE;
-    local_edns_ = RRsetPtr();
-    udpsize_ = Message::DEFAULT_MAX_UDPSIZE;
+    edns_ = EDNSPtr();
 
     for (int i = 0; i < SECTION_MAX; ++i) {
         counts_[i] = 0;
@@ -252,6 +151,18 @@ MessageImpl::init() {
     rrsets_[sectionCodeToId(Section::ANSWER())].clear();
     rrsets_[sectionCodeToId(Section::AUTHORITY())].clear();
     rrsets_[sectionCodeToId(Section::ADDITIONAL())].clear();
+}
+
+void
+MessageImpl::setOpcode(const Opcode& opcode) {
+    opcode_placeholder_ = opcode;
+    opcode_ = &opcode_placeholder_;
+}
+
+void
+MessageImpl::setRcode(const Rcode& rcode) {
+    rcode_placeholder_ = rcode;
+    rcode_ = &rcode_placeholder_;
 }
 
 Message::Message(Mode mode) :
@@ -285,38 +196,6 @@ Message::clearHeaderFlag(const MessageFlag& flag) {
     impl_->flags_ &= ~flag.getBit();
 }
 
-bool
-Message::isDNSSECSupported() const {
-    return (impl_->dnssec_ok_);
-}
-
-void
-Message::setDNSSECSupported(bool on) {
-    if (impl_->mode_ != Message::RENDER) {
-        isc_throw(InvalidMessageOperation,
-                  "setDNSSECSupported performed in non-render mode");
-    }
-    impl_->dnssec_ok_ = on;
-}
-
-uint16_t
-Message::getUDPSize() const {
-    return (impl_->udpsize_);
-}
-
-void
-Message::setUDPSize(uint16_t size) {
-    if (impl_->mode_ != Message::RENDER) {
-        isc_throw(InvalidMessageOperation,
-                  "setUDPSize performed in non-render mode");
-    }
-    if (size < DEFAULT_MAX_UDPSIZE) {
-        isc_throw(InvalidMessageUDPSize,
-                  "Specified UDP message size is too small");
-    }
-    impl_->udpsize_ = size;
-}
-
 qid_t
 Message::getQid() const {
     return (impl_->qid_);
@@ -333,7 +212,10 @@ Message::setQid(qid_t qid) {
 
 const Rcode&
 Message::getRcode() const {
-    return (impl_->rcode_);
+    if (impl_->rcode_ == NULL) {
+        isc_throw(InvalidMessageOperation, "getRcode attempted before set");
+    }
+    return (*impl_->rcode_);
 }
 
 void
@@ -342,11 +224,14 @@ Message::setRcode(const Rcode& rcode) {
         isc_throw(InvalidMessageOperation,
                   "setRcode performed in non-render mode");
     }
-    impl_->rcode_ = rcode;
+    impl_->setRcode(rcode);
 }
 
 const Opcode&
 Message::getOpcode() const {
+    if (impl_->opcode_ == NULL) {
+        isc_throw(InvalidMessageOperation, "getOpcode attempted before set");
+    }
     return (*impl_->opcode_);
 }
 
@@ -356,7 +241,21 @@ Message::setOpcode(const Opcode& opcode) {
         isc_throw(InvalidMessageOperation,
                   "setOpcode performed in non-render mode");
     }
-    impl_->opcode_ = &opcode;
+    impl_->setOpcode(opcode);
+}
+
+ConstEDNSPtr
+Message::getEDNS() const {
+    return (impl_->edns_);
+}
+
+void
+Message::setEDNS(ConstEDNSPtr edns) {
+    if (impl_->mode_ != Message::RENDER) {
+        isc_throw(InvalidMessageOperation,
+                  "setEDNS performed in non-render mode");
+    }
+    impl_->edns_ = edns;
 }
 
 unsigned int
@@ -441,59 +340,19 @@ struct RenderSection {
 };
 }
 
-namespace {
-bool
-addEDNS(MessageImpl* mimpl, MessageRenderer& renderer) {
-    const bool is_query = ((mimpl->flags_ & MessageFlag::QR().getBit()) == 0); 
-
-    // If this is a reply, add EDNS either when the request had it, or
-    // if the Rcode is BADVERS, which is EDNS specific.
-    // XXX: this logic is tricky.  We should revisit this later.
-    if (!is_query) {
-        if (mimpl->remote_edns_ == NULL && mimpl->rcode_ != Rcode::BADVERS()) {
-            return (false);
-        }
-    } else {
-        // For queries, we add EDNS only when necessary:
-        // Local UDP size is not the default value, or
-        // DNSSEC DO bit is to be set, or
-        // Extended Rcode is to be specified.
-        if (mimpl->udpsize_ == Message::DEFAULT_MAX_UDPSIZE &&
-            !mimpl->dnssec_ok_ &&
-            mimpl->rcode_.getCode() < 0x10) {
-            return (false);
-        }
-    }
-
-    // If adding the OPT RR would exceed the size limit, don't do it.
-    // 11 = len(".") + type(2byte) + class(2byte) + TTL(4byte) + RDLEN(2byte)
-    // (RDATA is empty in this simple implementation)
-    if (renderer.getLength() + 11 > renderer.getLengthLimit()) {
-        return (false);
-    }
-
-    // Render EDNS OPT RR
-    uint32_t extrcode_flags = ((mimpl->rcode_.getCode() & 0xff0) << 24);
-    if (mimpl->dnssec_ok_) {
-        extrcode_flags |= 0x8000; // set DO bit
-    }
-    mimpl->local_edns_ = RRsetPtr(new RRset(Name::ROOT_NAME(),
-                                            RRClass(mimpl->udpsize_),
-                                            RRType::OPT(),
-                                            RRTTL(extrcode_flags)));
-    // We don't support any options in this simple implementation
-    mimpl->local_edns_->addRdata(ConstRdataPtr(new generic::OPT()));
-    mimpl->local_edns_->toWire(renderer);
-
-    return (true);
-}
-}
-
 void
 Message::toWire(MessageRenderer& renderer) {
     if (impl_->mode_ != Message::RENDER) {
         isc_throw(InvalidMessageOperation,
                   "Message rendering attempted in non render mode");
+    }
+    if (impl_->rcode_ == NULL) {
+        isc_throw(InvalidMessageOperation,
+                  "Message rendering attempted without Rcode set");
+    }
+    if (impl_->opcode_ == NULL) {
+        isc_throw(InvalidMessageOperation,
+                  "Message rendering attempted without Opcode set");
     }
 
     // reserve room for the header
@@ -528,12 +387,20 @@ Message::toWire(MessageRenderer& renderer) {
                      RenderSection<RRsetPtr>(renderer, false)).getTotalCount();
     }
 
-    // Added EDNS OPT RR if necessary (we want to avoid hardcoding specialized
-    // logic, see the parser case)
-    if (!renderer.isTruncated() && addEDNS(this->impl_, renderer)) {
-        ++arcount;
+    // Add EDNS OPT RR if necessary.  Basically, we add it only when EDNS
+    // has been explicitly set.  However, if the RCODE would require it and
+    // no EDNS has been set we generate a temporary local EDNS and use it.
+    if (!renderer.isTruncated()) {
+        ConstEDNSPtr local_edns = impl_->edns_;
+        if (!local_edns && impl_->rcode_->getExtendedCode() != 0) {
+            local_edns = ConstEDNSPtr(new EDNS());
+        }
+        if (local_edns) {
+            arcount += local_edns->toWire(renderer,
+                                          impl_->rcode_->getExtendedCode());
+        }
     }
-
+ 
     // Adjust the counter buffer.
     // XXX: these may not be equal to the number of corresponding entries
     // in rrsets_[] or questions_ if truncation occurred or an EDNS OPT RR
@@ -553,7 +420,7 @@ Message::toWire(MessageRenderer& renderer) {
 
     uint16_t codes_and_flags =
         (impl_->opcode_->getCode() << OPCODE_SHIFT) & OPCODE_MASK;
-    codes_and_flags |= (impl_->rcode_.getCode() & RCODE_MASK);
+    codes_and_flags |= (impl_->rcode_->getCode() & RCODE_MASK);
     codes_and_flags |= (impl_->flags_ & FLAG_MASK);
     renderer.writeUint16At(codes_and_flags, header_pos);
     header_pos += sizeof(uint16_t);
@@ -582,8 +449,8 @@ Message::parseHeader(InputBuffer& buffer) {
 
     impl_->qid_ = buffer.readUint16();
     const uint16_t codes_and_flags = buffer.readUint16();
-    impl_->opcode_ = opcodes[((codes_and_flags & OPCODE_MASK) >> OPCODE_SHIFT)];
-    impl_->rcode_ = rcodes[(codes_and_flags & RCODE_MASK)];
+    impl_->setOpcode(Opcode((codes_and_flags & OPCODE_MASK) >> OPCODE_SHIFT));
+    impl_->setRcode(Rcode(codes_and_flags & RCODE_MASK));
     impl_->flags_ = (codes_and_flags & FLAG_MASK);
     impl_->counts_[Section::QUESTION().getCode()] = buffer.readUint16();
     impl_->counts_[Section::ANSWER().getCode()] = buffer.readUint16();
@@ -657,6 +524,34 @@ struct MatchRR : public unary_function<RRsetPtr, bool> {
 };
 }
 
+// Note about design decision:
+// we need some type specific processing here, including EDNS and TSIG.
+// how much we should generalize/hardcode the special logic is subject
+// to discussion.  In terms of modularity it would be ideal to introduce
+// an abstract class (say "MessageAttribute") and let other such
+// concrete notions as EDNS or TSIG inherit from it.  Then we would
+// just do:
+// message->addAttribute(rrtype, rrclass, buffer);
+// to create and attach type-specific concrete object to the message.
+//
+// A major downside of this approach is, as usual, complexity due to
+// indirection and performance penalty.  Also, it may not be so easy
+// to separate the processing logic because in many cases we'll need
+// parse context for which the message class is responsible (e.g.
+// to check the EDNS OPT RR only appears in the additional section,
+// and appears only once).
+//
+// Another point to consider is that we may not need so many special
+// types other than EDNS and TSIG (and when and if we implement it,
+// SIG(0)); newer optional attributes of the message would more likely
+// be standardized as new flags or options of EDNS.  If that's the case,
+// introducing an abstract class with all the overhead and complexity
+// may not make much sense.
+//
+// Conclusion: don't over-generalize type-specific logic for now.
+// introduce separate concrete classes, and move context-independent
+// logic to that class; processing logic dependent on parse context
+// is hardcoded here.
 int
 MessageImpl::parseSection(const Section& section, InputBuffer& buffer) {
     unsigned int added = 0;
@@ -678,60 +573,36 @@ MessageImpl::parseSection(const Section& section, InputBuffer& buffer) {
         const size_t rdlen = buffer.readUint16();
         ConstRdataPtr rdata = createRdata(rrtype, rrclass, buffer, rdlen);
 
-        // XXX: we wanted to avoid hardcoding type-specific logic here,
-        // but this would be the fastest way for a proof-of-concept
-        // implementation.  We'll revisit this part later.
         if (rrtype == RRType::OPT()) {
             if (section != Section::ADDITIONAL()) {
                 isc_throw(DNSMessageFORMERR,
                           "EDNS OPT RR found in an invalid section");
             }
-            if (remote_edns_ != NULL) {
+            if (edns_) {
                 isc_throw(DNSMessageFORMERR, "multiple EDNS OPT RR found");
             }
-            if (((ttl.getValue() & EDNSVERSION_MASK) >> 16) >
-                Message::EDNS_SUPPORTED_VERSION) {
-                // XXX: we should probably not reject the message yet, because
-                // it's better to let the requestor know the responder-side
-                // highest version as indicated in Section 4.6 of RFC2671.
-                // This is probably because why BIND 9 does the version check
-                // in the client code.
-                // This is a TODO item.  Right now we simply reject it.
-                const unsigned int ver =
-                    (ttl.getValue() & EDNSVERSION_MASK) >> 16;
-                isc_throw(DNSMessageBADVERS, "unsupported EDNS version: " <<
-                          ver);
-            }
-            if (name != Name::ROOT_NAME()) {
-                isc_throw(DNSMessageFORMERR,
-                          "invalid owner name for EDNS OPT RR");
-            }
 
-            remote_edns_ = RRsetPtr(new RRset(name, rrclass, rrtype, ttl));
-            remote_edns_->addRdata(rdata);
-
-            dnssec_ok_ = (((ttl.getValue() & EXTFLAG_MASK) & EXTFLAG_DO) != 0);
-            if (rrclass.getCode() > Message::DEFAULT_MAX_UDPSIZE) {
-                udpsize_ = rrclass.getCode();
-            }
-            rcode_ = Rcode(((ttl.getValue() & EXTRCODE_MASK) >> 20) |
-                           rcode_.getCode());
+            uint8_t extended_rcode;
+            edns_ = ConstEDNSPtr(createEDNSFromRR(name, rrclass, rrtype, ttl,
+                                                  *rdata, extended_rcode));
+            setRcode(Rcode(rcode_->getCode(), extended_rcode));
             continue;
-        }
-
-        vector<RRsetPtr>::iterator it =
-            find_if(rrsets_[sectionCodeToId(section)].begin(),
-                    rrsets_[sectionCodeToId(section)].end(),
-                    MatchRR(name, rrtype, rrclass));
-        if (it != rrsets_[sectionCodeToId(section)].end()) {
-            (*it)->setTTL(min((*it)->getTTL(), ttl));
-            (*it)->addRdata(rdata);
         } else {
-            RRsetPtr rrset = RRsetPtr(new RRset(name, rrclass, rrtype, ttl)); 
-            rrset->addRdata(rdata);
-            rrsets_[sectionCodeToId(section)].push_back(rrset);
+            vector<RRsetPtr>::iterator it =
+                find_if(rrsets_[sectionCodeToId(section)].begin(),
+                        rrsets_[sectionCodeToId(section)].end(),
+                        MatchRR(name, rrtype, rrclass));
+            if (it != rrsets_[sectionCodeToId(section)].end()) {
+                (*it)->setTTL(min((*it)->getTTL(), ttl));
+                (*it)->addRdata(rdata);
+            } else {
+                RRsetPtr rrset =
+                    RRsetPtr(new RRset(name, rrclass, rrtype, ttl)); 
+                rrset->addRdata(rdata);
+                rrsets_[sectionCodeToId(section)].push_back(rrset);
+            }
+            ++added;
         }
-        ++added;
     }
 
     return (added);
@@ -755,11 +626,20 @@ struct SectionFormatter {
 
 string
 Message::toText() const {
+    if (impl_->rcode_ == NULL) {
+        isc_throw(InvalidMessageOperation,
+                  "Message::toText() attempted without Rcode set");
+    }
+    if (impl_->opcode_ == NULL) {
+        isc_throw(InvalidMessageOperation,
+                  "Message::toText() attempted without Opcode set");
+    }
+
     string s;
 
     s += ";; ->>HEADER<<- opcode: " + impl_->opcode_->toText();
     // for simplicity we don't consider extended rcode (unlike BIND9)
-    s += ", status: " + impl_->rcode_.toText();
+    s += ", status: " + impl_->rcode_->toText();
     s += ", id: " + boost::lexical_cast<string>(impl_->qid_);
     s += "\n;; flags: ";
     if (getHeaderFlag(MessageFlag::QR()))
@@ -786,30 +666,14 @@ Message::toText() const {
         lexical_cast<string>(impl_->counts_[Section::AUTHORITY().getCode()]);
 
     unsigned int arcount = impl_->counts_[Section::ADDITIONAL().getCode()];
-    RRsetPtr edns_rrset;
-    if (!getHeaderFlag(MessageFlag::QR()) && impl_->remote_edns_ != NULL) {
-        edns_rrset = impl_->remote_edns_;
+    if (impl_->edns_ != NULL) {
         ++arcount;
     }
     s += ", ADDITIONAL: " + lexical_cast<string>(arcount) + "\n";
 
-    if (edns_rrset != NULL) {
+    if (impl_->edns_ != NULL) {
         s += "\n;; OPT PSEUDOSECTION:\n";
-        s += "; EDNS: version: ";
-        s += lexical_cast<string>(
-            (edns_rrset->getTTL().getValue() & 0x00ff0000) >> 16);
-        s += ", flags:";
-        if ((edns_rrset->getTTL().getValue() & 0x8000) != 0) {
-            s += " do";
-        }
-        const uint32_t mbz = edns_rrset->getTTL().getValue() & ~0x8000 & 0xffff;
-        if (mbz != 0) {
-            s += "; MBZ: " + lexical_cast<string>(mbz) + ", udp: ";
-        } else {
-            s += "; udp: " +
-                lexical_cast<string>(edns_rrset->getClass().getCode());
-        }
-        s += "\n";
+        s += impl_->edns_->toText();
     }
 
     if (!impl_->questions_.empty()) {
@@ -851,8 +715,7 @@ Message::clear(Mode mode) {
 }
 
 void
-Message::makeResponse()
-{
+Message::makeResponse() {
     if (impl_->mode_ != Message::PARSE) {
         isc_throw(InvalidMessageOperation,
                   "makeResponse() is performed in non-parse mode");
@@ -860,11 +723,7 @@ Message::makeResponse()
 
     impl_->mode_ = Message::RENDER;
 
-    impl_->dnssec_ok_ = false;
-    impl_->remote_udpsize_ = impl_->udpsize_;
-    impl_->local_edns_ = RRsetPtr();
-    impl_->udpsize_ = DEFAULT_MAX_UDPSIZE;
-
+    impl_->edns_ = EDNSPtr();
     impl_->flags_ &= MESSAGE_REPLYPRESERVE;
     setHeaderFlag(MessageFlag::QR());
 
@@ -1002,16 +861,6 @@ Message::endSection(const Section& section) const {
     return (RRsetIterator(
                 RRsetIteratorImpl(
                     impl_->rrsets_[sectionCodeToId(section)].end())));
-}
-
-ostream&
-operator<<(ostream& os, const Opcode& opcode) {
-    return (os << opcode.toText());
-}
-
-ostream&
-operator<<(ostream& os, const Rcode& rcode) {
-    return (os << rcode.toText());
 }
 
 ostream&

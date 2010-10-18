@@ -316,7 +316,9 @@ def _validate_spec(spec, full, data, errors):
     item_name = spec['item_name']
     item_optional = spec['item_optional']
 
-    if item_name in data:
+    if not data and item_optional:
+        return True
+    elif item_name in data:
         return _validate_item(spec, full, data[item_name], errors)
     elif full and not item_optional:
         if errors != None:
