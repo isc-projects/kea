@@ -19,6 +19,7 @@ import random
 import socket
 import threading
 import time
+import errno
 from isc.datasrc import sqlite3_ds
 import isc
 try: 
@@ -44,7 +45,7 @@ _BAD_OPCODE = 3
 _BAD_QR = 4
 _BAD_REPLY_PACKET = 5
 
-SOCK_DATA = b'somedata'
+SOCK_DATA = b's'
 def addr_to_str(addr):
     return '%s#%s' % (addr[0], addr[1])
 
@@ -106,7 +107,8 @@ class NotifyOut:
         self._notifying_zones = []
         self._log = log
         self._serving = False
-        self._read_sock = None
+        self._read_sock, self._write_sock = socket.socketpair()
+        self._read_sock.setblocking(False)
         self.notify_num = 0  # the count of in progress notifies
         self._verbose = verbose
         self._lock = threading.Lock()
@@ -183,7 +185,6 @@ class NotifyOut:
 
         # Prepare for launch
         self._serving = True
-        self._read_sock, self._write_sock = socket.socketpair()
         started_event = threading.Event()
 
         # Start
@@ -305,9 +306,14 @@ class NotifyOut:
             if err.args[0] != EINTR:
                 return {}, {}
 
-        if (self._read_sock in r_fds) and \
-           (self._read_sock.recv(len(SOCK_DATA)) == SOCK_DATA):
-            return {}, {} # user has called shutdown()
+        if self._read_sock in r_fds: # user has called shutdown()
+            try:
+                # Noone should write anything else than shutdown
+                assert self._read_sock.recv(len(SOCK_DATA)) == SOCK_DATA
+                return {}, {}
+            except socket.error as e: # Workaround around rare linux bug
+                if e.errno != errno.EAGAIN and e.errno != errno.EWOULDBLOCK:
+                    raise
 
         not_replied_zones = {}
         replied_zones = {}
