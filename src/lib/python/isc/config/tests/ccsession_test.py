@@ -440,16 +440,41 @@ class TestModuleCCSession(unittest.TestCase):
     def test_check_command_without_recvmsg_remote_module(self):
         "copied from test_check_command3"
         fake_session = FakeModuleCCSession()
-        mccs = self.create_session("spec2.spec", None, None, fake_session)
+        mccs = self.create_session("spec1.spec", None, None, fake_session)
         mccs.set_config_handler(self.my_config_handler_ok)
         self.assertEqual(len(fake_session.message_queue), 0)
+
+        fake_session.group_sendmsg(None, 'Spec2')
+        rmodname = mccs.add_remote_config(self.spec_file("spec2.spec"))
+        print(fake_session.message_queue)
+        self.assertEqual({'command': ['get_config', {'module_name': 'Spec2'}]},
+                         fake_session.get_message('ConfigManager', None))
+        self.assertEqual(len(fake_session.message_queue), 0)
+
         cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, { 'Spec2': { 'item1': 2 }})
         env = { 'group':'Spec2', 'from':None }
         self.assertEqual(len(fake_session.message_queue), 0)
         mccs.check_command_without_recvmsg(cmd, env)
-        self.assertEqual(len(fake_session.message_queue), 1)
-        self.assertEqual({'result': [0]},
-                          fake_session.get_message('Spec2', None))
+        self.assertEqual(len(fake_session.message_queue), 0)
+ 
+    def test_check_command_without_recvmsg_remote_module2(self):
+        "copied from test_check_command3"
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec1.spec", None, None, fake_session)
+        mccs.set_config_handler(self.my_config_handler_ok)
+        self.assertEqual(len(fake_session.message_queue), 0)
+
+        fake_session.group_sendmsg(None, 'Spec2')
+        rmodname = mccs.add_remote_config(self.spec_file("spec2.spec"))
+        self.assertEqual({'command': ['get_config', {'module_name': 'Spec2'}]},
+                         fake_session.get_message('ConfigManager', None))
+        self.assertEqual(len(fake_session.message_queue), 0)
+
+        cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, { 'Spec3': { 'item1': 2 }})
+        env = { 'group':'Spec3', 'from':None }
+        self.assertEqual(len(fake_session.message_queue), 0)
+        mccs.check_command_without_recvmsg(cmd, env)
+        self.assertEqual(len(fake_session.message_queue), 0)
  
     def test_check_command_block_timeout(self):
         """Check it works if session has timeout and it sets it back."""
