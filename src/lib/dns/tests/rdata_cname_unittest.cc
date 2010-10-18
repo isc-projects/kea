@@ -50,8 +50,7 @@ const uint8_t wiredata_cname2[] = {
     // compressed.
     0x03, 0x63, 0x6e, 0x32, 0xc0, 0x03 };
 
-TEST_F(Rdata_CNAME_Test, createFromText)
-{
+TEST_F(Rdata_CNAME_Test, createFromText) {
     EXPECT_EQ(0, rdata_cname.compare(generic::CNAME("cn.example.com")));
     // explicitly add a trailing dot.  should be the same RDATA.
     EXPECT_EQ(0, rdata_cname.compare(generic::CNAME("cn.example.com.")));
@@ -64,8 +63,7 @@ TEST_F(Rdata_CNAME_Test, createFromText)
                                                   "cn.example.com")));
 }
 
-TEST_F(Rdata_CNAME_Test, createFromWire)
-{
+TEST_F(Rdata_CNAME_Test, createFromWire) {
     EXPECT_EQ(0, rdata_cname.compare(
                   *rdataFactoryFromFile(RRType("CNAME"), RRClass("IN"),
                                         "rdata_cname_fromWire")));
@@ -90,16 +88,14 @@ TEST_F(Rdata_CNAME_Test, createFromWire)
                  InvalidRdataLength);
 }
 
-TEST_F(Rdata_CNAME_Test, toWireBuffer)
-{
+TEST_F(Rdata_CNAME_Test, toWireBuffer) {
     rdata_cname.toWire(obuffer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         obuffer.getData(), obuffer.getLength(),
                         wiredata_cname, sizeof(wiredata_cname));
 }
 
-TEST_F(Rdata_CNAME_Test, toWireRenderer)
-{
+TEST_F(Rdata_CNAME_Test, toWireRenderer) {
     rdata_cname.toWire(renderer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         obuffer.getData(), obuffer.getLength(),
@@ -110,13 +106,11 @@ TEST_F(Rdata_CNAME_Test, toWireRenderer)
                         wiredata_cname2, sizeof(wiredata_cname2));
 }
 
-TEST_F(Rdata_CNAME_Test, toText)
-{
+TEST_F(Rdata_CNAME_Test, toText) {
     EXPECT_EQ("cn.example.com.", rdata_cname.toText());
 }
 
-TEST_F(Rdata_CNAME_Test, getCname)
-{
+TEST_F(Rdata_CNAME_Test, getCname) {
     EXPECT_EQ(Name("cn.example.com."), rdata_cname.getCname());
 }
 }

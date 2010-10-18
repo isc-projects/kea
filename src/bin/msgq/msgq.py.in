@@ -31,8 +31,11 @@ import select
 import pprint
 import random
 from optparse import OptionParser, OptionValueError
+import isc.utils.process
 
 import isc.cc
+
+isc.utils.process.rename()
 
 # This is the version that gets displayed to the user.
 __version__ = "v20091030 (Paving the DNS Parking Lot)"
@@ -139,6 +142,10 @@ class MsgQ:
 
     def setup_listener(self):
         """Set up the listener socket.  Internal function."""
+        if self.verbose:
+            sys.stdout.write("[b10-msgq] Setting up socket at %s\n" %
+                             self.socket_file)
+
         self.listen_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         
         if os.path.exists(self.socket_file):

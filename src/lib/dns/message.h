@@ -25,6 +25,7 @@
 
 #include <exceptions/exceptions.h>
 
+#include <dns/edns.h>
 #include <dns/question.h>
 #include <dns/rrset.h>
 
@@ -81,6 +82,8 @@ class InputBuffer;
 class MessageRenderer;
 class Message;
 class MessageImpl;
+class Opcode;
+class Rcode;
 
 template <typename T>
 struct SectionIteratorImpl;
@@ -111,356 +114,45 @@ private:
 };
 
 inline const MessageFlag&
-MessageFlag::QR()
-{
+MessageFlag::QR() {
     static MessageFlag f(0x8000);
     return (f);
 }
 
 inline const MessageFlag&
-MessageFlag::AA()
-{
+MessageFlag::AA() {
     static MessageFlag f(0x0400);
     return (f);
 }
 
 inline const MessageFlag&
-MessageFlag::TC()
-{
+MessageFlag::TC() {
     static MessageFlag f(0x0200);
     return (f);
 }
 
 inline const MessageFlag&
-MessageFlag::RD()
-{
+MessageFlag::RD() {
     static MessageFlag f(0x0100);
     return (f);
 }
 
 inline const MessageFlag&
-MessageFlag::RA()
-{
+MessageFlag::RA() {
     static MessageFlag f(0x0080);
     return (f);
 }
 
 inline const MessageFlag&
-MessageFlag::AD()
-{
+MessageFlag::AD() {
     static MessageFlag f(0x0020);
     return (f);
 }
 
 inline const MessageFlag&
-MessageFlag::CD()
-{
+MessageFlag::CD() {
     static MessageFlag f(0x0010);
     return (f);
-}
-
-/// \brief The \c Opcode class objects represent standard OPCODEs
-/// of the header section of DNS messages.
-///
-/// Note: since there are only 15 possible values, it may make more sense to
-/// simply define an enum type to represent these values.
-///
-/// Constant objects are defined for standard flags.
-class Opcode {
-public:
-    uint16_t getCode() const { return (code_); }
-    bool operator==(const Opcode& other) const
-    { return (code_ == other.code_); }
-    bool operator!=(const Opcode& other) const
-    { return (code_ != other.code_); }
-    std::string toText() const;
-    static const Opcode& QUERY();
-    static const Opcode& IQUERY();
-    static const Opcode& STATUS();
-    static const Opcode& RESERVED3();
-    static const Opcode& NOTIFY();
-    static const Opcode& UPDATE();
-    static const Opcode& RESERVED6();
-    static const Opcode& RESERVED7();
-    static const Opcode& RESERVED8();
-    static const Opcode& RESERVED9();
-    static const Opcode& RESERVED10();
-    static const Opcode& RESERVED11();
-    static const Opcode& RESERVED12();
-    static const Opcode& RESERVED13();
-    static const Opcode& RESERVED14();
-    static const Opcode& RESERVED15();
-private:
-    Opcode(uint16_t code) : code_(code) {}
-    uint16_t code_;
-};
-
-inline const Opcode&
-Opcode::QUERY()
-{
-    static Opcode c(0);
-    return (c);
-}
-
-inline const Opcode&
-Opcode::IQUERY()
-{
-    static Opcode c(1);
-    return (c);
-}
-
-inline const Opcode&
-Opcode::STATUS()
-{
-    static Opcode c(2);
-    return (c);
-}
-
-inline const Opcode&
-Opcode::RESERVED3()
-{
-    static Opcode c(3);
-    return (c);
-}
-
-inline const Opcode&
-Opcode::NOTIFY()
-{
-    static Opcode c(4);
-    return (c);
-}
-
-inline const Opcode&
-Opcode::UPDATE()
-{
-    static Opcode c(5);
-    return (c);
-}
-
-inline const Opcode&
-Opcode::RESERVED6()
-{
-    static Opcode c(6);
-    return (c);
-}
-
-inline const Opcode&
-Opcode::RESERVED7()
-{
-    static Opcode c(7);
-    return (c);
-}
-
-inline const Opcode&
-Opcode::RESERVED8()
-{
-    static Opcode c(8);
-    return (c);
-}
-
-inline const Opcode&
-Opcode::RESERVED9()
-{
-    static Opcode c(9);
-    return (c);
-}
-
-inline const Opcode&
-Opcode::RESERVED10()
-{
-    static Opcode c(10);
-    return (c);
-}
-
-inline const Opcode&
-Opcode::RESERVED11()
-{
-    static Opcode c(11);
-    return (c);
-}
-
-inline const Opcode&
-Opcode::RESERVED12()
-{
-    static Opcode c(12);
-    return (c);
-}
-
-inline const Opcode&
-Opcode::RESERVED13()
-{
-    static Opcode c(13);
-    return (c);
-}
-
-inline const Opcode&
-Opcode::RESERVED14()
-{
-    static Opcode c(14);
-    return (c);
-}
-
-inline const Opcode&
-Opcode::RESERVED15()
-{
-    static Opcode c(15);
-    return (c);
-}
-
-/// \brief The \c Rcode class objects represent standard Response Codes
-/// (RCODEs) of the header section of DNS messages, and extended response
-/// codes as defined in the EDNS specification.
-///
-/// Constant objects are defined for standard flags.
-class Rcode {
-public:
-    Rcode(uint16_t code);
-    uint16_t getCode() const { return (code_); }
-    bool operator==(const Rcode& other) const { return (code_ == other.code_); }
-    bool operator!=(const Rcode& other) const { return (code_ != other.code_); }
-    std::string toText() const;
-    static const Rcode& NOERROR();
-    static const Rcode& FORMERR();
-    static const Rcode& SERVFAIL();
-    static const Rcode& NXDOMAIN();
-    static const Rcode& NOTIMP();
-    static const Rcode& REFUSED();
-    static const Rcode& YXDOMAIN();
-    static const Rcode& YXRRSET();
-    static const Rcode& NXRRSET();
-    static const Rcode& NOTAUTH();
-    static const Rcode& NOTZONE();
-    static const Rcode& RESERVED11();
-    static const Rcode& RESERVED12();
-    static const Rcode& RESERVED13();
-    static const Rcode& RESERVED14();
-    static const Rcode& RESERVED15();
-    // Extended Rcodes follow (EDNS required):
-    static const Rcode& BADVERS();
-private:
-    uint16_t code_;
-
-    // EDNS-extended RCODEs are 12-bit unsigned integers.
-    static const uint16_t MAX_RCODE = 0xfff;
-};
-
-inline const Rcode&
-Rcode::NOERROR()
-{
-    static Rcode c(0);
-    return (c);
-}
-
-inline const Rcode&
-Rcode::FORMERR()
-{
-    static Rcode c(1);
-    return (c);
-}
-
-inline const Rcode&
-Rcode::SERVFAIL()
-{
-    static Rcode c(2);
-    return (c);
-}
-
-inline const Rcode&
-Rcode::NXDOMAIN()
-{
-    static Rcode c(3);
-    return (c);
-}
-
-inline const Rcode&
-Rcode::NOTIMP()
-{
-    static Rcode c(4);
-    return (c);
-}
-
-inline const Rcode&
-Rcode::REFUSED()
-{
-    static Rcode c(5);
-    return (c);
-}
-
-inline const Rcode&
-Rcode::YXDOMAIN()
-{
-    static Rcode c(6);
-    return (c);
-}
-
-inline const Rcode&
-Rcode::YXRRSET()
-{
-    static Rcode c(7);
-    return (c);
-}
-
-inline const Rcode&
-Rcode::NXRRSET()
-{
-    static Rcode c(8);
-    return (c);
-}
-
-inline const Rcode&
-Rcode::NOTAUTH()
-{
-    static Rcode c(9);
-    return (c);
-}
-
-inline const Rcode&
-Rcode::NOTZONE()
-{
-    static Rcode c(10);
-    return (c);
-}
-
-inline const Rcode&
-Rcode::RESERVED11()
-{
-    static Rcode c(11);
-    return (c);
-}
-
-inline const Rcode&
-Rcode::RESERVED12()
-{
-    static Rcode c(12);
-    return (c);
-}
-
-inline const Rcode&
-Rcode::RESERVED13()
-{
-    static Rcode c(13);
-    return (c);
-}
-
-inline const Rcode&
-Rcode::RESERVED14()
-{
-    static Rcode c(14);
-    return (c);
-}
-
-inline const Rcode&
-Rcode::RESERVED15()
-{
-    static Rcode c(15);
-    return (c);
-}
-
-inline const Rcode&
-Rcode::BADVERS()
-{
-    static Rcode c(16);
-    return (c);
 }
 
 /// \brief The \c Section class objects represent DNS message sections such
@@ -500,29 +192,25 @@ private:
 };
 
 inline const Section&
-Section::QUESTION()
-{
+Section::QUESTION() {
     static Section s(SECTION_QUESTION);
     return (s);
 }
 
 inline const Section&
-Section::ANSWER()
-{
+Section::ANSWER() {
     static Section s(SECTION_ANSWER);
     return (s);
 }
 
 inline const Section&
-Section::AUTHORITY()
-{
+Section::AUTHORITY() {
     static Section s(SECTION_AUTHORITY);
     return (s);
 }
 
 inline const Section&
-Section::ADDITIONAL()
-{
+Section::ADDITIONAL() {
     static Section s(SECTION_ADDITIONAL);
     return (s);
 }
@@ -627,45 +315,6 @@ public:
     /// \c setHeaderFlag() with an additional argument.
     void clearHeaderFlag(const MessageFlag& flag);
 
-    /// \brief Return whether the message sender indicates DNSSEC is supported.
-    /// If EDNS is included, this corresponds to the value of the DO bit.
-    /// Otherwise, DNSSEC is considered not supported.
-    bool isDNSSECSupported() const;
-
-    /// \brief Specify whether DNSSEC is supported in the message.
-    ///
-    /// Only allowed in the \c RENDER mode.
-    /// If EDNS is included in the message, the DO bit is set or cleared
-    /// according to the specified value of this method.
-    void setDNSSECSupported(bool on);
-
-    /// \brief Return the maximum buffer size of UDP messages for the sender
-    /// of the message.
-    ///
-    /// The semantics of this value is different based on the mode:
-    /// In the \c PARSE mode, it means the buffer size of the remote node;
-    /// in the \c RENDER mode, it means the buffer size of the local node.
-    ///
-    /// In either case, its value is the value of the UDP payload size field
-    /// of EDNS (when it's included) or \c DEFAULT_MAX_UDPSIZE.
-    ///
-    /// Note: this interface may be confusing and may have to be revisited.
-    uint16_t getUDPSize() const;
-
-    /// \brief Specify the maximum buffer size of UDP messages of the local
-    /// node.
-    ///
-    /// Only allowed in the \c RENDER mode.
-    /// If EDNS OPT RR is included in the message, its UDP payload size field
-    /// will be set to the specified value.
-    ///
-    /// Unless explicitly specified, \c DEFAULT_MAX_UDPSIZE will be assumed
-    /// for the maximum buffer size, regardless of whether EDNS OPT RR is
-    /// included or not.  This means if an application wants to send a message
-    /// with an EDNS OPT RR for specifying a larger UDP size, it must explicitly
-    /// specify the value using this method.
-    void setUDPSize(uint16_t size);
-
     /// \brief Return the query ID given in the header section of the message.
     qid_t getQid() const;
 
@@ -680,22 +329,50 @@ public:
     /// included).  In the \c PARSE mode, if the received message contains
     /// an EDNS OPT RR, the corresponding extended code is identified and
     /// returned.
+    ///
+    /// The message must have been properly parsed (in the case of the
+    /// \c PARSE mode) or an \c Rcode has been set (in the case of the
+    /// \c RENDER mode) beforehand.  Otherwise, an exception of class
+    /// \c InvalidMessageOperation will be thrown.
     const Rcode& getRcode() const;
 
-    /// \brief Return the Response Code of the message.
+    /// \brief Set the Response Code of the message.
     ///
     /// Only allowed in the \c RENDER mode.
+    ///
     /// If the specified code is an EDNS extended RCODE, an EDNS OPT RR will be
     /// included in the message.
     void setRcode(const Rcode& rcode);
 
     /// \brief Return the OPCODE given in the header section of the message.
+    ///
+    /// The message must have been properly parsed (in the case of the
+    /// \c PARSE mode) or an \c Opcode has been set (in the case of the
+    /// \c RENDER mode) beforehand.  Otherwise, an exception of class
+    /// \c InvalidMessageOperation will be thrown.
     const Opcode& getOpcode() const;
 
     /// \brief Set the OPCODE of the header section of the message.
     ///
     /// Only allowed in the \c RENDER mode.
     void setOpcode(const Opcode& opcode);
+
+    /// \brief Return, if any, the EDNS associated with the message.
+    ///
+    /// This method never throws an exception.
+    ///
+    /// \return A shared pointer to the EDNS.  This will be a null shared
+    /// pointer if the message is not associated with EDNS.
+    ConstEDNSPtr getEDNS() const;
+
+    /// \brief Set EDNS for the message.
+    ///
+    /// Only allowed in the \c RENDER mode; otherwise an exception of class
+    /// \c InvalidMessageOperation will be thrown.
+    ///
+    /// \param edns A shared pointer to an \c EDNS object to be set in
+    /// \c Message.
+    void setEDNS(ConstEDNSPtr edns);
 
     /// \brief Returns the number of RRs contained in the given section.
     unsigned int getRRCount(const Section& section) const;
@@ -768,10 +445,19 @@ public:
     void makeResponse();
 
     /// \brief Convert the Message to a string.
+    ///
+    /// At least \c Opcode and \c Rcode must be validly set in the \c Message
+    /// (as a result of parse in the \c PARSE mode or by explicitly setting
+    /// in the \c RENDER mode);  otherwise, an exception of
+    /// class \c InvalidMessageOperation will be thrown.
     std::string toText() const;
 
     /// \brief Render the message in wire formant into a \c MessageRenderer
     /// object.
+    ///
+    /// This \c Message must be in the \c RENDER mode and both \c Opcode and
+    /// \c Rcode must have been set beforehand; otherwise, an exception of
+    /// class \c InvalidMessageOperation will be thrown.
     void toWire(MessageRenderer& renderer);
 
     /// \brief Parse the header section of the \c Message.
@@ -798,8 +484,6 @@ private:
     MessageImpl* impl_;
 };
 
-std::ostream& operator<<(std::ostream& os, const Opcode& opcode);
-std::ostream& operator<<(std::ostream& os, const Rcode& rcode);
 std::ostream& operator<<(std::ostream& os, const Message& message);
 }
 }

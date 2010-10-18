@@ -127,8 +127,7 @@ NSEC3::NSEC3(const string& nsec3_str) :
     impl_ = new NSEC3Impl(hashalg, flags, iterations, salt, next, typebits);
 }
 
-NSEC3::NSEC3(InputBuffer& buffer, size_t rdata_len)
-{
+NSEC3::NSEC3(InputBuffer& buffer, size_t rdata_len) {
     if (rdata_len < 5) {
         isc_throw(InvalidRdataLength, "NSEC3 too short");
     }
@@ -189,8 +188,7 @@ NSEC3::NSEC3(const NSEC3& source) :
 {}
 
 NSEC3&
-NSEC3::operator=(const NSEC3& source)
-{
+NSEC3::operator=(const NSEC3& source) {
     if (impl_ == source.impl_) {
         return (*this);
     }
@@ -202,14 +200,12 @@ NSEC3::operator=(const NSEC3& source)
     return (*this);
 }
 
-NSEC3::~NSEC3()
-{
+NSEC3::~NSEC3() {
     delete impl_;
 }
 
 string
-NSEC3::toText() const
-{
+NSEC3::toText() const {
     ostringstream s;
     int len = 0;
     for (int i = 0; i < impl_->typebits_.size(); i += len) {
@@ -241,8 +237,7 @@ NSEC3::toText() const
 }
 
 void
-NSEC3::toWire(OutputBuffer& buffer) const
-{
+NSEC3::toWire(OutputBuffer& buffer) const {
     buffer.writeUint8(impl_->hashalg_);
     buffer.writeUint8(impl_->flags_);
     buffer.writeUint16(impl_->iterations_);
@@ -254,8 +249,7 @@ NSEC3::toWire(OutputBuffer& buffer) const
 }
 
 void
-NSEC3::toWire(MessageRenderer& renderer) const
-{
+NSEC3::toWire(MessageRenderer& renderer) const {
     renderer.writeUint8(impl_->hashalg_);
     renderer.writeUint8(impl_->flags_);
     renderer.writeUint16(impl_->iterations_);
@@ -267,8 +261,7 @@ NSEC3::toWire(MessageRenderer& renderer) const
 }
 
 int
-NSEC3::compare(const Rdata& other) const
-{
+NSEC3::compare(const Rdata& other) const {
     const NSEC3& other_nsec3 = dynamic_cast<const NSEC3&>(other);
 
     if (impl_->hashalg_ != other_nsec3.impl_->hashalg_) {
