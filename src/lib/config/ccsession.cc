@@ -45,6 +45,7 @@
 using namespace std;
 
 using isc::data::Element;
+using isc::data::ConstElementPtr;
 using isc::data::ElementPtr;
 using isc::data::JSONError;
 
