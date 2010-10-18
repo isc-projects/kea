@@ -20,7 +20,7 @@ import tempfile
 import time
 import socket
 from isc.datasrc import sqlite3_ds
-from isc.notify import notify_out
+from isc.notify import notify_out, SOCK_DATA
 
 class TestZoneNotifyInfo(unittest.TestCase):
     def setUp(self):
@@ -129,7 +129,7 @@ class TestNotifyOut(unittest.TestCase):
         self._notify._notify_infos[('cn.', 'IN')].notify_timeout = time.time() + 10
         self._notify._notify_infos[('com.', 'IN')].notify_timeout = time.time() + 10
         self._notify._read_sock, self._notify._write_sock = socket.socketpair()
-        self._notify._write_sock.send(b'shutdown')
+        self._notify._write_sock.send(SOCK_DATA)
         replied_zones, timeout_zones = self._notify._wait_for_notify_reply()
         self.assertEqual(0, len(replied_zones))
         self.assertEqual(0, len(timeout_zones))
