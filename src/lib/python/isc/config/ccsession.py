@@ -216,7 +216,8 @@ class ModuleCCSession(ConfigData):
                             newc = self._remote_module_configs[module_name].get_local_config()
                             isc.cc.data.merge(newc, new_config)
                             self._remote_module_configs[module_name].set_local_config(newc)
-                            return
+                        # For other modules, we're not supposed to answer
+                        return
 
                     # ok, so apparently this update is for us.
                     errors = []
