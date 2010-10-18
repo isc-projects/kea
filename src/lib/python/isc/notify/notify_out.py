@@ -44,6 +44,7 @@ _BAD_OPCODE = 3
 _BAD_QR = 4
 _BAD_REPLY_PACKET = 5
 
+SOCK_DATA = b'somedata'
 def addr_to_str(addr):
     return '%s#%s' % (addr[0], addr[1])
 
@@ -206,7 +207,7 @@ class NotifyOut:
 
         # Ask it to stop
         self._serving = False
-        self._write_sock.send(b'shutdown') # make self._read_sock be readable.
+        self._write_sock.send(SOCK_DATA) # make self._read_sock be readable.
 
         # Wait for it
         self._thread.join()
@@ -304,7 +305,8 @@ class NotifyOut:
             if err.args[0] != EINTR:
                 return {}, {}
 
-        if self._read_sock in r_fds:
+        if (self._read_sock in r_fds) and \
+           (self._read_sock.recv(len(SOCK_DATA)) == SOCK_DATA):
             return {}, {} # user has called shutdown()
 
         not_replied_zones = {}
