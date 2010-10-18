@@ -71,8 +71,14 @@ TEST(IOAddressTest, fromText) {
     // bogus IPv4 address-like input
     EXPECT_THROW(IOAddress("192.0.2.2.1"), IOError);
 
+    // bogus IPv4 address-like input: out-of-range octet
+    EXPECT_THROW(IOAddress("192.0.2.300"), IOError);
+
     // bogus IPv6 address-like input
     EXPECT_THROW(IOAddress("2001:db8:::1234"), IOError);
+
+    // bogus IPv6 address-like input
+    EXPECT_THROW(IOAddress("2001:db8::efgh"), IOError);
 }
 
 TEST(IOEndpointTest, createUDPv4) {
@@ -178,9 +184,27 @@ TEST(IOServiceTest, duplicateBind) {
     delete io_service;
 }
 
+// Disabled because IPv4-mapped addresses don't seem to be working with
+// the IOService constructor
+TEST(IOServiceTest, DISABLED_IPv4MappedDuplicateBind) {
+    // Duplicate bind on IPv4-mapped IPv6 address
+    IOService* io_service = new IOService(*TEST_SERVER_PORT, *"127.0.0.1", NULL, NULL, NULL);
+    EXPECT_THROW(IOService(*TEST_SERVER_PORT, *"::ffff:127.0.0.1", NULL, NULL, NULL), IOError);
+    delete io_service;
+
+    // XXX:
+    // Currently, this throws an "invalid argument" exception.  I have
+    // not been able to get IPv4-mapped addresses to work.
+    io_service = new IOService(*TEST_SERVER_PORT, *"::ffff:127.0.0.1", NULL, NULL, NULL);
+    EXPECT_THROW(IOService(*TEST_SERVER_PORT, *"127.0.0.1", NULL, NULL, NULL), IOError);
+    delete io_service;
+}
+
+// This function returns an addrinfo structure for use by tests, using
+// different addresses and ports depending on whether we're testing
+// IPv4 or v6, TCP or UDP, and client or server operation.
 struct addrinfo*
-resolveAddress(const int family, const int sock_type, const int protocol,
-               const bool client) {
+resolveAddress(const int family, const int protocol, const bool client) {
     const char* const addr = (family == AF_INET6) ?
         TEST_IPV6_ADDR : TEST_IPV4_ADDR;
     const char* const port = client ? TEST_CLIENT_PORT : TEST_SERVER_PORT;
@@ -188,7 +212,7 @@ resolveAddress(const int family, const int sock_type, const int protocol,
     struct addrinfo hints;
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = family;
-    hints.ai_socktype = sock_type;
+    hints.ai_socktype = (protocol == IPPROTO_UDP) ? SOCK_DGRAM : SOCK_STREAM;
     hints.ai_protocol = protocol;
     hints.ai_flags = AI_NUMERICSERV;
 
@@ -230,8 +254,10 @@ protected:
             delete callback_;
         }
     }
+
+    // Send a test UDP packet to a mock server
     void sendUDP(const int family) {
-        res_ = resolveAddress(family, SOCK_DGRAM, IPPROTO_UDP, false);
+        res_ = resolveAddress(family, IPPROTO_UDP, false);
 
         sock_ = socket(res_->ai_family, res_->ai_socktype, res_->ai_protocol);
         if (sock_ < 0) {
@@ -244,8 +270,10 @@ protected:
         }
         io_service_->run();
     }
+
+    // Send a test TCP packet to a mock server
     void sendTCP(const int family) {
-        res_ = resolveAddress(family, SOCK_STREAM, IPPROTO_TCP, false);
+        res_ = resolveAddress(family, IPPROTO_TCP, false);
 
         sock_ = socket(res_->ai_family, res_->ai_socktype, res_->ai_protocol);
         if (sock_ < 0) {
@@ -260,8 +288,12 @@ protected:
         }
         io_service_->run();
     }
+
+    // Receive a UDP packet from a mock server; used for testing
+    // recursive lookup.  The caller must place a RecursiveQuery 
+    // on the IO Service queue before running this routine.
     void recvUDP(const int family, void* buffer, size_t& size) {
-        res_ = resolveAddress(family, SOCK_DGRAM, IPPROTO_UDP, true);
+        res_ = resolveAddress(family, IPPROTO_UDP, true);
 
         sock_ = socket(res_->ai_family, res_->ai_socktype, res_->ai_protocol);
         if (sock_ < 0) {
@@ -289,12 +321,18 @@ protected:
         // Pass the message size back via the size parameter
         size = ret;
     }
+
+
+    // Set up an IO Service queue using the specified address
     void setIOService(const char& address) {
         delete io_service_;
         io_service_ = NULL;
         callback_ = new ASIOCallBack(this);
         io_service_ = new IOService(*TEST_SERVER_PORT, address, callback_, NULL, NULL);
     }
+
+    // Set up an IO Service queue using the "any" address, on IPv4 if
+    // 'use_ipv4' is true and on IPv6 if 'use_ipv6' is true.
     void setIOService(const bool use_ipv4, const bool use_ipv6) {
         delete io_service_;
         io_service_ = NULL;
@@ -302,6 +340,13 @@ protected:
         io_service_ = new IOService(*TEST_SERVER_PORT, use_ipv4, use_ipv6, callback_,
                                     NULL, NULL);
     }
+
+    // Run a simple server test, on either IPv4 or IPv6, and over either
+    // UDP or TCP.  Calls the sendUDP() or sendTCP() methods, which will
+    // start the IO Service queue.  The UDPServer or TCPServer that was
+    // created by setIOSerice() will receive the test packet and issue a
+    // callback, which enables us to check that the data it received
+    // matches what we sent.
     void doTest(const int family, const int protocol) {
         if (protocol == IPPROTO_UDP) {
             sendUDP(family);
@@ -328,6 +373,9 @@ protected:
     }
 
 protected:
+    // This is a nonfunctional mockup of a DNSServer object.  Its purpose
+    // is to resume after a recursive query or other asynchronous call
+    // has completed.
     class MockServer : public DNSServer {
     public:
         explicit MockServer(asio::io_service& io_service,
@@ -336,16 +384,14 @@ protected:
                             DNSLookup* lookup = NULL,
                             DNSAnswer* answer = NULL) :
             io_(io_service),
+            message_(new Message(Message::PARSE)),
+            respbuf_(new OutputBuffer(0)),
             checkin_(checkin), lookup_(lookup), answer_(answer)
-        {
-        // HERE set up address
-        }
+        {}
 
         void operator()(asio::error_code ec = asio::error_code(),
                         size_t length = 0)
-        {
-            // Do some stuff
-        }
+        {}
 
         void resume(const bool done) {
             done_ = done;
@@ -358,12 +404,20 @@ protected:
         }
 
         inline void asyncLookup() {
-            // (*lookup_)(*io_message_, message_, respbuf_, this);
+            if (lookup_) {
+                (*lookup_)(*io_message_, message_, respbuf_, this);
+            }
         }
 
     private:
         asio::io_service& io_;
         bool done_;
+
+        // Currently unused; these will be used for testing
+        // asynchronous lookup calls via the asyncLookup() method
+        boost::shared_ptr<asiolink::IOMessage> io_message_;
+        isc::dns::MessagePtr message_;
+        isc::dns::OutputBufferPtr respbuf_;
 
         // Callback functions provided by the caller
         const SimpleCallback* checkin_;

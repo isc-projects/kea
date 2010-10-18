@@ -35,6 +35,8 @@
 
 #include <dns/tests/unittest_util.h>
 
+#include <auth/tests/mockups.h>
+
 using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::cc;
@@ -59,56 +61,6 @@ private:
 };
 
 class RecursorTest : public ::testing::Test {
-private:
-    class MockSession : public AbstractSession {
-    public:
-        MockSession() :
-            // by default we return a simple "success" message.
-            msg_(Element::fromJSON("{\"result\": [0, \"SUCCESS\"]}")),
-            send_ok_(true), receive_ok_(true)
-        {}
-        virtual void establish(const char* socket_file);
-        virtual void disconnect();
-        virtual int group_sendmsg(ConstElementPtr msg, string group,
-                                  string instance, string to);
-        virtual bool group_recvmsg(ConstElementPtr& envelope,
-                                   ConstElementPtr& msg,
-                                   bool nonblock, int seq);
-        virtual void subscribe(string group, string instance);
-        virtual void unsubscribe(string group, string instance);
-        virtual void startRead(boost::function<void()> read_callback);
-        virtual int reply(ConstElementPtr envelope, ConstElementPtr newmsg);
-        virtual bool hasQueuedMsgs() const;
-        virtual void setTimeout(size_t timeout UNUSED_PARAM) {};
-        virtual size_t getTimeout() const { return 0; };
-
-        void setMessage(ConstElementPtr msg) { msg_ = msg; }
-        void disableSend() { send_ok_ = false; }
-        void disableReceive() { receive_ok_ = false; }
-
-        ConstElementPtr sent_msg;
-        string msg_destination;
-    private:
-        ConstElementPtr msg_;
-        bool send_ok_;
-        bool receive_ok_;
-    };
-
-    // A nonoperative task object to be used in calls to processMessage()
-    class MockTask : public DNSServer {
-    public:
-        MockTask() : done_(false) {}
-        void operator()(asio::error_code ec UNUSED_PARAM,
-                        size_t length UNUSED_PARAM)
-        {}
-        // virtual void doLookup() { return; }
-        virtual void resume(const bool done) { done_ = done; }
-        virtual bool hasAnswer() { return (done_); }
-        virtual int value() { return (0); }
-    private:
-        bool done_;
-    };
-
 protected:
     RecursorTest() : ios(*TEST_PORT, true, false, NULL, NULL, NULL),
                     server(*DEFAULT_REMOTE_ADDRESS),
@@ -126,7 +78,7 @@ protected:
         delete endpoint;
     }
     MockSession notify_session;
-    MockTask task;
+    MockServer dnsserv;
     IOService ios;
     Recursor server;
     Message request_message;
@@ -145,85 +97,8 @@ protected:
     vector<uint8_t> data;
 
     void createDataFromFile(const char* const datafile, int protocol);
-    void createRequestMessage(const Opcode& opcode, const Name& request_name,
-                              const RRClass& rrclass, const RRType& rrtype);
-    void createRequestPacket(const Opcode& opcode, const Name& request_name,
-                             const RRClass& rrclass, const RRType& rrtype,
-                             int protocol);
-    void createRequestPacket(int protocol);
+    void createRequestPacket(Message& message, int protocol);
 };
-
-void
-RecursorTest::MockSession::establish(const char* socket_file UNUSED_PARAM) {}
-
-void
-RecursorTest::MockSession::disconnect() {}
-
-void
-RecursorTest::MockSession::subscribe(string group UNUSED_PARAM,
-                                    string instance UNUSED_PARAM)
-{}
-
-void
-RecursorTest::MockSession::unsubscribe(string group UNUSED_PARAM,
-                                      string instance UNUSED_PARAM)
-{}
-
-void
-RecursorTest::MockSession::startRead(
-    boost::function<void()> read_callback UNUSED_PARAM)
-{}
-
-int
-RecursorTest::MockSession::reply(ConstElementPtr envelope UNUSED_PARAM,
-                                ConstElementPtr newmsg UNUSED_PARAM)
-{
-    return (-1);
-}
-
-bool
-RecursorTest::MockSession::hasQueuedMsgs() const {
-    return (false);
-}
-
-int
-RecursorTest::MockSession::group_sendmsg(ConstElementPtr msg, string group,
-                                        string instance UNUSED_PARAM,
-                                        string to UNUSED_PARAM)
-{
-    if (!send_ok_) {
-        isc_throw(FatalError, "mock session send is disabled for test");
-    }
-
-    sent_msg = msg;
-    msg_destination = group;
-    return (0);
-}
-
-bool
-RecursorTest::MockSession::group_recvmsg(ConstElementPtr& envelope UNUSED_PARAM,
-                                        ConstElementPtr& msg,
-                                        bool nonblock UNUSED_PARAM,
-                                        int seq UNUSED_PARAM)
-{
-    if (!receive_ok_) {
-        isc_throw(FatalError, "mock session receive is disabled for test");
-    }
-
-    msg = msg_;
-    return (true);
-}
-
-// These are flags to indicate whether the corresponding flag bit of the
-// DNS header is to be set in the test cases.  (Note that the flag values
-// is irrelevant to their wire-format values)
-const unsigned int QR_FLAG = 0x1;
-const unsigned int AA_FLAG = 0x2;
-const unsigned int TC_FLAG = 0x4;
-const unsigned int RD_FLAG = 0x8;
-const unsigned int RA_FLAG = 0x10;
-const unsigned int AD_FLAG = 0x20;
-const unsigned int CD_FLAG = 0x40;
 
 void
 RecursorTest::createDataFromFile(const char* const datafile,
@@ -241,30 +116,10 @@ RecursorTest::createDataFromFile(const char* const datafile,
 }
 
 void
-RecursorTest::createRequestMessage(const Opcode& opcode,
-                                  const Name& request_name,
-                                  const RRClass& rrclass,
-                                  const RRType& rrtype)
+RecursorTest::createRequestPacket(Message& message,
+                                  const int protocol = IPPROTO_UDP)
 {
-    request_message.clear(Message::RENDER);
-    request_message.setOpcode(opcode);
-    request_message.setQid(default_qid);
-    request_message.addQuestion(Question(request_name, rrclass, rrtype));
-}
-
-void
-RecursorTest::createRequestPacket(const Opcode& opcode,
-                                 const Name& request_name,
-                                 const RRClass& rrclass, const RRType& rrtype,
-                                 const int protocol = IPPROTO_UDP)
-{
-    createRequestMessage(opcode, request_name, rrclass, rrtype);
-    createRequestPacket(protocol);
-}
-
-void
-RecursorTest::createRequestPacket(const int protocol = IPPROTO_UDP) {
-    request_message.toWire(request_renderer);
+    message.toWire(request_renderer);
 
     delete io_message;
 
@@ -275,6 +130,17 @@ RecursorTest::createRequestPacket(const int protocol = IPPROTO_UDP) {
                                request_renderer.getLength(),
                                *io_sock, *endpoint);
 }
+
+// These are flags to indicate whether the corresponding flag bit of the
+// DNS header is to be set in the test cases.  (Note that the flag values
+// is irrelevant to their wire-format values)
+const unsigned int QR_FLAG = 0x1;
+const unsigned int AA_FLAG = 0x2;
+const unsigned int TC_FLAG = 0x4;
+const unsigned int RD_FLAG = 0x8;
+const unsigned int RA_FLAG = 0x10;
+const unsigned int AD_FLAG = 0x20;
+const unsigned int CD_FLAG = 0x40;
 
 void
 headerCheck(const Message& message, const qid_t qid, const Rcode& rcode,
@@ -314,8 +180,8 @@ TEST_F(RecursorTest, unsupportedRequest) {
 
         parse_message->clear(Message::PARSE);
         server.processMessage(*io_message, parse_message,
-                              response_obuffer, &task);
-        EXPECT_TRUE(task.hasAnswer());
+                              response_obuffer, &dnsserv);
+        EXPECT_TRUE(dnsserv.hasAnswer());
         headerCheck(*parse_message, default_qid, Rcode::NOTIMP(), i, QR_FLAG,
                     0, 0, 0, 0);
     }
@@ -333,8 +199,8 @@ TEST_F(RecursorTest, verbose) {
 // Multiple questions.  Should result in FORMERR.
 TEST_F(RecursorTest, multiQuestion) {
     createDataFromFile("multiquestion_fromWire");
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_TRUE(task.hasAnswer());
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
                 QR_FLAG, 2, 0, 0, 0);
 
@@ -354,8 +220,8 @@ TEST_F(RecursorTest, multiQuestion) {
 // dropped.
 TEST_F(RecursorTest, shortMessage) {
     createDataFromFile("shortmessage_fromWire");
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_FALSE(task.hasAnswer());
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_FALSE(dnsserv.hasAnswer());
 }
 
 // Response messages.  Must be silently dropped, whether it's a valid response
@@ -363,26 +229,26 @@ TEST_F(RecursorTest, shortMessage) {
 TEST_F(RecursorTest, response) {
     // A valid (although unusual) response
     createDataFromFile("simpleresponse_fromWire");
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_FALSE(task.hasAnswer());
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_FALSE(dnsserv.hasAnswer());
 
     // A response with a broken question section.  must be dropped rather than
     // returning FORMERR.
     createDataFromFile("shortresponse_fromWire");
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_FALSE(task.hasAnswer());
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_FALSE(dnsserv.hasAnswer());
 
     // A response to iquery.  must be dropped rather than returning NOTIMP.
     createDataFromFile("iqueryresponse_fromWire");
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_FALSE(task.hasAnswer());
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_FALSE(dnsserv.hasAnswer());
 }
 
 // Query with a broken question
 TEST_F(RecursorTest, shortQuestion) {
     createDataFromFile("shortquestion_fromWire");
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_TRUE(task.hasAnswer());
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
     // Since the query's question is broken, the question section of the
     // response should be empty.
     headerCheck(*parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
@@ -392,8 +258,8 @@ TEST_F(RecursorTest, shortQuestion) {
 // Query with a broken answer section
 TEST_F(RecursorTest, shortAnswer) {
     createDataFromFile("shortanswer_fromWire");
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_TRUE(task.hasAnswer());
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
 
     // This is a bogus query, but question section is valid.  So the response
     // should copy the question section.
@@ -411,8 +277,8 @@ TEST_F(RecursorTest, shortAnswer) {
 // Query with unsupported version of EDNS.
 TEST_F(RecursorTest, ednsBadVers) {
     createDataFromFile("queryBadEDNS_fromWire");
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_TRUE(task.hasAnswer());
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
 
     // The response must have an EDNS OPT RR in the additional section.
     // Note that the DNSSEC DO bit is cleared even if this bit in the query
@@ -425,20 +291,23 @@ TEST_F(RecursorTest, ednsBadVers) {
 
 TEST_F(RecursorTest, AXFROverUDP) {
     // AXFR over UDP is invalid and should result in FORMERR.
-    createRequestPacket(opcode, Name("example.com"), RRClass::IN(),
-                        RRType::AXFR(), IPPROTO_UDP);
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_TRUE(task.hasAnswer());
+    UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
+                        Name("example.com"), RRClass::IN(), RRType::AXFR());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
                 QR_FLAG, 1, 0, 0, 0);
 }
 
 TEST_F(RecursorTest, AXFRFail) {
-    createRequestPacket(opcode, Name("example.com"), RRClass::IN(),
-                        RRType::AXFR(), IPPROTO_TCP);
+    UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
+                                       Name("example.com"), RRClass::IN(),
+                                       RRType::AXFR());
+    createRequestPacket(request_message, IPPROTO_TCP);
     // AXFR is not implemented and should always send NOTIMP.
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_TRUE(task.hasAnswer());
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::NOTIMP(), opcode.getCode(),
                 QR_FLAG, 1, 0, 0, 0);
 }
@@ -449,10 +318,10 @@ TEST_F(RecursorTest, notifyFail) {
     request_message.setOpcode(Opcode::NOTIFY());
     request_message.setHeaderFlag(MessageFlag::AA());
     request_message.setQid(default_qid);
-    request_message.toWire(request_renderer);
-    createRequestPacket(IPPROTO_UDP);
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_TRUE(task.hasAnswer());
+    request_message.setHeaderFlag(MessageFlag::AA());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::NOTAUTH(),
                 Opcode::NOTIFY().getCode(), QR_FLAG, 0, 0, 0, 0);
 }

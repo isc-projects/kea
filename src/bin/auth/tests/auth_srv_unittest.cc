@@ -34,14 +34,15 @@
 #include <asiolink/asiolink.h>
 
 #include <dns/tests/unittest_util.h>
+#include <auth/tests/mockups.h>
 
-using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::cc;
 using namespace isc::dns;
 using namespace isc::data;
 using namespace isc::xfr;
 using namespace asiolink;
+using isc::UnitTestUtil;
 
 namespace {
 const char* const CONFIG_TESTDB =
@@ -65,78 +66,6 @@ private:
 };
 
 class AuthSrvTest : public ::testing::Test {
-private:
-    class MockXfroutClient : public AbstractXfroutClient {
-    public:
-        MockXfroutClient() :
-            is_connected_(false), connect_ok_(true), send_ok_(true),
-            disconnect_ok_(true)
-        {}
-        virtual void connect();
-        virtual void disconnect();
-        virtual int sendXfroutRequestInfo(int tcp_sock, const void* msg_data,
-                                          uint16_t msg_len);
-        bool isConnected() const { return (is_connected_); }
-        void disableConnect() { connect_ok_ = false; }
-        void disableDisconnect() { disconnect_ok_ = false; }
-        void enableDisconnect() { disconnect_ok_ = true; }
-        void disableSend() { send_ok_ = false; }
-    private:
-        bool is_connected_;
-        bool connect_ok_;
-        bool send_ok_;
-        bool disconnect_ok_;
-    };
-
-    class MockSession : public AbstractSession {
-    public:
-        MockSession() :
-            // by default we return a simple "success" message.
-            msg_(Element::fromJSON("{\"result\": [0, \"SUCCESS\"]}")),
-            send_ok_(true), receive_ok_(true)
-        {}
-        virtual void establish(const char* socket_file);
-        virtual void disconnect();
-        virtual int group_sendmsg(ConstElementPtr msg, string group,
-                                  string instance, string to);
-        virtual bool group_recvmsg(ConstElementPtr& envelope,
-                                   ConstElementPtr& msg,
-                                   bool nonblock, int seq);
-        virtual void subscribe(string group, string instance);
-        virtual void unsubscribe(string group, string instance);
-        virtual void startRead(boost::function<void()> read_callback);
-        virtual int reply(ConstElementPtr envelope, ConstElementPtr newmsg);
-        virtual bool hasQueuedMsgs() const;
-        virtual void setTimeout(size_t timeout UNUSED_PARAM) {};
-        virtual size_t getTimeout() const { return 0; };
-
-        void setMessage(ConstElementPtr msg) { msg_ = msg; }
-        void disableSend() { send_ok_ = false; }
-        void disableReceive() { receive_ok_ = false; }
-
-        ConstElementPtr sent_msg;
-        string msg_destination;
-    private:
-        ConstElementPtr msg_;
-        bool send_ok_;
-        bool receive_ok_;
-    };
-
-    // A nonoperative task object to be used in calls to processMessage()
-    class MockTask : public DNSServer {
-    public:
-        MockTask() : done_(false) {}
-        void operator()(asio::error_code ec UNUSED_PARAM,
-                        size_t length UNUSED_PARAM)
-        {}
-        // virtual void doLookup() { return; }
-        virtual void resume(const bool done) { done_ = done; }
-        virtual bool hasAnswer() { return (done_); }
-        virtual int value() { return (0); }
-    private:
-        bool done_;
-    };
-
 protected:
     AuthSrvTest() : server(true, xfrout),
                     request_message(Message::RENDER),
@@ -155,7 +84,7 @@ protected:
     }
     MockSession notify_session;
     MockXfroutClient xfrout;
-    MockTask task;
+    MockServer dnsserv;
     AuthSrv server;
     Message request_message;
     MessagePtr parse_message;
@@ -173,103 +102,8 @@ protected:
     vector<uint8_t> data;
 
     void createDataFromFile(const char* const datafile, int protocol);
-    void createRequestMessage(const Opcode& opcode, const Name& request_name,
-                              const RRClass& rrclass, const RRType& rrtype);
-    void createRequestPacket(const Opcode& opcode, const Name& request_name,
-                             const RRClass& rrclass, const RRType& rrtype,
-                             int protocol);
-    void createRequestPacket(int protocol);
+    void createRequestPacket(Message& message, int protocol);
 };
-
-void
-AuthSrvTest::MockSession::establish(const char* socket_file UNUSED_PARAM) {}
-
-void
-AuthSrvTest::MockSession::disconnect() {}
-
-void
-AuthSrvTest::MockSession::subscribe(string group UNUSED_PARAM,
-                                    string instance UNUSED_PARAM)
-{}
-
-void
-AuthSrvTest::MockSession::unsubscribe(string group UNUSED_PARAM,
-                                      string instance UNUSED_PARAM)
-{}
-
-void
-AuthSrvTest::MockSession::startRead(
-    boost::function<void()> read_callback UNUSED_PARAM)
-{}
-
-int
-AuthSrvTest::MockSession::reply(ConstElementPtr envelope UNUSED_PARAM,
-                                ConstElementPtr newmsg UNUSED_PARAM)
-{
-    return (-1);
-}
-
-bool
-AuthSrvTest::MockSession::hasQueuedMsgs() const {
-    return (false);
-}
-
-int
-AuthSrvTest::MockSession::group_sendmsg(ConstElementPtr msg, string group,
-                                        string instance UNUSED_PARAM,
-                                        string to UNUSED_PARAM)
-{
-    if (!send_ok_) {
-        isc_throw(XfroutError, "mock session send is disabled for test");
-    }
-
-    sent_msg = msg;
-    msg_destination = group;
-    return (0);
-}
-
-bool
-AuthSrvTest::MockSession::group_recvmsg(ConstElementPtr& envelope UNUSED_PARAM,
-                                        ConstElementPtr& msg,
-                                        bool nonblock UNUSED_PARAM,
-                                        int seq UNUSED_PARAM)
-{
-    if (!receive_ok_) {
-        isc_throw(XfroutError, "mock session receive is disabled for test");
-    }
-
-    msg = msg_;
-    return (true);
-}
-
-void
-AuthSrvTest::MockXfroutClient::connect() {
-    if (!connect_ok_) {
-        isc_throw(XfroutError, "xfrout connection disabled for test");
-    }
-    is_connected_ = true;
-}
-
-void
-AuthSrvTest::MockXfroutClient::disconnect() {
-    if (!disconnect_ok_) {
-        isc_throw(XfroutError,
-                  "closing xfrout connection is disabled for test");
-    }
-    is_connected_ = false;
-}
-
-int
-AuthSrvTest::MockXfroutClient::sendXfroutRequestInfo(
-    const int tcp_sock UNUSED_PARAM,
-    const void* msg_data UNUSED_PARAM,
-    const uint16_t msg_len UNUSED_PARAM)
-{
-    if (!send_ok_) {
-        isc_throw(XfroutError, "xfrout connection send is disabled for test");
-    }
-    return (0);
-}
 
 
 // These are flags to indicate whether the corresponding flag bit of the
@@ -300,30 +134,10 @@ AuthSrvTest::createDataFromFile(const char* const datafile,
 }
 
 void
-AuthSrvTest::createRequestMessage(const Opcode& opcode,
-                                  const Name& request_name,
-                                  const RRClass& rrclass,
-                                  const RRType& rrtype)
-{
-    request_message.clear(Message::RENDER);
-    request_message.setOpcode(opcode);
-    request_message.setQid(default_qid);
-    request_message.addQuestion(Question(request_name, rrclass, rrtype));
-}
-
-void
-AuthSrvTest::createRequestPacket(const Opcode& opcode,
-                                 const Name& request_name,
-                                 const RRClass& rrclass, const RRType& rrtype,
+AuthSrvTest::createRequestPacket(Message& message,
                                  const int protocol = IPPROTO_UDP)
 {
-    createRequestMessage(opcode, request_name, rrclass, rrtype);
-    createRequestPacket(protocol);
-}
-
-void
-AuthSrvTest::createRequestPacket(const int protocol = IPPROTO_UDP) {
-    request_message.toWire(request_renderer);
+    message.toWire(request_renderer);
 
     delete io_message;
     delete io_sock;
@@ -374,8 +188,8 @@ TEST_F(AuthSrvTest, unsupportedRequest) {
 
         parse_message->clear(Message::PARSE);
         server.processMessage(*io_message, parse_message, response_obuffer,
-                              &task);
-    EXPECT_TRUE(task.hasAnswer());
+                              &dnsserv);
+        EXPECT_TRUE(dnsserv.hasAnswer());
         headerCheck(*parse_message, default_qid, Rcode::NOTIMP(), i, QR_FLAG,
                     0, 0, 0, 0);
     }
@@ -393,8 +207,8 @@ TEST_F(AuthSrvTest, verbose) {
 // Multiple questions.  Should result in FORMERR.
 TEST_F(AuthSrvTest, multiQuestion) {
     createDataFromFile("multiquestion_fromWire");
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_TRUE(task.hasAnswer());
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
                 QR_FLAG, 2, 0, 0, 0);
 
@@ -414,8 +228,8 @@ TEST_F(AuthSrvTest, multiQuestion) {
 // dropped.
 TEST_F(AuthSrvTest, shortMessage) {
     createDataFromFile("shortmessage_fromWire");
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_FALSE(task.hasAnswer());
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_FALSE(dnsserv.hasAnswer());
 }
 
 // Response messages.  Must be silently dropped, whether it's a valid response
@@ -423,26 +237,26 @@ TEST_F(AuthSrvTest, shortMessage) {
 TEST_F(AuthSrvTest, response) {
     // A valid (although unusual) response
     createDataFromFile("simpleresponse_fromWire");
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_FALSE(task.hasAnswer());
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_FALSE(dnsserv.hasAnswer());
 
     // A response with a broken question section.  must be dropped rather than
     // returning FORMERR.
     createDataFromFile("shortresponse_fromWire");
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_FALSE(task.hasAnswer());
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_FALSE(dnsserv.hasAnswer());
 
     // A response to iquery.  must be dropped rather than returning NOTIMP.
     createDataFromFile("iqueryresponse_fromWire");
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_FALSE(task.hasAnswer());
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_FALSE(dnsserv.hasAnswer());
 }
 
 // Query with a broken question
 TEST_F(AuthSrvTest, shortQuestion) {
     createDataFromFile("shortquestion_fromWire");
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_TRUE(task.hasAnswer());
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
     // Since the query's question is broken, the question section of the
     // response should be empty.
     headerCheck(*parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
@@ -452,8 +266,8 @@ TEST_F(AuthSrvTest, shortQuestion) {
 // Query with a broken answer section
 TEST_F(AuthSrvTest, shortAnswer) {
     createDataFromFile("shortanswer_fromWire");
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_TRUE(task.hasAnswer());
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
 
     // This is a bogus query, but question section is valid.  So the response
     // should copy the question section.
@@ -471,8 +285,8 @@ TEST_F(AuthSrvTest, shortAnswer) {
 // Query with unsupported version of EDNS.
 TEST_F(AuthSrvTest, ednsBadVers) {
     createDataFromFile("queryBadEDNS_fromWire");
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_TRUE(task.hasAnswer());
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
 
     // The response must have an EDNS OPT RR in the additional section.
     // Note that the DNSSEC DO bit is cleared even if this bit in the query
@@ -485,32 +299,36 @@ TEST_F(AuthSrvTest, ednsBadVers) {
 
 TEST_F(AuthSrvTest, AXFROverUDP) {
     // AXFR over UDP is invalid and should result in FORMERR.
-    createRequestPacket(opcode, Name("example.com"), RRClass::IN(),
-                        RRType::AXFR(), IPPROTO_UDP);
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_TRUE(task.hasAnswer());
+    UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
+                         Name("example.com"), RRClass::IN(),
+                         RRType::AXFR());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
                 QR_FLAG, 1, 0, 0, 0);
 }
 
 TEST_F(AuthSrvTest, AXFRSuccess) {
     EXPECT_FALSE(xfrout.isConnected());
-    createRequestPacket(opcode, Name("example.com"), RRClass::IN(),
-                        RRType::AXFR(), IPPROTO_TCP);
+    UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
+                         Name("example.com"), RRClass::IN(), RRType::AXFR());
+    createRequestPacket(request_message, IPPROTO_TCP);
     // On success, the AXFR query has been passed to a separate process,
     // so we shouldn't have to respond.
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_FALSE(task.hasAnswer());
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_FALSE(dnsserv.hasAnswer());
     EXPECT_FALSE(xfrout.isConnected());
 }
 
 TEST_F(AuthSrvTest, AXFRConnectFail) {
     EXPECT_FALSE(xfrout.isConnected()); // check prerequisite
     xfrout.disableConnect();
-    createRequestPacket(opcode, Name("example.com"), RRClass::IN(),
-                        RRType::AXFR(), IPPROTO_TCP);
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_TRUE(task.hasAnswer());
+    UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
+                         Name("example.com"), RRClass::IN(), RRType::AXFR());
+    createRequestPacket(request_message, IPPROTO_TCP);
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::SERVFAIL(),
                 opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
     // For a shot term workaround with xfrout we currently close the connection
@@ -521,18 +339,20 @@ TEST_F(AuthSrvTest, AXFRConnectFail) {
 TEST_F(AuthSrvTest, AXFRSendFail) {
     // first send a valid query, making the connection with the xfr process
     // open.
-    createRequestPacket(opcode, Name("example.com"), RRClass::IN(),
-                        RRType::AXFR(), IPPROTO_TCP);
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
+    UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
+                         Name("example.com"), RRClass::IN(), RRType::AXFR());
+    createRequestPacket(request_message, IPPROTO_TCP);
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
     EXPECT_FALSE(xfrout.isConnected()); // see above
 
     xfrout.disableSend();
     parse_message->clear(Message::PARSE);
     response_obuffer->clear();
-    createRequestPacket(opcode, Name("example.com"), RRClass::IN(),
-                        RRType::AXFR(), IPPROTO_TCP);
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_TRUE(task.hasAnswer());
+    UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
+                         Name("example.com"), RRClass::IN(), RRType::AXFR());
+    createRequestPacket(request_message, IPPROTO_TCP);
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::SERVFAIL(),
                 opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
 
@@ -545,10 +365,11 @@ TEST_F(AuthSrvTest, AXFRDisconnectFail) {
     // should it be thrown.
     xfrout.disableSend();
     xfrout.disableDisconnect();
-    createRequestPacket(opcode, Name("example.com"), RRClass::IN(),
-                        RRType::AXFR(), IPPROTO_TCP);
+    UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
+                         Name("example.com"), RRClass::IN(), RRType::AXFR());
+    createRequestPacket(request_message, IPPROTO_TCP);
     EXPECT_THROW(server.processMessage(*io_message, parse_message,
-                                       response_obuffer, &task),
+                                       response_obuffer, &dnsserv),
                  XfroutError);
     EXPECT_TRUE(xfrout.isConnected());
     // XXX: we need to re-enable disconnect.  otherwise an exception would be
@@ -557,12 +378,12 @@ TEST_F(AuthSrvTest, AXFRDisconnectFail) {
 }
 
 TEST_F(AuthSrvTest, notify) {
-    createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
-                        RRType::SOA());
+    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(), default_qid,
+                         Name("example.com"), RRClass::IN(), RRType::SOA());
     request_message.setHeaderFlag(MessageFlag::AA());
-    createRequestPacket(IPPROTO_UDP);
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_TRUE(task.hasAnswer());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
 
     // An internal command message should have been created and sent to an
     // external module.  Check them.
@@ -589,12 +410,12 @@ TEST_F(AuthSrvTest, notify) {
 
 TEST_F(AuthSrvTest, notifyForCHClass) {
     // Same as the previous test, but for the CH RRClass.
-    createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::CH(),
-                        RRType::SOA());
+    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(), default_qid,
+                         Name("example.com"), RRClass::CH(), RRType::SOA());
     request_message.setHeaderFlag(MessageFlag::AA());
-    createRequestPacket(IPPROTO_UDP);
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_TRUE(task.hasAnswer());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
 
     // Other conditions should be the same, so simply confirm the RR class is
     // set correctly.
@@ -609,56 +430,57 @@ TEST_F(AuthSrvTest, notifyEmptyQuestion) {
     request_message.setHeaderFlag(MessageFlag::AA());
     request_message.setQid(default_qid);
     request_message.toWire(request_renderer);
-    createRequestPacket(IPPROTO_UDP);
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_TRUE(task.hasAnswer());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::FORMERR(),
                 Opcode::NOTIFY().getCode(), QR_FLAG, 0, 0, 0, 0);
 }
 
 TEST_F(AuthSrvTest, notifyMultiQuestions) {
-    createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
-                        RRType::SOA());
+    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(), default_qid,
+                         Name("example.com"), RRClass::IN(), RRType::SOA());
     // add one more SOA question
     request_message.addQuestion(Question(Name("example.com"), RRClass::IN(),
                                          RRType::SOA()));
     request_message.setHeaderFlag(MessageFlag::AA());
-    createRequestPacket(IPPROTO_UDP);
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_TRUE(task.hasAnswer());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::FORMERR(),
                 Opcode::NOTIFY().getCode(), QR_FLAG, 2, 0, 0, 0);
 }
 
 TEST_F(AuthSrvTest, notifyNonSOAQuestion) {
-    createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
-                        RRType::NS());
+    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(), default_qid,
+                         Name("example.com"), RRClass::IN(), RRType::NS());
     request_message.setHeaderFlag(MessageFlag::AA());
-    createRequestPacket(IPPROTO_UDP);
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_TRUE(task.hasAnswer());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::FORMERR(),
                 Opcode::NOTIFY().getCode(), QR_FLAG, 1, 0, 0, 0);
 }
 
 TEST_F(AuthSrvTest, notifyWithoutAA) {
     // implicitly leave the AA bit off.  our implementation will accept it.
-    createRequestPacket(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
-                        RRType::SOA());
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_TRUE(task.hasAnswer());
+    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(), default_qid,
+                         Name("example.com"), RRClass::IN(), RRType::SOA());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::NOERROR(),
                 Opcode::NOTIFY().getCode(), QR_FLAG | AA_FLAG, 1, 0, 0, 0);
 }
 
 TEST_F(AuthSrvTest, notifyWithErrorRcode) {
-    createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
-                        RRType::SOA());
+    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(), default_qid,
+                         Name("example.com"), RRClass::IN(), RRType::SOA());
     request_message.setHeaderFlag(MessageFlag::AA());
     request_message.setRcode(Rcode::SERVFAIL());
-    createRequestPacket(IPPROTO_UDP);
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_TRUE(task.hasAnswer());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::NOERROR(),
                 Opcode::NOTIFY().getCode(), QR_FLAG | AA_FLAG, 1, 0, 0, 0);
 }
@@ -666,61 +488,61 @@ TEST_F(AuthSrvTest, notifyWithErrorRcode) {
 TEST_F(AuthSrvTest, notifyWithoutSession) {
     server.setXfrinSession(NULL);
 
-    createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
-                        RRType::SOA());
+    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(), default_qid,
+                         Name("example.com"), RRClass::IN(), RRType::SOA());
     request_message.setHeaderFlag(MessageFlag::AA());
-    createRequestPacket(IPPROTO_UDP);
+    createRequestPacket(request_message, IPPROTO_UDP);
 
     // we simply ignore the notify and let it be resent if an internal error
     // happens.
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_FALSE(task.hasAnswer());
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_FALSE(dnsserv.hasAnswer());
 }
 
 TEST_F(AuthSrvTest, notifySendFail) {
     notify_session.disableSend();
 
-    createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
-                        RRType::SOA());
+    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(), default_qid,
+                         Name("example.com"), RRClass::IN(), RRType::SOA());
     request_message.setHeaderFlag(MessageFlag::AA());
-    createRequestPacket(IPPROTO_UDP);
+    createRequestPacket(request_message, IPPROTO_UDP);
 
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_FALSE(task.hasAnswer());
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_FALSE(dnsserv.hasAnswer());
 }
 
 TEST_F(AuthSrvTest, notifyReceiveFail) {
     notify_session.disableReceive();
 
-    createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
-                        RRType::SOA());
+    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(), default_qid,
+                         Name("example.com"), RRClass::IN(), RRType::SOA());
     request_message.setHeaderFlag(MessageFlag::AA());
-    createRequestPacket(IPPROTO_UDP);
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_FALSE(task.hasAnswer());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_FALSE(dnsserv.hasAnswer());
 }
 
 TEST_F(AuthSrvTest, notifyWithBogusSessionMessage) {
     notify_session.setMessage(Element::fromJSON("{\"foo\": 1}"));
 
-    createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
-                        RRType::SOA());
+    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(), default_qid,
+                         Name("example.com"), RRClass::IN(), RRType::SOA());
     request_message.setHeaderFlag(MessageFlag::AA());
-    createRequestPacket(IPPROTO_UDP);
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_FALSE(task.hasAnswer());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_FALSE(dnsserv.hasAnswer());
 }
 
 TEST_F(AuthSrvTest, notifyWithSessionMessageError) {
     notify_session.setMessage(
         Element::fromJSON("{\"result\": [1, \"FAIL\"]}"));
 
-    createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
-                        RRType::SOA());
+    UnitTestUtil::createRequestMessage(request_message, Opcode::NOTIFY(), default_qid,
+                         Name("example.com"), RRClass::IN(), RRType::SOA());
     request_message.setHeaderFlag(MessageFlag::AA());
-    createRequestPacket(IPPROTO_UDP);
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_FALSE(task.hasAnswer());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_FALSE(dnsserv.hasAnswer());
 }
 
 void
@@ -745,8 +567,8 @@ TEST_F(AuthSrvTest, updateConfig) {
     // response should have the AA flag on, and have an RR in each answer
     // and authority section.
     createDataFromFile("examplequery_fromWire");
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_TRUE(task.hasAnswer());
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::NOERROR(), opcode.getCode(),
                 QR_FLAG | AA_FLAG, 1, 1, 1, 0);
 }
@@ -759,8 +581,8 @@ TEST_F(AuthSrvTest, datasourceFail) {
     // in a SERVFAIL response, and the answer and authority sections should
     // be empty.
     createDataFromFile("badExampleQuery_fromWire");
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_TRUE(task.hasAnswer());
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::SERVFAIL(),
                 opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
 }
@@ -774,8 +596,8 @@ TEST_F(AuthSrvTest, updateConfigFail) {
 
     // The original data source should still exist.
     createDataFromFile("examplequery_fromWire");
-    server.processMessage(*io_message, parse_message, response_obuffer, &task);
-    EXPECT_TRUE(task.hasAnswer());
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::NOERROR(), opcode.getCode(),
                 QR_FLAG | AA_FLAG, 1, 1, 1, 0);
 }
