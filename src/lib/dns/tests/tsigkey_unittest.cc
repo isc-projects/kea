@@ -20,7 +20,7 @@
 
 #include <exceptions/exceptions.h>
 
-#include <dns/tsig.h>
+#include <dns/tsigkey.h>
 
 #include <dns/tests/unittest_util.h>
 

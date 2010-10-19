@@ -21,7 +21,7 @@
 #include <exceptions/exceptions.h>
 
 #include <dns/name.h>
-#include <dns/tsig.h>
+#include <dns/tsigkey.h>
 
 using namespace std;
 
