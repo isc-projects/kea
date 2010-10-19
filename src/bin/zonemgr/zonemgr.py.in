@@ -323,7 +323,8 @@ class ZonemgrRefresh:
 
         return False
 
-    def _run_timer(self):
+    def _run_timer(self, start_event):
+        start_event.set()
         while self._running:
             # If zonemgr has no zone, set timer timeout to LOWERBOUND_RETRY.
             if self._zone_mgr_is_empty():
@@ -371,12 +372,15 @@ class ZonemgrRefresh:
         # Prepare the launch
         self._running = True
         (self._read_sock, self._write_sock) = socket.socketpair()
+        start_event = threading.Event()
 
         # Start the thread
-        self._thread = threading.Thread(target = self._run_timer, args = ())
+        self._thread = threading.Thread(target = self._run_timer,
+            args = (start_event,))
         if daemon:
             self._thread.setDaemon(True)
         self._thread.start()
+        start_event.wait()
 
         # Return the thread to anyone interested
         return self._thread
