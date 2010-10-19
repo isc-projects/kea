@@ -461,6 +461,13 @@ class XfroutServer:
         if self._unix_socket_server:
             self._unix_socket_server.shutdown()
 
+        # Wait for all threads to terminate
+        main_thread = threading.currentThread()
+        for th in threading.enumerate():
+            if th is main_thread:
+                continue
+            th.join()
+
     def command_handler(self, cmd, args):
         if cmd == "shutdown":
             self._log.log_message("info", "Received shutdown command.")
