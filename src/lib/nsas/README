@@ -1,0 +1,7 @@
+For an overview of the Nameserver Address Store, see the requirements and design
+documents at http://bind10.isc.org/wiki/Resolver.
+
+At the time of writing (19 October 2010), the file asiolink.h is present in this
+directory only for the purposes of development.  When the recursor's
+asynchronous I/O code has been finished, this will be removed and the NSAS will
+use the "real" code.
