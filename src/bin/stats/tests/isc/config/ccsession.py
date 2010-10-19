@@ -90,8 +90,8 @@ class ModuleCCSession(ConfigData):
     def close(self):
         self._session.close()
 
-    def check_command(self):
-        msg, env = self._session.group_recvmsg(False)
+    def check_command(self, nonblock=True):
+        msg, env = self._session.group_recvmsg(nonblock)
         if not msg or 'result' in msg:
             return
         cmd, arg = parse_command(msg)
