@@ -1,3 +1,12 @@
+  111.	[bug]*   zhanglikun, Michal Vaner
+	Make sure process xfrin/xfrout/zonemgr/cmdctl can be stoped
+	properly when user enter "ctrl+c" or 'Boss shutdown' command
+	through	bindctl.
+
+	The ZonemgrRefresh.run_timer and NotifyOut.dispatcher spawn
+	a thread themself.
+	(Trac #335, svn r3273)
+
   110.  [func]      Michal Vaner
 	Added isc.net.check module to check ip addresses and ports for correctness
 	and isc.net.addr to hold IP address. The bind10, xfrin and cmdctl programs
