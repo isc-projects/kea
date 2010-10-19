@@ -152,11 +152,8 @@ class NotifyOut:
                 self._notifying_zones.append(zone_id)
 
     def _dispatcher(self, started_event):
+        started_event.set() # Let the master know we are alive already
         while self._serving:
-            # Let the master know we are alive already
-            if started_event:
-                started_event.set()
-
             replied_zones, not_replied_zones = self._wait_for_notify_reply()
 
             for name_ in replied_zones:
