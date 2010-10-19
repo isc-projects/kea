@@ -80,7 +80,7 @@ libdns___la_SOURCES += rrttl.h rrttl.cc
 libdns___la_SOURCES += rrtype.cc
 libdns___la_SOURCES += question.h question.cc
 libdns___la_SOURCES += util/sha1.h util/sha1.cc
-libdns___la_SOURCES += tsig.h tsig.cc
+libdns___la_SOURCES += tsigkey.h tsigkey.cc
 
 nodist_libdns___la_SOURCES = rdataclass.cc rrclass.h rrtype.h
 nodist_libdns___la_SOURCES += rrparamregistry.cc
@@ -108,7 +108,7 @@ libdns___include_HEADERS = \
 	rrsetlist.h \
 	rrttl.h \
 	rrtype.h \
-	tsig.h
+	tsigkey.h
 # Purposely not installing these headers:
 # util/*.h: used only internally, and not actually DNS specific
 # rrclass-placeholder.h
