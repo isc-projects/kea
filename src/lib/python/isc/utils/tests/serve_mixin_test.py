@@ -46,9 +46,7 @@ class TestServeMixIn(unittest.TestCase):
         # use port 0 to select an arbitrary unused port.
         server = MyServer(('127.0.0.1', 0), MyHandler)
         ip, port = server.server_address
-        server_thread = threading.Thread(target=server.serve_forever)
-        server_thread.setDaemon(True)
-        server_thread.start()
+        server_thread = server.serve_forever()
 
         msg = b'senddata'
         self.assertEqual(msg, send_and_get_reply(ip, port, msg))
@@ -57,7 +55,6 @@ class TestServeMixIn(unittest.TestCase):
         # Now shutdown the server
         server.shutdown()
         # Sleep a while, make sure the thread has finished.
-        time.sleep(0.1)
         self.assertFalse(server_thread.is_alive())
 
 if __name__== "__main__":
