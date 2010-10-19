@@ -4,13 +4,13 @@
 	through	bindctl.
 
 	The ZonemgrRefresh.run_timer and NotifyOut.dispatcher spawn
-	a thread themself.
+	a thread themselves.
 	(Trac #335, svn r3273)
 
   110.  [func]      Michal Vaner
-	Added isc.net.check module to check ip addresses and ports for correctness
-	and isc.net.addr to hold IP address. The bind10, xfrin and cmdctl programs
-	are modified to use it.
+	Added isc.net.check module to check ip addresses and ports for
+	correctness and isc.net.addr to hold IP address. The bind10, xfrin
+	and cmdctl programs are modified to use it.
 	(Trac #353, svn r3240)
 
   109.  [func]		naokikambe
