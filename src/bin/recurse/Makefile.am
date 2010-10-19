@@ -37,8 +37,8 @@ spec_config.h: spec_config.h.pre
 BUILT_SOURCES = spec_config.h 
 pkglibexec_PROGRAMS = b10-recurse
 b10_recurse_SOURCES = recursor.cc recursor.h
-b10_recurse_SOURCES += change_user.cc change_user.h
-b10_recurse_SOURCES += common.h
+b10_recurse_SOURCES += $(top_builddir)/src/bin/auth/change_user.h
+b10_recurse_SOURCES += $(top_builddir)/src/bin/auth/common.h
 b10_recurse_SOURCES += main.cc
 b10_recurse_LDADD =  $(top_builddir)/src/lib/dns/libdns++.la
 b10_recurse_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
@@ -46,6 +46,7 @@ b10_recurse_LDADD += $(top_builddir)/src/lib/cc/libcc.la
 b10_recurse_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 b10_recurse_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 b10_recurse_LDADD += $(top_builddir)/src/lib/xfr/libxfr.la
+b10_recurse_LDADD += $(top_builddir)/src/bin/auth/change_user.o
 b10_recurse_LDFLAGS = -pthread
 
 # TODO: config.h.in is wrong because doesn't honor pkgdatadir

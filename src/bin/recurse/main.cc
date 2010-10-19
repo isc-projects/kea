@@ -41,9 +41,10 @@
 
 #include <xfr/xfrout_client.h>
 
+#include <auth/change_user.h>
+#include <auth/common.h>
+
 #include <recurse/spec_config.h>
-#include <recurse/common.h>
-#include <recurse/change_user.h>
 #include <recurse/recursor.h>
 
 using namespace std;

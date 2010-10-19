@@ -30,8 +30,9 @@
 #include <cc/data.h>
 #include <cc/session.h>
 
+#include <auth/common.h>
+
 #include <recurse/recursor.h>
-#include <recurse/common.h>
 
 #include <dns/tests/unittest_util.h>
 
