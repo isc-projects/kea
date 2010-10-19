@@ -266,7 +266,8 @@ class XfroutSession(BaseRequestHandler):
 
         for rr_data in sqlite3_ds.get_zone_datas(zone_name, self.server.get_db_file()):
             if  self.server._shutdown_event.is_set(): # Check if xfrout is shutdown
-                self._log.log_message("error", "shutdown!")
+                self._log.log_message("info", "xfrout process is being shutdown")
+                return
 
             # TODO: RRType.SOA() ?
             if RRType(rr_data[5]) == RRType("SOA"): #ignore soa record
@@ -398,8 +399,9 @@ def listen_on_xfr_query(unix_socket_server):
             # normal program flow continue by trying serve_forever()
             # again.
             if err.args[0] != errno.EINTR: raise
-
-   
+        else:
+            # serve_forever() loop has been stoped normally.
+            break
 
 class XfroutServer:
     def __init__(self):
@@ -428,9 +430,7 @@ class XfroutServer:
     def _start_notifier(self):
         datasrc = self._unix_socket_server.get_db_file()
         self._notifier = notify_out.NotifyOut(datasrc, self._log)
-        td = threading.Thread(target = notify_out.dispatcher, args = (self._notifier,))
-        td.daemon = True
-        td.start()
+        self._notifier.dispatcher()
 
     def send_notify(self, zone_name, zone_class):
         self._notifier.send_notify(zone_name, zone_class)
@@ -443,7 +443,7 @@ class XfroutServer:
                 answer = create_answer(1, "Unknown config data: " + str(key))
                 continue
             self._config_data[key] = new_config[key]
-        
+
         if self._log:
             self._log.update_config(new_config)
 
@@ -461,9 +461,11 @@ class XfroutServer:
         global xfrout_server
         xfrout_server = None #Avoid shutdown is called twice
         self._shutdown_event.set()
+        self._notifier.shutdown()
         if self._unix_socket_server:
             self._unix_socket_server.shutdown()
 
+        # Wait for all threads to terminate
         main_thread = threading.currentThread()
         for th in threading.enumerate():
             if th is main_thread:
@@ -475,7 +477,7 @@ class XfroutServer:
             self._log.log_message("info", "Received shutdown command.")
             self.shutdown()
             answer = create_answer(0)
-        
+
         elif cmd == notify_out.ZONE_NEW_DATA_READY_CMD:
             zone_name = args.get('zone_name')
             zone_class = args.get('zone_class')
@@ -490,7 +492,7 @@ class XfroutServer:
         else: 
             answer = create_answer(1, "Unknown command:" + str(cmd))
 
-        return answer    
+        return answer
 
     def run(self):
         '''Get and process all commands sent from cfgmgr or other modules. '''
