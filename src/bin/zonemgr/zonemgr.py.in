@@ -433,8 +433,8 @@ class Zonemgr:
         return answer
 
     def _config_data_check(self, config_data):
-        ''' Check whether the new config data is valid or 
-        not. '''                                          
+        """Check whether the new config data is valid or 
+        not. """ 
         # jitter should not be bigger than half of the original value
         if config_data.get('jitter_scope') > 0.5:
             config_data['jitter_scope'] = 0.5
