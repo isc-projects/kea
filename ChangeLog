@@ -38,7 +38,7 @@
   105.  [bug]       Michal Vaner
 	Python processes: they no longer take 100% CPU while idle
 	due to a busy loop in reading command session in a nonblocking way.
-	(Trac #349, svn r3153)
+	(Trac #349, svn r3153), (Trac #382, svn r3294)
 
   104.	[bug]		jerry
 	bin/zonemgr: zonemgr should be attempting to refresh expired zones.
