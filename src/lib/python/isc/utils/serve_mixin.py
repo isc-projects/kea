@@ -38,7 +38,7 @@ class ServeMixIn:
     def serve_forever(self, poll_interval=None):
         ''' Override the serve_forever([poll_interval]) in class
         socketserver.TCPServer by using the socketpair to wake up
-        instead of pulling.
+        instead of polling.
           Note, parameter 'poll_interval' is just used to keep the
         interface, it's never used in this function.
         '''        
