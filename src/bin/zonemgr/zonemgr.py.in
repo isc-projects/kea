@@ -438,7 +438,8 @@ class Zonemgr:
         # jitter should not be bigger than half of the original value
         if config_data.get('jitter_scope') > 0.5:
             config_data['jitter_scope'] = 0.5
-            log_msg("[b10-zonemgr] jitter_scope should not be bigger than 0.5.") 
+            log_msg("[b10-zonemgr] jitter_scope is too bigger, its value will "
+                      "be set to 0.5") 
 
     def _parse_cmd_params(self, args, command):
         zone_name = args.get("zone_name")
