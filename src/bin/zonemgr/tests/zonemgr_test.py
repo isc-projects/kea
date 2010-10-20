@@ -489,6 +489,15 @@ class TestZonemgr(unittest.TestCase):
         params1 = {"zone_class" : "CH"}
         self.assertRaises(ZonemgrException, self.zonemgr._parse_cmd_params, params2, ZONE_NOTIFY_COMMAND)
 
+    def test_config_data_check(self):
+        # jitter should not be bigger than half of the original value
+        config_data2 = {"jitter_scope" : 0.2}
+        config_data3 = {"jitter_scope" : 0.6}
+        self.zonemgr._config_data_check(config_data2)
+        self.assertEqual(0.2, config_data2.get("jitter_scope"))
+        self.zonemgr._config_data_check(config_data3)
+        self.assertEqual(0.5, config_data3.get("jitter_scope"))
+
     def tearDown(self):
         pass
 
