@@ -107,7 +107,7 @@ IOService::stop() {
 
 asio::io_service&
 IOService::get_io_service() {
-    return io_impl_->get_io_service();
+    return (io_impl_->get_io_service());
 }
 
 class DNSServiceImpl {
