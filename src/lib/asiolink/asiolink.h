@@ -204,24 +204,6 @@ public:
     ~DNSService();
     //@}
 
-    /// \brief Start the underlying event loop.
-    ///
-    /// This method does not return control to the caller until
-    /// the \c stop() method is called via some handler.
-//    void run();
-
-    /// \brief Run the underlying event loop for a single event.
-    ///
-    /// This method return control to the caller as soon as the
-    /// first handler has completed.  (If no handlers are ready when
-    /// it is run, it will block until one is.)
-//    void run_one();
-
-    /// \brief Stop the underlying event loop.
-    ///
-    /// This will return the control to the caller of the \c run() method.
-//    void stop();
-
     /// \brief Return the native \c io_service object used in this wrapper.
     ///
     /// This is a short term work around to support other BIND 10 modules
