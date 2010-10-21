@@ -40,7 +40,6 @@
 
 namespace asio {
 // forward declaration for IOService::get_io_service() below
-class DNSService;
 class io_service;
 }
 
@@ -186,19 +185,18 @@ private:
 public:
     /// \brief The constructor with a specific IP address and port on which
     /// the services listen on.
-    DNSService(IOService& io_service, const char& port, const char& address,
-               SimpleCallback* checkin,
-               DNSLookup* lookup,
-               DNSAnswer* answer);
+    DNSService(IOService& io_service, const char& port,
+               const char& address, SimpleCallback* checkin,
+               DNSLookup* lookup, DNSAnswer* answer);
     /// \brief The constructor with a specific port on which the services
     /// listen on.
     ///
     /// It effectively listens on "any" IPv4 and/or IPv6 addresses.
     /// IPv4/IPv6 services will be available if and only if \c use_ipv4
     /// or \c use_ipv6 is \c true, respectively.
-    DNSService(IOService& io_service, const char& port, const bool use_ipv4, const bool use_ipv6,
-               SimpleCallback* checkin,
-               DNSLookup* lookup,
+    DNSService(IOService& io_service, const char& port,
+               const bool use_ipv4, const bool use_ipv6,
+               SimpleCallback* checkin, DNSLookup* lookup,
                DNSAnswer* answer);
     /// \brief The destructor.
     ~DNSService();
