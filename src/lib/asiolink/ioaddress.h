@@ -73,7 +73,7 @@ public:
     /// and if it fails the corresponding standard exception will be thrown.
     ///
     /// \return A string representation of the address.
-    std::string toText() const;
+    virtual std::string toText() const;
 
     /// \brief Returns the address family.
     virtual short getFamily() const;

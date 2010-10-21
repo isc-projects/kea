@@ -45,8 +45,8 @@ public:
                       "mock session send is disabled for test");
         }
 
-        sent_msg = msg;
-        msg_destination = group;
+        sent_msg_ = msg;
+        msg_dest_ = group;
         return (0);
     }
 
@@ -83,13 +83,17 @@ public:
     virtual void setTimeout(size_t timeout UNUSED_PARAM) {};
     virtual size_t getTimeout() const { return 0; };
 
+    // The following methods extent AbstractSession to allow testing:
     void setMessage(isc::data::ConstElementPtr msg) { msg_ = msg; }
     void disableSend() { send_ok_ = false; }
     void disableReceive() { receive_ok_ = false; }
 
-    isc::data::ConstElementPtr sent_msg;
-    std::string msg_destination;
+    isc::data::ConstElementPtr getSentMessage() { return (sent_msg_); }
+    std::string getMessageDest() { return (msg_dest_); }
+
 private:
+    isc::data::ConstElementPtr sent_msg_;
+    std::string msg_dest_;
     isc::data::ConstElementPtr msg_;
     bool send_ok_;
     bool receive_ok_;

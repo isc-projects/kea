@@ -86,18 +86,19 @@ public:
                             OutputBufferPtr buffer,
                             DNSServer* server);
 
-    ModuleCCSession* config_session_;
+    /// Currently non-configurable, but will be.
+    static const uint16_t DEFAULT_LOCAL_UDPSIZE = 4096;
 
+    /// These members are public because Recursor accesses them directly.
+    ModuleCCSession* config_session_;
     bool verbose_mode_;
 
+private:
     /// Address of the forward nameserver
     const char& forward_;
 
     /// Object to handle upstream queries
     RecursiveQuery* rec_query_;
-
-    /// Currently non-configurable, but will be.
-    static const uint16_t DEFAULT_LOCAL_UDPSIZE = 4096;
 };
 
 class QuestionInserter {
