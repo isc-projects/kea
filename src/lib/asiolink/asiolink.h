@@ -36,9 +36,11 @@
 #include <asiolink/ioendpoint.h>
 #include <asiolink/iomessage.h>
 #include <asiolink/iosocket.h>
+//#include <asio/io_service.hpp>
 
 namespace asio {
 // forward declaration for IOService::get_io_service() below
+class DNSService;
 class io_service;
 }
 
@@ -93,6 +95,7 @@ class io_service;
 /// http://think-async.com/Asio/asio-1.3.1/doc/asio/reference/asio_handler_allocate.html
 
 namespace asiolink {
+struct DNSServiceImpl;
 struct IOServiceImpl;
 
 /// \brief An exception that is thrown if an error occurs within the IO
@@ -131,22 +134,8 @@ private:
     IOService(const IOService& source);
     IOService& operator=(const IOService& source);
 public:
-    /// \brief The constructor with a specific IP address and port on which
-    /// the services listen on.
-    IOService(const char& port, const char& address,
-              SimpleCallback* checkin,
-              DNSLookup* lookup,
-              DNSAnswer* answer);
-    /// \brief The constructor with a specific port on which the services
-    /// listen on.
-    ///
-    /// It effectively listens on "any" IPv4 and/or IPv6 addresses.
-    /// IPv4/IPv6 services will be available if and only if \c use_ipv4
-    /// or \c use_ipv6 is \c true, respectively.
-    IOService(const char& port, const bool use_ipv4, const bool use_ipv6,
-              SimpleCallback* checkin,
-              DNSLookup* lookup,
-              DNSAnswer* answer);
+    /// \brief The constructor
+    IOService();
     /// \brief The destructor.
     ~IOService();
     //@}
@@ -176,8 +165,73 @@ public:
     /// It will eventually be removed once the wrapper interface is
     /// generalized.
     asio::io_service& get_io_service();
+
 private:
-    IOServiceImpl* impl_;
+    IOServiceImpl* io_impl_;
+};
+
+class DNSService {
+    ///
+    /// \name Constructors and Destructor
+    ///
+    /// These are currently very specific to the authoritative server
+    /// implementation.
+    ///
+    /// Note: The copy constructor and the assignment operator are
+    /// intentionally defined as private, making this class non-copyable.
+    //@{
+private:
+    DNSService(const DNSService& source);
+    DNSService& operator=(const DNSService& source);
+public:
+    /// \brief The constructor with a specific IP address and port on which
+    /// the services listen on.
+    DNSService(IOService& io_service, const char& port, const char& address,
+               SimpleCallback* checkin,
+               DNSLookup* lookup,
+               DNSAnswer* answer);
+    /// \brief The constructor with a specific port on which the services
+    /// listen on.
+    ///
+    /// It effectively listens on "any" IPv4 and/or IPv6 addresses.
+    /// IPv4/IPv6 services will be available if and only if \c use_ipv4
+    /// or \c use_ipv6 is \c true, respectively.
+    DNSService(IOService& io_service, const char& port, const bool use_ipv4, const bool use_ipv6,
+               SimpleCallback* checkin,
+               DNSLookup* lookup,
+               DNSAnswer* answer);
+    /// \brief The destructor.
+    ~DNSService();
+    //@}
+
+    /// \brief Start the underlying event loop.
+    ///
+    /// This method does not return control to the caller until
+    /// the \c stop() method is called via some handler.
+//    void run();
+
+    /// \brief Run the underlying event loop for a single event.
+    ///
+    /// This method return control to the caller as soon as the
+    /// first handler has completed.  (If no handlers are ready when
+    /// it is run, it will block until one is.)
+//    void run_one();
+
+    /// \brief Stop the underlying event loop.
+    ///
+    /// This will return the control to the caller of the \c run() method.
+//    void stop();
+
+    /// \brief Return the native \c io_service object used in this wrapper.
+    ///
+    /// This is a short term work around to support other BIND 10 modules
+    /// that share the same \c io_service with the authoritative server.
+    /// It will eventually be removed once the wrapper interface is
+    /// generalized.
+    asio::io_service& get_io_service() { return io_service_.get_io_service(); };
+private:
+    DNSServiceImpl* impl_;
+    IOService& io_service_;
 };
 
 /// \brief The \c DNSServer class is a wrapper (and base class) for
@@ -447,7 +501,7 @@ public:
     /// This is currently the only way to construct \c RecursiveQuery
     /// object.  The address of the forward nameserver is specified,
     /// and all upstream queries will be sent to that one address.
-    RecursiveQuery(IOService& io_service, const char& forward,
+    RecursiveQuery(DNSService& dns_service, const char& forward,
                    uint16_t port = 53);
     //@}
 
@@ -465,7 +519,7 @@ public:
                    isc::dns::OutputBufferPtr buffer,
                    DNSServer* server);
 private:
-    IOService& io_service_;
+    DNSService& dns_service_;
     IOAddress ns_addr_;
     uint16_t port_;
 };
