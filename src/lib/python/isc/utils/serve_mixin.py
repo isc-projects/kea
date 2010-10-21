@@ -57,7 +57,7 @@ class ServeMixIn:
             else:
                 self._handle_request_noblock()
 
-        self.__is_shut_down.set()                
+        self.__is_shut_down.set()
 
     def shutdown(self):
         '''Stops the serve_forever loop.
