@@ -233,7 +233,7 @@ class CCSessionListener(Listener):
         """
         check the cc chanel
         """
-        return self.cc_session.check_command()
+        return self.cc_session.check_command(False)
 
     def config_handler(self, new_config):
         """
