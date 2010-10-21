@@ -190,6 +190,8 @@ main(int argc, char* argv[]) {
         DNSLookup* lookup = auth_server->getDNSLookupProvider();
         DNSAnswer* answer = auth_server->getDNSAnswerProvider();
 
+        io_service = new IOService();
+        DNSService* dns_service;
         if (address != NULL) {
             // XXX: we can only specify at most one explicit address.
             // This also means the server cannot run in the dual address
@@ -197,11 +199,11 @@ main(int argc, char* argv[]) {
             // We don't bother to fix this problem, however.  The -a option
             // is a short term workaround until we support dynamic listening
             // port allocation.
-            io_service = new IOService(*port, *address,
-                                       checkin, lookup, answer);
+            dns_service = new DNSService(*io_service,  *port, *address,
+                                     checkin, lookup, answer);
         } else {
-            io_service = new IOService(*port, use_ipv4, use_ipv6,
-                                       checkin, lookup, answer);
+            dns_service = new DNSService(*io_service, *port, use_ipv4,
+                                     use_ipv6, checkin, lookup, answer);
         }
         auth_server->setIOService(*io_service);
         cout << "[b10-auth] IOService created." << endl;
