@@ -48,13 +48,27 @@ public:
     //@}
 
     /// \brief Process an incoming DNS message, then signal 'server' to resume 
+    ///
+    /// A DNS query (or other message) has been received by a \c DNSServer
+    /// object.  Find an answer, then post the \c DNSServer object on the
+    /// I/O service queue and return.  When the server resumes, it can
+    /// send the reply.
+    ///
+    /// \param io_message The I/O service queue
+    /// \param message Pointer to the \c Message object
+    /// \param buffer Pointer to an \c OutputBuffer for the resposne
+    /// \param server Pointer to the \c DNSServer
     void processMessage(const asiolink::IOMessage& io_message,
                         isc::dns::MessagePtr message,
                         isc::dns::OutputBufferPtr buffer,
                         asiolink::DNSServer* server);
 
-    // \brief Set and get verbose mode
+    /// \brief Set verbose flag
+    ///
+    /// \param on The new value of the verbose flag
     void setVerbose(bool on);
+
+    /// \brief Get the current value of the verbose flag
     bool getVerbose() const;
 
     /// \brief Set and get the config session
