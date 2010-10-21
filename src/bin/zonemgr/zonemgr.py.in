@@ -435,10 +435,7 @@ class Zonemgr:
                                                   self.command_handler)
         self._module_cc.add_remote_config(AUTH_SPECFILE_LOCATION)
         self._config_data = self._module_cc.get_full_config()
-        # jitter should not be bigger than half of the original value
-        if self._config_data.get('jitter_scope') > 0.5:
-            self._config_data['jitter_scope'] = 0.5
-            log_msg("[b10-zonemgr] jitter_scope should not be bigger than 0.5.") 
+        self._config_data_check(self._config_data)
         self._module_cc.start()
 
     def get_db_file(self):
@@ -468,17 +465,22 @@ class Zonemgr:
             if key not in self._config_data:
                 answer = create_answer(1, "Unknown config data: " + str(key))
                 continue
-            # jitter should not be bigger than half of the original value
-            if key == 'jitter_scope':
-                if new_config.get(key) > 0.5:
-                    new_config[key] = 0.5
-                    log_msg("[b10-zonemgr] jitter_scope should not be bigger than 0.5.") 
             self._config_data[key] = new_config[key]
 
+        self._config_data_check(self._config_data)
         if (self._zone_refresh):
             self._zone_refresh.update_config_data(self._config_data)
 
         return answer
+
+    def _config_data_check(self, config_data):
+        """Check whether the new config data is valid or 
+        not. """ 
+        # jitter should not be bigger than half of the original value
+        if config_data.get('jitter_scope') > 0.5:
+            config_data['jitter_scope'] = 0.5
+            log_msg("[b10-zonemgr] jitter_scope is too bigger, its value will "
+                      "be set to 0.5") 
 
     def _parse_cmd_params(self, args, command):
         zone_name = args.get("zone_name")
