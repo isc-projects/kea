@@ -43,13 +43,82 @@ using namespace isc::dns;
 namespace asiolink {
 
 class IOServiceImpl {
+private:
+    IOServiceImpl(const IOService& source);
+    IOServiceImpl& operator=(const IOService& source);
 public:
-    IOServiceImpl(const char& port,
+    /// \brief The constructor
+    IOServiceImpl() : io_service_() {};
+    /// \brief The destructor.
+    ~IOServiceImpl() {};
+    //@}
+
+    /// \brief Start the underlying event loop.
+    ///
+    /// This method does not return control to the caller until
+    /// the \c stop() method is called via some handler.
+    void run() { io_service_.run(); };
+
+    /// \brief Run the underlying event loop for a single event.
+    ///
+    /// This method return control to the caller as soon as the
+    /// first handler has completed.  (If no handlers are ready when
+    /// it is run, it will block until one is.)
+    void run_one() { io_service_.run_one();} ;
+
+    /// \brief Stop the underlying event loop.
+    ///
+    /// This will return the control to the caller of the \c run() method.
+    void stop() { io_service_.stop();} ;
+
+    /// \brief Return the native \c io_service object used in this wrapper.
+    ///
+    /// This is a short term work around to support other BIND 10 modules
+    /// that share the same \c io_service with the authoritative server.
+    /// It will eventually be removed once the wrapper interface is
+    /// generalized.
+    asio::io_service& get_io_service() { return io_service_; };
+private:
+    asio::io_service io_service_;
+};
+
+IOService::IOService() {
+    io_impl_ = new IOServiceImpl();
+}
+
+IOService::~IOService() {
+    delete io_impl_;
+}
+
+void
+IOService::run() {
+    io_impl_->run();
+}
+
+void
+IOService::run_one() {
+    io_impl_->run_one();
+}
+
+void
+IOService::stop() {
+    io_impl_->stop();
+}
+
+asio::io_service&
+IOService::get_io_service() {
+    return io_impl_->get_io_service();
+}
+
+class DNSServiceImpl {
+public:
+    DNSServiceImpl(IOService& io_service, const char& port,
                   const ip::address* v4addr, const ip::address* v6addr,
                   SimpleCallback* checkin, DNSLookup* lookup,
                   DNSAnswer* answer);
-    asio::io_service io_service_;
+    //asio::io_service io_service_;
 
+    void stop();
     typedef boost::shared_ptr<UDPServer> UDPServerPtr;
     typedef boost::shared_ptr<TCPServer> TCPServerPtr;
     UDPServerPtr udp4_server_;
@@ -58,12 +127,13 @@ public:
     TCPServerPtr tcp6_server_;
 };
 
-IOServiceImpl::IOServiceImpl(const char& port,
-                             const ip::address* const v4addr,
-                             const ip::address* const v6addr,
-                             SimpleCallback* checkin,
-                             DNSLookup* lookup,
-                             DNSAnswer* answer) :
+DNSServiceImpl::DNSServiceImpl(IOService& io_service_,
+                               const char& port,
+                               const ip::address* const v4addr,
+                               const ip::address* const v6addr,
+                               SimpleCallback* checkin,
+                               DNSLookup* lookup,
+                               DNSAnswer* answer) :
     udp4_server_(UDPServerPtr()), udp6_server_(UDPServerPtr()),
     tcp4_server_(TCPServerPtr()), tcp6_server_(TCPServerPtr())
 {
@@ -85,21 +155,21 @@ IOServiceImpl::IOServiceImpl(const char& port,
 
     try {
         if (v4addr != NULL) {
-            udp4_server_ = UDPServerPtr(new UDPServer(io_service_,
+            udp4_server_ = UDPServerPtr(new UDPServer(io_service_.get_io_service(),
                                                       *v4addr, portnum,
                                                       checkin, lookup, answer));
             (*udp4_server_)();
-            tcp4_server_ = TCPServerPtr(new TCPServer(io_service_,
+            tcp4_server_ = TCPServerPtr(new TCPServer(io_service_.get_io_service(),
                                                       *v4addr, portnum,
                                                       checkin, lookup, answer));
             (*tcp4_server_)();
         }
         if (v6addr != NULL) {
-            udp6_server_ = UDPServerPtr(new UDPServer(io_service_,
+            udp6_server_ = UDPServerPtr(new UDPServer(io_service_.get_io_service(),
                                                       *v6addr, portnum,
                                                       checkin, lookup, answer));
             (*udp6_server_)();
-            tcp6_server_ = TCPServerPtr(new TCPServer(io_service_,
+            tcp6_server_ = TCPServerPtr(new TCPServer(io_service_.get_io_service(),
                                                       *v6addr, portnum,
                                                       checkin, lookup, answer));
             (*tcp6_server_)();
@@ -113,11 +183,12 @@ IOServiceImpl::IOServiceImpl(const char& port,
     }
 }
 
-IOService::IOService(const char& port, const char& address,
-                     SimpleCallback* checkin,
-                     DNSLookup* lookup,
-                     DNSAnswer* answer) :
-    impl_(NULL)
+DNSService::DNSService(IOService& io_service,
+                       const char& port, const char& address,
+                       SimpleCallback* checkin,
+                       DNSLookup* lookup,
+                       DNSAnswer* answer) :
+    impl_(NULL), io_service_(io_service)
 {
     error_code err;
     const ip::address addr = ip::address::from_string(&address, err);
@@ -126,53 +197,34 @@ IOService::IOService(const char& port, const char& address,
                   << err.message());
     }
 
-    impl_ = new IOServiceImpl(port,
+    impl_ = new DNSServiceImpl(io_service, port,
                               addr.is_v4() ? &addr : NULL,
                               addr.is_v6() ? &addr : NULL,
                               checkin, lookup, answer);
 }
 
-IOService::IOService(const char& port,
-                     const bool use_ipv4, const bool use_ipv6,
-                     SimpleCallback* checkin,
-                     DNSLookup* lookup,
-                     DNSAnswer* answer) :
-    impl_(NULL)
+DNSService::DNSService(IOService& io_service,
+                       const char& port,
+                       const bool use_ipv4, const bool use_ipv6,
+                       SimpleCallback* checkin,
+                       DNSLookup* lookup,
+                       DNSAnswer* answer) :
+    impl_(NULL), io_service_(io_service)
 {
     const ip::address v4addr_any = ip::address(ip::address_v4::any());
     const ip::address* const v4addrp = use_ipv4 ? &v4addr_any : NULL; 
     const ip::address v6addr_any = ip::address(ip::address_v6::any());
     const ip::address* const v6addrp = use_ipv6 ? &v6addr_any : NULL;
-    impl_ = new IOServiceImpl(port, v4addrp, v6addrp, checkin, lookup, answer);
+    impl_ = new DNSServiceImpl(io_service, port, v4addrp, v6addrp, checkin, lookup, answer);
 }
 
-IOService::~IOService() {
+DNSService::~DNSService() {
     delete impl_;
 }
 
-void
-IOService::run() {
-    impl_->io_service_.run();
-}
-
-void
-IOService::run_one() {
-    impl_->io_service_.run_one();
-}
-
-void
-IOService::stop() {
-    impl_->io_service_.stop();
-}
-
-asio::io_service&
-IOService::get_io_service() {
-    return (impl_->io_service_);
-}
-
-RecursiveQuery::RecursiveQuery(IOService& io_service, const char& forward,
+RecursiveQuery::RecursiveQuery(DNSService& dns_service, const char& forward,
                                uint16_t port) :
-    io_service_(io_service), ns_addr_(&forward), port_(port) 
+    dns_service_(dns_service), ns_addr_(&forward), port_(port) 
 {}
 
 void
@@ -184,7 +236,7 @@ RecursiveQuery::sendQuery(const Question& question, OutputBufferPtr buffer,
     // the message should be sent via TCP or UDP, or sent initially via
     // UDP and then fall back to TCP on failure, but for the moment
     // we're only going to handle UDP.
-    asio::io_service& io = io_service_.get_io_service();
+    asio::io_service& io = dns_service_.get_io_service();
     UDPQuery q(io, question, ns_addr_, port_, buffer, server);
     io.post(q);
 }
