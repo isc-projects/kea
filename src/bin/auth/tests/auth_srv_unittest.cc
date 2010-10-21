@@ -387,11 +387,11 @@ TEST_F(AuthSrvTest, notify) {
 
     // An internal command message should have been created and sent to an
     // external module.  Check them.
-    EXPECT_EQ("Zonemgr", notify_session.msg_destination);
+    EXPECT_EQ("Zonemgr", notify_session.getMessageDest());
     EXPECT_EQ("notify",
-              notify_session.sent_msg->get("command")->get(0)->stringValue());
+              notify_session.getSentMessage()->get("command")->get(0)->stringValue());
     ConstElementPtr notify_args =
-        notify_session.sent_msg->get("command")->get(1);
+        notify_session.getSentMessage()->get("command")->get(1);
     EXPECT_EQ("example.com.", notify_args->get("zone_name")->stringValue());
     EXPECT_EQ(DEFAULT_REMOTE_ADDRESS,
               notify_args->get("master")->stringValue());
@@ -420,7 +420,7 @@ TEST_F(AuthSrvTest, notifyForCHClass) {
     // Other conditions should be the same, so simply confirm the RR class is
     // set correctly.
     ConstElementPtr notify_args =
-        notify_session.sent_msg->get("command")->get(1);
+        notify_session.getSentMessage()->get("command")->get(1);
     EXPECT_EQ("CH", notify_args->get("zone_class")->stringValue());
 }
 
