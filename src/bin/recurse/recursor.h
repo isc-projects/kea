@@ -54,7 +54,7 @@ public:
     /// I/O service queue and return.  When the server resumes, it can
     /// send the reply.
     ///
-    /// \param io_message The I/O service queue
+    /// \param io_message The raw message received
     /// \param message Pointer to the \c Message object
     /// \param buffer Pointer to an \c OutputBuffer for the resposne
     /// \param server Pointer to the \c DNSServer
