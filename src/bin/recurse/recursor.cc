@@ -72,8 +72,8 @@ public:
         queryShutdown();
     }
 
-    void querySetup(IOService& ios) {
-        rec_query_ = new RecursiveQuery(ios, forward_);
+    void querySetup(DNSService& dnss) {
+        rec_query_ = new RecursiveQuery(dnss, forward_);
     }
 
     void queryShutdown() {
@@ -296,10 +296,10 @@ Recursor::~Recursor() {
 }
 
 void
-Recursor::setIOService(asiolink::IOService& ios) {
+Recursor::setDNSService(asiolink::DNSService& dnss) {
     impl_->queryShutdown();
-    impl_->querySetup(ios);
-    io_ = &ios;
+    impl_->querySetup(dnss);
+    dnss_ = &dnss;
 }
 
 void

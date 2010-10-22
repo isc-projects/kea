@@ -63,7 +63,7 @@ static bool verbose_mode = false;
 static const string PROGRAM = "Recurse";
 static const char* DNSPORT = "5300";
 
-static IOService* io_service;
+IOService io_service;
 static Recursor *recursor;
 
 ConstElementPtr
@@ -80,7 +80,7 @@ my_command_handler(const string& command, ConstElementPtr args) {
         /* let's add that message to our answer as well */
         answer = createAnswer(0, args);
     } else if (command == "shutdown") {
-        io_service->stop();
+        io_service.stop();
     }
     
     return (answer);
@@ -189,6 +189,8 @@ main(int argc, char* argv[]) {
         DNSLookup* lookup = recursor->getDNSLookupProvider();
         DNSAnswer* answer = recursor->getDNSAnswerProvider();
 
+        DNSService* dns_service;
+
         if (address != NULL) {
             // XXX: we can only specify at most one explicit address.
             // This also means the server cannot run in the dual address
@@ -196,16 +198,16 @@ main(int argc, char* argv[]) {
             // We don't bother to fix this problem, however.  The -a option
             // is a short term workaround until we support dynamic listening
             // port allocation.
-            io_service = new IOService(*port, *address,
-                                       checkin, lookup, answer);
+            dns_service = new DNSService(io_service, *port, *address,
+                                         checkin, lookup, answer);
         } else {
-            io_service = new IOService(*port, use_ipv4, use_ipv6,
-                                       checkin, lookup, answer);
+            dns_service = new DNSService(io_service, *port, use_ipv4, use_ipv6,
+                                         checkin, lookup, answer);
         }
-        recursor->setIOService(*io_service);
+        recursor->setDNSService(*dns_service);
         cout << "[b10-recurse] IOService created." << endl;
 
-        cc_session = new Session(io_service->get_io_service());
+        cc_session = new Session(io_service.get_io_service());
         cout << "[b10-recurse] Configuration session channel created." << endl;
 
         config_session = new ModuleCCSession(specfile, *cc_session,
@@ -221,7 +223,7 @@ main(int argc, char* argv[]) {
         recursor->updateConfig(ElementPtr());
 
         cout << "[b10-recurse] Server started." << endl;
-        io_service->run();
+        io_service.run();
     } catch (const std::exception& ex) {
         cerr << "[b10-recurse] Server failed: " << ex.what() << endl;
         ret = 1;
@@ -229,7 +231,6 @@ main(int argc, char* argv[]) {
 
     delete config_session;
     delete cc_session;
-    delete io_service;
     delete recursor;
 
     return (ret);

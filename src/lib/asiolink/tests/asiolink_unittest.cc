@@ -135,69 +135,92 @@ TEST(IOSocketTest, dummySockets) {
 }
 
 TEST(IOServiceTest, badPort) {
-    EXPECT_THROW(IOService(*"65536", true, false, NULL, NULL, NULL), IOError);
-    EXPECT_THROW(IOService(*"5300.0", true, false, NULL, NULL, NULL), IOError);
-    EXPECT_THROW(IOService(*"-1", true, false, NULL, NULL, NULL), IOError);
-    EXPECT_THROW(IOService(*"domain", true, false, NULL, NULL, NULL), IOError);
+    IOService io_service;
+    EXPECT_THROW(DNSService(io_service, *"65536", true, false, NULL, NULL, NULL), IOError);
+    EXPECT_THROW(DNSService(io_service, *"5300.0", true, false, NULL, NULL, NULL), IOError);
+    EXPECT_THROW(DNSService(io_service, *"-1", true, false, NULL, NULL, NULL), IOError);
+    EXPECT_THROW(DNSService(io_service, *"domain", true, false, NULL, NULL, NULL), IOError);
 }
 
 TEST(IOServiceTest, badAddress) {
-    EXPECT_THROW(IOService(*TEST_SERVER_PORT, *"192.0.2.1.1", NULL, NULL, NULL), IOError);
-    EXPECT_THROW(IOService(*TEST_SERVER_PORT, *"2001:db8:::1", NULL, NULL, NULL), IOError);
-    EXPECT_THROW(IOService(*TEST_SERVER_PORT, *"localhost", NULL, NULL, NULL), IOError);
+    IOService io_service;
+    EXPECT_THROW(DNSService(io_service, *TEST_SERVER_PORT, *"192.0.2.1.1", NULL, NULL, NULL), IOError);
+    EXPECT_THROW(DNSService(io_service, *TEST_SERVER_PORT, *"2001:db8:::1", NULL, NULL, NULL), IOError);
+    EXPECT_THROW(DNSService(io_service, *TEST_SERVER_PORT, *"localhost", NULL, NULL, NULL), IOError);
 }
 
 TEST(IOServiceTest, unavailableAddress) {
+    IOService io_service;
     // These addresses should generally be unavailable as a valid local
     // address, although there's no guarantee in theory.
-    EXPECT_THROW(IOService(*TEST_SERVER_PORT, *"255.255.0.0", NULL, NULL, NULL), IOError);
+    EXPECT_THROW(DNSService(io_service, *TEST_SERVER_PORT, *"255.255.0.0", NULL, NULL, NULL), IOError);
 
     // Some OSes would simply reject binding attempt for an AF_INET6 socket
     // to an IPv4-mapped IPv6 address.  Even if those that allow it, since
     // the corresponding IPv4 address is the same as the one used in the
     // AF_INET socket case above, it should at least show the same result
     // as the previous one.
-    EXPECT_THROW(IOService(*TEST_SERVER_PORT, *"::ffff:255.255.0.0", NULL, NULL, NULL), IOError);
+    EXPECT_THROW(DNSService(io_service, *TEST_SERVER_PORT, *"::ffff:255.255.0.0", NULL, NULL, NULL), IOError);
 }
 
-TEST(IOServiceTest, duplicateBind) {
+TEST(IOServiceTest, duplicateBind_v6) {
     // In each sub test case, second attempt should fail due to duplicate bind
+    IOService io_service;
 
     // IPv6, "any" address
-    IOService* io_service = new IOService(*TEST_SERVER_PORT, false, true, NULL, NULL, NULL);
-    EXPECT_THROW(IOService(*TEST_SERVER_PORT, false, true, NULL, NULL, NULL), IOError);
-    delete io_service;
+    DNSService* dns_service = new DNSService(io_service, *TEST_SERVER_PORT, false, true, NULL, NULL, NULL);
+    EXPECT_THROW(DNSService(io_service, *TEST_SERVER_PORT, false, true, NULL, NULL, NULL), IOError);
+    delete dns_service;
+
+}
+
+TEST(IOServiceTest, duplicateBind_v6_address) {
+    // In each sub test case, second attempt should fail due to duplicate bind
+    IOService io_service;
 
     // IPv6, specific address
-    io_service = new IOService(*TEST_SERVER_PORT, *TEST_IPV6_ADDR, NULL, NULL, NULL);
-    EXPECT_THROW(IOService(*TEST_SERVER_PORT, *TEST_IPV6_ADDR, NULL, NULL, NULL), IOError);
-    delete io_service;
+    DNSService* dns_service = new DNSService(io_service, *TEST_SERVER_PORT, *TEST_IPV6_ADDR, NULL, NULL, NULL);
+    EXPECT_THROW(DNSService(io_service, *TEST_SERVER_PORT, *TEST_IPV6_ADDR, NULL, NULL, NULL), IOError);
+    delete dns_service;
+
+}
+
+TEST(IOServiceTest, duplicateBind_v4) {
+    // In each sub test case, second attempt should fail due to duplicate bind
+    IOService io_service;
 
     // IPv4, "any" address
-    io_service = new IOService(*TEST_SERVER_PORT, true, false, NULL, NULL, NULL);
-    EXPECT_THROW(IOService(*TEST_SERVER_PORT, true, false, NULL, NULL, NULL), IOError);
-    delete io_service;
+    DNSService* dns_service = new DNSService(io_service, *TEST_SERVER_PORT, true, false, NULL, NULL, NULL);
+    EXPECT_THROW(DNSService(io_service, *TEST_SERVER_PORT, true, false, NULL, NULL, NULL), IOError);
+    delete dns_service;
+
+}
+
+TEST(IOServiceTest, duplicateBind_v4_address) {
+    // In each sub test case, second attempt should fail due to duplicate bind
+    IOService io_service;
 
     // IPv4, specific address
-    io_service = new IOService(*TEST_SERVER_PORT, *TEST_IPV4_ADDR, NULL, NULL, NULL);
-    EXPECT_THROW(IOService(*TEST_SERVER_PORT, *TEST_IPV4_ADDR, NULL, NULL, NULL), IOError);
-    delete io_service;
+    DNSService* dns_service = new DNSService(io_service, *TEST_SERVER_PORT, *TEST_IPV4_ADDR, NULL, NULL, NULL);
+    EXPECT_THROW(DNSService(io_service, *TEST_SERVER_PORT, *TEST_IPV4_ADDR, NULL, NULL, NULL), IOError);
+    delete dns_service;
 }
 
 // Disabled because IPv4-mapped addresses don't seem to be working with
 // the IOService constructor
 TEST(IOServiceTest, DISABLED_IPv4MappedDuplicateBind) {
+    IOService io_service;
     // Duplicate bind on IPv4-mapped IPv6 address
-    IOService* io_service = new IOService(*TEST_SERVER_PORT, *"127.0.0.1", NULL, NULL, NULL);
-    EXPECT_THROW(IOService(*TEST_SERVER_PORT, *"::ffff:127.0.0.1", NULL, NULL, NULL), IOError);
-    delete io_service;
+    DNSService* dns_service = new DNSService(io_service, *TEST_SERVER_PORT, *"127.0.0.1", NULL, NULL, NULL);
+    EXPECT_THROW(DNSService(io_service, *TEST_SERVER_PORT, *"::ffff:127.0.0.1", NULL, NULL, NULL), IOError);
+    delete dns_service;
 
     // XXX:
     // Currently, this throws an "invalid argument" exception.  I have
     // not been able to get IPv4-mapped addresses to work.
-    io_service = new IOService(*TEST_SERVER_PORT, *"::ffff:127.0.0.1", NULL, NULL, NULL);
-    EXPECT_THROW(IOService(*TEST_SERVER_PORT, *"127.0.0.1", NULL, NULL, NULL), IOError);
-    delete io_service;
+    dns_service = new DNSService(io_service, *TEST_SERVER_PORT, *"::ffff:127.0.0.1", NULL, NULL, NULL);
+    EXPECT_THROW(DNSService(io_service, *TEST_SERVER_PORT, *"127.0.0.1", NULL, NULL, NULL), IOError);
+    delete dns_service;
 }
 
 // This function returns an addrinfo structure for use by tests, using
@@ -234,7 +257,7 @@ resolveAddress(const int family, const int protocol, const bool client) {
 // received on the server side.  It then checks the received data matches
 // expected parameters.
 // If initialization parameters of the IOService should be modified, the test
-// case can do it using the setIOService() method.
+// case can do it using the setDNSService() method.
 // Note: the set of tests in ASIOLinkTest use actual network services and may
 // involve undesirable side effects such as blocking.
 class ASIOLinkTest : public ::testing::Test {
@@ -247,12 +270,9 @@ protected:
         if (sock_ != -1) {
             close(sock_);
         }
-        if (io_service_ != NULL) {
-            delete io_service_;
-        }
-        if (callback_ != NULL) {
-            delete callback_;
-        }
+        delete dns_service_;
+        delete callback_;
+        delete io_service_;
     }
 
     // Send a test UDP packet to a mock server
@@ -324,21 +344,25 @@ protected:
 
 
     // Set up an IO Service queue using the specified address
-    void setIOService(const char& address) {
+    void setDNSService(const char& address) {
+        delete dns_service_;
+        dns_service_ = NULL;
         delete io_service_;
-        io_service_ = NULL;
+        io_service_ = new IOService();
         callback_ = new ASIOCallBack(this);
-        io_service_ = new IOService(*TEST_SERVER_PORT, address, callback_, NULL, NULL);
+        dns_service_ = new DNSService(*io_service_, *TEST_SERVER_PORT, address, callback_, NULL, NULL);
     }
 
     // Set up an IO Service queue using the "any" address, on IPv4 if
     // 'use_ipv4' is true and on IPv6 if 'use_ipv6' is true.
-    void setIOService(const bool use_ipv4, const bool use_ipv6) {
+    void setDNSService(const bool use_ipv4, const bool use_ipv6) {
+        delete dns_service_;
+        dns_service_ = NULL;
         delete io_service_;
-        io_service_ = NULL;
+        io_service_ = new IOService();
         callback_ = new ASIOCallBack(this);
-        io_service_ = new IOService(*TEST_SERVER_PORT, use_ipv4, use_ipv6, callback_,
-                                    NULL, NULL);
+        dns_service_ = new DNSService(*io_service_, *TEST_SERVER_PORT, use_ipv4, use_ipv6, callback_,
+                                      NULL, NULL);
     }
 
     // Run a simple server test, on either IPv4 or IPv6, and over either
@@ -447,7 +471,10 @@ private:
         io_service_->stop();
     }
 protected:
+    // We use a pointer for io_service_, because for some tests we
+    // need to recreate a new one within one onstance of this class
     IOService* io_service_;
+    DNSService* dns_service_;
     ASIOCallBack* callback_;
     int callback_protocol_;
     int callback_native_;
@@ -459,9 +486,10 @@ private:
 };
 
 ASIOLinkTest::ASIOLinkTest() :
-    io_service_(NULL), callback_(NULL), sock_(-1), res_(NULL)
+    dns_service_(NULL), callback_(NULL), sock_(-1), res_(NULL)
 {
-    setIOService(true, true);
+    io_service_ = new IOService();
+    setDNSService(true, true);
 }
 
 TEST_F(ASIOLinkTest, v6UDPSend) {
@@ -492,24 +520,24 @@ TEST_F(ASIOLinkTest, v6UDPSendSpecific) {
     // an error on a subsequent read operation.  We could do it, but for
     // simplicity we only tests the easier cases for now.
 
-    setIOService(*TEST_IPV6_ADDR);
+    setDNSService(*TEST_IPV6_ADDR);
     doTest(AF_INET6, IPPROTO_UDP);
 }
 
 TEST_F(ASIOLinkTest, v6TCPSendSpecific) {
-    setIOService(*TEST_IPV6_ADDR);
+    setDNSService(*TEST_IPV6_ADDR);
     doTest(AF_INET6, IPPROTO_TCP);
 
     EXPECT_THROW(sendTCP(AF_INET), IOError);
 }
 
 TEST_F(ASIOLinkTest, v4UDPSendSpecific) {
-    setIOService(*TEST_IPV4_ADDR);
+    setDNSService(*TEST_IPV4_ADDR);
     doTest(AF_INET, IPPROTO_UDP);
 }
 
 TEST_F(ASIOLinkTest, v4TCPSendSpecific) {
-    setIOService(*TEST_IPV4_ADDR);
+    setDNSService(*TEST_IPV4_ADDR);
     doTest(AF_INET, IPPROTO_TCP);
 
     EXPECT_THROW(sendTCP(AF_INET6), IOError);
@@ -519,25 +547,25 @@ TEST_F(ASIOLinkTest, v6TCPOnly) {
     // Open only IPv6 TCP socket.  A subsequent attempt of establishing an
     // IPv4/TCP connection should fail.  See above for why we only test this
     // for TCP.
-    setIOService(false, true);
+    setDNSService(false, true);
     EXPECT_THROW(sendTCP(AF_INET), IOError);
 }
 
 TEST_F(ASIOLinkTest, v4TCPOnly) {
-    setIOService(true, false);
+    setDNSService(true, false);
     EXPECT_THROW(sendTCP(AF_INET6), IOError);
 }
 
 TEST_F(ASIOLinkTest, recursiveSetupV4) {
-    setIOService(true, false);
+    setDNSService(true, false);
     uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
-    EXPECT_NO_THROW(RecursiveQuery(*io_service_, *TEST_IPV4_ADDR, port));
+    EXPECT_NO_THROW(RecursiveQuery(*dns_service_, *TEST_IPV4_ADDR, port));
 }
 
 TEST_F(ASIOLinkTest, recursiveSetupV6) {
-    setIOService(false, true);
+    setDNSService(false, true);
     uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
-    EXPECT_NO_THROW(RecursiveQuery(*io_service_, *TEST_IPV6_ADDR, port));
+    EXPECT_NO_THROW(RecursiveQuery(*dns_service_, *TEST_IPV6_ADDR, port));
 }
 
 // XXX:
@@ -546,7 +574,7 @@ TEST_F(ASIOLinkTest, recursiveSetupV6) {
 // port, and with the various callbacks defined in such a way as to ensure
 // full code coverage including error cases.
 TEST_F(ASIOLinkTest, recursiveSend) {
-    setIOService(true, false);
+    setDNSService(true, false);
     asio::io_service& io = io_service_->get_io_service();
 
     // Note: We use the test prot plus one to ensure we aren't binding
@@ -555,7 +583,7 @@ TEST_F(ASIOLinkTest, recursiveSend) {
     asio::ip::address addr = asio::ip::address::from_string(TEST_IPV4_ADDR);
 
     MockServer server(io, addr, port, NULL, NULL, NULL);
-    RecursiveQuery rq(*io_service_, *TEST_IPV4_ADDR, port);
+    RecursiveQuery rq(*dns_service_, *TEST_IPV4_ADDR, port);
 
     Question q(Name("example.com"), RRClass::IN(), RRType::TXT());
     OutputBufferPtr buffer(new OutputBuffer(0));
