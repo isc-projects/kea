@@ -114,17 +114,9 @@ class DNSAnswer;
 /// \brief The \c IOService class is a wrapper for the ASIO \c io_service
 /// class.
 ///
-/// Currently, the interface of this class is very specific to the
-/// authoritative/recursive DNS server implementationss in b10-auth
-/// and b10-recurse; this is reflected in the constructor signatures.
-/// Ultimately the plan is to generalize it so that other BIND 10
-/// modules can use this interface, too.
 class IOService {
     ///
     /// \name Constructors and Destructor
-    ///
-    /// These are currently very specific to the authoritative server
-    /// implementation.
     ///
     /// Note: The copy constructor and the assignment operator are
     /// intentionally defined as private, making this class non-copyable.
@@ -169,12 +161,13 @@ private:
     IOServiceImpl* io_impl_;
 };
 
+///
+/// DNSService is the service that handles DNS queries and answers with
+/// a given IOService.
+/// 
 class DNSService {
     ///
     /// \name Constructors and Destructor
-    ///
-    /// These are currently very specific to the authoritative server
-    /// implementation.
     ///
     /// Note: The copy constructor and the assignment operator are
     /// intentionally defined as private, making this class non-copyable.
@@ -182,9 +175,17 @@ class DNSService {
 private:
     DNSService(const DNSService& source);
     DNSService& operator=(const DNSService& source);
+
 public:
     /// \brief The constructor with a specific IP address and port on which
     /// the services listen on.
+    ///
+    /// \param io_service The IOService to work with
+    /// \param port the port to listen on
+    /// \param address the IP address to listen on
+    /// \param checkin Provider for cc-channel events (see \c SimpleCallback)
+    /// \param lookup The lookup provider (see \c DNSLookup)
+    /// \param answer The answer provider (see \c DNSAnswer)
     DNSService(IOService& io_service, const char& port,
                const char& address, SimpleCallback* checkin,
                DNSLookup* lookup, DNSAnswer* answer);
@@ -194,6 +195,14 @@ public:
     /// It effectively listens on "any" IPv4 and/or IPv6 addresses.
     /// IPv4/IPv6 services will be available if and only if \c use_ipv4
     /// or \c use_ipv6 is \c true, respectively.
+    ///
+    /// \param io_service The IOService to work with
+    /// \param port the port to listen on
+    /// \param ipv4 If true, listen on ipv4 'any'
+    /// \param ipv6 If true, listen on ipv6 'any'
+    /// \param checkin Provider for cc-channel events (see \c SimpleCallback)
+    /// \param lookup The lookup provider (see \c DNSLookup)
+    /// \param answer The answer provider (see \c DNSAnswer)
     DNSService(IOService& io_service, const char& port,
                const bool use_ipv4, const bool use_ipv6,
                SimpleCallback* checkin, DNSLookup* lookup,
@@ -270,6 +279,9 @@ public:
 
     /// \brief Resume processing of the server coroutine after an 
     /// asynchronous call (e.g., to the DNS Lookup provider) has completed.
+    ///
+    /// \param done If true, this signals the system there is an answer
+    ///             to return.
     virtual inline void resume(const bool done) { self_->resume(done); }
 
     /// \brief Indicate whether the server is able to send an answer
@@ -284,6 +296,8 @@ public:
     /// purposes during development and removed later.  It allows
     /// callers from outside the coroutine object to retrieve information
     /// about its current state.
+    ///
+    /// \return The value of the 'coroutine' object
     virtual inline int value() { return (self_->value()); }
 
     /// \brief Returns a pointer to a clone of this DNSServer object.
@@ -292,6 +306,8 @@ public:
     /// normally be another \c DNSServer object containing a copy
     /// of the original "self_" pointer.  Calling clone() guarantees
     /// that the underlying object is also correctly copied.
+    ///
+    /// \return A deep copy of this DNSServer object
     virtual inline DNSServer* clone() { return (self_->clone()); }
     //@}
 
@@ -371,6 +387,11 @@ public:
     /// This makes its call indirectly via the "self" pointer, ensuring
     /// that the function ultimately invoked will be the one in the derived
     /// class.
+    ///
+    /// \param io_message The event message to handle
+    /// \param message The DNS MessagePtr that needs handling
+    /// \param buffer The final answer is put here
+    /// \param DNSServer DNSServer object to use
     virtual void operator()(const IOMessage& io_message,
                             isc::dns::MessagePtr message,
                             isc::dns::OutputBufferPtr buffer,
@@ -416,6 +437,14 @@ public:
     virtual ~DNSAnswer() {}
     //@}
     /// \brief The function operator
+    ///
+    /// This makes its call indirectly via the "self" pointer, ensuring
+    /// that the function ultimately invoked will be the one in the derived
+    /// class.
+    ///
+    /// \param io_message The event message to handle
+    /// \param message The DNS MessagePtr that needs handling
+    /// \param buffer The result is put here
     virtual void operator()(const IOMessage& io_message,
                             isc::dns::MessagePtr message,
                             isc::dns::OutputBufferPtr buffer) const = 0;
@@ -458,6 +487,8 @@ public:
     /// This makes its call indirectly via the "self" pointer, ensuring
     /// that the function ultimately invoked will be the one in the derived
     /// class.
+    ///
+    /// \param io_message The event message to handle
     virtual void operator()(const IOMessage& io_message) const {
         (*self_)(io_message);
     }
@@ -481,20 +512,25 @@ public:
     /// This is currently the only way to construct \c RecursiveQuery
     /// object.  The address of the forward nameserver is specified,
     /// and all upstream queries will be sent to that one address.
+    ///
+    /// \param dns_service The DNS Service to perform the recursive
+    ///        query on
+    /// \param forward The address of the nameserver to forward to
+    /// \param port The remote port to send the dns query to
     RecursiveQuery(DNSService& dns_service, const char& forward,
                    uint16_t port = 53);
     //@}
 
     /// \brief Initiates an upstream query in the \c RecursiveQuery object.
     ///
-    /// \param question The question being answered <qname/qclass/qtype>
-    /// \param buffer An output buffer into which the response can be copied
-    /// \param server A pointer to the \c DNSServer object handling the client
-    ///
     /// When sendQuery() is called, a message is sent asynchronously to
     /// the upstream name server.  When a reply arrives, 'server'
     /// is placed on the ASIO service queue via io_service::post(), so
     /// that the original \c DNSServer objct can resume processing.
+    ///
+    /// \param question The question being answered <qname/qclass/qtype>
+    /// \param buffer An output buffer into which the response can be copied
+    /// \param server A pointer to the \c DNSServer object handling the client
     void sendQuery(const isc::dns::Question& question,
                    isc::dns::OutputBufferPtr buffer,
                    DNSServer* server);
