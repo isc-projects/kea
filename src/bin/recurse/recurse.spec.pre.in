@@ -1,7 +1,7 @@
 {
   "module_spec": {
-    "module_name": "Auth",
-    "module_description": "Authoritative service",
+    "module_name": "Recurse",
+    "module_description": "Recursive service",
     "config_data": [
       { "item_name": "database_file",
         "item_type": "string",
@@ -12,7 +12,7 @@
     "commands": [
       {
         "command_name": "shutdown",
-        "command_description": "Shut down authoritative DNS server",
+        "command_description": "Shut down recursive DNS server",
         "command_args": []
       }
     ]
