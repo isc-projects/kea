@@ -79,10 +79,10 @@ public:
     isc::data::ConstElementPtr updateConfig(isc::data::ConstElementPtr config);
 
     /// \brief Assign an ASIO IO Service queue to this Recursor object
-    void setIOService(asiolink::IOService& ios);
+    void setDNSService(asiolink::DNSService& dnss);
 
     /// \brief Return this object's ASIO IO Service queue
-    asiolink::IOService& getIOService() const { return (*io_); }
+    asiolink::DNSService& getDNSService() const { return (*dnss_); }
 
     /// \brief Return pointer to the DNS Lookup callback function
     asiolink::DNSLookup* getDNSLookupProvider() { return (dns_lookup_); }
@@ -95,7 +95,7 @@ public:
 
 private:
     RecursorImpl* impl_;
-    asiolink::IOService* io_;
+    asiolink::DNSService* dnss_;
     asiolink::SimpleCallback* checkin_;
     asiolink::DNSLookup* dns_lookup_;
     asiolink::DNSAnswer* dns_answer_;
