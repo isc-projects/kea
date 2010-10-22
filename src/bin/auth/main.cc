@@ -65,7 +65,7 @@ static const char* DNSPORT = "5300";
  * class itself? */
 static AuthSrv *auth_server;
 
-static IOService* io_service;
+static IOService io_service;
 
 ConstElementPtr
 my_config_handler(ConstElementPtr new_config) {
@@ -81,7 +81,7 @@ my_command_handler(const string& command, ConstElementPtr args) {
         /* let's add that message to our answer as well */
         answer = createAnswer(0, args);
     } else if (command == "shutdown") {
-        io_service->stop();
+        io_service.stop();
     }
     
     return (answer);
@@ -190,7 +190,6 @@ main(int argc, char* argv[]) {
         DNSLookup* lookup = auth_server->getDNSLookupProvider();
         DNSAnswer* answer = auth_server->getDNSAnswerProvider();
 
-        io_service = new IOService();
         DNSService* dns_service;
         if (address != NULL) {
             // XXX: we can only specify at most one explicit address.
@@ -199,16 +198,17 @@ main(int argc, char* argv[]) {
             // We don't bother to fix this problem, however.  The -a option
             // is a short term workaround until we support dynamic listening
             // port allocation.
-            dns_service = new DNSService(*io_service,  *port, *address,
-                                     checkin, lookup, answer);
+            dns_service = new DNSService(io_service,  *port, *address,
+                                         checkin, lookup, answer);
         } else {
-            dns_service = new DNSService(*io_service, *port, use_ipv4,
-                                     use_ipv6, checkin, lookup, answer);
+            dns_service = new DNSService(io_service, *port, use_ipv4,
+                                         use_ipv6, checkin, lookup,
+                                         answer);
         }
-        auth_server->setIOService(*io_service);
+        auth_server->setIOService(io_service);
         cout << "[b10-auth] IOService created." << endl;
 
-        cc_session = new Session(io_service->get_io_service());
+        cc_session = new Session(io_service.get_io_service());
         cout << "[b10-auth] Configuration session channel created." << endl;
 
         config_session = new ModuleCCSession(specfile, *cc_session,
@@ -220,7 +220,7 @@ main(int argc, char* argv[]) {
             changeUser(uid);
         }
 
-        xfrin_session = new Session(io_service->get_io_service());
+        xfrin_session = new Session(io_service.get_io_service());
         cout << "[b10-auth] Xfrin session channel created." << endl;
         xfrin_session->establish(NULL);
         xfrin_session_established = true;
@@ -236,7 +236,7 @@ main(int argc, char* argv[]) {
         auth_server->updateConfig(ElementPtr());
 
         cout << "[b10-auth] Server started." << endl;
-        io_service->run();
+        io_service.run();
     } catch (const std::exception& ex) {
         cerr << "[b10-auth] Server failed: " << ex.what() << endl;
         ret = 1;
@@ -249,7 +249,6 @@ main(int argc, char* argv[]) {
     delete xfrin_session;
     delete config_session;
     delete cc_session;
-    delete io_service;
     delete auth_server;
 
     return (ret);

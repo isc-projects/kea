@@ -270,15 +270,9 @@ protected:
         if (sock_ != -1) {
             close(sock_);
         }
-        if (dns_service_ != NULL) {
-            delete dns_service_;
-        }
-        if (callback_ != NULL) {
-            delete callback_;
-        }
-        if (io_service_) {
-            delete io_service_;
-        }
+        delete dns_service_;
+        delete callback_;
+        delete io_service_;
     }
 
     // Send a test UDP packet to a mock server
