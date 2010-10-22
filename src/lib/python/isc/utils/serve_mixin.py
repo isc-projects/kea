@@ -19,27 +19,51 @@ import select
 
 SOCK_DATA = b'somedata'
 class ServeMixIn:
-    '''Mix-In class to override the function serve_forever()
-    and shutdown() in class socketserver::TCPServer.
-      serve_forever() in socketserver.TCPServer use polling
-    for checking request, which reduces the responsiveness to
-    the shutdown request and wastes cpu at all other times.
-      ServeMixIn should be used together with socketserver.TCPServer
-    or some derived classes of it, and ServeMixIn must be the first
-    base class in multiple inheritance, eg. MyClass(ServeMixIn,
-    socketserver.TCPServer). ServeMixIn.__init__() should be called
-    explicitely in derived class.
+    '''This is a mix-in class to override the function serve_forever()
+    and shutdown() in class socketserver.BaseServer.
+
+    As commented in the module source code,  serve_forever() in
+    socketserver.BaseServer uses polling for a shutdown request, which
+    "reduces the responsiveness to a shutdown request and wastes cpu at
+    all other times."
+
+    This class fixes this problem by introducing internal message
+    passing via a separate socket. Note, however, that according to
+    the module documentation serve_forever() and shutdown() are not
+    categorized as functions that can be overridden via mix-ins.  So
+    this mix-in class may not be compatible with future versions of
+    socketserver.  It should be considered a short term workaround
+    until the original implementation is fixed.
+
+    The NoPollMixIn class should be used together with
+    socketserver.BaseServer or some derived classes of it, and it must
+    be placed before the corresponding socketserver class.  In
+    addition, the constructor of this mix-in must be called
+    explicitely in the derived class.  For example, a basic TCP server
+    without the problem of polling is created as follows:
+
+       class MyServer(NoPollMixIn, socketserver.TCPServer):
+           def __init__(...):
+               ...
+               NoPollMixIn.__init__(self)
+               ...
+
+    To shutdown the server correctly, the serve_forever() method must
+    be run in a separate thread, and shutdown() must be called from
+    some other thread.
     '''
     def __init__(self):
         self.__read_sock, self.__write_sock = socket.socketpair()
         self.__is_shut_down = threading.Event()
 
     def serve_forever(self, poll_interval=None):
-        ''' Override the serve_forever([poll_interval]) in class
-        socketserver.TCPServer. use the socketpair to wake up
-        the select when shutdown() is called in anther thread.
-          Note, parameter 'poll_interval' is just used to keep the
-        interface, it's never used in this function.
+        ''' Overrides the serve_forever([poll_interval]) in class
+        socketserver.BaseServer.
+
+        It uses a socketpair to wake up the select when shutdown() is
+        called in anther thread.  Note, parameter 'poll_interval' is
+        just used for interface compatibility; it's never used in this
+        function.
         '''        
         while True:
             # block until the self.socket or self.__read_sock is readable
@@ -61,9 +85,9 @@ class ServeMixIn:
 
     def shutdown(self):
         '''Stops the serve_forever loop.
+
         Blocks until the loop has finished, the function should be called
         in another thread when serve_forever is running, or it will block.
         '''
         self.__write_sock.send(SOCK_DATA) # make self.__read_sock readable.
         self.__is_shut_down.wait()  # wait until the serve thread terminate
-
