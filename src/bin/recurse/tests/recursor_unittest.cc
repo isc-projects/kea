@@ -63,9 +63,7 @@ private:
 
 class RecursorTest : public ::testing::Test {
 protected:
-    RecursorTest() : ios(),
-                     dnss(ios, *TEST_PORT, true, false, NULL, NULL, NULL),
-                     server(*DEFAULT_REMOTE_ADDRESS),
+    RecursorTest() : server(*DEFAULT_REMOTE_ADDRESS),
                      request_message(Message::RENDER),
                      parse_message(new Message(Message::PARSE)),
                      default_qid(0x1035), opcode(Opcode(Opcode::QUERY())),
@@ -81,8 +79,6 @@ protected:
     }
     MockSession notify_session;
     MockServer dnsserv;
-    IOService ios;
-    DNSService dnss;
     Recursor server;
     Message request_message;
     MessagePtr parse_message;
