@@ -12,11 +12,12 @@ CLEANFILES = *.gcno *.gcda
 # which would make the build fail with -Werror (our default setting).
 lib_LTLIBRARIES = libasiolink.la
 libasiolink_la_SOURCES = asiolink.cc asiolink.h
-libasiolink_la_SOURCES += iosocket.h
+libasiolink_la_SOURCES += iosocket.h iomessage.h
 libasiolink_la_SOURCES += ioaddress.cc ioaddress.h
 libasiolink_la_SOURCES += ioendpoint.cc ioendpoint.h
 libasiolink_la_SOURCES += udpdns.cc internal/udpdns.h
 libasiolink_la_SOURCES += tcpdns.cc internal/tcpdns.h
+libasiolink_la_SOURCES += internal/coroutine.h
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # B10_CXXFLAGS)
 libasiolink_la_CXXFLAGS = $(AM_CXXFLAGS)
