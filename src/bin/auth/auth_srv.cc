@@ -78,23 +78,26 @@ public:
                           OutputBufferPtr buffer);
     bool processNotify(const IOMessage& io_message, MessagePtr message, 
                        OutputBufferPtr buffer);
-    std::string db_file_;
+
+    /// Currently non-configurable, but will be.
+    static const uint16_t DEFAULT_LOCAL_UDPSIZE = 4096;
+
+    /// These members are public because AuthSrv accesses them directly.
     ModuleCCSession* config_session_;
+    bool verbose_mode_;
+    AbstractSession* xfrin_session_;
+
+private:
+    std::string db_file_;
+
     MetaDataSrc data_sources_;
     /// We keep a pointer to the currently running sqlite datasource
     /// so that we can specifically remove that one should the database
     /// file change
     ConstDataSrcPtr cur_datasrc_;
 
-    bool verbose_mode_;
-
-    AbstractSession* xfrin_session_;
-
     bool xfrout_connected_;
     AbstractXfroutClient& xfrout_client_;
-
-    /// Currently non-configurable, but will be.
-    static const uint16_t DEFAULT_LOCAL_UDPSIZE = 4096;
 
     /// Hot spot cache
     isc::datasrc::HotCache cache_;
