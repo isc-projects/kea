@@ -369,7 +369,7 @@ TEST_F(RecursorConfig, forwardAddresses) {
 TEST_F(RecursorConfig, forwardAddressConfig) {
     // Try putting there some address
     ElementPtr config(Element::fromJSON("{"
-        "\"forward_addresses\": ["
+        "\"forward_addresses/\": ["
         "   {"
         "       \"address\": \"192.0.2.1\","
         "       \"port\": 53"
@@ -385,7 +385,7 @@ TEST_F(RecursorConfig, forwardAddressConfig) {
 
     // And then remove all addresses
     config = Element::fromJSON("{"
-        "\"forward_addresses\": null"
+        "\"forward_addresses/\": null"
         "}");
     result = server.updateConfig(config);
     EXPECT_EQ(result->toWire(), isc::config::createAnswer()->toWire());
@@ -402,23 +402,23 @@ void RecursorConfig::invalidTest(const string &JOSN) {
 TEST_F(RecursorConfig, invalidForwardAddresses) {
     // Try torturing it with some invalid inputs
     invalidTest("{"
-        "\"forward_addresses\": \"error\""
+        "\"forward_addresses/\": \"error\""
         "}");
     invalidTest("{"
-        "\"forward_addresses\": [{}]"
+        "\"forward_addresses/\": [{}]"
         "}");
     invalidTest("{"
-        "\"forward_addresses\": [{"
+        "\"forward_addresses/\": [{"
         "   \"port\": 1.5,"
         "   \"address\": \"192.0.2.1\""
         "}]}");
     invalidTest("{"
-        "\"forward_addresses\": [{"
+        "\"forward_addresses/\": [{"
         "   \"port\": -5,"
         "   \"address\": \"192.0.2.1\""
         "}]}");
     invalidTest("{"
-        "\"forward_addresses\": [{"
+        "\"forward_addresses/\": [{"
         "   \"port\": 53,"
         "   \"address\": \"bad_address\""
         "}]}");
@@ -448,7 +448,7 @@ TEST_F(RecursorConfig, listenAddresses) {
 TEST_F(RecursorConfig, listenAddressConfig) {
     // Try putting there some address
     ElementPtr config(Element::fromJSON("{"
-        "\"listen_addresses\": ["
+        "\"listen_on/\": ["
         "   {"
         "       \"address\": \"127.0.0.1\","
         "       \"port\": 5300"
@@ -464,7 +464,7 @@ TEST_F(RecursorConfig, listenAddressConfig) {
     // As this is example address, the machine should not have it on
     // any interface
     config = Element::fromJSON("{"
-        "\"listen_addresses\": ["
+        "\"listen_on/\": ["
         "   {"
         "       \"address\": \"192.0.2.0\","
         "       \"port\": 5300"
@@ -481,23 +481,23 @@ TEST_F(RecursorConfig, listenAddressConfig) {
 TEST_F(RecursorConfig, invalidListenAddresses) {
     // Try torturing it with some invalid inputs
     invalidTest("{"
-        "\"listen_addresses\": \"error\""
+        "\"listen_on/\": \"error\""
         "}");
     invalidTest("{"
-        "\"listen_addresses\": [{}]"
+        "\"listen_on/\": [{}]"
         "}");
     invalidTest("{"
-        "\"listen_addresses\": [{"
+        "\"listen_on/\": [{"
         "   \"port\": 1.5,"
         "   \"address\": \"192.0.2.1\""
         "}]}");
     invalidTest("{"
-        "\"listen_addresses\": [{"
+        "\"listen_on/\": [{"
         "   \"port\": -5,"
         "   \"address\": \"192.0.2.1\""
         "}]}");
     invalidTest("{"
-        "\"listen_addresses\": [{"
+        "\"listen_on/\": [{"
         "   \"port\": 53,"
         "   \"address\": \"bad_address\""
         "}]}");
