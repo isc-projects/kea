@@ -64,7 +64,6 @@ private:
 class RecursorTest : public ::testing::Test {
 protected:
     RecursorTest() : ios(*TEST_PORT, true, false, NULL, NULL, NULL),
-                    server(*DEFAULT_REMOTE_ADDRESS),
                     request_message(Message::RENDER),
                     parse_message(new Message(Message::PARSE)),
                     default_qid(0x1035), opcode(Opcode(Opcode::QUERY())),
@@ -73,7 +72,11 @@ protected:
                     io_message(NULL), endpoint(NULL), request_obuffer(0),
                     request_renderer(request_obuffer),
                     response_obuffer(new OutputBuffer(0))
-    {}
+    {
+        vector<pair<string, uint16_t> > upstream;
+        upstream.push_back(pair<string, uint16_t>(DEFAULT_REMOTE_ADDRESS, 53));
+        server.setForwardAddresses(upstream);
+    }
     ~RecursorTest() {
         delete io_message;
         delete endpoint;
@@ -325,6 +328,94 @@ TEST_F(RecursorTest, notifyFail) {
     EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::NOTAUTH(),
                 Opcode::NOTIFY().getCode(), QR_FLAG, 0, 0, 0, 0);
+}
+
+class RecursorConfig : public ::testing::Test {
+    public:
+        Recursor server;
+        void invalidForwardTest(const string &JOSN);
+};
+
+TEST_F(RecursorConfig, forwardAddresses) {
+    // Default value should be fully recursive
+    EXPECT_TRUE(server.getForwardAddresses().empty());
+    EXPECT_FALSE(server.isForwarding());
+
+    // Try putting there some addresses
+    vector<pair<string, uint16_t> > addresses;
+    addresses.push_back(pair<string, uint16_t>(DEFAULT_REMOTE_ADDRESS, 53));
+    addresses.push_back(pair<string, uint16_t>("::1", 53));
+    server.setForwardAddresses(addresses);
+    EXPECT_EQ(2, server.getForwardAddresses().size());
+    EXPECT_EQ("::1", server.getForwardAddresses()[1].first);
+    EXPECT_TRUE(server.isForwarding());
+
+    // Is it independent from what we do with the vector later?
+    addresses.clear();
+    EXPECT_EQ(2, server.getForwardAddresses().size());
+
+    // Did it return to fully recursive?
+    server.setForwardAddresses(addresses);
+    EXPECT_TRUE(server.getForwardAddresses().empty());
+    EXPECT_FALSE(server.isForwarding());
+}
+
+TEST_F(RecursorConfig, forwardAddressConfig) {
+    // Try putting there some address
+    ElementPtr config(Element::fromJSON("{"
+        "\"forward_addresses\": ["
+        "   {"
+        "       \"address\": \"192.0.2.1\","
+        "       \"port\": 53"
+        "   }"
+        "]"
+        "}"));
+    ConstElementPtr result(server.updateConfig(config));
+    EXPECT_EQ(result->toWire(), isc::config::createAnswer()->toWire());
+    EXPECT_TRUE(server.isForwarding());
+    ASSERT_EQ(1, server.getForwardAddresses().size());
+    EXPECT_EQ("192.0.2.1", server.getForwardAddresses()[0].first);
+    EXPECT_EQ(53, server.getForwardAddresses()[0].second);
+
+    // And then remove all addresses
+    config = Element::fromJSON("{"
+        "\"forward_addresses\": null"
+        "}");
+    result = server.updateConfig(config);
+    EXPECT_EQ(result->toWire(), isc::config::createAnswer()->toWire());
+    EXPECT_FALSE(server.isForwarding());
+    EXPECT_EQ(0, server.getForwardAddresses().size());
+}
+
+void RecursorConfig::invalidForwardTest(const string &JOSN) {
+    ElementPtr config(Element::fromJSON(JOSN));
+    EXPECT_FALSE(server.updateConfig(config)->equals(
+        *isc::config::createAnswer())) << "Accepted config " << JOSN << endl;
+}
+
+TEST_F(RecursorConfig, invalidForwardAddresses) {
+    // Try torturing it with some invalid inputs
+    invalidForwardTest("{"
+        "\"forward_addresses\": \"error\""
+        "}");
+    invalidForwardTest("{"
+        "\"forward_addresses\": [{}]"
+        "}");
+    invalidForwardTest("{"
+        "\"forward_addresses\": [{"
+        "   \"port\": 1.5,"
+        "   \"address\": \"192.0.2.1\""
+        "}]}");
+    invalidForwardTest("{"
+        "\"forward_addresses\": [{"
+        "   \"port\": -5,"
+        "   \"address\": \"192.0.2.1\""
+        "}]}");
+    invalidForwardTest("{"
+        "\"forward_addresses\": [{"
+        "   \"port\": 53,"
+        "   \"address\": \"bad_address\""
+        "}]}");
 }
 
 }
