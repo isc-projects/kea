@@ -341,10 +341,18 @@ protected:
                                     NULL, NULL);
     }
 
+    // Set up an IO Service queue without any addresses
+    void setIOService() {
+        delete io_service_;
+        io_service_ = NULL;
+        callback_ = new ASIOCallBack(this);
+        io_service_ = new IOService(callback_, NULL, NULL);
+    }
+
     // Run a simple server test, on either IPv4 or IPv6, and over either
     // UDP or TCP.  Calls the sendUDP() or sendTCP() methods, which will
     // start the IO Service queue.  The UDPServer or TCPServer that was
-    // created by setIOSerice() will receive the test packet and issue a
+    // created by setIOService() will receive the test packet and issue a
     // callback, which enables us to check that the data it received
     // matches what we sent.
     void doTest(const int family, const int protocol) {
@@ -512,6 +520,30 @@ TEST_F(ASIOLinkTest, v4TCPSendSpecific) {
     setIOService(*TEST_IPV4_ADDR);
     doTest(AF_INET, IPPROTO_TCP);
 
+    EXPECT_THROW(sendTCP(AF_INET6), IOError);
+}
+
+TEST_F(ASIOLinkTest, v6AddServer) {
+    setIOService();
+    io_service_->addServer(*TEST_SERVER_PORT, TEST_IPV6_ADDR);
+    doTest(AF_INET6, IPPROTO_TCP);
+
+    EXPECT_THROW(sendTCP(AF_INET), IOError);
+}
+
+TEST_F(ASIOLinkTest, v4AddServer) {
+    setIOService();
+    io_service_->addServer(*TEST_SERVER_PORT, TEST_IPV4_ADDR);
+    doTest(AF_INET, IPPROTO_TCP);
+
+    EXPECT_THROW(sendTCP(AF_INET6), IOError);
+}
+
+TEST_F(ASIOLinkTest, DISABLED_clearServers) {
+    // FIXME: Enable when clearServers actually close the sockets
+    io_service_->clearServers();
+
+    EXPECT_THROW(sendTCP(AF_INET), IOError);
     EXPECT_THROW(sendTCP(AF_INET6), IOError);
 }
 
