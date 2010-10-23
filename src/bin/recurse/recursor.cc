@@ -496,9 +496,9 @@ Recursor::updateConfig(ConstElementPtr config) {
     }
     try {
         // Parse forward_addresses
-        ConstElementPtr forwardAddressesE(config->get("forward_addresses"));
+        ConstElementPtr forwardAddressesE(config->get("forward_addresses/"));
         vector<addr_t> forwardAddresses(parseAddresses(forwardAddressesE));
-        ConstElementPtr listenAddressesE(config->get("listen_addresses"));
+        ConstElementPtr listenAddressesE(config->get("listen_on/"));
         vector<addr_t> listenAddresses(parseAddresses(listenAddressesE));
         // Everything OK, so commit the changes
         // listenAddresses can fail to bind, so try them first
