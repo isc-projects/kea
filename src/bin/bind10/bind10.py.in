@@ -364,8 +364,6 @@ class BoB:
         else:
             dns_prog = 'b10-auth'
         dnsargs = [dns_prog, '-p', str(self.dns_port)]
-        if self.forward:
-            dnsargs += ['-f', str(self.forward)]
         if self.address:
             dnsargs += ['-a', str(self.address)]
         if self.nocache:
