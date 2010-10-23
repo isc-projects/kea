@@ -363,11 +363,14 @@ class BoB:
             dns_prog = 'b10-recurse'
         else:
             dns_prog = 'b10-auth'
-        dnsargs = [dns_prog, '-p', str(self.dns_port)]
-        if self.address:
-            dnsargs += ['-a', str(self.address)]
-        if self.nocache:
-            dnsargs += ['-n']
+        dnsargs = [dns_prog]
+        if not self.recursive:
+            # The recursive uses configuration manager for these
+            dnsargs += ['-p', str(self.dns_port)]
+            if self.address:
+                dnsargs += ['-a', str(self.address)]
+            if self.nocache:
+                dnsargs += ['-n']
         if self.uid:
             dnsargs += ['-u', str(self.uid)]
         if self.verbose:
