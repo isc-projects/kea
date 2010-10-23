@@ -111,6 +111,13 @@ public:
     /// Return if we are in forwarding mode (if not, we are in fully recursive)
     bool isForwarding() const;
 
+    /**
+     * Set and get the addresses we listen on.
+     */
+    void setListenAddresses(const std::vector<std::pair<std::string,
+        uint16_t> >& addresses);
+    std::vector<std::pair<std::string, uint16_t> > getListenAddresses() const;
+
 private:
     RecursorImpl* impl_;
     asiolink::IOService* io_;

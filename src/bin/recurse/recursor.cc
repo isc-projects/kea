@@ -58,6 +58,8 @@ using namespace isc::config;
 using namespace isc::xfr;
 using namespace asiolink;
 
+typedef pair<string, uint16_t> addr_t;
+
 class RecursorImpl {
 private:
     // prohibit copy
@@ -83,15 +85,15 @@ public:
         rec_query_ = NULL;
     }
 
-    void setForwardAddresses(const vector<pair<string, uint16_t> >& upstream,
+    void setForwardAddresses(const vector<addr_t>& upstream,
         IOService* ios)
     {
         queryShutdown();
         upstream_ = upstream;
         if (ios) {
             if (upstream_.empty()) {
-                cerr << "[b10-recurse] Asked to do full recursive." << endl <<
-                    ", but not implemented yet. I'll do nothing." << endl;
+                cerr << "[b10-recurse] Asked to do full recursive," << endl <<
+                    "but not implemented yet. I'll do nothing." << endl;
             } else {
                 querySetup(*ios);
             }
@@ -109,7 +111,7 @@ public:
     ModuleCCSession* config_session_;
     bool verbose_mode_;
     /// Addresses of the forward nameserver
-    vector<pair<string, uint16_t> > upstream_;
+    vector<addr_t> upstream_, listen_;
 
 private:
 
@@ -447,6 +449,46 @@ RecursorImpl::processNormalQuery(const Question& question, MessagePtr message,
     rec_query_->sendQuery(question, buffer, server);
 }
 
+namespace {
+
+vector<addr_t>
+parseAddresses(ConstElementPtr addresses) {
+    vector<addr_t> result;
+    if (addresses) {
+        if (addresses->getType() == Element::list) {
+            for (size_t i(0); i < addresses->size(); ++ i) {
+                ConstElementPtr addrPair(addresses->get(i));
+                ConstElementPtr addr(addrPair->get("address"));
+                ConstElementPtr port(addrPair->get("port"));
+                if (!addr || ! port) {
+                    isc_throw(BadValue, "Address must contain both the IP"
+                        "address and port");
+                }
+                try {
+                    IOAddress(addr->stringValue());
+                    if (port->intValue() < 0 ||
+                        port->intValue() > 0xffff) {
+                        isc_throw(BadValue, "Bad port value (" <<
+                            port->intValue() << ")");
+                    }
+                    result.push_back(addr_t(addr->stringValue(),
+                        port->intValue()));
+                }
+                catch (const TypeError &e) { // Better error message
+                    isc_throw(TypeError,
+                        "Address must be a string and port an integer");
+                }
+            }
+        } else if (addresses->getType() != Element::null) {
+            isc_throw(TypeError,
+                "forward_addresses config element must be a list");
+        }
+    }
+    return (result);
+}
+
+}
+
 ConstElementPtr
 Recursor::updateConfig(ConstElementPtr config) {
     if (impl_->verbose_mode_) {
@@ -454,41 +496,17 @@ Recursor::updateConfig(ConstElementPtr config) {
     }
     try {
         // Parse forward_addresses
-        vector<pair<string, uint16_t> > addresses;
-        ConstElementPtr forwardAddresses(config->get("forward_addresses"));
-        if (forwardAddresses) {
-            if (forwardAddresses->getType() == Element::list) {
-                for (size_t i(0); i < forwardAddresses->size(); ++ i) {
-                    ConstElementPtr addrPair(forwardAddresses->get(i));
-                    ConstElementPtr addr(addrPair->get("address"));
-                    ConstElementPtr port(addrPair->get("port"));
-                    if (!addr || ! port) {
-                        isc_throw(BadValue, "Address must contain both the IP"
-                            "address and port");
-                    }
-                    try {
-                        IOAddress(addr->stringValue());
-                        if (port->intValue() < 0 ||
-                            port->intValue() > 0xffff) {
-                            isc_throw(BadValue, "Bad port value (" <<
-                                port->intValue() << ")");
-                        }
-                        addresses.push_back(pair<string, uint16_t>(
-                            addr->stringValue(), port->intValue()));
-                    }
-                    catch (const TypeError &e) { // Better error message
-                        isc_throw(TypeError,
-                            "Address must be a string and port an integer");
-                    }
-                }
-            } else if (forwardAddresses->getType() != Element::null) {
-                isc_throw(TypeError,
-                    "forward_addresses config element must be a list");
-            }
-        }
+        ConstElementPtr forwardAddressesE(config->get("forward_addresses"));
+        vector<addr_t> forwardAddresses(parseAddresses(forwardAddressesE));
+        ConstElementPtr listenAddressesE(config->get("listen_addresses"));
+        vector<addr_t> listenAddresses(parseAddresses(listenAddressesE));
         // Everything OK, so commit the changes
-        if (forwardAddresses) {
-            setForwardAddresses(addresses);
+        // listenAddresses can fail to bind, so try them first
+        if (listenAddressesE) {
+            setListenAddresses(listenAddresses);
+        }
+        if (forwardAddressesE) {
+            setForwardAddresses(forwardAddresses);
         }
         return (isc::config::createAnswer());
     } catch (const isc::Exception& error) {
@@ -500,8 +518,7 @@ Recursor::updateConfig(ConstElementPtr config) {
 }
 
 void
-Recursor::setForwardAddresses(const vector<pair<string, uint16_t> >&
-    addresses)
+Recursor::setForwardAddresses(const vector<addr_t>& addresses)
 {
     impl_->setForwardAddresses(addresses, io_);
 }
@@ -511,6 +528,46 @@ Recursor::isForwarding() const {
     return (!impl_->upstream_.empty());
 }
 
-vector<pair<string, uint16_t> > Recursor::getForwardAddresses() const {
+vector<addr_t>
+Recursor::getForwardAddresses() const {
     return (impl_->upstream_);
+}
+
+namespace {
+
+void
+setAddresses(IOService *service, const vector<addr_t>&
+    addresses)
+{
+    service->clearServers();
+    BOOST_FOREACH(const addr_t &address, addresses) {
+        service->addServer(address.second, address.first);
+    }
+}
+
+}
+
+void
+Recursor::setListenAddresses(const vector<addr_t>&
+    addresses)
+{
+    try {
+        setAddresses(io_, addresses);
+        impl_->listen_ = addresses;
+    }
+    catch (const exception &e) {
+        /*
+         * We couldn't set it. So return it back. If that fails as well,
+         * we have a problem.
+         *
+         * FIXME: What to do in that case? Directly abort?
+         */
+        setAddresses(io_, impl_->listen_);
+        throw e;// Let it fly a little bit further
+    }
+}
+
+vector<addr_t>
+Recursor::getListenAddresses() const {
+    return (impl_->listen_);
 }

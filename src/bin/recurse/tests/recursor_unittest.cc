@@ -332,8 +332,14 @@ TEST_F(RecursorTest, notifyFail) {
 
 class RecursorConfig : public ::testing::Test {
     public:
+        IOService service;
         Recursor server;
-        void invalidForwardTest(const string &JOSN);
+        RecursorConfig() :
+            service(NULL, NULL, NULL)
+        {
+            server.setIOService(service);
+        }
+        void invalidTest(const string &JOSN);
 };
 
 TEST_F(RecursorConfig, forwardAddresses) {
@@ -387,7 +393,7 @@ TEST_F(RecursorConfig, forwardAddressConfig) {
     EXPECT_EQ(0, server.getForwardAddresses().size());
 }
 
-void RecursorConfig::invalidForwardTest(const string &JOSN) {
+void RecursorConfig::invalidTest(const string &JOSN) {
     ElementPtr config(Element::fromJSON(JOSN));
     EXPECT_FALSE(server.updateConfig(config)->equals(
         *isc::config::createAnswer())) << "Accepted config " << JOSN << endl;
@@ -395,24 +401,103 @@ void RecursorConfig::invalidForwardTest(const string &JOSN) {
 
 TEST_F(RecursorConfig, invalidForwardAddresses) {
     // Try torturing it with some invalid inputs
-    invalidForwardTest("{"
+    invalidTest("{"
         "\"forward_addresses\": \"error\""
         "}");
-    invalidForwardTest("{"
+    invalidTest("{"
         "\"forward_addresses\": [{}]"
         "}");
-    invalidForwardTest("{"
+    invalidTest("{"
         "\"forward_addresses\": [{"
         "   \"port\": 1.5,"
         "   \"address\": \"192.0.2.1\""
         "}]}");
-    invalidForwardTest("{"
+    invalidTest("{"
         "\"forward_addresses\": [{"
         "   \"port\": -5,"
         "   \"address\": \"192.0.2.1\""
         "}]}");
-    invalidForwardTest("{"
+    invalidTest("{"
         "\"forward_addresses\": [{"
+        "   \"port\": 53,"
+        "   \"address\": \"bad_address\""
+        "}]}");
+}
+
+TEST_F(RecursorConfig, listenAddresses) {
+    // Default value should be fully recursive
+    EXPECT_TRUE(server.getListenAddresses().empty());
+
+    // Try putting there some addresses
+    vector<pair<string, uint16_t> > addresses;
+    addresses.push_back(pair<string, uint16_t>("127.0.0.1", 5300));
+    addresses.push_back(pair<string, uint16_t>("::1", 5300));
+    server.setListenAddresses(addresses);
+    EXPECT_EQ(2, server.getListenAddresses().size());
+    EXPECT_EQ("::1", server.getListenAddresses()[1].first);
+
+    // Is it independent from what we do with the vector later?
+    addresses.clear();
+    EXPECT_EQ(2, server.getListenAddresses().size());
+
+    // Did it return to fully recursive?
+    server.setListenAddresses(addresses);
+    EXPECT_TRUE(server.getListenAddresses().empty());
+}
+
+TEST_F(RecursorConfig, listenAddressConfig) {
+    // Try putting there some address
+    ElementPtr config(Element::fromJSON("{"
+        "\"listen_addresses\": ["
+        "   {"
+        "       \"address\": \"127.0.0.1\","
+        "       \"port\": 5300"
+        "   }"
+        "]"
+        "}"));
+    ConstElementPtr result(server.updateConfig(config));
+    EXPECT_EQ(result->toWire(), isc::config::createAnswer()->toWire());
+    ASSERT_EQ(1, server.getListenAddresses().size());
+    EXPECT_EQ("127.0.0.1", server.getListenAddresses()[0].first);
+    EXPECT_EQ(5300, server.getListenAddresses()[0].second);
+
+    // As this is example address, the machine should not have it on
+    // any interface
+    config = Element::fromJSON("{"
+        "\"listen_addresses\": ["
+        "   {"
+        "       \"address\": \"192.0.2.0\","
+        "       \"port\": 5300"
+        "   }"
+        "]"
+        "}");
+    result = server.updateConfig(config);
+    EXPECT_FALSE(result->equals(*isc::config::createAnswer()));
+    ASSERT_EQ(1, server.getListenAddresses().size());
+    EXPECT_EQ("127.0.0.1", server.getListenAddresses()[0].first);
+    EXPECT_EQ(5300, server.getListenAddresses()[0].second);
+}
+
+TEST_F(RecursorConfig, invalidListenAddresses) {
+    // Try torturing it with some invalid inputs
+    invalidTest("{"
+        "\"listen_addresses\": \"error\""
+        "}");
+    invalidTest("{"
+        "\"listen_addresses\": [{}]"
+        "}");
+    invalidTest("{"
+        "\"listen_addresses\": [{"
+        "   \"port\": 1.5,"
+        "   \"address\": \"192.0.2.1\""
+        "}]}");
+    invalidTest("{"
+        "\"listen_addresses\": [{"
+        "   \"port\": -5,"
+        "   \"address\": \"192.0.2.1\""
+        "}]}");
+    invalidTest("{"
+        "\"listen_addresses\": [{"
         "   \"port\": 53,"
         "   \"address\": \"bad_address\""
         "}]}");

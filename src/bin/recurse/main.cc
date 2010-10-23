@@ -106,30 +106,10 @@ usage() {
 int
 main(int argc, char* argv[]) {
     int ch;
-    const char* port = DNSPORT;
-    const char* address = NULL;
     const char* uid = NULL;
-    bool use_ipv4 = true, use_ipv6 = true;
 
-    while ((ch = getopt(argc, argv, "46a:p:u:v")) != -1) {
+    while ((ch = getopt(argc, argv, "u:v")) != -1) {
         switch (ch) {
-        case '4':
-            // Note that -4 means "ipv4 only", we need to set "use_ipv6" here,
-            // not "use_ipv4".  We could use something like "ipv4_only", but
-            // we found the negatively named variable could confuse the code
-            // logic.
-            use_ipv6 = false;
-            break;
-        case '6':
-            // The same note as -4 applies.
-            use_ipv4 = false;
-            break;
-        case 'a':
-            address = optarg;
-            break;
-        case 'p':
-            port = optarg;
-            break;
         case 'u':
             uid = optarg;
             break;
@@ -143,18 +123,6 @@ main(int argc, char* argv[]) {
     }
 
     if (argc - optind > 0) {
-        usage();
-    }
-
-    if (!use_ipv4 && !use_ipv6) {
-        cerr << "[b10-auth] Error: Cannot specify both -4 and -6 "
-             << "at the same time" << endl;
-        usage();
-    }
-
-    if ((!use_ipv4 || !use_ipv6) && address != NULL) {
-        cerr << "[b10-auth] Error: Cannot specify -4 or -6 "
-             << "at the same time as -a" << endl;
         usage();
     }
 
@@ -180,19 +148,7 @@ main(int argc, char* argv[]) {
         DNSLookup* lookup = recursor->getDNSLookupProvider();
         DNSAnswer* answer = recursor->getDNSAnswerProvider();
 
-        if (address != NULL) {
-            // XXX: we can only specify at most one explicit address.
-            // This also means the server cannot run in the dual address
-            // family mode if explicit addresses need to be specified.
-            // We don't bother to fix this problem, however.  The -a option
-            // is a short term workaround until we support dynamic listening
-            // port allocation.
-            io_service = new IOService(*port, *address,
-                                       checkin, lookup, answer);
-        } else {
-            io_service = new IOService(*port, use_ipv4, use_ipv6,
-                                       checkin, lookup, answer);
-        }
+        io_service = new IOService(checkin, lookup, answer);
         recursor->setIOService(*io_service);
         cout << "[b10-recurse] IOService created." << endl;
 
@@ -204,6 +160,7 @@ main(int argc, char* argv[]) {
                                              my_command_handler);
         cout << "[b10-recurse] Configuration channel established." << endl;
 
+        // FIXME: This does not belong here, but inside Boss
         if (uid != NULL) {
             changeUser(uid);
         }

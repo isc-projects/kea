@@ -37,7 +37,11 @@
           {
             "address": "::1",
             "port": 5300
-          }
+          },
+          {
+            "address": "127.0.0.1",
+            "port": 5300
+          },
         ],
         "list_item_spec": {
           "item_name": "address",
