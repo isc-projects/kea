@@ -16,6 +16,8 @@
 
 #include <config.h>
 
+#include <cstdlib> // For random(), temporary until better forwarding is done
+
 #include <unistd.h>             // for some IPC/network system calls
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -170,9 +172,9 @@ IOService::get_io_service() {
     return (impl_->io_service_);
 }
 
-RecursiveQuery::RecursiveQuery(IOService& io_service, const char& forward,
-                               uint16_t port) :
-    io_service_(io_service), ns_addr_(&forward), port_(port) 
+RecursiveQuery::RecursiveQuery(IOService& io_service,
+        const std::vector<std::pair<std::string, uint16_t> >& upstream) :
+    io_service_(io_service), upstream_(upstream)
 {}
 
 void
@@ -185,7 +187,10 @@ RecursiveQuery::sendQuery(const Question& question, OutputBufferPtr buffer,
     // UDP and then fall back to TCP on failure, but for the moment
     // we're only going to handle UDP.
     asio::io_service& io = io_service_.get_io_service();
-    UDPQuery q(io, question, ns_addr_, port_, buffer, server);
+    // TODO: Better way to choose the server
+    int serverIndex(random() % upstream_.size());
+    UDPQuery q(io, question, upstream_[serverIndex].first,
+        upstream_[serverIndex].second, buffer, server);
     io.post(q);
 }
 

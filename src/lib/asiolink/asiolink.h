@@ -25,6 +25,8 @@
 
 #include <functional>
 #include <string>
+#include <vector>
+#include <utility>
 
 #include <dns/buffer.h>
 #include <dns/message.h>
@@ -445,10 +447,11 @@ public:
     /// \brief Constructor for use when acting as a forwarder
     ///
     /// This is currently the only way to construct \c RecursiveQuery
-    /// object.  The address of the forward nameserver is specified,
-    /// and all upstream queries will be sent to that one address.
-    RecursiveQuery(IOService& io_service, const char& forward,
-                   uint16_t port = 53);
+    /// object.  The addresses of the forward nameservers is specified,
+    /// and every upstream query will be sent to one random address.
+    RecursiveQuery(IOService& io_service,
+                   const std::vector<std::pair<std::string, uint16_t> >&
+                   upstream);
     //@}
 
     /// \brief Initiates an upstream query in the \c RecursiveQuery object.
@@ -466,8 +469,7 @@ public:
                    DNSServer* server);
 private:
     IOService& io_service_;
-    IOAddress ns_addr_;
-    uint16_t port_;
+    std::vector<std::pair<std::string, uint16_t> > upstream_;
 };
 
 }      // asiolink
