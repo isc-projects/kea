@@ -528,16 +528,25 @@ TEST_F(ASIOLinkTest, v4TCPOnly) {
     EXPECT_THROW(sendTCP(AF_INET6), IOError);
 }
 
+vector<pair<string, uint16_t> >
+singleAddress(const string &address, uint16_t port) {
+    vector<pair<string, uint16_t> > result;
+    result.push_back(pair<string, uint16_t>(address, port));
+    return (result);
+}
+
 TEST_F(ASIOLinkTest, recursiveSetupV4) {
     setIOService(true, false);
     uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
-    EXPECT_NO_THROW(RecursiveQuery(*io_service_, *TEST_IPV4_ADDR, port));
+    EXPECT_NO_THROW(RecursiveQuery(*io_service_, singleAddress(TEST_IPV6_ADDR,
+        port)));
 }
 
 TEST_F(ASIOLinkTest, recursiveSetupV6) {
     setIOService(false, true);
     uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
-    EXPECT_NO_THROW(RecursiveQuery(*io_service_, *TEST_IPV6_ADDR, port));
+    EXPECT_NO_THROW(RecursiveQuery(*io_service_, singleAddress(TEST_IPV6_ADDR,
+        port)));
 }
 
 // XXX:
@@ -555,7 +564,7 @@ TEST_F(ASIOLinkTest, recursiveSend) {
     asio::ip::address addr = asio::ip::address::from_string(TEST_IPV4_ADDR);
 
     MockServer server(io, addr, port, NULL, NULL, NULL);
-    RecursiveQuery rq(*io_service_, *TEST_IPV4_ADDR, port);
+    RecursiveQuery rq(*io_service_, singleAddress(TEST_IPV4_ADDR, port));
 
     Question q(Name("example.com"), RRClass::IN(), RRType::TXT());
     OutputBufferPtr buffer(new OutputBuffer(0));
