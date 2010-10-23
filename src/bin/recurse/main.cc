@@ -108,11 +108,10 @@ main(int argc, char* argv[]) {
     int ch;
     const char* port = DNSPORT;
     const char* address = NULL;
-    const char* forward = NULL;
     const char* uid = NULL;
     bool use_ipv4 = true, use_ipv6 = true;
 
-    while ((ch = getopt(argc, argv, "46a:f:p:u:v")) != -1) {
+    while ((ch = getopt(argc, argv, "46a:p:u:v")) != -1) {
         switch (ch) {
         case '4':
             // Note that -4 means "ipv4 only", we need to set "use_ipv6" here,
@@ -127,9 +126,6 @@ main(int argc, char* argv[]) {
             break;
         case 'a':
             address = optarg;
-            break;
-        case 'f':
-            forward = optarg;
             break;
         case 'p':
             port = optarg;
@@ -162,11 +158,6 @@ main(int argc, char* argv[]) {
         usage();
     }
 
-    if (forward == NULL) {
-        cerr << "[b10-recurse] No forward name server specified" << endl;
-        usage();
-    }
-
     int ret = 0;
 
     // XXX: we should eventually pass io_service here.
@@ -181,7 +172,7 @@ main(int argc, char* argv[]) {
             specfile = string(RECURSE_SPECFILE_LOCATION);
         }
 
-        recursor = new Recursor(*forward);
+        recursor = new Recursor();
         recursor->setVerbose(verbose_mode);
         cout << "[b10-recurse] Server created." << endl;
 
@@ -218,7 +209,7 @@ main(int argc, char* argv[]) {
         }
 
         recursor->setConfigSession(config_session);
-        recursor->updateConfig(ElementPtr());
+        recursor->updateConfig(config_session->getFullConfig());
 
         cout << "[b10-recurse] Server started." << endl;
         io_service->run();
