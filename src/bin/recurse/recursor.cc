@@ -24,6 +24,7 @@
 #include <vector>
 
 #include <asiolink/asiolink.h>
+#include <asiolink/ioaddress.h>
 
 #include <boost/foreach.hpp>
 
@@ -63,9 +64,10 @@ private:
     RecursorImpl(const RecursorImpl& source);
     RecursorImpl& operator=(const RecursorImpl& source);
 public:
-    RecursorImpl(const char& forward) :
-        config_session_(NULL), verbose_mode_(false),
-        forward_(forward), rec_query_()
+    RecursorImpl() :
+        config_session_(NULL),
+        verbose_mode_(false),
+        rec_query_()
     {}
 
     ~RecursorImpl() {
@@ -73,12 +75,26 @@ public:
     }
 
     void querySetup(IOService& ios) {
-        rec_query_ = new RecursiveQuery(ios, forward_);
+        rec_query_ = new RecursiveQuery(ios, upstream_);
     }
 
     void queryShutdown() {
-        if (rec_query_) {
-            delete rec_query_;
+        delete rec_query_;
+        rec_query_ = NULL;
+    }
+
+    void setForwardAddresses(const vector<pair<string, uint16_t> >& upstream,
+        IOService* ios)
+    {
+        queryShutdown();
+        upstream_ = upstream;
+        if (ios) {
+            if (upstream_.empty()) {
+                cerr << "[b10-recurse] Asked to do full recursive." << endl <<
+                    ", but not implemented yet. I'll do nothing." << endl;
+            } else {
+                querySetup(*ios);
+            }
         }
     }
 
@@ -92,10 +108,10 @@ public:
     /// These members are public because Recursor accesses them directly.
     ModuleCCSession* config_session_;
     bool verbose_mode_;
+    /// Addresses of the forward nameserver
+    vector<pair<string, uint16_t> > upstream_;
 
 private:
-    /// Address of the forward nameserver
-    const char& forward_;
 
     /// Object to handle upstream queries
     RecursiveQuery* rec_query_;
@@ -281,8 +297,8 @@ private:
     Recursor* server_;
 };
 
-Recursor::Recursor(const char& forward) :
-    impl_(new RecursorImpl(forward)),
+Recursor::Recursor() :
+    impl_(new RecursorImpl()),
     checkin_(new ConfigCheck(this)),
     dns_lookup_(new MessageLookup(this)),
     dns_answer_(new MessageAnswer(this))
@@ -432,10 +448,48 @@ RecursorImpl::processNormalQuery(const Question& question, MessagePtr message,
 }
 
 ConstElementPtr
-Recursor::updateConfig(ConstElementPtr new_config UNUSED_PARAM) {
+Recursor::updateConfig(ConstElementPtr config) {
+    if (impl_->verbose_mode_) {
+        cout << "[b10-recurse] Update with config: " << config->str() << endl;
+    }
     try {
-        // We will do configuration updates here.  None are presently
-        // defined, so we just return an empty answer.
+        // Parse forward_addresses
+        vector<pair<string, uint16_t> > addresses;
+        ConstElementPtr forwardAddresses(config->get("forward_addresses"));
+        if (forwardAddresses) {
+            if (forwardAddresses->getType() == Element::list) {
+                for (size_t i(0); i < forwardAddresses->size(); ++ i) {
+                    ConstElementPtr addrPair(forwardAddresses->get(i));
+                    ConstElementPtr addr(addrPair->get("address"));
+                    ConstElementPtr port(addrPair->get("port"));
+                    if (!addr || ! port) {
+                        isc_throw(BadValue, "Address must contain both the IP"
+                            "address and port");
+                    }
+                    try {
+                        IOAddress(addr->stringValue());
+                        if (port->intValue() < 0 ||
+                            port->intValue() > 0xffff) {
+                            isc_throw(BadValue, "Bad port value (" <<
+                                port->intValue() << ")");
+                        }
+                        addresses.push_back(pair<string, uint16_t>(
+                            addr->stringValue(), port->intValue()));
+                    }
+                    catch (const TypeError &e) { // Better error message
+                        isc_throw(TypeError,
+                            "Address must be a string and port an integer");
+                    }
+                }
+            } else if (forwardAddresses->getType() != Element::null) {
+                isc_throw(TypeError,
+                    "forward_addresses config element must be a list");
+            }
+        }
+        // Everything OK, so commit the changes
+        if (forwardAddresses) {
+            setForwardAddresses(addresses);
+        }
         return (isc::config::createAnswer());
     } catch (const isc::Exception& error) {
         if (impl_->verbose_mode_) {
@@ -443,4 +497,20 @@ Recursor::updateConfig(ConstElementPtr new_config UNUSED_PARAM) {
         }
         return (isc::config::createAnswer(1, error.what()));
     }
+}
+
+void
+Recursor::setForwardAddresses(const vector<pair<string, uint16_t> >&
+    addresses)
+{
+    impl_->setForwardAddresses(addresses, io_);
+}
+
+bool
+Recursor::isForwarding() const {
+    return (!impl_->upstream_.empty());
+}
+
+vector<pair<string, uint16_t> > Recursor::getForwardAddresses() const {
+    return (impl_->upstream_);
 }
