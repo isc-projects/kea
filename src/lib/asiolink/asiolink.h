@@ -149,9 +149,19 @@ public:
               SimpleCallback* checkin,
               DNSLookup* lookup,
               DNSAnswer* answer);
+    /// \brief The constructor without any servers.
+    ///
+    /// Use addServer() to add some servers.
+    IOService(SimpleCallback *checkin, DNSLookup* lookup, DNSAnswer *answer);
     /// \brief The destructor.
     ~IOService();
     //@}
+
+    /// \brief Add another server to the service
+    void addServer(uint16_t port, const std::string &address);
+    void addServer(const char &port, const std::string &address);
+    /// \brief Remove all servers from the service
+    void clearServers();
 
     /// \brief Start the underlying event loop.
     ///

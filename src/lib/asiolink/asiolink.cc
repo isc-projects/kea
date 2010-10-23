@@ -22,6 +22,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+#include <vector>
 #include <asio.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/bind.hpp>
@@ -54,10 +55,50 @@ public:
 
     typedef boost::shared_ptr<UDPServer> UDPServerPtr;
     typedef boost::shared_ptr<TCPServer> TCPServerPtr;
-    UDPServerPtr udp4_server_;
-    UDPServerPtr udp6_server_;
-    TCPServerPtr tcp4_server_;
-    TCPServerPtr tcp6_server_;
+    typedef boost::shared_ptr<DNSServer> DNSServerPtr;
+    vector<DNSServerPtr> servers_;
+    SimpleCallback *checkin_;
+    DNSLookup *lookup_;
+    DNSAnswer *answer_;
+
+    void addServer(uint16_t port, const ip::address& address) {
+        try {
+            TCPServerPtr tcpServer(new TCPServer(io_service_, address, port,
+                checkin_, lookup_, answer_));
+            (*tcpServer)();
+            servers_.push_back(tcpServer);
+
+            UDPServerPtr udpServer(new UDPServer(io_service_, address, port,
+                checkin_, lookup_, answer_));
+            (*udpServer)();
+            servers_.push_back(udpServer);
+        }
+        catch (const asio::system_error& err) {
+            // We need to catch and convert any ASIO level exceptions.
+            // This can happen for unavailable address, binding a privilege port
+            // without the privilege, etc.
+            isc_throw(IOError, "Failed to initialize network servers: " <<
+                      err.what());
+        }
+    }
+    void addServer(const char& port, const ip::address& address) {
+        uint16_t portnum;
+        try {
+            // XXX: SunStudio with stlport4 doesn't reject some invalid
+            // representation such as "-1" by lexical_cast<uint16_t>, so
+            // we convert it into a signed integer of a larger size and perform
+            // range check ourselves.
+            const int32_t portnum32 = boost::lexical_cast<int32_t>(&port);
+            if (portnum32 < 0 || portnum32 > 65535) {
+                isc_throw(IOError, "Invalid port number '" << &port);
+            }
+            portnum = portnum32;
+        } catch (const boost::bad_lexical_cast& ex) {
+            isc_throw(IOError, "Invalid port number '" << &port << "': " <<
+                      ex.what());
+        }
+        addServer(portnum, address);
+    }
 };
 
 IOServiceImpl::IOServiceImpl(const char& port,
@@ -66,52 +107,16 @@ IOServiceImpl::IOServiceImpl(const char& port,
                              SimpleCallback* checkin,
                              DNSLookup* lookup,
                              DNSAnswer* answer) :
-    udp4_server_(UDPServerPtr()), udp6_server_(UDPServerPtr()),
-    tcp4_server_(TCPServerPtr()), tcp6_server_(TCPServerPtr())
+    checkin_(checkin),
+    lookup_(lookup),
+    answer_(answer)
 {
-    uint16_t portnum;
-    try {
-        // XXX: SunStudio with stlport4 doesn't reject some invalid
-        // representation such as "-1" by lexical_cast<uint16_t>, so
-        // we convert it into a signed integer of a larger size and perform
-        // range check ourselves.
-        const int32_t portnum32 = boost::lexical_cast<int32_t>(&port);
-        if (portnum32 < 0 || portnum32 > 65535) {
-            isc_throw(IOError, "Invalid port number '" << &port);
-        }
-        portnum = portnum32;
-    } catch (const boost::bad_lexical_cast& ex) {
-        isc_throw(IOError, "Invalid port number '" << &port << "': " <<
-                  ex.what());
-    }
 
-    try {
-        if (v4addr != NULL) {
-            udp4_server_ = UDPServerPtr(new UDPServer(io_service_,
-                                                      *v4addr, portnum,
-                                                      checkin, lookup, answer));
-            (*udp4_server_)();
-            tcp4_server_ = TCPServerPtr(new TCPServer(io_service_,
-                                                      *v4addr, portnum,
-                                                      checkin, lookup, answer));
-            (*tcp4_server_)();
-        }
-        if (v6addr != NULL) {
-            udp6_server_ = UDPServerPtr(new UDPServer(io_service_,
-                                                      *v6addr, portnum,
-                                                      checkin, lookup, answer));
-            (*udp6_server_)();
-            tcp6_server_ = TCPServerPtr(new TCPServer(io_service_,
-                                                      *v6addr, portnum,
-                                                      checkin, lookup, answer));
-            (*tcp6_server_)();
-        }
-    } catch (const asio::system_error& err) {
-        // We need to catch and convert any ASIO level exceptions.
-        // This can happen for unavailable address, binding a privilege port
-        // without the privilege, etc.
-        isc_throw(IOError, "Failed to initialize network servers: " <<
-                  err.what());
+    if (v4addr) {
+        addServer(port, *v4addr);
+    }
+    if (v6addr) {
+        addServer(port, *v6addr);
     }
 }
 
@@ -119,19 +124,9 @@ IOService::IOService(const char& port, const char& address,
                      SimpleCallback* checkin,
                      DNSLookup* lookup,
                      DNSAnswer* answer) :
-    impl_(NULL)
+    impl_(new IOServiceImpl(port, NULL, NULL, checkin, lookup, answer))
 {
-    error_code err;
-    const ip::address addr = ip::address::from_string(&address, err);
-    if (err) {
-        isc_throw(IOError, "Invalid IP address '" << &address << "': "
-                  << err.message());
-    }
-
-    impl_ = new IOServiceImpl(port,
-                              addr.is_v4() ? &addr : NULL,
-                              addr.is_v6() ? &addr : NULL,
-                              checkin, lookup, answer);
+    addServer(port, &address);
 }
 
 IOService::IOService(const char& port,
@@ -148,8 +143,46 @@ IOService::IOService(const char& port,
     impl_ = new IOServiceImpl(port, v4addrp, v6addrp, checkin, lookup, answer);
 }
 
+IOService::IOService(SimpleCallback* checkin, DNSLookup* lookup,
+    DNSAnswer *answer) :
+    impl_(new IOServiceImpl(*"", NULL, NULL, checkin, lookup, answer))
+{
+}
+
 IOService::~IOService() {
     delete impl_;
+}
+
+namespace {
+
+ip::address
+convertAddr(const string& address) {
+    error_code err;
+    ip::address addr = ip::address::from_string(address, err);
+    if (err) {
+        isc_throw(IOError, "Invalid IP address '" << &address << "': "
+            << err.message());
+    }
+    return addr;
+}
+
+}
+
+void
+IOService::addServer(const char& port, const string& address) {
+    impl_->addServer(port, convertAddr(address));
+}
+
+void
+IOService::addServer(uint16_t port, const string &address) {
+    impl_->addServer(port, convertAddr(address));
+}
+
+void
+IOService::clearServers() {
+    // FIXME: This does not work, it does not close the socket.
+    // How is it done?
+    impl_->servers_.clear();
 }
 
 void
