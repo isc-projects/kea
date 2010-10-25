@@ -171,7 +171,7 @@ SessionImpl::readData(void* data, size_t datalen) {
         asio::async_read(socket_, asio::buffer(data, datalen),
                          boost::bind(&setResult, &read_result, _1));
         asio::deadline_timer timer(socket_.io_service());
-    
+
         if (getTimeout() != 0) {
             timer.expires_from_now(boost::posix_time::milliseconds(getTimeout()));
             timer.async_wait(boost::bind(&setResult, &timer_result, _1));
@@ -182,7 +182,12 @@ SessionImpl::readData(void* data, size_t datalen) {
         // When one of them has a result, cancel the other, and wait
         // until the cancel is processed before we continue
         while (!read_result && !timer_result) {
-            socket_.io_service().run_one();
+            if (!socket_.io_service().run_one()) {
+                // We run out of work last time we did readData
+                // and there seems to be no way to test if it is running.
+                // We know when it returns 0, it is stopped.
+                socket_.io_service().reset();
+            }
 
             // Don't cancel the timer if we haven't set it
             if (read_result && getTimeout() != 0) {
