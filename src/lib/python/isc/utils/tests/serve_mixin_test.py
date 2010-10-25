@@ -47,18 +47,15 @@ class TestServeMixIn(unittest.TestCase):
         server = MyServer(('127.0.0.1', 0), MyHandler)
         ip, port = server.server_address
         server_thread = threading.Thread(target=server.serve_forever)
-        server_thread.setDaemon(True)
         server_thread.start()
 
         msg = b'senddata'
         self.assertEqual(msg, send_and_get_reply(ip, port, msg))
         self.assertTrue(server_thread.is_alive())
 
-        # Now shutdown the server
-        server.shutdown()
-        # Sleep a while, make sure the thread has finished.
-        time.sleep(0.1)
-        self.assertFalse(server_thread.is_alive())
+        self.assertFalse(server._is_shut_down.is_set())
+        server.shutdown() # Now shutdown the server
+        self.assertTrue(server._is_shut_down.is_set())
 
 if __name__== "__main__":
     unittest.main()
