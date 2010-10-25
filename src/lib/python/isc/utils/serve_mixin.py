@@ -54,7 +54,7 @@ class ServeMixIn:
     '''
     def __init__(self):
         self.__read_sock, self.__write_sock = socket.socketpair()
-        self.__is_shut_down = threading.Event()
+        self._is_shut_down = threading.Event()
 
     def serve_forever(self, poll_interval=None):
         ''' Overrides the serve_forever([poll_interval]) in class
@@ -73,7 +73,6 @@ class ServeMixIn:
                 if err.args[0] == EINTR:
                     continue
                 else:
-                    sys.stderr.write("Error with select(), %s\n", err)
                     break
             
             if self.__read_sock in r:
@@ -81,7 +80,7 @@ class ServeMixIn:
             else:
                 self._handle_request_noblock()
 
-        self.__is_shut_down.set()
+        self._is_shut_down.set()
 
     def shutdown(self):
         '''Stops the serve_forever loop.
@@ -90,4 +89,4 @@ class ServeMixIn:
         in another thread when serve_forever is running, or it will block.
         '''
         self.__write_sock.send(SOCK_DATA) # make self.__read_sock readable.
-        self.__is_shut_down.wait()  # wait until the serve thread terminate
+        self._is_shut_down.wait()  # wait until the serve thread terminate
