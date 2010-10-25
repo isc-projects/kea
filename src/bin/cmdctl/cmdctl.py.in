@@ -45,7 +45,7 @@ from isc.config import ccsession
 import isc.utils.process
 from optparse import OptionParser, OptionValueError
 from hashlib import sha1
-from isc.utils import serve_mixin
+from isc.utils import socketserver_mixin
 
 try:
     import threading
@@ -441,7 +441,7 @@ class CommandControl():
 
         return (keyfile, certfile, accountsfile)
 
-class SecureHTTPServer(serve_mixin.ServeMixIn,
+class SecureHTTPServer(socketserver_mixin.NoPollMixIn,
                        socketserver.ThreadingMixIn,
                        http.server.HTTPServer):
     '''Make the server address can be reused.'''
@@ -451,7 +451,7 @@ class SecureHTTPServer(serve_mixin.ServeMixIn,
                  CommandControlClass,
                  idle_timeout = 1200, verbose = False):
         '''idle_timeout: the max idle time for login'''
-        serve_mixin.ServeMixIn.__init__(self)
+        socketserver_mixin.NoPollMixIn.__init__(self)
         try:
             http.server.HTTPServer.__init__(self, server_address, RequestHandlerClass)
         except socket.error as err:

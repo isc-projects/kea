@@ -18,7 +18,7 @@ import socket
 import select
 
 SOCK_DATA = b'somedata'
-class ServeMixIn:
+class NoPollMixIn:
     '''This is a mix-in class to override the function serve_forever()
     and shutdown() in class socketserver.BaseServer.
 

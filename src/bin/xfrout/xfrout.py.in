@@ -34,7 +34,7 @@ import socket
 import select
 import errno
 from optparse import OptionParser, OptionValueError
-from isc.utils import serve_mixin
+from isc.utils import socketserver_mixin
 
 try:
     from libxfr_python import *
@@ -291,13 +291,13 @@ class XfroutSession(BaseRequestHandler):
 
         self._send_message_with_last_soa(msg, sock, rrset_soa, message_upper_len)
 
-class UnixSockServer(serve_mixin.ServeMixIn, ThreadingUnixStreamServer):
+class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
     '''The unix domain socket server which accept xfr query sent from auth server.'''
 
     def __init__(self, sock_file, handle_class, shutdown_event, config_data, cc, log):
         self._remove_unused_sock_file(sock_file)
         self._sock_file = sock_file
-        serve_mixin.ServeMixIn.__init__(self)
+        socketserver_mixin.NoPollMixIn.__init__(self)
         ThreadingUnixStreamServer.__init__(self, sock_file, handle_class)
         self._lock = threading.Lock()
         self._transfers_counter = 0
@@ -342,7 +342,7 @@ class UnixSockServer(serve_mixin.ServeMixIn, ThreadingUnixStreamServer):
             return True 
 
     def shutdown(self):
-        super().shutdown() # call the shutdown() of class serve_mixin.ServeMinIn
+        super().shutdown() # call the shutdown() of class socketserver_mixin.NoPollMixIn
         try:
             os.unlink(self._sock_file)
         except Exception as e:

@@ -14,7 +14,7 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 import unittest
-from isc.utils.serve_mixin import ServeMixIn
+from isc.utils.socketserver_mixin import NoPollMixIn
 import socketserver
 import threading
 import socket
@@ -25,12 +25,12 @@ class MyHandler(socketserver.BaseRequestHandler):
         data = self.request.recv(20)
         self.request.send(data)
 
-class MyServer(ServeMixIn, 
+class MyServer(NoPollMixIn, 
                socketserver.ThreadingMixIn,
                socketserver.TCPServer):
 
     def __init__(self, server_addr, handler_class):
-        ServeMixIn.__init__(self)
+        NoPollMixIn.__init__(self)
         socketserver.TCPServer.__init__(self, server_addr, handler_class)
 
 def send_and_get_reply(ip, port, msg):
@@ -41,7 +41,7 @@ def send_and_get_reply(ip, port, msg):
     sock.close()
     return response
 
-class TestServeMixIn(unittest.TestCase):
+class TestNoPollMixIn(unittest.TestCase):
     def test_serve_forever(self):
         # use port 0 to select an arbitrary unused port.
         server = MyServer(('127.0.0.1', 0), MyHandler)
