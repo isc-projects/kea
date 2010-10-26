@@ -181,7 +181,6 @@ main(int argc, char* argv[]) {
         }
 
         recursor = new Recursor(*forward);
-        recursor->setVerbose(isc::log::denabled);
         dlog("Server created.");
 
         SimpleCallback* checkin = recursor->getCheckinProvider();
