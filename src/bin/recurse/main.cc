@@ -47,14 +47,15 @@
 #include <recurse/spec_config.h>
 #include <recurse/recursor.h>
 
+#include <log/dummylog.h>
+
 using namespace std;
 using namespace isc::cc;
 using namespace isc::config;
+using isc::log::dlog;
 using namespace asiolink;
 
 namespace {
-
-static bool verbose_mode = false;
 
 // Default port current 5300 for testing purposes
 static const string PROGRAM = "Recurse";
@@ -102,6 +103,7 @@ usage() {
 
 int
 main(int argc, char* argv[]) {
+    isc::log::dprefix = "b10-recurse";
     int ch;
     const char* port = DNSPORT;
     const char* address = NULL;
@@ -135,7 +137,7 @@ main(int argc, char* argv[]) {
             uid = optarg;
             break;
         case 'v':
-            verbose_mode = true;
+            isc::log::denabled = true;
             break;
         case '?':
         default:
@@ -179,8 +181,8 @@ main(int argc, char* argv[]) {
         }
 
         recursor = new Recursor(*forward);
-        recursor->setVerbose(verbose_mode);
-        cout << "[b10-recurse] Server created." << endl;
+        recursor->setVerbose(isc::log::denabled);
+        dlog("Server created.");
 
         SimpleCallback* checkin = recursor->getCheckinProvider();
         DNSLookup* lookup = recursor->getDNSLookupProvider();
@@ -202,15 +204,15 @@ main(int argc, char* argv[]) {
                                          checkin, lookup, answer);
         }
         recursor->setDNSService(*dns_service);
-        cout << "[b10-recurse] IOService created." << endl;
+        dlog("IOService created.");
 
         cc_session = new Session(io_service.get_io_service());
-        cout << "[b10-recurse] Configuration session channel created." << endl;
+        dlog("Configuration session channel created.");
 
         config_session = new ModuleCCSession(specfile, *cc_session,
                                              my_config_handler,
                                              my_command_handler);
-        cout << "[b10-recurse] Configuration channel established." << endl;
+        dlog("Configuration channel established.");
 
         if (uid != NULL) {
             changeUser(uid);
@@ -219,10 +221,10 @@ main(int argc, char* argv[]) {
         recursor->setConfigSession(config_session);
         recursor->updateConfig(ElementPtr());
 
-        cout << "[b10-recurse] Server started." << endl;
+        dlog("Server started.");
         io_service.run();
     } catch (const std::exception& ex) {
-        cerr << "[b10-recurse] Server failed: " << ex.what() << endl;
+        dlog(string("Server failed: ") + ex.what());
         ret = 1;
     }
 
