@@ -48,11 +48,8 @@
 #include <recurse/recursor.h>
 
 using namespace std;
-using namespace isc::data;
 using namespace isc::cc;
 using namespace isc::config;
-using namespace isc::dns;
-using namespace isc::xfr;
 using namespace asiolink;
 
 namespace {
