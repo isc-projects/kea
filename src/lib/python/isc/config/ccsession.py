@@ -176,13 +176,12 @@ class ModuleCCSession(ConfigData):
         self._session.close()
 
     def check_command(self, nonblock=True):
-        """Check whether there is a command or configuration update
-           on the channel. Call the corresponding callback function if
-           there is. This function does a read on the cc session, and
-           returns nothing. It will respond to any command by either
-           an error or the answer message returned by the callback,
-           unless the latter is None.
-
+        """Check whether there is a command or configuration update on
+           the channel. This function does a read on the cc session, and
+           returns nothing.
+           It calls check_command_without_recvmsg()
+           to parse the received message.
+           
            If nonblock is True, it just checks if there's a command
            and does nothing if there isn't. If nonblock is False, it
            waits until it arrives. It temporarily sets timeout to infinity,
@@ -193,7 +192,13 @@ class ModuleCCSession(ConfigData):
             msg, env = self._session.group_recvmsg(nonblock)
         finally:
             self._session.set_timeout(timeout_orig)
+        self.check_command_without_recvmsg(msg, env)
 
+    def check_command_without_recvmsg(self, msg, env):
+        """Parse the given message to see if there is a command or a
+           configuration update. Calls the corresponding handler
+           functions if present. Responds on the channel if the
+           handler returns a message.""" 
         # should we default to an answer? success-by-default? unhandled error?
         if msg is not None and not 'result' in msg:
             answer = None
@@ -211,7 +216,8 @@ class ModuleCCSession(ConfigData):
                             newc = self._remote_module_configs[module_name].get_local_config()
                             isc.cc.data.merge(newc, new_config)
                             self._remote_module_configs[module_name].set_local_config(newc)
-                            return
+                        # For other modules, we're not supposed to answer
+                        return
 
                     # ok, so apparently this update is for us.
                     errors = []
