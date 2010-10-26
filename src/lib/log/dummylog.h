@@ -28,7 +28,7 @@ extern bool denabled;
  * The prefix is printed in front of every log message in square brackets.
  * The usual convention is to put the name of program here.
  */
-extern std::string dprogram;
+extern std::string dprefix;
 
 /**
  * \short Temporary interface to logging.
