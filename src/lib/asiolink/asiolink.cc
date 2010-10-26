@@ -187,12 +187,21 @@ IOService::clearServers() {
 
 void
 IOService::run() {
-    impl_->io_service_.run();
+    if (!impl_->io_service_.run()) {
+        // We got the io_service in stopped state and it didn't work
+        // Reset it and try again
+        impl_->io_service_.reset();
+        impl_->io_service_.run();
+    }
 }
 
 void
 IOService::run_one() {
-    impl_->io_service_.run_one();
+    if (!impl_->io_service_.run_one()) {
+        // Same as in run() - we got it in stopped state
+        impl_->io_service_.reset();
+        impl_->io_service_.run_one();
+    }
 }
 
 void
