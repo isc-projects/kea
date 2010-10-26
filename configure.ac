@@ -463,6 +463,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/datasrc/Makefile
                  src/lib/datasrc/tests/Makefile
                  src/lib/xfr/Makefile
+                 src/lib/log/Makefile
                ])
 AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/cfgmgr/tests/b10-cfgmgr_test.py
