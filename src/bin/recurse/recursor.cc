@@ -19,7 +19,6 @@
 #include <netinet/in.h>
 
 #include <algorithm>
-#include <cassert>
 #include <iostream>
 #include <vector>
 
@@ -28,8 +27,6 @@
 #include <boost/foreach.hpp>
 
 #include <config/ccsession.h>
-
-#include <cc/data.h>
 
 #include <exceptions/exceptions.h>
 
@@ -42,19 +39,14 @@
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
 
-#include <xfr/xfrout_client.h>
-
 #include <recurse/recursor.h>
 
 using namespace std;
 
 using namespace isc;
-using namespace isc::cc;
 using namespace isc::dns;
-using namespace isc::dns::rdata;
 using namespace isc::data;
 using namespace isc::config;
-using namespace isc::xfr;
 using namespace asiolink;
 
 class RecursorImpl {
