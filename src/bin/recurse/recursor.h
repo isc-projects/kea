@@ -63,14 +63,6 @@ public:
                         isc::dns::OutputBufferPtr buffer,
                         asiolink::DNSServer* server);
 
-    /// \brief Set verbose flag
-    ///
-    /// \param on The new value of the verbose flag
-    void setVerbose(bool on);
-
-    /// \brief Get the current value of the verbose flag
-    bool getVerbose() const;
-
     /// \brief Set and get the config session
     isc::config::ModuleCCSession* getConfigSession() const;
     void setConfigSession(isc::config::ModuleCCSession* config_session);

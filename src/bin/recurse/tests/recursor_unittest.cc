@@ -186,15 +186,6 @@ TEST_F(RecursorTest, unsupportedRequest) {
     }
 }
 
-// Simple API check
-TEST_F(RecursorTest, verbose) {
-    EXPECT_FALSE(server.getVerbose());
-    server.setVerbose(true);
-    EXPECT_TRUE(server.getVerbose());
-    server.setVerbose(false);
-    EXPECT_FALSE(server.getVerbose());
-}
-
 // Multiple questions.  Should result in FORMERR.
 TEST_F(RecursorTest, multiQuestion) {
     createDataFromFile("multiquestion_fromWire");
