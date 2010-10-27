@@ -63,6 +63,8 @@ if advised of the possibility of such damage.
 
 #include "hash.h"
 
+using namespace std;
+
 namespace isc {
 namespace nsas {
 
@@ -118,7 +120,9 @@ Hash::Hash(uint32_t tablesize, uint32_t maxkeylen, bool randomise) :
 }
 
 
-uint32_t Hash::operator()(const char* key, uint32_t keylen, bool ignorecase) {
+uint32_t Hash::operator()(const char* key, uint32_t keylen,
+    bool ignorecase) const
+{
 
     // Calculation as given in BIND-9.
     hash_accum_t partial_sum = 0;

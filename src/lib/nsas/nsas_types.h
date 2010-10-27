@@ -26,7 +26,7 @@
 /// Defines a set of typedefs used within the Network Address Store.
 
 /// \brief Array of nameserver addresses
-typedef std::vector<ip::address>    NasAddress
+typedef std::vector<ip::address>    NsasAddress
 
 
 #endif // __NSAS_TYPES_H

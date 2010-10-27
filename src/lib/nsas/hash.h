@@ -22,8 +22,6 @@
 
 #include "exceptions/exceptions.h"
 
-using namespace std;
-
 namespace isc {
 namespace nsas {
 
@@ -55,11 +53,15 @@ public:
     /// \param maxkeylen Maximum length (in bytes) of a key to be hashed.
     /// calculation will return a value between 0 and N-1.  The default
     /// value of 255 is the maximum size of a DNS name.
-    /// \param randomise If true (the default), the pseudo-random number generator
-    /// is seeded with the current time.  Otherwise it is initialised to a known
-    /// sequence.  This is principally for unit tests, where a random sequence
-    /// could lead to problems in checking results.
+    /// \param randomise If true (the default), the pseudo-random number
+    /// generator is seeded with the current time.  Otherwise it is initialised
+    /// to a known sequence.  This is principally for unit tests, where a random
+    /// sequence could lead to problems in checking results.
     Hash(uint32_t tablesize, uint32_t maxkeylen = 255, bool randomise = true);
+
+    /// \bool Virtual Destructor
+    virtual ~Hash()
+    {}
 
     /// \brief Return Size
     ///
@@ -84,7 +86,8 @@ public:
     /// hash value, false for it to be taken into account.
     ///
     /// \return Hash value, a number between 0 and N-1.
-    virtual uint32_t operator()(const char* key, uint32_t keylen, bool ignorecase = true);
+    virtual uint32_t operator()(const char* key, uint32_t keylen,
+        bool ignorecase = true) const;
 
     /// \brief Map Lower Case to Upper Case
     ///
@@ -94,7 +97,7 @@ public:
     /// \param inchar Input character
     ///
     /// \return Mapped character
-    unsigned char mapLower(unsigned char inchar) {
+    virtual unsigned char mapLower(unsigned char inchar) const {
         return casemap_[inchar];
     }
 
@@ -111,8 +114,8 @@ private:
 
     uint32_t        tablesize_;     ///< Size of the hash table
     uint32_t        maxkeylen_;     ///< Maximum key length
-    vector<unsigned char> casemap_; ///< Case mapping table
-    vector<hash_random_t> randvec_; ///< Vector of random numbers
+    std::vector<unsigned char> casemap_; ///< Case mapping table
+    std::vector<hash_random_t> randvec_; ///< Vector of random numbers
 
     static const uint32_t prime32_ = 0xfffffffb;    ///< 2^32 - 5
                                     ///< Specifies range of hash output

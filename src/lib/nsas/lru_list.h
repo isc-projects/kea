@@ -105,6 +105,10 @@ public:
         max_size_(max_size), count_(0), expired_(expired)
     {}
 
+    /// \brief Virtual Destructor
+    virtual ~LruList()
+    {}
+
     /// \brief Add Element
     ///
     /// Add a new element to the end of the list.
@@ -137,7 +141,7 @@ public:
     /// some time if the list is big.
     ///
     /// \return Number of elements in the list
-    virtual uint32_t size() {
+    virtual uint32_t size() const {
 
         // Don't bother to lock the mutex.  If an update is in progress, we
         // receive either the value just before the update or just after it.
@@ -149,7 +153,7 @@ public:
     /// \brief Return Maximum Size
     ///
     /// \return Maximum size of the list
-    virtual uint32_t getMaxSize() {
+    virtual uint32_t getMaxSize() const {
         return max_size_;
     }
 

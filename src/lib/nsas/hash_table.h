@@ -29,7 +29,6 @@
 #include "hash.h"
 
 // Maximum key length if the maximum size of a DNS name
-#define HASHTABLE_SIZE 1009
 #define MAX_KEY_LENGTH 255
 
 using namespace std;

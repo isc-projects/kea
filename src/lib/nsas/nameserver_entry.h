@@ -26,9 +26,6 @@
 #include "exceptions/exceptions.h"
 #include "rrset.h"
 
-using namespace std;
-using namespace isc::dns;
-
 namespace isc {
 namespace nsas {
 
@@ -82,7 +79,7 @@ public:
     typedef std::vector<AddressEntry>   AddressVector;
     typedef AddressVector::iterator     AddressVectorIterator;
 
-    /// Constructor where no A records are supplied.
+    /// \brief Constructor where no A records are supplied.
     ///
     /// \param name Name of the nameserver,
     /// \param classCode class of the nameserver
@@ -102,7 +99,12 @@ public:
     /// possible optimisation if the caller has the current time (it saves
     /// the overhead of a call to time()).  The default value of 0 requests
     /// the constructor to get its own copy of the current time.
-    NameserverEntry(AbstractRRset* v4Set, AbstractRRset* v6Set, time_t curtime = 0);
+    NameserverEntry(const isc::dns::AbstractRRset* v4Set,
+        const isc::dns::AbstractRRset* v6Set, time_t curtime = 0);
+
+    /// \brief Virtual Destructor
+    virtual ~NameserverEntry()
+    {}
 
     /// \brief Return Address
     ///
@@ -134,7 +136,7 @@ public:
     virtual void setAddressUnreachable(const IOAddress& address);
 
     /// \return Owner Name of RRset
-    virtual string getName() const {
+    virtual std::string getName() const {
         return name_;
     }
 
@@ -162,15 +164,16 @@ public:
     /// criteria is met.
     class AddressSelection : public std::binary_function<short, AddressEntry, bool> {
     public:
-        result_type operator()(short family, const AddressEntry& entry) const {
-            bool result = ((family != 0) && (entry.getAddress().getFamily() != family));
-            return result;
+        bool operator()(short family, const AddressEntry& entry) const {
+            bool match = (entry.getAddress().getFamily() == family) ||
+                (family == 0);
+            return (! match);
         }
     };
 
 private:
     boost::mutex    mutex_;             ///< Mutex protecting this object
-    string          name_;              ///< Canonical name of the nameserver
+    std::string     name_;              ///< Canonical name of the nameserver
     uint16_t        classCode_;         ///< Class of the nameserver
     std::vector<AddressEntry> address_; ///< Set of V4/V6 addresses
     time_t          expiration_;        ///< Summary expiration time
