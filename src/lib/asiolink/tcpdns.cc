@@ -73,8 +73,6 @@ TCPServer::operator()(error_code ec, size_t length) {
     /// permitted.  Certain variables used below can be declared here.
     boost::array<const_buffer,2> bufs;
     OutputBuffer* lenbuf;
-    IOEndpoint* peer;
-    IOSocket* iosock;
 
     CORO_REENTER (this) {
         do {
@@ -96,7 +94,7 @@ TCPServer::operator()(error_code ec, size_t length) {
 
         /// Instantiate the data buffer that will be used by the
         /// asynchronous read call.
-        data_ = boost::shared_ptr<char>(new char[MAX_LENGTH]);
+        data_.reset(new char[MAX_LENGTH]);
 
         /// Read the message, in two parts.  First, the message length:
         CORO_YIELD async_read(*socket_, asio::buffer(data_.get(),
@@ -122,9 +120,9 @@ TCPServer::operator()(error_code ec, size_t length) {
         // (XXX: It would be good to write a factory function
         // that would quickly generate an IOMessage object without
         // all these calls to "new".)
-        peer = new TCPEndpoint(socket_->remote_endpoint());
-        iosock = new TCPSocket(*socket_);
-        io_message_.reset(new IOMessage(data_.get(), length, *iosock, *peer));
+        peer_.reset(new TCPEndpoint(socket_->remote_endpoint()));
+        iosock_.reset(new TCPSocket(*socket_));
+        io_message_.reset(new IOMessage(data_.get(), length, *iosock_, *peer_));
         bytes_ = length;
 
         // Perform any necessary operations prior to processing the incoming

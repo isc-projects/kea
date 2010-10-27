@@ -173,6 +173,9 @@ private:
     const SimpleCallback* checkin_callback_;
     const DNSLookup* lookup_callback_;
     const DNSAnswer* answer_callback_;
+
+    boost::shared_ptr<IOEndpoint> peer_;
+    boost::shared_ptr<IOSocket> iosock_;
 };
 
 //
