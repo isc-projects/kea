@@ -169,7 +169,6 @@ main(int argc, char* argv[]) {
 
     int ret = 0;
 
-    // XXX: we should eventually pass io_service here.
     Session* cc_session = NULL;
     ModuleCCSession* config_session = NULL;
     try {
@@ -224,6 +223,7 @@ main(int argc, char* argv[]) {
 
         cout << "[b10-recurse] Server started." << endl;
         io_service.run();
+        delete dns_service;
     } catch (const std::exception& ex) {
         cerr << "[b10-recurse] Server failed: " << ex.what() << endl;
         ret = 1;
