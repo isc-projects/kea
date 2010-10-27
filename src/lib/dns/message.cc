@@ -715,8 +715,7 @@ Message::clear(Mode mode) {
 }
 
 void
-Message::makeResponse()
-{
+Message::makeResponse() {
     if (impl_->mode_ != Message::PARSE) {
         isc_throw(InvalidMessageOperation,
                   "makeResponse() is performed in non-parse mode");

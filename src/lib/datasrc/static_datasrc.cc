@@ -110,14 +110,12 @@ StaticDataSrcImpl::StaticDataSrcImpl() :
                                "0 28800 7200 604800 86400"));
 }
 
-StaticDataSrc::StaticDataSrc()
-{
+StaticDataSrc::StaticDataSrc() {
     setClass(RRClass::CH());
     impl_ = new StaticDataSrcImpl;
 }
 
-StaticDataSrc::~StaticDataSrc()
-{
+StaticDataSrc::~StaticDataSrc() {
     delete impl_;
 }
 

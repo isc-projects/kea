@@ -3,7 +3,7 @@ SUBDIRS = testdata .
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
 AM_CPPFLAGS += -DTEST_DATA_SRCDIR=\"$(srcdir)/testdata\"
-AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(top_builddir)/src/lib/dns/tests/testdata\"
+AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/lib/dns/tests/testdata\"
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 if USE_STATIC_LINK
