@@ -137,6 +137,11 @@ class testSession(unittest.TestCase):
         sess.close()
         self.assertRaises(SessionError, sess.sendmsg, {}, {"hello": "a"})
 
+    def test_env_too_large(self):
+        sess = MySession()
+        largeenv = { "a": "b"*65535 }
+        self.assertRaises(ProtocolError, sess.sendmsg, largeenv, {"hello": "a"})
+
     def test_session_sendmsg(self):
         sess = MySession()
         sess.sendmsg({}, {"hello": "a"})
