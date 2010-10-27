@@ -31,10 +31,8 @@ def remove_identical(a, b):
     to_remove = []
     if type(a) != dict or type(b) != dict:
         raise DataTypeError("Not a dict in remove_identical()")
-    for ka in a.keys():
-        if ka in b and a[ka] == b[ka]:
-            to_remove.append(ka)
-    for id in to_remove:
+    duplicate_keys = [key for key in a.keys() if key in b and a[key] == b[key]]
+    for id in duplicate_keys:
         del(a[id])
 
 def merge(orig, new):
