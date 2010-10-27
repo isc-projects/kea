@@ -2,7 +2,7 @@
 	Add one mixin class to override the naive serve_forever() provided
 	in python library socketserver. Instead of polling for shutdwon
 	every poll_interval seconds, one socketpair is used to wake up
-	the waiting server.(Trac #352, svn TBD)
+	the waiting server.(Trac #352, svn r3366)
 
   111.	[bug]*   zhanglikun, Michal Vaner
 	Make sure process xfrin/xfrout/zonemgr/cmdctl can be stoped
