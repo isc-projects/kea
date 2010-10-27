@@ -592,6 +592,8 @@ Package:
   Name:          $PACKAGE_NAME
   Version:       $PACKAGE_VERSION
 
+C++ Compiler:    $CXX
+
 Flags:
   DEFS:          $DEFS
   CPPFLAGS:      $CPPFLAGS
