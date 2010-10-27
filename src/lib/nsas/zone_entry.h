@@ -17,12 +17,10 @@
 #ifndef __ZONE_ENTRY_H
 #define __ZONE_ENTRY_H
 
-
 #include <string>
+#include <vector>
 #include <boost/thread.h>
 #include <boost/shared_ptr.h>
-
-using namespace std;
 
 class NameserverEntry;
 
@@ -42,7 +40,7 @@ public:
     ///
     /// Creates a zone entry object with an RRset representing the nameservers,
     /// plus possibly additional RRsets holding address information.
-    ZoneEntry(AbstractRRset* nsrrset, vector<AbstractRRSet*> additional);
+    ZoneEntry(AbstractRRset* nsrrset, const std::vector<AbstractRRSet*>& additional);
 
     /// \brief Lookup Address
     ///
@@ -54,13 +52,10 @@ public:
 
 private:
     boost::mutex    mutex_;     ///< Mutex protecting this zone entry
-    string          name_;      ///< Canonical zone name
-    short           class_;     ///< Class code
-    vector<boost::shared_ptr<NameserverEntry> > nameserver_; ///< Nameservers
+    std::string     name_;      ///< Canonical zone name
+    short           classCode_; ///< Class code
+    std::vector<boost::shared_ptr<NameserverEntry> > nameservers_; ///< Nameservers
     time_t          expiry_;    ///< Expiry time of this entry
 };
  
-
-
-
 #endif // __ZONE_ENTRY_H

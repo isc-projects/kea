@@ -33,6 +33,8 @@
 #include "nameserver_entry.h"
 
 using namespace isc::nsas;
+using namespace isc::dns;
+using namespace std;
 
 namespace isc {
 namespace nsas {
@@ -40,8 +42,8 @@ namespace nsas {
 
 // Constructor, initialized with the list of addresses associated with this
 // nameserver.
-NameserverEntry::NameserverEntry(AbstractRRset* v4Set, AbstractRRset* v6Set,
-    time_t curtime) : expiration_(0)
+NameserverEntry::NameserverEntry(const AbstractRRset* v4Set,
+    const AbstractRRset* v6Set, time_t curtime) : expiration_(0)
 {
     // TODO: Use pseudo-random RTT
     uint32_t rtt = 0;       // Round-trip time for an address
@@ -155,7 +157,6 @@ void NameserverEntry::setAddressRTT(const IOAddress& address, uint32_t rtt) {
 void NameserverEntry::setAddressUnreachable(const IOAddress& address) {
     setAddressRTT(address, AddressEntry::UNREACHABLE);
 }
-
 
 } // namespace dns
 } // namespace isc
