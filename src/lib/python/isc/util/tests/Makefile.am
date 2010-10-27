@@ -1,4 +1,4 @@
-PYTESTS = process_test.py
+PYTESTS = process_test.py socketserver_mixin_test.py
 EXTRA_DIST = $(PYTESTS)
 
 # later will have configure option to choose this, like: coverage run --branch

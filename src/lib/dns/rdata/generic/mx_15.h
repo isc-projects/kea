@@ -35,7 +35,7 @@ public:
     // BEGIN_COMMON_MEMBERS
     // END_COMMON_MEMBERS
 
-    explicit MX(uint16_t preference, const Name& mxname);
+    MX(uint16_t preference, const Name& mxname);
 
     ///
     /// Specialized methods

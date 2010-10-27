@@ -1,0 +1,416 @@
+#!@PYTHON@
+
+# Copyright (C) 2010  Internet Systems Consortium.
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SYSTEMS CONSORTIUM
+# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+# INTERNET SYSTEMS CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+# $Id$
+__version__ = "$Revision$"
+
+import sys; sys.path.append ('@@PYTHONPATH@@')
+import os
+import signal
+import select
+from time import time, strftime, gmtime
+from optparse import OptionParser, OptionValueError
+from collections import defaultdict
+from isc.config.ccsession import ModuleCCSession, create_answer
+from isc.cc import Session, SessionError
+# Note: Following lines are removed in b10-stats	#@@REMOVED@@
+if __name__ == 'stats':					#@@REMOVED@@
+    try:						#@@REMOVED@@
+        from fake_time import time, strftime, gmtime	#@@REMOVED@@
+    except ImportError:					#@@REMOVED@@
+        pass						#@@REMOVED@@
+
+# for setproctitle
+import isc.util.process
+isc.util.process.rename()
+
+# If B10_FROM_BUILD is set in the environment, we use data files
+# from a directory relative to that, otherwise we use the ones
+# installed on the system
+if "B10_FROM_BUILD" in os.environ:
+    SPECFILE_LOCATION = os.environ["B10_FROM_BUILD"] + "/src/bin/stats/stats.spec"
+else:
+    PREFIX = "@prefix@"
+    DATAROOTDIR = "@datarootdir@"
+    SPECFILE_LOCATION = "@datadir@/@PACKAGE@/stats.spec".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
+
+class Singleton(type):
+    """
+    A abstract class of singleton pattern
+    """
+    # Because of singleton pattern: 
+    #   At the beginning of coding, one UNIX domain socket is needed
+    #  for config manager, another socket is needed for stats module,
+    #  then stats module might need two sockets. So I adopted the
+    #  singleton pattern because I avoid creating multiple sockets in
+    #  one stats module. But in the initial version stats module
+    #  reports only via bindctl, so just one socket is needed. To use
+    #  the singleton pattern is not important now. :(
+
+    def __init__(self, *args, **kwargs):
+        type.__init__(self, *args, **kwargs)
+        self._instances = {}
+
+    def __call__(self, *args, **kwargs):
+        if args not in self._instances:
+            self._instances[args]={}
+        kw = tuple(kwargs.items())
+        if  kw not in self._instances[args]:
+            self._instances[args][kw] = type.__call__(self, *args, **kwargs)
+        return self._instances[args][kw]
+
+class Callback():
+    """
+    A Callback handler class
+    """
+    def __init__(self, name=None, callback=None, args=(), kwargs={}):
+        self.name = name
+        self.callback = callback
+        self.args = args
+        self.kwargs = kwargs
+
+    def __call__(self, *args, **kwargs):
+        if not args:
+            args = self.args
+        if not kwargs:
+            kwargs = self.kwargs
+        if self.callback:
+            return self.callback(*args, **kwargs)
+
+class Subject():
+    """
+    A abstract subject class of observer pattern
+    """
+    # Because of observer pattern:
+    #   In the initial release, I'm also sure that observer pattern
+    #  isn't definitely needed because the interface between gathering
+    #  and reporting statistics data is single.  However in the future
+    #  release, the interfaces may be multiple, that is, multiple
+    #  listeners may be needed. For example, one interface, which
+    #  stats module has, is for between ''config manager'' and stats
+    #  module, another interface is for between ''HTTP server'' and
+    #  stats module, and one more interface is for between ''SNMP
+    #  server'' and stats module. So by considering that stats module
+    #  needs multiple interfaces in the future release, I adopted the
+    #  observer pattern in stats module. But I don't have concrete
+    #  ideas in case of multiple listener currently.
+
+    def __init__(self):
+        self._listeners = []
+
+    def attach(self, listener):
+        if not listener in self._listeners:
+            self._listeners.append(listener)
+
+    def detach(self, listener):
+        try:
+            self._listeners.remove(listener)
+        except ValueError:
+            pass
+
+    def notify(self, event, modifier=None):
+        for listener in self._listeners:
+            if modifier != listener:
+                listener.update(event)
+
+class Listener():
+    """
+    A abstract listener class of observer pattern
+    """
+    def __init__(self, subject):
+        self.subject = subject
+        self.subject.attach(self)
+        self.events = {}
+
+    def update(self, name):
+        if name in self.events:
+            callback = self.events[name]
+            return callback()
+
+    def add_event(self, event):
+        self.events[event.name]=event
+
+class SessionSubject(Subject, metaclass=Singleton):
+    """
+    A concrete subject class which creates CC session object
+    """
+    def __init__(self, session=None, verbose=False):
+        Subject.__init__(self)
+        self.verbose = verbose
+        self.session=session
+        self.running = False
+
+    def start(self):
+        self.running = True
+        self.notify('start')
+
+    def stop(self):
+        self.running = False
+        self.notify('stop')
+
+    def check(self):
+        self.notify('check')
+
+class CCSessionListener(Listener):
+    """
+    A concrete listener class which creates SessionSubject object and
+    ModuleCCSession object
+    """
+    def __init__(self, subject, verbose=False):
+        Listener.__init__(self, subject)
+        self.verbose = verbose
+        self.session = subject.session
+        self.boot_time = get_datetime()
+
+        # create ModuleCCSession object
+        self.cc_session = ModuleCCSession(SPECFILE_LOCATION,
+                                          self.config_handler,
+                                          self.command_handler,
+                                          self.session)
+
+        self.session = self.subject.session = self.cc_session._session
+
+        # initialize internal data
+        self.config_spec = self.cc_session.get_module_spec().get_config_spec()
+        self.stats_spec = self.config_spec
+        self.stats_data = self.initialize_data(self.stats_spec)
+
+        # add event handler invoked via SessionSubject object
+        self.add_event(Callback('start', self.start))
+        self.add_event(Callback('stop', self.stop))
+        self.add_event(Callback('check', self.check))
+        # don't add 'command_' suffix to the special commands in
+        # order to prevent executing internal command via bindctl
+
+        # get commands spec
+        self.commands_spec = self.cc_session.get_module_spec().get_commands_spec()
+
+        # add event handler related command_handler of ModuleCCSession
+        # invoked via bindctl
+        for cmd in self.commands_spec:
+            try:
+                # add prefix "command_"
+                name = "command_" + cmd["command_name"]
+                callback = getattr(self, name)
+                kwargs = self.initialize_data(cmd["command_args"])
+                self.add_event(Callback(name=name, callback=callback, args=(), kwargs=kwargs))
+            except AttributeError as ae:
+                sys.stderr.write("[b10-stats] Caught undefined command while parsing spec file: "
+                                 +str(cmd["command_name"])+"\n")
+
+    def start(self):
+        """
+        start the cc chanel
+        """
+        # set initial value
+        self.stats_data['stats.boot_time'] = self.boot_time
+        self.stats_data['stats.start_time'] = get_datetime()
+        self.stats_data['stats.last_update_time'] = get_datetime()
+        self.stats_data['stats.lname'] = self.session.lname
+        return self.cc_session.start()
+
+    def stop(self):
+        """
+        stop the cc chanel
+        """
+        return self.cc_session.close()
+
+    def check(self):
+        """
+        check the cc chanel
+        """
+        return self.cc_session.check_command(False)
+
+    def config_handler(self, new_config):
+        """
+        handle a configure from the cc channel
+        """
+        if self.verbose:
+            sys.stdout.write("[b10-stats] newconfig received: "+str(new_config)+"\n")
+
+        # do nothing currently
+        return create_answer(0)
+
+    def command_handler(self, command, *args, **kwargs):
+        """
+        handle commands from the cc channel
+        """
+        # add 'command_' suffix in order to executing command via bindctl
+        name = 'command_' + command
+        
+        if name in self.events:
+            event = self.events[name]
+            return event(*args, **kwargs)
+        else:
+            return self.command_unknown(command, args)
+
+    def command_shutdown(self, args):
+        """
+        handle shutdown command
+        """
+        if self.verbose:
+            sys.stdout.write("[b10-stats] 'shutdown' command received\n")
+        self.subject.running = False
+        return create_answer(0)
+
+    def command_set(self, args, stats_data={}):
+        """
+        handle set command
+        """
+        if self.verbose:
+            sys.stdout.write("[b10-stats] 'set' command received, args: "+str(args)+"\n")
+
+        # 'args' must be dictionary type
+        self.stats_data.update(args['stats_data'])
+
+        # overwrite "stats.LastUpdateTime"
+        self.stats_data['stats.last_update_time'] = get_datetime()
+
+        return create_answer(0)
+
+    def command_remove(self, args, stats_item_name=''):
+        """
+        handle remove command
+        """
+        if self.verbose:
+            sys.stdout.write("[b10-stats] 'remove' command received, args: "+str(args)+"\n")
+
+        # 'args' must be dictionary type
+        if args and args['stats_item_name'] in self.stats_data:
+            stats_item_name = args['stats_item_name']
+
+        # just remove one item
+        self.stats_data.pop(stats_item_name)
+
+        return create_answer(0)
+
+    def command_show(self, args, stats_item_name=''):
+        """
+        handle show command
+        """
+        if self.verbose:
+            sys.stdout.write("[b10-stats] 'show' command received, args: "+str(args)+"\n")
+
+        # always overwrite 'report_time' and 'stats.timestamp'
+        # if "show" command invoked
+        self.stats_data['report_time'] = get_datetime()
+        self.stats_data['stats.timestamp'] = get_timestamp()
+
+        # if with args
+        if args and args['stats_item_name'] in self.stats_data:
+            stats_item_name = args['stats_item_name']
+            return create_answer(0, {stats_item_name: self.stats_data[stats_item_name]})
+
+        return create_answer(0, self.stats_data)
+
+    def command_reset(self, args):
+        """
+        handle reset command
+        """
+        if self.verbose:
+            sys.stdout.write("[b10-stats] 'reset' command received\n")
+
+        # re-initialize internal variables
+        self.stats_data = self.initialize_data(self.stats_spec)
+
+        # reset initial value
+        self.stats_data['stats.boot_time'] = self.boot_time
+        self.stats_data['stats.start_time'] = get_datetime()
+        self.stats_data['stats.last_update_time'] = get_datetime()
+        self.stats_data['stats.lname'] = self.session.lname
+
+        return create_answer(0)
+
+    def command_status(self, args):
+        """
+        handle status command
+        """
+        if self.verbose:
+            sys.stdout.write("[b10-stats] 'status' command received\n")
+        # just return "I'm alive."
+        return create_answer(0, "I'm alive.")
+
+    def command_unknown(self, command, args):
+        """
+        handle an unknown command
+        """
+        if self.verbose:
+            sys.stdout.write("[b10-stats] Unknown command received: '"
+                             + str(command) + "'\n")
+        return create_answer(1, "Unknown command: '"+str(command)+"'")
+
+
+    def initialize_data(self, spec):
+        """
+        initialize stats data
+        """
+        def __get_init_val(spec):
+            if spec['item_type'] == 'null':
+                return None
+            elif spec['item_type'] == 'boolean':
+                return bool(spec.get('item_default', False))
+            elif spec['item_type'] == 'string':
+                return str(spec.get('item_default', ''))
+            elif spec['item_type'] in set(['number', 'integer']):
+                return int(spec.get('item_default', 0))
+            elif spec['item_type'] in set(['float', 'double', 'real']):
+                return float(spec.get('item_default', 0.0))
+            elif spec['item_type'] in set(['list', 'array']):
+                return spec.get('item_default',
+                                [ __get_init_val(s) for s in spec['list_item_spec'] ])
+            elif spec['item_type'] in set(['map', 'object']):
+                return spec.get('item_default',
+                                dict([ (s['item_name'], __get_init_val(s)) for s in spec['map_item_spec'] ]) )
+            else:
+                return spec.get('item_default')
+        return dict([ (s['item_name'], __get_init_val(s)) for s in spec ])
+
+def get_timestamp():
+    """
+    get current timestamp
+    """
+    return time()
+
+def get_datetime():
+    """
+    get current datetime
+    """
+    return strftime("%Y-%m-%dT%H:%M:%SZ", gmtime())
+
+def main(session=None):
+    try:
+        parser = OptionParser()
+        parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
+                      help="display more about what is going on")
+        (options, args) = parser.parse_args()
+        subject = SessionSubject(session=session, verbose=options.verbose)
+        listener = CCSessionListener(subject, verbose=options.verbose)
+        subject.start()
+        while subject.running:
+            subject.check()
+        subject.stop()
+
+    except OptionValueError:
+        sys.stderr.write("[b10-stats] Error parsing options\n")
+    except SessionError as se:
+        sys.stderr.write("[b10-stats] Error creating Stats module, "
+              + "is the command channel daemon running?\n")
+    except KeyboardInterrupt as kie:
+        sys.stderr.write("[b10-stats] Interrupted, exiting\n")
+
+if __name__ == "__main__":
+    main()

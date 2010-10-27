@@ -1,5 +1,5 @@
-SUBDIRS = tests
+SUBDIRS = . tests
 
-python_PYTHON = __init__.py process.py
+python_PYTHON = __init__.py process.py socketserver_mixin.py
 
 pythondir = $(pyexecdir)/isc/util
