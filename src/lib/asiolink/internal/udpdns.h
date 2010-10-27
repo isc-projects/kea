@@ -162,7 +162,7 @@ private:
     isc::dns::OutputBufferPtr respbuf_;
     
     // The buffer into which the query packet is written
-    boost::shared_ptr<char> data_;
+    boost::shared_array<char> data_;
 
     // State information that is entirely internal to a given instance
     // of the coroutine can be declared here.
