@@ -33,12 +33,15 @@
 #include <asiolink/internal/tcpdns.h>
 #include <asiolink/internal/udpdns.h>
 
+#include <log/dummylog.h>
+
 using namespace asio;
 using asio::ip::udp;
 using asio::ip::tcp;
 
 using namespace std;
 using namespace isc::dns;
+using isc::log::dlog;
 
 namespace asiolink {
 
@@ -231,7 +234,7 @@ void
 RecursiveQuery::sendQuery(const Question& question, OutputBufferPtr buffer,
                           DNSServer* server)
 {
-
+    dlog("Sending upstream query to " + ns_addr_.toText());
     // XXX: eventually we will need to be able to determine whether
     // the message should be sent via TCP or UDP, or sent initially via
     // UDP and then fall back to TCP on failure, but for the moment

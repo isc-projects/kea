@@ -25,6 +25,7 @@ run_unittests_LDADD += $(SQLITE_LIBS)
 run_unittests_LDADD +=  $(top_builddir)/src/lib/dns/libdns++.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
+run_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # B10_CXXFLAGS)
 run_unittests_CXXFLAGS = $(AM_CXXFLAGS)
