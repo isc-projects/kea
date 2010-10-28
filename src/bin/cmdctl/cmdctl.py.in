@@ -43,18 +43,18 @@ import random
 import time
 import signal
 from isc.config import ccsession
+import isc.util.process
 import isc.net.parse
-import isc.utils.process
 from optparse import OptionParser, OptionValueError
 from hashlib import sha1
-from isc.utils import socketserver_mixin
+from isc.util import socketserver_mixin
 
 try:
     import threading
 except ImportError:
     import dummy_threading as threading
 
-isc.utils.process.rename()
+isc.util.process.rename()
 
 __version__ = 'BIND10'
 URL_PATTERN = re.compile('/([\w]+)(?:/([\w]+))?/?')
