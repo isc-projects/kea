@@ -36,12 +36,12 @@ public:
     ///
     /// \param address Address object representing this address
     /// \param rtt Initial round-trip time
-    AddressEntry(const IOAddress& address, uint32_t rtt = 0) :
+    AddressEntry(const asiolink::IOAddress& address, uint32_t rtt = 0) :
         address_(address), rtt_(rtt)
     {}
 
     /// \return Address object
-    IOAddress getAddress() const {
+    asiolink::IOAddress getAddress() const {
         return address_;
     }
 
@@ -83,7 +83,7 @@ public:
     static const uint32_t UNREACHABLE;  ///< RTT indicating unreachable address
 
 private:
-    IOAddress       address_;           ///< Address
+    asiolink::IOAddress address_;       ///< Address
     uint32_t        rtt_;               ///< Round-trip time
 };
 

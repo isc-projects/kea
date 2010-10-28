@@ -20,6 +20,8 @@
 #include <string>
 #include <sys/socket.h>
 
+namespace asiolink {
+
 /// \brief IO Address Dummy Class
 ///
 /// As part of ther recursor, Evan has written the asiolink.h file, which
@@ -49,5 +51,7 @@ public:
 private:
     std::string     address_;       ///< Address represented
 };
+
+}   // namespace asiolink
 
 #endif // __ASIOLINK_H

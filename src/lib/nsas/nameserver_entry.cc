@@ -32,6 +32,7 @@
 #include "address_entry.h"
 #include "nameserver_entry.h"
 
+using namespace asiolink;
 using namespace isc::nsas;
 using namespace isc::dns;
 using namespace std;
