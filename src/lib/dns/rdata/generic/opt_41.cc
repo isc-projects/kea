@@ -65,7 +65,8 @@ OPT::toWire(MessageRenderer& renderer UNUSED_PARAM) const {
 int
 OPT::compare(const Rdata& other) const {
     //const OPT& other_opt = dynamic_cast<const OPT&>(other);
-    dynamic_cast<const OPT&>(other); // right now we don't need other_opt
+    // right now we don't need other_opt:
+    static_cast<void>(dynamic_cast<const OPT&>(other));
 
     return (0);
 }
