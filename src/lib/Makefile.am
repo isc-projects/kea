@@ -1,1 +1,1 @@
-SUBDIRS = exceptions dns asiolink cc config datasrc python xfr bench log
+SUBDIRS = exceptions dns cc config datasrc python xfr bench log asiolink
