@@ -498,6 +498,9 @@ Recursor::updateConfig(ConstElementPtr config) {
     }
     try {
         // Parse forward_addresses
+        // FIXME Once the config parser is fixed, remove the slashes. They
+        // appear only on the default/startup value and shouldn't be here.
+        // See ticket #384
         ConstElementPtr forwardAddressesE(config->get("forward_addresses/"));
         vector<addr_t> forwardAddresses(parseAddresses(forwardAddressesE));
         ConstElementPtr listenAddressesE(config->get("listen_on/"));
@@ -553,15 +556,23 @@ Recursor::setListenAddresses(const vector<addr_t>& addresses) {
         setAddresses(io_, addresses);
         impl_->listen_ = addresses;
     }
-    catch (const exception &e) {
+    catch (const exception& e) {
         /*
          * We couldn't set it. So return it back. If that fails as well,
          * we have a problem.
          *
-         * FIXME: What to do in that case? Directly abort?
+         * If that fails, bad luck, but we are useless anyway, so just die
+         * and let boss start us again.
          */
-        setAddresses(io_, impl_->listen_);
-        throw e;// Let it fly a little bit further
+        try {
+            setAddresses(io_, impl_->listen_);
+        }
+        catch (const exception& e2) {
+            cerr << "[b10-recurse] Unable to recover from error: " << e.what()
+                << endl << "Rollback failed with: " << e2.what() << endl;
+            abort();
+        }
+        throw e; // Let it fly a little bit further
     }
 }
 
