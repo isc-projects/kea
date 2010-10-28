@@ -541,6 +541,7 @@ TEST_F(ASIOLinkTest, v4AddServer) {
 
 TEST_F(ASIOLinkTest, DISABLED_clearServers) {
     // FIXME: Enable when clearServers actually close the sockets
+    //    See #388
     io_service_->clearServers();
 
     EXPECT_THROW(sendTCP(AF_INET), IOError);
