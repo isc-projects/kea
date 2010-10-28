@@ -111,7 +111,9 @@ public:
     ModuleCCSession* config_session_;
     bool verbose_mode_;
     /// Addresses of the forward nameserver
-    vector<addr_t> upstream_, listen_;
+    vector<addr_t> upstream_;
+    /// Addresses we listen on
+    vector<addr_t> listen_;
 
 private:
 
