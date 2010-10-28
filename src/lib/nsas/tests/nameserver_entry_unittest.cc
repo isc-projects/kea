@@ -33,7 +33,7 @@
 
 #include "nsas_test_utilities.h"
 
-
+using namespace asiolink;
 using namespace std;
 using namespace isc::dns;
 using namespace rdata;

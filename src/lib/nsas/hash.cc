@@ -54,6 +54,7 @@ or otherwise) arising in any way out of the use of this software, even
 if advised of the possibility of such damage.
 */
 
+#include <cassert>
 #include <stdlib.h>
 #include <algorithm>
 #include <cassert>
@@ -71,17 +72,22 @@ namespace nsas {
 // Constructor.
 
 Hash::Hash(uint32_t tablesize, uint32_t maxkeylen, bool randomise) :
-    tablesize_(tablesize), maxkeylen_(maxkeylen)
+    tablesize_(tablesize), maxkeylen_(min(maxkeylen, (255 - sizeof(uint16_t))))
 {
-    // Check to see that we can cope with the maximum key length.
-    // (This code adapted from BIND-9)
+    // (Code taken from BIND-9)
+    //
+    // Check to see that we can cope with the maximum key length which, due
+    // to the limitations, should not be more than 255 in total.  The actual
+    // number of characters in the name that are considered is reduced to
+    // ensure that the class is taken into account in the hash.  (This accounts
+    // for the "+ sizeof(uint16_t)" in the calculations below.
     //
     // Overflow check.  Since our implementation only does a modulo
     // operation at the last stage of hash calculation, the accumulator
     // must not overflow.
     hash_accum_t overflow_limit =
         1 << (((sizeof(hash_accum_t) - sizeof(hash_random_t))) * 8);
-    if (overflow_limit < (maxkeylen + 1) * 0xff) {
+    if (overflow_limit < (maxkeylen_ + sizeof(uint16_t) + 1) * 0xff) {
         isc_throw(KeyLengthTooLong, "Hash key length too long for Hash class");
     }
 
@@ -101,8 +107,8 @@ Hash::Hash(uint32_t tablesize, uint32_t maxkeylen, bool randomise) :
     srandom(init_value.seed);
 
     // Fill in the random vector.
-    randvec_.reserve(maxkeylen + 1);
-    for (uint32_t i = 0; i < (maxkeylen + 1); ++i) {
+    randvec_.reserve(maxkeylen_ + sizeof(uint16_t) + 1);
+    for (uint32_t i = 0; i < (maxkeylen + sizeof(uint16_t) + 1); ++i) {
         randvec_.push_back(static_cast<hash_random_t>(random() & 0xffff));
     }
     assert(sizeof(hash_random_t) == 2); // So that the "& 0xffff" is valid
@@ -120,10 +126,8 @@ Hash::Hash(uint32_t tablesize, uint32_t maxkeylen, bool randomise) :
 }
 
 
-uint32_t Hash::operator()(const char* key, uint32_t keylen,
-    bool ignorecase) const
+uint32_t Hash::operator()(const HashKey& key, bool ignorecase) const
 {
-
     // Calculation as given in BIND-9.
     hash_accum_t partial_sum = 0;
     uint32_t i = 0;                 // Used after the end of the loop
@@ -131,14 +135,27 @@ uint32_t Hash::operator()(const char* key, uint32_t keylen,
     // Perform the hashing.  If the key length if more than the maximum we set
     // up this hash for, ignore the excess.
     if (ignorecase) {
-        for (i = 0; i < min(keylen, maxkeylen_); ++i) {
-            partial_sum += mapLower(key[i]) * randvec_[i];
+        for (i = 0; i < min(key.keylen, maxkeylen_); ++i) {
+            partial_sum += mapLower(key.key[i]) * randvec_[i];
         }
     } else {
-        for (i = 0; i < min(keylen, maxkeylen_); ++i) {
-            partial_sum += key[i] * randvec_[i];
+        for (i = 0; i < min(key.keylen, maxkeylen_); ++i) {
+            partial_sum += key.key[i] * randvec_[i];
         }
     }
+
+    // Add the hash of the class code
+    union {
+        uint16_t    class_code;                 // Copy of the class code
+        char        bytes[sizeof(uint16_t)];    // Byte equivalent
+    } convert;
+
+    convert.class_code = key.class_code;
+    for (int j = 0; j < sizeof(uint16_t); ++j, ++i) {
+        partial_sum += convert.bytes[j] * randvec_[i];
+    }
+
+    // ... and finish up.
     partial_sum += randvec_[i];
 
     // Determine the hash value

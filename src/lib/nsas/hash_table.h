@@ -27,6 +27,7 @@
 #include "config.h"
 
 #include "hash.h"
+#include "hash_key.h"
 
 // Maximum key length if the maximum size of a DNS name
 #define MAX_KEY_LENGTH 255
@@ -90,11 +91,10 @@ public:
     /// object's name is the same.
     ///
     /// \param object Pointer to the object
-    /// \param key Pointer to the name of the object
-    /// \param keylen Length of the key
+    /// \param key Key describing the object
     ///
     /// \return bool true of the name of the object is equal to the name given.
-    virtual bool operator()(T* object, const char* key, uint32_t keylen) = 0;
+    virtual bool operator()(T* object, const HashKey& key) = 0;
 };
 
 
@@ -131,11 +131,11 @@ public:
     ///
     /// Returns a shared_ptr object pointing to the table entry
     ///
-    /// \param key Name of the object.  The hash of this is calculated and
-    /// used to index the table.
+    /// \param key Name of the object (and class).  The hash of this is
+    /// calculated and used to index the table.
     ///
     /// \return Shared pointer to the object.
-    virtual boost::shared_ptr<T> get(const char* key, uint32_t keylen);
+    virtual boost::shared_ptr<T> get(const HashKey& key);
 
     /// \brief Remove Entry
     ///
@@ -143,12 +143,11 @@ public:
     /// destroyed, so if this is the last pointer, the object itself is also
     /// destroyed.
     ///
-    /// \param key Name of the object.  The hash of this is calculated and
-    /// used to index the table.
-    /// \param keylen Length of the key
+    /// \param key Name of the object (and class).  The hash of this is
+    /// calculated and used to index the table.
     ///
     /// \return true if the object was deleted, false if it was not found.
-    virtual bool remove(const char* key, uint32_t keylen);
+    virtual bool remove(const HashKey& key);
 
     /// \brief Add Entry
     ///
@@ -160,13 +159,12 @@ public:
     /// successful, this object will have a shared pointer pointing to it; it
     /// should not be deleted by the caller.
     /// \param key Key to use to calculate the hash.
-    /// \patam keylen Length of "key"
     /// \param replace If true, when an object is added and an object with the
     /// same name already exists, the existing object is replaced.  If false,
     // the addition fails and a status is returned.
     /// \return true if the object was successfully added, false otherwise.
-    virtual bool add(boost::shared_ptr<T>& object, const char* key,
-        uint32_t keylen, bool replace = false);
+    virtual bool add(boost::shared_ptr<T>& object, const HashKey& key,
+        bool replace = false);
 
     /// \brief Returns Size of Hash Table
     ///
@@ -190,10 +188,10 @@ HashTable<T>::HashTable(HashTableCompare<T>* compare, uint32_t size) :
 
 // Lookup an object in the table
 template <typename T>
-boost::shared_ptr<T> HashTable<T>::get(const char* key, uint32_t keylen) {
+boost::shared_ptr<T> HashTable<T>::get(const HashKey& key) {
 
     // Calculate the hash value
-    uint32_t index = hash_(key, keylen);
+    uint32_t index = hash_(key);
 
     // Take out a read lock on this hash slot.  The lock is released when this
     // object goes out of scope.
@@ -202,7 +200,7 @@ boost::shared_ptr<T> HashTable<T>::get(const char* key, uint32_t keylen) {
     // Locate the object.
     typename HashTableSlot<T>::iterator i;
     for (i = table_[index].list_.begin(); i != table_[index].list_.end(); ++i) {
-        if ((*compare_)(i->get(), key, keylen)) {
+        if ((*compare_)(i->get(), key)) {
 
             // Found it, so return the shared pointer object
             return (*i);
@@ -215,10 +213,10 @@ boost::shared_ptr<T> HashTable<T>::get(const char* key, uint32_t keylen) {
 
 // Remove an entry from the hash table
 template <typename T>
-bool HashTable<T>::remove(const char* key, uint32_t keylen) {
+bool HashTable<T>::remove(const HashKey& key) {
 
     // Calculate the hash value
-    uint32_t index = hash_(key, keylen);
+    uint32_t index = hash_(key);
 
     // Access to the elements of this hash slot are accessed under a mutex.
     // The mutex will be released when this object goes out of scope and is
@@ -228,7 +226,7 @@ bool HashTable<T>::remove(const char* key, uint32_t keylen) {
     // Now search this list to see if the element already exists.
     typename HashTableSlot<T>::iterator i;
     for (i = table_[index].list_.begin(); i != table_[index].list_.end(); ++i) {
-        if ((*compare_)(i->get(), key, keylen)) {
+        if ((*compare_)(i->get(), key)) {
 
             // Object found so delete it.
             table_[index].list_.erase(i);
@@ -243,11 +241,12 @@ bool HashTable<T>::remove(const char* key, uint32_t keylen) {
 
 // Add an entry to the hash table
 template <typename T>
-bool HashTable<T>::add(boost::shared_ptr<T>& object, const char* key,
-    uint32_t keylen, bool replace) {
+bool HashTable<T>::add(boost::shared_ptr<T>& object, const HashKey& key,
+    bool replace)
+{
 
     // Calculate the hash value
-    uint32_t index = hash_(key, keylen);
+    uint32_t index = hash_(key);
 
     // Access to the elements of this hash slot are accessed under a mutex.
     scoped_lock<typename HashTableSlot<T>::mutex_type> lock(table_[index].mutex_);
@@ -255,7 +254,7 @@ bool HashTable<T>::add(boost::shared_ptr<T>& object, const char* key,
     // Now search this list to see if the element already exists.
     typename HashTableSlot<T>::iterator i;
     for (i = table_[index].list_.begin(); i != table_[index].list_.end(); ++i) {
-        if ((*compare_)(i->get(), key, keylen)) {
+        if ((*compare_)(i->get(), key)) {
 
             // Object found.  If we are not allowed to replace the element,
             // return an error.  Otherwise erase it from the list and exit the

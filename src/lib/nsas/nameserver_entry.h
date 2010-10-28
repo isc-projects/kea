@@ -24,6 +24,7 @@
 #include "address_entry.h"
 #include "asiolink.h"
 #include "exceptions/exceptions.h"
+#include "lru_list.h"
 #include "rrset.h"
 
 namespace isc {
@@ -71,9 +72,11 @@ public:
 /// different TTLs) there is one expiration time for all address records.
 /// When that is reached, all records are declared expired and new fetches
 /// started for the information.
+///
+/// As this object will be stored in the nameserver address store LRU list,
+/// it is derived from the LRU list element class.
 
-
-class NameserverEntry {
+class NameserverEntry : public LruList<NameserverEntry>::Element {
 public:
     /// List of addresses associated with this nameserver
     typedef std::vector<AddressEntry>   AddressVector;
@@ -126,14 +129,14 @@ public:
     ///
     /// \param address Address to update
     /// \param RTT New RTT for the address
-    virtual void setAddressRTT(const IOAddress& address, uint32_t rtt);
+    virtual void setAddressRTT(const asiolink::IOAddress& address, uint32_t rtt);
 
     /// \brief Set Address Unreachable
     ///
     /// Sets the specified address to be unreachable
     ///
     /// \param address Address to update
-    virtual void setAddressUnreachable(const IOAddress& address);
+    virtual void setAddressUnreachable(const asiolink::IOAddress& address);
 
     /// \return Owner Name of RRset
     virtual std::string getName() const {

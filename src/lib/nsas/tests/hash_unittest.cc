@@ -28,8 +28,27 @@ using namespace std;
 namespace isc {
 namespace nsas {
 
+// Utility function to count the number of unique values in a vector
+static uint32_t CountUnique(const vector<uint32_t>& input) {
 
-/// \brief Text Fixture Class
+    // Duplicate the vector as this will be destroyed in the process.
+    vector<uint32_t>  vcopy(input);
+
+    // Check to see if values are unique.  Do this by sorting the values into
+    // ascending order, removing duplicates, and checking the size again.
+    //
+    // Note that unique only shifts elements around - it does not remove non-
+    // unique values, so it does change the size of the array.  The call to
+    // erase removes the elements left at the end of the array.
+    sort(vcopy.begin(), vcopy.end());
+    vcopy.erase(unique(vcopy.begin(), vcopy.end()), vcopy.end());
+
+    // ... and return the count of elements remaining.
+    return (vcopy.size());
+}
+
+
+/// \brief Test Fixture Class
 class HashTest : public ::testing::Test {
 };
 
@@ -60,22 +79,16 @@ TEST_F(HashTest, Algorithm) {
     // Generate hash values
     for (int i = 0; i < 50; ++i) {
         string name = base + boost::lexical_cast<string>(i);
-        uint32_t hashval = hash(name.c_str(), name.size());
+        uint32_t hashval = hash(HashKey(name.c_str(), name.size(), 0));
         EXPECT_LT(hashval, size);
         values.push_back(hashval);
     }
     uint32_t cursize = values.size();
 
-    // Check to see if they are unique.  Do this by sorting the values into
-    // ascending order, removing duplicates, and checking the size again.
-    //
-    // Note that unique only shifts elements around - it does not remove non-
-    // unique values, so it does change the size of the array.  The call to
-    // erase removes the elements left at the end of the array.
-    sort(values.begin(), values.end());
-    values.erase(unique(values.begin(), values.end()), values.end());
+    // Count the unique values in the array
+    uint32_t newsize = CountUnique(values);
 
-    uint32_t newsize = values.size();
+    // We don't expect many clashes.
     EXPECT_GE(newsize + 2, cursize);
 }
 
@@ -98,33 +111,57 @@ TEST_F(HashTest, CaseMapping) {
 }
 
 // Test the mapping of mixed-case names
-
 TEST_F(HashTest, MixedCase) {
 
     std::string test1 = "example1234.co.uk.";
     std::string test2 = "EXAmple1234.co.uk.";
 
-    Hash hash(1009, 255);
+    Hash hash(1009, 255, false);    // Disable randomisation for testing
 
     // Case not ignored, hashes should be different
-    uint32_t value1 = hash(test1.c_str(), test1.size(), false);
-    uint32_t value2 = hash(test2.c_str(), test2.size(), false);
+    uint32_t value1 = hash(HashKey(test1.c_str(), test1.size(), 0), false);
+    uint32_t value2 = hash(HashKey(test2.c_str(), test2.size(), 0), false);
     EXPECT_NE(value1, value2);
 
     // Case ignored, hashes should be the same
-    uint32_t value3 = hash(test1.c_str(), test1.size(), true);
-    uint32_t value4 = hash(test2.c_str(), test2.size(), true);
+    uint32_t value3 = hash(HashKey(test1.c_str(), test1.size(), 0), true);
+    uint32_t value4 = hash(HashKey(test2.c_str(), test2.size(), 0), true);
     EXPECT_EQ(value3, value4);
 
     // Check the default setting.
-    uint32_t value5 = hash(test1.c_str(), test1.size());
-    uint32_t value6 = hash(test2.c_str(), test2.size());
+    uint32_t value5 = hash(HashKey(test1.c_str(), test1.size(), 0));
+    uint32_t value6 = hash(HashKey(test2.c_str(), test2.size(), 0));
     EXPECT_EQ(value5, value6);
 
     // ... and just for good measure
     EXPECT_EQ(value1, value3);
     EXPECT_EQ(value1, value5);
 }
+
+// Test that the same name but different classes get mapped differently.
+TEST_F(HashTest, ClassCodes) {
+
+    std::string test1 = "example1234.co.uk.";
+    Hash hash(1009, 255, false);    // Disable randomisation for testing
+
+    // Just try codes in the range 0 to 9 - more than covers the allocated
+    // codes.
+    vector<uint32_t> values;
+    for (uint32_t i = 0; i < 10; ++i) {
+        values.push_back(hash(HashKey(test1.c_str(), test1.size(), i)));
+    }
+
+    // find the number of unique values in the array.  Although there can
+    // be some clashes, we don't expect too many.
+    uint32_t cursize = values.size();
+
+    // Count the unique values in the array
+    uint32_t newsize = CountUnique(values);
+
+    // We don't expect many clashes.
+    EXPECT_GE(newsize + 2, cursize);
+}
+
 
 // Test that the code performs when the length of the key is excessive
 TEST_F(HashTest, Overlong) {
@@ -137,8 +174,8 @@ TEST_F(HashTest, Overlong) {
     Hash hash(1009, string1.size());
 
     // Do two hashes
-    uint32_t value1 = hash(string1.c_str(), string1.size());
-    uint32_t value2 = hash(string2.c_str(), string2.size());
+    uint32_t value1 = hash(HashKey(string1.c_str(), string1.size(), 0));
+    uint32_t value2 = hash(HashKey(string2.c_str(), string2.size(), 0));
     EXPECT_EQ(value1, value2);
 }
 

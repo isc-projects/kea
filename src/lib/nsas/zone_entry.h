@@ -22,6 +22,8 @@
 #include <boost/thread.h>
 #include <boost/shared_ptr.h>
 
+#include "asiolink.h"
+
 class NameserverEntry;
 
 /// \brief Zone Entry
@@ -45,7 +47,7 @@ public:
     /// \brief Lookup Address
     ///
     /// Returns the address with the lowest RTT.
-    IOAddress getAddress() const;
+    asiolink::IOAddress getAddress() const;
 
 public:
     void updateNS

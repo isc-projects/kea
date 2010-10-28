@@ -22,6 +22,8 @@
 
 #include "exceptions/exceptions.h"
 
+#include "hash_key.h"
+
 namespace isc {
 namespace nsas {
 
@@ -79,14 +81,12 @@ public:
 
     /// \brief Hash Value
     ///
-    /// \param key String value or array of bytes for which a hash is to be
-    /// calculated.
-    /// \param ketlen Number of characters in the string
+    /// \param key Parameters comprising the key to be hashed.
     /// \param ignorecase true for case to be ignored when calculating the
     /// hash value, false for it to be taken into account.
     ///
     /// \return Hash value, a number between 0 and N-1.
-    virtual uint32_t operator()(const char* key, uint32_t keylen,
+    virtual uint32_t operator()(const HashKey& key, 
         bool ignorecase = true) const;
 
     /// \brief Map Lower Case to Upper Case
