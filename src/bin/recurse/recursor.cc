@@ -538,9 +538,7 @@ Recursor::getForwardAddresses() const {
 namespace {
 
 void
-setAddresses(IOService *service, const vector<addr_t>&
-    addresses)
-{
+setAddresses(IOService *service, const vector<addr_t>& addresses) {
     service->clearServers();
     BOOST_FOREACH(const addr_t &address, addresses) {
         service->addServer(address.second, address.first);
@@ -550,9 +548,7 @@ setAddresses(IOService *service, const vector<addr_t>&
 }
 
 void
-Recursor::setListenAddresses(const vector<addr_t>&
-    addresses)
-{
+Recursor::setListenAddresses(const vector<addr_t>& addresses) {
     try {
         setAddresses(io_, addresses);
         impl_->listen_ = addresses;
