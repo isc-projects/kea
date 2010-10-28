@@ -17,6 +17,8 @@ AC_LANG([C++])
 # Identify the compiler: this check must be after AC_PROG_CXX and AC_LANG.
 AM_CONDITIONAL(USE_GXX, test "X${GXX}" = "Xyes")
 AC_CHECK_DECL([__SUNPRO_CC], [SUNCXX="yes"], [SUNCXX="no"])
+AC_CHECK_DECL([__clang__], [CLANGPP="yes"], [CLANGPP="no"])
+AM_CONDITIONAL(USE_CLANGPP, test "X${CLANGPP}" = "Xyes")
 
 # Linker options
 
@@ -313,12 +315,14 @@ if test -z "$with_boost_include"; then
 		fi
 	done
 fi
+CPPFLAGS_SAVES="$CPPFLAGS"
 if test "${boost_include_path}" ; then
 	BOOST_INCLUDES="-I${boost_include_path}"
 	CPPFLAGS="$CPPFLAGS $BOOST_INCLUDES"
 fi
 AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp],,
   AC_MSG_ERROR([Missing required header files.]))
+CPPFLAGS="$CPPFLAGS_SAVES"
 AC_SUBST(BOOST_INCLUDES)
 
 #
@@ -604,6 +608,8 @@ Package:
   Name:          $PACKAGE_NAME
   Version:       $PACKAGE_VERSION
 
+C++ Compiler:    $CXX
+
 Flags:
   DEFS:          $DEFS
   CPPFLAGS:      $CPPFLAGS
@@ -613,6 +619,7 @@ dnl includes too
   Python:        ${PYTHON_INCLUDES}
                  ${PYTHON_LDFLAGS}
                  ${PYTHON_LIB}
+  Boost:         ${BOOST_INCLUDES}
   SQLite:        $SQLITE_CFLAGS
                  $SQLITE_LIBS
 
@@ -632,4 +639,3 @@ cat <<EOF
   Now you can type "make" to build BIND 10
 
 EOF
-

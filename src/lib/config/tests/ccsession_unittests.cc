@@ -150,9 +150,9 @@ TEST_F(CCSessionTest, parseCommand) {
 }
 
 TEST_F(CCSessionTest, session1) {
-    EXPECT_EQ(false, session.haveSubscription("Spec1", "*"));
+    EXPECT_FALSE(session.haveSubscription("Spec1", "*"));
     ModuleCCSession mccs(ccspecfile("spec1.spec"), session, NULL, NULL);
-    EXPECT_EQ(true, session.haveSubscription("Spec1", "*"));
+    EXPECT_TRUE(session.haveSubscription("Spec1", "*"));
 
     EXPECT_EQ(1, session.getMsgQueue()->size());
     ConstElementPtr msg;
@@ -165,9 +165,9 @@ TEST_F(CCSessionTest, session1) {
 }
 
 TEST_F(CCSessionTest, session2) {
-    EXPECT_EQ(false, session.haveSubscription("Spec2", "*"));
+    EXPECT_FALSE(session.haveSubscription("Spec2", "*"));
     ModuleCCSession mccs(ccspecfile("spec2.spec"), session, NULL, NULL);
-    EXPECT_EQ(true, session.haveSubscription("Spec2", "*"));
+    EXPECT_TRUE(session.haveSubscription("Spec2", "*"));
 
     EXPECT_EQ(1, session.getMsgQueue()->size());
     ConstElementPtr msg;
@@ -211,10 +211,10 @@ TEST_F(CCSessionTest, session3) {
     // client will ask for config
     session.getMessages()->add(createAnswer(0, el("{}")));
 
-    EXPECT_EQ(false, session.haveSubscription("Spec2", "*"));
+    EXPECT_FALSE(session.haveSubscription("Spec2", "*"));
     ModuleCCSession mccs(ccspecfile("spec2.spec"), session, my_config_handler,
                          my_command_handler);
-    EXPECT_EQ(true, session.haveSubscription("Spec2", "*"));
+    EXPECT_TRUE(session.haveSubscription("Spec2", "*"));
 
     EXPECT_EQ(2, session.getMsgQueue()->size());
     ConstElementPtr msg;
@@ -235,10 +235,10 @@ TEST_F(CCSessionTest, checkCommand) {
     // client will ask for config
     session.getMessages()->add(createAnswer(0, el("{}")));
 
-    EXPECT_EQ(false, session.haveSubscription("Spec2", "*"));
+    EXPECT_FALSE(session.haveSubscription("Spec2", "*"));
     ModuleCCSession mccs(ccspecfile("spec2.spec"), session, my_config_handler,
                          my_command_handler);
-    EXPECT_EQ(true, session.haveSubscription("Spec2", "*"));
+    EXPECT_TRUE(session.haveSubscription("Spec2", "*"));
 
     EXPECT_EQ(2, session.getMsgQueue()->size());
     ConstElementPtr msg;
@@ -340,23 +340,23 @@ TEST_F(CCSessionTest, remoteConfig) {
     int item1;
     
     ModuleCCSession mccs(ccspecfile("spec1.spec"), session, NULL, NULL);
-    EXPECT_EQ(true, session.haveSubscription("Spec1", "*"));
+    EXPECT_TRUE(session.haveSubscription("Spec1", "*"));
     
     // first simply connect, with no config values, and see we get
     // the default
     session.getMessages()->add(createAnswer(0, el("{}")));
 
-    EXPECT_EQ(false, session.haveSubscription("Spec2", "*"));
+    EXPECT_FALSE(session.haveSubscription("Spec2", "*"));
     module_name = mccs.addRemoteConfig(ccspecfile("spec2.spec"));
     EXPECT_EQ("Spec2", module_name);
-    EXPECT_EQ(true, session.haveSubscription("Spec2", "*"));
+    EXPECT_TRUE(session.haveSubscription("Spec2", "*"));
 
     item1 = mccs.getRemoteConfigValue(module_name, "item1")->intValue();
     EXPECT_EQ(1, item1);
 
     // Remove it and see we get an error asking for a config value
     mccs.removeRemoteConfig(module_name);
-    EXPECT_EQ(false, session.haveSubscription("Spec2", "*"));
+    EXPECT_FALSE(session.haveSubscription("Spec2", "*"));
     EXPECT_THROW(mccs.getRemoteConfigValue(module_name, "item1"), CCSessionError);
 
     // Now re-add it, with a specific config value, and see we get that
@@ -387,9 +387,9 @@ TEST_F(CCSessionTest, ignoreRemoteConfigCommands) {
     // client will ask for config
     session.getMessages()->add(createAnswer(0, el("{  }")));
 
-    EXPECT_EQ(false, session.haveSubscription("Spec2", "*"));
+    EXPECT_FALSE(session.haveSubscription("Spec2", "*"));
     ModuleCCSession mccs(ccspecfile("spec2.spec"), session, my_config_handler, my_command_handler);
-    EXPECT_EQ(true, session.haveSubscription("Spec2", "*"));
+    EXPECT_TRUE(session.haveSubscription("Spec2", "*"));
 
     EXPECT_EQ(2, session.getMsgQueue()->size());
     ConstElementPtr msg;
