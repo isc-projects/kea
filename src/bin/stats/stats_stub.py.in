@@ -27,8 +27,8 @@ from isc.cc import Session, SessionError
 from stats import get_datetime
 
 # for setproctitle
-import isc.utils.process
-isc.utils.process.rename()
+import isc.util.process
+isc.util.process.rename()
 
 # If B10_FROM_BUILD is set in the environment, we use data files
 # from a directory relative to that, otherwise we use the ones
