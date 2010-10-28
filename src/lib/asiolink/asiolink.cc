@@ -227,6 +227,18 @@ RecursiveQuery::RecursiveQuery(DNSService& dns_service, const char& forward,
     dns_service_(dns_service), ns_addr_(&forward), port_(port) 
 {}
 
+namespace {
+
+// This is just temporary so the interface change does not propagate too far
+struct ServerNotify : public UDPQuery::Callback {
+    DNSServer *server;
+    virtual void operator()(UDPQuery::Result result) {
+        server->resume(result == UDPQuery::SUCCESS);
+    }
+};
+
+}
+
 void
 RecursiveQuery::sendQuery(const Question& question, OutputBufferPtr buffer,
                           DNSServer* server)
@@ -237,7 +249,11 @@ RecursiveQuery::sendQuery(const Question& question, OutputBufferPtr buffer,
     // UDP and then fall back to TCP on failure, but for the moment
     // we're only going to handle UDP.
     asio::io_service& io = dns_service_.get_io_service();
-    UDPQuery q(io, question, ns_addr_, port_, buffer, server);
+    boost::shared_ptr<ServerNotify> callback(new ServerNotify);
+    // FIXME This is said it does problems when it is shared pointer, as
+    // it is destroyed too soon. But who deletes it now?
+    callback->server = server->clone();
+    UDPQuery q(io, question, ns_addr_, port_, buffer, callback);
     io.post(q);
 }
 

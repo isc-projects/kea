@@ -176,8 +176,9 @@ UDPServer::resume(const bool done) {
 /// The constructor
 UDPQuery::UDPQuery(io_service& io_service,
                    const Question& q, const IOAddress& addr, uint16_t port,
-                   OutputBufferPtr buffer, DNSServer* server) :
-    question_(q), buffer_(buffer), server_(server->clone())
+                   OutputBufferPtr buffer,
+                   boost::shared_ptr<Callback> callback, int timeout) :
+    question_(q), buffer_(buffer), callback_(callback)
 {
     udp proto = (addr.getFamily() == AF_INET) ? udp::v4() : udp::v6();
     socket_.reset(new udp::socket(io_service, proto));
@@ -232,8 +233,8 @@ UDPQuery::operator()(error_code ec, size_t length) {
         /// be unnecessary.)
         buffer_->writeData(data_.get(), length);
 
-        /// Signal the DNSServer object to resume processing.
-        server_->resume(true);
+        /// We are done
+        (*callback_)(SUCCESS);
     }
 }
 

@@ -180,11 +180,28 @@ private:
 //
 class UDPQuery : public coroutine {
 public:
+    // TODO Maybe this should be more generic than just for UDPQuery?
+    /**
+     * \short Result of the query
+     *
+     * This is related only to contacting the remote server. If the answer
+     * indicates error, it is still counted as SUCCESS here, if it comes back.
+     */
+    enum Result {
+        SUCCESS,
+        TIME_OUT
+    };
+    /// Abstract callback for the UDPQuery.
+    class Callback {
+        public:
+            /// This will be called when the UDPQuery is completed
+            virtual void operator()(Result result) = 0;
+    };
     explicit UDPQuery(asio::io_service& io_service,
                       const isc::dns::Question& q,
                       const IOAddress& addr, uint16_t port,
                       isc::dns::OutputBufferPtr buffer,
-                      DNSServer* server);
+                      boost::shared_ptr<Callback> callback, int timeout = -1);
     void operator()(asio::error_code ec = asio::error_code(),
                     size_t length = 0); 
 private:
@@ -211,20 +228,15 @@ private:
 
     // The output buffer supplied by the caller.  The resposne frmo
     // the upstream server will be copied here.
-    isc::dns::OutputBufferPtr buffer_;;
+    isc::dns::OutputBufferPtr buffer_;
 
     // These are allocated for each new query and are stored as
     // shared pointers to minimize copy overhead.
     isc::dns::OutputBufferPtr msgbuf_;
     boost::shared_array<char> data_;
 
-    // The UDP or TCP Server object from which the query originated.
-    // Note: Using a shared_ptr for this can cause problems when
-    // control is being transferred from this coroutine to the server;
-    // the reference count can drop to zero and cause the server to be
-    // destroyed before it executes.  Consequently in this case it's
-    // safer to use a raw pointer.
-    DNSServer* server_;
+    // This will be called when we are done.
+    boost::shared_ptr<Callback> callback_;
 };
 }
 
