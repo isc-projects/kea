@@ -159,7 +159,7 @@ public:
         FindResult(Result param_code, const Zone* param_zone) :
             code(param_code), zone(param_zone)
         {}
-        const Result const code;
+        const Result code;
         const Zone* const zone;
     };
 
