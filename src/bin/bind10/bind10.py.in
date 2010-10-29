@@ -141,9 +141,14 @@ class ProcessInfo:
         self.username = username
         self._spawn()
 
-    def _setuid(self):
+    def _preexec_work(self):
         """Function used before running a program that needs to run as a
         different user."""
+        # First, put us into a separate process group so we don't get
+        # SIGINT signals on Ctrl-C (the boss will shut everthing down by
+        # other means).
+        os.setpgrp()
+        # Second, set the user ID if one has been specified
         if self.uid is not None:
             try:
                 posix.setuid(self.uid)
@@ -177,7 +182,7 @@ class ProcessInfo:
                                         stderr=spawn_stderr,
                                         close_fds=True,
                                         env=spawn_env,
-                                        preexec_fn=self._setuid)
+                                        preexec_fn=self._preexec_work)
         self.pid = self.process.pid
         self.restart_schedule.set_run_start_time()
 
