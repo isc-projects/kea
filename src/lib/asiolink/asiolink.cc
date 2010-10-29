@@ -231,10 +231,17 @@ namespace {
 
 // This is just temporary so the interface change does not propagate too far
 struct ServerNotify : public UDPQuery::Callback {
-    DNSServer *server;
-    virtual void operator()(UDPQuery::Result result) {
-        server->resume(result == UDPQuery::SUCCESS);
-    }
+        ServerNotify(DNSServer *server) :
+            server_(server)
+        { }
+        virtual void operator()(UDPQuery::Result result) {
+            server_->resume(result == UDPQuery::SUCCESS);
+            delete this;
+        }
+    private:
+        // FIXME This is said it does problems when it is shared pointer, as
+        // it is destroyed too soon. But who deletes it now?
+        DNSServer *server_;
 };
 
 }
@@ -249,11 +256,8 @@ RecursiveQuery::sendQuery(const Question& question, OutputBufferPtr buffer,
     // UDP and then fall back to TCP on failure, but for the moment
     // we're only going to handle UDP.
     asio::io_service& io = dns_service_.get_io_service();
-    boost::shared_ptr<ServerNotify> callback(new ServerNotify);
-    // FIXME This is said it does problems when it is shared pointer, as
-    // it is destroyed too soon. But who deletes it now?
-    callback->server = server->clone();
-    UDPQuery q(io, question, ns_addr_, port_, buffer, callback);
+    UDPQuery q(io, question, ns_addr_, port_, buffer,
+        new ServerNotify(server->clone()));
     io.post(q);
 }
 

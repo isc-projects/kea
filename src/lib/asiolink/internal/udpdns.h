@@ -198,13 +198,21 @@ public:
             /// This will be called when the UDPQuery is completed
             virtual void operator()(Result result) = 0;
     };
+    /**
+     * \short Constructor.
+     *
+     * It creates the query.
+     * @param callback will be called when we terminate. It is your task to
+     *     delete it if allocated on heap.
+     * @param timeout in ms.
+     */
     explicit UDPQuery(asio::io_service& io_service,
                       const isc::dns::Question& q,
                       const IOAddress& addr, uint16_t port,
                       isc::dns::OutputBufferPtr buffer,
-                      boost::shared_ptr<Callback> callback, int timeout = -1);
+                      Callback *callback, int timeout = -1);
     void operator()(asio::error_code ec = asio::error_code(),
-                    size_t length = 0); 
+                    size_t length = 0);
     /// Terminate the query.
     void stop(Result reason = STOPPED);
 private:
@@ -239,7 +247,7 @@ private:
     boost::shared_array<char> data_;
 
     // This will be called when we are done.
-    boost::shared_ptr<Callback> callback_;
+    Callback *callback_;
 };
 }
 
