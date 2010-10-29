@@ -44,11 +44,12 @@ namespace nsas {
 template <typename T>
 class LruList : boost::noncopyable {
 public:
-    typedef typename std::list<boost::shared_ptr<T> >::iterator iterator;
+    typedef typename std::list<boost::shared_ptr<T> > lru_list;
+    typedef typename lru_list::iterator               iterator;
 
-    /// \brief Expired Operation
+    /// \brief Dropped Operation
     ///
-    /// When an object is removed from the LRU list because it has not been
+    /// When an object is dropped from the LRU list because it has not been
     /// accessed for some time, it is possible that the action should trigger
     /// some other functions.  For this reason, it is possible to register
     /// a list-wide functor object to execute in this casee.
@@ -56,53 +57,26 @@ public:
     /// Note that the function does not execute as the result of a call to
     /// remove() - that is an explicit call and it is assumed that the caller
     /// will handle any additional operations needed.
-    class Expired {
+    class Dropped {
     public:
 
-        /// \brief Expired Object Handler
+        /// \brief Dropped Object Handler
         ///
-        /// Function object called when the object expires from the LRU list.
+        /// Function object called when the object drops off the end of the
+        /// LRU list.
         ///
-        /// \param expired Expired object.
-        virtual void operator()(boost::shared_ptr<T>& element) = 0;
-    };
-
-    /// \brief Element of an LRU List
-    ///
-    /// This defines an element of the LRU List.  All objects stored in one
-    /// of these lists MUST be derived from this element.
-    ///
-    /// The class provides the storage for a pointer into the LRU list,
-    /// used to quickly locate the element when it is being "touched".
-    ///
-    /// Although it would be possible to require classes stored in the list
-    /// to have particular methods (and so eliminate the inheritance), this
-    /// would require the implementor to know something about the list and to
-    /// provide the appropriate logic.
-    ///
-    /// Unfortunately, using a base class does not simplify the definition of
-    /// the LRU list list class (by allowing the list to be defined as a list
-    /// of base class objects), as the list is a list of shared pointers to
-    /// objects, not a list of pointers to object.  Arguments are shared
-    /// pointers, but a shared pointer to a base class is not a subclass of a
-    /// shared pointer to a derived class.  For this reason, the list type
-    /// is a template parameter.
-    struct Element {
-        typename LruList<T>::iterator  handle_;    ///< Handle into the LRU List
-        bool                           valid_;     ///< true if handle is valid
-
-        Element() : valid_(false)
-        {}
+        /// \param drop Object being dropped.
+        virtual void operator()(boost::shared_ptr<T>& drop) = 0;
     };
 
     /// \brief Constructor
     ///
     /// \param max_size Maximum size of the list before elements are dropped.
-    /// \param expired Pointer to a function object that will get called as
+    /// \param dropped Pointer to a function object that will get called as
     /// elements are dropped.  This object will be stored using a shared_ptr,
     /// so should be allocated with new().
-    LruList(uint32_t max_size = 1000, Expired* expired = NULL) :
-        max_size_(max_size), count_(0), expired_(expired)
+    LruList(uint32_t max_size = 1000, Dropped* dropped = NULL) :
+        max_size_(max_size), count_(0), dropped_(dropped)
     {}
 
     /// \brief Virtual Destructor
@@ -169,7 +143,7 @@ private:
     std::list<boost::shared_ptr<T> >    lru_;       ///< The LRU list itself
     uint32_t                            max_size_;  ///< Max size of the list
     uint32_t                            count_;     ///< Count of elements
-    boost::shared_ptr<Expired>          expired_;   ///< Expired object
+    boost::shared_ptr<Dropped>          dropped_;   ///< Dropped object
 };
 
 // Add entry to the list
@@ -181,8 +155,7 @@ void LruList<T>::add(boost::shared_ptr<T>& element) {
 
     // Add the entry and set its pointer field to point into the list.
     // insert() is used to get the pointer.
-    element.get()->handle_ = lru_.insert(lru_.end(), element);
-    element.get()->valid_ = true;
+    element->setLruIterator(lru_.insert(lru_.end(), element));
 
     // ... and update the count while we have the mutex.
     ++count_;
@@ -194,10 +167,11 @@ void LruList<T>::add(boost::shared_ptr<T>& element) {
     while (count_ > max_size_) {
         if (!lru_.empty()) {
 
-            // Run the expiration handler (if there is one) on the
-            // to-be-expired object.
-            if (expired_) {
-                (*expired_)(*lru_.begin());
+            // Run the drop handler (if there is one) on the
+
+            // to-be-dropped object.
+            if (dropped_) {
+                (*dropped_)(*lru_.begin());
             }
 
             // ... and get rid of it from the list
@@ -223,14 +197,14 @@ void LruList<T>::remove(boost::shared_ptr<T>& element) {
     // what other elements are added or removed, the pointer remains valid.
     //
     // If the pointer is not valid, this is a no-op.
-    if (element.get()->valid_) {
+    if (element->iteratorValid()) {
 
         // Is valid, so protect list against concurrent access
         boost::interprocess::scoped_lock<boost::mutex> lock(mutex_);
 
-        element.get()->valid_ = false;      // Invalidate element
-        lru_.erase(element.get()->handle_); // Remove element from list
-        --count_;                           // One less element
+        lru_.erase(element->getLruIterator());  // Remove element from list
+        element->invalidateIterator();          // Invalidate pointer
+        --count_;                               // One less element
     }
 }
 
@@ -239,18 +213,18 @@ template <typename T>
 void LruList<T>::touch(boost::shared_ptr<T>& element) {
 
     // As before, if the pointer is not valid, this is a no-op.
-    if (element.get()->valid_) {
+    if (element->iteratorValid()) {
 
         // Protect list against concurrent access
         boost::interprocess::scoped_lock<boost::mutex> lock(mutex_);
 
         // Move the element to the end of the list.
-        lru_.splice(lru_.end(), lru_, element.get()->handle_);
+        lru_.splice(lru_.end(), lru_, element->getLruIterator());
 
         // Update the iterator in the element to point to it.  We can
         // offset from end() as a list has a bidirectional iterator.
         iterator i = lru_.end();
-        element.get()->handle_ = --i;
+        element->setLruIterator(--i);
     }
 }
 

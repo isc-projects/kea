@@ -22,6 +22,7 @@
 #include <boost/thread.h>
 #include <boost/shared_ptr.h>
 
+#include "nsas_entry.h"
 #include "asiolink.h"
 
 class NameserverEntry;
@@ -35,14 +36,15 @@ class NameserverEntry;
 /// complicated, in that the class takes account of triggering fetches for
 /// addresses of nameservers when the address records expire.
 
-class ZoneEntry {
+class ZoneEntry : public NsasEntry<ZoneEntry> {
 public:
 
     /// \brief Constructor
     ///
     /// Creates a zone entry object with an RRset representing the nameservers,
     /// plus possibly additional RRsets holding address information.
-    ZoneEntry(AbstractRRset* nsrrset, const std::vector<AbstractRRSet*>& additional);
+    ZoneEntry(AbstractRRset* nsrrset,
+            const std::vector<AbstractRRSet*>& additional);
 
     /// \brief Lookup Address
     ///

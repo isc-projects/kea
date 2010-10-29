@@ -32,9 +32,6 @@
 // Maximum key length if the maximum size of a DNS name
 #define MAX_KEY_LENGTH 255
 
-using namespace std;
-using namespace boost::interprocess;
-
 namespace isc {
 namespace nsas {
 
@@ -48,10 +45,17 @@ namespace nsas {
 /// does not copy its argument.
 template <typename T>
 struct HashTableSlot {
-    typedef boost::interprocess::interprocess_upgradable_mutex mutex_type;
 
-    mutex_type                          mutex_;     ///< Protection mutex
-    std::list<boost::shared_ptr<T> >    list_;      ///< List head
+    /// \brief Type definitions
+    ///
+    //@{
+
+    typedef typename std::list<boost::shared_ptr<T> >::iterator  iterator;
+                                    ///< Iterator over elements with same hash
+
+    typedef boost::interprocess::interprocess_upgradable_mutex mutex_type;
+                                    ///< Mutex protecting this slot
+    //@}
 
     /// \brief Default Constructor
     HashTableSlot()
@@ -63,8 +67,9 @@ struct HashTableSlot {
     /// defined outside the class to allow for use of the UNUSED_PARAM macro.
     HashTableSlot(const HashTableSlot<T>& unused);
 
-    /// ... and a couple of external definitions
-    typedef typename std::list<boost::shared_ptr<T> >::iterator  iterator;
+public:
+    mutex_type                          mutex_;     ///< Protection mutex
+    std::list<boost::shared_ptr<T> >    list_;      ///< List head
 };
 
 // (Non)Copy Constructor
@@ -94,7 +99,7 @@ public:
     /// \param key Key describing the object
     ///
     /// \return bool true of the name of the object is equal to the name given.
-    virtual bool operator()(T* object, const HashKey& key) = 0;
+    virtual bool operator()(T* object, const HashKey& key) const = 0;
 };
 
 
@@ -113,6 +118,18 @@ public:
 template <typename T>
 class HashTable {
 public:
+
+    /// \brief Type Definitions
+    ///
+    //@{
+    typedef typename
+    boost::interprocess::sharable_lock<typename HashTableSlot<T>::mutex_type>
+    sharable_lock;                  ///< Type for a scope-limited read-lock
+
+    typedef typename
+    boost::interprocess::scoped_lock<typename HashTableSlot<T>::mutex_type>
+    scoped_lock;                    ///< Type for a scope-limited write-lock
+    //@}
 
     /// \brief Constructor
     ///
@@ -174,8 +191,8 @@ public:
     }
 
 private:
-    Hash                        hash_;  ///< Hashing function
-    vector<HashTableSlot<T> >   table_; ///< The hash table itself
+    Hash                             hash_;  ///< Hashing function
+    std::vector<HashTableSlot<T> >   table_; ///< The hash table itself
     boost::shared_ptr<HashTableCompare<T> > compare_;  ///< Compare object
 };
 
@@ -195,7 +212,7 @@ boost::shared_ptr<T> HashTable<T>::get(const HashKey& key) {
 
     // Take out a read lock on this hash slot.  The lock is released when this
     // object goes out of scope.
-    sharable_lock<typename HashTableSlot<T>::mutex_type> lock(table_[index].mutex_);
+    sharable_lock lock(table_[index].mutex_);
 
     // Locate the object.
     typename HashTableSlot<T>::iterator i;
@@ -221,7 +238,7 @@ bool HashTable<T>::remove(const HashKey& key) {
     // Access to the elements of this hash slot are accessed under a mutex.
     // The mutex will be released when this object goes out of scope and is
     // destroyed.
-    scoped_lock<typename HashTableSlot<T>::mutex_type> lock(table_[index].mutex_);
+    scoped_lock lock(table_[index].mutex_);
 
     // Now search this list to see if the element already exists.
     typename HashTableSlot<T>::iterator i;
@@ -249,7 +266,7 @@ bool HashTable<T>::add(boost::shared_ptr<T>& object, const HashKey& key,
     uint32_t index = hash_(key);
 
     // Access to the elements of this hash slot are accessed under a mutex.
-    scoped_lock<typename HashTableSlot<T>::mutex_type> lock(table_[index].mutex_);
+    scoped_lock lock(table_[index].mutex_);
 
     // Now search this list to see if the element already exists.
     typename HashTableSlot<T>::iterator i;

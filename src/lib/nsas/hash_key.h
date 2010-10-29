@@ -17,10 +17,12 @@
 #ifndef __HASH_KEY_H
 #define __HASH_KEY_H
 
+#include <stdint.h>
+#include <string>
+#include "config.h"
+
 namespace isc {
 namespace nsas {
-
-#include <stdint.h>
 
 /// \brief Hash Key
 ///
@@ -63,7 +65,21 @@ struct HashKey {
         key(the_key.c_str()), keylen(the_key.size()), class_code(the_class_code)
     {}
 
-    // As these are public variables, they names do not end with an underscore.
+    /// \brief Equality
+    ///
+    /// Convenience for unit testing, this matches two hash keys as being
+    /// equal if the key strings match on a case-independent basis and the
+    /// classes match.
+    ///
+    /// Note that the class strings may include null bytes; the match is
+    /// done on a byte-by-byte basis, with codes in the range 'A' to 'Z' being
+    /// mapped to 'a' to 'z'.
+    ///
+    /// \param other Hash key to compare against.
+    ///
+    /// \return true if the two hash key objects are the same.
+    bool operator==(const isc::nsas::HashKey& other);
+
     const char* key;        ///< Pointer to the start of the key string
     uint32_t    keylen;     ///< Length of the key string
     uint16_t    class_code; ///< Class associated with the key
@@ -71,6 +87,5 @@ struct HashKey {
 
 } // namespace nsas
 } // namespace isc
-
 
 #endif // __HASH_KEY_H
