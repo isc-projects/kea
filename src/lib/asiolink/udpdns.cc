@@ -176,8 +176,7 @@ UDPServer::resume(const bool done) {
 /// The constructor
 UDPQuery::UDPQuery(io_service& io_service,
                    const Question& q, const IOAddress& addr, uint16_t port,
-                   OutputBufferPtr buffer,
-                   boost::shared_ptr<Callback> callback, int timeout) :
+                   OutputBufferPtr buffer, Callback *callback, int timeout) :
     question_(q), buffer_(buffer), callback_(callback)
 {
     udp proto = (addr.getFamily() == AF_INET) ? udp::v4() : udp::v6();
