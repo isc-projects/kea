@@ -189,7 +189,8 @@ public:
      */
     enum Result {
         SUCCESS,
-        TIME_OUT
+        TIME_OUT,
+        STOPPED
     };
     /// Abstract callback for the UDPQuery.
     class Callback {
@@ -204,6 +205,8 @@ public:
                       boost::shared_ptr<Callback> callback, int timeout = -1);
     void operator()(asio::error_code ec = asio::error_code(),
                     size_t length = 0); 
+    /// Terminate the query.
+    void stop(Result reason = STOPPED);
 private:
     enum { MAX_LENGTH = 4096 };
 
