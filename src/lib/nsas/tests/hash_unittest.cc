@@ -23,6 +23,8 @@
 
 #include "hash.h"
 
+#include "nsas_test.h"
+
 using namespace std;
 
 namespace isc {
@@ -37,9 +39,10 @@ static uint32_t CountUnique(const vector<uint32_t>& input) {
     // Check to see if values are unique.  Do this by sorting the values into
     // ascending order, removing duplicates, and checking the size again.
     //
-    // Note that unique only shifts elements around - it does not remove non-
-    // unique values, so it does change the size of the array.  The call to
-    // erase removes the elements left at the end of the array.
+    // Note that "unique" only shifts elements around - it does not remove non-
+    // unique values, so it does not change the size of the vector.  The call to
+    // erase removes the elements between the last unique element and the end
+    // of the vector, so shrinking the vector.
     sort(vcopy.begin(), vcopy.end());
     vcopy.erase(unique(vcopy.begin(), vcopy.end()), vcopy.end());
 
@@ -57,20 +60,20 @@ class HashTest : public ::testing::Test {
 TEST_F(HashTest, Constructor) {
     
     // Default constructor
-    Hash hash1(1009, 250);
-    EXPECT_EQ(1009, hash1.tableSize());
+    Hash hash1(HASHTABLE_DEFAULT_SIZE, 250);
+    EXPECT_EQ(HASHTABLE_DEFAULT_SIZE, hash1.tableSize());
     EXPECT_EQ(250, hash1.maxKeyLength());
 }
 
 // Test of the hash algorithm.  Without duplicating the code for the algorithm
 // here, testing is a bit awkward.  So the tests will check that a series of
-// names get hashed to different values.  (Choosing a 1009 element array should
+// names get hashed to different values.  (Choosing a HASHTABLE_DEFAULT_SIZE element array should
 // give minimal overlap; we'll allow for a maximum of 2 collisions with 50
 // similar names.  If there are more, perhaps the algorithm is at fault.
 
 TEST_F(HashTest, Algorithm) {
 
-    const int size = 1009;      // Size of the hash table
+    const int size = HASHTABLE_DEFAULT_SIZE;      // Size of the hash table
     Hash hash(size, 255, false);// Hashing algorithm object with seed
                                 // randomisation disabled
     string base = "alphabeta";  // Base of the names to behashed
@@ -96,7 +99,7 @@ TEST_F(HashTest, Algorithm) {
 
 TEST_F(HashTest, CaseMapping) {
 
-    Hash hash(1009, 255);
+    Hash hash(HASHTABLE_DEFAULT_SIZE, 255);
     
     // Check all unsigned characters
     for (int i = 0; i < 255; ++i) {
@@ -116,7 +119,7 @@ TEST_F(HashTest, MixedCase) {
     std::string test1 = "example1234.co.uk.";
     std::string test2 = "EXAmple1234.co.uk.";
 
-    Hash hash(1009, 255, false);    // Disable randomisation for testing
+    Hash hash(HASHTABLE_DEFAULT_SIZE, 255, false);    // Disable randomisation for testing
 
     // Case not ignored, hashes should be different
     uint32_t value1 = hash(HashKey(test1.c_str(), test1.size(), 0), false);
@@ -142,7 +145,7 @@ TEST_F(HashTest, MixedCase) {
 TEST_F(HashTest, ClassCodes) {
 
     std::string test1 = "example1234.co.uk.";
-    Hash hash(1009, 255, false);    // Disable randomisation for testing
+    Hash hash(HASHTABLE_DEFAULT_SIZE, 255, false);    // Disable randomisation for testing
 
     // Just try codes in the range 0 to 9 - more than covers the allocated
     // codes.
@@ -171,7 +174,7 @@ TEST_F(HashTest, Overlong) {
     std::string string1 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
     std::string string2 = string1 + string(4096, 'x');
 
-    Hash hash(1009, string1.size());
+    Hash hash(HASHTABLE_DEFAULT_SIZE, string1.size());
 
     // Do two hashes
     uint32_t value1 = hash(HashKey(string1.c_str(), string1.size(), 0));

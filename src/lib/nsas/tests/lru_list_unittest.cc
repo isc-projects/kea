@@ -14,6 +14,7 @@
 
 // $Id$
 
+#include <iostream>
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -21,34 +22,25 @@
 #include <gtest/gtest.h>
 #include <boost/lexical_cast.hpp>
 
+#include "nsas_entry.h"
 #include "lru_list.h"
+
+#include "nsas_test.h"
 
 using namespace std;
 
 namespace isc {
 namespace nsas {
 
-/// \brief Element Class
+/// \brief Dropped Functor Class
 ///
-/// This is an object that will be stored in the list.
-struct DataStore : public LruList<DataStore>::Element {
-    int         value_;
-    std::string text_;
-
-    /// \brief Constructor
-    DataStore(uint32_t value = 0, string text = "") : value_(value), text_(text)
-    {}
-};
-
-/// \brief Expired Functor Class
-///
-/// Functor object is called when an object in the list becomes expired.
-/// To prove that it has run, this function does nothing more than negate the
-/// the value of the data store.
-class Expired : public LruList<DataStore>::Expired {
+/// Functor object is called when an object is dropped from the LRU list.
+/// To prove that it has run, this function does nothing more than set the
+/// MS bit on the 16-bit class value.
+class Dropped : public LruList<TestEntry>::Dropped {
 public:
-    virtual void operator()(boost::shared_ptr<DataStore>& element) {
-        element.get()->value_ = -element.get()->value_;
+    virtual void operator()(boost::shared_ptr<TestEntry>& entry) {
+        entry->setClass(entry->getClass() | 0x8000);
     }
 };
 
@@ -57,112 +49,118 @@ public:
 class LruListTest : public ::testing::Test {
 protected:
     LruListTest() :
-        element1_(new DataStore(1, "alpha")),
-        element2_(new DataStore(2, "beta")),
-        element3_(new DataStore(3, "gamma")),
-        element4_(new DataStore(4, "delta")),
-        element5_(new DataStore(5, "epsilon")),
-        element6_(new DataStore(6, "zeta")),
-        element7_(new DataStore(7, "eta"))
+        entry1_(new TestEntry("alpha", 1)),
+        entry2_(new TestEntry("beta", 2)),
+        entry3_(new TestEntry("gamma", 3)),
+        entry4_(new TestEntry("delta", 4)),
+        entry5_(new TestEntry("epsilon", 5)),
+        entry6_(new TestEntry("zeta", 6)),
+        entry7_(new TestEntry("eta", 7))
     {}
 
+    virtual ~LruListTest() 
+    {}
 
-    boost::shared_ptr<DataStore>    element1_;
-    boost::shared_ptr<DataStore>    element2_;
-    boost::shared_ptr<DataStore>    element3_;
-    boost::shared_ptr<DataStore>    element4_;
-    boost::shared_ptr<DataStore>    element5_;
-    boost::shared_ptr<DataStore>    element6_;
-    boost::shared_ptr<DataStore>    element7_;
+    boost::shared_ptr<TestEntry>    entry1_;
+    boost::shared_ptr<TestEntry>    entry2_;
+    boost::shared_ptr<TestEntry>    entry3_;
+    boost::shared_ptr<TestEntry>    entry4_;
+    boost::shared_ptr<TestEntry>    entry5_;
+    boost::shared_ptr<TestEntry>    entry6_;
+    boost::shared_ptr<TestEntry>    entry7_;
 };
 
 
 // Test of the constructor
 TEST_F(LruListTest, Constructor) {
-    LruList<DataStore>  lru(100);
+    LruList<TestEntry>  lru(100);
     EXPECT_EQ(100, lru.getMaxSize());
     EXPECT_EQ(0, lru.size());
 }
 
-// Test of Get/Set the maximum number of elements
+// Test of Get/Set the maximum number of entrys
 TEST_F(LruListTest, GetSet) {
-    LruList<DataStore>  lru(100);
+    LruList<TestEntry>  lru(100);
     EXPECT_EQ(100, lru.getMaxSize());
-
     lru.setMaxSize(42);
     EXPECT_EQ(42, lru.getMaxSize());
 }
 
-// Test that adding an element really does add an element
+// Test that adding an entry really does add an entry
 TEST_F(LruListTest, Add) {
-    LruList<DataStore>  lru(100);
+    LruList<TestEntry>  lru(100);
     EXPECT_EQ(0, lru.size());
 
-    lru.add(element1_);
+    lru.add(entry1_);
     EXPECT_EQ(1, lru.size());
 
-    lru.add(element2_);
+    lru.add(entry2_);
     EXPECT_EQ(2, lru.size());
 }
 
-// Test that removing an element really does remove it.
+// Test that removing an entry really does remove it.
 TEST_F(LruListTest, Remove) {
-    LruList<DataStore>  lru(100);
+    LruList<TestEntry>  lru(100);
     EXPECT_EQ(0, lru.size());
 
-    lru.add(element1_);
+    EXPECT_FALSE(entry1_->iteratorValid());
+    lru.add(entry1_);
+    EXPECT_TRUE(entry1_->iteratorValid());
     EXPECT_EQ(1, lru.size());
 
-    lru.add(element2_);
+    EXPECT_FALSE(entry2_->iteratorValid());
+    lru.add(entry2_);
+    EXPECT_TRUE(entry2_->iteratorValid());
     EXPECT_EQ(2, lru.size());
 
-    lru.remove(element1_);
+    lru.remove(entry1_);
+    EXPECT_FALSE(entry1_->iteratorValid());
     EXPECT_EQ(1, lru.size());
 }
 
-// Check that adding a new element to a limited size list does delete the
-// oldest element from the list.
+// Check that adding a new entry to a limited size list does delete the
+// oldest entry from the list.
 TEST_F(LruListTest, SizeLimit) {
-    LruList<DataStore>  lru(3);
+    LruList<TestEntry>  lru(3);
     EXPECT_EQ(0, lru.size());
 
-    // Add first element and check that the shared pointer's reference count
-    // has increased.  There will be two references: one from the "element1_"
+    // Add first entry and check that the shared pointer's reference count
+    // has increased.  There will be two references: one from the "entry1_"
     // member in the test fixture class, and one from the list.
-    EXPECT_EQ(1, element1_.use_count());
-    lru.add(element1_);
-    EXPECT_EQ(2, element1_.use_count());
+    EXPECT_EQ(1, entry1_.use_count());
+    lru.add(entry1_);
+    EXPECT_EQ(2, entry1_.use_count());
     EXPECT_EQ(1, lru.size());
 
-    // Same for element 2.
-    EXPECT_EQ(1, element2_.use_count());
-    lru.add(element2_);
-    EXPECT_EQ(2, element2_.use_count());
+    // Same for entry 2.
+    EXPECT_EQ(1, entry2_.use_count());
+    lru.add(entry2_);
+    EXPECT_EQ(2, entry2_.use_count());
     EXPECT_EQ(2, lru.size());
 
-    // Same for element 3.
-    EXPECT_EQ(1, element3_.use_count());
-    lru.add(element3_);
-    EXPECT_EQ(2, element3_.use_count());
+    // Same for entry 3.
+    EXPECT_EQ(1, entry3_.use_count());
+    lru.add(entry3_);
+    EXPECT_EQ(2, entry3_.use_count());
     EXPECT_EQ(3, lru.size());
 
-    // Adding element 4 should remove element 1 from the list.  This will
-    // delete the list's shared pointer to the element and will therefore
-    // drop the reference count back to one (from the "element1_" member in
+    // Adding entry 4 should remove entry 1 from the list.  This will
+    // delete the list's shared pointer to the entry and will therefore
+    // drop the reference count back to one (from the "entry1_" member in
     // the text fixture class).
-    EXPECT_EQ(2, element1_.use_count());
-    EXPECT_EQ(1, element4_.use_count());
-    lru.add(element4_);
-    EXPECT_EQ(1, element1_.use_count());
-    EXPECT_EQ(2, element4_.use_count());
+    EXPECT_EQ(2, entry1_.use_count());
+    EXPECT_EQ(1, entry4_.use_count());
+    lru.add(entry4_);
+    EXPECT_EQ(1, entry1_.use_count());
+    EXPECT_EQ(2, entry4_.use_count());
     EXPECT_EQ(3, lru.size());
 
-    // Adding element 5 should remove element 2 from the list.
-    EXPECT_EQ(2, element2_.use_count());
-    EXPECT_EQ(1, element5_.use_count());
-    lru.add(element5_);
-    EXPECT_EQ(1, element2_.use_count());
-    EXPECT_EQ(2, element5_.use_count());
+    // Adding entry 5 should remove entry 2 from the list.
+    EXPECT_EQ(2, entry2_.use_count());
+    EXPECT_EQ(1, entry5_.use_count());
+    lru.add(entry5_);
+    EXPECT_EQ(1, entry2_.use_count());
+    EXPECT_EQ(2, entry5_.use_count());
     EXPECT_EQ(3, lru.size());
 }
 
@@ -170,118 +168,120 @@ TEST_F(LruListTest, SizeLimit) {
 TEST_F(LruListTest, Touch) {
 
     // Create the list
-    LruList<DataStore>  lru(3);
+    LruList<TestEntry>  lru(3);
     EXPECT_EQ(0, lru.size());
-    lru.add(element1_);
-    lru.add(element2_);
-    lru.add(element3_);
+    lru.add(entry1_);
+    lru.add(entry2_);
+    lru.add(entry3_);
 
-    // Check the reference counts of the elements and the list size
-    EXPECT_EQ(2, element1_.use_count());
-    EXPECT_EQ(2, element2_.use_count());
-    EXPECT_EQ(2, element3_.use_count());
-    EXPECT_EQ(1, element4_.use_count());
-    EXPECT_EQ(1, element5_.use_count());
-    EXPECT_EQ(1, element6_.use_count());
-    EXPECT_EQ(1, element7_.use_count());
+    // Check the reference counts of the entrys and the list size
+    EXPECT_EQ(2, entry1_.use_count());
+    EXPECT_EQ(2, entry2_.use_count());
+    EXPECT_EQ(2, entry3_.use_count());
+    EXPECT_EQ(1, entry4_.use_count());
+    EXPECT_EQ(1, entry5_.use_count());
+    EXPECT_EQ(1, entry6_.use_count());
+    EXPECT_EQ(1, entry7_.use_count());
     EXPECT_EQ(3, lru.size());
 
-    // "Touch" the first element
-    lru.touch(element1_);
+    // "Touch" the first entry
+    lru.touch(entry1_);
 
-    // Adding two more entries should not remove the touched element.
-    lru.add(element4_);
-    lru.add(element5_);
+    // Adding two more entries should not remove the touched entry.
+    lru.add(entry4_);
+    lru.add(entry5_);
 
-    // Check the status of the elements and the list.
-    EXPECT_EQ(2, element1_.use_count());
-    EXPECT_EQ(1, element2_.use_count());
-    EXPECT_EQ(1, element3_.use_count());
-    EXPECT_EQ(2, element4_.use_count());
-    EXPECT_EQ(2, element5_.use_count());
-    EXPECT_EQ(1, element6_.use_count());
-    EXPECT_EQ(1, element7_.use_count());
+    // Check the status of the entrys and the list.
+    EXPECT_EQ(2, entry1_.use_count());
+    EXPECT_EQ(1, entry2_.use_count());
+    EXPECT_EQ(1, entry3_.use_count());
+    EXPECT_EQ(2, entry4_.use_count());
+    EXPECT_EQ(2, entry5_.use_count());
+    EXPECT_EQ(1, entry6_.use_count());
+    EXPECT_EQ(1, entry7_.use_count());
     EXPECT_EQ(3, lru.size());
 
-    // Now touch the element agin to move it to the back of the list.
-    // This checks that the iterator stored in the element as a result of the
+    // Now touch the entry agin to move it to the back of the list.
+    // This checks that the iterator stored in the entry as a result of the
     // last touch operation is valid.
-    lru.touch(element1_);
+    lru.touch(entry1_);
 
-    // Check this by adding two more elements and checking reference counts
+    // Check this by adding two more entrys and checking reference counts
     // to see what is stored.
-    lru.add(element6_);
-    lru.add(element7_);
+    lru.add(entry6_);
+    lru.add(entry7_);
 
-    EXPECT_EQ(2, element1_.use_count());
-    EXPECT_EQ(1, element2_.use_count());
-    EXPECT_EQ(1, element3_.use_count());
-    EXPECT_EQ(1, element4_.use_count());
-    EXPECT_EQ(1, element5_.use_count());
-    EXPECT_EQ(2, element6_.use_count());
-    EXPECT_EQ(2, element7_.use_count());
+    EXPECT_EQ(2, entry1_.use_count());
+    EXPECT_EQ(1, entry2_.use_count());
+    EXPECT_EQ(1, entry3_.use_count());
+    EXPECT_EQ(1, entry4_.use_count());
+    EXPECT_EQ(1, entry5_.use_count());
+    EXPECT_EQ(2, entry6_.use_count());
+    EXPECT_EQ(2, entry7_.use_count());
     EXPECT_EQ(3, lru.size());
 }
 
-// Expired functor tests: tests that the function object is called when an
+// Dropped functor tests: tests that the function object is called when an
 // object expires from the list.
-TEST_F(LruListTest, Expired) {
+TEST_F(LruListTest, Dropped) {
 
     // Create an object with an expiration handler.
-    LruList<DataStore> lru(3, new Expired());
+    LruList<TestEntry> lru(3, new Dropped());
 
     // Fill the list
-    lru.add(element1_);
-    lru.add(element2_);
-    lru.add(element3_);
+    lru.add(entry1_);
+    lru.add(entry2_);
+    lru.add(entry3_);
 
-    EXPECT_EQ(1, element1_.get()->value_);
-    EXPECT_EQ(2, element2_.get()->value_);
+    EXPECT_EQ(1, entry1_->getClass());
+    EXPECT_EQ(2, entry2_->getClass());
 
-    // Add another element and check that the handler runs.
-    lru.add(element4_);
-    EXPECT_EQ(-1, element1_.get()->value_);
+    // Add another entry and check that the handler runs.
+    EXPECT_EQ(0, (entry1_->getClass() & 0x8000));
+    lru.add(entry4_);
+    EXPECT_NE(0, (entry1_->getClass() & 0x8000));
 
-    lru.add(element5_);
-    EXPECT_EQ(-2, element2_.get()->value_);
+    EXPECT_EQ(0, (entry2_->getClass() & 0x8000));
+    lru.add(entry5_);
+    EXPECT_NE(0, (entry2_->getClass() & 0x8000));
 
-    // Delete an element and check that the handler does not run. 
-    EXPECT_EQ(3, element3_.get()->value_);
-    lru.remove(element3_);
-    EXPECT_EQ(3, element3_.get()->value_);
+    // Delete an entry and check that the handler does not run. 
+    EXPECT_EQ(0, (entry3_->getClass() & 0x8000));
+    lru.remove(entry3_);
+    EXPECT_EQ(0, (entry3_->getClass() & 0x8000));
 }
 
 // Miscellaneous tests - pathological conditions
 TEST_F(LruListTest, Miscellaneous) {
 
-    // Zero size list should not allow elements to be added
-    LruList<DataStore> lru_1(0);
-    lru_1.add(element1_);
+    // Zero size list should not allow entrys to be added
+    LruList<TestEntry> lru_1(0);
+    lru_1.add(entry1_);
     EXPECT_EQ(0, lru_1.size());
-    EXPECT_EQ(1, element1_.use_count());
+    EXPECT_EQ(1, entry1_.use_count());
 
-    // Removing an uninserted element should not affect the list.
-    LruList<DataStore> lru_2(100);
-    lru_2.add(element1_);
-    lru_2.add(element2_);
-    lru_2.add(element3_);
+    // Removing an uninserted entry should not affect the list.
+    LruList<TestEntry> lru_2(100);
+    lru_2.add(entry1_);
+    lru_2.add(entry2_);
+    lru_2.add(entry3_);
     EXPECT_EQ(3, lru_2.size());
 
-    lru_2.remove(element4_);
-    EXPECT_EQ(2, element1_.use_count());
-    EXPECT_EQ(2, element2_.use_count());
-    EXPECT_EQ(2, element3_.use_count());
-    EXPECT_EQ(1, element4_.use_count());
-    EXPECT_EQ(1, element5_.use_count());
+    lru_2.remove(entry4_);
+    EXPECT_EQ(2, entry1_.use_count());
+    EXPECT_EQ(2, entry2_.use_count());
+    EXPECT_EQ(2, entry3_.use_count());
+    EXPECT_EQ(1, entry4_.use_count());
+    EXPECT_EQ(1, entry5_.use_count());
     EXPECT_EQ(3, lru_2.size());
 
-    // Touching an uninserted element should not affect the list.
-    lru_2.touch(element5_);
-    EXPECT_EQ(2, element1_.use_count());
-    EXPECT_EQ(2, element2_.use_count());
-    EXPECT_EQ(2, element3_.use_count());
-    EXPECT_EQ(1, element4_.use_count());
-    EXPECT_EQ(1, element5_.use_count());
+    // Touching an uninserted entry should not affect the list.
+    lru_2.touch(entry5_);
+    EXPECT_EQ(2, entry1_.use_count());
+    EXPECT_EQ(2, entry2_.use_count());
+    EXPECT_EQ(2, entry3_.use_count());
+    EXPECT_EQ(1, entry4_.use_count());
+    EXPECT_EQ(1, entry5_.use_count());
     EXPECT_EQ(3, lru_2.size());
 }
 

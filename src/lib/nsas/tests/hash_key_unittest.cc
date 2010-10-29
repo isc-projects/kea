@@ -21,13 +21,12 @@
 #include <gtest/gtest.h>
 #include <boost/lexical_cast.hpp>
 
-#include "hash.h"
+#include "hash_key.h"
 
 using namespace std;
 
 namespace isc {
 namespace nsas {
-
 
 /// \brief Test Fixture Class
 class HashKeyTest : public ::testing::Test {
@@ -50,6 +49,27 @@ TEST_F(HashKeyTest, Constructor) {
     EXPECT_EQ(key2.key, test2.c_str());
     EXPECT_EQ(key2.keylen, test2.size());
     EXPECT_EQ(key2.class_code, 2);
+}
+
+// Equality check
+TEST_F(HashKeyTest, Equality) {
+    string  test1("abcdef123");    // Simple string
+    string  test2("abcdef123");    // Same key, different object
+    string  test3("AbCdEf123");    // Same key, different case (unequal)
+    string  test4("ABCDE123");     // Different key (almost same)
+    string  test5("uvwxyz987");    // Different key
+
+    EXPECT_TRUE(HashKey(test1, 1) == HashKey(test1, 1));   // Same key and class
+    EXPECT_FALSE(HashKey(test1, 1) == HashKey(test1, 2));  // Different class
+
+    EXPECT_TRUE(HashKey(test1, 2) == HashKey(test2, 2));   // Same value key/class
+    EXPECT_FALSE(HashKey(test1, 2) == HashKey(test2, 3));
+
+    EXPECT_TRUE(HashKey(test1, 3) == HashKey(test3, 3));   // Same key
+    EXPECT_FALSE(HashKey(test1, 3) == HashKey(test3, 4));
+
+    EXPECT_FALSE(HashKey(test1, 1) == HashKey(test4, 1));
+    EXPECT_FALSE(HashKey(test1, 1) == HashKey(test5, 1));
 }
 
 } // namespace nsas

@@ -24,6 +24,8 @@
 #include "address_entry.h"
 #include "asiolink.h"
 #include "exceptions/exceptions.h"
+#include "nsas_entry.h"
+#include "hash_key.h"
 #include "lru_list.h"
 #include "rrset.h"
 
@@ -74,9 +76,9 @@ public:
 /// started for the information.
 ///
 /// As this object will be stored in the nameserver address store LRU list,
-/// it is derived from the LRU list element class.
+/// it is derived from the LRU list entry class.
 
-class NameserverEntry : public LruList<NameserverEntry>::Element {
+class NameserverEntry : public NsasEntry<NameserverEntry> {
 public:
     /// List of addresses associated with this nameserver
     typedef std::vector<AddressEntry>   AddressVector;
@@ -121,7 +123,8 @@ public:
     /// convenient.)
     /// \param family Set to AF_INET/AF_INET6 for V6/V6 addresses, anything
     /// else for all addresses.
-    virtual void getAddresses(NameserverEntry::AddressVector& addresses, short family = 0) const;
+    virtual void getAddresses(NameserverEntry::AddressVector& addresses,
+        short family = 0) const;
 
     /// \brief Update RTT
     ///
@@ -148,6 +151,11 @@ public:
         return classCode_;
     }
 
+    /// \return Hash Key of the Nameserver
+    virtual HashKey hashKey() const {
+        return HashKey(name_, classCode_);
+    }
+
     /// \return Expiration Time of Data
     ///
     /// Returns the expiration time of addresses for this nameserver.  For
@@ -156,7 +164,6 @@ public:
     virtual time_t getExpiration() const {
         return expiration_;
     }
-
 
     /// \brief Predicate for Address Selection
     ///

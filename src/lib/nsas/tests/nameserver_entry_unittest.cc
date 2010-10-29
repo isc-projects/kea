@@ -31,7 +31,7 @@
 #include "address_entry.h"
 #include "nameserver_entry.h"
 
-#include "nsas_test_utilities.h"
+#include "nsas_test.h"
 
 using namespace asiolink;
 using namespace std;
@@ -99,7 +99,7 @@ protected:
     BasicRRset rrv4_;           ///< Standard RRSet - IN, A, lowercase name
     BasicRRset rrcase_;         ///< Mixed-case name
     BasicRRset rrch_;           ///< Non-IN RRset (Chaos in this case)
-    BasicRRset rrns_;           ///< Non-NS RRset (MX in this case)
+    BasicRRset rrns_;           ///< NS RRset
     BasicRRset rrv6_;           ///< Standard RRset, IN, AAAA, lowercase name
     BasicRRset rrnet_;          ///< example.net A RRset
 };
