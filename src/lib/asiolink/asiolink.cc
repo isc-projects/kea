@@ -231,7 +231,7 @@ namespace {
 
 // This is just temporary so the interface change does not propagate too far
 struct ServerNotify : public UDPQuery::Callback {
-        ServerNotify(DNSServer *server) :
+        ServerNotify(DNSServer* server) :
             server_(server)
         { }
         virtual void operator()(UDPQuery::Result result) {
@@ -241,7 +241,7 @@ struct ServerNotify : public UDPQuery::Callback {
     private:
         // FIXME This is said it does problems when it is shared pointer, as
         // it is destroyed too soon. But who deletes it now?
-        DNSServer *server_;
+        DNSServer* server_;
 };
 
 }

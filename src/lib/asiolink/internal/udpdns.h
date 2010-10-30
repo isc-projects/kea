@@ -210,7 +210,7 @@ public:
                       const isc::dns::Question& q,
                       const IOAddress& addr, uint16_t port,
                       isc::dns::OutputBufferPtr buffer,
-                      Callback *callback, int timeout = -1);
+                      Callback* callback, int timeout = -1);
     void operator()(asio::error_code ec = asio::error_code(),
                     size_t length = 0);
     /// Terminate the query.
@@ -247,7 +247,7 @@ private:
     boost::shared_array<char> data_;
 
     // This will be called when we are done.
-    Callback *callback_;
+    Callback* callback_;
 };
 }
 
