@@ -54,9 +54,10 @@ class UDPQuery : public ::testing::Test, public asiolink::UDPQuery::Callback {
             EXPECT_EQ(expected, result);
             run = true;
         }
-        void respond(udp::endpoint& remote, udp::socket* socket) {
+        void respond(udp::endpoint* remote, udp::socket* socket) {
             // Some data came, just send something back.
-            socket->send_to(asio::buffer(TEST_DATA, sizeof TEST_DATA), remote);
+            socket->send_to(asio::buffer(TEST_DATA, sizeof TEST_DATA),
+                *remote);
             socket->close();
         }
 };
@@ -96,7 +97,7 @@ TEST_F(UDPQuery, receive) {
     char inbuff[512];
     udp::endpoint remote;
     socket.async_receive_from(asio::buffer(inbuff, 512), remote, boost::bind(
-        &UDPQuery::respond, this, remote, &socket));
+        &UDPQuery::respond, this, &remote, &socket));
     service.post(query);
     service.run();
     EXPECT_TRUE(run);
