@@ -23,8 +23,10 @@
 #include <boost/bind.hpp>
 
 #include <asio.hpp>
+#include <asio/deadline_timer.hpp>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 
 #include <dns/buffer.h>
 #include <dns/message.h>
@@ -179,6 +181,9 @@ struct UDPQuery::Priv {
     OutputBufferPtr msgbuf;
     boost::shared_array<char> data;
     Callback* callback;
+    bool stopped;
+    deadline_timer timer;
+    int timeout;
 
     Priv(io_service& service, const udp::socket::protocol_type& protocol,
         const Question &q, OutputBufferPtr b, Callback *c) :
@@ -186,7 +191,9 @@ struct UDPQuery::Priv {
         question(q),
         buffer(b),
         msgbuf(new OutputBuffer(512)),
-        callback(c)
+        callback(c),
+        stopped(false),
+        timer(service)
     { }
 };
 
@@ -201,15 +208,16 @@ UDPQuery::UDPQuery(io_service& io_service,
         callback))
 {
     priv->remote = UDPEndpoint(addr, port).getASIOEndpoint();
+    priv->timeout = timeout;
 }
 
 /// The function operator is implemented with the "stackless coroutine"
 /// pattern; see internal/coroutine.h for details.
 void
 UDPQuery::operator()(error_code ec, size_t length) {
-    if (ec) {
+    if (ec || priv->stopped) {
         return;
-    } 
+    }
 
     CORO_REENTER (this) {
         /// Generate the upstream query and render it to wire format
@@ -226,6 +234,15 @@ UDPQuery::operator()(error_code ec, size_t length) {
             msg.addQuestion(priv->question);
             MessageRenderer renderer(*priv->msgbuf);
             msg.toWire(renderer);
+        }
+
+        // If we timeout, we stop, which will shutdown everything and
+        // cancel all other attempts to run inside the coroutine
+        if (priv->timeout != -1) {
+            priv->timer.expires_from_now(boost::posix_time::milliseconds(
+                priv->timeout));
+            priv->timer.async_wait(boost::bind(&UDPQuery::stop, *this,
+                TIME_OUT));
         }
 
         // Begin an asynchronous send, and then yield.  When the
@@ -250,7 +267,20 @@ UDPQuery::operator()(error_code ec, size_t length) {
         priv->buffer->writeData(priv->data.get(), length);
 
         /// We are done
-        (*priv->callback)(SUCCESS);
+        stop(SUCCESS);
+    }
+}
+
+void
+UDPQuery::stop(Result result) {
+    if (!priv->stopped) {
+        priv->stopped = true;
+        priv->socket.cancel();
+        priv->socket.close();
+        priv->timer.cancel();
+        if (priv->callback) {
+            (*priv->callback)(result);
+        }
     }
 }
 
