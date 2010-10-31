@@ -218,36 +218,14 @@ public:
 private:
     enum { MAX_LENGTH = 4096 };
 
-    // The \c UDPQuery coroutine never forks, but it is copied whenever
-    // it calls an async_*() function, so it's best to keep copy overhead
-    // small by using pointers or references when possible.  However, this
-    // is not always possible.
-    //
-    // Socket used to for upstream queries. Created in the
-    // constructor and stored in a shared_ptr because socket objects
-    // are not copyable.
-    boost::shared_ptr<asio::ip::udp::socket> socket_;
-
-    // The remote endpoint.  Instantiated in the constructor.  Not
-    // stored as a shared_ptr because copy overhead of an endpoint
-    // object is no larger than that of a shared_ptr.
-    asio::ip::udp::endpoint remote_;
-
-    // The question being answered.  Copied rather than referenced
-    // because the object that created it is not guaranteed to persist.
-    isc::dns::Question question_;
-
-    // The output buffer supplied by the caller.  The resposne frmo
-    // the upstream server will be copied here.
-    isc::dns::OutputBufferPtr buffer_;
-
-    // These are allocated for each new query and are stored as
-    // shared pointers to minimize copy overhead.
-    isc::dns::OutputBufferPtr msgbuf_;
-    boost::shared_array<char> data_;
-
-    // This will be called when we are done.
-    Callback* callback_;
+    /**
+     * Private data. They are not private because of stability of the
+     * interface (this is private class anyway), but because this class
+     * will be copyed often and we want to keep the same data between
+     * the coroutines.
+     */
+    struct Priv;
+    boost::shared_ptr<Priv> priv;
 };
 }
 

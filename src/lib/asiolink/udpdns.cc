@@ -171,18 +171,36 @@ UDPServer::resume(const bool done) {
     io_.post(*this);
 }
 
+struct UDPQuery::Priv {
+    udp::socket socket;
+    udp::endpoint remote;
+    Question question;
+    OutputBufferPtr buffer;
+    OutputBufferPtr msgbuf;
+    boost::shared_array<char> data;
+    Callback* callback;
+
+    Priv(io_service& service, const udp::socket::protocol_type& protocol,
+        const Question &q, OutputBufferPtr b, Callback *c) :
+        socket(service, protocol),
+        question(q),
+        buffer(b),
+        msgbuf(new OutputBuffer(512)),
+        callback(c)
+    { }
+};
+
 /// The following functions implement the \c UDPQuery class.
 ///
 /// The constructor
 UDPQuery::UDPQuery(io_service& io_service,
                    const Question& q, const IOAddress& addr, uint16_t port,
                    OutputBufferPtr buffer, Callback *callback, int timeout) :
-    question_(q), buffer_(buffer), callback_(callback)
+    priv(new Priv(io_service,
+        addr.getFamily() == AF_INET ? udp::v4() : udp::v6(), q, buffer,
+        callback))
 {
-    udp proto = (addr.getFamily() == AF_INET) ? udp::v4() : udp::v6();
-    socket_.reset(new udp::socket(io_service, proto));
-    msgbuf_.reset(new OutputBuffer(512));
-    remote_ = UDPEndpoint(addr, port).getASIOEndpoint();
+    priv->remote = UDPEndpoint(addr, port).getASIOEndpoint();
 }
 
 /// The function operator is implemented with the "stackless coroutine"
@@ -205,35 +223,34 @@ UDPQuery::operator()(error_code ec, size_t length) {
             msg.setOpcode(Opcode::QUERY());
             msg.setRcode(Rcode::NOERROR());
             msg.setHeaderFlag(MessageFlag::RD());
-            msg.addQuestion(question_);
-            MessageRenderer renderer(*msgbuf_);
+            msg.addQuestion(priv->question);
+            MessageRenderer renderer(*priv->msgbuf);
             msg.toWire(renderer);
         }
 
         // Begin an asynchronous send, and then yield.  When the
         // send completes, we will resume immediately after this point.
-        CORO_YIELD socket_->async_send_to(buffer(msgbuf_->getData(),
-                                                 msgbuf_->getLength()),
-                                           remote_, *this);
+        CORO_YIELD priv->socket.async_send_to(buffer(priv->msgbuf->getData(),
+            priv->msgbuf->getLength()), priv->remote, *this);
 
         /// Allocate space for the response.  (XXX: This should be
         /// optimized by maintaining a free list of pre-allocated blocks)
-        data_.reset(new char[MAX_LENGTH]);
+        priv->data.reset(new char[MAX_LENGTH]);
 
         /// Begin an asynchronous receive, and yield.  When the receive
         /// completes, we will resume immediately after this point.
-        CORO_YIELD socket_->async_receive_from(buffer(data_.get(), MAX_LENGTH),
-                                               remote_, *this);
+        CORO_YIELD priv->socket.async_receive_from(buffer(priv->data.get(),
+            MAX_LENGTH), priv->remote, *this);
 
         /// Copy the answer into the response buffer.  (XXX: If the
         /// OutputBuffer object were made to meet the requirements of
         /// a MutableBufferSequence, then it could be written to directly
         /// by async_recieve_from() and this additional copy step would
         /// be unnecessary.)
-        buffer_->writeData(data_.get(), length);
+        priv->buffer->writeData(priv->data.get(), length);
 
         /// We are done
-        (*callback_)(SUCCESS);
+        (*priv->callback)(SUCCESS);
     }
 }
 
