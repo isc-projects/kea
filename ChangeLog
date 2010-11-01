@@ -7,7 +7,7 @@
 	renamed	to 'util'. Programs that used 'import isc.utils.process'
 	now need to use 'import isc.util.process'. The folder
 	/src/lib/python/isc/Util is removed since it isn't used by any
-	program. (Trac #364, rTBD)
+	program. (Trac #364, r3382)
 
   112.	[func]		zhang likun
 	Add one mixin class to override the naive serve_forever() provided
