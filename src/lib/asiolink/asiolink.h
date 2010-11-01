@@ -207,6 +207,9 @@ public:
                const bool use_ipv4, const bool use_ipv6,
                SimpleCallback* checkin, DNSLookup* lookup,
                DNSAnswer* answer);
+    /// TODO This is temporary, until we merge with the config
+    DNSService(IOService& io_service, SimpleCallback* checkin,
+        DNSLookup* lookup, DNSAnswer* answer);
     /// \brief The destructor.
     ~DNSService();
     //@}
@@ -517,8 +520,13 @@ public:
     ///        query on
     /// \param forward The address of the nameserver to forward to
     /// \param port The remote port to send the dns query to
+    /// \param timeout How long to timeout the query, in ms
+    ///     -1 means never timeout (but do not use that).
+    ///     TODO: This should be computed somehow dynamically in future
+    /// \param retries how many times we try again (0 means just send and
+    //      and return if it returs).
     RecursiveQuery(DNSService& dns_service, const char& forward,
-                   uint16_t port = 53);
+                   uint16_t port = 53, int timeout = -1, unsigned retries = 0);
     //@}
 
     /// \brief Initiates an upstream query in the \c RecursiveQuery object.

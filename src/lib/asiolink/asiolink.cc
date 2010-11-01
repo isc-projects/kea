@@ -218,12 +218,21 @@ DNSService::DNSService(IOService& io_service,
     impl_ = new DNSServiceImpl(io_service, port, v4addrp, v6addrp, checkin, lookup, answer);
 }
 
+// TODO This should be removed upon merge with the configuration
+DNSService::DNSService(IOService& io_service, SimpleCallback *checkin,
+    DNSLookup* lookup, DNSAnswer* answer) :
+    impl_(NULL), io_service_(io_service)
+{
+    impl_ = new DNSServiceImpl(io_service, *"0", NULL, NULL, checkin, lookup,
+        answer);
+}
+
 DNSService::~DNSService() {
     delete impl_;
 }
 
 RecursiveQuery::RecursiveQuery(DNSService& dns_service, const char& forward,
-                               uint16_t port) :
+    uint16_t port, int timeout, unsigned retries) :
     dns_service_(dns_service), ns_addr_(&forward), port_(port) 
 {}
 
