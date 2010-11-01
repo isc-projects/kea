@@ -20,6 +20,7 @@
 #include <string.h>
 
 #include <boost/lexical_cast.hpp>
+#include <boost/bind.hpp>
 
 #include <gtest/gtest.h>
 
@@ -34,10 +35,14 @@
 #include <asiolink/internal/tcpdns.h>
 #include <asiolink/internal/udpdns.h>
 
+#include <asio.hpp>
+
 using isc::UnitTestUtil;
 using namespace std;
 using namespace asiolink;
 using namespace isc::dns;
+using namespace asio;
+using asio::ip::udp;
 
 namespace {
 const char* const TEST_SERVER_PORT = "53535";
@@ -365,6 +370,16 @@ protected:
                                       NULL, NULL);
     }
 
+    // Set up empty DNS Service
+    void setDNSService() {
+        delete dns_service_;
+        dns_service_ = NULL;
+        delete io_service_;
+        io_service_ = new IOService();
+        callback_ = new ASIOCallBack(this);
+        dns_service_ = new DNSService(*io_service_, callback_, NULL, NULL);
+    }
+
     // Run a simple server test, on either IPv4 or IPv6, and over either
     // UDP or TCP.  Calls the sendUDP() or sendTCP() methods, which will
     // start the IO Service queue.  The UDPServer or TCPServer that was
@@ -433,10 +448,11 @@ protected:
             }
         }
 
-    private:
+    protected:
         asio::io_service& io_;
         bool done_;
 
+    private:
         // Currently unused; these will be used for testing
         // asynchronous lookup calls via the asyncLookup() method
         boost::shared_ptr<asiolink::IOMessage> io_message_;
@@ -447,6 +463,28 @@ protected:
         const SimpleCallback* checkin_;
         const DNSLookup* lookup_;
         const DNSAnswer* answer_;
+    };
+
+    // This version of mock server just stops the io_service when it is resumed
+    class MockServerStop : public MockServer {
+        public:
+            explicit MockServerStop(asio::io_service& io_service) :
+                MockServer(io_service, asio::ip::address(), 0)
+            {}
+
+            void operator()(asio::error_code ec = asio::error_code(),
+                            size_t length = 0)
+            {
+                io_.stop();
+            }
+
+            DNSServer* clone() {
+                return (new MockServerStop(*this));
+            }
+
+            bool done() const {
+                return done_;
+            }
     };
 
 private:
@@ -605,6 +643,45 @@ TEST_F(ASIOLinkTest, recursiveSend) {
     EXPECT_EQ(q.getName(), q2->getName());
     EXPECT_EQ(q.getType(), q2->getType());
     EXPECT_EQ(q.getClass(), q2->getClass());
+}
+
+void
+receive_and_inc(udp::socket* socket, int* num) {
+    *num ++;
+    static char inbuff[512];
+    socket->async_receive(asio::buffer(inbuff, 512),
+        boost::bind(receive_and_inc, socket, num));
+}
+
+// Test it tries the correct amount of times before giving up
+TEST_F(ASIOLinkTest, recursiveTimeout) {
+    // Prepare the service (we do not use the common setup, we do not answer
+    setDNSService();
+    asio::io_service& service = io_service_->get_io_service();
+
+    // Prepare the socket
+    uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
+    udp::socket socket(service, udp::v4());
+    socket.set_option(socket_base::reuse_address(true));
+    socket.bind(udp::endpoint(ip::address::from_string(TEST_IPV4_ADDR), port));
+    // And count the answers
+    int num = -1; // One is counted before the receipt of the first one
+    receive_and_inc(&socket, &num);
+
+    // Prepare the server
+    MockServerStop server(service);
+
+    // Do the answer
+    RecursiveQuery query(*dns_service_, *TEST_IPV4_ADDR, port, 10, 2);
+    Question question(Name("example.net"), RRClass::IN(), RRType::A());
+    OutputBufferPtr buffer(new OutputBuffer(0));
+    query.sendQuery(question, buffer, &server);
+
+    // Run the test
+    service.run();
+
+    EXPECT_TRUE(server.done());
+    EXPECT_EQ(3, num);
 }
 
 }
