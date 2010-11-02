@@ -233,24 +233,63 @@ DNSService::~DNSService() {
 
 RecursiveQuery::RecursiveQuery(DNSService& dns_service, const char& forward,
     uint16_t port, int timeout, unsigned retries) :
-    dns_service_(dns_service), ns_addr_(&forward), port_(port) 
+    dns_service_(dns_service),
+    ns_addr_(&forward),
+    port_(port),
+    timeout_(timeout),
+    retries_(retries)
 {}
 
 namespace {
 
-// This is just temporary so the interface change does not propagate too far
-struct ServerNotify : public UDPQuery::Callback {
-        ServerNotify(DNSServer* server) :
-            server_(server)
-        { }
-        virtual void operator()(UDPQuery::Result result) {
-            server_->resume(result == UDPQuery::SUCCESS);
-            delete this;
-        }
-    private:
-        // FIXME This is said it does problems when it is shared pointer, as
-        // it is destroyed too soon. But who deletes it now?
-        DNSServer* server_;
+class ServerNotify : public UDPQuery::Callback {
+        private:
+            asio::io_service& io_;
+            Question question_;
+            IOAddress address_;
+            uint16_t port_;
+            OutputBufferPtr buffer_;
+            /*
+             * FIXME This is said it does problems when it is shared pointer, as
+             *     it is destroyed too soon. But who deletes it now?
+             */
+            DNSServer* server_;
+            /*
+             * TODO Do something more clever with timeouts. In the long term, some
+             *     computation of average RTT, increase with each retry, etc.
+             */
+            int timeout_;
+            unsigned retries_;
+            void send() {
+                UDPQuery query(io_, question_, address_, port_, buffer_, this,
+                    timeout_);
+                io_.post(query);
+            }
+        public:
+            ServerNotify(asio::io_service& io, const Question &question,
+                const IOAddress& address, uint16_t port,
+                OutputBufferPtr buffer, DNSServer *server, int timeout,
+                unsigned retries) :
+                io_(io),
+                question_(question),
+                address_(address),
+                port_(port),
+                buffer_(buffer),
+                server_(server),
+                timeout_(timeout),
+                retries_(retries)
+            {
+                send();
+            }
+            virtual void operator()(UDPQuery::Result result) {
+                if (result == UDPQuery::TIME_OUT && retries_ --) {
+                    // We timed out, but we have some retries, so send again
+                    send();
+                } else {
+                    server_->resume(result == UDPQuery::SUCCESS);
+                    delete this;
+                }
+            }
 };
 
 }
@@ -265,9 +304,9 @@ RecursiveQuery::sendQuery(const Question& question, OutputBufferPtr buffer,
     // UDP and then fall back to TCP on failure, but for the moment
     // we're only going to handle UDP.
     asio::io_service& io = dns_service_.get_io_service();
-    UDPQuery q(io, question, ns_addr_, port_, buffer,
-        new ServerNotify(server->clone()));
-    io.post(q);
+    // It will delete itself when it is done
+    new ServerNotify(io, question, ns_addr_, port_, buffer, server->clone(),
+         timeout_, retries_);
 }
 
 }
