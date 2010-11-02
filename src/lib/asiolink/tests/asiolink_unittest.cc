@@ -468,23 +468,21 @@ protected:
     // This version of mock server just stops the io_service when it is resumed
     class MockServerStop : public MockServer {
         public:
-            explicit MockServerStop(asio::io_service& io_service) :
-                MockServer(io_service, asio::ip::address(), 0)
+            explicit MockServerStop(asio::io_service& io_service, bool* done) :
+                MockServer(io_service, asio::ip::address(), 0),
+                done_(done)
             {}
 
-            void operator()(asio::error_code ec = asio::error_code(),
-                            size_t length = 0)
-            {
+            void resume(const bool done) {
+                *done_ = done;
                 io_.stop();
             }
 
             DNSServer* clone() {
                 return (new MockServerStop(*this));
             }
-
-            bool done() const {
-                return done_;
-            }
+        private:
+            bool* done_;
     };
 
 private:
@@ -647,7 +645,7 @@ TEST_F(ASIOLinkTest, recursiveSend) {
 
 void
 receive_and_inc(udp::socket* socket, int* num) {
-    *num ++;
+    (*num) ++;
     static char inbuff[512];
     socket->async_receive(asio::buffer(inbuff, 512),
         boost::bind(receive_and_inc, socket, num));
@@ -669,7 +667,8 @@ TEST_F(ASIOLinkTest, recursiveTimeout) {
     receive_and_inc(&socket, &num);
 
     // Prepare the server
-    MockServerStop server(service);
+    bool done(true);
+    MockServerStop server(service, &done);
 
     // Do the answer
     RecursiveQuery query(*dns_service_, *TEST_IPV4_ADDR, port, 10, 2);
@@ -680,7 +679,8 @@ TEST_F(ASIOLinkTest, recursiveTimeout) {
     // Run the test
     service.run();
 
-    EXPECT_TRUE(server.done());
+    // The query should fail
+    EXPECT_FALSE(done);
     EXPECT_EQ(3, num);
 }
 

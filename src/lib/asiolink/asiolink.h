@@ -546,6 +546,8 @@ private:
     DNSService& dns_service_;
     IOAddress ns_addr_;
     uint16_t port_;
+    int timeout_;
+    unsigned retries_;
 };
 
 }      // asiolink
