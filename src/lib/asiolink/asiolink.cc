@@ -242,7 +242,7 @@ RecursiveQuery::RecursiveQuery(DNSService& dns_service, const char& forward,
 
 namespace {
 
-class ServerNotify : public UDPQuery::Callback {
+class RunningQuery : public UDPQuery::Callback {
         private:
             asio::io_service& io_;
             Question question_;
@@ -266,7 +266,7 @@ class ServerNotify : public UDPQuery::Callback {
                 io_.post(query);
             }
         public:
-            ServerNotify(asio::io_service& io, const Question &question,
+            RunningQuery(asio::io_service& io, const Question &question,
                 const IOAddress& address, uint16_t port,
                 OutputBufferPtr buffer, DNSServer *server, int timeout,
                 unsigned retries) :
@@ -305,7 +305,7 @@ RecursiveQuery::sendQuery(const Question& question, OutputBufferPtr buffer,
     // we're only going to handle UDP.
     asio::io_service& io = dns_service_.get_io_service();
     // It will delete itself when it is done
-    new ServerNotify(io, question, ns_addr_, port_, buffer, server->clone(),
+    new RunningQuery(io, question, ns_addr_, port_, buffer, server->clone(),
          timeout_, retries_);
 }
 
