@@ -16,6 +16,7 @@
 
 #include <unistd.h>             // for getpid
 
+#include <cassert>
 #include <cstdlib>              // for rand
 #include <algorithm>
 #include <iostream>
@@ -42,9 +43,11 @@ public:
         vector<int>::const_iterator end_key = keys_.end();
         for (iter = keys_.begin(); iter != end_key; ++iter) {
             if (Sorted) {
-                binary_search(data_.begin(), data_.end(), *iter);
+                // perform simple sanity check with assert() to ensure
+                // compiler optimization won't skip the search.
+                assert(binary_search(data_.begin(), data_.end(), *iter));
             } else {
-                find(data_.begin(), data_.end(), *iter);
+                assert(find(data_.begin(), data_.end(), *iter) != data_.end());
             }
         }
         return (keys_.size());
@@ -63,7 +66,7 @@ public:
         vector<int>::const_iterator iter;
         vector<int>::const_iterator end_key = keys_.end();
         for (iter = keys_.begin(); iter != end_key; ++iter) {
-            data_.find(*iter);
+            assert(data_.find(*iter) != data_.end());
         }        
         return (keys_.size());
     }

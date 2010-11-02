@@ -2,6 +2,30 @@
   "module_spec": {
      "module_name": "Zonemgr",
       "config_data":[
+       {
+         "item_name": "lowerbound_refresh",
+         "item_type": "integer",
+         "item_optional": false,
+         "item_default": 10
+       },
+       {
+         "item_name": "lowerbound_retry",
+         "item_type": "integer",
+         "item_optional": false,
+         "item_default": 5 
+       },
+       {
+         "item_name": "max_transfer_timeout",
+         "item_type": "integer",
+         "item_optional": false,
+         "item_default": 14400 
+       },
+       {
+         "item_name": "jitter_scope",
+         "item_type": "real",
+         "item_optional": false,
+         "item_default": 0.25
+       }
       ],
       "commands": [
         {

@@ -260,16 +260,14 @@ private:
 // END_WELL_KNOWN_CLASS_DEFINITIONS
 
 inline const RRClass&
-RRClass::NONE()
-{
+RRClass::NONE() {
     static RRClass rrclass(RRCLASS_NONE);
 
     return (rrclass);
 }
 
 inline const RRClass&
-RRClass::ANY()
-{
+RRClass::ANY() {
     static RRClass rrclass(RRCLASS_ANY);
 
     return (rrclass);

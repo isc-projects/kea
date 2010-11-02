@@ -114,50 +114,43 @@ private:
 };
 
 inline const MessageFlag&
-MessageFlag::QR()
-{
+MessageFlag::QR() {
     static MessageFlag f(0x8000);
     return (f);
 }
 
 inline const MessageFlag&
-MessageFlag::AA()
-{
+MessageFlag::AA() {
     static MessageFlag f(0x0400);
     return (f);
 }
 
 inline const MessageFlag&
-MessageFlag::TC()
-{
+MessageFlag::TC() {
     static MessageFlag f(0x0200);
     return (f);
 }
 
 inline const MessageFlag&
-MessageFlag::RD()
-{
+MessageFlag::RD() {
     static MessageFlag f(0x0100);
     return (f);
 }
 
 inline const MessageFlag&
-MessageFlag::RA()
-{
+MessageFlag::RA() {
     static MessageFlag f(0x0080);
     return (f);
 }
 
 inline const MessageFlag&
-MessageFlag::AD()
-{
+MessageFlag::AD() {
     static MessageFlag f(0x0020);
     return (f);
 }
 
 inline const MessageFlag&
-MessageFlag::CD()
-{
+MessageFlag::CD() {
     static MessageFlag f(0x0010);
     return (f);
 }
@@ -199,29 +192,25 @@ private:
 };
 
 inline const Section&
-Section::QUESTION()
-{
+Section::QUESTION() {
     static Section s(SECTION_QUESTION);
     return (s);
 }
 
 inline const Section&
-Section::ANSWER()
-{
+Section::ANSWER() {
     static Section s(SECTION_ANSWER);
     return (s);
 }
 
 inline const Section&
-Section::AUTHORITY()
-{
+Section::AUTHORITY() {
     static Section s(SECTION_AUTHORITY);
     return (s);
 }
 
 inline const Section&
-Section::ADDITIONAL()
-{
+Section::ADDITIONAL() {
     static Section s(SECTION_ADDITIONAL);
     return (s);
 }

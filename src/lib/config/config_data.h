@@ -39,12 +39,14 @@ class ConfigData {
 public:
     /// Constructs a ConfigData option with no specification and an
     /// empty configuration.
-    ConfigData() { _config = Element::createMap(); };
+    ConfigData() { _config = isc::data::Element::createMap(); };
 
     /// Constructs a ConfigData option with the given specification
     /// and an empty configuration.
     /// \param module_spec A ModuleSpec for the relevant module
-    ConfigData(const ModuleSpec& module_spec) : _module_spec(module_spec) { _config = Element::createMap(); }
+    ConfigData(const ModuleSpec& module_spec) : _module_spec(module_spec) {
+        _config = isc::data::Element::createMap();
+    }
 
     virtual ~ConfigData() {};
 
@@ -55,7 +57,7 @@ public:
     /// Raises a DataNotFoundError if the identifier is bad.
     /// \param identifier The identifier pointing to the configuration
     ///        value that is to be returned
-    ConstElementPtr getValue(const std::string& identifier) const;
+    isc::data::ConstElementPtr getValue(const std::string& identifier) const;
 
     /// Returns the value currently set for the given identifier
     /// If no value is set, the default value (as specified by the
@@ -67,8 +69,8 @@ public:
     ///                   false otherwise
     /// \param identifier The identifier pointing to the configuration
     ///        value that is to be returned
-    ConstElementPtr getValue(bool& is_default,
-                             const std::string& identifier) const;
+    isc::data::ConstElementPtr getValue(bool& is_default,
+                                        const std::string& identifier) const;
 
     /// Returns the ModuleSpec associated with this ConfigData object
     const ModuleSpec& getModuleSpec() const { return (_module_spec); }
@@ -80,12 +82,12 @@ public:
     /// \param config An ElementPtr pointing to a MapElement containing
     ///        *all* non-default configuration values. Existing values
     ///        will be removed.
-    void setLocalConfig(ElementPtr config) { _config = config; }
+    void setLocalConfig(isc::data::ElementPtr config) { _config = config; }
 
     /// Returns the local (i.e. non-default) configuration.
     /// \returns An ElementPtr pointing to a MapElement containing all
     ///          non-default configuration options.
-    ElementPtr getLocalConfig() { return (_config); }
+    isc::data::ElementPtr getLocalConfig() { return (_config); }
 
     /// Returns a list of all possible configuration options as specified
     ///         by the ModuleSpec.
@@ -97,18 +99,18 @@ public:
     ///         StringElements that specify the identifiers at the given
     ///         location (or all possible identifiers if identifier==""
     ///         and recurse==false)
-    ConstElementPtr getItemList(const std::string& identifier = "",
-                                bool recurse = false) const;
+    isc::data::ConstElementPtr getItemList(const std::string& identifier = "",
+                                           bool recurse = false) const;
 
     /// Returns all current configuration settings (both non-default and default).
     /// \return An ElementPtr pointing to a MapElement containing
     ///         string->value elements, where the string is the
     ///         full identifier of the configuration option and the
     ///         value is an ElementPtr with the value.
-    ConstElementPtr getFullConfig() const;
+    isc::data::ConstElementPtr getFullConfig() const;
 
 private:
-    ElementPtr _config;
+    isc::data::ElementPtr _config;
     ModuleSpec _module_spec;
 };
 

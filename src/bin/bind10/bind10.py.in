@@ -63,15 +63,19 @@ import pwd
 import posix
 
 import isc.cc
-import isc.utils.process
+import isc.util.process
+import isc.net.parse
 
 # Assign this process some longer name
-isc.utils.process.rename(sys.argv[0])
+isc.util.process.rename(sys.argv[0])
 
 # This is the version that gets displayed to the user.
 # The VERSION string consists of the module name, the module version
 # number, and the overall BIND 10 version number (set in configure.ac).
 VERSION = "bind10 20100916 (BIND 10 @PACKAGE_VERSION@)"
+
+# This is for bind10.boottime of stats module
+_BASETIME = time.gmtime()
 
 class RestartSchedule:
     """
@@ -137,9 +141,14 @@ class ProcessInfo:
         self.username = username
         self._spawn()
 
-    def _setuid(self):
+    def _preexec_work(self):
         """Function used before running a program that needs to run as a
         different user."""
+        # First, put us into a separate process group so we don't get
+        # SIGINT signals on Ctrl-C (the boss will shut everthing down by
+        # other means).
+        os.setpgrp()
+        # Second, set the user ID if one has been specified
         if self.uid is not None:
             try:
                 posix.setuid(self.uid)
@@ -173,42 +182,17 @@ class ProcessInfo:
                                         stderr=spawn_stderr,
                                         close_fds=True,
                                         env=spawn_env,
-                                        preexec_fn=self._setuid)
+                                        preexec_fn=self._preexec_work)
         self.pid = self.process.pid
         self.restart_schedule.set_run_start_time()
 
     def respawn(self):
         self._spawn()
 
-class IPAddr:
-    """Stores an IPv4 or IPv6 address."""
-    family = None
-    addr = None
-
-    def __init__(self, addr):
-        try:
-            a = socket.inet_pton(socket.AF_INET, addr)
-            self.family = socket.AF_INET
-            self.addr = a
-            return
-        except:
-            pass
-
-        try:
-            a = socket.inet_pton(socket.AF_INET6, addr)
-            self.family = socket.AF_INET6
-            self.addr = a
-            return
-        except Exception as e:
-            raise e
-    
-    def __str__(self):
-        return socket.inet_ntop(self.family, self.addr)
-
 class BoB:
     """Boss of BIND class."""
     
-    def __init__(self, msgq_socket_file=None, auth_port=5300, address='',
+    def __init__(self, msgq_socket_file=None, auth_port=5300, address=None,
                  nocache=False, verbose=False, setuid=None, username=None):
         """Initialize the Boss of BIND. This is a singleton (only one
         can run).
@@ -222,7 +206,7 @@ class BoB:
         self.auth_port = auth_port
         self.address = None
         if address:
-            self.address = IPAddr(address)
+            self.address = address
         self.cc_session = None
         self.ccs = None
         self.processes = {}
@@ -424,6 +408,27 @@ class BoB:
             sys.stdout.write("[bind10] Started b10-zonemgr(PID %d)\n" % 
                              zonemgr.pid)
 
+        # start b10-stats
+        stats_args = ['b10-stats']
+        if self.verbose:
+            sys.stdout.write("[bind10] Starting b10-stats\n")
+            stats_args += ['-v']
+        try:
+            statsd = ProcessInfo("b10-stats", stats_args,
+                                 c_channel_env)
+        except Exception as e:
+            c_channel.process.kill()
+            bind_cfgd.process.kill()
+            xfrout.process.kill()
+            auth.process.kill()
+            xfrind.process.kill()
+            zonemgr.process.kill()
+            return "Unable to start b10-stats; " + str(e)
+
+        self.processes[statsd.pid] = statsd
+        if self.verbose:
+            sys.stdout.write("[bind10] Started b10-stats (PID %d)\n" % statsd.pid)
+
         # start the b10-cmdctl
         # XXX: we hardcode port 8080
         cmdctl_args = ['b10-cmdctl']
@@ -440,6 +445,7 @@ class BoB:
             auth.process.kill()
             xfrind.process.kill()
             zonemgr.process.kill()
+            statsd.process.kill()
             return "Unable to start b10-cmdctl; " + str(e)
         self.processes[cmd_ctrld.pid] = cmd_ctrld
         if self.verbose:
@@ -453,12 +459,13 @@ class BoB:
     def stop_all_processes(self):
         """Stop all processes."""
         cmd = { "command": ['shutdown']}
-        self.cc_session.group_sendmsg(cmd, 'Boss', 'Cmdctl')
-        self.cc_session.group_sendmsg(cmd, "Boss", "ConfigManager")
-        self.cc_session.group_sendmsg(cmd, "Boss", "Auth")
-        self.cc_session.group_sendmsg(cmd, "Boss", "Xfrout")
-        self.cc_session.group_sendmsg(cmd, "Boss", "Xfrin")
-        self.cc_session.group_sendmsg(cmd, "Boss", "Zonemgr")
+        self.cc_session.group_sendmsg(cmd, 'Cmdctl', 'Cmdctl')
+        self.cc_session.group_sendmsg(cmd, "ConfigManager", "ConfigManager")
+        self.cc_session.group_sendmsg(cmd, "Auth", "Auth")
+        self.cc_session.group_sendmsg(cmd, "Xfrout", "Xfrout")
+        self.cc_session.group_sendmsg(cmd, "Xfrin", "Xfrin")
+        self.cc_session.group_sendmsg(cmd, "Zonemgr", "Zonemgr")
+        self.cc_session.group_sendmsg(cmd, "Boss", "Stats")
 
     def stop_process(self, process):
         """Stop the given process, friendly-like."""
@@ -475,7 +482,9 @@ class BoB:
         except:
             pass
         # XXX: some delay probably useful... how much is uncertain
-        time.sleep(0.5)  
+        # I have changed the delay from 0.5 to 1, but sometime it's 
+        # still not enough.
+        time.sleep(1)  
         self.reap_children()
         # next try sending a SIGTERM
         processes_to_stop = list(self.processes.values())
@@ -582,7 +591,7 @@ def reaper(signal_number, stack_frame):
     # the Python signal handler has been set up to write
     # down a pipe, waking up our select() bit
     pass
-                   
+
 def get_signame(signal_number):
     """Return the symbolic name for a signal."""
     for sig in dir(signal):
@@ -604,30 +613,28 @@ def fatal_signal(signal_number, stack_frame):
 def check_port(option, opt_str, value, parser):
     """Function to insure that the port we are passed is actually 
     a valid port number. Used by OptionParser() on startup."""
-    if not re.match('^(6553[0-5]|655[0-2]\d|65[0-4]\d\d|6[0-4]\d{3}|[1-5]\d{4}|[1-9]\d{0,3}|0)$', value):
-        raise OptionValueError("%s requires a port number (0-65535)" % opt_str)
-    if (opt_str == '-m' or opt_str == '--msgq-port'):
-        parser.values.msgq_port = value
-    elif (opt_str == '-p' or opt_str == '--port'):
-        parser.values.auth_port = value
-    else:
-        raise OptionValueError("Unknown option " + opt_str)
-  
+    try:
+        if opt_str in ['-p', '--port']:
+            parser.values.auth_port = isc.net.parse.port_parse(value)
+        else:
+            raise OptionValueError("Unknown option " + opt_str)
+    except ValueError as e:
+        raise OptionValueError(str(e))
+
 def check_addr(option, opt_str, value, parser):
     """Function to insure that the address we are passed is actually 
     a valid address. Used by OptionParser() on startup."""
     try:
-        IPAddr(value)
-    except:
+        if opt_str in ['-a', '--address']:
+            parser.values.address = isc.net.parse.addr_parse(value)
+        else:
+            raise OptionValueError("Unknown option " + opt_str)
+    except ValueError:
         raise OptionValueError("%s requires a valid IPv4 or IPv6 address" % opt_str)
-    if (opt_str == '-a' or opt_str == '--address'):
-        parser.values.address = value
-    else:
-        raise OptionValueError("Unknown option " + opt_str)
 
 def process_rename(option, opt_str, value, parser):
     """Function that renames the process if it is requested by a option."""
-    isc.utils.process.rename(value)
+    isc.util.process.rename(value)
 
 def main():
     global options
@@ -646,8 +653,8 @@ def main():
                       help="UNIX domain socket file the b10-msgq daemon will use")
     parser.add_option("-n", "--no-cache", action="store_true", dest="nocache",
                       default=False, help="disable hot-spot cache in b10-auth")
-    parser.add_option("-p", "--port", dest="auth_port", type="string",
-                      action="callback", callback=check_port, default="5300",
+    parser.add_option("-p", "--port", dest="auth_port", type="int",
+                      action="callback", callback=check_port, default=5300,
                       help="port the b10-auth daemon will use (default 5300)")
     parser.add_option("-u", "--user", dest="user",
                       type="string", default=None,
@@ -714,7 +721,7 @@ def main():
     signal.signal(signal.SIGPIPE, signal.SIG_IGN)
 
     # Go bob!
-    boss_of_bind = BoB(options.msgq_socket_file, int(options.auth_port),
+    boss_of_bind = BoB(options.msgq_socket_file, options.auth_port,
                        options.address, options.nocache, options.verbose,
                        setuid, username)
     startup_result = boss_of_bind.startup()
@@ -722,6 +729,17 @@ def main():
         sys.stderr.write("[bind10] Error on startup: %s\n" % startup_result)
         sys.exit(1)
     sys.stdout.write("[bind10] BIND 10 started\n")
+
+    # send "bind10.boot_time" to b10-stats
+    time.sleep(1) # wait a second
+    if options.verbose:
+        sys.stdout.write("[bind10] send \"bind10.boot_time\" to b10-stats\n")
+    cmd = isc.config.ccsession.create_command('set', 
+            { "stats_data": {
+              'bind10.boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', _BASETIME)
+              }
+            })
+    boss_of_bind.cc_session.group_sendmsg(cmd, 'Stats')
 
     # In our main loop, we check for dead processes or messages 
     # on the c-channel.
