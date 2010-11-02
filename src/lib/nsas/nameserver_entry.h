@@ -87,9 +87,9 @@ public:
     /// \brief Constructor where no A records are supplied.
     ///
     /// \param name Name of the nameserver,
-    /// \param classCode class of the nameserver
-    NameserverEntry(const std::string& name, uint16_t classCode) :
-        name_(name), classCode_(classCode)
+    /// \param class_code class of the nameserver
+    NameserverEntry(const std::string& name, uint16_t class_code) :
+        name_(name), classCode_(class_code)
     {}
 
     /// Constructor where one or more RRsets of A/AAAA records are supplied.

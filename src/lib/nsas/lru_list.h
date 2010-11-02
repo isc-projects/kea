@@ -66,7 +66,7 @@ public:
         /// LRU list.
         ///
         /// \param drop Object being dropped.
-        virtual void operator()(boost::shared_ptr<T>& drop) = 0;
+        virtual void operator()(T* drop) const = 0;
     };
 
     /// \brief Constructor
@@ -171,7 +171,7 @@ void LruList<T>::add(boost::shared_ptr<T>& element) {
 
             // to-be-dropped object.
             if (dropped_) {
-                (*dropped_)(*lru_.begin());
+                (*dropped_)(lru_.begin()->get());
             }
 
             // ... and get rid of it from the list

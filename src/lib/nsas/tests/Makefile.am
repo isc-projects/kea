@@ -23,9 +23,11 @@ run_unittests_SOURCES += hash_key_unittest.cc
 run_unittests_SOURCES += hash_table_unittest.cc
 run_unittests_SOURCES += hash_unittest.cc
 run_unittests_SOURCES += lru_list_unittest.cc
+run_unittests_SOURCES += nameserver_address_store_unittest.cc
 run_unittests_SOURCES += nameserver_entry_unittest.cc
 run_unittests_SOURCES += nsas_entry_compare_unittest.cc
 run_unittests_SOURCES += nsas_test_utilities.h 
+run_unittests_SOURCES += zone_entry_unittest.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)

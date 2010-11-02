@@ -39,7 +39,7 @@ namespace nsas {
 /// MS bit on the 16-bit class value.
 class Dropped : public LruList<TestEntry>::Dropped {
 public:
-    virtual void operator()(boost::shared_ptr<TestEntry>& entry) {
+    virtual void operator()(TestEntry* entry) const {
         entry->setClass(entry->getClass() | 0x8000);
     }
 };
