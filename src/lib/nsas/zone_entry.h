@@ -19,11 +19,17 @@
 
 #include <string>
 #include <vector>
-#include <boost/thread.h>
-#include <boost/shared_ptr.h>
+#include <boost/thread.hpp>
+#include <boost/shared_ptr.hpp>
 
+#include "rrset.h"
+
+#include "hash_key.h"
 #include "nsas_entry.h"
 #include "asiolink.h"
+
+namespace isc {
+namespace nsas {
 
 class NameserverEntry;
 
@@ -39,27 +45,55 @@ class NameserverEntry;
 class ZoneEntry : public NsasEntry<ZoneEntry> {
 public:
 
+    /// \brief Constructor where no NS records are supplied
+    ///
+    /// \param name Name of the zone
+    /// \param class_code Class of this zone (zones of different classes have
+    /// different objects.
+    ZoneEntry(const std::string& name, uint16_t class_code) :
+        name_(name), classCode_(class_code)
+    {}
+
     /// \brief Constructor
     ///
     /// Creates a zone entry object with an RRset representing the nameservers,
     /// plus possibly additional RRsets holding address information.
-    ZoneEntry(AbstractRRset* nsrrset,
-            const std::vector<AbstractRRSet*>& additional);
+    //ZoneEntry(isc::dns::AbstractRRset* nsrrset,
+    //       const std::vector<isc::dns::AbstractRRset*>& additional);
+
+    /// \brief Destructor
+    virtual ~ZoneEntry()
+    {}
+
+    /// \return Name of the zone
+    virtual std::string getName() const {
+        return name_;
+    }
+
+    /// \return Class of zone
+    virtual short getClass() const {
+        return classCode_;
+    }
+
+    /// \return Return Hash Key
+    virtual HashKey hashKey() const {
+        return HashKey(name_, classCode_);
+    }
 
     /// \brief Lookup Address
     ///
     /// Returns the address with the lowest RTT.
-    asiolink::IOAddress getAddress() const;
-
-public:
-    void updateNS
+    //virtual asiolink::IOAddress getAddress() const;
 
 private:
     boost::mutex    mutex_;     ///< Mutex protecting this zone entry
     std::string     name_;      ///< Canonical zone name
-    short           classCode_; ///< Class code
+    uint16_t        classCode_; ///< Class code
     std::vector<boost::shared_ptr<NameserverEntry> > nameservers_; ///< Nameservers
     time_t          expiry_;    ///< Expiry time of this entry
 };
+
+} // namespace nsas
+} // namespace isc
  
 #endif // __ZONE_ENTRY_H

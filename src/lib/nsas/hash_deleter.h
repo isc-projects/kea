@@ -19,6 +19,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include "hash_table.h"
+#include "lru_list.h"
 
 namespace isc {
 namespace nsas {
@@ -53,7 +54,7 @@ public:
     /// Performs the deletion of the zone entry from the hash table.
     ///
     /// \param element Element to be deleted
-    virtual void operator()(boost::shared_ptr<T>& element);
+    virtual void operator()(T* element) const;
 
 private:
     HashTable<T>& hashtable_;         ///< Hash table to access element
@@ -61,7 +62,7 @@ private:
 
 // delete the object from the relevant hash table
 template <class T>
-void HashDeleter<T>::operator()(boost::shared_ptr<T>& element) {
+void HashDeleter<T>::operator()(T* element) const {
     hashtable_.remove(element->hashKey());
 }
 
