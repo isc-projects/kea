@@ -1,0 +1,155 @@
+#!@PYTHON@
+
+# Copyright (C) 2010  Internet Systems Consortium.
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SYSTEMS CONSORTIUM
+# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+# INTERNET SYSTEMS CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+# $Id$
+__version__ = "$Revision$"
+
+import sys; sys.path.append ('@@PYTHONPATH@@')
+import os
+import time
+from optparse import OptionParser, OptionValueError
+from isc.config.ccsession import ModuleCCSession, create_command, parse_answer, parse_command, create_answer
+from isc.cc import Session, SessionError
+from stats import get_datetime
+
+# for setproctitle
+import isc.util.process
+isc.util.process.rename()
+
+# If B10_FROM_BUILD is set in the environment, we use data files
+# from a directory relative to that, otherwise we use the ones
+# installed on the system
+if "B10_FROM_BUILD" in os.environ:
+    SPECFILE_LOCATION = os.environ["B10_FROM_BUILD"] + "/src/bin/stats/stats.spec"
+else:
+    PREFIX = "@prefix@"
+    DATAROOTDIR = "@datarootdir@"
+    SPECFILE_LOCATION = "@datadir@/@PACKAGE@/stats.spec".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
+
+class CCSessionStub:
+    """
+    This class is intended to behaves as a sender to Stats module. It
+    creates MoudleCCSession object and send specified command.
+    """
+    def __init__(self, session=None, verbose=False):
+        # create ModuleCCSession object
+        self.verbose = verbose
+        self.cc_session = ModuleCCSession(SPECFILE_LOCATION,
+                                          self.__dummy, self.__dummy, session)
+        self.module_name = self.cc_session._module_name
+        self.session = self.cc_session._session
+
+    def __dummy(self, *args):
+        pass
+
+    def send_command(self, command, args):
+        """
+        send command to stats module with args
+        """
+        cmd = create_command(command, args)
+        if self.verbose:
+            sys.stdout.write("[b10-stats_stub] send command : " + str(cmd) + "\n")
+        seq = self.session.group_sendmsg(cmd, self.module_name)
+        msg, env = self.session.group_recvmsg(False, seq) # non-blocking is False
+        if self.verbose:
+            sys.stdout.write("[b10-stats_stub] received env : " + str(env) + "\n")
+            sys.stdout.write("[b10-stats_stub] received message : " + str(msg) + "\n")
+        (ret, arg) = (None, None)
+        if 'result' in msg:
+            ret, arg = parse_answer(msg)
+        elif 'command' in msg:
+            ret, arg = parse_command(msg)
+        self.session.group_reply(env, create_answer(0))
+        return ret, arg, env
+        
+class BossModuleStub:
+    """
+    This class is customized from CCSessionStub and is intended to behaves
+    as a virtual Boss module to send to Stats Module.
+    """
+    def __init__(self, session=None, verbose=False):
+        self.stub = CCSessionStub(session=session, verbose=verbose)
+    
+    def send_boottime(self):
+        return self.stub.send_command("set", {"stats_data": {"bind10.boot_time": get_datetime()}})
+
+class AuthModuleStub:
+    """
+    This class is customized CCSessionStub and is intended to behaves
+    as a virtual Auth module to send to Stats Module.
+    """
+    def __init__(self, session=None, verbose=False):
+        self.stub = CCSessionStub(session=session, verbose=verbose)
+        self.count = { "udp": 0, "tcp": 0 }
+    
+    def send_udp_query_count(self, cmd="set", cnt=0):
+        """
+        count up udp query count
+        """
+        prt = "udp"
+        self.count[prt] = 1
+        if cnt > 0:
+            self.count[prt] = cnt
+        return self.stub.send_command(cmd,
+                                      {"stats_data":
+                                           {"auth.queries."+prt: self.count[prt]}
+                                       })
+
+    def send_tcp_query_count(self, cmd="set", cnt=0):
+        """
+        set udp query count
+        """
+        prt = "tcp"
+        self.count[prt] = self.count[prt] + 1
+        if cnt > 0:
+            self.count[prt] = cnt
+        return self.stub.send_command(cmd,
+                                      {"stats_data":
+                                           {"auth.queries."+prt: self.count[prt]}
+                                       })
+
+def main(session=None):
+    try:
+        parser=OptionParser()
+        parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
+                      help="display more about what is going on")
+        (options, args) = parser.parse_args()
+        stub = CCSessionStub(session=session, verbose=options.verbose)
+        boss = BossModuleStub(session=stub.session, verbose=options.verbose)
+        auth = AuthModuleStub(session=stub.session, verbose=options.verbose)
+        stub.send_command("status", None)
+        boss.send_boottime()
+        t_cnt=0
+        u_cnt=81120
+        auth.send_udp_query_count(cnt=u_cnt) # This is an example.
+        while True:
+            u_cnt = u_cnt + 1
+            t_cnt = t_cnt + 1
+            auth.send_udp_query_count(cnt=u_cnt)
+            auth.send_tcp_query_count(cnt=t_cnt)
+            time.sleep(1)
+
+    except OptionValueError:
+        sys.stderr.write("[b10-stats_stub] Error parsing options\n")
+    except SessionError as se:
+        sys.stderr.write("[b10-stats_stub] Error creating Stats module, "
+              + "is the command channel daemon running?\n")
+    except KeyboardInterrupt as kie:
+        sys.stderr.write("[b10-stats_stub] Interrupted, exiting\n")
+
+if __name__ == "__main__":
+    main()

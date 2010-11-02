@@ -27,6 +27,11 @@ ZONE_NAME_CLASS3_IN = ("example.com", "IN")
 ZONE_NAME_CLASS1_CH = ("sd.cn.", "CH")
 ZONE_NAME_CLASS2_IN = ("tw.cn", "IN")
 
+MAX_TRANSFER_TIMEOUT = 14400
+LOWERBOUND_REFRESH = 10
+LOWERBOUND_RETRY = 5 
+JITTER_SCOPE = 0.10
+
 class ZonemgrTestException(Exception):
     pass
 
@@ -40,8 +45,21 @@ class MySession():
 
 class MyZonemgrRefresh(ZonemgrRefresh):
     def __init__(self):
-        self._cc = MySession()
-        self._db_file = "initdb.file"
+        class FakeConfig:
+            def get(self, name):
+                if name == 'lowerbound_refresh':
+                    return LOWERBOUND_REFRESH
+                elif name == 'lowerbound_retry':
+                    return LOWERBOUND_RETRY
+                elif name == 'max_transfer_timeout':
+                    return MAX_TRANSFER_TIMEOUT
+                elif name == 'jitter_scope':
+                    return JITTER_SCOPE
+                else:
+                    raise ValueError('Uknown config option')
+        self._master_socket, self._slave_socket = socket.socketpair()
+        ZonemgrRefresh.__init__(self, MySession(), "initdb.file",
+            self._slave_socket, FakeConfig())
         current_time = time.time()
         self._zonemgr_refresh_info = { 
          ('sd.cn.', 'IN'): {
@@ -58,8 +76,8 @@ class MyZonemgrRefresh(ZonemgrRefresh):
 
 class TestZonemgrRefresh(unittest.TestCase):
     def setUp(self):
-        self.stdout_backup = sys.stdout
-        sys.stdout = open(os.devnull, 'w')
+        self.stderr_backup = sys.stderr
+        sys.stderr = open(os.devnull, 'w')
         self.zone_refresh = MyZonemgrRefresh()
 
     def test_random_jitter(self):
@@ -92,7 +110,7 @@ class TestZonemgrRefresh(unittest.TestCase):
         time2 = time.time()
         self.assertTrue((time1 + 7200 * 3 / 4) <= zone_timeout)
         self.assertTrue(zone_timeout <= time2 + 7200)
-        
+
     def test_set_zone_retry_timer(self):
         time1 = time.time()
         self.zone_refresh._set_zone_retry_timer(ZONE_NAME_CLASS1_IN)
@@ -138,6 +156,8 @@ class TestZonemgrRefresh(unittest.TestCase):
          
     def test_zonemgr_reload_zone(self):
         soa_rdata = 'a.dns.cn. root.cnnic.cn. 2009073106 1800 900 2419200 21600'
+        # We need to restore this not to harm other tests
+        old_get_zone_soa = sqlite3_ds.get_zone_soa
         def get_zone_soa(zone_name, db_file):
             return (1, 2, 'sd.cn.', 'cn.sd.', 21600, 'SOA', None, 
                     'a.dns.cn. root.cnnic.cn. 2009073106 1800 900 2419200 21600')
@@ -145,6 +165,7 @@ class TestZonemgrRefresh(unittest.TestCase):
 
         self.zone_refresh.zonemgr_reload_zone(ZONE_NAME_CLASS1_IN)
         self.assertEqual(soa_rdata, self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_soa_rdata"])
+        sqlite3_ds.get_zone_soa = old_get_zone_soa
 
     def test_get_zone_notifier_master(self):
         notify_master = "192.168.1.1"
@@ -222,6 +243,9 @@ class TestZonemgrRefresh(unittest.TestCase):
 
     def test_zonemgr_add_zone(self):
         soa_rdata = 'a.dns.cn. root.cnnic.cn. 2009073106 1800 900 2419200 21600'
+        # This needs to be restored. The following test actually failed if we left
+        # this unclean
+        old_get_zone_soa = sqlite3_ds.get_zone_soa
 
         def get_zone_soa(zone_name, db_file):
             return (1, 2, 'sd.cn.', 'cn.sd.', 21600, 'SOA', None, 
@@ -242,7 +266,8 @@ class TestZonemgrRefresh(unittest.TestCase):
             return None
         sqlite3_ds.get_zone_soa = get_zone_soa2
         self.assertRaises(ZonemgrException, self.zone_refresh.zonemgr_add_zone, \
-                                          ZONE_NAME_CLASS1_IN)
+                                         ZONE_NAME_CLASS1_IN)
+        sqlite3_ds.get_zone_soa = old_get_zone_soa
 
     def test_build_zonemgr_refresh_info(self):
         soa_rdata = 'a.dns.cn. root.cnnic.cn. 2009073106 1800 900 2419200 21600'
@@ -373,7 +398,7 @@ class TestZonemgrRefresh(unittest.TestCase):
         """This case will run timer in daemon thread. 
         The zone's next_refresh_time is less than now, so zonemgr will do zone refresh 
         immediately. The zone's state will become "refreshing". 
-        Then closing the socket ,the timer will stop, and throw a ZonemgrException."""
+        """
         time1 = time.time()
         self.zone_refresh._zonemgr_refresh_info = {
                 ("sd.cn.", "IN"):{
@@ -382,24 +407,38 @@ class TestZonemgrRefresh(unittest.TestCase):
                     'zone_soa_rdata': 'a.dns.cn. root.cnnic.cn. 2009073105 7200 3600 2419200 21600', 
                     'zone_state': ZONE_OK}
                 }
-        master_socket, slave_socket = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.zone_refresh._socket = master_socket 
-        master_socket.close()
-        self.assertRaises(ZonemgrException, self.zone_refresh.run_timer)
-
-        self.zone_refresh._socket = slave_socket
-        listener = threading.Thread(target = self.zone_refresh.run_timer, args = ())
-        listener.setDaemon(True)
-        listener.start()
-        time.sleep(1)
-
+        self.zone_refresh._check_sock = self.zone_refresh._master_socket 
+        listener = self.zone_refresh.run_timer(daemon=True)
+        # Shut down the timer thread
+        self.zone_refresh.shutdown()
+        # After running timer, the zone's state should become "refreshing".
         zone_state = self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN]["zone_state"]
         self.assertTrue("refresh_timeout" in self.zone_refresh._zonemgr_refresh_info[ZONE_NAME_CLASS1_IN].keys())
         self.assertTrue(zone_state == ZONE_REFRESHING)
 
+    def test_update_config_data(self):
+        config_data = {
+                    "lowerbound_refresh" : 60,
+                    "lowerbound_retry" : 30,
+                    "max_transfer_timeout" : 19800,
+                    "jitter_scope" : 0.25
+                }
+        self.zone_refresh.update_config_data(config_data)
+        self.assertEqual(60, self.zone_refresh._lowerbound_refresh)
+        self.assertEqual(30, self.zone_refresh._lowerbound_retry)
+        self.assertEqual(19800, self.zone_refresh._max_transfer_timeout)
+        self.assertEqual(0.25, self.zone_refresh._jitter_scope)
+
+    def test_shutdown(self):
+        self.zone_refresh._check_sock = self.zone_refresh._master_socket 
+        listener = self.zone_refresh.run_timer()
+        self.assertTrue(listener.is_alive())
+        # Shut down the timer thread
+        self.zone_refresh.shutdown()
+        self.assertFalse(listener.is_alive())
 
     def tearDown(self):
-        sys.stdout = self.stdout_backup
+        sys.stderr= self.stderr_backup
 
 
 class MyCCSession():
@@ -417,10 +456,16 @@ class MyZonemgr(Zonemgr):
 
     def __init__(self):
         self._db_file = "initdb.file"
+        self._zone_refresh = None
         self._shutdown_event = threading.Event()
         self._cc = MySession()
         self._module_cc = MyCCSession()
-        self._config_data = {"zone_name" : "org.cn", "zone_class" : "CH", "master" : "127.0.0.1"}
+        self._config_data = {
+                    "lowerbound_refresh" : 10, 
+                    "lowerbound_retry" : 5, 
+                    "max_transfer_timeout" : 14400,
+                    "jitter_scope" : 0.1
+                    }
 
     def _start_zone_refresh_timer(self):
         pass
@@ -431,12 +476,21 @@ class TestZonemgr(unittest.TestCase):
         self.zonemgr = MyZonemgr()
 
     def test_config_handler(self):
-        config_data1 = {"zone_name" : "sd.cn.", "zone_class" : "CH", "master" : "192.168.1.1"}
+        config_data1 = {
+                    "lowerbound_refresh" : 60, 
+                    "lowerbound_retry" : 30, 
+                    "max_transfer_timeout" : 14400,
+                    "jitter_scope" : 0.1
+                    }
         self.zonemgr.config_handler(config_data1)
         self.assertEqual(config_data1, self.zonemgr._config_data)
         config_data2 = {"zone_name" : "sd.cn.", "port" : "53", "master" : "192.168.1.1"}
         self.zonemgr.config_handler(config_data2)
         self.assertEqual(config_data1, self.zonemgr._config_data)
+        # jitter should not be bigger than half of the original value
+        config_data3 = {"jitter_scope" : 0.7}
+        self.zonemgr.config_handler(config_data3)
+        self.assertEqual(0.5, self.zonemgr._config_data.get("jitter_scope"))
 
     def test_get_db_file(self):
         self.assertEqual("initdb.file", self.zonemgr.get_db_file())
@@ -451,6 +505,15 @@ class TestZonemgr(unittest.TestCase):
         self.assertRaises(ZonemgrException, self.zonemgr._parse_cmd_params, params2, ZONE_NOTIFY_COMMAND)
         params1 = {"zone_class" : "CH"}
         self.assertRaises(ZonemgrException, self.zonemgr._parse_cmd_params, params2, ZONE_NOTIFY_COMMAND)
+
+    def test_config_data_check(self):
+        # jitter should not be bigger than half of the original value
+        config_data2 = {"jitter_scope" : 0.2}
+        config_data3 = {"jitter_scope" : 0.6}
+        self.zonemgr._config_data_check(config_data2)
+        self.assertEqual(0.2, config_data2.get("jitter_scope"))
+        self.zonemgr._config_data_check(config_data3)
+        self.assertEqual(0.5, config_data3.get("jitter_scope"))
 
     def tearDown(self):
         pass

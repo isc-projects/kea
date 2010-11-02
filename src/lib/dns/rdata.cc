@@ -82,8 +82,7 @@ createRdata(const RRType& rrtype, const RRClass& rrclass, const Rdata& source)
 }
 
 int
-compareNames(const Name& n1, const Name& n2)
-{
+compareNames(const Name& n1, const Name& n2) {
     size_t len1 = n1.getLength();
     size_t len2 = n2.getLength();
     size_t cmplen = min(len1, len2);
@@ -107,8 +106,7 @@ struct GenericImpl {
     vector<uint8_t> data_;
 };
 
-Generic::Generic(InputBuffer& buffer, size_t rdata_len)
-{
+Generic::Generic(InputBuffer& buffer, size_t rdata_len) {
     if (rdata_len > MAX_RDLENGTH) {
         isc_throw(InvalidRdataLength, "RDLENGTH too large");
     }
@@ -119,8 +117,7 @@ Generic::Generic(InputBuffer& buffer, size_t rdata_len)
     impl_ = new GenericImpl(data);
 }
 
-Generic::Generic(const string& rdata_string)
-{
+Generic::Generic(const string& rdata_string) {
     istringstream iss(rdata_string);
     string unknown_mark;
     iss >> unknown_mark;
@@ -181,8 +178,7 @@ Generic::Generic(const string& rdata_string)
     impl_ = new GenericImpl(data);
 }
 
-Generic::~Generic()
-{
+Generic::~Generic() {
     delete impl_;
 }
 
@@ -191,8 +187,7 @@ Generic::Generic(const Generic& source) :
 {}
 
 Generic&
-Generic::operator=(const Generic& source)
-{
+Generic::operator=(const Generic& source) {
     if (impl_ == source.impl_) {
         return (*this);
     }
@@ -218,8 +213,7 @@ private:
 }
 
 string
-Generic::toText() const
-{
+Generic::toText() const {
     ostringstream oss;
 
     oss << "\\# " << impl_->data_.size() << " ";
@@ -231,21 +225,18 @@ Generic::toText() const
 }
 
 void
-Generic::toWire(OutputBuffer& buffer) const
-{
+Generic::toWire(OutputBuffer& buffer) const {
     buffer.writeData(&impl_->data_[0], impl_->data_.size());
 }
 
 void
-Generic::toWire(MessageRenderer& renderer) const
-{
+Generic::toWire(MessageRenderer& renderer) const {
     renderer.writeData(&impl_->data_[0], impl_->data_.size());
 }
 
 namespace {
 inline int
-compare_internal(const GenericImpl& lhs, const GenericImpl& rhs)
-{
+compare_internal(const GenericImpl& lhs, const GenericImpl& rhs) {
     size_t this_len = lhs.data_.size();
     size_t other_len = rhs.data_.size();
     size_t len = (this_len < other_len) ? this_len : other_len;
@@ -262,16 +253,14 @@ compare_internal(const GenericImpl& lhs, const GenericImpl& rhs)
 }
 
 int
-Generic::compare(const Rdata& other) const
-{
+Generic::compare(const Rdata& other) const {
     const Generic& other_rdata = dynamic_cast<const Generic&>(other);
 
     return (compare_internal(*impl_, *other_rdata.impl_));
 }
 
 std::ostream&
-operator<<(std::ostream& os, const Generic& rdata)
-{
+operator<<(std::ostream& os, const Generic& rdata) {
     return (os << rdata.toText());
 }
 } // end of namespace generic
