@@ -219,7 +219,7 @@ DNSService::DNSService(IOService& io_service,
 }
 
 // TODO This should be removed upon merge with the configuration
-DNSService::DNSService(IOService& io_service, SimpleCallback *checkin,
+DNSService::DNSService(IOService& io_service, SimpleCallback* checkin,
     DNSLookup* lookup, DNSAnswer* answer) :
     impl_(NULL), io_service_(io_service)
 {
@@ -268,7 +268,7 @@ class RunningQuery : public UDPQuery::Callback {
         public:
             RunningQuery(asio::io_service& io, const Question &question,
                 const IOAddress& address, uint16_t port,
-                OutputBufferPtr buffer, DNSServer *server, int timeout,
+                OutputBufferPtr buffer, DNSServer* server, int timeout,
                 unsigned retries) :
                 io_(io),
                 question_(question),
