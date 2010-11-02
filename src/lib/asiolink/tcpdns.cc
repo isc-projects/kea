@@ -72,7 +72,7 @@ TCPServer::operator()(error_code ec, size_t length) {
     /// a switch statement, inline variable declarations are not
     /// permitted.  Certain variables used below can be declared here.
     boost::array<const_buffer,2> bufs;
-    OutputBuffer* lenbuf;
+    OutputBuffer* lenbuf = NULL;
 
     CORO_REENTER (this) {
         do {
@@ -173,6 +173,7 @@ TCPServer::operator()(error_code ec, size_t length) {
         // will simply exit at that time).
         CORO_YIELD async_write(*socket_, bufs, *this);
     }
+    delete lenbuf;
 }
 
 /// Call the DNS lookup provider.  (Expected to be called by the
