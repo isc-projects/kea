@@ -62,7 +62,7 @@ static bool verbose_mode = false;
 // Default port current 5300 for testing purposes
 static const string PROGRAM = "Recurse";
 
-static IOService* io_service;
+IOService io_service;
 static Recursor *recursor;
 
 ConstElementPtr
@@ -79,7 +79,7 @@ my_command_handler(const string& command, ConstElementPtr args) {
         /* let's add that message to our answer as well */
         answer = createAnswer(0, args);
     } else if (command == "shutdown") {
-        io_service->stop();
+        io_service.stop();
     }
 
     return (answer);
@@ -139,11 +139,12 @@ main(int argc, char* argv[]) {
         DNSLookup* lookup = recursor->getDNSLookupProvider();
         DNSAnswer* answer = recursor->getDNSAnswerProvider();
 
-        io_service = new IOService(checkin, lookup, answer);
-        recursor->setIOService(*io_service);
+        DNSService dns_service(io_service, checkin, lookup, answer);
+
+        recursor->setDNSService(dns_service);
         cout << "[b10-recurse] IOService created." << endl;
 
-        cc_session = new Session(io_service->get_io_service());
+        cc_session = new Session(io_service.get_io_service());
         cout << "[b10-recurse] Configuration session channel created." << endl;
 
         config_session = new ModuleCCSession(specfile, *cc_session,
@@ -160,7 +161,7 @@ main(int argc, char* argv[]) {
         recursor->updateConfig(config_session->getFullConfig());
 
         cout << "[b10-recurse] Server started." << endl;
-        io_service->run();
+        io_service.run();
     } catch (const std::exception& ex) {
         cerr << "[b10-recurse] Server failed: " << ex.what() << endl;
         ret = 1;
@@ -168,7 +169,6 @@ main(int argc, char* argv[]) {
 
     delete config_session;
     delete cc_session;
-    delete io_service;
     delete recursor;
 
     return (ret);

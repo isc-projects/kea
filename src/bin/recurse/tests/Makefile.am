@@ -35,24 +35,12 @@ endif
 
 noinst_PROGRAMS = $(TESTS)
 
-EXTRA_DIST =  testdata/badExampleQuery_fromWire
-EXTRA_DIST += testdata/badExampleQuery_fromWire.spec
-EXTRA_DIST += testdata/example.com
-EXTRA_DIST += testdata/examplequery_fromWire
-EXTRA_DIST += testdata/examplequery_fromWire.spec
-EXTRA_DIST += testdata/example.sqlite3
-EXTRA_DIST += testdata/iqueryresponse_fromWire
-EXTRA_DIST += testdata/iqueryresponse_fromWire.spec
+EXTRA_DIST = testdata/iqueryresponse_fromWire
 EXTRA_DIST += testdata/multiquestion_fromWire
-EXTRA_DIST += testdata/multiquestion_fromWire.spec
 EXTRA_DIST += testdata/queryBadEDNS_fromWire
-EXTRA_DIST += testdata/queryBadEDNS_fromWire.spec
 EXTRA_DIST += testdata/shortanswer_fromWire
-EXTRA_DIST += testdata/shortanswer_fromWire.spec
 EXTRA_DIST += testdata/shortmessage_fromWire
 EXTRA_DIST += testdata/shortquestion_fromWire
 EXTRA_DIST += testdata/shortresponse_fromWire
 EXTRA_DIST += testdata/simplequery_fromWire
-EXTRA_DIST += testdata/simplequery_fromWire.spec
 EXTRA_DIST += testdata/simpleresponse_fromWire
-EXTRA_DIST += testdata/simpleresponse_fromWire.spec
