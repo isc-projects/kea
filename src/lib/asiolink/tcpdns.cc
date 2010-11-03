@@ -72,7 +72,7 @@ TCPServer::operator()(error_code ec, size_t length) {
     /// a switch statement, inline variable declarations are not
     /// permitted.  Certain variables used below can be declared here.
     boost::array<const_buffer,2> bufs;
-    OutputBuffer* lenbuf = NULL;
+    OutputBuffer lenbuf(TCP_MESSAGE_LENGTHSIZE);
 
     CORO_REENTER (this) {
         do {
@@ -162,9 +162,8 @@ TCPServer::operator()(error_code ec, size_t length) {
         (*answer_callback_)(*io_message_, message_, respbuf_);
 
         // Set up the response, beginning with two length bytes.
-        lenbuf = new OutputBuffer(TCP_MESSAGE_LENGTHSIZE);
-        lenbuf->writeUint16(respbuf_->getLength());
-        bufs[0] = buffer(lenbuf->getData(), lenbuf->getLength());
+        lenbuf.writeUint16(respbuf_->getLength());
+        bufs[0] = buffer(lenbuf.getData(), lenbuf.getLength());
         bufs[1] = buffer(respbuf_->getData(), respbuf_->getLength());
 
         // Begin an asynchronous send, and then yield.  When the
@@ -173,7 +172,6 @@ TCPServer::operator()(error_code ec, size_t length) {
         // will simply exit at that time).
         CORO_YIELD async_write(*socket_, bufs, *this);
     }
-    delete lenbuf;
 }
 
 /// Call the DNS lookup provider.  (Expected to be called by the
