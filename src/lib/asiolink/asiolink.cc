@@ -51,7 +51,10 @@ private:
     IOServiceImpl& operator=(const IOService& source);
 public:
     /// \brief The constructor
-    IOServiceImpl() : io_service_() {};
+    IOServiceImpl() :
+        io_service_(),
+        work_(io_service_)
+    {};
     /// \brief The destructor.
     ~IOServiceImpl() {};
     //@}
@@ -83,6 +86,7 @@ public:
     asio::io_service& get_io_service() { return io_service_; };
 private:
     asio::io_service io_service_;
+    asio::io_service::work work_;
 };
 
 IOService::IOService() {
@@ -119,11 +123,9 @@ public:
                   const ip::address* v4addr, const ip::address* v6addr,
                   SimpleCallback* checkin, DNSLookup* lookup,
                   DNSAnswer* answer);
-    //asio::io_service io_service_;
-    // So it does not run out of work when there are no listening sockets
-    asio::io_service::work work_;
 
-    void stop();
+    IOService& io_service_;
+
     typedef boost::shared_ptr<UDPServer> UDPServerPtr;
     typedef boost::shared_ptr<TCPServer> TCPServerPtr;
     typedef boost::shared_ptr<DNSServer> DNSServerPtr;
@@ -134,13 +136,13 @@ public:
 
     void addServer(uint16_t port, const ip::address& address) {
         try {
-            TCPServerPtr tcpServer(new TCPServer(io_service_, address, port,
-                checkin_, lookup_, answer_));
+            TCPServerPtr tcpServer(new TCPServer(io_service_.get_io_service(),
+                address, port, checkin_, lookup_, answer_));
             (*tcpServer)();
             servers_.push_back(tcpServer);
 
-            UDPServerPtr udpServer(new UDPServer(io_service_, address, port,
-                checkin_, lookup_, answer_));
+            UDPServerPtr udpServer(new UDPServer(io_service_.get_io_service(),
+                address, port, checkin_, lookup_, answer_));
             (*udpServer)();
             servers_.push_back(udpServer);
         }
@@ -172,15 +174,14 @@ public:
     }
 };
 
-DNSServiceImpl::DNSServiceImpl(IOService& io_service_,
+DNSServiceImpl::DNSServiceImpl(IOService& io_service,
                                const char& port,
                                const ip::address* const v4addr,
                                const ip::address* const v6addr,
                                SimpleCallback* checkin,
                                DNSLookup* lookup,
                                DNSAnswer* answer) :
-    // TODO MERGE move work to IOService
-    work_(io_service_),
+    io_service_(io_service),
     checkin_(checkin),
     lookup_(lookup),
     answer_(answer)
@@ -199,7 +200,7 @@ DNSService::DNSService(IOService& io_service,
                        SimpleCallback* checkin,
                        DNSLookup* lookup,
                        DNSAnswer* answer) :
-    impl_(new IOServiceImpl(io_service, port, NULL, NULL, checkin, lookup,
+    impl_(new DNSServiceImpl(io_service, port, NULL, NULL, checkin, lookup,
         answer)), io_service_(io_service)
 {
     addServer(port, &address);
@@ -222,8 +223,8 @@ DNSService::DNSService(IOService& io_service,
 
 DNSService::DNSService(IOService& io_service, SimpleCallback* checkin,
     DNSLookup* lookup, DNSAnswer *answer) :
-    impl_(new IOServiceImpl(io_service, *"0", NULL, NULL, checkin, lookup,
-        answer))
+    impl_(new DNSServiceImpl(io_service, *"0", NULL, NULL, checkin, lookup,
+        answer)), io_service_(io_service)
 {
 }
 
@@ -261,26 +262,6 @@ DNSService::clearServers() {
     // FIXME: This does not work, it does not close the socket.
     // How is it done?
     impl_->servers_.clear();
-}
-
-void
-IOService::run() {
-    impl_->io_service_.run();
-}
-
-void
-IOService::run_one() {
-    impl_->io_service_.run_one();
-}
-
-void
-IOService::stop() {
-    impl_->io_service_.stop();
-}
-
-asio::io_service&
-IOService::get_io_service() {
-    return (impl_->io_service_);
 }
 
 RecursiveQuery::RecursiveQuery(DNSService& dns_service,

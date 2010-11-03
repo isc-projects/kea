@@ -366,11 +366,14 @@ protected:
     }
 
     // Set up an IO Service queue without any addresses
-    void setIOService() {
+    void setDNSService() {
+        delete dns_service_;
+        dns_service_ = NULL;
         delete io_service_;
         io_service_ = NULL;
+        io_service_ = new IOService();
         callback_ = new ASIOCallBack(this);
-        io_service_ = new IOService(callback_, NULL, NULL);
+        dns_service_ = new DNSService(*io_service_, callback_, NULL, NULL);
     }
 
     // Run a simple server test, on either IPv4 or IPv6, and over either
@@ -552,16 +555,16 @@ TEST_F(ASIOLinkTest, v4TCPSendSpecific) {
 }
 
 TEST_F(ASIOLinkTest, v6AddServer) {
-    setIOService();
-    io_service_->addServer(*TEST_SERVER_PORT, TEST_IPV6_ADDR);
+    setDNSService();
+    dns_service_->addServer(*TEST_SERVER_PORT, TEST_IPV6_ADDR);
     doTest(AF_INET6, IPPROTO_TCP);
 
     EXPECT_THROW(sendTCP(AF_INET), IOError);
 }
 
 TEST_F(ASIOLinkTest, v4AddServer) {
-    setIOService();
-    io_service_->addServer(*TEST_SERVER_PORT, TEST_IPV4_ADDR);
+    setDNSService();
+    dns_service_->addServer(*TEST_SERVER_PORT, TEST_IPV4_ADDR);
     doTest(AF_INET, IPPROTO_TCP);
 
     EXPECT_THROW(sendTCP(AF_INET6), IOError);
@@ -570,7 +573,8 @@ TEST_F(ASIOLinkTest, v4AddServer) {
 TEST_F(ASIOLinkTest, DISABLED_clearServers) {
     // FIXME: Enable when clearServers actually close the sockets
     //    See #388
-    io_service_->clearServers();
+    setDNSService();
+    dns_service_->clearServers();
 
     EXPECT_THROW(sendTCP(AF_INET), IOError);
     EXPECT_THROW(sendTCP(AF_INET6), IOError);
