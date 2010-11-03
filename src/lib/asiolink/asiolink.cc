@@ -52,6 +52,8 @@ public:
                   SimpleCallback* checkin, DNSLookup* lookup,
                   DNSAnswer* answer);
     asio::io_service io_service_;
+    // So it does not run out of work when there are no listening sockets
+    asio::io_service::work work_;
 
     typedef boost::shared_ptr<UDPServer> UDPServerPtr;
     typedef boost::shared_ptr<TCPServer> TCPServerPtr;
@@ -107,6 +109,7 @@ IOServiceImpl::IOServiceImpl(const char& port,
                              SimpleCallback* checkin,
                              DNSLookup* lookup,
                              DNSAnswer* answer) :
+    work_(io_service_),
     checkin_(checkin),
     lookup_(lookup),
     answer_(answer)
@@ -187,21 +190,12 @@ IOService::clearServers() {
 
 void
 IOService::run() {
-    if (!impl_->io_service_.run()) {
-        // We got the io_service in stopped state and it didn't work
-        // Reset it and try again
-        impl_->io_service_.reset();
-        impl_->io_service_.run();
-    }
+    impl_->io_service_.run();
 }
 
 void
 IOService::run_one() {
-    if (!impl_->io_service_.run_one()) {
-        // Same as in run() - we got it in stopped state
-        impl_->io_service_.reset();
-        impl_->io_service_.run_one();
-    }
+    impl_->io_service_.run_one();
 }
 
 void

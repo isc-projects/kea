@@ -182,12 +182,7 @@ SessionImpl::readData(void* data, size_t datalen) {
         // When one of them has a result, cancel the other, and wait
         // until the cancel is processed before we continue
         while (!read_result && !timer_result) {
-            if (!socket_.io_service().run_one()) {
-                // We run out of work last time we did readData
-                // and there seems to be no way to test if it is running.
-                // We know when it returns 0, it is stopped.
-                socket_.io_service().reset();
-            }
+            socket_.io_service().run_one();
 
             // Don't cancel the timer if we haven't set it
             if (read_result && getTimeout() != 0) {
