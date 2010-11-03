@@ -63,7 +63,7 @@ private:
 
 class RecursorTest : public ::testing::Test {
 protected:
-    RecursorTest() : server(*DEFAULT_REMOTE_ADDRESS),
+    RecursorTest() : server(),
                      request_message(Message::RENDER),
                      parse_message(new Message(Message::PARSE)),
                      default_qid(0x1035), opcode(Opcode(Opcode::QUERY())),
@@ -331,12 +331,13 @@ TEST_F(RecursorTest, notifyFail) {
 
 class RecursorConfig : public ::testing::Test {
     public:
-        IOService service;
+        IOService ios;
+        DNSService dnss;
         Recursor server;
         RecursorConfig() :
-            service(NULL, NULL, NULL)
+            dnss(ios, NULL, NULL, NULL)
         {
-            server.setIOService(service);
+            server.setDNSService(dnss);
         }
         void invalidTest(const string &JOSN);
 };
