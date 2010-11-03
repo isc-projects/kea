@@ -249,7 +249,7 @@ NSEC3::toWire(OutputBuffer& buffer) const {
 }
 
 void
-NSEC3::toWire(MessageRenderer& renderer) const {
+NSEC3::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeUint8(impl_->hashalg_);
     renderer.writeUint8(impl_->flags_);
     renderer.writeUint16(impl_->iterations_);

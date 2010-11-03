@@ -28,7 +28,7 @@ namespace isc {
 namespace dns {
 class InputBuffer;
 class OutputBuffer;
-class MessageRenderer;
+class AbstractMessageRenderer;
 
 ///
 /// \brief A standard DNS module exception that is thrown if the name parser
@@ -349,7 +349,7 @@ public:
     ///
     /// \param renderer DNS message rendering context that encapsulates the
     /// output buffer and name compression information.
-    void toWire(MessageRenderer& renderer) const;
+    void toWire(AbstractMessageRenderer& renderer) const;
 
     /// \brief Render the <code>Name</code> in the wire format without
     /// compression.

@@ -73,7 +73,7 @@ MX::toWire(OutputBuffer& buffer) const {
 }
 
 void
-MX::toWire(MessageRenderer& renderer) const {
+MX::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeUint16(preference_);
     renderer.writeName(mxname_);
 }

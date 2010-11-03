@@ -101,7 +101,7 @@ SOA::toWire(OutputBuffer& buffer) const {
 }
 
 void
-SOA::toWire(MessageRenderer& renderer) const {
+SOA::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeName(mname_);
     renderer.writeName(rname_);
     renderer.writeData(numdata_, sizeof(numdata_));

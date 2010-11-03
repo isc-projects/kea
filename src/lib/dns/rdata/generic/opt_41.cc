@@ -58,7 +58,7 @@ OPT::toWire(OutputBuffer& buffer UNUSED_PARAM) const {
 }
 
 void
-OPT::toWire(MessageRenderer& renderer UNUSED_PARAM) const {
+OPT::toWire(AbstractMessageRenderer& renderer UNUSED_PARAM) const {
     // nothing to do, as this simple version doesn't support any options.
 }
 

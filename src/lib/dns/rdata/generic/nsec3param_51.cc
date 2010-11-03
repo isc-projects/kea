@@ -136,7 +136,7 @@ NSEC3PARAM::toWire(OutputBuffer& buffer) const {
 }
 
 void
-NSEC3PARAM::toWire(MessageRenderer& renderer) const {
+NSEC3PARAM::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeUint8(impl_->hashalg_);
     renderer.writeUint8(impl_->flags_);
     renderer.writeUint16(impl_->iterations_);

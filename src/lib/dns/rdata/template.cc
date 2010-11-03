@@ -52,7 +52,7 @@ MyType::toWire(OutputBuffer& buffer) const {
 }
 
 void
-MyType::toWire(MessageRenderer& renderer) const {
+MyType::toWire(AbstractMessageRenderer& renderer) const {
 }
 
 int

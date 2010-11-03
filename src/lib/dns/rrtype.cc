@@ -55,7 +55,7 @@ RRType::toWire(OutputBuffer& buffer) const {
 }
 
 void
-RRType::toWire(MessageRenderer& renderer) const {
+RRType::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeUint16(typecode_);
 }
 

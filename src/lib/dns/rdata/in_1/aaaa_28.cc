@@ -68,7 +68,7 @@ AAAA::toWire(OutputBuffer& buffer) const {
 }
 
 void
-AAAA::toWire(MessageRenderer& renderer) const {
+AAAA::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeData(&addr_, sizeof(addr_));
 }
 

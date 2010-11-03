@@ -132,7 +132,7 @@ DS::toWire(OutputBuffer& buffer) const {
 }
 
 void
-DS::toWire(MessageRenderer& renderer) const {
+DS::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeUint16(impl_->tag_);
     renderer.writeUint8(impl_->algorithm_);
     renderer.writeUint8(impl_->digest_type_);

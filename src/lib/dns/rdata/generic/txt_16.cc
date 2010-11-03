@@ -103,7 +103,7 @@ TXT::toWire(OutputBuffer& buffer) const {
 }
 
 void
-TXT::toWire(MessageRenderer& renderer) const {
+TXT::toWire(AbstractMessageRenderer& renderer) const {
     for (vector<vector<uint8_t> >::const_iterator it = string_list_.begin();
          it != string_list_.end();
          ++it)

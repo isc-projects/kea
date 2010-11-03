@@ -230,7 +230,7 @@ Generic::toWire(OutputBuffer& buffer) const {
 }
 
 void
-Generic::toWire(MessageRenderer& renderer) const {
+Generic::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeData(&impl_->data_[0], impl_->data_.size());
 }
 

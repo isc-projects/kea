@@ -54,7 +54,7 @@ CNAME::toWire(OutputBuffer& buffer) const {
 }
 
 void
-CNAME::toWire(MessageRenderer& renderer) const {
+CNAME::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeName(cname_);
 }
 
