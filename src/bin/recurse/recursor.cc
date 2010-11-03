@@ -86,16 +86,16 @@ public:
     }
 
     void setForwardAddresses(const vector<addr_t>& upstream,
-        IOService* ios)
+        DNSService *dnss)
     {
         queryShutdown();
         upstream_ = upstream;
-        if (ios) {
+        if (dnss) {
             if (upstream_.empty()) {
                 cerr << "[b10-recurse] Asked to do full recursive," << endl <<
                     "but not implemented yet. I'll do nothing." << endl;
             } else {
-                querySetup(*ios);
+                querySetup(*dnss);
             }
         }
     }
@@ -525,7 +525,7 @@ Recursor::updateConfig(ConstElementPtr config) {
 void
 Recursor::setForwardAddresses(const vector<addr_t>& addresses)
 {
-    impl_->setForwardAddresses(addresses, io_);
+    impl_->setForwardAddresses(addresses, dnss_);
 }
 
 bool
@@ -541,7 +541,7 @@ Recursor::getForwardAddresses() const {
 namespace {
 
 void
-setAddresses(IOService *service, const vector<addr_t>& addresses) {
+setAddresses(DNSService *service, const vector<addr_t>& addresses) {
     service->clearServers();
     BOOST_FOREACH(const addr_t &address, addresses) {
         service->addServer(address.second, address.first);
@@ -553,7 +553,7 @@ setAddresses(IOService *service, const vector<addr_t>& addresses) {
 void
 Recursor::setListenAddresses(const vector<addr_t>& addresses) {
     try {
-        setAddresses(io_, addresses);
+        setAddresses(dnss_, addresses);
         impl_->listen_ = addresses;
     }
     catch (const exception& e) {
@@ -565,7 +565,7 @@ Recursor::setListenAddresses(const vector<addr_t>& addresses) {
          * and let boss start us again.
          */
         try {
-            setAddresses(io_, impl_->listen_);
+            setAddresses(dnss_, impl_->listen_);
         }
         catch (const exception& e2) {
             cerr << "[b10-recurse] Unable to recover from error: " << e.what()
