@@ -27,7 +27,7 @@ namespace isc {
 namespace dns {
 class InputBuffer;
 class OutputBuffer;
-class MessageRenderer;
+class AbstractMessageRenderer;
 class RRType;
 class RRClass;
 class Name;
@@ -180,7 +180,7 @@ public:
     ///
     /// \param renderer DNS message rendering context that encapsulates the
     /// output buffer in which the \c Rdata is to be stored.
-    virtual void toWire(MessageRenderer& renderer) const = 0;
+    virtual void toWire(AbstractMessageRenderer& renderer) const = 0;
     //@}
 
     ///
@@ -329,7 +329,7 @@ public:
     ///
     /// \param renderer DNS message rendering context that encapsulates the
     /// output buffer in which the \c Generic object is to be stored.
-    virtual void toWire(MessageRenderer& renderer) const;
+    virtual void toWire(AbstractMessageRenderer& renderer) const;
     //@}
     ///
     /// \name Comparison method

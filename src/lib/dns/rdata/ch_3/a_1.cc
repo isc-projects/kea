@@ -48,7 +48,7 @@ A::toWire(OutputBuffer& buffer UNUSED_PARAM) const {
 }
 
 void
-A::toWire(MessageRenderer& renderer UNUSED_PARAM) const {
+A::toWire(AbstractMessageRenderer& renderer UNUSED_PARAM) const {
     // TBD
 }
 

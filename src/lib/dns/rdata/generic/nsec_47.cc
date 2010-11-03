@@ -208,7 +208,7 @@ NSEC::toWire(OutputBuffer& buffer) const {
 }
 
 void
-NSEC::toWire(MessageRenderer& renderer) const {
+NSEC::toWire(AbstractMessageRenderer& renderer) const {
     impl_->nextname_.toWire(renderer);
     renderer.writeData(&impl_->typebits_[0], impl_->typebits_.size());
 }

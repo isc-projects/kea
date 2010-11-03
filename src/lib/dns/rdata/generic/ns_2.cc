@@ -50,7 +50,7 @@ NS::toWire(OutputBuffer& buffer) const {
 }
 
 void
-NS::toWire(MessageRenderer& renderer) const {
+NS::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeName(nsname_);
 }
 

@@ -29,7 +29,6 @@
 
 using namespace std;
 using isc::dns::NameComparisonResult;
-using isc::dns::MessageRenderer;
 
 namespace isc {
 namespace dns {
@@ -405,7 +404,7 @@ Name::toWire(OutputBuffer& buffer) const {
 }
 
 void
-Name::toWire(MessageRenderer& renderer) const {
+Name::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeName(*this);
 }
 

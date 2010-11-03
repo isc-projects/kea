@@ -109,7 +109,7 @@ def import_classheader(class_txt, type_txt, type_code, file):
             content += '''
 class InputBuffer;
 class OutputBuffer;
-class MessageRenderer;\n\n'''
+class AbstractMessageRenderer;\n\n'''
         if re.match('\s+// BEGIN_COMMON_MEMBERS$', line):
             content += '''
     explicit ''' + type_utxt + '''(const std::string& type_str);
@@ -117,7 +117,7 @@ class MessageRenderer;\n\n'''
     ''' + type_utxt + '''(const ''' + type_utxt + '''& other);
     virtual std::string toText() const;
     virtual void toWire(OutputBuffer& buffer) const;
-    virtual void toWire(MessageRenderer& renderer) const;
+    virtual void toWire(AbstractMessageRenderer& renderer) const;
     virtual int compare(const Rdata& other) const;\n\n'''
     rdata_header.close()
     return content

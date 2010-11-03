@@ -136,7 +136,7 @@ DNSKEY::toWire(OutputBuffer& buffer) const {
 }
 
 void
-DNSKEY::toWire(MessageRenderer& renderer) const {
+DNSKEY::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeUint16(impl_->flags_);
     renderer.writeUint8(impl_->protocol_);
     renderer.writeUint8(impl_->algorithm_);
