@@ -129,19 +129,9 @@ private:
 public:
     /// \brief The constructor
     IOService();
-    /// \brief The constructor without any servers.
-    ///
-    /// Use addServer() to add some servers.
-    IOService(SimpleCallback *checkin, DNSLookup* lookup, DNSAnswer *answer);
     /// \brief The destructor.
     ~IOService();
     //@}
-
-    /// \brief Add another server to the service
-    void addServer(uint16_t port, const std::string &address);
-    void addServer(const char &port, const std::string &address);
-    /// \brief Remove all servers from the service
-    void clearServers();
 
     /// \brief Start the underlying event loop.
     ///
@@ -219,9 +209,20 @@ public:
                const bool use_ipv4, const bool use_ipv6,
                SimpleCallback* checkin, DNSLookup* lookup,
                DNSAnswer* answer);
+    /// \brief The constructor without any servers.
+    ///
+    /// Use addServer() to add some servers.
+    DNSService(IOService& io_service, SimpleCallback* checkin,
+               DNSLookup* lookup, DNSAnswer* answer);
     /// \brief The destructor.
     ~DNSService();
     //@}
+
+    /// \brief Add another server to the service
+    void addServer(uint16_t port, const std::string &address);
+    void addServer(const char &port, const std::string &address);
+    /// \brief Remove all servers from the service
+    void clearServers();
 
     /// \brief Return the native \c io_service object used in this wrapper.
     ///
@@ -528,7 +529,7 @@ public:
     ///        query on.
     /// \param upstream Addresses and ports of the upstream servers
     ///        to forward queries to.
-    RecursiveQuery(IOService& io_service,
+    RecursiveQuery(DNSService& dns_service,
                    const std::vector<std::pair<std::string, uint16_t> >&
                    upstream);
     //@}
