@@ -63,15 +63,15 @@ private:
 
 class RecursorTest : public ::testing::Test {
 protected:
-    RecursorTest() : ios(*TEST_PORT, true, false, NULL, NULL, NULL),
-                    request_message(Message::RENDER),
-                    parse_message(new Message(Message::PARSE)),
-                    default_qid(0x1035), opcode(Opcode(Opcode::QUERY())),
-                    qname("www.example.com"),
-                    qclass(RRClass::IN()), qtype(RRType::A()),
-                    io_message(NULL), endpoint(NULL), request_obuffer(0),
-                    request_renderer(request_obuffer),
-                    response_obuffer(new OutputBuffer(0))
+    RecursorTest() : server(*DEFAULT_REMOTE_ADDRESS),
+                     request_message(Message::RENDER),
+                     parse_message(new Message(Message::PARSE)),
+                     default_qid(0x1035), opcode(Opcode(Opcode::QUERY())),
+                     qname("www.example.com"),
+                     qclass(RRClass::IN()), qtype(RRType::A()),
+                     io_message(NULL), endpoint(NULL), request_obuffer(0),
+                     request_renderer(request_obuffer),
+                     response_obuffer(new OutputBuffer(0))
     {
         vector<pair<string, uint16_t> > upstream;
         upstream.push_back(pair<string, uint16_t>(DEFAULT_REMOTE_ADDRESS, 53));
@@ -83,7 +83,6 @@ protected:
     }
     MockSession notify_session;
     MockServer dnsserv;
-    IOService ios;
     Recursor server;
     Message request_message;
     MessagePtr parse_message;
