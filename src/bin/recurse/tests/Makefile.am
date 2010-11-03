@@ -1,7 +1,7 @@
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/lib/dns -I$(top_srcdir)/src/bin
 AM_CPPFLAGS += -I$(top_builddir)/src/lib/cc
-AM_CPPFLAGS += -DTEST_DATA_DIR=\"../../auth/tests/testdata\"
+AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(top_srcdir)/src/bin/auth/tests/testdata\"
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
@@ -18,6 +18,8 @@ run_unittests_SOURCES = $(top_srcdir)/src/lib/dns/tests/unittest_util.h
 run_unittests_SOURCES += $(top_srcdir)/src/lib/dns/tests/unittest_util.cc
 run_unittests_SOURCES += ../recursor.h ../recursor.cc
 run_unittests_SOURCES += ../../auth/tests/mockups.h
+run_unittests_SOURCES += ../../auth/tests/srv_test.h
+run_unittests_SOURCES += ../../auth/tests/srv_unittest.h
 run_unittests_SOURCES += recursor_unittest.cc
 run_unittests_SOURCES += run_unittests.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
