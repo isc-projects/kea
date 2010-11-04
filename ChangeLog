@@ -1,3 +1,8 @@
+  TBD.  [func]      vorner
+	The b10-recursive is configured trough config manager.
+	It has "listen_on" and "forward_addresses" options.
+	(Trac #389, r3448)
+
   91.	[func]*		jinmei
 	lib/cc: Use const pointers and const member functions for the API
 	as much as possible for safer operations.  Basically this does
