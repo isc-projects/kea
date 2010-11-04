@@ -240,7 +240,7 @@ class XfrinConnection(asyncore.dispatcher):
         if msg_rcode != Rcode.NOERROR():
             raise XfrinException('error response: %s' % msg_rcode.to_text())
 
-        if not msg.get_header_flag(MessageFlag.QR()):
+        if not msg.get_header_flag(Message.HEADERFLAG_QR):
             raise XfrinException('response is not a response ')
 
         if msg.get_qid() != self._query_id:
@@ -251,10 +251,10 @@ class XfrinConnection(asyncore.dispatcher):
 
         self._check_response_header(msg)
 
-        if msg.get_rr_count(Section.ANSWER()) == 0:
+        if msg.get_rr_count(Message.SECTION_ANSWER) == 0:
             raise XfrinException('answer section is empty')
 
-        if msg.get_rr_count(Section.QUESTION()) > 1:
+        if msg.get_rr_count(Message.SECTION_QUESTION) > 1:
             raise XfrinException('query section count greater than 1')
 
     def _handle_answer_section(self, answer_section):
@@ -294,7 +294,7 @@ class XfrinConnection(asyncore.dispatcher):
             msg.from_wire(recvdata)
             self._check_response_status(msg)
             
-            answer_section = msg.get_section(Section.ANSWER())
+            answer_section = msg.get_section(Message.SECTION_ANSWER)
             for rr in self._handle_answer_section(answer_section):
                 yield rr
 

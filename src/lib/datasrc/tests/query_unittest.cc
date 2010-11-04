@@ -38,7 +38,7 @@ createQuery(Message& m, const Name& qname, const RRClass& qclass,
             const RRType& qtype)
 {
     m.setOpcode(Opcode::QUERY());
-    m.setHeaderFlag(MessageFlag::RD());
+    m.setHeaderFlag(Message::HEADERFLAG_RD);
     m.addQuestion(Question(qname, qclass, qtype));
 }
 

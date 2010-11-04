@@ -321,18 +321,25 @@ headerCheck(const Message& message, const qid_t qid, const Rcode& rcode,
     EXPECT_EQ(qid, message.getQid());
     EXPECT_EQ(rcode, message.getRcode());
     EXPECT_EQ(opcodeval, message.getOpcode().getCode());
-    EXPECT_EQ((flags & QR_FLAG) != 0, message.getHeaderFlag(MessageFlag::QR()));
-    EXPECT_EQ((flags & AA_FLAG) != 0, message.getHeaderFlag(MessageFlag::AA()));
-    EXPECT_EQ((flags & TC_FLAG) != 0, message.getHeaderFlag(MessageFlag::TC()));
-    EXPECT_EQ((flags & RA_FLAG) != 0, message.getHeaderFlag(MessageFlag::RA()));
-    EXPECT_EQ((flags & RD_FLAG) != 0, message.getHeaderFlag(MessageFlag::RD()));
-    EXPECT_EQ((flags & AD_FLAG) != 0, message.getHeaderFlag(MessageFlag::AD()));
-    EXPECT_EQ((flags & CD_FLAG) != 0, message.getHeaderFlag(MessageFlag::CD()));
+    EXPECT_EQ((flags & QR_FLAG) != 0,
+              message.getHeaderFlag(Message::HEADERFLAG_QR));
+    EXPECT_EQ((flags & AA_FLAG) != 0,
+              message.getHeaderFlag(Message::HEADERFLAG_AA));
+    EXPECT_EQ((flags & TC_FLAG) != 0,
+              message.getHeaderFlag(Message::HEADERFLAG_TC));
+    EXPECT_EQ((flags & RA_FLAG) != 0,
+              message.getHeaderFlag(Message::HEADERFLAG_RA));
+    EXPECT_EQ((flags & RD_FLAG) != 0,
+              message.getHeaderFlag(Message::HEADERFLAG_RD));
+    EXPECT_EQ((flags & AD_FLAG) != 0,
+              message.getHeaderFlag(Message::HEADERFLAG_AD));
+    EXPECT_EQ((flags & CD_FLAG) != 0,
+              message.getHeaderFlag(Message::HEADERFLAG_CD));
 
-    EXPECT_EQ(qdcount, message.getRRCount(Section::QUESTION()));
-    EXPECT_EQ(ancount, message.getRRCount(Section::ANSWER()));
-    EXPECT_EQ(nscount, message.getRRCount(Section::AUTHORITY()));
-    EXPECT_EQ(arcount, message.getRRCount(Section::ADDITIONAL()));
+    EXPECT_EQ(qdcount, message.getRRCount(Message::SECTION_QUESTION));
+    EXPECT_EQ(ancount, message.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(nscount, message.getRRCount(Message::SECTION_AUTHORITY));
+    EXPECT_EQ(arcount, message.getRRCount(Message::SECTION_ADDITIONAL));
 }
 
 // Unsupported requests.  Should result in NOTIMP.
@@ -540,7 +547,7 @@ TEST_F(AuthSrvTest, AXFRDisconnectFail) {
 TEST_F(AuthSrvTest, notify) {
     createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
                         RRType::SOA());
-    request_message.setHeaderFlag(MessageFlag::AA());
+    request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(IPPROTO_UDP);
     EXPECT_TRUE(server.processMessage(*io_message, parse_message,
                                       response_renderer));
@@ -572,7 +579,7 @@ TEST_F(AuthSrvTest, notifyForCHClass) {
     // Same as the previous test, but for the CH RRClass.
     createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::CH(),
                         RRType::SOA());
-    request_message.setHeaderFlag(MessageFlag::AA());
+    request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(IPPROTO_UDP);
     EXPECT_TRUE(server.processMessage(*io_message, parse_message,
                                       response_renderer));
@@ -588,7 +595,7 @@ TEST_F(AuthSrvTest, notifyEmptyQuestion) {
     request_message.clear(Message::RENDER);
     request_message.setOpcode(Opcode::NOTIFY());
     request_message.setRcode(Rcode::NOERROR());
-    request_message.setHeaderFlag(MessageFlag::AA());
+    request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     request_message.setQid(default_qid);
     request_message.toWire(request_renderer);
     createRequestPacket(IPPROTO_UDP);
@@ -604,7 +611,7 @@ TEST_F(AuthSrvTest, notifyMultiQuestions) {
     // add one more SOA question
     request_message.addQuestion(Question(Name("example.com"), RRClass::IN(),
                                          RRType::SOA()));
-    request_message.setHeaderFlag(MessageFlag::AA());
+    request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(IPPROTO_UDP);
     EXPECT_TRUE(server.processMessage(*io_message, parse_message,
                                       response_renderer));
@@ -615,7 +622,7 @@ TEST_F(AuthSrvTest, notifyMultiQuestions) {
 TEST_F(AuthSrvTest, notifyNonSOAQuestion) {
     createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
                         RRType::NS());
-    request_message.setHeaderFlag(MessageFlag::AA());
+    request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(IPPROTO_UDP);
     EXPECT_TRUE(server.processMessage(*io_message, parse_message,
                                       response_renderer));
@@ -636,7 +643,7 @@ TEST_F(AuthSrvTest, notifyWithoutAA) {
 TEST_F(AuthSrvTest, notifyWithErrorRcode) {
     createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
                         RRType::SOA());
-    request_message.setHeaderFlag(MessageFlag::AA());
+    request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     request_message.setRcode(Rcode::SERVFAIL());
     createRequestPacket(IPPROTO_UDP);
     EXPECT_TRUE(server.processMessage(*io_message, parse_message,
@@ -650,7 +657,7 @@ TEST_F(AuthSrvTest, notifyWithoutSession) {
 
     createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
                         RRType::SOA());
-    request_message.setHeaderFlag(MessageFlag::AA());
+    request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(IPPROTO_UDP);
 
     // we simply ignore the notify and let it be resent if an internal error
@@ -664,7 +671,7 @@ TEST_F(AuthSrvTest, notifySendFail) {
 
     createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
                         RRType::SOA());
-    request_message.setHeaderFlag(MessageFlag::AA());
+    request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(IPPROTO_UDP);
 
     EXPECT_FALSE(server.processMessage(*io_message, parse_message,
@@ -676,7 +683,7 @@ TEST_F(AuthSrvTest, notifyReceiveFail) {
 
     createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
                         RRType::SOA());
-    request_message.setHeaderFlag(MessageFlag::AA());
+    request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(IPPROTO_UDP);
     EXPECT_FALSE(server.processMessage(*io_message, parse_message,
                                        response_renderer));
@@ -687,7 +694,7 @@ TEST_F(AuthSrvTest, notifyWithBogusSessionMessage) {
 
     createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
                         RRType::SOA());
-    request_message.setHeaderFlag(MessageFlag::AA());
+    request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(IPPROTO_UDP);
     EXPECT_FALSE(server.processMessage(*io_message, parse_message,
                                        response_renderer));
@@ -699,7 +706,7 @@ TEST_F(AuthSrvTest, notifyWithSessionMessageError) {
 
     createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
                         RRType::SOA());
-    request_message.setHeaderFlag(MessageFlag::AA());
+    request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(IPPROTO_UDP);
     EXPECT_FALSE(server.processMessage(*io_message, parse_message,
                                        response_renderer));

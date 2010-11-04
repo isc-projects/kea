@@ -152,8 +152,8 @@ makeErrorMessage(Message& message, MessageRenderer& renderer,
     // XXX: with the current implementation, it's not easy to set EDNS0
     // depending on whether the query had it.  So we'll simply omit it.
     const qid_t qid = message.getQid();
-    const bool rd = message.getHeaderFlag(MessageFlag::RD());
-    const bool cd = message.getHeaderFlag(MessageFlag::CD());
+    const bool rd = message.getHeaderFlag(Message::HEADERFLAG_RD);
+    const bool cd = message.getHeaderFlag(Message::HEADERFLAG_CD);
     const Opcode& opcode = message.getOpcode();
     vector<QuestionPtr> questions;
 
@@ -166,12 +166,12 @@ makeErrorMessage(Message& message, MessageRenderer& renderer,
     message.clear(Message::RENDER);
     message.setQid(qid);
     message.setOpcode(opcode);
-    message.setHeaderFlag(MessageFlag::QR());
+    message.setHeaderFlag(Message::HEADERFLAG_QR);
     if (rd) {
-        message.setHeaderFlag(MessageFlag::RD());
+        message.setHeaderFlag(Message::HEADERFLAG_RD);
     }
     if (cd) {
-        message.setHeaderFlag(MessageFlag::CD());
+        message.setHeaderFlag(Message::HEADERFLAG_CD);
     }
     for_each(questions.begin(), questions.end(), QuestionInserter(&message));
     message.setRcode(rcode);
@@ -231,7 +231,7 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
         message.parseHeader(request_buffer);
 
         // Ignore all responses.
-        if (message.getHeaderFlag(MessageFlag::QR())) {
+        if (message.getHeaderFlag(Message::HEADERFLAG_QR)) {
             if (impl_->verbose_mode_) {
                 cerr << "[b10-auth] received unexpected response, ignoring"
                      << endl;
@@ -279,7 +279,7 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
         return (true);
     }
 
-    if (message.getRRCount(Section::QUESTION()) != 1) {
+    if (message.getRRCount(Message::SECTION_QUESTION) != 1) {
         makeErrorMessage(message, response_renderer, Rcode::FORMERR(),
                          impl_->verbose_mode_);
         return (true);
@@ -310,7 +310,7 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
         Message::DEFAULT_MAX_UDPSIZE; 
 
     message.makeResponse();
-    message.setHeaderFlag(MessageFlag::AA());
+    message.setHeaderFlag(Message::HEADERFLAG_AA);
     message.setRcode(Rcode::NOERROR());
 
     if (remote_edns) {
@@ -397,10 +397,10 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
 {
     // The incoming notify must contain exactly one question for SOA of the
     // zone name.
-    if (message.getRRCount(Section::QUESTION()) != 1) {
+    if (message.getRRCount(Message::SECTION_QUESTION) != 1) {
         if (verbose_mode_) {
                 cerr << "[b10-auth] invalid number of questions in notify: "
-                     << message.getRRCount(Section::QUESTION()) << endl;
+                     << message.getRRCount(Message::SECTION_QUESTION) << endl;
         }
         makeErrorMessage(message, response_renderer, Rcode::FORMERR(),
                          verbose_mode_);
@@ -472,7 +472,7 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
     }
 
     message.makeResponse();
-    message.setHeaderFlag(MessageFlag::AA());
+    message.setHeaderFlag(Message::HEADERFLAG_AA);
     message.setRcode(Rcode::NOERROR());
     message.toWire(response_renderer);
     return (true);

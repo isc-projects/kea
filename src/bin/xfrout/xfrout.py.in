@@ -226,8 +226,8 @@ class XfroutSession(BaseRequestHandler):
         msg.set_qid(qid)
         msg.set_opcode(opcode)
         msg.set_rcode(rcode)
-        msg.set_header_flag(MessageFlag.AA())
-        msg.set_header_flag(MessageFlag.QR())
+        msg.set_header_flag(Message.HEADERFLAG_AA)
+        msg.set_header_flag(Message.HEADERFLAG_QR)
         return msg
 
     def _create_rrset_from_db_record(self, record):
@@ -247,11 +247,11 @@ class XfroutSession(BaseRequestHandler):
         rrset_len = get_rrset_len(rrset_soa)
 
         if message_upper_len + rrset_len < XFROUT_MAX_MESSAGE_SIZE:
-            msg.add_rrset(Section.ANSWER(), rrset_soa)
+            msg.add_rrset(Message.SECTION_ANSWER, rrset_soa)
         else:
             self._send_message(sock, msg)
             msg = self._clear_message(msg)
-            msg.add_rrset(Section.ANSWER(), rrset_soa)
+            msg.add_rrset(Message.SECTION_ANSWER, rrset_soa)
 
         self._send_message(sock, msg)
 
@@ -259,10 +259,10 @@ class XfroutSession(BaseRequestHandler):
     def _reply_xfrout_query(self, msg, sock, zone_name):
         #TODO, there should be a better way to insert rrset.
         msg.make_response()
-        msg.set_header_flag(MessageFlag.AA())
+        msg.set_header_flag(Message.HEADERFLAG_AA)
         soa_record = sqlite3_ds.get_zone_soa(zone_name, self.server.get_db_file())
         rrset_soa = self._create_rrset_from_db_record(soa_record)
-        msg.add_rrset(Section.ANSWER(), rrset_soa)
+        msg.add_rrset(Message.SECTION_ANSWER, rrset_soa)
 
         message_upper_len = get_rrset_len(rrset_soa)
 
@@ -282,13 +282,13 @@ class XfroutSession(BaseRequestHandler):
             # may have reached the limit
             rrset_len = get_rrset_len(rrset_)
             if message_upper_len + rrset_len < XFROUT_MAX_MESSAGE_SIZE:
-                msg.add_rrset(Section.ANSWER(), rrset_)
+                msg.add_rrset(Message.SECTION_ANSWER, rrset_)
                 message_upper_len += rrset_len
                 continue
 
             self._send_message(sock, msg)
             msg = self._clear_message(msg)
-            msg.add_rrset(Section.ANSWER(), rrset_) # Add the rrset to the new message
+            msg.add_rrset(Message.SECTION_ANSWER, rrset_) # Add the rrset to the new message
             message_upper_len = rrset_len
 
         self._send_message_with_last_soa(msg, sock, rrset_soa, message_upper_len)
