@@ -1,4 +1,4 @@
-SUBDIRS = . tests python
+SUBDIRS = . tests python benchmarks
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
