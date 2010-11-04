@@ -235,7 +235,7 @@ RdataFields::toWire(AbstractMessageRenderer& renderer) const {
             renderer.writeName(Name(buffer),
                                fields_[i].type == COMPRESSIBLE_NAME ?
                                true : false);
-        }   
+        }
         offset += fields_[i].len;
     }
 }
