@@ -335,8 +335,16 @@ class MultiConfigData:
         module, sep, id = identifier.partition("/")
         try:
             spec = find_spec_part(self._specifications[module].get_config_spec(), id)
-            if 'item_default' in spec:
+            if type(spec) == dict and 'item_default' in spec:
                 return spec['item_default']
+            elif type(spec) == list:
+                result = {}
+                for i in spec:
+                    if type(i) == dict and 'item_default' in i:
+                        result[i['item_name']] = i['item_default']
+                    else:
+                        result[i['item_name']] = None
+                return result
             else:
                 return None
         except isc.cc.data.DataNotFoundError as dnfe:
@@ -405,19 +413,43 @@ class MultiConfigData:
                             entry['default'] = False
                         result.append(entry)
                 elif type(spec_part) == dict:
+                    # Two 'special cases' for easier viewing;
+                    # If the item is a map, show the first-level contents
+                    #
+                    # If the item is a list, show all elements (with index in the name).
+                    #
                     item = spec_part
                     if item['item_type'] == 'list':
                         li_spec = item['list_item_spec']
                         item_list, status =  self.get_value("/" + identifier)
                         if item_list != None:
+                            i = 0
                             for value in item_list:
                                 result_part2 = {}
-                                result_part2['name'] = li_spec['item_name']
+                                result_part2['name'] = item['item_name'] + '[' + str(i) + ']'
                                 result_part2['value'] = value
                                 result_part2['type'] = li_spec['item_type']
                                 result_part2['default'] = False
                                 result_part2['modified'] = False
                                 result.append(result_part2)
+                                i = i + 1
+                    elif item['item_type'] == 'map':
+                        map_name = item['item_name'] + "/"
+                        for map_item in item['map_item_spec']:
+                            entry = {}
+                            entry['name'] = map_name + map_item['item_name']
+                            entry['type'] = map_item['item_type']
+                            value, status = self.get_value("/" + identifier + "/" + map_item['item_name'])
+                            entry['value'] = value
+                            if status == self.LOCAL:
+                                entry['modified'] = True
+                            else:
+                                entry['modified'] = False
+                            if status == self.DEFAULT:
+                                entry['default'] = False
+                            else:
+                                entry['default'] = False
+                            result.append(entry)
                     else:
                         entry = {}
                         entry['name'] = item['item_name']
