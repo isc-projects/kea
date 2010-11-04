@@ -1,3 +1,10 @@
+  115.	[func]*		jinmei
+	src/lib/dns: Changed DNS message flags and section names from
+	separate classes to simpler enums, considering the balance between
+	type safety and usability.  API has been changed accordingly.
+	More documentation and tests were provided with these changes.
+	(Trac #358, r3439)
+
   114.	[build]		jinmei
 	Supported clang++.  Note: Boost >= 1.44 is required.
 	(Trac #365, svn r3383)
