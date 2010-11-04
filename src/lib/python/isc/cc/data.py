@@ -55,20 +55,27 @@ def merge(orig, new):
         else:
             orig[kn] = new[kn]
 
-def find(element, identifier):
-    """Returns the subelement in the given data element, raises DataNotFoundError if not found"""
-    if type(identifier) != str or (type(element) != dict and identifier != ""):
-        raise DataTypeError("identifier in merge() is not a string")
-    if type(identifier) != str or (type(element) != dict and identifier != ""):
-        raise DataTypeError("element in merge() is not a dict")
+def _split_identifier(identifier):
+    if type(identifier) != str:
+        raise DataTypeError("identifier is not a string")
     id_parts = identifier.split("/")
     id_parts[:] = (value for value in id_parts if value != "")
+    return id_parts
+
+def _find_child_el(element, id):
+    if type(element) == dict and id in element.keys():
+        return element[id]
+    else:
+        raise DataNotFoundError(id + " in " + str(element))
+
+def find(element, identifier):
+    """Returns the subelement in the given data element, raises DataNotFoundError if not found"""
+    if (type(element) != dict and identifier != ""):
+        raise DataTypeError("element in merge() is not a dict")
+    id_parts = _split_identifier(identifier)
     cur_el = element
     for id in id_parts:
-        if type(cur_el) == dict and id in cur_el.keys():
-            cur_el = cur_el[id]
-        else:
-            raise DataNotFoundError(identifier + " in " + str(element))
+        cur_el = _find_child_el(cur_el, id)
     return cur_el
 
 def set(element, identifier, value):
@@ -81,23 +88,21 @@ def set(element, identifier, value):
        el.set().set().set() is possible)"""
     if type(element) != dict:
         raise DataTypeError("element in set() is not a dict")
-    if type(identifier) != str:
-        raise DataTypeError("identifier in set() is not a string")
-    id_parts = identifier.split("/")
-    id_parts[:] = (value for value in id_parts if value != "")
+    id_parts = _split_identifier(identifier)
     cur_el = element
     for id in id_parts[:-1]:
-        if id in cur_el.keys():
-            cur_el = cur_el[id]
-        else:
-            if value == None:
+        try:
+            cur_el = _find_child_el(cur_el, id)
+        except DataNotFoundError:
+            if value is None:
                 # ok we are unsetting a value that wasn't set in
                 # the first place. Simply stop.
                 return
             cur_el[id] = {}
             cur_el = cur_el[id]
+
     # value can be an empty list or dict, so check for None eplicitely
-    if value != None:
+    if value is not None:
         cur_el[id_parts[-1]] = value
     elif id_parts[-1] in cur_el:
         del cur_el[id_parts[-1]]
@@ -115,17 +120,12 @@ def find_no_exc(element, identifier):
     """Returns the subelement in the given data element, returns None
        if not found, or if an error occurred (i.e. this function should
        never raise an exception)"""
-    if type(identifier) != str:
+    try:
+        return find(element, identifier)
+    except DataNotFoundError:
         return None
-    id_parts = identifier.split("/")
-    id_parts[:] = (value for value in id_parts if value != "")
-    cur_el = element
-    for id in id_parts:
-        if (type(cur_el) == dict and id in cur_el.keys()) or id=="":
-            cur_el = cur_el[id]
-        else:
-            return None
-    return cur_el
+    except DataTypeError:
+        return None
 
 def parse_value_str(value_str):
     """Parses the given string to a native python object. If the
