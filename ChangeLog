@@ -1,5 +1,5 @@
   TBD.  [func]      vorner
-	The b10-recursive is configured trough config manager.
+	The b10-recursive is configured through config manager.
 	It has "listen_on" and "forward_addresses" options.
 	(Trac #389, r3448)
 
