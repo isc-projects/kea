@@ -105,7 +105,7 @@ getFieldSpecData()-> { compressible name { compressible name { other data
 /// source such as a zone file) in the serialized format and store a copy of
 /// the data somewhere in memory.  The following code sample implements this
 /// scenario:
-/// \code // assume "rdata" is a reference type to \c Rdata
+/// \code // assume "rdata" is a reference type to Rdata
 /// const RdataFields fields(rdata);
 /// const unsigned int nfields = fields.getFieldCount();
 /// memcpy(some_place, fields.getFieldSpecData(), nfields*sizeof(FieldSpec));
