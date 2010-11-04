@@ -566,6 +566,12 @@ class BindCmdInterpreter(Cmd):
                     if value_map['modified']:
                         line += "(modified)"
                     print(line)
+            elif cmd.command == "show_json":
+                if identifier == "":
+                    print("Need at least the module to show the configuration in JSON format")
+                else:
+                    data, default = self.config_data.get_value(identifier)
+                    print(json.dumps(data))
             elif cmd.command == "add":
                 self.config_data.add_value(identifier, cmd.params['value'])
             elif cmd.command == "remove":

@@ -38,6 +38,11 @@ def prepare_config_commands(tool):
     cmd.add_param(param)
     module.add_command(cmd)
 
+    cmd = CommandInfo(name = "show_json", desc = "Show full configuration in JSON format")
+    param = ParamInfo(name = "identifier", type = "string", optional=True)
+    cmd.add_param(param)
+    module.add_command(cmd)
+
     cmd = CommandInfo(name = "add", desc = "Add entry to configuration list")
     param = ParamInfo(name = "identifier", type = "string", optional=True)
     cmd.add_param(param)

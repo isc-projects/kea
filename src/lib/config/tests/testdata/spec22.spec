@@ -1,6 +1,6 @@
 {
   "module_spec": {
-    "module_name": "Spec2",
+    "module_name": "Spec22",
     "config_data": [
       { "item_name": "value1",
         "item_type": "integer",
@@ -81,7 +81,7 @@
       { "item_name": "value9",
         "item_type": "map",
         "item_optional": false,
-        "item_default": {},
+        "item_default": { "v91": "def", "v92": {} },
         "map_item_spec": [
           { "item_name": "v91",
             "item_type": "string",
