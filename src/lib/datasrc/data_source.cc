@@ -101,14 +101,14 @@ getAdditional(Query& q, ConstRRsetPtr rrset) {
             const generic::NS& ns = dynamic_cast<const generic::NS&>(rd);
             q.tasks().push(QueryTaskPtr(
                                new QueryTask(q, ns.getNSName(),
-                                             Section::ADDITIONAL(),
+                                             Message::SECTION_ADDITIONAL,
                                              QueryTask::GLUE_QUERY,
                                              QueryTask::GETADDITIONAL))); 
         } else if (rrset->getType() == RRType::MX()) {
             const generic::MX& mx = dynamic_cast<const generic::MX&>(rd);
             q.tasks().push(QueryTaskPtr(
                                new QueryTask(q, mx.getMXName(),
-                                             Section::ADDITIONAL(),
+                                             Message::SECTION_ADDITIONAL,
                                              QueryTask::NOGLUE_QUERY,
                                              QueryTask::GETADDITIONAL))); 
         }
@@ -165,7 +165,7 @@ chaseCname(Query& q, QueryTaskPtr task, RRsetPtr rrset) {
     q.tasks().push(QueryTaskPtr(
                        new QueryTask(q, dynamic_cast<const generic::CNAME&>
                                      (it->getCurrent()).getCname(),
-                                     task->qtype, Section::ANSWER(),
+                                     task->qtype, Message::SECTION_ANSWER,
                                      QueryTask::FOLLOWCNAME)));
 }
 
@@ -473,16 +473,19 @@ doQueryTask(QueryTask& task, ZoneInfo& zoneinfo, RRsetList& target) {
 // checking first to ensure that there isn't already an RRset with
 // the same name and type.
 inline void
-addToMessage(Query& q, const Section& sect, RRsetPtr rrset,
+addToMessage(Query& q, const Message::Section sect, RRsetPtr rrset,
              bool no_dnssec = false)
 {
     Message& m = q.message();
     if (no_dnssec) {
-        if (rrset->getType() == RRType::RRSIG() || !m.hasRRset(sect, rrset)) {
+        if (rrset->getType() == RRType::RRSIG() ||
+            !m.hasRRset(sect, rrset->getName(), rrset->getClass(),
+                        rrset->getType())) {
             m.addRRset(sect, rrset, false);
         }
     } else {
-        if (!m.hasRRset(sect, rrset)) {
+        if (!m.hasRRset(sect, rrset->getName(), rrset->getClass(),
+                        rrset->getType())) {
             m.addRRset(sect, rrset, q.wantDnssec());
         }
     }
@@ -498,7 +501,7 @@ copyAuth(Query& q, RRsetList& auth) {
         if (rrset->getType() == RRType::DS() && !q.wantDnssec()) {
             continue;
         }
-        addToMessage(q, Section::AUTHORITY(), rrset);
+        addToMessage(q, Message::SECTION_AUTHORITY, rrset);
         getAdditional(q, rrset);
     }
 }
@@ -560,11 +563,11 @@ hasDelegation(Query& q, QueryTaskPtr task, ZoneInfo& zoneinfo) {
             RRsetPtr r = ref.findRRset(RRType::DNAME(), q.qclass());
             if (r != NULL) {
                 RRsetList syn;
-                addToMessage(q, Section::ANSWER(), r);
-                q.message().setHeaderFlag(MessageFlag::AA());
+                addToMessage(q, Message::SECTION_ANSWER, r);
+                q.message().setHeaderFlag(Message::HEADERFLAG_AA);
                 synthesizeCname(task, r, syn);
                 if (syn.size() == 1) {
-                    addToMessage(q, Section::ANSWER(),
+                    addToMessage(q, Message::SECTION_ANSWER,
                                  syn.findRRset(RRType::CNAME(), q.qclass()));
                     chaseCname(q, task, syn.findRRset(RRType::CNAME(),
                                                       q.qclass()));
@@ -582,7 +585,7 @@ hasDelegation(Query& q, QueryTaskPtr task, ZoneInfo& zoneinfo) {
     // at the actual qname node.)
     if (task->op == QueryTask::AUTH_QUERY &&
         task->state == QueryTask::GETANSWER) {
-        q.message().setHeaderFlag(MessageFlag::AA());
+        q.message().setHeaderFlag(Message::HEADERFLAG_AA);
     }
 
     return (false);
@@ -599,7 +602,7 @@ addSOA(Query& q, ZoneInfo& zoneinfo) {
         return (DataSrc::ERROR);
     }
 
-    addToMessage(q, Section::AUTHORITY(),
+    addToMessage(q, Message::SECTION_AUTHORITY,
                  soa.findRRset(RRType::SOA(), q.qclass()));
     return (DataSrc::SUCCESS);
 }
@@ -611,7 +614,7 @@ addNSEC(Query& q, const Name& name, ZoneInfo& zoneinfo) {
     QueryTask newtask(q, name, RRType::NSEC(), QueryTask::SIMPLE_QUERY); 
     RETERR(doQueryTask(newtask, zoneinfo, nsec));
     if (newtask.flags == 0) {
-        addToMessage(q, Section::AUTHORITY(),
+        addToMessage(q, Message::SECTION_AUTHORITY,
                      nsec.findRRset(RRType::NSEC(), q.qclass()));
     }
 
@@ -680,7 +683,7 @@ proveNX(Query& q, QueryTaskPtr task, ZoneInfo& zoneinfo, const bool wildcard) {
         RRsetPtr rrset;
         string hash1(nsec3->getHash(task->qname));
         RETERR(getNsec3(q, zoneinfo, hash1, rrset));
-        addToMessage(q, Section::AUTHORITY(), rrset);
+        addToMessage(q, Message::SECTION_AUTHORITY, rrset);
 
         // If this is an NXRRSET or NOERROR/NODATA, we're done
         if ((task->flags & DataSrc::TYPE_NOT_FOUND) != 0) {
@@ -705,7 +708,7 @@ proveNX(Query& q, QueryTaskPtr task, ZoneInfo& zoneinfo, const bool wildcard) {
             // we don't want to use one until we find an exact match
             RETERR(getNsec3(q, zoneinfo, hash2, rrset));
             if (hash2 == nodehash) {
-                addToMessage(q, Section::AUTHORITY(), rrset);
+                addToMessage(q, Message::SECTION_AUTHORITY, rrset);
                 break;
             }
         }
@@ -720,7 +723,7 @@ proveNX(Query& q, QueryTaskPtr task, ZoneInfo& zoneinfo, const bool wildcard) {
         string hash3(nsec3->getHash(Name("*").concatenate(enclosure)));
         RETERR(getNsec3(q, zoneinfo, hash3, rrset));
         if (hash3 != hash1 && hash3 != hash2) {
-            addToMessage(q, Section::AUTHORITY(), rrset);
+            addToMessage(q, Message::SECTION_AUTHORITY, rrset);
         }
     } else {
         Name nsecname(task->qname);
@@ -778,7 +781,7 @@ tryWildcard(Query& q, QueryTaskPtr task, ZoneInfo& zoneinfo, bool& found) {
 
     for (int i = 1; i <= diff; ++i) {
         const Name& wname(star.concatenate(task->qname.split(i)));
-        QueryTask newtask(q, wname, task->qtype, Section::ANSWER(),
+        QueryTask newtask(q, wname, task->qtype, Message::SECTION_ANSWER,
                           QueryTask::AUTH_QUERY); 
         result = doQueryTask(newtask, zoneinfo, wild);
         if (result == DataSrc::SUCCESS) {
@@ -820,13 +823,13 @@ tryWildcard(Query& q, QueryTaskPtr task, ZoneInfo& zoneinfo, bool& found) {
             RRsetPtr rrset = wild.findRRset(RRType::CNAME(), q.qclass());
             if (rrset != NULL) {
                 rrset->setName(task->qname);
-                addToMessage(q, Section::ANSWER(), rrset);
+                addToMessage(q, Message::SECTION_ANSWER, rrset);
                 chaseCname(q, task, rrset);
             }
         } else {
             BOOST_FOREACH (RRsetPtr rrset, wild) {
                 rrset->setName(task->qname);
-                addToMessage(q, Section::ANSWER(), rrset);
+                addToMessage(q, Message::SECTION_ANSWER, rrset);
             }
 
             RRsetList auth;
@@ -855,7 +858,7 @@ DataSrc::doQuery(Query& q) {
 
     // Process the query task queue.  (The queue is initialized
     // and the first task placed on it by the Query constructor.)
-    m.clearHeaderFlag(MessageFlag::AA());
+    m.setHeaderFlag(Message::HEADERFLAG_AA, false);
     while (!q.tasks().empty()) {
         QueryTaskPtr task = q.tasks().front();
         q.tasks().pop();
@@ -982,19 +985,19 @@ DataSrc::doQuery(Query& q) {
             // The qname node contains an out-of-zone referral.
             if (task->state == QueryTask::GETANSWER) {
                 RRsetList auth;
-                m.clearHeaderFlag(MessageFlag::AA());
+                m.setHeaderFlag(Message::HEADERFLAG_AA, false);
                 if (!refQuery(q, task->qname, zoneinfo, auth)) {
                     m.setRcode(Rcode::SERVFAIL());
                     return;
                 }
                 BOOST_FOREACH (RRsetPtr rrset, auth) {
                     if (rrset->getType() == RRType::NS()) {
-                        addToMessage(q, Section::AUTHORITY(), rrset);
+                        addToMessage(q, Message::SECTION_AUTHORITY, rrset);
                     } else if (rrset->getType() == task->qtype) {
-                        addToMessage(q, Section::ANSWER(), rrset);
+                        addToMessage(q, Message::SECTION_ANSWER, rrset);
                     } else if (rrset->getType() == RRType::DS() &&
                                q.wantDnssec()) {
-                        addToMessage(q, Section::AUTHORITY(), rrset);
+                        addToMessage(q, Message::SECTION_AUTHORITY, rrset);
                     }
                     getAdditional(q, rrset);
                 }
@@ -1063,13 +1066,14 @@ DataSrc::doQuery(Query& q) {
     // space, signatures in additional section are
     // optional.)
     BOOST_FOREACH(RRsetPtr rrset, additional) {
-        addToMessage(q, Section::ADDITIONAL(), rrset, true);
+        addToMessage(q, Message::SECTION_ADDITIONAL, rrset, true);
     }
 
     if (q.wantDnssec()) {
         BOOST_FOREACH(RRsetPtr rrset, additional) {
             if (rrset->getRRsig()) {
-                addToMessage(q, Section::ADDITIONAL(), rrset->getRRsig(), true);
+                addToMessage(q, Message::SECTION_ADDITIONAL, rrset->getRRsig(),
+                             true);
             }
         }
     }

@@ -44,32 +44,42 @@
 
 using namespace std;
 using namespace boost;
-using namespace isc::dns;
 using namespace isc::dns::rdata;
 
 namespace isc {
 namespace dns {
 
 namespace {
-typedef uint16_t flags_t;
-
 // protocol constants
 const size_t HEADERLEN = 12;
-
-const flags_t FLAG_QR = 0x8000;
-const flags_t FLAG_AA = 0x0400;
-const flags_t FLAG_TC = 0x0200;
-const flags_t FLAG_RD = 0x0100;
-const flags_t FLAG_RA = 0x0080;
-const flags_t FLAG_AD = 0x0020;
-const flags_t FLAG_CD = 0x0010;
 
 const unsigned int OPCODE_MASK = 0x7800;
 const unsigned int OPCODE_SHIFT = 11;
 const unsigned int RCODE_MASK = 0x000f;
-const unsigned int FLAG_MASK = 0x8ff0;
 
-const unsigned int MESSAGE_REPLYPRESERVE = (FLAG_RD | FLAG_CD);
+// This diagram shows the wire-format representation of the 2nd 16 bits of
+// the DNS header section, which contain all defined flag bits.
+//
+//    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+//    |QR|   Opcode  |AA|TC|RD|RA|  |AD|CD|   RCODE   |
+//    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+//      1  0  0  0| 0  1  1  1| 1  0  1  1| 0  0  0  0|
+//         0x8         0x7         0xb         0x0
+//
+// This mask covers all the flag bits, and those bits only.
+// Note: we reject a "flag" the is not covered by this mask in some of the
+// public methods.  This means our current definition is not fully extendable;
+// applications cannot introduce a new flag bit temporarily without modifying
+// the source code.
+const unsigned int HEADERFLAG_MASK = 0x87b0;
+
+// This is a set of flag bits that should be preserved when building a reply
+// from a request.
+// Note: we assume the specific definition of HEADERFLAG_xx.  We may change
+// the definition in future, in which case we need to adjust this definition,
+// too (see also the description about the Message::HeaderFlag type).
+const uint16_t MESSAGE_REPLYPRESERVE = (Message::HEADERFLAG_RD |
+                                        Message::HEADERFLAG_CD);
 
 const char *sectiontext[] = {
     "QUESTION",
@@ -77,15 +87,6 @@ const char *sectiontext[] = {
     "AUTHORITY",
     "ADDITIONAL"
 };
-}
-
-namespace {
-inline unsigned int
-sectionCodeToId(const Section& section) {
-    unsigned int code = section.getCode();
-    assert(code > 0);
-    return (section.getCode() - 1);
-}
 }
 
 class MessageImpl {
@@ -105,13 +106,13 @@ public:
     const Opcode* opcode_;
     Opcode opcode_placeholder_;
 
-    flags_t flags_;
+    uint16_t flags_;            // wire-format representation of header flags.
 
     bool header_parsed_;
-    static const unsigned int SECTION_MAX = 4; // TODO: revisit this design
-    int counts_[SECTION_MAX];   // TODO: revisit this definition
+    static const unsigned int NUM_SECTIONS = 4; // TODO: revisit this design
+    int counts_[NUM_SECTIONS];   // TODO: revisit this definition
     vector<QuestionPtr> questions_;
-    vector<RRsetPtr> rrsets_[SECTION_MAX];
+    vector<RRsetPtr> rrsets_[NUM_SECTIONS];
     ConstEDNSPtr edns_;
 
 #ifdef notyet
@@ -123,7 +124,7 @@ public:
     void setOpcode(const Opcode& opcode);
     void setRcode(const Rcode& rcode);
     int parseQuestion(InputBuffer& buffer);
-    int parseSection(const Section& section, InputBuffer& buffer);
+    int parseSection(const Message::Section section, InputBuffer& buffer);
 };
 
 MessageImpl::MessageImpl(Message::Mode mode) :
@@ -142,15 +143,15 @@ MessageImpl::init() {
     opcode_ = NULL;
     edns_ = EDNSPtr();
 
-    for (int i = 0; i < SECTION_MAX; ++i) {
+    for (int i = 0; i < NUM_SECTIONS; ++i) {
         counts_[i] = 0;
     }
 
     header_parsed_ = false;
     questions_.clear();
-    rrsets_[sectionCodeToId(Section::ANSWER())].clear();
-    rrsets_[sectionCodeToId(Section::AUTHORITY())].clear();
-    rrsets_[sectionCodeToId(Section::ADDITIONAL())].clear();
+    rrsets_[Message::SECTION_ANSWER].clear();
+    rrsets_[Message::SECTION_AUTHORITY].clear();
+    rrsets_[Message::SECTION_ADDITIONAL].clear();
 }
 
 void
@@ -174,26 +175,31 @@ Message::~Message() {
 }
 
 bool
-Message::getHeaderFlag(const MessageFlag& flag) const {
-    return ((impl_->flags_ & flag.getBit()) != 0);
+Message::getHeaderFlag(const HeaderFlag flag) const {
+    if (flag == 0 || (flag & ~HEADERFLAG_MASK) != 0) {
+        isc_throw(InvalidParameter,
+                  "Message::getHeaderFlag:: Invalid flag is specified: " <<
+                  flag);
+    }
+    return ((impl_->flags_ & flag) != 0);
 }
 
 void
-Message::setHeaderFlag(const MessageFlag& flag) {
+Message::setHeaderFlag(const HeaderFlag flag, const bool on) {
     if (impl_->mode_ != Message::RENDER) {
         isc_throw(InvalidMessageOperation,
                   "setHeaderFlag performed in non-render mode");
     }
-    impl_->flags_ |= flag.getBit();
-}
-
-void
-Message::clearHeaderFlag(const MessageFlag& flag) {
-    if (impl_->mode_ != Message::RENDER) {
-        isc_throw(InvalidMessageOperation,
-                  "clearHeaderFlag performed in non-render mode");
+    if (flag == 0 || (flag & ~HEADERFLAG_MASK) != 0) {
+        isc_throw(InvalidParameter,
+                  "Message::getHeaderFlag:: Invalid flag is specified: " <<
+                  flag);
     }
-    impl_->flags_ &= ~flag.getBit();
+    if (on) {
+        impl_->flags_ |= flag;
+    } else {
+        impl_->flags_ &= ~flag;
+    }
 }
 
 qid_t
@@ -259,35 +265,46 @@ Message::setEDNS(ConstEDNSPtr edns) {
 }
 
 unsigned int
-Message::getRRCount(const Section& section) const {
-    return (impl_->counts_[section.getCode()]);
+Message::getRRCount(const Section section) const {
+    if (section >= MessageImpl::NUM_SECTIONS) {
+        isc_throw(OutOfRange, "Invalid message section: " << section);
+    }
+    return (impl_->counts_[section]);
 }
 
 void
-Message::addRRset(const Section& section, RRsetPtr rrset, const bool sign) {
+Message::addRRset(const Section section, RRsetPtr rrset, const bool sign) {
     if (impl_->mode_ != Message::RENDER) {
         isc_throw(InvalidMessageOperation,
                   "addRRset performed in non-render mode");
     }
+    if (section >= MessageImpl::NUM_SECTIONS) {
+        isc_throw(OutOfRange, "Invalid message section: " << section);
+    }
 
-    impl_->rrsets_[sectionCodeToId(section)].push_back(rrset);
-    impl_->counts_[section.getCode()] += rrset->getRdataCount();
+    impl_->rrsets_[section].push_back(rrset);
+    impl_->counts_[section] += rrset->getRdataCount();
 
     RRsetPtr sp = rrset->getRRsig();
     if (sign && sp != NULL) {
-        impl_->rrsets_[sectionCodeToId(section)].push_back(sp);
-        impl_->counts_[section.getCode()] += sp->getRdataCount();
+        impl_->rrsets_[section].push_back(sp);
+        impl_->counts_[section] += sp->getRdataCount();
     }
 }
 
 bool
-Message::hasRRset(const Section& section, RRsetPtr rrset) {
-    BOOST_FOREACH(RRsetPtr r, impl_->rrsets_[sectionCodeToId(section)]) {
-        if (r->getType() == rrset->getType() &&
-            r->getName() == rrset->getName())
-        {
-            return (true);
+Message::hasRRset(const Section section, const Name& name,
+                  const RRClass& rrclass, const RRType& rrtype)
+{
+    if (section >= MessageImpl::NUM_SECTIONS) {
+        isc_throw(OutOfRange, "Invalid message section: " << section);
+    }
 
+    BOOST_FOREACH(ConstRRsetPtr r, impl_->rrsets_[section]) {
+        if (r->getClass() == rrclass &&
+            r->getType() == rrtype &&
+            r->getName() == name) {
+            return (true);
         }
     }
 
@@ -302,7 +319,7 @@ Message::addQuestion(const QuestionPtr question) {
     }
 
     impl_->questions_.push_back(question);
-    ++impl_->counts_[Section::QUESTION().getCode()];
+    ++impl_->counts_[SECTION_QUESTION];
 }
 
 void
@@ -366,24 +383,24 @@ Message::toWire(MessageRenderer& renderer) {
     uint16_t ancount = 0;
     if (!renderer.isTruncated()) {
         ancount =
-            for_each(impl_->rrsets_[sectionCodeToId(Section::ANSWER())].begin(),
-                     impl_->rrsets_[sectionCodeToId(Section::ANSWER())].end(),
+            for_each(impl_->rrsets_[SECTION_ANSWER].begin(),
+                     impl_->rrsets_[SECTION_ANSWER].end(),
                      RenderSection<RRsetPtr>(renderer, true)).getTotalCount();
     }
     uint16_t nscount = 0;
     if (!renderer.isTruncated()) {
         nscount =
-            for_each(impl_->rrsets_[sectionCodeToId(Section::AUTHORITY())].begin(),
-                     impl_->rrsets_[sectionCodeToId(Section::AUTHORITY())].end(),
+            for_each(impl_->rrsets_[SECTION_AUTHORITY].begin(),
+                     impl_->rrsets_[SECTION_AUTHORITY].end(),
                      RenderSection<RRsetPtr>(renderer, true)).getTotalCount();
     }
     uint16_t arcount = 0;
     if (renderer.isTruncated()) {
-        setHeaderFlag(MessageFlag::TC());
+        setHeaderFlag(HEADERFLAG_TC, true);
     } else {
         arcount =
-            for_each(impl_->rrsets_[sectionCodeToId(Section::ADDITIONAL())].begin(),
-                     impl_->rrsets_[sectionCodeToId(Section::ADDITIONAL())].end(),
+            for_each(impl_->rrsets_[SECTION_ADDITIONAL].begin(),
+                     impl_->rrsets_[SECTION_ADDITIONAL].end(),
                      RenderSection<RRsetPtr>(renderer, false)).getTotalCount();
     }
 
@@ -406,10 +423,10 @@ Message::toWire(MessageRenderer& renderer) {
     // in rrsets_[] or questions_ if truncation occurred or an EDNS OPT RR
     // was inserted.  This is not good, and we should revisit the entire
     // design.
-    impl_->counts_[Section::QUESTION().getCode()] = qdcount;
-    impl_->counts_[Section::ANSWER().getCode()] = ancount;
-    impl_->counts_[Section::AUTHORITY().getCode()] = nscount;
-    impl_->counts_[Section::ADDITIONAL().getCode()] = arcount;
+    impl_->counts_[SECTION_QUESTION] = qdcount;
+    impl_->counts_[SECTION_ANSWER] = ancount;
+    impl_->counts_[SECTION_AUTHORITY] = nscount;
+    impl_->counts_[SECTION_ADDITIONAL] = arcount;
 
     // TBD: TSIG, SIG(0) etc.
 
@@ -421,7 +438,7 @@ Message::toWire(MessageRenderer& renderer) {
     uint16_t codes_and_flags =
         (impl_->opcode_->getCode() << OPCODE_SHIFT) & OPCODE_MASK;
     codes_and_flags |= (impl_->rcode_->getCode() & RCODE_MASK);
-    codes_and_flags |= (impl_->flags_ & FLAG_MASK);
+    codes_and_flags |= (impl_->flags_ & HEADERFLAG_MASK);
     renderer.writeUint16At(codes_and_flags, header_pos);
     header_pos += sizeof(uint16_t);
     // XXX: should avoid repeated pattern (TODO)
@@ -451,11 +468,11 @@ Message::parseHeader(InputBuffer& buffer) {
     const uint16_t codes_and_flags = buffer.readUint16();
     impl_->setOpcode(Opcode((codes_and_flags & OPCODE_MASK) >> OPCODE_SHIFT));
     impl_->setRcode(Rcode(codes_and_flags & RCODE_MASK));
-    impl_->flags_ = (codes_and_flags & FLAG_MASK);
-    impl_->counts_[Section::QUESTION().getCode()] = buffer.readUint16();
-    impl_->counts_[Section::ANSWER().getCode()] = buffer.readUint16();
-    impl_->counts_[Section::AUTHORITY().getCode()] = buffer.readUint16();
-    impl_->counts_[Section::ADDITIONAL().getCode()] = buffer.readUint16();
+    impl_->flags_ = (codes_and_flags & HEADERFLAG_MASK);
+    impl_->counts_[SECTION_QUESTION] = buffer.readUint16();
+    impl_->counts_[SECTION_ANSWER] = buffer.readUint16();
+    impl_->counts_[SECTION_AUTHORITY] = buffer.readUint16();
+    impl_->counts_[SECTION_ADDITIONAL] = buffer.readUint16();
 
     impl_->header_parsed_ = true;
 }
@@ -471,14 +488,13 @@ Message::fromWire(InputBuffer& buffer) {
         parseHeader(buffer);
     }
 
-    impl_->counts_[Section::QUESTION().getCode()] =
-        impl_->parseQuestion(buffer);
-    impl_->counts_[Section::ANSWER().getCode()] =
-        impl_->parseSection(Section::ANSWER(), buffer);
-    impl_->counts_[Section::AUTHORITY().getCode()] =
-        impl_->parseSection(Section::AUTHORITY(), buffer);
-    impl_->counts_[Section::ADDITIONAL().getCode()] =
-        impl_->parseSection(Section::ADDITIONAL(), buffer);
+    impl_->counts_[SECTION_QUESTION] = impl_->parseQuestion(buffer);
+    impl_->counts_[SECTION_ANSWER] =
+        impl_->parseSection(SECTION_ANSWER, buffer);
+    impl_->counts_[SECTION_AUTHORITY] =
+        impl_->parseSection(SECTION_AUTHORITY, buffer);
+    impl_->counts_[SECTION_ADDITIONAL] =
+        impl_->parseSection(SECTION_ADDITIONAL, buffer);
 }
 
 int
@@ -486,7 +502,7 @@ MessageImpl::parseQuestion(InputBuffer& buffer) {
     unsigned int added = 0;
 
     for (unsigned int count = 0;
-         count < counts_[Section::QUESTION().getCode()];
+         count < counts_[Message::SECTION_QUESTION];
          ++count) {
         const Name name(buffer);
 
@@ -498,9 +514,9 @@ MessageImpl::parseQuestion(InputBuffer& buffer) {
         const RRType rrtype(buffer.readUint16());
         const RRClass rrclass(buffer.readUint16());
 
-        // XXX: need a duplicate check.  We might also want to have an optimized
-        // algorithm that requires the question section contain exactly one
-        // RR.
+        // XXX: need a duplicate check.  We might also want to have an
+        // optimized algorithm that requires the question section contain
+        // exactly one RR.
 
         questions_.push_back(QuestionPtr(new Question(name, rrclass, rrtype)));
         ++added;
@@ -553,16 +569,20 @@ struct MatchRR : public unary_function<RRsetPtr, bool> {
 // logic to that class; processing logic dependent on parse context
 // is hardcoded here.
 int
-MessageImpl::parseSection(const Section& section, InputBuffer& buffer) {
+MessageImpl::parseSection(const Message::Section section,
+                          InputBuffer& buffer)
+{
+    assert(section < MessageImpl::NUM_SECTIONS);
+
     unsigned int added = 0;
 
-    for (unsigned int count = 0; count < counts_[section.getCode()]; ++count) {
+    for (unsigned int count = 0; count < counts_[section]; ++count) {
         const Name name(buffer);
 
         // buffer must store at least RR TYPE, RR CLASS, TTL, and RDLEN.
         if ((buffer.getLength() - buffer.getPosition()) <
             3 * sizeof(uint16_t) + sizeof(uint32_t)) {
-            isc_throw(DNSMessageFORMERR, sectiontext[section.getCode()] <<
+            isc_throw(DNSMessageFORMERR, sectiontext[section] <<
                       " section too short: " <<
                       (buffer.getLength() - buffer.getPosition()) << " bytes");
         }
@@ -574,7 +594,7 @@ MessageImpl::parseSection(const Section& section, InputBuffer& buffer) {
         ConstRdataPtr rdata = createRdata(rrtype, rrclass, buffer, rdlen);
 
         if (rrtype == RRType::OPT()) {
-            if (section != Section::ADDITIONAL()) {
+            if (section != Message::SECTION_ADDITIONAL) {
                 isc_throw(DNSMessageFORMERR,
                           "EDNS OPT RR found in an invalid section");
             }
@@ -589,17 +609,16 @@ MessageImpl::parseSection(const Section& section, InputBuffer& buffer) {
             continue;
         } else {
             vector<RRsetPtr>::iterator it =
-                find_if(rrsets_[sectionCodeToId(section)].begin(),
-                        rrsets_[sectionCodeToId(section)].end(),
+                find_if(rrsets_[section].begin(), rrsets_[section].end(),
                         MatchRR(name, rrtype, rrclass));
-            if (it != rrsets_[sectionCodeToId(section)].end()) {
+            if (it != rrsets_[section].end()) {
                 (*it)->setTTL(min((*it)->getTTL(), ttl));
                 (*it)->addRdata(rdata);
             } else {
                 RRsetPtr rrset =
                     RRsetPtr(new RRset(name, rrclass, rrtype, ttl)); 
                 rrset->addRdata(rdata);
-                rrsets_[sectionCodeToId(section)].push_back(rrset);
+                rrsets_[section].push_back(rrset);
             }
             ++added;
         }
@@ -611,15 +630,15 @@ MessageImpl::parseSection(const Section& section, InputBuffer& buffer) {
 namespace {
 template <typename T>
 struct SectionFormatter {
-    SectionFormatter(const Section& section, string& output) :
+    SectionFormatter(const Message::Section section, string& output) :
         section_(section), output_(output) {}
     void operator()(const T& entry) {
-        if (section_ == Section::QUESTION()) {
+        if (section_ == Message::SECTION_QUESTION) {
             output_ += ";";
         }
         output_ += entry->toText();
     }
-    const Section& section_;
+    const Message::Section section_;
     string& output_;
 };
 }
@@ -642,30 +661,37 @@ Message::toText() const {
     s += ", status: " + impl_->rcode_->toText();
     s += ", id: " + boost::lexical_cast<string>(impl_->qid_);
     s += "\n;; flags: ";
-    if (getHeaderFlag(MessageFlag::QR()))
+    if (getHeaderFlag(HEADERFLAG_QR)) {
         s += "qr ";
-    if (getHeaderFlag(MessageFlag::AA()))
+    }
+    if (getHeaderFlag(HEADERFLAG_AA)) {
         s += "aa ";
-    if (getHeaderFlag(MessageFlag::TC()))
+    }
+    if (getHeaderFlag(HEADERFLAG_TC)) {
         s += "tc ";
-    if (getHeaderFlag(MessageFlag::RD()))
+    }
+    if (getHeaderFlag(HEADERFLAG_RD)) {
         s += "rd ";
-    if (getHeaderFlag(MessageFlag::RA()))
+    }
+    if (getHeaderFlag(HEADERFLAG_RA)) {
         s += "ra ";
-    if (getHeaderFlag(MessageFlag::AD()))
+    }
+    if (getHeaderFlag(HEADERFLAG_AD)) {
         s += "ad ";
-    if (getHeaderFlag(MessageFlag::CD()))
+    }
+    if (getHeaderFlag(HEADERFLAG_CD)) {
         s += "cd ";
+    }
 
     // for simplicity, don't consider the update case for now
     s += "; QUESTION: " +
-        lexical_cast<string>(impl_->counts_[Section::QUESTION().getCode()]);
+        lexical_cast<string>(impl_->counts_[SECTION_QUESTION]);
     s += ", ANSWER: " +
-        lexical_cast<string>(impl_->counts_[Section::ANSWER().getCode()]);
+        lexical_cast<string>(impl_->counts_[SECTION_ANSWER]);
     s += ", AUTHORITY: " +
-        lexical_cast<string>(impl_->counts_[Section::AUTHORITY().getCode()]);
+        lexical_cast<string>(impl_->counts_[SECTION_AUTHORITY]);
 
-    unsigned int arcount = impl_->counts_[Section::ADDITIONAL().getCode()];
+    unsigned int arcount = impl_->counts_[SECTION_ADDITIONAL];
     if (impl_->edns_ != NULL) {
         ++arcount;
     }
@@ -678,31 +704,31 @@ Message::toText() const {
 
     if (!impl_->questions_.empty()) {
         s += "\n;; " +
-            string(sectiontext[Section::QUESTION().getCode()]) + " SECTION:\n";
+            string(sectiontext[SECTION_QUESTION]) + " SECTION:\n";
         for_each(impl_->questions_.begin(), impl_->questions_.end(),
-                 SectionFormatter<QuestionPtr>(Section::QUESTION(), s));
+                 SectionFormatter<QuestionPtr>(SECTION_QUESTION, s));
     }
-    if (!impl_->rrsets_[sectionCodeToId(Section::ANSWER())].empty()) {
+    if (!impl_->rrsets_[SECTION_ANSWER].empty()) {
         s += "\n;; " +
-            string(sectiontext[Section::ANSWER().getCode()]) + " SECTION:\n";
-        for_each(impl_->rrsets_[sectionCodeToId(Section::ANSWER())].begin(),
-                 impl_->rrsets_[sectionCodeToId(Section::ANSWER())].end(),
-                 SectionFormatter<RRsetPtr>(Section::ANSWER(), s));
+            string(sectiontext[SECTION_ANSWER]) + " SECTION:\n";
+        for_each(impl_->rrsets_[SECTION_ANSWER].begin(),
+                 impl_->rrsets_[SECTION_ANSWER].end(),
+                 SectionFormatter<RRsetPtr>(SECTION_ANSWER, s));
     }
-    if (!impl_->rrsets_[sectionCodeToId(Section::AUTHORITY())].empty()) {
+    if (!impl_->rrsets_[SECTION_AUTHORITY].empty()) {
         s += "\n;; " +
-            string(sectiontext[Section::AUTHORITY().getCode()]) + " SECTION:\n";
-        for_each(impl_->rrsets_[sectionCodeToId(Section::AUTHORITY())].begin(),
-                 impl_->rrsets_[sectionCodeToId(Section::AUTHORITY())].end(),
-                 SectionFormatter<RRsetPtr>(Section::AUTHORITY(), s));
+            string(sectiontext[SECTION_AUTHORITY]) + " SECTION:\n";
+        for_each(impl_->rrsets_[SECTION_AUTHORITY].begin(),
+                 impl_->rrsets_[SECTION_AUTHORITY].end(),
+                 SectionFormatter<RRsetPtr>(SECTION_AUTHORITY, s));
     }
-    if (!impl_->rrsets_[sectionCodeToId(Section::ADDITIONAL())].empty()) {
+    if (!impl_->rrsets_[SECTION_ADDITIONAL].empty()) {
         s += "\n;; " +
-            string(sectiontext[Section::ADDITIONAL().getCode()]) +
+            string(sectiontext[SECTION_ADDITIONAL]) +
             " SECTION:\n";
-        for_each(impl_->rrsets_[sectionCodeToId(Section::ADDITIONAL())].begin(),
-                 impl_->rrsets_[sectionCodeToId(Section::ADDITIONAL())].end(),
-                 SectionFormatter<RRsetPtr>(Section::ADDITIONAL(), s));
+        for_each(impl_->rrsets_[SECTION_ADDITIONAL].begin(),
+                 impl_->rrsets_[SECTION_ADDITIONAL].end(),
+                 SectionFormatter<RRsetPtr>(SECTION_ADDITIONAL, s));
     }
 
     return (s);
@@ -725,14 +751,14 @@ Message::makeResponse() {
 
     impl_->edns_ = EDNSPtr();
     impl_->flags_ &= MESSAGE_REPLYPRESERVE;
-    setHeaderFlag(MessageFlag::QR());
+    setHeaderFlag(HEADERFLAG_QR, true);
 
-    impl_->rrsets_[sectionCodeToId(Section::ANSWER())].clear();
-    impl_->counts_[Section::ANSWER().getCode()] = 0;
-    impl_->rrsets_[sectionCodeToId(Section::AUTHORITY())].clear();
-    impl_->counts_[Section::AUTHORITY().getCode()] = 0;
-    impl_->rrsets_[sectionCodeToId(Section::ADDITIONAL())].clear();
-    impl_->counts_[Section::ADDITIONAL().getCode()] = 0;
+    impl_->rrsets_[SECTION_ANSWER].clear();
+    impl_->counts_[SECTION_ANSWER] = 0;
+    impl_->rrsets_[SECTION_AUTHORITY].clear();
+    impl_->counts_[SECTION_AUTHORITY] = 0;
+    impl_->rrsets_[SECTION_ADDITIONAL].clear();
+    impl_->counts_[SECTION_ADDITIONAL] = 0;
 }
 
 ///
@@ -840,33 +866,34 @@ Message::endQuestion() const {
 /// RRsets iterators
 ///
 const SectionIterator<RRsetPtr>
-Message::beginSection(const Section& section) const {
-    if (section == Section::QUESTION()) {
+Message::beginSection(const Section section) const {
+    if (section >= MessageImpl::NUM_SECTIONS) {
+        isc_throw(OutOfRange, "Invalid message section: " << section);
+    }
+    if (section == SECTION_QUESTION) {
         isc_throw(InvalidMessageSection,
                   "RRset iterator is requested for question");
     }
 
-    return (RRsetIterator(
-                RRsetIteratorImpl(
-                    impl_->rrsets_[sectionCodeToId(section)].begin())));
+    return (RRsetIterator(RRsetIteratorImpl(impl_->rrsets_[section].begin())));
 }
 
 const SectionIterator<RRsetPtr>
-Message::endSection(const Section& section) const {
-    if (section == Section::QUESTION()) {
+Message::endSection(const Section section) const {
+    if (section >= MessageImpl::NUM_SECTIONS) {
+        isc_throw(OutOfRange, "Invalid message section: " << section);
+    }
+    if (section == SECTION_QUESTION) {
         isc_throw(InvalidMessageSection,
                   "RRset iterator is requested for question");
     }
 
-    return (RRsetIterator(
-                RRsetIteratorImpl(
-                    impl_->rrsets_[sectionCodeToId(section)].end())));
+    return (RRsetIterator(RRsetIteratorImpl(impl_->rrsets_[section].end())));
 }
 
 ostream&
 operator<<(ostream& os, const Message& message) {
     return (os << message.toText());
 }
-
 } // end of namespace dns
 } // end of namespace isc

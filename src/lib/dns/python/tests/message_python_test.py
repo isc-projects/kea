@@ -22,61 +22,6 @@ import os
 from pydnspp import *
 from testutil import *
 
-class MessageFlagTest(unittest.TestCase):
-    def test_init(self):
-        self.assertRaises(NotImplementedError, MessageFlag)
-
-    def test_get_bit(self):
-        self.assertEqual(0x8000, MessageFlag.QR().get_bit())
-        self.assertEqual(0x0400, MessageFlag.AA().get_bit())
-        self.assertEqual(0x0200, MessageFlag.TC().get_bit())
-        self.assertEqual(0x0100, MessageFlag.RD().get_bit())
-        self.assertEqual(0x0080, MessageFlag.RA().get_bit())
-        self.assertEqual(0x0020, MessageFlag.AD().get_bit())
-        self.assertEqual(0x0010, MessageFlag.CD().get_bit())
-
-class SectionTest(unittest.TestCase):
-
-    def test_init(self):
-        self.assertRaises(NotImplementedError, Section)
-
-    def test_get_code(self):
-        self.assertEqual(0, Section.QUESTION().get_code())
-        self.assertEqual(1, Section.ANSWER().get_code())
-        self.assertEqual(2, Section.AUTHORITY().get_code())
-        self.assertEqual(3, Section.ADDITIONAL().get_code())
-
-    def test_richcmp(self):
-        s1 = Section.QUESTION()
-        s2 = Section.ANSWER()
-        s3 = Section.ANSWER()
-        self.assertTrue(s2 == s3)
-        self.assertTrue(s1 != s2)
-        self.assertFalse(s1 == s2)
-        self.assertFalse(s1 == 1)
-        # can't use assertRaises here...
-        try:
-            s1 < s2
-            self.fail("operation that should have raised an error unexpectedly succeeded")
-        except Exception as err:
-            self.assertEqual(TypeError, type(err))
-        try:
-            s1 <= s2
-            self.fail("operation that should have raised an error unexpectedly succeeded")
-        except Exception as err:
-            self.assertEqual(TypeError, type(err))
-        try:
-            s1 > s2
-            self.fail("operation that should have raised an error unexpectedly succeeded")
-        except Exception as err:
-            self.assertEqual(TypeError, type(err))
-        try:
-            s1 >= s2
-            self.fail("operation that should have raised an error unexpectedly succeeded")
-        except Exception as err:
-            self.assertEqual(TypeError, type(err))
-        
-
 # helper functions for tests taken from c++ unittests
 if "TESTDATA_PATH" in os.environ:
     testdata_path = os.environ["TESTDATA_PATH"]
@@ -105,15 +50,16 @@ def create_message():
     message_render.set_qid(0x1035)
     message_render.set_opcode(Opcode.QUERY())
     message_render.set_rcode(Rcode.NOERROR())
-    message_render.set_header_flag(MessageFlag.QR())
-    message_render.set_header_flag(MessageFlag.RD())
-    message_render.set_header_flag(MessageFlag.AA())
-    message_render.add_question(Question(Name("test.example.com"), RRClass("IN"), RRType("A")))
+    message_render.set_header_flag(Message.HEADERFLAG_QR)
+    message_render.set_header_flag(Message.HEADERFLAG_RD)
+    message_render.set_header_flag(Message.HEADERFLAG_AA)
+    message_render.add_question(Question(Name("test.example.com"),
+                                         RRClass("IN"), RRType("A")))
     rrset = RRset(Name("test.example.com"), RRClass("IN"),
                                         RRType("A"), RRTTL(3600))
     rrset.add_rdata(Rdata(RRType("A"), RRClass("IN"), "192.0.2.1"))
     rrset.add_rdata(Rdata(RRType("A"), RRClass("IN"), "192.0.2.2"))
-    message_render.add_rrset(Section.ANSWER(), rrset)
+    message_render.add_rrset(Message.SECTION_ANSWER, rrset)
     return message_render
 
 
@@ -122,29 +68,56 @@ class MessageTest(unittest.TestCase):
     def setUp(self):
         self.p = Message(Message.PARSE)
         self.r = Message(Message.RENDER)
-        
+
+        self.rrset_a = RRset(Name("example.com"), RRClass("IN"), RRType("A"),
+                             RRTTL(3600))
+        self.rrset_a.add_rdata(Rdata(RRType("A"), RRClass("IN"), "192.0.2.1"))
+        self.rrset_a.add_rdata(Rdata(RRType("A"), RRClass("IN"), "192.0.2.2"))
+
+        self.rrset_aaaa = RRset(Name("example.com"), RRClass("IN"),
+                                RRType("AAAA"), RRTTL(3600))
+        self.rrset_aaaa.add_rdata(Rdata(RRType("AAAA"), RRClass("IN"),
+                                        "2001:db8::134"))
+
+        self.bogus_section = Message.SECTION_ADDITIONAL + 1
+
     def test_init(self):
         self.assertRaises(TypeError, Message, 3)
         self.assertRaises(TypeError, Message, "wrong")
 
-    def test_get_header_flag(self):
+    def test_header_flag(self): # set and get methods
         self.assertRaises(TypeError, self.p.get_header_flag, "wrong")
-        self.assertFalse(self.p.get_header_flag(MessageFlag.AA()))
-
-    def test_set_clear_header_flag(self):
         self.assertRaises(TypeError, self.r.set_header_flag, "wrong")
-        self.assertRaises(TypeError, self.r.clear_header_flag, "wrong")
 
-        self.assertFalse(self.r.get_header_flag(MessageFlag.AA()))
-        self.r.set_header_flag(MessageFlag.AA())
-        self.assertTrue(self.r.get_header_flag(MessageFlag.AA()))
-        self.r.clear_header_flag(MessageFlag.AA())
-        self.assertFalse(self.r.get_header_flag(MessageFlag.AA()))
+        self.assertFalse(self.r.get_header_flag(Message.HEADERFLAG_QR))
+        self.assertFalse(self.r.get_header_flag(Message.HEADERFLAG_AA))
+        self.assertFalse(self.r.get_header_flag(Message.HEADERFLAG_TC))
+        self.assertFalse(self.r.get_header_flag(Message.HEADERFLAG_RD))
+        self.assertFalse(self.r.get_header_flag(Message.HEADERFLAG_RA))
+        self.assertFalse(self.r.get_header_flag(Message.HEADERFLAG_AD))
+        self.assertFalse(self.r.get_header_flag(Message.HEADERFLAG_CD))
+
+        self.r.set_header_flag(Message.HEADERFLAG_QR)
+        self.assertTrue(self.r.get_header_flag(Message.HEADERFLAG_QR))
+
+        self.r.set_header_flag(Message.HEADERFLAG_AA, True)
+        self.assertTrue(self.r.get_header_flag(Message.HEADERFLAG_AA))
+
+        self.r.set_header_flag(Message.HEADERFLAG_AA, False)
+        self.assertFalse(self.r.get_header_flag(Message.HEADERFLAG_AA))
+
+        self.assertRaises(InvalidParameter, self.r.set_header_flag, 0)
+        self.assertRaises(InvalidParameter, self.r.set_header_flag, 0x7000)
+        self.assertRaises(InvalidParameter, self.r.set_header_flag, 0x0800)
+        self.assertRaises(InvalidParameter, self.r.set_header_flag, 0x10000)
+        self.assertRaises(TypeError, self.r.set_header_flag, 0x80000000)
+        # this would cause overflow and result in a "valid" flag
+        self.assertRaises(TypeError, self.r.set_header_flag,
+                          Message.HEADERFLAG_AA | 0x100000000)
+        self.assertRaises(TypeError, self.r.set_header_flag, -1)
 
         self.assertRaises(InvalidMessageOperation,
-                          self.p.set_header_flag, MessageFlag.AA())
-        self.assertRaises(InvalidMessageOperation,
-                          self.p.clear_header_flag, MessageFlag.AA())
+                          self.p.set_header_flag, Message.HEADERFLAG_AA)
 
     def test_set_qid(self):
         self.assertRaises(TypeError, self.r.set_qid, "wrong")
@@ -195,52 +168,77 @@ class MessageTest(unittest.TestCase):
         self.r.set_edns(edns)
         self.assertEqual(1024, self.r.get_edns().get_udp_size())
 
+    def test_get_rr_count(self):
+        # counts also tested in add_section
+        self.assertEqual(0, self.r.get_rr_count(Message.SECTION_QUESTION))
+        self.assertEqual(0, self.r.get_rr_count(Message.SECTION_ANSWER))
+        self.assertEqual(0, self.r.get_rr_count(Message.SECTION_AUTHORITY))
+        self.assertEqual(0, self.r.get_rr_count(Message.SECTION_ADDITIONAL))
+
+        self.r.add_question(Question(Name("example.com"), RRClass("IN"),
+                                     RRType("A")))
+        self.assertEqual(1, self.r.get_rr_count(Message.SECTION_QUESTION))
+
+        self.r.add_rrset(Message.SECTION_ANSWER, self.rrset_a)
+        self.assertEqual(2, self.r.get_rr_count(Message.SECTION_ANSWER))
+
+        factoryFromFile(self.p, "message_fromWire11.wire")
+        self.assertEqual(1, self.r.get_rr_count(Message.SECTION_QUESTION))
+        self.assertEqual(0, self.r.get_rr_count(Message.SECTION_ADDITIONAL))
+
+        self.assertRaises(OverflowError, self.r.get_rr_count,
+                          self.bogus_section)
+        self.assertRaises(TypeError, self.r.get_rr_count, "wrong")
+
     def test_get_section(self):
         self.assertRaises(TypeError, self.r.get_section, "wrong")
 
-        rrset = RRset(Name("example.com"), RRClass("IN"), RRType("A"), RRTTL(3600))
-        rrset.add_rdata(Rdata(RRType("A"), RRClass("IN"), "192.0.2.1"))
-        rrset.add_rdata(Rdata(RRType("A"), RRClass("IN"), "192.0.2.2"))
-        section_rrset = [rrset]
+        section_rrset = [self.rrset_a]
 
         self.assertRaises(InvalidMessageOperation, self.p.add_rrset,
-                          Section.ANSWER(), rrset)
+                          Message.SECTION_ANSWER, self.rrset_a)
         
-        self.assertFalse(compare_rrset_list(section_rrset, self.r.get_section(Section.ANSWER())))
-        self.assertEqual(0, self.r.get_rr_count(Section.ANSWER()))
-        self.r.add_rrset(Section.ANSWER(), rrset)
-        self.assertTrue(compare_rrset_list(section_rrset, self.r.get_section(Section.ANSWER())))
-        self.assertEqual(2, self.r.get_rr_count(Section.ANSWER()))
+        self.assertFalse(compare_rrset_list(section_rrset, self.r.get_section(Message.SECTION_ANSWER)))
+        self.assertEqual(0, self.r.get_rr_count(Message.SECTION_ANSWER))
+        self.r.add_rrset(Message.SECTION_ANSWER, self.rrset_a)
+        self.assertTrue(compare_rrset_list(section_rrset, self.r.get_section(Message.SECTION_ANSWER)))
+        self.assertEqual(2, self.r.get_rr_count(Message.SECTION_ANSWER))
 
-        self.assertFalse(compare_rrset_list(section_rrset, self.r.get_section(Section.AUTHORITY())))
-        self.assertEqual(0, self.r.get_rr_count(Section.AUTHORITY()))
-        self.r.add_rrset(Section.AUTHORITY(), rrset)
-        self.assertTrue(compare_rrset_list(section_rrset, self.r.get_section(Section.AUTHORITY())))
-        self.assertEqual(2, self.r.get_rr_count(Section.AUTHORITY()))
+        self.assertFalse(compare_rrset_list(section_rrset, self.r.get_section(Message.SECTION_AUTHORITY)))
+        self.assertEqual(0, self.r.get_rr_count(Message.SECTION_AUTHORITY))
+        self.r.add_rrset(Message.SECTION_AUTHORITY, self.rrset_a)
+        self.assertTrue(compare_rrset_list(section_rrset, self.r.get_section(Message.SECTION_AUTHORITY)))
+        self.assertEqual(2, self.r.get_rr_count(Message.SECTION_AUTHORITY))
 
-        self.assertFalse(compare_rrset_list(section_rrset, self.r.get_section(Section.ADDITIONAL())))
-        self.assertEqual(0, self.r.get_rr_count(Section.ADDITIONAL()))
-        self.r.add_rrset(Section.ADDITIONAL(), rrset)
-        self.assertTrue(compare_rrset_list(section_rrset, self.r.get_section(Section.ADDITIONAL())))
-        self.assertEqual(2, self.r.get_rr_count(Section.ADDITIONAL()))
-
-    def test_get_rr_count(self):
-        self.assertRaises(TypeError, self.r.get_rr_count, "wrong")
-        # counts also tested in add_section
+        self.assertFalse(compare_rrset_list(section_rrset, self.r.get_section(Message.SECTION_ADDITIONAL)))
+        self.assertEqual(0, self.r.get_rr_count(Message.SECTION_ADDITIONAL))
+        self.r.add_rrset(Message.SECTION_ADDITIONAL, self.rrset_a)
+        self.assertTrue(compare_rrset_list(section_rrset, self.r.get_section(Message.SECTION_ADDITIONAL)))
+        self.assertEqual(2, self.r.get_rr_count(Message.SECTION_ADDITIONAL))
 
     def test_add_question(self):
         self.assertRaises(TypeError, self.r.add_question, "wrong", "wrong")
         q = Question(Name("example.com"), RRClass("IN"), RRType("A"))
         qs = [q]
         self.assertFalse(compare_rrset_list(qs, self.r.get_question()))
-        self.assertEqual(0, self.r.get_rr_count(Section.QUESTION()))
+        self.assertEqual(0, self.r.get_rr_count(Message.SECTION_QUESTION))
         self.r.add_question(q)
         self.assertTrue(compare_rrset_list(qs, self.r.get_question()))
-        self.assertEqual(1, self.r.get_rr_count(Section.QUESTION()))
+        self.assertEqual(1, self.r.get_rr_count(Message.SECTION_QUESTION))
 
     def test_add_rrset(self):
         self.assertRaises(TypeError, self.r.add_rrset, "wrong")
-        # actual addition already tested in get_section
+        self.assertRaises(TypeError, self.r.add_rrset)
+
+        # we can currently only test the no-sign case.
+        self.r.add_rrset(Message.SECTION_ANSWER, self.rrset_a)
+        self.assertEqual(2, self.r.get_rr_count(Message.SECTION_ANSWER))
+
+    def test_bad_add_rrset(self):
+        self.assertRaises(InvalidMessageOperation, self.p.add_rrset,
+                          Message.SECTION_ANSWER, self.rrset_a)
+        self.assertRaises(OverflowError, self.r.add_rrset,
+                          self.bogus_section, self.rrset_a)
 
     def test_clear(self):
         self.assertEqual(None, self.r.clear(Message.PARSE))
@@ -308,22 +306,22 @@ test.example.com. 3600 IN A 192.0.2.2
         self.assertEqual(0x1035, message_parse.get_qid())
         self.assertEqual(Opcode.QUERY(), message_parse.get_opcode())
         self.assertEqual(Rcode.NOERROR(), message_parse.get_rcode())
-        self.assertTrue(message_parse.get_header_flag(MessageFlag.QR()))
-        self.assertTrue(message_parse.get_header_flag(MessageFlag.RD()))
-        self.assertTrue(message_parse.get_header_flag(MessageFlag.AA()))
+        self.assertTrue(message_parse.get_header_flag(Message.HEADERFLAG_QR))
+        self.assertTrue(message_parse.get_header_flag(Message.HEADERFLAG_RD))
+        self.assertTrue(message_parse.get_header_flag(Message.HEADERFLAG_AA))
     
         #QuestionPtr q = *message_parse.beginQuestion()
         q = message_parse.get_question()[0]
         self.assertEqual(test_name, q.get_name())
         self.assertEqual(RRType("A"), q.get_type())
         self.assertEqual(RRClass("IN"), q.get_class())
-        self.assertEqual(1, message_parse.get_rr_count(Section.QUESTION()))
-        self.assertEqual(2, message_parse.get_rr_count(Section.ANSWER()))
-        self.assertEqual(0, message_parse.get_rr_count(Section.AUTHORITY()))
-        self.assertEqual(0, message_parse.get_rr_count(Section.ADDITIONAL()))
+        self.assertEqual(1, message_parse.get_rr_count(Message.SECTION_QUESTION))
+        self.assertEqual(2, message_parse.get_rr_count(Message.SECTION_ANSWER))
+        self.assertEqual(0, message_parse.get_rr_count(Message.SECTION_AUTHORITY))
+        self.assertEqual(0, message_parse.get_rr_count(Message.SECTION_ADDITIONAL))
     
-        #RRsetPtr rrset = *message_parse.beginSection(Section.ANSWER())
-        rrset = message_parse.get_section(Section.ANSWER())[0]
+        #RRsetPtr rrset = *message_parse.beginSection(Message.SECTION_ANSWER)
+        rrset = message_parse.get_section(Message.SECTION_ANSWER)[0]
         self.assertEqual(test_name, rrset.get_name())
         self.assertEqual(RRType("A"), rrset.get_type())
         self.assertEqual(RRClass("IN"), rrset.get_class())

@@ -115,7 +115,7 @@ class TestXfroutSession(unittest.TestCase):
         self.assertEqual(msg.get_qid(), qid)
         self.assertEqual(msg.get_opcode(), opcode)
         self.assertEqual(msg.get_rcode(), rcode)
-        self.assertTrue(msg.get_header_flag(MessageFlag.AA()))
+        self.assertTrue(msg.get_header_flag(Message.HEADERFLAG_AA))
 
     def test_reply_query_with_format_error(self):
          
@@ -140,12 +140,12 @@ class TestXfroutSession(unittest.TestCase):
         self.xfrsess._send_message_with_last_soa(msg, self.sock, rrset_soa, 0)
         get_msg = self.sock.read_msg()
 
-        self.assertEqual(get_msg.get_rr_count(Section.QUESTION()), 1)
-        self.assertEqual(get_msg.get_rr_count(Section.ANSWER()), 1)
-        self.assertEqual(get_msg.get_rr_count(Section.AUTHORITY()), 0)
+        self.assertEqual(get_msg.get_rr_count(Message.SECTION_QUESTION), 1)
+        self.assertEqual(get_msg.get_rr_count(Message.SECTION_ANSWER), 1)
+        self.assertEqual(get_msg.get_rr_count(Message.SECTION_AUTHORITY), 0)
 
         #answer_rrset_iter = section_iter(get_msg, section.ANSWER())
-        answer = get_msg.get_section(Section.ANSWER())[0]#answer_rrset_iter.get_rrset()
+        answer = get_msg.get_section(Message.SECTION_ANSWER)[0]#answer_rrset_iter.get_rrset()
         self.assertEqual(answer.get_name().to_text(), "example.com.")
         self.assertEqual(answer.get_class(), RRClass("IN"))
         self.assertEqual(answer.get_type().to_text(), "SOA")
@@ -160,7 +160,7 @@ class TestXfroutSession(unittest.TestCase):
         msg = self.getmsg()
         msg.make_response()
 
-        msg.add_rrset(Section.ANSWER(), rrset_a)
+        msg.add_rrset(Message.SECTION_ANSWER, rrset_a)
         # give the function a value that is larger than MAX-len(rrset)
         self.xfrsess._send_message_with_last_soa(msg, self.sock, rrset_soa, 65520)
 
@@ -168,11 +168,11 @@ class TestXfroutSession(unittest.TestCase):
         # (1 with the rrset we added manually, and 1 that triggered
         # the sending in _with_last_soa)
         get_msg = self.sock.read_msg()
-        self.assertEqual(get_msg.get_rr_count(Section.QUESTION()), 1)
-        self.assertEqual(get_msg.get_rr_count(Section.ANSWER()), 1)
-        self.assertEqual(get_msg.get_rr_count(Section.AUTHORITY()), 0)
+        self.assertEqual(get_msg.get_rr_count(Message.SECTION_QUESTION), 1)
+        self.assertEqual(get_msg.get_rr_count(Message.SECTION_ANSWER), 1)
+        self.assertEqual(get_msg.get_rr_count(Message.SECTION_AUTHORITY), 0)
 
-        answer = get_msg.get_section(Section.ANSWER())[0]
+        answer = get_msg.get_section(Message.SECTION_ANSWER)[0]
         self.assertEqual(answer.get_name().to_text(), "example.com.")
         self.assertEqual(answer.get_class(), RRClass("IN"))
         self.assertEqual(answer.get_type().to_text(), "A")
@@ -180,12 +180,12 @@ class TestXfroutSession(unittest.TestCase):
         self.assertEqual(rdata[0].to_text(), "192.0.2.1")
 
         get_msg = self.sock.read_msg()
-        self.assertEqual(get_msg.get_rr_count(Section.QUESTION()), 0)
-        self.assertEqual(get_msg.get_rr_count(Section.ANSWER()), 1)
-        self.assertEqual(get_msg.get_rr_count(Section.AUTHORITY()), 0)
+        self.assertEqual(get_msg.get_rr_count(Message.SECTION_QUESTION), 0)
+        self.assertEqual(get_msg.get_rr_count(Message.SECTION_ANSWER), 1)
+        self.assertEqual(get_msg.get_rr_count(Message.SECTION_AUTHORITY), 0)
 
-        #answer_rrset_iter = section_iter(get_msg, section.ANSWER())
-        answer = get_msg.get_section(Section.ANSWER())[0]
+        #answer_rrset_iter = section_iter(get_msg, Message.SECTION_ANSWER)
+        answer = get_msg.get_section(Message.SECTION_ANSWER)[0]
         self.assertEqual(answer.get_name().to_text(), "example.com.")
         self.assertEqual(answer.get_class(), RRClass("IN"))
         self.assertEqual(answer.get_type().to_text(), "SOA")
@@ -281,7 +281,7 @@ class TestXfroutSession(unittest.TestCase):
         sqlite3_ds.get_zone_datas = get_zone_datas
         self.xfrsess._reply_xfrout_query(self.getmsg(), self.sock, "example.com.")
         reply_msg = self.sock.read_msg()
-        self.assertEqual(reply_msg.get_rr_count(Section.ANSWER()), 2)
+        self.assertEqual(reply_msg.get_rr_count(Message.SECTION_ANSWER), 2)
 
 class MyCCSession():
     def __init__(self):
