@@ -51,6 +51,7 @@ libasio_link_a_CPPFLAGS = $(AM_CPPFLAGS)
 BUILT_SOURCES = spec_config.h 
 pkglibexec_PROGRAMS = b10-auth
 b10_auth_SOURCES = auth_srv.cc auth_srv.h
+b10_auth_SOURCES += rbt_datasrc.h rbt_datasrc.cc
 b10_auth_SOURCES += change_user.cc change_user.h
 b10_auth_SOURCES += common.h
 b10_auth_SOURCES += main.cc
