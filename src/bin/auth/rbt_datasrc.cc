@@ -46,7 +46,7 @@ RBNode::~RBNode() {
         delete down_;
 }
 
-RBNode* 
+RBNode*
 RBNode::successor() {
     RBNode* current = this;
 
@@ -128,14 +128,14 @@ RBTree::~RBTree() {
     root_ = NULL;
 }
 
-RBTree::FindResult 
+RBTree::FindResult
 RBTree::find(const Name &name, RBNode **node)const {
     RBTree *tree;
     return findHelper(name, &tree, node);
 }
 
 
-RBTree::FindResult 
+RBTree::FindResult
 RBTree::findHelper(const Name &name, RBTree **tree, RBNode **ret)const {
     RBNode* node = root_;
     while (node != NULLNODE) {
@@ -187,7 +187,7 @@ RBTree::getNodeCountHelper(const RBNode *node) const {
     return 1 + sub_tree_node_count + getNodeCountHelper(node->left_) + getNodeCountHelper(node->right_);
 }
 
-int 
+int
 RBTree::insert(const Name &name, RBNode **new_node) {
     RBNode* parent = NULLNODE;
     RBNode* current = root_;
@@ -262,7 +262,7 @@ RBTree::insert(const Name &name, RBNode **new_node) {
     return 0;
 }
 
-void 
+void
 RBTree::insertRebalance(RBNode * node) {
     RBNode* uncle;
 
@@ -313,7 +313,7 @@ RBTree::insertRebalance(RBNode * node) {
 }
 
 
-RBNode* 
+RBNode*
 RBTree::leftRotate(RBNode * p) {
     RBNode* c = p->right_;
 
@@ -337,7 +337,7 @@ RBTree::leftRotate(RBNode * p) {
     return c;
 }
 
-RBNode* 
+RBNode*
 RBTree::rightRotate(RBNode * p) {
     RBNode* c = p->left_;
 
@@ -362,7 +362,7 @@ RBTree::rightRotate(RBNode * p) {
 }
 
 
-int 
+int
 RBTree::erase(const Name &name) {
     RBNode *node;
     RBTree *tree;
@@ -393,7 +393,7 @@ RBTree::erase(const Name &name) {
 }
 
 
-void 
+void
 RBTree::eraseNode(RBNode *node) {
     RBNode* y = NULLNODE;
     RBNode* x = NULLNODE;
@@ -436,7 +436,7 @@ RBTree::eraseNode(RBNode *node) {
     --node_count_;
 }
 
-void 
+void
 RBTree::deleteRebalance(RBNode * node) {
     RBNode* w = NULLNODE;
 
