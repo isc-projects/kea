@@ -126,6 +126,11 @@ public:
     virtual void getAddresses(NameserverEntry::AddressVector& addresses,
         short family = 0) const;
 
+    /// \brief Return Address that corresponding to the index
+    ///
+    /// \param index The address index in the address vector
+    virtual asiolink::IOAddress getAddressAtIndex(uint32_t index) const;
+
     /// \brief Update RTT
     ///
     /// Updates the RTT for a particular address
@@ -133,6 +138,12 @@ public:
     /// \param address Address to update
     /// \param RTT New RTT for the address
     virtual void setAddressRTT(const asiolink::IOAddress& address, uint32_t rtt);
+
+    /// \brief Update RTT of the address that corresponding to the index
+    ///
+    /// \param rtt Round-Trip Time
+    /// \param index The address's index in address vector
+    virtual void updateAddressRTTAtIndex(uint32_t rtt, uint32_t index);
 
     /// \brief Set Address Unreachable
     ///
@@ -155,6 +166,8 @@ public:
     virtual HashKey hashKey() const {
         return HashKey(name_, classCode_);
     }
+
+    /// \return Hash Key of the Nameserver
 
     /// \return Expiration Time of Data
     ///

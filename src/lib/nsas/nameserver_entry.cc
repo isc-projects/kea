@@ -143,6 +143,13 @@ void NameserverEntry::getAddresses(AddressVector& addresses, short family) const
         bind1st(AddressSelection(), family));
 }
 
+asiolink::IOAddress NameserverEntry::getAddressAtIndex(uint32_t index) const
+{
+    assert(index < address_.size());
+
+    return address_[index].getAddress();
+}
+
 // Set the address RTT to a specific value
 void NameserverEntry::setAddressRTT(const IOAddress& address, uint32_t rtt) {
 
@@ -152,6 +159,15 @@ void NameserverEntry::setAddressRTT(const IOAddress& address, uint32_t rtt) {
             i->setRTT(rtt);
         }
     }
+}
+
+// Update the address's rtt 
+void NameserverEntry::updateAddressRTTAtIndex(uint32_t rtt, uint32_t index) {
+    //make sure it is a valid index
+    if(index >= address_.size()) return;
+
+    //update the rtt
+    address_[index].setRTT(rtt);
 }
 
 // Sets the address to be unreachable
