@@ -16,6 +16,7 @@
 
 #include <gtest/gtest.h>
 #include <boost/shared_ptr.hpp>
+#include <boost/bind.hpp>
 
 #include <string.h>
 #include <iostream>
@@ -27,6 +28,7 @@
 #include "nsas_test.h"
 
 using namespace std;
+using boost::shared_ptr;
 
 namespace isc {
 namespace nsas {
@@ -173,6 +175,30 @@ TEST_F(HashTableTest, GetTest) {
     // ... and a lookup should return empty
     value = table_.get(dummy1_->hashKey());
     EXPECT_TRUE(value.get() == NULL);
+}
+
+shared_ptr<TestEntry>
+pass(shared_ptr<TestEntry> value) {
+    return (value);
+}
+
+TEST_F(HashTableTest, GetOrAddTest) {
+    // Add one entry
+    EXPECT_TRUE(table_.add(dummy1_, dummy1_->hashKey()));
+
+    // Check it looks it up
+    std::pair<bool, shared_ptr<TestEntry> > result = table_.getOrAdd(
+        dummy1_->hashKey(), boost::bind(pass, dummy3_));
+    EXPECT_TRUE(result.first);
+    EXPECT_EQ(dummy1_.get(), result.second.get());
+
+    // Check it says it adds the value
+    result = table_.getOrAdd(dummy3_->hashKey(), boost::bind(pass, dummy3_));
+    EXPECT_FALSE(result.first);
+    EXPECT_EQ(dummy3_.get(), result.second.get());
+
+    // Check it really did add it
+    EXPECT_EQ(dummy3_.get(), table_.get(dummy3_->hashKey()).get());
 }
 
 // Test that objects with the same name and different classes are distinct.
