@@ -151,8 +151,12 @@ public:
     /// \param key Name of the object (and class).  The hash of this is
     /// calculated and used to index the table.
     ///
-    /// \return Shared pointer to the object.
-    virtual boost::shared_ptr<T> get(const HashKey& key);
+    /// \return Shared pointer to the object or NULL if it is not there.
+    virtual boost::shared_ptr<T> get(const HashKey& key) {
+        uint32_t index = hash_(key);
+        scoped_lock lock(table_[index].mutex_);
+        return getInternal(key, index);
+    }
 
     /// \brief Remove Entry
     ///
@@ -181,7 +185,40 @@ public:
     // the addition fails and a status is returned.
     /// \return true if the object was successfully added, false otherwise.
     virtual bool add(boost::shared_ptr<T>& object, const HashKey& key,
-        bool replace = false);
+        bool replace = false)
+    {
+        uint32_t index = hash_(key);
+        scoped_lock lock(table_[index].mutex_);
+        return addInternal(object, key, index, replace);
+    }
+
+    /// \brief Attomicly lookup an entry or add a new one if it does not exist.
+    ///
+    /// Looks up an entry specified by key in the table. If it is not there,
+    /// it calls generator() and adds its result to the table under given key.
+    /// It is performed attomically to prevent race conditions.
+    ///
+    /// \param key The entry to lookup.
+    /// \param generator will be called when the item is not there. Its result
+    ///     will be added and returned.
+    /// \return The boolean part of pair tells if the value was added (true
+    ///     means new value, false looked up one). The other part is the
+    ///     object, either found or created.
+    template<class Generator>
+    std::pair<bool, boost::shared_ptr<T> > getOrAdd(const HashKey& key,
+        const Generator& generator)
+    {
+        uint32_t index = hash_(key);
+        scoped_lock lock(table_[index].mutex_);
+        boost::shared_ptr<T> result(getInternal(key, index));
+        if (result) {
+            return (std::pair<bool, boost::shared_ptr<T> >(true, result));
+        } else {
+            result = generator();
+            addInternal(result, key, index);
+            return (std::pair<bool, boost::shared_ptr<T> >(false, result));
+        }
+    }
 
     /// \brief Returns Size of Hash Table
     ///
@@ -189,6 +226,13 @@ public:
     virtual uint32_t tableSize() const {
         return table_.size();
     }
+
+protected:
+    // Internal parts, expect to be already locked
+    virtual boost::shared_ptr<T> getInternal(const HashKey& key,
+        uint32_t index);
+    virtual bool addInternal(boost::shared_ptr<T>& object, const HashKey& key,
+        uint32_t index, bool replace = false);
 
 private:
     Hash                             hash_;  ///< Hashing function
@@ -205,15 +249,9 @@ HashTable<T>::HashTable(HashTableCompare<T>* compare, uint32_t size) :
 
 // Lookup an object in the table
 template <typename T>
-boost::shared_ptr<T> HashTable<T>::get(const HashKey& key) {
-
-    // Calculate the hash value
-    uint32_t index = hash_(key);
-
-    // Take out a read lock on this hash slot.  The lock is released when this
-    // object goes out of scope.
-    sharable_lock lock(table_[index].mutex_);
-
+boost::shared_ptr<T> HashTable<T>::getInternal(const HashKey& key,
+    uint32_t index)
+{
     // Locate the object.
     typename HashTableSlot<T>::iterator i;
     for (i = table_[index].list_.begin(); i != table_[index].list_.end(); ++i) {
@@ -258,17 +296,10 @@ bool HashTable<T>::remove(const HashKey& key) {
 
 // Add an entry to the hash table
 template <typename T>
-bool HashTable<T>::add(boost::shared_ptr<T>& object, const HashKey& key,
-    bool replace)
+bool HashTable<T>::addInternal(boost::shared_ptr<T>& object,
+    const HashKey& key, uint32_t index, bool replace)
 {
-
-    // Calculate the hash value
-    uint32_t index = hash_(key);
-
-    // Access to the elements of this hash slot are accessed under a mutex.
-    scoped_lock lock(table_[index].mutex_);
-
-    // Now search this list to see if the element already exists.
+    // Search this list to see if the element already exists.
     typename HashTableSlot<T>::iterator i;
     for (i = table_[index].list_.begin(); i != table_[index].list_.end(); ++i) {
         if ((*compare_)(i->get(), key)) {
