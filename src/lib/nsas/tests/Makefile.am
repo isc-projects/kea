@@ -23,6 +23,7 @@ run_unittests_SOURCES += hash_key_unittest.cc
 run_unittests_SOURCES += hash_table_unittest.cc
 run_unittests_SOURCES += hash_unittest.cc
 run_unittests_SOURCES += lru_list_unittest.cc
+run_unittests_SOURCES += nameserver_address_unittest.cc
 run_unittests_SOURCES += nameserver_address_store_unittest.cc
 run_unittests_SOURCES += nameserver_entry_unittest.cc
 run_unittests_SOURCES += nsas_entry_compare_unittest.cc
