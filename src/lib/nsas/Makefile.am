@@ -15,6 +15,7 @@ libnsas_la_SOURCES += hash_key.cc hash_key.h
 libnsas_la_SOURCES += hash_table.h
 libnsas_la_SOURCES += lru_list.h
 libnsas_la_SOURCES += nameserver_address_store.cc nameserver_address_store.h
+libnsas_la_SOURCES += nameserver_address.h
 libnsas_la_SOURCES += nameserver_entry.cc nameserver_entry.h
 libnsas_la_SOURCES += nsas_entry_compare.h
 libnsas_la_SOURCES += nsas_entry.h
