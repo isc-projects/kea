@@ -74,7 +74,7 @@ class RBNode {
 };
 
 /// RBTree is a generic red black tree, it contains all the node with same suffix
-/// So for one zone, severl RBTrees are involved. But from outside, the sub tree is 
+/// So for one zone, severl RBTrees are involved. But from outside, the sub tree is
 /// opaque for end user. if the sub tree only has one node and the base node which is pointed by the
 /// "up_" pointer is one non-terminal, the single node will merge with the "up_" node then the sub tree will
 /// be deleted
@@ -95,10 +95,10 @@ class RBTree {
         /// the interface just used for test the tree logic, later will be removed
         int getNodeCount() const;
 
-        
+
         void printTree(int depth = 0)const;
-    
-        /// if the name exists, return value will be one, and inserted_node will point to 
+
+        /// if the name exists, return value will be one, and inserted_node will point to
         /// the existed node, otherwise return value is zero, and inserted_node points to
         /// new created node
         int insert(const Name &name, RBNode **inserted_node);

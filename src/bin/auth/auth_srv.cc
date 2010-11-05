@@ -435,7 +435,7 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
         }
         return (false);
     }
-    
+
     const string remote_ip_address =
         io_message.getRemoteEndpoint().getAddress().toText();
     static const string command_template_start =
