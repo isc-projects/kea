@@ -24,6 +24,10 @@
 #include "nameserver_address_store.h"
 #include "zone_entry.h"
 
+using namespace isc::dns;
+using namespace std;
+using namespace boost;
+
 namespace isc {
 namespace nsas {
 
@@ -37,8 +41,17 @@ NameserverAddressStore::NameserverAddressStore(uint32_t zonehashsize,
     zone_hash_(new NsasEntryCompare<ZoneEntry>, zonehashsize),
     nameserver_hash_(new NsasEntryCompare<NameserverEntry>, nshashsize),
     zone_lru_((3 * zonehashsize), new HashDeleter<ZoneEntry>(zone_hash_)),
-    nameserver_lru_((3 * nshashsize), new HashDeleter<NameserverEntry>(nameserver_hash_))
+    nameserver_lru_((3 * nshashsize), new HashDeleter<NameserverEntry>(
+        nameserver_hash_))
 {
+}
+
+void
+NameserverAddressStore::lookup(const std::string& , uint16_t ,
+    const AbstractRRset& , const vector<AbstractRRset>& ,
+    shared_ptr<AddressRequestCallback> )
+{
+    // TODO Implement
 }
 
 } // namespace nsas

@@ -67,15 +67,17 @@ public:
     /// Looks up the address of a nameserver in the zone.
     ///
     /// \param zone Name of zone for which an address is required.
+    /// \param class_code Class of the zone.
     /// \param authority Authority RRset from the referral containing the
     /// nameservers that serve the zone.
     /// \param additional Additional RRset(s) for authority information.  These
     /// are taken from the referral.
     /// \param callback Callback object used to pass the result back to the
     /// caller.
-    /* void lookup(const std::string& zone, isc::dns::AbstractRRset& authority,
-        const std::vector<isc::dns::AbstractRRset>& additional
-        boost::shared_ptr<isc::dns::AddressRequestCallback> callback ); */
+    void lookup(const std::string& zone, uint16_t class_code,
+        const isc::dns::AbstractRRset& authority,
+        const std::vector<isc::dns::AbstractRRset>& additional,
+        boost::shared_ptr<AddressRequestCallback> callback);
 
     /// \brief Protected Members
     ///
