@@ -20,9 +20,13 @@
 /// address store.  These act to delete zones from the zone hash table when
 /// the element reaches the top of the LRU list.
 
+#include <dns/rrttl.h>
+#include <dns/rdataclass.h>
+
 #include <gtest/gtest.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/foreach.hpp>
 
 #include <string.h>
 #include <vector>
@@ -35,6 +39,8 @@
 #include "nsas_test.h"
 
 using namespace isc::dns;
+using namespace std;
+using namespace boost;
 
 namespace isc {
 namespace nsas {
@@ -80,10 +86,12 @@ public:
 class NameserverAddressStoreTest : public ::testing::Test {
 protected:
 
-    // Constructor - initialize a set of nameserver and zone objects.  For convenience,
-    // these are stored in vectors.
-    NameserverAddressStoreTest()
+    NameserverAddressStoreTest() :
+        authority_(new RRset(Name("example.net."), RRClass::IN(), RRType::NS(),
+            RRTTL(128)))
     {
+        // Constructor - initialize a set of nameserver and zone objects.  For convenience,
+        // these are stored in vectors.
         for (int i = 1; i <= 9; ++i) {
             std::string name = "nameserver" + boost::lexical_cast<std::string>(i);
             nameservers_.push_back(boost::shared_ptr<NameserverEntry>(new NameserverEntry(name, (40 + i))));
@@ -93,19 +101,73 @@ protected:
             std::string name = "zone" + boost::lexical_cast<std::string>(i);
             zones_.push_back(boost::shared_ptr<ZoneEntry>(new ZoneEntry(name, (40 + i))));
         }
+
+        // A nameserver serving data
+        authority_->addRdata(rdata::generic::NS(Name("ns.example.com.")));
+
+        // This is reused because of convenience, clear it just in case
+        NSASCallback::results.clear();
     }
 
     // Vector of pointers to nameserver and zone entries.
     std::vector<boost::shared_ptr<NameserverEntry> > nameservers_;
     std::vector<boost::shared_ptr<ZoneEntry> >       zones_;
 
+    RRsetPtr authority_;
+
     class TestResolver : public ResolverInterface {
         public:
-            virtual void resolve(QuestionPtr, CallbackPtr) {
-                assert(0); // TODO Implement
+            typedef pair<QuestionPtr, CallbackPtr> Request;
+            vector<Request> requests;
+            virtual void resolve(QuestionPtr q, CallbackPtr c) {
+                requests.push_back(Request(q, c));
+            }
+            QuestionPtr operator[](size_t index) {
+                return (requests[index].first);
             }
     } defaultTestResolver;
+
+    /**
+     * Looks if the two provided requests in resolver are A and AAAA.
+     * Sorts them so index1 is A.
+     */
+    void asksIPs(const Name& name, size_t index1, size_t index2) {
+        size_t max = (index1 < index2) ? index2 : index1;
+        ASSERT_GT(defaultTestResolver.requests.size(), max);
+        EXPECT_EQ(name, defaultTestResolver[index1]->getName());
+        EXPECT_EQ(name, defaultTestResolver[index2]->getName());
+        EXPECT_EQ(RRClass::IN(), defaultTestResolver[index1]->getClass());
+        EXPECT_EQ(RRClass::IN(), defaultTestResolver[index2]->getClass());
+        // If they are the other way around, swap
+        if (defaultTestResolver[index1]->getType() == RRType::AAAA() &&
+            defaultTestResolver[index2]->getType() == RRType::A())
+        {
+            TestResolver::Request tmp(defaultTestResolver.requests[index1]);
+            defaultTestResolver.requests[index1] =
+                defaultTestResolver.requests[index2];
+            defaultTestResolver.requests[index2] = tmp;
+        }
+        // Check the correct addresses
+        EXPECT_EQ(RRType::A(), defaultTestResolver[index1]->getType());
+        EXPECT_EQ(RRType::AAAA(), defaultTestResolver[index1]->getType());
+    }
+
+    class NSASCallback : public AddressRequestCallback {
+        public:
+            typedef pair<bool, asiolink::IOAddress> Result;
+            static vector<Result> results;
+            virtual void success(const asiolink::IOAddress& address) {
+                results.push_back(Result(true, address));
+            }
+            virtual void unreachable() {
+                results.push_back(Result(false,
+                    asiolink::IOAddress("0.0.0.0")));
+            }
+    };
 };
+
+vector<NameserverAddressStoreTest::NSASCallback::Result>
+    NameserverAddressStoreTest::NSASCallback::results;
 
 
 /// \brief Remove Zone Entry from Hash Table
@@ -165,6 +227,53 @@ TEST_F(NameserverAddressStoreTest, NameserverDeletionCheck) {
     EXPECT_EQ(3, nameservers_[7].use_count());
 
     EXPECT_EQ(1, nameservers_[1].use_count());
+}
+
+/**
+ * \short Try lookup on empty store.
+ *
+ * Check if it asks correct questions and it keeps correct internal state.
+ */
+TEST_F(NameserverAddressStoreTest, emptyLookup) {
+    DerivedNsas nsas(defaultTestResolver, 10, 10);
+    // Ask it a question
+    nsas.lookup("example.net.", RRClass::IN().getCode(), *authority_,
+        vector<AbstractRRset>(), boost::shared_ptr<AddressRequestCallback>(
+        new NSASCallback));
+    // It should ask for IP addresses for example.com.
+    ASSERT_EQ(2, defaultTestResolver.requests.size());
+    asksIPs(Name("example.com."), 0, 1);
+
+    // Ask another question for the same zone
+    nsas.lookup("example.net.", RRClass::IN().getCode(), *authority_,
+        vector<AbstractRRset>(), boost::shared_ptr<AddressRequestCallback>(
+        new NSASCallback));
+    // It should ask no more questions now
+    EXPECT_EQ(2, defaultTestResolver.requests.size());
+
+    // Ask another question with different zone but the same nameserver
+    authority_->setName(Name("example.com."));
+    nsas.lookup("example.com.", RRClass::IN().getCode(), *authority_,
+        vector<AbstractRRset>(), boost::shared_ptr<AddressRequestCallback>(
+        new NSASCallback));
+    // It still should ask nothing
+    EXPECT_EQ(2, defaultTestResolver.requests.size());
+
+    // We provide IP address of one nameserver, it should generate all the
+    // results
+    RRsetPtr answer(new RRset(Name("example.com."), RRClass::IN(), RRType::A(),
+        RRTTL(100)));
+    answer->addRdata(rdata::in::A("192.0.2.1"));
+    Message address(Message::RENDER); // Not able to create different one
+    address.addRRset(Section::ANSWER(), answer);
+    address.addRRset(Section::AUTHORITY(), authority_);
+    address.addQuestion(defaultTestResolver[0]);
+    defaultTestResolver.requests[0].second->success(address);
+    EXPECT_EQ(3, NSASCallback::results.size());
+    BOOST_FOREACH(const NSASCallback::Result& result, NSASCallback::results) {
+        EXPECT_TRUE(result.first);
+        EXPECT_EQ("192.0.2.1", result.second.toText());
+    }
 }
 
 } // namespace nsas
