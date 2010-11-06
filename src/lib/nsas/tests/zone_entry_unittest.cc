@@ -15,16 +15,19 @@
 // $Id$
 
 #include <gtest/gtest.h>
+#include <boost/shared_ptr.hpp>
 
 #include "rrclass.h"
 
 #include "asiolink.h"
 #include "zone_entry.h"
+#include "../address_request_callback.h"
 
 #include "nsas_test.h"
 
 using namespace asiolink;
 using namespace std;
+using namespace boost;
 using namespace isc::dns;
 
 namespace isc {
@@ -46,6 +49,32 @@ TEST_F(ZoneEntryTest, DefaultConstructor) {
     ZoneEntry alpha(EXAMPLE_CO_UK, RRClass::IN().getCode());
     EXPECT_EQ(EXAMPLE_CO_UK, alpha.getName());
     EXPECT_EQ(RRClass::IN().getCode(), alpha.getClass());
+}
+
+namespace {
+// Just something that can be created and passed
+class Callback : public AddressRequestCallback {
+    public:
+        void success(const asiolink::IOAddress&) { };
+        void unreachable() { };
+};
+}
+
+TEST_F(ZoneEntryTest, Callbacks) {
+    const size_t count(3);
+    shared_ptr<AddressRequestCallback> callbacks[count];
+
+    ZoneEntry zone(EXAMPLE_CO_UK, RRClass::IN().getCode());
+    EXPECT_FALSE(zone.hasCallbacks());
+    for (size_t i(0); i < count; ++ i) {
+        zone.addCallback(callbacks[i] = shared_ptr<AddressRequestCallback>(
+            new Callback));
+    }
+    for (size_t i(0); i < count; ++ i) {
+        ASSERT_TRUE(zone.hasCallbacks());
+        EXPECT_EQ(callbacks[i], zone.popCallback());
+    }
+    EXPECT_FALSE(zone.hasCallbacks());
 }
 
 }   // namespace nsas
