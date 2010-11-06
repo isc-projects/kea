@@ -26,12 +26,15 @@
 
 #include <string.h>
 #include <vector>
+#include <cassert>
 
 #include "nameserver_address_store.h"
 #include "nsas_entry_compare.h"
 #include "nameserver_entry.h"
 #include "zone_entry.h"
 #include "nsas_test.h"
+
+using namespace isc::dns;
 
 namespace isc {
 namespace nsas {
@@ -47,8 +50,9 @@ public:
     ///
     /// \param hashsize Size of the zone hash table
     /// \param lrusize Size of the zone hash table
-    DerivedNsas(uint32_t hashsize, uint32_t lrusize) :
-        NameserverAddressStore(hashsize, lrusize)
+    DerivedNsas(ResolverInterface& resolver, uint32_t hashsize,
+        uint32_t lrusize) :
+        NameserverAddressStore(resolver, hashsize, lrusize)
     {}
 
     /// \brief Virtual Destructor
@@ -94,6 +98,13 @@ protected:
     // Vector of pointers to nameserver and zone entries.
     std::vector<boost::shared_ptr<NameserverEntry> > nameservers_;
     std::vector<boost::shared_ptr<ZoneEntry> >       zones_;
+
+    class TestResolver : public ResolverInterface {
+        public:
+            virtual void resolve(QuestionPtr, CallbackPtr) {
+                assert(0); // TODO Implement
+            }
+    } defaultTestResolver;
 };
 
 
@@ -105,7 +116,7 @@ TEST_F(NameserverAddressStoreTest, ZoneDeletionCheck) {
 
     // Create a NSAS with a hash size of three and a LRU size of 9 (both zone and
     // nameserver tables).
-    DerivedNsas nsas(2, 2);
+    DerivedNsas nsas(defaultTestResolver, 2, 2);
 
     // Add six entries to the tables.  After addition the reference count of each element
     // should be 3 - one for the entry in the zones_ vector, and one each for the entries
@@ -135,7 +146,7 @@ TEST_F(NameserverAddressStoreTest, NameserverDeletionCheck) {
 
     // Create a NSAS with a hash size of three and a LRU size of 9 (both zone and
     // nameserver tables).
-    DerivedNsas nsas(2, 2);
+    DerivedNsas nsas(defaultTestResolver, 2, 2);
 
     // Add six entries to the tables.  After addition the reference count of each element
     // should be 3 - one for the entry in the nameservers_ vector, and one each for the entries

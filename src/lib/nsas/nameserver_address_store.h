@@ -27,6 +27,7 @@
 #include "nameserver_entry.h"
 #include "lru_list.h"
 #include "zone_entry.h"
+#include "resolver_interface.h"
 
 namespace isc {
 namespace nsas {
@@ -46,15 +47,17 @@ public:
     /// The constructor sizes all the tables.  As there are various
     /// relationships between the table sizes, and as some values are best as
     /// prime numbers, the table sizes are determined by compile-time values.
-    /// 
+    ///
+    /// \param resolver Which resolver object (or resolver-like, in case of
+    /// tests) should it use to ask questions.
     /// \param zonehashsize Size of the zone hash table.  The default value of
     /// 1009 is the first prime number above 1000.
     /// \param nshash size Size of the nameserver hash table.  The default
     /// value of 2003 is the first prime number over 2000, and by implication,
     /// there is an assumption that there will be more nameservers than zones
     /// in the store.
-    NameserverAddressStore(uint32_t zonehashsize = 1009,
-        uint32_t nshashsize = 3001);
+    NameserverAddressStore(ResolverInterface& resolver,
+        uint32_t zonehashsize = 1009, uint32_t nshashsize = 3001);
 
     /// \brief Destructor
     ///
@@ -99,6 +102,8 @@ protected:
     LruList<ZoneEntry>          zone_lru_;
     LruList<NameserverEntry>    nameserver_lru_;
     //}@
+private:
+    ResolverInterface& resolver_;
 };
 
 } // namespace nsas
