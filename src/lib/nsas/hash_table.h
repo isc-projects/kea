@@ -24,7 +24,7 @@
 #include <boost/interprocess/sync/interprocess_upgradable_mutex.hpp>
 #include <list>
 
-#include "config.h"
+#include <config.h>
 
 #include "hash.h"
 #include "hash_key.h"

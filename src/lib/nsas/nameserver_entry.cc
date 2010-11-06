@@ -22,12 +22,12 @@
 #include <ctype.h>
 #include <strings.h>
 
-#include "config.h"
+#include <config.h>
 
-#include "exceptions/exceptions.h"
-#include "name.h"
-#include "rrclass.h"
-#include "rrttl.h"
+#include <exceptions/exceptions.h>
+#include <dns/name.h>
+#include <dns/rrclass.h>
+#include <dns/rrttl.h>
 
 #include "address_entry.h"
 #include "nameserver_entry.h"

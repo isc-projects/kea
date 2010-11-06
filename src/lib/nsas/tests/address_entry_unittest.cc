@@ -24,8 +24,8 @@
 #include <stdint.h>
 
 
-#include "asiolink.h"
-#include "address_entry.h"
+#include "../asiolink.h"
+#include "../address_entry.h"
 
 static std::string V4A_TEXT("1.2.3.4");
 static std::string V4B_TEXT("5.6.7.8");

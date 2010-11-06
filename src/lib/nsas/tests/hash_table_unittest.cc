@@ -21,10 +21,10 @@
 #include <string.h>
 #include <iostream>
 
-#include "hash_table.h"
-#include "hash_key.h"
+#include "../hash_table.h"
+#include "../hash_key.h"
 
-#include "nsas_entry_compare.h"
+#include "../nsas_entry_compare.h"
 #include "nsas_test.h"
 
 using namespace std;

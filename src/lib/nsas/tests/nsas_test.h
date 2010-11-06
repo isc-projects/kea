@@ -24,13 +24,13 @@
 
 #include <string>
 
-#include "config.h"
+#include <config.h>
 
-#include "buffer.h"
-#include "rdata.h"
-#include "rrtype.h"
-#include "messagerenderer.h"
-#include "nsas_entry.h"
+#include <dns/buffer.h>
+#include <dns/rdata.h>
+#include <dns/rrtype.h>
+#include <dns/messagerenderer.h>
+#include "../nsas_entry.h"
 
 using namespace isc::dns::rdata;
 using namespace isc::dns;

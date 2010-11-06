@@ -21,8 +21,8 @@
 #include <gtest/gtest.h>
 #include <boost/lexical_cast.hpp>
 
-#include "hash_key.h"
-#include "nsas_entry_compare.h"
+#include "../hash_key.h"
+#include "../nsas_entry_compare.h"
 #include "nsas_test.h"
 
 using namespace std;

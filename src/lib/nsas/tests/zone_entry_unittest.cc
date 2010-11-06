@@ -17,10 +17,10 @@
 #include <gtest/gtest.h>
 #include <boost/shared_ptr.hpp>
 
-#include "rrclass.h"
+#include <dns/rrclass.h>
 
-#include "asiolink.h"
-#include "zone_entry.h"
+#include "../asiolink.h"
+#include "../zone_entry.h"
 #include "../address_request_callback.h"
 
 #include "nsas_test.h"

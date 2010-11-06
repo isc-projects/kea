@@ -21,15 +21,15 @@
 #include <boost/foreach.hpp>
 #include <gtest/gtest.h>
 
-#include "rdata.h"
-#include "rrset.h"
-#include "rrclass.h"
-#include "rrttl.h"
-#include "name.h"
+#include <dns/rdata.h>
+#include <dns/rrset.h>
+#include <dns/rrclass.h>
+#include <dns/rrttl.h>
+#include <dns/name.h>
 
-#include "asiolink.h"
-#include "address_entry.h"
-#include "nameserver_entry.h"
+#include "../asiolink.h"
+#include "../address_entry.h"
+#include "../nameserver_entry.h"
 
 #include "nsas_test.h"
 

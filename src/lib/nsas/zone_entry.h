@@ -23,7 +23,7 @@
 #include <boost/thread.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include "rrset.h"
+#include <dns/rrset.h>
 
 #include "hash_key.h"
 #include "nsas_entry.h"

@@ -14,9 +14,9 @@
 
 // $Id$
 
-#include <string.h>
+#include <cstring>
 
-#include "config.h"
+#include <config.h>
 #include "hash_key.h"
 
 namespace isc {
