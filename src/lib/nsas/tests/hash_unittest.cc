@@ -21,7 +21,7 @@
 #include <gtest/gtest.h>
 #include <boost/lexical_cast.hpp>
 
-#include "hash.h"
+#include "../hash.h"
 
 #include "nsas_test.h"
 

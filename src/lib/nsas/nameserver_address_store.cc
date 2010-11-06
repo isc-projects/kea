@@ -16,7 +16,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "config.h"
+#include <config.h>
 
 #include "hash_deleter.h"
 #include "nsas_entry_compare.h"

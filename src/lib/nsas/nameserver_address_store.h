@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 
-#include "rrset.h"
+#include <dns/rrset.h>
 
 #include "address_request_callback.h"
 #include "hash_table.h"

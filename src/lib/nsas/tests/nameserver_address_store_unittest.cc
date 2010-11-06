@@ -32,10 +32,10 @@
 #include <vector>
 #include <cassert>
 
-#include "nameserver_address_store.h"
-#include "nsas_entry_compare.h"
-#include "nameserver_entry.h"
-#include "zone_entry.h"
+#include "../nameserver_address_store.h"
+#include "../nsas_entry_compare.h"
+#include "../nameserver_entry.h"
+#include "../zone_entry.h"
 #include "nsas_test.h"
 
 using namespace isc::dns;

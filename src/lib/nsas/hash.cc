@@ -60,7 +60,7 @@ if advised of the possibility of such damage.
 #include <cassert>
 #include <string>
 
-#include "config.h"
+#include <config.h>
 
 #include "hash.h"
 

@@ -16,13 +16,13 @@
 
 #include <gtest/gtest.h>
 
-#include "name.h"
-#include "nameserver_address.h"
-#include "rdata.h"
-#include "rrclass.h"
-#include "rrset.h"
-#include "rrttl.h"
+#include <dns/name.h>
+#include <dns/rdata.h>
+#include <dns/rrclass.h>
+#include <dns/rrset.h>
+#include <dns/rrttl.h>
 
+#include "../nameserver_address.h"
 #include "nsas_test.h"
 
 namespace isc {

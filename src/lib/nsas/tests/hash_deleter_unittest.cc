@@ -21,14 +21,14 @@
 #include <gtest/gtest.h>
 #include <boost/lexical_cast.hpp>
 
-#include "nsas_entry.h"
-#include "hash_table.h"
-#include "hash_key.h"
-#include "lru_list.h"
-#include "hash_deleter.h"
+#include "../nsas_entry.h"
+#include "../hash_table.h"
+#include "../hash_key.h"
+#include "../lru_list.h"
+#include "../hash_deleter.h"
 
 #include "nsas_test.h"
-#include "nsas_entry_compare.h"
+#include "../nsas_entry_compare.h"
 
 using namespace std;
 

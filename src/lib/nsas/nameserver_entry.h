@@ -21,13 +21,14 @@
 #include <vector>
 #include <boost/thread.hpp>
 
+#include <exceptions/exceptions.h>
+#include <dns/rrset.h>
+
 #include "address_entry.h"
 #include "asiolink.h"
-#include "exceptions/exceptions.h"
 #include "nsas_entry.h"
 #include "hash_key.h"
 #include "lru_list.h"
-#include "rrset.h"
 
 namespace isc {
 namespace nsas {

@@ -19,7 +19,7 @@
 
 #include <stdint.h>
 #include <string>
-#include "config.h"
+#include <config.h>
 
 namespace isc {
 namespace nsas {

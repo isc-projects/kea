@@ -21,7 +21,7 @@
 #include <gtest/gtest.h>
 #include <boost/lexical_cast.hpp>
 
-#include "hash_key.h"
+#include "../hash_key.h"
 
 using namespace std;
 

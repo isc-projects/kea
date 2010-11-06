@@ -22,8 +22,8 @@
 #include <gtest/gtest.h>
 #include <boost/lexical_cast.hpp>
 
-#include "nsas_entry.h"
-#include "lru_list.h"
+#include "../nsas_entry.h"
+#include "../lru_list.h"
 
 #include "nsas_test.h"
 
