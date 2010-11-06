@@ -32,6 +32,32 @@
 namespace isc {
 namespace nsas {
 
+/**
+ * \short Invalid referral information passed.
+ *
+ * This is thrown if the referral passed to NameserverAddressStore::lookup is
+ * wrong. Has subexceptions for specific conditions.
+ */
+struct InvalidReferral : public isc::BadValue {
+    InvalidReferral(const char *file, size_t line, const char *what) :
+        BadValue(file, line, what)
+    { }
+};
+
+/// \short The referral is not for this zone.
+struct InconsistentZone : public InvalidReferral {
+    InconsistentZone(const char *file, size_t line, const char *what) :
+        InvalidReferral(file, line, what)
+    { }
+};
+
+/// \short The authority zone contains something else than NS
+struct NotNS : public InvalidReferral {
+    NotNS(const char *file, size_t line, const char *what) :
+        InvalidReferral(file, line, what)
+    { }
+};
+
 /// \brief Nameserver Address Store
 ///
 /// This class implements the bare bones of the nameserver address store - the
@@ -104,6 +130,17 @@ protected:
     //}@
 private:
     ResolverInterface& resolver_;
+    /**
+     * \short Find if any callbacks may be called.
+     *
+     * This is called when new callback or new data arrive to a zone. In both
+     * cases this may trigger executing some of the callbacks or additional
+     * lookups.
+     * \param zone Which zone to process
+     * \todo Should this be part of the zone entry possibly?
+     * \todo Pass some of the referral stuff there?
+     */
+    void processZone(boost::shared_ptr<ZoneEntry> zone);
 };
 
 } // namespace nsas

@@ -164,6 +164,10 @@ protected:
                     asiolink::IOAddress("0.0.0.0")));
             }
     };
+
+    boost::shared_ptr<AddressRequestCallback> getCallback() {
+        return (boost::shared_ptr<AddressRequestCallback>(new NSASCallback));
+    }
 };
 
 vector<NameserverAddressStoreTest::NSASCallback::Result>
@@ -238,24 +242,21 @@ TEST_F(NameserverAddressStoreTest, emptyLookup) {
     DerivedNsas nsas(defaultTestResolver, 10, 10);
     // Ask it a question
     nsas.lookup("example.net.", RRClass::IN().getCode(), *authority_,
-        vector<AbstractRRset>(), boost::shared_ptr<AddressRequestCallback>(
-        new NSASCallback));
+        vector<AbstractRRset>(), getCallback());
     // It should ask for IP addresses for example.com.
     ASSERT_EQ(2, defaultTestResolver.requests.size());
     asksIPs(Name("example.com."), 0, 1);
 
     // Ask another question for the same zone
     nsas.lookup("example.net.", RRClass::IN().getCode(), *authority_,
-        vector<AbstractRRset>(), boost::shared_ptr<AddressRequestCallback>(
-        new NSASCallback));
+        vector<AbstractRRset>(), getCallback());
     // It should ask no more questions now
     EXPECT_EQ(2, defaultTestResolver.requests.size());
 
     // Ask another question with different zone but the same nameserver
     authority_->setName(Name("example.com."));
     nsas.lookup("example.com.", RRClass::IN().getCode(), *authority_,
-        vector<AbstractRRset>(), boost::shared_ptr<AddressRequestCallback>(
-        new NSASCallback));
+        vector<AbstractRRset>(), getCallback());
     // It still should ask nothing
     EXPECT_EQ(2, defaultTestResolver.requests.size());
 
@@ -274,6 +275,28 @@ TEST_F(NameserverAddressStoreTest, emptyLookup) {
         EXPECT_TRUE(result.first);
         EXPECT_EQ("192.0.2.1", result.second.toText());
     }
+}
+
+/// \short Test invalid authority section.
+TEST_F(NameserverAddressStoreTest, invalidAuthority) {
+    DerivedNsas nsas(defaultTestResolver, 2, 2);
+    EXPECT_THROW(nsas.lookup("example.net.", RRClass::CH().getCode(),
+        *authority_, vector<AbstractRRset>(), getCallback()),
+        InconsistentZone);
+    EXPECT_EQ(0, defaultTestResolver.requests.size());
+    EXPECT_EQ(0, NSASCallback::results.size());
+    EXPECT_THROW(nsas.lookup("example.com.", RRClass::IN().getCode(),
+        *authority_, vector<AbstractRRset>(), getCallback()),
+        InconsistentZone);
+    EXPECT_EQ(0, defaultTestResolver.requests.size());
+    EXPECT_EQ(0, NSASCallback::results.size());
+    BasicRRset aAuthority(Name("example.net."), RRClass::IN(), RRType::A(),
+            RRTTL(128));
+    EXPECT_THROW(nsas.lookup("example.net.", RRClass::IN().getCode(),
+        aAuthority, vector<AbstractRRset>(),
+        getCallback()), NotNS);
+    EXPECT_EQ(0, defaultTestResolver.requests.size());
+    EXPECT_EQ(0, NSASCallback::results.size());
 }
 
 } // namespace nsas
