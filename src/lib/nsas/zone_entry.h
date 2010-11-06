@@ -19,6 +19,7 @@
 
 #include <string>
 #include <vector>
+#include <list>
 #include <boost/thread.hpp>
 #include <boost/shared_ptr.hpp>
 
@@ -32,6 +33,7 @@ namespace isc {
 namespace nsas {
 
 class NameserverEntry;
+class AddressRequestCallback;
 
 /// \brief Zone Entry
 ///
@@ -80,17 +82,20 @@ public:
         return HashKey(name_, classCode_);
     }
 
-    /// \brief Lookup Address
-    ///
-    /// Returns the address with the lowest RTT.
-    //virtual asiolink::IOAddress getAddress() const;
+    /// \short Add another callback here
+    void addCallback(boost::shared_ptr<AddressRequestCallback> callback);
+    /// \short Is there at last one callback waiting?
+    bool hasCallbacks() const;
+    /// \short Remove a callback from queue and return it
+    boost::shared_ptr<AddressRequestCallback> popCallback();
 
 private:
-    boost::mutex    mutex_;     ///< Mutex protecting this zone entry
+    mutable boost::mutex    mutex_;     ///< Mutex protecting this zone entry
     std::string     name_;      ///< Canonical zone name
     uint16_t        classCode_; ///< Class code
     std::vector<boost::shared_ptr<NameserverEntry> > nameservers_; ///< Nameservers
     time_t          expiry_;    ///< Expiry time of this entry
+    std::list<boost::shared_ptr<AddressRequestCallback> > callbacks_;
 };
 
 } // namespace nsas
