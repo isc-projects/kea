@@ -36,13 +36,14 @@ namespace nsas {
 // The LRU lists are set equal to three times the size of the respective
 // hash table, on the assumption that three elements is the longest linear
 // search we want to do when looking up names in the hash table.
-NameserverAddressStore::NameserverAddressStore(uint32_t zonehashsize,
-    uint32_t nshashsize) :
+NameserverAddressStore::NameserverAddressStore(ResolverInterface& resolver,
+    uint32_t zonehashsize, uint32_t nshashsize) :
     zone_hash_(new NsasEntryCompare<ZoneEntry>, zonehashsize),
     nameserver_hash_(new NsasEntryCompare<NameserverEntry>, nshashsize),
     zone_lru_((3 * zonehashsize), new HashDeleter<ZoneEntry>(zone_hash_)),
     nameserver_lru_((3 * nshashsize), new HashDeleter<NameserverEntry>(
-        nameserver_hash_))
+        nameserver_hash_)),
+    resolver_(resolver)
 {
 }
 
