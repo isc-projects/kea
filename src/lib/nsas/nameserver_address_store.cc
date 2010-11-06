@@ -47,12 +47,60 @@ NameserverAddressStore::NameserverAddressStore(ResolverInterface& resolver,
 {
 }
 
+namespace {
+
+// Often used types
+typedef shared_ptr<ZoneEntry> ZonePtr;
+typedef shared_ptr<NameserverEntry> NameserverPtr;
+typedef shared_ptr<AddressRequestCallback> CallbackPtr;
+
+// One function to call new on both ZoneEntry and NameserverEntry
+template<class T>
+shared_ptr<T>
+newT(const std::string& zone, uint16_t class_code) {
+    return (shared_ptr<T>(new T(zone, class_code)));
+}
+
+}
+
 void
-NameserverAddressStore::lookup(const std::string& , uint16_t ,
-    const AbstractRRset& , const vector<AbstractRRset>& ,
-    shared_ptr<AddressRequestCallback> )
+NameserverAddressStore::lookup(const std::string& zone, uint16_t class_code,
+    const AbstractRRset& authority, const vector<AbstractRRset>& ,
+    CallbackPtr callback)
 {
-    // TODO Implement
+    // Try to look up the entry
+    pair<bool, ZonePtr> zone_lookup(
+        zone_hash_.getOrAdd(HashKey(zone, class_code),
+        bind(newT<ZoneEntry>, zone, class_code)));
+    ZonePtr zone_ptr(zone_lookup.second);
+    if (zone_lookup.first) { // New value
+        zone_lru_.add(zone_ptr);
+        // Sanitize the authority section and put the data there
+        if (authority.getClass().getCode() != class_code) {
+            isc_throw(InconsistentZone,
+                "Authority section is for different class, expected: " <<
+                RRClass(class_code).toText() << ", got: " <<
+                authority.getClass().toText());
+        }
+        if (authority.getName() != Name(zone)) {
+            isc_throw(InconsistentZone,
+                "Authority section is for different zone, expected: " <<
+                zone << ", got: " << authority.getName().toText());
+        }
+        if (authority.getType() != RRType::NS()) {
+            isc_throw(NotNS, "Authority section with non-NS RR type: " <<
+                authority.getType().toText());
+        }
+    } else { // Was already here
+        zone_lru_.touch(zone_ptr);
+        // TODO Do we update the TTL and nameservers here?
+    }
+    zone_ptr->addCallback(callback);
+    processZone(zone_ptr);
+}
+
+void NameserverAddressStore::processZone(ZonePtr) {
+
 }
 
 } // namespace nsas
