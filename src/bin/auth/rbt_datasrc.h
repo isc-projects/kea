@@ -51,24 +51,24 @@ class RBNode {
         const Name &getName() const {return name_;}
 
         //next domain name which is bigger than current one
-        RBNode * successor();
+        RBNode* successor();
 
     private:
-        RBNode(const Name &name, RRsetListPtr rrsets = RRsetListPtr(), RBNode* nullnode = NULL);
+        RBNode(const Name& name, RRsetListPtr rrsets = RRsetListPtr(), RBNode* nullnode = NULL);
         ~RBNode(); //the class isn't left to be inherited
-        void cloneDNSData(RBNode &node);
-        void setDownTree(RBTree *down);
+        void cloneDNSData(RBNode& node);
+        void setDownTree(RBTree* down);
 
         /// data to maintain the rbtree balance
-        RBNode *  parent_;
-        RBNode *  left_;
-        RBNode *  right_;
+        RBNode*  parent_;
+        RBNode*  left_;
+        RBNode*  right_;
         int       color_;
 
         /// data to carry dns info
         Name      name_;
         RRsetListPtr rrsets_;
-        RBTree *  down_;
+        RBTree*  down_;
         bool      is_delegate_;
         bool      is_nonterminal_;
 };
@@ -88,7 +88,7 @@ class RBTree {
 
         /// if find result isn't NOTFOUND, the node will point to the result
         /// with return value equal to NOTFOUND, the value of node is undetermined
-        FindResult find(const Name &name, RBNode **node)const;
+        FindResult find(const Name& name, RBNode** node)const;
 
         /// get all the node count recursively, including the sub trees
         /// note that the return value isn't same with valid domain names in the tree
@@ -101,28 +101,28 @@ class RBTree {
         /// if the name exists, return value will be one, and inserted_node will point to
         /// the existed node, otherwise return value is zero, and inserted_node points to
         /// new created node
-        int insert(const Name &name, RBNode **inserted_node);
+        int insert(const Name& name, RBNode** inserted_node);
 
         /// if the node doesn't exist, return value will be one otherwise zero
-        int erase(const Name &name);
+        int erase(const Name& name);
 
     private:
         void deleteRebalance(RBNode* node);
         void insertRebalance(RBNode* node);
-        RBNode * rightRotate(RBNode* p);
-        RBNode * leftRotate(RBNode* p);
-        void printTreeHelper(RBNode *node, int depth)const;
-        void eraseNode(RBNode *node);
+        RBNode* rightRotate(RBNode* p);
+        RBNode* leftRotate(RBNode* p);
+        void printTreeHelper(RBNode* node, int depth)const;
+        void eraseNode(RBNode* node);
 
         /// recursive find one name in the tree, and return the exact tree has the name
-        FindResult findHelper(const Name &name, RBTree **tree, RBNode **node)const;
-        int getNodeCountHelper(const RBNode *node) const;
+        FindResult findHelper(const Name& name, RBTree** tree, RBNode** node)const;
+        int getNodeCountHelper(const RBNode* node) const;
 
         void setUpNode(RBNode *node);
 
-        RBNode *  root_;
-        RBNode *  NULLNODE;
-        RBNode *  up_;
+        RBNode*  root_;
+        RBNode*  NULLNODE;
+        RBNode*  up_;
         unsigned int node_count_; //current  tree node count exclude the node in down pointing trees
 };
 }
