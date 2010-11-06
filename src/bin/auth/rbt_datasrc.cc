@@ -23,7 +23,7 @@ namespace {
     /// helper function to remove the base domain from super domain
     /// the precondition of this function is thant super_name contains sub_name
     Name operator-(const Name &super_name, const Name &sub_name) {
-        return super_name.split(0, super_name.getLabelCount() - sub_name.getLabelCount());
+        return (super_name.split(0, super_name.getLabelCount() - sub_name.getLabelCount()));
     }
 }
 
@@ -54,7 +54,7 @@ RBNode::successor() {
         current = right_;
         while (current->left_ != current->left_->left_)
             current = current->left_;
-        return current;
+        return (current);
     }
 
     RBNode* s = current->parent_;
@@ -62,7 +62,7 @@ RBNode::successor() {
         current = s;
         s = s->parent_;
     }
-    return s;
+    return (s);
 }
 
 /// no duplication is checked now
@@ -74,7 +74,7 @@ RBNode::addRRset(RRsetPtr rrset) {
         rrsets_.reset(new RRsetList());
     rrsets_->addRRset(rrset);
     is_nonterminal_ = false;
-    return 0;
+    return (0);
 }
 
 void
@@ -131,7 +131,7 @@ RBTree::~RBTree() {
 RBTree::FindResult
 RBTree::find(const Name &name, RBNode **node)const {
     RBTree *tree;
-    return findHelper(name, &tree, node);
+    return (findHelper(name, &tree, node));
 }
 
 
@@ -144,7 +144,7 @@ RBTree::findHelper(const Name &name, RBTree **tree, RBNode **ret)const {
         if (relation == NameComparisonResult::EQUAL) {
             *tree = (RBTree *)this;
             *ret = node;
-            return RBTree::EXACTMATCH;
+            return (RBTree::EXACTMATCH);
         }
         else {
             int common_label_count = compare_result.getCommonLabels();
@@ -155,7 +155,7 @@ RBTree::findHelper(const Name &name, RBTree **tree, RBNode **ret)const {
                 if (node->isDelegate()) {
                     *tree = (RBTree *)this;
                     *ret = node;
-                    return RBTree::FINDREFERRAL;
+                    return (RBTree::FINDREFERRAL);
                 }
                 else if (node->down_)
                     /// the node all save the relative name, so we need to remove the suffix
