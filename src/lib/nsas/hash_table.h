@@ -212,11 +212,11 @@ public:
         scoped_lock lock(table_[index].mutex_);
         boost::shared_ptr<T> result(getInternal(key, index));
         if (result) {
-            return (std::pair<bool, boost::shared_ptr<T> >(true, result));
+            return (std::pair<bool, boost::shared_ptr<T> >(false, result));
         } else {
             result = generator();
             addInternal(result, key, index);
-            return (std::pair<bool, boost::shared_ptr<T> >(false, result));
+            return (std::pair<bool, boost::shared_ptr<T> >(true, result));
         }
     }
 

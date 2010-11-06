@@ -189,12 +189,12 @@ TEST_F(HashTableTest, GetOrAddTest) {
     // Check it looks it up
     std::pair<bool, shared_ptr<TestEntry> > result = table_.getOrAdd(
         dummy1_->hashKey(), boost::bind(pass, dummy3_));
-    EXPECT_TRUE(result.first);
+    EXPECT_FALSE(result.first);
     EXPECT_EQ(dummy1_.get(), result.second.get());
 
     // Check it says it adds the value
     result = table_.getOrAdd(dummy3_->hashKey(), boost::bind(pass, dummy3_));
-    EXPECT_FALSE(result.first);
+    EXPECT_TRUE(result.first);
     EXPECT_EQ(dummy3_.get(), result.second.get());
 
     // Check it really did add it
