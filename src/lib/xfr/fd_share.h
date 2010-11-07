@@ -20,12 +20,16 @@
 namespace isc {
 namespace xfr {
 
+/// Failed to receive xfr socket descriptor "fd" on unix domain socket 'sock'
+const int XFR_FD_RECEIVE_FAIL = -2;
+
 // Receive socket descriptor on unix domain socket 'sock'.
 // Returned value is the socket descriptor received.
+// Returned XFR_FD_RECEIVE_FAIL if failed to receive xfr socket descriptor
 // Errors are indicated by a return value of -1.
 int recv_fd(const int sock);
 
-// Send socket descriptor "fd" to server over unix domain socket 'sock', 
+// Send socket descriptor "fd" to server over unix domain socket 'sock',
 // the connection from socket 'sock' to unix domain server should be established first.
 // Errors are indicated by a return value of -1.
 int send_fd(const int sock, const int fd);
@@ -35,6 +39,6 @@ int send_fd(const int sock, const int fd);
 
 #endif
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:

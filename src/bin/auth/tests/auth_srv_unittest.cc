@@ -489,7 +489,7 @@ TEST_F(AuthSrvTest, AXFRSuccess) {
     // so we shouldn't have to respond.
     EXPECT_FALSE(server.processMessage(*io_message, parse_message,
                                        response_renderer));
-    EXPECT_FALSE(xfrout.isConnected());
+    EXPECT_TRUE(xfrout.isConnected());
 }
 
 TEST_F(AuthSrvTest, AXFRConnectFail) {
@@ -501,8 +501,6 @@ TEST_F(AuthSrvTest, AXFRConnectFail) {
                                       response_renderer));
     headerCheck(parse_message, default_qid, Rcode::SERVFAIL(),
                 opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
-    // For a shot term workaround with xfrout we currently close the connection
-    // for each AXFR attempt
     EXPECT_FALSE(xfrout.isConnected());
 }
 
@@ -512,7 +510,7 @@ TEST_F(AuthSrvTest, AXFRSendFail) {
     createRequestPacket(opcode, Name("example.com"), RRClass::IN(),
                         RRType::AXFR(), IPPROTO_TCP);
     server.processMessage(*io_message, parse_message, response_renderer);
-    EXPECT_FALSE(xfrout.isConnected()); // see above
+    EXPECT_TRUE(xfrout.isConnected());
 
     xfrout.disableSend();
     parse_message.clear(Message::PARSE);

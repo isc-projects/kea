@@ -77,7 +77,7 @@ public:
                             MessageRenderer& response_renderer);
     bool processAxfrQuery(const IOMessage& io_message, Message& message,
                             MessageRenderer& response_renderer);
-    bool processNotify(const IOMessage& io_message, Message& message, 
+    bool processNotify(const IOMessage& io_message, Message& message,
                             MessageRenderer& response_renderer);
     std::string db_file_;
     ModuleCCSession* config_session_;
@@ -307,7 +307,7 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
     ConstEDNSPtr remote_edns = message.getEDNS();
     const bool dnssec_ok = remote_edns && remote_edns->getDNSSECAwareness();
     const uint16_t remote_bufsize = remote_edns ? remote_edns->getUDPSize() :
-        Message::DEFAULT_MAX_UDPSIZE; 
+        Message::DEFAULT_MAX_UDPSIZE;
 
     message.makeResponse();
     message.setHeaderFlag(Message::HEADERFLAG_AA);
@@ -360,8 +360,10 @@ AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, Message& message,
     }
 
     try {
-        xfrout_client_.connect();
-        xfrout_connected_ = true;
+        if (!xfrout_connected_) {
+            xfrout_client_.connect();
+            xfrout_connected_ = true;
+        }
         xfrout_client_.sendXfroutRequestInfo(
             io_message.getSocket().getNative(),
             io_message.getData(),
@@ -375,7 +377,7 @@ AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, Message& message,
             xfrout_client_.disconnect();
             xfrout_connected_ = false;
         }
-        
+
         if (verbose_mode_) {
             cerr << "[b10-auth] Error in handling XFR request: " << err.what()
                  << endl;
@@ -385,15 +387,12 @@ AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, Message& message,
         return (true);
     }
 
-    xfrout_client_.disconnect();
-    xfrout_connected_ = false;
-
     return (false);
 }
 
 bool
-AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message, 
-                           MessageRenderer& response_renderer) 
+AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
+                           MessageRenderer& response_renderer)
 {
     // The incoming notify must contain exactly one question for SOA of the
     // zone name.
@@ -435,7 +434,7 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
         }
         return (false);
     }
-    
+
     const string remote_ip_address =
         io_message.getRemoteEndpoint().getAddress().toText();
     static const string command_template_start =
@@ -446,7 +445,7 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
 
     try {
         ConstElementPtr notify_command = Element::fromJSON(
-                command_template_start + question->getName().toText() + 
+                command_template_start + question->getName().toText() +
                 command_template_master + remote_ip_address +
                 command_template_rrclass + question->getClass().toText() +
                 command_template_end);
@@ -460,7 +459,7 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
         if (rcode != 0) {
             if (verbose_mode_) {
                 cerr << "[b10-auth] failed to notify Zonemgr: "
-                     << parsed_answer->str() << endl; 
+                     << parsed_answer->str() << endl;
             }
             return (false);
         }
