@@ -1,3 +1,9 @@
+  116.	[bug]		jerry
+	src/bin/xfrout: Xfrout and Auth will communicate by long tcp
+	connection, Auth needs to make a new connection only on the first
+	time or if an error occurred.
+	(Trac #299, svn r3482)
+
   115.	[func]*		jinmei
 	src/lib/dns: Changed DNS message flags and section names from
 	separate classes to simpler enums, considering the balance between
@@ -10,7 +16,7 @@
 	(Trac #365, svn r3383)
 
   113.	[func]*		zhanglikun
-	Folder name 'utils'(the folder in /src/lib/python/isc/) has been 
+	Folder name 'utils'(the folder in /src/lib/python/isc/) has been
 	renamed	to 'util'. Programs that used 'import isc.utils.process'
 	now need to use 'import isc.util.process'. The folder
 	/src/lib/python/isc/Util is removed since it isn't used by any

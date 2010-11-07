@@ -47,22 +47,29 @@ class MySocket():
         result = self.sendqueue[:size]
         self.sendqueue = self.sendqueue[size:]
         return result
-    
+
     def read_msg(self):
         sent_data = self.readsent()
         get_msg = Message(Message.PARSE)
         get_msg.from_wire(bytes(sent_data[2:]))
         return get_msg
-    
+
     def clear_send(self):
         del self.sendqueue[:]
 
 # We subclass the Session class we're testing here, only
-# to override the __init__() method, which wants a socket,
+# to override the handle() and _send_data() method
 class MyXfroutSession(XfroutSession):
     def handle(self):
         pass
-    
+
+    def _send_data(self, sock, data):
+        size = len(data)
+        total_count = 0
+        while total_count < size:
+            count = sock.send(data[total_count:])
+            total_count += count
+
 class Dbserver:
     def __init__(self):
         self._shutdown_event = threading.Event()
@@ -80,11 +87,20 @@ class TestXfroutSession(unittest.TestCase):
     def setUp(self):
         request = MySocket(socket.AF_INET,socket.SOCK_STREAM)
         self.log = isc.log.NSLogger('xfrout', '',  severity = 'critical', log_to_console = False )
-        self.xfrsess = MyXfroutSession(request, None, None, self.log)
+        (self.write_sock, self.read_sock) = socket.socketpair()
+        self.xfrsess = MyXfroutSession(request, None, None, self.log, self.read_sock)
         self.xfrsess.server = Dbserver()
         self.mdata = bytes(b'\xd6=\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\x03com\x00\x00\xfc\x00\x01')
         self.sock = MySocket(socket.AF_INET,socket.SOCK_STREAM)
         self.soa_record = (4, 3, 'example.com.', 'com.example.', 3600, 'SOA', None, 'master.example.com. admin.example.com. 1234 3600 1800 2419200 7200')
+
+    def test_receive_query_message(self):
+        send_msg = b"\xd6=\x00\x00\x00\x01\x00"
+        msg_len = struct.pack('H', socket.htons(len(send_msg)))
+        self.write_sock.send(msg_len)
+        self.write_sock.send(send_msg)
+        recv_msg = self.xfrsess._receive_query_message(self.read_sock)
+        self.assertEqual(recv_msg, send_msg)
 
     def test_parse_query_message(self):
         [get_rcode, get_msg] = self.xfrsess._parse_query_message(self.mdata)
@@ -93,7 +109,7 @@ class TestXfroutSession(unittest.TestCase):
     def test_get_query_zone_name(self):
         msg = self.getmsg()
         self.assertEqual(self.xfrsess._get_query_zone_name(msg), "example.com.")
-  
+
     def test_send_data(self):
         self.xfrsess._send_data(self.sock, self.mdata)
         senddata = self.sock.readsent()
@@ -103,8 +119,8 @@ class TestXfroutSession(unittest.TestCase):
         msg = self.getmsg()
         self.xfrsess._reply_query_with_error_rcode(msg, self.sock, Rcode(3))
         get_msg = self.sock.read_msg()
-        self.assertEqual(get_msg.get_rcode().to_text(), "NXDOMAIN") 
-     
+        self.assertEqual(get_msg.get_rcode().to_text(), "NXDOMAIN")
+
     def test_clear_message(self):
         msg = self.getmsg()
         qid = msg.get_qid()
@@ -118,7 +134,7 @@ class TestXfroutSession(unittest.TestCase):
         self.assertTrue(msg.get_header_flag(Message.HEADERFLAG_AA))
 
     def test_reply_query_with_format_error(self):
-         
+
         msg = self.getmsg()
         self.xfrsess._reply_query_with_format_error(msg, self.sock)
         get_msg = self.sock.read_msg()
@@ -217,7 +233,7 @@ class TestXfroutSession(unittest.TestCase):
         sqlite3_ds.get_zone_soa = zone_soa
         self.assertEqual(self.xfrsess._zone_exist(True), True)
         self.assertEqual(self.xfrsess._zone_exist(False), False)
-    
+
     def test_check_xfrout_available(self):
         def zone_exist(zone):
             return zone
@@ -243,7 +259,7 @@ class TestXfroutSession(unittest.TestCase):
         self.xfrsess.dns_xfrout_start(self.sock, b"\xd6=\x00\x00\x00\x01\x00")
         sent_data = self.sock.readsent()
         self.assertEqual(len(sent_data), 0)
-    
+
     def default(self, param):
         return "example.com"
 
@@ -255,20 +271,20 @@ class TestXfroutSession(unittest.TestCase):
         self.xfrsess.dns_xfrout_start(self.sock, self.mdata)
         get_msg = self.sock.read_msg()
         self.assertEqual(get_msg.get_rcode().to_text(), "NOTAUTH")
-    
+
     def test_dns_xfrout_start_noerror(self):
         self.xfrsess._get_query_zone_name = self.default
         def noerror(form):
-            return Rcode.NOERROR() 
+            return Rcode.NOERROR()
         self.xfrsess._check_xfrout_available = noerror
-        
+
         def myreply(msg, sock, zonename):
             self.sock.send(b"success")
-        
+
         self.xfrsess._reply_xfrout_query = myreply
         self.xfrsess.dns_xfrout_start(self.sock, self.mdata)
         self.assertEqual(self.sock.readsent(), b"success")
-    
+
     def test_reply_xfrout_query_noerror(self):
         global sqlite3_ds
         def get_zone_soa(zonename, file):
@@ -292,7 +308,7 @@ class MyCCSession():
             return "initdb.file", False
         else:
             return "unknown", False
-    
+
 
 class MyUnixSockServer(UnixSockServer):
     def __init__(self):
@@ -306,7 +322,7 @@ class MyUnixSockServer(UnixSockServer):
 class TestUnixSockServer(unittest.TestCase):
     def setUp(self):
         self.unix = MyUnixSockServer()
-     
+
     def test_updata_config_data(self):
         self.unix.update_config_data({'transfers_out':10 })
         self.assertEqual(self.unix._max_transfers_out, 10)
@@ -324,7 +340,7 @@ class TestUnixSockServer(unittest.TestCase):
         count = self.unix._transfers_counter
         self.assertEqual(self.unix.increase_transfers_counter(), False)
         self.assertEqual(count, self.unix._transfers_counter)
- 
+
     def test_decrease_transfers_counter(self):
         count = self.unix._transfers_counter
         self.unix.decrease_transfers_counter()
@@ -335,7 +351,7 @@ class TestUnixSockServer(unittest.TestCase):
             os.remove(sock_file)
         except OSError:
             pass
- 
+
     def test_sock_file_in_use_file_exist(self):
         sock_file = 'temp.sock.file'
         self._remove_file(sock_file)

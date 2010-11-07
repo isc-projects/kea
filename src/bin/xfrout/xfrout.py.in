@@ -63,6 +63,7 @@ AUTH_SPECFILE_LOCATION = AUTH_SPECFILE_PATH + os.sep + "auth.spec"
 MAX_TRANSFERS_OUT = 10
 VERBOSE_MODE = False
 
+
 XFROUT_MAX_MESSAGE_SIZE = 65535
 
 def get_rrset_len(rrset):
@@ -73,46 +74,78 @@ def get_rrset_len(rrset):
 
 
 class XfroutSession(BaseRequestHandler):
-    def __init__(self, request, client_address, server, log):
+    def __init__(self, request, client_address, server, log, sock):
         # The initializer for the superclass may call functions
         # that need _log to be set, so we set it first
         self._log = log
+        self._shutdown_sock = sock
         BaseRequestHandler.__init__(self, request, client_address, server)
 
     def handle(self):
-        fd = recv_fd(self.request.fileno())
-        
-        if fd < 0:
-            # This may happen when one xfrout process try to connect to
-            # xfrout unix socket server, to check whether there is another
-            # xfrout running. 
-            self._log.log_message("error", "Failed to receive the file descriptor for XFR connection")
-            return
+        '''Handle a request until shutdown or xfrout client is closed.'''
+        # check self.server._shutdown_event to ensure the real shutdown comes.
+        # Linux could trigger a spurious readable event on the _shutdown_sock 
+        # due to a bug, so we need perform a double check. 
+        while not self.server._shutdown_event.is_set(): # Check if xfrout is shutdown
+            try:
+                (rlist, wlist, xlist) = select.select([self._shutdown_sock, self.request], [], [])
+            except select.error as e:
+                if e.args[0] == errno.EINTR:
+                    (rlist, wlist, xlist) = ([], [], [])
+                    continue
+                else:
+                    self._log.log_message("error", "Error with select(): %s" %e)
+                    break
+            # self.server._shutdown_evnet will be set by now, if it is not a false
+            # alarm
+            if self._shutdown_sock in rlist:
+                continue
 
-        data_len = self.request.recv(2)
+            sock_fd = recv_fd(self.request.fileno())
+
+            if sock_fd < 0:
+                # This may happen when one xfrout process try to connect to
+                # xfrout unix socket server, to check whether there is another
+                # xfrout running.
+                if sock_fd == XFR_FD_RECEIVE_FAIL:
+                    self._log.log_message("error", "Failed to receive the file descriptor for XFR connection")
+                break
+
+            # receive query msg
+            msgdata = self._receive_query_message(self.request)
+            if not msgdata:
+                break
+
+            try:
+                self.dns_xfrout_start(sock_fd, msgdata)
+                #TODO, avoid catching all exceptions
+            except Exception as e:
+                self._log.log_message("error", str(e))
+
+            os.close(sock_fd)
+
+    def _receive_query_message(self, sock):
+        ''' receive query message from sock'''
+        # receive data length
+        data_len = sock.recv(2)
+        if not data_len:
+            return None
         msg_len = struct.unpack('!H', data_len)[0]
-        msgdata = self.request.recv(msg_len)
-        sock = socket.fromfd(fd, socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            self.dns_xfrout_start(sock, msgdata)
-            #TODO, avoid catching all exceptions
-        except Exception as e:
-            self._log.log_message("error", str(e))
+        # receive data
+        recv_size = 0
+        msgdata = b''
+        while recv_size < msg_len:
+            data = sock.recv(msg_len - recv_size)
+            if not data:
+                return None
+            recv_size += len(data)
+            msgdata += data
 
-        try:
-            sock.shutdown(socket.SHUT_RDWR)
-        except socket.error:
-            # Avoid socket error caused by shutting down 
-            # one non-connected socket.
-            pass
-
-        sock.close()
-        os.close(fd)
-        pass
+        return msgdata
 
     def _parse_query_message(self, mdata):
         ''' parse query message to [socket,message]'''
-        #TODO, need to add parseHeader() in case the message header is invalid 
+        #TODO, need to add parseHeader() in case the message header is invalid
         try:
             msg = Message(Message.PARSE)
             Message.from_wire(msg, mdata)
@@ -127,37 +160,37 @@ class XfroutSession(BaseRequestHandler):
         return question.get_name().to_text()
 
 
-    def _send_data(self, sock, data):
+    def _send_data(self, sock_fd, data):
         size = len(data)
         total_count = 0
         while total_count < size:
-            count = sock.send(data[total_count:])
+            count = os.write(sock_fd, data[total_count:])
             total_count += count
 
 
-    def _send_message(self, sock, msg):
+    def _send_message(self, sock_fd, msg):
         render = MessageRenderer()
         render.set_length_limit(XFROUT_MAX_MESSAGE_SIZE)
         msg.to_wire(render)
         header_len = struct.pack('H', socket.htons(render.get_length()))
-        self._send_data(sock, header_len)
-        self._send_data(sock, render.get_data())
+        self._send_data(sock_fd, header_len)
+        self._send_data(sock_fd, render.get_data())
 
 
-    def _reply_query_with_error_rcode(self, msg, sock, rcode_):
+    def _reply_query_with_error_rcode(self, msg, sock_fd, rcode_):
         msg.make_response()
         msg.set_rcode(rcode_)
-        self._send_message(sock, msg)
+        self._send_message(sock_fd, msg)
 
 
-    def _reply_query_with_format_error(self, msg, sock):
+    def _reply_query_with_format_error(self, msg, sock_fd):
         '''query message format isn't legal.'''
         if not msg:
-            return # query message is invalid. send nothing back. 
+            return # query message is invalid. send nothing back.
 
         msg.make_response()
         msg.set_rcode(Rcode.FORMERR())
-        self._send_message(sock, msg)
+        self._send_message(sock_fd, msg)
 
 
     def _zone_is_empty(self, zone):
@@ -167,24 +200,24 @@ class XfroutSession(BaseRequestHandler):
         return True
 
     def _zone_exist(self, zonename):
-        # Find zone in datasource, should this works? maybe should ask 
+        # Find zone in datasource, should this works? maybe should ask
         # config manager.
         soa = sqlite3_ds.get_zone_soa(zonename, self.server.get_db_file())
         if soa:
             return True
         return False
 
-    
+
     def _check_xfrout_available(self, zone_name):
         '''Check if xfr request can be responsed.
            TODO, Get zone's configuration from cfgmgr or some other place
-           eg. check allow_transfer setting, 
+           eg. check allow_transfer setting,
         '''
         if not self._zone_exist(zone_name):
             return Rcode.NOTAUTH()
 
         if self._zone_is_empty(zone_name):
-            return Rcode.SERVFAIL() 
+            return Rcode.SERVFAIL()
 
         #TODO, check allow_transfer
         if not self.server.increase_transfers_counter():
@@ -193,35 +226,35 @@ class XfroutSession(BaseRequestHandler):
         return Rcode.NOERROR()
 
 
-    def dns_xfrout_start(self, sock, msg_query):
+    def dns_xfrout_start(self, sock_fd, msg_query):
         rcode_, msg = self._parse_query_message(msg_query)
         #TODO. create query message and parse header
         if rcode_ != Rcode.NOERROR():
-            return self._reply_query_with_format_error(msg, sock)
+            return self._reply_query_with_format_error(msg, sock_fd)
 
         zone_name = self._get_query_zone_name(msg)
         rcode_ = self._check_xfrout_available(zone_name)
         if rcode_ != Rcode.NOERROR():
             self._log.log_message("info", "transfer of '%s/IN' failed: %s",
                                   zone_name, rcode_.to_text())
-            return self. _reply_query_with_error_rcode(msg, sock, rcode_)
+            return self. _reply_query_with_error_rcode(msg, sock_fd, rcode_)
 
         try:
             self._log.log_message("info", "transfer of '%s/IN': AXFR started" % zone_name)
-            self._reply_xfrout_query(msg, sock, zone_name)
+            self._reply_xfrout_query(msg, sock_fd, zone_name)
             self._log.log_message("info", "transfer of '%s/IN': AXFR end" % zone_name)
         except Exception as err:
             self._log.log_message("error", str(err))
 
         self.server.decrease_transfers_counter()
-        return    
+        return
 
 
     def _clear_message(self, msg):
         qid = msg.get_qid()
         opcode = msg.get_opcode()
         rcode = msg.get_rcode()
-        
+
         msg.clear(Message.RENDER)
         msg.set_qid(qid)
         msg.set_opcode(opcode)
@@ -231,7 +264,7 @@ class XfroutSession(BaseRequestHandler):
         return msg
 
     def _create_rrset_from_db_record(self, record):
-        '''Create one rrset from one record of datasource, if the schema of record is changed, 
+        '''Create one rrset from one record of datasource, if the schema of record is changed,
         This function should be updated first.
         '''
         rrtype_ = RRType(record[5])
@@ -239,8 +272,8 @@ class XfroutSession(BaseRequestHandler):
         rrset_ = RRset(Name(record[2]), RRClass("IN"), rrtype_, RRTTL( int(record[4])))
         rrset_.add_rdata(rdata_)
         return rrset_
-         
-    def _send_message_with_last_soa(self, msg, sock, rrset_soa, message_upper_len):
+
+    def _send_message_with_last_soa(self, msg, sock_fd, rrset_soa, message_upper_len):
         '''Add the SOA record to the end of message. If it can't be
         added, a new message should be created to send out the last soa .
         '''
@@ -249,14 +282,14 @@ class XfroutSession(BaseRequestHandler):
         if message_upper_len + rrset_len < XFROUT_MAX_MESSAGE_SIZE:
             msg.add_rrset(Message.SECTION_ANSWER, rrset_soa)
         else:
-            self._send_message(sock, msg)
+            self._send_message(sock_fd, msg)
             msg = self._clear_message(msg)
             msg.add_rrset(Message.SECTION_ANSWER, rrset_soa)
 
-        self._send_message(sock, msg)
+        self._send_message(sock_fd, msg)
 
 
-    def _reply_xfrout_query(self, msg, sock, zone_name):
+    def _reply_xfrout_query(self, msg, sock_fd, zone_name):
         #TODO, there should be a better way to insert rrset.
         msg.make_response()
         msg.set_header_flag(Message.HEADERFLAG_AA)
@@ -286,12 +319,12 @@ class XfroutSession(BaseRequestHandler):
                 message_upper_len += rrset_len
                 continue
 
-            self._send_message(sock, msg)
+            self._send_message(sock_fd, msg)
             msg = self._clear_message(msg)
             msg.add_rrset(Message.SECTION_ANSWER, rrset_) # Add the rrset to the new message
             message_upper_len = rrset_len
 
-        self._send_message_with_last_soa(msg, sock, rrset_soa, message_upper_len)
+        self._send_message_with_last_soa(msg, sock_fd, rrset_soa, message_upper_len)
 
 class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
     '''The unix domain socket server which accept xfr query sent from auth server.'''
@@ -304,22 +337,23 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
         self._lock = threading.Lock()
         self._transfers_counter = 0
         self._shutdown_event = shutdown_event
+        self._write_sock, self._read_sock = socket.socketpair()
         self._log = log
         self.update_config_data(config_data)
         self._cc = cc
-        
+
     def finish_request(self, request, client_address):
         '''Finish one request by instantiating RequestHandlerClass.'''
-        self.RequestHandlerClass(request, client_address, self, self._log)
+        self.RequestHandlerClass(request, client_address, self, self._log, self._read_sock)
 
     def _remove_unused_sock_file(self, sock_file):
-        '''Try to remove the socket file. If the file is being used 
-        by one running xfrout process, exit from python. 
+        '''Try to remove the socket file. If the file is being used
+        by one running xfrout process, exit from python.
         If it's not a socket file or nobody is listening
         , it will be removed. If it can't be removed, exit from python. '''
         if self._sock_file_in_use(sock_file):
-            sys.stderr.write("[b10-xfrout] Fail to start xfrout process, unix socket" 
-                  " file '%s' is being used by another xfrout process\n" % sock_file)
+            self._log.log_message("error", "Fail to start xfrout process, unix socket file '%s'"
+                                 " is being used by another xfrout process\n" % sock_file)
             sys.exit(0)
         else:
             if not os.path.exists(sock_file):
@@ -328,12 +362,12 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
             try:
                 os.unlink(sock_file)
             except OSError as err:
-                sys.stderr.write('[b10-xfrout] Fail to remove file %s: %s\n' % (sock_file, err))
+                self._log.log_message("error", '[b10-xfrout] Fail to remove file %s: %s\n' % (sock_file, err))
                 sys.exit(0)
-   
+
     def _sock_file_in_use(self, sock_file):
-        '''Check whether the socket file 'sock_file' exists and 
-        is being used by one running xfrout process. If it is, 
+        '''Check whether the socket file 'sock_file' exists and
+        is being used by one running xfrout process. If it is,
         return True, or else return False. '''
         try:
             sock = socket.socket(socket.AF_UNIX)
@@ -341,9 +375,10 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn, ThreadingUnixStreamServer):
         except socket.error as err:
             return False
         else:
-            return True 
+            return True
 
     def shutdown(self):
+        self._write_sock.send(b"shutdown") #terminate the xfrout session thread
         super().shutdown() # call the shutdown() of class socketserver_mixin.NoPollMixIn
         try:
             os.unlink(self._sock_file)
@@ -390,7 +425,7 @@ class XfroutServer:
     def __init__(self):
         self._unix_socket_server = None
         self._log = None
-        self._listen_sock_file = UNIX_SOCKET_FILE 
+        self._listen_sock_file = UNIX_SOCKET_FILE
         self._shutdown_event = threading.Event()
         self._cc = isc.config.ModuleCCSession(SPECFILE_LOCATION, self.config_handler, self.command_handler)
         self._config_data = self._cc.get_full_config()
@@ -404,12 +439,12 @@ class XfroutServer:
 
     def _start_xfr_query_listener(self):
         '''Start a new thread to accept xfr query. '''
-        self._unix_socket_server = UnixSockServer(self._listen_sock_file, XfroutSession, 
+        self._unix_socket_server = UnixSockServer(self._listen_sock_file, XfroutSession,
                                                   self._shutdown_event, self._config_data,
                                                   self._cc, self._log);
         listener = threading.Thread(target=self._unix_socket_server.serve_forever)
         listener.start()
-        
+
     def _start_notifier(self):
         datasrc = self._unix_socket_server.get_db_file()
         self._notifier = notify_out.NotifyOut(datasrc, self._log)
@@ -472,7 +507,7 @@ class XfroutServer:
             else:
                 answer = create_answer(1, "Bad command parameter:" + str(args))
 
-        else: 
+        else:
             answer = create_answer(1, "Unknown command:" + str(cmd))
 
         return answer
@@ -514,7 +549,7 @@ if '__main__' == __name__:
         sys.stderr.write("[b10-xfrout] Error creating xfrout, "
                            "is the command channel daemon running?\n")
     except SessionTimeout as e:
-        sys.stderr.write("[b10-xfrout] Error creating xfrout, " 
+        sys.stderr.write("[b10-xfrout] Error creating xfrout, "
                            "is the configuration manager running?\n")
     except ModuleCCSessionError as e:
         sys.stderr.write("[b10-xfrout] exit xfrout process:%s\n" % str(e))
