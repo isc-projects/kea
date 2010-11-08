@@ -719,7 +719,7 @@ Element::fromWire(const std::string& s) {
 }
 
 ElementPtr
-Element::fromWire(std::stringstream& in, int length) {
+Element::fromWire(std::stringstream& in, int) {
     //
     // Check protocol version
     //

@@ -1247,13 +1247,6 @@ Nsec3Param::getHash(const Name& name) const {
     return (encodeBase32Hex(vector<uint8_t>(digest, digest + SHA1_HASHSIZE)));
 }
 
-//
-// The following methods are effectively empty, and their parameters are
-// unused.  To silence compilers that warn unused function parameters,
-// we specify a (compiler dependent) special keyword when available.
-// It's defined in config.h, and to avoid including this header file from
-// installed files we define the methods here.
-//
 DataSrc::Result
 DataSrc::init(isc::data::ConstElementPtr) {
     return (NOT_IMPLEMENTED);
