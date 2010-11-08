@@ -130,9 +130,10 @@ TEST_F(RBTreeTest, findName) {
 
     // not found
     EXPECT_EQ(RBTree::NOTFOUND, rbtree.find(Name("x"), &rbtnode));
-    EXPECT_EQ(RBTree::NOTFOUND, rbtree.find(Name("m.n"), &rbtnode));
+    EXPECT_EQ(RBTree::NOTFOUND, rbtree.find(Name("m.b"), &rbtnode));
     EXPECT_EQ(RBTree::NOTFOUND, rbtree.find(Name("o.p.w.y.d.e.f"), &rbtnode));
     EXPECT_EQ(RBTree::NOTFOUND, rbtree.find(Name("m.w.y.d.e.f"), &rbtnode));
+    EXPECT_EQ(RBTree::NOTFOUND, rbtree.find(Name("m.e.f"), &rbtnode));
 
     // find referral
     RRsetPtr rrset = RRsetPtr(new RRset(Name("d.e.f"), RRClass::IN(), RRType::NS(),
@@ -171,24 +172,43 @@ TEST_F(RBTreeTest, successor) {
 }
 
 TEST_F(RBTreeTest, eraseName) {
+    EXPECT_EQ(0, rbtree.insert(Name("k"), &rbtnode));
     EXPECT_EQ(0, rbtree.insert(Name("r.d.e.f"), &rbtnode));
     EXPECT_EQ(0, rbtree.insert(Name("s.d.e.f"), &rbtnode));
-    EXPECT_EQ(15, rbtree.getNodeCount());
+    EXPECT_EQ(0, rbtree.insert(Name("y"), &rbtnode));
+    EXPECT_EQ(17, rbtree.getNodeCount());
+    /*
+     *             b
+     *           /   \
+     *          a    d.e.f
+     *              /  |   \
+     *             c   |     k
+     *                 |    / \
+     *               w.y   g.h  y
+     *             /   | \  |
+     *            s    |  z i
+     *           / \   |  |
+     *          r  x   p  j
+     *               /   \
+     *              o     q
+     */
+
+    EXPECT_EQ(0, rbtree.erase(Name("a")));
+    EXPECT_EQ(0, rbtree.insert(Name("a"), &rbtnode));
+    EXPECT_EQ(0, rbtree.erase(Name("k")));
+    EXPECT_EQ(0, rbtree.erase(Name("y")));
 
     // can't delete non terminal
-    int ret = rbtree.erase(Name("d.e.f"));
-    EXPECT_EQ(1, ret);
+    EXPECT_EQ(1, rbtree.erase(Name("d.e.f")));
     EXPECT_EQ(RBTree::EXACTMATCH, rbtree.find(Name("w.y.d.e.f"), &rbtnode));
     RRsetPtr rrset = RRsetPtr(new RRset(Name("w.y.d.e.f"), RRClass::IN(), RRType::A(),
                                        RRTTL(3600)));
     rbtnode->addRRset(rrset);
-    ret = rbtree.erase(Name("p.w.y.d.e.f"));
-    EXPECT_EQ(0, ret);
+    EXPECT_EQ(0, rbtree.erase(Name("p.w.y.d.e.f")));
     EXPECT_EQ(14, rbtree.getNodeCount());
     EXPECT_EQ(RBTree::NOTFOUND, rbtree.find(Name("p.w.y.d.e.f"), &rbtnode));
 
-    ret = rbtree.erase(Name("q.w.y.d.e.f"));
-    EXPECT_EQ(0, ret);
+    EXPECT_EQ(0, rbtree.erase(Name("q.w.y.d.e.f")));
     EXPECT_EQ(13, rbtree.getNodeCount());
     EXPECT_EQ(RBTree::NOTFOUND, rbtree.find(Name("q.w.y.d.e.f"), &rbtnode));
 
@@ -197,83 +217,156 @@ TEST_F(RBTreeTest, eraseName) {
     EXPECT_EQ(RBTree::EXACTMATCH, rbtree.find(Name("o.w.y.d.e.f"), &rbtnode));
     EXPECT_EQ(RBTree::EXACTMATCH, rbtree.find(Name("w.y.d.e.f"), &rbtnode));
     /*
-     *             b
-     *           /   \
-     *          a    d.e.f
-     *               / | \
-     *              c  |  g.h
-     *                 |   |
-     *                w.y  i
+     *               d.e.f
      *              /  |  \
+     *            b    |   g.h
+     *           / \   |    |
+     *          a  c  w.y   i
+     *               / | \
      *             s   |   z
-     *           /  \  |   |
-     *          r    x o   j
+     *            / \  |   |
+     *           r   x o   j
      */
-    // z would be rejoined with d.e.f, since d.e.f has no data associated with the key
-    ret = rbtree.erase(Name("o.w.y.d.e.f"));
-
-    EXPECT_EQ(0, ret);
+    EXPECT_EQ(0, rbtree.erase(Name("o.w.y.d.e.f")));
     EXPECT_EQ(12, rbtree.getNodeCount());
-    ret = rbtree.erase(Name("w.y.d.e.f"));
-    EXPECT_EQ(0, ret);
+    EXPECT_EQ(0, rbtree.erase(Name("w.y.d.e.f")));
     EXPECT_EQ(11, rbtree.getNodeCount());
-    ret = rbtree.erase(Name("x.d.e.f"));
-    EXPECT_EQ(0, ret);
+    EXPECT_EQ(0, rbtree.erase(Name("x.d.e.f")));
     EXPECT_EQ(10, rbtree.getNodeCount());
     /*
-     *             b
-     *           /   \
-     *          a    d.e.f
-     *              /  |  \
-     *             c   s  g.h
-     *                / \  |
-     *               r   z i
-     *                   |
-     *                   j
-     */
-    // erase a non-exist node
-    ret = rbtree.erase(Name("x.d.e.f"));
-    EXPECT_EQ(1, ret);
-
-    // delete all the nodes one by one
-    ret = rbtree.erase(Name("c"));
-    EXPECT_EQ(0, ret);
-    EXPECT_EQ(9, rbtree.getNodeCount());
-    ret = rbtree.erase(Name("g.h"));
-    EXPECT_EQ(1, ret);
-    EXPECT_EQ(9, rbtree.getNodeCount());
-    ret = rbtree.erase(Name("a"));
-    EXPECT_EQ(0, ret);
-    EXPECT_EQ(8, rbtree.getNodeCount());
-    ret = rbtree.erase(Name("b"));
-    EXPECT_EQ(0, ret);
-    EXPECT_EQ(7, rbtree.getNodeCount());
-    ret = rbtree.erase(Name("i.g.h"));
-    EXPECT_EQ(0, ret);
-    EXPECT_EQ(6, rbtree.getNodeCount());
-    /*
      *               d.e.f
-     *                 |  \
-     *                 s  g.h
+     *              /  |  \
+     *            b    |   g.h
+     *           / \   |    |
+     *          a  c   s    i
      *                / \
      *               r   z
      *                   |
      *                   j
      */
-    ret = rbtree.erase(Name("r.d.e.f"));
-    EXPECT_EQ(0, ret);
+    // erase a non-exist node
+    EXPECT_EQ(1, rbtree.erase(Name("x.d.e.f")));
+    // delete all the nodes one by one
+    EXPECT_EQ(0, rbtree.erase(Name("c")));
+    EXPECT_EQ(9, rbtree.getNodeCount());
+    EXPECT_EQ(1, rbtree.erase(Name("g.h")));
+    EXPECT_EQ(9, rbtree.getNodeCount());
+    EXPECT_EQ(0, rbtree.erase(Name("a")));
+    EXPECT_EQ(8, rbtree.getNodeCount());
+    EXPECT_EQ(0, rbtree.erase(Name("b")));
+    EXPECT_EQ(7, rbtree.getNodeCount());
+    EXPECT_EQ(0, rbtree.erase(Name("i.g.h")));
+    EXPECT_EQ(6, rbtree.getNodeCount());
+    /*
+     *               d.e.f
+     *                 |  \
+     *                 |   g.h
+     *                 |
+     *                 s
+     *                / \
+     *               r   z
+     *                   |
+     *                   j
+     */
+    // can't delete non-terminal node
+    EXPECT_EQ(1, rbtree.erase(Name("z.d.e.f")));
+    EXPECT_EQ(6, rbtree.getNodeCount());
+    EXPECT_EQ(0, rbtree.erase(Name("j.z.d.e.f")));
     EXPECT_EQ(5, rbtree.getNodeCount());
-    ret = rbtree.erase(Name("j.z.d.e.f"));
-    EXPECT_EQ(0, ret);
+    EXPECT_EQ(0, rbtree.erase(Name("r.d.e.f")));
     EXPECT_EQ(4, rbtree.getNodeCount());
-    ret = rbtree.erase(Name("z.d.e.f"));
-    EXPECT_EQ(0, ret);
+    // z will rejoin with d.e.f since d.e.f has no data
+    EXPECT_EQ(0, rbtree.erase(Name("s.d.e.f")));
     EXPECT_EQ(2, rbtree.getNodeCount());
-    ret = rbtree.erase(Name("s.d.e.f"));
-    EXPECT_EQ(0, ret);
+    /*
+     *               z.d.e.f
+     *                    \
+     *                     g.h
+     */
+
+    EXPECT_EQ(0, rbtree.erase(Name("g.h")));
     EXPECT_EQ(1, rbtree.getNodeCount());
-    ret = rbtree.erase(Name("g.h"));
-    EXPECT_EQ(0, ret);
+
+    // rebuild rbtree to cover different execution paths 
+    EXPECT_EQ(0, rbtree.insert(Name("a"), &rbtnode));
+    EXPECT_EQ(0, rbtree.insert(Name("g"), &rbtnode));
+    EXPECT_EQ(0, rbtree.insert(Name("b"), &rbtnode));
+    EXPECT_EQ(0, rbtree.insert(Name("d"), &rbtnode));
+    EXPECT_EQ(0, rbtree.insert(Name("c"), &rbtnode));
+    EXPECT_EQ(0, rbtree.insert(Name("e"), &rbtnode));
+    /*
+     *               z.d.e.f
+     *                /   \
+     *               b     g
+     *             /  \
+     *            a    d
+     *               /   \
+     *              c     e
+     */
+    EXPECT_EQ(0, rbtree.erase(Name("g")));
+    EXPECT_EQ(0, rbtree.erase(Name("z.d.e.f")));
+    EXPECT_EQ(5, rbtree.getNodeCount());
+
+    EXPECT_EQ(0, rbtree.insert(Name("da"), &rbtnode));
+    EXPECT_EQ(0, rbtree.insert(Name("aa"), &rbtnode));
+    EXPECT_EQ(0, rbtree.insert(Name("ba"), &rbtnode));
+    EXPECT_EQ(0, rbtree.insert(Name("ca"), &rbtnode));
+    EXPECT_EQ(0, rbtree.insert(Name("m"), &rbtnode));
+    EXPECT_EQ(0, rbtree.insert(Name("nm"), &rbtnode));
+    EXPECT_EQ(0, rbtree.insert(Name("om"), &rbtnode));
+    EXPECT_EQ(0, rbtree.insert(Name("da"), &rbtnode));
+    EXPECT_EQ(0, rbtree.insert(Name("k"), &rbtnode));
+    EXPECT_EQ(0, rbtree.insert(Name("l"), &rbtnode));
+    EXPECT_EQ(0, rbtree.insert(Name("fe"), &rbtnode));
+    EXPECT_EQ(0, rbtree.insert(Name("ge"), &rbtnode));
+    EXPECT_EQ(0, rbtree.insert(Name("i"), &rbtnode));
+    EXPECT_EQ(0, rbtree.insert(Name("ae"), &rbtnode));
+    EXPECT_EQ(0, rbtree.insert(Name("n"), &rbtnode));
+    EXPECT_EQ(19, rbtree.getNodeCount());
+    /*
+     *                  d
+     *              /      \
+     *            b          c
+     *          /  \       /   \
+     *        aa    c     e     nm
+     *       / \   / \   / \    /\
+     *      a  ae ba ca da ge  m  om
+     *                    /  \  \
+     *                   fe   k  n
+     *                       /
+     *                      i
+     */
+    // delete rbtree node one by one
+    EXPECT_EQ(0, rbtree.erase(Name("nm")));
+    EXPECT_EQ(0, rbtree.erase(Name("n")));
+    EXPECT_EQ(0, rbtree.erase(Name("a")));
+    EXPECT_EQ(0, rbtree.erase(Name("ae")));
+    EXPECT_EQ(0, rbtree.erase(Name("i")));
+    EXPECT_EQ(0, rbtree.erase(Name("aa")));
+    EXPECT_EQ(0, rbtree.erase(Name("e")));
+    EXPECT_EQ(0, rbtree.erase(Name("ge")));
+    EXPECT_EQ(0, rbtree.erase(Name("k")));
+    EXPECT_EQ(0, rbtree.erase(Name("m")));
+    EXPECT_EQ(9, rbtree.getNodeCount());
+    /*
+     *                  d
+     *              /      \
+     *            c          c
+     *          /  \       /   \
+     *         b   ca     fe    om
+     *         \         /
+     *         ba       da
+     */
+    EXPECT_EQ(1, rbtree.erase(Name("am")));
+    EXPECT_EQ(0, rbtree.erase(Name("fe")));
+    EXPECT_EQ(0, rbtree.erase(Name("da")));
+    EXPECT_EQ(0, rbtree.erase(Name("om")));
+    EXPECT_EQ(0, rbtree.erase(Name("d")));
+    EXPECT_EQ(0, rbtree.erase(Name("b")));
+    EXPECT_EQ(0, rbtree.erase(Name("ba")));
+    EXPECT_EQ(0, rbtree.erase(Name("ca")));
+    EXPECT_EQ(0, rbtree.erase(Name("c")));
+    EXPECT_EQ(0, rbtree.erase(Name("l")));
     EXPECT_EQ(0, rbtree.getNodeCount());
 }
 

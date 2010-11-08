@@ -203,8 +203,7 @@ RBTree::insert(const Name& name, RBNode** new_node) {
                 *new_node = current;
             /// if the node is non-ternimal, it doesn't exist, so we return 0
             return (current->rrsets_.get() ? 1 : 0);
-        }
-        else {
+        } else {
             int common_label_count = compare_result.getCommonLabels();
             if (common_label_count == 1) {
                 order = compare_result.getOrder();
@@ -238,7 +237,7 @@ RBTree::insert(const Name& name, RBNode** new_node) {
                         return (0);
                     } else {
                         current->is_nonterminal_ = true;
-                        return (current->down_->insert(name - common_ancestor, new_node));
+                        return (current->down_->insert(name - common_ancestor, new_node)); 
                     }
                 }
             }
@@ -426,8 +425,7 @@ RBTree::eraseNode(RBNode *node) {
     if (y->color_ == BLACK)
         deleteRebalance(x);
 
-
-    if ( y == root_)
+    if (y == root_)
         root_ = NULLNODE;
 
     y->left_ = NULL;
@@ -443,7 +441,6 @@ RBTree::deleteRebalance(RBNode* node) {
     while (node != root_ && node->color_ == BLACK) {
         if (node == node->parent_->left_) {
             w = node->parent_->right_;
-
 
             if (w->color_ == RED) {
                 w->color_ = BLACK;
@@ -476,7 +473,9 @@ RBTree::deleteRebalance(RBNode* node) {
                 node->parent_->color_ = RED;
                 rightRotate(node->parent_);
                 w = node->parent_->left_;
-            } if (w->right_->color_ == BLACK && w->left_->color_ == BLACK) {
+            }
+
+            if (w->right_->color_ == BLACK && w->left_->color_ == BLACK) {
                 w->color_ = RED;
                 node = node->parent_;
             } else {
