@@ -327,7 +327,7 @@ class ZonemgrRefresh:
         while self._running:
             # Notify run_timer that we already started and are inside the loop.
             # It is set only once, but when it was outside the loop, there was
-            # a race condition and _running was could be set false before we
+            # a race condition and _running could be set to false before we
             # could enter it
             if start_event:
                 start_event.set()
