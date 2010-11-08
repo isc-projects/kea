@@ -33,7 +33,7 @@ NS::NS(const std::string& namestr) :
     nsname_(namestr)
 {}
 
-NS::NS(InputBuffer& buffer, size_t rdata_len UNUSED_PARAM) :
+NS::NS(InputBuffer& buffer, size_t) :
     nsname_(buffer)
 {
     // we don't need rdata_len for parsing.  if necessary, the caller will

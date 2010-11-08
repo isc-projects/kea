@@ -34,7 +34,7 @@ using namespace boost;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
-SOA::SOA(InputBuffer& buffer, size_t rdata_len UNUSED_PARAM) :
+SOA::SOA(InputBuffer& buffer, size_t) :
     mname_(buffer), rname_(buffer)
 {
     // we don't need rdata_len for parsing.  if necessary, the caller will

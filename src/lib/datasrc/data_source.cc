@@ -1255,64 +1255,64 @@ Nsec3Param::getHash(const Name& name) const {
 // installed files we define the methods here.
 //
 DataSrc::Result
-DataSrc::init(isc::data::ConstElementPtr config UNUSED_PARAM) {
+DataSrc::init(isc::data::ConstElementPtr) {
     return (NOT_IMPLEMENTED);
 }
 
 DataSrc::Result
-MetaDataSrc::findRRset(const isc::dns::Name& qname UNUSED_PARAM,
-                       const isc::dns::RRClass& qclass UNUSED_PARAM,
-                       const isc::dns::RRType& qtype UNUSED_PARAM,
-                       isc::dns::RRsetList& target UNUSED_PARAM,
-                       uint32_t& flags UNUSED_PARAM,
-                       const isc::dns::Name* zonename UNUSED_PARAM) const
+MetaDataSrc::findRRset(const isc::dns::Name&,
+                       const isc::dns::RRClass&,
+                       const isc::dns::RRType&,
+                       isc::dns::RRsetList&,
+                       uint32_t&,
+                       const isc::dns::Name*) const
 {
     return (NOT_IMPLEMENTED);
 }
 
 DataSrc::Result
-MetaDataSrc::findExactRRset(const isc::dns::Name& qname UNUSED_PARAM,
-                            const isc::dns::RRClass& qclass UNUSED_PARAM,
-                            const isc::dns::RRType& qtype UNUSED_PARAM,
-                            isc::dns::RRsetList& target UNUSED_PARAM,
-                            uint32_t& flags UNUSED_PARAM,
-                            const isc::dns::Name* zonename UNUSED_PARAM) const
+MetaDataSrc::findExactRRset(const isc::dns::Name&,
+                            const isc::dns::RRClass&,
+                            const isc::dns::RRType&,
+                            isc::dns::RRsetList&,
+                            uint32_t&,
+                            const isc::dns::Name*) const
 {
     return (NOT_IMPLEMENTED);
 }
 
 DataSrc::Result
-MetaDataSrc::findAddrs(const isc::dns::Name& qname UNUSED_PARAM,
-                       const isc::dns::RRClass& qclass UNUSED_PARAM,
-                       isc::dns::RRsetList& target UNUSED_PARAM,
-                       uint32_t& flags UNUSED_PARAM,
-                       const isc::dns::Name* zonename UNUSED_PARAM) const
+MetaDataSrc::findAddrs(const isc::dns::Name&,
+                       const isc::dns::RRClass&,
+                       isc::dns::RRsetList&,
+                       uint32_t&,
+                       const isc::dns::Name*) const
 {
     return (NOT_IMPLEMENTED);
 }
 
 DataSrc::Result
-MetaDataSrc::findReferral(const isc::dns::Name& qname UNUSED_PARAM,
-                          const isc::dns::RRClass& qclass UNUSED_PARAM,
-                          isc::dns::RRsetList& target UNUSED_PARAM,
-                          uint32_t& flags UNUSED_PARAM,
-                          const isc::dns::Name* zonename UNUSED_PARAM) const
+MetaDataSrc::findReferral(const isc::dns::Name&,
+                          const isc::dns::RRClass&,
+                          isc::dns::RRsetList&,
+                          uint32_t&,
+                          const isc::dns::Name*) const
 {
     return (NOT_IMPLEMENTED);
 }
 
 DataSrc::Result
-MetaDataSrc::findPreviousName(const isc::dns::Name& qname UNUSED_PARAM,
-                              isc::dns::Name& target UNUSED_PARAM,
-                              const isc::dns::Name* zonename UNUSED_PARAM) const
+MetaDataSrc::findPreviousName(const isc::dns::Name&,
+                              isc::dns::Name&,
+                              const isc::dns::Name*) const
 {
     return (NOT_IMPLEMENTED);
 }
 
 DataSrc::Result
-MetaDataSrc::findCoveringNSEC3(const isc::dns::Name& zonename UNUSED_PARAM,
-                               std::string& hash UNUSED_PARAM,
-                               isc::dns::RRsetList& target UNUSED_PARAM) const
+MetaDataSrc::findCoveringNSEC3(const isc::dns::Name&,
+                               std::string&,
+                               isc::dns::RRsetList&) const
 {
     return (NOT_IMPLEMENTED);
 }

@@ -235,18 +235,12 @@ StaticDataSrc::findExactRRset(const Name& qname,
 }
 
 DataSrc::Result
-StaticDataSrc::findPreviousName(const Name& qname UNUSED_PARAM,
-                                Name& target UNUSED_PARAM,
-                                const Name* zonename UNUSED_PARAM) const
-{
+StaticDataSrc::findPreviousName(const Name&, Name&, const Name*) const {
     return (NOT_IMPLEMENTED);
 }
 
 DataSrc::Result
-StaticDataSrc::findCoveringNSEC3(const Name& zonename UNUSED_PARAM,
-                                 string& hash UNUSED_PARAM,
-                                 RRsetList& target UNUSED_PARAM) const
-{
+StaticDataSrc::findCoveringNSEC3(const Name&, string&, RRsetList&) const {
    return (NOT_IMPLEMENTED);
 }
 
@@ -258,7 +252,7 @@ StaticDataSrc::init() {
 // Static data source is "configuration less", so the \c config parameter
 // is intentionally ignored.
 DataSrc::Result
-StaticDataSrc::init(isc::data::ConstElementPtr config UNUSED_PARAM) {
+StaticDataSrc::init(isc::data::ConstElementPtr) {
     return (init());
 }
 
