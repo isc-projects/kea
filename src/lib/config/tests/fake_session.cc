@@ -91,7 +91,7 @@ FakeSession::startRead(boost::function<void()>) {
 }
 
 void
-FakeSession::establish(const char* socket_file) {
+FakeSession::establish(const char*) {
 }
 
 bool
