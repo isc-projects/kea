@@ -425,9 +425,6 @@ RBTree::eraseNode(RBNode *node) {
     if (y->color_ == BLACK)
         deleteRebalance(x);
 
-    if (y == root_)
-        root_ = NULLNODE;
-
     y->left_ = NULL;
     y->right_ = NULL;
     delete y;
