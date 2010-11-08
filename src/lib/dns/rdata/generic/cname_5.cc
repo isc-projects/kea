@@ -33,7 +33,7 @@ CNAME::CNAME(const std::string& namestr) :
     cname_(namestr)
 {}
 
-CNAME::CNAME(InputBuffer& buffer, size_t rdata_len UNUSED_PARAM) :
+CNAME::CNAME(InputBuffer& buffer, size_t) :
     Rdata(), cname_(buffer)
 {
     // we don't need rdata_len for parsing.  if necessary, the caller will

@@ -220,82 +220,82 @@ Opcode_createStatic(const Opcode& opcode) {
 }
 
 PyObject*
-Opcode_QUERY(const s_Opcode* self UNUSED_PARAM) {
+Opcode_QUERY(const s_Opcode*) {
     return (Opcode_createStatic(Opcode::QUERY()));
 }
 
 PyObject*
-Opcode_IQUERY(const s_Opcode* self UNUSED_PARAM) {
+Opcode_IQUERY(const s_Opcode*) {
     return (Opcode_createStatic(Opcode::IQUERY()));
 }
 
 PyObject*
-Opcode_STATUS(const s_Opcode* self UNUSED_PARAM) {
+Opcode_STATUS(const s_Opcode*) {
     return (Opcode_createStatic(Opcode::STATUS()));
 }
 
 PyObject*
-Opcode_RESERVED3(const s_Opcode* self UNUSED_PARAM) {
+Opcode_RESERVED3(const s_Opcode*) {
     return (Opcode_createStatic(Opcode::RESERVED3()));
 }
 
 PyObject*
-Opcode_NOTIFY(const s_Opcode* self UNUSED_PARAM) {
+Opcode_NOTIFY(const s_Opcode*) {
     return (Opcode_createStatic(Opcode::NOTIFY()));
 }
 
 PyObject*
-Opcode_UPDATE(const s_Opcode* self UNUSED_PARAM) {
+Opcode_UPDATE(const s_Opcode*) {
     return (Opcode_createStatic(Opcode::UPDATE()));
 }
 
 PyObject*
-Opcode_RESERVED6(const s_Opcode* self UNUSED_PARAM) {
+Opcode_RESERVED6(const s_Opcode*) {
     return (Opcode_createStatic(Opcode::RESERVED6()));
 }
 
 PyObject*
-Opcode_RESERVED7(const s_Opcode* self UNUSED_PARAM) {
+Opcode_RESERVED7(const s_Opcode*) {
     return (Opcode_createStatic(Opcode::RESERVED7()));
 }
 
 PyObject*
-Opcode_RESERVED8(const s_Opcode* self UNUSED_PARAM) {
+Opcode_RESERVED8(const s_Opcode*) {
     return (Opcode_createStatic(Opcode::RESERVED8()));
 }
 
 PyObject*
-Opcode_RESERVED9(const s_Opcode* self UNUSED_PARAM) {
+Opcode_RESERVED9(const s_Opcode*) {
     return (Opcode_createStatic(Opcode::RESERVED9()));
 }
 
 PyObject*
-Opcode_RESERVED10(const s_Opcode* self UNUSED_PARAM) {
+Opcode_RESERVED10(const s_Opcode*) {
     return (Opcode_createStatic(Opcode::RESERVED10()));
 }
 
 PyObject*
-Opcode_RESERVED11(const s_Opcode* self UNUSED_PARAM) {
+Opcode_RESERVED11(const s_Opcode*) {
     return (Opcode_createStatic(Opcode::RESERVED11()));
 }
 
 PyObject*
-Opcode_RESERVED12(const s_Opcode* self UNUSED_PARAM) {
+Opcode_RESERVED12(const s_Opcode*) {
     return (Opcode_createStatic(Opcode::RESERVED12()));
 }
 
 PyObject*
-Opcode_RESERVED13(const s_Opcode* self UNUSED_PARAM) {
+Opcode_RESERVED13(const s_Opcode*) {
     return (Opcode_createStatic(Opcode::RESERVED13()));
 }
 
 PyObject*
-Opcode_RESERVED14(const s_Opcode* self UNUSED_PARAM) {
+Opcode_RESERVED14(const s_Opcode*) {
     return (Opcode_createStatic(Opcode::RESERVED14()));
 }
 
 PyObject*
-Opcode_RESERVED15(const s_Opcode* self UNUSED_PARAM) {
+Opcode_RESERVED15(const s_Opcode*) {
     return (Opcode_createStatic(Opcode::RESERVED15()));
 }
 

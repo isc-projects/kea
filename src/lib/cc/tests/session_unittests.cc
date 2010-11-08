@@ -76,7 +76,7 @@ public:
     }
 
     void
-    acceptHandler(const asio::error_code& error UNUSED_PARAM) {
+    acceptHandler(const asio::error_code&) {
     }
 
     void

@@ -254,87 +254,87 @@ Rcode_createStatic(const Rcode& rcode) {
 }
 
 PyObject*
-Rcode_NOERROR(const s_Rcode* self UNUSED_PARAM) {
+Rcode_NOERROR(const s_Rcode*) {
     return (Rcode_createStatic(Rcode::NOERROR()));
 }
 
 PyObject*
-Rcode_FORMERR(const s_Rcode* self UNUSED_PARAM) {
+Rcode_FORMERR(const s_Rcode*) {
     return (Rcode_createStatic(Rcode::FORMERR()));
 }
 
 PyObject*
-Rcode_SERVFAIL(const s_Rcode* self UNUSED_PARAM) {
+Rcode_SERVFAIL(const s_Rcode*) {
     return (Rcode_createStatic(Rcode::SERVFAIL()));
 }
 
 PyObject*
-Rcode_NXDOMAIN(const s_Rcode* self UNUSED_PARAM) {
+Rcode_NXDOMAIN(const s_Rcode*) {
     return (Rcode_createStatic(Rcode::NXDOMAIN()));
 }
 
 PyObject*
-Rcode_NOTIMP(const s_Rcode* self UNUSED_PARAM) {
+Rcode_NOTIMP(const s_Rcode*) {
     return (Rcode_createStatic(Rcode::NOTIMP()));
 }
 
 PyObject*
-Rcode_REFUSED(const s_Rcode* self UNUSED_PARAM) {
+Rcode_REFUSED(const s_Rcode*) {
     return (Rcode_createStatic(Rcode::REFUSED()));
 }
 
 PyObject*
-Rcode_YXDOMAIN(const s_Rcode* self UNUSED_PARAM) {
+Rcode_YXDOMAIN(const s_Rcode*) {
     return (Rcode_createStatic(Rcode::YXDOMAIN()));
 }
 
 PyObject*
-Rcode_YXRRSET(const s_Rcode* self UNUSED_PARAM) {
+Rcode_YXRRSET(const s_Rcode*) {
     return (Rcode_createStatic(Rcode::YXRRSET()));
 }
 
 PyObject*
-Rcode_NXRRSET(const s_Rcode* self UNUSED_PARAM) {
+Rcode_NXRRSET(const s_Rcode*) {
     return (Rcode_createStatic(Rcode::NXRRSET()));
 }
 
 PyObject*
-Rcode_NOTAUTH(const s_Rcode* self UNUSED_PARAM) {
+Rcode_NOTAUTH(const s_Rcode*) {
     return (Rcode_createStatic(Rcode::NOTAUTH()));
 }
 
 PyObject*
-Rcode_NOTZONE(const s_Rcode* self UNUSED_PARAM) {
+Rcode_NOTZONE(const s_Rcode*) {
     return (Rcode_createStatic(Rcode::NOTZONE()));
 }
 
 PyObject*
-Rcode_RESERVED11(const s_Rcode* self UNUSED_PARAM) {
+Rcode_RESERVED11(const s_Rcode*) {
     return (Rcode_createStatic(Rcode::RESERVED11()));
 }
 
 PyObject*
-Rcode_RESERVED12(const s_Rcode* self UNUSED_PARAM) {
+Rcode_RESERVED12(const s_Rcode*) {
     return (Rcode_createStatic(Rcode::RESERVED12()));
 }
 
 PyObject*
-Rcode_RESERVED13(const s_Rcode* self UNUSED_PARAM) {
+Rcode_RESERVED13(const s_Rcode*) {
     return (Rcode_createStatic(Rcode::RESERVED13()));
 }
 
 PyObject*
-Rcode_RESERVED14(const s_Rcode* self UNUSED_PARAM) {
+Rcode_RESERVED14(const s_Rcode*) {
     return (Rcode_createStatic(Rcode::RESERVED14()));
 }
 
 PyObject*
-Rcode_RESERVED15(const s_Rcode* self UNUSED_PARAM) {
+Rcode_RESERVED15(const s_Rcode*) {
     return (Rcode_createStatic(Rcode::RESERVED15()));
 }
 
 PyObject*
-Rcode_BADVERS(const s_Rcode* self UNUSED_PARAM) {
+Rcode_BADVERS(const s_Rcode*) {
     return (Rcode_createStatic(Rcode::BADVERS()));
 }
 
