@@ -72,7 +72,8 @@ namespace nsas {
 // Constructor.
 
 Hash::Hash(uint32_t tablesize, uint32_t maxkeylen, bool randomise) :
-    tablesize_(tablesize), maxkeylen_(min(maxkeylen, (255 - sizeof(uint16_t))))
+    tablesize_(tablesize), maxkeylen_(min<uint32_t>(maxkeylen,
+        (255 - sizeof(uint16_t))))
 {
     // (Code taken from BIND-9)
     //
