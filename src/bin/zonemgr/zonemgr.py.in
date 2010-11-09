@@ -324,8 +324,14 @@ class ZonemgrRefresh:
         return False
 
     def _run_timer(self, start_event):
-        start_event.set()
         while self._running:
+            # Notify run_timer that we already started and are inside the loop.
+            # It is set only once, but when it was outside the loop, there was
+            # a race condition and _running could be set to false before we
+            # could enter it
+            if start_event:
+                start_event.set()
+                start_event = None
             # If zonemgr has no zone, set timer timeout to self._lowerbound_retry.
             if self._zone_mgr_is_empty():
                 timeout = self._lowerbound_retry
@@ -354,7 +360,8 @@ class ZonemgrRefresh:
             for fd in rlist:
                 if fd == self._read_sock: # awaken by shutdown socket
                     # self._running will be False by now, if it is not a false
-                    # alarm
+                    # alarm (linux kernel is said to trigger spurious wakeup
+                    # on a filehandle that is not really readable).
                     continue
                 if fd == self._check_sock: # awaken by check socket
                     self._check_sock.recv(32)
