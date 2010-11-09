@@ -162,7 +162,7 @@ private:
     isc::dns::OutputBufferPtr respbuf_;
     
     // The buffer into which the query packet is written
-    boost::shared_ptr<char> data_;
+    boost::shared_array<char> data_;
 
     // State information that is entirely internal to a given instance
     // of the coroutine can be declared here.
@@ -173,6 +173,9 @@ private:
     const SimpleCallback* checkin_callback_;
     const DNSLookup* lookup_callback_;
     const DNSAnswer* answer_callback_;
+
+    boost::shared_ptr<IOEndpoint> peer_;
+    boost::shared_ptr<IOSocket> iosock_;
 };
 
 //
@@ -219,12 +222,7 @@ private:
     boost::shared_array<char> data_;
 
     // The UDP or TCP Server object from which the query originated.
-    // Note: Using a shared_ptr for this can cause problems when
-    // control is being transferred from this coroutine to the server;
-    // the reference count can drop to zero and cause the server to be
-    // destroyed before it executes.  Consequently in this case it's
-    // safer to use a raw pointer.
-    DNSServer* server_;
+    boost::shared_ptr<DNSServer> server_;
 };
 }
 

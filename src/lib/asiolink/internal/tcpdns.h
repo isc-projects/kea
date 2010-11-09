@@ -21,6 +21,7 @@
 
 
 #include <asio.hpp>
+#include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <dns/buffer.h>
@@ -167,7 +168,7 @@ private:
     isc::dns::MessagePtr message_;
 
     // The buffer into which the query packet is written
-    boost::shared_ptr<char> data_;
+    boost::shared_array<char>data_;
 
     // State information that is entirely internal to a given instance
     // of the coroutine can be declared here.
@@ -178,6 +179,9 @@ private:
     const SimpleCallback* checkin_callback_;
     const DNSLookup* lookup_callback_;
     const DNSAnswer* answer_callback_;
+
+    boost::shared_ptr<IOEndpoint> peer_;
+    boost::shared_ptr<IOSocket> iosock_;
 };
 
 }

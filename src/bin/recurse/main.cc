@@ -119,7 +119,6 @@ main(int argc, char* argv[]) {
 
     int ret = 0;
 
-    // XXX: we should eventually pass io_service here.
     Session* cc_session = NULL;
     ModuleCCSession* config_session = NULL;
     try {
