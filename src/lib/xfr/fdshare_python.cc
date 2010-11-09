@@ -24,7 +24,7 @@
 
 
 static PyObject*
-fdshare_recv_fd(PyObject* self UNUSED_PARAM, PyObject* args) {
+fdshare_recv_fd(PyObject*, PyObject* args) {
     int sock, fd;
     if (!PyArg_ParseTuple(args, "i", &sock)) {
         return (NULL);
@@ -34,7 +34,7 @@ fdshare_recv_fd(PyObject* self UNUSED_PARAM, PyObject* args) {
 }
 
 static PyObject*
-fdshare_send_fd(PyObject* self UNUSED_PARAM, PyObject* args) {
+fdshare_send_fd(PyObject*, PyObject* args) {
     int sock, fd, result;
     if (!PyArg_ParseTuple(args, "ii", &sock, &fd)) {
         return (NULL);

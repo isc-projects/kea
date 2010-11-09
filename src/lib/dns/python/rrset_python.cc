@@ -158,7 +158,7 @@ static PyTypeObject rrset_type = {
 };
 
 static int
-RRset_init(s_RRset* self, PyObject* args UNUSED_PARAM) {
+RRset_init(s_RRset* self, PyObject* args) {
     s_Name* name;
     s_RRClass* rrclass;
     s_RRType* rrtype;

@@ -97,7 +97,7 @@ private:
         virtual void startRead(boost::function<void()> read_callback);
         virtual int reply(ConstElementPtr envelope, ConstElementPtr newmsg);
         virtual bool hasQueuedMsgs() const;
-        virtual void setTimeout(size_t timeout UNUSED_PARAM) {};
+        virtual void setTimeout(size_t) {}
         virtual size_t getTimeout() const { return 0; };
 
         void setMessage(ConstElementPtr msg) { msg_ = msg; }
@@ -156,30 +156,25 @@ protected:
 };
 
 void
-AuthSrvTest::MockSession::establish(const char* socket_file UNUSED_PARAM) {}
+AuthSrvTest::MockSession::establish(const char*) {}
 
 void
 AuthSrvTest::MockSession::disconnect() {}
 
 void
-AuthSrvTest::MockSession::subscribe(string group UNUSED_PARAM,
-                                    string instance UNUSED_PARAM)
+AuthSrvTest::MockSession::subscribe(string, string)
 {}
 
 void
-AuthSrvTest::MockSession::unsubscribe(string group UNUSED_PARAM,
-                                      string instance UNUSED_PARAM)
+AuthSrvTest::MockSession::unsubscribe(string, string)
 {}
 
 void
-AuthSrvTest::MockSession::startRead(
-    boost::function<void()> read_callback UNUSED_PARAM)
+AuthSrvTest::MockSession::startRead(boost::function<void()>)
 {}
 
 int
-AuthSrvTest::MockSession::reply(ConstElementPtr envelope UNUSED_PARAM,
-                                ConstElementPtr newmsg UNUSED_PARAM)
-{
+AuthSrvTest::MockSession::reply(ConstElementPtr, ConstElementPtr) {
     return (-1);
 }
 
@@ -190,8 +185,7 @@ AuthSrvTest::MockSession::hasQueuedMsgs() const {
 
 int
 AuthSrvTest::MockSession::group_sendmsg(ConstElementPtr msg, string group,
-                                        string instance UNUSED_PARAM,
-                                        string to UNUSED_PARAM)
+                                        string, string)
 {
     if (!send_ok_) {
         isc_throw(XfroutError, "mock session send is disabled for test");
@@ -203,10 +197,8 @@ AuthSrvTest::MockSession::group_sendmsg(ConstElementPtr msg, string group,
 }
 
 bool
-AuthSrvTest::MockSession::group_recvmsg(ConstElementPtr& envelope UNUSED_PARAM,
-                                        ConstElementPtr& msg,
-                                        bool nonblock UNUSED_PARAM,
-                                        int seq UNUSED_PARAM)
+AuthSrvTest::MockSession::group_recvmsg(ConstElementPtr&,
+                                        ConstElementPtr& msg, bool, int)
 {
     if (!receive_ok_) {
         isc_throw(XfroutError, "mock session receive is disabled for test");
@@ -234,10 +226,9 @@ AuthSrvTest::MockXfroutClient::disconnect() {
 }
 
 int
-AuthSrvTest::MockXfroutClient::sendXfroutRequestInfo(
-    const int tcp_sock UNUSED_PARAM,
-    const void* msg_data UNUSED_PARAM,
-    const uint16_t msg_len UNUSED_PARAM)
+AuthSrvTest::MockXfroutClient::sendXfroutRequestInfo(const int,
+                                                     const void*,
+                                                     const uint16_t)
 {
     if (!send_ok_) {
         isc_throw(XfroutError, "xfrout connection send is disabled for test");

@@ -4,10 +4,6 @@ AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
-# see src/lib/cc/Makefile.am for -Wno-unused-parameter
-if USE_GXX
-AM_CXXFLAGS += -Wno-unused-parameter
-endif
 
 if USE_STATIC_LINK
 AM_LDFLAGS = -static
