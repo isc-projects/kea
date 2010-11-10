@@ -1,0 +1,20 @@
+CLEANFILES = *.wire
+
+BUILT_SOURCES = iqueryresponse_fromWire.wire multiquestion_fromWire.wire
+BUILT_SOURCES += queryBadEDNS_fromWire.wire shortanswer_fromWire.wire
+BUILT_SOURCES += simplequery_fromWire.wire simpleresponse_fromWire.wire
+
+# NOTE: keep this in sync with real file listing
+# so is included in tarball
+EXTRA_DIST = iqueryresponse_fromWire.spec
+EXTRA_DIST += multiquestion_fromWire.spec
+EXTRA_DIST += queryBadEDNS_fromWire.spec
+EXTRA_DIST += shortanswer_fromWire.spec
+EXTRA_DIST += shortmessage_fromWire
+EXTRA_DIST += shortquestion_fromWire
+EXTRA_DIST += shortresponse_fromWire
+EXTRA_DIST += simplequery_fromWire.spec
+EXTRA_DIST += simpleresponse_fromWire.spec
+
+.spec.wire:
+	$(abs_top_builddir)/src/lib/dns/tests/testdata/gen-wiredata.py -o $@ $<
