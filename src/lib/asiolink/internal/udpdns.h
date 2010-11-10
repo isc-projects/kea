@@ -35,23 +35,40 @@
 // API.
 
 namespace asiolink {
-// Note: this implementation is optimized for the case where this object
-// is created from an ASIO endpoint object in a receiving code path
-// by avoiding to make a copy of the base endpoint.  Otherwise, when we
-// receive UDP packets at a high rate, the copy overhead might be significant.
+/// \brief The \c UDPEndpoint class is a concrete derived class of
+/// \c IOEndpoint that represents an endpoint of a UDP packet.
+///
+/// Other notes about \c TCPEndpoint applies to this class, too.
 class UDPEndpoint : public IOEndpoint {
 public:
+    ///
+    /// \name Constructors and Destructor.
+    ///
+    //@{
+    /// \brief Constructor from a pair of address and port.
+    ///
+    /// \param address The IP address of the endpoint.
+    /// \param port The UDP port number of the endpoint.
     UDPEndpoint(const IOAddress& address, const unsigned short port) :
         asio_endpoint_placeholder_(
             new asio::ip::udp::endpoint(asio::ip::address::from_string(address.toText()),
                               port)),
         asio_endpoint_(*asio_endpoint_placeholder_)
     {}
+
+    /// \brief Constructor from an ASIO UDP endpoint.
+    ///
+    /// This constructor is designed to be an efficient wrapper for the
+    /// corresponding ASIO class, \c udp::endpoint.
+    ///
+    /// \param asio_endpoint The ASIO representation of the UDP endpoint.
     UDPEndpoint(const asio::ip::udp::endpoint& asio_endpoint) :
         asio_endpoint_placeholder_(NULL), asio_endpoint_(asio_endpoint)
     {}
-        
+
+    /// \brief The destructor.
     ~UDPEndpoint() { delete asio_endpoint_placeholder_; }
+    //@}
 
     inline IOAddress getAddress() const {
         return (asio_endpoint_.address());
@@ -80,11 +97,18 @@ private:
     const asio::ip::udp::endpoint& asio_endpoint_;
 };
 
+/// \brief The \c UDPSocket class is a concrete derived class of
+/// \c IOSocket that represents a UDP socket.
+///
+/// Other notes about \c TCPSocket applies to this class, too.
 class UDPSocket : public IOSocket {
 private:
     UDPSocket(const UDPSocket& source);
     UDPSocket& operator=(const UDPSocket& source);
 public:
+    /// \brief Constructor from an ASIO UDP socket.
+    ///
+    /// \param socket The ASIO representation of the UDP socket.
     UDPSocket(asio::ip::udp::socket& socket) : socket_(socket) {}
 
     virtual int getNative() const { return (socket_.native()); }

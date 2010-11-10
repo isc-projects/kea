@@ -68,8 +68,7 @@ protected:
 };
 
 string
-Rdata_Unknown_Test::getLongestRdataTxt()
-{
+Rdata_Unknown_Test::getLongestRdataTxt() {
     ostringstream oss;
 
     oss << "\\# " << MAX_RDLENGTH << " ";
@@ -83,8 +82,7 @@ Rdata_Unknown_Test::getLongestRdataTxt()
 }
 
 void
-Rdata_Unknown_Test::getLongestRdataWire(vector<uint8_t>& v)
-{
+Rdata_Unknown_Test::getLongestRdataWire(vector<uint8_t>& v) {
     unsigned char ch = 0;
     for (int i = 0; i < MAX_RDLENGTH; ++i, ++ch) {
         v.push_back(ch);
@@ -102,8 +100,7 @@ const uint8_t wiredata_unknown[] = { 0xa1, 0xb2, 0xc3, 0x0d };
 // renumber it.
 const RRType unknown_rrtype = RRType(65000);
 
-TEST_F(Rdata_Unknown_Test, createFromText)
-{
+TEST_F(Rdata_Unknown_Test, createFromText) {
     // valid construction.  This also tests a normal case of "FromWire".
     EXPECT_EQ(0, generic::Generic("\\# 4 a1b2c30d").compare(
                   *rdataFactoryFromFile(unknown_rrtype, RRClass::IN(),
@@ -148,8 +145,7 @@ TEST_F(Rdata_Unknown_Test, createFromText)
     EXPECT_THROW(generic::Generic("\\# 1ff"), InvalidRdataText);
 }
 
-TEST_F(Rdata_Unknown_Test, createFromWire)
-{
+TEST_F(Rdata_Unknown_Test, createFromWire) {
     // normal case (including 0-length data) is covered in createFromText.
 
     // buffer too short.  the error should be detected in buffer read
@@ -167,8 +163,7 @@ TEST_F(Rdata_Unknown_Test, createFromWire)
 
 // The following 3 sets of tests check the behavior of createRdata() variants
 // with the "unknown" RRtype.  The result should be RRclass independent.
-TEST_F(Rdata_Unknown_Test, createRdataFromString)
-{
+TEST_F(Rdata_Unknown_Test, createRdataFromString) {
     EXPECT_EQ(0, rdata_unknown.compare(
                   *createRdata(unknown_rrtype, RRClass::IN(),
                                rdata_unknowntxt)));
@@ -180,8 +175,7 @@ TEST_F(Rdata_Unknown_Test, createRdataFromString)
                                rdata_unknowntxt)));
 }
 
-TEST_F(Rdata_Unknown_Test, createRdataFromWire)
-{
+TEST_F(Rdata_Unknown_Test, createRdataFromWire) {
     InputBuffer ibuffer(wiredata_unknown, sizeof(wiredata_unknown));
     EXPECT_EQ(0, rdata_unknown.compare(
                   *createRdata(unknown_rrtype, RRClass::IN(),
@@ -198,8 +192,7 @@ TEST_F(Rdata_Unknown_Test, createRdataFromWire)
                                ibuffer3, sizeof(wiredata_unknown))));
 }
 
-TEST_F(Rdata_Unknown_Test, createRdataByCopy)
-{
+TEST_F(Rdata_Unknown_Test, createRdataByCopy) {
     EXPECT_EQ(0, rdata_unknown.compare(
                   *createRdata(unknown_rrtype, RRClass::IN(), rdata_unknown)));
     EXPECT_EQ(0, rdata_unknown.compare(
@@ -209,8 +202,7 @@ TEST_F(Rdata_Unknown_Test, createRdataByCopy)
                                rdata_unknown)));
 }
 
-TEST_F(Rdata_Unknown_Test, copyConstruct)
-{
+TEST_F(Rdata_Unknown_Test, copyConstruct) {
     generic::Generic copy(rdata_unknown);
     EXPECT_EQ(0, copy.compare(rdata_unknown));
 
@@ -221,8 +213,7 @@ TEST_F(Rdata_Unknown_Test, copyConstruct)
     EXPECT_EQ(0, copy3.compare(rdata_unknown));
 }
 
-TEST_F(Rdata_Unknown_Test, assignment)
-{
+TEST_F(Rdata_Unknown_Test, assignment) {
     generic::Generic copy("\\# 1 10");
     copy = rdata_unknown;
     EXPECT_EQ(0, copy.compare(rdata_unknown));
@@ -239,31 +230,27 @@ TEST_F(Rdata_Unknown_Test, assignment)
     EXPECT_EQ(0, copy.compare(rdata_unknown));
 }
 
-TEST_F(Rdata_Unknown_Test, toText)
-{
+TEST_F(Rdata_Unknown_Test, toText) {
     EXPECT_EQ(rdata_unknowntxt, rdata_unknown.toText());
     EXPECT_EQ(getLongestRdataTxt(),
               generic::Generic(getLongestRdataTxt()).toText());
 }
 
-TEST_F(Rdata_Unknown_Test, toWireBuffer)
-{
+TEST_F(Rdata_Unknown_Test, toWireBuffer) {
     rdata_unknown.toWire(obuffer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         obuffer.getData(), obuffer.getLength(),
                         wiredata_unknown, sizeof(wiredata_unknown));
 }
 
-TEST_F(Rdata_Unknown_Test, toWireRenderer)
-{
+TEST_F(Rdata_Unknown_Test, toWireRenderer) {
     rdata_unknown.toWire(renderer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         obuffer.getData(), obuffer.getLength(),
                         wiredata_unknown, sizeof(wiredata_unknown));
 }
 
-TEST_F(Rdata_Unknown_Test, compare)
-{
+TEST_F(Rdata_Unknown_Test, compare) {
     // comparison as left-justified unsigned octet sequences:
     EXPECT_EQ(0, rdata_unknown.compare(rdata_unknown));
 
@@ -281,8 +268,7 @@ TEST_F(Rdata_Unknown_Test, compare)
     EXPECT_LT(0, rdata_unknown.compare(rdata_unknown_short));
 }
 
-TEST_F(Rdata_Unknown_Test, LeftShiftOperator)
-{
+TEST_F(Rdata_Unknown_Test, LeftShiftOperator) {
     ostringstream oss;
     oss << rdata_unknown;
     EXPECT_EQ(rdata_unknown.toText(), oss.str());
@@ -291,14 +277,13 @@ TEST_F(Rdata_Unknown_Test, LeftShiftOperator)
 //
 // Tests for global utility functions
 //
-TEST_F(RdataTest, compareNames)
-{
+TEST_F(RdataTest, compareNames) {
     Name small("a.example");
     Name large("example");
 
     // Check the case where the order is different from the owner name
     // comparison:
-    EXPECT_EQ(true, small > large);
+    EXPECT_TRUE(small > large);
     EXPECT_EQ(-1, compareNames(small, large));
     EXPECT_EQ(1, compareNames(large, small));
 

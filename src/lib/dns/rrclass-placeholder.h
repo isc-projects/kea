@@ -211,7 +211,7 @@ public:
     /// \brief Same as \c equals().
     bool operator==(const RRClass& other) const { return (equals(other)); }
 
-    /// \brief Return true iff two RRClasses are equal.
+    /// \brief Return true iff two RRClasses are not equal.
     ///
     /// This method never throws an exception.
     ///
@@ -260,16 +260,14 @@ private:
 // END_WELL_KNOWN_CLASS_DEFINITIONS
 
 inline const RRClass&
-RRClass::NONE()
-{
+RRClass::NONE() {
     static RRClass rrclass(RRCLASS_NONE);
 
     return (rrclass);
 }
 
 inline const RRClass&
-RRClass::ANY()
-{
+RRClass::ANY() {
     static RRClass rrclass(RRCLASS_ANY);
 
     return (rrclass);

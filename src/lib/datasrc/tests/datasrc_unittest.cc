@@ -26,6 +26,8 @@
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
 #include <dns/question.h>
+#include <dns/opcode.h>
+#include <dns/rcode.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 #include <dns/rrclass.h>
@@ -77,7 +79,7 @@ protected:
 
 void
 performQuery(DataSrc& data_source, HotCache& cache, Message& message) {
-    message.setHeaderFlag(MessageFlag::AA());
+    message.setHeaderFlag(Message::HEADERFLAG_AA);
     message.setRcode(Rcode::NOERROR());
     Query q(message, cache, true);
     data_source.doQuery(q);
@@ -90,7 +92,7 @@ DataSrcTest::createAndProcessQuery(const Name& qname, const RRClass& qclass,
     msg.makeResponse();
     msg.setOpcode(Opcode::QUERY());
     msg.addQuestion(Question(qname, qclass, qtype));
-    msg.setHeaderFlag(MessageFlag::RD());
+    msg.setHeaderFlag(Message::HEADERFLAG_RD);
     performQuery(meta_source, cache, msg);
 }
 
@@ -100,13 +102,13 @@ headerCheck(const Message& message, const Rcode& rcode, const bool qrflag,
             const unsigned int nscount, const unsigned int arcount)
 {
     EXPECT_EQ(rcode, message.getRcode());
-    EXPECT_EQ(qrflag, message.getHeaderFlag(MessageFlag::QR()));
-    EXPECT_EQ(aaflag, message.getHeaderFlag(MessageFlag::AA()));
-    EXPECT_EQ(rdflag, message.getHeaderFlag(MessageFlag::RD()));
+    EXPECT_EQ(qrflag, message.getHeaderFlag(Message::HEADERFLAG_QR));
+    EXPECT_EQ(aaflag, message.getHeaderFlag(Message::HEADERFLAG_AA));
+    EXPECT_EQ(rdflag, message.getHeaderFlag(Message::HEADERFLAG_RD));
 
-    EXPECT_EQ(ancount, message.getRRCount(Section::ANSWER()));
-    EXPECT_EQ(nscount, message.getRRCount(Section::AUTHORITY()));
-    EXPECT_EQ(arcount, message.getRRCount(Section::ADDITIONAL()));
+    EXPECT_EQ(ancount, message.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(nscount, message.getRRCount(Message::SECTION_AUTHORITY));
+    EXPECT_EQ(arcount, message.getRRCount(Message::SECTION_ADDITIONAL));
 }
 
 void
@@ -115,7 +117,7 @@ DataSrcTest::QueryCommon(const RRClass& qclass) {
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 4, 6);
 
-    RRsetIterator rit = msg.beginSection(Section::ANSWER());
+    RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("www.example.com"), rrset->getName());
     EXPECT_EQ(RRType::A(), rrset->getType());
@@ -129,7 +131,7 @@ DataSrcTest::QueryCommon(const RRClass& qclass) {
 
     // XXX: also check ANSWER RRSIG
 
-    rit = msg.beginSection(Section::AUTHORITY());
+    rit = msg.beginSection(Message::SECTION_AUTHORITY);
     rrset = *rit;
     EXPECT_EQ(Name("example.com"), rrset->getName());
     EXPECT_EQ(RRType::NS(), rrset->getType());
@@ -145,7 +147,7 @@ DataSrcTest::QueryCommon(const RRClass& qclass) {
     it->next();
     EXPECT_TRUE(it->isLast());
 
-    rit = msg.beginSection(Section::ADDITIONAL());
+    rit = msg.beginSection(Message::SECTION_ADDITIONAL);
     rrset = *rit;
     EXPECT_EQ(Name("dns01.example.com"), rrset->getName());
     EXPECT_EQ(RRType::A(), rrset->getType());
@@ -169,9 +171,9 @@ TEST_F(DataSrcTest, QueryClassMismatch) {
     headerCheck(msg, Rcode::REFUSED(), true, false, true, 0, 0, 0);
 
     EXPECT_EQ(Rcode::REFUSED(), msg.getRcode());
-    EXPECT_TRUE(msg.getHeaderFlag(MessageFlag::QR()));
-    EXPECT_FALSE(msg.getHeaderFlag(MessageFlag::AA()));
-    EXPECT_TRUE(msg.getHeaderFlag(MessageFlag::RD()));
+    EXPECT_TRUE(msg.getHeaderFlag(Message::HEADERFLAG_QR));
+    EXPECT_FALSE(msg.getHeaderFlag(Message::HEADERFLAG_AA));
+    EXPECT_TRUE(msg.getHeaderFlag(Message::HEADERFLAG_RD));
 }
 
 // Query class of any should match the first data source.
@@ -184,7 +186,7 @@ TEST_F(DataSrcTest, NSQuery) {
                           RRType::NS());
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 0, 6);
 
-    RRsetIterator rit = msg.beginSection(Section::ANSWER());
+    RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("example.com"), rrset->getName());
     EXPECT_EQ(RRType::NS(), rrset->getType());
@@ -207,7 +209,7 @@ TEST_F(DataSrcTest, DuplicateQuery) {
                           RRType::NS());
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 0, 6);
 
-    RRsetIterator rit = msg.beginSection(Section::ANSWER());
+    RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("example.com"), rrset->getName());
     EXPECT_EQ(RRType::NS(), rrset->getType());
@@ -228,7 +230,7 @@ TEST_F(DataSrcTest, DuplicateQuery) {
                           RRType::NS());
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 0, 6);
 
-    rit = msg.beginSection(Section::ANSWER());
+    rit = msg.beginSection(Message::SECTION_ANSWER);
     rrset = *rit;
     EXPECT_EQ(Name("example.com"), rrset->getName());
     EXPECT_EQ(RRType::NS(), rrset->getType());
@@ -250,7 +252,7 @@ TEST_F(DataSrcTest, DNSKEYQuery) {
                           RRType::DNSKEY());
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 4, 6);
 
-    RRsetIterator rit = msg.beginSection(Section::ANSWER());
+    RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("example.com"), rrset->getName());
     EXPECT_EQ(RRType::DNSKEY(), rrset->getType());
@@ -265,7 +267,7 @@ TEST_F(DataSrcTest, DNSKEYDuplicateQuery) {
                           RRType::DNSKEY());
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 4, 6);
 
-    RRsetIterator rit = msg.beginSection(Section::ANSWER());
+    RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("example.com"), rrset->getName());
     EXPECT_EQ(RRType::DNSKEY(), rrset->getType());
@@ -274,7 +276,7 @@ TEST_F(DataSrcTest, DNSKEYDuplicateQuery) {
     msg.clear(Message::PARSE);
     createAndProcessQuery(Name("example.com"), RRClass::IN(),
                           RRType::DNSKEY());
-    rit = msg.beginSection(Section::ANSWER());
+    rit = msg.beginSection(Message::SECTION_ANSWER);
     rrset = *rit;
     EXPECT_EQ(Name("example.com"), rrset->getName());
     EXPECT_EQ(RRType::DNSKEY(), rrset->getType());
@@ -287,7 +289,7 @@ TEST_F(DataSrcTest, NxRRset) {
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 0, 4, 0);
 
-    RRsetIterator rit = msg.beginSection(Section::AUTHORITY());
+    RRsetIterator rit = msg.beginSection(Message::SECTION_AUTHORITY);
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("example.com"), rrset->getName());
     EXPECT_EQ(RRType::SOA(), rrset->getType());
@@ -299,7 +301,7 @@ TEST_F(DataSrcTest, Nxdomain) {
 
     headerCheck(msg, Rcode::NXDOMAIN(), true, true, true, 0, 6, 0);
 
-    RRsetIterator rit = msg.beginSection(Section::AUTHORITY());
+    RRsetIterator rit = msg.beginSection(Message::SECTION_AUTHORITY);
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("example.com"), rrset->getName());
     EXPECT_EQ(RRType::SOA(), rrset->getType());
@@ -314,9 +316,9 @@ TEST_F(DataSrcTest, NxZone) {
     headerCheck(msg, Rcode::REFUSED(), true, false, true, 0, 0, 0);
 
     EXPECT_EQ(Rcode::REFUSED(), msg.getRcode());
-    EXPECT_TRUE(msg.getHeaderFlag(MessageFlag::QR()));
-    EXPECT_FALSE(msg.getHeaderFlag(MessageFlag::AA()));
-    EXPECT_TRUE(msg.getHeaderFlag(MessageFlag::RD()));
+    EXPECT_TRUE(msg.getHeaderFlag(Message::HEADERFLAG_QR));
+    EXPECT_FALSE(msg.getHeaderFlag(Message::HEADERFLAG_AA));
+    EXPECT_TRUE(msg.getHeaderFlag(Message::HEADERFLAG_RD));
 }
 
 TEST_F(DataSrcTest, Wildcard) {
@@ -325,7 +327,7 @@ TEST_F(DataSrcTest, Wildcard) {
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 6, 6);
 
-    RRsetIterator rit = msg.beginSection(Section::ANSWER());
+    RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("www.wild.example.com"), rrset->getName());
     EXPECT_EQ(RRType::A(), rrset->getType());
@@ -337,7 +339,7 @@ TEST_F(DataSrcTest, Wildcard) {
     it->next();
     EXPECT_TRUE(it->isLast());
 
-    rit = msg.beginSection(Section::AUTHORITY());
+    rit = msg.beginSection(Message::SECTION_AUTHORITY);
     rrset = *rit;
     EXPECT_EQ(Name("*.wild.example.com"), rrset->getName());
     EXPECT_EQ(RRType::NSEC(), rrset->getType());
@@ -360,7 +362,7 @@ TEST_F(DataSrcTest, Wildcard) {
     it->next();
     EXPECT_TRUE(it->isLast());
 
-    rit = msg.beginSection(Section::ADDITIONAL());
+    rit = msg.beginSection(Message::SECTION_ADDITIONAL);
     rrset = *rit;
     EXPECT_EQ(Name("dns01.example.com"), rrset->getName());
     EXPECT_EQ(RRType::A(), rrset->getType());
@@ -397,7 +399,7 @@ TEST_F(DataSrcTest, WildcardCname) {
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 6, 6);
 
-    RRsetIterator rit = msg.beginSection(Section::ANSWER());
+    RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("www.wild2.example.com"), rrset->getName());
     EXPECT_EQ(RRType::CNAME(), rrset->getType());
@@ -422,7 +424,7 @@ TEST_F(DataSrcTest, WildcardCname) {
     it->next();
     EXPECT_TRUE(it->isLast());
 
-    rit = msg.beginSection(Section::AUTHORITY());
+    rit = msg.beginSection(Message::SECTION_AUTHORITY);
     rrset = *rit;
     EXPECT_EQ(Name("*.wild2.example.com"), rrset->getName());
     EXPECT_EQ(RRType::NSEC(), rrset->getType());
@@ -445,7 +447,7 @@ TEST_F(DataSrcTest, WildcardCname) {
     it->next();
     EXPECT_TRUE(it->isLast());
 
-    rit = msg.beginSection(Section::ADDITIONAL());
+    rit = msg.beginSection(Message::SECTION_ADDITIONAL);
     rrset = *rit;
     EXPECT_EQ(Name("dns01.example.com"), rrset->getName());
     EXPECT_EQ(RRType::A(), rrset->getType());
@@ -465,7 +467,7 @@ TEST_F(DataSrcTest, WildcardCnameNodata) {
                           RRType::AAAA());
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 4, 0);
 
-    RRsetIterator rit = msg.beginSection(Section::ANSWER());
+    RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("www.wild2.example.com"), rrset->getName());
     EXPECT_EQ(RRType::CNAME(), rrset->getType());
@@ -477,7 +479,7 @@ TEST_F(DataSrcTest, WildcardCnameNodata) {
     it->next();
     EXPECT_TRUE(it->isLast());
 
-    rit = msg.beginSection(Section::AUTHORITY());
+    rit = msg.beginSection(Message::SECTION_AUTHORITY);
     rrset = *rit;
     EXPECT_EQ(Name("*.wild2.example.com"), rrset->getName());
     EXPECT_EQ(RRType::NSEC(), rrset->getType());
@@ -497,7 +499,7 @@ TEST_F(DataSrcTest, WildcardCnameNxdomain) {
                           RRType::A());
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 6, 0);
 
-    RRsetIterator rit = msg.beginSection(Section::ANSWER());
+    RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("www.wild3.example.com"), rrset->getName());
     EXPECT_EQ(RRType::CNAME(), rrset->getType());
@@ -509,7 +511,7 @@ TEST_F(DataSrcTest, WildcardCnameNxdomain) {
     it->next();
     EXPECT_TRUE(it->isLast());
 
-    rit = msg.beginSection(Section::AUTHORITY());
+    rit = msg.beginSection(Message::SECTION_AUTHORITY);
     rrset = *rit;
     EXPECT_EQ(Name("*.wild3.example.com"), rrset->getName());
     EXPECT_EQ(RRType::NSEC(), rrset->getType());
@@ -535,7 +537,7 @@ TEST_F(DataSrcTest, AuthDelegation) {
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 4, 6);
 
-    RRsetIterator rit = msg.beginSection(Section::ANSWER());
+    RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("www.sql1.example.com"), rrset->getName());
     EXPECT_EQ(RRType::A(), rrset->getType());
@@ -547,7 +549,7 @@ TEST_F(DataSrcTest, AuthDelegation) {
     it->next();
     EXPECT_TRUE(it->isLast());
 
-    rit = msg.beginSection(Section::AUTHORITY());
+    rit = msg.beginSection(Message::SECTION_AUTHORITY);
     rrset = *rit;
     EXPECT_EQ(Name("sql1.example.com"), rrset->getName());
     EXPECT_EQ(RRType::NS(), rrset->getType());
@@ -563,7 +565,7 @@ TEST_F(DataSrcTest, AuthDelegation) {
     it->next();
     EXPECT_TRUE(it->isLast());
 
-    rit = msg.beginSection(Section::ADDITIONAL());
+    rit = msg.beginSection(Message::SECTION_ADDITIONAL);
     rrset = *rit;
     EXPECT_EQ(Name("dns01.example.com"), rrset->getName());
     EXPECT_EQ(RRType::A(), rrset->getType());
@@ -582,7 +584,7 @@ TEST_F(DataSrcTest, Dname) {
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 5, 4, 6);
 
-    RRsetIterator rit = msg.beginSection(Section::ANSWER());
+    RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("dname.example.com"), rrset->getName());
     EXPECT_EQ(RRType::DNAME(), rrset->getType());
@@ -596,7 +598,7 @@ TEST_F(DataSrcTest, Dname) {
 
     // XXX: check CNAME and A record too
 
-    rit = msg.beginSection(Section::AUTHORITY());
+    rit = msg.beginSection(Message::SECTION_AUTHORITY);
     rrset = *rit;
     EXPECT_EQ(Name("sql1.example.com"), rrset->getName());
     EXPECT_EQ(RRType::NS(), rrset->getType());
@@ -612,7 +614,7 @@ TEST_F(DataSrcTest, Dname) {
     it->next();
     EXPECT_TRUE(it->isLast());
 
-    rit = msg.beginSection(Section::ADDITIONAL());
+    rit = msg.beginSection(Message::SECTION_ADDITIONAL);
     rrset = *rit;
     EXPECT_EQ(Name("dns01.example.com"), rrset->getName());
     EXPECT_EQ(RRType::A(), rrset->getType());
@@ -640,7 +642,7 @@ TEST_F(DataSrcTest, Cname) {
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 0, 0);
 
-    RRsetIterator rit = msg.beginSection(Section::ANSWER());
+    RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("foo.example.com"), rrset->getName());
     EXPECT_EQ(RRType::CNAME(), rrset->getType());
@@ -659,7 +661,7 @@ TEST_F(DataSrcTest, CnameInt) {
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 4, 6);
 
-    RRsetIterator rit = msg.beginSection(Section::ANSWER());
+    RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("cname-int.example.com"), rrset->getName());
     EXPECT_EQ(RRType::CNAME(), rrset->getType());
@@ -673,7 +675,7 @@ TEST_F(DataSrcTest, CnameInt) {
 
     // XXX: check a record as well
 
-    rit = msg.beginSection(Section::AUTHORITY());
+    rit = msg.beginSection(Message::SECTION_AUTHORITY);
     rrset = *rit;
     EXPECT_EQ(Name("example.com"), rrset->getName());
     EXPECT_EQ(RRType::NS(), rrset->getType());
@@ -686,7 +688,7 @@ TEST_F(DataSrcTest, CnameExt) {
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 4, 4, 6);
 
-    RRsetIterator rit = msg.beginSection(Section::ANSWER());
+    RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("cname-ext.example.com"), rrset->getName());
     EXPECT_EQ(RRType::CNAME(), rrset->getType());
@@ -698,7 +700,7 @@ TEST_F(DataSrcTest, CnameExt) {
     it->next();
     EXPECT_TRUE(it->isLast());
 
-    rit = msg.beginSection(Section::AUTHORITY());
+    rit = msg.beginSection(Message::SECTION_AUTHORITY);
     rrset = *rit;
     EXPECT_EQ(Name("sql1.example.com"), rrset->getName());
     EXPECT_EQ(RRType::NS(), rrset->getType());
@@ -711,7 +713,7 @@ TEST_F(DataSrcTest, Delegation) {
 
     headerCheck(msg, Rcode::NOERROR(), true, false, true, 0, 5, 2);
 
-    RRsetIterator rit = msg.beginSection(Section::AUTHORITY());
+    RRsetIterator rit = msg.beginSection(Message::SECTION_AUTHORITY);
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("subzone.example.com."), rrset->getName());
     EXPECT_EQ(RRType::NS(), rrset->getType());
@@ -723,7 +725,7 @@ TEST_F(DataSrcTest, Delegation) {
     it->next();
     EXPECT_FALSE(it->isLast());
 
-    rit = msg.beginSection(Section::ADDITIONAL());
+    rit = msg.beginSection(Message::SECTION_ADDITIONAL);
     rrset = *rit;
     EXPECT_EQ(Name("ns1.subzone.example.com"), rrset->getName());
     EXPECT_EQ(RRType::A(), rrset->getType());
@@ -742,7 +744,7 @@ TEST_F(DataSrcTest, NSDelegation) {
 
     headerCheck(msg, Rcode::NOERROR(), true, false, true, 0, 5, 2);
 
-    RRsetIterator rit = msg.beginSection(Section::AUTHORITY());
+    RRsetIterator rit = msg.beginSection(Message::SECTION_AUTHORITY);
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("subzone.example.com."), rrset->getName());
     EXPECT_EQ(RRType::NS(), rrset->getType());
@@ -754,7 +756,7 @@ TEST_F(DataSrcTest, NSDelegation) {
     it->next();
     EXPECT_FALSE(it->isLast());
 
-    rit = msg.beginSection(Section::ADDITIONAL());
+    rit = msg.beginSection(Message::SECTION_ADDITIONAL);
     rrset = *rit;
     EXPECT_EQ(Name("ns1.subzone.example.com"), rrset->getName());
     EXPECT_EQ(RRType::A(), rrset->getType());
@@ -780,13 +782,13 @@ TEST_F(DataSrcTest, NSECZonecut) {
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 2, 4, 6);
 
-    RRsetIterator rit = msg.beginSection(Section::ANSWER());
+    RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("subzone.example.com."), rrset->getName());
     EXPECT_EQ(RRType::NSEC(), rrset->getType());
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
-    rit = msg.beginSection(Section::AUTHORITY());
+    rit = msg.beginSection(Message::SECTION_AUTHORITY);
     rrset = *rit;
     EXPECT_EQ(Name("example.com"), rrset->getName());
     EXPECT_EQ(RRType::NS(), rrset->getType());
@@ -808,7 +810,7 @@ TEST_F(DataSrcTest, DNAMEZonecut) {
                           RRType::DNAME());
 
     headerCheck(msg, Rcode::NOERROR(), true, false, true, 0, 5, 2);
-    RRsetIterator rit = msg.beginSection(Section::AUTHORITY());
+    RRsetIterator rit = msg.beginSection(Message::SECTION_AUTHORITY);
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("subzone.example.com."), rrset->getName());
     EXPECT_EQ(RRType::NS(), rrset->getType());
@@ -820,7 +822,7 @@ TEST_F(DataSrcTest, DNAMEZonecut) {
     it->next();
     EXPECT_FALSE(it->isLast());
 
-    rit = msg.beginSection(Section::ADDITIONAL());
+    rit = msg.beginSection(Message::SECTION_ADDITIONAL);
     rrset = *rit;
     EXPECT_EQ(Name("ns1.subzone.example.com"), rrset->getName());
     EXPECT_EQ(RRType::A(), rrset->getType());
@@ -839,13 +841,13 @@ TEST_F(DataSrcTest, DS) {
 
     headerCheck(msg, Rcode::NOERROR(), true, true, true, 3, 4, 6);
 
-    RRsetIterator rit = msg.beginSection(Section::ANSWER());
+    RRsetIterator rit = msg.beginSection(Message::SECTION_ANSWER);
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("subzone.example.com."), rrset->getName());
     EXPECT_EQ(RRType::DS(), rrset->getType());
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
-    rit = msg.beginSection(Section::AUTHORITY());
+    rit = msg.beginSection(Message::SECTION_AUTHORITY);
     rrset = *rit;
     EXPECT_EQ(Name("example.com"), rrset->getName());
     EXPECT_EQ(RRType::NS(), rrset->getType());
@@ -870,7 +872,7 @@ TEST_F(DataSrcTest, CNAMELoop) {
     // one.loop.example points to two.loop.example, which points back
     // to one.loop.example, so there should be exactly two CNAME records
     // in the answer.
-    EXPECT_EQ(2, msg.getRRCount(Section::ANSWER()));
+    EXPECT_EQ(2, msg.getRRCount(Message::SECTION_ANSWER));
 }
 
 // NSEC query for the name of a zone cut for non-secure delegation.
@@ -881,7 +883,7 @@ TEST_F(DataSrcTest, NSECZonecutOfNonsecureZone) {
 
     headerCheck(msg, Rcode::NOERROR(), true, false, true, 0, 1, 1);
 
-    RRsetIterator rit = msg.beginSection(Section::AUTHORITY());
+    RRsetIterator rit = msg.beginSection(Message::SECTION_AUTHORITY);
     ConstRRsetPtr rrset = *rit;
     EXPECT_EQ(Name("sub.example.org."), rrset->getName());
     EXPECT_EQ(RRType::NS(), rrset->getType());
@@ -895,7 +897,7 @@ TEST_F(DataSrcTest, NSECZonecutOfNonsecureZone) {
     it->next();
     EXPECT_TRUE(it->isLast());
 
-    rit = msg.beginSection(Section::ADDITIONAL());
+    rit = msg.beginSection(Message::SECTION_ADDITIONAL);
     rrset = *rit;
     EXPECT_EQ(Name("ns.sub.example.org."), rrset->getName());
     EXPECT_EQ(RRType::A(), rrset->getType());
@@ -915,6 +917,24 @@ TEST_F(DataSrcTest, RootDSQuery) {
     headerCheck(msg, Rcode::REFUSED(), true, false, true, 0, 0, 0);
 }
 
+TEST_F(DataSrcTest, DSQueryFromCache) {
+    // explicitly enable hot spot cache
+    cache.setEnabled(true);
+
+    // The first query will create a negative cache for example.org/CNAME
+    createAndProcessQuery(Name("example.org"), RRClass::IN(), RRType::SOA());
+
+    // the cached CNAME shouldn't confuse subsequent query.
+    // there may be several different possible cases that could trigger a bug,
+    // but DS query is the only known example.
+    msg.clear(Message::PARSE);
+    createAndProcessQuery(Name("example.org"), RRClass::IN(), RRType::DS());
+
+    // returning refused is probably a bad behavior, but it's a different
+    // issue -- see Trac Ticket #306.
+    headerCheck(msg, Rcode::REFUSED(), true, false, true, 0, 0, 0);
+}
+
 // Non-existent name in the "static" data source.  The purpose of this test
 // is to check a corner case behavior when atypical RRClass (CH in this case)
 // is specified.
@@ -922,7 +942,7 @@ TEST_F(DataSrcTest, StaticNxDomain) {
     createAndProcessQuery(Name("www.version.bind"), RRClass::CH(),
                           RRType::TXT());
     headerCheck(msg, Rcode::NXDOMAIN(), true, true, true, 0, 1, 0);
-    RRsetIterator rit = msg.beginSection(Section::AUTHORITY());
+    RRsetIterator rit = msg.beginSection(Message::SECTION_AUTHORITY);
     RRsetPtr rrset = *rit;
     EXPECT_EQ(Name("version.bind"), rrset->getName());
     EXPECT_EQ(RRType::SOA(), rrset->getType());

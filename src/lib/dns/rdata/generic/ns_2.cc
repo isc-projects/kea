@@ -33,7 +33,7 @@ NS::NS(const std::string& namestr) :
     nsname_(namestr)
 {}
 
-NS::NS(InputBuffer& buffer, size_t rdata_len UNUSED_PARAM) :
+NS::NS(InputBuffer& buffer, size_t) :
     nsname_(buffer)
 {
     // we don't need rdata_len for parsing.  if necessary, the caller will
@@ -45,34 +45,29 @@ NS::NS(const NS& other) :
 {}
 
 void
-NS::toWire(OutputBuffer& buffer) const
-{
+NS::toWire(OutputBuffer& buffer) const {
     nsname_.toWire(buffer);
 }
 
 void
-NS::toWire(MessageRenderer& renderer) const
-{
+NS::toWire(MessageRenderer& renderer) const {
     renderer.writeName(nsname_);
 }
 
 string
-NS::toText() const
-{
+NS::toText() const {
     return (nsname_.toText());
 }
 
 int
-NS::compare(const Rdata& other) const
-{
+NS::compare(const Rdata& other) const {
     const NS& other_ns = dynamic_cast<const NS&>(other);
 
     return (compareNames(nsname_, other_ns.nsname_));
 }
 
 const Name&
-NS::getNSName() const
-{
+NS::getNSName() const {
     return (nsname_);
 }
 

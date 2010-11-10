@@ -14,12 +14,12 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #
-# Tests for the messagerenderer part of the libdns_python module
+# Tests for the messagerenderer part of the pydnspp module
 #
 
 import unittest
 import os
-from libdns_python import *
+from pydnspp import *
 
 class MessageRendererTest(unittest.TestCase):
 
@@ -32,20 +32,21 @@ class MessageRendererTest(unittest.TestCase):
         message = Message(Message.RENDER)
         message.set_qid(123)
         message.set_opcode(Opcode.QUERY())
+        message.set_rcode(Rcode.NOERROR())
         message.add_question(Question(name, c, t))
 
         self.message1 = message
         message = Message(Message.RENDER)
         message.set_qid(123)
-        message.set_header_flag(MessageFlag.AA())
-        message.set_header_flag(MessageFlag.QR())
+        message.set_header_flag(Message.HEADERFLAG_AA, True)
+        message.set_header_flag(Message.HEADERFLAG_QR, True)
         message.set_opcode(Opcode.QUERY())
         message.set_rcode(Rcode.NOERROR())
         message.add_question(Question(name, c, t))
         rrset = RRset(name, c, t, ttl)
         rrset.add_rdata(Rdata(t, c, "192.0.2.98"))
         rrset.add_rdata(Rdata(t, c, "192.0.2.99"))
-        message.add_rrset(Section.AUTHORITY(), rrset)
+        message.add_rrset(Message.SECTION_AUTHORITY, rrset)
         self.message2 = message
 
         self.renderer1 = MessageRenderer()

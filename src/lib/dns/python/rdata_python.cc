@@ -92,7 +92,7 @@ static PyMethodDef Rdata_methods[] = {
 // Most of the functions are not actually implemented and NULL here.
 static PyTypeObject rdata_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.Rdata",
+    "pydnspp.Rdata",
     sizeof(s_Rdata),                    // tp_basicsize
     0,                                  // tp_itemsize
     (destructor)Rdata_destroy,          // tp_dealloc
@@ -146,11 +146,20 @@ Rdata_init(s_Rdata* self, PyObject* args) {
     s_RRType* rrtype;
     s_RRClass* rrclass;
     const char* s;
-    
+    const char* data;
+    Py_ssize_t len;
+
+    // Create from string
     if (PyArg_ParseTuple(args, "O!O!s", &rrtype_type, &rrtype,
                                         &rrclass_type, &rrclass,
                                         &s)) {
         self->rdata = createRdata(*rrtype->rrtype, *rrclass->rrclass, s);
+        return (0);
+    } else if (PyArg_ParseTuple(args, "O!O!y#", &rrtype_type, &rrtype,
+                                &rrclass_type, &rrclass, &data, &len)) {
+        InputBuffer input_buffer(data, len);
+        self->rdata = createRdata(*rrtype->rrtype, *rrclass->rrclass,
+                                  input_buffer, len);
         return (0);
     }
 
@@ -195,7 +204,7 @@ Rdata_toWire(s_Rdata* self, PyObject* args) {
         // to prevent memory leak
         Py_DECREF(rd_bytes);
         return (result);
-    } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, (PyObject**) &mr)) {
+    } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
         self->rdata->toWire(*mr->messagerenderer);
         // If we return NULL it is seen as an error, so use this for
         // None returns
@@ -267,13 +276,13 @@ initModulePart_Rdata(PyObject* mod) {
                        reinterpret_cast<PyObject*>(&rdata_type));
 
     // Add the exceptions to the class
-    po_InvalidRdataLength = PyErr_NewException("libdns_python.InvalidRdataLength", NULL, NULL);
+    po_InvalidRdataLength = PyErr_NewException("pydnspp.InvalidRdataLength", NULL, NULL);
     PyModule_AddObject(mod, "InvalidRdataLength", po_InvalidRdataLength);
 
-    po_InvalidRdataText = PyErr_NewException("libdns_python.InvalidRdataText", NULL, NULL);
+    po_InvalidRdataText = PyErr_NewException("pydnspp.InvalidRdataText", NULL, NULL);
     PyModule_AddObject(mod, "InvalidRdataText", po_InvalidRdataText);
 
-    po_CharStringTooLong = PyErr_NewException("libdns_python.CharStringTooLong", NULL, NULL);
+    po_CharStringTooLong = PyErr_NewException("pydnspp.CharStringTooLong", NULL, NULL);
     PyModule_AddObject(mod, "CharStringTooLong", po_CharStringTooLong);
 
     

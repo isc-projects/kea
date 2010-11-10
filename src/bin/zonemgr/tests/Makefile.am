@@ -1,6 +1,8 @@
 PYTESTS = zonemgr_test.py
 EXTRA_DIST = $(PYTESTS)
 
+CLEANFILES = initdb.file
+
 # later will have configure option to choose this, like: coverage run --branch
 PYCOVERAGE = $(PYTHON)
 # test using command-line arguments, so use check-local target instead of TESTS

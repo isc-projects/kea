@@ -31,7 +31,7 @@ namespace config {
 /// \brief Creates a standard config/command level success answer message
 ///        (i.e. of the form { "result": [ 0 ] }
 /// \return Standard command/config success answer message
-ConstElementPtr createAnswer();
+isc::data::ConstElementPtr createAnswer();
 
 ///
 /// \brief Creates a standard config/command level answer message
@@ -43,7 +43,8 @@ ConstElementPtr createAnswer();
 ///            Element type. For rcode == 1, this argument is mandatory,
 ///            and must be a StringElement containing an error description
 /// \return Standard command/config answer message
-ConstElementPtr createAnswer(const int rcode, ConstElementPtr arg);
+isc::data::ConstElementPtr createAnswer(const int rcode,
+                                        isc::data::ConstElementPtr arg);
 
 ///
 /// \brief Creates a standard config/command level answer message
@@ -52,7 +53,8 @@ ConstElementPtr createAnswer(const int rcode, ConstElementPtr arg);
 /// \param rcode The return code (0 for success)
 /// \param arg A string to put into the StringElement argument
 /// \return Standard command/config answer message
-ConstElementPtr createAnswer(const int rcode, const std::string& arg);
+isc::data::ConstElementPtr createAnswer(const int rcode,
+                                        const std::string& arg);
 
 ///
 /// Parses a standard config/command level answer message
@@ -63,7 +65,8 @@ ConstElementPtr createAnswer(const int rcode, const std::string& arg);
 /// \return The optional argument in the message, or an empty ElementPtr
 ///         if there was no argument. If rcode != 0, this contains a
 ///         StringElement with the error description.
-ConstElementPtr parseAnswer(int &rcode, ConstElementPtr msg);
+isc::data::ConstElementPtr parseAnswer(int &rcode,
+                                       isc::data::ConstElementPtr msg);
 
 ///
 /// \brief Creates a standard config/command command message with no
@@ -71,7 +74,7 @@ ConstElementPtr parseAnswer(int &rcode, ConstElementPtr msg);
 /// 
 /// \param command The command string
 /// \return The created message
-ConstElementPtr createCommand(const std::string& command);
+isc::data::ConstElementPtr createCommand(const std::string& command);
 
 ///
 /// \brief Creates a standard config/command command message with the
@@ -81,7 +84,8 @@ ConstElementPtr createCommand(const std::string& command);
 /// \param arg The optional argument for the command. This can be of 
 ///        any Element type, but it should conform to the .spec file.
 /// \return The created message
-ConstElementPtr createCommand(const std::string& command, ConstElementPtr arg);
+isc::data::ConstElementPtr createCommand(const std::string& command,
+                                         isc::data::ConstElementPtr arg);
 
 ///
 /// \brief Parses the given command into a string containing the actual
@@ -92,7 +96,8 @@ ConstElementPtr createCommand(const std::string& command, ConstElementPtr arg);
 /// \param command The command message containing the command (as made
 ///        by createCommand()
 /// \return The command string
-std::string parseCommand(ConstElementPtr& arg, ConstElementPtr command);
+std::string parseCommand(isc::data::ConstElementPtr& arg,
+                         isc::data::ConstElementPtr command);
 
 
 ///
@@ -225,8 +230,9 @@ public:
      * \param identifier The identifier of the config value
      * \return The configuration setting at the given identifier
      */
-    ConstElementPtr getRemoteConfigValue(const std::string& module_name,
-                                         const std::string& identifier) const;
+    isc::data::ConstElementPtr getRemoteConfigValue(
+        const std::string& module_name,
+        const std::string& identifier) const;
     
 private:
     ModuleSpec readModuleSpecification(const std::string& filename);
@@ -235,7 +241,8 @@ private:
     std::string module_name_;
     isc::cc::AbstractSession& session_;
     ModuleSpec module_specification_;
-    ConstElementPtr handleConfigUpdate(ConstElementPtr new_config);
+    isc::data::ConstElementPtr handleConfigUpdate(
+        isc::data::ConstElementPtr new_config);
 
     isc::data::ConstElementPtr(*config_handler_)(
         isc::data::ConstElementPtr new_config);
@@ -245,7 +252,7 @@ private:
 
     std::map<std::string, ConfigData> remote_module_configs_;
     void updateRemoteConfig(const std::string& module_name,
-                            ConstElementPtr new_config);
+                            isc::data::ConstElementPtr new_config);
 };
 
 }

@@ -48,8 +48,7 @@ protected:
 
 const uint8_t BufferTest::testdata[5] = {1, 2, 3, 4, 5};
 
-TEST_F(BufferTest, inputBufferRead)
-{
+TEST_F(BufferTest, inputBufferRead) {
     EXPECT_EQ(5, ibuffer.getLength());
     EXPECT_EQ(1, ibuffer.readUint8());
     EXPECT_EQ(1, ibuffer.getPosition());
@@ -66,8 +65,7 @@ TEST_F(BufferTest, inputBufferRead)
     EXPECT_EQ(0, memcmp(vdata, testdata, sizeof(testdata)));
 }
 
-TEST_F(BufferTest, inputBufferException)
-{
+TEST_F(BufferTest, inputBufferException) {
     EXPECT_THROW(ibuffer.setPosition(6), isc::dns::InvalidBufferPosition);
 
     ibuffer.setPosition(sizeof(testdata));
@@ -84,8 +82,7 @@ TEST_F(BufferTest, inputBufferException)
                  isc::dns::InvalidBufferPosition);
 }
 
-TEST_F(BufferTest, outputBufferExtend)
-{
+TEST_F(BufferTest, outputBufferExtend) {
     EXPECT_EQ(0, obuffer.getCapacity());
     EXPECT_EQ(0, obuffer.getLength());
     obuffer.writeUint8(10);
@@ -93,8 +90,7 @@ TEST_F(BufferTest, outputBufferExtend)
     EXPECT_EQ(1, obuffer.getLength());
 }
 
-TEST_F(BufferTest, outputBufferWrite)
-{
+TEST_F(BufferTest, outputBufferWrite) {
     const uint8_t* cp;
 
     obuffer.writeUint8(1);
@@ -126,8 +122,7 @@ TEST_F(BufferTest, outputBufferWrite)
     EXPECT_EQ(0, memcmp(cp + 7, testdata, sizeof(testdata)));
 }
 
-TEST_F(BufferTest, outputBufferWriteat)
-{
+TEST_F(BufferTest, outputBufferWriteat) {
     obuffer.writeUint32(data32);
     expected_size += sizeof(data32);
 
@@ -153,8 +148,7 @@ TEST_F(BufferTest, outputBufferWriteat)
                  isc::dns::InvalidBufferPosition);
 }
 
-TEST_F(BufferTest, outputBufferSkip)
-{
+TEST_F(BufferTest, outputBufferSkip) {
     obuffer.skip(4);
     EXPECT_EQ(4, obuffer.getLength());
 
@@ -162,8 +156,7 @@ TEST_F(BufferTest, outputBufferSkip)
     EXPECT_EQ(6, obuffer.getLength());
 }
 
-TEST_F(BufferTest, outputBufferTrim)
-{
+TEST_F(BufferTest, outputBufferTrim) {
     obuffer.writeData(testdata, sizeof(testdata));
     EXPECT_EQ(5, obuffer.getLength());
 
@@ -176,8 +169,7 @@ TEST_F(BufferTest, outputBufferTrim)
     EXPECT_THROW(obuffer.trim(3), OutOfRange);
 }
 
-TEST_F(BufferTest, outputBufferReadat)
-{
+TEST_F(BufferTest, outputBufferReadat) {
     obuffer.writeData(testdata, sizeof(testdata));
     for (int i = 0; i < sizeof(testdata); i ++) {
         EXPECT_EQ(testdata[i], obuffer[i]);
@@ -185,8 +177,7 @@ TEST_F(BufferTest, outputBufferReadat)
     EXPECT_THROW(obuffer[sizeof(testdata)], isc::dns::InvalidBufferPosition);
 }
 
-TEST_F(BufferTest, outputBufferClear)
-{
+TEST_F(BufferTest, outputBufferClear) {
     obuffer.writeData(testdata, sizeof(testdata));
     obuffer.clear();
     EXPECT_EQ(0, obuffer.getLength());

@@ -1,1 +1,1 @@
-from libdns_python_name import *
+from pydnspp import *

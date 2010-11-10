@@ -35,26 +35,49 @@
 // API.
 
 namespace asiolink {
-/// \brief A TCP-specific \c IOEndpoint object.
+/// \brief The \c TCPEndpoint class is a concrete derived class of
+/// \c IOEndpoint that represents an endpoint of a TCP connection.
+///
+/// In the current implementation, an object of this class is always
+/// instantiated within the wrapper routines.  Applications are expected to
+/// get access to the object via the abstract base class, \c IOEndpoint.
+/// This design may be changed when we generalize the wrapper interface.
 ///
 /// Note: this implementation is optimized for the case where this object
 /// is created from an ASIO endpoint object in a receiving code path
-/// by avoiding the need to copy of the base endpoint.  For TCP, it may
-/// not be a big deal, but when we receive UDP packets at a high rate,
-/// the copy overhead could be significant.
+/// by avoiding to make a copy of the base endpoint.  For TCP it may not be
+/// a big deal, but when we receive UDP packets at a high rate, the copy
+/// overhead might be significant.
 class TCPEndpoint : public IOEndpoint {
 public:
+    ///
+    /// \name Constructors and Destructor
+    ///
+    //@{
+    /// \brief Constructor from a pair of address and port.
+    ///
+    /// \param address The IP address of the endpoint.
+    /// \param port The TCP port number of the endpoint.
     TCPEndpoint(const IOAddress& address, const unsigned short port) :
         asio_endpoint_placeholder_(
             new asio::ip::tcp::endpoint(
                 asio::ip::address::from_string(address.toText()), port)),
         asio_endpoint_(*asio_endpoint_placeholder_)
     {}
+
+    /// \brief Constructor from an ASIO TCP endpoint.
+    ///
+    /// This constructor is designed to be an efficient wrapper for the
+    /// corresponding ASIO class, \c tcp::endpoint.
+    ///
+    /// \param asio_endpoint The ASIO representation of the TCP endpoint.
     TCPEndpoint(const asio::ip::tcp::endpoint& asio_endpoint) :
         asio_endpoint_placeholder_(NULL), asio_endpoint_(asio_endpoint)
     {}
-        
+
+    /// \brief The destructor.
     ~TCPEndpoint() { delete asio_endpoint_placeholder_; }
+    //@}
 
     inline IOAddress getAddress() const {
         return (asio_endpoint_.address());
@@ -83,12 +106,21 @@ private:
     const asio::ip::tcp::endpoint& asio_endpoint_;
 };
 
-/// \brief A TCP-specific \c IOSocket object.
+/// \brief The \c TCPSocket class is a concrete derived class of
+/// \c IOSocket that represents a TCP socket.
+///
+/// In the current implementation, an object of this class is always
+/// instantiated within the wrapper routines.  Applications are expected to
+/// get access to the object via the abstract base class, \c IOSocket.
+/// This design may be changed when we generalize the wrapper interface.
 class TCPSocket : public IOSocket {
 private:
     TCPSocket(const TCPSocket& source);
     TCPSocket& operator=(const TCPSocket& source);
 public:
+    /// \brief Constructor from an ASIO TCP socket.
+    ///
+    /// \param socket The ASIO representation of the TCP socket.
     TCPSocket(asio::ip::tcp::socket& socket) : socket_(socket) {}
 
     inline int getNative() const { return (socket_.native()); }

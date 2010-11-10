@@ -28,17 +28,16 @@ class MockSession : public isc::cc::AbstractSession {
 public:
     MockSession() :
         // by default we return a simple "success" message.
-        msg_(Element::fromJSON("{\"result\": [0, \"SUCCESS\"]}")),
+        msg_(isc::data::Element::fromJSON("{\"result\": [0, \"SUCCESS\"]}")),
         send_ok_(true), receive_ok_(true)
     {}
 
 
-    virtual void establish(const char* socket_file UNUSED_PARAM) {}
+    virtual void establish(const char*) {}
     virtual void disconnect() {}
 
     virtual int group_sendmsg(isc::data::ConstElementPtr msg, std::string group,
-                              std::string instance UNUSED_PARAM,
-                              std::string to UNUSED_PARAM)
+                              std::string, std::string)
     {
         if (!send_ok_) {
             isc_throw(isc::cc::SessionError,
@@ -50,10 +49,8 @@ public:
         return (0);
     }
 
-    virtual bool group_recvmsg(isc::data::ConstElementPtr& env UNUSED_PARAM,
-                               isc::data::ConstElementPtr& msg UNUSED_PARAM,
-                               bool nonblock UNUSED_PARAM,
-                               int seq UNUSED_PARAM)
+    virtual bool group_recvmsg(isc::data::ConstElementPtr&,
+                               isc::data::ConstElementPtr& msg, bool, int)
     {
         if (!receive_ok_) {
             isc_throw(isc::cc::SessionError,
@@ -64,15 +61,12 @@ public:
         return (true);
     }
 
-    virtual void subscribe(std::string group UNUSED_PARAM,
-                           std::string instance UNUSED_PARAM) {}
-    virtual void unsubscribe(std::string group UNUSED_PARAM,
-                             std::string instance UNUSED_PARAM) {}
+    virtual void subscribe(std::string, std::string) {}
+    virtual void unsubscribe(std::string, std::string) {}
 
-    virtual void startRead(boost::function<void()> callback UNUSED_PARAM) {}
+    virtual void startRead(boost::function<void()>) {}
 
-    virtual int reply(isc::data::ConstElementPtr envelope UNUSED_PARAM,
-                      isc::data::ConstElementPtr newmsg UNUSED_PARAM) {
+    virtual int reply(isc::data::ConstElementPtr, isc::data::ConstElementPtr) {
         return (-1);
     }
 
@@ -80,7 +74,7 @@ public:
         return (false);
     }
 
-    virtual void setTimeout(size_t timeout UNUSED_PARAM) {};
+    virtual void setTimeout(size_t) {};
     virtual size_t getTimeout() const { return 0; };
 
     // The following methods extent AbstractSession to allow testing:
@@ -103,9 +97,7 @@ private:
 class MockServer : public asiolink::DNSServer {
 public:
     MockServer() : done_(false) {}
-    void operator()(asio::error_code ec UNUSED_PARAM,
-                    size_t length UNUSED_PARAM)
-    {}
+    void operator()(asio::error_code, size_t) {}
     virtual void resume(const bool done) { done_ = done; }
     virtual bool hasAnswer() { return (done_); }
     virtual int value() { return (0); }
@@ -137,10 +129,7 @@ public:
         is_connected_ = false;
     }
 
-    virtual int sendXfroutRequestInfo(int tcp_sock UNUSED_PARAM,
-                                      const void* msg_data UNUSED_PARAM,
-                                      uint16_t msg_len UNUSED_PARAM)
-    {
+    virtual int sendXfroutRequestInfo(int, const void*, uint16_t) {
         if (!send_ok_) {
             isc_throw(isc::xfr::XfroutError,
                        "xfrout connection send is disabled for test");

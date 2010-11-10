@@ -22,6 +22,8 @@
 #include <dns/buffer.h>
 #include <dns/message.h>
 #include <dns/name.h>
+#include <dns/opcode.h>
+#include <dns/rcode.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
 
@@ -80,13 +82,12 @@ public:
         EXPECT_EQ(0, message.getQid());
         EXPECT_EQ(Opcode::QUERY(), message.getOpcode());
         EXPECT_EQ(Rcode::NOERROR(), message.getRcode());
-        EXPECT_EQ(Rcode::NOERROR(), message.getRcode());
-        EXPECT_FALSE(message.getHeaderFlag(MessageFlag::QR()));
-        EXPECT_FALSE(message.getHeaderFlag(MessageFlag::AA()));
-        EXPECT_EQ(1, message.getRRCount(Section::QUESTION()));
-        EXPECT_EQ(0, message.getRRCount(Section::ANSWER()));
-        EXPECT_EQ(0, message.getRRCount(Section::AUTHORITY()));
-        EXPECT_EQ(0, message.getRRCount(Section::ADDITIONAL()));
+        EXPECT_FALSE(message.getHeaderFlag(Message::HEADERFLAG_QR));
+        EXPECT_FALSE(message.getHeaderFlag(Message::HEADERFLAG_AA));
+        EXPECT_EQ(1, message.getRRCount(Message::SECTION_QUESTION));
+        EXPECT_EQ(0, message.getRRCount(Message::SECTION_ANSWER));
+        EXPECT_EQ(0, message.getRRCount(Message::SECTION_AUTHORITY));
+        EXPECT_EQ(0, message.getRRCount(Message::SECTION_ADDITIONAL));
 
         // Check if the question matches our original data, if the expected
         // data is given.

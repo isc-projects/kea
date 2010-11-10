@@ -96,7 +96,7 @@ class io_service;
 /// http://think-async.com/Asio/asio-1.3.1/doc/asio/reference/asio_handler_allocate.html
 
 namespace asiolink {
-struct DNSServiceImpl;
+class DNSServiceImpl;
 struct IOServiceImpl;
 
 /// \brief An exception that is thrown if an error occurs within the IO
