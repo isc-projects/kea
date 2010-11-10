@@ -130,5 +130,28 @@ class TestBossArgs(unittest.TestCase):
         x = bob.wait()
         self.assertTrue(bob.wait() == 0)
 
+    def testPrettyName(self):
+        """Try the --pretty-name option."""
+        CMD_PRETTY_NAME = b'bob-name-test'
+        bob = subprocess.Popen(args=(BIND10_EXE, '--pretty-name',
+            CMD_PRETTY_NAME), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        started_ok = self._waitForString(bob, '[bind10] BIND 10 started')
+        self.assertTrue(started_ok)
+        ps = subprocess.Popen(args=("ps", "axo", "pid,comm"),
+                              stdout=subprocess.PIPE)
+        s = ps.stdout.readline()
+        command = None
+        while True:
+            s = ps.stdout.readline()
+            if s == '': break
+            (pid,comm) = s.split(None, 1)
+            if int(pid) == bob.pid:
+                command = comm
+                break
+        self.assertEqual(command, CMD_PRETTY_NAME + b'\n')
+        time.sleep(0.1)
+        bob.terminate()
+        bob.wait()
+
 if __name__ == '__main__':
     unittest.main()

@@ -19,6 +19,7 @@
 #include <dns/buffer.h>
 #include <dns/message.h>
 #include <dns/name.h>
+#include <dns/opcode.h>
 #include <dns/rrtype.h>
 #include <dns/rrclass.h>
 
@@ -37,7 +38,7 @@ createQuery(Message& m, const Name& qname, const RRClass& qclass,
             const RRType& qtype)
 {
     m.setOpcode(Opcode::QUERY());
-    m.setHeaderFlag(MessageFlag::RD());
+    m.setHeaderFlag(Message::HEADERFLAG_RD);
     m.addQuestion(Question(qname, qclass, qtype));
 }
 

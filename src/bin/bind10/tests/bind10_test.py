@@ -1,4 +1,4 @@
-from bind10 import ProcessInfo, BoB, IPAddr
+from bind10 import ProcessInfo, BoB
 
 # XXX: environment tests are currently disabled, due to the preprocessor
 #      setup that we have now complicating the environment
@@ -8,6 +8,7 @@ import sys
 import os
 import signal
 import socket
+from isc.net.addr import IPAddr
 
 class TestProcessInfo(unittest.TestCase):
     def setUp(self):
@@ -72,28 +73,6 @@ class TestProcessInfo(unittest.TestCase):
         self.assertTrue(type(pi.pid) is int)
         self.assertNotEqual(pi.pid, old_pid)
 
-class TestIPAddr(unittest.TestCase):
-    def test_v6ok(self):
-        addr = IPAddr('2001:4f8::1')
-        self.assertEqual(addr.family, socket.AF_INET6)
-        self.assertEqual(addr.addr, socket.inet_pton(socket.AF_INET6, '2001:4f8::1'))
-
-    def test_v4ok(self):
-        addr = IPAddr('127.127.127.127')
-        self.assertEqual(addr.family, socket.AF_INET)
-        self.assertEqual(addr.addr, socket.inet_aton('127.127.127.127'))
-
-    def test_badaddr(self):
-        self.assertRaises(socket.error, IPAddr, 'foobar')
-        self.assertRaises(socket.error, IPAddr, 'foo::bar')
-        self.assertRaises(socket.error, IPAddr, '123')
-        self.assertRaises(socket.error, IPAddr, '123.456.789.0')
-        self.assertRaises(socket.error, IPAddr, '127/8')
-        self.assertRaises(socket.error, IPAddr, '0/0')
-        self.assertRaises(socket.error, IPAddr, '1.2.3.4/32')
-        self.assertRaises(socket.error, IPAddr, '0')
-        self.assertRaises(socket.error, IPAddr, '')
-
 class TestBoB(unittest.TestCase):
     def test_init(self):
         bob = BoB()
@@ -127,7 +106,7 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.runnable, False)
 
     def test_init_alternate_address(self):
-        bob = BoB(None, 5300, '127.127.127.127')
+        bob = BoB(None, 5300, IPAddr('127.127.127.127'))
         self.assertEqual(bob.verbose, False)
         self.assertEqual(bob.dns_port, 5300)
         self.assertEqual(bob.msgq_socket_file, None)

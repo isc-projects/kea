@@ -29,6 +29,8 @@
 #include <dns/buffer.h>
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
+#include <dns/opcode.h>
+#include <dns/rcode.h>
 
 #include <asiolink.h>
 #include <internal/coroutine.h>
@@ -202,7 +204,7 @@ UDPQuery::operator()(error_code ec, size_t length) {
             msg.setQid(0);
             msg.setOpcode(Opcode::QUERY());
             msg.setRcode(Rcode::NOERROR());
-            msg.setHeaderFlag(MessageFlag::RD());
+            msg.setHeaderFlag(Message::HEADERFLAG_RD);
             msg.addQuestion(question_);
             MessageRenderer renderer(*msgbuf_);
             msg.toWire(renderer);

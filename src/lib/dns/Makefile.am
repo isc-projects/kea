@@ -1,6 +1,7 @@
 SUBDIRS = . tests python
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
+AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 CLEANFILES = *.gcno *.gcda
@@ -63,11 +64,14 @@ libdns___la_SOURCES += util/binary_from_base32hex.h
 libdns___la_SOURCES += util/base16_from_binary.h util/binary_from_base16.h
 libdns___la_SOURCES += buffer.h
 libdns___la_SOURCES += dnssectime.h dnssectime.cc
+libdns___la_SOURCES += edns.h edns.cc
 libdns___la_SOURCES += exceptions.h exceptions.cc
 libdns___la_SOURCES += util/hex.h
 libdns___la_SOURCES += message.h message.cc
 libdns___la_SOURCES += messagerenderer.h messagerenderer.cc
 libdns___la_SOURCES += name.h name.cc
+libdns___la_SOURCES += opcode.h opcode.cc
+libdns___la_SOURCES += rcode.h rcode.cc
 libdns___la_SOURCES += rdata.h rdata.cc
 libdns___la_SOURCES += rrclass.cc
 libdns___la_SOURCES += rrparamregistry.h
@@ -88,8 +92,8 @@ rrparamregistry.cc: rrparamregistry-placeholder.cc
 rrclass.h rrtype.h rrparamregistry.cc rdataclass.h rdataclass.cc: Makefile
 	./gen-rdatacode.py
 
-libdns++_includedir = $(includedir)/dns
-libdns++_include_HEADERS = \
+libdns___includedir = $(includedir)/dns
+libdns___include_HEADERS = \
 	buffer.h \
 	dnssectime.h \
 	exceptions.h \

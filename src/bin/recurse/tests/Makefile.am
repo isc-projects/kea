@@ -1,3 +1,5 @@
+SUBDIRS = testdata .
+
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/lib/dns -I$(top_srcdir)/src/bin
 AM_CPPFLAGS += -I$(top_builddir)/src/lib/cc
@@ -34,13 +36,3 @@ run_unittests_LDADD += $(top_builddir)/src/lib/xfr/libxfr.la
 endif
 
 noinst_PROGRAMS = $(TESTS)
-
-EXTRA_DIST = testdata/iqueryresponse_fromWire
-EXTRA_DIST += testdata/multiquestion_fromWire
-EXTRA_DIST += testdata/queryBadEDNS_fromWire
-EXTRA_DIST += testdata/shortanswer_fromWire
-EXTRA_DIST += testdata/shortmessage_fromWire
-EXTRA_DIST += testdata/shortquestion_fromWire
-EXTRA_DIST += testdata/shortresponse_fromWire
-EXTRA_DIST += testdata/simplequery_fromWire
-EXTRA_DIST += testdata/simpleresponse_fromWire

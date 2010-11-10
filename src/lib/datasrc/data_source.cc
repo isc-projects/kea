@@ -32,6 +32,7 @@
 #include <dns/buffer.h>
 #include <dns/message.h>
 #include <dns/name.h>
+#include <dns/rcode.h>
 #include <dns/rdataclass.h>
 #include <dns/rrset.h>
 #include <dns/rrsetlist.h>
@@ -100,14 +101,14 @@ getAdditional(Query& q, ConstRRsetPtr rrset) {
             const generic::NS& ns = dynamic_cast<const generic::NS&>(rd);
             q.tasks().push(QueryTaskPtr(
                                new QueryTask(q, ns.getNSName(),
-                                             Section::ADDITIONAL(),
+                                             Message::SECTION_ADDITIONAL,
                                              QueryTask::GLUE_QUERY,
                                              QueryTask::GETADDITIONAL))); 
         } else if (rrset->getType() == RRType::MX()) {
             const generic::MX& mx = dynamic_cast<const generic::MX&>(rd);
             q.tasks().push(QueryTaskPtr(
                                new QueryTask(q, mx.getMXName(),
-                                             Section::ADDITIONAL(),
+                                             Message::SECTION_ADDITIONAL,
                                              QueryTask::NOGLUE_QUERY,
                                              QueryTask::GETADDITIONAL))); 
         }
@@ -164,7 +165,7 @@ chaseCname(Query& q, QueryTaskPtr task, RRsetPtr rrset) {
     q.tasks().push(QueryTaskPtr(
                        new QueryTask(q, dynamic_cast<const generic::CNAME&>
                                      (it->getCurrent()).getCname(),
-                                     task->qtype, Section::ANSWER(),
+                                     task->qtype, Message::SECTION_ANSWER,
                                      QueryTask::FOLLOWCNAME)));
 }
 
@@ -206,6 +207,11 @@ checkCache(QueryTask& task, RRsetList& target) {
         if (!hit || !rrset || (flags & DataSrc::CNAME_FOUND) != 0) {
             hit = cache.retrieve(task.qname, task.qclass, RRType::CNAME(),
                                  rrset, flags);
+            if (!rrset) {
+                // If we don't have a positive cache, forget it; otherwise the
+                // intermediate result may confuse the subsequent processing.
+                hit = false;
+            }
         }
 
         if (hit) {
@@ -467,16 +473,19 @@ doQueryTask(QueryTask& task, ZoneInfo& zoneinfo, RRsetList& target) {
 // checking first to ensure that there isn't already an RRset with
 // the same name and type.
 inline void
-addToMessage(Query& q, const Section& sect, RRsetPtr rrset,
+addToMessage(Query& q, const Message::Section sect, RRsetPtr rrset,
              bool no_dnssec = false)
 {
     Message& m = q.message();
     if (no_dnssec) {
-        if (rrset->getType() == RRType::RRSIG() || !m.hasRRset(sect, rrset)) {
+        if (rrset->getType() == RRType::RRSIG() ||
+            !m.hasRRset(sect, rrset->getName(), rrset->getClass(),
+                        rrset->getType())) {
             m.addRRset(sect, rrset, false);
         }
     } else {
-        if (!m.hasRRset(sect, rrset)) {
+        if (!m.hasRRset(sect, rrset->getName(), rrset->getClass(),
+                        rrset->getType())) {
             m.addRRset(sect, rrset, q.wantDnssec());
         }
     }
@@ -492,7 +501,7 @@ copyAuth(Query& q, RRsetList& auth) {
         if (rrset->getType() == RRType::DS() && !q.wantDnssec()) {
             continue;
         }
-        addToMessage(q, Section::AUTHORITY(), rrset);
+        addToMessage(q, Message::SECTION_AUTHORITY, rrset);
         getAdditional(q, rrset);
     }
 }
@@ -554,11 +563,11 @@ hasDelegation(Query& q, QueryTaskPtr task, ZoneInfo& zoneinfo) {
             RRsetPtr r = ref.findRRset(RRType::DNAME(), q.qclass());
             if (r != NULL) {
                 RRsetList syn;
-                addToMessage(q, Section::ANSWER(), r);
-                q.message().setHeaderFlag(MessageFlag::AA());
+                addToMessage(q, Message::SECTION_ANSWER, r);
+                q.message().setHeaderFlag(Message::HEADERFLAG_AA);
                 synthesizeCname(task, r, syn);
                 if (syn.size() == 1) {
-                    addToMessage(q, Section::ANSWER(),
+                    addToMessage(q, Message::SECTION_ANSWER,
                                  syn.findRRset(RRType::CNAME(), q.qclass()));
                     chaseCname(q, task, syn.findRRset(RRType::CNAME(),
                                                       q.qclass()));
@@ -576,7 +585,7 @@ hasDelegation(Query& q, QueryTaskPtr task, ZoneInfo& zoneinfo) {
     // at the actual qname node.)
     if (task->op == QueryTask::AUTH_QUERY &&
         task->state == QueryTask::GETANSWER) {
-        q.message().setHeaderFlag(MessageFlag::AA());
+        q.message().setHeaderFlag(Message::HEADERFLAG_AA);
     }
 
     return (false);
@@ -593,7 +602,7 @@ addSOA(Query& q, ZoneInfo& zoneinfo) {
         return (DataSrc::ERROR);
     }
 
-    addToMessage(q, Section::AUTHORITY(),
+    addToMessage(q, Message::SECTION_AUTHORITY,
                  soa.findRRset(RRType::SOA(), q.qclass()));
     return (DataSrc::SUCCESS);
 }
@@ -605,7 +614,7 @@ addNSEC(Query& q, const Name& name, ZoneInfo& zoneinfo) {
     QueryTask newtask(q, name, RRType::NSEC(), QueryTask::SIMPLE_QUERY); 
     RETERR(doQueryTask(newtask, zoneinfo, nsec));
     if (newtask.flags == 0) {
-        addToMessage(q, Section::AUTHORITY(),
+        addToMessage(q, Message::SECTION_AUTHORITY,
                      nsec.findRRset(RRType::NSEC(), q.qclass()));
     }
 
@@ -674,7 +683,7 @@ proveNX(Query& q, QueryTaskPtr task, ZoneInfo& zoneinfo, const bool wildcard) {
         RRsetPtr rrset;
         string hash1(nsec3->getHash(task->qname));
         RETERR(getNsec3(q, zoneinfo, hash1, rrset));
-        addToMessage(q, Section::AUTHORITY(), rrset);
+        addToMessage(q, Message::SECTION_AUTHORITY, rrset);
 
         // If this is an NXRRSET or NOERROR/NODATA, we're done
         if ((task->flags & DataSrc::TYPE_NOT_FOUND) != 0) {
@@ -699,7 +708,7 @@ proveNX(Query& q, QueryTaskPtr task, ZoneInfo& zoneinfo, const bool wildcard) {
             // we don't want to use one until we find an exact match
             RETERR(getNsec3(q, zoneinfo, hash2, rrset));
             if (hash2 == nodehash) {
-                addToMessage(q, Section::AUTHORITY(), rrset);
+                addToMessage(q, Message::SECTION_AUTHORITY, rrset);
                 break;
             }
         }
@@ -714,7 +723,7 @@ proveNX(Query& q, QueryTaskPtr task, ZoneInfo& zoneinfo, const bool wildcard) {
         string hash3(nsec3->getHash(Name("*").concatenate(enclosure)));
         RETERR(getNsec3(q, zoneinfo, hash3, rrset));
         if (hash3 != hash1 && hash3 != hash2) {
-            addToMessage(q, Section::AUTHORITY(), rrset);
+            addToMessage(q, Message::SECTION_AUTHORITY, rrset);
         }
     } else {
         Name nsecname(task->qname);
@@ -772,7 +781,7 @@ tryWildcard(Query& q, QueryTaskPtr task, ZoneInfo& zoneinfo, bool& found) {
 
     for (int i = 1; i <= diff; ++i) {
         const Name& wname(star.concatenate(task->qname.split(i)));
-        QueryTask newtask(q, wname, task->qtype, Section::ANSWER(),
+        QueryTask newtask(q, wname, task->qtype, Message::SECTION_ANSWER,
                           QueryTask::AUTH_QUERY); 
         result = doQueryTask(newtask, zoneinfo, wild);
         if (result == DataSrc::SUCCESS) {
@@ -814,13 +823,13 @@ tryWildcard(Query& q, QueryTaskPtr task, ZoneInfo& zoneinfo, bool& found) {
             RRsetPtr rrset = wild.findRRset(RRType::CNAME(), q.qclass());
             if (rrset != NULL) {
                 rrset->setName(task->qname);
-                addToMessage(q, Section::ANSWER(), rrset);
+                addToMessage(q, Message::SECTION_ANSWER, rrset);
                 chaseCname(q, task, rrset);
             }
         } else {
             BOOST_FOREACH (RRsetPtr rrset, wild) {
                 rrset->setName(task->qname);
-                addToMessage(q, Section::ANSWER(), rrset);
+                addToMessage(q, Message::SECTION_ANSWER, rrset);
             }
 
             RRsetList auth;
@@ -849,7 +858,7 @@ DataSrc::doQuery(Query& q) {
 
     // Process the query task queue.  (The queue is initialized
     // and the first task placed on it by the Query constructor.)
-    m.clearHeaderFlag(MessageFlag::AA());
+    m.setHeaderFlag(Message::HEADERFLAG_AA, false);
     while (!q.tasks().empty()) {
         QueryTaskPtr task = q.tasks().front();
         q.tasks().pop();
@@ -976,19 +985,19 @@ DataSrc::doQuery(Query& q) {
             // The qname node contains an out-of-zone referral.
             if (task->state == QueryTask::GETANSWER) {
                 RRsetList auth;
-                m.clearHeaderFlag(MessageFlag::AA());
+                m.setHeaderFlag(Message::HEADERFLAG_AA, false);
                 if (!refQuery(q, task->qname, zoneinfo, auth)) {
                     m.setRcode(Rcode::SERVFAIL());
                     return;
                 }
                 BOOST_FOREACH (RRsetPtr rrset, auth) {
                     if (rrset->getType() == RRType::NS()) {
-                        addToMessage(q, Section::AUTHORITY(), rrset);
+                        addToMessage(q, Message::SECTION_AUTHORITY, rrset);
                     } else if (rrset->getType() == task->qtype) {
-                        addToMessage(q, Section::ANSWER(), rrset);
+                        addToMessage(q, Message::SECTION_ANSWER, rrset);
                     } else if (rrset->getType() == RRType::DS() &&
                                q.wantDnssec()) {
-                        addToMessage(q, Section::AUTHORITY(), rrset);
+                        addToMessage(q, Message::SECTION_AUTHORITY, rrset);
                     }
                     getAdditional(q, rrset);
                 }
@@ -1057,13 +1066,14 @@ DataSrc::doQuery(Query& q) {
     // space, signatures in additional section are
     // optional.)
     BOOST_FOREACH(RRsetPtr rrset, additional) {
-        addToMessage(q, Section::ADDITIONAL(), rrset, true);
+        addToMessage(q, Message::SECTION_ADDITIONAL, rrset, true);
     }
 
     if (q.wantDnssec()) {
         BOOST_FOREACH(RRsetPtr rrset, additional) {
             if (rrset->getRRsig()) {
-                addToMessage(q, Section::ADDITIONAL(), rrset->getRRsig(), true);
+                addToMessage(q, Message::SECTION_ADDITIONAL, rrset->getRRsig(),
+                             true);
             }
         }
     }
@@ -1237,72 +1247,65 @@ Nsec3Param::getHash(const Name& name) const {
     return (encodeBase32Hex(vector<uint8_t>(digest, digest + SHA1_HASHSIZE)));
 }
 
-//
-// The following methods are effectively empty, and their parameters are
-// unused.  To silence compilers that warn unused function parameters,
-// we specify a (compiler dependent) special keyword when available.
-// It's defined in config.h, and to avoid including this header file from
-// installed files we define the methods here.
-//
 DataSrc::Result
-DataSrc::init(isc::data::ConstElementPtr config UNUSED_PARAM) {
+DataSrc::init(isc::data::ConstElementPtr) {
     return (NOT_IMPLEMENTED);
 }
 
 DataSrc::Result
-MetaDataSrc::findRRset(const isc::dns::Name& qname UNUSED_PARAM,
-                       const isc::dns::RRClass& qclass UNUSED_PARAM,
-                       const isc::dns::RRType& qtype UNUSED_PARAM,
-                       isc::dns::RRsetList& target UNUSED_PARAM,
-                       uint32_t& flags UNUSED_PARAM,
-                       const isc::dns::Name* zonename UNUSED_PARAM) const
+MetaDataSrc::findRRset(const isc::dns::Name&,
+                       const isc::dns::RRClass&,
+                       const isc::dns::RRType&,
+                       isc::dns::RRsetList&,
+                       uint32_t&,
+                       const isc::dns::Name*) const
 {
     return (NOT_IMPLEMENTED);
 }
 
 DataSrc::Result
-MetaDataSrc::findExactRRset(const isc::dns::Name& qname UNUSED_PARAM,
-                            const isc::dns::RRClass& qclass UNUSED_PARAM,
-                            const isc::dns::RRType& qtype UNUSED_PARAM,
-                            isc::dns::RRsetList& target UNUSED_PARAM,
-                            uint32_t& flags UNUSED_PARAM,
-                            const isc::dns::Name* zonename UNUSED_PARAM) const
+MetaDataSrc::findExactRRset(const isc::dns::Name&,
+                            const isc::dns::RRClass&,
+                            const isc::dns::RRType&,
+                            isc::dns::RRsetList&,
+                            uint32_t&,
+                            const isc::dns::Name*) const
 {
     return (NOT_IMPLEMENTED);
 }
 
 DataSrc::Result
-MetaDataSrc::findAddrs(const isc::dns::Name& qname UNUSED_PARAM,
-                       const isc::dns::RRClass& qclass UNUSED_PARAM,
-                       isc::dns::RRsetList& target UNUSED_PARAM,
-                       uint32_t& flags UNUSED_PARAM,
-                       const isc::dns::Name* zonename UNUSED_PARAM) const
+MetaDataSrc::findAddrs(const isc::dns::Name&,
+                       const isc::dns::RRClass&,
+                       isc::dns::RRsetList&,
+                       uint32_t&,
+                       const isc::dns::Name*) const
 {
     return (NOT_IMPLEMENTED);
 }
 
 DataSrc::Result
-MetaDataSrc::findReferral(const isc::dns::Name& qname UNUSED_PARAM,
-                          const isc::dns::RRClass& qclass UNUSED_PARAM,
-                          isc::dns::RRsetList& target UNUSED_PARAM,
-                          uint32_t& flags UNUSED_PARAM,
-                          const isc::dns::Name* zonename UNUSED_PARAM) const
+MetaDataSrc::findReferral(const isc::dns::Name&,
+                          const isc::dns::RRClass&,
+                          isc::dns::RRsetList&,
+                          uint32_t&,
+                          const isc::dns::Name*) const
 {
     return (NOT_IMPLEMENTED);
 }
 
 DataSrc::Result
-MetaDataSrc::findPreviousName(const isc::dns::Name& qname UNUSED_PARAM,
-                              isc::dns::Name& target UNUSED_PARAM,
-                              const isc::dns::Name* zonename UNUSED_PARAM) const
+MetaDataSrc::findPreviousName(const isc::dns::Name&,
+                              isc::dns::Name&,
+                              const isc::dns::Name*) const
 {
     return (NOT_IMPLEMENTED);
 }
 
 DataSrc::Result
-MetaDataSrc::findCoveringNSEC3(const isc::dns::Name& zonename UNUSED_PARAM,
-                               std::string& hash UNUSED_PARAM,
-                               isc::dns::RRsetList& target UNUSED_PARAM) const
+MetaDataSrc::findCoveringNSEC3(const isc::dns::Name&,
+                               std::string&,
+                               isc::dns::RRsetList&) const
 {
     return (NOT_IMPLEMENTED);
 }

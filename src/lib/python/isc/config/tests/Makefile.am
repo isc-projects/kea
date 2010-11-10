@@ -10,7 +10,7 @@ check-local:
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
 	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python \
-	CONFIG_TESTDATA_PATH=$(abs_top_srcdir)/src/lib/config/testdata \
-	CONFIG_WR_TESTDATA_PATH=$(abs_top_builddir)/src/lib/config/testdata \
+	CONFIG_TESTDATA_PATH=$(abs_top_srcdir)/src/lib/config/tests/testdata \
+	CONFIG_WR_TESTDATA_PATH=$(abs_top_builddir)/src/lib/config/tests/testdata \
 	$(PYCOVERAGE) $(abs_srcdir)/$$pytest || exit ; \
 	done

@@ -20,6 +20,8 @@
 
 #include <asiolink/asiolink.h>
 
+#include <dns/opcode.h>
+#include <dns/rcode.h>
 #include <dns/buffer.h>
 #include <dns/name.h>
 #include <dns/message.h>
@@ -48,18 +50,6 @@ using namespace asiolink;
 namespace {
 const char* const DEFAULT_REMOTE_ADDRESS = "192.0.2.1";
 const char* const TEST_PORT = "53535";
-
-class DummySocket : public IOSocket {
-private:
-    DummySocket(const DummySocket& source);
-    DummySocket& operator=(const DummySocket& source);
-public:
-    DummySocket(const int protocol) : protocol_(protocol) {}
-    virtual int getNative() const { return (-1); }
-    virtual int getProtocol() const { return (protocol_); }
-private:
-    const int protocol_;
-};
 
 class RecursorTest : public ::testing::Test {
 protected:
@@ -114,7 +104,8 @@ RecursorTest::createDataFromFile(const char* const datafile,
     endpoint = IOEndpoint::create(protocol,
                                   IOAddress(DEFAULT_REMOTE_ADDRESS), 5300);
     UnitTestUtil::readWireData(datafile, data);
-    io_sock = new DummySocket(protocol);
+    io_sock = (protocol == IPPROTO_UDP) ? &IOSocket::getDummyUDPSocket() :
+        &IOSocket::getDummyTCPSocket();
     io_message = new IOMessage(&data[0], data.size(), *io_sock, *endpoint);
 }
 
@@ -128,7 +119,8 @@ RecursorTest::createRequestPacket(Message& message,
 
     endpoint = IOEndpoint::create(protocol,
                                   IOAddress(DEFAULT_REMOTE_ADDRESS), 5300);
-    io_sock = new DummySocket(protocol);
+    io_sock = (protocol == IPPROTO_UDP) ? &IOSocket::getDummyUDPSocket() :
+        &IOSocket::getDummyTCPSocket();
     io_message = new IOMessage(request_renderer.getData(),
                                request_renderer.getLength(),
                                *io_sock, *endpoint);
@@ -155,18 +147,25 @@ headerCheck(const Message& message, const qid_t qid, const Rcode& rcode,
     EXPECT_EQ(qid, message.getQid());
     EXPECT_EQ(rcode, message.getRcode());
     EXPECT_EQ(opcodeval, message.getOpcode().getCode());
-    EXPECT_EQ((flags & QR_FLAG) != 0, message.getHeaderFlag(MessageFlag::QR()));
-    EXPECT_EQ((flags & AA_FLAG) != 0, message.getHeaderFlag(MessageFlag::AA()));
-    EXPECT_EQ((flags & TC_FLAG) != 0, message.getHeaderFlag(MessageFlag::TC()));
-    EXPECT_EQ((flags & RA_FLAG) != 0, message.getHeaderFlag(MessageFlag::RA()));
-    EXPECT_EQ((flags & RD_FLAG) != 0, message.getHeaderFlag(MessageFlag::RD()));
-    EXPECT_EQ((flags & AD_FLAG) != 0, message.getHeaderFlag(MessageFlag::AD()));
-    EXPECT_EQ((flags & CD_FLAG) != 0, message.getHeaderFlag(MessageFlag::CD()));
+    EXPECT_EQ((flags & QR_FLAG) != 0, message.getHeaderFlag(
+        Message::HEADERFLAG_QR));
+    EXPECT_EQ((flags & AA_FLAG) != 0, message.getHeaderFlag(
+        Message::HEADERFLAG_AA));
+    EXPECT_EQ((flags & TC_FLAG) != 0, message.getHeaderFlag(
+        Message::HEADERFLAG_TC));
+    EXPECT_EQ((flags & RA_FLAG) != 0, message.getHeaderFlag(
+        Message::HEADERFLAG_RA));
+    EXPECT_EQ((flags & RD_FLAG) != 0, message.getHeaderFlag(
+        Message::HEADERFLAG_RD));
+    EXPECT_EQ((flags & AD_FLAG) != 0, message.getHeaderFlag(
+        Message::HEADERFLAG_AD));
+    EXPECT_EQ((flags & CD_FLAG) != 0, message.getHeaderFlag(
+        Message::HEADERFLAG_CD));
 
-    EXPECT_EQ(qdcount, message.getRRCount(Section::QUESTION()));
-    EXPECT_EQ(ancount, message.getRRCount(Section::ANSWER()));
-    EXPECT_EQ(nscount, message.getRRCount(Section::AUTHORITY()));
-    EXPECT_EQ(arcount, message.getRRCount(Section::ADDITIONAL()));
+    EXPECT_EQ(qdcount, message.getRRCount(Message::SECTION_QUESTION));
+    EXPECT_EQ(ancount, message.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(nscount, message.getRRCount(Message::SECTION_AUTHORITY));
+    EXPECT_EQ(arcount, message.getRRCount(Message::SECTION_ADDITIONAL));
 }
 
 // Unsupported requests.  Should result in NOTIMP.
@@ -178,7 +177,7 @@ TEST_F(RecursorTest, unsupportedRequest) {
             i == Opcode::NOTIFY().getCode()) {
             continue;
         }
-        createDataFromFile("simplequery_fromWire");
+        createDataFromFile("simplequery_fromWire.wire");
         data[2] = ((i << 3) & 0xff);
 
         parse_message->clear(Message::PARSE);
@@ -201,7 +200,7 @@ TEST_F(RecursorTest, verbose) {
 
 // Multiple questions.  Should result in FORMERR.
 TEST_F(RecursorTest, multiQuestion) {
-    createDataFromFile("multiquestion_fromWire");
+    createDataFromFile("multiquestion_fromWire.wire");
     server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
     EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(),
@@ -231,7 +230,7 @@ TEST_F(RecursorTest, shortMessage) {
 // or malformed or could otherwise cause a protocol error.
 TEST_F(RecursorTest, response) {
     // A valid (although unusual) response
-    createDataFromFile("simpleresponse_fromWire");
+    createDataFromFile("simpleresponse_fromWire.wire");
     server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
     EXPECT_FALSE(dnsserv.hasAnswer());
 
@@ -242,7 +241,7 @@ TEST_F(RecursorTest, response) {
     EXPECT_FALSE(dnsserv.hasAnswer());
 
     // A response to iquery.  must be dropped rather than returning NOTIMP.
-    createDataFromFile("iqueryresponse_fromWire");
+    createDataFromFile("iqueryresponse_fromWire.wire");
     server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
     EXPECT_FALSE(dnsserv.hasAnswer());
 }
@@ -260,7 +259,7 @@ TEST_F(RecursorTest, shortQuestion) {
 
 // Query with a broken answer section
 TEST_F(RecursorTest, shortAnswer) {
-    createDataFromFile("shortanswer_fromWire");
+    createDataFromFile("shortanswer_fromWire.wire");
     server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
     EXPECT_TRUE(dnsserv.hasAnswer());
 
@@ -279,17 +278,25 @@ TEST_F(RecursorTest, shortAnswer) {
 
 // Query with unsupported version of EDNS.
 TEST_F(RecursorTest, ednsBadVers) {
-    createDataFromFile("queryBadEDNS_fromWire");
+    createDataFromFile("queryBadEDNS_fromWire.wire");
     server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
     EXPECT_TRUE(dnsserv.hasAnswer());
 
-    // The response must have an EDNS OPT RR in the additional section.
+    // The response must have an EDNS OPT RR in the additional section, but
+    // it will be added automatically at the render time.
     // Note that the DNSSEC DO bit is cleared even if this bit in the query
     // is set.  This is a limitation of the current implementation.
     headerCheck(*parse_message, default_qid, Rcode::BADVERS(), opcode.getCode(),
                 QR_FLAG, 1, 0, 0, 1);
-    EXPECT_EQ(4096, parse_message->getUDPSize());
-    EXPECT_FALSE(parse_message->isDNSSECSupported());
+    EXPECT_FALSE(parse_message->getEDNS()); // EDNS isn't added at this point
+
+    InputBuffer ib(response_obuffer->getData(), response_obuffer->getLength());
+    Message parsed(Message::PARSE);
+    parsed.fromWire(ib);
+    EXPECT_EQ(Rcode::BADVERS(), parsed.getRcode());
+    ConstEDNSPtr edns(parsed.getEDNS());
+    ASSERT_TRUE(edns);
+    EXPECT_FALSE(edns->getDNSSECAwareness());
 }
 
 TEST_F(RecursorTest, AXFROverUDP) {
@@ -319,9 +326,10 @@ TEST_F(RecursorTest, notifyFail) {
     // Notify should always return NOTAUTH
     request_message.clear(Message::RENDER);
     request_message.setOpcode(Opcode::NOTIFY());
-    request_message.setHeaderFlag(MessageFlag::AA());
+    request_message.setRcode(Rcode::NOERROR());
+    request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     request_message.setQid(default_qid);
-    request_message.setHeaderFlag(MessageFlag::AA());
+    request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
     server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
     EXPECT_TRUE(dnsserv.hasAnswer());
@@ -369,7 +377,7 @@ TEST_F(RecursorConfig, forwardAddresses) {
 TEST_F(RecursorConfig, forwardAddressConfig) {
     // Try putting there some address
     ElementPtr config(Element::fromJSON("{"
-        "\"forward_addresses/\": ["
+        "\"forward_addresses\": ["
         "   {"
         "       \"address\": \"192.0.2.1\","
         "       \"port\": 53"
@@ -385,7 +393,7 @@ TEST_F(RecursorConfig, forwardAddressConfig) {
 
     // And then remove all addresses
     config = Element::fromJSON("{"
-        "\"forward_addresses/\": null"
+        "\"forward_addresses\": null"
         "}");
     result = server.updateConfig(config);
     EXPECT_EQ(result->toWire(), isc::config::createAnswer()->toWire());
@@ -402,23 +410,23 @@ void RecursorConfig::invalidTest(const string &JOSN) {
 TEST_F(RecursorConfig, invalidForwardAddresses) {
     // Try torturing it with some invalid inputs
     invalidTest("{"
-        "\"forward_addresses/\": \"error\""
+        "\"forward_addresses\": \"error\""
         "}");
     invalidTest("{"
-        "\"forward_addresses/\": [{}]"
+        "\"forward_addresses\": [{}]"
         "}");
     invalidTest("{"
-        "\"forward_addresses/\": [{"
+        "\"forward_addresses\": [{"
         "   \"port\": 1.5,"
         "   \"address\": \"192.0.2.1\""
         "}]}");
     invalidTest("{"
-        "\"forward_addresses/\": [{"
+        "\"forward_addresses\": [{"
         "   \"port\": -5,"
         "   \"address\": \"192.0.2.1\""
         "}]}");
     invalidTest("{"
-        "\"forward_addresses/\": [{"
+        "\"forward_addresses\": [{"
         "   \"port\": 53,"
         "   \"address\": \"bad_address\""
         "}]}");
@@ -448,7 +456,7 @@ TEST_F(RecursorConfig, listenAddresses) {
 TEST_F(RecursorConfig, DISABLED_listenAddressConfig) {
     // Try putting there some address
     ElementPtr config(Element::fromJSON("{"
-        "\"listen_on/\": ["
+        "\"listen_on\": ["
         "   {"
         "       \"address\": \"127.0.0.1\","
         "       \"port\": 5300"
@@ -467,7 +475,7 @@ TEST_F(RecursorConfig, DISABLED_listenAddressConfig) {
     //     it is impossible, since the sockets are not closed.
     //     Once #388 is solved, enable this test.
     config = Element::fromJSON("{"
-        "\"listen_on/\": ["
+        "\"listen_on\": ["
         "   {"
         "       \"address\": \"192.0.2.0\","
         "       \"port\": 5300"
@@ -484,23 +492,23 @@ TEST_F(RecursorConfig, DISABLED_listenAddressConfig) {
 TEST_F(RecursorConfig, invalidListenAddresses) {
     // Try torturing it with some invalid inputs
     invalidTest("{"
-        "\"listen_on/\": \"error\""
+        "\"listen_on\": \"error\""
         "}");
     invalidTest("{"
-        "\"listen_on/\": [{}]"
+        "\"listen_on\": [{}]"
         "}");
     invalidTest("{"
-        "\"listen_on/\": [{"
+        "\"listen_on\": [{"
         "   \"port\": 1.5,"
         "   \"address\": \"192.0.2.1\""
         "}]}");
     invalidTest("{"
-        "\"listen_on/\": [{"
+        "\"listen_on\": [{"
         "   \"port\": -5,"
         "   \"address\": \"192.0.2.1\""
         "}]}");
     invalidTest("{"
-        "\"listen_on/\": [{"
+        "\"listen_on\": [{"
         "   \"port\": 53,"
         "   \"address\": \"bad_address\""
         "}]}");

@@ -31,6 +31,7 @@
 #include <dns/message.h>
 
 #include <asiolink/asiolink.h>
+#include <asiolink/iosocket.h>
 #include <asiolink/internal/tcpdns.h>
 #include <asiolink/internal/udpdns.h>
 
@@ -48,18 +49,6 @@ const char* const TEST_IPV4_ADDR = "127.0.0.1";
 // two octets encode the length of the rest of the data.  This is crucial
 // for the tests below.
 const uint8_t test_data[] = {0, 4, 1, 2, 3, 4};
-
-class DummySocket : public IOSocket {
-private:
-    DummySocket(const DummySocket& source);
-    DummySocket& operator=(const DummySocket& source);
-public:
-    DummySocket(const int protocol) : protocol_(protocol) {}
-    virtual int getNative() const { return (-1); }
-    virtual int getProtocol() const { return (protocol_); }
-private:
-    const int protocol_;
-};
 
 TEST(IOAddressTest, fromText) {
     IOAddress io_address_v4("192.0.2.1");
@@ -128,10 +117,10 @@ TEST(IOEndpointTest, createIPProto) {
 }
 
 TEST(IOSocketTest, dummySockets) {
-    EXPECT_EQ(IPPROTO_UDP, DummySocket(IPPROTO_UDP).getProtocol());
-    EXPECT_EQ(IPPROTO_TCP, DummySocket(IPPROTO_TCP).getProtocol());
-    EXPECT_EQ(-1, DummySocket(IPPROTO_UDP).getNative());
-    EXPECT_EQ(-1, DummySocket(IPPROTO_TCP).getNative());
+    EXPECT_EQ(IPPROTO_UDP, IOSocket::getDummyUDPSocket().getProtocol());
+    EXPECT_EQ(IPPROTO_TCP, IOSocket::getDummyTCPSocket().getProtocol());
+    EXPECT_EQ(-1, IOSocket::getDummyUDPSocket().getNative());
+    EXPECT_EQ(-1, IOSocket::getDummyTCPSocket().getNative());
 }
 
 TEST(IOServiceTest, badPort) {

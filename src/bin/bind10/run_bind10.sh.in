@@ -20,7 +20,7 @@ export PYTHON_EXEC
 
 BIND10_PATH=@abs_top_builddir@/src/bin/bind10
 
-PATH=@abs_top_builddir@/src/bin/msgq:@abs_top_builddir@/src/bin/auth:@abs_top_builddir@/src/bin/recurse:@abs_top_builddir@/src/bin/cfgmgr:@abs_top_builddir@/src/bin/cmdctl:@abs_top_builddir@/src/bin/xfrin:@abs_top_builddir@/src/bin/xfrout:@abs_top_builddir@/src/bin/zonemgr:$PATH
+PATH=@abs_top_builddir@/src/bin/msgq:@abs_top_builddir@/src/bin/auth:@abs_top_builddir@/src/bin/recurse:@abs_top_builddir@/src/bin/cfgmgr:@abs_top_builddir@/src/bin/cmdctl:@abs_top_builddir@/src/bin/stats:@abs_top_builddir@/src/bin/xfrin:@abs_top_builddir@/src/bin/xfrout:@abs_top_builddir@/src/bin/zonemgr:$PATH
 export PATH
 
 PYTHONPATH=@abs_top_builddir@/src/lib/python:@abs_top_builddir@/src/lib/dns/python/.libs:@abs_top_builddir@/src/lib/xfr/.libs

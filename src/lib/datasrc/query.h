@@ -57,7 +57,7 @@ public:
 
     // The section of the reply into which the data should be
     // written after it has been fetched from the data source.
-    const isc::dns::Section section;
+    const isc::dns::Message::Section section;
 
     // The op field indicates the operation to be carried out by
     // this query task:
@@ -127,14 +127,18 @@ public:
 
     // Constructors
     QueryTask(const Query& q, const isc::dns::Name& n,
-              const isc::dns::RRType& t, const isc::dns::Section& sect);
+              const isc::dns::RRType& t,
+              const isc::dns::Message::Section sect);
     QueryTask(const Query& q, const isc::dns::Name& n,
-              const isc::dns::RRType& t, const isc::dns::Section& sect, Op o);
+              const isc::dns::RRType& t,
+              const isc::dns::Message::Section sect, Op o);
     QueryTask(const Query& q, const isc::dns::Name& n,
-              const isc::dns::RRType& t, const isc::dns::Section& sect,
+              const isc::dns::RRType& t,
+              const isc::dns::Message::Section sect,
               const State st);
     QueryTask(const Query& q, const isc::dns::Name& n,
-              const isc::dns::RRType& t, const isc::dns::Section& sect,
+              const isc::dns::RRType& t,
+              const isc::dns::Message::Section sect,
               Op o, State st);
 
     // These are special constructors for particular query task types,
@@ -147,7 +151,7 @@ public:
     QueryTask(const Query& q, const isc::dns::Name& n, Op o);
     // A glue (or noglue) query doesn't need to specify type.
     QueryTask(const Query& q, const isc::dns::Name& n,
-              const isc::dns::Section& sect, Op o, State st);
+              const isc::dns::Message::Section sect, Op o, State st);
 
     ~QueryTask();
 };

@@ -28,8 +28,7 @@
 using namespace isc::xfr;
 using namespace boost::python;
 
-BOOST_PYTHON_MODULE(bind10_xfr)
-{
+BOOST_PYTHON_MODULE(bind10_xfr) {
     def("recv_fd", &recv_fd);
     def("send_fd", &send_fd);
 }

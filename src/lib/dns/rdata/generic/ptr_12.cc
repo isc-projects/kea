@@ -33,7 +33,7 @@ PTR::PTR(const string& type_str) :
     ptr_name_(type_str)
 {}
 
-PTR::PTR(InputBuffer& buffer, size_t rdata_len UNUSED_PARAM) :
+PTR::PTR(InputBuffer& buffer, size_t) :
     ptr_name_(buffer)
 {
     // we don't need rdata_len for parsing.  if necessary, the caller will
@@ -45,26 +45,22 @@ PTR::PTR(const PTR& source) :
 {}
 
 std::string
-PTR::toText() const
-{
+PTR::toText() const {
     return (ptr_name_.toText());
 }
 
 void
-PTR::toWire(OutputBuffer& buffer) const
-{
+PTR::toWire(OutputBuffer& buffer) const {
     ptr_name_.toWire(buffer);
 }
 
 void
-PTR::toWire(MessageRenderer& renderer) const
-{
+PTR::toWire(MessageRenderer& renderer) const {
     renderer.writeName(ptr_name_);
 }
 
 int
-PTR::compare(const Rdata& other) const
-{
+PTR::compare(const Rdata& other) const {
     // The compare method normally begins with this dynamic cast.
     const PTR& other_ptr = dynamic_cast<const PTR&>(other);
 
@@ -73,8 +69,7 @@ PTR::compare(const Rdata& other) const
 }
 
 const Name&
-PTR::getPTRName() const
-{
+PTR::getPTRName() const {
     return (ptr_name_);
 }
 

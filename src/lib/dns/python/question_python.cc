@@ -76,7 +76,7 @@ static PyMethodDef Question_methods[] = {
 // Most of the functions are not actually implemented and NULL here.
 static PyTypeObject question_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.Question",
+    "pydnspp.Question",
     sizeof(s_Question),                 // tp_basicsize
     0,                                  // tp_itemsize
     (destructor)Question_destroy,       // tp_dealloc
@@ -254,8 +254,7 @@ Question_toWire(s_Question* self, PyObject* args) {
         // to prevent memory leak
         Py_DECREF(n);
         return (result);
-    } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type,
-                                reinterpret_cast<PyObject**>(&mr))) {
+    } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
         self->question->toWire(*mr->messagerenderer);
         // If we return NULL it is seen as an error, so use this for
         // None returns
