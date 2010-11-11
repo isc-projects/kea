@@ -26,4 +26,8 @@ libasiolink_la_CXXFLAGS = $(AM_CXXFLAGS)
 if USE_GXX
 libasiolink_la_CXXFLAGS += -Wno-unused-parameter
 endif
+if USE_CLANGPP
+# Same for clang++, but we need to turn off -Werror completely.
+libasiolink_la_CXXFLAGS += -Wno-error
+endif
 libasiolink_la_CPPFLAGS = $(AM_CPPFLAGS)
