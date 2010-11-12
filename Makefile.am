@@ -8,7 +8,7 @@ DISTCLEANFILES = config.report
 # When running distcheck target, do not install the configurations
 DISTCHECK_CONFIGURE_FLAGS = --disable-install-configurations
 
-clean-coverage:
+clean-cpp-coverage:
 	@if [ $(USE_LCOV) = yes ] ; then \
 		$(LCOV) --directory . --zerocounters; \
 		rm -rf coverage/; \
@@ -17,9 +17,12 @@ clean-coverage:
 		exit 1; \
 	fi
 
+clean-python-coverage:
+	rm -f $(abs_top_srcdir)/.coverage $(abs_top_srcdir)/py-coverage-html
+
 perform-coverage: check
 
-report-coverage:
+report-cpp-coverage:
 	$(LCOV) --capture --directory . --output-file all.info
 	$(LCOV) --remove all.info \
 			c++/4.4\*/\* \
@@ -39,7 +42,17 @@ report-coverage:
 		--output report.info
 	$(GENHTML) -o coverage report.info 
 
+report-python-coverage:
+	@if [ $(USE_PYCOVERAGE) = yes ] ; then \
+		$(PYCOVERAGE) html -d py-coverage-html --omit=src/lib/python/isc/config/tests,src/bin/bind10/tests,src/bin/bindctl/tests/,src/bin/cfgmgr/tests/,src/bin/cmdctl/tests/,src/bin/msgq/tests/,src/bin/tests/,src/bin/xfrin/tests/,src/bin/xfrout/tests/,src/bin/zonemgr/tests/,src/lib/dns/python/tests/,src/lib/python/isc/cc/tests/,src/lib/python/isc/log/tests/,src/lib/python/isc/utils/tests/,src/lib/python/isc/notify/tests ; \
+	fi
+
+# for python and c++ test coverage
 coverage: clean-coverage perform-coverage report-coverage
+
+clean-coverage: clean-cpp-coverage clean-python-coverage
+
+report-coverage: report-cpp-coverage report-python-coverage
 
 #### include external sources in the distributed tarball:
 EXTRA_DIST = ext/asio/README

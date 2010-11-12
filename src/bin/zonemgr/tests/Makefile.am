@@ -1,4 +1,4 @@
-PYCOVERAGE=@PYCOVERAGE@
+PYCOVERAGE_RUN=@PYCOVERAGE_RUN@
 PYTESTS = zonemgr_test.py
 EXTRA_DIST = $(PYTESTS)
 
@@ -12,5 +12,5 @@ endif
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
 	env PYTHONPATH=$(abs_top_builddir)/src/bin/zonemgr:$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/lib/dns/.libs:$(abs_top_builddir)/src/lib/dns/python/.libs:$(abs_top_builddir)/src/lib/xfr/.libs \
-	$(PYCOVERAGE) $(abs_srcdir)/$$pytest || exit ; \
+	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done

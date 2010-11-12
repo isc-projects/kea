@@ -1,4 +1,4 @@
-PYCOVERAGE = @PYCOVERAGE@
+PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
 PYTESTS = b10-cfgmgr_test.py
 
 EXTRA_DIST = $(PYTESTS)
@@ -13,5 +13,5 @@ endif
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
 	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/bin/cfgmgr \
-	$(PYCOVERAGE) $(abs_builddir)/$$pytest || exit ; \
+	$(PYCOVERAGE_RUN) $(abs_builddir)/$$pytest || exit ; \
 	done

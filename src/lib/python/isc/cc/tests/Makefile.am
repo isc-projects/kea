@@ -1,4 +1,4 @@
-PYCOVERAGE = @PYCOVERAGE@          
+PYCOVERAGE_RUN = @PYCOVERAGE_RUN@          
 
 PYTESTS = message_test.py data_test.py session_test.py
 # NOTE: test_session.py is to be run manually, so not automated.
@@ -17,5 +17,5 @@ endif
 	echo Running test: $$pytest ; \
 	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python \
 	BIND10_TEST_SOCKET_FILE=$(builddir)/test_socket.sock \
-	$(PYCOVERAGE) $(abs_srcdir)/$$pytest || exit ; \
+	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done

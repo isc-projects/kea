@@ -1,4 +1,4 @@
-PYCOVERAGE = @PYCOVERAGE@
+PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
 PYTESTS = edns_python_test.py
 PYTESTS += message_python_test.py
 PYTESTS += messagerenderer_python_test.py
@@ -34,5 +34,5 @@ endif
 	env PYTHONPATH=$(abs_top_srcdir)/src/lib/dns/.libs:$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/lib/dns/python/.libs \
 	TESTDATA_PATH=$(abs_top_srcdir)/src/lib/dns/tests/testdata:$(abs_top_builddir)/src/lib/dns/tests/testdata \
 	$(LIBRARY_PATH_PLACEHOLDER) \
-	$(PYCOVERAGE) $(abs_srcdir)/$$pytest || exit ; \
+	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done
