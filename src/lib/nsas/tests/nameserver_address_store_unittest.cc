@@ -103,7 +103,7 @@ protected:
         }
 
         // A nameserver serving data
-        authority_->addRdata(rdata::generic::NS(Name("ns.example.com.")));
+        authority_->addRdata(ConstRdataPtr(new rdata::generic::NS(Name("ns.example.com."))));
 
         // This is reused because of convenience, clear it just in case
         NSASCallback::results.clear();

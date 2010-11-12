@@ -17,6 +17,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <config.h>
+#include <dns/rdataclass.h>
 
 #include "hash_deleter.h"
 #include "nsas_entry_compare.h"
@@ -57,8 +58,8 @@ typedef shared_ptr<AddressRequestCallback> CallbackPtr;
 // One function to call new on both ZoneEntry and NameserverEntry
 template<class T>
 shared_ptr<T>
-newT(const std::string& zone, uint16_t class_code) {
-    return (shared_ptr<T>(new T(zone, class_code)));
+newT(const std::string& name, uint16_t class_code) {
+    return (shared_ptr<T>(new T(name, class_code)));
 }
 
 }
@@ -91,6 +92,18 @@ NameserverAddressStore::lookup(const std::string& zone, uint16_t class_code,
             isc_throw(NotNS, "Authority section with non-NS RR type: " <<
                 authority.getType().toText());
         }
+        // Make sure the name servers exist
+        RdataIteratorPtr ns(authority.getRdataIterator());
+        for (ns->first(); !ns->isLast(); ns->next()) {
+            Name nsName(dynamic_cast<const rdata::generic::NS&>(
+                ns->getCurrent()).getNSName());
+            pair<bool, NameserverPtr> ns_lookup(
+                nameserver_hash_.getOrAdd(HashKey(nsName.toText(), class_code),
+                bind(newT<NameserverEntry>, nsName.toText(), class_code)));
+            if (ns_lookup.first) { // Is it a new nameserver?
+                // TODO Fill in the values from additional section
+            }
+        }
     } else { // Was already here
         zone_lru_.touch(zone_ptr);
         // TODO Do we update the TTL and nameservers here?
@@ -100,7 +113,7 @@ NameserverAddressStore::lookup(const std::string& zone, uint16_t class_code,
 }
 
 void NameserverAddressStore::processZone(ZonePtr) {
-
+    
 }
 
 } // namespace nsas
