@@ -1,6 +1,3 @@
-PYCOVERAGE = @PYCOVERAGE@
-PYTESTS = error_test.sh
-
 EXTRA_DIST = error.known
 EXTRA_DIST += formerr1.db 
 EXTRA_DIST += formerr2.db
@@ -15,15 +12,8 @@ EXTRA_DIST += keyerror3.db
 EXTRA_DIST += originerr1.db
 EXTRA_DIST += originerr2.db
 
+# TODO: use TESTS ?
 # test using command-line arguments, so use check-local target instead of TESTS
 check-local:
-if ENABLE_PYTHON_COVERAGE
-	touch $(abs_top_srcdir)/.coverage 
-	rm -f .coverage
-	${LN_S} $(abs_top_srcdir)/.coverage .coverage
-endif
-	for pytest in $(PYTESTS) ; do \
-	echo Running test: $$pytest ; \
-	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/bin/loadzone \
-	$(SHELL) $(abs_builddir)/$$pytest || exit ; \
-	done
+	echo Running test: error_test.sh
+	$(SHELL) $(abs_builddir)/error_test.sh

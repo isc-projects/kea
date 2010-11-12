@@ -1,4 +1,4 @@
-PYCOVERAGE=@PYCOVERAGE@
+PYCOVERAGE_RUN=@PYCOVERAGE_RUN@
 PYTESTS = xfrin_test.py
 EXTRA_DIST = $(PYTESTS)
 
@@ -20,5 +20,5 @@ endif
 	echo Running test: $$pytest ; \
 	env PYTHONPATH=$(abs_top_builddir)/src/lib/dns/python/.libs:$(abs_top_builddir)/src/bin/xfrin:$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python \
 	$(LIBRARY_PATH_PLACEHOLDER) \
-	$(PYCOVERAGE) $(abs_srcdir)/$$pytest || exit ; \
+	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done
