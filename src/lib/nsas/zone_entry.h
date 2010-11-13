@@ -116,6 +116,38 @@ public:
     iterator end() { return (nameservers_.end()); }
     const_iterator begin() const { return (nameservers_.begin()); }
     const_iterator end() const { return (nameservers_.end()); }
+
+    /**
+     * \short Lock of the zone entry.
+     *
+     * Something like a scope lock for the zone entry. It can be copyed (so
+     * the result of the getLock() can be assigned to a local variable). The
+     * lock is released once all copyes of the getLock result are destroyed.
+     * However, it is not reentrant (another call to getLock will block).
+     *
+     * This locks both the zone entry and all nameserver entries in a manner
+     * avoiding deadlocks (sorts the nameserver entries before trying to
+     * acquire them). However, it asumes noone does any other kind of locking
+     * of multiple muteces.
+     *
+     * Copy constructor, assignment operator and destructor are default.
+     * The constructor that creates a new lock is private, use getLock()
+     * to lock a zone entry.
+     */
+    class Lock {
+        private:
+            struct Impl;
+            boost::shared_ptr<Impl> impl_;
+            Lock(ZoneEntry&);
+            friend class ZoneEntry;
+    };
+
+    /**
+     * \short Acquire a lock.
+     *
+     * \see Lock
+     */
+    Lock getLock() { return Lock(*this); }
 private:
     mutable boost::mutex    mutex_;     ///< Mutex protecting this zone entry
     std::string     name_;      ///< Canonical zone name
