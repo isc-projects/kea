@@ -108,6 +108,7 @@ newZone(const std::string* zone, uint16_t class_code,
         } else {
             ns_lru->touch(ns_lookup.second);
         }
+        zone_ptr->nameserverAdd(ns_lookup.second);
     }
 
     return zone_ptr;
