@@ -55,58 +55,81 @@ typedef shared_ptr<ZoneEntry> ZonePtr;
 typedef shared_ptr<NameserverEntry> NameserverPtr;
 typedef shared_ptr<AddressRequestCallback> CallbackPtr;
 
-// One function to call new on both ZoneEntry and NameserverEntry
-template<class T>
-shared_ptr<T>
-newT(const std::string& name, uint16_t class_code) {
-    return (shared_ptr<T>(new T(name, class_code)));
+/*
+ * Create a nameserver.
+ * Called inside a mutex so it is filled in attomically.
+ */
+NameserverPtr
+newNs(const std::string* name, uint16_t class_code,
+    const vector<AbstractRRset>*)
+{
+    return (NameserverPtr(new NameserverEntry(*name, class_code)));
+}
+
+/*
+ * Create a zone entry.
+ * It is called inside the mutex so it is called and filled in attomically.
+ * Pointers are used instead of references, because with references,
+ * boost::bind copyes.
+ */
+ZonePtr
+newZone(const std::string* zone, uint16_t class_code,
+   const AbstractRRset* authority, const vector<AbstractRRset>* additional,
+   HashTable<NameserverEntry>* ns_hash, LruList<NameserverEntry>* ns_lru)
+{
+    ZonePtr zone_ptr(new ZoneEntry(*zone, class_code));
+    // Sanitize the authority section and put the data there
+    if (authority->getClass().getCode() != class_code) {
+        isc_throw(InconsistentZone,
+            "Authority section is for different class, expected: " <<
+            RRClass(class_code).toText() << ", got: " <<
+            authority->getClass().toText());
+    }
+    if (authority->getName() != Name(*zone)) {
+        isc_throw(InconsistentZone,
+            "Authority section is for different zone, expected: " <<
+            zone << ", got: " << authority->getName().toText());
+    }
+    if (authority->getType() != RRType::NS()) {
+        isc_throw(NotNS, "Authority section with non-NS RR type: " <<
+            authority->getType().toText());
+    }
+    // Make sure the name servers exist
+    RdataIteratorPtr ns(authority->getRdataIterator());
+    for (ns->first(); !ns->isLast(); ns->next()) {
+        Name ns_name(dynamic_cast<const rdata::generic::NS&>(
+                    ns->getCurrent()).getNSName());
+        string ns_name_str(ns_name.toText());
+        pair<bool, NameserverPtr> ns_lookup(
+                ns_hash->getOrAdd(HashKey(ns_name_str, class_code),
+                bind(newNs, &ns_name_str, class_code, additional)));
+        if (ns_lookup.first) { // Is it a new nameserver?
+            ns_lru->add(ns_lookup.second);
+        } else {
+            ns_lru->touch(ns_lookup.second);
+        }
+    }
+
+    return zone_ptr;
 }
 
 }
 
 void
 NameserverAddressStore::lookup(const std::string& zone, uint16_t class_code,
-    const AbstractRRset& authority, const vector<AbstractRRset>& ,
+    const AbstractRRset& authority, const vector<AbstractRRset>& additional,
     CallbackPtr callback)
 {
-    // Try to look up the entry
+    // Try to look up the entry, or create and fill it with initial data
     pair<bool, ZonePtr> zone_lookup(
         zone_hash_.getOrAdd(HashKey(zone, class_code),
-        bind(newT<ZoneEntry>, zone, class_code)));
+        bind(newZone, &zone, class_code, &authority, &additional,
+        &nameserver_hash_, &nameserver_lru_)));
     ZonePtr zone_ptr(zone_lookup.second);
     if (zone_lookup.first) { // New value
         zone_lru_.add(zone_ptr);
-        // Sanitize the authority section and put the data there
-        if (authority.getClass().getCode() != class_code) {
-            isc_throw(InconsistentZone,
-                "Authority section is for different class, expected: " <<
-                RRClass(class_code).toText() << ", got: " <<
-                authority.getClass().toText());
-        }
-        if (authority.getName() != Name(zone)) {
-            isc_throw(InconsistentZone,
-                "Authority section is for different zone, expected: " <<
-                zone << ", got: " << authority.getName().toText());
-        }
-        if (authority.getType() != RRType::NS()) {
-            isc_throw(NotNS, "Authority section with non-NS RR type: " <<
-                authority.getType().toText());
-        }
-        // Make sure the name servers exist
-        RdataIteratorPtr ns(authority.getRdataIterator());
-        for (ns->first(); !ns->isLast(); ns->next()) {
-            Name nsName(dynamic_cast<const rdata::generic::NS&>(
-                ns->getCurrent()).getNSName());
-            pair<bool, NameserverPtr> ns_lookup(
-                nameserver_hash_.getOrAdd(HashKey(nsName.toText(), class_code),
-                bind(newT<NameserverEntry>, nsName.toText(), class_code)));
-            if (ns_lookup.first) { // Is it a new nameserver?
-                // TODO Fill in the values from additional section
-            }
-        }
     } else { // Was already here
         zone_lru_.touch(zone_ptr);
-        // TODO Do we update the TTL and nameservers here?
     }
     zone_ptr->addCallback(callback);
     processZone(zone_ptr);
