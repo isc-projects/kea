@@ -89,11 +89,38 @@ public:
     /// \short Remove a callback from queue and return it
     boost::shared_ptr<AddressRequestCallback> popCallback();
 
+    /// \short Nameserver entry pointer
+    typedef boost::shared_ptr<NameserverEntry> NameserverPtr;
+    /// \short Vector of nameservers
+    typedef std::vector<NameserverPtr> NameserverVector;
+    /// \short Iterators to the nameservers
+    typedef NameserverVector::iterator iterator;
+    typedef NameserverVector::const_iterator const_iterator;
+
+    /**
+     * \short Add a nameserver pointer to this zone.
+     *
+     * This does not lock, as it should be called while it is being created.
+     * No new nameservers should be added later (it should timeout first and
+     * be rebuild). Calling this after addition to the NameserverAddressStore
+     * is undefined (it is not thread safe).
+     */
+    void nameserver_add(NameserverPtr ns) { nameservers_.push_back(ns); }
+    /**
+     * \short Iterators for the nameservers.
+     *
+     * They do not lock, as the nameservers should be read only during
+     * the life of the zone.
+     */
+    iterator begin() { return (nameservers_.begin()); }
+    iterator end() { return (nameservers_.end()); }
+    const_iterator begin() const { return (nameservers_.begin()); }
+    const_iterator end() const { return (nameservers_.end()); }
 private:
     mutable boost::mutex    mutex_;     ///< Mutex protecting this zone entry
     std::string     name_;      ///< Canonical zone name
     uint16_t        classCode_; ///< Class code
-    std::vector<boost::shared_ptr<NameserverEntry> > nameservers_; ///< Nameservers
+    NameserverVector nameservers_; ///< Nameservers
     time_t          expiry_;    ///< Expiry time of this entry
     std::list<boost::shared_ptr<AddressRequestCallback> > callbacks_;
 };

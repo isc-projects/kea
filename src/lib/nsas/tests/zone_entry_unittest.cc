@@ -21,6 +21,7 @@
 
 #include "../asiolink.h"
 #include "../zone_entry.h"
+#include "../nameserver_entry.h"
 #include "../address_request_callback.h"
 
 #include "nsas_test.h"
@@ -75,6 +76,23 @@ TEST_F(ZoneEntryTest, Callbacks) {
         EXPECT_EQ(callbacks[i], zone.popCallback());
     }
     EXPECT_FALSE(zone.hasCallbacks());
+}
+
+TEST_F(ZoneEntryTest, Nameserver_iterators) {
+    ZoneEntry zone(EXAMPLE_CO_UK, RRClass::IN().getCode());
+    shared_ptr<NameserverEntry> nse(new NameserverEntry(EXAMPLE_CO_UK,
+        RRClass::IN().getCode()));
+    // The iterator can't be printed, so we can't use EQ
+    const ZoneEntry& zone_const(zone);
+    EXPECT_TRUE(zone.begin() == zone.end());
+    EXPECT_TRUE(zone_const.begin() == zone_const.end());
+    zone.nameserver_add(nse);
+    EXPECT_FALSE(zone.begin() == zone.end());
+    EXPECT_FALSE(zone_const.begin() == zone_const.end());
+    EXPECT_TRUE(*zone.begin() == nse);
+    EXPECT_TRUE(*zone_const.begin() == nse);
+    EXPECT_TRUE(zone.begin() + 1 == zone.end());
+    EXPECT_TRUE(zone_const.begin() + 1 == zone_const.end());
 }
 
 }   // namespace nsas
