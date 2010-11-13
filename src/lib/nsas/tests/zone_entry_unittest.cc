@@ -16,6 +16,7 @@
 
 #include <gtest/gtest.h>
 #include <boost/shared_ptr.hpp>
+#include <boost/thread.hpp>
 
 #include <dns/rrclass.h>
 
@@ -36,6 +37,7 @@ namespace nsas {
 
 // String constants.  These should end in a dot.
 static const std::string EXAMPLE_CO_UK("example.co.uk.");
+static const std::string EXAMPLE_NET("example.net.");
 
 /// \brief Test Fixture Class
 class ZoneEntryTest : public ::testing::Test {
@@ -93,6 +95,76 @@ TEST_F(ZoneEntryTest, NameserverIterators) {
     EXPECT_TRUE(*zone_const.begin() == nse);
     EXPECT_TRUE(zone.begin() + 1 == zone.end());
     EXPECT_TRUE(zone_const.begin() + 1 == zone_const.end());
+}
+
+void lockAndWait(ZoneEntry* zone, barrier* when) {
+    ZoneEntry::Lock lock(zone->getLock());
+    when->wait();
+}
+
+void lockAndKeep(ZoneEntry* zone, bool* locked_self, bool* locked_other,
+    barrier* when)
+{
+    // Lock
+    ZoneEntry::Lock lock(zone->getLock());
+    *locked_self = true;
+    // Wait for the start of the other thread
+    when->wait();
+    // Make sure the other thread gets a chance to run
+    for (int i(0); i < 100; ++ i) {
+        this_thread::yield();
+        EXPECT_FALSE(*locked_other);
+    }
+    *locked_self = false;
+}
+
+TEST_F(ZoneEntryTest, Lock) {
+    // Create some testing data
+    ZoneEntry z1(EXAMPLE_CO_UK, RRClass::IN().getCode());
+    ZoneEntry z2(EXAMPLE_NET, RRClass::IN().getCode());
+    shared_ptr<NameserverEntry> ns1(new NameserverEntry(EXAMPLE_CO_UK,
+        RRClass::IN().getCode()));
+    shared_ptr<NameserverEntry> ns2(new NameserverEntry(EXAMPLE_NET,
+        RRClass::IN().getCode()));
+    z1.nameserverAdd(ns1);
+    z2.nameserverAdd(ns2);
+
+    barrier both(2);
+
+    // This tries that both can lock right now.
+    // FIXME If they can't it will deadlock. Any idea how to do it better?
+    thread t1(lockAndWait, &z1, &both);
+    thread t2(lockAndWait, &z2, &both);
+    t1.join();
+    t2.join();
+
+    z1.nameserverAdd(ns2);
+    z2.nameserverAdd(ns1);
+    // Now check that they can't both lock at the same time.
+    barrier both_second(2);
+    bool l1(false), l2(false);
+    thread t3(lockAndKeep, &z1, &l1, &l2, &both);
+    thread t4(lockAndKeep, &z2, &l2, &l1, &both_second);
+    both.wait();
+    // Make sure one of them is started
+    for (int i(0); i < 100; ++ i) {
+        this_thread::yield();
+    }
+    both_second.wait();
+    t3.join();
+    t4.join();
+
+    // Try it the other way around (so it does not depend on the order of nameservers
+    thread t6(lockAndKeep, &z2, &l2, &l1, &both);
+    thread t5(lockAndKeep, &z1, &l1, &l2, &both_second);
+    both.wait();
+    // Make sure one of them is started
+    for (int i(0); i < 100; ++ i) {
+        this_thread::yield();
+    }
+    both_second.wait();
+    t5.join();
+    t6.join();
 }
 
 }   // namespace nsas

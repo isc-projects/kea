@@ -22,25 +22,25 @@ namespace nsas {
 
 namespace {
 // Shorter aliases for frequently used types
-typedef boost::mutex::scoped_lock Lock;
+typedef boost::mutex::scoped_lock LLock; // Local lock, nameservers not locked
 typedef boost::shared_ptr<AddressRequestCallback> CallbackPtr;
 }
 
 void
 ZoneEntry::addCallback(CallbackPtr callback) {
-    Lock lock(mutex_);
+    LLock lock(mutex_);
     callbacks_.push_back(callback);
 }
 
 bool
 ZoneEntry::hasCallbacks() const {
-    Lock lock(mutex_);
+    LLock lock(mutex_);
     return (!callbacks_.empty());
 }
 
 CallbackPtr
 ZoneEntry::popCallback() {
-    Lock lock(mutex_);
+    LLock lock(mutex_);
     CallbackPtr result(callbacks_.front());
     callbacks_.pop_front();
     return (result);
