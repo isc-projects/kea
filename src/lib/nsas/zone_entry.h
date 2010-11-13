@@ -105,7 +105,7 @@ public:
      * be rebuild). Calling this after addition to the NameserverAddressStore
      * is undefined (it is not thread safe).
      */
-    void nameserver_add(NameserverPtr ns) { nameservers_.push_back(ns); }
+    void nameserverAdd(NameserverPtr ns) { nameservers_.push_back(ns); }
     /**
      * \short Iterators for the nameservers.
      *
