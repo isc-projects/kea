@@ -93,9 +93,15 @@ public:
     typedef boost::shared_ptr<NameserverEntry> NameserverPtr;
     /// \short Vector of nameservers
     typedef std::vector<NameserverPtr> NameserverVector;
-    /// \short Iterators to the nameservers
+    /**
+     * \name Iterators
+     *
+     * They iterate over the nameservers.
+     */
+    //@{
     typedef NameserverVector::iterator iterator;
     typedef NameserverVector::const_iterator const_iterator;
+    //@}
 
     /**
      * \short Add a nameserver pointer to this zone.
@@ -107,28 +113,33 @@ public:
      */
     void nameserverAdd(NameserverPtr ns) { nameservers_.push_back(ns); }
     /**
-     * \short Iterators for the nameservers.
+     * \name Iterator access
+     *
+     * They work similar to usual stl iterator access functions. They iterate
+     * over the nameservers.
      *
      * They do not lock, as the nameservers should be read only during
      * the life of the zone.
      */
+    //@{
     iterator begin() { return (nameservers_.begin()); }
     iterator end() { return (nameservers_.end()); }
     const_iterator begin() const { return (nameservers_.begin()); }
     const_iterator end() const { return (nameservers_.end()); }
+    //@}
 
     /**
      * \short Lock of the zone entry.
      *
      * Something like a scope lock for the zone entry. It can be copyed (so
      * the result of the getLock() can be assigned to a local variable). The
-     * lock is released once all copyes of the getLock result are destroyed.
+     * lock is released once all copies of the getLock result are destroyed.
      * However, it is not reentrant (another call to getLock will block).
      *
      * This locks both the zone entry and all nameserver entries in a manner
-     * avoiding deadlocks (sorts the nameserver entries before trying to
-     * acquire them). However, it asumes noone does any other kind of locking
-     * of multiple muteces.
+     * avoiding deadlocks (sorts the nameserver entry pointers before trying to
+     * lock them). However, it asumes no one does any other kind of locking
+     * of multiple mutices.
      *
      * Copy constructor, assignment operator and destructor are default.
      * The constructor that creates a new lock is private, use getLock()
