@@ -16,14 +16,23 @@
 
 #include "zone_entry.h"
 #include "address_request_callback.h"
+#include "nameserver_entry.h"
+
+#include <algorithm>
+#include <boost/foreach.hpp>
+
+using namespace std;
+using namespace boost;
 
 namespace isc {
 namespace nsas {
 
 namespace {
 // Shorter aliases for frequently used types
-typedef boost::mutex::scoped_lock LLock; // Local lock, nameservers not locked
-typedef boost::shared_ptr<AddressRequestCallback> CallbackPtr;
+typedef mutex::scoped_lock LLock; // Local lock, nameservers not locked
+typedef shared_ptr<LLock> LockPtr;
+typedef vector<LockPtr> Locks;
+typedef shared_ptr<AddressRequestCallback> CallbackPtr;
 }
 
 void
@@ -44,6 +53,34 @@ ZoneEntry::popCallback() {
     CallbackPtr result(callbacks_.front());
     callbacks_.pop_front();
     return (result);
+}
+
+// Struct, we are somewhere inside, no need to play the private & public game
+struct ZoneEntry::Lock::Impl {
+    Locks locks;
+};
+
+ZoneEntry::Lock::Lock(shared_ptr<Impl> impl) :
+    impl_(impl)
+{ }
+
+ZoneEntry::Lock
+ZoneEntry::getLock() {
+    // First, lock the zone so we can get the nameservers
+    LockPtr lock(new LLock(mutex_));
+    // Get a sorted copy of the nameservers
+    // They are sorted to avoid possible race conditions, they will be locked
+    // in increasing order
+    NameserverVector nameserverCopy(nameservers_);
+    sort(nameserverCopy.begin(), nameserverCopy.end());
+    // Construct the list of locks and lock all the nameservers
+    shared_ptr<Lock::Impl> impl(new Lock::Impl);
+    impl->locks.push_back(lock);
+    BOOST_FOREACH(NameserverPtr ns, nameserverCopy) {
+        impl->locks.push_back(LockPtr(new LLock(ns->mutex_)));
+    }
+
+    return (Lock(impl));
 }
 
 }; // namespace nsas
