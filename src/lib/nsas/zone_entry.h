@@ -133,12 +133,14 @@ public:
      * Copy constructor, assignment operator and destructor are default.
      * The constructor that creates a new lock is private, use getLock()
      * to lock a zone entry.
+     *
+     * It is an error for the lock to survive destruction of its zone entry.
      */
     class Lock {
         private:
             struct Impl;
             boost::shared_ptr<Impl> impl_;
-            Lock(ZoneEntry&);
+            Lock(boost::shared_ptr<Impl>);
             friend class ZoneEntry;
     };
 
@@ -147,7 +149,7 @@ public:
      *
      * \see Lock
      */
-    Lock getLock() { return Lock(*this); }
+    Lock getLock();
 private:
     mutable boost::mutex    mutex_;     ///< Mutex protecting this zone entry
     std::string     name_;      ///< Canonical zone name

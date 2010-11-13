@@ -55,7 +55,7 @@ public:
     {}
 };
 
-
+class ZoneEntry;
 
 /// \brief Nameserver Entry
 ///
@@ -202,6 +202,8 @@ private:
     std::vector<AddressEntry> address_; ///< Set of V4/V6 addresses
     time_t          expiration_;        ///< Summary expiration time
     time_t          last_access_;       ///< Last access time to the structure
+    // We allow ZoneEntry to lock us
+    friend class ZoneEntry;
 };
 
 }   // namespace dns
