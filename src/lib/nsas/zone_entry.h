@@ -28,6 +28,7 @@
 #include "hash_key.h"
 #include "nsas_entry.h"
 #include "asiolink.h"
+#include "fetchable.h"
 
 namespace isc {
 namespace nsas {
@@ -44,7 +45,7 @@ class AddressRequestCallback;
 /// complicated, in that the class takes account of triggering fetches for
 /// addresses of nameservers when the address records expire.
 
-class ZoneEntry : public NsasEntry<ZoneEntry> {
+class ZoneEntry : public NsasEntry<ZoneEntry>, Fetchable {
 public:
 
     /// \brief Constructor where no NS records are supplied
