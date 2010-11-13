@@ -21,5 +21,7 @@ libnsas_la_SOURCES += nsas_entry_compare.h
 libnsas_la_SOURCES += nsas_entry.h
 libnsas_la_SOURCES += zone_entry.cc zone_entry.h
 libnsas_la_SOURCES += fetchable.h
+libnsas_la_SOURCES += address_request_callback.h
+libnsas_la_SOURCES += resolver_interface.h
 
 CLEANFILES = *.gcno *.gcda
