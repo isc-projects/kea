@@ -78,7 +78,7 @@ TEST_F(ZoneEntryTest, Callbacks) {
     EXPECT_FALSE(zone.hasCallbacks());
 }
 
-TEST_F(ZoneEntryTest, Nameserver_iterators) {
+TEST_F(ZoneEntryTest, NameserverIterators) {
     ZoneEntry zone(EXAMPLE_CO_UK, RRClass::IN().getCode());
     shared_ptr<NameserverEntry> nse(new NameserverEntry(EXAMPLE_CO_UK,
         RRClass::IN().getCode()));
@@ -86,7 +86,7 @@ TEST_F(ZoneEntryTest, Nameserver_iterators) {
     const ZoneEntry& zone_const(zone);
     EXPECT_TRUE(zone.begin() == zone.end());
     EXPECT_TRUE(zone_const.begin() == zone_const.end());
-    zone.nameserver_add(nse);
+    zone.nameserverAdd(nse);
     EXPECT_FALSE(zone.begin() == zone.end());
     EXPECT_FALSE(zone_const.begin() == zone_const.end());
     EXPECT_TRUE(*zone.begin() == nse);
