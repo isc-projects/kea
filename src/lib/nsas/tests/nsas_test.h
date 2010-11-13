@@ -17,7 +17,7 @@
 #ifndef __NSAS_TEST_H
 #define __NSAS_TEST_H
 
-/// \file test_utilities.h
+/// \file nsas_test.h
 ///
 /// Contains miscellaneous classes and other stuff to help with the nameserver
 /// address store tests.
