@@ -88,7 +88,9 @@ protected:
 
     NameserverAddressStoreTest() :
         authority_(new RRset(Name("example.net."), RRClass::IN(), RRType::NS(),
-            RRTTL(128)))
+            RRTTL(128))),
+        empty_authority_(new RRset(Name("example.net."), RRClass::IN(),
+            RRType::NS(), RRTTL(128)))
     {
         // Constructor - initialize a set of nameserver and zone objects.  For convenience,
         // these are stored in vectors.
@@ -113,7 +115,7 @@ protected:
     std::vector<boost::shared_ptr<NameserverEntry> > nameservers_;
     std::vector<boost::shared_ptr<ZoneEntry> >       zones_;
 
-    RRsetPtr authority_;
+    RRsetPtr authority_, empty_authority_;
 
     class TestResolver : public ResolverInterface {
         public:
@@ -275,6 +277,23 @@ TEST_F(NameserverAddressStoreTest, emptyLookup) {
         EXPECT_TRUE(result.first);
         EXPECT_EQ("192.0.2.1", result.second.toText());
     }
+}
+
+/**
+ * \short Try looking up a zone that does not have any nameservers.
+ *
+ * It should not ask anything and say it is unreachable right away.
+ */
+TEST_F(NameserverAddressStoreTest, zoneWithoutNameservers) {
+    DerivedNsas nsas(defaultTestResolver, 10, 10);
+    // Ask it a question
+    nsas.lookup("example.net.", RRClass::IN().getCode(), *empty_authority_,
+        vector<AbstractRRset>(), getCallback());
+    // There should be no questions, because there's nothing to ask
+    EXPECT_EQ(0, defaultTestResolver.requests.size());
+    // And there should be one „unreachable“ answer for the query
+    ASSERT_EQ(1, NSASCallback::results.size());
+    EXPECT_FALSE(NSASCallback::results[0].first);
 }
 
 /// \short Test invalid authority section.
