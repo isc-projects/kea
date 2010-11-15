@@ -80,7 +80,7 @@ class ZoneEntry;
 /// As this object will be stored in the nameserver address store LRU list,
 /// it is derived from the LRU list entry class.
 
-class NameserverEntry : public NsasEntry<NameserverEntry>, Fetchable {
+class NameserverEntry : public NsasEntry<NameserverEntry>, public Fetchable {
 public:
     /// List of addresses associated with this nameserver
     typedef std::vector<AddressEntry>   AddressVector;

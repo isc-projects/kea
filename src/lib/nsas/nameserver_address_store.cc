@@ -15,6 +15,7 @@
 // $Id$
 
 #include <boost/shared_ptr.hpp>
+#include <boost/foreach.hpp>
 
 #include <config.h>
 #include <dns/rdataclass.h>
@@ -130,14 +131,94 @@ NameserverAddressStore::lookup(const std::string& zone, uint16_t class_code,
     if (zone_lookup.first) { // New value
         zone_lru_.add(zone_ptr);
     } else { // Was already here
+        // FIXME Check the TTL, delete and retry if outdated
         zone_lru_.touch(zone_ptr);
     }
     zone_ptr->addCallback(callback);
     processZone(zone_ptr);
 }
 
-void NameserverAddressStore::processZone(ZonePtr) {
-    
+namespace {
+
+asiolink::IOAddress
+chooseAddress(const NameserverEntry::AddressVector& addresses) {
+    // TODO Something little bit more inteligent than just picking the first
+    // one
+    assert(!addresses.empty()); // Should not be called with empty list
+    return addresses.front().getAddress();
+}
+
+}
+
+void NameserverAddressStore::processZone(ZonePtr zone) {
+    // Addresses of existing nameservers
+    NameserverEntry::AddressVector addresses;
+    // Current state
+    Fetchable::State state;
+    {
+        // Nameservers we can still ask for their IP address
+        vector<NameserverPtr> not_asked;
+        // Are there any in-progress nameservers?
+        bool pending(false);
+        /**
+         * This is inside a block so we can unlock the zone with nameservers
+         * after we get all information from it. We do not need to keep the
+         * lock on the nameservers when we run callbacks.
+         */
+        ZoneEntry::Lock lock(zone->getLock());
+
+        if (zone->getState() != Fetchable::UNREACHABLE) {
+            // Look into all the nameservers
+
+            // FIXME This completely ignores TTLs, something shoud be done with them.
+            // Maybe turn all outdated nameservers into NOT_ASKED?
+
+            BOOST_FOREACH(NameserverPtr ns, *zone) {
+                switch (ns->getState()) {
+                    case Fetchable::NOT_ASKED:
+                        not_asked.push_back(ns);
+                        break;
+                    case Fetchable::READY:
+                        ns->getAddresses(addresses);
+                        break;
+                    case Fetchable::IN_PROGRESS:
+                        pending = true;
+                        break;
+                    case Fetchable::UNREACHABLE:
+                        // Nothing. We do not care about it.
+                        break;
+                }
+            }
+        }
+
+        /*
+         * If there is no data, noone to ask and noone to expect answer from
+         * then bad luck, but this zone can't be reached.
+         */
+        if (not_asked.empty() && addresses.empty() && !pending) {
+            zone->setState(Fetchable::UNREACHABLE);
+        }
+
+        // TODO Pick up to two not_asked ones and ask them
+
+        state = zone->getState();
+    } // Release the lock (and some other resources as a bonus)
+
+    // If we are unreachable, tell everyone
+    if (state == Fetchable::UNREACHABLE) {
+        while (zone->hasCallbacks()) {
+            zone->popCallback()->unreachable();
+        }
+    } else if (!addresses.empty()) { // Give everyone an address
+        while (zone->hasCallbacks()) {
+            // Get the address first, so the callback is removed after we are
+            // sure there's no exception
+            asiolink::IOAddress address(chooseAddress(addresses));
+            zone->popCallback()->success(address);
+        }
+    }
+    // Otherwise, we are still waiting for more info to come, let the
+    // callbacks rest
 }
 
 } // namespace nsas
