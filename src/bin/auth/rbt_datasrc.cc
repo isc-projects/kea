@@ -53,7 +53,7 @@ RBNode*
 RBNode::successor() {
     RBNode* current = this;
 
-    /// if has right node, the successor is the left-most node
+    // if it has right node, the successor is the left-most node
     if (right_ != right_->right_) {
         current = right_;
         while (current->left_ != current->left_->left_) {
@@ -62,8 +62,8 @@ RBNode::successor() {
         return (current);
     }
 
-    /// otherwise return the parent without left child or
-    /// current node isnot its right child
+    // otherwise return the parent without left child or
+    // current node is not its right child
     RBNode* s = current->parent_;
     while (s != s->left_ && current == s->right_) {
         current = s;
@@ -96,8 +96,9 @@ RBNode::cloneDNSData(RBNode& node) {
 void
 RBNode::setDownTree(RBTree* down) {
     down_ = down;
-    if (down)
+    if (down) {
         down->up_ = this;
+    }
 }
 
 /*
@@ -176,8 +177,7 @@ RBTree::findHelper(const Name& name, RBTree** tree, RBNode** ret) const {
             *tree = (RBTree*)this;
             *ret = node;
             return (RBTree::EXACTMATCH);
-        }
-        else {
+        } else {
             int common_label_count = compare_result.getCommonLabels();
             // common label count equal one means, there is no common between
             // two names
@@ -417,13 +417,13 @@ RBTree::erase(const Name& name) {
         return (1);
     }
 
-    /// cannot delete non terminal
+    // cannot delete non terminal
     if (node->down_ != NULL) {
         return (1);
     }
 
     tree->eraseNode(node);
-    /// merge down to up
+    // merge down to up
     if (tree->node_count_ == 1 && tree->up_ != NULL &&
         tree->up_->isNonterminal()) {
         RBNode* up = tree->up_;
@@ -464,7 +464,7 @@ RBTree::eraseNode(RBNode *node) {
 
     if (y->parent_ == NULLNODE) {
         root_ = x;
-    } else if ( y == y->parent_->left_ ) {
+    } else if (y == y->parent_->left_) {
         y->parent_->left_ = x;
     } else {
         y->parent_->right_ = x;
@@ -549,11 +549,12 @@ RBTree::deleteRebalance(RBNode* node) {
     node->color_ = BLACK;
 }
 
-#define INDNET(depth) do{\
-    int i = 0;\
-    for (; i < (depth) * 5; ++i)\
-        std::cout << " ";\
-}while(0)
+#define INDNET(depth) do { \
+    int i = 0; \
+    for (; i < (depth) * 5; ++i) { \
+        std::cout << " "; \
+    } \
+} while(0)
 
 void
 RBTree::printTree(int depth) const {
