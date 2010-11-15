@@ -57,14 +57,14 @@ public:
     bool isDelegate() const { return (is_delegate_); }
 
     /// \brief return whether current domain name is non-terminal
-    /// A non-terminal domain has no rrsets but at least one of its descendant
-    /// domain has rrset
+    /// A non-terminal domain has no RRsets but at least one of its descendant
+    /// domain has RRset
     bool isNonterminal() const { return (is_nonterminal_); }
 
     /// \brief return the name of current node, it's relative to its parents
     //
     /// \todo Is it meaningful to return the absolute of the node?
-    const Name &getName() const {return (name_); }
+    const Name& getName() const {return (name_); }
 
     // \brief return next node whose name is bigger than current node
     RBNode* successor();
@@ -74,11 +74,12 @@ public:
     /// \name modify function
     //@{
 
-    /// \brief add the rrset to the node
-    /// \Note: there is no check whether the node already has the rrset or not
-    /// and no check about whether the name of the rrset is the same with the
+    /// \brief add an RRset to the node
+    /// \Note: there is no check about whether the node already has the RRset
+    /// or not
+    /// and no check about whether the name of the RRset is the same with the
     /// node or not.
-    /// All of above is rely on interface user
+    /// It is the caller's responsibility to ensure these conditions.
     int addRRset(RRsetPtr rrset);
     //@}
 
