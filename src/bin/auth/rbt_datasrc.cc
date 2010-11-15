@@ -20,17 +20,20 @@
 
 using namespace isc::dns;
 namespace {
-    /// helper function to remove the base domain from super domain
-    /// the precondition of this function is the super_name contains the sub_name
-    Name operator-(const Name& super_name, const Name& sub_name) {
-        return (super_name.split(0, super_name.getLabelCount() - sub_name.getLabelCount()));
-    }
+/// helper function to remove the base domain from super domain
+/// the precondition of this function is the super_name contains the
+/// sub_name
+Name
+operator-(const Name& super_name, const Name& sub_name) {
+    return (super_name.split(0, super_name.getLabelCount() -
+                             sub_name.getLabelCount()));
+}
 }
 
 namespace isc {
 namespace datasrc {
-RBNode::RBNode(const Name& name, RRsetListPtr rrsets, RBNode* nullnode)
-:   parent_(nullnode),
+RBNode::RBNode(const Name& name, RRsetListPtr rrsets, RBNode* nullnode) :
+    parent_(nullnode),
     left_(nullnode),
     right_(nullnode),
     color_(RED),
@@ -38,12 +41,12 @@ RBNode::RBNode(const Name& name, RRsetListPtr rrsets, RBNode* nullnode)
     rrsets_(rrsets),
     down_(NULL),
     is_delegate_(false),
-    is_nonterminal_(false) {
+    is_nonterminal_(false)
+{
 }
 
 RBNode::~RBNode() {
-    if (down_)
-        delete down_;
+    delete down_;
 }
 
 RBNode*
@@ -53,8 +56,9 @@ RBNode::successor() {
     /// if has right node, the successor is the left-most node
     if (right_ != right_->right_) {
         current = right_;
-        while (current->left_ != current->left_->left_)
+        while (current->left_ != current->left_->left_) {
             current = current->left_;
+        }
         return (current);
     }
 
@@ -70,10 +74,12 @@ RBNode::successor() {
 
 int
 RBNode::addRRset(RRsetPtr rrset) {
-    if (rrset->getType() == RRType::NS())
+    if (rrset->getType() == RRType::NS()) {
         is_delegate_ = true;
-    if (rrsets_.get() == NULL)
+    }
+    if (rrsets_.get() == NULL) {
         rrsets_.reset(new RRsetList());
+    }
     rrsets_->addRRset(rrset);
     is_nonterminal_ = false;
     return (0);
@@ -128,19 +134,22 @@ RBTree::~RBTree() {
     assert(root_ != NULL);
 
     delete NULLNODE;
-    if (root_ == NULLNODE)
+    if (root_ == NULLNODE) {
         return;
+    }
 
     RBNode* node = root_;
     while (root_->left_ != NULLNODE || root_->right_ != NULLNODE) {
-        while (node->left_ != NULLNODE || node->right_ != NULLNODE)
+        while (node->left_ != NULLNODE || node->right_ != NULLNODE) {
             node = (node->left_ != NULLNODE) ? node->left_ : node->right_;
+        }
 
         RBNode* parent = node->parent_;
-        if (parent->left_ == node)
+        if (parent->left_ == node) {
             parent->left_ = NULLNODE;
-        else
+        } else {
             parent->right_ = NULLNODE;
+        }
         delete node;
         node = parent;
     }
@@ -161,7 +170,8 @@ RBTree::findHelper(const Name& name, RBTree** tree, RBNode** ret) const {
     RBNode* node = root_;
     while (node != NULLNODE) {
         NameComparisonResult compare_result = name.compare(node->name_);
-        NameComparisonResult::NameRelation relation = compare_result.getRelation();
+        NameComparisonResult::NameRelation relation =
+            compare_result.getRelation();
         if (relation == NameComparisonResult::EQUAL) {
             *tree = (RBTree*)this;
             *ret = node;
@@ -169,24 +179,27 @@ RBTree::findHelper(const Name& name, RBTree** tree, RBNode** ret) const {
         }
         else {
             int common_label_count = compare_result.getCommonLabels();
-            /// common label count equal one means, there is no common between two names
-            if (common_label_count == 1)
-                node = (compare_result.getOrder() < 0) ? node->left_ : node->right_;
-            else if (NameComparisonResult::SUBDOMAIN == relation) {
+            // common label count equal one means, there is no common between
+            // two names
+            if (common_label_count == 1) {
+                node = (compare_result.getOrder() < 0) ?
+                    node->left_ : node->right_;
+            } else if (NameComparisonResult::SUBDOMAIN == relation) {
                 if (node->isDelegate()) {
                     *tree = (RBTree*)this;
                     *ret = node;
                     return (RBTree::FINDREFERRAL);
-                }
-                else if (node->down_)
-                    /// the node all save the relative name, so we need to remove the suffix
-                    return (node->down_->findHelper(name - node->name_, tree, ret));
-                else
+                } else if (node->down_) {
+                    // the node all save the relative name, so we need to
+                    // remove the suffix
+                    return (node->down_->findHelper(name - node->name_, tree,
+                                                    ret));
+                } else {
                     return (RBTree::NOTFOUND);
-
-            }
-            else
+                }
+            } else {
                 return (RBTree::NOTFOUND);
+            }
         }
     }
 
@@ -196,16 +209,17 @@ RBTree::findHelper(const Name& name, RBTree** tree, RBNode** ret) const {
 int
 RBTree::getNodeCount() const {
     return (getNodeCountHelper(root_));
-
 }
 
 int
 RBTree::getNodeCountHelper(const RBNode *node) const {
-    if (NULLNODE == node)
+    if (NULLNODE == node) {
         return (0);
+    }
 
     int sub_tree_node_count = node->down_ ? node->down_->getNodeCount() : 0;
-    return (1 + sub_tree_node_count + getNodeCountHelper(node->left_) + getNodeCountHelper(node->right_));
+    return (1 + sub_tree_node_count + getNodeCountHelper(node->left_) +
+            getNodeCountHelper(node->right_));
 }
 
 int
@@ -218,11 +232,13 @@ RBTree::insert(const Name& name, RBNode** new_node) {
         parent = current;
 
         NameComparisonResult compare_result = name.compare(current->name_);
-        NameComparisonResult::NameRelation relation = compare_result.getRelation();
+        NameComparisonResult::NameRelation relation =
+            compare_result.getRelation();
         if (relation == NameComparisonResult::EQUAL) {
-            if (new_node)
+            if (new_node) {
                 *new_node = current;
-            /// if the node is non-ternimal, it doesnot exist, so we return 0
+            }
+            // if the node is non-ternimal, it does not exist, so we return 0
             return (current->rrsets_.get() ? 1 : 0);
         } else {
             int common_label_count = compare_result.getCommonLabels();
@@ -230,15 +246,20 @@ RBTree::insert(const Name& name, RBNode** new_node) {
                 order = compare_result.getOrder();
                 current = order < 0 ? current->left_ : current->right_;
             } else {
-                /// insert sub domain to sub tree
+                // insert sub domain to sub tree
                 if (relation == NameComparisonResult::SUBDOMAIN) {
-                    if (NULL == current->down_)
+                    if (NULL == current->down_) {
                         current->setDownTree(new RBTree());
-                    return (current->down_->insert(name - current->name_, new_node));
+                    }
+                    return (current->down_->insert(name - current->name_,
+                                                   new_node));
                 } else {
-                    /// for super domain or has common label domain, create common node first
-                    /// then insert current name and new name into the sub tree
-                    Name common_ancestor = name.split(name.getLabelCount() - common_label_count, common_label_count);
+                    // for super domain or has common label domain, create
+                    // common node first then insert current name and new name
+                    // into the sub tree
+                    Name common_ancestor = name.split(
+                        name.getLabelCount() - common_label_count,
+                        common_label_count);
                     Name sub_name = current->name_ - common_ancestor;
                     current->name_ = common_ancestor;
                     RBTree* down_old = current->down_;
@@ -251,33 +272,36 @@ RBTree::insert(const Name& name, RBNode** new_node) {
                     sub_root->name_ = sub_name;
 
                     current->rrsets_.reset();
-                    /// if insert name is the super domain of current node, no need insert again
-                    /// otherwise insert it into the down tree
+                    // if insert name is the super domain of current node, no
+                    // need insert again otherwise insert it into the down
+                    // tree.
                     if (name.getLabelCount() == common_label_count) {
                         *new_node = current;
                         return (0);
                     } else {
                         current->is_nonterminal_ = true;
-                        return (current->down_->insert(name - common_ancestor, new_node));
+                        return (current->down_->insert(name - common_ancestor,
+                                                       new_node));
                     }
                 }
             }
-
         }
     }
 
     RBNode* node = new RBNode(name, RBNode::RRsetListPtr(), NULLNODE);
     node->parent_ = parent;
-    if (parent == NULLNODE)
+    if (parent == NULLNODE) {
         root_ = node;
-    else if (order < 0)
+    } else if (order < 0) {
         parent->left_ = node;
-    else
+    } else {
         parent->right_ = node;
+    }
 
     insertRebalance(node);
-    if (new_node)
+    if (new_node) {
         *new_node = node;
+    }
     ++node_count_;
     return (0);
 }
@@ -325,7 +349,6 @@ RBTree::insertRebalance(RBNode* node) {
 
                 leftRotate(node->parent_->parent_);
             }
-
         }
     }
 
@@ -339,17 +362,19 @@ RBTree::leftRotate(RBNode* p) {
 
     p->right_ = c->left_;
 
-    if (c->left_ != NULLNODE)
+    if (c->left_ != NULLNODE) {
         c->left_->parent_ = p;
+    }
 
     c->parent_ = p->parent_;
 
-    if (p->parent_ == NULLNODE)
+    if (p->parent_ == NULLNODE) {
         root_ = c;
-    else if (p == p->parent_->left_)
+    } else if (p == p->parent_->left_) {
         p->parent_->left_ = c;
-    else
+    } else {
         p->parent_->right_ = c;
+    }
 
     c->left_ = p;
     p->parent_ = c;
@@ -363,17 +388,19 @@ RBTree::rightRotate(RBNode* p) {
 
     p->left_ = c->right_;
 
-    if (c->right_ != NULLNODE)
+    if (c->right_ != NULLNODE) {
         c->right_->parent_ = p;
+    }
 
     c->parent_ = p->parent_;
 
-    if (p->parent_ == NULLNODE)
+    if (p->parent_ == NULLNODE) {
         root_ = c;
-    else if (p == p->parent_->left_)
+    } else if (p == p->parent_->left_) {
         p->parent_->left_ = c;
-    else
+    } else {
         p->parent_->right_ = c;
+    }
 
     c->right_ = p;
     p->parent_ = c;
@@ -386,16 +413,19 @@ int
 RBTree::erase(const Name& name) {
     RBNode* node;
     RBTree* tree;
-    if (findHelper(name, &tree, &node) != RBTree::EXACTMATCH)
+    if (findHelper(name, &tree, &node) != RBTree::EXACTMATCH) {
         return (1);
+    }
 
     /// cannot delete non terminal
-    if (node->down_ != NULL)
+    if (node->down_ != NULL) {
         return (1);
+    }
 
     tree->eraseNode(node);
     /// merge down to up
-    if (tree->node_count_ == 1 && tree->up_ != NULL && tree->up_->isNonterminal()) {
+    if (tree->node_count_ == 1 && tree->up_ != NULL &&
+        tree->up_->isNonterminal()) {
         RBNode* up = tree->up_;
         Name merged_name = tree->root_->name_.concatenate(up->name_);
         tree->root_->cloneDNSData(*up);
@@ -404,7 +434,7 @@ RBTree::erase(const Name& name) {
         up->name_ = merged_name;
         up->is_nonterminal_ = false;
         delete tree;
-    } else if (tree->node_count_ == 0 && tree->up_) { ///delete empty tree
+    } else if (tree->node_count_ == 0 && tree->up_) { // delete empty tree
         tree->up_->setDownTree(NULL);
         delete tree;
     }
@@ -418,24 +448,27 @@ RBTree::eraseNode(RBNode *node) {
     RBNode* y = NULLNODE;
     RBNode* x = NULLNODE;
 
-    if (node->left_ == NULLNODE || node->right_ == NULLNODE)
+    if (node->left_ == NULLNODE || node->right_ == NULLNODE) {
         y = node;
-    else
+    } else {
         y = node->successor();
+    }
 
-    if (y->left_ != NULLNODE)
+    if (y->left_ != NULLNODE) {
         x = y->left_;
-    else
+    } else {
         x = y->right_;
+    }
 
     x->parent_ = y->parent_;
 
-    if (y->parent_ == NULLNODE)
+    if (y->parent_ == NULLNODE) {
         root_ = x;
-    else if ( y == y->parent_->left_ )
+    } else if ( y == y->parent_->left_ ) {
         y->parent_->left_ = x;
-    else
+    } else {
         y->parent_->right_ = x;
+    }
 
     if (y != node) {
         y->cloneDNSData(*node);
@@ -443,8 +476,9 @@ RBTree::eraseNode(RBNode *node) {
         y->down_ = NULL;
     }
 
-    if (y->color_ == BLACK)
+    if (y->color_ == BLACK) {
         deleteRebalance(x);
+    }
 
     y->left_ = NULL;
     y->right_ = NULL;
@@ -528,12 +562,11 @@ RBTree::printTree(int depth) const {
     printTreeHelper(root_, depth);
 }
 
-
 void
 RBTree::printTreeHelper(RBNode* node, int depth) const {
-
     INDNET(depth);
-    std::cout << node->name_.toText() << " (" << ((node->color_ == BLACK) ? "black" : "red") << ")\n";
+    std::cout << node->name_.toText() << " ("
+              << ((node->color_ == BLACK) ? "black" : "red") << ")\n";
     std::cout << ((node->isNonterminal()) ? "[non-terminal] \n" : "\n");
     if (node->down_) {
         assert(node->down_->up_ == node);
@@ -544,16 +577,16 @@ RBTree::printTreeHelper(RBNode* node, int depth) const {
         std::cout << "end down from" << node->name_.toText() <<"\n";
     }
 
-    if (node->left_ != NULLNODE)
+    if (node->left_ != NULLNODE) {
         printTreeHelper(node->left_, depth + 1);
-    else {
+    } else {
         INDNET(depth + 1);
         std::cout << "NULL\n";
     }
 
-    if (node->right_ != NULLNODE)
+    if (node->right_ != NULLNODE) {
         printTreeHelper(node->right_, depth + 1);
-    else {
+    } else {
         INDNET(depth + 1);
         std::cout << "NULL\n";
     }

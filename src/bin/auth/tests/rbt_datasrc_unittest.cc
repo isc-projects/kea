@@ -49,8 +49,7 @@ using namespace isc::datasrc;
 namespace {
 class RBTreeTest : public::testing::Test {
 protected:
-    RBTreeTest() : rbtree()
-    {
+    RBTreeTest() : rbtree() {
         rbtree.insert(Name("a"), &rbtnode);
         rbtree.insert(Name("b"), &rbtnode);
         rbtree.insert(Name("c"), &rbtnode);
@@ -88,8 +87,8 @@ TEST_F(RBTreeTest, insertNames) {
     EXPECT_EQ(15, rbtree.getNodeCount());
 
     // return 1, since node "d.e.f" already has data associated with it
-    RRsetPtr rrset = RRsetPtr(new RRset(Name("example.com"), RRClass::IN(), RRType::NS(),
-                                       RRTTL(3600)));
+    RRsetPtr rrset(new RRset(Name("example.com"), RRClass::IN(), RRType::NS(),
+                             RRTTL(3600)));
     rbtnode->addRRset(rrset);
     EXPECT_EQ(1, rbtree.insert(Name("example.com"), &rbtnode));
     EXPECT_EQ(15, rbtree.getNodeCount());
@@ -136,8 +135,8 @@ TEST_F(RBTreeTest, findName) {
     EXPECT_EQ(RBTree::NOTFOUND, rbtree.find(Name("m.e.f"), &rbtnode));
 
     // find referral
-    RRsetPtr rrset = RRsetPtr(new RRset(Name("d.e.f"), RRClass::IN(), RRType::NS(),
-                                       RRTTL(3600)));
+    RRsetPtr rrset(new RRset(Name("d.e.f"), RRClass::IN(), RRType::NS(),
+                             RRTTL(3600)));
     rbtnode->addRRset(rrset);
     EXPECT_EQ(RBTree::FINDREFERRAL, rbtree.find(Name("m.d.e.f"), &rbtnode));
     EXPECT_EQ(Name("d.e.f"), rbtnode->getName());
@@ -201,8 +200,8 @@ TEST_F(RBTreeTest, eraseName) {
     // can't delete non terminal
     EXPECT_EQ(1, rbtree.erase(Name("d.e.f")));
     EXPECT_EQ(RBTree::EXACTMATCH, rbtree.find(Name("w.y.d.e.f"), &rbtnode));
-    RRsetPtr rrset = RRsetPtr(new RRset(Name("w.y.d.e.f"), RRClass::IN(), RRType::A(),
-                                       RRTTL(3600)));
+    RRsetPtr rrset(new RRset(Name("w.y.d.e.f"), RRClass::IN(), RRType::A(),
+                             RRTTL(3600)));
     rbtnode->addRRset(rrset);
     EXPECT_EQ(0, rbtree.erase(Name("p.w.y.d.e.f")));
     EXPECT_EQ(14, rbtree.getNodeCount());
@@ -287,7 +286,7 @@ TEST_F(RBTreeTest, eraseName) {
     EXPECT_EQ(0, rbtree.erase(Name("g.h")));
     EXPECT_EQ(1, rbtree.getNodeCount());
 
-    // rebuild rbtree to cover different execution paths 
+    // rebuild rbtree to cover different execution paths
     EXPECT_EQ(0, rbtree.insert(Name("a"), &rbtnode));
     EXPECT_EQ(0, rbtree.insert(Name("g"), &rbtnode));
     EXPECT_EQ(0, rbtree.insert(Name("b"), &rbtnode));
@@ -376,14 +375,14 @@ TEST_F(RBTreeTest, isDelegate) {
     EXPECT_FALSE(rbtnode->isDelegate());
 
     // add a rrset
-    RRsetPtr a_rrset = RRsetPtr(new RRset(Name("d.e.f"), RRClass::IN(), RRType::A(),
-                                       RRTTL(3600)));
+    RRsetPtr a_rrset(new RRset(Name("d.e.f"), RRClass::IN(), RRType::A(),
+                               RRTTL(3600)));
     rbtnode->addRRset(a_rrset);
     EXPECT_FALSE(rbtnode->isDelegate());
 
     // add ns rrset
-    RRsetPtr ns_rrset = RRsetPtr(new RRset(Name("d.e.f"), RRClass::IN(), RRType::NS(),
-                                       RRTTL(3600)));
+    RRsetPtr ns_rrset(new RRset(Name("d.e.f"), RRClass::IN(), RRType::NS(),
+                                RRTTL(3600)));
     rbtnode->addRRset(ns_rrset);
     EXPECT_TRUE(rbtnode->isDelegate());
 }
