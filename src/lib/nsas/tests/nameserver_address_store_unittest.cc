@@ -296,6 +296,48 @@ TEST_F(NameserverAddressStoreTest, zoneWithoutNameservers) {
     EXPECT_FALSE(NSASCallback::results[0].first);
 }
 
+/**
+ * \short Try looking up a zone that has only an unreachable nameserver.
+ *
+ * It should be unreachable. Furthermore, subsequent questions for that zone
+ * or other zone with the same nameserver should be unreachable right away,
+ * without further asking.
+ */
+TEST_F(NameserverAddressStoreTest, unreachableNS) {
+    DerivedNsas nsas(defaultTestResolver, 10, 10);
+    // Ask it a question
+    nsas.lookup("example.net.", RRClass::IN().getCode(), *authority_,
+        vector<AbstractRRset>(), getCallback());
+    // It should ask for IP addresses for example.com.
+    ASSERT_EQ(2, defaultTestResolver.requests.size());
+    asksIPs(Name("example.com."), 0, 1);
+
+    // Ask another question with different zone but the same nameserver
+    authority_->setName(Name("example.com."));
+    nsas.lookup("example.com.", RRClass::IN().getCode(), *authority_,
+        vector<AbstractRRset>(), getCallback());
+    // It should ask nothing more now
+    EXPECT_EQ(2, defaultTestResolver.requests.size());
+
+    // We say there are no addresses
+    defaultTestResolver.requests[0].second->failure();
+    defaultTestResolver.requests[1].second->failure();
+
+    // We should have 2 answers now
+    EXPECT_EQ(2, NSASCallback::results.size());
+    // When we ask one same and one other zone with the same nameserver,
+    // it should generate no questions and answer right away
+    nsas.lookup("example.net.", RRClass::IN().getCode(), *authority_,
+        vector<AbstractRRset>(), getCallback());
+    nsas.lookup("example.org.", RRClass::IN().getCode(), *authority_,
+        vector<AbstractRRset>(), getCallback());
+    // There should be 4 negative answers now
+    EXPECT_EQ(4, NSASCallback::results.size());
+    BOOST_FOREACH(const NSASCallback::Result& result, NSASCallback::results) {
+        EXPECT_FALSE(result.first);
+    }
+}
+
 /// \short Test invalid authority section.
 TEST_F(NameserverAddressStoreTest, invalidAuthority) {
     DerivedNsas nsas(defaultTestResolver, 2, 2);
