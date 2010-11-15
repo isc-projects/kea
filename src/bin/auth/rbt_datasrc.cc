@@ -21,7 +21,7 @@
 using namespace isc::dns;
 namespace {
     /// helper function to remove the base domain from super domain
-    /// the precondition of this function is thant super_name contains sub_name
+    /// the precondition of this function is the super_name contains the sub_name
     Name operator-(const Name& super_name, const Name& sub_name) {
         return (super_name.split(0, super_name.getLabelCount() - sub_name.getLabelCount()));
     }
@@ -50,7 +50,7 @@ RBNode*
 RBNode::successor() {
     RBNode* current = this;
 
-    /// if has right node, the successor is the most left node
+    /// if has right node, the successor is the left-most node
     if (right_ != right_->right_) {
         current = right_;
         while (current->left_ != current->left_->left_)
@@ -58,7 +58,7 @@ RBNode::successor() {
         return (current);
     }
 
-    /// otherwise return the parent without left child or 
+    /// otherwise return the parent without left child or
     /// current node isnot its right child
     RBNode* s = current->parent_;
     while (s != s->left_ && current == s->right_) {
@@ -169,7 +169,7 @@ RBTree::findHelper(const Name& name, RBTree** tree, RBNode** ret) const {
         }
         else {
             int common_label_count = compare_result.getCommonLabels();
-            ///common label count equal one means, there is no common between two names
+            /// common label count equal one means, there is no common between two names
             if (common_label_count == 1)
                 node = (compare_result.getOrder() < 0) ? node->left_ : node->right_;
             else if (NameComparisonResult::SUBDOMAIN == relation) {
@@ -222,7 +222,7 @@ RBTree::insert(const Name& name, RBNode** new_node) {
         if (relation == NameComparisonResult::EQUAL) {
             if (new_node)
                 *new_node = current;
-            /// if the node is non-ternimal, it doesn't exist, so we return 0
+            /// if the node is non-ternimal, it doesnot exist, so we return 0
             return (current->rrsets_.get() ? 1 : 0);
         } else {
             int common_label_count = compare_result.getCommonLabels();
@@ -258,7 +258,7 @@ RBTree::insert(const Name& name, RBNode** new_node) {
                         return (0);
                     } else {
                         current->is_nonterminal_ = true;
-                        return (current->down_->insert(name - common_ancestor, new_node)); 
+                        return (current->down_->insert(name - common_ancestor, new_node));
                     }
                 }
             }
@@ -389,7 +389,7 @@ RBTree::erase(const Name& name) {
     if (findHelper(name, &tree, &node) != RBTree::EXACTMATCH)
         return (1);
 
-    /// cann't delete non terminal
+    /// cannot delete non terminal
     if (node->down_ != NULL)
         return (1);
 
