@@ -45,7 +45,7 @@ class AddressRequestCallback;
 /// complicated, in that the class takes account of triggering fetches for
 /// addresses of nameservers when the address records expire.
 
-class ZoneEntry : public NsasEntry<ZoneEntry>, Fetchable {
+class ZoneEntry : public NsasEntry<ZoneEntry>, public Fetchable {
 public:
 
     /// \brief Constructor where no NS records are supplied
