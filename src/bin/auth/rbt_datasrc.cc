@@ -50,6 +50,7 @@ RBNode*
 RBNode::successor() {
     RBNode* current = this;
 
+    /// if has right node, the successor is the most left node
     if (right_ != right_->right_) {
         current = right_;
         while (current->left_ != current->left_->left_)
@@ -57,6 +58,8 @@ RBNode::successor() {
         return (current);
     }
 
+    /// otherwise return the parent without left child or 
+    /// current node isnot its right child
     RBNode* s = current->parent_;
     while (s != s->left_ && current == s->right_) {
         current = s;
@@ -65,7 +68,6 @@ RBNode::successor() {
     return (s);
 }
 
-/// no duplication is checked now
 int
 RBNode::addRRset(RRsetPtr rrset) {
     if (rrset->getType() == RRType::NS())
@@ -92,7 +94,26 @@ RBNode::setDownTree(RBTree* down) {
         down->up_ = this;
 }
 
-
+/*
+ with the following names:
+     a       x.d.e.f     o.w.y.d.e.f
+     b       z.d.e.f     p.w.y.d.e.f
+     c       g.h         q.w.y.d.e.f
+     the tree will looks like:
+                                  b
+                                /   \
+                               a    d.e.f
+                                      /|\
+                                     c | g.h
+                                       |
+                                      w.y
+                                      /|\
+                                     x | z
+                                       |
+                                       p
+                                      / \
+                                     o   q
+*/
 RBTree::RBTree() {
     NULLNODE = new RBNode(Name(" "));
     NULLNODE->parent_  = NULLNODE->left_ = NULLNODE->right_ = NULLNODE;
@@ -129,14 +150,14 @@ RBTree::~RBTree() {
 }
 
 RBTree::FindResult
-RBTree::find(const Name& name, RBNode** node)const {
+RBTree::find(const Name& name, RBNode** node) const {
     RBTree* tree;
     return (findHelper(name, &tree, node));
 }
 
 
 RBTree::FindResult
-RBTree::findHelper(const Name& name, RBTree** tree, RBNode** ret)const {
+RBTree::findHelper(const Name& name, RBTree** tree, RBNode** ret) const {
     RBNode* node = root_;
     while (node != NULLNODE) {
         NameComparisonResult compare_result = name.compare(node->name_);
@@ -209,14 +230,14 @@ RBTree::insert(const Name& name, RBNode** new_node) {
                 order = compare_result.getOrder();
                 current = order < 0 ? current->left_ : current->right_;
             } else {
-                //insert sub domain to sub tree
+                /// insert sub domain to sub tree
                 if (relation == NameComparisonResult::SUBDOMAIN) {
                     if (NULL == current->down_)
                         current->setDownTree(new RBTree());
                     return (current->down_->insert(name - current->name_, new_node));
                 } else {
-                    // for super domain or has common label domain, create common node first
-                    // then insert current name and new name into the sub tree
+                    /// for super domain or has common label domain, create common node first
+                    /// then insert current name and new name into the sub tree
                     Name common_ancestor = name.split(name.getLabelCount() - common_label_count, common_label_count);
                     Name sub_name = current->name_ - common_ancestor;
                     current->name_ = common_ancestor;
@@ -230,8 +251,8 @@ RBTree::insert(const Name& name, RBNode** new_node) {
                     sub_root->name_ = sub_name;
 
                     current->rrsets_.reset();
-                    //if insert name is the super domain of current node, no need insert
-                    //otherwise insert it into the down tree
+                    /// if insert name is the super domain of current node, no need insert again
+                    /// otherwise insert it into the down tree
                     if (name.getLabelCount() == common_label_count) {
                         *new_node = current;
                         return (0);
@@ -373,7 +394,7 @@ RBTree::erase(const Name& name) {
         return (1);
 
     tree->eraseNode(node);
-    ///merge down to up
+    /// merge down to up
     if (tree->node_count_ == 1 && tree->up_ != NULL && tree->up_->isNonterminal()) {
         RBNode* up = tree->up_;
         Name merged_name = tree->root_->name_.concatenate(up->name_);
