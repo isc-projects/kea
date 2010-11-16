@@ -62,8 +62,8 @@ protected:
         rbtree.insert(Name("p.w.y.d.e.f"), &rbtnode);
         rbtree.insert(Name("q.w.y.d.e.f"), &rbtnode);
     }
-    RBTree rbtree;
-    RBNode *rbtnode;
+    RBTree<int> rbtree;
+    RBNode<int> *rbtnode;
 };
 
 
@@ -86,10 +86,9 @@ TEST_F(RBTreeTest, insertNames) {
     EXPECT_EQ(0, rbtree.insert(Name("example.com"), &rbtnode));
     EXPECT_EQ(15, rbtree.getNodeCount());
 
-    // return 1, since node "d.e.f" already has data associated with it
-    RRsetPtr rrset(new RRset(Name("example.com"), RRClass::IN(), RRType::NS(),
-                             RRTTL(3600)));
-    rbtnode->addRRset(rrset);
+    // return 1, since node "example.com" already has data associated with it
+    int data = 10;
+    rbtnode->setData(data);
     EXPECT_EQ(1, rbtree.insert(Name("example.com"), &rbtnode));
     EXPECT_EQ(15, rbtree.getNodeCount());
 
@@ -122,30 +121,23 @@ TEST_F(RBTreeTest, insertNames) {
 
 TEST_F(RBTreeTest, findName) {
     // exact match
-    EXPECT_EQ(RBTree::EXACTMATCH, rbtree.find(Name("a"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name("a"), &rbtnode));
     EXPECT_EQ(Name("a"), rbtnode->getName());
-    EXPECT_EQ(RBTree::EXACTMATCH, rbtree.find(Name("d.e.f"), &rbtnode));
-    EXPECT_EQ(Name("d.e.f"), rbtnode->getName());
 
     // not found
-    EXPECT_EQ(RBTree::NOTFOUND, rbtree.find(Name("x"), &rbtnode));
-    EXPECT_EQ(RBTree::NOTFOUND, rbtree.find(Name("m.b"), &rbtnode));
-    EXPECT_EQ(RBTree::NOTFOUND, rbtree.find(Name("o.p.w.y.d.e.f"), &rbtnode));
-    EXPECT_EQ(RBTree::NOTFOUND, rbtree.find(Name("m.w.y.d.e.f"), &rbtnode));
-    EXPECT_EQ(RBTree::NOTFOUND, rbtree.find(Name("m.e.f"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::NOTFOUND, rbtree.find(Name("d.e.f"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::NOTFOUND, rbtree.find(Name("x"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::NOTFOUND, rbtree.find(Name("m.n"), &rbtnode));
 
-    // find referral
-    RRsetPtr rrset(new RRset(Name("d.e.f"), RRClass::IN(), RRType::NS(),
-                             RRTTL(3600)));
-    rbtnode->addRRset(rrset);
-    EXPECT_EQ(RBTree::FINDREFERRAL, rbtree.find(Name("m.d.e.f"), &rbtnode));
-    EXPECT_EQ(Name("d.e.f"), rbtnode->getName());
+    // partial match
+    EXPECT_EQ(RBTree<int>::PARTIALMATCH, rbtree.find(Name("m.b"), &rbtnode));
+    EXPECT_EQ(Name("b"), rbtnode->getName());
 }
 
 TEST_F(RBTreeTest, successor) {
     // traverse the trees
-    EXPECT_EQ(RBTree::EXACTMATCH, rbtree.find(Name("a"), &rbtnode));
-    RBNode *successor_node = rbtnode->successor();
+    EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name("a"), &rbtnode));
+    RBNode<int> *successor_node = rbtnode->successor();
     EXPECT_EQ(Name("b"), successor_node->getName());
     successor_node = successor_node->successor();
     EXPECT_EQ(Name("c"), successor_node->getName());
@@ -155,19 +147,20 @@ TEST_F(RBTreeTest, successor) {
     EXPECT_EQ(Name("g.h"), successor_node->getName());
     successor_node = successor_node->successor();
 
-    EXPECT_EQ(RBTree::EXACTMATCH, rbtree.find(Name("x.d.e.f"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name("x.d.e.f"), &rbtnode));
     EXPECT_EQ(Name("x"), rbtnode->getName());
     successor_node = rbtnode->successor();
     EXPECT_EQ(Name("w.y"), successor_node->getName());
     successor_node = successor_node->successor();
     EXPECT_EQ(Name("z"), successor_node->getName());
 
-    EXPECT_EQ(RBTree::EXACTMATCH, rbtree.find(Name("o.w.y.d.e.f"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name("o.w.y.d.e.f"), &rbtnode));
     EXPECT_EQ(Name("o"), rbtnode->getName());
     successor_node = rbtnode->successor();
     EXPECT_EQ(Name("p"), successor_node->getName());
     successor_node = successor_node->successor();
     EXPECT_EQ(Name("q"), successor_node->getName());
+}
 }
 
 TEST_F(RBTreeTest, eraseName) {
@@ -199,36 +192,33 @@ TEST_F(RBTreeTest, eraseName) {
 
     // can't delete non terminal
     EXPECT_EQ(1, rbtree.erase(Name("d.e.f")));
-    EXPECT_EQ(RBTree::EXACTMATCH, rbtree.find(Name("w.y.d.e.f"), &rbtnode));
-    RRsetPtr rrset(new RRset(Name("w.y.d.e.f"), RRClass::IN(), RRType::A(),
-                             RRTTL(3600)));
-    rbtnode->addRRset(rrset);
+    EXPECT_EQ(RBTree<int>::NOTFOUND, rbtree.find(Name("w.y.d.e.f"), &rbtnode));
     EXPECT_EQ(0, rbtree.erase(Name("p.w.y.d.e.f")));
     EXPECT_EQ(14, rbtree.getNodeCount());
-    EXPECT_EQ(RBTree::NOTFOUND, rbtree.find(Name("p.w.y.d.e.f"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::NOTFOUND, rbtree.find(Name("p.w.y.d.e.f"), &rbtnode));
 
     EXPECT_EQ(0, rbtree.erase(Name("q.w.y.d.e.f")));
-    EXPECT_EQ(13, rbtree.getNodeCount());
-    EXPECT_EQ(RBTree::NOTFOUND, rbtree.find(Name("q.w.y.d.e.f"), &rbtnode));
+    EXPECT_EQ(12, rbtree.getNodeCount());
+    EXPECT_EQ(RBTree<int>::NOTFOUND, rbtree.find(Name("q.w.y.d.e.f"), &rbtnode));
 
     // o would not be rejoined with w.y if w.y had data
     // associated with the key
-    EXPECT_EQ(RBTree::EXACTMATCH, rbtree.find(Name("o.w.y.d.e.f"), &rbtnode));
-    EXPECT_EQ(RBTree::EXACTMATCH, rbtree.find(Name("w.y.d.e.f"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name("o.w.y.d.e.f"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::NOTFOUND, rbtree.find(Name("w.y.d.e.f"), &rbtnode));
     /*
      *               d.e.f
      *              /  |  \
      *            b    |   g.h
      *           / \   |    |
-     *          a  c  w.y   i
-     *               / | \
-     *             s   |   z
-     *            / \  |   |
-     *           r   x o   j
+     *          a  c o.w.y  i
+     *               /   \
+     *             s       z
+     *            / \      |
+     *           r   x     j
      */
     EXPECT_EQ(0, rbtree.erase(Name("o.w.y.d.e.f")));
-    EXPECT_EQ(12, rbtree.getNodeCount());
-    EXPECT_EQ(0, rbtree.erase(Name("w.y.d.e.f")));
+    EXPECT_EQ(11, rbtree.getNodeCount());
+    EXPECT_EQ(1, rbtree.erase(Name("w.y.d.e.f")));
     EXPECT_EQ(11, rbtree.getNodeCount());
     EXPECT_EQ(0, rbtree.erase(Name("x.d.e.f")));
     EXPECT_EQ(10, rbtree.getNodeCount());
@@ -313,7 +303,7 @@ TEST_F(RBTreeTest, eraseName) {
     EXPECT_EQ(0, rbtree.insert(Name("m"), &rbtnode));
     EXPECT_EQ(0, rbtree.insert(Name("nm"), &rbtnode));
     EXPECT_EQ(0, rbtree.insert(Name("om"), &rbtnode));
-    EXPECT_EQ(0, rbtree.insert(Name("da"), &rbtnode));
+    EXPECT_EQ(1, rbtree.insert(Name("da"), &rbtnode));
     EXPECT_EQ(0, rbtree.insert(Name("k"), &rbtnode));
     EXPECT_EQ(0, rbtree.insert(Name("l"), &rbtnode));
     EXPECT_EQ(0, rbtree.insert(Name("fe"), &rbtnode));
@@ -369,22 +359,3 @@ TEST_F(RBTreeTest, eraseName) {
     EXPECT_EQ(0, rbtree.getNodeCount());
 }
 
-
-TEST_F(RBTreeTest, isDelegate) {
-    EXPECT_EQ(RBTree::EXACTMATCH, rbtree.find(Name("d.e.f"), &rbtnode));
-    EXPECT_FALSE(rbtnode->isDelegate());
-
-    // add a rrset
-    RRsetPtr a_rrset(new RRset(Name("d.e.f"), RRClass::IN(), RRType::A(),
-                               RRTTL(3600)));
-    rbtnode->addRRset(a_rrset);
-    EXPECT_FALSE(rbtnode->isDelegate());
-
-    // add ns rrset
-    RRsetPtr ns_rrset(new RRset(Name("d.e.f"), RRClass::IN(), RRType::NS(),
-                                RRTTL(3600)));
-    rbtnode->addRRset(ns_rrset);
-    EXPECT_TRUE(rbtnode->isDelegate());
-}
-
-}
