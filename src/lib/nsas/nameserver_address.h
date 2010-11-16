@@ -70,8 +70,7 @@ public:
     /// update the address's RTT.
     /// \param rtt The new Round-Trip Time
     void updateRTT(uint32_t rtt) { 
-        NameserverEntry* ne = ns_.get();
-        if(ne) ne->updateAddressRTTAtIndex(rtt, index_); 
+        ns_.get()->updateAddressRTTAtIndex(rtt, index_); 
     }
 private:
     /// \brief Default Constructor
