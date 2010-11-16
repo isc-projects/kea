@@ -14,8 +14,10 @@
 
 // $Id$
 
+#include <boost/thread.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/foreach.hpp>
+#include <boost/random.hpp>
 
 #include <config.h>
 #include <dns/rdataclass.h>
@@ -45,7 +47,8 @@ NameserverAddressStore::NameserverAddressStore(ResolverInterface& resolver,
     zone_lru_((3 * zonehashsize), new HashDeleter<ZoneEntry>(zone_hash_)),
     nameserver_lru_((3 * nshashsize), new HashDeleter<NameserverEntry>(
         nameserver_hash_)),
-    resolver_(resolver)
+    resolver_(resolver),
+    callback_(*this)
 {
 }
 
@@ -89,7 +92,7 @@ newZone(const std::string* zone, uint16_t class_code,
     if (authority->getName() != Name(*zone)) {
         isc_throw(InconsistentZone,
             "Authority section is for different zone, expected: " <<
-            zone << ", got: " << authority->getName().toText());
+            *zone << ", got: " << authority->getName().toText());
     }
     if (authority->getType() != RRType::NS()) {
         isc_throw(NotNS, "Authority section with non-NS RR type: " <<
@@ -141,6 +144,21 @@ NameserverAddressStore::lookup(const std::string& zone, uint16_t class_code,
 
 namespace {
 
+mutex randMutex;
+
+size_t
+randIndex(size_t count) {
+    // We need to lock the global generator
+    // TODO If there's contention locking, we might want a generator
+    // for each thread?
+    mutex::scoped_lock lock(randMutex);
+    // This seems to be enough to use pseudo-random generator and according
+    // to boost docs, this one is fast.
+    static rand48 generator;
+    return variate_generator<rand48&, uniform_int<size_t> >(generator,
+        uniform_int<size_t>(0, count - 1))();
+}
+
 asiolink::IOAddress
 chooseAddress(const NameserverEntry::AddressVector& addresses) {
     // TODO Something little bit more inteligent than just picking the first
@@ -184,6 +202,7 @@ void NameserverAddressStore::processZone(ZonePtr zone) {
                         break;
                     case Fetchable::IN_PROGRESS:
                         pending = true;
+                        ns->ensureHasCallback(zone, callback_);
                         break;
                     case Fetchable::UNREACHABLE:
                         // Nothing. We do not care about it.
@@ -200,7 +219,15 @@ void NameserverAddressStore::processZone(ZonePtr zone) {
             zone->setState(Fetchable::UNREACHABLE);
         }
 
-        // TODO Pick up to two not_asked ones and ask them
+        // Pick up to two nameservers and try to resolve them
+        // TODO Any better way to choose one?
+        for (int i(0); i < 2 && !not_asked.empty(); ++ i) {
+            size_t index(randIndex(not_asked.size()));
+            not_asked[index]->askIP(resolver_, zone, callback_,
+                not_asked[index]);
+            // Remove from the vector so we do not choose it again
+            not_asked.erase(not_asked.begin() + index);
+        }
 
         state = zone->getState();
     } // Release the lock (and some other resources as a bonus)

@@ -141,6 +141,19 @@ private:
      * \todo Pass some of the referral stuff there?
      */
     void processZone(boost::shared_ptr<ZoneEntry> zone);
+    /// \short Callback from nameserver entry to process zone.
+    class Callback : public NameserverEntry::Callback {
+        public:
+            Callback(NameserverAddressStore& store) :
+                store_(store)
+            { }
+            virtual void operator()(boost::shared_ptr<ZoneEntry> zone) {
+                store_.processZone(zone);
+            }
+        private:
+            NameserverAddressStore& store_;
+    } callback_;
+    friend class Callback;
 };
 
 } // namespace nsas
