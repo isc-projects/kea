@@ -132,7 +132,7 @@ public:
     /// This constructor never throws an exception.
     ///
     /// \param asio_address The ASIO \c ip::address to be converted.
-    IOAddress(const asio::ip::address& asio_adress);
+    IOAddress(const asio::ip::address& asio_address);
     //@}
 
     /// \brief Convert the address to a string.
