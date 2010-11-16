@@ -144,6 +144,7 @@ static void CompareAddresses(NameserverEntry::AddressVector& av,
     // Do the same for the Basic RRset
     vector<string> rrstr;
     RdataIteratorPtr i = rrs.getRdataIterator();
+    // TODO Remove at merge with #410
     i->first();
     while (! i->isLast()) {
         rrstr.push_back(i->getCurrent().toText());

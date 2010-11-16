@@ -97,6 +97,7 @@ newZone(const std::string* zone, uint16_t class_code,
     }
     // Make sure the name servers exist
     RdataIteratorPtr ns(authority->getRdataIterator());
+    // TODO Remove the call to first on merge with #410
     for (ns->first(); !ns->isLast(); ns->next()) {
         Name ns_name(dynamic_cast<const rdata::generic::NS&>(
                     ns->getCurrent()).getNSName());
