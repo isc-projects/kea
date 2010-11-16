@@ -53,6 +53,9 @@ public:
     // Return the IOAddress corresponding to the index in rrv4_
     asiolink::IOAddress getAddressAtIndex(uint32_t index) { return ns_.get()->getAddressAtIndex(index); }
 
+    // Return the addresses count stored in RRset
+    unsigned int getAddressesCount() const { return rrv4_.getRdataCount(); }
+
     // Return the RTT of the address
     uint32_t getAddressRTTAtIndex(uint32_t index) { 
         NameserverEntry::AddressVector addresses;
@@ -70,27 +73,49 @@ class NameserverAddressTest : public ::testing::Test {
 protected:
     // Constructor
     NameserverAddressTest(): 
-        ns_address_(ns_sample_.getNameserverEntry(), TEST_ADDRESS_INDEX)
+        ns_address_(ns_sample_.getNameserverEntry(), TEST_ADDRESS_INDEX),
+        invalid_ns_address_(ns_sample_.getNameserverEntry(), ns_sample_.getAddressesCount())
     {
     }
 
     NameserverEntrySample ns_sample_;
+    // Valid NameserverAddress object
     NameserverAddress ns_address_;
+
+    // NameserverAddress object that constructed with invalid index
+    NameserverAddress invalid_ns_address_;
 };
 
 // Test that the address is equal to the address in NameserverEntry
 TEST_F(NameserverAddressTest, Address) {
     EXPECT_TRUE(ns_address_.getAddress().equal( ns_sample_.getAddressAtIndex(TEST_ADDRESS_INDEX)));
+
+    // It will trigger an assert with the invalid index
+    ASSERT_DEATH(invalid_ns_address_.getAddress(), "");
+
+    boost::shared_ptr<NameserverEntry> empty_ne((NameserverEntry*)NULL);
+    NameserverAddress empty_ns_address(empty_ne, 0);
+
+    // It will trigger an assert with the empty NameserverEntry shared pointer
+    ASSERT_DEATH(empty_ns_address.getAddress(), "");
 }
 
 // Test that the RTT is updated
 TEST_F(NameserverAddressTest, UpdateRTT) {
     uint32_t old_rtt = ns_sample_.getAddressRTTAtIndex(TEST_ADDRESS_INDEX);
-    uint32_t new_rtt = old_rtt + 1;
+    uint32_t new_rtt = old_rtt + 10;
+
+    uint32_t old_rtt0 = ns_sample_.getAddressRTTAtIndex(0);
+    uint32_t old_rtt2 = ns_sample_.getAddressRTTAtIndex(2);
 
     ns_address_.updateRTT(new_rtt);
 
+    //The RTT should have been updated
     EXPECT_EQ(new_rtt, ns_sample_.getAddressRTTAtIndex(TEST_ADDRESS_INDEX));
+
+    //The RTTs not been updated should remain unchanged
+    EXPECT_EQ(old_rtt0, ns_sample_.getAddressRTTAtIndex(0));
+    EXPECT_EQ(old_rtt2, ns_sample_.getAddressRTTAtIndex(2));
 }
 
 } // namespace nsas
