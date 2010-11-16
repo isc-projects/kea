@@ -57,6 +57,7 @@ public:
 };
 
 class ZoneEntry;
+class ResolverInterface;
 
 /// \brief Nameserver Entry
 ///
@@ -196,6 +197,53 @@ public:
         }
     };
 
+    /// \name Obtaining the IP addresses from resolver
+    //@{
+    /// \short A callback that some information here arrived (or are unavailable).
+    struct Callback {
+        virtual void operator()(boost::shared_ptr<ZoneEntry>) = 0;
+    };
+
+    /**
+     * \short Asks the resolver for IP address (or addresses).
+     *
+     * Adds a callback for given zone when they are ready or the information
+     * is found unreachable.
+     *
+     * This does not lock and expects that the entry is already locked.
+     *
+     * Expects that the nameserver entry is in NOT_ASKED state,
+     * throws BadValue otherwise.
+     *
+     * \param resolver Who to ask.
+     * \param zone The callbacks are named, so we can check if we already have
+     *     a callback for given zone. This is the name and the zone will be
+     *     passed to the callback when called.
+     * \param callback The callback.
+     * \param self Since we need to pass a shared pointer to the resolver, we
+     *     need to get one. However, we can not create one from this, because
+     *     it would have different reference count. So the caller must pass it.
+     */
+    void askIP(ResolverInterface& resolver, boost::shared_ptr<ZoneEntry> zone,
+        Callback& callback, boost::shared_ptr<NameserverEntry> self);
+    /**
+     * \short Ensures that zone has a callback registered.
+     *
+     * This adds a given callback to this nameserver entry, but only if
+     * the zone does not have one already.
+     *
+     * Does not lock and expects that the entry is already locked.
+     *
+     * Expects that the nameserver entri is in IN_PROGRESS state, throws
+     * BadValue otherwise.
+     *
+     * \param zone Whose callback we add.
+     * \param callback The callback.
+     */
+    void ensureHasCallback(boost::shared_ptr<ZoneEntry> zone,
+        Callback& callback);
+    //@}
+
 private:
     boost::mutex    mutex_;             ///< Mutex protecting this object
     std::string     name_;              ///< Canonical name of the nameserver
@@ -205,6 +253,13 @@ private:
     time_t          last_access_;       ///< Last access time to the structure
     // We allow ZoneEntry to lock us
     friend class ZoneEntry;
+    // We store the callbacks of zones asking for addresses here
+    std::map<boost::shared_ptr<ZoneEntry>, Callback*> ipCallbacks_;
+    // This is our callback class to resolver
+    class ResolverCallback;
+    friend class ResolverCallback;
+    // How many responses from resolver do we expect?
+    size_t waiting_responses_;
 };
 
 }   // namespace dns
