@@ -67,6 +67,7 @@ NameserverEntry::NameserverEntry(const AbstractRRset* v4Set,
     // XXX: Do we need to check that these are V4 addresses?
     if (v4Set) {
         RdataIteratorPtr i = v4Set->getRdataIterator();
+        // TODO Remove at merge with #410
         i->first();
         while (! i->isLast()) {
             address_.push_back(AddressEntry(IOAddress(i->getCurrent().toText()),
@@ -84,6 +85,7 @@ NameserverEntry::NameserverEntry(const AbstractRRset* v4Set,
     // XXX: Do we need to check that these are V6 addresses?
     if (v6Set) {
         RdataIteratorPtr i = v6Set->getRdataIterator();
+        // TODO Remove at merge with #410
         i->first();
         while (! i->isLast()) {
             address_.push_back(AddressEntry(IOAddress(i->getCurrent().toText()),
