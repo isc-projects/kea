@@ -67,14 +67,14 @@ public:
     /// \todo Is it meaningful to return the absolute of the node?
     const Name& getName() const {return (name_); }
 
-    // \breif return the data 
+    // \breif return the data store in this node
     T& getData() { return (data_);}
     // \brief return next node whose name is bigger than current node
     RBNode<T>* successor();
     //@}
     
     /// \name Modify functions
-    // \brief return the data stored in the node
+    // \brief set the data stored in the node
     void setData(const T& data) { data_ = data;}
 
 private:
@@ -112,9 +112,14 @@ private:
 
     /// data to carry dns info
     Name        name_;
+    /// this will make type T should have default constructor 
+    /// without any parameters
     T           data_;
     RBTree<T>*  down_;
-    bool        is_shadow_; ///the node willn't return to end user, if the node is shadow
+    ///the node willn't return to end user, if the node is shadow
+    ///shadow node is created by rbtree for inner use, it's opaque to
+    ///end user. 
+    bool        is_shadow_; 
 };
 
 
@@ -201,8 +206,8 @@ class RBTree : public boost::noncopyable {
 public:
     /// \brief The return value for the \c find() method
     /// - EXACTMATCH: return the node in the tree exactly same with the target
-    /// - FINDREFERRAL: return the node which is an ancestor of the target
-    ///   containing NS record
+    /// - PARTIALMATCH: return the node which is an ancestor of the target 
+    ///   which also is the longest match
     /// - NOTFOUND: other conditions except EXACTMATCH & FINDREFERRAL
     enum FindResult{EXACTMATCH, PARTIALMATCH, NOTFOUND};
 
@@ -440,9 +445,9 @@ RBTree<T>::insert(const Name& name, RBNode<T>** new_node) {
             // otherwise return 1
             if (current->is_shadow_) {
                 current->is_shadow_ = false;
-                return 0;
+                return(0);
             } else {
-                return 1;
+                return(1);
             }
         } else {
             int common_label_count = compare_result.getCommonLabels();
