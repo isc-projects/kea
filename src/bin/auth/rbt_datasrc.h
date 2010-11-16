@@ -75,7 +75,7 @@ public:
     
     /// \name Modify functions
     // \brief return the data stored in the node
-    void setData(T& data) { data_ = data;}
+    void setData(const T& data) { data_ = data;}
 
 private:
     /// \name Constructors and destructor
@@ -429,8 +429,14 @@ RBTree<T>::insert(const Name& name, RBNode<T>** new_node) {
             if (new_node) {
                 *new_node = current;
             }
-            // if the node is non-ternimal, it does not exist, so we return 0
-            return (current->is_shadow_ ? 0 : 1);
+            // if the node is a common suffix not user inserted, return 0
+            // otherwise return 1
+            if (current->is_shadow_) {
+                current->is_shadow_ = false;
+                return 0;
+            } else {
+                return 1;
+            }
         } else {
             int common_label_count = compare_result.getCommonLabels();
             if (common_label_count == 1) {
