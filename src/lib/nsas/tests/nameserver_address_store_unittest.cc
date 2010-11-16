@@ -211,7 +211,7 @@ TEST_F(NameserverAddressStoreTest, emptyLookup) {
         vector<AbstractRRset>(), getCallback());
     // It should ask for IP addresses for example.com.
     ASSERT_EQ(2, defaultTestResolver.requests.size());
-    defaultTestResolver.asksIPs(Name("example.com."), 0, 1);
+    defaultTestResolver.asksIPs(Name("ns.example.com."), 0, 1);
 
     // Ask another question for the same zone
     nsas.lookup("example.net.", RRClass::IN().getCode(), *authority_,
@@ -274,7 +274,7 @@ TEST_F(NameserverAddressStoreTest, unreachableNS) {
         vector<AbstractRRset>(), getCallback());
     // It should ask for IP addresses for example.com.
     ASSERT_EQ(2, defaultTestResolver.requests.size());
-    defaultTestResolver.asksIPs(Name("example.com."), 0, 1);
+    defaultTestResolver.asksIPs(Name("ns.example.com."), 0, 1);
 
     // Ask another question with different zone but the same nameserver
     authority_->setName(Name("example.com."));
@@ -291,8 +291,10 @@ TEST_F(NameserverAddressStoreTest, unreachableNS) {
     EXPECT_EQ(2, NSASCallback::results.size());
     // When we ask one same and one other zone with the same nameserver,
     // it should generate no questions and answer right away
+    authority_->setName(Name("example.net."));
     nsas.lookup("example.net.", RRClass::IN().getCode(), *authority_,
         vector<AbstractRRset>(), getCallback());
+    authority_->setName(Name("example.org."));
     nsas.lookup("example.org.", RRClass::IN().getCode(), *authority_,
         vector<AbstractRRset>(), getCallback());
     // There should be 4 negative answers now
