@@ -126,7 +126,8 @@ RBNode<T>::RBNode(const Name& name, T &data, RBNode* nullnode) :
     color_(RED),
     name_(name),
     data_(data),
-    down_(NULL) {
+    down_(NULL),
+    is_shadow_(false){
 }
 
 template <typename T>
@@ -136,7 +137,8 @@ RBNode<T>::RBNode(const Name& name, RBNode* nullnode) :
     right_(nullnode),
     color_(RED),
     name_(name),
-    down_(NULL) {
+    down_(NULL),
+    is_shadow_(false){
 }
 
 template <typename T>
@@ -173,6 +175,7 @@ void
 RBNode<T>::cloneDNSData(RBNode<T>& node) {
     node.name_ = name_;
     node.data_ = data_;
+    node.is_shadow_ = is_shadow_;
 }
 
 template <typename T>
@@ -354,9 +357,13 @@ RBTree<T>::findHelper(const Name& name, RBTree<T>** tree, RBNode<T>** ret) const
         NameComparisonResult::NameRelation relation =
             compare_result.getRelation();
         if (relation == NameComparisonResult::EQUAL) {
-            *tree = (RBTree*)this;
-            *ret = node;
-            return (RBTree<T>::EXACTMATCH);
+            if (node->is_shadow_) {
+                return (RBTree<T>::NOTFOUND);
+            } else {
+                *tree = (RBTree*)this;
+                *ret = node;
+                return (RBTree<T>::EXACTMATCH);
+            }
         } else {
             int common_label_count = compare_result.getCommonLabels();
             // common label count equal one means, there is no common between
