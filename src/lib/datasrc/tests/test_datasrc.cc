@@ -408,7 +408,7 @@ copyRRset(RRsetPtr const source) {
     RRsetPtr rrset = RRsetPtr(new RRset(source->getName(), source->getClass(),
                                         source->getType(), source->getTTL()));
     RdataIteratorPtr it = source->getRdataIterator();
-    for (it->first(); !it->isLast(); it->next()) {
+    for (; !it->isLast(); it->next()) {
         rrset->addRdata(it->getCurrent());
     }
     if (source->getRRsig()) {
