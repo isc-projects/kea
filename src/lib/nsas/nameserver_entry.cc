@@ -28,14 +28,17 @@
 #include <dns/name.h>
 #include <dns/rrclass.h>
 #include <dns/rrttl.h>
+#include <dns/question.h>
 
 #include "address_entry.h"
 #include "nameserver_entry.h"
+#include "resolver_interface.h"
 
 using namespace asiolink;
 using namespace isc::nsas;
 using namespace isc::dns;
 using namespace std;
+using namespace boost;
 
 namespace isc {
 namespace nsas {
@@ -175,6 +178,119 @@ void NameserverEntry::updateAddressRTTAtIndex(uint32_t rtt, uint32_t index) {
 // Sets the address to be unreachable
 void NameserverEntry::setAddressUnreachable(const IOAddress& address) {
     setAddressRTT(address, AddressEntry::UNREACHABLE);
+}
+
+void NameserverEntry::ensureHasCallback(shared_ptr<ZoneEntry> zone,
+    NameserverEntry::Callback& callback)
+{
+    if (getState() != Fetchable::IN_PROGRESS) {
+        isc_throw(BadValue,
+            "Callbacks can be added only to IN_PROGRESS nameserver entries");
+    }
+    if (ipCallbacks_.find(zone) == ipCallbacks_.end()) {
+        ipCallbacks_[zone] = &callback;
+    }
+}
+
+class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
+    public:
+        ResolverCallback(shared_ptr<NameserverEntry> entry) :
+            entry_(entry),
+            rtt(0)
+        { }
+        virtual void success(const Message& response) {
+            map<shared_ptr<ZoneEntry>, NameserverEntry::Callback*> callbacks;
+            bool has_address(false);
+            {
+                mutex::scoped_lock lock(entry_->mutex_);
+                for (RRsetIterator set(
+                    // TODO Trunk does Section::ANSWER() by constant
+                    response.beginSection(Section::ANSWER()));
+                    set != response.endSection(Section::ANSWER()); ++ set)
+                {
+                    /**
+                     * TODO Move to common function, this is similar to
+                     * what is in constructor.
+                     */
+                    RdataIteratorPtr i((*set)->getRdataIterator());
+                    // TODO Remove at merge with #410
+                    i->first();
+                    while (! i->isLast()) {
+                        has_address = true;
+                        entry_->address_.push_back(AddressEntry(IOAddress(
+                        i->getCurrent().toText()), ++rtt));
+                        i->next();
+                    }
+                }
+                if (has_address) {
+                    callbacks.swap(entry_->ipCallbacks_);
+                    entry_->waiting_responses_ --;
+                    entry_->setState(Fetchable::READY);
+                }
+            } // Unlock
+            if (has_address) {
+                dispatchCallbacks(callbacks);
+            } else {
+                // No address there, so we take it as a failure
+                failure();
+            }
+        }
+        virtual void failure() {
+            map<shared_ptr<ZoneEntry>, NameserverEntry::Callback*> callbacks;
+            {
+                mutex::scoped_lock lock(entry_->mutex_);
+                entry_->waiting_responses_ --;
+                // Do we still have a chance to get the answer?
+                // Or did we already?
+                if (entry_->waiting_responses_ ||
+                    entry_->getState() != Fetchable::IN_PROGRESS)
+                {
+                    return;
+                }
+                // Remove the callbacks and call them now
+                callbacks.swap(entry_->ipCallbacks_);
+                entry_->setState(Fetchable::UNREACHABLE);
+            } // Unlock
+            dispatchCallbacks(callbacks);
+        }
+    private:
+        shared_ptr<NameserverEntry> entry_;
+        int rtt;
+        void dispatchCallbacks(map<shared_ptr<ZoneEntry>,
+            NameserverEntry::Callback*>& callbacks)
+        {
+            /*
+             * FIXME This approach is not completely exception safe.
+             * If we get an exception from callback, we lose the other
+             * callbacks.
+             */
+            for (map<shared_ptr<ZoneEntry>, NameserverEntry::Callback*>::
+                iterator i(callbacks.begin()); i != callbacks.end(); ++ i)
+            {
+                shared_ptr<ZoneEntry> zone(i->first);
+                (*i->second)(zone);
+            }
+        }
+};
+
+void NameserverEntry::askIP(ResolverInterface& resolver,
+    shared_ptr<ZoneEntry> zone, NameserverEntry::Callback& callback,
+    shared_ptr<NameserverEntry> self)
+{
+    if (getState() != Fetchable::NOT_ASKED) {
+        isc_throw(BadValue,
+            "Asking to resolve an IP address, but it was asked before");
+    }
+    setState(Fetchable::IN_PROGRESS);
+    ipCallbacks_[zone] = &callback;
+
+    shared_ptr<ResolverCallback> resolver_callback(new ResolverCallback(self));
+    waiting_responses_ = 2;
+    // TODO Should we ask for both A and AAAA in all occations?
+    resolver.resolve(QuestionPtr(new Question(Name(getName()),
+        RRClass(getClass()), RRType::A())), resolver_callback);
+    resolver.resolve(QuestionPtr(new Question(Name(getName()),
+        RRClass(getClass()), RRType::AAAA())), resolver_callback);
 }
 
 } // namespace dns

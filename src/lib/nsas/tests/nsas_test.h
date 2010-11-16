@@ -23,6 +23,7 @@
 /// address store tests.
 
 #include <string>
+#include <vector>
 
 #include <config.h>
 
@@ -31,6 +32,7 @@
 #include <dns/rrtype.h>
 #include <dns/messagerenderer.h>
 #include "../nsas_entry.h"
+#include "../resolver_interface.h"
 
 using namespace isc::dns::rdata;
 using namespace isc::dns;
@@ -212,5 +214,47 @@ static const uint32_t HASHTABLE_DEFAULT_SIZE = 1009; ///< First prime above 1000
 
 } // namespace nsas
 } // namespace isc
+
+namespace {
+
+using namespace std;
+
+class TestResolver : public isc::nsas::ResolverInterface {
+    public:
+        typedef pair<QuestionPtr, CallbackPtr> Request;
+        vector<Request> requests;
+        virtual void resolve(QuestionPtr q, CallbackPtr c) {
+            requests.push_back(Request(q, c));
+        }
+        QuestionPtr operator[](size_t index) {
+            return (requests[index].first);
+        }
+        /**
+         * Looks if the two provided requests in resolver are A and AAAA.
+         * Sorts them so index1 is A.
+         */
+        void asksIPs(const Name& name, size_t index1, size_t index2) {
+            size_t max = (index1 < index2) ? index2 : index1;
+            ASSERT_GT(requests.size(), max);
+            EXPECT_EQ(name, (*this)[index1]->getName());
+            EXPECT_EQ(name, (*this)[index2]->getName());
+            EXPECT_EQ(RRClass::IN(), (*this)[index1]->getClass());
+            EXPECT_EQ(RRClass::IN(), (*this)[index2]->getClass());
+            // If they are the other way around, swap
+            if ((*this)[index1]->getType() == RRType::AAAA() &&
+                (*this)[index2]->getType() == RRType::A())
+            {
+                TestResolver::Request tmp((*this).requests[index1]);
+                (*this).requests[index1] =
+                    (*this).requests[index2];
+                (*this).requests[index2] = tmp;
+            }
+            // Check the correct addresses
+            EXPECT_EQ(RRType::A(), (*this)[index1]->getType());
+            EXPECT_EQ(RRType::AAAA(), (*this)[index2]->getType());
+        }
+};
+
+} // Empty namespace
 
 #endif // __NSAS_TEST_H

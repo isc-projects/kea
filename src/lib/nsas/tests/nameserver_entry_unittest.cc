@@ -19,17 +19,21 @@
 
 #include <limits.h>
 #include <boost/foreach.hpp>
+#include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 
 #include <dns/rdata.h>
 #include <dns/rrset.h>
 #include <dns/rrclass.h>
+#include <dns/rdataclass.h>
 #include <dns/rrttl.h>
 #include <dns/name.h>
+#include <exceptions/exceptions.h>
 
 #include "../asiolink.h"
 #include "../address_entry.h"
 #include "../nameserver_entry.h"
+#include "../zone_entry.h"
 
 #include "nsas_test.h"
 
@@ -37,6 +41,7 @@ using namespace asiolink;
 using namespace std;
 using namespace isc::dns;
 using namespace rdata;
+using namespace boost;
 
 namespace isc {
 namespace nsas {
@@ -102,6 +107,15 @@ protected:
     BasicRRset rrns_;           ///< NS RRset
     BasicRRset rrv6_;           ///< Standard RRset, IN, AAAA, lowercase name
     BasicRRset rrnet_;          ///< example.net A RRset
+
+    /// \short Just a really stupid callback counting times called
+    struct Callback : public NameserverEntry::Callback {
+        size_t count;
+        virtual void operator()(shared_ptr<ZoneEntry>) {
+            count ++;
+        }
+        Callback() : count(0) { }
+    };
 };
 
 /// \brief Compare Vectors of String
@@ -451,6 +465,72 @@ TEST_F(NameserverEntryTest, CheckClass) {
 
 }
 
+// Tests if it asks the IP addresses and calls callbacks when it comes
+TEST_F(NameserverEntryTest, IPCallbacks) {
+    shared_ptr<NameserverEntry> entry(new NameserverEntry(EXAMPLE_CO_UK,
+        RRClass::IN().getCode()));
+    Callback callback;
+    TestResolver resolver;
+    shared_ptr<ZoneEntry> no_zone, zone(new ZoneEntry(EXAMPLE_CO_UK,
+        RRClass::IN().getCode()));
+
+    // Ensure that we do not add callbacks now
+    EXPECT_THROW(entry->ensureHasCallback(no_zone, callback), isc::BadValue);
+
+    entry->askIP(resolver, no_zone, callback, entry);
+    // Ensure it becomes IN_PROGRESS
+    EXPECT_EQ(Fetchable::IN_PROGRESS, entry->getState());
+    // Ensure we can ask for IP address only once
+    EXPECT_THROW(entry->askIP(resolver, no_zone, callback, entry),
+        isc::BadValue);
+
+    // Add a callback for a different zone
+    entry->ensureHasCallback(zone, callback);
+
+    // Now, there should be two queries in the resolver
+    ASSERT_EQ(2, resolver.requests.size());
+    resolver.asksIPs(Name(EXAMPLE_CO_UK), 0, 1);
+
+    // Answer one and see that the callbacks are called
+    RRsetPtr answer(new RRset(Name(EXAMPLE_CO_UK), RRClass::IN(), RRType::A(),
+        RRTTL(100)));
+    answer->addRdata(rdata::in::A("192.0.2.1"));
+    Message address(Message::RENDER); // Not able to create different one
+    address.addRRset(Section::ANSWER(), answer);
+    address.addQuestion(resolver[0]);
+    resolver.requests[0].second->success(address);
+
+    // Both callbacks should be called by now
+    EXPECT_EQ(2, callback.count);
+    // It should contain one IP address
+    NameserverEntry::AddressVector addresses;
+    entry->getAddresses(addresses);
+    EXPECT_EQ(1, addresses.size());
+    EXPECT_EQ(Fetchable::READY, entry->getState());
+}
+
+// Test the callback is called even when the address is unreachable
+TEST_F(NameserverEntryTest, IPCallbacksUnreachable) {
+    shared_ptr<NameserverEntry> entry(new NameserverEntry(EXAMPLE_CO_UK,
+        RRClass::IN().getCode()));
+    Callback callback;
+    TestResolver resolver;
+    shared_ptr<ZoneEntry> no_zone;
+
+    // Ask for its IP
+    entry->askIP(resolver, no_zone, callback, entry);
+    // Check it asks the resolver
+    ASSERT_EQ(2, resolver.requests.size());
+    resolver.asksIPs(Name(EXAMPLE_CO_UK), 0, 1);
+    resolver.requests[0].second->failure();
+    // It should still wait for the second one
+    EXPECT_EQ(0, callback.count);
+    EXPECT_EQ(Fetchable::IN_PROGRESS, entry->getState());
+    // It should call the callback now and be unrechable
+    resolver.requests[1].second->failure();
+    EXPECT_EQ(1, callback.count);
+    EXPECT_EQ(Fetchable::UNREACHABLE, entry->getState());
+}
 
 }   // namespace nsas
 }   // namespace isc

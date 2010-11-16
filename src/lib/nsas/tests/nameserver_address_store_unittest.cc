@@ -29,7 +29,6 @@
 #include <boost/foreach.hpp>
 
 #include <string.h>
-#include <vector>
 #include <cassert>
 
 #include "../nameserver_address_store.h"
@@ -117,42 +116,7 @@ protected:
 
     RRsetPtr authority_, empty_authority_;
 
-    class TestResolver : public ResolverInterface {
-        public:
-            typedef pair<QuestionPtr, CallbackPtr> Request;
-            vector<Request> requests;
-            virtual void resolve(QuestionPtr q, CallbackPtr c) {
-                requests.push_back(Request(q, c));
-            }
-            QuestionPtr operator[](size_t index) {
-                return (requests[index].first);
-            }
-    } defaultTestResolver;
-
-    /**
-     * Looks if the two provided requests in resolver are A and AAAA.
-     * Sorts them so index1 is A.
-     */
-    void asksIPs(const Name& name, size_t index1, size_t index2) {
-        size_t max = (index1 < index2) ? index2 : index1;
-        ASSERT_GT(defaultTestResolver.requests.size(), max);
-        EXPECT_EQ(name, defaultTestResolver[index1]->getName());
-        EXPECT_EQ(name, defaultTestResolver[index2]->getName());
-        EXPECT_EQ(RRClass::IN(), defaultTestResolver[index1]->getClass());
-        EXPECT_EQ(RRClass::IN(), defaultTestResolver[index2]->getClass());
-        // If they are the other way around, swap
-        if (defaultTestResolver[index1]->getType() == RRType::AAAA() &&
-            defaultTestResolver[index2]->getType() == RRType::A())
-        {
-            TestResolver::Request tmp(defaultTestResolver.requests[index1]);
-            defaultTestResolver.requests[index1] =
-                defaultTestResolver.requests[index2];
-            defaultTestResolver.requests[index2] = tmp;
-        }
-        // Check the correct addresses
-        EXPECT_EQ(RRType::A(), defaultTestResolver[index1]->getType());
-        EXPECT_EQ(RRType::AAAA(), defaultTestResolver[index1]->getType());
-    }
+    TestResolver defaultTestResolver;
 
     class NSASCallback : public AddressRequestCallback {
         public:
@@ -247,7 +211,7 @@ TEST_F(NameserverAddressStoreTest, emptyLookup) {
         vector<AbstractRRset>(), getCallback());
     // It should ask for IP addresses for example.com.
     ASSERT_EQ(2, defaultTestResolver.requests.size());
-    asksIPs(Name("example.com."), 0, 1);
+    defaultTestResolver.asksIPs(Name("example.com."), 0, 1);
 
     // Ask another question for the same zone
     nsas.lookup("example.net.", RRClass::IN().getCode(), *authority_,
@@ -310,7 +274,7 @@ TEST_F(NameserverAddressStoreTest, unreachableNS) {
         vector<AbstractRRset>(), getCallback());
     // It should ask for IP addresses for example.com.
     ASSERT_EQ(2, defaultTestResolver.requests.size());
-    asksIPs(Name("example.com."), 0, 1);
+    defaultTestResolver.asksIPs(Name("example.com."), 0, 1);
 
     // Ask another question with different zone but the same nameserver
     authority_->setName(Name("example.com."));
