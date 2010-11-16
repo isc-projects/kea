@@ -49,7 +49,7 @@ public:
     /// file line number.
     ///
     /// @param file the file name where the exception was thrown.
-    /// @param line the line in @ref file where the exception was thrown.
+    /// @param line the line in \a file where the exception was thrown.
     /// @param what a description (type) of the exception.
     Exception(const char* file, size_t line, const std::string& what) :
         file_(file), line_(line), what_(what) {}
