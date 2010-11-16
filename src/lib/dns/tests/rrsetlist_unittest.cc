@@ -150,7 +150,6 @@ TEST_F(RRsetListTest, checkData) {
 
     RdataIteratorPtr it =
         list.findRRset(RRType::A(), RRClass::IN())->getRdataIterator();
-    it->first();
     EXPECT_FALSE(it->isLast());
     EXPECT_EQ("192.0.2.1", it->getCurrent().toText());
 }

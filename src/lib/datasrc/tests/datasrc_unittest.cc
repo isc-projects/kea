@@ -124,7 +124,6 @@ DataSrcTest::QueryCommon(const RRClass& qclass) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     RdataIteratorPtr it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("192.0.2.1", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
@@ -138,7 +137,6 @@ DataSrcTest::QueryCommon(const RRClass& qclass) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("dns01.example.com.", it->getCurrent().toText());
     it->next();
     EXPECT_EQ("dns02.example.com.", it->getCurrent().toText());
@@ -154,7 +152,6 @@ DataSrcTest::QueryCommon(const RRClass& qclass) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("192.0.2.1", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
@@ -193,7 +190,6 @@ TEST_F(DataSrcTest, NSQuery) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     RdataIteratorPtr it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("dns01.example.com.", it->getCurrent().toText());
     it->next();
     EXPECT_EQ("dns02.example.com.", it->getCurrent().toText());
@@ -216,7 +212,6 @@ TEST_F(DataSrcTest, DuplicateQuery) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     RdataIteratorPtr it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("dns01.example.com.", it->getCurrent().toText());
     it->next();
     EXPECT_EQ("dns02.example.com.", it->getCurrent().toText());
@@ -237,7 +232,6 @@ TEST_F(DataSrcTest, DuplicateQuery) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("dns01.example.com.", it->getCurrent().toText());
     it->next();
     EXPECT_EQ("dns02.example.com.", it->getCurrent().toText());
@@ -334,7 +328,6 @@ TEST_F(DataSrcTest, Wildcard) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     RdataIteratorPtr it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("192.0.2.2", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
@@ -353,7 +346,6 @@ TEST_F(DataSrcTest, Wildcard) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("dns01.example.com.", it->getCurrent().toText());
     it->next();
     EXPECT_EQ("dns02.example.com.", it->getCurrent().toText());
@@ -369,7 +361,6 @@ TEST_F(DataSrcTest, Wildcard) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("192.0.2.1", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
@@ -406,7 +397,6 @@ TEST_F(DataSrcTest, WildcardCname) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     RdataIteratorPtr it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("www.example.com.", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
@@ -419,7 +409,6 @@ TEST_F(DataSrcTest, WildcardCname) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("192.0.2.1", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
@@ -438,7 +427,6 @@ TEST_F(DataSrcTest, WildcardCname) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("dns01.example.com.", it->getCurrent().toText());
     it->next();
     EXPECT_EQ("dns02.example.com.", it->getCurrent().toText());
@@ -454,7 +442,6 @@ TEST_F(DataSrcTest, WildcardCname) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("192.0.2.1", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
@@ -474,7 +461,6 @@ TEST_F(DataSrcTest, WildcardCnameNodata) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     RdataIteratorPtr it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("www.example.com.", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
@@ -506,7 +492,6 @@ TEST_F(DataSrcTest, WildcardCnameNxdomain) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     RdataIteratorPtr it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("spork.example.com.", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
@@ -544,7 +529,6 @@ TEST_F(DataSrcTest, AuthDelegation) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     RdataIteratorPtr it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("192.0.2.2", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
@@ -556,7 +540,6 @@ TEST_F(DataSrcTest, AuthDelegation) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("dns01.example.com.", it->getCurrent().toText());
     it->next();
     EXPECT_EQ("dns02.example.com.", it->getCurrent().toText());
@@ -572,7 +555,6 @@ TEST_F(DataSrcTest, AuthDelegation) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("192.0.2.1", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
@@ -591,7 +573,6 @@ TEST_F(DataSrcTest, Dname) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     RdataIteratorPtr it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("sql1.example.com.", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
@@ -605,7 +586,6 @@ TEST_F(DataSrcTest, Dname) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("dns01.example.com.", it->getCurrent().toText());
     it->next();
     EXPECT_EQ("dns02.example.com.", it->getCurrent().toText());
@@ -621,7 +601,6 @@ TEST_F(DataSrcTest, Dname) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("192.0.2.1", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
@@ -649,7 +628,6 @@ TEST_F(DataSrcTest, Cname) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     RdataIteratorPtr it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("cnametest.flame.org.", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
@@ -668,7 +646,6 @@ TEST_F(DataSrcTest, CnameInt) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     RdataIteratorPtr it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("www.example.com.", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
@@ -695,7 +672,6 @@ TEST_F(DataSrcTest, CnameExt) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     RdataIteratorPtr it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("www.sql1.example.com.", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
@@ -720,7 +696,6 @@ TEST_F(DataSrcTest, Delegation) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     RdataIteratorPtr it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("ns1.subzone.example.com.", it->getCurrent().toText());
     it->next();
     EXPECT_FALSE(it->isLast());
@@ -732,7 +707,6 @@ TEST_F(DataSrcTest, Delegation) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("192.0.2.1", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
@@ -751,7 +725,6 @@ TEST_F(DataSrcTest, NSDelegation) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     RdataIteratorPtr it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("ns1.subzone.example.com.", it->getCurrent().toText());
     it->next();
     EXPECT_FALSE(it->isLast());
@@ -763,7 +736,6 @@ TEST_F(DataSrcTest, NSDelegation) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("192.0.2.1", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
@@ -795,7 +767,6 @@ TEST_F(DataSrcTest, NSECZonecut) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     RdataIteratorPtr it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("dns01.example.com.", it->getCurrent().toText());
     it->next();
     EXPECT_EQ("dns02.example.com.", it->getCurrent().toText());
@@ -817,7 +788,6 @@ TEST_F(DataSrcTest, DNAMEZonecut) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     RdataIteratorPtr it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("ns1.subzone.example.com.", it->getCurrent().toText());
     it->next();
     EXPECT_FALSE(it->isLast());
@@ -829,7 +799,6 @@ TEST_F(DataSrcTest, DNAMEZonecut) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("192.0.2.1", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
@@ -854,7 +823,6 @@ TEST_F(DataSrcTest, DS) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     RdataIteratorPtr it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("dns01.example.com.", it->getCurrent().toText());
     it->next();
     EXPECT_EQ("dns02.example.com.", it->getCurrent().toText());
@@ -890,7 +858,6 @@ TEST_F(DataSrcTest, NSECZonecutOfNonsecureZone) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     RdataIteratorPtr it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ(createRdata(RRType::NS(), RRClass::IN(),
                           "ns.sub.example.org.")->toText(),
               it->getCurrent().toText());
@@ -904,7 +871,6 @@ TEST_F(DataSrcTest, NSECZonecutOfNonsecureZone) {
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
 
     it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ(createRdata(RRType::A(), RRClass::IN(), "192.0.2.101")->toText(),
               it->getCurrent().toText());
     it->next();

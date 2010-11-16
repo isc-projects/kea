@@ -148,7 +148,7 @@ typedef boost::shared_ptr<RdataIterator> RdataIteratorPtr;
 ///      "sort" and "search(find)" method?
 ///   - what about comparing two RRsets of the same type?  If we need this,
 ///     should it compare rdata's as a set or as a list (i.e. compare
-///     each %rdata one by one or as a whole)?  c.f. NLnet Labs' ldns
+///     each rdata one by one or as a whole)?  c.f. NLnet Labs' ldns
 ///     (http://www.nlnetlabs.nl/projects/ldns/doc/index.html)
 ///     has \c ldns_rr_list_compare(), which takes the latter approach
 ///     (seemingly assuming the caller sorts the lists beforehand).
@@ -357,7 +357,7 @@ public:
     /// \endcode
     ///
     /// This method is more strictly typed than the pointer version:
-    /// If \c %rdata does not refer to the appropriate derived
+    /// If \c rdata does not refer to the appropriate derived
     /// \c Rdata class
     /// for the \c RRType for this \c RRset, it throws an exception of class
     /// \c std::bad_cast.
@@ -384,6 +384,10 @@ public:
 
     /// \brief Return an iterator to go through all RDATA stored in the
     /// \c RRset.
+    ///
+    /// The rdata cursor of the returned iterator will point to the first
+    /// RDATA, that is, it effectively calls \c RdataIterator::first()
+    /// internally.
     ///
     /// Using the design pattern terminology, \c getRdataIterator()
     /// is an example of a <em>factory method</em>.
@@ -417,10 +421,10 @@ public:
 /// The RDATA objects stored in the \c RRset are considered to form
 /// a unidirectional list from the \c RdataIterator point of view (while
 /// the actual implementation in the derived \c RRset may not use a list).
-/// We call this unidirectional list the <em>%rdata list</em>.
+/// We call this unidirectional list the <em>rdata list</em>.
 ///
 /// An \c RdataIterator object internally (and conceptually) holds a
-/// <em>%rdata cursor</em>, which points to a specific item of the %rdata list.
+/// <em>rdata cursor</em>, which points to a specific item of the rdata list.
 ///
 /// Note about design choice: as is clear from the interface, \c RdataIterator
 /// is not compatible with the standard iterator classes.
@@ -458,29 +462,29 @@ private:
     //@}
 
 public:
-    /// \brief Move the %rdata cursor to the first RDATA in the %rdata list
+    /// \brief Move the rdata cursor to the first RDATA in the rdata list
     /// (if any).
     ///
     /// This method can safely be called multiple times, even after moving
-    /// the %rdata cursor forward by the \c next() method.
+    /// the rdata cursor forward by the \c next() method.
     ///
     /// This method should never throw an exception.
     virtual void first() = 0;
 
-    /// \brief Move the %rdata cursor to the next RDATA in the %rdata list
+    /// \brief Move the rdata cursor to the next RDATA in the rdata list
     /// (if any).
     ///
     /// This method should never throw an exception.
     virtual void next() = 0;
 
-    /// \brief Return the current \c Rdata corresponding to the %rdata cursor.
+    /// \brief Return the current \c Rdata corresponding to the rdata cursor.
     ///
     /// \return A reference to an \c rdata::::Rdata object corresponding
-    /// to the %rdata cursor.
+    /// to the rdata cursor.
     virtual const rdata::Rdata& getCurrent() const = 0;
 
-    /// \brief Return true iff the %rdata cursor has reached the end of the
-    /// %rdata list.
+    /// \brief Return true iff the rdata cursor has reached the end of the
+    /// rdata list.
     ///
     /// Once this method returns \c true, the behavior of any subsequent
     /// call to \c next() or \c getCurrent() is undefined.
@@ -489,8 +493,8 @@ public:
     ///
     /// This method should never throw an exception.
     ///
-    /// \return \c true if the %rdata cursor has reached the end of the
-    /// %rdata list; otherwise \c false.
+    /// \return \c true if the rdata cursor has reached the end of the
+    /// rdata list; otherwise \c false.
     virtual bool isLast() const = 0;
 };
 
