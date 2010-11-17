@@ -34,7 +34,7 @@
 #include <asiolink/asiolink.h>
 
 #include <dns/tests/unittest_util.h>
-#include <auth/tests/mockups.h>
+#include "mockups.h"
 
 using namespace std;
 using namespace isc::cc;

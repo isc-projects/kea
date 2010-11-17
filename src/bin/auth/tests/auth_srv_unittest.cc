@@ -16,7 +16,7 @@
 
 #include <config.h>
 #include <auth/auth_srv.h>
-#include <auth/tests/srv_unittest.h>
+#include <testutils/srv_unittest.h>
 
 using namespace std;
 using namespace isc::cc;
