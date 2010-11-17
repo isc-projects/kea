@@ -94,10 +94,8 @@ TEST_F(NameserverAddressTest, Address) {
     ASSERT_DEATH(invalid_ns_address_.getAddress(), "");
 
     boost::shared_ptr<NameserverEntry> empty_ne((NameserverEntry*)NULL);
-    NameserverAddress empty_ns_address(empty_ne, 0);
-
-    // It will trigger an assert with the empty NameserverEntry shared pointer
-    ASSERT_DEATH(empty_ns_address.getAddress(), "");
+    // It will throw an NullNameserverEntryPointer exception with the empty NameserverEntry shared pointer
+    ASSERT_THROW({NameserverAddress empty_ns_address(empty_ne, 0);}, NullNameserverEntryPointer);
 }
 
 // Test that the RTT is updated
