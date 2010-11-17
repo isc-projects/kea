@@ -27,7 +27,7 @@ namespace {
             i == Opcode::NOTIFY().getCode()) { \
             continue; \
         } \
-        createDataFromFile("simplequery_fromWire"); \
+        createDataFromFile("simplequery_fromWire.wire"); \
         data[2] = ((i << 3) & 0xff); \
  \
         parse_message->clear(Message::PARSE); \
@@ -49,7 +49,7 @@ namespace {
 
 // Multiple questions.  Should result in FORMERR.
 #define MULTI_QUESTION_TEST \
-    createDataFromFile("multiquestion_fromWire"); \
+    createDataFromFile("multiquestion_fromWire.wire"); \
     server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv); \
     EXPECT_TRUE(dnsserv.hasAnswer()); \
     headerCheck(*parse_message, default_qid, Rcode::FORMERR(), opcode.getCode(), \
@@ -77,7 +77,7 @@ namespace {
 // or malformed or could otherwise cause a protocol error.
 #define RESPONSE_TEST \
     /* A valid (although unusual) response */\
-    createDataFromFile("simpleresponse_fromWire"); \
+    createDataFromFile("simpleresponse_fromWire.wire"); \
     server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv); \
     EXPECT_FALSE(dnsserv.hasAnswer()); \
  \
@@ -88,7 +88,7 @@ namespace {
     EXPECT_FALSE(dnsserv.hasAnswer()); \
  \
     /* A response to iquery.  must be dropped rather than returning NOTIMP. */\
-    createDataFromFile("iqueryresponse_fromWire"); \
+    createDataFromFile("iqueryresponse_fromWire.wire"); \
     server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv); \
     EXPECT_FALSE(dnsserv.hasAnswer());
 
@@ -104,7 +104,7 @@ namespace {
 
 // Query with a broken answer section
 #define SHORT_ANSWER_TEST \
-    createDataFromFile("shortanswer_fromWire"); \
+    createDataFromFile("shortanswer_fromWire.wire"); \
     server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv); \
     EXPECT_TRUE(dnsserv.hasAnswer()); \
  \
@@ -122,17 +122,26 @@ namespace {
 
 // Query with unsupported version of EDNS.
 #define EDNS_BADVERS_TEST \
-    createDataFromFile("queryBadEDNS_fromWire"); \
+    createDataFromFile("queryBadEDNS_fromWire.wire"); \
     server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv); \
     EXPECT_TRUE(dnsserv.hasAnswer()); \
  \
-    /* The response must have an EDNS OPT RR in the additional section. \
+    /* The response must have an EDNS OPT RR in the additional section, \
+       it will be added automatically at the render time.
        Note that the DNSSEC DO bit is cleared even if this bit in the query \
        is set.  This is a limitation of the current implementation. */ \
     headerCheck(*parse_message, default_qid, Rcode::BADVERS(), opcode.getCode(), \
                 QR_FLAG, 1, 0, 0, 1); \
-    EXPECT_EQ(4096, parse_message->getUDPSize()); \
-    EXPECT_FALSE(parse_message->isDNSSECSupported());
+    EXPECT_FALSE(parse_message->getEDNS()); /* EDNS isn't added at this point */ \
+ \
+    InputBuffer ib(response_obuffer->getData(), response_obuffer->getLength()); \
+    Message parsed(Message::PARSE); \
+    parsed.fromWire(ib); \
+    EXPECT_EQ(Rcode::BADVERS(), parsed.getRcode()); \
+    ConstEDNSPtr edns(parsed.getEDNS()); \
+    ASSERT_TRUE(edns); \
+    EXPECT_FALSE(edns->getDNSSECAwareness());
+
 
 #define AXFR_OVER_UDP_TEST \
     /* AXFR over UDP is invalid and should result in FORMERR. */\

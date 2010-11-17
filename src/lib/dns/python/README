@@ -1,14 +1,14 @@
 
 This is an implementation of the python wrappers for isc::dns.
 
-Currently, when compiled the module is called libdns_python. If we
+When compiled the module is called pydnspp. If we
 decide to always need it we can add a default import under
 lib/python/isc.
 
 To use it from the source tree, you must add src/lib/dns/python/.libs
 to your PYTHONPATH environment variable. Within python you can then use
-> import libdns_python
-> rrc = libdns_python.RRClass("IN")
+> import pydnspp
+> rrc = pydnspp.RRClass("IN")
 etc.
 
 Notes:
@@ -26,8 +26,8 @@ specific Rdata types.
 If you have specific functionality you do need, please ask for it and we
 will add it.
 
-The 'main' module is defined in libdns_python.cc.
-There is a libdns_python_common.[cc|h] for helper functions.
+The 'main' module is defined in pydnspp.cc.
+There is a pydnspp_common.[cc|h] for helper functions.
 
 Implementation notes:
 
@@ -87,7 +87,7 @@ This is repeated for every class we export.
 
 Finally we define the function to add the class, constants, exceptions,
 and enums to the module. This function is called from the init function
-in libdns_python.cc, has the name
+in pydnspp.cc, has the name
 initModulePart_<c++ class name>, returns a boolean
 (true on success, false on failure), and takes the module as a
 PyObject*. There is a convenience function called addClassVariable to

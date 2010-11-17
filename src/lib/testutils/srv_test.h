@@ -22,6 +22,8 @@
 #include <dns/name.h>
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
+#include <dns/opcode.h>
+#include <dns/rcode.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
 
@@ -46,18 +48,6 @@ using isc::UnitTestUtil;
 
 namespace {
 const char* const DEFAULT_REMOTE_ADDRESS = "192.0.2.1";
-
-class DummySocket : public IOSocket {
-private:
-    DummySocket(const DummySocket& source);
-    DummySocket& operator=(const DummySocket& source);
-public:
-    DummySocket(const int protocol) : protocol_(protocol) {}
-    virtual int getNative() const { return (-1); }
-    virtual int getProtocol() const { return (protocol_); }
-private:
-    const int protocol_;
-};
 
 // The base class for Auth and Recurse test case
 class SrvTestBase : public ::testing::Test {
@@ -93,7 +83,7 @@ protected:
     vector<uint8_t> data;
 
     void createDataFromFile(const char* const datafile, int protocol);
-    void createRequestPacket(Message& message, int protocol);
+    void createRequestPacket(Message& message, const int protocol);
 };
 
 void
@@ -101,7 +91,6 @@ SrvTestBase::createDataFromFile(const char* const datafile,
                                 const int protocol = IPPROTO_UDP)
 {
     delete io_message;
-    delete io_sock;
     data.clear();
 
     delete endpoint;
@@ -109,7 +98,8 @@ SrvTestBase::createDataFromFile(const char* const datafile,
     endpoint = IOEndpoint::create(protocol,
                                   IOAddress(DEFAULT_REMOTE_ADDRESS), 5300);
     UnitTestUtil::readWireData(datafile, data);
-    io_sock = new DummySocket(protocol);
+    io_sock = (protocol == IPPROTO_UDP) ? &IOSocket::getDummyUDPSocket() :
+        &IOSocket::getDummyTCPSocket();
     io_message = new IOMessage(&data[0], data.size(), *io_sock, *endpoint);
 }
 
@@ -120,11 +110,11 @@ SrvTestBase::createRequestPacket(Message& message,
     message.toWire(request_renderer);
 
     delete io_message;
-    delete io_sock;
 
     endpoint = IOEndpoint::create(protocol,
                                   IOAddress(DEFAULT_REMOTE_ADDRESS), 5300);
-    io_sock = new DummySocket(protocol);
+    io_sock = (protocol == IPPROTO_UDP) ? &IOSocket::getDummyUDPSocket() :
+        &IOSocket::getDummyTCPSocket();
     io_message = new IOMessage(request_renderer.getData(),
                                request_renderer.getLength(),
                                *io_sock, *endpoint);
@@ -151,18 +141,25 @@ headerCheck(const Message& message, const qid_t qid, const Rcode& rcode,
     EXPECT_EQ(qid, message.getQid());
     EXPECT_EQ(rcode, message.getRcode());
     EXPECT_EQ(opcodeval, message.getOpcode().getCode());
-    EXPECT_EQ((flags & QR_FLAG) != 0, message.getHeaderFlag(MessageFlag::QR()));
-    EXPECT_EQ((flags & AA_FLAG) != 0, message.getHeaderFlag(MessageFlag::AA()));
-    EXPECT_EQ((flags & TC_FLAG) != 0, message.getHeaderFlag(MessageFlag::TC()));
-    EXPECT_EQ((flags & RA_FLAG) != 0, message.getHeaderFlag(MessageFlag::RA()));
-    EXPECT_EQ((flags & RD_FLAG) != 0, message.getHeaderFlag(MessageFlag::RD()));
-    EXPECT_EQ((flags & AD_FLAG) != 0, message.getHeaderFlag(MessageFlag::AD()));
-    EXPECT_EQ((flags & CD_FLAG) != 0, message.getHeaderFlag(MessageFlag::CD()));
+    EXPECT_EQ((flags & QR_FLAG) != 0,
+              message.getHeaderFlag(Message::HEADERFLAG_QR));
+    EXPECT_EQ((flags & AA_FLAG) != 0,
+              message.getHeaderFlag(Message::HEADERFLAG_AA));
+    EXPECT_EQ((flags & TC_FLAG) != 0,
+              message.getHeaderFlag(Message::HEADERFLAG_TC));
+    EXPECT_EQ((flags & RA_FLAG) != 0,
+              message.getHeaderFlag(Message::HEADERFLAG_RA));
+    EXPECT_EQ((flags & RD_FLAG) != 0,
+              message.getHeaderFlag(Message::HEADERFLAG_RD));
+    EXPECT_EQ((flags & AD_FLAG) != 0,
+              message.getHeaderFlag(Message::HEADERFLAG_AD));
+    EXPECT_EQ((flags & CD_FLAG) != 0,
+              message.getHeaderFlag(Message::HEADERFLAG_CD));
 
-    EXPECT_EQ(qdcount, message.getRRCount(Section::QUESTION()));
-    EXPECT_EQ(ancount, message.getRRCount(Section::ANSWER()));
-    EXPECT_EQ(nscount, message.getRRCount(Section::AUTHORITY()));
-    EXPECT_EQ(arcount, message.getRRCount(Section::ADDITIONAL()));
+    EXPECT_EQ(qdcount, message.getRRCount(Message::SECTION_QUESTION));
+    EXPECT_EQ(ancount, message.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(nscount, message.getRRCount(Message::SECTION_AUTHORITY));
+    EXPECT_EQ(arcount, message.getRRCount(Message::SECTION_ADDITIONAL));
 }
 
 }

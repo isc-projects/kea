@@ -1,4 +1,4 @@
-SUBDIRS = tests
+SUBDIRS = . tests
 
 bin_SCRIPTS = bindctl
 man_MANS = bindctl.1

@@ -18,6 +18,8 @@
 #define __RECURSOR_H 1
 
 #include <string>
+#include <vector>
+#include <utility>
 
 #include <cc/data.h>
 #include <config/ccsession.h>
@@ -38,12 +40,7 @@ private:
     Recursor& operator=(const Recursor& source);
 public:
     /// The constructor.
-    ///
-    /// \param forward The address of the name server to which requests
-    /// should be forwarded.  (In the future, when the server is running
-    /// in forwarding mode, the forward nameserver addresses will be set
-    /// via the config channel instaed.)
-    Recursor(const char& forward);
+    Recursor();
     ~Recursor();
     //@}
 
@@ -92,6 +89,34 @@ public:
 
     /// \brief Return pointer to the Checkin callback function
     asiolink::SimpleCallback* getCheckinProvider() { return (checkin_); }
+
+    /**
+     * \brief Specify the list of upstream servers.
+     *
+     * Specify the list off addresses of upstream servers to forward queries
+     * to. If the list is empty, this server is set to full recursive mode.
+     * If it is non-empty, it switches to forwarder.
+     *
+     * @param addresses The list of addresses to use (each one is the address
+     * and port pair).
+     */
+    void setForwardAddresses(const std::vector<std::pair<std::string,
+        uint16_t> >& addresses);
+    /**
+     * \short Get list of upstream addresses.
+     *
+     * \see setForwardAddresses.
+     */
+    std::vector<std::pair<std::string, uint16_t> > getForwardAddresses() const;
+    /// Return if we are in forwarding mode (if not, we are in fully recursive)
+    bool isForwarding() const;
+
+    /**
+     * Set and get the addresses we listen on.
+     */
+    void setListenAddresses(const std::vector<std::pair<std::string,
+        uint16_t> >& addresses);
+    std::vector<std::pair<std::string, uint16_t> > getListenAddresses() const;
 
 private:
     RecursorImpl* impl_;

@@ -135,9 +135,9 @@ class MockXfrinConnection(XfrinConnection):
         resp.set_opcode(Opcode.QUERY())
         resp.set_rcode(rcode)
         if response:
-            resp.set_header_flag(MessageFlag.QR())
+            resp.set_header_flag(Message.HEADERFLAG_QR)
         [resp.add_question(q) for q in questions]
-        [resp.add_rrset(Section.ANSWER(), a) for a in answers]
+        [resp.add_rrset(Message.SECTION_ANSWER, a) for a in answers]
 
         renderer = MessageRenderer()
         resp.to_wire(renderer)
@@ -421,21 +421,21 @@ class TestXfrin(unittest.TestCase):
         name, rrclass = self._do_parse_zone_name_class()
         master_addrinfo = self._do_parse_master_port()
         db_file = self.args.get('db_file')
-        self.assertEqual(master_addrinfo[4][1], int(TEST_MASTER_PORT))
+        self.assertEqual(master_addrinfo[2][1], int(TEST_MASTER_PORT))
         self.assertEqual(name, TEST_ZONE_NAME)
         self.assertEqual(rrclass, TEST_RRCLASS)
-        self.assertEqual(master_addrinfo[4][0], TEST_MASTER_IPV4_ADDRESS)
+        self.assertEqual(master_addrinfo[2][0], TEST_MASTER_IPV4_ADDRESS)
         self.assertEqual(db_file, TEST_DB_FILE)
 
     def test_parse_cmd_params_default_port(self):
         del self.args['port']
         master_addrinfo = self._do_parse_master_port()
-        self.assertEqual(master_addrinfo[4][1], 53)
+        self.assertEqual(master_addrinfo[2][1], 53)
 
     def test_parse_cmd_params_ip6master(self):
         self.args['master'] = TEST_MASTER_IPV6_ADDRESS
         master_addrinfo = self._do_parse_master_port()
-        self.assertEqual(master_addrinfo[4][0], TEST_MASTER_IPV6_ADDRESS)
+        self.assertEqual(master_addrinfo[2][0], TEST_MASTER_IPV6_ADDRESS)
 
     def test_parse_cmd_params_chclass(self):
         self.args['zone_class'] = 'CH'
@@ -454,7 +454,7 @@ class TestXfrin(unittest.TestCase):
         # master address is mandatory.
         del self.args['master']
         master_addrinfo = self._do_parse_master_port()
-        self.assertEqual(master_addrinfo[4][0], DEFAULT_MASTER)
+        self.assertEqual(master_addrinfo[2][0], DEFAULT_MASTER)
 
     def test_parse_cmd_params_bad_ip4(self):
         self.args['master'] = '3.3.3.3.3'
@@ -508,12 +508,12 @@ class TestXfrin(unittest.TestCase):
                                                   self.args)['result'][0], 1)
 
     def test_command_handler_retransfer_nomodule(self):
-        dns_module = sys.modules['libdns_python'] # this must exist
-        del sys.modules['libdns_python']
+        dns_module = sys.modules['pydnspp'] # this must exist
+        del sys.modules['pydnspp']
         self.assertEqual(self.xfr.command_handler("retransfer",
                                                   self.args)['result'][0], 1)
         # sys.modules is global, so we must recover it
-        sys.modules['libdns_python'] = dns_module
+        sys.modules['pydnspp'] = dns_module
 
     def test_command_handler_refresh(self):
         # at this level, refresh is no different than retransfer.

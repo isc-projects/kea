@@ -94,7 +94,7 @@ static PyMethodDef RRset_methods[] = {
 
 static PyTypeObject rrset_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.RRset",
+    "pydnspp.RRset",
     sizeof(s_RRset),                    // tp_basicsize
     0,                                  // tp_itemsize
     (destructor)RRset_destroy,          // tp_dealloc
@@ -158,7 +158,7 @@ static PyTypeObject rrset_type = {
 };
 
 static int
-RRset_init(s_RRset* self, PyObject* args UNUSED_PARAM) {
+RRset_init(s_RRset* self, PyObject* args) {
     s_Name* name;
     s_RRClass* rrclass;
     s_RRType* rrtype;
@@ -315,7 +315,7 @@ RRset_toWire(s_RRset* self, PyObject* args) {
             // to prevent memory leak
             Py_DECREF(n);
             return (result);
-        } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, (PyObject**) &mr)) {
+        } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
             self->rrset->toWire(*mr->messagerenderer);
             // If we return NULL it is seen as an error, so use this for
             // None returns
@@ -379,7 +379,7 @@ RRset_getRdata(s_RRset* self) {
 bool
 initModulePart_RRset(PyObject* mod) {
     // Add the exceptions to the module
-    po_EmptyRRset = PyErr_NewException("libdns_python.EmptyRRset", NULL, NULL);
+    po_EmptyRRset = PyErr_NewException("pydnspp.EmptyRRset", NULL, NULL);
     PyModule_AddObject(mod, "EmptyRRset", po_EmptyRRset);
 
     // Add the enums to the module

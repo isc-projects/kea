@@ -79,9 +79,14 @@ class TestSubscriptionManager(unittest.TestCase):
 
     def test_open_socket_default(self):
         env_var = None
+        orig_socket_file = None
         if "BIND10_MSGQ_SOCKET_FILE" in os.environ:
             env_var = os.environ["BIND10_MSGQ_SOCKET_FILE"]
             del os.environ["BIND10_MSGQ_SOCKET_FILE"]
+        # temporarily replace the class "default" not to be disrupted by
+        # any running BIND 10 instance.
+        if "BIND10_TEST_SOCKET_FILE" in os.environ:
+            MsgQ.SOCKET_FILE = os.environ["BIND10_TEST_SOCKET_FILE"]
         socket_file = MsgQ.SOCKET_FILE
         self.assertFalse(os.path.exists(socket_file))
         msgq = MsgQ();
@@ -96,6 +101,8 @@ class TestSubscriptionManager(unittest.TestCase):
             pass
         if env_var is not None:
             os.environ["BIND10_MSGQ_SOCKET_FILE"] = env_var
+        if orig_socket_file is not None:
+            MsgQ.SOCKET_FILE = orig_socket_file
 
     def test_open_socket_bad(self):
         msgq = MsgQ("/does/not/exist")
