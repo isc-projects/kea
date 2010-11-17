@@ -16,7 +16,6 @@
 
 #include <config.h>
 #include <recurse/recursor.h>
-#include <auth/tests/srv_test.h>
 #include <auth/tests/srv_unittest.h>
 
 using isc::UnitTestUtil;

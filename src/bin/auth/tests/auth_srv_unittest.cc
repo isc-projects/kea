@@ -16,7 +16,6 @@
 
 #include <config.h>
 #include <auth/auth_srv.h>
-#include <auth/tests/srv_test.h>
 #include <auth/tests/srv_unittest.h>
 
 using namespace std;

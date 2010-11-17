@@ -14,6 +14,8 @@
 
 // $Id: auth_srv_unittest.cc 3310 2010-10-21 23:10:24Z each $
 
+#include "srv_test.h"
+
 namespace {
 
 // Unsupported requests.  Should result in NOTIMP.
