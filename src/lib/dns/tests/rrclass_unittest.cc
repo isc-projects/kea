@@ -51,8 +51,7 @@ const uint8_t RRClassTest::wiredata[] = { 0x00, 0x01, 0x00, 0x80, 0x08,
                                           0x00, 0x80, 0x00, 0xff, 0xff };
 
 RRClass
-RRClassTest::rrclassFactoryFromWire(const char* datafile)
-{
+RRClassTest::rrclassFactoryFromWire(const char* datafile) {
     std::vector<unsigned char> data;
     UnitTestUtil::readWireData(datafile, data);
 
@@ -61,8 +60,7 @@ RRClassTest::rrclassFactoryFromWire(const char* datafile)
     return (RRClass(buffer));
 }
 
-TEST_F(RRClassTest, fromText)
-{
+TEST_F(RRClassTest, fromText) {
     EXPECT_EQ("IN", RRClass("IN").toText());
     EXPECT_EQ("CH", RRClass("CH").toText());
 
@@ -81,29 +79,25 @@ TEST_F(RRClassTest, fromText)
     EXPECT_THROW(RRClass("CLASS65000 "), InvalidRRClass);
 }
 
-TEST_F(RRClassTest, fromWire)
-{
+TEST_F(RRClassTest, fromWire) {
     EXPECT_EQ(0x1234,
               rrclassFactoryFromWire("rrcode16_fromWire1").getCode());
     EXPECT_THROW(rrclassFactoryFromWire("rrcode16_fromWire2"),
                  IncompleteRRClass);
 }
 
-TEST_F(RRClassTest, caseConstruct)
-{
+TEST_F(RRClassTest, caseConstruct) {
     EXPECT_EQ("IN", RRClass("in").toText());
     EXPECT_EQ("CH", RRClass("ch").toText());
     EXPECT_EQ("CLASS65535", RRClass("class65535").toText());
 }
 
-TEST_F(RRClassTest, toText)
-{
+TEST_F(RRClassTest, toText) {
     EXPECT_EQ("IN", RRClass(1).toText());
     EXPECT_EQ("CLASS65000", RRClass(65000).toText());
 }
 
-TEST_F(RRClassTest, toWireBuffer)
-{
+TEST_F(RRClassTest, toWireBuffer) {
     rrclass_1.toWire(obuffer);
     rrclass_0x80.toWire(obuffer);
     rrclass_0x800.toWire(obuffer);
@@ -115,8 +109,7 @@ TEST_F(RRClassTest, toWireBuffer)
                         wiredata, sizeof(wiredata));
 }
 
-TEST_F(RRClassTest, toWireRenderer)
-{
+TEST_F(RRClassTest, toWireRenderer) {
     rrclass_1.toWire(renderer);
     rrclass_0x80.toWire(renderer);
     rrclass_0x800.toWire(renderer);
@@ -128,14 +121,12 @@ TEST_F(RRClassTest, toWireRenderer)
                         wiredata, sizeof(wiredata));
 }
 
-TEST_F(RRClassTest, wellKnownClasss)
-{
+TEST_F(RRClassTest, wellKnownClasss) {
     EXPECT_EQ(1, RRClass::IN().getCode());
     EXPECT_EQ("IN", RRClass::IN().toText());
 }
 
-TEST_F(RRClassTest, compare)
-{
+TEST_F(RRClassTest, compare) {
     EXPECT_TRUE(RRClass(1) == RRClass("IN"));
     EXPECT_TRUE(RRClass(1).equals(RRClass("IN")));
     EXPECT_TRUE(RRClass(0).nequals(RRClass("IN")));
@@ -145,8 +136,7 @@ TEST_F(RRClassTest, compare)
 }
 
 // test operator<<.  We simply confirm it appends the result of toText().
-TEST_F(RRClassTest, LeftShiftOperator)
-{
+TEST_F(RRClassTest, LeftShiftOperator) {
     ostringstream oss;
     oss << RRClass::IN();
     EXPECT_EQ(RRClass::IN().toText(), oss.str());

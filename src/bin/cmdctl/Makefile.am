@@ -1,4 +1,4 @@
-SUBDIRS = tests
+SUBDIRS = . tests
 
 pkglibexecdir = $(libexecdir)/@PACKAGE@
 
@@ -15,7 +15,7 @@ CMDCTL_CONFIGURATIONS += cmdctl-keyfile.pem cmdctl-certfile.pem
 
 b10_cmdctl_DATA = $(CMDCTL_CONFIGURATIONS)
 b10_cmdctl_DATA += cmdctl.spec
- 
+
 EXTRA_DIST = $(CMDCTL_CONFIGURATIONS)
 
 CLEANFILES=	b10-cmdctl cmdctl.pyc cmdctl.spec

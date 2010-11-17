@@ -34,36 +34,29 @@ using namespace std;
 // If you added member functions specific to this derived class, you'll need
 // to implement them here, of course.
 
-MyType::MyType(const string& type_str)
-{
+MyType::MyType(const string& type_str) {
 }
 
-MyType::MyType(InputBuffer& buffer, size_t rdata_len)
-{
+MyType::MyType(InputBuffer& buffer, size_t rdata_len) {
 }
 
-MyType::MyType(const MyType& source)
-{
+MyType::MyType(const MyType& source) {
 }
 
 std::string
-MyType::toText() const
-{
+MyType::toText() const {
 }
 
 void
-MyType::toWire(OutputBuffer& buffer) const
-{
+MyType::toWire(OutputBuffer& buffer) const {
 }
 
 void
-MyType::toWire(MessageRenderer& renderer) const
-{
+MyType::toWire(MessageRenderer& renderer) const {
 }
 
 int
-MyType::compare(const Rdata& other) const
-{
+MyType::compare(const Rdata& other) const {
     // The compare method normally begins with this dynamic cast.
     const MyType& other_mytype = dynamic_cast<const MyType&>(other);
     // ...

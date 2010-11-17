@@ -530,8 +530,8 @@ public:
     /// \param rrclass The RR class of the RRset.
     /// \param rrtype The RR type of the RRset.
     /// \param ttl The TTL of the RRset.
-    explicit BasicRRset(const Name& name, const RRClass& rrclass,
-                        const RRType& rrtype, const RRTTL& ttl);
+    BasicRRset(const Name& name, const RRClass& rrclass,
+               const RRType& rrtype, const RRTTL& ttl);
     /// \brief The destructor.
     virtual ~BasicRRset();
     //@}
@@ -668,7 +668,7 @@ private:
 /// QNAME/QTYPE/QCLASS as a single object.
 class RRset : public BasicRRset {
 public:
-    explicit RRset(const Name& name, const RRClass& rrclass,
+    RRset(const Name& name, const RRClass& rrclass,
           const RRType& rrtype, const RRTTL& ttl);
 
     virtual ~RRset();
@@ -692,8 +692,8 @@ public:
     /// \brief Adds an RRSIG RR to this RRset's signatures
     virtual void addRRsig(const rdata::RdataPtr rdata) {
         if (!rrsig_) {
-            rrsig_ = RRsetPtr(new RRset(this->getName(), this->getClass(),
-                                        RRType::RRSIG(), this->getTTL()));
+            rrsig_ = RRsetPtr(new RRset(getName(), getClass(),
+                                        RRType::RRSIG(), getTTL()));
         }
         rrsig_->addRdata(rdata);
     }
@@ -703,8 +703,8 @@ public:
         RdataIteratorPtr it = sigs.getRdataIterator();
 
         if (!rrsig_) {
-            rrsig_ = RRsetPtr(new RRset(this->getName(), this->getClass(),
-                                        RRType::RRSIG(), this->getTTL()));
+            rrsig_ = RRsetPtr(new RRset(getName(), getClass(),
+                                        RRType::RRSIG(), getTTL()));
         }
 
         for (it->first(); !it->isLast(); it->next()) {

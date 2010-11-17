@@ -16,10 +16,13 @@
 
 #include <config.h>
 
+#include <cstdlib> // For random(), temporary until better forwarding is done
+
 #include <unistd.h>             // for some IPC/network system calls
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+#include <vector>
 #include <asio.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/bind.hpp>
@@ -48,7 +51,10 @@ private:
     IOServiceImpl& operator=(const IOService& source);
 public:
     /// \brief The constructor
-    IOServiceImpl() : io_service_() {};
+    IOServiceImpl() :
+        io_service_(),
+        work_(io_service_)
+    {};
     /// \brief The destructor.
     ~IOServiceImpl() {};
     //@}
@@ -80,6 +86,7 @@ public:
     asio::io_service& get_io_service() { return io_service_; };
 private:
     asio::io_service io_service_;
+    asio::io_service::work work_;
 };
 
 IOService::IOService() {
@@ -116,70 +123,75 @@ public:
                   const ip::address* v4addr, const ip::address* v6addr,
                   SimpleCallback* checkin, DNSLookup* lookup,
                   DNSAnswer* answer);
-    //asio::io_service io_service_;
 
-    void stop();
+    IOService& io_service_;
+
     typedef boost::shared_ptr<UDPServer> UDPServerPtr;
     typedef boost::shared_ptr<TCPServer> TCPServerPtr;
-    UDPServerPtr udp4_server_;
-    UDPServerPtr udp6_server_;
-    TCPServerPtr tcp4_server_;
-    TCPServerPtr tcp6_server_;
+    typedef boost::shared_ptr<DNSServer> DNSServerPtr;
+    vector<DNSServerPtr> servers_;
+    SimpleCallback *checkin_;
+    DNSLookup *lookup_;
+    DNSAnswer *answer_;
+
+    void addServer(uint16_t port, const ip::address& address) {
+        try {
+            TCPServerPtr tcpServer(new TCPServer(io_service_.get_io_service(),
+                address, port, checkin_, lookup_, answer_));
+            (*tcpServer)();
+            servers_.push_back(tcpServer);
+
+            UDPServerPtr udpServer(new UDPServer(io_service_.get_io_service(),
+                address, port, checkin_, lookup_, answer_));
+            (*udpServer)();
+            servers_.push_back(udpServer);
+        }
+        catch (const asio::system_error& err) {
+            // We need to catch and convert any ASIO level exceptions.
+            // This can happen for unavailable address, binding a privilege port
+            // without the privilege, etc.
+            isc_throw(IOError, "Failed to initialize network servers: " <<
+                      err.what());
+        }
+    }
+    void addServer(const char& port, const ip::address& address) {
+        uint16_t portnum;
+        try {
+            // XXX: SunStudio with stlport4 doesn't reject some invalid
+            // representation such as "-1" by lexical_cast<uint16_t>, so
+            // we convert it into a signed integer of a larger size and perform
+            // range check ourselves.
+            const int32_t portnum32 = boost::lexical_cast<int32_t>(&port);
+            if (portnum32 < 0 || portnum32 > 65535) {
+                isc_throw(IOError, "Invalid port number '" << &port);
+            }
+            portnum = portnum32;
+        } catch (const boost::bad_lexical_cast& ex) {
+            isc_throw(IOError, "Invalid port number '" << &port << "': " <<
+                      ex.what());
+        }
+        addServer(portnum, address);
+    }
 };
 
-DNSServiceImpl::DNSServiceImpl(IOService& io_service_,
+DNSServiceImpl::DNSServiceImpl(IOService& io_service,
                                const char& port,
                                const ip::address* const v4addr,
                                const ip::address* const v6addr,
                                SimpleCallback* checkin,
                                DNSLookup* lookup,
                                DNSAnswer* answer) :
-    udp4_server_(UDPServerPtr()), udp6_server_(UDPServerPtr()),
-    tcp4_server_(TCPServerPtr()), tcp6_server_(TCPServerPtr())
+    io_service_(io_service),
+    checkin_(checkin),
+    lookup_(lookup),
+    answer_(answer)
 {
-    uint16_t portnum;
-    try {
-        // XXX: SunStudio with stlport4 doesn't reject some invalid
-        // representation such as "-1" by lexical_cast<uint16_t>, so
-        // we convert it into a signed integer of a larger size and perform
-        // range check ourselves.
-        const int32_t portnum32 = boost::lexical_cast<int32_t>(&port);
-        if (portnum32 < 0 || portnum32 > 65535) {
-            isc_throw(IOError, "Invalid port number '" << &port);
-        }
-        portnum = portnum32;
-    } catch (const boost::bad_lexical_cast& ex) {
-        isc_throw(IOError, "Invalid port number '" << &port << "': " <<
-                  ex.what());
-    }
 
-    try {
-        if (v4addr != NULL) {
-            udp4_server_ = UDPServerPtr(new UDPServer(io_service_.get_io_service(),
-                                                      *v4addr, portnum,
-                                                      checkin, lookup, answer));
-            (*udp4_server_)();
-            tcp4_server_ = TCPServerPtr(new TCPServer(io_service_.get_io_service(),
-                                                      *v4addr, portnum,
-                                                      checkin, lookup, answer));
-            (*tcp4_server_)();
-        }
-        if (v6addr != NULL) {
-            udp6_server_ = UDPServerPtr(new UDPServer(io_service_.get_io_service(),
-                                                      *v6addr, portnum,
-                                                      checkin, lookup, answer));
-            (*udp6_server_)();
-            tcp6_server_ = TCPServerPtr(new TCPServer(io_service_.get_io_service(),
-                                                      *v6addr, portnum,
-                                                      checkin, lookup, answer));
-            (*tcp6_server_)();
-        }
-    } catch (const asio::system_error& err) {
-        // We need to catch and convert any ASIO level exceptions.
-        // This can happen for unavailable address, binding a privilege port
-        // without the privilege, etc.
-        isc_throw(IOError, "Failed to initialize network servers: " <<
-                  err.what());
+    if (v4addr) {
+        addServer(port, *v4addr);
+    }
+    if (v6addr) {
+        addServer(port, *v6addr);
     }
 }
 
@@ -188,19 +200,10 @@ DNSService::DNSService(IOService& io_service,
                        SimpleCallback* checkin,
                        DNSLookup* lookup,
                        DNSAnswer* answer) :
-    impl_(NULL), io_service_(io_service)
+    impl_(new DNSServiceImpl(io_service, port, NULL, NULL, checkin, lookup,
+        answer)), io_service_(io_service)
 {
-    error_code err;
-    const ip::address addr = ip::address::from_string(&address, err);
-    if (err) {
-        isc_throw(IOError, "Invalid IP address '" << &address << "': "
-                  << err.message());
-    }
-
-    impl_ = new DNSServiceImpl(io_service, port,
-                              addr.is_v4() ? &addr : NULL,
-                              addr.is_v6() ? &addr : NULL,
-                              checkin, lookup, answer);
+    addServer(port, &address);
 }
 
 DNSService::DNSService(IOService& io_service,
@@ -218,13 +221,52 @@ DNSService::DNSService(IOService& io_service,
     impl_ = new DNSServiceImpl(io_service, port, v4addrp, v6addrp, checkin, lookup, answer);
 }
 
+DNSService::DNSService(IOService& io_service, SimpleCallback* checkin,
+    DNSLookup* lookup, DNSAnswer *answer) :
+    impl_(new DNSServiceImpl(io_service, *"0", NULL, NULL, checkin, lookup,
+        answer)), io_service_(io_service)
+{
+}
+
 DNSService::~DNSService() {
     delete impl_;
 }
 
-RecursiveQuery::RecursiveQuery(DNSService& dns_service, const char& forward,
-                               uint16_t port) :
-    dns_service_(dns_service), ns_addr_(&forward), port_(port) 
+namespace {
+
+ip::address
+convertAddr(const string& address) {
+    error_code err;
+    ip::address addr = ip::address::from_string(address, err);
+    if (err) {
+        isc_throw(IOError, "Invalid IP address '" << &address << "': "
+            << err.message());
+    }
+    return addr;
+}
+
+}
+
+void
+DNSService::addServer(const char& port, const string& address) {
+    impl_->addServer(port, convertAddr(address));
+}
+
+void
+DNSService::addServer(uint16_t port, const string &address) {
+    impl_->addServer(port, convertAddr(address));
+}
+
+void
+DNSService::clearServers() {
+    // FIXME: This does not work, it does not close the socket.
+    // How is it done?
+    impl_->servers_.clear();
+}
+
+RecursiveQuery::RecursiveQuery(DNSService& dns_service,
+        const std::vector<std::pair<std::string, uint16_t> >& upstream) :
+    dns_service_(dns_service), upstream_(upstream)
 {}
 
 void
@@ -237,7 +279,10 @@ RecursiveQuery::sendQuery(const Question& question, OutputBufferPtr buffer,
     // UDP and then fall back to TCP on failure, but for the moment
     // we're only going to handle UDP.
     asio::io_service& io = dns_service_.get_io_service();
-    UDPQuery q(io, question, ns_addr_, port_, buffer, server);
+    // TODO: Better way to choose the server
+    int serverIndex(random() % upstream_.size());
+    UDPQuery q(io, question, upstream_[serverIndex].first,
+        upstream_[serverIndex].second, buffer, server);
     io.post(q);
 }
 

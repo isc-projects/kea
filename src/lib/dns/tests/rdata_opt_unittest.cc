@@ -38,14 +38,12 @@ class Rdata_OPT_Test : public RdataTest {
 
 const generic::OPT rdata_opt;
 
-TEST_F(Rdata_OPT_Test, createFromText)
-{
+TEST_F(Rdata_OPT_Test, createFromText) {
     // OPT RR cannot be created from text.
     EXPECT_THROW(generic::OPT("this does not matter"), InvalidRdataText);
 }
 
-TEST_F(Rdata_OPT_Test, createFromWire)
-{
+TEST_F(Rdata_OPT_Test, createFromWire) {
     // Valid cases: in the simple implementation with no supported options,
     // we can only check these don't throw.
     EXPECT_NO_THROW(rdataFactoryFromFile(RRType::OPT(), RRClass("CLASS4096"),
@@ -59,25 +57,21 @@ TEST_F(Rdata_OPT_Test, createFromWire)
                  InvalidRdataLength);
 }
 
-TEST_F(Rdata_OPT_Test, toWireBuffer)
-{
+TEST_F(Rdata_OPT_Test, toWireBuffer) {
     rdata_opt.toWire(obuffer);
     EXPECT_EQ(0, obuffer.getLength());
 }
 
-TEST_F(Rdata_OPT_Test, toWireRenderer)
-{
+TEST_F(Rdata_OPT_Test, toWireRenderer) {
     rdata_opt.toWire(renderer);
     EXPECT_EQ(0, obuffer.getLength());
 }
 
-TEST_F(Rdata_OPT_Test, toText)
-{
+TEST_F(Rdata_OPT_Test, toText) {
     EXPECT_EQ("", rdata_opt.toText());
 }
 
-TEST_F(Rdata_OPT_Test, compare)
-{
+TEST_F(Rdata_OPT_Test, compare) {
     // This simple implementation always returns "true"
     EXPECT_EQ(0, rdata_opt.compare(
                   *rdataFactoryFromFile(RRType::OPT(), RRClass::CH(),

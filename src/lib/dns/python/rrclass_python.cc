@@ -100,7 +100,7 @@ static PyMethodDef RRClass_methods[] = {
 // Most of the functions are not actually implemented and NULL here.
 static PyTypeObject rrclass_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.RRClass",
+    "pydnspp.RRClass",
     sizeof(s_RRClass),                  // tp_basicsize
     0,                                  // tp_itemsize
     (destructor)RRClass_destroy,        // tp_dealloc
@@ -236,7 +236,7 @@ RRClass_toWire(s_RRClass* self, PyObject* args) {
         // to prevent memory leak
         Py_DECREF(n);
         return (result);
-    } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, (PyObject**) &mr)) {
+    } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
         self->rrclass->toWire(*mr->messagerenderer);
         // If we return NULL it is seen as an error, so use this for
         // None returns
@@ -306,23 +306,23 @@ static PyObject* RRClass_createStatic(RRClass stc) {
     return (ret);
 }
 
-static PyObject* RRClass_IN(s_RRClass *self UNUSED_PARAM) {
+static PyObject* RRClass_IN(s_RRClass*) {
     return (RRClass_createStatic(RRClass::IN()));
 }
 
-static PyObject* RRClass_CH(s_RRClass *self UNUSED_PARAM) {
+static PyObject* RRClass_CH(s_RRClass*) {
     return (RRClass_createStatic(RRClass::CH()));
 }
 
-static PyObject* RRClass_HS(s_RRClass *self UNUSED_PARAM) {
+static PyObject* RRClass_HS(s_RRClass*) {
     return (RRClass_createStatic(RRClass::HS()));
 }
 
-static PyObject* RRClass_NONE(s_RRClass *self UNUSED_PARAM) {
+static PyObject* RRClass_NONE(s_RRClass*) {
     return (RRClass_createStatic(RRClass::NONE()));
 }
 
-static PyObject* RRClass_ANY(s_RRClass *self UNUSED_PARAM) {
+static PyObject* RRClass_ANY(s_RRClass*) {
     return (RRClass_createStatic(RRClass::ANY()));
 }
 // end of RRClass
@@ -332,10 +332,10 @@ static PyObject* RRClass_ANY(s_RRClass *self UNUSED_PARAM) {
 bool
 initModulePart_RRClass(PyObject* mod) {
     // Add the exceptions to the module
-    po_InvalidRRClass = PyErr_NewException("libdns_python.InvalidRRClass", NULL, NULL);
+    po_InvalidRRClass = PyErr_NewException("pydnspp.InvalidRRClass", NULL, NULL);
     Py_INCREF(po_InvalidRRClass);
     PyModule_AddObject(mod, "InvalidRRClass", po_InvalidRRClass);
-    po_IncompleteRRClass = PyErr_NewException("libdns_python.IncompleteRRClass", NULL, NULL);
+    po_IncompleteRRClass = PyErr_NewException("pydnspp.IncompleteRRClass", NULL, NULL);
     Py_INCREF(po_IncompleteRRClass);
     PyModule_AddObject(mod, "IncompleteRRClass", po_IncompleteRRClass);
 

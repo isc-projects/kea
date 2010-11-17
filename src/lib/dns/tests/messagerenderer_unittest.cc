@@ -130,7 +130,7 @@ TEST_F(MessageRendererTest, writeNameCaseSensitiveCompress) {
     // name compression in case sensitive manner.  See the data file
     // description for details.
     renderer.setCompressMode(MessageRenderer::CASE_SENSITIVE);
-    UnitTestUtil::readWireData("name_toWire5", data);
+    UnitTestUtil::readWireData("name_toWire5.wire", data);
     renderer.writeName(Name("a.example.com."));
     renderer.writeName(Name("b.eXample.com."));
     renderer.writeName(Name("c.eXample.com."));
@@ -140,7 +140,7 @@ TEST_F(MessageRendererTest, writeNameCaseSensitiveCompress) {
 
 TEST_F(MessageRendererTest, writeNameMixedCaseCompress) {
     renderer.setCompressMode(MessageRenderer::CASE_SENSITIVE);
-    UnitTestUtil::readWireData("name_toWire6", data);
+    UnitTestUtil::readWireData("name_toWire6.wire", data);
     renderer.writeName(Name("a.example.com."));
     renderer.writeName(Name("b.eXample.com."));
 

@@ -131,7 +131,7 @@ TEST_F(Rdata_RRSIG_Test, createFromWire) {
 
     // RDLEN is too short
     EXPECT_THROW(rdataFactoryFromFile(RRType::RRSIG(), RRClass::IN(),
-                                      "rdata_rrsig_fromWire2"),
+                                      "rdata_rrsig_fromWire2.wire"),
                  InvalidRdataLength);
 }
 }

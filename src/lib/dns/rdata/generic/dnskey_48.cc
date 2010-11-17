@@ -103,8 +103,7 @@ DNSKEY::DNSKEY(const DNSKEY& source) :
 {}
 
 DNSKEY&
-DNSKEY::operator=(const DNSKEY& source)
-{
+DNSKEY::operator=(const DNSKEY& source) {
     if (impl_ == source.impl_) {
         return (*this);
     }
@@ -116,14 +115,12 @@ DNSKEY::operator=(const DNSKEY& source)
     return (*this);
 }
 
-DNSKEY::~DNSKEY()
-{
+DNSKEY::~DNSKEY() {
     delete impl_;
 }
 
 string
-DNSKEY::toText() const
-{
+DNSKEY::toText() const {
     return (boost::lexical_cast<string>(static_cast<int>(impl_->flags_)) +
         " " + boost::lexical_cast<string>(static_cast<int>(impl_->protocol_)) +
         " " + boost::lexical_cast<string>(static_cast<int>(impl_->algorithm_)) +
@@ -131,8 +128,7 @@ DNSKEY::toText() const
 }
 
 void
-DNSKEY::toWire(OutputBuffer& buffer) const
-{
+DNSKEY::toWire(OutputBuffer& buffer) const {
     buffer.writeUint16(impl_->flags_);
     buffer.writeUint8(impl_->protocol_);
     buffer.writeUint8(impl_->algorithm_);
@@ -140,8 +136,7 @@ DNSKEY::toWire(OutputBuffer& buffer) const
 }
 
 void
-DNSKEY::toWire(MessageRenderer& renderer) const
-{
+DNSKEY::toWire(MessageRenderer& renderer) const {
     renderer.writeUint16(impl_->flags_);
     renderer.writeUint8(impl_->protocol_);
     renderer.writeUint8(impl_->algorithm_);
@@ -149,8 +144,7 @@ DNSKEY::toWire(MessageRenderer& renderer) const
 }
 
 int
-DNSKEY::compare(const Rdata& other) const
-{
+DNSKEY::compare(const Rdata& other) const {
     const DNSKEY& other_dnskey = dynamic_cast<const DNSKEY&>(other);
 
     if (impl_->flags_ != other_dnskey.impl_->flags_) {
@@ -176,8 +170,7 @@ DNSKEY::compare(const Rdata& other) const
 }
 
 uint16_t
-DNSKEY::getTag() const
-{
+DNSKEY::getTag() const {
     if (impl_->algorithm_ == 1) {
         int len = impl_->keydata_.size();
         return ((impl_->keydata_[len - 3] << 8) + impl_->keydata_[len - 2]);

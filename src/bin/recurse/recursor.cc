@@ -24,6 +24,7 @@
 #include <vector>
 
 #include <asiolink/asiolink.h>
+#include <asiolink/ioaddress.h>
 
 #include <boost/foreach.hpp>
 
@@ -33,6 +34,8 @@
 
 #include <exceptions/exceptions.h>
 
+#include <dns/opcode.h>
+#include <dns/rcode.h>
 #include <dns/buffer.h>
 #include <dns/exceptions.h>
 #include <dns/name.h>
@@ -57,15 +60,18 @@ using namespace isc::config;
 using namespace isc::xfr;
 using namespace asiolink;
 
+typedef pair<string, uint16_t> addr_t;
+
 class RecursorImpl {
 private:
     // prohibit copy
     RecursorImpl(const RecursorImpl& source);
     RecursorImpl& operator=(const RecursorImpl& source);
 public:
-    RecursorImpl(const char& forward) :
-        config_session_(NULL), verbose_mode_(false),
-        forward_(forward), rec_query_()
+    RecursorImpl() :
+        config_session_(NULL),
+        verbose_mode_(false),
+        rec_query_()
     {}
 
     ~RecursorImpl() {
@@ -73,12 +79,26 @@ public:
     }
 
     void querySetup(DNSService& dnss) {
-        rec_query_ = new RecursiveQuery(dnss, forward_);
+        rec_query_ = new RecursiveQuery(dnss, upstream_);
     }
 
     void queryShutdown() {
-        if (rec_query_) {
-            delete rec_query_;
+        delete rec_query_;
+        rec_query_ = NULL;
+    }
+
+    void setForwardAddresses(const vector<addr_t>& upstream,
+        DNSService *dnss)
+    {
+        queryShutdown();
+        upstream_ = upstream;
+        if (dnss) {
+            if (upstream_.empty()) {
+                cerr << "[b10-recurse] Asked to do full recursive," << endl <<
+                    "but not implemented yet. I'll do nothing." << endl;
+            } else {
+                querySetup(*dnss);
+            }
         }
     }
 
@@ -92,10 +112,12 @@ public:
     /// These members are public because Recursor accesses them directly.
     ModuleCCSession* config_session_;
     bool verbose_mode_;
+    /// Addresses of the forward nameserver
+    vector<addr_t> upstream_;
+    /// Addresses we listen on
+    vector<addr_t> listen_;
 
 private:
-    /// Address of the forward nameserver
-    const char& forward_;
 
     /// Object to handle upstream queries
     RecursiveQuery* rec_query_;
@@ -112,14 +134,15 @@ public:
 
 class SectionInserter {
 public:
-    SectionInserter(MessagePtr message, const Section& sect, bool sign) :
+    SectionInserter(MessagePtr message, const Message::Section sect,
+        bool sign) :
         message_(message), section_(sect), sign_(sign)
     {}
     void operator()(const RRsetPtr rrset) {
         message_->addRRset(section_, rrset, true);
     }
     MessagePtr message_;
-    const Section& section_;
+    const Message::Section section_;
     bool sign_;
 };
 
@@ -131,8 +154,8 @@ makeErrorMessage(MessagePtr message, OutputBufferPtr buffer,
     // XXX: with the current implementation, it's not easy to set EDNS0
     // depending on whether the query had it.  So we'll simply omit it.
     const qid_t qid = message->getQid();
-    const bool rd = message->getHeaderFlag(MessageFlag::RD());
-    const bool cd = message->getHeaderFlag(MessageFlag::CD());
+    const bool rd = message->getHeaderFlag(Message::HEADERFLAG_RD);
+    const bool cd = message->getHeaderFlag(Message::HEADERFLAG_CD);
     const Opcode& opcode = message->getOpcode();
     vector<QuestionPtr> questions;
 
@@ -145,13 +168,12 @@ makeErrorMessage(MessagePtr message, OutputBufferPtr buffer,
     message->clear(Message::RENDER);
     message->setQid(qid);
     message->setOpcode(opcode);
-    message->setHeaderFlag(MessageFlag::QR());
-    message->setUDPSize(RecursorImpl::DEFAULT_LOCAL_UDPSIZE);
+    message->setHeaderFlag(Message::HEADERFLAG_QR);
     if (rd) {
-        message->setHeaderFlag(MessageFlag::RD());
+        message->setHeaderFlag(Message::HEADERFLAG_RD);
     }
     if (cd) {
-        message->setHeaderFlag(MessageFlag::CD());
+        message->setHeaderFlag(Message::HEADERFLAG_CD);
     }
     for_each(questions.begin(), questions.end(), QuestionInserter(message));
     message->setRcode(rcode);
@@ -193,8 +215,8 @@ public:
                             OutputBufferPtr buffer) const
     {
         const qid_t qid = message->getQid();
-        const bool rd = message->getHeaderFlag(MessageFlag::RD());
-        const bool cd = message->getHeaderFlag(MessageFlag::CD());
+        const bool rd = message->getHeaderFlag(Message::HEADERFLAG_RD);
+        const bool cd = message->getHeaderFlag(Message::HEADERFLAG_CD);
         const Opcode& opcode = message->getOpcode();
         const Rcode& rcode = message->getRcode();
         vector<QuestionPtr> questions;
@@ -204,15 +226,14 @@ public:
         message->setQid(qid);
         message->setOpcode(opcode);
         message->setRcode(rcode);
-        message->setUDPSize(RecursorImpl::DEFAULT_LOCAL_UDPSIZE);
 
-        message->setHeaderFlag(MessageFlag::QR());
-        message->setHeaderFlag(MessageFlag::RA());
+        message->setHeaderFlag(Message::HEADERFLAG_QR);
+        message->setHeaderFlag(Message::HEADERFLAG_RA);
         if (rd) {
-            message->setHeaderFlag(MessageFlag::RD());
+            message->setHeaderFlag(Message::HEADERFLAG_RD);
         }
         if (cd) {
-            message->setHeaderFlag(MessageFlag::CD());
+            message->setHeaderFlag(Message::HEADERFLAG_CD);
         }
 
 
@@ -227,15 +248,18 @@ public:
                 Message incoming(Message::PARSE);
                 InputBuffer ibuf(buffer->getData(), buffer->getLength());
                 incoming.fromWire(ibuf);
-                for_each(incoming.beginSection(Section::ANSWER()), 
-                         incoming.endSection(Section::ANSWER()),
-                         SectionInserter(message, Section::ANSWER(), true));
-                for_each(incoming.beginSection(Section::ADDITIONAL()), 
-                         incoming.endSection(Section::ADDITIONAL()),
-                         SectionInserter(message, Section::ADDITIONAL(), true));
-                for_each(incoming.beginSection(Section::AUTHORITY()), 
-                         incoming.endSection(Section::AUTHORITY()),
-                         SectionInserter(message, Section::AUTHORITY(), true));
+                for_each(incoming.beginSection(Message::SECTION_ANSWER),
+                         incoming.endSection(Message::SECTION_ANSWER),
+                         SectionInserter(message, Message::SECTION_ANSWER,
+                         true));
+                for_each(incoming.beginSection(Message::SECTION_ADDITIONAL),
+                         incoming.endSection(Message::SECTION_ADDITIONAL),
+                         SectionInserter(message, Message::SECTION_ADDITIONAL,
+                         true));
+                for_each(incoming.beginSection(Message::SECTION_AUTHORITY),
+                         incoming.endSection(Message::SECTION_ADDITIONAL),
+                         SectionInserter(message, Message::SECTION_AUTHORITY,
+                         true));
             } catch (const Exception& ex) {
                 // Incoming message couldn't be read, we just SERVFAIL
                 message->setRcode(Rcode::SERVFAIL());
@@ -248,7 +272,9 @@ public:
         MessageRenderer renderer(*buffer);
 
         if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
-            renderer.setLengthLimit(message->getUDPSize());
+            ConstEDNSPtr edns(message->getEDNS());
+            renderer.setLengthLimit(edns ? edns->getUDPSize() :
+                Message::DEFAULT_MAX_UDPSIZE);
         } else {
             renderer.setLengthLimit(65535);
         }
@@ -272,7 +298,7 @@ private:
 class ConfigCheck : public SimpleCallback {
 public:
     ConfigCheck(Recursor* srv) : server_(srv) {}
-    virtual void operator()(const IOMessage& io_message UNUSED_PARAM) const {
+    virtual void operator()(const IOMessage&) const {
         if (server_->getConfigSession()->hasQueuedMsgs()) {
             server_->getConfigSession()->checkCommand();
         }
@@ -281,8 +307,8 @@ private:
     Recursor* server_;
 };
 
-Recursor::Recursor(const char& forward) :
-    impl_(new RecursorImpl(forward)),
+Recursor::Recursor() :
+    impl_(new RecursorImpl()),
     checkin_(new ConfigCheck(this)),
     dns_lookup_(new MessageLookup(this)),
     dns_answer_(new MessageAnswer(this))
@@ -333,7 +359,7 @@ Recursor::processMessage(const IOMessage& io_message, MessagePtr message,
         message->parseHeader(request_buffer);
 
         // Ignore all responses.
-        if (message->getHeaderFlag(MessageFlag::QR())) {
+        if (message->getHeaderFlag(Message::HEADERFLAG_QR)) {
             if (impl_->verbose_mode_) {
                 cerr << "[b10-recurse] received unexpected response, ignoring"
                      << endl;
@@ -387,7 +413,7 @@ Recursor::processMessage(const IOMessage& io_message, MessagePtr message,
         }
         makeErrorMessage(message, buffer, Rcode::NOTIMP(),
                          impl_->verbose_mode_);
-    } else if (message->getRRCount(Section::QUESTION()) != 1) {
+    } else if (message->getRRCount(Message::SECTION_QUESTION) != 1) {
         makeErrorMessage(message, buffer, Rcode::FORMERR(),
                          impl_->verbose_mode_);
     } else {
@@ -421,21 +447,80 @@ void
 RecursorImpl::processNormalQuery(const Question& question, MessagePtr message,
                                  OutputBufferPtr buffer, DNSServer* server)
 {
-    const bool dnssec_ok = message->isDNSSECSupported();
+    ConstEDNSPtr edns(message->getEDNS());
+    const bool dnssec_ok = edns && edns->getDNSSECAwareness();
 
     message->makeResponse();
-    message->setHeaderFlag(MessageFlag::RA());
+    message->setHeaderFlag(Message::HEADERFLAG_RA);
     message->setRcode(Rcode::NOERROR());
-    message->setDNSSECSupported(dnssec_ok);
-    message->setUDPSize(RecursorImpl::DEFAULT_LOCAL_UDPSIZE);
+    if (edns) {
+        EDNSPtr edns_response(new EDNS());
+        edns_response->setDNSSECAwareness(dnssec_ok);
+        edns_response->setUDPSize(RecursorImpl::DEFAULT_LOCAL_UDPSIZE);
+        message->setEDNS(edns_response);
+    }
     rec_query_->sendQuery(question, buffer, server);
 }
 
+namespace {
+
+vector<addr_t>
+parseAddresses(ConstElementPtr addresses) {
+    vector<addr_t> result;
+    if (addresses) {
+        if (addresses->getType() == Element::list) {
+            for (size_t i(0); i < addresses->size(); ++ i) {
+                ConstElementPtr addrPair(addresses->get(i));
+                ConstElementPtr addr(addrPair->get("address"));
+                ConstElementPtr port(addrPair->get("port"));
+                if (!addr || ! port) {
+                    isc_throw(BadValue, "Address must contain both the IP"
+                        "address and port");
+                }
+                try {
+                    IOAddress(addr->stringValue());
+                    if (port->intValue() < 0 ||
+                        port->intValue() > 0xffff) {
+                        isc_throw(BadValue, "Bad port value (" <<
+                            port->intValue() << ")");
+                    }
+                    result.push_back(addr_t(addr->stringValue(),
+                        port->intValue()));
+                }
+                catch (const TypeError &e) { // Better error message
+                    isc_throw(TypeError,
+                        "Address must be a string and port an integer");
+                }
+            }
+        } else if (addresses->getType() != Element::null) {
+            isc_throw(TypeError,
+                "forward_addresses config element must be a list");
+        }
+    }
+    return (result);
+}
+
+}
+
 ConstElementPtr
-Recursor::updateConfig(ConstElementPtr new_config UNUSED_PARAM) {
+Recursor::updateConfig(ConstElementPtr config) {
+    if (impl_->verbose_mode_) {
+        cout << "[b10-recurse] Update with config: " << config->str() << endl;
+    }
     try {
-        // We will do configuration updates here.  None are presently
-        // defined, so we just return an empty answer.
+        // Parse forward_addresses
+        ConstElementPtr forwardAddressesE(config->get("forward_addresses"));
+        vector<addr_t> forwardAddresses(parseAddresses(forwardAddressesE));
+        ConstElementPtr listenAddressesE(config->get("listen_on"));
+        vector<addr_t> listenAddresses(parseAddresses(listenAddressesE));
+        // Everything OK, so commit the changes
+        // listenAddresses can fail to bind, so try them first
+        if (listenAddressesE) {
+            setListenAddresses(listenAddresses);
+        }
+        if (forwardAddressesE) {
+            setForwardAddresses(forwardAddresses);
+        }
         return (isc::config::createAnswer());
     } catch (const isc::Exception& error) {
         if (impl_->verbose_mode_) {
@@ -443,4 +528,63 @@ Recursor::updateConfig(ConstElementPtr new_config UNUSED_PARAM) {
         }
         return (isc::config::createAnswer(1, error.what()));
     }
+}
+
+void
+Recursor::setForwardAddresses(const vector<addr_t>& addresses)
+{
+    impl_->setForwardAddresses(addresses, dnss_);
+}
+
+bool
+Recursor::isForwarding() const {
+    return (!impl_->upstream_.empty());
+}
+
+vector<addr_t>
+Recursor::getForwardAddresses() const {
+    return (impl_->upstream_);
+}
+
+namespace {
+
+void
+setAddresses(DNSService *service, const vector<addr_t>& addresses) {
+    service->clearServers();
+    BOOST_FOREACH(const addr_t &address, addresses) {
+        service->addServer(address.second, address.first);
+    }
+}
+
+}
+
+void
+Recursor::setListenAddresses(const vector<addr_t>& addresses) {
+    try {
+        setAddresses(dnss_, addresses);
+        impl_->listen_ = addresses;
+    }
+    catch (const exception& e) {
+        /*
+         * We couldn't set it. So return it back. If that fails as well,
+         * we have a problem.
+         *
+         * If that fails, bad luck, but we are useless anyway, so just die
+         * and let boss start us again.
+         */
+        try {
+            setAddresses(dnss_, impl_->listen_);
+        }
+        catch (const exception& e2) {
+            cerr << "[b10-recurse] Unable to recover from error: " << e.what()
+                << endl << "Rollback failed with: " << e2.what() << endl;
+            abort();
+        }
+        throw e; // Let it fly a little bit further
+    }
+}
+
+vector<addr_t>
+Recursor::getListenAddresses() const {
+    return (impl_->listen_);
 }
