@@ -114,7 +114,8 @@ public:
         message_(message), section_(sect), sign_(sign)
     {}
     void operator()(const RRsetPtr rrset) {
-        dlog("Adding RRSet to message");
+        dlog("Adding RRSet to message section " +
+            boost::lexical_cast<string>(section_.getCode()));
         message_->addRRset(section_, rrset, true);
     }
     MessagePtr message_;
@@ -354,10 +355,15 @@ Recursor::processMessage(const IOMessage& io_message, MessagePtr message,
     bool sendAnswer = true;
     if (message->getOpcode() == Opcode::NOTIFY()) {
         makeErrorMessage(message, buffer, Rcode::NOTAUTH());
+        dlog("Notify arrived, but we are not authoritative");
     } else if (message->getOpcode() != Opcode::QUERY()) {
-        dlog("unsupported opcode");
+        dlog("Unsupported opcode (got: " + message->getOpcode().toText() +
+            ", expected: " + Opcode::QUERY().toText());
         makeErrorMessage(message, buffer, Rcode::NOTIMP());
     } else if (message->getRRCount(Section::QUESTION()) != 1) {
+        dlog("The query contained " +
+            boost::lexical_cast<string>(message->getRRCount(
+            Section::QUESTION()) + " questions, exactly one expected"));
         makeErrorMessage(message, buffer, Rcode::FORMERR());
     } else {
         ConstQuestionPtr question = *message->beginQuestion();
