@@ -29,6 +29,7 @@
 #include <dns/buffer.h>
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
+#include <log/dummylog.h>
 
 #include <asiolink.h>
 #include <internal/coroutine.h>
@@ -37,6 +38,7 @@
 using namespace asio;
 using asio::ip::udp;
 using asio::ip::tcp;
+using isc::log::dlog;
 
 using namespace std;
 using namespace isc::dns;
@@ -208,6 +210,8 @@ UDPQuery::operator()(error_code ec, size_t length) {
             msg.addQuestion(question_);
             MessageRenderer renderer(*msgbuf_);
             msg.toWire(renderer);
+            dlog("Sending " + msg.toText() + " to " +
+                remote_.address().to_string());
         }
 
         // Begin an asynchronous send, and then yield.  When the
@@ -224,6 +228,8 @@ UDPQuery::operator()(error_code ec, size_t length) {
         /// completes, we will resume immediately after this point.
         CORO_YIELD socket_->async_receive_from(buffer(data_.get(), MAX_LENGTH),
                                                remote_, *this);
+        // The message is not rendered yet, so we can't print it easilly
+        dlog("Received response from " + remote_.address().to_string());
 
         /// Copy the answer into the response buffer.  (XXX: If the
         /// OutputBuffer object were made to meet the requirements of

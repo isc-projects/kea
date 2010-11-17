@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <errno.h>
 
-#include <cassert>
+#include <string>
 #include <iostream>
 
 #include <boost/foreach.hpp>
@@ -164,6 +164,14 @@ main(int argc, char* argv[]) {
     if (forward == NULL) {
         cerr << "[b10-recurse] No forward name server specified" << endl;
         usage();
+    }
+
+    if (isc::log::denabled) { // Show the command line
+        string cmdline("Command line:");
+        for (int i = 0; i < argc; ++ i) {
+            cmdline = cmdline + " " + argv[i];
+        }
+        dlog(cmdline);
     }
 
     int ret = 0;
