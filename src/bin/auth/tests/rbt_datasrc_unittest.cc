@@ -161,7 +161,6 @@ TEST_F(RBTreeTest, successor) {
     successor_node = successor_node->successor();
     EXPECT_EQ(Name("q"), successor_node->getName());
 }
-}
 
 TEST_F(RBTreeTest, eraseName) {
     EXPECT_EQ(0, rbtree.insert(Name("k"), &rbtnode));
@@ -190,7 +189,7 @@ TEST_F(RBTreeTest, eraseName) {
     EXPECT_EQ(0, rbtree.erase(Name("k")));
     EXPECT_EQ(0, rbtree.erase(Name("y")));
 
-    // can't delete non terminal
+    // can't delete shadow node
     EXPECT_EQ(1, rbtree.erase(Name("d.e.f")));
     EXPECT_EQ(RBTree<int>::NOTFOUND, rbtree.find(Name("w.y.d.e.f"), &rbtnode));
     EXPECT_EQ(0, rbtree.erase(Name("p.w.y.d.e.f")));
@@ -238,8 +237,6 @@ TEST_F(RBTreeTest, eraseName) {
     // delete all the nodes one by one
     EXPECT_EQ(0, rbtree.erase(Name("c")));
     EXPECT_EQ(9, rbtree.getNodeCount());
-    EXPECT_EQ(1, rbtree.erase(Name("g.h")));
-    EXPECT_EQ(9, rbtree.getNodeCount());
     EXPECT_EQ(0, rbtree.erase(Name("a")));
     EXPECT_EQ(8, rbtree.getNodeCount());
     EXPECT_EQ(0, rbtree.erase(Name("b")));
@@ -257,8 +254,15 @@ TEST_F(RBTreeTest, eraseName) {
      *                   |
      *                   j
      */
-    // can't delete non-terminal node
-    EXPECT_EQ(1, rbtree.erase(Name("z.d.e.f")));
+    // can't delete shadow node
+    EXPECT_EQ(0, rbtree.insert(Name("d.e.f"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name("d.e.f"), &rbtnode));
+    EXPECT_EQ(0, rbtree.erase(Name("d.e.f")));
+    EXPECT_EQ(RBTree<int>::NOTFOUND, rbtree.find(Name("d.e.f"), &rbtnode));
+    // d.e.f node become shadow
+    EXPECT_EQ(1, rbtree.erase(Name("d.e.f")));
+    // z is a shdow node
+    EXPECT_EQ(0, rbtree.erase(Name("z.d.e.f")));
     EXPECT_EQ(6, rbtree.getNodeCount());
     EXPECT_EQ(0, rbtree.erase(Name("j.z.d.e.f")));
     EXPECT_EQ(5, rbtree.getNodeCount());
@@ -359,3 +363,4 @@ TEST_F(RBTreeTest, eraseName) {
     EXPECT_EQ(0, rbtree.getNodeCount());
 }
 
+}
