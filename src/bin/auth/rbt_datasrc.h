@@ -20,6 +20,7 @@
 #include <dns/rrsetlist.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/utility.hpp>
+#include <exception>
 
 using namespace isc::dns;
 namespace isc {
@@ -132,7 +133,7 @@ RBNode<T>::RBNode(const Name& name, T &data, RBNode* nullnode) :
     name_(name),
     data_(data),
     down_(NULL),
-    is_shadow_(false){
+    is_shadow_(false) {
 }
 
 template <typename T>
@@ -143,7 +144,7 @@ RBNode<T>::RBNode(const Name& name, RBNode* nullnode) :
     color_(RED),
     name_(name),
     down_(NULL),
-    is_shadow_(false){
+    is_shadow_(false) {
 }
 
 template <typename T>
@@ -230,7 +231,12 @@ public:
     FindResult find(const Name& name, RBNode<T>** node) const;
 
     /// \brief Get the total node count in the tree
+    /// the node count including the node created common suffix node
     int getNodeCount() const;
+
+
+    /// \brief Get the total names inserted into the tree
+    int getNameCount() const;
     //@}
 
     /// \name Debug function
@@ -250,6 +256,7 @@ public:
     /// inserted_node
     /// \return return 0 means no node exists in the tree with the name before
     /// insert; return 1 means already has the node with the given name
+    /// return -1 means no memory left to allocate new node
     //
     /// To add an RRset into one node when it's not known whether the node
     /// already exists, it is better to call \c insert and then call the
@@ -277,7 +284,9 @@ private:
     FindResult findHelper(const Name& name, RBTree<T>** tree,
                           RBNode<T>** node) const;
     int getNodeCountHelper(const RBNode<T>* node) const;
+    int getNameCountHelper(const RBNode<T>* node) const;
     void printTreeHelper(RBNode<T>* node, int depth) const;
+    void mergeWithUpNode();
     //@}
 
     RBNode<T>*  root_;
@@ -322,7 +331,7 @@ RBTree<T>::~RBTree() {
     assert(root_ != NULL);
 
     delete NULLNODE;
-    if (root_ == NULLNODE) {
+    if (NULLNODE == root_) {
         return;
     }
 
@@ -412,6 +421,8 @@ RBTree<T>::getNodeCount() const {
     return (getNodeCountHelper(root_));
 }
 
+
+
 template <typename T>
 int
 RBTree<T>::getNodeCountHelper(const RBNode<T> *node) const {
@@ -422,6 +433,25 @@ RBTree<T>::getNodeCountHelper(const RBNode<T> *node) const {
     int sub_tree_node_count = node->down_ ? node->down_->getNodeCount() : 0;
     return (1 + sub_tree_node_count + getNodeCountHelper(node->left_) +
             getNodeCountHelper(node->right_));
+}
+
+template <typename T>
+int
+RBTree<T>::getNameCount() const {
+    return (getNameCountHelper(root_));
+}
+
+
+template <typename T>
+int
+RBTree<T>::getNameCountHelper(const RBNode<T> *node) const {
+    if (NULLNODE == node || node->is_shadow_) {
+        return (0);
+    }
+
+    int sub_tree_name_count = node->down_ ? node->down_->getNameCount() : 0;
+    return (1 + sub_tree_name_count + getNameCountHelper(node->left_) +
+            getNameCountHelper(node->right_));
 }
 
 template <typename T>
@@ -445,9 +475,9 @@ RBTree<T>::insert(const Name& name, RBNode<T>** new_node) {
             // otherwise return 1
             if (current->is_shadow_) {
                 current->is_shadow_ = false;
-                return(0);
+                return (0);
             } else {
-                return(1);
+                return (1);
             }
         } else {
             int common_label_count = compare_result.getCommonLabels();
@@ -458,10 +488,23 @@ RBTree<T>::insert(const Name& name, RBNode<T>** new_node) {
                 // insert sub domain to sub tree
                 if (relation == NameComparisonResult::SUBDOMAIN) {
                     if (NULL == current->down_) {
-                        current->setDownTree(new RBTree());
+                        try {
+                            RBTree<T>* new_sub_tree = new RBTree();
+                            int ret = new_sub_tree->insert(name - current->name_,
+                                        new_node);
+                            if (-1 == ret) {
+                                delete new_sub_tree;
+                                return (-1);
+                            }
+                            current->setDownTree(new_sub_tree);
+                            return (ret);
+                        } catch (std::bad_alloc &) {
+                            return (-1);
+                        }
+                    } else {
+                        return  current->down_->insert(name - current->name_,
+                                                   new_node);
                     }
-                    return (current->down_->insert(name - current->name_,
-                                                   new_node));
                 } else {
                     // for super domain or has common label domain, create
                     // common node first then insert current name and new name
@@ -470,47 +513,66 @@ RBTree<T>::insert(const Name& name, RBNode<T>** new_node) {
                         name.getLabelCount() - common_label_count,
                         common_label_count);
                     Name sub_name = current->name_ - common_ancestor;
-                    current->name_ = common_ancestor;
-                    RBTree<T>* down_old = current->down_;
-                    current->setDownTree(new RBTree<T>());
-                    RBNode<T>* sub_root;
-                    current->down_->insert(sub_name, &sub_root);
+                    try {
+                        // create new sub domain tree, and ty to insert 
+                        // (current_name - common_ancestor) and (name - common_ancestor)
+                        RBTree<T>* new_sub_tree = new RBTree();
+                        RBNode<T>* sub_root;
+                        if ( -1 == new_sub_tree->insert(sub_name, &sub_root)) {
+                            delete new_sub_tree;
+                            return (-1);
+                        }
 
-                    current->cloneDNSData(*sub_root);
-                    sub_root->setDownTree(down_old);
-                    sub_root->name_ = sub_name;
-                    current->is_shadow_ = true;
+                        int ret = 0;
+                        if (name.getLabelCount() != common_label_count) {
+                            ret = new_sub_tree->insert(name - common_ancestor, new_node);
+                            if (-1 == ret) {
+                                delete new_sub_tree;
+                                return (-1);
+                            }
+                        }
+                            
+                        RBTree<T>* down_old = current->down_;
+                        current->setDownTree(new_sub_tree);
+                        current->name_ = common_ancestor;
+                        current->cloneDNSData(*sub_root);
+                        sub_root->setDownTree(down_old);
+                        sub_root->name_ = sub_name;
+                        current->is_shadow_ = true;
 
-                    // if insert name is the super domain of current node, no
-                    // need insert again otherwise insert it into the down
-                    // tree.
-                    if (name.getLabelCount() == common_label_count) {
-                        *new_node = current;
-                        current->is_shadow_ = false;
-                        return (0);
-                    } else {
-                        return (current->down_->insert(name - common_ancestor,
-                                                       new_node));
+                        if (name.getLabelCount() == common_label_count) {
+                            *new_node = current;
+                            current->is_shadow_ = false;
+                            return (0);
+                        } else {
+                            return ret;
+                        }
+                    } catch (std::bad_alloc &) {
+                        return (-1);
                     }
                 }
             }
         }
     }
 
-    RBNode<T>* node = new RBNode<T>(name, NULLNODE);
-    node->parent_ = parent;
-    if (parent == NULLNODE) {
-        root_ = node;
-    } else if (order < 0) {
-        parent->left_ = node;
-    } else {
-        parent->right_ = node;
+    try {
+        RBNode<T>* node = new RBNode<T>(name, NULLNODE);
+        node->parent_ = parent;
+        if (parent == NULLNODE) {
+            root_ = node;
+        } else if (order < 0) {
+            parent->left_ = node;
+        } else {
+            parent->right_ = node;
+        }
+        insertRebalance(node);
+        if (new_node) {
+            *new_node = node;
+        }
+    } catch (std::bad_alloc &) {
+        return (-1);
     }
 
-    insertRebalance(node);
-    if (new_node) {
-        *new_node = node;
-    }
     ++node_count_;
     return (0);
 }
@@ -619,7 +681,6 @@ RBTree<T>::rightRotate(RBNode<T>* p) {
     return (c);
 }
 
-
 template <typename T>
 int
 RBTree<T>::erase(const Name& name) {
@@ -629,29 +690,38 @@ RBTree<T>::erase(const Name& name) {
         return (1);
     }
 
-    // cannot delete non terminal
+    // for node with downpointer, set it to shadow
     if (node->down_ != NULL) {
-        return (1);
+        assert(node->is_shadow_ == false);
+        node->is_shadow_ = true;
+        return (0);
     }
 
     tree->eraseNode(node);
+    tree->mergeWithUpNode();
+    return 0;
+}
+
+template <typename T>
+void
+RBTree<T>::mergeWithUpNode()
+{
+    if (NULL == up_)
+        return;
     // merge down to up
-    if (tree->node_count_ == 1 && tree->up_ != NULL &&
-        tree->up_->is_shadow_) {
-        RBNode<T>* up = tree->up_;
-        Name merged_name = tree->root_->name_.concatenate(up->name_);
-        tree->root_->cloneDNSData(*up);
-        up->setDownTree(tree->root_->down_);
-        tree->root_->setDownTree(NULL);
+    if (node_count_ == 1 && up_->is_shadow_) {
+        RBNode<T>* up = up_;
+        Name merged_name = root_->name_.concatenate(up->name_);
+        root_->cloneDNSData(*up);
+        up->setDownTree(root_->down_);
+        root_->setDownTree(NULL);
         up->name_ = merged_name;
         up->is_shadow_ = false;
-        delete tree;
-    } else if (tree->node_count_ == 0 && tree->up_) { // delete empty tree
-        tree->up_->setDownTree(NULL);
-        delete tree;
+        delete this;
+    } else if (node_count_ == 0) { // delete empty tree
+        up_->setDownTree(NULL);
+        delete this;
     }
-
-    return (0);
 }
 
 
