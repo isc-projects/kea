@@ -71,6 +71,20 @@ TEST_F(RBTreeTest, getNodeCount) {
     EXPECT_EQ(13, rbtree.getNodeCount());
 }
 
+TEST_F(RBTreeTest, getNameCount) {
+    EXPECT_EQ(11, rbtree.getNameCount());
+    EXPECT_EQ(0, rbtree.insert(Name("d.e.f"), &rbtnode));
+    EXPECT_EQ(12, rbtree.getNameCount());
+    EXPECT_EQ(0, rbtree.erase(Name("d.e.f")));
+    EXPECT_EQ(11, rbtree.getNameCount());
+    EXPECT_EQ(0, rbtree.erase(Name("o.w.y.d.e.f")));
+    EXPECT_EQ(10, rbtree.getNameCount());
+    EXPECT_EQ(0, rbtree.erase(Name("p.w.y.d.e.f")));
+    EXPECT_EQ(9, rbtree.getNameCount());
+    EXPECT_EQ(0, rbtree.erase(Name("q.w.y.d.e.f")));
+    EXPECT_EQ(8, rbtree.getNameCount());
+}
+
 TEST_F(RBTreeTest, insertNames) {
     // a node is considered to "formally" exist only if it has data
     // associated with it
