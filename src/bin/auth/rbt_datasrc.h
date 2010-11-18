@@ -281,12 +281,11 @@ private:
     //@{
     /// Each public function has related recursive helper function
     void eraseNode(RBNode<T>* node);
-    FindResult findHelper(const Name& name, RBTree<T>** tree,
+    FindResult findHelper(const Name& name, const RBTree<T>** tree,
                           RBNode<T>** node) const;
     int getNodeCountHelper(const RBNode<T>* node) const;
     int getNameCountHelper(const RBNode<T>* node) const;
-    void printTreeHelper(RBNode<T>* node, int depth) const;
-    void mergeWithUpNode();
+    void printTreeHelper(const RBNode<T>* node, int depth) const;
     //@}
 
     RBNode<T>*  root_;
@@ -358,13 +357,13 @@ RBTree<T>::~RBTree() {
 template <typename T>
 typename RBTree<T>::FindResult
 RBTree<T>::find(const Name& name, RBNode<T>** node) const {
-    RBTree<T>* tree;
+    const RBTree<T>* tree;
     return (findHelper(name, &tree, node));
 }
 
 template <typename T>
 typename RBTree<T>::FindResult
-RBTree<T>::findHelper(const Name& name, RBTree<T>** tree, RBNode<T>** ret) const {
+RBTree<T>::findHelper(const Name& name, const RBTree<T>** tree, RBNode<T>** ret) const {
     RBNode<T>* node = root_;
     while (node != NULLNODE) {
         NameComparisonResult compare_result = name.compare(node->name_);
@@ -374,7 +373,7 @@ RBTree<T>::findHelper(const Name& name, RBTree<T>** tree, RBNode<T>** ret) const
             if (node->is_shadow_) {
                 return (RBTree<T>::NOTFOUND);
             } else {
-                *tree = (RBTree*)this;
+                *tree = this;
                 *ret = node;
                 return (RBTree<T>::EXACTMATCH);
             }
@@ -399,7 +398,7 @@ RBTree<T>::findHelper(const Name& name, RBTree<T>** tree, RBNode<T>** ret) const
                     // if not found in sub domain tree, so current node is the longest match
                     // otherwise return the result in sub domin tree
                     if (RBTree<T>::NOTFOUND == result) {
-                        *tree = (RBTree *)this;
+                        *tree = this;
                         *ret = node;
                         return RBTree<T>::PARTIALMATCH;
                     } else {
@@ -445,12 +444,12 @@ RBTree<T>::getNameCount() const {
 template <typename T>
 int
 RBTree<T>::getNameCountHelper(const RBNode<T> *node) const {
-    if (NULLNODE == node || node->is_shadow_) {
+    if (NULLNODE == node) {
         return (0);
     }
 
     int sub_tree_name_count = node->down_ ? node->down_->getNameCount() : 0;
-    return (1 + sub_tree_name_count + getNameCountHelper(node->left_) +
+    return ((node->is_shadow_ ? 0 : 1) + sub_tree_name_count + getNameCountHelper(node->left_) +
             getNameCountHelper(node->right_));
 }
 
@@ -685,8 +684,8 @@ template <typename T>
 int
 RBTree<T>::erase(const Name& name) {
     RBNode<T>* node;
-    RBTree<T>* tree;
-    if (findHelper(name, &tree, &node) != RBTree<T>::EXACTMATCH) {
+    const RBTree<T>* ctree;
+    if (findHelper(name, &ctree, &node) != RBTree<T>::EXACTMATCH) {
         return (1);
     }
 
@@ -697,33 +696,27 @@ RBTree<T>::erase(const Name& name) {
         return (0);
     }
 
+    RBTree<T> *tree = const_cast<RBTree<T> *>(ctree);
     tree->eraseNode(node);
-    tree->mergeWithUpNode();
+
+    if (NULL != tree->up_) {
+        // merge down to up
+        if (1 == tree->node_count_ && tree->up_->is_shadow_) {
+            RBNode<T>* up = tree->up_;
+            Name merged_name = tree->root_->name_.concatenate(up->name_);
+            tree->root_->cloneDNSData(*up);
+            up->setDownTree(tree->root_->down_);
+            tree->root_->setDownTree(NULL);
+            up->name_ = merged_name;
+            up->is_shadow_ = false;
+            delete tree;
+        } else if (0 == tree->node_count_) { // delete empty tree
+            tree->up_->setDownTree(NULL);
+            delete tree;
+        }
+    }
     return 0;
 }
-
-template <typename T>
-void
-RBTree<T>::mergeWithUpNode()
-{
-    if (NULL == up_)
-        return;
-    // merge down to up
-    if (node_count_ == 1 && up_->is_shadow_) {
-        RBNode<T>* up = up_;
-        Name merged_name = root_->name_.concatenate(up->name_);
-        root_->cloneDNSData(*up);
-        up->setDownTree(root_->down_);
-        root_->setDownTree(NULL);
-        up->name_ = merged_name;
-        up->is_shadow_ = false;
-        delete this;
-    } else if (node_count_ == 0) { // delete empty tree
-        up_->setDownTree(NULL);
-        delete this;
-    }
-}
-
 
 template <typename T>
 void
@@ -850,7 +843,7 @@ RBTree<T>::printTree(int depth) const {
 
 template <typename T>
 void
-RBTree<T>::printTreeHelper(RBNode<T>* node, int depth) const {
+RBTree<T>::printTreeHelper(const RBNode<T>* node, int depth) const {
     INDNET(depth);
     std::cout << node->name_.toText() << " ("
               << ((node->color_ == BLACK) ? "black" : "red") << ")\n";
