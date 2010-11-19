@@ -90,9 +90,14 @@ public:
         upstream_ = upstream;
         if (dnss) {
             if (upstream_.empty()) {
-                cerr << "[b10-recurse] Asked to do full recursive," << endl <<
-                    "but not implemented yet. I'll do nothing." << endl;
+                dlog("Asked to do full recursive, but not implemented yet."
+                    "I'll do nothing.");
             } else {
+                dlog("Setting forward addresses:");
+                BOOST_FOREACH(const addr_t& address, upstream) {
+                    dlog(" " + address.first + ":" +
+                        boost::lexical_cast<string>(address.second));
+                }
                 querySetup(*dnss);
             }
         }
@@ -530,6 +535,10 @@ setAddresses(DNSService *service, const vector<addr_t>& addresses) {
 void
 Recursor::setListenAddresses(const vector<addr_t>& addresses) {
     try {
+        dlog("Setting listen addresses:");
+        BOOST_FOREACH(const addr_t& addr, addresses) {
+            dlog(" " + addr.first + boost::lexical_cast<string>(addr.second));
+        }
         setAddresses(dnss_, addresses);
         impl_->listen_ = addresses;
     }
@@ -545,8 +554,8 @@ Recursor::setListenAddresses(const vector<addr_t>& addresses) {
             setAddresses(dnss_, impl_->listen_);
         }
         catch (const exception& e2) {
-            cerr << "[b10-recurse] Unable to recover from error: " << e.what()
-                << endl << "Rollback failed with: " << e2.what() << endl;
+            dlog("Unable to recover from error: " + e.what() +
+                "Rollback failed with: " + e2.what());
             abort();
         }
         throw e; // Let it fly a little bit further
