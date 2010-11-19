@@ -554,7 +554,7 @@ Recursor::setListenAddresses(const vector<addr_t>& addresses) {
             setAddresses(dnss_, impl_->listen_);
         }
         catch (const exception& e2) {
-            dlog("Unable to recover from error: " + e.what() +
+            dlog(string("Unable to recover from error: ") + e.what() +
                 "Rollback failed with: " + e2.what());
             abort();
         }
