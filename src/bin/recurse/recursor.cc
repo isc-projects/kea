@@ -90,7 +90,7 @@ public:
         upstream_ = upstream;
         if (dnss) {
             if (upstream_.empty()) {
-                dlog("Asked to do full recursive, but not implemented yet."
+                dlog("Asked to do full recursive, but not implemented yet. "
                     "I'll do nothing.");
             } else {
                 dlog("Setting forward addresses:");
@@ -555,7 +555,7 @@ Recursor::setListenAddresses(const vector<addr_t>& addresses) {
         }
         catch (const exception& e2) {
             dlog(string("Unable to recover from error: ") + e.what() +
-                "Rollback failed with: " + e2.what());
+                " Rollback failed with: " + e2.what());
             abort();
         }
         throw e; // Let it fly a little bit further
