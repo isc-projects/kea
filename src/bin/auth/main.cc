@@ -240,6 +240,8 @@ main(int argc, char* argv[]) {
 
         cout << "[b10-auth] Server started." << endl;
         io_service.run();
+
+        delete dns_service;
     } catch (const std::exception& ex) {
         cerr << "[b10-auth] Server failed: " << ex.what() << endl;
         ret = 1;

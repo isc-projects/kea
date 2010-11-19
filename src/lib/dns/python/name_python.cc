@@ -50,7 +50,7 @@ public:
     isc::dns::NameComparisonResult* ncr;
 };
 
-static int NameComparisonResult_init(s_NameComparisonResult* self UNUSED_PARAM, PyObject* args UNUSED_PARAM);
+static int NameComparisonResult_init(s_NameComparisonResult*, PyObject*);
 static void NameComparisonResult_destroy(s_NameComparisonResult* self);
 static PyObject* NameComparisonResult_getOrder(s_NameComparisonResult* self);
 static PyObject* NameComparisonResult_getCommonLabels(s_NameComparisonResult* self);
@@ -68,7 +68,7 @@ static PyMethodDef NameComparisonResult_methods[] = {
 
 static PyTypeObject name_comparison_result_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.NameComparisonResult",
+    "pydnspp.NameComparisonResult",
     sizeof(s_NameComparisonResult),           // tp_basicsize
     0,                                        // tp_itemsize
     (destructor)NameComparisonResult_destroy, // tp_dealloc
@@ -123,9 +123,7 @@ static PyTypeObject name_comparison_result_type = {
 };
 
 static int
-NameComparisonResult_init(s_NameComparisonResult* self UNUSED_PARAM,
-                          PyObject* args UNUSED_PARAM)
-{
+NameComparisonResult_init(s_NameComparisonResult*, PyObject*) {
     PyErr_SetString(PyExc_NotImplementedError,
                     "NameComparisonResult can't be built directly");
     return (-1);
@@ -222,7 +220,7 @@ static PyMethodDef Name_methods[] = {
 
 static PyTypeObject name_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.Name",
+    "pydnspp.Name",
     sizeof(s_Name),                     // tp_basicsize
     0,                                  // tp_itemsize
     (destructor)Name_destroy,           // tp_dealloc
@@ -421,7 +419,7 @@ Name_toWire(s_Name* self, PyObject* args) {
         // to prevent memory leak
         Py_DECREF(name_bytes);
         return (result);
-    } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, (PyObject**) &mr)) {
+    } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
         self->name->toWire(*mr->messagerenderer);
         // If we return NULL it is seen as an error, so use this for
         // None returns
@@ -437,7 +435,7 @@ static PyObject*
 Name_compare(s_Name* self, PyObject* args) {
     s_Name* other;
 
-    if (!PyArg_ParseTuple(args, "O!", &name_type, (PyObject* *) &other))
+    if (!PyArg_ParseTuple(args, "O!", &name_type, &other))
         return (NULL);
 
     s_NameComparisonResult* ret = PyObject_New(s_NameComparisonResult, &name_comparison_result_type);
@@ -452,7 +450,7 @@ static PyObject*
 Name_equals(s_Name* self, PyObject* args) {
     s_Name* other;
 
-    if (!PyArg_ParseTuple(args, "O!", &name_type, (PyObject* *) &other))
+    if (!PyArg_ParseTuple(args, "O!", &name_type, &other))
         return (NULL);
 
     if (self->name->equals(*other->name))
@@ -565,7 +563,7 @@ static PyObject*
 Name_concatenate(s_Name* self, PyObject* args) {
     s_Name* other;
 
-    if (!PyArg_ParseTuple(args, "O!", &name_type, (PyObject**) &other))
+    if (!PyArg_ParseTuple(args, "O!", &name_type, &other))
         return (NULL);
 
     s_Name* ret = PyObject_New(s_Name, &name_type);
@@ -651,30 +649,30 @@ initModulePart_Name(PyObject* mod) {
     
 
     // Add the exceptions to the module
-    po_EmptyLabel = PyErr_NewException("libdns_python.EmptyLabel", NULL, NULL);
+    po_EmptyLabel = PyErr_NewException("pydnspp.EmptyLabel", NULL, NULL);
     PyModule_AddObject(mod, "EmptyLabel", po_EmptyLabel);
 
-    po_TooLongName = PyErr_NewException("libdns_python.TooLongName", NULL, NULL);
+    po_TooLongName = PyErr_NewException("pydnspp.TooLongName", NULL, NULL);
     PyModule_AddObject(mod, "TooLongName", po_TooLongName);
 
-    po_TooLongLabel = PyErr_NewException("libdns_python.TooLongLabel", NULL, NULL);
+    po_TooLongLabel = PyErr_NewException("pydnspp.TooLongLabel", NULL, NULL);
     PyModule_AddObject(mod, "TooLongLabel", po_TooLongLabel);
 
-    po_BadLabelType = PyErr_NewException("libdns_python.BadLabelType", NULL, NULL);
+    po_BadLabelType = PyErr_NewException("pydnspp.BadLabelType", NULL, NULL);
     PyModule_AddObject(mod, "BadLabelType", po_BadLabelType);
 
-    po_BadEscape = PyErr_NewException("libdns_python.BadEscape", NULL, NULL);
+    po_BadEscape = PyErr_NewException("pydnspp.BadEscape", NULL, NULL);
     PyModule_AddObject(mod, "BadEscape", po_BadEscape);
 
-    po_IncompleteName = PyErr_NewException("libdns_python.IncompleteName", NULL, NULL);
+    po_IncompleteName = PyErr_NewException("pydnspp.IncompleteName", NULL, NULL);
     PyModule_AddObject(mod, "IncompleteName", po_IncompleteName);
 
-    po_InvalidBufferPosition = PyErr_NewException("libdns_python.InvalidBufferPosition", NULL, NULL);
+    po_InvalidBufferPosition = PyErr_NewException("pydnspp.InvalidBufferPosition", NULL, NULL);
     PyModule_AddObject(mod, "InvalidBufferPosition", po_InvalidBufferPosition);
 
     // This one could have gone into the message_python.cc file, but is
     // already needed here.
-    po_DNSMessageFORMERR = PyErr_NewException("libdns_python.DNSMessageFORMERR", NULL, NULL);
+    po_DNSMessageFORMERR = PyErr_NewException("pydnspp.DNSMessageFORMERR", NULL, NULL);
     PyModule_AddObject(mod, "DNSMessageFORMERR", po_DNSMessageFORMERR);
 
     return (true);

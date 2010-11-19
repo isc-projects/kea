@@ -73,10 +73,10 @@ public:
     /// and if it fails the corresponding standard exception will be thrown.
     ///
     /// \return A string representation of the address.
-    virtual std::string toText() const;
+    std::string toText() const;
 
     /// \brief Returns the address family.
-    virtual short getFamily() const;
+    short getFamily() const;
 
 private:
     asio::ip::address asio_address_;
