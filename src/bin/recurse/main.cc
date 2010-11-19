@@ -52,6 +52,7 @@
 using namespace std;
 using namespace isc::cc;
 using namespace isc::config;
+using namespace isc::data;
 using isc::log::dlog;
 using namespace asiolink;
 
@@ -59,7 +60,6 @@ namespace {
 
 // Default port current 5300 for testing purposes
 static const string PROGRAM = "Recurse";
-static const char* DNSPORT = "5300";
 
 IOService io_service;
 static Recursor *recursor;
@@ -80,21 +80,13 @@ my_command_handler(const string& command, ConstElementPtr args) {
     } else if (command == "shutdown") {
         io_service.stop();
     }
-    
+
     return (answer);
 }
 
 void
 usage() {
-    cerr << "Usage:  b10-recurse -f nameserver [-a address] [-p port] [-u user]"
-                     "[-4|-6] [-v]" << endl;
-    cerr << "\t-f: specify the nameserver to which queries should be forwarded"
-         << endl;
-    cerr << "\t-a: specify the address to listen on (default: all)" << endl;
-    cerr << "\t-p: specify the port to listen on (default: " << DNSPORT << ")"
-         << endl;
-    cerr << "\t-4: listen on all IPv4 addresses (incompatible with -a)" << endl;
-    cerr << "\t-6: listen on all IPv6 addresses (incompatible with -a)" << endl;
+    cerr << "Usage:  b10-recurse [-u user] [-v]" << endl;
     cerr << "\t-u: change process UID to the specified user" << endl;
     cerr << "\t-v: verbose output" << endl;
     exit(1);
@@ -105,34 +97,10 @@ int
 main(int argc, char* argv[]) {
     isc::log::dprefix = "b10-recurse";
     int ch;
-    const char* port = DNSPORT;
-    const char* address = NULL;
-    const char* forward = NULL;
     const char* uid = NULL;
-    bool use_ipv4 = true, use_ipv6 = true;
 
-    while ((ch = getopt(argc, argv, "46a:f:p:u:v")) != -1) {
+    while ((ch = getopt(argc, argv, "u:v")) != -1) {
         switch (ch) {
-        case '4':
-            // Note that -4 means "ipv4 only", we need to set "use_ipv6" here,
-            // not "use_ipv4".  We could use something like "ipv4_only", but
-            // we found the negatively named variable could confuse the code
-            // logic.
-            use_ipv6 = false;
-            break;
-        case '6':
-            // The same note as -4 applies.
-            use_ipv4 = false;
-            break;
-        case 'a':
-            address = optarg;
-            break;
-        case 'f':
-            forward = optarg;
-            break;
-        case 'p':
-            port = optarg;
-            break;
         case 'u':
             uid = optarg;
             break;
@@ -149,23 +117,6 @@ main(int argc, char* argv[]) {
         usage();
     }
 
-    if (!use_ipv4 && !use_ipv6) {
-        cerr << "[b10-auth] Error: Cannot specify both -4 and -6 "
-             << "at the same time" << endl;
-        usage();
-    }
-
-    if ((!use_ipv4 || !use_ipv6) && address != NULL) {
-        cerr << "[b10-auth] Error: Cannot specify -4 or -6 "
-             << "at the same time as -a" << endl;
-        usage();
-    }
-
-    if (forward == NULL) {
-        cerr << "[b10-recurse] No forward name server specified" << endl;
-        usage();
-    }
-
     if (isc::log::denabled) { // Show the command line
         string cmdline("Command line:");
         for (int i = 0; i < argc; ++ i) {
@@ -176,7 +127,6 @@ main(int argc, char* argv[]) {
 
     int ret = 0;
 
-    // XXX: we should eventually pass io_service here.
     Session* cc_session = NULL;
     ModuleCCSession* config_session = NULL;
     try {
@@ -188,29 +138,16 @@ main(int argc, char* argv[]) {
             specfile = string(RECURSE_SPECFILE_LOCATION);
         }
 
-        recursor = new Recursor(*forward);
+        recursor = new Recursor();
         dlog("Server created.");
 
         SimpleCallback* checkin = recursor->getCheckinProvider();
         DNSLookup* lookup = recursor->getDNSLookupProvider();
         DNSAnswer* answer = recursor->getDNSAnswerProvider();
 
-        DNSService* dns_service;
+        DNSService dns_service(io_service, checkin, lookup, answer);
 
-        if (address != NULL) {
-            // XXX: we can only specify at most one explicit address.
-            // This also means the server cannot run in the dual address
-            // family mode if explicit addresses need to be specified.
-            // We don't bother to fix this problem, however.  The -a option
-            // is a short term workaround until we support dynamic listening
-            // port allocation.
-            dns_service = new DNSService(io_service, *port, *address,
-                                         checkin, lookup, answer);
-        } else {
-            dns_service = new DNSService(io_service, *port, use_ipv4, use_ipv6,
-                                         checkin, lookup, answer);
-        }
-        recursor->setDNSService(*dns_service);
+        recursor->setDNSService(dns_service);
         dlog("IOService created.");
 
         cc_session = new Session(io_service.get_io_service());
@@ -221,12 +158,13 @@ main(int argc, char* argv[]) {
                                              my_command_handler);
         dlog("Configuration channel established.");
 
+        // FIXME: This does not belong here, but inside Boss
         if (uid != NULL) {
             changeUser(uid);
         }
 
         recursor->setConfigSession(config_session);
-        recursor->updateConfig(ElementPtr());
+        recursor->updateConfig(config_session->getFullConfig());
 
         dlog("Server started.");
         io_service.run();

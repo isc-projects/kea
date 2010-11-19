@@ -143,8 +143,8 @@ public:
     ///
     /// This constructor simply initializes the object in the straightforward
     /// way.
-    explicit NameComparisonResult(int order, unsigned int nlabels,
-                                  NameRelation relation) :
+    NameComparisonResult(int order, unsigned int nlabels,
+                         NameRelation relation) :
         order_(order), nlabels_(nlabels), relation_(relation) {}
     //@}
 

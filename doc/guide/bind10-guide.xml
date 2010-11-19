@@ -42,7 +42,7 @@
 
     <note>
       <para>
-        BIND 10, at this time, does not provide an recursive
+        BIND 10, at this time, does not provide a recursive
         DNS server. It does provide a EDNS0- and DNSSEC-capable
         authoritative DNS server.
       </para>
@@ -74,9 +74,9 @@
 	For this development prototype release, the only supported
 	data source backend is SQLite3. The authoritative server
 	requires SQLite 3.3.9 or newer.
-        The <command>b10-xfrin</command> and <command>b10-xfrout</command>
-        modules require the libpython3 library and the Python
-        _sqlite3.so module.
+	The <command>b10-xfrin</command>, <command>b10-xfrout</command>,
+	and <command>b10-zonemgr</command> modules require the
+	libpython3 library and the Python _sqlite3.so module.
       </para></note>
 <!-- TODO: this will change ... -->
 
@@ -162,6 +162,15 @@
 	      This process is used to handle transfer requests to
 	      send a local zone to a remote secondary server,
 	      when acting as a master server.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
+              <command>b10-zonemgr</command> &mdash;
+              Secondary manager.
+	      This process keeps track of timers and other
+              necessary information for BIND 10 to act as a slave server.
             </simpara>
           </listitem>
 
@@ -650,8 +659,9 @@ var/
       The <command>bind10</command> master process will also start up
       <command>b10-cmdctl</command> for admins to communicate with the
       system, <command>b10-auth</command> for Authoritative DNS service,
-      <command>b10-xfrin</command> for inbound DNS zone transfers.
-      and <command>b10-xfrout</command> for outbound DNS zone transfers.
+      <command>b10-xfrin</command> for inbound DNS zone transfers,
+      <command>b10-xfrout</command> for outbound DNS zone transfers,
+      and <command>b10-zonemgr</command> for secondary service.
     </para>
 
     <section id="start">
@@ -1173,14 +1183,14 @@ TODO
       transfer. When received, it is stored in the BIND 10
       data store, and its records can be served by
       <command>b10-auth</command>.
-      This allows the BIND 10 server to provide
-      <quote>secondary</quote> service.
+      In combination with <command>b10-zonemgr</command> (for
+      automated SOA checks), this allows the BIND 10 server to
+      provide <quote>secondary</quote> service.
     </para>
 
     <note><simpara>
      The current development release of BIND 10 only supports
      AXFR. (IXFR is not supported.) 
-     It also does not yet support automated SOA checks.
     </simpara></note>
 
     <para>
@@ -1204,12 +1214,13 @@ TODO
       sends the zone.
       This is used to provide master DNS service to share zones
       to secondary name servers.
+      The <command>b10-xfrout</command> is also used to send
+      NOTIFY messages to slaves.
     </para>
 
     <note><simpara>
      The current development release of BIND 10 only supports
      AXFR. (IXFR is not supported.) 
-     It also does not yet support NOTIFY.
      Access control is not yet provided.
     </simpara></note>
 
@@ -1223,6 +1234,31 @@ uses /tmp/auth_xfrout_conn which is a socket
 what is XfroutClient xfr_client??
 /tmp/auth_xfrout_conn is not removed
 -->
+
+  </chapter>
+
+  <chapter id="zonemgr">
+    <title>Secondary Manager</title>
+
+    <para>
+      The <command>b10-zonemgr</command> process is started by
+      <command>bind10</command>.
+      It keeps track of SOA refresh, retry, and expire timers
+      and other details for BIND 10 to perform as a slave.
+      When the <command>b10-auth</command> authoritative DNS server
+      receives a NOTIFY message, <command>b10-zonemgr</command>
+      may tell <command>b10-xfrin</command> to do a refresh
+      to start an inbound zone transfer.
+      The secondary manager resets its counters when a new zone is
+      transferred in.
+    </para>
+
+    <note><simpara>
+     Access control (such as allowing notifies) is not yet provided.
+     The primary/secondary service is not yet complete.
+    </simpara></note>
+
+<!-- TODO: lots to describe for zonemgr -->
 
   </chapter>
 

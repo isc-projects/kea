@@ -103,20 +103,25 @@ private:
     const std::string what_;
 };
 
-///
 /// \brief A generic exception that is thrown if a parameter given
 /// to a method would refer to or modify out-of-range data.
-///
 class OutOfRange : public Exception {
 public:
     OutOfRange(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
 
-///
+/// \brief A generic exception that is thrown if a parameter given
+/// to a method or function is considered invalid and no other specific
+/// exceptions are suitable to describe the error.
+class InvalidParameter : public Exception {
+public:
+    InvalidParameter(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 /// \brief A generic exception that is thrown if a parameter given
 /// to a method is considered invalid in that context.
-///
 class BadValue : public Exception {
 public:
     BadValue(const char* file, size_t line, const char* what) :

@@ -91,7 +91,7 @@ static PyMethodDef RRTTL_methods[] = {
 // Most of the functions are not actually implemented and NULL here.
 static PyTypeObject rrttl_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "libdns_python.RRTTL",
+    "pydnspp.RRTTL",
     sizeof(s_RRTTL),                    // tp_basicsize
     0,                                  // tp_itemsize
     (destructor)RRTTL_destroy,          // tp_dealloc
@@ -235,7 +235,7 @@ RRTTL_toWire(s_RRTTL* self, PyObject* args) {
         // to prevent memory leak
         Py_DECREF(n);
         return (result);
-    } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, (PyObject**) &mr)) {
+    } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
         self->rrttl->toWire(*mr->messagerenderer);
         // If we return NULL it is seen as an error, so use this for
         // None returns
@@ -296,9 +296,9 @@ RRTTL_richcmp(s_RRTTL* self, s_RRTTL* other, int op) {
 bool
 initModulePart_RRTTL(PyObject* mod) {
     // Add the exceptions to the module
-    po_InvalidRRTTL = PyErr_NewException("libdns_python.InvalidRRTTL", NULL, NULL);
+    po_InvalidRRTTL = PyErr_NewException("pydnspp.InvalidRRTTL", NULL, NULL);
     PyModule_AddObject(mod, "InvalidRRTTL", po_InvalidRRTTL);
-    po_IncompleteRRTTL = PyErr_NewException("libdns_python.IncompleteRRTTL", NULL, NULL);
+    po_IncompleteRRTTL = PyErr_NewException("pydnspp.IncompleteRRTTL", NULL, NULL);
     PyModule_AddObject(mod, "IncompleteRRTTL", po_IncompleteRRTTL);
 
     // We initialize the static description object with PyType_Ready(),

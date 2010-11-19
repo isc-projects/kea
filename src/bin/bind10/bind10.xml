@@ -56,6 +56,7 @@
       <arg><option>--no-cache</option></arg>
       <arg><option>--port <replaceable>number</replaceable></option></arg>
       <arg><option>--user <replaceable>user</replaceable></option></arg>
+      <arg><option>--pretty-name <replaceable>name</replaceable></option></arg>
       <arg><option>--verbose</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -149,6 +150,17 @@
       </varlistentry>
 
       <varlistentry>
+        <term><option>--pretty-name <replaceable>name</replaceable></option></term>
+
+        <listitem>
+          <para>The name this process should have in tools like
+          <command>ps</command> or <command>top</command>. This
+          is handy if you have multiple versions/installations
+          of <command>bind10</command>.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term><option>-v</option>, <option>--verbose</option></term>
         <listitem>
 	  <para>Display more about what is going on for
@@ -188,6 +200,12 @@
       </citerefentry>,
       <citerefentry>
         <refentrytitle>b10-xfrin</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>b10-xfrout</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>b10-zonemgr</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citetitle>BIND 10 Guide</citetitle>.
     </para>

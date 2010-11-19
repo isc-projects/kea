@@ -1,4 +1,4 @@
-SUBDIRS = tests
+SUBDIRS = . tests
 
 python_PYTHON = __init__.py ccsession.py cfgmgr.py config_data.py module_spec.py
 

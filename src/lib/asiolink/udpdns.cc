@@ -30,6 +30,8 @@
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
 #include <log/dummylog.h>
+#include <dns/opcode.h>
+#include <dns/rcode.h>
 
 #include <asiolink.h>
 #include <internal/coroutine.h>
@@ -75,8 +77,6 @@ UDPServer::operator()(error_code ec, size_t length) {
     /// Because the coroutine reeentry block is implemented as
     /// a switch statement, inline variable declarations are not
     /// permitted.  Certain variables used below can be declared here.
-    IOEndpoint* peer;
-    IOSocket* iosock;
 
     CORO_REENTER (this) {
         do {
@@ -108,9 +108,9 @@ UDPServer::operator()(error_code ec, size_t length) {
         // (XXX: It would be good to write a factory function
         // that would quickly generate an IOMessage object without
         // all these calls to "new".)
-        peer = new UDPEndpoint(*sender_);
-        iosock = new UDPSocket(*socket_);
-        io_message_.reset(new IOMessage(data_.get(), bytes_, *iosock, *peer));
+        peer_.reset(new UDPEndpoint(*sender_));
+        iosock_.reset(new UDPSocket(*socket_));
+        io_message_.reset(new IOMessage(data_.get(), bytes_, *iosock_, *peer_));
 
         // Perform any necessary operations prior to processing an incoming
         // query (e.g., checking for queued configuration messages).
@@ -206,7 +206,7 @@ UDPQuery::operator()(error_code ec, size_t length) {
             msg.setQid(0);
             msg.setOpcode(Opcode::QUERY());
             msg.setRcode(Rcode::NOERROR());
-            msg.setHeaderFlag(MessageFlag::RD());
+            msg.setHeaderFlag(Message::HEADERFLAG_RD);
             msg.addQuestion(question_);
             MessageRenderer renderer(*msgbuf_);
             msg.toWire(renderer);

@@ -28,6 +28,8 @@
 #include <dns/name.h>
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
+#include <dns/opcode.h>
+#include <dns/rcode.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
 #include <dns/rrset.h>
@@ -56,7 +58,7 @@ host_lookup(const char* const name, const char* const type) {
     msg.setOpcode(Opcode::QUERY());
     msg.setRcode(Rcode::NOERROR());
     if (recursive_bit) {
-        msg.setHeaderFlag(MessageFlag::RD());    // set recursive bit
+        msg.setHeaderFlag(Message::HEADERFLAG_RD); // set recursive bit
     }
 
     msg.addQuestion(Question(Name(name),
@@ -120,9 +122,10 @@ host_lookup(const char* const name, const char* const type) {
 
             rmsg.fromWire(ibuffer);
             if (!verbose) {
-                  for (RRsetIterator it = rmsg.beginSection(Section::ANSWER());
-                       it != rmsg.endSection(Section::ANSWER());
-                       ++it) {
+                for (RRsetIterator it =
+                         rmsg.beginSection(Message::SECTION_ANSWER);
+                     it != rmsg.endSection(Message::SECTION_ANSWER);
+                     ++it) {
                       if ((*it)->getType() != RRType::A()) {
                           continue;
                       }
