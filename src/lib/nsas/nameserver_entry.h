@@ -245,6 +245,7 @@ public:
     //@}
 
 private:
+    // TODO Read-write lock?
     boost::mutex    mutex_;             ///< Mutex protecting this object
     std::string     name_;              ///< Canonical name of the nameserver
     uint16_t        classCode_;         ///< Class of the nameserver
