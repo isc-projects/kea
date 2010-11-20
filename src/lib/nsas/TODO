@@ -1,0 +1,24 @@
+* Make it aware of two address kinds, execute the callbacks if there is at
+  last one kind ready.
+
+Nameserver entries:
+* Upgrade the nameserver entries to own the callbacks (they will hold shared
+  pointers to zones). This will ensure the zone is not deleted at wrong time.
+* There's only one function for adding callbacks, put them together.
+* Return if we timed out.
+
+Zone entries:
+* They will be nameserver callbacks themself. This ensures that they are not
+  destroyed, since the callback is owned by the nameserver and will easy up
+  the accessing of internal data structures. Maybe a private inheritance?
+* Add ability to time out
+* Implement the new interface
+* They will create new nameserver entries in constructor.
+* Move the logic here from NSAS
+* If there are callbacks for this kind of address, do not look into the
+  nameserver entries, just add it.
+* Even if the TTL is 0, we should accept the first callback.
+
+The NSAS itself:
+* If the zone rejects the callback, remove it and call recursively the same
+  one. As it will accept at last one, it should not become a loop.

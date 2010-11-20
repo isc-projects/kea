@@ -23,10 +23,25 @@
 /// \file nsas_types.h
 /// \brief Nameserver Address Store Types
 ///
-/// Defines a set of typedefs used within the Network Address Store.
+/// Defines a set of types used within the Network Address Store.
+
+namespace isc {
+namespace nsas {
 
 /// \brief Array of nameserver addresses
 typedef std::vector<ip::address>    NsasAddress
 
+/// \brief Address requested
+enum AddressRequest {
+    /// \short Interested only in IPv4 address
+    V4_ONLY,
+    /// \short Interested only in IPv6 address
+    V6_ONLY,
+    /// \short Any address is good
+    ANY_OK
+};
+
+}
+}
 
 #endif // __NSAS_TYPES_H
