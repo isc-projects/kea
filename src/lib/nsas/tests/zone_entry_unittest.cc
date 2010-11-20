@@ -105,6 +105,8 @@ void lockAndWait(ZoneEntry* zone, barrier* when) {
 void lockAndKeep(ZoneEntry* zone, bool* locked_self, bool* locked_other,
     barrier* when)
 {
+    // Wait for go signal
+    when->wait();
     // Lock
     ZoneEntry::Lock lock(zone->getLock());
     *locked_self = true;
@@ -144,9 +146,14 @@ TEST_F(ZoneEntryTest, Lock) {
     barrier both_second(2);
     bool l1(false), l2(false);
     thread t3(lockAndKeep, &z1, &l1, &l2, &both);
-    thread t4(lockAndKeep, &z2, &l2, &l1, &both_second);
+    // Let this one run into the lock, not the other
     both.wait();
-    // Make sure one of them is started
+    thread t4(lockAndKeep, &z2, &l2, &l1, &both_second);
+    // Let it start the loop
+    both.wait();
+    // Let this one run to the lock and wait on it
+    both_second.wait();
+    // Make sure the threads has time now
     for (int i(0); i < 100; ++ i) {
         this_thread::yield();
     }
@@ -156,9 +163,10 @@ TEST_F(ZoneEntryTest, Lock) {
 
     // Try it the other way around (so it does not depend on the order of nameservers
     thread t6(lockAndKeep, &z2, &l2, &l1, &both);
+    both.wait();
     thread t5(lockAndKeep, &z1, &l1, &l2, &both_second);
     both.wait();
-    // Make sure one of them is started
+    both_second.wait();
     for (int i(0); i < 100; ++ i) {
         this_thread::yield();
     }
