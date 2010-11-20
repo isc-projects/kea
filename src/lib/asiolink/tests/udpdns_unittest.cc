@@ -32,16 +32,22 @@ const uint16_t TEST_PORT(5301);
 // FIXME Shouldn't we send something that is real message?
 const char TEST_DATA[] = "TEST DATA";
 
+// Test fixture for the asiolink::UDPQuery.
 class UDPQueryTest : public ::testing::Test,
     public asiolink::UDPQuery::Callback
 {
     public:
+        // Expected result of the callback
         asiolink::UDPQuery::Result expected_;
+        // Did the callback run already?
         bool run_;
+        // We use an io_service to run the query
         io_service service_;
+        // Something to ask
         Question question_;
-        // To keep a reference so noone calls delete this;
+        // Buffer where the UDPQuery will store response
         OutputBufferPtr buffer_;
+        // The query we are testing
         asiolink::UDPQuery query_;
 
         UDPQueryTest() :
@@ -52,10 +58,16 @@ class UDPQueryTest : public ::testing::Test,
                 TEST_PORT, buffer_, this, 100)
         { }
 
+        // This is the callback's (), so it can be called.
         void operator()(asiolink::UDPQuery::Result result) {
+            // We check the query returns the correct result
             EXPECT_EQ(expected_, result);
+            // Check it is called only once
+            EXPECT_FALSE(run_);
+            // And mark the callback was called
             run_ = true;
         }
+        // A response handler, pretending to be remote DNS server
         void respond(udp::endpoint* remote, udp::socket* socket) {
             // Some data came, just send something back.
             socket->send_to(asio::buffer(TEST_DATA, sizeof TEST_DATA),
@@ -64,17 +76,31 @@ class UDPQueryTest : public ::testing::Test,
         }
 };
 
+/*
+ * Test that when we run the query and stop it after it was run,
+ * it returs "stopped" correctly.
+ *
+ * That is why is stop() posted to the service_ as well instead
+ * of calling it.
+ */
 TEST_F(UDPQueryTest, stop) {
     expected_ = asiolink::UDPQuery::STOPPED;
+    // Post the query
     service_.post(query_);
-    // Make sure stop is called after executing () of the query
-    // Why doesn't boost::bind support default parameters?
+    // Post query_.stop() (yes, the boost::bind thing is just
+    // query_.stop()).
     service_.post(boost::bind(&asiolink::UDPQuery::stop, query_,
         asiolink::UDPQuery::STOPPED));
+    // Run both of them
     service_.run();
     EXPECT_TRUE(run_);
 }
 
+/*
+ * Test that when we queue the query to service_ and call stop()
+ * before it gets executed, it acts sanely as well (eg. has the
+ * same result as running stop() after - calls the callback).
+ */
 TEST_F(UDPQueryTest, prematureStop) {
     expected_ = asiolink::UDPQuery::STOPPED;
     // Stop before it is started
@@ -84,6 +110,9 @@ TEST_F(UDPQueryTest, prematureStop) {
     EXPECT_TRUE(run_);
 }
 
+/*
+ * Test that it will timeout when no answer will arriwe.
+ */
 TEST_F(UDPQueryTest, timeout) {
     expected_ = asiolink::UDPQuery::TIME_OUT;
     service_.post(query_);
@@ -91,6 +120,12 @@ TEST_F(UDPQueryTest, timeout) {
     EXPECT_TRUE(run_);
 }
 
+/*
+ * Test that it will succeed when we fake an answer and
+ * stores the same data we send.
+ *
+ * This is done trough a real socket on loopback address.
+ */
 TEST_F(UDPQueryTest, receive) {
     expected_ = asiolink::UDPQuery::SUCCESS;
     udp::socket socket(service_, udp::v4());
