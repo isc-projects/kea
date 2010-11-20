@@ -242,24 +242,37 @@ RecursiveQuery::RecursiveQuery(DNSService& dns_service, const char& forward,
 
 namespace {
 
+/*
+ * This is a query in progress. When a new query is made, this one holds
+ * the context information about it, like how many times we are allowed
+ * to retry on failure, what to do when we succeed, etc.
+ *
+ * Used by RecursiveQuery::sendQuery.
+ */
 class RunningQuery : public UDPQuery::Callback {
         private:
+            // The io service to handle async calls
             asio::io_service& io_;
+            // Info for (re)sending the query (the question and destination)
             Question question_;
             IOAddress address_;
             uint16_t port_;
+            // Buffer to store the result.
             OutputBufferPtr buffer_;
             /*
              * FIXME This is said it does problems when it is shared pointer, as
              *     it is destroyed too soon. But who deletes it now?
              */
+            // Server to notify when we succeed or fail
             DNSServer* server_;
             /*
              * TODO Do something more clever with timeouts. In the long term, some
              *     computation of average RTT, increase with each retry, etc.
              */
+            // Timeout information
             int timeout_;
             unsigned retries_;
+            // (re)send the query to the server.
             void send() {
                 UDPQuery query(io_, question_, address_, port_, buffer_, this,
                     timeout_);
@@ -281,6 +294,7 @@ class RunningQuery : public UDPQuery::Callback {
             {
                 send();
             }
+            // This function is used as callback from DNSQuery.
             virtual void operator()(UDPQuery::Result result) {
                 if (result == UDPQuery::TIME_OUT && retries_ --) {
                     // We timed out, but we have some retries, so send again
