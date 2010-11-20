@@ -32,7 +32,9 @@ const uint16_t TEST_PORT(5301);
 // FIXME Shouldn't we send something that is real message?
 const char TEST_DATA[] = "TEST DATA";
 
-class UDPQuery : public ::testing::Test, public asiolink::UDPQuery::Callback {
+class UDPQueryTest : public ::testing::Test,
+    public asiolink::UDPQuery::Callback
+{
     public:
         asiolink::UDPQuery::Result expected;
         bool run;
@@ -42,7 +44,7 @@ class UDPQuery : public ::testing::Test, public asiolink::UDPQuery::Callback {
         OutputBufferPtr buffer;
         asiolink::UDPQuery query;
 
-        UDPQuery() :
+        UDPQueryTest() :
             run(false),
             question(Name("example.net"), RRClass::IN(), RRType::A()),
             buffer(new OutputBuffer(512)),
@@ -62,7 +64,7 @@ class UDPQuery : public ::testing::Test, public asiolink::UDPQuery::Callback {
         }
 };
 
-TEST_F(UDPQuery, stop) {
+TEST_F(UDPQueryTest, stop) {
     expected = asiolink::UDPQuery::STOPPED;
     service.post(query);
     // Make sure stop is called after executing () of the query
@@ -73,7 +75,7 @@ TEST_F(UDPQuery, stop) {
     EXPECT_TRUE(run);
 }
 
-TEST_F(UDPQuery, prematureStop) {
+TEST_F(UDPQueryTest, prematureStop) {
     expected = asiolink::UDPQuery::STOPPED;
     // Stop before it is started
     query.stop();
@@ -82,14 +84,14 @@ TEST_F(UDPQuery, prematureStop) {
     EXPECT_TRUE(run);
 }
 
-TEST_F(UDPQuery, timeout) {
+TEST_F(UDPQueryTest, timeout) {
     expected = asiolink::UDPQuery::TIME_OUT;
     service.post(query);
     service.run();
     EXPECT_TRUE(run);
 }
 
-TEST_F(UDPQuery, receive) {
+TEST_F(UDPQueryTest, receive) {
     expected = asiolink::UDPQuery::SUCCESS;
     udp::socket socket(service, udp::v4());
     socket.set_option(socket_base::reuse_address(true));
@@ -97,7 +99,7 @@ TEST_F(UDPQuery, receive) {
     char inbuff[512];
     udp::endpoint remote;
     socket.async_receive_from(asio::buffer(inbuff, 512), remote, boost::bind(
-        &UDPQuery::respond, this, &remote, &socket));
+        &UDPQueryTest::respond, this, &remote, &socket));
     service.post(query);
     service.run();
     EXPECT_TRUE(run);
