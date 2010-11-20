@@ -154,7 +154,7 @@ public:
     /// \return Shared pointer to the object or NULL if it is not there.
     virtual boost::shared_ptr<T> get(const HashKey& key) {
         uint32_t index = hash_(key);
-        scoped_lock lock(table_[index].mutex_);
+        sharable_lock lock(table_[index].mutex_);
         return getInternal(key, index);
     }
 
@@ -192,18 +192,29 @@ public:
         return addInternal(object, key, index, replace);
     }
 
-    /// \brief Attomicly lookup an entry or add a new one if it does not exist.
-    ///
-    /// Looks up an entry specified by key in the table. If it is not there,
-    /// it calls generator() and adds its result to the table under given key.
-    /// It is performed attomically to prevent race conditions.
-    ///
-    /// \param key The entry to lookup.
-    /// \param generator will be called when the item is not there. Its result
-    ///     will be added and returned.
-    /// \return The boolean part of pair tells if the value was added (true
-    ///     means new value, false looked up one). The other part is the
-    ///     object, either found or created.
+    /**
+     * \brief Attomicly lookup an entry or add a new one if it does not exist.
+     *
+     * Looks up an entry specified by key in the table. If it is not there,
+     * it calls generator() and adds its result to the table under given key.
+     * It is performed attomically to prevent race conditions.
+     *
+     * \param key The entry to lookup.
+     * \param generator will be called when the item is not there. Its result
+     *     will be added and returned. The generator should return as soon
+     *     as possible, the slot is locked during its execution.
+     * \return The boolean part of pair tells if the value was added (true
+     *     means new value, false looked up one). The other part is the
+     *     object, either found or created.
+     * \todo This uses a scoped_lock, which does not allow sharing and is
+     *     used a lot in the code. It might turn out in future that it is a
+     *     problem and that most of the accesses is read only. In that case we
+     *     could split it to fast-slow path - first try to find it with
+     *     shared_lock. If it fails, lock by scoped_lock, try to find again (we
+     *     unlocked it, so it might have appeared) and if it still isn't there,
+     *     create it. Not implemented now as it might or might not help (it
+     *     could even slow it down) and the code would get more complicated.
+     */
     template<class Generator>
     std::pair<bool, boost::shared_ptr<T> > getOrAdd(const HashKey& key,
         const Generator& generator)
