@@ -219,13 +219,16 @@ private:
     enum { MAX_LENGTH = 4096 };
 
     /**
-     * Private data. They are not private because of stability of the
+     * \short Private data
+     *
+     * They are not private because of stability of the
      * interface (this is private class anyway), but because this class
-     * will be copyed often and we want to keep the same data between
-     * the coroutines.
+     * will be copyed often (it is used as a coroutine and passed as callback
+     * to many async_*() functions) and we want keep the same data. Some of
+     * the data is not copyable too.
      */
-    struct Priv;
-    boost::shared_ptr<Priv> priv;
+    struct PrivateData;
+    boost::shared_ptr<PrivateData> data_;
 };
 }
 
