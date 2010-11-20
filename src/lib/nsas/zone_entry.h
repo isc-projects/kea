@@ -57,6 +57,8 @@ public:
         name_(name), classCode_(class_code)
     {}
 
+    // TODO Constructor from namesarver table and referral information
+
     /// \brief Constructor
     ///
     /// Creates a zone entry object with an RRset representing the nameservers,
@@ -83,88 +85,27 @@ public:
         return HashKey(name_, classCode_);
     }
 
-    // TODO The callbacks must be distinguished - A, AAAA or any of them
-
-    /// \short Add another callback here
-    void addCallback(boost::shared_ptr<AddressRequestCallback> callback);
-    /// \short Is there at last one callback waiting?
-    bool hasCallbacks() const;
-    /// \short Remove a callback from queue and return it
-    boost::shared_ptr<AddressRequestCallback> popCallback();
-
-    /// \short Nameserver entry pointer
-    typedef boost::shared_ptr<NameserverEntry> NameserverPtr;
-    /// \short Vector of nameservers
-    typedef std::vector<NameserverPtr> NameserverVector;
     /**
-     * \name Iterators
+     * \short Put another callback inside.
      *
-     * They iterate over the nameservers.
+     * This callback is either executed right away, if it is possible,
+     * or queued for later.
+     * \param callback The callback itself.
+     * \param v4ok Is it ok to give the callback a IPv4 address?
+     * \param v6ok Is it ok to give the callback a IPv6 address? (At last one
+     *     of them must be true or isc::BadValue is thrown)
+     * \param self A shared pointer to this zone entry. It is not possible to
+     *     create one from C++ this pointer, since another shared pointer
+     *     will already exist at that point, however it is needed to callback.
+     *     When calling function on the zone entry, you should already have
+     *     one.
+     * \return True if the zone is still valid and accepted the callback.
+     *     If it returns false, it should be discarded (it has timed out)
+     *     and new instance should be created.
      */
-    //@{
-    typedef NameserverVector::iterator iterator;
-    typedef NameserverVector::const_iterator const_iterator;
-    //@}
+    bool addCallback(boost::shared_ptr<AddressRequestCallback>
+        callback, bool v4ok, bool v6ok, boost::shared_ptr<ZoneEntry> self);
 
-    /**
-     * \short Add a nameserver pointer to this zone.
-     *
-     * This does not lock, as it should be called while it is being created.
-     * No new nameservers should be added later (it should timeout first and
-     * be rebuild). Calling this after addition to the NameserverAddressStore
-     * is undefined (it is not thread safe).
-     */
-    void nameserverAdd(NameserverPtr ns) { nameservers_.push_back(ns); }
-    /**
-     * \name Iterator access
-     *
-     * They work similar to usual stl iterator access functions. They iterate
-     * over the nameservers.
-     *
-     * They do not lock, as the nameservers should be read only during
-     * the life of the zone.
-     */
-    //@{
-    iterator begin() { return (nameservers_.begin()); }
-    iterator end() { return (nameservers_.end()); }
-    const_iterator begin() const { return (nameservers_.begin()); }
-    const_iterator end() const { return (nameservers_.end()); }
-    //@}
-
-    // TODO Get rid of this
-    /**
-     * \short Lock of the zone entry.
-     *
-     * Something like a scope lock for the zone entry. It can be copyed (so
-     * the result of the getLock() can be assigned to a local variable). The
-     * lock is released once all copies of the getLock result are destroyed.
-     * However, it is not reentrant (another call to getLock will block).
-     *
-     * This locks both the zone entry and all nameserver entries in a manner
-     * avoiding deadlocks (sorts the nameserver entry pointers before trying to
-     * lock them). However, it asumes no one does any other kind of locking
-     * of multiple mutices.
-     *
-     * Copy constructor, assignment operator and destructor are default.
-     * The constructor that creates a new lock is private, use getLock()
-     * to lock a zone entry.
-     *
-     * It is an error for the lock to survive destruction of its zone entry.
-     */
-    class Lock {
-        private:
-            struct Impl;
-            boost::shared_ptr<Impl> impl_;
-            Lock(boost::shared_ptr<Impl>);
-            friend class ZoneEntry;
-    };
-
-    /**
-     * \short Acquire a lock.
-     *
-     * \see Lock
-     */
-    Lock getLock();
 private:
     // TODO Read-Write lock?
     mutable boost::mutex    mutex_;     ///< Mutex protecting this zone entry
@@ -173,6 +114,12 @@ private:
     NameserverVector nameservers_; ///< Nameservers
     time_t          expiry_;    ///< Expiry time of this entry
     std::list<boost::shared_ptr<AddressRequestCallback> > callbacks_;
+    // Internal function that adds a callback (if there's one) and processes
+    // the nameservers (if there's chance there's some info) and calls
+    // callbacks. If nameserver is given, it is considered new and valid
+    // even if its TTL is 0.
+    void process(boosh::shared_ptr<AddressRequestCallback> callback,
+         bool v4ok, bool v6ok, NameserverEntry* nameserver);
 };
 
 } // namespace nsas

@@ -27,6 +27,7 @@
 #include "address_entry.h"
 #include "asiolink.h"
 #include "nsas_entry.h"
+#include "nsas_types.h"
 #include "hash_key.h"
 #include "lru_list.h"
 #include "fetchable.h"
@@ -80,6 +81,7 @@ class ResolverInterface;
 ///
 /// As this object will be stored in the nameserver address store LRU list,
 /// it is derived from the LRU list entry class.
+/// \todo Is it needed to have virtual functions? Will we subclass it?
 
 class NameserverEntry : public NsasEntry<NameserverEntry>, public Fetchable {
 public:
@@ -117,18 +119,20 @@ public:
     /// \brief Return Address
     ///
     /// Returns a vector of addresses corresponding to this nameserver.
-    /// It is up to the caller to 
     ///
     /// \param addresses Vector of address entries into which will be appended
     /// addresses that match the specified criteria. (The reason for choosing
     /// this signature is that addresses from more than one nameserver may be
     /// retrieved, in which case appending to an existing list of addresses is
     /// convenient.)
-    /// \param family Set to AF_INET/AF_INET6 for V6/V6 addresses, anything
+    /// \param family The family of address that is requested.
     /// else for all addresses.
-    virtual void getAddresses(NameserverEntry::AddressVector& addresses,
-        short family = 0) const;
+    /// \return The state this is currently in. If the TTL expires, it enters
+    ///     the NOT_ASKED state by itself.
+    virtual Fetchable::State getAddresses(
+        NameserverEntry::AddressVector& addresses, AddressRequest family);
 
+    // TODO Is this one of any use at all?
     /// \brief Return Address that corresponding to the index
     ///
     /// \param index The address index in the address vector
@@ -201,7 +205,7 @@ public:
     //@{
     /// \short A callback that some information here arrived (or are unavailable).
     struct Callback {
-        virtual void operator()(boost::shared_ptr<ZoneEntry>) = 0;
+        virtual void operator()(NameserverEntry* self) = 0;
     };
 
     /**
@@ -210,38 +214,25 @@ public:
      * Adds a callback for given zone when they are ready or the information
      * is found unreachable.
      *
-     * This does not lock and expects that the entry is already locked.
+     * If it is not in NOT_ASKED state, it does not ask the for the IP address
+     * again, it just inserts the callback. It is up to the caller not to
+     * insert one callback multiple times.
      *
-     * Expects that the nameserver entry is in NOT_ASKED state,
-     * throws BadValue otherwise.
+     * The callback might be called directly from this function.
      *
      * \param resolver Who to ask.
-     * \param zone The callbacks are named, so we can check if we already have
-     *     a callback for given zone. This is the name and the zone will be
-     *     passed to the callback when called.
      * \param callback The callback.
+     * \param family Which addresses are interesting to the caller. This does
+     *     not change which adresses are requested, but the callback might
+     *     be executed when at last one requested type is available (eg. not
+     *     waiting for the other one).
      * \param self Since we need to pass a shared pointer to the resolver, we
      *     need to get one. However, we can not create one from this, because
      *     it would have different reference count. So the caller must pass it.
      */
-    void askIP(ResolverInterface& resolver, boost::shared_ptr<ZoneEntry> zone,
-        Callback& callback, boost::shared_ptr<NameserverEntry> self);
-    /**
-     * \short Ensures that zone has a callback registered.
-     *
-     * This adds a given callback to this nameserver entry, but only if
-     * the zone does not have one already.
-     *
-     * Does not lock and expects that the entry is already locked.
-     *
-     * Expects that the nameserver entri is in IN_PROGRESS state, throws
-     * BadValue otherwise.
-     *
-     * \param zone Whose callback we add.
-     * \param callback The callback.
-     */
-    void ensureHasCallback(boost::shared_ptr<ZoneEntry> zone,
-        Callback& callback);
+    void askIP(ResolverInterface& resolver,
+        boost::shared_ptr<Callback> callback, AddressRequest family,
+        boost::shared_ptr<NameserverEntry> self);
     //@}
 
 private:
@@ -252,10 +243,6 @@ private:
     std::vector<AddressEntry> address_; ///< Set of V4/V6 addresses
     time_t          expiration_;        ///< Summary expiration time
     time_t          last_access_;       ///< Last access time to the structure
-    // We allow ZoneEntry to lock us
-    friend class ZoneEntry;
-    // We store the callbacks of zones asking for addresses here
-    std::map<boost::shared_ptr<ZoneEntry>, Callback*> ipCallbacks_;
     // This is our callback class to resolver
     class ResolverCallback;
     friend class ResolverCallback;

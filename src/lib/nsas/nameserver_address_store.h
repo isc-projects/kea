@@ -28,6 +28,7 @@
 #include "lru_list.h"
 #include "zone_entry.h"
 #include "resolver_interface.h"
+#include "nsas_types.h"
 
 namespace isc {
 namespace nsas {
@@ -103,10 +104,12 @@ public:
     /// are taken from the referral.
     /// \param callback Callback object used to pass the result back to the
     /// caller.
+    /// \param request Which address is requested.
     void lookup(const std::string& zone, uint16_t class_code,
         const isc::dns::AbstractRRset& authority,
         const std::vector<isc::dns::AbstractRRset>& additional,
-        boost::shared_ptr<AddressRequestCallback> callback);
+        boost::shared_ptr<AddressRequestCallback> callback, AddressRequest
+        request = ANY_OK);
 
     /// \brief Protected Members
     ///
@@ -130,30 +133,6 @@ protected:
     //}@
 private:
     ResolverInterface& resolver_;
-    /**
-     * \short Find if any callbacks may be called.
-     *
-     * This is called when new callback or new data arrive to a zone. In both
-     * cases this may trigger executing some of the callbacks or additional
-     * lookups.
-     * \param zone Which zone to process
-     * \todo Should this be part of the zone entry possibly?
-     * \todo Pass some of the referral stuff there?
-     */
-    void processZone(boost::shared_ptr<ZoneEntry> zone);
-    /// \short Callback from nameserver entry to process zone.
-    class Callback : public NameserverEntry::Callback {
-        public:
-            Callback(NameserverAddressStore& store) :
-                store_(store)
-            { }
-            virtual void operator()(boost::shared_ptr<ZoneEntry> zone) {
-                store_.processZone(zone);
-            }
-        private:
-            NameserverAddressStore& store_;
-    } callback_;
-    friend class Callback;
 };
 
 } // namespace nsas
