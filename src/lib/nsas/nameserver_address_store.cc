@@ -139,6 +139,8 @@ NameserverAddressStore::lookup(const std::string& zone, uint16_t class_code,
         zone_lru_.touch(zone_ptr);
     }
     zone_ptr->addCallback(callback);
+    // TODO Do this only when there are no callbacks currently
+    // if there are, it means this will be just added as well
     processZone(zone_ptr);
 }
 
@@ -169,6 +171,9 @@ chooseAddress(const NameserverEntry::AddressVector& addresses) {
 
 }
 
+// TODO Pass a nameserver that is responsible for this, as it is not
+// checked for TTL (might be 0)
+// TODO Move this to the zone
 void NameserverAddressStore::processZone(ZonePtr zone) {
     // Addresses of existing nameservers
     NameserverEntry::AddressVector addresses;

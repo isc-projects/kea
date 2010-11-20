@@ -83,6 +83,8 @@ public:
         return HashKey(name_, classCode_);
     }
 
+    // TODO The callbacks must be distinguished - A, AAAA or any of them
+
     /// \short Add another callback here
     void addCallback(boost::shared_ptr<AddressRequestCallback> callback);
     /// \short Is there at last one callback waiting?
@@ -129,6 +131,7 @@ public:
     const_iterator end() const { return (nameservers_.end()); }
     //@}
 
+    // TODO Get rid of this
     /**
      * \short Lock of the zone entry.
      *
@@ -163,6 +166,7 @@ public:
      */
     Lock getLock();
 private:
+    // TODO Read-Write lock?
     mutable boost::mutex    mutex_;     ///< Mutex protecting this zone entry
     std::string     name_;      ///< Canonical zone name
     uint16_t        classCode_; ///< Class code
