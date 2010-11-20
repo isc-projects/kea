@@ -36,25 +36,25 @@ class UDPQueryTest : public ::testing::Test,
     public asiolink::UDPQuery::Callback
 {
     public:
-        asiolink::UDPQuery::Result expected;
-        bool run;
-        io_service service;
-        Question question;
+        asiolink::UDPQuery::Result expected_;
+        bool run_;
+        io_service service_;
+        Question question_;
         // To keep a reference so noone calls delete this;
-        OutputBufferPtr buffer;
-        asiolink::UDPQuery query;
+        OutputBufferPtr buffer_;
+        asiolink::UDPQuery query_;
 
         UDPQueryTest() :
-            run(false),
-            question(Name("example.net"), RRClass::IN(), RRType::A()),
-            buffer(new OutputBuffer(512)),
-            query(service, question, asiolink::IOAddress(TEST_HOST), TEST_PORT,
-                buffer, this, 100)
+            run_(false),
+            question_(Name("example.net"), RRClass::IN(), RRType::A()),
+            buffer_(new OutputBuffer(512)),
+            query_(service_, question_, asiolink::IOAddress(TEST_HOST),
+                TEST_PORT, buffer_, this, 100)
         { }
 
         void operator()(asiolink::UDPQuery::Result result) {
-            EXPECT_EQ(expected, result);
-            run = true;
+            EXPECT_EQ(expected_, result);
+            run_ = true;
         }
         void respond(udp::endpoint* remote, udp::socket* socket) {
             // Some data came, just send something back.
@@ -65,46 +65,46 @@ class UDPQueryTest : public ::testing::Test,
 };
 
 TEST_F(UDPQueryTest, stop) {
-    expected = asiolink::UDPQuery::STOPPED;
-    service.post(query);
+    expected_ = asiolink::UDPQuery::STOPPED;
+    service_.post(query_);
     // Make sure stop is called after executing () of the query
     // Why doesn't boost::bind support default parameters?
-    service.post(boost::bind(&asiolink::UDPQuery::stop, query,
+    service_.post(boost::bind(&asiolink::UDPQuery::stop, query_,
         asiolink::UDPQuery::STOPPED));
-    service.run();
-    EXPECT_TRUE(run);
+    service_.run();
+    EXPECT_TRUE(run_);
 }
 
 TEST_F(UDPQueryTest, prematureStop) {
-    expected = asiolink::UDPQuery::STOPPED;
+    expected_ = asiolink::UDPQuery::STOPPED;
     // Stop before it is started
-    query.stop();
-    service.post(query);
-    service.run();
-    EXPECT_TRUE(run);
+    query_.stop();
+    service_.post(query_);
+    service_.run();
+    EXPECT_TRUE(run_);
 }
 
 TEST_F(UDPQueryTest, timeout) {
-    expected = asiolink::UDPQuery::TIME_OUT;
-    service.post(query);
-    service.run();
-    EXPECT_TRUE(run);
+    expected_ = asiolink::UDPQuery::TIME_OUT;
+    service_.post(query_);
+    service_.run();
+    EXPECT_TRUE(run_);
 }
 
 TEST_F(UDPQueryTest, receive) {
-    expected = asiolink::UDPQuery::SUCCESS;
-    udp::socket socket(service, udp::v4());
+    expected_ = asiolink::UDPQuery::SUCCESS;
+    udp::socket socket(service_, udp::v4());
     socket.set_option(socket_base::reuse_address(true));
     socket.bind(udp::endpoint(TEST_HOST, TEST_PORT));
     char inbuff[512];
     udp::endpoint remote;
     socket.async_receive_from(asio::buffer(inbuff, 512), remote, boost::bind(
         &UDPQueryTest::respond, this, &remote, &socket));
-    service.post(query);
-    service.run();
-    EXPECT_TRUE(run);
-    ASSERT_EQ(sizeof TEST_DATA, buffer->getLength());
-    EXPECT_EQ(0, memcmp(TEST_DATA, buffer->getData(), sizeof TEST_DATA));
+    service_.post(query_);
+    service_.run();
+    EXPECT_TRUE(run_);
+    ASSERT_EQ(sizeof TEST_DATA, buffer_->getLength());
+    EXPECT_EQ(0, memcmp(TEST_DATA, buffer_->getData(), sizeof TEST_DATA));
 }
 
 }
