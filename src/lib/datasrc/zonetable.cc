@@ -93,8 +93,6 @@ ZoneTable::remove(const Name& origin) {
 
 ZoneTable::FindResult
 ZoneTable::find(const Name& name) const {
-    Name qname(name);
-
     // Inefficient internal loop to find a longest match.
     // This will be replaced with a single call to more intelligent backend.
     for (int i = 0; i < name.getLabelCount(); ++i) {
