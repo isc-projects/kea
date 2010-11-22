@@ -303,7 +303,7 @@ class RunningQuery : public UDPQuery::Callback {
              *     it is destroyed too soon. But who deletes it now?
              */
             // Server to notify when we succeed or fail
-            DNSServer* server_;
+            shared_ptr<DNSServer> server_;
             /*
              * TODO Do something more clever with timeouts. In the long term, some
              *     computation of average RTT, increase with each retry, etc.
@@ -331,7 +331,7 @@ class RunningQuery : public UDPQuery::Callback {
                 question_(question),
                 upstream_(upstream),
                 buffer_(buffer),
-                server_(server),
+                server_(server->clone()),
                 timeout_(timeout),
                 retries_(retries)
             {
