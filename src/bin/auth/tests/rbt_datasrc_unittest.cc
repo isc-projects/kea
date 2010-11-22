@@ -377,4 +377,22 @@ TEST_F(RBTreeTest, eraseName) {
     EXPECT_EQ(0, rbtree.getNodeCount());
 }
 
+TEST_F(RBTreeTest, printTree) {
+    std::ostringstream str;
+    std::ostringstream str2;
+    rbtree.printTree(str);
+    str2 << "tree has node 5\nb. (black)\n\n     a. (black)\n\n          NULL\n          NULL\n     d.e.f. (black)\n[invisible] \n          begin down from d.e.f.\n          tree has node 3\n          w.y. (black)\n[invisible] \n               begin down from w.y.\n               tree has node 3\n               p. (black)\n\n                    o. (red)\n\n                         NULL\n                         NULL\n                    q. (red)\n\n                         NULL\n                         NULL\n               end down fromw.y.\n               x. (red)\n\n                    NULL\n                    NULL\n               z. (red)\n\n                    begin down from z.\n                    tree has node 1\n                    j. (black)\n\n                         NULL\n                         NULL\n                    end down fromz.\n                    NULL\n                    NULL\n          end down fromd.e.f.\n          c. (red)\n\n               NULL\n               NULL\n          g.h. (red)\n\n               begin down from g.h.\n               tree has node 1\n               i. (black)\n\n                    NULL\n                    NULL\n               end down fromg.h.\n               NULL\n               NULL\n";
+    EXPECT_EQ(str.str(), str2.str());
+    rbtree.erase(Name("o.w.y.d.e.f"));
+    rbtree.erase(Name("p.w.y.d.e.f"));
+    rbtree.erase(Name("q.w.y.d.e.f"));
+    rbtree.erase(Name("j.z.d.e.f"));
+    rbtree.erase(Name("x.d.e.f"));
+    str.str("");
+    str2.str("");
+    rbtree.printTree(str);
+    str2 << "tree has node 5\nb. (black)\n\n     a. (black)\n\n          NULL\n          NULL\n     z.d.e.f. (black)\n\n          c. (red)\n\n               NULL\n               NULL\n          g.h. (red)\n\n               begin down from g.h.\n               tree has node 1\n               i. (black)\n\n                    NULL\n                    NULL\n               end down fromg.h.\n               NULL\n               NULL\n";
+    EXPECT_EQ(str.str(), str2.str());
+}
+
 }

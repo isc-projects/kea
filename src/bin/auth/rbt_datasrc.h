@@ -878,6 +878,6 @@ RBTree<T>::printTreeHelper(std::ostream &os, const RBNode<T>* node, int depth) c
 
 #endif  // _RBTREE_H
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:
