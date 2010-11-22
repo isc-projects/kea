@@ -214,12 +214,12 @@ public:
     /// Find a \c Zone that best matches the given name in the \c ZoneTable.
     ///
     /// It searches the internal storage for a \c Zone that gives the
-    /// longest match against \c origin, and returns the result in the
+    /// longest match against \c name, and returns the result in the
     /// form of a \c FindResult object as follows:
     /// - \c code: The result code of the operation.
     ///   - \c SUCCESS: A zone that gives an exact match is found
     ///   - \c PARTIALMATCH: A zone whose origin is a super domain of
-    ///     \c zone is found (but there is no exact match)
+    ///     \c name is found (but there is no exact match)
     ///   - \c NOTFOUND: For all other cases.
     /// - \c zone: A pointer to the found \c Zone object if one is found;
     /// otherwise \c NULL.
