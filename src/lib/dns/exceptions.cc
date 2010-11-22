@@ -15,7 +15,7 @@
 // $Id$
 
 #include <dns/exceptions.h>
-#include <dns/message.h>
+#include <dns/rcode.h>
 
 namespace isc {
 namespace dns {

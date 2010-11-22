@@ -25,6 +25,9 @@ import csv
 import getpass
 import getopt
 import sys
+import isc.util.process
+
+isc.util.process.rename()
 
 VERSION_NUMBER = 'bind10'
 DEFAULT_FILE = 'cmdctl-accounts.csv'

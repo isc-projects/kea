@@ -269,7 +269,7 @@ class MasterFile:
             if second[-1] == '.':
                 self.__origin = second
             elif not self.__origin:
-                raise MasterFileError("$ORIGIN is not absolute in record:%s" % s)
+                raise MasterFileError("$ORIGIN is not absolute in record: %s" % s)
             elif self.__origin != '.':
                 self.__origin = second + '.' + self.__origin
             else:

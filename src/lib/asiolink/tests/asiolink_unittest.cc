@@ -32,6 +32,7 @@
 #include <dns/message.h>
 
 #include <asiolink/asiolink.h>
+#include <asiolink/iosocket.h>
 #include <asiolink/internal/tcpdns.h>
 #include <asiolink/internal/udpdns.h>
 
@@ -53,18 +54,6 @@ const char* const TEST_IPV4_ADDR = "127.0.0.1";
 // two octets encode the length of the rest of the data.  This is crucial
 // for the tests below.
 const uint8_t test_data[] = {0, 4, 1, 2, 3, 4};
-
-class DummySocket : public IOSocket {
-private:
-    DummySocket(const DummySocket& source);
-    DummySocket& operator=(const DummySocket& source);
-public:
-    DummySocket(const int protocol) : protocol_(protocol) {}
-    virtual int getNative() const { return (-1); }
-    virtual int getProtocol() const { return (protocol_); }
-private:
-    const int protocol_;
-};
 
 TEST(IOAddressTest, fromText) {
     IOAddress io_address_v4("192.0.2.1");
@@ -133,10 +122,10 @@ TEST(IOEndpointTest, createIPProto) {
 }
 
 TEST(IOSocketTest, dummySockets) {
-    EXPECT_EQ(IPPROTO_UDP, DummySocket(IPPROTO_UDP).getProtocol());
-    EXPECT_EQ(IPPROTO_TCP, DummySocket(IPPROTO_TCP).getProtocol());
-    EXPECT_EQ(-1, DummySocket(IPPROTO_UDP).getNative());
-    EXPECT_EQ(-1, DummySocket(IPPROTO_TCP).getNative());
+    EXPECT_EQ(IPPROTO_UDP, IOSocket::getDummyUDPSocket().getProtocol());
+    EXPECT_EQ(IPPROTO_TCP, IOSocket::getDummyTCPSocket().getProtocol());
+    EXPECT_EQ(-1, IOSocket::getDummyUDPSocket().getNative());
+    EXPECT_EQ(-1, IOSocket::getDummyTCPSocket().getNative());
 }
 
 TEST(IOServiceTest, badPort) {
@@ -371,6 +360,7 @@ protected:
     }
 
     // Set up empty DNS Service
+    // Set up an IO Service queue without any addresses
     void setDNSService() {
         delete dns_service_;
         dns_service_ = NULL;
@@ -383,7 +373,7 @@ protected:
     // Run a simple server test, on either IPv4 or IPv6, and over either
     // UDP or TCP.  Calls the sendUDP() or sendTCP() methods, which will
     // start the IO Service queue.  The UDPServer or TCPServer that was
-    // created by setIOSerice() will receive the test packet and issue a
+    // created by setIOService() will receive the test packet and issue a
     // callback, which enables us to check that the data it received
     // matches what we sent.
     void doTest(const int family, const int protocol) {
@@ -579,6 +569,32 @@ TEST_F(ASIOLinkTest, v4TCPSendSpecific) {
     EXPECT_THROW(sendTCP(AF_INET6), IOError);
 }
 
+TEST_F(ASIOLinkTest, v6AddServer) {
+    setDNSService();
+    dns_service_->addServer(*TEST_SERVER_PORT, TEST_IPV6_ADDR);
+    doTest(AF_INET6, IPPROTO_TCP);
+
+    EXPECT_THROW(sendTCP(AF_INET), IOError);
+}
+
+TEST_F(ASIOLinkTest, v4AddServer) {
+    setDNSService();
+    dns_service_->addServer(*TEST_SERVER_PORT, TEST_IPV4_ADDR);
+    doTest(AF_INET, IPPROTO_TCP);
+
+    EXPECT_THROW(sendTCP(AF_INET6), IOError);
+}
+
+TEST_F(ASIOLinkTest, DISABLED_clearServers) {
+    // FIXME: Enable when clearServers actually close the sockets
+    //    See #388
+    setDNSService();
+    dns_service_->clearServers();
+
+    EXPECT_THROW(sendTCP(AF_INET), IOError);
+    EXPECT_THROW(sendTCP(AF_INET6), IOError);
+}
+
 TEST_F(ASIOLinkTest, v6TCPOnly) {
     // Open only IPv6 TCP socket.  A subsequent attempt of establishing an
     // IPv4/TCP connection should fail.  See above for why we only test this
@@ -592,16 +608,25 @@ TEST_F(ASIOLinkTest, v4TCPOnly) {
     EXPECT_THROW(sendTCP(AF_INET6), IOError);
 }
 
+vector<pair<string, uint16_t> >
+singleAddress(const string &address, uint16_t port) {
+    vector<pair<string, uint16_t> > result;
+    result.push_back(pair<string, uint16_t>(address, port));
+    return (result);
+}
+
 TEST_F(ASIOLinkTest, recursiveSetupV4) {
     setDNSService(true, false);
     uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
-    EXPECT_NO_THROW(RecursiveQuery(*dns_service_, *TEST_IPV4_ADDR, port));
+    EXPECT_NO_THROW(RecursiveQuery(*dns_service_, singleAddress(TEST_IPV6_ADDR,
+        port)));
 }
 
 TEST_F(ASIOLinkTest, recursiveSetupV6) {
     setDNSService(false, true);
     uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
-    EXPECT_NO_THROW(RecursiveQuery(*dns_service_, *TEST_IPV6_ADDR, port));
+    EXPECT_NO_THROW(RecursiveQuery(*dns_service_, singleAddress(TEST_IPV6_ADDR,
+        port)));
 }
 
 // XXX:
@@ -619,7 +644,7 @@ TEST_F(ASIOLinkTest, recursiveSend) {
     asio::ip::address addr = asio::ip::address::from_string(TEST_IPV4_ADDR);
 
     MockServer server(io, addr, port, NULL, NULL, NULL);
-    RecursiveQuery rq(*dns_service_, *TEST_IPV4_ADDR, port);
+    RecursiveQuery rq(*dns_service_, singleAddress(TEST_IPV4_ADDR, port));
 
     Question q(Name("example.com"), RRClass::IN(), RRType::TXT());
     OutputBufferPtr buffer(new OutputBuffer(0));
@@ -671,7 +696,8 @@ TEST_F(ASIOLinkTest, recursiveTimeout) {
     MockServerStop server(service, &done);
 
     // Do the answer
-    RecursiveQuery query(*dns_service_, *TEST_IPV4_ADDR, port, 10, 2);
+    RecursiveQuery query(*dns_service_, singleAddress(TEST_IPV4_ADDR, port),
+        10, 2);
     Question question(Name("example.net"), RRClass::IN(), RRType::A());
     OutputBufferPtr buffer(new OutputBuffer(0));
     query.sendQuery(question, buffer, &server);

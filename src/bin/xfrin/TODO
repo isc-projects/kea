@@ -63,3 +63,8 @@
     which a shutdown notification would be sent to the child.  With
     this approach each thread needs to watch at least two channels,
     and then it would need some asynchronous communication mechanism.
+17. Do zone transfer from notifyfrom address first, if it's one master of the zone.
+18. Check soa serial first when doing zone refreshment.
+19. Add configuration items to seperate zone, including ACL, multiple masters, etc.
+20. Be able to cancel the ongoing zone transfer, and be able to disable zone transfer.
+

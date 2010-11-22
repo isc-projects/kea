@@ -105,8 +105,7 @@ TEST(ModuleSpec, SpecfileItems) {
                    "badname is not a valid type name");
 }
 
-TEST(ModuleSpec, SpecfileConfigData)
-{
+TEST(ModuleSpec, SpecfileConfigData) {
     module_spec_error("spec7.spec",
                    "module_name missing in {  }");
     module_spec_error("spec8.spec",
@@ -117,8 +116,7 @@ TEST(ModuleSpec, SpecfileConfigData)
                    "commands is not a list of elements");
 }
 
-TEST(ModuleSpec, SpecfileCommands)
-{
+TEST(ModuleSpec, SpecfileCommands) {
     module_spec_error("spec17.spec",
                    "command_name missing in { \"command_args\": [ { \"item_default\": \"\", \"item_name\": \"message\", \"item_optional\": false, \"item_type\": \"string\" } ], \"command_description\": \"Print the given message to stdout\" }");
     module_spec_error("spec18.spec",

@@ -77,8 +77,7 @@ DS::DS(const string& ds_str) :
     impl_ = new DSImpl(tag, algorithm, digest_type, digest);
 }
 
-DS::DS(InputBuffer& buffer, size_t rdata_len)
-{
+DS::DS(InputBuffer& buffer, size_t rdata_len) {
     if (rdata_len < 4) {
         isc_throw(InvalidRdataLength, "DS too short");
     }
@@ -99,8 +98,7 @@ DS::DS(const DS& source) :
 {}
 
 DS&
-DS::operator=(const DS& source)
-{
+DS::operator=(const DS& source) {
     if (impl_ == source.impl_) {
         return (*this);
     }
@@ -112,14 +110,12 @@ DS::operator=(const DS& source)
     return (*this);
 }
 
-DS::~DS()
-{
+DS::~DS() {
     delete impl_;
 }
 
 string
-DS::toText() const
-{
+DS::toText() const {
     using namespace boost;
     return (lexical_cast<string>(static_cast<int>(impl_->tag_)) +
         " " + lexical_cast<string>(static_cast<int>(impl_->algorithm_)) +
@@ -128,8 +124,7 @@ DS::toText() const
 }
 
 void
-DS::toWire(OutputBuffer& buffer) const
-{
+DS::toWire(OutputBuffer& buffer) const {
     buffer.writeUint16(impl_->tag_);
     buffer.writeUint8(impl_->algorithm_);
     buffer.writeUint8(impl_->digest_type_);
@@ -137,8 +132,7 @@ DS::toWire(OutputBuffer& buffer) const
 }
 
 void
-DS::toWire(MessageRenderer& renderer) const
-{
+DS::toWire(MessageRenderer& renderer) const {
     renderer.writeUint16(impl_->tag_);
     renderer.writeUint8(impl_->algorithm_);
     renderer.writeUint8(impl_->digest_type_);
@@ -146,8 +140,7 @@ DS::toWire(MessageRenderer& renderer) const
 }
 
 int
-DS::compare(const Rdata& other) const
-{
+DS::compare(const Rdata& other) const {
     const DS& other_ds = dynamic_cast<const DS&>(other);
 
     if (impl_->tag_ != other_ds.impl_->tag_) {

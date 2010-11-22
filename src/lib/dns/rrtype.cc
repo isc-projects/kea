@@ -33,13 +33,11 @@ using isc::dns::OutputBuffer;
 namespace isc {
 namespace dns {
 
-RRType::RRType(const string& typestr)
-{
+RRType::RRType(const string& typestr) {
     typecode_ = RRParamRegistry::getRegistry().textToTypeCode(typestr);
 }
 
-RRType::RRType(InputBuffer& buffer)
-{
+RRType::RRType(InputBuffer& buffer) {
     if (buffer.getLength() - buffer.getPosition() < sizeof(uint16_t)) {
         isc_throw(IncompleteRRType, "incomplete wire-format RR type");
     }
@@ -47,26 +45,22 @@ RRType::RRType(InputBuffer& buffer)
 }
 
 const string
-RRType::toText() const
-{
+RRType::toText() const {
     return (RRParamRegistry::getRegistry().codeToTypeText(typecode_));
 }
 
 void
-RRType::toWire(OutputBuffer& buffer) const
-{
+RRType::toWire(OutputBuffer& buffer) const {
     buffer.writeUint16(typecode_);
 }
 
 void
-RRType::toWire(MessageRenderer& renderer) const
-{
+RRType::toWire(MessageRenderer& renderer) const {
     renderer.writeUint16(typecode_);
 }
 
 ostream&
-operator<<(ostream& os, const RRType& rrtype)
-{
+operator<<(ostream& os, const RRType& rrtype) {
     os << rrtype.toText();
     return (os);
 }

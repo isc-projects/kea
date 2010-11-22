@@ -15,6 +15,15 @@
 
 # $Id$
 
+import isc
+
+class WouldBlockForever(Exception):
+    """
+    This is thrown by the FakeModuleCCSession if it would need
+    to block forever for incoming message.
+    """
+    pass
+
 #
 # We can probably use a more general version of this
 #
@@ -24,6 +33,10 @@ class FakeModuleCCSession:
         # each entry is of the form [ channel, instance, message ]
         self.message_queue = []
         self._socket = "ok we just need something not-None here atm"
+        # if self.timeout is set to anything other than 0, and
+        # the message_queue is empty when receive is called, throw
+        # a SessionTimeout
+        self._timeout = 0
 
     def group_subscribe(self, group_name, instance_name = None):
         if not group_name in self.subscriptions:
@@ -58,12 +71,21 @@ class FakeModuleCCSession:
         if 'group' in env:
             self.message_queue.append([ env['group'], None, msg])
 
-    def group_recvmsg(self, blocking, seq = None):
+    def group_recvmsg(self, nonblock=True, seq = None):
         for qm in self.message_queue:
-            if qm[0] in self.subscriptions and (qm[1] == None or qm[1] in self.subscriptions[qm[0]]):
+            if qm[0] in self.subscriptions and (qm[1] == None or qm[1] in
+                self.subscriptions[qm[0]]):
                 self.message_queue.remove(qm)
                 return qm[2], {'group': qm[0], 'from': qm[1]}
-        return None, None
+        if self._timeout == 0:
+            if nonblock:
+                return None, None
+            else:
+                raise WouldBlockForever(
+                    "Blocking read without timeout and no message ready")
+        else:
+            raise isc.cc.SessionTimeout("Timeout set but no data to "
+                                 "return to group_recvmsg()")
 
     def get_message(self, channel, target = None):
         for qm in self.message_queue:
@@ -75,4 +97,9 @@ class FakeModuleCCSession:
     def close(self):
         # need to pass along somehow that this function has been called,
         self._socket = "closed"
-        pass
+
+    def set_timeout(self, timeout):
+        self._timeout = timeout
+
+    def get_timeout(self):
+        return self._timeout
