@@ -340,6 +340,7 @@ class RunningQuery : public UDPQuery::Callback {
             // This function is used as callback from DNSQuery.
             virtual void operator()(UDPQuery::Result result) {
                 if (result == UDPQuery::TIME_OUT && retries_ --) {
+                    dlog("Resending query");
                     // We timed out, but we have some retries, so send again
                     send();
                 } else {

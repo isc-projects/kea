@@ -293,6 +293,15 @@ UDPQuery::operator()(error_code ec, size_t length) {
 void
 UDPQuery::stop(Result result) {
     if (!data_->stopped) {
+        switch (result) {
+            case TIME_OUT:
+                dlog("Query timed out");
+                break;
+            case STOPPED:
+                dlog("Query stopped");
+                break;
+            default:;
+        }
         data_->stopped = true;
         data_->socket.cancel();
         data_->socket.close();
