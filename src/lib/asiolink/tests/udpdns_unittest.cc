@@ -78,9 +78,9 @@ class UDPQueryTest : public ::testing::Test,
 
 /*
  * Test that when we run the query and stop it after it was run,
- * it returs "stopped" correctly.
+ * it returns "stopped" correctly.
  *
- * That is why is stop() posted to the service_ as well instead
+ * That is why stop() is posted to the service_ as well instead
  * of calling it.
  */
 TEST_F(UDPQueryTest, stop) {
@@ -111,7 +111,7 @@ TEST_F(UDPQueryTest, prematureStop) {
 }
 
 /*
- * Test that it will timeout when no answer will arriwe.
+ * Test that it will timeout when no answer will arrive.
  */
 TEST_F(UDPQueryTest, timeout) {
     expected_ = asiolink::UDPQuery::TIME_OUT;
@@ -124,7 +124,7 @@ TEST_F(UDPQueryTest, timeout) {
  * Test that it will succeed when we fake an answer and
  * stores the same data we send.
  *
- * This is done trough a real socket on loopback address.
+ * This is done through a real socket on loopback address.
  */
 TEST_F(UDPQueryTest, receive) {
     expected_ = asiolink::UDPQuery::SUCCESS;
