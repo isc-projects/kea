@@ -117,6 +117,11 @@ public:
     /// Addresses we listen on
     vector<addr_t> listen_;
 
+    /// Time in milliseconds, to timeout
+    int timeout_;
+    /// Number of retries after timeout
+    unsigned retries_;
+
 private:
 
     /// Object to handle upstream queries
@@ -489,6 +494,27 @@ Recursor::updateConfig(ConstElementPtr config) {
         vector<addr_t> forwardAddresses(parseAddresses(forwardAddressesE));
         ConstElementPtr listenAddressesE(config->get("listen_on"));
         vector<addr_t> listenAddresses(parseAddresses(listenAddressesE));
+        bool set_timeouts(false);
+        int timeout = impl_->timeout_;
+        unsigned retries = impl_->retries_;
+        ConstElementPtr timeoutE(config->get("timeout")),
+            retriesE(config->get("retries"));
+        if (timeoutE) {
+            // It should be safe to just get it, the config manager should
+            // check for us
+            timeout = timeoutE->intValue();
+            if (timeout < -1) {
+                isc_throw(BadValue, "Timeout too small");
+            }
+            set_timeouts = true;
+        }
+        if (retriesE) {
+            if (retriesE->intValue() < 0) {
+                isc_throw(BadValue, "Negative number of retries");
+            }
+            retries = retriesE->intValue();
+            set_timeouts = true;
+        }
         // Everything OK, so commit the changes
         // listenAddresses can fail to bind, so try them first
         if (listenAddressesE) {
@@ -496,6 +522,9 @@ Recursor::updateConfig(ConstElementPtr config) {
         }
         if (forwardAddressesE) {
             setForwardAddresses(forwardAddresses);
+        }
+        if (set_timeouts) {
+            setTimeouts(timeout, retries);
         }
         return (isc::config::createAnswer());
     } catch (const isc::Exception& error) {
@@ -560,6 +589,20 @@ Recursor::setListenAddresses(const vector<addr_t>& addresses) {
         }
         throw e; // Let it fly a little bit further
     }
+}
+
+void
+Recursor::setTimeouts(int timeout, unsigned retries) {
+    dlog("Setting timeout to " + boost::lexical_cast<string>(timeout) +
+        " and retry count to " + boost::lexical_cast<string>(retries));
+    impl_->timeout_ = timeout;
+    impl_->retries_ = retries;
+    impl_->queryShutdown();
+    impl_->querySetup(*dnss_);
+}
+pair<int, unsigned>
+Recursor::getTimeouts() const {
+    return (pair<int, unsigned>(impl_->timeout_, impl_->retries_));
 }
 
 vector<addr_t>

@@ -110,6 +110,23 @@ public:
         uint16_t> >& addresses);
     std::vector<std::pair<std::string, uint16_t> > getListenAddresses() const;
 
+    /**
+     * \short Set options related to timeouts.
+     *
+     * This sets the time of timeout and number of retries.
+     * \param timeout The time in milliseconds. The value -1 disables timeouts.
+     * \param retries The number of retries (0 means try the first time only,
+     *     do not retry).
+     */
+    void setTimeouts(int timeout = -1, unsigned retries = 0);
+
+    /**
+     * \short Get info about timeouts.
+     *
+     * \returns Timeout and retries (as described in setTimeouts).
+     */
+    std::pair<int, unsigned> getTimeouts() const;
+
 private:
     RecursorImpl* impl_;
     asiolink::DNSService* dnss_;
