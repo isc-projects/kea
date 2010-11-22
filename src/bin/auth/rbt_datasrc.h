@@ -60,24 +60,25 @@ class RBTree;
 template <typename T>
 class RBNode : public boost::noncopyable {
 public:
-    /// only /c RBTree can create and destroy \c RBNode
+    /// only \c RBTree can create and destroy \c RBNode
     friend class RBTree<T>;
     /// \name Test functions
     //@{
     /// \brief return the name of current node, it's relative to its parents
     //
     /// \todo Is it meaningful to return the absolute of the node?
-    const Name& getName() const {return (name_); }
+    const Name& getName() const { return (name_); }
 
-    // \breif return the data store in this node
-    T& getData() { return (data_);}
-    // \brief return next node whose name is bigger than current node
+    /// \breif return the data store in this node
+    T& getData() { return (data_); }
+
+    /// \brief return next node whose name is bigger than current node
     RBNode<T>* successor();
     //@}
     
     /// \name Modify functions
-    // \brief set the data stored in the node
-    void setData(const T& data) { data_ = data;}
+    /// \brief set the data stored in the node
+    void setData(const T& data) { data_ = data; }
 
 private:
     /// \name Constructors and destructor
@@ -87,10 +88,9 @@ private:
     /// default node singled as null node, this is intended to keep the code
     /// more unify
 
-    RBNode(const Name &name, RBNode<T> *nullnode = NULL);
+    RBNode(const Name &name, RBNode<T>* nullnode = NULL);
 
-    RBNode(const Name& name, T& data,
-            RBNode<T>* nullnode = NULL);
+    RBNode(const Name& name, const T& data, RBNode<T>* nullnode = NULL);
 
     /// the class isn't left to be inherited
     ~RBNode();
@@ -118,7 +118,8 @@ private:
     /// without any parameters
     T           data_;
     RBTree<T>*  down_;
-    ///the node willn't return to end user, if the node is shadow
+
+    ///the node won't be returned to end user, if the node is shadow.
     ///shadow node is created by rbtree for inner use, it's opaque to
     ///end user. 
     bool        is_shadow_; 
@@ -126,7 +127,7 @@ private:
 
 
 template <typename T>
-RBNode<T>::RBNode(const Name& name, T &data, RBNode* nullnode) :
+RBNode<T>::RBNode(const Name& name, const T& data, RBNode* nullnode) :
     parent_(nullnode),
     left_(nullnode),
     right_(nullnode),
@@ -134,7 +135,8 @@ RBNode<T>::RBNode(const Name& name, T &data, RBNode* nullnode) :
     name_(name),
     data_(data),
     down_(NULL),
-    is_shadow_(false) {
+    is_shadow_(false)
+{
 }
 
 template <typename T>
@@ -145,7 +147,8 @@ RBNode<T>::RBNode(const Name& name, RBNode* nullnode) :
     color_(RED),
     name_(name),
     down_(NULL),
-    is_shadow_(false) {
+    is_shadow_(false)
+{
 }
 
 template <typename T>
@@ -189,7 +192,7 @@ template <typename T>
 void
 RBNode<T>::setDownTree(RBTree<T>* down) {
     down_ = down;
-    if (down) {
+    if (down != NULL) {
         down->up_ = this;
     }
 }
@@ -244,7 +247,7 @@ public:
     //@{
     /// \brief print the nodes in the trees
     /// \todo is it better to return one string instead of print to the stdout?
-    void printTree(std::ostream &os, int depth = 0) const;
+    void printTree(std::ostream& os, int depth = 0) const;
     //@}
 
     /// \name Modify function
@@ -364,7 +367,9 @@ RBTree<T>::find(const Name& name, RBNode<T>** node) const {
 
 template <typename T>
 typename RBTree<T>::FindResult
-RBTree<T>::findHelper(const Name& name, const RBTree<T>** tree, RBNode<T>** ret) const {
+RBTree<T>::findHelper(const Name& name, const RBTree<T>** tree,
+                      RBNode<T>** ret) const
+{
     RBNode<T>* node = root_;
     while (node != NULLNODE) {
         NameComparisonResult compare_result = name.compare(node->name_);
@@ -387,23 +392,24 @@ RBTree<T>::findHelper(const Name& name, const RBTree<T>** tree, RBNode<T>** ret)
                     node->left_ : node->right_;
             } else if (NameComparisonResult::SUBDOMAIN == relation) {
                 if (node->is_shadow_) {
-                    assert(node->down_);
+                    assert(node->down_ != NULL);
                     return (node->down_->findHelper(name - node->name_, tree,
-                                    ret));
+                                                    ret));
                 } else {
                     RBTree<T>::FindResult result = RBTree<T>::NOTFOUND;
-                    if (node->down_) {
-                        result = node->down_->findHelper(name - node->name_, tree,
-                                ret);
+                    if (node->down_ != NULL) {
+                        result = node->down_->findHelper(name - node->name_,
+                                                         tree, ret);
                     }
-                    // if not found in sub domain tree, so current node is the longest match
+                    // if not found in sub domain tree, so current node is the
+                    // longest match
                     // otherwise return the result in sub domin tree
                     if (RBTree<T>::NOTFOUND == result) {
                         *tree = this;
                         *ret = node;
-                        return RBTree<T>::PARTIALMATCH;
+                        return (RBTree<T>::PARTIALMATCH);
                     } else {
-                        return result;
+                        return (result);
                     }
                 }
             } else {
@@ -420,8 +426,6 @@ int
 RBTree<T>::getNodeCount() const {
     return (getNodeCountHelper(root_));
 }
-
-
 
 template <typename T>
 int
@@ -441,7 +445,6 @@ RBTree<T>::getNameCount() const {
     return (getNameCountHelper(root_));
 }
 
-
 template <typename T>
 int
 RBTree<T>::getNameCountHelper(const RBNode<T> *node) const {
@@ -450,7 +453,8 @@ RBTree<T>::getNameCountHelper(const RBNode<T> *node) const {
     }
 
     int sub_tree_name_count = node->down_ ? node->down_->getNameCount() : 0;
-    return ((node->is_shadow_ ? 0 : 1) + sub_tree_name_count + getNameCountHelper(node->left_) +
+    return ((node->is_shadow_ ? 0 : 1) + sub_tree_name_count +
+            getNameCountHelper(node->left_) +
             getNameCountHelper(node->right_));
 }
 
@@ -468,7 +472,7 @@ RBTree<T>::insert(const Name& name, RBNode<T>** new_node) {
         NameComparisonResult::NameRelation relation =
             compare_result.getRelation();
         if (relation == NameComparisonResult::EQUAL) {
-            if (new_node) {
+            if (new_node != NULL) {
                 *new_node = current;
             }
             // if the node is a common suffix not user inserted, return 0
@@ -490,20 +494,21 @@ RBTree<T>::insert(const Name& name, RBNode<T>** new_node) {
                     if (NULL == current->down_) {
                         try {
                             RBTree<T>* new_sub_tree = new RBTree();
-                            int ret = new_sub_tree->insert(name - current->name_,
-                                        new_node);
+                            int ret = new_sub_tree->insert(name -
+                                                           current->name_,
+                                                           new_node);
                             if (-1 == ret) {
                                 delete new_sub_tree;
                                 return (-1);
                             }
                             current->setDownTree(new_sub_tree);
                             return (ret);
-                        } catch (std::bad_alloc &) {
+                        } catch (std::bad_alloc&) {
                             return (-1);
                         }
                     } else {
-                        return  current->down_->insert(name - current->name_,
-                                                   new_node);
+                        return (current->down_->insert(name - current->name_,
+                                                       new_node));
                     }
                 } else {
                     // for super domain or has common label domain, create
@@ -518,14 +523,15 @@ RBTree<T>::insert(const Name& name, RBNode<T>** new_node) {
                         // (current_name - common_ancestor) and (name - common_ancestor)
                         RBTree<T>* new_sub_tree = new RBTree();
                         RBNode<T>* sub_root;
-                        if ( -1 == new_sub_tree->insert(sub_name, &sub_root)) {
+                        if (-1 == new_sub_tree->insert(sub_name, &sub_root)) {
                             delete new_sub_tree;
                             return (-1);
                         }
 
                         int ret = 0;
                         if (name.getLabelCount() != common_label_count) {
-                            ret = new_sub_tree->insert(name - common_ancestor, new_node);
+                            ret = new_sub_tree->insert(name - common_ancestor,
+                                                       new_node);
                             if (-1 == ret) {
                                 delete new_sub_tree;
                                 return (-1);
@@ -545,9 +551,9 @@ RBTree<T>::insert(const Name& name, RBNode<T>** new_node) {
                             current->is_shadow_ = false;
                             return (0);
                         } else {
-                            return ret;
+                            return (ret);
                         }
-                    } catch (std::bad_alloc &) {
+                    } catch (std::bad_alloc&) {
                         return (-1);
                     }
                 }
@@ -566,10 +572,10 @@ RBTree<T>::insert(const Name& name, RBNode<T>** new_node) {
             parent->right_ = node;
         }
         insertRebalance(node);
-        if (new_node) {
+        if (new_node != NULL) {
             *new_node = node;
         }
-    } catch (std::bad_alloc &) {
+    } catch (std::bad_alloc&) {
         return (-1);
     }
 
@@ -697,7 +703,7 @@ RBTree<T>::erase(const Name& name) {
         return (0);
     }
 
-    RBTree<T> *tree = const_cast<RBTree<T> *>(ctree);
+    RBTree<T>* tree = const_cast<RBTree<T>*>(ctree);
     tree->eraseNode(node);
 
     if (NULL != tree->up_) {
@@ -716,7 +722,7 @@ RBTree<T>::erase(const Name& name) {
             delete tree;
         }
     }
-    return 0;
+    return (0);
 }
 
 template <typename T>
@@ -844,7 +850,9 @@ RBTree<T>::printTree(std::ostream &os, int depth) const {
 
 template <typename T>
 void
-RBTree<T>::printTreeHelper(std::ostream &os, const RBNode<T>* node, int depth) const {
+RBTree<T>::printTreeHelper(std::ostream& os, const RBNode<T>* node,
+                           int depth) const
+{
     INDNET(os, depth);
     os << node->name_.toText() << " ("
               << ((node->color_ == BLACK) ? "black" : "red") << ")\n";
