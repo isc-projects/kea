@@ -848,7 +848,7 @@ RBTree<T>::printTreeHelper(std::ostream &os, const RBNode<T>* node, int depth) c
     INDNET(os, depth);
     os << node->name_.toText() << " ("
               << ((node->color_ == BLACK) ? "black" : "red") << ")\n";
-    os << ((node->isNonterminal()) ? "[non-terminal] \n" : "\n");
+    os << ((node->is_shadow_) ? "[invisible] \n" : "\n");
     if (node->down_) {
         assert(node->down_->up_ == node);
         INDNET(os, depth + 1);
