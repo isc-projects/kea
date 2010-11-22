@@ -206,7 +206,6 @@ fi
 # gcc specific settings:
 if test "X$GXX" = "Xyes"; then
 B10_CXXFLAGS="-Wall -Wextra -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
-UNUSED_PARAM_ATTRIBUTE='__attribute__((unused))'
 
 # Certain versions of gcc (g++) have a bug that incorrectly warns about
 # the use of anonymous name spaces even if they're closed in a single
@@ -225,7 +224,6 @@ CXXFLAGS="$CXXFLAGS_SAVED"
 fi				dnl GXX = yes
 
 AM_CONDITIONAL(GCC_WERROR_OK, test $werror_ok = 1)
-AC_DEFINE_UNQUOTED(UNUSED_PARAM, $UNUSED_PARAM_ATTRIBUTE, Define to compiler keyword indicating a function argument is intentionally unused)
 
 # produce PIC unless we disable shared libraries. need this for python bindings.
 if test $enable_shared != "no" -a "X$GXX" = "Xyes"; then

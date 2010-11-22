@@ -505,9 +505,7 @@ public:
         }
     }
 
-    void sendCompleted(const asio::error_code& error UNUSED_PARAM,
-                       size_t bytes_sent UNUSED_PARAM)
-    {
+    void sendCompleted(const asio::error_code&, size_t) {
         // Even if error occurred there's nothing to do.  Simply handle
         // the next request.
         startReceive();
