@@ -93,5 +93,12 @@ TEST_F(ZoneTableTest, find) {
               zone_table.find(Name("www.example.com")).code);
     EXPECT_EQ(Name("example.com"),
               zone_table.find(Name("www.example.com")).zone->getOrigin());
+
+    // make sure the partial match is indeed the longest match by adding
+    // a zone with a shorter origin and query again.
+    ZonePtr zone_com(new Zone(RRClass::IN(), Name("com")));
+    EXPECT_EQ(ZoneTable::SUCCESS, zone_table.add(zone_com));
+    EXPECT_EQ(Name("example.com"),
+              zone_table.find(Name("www.example.com")).zone->getOrigin());
 }
 }
