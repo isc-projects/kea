@@ -127,10 +127,17 @@ public:
     /// convenient.)
     /// \param family The family of address that is requested.
     /// else for all addresses.
+    /// \param expired_ok Return addresses even when expired. In that case,
+    ///     it will pretend to be READY. This is here to allow getting address
+    ///     with TTL 0 from a nameserver that just arrived and triggered
+    ///     a callback.
     /// \return The state this is currently in. If the TTL expires, it enters
-    ///     the NOT_ASKED state by itself.
+    ///     the EXPIRED state by itself. It may be IN_PROGRESS and still
+    ///     return some addresses (when one address family arrived and is
+    ///     is returned, but the other is still on the way).
     virtual Fetchable::State getAddresses(
-        NameserverEntry::AddressVector& addresses, AddressRequest family);
+        NameserverEntry::AddressVector& addresses,
+        AddressRequest family = ANY_OK, bool expired_ok = false);
 
     // TODO Is this one of any use at all?
     /// \brief Return Address that corresponding to the index
@@ -206,6 +213,8 @@ public:
     /// \short A callback that some information here arrived (or are unavailable).
     struct Callback {
         virtual void operator()(NameserverEntry* self) = 0;
+        /// \short Virtual destructor, so descendants are properly cleaned up
+        virtual ~ Callback() {}
     };
 
     /**
@@ -214,9 +223,9 @@ public:
      * Adds a callback for given zone when they are ready or the information
      * is found unreachable.
      *
-     * If it is not in NOT_ASKED state, it does not ask the for the IP address
-     * again, it just inserts the callback. It is up to the caller not to
-     * insert one callback multiple times.
+     * If it is not in NOT_ASKED or EXPIRED state, it does not ask the for the
+     * IP address again, it just inserts the callback. It is up to the caller
+     * not to insert one callback multiple times.
      *
      * The callback might be called directly from this function.
      *

@@ -37,6 +37,8 @@ class Fetchable {
         enum State {
             /// \short No one yet asked for the information.
             NOT_ASKED,
+            /// \short The information is too old and should not be used.
+            EXPIRED,
             /// \short The information is asked for but it did not arrive.
             IN_PROGRESS,
             /// \short It is not possible to get the information.

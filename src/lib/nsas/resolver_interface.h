@@ -52,6 +52,8 @@ class ResolverInterface {
                  * \todo Pass some reason.
                  */
                 virtual void failure() = 0;
+                /// \short Virtual destructor, so descendants are cleaned up
+                virtual ~ Callback() {};
         };
         typedef boost::shared_ptr<Callback> CallbackPtr;
         /**
@@ -65,6 +67,8 @@ class ResolverInterface {
          */
         virtual void resolve(isc::dns::QuestionPtr question,
             CallbackPtr callback) = 0;
+        /// \short Virtual destructor, so descendants are properly cleaned up
+        virtual ~ ResolverInterface() {}
 };
 
 } // namespace nsas
