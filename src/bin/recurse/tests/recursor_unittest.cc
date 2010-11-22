@@ -39,11 +39,6 @@ TEST_F(RecursorTest, unsupportedRequest) {
     UNSUPPORTED_REQUEST_TEST;
 }
 
-// Simple API check
-TEST_F(RecursorTest, verbose) {
-    VERBOSE_TEST;
-}
-
 // Multiple questions.  Should result in FORMERR.
 TEST_F(RecursorTest, multiQuestion) {
     MULTI_QUESTION_TEST; 

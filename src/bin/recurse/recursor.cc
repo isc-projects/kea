@@ -19,18 +19,15 @@
 #include <netinet/in.h>
 
 #include <algorithm>
-#include <cassert>
-#include <iostream>
 #include <vector>
 
 #include <asiolink/asiolink.h>
 #include <asiolink/ioaddress.h>
 
 #include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <config/ccsession.h>
-
-#include <cc/data.h>
 
 #include <exceptions/exceptions.h>
 
@@ -45,19 +42,17 @@
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
 
-#include <xfr/xfrout_client.h>
+#include <log/dummylog.h>
 
 #include <recurse/recursor.h>
 
 using namespace std;
 
 using namespace isc;
-using namespace isc::cc;
 using namespace isc::dns;
-using namespace isc::dns::rdata;
 using namespace isc::data;
 using namespace isc::config;
-using namespace isc::xfr;
+using isc::log::dlog;
 using namespace asiolink;
 
 typedef pair<string, uint16_t> addr_t;
@@ -70,7 +65,6 @@ private:
 public:
     RecursorImpl() :
         config_session_(NULL),
-        verbose_mode_(false),
         rec_query_()
     {}
 
@@ -79,10 +73,12 @@ public:
     }
 
     void querySetup(DNSService& dnss) {
+        dlog("Query setup");
         rec_query_ = new RecursiveQuery(dnss, upstream_);
     }
 
     void queryShutdown() {
+        dlog("Query shutdown");
         delete rec_query_;
         rec_query_ = NULL;
     }
@@ -94,9 +90,14 @@ public:
         upstream_ = upstream;
         if (dnss) {
             if (upstream_.empty()) {
-                cerr << "[b10-recurse] Asked to do full recursive," << endl <<
-                    "but not implemented yet. I'll do nothing." << endl;
+                dlog("Asked to do full recursive, but not implemented yet. "
+                    "I'll do nothing.");
             } else {
+                dlog("Setting forward addresses:");
+                BOOST_FOREACH(const addr_t& address, upstream) {
+                    dlog(" " + address.first + ":" +
+                        boost::lexical_cast<string>(address.second));
+                }
                 querySetup(*dnss);
             }
         }
@@ -111,7 +112,6 @@ public:
 
     /// These members are public because Recursor accesses them directly.
     ModuleCCSession* config_session_;
-    bool verbose_mode_;
     /// Addresses of the forward nameserver
     vector<addr_t> upstream_;
     /// Addresses we listen on
@@ -127,6 +127,8 @@ class QuestionInserter {
 public:
     QuestionInserter(MessagePtr message) : message_(message) {}
     void operator()(const QuestionPtr question) {
+        dlog(string("Adding question ") + question->getName().toText() +
+            " to message");
         message_->addQuestion(question);
     }
     MessagePtr message_;
@@ -139,6 +141,8 @@ public:
         message_(message), section_(sect), sign_(sign)
     {}
     void operator()(const RRsetPtr rrset) {
+        dlog("Adding RRSet to message section " +
+            boost::lexical_cast<string>(section_));
         message_->addRRset(section_, rrset, true);
     }
     MessagePtr message_;
@@ -148,7 +152,7 @@ public:
 
 void
 makeErrorMessage(MessagePtr message, OutputBufferPtr buffer,
-                 const Rcode& rcode, const bool verbose_mode)
+                 const Rcode& rcode)
 {
     // extract the parameters that should be kept.
     // XXX: with the current implementation, it's not easy to set EDNS0
@@ -180,10 +184,9 @@ makeErrorMessage(MessagePtr message, OutputBufferPtr buffer,
     MessageRenderer renderer(*buffer);
     message->toWire(renderer);
 
-    if (verbose_mode) {
-        cerr << "[b10-recurse] sending an error response (" <<
-            renderer.getLength() << " bytes):\n" << message->toText() << endl;
-    }
+    dlog(string("Sending an error response (") +
+        boost::lexical_cast<string>(renderer.getLength()) + " bytes):\n" +
+        message->toText());
 }
 
 // This is a derived class of \c DNSLookup, to serve as a
@@ -281,11 +284,9 @@ public:
 
         message->toWire(renderer);
 
-        if (server_->getVerbose()) {
-            cerr << "[b10-recurse] sending a response ("
-                 << renderer.getLength() << " bytes):\n"
-                 << message->toText() << endl;
-        }
+        dlog(string("sending a response (") +
+            boost::lexical_cast<string>(renderer.getLength()) + "bytes): \n" +
+            message->toText());
     }
 
 private:
@@ -319,6 +320,7 @@ Recursor::~Recursor() {
     delete checkin_;
     delete dns_lookup_;
     delete dns_answer_;
+    dlog("Deleting the Recursor");
 }
 
 void
@@ -326,16 +328,6 @@ Recursor::setDNSService(asiolink::DNSService& dnss) {
     impl_->queryShutdown();
     impl_->querySetup(dnss);
     dnss_ = &dnss;
-}
-
-void
-Recursor::setVerbose(const bool on) {
-    impl_->verbose_mode_ = on;
-}
-
-bool
-Recursor::getVerbose() const {
-    return (impl_->verbose_mode_);
 }
 
 void
@@ -352,6 +344,7 @@ void
 Recursor::processMessage(const IOMessage& io_message, MessagePtr message,
                         OutputBufferPtr buffer, DNSServer* server)
 {
+    dlog("Got a DNS message");
     InputBuffer request_buffer(io_message.getData(), io_message.getDataSize());
     // First, check the header part.  If we fail even for the base header,
     // just drop the message.
@@ -360,17 +353,12 @@ Recursor::processMessage(const IOMessage& io_message, MessagePtr message,
 
         // Ignore all responses.
         if (message->getHeaderFlag(Message::HEADERFLAG_QR)) {
-            if (impl_->verbose_mode_) {
-                cerr << "[b10-recurse] received unexpected response, ignoring"
-                     << endl;
-            }
+            dlog("Received unexpected response, ignoring");
             server->resume(false);
             return;
         }
     } catch (const Exception& ex) {
-        if (impl_->verbose_mode_) {
-            cerr << "[b10-recurse] DNS packet exception: " << ex.what() << endl;
-        }
+        dlog(string("DNS packet exception: ") + ex.what());
         server->resume(false);
         return;
     }
@@ -379,57 +367,45 @@ Recursor::processMessage(const IOMessage& io_message, MessagePtr message,
     try {
         message->fromWire(request_buffer);
     } catch (const DNSProtocolError& error) {
-        if (impl_->verbose_mode_) {
-            cerr << "[b10-recurse] returning " <<  error.getRcode().toText()
-                 << ": " << error.what() << endl;
-        }
-        makeErrorMessage(message, buffer, error.getRcode(),
-                         impl_->verbose_mode_);
+        dlog(string("returning ") + error.getRcode().toText() + ": " + 
+            error.what());
+        makeErrorMessage(message, buffer, error.getRcode());
         server->resume(true);
         return;
     } catch (const Exception& ex) {
-        if (impl_->verbose_mode_) {
-            cerr << "[b10-recurse] returning SERVFAIL: " << ex.what() << endl;
-        }
-        makeErrorMessage(message, buffer, Rcode::SERVFAIL(),
-                         impl_->verbose_mode_);
+        dlog(string("returning SERVFAIL: ") + ex.what());
+        makeErrorMessage(message, buffer, Rcode::SERVFAIL());
         server->resume(true);
         return;
     } // other exceptions will be handled at a higher layer.
 
-    if (impl_->verbose_mode_) {
-        cerr << "[b10-recurse] received a message:\n"
-             << message->toText() << endl;
-    }
+    dlog("received a message:\n" + message->toText());
 
     // Perform further protocol-level validation.
     bool sendAnswer = true;
     if (message->getOpcode() == Opcode::NOTIFY()) {
-        makeErrorMessage(message, buffer, Rcode::NOTAUTH(),
-                         impl_->verbose_mode_);
+        makeErrorMessage(message, buffer, Rcode::NOTAUTH());
+        dlog("Notify arrived, but we are not authoritative");
     } else if (message->getOpcode() != Opcode::QUERY()) {
-        if (impl_->verbose_mode_) {
-            cerr << "[b10-recurse] unsupported opcode" << endl;
-        }
-        makeErrorMessage(message, buffer, Rcode::NOTIMP(),
-                         impl_->verbose_mode_);
+        dlog("Unsupported opcode (got: " + message->getOpcode().toText() +
+            ", expected: " + Opcode::QUERY().toText());
+        makeErrorMessage(message, buffer, Rcode::NOTIMP());
     } else if (message->getRRCount(Message::SECTION_QUESTION) != 1) {
-        makeErrorMessage(message, buffer, Rcode::FORMERR(),
-                         impl_->verbose_mode_);
+        dlog("The query contained " +
+            boost::lexical_cast<string>(message->getRRCount(
+            Message::SECTION_QUESTION) + " questions, exactly one expected"));
+        makeErrorMessage(message, buffer, Rcode::FORMERR());
     } else {
         ConstQuestionPtr question = *message->beginQuestion();
         const RRType &qtype = question->getType();
         if (qtype == RRType::AXFR()) {
             if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
-                makeErrorMessage(message, buffer, Rcode::FORMERR(),
-                                 impl_->verbose_mode_);
+                makeErrorMessage(message, buffer, Rcode::FORMERR());
             } else {
-                makeErrorMessage(message, buffer, Rcode::NOTIMP(),
-                                 impl_->verbose_mode_);
+                makeErrorMessage(message, buffer, Rcode::NOTIMP());
             }
         } else if (qtype == RRType::IXFR()) {
-            makeErrorMessage(message, buffer, Rcode::NOTIMP(),
-                         impl_->verbose_mode_);
+            makeErrorMessage(message, buffer, Rcode::NOTIMP());
         } else {
             // The RecursiveQuery object will post the "resume" event to the
             // DNSServer when an answer arrives, so we don't have to do it now.
@@ -447,6 +423,7 @@ void
 RecursorImpl::processNormalQuery(const Question& question, MessagePtr message,
                                  OutputBufferPtr buffer, DNSServer* server)
 {
+    dlog("Processing normal query");
     ConstEDNSPtr edns(message->getEDNS());
     const bool dnssec_ok = edns && edns->getDNSSECAwareness();
 
@@ -504,9 +481,8 @@ parseAddresses(ConstElementPtr addresses) {
 
 ConstElementPtr
 Recursor::updateConfig(ConstElementPtr config) {
-    if (impl_->verbose_mode_) {
-        cout << "[b10-recurse] Update with config: " << config->str() << endl;
-    }
+    dlog("New config comes: " + config->toWire());
+
     try {
         // Parse forward_addresses
         ConstElementPtr forwardAddressesE(config->get("forward_addresses"));
@@ -523,9 +499,7 @@ Recursor::updateConfig(ConstElementPtr config) {
         }
         return (isc::config::createAnswer());
     } catch (const isc::Exception& error) {
-        if (impl_->verbose_mode_) {
-            cerr << "[b10-recurse] error: " << error.what() << endl;
-        }
+        dlog(string("error in config: ") + error.what());
         return (isc::config::createAnswer(1, error.what()));
     }
 }
@@ -561,6 +535,10 @@ setAddresses(DNSService *service, const vector<addr_t>& addresses) {
 void
 Recursor::setListenAddresses(const vector<addr_t>& addresses) {
     try {
+        dlog("Setting listen addresses:");
+        BOOST_FOREACH(const addr_t& addr, addresses) {
+            dlog(" " + addr.first + boost::lexical_cast<string>(addr.second));
+        }
         setAddresses(dnss_, addresses);
         impl_->listen_ = addresses;
     }
@@ -576,8 +554,8 @@ Recursor::setListenAddresses(const vector<addr_t>& addresses) {
             setAddresses(dnss_, impl_->listen_);
         }
         catch (const exception& e2) {
-            cerr << "[b10-recurse] Unable to recover from error: " << e.what()
-                << endl << "Rollback failed with: " << e2.what() << endl;
+            dlog(string("Unable to recover from error: ") + e.what() +
+                " Rollback failed with: " + e2.what());
             abort();
         }
         throw e; // Let it fly a little bit further
