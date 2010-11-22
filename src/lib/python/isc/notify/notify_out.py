@@ -367,6 +367,7 @@ class NotifyOut:
                     zone_id = self._waiting_zones.pop(0) 
                     self._notify_infos[zone_id].prepare_notify_out()
                     self.notify_num += 1 
+                    self._notifying_zones.append(zone_id)
 
     def _send_notify_message_udp(self, zone_notify_info, addrinfo):
         msg, qid = self._create_notify_message(zone_notify_info.zone_name, 
