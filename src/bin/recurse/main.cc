@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <errno.h>
 
-#include <cassert>
+#include <string>
 #include <iostream>
 
 #include <boost/foreach.hpp>
@@ -47,17 +47,16 @@
 #include <recurse/spec_config.h>
 #include <recurse/recursor.h>
 
+#include <log/dummylog.h>
+
 using namespace std;
-using namespace isc::data;
 using namespace isc::cc;
 using namespace isc::config;
-using namespace isc::dns;
-using namespace isc::xfr;
+using namespace isc::data;
+using isc::log::dlog;
 using namespace asiolink;
 
 namespace {
-
-static bool verbose_mode = false;
 
 // Default port current 5300 for testing purposes
 static const string PROGRAM = "Recurse";
@@ -96,6 +95,7 @@ usage() {
 
 int
 main(int argc, char* argv[]) {
+    isc::log::dprefix = "b10-recurse";
     int ch;
     const char* uid = NULL;
 
@@ -105,7 +105,7 @@ main(int argc, char* argv[]) {
             uid = optarg;
             break;
         case 'v':
-            verbose_mode = true;
+            isc::log::denabled = true;
             break;
         case '?':
         default:
@@ -115,6 +115,14 @@ main(int argc, char* argv[]) {
 
     if (argc - optind > 0) {
         usage();
+    }
+
+    if (isc::log::denabled) { // Show the command line
+        string cmdline("Command line:");
+        for (int i = 0; i < argc; ++ i) {
+            cmdline = cmdline + " " + argv[i];
+        }
+        dlog(cmdline);
     }
 
     int ret = 0;
@@ -131,8 +139,7 @@ main(int argc, char* argv[]) {
         }
 
         recursor = new Recursor();
-        recursor->setVerbose(verbose_mode);
-        cout << "[b10-recurse] Server created." << endl;
+        dlog("Server created.");
 
         SimpleCallback* checkin = recursor->getCheckinProvider();
         DNSLookup* lookup = recursor->getDNSLookupProvider();
@@ -141,15 +148,15 @@ main(int argc, char* argv[]) {
         DNSService dns_service(io_service, checkin, lookup, answer);
 
         recursor->setDNSService(dns_service);
-        cout << "[b10-recurse] IOService created." << endl;
+        dlog("IOService created.");
 
         cc_session = new Session(io_service.get_io_service());
-        cout << "[b10-recurse] Configuration session channel created." << endl;
+        dlog("Configuration session channel created.");
 
         config_session = new ModuleCCSession(specfile, *cc_session,
                                              my_config_handler,
                                              my_command_handler);
-        cout << "[b10-recurse] Configuration channel established." << endl;
+        dlog("Configuration channel established.");
 
         // FIXME: This does not belong here, but inside Boss
         if (uid != NULL) {
@@ -158,11 +165,12 @@ main(int argc, char* argv[]) {
 
         recursor->setConfigSession(config_session);
         recursor->updateConfig(config_session->getFullConfig());
+        dlog("Config loaded");
 
-        cout << "[b10-recurse] Server started." << endl;
+        dlog("Server started.");
         io_service.run();
     } catch (const std::exception& ex) {
-        cerr << "[b10-recurse] Server failed: " << ex.what() << endl;
+        dlog(string("Server failed: ") + ex.what());
         ret = 1;
     }
 

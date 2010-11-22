@@ -1,4 +1,9 @@
   TBD.  [func]      vorner
+	New temporary logging function available in isc::log. It is used by
+	b10-recurse.
+	(Trac #393, r3602)
+
+  TBD.  [func]      vorner
 	The b10-recursive is configured through config manager.
 	It has "listen_on" and "forward_addresses" options.
 	(Trac #389, r3448)
