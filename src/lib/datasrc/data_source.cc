@@ -95,7 +95,7 @@ getAdditional(Query& q, ConstRRsetPtr rrset) {
     }
 
     RdataIteratorPtr it = rrset->getRdataIterator();
-    for (it->first(); !it->isLast(); it->next()) {
+    for (; !it->isLast(); it->next()) {
         const Rdata& rd(it->getCurrent());
         if (rrset->getType() == RRType::NS()) {
             const generic::NS& ns = dynamic_cast<const generic::NS&>(rd);
@@ -123,7 +123,6 @@ synthesizeCname(QueryTaskPtr task, RRsetPtr rrset, RRsetList& target) {
 
     // More than one DNAME RR in the RRset is illegal, so we only have
     // to process the first one.
-    it->first();
     if (it->isLast()) {
         return;
     }
@@ -152,7 +151,6 @@ chaseCname(Query& q, QueryTaskPtr task, RRsetPtr rrset) {
 
     // More than one CNAME RR in the RRset is illegal, so we only have
     // to process the first one.
-    it->first();
     if (it->isLast()) {
         return;
     }
@@ -660,7 +658,6 @@ getNsec3Param(Query& q, ZoneInfo& zoneinfo) {
     // XXX: currently only one NSEC3 chain per zone is supported;
     // we will need to revisit this.
     RdataIteratorPtr it = rrset->getRdataIterator();
-    it->first();
     if (it->isLast()) {
         return (ConstNsec3ParamPtr());
     }
