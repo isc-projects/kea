@@ -1,3 +1,15 @@
+  118.	[func]		jinmei
+	src/lib/dns: changed the interface of AbstractRRset::getRdataIterator()
+	so that the internal cursor would point to the first RDATA
+	automatically.  This will be a more intuitive and less error prone
+	behavior.  This is a backward compatible change. (Trac #410, r3595)
+
+  117.  [func]		jinmei
+	src/lib/datasrc: added new zone and zone table classes for the
+	support of in memory data source.  This is an intermediate step to
+	the bigger feature, and is not yet actually usable in practice.
+	(Trac #399, svn r3590)
+
   116.	[bug]		jerry
 	src/bin/xfrout: Xfrout and Auth will communicate by long tcp
 	connection, Auth needs to make a new connection only on the first
