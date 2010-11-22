@@ -35,6 +35,7 @@
 
 using isc::UnitTestUtil;
 using namespace std;
+using namespace isc;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 
@@ -51,24 +52,45 @@ using namespace isc::dns::rdata;
 //
 
 const uint16_t Message::DEFAULT_MAX_UDPSIZE;
+const Name test_name("test.example.com");
 
 namespace {
 class MessageTest : public ::testing::Test {
 protected:
     MessageTest() : obuffer(0), renderer(obuffer),
                     message_parse(Message::PARSE),
-                    message_render(Message::RENDER)
-    {}
+                    message_render(Message::RENDER),
+                    bogus_section(static_cast<Message::Section>(
+                                      Message::SECTION_ADDITIONAL + 1))
+    {
+        rrset_a = RRsetPtr(new RRset(test_name, RRClass::IN(),
+                                     RRType::A(), RRTTL(3600)));
+        rrset_a->addRdata(in::A("192.0.2.1"));
+        rrset_a->addRdata(in::A("192.0.2.2"));
+
+        rrset_aaaa = RRsetPtr(new RRset(test_name, RRClass::IN(),
+                                        RRType::AAAA(), RRTTL(3600)));
+        rrset_aaaa->addRdata(in::AAAA("2001:db8::1234"));
+
+        rrset_rrsig = RRsetPtr(new RRset(test_name, RRClass::IN(),
+                                        RRType::RRSIG(), RRTTL(3600)));
+        rrset_rrsig->addRdata(generic::RRSIG("AAAA 5 3 7200 20100322084538 "
+                                             "20100220084538 1 example.com "
+                                             "FAKEFAKEFAKEFAKE"));
+        rrset_aaaa->addRRsig(rrset_rrsig);
+    }
     
     static Question factoryFromFile(const char* datafile);
     OutputBuffer obuffer;
     MessageRenderer renderer;
     Message message_parse;
     Message message_render;
+    const Message::Section bogus_section;
+    RRsetPtr rrset_a;           // A RRset with two RDATAs
+    RRsetPtr rrset_aaaa;        // AAAA RRset with one RDATA with RRSIG
+    RRsetPtr rrset_rrsig;       // RRSIG for the AAAA RRset
     static void factoryFromFile(Message& message, const char* datafile);
 };
-
-const Name test_name("test.example.com");
 
 void
 MessageTest::factoryFromFile(Message& message, const char* datafile) {
@@ -77,6 +99,52 @@ MessageTest::factoryFromFile(Message& message, const char* datafile) {
 
     InputBuffer buffer(&data[0], data.size());
     message.fromWire(buffer);
+}
+
+TEST_F(MessageTest, headerFlag) {
+    // by default no flag is set
+    EXPECT_FALSE(message_render.getHeaderFlag(Message::HEADERFLAG_QR));
+    EXPECT_FALSE(message_render.getHeaderFlag(Message::HEADERFLAG_AA));
+    EXPECT_FALSE(message_render.getHeaderFlag(Message::HEADERFLAG_TC));
+    EXPECT_FALSE(message_render.getHeaderFlag(Message::HEADERFLAG_RD));
+    EXPECT_FALSE(message_render.getHeaderFlag(Message::HEADERFLAG_RA));
+    EXPECT_FALSE(message_render.getHeaderFlag(Message::HEADERFLAG_AD));
+    EXPECT_FALSE(message_render.getHeaderFlag(Message::HEADERFLAG_CD));
+
+    // set operation: by default it will be on
+    message_render.setHeaderFlag(Message::HEADERFLAG_QR);
+    EXPECT_TRUE(message_render.getHeaderFlag(Message::HEADERFLAG_QR));
+
+    // it can be set to on explicitly, too
+    message_render.setHeaderFlag(Message::HEADERFLAG_AA, true);
+    EXPECT_TRUE(message_render.getHeaderFlag(Message::HEADERFLAG_AA));
+
+    // the bit can also be cleared
+    message_render.setHeaderFlag(Message::HEADERFLAG_AA, false);
+    EXPECT_FALSE(message_render.getHeaderFlag(Message::HEADERFLAG_AA));
+
+    // Invalid flag values
+    EXPECT_THROW(message_render.setHeaderFlag(
+                     static_cast<Message::HeaderFlag>(0)), InvalidParameter);
+    EXPECT_THROW(message_render.setHeaderFlag(
+                     static_cast<Message::HeaderFlag>(0x7000)),
+                 InvalidParameter);
+    EXPECT_THROW(message_render.setHeaderFlag(
+                     static_cast<Message::HeaderFlag>(0x0800)),
+                 InvalidParameter);
+    EXPECT_THROW(message_render.setHeaderFlag(
+                     static_cast<Message::HeaderFlag>(0x0040)),
+                 InvalidParameter);
+    EXPECT_THROW(message_render.setHeaderFlag(
+                     static_cast<Message::HeaderFlag>(0x10000)),
+                 InvalidParameter);
+    EXPECT_THROW(message_render.setHeaderFlag(
+                     static_cast<Message::HeaderFlag>(0x80000000)),
+                 InvalidParameter);
+
+    // set operation isn't allowed in the parse mode.
+    EXPECT_THROW(message_parse.setHeaderFlag(Message::HEADERFLAG_QR),
+                 InvalidMessageOperation);
 }
 
 TEST_F(MessageTest, getEDNS) {
@@ -99,25 +167,126 @@ TEST_F(MessageTest, setEDNS) {
     EXPECT_EQ(edns, message_render.getEDNS());
 }
 
+TEST_F(MessageTest, getRRCount) {
+    // by default all counters should be 0
+    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_QUESTION));
+    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_AUTHORITY));
+    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_ADDITIONAL));
+
+    message_render.addQuestion(Question(Name("test.example.com"),
+                                        RRClass::IN(), RRType::A()));
+    EXPECT_EQ(1, message_render.getRRCount(Message::SECTION_QUESTION));
+
+    // rrset_a contains two RRs
+    message_render.addRRset(Message::SECTION_ANSWER, rrset_a);
+    EXPECT_EQ(2, message_render.getRRCount(Message::SECTION_ANSWER));
+
+    // parse a message containing a Question and EDNS OPT RR.
+    // OPT shouldn't be counted as normal RR, so result of getRRCount
+    // shouldn't change.
+    factoryFromFile(message_parse, "message_fromWire11.wire");
+    EXPECT_EQ(1, message_render.getRRCount(Message::SECTION_QUESTION));
+    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_ADDITIONAL));
+
+    // out-of-band section ID
+    EXPECT_THROW(message_parse.getRRCount(bogus_section), OutOfRange);
+}
+
+TEST_F(MessageTest, addRRset) {
+    // default case
+    message_render.addRRset(Message::SECTION_ANSWER, rrset_a);
+    EXPECT_EQ(rrset_a,
+              *message_render.beginSection(Message::SECTION_ANSWER));
+    EXPECT_EQ(2, message_render.getRRCount(Message::SECTION_ANSWER));
+
+    // signed RRset, default case
+    message_render.clear(Message::RENDER);
+    message_render.addRRset(Message::SECTION_ANSWER, rrset_aaaa);
+    EXPECT_EQ(rrset_aaaa,
+              *message_render.beginSection(Message::SECTION_ANSWER));
+    EXPECT_EQ(1, message_render.getRRCount(Message::SECTION_ANSWER));
+
+    // signed RRset, add with the RRSIG.  getRRCount() should return 2
+    message_render.clear(Message::RENDER);
+    message_render.addRRset(Message::SECTION_ANSWER, rrset_aaaa, true);
+    EXPECT_EQ(rrset_aaaa,
+              *message_render.beginSection(Message::SECTION_ANSWER));
+    EXPECT_EQ(2, message_render.getRRCount(Message::SECTION_ANSWER));
+
+    // signed RRset, add explicitly without RRSIG.
+    message_render.clear(Message::RENDER);
+    message_render.addRRset(Message::SECTION_ANSWER, rrset_aaaa, false);
+    EXPECT_EQ(rrset_aaaa,
+              *message_render.beginSection(Message::SECTION_ANSWER));
+    EXPECT_EQ(1, message_render.getRRCount(Message::SECTION_ANSWER));
+}
+
+TEST_F(MessageTest, badAddRRset) {
+    // addRRset() isn't allowed in the parse mode.
+    EXPECT_THROW(message_parse.addRRset(Message::SECTION_ANSWER,
+                                        rrset_a), InvalidMessageOperation);
+    // out-of-band section ID
+    EXPECT_THROW(message_render.addRRset(bogus_section, rrset_a), OutOfRange);
+}
+
+TEST_F(MessageTest, hasRRset) {
+    message_render.addRRset(Message::SECTION_ANSWER, rrset_a);
+    EXPECT_TRUE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
+                                        RRClass::IN(), RRType::A()));
+    // section doesn't match
+    EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ADDITIONAL, test_name,
+                                         RRClass::IN(), RRType::A()));
+    // name doesn't match
+    EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ANSWER,
+                                         Name("nomatch.example"),
+                                         RRClass::IN(), RRType::A()));
+    // RR class doesn't match
+    EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
+                                        RRClass::CH(), RRType::A()));
+    // RR type doesn't match
+    EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
+                                        RRClass::IN(), RRType::AAAA()));
+
+    // out-of-band section ID
+    EXPECT_THROW(message_render.hasRRset(bogus_section, test_name,
+                                         RRClass::IN(), RRType::A()),
+                 OutOfRange);
+}
+
+TEST_F(MessageTest, badBeginSection) {
+    // valid cases are tested via other tests
+    EXPECT_THROW(message_render.beginSection(Message::SECTION_QUESTION),
+                 InvalidMessageSection);
+    EXPECT_THROW(message_render.beginSection(bogus_section), OutOfRange);
+}
+
+TEST_F(MessageTest, badEndSection) {
+    // valid cases are tested via other tests
+    EXPECT_THROW(message_render.endSection(Message::SECTION_QUESTION),
+                 InvalidMessageSection);
+    EXPECT_THROW(message_render.endSection(bogus_section), OutOfRange);
+}
+
 TEST_F(MessageTest, fromWire) {
     factoryFromFile(message_parse, "message_fromWire1");
     EXPECT_EQ(0x1035, message_parse.getQid());
     EXPECT_EQ(Opcode::QUERY(), message_parse.getOpcode());
     EXPECT_EQ(Rcode::NOERROR(), message_parse.getRcode());
-    EXPECT_TRUE(message_parse.getHeaderFlag(MessageFlag::QR()));
-    EXPECT_TRUE(message_parse.getHeaderFlag(MessageFlag::RD()));
-    EXPECT_TRUE(message_parse.getHeaderFlag(MessageFlag::AA()));
+    EXPECT_TRUE(message_parse.getHeaderFlag(Message::HEADERFLAG_QR));
+    EXPECT_TRUE(message_parse.getHeaderFlag(Message::HEADERFLAG_RD));
+    EXPECT_TRUE(message_parse.getHeaderFlag(Message::HEADERFLAG_AA));
 
     QuestionPtr q = *message_parse.beginQuestion();
     EXPECT_EQ(test_name, q->getName());
     EXPECT_EQ(RRType::A(), q->getType());
     EXPECT_EQ(RRClass::IN(), q->getClass());
-    EXPECT_EQ(1, message_parse.getRRCount(Section::QUESTION()));
-    EXPECT_EQ(2, message_parse.getRRCount(Section::ANSWER()));
-    EXPECT_EQ(0, message_parse.getRRCount(Section::AUTHORITY()));
-    EXPECT_EQ(0, message_parse.getRRCount(Section::ADDITIONAL()));
+    EXPECT_EQ(1, message_parse.getRRCount(Message::SECTION_QUESTION));
+    EXPECT_EQ(2, message_parse.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(0, message_parse.getRRCount(Message::SECTION_AUTHORITY));
+    EXPECT_EQ(0, message_parse.getRRCount(Message::SECTION_ADDITIONAL));
 
-    RRsetPtr rrset = *message_parse.beginSection(Section::ANSWER());
+    RRsetPtr rrset = *message_parse.beginSection(Message::SECTION_ANSWER);
     EXPECT_EQ(test_name, rrset->getName());
     EXPECT_EQ(RRType::A(), rrset->getType());
     EXPECT_EQ(RRClass::IN(), rrset->getClass());
@@ -157,21 +326,17 @@ TEST_F(MessageTest, toWire) {
     message_render.setQid(0x1035);
     message_render.setOpcode(Opcode::QUERY());
     message_render.setRcode(Rcode::NOERROR());
-    message_render.setHeaderFlag(MessageFlag::QR());
-    message_render.setHeaderFlag(MessageFlag::RD());
-    message_render.setHeaderFlag(MessageFlag::AA());
+    message_render.setHeaderFlag(Message::HEADERFLAG_QR, true);
+    message_render.setHeaderFlag(Message::HEADERFLAG_RD, true);
+    message_render.setHeaderFlag(Message::HEADERFLAG_AA, true);
     message_render.addQuestion(Question(Name("test.example.com"), RRClass::IN(),
                                         RRType::A()));
-    RRsetPtr rrset = RRsetPtr(new RRset(Name("test.example.com"), RRClass::IN(),
-                                        RRType::A(), RRTTL(3600)));
-    rrset->addRdata(in::A("192.0.2.1"));
-    rrset->addRdata(in::A("192.0.2.2"));
-    message_render.addRRset(Section::ANSWER(), rrset);
+    message_render.addRRset(Message::SECTION_ANSWER, rrset_a);
 
-    EXPECT_EQ(1, message_render.getRRCount(Section::QUESTION()));
-    EXPECT_EQ(2, message_render.getRRCount(Section::ANSWER()));
-    EXPECT_EQ(0, message_render.getRRCount(Section::AUTHORITY()));
-    EXPECT_EQ(0, message_render.getRRCount(Section::ADDITIONAL()));
+    EXPECT_EQ(1, message_render.getRRCount(Message::SECTION_QUESTION));
+    EXPECT_EQ(2, message_render.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_AUTHORITY));
+    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_ADDITIONAL));
 
     message_render.toWire(renderer);
     vector<unsigned char> data;

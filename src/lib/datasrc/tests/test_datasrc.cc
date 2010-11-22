@@ -307,7 +307,7 @@ vector<Zone> zones;
 }
 
 DataSrc::Result
-TestDataSrc::init(isc::data::ConstElementPtr config UNUSED_PARAM) {
+TestDataSrc::init(isc::data::ConstElementPtr) {
     return (init());
 }
 
@@ -623,10 +623,7 @@ TestDataSrc::findPreviousName(const Name& qname,
 }
 
 DataSrc::Result
-TestDataSrc::findCoveringNSEC3(const Name& zonename UNUSED_PARAM,
-                               string& hash UNUSED_PARAM,
-                               RRsetList& target UNUSED_PARAM) const
-{
+TestDataSrc::findCoveringNSEC3(const Name&, string&, RRsetList&) const {
     return (NOT_IMPLEMENTED);
 }
 
