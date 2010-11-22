@@ -396,7 +396,8 @@ RBTree<T>::findHelper(const Name& name, const RBTree<T>** tree,
                     return (node->down_->findHelper(name - node->name_, tree,
                                                     ret));
                 } else {
-                    RBTree<T>::FindResult result = RBTree<T>::NOTFOUND;
+                    typename RBTree<T>::FindResult result =
+                        RBTree<T>::NOTFOUND;
                     if (node->down_ != NULL) {
                         result = node->down_->findHelper(name - node->name_,
                                                          tree, ret);
