@@ -165,7 +165,8 @@ TEST_F(RecursorConfig, forwardAddressConfig) {
     EXPECT_EQ(0, server.getForwardAddresses().size());
 }
 
-void RecursorConfig::invalidTest(const string &JOSN) {
+void
+RecursorConfig::invalidTest(const string &JOSN) {
     ElementPtr config(Element::fromJSON(JOSN));
     EXPECT_FALSE(server.updateConfig(config)->equals(
         *isc::config::createAnswer())) << "Accepted config " << JOSN << endl;
@@ -276,6 +277,42 @@ TEST_F(RecursorConfig, invalidListenAddresses) {
         "   \"port\": 53,"
         "   \"address\": \"bad_address\""
         "}]}");
+}
+
+// Just test it sets and gets the values correctly
+TEST_F(RecursorConfig, timeouts) {
+    server.setTimeouts(0, 1);
+    EXPECT_EQ(0, server.getTimeouts().first);
+    EXPECT_EQ(1, server.getTimeouts().second);
+    server.setTimeouts();
+    EXPECT_EQ(-1, server.getTimeouts().first);
+    EXPECT_EQ(0, server.getTimeouts().second);
+}
+
+TEST_F(RecursorConfig, timeoutsConfig) {
+    ElementPtr config = Element::fromJSON("{"
+            "\"timeout\": 1000,"
+            "\"retries\": 3"
+            "}");
+    ConstElementPtr result(server.updateConfig(config));
+    EXPECT_EQ(result->toWire(), isc::config::createAnswer()->toWire());
+    EXPECT_EQ(1000, server.getTimeouts().first);
+    EXPECT_EQ(3, server.getTimeouts().second);
+}
+
+TEST_F(RecursorConfig, invalidTimeoutsConfig) {
+    invalidTest("{"
+        "\"timeout\": \"error\""
+        "}");
+    invalidTest("{"
+        "\"timeout\": -2"
+        "}");
+    invalidTest("{"
+        "\"retries\": \"error\""
+        "}");
+    invalidTest("{"
+        "\"retries\": -1"
+        "}");
 }
 
 }
