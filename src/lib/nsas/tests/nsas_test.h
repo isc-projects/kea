@@ -30,6 +30,7 @@
 #include <dns/buffer.h>
 #include <dns/rdata.h>
 #include <dns/rrtype.h>
+#include <dns/rrttl.h>
 #include <dns/messagerenderer.h>
 #include "../nsas_entry.h"
 #include "../resolver_interface.h"
@@ -219,6 +220,10 @@ namespace {
 
 using namespace std;
 
+/*
+ * This pretends to be a resolver. It stores the queries and
+ * they can be answered.
+ */
 class TestResolver : public isc::nsas::ResolverInterface {
     public:
         typedef pair<QuestionPtr, CallbackPtr> Request;
@@ -229,7 +234,7 @@ class TestResolver : public isc::nsas::ResolverInterface {
         QuestionPtr operator[](size_t index) {
             return (requests[index].first);
         }
-        /**
+        /*
          * Looks if the two provided requests in resolver are A and AAAA.
          * Sorts them so index1 is A.
          */
@@ -252,6 +257,21 @@ class TestResolver : public isc::nsas::ResolverInterface {
             // Check the correct addresses
             EXPECT_EQ(RRType::A(), (*this)[index1]->getType());
             EXPECT_EQ(RRType::AAAA(), (*this)[index2]->getType());
+        }
+
+        /*
+         * Sends a simple answer to a query.
+         * Provide index of a query and the address to pass.
+         */
+        void answer(size_t index, const Name& name, const rdata::Rdata& rdata,
+            size_t TTL = 100) {
+            RRsetPtr set(new RRset(name, RRClass::IN(),
+                RRType::A(), RRTTL(TTL)));
+            set->addRdata(rdata);
+            Message address(Message::RENDER); // Not able to create different one
+            address.addRRset(Section::ANSWER(), set);
+            address.addQuestion(requests[index].first);
+            requests[index].second->success(address);
         }
 };
 

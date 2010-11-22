@@ -111,7 +111,7 @@ protected:
     /// \short Just a really stupid callback counting times called
     struct Callback : public NameserverEntry::Callback {
         size_t count;
-        virtual void operator()(shared_ptr<ZoneEntry>) {
+        virtual void operator()(NameserverEntry*) {
             count ++;
         }
         Callback() : count(0) { }
@@ -220,11 +220,11 @@ TEST_F(NameserverEntryTest, AddressListConstructor) {
     EXPECT_EQ(0, av.size());
 
     NameserverEntry::AddressVector av4;
-    alpha.getAddresses(av4, AF_INET);
+    alpha.getAddresses(av4, V4_ONLY);
     EXPECT_EQ(0, av4.size());
 
     NameserverEntry::AddressVector av6;
-    alpha.getAddresses(av6, AF_INET6);
+    alpha.getAddresses(av6, V6_ONLY);
     EXPECT_EQ(0, av6.size());
 
     // Initialize with V4 addresses only.
@@ -236,11 +236,11 @@ TEST_F(NameserverEntryTest, AddressListConstructor) {
     EXPECT_EQ(rrv4_.getRdataCount(), bv.size());
 
     NameserverEntry::AddressVector bv4;
-    beta.getAddresses(bv4, AF_INET);
+    beta.getAddresses(bv4, V4_ONLY);
     EXPECT_EQ(rrv4_.getRdataCount(), bv4.size());
 
     NameserverEntry::AddressVector bv6;
-    beta.getAddresses(bv6, AF_INET6);
+    beta.getAddresses(bv6, V6_ONLY);
     EXPECT_EQ(0, bv6.size());
 
     // Check that the addresses received are unique.
@@ -256,11 +256,11 @@ TEST_F(NameserverEntryTest, AddressListConstructor) {
     EXPECT_EQ(rrv6_.getRdataCount(), cv.size());
 
     NameserverEntry::AddressVector cv4;
-    gamma.getAddresses(cv4, AF_INET);
+    gamma.getAddresses(cv4, V4_ONLY);
     EXPECT_EQ(0, cv4.size());
 
     NameserverEntry::AddressVector cv6;
-    gamma.getAddresses(cv6, AF_INET6);
+    gamma.getAddresses(cv6, V6_ONLY);
     EXPECT_EQ(rrv6_.getRdataCount(), cv6.size());
 
     SCOPED_TRACE("Checking V6 addresses");
@@ -274,13 +274,13 @@ TEST_F(NameserverEntryTest, AddressListConstructor) {
     EXPECT_EQ((rrv4_.getRdataCount() + rrv6_.getRdataCount()), dv.size());
 
     NameserverEntry::AddressVector dv4;
-    delta.getAddresses(dv4, AF_INET);
+    delta.getAddresses(dv4, V4_ONLY);
     EXPECT_EQ(rrv4_.getRdataCount(), dv4.size());
     SCOPED_TRACE("Checking V4 addresses after dual-address family constructor");
     CompareAddresses(dv4, rrv4_);
 
     NameserverEntry::AddressVector dv6;
-    delta.getAddresses(dv6, AF_INET6);
+    delta.getAddresses(dv6, V6_ONLY);
     EXPECT_EQ(rrv6_.getRdataCount(), dv6.size());
     SCOPED_TRACE("Checking V6 addresses after dual-address family constructor");
     CompareAddresses(dv6, rrv6_);
@@ -288,8 +288,8 @@ TEST_F(NameserverEntryTest, AddressListConstructor) {
     // ... and check that the composite of the v4 and v6 addresses is the same
     // as that returned by the get without a filter.
     NameserverEntry::AddressVector dvcomponent;
-    delta.getAddresses(dvcomponent, AF_INET);
-    delta.getAddresses(dvcomponent, AF_INET6);
+    delta.getAddresses(dvcomponent, V4_ONLY);
+    delta.getAddresses(dvcomponent, V6_ONLY);
     SCOPED_TRACE("Checking V4+V6 addresses same as composite return");
     CompareAddressVectors(dv, dvcomponent);
 }
@@ -466,70 +466,76 @@ TEST_F(NameserverEntryTest, CheckClass) {
 }
 
 // Tests if it asks the IP addresses and calls callbacks when it comes
+// including the right addresses are returned and that they expire
 TEST_F(NameserverEntryTest, IPCallbacks) {
     shared_ptr<NameserverEntry> entry(new NameserverEntry(EXAMPLE_CO_UK,
         RRClass::IN().getCode()));
-    Callback callback;
+    shared_ptr<Callback> callback(new Callback);
     TestResolver resolver;
-    shared_ptr<ZoneEntry> no_zone, zone(new ZoneEntry(EXAMPLE_CO_UK,
-        RRClass::IN().getCode()));
 
-    // Ensure that we do not add callbacks now
-    EXPECT_THROW(entry->ensureHasCallback(no_zone, callback), isc::BadValue);
-
-    entry->askIP(resolver, no_zone, callback, entry);
+    entry->askIP(resolver, callback, ANY_OK, entry);
     // Ensure it becomes IN_PROGRESS
     EXPECT_EQ(Fetchable::IN_PROGRESS, entry->getState());
-    // Ensure we can ask for IP address only once
-    EXPECT_THROW(entry->askIP(resolver, no_zone, callback, entry),
-        isc::BadValue);
-
-    // Add a callback for a different zone
-    entry->ensureHasCallback(zone, callback);
-
     // Now, there should be two queries in the resolver
     ASSERT_EQ(2, resolver.requests.size());
     resolver.asksIPs(Name(EXAMPLE_CO_UK), 0, 1);
 
-    // Answer one and see that the callbacks are called
-    RRsetPtr answer(new RRset(Name(EXAMPLE_CO_UK), RRClass::IN(), RRType::A(),
-        RRTTL(100)));
-    answer->addRdata(rdata::in::A("192.0.2.1"));
-    Message address(Message::RENDER); // Not able to create different one
-    address.addRRset(Section::ANSWER(), answer);
-    address.addQuestion(resolver[0]);
-    resolver.requests[0].second->success(address);
+    // Another one might ask
+    entry->askIP(resolver, callback, V4_ONLY, entry);
+    // There should still be only two queries in the resolver
+    ASSERT_EQ(2, resolver.requests.size());
 
-    // Both callbacks should be called by now
-    EXPECT_EQ(2, callback.count);
+    // Another one, with need of IPv6 address
+    entry->askIP(resolver, callback, V6_ONLY, entry);
+
+    // Answer one and see that the callbacks are called
+    resolver.answer(0, Name(EXAMPLE_CO_UK), rdata::in::A("192.0.2.1"));
+
+    // Both callbacks that want IPv4 should be called by now
+    EXPECT_EQ(2, callback->count);
     // It should contain one IP address
     NameserverEntry::AddressVector addresses;
-    entry->getAddresses(addresses);
+    // Still in progress, waiting for the other address
+    EXPECT_EQ(Fetchable::IN_PROGRESS, entry->getAddresses(addresses));
     EXPECT_EQ(1, addresses.size());
-    EXPECT_EQ(Fetchable::READY, entry->getState());
+    // Answer IPv6 address
+    // It is with zero TTL, so it should expire right away
+    resolver.answer(1, Name(EXAMPLE_CO_UK), rdata::in::AAAA("1001:db8::1"), 0);
+    // The other callback should appear
+    EXPECT_EQ(3, callback->count);
+    // It should return the one address. It should be expired, but
+    // we ignore it for now
+    EXPECT_EQ(Fetchable::READY, entry->getAddresses(addresses, V6_ONLY, true));
+    // Another address should appear
+    EXPECT_EQ(2, addresses.size());
+    // But when we do not ignore it, it should not appear
+    EXPECT_EQ(Fetchable::EXPIRED, entry->getAddresses(addresses, V6_ONLY));
+    EXPECT_EQ(2, addresses.size());
 }
 
 // Test the callback is called even when the address is unreachable
 TEST_F(NameserverEntryTest, IPCallbacksUnreachable) {
     shared_ptr<NameserverEntry> entry(new NameserverEntry(EXAMPLE_CO_UK,
         RRClass::IN().getCode()));
-    Callback callback;
+    shared_ptr<Callback> callback(new Callback);
     TestResolver resolver;
-    shared_ptr<ZoneEntry> no_zone;
 
     // Ask for its IP
-    entry->askIP(resolver, no_zone, callback, entry);
+    entry->askIP(resolver, callback, ANY_OK, entry);
     // Check it asks the resolver
     ASSERT_EQ(2, resolver.requests.size());
     resolver.asksIPs(Name(EXAMPLE_CO_UK), 0, 1);
     resolver.requests[0].second->failure();
     // It should still wait for the second one
-    EXPECT_EQ(0, callback.count);
+    EXPECT_EQ(0, callback->count);
     EXPECT_EQ(Fetchable::IN_PROGRESS, entry->getState());
     // It should call the callback now and be unrechable
     resolver.requests[1].second->failure();
-    EXPECT_EQ(1, callback.count);
+    EXPECT_EQ(1, callback->count);
     EXPECT_EQ(Fetchable::UNREACHABLE, entry->getState());
+    NameserverEntry::AddressVector addresses;
+    EXPECT_EQ(Fetchable::UNREACHABLE, entry->getAddresses(addresses));
+    EXPECT_EQ(0, addresses.size());
 }
 
 }   // namespace nsas

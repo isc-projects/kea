@@ -111,6 +111,8 @@ private:
     mutable boost::mutex    mutex_;     ///< Mutex protecting this zone entry
     std::string     name_;      ///< Canonical zone name
     uint16_t        classCode_; ///< Class code
+    typedef boost::shared_ptr<NameserverEntry> NameserverPtr;
+    typedef std::vector<NameserverPtr> NameserverVector;
     NameserverVector nameservers_; ///< Nameservers
     time_t          expiry_;    ///< Expiry time of this entry
     std::list<boost::shared_ptr<AddressRequestCallback> > callbacks_;
@@ -118,7 +120,7 @@ private:
     // the nameservers (if there's chance there's some info) and calls
     // callbacks. If nameserver is given, it is considered new and valid
     // even if its TTL is 0.
-    void process(boosh::shared_ptr<AddressRequestCallback> callback,
+    void process(boost::shared_ptr<AddressRequestCallback> callback,
          bool v4ok, bool v6ok, NameserverEntry* nameserver);
 };
 

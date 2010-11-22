@@ -6,6 +6,7 @@ Nameserver entries:
   pointers to zones). This will ensure the zone is not deleted at wrong time.
 * There's only one function for adding callbacks, put them together.
 * Return if we timed out.
+* When it expires, it should invalidate the zone up above it.
 
 Zone entries:
 * They will be nameserver callbacks themself. This ensures that they are not

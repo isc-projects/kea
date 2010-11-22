@@ -17,9 +17,6 @@
 #ifndef __NSAS_TYPES_H
 #define __NSAS_TYPES_H
 
-#include <vector>
-#include <asio.h>
-
 /// \file nsas_types.h
 /// \brief Nameserver Address Store Types
 ///
@@ -27,9 +24,6 @@
 
 namespace isc {
 namespace nsas {
-
-/// \brief Array of nameserver addresses
-typedef std::vector<ip::address>    NsasAddress
 
 /// \brief Address requested
 enum AddressRequest {
