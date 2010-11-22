@@ -24,6 +24,7 @@ run_unittests_SOURCES += static_unittest.cc
 run_unittests_SOURCES += query_unittest.cc
 run_unittests_SOURCES += cache_unittest.cc
 run_unittests_SOURCES += test_datasrc.h test_datasrc.cc
+run_unittests_SOURCES += zonetable_unittest.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 run_unittests_LDADD = $(GTEST_LDADD)
