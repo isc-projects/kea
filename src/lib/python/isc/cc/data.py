@@ -31,10 +31,8 @@ def remove_identical(a, b):
     to_remove = []
     if type(a) != dict or type(b) != dict:
         raise DataTypeError("Not a dict in remove_identical()")
-    for ka in a.keys():
-        if ka in b and a[ka] == b[ka]:
-            to_remove.append(ka)
-    for id in to_remove:
+    duplicate_keys = [key for key in a.keys() if key in b and a[key] == b[key]]
+    for id in duplicate_keys:
         del(a[id])
 
 def merge(orig, new):
@@ -43,17 +41,20 @@ def merge(orig, new):
        new it will be removed in orig."""
     if type(orig) != dict or type(new) != dict:
         raise DataTypeError("Not a dict in merge()")
-    for kn in new.keys():
-        if kn in orig:
-            if new[kn]:
-                if type(new[kn]) == dict:
-                    merge(orig[kn], new[kn])
-                else:
-                    orig[kn] = new[kn]
-            else:
-                del orig[kn]
-        else:
-            orig[kn] = new[kn]
+    orig.update(new)
+    remove_null_items(orig)
+
+def remove_null_items(d):
+    """Recursively removes all (key,value) pairs from d where the
+       value is None"""
+    null_keys = []
+    for key in d.keys():
+        if type(d[key]) == dict:
+            remove_null_items(d[key])
+        elif d[key] is None:
+            null_keys.append(key)
+    for k in null_keys:
+        del d[k]
 
 def find(element, identifier):
     """Returns the subelement in the given data element, raises DataNotFoundError if not found"""

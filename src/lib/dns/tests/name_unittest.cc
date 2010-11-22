@@ -84,8 +84,7 @@ NameTest::nameFactoryFromWire(const char* datafile, size_t position,
 }
 
 Name
-NameTest::nameFactoryLowerCase()
-{
+NameTest::nameFactoryLowerCase() {
     string lowercase_namestr;
     lowercase_namestr.reserve(Name::MAX_WIRE);
 
@@ -124,8 +123,7 @@ NameTest::compareInWireFormat(const Name& name_actual,
                         buffer_expected.getData(), buffer_expected.getLength());
 }
 
-TEST_F(NameTest, nonlocalObject)
-{
+TEST_F(NameTest, nonlocalObject) {
     // A previous version of code relied on a non local static object for
     // name construction, so a non local static Name object defined outside
     // the name module might not be initialized correctly.  This test detects
@@ -133,8 +131,7 @@ TEST_F(NameTest, nonlocalObject)
     EXPECT_EQ("\\255.example.com.", downcased_global.toText());
 }
 
-TEST_F(NameTest, fromText)
-{
+TEST_F(NameTest, fromText) {
     vector<string> strnames;
     strnames.push_back("www.example.com");
     strnames.push_back("www.example.com."); // with a trailing dot
@@ -216,8 +213,7 @@ TEST_F(NameTest, fromText)
     EXPECT_EQ(Name::MAX_LABELS, maxlabels.getLabelCount());
 }
 
-TEST_F(NameTest, fromWire)
-{
+TEST_F(NameTest, fromWire) {
     //
     // test cases derived from BIND9 tests.
     //
@@ -271,8 +267,7 @@ TEST_F(NameTest, fromWire)
     EXPECT_EQ(3, nameFactoryFromWire("name_fromWire1", 25).getLabelCount());
 }
 
-TEST_F(NameTest, copyConstruct)
-{
+TEST_F(NameTest, copyConstruct) {
     Name copy(example_name);
     EXPECT_EQ(copy, example_name);
 
@@ -283,8 +278,7 @@ TEST_F(NameTest, copyConstruct)
     EXPECT_EQ(copy3, example_name);
 }
 
-TEST_F(NameTest, assignment)
-{
+TEST_F(NameTest, assignment) {
     Name copy(".");
     copy = example_name;
     EXPECT_EQ(copy, example_name);
@@ -301,8 +295,7 @@ TEST_F(NameTest, assignment)
     EXPECT_EQ(copy, example_name);
 }
 
-TEST_F(NameTest, toText)
-{
+TEST_F(NameTest, toText) {
     // tests derived from BIND9
     EXPECT_EQ("a.b.c.d", Name("a.b.c.d").toText(true));
     EXPECT_EQ("a.\\\\[[.c.d", Name("a.\\\\[\\[.c.d").toText(true));
@@ -349,31 +342,29 @@ TEST_F(NameTest, toText)
               nameFactoryFromWire("name_fromWire14", 0).toText());
 }
 
-TEST_F(NameTest, toWireBuffer)
-{
+TEST_F(NameTest, toWireBuffer) {
     vector<unsigned char> data;
     OutputBuffer buffer(0);
 
     UnitTestUtil::readWireData(string("01610376697803636f6d00"), data);
     Name("a.vix.com.").toWire(buffer);
-    EXPECT_EQ(true, buffer.getLength() == data.size() &&
-              memcmp(buffer.getData(), &data[0], data.size()) == 0);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, &data[0], data.size(),
+                        buffer.getData(), buffer.getLength());
 }
 
 //
 // We test various corner cases in Renderer tests, but add this test case
 // to fill the code coverage gap.
 //
-TEST_F(NameTest, toWireRenderer)
-{
+TEST_F(NameTest, toWireRenderer) {
     vector<unsigned char> data;
     OutputBuffer buffer(0);
     MessageRenderer renderer(buffer);
 
     UnitTestUtil::readWireData(string("01610376697803636f6d00"), data);
     Name("a.vix.com.").toWire(renderer);
-    EXPECT_EQ(true, buffer.getLength() == data.size() &&
-              memcmp(buffer.getData(), &data[0], data.size()) == 0);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, &data[0], data.size(),
+                        buffer.getData(), buffer.getLength());
 }
 
 //
@@ -443,9 +434,9 @@ TEST_F(NameTest, equal) {
 }
 
 TEST_F(NameTest, isWildcard) {
-    EXPECT_EQ(false, example_name.isWildcard());
-    EXPECT_EQ(true, Name("*.a.example.com").isWildcard());
-    EXPECT_EQ(false, Name("a.*.example.com").isWildcard());
+    EXPECT_FALSE(example_name.isWildcard());
+    EXPECT_TRUE(Name("*.a.example.com").isWildcard());
+    EXPECT_FALSE(Name("a.*.example.com").isWildcard());
 }
 
 TEST_F(NameTest, concatenate) {

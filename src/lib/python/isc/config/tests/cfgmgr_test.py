@@ -255,6 +255,7 @@ class TestConfigManager(unittest.TestCase):
                          self.fake_session.get_message(self.name, None))
         self.assertEqual(len(self.fake_session.message_queue), 0)
 
+        self.fake_session.group_sendmsg(None, 'ConfigManager')
         self._handle_msg_helper({ "command": [ "set_config", [ ] ] },
                                 {'result': [1, 'Wrong number of arguments']} )
         self._handle_msg_helper({ "command": [ "set_config", [ self.name, { "test": 125 }] ] },

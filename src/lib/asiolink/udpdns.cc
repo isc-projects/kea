@@ -31,6 +31,9 @@
 #include <dns/buffer.h>
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
+#include <log/dummylog.h>
+#include <dns/opcode.h>
+#include <dns/rcode.h>
 
 #include <asiolink.h>
 #include <internal/coroutine.h>
@@ -39,6 +42,7 @@
 using namespace asio;
 using asio::ip::udp;
 using asio::ip::tcp;
+using isc::log::dlog;
 
 using namespace std;
 using namespace isc::dns;
@@ -75,8 +79,6 @@ UDPServer::operator()(error_code ec, size_t length) {
     /// Because the coroutine reeentry block is implemented as
     /// a switch statement, inline variable declarations are not
     /// permitted.  Certain variables used below can be declared here.
-    IOEndpoint* peer;
-    IOSocket* iosock;
 
     CORO_REENTER (this) {
         do {
@@ -108,9 +110,9 @@ UDPServer::operator()(error_code ec, size_t length) {
         // (XXX: It would be good to write a factory function
         // that would quickly generate an IOMessage object without
         // all these calls to "new".)
-        peer = new UDPEndpoint(*sender_);
-        iosock = new UDPSocket(*socket_);
-        io_message_.reset(new IOMessage(data_.get(), bytes_, *iosock, *peer));
+        peer_.reset(new UDPEndpoint(*sender_));
+        iosock_.reset(new UDPSocket(*socket_));
+        io_message_.reset(new IOMessage(data_.get(), bytes_, *iosock_, *peer_));
 
         // Perform any necessary operations prior to processing an incoming
         // query (e.g., checking for queued configuration messages).
@@ -243,10 +245,12 @@ UDPQuery::operator()(error_code ec, size_t length) {
             msg.setQid(0);
             msg.setOpcode(Opcode::QUERY());
             msg.setRcode(Rcode::NOERROR());
-            msg.setHeaderFlag(MessageFlag::RD());
+            msg.setHeaderFlag(Message::HEADERFLAG_RD);
             msg.addQuestion(data_->question);
             MessageRenderer renderer(*data_->msgbuf);
             msg.toWire(renderer);
+            dlog("Sending " + msg.toText() + " to " +
+                data_->remote.address().to_string());
         }
 
         // If we timeout, we stop, which will shutdown everything and
@@ -271,6 +275,8 @@ UDPQuery::operator()(error_code ec, size_t length) {
         /// completes, we will resume immediately after this point.
         CORO_YIELD data_->socket.async_receive_from(buffer(data_->data.get(),
             MAX_LENGTH), data_->remote, *this);
+        // The message is not rendered yet, so we can't print it easilly
+        dlog("Received response from " + data_->remote.address().to_string());
 
         /// Copy the answer into the response buffer.  (XXX: If the
         /// OutputBuffer object were made to meet the requirements of

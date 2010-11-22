@@ -72,57 +72,49 @@ protected:
     static const int MAX_RDATA_COUNT = 100;
 };
 
-TEST_F(RRsetTest, getRdataCount)
-{
+TEST_F(RRsetTest, getRdataCount) {
     for (int i = 0; i < MAX_RDATA_COUNT; ++i) {
         EXPECT_EQ(i, rrset_a_empty.getRdataCount());
         rrset_a_empty.addRdata(in::A("192.0.2.1"));
     }
 }
 
-TEST_F(RRsetTest, getName)
-{
+TEST_F(RRsetTest, getName) {
     EXPECT_EQ(test_name, rrset_a.getName());
     EXPECT_EQ(test_domain, rrset_ns.getName());
 }
 
-TEST_F(RRsetTest, getClass)
-{
+TEST_F(RRsetTest, getClass) {
     EXPECT_EQ(RRClass("IN"), rrset_a.getClass());
     EXPECT_EQ(RRClass("CH"), rrset_ch_txt.getClass());
 }
 
-TEST_F(RRsetTest, getType)
-{
+TEST_F(RRsetTest, getType) {
     EXPECT_EQ(RRType("A"), rrset_a.getType());
     EXPECT_EQ(RRType("NS"), rrset_ns.getType());
     EXPECT_EQ(RRType("TXT"), rrset_ch_txt.getType());
 }
 
-TEST_F(RRsetTest, getTTL)
-{
+TEST_F(RRsetTest, getTTL) {
     EXPECT_EQ(RRTTL(3600), rrset_a.getTTL());
     EXPECT_EQ(RRTTL(86400), rrset_ns.getTTL());
     EXPECT_EQ(RRTTL(0), rrset_ch_txt.getTTL());
 }
 
-TEST_F(RRsetTest, setTTL)
-{
+TEST_F(RRsetTest, setTTL) {
     rrset_a.setTTL(RRTTL(86400));
     EXPECT_EQ(RRTTL(86400), rrset_a.getTTL());
     rrset_a.setTTL(RRTTL(0));
     EXPECT_EQ(RRTTL(0), rrset_a.getTTL());
 }
 
-TEST_F(RRsetTest, setName)
-{
+TEST_F(RRsetTest, setName) {
     rrset_a.setName(test_nsname);
     EXPECT_EQ(test_nsname, rrset_a.getName());
 }
 
 void
-addRdataTestCommon(const RRset& rrset)
-{
+addRdataTestCommon(const RRset& rrset) {
     EXPECT_EQ(2, rrset.getRdataCount());
 
     RdataIteratorPtr it = rrset.getRdataIterator();
@@ -136,8 +128,7 @@ addRdataTestCommon(const RRset& rrset)
     EXPECT_TRUE(it->isLast());
 }
 
-TEST_F(RRsetTest, addRdata)
-{
+TEST_F(RRsetTest, addRdata) {
     addRdataTestCommon(rrset_a);
 
     // Reference version of addRdata() doesn't allow to add a different
@@ -145,8 +136,7 @@ TEST_F(RRsetTest, addRdata)
     EXPECT_THROW(rrset_a.addRdata(generic::NS(test_nsname)), std::bad_cast);
 }
 
-TEST_F(RRsetTest, addRdataPtr)
-{
+TEST_F(RRsetTest, addRdataPtr) {
     rrset_a_empty.addRdata(createRdata(rrset_a_empty.getType(),
                                        rrset_a_empty.getClass(),
                                        "192.0.2.1"));
@@ -163,8 +153,7 @@ TEST_F(RRsetTest, addRdataPtr)
     EXPECT_EQ(3, rrset_a_empty.getRdataCount());
 }
 
-TEST_F(RRsetTest, iterator)
-{
+TEST_F(RRsetTest, iterator) {
     // Iterator for an empty RRset.
     RdataIteratorPtr it = rrset_a_empty.getRdataIterator();
     it->first();
@@ -187,8 +176,7 @@ TEST_F(RRsetTest, iterator)
     }
 }
 
-TEST_F(RRsetTest, toText)
-{
+TEST_F(RRsetTest, toText) {
     EXPECT_EQ("test.example.com. 3600 IN A 192.0.2.1\n"
               "test.example.com. 3600 IN A 192.0.2.2\n",
               rrset_a.toText());
@@ -197,8 +185,7 @@ TEST_F(RRsetTest, toText)
     EXPECT_THROW(rrset_a_empty.toText(), EmptyRRset);
 }
 
-TEST_F(RRsetTest, toWireBuffer)
-{
+TEST_F(RRsetTest, toWireBuffer) {
     rrset_a.toWire(buffer);
 
     UnitTestUtil::readWireData("rrset_toWire1", wiredata);
@@ -210,8 +197,7 @@ TEST_F(RRsetTest, toWireBuffer)
     EXPECT_THROW(rrset_a_empty.toWire(buffer), EmptyRRset);
 }
 
-TEST_F(RRsetTest, toWireRenderer)
-{
+TEST_F(RRsetTest, toWireRenderer) {
     rrset_ns.addRdata(generic::NS(test_nsname));
 
     rrset_a.toWire(renderer);
@@ -227,8 +213,7 @@ TEST_F(RRsetTest, toWireRenderer)
 }
 
 // test operator<<.  We simply confirm it appends the result of toText().
-TEST_F(RRsetTest, LeftShiftOperator)
-{
+TEST_F(RRsetTest, LeftShiftOperator) {
     ostringstream oss;
     oss << rrset_a;
     EXPECT_EQ(rrset_a.toText(), oss.str());

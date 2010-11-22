@@ -14,12 +14,12 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #
-# Tests for the rrclass part of the libdns_python module
+# Tests for the rrclass part of the pydnspp module
 #
 
 import unittest
 import os
-from libdns_python import *
+from pydnspp import *
 
 class RRClassTest(unittest.TestCase):
     def setUp(self):

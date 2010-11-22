@@ -19,10 +19,11 @@ import random
 import socket
 import threading
 import time
+import errno
 from isc.datasrc import sqlite3_ds
 import isc
 try: 
-    from libdns_python import * 
+    from pydnspp import * 
 except ImportError as e: 
     # C++ loadable module may not be installed; 
     sys.stderr.write('[b10-xfrout] failed to import DNS or XFR module: %s\n' % str(e)) 
@@ -44,29 +45,11 @@ _BAD_OPCODE = 3
 _BAD_QR = 4
 _BAD_REPLY_PACKET = 5
 
+SOCK_DATA = b's'
 def addr_to_str(addr):
     return '%s#%s' % (addr[0], addr[1])
 
-def dispatcher(notifier):
-    '''The loop function for handling notify related events.
-    If one zone get the notify reply before timeout, call the
-    handle to process the reply. If one zone can't get the notify
-    before timeout, call the handler to resend notify or notify 
-    next slave.  
-    notifier: one object of class NotifyOut. '''
-    while True:
-        replied_zones, not_replied_zones = notifier._wait_for_notify_reply()
-        if len(replied_zones) == 0 and len(not_replied_zones) == 0:
-            time.sleep(_IDLE_SLEEP_TIME) #TODO set a better time for idle sleep
-            continue
 
-        for name_ in replied_zones:
-            notifier._zone_notify_handler(replied_zones[name_], _EVENT_READ)
-            
-        for name_ in not_replied_zones:
-            if not_replied_zones[name_].notify_timeout <= time.time():
-                notifier._zone_notify_handler(not_replied_zones[name_], _EVENT_TIMEOUT)
- 
 class ZoneNotifyInfo:
     '''This class keeps track of notify-out information for one zone.'''
 
@@ -115,14 +98,17 @@ class ZoneNotifyInfo:
 
 class NotifyOut:
     '''This class is used to handle notify logic for all zones(sending
-    notify message to its slaves).The only interface provided to 
-    the user is send_notify(). the object of this class should be 
-    used together with function dispatcher(). '''
+    notify message to its slaves). notify service can be started by 
+    calling  dispatcher(), and it can be stoped by calling shutdown()
+    in another thread. ''' 
     def __init__(self, datasrc_file, log=None, verbose=True):
         self._notify_infos = {} # key is (zone_name, zone_class)
         self._waiting_zones = []
         self._notifying_zones = []
         self._log = log
+        self._serving = False
+        self._read_sock, self._write_sock = socket.socketpair()
+        self._read_sock.setblocking(False)
         self.notify_num = 0  # the count of in progress notifies
         self._verbose = verbose
         self._lock = threading.Lock()
@@ -165,6 +151,70 @@ class NotifyOut:
                 self.notify_num += 1 
                 self._notifying_zones.append(zone_id)
 
+    def _dispatcher(self, started_event):
+        started_event.set() # Let the master know we are alive already
+        while self._serving:
+            replied_zones, not_replied_zones = self._wait_for_notify_reply()
+
+            for name_ in replied_zones:
+                self._zone_notify_handler(replied_zones[name_], _EVENT_READ)
+
+            for name_ in not_replied_zones:
+                if not_replied_zones[name_].notify_timeout <= time.time():
+                    self._zone_notify_handler(not_replied_zones[name_], _EVENT_TIMEOUT)
+
+    def dispatcher(self, daemon=False):
+        """Spawns a thread that will handle notify related events.
+
+        If one zone get the notify reply before timeout, call the
+        handle to process the reply. If one zone can't get the notify
+        before timeout, call the handler to resend notify or notify 
+        next slave.  
+
+        The thread can be stopped by calling shutdown().
+
+        Returns the thread object to anyone interested.
+        """
+
+        if self._serving:
+            raise RuntimeError(
+                'Dispatcher already running, tried to start twice')
+
+        # Prepare for launch
+        self._serving = True
+        started_event = threading.Event()
+
+        # Start
+        self._thread = threading.Thread(target=self._dispatcher,
+            args=[started_event])
+        if daemon:
+            self._thread.daemon = daemon
+        self._thread.start()
+
+        # Wait for it to get started
+        started_event.wait()
+
+        # Return it to anyone listening
+        return self._thread
+
+    def shutdown(self):
+        """Stop the dispatcher() thread. Blocks until the thread stopped."""
+
+        if not self._serving:
+            raise RuntimeError('Tried to stop while not running')
+
+        # Ask it to stop
+        self._serving = False
+        self._write_sock.send(SOCK_DATA) # make self._read_sock be readable.
+
+        # Wait for it
+        self._thread.join()
+
+        # Clean up
+        self._write_sock = None
+        self._read_sock = None
+        self._thread = None
+
     def _get_rdata_data(self, rr):
         return rr[7].strip()
 
@@ -200,49 +250,68 @@ class NotifyOut:
         return addr_list
 
     def _prepare_select_info(self):
-        '''Prepare the information for select(), returned 
-        value is one tuple 
+        '''
+        Prepare the information for select(), returned
+        value is one tuple
         (block_timeout, valid_socks, notifying_zones)
         block_timeout: the timeout for select()
         valid_socks: sockets list for waiting ready reading.
-        notifying_zones: the zones which have been triggered 
-                        for notify. '''
+        notifying_zones: the zones which have been triggered
+                        for notify.
+        '''
         valid_socks = []
         notifying_zones = {}
-        min_timeout = None 
+        min_timeout = None
         for info in self._notify_infos:
             sock = self._notify_infos[info].get_socket()
             if sock:
                 valid_socks.append(sock)
                 notifying_zones[info] = self._notify_infos[info]
                 tmp_timeout = self._notify_infos[info].notify_timeout
-                if min_timeout:
+                if min_timeout is not None:
                     if tmp_timeout < min_timeout:
                         min_timeout = tmp_timeout
                 else:
                     min_timeout = tmp_timeout
-       
-        block_timeout = 0
-        if min_timeout:
+
+        block_timeout = _IDLE_SLEEP_TIME
+        if min_timeout is not None:
             block_timeout = min_timeout - time.time()
             if block_timeout < 0:
                 block_timeout = 0
-        
+
         return (block_timeout, valid_socks, notifying_zones)
 
     def _wait_for_notify_reply(self):
-        '''receive notify replies in specified time. returned value 
-        is one tuple:(replied_zones, not_replied_zones)
+        '''
+        Receive notify replies in specified time. returned value
+        is one tuple:(replied_zones, not_replied_zones). ({}, {}) is
+        returned if shutdown() was called.
+
         replied_zones: the zones which receive notify reply.
         not_replied_zones: the zones which haven't got notify reply.
+
         '''
-        (block_timeout, valid_socks, notifying_zones) = self._prepare_select_info()
+        (block_timeout, valid_socks, notifying_zones) = \
+            self._prepare_select_info()
+        # This is None only during some tests
+        if self._read_sock is not None:
+            valid_socks.append(self._read_sock)
         try:
             r_fds, w, e = select.select(valid_socks, [], [], block_timeout)
         except select.error as err:
             if err.args[0] != EINTR:
-                return [], []
-        
+                return {}, {}
+
+        if self._read_sock in r_fds: # user has called shutdown()
+            try:
+                # Noone should write anything else than shutdown
+                assert self._read_sock.recv(len(SOCK_DATA)) == SOCK_DATA
+                return {}, {}
+            except socket.error as e: # Workaround around rare linux bug
+                if e.errno != errno.EAGAIN and e.errno != errno.EWOULDBLOCK:
+                    raise
+
         not_replied_zones = {}
         replied_zones = {}
         for info in notifying_zones:
@@ -333,13 +402,13 @@ class NotifyOut:
         msg.set_qid(qid)
         msg.set_opcode(Opcode.NOTIFY())
         msg.set_rcode(Rcode.NOERROR())
-        msg.set_header_flag(MessageFlag.AA())
+        msg.set_header_flag(Message.HEADERFLAG_AA)
         question = Question(Name(zone_name), RRClass(zone_class), RRType('SOA'))
         msg.add_question(question)
         # Add soa record to answer section
         soa_record = sqlite3_ds.get_zone_rrset(zone_name, zone_name, 'SOA', self._db_file) 
         rrset_soa = self._create_rrset_from_db_record(soa_record[0], zone_class)
-        msg.add_rrset(Section.ANSWER(), rrset_soa)
+        msg.add_rrset(Message.SECTION_ANSWER, rrset_soa)
         return msg, qid
 
     def _handle_notify_reply(self, zone_notify_info, msg_data):
@@ -351,7 +420,7 @@ class NotifyOut:
         try:
             errstr = 'notify reply error: '
             msg.from_wire(msg_data)
-            if not msg.get_header_flag(MessageFlag.QR()):
+            if not msg.get_header_flag(Message.HEADERFLAG_QR):
                 self._log_msg('error', errstr + 'bad flags')
                 return _BAD_QR
 

@@ -22,9 +22,12 @@
 // See the description of the namespace below.
 #include <unistd.h>             // for some network system calls
 #include <asio/ip/address.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <functional>
 #include <string>
+#include <vector>
+#include <utility>
 
 #include <dns/buffer.h>
 #include <dns/message.h>
@@ -36,7 +39,6 @@
 #include <asiolink/ioendpoint.h>
 #include <asiolink/iomessage.h>
 #include <asiolink/iosocket.h>
-//#include <asio/io_service.hpp>
 
 namespace asio {
 // forward declaration for IOService::get_io_service() below
@@ -94,7 +96,7 @@ class io_service;
 /// http://think-async.com/Asio/asio-1.3.1/doc/asio/reference/asio_handler_allocate.html
 
 namespace asiolink {
-struct DNSServiceImpl;
+class DNSServiceImpl;
 struct IOServiceImpl;
 
 /// \brief An exception that is thrown if an error occurs within the IO
@@ -207,12 +209,20 @@ public:
                const bool use_ipv4, const bool use_ipv6,
                SimpleCallback* checkin, DNSLookup* lookup,
                DNSAnswer* answer);
-    /// TODO This is temporary, until we merge with the config
+    /// \brief The constructor without any servers.
+    ///
+    /// Use addServer() to add some servers.
     DNSService(IOService& io_service, SimpleCallback* checkin,
-        DNSLookup* lookup, DNSAnswer* answer);
+               DNSLookup* lookup, DNSAnswer* answer);
     /// \brief The destructor.
     ~DNSService();
     //@}
+
+    /// \brief Add another server to the service
+    void addServer(uint16_t port, const std::string &address);
+    void addServer(const char &port, const std::string &address);
+    /// \brief Remove all servers from the service
+    void clearServers();
 
     /// \brief Return the native \c io_service object used in this wrapper.
     ///
@@ -513,20 +523,20 @@ public:
     /// \brief Constructor for use when acting as a forwarder
     ///
     /// This is currently the only way to construct \c RecursiveQuery
-    /// object.  The address of the forward nameserver is specified,
-    /// and all upstream queries will be sent to that one address.
-    ///
+    /// object.  The addresses of the forward nameservers is specified,
+    /// and every upstream query will be sent to one random address.
     /// \param dns_service The DNS Service to perform the recursive
-    ///        query on
-    /// \param forward The address of the nameserver to forward to
-    /// \param port The remote port to send the dns query to
+    ///        query on.
+    /// \param upstream Addresses and ports of the upstream servers
+    ///        to forward queries to.
     /// \param timeout How long to timeout the query, in ms
     ///     -1 means never timeout (but do not use that).
     ///     TODO: This should be computed somehow dynamically in future
     /// \param retries how many times we try again (0 means just send and
-    //      and return if it returs).
-    RecursiveQuery(DNSService& dns_service, const char& forward,
-                   uint16_t port = 53, int timeout = -1, unsigned retries = 0);
+    ///     and return if it returs).
+    RecursiveQuery(DNSService& dns_service,
+                   const std::vector<std::pair<std::string, uint16_t> >&
+                   upstream, int timeout = -1, unsigned retries = 0);
     //@}
 
     /// \brief Initiates an upstream query in the \c RecursiveQuery object.
@@ -544,8 +554,8 @@ public:
                    DNSServer* server);
 private:
     DNSService& dns_service_;
-    IOAddress ns_addr_;
-    uint16_t port_;
+    boost::shared_ptr<std::vector<std::pair<std::string, uint16_t> > >
+        upstream_;
     int timeout_;
     unsigned retries_;
 };
