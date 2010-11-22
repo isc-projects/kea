@@ -1,3 +1,13 @@
+  119.	[bug]		jinmei
+	The master file parser of the python datasrc module incorrectly
+	regarded a domain name beginning with a decimal number as a TTL
+	specification.  This confused b10-loadzone and had it reject to
+	load a zone file that contains such a name.
+	Note: this fix is incomplete and the loadzone would still be
+	confused if the owner name is a syntactically indistinguishable
+	from a TTL specification.  This is part of a more general issue
+	and will be addressed in Trac #413.  (Trac #411, svn r3599)
+
   118.	[func]		jinmei
 	src/lib/dns: changed the interface of AbstractRRset::getRdataIterator()
 	so that the internal cursor would point to the first RDATA
