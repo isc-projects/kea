@@ -21,6 +21,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/utility.hpp>
 #include <exception>
+#include <iostream> 
 
 using namespace isc::dns;
 namespace isc {
@@ -243,7 +244,7 @@ public:
     //@{
     /// \brief print the nodes in the trees
     /// \todo is it better to return one string instead of print to the stdout?
-    void printTree(int depth = 0) const;
+    void printTree(std::ostream &os, int depth = 0) const;
     //@}
 
     /// \name Modify function
@@ -285,7 +286,7 @@ private:
                           RBNode<T>** node) const;
     int getNodeCountHelper(const RBNode<T>* node) const;
     int getNameCountHelper(const RBNode<T>* node) const;
-    void printTreeHelper(const RBNode<T>* node, int depth) const;
+    void printTreeHelper(std::ostream &os, const RBNode<T>* node, int depth) const;
     //@}
 
     RBNode<T>*  root_;
@@ -826,49 +827,49 @@ RBTree<T>::deleteRebalance(RBNode<T>* node) {
     node->color_ = BLACK;
 }
 
-#define INDNET(depth) do { \
+#define INDNET(os, depth) do { \
     int i = 0; \
     for (; i < (depth) * 5; ++i) { \
-        std::cout << " "; \
+        (os) << " "; \
     } \
 } while(0)
 
 template <typename T>
 void
-RBTree<T>::printTree(int depth) const {
-    INDNET(depth);
-    std::cout << "tree has node " << node_count_ << "\n";
-    printTreeHelper(root_, depth);
+RBTree<T>::printTree(std::ostream &os, int depth) const {
+    INDNET(os, depth);
+    os << "tree has node " << node_count_ << "\n";
+    printTreeHelper(os, root_, depth);
 }
 
 template <typename T>
 void
-RBTree<T>::printTreeHelper(const RBNode<T>* node, int depth) const {
-    INDNET(depth);
-    std::cout << node->name_.toText() << " ("
+RBTree<T>::printTreeHelper(std::ostream &os, const RBNode<T>* node, int depth) const {
+    INDNET(os, depth);
+    os << node->name_.toText() << " ("
               << ((node->color_ == BLACK) ? "black" : "red") << ")\n";
-    std::cout << ((node->isNonterminal()) ? "[non-terminal] \n" : "\n");
+    os << ((node->isNonterminal()) ? "[non-terminal] \n" : "\n");
     if (node->down_) {
         assert(node->down_->up_ == node);
-        INDNET(depth + 1);
-        std::cout << "begin down from "<< node->name_.toText() << "\n";
-        node->down_->printTree(depth + 1);
-        INDNET(depth + 1);
-        std::cout << "end down from" << node->name_.toText() <<"\n";
+        INDNET(os, depth + 1);
+        os << "begin down from "<< node->name_.toText() << "\n";
+        node->down_->printTree(os, depth + 1);
+        INDNET(os, depth + 1);
+        os << "end down from" << node->name_.toText() <<"\n";
     }
 
     if (node->left_ != NULLNODE) {
-        printTreeHelper(node->left_, depth + 1);
+        printTreeHelper(os, node->left_, depth + 1);
     } else {
-        INDNET(depth + 1);
-        std::cout << "NULL\n";
+        INDNET(os, depth + 1);
+        os << "NULL\n";
     }
 
     if (node->right_ != NULLNODE) {
-        printTreeHelper(node->right_, depth + 1);
+        printTreeHelper(os, node->right_, depth + 1);
     } else {
-        INDNET(depth + 1);
-        std::cout << "NULL\n";
+        INDNET(os, depth + 1);
+        os << "NULL\n";
     }
 }
 
