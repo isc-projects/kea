@@ -231,6 +231,7 @@ public:
     /// NOTFOUND, if the return value is NOTFOUND, the value of node is
     /// \c unknown
     FindResult find(const Name& name, RBNode<T>** node) const;
+    FindResult find(const Name& name, const RBNode<T>** node) const;
 
     /// \brief Get the total node count in the tree
     /// the node count including the node created common suffix node
@@ -364,7 +365,16 @@ RBTree<T>::find(const Name& name, RBNode<T>** node) const {
     return (findHelper(name, &tree, node));
 }
 
-
+template <typename T>
+typename RBTree<T>::FindResult
+RBTree<T>::find(const Name& name, const RBNode<T>** node) const {
+    const RBTree<T> *tree;
+    RBNode<T> *target_node; 
+    RBTree<T>::FindResult ret = findHelper(name, &tree, &target_node);
+    if (ret != NOTFOUND)
+        *node = target_node;
+    return ret;
+}
 
 template <typename T>
 typename RBTree<T>::FindResult
