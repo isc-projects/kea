@@ -1,12 +1,6 @@
-* Make it aware of two address kinds, execute the callbacks if there is at
-  last one kind ready.
-
 Nameserver entries:
-* Upgrade the nameserver entries to own the callbacks (they will hold shared
-  pointers to zones). This will ensure the zone is not deleted at wrong time.
-* There's only one function for adding callbacks, put them together.
-* Return if we timed out.
-* When it expires, it should invalidate the zone up above it.
+* There's a big FIXME in askIP.
+* It has places where TTL should be handled, but isn't yet.
 
 Zone entries:
 * They will be nameserver callbacks themself. This ensures that they are not
