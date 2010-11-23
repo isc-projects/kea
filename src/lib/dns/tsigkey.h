@@ -261,7 +261,8 @@ public:
     /// This method never throws an exception.
     ///
     /// \param key_name The name of the key to be removed.
-    /// \return \c SUCCESS If the key is successfully added to the key ring.
+    /// \return \c SUCCESS If the key is successfully removed from the key
+    /// ring.
     /// \return \c NOTFOUND The key ring does not store the key that matches
     /// \c key_name.
     Result remove(const Name& key_name);
