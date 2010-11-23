@@ -13,18 +13,27 @@ clean-cpp-coverage:
 		$(LCOV) --directory . --zerocounters; \
 		rm -rf coverage/; \
 	else \
-		echo "Code coverage not enabled at configuration time"; \
+		echo "C++ code coverage not enabled at configuration time." ; \
+		echo "Use: ./configure --with-lcov" ; \
 		exit 1; \
 	fi
 
 clean-python-coverage:
-	rm -f $(abs_top_srcdir)/.coverage $(abs_top_srcdir)/py-coverage-html
+	@if [ $(USE_PYCOVERAGE) = yes ] ; then \
+		rm -f $(abs_top_srcdir)/.coverage ; \
+		rm -rf $(abs_top_srcdir)/py-coverage-html ; \
+	else \
+		echo "Python code coverage not enabled at configuration time." ; \
+		echo "Use: ./configure --with-pycoverage" ; \
+		exit 1; \
+	fi
 
 perform-coverage: check
 
 report-cpp-coverage:
-	$(LCOV) --capture --directory . --output-file all.info
-	$(LCOV) --remove all.info \
+	@if [ $(USE_LCOV) = yes ] ; then \
+		$(LCOV) --capture --directory . --output-file all.info ; \
+		$(LCOV) --remove all.info \
 			c++/4.4\*/\* \
 			c++/4.4\*/backward/\* \
 			c++/4.4\*/bits/\* \
@@ -39,12 +48,21 @@ report-cpp-coverage:
 			\*_unittests.cc \
 			\*_unittest.cc \
 			\*_unittests.h \
-		--output report.info
-	$(GENHTML) -o coverage report.info 
+			--output report.info ; \
+		$(GENHTML) -o coverage report.info ; \
+	else \
+		echo "C++ code coverage not enabled at configuration time." ; \
+		echo "Use: ./configure --with-lcov" ; \
+		exit 1; \
+	fi
 
 report-python-coverage:
 	@if [ $(USE_PYCOVERAGE) = yes ] ; then \
 		$(PYCOVERAGE) html -d py-coverage-html --omit=src/bin/bind10/tests/,src/bin/bindctl/tests/,src/bin/cfgmgr/tests/,src/bin/cmdctl/tests/,src/bin/loadzone/tests/,src/bin/msgq/tests/,src/bin/stats/tests/,src/bin/tests/,src/bin/xfrin/tests/,src/bin/xfrout/tests/,src/bin/zonemgr/tests/,src/lib/dns/python/tests/,src/lib/dns/tests/,src/lib/python/isc/cc/tests/,src/lib/python/isc/config/tests/,src/lib/python/isc/datasrc/tests/,src/lib/python/isc/log/tests/,src/lib/python/isc/net/tests/,src/lib/python/isc/notify/tests/,src/lib/python/isc/util/tests/ ; \
+	else \
+		echo "Python code coverage not enabled at configuration time." ; \
+		echo "Use: ./configure --with-pycoverage" ; \
+		exit 1; \
 	fi
 
 # for python and c++ test coverage
