@@ -1,0 +1,124 @@
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	       [<!ENTITY mdash "&#8212;">]>
+<!--
+ - Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+ -
+ - Permission to use, copy, modify, and/or distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
+-->
+
+<!-- $Id$ -->
+<refentry>
+
+  <refentryinfo>
+    <date>Oct 15, 2010</date>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle>b10-stats</refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo>BIND10</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>b10-stats</refname>
+    <refpurpose>BIND 10 statistics module</refpurpose>
+  </refnamediv>
+
+  <docinfo>
+    <copyright>
+      <year>2010</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
+    </copyright>
+  </docinfo>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>b10-stats</command>
+      <arg><option>-v</option></arg>
+      <arg><option>--verbose</option></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>DESCRIPTION</title>
+    <para>
+      The <command>b10-stats</command> is a daemon forked by
+      <command>bind10</command>. Stats module collects statistics data
+      from each module and reports statistics information
+      via <command>bindctl</command>.  It communicates by using the
+      Command Channel by <command>b10-msgq</command> with other
+      modules
+      like <command>bind10</command>, <command>b10-auth</command> and
+      so on. It waits for coming data from other modules, then other
+      modules send data to stats module periodically. Other modules
+      send stats data to stats module independently from
+      implementation of stats module, so the frequency of sending data
+      may not be constant. Stats module collects data and aggregates
+      it.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>OPTIONS</title>
+    <para>The arguments are as follows:</para>
+    <variablelist>
+      <varlistentry>
+        <term><option>-v</option>, <option>--verbose</option></term>
+        <listitem>
+	  <para>
+          This <command>b10-stats</command> switches to verbose
+          mode. It sends verbose messages to STDOUT.
+	  </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>FILES</title>
+    <para><filename>/usr/local/share/bind10-devel/stats.spec</filename>
+      &mdash; This is a spec file for <command>b10-stats</command>. It
+      contains definitions of statistics items of BIND 10 and commands
+      received vi bindctl.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry>
+        <refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>bindctl</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>b10-auth</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citetitle>BIND 10 Guide</citetitle>.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>HISTORY</title>
+    <para>
+      The <command>b10-stats</command> daemon was initially designed
+      and implemented by Naoki Kambe of JPRS in Oct 2010.
+    </para>
+  </refsect1>
+</refentry><!--
+ - Local variables:
+ - mode: sgml
+ - End:
+-->

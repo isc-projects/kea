@@ -1,6 +1,7 @@
 PYCOVERAGE_RUN=@PYCOVERAGE_RUN@
 PYTESTS = zonemgr_test.py
 EXTRA_DIST = $(PYTESTS)
+CLEANFILES = initdb.file
 
 # test using command-line arguments, so use check-local target instead of TESTS
 check-local:

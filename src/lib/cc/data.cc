@@ -62,84 +62,82 @@ Element::toWire(std::ostream& ss) const {
 // installed files we define the methods here.
 //
 bool
-Element::getValue(long int& t UNUSED_PARAM) {
+Element::getValue(long int&) {
     return (false);
 }
 
 bool
-Element::getValue(double& t UNUSED_PARAM) {
+Element::getValue(double&) {
     return (false);
 }
 
 bool
-Element::getValue(bool& t UNUSED_PARAM) {
+Element::getValue(bool&) {
     return (false);
 }
 
 bool
-Element::getValue(std::string& t UNUSED_PARAM) {
+Element::getValue(std::string&) {
     return (false);
 }
 
 bool
-Element::getValue(std::vector<ConstElementPtr>& t UNUSED_PARAM) {
+Element::getValue(std::vector<ConstElementPtr>&) {
     return (false);
 }
 
 bool
-Element::getValue(std::map<std::string, ConstElementPtr>& t UNUSED_PARAM) {
+Element::getValue(std::map<std::string, ConstElementPtr>&) {
     return (false);
 }
 
 bool
-Element::setValue(const long int v UNUSED_PARAM) {
+Element::setValue(const long int) {
     return (false);
 }
 
 bool
-Element::setValue(const double v UNUSED_PARAM) {
+Element::setValue(const double) {
     return (false);
 }
 
 bool
-Element::setValue(const bool t UNUSED_PARAM) {
+Element::setValue(const bool) {
     return (false);
 }
 
 bool
-Element::setValue(const std::string& v UNUSED_PARAM) {
+Element::setValue(const std::string&) {
     return (false);
 }
 
 bool
-Element::setValue(const std::vector<ConstElementPtr>& v UNUSED_PARAM) {
+Element::setValue(const std::vector<ConstElementPtr>&) {
     return (false);
 }
 
 bool
-Element::setValue(const std::map<std::string,
-                  ConstElementPtr>& v UNUSED_PARAM)
-{
+Element::setValue(const std::map<std::string, ConstElementPtr>&) {
     return (false);
 }
 
 ConstElementPtr
-Element::get(const int i UNUSED_PARAM) const {
+Element::get(const int) const {
     isc_throw(TypeError, "get(int) called on a non-list Element");
 }
 
 void
-Element::set(const size_t i UNUSED_PARAM, ConstElementPtr element UNUSED_PARAM) {
+Element::set(const size_t, ConstElementPtr) {
     isc_throw(TypeError, "set(int, element) called on a non-list Element");
 }
 
 void
-Element::add(ConstElementPtr element UNUSED_PARAM) {
+Element::add(ConstElementPtr) {
     isc_throw(TypeError, "add() called on a non-list Element");
 }
 
 void
-Element::remove(const int i UNUSED_PARAM) {
+Element::remove(const int) {
     isc_throw(TypeError, "remove(int) called on a non-list Element");
 }
 
@@ -149,42 +147,39 @@ Element::size() const {
 }
 
 ConstElementPtr
-Element::get(const std::string& name UNUSED_PARAM) const {
+Element::get(const std::string&) const {
     isc_throw(TypeError, "get(string) called on a non-map Element");
 }
 
 void
-Element::set(const std::string& name UNUSED_PARAM,
-             ConstElementPtr element UNUSED_PARAM)
-{
+Element::set(const std::string&, ConstElementPtr) {
     isc_throw(TypeError, "set(name, element) called on a non-map Element");
 }
 
 void
-Element::remove(const std::string& name UNUSED_PARAM) {
+Element::remove(const std::string&) {
     isc_throw(TypeError, "remove(string) called on a non-map Element");
 }
 
 bool
-Element::contains(const std::string& name UNUSED_PARAM) const {
+Element::contains(const std::string&) const {
     isc_throw(TypeError, "contains(string) called on a non-map Element");
 }
 
 ConstElementPtr
-Element::find(const std::string& identifier UNUSED_PARAM) const {
+Element::find(const std::string&) const {
     isc_throw(TypeError, "find(string) called on a non-map Element");
 }
 
 bool
-Element::find(const std::string& identifier UNUSED_PARAM,
-              ConstElementPtr t UNUSED_PARAM) const
-{
+Element::find(const std::string&, ConstElementPtr) const {
     return (false);
 }
 
 namespace {
 inline void
-throwJSONError(const std::string& error, const std::string& file, int line, int pos)
+throwJSONError(const std::string& error, const std::string& file, int line,
+               int pos)
 {
     std::stringstream ss;
     ss << error << " in " + file + ":" << line << ":" << pos;
@@ -427,13 +422,15 @@ from_stringstream_null(std::istream &in, const std::string& file,
 }
 
 ElementPtr
-from_stringstream_string(std::istream& in, const std::string& file, int& line, int& pos)
+from_stringstream_string(std::istream& in, const std::string& file, int& line,
+                         int& pos)
 {
     return (Element::create(str_from_stringstream(in, file, line, pos)));
 }
 
 ElementPtr
-from_stringstream_list(std::istream &in, const std::string& file, int& line, int& pos)
+from_stringstream_list(std::istream &in, const std::string& file, int& line,
+                       int& pos)
 {
     char c = 0;
     ElementPtr list = Element::createList();
@@ -484,8 +481,7 @@ from_stringstream_map(std::istream &in, const std::string& file, int& line,
 }
 
 std::string
-Element::typeToName(Element::types type)
-{
+Element::typeToName(Element::types type) {
     switch (type) {
     case Element::integer:
         return (std::string("integer"));
@@ -538,14 +534,16 @@ Element::fromJSON(std::istream& in) throw(JSONError) {
 }
 
 ElementPtr
-Element::fromJSON(std::istream& in, const std::string& file_name) throw(JSONError)
+Element::fromJSON(std::istream& in, const std::string& file_name)
+    throw(JSONError)
 {
     int line = 1, pos = 1;
     return (fromJSON(in, file_name, line, pos));
 }
 
 ElementPtr
-Element::fromJSON(std::istream &in, const std::string& file, int& line, int& pos) throw(JSONError)
+Element::fromJSON(std::istream &in, const std::string& file, int& line,
+                  int& pos) throw(JSONError)
 {
     char c = 0;
     ElementPtr element;
@@ -721,7 +719,7 @@ Element::fromWire(const std::string& s) {
 }
 
 ElementPtr
-Element::fromWire(std::stringstream& in, int length) {
+Element::fromWire(std::stringstream& in, int) {
     //
     // Check protocol version
     //
@@ -892,7 +890,7 @@ merge(ElementPtr element, ConstElementPtr other) {
         isc_throw(TypeError, "merge arguments not MapElements");
     }
     
-    std::map<std::string, ConstElementPtr> m = other->mapValue();
+    const std::map<std::string, ConstElementPtr>& m = other->mapValue();
     for (std::map<std::string, ConstElementPtr>::const_iterator it = m.begin();
          it != m.end() ; ++it) {
         if ((*it).second && (*it).second->getType() != Element::null) {

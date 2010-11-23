@@ -41,8 +41,7 @@ RRsetList::addRRset(RRsetPtr rrsetptr) {
 }
 
 void
-RRsetList::append(RRsetList& source)
-{
+RRsetList::append(RRsetList& source) {
     BOOST_FOREACH(RRsetPtr rrset, source) {
         addRRset(rrset);
     }

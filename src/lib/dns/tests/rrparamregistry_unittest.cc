@@ -70,8 +70,7 @@ protected:
 const string RRParamRegistryTest::test_class_str("TESTCLASS");
 const string RRParamRegistryTest::test_type_str("TESTTYPE");
 
-TEST_F(RRParamRegistryTest, addRemove)
-{
+TEST_F(RRParamRegistryTest, addRemove) {
     RRParamRegistry::getRegistry().addType(test_type_str, test_type_code);
     RRParamRegistry::getRegistry().addClass(test_class_str, test_class_code);
     EXPECT_EQ(65533, RRClass("TESTCLASS").getCode());
@@ -90,8 +89,7 @@ TEST_F(RRParamRegistryTest, addRemove)
     EXPECT_FALSE(RRParamRegistry::getRegistry().removeClass(test_class_code));
 }
 
-TEST_F(RRParamRegistryTest, addError)
-{
+TEST_F(RRParamRegistryTest, addError) {
     // An attempt to override a pre-registered class should fail with an
     // exception, and the pre-registered one should remain in the registry.
     EXPECT_THROW(RRParamRegistry::getRegistry().addClass(test_class_str, 1),
@@ -114,8 +112,7 @@ public:
     { return (RdataPtr(new in::A(dynamic_cast<const in::A&>(source)))); }
 };
 
-TEST_F(RRParamRegistryTest, addRemoveFactory)
-{
+TEST_F(RRParamRegistryTest, addRemoveFactory) {
     // By default, the test type/code pair should be considered "unknown",
     // so the following should trigger an exception.
     EXPECT_THROW(createRdata(RRType(test_type_code), RRClass(test_class_code),

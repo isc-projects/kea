@@ -306,23 +306,23 @@ static PyObject* RRClass_createStatic(RRClass stc) {
     return (ret);
 }
 
-static PyObject* RRClass_IN(s_RRClass *self UNUSED_PARAM) {
+static PyObject* RRClass_IN(s_RRClass*) {
     return (RRClass_createStatic(RRClass::IN()));
 }
 
-static PyObject* RRClass_CH(s_RRClass *self UNUSED_PARAM) {
+static PyObject* RRClass_CH(s_RRClass*) {
     return (RRClass_createStatic(RRClass::CH()));
 }
 
-static PyObject* RRClass_HS(s_RRClass *self UNUSED_PARAM) {
+static PyObject* RRClass_HS(s_RRClass*) {
     return (RRClass_createStatic(RRClass::HS()));
 }
 
-static PyObject* RRClass_NONE(s_RRClass *self UNUSED_PARAM) {
+static PyObject* RRClass_NONE(s_RRClass*) {
     return (RRClass_createStatic(RRClass::NONE()));
 }
 
-static PyObject* RRClass_ANY(s_RRClass *self UNUSED_PARAM) {
+static PyObject* RRClass_ANY(s_RRClass*) {
     return (RRClass_createStatic(RRClass::ANY()));
 }
 // end of RRClass
