@@ -167,7 +167,8 @@ const RBNode<T>*
 RBNode<T>::successor() const {
     const RBNode<T>* current = this;
 
-    // if it has right node, the successor is the left-most node
+    // If it has right node, the successor is the left-most node of the right
+    // subtree.
     if (right_ != NULL_NODE()) {
         current = right_;
         while (current->left_ != NULL_NODE()) {
@@ -176,10 +177,11 @@ RBNode<T>::successor() const {
         return (current);
     }
 
-    // otherwise return the parent without left child or
-    // current node is not its right child
+    // Otherwise go up until we find the first left branch on our path to
+    // root.  If found, the parent of the branch is the successor.
+    // Otherwise, we return the null node.
     const RBNode<T>* s = current->parent_;
-    while (s != s->left_ && current == s->right_) {
+    while (s != NULL_NODE() && current == s->right_) {
         current = s;
         s = s->parent_;
     }
