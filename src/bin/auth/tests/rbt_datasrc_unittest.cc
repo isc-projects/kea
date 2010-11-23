@@ -146,13 +146,13 @@ TEST_F(RBTreeTest, findName) {
 
     // partial match
     EXPECT_EQ(RBTree<int>::PARTIALMATCH, rbtree.find(Name("m.b"), &crbtnode));
-    EXPECT_EQ(Name("b"), rbtnode->getName());
+    EXPECT_EQ(Name("b"), crbtnode->getName());
 }
 
 TEST_F(RBTreeTest, successor) {
     // traverse the trees
     EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name("a"), &crbtnode));
-    const RBNode<int> *successor_node = rbtnode->successor();
+    const RBNode<int> *successor_node = crbtnode->successor();
     EXPECT_EQ(Name("b"), successor_node->getName());
     successor_node = successor_node->successor();
     EXPECT_EQ(Name("c"), successor_node->getName());
@@ -163,16 +163,16 @@ TEST_F(RBTreeTest, successor) {
     successor_node = successor_node->successor();
 
     EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name("x.d.e.f"), &crbtnode));
-    EXPECT_EQ(Name("x"), rbtnode->getName());
-    successor_node = rbtnode->successor();
+    EXPECT_EQ(Name("x"), crbtnode->getName());
+    successor_node = crbtnode->successor();
     EXPECT_EQ(Name("w.y"), successor_node->getName());
     successor_node = successor_node->successor();
     EXPECT_EQ(Name("z"), successor_node->getName());
 
     EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name("o.w.y.d.e.f"),
                                                    &crbtnode));
-    EXPECT_EQ(Name("o"), rbtnode->getName());
-    successor_node = rbtnode->successor();
+    EXPECT_EQ(Name("o"), crbtnode->getName());
+    successor_node = crbtnode->successor();
     EXPECT_EQ(Name("p"), successor_node->getName());
     successor_node = successor_node->successor();
     EXPECT_EQ(Name("q"), successor_node->getName());
