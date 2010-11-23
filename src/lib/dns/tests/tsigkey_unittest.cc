@@ -97,7 +97,8 @@ TEST_F(TSIGKeyTest, assignment) {
 
     // Check if the copied data is valid even after the original is deleted
     TSIGKey* copy2 = new TSIGKey(original);
-    TSIGKey copy3 = *copy2;
+    TSIGKey copy3(original);
+    copy3 = *copy2;
     delete copy2;
     compareTSIGKeys(original, copy3);
 
