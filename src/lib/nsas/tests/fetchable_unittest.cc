@@ -28,6 +28,7 @@ TEST(Fetchable, accessMethods) {
     f.setState(Fetchable::IN_PROGRESS);
     EXPECT_EQ(Fetchable::IN_PROGRESS, f.getState());
     Fetchable funr(Fetchable::UNREACHABLE);
+    EXPECT_EQ(Fetchable::UNREACHABLE, funr.getState());
 }
 
 }
