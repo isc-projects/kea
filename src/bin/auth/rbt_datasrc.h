@@ -372,9 +372,11 @@ typename RBTree<T>::FindResult
 RBTree<T>::find(const Name& name, const RBNode<T>** node) const {
     const RBTree<T> *tree;
     RBNode<T> *target_node; 
-    RBTree<T>::FindResult ret = findHelper(name, &tree, &target_node);
-    if (ret != NOTFOUND)
+    const typename RBTree<T>::FindResult ret =
+        findHelper(name, &tree, &target_node);
+    if (ret != NOTFOUND) {
         *node = target_node;
+    }
     return (ret);
 }
 
