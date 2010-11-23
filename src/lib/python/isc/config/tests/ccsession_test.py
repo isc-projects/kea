@@ -397,6 +397,112 @@ class TestModuleCCSession(unittest.TestCase):
         mccs.set_command_handler(self.my_command_handler_ok)
         self.assertRaises(WouldBlockForever, lambda: mccs.check_command(False))
 
+    def test_check_command_without_recvmsg1(self):
+        "copied from test_check_command2"
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec1.spec", None, None, fake_session)
+        mccs.set_config_handler(self.my_config_handler_ok)
+        self.assertEqual(len(fake_session.message_queue), 0)
+        cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, { 'Spec1': 'abcd' })
+        env = { 'group': 'Spec1', 'from':None };
+        mccs.check_command_without_recvmsg(cmd, env)
+        self.assertEqual(len(fake_session.message_queue), 1)
+        self.assertEqual({'result': [1, 'No config_data specification']},
+                         fake_session.get_message('Spec1', None))
+ 
+    def test_check_command_without_recvmsg2(self):
+        "copied from test_check_command3"
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec2.spec", None, None, fake_session)
+        mccs.set_config_handler(self.my_config_handler_ok)
+        self.assertEqual(len(fake_session.message_queue), 0)
+        cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, { 'Spec2': { 'item1': 2 }})
+        self.assertEqual(len(fake_session.message_queue), 0)
+        env = { 'group':'Spec2', 'from':None }
+        mccs.check_command_without_recvmsg(cmd, env)
+        self.assertEqual(len(fake_session.message_queue), 1)
+        self.assertEqual({'result': [0]},
+                          fake_session.get_message('Spec2', None))
+ 
+    def test_check_command_without_recvmsg3(self):
+        "copied from test_check_command7"
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec2.spec", None, None, fake_session)
+        mccs.set_command_handler(self.my_command_handler_ok)
+        self.assertEqual(len(fake_session.message_queue), 0)
+        cmd = isc.config.ccsession.create_command("print_message", "just a message")
+        env = { 'group':'Spec2', 'from':None }
+        self.assertEqual(len(fake_session.message_queue), 0)
+        mccs.check_command_without_recvmsg(cmd, env)
+        self.assertEqual({'result': [0]},
+                         fake_session.get_message('Spec2', None))
+ 
+    def test_check_command_without_recvmsg_remote_module(self):
+        "copied from test_check_command3"
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec1.spec", None, None, fake_session)
+        mccs.set_config_handler(self.my_config_handler_ok)
+        self.assertEqual(len(fake_session.message_queue), 0)
+
+        fake_session.group_sendmsg(None, 'Spec2')
+        rmodname = mccs.add_remote_config(self.spec_file("spec2.spec"))
+        print(fake_session.message_queue)
+        self.assertEqual({'command': ['get_config', {'module_name': 'Spec2'}]},
+                         fake_session.get_message('ConfigManager', None))
+        self.assertEqual(len(fake_session.message_queue), 0)
+
+        cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, { 'Spec2': { 'item1': 2 }})
+        env = { 'group':'Spec2', 'from':None }
+        self.assertEqual(len(fake_session.message_queue), 0)
+        mccs.check_command_without_recvmsg(cmd, env)
+        self.assertEqual(len(fake_session.message_queue), 0)
+ 
+    def test_check_command_without_recvmsg_remote_module2(self):
+        "copied from test_check_command3"
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec1.spec", None, None, fake_session)
+        mccs.set_config_handler(self.my_config_handler_ok)
+        self.assertEqual(len(fake_session.message_queue), 0)
+
+        fake_session.group_sendmsg(None, 'Spec2')
+        rmodname = mccs.add_remote_config(self.spec_file("spec2.spec"))
+        self.assertEqual({'command': ['get_config', {'module_name': 'Spec2'}]},
+                         fake_session.get_message('ConfigManager', None))
+        self.assertEqual(len(fake_session.message_queue), 0)
+
+        cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, { 'Spec3': { 'item1': 2 }})
+        env = { 'group':'Spec3', 'from':None }
+        self.assertEqual(len(fake_session.message_queue), 0)
+        mccs.check_command_without_recvmsg(cmd, env)
+        self.assertEqual(len(fake_session.message_queue), 0)
+ 
+    def test_check_command_block_timeout(self):
+        """Check it works if session has timeout and it sets it back."""
+        def cmd_check(mccs, session):
+            session.set_timeout(1)
+            mccs.check_command(False)
+        fake_session = self.common_check_command_check(
+            self.my_command_handler_ok, cmd_check)
+        self.assertEqual(len(fake_session.message_queue), 1)
+        self.assertEqual({'result': [0]},
+                         fake_session.get_message('Spec2', None))
+        self.assertEqual(fake_session.get_timeout(), 1)
+
+    def test_check_command_blocks_forever(self):
+        """Check it would wait forever checking a command."""
+        fake_session = FakeModuleCCSession()
+        mccs = self.create_session("spec2.spec", None, None, fake_session)
+        mccs.set_command_handler(self.my_command_handler_ok)
+        self.assertRaises(WouldBlockForever, lambda: mccs.check_command(False))
+
+    def test_check_command_blocks_forever_timeout(self):
+        """Like above, but it should wait forever even with timeout here."""
+        fake_session = FakeModuleCCSession()
+        fake_session.set_timeout(1)
+        mccs = self.create_session("spec2.spec", None, None, fake_session)
+        mccs.set_command_handler(self.my_command_handler_ok)
+        self.assertRaises(WouldBlockForever, lambda: mccs.check_command(False))
+
     def test_remote_module(self):
         fake_session = FakeModuleCCSession()
         mccs = self.create_session("spec1.spec", None, None, fake_session)

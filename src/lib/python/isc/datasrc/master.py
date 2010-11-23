@@ -103,7 +103,7 @@ def isname(s):
 # isttl: check whether a string is a valid TTL specifier.
 # returns: boolean
 #########################################################################
-ttl_regex = re.compile('([0-9]+[wdhms]?)+', re.I)
+ttl_regex = re.compile('([0-9]+[wdhms]?)+$', re.I)
 def isttl(s):
     global ttl_regex
     if ttl_regex.match(s):
@@ -269,7 +269,7 @@ class MasterFile:
             if second[-1] == '.':
                 self.__origin = second
             elif not self.__origin:
-                raise MasterFileError("$ORIGIN is not absolute in record:%s" % s)
+                raise MasterFileError("$ORIGIN is not absolute in record: %s" % s)
             elif self.__origin != '.':
                 self.__origin = second + '.' + self.__origin
             else:

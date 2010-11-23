@@ -31,11 +31,11 @@ import select
 import pprint
 import random
 from optparse import OptionParser, OptionValueError
-import isc.utils.process
+import isc.util.process
 
 import isc.cc
 
-isc.utils.process.rename()
+isc.util.process.rename()
 
 # This is the version that gets displayed to the user.
 __version__ = "v20091030 (Paving the DNS Parking Lot)"

@@ -367,6 +367,7 @@ class NotifyOut:
                     zone_id = self._waiting_zones.pop(0) 
                     self._notify_infos[zone_id].prepare_notify_out()
                     self.notify_num += 1 
+                    self._notifying_zones.append(zone_id)
 
     def _send_notify_message_udp(self, zone_notify_info, addrinfo):
         msg, qid = self._create_notify_message(zone_notify_info.zone_name, 
@@ -402,13 +403,13 @@ class NotifyOut:
         msg.set_qid(qid)
         msg.set_opcode(Opcode.NOTIFY())
         msg.set_rcode(Rcode.NOERROR())
-        msg.set_header_flag(MessageFlag.AA())
+        msg.set_header_flag(Message.HEADERFLAG_AA)
         question = Question(Name(zone_name), RRClass(zone_class), RRType('SOA'))
         msg.add_question(question)
         # Add soa record to answer section
         soa_record = sqlite3_ds.get_zone_rrset(zone_name, zone_name, 'SOA', self._db_file) 
         rrset_soa = self._create_rrset_from_db_record(soa_record[0], zone_class)
-        msg.add_rrset(Section.ANSWER(), rrset_soa)
+        msg.add_rrset(Message.SECTION_ANSWER, rrset_soa)
         return msg, qid
 
     def _handle_notify_reply(self, zone_notify_info, msg_data):
@@ -420,7 +421,7 @@ class NotifyOut:
         try:
             errstr = 'notify reply error: '
             msg.from_wire(msg_data)
-            if not msg.get_header_flag(MessageFlag.QR()):
+            if not msg.get_header_flag(Message.HEADERFLAG_QR):
                 self._log_msg('error', errstr + 'bad flags')
                 return _BAD_QR
 

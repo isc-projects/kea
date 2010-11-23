@@ -170,9 +170,9 @@ public:
     /// then promoted to the head of the LRU queue.  (NOTE: Because
     /// of this, "retrieve" cannot be implemented as a const method.)
     ///
-    /// \param name The query name
-    /// \param rrclass The query class
-    /// \param rrtype The query type
+    /// \param qname The query name
+    /// \param qclass The query class
+    /// \param qtype The query type
     /// \param rrset Returns the RRset found, if any, to the caller
     /// \param flags Returns the flags, if any, to the caller
     ///

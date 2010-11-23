@@ -1,4 +1,4 @@
-# Copyright (C) 2010  CZ NIC
+# Copyright (C) 2010  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -13,27 +13,23 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-"""Tests for isc.utils.process."""
+from isc.datasrc.master import *
 import unittest
-import isc.utils.process
-run_tests = True
-try:
-    import setproctitle
-except ImportError:
-    run_tests = False
 
-class TestRename(unittest.TestCase):
-    """Testcase for isc.process.rename."""
-    def __get_self_name(self):
-        return setproctitle.getproctitle()
+class TestTTL(unittest.TestCase):
+    def test_ttl(self):
+        self.assertTrue(isttl('3600'))
+        self.assertTrue(isttl('1W'))
+        self.assertTrue(isttl('1w'))
+        self.assertTrue(isttl('2D'))
+        self.assertTrue(isttl('2d'))
+        self.assertTrue(isttl('30M'))
+        self.assertTrue(isttl('30m'))
+        self.assertTrue(isttl('10S'))
+        self.assertTrue(isttl('10s'))
+        self.assertTrue(isttl('2W1D'))
+        self.assertFalse(isttl('not a ttl'))
+        self.assertFalse(isttl('1X'))
 
-    @unittest.skipIf(not run_tests, "Setproctitle not installed, not testing")
-    def test_rename(self):
-        """Test if the renaming function works."""
-        isc.utils.process.rename("rename-test")
-        self.assertEqual("rename-test", self.__get_self_name())
-        isc.utils.process.rename()
-        self.assertEqual("process_test.py", self.__get_self_name())
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()
