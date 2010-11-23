@@ -64,6 +64,7 @@ protected:
     }
     RBTree<int> rbtree;
     RBNode<int> *rbtnode;
+    const RBNode<int>* crbtnode;
 };
 
 
@@ -135,23 +136,23 @@ TEST_F(RBTreeTest, insertNames) {
 
 TEST_F(RBTreeTest, findName) {
     // exact match
-    EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name("a"), &rbtnode));
-    EXPECT_EQ(Name("a"), rbtnode->getName());
+    EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name("a"), &crbtnode));
+    EXPECT_EQ(Name("a"), crbtnode->getName());
 
     // not found
-    EXPECT_EQ(RBTree<int>::NOTFOUND, rbtree.find(Name("d.e.f"), &rbtnode));
-    EXPECT_EQ(RBTree<int>::NOTFOUND, rbtree.find(Name("x"), &rbtnode));
-    EXPECT_EQ(RBTree<int>::NOTFOUND, rbtree.find(Name("m.n"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::NOTFOUND, rbtree.find(Name("d.e.f"), &crbtnode));
+    EXPECT_EQ(RBTree<int>::NOTFOUND, rbtree.find(Name("x"), &crbtnode));
+    EXPECT_EQ(RBTree<int>::NOTFOUND, rbtree.find(Name("m.n"), &crbtnode));
 
     // partial match
-    EXPECT_EQ(RBTree<int>::PARTIALMATCH, rbtree.find(Name("m.b"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::PARTIALMATCH, rbtree.find(Name("m.b"), &crbtnode));
     EXPECT_EQ(Name("b"), rbtnode->getName());
 }
 
 TEST_F(RBTreeTest, successor) {
     // traverse the trees
-    EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name("a"), &rbtnode));
-    RBNode<int> *successor_node = rbtnode->successor();
+    EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name("a"), &crbtnode));
+    const RBNode<int> *successor_node = rbtnode->successor();
     EXPECT_EQ(Name("b"), successor_node->getName());
     successor_node = successor_node->successor();
     EXPECT_EQ(Name("c"), successor_node->getName());
@@ -161,14 +162,15 @@ TEST_F(RBTreeTest, successor) {
     EXPECT_EQ(Name("g.h"), successor_node->getName());
     successor_node = successor_node->successor();
 
-    EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name("x.d.e.f"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name("x.d.e.f"), &crbtnode));
     EXPECT_EQ(Name("x"), rbtnode->getName());
     successor_node = rbtnode->successor();
     EXPECT_EQ(Name("w.y"), successor_node->getName());
     successor_node = successor_node->successor();
     EXPECT_EQ(Name("z"), successor_node->getName());
 
-    EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name("o.w.y.d.e.f"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name("o.w.y.d.e.f"),
+                                                   &crbtnode));
     EXPECT_EQ(Name("o"), rbtnode->getName());
     successor_node = rbtnode->successor();
     EXPECT_EQ(Name("p"), successor_node->getName());
@@ -205,19 +207,22 @@ TEST_F(RBTreeTest, eraseName) {
 
     // can't delete shadow node
     EXPECT_EQ(1, rbtree.erase(Name("d.e.f")));
-    EXPECT_EQ(RBTree<int>::NOTFOUND, rbtree.find(Name("w.y.d.e.f"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::NOTFOUND, rbtree.find(Name("w.y.d.e.f"), &crbtnode));
     EXPECT_EQ(0, rbtree.erase(Name("p.w.y.d.e.f")));
     EXPECT_EQ(14, rbtree.getNodeCount());
-    EXPECT_EQ(RBTree<int>::NOTFOUND, rbtree.find(Name("p.w.y.d.e.f"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::NOTFOUND, rbtree.find(Name("p.w.y.d.e.f"),
+                                                 &crbtnode));
 
     EXPECT_EQ(0, rbtree.erase(Name("q.w.y.d.e.f")));
     EXPECT_EQ(12, rbtree.getNodeCount());
-    EXPECT_EQ(RBTree<int>::NOTFOUND, rbtree.find(Name("q.w.y.d.e.f"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::NOTFOUND, rbtree.find(Name("q.w.y.d.e.f"),
+                                                 &crbtnode));
 
     // o would not be rejoined with w.y if w.y had data
     // associated with the key
-    EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name("o.w.y.d.e.f"), &rbtnode));
-    EXPECT_EQ(RBTree<int>::NOTFOUND, rbtree.find(Name("w.y.d.e.f"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name("o.w.y.d.e.f"),
+                                                   &crbtnode));
+    EXPECT_EQ(RBTree<int>::NOTFOUND, rbtree.find(Name("w.y.d.e.f"), &crbtnode));
     /*
      *               d.e.f
      *              /  |  \
@@ -270,9 +275,9 @@ TEST_F(RBTreeTest, eraseName) {
      */
     // can't delete shadow node
     EXPECT_EQ(0, rbtree.insert(Name("d.e.f"), &rbtnode));
-    EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name("d.e.f"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name("d.e.f"), &crbtnode));
     EXPECT_EQ(0, rbtree.erase(Name("d.e.f")));
-    EXPECT_EQ(RBTree<int>::NOTFOUND, rbtree.find(Name("d.e.f"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::NOTFOUND, rbtree.find(Name("d.e.f"), &crbtnode));
     // d.e.f node become shadow
     EXPECT_EQ(1, rbtree.erase(Name("d.e.f")));
     // z is a shdow node
