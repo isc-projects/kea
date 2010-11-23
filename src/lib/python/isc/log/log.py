@@ -19,6 +19,7 @@ Copyright (C) 2010  Internet Systems Consortium.
 To use, simply 'import isc.log.log' and log away!
 """
 import os
+import sys
 import syslog
 import logging
 import logging.handlers
@@ -31,47 +32,73 @@ LEVELS = {'debug' : logging.DEBUG,
           'error' : logging.ERROR,
           'critical' : logging.CRITICAL}
 
-
 FORMATTER = logging.Formatter("%(name)s: %(levelname)s: %(message)s")
 TIME_FORMATTER = logging.Formatter("%(asctime)s.%(msecs)03d %(name)s: %(levelname)s: %(message)s",
                                    "%d-%b-%Y %H:%M:%S")
+
+def log_err(err_type, err_msg):
+    sys.stderr.write(err_type + ": " + "%s.\n" % str(err_msg)[str(err_msg).find(']')+1:])
+
 
 class NSFileLogHandler(logging.handlers.RotatingFileHandler):
     """RotatingFileHandler: replace RotatingFileHandler with a custom handler"""
 
     def __init__(self, filename, mode='a', maxBytes=0, backupCount=0, encoding=None, delay=0):
-        dir = os.path.split(filename)
-        if not (os.path.exists(dir[0])):
-            os.makedirs(dir[0])
-        super(NSFileLogHandler, self).__init__(filename, mode, maxBytes,
+        abs_file_name = self._get_abs_file_path(filename)
+        """Create log directory beforehand, because the underlying logging framework won't 
+        create non-exsiting log directory on writing logs.
+        """
+        if not (os.path.exists(os.path.dirname(abs_file_name))):
+            os.makedirs(os.path.dirname(abs_file_name))
+        super(NSFileLogHandler, self).__init__(abs_file_name, mode, maxBytes,
                                                 backupCount, encoding, delay)
+
+    def handleError(self, record):
+        """Overwrite handleError to provide more user-friendly error messages"""
+        if logging.raiseExceptions:
+            ei = sys.exc_info()
+            if (ei[1]):
+                sys.stderr.write("[b10-logging] : " + str(ei[1]))
+
+    def _get_abs_file_path(self, file_name):
+        """ Get absolute file path"""
+        # For a bare filename, log_dir will be set the current directory.
+        if not os.path.dirname(file_name):
+            abs_file_dir = os.getcwd()
+        else:
+            abs_file_dir = os.path.abspath(os.path.dirname(file_name))
+        abs_file_name = os.path.join(abs_file_dir, os.path.basename(file_name))
+        return abs_file_name
 
     def shouldRollover(self, record):
         """Rewrite RotatingFileHandler.shouldRollover. 
        
         If the log file is deleted at runtime, a new file will be created.
         """
-        dfn = self.baseFilename                 
+        dfn = self.baseFilename
         if (self.stream) and (not os.path.exists(dfn)): #Does log file exist?
-            self.stream.close()
-            dir = os.path.split(dfn)
-            if not (os.path.exists(dir[0])): #Does log subdirectory exist?
-                os.makedirs(dir[0])
+            self.stream = None
+            """ Log directory may be deleted while bind10 running or updated with a
+             non-existing directory. Need to create log directory beforehand, because
+             the underlying logging framework won't create non-exsiting log directory
+             on writing logs.
+             """
+            if not (os.path.exists(os.path.dirname(dfn))): #Does log subdirectory exist?
+                os.makedirs(os.path.dirname(dfn))
             self.stream = self._open()
         return super(NSFileLogHandler, self).shouldRollover(record)
     
     def update_config(self, file_name, backup_count, max_bytes):
         """Update RotatingFileHandler configuration.
+        Changes will be picked up in the next call to shouldRollover().
 
-        If the file path does not exist, we will use the old log file.
         input:
             log file name
             max backup count
             predetermined log file size
         """
-        dir = os.path.split(file_name)
-        if (os.path.exists(dir[0])):
-            self.baseFilename = file_name
+        abs_file_name = self._get_abs_file_path(file_name)
+        self.baseFilename = abs_file_name 
         self.maxBytes = max_bytes
         self.backupCount = backup_count
 
@@ -162,8 +189,9 @@ class NSLogger(logging.getLoggerClass()):
             try:
                 self._file_handler = NSFileLogHandler(filename = log_file,
                                           maxBytes = max_bytes, backupCount = backup_count)
-            except IOError:
+            except (IOError, OSError) as e:
                 self._file_handler = None
+                log_err("[b10-logging] Add file handler fail", str(e))
                 return
             self._file_handler.setFormatter(TIME_FORMATTER)
             self.addHandler(self._file_handler)
@@ -244,6 +272,9 @@ class NSLogger(logging.getLoggerClass()):
         logger.log_message('info', "We have a %s", "mysterious problem").
         """
         logLevel = LEVELS.get(level, logging.NOTSET)
-        self.log(logLevel, msg, *args, **kwargs)
+        try:
+            self.log(logLevel, msg, *args, **kwargs)
+        except (TypeError, KeyError) as e:
+            sys.stderr.write("[b10-logging] Log message fail %s\n" % (str(e)))
 
 

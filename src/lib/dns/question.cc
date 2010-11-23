@@ -42,15 +42,13 @@ Question::Question(InputBuffer& buffer) :
 }
 
 string
-Question::toText() const
-{
+Question::toText() const {
     return (name_.toText() + " " + rrclass_.toText() + " " +
             rrtype_.toText() + "\n");
 }
 
 unsigned int
-Question::toWire(OutputBuffer& buffer) const
-{
+Question::toWire(OutputBuffer& buffer) const {
     name_.toWire(buffer);
     rrtype_.toWire(buffer);
     rrclass_.toWire(buffer);    // number of "entries", which is always 1
@@ -59,8 +57,7 @@ Question::toWire(OutputBuffer& buffer) const
 }
 
 unsigned int
-Question::toWire(MessageRenderer& renderer) const
-{
+Question::toWire(MessageRenderer& renderer) const {
     renderer.writeName(name_);
     rrtype_.toWire(renderer);
     rrclass_.toWire(renderer);
@@ -69,8 +66,7 @@ Question::toWire(MessageRenderer& renderer) const
 }
 
 ostream&
-operator<<(std::ostream& os, const Question& question)
-{
+operator<<(std::ostream& os, const Question& question) {
     os << question.toText();
     return (os);
 }

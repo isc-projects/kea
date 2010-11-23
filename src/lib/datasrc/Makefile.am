@@ -2,6 +2,7 @@ SUBDIRS = . tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
+AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += $(SQLITE_CFLAGS)
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
@@ -14,3 +15,4 @@ libdatasrc_la_SOURCES += static_datasrc.h static_datasrc.cc
 libdatasrc_la_SOURCES += sqlite3_datasrc.h sqlite3_datasrc.cc
 libdatasrc_la_SOURCES += query.h query.cc
 libdatasrc_la_SOURCES += cache.h cache.cc
+libdatasrc_la_SOURCES += zonetable.h zonetable.cc

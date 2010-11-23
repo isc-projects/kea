@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10-devel, 20100701, bind10-dev@isc.org)
+AC_INIT(bind10-devel, 20101013, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
@@ -17,6 +17,8 @@ AC_LANG([C++])
 # Identify the compiler: this check must be after AC_PROG_CXX and AC_LANG.
 AM_CONDITIONAL(USE_GXX, test "X${GXX}" = "Xyes")
 AC_CHECK_DECL([__SUNPRO_CC], [SUNCXX="yes"], [SUNCXX="no"])
+AC_CHECK_DECL([__clang__], [CLANGPP="yes"], [CLANGPP="no"])
+AM_CONDITIONAL(USE_CLANGPP, test "X${CLANGPP}" = "Xyes")
 
 # Linker options
 
@@ -204,7 +206,6 @@ fi
 # gcc specific settings:
 if test "X$GXX" = "Xyes"; then
 B10_CXXFLAGS="-Wall -Wextra -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
-UNUSED_PARAM_ATTRIBUTE='__attribute__((unused))'
 
 # Certain versions of gcc (g++) have a bug that incorrectly warns about
 # the use of anonymous name spaces even if they're closed in a single
@@ -223,7 +224,6 @@ CXXFLAGS="$CXXFLAGS_SAVED"
 fi				dnl GXX = yes
 
 AM_CONDITIONAL(GCC_WERROR_OK, test $werror_ok = 1)
-AC_DEFINE_UNQUOTED(UNUSED_PARAM, $UNUSED_PARAM_ATTRIBUTE, Define to compiler keyword indicating a function argument is intentionally unused)
 
 # produce PIC unless we disable shared libraries. need this for python bindings.
 if test $enable_shared != "no" -a "X$GXX" = "Xyes"; then
@@ -271,6 +271,7 @@ else
 fi
 AM_CONDITIONAL(ENABLE_PYTHON_COVERAGE, test x$USE_PYCOVERAGE != xno)
 AC_SUBST(PYCOVERAGE)
+AC_SUBST(PYCOVERAGE_RUN)
 AC_SUBST(USE_PYCOVERAGE)
 
 AC_ARG_WITH(lcov,
@@ -279,7 +280,6 @@ AC_ARG_WITH(lcov,
 AC_ARG_WITH(gtest,
 [  --with-gtest=PATH       specify a path to gtest header files (PATH/include) and library (PATH/lib)],
     gtest_path="$withval", gtest_path="no")
-
 
 USE_LCOV="no"
 if test "$lcov" != "no"; then
@@ -333,12 +333,14 @@ if test -z "$with_boost_include"; then
 		fi
 	done
 fi
+CPPFLAGS_SAVES="$CPPFLAGS"
 if test "${boost_include_path}" ; then
 	BOOST_INCLUDES="-I${boost_include_path}"
 	CPPFLAGS="$CPPFLAGS $BOOST_INCLUDES"
 fi
 AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp],,
   AC_MSG_ERROR([Missing required header files.]))
+CPPFLAGS="$CPPFLAGS_SAVES"
 AC_SUBST(BOOST_INCLUDES)
 
 #
@@ -454,7 +456,7 @@ if test "X$ac_cv_have_devpoll" = "Xyes" -a "X$GXX" = "Xyes"; then
 fi
 
 AC_ARG_ENABLE(man, [AC_HELP_STRING([--enable-man],
-  [regenerate man pages [default=no]])] ,enable_man=yes, enable_man=no)
+  [regenerate man pages [default=no]])], enable_man=yes, enable_man=no)
 
 AM_CONDITIONAL(ENABLE_MAN, test x$enable_man != xno)
 
@@ -491,6 +493,13 @@ AC_CONFIG_FILES([Makefile
                  src/bin/xfrout/tests/Makefile
                  src/bin/zonemgr/Makefile
                  src/bin/zonemgr/tests/Makefile
+                 src/bin/stats/Makefile
+                 src/bin/stats/tests/Makefile
+                 src/bin/stats/tests/isc/Makefile
+                 src/bin/stats/tests/isc/cc/Makefile
+                 src/bin/stats/tests/isc/config/Makefile
+                 src/bin/stats/tests/isc/util/Makefile
+                 src/bin/stats/tests/testdata/Makefile
                  src/bin/usermgr/Makefile
                  src/bin/tests/Makefile
                  src/lib/Makefile
@@ -501,15 +510,18 @@ AC_CONFIG_FILES([Makefile
                  src/lib/cc/tests/Makefile
                  src/lib/python/Makefile
                  src/lib/python/isc/Makefile
-                 src/lib/python/isc/utils/Makefile
-                 src/lib/python/isc/utils/tests/Makefile
+                 src/lib/python/isc/util/Makefile
+                 src/lib/python/isc/util/tests/Makefile
                  src/lib/python/isc/datasrc/Makefile
+                 src/lib/python/isc/datasrc/tests/Makefile
                  src/lib/python/isc/cc/Makefile
                  src/lib/python/isc/cc/tests/Makefile
                  src/lib/python/isc/config/Makefile
                  src/lib/python/isc/config/tests/Makefile
                  src/lib/python/isc/log/Makefile
                  src/lib/python/isc/log/tests/Makefile
+                 src/lib/python/isc/net/Makefile
+                 src/lib/python/isc/net/tests/Makefile
                  src/lib/python/isc/notify/Makefile
                  src/lib/python/isc/notify/tests/Makefile
                  src/lib/config/Makefile
@@ -534,7 +546,6 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/cmdctl/cmdctl.spec.pre
            src/bin/xfrin/tests/xfrin_test
            src/bin/xfrin/xfrin.py
-           src/bin/xfrin/xfrin.spec.pre
            src/bin/xfrin/run_b10-xfrin.sh
            src/bin/xfrout/xfrout.py
            src/bin/xfrout/xfrout.spec.pre
@@ -544,6 +555,12 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/zonemgr/zonemgr.spec.pre
            src/bin/zonemgr/tests/zonemgr_test
            src/bin/zonemgr/run_b10-zonemgr.sh
+           src/bin/stats/stats.py
+           src/bin/stats/stats_stub.py
+           src/bin/stats/stats.spec.pre
+           src/bin/stats/run_b10-stats.sh
+           src/bin/stats/run_b10-stats_stub.sh
+           src/bin/stats/tests/stats_test
            src/bin/bind10/bind10.py
            src/bin/bind10/tests/bind10_test
            src/bin/bind10/run_bind10.sh
@@ -577,6 +594,9 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
            chmod +x src/bin/xfrout/run_b10-xfrout.sh
            chmod +x src/bin/zonemgr/run_b10-zonemgr.sh
+           chmod +x src/bin/stats/tests/stats_test
+           chmod +x src/bin/stats/run_b10-stats.sh
+           chmod +x src/bin/stats/run_b10-stats_stub.sh
            chmod +x src/bin/bind10/run_bind10.sh
            chmod +x src/bin/cmdctl/tests/cmdctl_test
            chmod +x src/bin/xfrin/tests/xfrin_test
@@ -607,6 +627,8 @@ Package:
   Name:          $PACKAGE_NAME
   Version:       $PACKAGE_VERSION
 
+C++ Compiler:    $CXX
+
 Flags:
   DEFS:          $DEFS
   CPPFLAGS:      $CPPFLAGS
@@ -616,6 +638,7 @@ dnl includes too
   Python:        ${PYTHON_INCLUDES}
                  ${PYTHON_LDFLAGS}
                  ${PYTHON_LIB}
+  Boost:         ${BOOST_INCLUDES}
   SQLite:        $SQLITE_CFLAGS
                  $SQLITE_LIBS
 
@@ -636,4 +659,3 @@ cat <<EOF
   Now you can type "make" to build BIND 10
 
 EOF
-

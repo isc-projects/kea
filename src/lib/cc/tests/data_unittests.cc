@@ -247,7 +247,7 @@ TEST(Element, create_and_value_throws) {
     EXPECT_EQ(b, true);
     b = false;
     EXPECT_TRUE(el->setValue(b));
-    EXPECT_EQ(false, el->boolValue());
+    EXPECT_FALSE(el->boolValue());
 
     el = Element::create("foo");
     EXPECT_THROW(el->intValue(), TypeError);
