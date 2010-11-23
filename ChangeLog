@@ -1,3 +1,7 @@
+  XXX.  [build]		jreed
+	Introduced configure option and make targets for generating
+	Python code coverage report. (Trac #362)
+
   120.  [func]		jinmei
 	src/lib/dns: introduced two new classes, TSIGKey and TSIGKeyRing,
 	to manage TSIG keys. (Trac #381, svn r3622)
