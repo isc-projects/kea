@@ -93,7 +93,7 @@ recv_fd(const int sock) {
 
     if (recvmsg(sock, &msghdr, 0) < 0) {
         free(msghdr.msg_control);
-        return (-1);
+        return (XFR_FD_RECEIVE_FAIL);
     }
     const struct cmsghdr* cmsg = CMSG_FIRSTHDR(&msghdr);
     int fd = -1;

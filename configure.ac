@@ -17,6 +17,8 @@ AC_LANG([C++])
 # Identify the compiler: this check must be after AC_PROG_CXX and AC_LANG.
 AM_CONDITIONAL(USE_GXX, test "X${GXX}" = "Xyes")
 AC_CHECK_DECL([__SUNPRO_CC], [SUNCXX="yes"], [SUNCXX="no"])
+AC_CHECK_DECL([__clang__], [CLANGPP="yes"], [CLANGPP="no"])
+AM_CONDITIONAL(USE_CLANGPP, test "X${CLANGPP}" = "Xyes")
 
 # Linker options
 
@@ -204,7 +206,6 @@ fi
 # gcc specific settings:
 if test "X$GXX" = "Xyes"; then
 B10_CXXFLAGS="-Wall -Wextra -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
-UNUSED_PARAM_ATTRIBUTE='__attribute__((unused))'
 
 # Certain versions of gcc (g++) have a bug that incorrectly warns about
 # the use of anonymous name spaces even if they're closed in a single
@@ -223,7 +224,6 @@ CXXFLAGS="$CXXFLAGS_SAVED"
 fi				dnl GXX = yes
 
 AM_CONDITIONAL(GCC_WERROR_OK, test $werror_ok = 1)
-AC_DEFINE_UNQUOTED(UNUSED_PARAM, $UNUSED_PARAM_ATTRIBUTE, Define to compiler keyword indicating a function argument is intentionally unused)
 
 # produce PIC unless we disable shared libraries. need this for python bindings.
 if test $enable_shared != "no" -a "X$GXX" = "Xyes"; then
@@ -313,12 +313,14 @@ if test -z "$with_boost_include"; then
 		fi
 	done
 fi
+CPPFLAGS_SAVES="$CPPFLAGS"
 if test "${boost_include_path}" ; then
 	BOOST_INCLUDES="-I${boost_include_path}"
 	CPPFLAGS="$CPPFLAGS $BOOST_INCLUDES"
 fi
 AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp],,
   AC_MSG_ERROR([Missing required header files.]))
+CPPFLAGS="$CPPFLAGS_SAVES"
 AC_SUBST(BOOST_INCLUDES)
 
 #
@@ -476,7 +478,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/stats/tests/isc/Makefile
                  src/bin/stats/tests/isc/cc/Makefile
                  src/bin/stats/tests/isc/config/Makefile
-                 src/bin/stats/tests/isc/utils/Makefile
+                 src/bin/stats/tests/isc/util/Makefile
                  src/bin/stats/tests/testdata/Makefile
                  src/bin/usermgr/Makefile
                  src/bin/tests/Makefile
@@ -488,9 +490,10 @@ AC_CONFIG_FILES([Makefile
                  src/lib/cc/tests/Makefile
                  src/lib/python/Makefile
                  src/lib/python/isc/Makefile
-                 src/lib/python/isc/utils/Makefile
-                 src/lib/python/isc/utils/tests/Makefile
+                 src/lib/python/isc/util/Makefile
+                 src/lib/python/isc/util/tests/Makefile
                  src/lib/python/isc/datasrc/Makefile
+                 src/lib/python/isc/datasrc/tests/Makefile
                  src/lib/python/isc/cc/Makefile
                  src/lib/python/isc/cc/tests/Makefile
                  src/lib/python/isc/config/Makefile
@@ -604,6 +607,8 @@ Package:
   Name:          $PACKAGE_NAME
   Version:       $PACKAGE_VERSION
 
+C++ Compiler:    $CXX
+
 Flags:
   DEFS:          $DEFS
   CPPFLAGS:      $CPPFLAGS
@@ -613,6 +618,7 @@ dnl includes too
   Python:        ${PYTHON_INCLUDES}
                  ${PYTHON_LDFLAGS}
                  ${PYTHON_LIB}
+  Boost:         ${BOOST_INCLUDES}
   SQLite:        $SQLITE_CFLAGS
                  $SQLITE_LIBS
 
@@ -632,4 +638,3 @@ cat <<EOF
   Now you can type "make" to build BIND 10
 
 EOF
-
