@@ -73,7 +73,7 @@ public:
     T& getData() { return (data_); }
 
     /// \brief return next node whose name is bigger than current node
-    RBNode<T>* successor();
+    const RBNode<T>* successor() const;
     //@}
     
     /// \name Modify functions
@@ -157,9 +157,9 @@ RBNode<T>::~RBNode() {
 }
 
 template <typename T>
-RBNode<T>*
-RBNode<T>::successor() {
-    RBNode<T>* current = this;
+const RBNode<T>*
+RBNode<T>::successor() const {
+    const RBNode<T>* current = this;
 
     // if it has right node, the successor is the left-most node
     if (right_ != right_->right_) {
@@ -172,7 +172,7 @@ RBNode<T>::successor() {
 
     // otherwise return the parent without left child or
     // current node is not its right child
-    RBNode<T>* s = current->parent_;
+    const RBNode<T>* s = current->parent_;
     while (s != s->left_ && current == s->right_) {
         current = s;
         s = s->parent_;
@@ -232,7 +232,7 @@ public:
     /// \param node Point to the node when the return vaule is \c not
     /// NOTFOUND, if the return value is NOTFOUND, the value of node is
     /// \c unknown
-    FindResult find(const Name& name, RBNode<T>** node) const;
+    FindResult find(const Name& name, const RBNode<T>** node) const;
 
     /// \brief Get the total node count in the tree
     /// the node count including the node created common suffix node
@@ -286,7 +286,7 @@ private:
     /// Each public function has related recursive helper function
     void eraseNode(RBNode<T>* node);
     FindResult findHelper(const Name& name, const RBTree<T>** tree,
-                          RBNode<T>** node) const;
+                          const RBNode<T>** node) const;
     int getNodeCountHelper(const RBNode<T>* node) const;
     int getNameCountHelper(const RBNode<T>* node) const;
     void printTreeHelper(std::ostream &os, const RBNode<T>* node, int depth) const;
@@ -360,7 +360,7 @@ RBTree<T>::~RBTree() {
 
 template <typename T>
 typename RBTree<T>::FindResult
-RBTree<T>::find(const Name& name, RBNode<T>** node) const {
+RBTree<T>::find(const Name& name, const RBNode<T>** node) const {
     const RBTree<T>* tree;
     return (findHelper(name, &tree, node));
 }
@@ -368,12 +368,12 @@ RBTree<T>::find(const Name& name, RBNode<T>** node) const {
 template <typename T>
 typename RBTree<T>::FindResult
 RBTree<T>::findHelper(const Name& name, const RBTree<T>** tree,
-                      RBNode<T>** ret) const
+                      const RBNode<T>** ret) const
 {
     RBNode<T>* node = root_;
     while (node != NULLNODE) {
-        NameComparisonResult compare_result = name.compare(node->name_);
-        NameComparisonResult::NameRelation relation =
+        const NameComparisonResult compare_result = name.compare(node->name_);
+        const NameComparisonResult::NameRelation relation =
             compare_result.getRelation();
         if (relation == NameComparisonResult::EQUAL) {
             if (node->is_shadow_) {
@@ -384,7 +384,7 @@ RBTree<T>::findHelper(const Name& name, const RBTree<T>** tree,
                 return (RBTree<T>::EXACTMATCH);
             }
         } else {
-            int common_label_count = compare_result.getCommonLabels();
+            const int common_label_count = compare_result.getCommonLabels();
             // common label count equal one means, there is no common between
             // two names
             if (common_label_count == 1) {
@@ -435,7 +435,8 @@ RBTree<T>::getNodeCountHelper(const RBNode<T> *node) const {
         return (0);
     }
 
-    int sub_tree_node_count = node->down_ ? node->down_->getNodeCount() : 0;
+    const int sub_tree_node_count =
+        node->down_ ? node->down_->getNodeCount() : 0;
     return (1 + sub_tree_node_count + getNodeCountHelper(node->left_) +
             getNodeCountHelper(node->right_));
 }
@@ -453,7 +454,8 @@ RBTree<T>::getNameCountHelper(const RBNode<T> *node) const {
         return (0);
     }
 
-    int sub_tree_name_count = node->down_ ? node->down_->getNameCount() : 0;
+    const int sub_tree_name_count =
+        node->down_ ? node->down_->getNameCount() : 0;
     return ((node->is_shadow_ ? 0 : 1) + sub_tree_name_count +
             getNameCountHelper(node->left_) +
             getNameCountHelper(node->right_));
@@ -469,8 +471,9 @@ RBTree<T>::insert(const Name& name, RBNode<T>** new_node) {
     while (current != NULLNODE) {
         parent = current;
 
-        NameComparisonResult compare_result = name.compare(current->name_);
-        NameComparisonResult::NameRelation relation =
+        const NameComparisonResult compare_result =
+            name.compare(current->name_);
+        const NameComparisonResult::NameRelation relation =
             compare_result.getRelation();
         if (relation == NameComparisonResult::EQUAL) {
             if (new_node != NULL) {
@@ -485,7 +488,7 @@ RBTree<T>::insert(const Name& name, RBNode<T>** new_node) {
                 return (1);
             }
         } else {
-            int common_label_count = compare_result.getCommonLabels();
+            const int common_label_count = compare_result.getCommonLabels();
             if (common_label_count == 1) {
                 order = compare_result.getOrder();
                 current = order < 0 ? current->left_ : current->right_;
@@ -515,10 +518,10 @@ RBTree<T>::insert(const Name& name, RBNode<T>** new_node) {
                     // for super domain or has common label domain, create
                     // common node first then insert current name and new name
                     // into the sub tree
-                    Name common_ancestor = name.split(
+                    const Name common_ancestor = name.split(
                         name.getLabelCount() - common_label_count,
                         common_label_count);
-                    Name sub_name = current->name_ - common_ancestor;
+                    const Name sub_name = current->name_ - common_ancestor;
                     try {
                         // create new sub domain tree, and ty to insert 
                         // (current_name - common_ancestor) and (name - common_ancestor)
@@ -691,13 +694,14 @@ RBTree<T>::rightRotate(RBNode<T>* p) {
 template <typename T>
 int
 RBTree<T>::erase(const Name& name) {
-    RBNode<T>* node;
+    const RBNode<T>* cnode;
     const RBTree<T>* ctree;
-    if (findHelper(name, &ctree, &node) != RBTree<T>::EXACTMATCH) {
+    if (findHelper(name, &ctree, &cnode) != RBTree<T>::EXACTMATCH) {
         return (1);
     }
 
     // for node with downpointer, set it to shadow
+    RBNode<T>* node = const_cast<RBNode<T>*>(cnode);
     if (node->down_ != NULL) {
         assert(node->is_shadow_ == false);
         node->is_shadow_ = true;
@@ -711,7 +715,7 @@ RBTree<T>::erase(const Name& name) {
         // merge down to up
         if (1 == tree->node_count_ && tree->up_->is_shadow_) {
             RBNode<T>* up = tree->up_;
-            Name merged_name = tree->root_->name_.concatenate(up->name_);
+            const Name merged_name = tree->root_->name_.concatenate(up->name_);
             tree->root_->cloneDNSData(*up);
             up->setDownTree(tree->root_->down_);
             tree->root_->setDownTree(NULL);
@@ -735,7 +739,7 @@ RBTree<T>::eraseNode(RBNode<T> *node) {
     if (node->left_ == NULLNODE || node->right_ == NULLNODE) {
         y = node;
     } else {
-        y = node->successor();
+        y = const_cast<RBNode<T>*>(node->successor());
     }
 
     if (y->left_ != NULLNODE) {
