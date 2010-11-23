@@ -83,18 +83,26 @@ public:
 private:
     /// \name Constructors and destructor
     //@{
-    /// \param nullnode The null point for \c RBNode isnot use \c NULL, but
-    /// use one specified
-    /// default node singled as null node, this is intended to keep the code
-    /// more unify
+    /// \brief Default constructor.
+    ///
+    /// This constructor is provided specifically for generating a special
+    /// "null" node, and is intended be used only internally.
+    RBNode();
 
-    RBNode(const Name &name, RBNode<T>* nullnode = NULL);
-
-    RBNode(const Name& name, const T& data, RBNode<T>* nullnode = NULL);
+    /// \brief Constructor from the node name.
+    ///
+    /// \param name The domain name corresponding to the node.
+    RBNode(const Name &name);
 
     /// the class isn't left to be inherited
     ~RBNode();
     //@}
+
+    /// This is a factory class method of a special singleton null node.
+    static RBNode<T>* NULL_NODE() {
+        static RBNode<T> null_node;
+        return (&null_node);
+    }
 
     /// \brief copy the DNS related data to another node except the sub domain
     /// tree
@@ -125,25 +133,23 @@ private:
     bool        is_shadow_; 
 };
 
-
 template <typename T>
-RBNode<T>::RBNode(const Name& name, const T& data, RBNode* nullnode) :
-    parent_(nullnode),
-    left_(nullnode),
-    right_(nullnode),
-    color_(RED),
-    name_(name),
-    data_(data),
+RBNode<T>::RBNode() :
+    parent_(this),
+    left_(this),
+    right_(this),
+    color_(BLACK),
+    name_(Name::ROOT_NAME()),   // dummy name, the value doesn't matter.
     down_(NULL),
     is_shadow_(false) 
 {
 }
 
 template <typename T>
-RBNode<T>::RBNode(const Name& name, RBNode* nullnode) :
-    parent_(nullnode),
-    left_(nullnode),
-    right_(nullnode),
+RBNode<T>::RBNode(const Name& name) :
+    parent_(NULL_NODE()),
+    left_(NULL_NODE()),
+    right_(NULL_NODE()),
     color_(RED),
     name_(name),
     down_(NULL),
@@ -162,9 +168,9 @@ RBNode<T>::successor() const {
     const RBNode<T>* current = this;
 
     // if it has right node, the successor is the left-most node
-    if (right_ != right_->right_) {
+    if (right_ != NULL_NODE()) {
         current = right_;
-        while (current->left_ != current->left_->left_) {
+        while (current->left_ != NULL_NODE()) {
             current = current->left_;
         }
         return (current);
@@ -322,9 +328,7 @@ private:
 */
 template <typename T>
 RBTree<T>::RBTree() {
-    NULLNODE = new RBNode<T>(Name(" "));
-    NULLNODE->parent_  = NULLNODE->left_ = NULLNODE->right_ = NULLNODE;
-    NULLNODE->color_ = BLACK;
+    NULLNODE = RBNode<T>::NULL_NODE();
     root_ = NULLNODE;
     node_count_ = 0;
     up_ = NULL;
@@ -334,7 +338,6 @@ template <typename T>
 RBTree<T>::~RBTree() {
     assert(root_ != NULL);
 
-    delete NULLNODE;
     if (NULLNODE == root_) {
         return;
     }
@@ -581,7 +584,7 @@ RBTree<T>::insert(const Name& name, RBNode<T>** new_node) {
     }
 
     try {
-        RBNode<T>* node = new RBNode<T>(name, NULLNODE);
+        RBNode<T>* node = new RBNode<T>(name);
         node->parent_ = parent;
         if (parent == NULLNODE) {
             root_ = node;
