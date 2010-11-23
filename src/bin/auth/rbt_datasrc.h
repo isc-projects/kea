@@ -135,8 +135,7 @@ RBNode<T>::RBNode(const Name& name, const T& data, RBNode* nullnode) :
     name_(name),
     data_(data),
     down_(NULL),
-    is_shadow_(false)
-{
+    is_shadow_(false) {
 }
 
 template <typename T>
@@ -147,8 +146,7 @@ RBNode<T>::RBNode(const Name& name, RBNode* nullnode) :
     color_(RED),
     name_(name),
     down_(NULL),
-    is_shadow_(false)
-{
+    is_shadow_(false) {
 }
 
 template <typename T>
@@ -232,7 +230,7 @@ public:
     /// \param node Point to the node when the return vaule is \c not
     /// NOTFOUND, if the return value is NOTFOUND, the value of node is
     /// \c unknown
-    FindResult find(const Name& name, const RBNode<T>** node) const;
+    FindResult find(const Name& name, RBNode<T>** node) const;
 
     /// \brief Get the total node count in the tree
     /// the node count including the node created common suffix node
@@ -286,7 +284,7 @@ private:
     /// Each public function has related recursive helper function
     void eraseNode(RBNode<T>* node);
     FindResult findHelper(const Name& name, const RBTree<T>** tree,
-                          const RBNode<T>** node) const;
+                          RBNode<T>** node) const;
     int getNodeCountHelper(const RBNode<T>* node) const;
     int getNameCountHelper(const RBNode<T>* node) const;
     void printTreeHelper(std::ostream &os, const RBNode<T>* node, int depth) const;
@@ -358,17 +356,20 @@ RBTree<T>::~RBTree() {
     root_ = NULL;
 }
 
+
 template <typename T>
 typename RBTree<T>::FindResult
-RBTree<T>::find(const Name& name, const RBNode<T>** node) const {
-    const RBTree<T>* tree;
+RBTree<T>::find(const Name& name, RBNode<T>** node) const {
+    const RBTree<T> *tree;
     return (findHelper(name, &tree, node));
 }
+
+
 
 template <typename T>
 typename RBTree<T>::FindResult
 RBTree<T>::findHelper(const Name& name, const RBTree<T>** tree,
-                      const RBNode<T>** ret) const
+                      RBNode<T>** ret) const 
 {
     RBNode<T>* node = root_;
     while (node != NULLNODE) {
@@ -694,14 +695,13 @@ RBTree<T>::rightRotate(RBNode<T>* p) {
 template <typename T>
 int
 RBTree<T>::erase(const Name& name) {
-    const RBNode<T>* cnode;
+    RBNode<T>* node;
     const RBTree<T>* ctree;
-    if (findHelper(name, &ctree, &cnode) != RBTree<T>::EXACTMATCH) {
+    if (findHelper(name, &ctree, &node) != RBTree<T>::EXACTMATCH) {
         return (1);
     }
 
     // for node with downpointer, set it to shadow
-    RBNode<T>* node = const_cast<RBNode<T>*>(cnode);
     if (node->down_ != NULL) {
         assert(node->is_shadow_ == false);
         node->is_shadow_ = true;
