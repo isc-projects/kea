@@ -1,3 +1,7 @@
+  120.  [func]		jinmei
+	src/lib/dns: introduced two new classes, TSIGKey and TSIGKeyRing,
+	to manage TSIG keys. (Trac #381, svn r3622)
+
   119.	[bug]		jinmei
 	The master file parser of the python datasrc module incorrectly
 	regarded a domain name beginning with a decimal number as a TTL
