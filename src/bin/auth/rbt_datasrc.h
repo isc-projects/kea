@@ -135,7 +135,8 @@ RBNode<T>::RBNode(const Name& name, const T& data, RBNode* nullnode) :
     name_(name),
     data_(data),
     down_(NULL),
-    is_shadow_(false) {
+    is_shadow_(false) 
+{
 }
 
 template <typename T>
@@ -146,7 +147,8 @@ RBNode<T>::RBNode(const Name& name, RBNode* nullnode) :
     color_(RED),
     name_(name),
     down_(NULL),
-    is_shadow_(false) {
+    is_shadow_(false) 
+{
 }
 
 template <typename T>
@@ -373,7 +375,7 @@ RBTree<T>::find(const Name& name, const RBNode<T>** node) const {
     RBTree<T>::FindResult ret = findHelper(name, &tree, &target_node);
     if (ret != NOTFOUND)
         *node = target_node;
-    return ret;
+    return (ret);
 }
 
 template <typename T>
