@@ -111,7 +111,7 @@ protected:
     /// \short Just a really stupid callback counting times called
     struct Callback : public NameserverEntry::Callback {
         size_t count;
-        virtual void operator()(NameserverEntry*) {
+        virtual void operator()(shared_ptr<NameserverEntry>) {
             count ++;
         }
         Callback() : count(0) { }
@@ -213,34 +213,34 @@ TEST_F(NameserverEntryTest, DefaultConstructor) {
 TEST_F(NameserverEntryTest, AddressListConstructor) {
 
     // Initialize with no addresses and check that data returned has size of
-    // zero.
+    // zero and knows it did not ask for the address yet
     NameserverEntry alpha(NULL, NULL);
     NameserverEntry::AddressVector av;
-    alpha.getAddresses(av);
+    EXPECT_EQ(Fetchable::NOT_ASKED, alpha.getAddresses(av));
     EXPECT_EQ(0, av.size());
 
     NameserverEntry::AddressVector av4;
-    alpha.getAddresses(av4, V4_ONLY);
+    EXPECT_EQ(Fetchable::NOT_ASKED, alpha.getAddresses(av4, V4_ONLY));
     EXPECT_EQ(0, av4.size());
 
     NameserverEntry::AddressVector av6;
-    alpha.getAddresses(av6, V6_ONLY);
+    EXPECT_EQ(Fetchable::NOT_ASKED, alpha.getAddresses(av6, V6_ONLY));
     EXPECT_EQ(0, av6.size());
 
     // Initialize with V4 addresses only.
-    EXPECT_TRUE(rrv4_.getRdataCount() > 0);
+    EXPECT_GT(rrv4_.getRdataCount(), 0);
     NameserverEntry beta(&rrv4_, NULL);
 
     NameserverEntry::AddressVector bv;
-    beta.getAddresses(bv);
+    EXPECT_EQ(Fetchable::READY, beta.getAddresses(bv));
     EXPECT_EQ(rrv4_.getRdataCount(), bv.size());
 
     NameserverEntry::AddressVector bv4;
-    beta.getAddresses(bv4, V4_ONLY);
+    EXPECT_EQ(Fetchable::READY, beta.getAddresses(bv4, V4_ONLY));
     EXPECT_EQ(rrv4_.getRdataCount(), bv4.size());
 
     NameserverEntry::AddressVector bv6;
-    beta.getAddresses(bv6, V6_ONLY);
+    EXPECT_EQ(Fetchable::UNREACHABLE, beta.getAddresses(bv6, V6_ONLY));
     EXPECT_EQ(0, bv6.size());
 
     // Check that the addresses received are unique.
@@ -252,15 +252,15 @@ TEST_F(NameserverEntryTest, AddressListConstructor) {
     NameserverEntry gamma(NULL, &rrv6_);
 
     NameserverEntry::AddressVector cv;
-    gamma.getAddresses(cv);
+    EXPECT_EQ(Fetchable::READY, gamma.getAddresses(cv));
     EXPECT_EQ(rrv6_.getRdataCount(), cv.size());
 
     NameserverEntry::AddressVector cv4;
-    gamma.getAddresses(cv4, V4_ONLY);
+    EXPECT_EQ(Fetchable::UNREACHABLE, gamma.getAddresses(cv4, V4_ONLY));
     EXPECT_EQ(0, cv4.size());
 
     NameserverEntry::AddressVector cv6;
-    gamma.getAddresses(cv6, V6_ONLY);
+    EXPECT_EQ(Fetchable::READY, gamma.getAddresses(cv6, V6_ONLY));
     EXPECT_EQ(rrv6_.getRdataCount(), cv6.size());
 
     SCOPED_TRACE("Checking V6 addresses");
@@ -270,17 +270,17 @@ TEST_F(NameserverEntryTest, AddressListConstructor) {
     NameserverEntry delta(&rrv4_, &rrv6_);
 
     NameserverEntry::AddressVector dv;
-    delta.getAddresses(dv);
+    EXPECT_EQ(Fetchable::READY, delta.getAddresses(dv));
     EXPECT_EQ((rrv4_.getRdataCount() + rrv6_.getRdataCount()), dv.size());
 
     NameserverEntry::AddressVector dv4;
-    delta.getAddresses(dv4, V4_ONLY);
+    EXPECT_EQ(Fetchable::READY, delta.getAddresses(dv4, V4_ONLY));
     EXPECT_EQ(rrv4_.getRdataCount(), dv4.size());
     SCOPED_TRACE("Checking V4 addresses after dual-address family constructor");
     CompareAddresses(dv4, rrv4_);
 
     NameserverEntry::AddressVector dv6;
-    delta.getAddresses(dv6, V6_ONLY);
+    EXPECT_EQ(Fetchable::READY, delta.getAddresses(dv6, V6_ONLY));
     EXPECT_EQ(rrv6_.getRdataCount(), dv6.size());
     SCOPED_TRACE("Checking V6 addresses after dual-address family constructor");
     CompareAddresses(dv6, rrv6_);
@@ -288,8 +288,8 @@ TEST_F(NameserverEntryTest, AddressListConstructor) {
     // ... and check that the composite of the v4 and v6 addresses is the same
     // as that returned by the get without a filter.
     NameserverEntry::AddressVector dvcomponent;
-    delta.getAddresses(dvcomponent, V4_ONLY);
-    delta.getAddresses(dvcomponent, V6_ONLY);
+    EXPECT_EQ(Fetchable::READY, delta.getAddresses(dvcomponent, V4_ONLY));
+    EXPECT_EQ(Fetchable::READY, delta.getAddresses(dvcomponent, V6_ONLY));
     SCOPED_TRACE("Checking V4+V6 addresses same as composite return");
     CompareAddressVectors(dv, dvcomponent);
 }
@@ -330,7 +330,7 @@ TEST_F(NameserverEntryTest, SetRTT) {
     NameserverEntry::AddressVector vec;
     alpha.getAddresses(vec);
 
-    EXPECT_TRUE(vec.size() > 0);
+    ASSERT_TRUE(vec.size() > 0);
 
     // Take the first address and change the RTT.
     IOAddress first_address = vec[0].getAddress();
@@ -363,7 +363,7 @@ TEST_F(NameserverEntryTest, Unreachable) {
     NameserverEntry::AddressVector vec;
     alpha.getAddresses(vec);
 
-    EXPECT_TRUE(vec.size() > 0);
+    ASSERT_TRUE(vec.size() > 0);
 
     // Take the first address and mark as unreachable.
     IOAddress first_address = vec[0].getAddress();
@@ -489,7 +489,8 @@ TEST_F(NameserverEntryTest, IPCallbacks) {
     entry->askIP(resolver, callback, V6_ONLY, entry);
 
     // Answer one and see that the callbacks are called
-    resolver.answer(0, Name(EXAMPLE_CO_UK), rdata::in::A("192.0.2.1"));
+    resolver.answer(0, Name(EXAMPLE_CO_UK), RRType::A(),
+        rdata::in::A("192.0.2.1"));
 
     // Both callbacks that want IPv4 should be called by now
     EXPECT_EQ(2, callback->count);
@@ -500,7 +501,8 @@ TEST_F(NameserverEntryTest, IPCallbacks) {
     EXPECT_EQ(1, addresses.size());
     // Answer IPv6 address
     // It is with zero TTL, so it should expire right away
-    resolver.answer(1, Name(EXAMPLE_CO_UK), rdata::in::AAAA("1001:db8::1"), 0);
+    resolver.answer(1, Name(EXAMPLE_CO_UK), RRType::AAAA(),
+        rdata::in::AAAA("2001:db8::1"), 0);
     // The other callback should appear
     EXPECT_EQ(3, callback->count);
     // It should return the one address. It should be expired, but

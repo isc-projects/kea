@@ -23,6 +23,7 @@
 
 #include <exceptions/exceptions.h>
 #include <dns/rrset.h>
+#include <dns/rrtype.h>
 
 #include "address_entry.h"
 #include "asiolink.h"
@@ -31,6 +32,7 @@
 #include "hash_key.h"
 #include "lru_list.h"
 #include "fetchable.h"
+#include "resolver_interface.h"
 
 namespace isc {
 namespace nsas {
@@ -81,7 +83,6 @@ class ResolverInterface;
 ///
 /// As this object will be stored in the nameserver address store LRU list,
 /// it is derived from the LRU list entry class.
-/// \todo Is it needed to have virtual functions? Will we subclass it?
 
 class NameserverEntry : public NsasEntry<NameserverEntry>, public Fetchable {
 public:
@@ -112,10 +113,6 @@ public:
     NameserverEntry(const isc::dns::AbstractRRset* v4Set,
         const isc::dns::AbstractRRset* v6Set, time_t curtime = 0);
 
-    /// \brief Virtual Destructor
-    virtual ~NameserverEntry()
-    {}
-
     /// \brief Return Address
     ///
     /// Returns a vector of addresses corresponding to this nameserver.
@@ -135,15 +132,16 @@ public:
     ///     the EXPIRED state by itself. It may be IN_PROGRESS and still
     ///     return some addresses (when one address family arrived and is
     ///     is returned, but the other is still on the way).
-    virtual Fetchable::State getAddresses(
+    /// \todo Should we sort out unreachable addresses as well?
+    Fetchable::State getAddresses(
         NameserverEntry::AddressVector& addresses,
-        AddressRequest family = ANY_OK, bool expired_ok = false);
+        AddressFamily family = ANY_OK, bool expired_ok = false);
 
     // TODO Is this one of any use at all?
     /// \brief Return Address that corresponding to the index
     ///
     /// \param index The address index in the address vector
-    virtual asiolink::IOAddress getAddressAtIndex(uint32_t index) const;
+    asiolink::IOAddress getAddressAtIndex(uint32_t index) const;
 
     /// \brief Update RTT
     ///
@@ -151,28 +149,28 @@ public:
     ///
     /// \param address Address to update
     /// \param RTT New RTT for the address
-    virtual void setAddressRTT(const asiolink::IOAddress& address, uint32_t rtt);
+    void setAddressRTT(const asiolink::IOAddress& address, uint32_t rtt);
 
     /// \brief Update RTT of the address that corresponding to the index
     ///
     /// \param rtt Round-Trip Time
     /// \param index The address's index in address vector
-    virtual void updateAddressRTTAtIndex(uint32_t rtt, uint32_t index);
+    void updateAddressRTTAtIndex(uint32_t rtt, uint32_t index);
 
     /// \brief Set Address Unreachable
     ///
     /// Sets the specified address to be unreachable
     ///
     /// \param address Address to update
-    virtual void setAddressUnreachable(const asiolink::IOAddress& address);
+    void setAddressUnreachable(const asiolink::IOAddress& address);
 
     /// \return Owner Name of RRset
-    virtual std::string getName() const {
+    std::string getName() const {
         return name_;
     }
 
     /// \return Class of RRset
-    virtual short getClass() const {
+    short getClass() const {
         return classCode_;
     }
 
@@ -188,31 +186,15 @@ public:
     /// Returns the expiration time of addresses for this nameserver.  For
     /// simplicity, this quantity is calculated as the minimum expiration time
     /// of the A and AAAA address records.
-    virtual time_t getExpiration() const {
+    time_t getExpiration() const {
         return expiration_;
     }
-
-    /// \brief Predicate for Address Selection
-    ///
-    /// Returns false if the address family of a given entry matches the address
-    /// family given or if the address family is 0 (which means return all
-    /// addresses).  This curious logic is needed for use in the remove_copy_if
-    /// algorithm, which copies all values apart from those for which the
-    /// criteria is met.
-    class AddressSelection : public std::binary_function<short, AddressEntry, bool> {
-    public:
-        bool operator()(short family, const AddressEntry& entry) const {
-            bool match = (entry.getAddress().getFamily() == family) ||
-                (family == 0);
-            return (! match);
-        }
-    };
 
     /// \name Obtaining the IP addresses from resolver
     //@{
     /// \short A callback that some information here arrived (or are unavailable).
     struct Callback {
-        virtual void operator()(NameserverEntry* self) = 0;
+        virtual void operator()(boost::shared_ptr<NameserverEntry> self) = 0;
         /// \short Virtual destructor, so descendants are properly cleaned up
         virtual ~ Callback() {}
     };
@@ -238,25 +220,36 @@ public:
      * \param self Since we need to pass a shared pointer to the resolver, we
      *     need to get one. However, we can not create one from this, because
      *     it would have different reference count. So the caller must pass it.
+     * \return The state the entry is currently in. It can return UNREACHABLE
+     *     even when there are addresses, if there are no addresses for this
+     *     family.
      */
     void askIP(ResolverInterface& resolver,
-        boost::shared_ptr<Callback> callback, AddressRequest family,
+        boost::shared_ptr<Callback> callback, AddressFamily family,
         boost::shared_ptr<NameserverEntry> self);
     //@}
 
 private:
     // TODO Read-write lock?
-    boost::mutex    mutex_;             ///< Mutex protecting this object
+    mutable boost::mutex    mutex_;     ///< Mutex protecting this object
     std::string     name_;              ///< Canonical name of the nameserver
     uint16_t        classCode_;         ///< Class of the nameserver
     std::vector<AddressEntry> address_; ///< Set of V4/V6 addresses
     time_t          expiration_;        ///< Summary expiration time
     time_t          last_access_;       ///< Last access time to the structure
-    // This is our callback class to resolver
+    // Do we have some addresses already? Do we expect some to come?
+    // These are set after asking for IP, if NOT_ASKED, they are uninitialized
+    bool has_address_[ADDR_REQ_MAX], expect_address_[ADDR_REQ_MAX];
+    // Callbacks from resolver
     class ResolverCallback;
     friend class ResolverCallback;
-    // How many responses from resolver do we expect?
-    size_t waiting_responses_;
+    // Callbacks inserted into this object
+    typedef std::pair<AddressFamily, boost::shared_ptr<Callback> >
+        CallbackPair;
+    std::vector<CallbackPair> callbacks_;
+    /// \short Private version that does the actual asking of one address type
+    void askIP(ResolverInterface&, const isc::dns::RRType&, AddressFamily,
+        boost::shared_ptr<NameserverEntry>);
 };
 
 }   // namespace dns

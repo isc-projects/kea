@@ -26,13 +26,16 @@ namespace isc {
 namespace nsas {
 
 /// \brief Address requested
-enum AddressRequest {
+enum AddressFamily {
     /// \short Interested only in IPv4 address
     V4_ONLY,
     /// \short Interested only in IPv6 address
     V6_ONLY,
     /// \short Any address is good
-    ANY_OK
+    ANY_OK,
+    /// \short Bumper value, does not mean anything, it just represents the
+    /// max value
+    ADDR_REQ_MAX
 };
 
 }
