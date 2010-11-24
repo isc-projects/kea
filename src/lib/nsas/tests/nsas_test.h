@@ -276,6 +276,76 @@ class TestResolver : public isc::nsas::ResolverInterface {
         }
 };
 
+// String constants.  These should end in a dot.
+static const std::string EXAMPLE_CO_UK("example.co.uk.");
+static const std::string EXAMPLE_NET("example.net.");
+static const std::string MIXED_EXAMPLE_CO_UK("EXAmple.co.uk.");
+
+class TestWithRdata : public ::testing::Test {
+protected:
+    /// \brief Constructor
+    ///
+    /// Initializes the RRsets used in the tests.  The RRsets themselves have to
+    /// be initialized with the basic data on their construction. The Rdata for
+    /// them is added in SetUp().
+    TestWithRdata() :
+        rrv4_(Name(EXAMPLE_CO_UK), RRClass::IN(), RRType::A(), RRTTL(1200)),
+        rrcase_(Name(MIXED_EXAMPLE_CO_UK), RRClass::IN(), RRType::A(),
+            RRTTL(1200)),
+        rrch_(Name(EXAMPLE_CO_UK), RRClass::CH(), RRType::A(), RRTTL(1200)),
+        rrns_(Name(EXAMPLE_CO_UK), RRClass::IN(), RRType::NS(), RRTTL(1200)),
+        rr_single_(Name(EXAMPLE_CO_UK), RRClass::IN(), RRType::NS(), RRTTL(0)),
+        rr_empty_(Name(EXAMPLE_CO_UK), RRClass::IN(), RRType::NS(),
+            RRTTL(600)),
+        rrv6_(Name(EXAMPLE_CO_UK), RRClass::IN(), RRType::AAAA(), RRTTL(900)),
+        rrnet_(Name(EXAMPLE_NET), RRClass::IN(), RRType::A(), RRTTL(600))
+    {}
+
+    /// \brief Add Rdata to RRsets
+    ///
+    /// The data are added as const pointers to avoid the stricter type checking
+    /// applied by the Rdata code.  There is no need for it in these tests.
+    virtual void SetUp() {
+
+        // A records
+        rrv4_.addRdata(ConstRdataPtr(new RdataTest<A>("1.2.3.4")));
+        rrv4_.addRdata(ConstRdataPtr(new RdataTest<A>("5.6.7.8")));
+        rrv4_.addRdata(ConstRdataPtr(new RdataTest<A>("9.10.11.12")));
+
+        // A records
+        rrcase_.addRdata(ConstRdataPtr(new RdataTest<A>("13.14.15.16")));
+
+        // No idea what Chaosnet address look like other than they are 16 bits
+        // The fact that they are type A is probably also incorrect.
+        rrch_.addRdata(ConstRdataPtr(new RdataTest<A>("1324")));
+
+        // NS records take a single name
+        rrns_.addRdata(ConstRdataPtr(new RdataTest<NS>("example.fr")));
+        rrns_.addRdata(ConstRdataPtr(new RdataTest<NS>("example.de")));
+
+        // Single NS record with 0 TTL
+        rr_single_.addRdata(ConstRdataPtr(new RdataTest<NS>(
+            "ns.example.net.")));
+
+        // AAAA records
+        rrv6_.addRdata(ConstRdataPtr(new RdataTest<AAAA>("2001::1002")));
+        rrv6_.addRdata(ConstRdataPtr(new RdataTest<AAAA>("dead:beef:feed::")));
+
+        // A record for example.net
+        rrnet_.addRdata(ConstRdataPtr(new RdataTest<A>("17.18.18.20")));
+    }
+
+    /// \brief Data for the tests
+    BasicRRset rrv4_;           ///< Standard RRSet - IN, A, lowercase name
+    BasicRRset rrcase_;         ///< Mixed-case name
+    BasicRRset rrch_;           ///< Non-IN RRset (Chaos in this case)
+    BasicRRset rrns_;           ///< NS RRset
+    BasicRRset rr_single_;      ///< NS RRset with single NS
+    BasicRRset rr_empty_;       ///< NS RRset without any nameservers
+    BasicRRset rrv6_;           ///< Standard RRset, IN, AAAA, lowercase name
+    BasicRRset rrnet_;          ///< example.net A RRset
+};
+
 } // Empty namespace
 
 #endif // __NSAS_TEST_H

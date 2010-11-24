@@ -224,7 +224,7 @@ public:
      *     even when there are addresses, if there are no addresses for this
      *     family.
      */
-    void askIP(ResolverInterface& resolver,
+    void askIP(boost::shared_ptr<ResolverInterface> resolver,
         boost::shared_ptr<Callback> callback, AddressFamily family,
         boost::shared_ptr<NameserverEntry> self);
     //@}
@@ -248,7 +248,8 @@ private:
         CallbackPair;
     std::vector<CallbackPair> callbacks_;
     /// \short Private version that does the actual asking of one address type
-    void askIP(ResolverInterface&, const isc::dns::RRType&, AddressFamily,
+    void askIP(boost::shared_ptr<ResolverInterface> resolver,
+        const isc::dns::RRType&, AddressFamily,
         boost::shared_ptr<NameserverEntry>);
 };
 

@@ -83,7 +83,7 @@ public:
     /// value of 2003 is the first prime number over 2000, and by implication,
     /// there is an assumption that there will be more nameservers than zones
     /// in the store.
-    NameserverAddressStore(ResolverInterface& resolver,
+    NameserverAddressStore(boost::shared_ptr<ResolverInterface> resolver,
         uint32_t zonehashsize = 1009, uint32_t nshashsize = 3001);
 
     /// \brief Destructor
@@ -92,6 +92,7 @@ public:
     virtual ~NameserverAddressStore()
     {}
 
+    // TODO Drop zone and class code, they can be found out from the authority
     /// \brief Lookup Address for a Zone
     ///
     /// Looks up the address of a nameserver in the zone.
@@ -107,7 +108,7 @@ public:
     /// \param request Which address is requested.
     void lookup(const std::string& zone, uint16_t class_code,
         const isc::dns::AbstractRRset& authority,
-        const std::vector<isc::dns::AbstractRRset>& additional,
+        const std::vector<const isc::dns::AbstractRRset*>& additional,
         boost::shared_ptr<AddressRequestCallback> callback, AddressRequest
         request = ANY_OK);
 
@@ -132,7 +133,7 @@ protected:
     LruList<NameserverEntry>    nameserver_lru_;
     //}@
 private:
-    ResolverInterface& resolver_;
+    boost::shared_ptr<ResolverInterface> resolver_;
 };
 
 } // namespace nsas

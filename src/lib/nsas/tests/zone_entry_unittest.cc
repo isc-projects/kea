@@ -16,7 +16,6 @@
 
 #include <gtest/gtest.h>
 #include <boost/shared_ptr.hpp>
-#include <boost/thread.hpp>
 
 #include <dns/rrclass.h>
 
@@ -24,156 +23,111 @@
 #include "../zone_entry.h"
 #include "../nameserver_entry.h"
 #include "../address_request_callback.h"
+#include "../nsas_entry_compare.h"
+#include "../hash_deleter.h"
 
 #include "nsas_test.h"
 
+using namespace isc::nsas;
 using namespace asiolink;
 using namespace std;
 using namespace boost;
 using namespace isc::dns;
 
-namespace isc {
-namespace nsas {
-
-// String constants.  These should end in a dot.
-static const std::string EXAMPLE_CO_UK("example.co.uk.");
-static const std::string EXAMPLE_NET("example.net.");
+namespace {
 
 /// \brief Test Fixture Class
-class ZoneEntryTest : public ::testing::Test {
+class ZoneEntryTest : public TestWithRdata {
 protected:
+    /// \brief Constructor
+    ZoneEntryTest() :
+        nameservers_hash_(new NsasEntryCompare<NameserverEntry>),
+        nameservers_lru_((3 * nameservers_hash_.tableSize()),
+            new HashDeleter<NameserverEntry>(nameservers_hash_)),
+        resolver_(new TestResolver),
+        callback_(new Callback)
+    { }
+    /// \brief Tables of nameservers to pass into zone entry constructor
+    HashTable<NameserverEntry> nameservers_hash_;
+    LruList<NameserverEntry> nameservers_lru_;
+    shared_ptr<TestResolver> resolver_;
 
+    struct Callback : public AddressRequestCallback {
+        Callback() : unreachable_count_(0) {}
+        size_t unreachable_count_;
+        vector<IOAddress> successes_;
+        virtual void unreachable() { unreachable_count_ ++; }
+        virtual void success(const IOAddress& address) {
+            successes_.push_back(address);
+        }
+    };
+    shared_ptr<Callback> callback_;
+};
+
+/// \brief Inherited version with access into its internals for tests
+class InheritedZoneEntry : public ZoneEntry {
+    public:
+        InheritedZoneEntry(shared_ptr<ResolverInterface> resolver,
+            const isc::dns::AbstractRRset& authority,
+            const std::vector<const isc::dns::AbstractRRset*>& additional,
+            HashTable<NameserverEntry>& nameservers,
+            LruList<NameserverEntry>& nameserver_lru) :
+            ZoneEntry(resolver, authority, additional, nameservers,
+                nameserver_lru)
+        { }
+        InheritedZoneEntry(shared_ptr<ResolverInterface> resolver,
+            const std::string& name, uint16_t class_code) :
+            ZoneEntry(resolver, name, class_code)
+        { }
+        NameserverVector& nameservers() { return nameservers_; }
 };
 
 /// Tests of the default constructor
 TEST_F(ZoneEntryTest, DefaultConstructor) {
 
     // Default constructor should not create any RRsets
-    ZoneEntry alpha(EXAMPLE_CO_UK, RRClass::IN().getCode());
+    InheritedZoneEntry alpha(resolver_, EXAMPLE_CO_UK,
+        RRClass::IN().getCode());
     EXPECT_EQ(EXAMPLE_CO_UK, alpha.getName());
     EXPECT_EQ(RRClass::IN().getCode(), alpha.getClass());
+    EXPECT_TRUE(alpha.nameservers().empty());
 }
 
-namespace {
-// Just something that can be created and passed
-class Callback : public AddressRequestCallback {
-    public:
-        void success(const asiolink::IOAddress&) { };
-        void unreachable() { };
-};
+/// Tests of constructor from referral data
+TEST_F(ZoneEntryTest, ReferralConstructor) {
+    InheritedZoneEntry alpha(resolver_, rr_single_,
+        vector<const AbstractRRset*>(), nameservers_hash_, nameservers_lru_);
+    // It should load the name and class from the referral info
+    EXPECT_EQ(EXAMPLE_CO_UK, alpha.getName());
+    EXPECT_EQ(RRClass::IN().getCode(), alpha.getClass());
+    EXPECT_EQ(1, alpha.nameservers().size());
+    EXPECT_EQ("ns.example.net.", alpha.nameservers()[0]->getName());
+    // TODO Test with some additional data once NameserverEntry supports them?
 }
 
-TEST_F(ZoneEntryTest, Callbacks) {
-    const size_t count(3);
-    shared_ptr<AddressRequestCallback> callbacks[count];
-
-    ZoneEntry zone(EXAMPLE_CO_UK, RRClass::IN().getCode());
-    EXPECT_FALSE(zone.hasCallbacks());
-    for (size_t i(0); i < count; ++ i) {
-        zone.addCallback(callbacks[i] = shared_ptr<AddressRequestCallback>(
-            new Callback));
-    }
-    for (size_t i(0); i < count; ++ i) {
-        ASSERT_TRUE(zone.hasCallbacks());
-        EXPECT_EQ(callbacks[i], zone.popCallback());
-    }
-    EXPECT_FALSE(zone.hasCallbacks());
+TEST_F(ZoneEntryTest, CallbackNoNS) {
+    shared_ptr<InheritedZoneEntry> zone(new InheritedZoneEntry(resolver_,
+        rr_empty_, vector<const AbstractRRset*>(), nameservers_hash_,
+        nameservers_lru_));
+    // It should accept the callback
+    EXPECT_TRUE(zone->addCallback(callback_, ANY_OK, zone));
+    // And tell imediatelly that it is unreachable (when it has no nameservers)
+    EXPECT_TRUE(callback_->successes_.empty());
+    EXPECT_EQ(1, callback_->unreachable_count_);
 }
 
-TEST_F(ZoneEntryTest, NameserverIterators) {
-    ZoneEntry zone(EXAMPLE_CO_UK, RRClass::IN().getCode());
-    shared_ptr<NameserverEntry> nse(new NameserverEntry(EXAMPLE_CO_UK,
-        RRClass::IN().getCode()));
-    // The iterator can't be printed, so we can't use EQ
-    const ZoneEntry& zone_const(zone);
-    EXPECT_TRUE(zone.begin() == zone.end());
-    EXPECT_TRUE(zone_const.begin() == zone_const.end());
-    zone.nameserverAdd(nse);
-    EXPECT_FALSE(zone.begin() == zone.end());
-    EXPECT_FALSE(zone_const.begin() == zone_const.end());
-    EXPECT_TRUE(*zone.begin() == nse);
-    EXPECT_TRUE(*zone_const.begin() == nse);
-    EXPECT_TRUE(zone.begin() + 1 == zone.end());
-    EXPECT_TRUE(zone_const.begin() + 1 == zone_const.end());
+TEST_F(ZoneEntryTest, CallbackZeroTTL) {
+    shared_ptr<InheritedZoneEntry> zone(new InheritedZoneEntry(resolver_,
+        rr_single_, vector<const AbstractRRset*>(), nameservers_hash_,
+        nameservers_lru_));
+    // It should accept the callback
+    EXPECT_TRUE(zone->addCallback(callback_, ANY_OK, zone));
+    // It should not be answered yet, it should ask for the IP addresses
+    EXPECT_TRUE(callback_->successes_.empty());
+    EXPECT_EQ(0, callback_->unreachable_count_);
+    resolver_->asksIPs(Name("ns.example.net."), 0, 1);
+    // It should reject another one, as it has zero TTL
+    EXPECT_FALSE(zone->addCallback(callback_, ANY_OK, zone));
 }
 
-void lockAndWait(ZoneEntry* zone, barrier* when) {
-    ZoneEntry::Lock lock(zone->getLock());
-    when->wait();
-}
-
-void lockAndKeep(ZoneEntry* zone, bool* locked_self, bool* locked_other,
-    barrier* when)
-{
-    // Wait for go signal
-    when->wait();
-    // Lock
-    ZoneEntry::Lock lock(zone->getLock());
-    *locked_self = true;
-    // Wait for the start of the other thread
-    when->wait();
-    // Make sure the other thread gets a chance to run
-    for (int i(0); i < 100; ++ i) {
-        this_thread::yield();
-        EXPECT_FALSE(*locked_other);
-    }
-    *locked_self = false;
-}
-
-TEST_F(ZoneEntryTest, Lock) {
-    // Create some testing data
-    ZoneEntry z1(EXAMPLE_CO_UK, RRClass::IN().getCode());
-    ZoneEntry z2(EXAMPLE_NET, RRClass::IN().getCode());
-    shared_ptr<NameserverEntry> ns1(new NameserverEntry(EXAMPLE_CO_UK,
-        RRClass::IN().getCode()));
-    shared_ptr<NameserverEntry> ns2(new NameserverEntry(EXAMPLE_NET,
-        RRClass::IN().getCode()));
-    z1.nameserverAdd(ns1);
-    z2.nameserverAdd(ns2);
-
-    barrier both(2);
-
-    // This tries that both can lock right now.
-    // FIXME If they can't it will deadlock. Any idea how to do it better?
-    thread t1(lockAndWait, &z1, &both);
-    thread t2(lockAndWait, &z2, &both);
-    t1.join();
-    t2.join();
-
-    z1.nameserverAdd(ns2);
-    z2.nameserverAdd(ns1);
-    // Now check that they can't both lock at the same time.
-    barrier both_second(2);
-    bool l1(false), l2(false);
-    thread t3(lockAndKeep, &z1, &l1, &l2, &both);
-    // Let this one run into the lock, not the other
-    both.wait();
-    thread t4(lockAndKeep, &z2, &l2, &l1, &both_second);
-    // Let it start the loop
-    both.wait();
-    // Let this one run to the lock and wait on it
-    both_second.wait();
-    // Make sure the threads has time now
-    for (int i(0); i < 100; ++ i) {
-        this_thread::yield();
-    }
-    both_second.wait();
-    t3.join();
-    t4.join();
-
-    // Try it the other way around (so it does not depend on the order of nameservers
-    thread t6(lockAndKeep, &z2, &l2, &l1, &both);
-    both.wait();
-    thread t5(lockAndKeep, &z1, &l1, &l2, &both_second);
-    both.wait();
-    both_second.wait();
-    for (int i(0); i < 100; ++ i) {
-        this_thread::yield();
-    }
-    both_second.wait();
-    t5.join();
-    t6.join();
-}
-
-}   // namespace nsas
-}   // namespace isc
+}   // namespace

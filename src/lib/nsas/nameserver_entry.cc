@@ -432,18 +432,18 @@ class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
 };
 
 void
-NameserverEntry::askIP(ResolverInterface& resolver, const RRType& type,
-    AddressFamily family, shared_ptr<NameserverEntry> self)
+NameserverEntry::askIP(shared_ptr<ResolverInterface> resolver,
+    const RRType& type, AddressFamily family, shared_ptr<NameserverEntry> self)
 {
     QuestionPtr question(new Question(Name(getName()), RRClass(getClass()),
          type));
     shared_ptr<ResolverCallback> callback(new ResolverCallback(self, family,
          type));
-    resolver.resolve(question, callback);
+    resolver->resolve(question, callback);
 }
 
 void
-NameserverEntry::askIP(ResolverInterface& resolver,
+NameserverEntry::askIP(shared_ptr<ResolverInterface> resolver,
     shared_ptr<Callback> callback, AddressFamily family,
     shared_ptr<NameserverEntry> self)
 {
