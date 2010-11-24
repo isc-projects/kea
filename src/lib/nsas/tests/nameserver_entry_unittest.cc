@@ -37,77 +37,18 @@
 
 #include "nsas_test.h"
 
+using namespace isc::nsas;
 using namespace asiolink;
 using namespace std;
 using namespace isc::dns;
 using namespace rdata;
 using namespace boost;
 
-namespace isc {
-namespace nsas {
-
-// String constants.  These should end in a dot.
-static const std::string EXAMPLE_CO_UK("example.co.uk.");
-static const std::string EXAMPLE_NET("example.net.");
-static const std::string MIXED_EXAMPLE_CO_UK("EXAmple.co.uk.");
+namespace {
 
 /// \brief Test Fixture Class
-class NameserverEntryTest : public ::testing::Test {
+class NameserverEntryTest : public TestWithRdata {
 protected:
-
-    /// \brief Constructor
-    ///
-    /// Initializes the RRsets used in the tests.  The RRsets themselves have to
-    /// be initialized with the basic data on their construction. The Rdata for
-    /// them is added in SetUp().
-    NameserverEntryTest() :
-        rrv4_(Name(EXAMPLE_CO_UK), RRClass::IN(), RRType::A(), RRTTL(1200)),
-        rrcase_(Name(MIXED_EXAMPLE_CO_UK), RRClass::IN(), RRType::A(),
-            RRTTL(1200)),
-        rrch_(Name(EXAMPLE_CO_UK), RRClass::CH(), RRType::A(), RRTTL(1200)),
-        rrns_(Name(EXAMPLE_CO_UK), RRClass::IN(), RRType::NS(), RRTTL(1200)),
-        rrv6_(Name(EXAMPLE_CO_UK), RRClass::IN(), RRType::AAAA(), RRTTL(900)),
-        rrnet_(Name(EXAMPLE_NET), RRClass::IN(), RRType::A(), RRTTL(600))
-    {}
-
-    /// \brief Add Rdata to RRsets
-    ///
-    /// The data are added as const pointers to avoid the stricter type checking
-    /// applied by the Rdata code.  There is no need for it in these tests.
-    virtual void SetUp() {
-
-        // A records
-        rrv4_.addRdata(ConstRdataPtr(new RdataTest<A>("1.2.3.4")));
-        rrv4_.addRdata(ConstRdataPtr(new RdataTest<A>("5.6.7.8")));
-        rrv4_.addRdata(ConstRdataPtr(new RdataTest<A>("9.10.11.12")));
-
-        // A records
-        rrcase_.addRdata(ConstRdataPtr(new RdataTest<A>("13.14.15.16")));
-
-        // No idea what Chaosnet address look like other than they are 16 bits
-        // The fact that they are type A is probably also incorrect.
-        rrch_.addRdata(ConstRdataPtr(new RdataTest<A>("1324")));
-
-        // NS records take a single name
-        rrns_.addRdata(ConstRdataPtr(new RdataTest<NS>("example.fr")));
-        rrns_.addRdata(ConstRdataPtr(new RdataTest<NS>("example.de")));
-
-        // AAAA records
-        rrv6_.addRdata(ConstRdataPtr(new RdataTest<AAAA>("2001::1002")));
-        rrv6_.addRdata(ConstRdataPtr(new RdataTest<AAAA>("dead:beef:feed::")));
-
-        // A record for example.net
-        rrnet_.addRdata(ConstRdataPtr(new RdataTest<A>("17.18.18.20")));
-    }
-
-    /// \brief Data for the tests
-    BasicRRset rrv4_;           ///< Standard RRSet - IN, A, lowercase name
-    BasicRRset rrcase_;         ///< Mixed-case name
-    BasicRRset rrch_;           ///< Non-IN RRset (Chaos in this case)
-    BasicRRset rrns_;           ///< NS RRset
-    BasicRRset rrv6_;           ///< Standard RRset, IN, AAAA, lowercase name
-    BasicRRset rrnet_;          ///< example.net A RRset
-
     /// \short Just a really stupid callback counting times called
     struct Callback : public NameserverEntry::Callback {
         size_t count;
@@ -471,25 +412,25 @@ TEST_F(NameserverEntryTest, IPCallbacks) {
     shared_ptr<NameserverEntry> entry(new NameserverEntry(EXAMPLE_CO_UK,
         RRClass::IN().getCode()));
     shared_ptr<Callback> callback(new Callback);
-    TestResolver resolver;
+    shared_ptr<TestResolver> resolver(new TestResolver);
 
     entry->askIP(resolver, callback, ANY_OK, entry);
     // Ensure it becomes IN_PROGRESS
     EXPECT_EQ(Fetchable::IN_PROGRESS, entry->getState());
     // Now, there should be two queries in the resolver
-    ASSERT_EQ(2, resolver.requests.size());
-    resolver.asksIPs(Name(EXAMPLE_CO_UK), 0, 1);
+    ASSERT_EQ(2, resolver->requests.size());
+    resolver->asksIPs(Name(EXAMPLE_CO_UK), 0, 1);
 
     // Another one might ask
     entry->askIP(resolver, callback, V4_ONLY, entry);
     // There should still be only two queries in the resolver
-    ASSERT_EQ(2, resolver.requests.size());
+    ASSERT_EQ(2, resolver->requests.size());
 
     // Another one, with need of IPv6 address
     entry->askIP(resolver, callback, V6_ONLY, entry);
 
     // Answer one and see that the callbacks are called
-    resolver.answer(0, Name(EXAMPLE_CO_UK), RRType::A(),
+    resolver->answer(0, Name(EXAMPLE_CO_UK), RRType::A(),
         rdata::in::A("192.0.2.1"));
 
     // Both callbacks that want IPv4 should be called by now
@@ -501,7 +442,7 @@ TEST_F(NameserverEntryTest, IPCallbacks) {
     EXPECT_EQ(1, addresses.size());
     // Answer IPv6 address
     // It is with zero TTL, so it should expire right away
-    resolver.answer(1, Name(EXAMPLE_CO_UK), RRType::AAAA(),
+    resolver->answer(1, Name(EXAMPLE_CO_UK), RRType::AAAA(),
         rdata::in::AAAA("2001:db8::1"), 0);
     // The other callback should appear
     EXPECT_EQ(3, callback->count);
@@ -520,19 +461,19 @@ TEST_F(NameserverEntryTest, IPCallbacksUnreachable) {
     shared_ptr<NameserverEntry> entry(new NameserverEntry(EXAMPLE_CO_UK,
         RRClass::IN().getCode()));
     shared_ptr<Callback> callback(new Callback);
-    TestResolver resolver;
+    shared_ptr<TestResolver> resolver(new TestResolver);
 
     // Ask for its IP
     entry->askIP(resolver, callback, ANY_OK, entry);
     // Check it asks the resolver
-    ASSERT_EQ(2, resolver.requests.size());
-    resolver.asksIPs(Name(EXAMPLE_CO_UK), 0, 1);
-    resolver.requests[0].second->failure();
+    ASSERT_EQ(2, resolver->requests.size());
+    resolver->asksIPs(Name(EXAMPLE_CO_UK), 0, 1);
+    resolver->requests[0].second->failure();
     // It should still wait for the second one
     EXPECT_EQ(0, callback->count);
     EXPECT_EQ(Fetchable::IN_PROGRESS, entry->getState());
     // It should call the callback now and be unrechable
-    resolver.requests[1].second->failure();
+    resolver->requests[1].second->failure();
     EXPECT_EQ(1, callback->count);
     EXPECT_EQ(Fetchable::UNREACHABLE, entry->getState());
     NameserverEntry::AddressVector addresses;
@@ -540,5 +481,4 @@ TEST_F(NameserverEntryTest, IPCallbacksUnreachable) {
     EXPECT_EQ(0, addresses.size());
 }
 
-}   // namespace nsas
-}   // namespace isc
+}   // namespace

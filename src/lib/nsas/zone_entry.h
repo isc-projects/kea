@@ -29,6 +29,8 @@
 #include "nsas_entry.h"
 #include "asiolink.h"
 #include "fetchable.h"
+#include "resolver_interface.h"
+#include "nsas_types.h"
 
 namespace isc {
 namespace nsas {
@@ -50,33 +52,42 @@ public:
 
     /// \brief Constructor where no NS records are supplied
     ///
+    /// It is here mostly for testing purposes.
+    ///
+    /// \param resolver The resolver used to ask for IP addresses
     /// \param name Name of the zone
     /// \param class_code Class of this zone (zones of different classes have
     /// different objects.
-    ZoneEntry(const std::string& name, uint16_t class_code) :
-        name_(name), classCode_(class_code)
+    ZoneEntry(boost::shared_ptr<ResolverInterface> resolver,
+        const std::string& name, uint16_t class_code) :
+        name_(name), classCode_(class_code), resolver_(resolver)
     {}
-
-    // TODO Constructor from namesarver table and referral information
 
     /// \brief Constructor
     ///
     /// Creates a zone entry object with an RRset representing the nameservers,
     /// plus possibly additional RRsets holding address information.
-    //ZoneEntry(isc::dns::AbstractRRset* nsrrset,
-    //       const std::vector<isc::dns::AbstractRRset*>& additional);
-
-    /// \brief Destructor
-    virtual ~ZoneEntry()
-    {}
+    ///
+    /// \param resolver The resolver used to ask for IP addresses
+    /// \param authority Specifies the name, code and nameservers of this zone.
+    /// \param additional The additional section to feed to nameservers.
+    /// \param nameservers Hash table of existing nameserves and a place where
+    ///     new ones will be put.
+    /// \param nameserver_lru The lru where the nameservers will be added or
+    ///     touched.
+    ZoneEntry(boost::shared_ptr<ResolverInterface> resolver,
+        const isc::dns::AbstractRRset& authority,
+        const std::vector<const isc::dns::AbstractRRset*>& additional,
+        HashTable<NameserverEntry>& nameservers,
+        LruList<NameserverEntry>& nameserver_lru);
 
     /// \return Name of the zone
-    virtual std::string getName() const {
+    std::string getName() const {
         return name_;
     }
 
     /// \return Class of zone
-    virtual short getClass() const {
+    short getClass() const {
         return classCode_;
     }
 
@@ -90,10 +101,9 @@ public:
      *
      * This callback is either executed right away, if it is possible,
      * or queued for later.
+     *
      * \param callback The callback itself.
-     * \param v4ok Is it ok to give the callback a IPv4 address?
-     * \param v6ok Is it ok to give the callback a IPv6 address? (At last one
-     *     of them must be true or isc::BadValue is thrown)
+     * \param family Which address family is acceptable as an answer?
      * \param self A shared pointer to this zone entry. It is not possible to
      *     create one from C++ this pointer, since another shared pointer
      *     will already exist at that point, however it is needed to callback.
@@ -104,24 +114,29 @@ public:
      *     and new instance should be created.
      */
     bool addCallback(boost::shared_ptr<AddressRequestCallback>
-        callback, bool v4ok, bool v6ok, boost::shared_ptr<ZoneEntry> self);
+        callback, AddressFamily family, boost::shared_ptr<ZoneEntry> self);
 
-private:
+    /// \short Protected members, so they can be accessed by tests.
+    //@{
+protected:
     // TODO Read-Write lock?
-    mutable boost::mutex    mutex_;     ///< Mutex protecting this zone entry
-    std::string     name_;      ///< Canonical zone name
-    uint16_t        classCode_; ///< Class code
     typedef boost::shared_ptr<NameserverEntry> NameserverPtr;
     typedef std::vector<NameserverPtr> NameserverVector;
     NameserverVector nameservers_; ///< Nameservers
-    time_t          expiry_;    ///< Expiry time of this entry
     std::list<boost::shared_ptr<AddressRequestCallback> > callbacks_;
+    time_t          expiry_;    ///< Expiry time of this entry
+    //}@
+private:
+    mutable boost::mutex    mutex_;     ///< Mutex protecting this zone entry
+    std::string     name_;      ///< Canonical zone name
+    uint16_t        classCode_; ///< Class code
     // Internal function that adds a callback (if there's one) and processes
     // the nameservers (if there's chance there's some info) and calls
     // callbacks. If nameserver is given, it is considered new and valid
     // even if its TTL is 0.
     void process(boost::shared_ptr<AddressRequestCallback> callback,
          bool v4ok, bool v6ok, NameserverEntry* nameserver);
+    boost::shared_ptr<ResolverInterface> resolver_;
 };
 
 } // namespace nsas

@@ -28,7 +28,7 @@ run_unittests_SOURCES += nameserver_address_unittest.cc
 run_unittests_SOURCES += nameserver_entry_unittest.cc
 run_unittests_SOURCES += nsas_entry_compare_unittest.cc
 run_unittests_SOURCES += nsas_test.h
-#run_unittests_SOURCES += zone_entry_unittest.cc
+run_unittests_SOURCES += zone_entry_unittest.cc
 run_unittests_SOURCES += fetchable_unittest.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
