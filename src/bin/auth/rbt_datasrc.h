@@ -16,14 +16,10 @@
 #define _RBTREE_H 1
 
 #include <dns/name.h>
-#include <dns/rrset.h>
-#include <dns/rrsetlist.h>
-#include <boost/shared_ptr.hpp>
 #include <boost/utility.hpp>
 #include <exception>
 #include <iostream> 
 
-using namespace isc::dns;
 namespace isc {
 namespace datasrc {
 
@@ -31,8 +27,8 @@ namespace {
 /// helper function to remove the base domain from super domain
 /// the precondition of this function is the super_name contains the
 /// sub_name
-Name
-operator-(const Name& super_name, const Name& sub_name) {
+isc::dns::Name
+operator-(const isc::dns::Name& super_name, const isc::dns::Name& sub_name) {
     return (super_name.split(0, super_name.getLabelCount() -
                              sub_name.getLabelCount()));
 }
@@ -67,9 +63,9 @@ public:
     /// \brief return the name of current node, it's relative to its parents
     //
     /// \todo Is it meaningful to return the absolute of the node?
-    const Name& getName() const { return (name_); }
+    const isc::dns::Name& getName() const { return (name_); }
 
-    /// \breif return the data store in this node
+    /// \brief return the data store in this node
     T& getData() { return (data_); }
 
     /// \brief return next node whose name is bigger than current node
@@ -92,7 +88,7 @@ private:
     /// \brief Constructor from the node name.
     ///
     /// \param name The domain name corresponding to the node.
-    RBNode(const Name &name);
+    RBNode(const isc::dns::Name &name);
 
     /// the class isn't left to be inherited
     ~RBNode();
@@ -121,7 +117,7 @@ private:
     RBTreeColor color_;
 
     /// data to carry dns info
-    Name        name_;
+    isc::dns::Name        name_;
     /// this will make type T should have default constructor 
     /// without any parameters
     T           data_;
@@ -139,14 +135,15 @@ RBNode<T>::RBNode() :
     left_(this),
     right_(this),
     color_(BLACK),
-    name_(Name::ROOT_NAME()),   // dummy name, the value doesn't matter.
+    // dummy name, the value doesn't matter:
+    name_(isc::dns::Name::ROOT_NAME()),
     down_(NULL),
     is_shadow_(false) 
 {
 }
 
 template <typename T>
-RBNode<T>::RBNode(const Name& name) :
+RBNode<T>::RBNode(const isc::dns::Name& name) :
     parent_(NULL_NODE()),
     left_(NULL_NODE()),
     right_(NULL_NODE()),
@@ -240,8 +237,8 @@ public:
     /// \param node Point to the node when the return vaule is \c not
     /// NOTFOUND, if the return value is NOTFOUND, the value of node is
     /// \c unknown
-    FindResult find(const Name& name, RBNode<T>** node) const;
-    FindResult find(const Name& name, const RBNode<T>** node) const;
+    FindResult find(const isc::dns::Name& name, RBNode<T>** node) const;
+    FindResult find(const isc::dns::Name& name, const RBNode<T>** node) const;
 
     /// \brief Get the total node count in the tree
     /// the node count including the node created common suffix node
@@ -274,11 +271,11 @@ public:
     /// To add an RRset into one node when it's not known whether the node
     /// already exists, it is better to call \c insert and then call the
     /// RBNode interface instead of calling \c find().
-    int insert(const Name& name, RBNode<T>** inserted_node);
+    int insert(const isc::dns::Name& name, RBNode<T>** inserted_node);
 
     /// \brief Erase the node with the domain name
     /// \return If no node with the name, return 1; otherwise return 0
-    int erase(const Name& name);
+    int erase(const isc::dns::Name& name);
     //@}
 
 private:
@@ -294,7 +291,7 @@ private:
     //@{
     /// Each public function has related recursive helper function
     void eraseNode(RBNode<T>* node);
-    FindResult findHelper(const Name& name, const RBTree<T>** tree,
+    FindResult findHelper(const isc::dns::Name& name, const RBTree<T>** tree,
                           RBNode<T>** node) const;
     int getNodeCountHelper(const RBNode<T>* node) const;
     int getNameCountHelper(const RBNode<T>* node) const;
@@ -367,14 +364,14 @@ RBTree<T>::~RBTree() {
 
 template <typename T>
 typename RBTree<T>::FindResult
-RBTree<T>::find(const Name& name, RBNode<T>** node) const {
+RBTree<T>::find(const isc::dns::Name& name, RBNode<T>** node) const {
     const RBTree<T> *tree;
     return (findHelper(name, &tree, node));
 }
 
 template <typename T>
 typename RBTree<T>::FindResult
-RBTree<T>::find(const Name& name, const RBNode<T>** node) const {
+RBTree<T>::find(const isc::dns::Name& name, const RBNode<T>** node) const {
     const RBTree<T> *tree;
     RBNode<T> *target_node; 
     const typename RBTree<T>::FindResult ret =
@@ -387,15 +384,16 @@ RBTree<T>::find(const Name& name, const RBNode<T>** node) const {
 
 template <typename T>
 typename RBTree<T>::FindResult
-RBTree<T>::findHelper(const Name& name, const RBTree<T>** tree,
+RBTree<T>::findHelper(const isc::dns::Name& name, const RBTree<T>** tree,
                       RBNode<T>** ret) const 
 {
     RBNode<T>* node = root_;
     while (node != NULLNODE) {
-        const NameComparisonResult compare_result = name.compare(node->name_);
-        const NameComparisonResult::NameRelation relation =
+        const isc::dns::NameComparisonResult compare_result =
+            name.compare(node->name_);
+        const isc::dns::NameComparisonResult::NameRelation relation =
             compare_result.getRelation();
-        if (relation == NameComparisonResult::EQUAL) {
+        if (relation == isc::dns::NameComparisonResult::EQUAL) {
             if (node->is_shadow_) {
                 return (RBTree<T>::NOTFOUND);
             } else {
@@ -405,12 +403,12 @@ RBTree<T>::findHelper(const Name& name, const RBTree<T>** tree,
             }
         } else {
             const int common_label_count = compare_result.getCommonLabels();
-            // common label count equal one means, there is no common between
-            // two names
+            // If the common label count is 1, there is no common label between
+            // the two names, except the trailing "dot".
             if (common_label_count == 1) {
                 node = (compare_result.getOrder() < 0) ?
                     node->left_ : node->right_;
-            } else if (NameComparisonResult::SUBDOMAIN == relation) {
+            } else if (isc::dns::NameComparisonResult::SUBDOMAIN == relation) {
                 if (node->is_shadow_) {
                     assert(node->down_ != NULL);
                     return (node->down_->findHelper(name - node->name_, tree,
@@ -456,7 +454,7 @@ RBTree<T>::getNodeCountHelper(const RBNode<T> *node) const {
     }
 
     const int sub_tree_node_count =
-        node->down_ ? node->down_->getNodeCount() : 0;
+        (node->down_ != NULL) ? node->down_->getNodeCount() : 0;
     return (1 + sub_tree_node_count + getNodeCountHelper(node->left_) +
             getNodeCountHelper(node->right_));
 }
@@ -475,7 +473,7 @@ RBTree<T>::getNameCountHelper(const RBNode<T> *node) const {
     }
 
     const int sub_tree_name_count =
-        node->down_ ? node->down_->getNameCount() : 0;
+        (node->down_ != NULL) ? node->down_->getNameCount() : 0;
     return ((node->is_shadow_ ? 0 : 1) + sub_tree_name_count +
             getNameCountHelper(node->left_) +
             getNameCountHelper(node->right_));
@@ -483,7 +481,7 @@ RBTree<T>::getNameCountHelper(const RBNode<T> *node) const {
 
 template <typename T>
 int
-RBTree<T>::insert(const Name& name, RBNode<T>** new_node) {
+RBTree<T>::insert(const isc::dns::Name& name, RBNode<T>** new_node) {
     RBNode<T>* parent = NULLNODE;
     RBNode<T>* current = root_;
 
@@ -491,11 +489,11 @@ RBTree<T>::insert(const Name& name, RBNode<T>** new_node) {
     while (current != NULLNODE) {
         parent = current;
 
-        const NameComparisonResult compare_result =
+        const isc::dns::NameComparisonResult compare_result =
             name.compare(current->name_);
-        const NameComparisonResult::NameRelation relation =
+        const isc::dns::NameComparisonResult::NameRelation relation =
             compare_result.getRelation();
-        if (relation == NameComparisonResult::EQUAL) {
+        if (relation == isc::dns::NameComparisonResult::EQUAL) {
             if (new_node != NULL) {
                 *new_node = current;
             }
@@ -514,7 +512,7 @@ RBTree<T>::insert(const Name& name, RBNode<T>** new_node) {
                 current = order < 0 ? current->left_ : current->right_;
             } else {
                 // insert sub domain to sub tree
-                if (relation == NameComparisonResult::SUBDOMAIN) {
+                if (relation == isc::dns::NameComparisonResult::SUBDOMAIN) {
                     if (NULL == current->down_) {
                         try {
                             RBTree<T>* new_sub_tree = new RBTree();
@@ -535,16 +533,21 @@ RBTree<T>::insert(const Name& name, RBNode<T>** new_node) {
                                                        new_node));
                     }
                 } else {
-                    // for super domain or has common label domain, create
-                    // common node first then insert current name and new name
-                    // into the sub tree
-                    const Name common_ancestor = name.split(
+                    // The number of labels in common is fewer
+                    // than the number of labels at the current
+                    // node, so the current node must be adjusted
+                    // to have just the common suffix, and a down
+                    // pointer made to a new tree.
+                    const isc::dns::Name common_ancestor = name.split(
                         name.getLabelCount() - common_label_count,
                         common_label_count);
-                    const Name sub_name = current->name_ - common_ancestor;
+                    const isc::dns::Name sub_name =
+                        current->name_ - common_ancestor;
+
                     try {
                         // create new sub domain tree, and ty to insert 
-                        // (current_name - common_ancestor) and (name - common_ancestor)
+                        // (current_name - common_ancestor) and
+                        // (name - common_ancestor)
                         RBTree<T>* new_sub_tree = new RBTree();
                         RBNode<T>* sub_root;
                         if (-1 == new_sub_tree->insert(sub_name, &sub_root)) {
@@ -713,14 +716,18 @@ RBTree<T>::rightRotate(RBNode<T>* p) {
 
 template <typename T>
 int
-RBTree<T>::erase(const Name& name) {
+RBTree<T>::erase(const isc::dns::Name& name) {
     RBNode<T>* node;
     const RBTree<T>* ctree;
     if (findHelper(name, &ctree, &node) != RBTree<T>::EXACTMATCH) {
         return (1);
     }
 
-    // for node with downpointer, set it to shadow
+    // For node with downpointer, set it to shadow.
+    // Since there is at least one node below this one, the deletion is
+    // complete.  The down node from this node might be all by itself on a
+    // single level, so we could collapse the subtree to reduce the levels
+    // (but we don't it for simplicity for now).
     if (node->down_ != NULL) {
         assert(node->is_shadow_ == false);
         node->is_shadow_ = true;
@@ -734,7 +741,8 @@ RBTree<T>::erase(const Name& name) {
         // merge down to up
         if (1 == tree->node_count_ && tree->up_->is_shadow_) {
             RBNode<T>* up = tree->up_;
-            const Name merged_name = tree->root_->name_.concatenate(up->name_);
+            const isc::dns::Name merged_name =
+                tree->root_->name_.concatenate(up->name_);
             tree->root_->cloneDNSData(*up);
             up->setDownTree(tree->root_->down_);
             tree->root_->setDownTree(NULL);
@@ -751,7 +759,7 @@ RBTree<T>::erase(const Name& name) {
 
 template <typename T>
 void
-RBTree<T>::eraseNode(RBNode<T> *node) {
+RBTree<T>::eraseNode(RBNode<T>* node) {
     RBNode<T>* y = NULLNODE;
     RBNode<T>* x = NULLNODE;
 
@@ -857,17 +865,17 @@ RBTree<T>::deleteRebalance(RBNode<T>* node) {
     node->color_ = BLACK;
 }
 
-#define INDNET(os, depth) do { \
+#define INDENT(os, depth) do { \
     int i = 0; \
     for (; i < (depth) * 5; ++i) { \
         (os) << " "; \
     } \
-} while(0)
+} while (0)
 
 template <typename T>
 void
-RBTree<T>::printTree(std::ostream &os, int depth) const {
-    INDNET(os, depth);
+RBTree<T>::printTree(std::ostream& os, int depth) const {
+    INDENT(os, depth);
     os << "tree has node " << node_count_ << "\n";
     printTreeHelper(os, root_, depth);
 }
@@ -877,30 +885,30 @@ void
 RBTree<T>::printTreeHelper(std::ostream& os, const RBNode<T>* node,
                            int depth) const
 {
-    INDNET(os, depth);
+    INDENT(os, depth);
     os << node->name_.toText() << " ("
               << ((node->color_ == BLACK) ? "black" : "red") << ")\n";
     os << ((node->is_shadow_) ? "[invisible] \n" : "\n");
-    if (node->down_) {
+    if (node->down_ != NULL) {
         assert(node->down_->up_ == node);
-        INDNET(os, depth + 1);
+        INDENT(os, depth + 1);
         os << "begin down from "<< node->name_.toText() << "\n";
         node->down_->printTree(os, depth + 1);
-        INDNET(os, depth + 1);
-        os << "end down from" << node->name_.toText() <<"\n";
+        INDENT(os, depth + 1);
+        os << "end down from" << node->name_.toText() << "\n";
     }
 
     if (node->left_ != NULLNODE) {
         printTreeHelper(os, node->left_, depth + 1);
     } else {
-        INDNET(os, depth + 1);
+        INDENT(os, depth + 1);
         os << "NULL\n";
     }
 
     if (node->right_ != NULLNODE) {
         printTreeHelper(os, node->right_, depth + 1);
     } else {
-        INDNET(os, depth + 1);
+        INDENT(os, depth + 1);
         os << "NULL\n";
     }
 }

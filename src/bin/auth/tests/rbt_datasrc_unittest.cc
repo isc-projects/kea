@@ -27,6 +27,7 @@
 
 using namespace std;
 using isc::UnitTestUtil;
+using namespace isc::dns;
 using namespace isc::datasrc;
 
 /* The initial structure of rbtree
