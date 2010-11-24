@@ -249,7 +249,8 @@ TSIG::TSIG(const Name& algorithm, uint64_t time_signed, uint16_t fudge,
            uint16_t error, uint16_t other_len, const void* other_data) :
     impl_(NULL)
 {
-    if (time_signed > 0xffffffffffff) {
+    // Time Signed is a 48-bit value.
+    if ((time_signed >> 48) != 0) {
         isc_throw(OutOfRange, "TSIG Time Signed is too large: " <<
                   time_signed);
     }
