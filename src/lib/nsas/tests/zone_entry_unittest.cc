@@ -106,6 +106,7 @@ TEST_F(ZoneEntryTest, ReferralConstructor) {
     // TODO Test with some additional data once NameserverEntry supports them?
 }
 
+// It should answer negatively right away if there are no nameservers
 TEST_F(ZoneEntryTest, CallbackNoNS) {
     shared_ptr<InheritedZoneEntry> zone(new InheritedZoneEntry(resolver_,
         rr_empty_, vector<const AbstractRRset*>(), nameservers_hash_,
@@ -117,6 +118,7 @@ TEST_F(ZoneEntryTest, CallbackNoNS) {
     EXPECT_EQ(1, callback_->unreachable_count_);
 }
 
+// Check it accepts the first callback with 0 TTL
 TEST_F(ZoneEntryTest, CallbackZeroTTL) {
     // Make it zero TTL, so it expires right away
     rr_single_.setTTL(RRTTL(0));
@@ -133,6 +135,7 @@ TEST_F(ZoneEntryTest, CallbackZeroTTL) {
     EXPECT_FALSE(zone->addCallback(callback_, ANY_OK, zone));
 }
 
+// Check it answers callbacks when we give it addresses
 TEST_F(ZoneEntryTest, CallbacksAnswered) {
     shared_ptr<InheritedZoneEntry> zone(new InheritedZoneEntry(resolver_,
         rr_single_, vector<const AbstractRRset*>(), nameservers_hash_,
@@ -162,7 +165,7 @@ TEST_F(ZoneEntryTest, CallbacksAnswered) {
     // We are still in progress, not everything arrived
     EXPECT_EQ(Fetchable::IN_PROGRESS, zone->getState());
     resolver_->answer(1, ns_name_, RRType::AAAA(),
-        rdata::in::A("2001:db8::1"));
+        rdata::in::AAAA("2001:db8::1"));
     // This should answer the third callback
     ASSERT_EQ(3, callback_->successes_.size());
     EXPECT_TRUE(IOAddress("2001:db8::1").equal(callback_->successes_[2]));
@@ -177,6 +180,7 @@ TEST_F(ZoneEntryTest, CallbacksAnswered) {
     EXPECT_EQ(0, callback_->unreachable_count_);
 }
 
+// Pretend the server can be reached only by IPv4
 TEST_F(ZoneEntryTest, CallbacksAOnly) {
     shared_ptr<InheritedZoneEntry> zone(new InheritedZoneEntry(resolver_,
         rr_single_, vector<const AbstractRRset*>(), nameservers_hash_,
@@ -218,6 +222,60 @@ TEST_F(ZoneEntryTest, CallbacksAOnly) {
     EXPECT_EQ(2, resolver_->requests.size());
     EXPECT_EQ(3, callback_->successes_.size());
     EXPECT_EQ(2, callback_->unreachable_count_);
+}
+
+// See it tries hard enough to get address and tries both nameservers
+TEST_F(ZoneEntryTest, CallbackTwoNS) {
+    shared_ptr<InheritedZoneEntry> zone(new InheritedZoneEntry(resolver_,
+        rrns_, vector<const AbstractRRset*>(), nameservers_hash_,
+        nameservers_lru_));
+    // It should be in NOT_ASKED state
+    EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
+    // It should accept the callback
+    EXPECT_TRUE(zone->addCallback(callback_, V4_ONLY, zone));
+    EXPECT_EQ(Fetchable::IN_PROGRESS, zone->getState());
+    // It asks a question (we do not know which nameserver)
+    resolver_->asksIPs((*resolver_)[0]->getName(), 0, 1);
+    resolver_->requests[0].second->failure();
+    // Nothing should be answered or failed yet
+    EXPECT_EQ(0, callback_->unreachable_count_);
+    EXPECT_EQ(0, callback_->successes_.size());
+    // It should be still IN_PROGRESS and ask the second nameserver
+    // (at last now, if not before)
+    EXPECT_EQ(Fetchable::IN_PROGRESS, zone->getState());
+    resolver_->asksIPs((*resolver_)[2]->getName(), 2, 3);
+    // Fail the second one
+    resolver_->requests[2].second->failure();
+    // The callback should be failed now, as there is no chance of getting
+    // v4 address
+    EXPECT_EQ(1, callback_->unreachable_count_);
+    EXPECT_EQ(0, callback_->successes_.size());
+    // We should still be IN_PROGRESS, waiting for v6
+    EXPECT_EQ(Fetchable::IN_PROGRESS, zone->getState());
+    // And question for v6 or any should still wait while v4 should be failed
+    // right away
+    EXPECT_TRUE(zone->addCallback(callback_, V6_ONLY, zone));
+    EXPECT_EQ(1, callback_->unreachable_count_);
+    EXPECT_EQ(0, callback_->successes_.size());
+
+    EXPECT_TRUE(zone->addCallback(callback_, ANY_OK, zone));
+    EXPECT_EQ(1, callback_->unreachable_count_);
+    EXPECT_EQ(0, callback_->successes_.size());
+
+    EXPECT_TRUE(zone->addCallback(callback_, V4_ONLY, zone));
+    EXPECT_EQ(2, callback_->unreachable_count_);
+    EXPECT_EQ(0, callback_->successes_.size());
+    // Answer the IPv6 one
+    resolver_->answer(1, (*resolver_)[1]->getName(), RRType::AAAA(),
+        rdata::in::AAAA("2001:db8::1"));
+
+    // Ready, as we have at last some address
+    EXPECT_EQ(Fetchable::READY, zone->getState());
+    // The other callbacks should be answered now
+    EXPECT_EQ(2, callback_->unreachable_count_);
+    ASSERT_EQ(2, callback_->successes_.size());
+    EXPECT_TRUE(IOAddress("2001:db8::1").equal(callback_->successes_[0]));
+    EXPECT_TRUE(IOAddress("2001:db8::1").equal(callback_->successes_[1]));
 }
 
 }   // namespace
