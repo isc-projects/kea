@@ -294,11 +294,13 @@ protected:
             RRTTL(1200)),
         rrch_(Name(EXAMPLE_CO_UK), RRClass::CH(), RRType::A(), RRTTL(1200)),
         rrns_(Name(EXAMPLE_CO_UK), RRClass::IN(), RRType::NS(), RRTTL(1200)),
-        rr_single_(Name(EXAMPLE_CO_UK), RRClass::IN(), RRType::NS(), RRTTL(0)),
+        rr_single_(Name(EXAMPLE_CO_UK), RRClass::IN(), RRType::NS(),
+            RRTTL(600)),
         rr_empty_(Name(EXAMPLE_CO_UK), RRClass::IN(), RRType::NS(),
             RRTTL(600)),
         rrv6_(Name(EXAMPLE_CO_UK), RRClass::IN(), RRType::AAAA(), RRTTL(900)),
-        rrnet_(Name(EXAMPLE_NET), RRClass::IN(), RRType::A(), RRTTL(600))
+        rrnet_(Name(EXAMPLE_NET), RRClass::IN(), RRType::A(), RRTTL(600)),
+        ns_name_(ns_name_)
     {}
 
     /// \brief Add Rdata to RRsets
@@ -344,6 +346,7 @@ protected:
     BasicRRset rr_empty_;       ///< NS RRset without any nameservers
     BasicRRset rrv6_;           ///< Standard RRset, IN, AAAA, lowercase name
     BasicRRset rrnet_;          ///< example.net A RRset
+    Name ns_name_;  ///< Nameserver name of ns.example.net
 };
 
 } // Empty namespace
