@@ -225,6 +225,10 @@ using namespace std;
  * they can be answered.
  */
 class TestResolver : public isc::nsas::ResolverInterface {
+    private:
+        void checkIndex(size_t index) {
+            ASSERT_GT(requests.size(), index);
+        }
     public:
         typedef pair<QuestionPtr, CallbackPtr> Request;
         vector<Request> requests;
@@ -232,6 +236,7 @@ class TestResolver : public isc::nsas::ResolverInterface {
             requests.push_back(Request(q, c));
         }
         QuestionPtr operator[](size_t index) {
+            checkIndex(index);
             return (requests[index].first);
         }
         /*
@@ -240,7 +245,7 @@ class TestResolver : public isc::nsas::ResolverInterface {
          */
         void asksIPs(const Name& name, size_t index1, size_t index2) {
             size_t max = (index1 < index2) ? index2 : index1;
-            ASSERT_GT(requests.size(), max);
+            checkIndex(max);
             EXPECT_EQ(name, (*this)[index1]->getName());
             EXPECT_EQ(name, (*this)[index2]->getName());
             EXPECT_EQ(RRClass::IN(), (*this)[index1]->getClass());
