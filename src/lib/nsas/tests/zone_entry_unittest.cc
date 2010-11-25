@@ -18,6 +18,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <dns/rrclass.h>
+#include <dns/rdataclass.h>
 
 #include "../asiolink.h"
 #include "../zone_entry.h"
@@ -117,6 +118,8 @@ TEST_F(ZoneEntryTest, CallbackNoNS) {
 }
 
 TEST_F(ZoneEntryTest, CallbackZeroTTL) {
+    // Make it zero TTL, so it expires right away
+    rr_single_.setTTL(RRTTL(0));
     shared_ptr<InheritedZoneEntry> zone(new InheritedZoneEntry(resolver_,
         rr_single_, vector<const AbstractRRset*>(), nameservers_hash_,
         nameservers_lru_));
@@ -125,9 +128,96 @@ TEST_F(ZoneEntryTest, CallbackZeroTTL) {
     // It should not be answered yet, it should ask for the IP addresses
     EXPECT_TRUE(callback_->successes_.empty());
     EXPECT_EQ(0, callback_->unreachable_count_);
-    resolver_->asksIPs(Name("ns.example.net."), 0, 1);
+    resolver_->asksIPs(ns_name_, 0, 1);
     // It should reject another one, as it has zero TTL
     EXPECT_FALSE(zone->addCallback(callback_, ANY_OK, zone));
+}
+
+TEST_F(ZoneEntryTest, CallbacksAnswered) {
+    shared_ptr<InheritedZoneEntry> zone(new InheritedZoneEntry(resolver_,
+        rr_single_, vector<const AbstractRRset*>(), nameservers_hash_,
+        nameservers_lru_));
+    // It should be in NOT_ASKED state
+    EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
+    // It should accept the callback
+    EXPECT_TRUE(zone->addCallback(callback_, ANY_OK, zone));
+    // It should not be answered yet, it should ask for the IP addresses
+    EXPECT_TRUE(callback_->successes_.empty());
+    EXPECT_EQ(0, callback_->unreachable_count_);
+    resolver_->asksIPs(ns_name_, 0, 1);
+    // We should be IN_PROGRESS
+    EXPECT_EQ(Fetchable::IN_PROGRESS, zone->getState());
+    // Give two more callbacks, with different address families
+    EXPECT_TRUE(zone->addCallback(callback_, V4_ONLY, zone));
+    EXPECT_TRUE(zone->addCallback(callback_, V6_ONLY, zone));
+    // Nothing more is asked
+    EXPECT_EQ(2, resolver_->requests.size());
+    resolver_->answer(0, ns_name_, RRType::A(), rdata::in::A("192.0.2.1"));
+    // Two are answered (ANY and V4)
+    ASSERT_EQ(2, callback_->successes_.size());
+    EXPECT_TRUE(IOAddress("192.0.2.1").equal(callback_->successes_[0]));
+    EXPECT_TRUE(IOAddress("192.0.2.1").equal(callback_->successes_[1]));
+    // None are rejected
+    EXPECT_EQ(0, callback_->unreachable_count_);
+    // We are still in progress, not everything arrived
+    EXPECT_EQ(Fetchable::IN_PROGRESS, zone->getState());
+    resolver_->answer(1, ns_name_, RRType::AAAA(),
+        rdata::in::A("2001:db8::1"));
+    // This should answer the third callback
+    ASSERT_EQ(3, callback_->successes_.size());
+    EXPECT_TRUE(IOAddress("2001:db8::1").equal(callback_->successes_[2]));
+    EXPECT_EQ(0, callback_->unreachable_count_);
+    // It should think it is ready
+    EXPECT_EQ(Fetchable::READY, zone->getState());
+    // When we ask something more, it should be answered right away
+    EXPECT_TRUE(zone->addCallback(callback_, V4_ONLY, zone));
+    EXPECT_EQ(2, resolver_->requests.size());
+    ASSERT_EQ(4, callback_->successes_.size());
+    EXPECT_TRUE(IOAddress("192.0.2.1").equal(callback_->successes_[3]));
+    EXPECT_EQ(0, callback_->unreachable_count_);
+}
+
+TEST_F(ZoneEntryTest, CallbacksAOnly) {
+    shared_ptr<InheritedZoneEntry> zone(new InheritedZoneEntry(resolver_,
+        rr_single_, vector<const AbstractRRset*>(), nameservers_hash_,
+        nameservers_lru_));
+    // It should be in NOT_ASKED state
+    EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
+    // It should accept the callback
+    EXPECT_TRUE(zone->addCallback(callback_, ANY_OK, zone));
+    // It should not be answered yet, it should ask for the IP addresses
+    EXPECT_TRUE(callback_->successes_.empty());
+    EXPECT_EQ(0, callback_->unreachable_count_);
+    resolver_->asksIPs(ns_name_, 0, 1);
+    // We should be IN_PROGRESS
+    EXPECT_EQ(Fetchable::IN_PROGRESS, zone->getState());
+    // Give two more callbacks, with different address families
+    EXPECT_TRUE(zone->addCallback(callback_, V4_ONLY, zone));
+    EXPECT_TRUE(zone->addCallback(callback_, V6_ONLY, zone));
+    resolver_->requests[1].second->failure();
+    // One should be rejected, but two still stay, they have chance
+    EXPECT_EQ(0, callback_->successes_.size());
+    EXPECT_EQ(1, callback_->unreachable_count_);
+    EXPECT_EQ(Fetchable::IN_PROGRESS, zone->getState());
+    // Answer the A one and see it answers what can be answered
+    ASSERT_EQ(2, callback_->successes_.size());
+    resolver_->answer(0, ns_name_, RRType::A(), rdata::in::A("192.0.2.1"));
+    EXPECT_TRUE(IOAddress("192.0.2.1").equal(callback_->successes_[0]));
+    EXPECT_TRUE(IOAddress("192.0.2.1").equal(callback_->successes_[1]));
+    EXPECT_EQ(1, callback_->unreachable_count_);
+    // Everything arriwed, so we are ready
+    EXPECT_EQ(Fetchable::READY, zone->getState());
+    // Try asking something more
+    EXPECT_TRUE(zone->addCallback(callback_, V4_ONLY, zone));
+    EXPECT_EQ(2, resolver_->requests.size());
+    ASSERT_EQ(3, callback_->successes_.size());
+    EXPECT_TRUE(IOAddress("192.0.2.1").equal(callback_->successes_[2]));
+    EXPECT_EQ(1, callback_->unreachable_count_);
+
+    EXPECT_TRUE(zone->addCallback(callback_, V6_ONLY, zone));
+    EXPECT_EQ(2, resolver_->requests.size());
+    EXPECT_EQ(3, callback_->successes_.size());
+    EXPECT_EQ(2, callback_->unreachable_count_);
 }
 
 }   // namespace
