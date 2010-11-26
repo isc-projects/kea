@@ -40,13 +40,18 @@ using namespace std;
 namespace isc {
 namespace nsas {
 
+// Generate a small random RTT when initialize the list of addresses
+// to select all the addresses in unpredicable order
+// The initia RTT is between 0ms and 7ms which is as the same as bind9
+#define MIN_INIT_RTT 0
+#define MAX_INIT_RTT 7
+UniformRandomIntegerGenerator NameserverEntry::rndRttGen_(MIN_INIT_RTT, MAX_INIT_RTT);
 
 // Constructor, initialized with the list of addresses associated with this
 // nameserver.
 NameserverEntry::NameserverEntry(const AbstractRRset* v4Set,
     const AbstractRRset* v6Set, time_t curtime) : expiration_(0)
 {
-    // TODO: Use pseudo-random RTT
     uint32_t rtt = 0;       // Round-trip time for an address
     string v4name = "";     // Name from the V4 RRset
     string v6name = "";     // Name from the v6 RRset

@@ -24,9 +24,10 @@
 #include "address_entry.h"
 #include "asiolink.h"
 #include "exceptions/exceptions.h"
-#include "nsas_entry.h"
 #include "hash_key.h"
 #include "lru_list.h"
+#include "nsas_entry.h"
+#include "random_number_generator.h"
 #include "rrset.h"
 
 namespace isc {
@@ -195,12 +196,13 @@ public:
     };
 
 private:
-    boost::mutex    mutex_;             ///< Mutex protecting this object
-    std::string     name_;              ///< Canonical name of the nameserver
-    uint16_t        classCode_;         ///< Class of the nameserver
-    std::vector<AddressEntry> address_; ///< Set of V4/V6 addresses
-    time_t          expiration_;        ///< Summary expiration time
-    time_t          last_access_;       ///< Last access time to the structure
+    boost::mutex    mutex_;                          ///< Mutex protecting this object
+    std::string     name_;                           ///< Canonical name of the nameserver
+    uint16_t        classCode_;                      ///< Class of the nameserver
+    std::vector<AddressEntry> address_;              ///< Set of V4/V6 addresses
+    time_t          expiration_;                     ///< Summary expiration time
+    time_t          last_access_;                    ///< Last access time to the structure
+    static UniformRandomIntegerGenerator rndRttGen_; ///< Small random RTT generator
 };
 
 }   // namespace dns
