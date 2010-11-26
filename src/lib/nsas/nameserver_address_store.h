@@ -101,14 +101,11 @@ public:
     /// \param class_code Class of the zone.
     /// \param authority Authority RRset from the referral containing the
     /// nameservers that serve the zone.
-    /// \param additional Additional RRset(s) for authority information.  These
-    /// are taken from the referral.
     /// \param callback Callback object used to pass the result back to the
     /// caller.
     /// \param request Which address is requested.
     void lookup(const std::string& zone, uint16_t class_code,
         const isc::dns::AbstractRRset& authority,
-        const std::vector<const isc::dns::AbstractRRset*>& additional,
         boost::shared_ptr<AddressRequestCallback> callback, AddressRequest
         request = ANY_OK);
 

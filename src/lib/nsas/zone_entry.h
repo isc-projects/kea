@@ -65,19 +65,16 @@ public:
 
     /// \brief Constructor
     ///
-    /// Creates a zone entry object with an RRset representing the nameservers,
-    /// plus possibly additional RRsets holding address information.
+    /// Creates a zone entry object with an RRset representing the nameservers.
     ///
     /// \param resolver The resolver used to ask for IP addresses
     /// \param authority Specifies the name, code and nameservers of this zone.
-    /// \param additional The additional section to feed to nameservers.
     /// \param nameservers Hash table of existing nameserves and a place where
     ///     new ones will be put.
     /// \param nameserver_lru The lru where the nameservers will be added or
     ///     touched.
     ZoneEntry(boost::shared_ptr<ResolverInterface> resolver,
         const isc::dns::AbstractRRset& authority,
-        const std::vector<const isc::dns::AbstractRRset*>& additional,
         HashTable<NameserverEntry>& nameservers,
         LruList<NameserverEntry>& nameserver_lru);
 

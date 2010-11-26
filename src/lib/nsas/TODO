@@ -17,3 +17,12 @@ Zone entries:
 The NSAS itself:
 * If the zone rejects the callback, remove it and call recursively the same
   one. As it will accept at last one, it should not become a loop.
+* Do not pass referral info by lookup, it should be fetched on-demand from recursor/cache
+
+Long term:
+* Make a mechanism the cache (which does not exist at the time of writing this
+  note) will be able to notify the NSAS that something has changed (address,
+  new nameserver, etc). Because the cache will have access to the data and
+  knows when it changes (it updates its structures), it is the best place. It
+  will be caching even data like authority and additional sections. It will
+  notify us somehow (we will need to tell it when).
