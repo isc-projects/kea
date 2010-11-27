@@ -28,6 +28,15 @@
 
 class RecursorImpl;
 
+/**
+ * \short The recursive nameserver.
+ *
+ * It is a concreate class implementing recursive DNS server protocol
+ * processing. It is responsible for handling incoming DNS requests. It parses
+ * them, passes them deeper into the resolving machinery and then creates the
+ * answer. It doesn't really know about chasing referrals and similar, it
+ * simply plugs the parts that know into the network handling code.
+ */
 class Recursor {
     ///
     /// \name Constructors, Assignment Operator and Destructor.
