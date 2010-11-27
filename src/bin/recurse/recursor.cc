@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <vector>
+#include <cassert>
 
 #include <asiolink/asiolink.h>
 #include <asiolink/ioaddress.h>
@@ -65,7 +66,7 @@ private:
 public:
     RecursorImpl() :
         config_session_(NULL),
-        rec_query_()
+        rec_query_(NULL)
     {}
 
     ~RecursorImpl() {
@@ -73,6 +74,7 @@ public:
     }
 
     void querySetup(DNSService& dnss) {
+        assert(!rec_query_); // queryShutdown must be called first
         dlog("Query setup");
         rec_query_ = new RecursiveQuery(dnss, upstream_);
     }
@@ -217,7 +219,6 @@ private:
 // into a wire-format response.
 class MessageAnswer : public DNSAnswer {
 public:
-    MessageAnswer(Recursor* srv) : server_(srv) {}
     virtual void operator()(const IOMessage& io_message,
                             MessagePtr message,
                             OutputBufferPtr buffer) const
@@ -293,9 +294,6 @@ public:
             boost::lexical_cast<string>(renderer.getLength()) + "bytes): \n" +
             message->toText());
     }
-
-private:
-    Recursor* server_;
 };
 
 // This is a derived class of \c SimpleCallback, to serve
@@ -317,7 +315,7 @@ Recursor::Recursor() :
     impl_(new RecursorImpl()),
     checkin_(new ConfigCheck(this)),
     dns_lookup_(new MessageLookup(this)),
-    dns_answer_(new MessageAnswer(this))
+    dns_answer_(new MessageAnswer)
 {}
 
 Recursor::~Recursor() {
