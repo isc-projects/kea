@@ -204,9 +204,7 @@ class BoB:
             msgq process listens on.  If verbose is True, then the boss reports
             what it is doing.
         """
-        self.address = None
-        if address:
-            self.address = address
+        self.address = address
         self.auth_port = auth_port
         self.cc_session = None
         self.ccs = None
@@ -217,9 +215,7 @@ class BoB:
         self.msgq_socket_file = msgq_socket_file
         self.nocache = nocache
         self.processes = {}
-        self.res_address = None
-        if res_address:
-            self.res_address = res_address
+        self.res_address = res_address
         self.res_port = res_port
         self.runnable = False
         self.uid = setuid
