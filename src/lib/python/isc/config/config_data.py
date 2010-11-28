@@ -109,6 +109,12 @@ def find_spec_part(element, identifier):
     id_parts[:] = (value for value in id_parts if value != "")
     cur_el = element
     for id in id_parts:
+        # strip list selector part
+        # don't need it for the spec part, so just drop it
+        i = id.find('[')
+        e = id.find(']')
+        if i >= 0 and e > i + 1:
+            id = id[:i]
         if type(cur_el) == dict and 'map_item_spec' in cur_el.keys():
             found = False
             for cur_el_item in cur_el['map_item_spec']:
@@ -121,12 +127,20 @@ def find_spec_part(element, identifier):
             found = False
             for cur_el_item in cur_el:
                 if cur_el_item['item_name'] == id:
+                    #print("[XX] full list item:")
+                    #print(cur_el_item)
+                    #if 'list_item_spec' in cur_el_item:
+                    #    cur_el = cur_el_item['list_item_spec']
+                    #else:
                     cur_el = cur_el_item
                     found = True
             if not found:
                 raise isc.cc.data.DataNotFoundError(id + " in " + str(cur_el))
         else:
             raise isc.cc.data.DataNotFoundError("Not a correct config specification")
+    print("[XX] Returning: ")
+    print(cur_el)
+    print("[XX] end")
     return cur_el
 
 def spec_name_list(spec, prefix="", recurse=False):
@@ -336,28 +350,47 @@ class MultiConfigData:
         try:
             spec = find_spec_part(self._specifications[module].get_config_spec(), id)
             if 'item_default' in spec:
-                return spec['item_default']
+                i = id.find('[')
+                e = id.find(']')
+                if i >= 0 and e > i + 1 \
+                   and type(spec['item_default']) == list:
+                    default_list = spec['item_default']
+                    index = int(id[i + 1:e])
+                    if index < len(default_list):
+                        return default_list[index]
+                    else:
+                        return None
+                else:
+                    return spec['item_default']
             else:
                 return None
         except isc.cc.data.DataNotFoundError as dnfe:
             return None
 
-    def get_value(self, identifier):
+    def get_value(self, identifier, default = True):
         """Returns a tuple containing value,status.
            The value contains the configuration value for the given
            identifier. The status reports where this value came from;
            it is one of: LOCAL, CURRENT, DEFAULT or NONE, corresponding
            (local change, current setting, default as specified by the
-           specification, or not found at all)."""
+           specification, or not found at all). Does not check and
+           set DEFAULT if the argument 'default' is False (default
+           defaults to True)"""
         value = self.get_local_value(identifier)
+        print("[XX] mcd get_value() for: " + identifier)
+        print("[XX] mcd get_value() local: " + str(value))
         if value != None:
             return value, self.LOCAL
         value = self.get_current_value(identifier)
+        print("[XX] mcd get_value() current: " + str(value))
         if value != None:
             return value, self.CURRENT
-        value = self.get_default_value(identifier)
-        if value != None:
-            return value, self.DEFAULT
+        if default:
+            value = self.get_default_value(identifier)
+            print("[XX] mcd get_value() default: " + str(value))
+            if value != None:
+                return value, self.DEFAULT
+        print("[XX] mcd get_value() nothing found")
         return None, self.NONE
 
     def get_value_maps(self, identifier = None):
@@ -393,6 +426,7 @@ class MultiConfigData:
                         entry = {}
                         entry['name'] = item['item_name']
                         entry['type'] = item['item_type']
+                        print("[XX] GET VALUE FOR: " + str("/" + identifier + "/" + item['item_name']))
                         value, status = self.get_value("/" + identifier + "/" + item['item_name'])
                         entry['value'] = value
                         if status == self.LOCAL:
@@ -408,32 +442,53 @@ class MultiConfigData:
                     item = spec_part
                     if item['item_type'] == 'list':
                         li_spec = item['list_item_spec']
-                        item_list, status =  self.get_value("/" + identifier)
-                        if item_list != None:
-                            for value in item_list:
+                        print("[XX] GET VALUE FOR: " + str("/" + identifier))
+                        value, status =  self.get_value("/" + identifier)
+                        print("[XX] ITEM_LIST: " + str(value))
+                        if type(value) == list:
+                            for list_value in value:
                                 result_part2 = {}
                                 result_part2['name'] = li_spec['item_name']
-                                result_part2['value'] = value
+                                result_part2['value'] = list_value
                                 result_part2['type'] = li_spec['item_type']
                                 result_part2['default'] = False
                                 result_part2['modified'] = False
                                 result.append(result_part2)
+                        elif value is not None:
+                            entry = {}
+                            entry['name'] = li_spec['item_name']
+                            entry['type'] = li_spec['item_type']
+                            entry['value'] = value
+                            if status == self.LOCAL:
+                                entry['modified'] = True
+                            else:
+                                entry['modified'] = False
+                            if status == self.DEFAULT:
+                                entry['default'] = False
+                            else:
+                                entry['default'] = False
+                            result.append(entry)
                     else:
-                        entry = {}
-                        entry['name'] = item['item_name']
-                        entry['type'] = item['item_type']
                         #value, status = self.get_value("/" + identifier + "/" + item['item_name'])
-                        value, status = self.get_value("/" + identifier)
-                        entry['value'] = value
-                        if status == self.LOCAL:
-                            entry['modified'] = True
-                        else:
-                            entry['modified'] = False
-                        if status == self.DEFAULT:
-                            entry['default'] = False
-                        else:
-                            entry['default'] = False
-                        result.append(entry)
+                        print("[XX] GET VALUE FOR: " + str("/" + identifier))
+                        # The type of the config data is a list,
+                        # so we do not want to have a default if it's
+                        # out of range
+                        value, status = self.get_value("/" + identifier, False)
+                        if value is not None:
+                            entry = {}
+                            entry['name'] = item['item_name']
+                            entry['type'] = item['item_type']
+                            entry['value'] = value
+                            if status == self.LOCAL:
+                                entry['modified'] = True
+                            else:
+                                entry['modified'] = False
+                            if status == self.DEFAULT:
+                                entry['default'] = False
+                            else:
+                                entry['default'] = False
+                            result.append(entry)
         return result
 
     def set_value(self, identifier, value):
@@ -441,8 +496,15 @@ class MultiConfigData:
            there is a specification for the given identifier, the type
            is checked."""
         spec_part = self.find_spec_part(identifier)
+        print("[XX] SPEC PART FOR " + identifier + ": ")
+        print(spec_part)
         if spec_part != None:
+            i = identifier.find('[')
+            e = identifier.find(']')
+            if i >= 0 and e > i and spec_part['item_type'] == 'list':
+                spec_part = spec_part['list_item_spec']
             check_type(spec_part, value)
+        # TODO: get the local list to value
         isc.cc.data.set(self._local_changes, identifier, value)
  
     def get_config_item_list(self, identifier = None, recurse = False):

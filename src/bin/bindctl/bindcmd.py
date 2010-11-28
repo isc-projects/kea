@@ -553,6 +553,9 @@ class BindCmdInterpreter(Cmd):
 
             if cmd.command == "show":
                 values = self.config_data.get_value_maps(identifier)
+                print("[XX] VALUE MAPS:")
+                print(str(values))
+                print("[XX] END VALUE MAPS")
                 for value_map in values:
                     line = value_map['name']
                     if value_map['type'] in [ 'module', 'map', 'list' ]:
@@ -593,8 +596,8 @@ class BindCmdInterpreter(Cmd):
                 self.go(identifier)
         except isc.cc.data.DataTypeError as dte:
             print("Error: " + str(dte))
-        except isc.cc.data.DataNotFoundError as dnfe:
-            print("Error: " + identifier + " not found")
+        #except isc.cc.data.DataNotFoundError as dnfe:
+        #    print("Error: " + identifier + " not found")
         except KeyError as ke:
             print("Error: missing " + str(ke))
             raise ke

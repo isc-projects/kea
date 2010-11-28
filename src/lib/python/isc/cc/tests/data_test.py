@@ -95,6 +95,17 @@ class TestData(unittest.TestCase):
         self.assertRaises(data.DataTypeError, data.find, None, 1)
         self.assertRaises(data.DataTypeError, data.find, "123", "123")
         self.assertEqual(data.find("123", ""), "123")
+
+        d2 = { 'a': [ 1, 2, 3 ] }
+        self.assertEqual(data.find(d2, 'a[0]'), 1)
+        self.assertEqual(data.find(d2, 'a[1]'), 2)
+        self.assertEqual(data.find(d2, 'a[2]'), 3)
+        self.assertRaises(data.DataNotFoundError, data.find, d2, 'a[3]')
+        self.assertRaises(data.DataTypeError, data.find, d2, 'a[a]')
+
+        d3 = { 'a': [ { 'b': [ {}, { 'c': 'd' } ] } ] }
+        self.assertEqual(data.find(d3, 'a[0]/b[1]/c'), 'd')
+        self.assertRaises(data.DataNotFoundError, data.find, d3, 'a[1]/b[1]/c')
         
     def test_set(self):
         d1 = { 'a': 'a', 'b': 1, 'c': { 'd': 'd', 'e': 2 } }

@@ -63,15 +63,40 @@ def _split_identifier(identifier):
     return id_parts
 
 def _find_child_el(element, id):
+    """Finds the child of element with the given id. If the id contains
+       [i], where i is a number, and the child element is a list, the
+       i-th element of that list is returned instead of the list itself.
+       Raises a DataTypeError if the element is of wrong type, if id
+       is not a string, or if the id string contains a bad value.
+       Raises a DataNotFoundError if the element at id could not be
+       found.
+    """
+    i = id.find('[')
+    e = id.find(']')
+    list_index = None
+    if i >= 0 and e > i + 1:
+        try:
+            list_index = int(id[i + 1:e])
+        except ValueError as ve:
+            # repack as datatypeerror
+            raise DataTypeError(ve)
+        id = id[:i]
     if type(element) == dict and id in element.keys():
-        return element[id]
+        result = element[id]
     else:
         raise DataNotFoundError(id + " in " + str(element))
+    if type(result) == list and list_index is not None:
+        print("[XX] GETTING ELEMENT NUMBER " + str(list_index) + " (of " + str(len(result)) + ")")
+        if list_index >= len(result):
+            print("[XX] OUT OF RANGE")
+            raise DataNotFoundError("Element " + str(list_index) + " in " + str(result))
+        result = result[list_index]
+    return result
 
 def find(element, identifier):
     """Returns the subelement in the given data element, raises DataNotFoundError if not found"""
     if (type(element) != dict and identifier != ""):
-        raise DataTypeError("element in merge() is not a dict")
+        raise DataTypeError("element in find() is not a dict")
     id_parts = _split_identifier(identifier)
     cur_el = element
     for id in id_parts:
@@ -88,12 +113,17 @@ def set(element, identifier, value):
        el.set().set().set() is possible)"""
     if type(element) != dict:
         raise DataTypeError("element in set() is not a dict")
+    print("[XX] full identifier: " + identifier)
     id_parts = _split_identifier(identifier)
     cur_el = element
+    print("[XX] Full element:")
+    print(element)
     for id in id_parts[:-1]:
         try:
+            print("[XX] find " + id)
             cur_el = _find_child_el(cur_el, id)
         except DataNotFoundError:
+            print("[XX] DNF for " + id)
             if value is None:
                 # ok we are unsetting a value that wasn't set in
                 # the first place. Simply stop.
@@ -102,6 +132,7 @@ def set(element, identifier, value):
             cur_el = cur_el[id]
 
     # value can be an empty list or dict, so check for None eplicitely
+    print("[XX] Current value: " + str(cur_el))
     if value is not None:
         cur_el[id_parts[-1]] = value
     elif id_parts[-1] in cur_el:
