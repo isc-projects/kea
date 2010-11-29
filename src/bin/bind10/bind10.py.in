@@ -15,7 +15,7 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-"""\
+"""
 This file implements the Boss of Bind (BoB, or bob) program.
 
 Its purpose is to start up the BIND 10 system, and then manage the
@@ -72,7 +72,7 @@ isc.util.process.rename(sys.argv[0])
 # This is the version that gets displayed to the user.
 # The VERSION string consists of the module name, the module version
 # number, and the overall BIND 10 version number (set in configure.ac).
-VERSION = "bind10 20100916 (BIND 10 @PACKAGE_VERSION@)"
+VERSION = "bind10 20101129 (BIND 10 @PACKAGE_VERSION@)"
 
 # This is for bind10.boottime of stats module
 _BASETIME = time.gmtime()
@@ -194,9 +194,8 @@ class CChannelConnectError(Exception): pass
 class BoB:
     """Boss of BIND class."""
     
-    def __init__(self, msgq_socket_file=None, auth_port=5300, res_port=5301,
-                 address=None, res_address=None, nocache=False, verbose=False,
-                 setuid=None, username=None):
+    def __init__(self, msgq_socket_file=None, auth_port=5300, address=None,
+                 nocache=False, verbose=False, setuid=None, username=None):
         """
             Initialize the Boss of BIND. This is a singleton (only one can run).
         
@@ -215,8 +214,6 @@ class BoB:
         self.msgq_socket_file = msgq_socket_file
         self.nocache = nocache
         self.processes = {}
-        self.res_address = res_address
-        self.res_port = res_port
         self.runnable = False
         self.uid = setuid
         self.username = username
@@ -237,9 +234,7 @@ class BoB:
         if type(command) != str:
             answer = isc.config.ccsession.create_answer(1, "bad command")
         else:
-            cmd = command
-            if cmd == "shutdown":
-                sys.stdout.write("[bind10] shutdown command received by Boss\n")
+            if command == "shutdown":
                 self.runnable = False
                 answer = isc.config.ccsession.create_answer(0)
             else:
@@ -444,19 +439,14 @@ class BoB:
         """
         self.curproc = "b10-recurse"
         # XXX: this must be read from the configuration manager in the future
-        resargs = ['b10-recurse', '-p', str(self.res_port)]
-        if self.res_address:
-            resargs += ['-a', str(self.res_address)]
-        if self.nocache:
-            resargs += ['-n']
+        resargs = ['b10-recurse']
         if self.uid:
             resargs += ['-u', str(self.uid)]
         if self.verbose:
             resargs += ['-v']
 
         # ... and start
-        self.start_process("b10-recurse", resargs, c_channel_env,
-            self.res_port, self.res_address)
+        self.start_process("b10-recurse", resargs, c_channel_env)
 
     def start_xfrout(self, c_channel_env):
         self.start_simple("b10-xfrout", c_channel_env)
@@ -496,7 +486,9 @@ class BoB:
         if self.cfg_start_recurse:
             self.start_recurse(c_channel_env)
 
-        # Everything after the main components can run as non-root
+        # Everything after the main components can run as non-root.
+        # TODO: this is only temporary - once the privileged socket creator is
+        # fully working, nothing else will run as root.
         if self.uid is not None:
             posix.setuid(self.uid)
 
@@ -706,8 +698,6 @@ def check_port(option, opt_str, value, parser):
     try:
         if opt_str in ['-p', '--port']:
             parser.values.auth_port = isc.net.parse.port_parse(value)
-        elif opt_str in ['-q', '--res-port']:
-            parser.values.res_port = isc.net.parse.port_parse(value)
         else:
             raise OptionValueError("Unknown option " + opt_str)
     except ValueError as e:
@@ -719,8 +709,6 @@ def check_addr(option, opt_str, value, parser):
     try:
         if opt_str in ['-a', '--address']:
             parser.values.address = isc.net.parse.addr_parse(value)
-        elif opt_str in ['-b', '--res-address']:
-            parser.values.res_address = isc.net.parse.addr_parse(value)
         else:
             raise OptionValueError("Unknown option " + opt_str)
     except ValueError:
@@ -739,12 +727,8 @@ def main():
     # Parse any command-line options.
     parser = OptionParser(version=VERSION)
     parser.add_option("-a", "--address", dest="address", type="string",
-                      action="callback", callback=check_addr, default='',
+                      action="callback", callback=check_addr, default=None,
                       help="address the b10-auth daemon will use (default: listen on all addresses)")
-    parser.add_option("-b", "--res-address", dest="res_address",
-                      type="string",
-                      action="callback", callback=check_addr, default='',
-                      help="address the b10-recurse daemon will use (default: listen on all addresses)")
     parser.add_option("-m", "--msgq-socket-file", dest="msgq_socket_file",
                       type="string", default=None,
                       help="UNIX domain socket file the b10-msgq daemon will use")
@@ -753,9 +737,6 @@ def main():
     parser.add_option("-p", "--port", dest="auth_port", type="int",
                       action="callback", callback=check_port, default=5300,
                       help="port the b10-auth daemon will use (default 5300)")
-    parser.add_option("-q", "--res-port", dest="res_port", type="int",
-                      action="callback", callback=check_port, default=5301,
-                      help="b10-recurse daemon port (default 5301)")
     parser.add_option("-u", "--user", dest="user",
                       type="string", default=None,
                       help="Change user after startup (must run as root)")
@@ -822,8 +803,8 @@ def main():
 
     # Go bob!
     boss_of_bind = BoB(options.msgq_socket_file, options.auth_port,
-                       options.res_port, options.address, options.res_address,
-                       options.nocache, options.verbose, setuid, username)
+                       options.address, options.nocache, options.verbose,
+                       setuid, username)
     startup_result = boss_of_bind.startup()
     if startup_result:
         sys.stderr.write("[bind10] Error on startup: %s\n" % startup_result)
@@ -881,6 +862,7 @@ def main():
     # shutdown
     signal.signal(signal.SIGCHLD, signal.SIG_DFL)
     boss_of_bind.shutdown()
+    sys.stdout.write("[bind10] BIND 10 exiting\n");
     sys.exit(0)
 
 if __name__ == "__main__":
