@@ -1,6 +1,7 @@
 SUBDIRS = . tests python
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
+AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 CLEANFILES = *.gcno *.gcda
@@ -81,7 +82,7 @@ libdns___la_SOURCES += rrttl.h rrttl.cc
 libdns___la_SOURCES += rrtype.cc
 libdns___la_SOURCES += question.h question.cc
 libdns___la_SOURCES += util/sha1.h util/sha1.cc
-libdns___la_SOURCES += tsig.h tsig.cc
+libdns___la_SOURCES += tsigkey.h tsigkey.cc
 
 nodist_libdns___la_SOURCES = rdataclass.cc rrclass.h rrtype.h
 nodist_libdns___la_SOURCES += rrparamregistry.cc
@@ -96,11 +97,13 @@ libdns___includedir = $(includedir)/dns
 libdns___include_HEADERS = \
 	buffer.h \
 	dnssectime.h \
+	edns.h \
 	exceptions.h \
 	message.h \
 	messagerenderer.h \
 	name.h \
 	question.h \
+	rcode.h \
 	rdata.h \
 	rdataclass.h \
 	rrclass.h \
@@ -109,7 +112,7 @@ libdns___include_HEADERS = \
 	rrsetlist.h \
 	rrttl.h \
 	rrtype.h \
-	tsig.h
+	tsigkey.h
 # Purposely not installing these headers:
 # util/*.h: used only internally, and not actually DNS specific
 # rrclass-placeholder.h

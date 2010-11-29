@@ -74,7 +74,7 @@ EDNS::EDNS(const uint8_t version) :
 }
 
 EDNS::EDNS(const Name& name, const RRClass& rrclass, const RRType& rrtype,
-           const RRTTL& ttl, const Rdata& rdata UNUSED_PARAM) :
+           const RRTTL& ttl, const Rdata&) :
     version_((ttl.getValue() & VERSION_MASK) >> VERSION_SHIFT)
 {
     if (rrtype != RRType::OPT()) {
@@ -152,7 +152,7 @@ EDNS::toWire(OutputBuffer& buffer, const uint8_t extended_rcode) const {
 EDNS*
 createEDNSFromRR(const Name& name, const RRClass& rrclass,
                  const RRType& rrtype, const RRTTL& ttl,
-                 const Rdata& rdata UNUSED_PARAM,
+                 const Rdata& rdata,
                  uint8_t& extended_rcode)
 {
     // Create a new EDNS object first for exception guarantee.

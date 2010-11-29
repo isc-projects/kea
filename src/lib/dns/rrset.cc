@@ -35,18 +35,15 @@ using namespace isc::dns::rdata;
 namespace isc {
 namespace dns {
 void
-AbstractRRset::addRdata(const Rdata& rdata)
-{
+AbstractRRset::addRdata(const Rdata& rdata) {
     addRdata(createRdata(getType(), getClass(), rdata));
 }
 
 string
-AbstractRRset::toText() const
-{
+AbstractRRset::toText() const {
     string s;
     RdataIteratorPtr it = getRdataIterator();
 
-    it->first();
     if (it->isLast()) {
         isc_throw(EmptyRRset, "ToText() is attempted for an empty RRset");
     }
@@ -64,12 +61,10 @@ AbstractRRset::toText() const
 namespace {
 template <typename T>
 inline unsigned int
-rrsetToWire(const AbstractRRset& rrset, T& output, const size_t limit)
-{
+rrsetToWire(const AbstractRRset& rrset, T& output, const size_t limit) {
     unsigned int n = 0;
     RdataIteratorPtr it = rrset.getRdataIterator();
 
-    it->first();
     if (it->isLast()) {
         isc_throw(EmptyRRset, "ToWire() is attempted for an empty RRset");
     }
@@ -105,14 +100,12 @@ rrsetToWire(const AbstractRRset& rrset, T& output, const size_t limit)
 }
 
 unsigned int
-AbstractRRset::toWire(OutputBuffer& buffer) const
-{
+AbstractRRset::toWire(OutputBuffer& buffer) const {
     return (rrsetToWire<OutputBuffer>(*this, buffer, 0));
 }
 
 unsigned int
-AbstractRRset::toWire(MessageRenderer& renderer) const
-{
+AbstractRRset::toWire(MessageRenderer& renderer) const {
     const unsigned int rrs_written = rrsetToWire<MessageRenderer>(
         *this, renderer, renderer.getLengthLimit());
     if (getRdataCount() > rrs_written) {
@@ -122,8 +115,7 @@ AbstractRRset::toWire(MessageRenderer& renderer) const
 }
 
 ostream&
-operator<<(ostream& os, const AbstractRRset& rrset)
-{
+operator<<(ostream& os, const AbstractRRset& rrset) {
     os << rrset.toText();
     return (os);
 }
@@ -151,80 +143,67 @@ BasicRRset::BasicRRset(const Name& name, const RRClass& rrclass,
     impl_ = new BasicRRsetImpl(name, rrclass, rrtype, ttl);
 }
 
-BasicRRset::~BasicRRset()
-{
+BasicRRset::~BasicRRset() {
     delete impl_;
 }
 
 void
-BasicRRset::addRdata(ConstRdataPtr rdata)
-{
+BasicRRset::addRdata(ConstRdataPtr rdata) {
     impl_->rdatalist_.push_back(rdata);
 }
 
 void
-BasicRRset::addRdata(const Rdata& rdata)
-{
+BasicRRset::addRdata(const Rdata& rdata) {
     AbstractRRset::addRdata(rdata);
 }
 
 unsigned int
-BasicRRset::getRdataCount() const
-{
+BasicRRset::getRdataCount() const {
     return (impl_->rdatalist_.size());
 }
 
 const Name&
-BasicRRset::getName() const
-{
+BasicRRset::getName() const {
     return (impl_->name_);
 }
 
 const RRClass&
-BasicRRset::getClass() const
-{
+BasicRRset::getClass() const {
     return (impl_->rrclass_);
 }
 
 const RRType&
-BasicRRset::getType() const
-{
+BasicRRset::getType() const {
     return (impl_->rrtype_);
 }
 
 const RRTTL&
-BasicRRset::getTTL() const
-{
+BasicRRset::getTTL() const {
     return (impl_->ttl_);
 }
 
 void
-BasicRRset::setName(const Name& name)
-{
+BasicRRset::setName(const Name& name) {
     impl_->name_ = name;
 }
 
 void
-BasicRRset::setTTL(const RRTTL& ttl)
-{
+BasicRRset::setTTL(const RRTTL& ttl) {
     impl_->ttl_ = ttl;
 }
 
 string
-BasicRRset::toText() const
-{
+BasicRRset::toText() const {
     return (AbstractRRset::toText());
 }
 
 unsigned int
-BasicRRset::toWire(OutputBuffer& buffer) const
-{
+BasicRRset::toWire(OutputBuffer& buffer) const {
     return (AbstractRRset::toWire(buffer));
 }
 
 unsigned int
-BasicRRset::toWire(MessageRenderer& renderer) const
-{
+BasicRRset::toWire(MessageRenderer& renderer) const {
     return (AbstractRRset::toWire(renderer));
 }
 
@@ -243,7 +222,8 @@ private:
     BasicRdataIterator() {}
 public:
     BasicRdataIterator(const std::vector<rdata::ConstRdataPtr>& datavector) :
-        datavector_(&datavector) {}
+        datavector_(&datavector), it_(datavector_->begin())
+    {}
     ~BasicRdataIterator() {}
     virtual void first() { it_ = datavector_->begin(); }
     virtual void next() { ++it_; }
@@ -256,8 +236,7 @@ private:
 }
 
 RdataIteratorPtr
-BasicRRset::getRdataIterator() const
-{
+BasicRRset::getRdataIterator() const {
     return (RdataIteratorPtr(new BasicRdataIterator(impl_->rdatalist_)));
 }
 }

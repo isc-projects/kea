@@ -23,8 +23,7 @@ using isc::Exception;
 namespace isc {
 
 const char*
-Exception::what() const throw()
-{
+Exception::what() const throw() {
     const char* whatstr = "isc::Exception";
 
     // XXX: even though it's very unlikely that c_str() throws an exception,
