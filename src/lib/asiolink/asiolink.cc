@@ -45,6 +45,7 @@ using asio::ip::tcp;
 using namespace std;
 using namespace isc::dns;
 using isc::log::dlog;
+using namespace boost;
 
 namespace asiolink {
 
@@ -237,6 +238,18 @@ DNSService::~DNSService() {
 
 namespace {
 
+typedef std::vector<std::pair<std::string, uint16_t> > AddressVector;
+
+}
+
+RecursiveQuery::RecursiveQuery(DNSService& dns_service,
+    const AddressVector& upstream, int timeout, unsigned retries) :
+    dns_service_(dns_service), upstream_(new AddressVector(upstream)),
+    timeout_(timeout), retries_(retries)
+{}
+
+namespace {
+
 ip::address
 convertAddr(const string& address) {
     error_code err;
@@ -256,7 +269,7 @@ DNSService::addServer(const char& port, const string& address) {
 }
 
 void
-DNSService::addServer(uint16_t port, const string &address) {
+DNSService::addServer(uint16_t port, const string& address) {
     impl_->addServer(port, convertAddr(address));
 }
 
@@ -267,27 +280,90 @@ DNSService::clearServers() {
     impl_->servers_.clear();
 }
 
-RecursiveQuery::RecursiveQuery(DNSService& dns_service,
-        const std::vector<std::pair<std::string, uint16_t> >& upstream) :
-    dns_service_(dns_service), upstream_(upstream)
-{}
+namespace {
+
+/*
+ * This is a query in progress. When a new query is made, this one holds
+ * the context information about it, like how many times we are allowed
+ * to retry on failure, what to do when we succeed, etc.
+ *
+ * Used by RecursiveQuery::sendQuery.
+ */
+class RunningQuery : public UDPQuery::Callback {
+        private:
+            // The io service to handle async calls
+            asio::io_service& io_;
+            // Info for (re)sending the query (the question and destination)
+            Question question_;
+            shared_ptr<AddressVector> upstream_;
+            // Buffer to store the result.
+            OutputBufferPtr buffer_;
+            /*
+             * FIXME This is said it does problems when it is shared pointer, as
+             *     it is destroyed too soon. But who deletes it now?
+             */
+            // Server to notify when we succeed or fail
+            shared_ptr<DNSServer> server_;
+            /*
+             * TODO Do something more clever with timeouts. In the long term, some
+             *     computation of average RTT, increase with each retry, etc.
+             */
+            // Timeout information
+            int timeout_;
+            unsigned retries_;
+            // (re)send the query to the server.
+            void send() {
+                int serverIndex(random() % upstream_->size());
+                dlog("Sending upstream query (" + question_.toText() +
+                    ") to " + upstream_->at(serverIndex).first);
+                UDPQuery query(io_, question_,
+                    upstream_->at(serverIndex).first,
+                    upstream_->at(serverIndex).second, buffer_, this,
+                    timeout_);
+                io_.post(query);
+            }
+        public:
+            RunningQuery(asio::io_service& io, const Question &question,
+                shared_ptr<AddressVector> upstream,
+                OutputBufferPtr buffer, DNSServer* server, int timeout,
+                unsigned retries) :
+                io_(io),
+                question_(question),
+                upstream_(upstream),
+                buffer_(buffer),
+                server_(server->clone()),
+                timeout_(timeout),
+                retries_(retries)
+            {
+                send();
+            }
+            // This function is used as callback from DNSQuery.
+            virtual void operator()(UDPQuery::Result result) {
+                if (result == UDPQuery::TIME_OUT && retries_ --) {
+                    dlog("Resending query");
+                    // We timed out, but we have some retries, so send again
+                    send();
+                } else {
+                    server_->resume(result == UDPQuery::SUCCESS);
+                    delete this;
+                }
+            }
+};
+
+}
 
 void
 RecursiveQuery::sendQuery(const Question& question, OutputBufferPtr buffer,
                           DNSServer* server)
 {
-    int serverIndex(random() % upstream_.size());
-    dlog("Sending upstream query (" + question.toText() + ") to " +
-        upstream_[serverIndex].first);
     // XXX: eventually we will need to be able to determine whether
     // the message should be sent via TCP or UDP, or sent initially via
     // UDP and then fall back to TCP on failure, but for the moment
     // we're only going to handle UDP.
     asio::io_service& io = dns_service_.get_io_service();
-    // TODO: Better way to choose the server
-    UDPQuery q(io, question, upstream_[serverIndex].first,
-        upstream_[serverIndex].second, buffer, server);
-    io.post(q);
+    // It will delete itself when it is done
+    new RunningQuery(io, question, upstream_, buffer, server->clone(),
+         timeout_, retries_);
 }
 
 }
