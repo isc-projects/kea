@@ -71,17 +71,19 @@ public:
     ///
     /// This method first identifies the zone that best matches the query
     /// name (and in some cases RR type when the search is dependent on the
-    /// type) and then searches the zone that best matches the query name.
+    /// type) and then searches the zone for an entry that best matches the
+    /// query name.
     /// It then updates the response message accordingly; for example, a
     /// successful search would result in adding a corresponding RRset to
     /// the answer section of the response.
     ///
-    /// If no matching zone is found in the zone table, the \c Rcode of
+    /// If no matching zone is found in the zone table, the RCODE of
     /// SERVFAIL will be set in the response.
     ///
     /// Right now this method never throws an exception, but it may in a
     /// future version.
     void process() const;
+
 private:
     const isc::datasrc::ZoneTable& zone_table_;
     const isc::dns::Name& qname_;
