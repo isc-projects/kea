@@ -21,6 +21,7 @@
 #
 
 import json
+import re
 
 class DataNotFoundError(Exception): pass
 class DataTypeError(Exception): pass
@@ -55,12 +56,66 @@ def merge(orig, new):
         else:
             orig[kn] = new[kn]
 
-def _split_identifier(identifier):
+def _concat_identifier(id_parts):
+    """Concatenates the given identifier parts into a string,
+       delimited with the '/' character.
+    """
+    return '/'.join(id_parts)
+
+def split_identifier(identifier):
+    """Splits the given identifier into a list of identifier parts,
+       as delimited by the '/' character.
+       Raises a DataTypeError if identifier is not a string."""
     if type(identifier) != str:
         raise DataTypeError("identifier is not a string")
-    id_parts = identifier.split("/")
+    id_parts = identifier.split('/')
     id_parts[:] = (value for value in id_parts if value != "")
     return id_parts
+
+def split_identifier_list_indices(identifier):
+    """Finds list indexes in the given identifier, which are of the
+       format [integer].
+       Identifier must be a string.
+       This will only give the list index for the last 'part' of the
+       given identifier (as delimited by the '/' sign).
+       Raises a DataTypeError if the identifier is not a string,
+       or if the format is bad.
+       Returns a tuple, where the first element is the string part of
+       the identifier, and the second element is a list of (nested) list
+       indices.
+       Examples:
+       'a/b/c' will return ('a/b/c', None)
+       'a/b/c[1]' will return ('a/b/c', [1])
+       'a/b/c[1][2][3]' will return ('a/b/c', [1, 2, 3])
+       'a[0]/b[1]/c[2]' will return ('a[0]/b[1]/c, [2])
+    """
+    if type(identifier) != str:
+        raise DataTypeError("identifier in split_identifier_list_indices() contains '/': " + str(identifier))
+    id_parts = split_identifier(identifier)
+    id_str = id_parts[-1]
+    i = id_str.find('[')
+    if i < 0:
+        if identifier.find(']') >= 0:
+            raise DataTypeError("Bad format in identifier: " + str(identifier))
+        return identifier, None
+    id = identifier[:i]
+    indices = []
+    while i >= 0:
+        e = id_str.find(']')
+        if e < i + 1:
+            raise DataTypeError("Bad format in identifier: " + str(identifier))
+        try:
+            indices.append(int(id_str[i+1:e]))
+        except ValueError:
+            raise DataTypeError("List index in " + identifier + " not an integer")
+        id_str = id_str[e + 1:]
+        i = id_str.find('[')
+    if id.find(']') >= 0:
+        raise DataTypeError("Bad format in identifier: " + str(identifier))
+    id_parts = id_parts[:-1]
+    id_parts.append(id)
+    id = _concat_identifier(id_parts)
+    return id, indices
 
 def _find_child_el(element, id):
     """Finds the child of element with the given id. If the id contains
@@ -71,33 +126,23 @@ def _find_child_el(element, id):
        Raises a DataNotFoundError if the element at id could not be
        found.
     """
-    i = id.find('[')
-    e = id.find(']')
-    list_index = None
-    if i >= 0 and e > i + 1:
-        try:
-            list_index = int(id[i + 1:e])
-        except ValueError as ve:
-            # repack as datatypeerror
-            raise DataTypeError(ve)
-        id = id[:i]
+    id, list_indices = split_identifier_list_indices(id)
     if type(element) == dict and id in element.keys():
         result = element[id]
     else:
         raise DataNotFoundError(id + " in " + str(element))
-    if type(result) == list and list_index is not None:
-        print("[XX] GETTING ELEMENT NUMBER " + str(list_index) + " (of " + str(len(result)) + ")")
-        if list_index >= len(result):
-            print("[XX] OUT OF RANGE")
-            raise DataNotFoundError("Element " + str(list_index) + " in " + str(result))
-        result = result[list_index]
+    if type(result) == list and list_indices is not None:
+        for list_index in list_indices:
+            if list_index >= len(result):
+                raise DataNotFoundError("Element " + str(list_index) + " in " + str(result))
+            result = result[list_index]
     return result
 
 def find(element, identifier):
     """Returns the subelement in the given data element, raises DataNotFoundError if not found"""
     if (type(element) != dict and identifier != ""):
         raise DataTypeError("element in find() is not a dict")
-    id_parts = _split_identifier(identifier)
+    id_parts = split_identifier(identifier)
     cur_el = element
     for id in id_parts:
         cur_el = _find_child_el(cur_el, id)
@@ -113,17 +158,14 @@ def set(element, identifier, value):
        el.set().set().set() is possible)"""
     if type(element) != dict:
         raise DataTypeError("element in set() is not a dict")
-    print("[XX] full identifier: " + identifier)
-    id_parts = _split_identifier(identifier)
+    if type(identifier) != str:
+        raise DataTypeError("identifier in set() is not a str")
+    id_parts = split_identifier(identifier)
     cur_el = element
-    print("[XX] Full element:")
-    print(element)
     for id in id_parts[:-1]:
         try:
-            print("[XX] find " + id)
             cur_el = _find_child_el(cur_el, id)
         except DataNotFoundError:
-            print("[XX] DNF for " + id)
             if value is None:
                 # ok we are unsetting a value that wasn't set in
                 # the first place. Simply stop.
@@ -131,12 +173,32 @@ def set(element, identifier, value):
             cur_el[id] = {}
             cur_el = cur_el[id]
 
-    # value can be an empty list or dict, so check for None eplicitely
-    print("[XX] Current value: " + str(cur_el))
-    if value is not None:
-        cur_el[id_parts[-1]] = value
-    elif id_parts[-1] in cur_el:
-        del cur_el[id_parts[-1]]
+    id, list_indices = split_identifier_list_indices(id_parts[-1])
+    if list_indices is None:
+        # value can be an empty list or dict, so check for None eplicitely
+        if value is not None:
+            cur_el[id] = value
+        else:
+            del cur_el[id]
+    else:
+        cur_el = cur_el[id]
+        # in case of nested lists, we need to get to the next to last
+        for list_index in list_indices[:-1]:
+            if type(cur_el) != list:
+                raise DataTypeError("Element at " + identifier + " is not a list")
+            if len(cur_el) <= list_index:
+                raise DataNotFoundError("List index at " + identifier + " out of range")
+            cur_el = cur_el[list_index]
+        # value can be an empty list or dict, so check for None eplicitely
+        list_index = list_indices[-1]
+        if type(cur_el) != list:
+            raise DataTypeError("Element at " + identifier + " is not a list")
+        if len(cur_el) <= list_index:
+            raise DataNotFoundError("List index at " + identifier + " out of range")
+        if value is not None:
+            cur_el[list_index] = value
+        else:
+            del cur_el[list_index]
     return element
 
 def unset(element, identifier):
