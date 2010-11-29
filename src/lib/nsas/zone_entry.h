@@ -50,33 +50,44 @@ class AddressRequestCallback;
 class ZoneEntry : public NsasEntry<ZoneEntry>, public Fetchable {
 public:
 
-    /// \brief Constructor where no NS records are supplied
-    ///
-    /// It is here mostly for testing purposes.
-    ///
-    /// \param resolver The resolver used to ask for IP addresses
-    /// \param name Name of the zone
-    /// \param class_code Class of this zone (zones of different classes have
-    /// different objects.
+    /**
+     * \brief Constructor where no NS records are supplied
+     *
+     * It is here mostly for testing purposes.
+     *
+     * \param resolver The resolver used to ask for IP addresses
+     * \param name Name of the zone
+     * \param class_code Class of this zone (zones of different classes have
+     *     different objects.
+     * \todo Move to cc file, include the lookup (if NSAS uses resolver for
+     *     everything)
+     */
     ZoneEntry(boost::shared_ptr<ResolverInterface> resolver,
-        const std::string& name, uint16_t class_code) :
-        name_(name), classCode_(class_code), resolver_(resolver)
+        const std::string& name, uint16_t class_code,
+        boost::shared_ptr<HashTable<NameserverEntry> > nameserver_table,
+        boost::shared_ptr<LruList<NameserverEntry> > nameserver_lru) :
+        name_(name), classCode_(class_code), resolver_(resolver),
+        nameserver_table_(nameserver_table), nameserver_lru_(nameserver_lru)
     {}
 
-    /// \brief Constructor
-    ///
-    /// Creates a zone entry object with an RRset representing the nameservers.
-    ///
-    /// \param resolver The resolver used to ask for IP addresses
-    /// \param authority Specifies the name, code and nameservers of this zone.
-    /// \param nameservers Hash table of existing nameserves and a place where
-    ///     new ones will be put.
-    /// \param nameserver_lru The lru where the nameservers will be added or
-    ///     touched.
+    /**
+     * \brief Constructor
+     *
+     * Creates a zone entry object with an RRset representing the nameservers.
+     *
+     * \param resolver The resolver used to ask for IP addresses
+     * \param authority Specifies the name, code and nameservers of this zone.
+     * \param nameserver_table Hash table of existing nameserves and a place
+     *     where new ones will be put.
+     * \param nameserver_lru The lru where the nameservers will be added or
+     *     touched.
+     * \todo This might be completely unneeded if NSAS uses resolver for
+     *     everything.
+     */
     ZoneEntry(boost::shared_ptr<ResolverInterface> resolver,
         const isc::dns::AbstractRRset& authority,
-        HashTable<NameserverEntry>& nameservers,
-        LruList<NameserverEntry>& nameserver_lru);
+        boost::shared_ptr<HashTable<NameserverEntry> > nameserver_table,
+        boost::shared_ptr<LruList<NameserverEntry> > nameserver_lru);
 
     /// \return Name of the zone
     std::string getName() const {
@@ -132,11 +143,16 @@ private:
     // callbacks. If nameserver is given, it is considered new and valid
     // even if its TTL is 0.
     void process(boost::shared_ptr<AddressRequestCallback> callback,
-         bool v4ok, bool v6ok, NameserverEntry* nameserver);
+         AddressFamily family, NameserverEntry* nameserver);
+    // Resolver we use
     boost::shared_ptr<ResolverInterface> resolver_;
+    // We store the nameserver table and lru, so we can look up when there's
+    // update
+    boost::shared_ptr<HashTable<NameserverEntry> > nameserver_table_;
+    boost::shared_ptr<LruList<NameserverEntry> > nameserver_lru_;
 };
 
 } // namespace nsas
 } // namespace isc
- 
+
 #endif // __ZONE_ENTRY_H

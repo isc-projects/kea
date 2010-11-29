@@ -25,62 +25,38 @@ using namespace std;
 using namespace boost;
 
 namespace isc {
+
+using namespace dns;
+
 namespace nsas {
 
 namespace {
 // Shorter aliases for frequently used types
-typedef mutex::scoped_lock LLock; // Local lock, nameservers not locked
-typedef shared_ptr<LLock> LockPtr;
-typedef vector<LockPtr> Locks;
+typedef mutex::scoped_lock Lock; // Local lock, nameservers not locked
 typedef shared_ptr<AddressRequestCallback> CallbackPtr;
 }
 
-void
-ZoneEntry::addCallback(CallbackPtr callback) {
-    LLock lock(mutex_);
-    callbacks_.push_back(callback);
+ZoneEntry::ZoneEntry(shared_ptr<ResolverInterface> resolver,
+    const AbstractRRset&,
+    shared_ptr<HashTable<NameserverEntry> > nameserver_table,
+    shared_ptr<LruList<NameserverEntry> > nameserver_lru) :
+    resolver_(resolver),
+    nameserver_table_(nameserver_table),
+    nameserver_lru_(nameserver_lru)
+{
+    // TODO get rid of this function
 }
 
 bool
-ZoneEntry::hasCallbacks() const {
-    LLock lock(mutex_);
-    return (!callbacks_.empty());
-}
+ZoneEntry::addCallback(CallbackPtr callback,  AddressFamily family,
+    shared_ptr<ZoneEntry> self)
+{
+    // TODO: this is just stub now, to compile
+    (void) callback;
+    (void) family;
+    (void) self;
+    return (false);
 
-CallbackPtr
-ZoneEntry::popCallback() {
-    LLock lock(mutex_);
-    CallbackPtr result(callbacks_.front());
-    callbacks_.pop_front();
-    return (result);
-}
-
-// Struct, we are somewhere inside, no need to play the private & public game
-struct ZoneEntry::Lock::Impl {
-    Locks locks;
-};
-
-ZoneEntry::Lock::Lock(shared_ptr<Impl> impl) :
-    impl_(impl)
-{ }
-
-ZoneEntry::Lock
-ZoneEntry::getLock() {
-    // First, lock the zone so we can get the nameservers
-    LockPtr lock(new LLock(mutex_));
-    // Get a sorted copy of the nameservers
-    // They are sorted to avoid possible race conditions, they will be locked
-    // in increasing order
-    NameserverVector nameserverCopy(nameservers_);
-    sort(nameserverCopy.begin(), nameserverCopy.end());
-    // Construct the list of locks and lock all the nameservers
-    shared_ptr<Lock::Impl> impl(new Lock::Impl);
-    impl->locks.push_back(lock);
-    BOOST_FOREACH(NameserverPtr ns, nameserverCopy) {
-        impl->locks.push_back(LockPtr(new LLock(ns->mutex_)));
-    }
-
-    return (Lock(impl));
 }
 
 }; // namespace nsas
