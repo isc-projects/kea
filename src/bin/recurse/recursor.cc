@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <vector>
+#include <cassert>
 
 #include <asiolink/asiolink.h>
 #include <asiolink/ioaddress.h>
@@ -65,7 +66,7 @@ private:
 public:
     RecursorImpl() :
         config_session_(NULL),
-        rec_query_()
+        rec_query_(NULL)
     {}
 
     ~RecursorImpl() {
@@ -73,6 +74,7 @@ public:
     }
 
     void querySetup(DNSService& dnss) {
+        assert(!rec_query_); // queryShutdown must be called first
         dlog("Query setup");
         rec_query_ = new RecursiveQuery(dnss, upstream_);
     }
@@ -117,12 +119,22 @@ public:
     /// Addresses we listen on
     vector<addr_t> listen_;
 
+    /// Time in milliseconds, to timeout
+    int timeout_;
+    /// Number of retries after timeout
+    unsigned retries_;
+
 private:
 
     /// Object to handle upstream queries
     RecursiveQuery* rec_query_;
 };
 
+/*
+ * std::for_each has a broken interface. It makes no sense in a language
+ * without lambda functions/closures. These two classes emulate the lambda
+ * functions so for_each can be used.
+ */
 class QuestionInserter {
 public:
     QuestionInserter(MessagePtr message) : message_(message) {}
@@ -136,9 +148,8 @@ public:
 
 class SectionInserter {
 public:
-    SectionInserter(MessagePtr message, const Message::Section sect,
-        bool sign) :
-        message_(message), section_(sect), sign_(sign)
+    SectionInserter(MessagePtr message, const Message::Section sect) :
+        message_(message), section_(sect)
     {}
     void operator()(const RRsetPtr rrset) {
         dlog("Adding RRSet to message section " +
@@ -147,7 +158,6 @@ public:
     }
     MessagePtr message_;
     const Message::Section section_;
-    bool sign_;
 };
 
 void
@@ -212,7 +222,6 @@ private:
 // into a wire-format response.
 class MessageAnswer : public DNSAnswer {
 public:
-    MessageAnswer(Recursor* srv) : server_(srv) {}
     virtual void operator()(const IOMessage& io_message,
                             MessagePtr message,
                             OutputBufferPtr buffer) const
@@ -253,16 +262,13 @@ public:
                 incoming.fromWire(ibuf);
                 for_each(incoming.beginSection(Message::SECTION_ANSWER),
                          incoming.endSection(Message::SECTION_ANSWER),
-                         SectionInserter(message, Message::SECTION_ANSWER,
-                         true));
+                         SectionInserter(message, Message::SECTION_ANSWER));
                 for_each(incoming.beginSection(Message::SECTION_ADDITIONAL),
                          incoming.endSection(Message::SECTION_ADDITIONAL),
-                         SectionInserter(message, Message::SECTION_ADDITIONAL,
-                         true));
+                         SectionInserter(message, Message::SECTION_ADDITIONAL));
                 for_each(incoming.beginSection(Message::SECTION_AUTHORITY),
                          incoming.endSection(Message::SECTION_ADDITIONAL),
-                         SectionInserter(message, Message::SECTION_AUTHORITY,
-                         true));
+                         SectionInserter(message, Message::SECTION_AUTHORITY));
             } catch (const Exception& ex) {
                 // Incoming message couldn't be read, we just SERVFAIL
                 message->setRcode(Rcode::SERVFAIL());
@@ -288,9 +294,6 @@ public:
             boost::lexical_cast<string>(renderer.getLength()) + "bytes): \n" +
             message->toText());
     }
-
-private:
-    Recursor* server_;
 };
 
 // This is a derived class of \c SimpleCallback, to serve
@@ -312,7 +315,7 @@ Recursor::Recursor() :
     impl_(new RecursorImpl()),
     checkin_(new ConfigCheck(this)),
     dns_lookup_(new MessageLookup(this)),
-    dns_answer_(new MessageAnswer(this))
+    dns_answer_(new MessageAnswer)
 {}
 
 Recursor::~Recursor() {
@@ -489,6 +492,27 @@ Recursor::updateConfig(ConstElementPtr config) {
         vector<addr_t> forwardAddresses(parseAddresses(forwardAddressesE));
         ConstElementPtr listenAddressesE(config->get("listen_on"));
         vector<addr_t> listenAddresses(parseAddresses(listenAddressesE));
+        bool set_timeouts(false);
+        int timeout = impl_->timeout_;
+        unsigned retries = impl_->retries_;
+        ConstElementPtr timeoutE(config->get("timeout")),
+            retriesE(config->get("retries"));
+        if (timeoutE) {
+            // It should be safe to just get it, the config manager should
+            // check for us
+            timeout = timeoutE->intValue();
+            if (timeout < -1) {
+                isc_throw(BadValue, "Timeout too small");
+            }
+            set_timeouts = true;
+        }
+        if (retriesE) {
+            if (retriesE->intValue() < 0) {
+                isc_throw(BadValue, "Negative number of retries");
+            }
+            retries = retriesE->intValue();
+            set_timeouts = true;
+        }
         // Everything OK, so commit the changes
         // listenAddresses can fail to bind, so try them first
         if (listenAddressesE) {
@@ -496,6 +520,9 @@ Recursor::updateConfig(ConstElementPtr config) {
         }
         if (forwardAddressesE) {
             setForwardAddresses(forwardAddresses);
+        }
+        if (set_timeouts) {
+            setTimeouts(timeout, retries);
         }
         return (isc::config::createAnswer());
     } catch (const isc::Exception& error) {
@@ -560,6 +587,20 @@ Recursor::setListenAddresses(const vector<addr_t>& addresses) {
         }
         throw e; // Let it fly a little bit further
     }
+}
+
+void
+Recursor::setTimeouts(int timeout, unsigned retries) {
+    dlog("Setting timeout to " + boost::lexical_cast<string>(timeout) +
+        " and retry count to " + boost::lexical_cast<string>(retries));
+    impl_->timeout_ = timeout;
+    impl_->retries_ = retries;
+    impl_->queryShutdown();
+    impl_->querySetup(*dnss_);
+}
+pair<int, unsigned>
+Recursor::getTimeouts() const {
+    return (pair<int, unsigned>(impl_->timeout_, impl_->retries_));
 }
 
 vector<addr_t>

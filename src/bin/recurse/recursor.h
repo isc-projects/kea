@@ -28,6 +28,15 @@
 
 class RecursorImpl;
 
+/**
+ * \short The recursive nameserver.
+ *
+ * It is a concreate class implementing recursive DNS server protocol
+ * processing. It is responsible for handling incoming DNS requests. It parses
+ * them, passes them deeper into the resolving machinery and then creates the
+ * answer. It doesn't really know about chasing referrals and similar, it
+ * simply plugs the parts that know into the network handling code.
+ */
 class Recursor {
     ///
     /// \name Constructors, Assignment Operator and Destructor.
@@ -109,6 +118,23 @@ public:
     void setListenAddresses(const std::vector<std::pair<std::string,
         uint16_t> >& addresses);
     std::vector<std::pair<std::string, uint16_t> > getListenAddresses() const;
+
+    /**
+     * \short Set options related to timeouts.
+     *
+     * This sets the time of timeout and number of retries.
+     * \param timeout The time in milliseconds. The value -1 disables timeouts.
+     * \param retries The number of retries (0 means try the first time only,
+     *     do not retry).
+     */
+    void setTimeouts(int timeout = -1, unsigned retries = 0);
+
+    /**
+     * \short Get info about timeouts.
+     *
+     * \returns Timeout and retries (as described in setTimeouts).
+     */
+    std::pair<int, unsigned> getTimeouts() const;
 
 private:
     RecursorImpl* impl_;

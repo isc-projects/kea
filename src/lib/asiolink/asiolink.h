@@ -22,6 +22,7 @@
 // See the description of the namespace below.
 #include <unistd.h>             // for some network system calls
 #include <asio/ip/address.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <functional>
 #include <string>
@@ -38,7 +39,6 @@
 #include <asiolink/ioendpoint.h>
 #include <asiolink/iomessage.h>
 #include <asiolink/iosocket.h>
-//#include <asio/io_service.hpp>
 
 namespace asio {
 // forward declaration for IOService::get_io_service() below
@@ -529,9 +529,14 @@ public:
     ///        query on.
     /// \param upstream Addresses and ports of the upstream servers
     ///        to forward queries to.
+    /// \param timeout How long to timeout the query, in ms
+    ///     -1 means never timeout (but do not use that).
+    ///     TODO: This should be computed somehow dynamically in future
+    /// \param retries how many times we try again (0 means just send and
+    ///     and return if it returs).
     RecursiveQuery(DNSService& dns_service,
                    const std::vector<std::pair<std::string, uint16_t> >&
-                   upstream);
+                   upstream, int timeout = -1, unsigned retries = 0);
     //@}
 
     /// \brief Initiates an upstream query in the \c RecursiveQuery object.
@@ -549,7 +554,10 @@ public:
                    DNSServer* server);
 private:
     DNSService& dns_service_;
-    std::vector<std::pair<std::string, uint16_t> > upstream_;
+    boost::shared_ptr<std::vector<std::pair<std::string, uint16_t> > >
+        upstream_;
+    int timeout_;
+    unsigned retries_;
 };
 
 }      // asiolink
