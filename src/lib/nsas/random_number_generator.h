@@ -17,10 +17,11 @@
 #ifndef __NSAS_RANDOM_NUMBER_GENERATOR_H
 #define __NSAS_RANDOM_NUMBER_GENERATOR_H
 
+#include <numeric>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int.hpp>
+#include <boost/random/uniform_real.hpp>
 #include <boost/random/variate_generator.hpp>
-
 
 namespace isc {
 namespace nsas {
@@ -28,19 +29,23 @@ namespace nsas {
 /// \brief Uniform random integer generator
 ///
 /// Generate uniformly distributed integers in range of [min, max]
-/// \param min The minimum number in the range
-/// \param max The maximum number in the range
 class UniformRandomIntegerGenerator{
 public:
+    /// \brief Constructor
+    ///
+    /// \param min The minimum number in the range
+    /// \param max The maximum number in the range
     UniformRandomIntegerGenerator(int min, int max):
         min_(min), max_(max), dist_(min, max), generator_(rng_, dist_)
     {
+        // Init with the current time
         rng_.seed(time(NULL));
     }
 
+    /// \brief Generate uniformly distributed integer
     int operator()() { return generator_(); }
 private:
-    ///< Hide default and copy constructor
+    /// Hide default and copy constructor
     UniformRandomIntegerGenerator();///< Default constructor
     UniformRandomIntegerGenerator(const UniformRandomIntegerGenerator&); ///< Copy constructor
 
@@ -49,6 +54,78 @@ private:
     boost::uniform_int<> dist_;     ///< Distribute uniformly.
     boost::mt19937 rng_;            ///< Mersenne Twister: A 623-dimensionally equidistributed uniform pseudo-random number generator
     boost::variate_generator<boost::mt19937&, boost::uniform_int<> > generator_; ///< Uniform generator
+};
+
+/// \brief Weighted random integer generator
+///
+/// Generate random integers according different probabilities
+class WeightedRandomIntegerGenerator{
+public:
+    /// \brief Constructor
+    ///
+    /// \param probabilities The probabies for all the integers, the probability must be 
+    /// between 0 and 1.0, the sum of probabilities must be equal to 1.
+    /// For example, if the probabilities contains the following values:
+    /// 0.5 0.3 0.2, the 1st integer will be generated more frequently than the
+    /// other integers and the probability is proportional to its value.
+    /// \param min The minimum integer that generated, other integers will be 
+    /// min, min + 1, ..., min + probabilities.size() - 1
+    WeightedRandomIntegerGenerator(const std::vector<double>& probabilities, int min = 0):
+        dist_(0, 1.0), uniform_real_gen_(rng_, dist_), min_(min)
+    {
+        // The probabilities must be valid
+        assert(isProbabilitiesValid(probabilities));
+        // Calculate the partial sum of probabilities
+        std::partial_sum(probabilities.begin(), probabilities.end(),
+                                     std::back_inserter(cumulative_));
+        // Init with the current time
+        rng_.seed(time(NULL));
+    }
+
+    /// \brief Generate weighted random integer
+    int operator()()
+    {
+        return std::lower_bound(cumulative_.begin(), cumulative_.end(), uniform_real_gen_()) 
+            - cumulative_.begin() + min_;
+    }
+
+    /// \brief Destroctor
+    ~WeightedRandomIntegerGenerator()
+    {
+    }
+
+private:
+    /// \brief Check the validation of probabilities vector
+    ///
+    /// The probability must be in range of [0, 1.0] and the sum must be equal to 1.0
+    /// Empty probabilities is also valid.
+    bool isProbabilitiesValid(const std::vector<double>& probabilities) const
+    {
+        typedef std::vector<double>::const_iterator Iterator;
+        double sum = probabilities.empty() ? 1 : 0;
+        for(Iterator it = probabilities.begin(); it != probabilities.end(); ++it){
+            //The probability must be in [0, 1.0]
+            if(*it < 0) return false;
+
+            if(*it > 1) return false;
+
+            sum += *it;
+        }
+
+        std::cout << sum << " " << (sum == 1.0) << std::endl;
+        double epsilon = 0.0001;
+        // The sum must be equal to 1
+        return fabs(sum - 1) < epsilon;
+    }
+
+    // Shortcut typedefs
+    typedef boost::variate_generator<boost::mt19937&, boost::uniform_real<> > UniformRealGenerator;
+
+    std::vector<double> cumulative_;            ///< The partial sum of the probabilities
+    boost::mt19937 rng_;                        ///< Mersenne Twister: A 623-dimensionally equidistributed uniform pseudo-random number generator 
+    boost::uniform_real<> dist_;                ///< Uniformly distributed real numbers
+    UniformRealGenerator uniform_real_gen_;     ///< Uniformly distributed random real numbers generator
+    int min_;                                   ///< The minimum integer that will be generated
 };
 
 }   // namespace dns
