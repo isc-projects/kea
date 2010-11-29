@@ -33,7 +33,7 @@ DNAME::DNAME(const std::string& namestr) :
     dname_(namestr)
 {}
 
-DNAME::DNAME(InputBuffer& buffer, size_t rdata_len UNUSED_PARAM) :
+DNAME::DNAME(InputBuffer& buffer, size_t) :
     dname_(buffer)
 {
     // we don't need rdata_len for parsing.  if necessary, the caller will
@@ -49,34 +49,29 @@ DNAME::DNAME(const Name& dname) :
 {}
 
 void
-DNAME::toWire(OutputBuffer& buffer) const
-{
+DNAME::toWire(OutputBuffer& buffer) const {
     dname_.toWire(buffer);
 }
 
 void
-DNAME::toWire(MessageRenderer& renderer) const
-{
+DNAME::toWire(MessageRenderer& renderer) const {
     renderer.writeName(dname_);
 }
 
 string
-DNAME::toText() const
-{
+DNAME::toText() const {
     return (dname_.toText());
 }
 
 int
-DNAME::compare(const Rdata& other) const
-{
+DNAME::compare(const Rdata& other) const {
     const DNAME& other_dname = dynamic_cast<const DNAME&>(other);
 
     return (compareNames(dname_, other_dname.dname_));
 }
 
 const Name&
-DNAME::getDname() const
-{
+DNAME::getDname() const {
     return (dname_);
 }
 

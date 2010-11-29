@@ -38,6 +38,7 @@
 
 using namespace std;
 using namespace isc;
+using namespace isc::data;
 using namespace isc::dns;
 using namespace isc::xfr;
 using namespace isc::bench;

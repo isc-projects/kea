@@ -34,7 +34,7 @@ using namespace boost;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
-SOA::SOA(InputBuffer& buffer, size_t rdata_len UNUSED_PARAM) :
+SOA::SOA(InputBuffer& buffer, size_t) :
     mname_(buffer), rname_(buffer)
 {
     // we don't need rdata_len for parsing.  if necessary, the caller will
@@ -94,24 +94,21 @@ SOA::SOA(const SOA& other) :
 }
 
 void
-SOA::toWire(OutputBuffer& buffer) const
-{
+SOA::toWire(OutputBuffer& buffer) const {
     mname_.toWire(buffer);
     rname_.toWire(buffer);
     buffer.writeData(numdata_, sizeof(numdata_));
 }
 
 void
-SOA::toWire(MessageRenderer& renderer) const
-{
+SOA::toWire(MessageRenderer& renderer) const {
     renderer.writeName(mname_);
     renderer.writeName(rname_);
     renderer.writeData(numdata_, sizeof(numdata_));
 }
 
 string
-SOA::toText() const
-{
+SOA::toText() const {
     InputBuffer b(numdata_, sizeof(numdata_));
     uint32_t serial = b.readUint32();
     uint32_t refresh = b.readUint32();
@@ -128,8 +125,7 @@ SOA::toText() const
 }
 
 int
-SOA::compare(const Rdata& other) const
-{
+SOA::compare(const Rdata& other) const {
     const SOA& other_soa = dynamic_cast<const SOA&>(other);
 
     int order = compareNames(mname_, other_soa.mname_);

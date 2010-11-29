@@ -258,8 +258,7 @@ private:
 // END_WELL_KNOWN_CLASS_DEFINITIONS
 
 inline const RRClass&
-RRClass::NONE()
-{
+RRClass::NONE() {
     static RRClass rrclass(RRCLASS_NONE);
 
     return (rrclass);

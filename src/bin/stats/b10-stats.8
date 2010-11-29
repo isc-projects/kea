@@ -1,0 +1,68 @@
+'\" t
+.\"     Title: b10-stats
+.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
+.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
+.\"      Date: Oct 15, 2010
+.\"    Manual: BIND10
+.\"    Source: BIND10
+.\"  Language: English
+.\"
+.TH "B10\-STATS" "8" "Oct 15, 2010" "BIND10" "BIND10"
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+b10-stats \- BIND 10 statistics module
+.SH "SYNOPSIS"
+.HP \w'\fBb10\-stats\fR\ 'u
+\fBb10\-stats\fR [\fB\-v\fR] [\fB\-\-verbose\fR]
+.SH "DESCRIPTION"
+.PP
+The
+\fBb10\-stats\fR
+is a daemon forked by
+\fBbind10\fR\&. Stats module collects statistics data from each module and reports statistics information via
+\fBbindctl\fR\&. It communicates by using the Command Channel by
+\fBb10\-msgq\fR
+with other modules like
+\fBbind10\fR,
+\fBb10\-auth\fR
+and so on\&. It waits for coming data from other modules, then other modules send data to stats module periodically\&. Other modules send stats data to stats module independently from implementation of stats module, so the frequency of sending data may not be constant\&. Stats module collects data and aggregates it\&.
+.SH "OPTIONS"
+.PP
+The arguments are as follows:
+.PP
+\fB\-v\fR, \fB\-\-verbose\fR
+.RS 4
+This
+\fBb10\-stats\fR
+switches to verbose mode\&. It sends verbose messages to STDOUT\&.
+.RE
+.SH "FILES"
+.PP
+/usr/local/share/bind10\-devel/stats\&.spec
+\(em This is a spec file for
+\fBb10\-stats\fR\&. It contains definitions of statistics items of BIND 10 and commands received vi bindctl\&.
+.SH "SEE ALSO"
+.PP
+
+\fBbind10\fR(8),
+\fBbindctl\fR(1),
+\fBb10-auth\fR(8),
+BIND 10 Guide\&.
+.SH "HISTORY"
+.PP
+The
+\fBb10\-stats\fR
+daemon was initially designed and implemented by Naoki Kambe of JPRS in Oct 2010\&.
+.SH "COPYRIGHT"
+.br
+Copyright \(co 2010 Internet Systems Consortium, Inc. ("ISC")
+.br

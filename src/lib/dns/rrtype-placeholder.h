@@ -276,22 +276,19 @@ private:
 // END_WELL_KNOWN_TYPE_DEFINITIONS
 
 inline const RRType&
-RRType::IXFR()
-{
+RRType::IXFR() {
     static RRType rrtype(RRTYPE_IXFR);
     return (rrtype);
 }
 
 inline const RRType&
-RRType::AXFR()
-{
+RRType::AXFR() {
     static RRType rrtype(RRTYPE_AXFR);
     return (rrtype);
 }
 
 inline const RRType&
-RRType::ANY()
-{
+RRType::ANY() {
     static RRType rrtype(RRTYPE_ANY);
     return (rrtype);
 }
