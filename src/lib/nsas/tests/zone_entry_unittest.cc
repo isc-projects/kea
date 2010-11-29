@@ -42,15 +42,18 @@ class ZoneEntryTest : public TestWithRdata {
 protected:
     /// \brief Constructor
     ZoneEntryTest() :
-        nameservers_hash_(new NsasEntryCompare<NameserverEntry>),
-        nameservers_lru_((3 * nameservers_hash_.tableSize()),
-            new HashDeleter<NameserverEntry>(nameservers_hash_)),
+        nameserver_table_(new HashTable<NameserverEntry>(
+            new NsasEntryCompare<NameserverEntry>)),
+        nameserver_lru_(new LruList<NameserverEntry>(
+            (3 * nameserver_table_->tableSize()),
+            new HashDeleter<NameserverEntry>(*nameserver_table_))),
         resolver_(new TestResolver),
         callback_(new Callback)
     { }
     /// \brief Tables of nameservers to pass into zone entry constructor
-    HashTable<NameserverEntry> nameservers_hash_;
-    LruList<NameserverEntry> nameservers_lru_;
+    shared_ptr<HashTable<NameserverEntry> > nameserver_table_;
+    shared_ptr<LruList<NameserverEntry> > nameserver_lru_;
+    /// \brief The resolver
     shared_ptr<TestResolver> resolver_;
 
     struct Callback : public AddressRequestCallback {
@@ -70,13 +73,16 @@ class InheritedZoneEntry : public ZoneEntry {
     public:
         InheritedZoneEntry(shared_ptr<ResolverInterface> resolver,
             const isc::dns::AbstractRRset& authority,
-            HashTable<NameserverEntry>& nameservers,
-            LruList<NameserverEntry>& nameserver_lru) :
-            ZoneEntry(resolver, authority, nameservers, nameserver_lru)
+            shared_ptr<HashTable<NameserverEntry> > nameserver_table,
+            shared_ptr<LruList<NameserverEntry> > nameserver_lru) :
+            ZoneEntry(resolver, authority, nameserver_table, nameserver_lru)
         { }
         InheritedZoneEntry(shared_ptr<ResolverInterface> resolver,
-            const std::string& name, uint16_t class_code) :
-            ZoneEntry(resolver, name, class_code)
+            const std::string& name, uint16_t class_code,
+            shared_ptr<HashTable<NameserverEntry> > nameserver_table,
+            shared_ptr<LruList<NameserverEntry> > nameserver_lru) :
+            ZoneEntry(resolver, name, class_code, nameserver_table,
+                nameserver_lru)
         { }
         NameserverVector& nameservers() { return nameservers_; }
 };
@@ -86,7 +92,7 @@ TEST_F(ZoneEntryTest, DefaultConstructor) {
 
     // Default constructor should not create any RRsets
     InheritedZoneEntry alpha(resolver_, EXAMPLE_CO_UK,
-        RRClass::IN().getCode());
+        RRClass::IN().getCode(), nameserver_table_, nameserver_lru_);
     EXPECT_EQ(EXAMPLE_CO_UK, alpha.getName());
     EXPECT_EQ(RRClass::IN().getCode(), alpha.getClass());
     EXPECT_TRUE(alpha.nameservers().empty());
@@ -94,8 +100,8 @@ TEST_F(ZoneEntryTest, DefaultConstructor) {
 
 /// Tests of constructor from referral data
 TEST_F(ZoneEntryTest, ReferralConstructor) {
-    InheritedZoneEntry alpha(resolver_, rr_single_, nameservers_hash_,
-        nameservers_lru_);
+    InheritedZoneEntry alpha(resolver_, rr_single_, nameserver_table_,
+        nameserver_lru_);
     // It should load the name and class from the referral info
     EXPECT_EQ(EXAMPLE_CO_UK, alpha.getName());
     EXPECT_EQ(RRClass::IN().getCode(), alpha.getClass());
@@ -107,7 +113,7 @@ TEST_F(ZoneEntryTest, ReferralConstructor) {
 // It should answer negatively right away if there are no nameservers
 TEST_F(ZoneEntryTest, CallbackNoNS) {
     shared_ptr<InheritedZoneEntry> zone(new InheritedZoneEntry(resolver_,
-        rr_empty_, nameservers_hash_, nameservers_lru_));
+        rr_empty_, nameserver_table_, nameserver_lru_));
     // It should accept the callback
     EXPECT_TRUE(zone->addCallback(callback_, ANY_OK, zone));
     // And tell imediatelly that it is unreachable (when it has no nameservers)
@@ -120,7 +126,7 @@ TEST_F(ZoneEntryTest, CallbackZeroTTL) {
     // Make it zero TTL, so it expires right away
     rr_single_.setTTL(RRTTL(0));
     shared_ptr<InheritedZoneEntry> zone(new InheritedZoneEntry(resolver_,
-        rr_single_, nameservers_hash_, nameservers_lru_));
+        rr_single_, nameserver_table_, nameserver_lru_));
     // It should accept the callback
     EXPECT_TRUE(zone->addCallback(callback_, ANY_OK, zone));
     // It should not be answered yet, it should ask for the IP addresses
@@ -134,7 +140,7 @@ TEST_F(ZoneEntryTest, CallbackZeroTTL) {
 // Check it answers callbacks when we give it addresses
 TEST_F(ZoneEntryTest, CallbacksAnswered) {
     shared_ptr<InheritedZoneEntry> zone(new InheritedZoneEntry(resolver_,
-        rr_single_, nameservers_hash_, nameservers_lru_));
+        rr_single_, nameserver_table_, nameserver_lru_));
     // It should be in NOT_ASKED state
     EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
     // It should accept the callback
@@ -178,7 +184,7 @@ TEST_F(ZoneEntryTest, CallbacksAnswered) {
 // Pretend the server can be reached only by IPv4
 TEST_F(ZoneEntryTest, CallbacksAOnly) {
     shared_ptr<InheritedZoneEntry> zone(new InheritedZoneEntry(resolver_,
-        rr_single_, nameservers_hash_, nameservers_lru_));
+        rr_single_, nameserver_table_, nameserver_lru_));
     // It should be in NOT_ASKED state
     EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
     // It should accept the callback
@@ -221,7 +227,7 @@ TEST_F(ZoneEntryTest, CallbacksAOnly) {
 // See it tries hard enough to get address and tries both nameservers
 TEST_F(ZoneEntryTest, CallbackTwoNS) {
     shared_ptr<InheritedZoneEntry> zone(new InheritedZoneEntry(resolver_,
-        rrns_, nameservers_hash_, nameservers_lru_));
+        rrns_, nameserver_table_, nameserver_lru_));
     // It should be in NOT_ASKED state
     EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
     // It should accept the callback

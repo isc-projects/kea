@@ -110,6 +110,8 @@ public:
     /// possible optimisation if the caller has the current time (it saves
     /// the overhead of a call to time()).  The default value of 0 requests
     /// the constructor to get its own copy of the current time.
+    /// \todo This is possibly unneeded, if NSAS uses the resolver for
+    /// everything
     NameserverEntry(const isc::dns::AbstractRRset* v4Set,
         const isc::dns::AbstractRRset* v6Set, time_t curtime = 0);
 
