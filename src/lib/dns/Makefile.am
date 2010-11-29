@@ -96,11 +96,13 @@ libdns___includedir = $(includedir)/dns
 libdns___include_HEADERS = \
 	buffer.h \
 	dnssectime.h \
+	edns.h \
 	exceptions.h \
 	message.h \
 	messagerenderer.h \
 	name.h \
 	question.h \
+	rcode.h \
 	rdata.h \
 	rdataclass.h \
 	rrclass.h \
