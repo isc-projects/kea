@@ -18,16 +18,15 @@ pkglibexecdir = $(libexecdir)/@PACKAGE@
 
 CLEANFILES = *.gcno *.gcda recurse.spec spec_config.h
 
-
 man_MANS = b10-recurse.8
 EXTRA_DIST = $(man_MANS) b10-recurse.xml
 
-# if ENABLE_MAN
+if ENABLE_MAN
 
 b10-recurse.8: b10-recurse.xml
 	xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-recurse.xml
 
-# endif
+endif
 
 recurse.spec: recurse.spec.pre
 	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" recurse.spec.pre >$@
