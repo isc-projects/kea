@@ -1,3 +1,8 @@
+  121.  [func]		jinmei
+	src/lib/dns: Added support for TSIG RDATA.  At this moment this is
+	not much of real use, however, because no protocol support was
+	added yet.  It will soon be added. (Trac #372, svn r3649)
+
   120.  [func]		jinmei
 	src/lib/dns: introduced two new classes, TSIGKey and TSIGKeyRing,
 	to manage TSIG keys. (Trac #381, svn r3622)
