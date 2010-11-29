@@ -199,6 +199,7 @@ public:
     /// is shutdown.
     ///
     void setXfrinSession(isc::cc::AbstractSession* xfrin_session);
+
 private:
     AuthSrvImpl* impl_;
 };
