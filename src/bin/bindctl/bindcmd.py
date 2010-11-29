@@ -553,9 +553,6 @@ class BindCmdInterpreter(Cmd):
 
             if cmd.command == "show":
                 values = self.config_data.get_value_maps(identifier)
-                print("[XX] VALUE MAPS:")
-                print(str(values))
-                print("[XX] END VALUE MAPS")
                 for value_map in values:
                     line = value_map['name']
                     if value_map['type'] in [ 'module', 'map', 'list' ]:

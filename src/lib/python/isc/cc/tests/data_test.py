@@ -82,6 +82,23 @@ class TestData(unittest.TestCase):
         self.assertRaises(data.DataTypeError, data.merge, 1, d2)
         self.assertRaises(data.DataTypeError, data.merge, None, None)
 
+
+    def testsplit_identifier_list_indices(self):
+        id, indices = data.split_identifier_list_indices('a')
+        self.assertEqual(id, 'a')
+        self.assertEqual(indices, None)
+        id, indices = data.split_identifier_list_indices('a[0]')
+        self.assertEqual(id, 'a')
+        self.assertEqual(indices, [0])
+        id, indices = data.split_identifier_list_indices('a[0][1]')
+        self.assertEqual(id, 'a')
+        self.assertEqual(indices, [0, 1])
+
+        # bad formats
+        self.assertRaises(data.DataTypeError, data.split_identifier_list_indices, 'a[')
+        self.assertRaises(data.DataTypeError, data.split_identifier_list_indices, 'a]')
+        self.assertRaises(data.DataTypeError, data.split_identifier_list_indices, 'a[[0]]')
+
     def test_find(self):
         d1 = { 'a': 'a', 'b': 1, 'c': { 'd': 'd', 'e': 2, 'more': { 'data': 'here' } } }
         self.assertEqual(data.find(d1, ''), d1)
@@ -110,13 +127,27 @@ class TestData(unittest.TestCase):
     def test_set(self):
         d1 = { 'a': 'a', 'b': 1, 'c': { 'd': 'd', 'e': 2 } }
         d12 = { 'b': 1, 'c': { 'e': 3, 'f': [ 1 ] } }
+        d13 = { 'b': 1, 'c': { 'e': 3, 'f': [ 2 ] } }
+        d14 = { 'b': 1, 'c': { 'e': 3, 'f': [ { 'g': [ 1, 2 ] } ] } }
+        d15 = { 'b': 1, 'c': { 'e': 3, 'f': [ { 'g': [ 1, 3 ] } ] } }
         data.set(d1, 'a', None)
         data.set(d1, 'c/d', None)
         data.set(d1, 'c/e/', 3)
         data.set(d1, 'c/f', [ 1 ] )
         self.assertEqual(d1, d12)
+        data.set(d1, 'c/f[0]', 2 )
+        self.assertEqual(d1, d13)
+
+        data.set(d1, 'c/f[0]', { 'g': [ 1, 2] } )
+        self.assertEqual(d1, d14)
+        data.set(d1, 'c/f[0]/g[1]', 3)
+        self.assertEqual(d1, d15)
+        
         self.assertRaises(data.DataTypeError, data.set, d1, 1, 2)
         self.assertRaises(data.DataTypeError, data.set, 1, "", 2)
+        self.assertRaises(data.DataTypeError, data.set, d1, 'c[1]', 2)
+        self.assertRaises(data.DataNotFoundError, data.set, d1, 'c/f[5]', 2)
+
         d3 = {}
         e3 = data.set(d3, "does/not/exist", 123)
         self.assertEqual(d3,
@@ -125,11 +156,25 @@ class TestData(unittest.TestCase):
                          { 'does': { 'not': { 'exist': 123 } } })
 
     def test_unset(self):
-        d1 = { 'a': 'a', 'b': 1, 'c': { 'd': 'd', 'e': 2 } }
+        d1 = { 'a': 'a', 'b': 1, 'c': { 'd': 'd', 'e': [ 1, 2, 3 ] } }
         data.unset(d1, 'a')
         data.unset(d1, 'c/d')
         data.unset(d1, 'does/not/exist')
-        self.assertEqual(d1, { 'b': 1, 'c': { 'e': 2 } })
+        self.assertEqual(d1, { 'b': 1, 'c': { 'e': [ 1, 2, 3 ] } })
+        data.unset(d1, 'c/e[0]')
+        self.assertEqual(d1, { 'b': 1, 'c': { 'e': [ 2, 3 ] } })
+        data.unset(d1, 'c/e[1]')
+        self.assertEqual(d1, { 'b': 1, 'c': { 'e': [ 2 ] } })
+        # index 1 should now be out of range
+        self.assertRaises(data.DataNotFoundError, data.unset, d1, 'c/e[1]')
+        d2 = { 'a': [ { 'b': [ 1, 2 ] } ] }
+        data.unset(d2, 'a[0]/b[1]')
+        self.assertEqual(d2, { 'a': [ { 'b': [ 1 ] } ] })
+        d3 = { 'a': [ [ 1, 2 ] ] }
+        data.set(d3, "a[0][1]", 3)
+        self.assertEqual(d3, { 'a': [ [ 1, 3 ] ] })
+        data.unset(d3, 'a[0][1]')
+        self.assertEqual(d3, { 'a': [ [ 1 ] ] })
         
     def test_find_no_exc(self):
         d1 = { 'a': 'a', 'b': 1, 'c': { 'd': 'd', 'e': 2, 'more': { 'data': 'here' } } }

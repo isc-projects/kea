@@ -108,13 +108,11 @@ def find_spec_part(element, identifier):
     id_parts = identifier.split("/")
     id_parts[:] = (value for value in id_parts if value != "")
     cur_el = element
-    for id in id_parts:
+    #for id in id_parts:
+    for id_part in id_parts:
         # strip list selector part
         # don't need it for the spec part, so just drop it
-        i = id.find('[')
-        e = id.find(']')
-        if i >= 0 and e > i + 1:
-            id = id[:i]
+        id, list_indices = isc.cc.data.split_identifier_list_indices(id_part)
         if type(cur_el) == dict and 'map_item_spec' in cur_el.keys():
             found = False
             for cur_el_item in cur_el['map_item_spec']:
@@ -127,20 +125,12 @@ def find_spec_part(element, identifier):
             found = False
             for cur_el_item in cur_el:
                 if cur_el_item['item_name'] == id:
-                    #print("[XX] full list item:")
-                    #print(cur_el_item)
-                    #if 'list_item_spec' in cur_el_item:
-                    #    cur_el = cur_el_item['list_item_spec']
-                    #else:
                     cur_el = cur_el_item
                     found = True
             if not found:
                 raise isc.cc.data.DataNotFoundError(id + " in " + str(cur_el))
         else:
             raise isc.cc.data.DataNotFoundError("Not a correct config specification")
-    print("[XX] Returning: ")
-    print(cur_el)
-    print("[XX] end")
     return cur_el
 
 def spec_name_list(spec, prefix="", recurse=False):
@@ -242,6 +232,20 @@ class ConfigData:
             result[item] = value
         return result
 
+# should we just make a class for these?
+def _create_value_map_entry(name, type, value, status = None):
+    entry = {}
+    entry['name'] = name
+    entry['type'] = type
+    entry['value'] = value
+    entry['modified'] = False
+    entry['default'] = False
+    if status == MultiConfigData.LOCAL:
+        entry['modified'] = True
+    if status == MultiConfigData.DEFAULT:
+        entry['default'] = True
+    return entry
+
 class MultiConfigData:
     """This class stores the module specs, current non-default
        configuration values and 'local' (uncommitted) changes for
@@ -286,7 +290,7 @@ class MultiConfigData:
            identifier (up to the first /) is interpreted as the module
            name. Returns None if not found, or if identifier is not a
            string."""
-        if type(identifier) != str:
+        if type(identifier) != str or identifier == "":
             return None
         if identifier[0] == '/':
             identifier = identifier[1:]
@@ -350,16 +354,16 @@ class MultiConfigData:
         try:
             spec = find_spec_part(self._specifications[module].get_config_spec(), id)
             if 'item_default' in spec:
-                i = id.find('[')
-                e = id.find(']')
-                if i >= 0 and e > i + 1 \
-                   and type(spec['item_default']) == list:
-                    default_list = spec['item_default']
-                    index = int(id[i + 1:e])
-                    if index < len(default_list):
-                        return default_list[index]
-                    else:
-                        return None
+                id, list_indices = isc.cc.data.split_identifier_list_indices(id)
+                if list_indices is not None and \
+                   type(spec['item_default']) == list:
+                    if len(list_indices) == 1:
+                        default_list = spec['item_default']
+                        index = list_indices[0]
+                        if index < len(default_list):
+                            return default_list[index]
+                        else:
+                            return None
                 else:
                     return spec['item_default']
             else:
@@ -377,20 +381,15 @@ class MultiConfigData:
            set DEFAULT if the argument 'default' is False (default
            defaults to True)"""
         value = self.get_local_value(identifier)
-        print("[XX] mcd get_value() for: " + identifier)
-        print("[XX] mcd get_value() local: " + str(value))
         if value != None:
             return value, self.LOCAL
         value = self.get_current_value(identifier)
-        print("[XX] mcd get_value() current: " + str(value))
         if value != None:
             return value, self.CURRENT
         if default:
             value = self.get_default_value(identifier)
-            print("[XX] mcd get_value() default: " + str(value))
             if value != None:
                 return value, self.DEFAULT
-        print("[XX] mcd get_value() nothing found")
         return None, self.NONE
 
     def get_value_maps(self, identifier = None):
@@ -407,12 +406,7 @@ class MultiConfigData:
         if not identifier:
             # No identifier, so we need the list of current modules
             for module in self._specifications.keys():
-                entry = {}
-                entry['name'] = module
-                entry['type'] = 'module'
-                entry['value'] = None
-                entry['modified'] = False
-                entry['default'] = False
+                entry = _create_value_map_entry(module, 'module', None)
                 result.append(entry)
         else:
             if identifier[0] == '/':
@@ -423,71 +417,37 @@ class MultiConfigData:
                 spec_part = find_spec_part(spec.get_config_spec(), id)
                 if type(spec_part) == list:
                     for item in spec_part:
-                        entry = {}
-                        entry['name'] = item['item_name']
-                        entry['type'] = item['item_type']
-                        print("[XX] GET VALUE FOR: " + str("/" + identifier + "/" + item['item_name']))
-                        value, status = self.get_value("/" + identifier + "/" + item['item_name'])
-                        entry['value'] = value
-                        if status == self.LOCAL:
-                            entry['modified'] = True
-                        else:
-                            entry['modified'] = False
-                        if status == self.DEFAULT:
-                            entry['default'] = False
-                        else:
-                            entry['default'] = False
+                        value, status = self.get_value("/" + identifier\
+                                              + "/" + item['item_name'])
+                        entry = _create_value_map_entry(item['item_name'],
+                                                        item['item_type'],
+                                                        value, status)
                         result.append(entry)
                 elif type(spec_part) == dict:
                     item = spec_part
                     if item['item_type'] == 'list':
                         li_spec = item['list_item_spec']
-                        print("[XX] GET VALUE FOR: " + str("/" + identifier))
                         value, status =  self.get_value("/" + identifier)
-                        print("[XX] ITEM_LIST: " + str(value))
                         if type(value) == list:
                             for list_value in value:
-                                result_part2 = {}
-                                result_part2['name'] = li_spec['item_name']
-                                result_part2['value'] = list_value
-                                result_part2['type'] = li_spec['item_type']
-                                result_part2['default'] = False
-                                result_part2['modified'] = False
+                                result_part2 = _create_value_map_entry(
+                                                   li_spec['item_name'],
+                                                   li_spec['item_type'],
+                                                   list_value)
                                 result.append(result_part2)
                         elif value is not None:
-                            entry = {}
-                            entry['name'] = li_spec['item_name']
-                            entry['type'] = li_spec['item_type']
-                            entry['value'] = value
-                            if status == self.LOCAL:
-                                entry['modified'] = True
-                            else:
-                                entry['modified'] = False
-                            if status == self.DEFAULT:
-                                entry['default'] = False
-                            else:
-                                entry['default'] = False
+                            entry = _create_value_map_entry(
+                                        li_spec['item_name'],
+                                        li_spec['item_type'],
+                                        value, status)
                             result.append(entry)
                     else:
-                        #value, status = self.get_value("/" + identifier + "/" + item['item_name'])
-                        print("[XX] GET VALUE FOR: " + str("/" + identifier))
-                        # The type of the config data is a list,
-                        # so we do not want to have a default if it's
-                        # out of range
-                        value, status = self.get_value("/" + identifier, False)
+                        value, status = self.get_value("/" + identifier)
                         if value is not None:
-                            entry = {}
-                            entry['name'] = item['item_name']
-                            entry['type'] = item['item_type']
-                            entry['value'] = value
-                            if status == self.LOCAL:
-                                entry['modified'] = True
-                            else:
-                                entry['modified'] = False
-                            if status == self.DEFAULT:
-                                entry['default'] = False
-                            else:
-                                entry['default'] = False
+                            entry = _create_value_map_entry(
+                                        item['item_name'],
+                                        item['item_type'],
+                                        value, status)
                             result.append(entry)
         return result
 
@@ -496,15 +456,28 @@ class MultiConfigData:
            there is a specification for the given identifier, the type
            is checked."""
         spec_part = self.find_spec_part(identifier)
-        print("[XX] SPEC PART FOR " + identifier + ": ")
-        print(spec_part)
-        if spec_part != None:
-            i = identifier.find('[')
-            e = identifier.find(']')
-            if i >= 0 and e > i and spec_part['item_type'] == 'list':
+        if spec_part is not None and value is not None:
+            id, list_indices = isc.cc.data.split_identifier_list_indices(identifier)
+            if list_indices is not None \
+               and spec_part['item_type'] == 'list':
                 spec_part = spec_part['list_item_spec']
             check_type(spec_part, value)
-        # TODO: get the local list to value
+
+        # Since we do not support list diffs (yet?), we need to
+        # copy the currently set list of items to _local_changes
+        # if we want to modify an element in there
+        # (for any list indices specified in the full identifier)
+        id_parts = isc.cc.data.split_identifier(identifier)
+        cur_id_part = '/'
+        for id_part in id_parts:
+            id, list_indices = isc.cc.data.split_identifier_list_indices(id_part)
+            if list_indices is not None:
+                cur_list, status = self.get_value(cur_id_part + id)
+                if status != MultiConfigData.LOCAL:
+                    isc.cc.data.set(self._local_changes,
+                                    cur_id_part + id,
+                                    cur_list)
+            cur_id_part = cur_id_part + id_part + "/"
         isc.cc.data.set(self._local_changes, identifier, value)
  
     def get_config_item_list(self, identifier = None, recurse = False):
