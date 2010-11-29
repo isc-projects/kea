@@ -130,6 +130,11 @@ private:
     RecursiveQuery* rec_query_;
 };
 
+/*
+ * std::for_each has a broken interface. It makes no sense in a language
+ * without lambda functions/closures. These two classes emulate the lambda
+ * functions so for_each can be used.
+ */
 class QuestionInserter {
 public:
     QuestionInserter(MessagePtr message) : message_(message) {}
@@ -143,9 +148,8 @@ public:
 
 class SectionInserter {
 public:
-    SectionInserter(MessagePtr message, const Message::Section sect,
-        bool sign) :
-        message_(message), section_(sect), sign_(sign)
+    SectionInserter(MessagePtr message, const Message::Section sect) :
+        message_(message), section_(sect)
     {}
     void operator()(const RRsetPtr rrset) {
         dlog("Adding RRSet to message section " +
@@ -154,7 +158,6 @@ public:
     }
     MessagePtr message_;
     const Message::Section section_;
-    bool sign_;
 };
 
 void
@@ -259,16 +262,13 @@ public:
                 incoming.fromWire(ibuf);
                 for_each(incoming.beginSection(Message::SECTION_ANSWER),
                          incoming.endSection(Message::SECTION_ANSWER),
-                         SectionInserter(message, Message::SECTION_ANSWER,
-                         true));
+                         SectionInserter(message, Message::SECTION_ANSWER));
                 for_each(incoming.beginSection(Message::SECTION_ADDITIONAL),
                          incoming.endSection(Message::SECTION_ADDITIONAL),
-                         SectionInserter(message, Message::SECTION_ADDITIONAL,
-                         true));
+                         SectionInserter(message, Message::SECTION_ADDITIONAL));
                 for_each(incoming.beginSection(Message::SECTION_AUTHORITY),
                          incoming.endSection(Message::SECTION_ADDITIONAL),
-                         SectionInserter(message, Message::SECTION_AUTHORITY,
-                         true));
+                         SectionInserter(message, Message::SECTION_AUTHORITY));
             } catch (const Exception& ex) {
                 // Incoming message couldn't be read, we just SERVFAIL
                 message->setRcode(Rcode::SERVFAIL());
