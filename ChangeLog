@@ -1,4 +1,8 @@
   TBD.  [func]      vorner
+	b10-recurse supports timeouts and retries in forwarder mode.
+	(Trac #401, svn r3660)
+
+  TBD.  [func]      vorner
 	New temporary logging function available in isc::log. It is used by
 	b10-recurse.
 	(Trac #393, r3602)
