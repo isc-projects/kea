@@ -14,8 +14,6 @@
 
 // $Id$
 
-#include <config.h>
-
 #include <string>
 #include <sstream>
 #include <vector>
@@ -121,9 +119,9 @@ tokenToNum(const string& num_token) {
 /// - <MAC> and <OtherData> is a BASE-64 encoded string that does not contain
 ///   space characters.
 ///   When <MACSize> and <OtherLen> is 0, <MAC> and <OtherData> must not
-///   appear %in \c tsgi_str, respectively.
-/// - The decoded %data of <MAC> is <MACSize> bytes of binary stream.
-/// - The decoded %data of <OtherData> is <OtherLen> bytes of binary stream.
+///   appear in \c tsgi_str, respectively.
+/// - The decoded data of <MAC> is <MACSize> bytes of binary stream.
+/// - The decoded data of <OtherData> is <OtherLen> bytes of binary stream.
 ///
 /// An example of valid string is:
 /// \code "hmac-sha256. 853804800 300 3 AAAA 2845 0 0" \endcode
@@ -138,7 +136,7 @@ tokenToNum(const string& num_token) {
 ///
 /// If <Alg> is not a valid domain name, a corresponding exception from
 /// the \c Name class will be thrown;
-/// if <MAC> or <OtherData> is not validly encoded %in BASE-64, an exception
+/// if <MAC> or <OtherData> is not validly encoded in BASE-64, an exception
 /// of class \c isc::BadValue will be thrown;
 /// if %any of the other bullet points above is not met, an exception of
 /// class \c InvalidRdataText will be thrown.
@@ -190,12 +188,12 @@ TSIG::TSIG(const std::string& tsig_str) : impl_(NULL) {
                          error, other_data);
 }
 
-/// \brief Constructor from wire-format %data.
+/// \brief Constructor from wire-format data.
 ///
 /// When a read operation on \c buffer fails (e.g., due to a corrupted
 /// message) a corresponding exception from the \c InputBuffer class will
 /// be thrown.
-/// If the wire-format %data does not begin with a valid domain name,
+/// If the wire-format data does not begin with a valid domain name,
 /// a corresponding exception from the \c Name class will be thrown.
 /// In addition, this constructor internally involves resource allocation,
 /// and if it fails a corresponding standard exception will be thrown.
@@ -204,13 +202,13 @@ TSIG::TSIG(const std::string& tsig_str) : impl_(NULL) {
 /// of domain name.  But this implementation accepts a %TSIG RR even if that
 /// field is compressed.
 ///
-/// \param buffer A buffer storing the wire format %data.
-/// \param rdata_len The length of the RDATA %in bytes, normally expected
+/// \param buffer A buffer storing the wire format data.
+/// \param rdata_len The length of the RDATA in bytes, normally expected
 /// to be the value of the RDLENGTH field of the corresponding RR.
 /// But this constructor does not use this parameter; if necessary, the caller
 /// must check consistency between the length parameter and the actual
 /// RDATA length.
-TSIG::TSIG(InputBuffer& buffer, size_t rdata_len UNUSED_PARAM) : impl_(NULL) {
+TSIG::TSIG(InputBuffer& buffer, size_t) : impl_(NULL) {
     Name algorithm(buffer);
 
     uint8_t time_signed_buf[6];
@@ -293,7 +291,7 @@ TSIG::~TSIG() {
 
 /// \brief Convert the \c TSIG to a string.
 ///
-/// The output of this method is formatted as described %in the "from string"
+/// The output of this method is formatted as described in the "from string"
 /// constructor (\c TSIG(const std::string&))).
 ///
 /// If internal resource allocation fails, a corresponding
@@ -367,10 +365,10 @@ TSIG::toWire(OutputBuffer& buffer) const {
 /// \brief Render the \c TSIG in the wire format with taking into account
 /// compression.
 ///
-/// As specified %in RFC3597, the Algorithm field (a domain name) will not
+/// As specified in RFC3597, the Algorithm field (a domain name) will not
 /// be compressed.  However, the domain name could be a target of compression
 /// of other compressible names (though pretty unlikely), the offset
-/// information of the algorithm name may be recorded %in \c renderer.
+/// information of the algorithm name may be recorded in \c renderer.
 ///
 /// If internal resource allocation fails, a corresponding
 /// standard exception will be thrown.
@@ -401,10 +399,10 @@ vectorComp(const vector<uint8_t>& v1, const vector<uint8_t>& v2) {
 /// \brief Compare two instances of \c TSIG RDATA.
 ///
 /// This method compares \c this and the \c other \c TSIG objects
-/// %in terms of the DNSSEC sorting order as defined %in RFC4034, and returns
+/// in terms of the DNSSEC sorting order as defined in RFC4034, and returns
 /// the result as an integer.
 ///
-/// This method is expected to be used %in a polymorphic way, and the
+/// This method is expected to be used in a polymorphic way, and the
 /// parameter to compare against is therefore of the abstract \c Rdata class.
 /// However, comparing two \c Rdata objects of different RR types
 /// is meaningless, and \c other must point to a \c TSIG object;
