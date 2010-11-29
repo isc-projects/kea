@@ -79,7 +79,6 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.verbose, False)
         self.assertEqual(bob.msgq_socket_file, None)
         self.assertEqual(bob.auth_port, 5300)
-        self.assertEqual(bob.res_port, 5301)
         self.assertEqual(bob.address, None)
         self.assertEqual(bob.cc_session, None)
         self.assertEqual(bob.ccs, None)
@@ -97,7 +96,6 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.verbose, False)
         self.assertEqual(bob.msgq_socket_file, "alt_socket_file")
         self.assertEqual(bob.auth_port, 5300)
-        self.assertEqual(bob.res_port, 5301)
         self.assertEqual(bob.address, None)
         self.assertEqual(bob.cc_session, None)
         self.assertEqual(bob.ccs, None)
@@ -115,27 +113,7 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.verbose, False)
         self.assertEqual(bob.msgq_socket_file, None)
         self.assertEqual(bob.auth_port, 9999)
-        self.assertEqual(bob.res_port, 5301)
         self.assertEqual(bob.address, None)
-        self.assertEqual(bob.cc_session, None)
-        self.assertEqual(bob.ccs, None)
-        self.assertEqual(bob.processes, {})
-        self.assertEqual(bob.dead_processes, {})
-        self.assertEqual(bob.runnable, False)
-        self.assertEqual(bob.uid, None)
-        self.assertEqual(bob.username, None)
-        self.assertEqual(bob.nocache, False)
-        self.assertEqual(bob.cfg_start_auth, True)
-        self.assertEqual(bob.cfg_start_recurse, False)
-
-    def test_init_alternate_res_port(self):
-        bob = BoB(None, 9999, 9998)
-        self.assertEqual(bob.verbose, False)
-        self.assertEqual(bob.msgq_socket_file, None)
-        self.assertEqual(bob.auth_port, 9999)
-        self.assertEqual(bob.res_port, 9998)
-        self.assertEqual(bob.address, None)
-        self.assertEqual(bob.res_address, None)
         self.assertEqual(bob.cc_session, None)
         self.assertEqual(bob.ccs, None)
         self.assertEqual(bob.processes, {})
@@ -148,32 +126,11 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.cfg_start_recurse, False)
 
     def test_init_alternate_address(self):
-        bob = BoB(None, 1234, 5678, IPAddr('127.127.127.127'))
+        bob = BoB(None, 1234, IPAddr('127.127.127.127'))
         self.assertEqual(bob.verbose, False)
         self.assertEqual(bob.msgq_socket_file, None)
         self.assertEqual(bob.auth_port, 1234)
-        self.assertEqual(bob.res_port, 5678)
         self.assertEqual(bob.address.addr, socket.inet_aton('127.127.127.127'))
-        self.assertEqual(bob.res_address, None)
-        self.assertEqual(bob.cc_session, None)
-        self.assertEqual(bob.ccs, None)
-        self.assertEqual(bob.processes, {})
-        self.assertEqual(bob.dead_processes, {})
-        self.assertEqual(bob.runnable, False)
-        self.assertEqual(bob.uid, None)
-        self.assertEqual(bob.username, None)
-        self.assertEqual(bob.nocache, False)
-        self.assertEqual(bob.cfg_start_auth, True)
-        self.assertEqual(bob.cfg_start_recurse, False)
-
-    def test_init_alternate_res_address(self):
-        bob = BoB(None, 1234, 5678, IPAddr('127.127.127.127'), IPAddr("255.254.253.252"))
-        self.assertEqual(bob.verbose, False)
-        self.assertEqual(bob.msgq_socket_file, None)
-        self.assertEqual(bob.auth_port, 1234)
-        self.assertEqual(bob.res_port, 5678)
-        self.assertEqual(bob.address.addr, socket.inet_aton('127.127.127.127'))
-        self.assertEqual(bob.res_address.addr, socket.inet_aton('255.254.253.252'))
         self.assertEqual(bob.cc_session, None)
         self.assertEqual(bob.ccs, None)
         self.assertEqual(bob.processes, {})
@@ -256,7 +213,7 @@ class TestStartAllProcessesBob(unittest.TestCase):
         self.assertEqual(bob.stats, False)
         self.assertEqual(bob.cmdctl, False)
 
-    # Checks the processes started when starting neither auth nor recruse
+    # Checks the processes started when starting neither auth nor recurse
     # is specified.
     def test_start_none(self):
         # Created Bob and ensure initialization correct
