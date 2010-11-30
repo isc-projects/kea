@@ -100,6 +100,8 @@ public:
     ///
     /// \return bool true of the name of the object is equal to the name given.
     virtual bool operator()(T* object, const HashKey& key) const = 0;
+    /// \brief Virtual destructor
+    virtual ~ HashTableCompare() { }
 };
 
 
@@ -152,7 +154,7 @@ public:
     /// calculated and used to index the table.
     ///
     /// \return Shared pointer to the object or NULL if it is not there.
-    virtual boost::shared_ptr<T> get(const HashKey& key) {
+    boost::shared_ptr<T> get(const HashKey& key) {
         uint32_t index = hash_(key);
         sharable_lock lock(table_[index].mutex_);
         return getInternal(key, index);
@@ -168,7 +170,7 @@ public:
     /// calculated and used to index the table.
     ///
     /// \return true if the object was deleted, false if it was not found.
-    virtual bool remove(const HashKey& key);
+    bool remove(const HashKey& key);
 
     /// \brief Add Entry
     ///
@@ -184,7 +186,7 @@ public:
     /// same name already exists, the existing object is replaced.  If false,
     // the addition fails and a status is returned.
     /// \return true if the object was successfully added, false otherwise.
-    virtual bool add(boost::shared_ptr<T>& object, const HashKey& key,
+    bool add(boost::shared_ptr<T>& object, const HashKey& key,
         bool replace = false)
     {
         uint32_t index = hash_(key);
@@ -234,15 +236,15 @@ public:
     /// \brief Returns Size of Hash Table
     ///
     /// \return Size of hash table
-    virtual uint32_t tableSize() const {
+    uint32_t tableSize() const {
         return table_.size();
     }
 
 protected:
     // Internal parts, expect to be already locked
-    virtual boost::shared_ptr<T> getInternal(const HashKey& key,
+    boost::shared_ptr<T> getInternal(const HashKey& key,
         uint32_t index);
-    virtual bool addInternal(boost::shared_ptr<T>& object, const HashKey& key,
+    bool addInternal(boost::shared_ptr<T>& object, const HashKey& key,
         uint32_t index, bool replace = false);
 
 private:
