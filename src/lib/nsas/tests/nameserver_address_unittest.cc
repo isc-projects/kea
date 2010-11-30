@@ -37,21 +37,24 @@ using namespace rdata;
 class NameserverEntrySample {
 public:
     NameserverEntrySample():
-        rrv4_(Name("example.org"), RRClass::IN(), RRType::A(), RRTTL(1200))
+        name_("example.org"),
+        rrv4_(name_, RRClass::IN(), RRType::A(), RRTTL(1200))
     {
         // Add some sample A records
         rrv4_.addRdata(ConstRdataPtr(new RdataTest<A>("1.2.3.4")));
         rrv4_.addRdata(ConstRdataPtr(new RdataTest<A>("5.6.7.8")));
         rrv4_.addRdata(ConstRdataPtr(new RdataTest<A>("9.10.11.12")));
 
-        ns_.reset(new NameserverEntry(&rrv4_, NULL));
+        ns_.reset(new NameserverEntry(name_.toText(), RRClass::IN()));
     }
 
     // Return the sample NameserverEntry
     boost::shared_ptr<NameserverEntry>& getNameserverEntry() { return ns_; }
 
     // Return the IOAddress corresponding to the index in rrv4_
-    asiolink::IOAddress getAddressAtIndex(uint32_t index) { return ns_.get()->getAddressAtIndex(index); }
+    asiolink::IOAddress getAddressAtIndex(uint32_t index) {
+        return ns_.get()->getAddressAtIndex(index);
+    }
 
     // Return the RTT of the address
     uint32_t getAddressRTTAtIndex(uint32_t index) { 
@@ -61,6 +64,7 @@ public:
     }
 
 private:
+    Name name_;                             ///< Name of the sample
     BasicRRset rrv4_;                       ///< Standard RRSet - IN, A, lowercase name
     boost::shared_ptr<NameserverEntry> ns_; ///< Shared_ptr that points to a NameserverEntry object
 };

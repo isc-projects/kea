@@ -82,7 +82,8 @@ TEST_F(HashTest, Algorithm) {
     // Generate hash values
     for (int i = 0; i < 50; ++i) {
         string name = base + boost::lexical_cast<string>(i);
-        uint32_t hashval = hash(HashKey(name.c_str(), name.size(), 0));
+        uint32_t hashval = hash(HashKey(name.c_str(), name.size(),
+            RRClass(0)));
         EXPECT_LT(hashval, size);
         values.push_back(hashval);
     }
@@ -122,18 +123,22 @@ TEST_F(HashTest, MixedCase) {
     Hash hash(HASHTABLE_DEFAULT_SIZE, 255, false);    // Disable randomisation for testing
 
     // Case not ignored, hashes should be different
-    uint32_t value1 = hash(HashKey(test1.c_str(), test1.size(), 0), false);
-    uint32_t value2 = hash(HashKey(test2.c_str(), test2.size(), 0), false);
+    uint32_t value1 = hash(HashKey(test1.c_str(), test1.size(), RRClass::IN()),
+        false);
+    uint32_t value2 = hash(HashKey(test2.c_str(), test2.size(), RRClass::IN()),
+        false);
     EXPECT_NE(value1, value2);
 
     // Case ignored, hashes should be the same
-    uint32_t value3 = hash(HashKey(test1.c_str(), test1.size(), 0), true);
-    uint32_t value4 = hash(HashKey(test2.c_str(), test2.size(), 0), true);
+    uint32_t value3 = hash(HashKey(test1.c_str(), test1.size(), RRClass::IN()),
+        true);
+    uint32_t value4 = hash(HashKey(test2.c_str(), test2.size(), RRClass::IN()),
+        true);
     EXPECT_EQ(value3, value4);
 
     // Check the default setting.
-    uint32_t value5 = hash(HashKey(test1.c_str(), test1.size(), 0));
-    uint32_t value6 = hash(HashKey(test2.c_str(), test2.size(), 0));
+    uint32_t value5 = hash(HashKey(test1.c_str(), test1.size(), RRClass::IN()));
+    uint32_t value6 = hash(HashKey(test2.c_str(), test2.size(), RRClass::IN()));
     EXPECT_EQ(value5, value6);
 
     // ... and just for good measure
@@ -151,7 +156,8 @@ TEST_F(HashTest, ClassCodes) {
     // codes.
     vector<uint32_t> values;
     for (uint32_t i = 0; i < 10; ++i) {
-        values.push_back(hash(HashKey(test1.c_str(), test1.size(), i)));
+        values.push_back(hash(HashKey(test1.c_str(), test1.size(),
+            RRClass(i))));
     }
 
     // find the number of unique values in the array.  Although there can
@@ -177,8 +183,10 @@ TEST_F(HashTest, Overlong) {
     Hash hash(HASHTABLE_DEFAULT_SIZE, string1.size());
 
     // Do two hashes
-    uint32_t value1 = hash(HashKey(string1.c_str(), string1.size(), 0));
-    uint32_t value2 = hash(HashKey(string2.c_str(), string2.size(), 0));
+    uint32_t value1 = hash(HashKey(string1.c_str(), string1.size(),
+        RRClass(0)));
+    uint32_t value2 = hash(HashKey(string2.c_str(), string2.size(),
+        RRClass(0)));
     EXPECT_EQ(value1, value2);
 }
 

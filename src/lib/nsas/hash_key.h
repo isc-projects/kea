@@ -17,6 +17,8 @@
 #ifndef __HASH_KEY_H
 #define __HASH_KEY_H
 
+#include <dns/rrclass.h>
+
 #include <stdint.h>
 #include <string>
 #include <config.h>
@@ -51,8 +53,11 @@ struct HashKey {
     /// \param the_key Array of bytes for which key is to be constructed
     /// \param the_keylen Length of the byte array
     /// \param the_class_code Class of this entry
-    HashKey(const char* the_key, uint32_t the_keylen, uint16_t the_class_code) :
-        key(the_key), keylen(the_keylen), class_code(the_class_code)
+    HashKey(const char* the_key, uint32_t the_keylen,
+        const isc::dns::RRClass& the_class_code) :
+        key(the_key),
+        keylen(the_keylen),
+        class_code(the_class_code)
     {}
 
     /// \brief String Constructor
@@ -61,8 +66,11 @@ struct HashKey {
     ///
     /// \param the_key Name to use as the key for the hash
     /// \param the_class_code Class of this entry
-    HashKey(const std::string& the_key, uint16_t the_class_code) :
-        key(the_key.c_str()), keylen(the_key.size()), class_code(the_class_code)
+    HashKey(const std::string& the_key,
+        const isc::dns::RRClass& the_class_code) :
+        key(the_key.c_str()),
+        keylen(the_key.size()),
+        class_code(the_class_code)
     {}
 
     /// \brief Equality
@@ -82,7 +90,7 @@ struct HashKey {
 
     const char* key;        ///< Pointer to the start of the key string
     uint32_t    keylen;     ///< Length of the key string
-    uint16_t    class_code; ///< Class associated with the key
+    isc::dns::RRClass class_code; ///< Class associated with the key
 };
 
 } // namespace nsas

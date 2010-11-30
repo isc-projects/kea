@@ -95,7 +95,7 @@ public:
     }
 
     /// \return Class of zone
-    short getClass() const {
+    const isc::dns::RRClass& getClass() const {
         return classCode_;
     }
 
@@ -137,7 +137,7 @@ protected:
 private:
     mutable boost::mutex    mutex_;     ///< Mutex protecting this zone entry
     std::string     name_;      ///< Canonical zone name
-    uint16_t        classCode_; ///< Class code
+    isc::dns::RRClass        classCode_; ///< Class code
     // Internal function that adds a callback (if there's one) and processes
     // the nameservers (if there's chance there's some info) and calls
     // callbacks. If nameserver is given, it is considered new and valid

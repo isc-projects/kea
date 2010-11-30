@@ -158,7 +158,7 @@ public:
     /// \param name Name that will be used for the object.  This will form
     /// part of the key.
     /// \param class_code Class associated with the object.
-    TestEntry(std::string name, uint16_t class_code) :
+    TestEntry(std::string name, const isc::dns::RRClass& class_code) :
         name_(name), class_code_(class_code)
     {}
 
@@ -191,20 +191,20 @@ public:
     /// \brief Get the Class
     ///
     /// \return Class code assigned to this object
-    virtual uint16_t getClass() const {
+    virtual const isc::dns::RRClass& getClass() const {
         return class_code_;
     }
 
     /// \brief Set the Class
     ///
     /// \param class_code New class code of the object
-    virtual void setClass(uint16_t class_code) {
+    virtual void setClass(const isc::dns::RRClass& class_code) {
         class_code_ = class_code;
     }
 
 private:
     std::string name_;          ///< Name of the object
-    uint16_t    class_code_;    ///< Class of the object
+    isc::dns::RRClass    class_code_;    ///< Class of the object
 };
 
 /// \brief isc::nsas Constants
@@ -226,8 +226,8 @@ using namespace std;
  */
 class TestResolver : public isc::nsas::ResolverInterface {
     private:
-        void checkIndex(size_t index) {
-            ASSERT_GT(requests.size(), index);
+        bool checkIndex(size_t index) {
+            return (requests.size() > index);
         }
     public:
         typedef pair<QuestionPtr, CallbackPtr> Request;
@@ -236,16 +236,20 @@ class TestResolver : public isc::nsas::ResolverInterface {
             requests.push_back(Request(q, c));
         }
         QuestionPtr operator[](size_t index) {
-            checkIndex(index);
+            EXPECT_TRUE(checkIndex(index));
             return (requests[index].first);
         }
         /*
          * Looks if the two provided requests in resolver are A and AAAA.
          * Sorts them so index1 is A.
+         *
+         * Returns false if there aren't enough elements
          */
-        void asksIPs(const Name& name, size_t index1, size_t index2) {
+        bool asksIPs(const Name& name, size_t index1, size_t index2) {
             size_t max = (index1 < index2) ? index2 : index1;
-            checkIndex(max);
+            if (!checkIndex(max)) {
+                return false;
+            }
             EXPECT_EQ(name, (*this)[index1]->getName());
             EXPECT_EQ(name, (*this)[index2]->getName());
             EXPECT_EQ(RRClass::IN(), (*this)[index1]->getClass());
@@ -262,6 +266,7 @@ class TestResolver : public isc::nsas::ResolverInterface {
             // Check the correct addresses
             EXPECT_EQ(RRType::A(), (*this)[index1]->getType());
             EXPECT_EQ(RRType::AAAA(), (*this)[index2]->getType());
+            return (true);
         }
 
         /*

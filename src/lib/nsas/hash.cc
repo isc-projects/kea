@@ -151,7 +151,7 @@ uint32_t Hash::operator()(const HashKey& key, bool ignorecase) const
         char        bytes[sizeof(uint16_t)];    // Byte equivalent
     } convert;
 
-    convert.class_code = key.class_code;
+    convert.class_code = key.class_code.getCode();
     for (int j = 0; j < sizeof(uint16_t); ++j, ++i) {
         partial_sum += convert.bytes[j] * randvec_[i];
     }
