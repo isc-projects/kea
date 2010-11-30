@@ -54,6 +54,12 @@ Zone::getClass() const {
     return (impl_->zone_class_);
 }
 
+AbstractZone::FindResult
+Zone::find(const Name&, const RRType&) const {
+    // This is a tentative implementation that always returns NXDOMAIN.
+    return (FindResult(NXDOMAIN, RRsetPtr()));
+}
+
 // This is a temporary, inefficient implementation using std::map and handmade
 // iteration to realize longest match.
 

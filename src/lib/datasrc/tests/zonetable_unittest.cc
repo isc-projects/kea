@@ -35,6 +35,12 @@ TEST(ZoneTest, init) {
     EXPECT_EQ(RRClass::CH(), ch_zone.getClass());
 }
 
+TEST(ZoneTest, find) {
+    Zone zone(RRClass::IN(), Name("example.com"));
+    EXPECT_EQ(AbstractZone::NXDOMAIN,
+              zone.find(Name("www.example.com"), RRType::A()).code);
+}
+
 class ZoneTableTest : public ::testing::Test {
 protected:
     ZoneTableTest() : zone1(new Zone(RRClass::IN(), Name("example.com"))),
