@@ -1,3 +1,34 @@
+  121.  [func]		jinmei
+	src/lib/dns: Added support for TSIG RDATA.  At this moment this is
+	not much of real use, however, because no protocol support was
+	added yet.  It will soon be added. (Trac #372, svn r3649)
+
+  120.  [func]		jinmei
+	src/lib/dns: introduced two new classes, TSIGKey and TSIGKeyRing,
+	to manage TSIG keys. (Trac #381, svn r3622)
+
+  119.	[bug]		jinmei
+	The master file parser of the python datasrc module incorrectly
+	regarded a domain name beginning with a decimal number as a TTL
+	specification.  This confused b10-loadzone and had it reject to
+	load a zone file that contains such a name.
+	Note: this fix is incomplete and the loadzone would still be
+	confused if the owner name is a syntactically indistinguishable
+	from a TTL specification.  This is part of a more general issue
+	and will be addressed in Trac #413.  (Trac #411, svn r3599)
+
+  118.	[func]		jinmei
+	src/lib/dns: changed the interface of AbstractRRset::getRdataIterator()
+	so that the internal cursor would point to the first RDATA
+	automatically.  This will be a more intuitive and less error prone
+	behavior.  This is a backward compatible change. (Trac #410, r3595)
+
+  117.  [func]		jinmei
+	src/lib/datasrc: added new zone and zone table classes for the
+	support of in memory data source.  This is an intermediate step to
+	the bigger feature, and is not yet actually usable in practice.
+	(Trac #399, svn r3590)
+
   116.	[bug]		jerry
 	src/bin/xfrout: Xfrout and Auth will communicate by long tcp
 	connection, Auth needs to make a new connection only on the first

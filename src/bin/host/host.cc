@@ -131,7 +131,7 @@ host_lookup(const char* const name, const char* const type) {
                       }
 
                       RdataIteratorPtr rit = (*it)->getRdataIterator();
-                      for (rit->first(); !rit->isLast(); rit->next()) {
+                      for (; !rit->isLast(); rit->next()) {
                           // instead of using my name, maybe use returned label?
                           cout << name << " has address " <<
                               (*rit).getCurrent().toText() << endl;
