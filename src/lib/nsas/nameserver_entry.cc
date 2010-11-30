@@ -297,45 +297,30 @@ class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
             family_(family),
             type_(type)
         { }
-        virtual void success(const Message& response) {
+        virtual void success(shared_ptr<AbstractRRset> response) {
             Lock lock(entry_->mutex_);
 
             vector<AddressEntry> entries;
 
-            bool found(false);
-            for (RRsetIterator set(
-                // TODO Trunk does Section::ANSWER() by constant
-                response.beginSection(Section::ANSWER()));
-                set != response.endSection(Section::ANSWER()); ++ set)
+            if (response->getType() != type_ ||
+                response->getClass() != RRClass(entry_->getClass()))
             {
-                if (found) {
-                    // TODO Log this
-                    // There are more than one RRset in the answer,
-                    // this shouldn't happen
-                    failureInternal(lock);
-                    return;
-                }
+                // TODO Log we got answer of different type
+                failureInternal(lock);
+                return;
+            }
 
-                if ((*set)->getType() != type_ ||
-                    (*set)->getClass() != RRClass(entry_->getClass()))
-                {
-                    // TODO Log we got answer of different type
-                    failureInternal(lock);
-                    return;
-                }
-
-                /**
-                 * TODO Move to common function, this is similar to
-                 * what is in constructor.
-                 */
-                RdataIteratorPtr i((*set)->getRdataIterator());
-                // TODO Remove at merge with trunk
-                i->first();
-                while (! i->isLast()) {
-                    entries.push_back(AddressEntry(IOAddress(
-                        i->getCurrent().toText()), ++ rtt_));
-                    i->next();
-                }
+            /**
+             * TODO Move to common function, this is similar to
+             * what is in constructor.
+             */
+            RdataIteratorPtr i(response->getRdataIterator());
+            // TODO Remove at merge with trunk
+            i->first();
+            while (! i->isLast()) {
+                entries.push_back(AddressEntry(IOAddress(
+                    i->getCurrent().toText()), ++ rtt_));
+                i->next();
             }
 
             if (entries.empty()) {
