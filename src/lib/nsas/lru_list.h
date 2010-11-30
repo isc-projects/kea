@@ -66,6 +66,8 @@ public:
         ///
         /// \param drop Object being dropped.
         virtual void operator()(T* drop) const = 0;
+        /// \brief Virtual destructor
+        virtual ~ Dropped() { }
     };
 
     /// \brief Constructor
