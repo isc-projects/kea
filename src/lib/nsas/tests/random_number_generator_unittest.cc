@@ -79,30 +79,11 @@ TEST_F(UniformRandomIntegerGeneratorTest, IntegerRange) {
 /// \brief Test Fixture Class for weighted random number generator
 class WeightedRandomIntegerGeneratorTest : public ::testing::Test {
 public:
-    WeightedRandomIntegerGeneratorTest():
-        gen_(NULL), min_(1)
-    {
-        // Initialize the probabilites vector
-        probabilities_.push_back(0.5);
-        probabilities_.push_back(0.3);
-        probabilities_.push_back(0.2);
-
-        gen_ = new WeightedRandomIntegerGenerator(probabilities_, min_);
-    }
-
-    int gen() { return (*gen_)(); }
-    int min() const { return min_; }
-    int max() const { return min_ + probabilities_.size() - 1; }
+    WeightedRandomIntegerGeneratorTest()
+    { }
 
     virtual ~WeightedRandomIntegerGeneratorTest()
-    {
-        delete gen_;
-    }
-
-private:
-    vector<double> probabilities_;
-    WeightedRandomIntegerGenerator *gen_;
-    int min_;
+    { }
 };
 
 // Test of the weighted random number generator constructor
@@ -214,6 +195,38 @@ TEST_F(WeightedRandomIntegerGeneratorTest, WeightedRandomization)
         // The 1st integer count should be double of 3rd one
         ASSERT_EQ(2, (int)(c1*1.0/c3 + 0.5));
     }
+}
+
+// Test the reset function of generator
+TEST_F(WeightedRandomIntegerGeneratorTest, ResetProbabilities) 
+{
+        vector<double> probabilities;
+        int c1 = 0;
+        int c2 = 0;
+        probabilities.push_back(0.8);
+        probabilities.push_back(0.2);
+        WeightedRandomIntegerGenerator gen(probabilities);
+        for(int i = 0; i < 100000; ++i){
+            int n = gen();
+            if(n == 0) ++c1;
+            else if(n == 1) ++c2;
+        }
+        // The 1st integer count should be 4 times of 2nd one
+        ASSERT_EQ(4, (int)(c1*1.0/c2 + 0.5));
+
+        // Reset the probabilities
+        probabilities.clear();
+        c1 = c2 = 0;
+        probabilities.push_back(0.2);
+        probabilities.push_back(0.8);
+        gen.reset(probabilities);
+        for(int i = 0; i < 100000; ++i){
+            int n = gen();
+            if(n == 0) ++c1;
+            else if(n == 1) ++c2;
+        }
+        // The 2nd integer count should be 4 times of 1st one
+        ASSERT_EQ(4, (int)(c2*1.0/c1 + 0.5));
 }
 
 } // namespace nsas

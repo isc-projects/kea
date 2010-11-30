@@ -51,7 +51,7 @@ public:
     boost::shared_ptr<NameserverEntry>& getNameserverEntry() { return ns_; }
 
     // Return the IOAddress corresponding to the index in rrv4_
-    asiolink::IOAddress getAddressAtIndex(uint32_t index) { return ns_.get()->getAddressAtIndex(index); }
+    asiolink::IOAddress getAddressAtIndex(uint32_t index) { return ns_.get()->getAddressAtIndex(index, AF_INET); }
 
     // Return the addresses count stored in RRset
     unsigned int getAddressesCount() const { return rrv4_.getRdataCount(); }
@@ -73,8 +73,8 @@ class NameserverAddressTest : public ::testing::Test {
 protected:
     // Constructor
     NameserverAddressTest(): 
-        ns_address_(ns_sample_.getNameserverEntry(), TEST_ADDRESS_INDEX),
-        invalid_ns_address_(ns_sample_.getNameserverEntry(), ns_sample_.getAddressesCount())
+        ns_address_(ns_sample_.getNameserverEntry(), TEST_ADDRESS_INDEX, AF_INET),
+        invalid_ns_address_(ns_sample_.getNameserverEntry(), ns_sample_.getAddressesCount(), AF_INET)
     {
     }
 
@@ -95,7 +95,7 @@ TEST_F(NameserverAddressTest, Address) {
 
     boost::shared_ptr<NameserverEntry> empty_ne((NameserverEntry*)NULL);
     // It will throw an NullNameserverEntryPointer exception with the empty NameserverEntry shared pointer
-    ASSERT_THROW({NameserverAddress empty_ns_address(empty_ne, 0);}, NullNameserverEntryPointer);
+    ASSERT_THROW({NameserverAddress empty_ns_address(empty_ne, 0, AF_INET);}, NullNameserverEntryPointer);
 }
 
 // Test that the RTT is updated
@@ -106,10 +106,12 @@ TEST_F(NameserverAddressTest, UpdateRTT) {
     uint32_t old_rtt0 = ns_sample_.getAddressRTTAtIndex(0);
     uint32_t old_rtt2 = ns_sample_.getAddressRTTAtIndex(2);
 
-    ns_address_.updateRTT(new_rtt);
+    for(int i = 0; i < 10000; ++i){
+        ns_address_.updateRTT(new_rtt);
+    }
 
     //The RTT should have been updated
-    EXPECT_EQ(new_rtt, ns_sample_.getAddressRTTAtIndex(TEST_ADDRESS_INDEX));
+    EXPECT_NE(new_rtt, ns_sample_.getAddressRTTAtIndex(TEST_ADDRESS_INDEX));
 
     //The RTTs not been updated should remain unchanged
     EXPECT_EQ(old_rtt0, ns_sample_.getAddressRTTAtIndex(0));
