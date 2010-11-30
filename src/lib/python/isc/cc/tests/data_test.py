@@ -70,6 +70,11 @@ class TestData(unittest.TestCase):
         c = { "a": { "b": "c" } }
         data.remove_identical(a, b)
         self.assertEqual(a, c)
+
+        self.assertRaises(data.DataTypeError, data.remove_identical,
+                          a, 1)
+        self.assertRaises(data.DataTypeError, data.remove_identical,
+                          1, b)
         
     def test_merge(self):
         d1 = { 'a': 'a', 'b': 1, 'c': { 'd': 'd', 'e': 2 } }
@@ -83,7 +88,7 @@ class TestData(unittest.TestCase):
         self.assertRaises(data.DataTypeError, data.merge, None, None)
 
 
-    def testsplit_identifier_list_indices(self):
+    def test_split_identifier_list_indices(self):
         id, indices = data.split_identifier_list_indices('a')
         self.assertEqual(id, 'a')
         self.assertEqual(indices, None)
@@ -98,6 +103,11 @@ class TestData(unittest.TestCase):
         self.assertRaises(data.DataTypeError, data.split_identifier_list_indices, 'a[')
         self.assertRaises(data.DataTypeError, data.split_identifier_list_indices, 'a]')
         self.assertRaises(data.DataTypeError, data.split_identifier_list_indices, 'a[[0]]')
+        self.assertRaises(data.DataTypeError, data.split_identifier_list_indices, 'a[0]a')
+        self.assertRaises(data.DataTypeError, data.split_identifier_list_indices, 'a[0]a[1]')
+
+        self.assertRaises(data.DataTypeError, data.split_identifier_list_indices, 1)
+        
 
     def test_find(self):
         d1 = { 'a': 'a', 'b': 1, 'c': { 'd': 'd', 'e': 2, 'more': { 'data': 'here' } } }
@@ -146,7 +156,9 @@ class TestData(unittest.TestCase):
         self.assertRaises(data.DataTypeError, data.set, d1, 1, 2)
         self.assertRaises(data.DataTypeError, data.set, 1, "", 2)
         self.assertRaises(data.DataTypeError, data.set, d1, 'c[1]', 2)
+        self.assertRaises(data.DataTypeError, data.set, d1, 'c[1][2]', 2)
         self.assertRaises(data.DataNotFoundError, data.set, d1, 'c/f[5]', 2)
+        self.assertRaises(data.DataNotFoundError, data.set, d1, 'c/f[5][2]', 2)
 
         d3 = {}
         e3 = data.set(d3, "does/not/exist", 123)
@@ -201,6 +213,9 @@ class TestData(unittest.TestCase):
         self.assertEqual(data.parse_value_str("{}"), {})
         self.assertEqual(data.parse_value_str("{ \"a\": \"b\", \"c\": 1 }"), { 'a': 'b', 'c': 1 })
         self.assertEqual(data.parse_value_str("[ a c"), "[ a c")
+
+        self.assertEqual(data.parse_value_str(1), None)
+
 
 if __name__ == '__main__':
     #if not 'CONFIG_TESTDATA_PATH' in os.environ:

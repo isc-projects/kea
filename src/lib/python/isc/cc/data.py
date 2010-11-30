@@ -90,7 +90,9 @@ def split_identifier_list_indices(identifier):
        'a[0]/b[1]/c[2]' will return ('a[0]/b[1]/c, [2])
     """
     if type(identifier) != str:
-        raise DataTypeError("identifier in split_identifier_list_indices() contains '/': " + str(identifier))
+        raise DataTypeError("identifier in "
+                            "split_identifier_list_indices() "
+                            "not a string: " + str(identifier))
     id_parts = split_identifier(identifier)
     id_str = id_parts[-1]
     i = id_str.find('[')
@@ -110,7 +112,9 @@ def split_identifier_list_indices(identifier):
             raise DataTypeError("List index in " + identifier + " not an integer")
         id_str = id_str[e + 1:]
         i = id_str.find('[')
-    if id.find(']') >= 0:
+        if i > 0:
+            raise DataTypeError("Bad format in identifier: " + str(identifier))
+    if id.find(']') >= 0 or len(id_str) > 0:
         raise DataTypeError("Bad format in identifier: " + str(identifier))
     id_parts = id_parts[:-1]
     id_parts.append(id)
@@ -229,9 +233,6 @@ def parse_value_str(value_str):
     try:
         return json.loads(value_str)
     except ValueError as ve:
-        # simply return the string itself
-        return value_str
-    except SyntaxError as ve:
         # simply return the string itself
         return value_str
 
