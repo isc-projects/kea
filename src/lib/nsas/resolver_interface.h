@@ -18,6 +18,7 @@
 #define __RESOLVER_INTERFACE_H
 
 #include <dns/message.h>
+#include <dns/rrset.h>
 
 /**
  * \file resolver_interface.h
@@ -45,7 +46,8 @@ class ResolverInterface {
         class Callback {
             public:
                 /// \short Some data arrived.
-                virtual void success(const isc::dns::Message& response) = 0;
+                virtual void success(boost::shared_ptr<isc::dns::AbstractRRset>
+                    response) = 0;
                 /**
                  * \short No data available.
                  *

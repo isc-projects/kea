@@ -274,10 +274,7 @@ class TestResolver : public isc::nsas::ResolverInterface {
             RRsetPtr set(new RRset(name, RRClass::IN(),
                 type, RRTTL(TTL)));
             set->addRdata(rdata);
-            Message address(Message::RENDER); // Not able to create different one
-            address.addRRset(Section::ANSWER(), set);
-            address.addQuestion(requests[index].first);
-            requests[index].second->success(address);
+            requests[index].second->success(set);
         }
 };
 
