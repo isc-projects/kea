@@ -87,20 +87,25 @@ def split_identifier_list_indices(identifier):
        'a/b/c' will return ('a/b/c', None)
        'a/b/c[1]' will return ('a/b/c', [1])
        'a/b/c[1][2][3]' will return ('a/b/c', [1, 2, 3])
-       'a[0]/b[1]/c[2]' will return ('a[0]/b[1]/c, [2])
+       'a[0]/b[1]/c[2]' will return ('a[0]/b[1]/c', [2])
     """
     if type(identifier) != str:
         raise DataTypeError("identifier in "
                             "split_identifier_list_indices() "
                             "not a string: " + str(identifier))
+
+    # We only work on the final 'part' of the identifier
     id_parts = split_identifier(identifier)
     id_str = id_parts[-1]
+
     i = id_str.find('[')
     if i < 0:
         if identifier.find(']') >= 0:
             raise DataTypeError("Bad format in identifier: " + str(identifier))
         return identifier, None
-    id = identifier[:i]
+
+    # keep the non-index part of that to replace later
+    id = id_str[:i]
     indices = []
     while i >= 0:
         e = id_str.find(']')
@@ -116,8 +121,10 @@ def split_identifier_list_indices(identifier):
             raise DataTypeError("Bad format in identifier: " + str(identifier))
     if id.find(']') >= 0 or len(id_str) > 0:
         raise DataTypeError("Bad format in identifier: " + str(identifier))
-    id_parts = id_parts[:-1]
-    id_parts.append(id)
+
+    # we replace the final part of the original identifier with
+    # the stripped string
+    id_parts[-1] = id
     id = _concat_identifier(id_parts)
     return id, indices
 
