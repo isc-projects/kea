@@ -94,7 +94,7 @@ TEST_F(ZoneEntryTest, DefaultConstructor) {
     InheritedZoneEntry alpha(resolver_, EXAMPLE_CO_UK,
         RRClass::IN().getCode(), nameserver_table_, nameserver_lru_);
     EXPECT_EQ(EXAMPLE_CO_UK, alpha.getName());
-    EXPECT_EQ(RRClass::IN().getCode(), alpha.getClass());
+    EXPECT_EQ(RRClass::IN(), alpha.getClass());
     EXPECT_TRUE(alpha.nameservers().empty());
 }
 
@@ -104,7 +104,7 @@ TEST_F(ZoneEntryTest, ReferralConstructor) {
         nameserver_lru_);
     // It should load the name and class from the referral info
     EXPECT_EQ(EXAMPLE_CO_UK, alpha.getName());
-    EXPECT_EQ(RRClass::IN().getCode(), alpha.getClass());
+    EXPECT_EQ(RRClass::IN(), alpha.getClass());
     EXPECT_EQ(1, alpha.nameservers().size());
     EXPECT_EQ("ns.example.net.", alpha.nameservers()[0]->getName());
     // TODO Test with some additional data once NameserverEntry supports them?

@@ -94,26 +94,11 @@ public:
     ///
     /// \param name Name of the nameserver,
     /// \param class_code class of the nameserver
-    NameserverEntry(const std::string& name, uint16_t class_code) :
-        name_(name), classCode_(class_code)
+    NameserverEntry(const std::string& name,
+        const isc::dns::RRClass& class_code) :
+        name_(name),
+        classCode_(class_code)
     {}
-
-    /// Constructor where one or more RRsets of A/AAAA records are supplied.
-    /// The class is taken from class of address records and the name from
-    /// the owner of the records.  If both sets of information are supplied
-    /// and the owner names are different, the V4 set wins out; the V6 set of
-    /// information is ignored and an error message is logged.
-    ///
-    /// \param v4Set RRset of A records
-    /// \param v6Set RRset of AAAA records
-    /// \param curtime Current time.  Present for testing, but also as a
-    /// possible optimisation if the caller has the current time (it saves
-    /// the overhead of a call to time()).  The default value of 0 requests
-    /// the constructor to get its own copy of the current time.
-    /// \todo This is possibly unneeded, if NSAS uses the resolver for
-    /// everything
-    NameserverEntry(const isc::dns::AbstractRRset* v4Set,
-        const isc::dns::AbstractRRset* v6Set, time_t curtime = 0);
 
     /// \brief Return Address
     ///
@@ -172,7 +157,7 @@ public:
     }
 
     /// \return Class of RRset
-    short getClass() const {
+    const isc::dns::RRClass& getClass() const {
         return classCode_;
     }
 
@@ -235,7 +220,7 @@ private:
     // TODO Read-write lock?
     mutable boost::mutex    mutex_;     ///< Mutex protecting this object
     std::string     name_;              ///< Canonical name of the nameserver
-    uint16_t        classCode_;         ///< Class of the nameserver
+    isc::dns::RRClass classCode_;       ///< Class of the nameserver
     std::vector<AddressEntry> address_; ///< Set of V4/V6 addresses
     time_t          expiration_;        ///< Summary expiration time
     time_t          last_access_;       ///< Last access time to the structure

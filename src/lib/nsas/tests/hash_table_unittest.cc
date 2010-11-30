@@ -21,6 +21,8 @@
 #include <string.h>
 #include <iostream>
 
+#include <dns/rrclass.h>
+
 #include "../hash_table.h"
 #include "../hash_key.h"
 
@@ -29,6 +31,7 @@
 
 using namespace std;
 using boost::shared_ptr;
+using namespace isc::dns;
 
 namespace isc {
 namespace nsas {
@@ -46,10 +49,10 @@ protected:
     // Constructor - initialize the objects
     HashTableTest() :
         table_(new NsasEntryCompare<TestEntry>()),
-        dummy1_(new TestEntry("test", 1)),
-        dummy2_(new TestEntry("test", 1)),
-        dummy3_(new TestEntry("Something_Else", 1)),
-        dummy4_(new TestEntry("test", 3))
+        dummy1_(new TestEntry("test", RRClass::IN())),
+        dummy2_(new TestEntry("test", RRClass::IN())),
+        dummy3_(new TestEntry("Something_Else", RRClass::IN())),
+        dummy4_(new TestEntry("test", RRClass::CH()))
     {}
 
     // Members.

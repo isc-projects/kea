@@ -39,9 +39,9 @@ class NsasEntryCompareTest : public ::testing::Test {
 TEST_F(NsasEntryCompareTest, Compare) {
 
     // Construct a couple of different objects
-    TestEntry entry1("test1", 42);
-    TestEntry entry2("test1", 24);
-    TestEntry entry3("test2", 42);
+    TestEntry entry1("test1", RRClass(42));
+    TestEntry entry2("test1", RRClass(24));
+    TestEntry entry3("test2", RRClass(42));
 
     // Create corresponding hash key objects
     HashKey key1(entry1.getName(), entry1.getClass());

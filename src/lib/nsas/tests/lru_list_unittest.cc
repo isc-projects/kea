@@ -40,7 +40,7 @@ namespace nsas {
 class Dropped : public LruList<TestEntry>::Dropped {
 public:
     virtual void operator()(TestEntry* entry) const {
-        entry->setClass(entry->getClass() | 0x8000);
+        entry->setClass(RRClass(entry->getClass().getCode() | 0x8000));
     }
 };
 
@@ -49,13 +49,13 @@ public:
 class LruListTest : public ::testing::Test {
 protected:
     LruListTest() :
-        entry1_(new TestEntry("alpha", 1)),
-        entry2_(new TestEntry("beta", 2)),
-        entry3_(new TestEntry("gamma", 3)),
-        entry4_(new TestEntry("delta", 4)),
-        entry5_(new TestEntry("epsilon", 5)),
-        entry6_(new TestEntry("zeta", 6)),
-        entry7_(new TestEntry("eta", 7))
+        entry1_(new TestEntry("alpha", RRClass::IN())),
+        entry2_(new TestEntry("beta", RRClass::CH())),
+        entry3_(new TestEntry("gamma", RRClass::HS())),
+        entry4_(new TestEntry("delta", RRClass::IN())),
+        entry5_(new TestEntry("epsilon", RRClass::HS())),
+        entry6_(new TestEntry("zeta", RRClass::CH())),
+        entry7_(new TestEntry("eta", RRClass::IN()))
     {}
 
     virtual ~LruListTest() 
@@ -233,22 +233,22 @@ TEST_F(LruListTest, Dropped) {
     lru.add(entry2_);
     lru.add(entry3_);
 
-    EXPECT_EQ(1, entry1_->getClass());
-    EXPECT_EQ(2, entry2_->getClass());
+    EXPECT_EQ(RRClass::IN(), entry1_->getClass());
+    EXPECT_EQ(RRClass::CH(), entry2_->getClass());
 
     // Add another entry and check that the handler runs.
-    EXPECT_EQ(0, (entry1_->getClass() & 0x8000));
+    EXPECT_EQ(0, (entry1_->getClass().getCode() & 0x8000));
     lru.add(entry4_);
-    EXPECT_NE(0, (entry1_->getClass() & 0x8000));
+    EXPECT_NE(0, (entry1_->getClass().getCode() & 0x8000));
 
-    EXPECT_EQ(0, (entry2_->getClass() & 0x8000));
+    EXPECT_EQ(0, (entry2_->getClass().getCode() & 0x8000));
     lru.add(entry5_);
-    EXPECT_NE(0, (entry2_->getClass() & 0x8000));
+    EXPECT_NE(0, (entry2_->getClass().getCode() & 0x8000));
 
     // Delete an entry and check that the handler does not run. 
-    EXPECT_EQ(0, (entry3_->getClass() & 0x8000));
+    EXPECT_EQ(0, (entry3_->getClass().getCode() & 0x8000));
     lru.remove(entry3_);
-    EXPECT_EQ(0, (entry3_->getClass() & 0x8000));
+    EXPECT_EQ(0, (entry3_->getClass().getCode() & 0x8000));
 }
 
 // Miscellaneous tests - pathological conditions

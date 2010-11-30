@@ -57,91 +57,48 @@ protected:
         }
         Callback() : count(0) { }
     };
+private:
+    void fillSet(shared_ptr<TestResolver> resolver, size_t index,
+        const BasicRRset *set)
+    {
+        if (set) {
+            shared_ptr<BasicRRset> new_set(new BasicRRset(set->getName(),
+                set->getClass(), set->getType(), set->getTTL()));
+            for(RdataIteratorPtr i(set->getRdataIterator()); !i->isLast();
+                i->next())
+            {
+                new_set->addRdata(i->getCurrent());
+            }
+            resolver->requests[index].second->success(new_set);
+        } else {
+            resolver->requests[index].second->failure();
+        }
+    }
+protected:
+    /// Fills the nameserver entry with data trough ask IP
+    void fillNSEntry(shared_ptr<NameserverEntry> entry, const BasicRRset* rrv4,
+        const BasicRRset* rrv6)
+    {
+        // Prepare data to run askIP
+        shared_ptr<TestResolver> resolver(new TestResolver);
+        shared_ptr<Callback> callback(new Callback);
+        // Let it ask for data
+        entry->askIP(resolver, callback, ANY_OK, entry);
+        // Check it really asked and sort the queries
+        resolver->asksIPs(Name(entry->getName()), 0, 1);
+        // Respond with answers
+        fillSet(resolver, 0, rrv4);
+        fillSet(resolver, 1, rrv6);
+    }
 };
-
-/// \brief Compare Vectors of String
-///
-/// Compares two vectors of strings.  A GoogleTest check is done on the results.
-///
-/// \param vec1 First vector.  This may be reordered in the comparison.
-/// \param vec2 Second vector.  This may be reordered in the comparison
-static void CompareStringVectors(vector<string>& vec1, vector<string>& vec2)
-{
-    // Check that the vectors are the same size.
-    EXPECT_EQ(vec1.size(), vec2.size());
-
-    // Get into canonical order
-    sort(vec1.begin(), vec1.end());
-    sort(vec2.begin(), vec2.end());
-
-    // ... and look for a mismatch.
-    EXPECT_TRUE(equal(vec1.begin(), vec1.end(), vec2.begin()));
-}
-
-/// \brief Compare Ranges of Addresses
-///
-/// Compares the addresses held in an address vector with those held in the
-/// RRset from which it was dervived and checks that there is a 1:1
-/// mapping between the two.
-///
-/// \param av AddressVector retrieved from NameserverEntry object
-/// \param rrs BasicRRSet from which the vector was created
-static void CompareAddresses(NameserverEntry::AddressVector& av,
-    BasicRRset& rrs)
-{
-
-    // Extract addresses from address vector into strings
-    vector<string> avs;
-    BOOST_FOREACH(AddressEntry addr, av) {
-        avs.push_back(addr.getAddress().toText());
-    }
-
-    // Do the same for the Basic RRset
-    vector<string> rrstr;
-    RdataIteratorPtr i = rrs.getRdataIterator();
-    // TODO Remove at merge with #410
-    i->first();
-    while (! i->isLast()) {
-        rrstr.push_back(i->getCurrent().toText());
-        i->next();
-    }
-
-    // ... and compare the results
-    CompareStringVectors(avs, rrstr);
-}
-
-
-/// \brief Compare Address Vectors
-///
-/// Compares two address vectors by converting the addresses to string form
-/// and comparing the strings.  Any mismatch will be reported.
-///
-/// \param vec1 First address vector
-/// \param vec2 Second address vector
-static void CompareAddressVectors(NameserverEntry::AddressVector& vec1,
-    NameserverEntry::AddressVector& vec2) {
-
-    // Extract addresses from address vectors into strings
-    vector<string> strvec1;
-    BOOST_FOREACH(AddressEntry addr, vec1) {
-        strvec1.push_back(addr.getAddress().toText());
-    }
-
-    vector<string> strvec2;
-    BOOST_FOREACH(AddressEntry addr, vec2) {
-        strvec2.push_back(addr.getAddress().toText());
-    }
-
-    CompareStringVectors(strvec1, strvec2);
-}
 
 /// Tests of the default constructor
 TEST_F(NameserverEntryTest, DefaultConstructor) {
 
     // Default constructor should not create any RRsets
-    NameserverEntry alpha(EXAMPLE_CO_UK, RRClass::IN().getCode());
+    NameserverEntry alpha(EXAMPLE_CO_UK, RRClass::IN());
     EXPECT_EQ(EXAMPLE_CO_UK, alpha.getName());
-    EXPECT_EQ(RRClass::IN().getCode(), alpha.getClass());
+    EXPECT_EQ(RRClass::IN(), alpha.getClass());
 
     // Also check that no addresses have been created.
     NameserverEntry::AddressVector addresses;
@@ -149,99 +106,15 @@ TEST_F(NameserverEntryTest, DefaultConstructor) {
     EXPECT_TRUE(addresses.empty());
 }
 
-
-/// Tests of constructor passed a list of addresses.
-TEST_F(NameserverEntryTest, AddressListConstructor) {
-
-    // Initialize with no addresses and check that data returned has size of
-    // zero and knows it did not ask for the address yet
-    NameserverEntry alpha(NULL, NULL);
-    NameserverEntry::AddressVector av;
-    EXPECT_EQ(Fetchable::NOT_ASKED, alpha.getAddresses(av));
-    EXPECT_EQ(0, av.size());
-
-    NameserverEntry::AddressVector av4;
-    EXPECT_EQ(Fetchable::NOT_ASKED, alpha.getAddresses(av4, V4_ONLY));
-    EXPECT_EQ(0, av4.size());
-
-    NameserverEntry::AddressVector av6;
-    EXPECT_EQ(Fetchable::NOT_ASKED, alpha.getAddresses(av6, V6_ONLY));
-    EXPECT_EQ(0, av6.size());
-
-    // Initialize with V4 addresses only.
-    EXPECT_GT(rrv4_.getRdataCount(), 0);
-    NameserverEntry beta(&rrv4_, NULL);
-
-    NameserverEntry::AddressVector bv;
-    EXPECT_EQ(Fetchable::READY, beta.getAddresses(bv));
-    EXPECT_EQ(rrv4_.getRdataCount(), bv.size());
-
-    NameserverEntry::AddressVector bv4;
-    EXPECT_EQ(Fetchable::READY, beta.getAddresses(bv4, V4_ONLY));
-    EXPECT_EQ(rrv4_.getRdataCount(), bv4.size());
-
-    NameserverEntry::AddressVector bv6;
-    EXPECT_EQ(Fetchable::UNREACHABLE, beta.getAddresses(bv6, V6_ONLY));
-    EXPECT_EQ(0, bv6.size());
-
-    // Check that the addresses received are unique.
-    SCOPED_TRACE("Checking V4 addresses");
-    CompareAddresses(bv4, rrv4_);
-
-    // Initialize with V6 addresses only
-    EXPECT_TRUE(rrv6_.getRdataCount() > 0);
-    NameserverEntry gamma(NULL, &rrv6_);
-
-    NameserverEntry::AddressVector cv;
-    EXPECT_EQ(Fetchable::READY, gamma.getAddresses(cv));
-    EXPECT_EQ(rrv6_.getRdataCount(), cv.size());
-
-    NameserverEntry::AddressVector cv4;
-    EXPECT_EQ(Fetchable::UNREACHABLE, gamma.getAddresses(cv4, V4_ONLY));
-    EXPECT_EQ(0, cv4.size());
-
-    NameserverEntry::AddressVector cv6;
-    EXPECT_EQ(Fetchable::READY, gamma.getAddresses(cv6, V6_ONLY));
-    EXPECT_EQ(rrv6_.getRdataCount(), cv6.size());
-
-    SCOPED_TRACE("Checking V6 addresses");
-    CompareAddresses(cv6, rrv6_);
-
-    // Initialize with both sets of addresses
-    NameserverEntry delta(&rrv4_, &rrv6_);
-
-    NameserverEntry::AddressVector dv;
-    EXPECT_EQ(Fetchable::READY, delta.getAddresses(dv));
-    EXPECT_EQ((rrv4_.getRdataCount() + rrv6_.getRdataCount()), dv.size());
-
-    NameserverEntry::AddressVector dv4;
-    EXPECT_EQ(Fetchable::READY, delta.getAddresses(dv4, V4_ONLY));
-    EXPECT_EQ(rrv4_.getRdataCount(), dv4.size());
-    SCOPED_TRACE("Checking V4 addresses after dual-address family constructor");
-    CompareAddresses(dv4, rrv4_);
-
-    NameserverEntry::AddressVector dv6;
-    EXPECT_EQ(Fetchable::READY, delta.getAddresses(dv6, V6_ONLY));
-    EXPECT_EQ(rrv6_.getRdataCount(), dv6.size());
-    SCOPED_TRACE("Checking V6 addresses after dual-address family constructor");
-    CompareAddresses(dv6, rrv6_);
-
-    // ... and check that the composite of the v4 and v6 addresses is the same
-    // as that returned by the get without a filter.
-    NameserverEntry::AddressVector dvcomponent;
-    EXPECT_EQ(Fetchable::READY, delta.getAddresses(dvcomponent, V4_ONLY));
-    EXPECT_EQ(Fetchable::READY, delta.getAddresses(dvcomponent, V6_ONLY));
-    SCOPED_TRACE("Checking V4+V6 addresses same as composite return");
-    CompareAddressVectors(dv, dvcomponent);
-}
-
 // Test the the RTT on tthe created addresses is not 0 and is different
 TEST_F(NameserverEntryTest, InitialRTT) {
 
     // Get the RTT for the different addresses
-    NameserverEntry alpha(&rrv4_, &rrv6_);
+    shared_ptr<NameserverEntry> alpha(new NameserverEntry(EXAMPLE_CO_UK,
+        RRClass::IN()));
+    fillNSEntry(alpha, &rrv4_, &rrv6_);
     NameserverEntry::AddressVector vec;
-    alpha.getAddresses(vec);
+    alpha->getAddresses(vec);
 
     // Copy into a vector of time_t.
     vector<uint32_t> rtt;
@@ -267,9 +140,11 @@ TEST_F(NameserverEntryTest, InitialRTT) {
 TEST_F(NameserverEntryTest, SetRTT) {
 
     // Get the RTT for the different addresses
-    NameserverEntry alpha(&rrv4_, &rrv6_);
+    shared_ptr<NameserverEntry> alpha(new NameserverEntry(EXAMPLE_CO_UK,
+        RRClass::IN()));
+    fillNSEntry(alpha, &rrv4_, &rrv6_);
     NameserverEntry::AddressVector vec;
-    alpha.getAddresses(vec);
+    alpha->getAddresses(vec);
 
     ASSERT_TRUE(vec.size() > 0);
 
@@ -277,11 +152,11 @@ TEST_F(NameserverEntryTest, SetRTT) {
     IOAddress first_address = vec[0].getAddress();
     uint32_t first_rtt = vec[0].getRTT();
     uint32_t new_rtt = first_rtt + 42;
-    alpha.setAddressRTT(first_address, new_rtt);
+    alpha->setAddressRTT(first_address, new_rtt);
 
     // Now see if it has changed
     NameserverEntry::AddressVector newvec;
-    alpha.getAddresses(newvec);
+    alpha->getAddresses(newvec);
 
     int matchcount = 0;
     for (NameserverEntry::AddressVectorIterator i = newvec.begin();
@@ -300,9 +175,11 @@ TEST_F(NameserverEntryTest, SetRTT) {
 TEST_F(NameserverEntryTest, Unreachable) {
 
     // Get the RTT for the different addresses
-    NameserverEntry alpha(&rrv4_, &rrv6_);
+    shared_ptr<NameserverEntry> alpha(new NameserverEntry(EXAMPLE_CO_UK,
+        RRClass::IN()));
+    fillNSEntry(alpha, &rrv4_, &rrv6_);
     NameserverEntry::AddressVector vec;
-    alpha.getAddresses(vec);
+    alpha->getAddresses(vec);
 
     ASSERT_TRUE(vec.size() > 0);
 
@@ -310,11 +187,11 @@ TEST_F(NameserverEntryTest, Unreachable) {
     IOAddress first_address = vec[0].getAddress();
     EXPECT_FALSE(vec[0].isUnreachable());
 
-    alpha.setAddressUnreachable(first_address);
+    alpha->setAddressUnreachable(first_address);
 
     // Now see if it has changed
     NameserverEntry::AddressVector newvec;
-    alpha.getAddresses(newvec);
+    alpha->getAddresses(newvec);
 
     int matchcount = 0;
     for (NameserverEntry::AddressVectorIterator i = newvec.begin();
@@ -334,32 +211,42 @@ TEST_F(NameserverEntryTest, Unreachable) {
 // Note that for testing purposes we use the three-argument NameserverEntry
 // constructor (where we supply the time).  It eliminates intermittent errors
 // cause when this test is run just as the clock "ticks over" to another second.
+// TODO Return the way where we can pass time inside somehow
 TEST_F(NameserverEntryTest, ExpirationTime) {
 
     time_t curtime = time(NULL);
     time_t expiration = 0;
 
     // Test where there is a single TTL
-    NameserverEntry alpha(&rrv4_, NULL, curtime);
-    expiration = alpha.getExpiration();
+    shared_ptr<NameserverEntry> alpha(new NameserverEntry(EXAMPLE_CO_UK,
+        RRClass::IN()));
+    fillNSEntry(alpha, &rrv4_, NULL);
+    expiration = alpha->getExpiration();
     EXPECT_EQ(expiration, curtime + rrv4_.getTTL().getValue());
 
-    NameserverEntry beta(NULL, &rrv6_, curtime);
-    expiration = beta.getExpiration();
+    shared_ptr<NameserverEntry> beta(new NameserverEntry(EXAMPLE_CO_UK,
+        RRClass::IN()));
+    fillNSEntry(beta, NULL, &rrv6_);
+    expiration = beta->getExpiration();
     EXPECT_EQ(expiration, curtime + rrv6_.getTTL().getValue());
 
     // Test where there are two different TTLs
     EXPECT_NE(rrv4_.getTTL().getValue(), rrv6_.getTTL().getValue());
-    NameserverEntry gamma(&rrv4_, &rrv6_, curtime);
+    shared_ptr<NameserverEntry> gamma(new NameserverEntry(EXAMPLE_CO_UK,
+        RRClass::IN()));
+    fillNSEntry(gamma, &rrv4_, &rrv6_);
     uint32_t minttl = min(rrv4_.getTTL().getValue(), rrv6_.getTTL().getValue());
+    expiration = gamma->getExpiration();
     EXPECT_EQ(expiration, curtime + minttl);
 
     // Finally check where we don't specify a current time.  All we know is
     // that the expiration time should be greater than the TTL (as the current
     // time is greater than zero).
 
-    NameserverEntry delta(&rrv4_, NULL);
-    EXPECT_GT(delta.getExpiration(), rrv4_.getTTL().getValue());
+    shared_ptr<NameserverEntry> delta(new NameserverEntry(EXAMPLE_CO_UK,
+        RRClass::IN()));
+    fillNSEntry(gamma, &rrv4_, NULL);
+    EXPECT_GT(delta->getExpiration(), rrv4_.getTTL().getValue());
 }
 
 
@@ -367,50 +254,23 @@ TEST_F(NameserverEntryTest, ExpirationTime) {
 TEST_F(NameserverEntryTest, CheckName) {
 
     // Default constructor
-    NameserverEntry alpha(EXAMPLE_CO_UK, RRClass::IN().getCode());
+    NameserverEntry alpha(EXAMPLE_CO_UK, RRClass::IN());
     EXPECT_EQ(EXAMPLE_CO_UK, alpha.getName());
-
-    // Address constructor
-    NameserverEntry beta(&rrv4_, NULL);
-    EXPECT_EQ(EXAMPLE_CO_UK, beta.getName());
-
-    NameserverEntry gamma(NULL, &rrv6_);
-    EXPECT_EQ(EXAMPLE_CO_UK, gamma.getName());
-
-    NameserverEntry delta(&rrv4_, &rrv6_);
-    EXPECT_EQ(EXAMPLE_CO_UK, delta.getName());
-
-    // Check that the name is not canonicalised
-    NameserverEntry epsilon(&rrcase_, NULL);
-    EXPECT_EQ(MIXED_EXAMPLE_CO_UK, epsilon.getName());
-
-    // Check that inconsistent names mean that an exception is generated.
-    EXPECT_THROW(NameserverEntry zeta(&rrnet_, &rrv6_),
-        isc::nsas::InconsistentOwnerNames);
 }
 
 // Check that it can cope with non-IN classes.
 TEST_F(NameserverEntryTest, CheckClass) {
 
     // Default constructor
-    NameserverEntry alpha(EXAMPLE_CO_UK, RRClass::CH().getCode());
-    EXPECT_EQ(RRClass::CH().getCode(), alpha.getClass());
-
-    // Address constructor
-    NameserverEntry beta(&rrch_, NULL);
-    EXPECT_EQ(RRClass::CH().getCode(), beta.getClass());
-
-    // Ensure that inconsistent class throws an exception
-    EXPECT_THROW(NameserverEntry gamma(&rrch_, &rrv6_),
-        isc::nsas::InconsistentClass);
-
+    NameserverEntry alpha(EXAMPLE_CO_UK, RRClass::CH());
+    EXPECT_EQ(RRClass::CH(), alpha.getClass());
 }
 
 // Tests if it asks the IP addresses and calls callbacks when it comes
 // including the right addresses are returned and that they expire
 TEST_F(NameserverEntryTest, IPCallbacks) {
     shared_ptr<NameserverEntry> entry(new NameserverEntry(EXAMPLE_CO_UK,
-        RRClass::IN().getCode()));
+        RRClass::IN()));
     shared_ptr<Callback> callback(new Callback);
     shared_ptr<TestResolver> resolver(new TestResolver);
 
@@ -418,8 +278,8 @@ TEST_F(NameserverEntryTest, IPCallbacks) {
     // Ensure it becomes IN_PROGRESS
     EXPECT_EQ(Fetchable::IN_PROGRESS, entry->getState());
     // Now, there should be two queries in the resolver
-    ASSERT_EQ(2, resolver->requests.size());
-    resolver->asksIPs(Name(EXAMPLE_CO_UK), 0, 1);
+    EXPECT_EQ(2, resolver->requests.size());
+    ASSERT_TRUE(resolver->asksIPs(Name(EXAMPLE_CO_UK), 0, 1));
 
     // Another one might ask
     entry->askIP(resolver, callback, V4_ONLY, entry);
@@ -459,15 +319,15 @@ TEST_F(NameserverEntryTest, IPCallbacks) {
 // Test the callback is called even when the address is unreachable
 TEST_F(NameserverEntryTest, IPCallbacksUnreachable) {
     shared_ptr<NameserverEntry> entry(new NameserverEntry(EXAMPLE_CO_UK,
-        RRClass::IN().getCode()));
+        RRClass::IN()));
     shared_ptr<Callback> callback(new Callback);
     shared_ptr<TestResolver> resolver(new TestResolver);
 
     // Ask for its IP
     entry->askIP(resolver, callback, ANY_OK, entry);
     // Check it asks the resolver
-    ASSERT_EQ(2, resolver->requests.size());
-    resolver->asksIPs(Name(EXAMPLE_CO_UK), 0, 1);
+    EXPECT_EQ(2, resolver->requests.size());
+    ASSERT_TRUE(resolver->asksIPs(Name(EXAMPLE_CO_UK), 0, 1));
     resolver->requests[0].second->failure();
     // It should still wait for the second one
     EXPECT_EQ(0, callback->count);
