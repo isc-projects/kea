@@ -30,6 +30,7 @@
 #include "rrttl.h"
 
 #include "address_entry.h"
+#include "nameserver_address.h"
 #include "nameserver_entry.h"
 
 using namespace asiolink;
@@ -40,19 +41,12 @@ using namespace std;
 namespace isc {
 namespace nsas {
 
-// Generate a small random RTT when initialize the list of addresses
-// to select all the addresses in unpredicable order
-// The initia RTT is between 0ms and 7ms which is as the same as bind9
-#define MIN_INIT_RTT 0
-#define MAX_INIT_RTT 7
-UniformRandomIntegerGenerator NameserverEntry::rndRttGen_(MIN_INIT_RTT, MAX_INIT_RTT);
-
 // Constructor, initialized with the list of addresses associated with this
 // nameserver.
 NameserverEntry::NameserverEntry(const AbstractRRset* v4Set,
     const AbstractRRset* v6Set, time_t curtime) : expiration_(0)
 {
-    uint32_t rtt = 0;       // Round-trip time for an address
+    uint32_t rtt = 1;       // Round-trip time for an address
     string v4name = "";     // Name from the V4 RRset
     string v6name = "";     // Name from the v6 RRset
     uint16_t v4class = 0;   // Class of V4 RRset
@@ -74,8 +68,8 @@ NameserverEntry::NameserverEntry(const AbstractRRset* v4Set,
         RdataIteratorPtr i = v4Set->getRdataIterator();
         i->first();
         while (! i->isLast()) {
-            address_.push_back(AddressEntry(IOAddress(i->getCurrent().toText()),
-            ++rtt));
+            v4_addresses_.push_back(AddressEntry(IOAddress(i->getCurrent().toText()),
+            rtt));
             i->next();
         }
 
@@ -83,6 +77,9 @@ NameserverEntry::NameserverEntry(const AbstractRRset* v4Set,
         expiration_ = curtime + v4Set->getTTL().getValue();
         v4name = v4Set->getName().toText(false);    // Ensure trailing dot
         v4class = v4Set->getClass().getCode();
+
+        // Update the address selector
+        updateAddressSelector(v4_addresses_, v4_address_selector_);
     }
 
     // Now the v6 addresses
@@ -91,8 +88,8 @@ NameserverEntry::NameserverEntry(const AbstractRRset* v4Set,
         RdataIteratorPtr i = v6Set->getRdataIterator();
         i->first();
         while (! i->isLast()) {
-            address_.push_back(AddressEntry(IOAddress(i->getCurrent().toText()),
-            ++rtt));
+            v6_addresses_.push_back(AddressEntry(IOAddress(i->getCurrent().toText()),
+            rtt));
             i->next();
         }
 
@@ -108,6 +105,9 @@ NameserverEntry::NameserverEntry(const AbstractRRset* v4Set,
         // Extract the name of the v6 set and its class
         v6name = v6Set->getName().toText(false);    // Ensure trailing dot
         v6class = v6Set->getClass().getCode();
+
+        // Update the address selector
+        updateAddressSelector(v6_addresses_, v6_address_selector_);
     }
 
     // TODO: Log a problem if both V4 and V6 address were null.
@@ -144,40 +144,127 @@ void NameserverEntry::getAddresses(AddressVector& addresses, short family) const
     // Now copy all entries that meet the criteria.  Since remove_copy_if
     // does the inverse (copies all entries that do not meet the criteria),
     // the predicate for address selection is negated.
-    remove_copy_if(address_.begin(), address_.end(), back_inserter(addresses),
+    remove_copy_if(v4_addresses_.begin(), v4_addresses_.end(), back_inserter(addresses),
+        bind1st(AddressSelection(), family));
+    remove_copy_if(v6_addresses_.begin(), v6_addresses_.end(), back_inserter(addresses),
         bind1st(AddressSelection(), family));
 }
 
-asiolink::IOAddress NameserverEntry::getAddressAtIndex(uint32_t index) const
+// Return one address matching the given family
+bool NameserverEntry::getAddress(boost::shared_ptr<NameserverEntry>& nameserver, 
+        NameserverAddress& address, short family)
 {
-    assert(index < address_.size());
 
-    return address_[index].getAddress();
+    // The shared_ptr must contain this pointer
+    assert(nameserver.get() == this);
+
+    if(family == AF_INET){
+        if(v4_addresses_.size() == 0) return false;
+
+        address = NameserverAddress(nameserver, v4_address_selector_(), AF_INET);
+        return true;
+    } else if(family == AF_INET6){
+        if(v6_addresses_.size() == 0) return false;
+
+        address = NameserverAddress(nameserver, v6_address_selector_(), AF_INET6);
+        return true;
+    }
+    return false;
+}
+
+// Return the address corresponding to the family
+asiolink::IOAddress NameserverEntry::getAddressAtIndex(uint32_t index, short family) const
+{
+    const vector<AddressEntry> *addresses = &v4_addresses_;
+    if(family == AF_INET6){
+        addresses = &v6_addresses_;
+    }
+    assert(index < addresses->size());
+
+    return (*addresses)[index].getAddress();
 }
 
 // Set the address RTT to a specific value
 void NameserverEntry::setAddressRTT(const IOAddress& address, uint32_t rtt) {
 
     // Search through the list of addresses for a match
-    for (AddressVectorIterator i = address_.begin(); i != address_.end(); ++i) {
+    for (AddressVectorIterator i = v4_addresses_.begin(); i != v4_addresses_.end(); ++i) {
         if (i->getAddress().equal(address)) {
             i->setRTT(rtt);
+
+            // Update the selector
+            updateAddressSelector(v4_addresses_, v4_address_selector_);
+            return;
+        }
+    }
+
+    // Search the v6 list
+    for (AddressVectorIterator i = v6_addresses_.begin(); i != v6_addresses_.end(); ++i) {
+        if (i->getAddress().equal(address)) {
+            i->setRTT(rtt);
+
+            // Update the selector
+            updateAddressSelector(v6_addresses_, v6_address_selector_);
+            return;
         }
     }
 }
 
 // Update the address's rtt 
-void NameserverEntry::updateAddressRTTAtIndex(uint32_t rtt, uint32_t index) {
-    //make sure it is a valid index
-    if(index >= address_.size()) return;
+#define UPDATE_RTT_ALPHA 0.7
+void NameserverEntry::updateAddressRTTAtIndex(uint32_t rtt, uint32_t index, short family) {
+    vector<AddressEntry>* addresses = &v4_addresses_;
+    if(family == AF_INET6){
+        addresses = &v6_addresses_;
+    }
 
-    //update the rtt
-    address_[index].setRTT(rtt);
+    //make sure it is a valid index
+    if(index >= addresses->size()) return;
+
+    // Smoothly update the rtt
+    // The algorithm is as the same as bind8/bind9:
+    //    new_rtt = old_rtt * alpha + new_rtt * (1 - alpha), where alpha is a float number in [0, 1.0]
+    // The default value for alpha is 0.7
+    uint32_t old_rtt = (*addresses)[index].getRTT();
+    uint32_t new_rtt = (int)(old_rtt * UPDATE_RTT_ALPHA + rtt * (1 - UPDATE_RTT_ALPHA));
+    (*addresses)[index].setRTT(new_rtt);
+
+    // Update the selector
+    if(family == AF_INET) updateAddressSelector(v4_addresses_, v4_address_selector_);
+    else if(family == AF_INET6) updateAddressSelector(v6_addresses_, v6_address_selector_);
 }
 
 // Sets the address to be unreachable
 void NameserverEntry::setAddressUnreachable(const IOAddress& address) {
     setAddressRTT(address, AddressEntry::UNREACHABLE);
+}
+
+// Update the address selector according to the RTTs
+//
+// Each address has a probability to be selected if multiple addresses are available
+// The weight factor is equal to 1/(rtt*rtt), then all the weight factors are normalized
+// to make the sum equal to 1.0
+void NameserverEntry::updateAddressSelector(const std::vector<AddressEntry>& addresses, 
+        WeightedRandomIntegerGenerator& selector)
+{
+    vector<double> probabilities;
+    for(vector<AddressEntry>::const_iterator it = addresses.begin(); 
+            it != addresses.end(); ++it){
+        uint32_t rtt = (*it).getRTT();
+        if(rtt == 0) isc_throw(RTTIsZero, "The RTT is 0");
+
+        probabilities.push_back(1.0/(rtt*rtt));
+    }
+    // Calculate the sum
+    double sum = accumulate(probabilities.begin(), probabilities.end(), 0.0);
+
+    // Normalize the probabilities to make the sum equal to 1.0
+    for(vector<double>::iterator it = probabilities.begin(); 
+            it != probabilities.end(); ++it){
+        (*it) /= sum;
+    }
+
+    selector.reset(probabilities);
 }
 
 } // namespace dns

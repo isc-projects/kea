@@ -81,6 +81,37 @@ public:
         // Init with the current time
         rng_.seed(time(NULL));
     }
+    
+    /// \brief Default constructor
+    ///
+    WeightedRandomIntegerGenerator():
+        dist_(0, 1.0), uniform_real_gen_(rng_, dist_), min_(0)
+    {
+    }
+
+    /// \brief Reset the probabilities
+    ///
+    /// Change the weights of each integers
+    /// \param probabilities The probabies for all the integers
+    /// \param min The minimum integer that generated
+    void reset(const std::vector<double>& probabilities, int min = 0)
+    {
+        // The probabilities must be valid
+        assert(isProbabilitiesValid(probabilities));
+
+        // Reset the cumulative sum
+        cumulative_.clear();
+
+        // Calculate the partial sum of probabilities
+        std::partial_sum(probabilities.begin(), probabilities.end(),
+                                     std::back_inserter(cumulative_));
+
+        // Reset the minimum integer
+        min_ = min;
+
+        // Reset the random number generator
+        rng_.seed(time(NULL));
+    }
 
     /// \brief Generate weighted random integer
     int operator()()
@@ -112,7 +143,6 @@ private:
             sum += *it;
         }
 
-        std::cout << sum << " " << (sum == 1.0) << std::endl;
         double epsilon = 0.0001;
         // The sum must be equal to 1
         return fabs(sum - 1) < epsilon;

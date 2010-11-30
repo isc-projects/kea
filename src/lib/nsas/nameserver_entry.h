@@ -33,6 +33,8 @@
 namespace isc {
 namespace nsas {
 
+class NameserverAddress;
+
 /// \brief Inconsistent Owner Names
 ///
 /// Thrown if a NameserverEntry is constructed from both an A and AAAA RRset
@@ -40,6 +42,16 @@ namespace nsas {
 class InconsistentOwnerNames : public Exception {
 public:
     InconsistentOwnerNames(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what)
+    {}
+};
+
+/// \brief RTT is zero
+///
+/// Thrown if a RTT related with an address is 0.
+class RTTIsZero : public Exception {
+public:
+    RTTIsZero(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what)
     {}
 };
@@ -127,10 +139,22 @@ public:
     virtual void getAddresses(NameserverEntry::AddressVector& addresses,
         short family = 0) const;
 
+    /// \brief Return one address
+    ///
+    /// Return one address corresponding to this nameserver
+    /// \param nameserver The NamerserverEntry shared_ptr object. The NameserverAddress
+    ///        need to hold it to avoid NameserverEntry being released
+    /// \param address NameserverAddress object used to receive the address
+    /// \param family The family of user request, AF_INET or AF_INET6
+    /// \return true if one address is found, false otherwise
+    virtual bool getAddress(boost::shared_ptr<NameserverEntry>& nameserver, 
+            NameserverAddress& address, short family);
+
     /// \brief Return Address that corresponding to the index
     ///
     /// \param index The address index in the address vector
-    virtual asiolink::IOAddress getAddressAtIndex(uint32_t index) const;
+    /// \param family The address family, AF_INET or AF_INET6
+    virtual asiolink::IOAddress getAddressAtIndex(uint32_t index, short family) const;
 
     /// \brief Update RTT
     ///
@@ -144,7 +168,8 @@ public:
     ///
     /// \param rtt Round-Trip Time
     /// \param index The address's index in address vector
-    virtual void updateAddressRTTAtIndex(uint32_t rtt, uint32_t index);
+    /// \param family The address family, AF_INET or AF_INET6
+    virtual void updateAddressRTTAtIndex(uint32_t rtt, uint32_t index, short family);
 
     /// \brief Set Address Unreachable
     ///
@@ -196,13 +221,22 @@ public:
     };
 
 private:
-    boost::mutex    mutex_;                          ///< Mutex protecting this object
-    std::string     name_;                           ///< Canonical name of the nameserver
-    uint16_t        classCode_;                      ///< Class of the nameserver
-    std::vector<AddressEntry> address_;              ///< Set of V4/V6 addresses
-    time_t          expiration_;                     ///< Summary expiration time
-    time_t          last_access_;                    ///< Last access time to the structure
-    static UniformRandomIntegerGenerator rndRttGen_; ///< Small random RTT generator
+    /// \brief Update the address selector according to the RTTs of addresses
+    ///
+    /// \param addresses The address list
+    /// \param selector Weighted random generator
+    void updateAddressSelector(const std::vector<AddressEntry>& addresses, 
+            WeightedRandomIntegerGenerator& selector);
+
+    boost::mutex    mutex_;                              ///< Mutex protecting this object
+    std::string     name_;                               ///< Canonical name of the nameserver
+    uint16_t        classCode_;                          ///< Class of the nameserver
+    std::vector<AddressEntry> v4_addresses_;             ///< Set of V4 addresses
+    std::vector<AddressEntry> v6_addresses_;             ///< Set of V6 addresses
+    time_t          expiration_;                         ///< Summary expiration time
+    time_t          last_access_;                        ///< Last access time to the structure
+    WeightedRandomIntegerGenerator v4_address_selector_; ///< Generate one integer according to different probability
+    WeightedRandomIntegerGenerator v6_address_selector_; ///< Generate one integer according to different probability
 };
 
 }   // namespace dns
