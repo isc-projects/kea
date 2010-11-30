@@ -1,7 +1,8 @@
   122.  [func]		stephen
 	src/bin/bind10: Added configuration options to Boss to determine
 	whether to start the authoritative server, recursive server (or
-	both). (Trac #412, svn r3676)
+	both). A dummy recursor has been provided for test purposes.
+	(Trac #412, svn r3676)
 
   121.  [func]		jinmei
 	src/lib/dns: Added support for TSIG RDATA.  At this moment this is
