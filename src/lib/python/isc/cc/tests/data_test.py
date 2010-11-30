@@ -99,6 +99,23 @@ class TestData(unittest.TestCase):
         self.assertEqual(id, 'a')
         self.assertEqual(indices, [0, 1])
 
+        # examples from the docstring
+        id, indices = data.split_identifier_list_indices('a/b/c')
+        self.assertEqual(id, 'a/b/c')
+        self.assertEqual(indices, None)
+        
+        id, indices = data.split_identifier_list_indices('a/b/c[1]')
+        self.assertEqual(id, 'a/b/c')
+        self.assertEqual(indices, [1])
+       
+        id, indices = data.split_identifier_list_indices('a/b/c[1][2][3]')
+        self.assertEqual(id, 'a/b/c')
+        self.assertEqual(indices, [1, 2, 3])
+        
+        id, indices = data.split_identifier_list_indices('a[0]/b[1]/c[2]')
+        self.assertEqual(id, 'a[0]/b[1]/c')
+        self.assertEqual(indices, [2])
+
         # bad formats
         self.assertRaises(data.DataTypeError, data.split_identifier_list_indices, 'a[')
         self.assertRaises(data.DataTypeError, data.split_identifier_list_indices, 'a]')
