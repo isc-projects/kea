@@ -22,6 +22,7 @@ two through the classes in ccsession)
 
 import isc.cc.data
 import isc.config.module_spec
+import ast
 
 class ConfigDataError(Exception): pass
 
@@ -56,14 +57,14 @@ def check_type(spec_part, value):
         raise isc.cc.data.DataTypeError(str(value) + " is not a map")
 
 def convert_type(spec_part, value):
-    """Convert the give value(type is string) according specification 
+    """Convert the given value(type is string) according specification 
     part relevant for the value. Raises an isc.cc.data.DataTypeError 
     exception if conversion failed.
     """
     if type(spec_part) == dict and 'item_type' in spec_part:
         data_type = spec_part['item_type']
     else:
-        raise isc.cc.data.DataTypeError(str("Incorrect specification part for type convering"))
+        raise isc.cc.data.DataTypeError(str("Incorrect specification part for type conversion"))
    
     try:
         if data_type == "integer":
@@ -81,18 +82,25 @@ def convert_type(spec_part, value):
                     ret.append(convert_type(spec_part['list_item_spec'], item))
             elif type(value) == str:    
                 value = value.split(',')
-                for item in value:    
+                for item in value:
                     sub_value = item.split()
                     for sub_item in sub_value:
-                        ret.append(convert_type(spec_part['list_item_spec'], sub_item))
+                        ret.append(convert_type(spec_part['list_item_spec'],
+                                                sub_item))
 
             if ret == []:
                 raise isc.cc.data.DataTypeError(str(value) + " is not a list")
 
             return ret
         elif data_type == "map":
-            return dict(value)
-            # todo: check types of map contents too
+            map = ast.literal_eval(value)
+            if type(map) == dict:
+                # todo: check types of map contents too
+                return map
+            else:
+                raise isc.cc.data.DataTypeError(
+                           "Value in convert_type not a string "
+                           "specifying a dict")
         else:
             return value
     except ValueError as err:
@@ -416,6 +424,7 @@ class MultiConfigData:
             if spec:
                 spec_part = find_spec_part(spec.get_config_spec(), id)
                 if type(spec_part) == list:
+                    # list of items to show
                     for item in spec_part:
                         value, status = self.get_value("/" + identifier\
                                               + "/" + item['item_name'])
@@ -424,6 +433,7 @@ class MultiConfigData:
                                                         value, status)
                         result.append(entry)
                 elif type(spec_part) == dict:
+                    # Sub-specification
                     item = spec_part
                     if item['item_type'] == 'list':
                         li_spec = item['list_item_spec']
