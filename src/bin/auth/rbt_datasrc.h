@@ -468,7 +468,7 @@ RBTree<T>::findHelper(const isc::dns::Name& target_name, RBNode<T>** up_node,
     using namespace helper;
 
     RBNode<T>* node = root_;
-    RBTree<T>::Result ret = NOTFOUND;
+    typename RBTree<T>::Result ret = NOTFOUND;
     *up_node = NULL;
     isc::dns::Name name = target_name;
 
