@@ -109,24 +109,13 @@ TEST_F(NameserverEntryTest, InitialRTT) {
     NameserverEntry::AddressVector vec;
     alpha->getAddresses(vec);
 
-    // Copy into a vector of time_t.
-    vector<uint32_t> rtt;
-    for (NameserverEntry::AddressVectorIterator i = vec.begin();
-        i != vec.end(); ++i) {
-        rtt.push_back(i->getRTT());
+    // Check they are not 0 and they are all small, they should be some kind
+    // of randomish numbers, so we can't expect much more here
+    BOOST_FOREACH(const AddressEntry& entry, vec) {
+        EXPECT_GT(entry.getRTT(), 0);
+        // 20 is some arbitrary small value
+        EXPECT_LT(entry.getRTT(), 20);
     }
-
-    // Ensure that the addresses are sorted and note how many RTTs we have.
-    sort(rtt.begin(), rtt.end());
-    int oldcount = rtt.size();
-
-    // Remove duplicates and notw the new size.
-    vector<uint32_t>::iterator newend = unique(rtt.begin(), rtt.end());
-    rtt.erase(newend, rtt.end());
-    int newcount = rtt.size();
-
-    // .. and we don't expect to have lost anything.
-    EXPECT_EQ(oldcount, newcount);
 }
 
 // Set an address RTT to a given value
