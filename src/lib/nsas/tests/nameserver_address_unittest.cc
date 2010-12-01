@@ -30,6 +30,7 @@ namespace nsas {
 
 using namespace dns;
 using namespace rdata;
+using namespace boost;
 
 #define TEST_ADDRESS_INDEX 1
 
@@ -38,14 +39,18 @@ class NameserverEntrySample {
 public:
     NameserverEntrySample():
         name_("example.org"),
-        rrv4_(name_, RRClass::IN(), RRType::A(), RRTTL(1200))
+        rrv4_(new BasicRRset(name_, RRClass::IN(), RRType::A(), RRTTL(1200)))
     {
         // Add some sample A records
-        rrv4_.addRdata(ConstRdataPtr(new RdataTest<A>("1.2.3.4")));
-        rrv4_.addRdata(ConstRdataPtr(new RdataTest<A>("5.6.7.8")));
-        rrv4_.addRdata(ConstRdataPtr(new RdataTest<A>("9.10.11.12")));
+        rrv4_->addRdata(ConstRdataPtr(new RdataTest<A>("1.2.3.4")));
+        rrv4_->addRdata(ConstRdataPtr(new RdataTest<A>("5.6.7.8")));
+        rrv4_->addRdata(ConstRdataPtr(new RdataTest<A>("9.10.11.12")));
 
         ns_.reset(new NameserverEntry(name_.toText(), RRClass::IN()));
+        shared_ptr<TestResolver> resolver(new TestResolver);
+        ns_->askIP(resolver, shared_ptr<Callback>(new Callback), ANY_OK, ns_);
+        resolver->asksIPs(name_, 0, 1);
+        resolver->requests[0].second->success(rrv4_);
     }
 
     // Return the sample NameserverEntry
@@ -65,8 +70,13 @@ public:
 
 private:
     Name name_;                             ///< Name of the sample
-    BasicRRset rrv4_;                       ///< Standard RRSet - IN, A, lowercase name
+    shared_ptr<BasicRRset> rrv4_;           ///< Standard RRSet - IN, A, lowercase name
     boost::shared_ptr<NameserverEntry> ns_; ///< Shared_ptr that points to a NameserverEntry object
+
+    class Callback : public NameserverEntry::Callback {
+        public:
+            virtual void operator()(shared_ptr<NameserverEntry>) { }
+    };
 };
 
 /// \brief Test Fixture Class

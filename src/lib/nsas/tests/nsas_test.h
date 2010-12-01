@@ -235,8 +235,14 @@ class TestResolver : public isc::nsas::ResolverInterface {
         virtual void resolve(QuestionPtr q, CallbackPtr c) {
             requests.push_back(Request(q, c));
         }
+
+        // Thrown if the query at the given index does not exist.
+        class NoSuchRequest : public std::exception { };
+
         QuestionPtr operator[](size_t index) {
-            EXPECT_TRUE(checkIndex(index));
+            if (index >= requests.size()) {
+                throw NoSuchRequest();
+            }
             return (requests[index].first);
         }
         /*
@@ -276,6 +282,9 @@ class TestResolver : public isc::nsas::ResolverInterface {
         void answer(size_t index, const Name& name, const RRType& type,
             const rdata::Rdata& rdata, size_t TTL = 100)
         {
+            if (index >= requests.size()) {
+                throw NoSuchRequest();
+            }
             RRsetPtr set(new RRset(name, RRClass::IN(),
                 type, RRTTL(TTL)));
             set->addRdata(rdata);
@@ -290,24 +299,30 @@ static const std::string MIXED_EXAMPLE_CO_UK("EXAmple.co.uk.");
 
 class TestWithRdata : public ::testing::Test {
 protected:
+    typedef boost::shared_ptr<BasicRRset> BasicRRsetPtr;
     /// \brief Constructor
     ///
     /// Initializes the RRsets used in the tests.  The RRsets themselves have to
     /// be initialized with the basic data on their construction. The Rdata for
     /// them is added in SetUp().
     TestWithRdata() :
-        rrv4_(Name(EXAMPLE_CO_UK), RRClass::IN(), RRType::A(), RRTTL(1200)),
-        rrcase_(Name(MIXED_EXAMPLE_CO_UK), RRClass::IN(), RRType::A(),
-            RRTTL(1200)),
-        rrch_(Name(EXAMPLE_CO_UK), RRClass::CH(), RRType::A(), RRTTL(1200)),
-        rrns_(Name(EXAMPLE_CO_UK), RRClass::IN(), RRType::NS(), RRTTL(1200)),
-        rr_single_(Name(EXAMPLE_CO_UK), RRClass::IN(), RRType::NS(),
-            RRTTL(600)),
-        rr_empty_(Name(EXAMPLE_CO_UK), RRClass::IN(), RRType::NS(),
-            RRTTL(600)),
-        rrv6_(Name(EXAMPLE_CO_UK), RRClass::IN(), RRType::AAAA(), RRTTL(900)),
-        rrnet_(Name(EXAMPLE_NET), RRClass::IN(), RRType::A(), RRTTL(600)),
-        ns_name_(ns_name_)
+        rrv4_(new BasicRRset(Name(EXAMPLE_CO_UK), RRClass::IN(), RRType::A(),
+            RRTTL(1200))),
+        rrcase_(new BasicRRset(Name(MIXED_EXAMPLE_CO_UK), RRClass::IN(),
+            RRType::A(), RRTTL(1200))),
+        rrch_(new BasicRRset(Name(EXAMPLE_CO_UK), RRClass::CH(), RRType::A(),
+            RRTTL(1200))),
+        rrns_(new BasicRRset(Name(EXAMPLE_CO_UK), RRClass::IN(), RRType::NS(),
+            RRTTL(1200))),
+        rr_single_(new BasicRRset(Name(EXAMPLE_CO_UK), RRClass::IN(),
+            RRType::NS(), RRTTL(600))),
+        rr_empty_(new BasicRRset(Name(EXAMPLE_CO_UK), RRClass::IN(),
+            RRType::NS(), RRTTL(600))),
+        rrv6_(new BasicRRset(Name(EXAMPLE_CO_UK), RRClass::IN(),
+            RRType::AAAA(), RRTTL(900))),
+        rrnet_(new BasicRRset(Name(EXAMPLE_NET), RRClass::IN(), RRType::A(),
+            RRTTL(600))),
+        ns_name_("ns.example.net.")
     {}
 
     /// \brief Add Rdata to RRsets
@@ -317,42 +332,42 @@ protected:
     virtual void SetUp() {
 
         // A records
-        rrv4_.addRdata(ConstRdataPtr(new RdataTest<A>("1.2.3.4")));
-        rrv4_.addRdata(ConstRdataPtr(new RdataTest<A>("5.6.7.8")));
-        rrv4_.addRdata(ConstRdataPtr(new RdataTest<A>("9.10.11.12")));
+        rrv4_->addRdata(ConstRdataPtr(new RdataTest<A>("1.2.3.4")));
+        rrv4_->addRdata(ConstRdataPtr(new RdataTest<A>("5.6.7.8")));
+        rrv4_->addRdata(ConstRdataPtr(new RdataTest<A>("9.10.11.12")));
 
         // A records
-        rrcase_.addRdata(ConstRdataPtr(new RdataTest<A>("13.14.15.16")));
+        rrcase_->addRdata(ConstRdataPtr(new RdataTest<A>("13.14.15.16")));
 
         // No idea what Chaosnet address look like other than they are 16 bits
         // The fact that they are type A is probably also incorrect.
-        rrch_.addRdata(ConstRdataPtr(new RdataTest<A>("1324")));
+        rrch_->addRdata(ConstRdataPtr(new RdataTest<A>("1324")));
 
         // NS records take a single name
-        rrns_.addRdata(ConstRdataPtr(new RdataTest<NS>("example.fr")));
-        rrns_.addRdata(ConstRdataPtr(new RdataTest<NS>("example.de")));
+        rrns_->addRdata(ConstRdataPtr(new RdataTest<NS>("example.fr")));
+        rrns_->addRdata(ConstRdataPtr(new RdataTest<NS>("example.de")));
 
         // Single NS record with 0 TTL
-        rr_single_.addRdata(ConstRdataPtr(new RdataTest<NS>(
+        rr_single_->addRdata(ConstRdataPtr(new RdataTest<NS>(
             "ns.example.net.")));
 
         // AAAA records
-        rrv6_.addRdata(ConstRdataPtr(new RdataTest<AAAA>("2001::1002")));
-        rrv6_.addRdata(ConstRdataPtr(new RdataTest<AAAA>("dead:beef:feed::")));
+        rrv6_->addRdata(ConstRdataPtr(new RdataTest<AAAA>("2001::1002")));
+        rrv6_->addRdata(ConstRdataPtr(new RdataTest<AAAA>("dead:beef:feed::")));
 
         // A record for example.net
-        rrnet_.addRdata(ConstRdataPtr(new RdataTest<A>("17.18.18.20")));
+        rrnet_->addRdata(ConstRdataPtr(new RdataTest<A>("17.18.18.20")));
     }
 
     /// \brief Data for the tests
-    BasicRRset rrv4_;           ///< Standard RRSet - IN, A, lowercase name
-    BasicRRset rrcase_;         ///< Mixed-case name
-    BasicRRset rrch_;           ///< Non-IN RRset (Chaos in this case)
-    BasicRRset rrns_;           ///< NS RRset
-    BasicRRset rr_single_;      ///< NS RRset with single NS
-    BasicRRset rr_empty_;       ///< NS RRset without any nameservers
-    BasicRRset rrv6_;           ///< Standard RRset, IN, AAAA, lowercase name
-    BasicRRset rrnet_;          ///< example.net A RRset
+    BasicRRsetPtr rrv4_;           ///< Standard RRSet - IN, A, lowercase name
+    BasicRRsetPtr rrcase_;         ///< Mixed-case name
+    BasicRRsetPtr rrch_;           ///< Non-IN RRset (Chaos in this case)
+    BasicRRsetPtr rrns_;           ///< NS RRset
+    BasicRRsetPtr rr_single_;      ///< NS RRset with single NS
+    BasicRRsetPtr rr_empty_;       ///< NS RRset without any nameservers
+    BasicRRsetPtr rrv6_;           ///< Standard RRset, IN, AAAA, lowercase name
+    BasicRRsetPtr rrnet_;          ///< example.net A RRset
     Name ns_name_;  ///< Nameserver name of ns.example.net
 };
 
