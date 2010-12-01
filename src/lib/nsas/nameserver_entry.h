@@ -97,7 +97,8 @@ public:
     NameserverEntry(const std::string& name,
         const isc::dns::RRClass& class_code) :
         name_(name),
-        classCode_(class_code)
+        classCode_(class_code),
+        expiration_(0)
     {}
 
     /// \brief Return Address
@@ -222,8 +223,7 @@ private:
     std::string     name_;              ///< Canonical name of the nameserver
     isc::dns::RRClass classCode_;       ///< Class of the nameserver
     std::vector<AddressEntry> address_; ///< Set of V4/V6 addresses
-    time_t          expiration_;        ///< Summary expiration time
-    time_t          last_access_;       ///< Last access time to the structure
+    time_t          expiration_;        ///< Summary expiration time. 0 = unset
     // Do we have some addresses already? Do we expect some to come?
     // These are set after asking for IP, if NOT_ASKED, they are uninitialized
     bool has_address_[ADDR_REQ_MAX], expect_address_[ADDR_REQ_MAX];
