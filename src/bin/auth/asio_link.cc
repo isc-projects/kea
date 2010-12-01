@@ -735,9 +735,7 @@ IntervalTimer::~IntervalTimer() {
 }
 
 bool
-IntervalTimer::setupTimer(const Callback& cbfunc,
-                                const uint32_t interval)
-{
+IntervalTimer::setupTimer(const Callback& cbfunc, const uint32_t interval) {
     return (impl_->setupTimer(cbfunc, interval));
 }
 }

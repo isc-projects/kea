@@ -382,7 +382,8 @@ TEST_F(ASIOLinkTest, startIntervalTimer) {
     // Create asio_link::IntervalTimer and setup.
     // Then run IOService and test if the callback function is called.
     setIOService(false, false);
-    asio_link::IntervalTimer *itimer = new asio_link::IntervalTimer(io_service_->get_io_service());
+    asio_link::IntervalTimer* itimer =
+        new asio_link::IntervalTimer(io_service_->get_io_service());
     doTimerTest(itimer);
     delete itimer;
 }
