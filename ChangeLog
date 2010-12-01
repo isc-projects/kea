@@ -1,3 +1,5 @@
+bind10-devel-20101201 released on December 01, 2010
+
   124.  [bug]		jreed
 	Fix some wrong version reporting. Now also show the version
 	for the component and BIND 10 suite. (Trac #302, svn r3696)
@@ -33,10 +35,11 @@
 	and will be addressed in Trac #413.  (Trac #411, svn r3599)
 
   118.	[func]		jinmei
-	src/lib/dns: changed the interface of AbstractRRset::getRdataIterator()
-	so that the internal cursor would point to the first RDATA
-	automatically.  This will be a more intuitive and less error prone
-	behavior.  This is a backward compatible change. (Trac #410, r3595)
+	src/lib/dns: changed the interface of
+	AbstractRRset::getRdataIterator() so that the internal
+	cursor would point to the first RDATA automatically.  This
+	will be a more intuitive and less error prone behavior.
+	This is a backward compatible change. (Trac #410, r3595)
 
   117.  [func]		jinmei
 	src/lib/datasrc: added new zone and zone table classes for the
@@ -72,15 +75,13 @@
 	Add one mixin class to override the naive serve_forever() provided
 	in python library socketserver. Instead of polling for shutdwon
 	every poll_interval seconds, one socketpair is used to wake up
-	the waiting server.(Trac #352, svn r3366)
+	the waiting server. (Trac #352, svn r3366)
 
   111.	[bug]*   zhanglikun, Michal Vaner
-	Make sure process xfrin/xfrout/zonemgr/cmdctl can be stoped
+	Make sure process xfrin/xfrout/zonemgr/cmdctl can be stopped
 	properly when user enter "ctrl+c" or 'Boss shutdown' command
-	through	bindctl.
-
-	The ZonemgrRefresh.run_timer and NotifyOut.dispatcher spawn
-	a thread themselves.
+	through bindctl.  The ZonemgrRefresh.run_timer and
+	NotifyOut.dispatcher spawn a thread themselves.
 	(Trac #335, svn r3273)
 
   110.  [func]      Michal Vaner
@@ -122,7 +123,7 @@
 				   
   103.	[bug]		jerry
 	lib/python/isc/log: Fixed an issue with python logging,
-	python log shouldn't die with OSError.(Trac #267, r3137)
+	python log shouldn't die with OSError. (Trac #267, r3137)
 				   
   102.	[build]		jinmei
 	Disable threads in ASIO to minimize build time dependency.
