@@ -128,10 +128,13 @@ AuthSrvImpl::~AuthSrvImpl() {
 
 AuthSrv::AuthSrv(const bool use_cache, AbstractXfroutClient& xfrout_client) :
     impl_(new AuthSrvImpl(use_cache, xfrout_client))
-{}
+{
+    counter = new statistics::Counter(impl_->verbose_mode_);
+}
 
 AuthSrv::~AuthSrv() {
     delete impl_;
+    delete counter;
 }
 
 namespace {
@@ -214,6 +217,11 @@ AuthSrv::setConfigSession(ModuleCCSession* config_session) {
     impl_->config_session_ = config_session;
 }
 
+void
+AuthSrv::setStatsSession(AbstractSession* stats_session) {
+    counter->setStatsSession(stats_session);
+}
+
 ModuleCCSession*
 AuthSrv::getConfigSession() const {
     return (impl_->config_session_);
@@ -264,6 +272,19 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
 
     if (impl_->verbose_mode_) {
         cerr << "[b10-auth] received a message:\n" << message.toText() << endl;
+    }
+
+    // increment Query Counter
+    if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
+        counter->inc(statistics::Counter::COUNTER_UDP);
+    } else if (io_message.getSocket().getProtocol() == IPPROTO_TCP) {
+        counter->inc(statistics::Counter::COUNTER_TCP);
+    } else {
+        // unknown protocol
+        if (impl_->verbose_mode_) {
+            cerr << "[b10-auth] Unknown protocol: " <<
+                     io_message.getSocket().getProtocol() << endl;
+        }
     }
 
     // Perform further protocol-level validation.
@@ -542,4 +563,11 @@ AuthSrv::updateConfig(ConstElementPtr new_config) {
         }
         return (isc::config::createAnswer(1, error.what()));
     }
+}
+
+asio_link::IntervalTimer::Callback
+AuthSrv::getStatsCallback() {
+    // just invoke statistics::Counter::getStatsCallback()
+    // and return its return value
+    return (counter->getCallback());
 }

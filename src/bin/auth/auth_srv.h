@@ -22,6 +22,12 @@
 #include <cc/data.h>
 #include <config/ccsession.h>
 
+/// for the typedef of asio_link::IntervalTimer::Callback
+#include <auth/asio_link.h>
+
+// for class statistics::Counter
+#include <auth/stats.h>
+
 namespace isc {
 namespace dns {
 class InputBuffer;
@@ -199,8 +205,28 @@ public:
     /// is shutdown.
     ///
     void setXfrinSession(isc::cc::AbstractSession* xfrin_session);
+
+    /// \brief Set the communication session with Statistics.
+    ///
+    void setStatsSession(isc::cc::AbstractSession* stats_session);
+
+    /// \brief Return the function that sends statistics information
+    /// to Statistics module.
+    /// 
+    /// This function returns the return value of
+    /// statistics::Counter::getCallback().
+    ///
+    /// \return \c boost::function which contains the procedure
+    /// to send statistics.
+    asio_link::IntervalTimer::Callback getStatsCallback();
 private:
     AuthSrvImpl* impl_;
+
+    // TODO: consider where to put the counter.
+    // Currently, count-up is in AuthSrv::processMessage.
+    // In the future, count-up will be in AuthSrvImpl::process*Query
+    // and this declaration will be moved into AuthSrvImpl.
+    statistics::Counter *counter;
 };
 
 #endif // __AUTH_SRV_H

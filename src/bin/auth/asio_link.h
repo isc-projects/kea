@@ -89,6 +89,7 @@ class AuthSrv;
 
 namespace asio_link {
 class IOServiceImpl;
+struct IntervalTimerImpl;
 
 /// \brief An exception that is thrown if an error occurs within the IO
 /// module.  This is mainly intended to be a wrapper exception class for
@@ -443,6 +444,46 @@ public:
     void setCallBack(IOCallBack callback);
 private:
     IOServiceImpl* impl_;
+};
+
+/// \brief The \c IntervalTimer class is a wrapper for the ASIO \c deadline_timer
+/// class.
+///
+/// This class is implemented to use boost::deadline_timer as interval timer.
+/// Copy of this class is prohibited not to call the callback function twice.
+class IntervalTimer {
+public:
+    /// \name The type of timer callback function
+    typedef boost::function<void(void)> Callback;
+
+    ///
+    /// \name Constructors and Destructor
+    ///
+    /// Note: The copy constructor and the assignment operator are
+    /// intentionally defined as private, making this class non-copyable.
+    //@{
+private:
+    IntervalTimer(const IntervalTimer& source);
+    IntervalTimer& operator=(const IntervalTimer& source);
+public:
+    /// \brief The constructor with asio::io_service.
+    ///
+    /// \param io_service A reference to an instance of asio::io_service
+    IntervalTimer(asio::io_service& io_service);
+    /// \brief The destructor.
+    ~IntervalTimer();
+    //@}
+
+    /// \brief Register timer callback function
+    ///
+    /// \param cbfunc A reference to a function to call back
+    /// when the timer is expired
+    /// \param interval Interval in seconds
+    ///
+    /// \return \c true on success
+    bool setupTimer(const Callback& cbfunc, const uint32_t interval);
+private:
+    IntervalTimerImpl* impl_;
 };
 }      // asio_link
 #endif // __ASIO_LINK_H

@@ -544,10 +544,10 @@ class BoB:
         self.cc_session.group_sendmsg(cmd, "ConfigManager", "ConfigManager")
         self.cc_session.group_sendmsg(cmd, "Auth", "Auth")
         self.cc_session.group_sendmsg(cmd, "Recurse", "Recurse")
+        self.cc_session.group_sendmsg(cmd, "Stats", "Stats")
         self.cc_session.group_sendmsg(cmd, "Xfrout", "Xfrout")
         self.cc_session.group_sendmsg(cmd, "Xfrin", "Xfrin")
         self.cc_session.group_sendmsg(cmd, "Zonemgr", "Zonemgr")
-        self.cc_session.group_sendmsg(cmd, "Boss", "Stats")
 
     def stop_process(self, process):
         """Stop the given process, friendly-like."""

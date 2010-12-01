@@ -59,6 +59,10 @@ bool verbose_mode = false;
 const string PROGRAM = "Auth";
 const char* DNSPORT = "5300";
 
+// Note: this value must be greater than 0.
+// TODO: make it configurable via command channel.
+const uint32_t STATS_SEND_INTERVAL_SEC = 60;
+
 /* need global var for config/command handlers.
  * todo: turn this around, and put handlers in the authserver
  * class itself? */
@@ -81,6 +85,13 @@ my_command_handler(const string& command, ConstElementPtr args) {
         answer = createAnswer(0, args);
     } else if (command == "shutdown") {
         io_service->stop();
+    } else if (command == "sendstats") {
+        if (verbose_mode) {
+            cerr << "[b10-auth] command 'sendstats' received" << endl;
+        }
+        if (auth_server != NULL) {
+            auth_server->getStatsCallback()();
+        }
     }
     
     return (answer);
@@ -154,7 +165,10 @@ main(int argc, char* argv[]) {
     // XXX: we should eventually pass io_service here.
     Session* cc_session = NULL;
     Session* xfrin_session = NULL;
+    Session* stats_session = NULL;
+    asio_link::IntervalTimer* itimer = NULL;
     bool xfrin_session_established = false; // XXX (see Trac #287)
+    bool stats_session_established = false; // XXX (see Trac #287)
     ModuleCCSession* config_session = NULL;
     string xfrout_socket_path;
     if (getenv("B10_FROM_BUILD") != NULL) {
@@ -209,14 +223,29 @@ main(int argc, char* argv[]) {
         xfrin_session_established = true;
         cout << "[b10-auth] Xfrin session channel established." << endl;
 
+        stats_session = new Session(io_service->get_io_service());
+        cout << "[b10-auth] Stats session channel created." << endl;
+        stats_session->establish(NULL);
+        stats_session_established = true;
+        cout << "[b10-auth] Stats session channel established." << endl;
+
         // XXX: with the current interface to asio_link we have to create
         // auth_server before io_service while Session needs io_service.
         // In a next step of refactoring we should make asio_link independent
         // from auth_server, and create io_service, auth_server, and
         // sessions in that order.
         auth_server->setXfrinSession(xfrin_session);
+        auth_server->setStatsSession(stats_session);
         auth_server->setConfigSession(config_session);
         auth_server->updateConfig(ElementPtr());
+
+        // create interval timer instance
+        itimer = new asio_link::IntervalTimer(io_service->get_io_service());
+        // set up interval timer
+        // register function to send statistics with interval
+        itimer->setupTimer(auth_server->getStatsCallback(),
+                           STATS_SEND_INTERVAL_SEC);
+        cout << "[b10-auth] Interval timer set to send stats." << endl;
 
         cout << "[b10-auth] Server started." << endl;
         io_service->run();
@@ -225,10 +254,16 @@ main(int argc, char* argv[]) {
         ret = 1;
     }
 
+    if (stats_session_established) {
+        stats_session->disconnect();
+    }
+
     if (xfrin_session_established) {
         xfrin_session->disconnect();
     }
 
+    delete itimer;
+    delete stats_session;
     delete xfrin_session;
     delete config_session;
     delete cc_session;
