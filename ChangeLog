@@ -1,3 +1,8 @@
+  123.  [bug]		jelte
+	src/bin/bindctl printed values had the form of python literals
+	(e.g. 'True'), while the input requires valid JSON (e.g. 'true').
+	Output changed to JSON format for consistency.
+
   122.  [func]		stephen
 	src/bin/bind10: Added configuration options to Boss to determine
 	whether to start the authoritative server, recursive server (or
