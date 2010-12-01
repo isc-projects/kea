@@ -1,3 +1,10 @@
+  TBD.  [func]		y-aharen
+	src/bin/auth: Added a feature to count query and send counter
+	values to b10-stats periodically. To support it, added wrapping
+	class of asio::deadline_timer to use as interval timer.
+	Added a command 'sendstats' to send counter values at once.
+	(Trac #347, svn rxxxx)
+
   122.  [func]		stephen
 	src/bin/bind10: Added configuration options to Boss to determine
 	whether to start the authoritative server, recursive server (or

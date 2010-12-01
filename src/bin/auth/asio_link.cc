@@ -666,4 +666,78 @@ IOService::setCallBack(const IOCallBack callback) {
         impl_->tcp6_server_->setCallBack(&impl_->callback_);
     }
 }
+
+class IntervalTimerImpl {
+private:
+    // prohibit copy to avoid the function be called twice
+    IntervalTimerImpl(const IntervalTimerImpl& source);
+    IntervalTimerImpl& operator=(const IntervalTimerImpl& source);
+public:
+    IntervalTimerImpl(asio::io_service& io_service);
+    ~IntervalTimerImpl();
+    bool setupTimer(const IntervalTimer::Callback& cbfunc,
+                    const uint32_t interval);
+    void callback(const asio::error_code& error);
+private:
+    void updateTimer();
+    IntervalTimer::Callback cbfunc_;
+    // interval in seconds
+    uint32_t interval_;
+    asio::deadline_timer timer_;
+};
+
+IntervalTimerImpl::IntervalTimerImpl(asio::io_service& io_service) :
+    timer_(io_service)
+{}
+
+IntervalTimerImpl::~IntervalTimerImpl() {
+    timer_.cancel();
+}
+
+bool
+IntervalTimerImpl::setupTimer(const IntervalTimer::Callback& cbfunc,
+                              const uint32_t interval)
+{
+    // interval value must be positive
+    assert(interval > 0);
+    cbfunc_ = cbfunc;
+    interval_ = interval;
+    // start timer
+    updateTimer();
+    return (true);
+}
+
+void
+IntervalTimerImpl::updateTimer() {
+    // update expire time (current time + interval_)
+    timer_.expires_from_now(boost::posix_time::seconds(interval_));
+    // restart timer
+    timer_.async_wait(boost::bind(&IntervalTimerImpl::callback, this, _1));
+}
+
+void
+IntervalTimerImpl::callback(const asio::error_code& cancelled) {
+    assert(!cbfunc_.empty());
+    // skip function call in case the timer was cancelled
+    if (!cancelled) {
+        cbfunc_();
+        // restart timer
+        updateTimer();
+    }
+}
+
+IntervalTimer::IntervalTimer(asio::io_service& io_service) {
+    impl_ = new IntervalTimerImpl(io_service);
+}
+
+IntervalTimer::~IntervalTimer() {
+    delete impl_;
+}
+
+bool
+IntervalTimer::setupTimer(const Callback& cbfunc,
+                                const uint32_t interval)
+{
+    return (impl_->setupTimer(cbfunc, interval));
+}
 }

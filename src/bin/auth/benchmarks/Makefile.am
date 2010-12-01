@@ -9,6 +9,7 @@ CLEANFILES = *.gcno *.gcda
 noinst_PROGRAMS = query_bench
 query_bench_SOURCES = query_bench.cc
 query_bench_SOURCES += ../auth_srv.h ../auth_srv.cc
+query_bench_SOURCES += ../stats.h ../stats.cc
 
 query_bench_LDADD = $(top_builddir)/src/lib/dns/libdns++.la
 query_bench_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la

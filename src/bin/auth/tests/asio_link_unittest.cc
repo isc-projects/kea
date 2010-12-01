@@ -252,6 +252,15 @@ protected:
                             callback_data_.size(),
                             expected_data, expected_datasize);
     }
+    void doTimerTest(asio_link::IntervalTimer* itimer) {
+        // interval timer test
+        // set test_obj_->timerCallBack() as callback function
+        // and check that the function was called
+        timer_called_ = false;
+        EXPECT_TRUE(itimer->setupTimer(TimerCallBack(this), 1));
+        io_service_->run();
+        EXPECT_TRUE(timer_called_);
+    }
 private:
     class ASIOCallBack : public std::unary_function<IOMessage, void> {
     public:
@@ -273,12 +282,27 @@ private:
             io_message.getDataSize());
         io_service_->stop();
     }
+private:
+    class TimerCallBack : public std::unary_function<void, void> {
+    public:
+        TimerCallBack(ASIOLinkTest* test_obj) : test_obj_(test_obj) {}
+        void operator()(void) const {
+            test_obj_->timerCallBack();
+        }
+    private:
+        ASIOLinkTest* test_obj_;
+    };
+    void timerCallBack() {
+        timer_called_ = true;
+        io_service_->stop();
+    }
 protected:
     IOService* io_service_;
     int callback_protocol_;
     int callback_native_;
     string callback_address_;
     vector<uint8_t> callback_data_;
+    bool timer_called_;
     int sock_;
 private:
     struct addrinfo* res_;
@@ -354,4 +378,12 @@ TEST_F(ASIOLinkTest, v4TCPOnly) {
     EXPECT_THROW(sendTCP(AF_INET6), IOError);
 }
 
+TEST_F(ASIOLinkTest, startIntervalTimer) {
+    // Create asio_link::IntervalTimer and setup.
+    // Then run IOService and test if the callback function is called.
+    setIOService(false, false);
+    asio_link::IntervalTimer *itimer = new asio_link::IntervalTimer(io_service_->get_io_service());
+    doTimerTest(itimer);
+    delete itimer;
+}
 }
