@@ -28,7 +28,10 @@ import isc.util.process
 
 isc.util.process.rename()
 
-__version__ = 'Bindctl'
+# This is the version that gets displayed to the user.
+# The VERSION string consists of the module name, the module version
+# number, and the overall BIND 10 version number (set in configure.ac).
+VERSION = "bindctl 20101201 (BIND 10 @PACKAGE_VERSION@)"
 
 def prepare_config_commands(tool):
     '''Prepare fixed commands for local configuration editing'''
@@ -113,7 +116,7 @@ def set_bindctl_options(parser):
 
 if __name__ == '__main__':
     try:
-        parser = OptionParser(version = __version__)
+        parser = OptionParser(version = VERSION)
         set_bindctl_options(parser)
         (options, args) = parser.parse_args()
         server_addr = options.addr + ':' + str(options.port)

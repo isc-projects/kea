@@ -1,7 +1,11 @@
+  124.  [bug]		jreed
+	Fix some wrong version reporting. Now also show the version
+	for the component and BIND 10 suite. (Trac #302, svn r3696)
+
   123.  [bug]		jelte
 	src/bin/bindctl printed values had the form of python literals
 	(e.g. 'True'), while the input requires valid JSON (e.g. 'true').
-	Output changed to JSON format for consistency.
+	Output changed to JSON format for consistency. (svn r3694)
 
   122.  [func]		stephen
 	src/bin/bind10: Added configuration options to Boss to determine
