@@ -206,7 +206,6 @@ fi
 # gcc specific settings:
 if test "X$GXX" = "Xyes"; then
 B10_CXXFLAGS="-Wall -Wextra -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
-UNUSED_PARAM_ATTRIBUTE='__attribute__((unused))'
 
 # Certain versions of gcc (g++) have a bug that incorrectly warns about
 # the use of anonymous name spaces even if they're closed in a single
@@ -225,7 +224,6 @@ CXXFLAGS="$CXXFLAGS_SAVED"
 fi				dnl GXX = yes
 
 AM_CONDITIONAL(GCC_WERROR_OK, test $werror_ok = 1)
-AC_DEFINE_UNQUOTED(UNUSED_PARAM, $UNUSED_PARAM_ATTRIBUTE, Define to compiler keyword indicating a function argument is intentionally unused)
 
 # produce PIC unless we disable shared libraries. need this for python bindings.
 if test $enable_shared != "no" -a "X$GXX" = "Xyes"; then
@@ -469,6 +467,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/auth/tests/Makefile
                  src/bin/auth/tests/testdata/Makefile
                  src/bin/auth/benchmarks/Makefile
+                 src/bin/recurse/Makefile
                  src/bin/xfrin/Makefile
                  src/bin/xfrin/tests/Makefile
                  src/bin/xfrout/Makefile
@@ -495,6 +494,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/python/isc/util/Makefile
                  src/lib/python/isc/util/tests/Makefile
                  src/lib/python/isc/datasrc/Makefile
+                 src/lib/python/isc/datasrc/tests/Makefile
                  src/lib/python/isc/cc/Makefile
                  src/lib/python/isc/cc/tests/Makefile
                  src/lib/python/isc/config/Makefile
@@ -532,6 +532,9 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/xfrout/xfrout.spec.pre
            src/bin/xfrout/tests/xfrout_test
            src/bin/xfrout/run_b10-xfrout.sh
+           src/bin/recurse/recurse.py
+           src/bin/recurse/recurse.spec.pre
+           src/bin/recurse/run_b10-recurse.sh
            src/bin/zonemgr/zonemgr.py
            src/bin/zonemgr/zonemgr.spec.pre
            src/bin/zonemgr/tests/zonemgr_test
@@ -574,6 +577,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
            chmod +x src/bin/xfrout/run_b10-xfrout.sh
+           chmod +x src/bin/recurse/run_b10-recurse.sh
            chmod +x src/bin/zonemgr/run_b10-zonemgr.sh
            chmod +x src/bin/stats/tests/stats_test
            chmod +x src/bin/stats/run_b10-stats.sh

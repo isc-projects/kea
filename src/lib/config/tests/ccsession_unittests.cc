@@ -188,7 +188,7 @@ ConstElementPtr my_config_handler(ConstElementPtr new_config) {
 }
 
 ConstElementPtr my_command_handler(const std::string& command,
-                                   ConstElementPtr arg UNUSED_PARAM)
+                                   ConstElementPtr arg)
 {
     if (command == "good_command") {
         return (createAnswer());

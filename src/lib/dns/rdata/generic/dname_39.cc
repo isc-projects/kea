@@ -33,7 +33,7 @@ DNAME::DNAME(const std::string& namestr) :
     dname_(namestr)
 {}
 
-DNAME::DNAME(InputBuffer& buffer, size_t rdata_len UNUSED_PARAM) :
+DNAME::DNAME(InputBuffer& buffer, size_t) :
     dname_(buffer)
 {
     // we don't need rdata_len for parsing.  if necessary, the caller will

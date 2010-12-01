@@ -158,7 +158,7 @@ static PyTypeObject rrset_type = {
 };
 
 static int
-RRset_init(s_RRset* self, PyObject* args UNUSED_PARAM) {
+RRset_init(s_RRset* self, PyObject* args) {
     s_Name* name;
     s_RRClass* rrclass;
     s_RRType* rrtype;
@@ -355,7 +355,7 @@ RRset_getRdata(s_RRset* self) {
 
     RdataIteratorPtr it = self->rrset->getRdataIterator();
 
-    for (it->first(); !it->isLast(); it->next()) {
+    for (; !it->isLast(); it->next()) {
         s_Rdata *rds = static_cast<s_Rdata*>(rdata_type.tp_alloc(&rdata_type, 0));
         if (rds != NULL) {
             // hmz them iterators/shared_ptrs and private constructors

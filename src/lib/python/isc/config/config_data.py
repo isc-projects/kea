@@ -158,11 +158,9 @@ def spec_name_list(spec, prefix="", recurse=False):
                     result.extend(spec_name_list(list_el['map_item_spec'], prefix + list_el['item_name'], recurse))
                 else:
                     name = list_el['item_name']
-                    if list_el['item_type'] in ["list", "map"]:
-                        name += "/"
                     result.append(prefix + name)
             else:
-                raise ConfigDataError("Bad specication")
+                raise ConfigDataError("Bad specification")
     else:
         raise ConfigDataError("Bad specication")
     return result
