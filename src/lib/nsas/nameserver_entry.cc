@@ -67,40 +67,32 @@ NameserverEntry::getAddresses(AddressVector& addresses,
 {
     Lock lock(mutex_);
 
-    /*
-     * FIXME: This switch is not completely correct. What if it is EXPIRED
-     * with expired_ok true and the given familly is unreachable?
-     *
-     * Write a test for this and:
-     * * First check if EXPIRED (and not expired_ok) or NOT_ASKED, then we are
-     *   done.
-     * * Second, check TTL and expire if not expired_ok. That might change us
-     *   to EXPIRED and we are done again.
-     * * Then see if we have the given address family ready and return.
-     * * Solve problem of both A and AAAA addresses with TTL 0 and then
-     *   when the second one comes, we should not give the first one even when
-     *   expired_ok, because it is in callback of the other one and it is
-     *   really expired.
-     */
+    // Check TTL
+    time_t now(time(NULL));
+    // We take = as well, so we catch TTL 0 correctly
+    // expiration_ == 0 means not set, the reason is we are UNREACHABLE or
+    // NOT_ASKED or IN_PROGRESS
+    if (getState() != NOT_ASKED && expiration_ <= now && expiration_) {
+        setState(EXPIRED);
+    }
+
+    if (getState() == EXPIRED && !expired_ok) {
+        return EXPIRED;
+    }
+
     switch (getState()) {
         case IN_PROGRESS:
+            // Did we receive the address already?
             if (!has_address_[family] && expect_address_[family]) {
                 return IN_PROGRESS;
             }
             // If we do not expect the address, then fall trough to READY
+        case EXPIRED: // If expired_ok, we pretend to be ready
         case READY:
-            // TODO: Check TTL. If it is too old,
-            // set to EXPIRED and fall trough
-            // If we do not have this kind of address, it is unreachable by it
             if (!has_address_[family]) {
                 return UNREACHABLE;
             }
-            break;
-        case EXPIRED:
-            if (expired_ok) {
-                break;
-            }
-            // If expired is not OK, we just return state
+            break; // OK, we give some answers
         case NOT_ASKED:
         case UNREACHABLE:
             // TODO: Check TTL of UNREACHABLE
@@ -333,12 +325,15 @@ NameserverEntry::askIP(shared_ptr<ResolverInterface> resolver,
         // We will request the addresses
 
         // Set internal state first
+        // TODO: We might want to save the addresses somewhere so we do not
+        // lose RTT
         address_.clear();
         setState(IN_PROGRESS);
         has_address_[V4_ONLY] = has_address_[V6_ONLY] = has_address_[ANY_OK] =
             false;
         expect_address_[V4_ONLY] = expect_address_[V6_ONLY] =
             expect_address_[ANY_OK] = true;
+        expiration_ = 0;
 
         // Store the callback
         callbacks_.push_back(CallbackPair(family, callback));
