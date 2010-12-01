@@ -175,9 +175,9 @@ class TestConfigData(unittest.TestCase):
 
     def test_spec_name_list(self):
         name_list = spec_name_list(self.cd.get_module_spec().get_config_spec())
-        self.assertEqual(['item1', 'item2', 'item3', 'item4', 'item5/', 'item6/'], name_list)
+        self.assertEqual(['item1', 'item2', 'item3', 'item4', 'item5', 'item6'], name_list)
         name_list = spec_name_list(self.cd.get_module_spec().get_config_spec(), "", True)
-        self.assertEqual(['item1', 'item2', 'item3', 'item4', 'item5/', 'item6/value1', 'item6/value2'], name_list)
+        self.assertEqual(['item1', 'item2', 'item3', 'item4', 'item5', 'item6/value1', 'item6/value2'], name_list)
         spec_part = find_spec_part(self.cd.get_module_spec().get_config_spec(), "item6")
         name_list = spec_name_list(spec_part, "item6", True)
         self.assertEqual(['item6/value1', 'item6/value2'], name_list)
@@ -193,7 +193,7 @@ class TestConfigData(unittest.TestCase):
         name_list = spec_name_list({ "myModule": config_spec }, "", False)
         self.assertEqual(['myModule/'], name_list)
         name_list = spec_name_list({ "myModule": config_spec }, "", True)
-        self.assertEqual(['myModule/', 'myModule/value1', 'myModule/value2', 'myModule/value3', 'myModule/value4', 'myModule/value5/', 'myModule/value6/v61', 'myModule/value6/v62', 'myModule/value7/', 'myModule/value8/', 'myModule/value9/v91', 'myModule/value9/v92/v92a', 'myModule/value9/v92/v92b'], name_list)
+        self.assertEqual(['myModule/', 'myModule/value1', 'myModule/value2', 'myModule/value3', 'myModule/value4', 'myModule/value5', 'myModule/value6/v61', 'myModule/value6/v62', 'myModule/value7', 'myModule/value8', 'myModule/value9/v91', 'myModule/value9/v92/v92a', 'myModule/value9/v92/v92b'], name_list)
 
         self.assertRaises(ConfigDataError, spec_name_list, 1)
         self.assertRaises(ConfigDataError, spec_name_list, [ 'a' ])
@@ -240,19 +240,19 @@ class TestConfigData(unittest.TestCase):
 
     def test_get_item_list(self):
         name_list = self.cd.get_item_list()
-        self.assertEqual(['item1', 'item2', 'item3', 'item4', 'item5/', 'item6/'], name_list)
+        self.assertEqual(['item1', 'item2', 'item3', 'item4', 'item5', 'item6'], name_list)
         name_list = self.cd.get_item_list("", True)
-        self.assertEqual(['item1', 'item2', 'item3', 'item4', 'item5/', 'item6/value1', 'item6/value2'], name_list)
+        self.assertEqual(['item1', 'item2', 'item3', 'item4', 'item5', 'item6/value1', 'item6/value2'], name_list)
         name_list = self.cd.get_item_list("item6", False)
         self.assertEqual(['item6/value1', 'item6/value2'], name_list)
 
     def test_get_full_config(self):
         full_config = self.cd.get_full_config()
-        self.assertEqual({ "item1": 1, "item2": 1.1, "item3": True, "item4": "test", "item5/": ['a', 'b'], "item6/value1": 'default', 'item6/value2': None}, full_config)
+        self.assertEqual({ "item1": 1, "item2": 1.1, "item3": True, "item4": "test", "item5": ['a', 'b'], "item6/value1": 'default', 'item6/value2': None}, full_config)
         my_config = { "item1": 2, "item2": 2.2, "item3": False, "item4": "asdf", "item5": [ "c", "d" ] }
         self.cd.set_local_config(my_config)
         full_config = self.cd.get_full_config()
-        self.assertEqual({ "item1": 2, "item2": 2.2, "item3": False, "item4": "asdf", "item5/": [ "c", "d" ], "item6/value1": 'default', 'item6/value2': None}, full_config)
+        self.assertEqual({ "item1": 2, "item2": 2.2, "item3": False, "item4": "asdf", "item5": [ "c", "d" ], "item6/value1": 'default', 'item6/value2': None}, full_config)
 
 class TestMultiConfigData(unittest.TestCase):
     def setUp(self):
@@ -441,13 +441,13 @@ class TestMultiConfigData(unittest.TestCase):
         config_items = self.mcd.get_config_item_list(None, False)
         self.assertEqual(['Spec2'], config_items)
         config_items = self.mcd.get_config_item_list(None, True)
-        self.assertEqual(['Spec2/item1', 'Spec2/item2', 'Spec2/item3', 'Spec2/item4', 'Spec2/item5/', 'Spec2/item6/value1', 'Spec2/item6/value2'], config_items)
+        self.assertEqual(['Spec2/item1', 'Spec2/item2', 'Spec2/item3', 'Spec2/item4', 'Spec2/item5', 'Spec2/item6/value1', 'Spec2/item6/value2'], config_items)
         config_items = self.mcd.get_config_item_list("Spec2", True)
-        self.assertEqual(['Spec2/item1', 'Spec2/item2', 'Spec2/item3', 'Spec2/item4', 'Spec2/item5/', 'Spec2/item6/value1', 'Spec2/item6/value2'], config_items)
+        self.assertEqual(['Spec2/item1', 'Spec2/item2', 'Spec2/item3', 'Spec2/item4', 'Spec2/item5', 'Spec2/item6/value1', 'Spec2/item6/value2'], config_items)
         config_items = self.mcd.get_config_item_list("Spec2")
-        self.assertEqual(['Spec2/item1', 'Spec2/item2', 'Spec2/item3', 'Spec2/item4', 'Spec2/item5/', 'Spec2/item6/'], config_items)
+        self.assertEqual(['Spec2/item1', 'Spec2/item2', 'Spec2/item3', 'Spec2/item4', 'Spec2/item5', 'Spec2/item6'], config_items)
         config_items = self.mcd.get_config_item_list("Spec2", True)
-        self.assertEqual(['Spec2/item1', 'Spec2/item2', 'Spec2/item3', 'Spec2/item4', 'Spec2/item5/', 'Spec2/item6/value1', 'Spec2/item6/value2'], config_items)
+        self.assertEqual(['Spec2/item1', 'Spec2/item2', 'Spec2/item3', 'Spec2/item4', 'Spec2/item5', 'Spec2/item6/value1', 'Spec2/item6/value2'], config_items)
 
 if __name__ == '__main__':
     unittest.main()
