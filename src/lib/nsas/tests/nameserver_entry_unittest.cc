@@ -59,25 +59,18 @@ protected:
     };
 private:
     void fillSet(shared_ptr<TestResolver> resolver, size_t index,
-        const BasicRRset *set)
+        shared_ptr<BasicRRset> set)
     {
         if (set) {
-            shared_ptr<BasicRRset> new_set(new BasicRRset(set->getName(),
-                set->getClass(), set->getType(), set->getTTL()));
-            for(RdataIteratorPtr i(set->getRdataIterator()); !i->isLast();
-                i->next())
-            {
-                new_set->addRdata(i->getCurrent());
-            }
-            resolver->requests[index].second->success(new_set);
+            resolver->requests[index].second->success(set);
         } else {
             resolver->requests[index].second->failure();
         }
     }
 protected:
     /// Fills the nameserver entry with data trough ask IP
-    void fillNSEntry(shared_ptr<NameserverEntry> entry, const BasicRRset* rrv4,
-        const BasicRRset* rrv6)
+    void fillNSEntry(shared_ptr<NameserverEntry> entry,
+        shared_ptr<BasicRRset> rrv4, shared_ptr<BasicRRset> rrv6)
     {
         // Prepare data to run askIP
         shared_ptr<TestResolver> resolver(new TestResolver);
@@ -112,7 +105,7 @@ TEST_F(NameserverEntryTest, InitialRTT) {
     // Get the RTT for the different addresses
     shared_ptr<NameserverEntry> alpha(new NameserverEntry(EXAMPLE_CO_UK,
         RRClass::IN()));
-    fillNSEntry(alpha, &rrv4_, &rrv6_);
+    fillNSEntry(alpha, rrv4_, rrv6_);
     NameserverEntry::AddressVector vec;
     alpha->getAddresses(vec);
 
@@ -142,7 +135,7 @@ TEST_F(NameserverEntryTest, SetRTT) {
     // Get the RTT for the different addresses
     shared_ptr<NameserverEntry> alpha(new NameserverEntry(EXAMPLE_CO_UK,
         RRClass::IN()));
-    fillNSEntry(alpha, &rrv4_, &rrv6_);
+    fillNSEntry(alpha, rrv4_, rrv6_);
     NameserverEntry::AddressVector vec;
     alpha->getAddresses(vec);
 
@@ -177,7 +170,7 @@ TEST_F(NameserverEntryTest, Unreachable) {
     // Get the RTT for the different addresses
     shared_ptr<NameserverEntry> alpha(new NameserverEntry(EXAMPLE_CO_UK,
         RRClass::IN()));
-    fillNSEntry(alpha, &rrv4_, &rrv6_);
+    fillNSEntry(alpha, rrv4_, rrv6_);
     NameserverEntry::AddressVector vec;
     alpha->getAddresses(vec);
 
@@ -220,22 +213,22 @@ TEST_F(NameserverEntryTest, ExpirationTime) {
     // Test where there is a single TTL
     shared_ptr<NameserverEntry> alpha(new NameserverEntry(EXAMPLE_CO_UK,
         RRClass::IN()));
-    fillNSEntry(alpha, &rrv4_, NULL);
+    fillNSEntry(alpha, rrv4_, shared_ptr<BasicRRset>());
     expiration = alpha->getExpiration();
-    EXPECT_EQ(expiration, curtime + rrv4_.getTTL().getValue());
+    EXPECT_EQ(expiration, curtime + rrv4_->getTTL().getValue());
 
     shared_ptr<NameserverEntry> beta(new NameserverEntry(EXAMPLE_CO_UK,
         RRClass::IN()));
-    fillNSEntry(beta, NULL, &rrv6_);
+    fillNSEntry(beta, shared_ptr<BasicRRset>(), rrv6_);
     expiration = beta->getExpiration();
-    EXPECT_EQ(expiration, curtime + rrv6_.getTTL().getValue());
+    EXPECT_EQ(expiration, curtime + rrv6_->getTTL().getValue());
 
     // Test where there are two different TTLs
-    EXPECT_NE(rrv4_.getTTL().getValue(), rrv6_.getTTL().getValue());
+    EXPECT_NE(rrv4_->getTTL().getValue(), rrv6_->getTTL().getValue());
     shared_ptr<NameserverEntry> gamma(new NameserverEntry(EXAMPLE_CO_UK,
         RRClass::IN()));
-    fillNSEntry(gamma, &rrv4_, &rrv6_);
-    uint32_t minttl = min(rrv4_.getTTL().getValue(), rrv6_.getTTL().getValue());
+    fillNSEntry(gamma, rrv4_, rrv6_);
+    uint32_t minttl = min(rrv4_->getTTL().getValue(), rrv6_->getTTL().getValue());
     expiration = gamma->getExpiration();
     EXPECT_EQ(expiration, curtime + minttl);
 
@@ -245,8 +238,8 @@ TEST_F(NameserverEntryTest, ExpirationTime) {
 
     shared_ptr<NameserverEntry> delta(new NameserverEntry(EXAMPLE_CO_UK,
         RRClass::IN()));
-    fillNSEntry(gamma, &rrv4_, NULL);
-    EXPECT_GT(delta->getExpiration(), rrv4_.getTTL().getValue());
+    fillNSEntry(delta, rrv4_, shared_ptr<BasicRRset>());
+    EXPECT_GT(delta->getExpiration(), rrv4_->getTTL().getValue());
 }
 
 
