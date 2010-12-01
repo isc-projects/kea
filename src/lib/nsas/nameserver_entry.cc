@@ -187,6 +187,8 @@ class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
             type_(type)
         { }
         virtual void success(shared_ptr<AbstractRRset> response) {
+            time_t now = time(NULL);
+
             Lock lock(entry_->mutex_);
 
             vector<AddressEntry> entries;
@@ -199,10 +201,6 @@ class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
                 return;
             }
 
-            /**
-             * TODO Move to common function, this is similar to
-             * what is in constructor.
-             */
             RdataIteratorPtr i(response->getRdataIterator());
             // TODO Remove at merge with trunk
             i->first();
@@ -230,6 +228,14 @@ class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
                 // Put the addresses there
                 entry_->address_.insert(entry_->address_.end(),
                     entries.begin(), entries.end());
+                // Update the expiration time. If it is 0, it means we
+                // did not set it yet, so reset
+                time_t expiration(now + response->getTTL().getValue());
+                if (entry_->expiration_) {
+                    entry_->expiration_ = min(entry_->expiration_, expiration);
+                } else {
+                    entry_->expiration_ = expiration;
+                }
                 // Run the right callbacks
                 dispatchCallbacks(lock);
             }
