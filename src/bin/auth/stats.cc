@@ -57,20 +57,17 @@ CounterImpl::~CounterImpl() {
 }
 
 void
-CounterImpl::inc(const Counter::CounterType type)
-{
+CounterImpl::inc(const Counter::CounterType type) {
     ++counters_->at(type);
 }
 
 asio_link::IntervalTimer::Callback
-CounterImpl::getCallback()
-{
+CounterImpl::getCallback() {
     return (boost::bind(&CounterImpl::sendStats, this));
 }
 
 void
-CounterImpl::sendStats()
-{
+CounterImpl::sendStats() {
     if (stats_session_ == NULL) {
         if (verbose_mode_) {
             std::cerr << "[b10-auth] "
@@ -130,8 +127,7 @@ Counter::~Counter() {
 }
 
 asio_link::IntervalTimer::Callback
-Counter::getCallback()
-{
+Counter::getCallback() {
     return (impl_->getCallback());
 }
 
