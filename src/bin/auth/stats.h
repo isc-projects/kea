@@ -31,9 +31,9 @@ class CounterImpl;
 /// \brief A query counter.
 ///
 /// \c Counter is a query counter class. It holds query counter
-/// and provide an interface to increment the counter.
+/// and provides an interface to increment the counter.
 /// This class also provides a function to send information to
-/// statistics (b10-stats).
+/// statistics (most commonly the b10-stats program).
 ///
 /// This class uses pimpl idiom and hides detailed implementation.
 /// This class is constructed on startup of the server, so
@@ -42,18 +42,18 @@ class Counter {
 private:
     CounterImpl* impl_;
 public:
-    // Enum for the type of counter
-    // COUNTER_UDP: counter for UDP queries
-    // COUNTER_TCP: counter for TCP queries
+    /// Enum for the type of counter
     enum CounterType {
-        COUNTER_UDP = 0,
-        COUNTER_TCP = 1,
-        COUNTER_TYPES = 2
+        COUNTER_UDP = 0, ///< counter for UDP queries
+        COUNTER_TCP = 1, ///< counter for TCP queries
+        COUNTER_TYPES = 2 ///< The number of defined counters
     };
+
     /// The constructor.
     ///
-    /// verbose_mode references verbose_mode_ of AuthSrvImpl
+    /// \param verbose_mode references verbose_mode_ of AuthSrvImpl
     Counter(const bool& verbose_mode);
+
     /// The destructor.
     ~Counter();
 
@@ -65,10 +65,10 @@ public:
     void inc(const CounterType type);
 
     /// \brief Get the function to send statistics information
-    /// to Statistics module
+    /// to a Statistics module
     ///
     /// The returned function is inteneded to be called
-    /// perioically.
+    /// periodically.
     ///
     /// \return \c asio_link::IntervalTimer::Callback points
     /// to a function to send statistics
@@ -84,3 +84,7 @@ public:
 } // statistics
 
 #endif // __STATS_H
+
+// Local Variables: 
+// mode: c++
+// End: 
