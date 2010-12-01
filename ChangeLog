@@ -32,7 +32,7 @@ bind10-devel-20101201 released on December 01, 2010
 	Note: this fix is incomplete and the loadzone would still be
 	confused if the owner name is a syntactically indistinguishable
 	from a TTL specification.  This is part of a more general issue
-	and will be addressed in Trac #413.  (Trac #411, svn r3599)
+	and will be addressed in Trac #413. (Trac #411, svn r3599)
 
   118.	[func]		jinmei
 	src/lib/dns: changed the interface of
@@ -93,7 +93,7 @@ bind10-devel-20101201 released on December 01, 2010
   109.  [func]		naokikambe
 	Added the initial version of the stats module for the statistics
 	feature of BIND 10, which supports the restricted features and
-	items and reports via bindctl command (Trac #191, r3218)
+	items and reports via bindctl command. (Trac #191, r3218)
 	Added the document of the stats module, which is about how stats
 	module collects the data (Trac #170, [wiki:StatsModule])
 
@@ -177,7 +177,7 @@ bind10-devel-20100917 released on September 17, 2010
   93.	[bug]		jinmei
 	lib/datasrc: A DS query could crash the library (and therefore,
 	e.g. the authoritative server) if some RR of the same apex name
-	is stored in the hot spot cache.  (Trac #307, svn r2923)
+	is stored in the hot spot cache. (Trac #307, svn r2923)
 
   92.	[func]*		jelte
 	libdns_python (the python wrappers for libdns++) has been renamed
@@ -357,7 +357,7 @@ bind10-devel-20100701 released on July 1, 2010
   66.  [bug]		each
 	Check for duplicate RRsets before inserting data into a message
 	section; this, among other things, will prevent multiple copies
-	of the same CNAME from showing up when there's a loop.  (Trac #69,
+	of the same CNAME from showing up when there's a loop. (Trac #69,
 	svn r2350)
     
   65.  [func]		shentingting
@@ -479,7 +479,7 @@ bind10-devel-20100602 released on June 2, 2010
 	#205, svn r1957)
 
   44.   [build]         jreed
-	Install headers for libdns and libexception.  (Trac #68,
+	Install headers for libdns and libexception. (Trac #68,
 	svn r1941)
 
   43.   [func]          jelte
@@ -487,7 +487,7 @@ bind10-devel-20100602 released on June 2, 2010
 
   42.   [func]          jelte
 	lib/python/isc/config:      Make temporary file with python
-	tempfile module instead of manual with fixed name.  (Trac
+	tempfile module instead of manual with fixed name. (Trac
 	#184, svn r1859)
 
   41.   [func]          jelte
@@ -495,7 +495,7 @@ bind10-devel-20100602 released on June 2, 2010
 
   40.   [build]         jreed
 	Report detected features and configure settings at end of
-	configure output.  (svn r1836)
+	configure output. (svn r1836)
 
   39.   [func]*         each
 	Renamed libauth to libdatasrc.
@@ -508,7 +508,7 @@ bind10-devel-20100602 released on June 2, 2010
 	(Trac #135, #151, #134, svn r1797)
 
   37.   [build]         jinmei
-	Check for the availability of python-config.  (Trac #159,
+	Check for the availability of python-config. (Trac #159,
 	svn r1794)
 
   36.	[func]		shane
@@ -553,7 +553,7 @@ bind10-devel-20100421 released on April 21, 2010
 
   27.	[build]
 	Add missing copyright license statements to various source
-	files.  (svn r1750)
+	files. (svn r1750)
 
   26.	[func]
 	Use PACKAGE_STRING (name + version) from config.h instead
