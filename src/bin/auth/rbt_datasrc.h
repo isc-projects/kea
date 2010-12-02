@@ -61,10 +61,12 @@ class RBTree;
 /// includes all the subdomains of this node.
 /// The name stored in the node is relative related to its parent node.
 /// One special kind of node is non-terminal node
-/// which has subdomains with RRset but itself doesn't have any RRsets.
+/// which has subdomains with RRset but itself doesn't have any RRsets. and typically
+/// this kind of node is shadow to end user
 ///
-/// \b Note: \c RBNode should be created or destroyed only by \c RBTree so
-/// constructor and destructor function aren't exposed.
+/// \note: \c RBNode should be created or destroyed only by \c RBTree so
+/// constructor and destructor function aren't exposed. The memory management of each
+/// node will be handled by a pool, so the node deconstruction will do nothing
 template <typename T>
 class RBNode : public boost::noncopyable {
 public:
@@ -112,9 +114,10 @@ private:
         return (&null_node);
     }
 
-    /// \brief copy the DNS related data to another node except the sub domain
-    /// tree
-    void cloneDNSData(RBNode<T>& node);
+    /// \brief copy the the data saved in the node into another node
+    /// the data copied exclude the rbtree related data like left,right,parent 
+    /// and color
+    void copyContent(RBNode<T>& node);
 
     /// data to maintain the rbtree balance
     RBNode<T>*  parent_;
@@ -122,19 +125,30 @@ private:
     RBNode<T>*  right_;
     RBTreeColor color_;
 
-    /// data to carry dns info
+
     isc::dns::Name     name_;
     /// this will make type T should have default constructor
     /// without any parameters
     T           data_;
+    /// the down pointer points to the root node of sub domains of current 
+    /// domain 
+    /// \par Adding down pointer to \c RBNode is for two purpose:
+    /// \li Accelerate the search process, with sub domain tree, it split the
+    /// big flat tree into several hierarchy trees
+    /// \li It save memory useage, so same label won't be saved several times 
     RBNode<T>*  down_;
 
     ///the node won't be returned to end user, if the node is shadow.
     ///shadow node is created by rbtree for inner use, it's opaque to
-    ///end user.
+    ///end user. 
+    /// \par shadow node is the node with sub domain tree, but itself don't
+    /// contain any data, so the \c down_ pointer of a shadow node cannot be NULL
     bool        is_shadow_;
 };
 
+
+// typically each node should has a name associate with it
+// this construction is only used to create \c NULLNODE
 template <typename T>
 RBNode<T>::RBNode() :
     parent_(this),
@@ -188,7 +202,7 @@ RBNode<T>::successor()const {
 
 template <typename T>
 void
-RBNode<T>::cloneDNSData(RBNode<T>& node) {
+RBNode<T>::copyContent(RBNode<T>& node) {
     node.name_ = name_;
     node.data_ = data_;
     node.down_ = down_;
@@ -243,11 +257,11 @@ public:
 
     /// \brief Get the total node count in the tree
     /// the node count including the node created common suffix node,
-    /// this function will only be used when debuging
+    /// this function will only be used for debuging
     int getNodeCount() const { return (node_count_);}
 
 
-    /// \brief Get the total names inserted into the tree
+    /// \brief Get the total names has been inserted into the tree
     int getNameCount() const { return (name_count_);}
     //@}
 
@@ -285,14 +299,22 @@ public:
 
     /// \brief iterator of domain tree, mainly used to walk throught the whole tree
     /// in ascending order according to domain name
-    /// \todo make find and insert in domain tree return iterator not rbnode pointer
+    /// \todo make find and insert in domain tree return iterator not rbnode pointer,
+    /// \note the iterator should know the node it points to and the tree the node 
+    /// belongs to, since the tree can only search from up to down, the up nodes 
+    /// has travelled has to be stored, the iterator has similar functionality as 
+    /// dns_rbtnodechain in bind9. Keep the constuction and deconstruction private is
+    /// becuase there is no default iterator.
     class Iterator : public std::iterator<std::input_iterator_tag, RBNode<T> >
     {
         friend class RBTree<T>;
         public:
+            /// copy and assign constructor 
+            /// \name
+            //@{
             Iterator(const Iterator& itr);
             Iterator& operator=(const Iterator& itr);
-
+            //@}
 
             const RBNode<T>& operator*() const { return (*node_);}
             RBNode<T>& operator*()             { return (*node_);}
@@ -307,7 +329,10 @@ public:
             bool operator!=(const Iterator &itr) const { return !(*this == itr); }
 
         private:
+            /// constructor
             Iterator(RBNode<T> *node, RBTree<T> *tree, RBNode<T> **nodes_to_root_path = NULL, int path_len = 0);
+            /// the difference between \c successor and \c nextVisibleSuccessor is that, \c nextVisibleSuccessor will
+            /// travel in the whole tree including the down trees, and also it will return non-shadow node
             RBNode<T> *nextVisibleSuccessor(RBNode<T> *node);
 
             RBNode<T>* node_;
@@ -317,12 +342,15 @@ public:
     };
 
     friend class Iterator;
+    /// \name iterator related functions
+    //@{
     /// \brief begin point to the smallest visible node in the tree
     Iterator begin() const;
     const Iterator begin();
 
     Iterator end()  const{ return (Iterator(NULLNODE, const_cast<RBTree<T>*>(this)));}
     const Iterator end() { return (Iterator(NULLNODE, this));}
+    //@}
 
 private:
     /// \name RBTree balance functions
@@ -360,6 +388,8 @@ private:
 
     /// Merge node with its down node, down node will be deleted and the data of
     /// down node will move to up node.
+    /// \note the precondition of this function is that, the down tree of node
+    /// has only one node and current node is shadow
     void nodeFussion(RBNode<T>& node);
 
     /// return the node with smallest name, according to DNS domain name order
@@ -369,7 +399,7 @@ private:
 
     RBNode<T>*  root_;
     RBNode<T>*  NULLNODE;
-    /// the node count of current tree except the sub domain trees
+    /// the node count of current tree 
     unsigned int node_count_;
     /// the count of real name user inserted into the domain tree
     unsigned int name_count_;
@@ -435,6 +465,7 @@ RBTree<T>::createNode(const isc::dns::Name& name) {
 template <typename T>
 void
 RBTree<T>::freeNode(RBNode<T>* node) {
+    // NULLNODE isn't alloc in heap
     assert(node != NULLNODE);
     node_pool_.destroy(node);
 }
@@ -651,7 +682,7 @@ RBTree<T>::nodeFission(RBNode<T>& node, const isc::dns::Name& base_name) {
         return (NOMEM);
     }
 
-    node.cloneDNSData(*down_node);
+    node.copyContent(*down_node);
     node.name_ = base_name;
     node.down_ = down_node;
     node.is_shadow_ = true;
@@ -827,7 +858,7 @@ RBTree<T>::eraseNode(RBNode<T>** root, RBNode<T>* target) {
     }
 
     if (to_delete != target) {
-        to_delete->cloneDNSData(*target);
+        to_delete->copyContent(*target);
         to_delete->down_ = NULL;
     }
 
@@ -850,7 +881,7 @@ RBTree<T>::nodeFussion(RBNode<T>& up_node) {
 
     const isc::dns::Name merged_name =
     down_node->name_.concatenate(up_node.name_);
-    down_node->cloneDNSData(up_node);
+    down_node->copyContent(up_node);
     up_node.down_ = NULL;
     up_node.name_ = merged_name;
     up_node.is_shadow_ = false;
