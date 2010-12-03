@@ -64,11 +64,7 @@ public:
     ZoneEntry(boost::shared_ptr<ResolverInterface> resolver,
         const std::string& name, const isc::dns::RRClass& class_code,
         boost::shared_ptr<HashTable<NameserverEntry> > nameserver_table,
-        boost::shared_ptr<LruList<NameserverEntry> > nameserver_lru) :
-        expiry_(0),
-        name_(name), class_code_(class_code), resolver_(resolver),
-        nameserver_table_(nameserver_table), nameserver_lru_(nameserver_lru)
-    {}
+        boost::shared_ptr<LruList<NameserverEntry> > nameserver_lru);
 
     /// \return Name of the zone
     std::string getName() const {
@@ -131,7 +127,8 @@ private:
     // If lock is provided, it is locked mutex_ and will be used. If not,
     // will use its own.
     void process(boost::shared_ptr<AddressRequestCallback> callback,
-         AddressFamily family, NameserverEntry* nameserver,
+         AddressFamily family, boost::shared_ptr<NameserverEntry> nameserver,
+         boost::shared_ptr<ZoneEntry> self,
          boost::shared_ptr<boost::mutex::scoped_lock> lock =
          boost::shared_ptr<boost::mutex::scoped_lock>());
     // Resolver we use
@@ -144,6 +141,14 @@ private:
     class ResolverCallback;
     // It has direct access to us
     friend class ResolverCallback;
+    // Guard class to eliminate missing finally
+    class ProcessGuard;
+    friend class ProcessGuard;
+    // Are we in the process method?
+    bool in_process_[ADDR_REQ_MAX];
+    // Callback from nameserver entry
+    class NameserverCallback;
+    // And it can get into our internals as well (call process)
 };
 
 } // namespace nsas
