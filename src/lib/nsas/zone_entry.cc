@@ -36,18 +36,6 @@ typedef mutex::scoped_lock Lock; // Local lock, nameservers not locked
 typedef shared_ptr<AddressRequestCallback> CallbackPtr;
 }
 
-ZoneEntry::ZoneEntry(shared_ptr<ResolverInterface> resolver,
-    const AbstractRRset& set,
-    shared_ptr<HashTable<NameserverEntry> > nameserver_table,
-    shared_ptr<LruList<NameserverEntry> > nameserver_lru) :
-    classCode_(set.getClass()),
-    resolver_(resolver),
-    nameserver_table_(nameserver_table),
-    nameserver_lru_(nameserver_lru)
-{
-    // TODO get rid of this function
-}
-
 bool
 ZoneEntry::addCallback(CallbackPtr callback,  AddressFamily family,
     shared_ptr<ZoneEntry> self)
