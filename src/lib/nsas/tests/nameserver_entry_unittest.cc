@@ -76,7 +76,7 @@ protected:
         shared_ptr<TestResolver> resolver(new TestResolver);
         shared_ptr<Callback> callback(new Callback);
         // Let it ask for data
-        entry->askIP(resolver, callback, ANY_OK, entry);
+        entry->askIP(resolver, callback, ANY_OK);
         // Check it really asked and sort the queries
         resolver->asksIPs(Name(entry->getName()), 0, 1);
         // Respond with answers
@@ -256,7 +256,7 @@ TEST_F(NameserverEntryTest, IPCallbacks) {
     shared_ptr<Callback> callback(new Callback);
     shared_ptr<TestResolver> resolver(new TestResolver);
 
-    entry->askIP(resolver, callback, ANY_OK, entry);
+    entry->askIP(resolver, callback, ANY_OK);
     // Ensure it becomes IN_PROGRESS
     EXPECT_EQ(Fetchable::IN_PROGRESS, entry->getState());
     // Now, there should be two queries in the resolver
@@ -264,12 +264,12 @@ TEST_F(NameserverEntryTest, IPCallbacks) {
     ASSERT_TRUE(resolver->asksIPs(Name(EXAMPLE_CO_UK), 0, 1));
 
     // Another one might ask
-    entry->askIP(resolver, callback, V4_ONLY, entry);
+    entry->askIP(resolver, callback, V4_ONLY);
     // There should still be only two queries in the resolver
     ASSERT_EQ(2, resolver->requests.size());
 
     // Another one, with need of IPv6 address
-    entry->askIP(resolver, callback, V6_ONLY, entry);
+    entry->askIP(resolver, callback, V6_ONLY);
 
     // Answer one and see that the callbacks are called
     resolver->answer(0, Name(EXAMPLE_CO_UK), RRType::A(),
@@ -306,7 +306,7 @@ TEST_F(NameserverEntryTest, IPCallbacksUnreachable) {
     shared_ptr<TestResolver> resolver(new TestResolver);
 
     // Ask for its IP
-    entry->askIP(resolver, callback, ANY_OK, entry);
+    entry->askIP(resolver, callback, ANY_OK);
     // Check it asks the resolver
     EXPECT_EQ(2, resolver->requests.size());
     ASSERT_TRUE(resolver->asksIPs(Name(EXAMPLE_CO_UK), 0, 1));

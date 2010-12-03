@@ -304,19 +304,18 @@ class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
 
 void
 NameserverEntry::askIP(shared_ptr<ResolverInterface> resolver,
-    const RRType& type, AddressFamily family, shared_ptr<NameserverEntry> self)
+    const RRType& type, AddressFamily family)
 {
     QuestionPtr question(new Question(Name(getName()), RRClass(getClass()),
-         type));
-    shared_ptr<ResolverCallback> callback(new ResolverCallback(self, family,
-         type));
+        type));
+    shared_ptr<ResolverCallback> callback(new ResolverCallback(
+        shared_from_this(), family, type));
     resolver->resolve(question, callback);
 }
 
 void
 NameserverEntry::askIP(shared_ptr<ResolverInterface> resolver,
-    shared_ptr<Callback> callback, AddressFamily family,
-    shared_ptr<NameserverEntry> self)
+    shared_ptr<Callback> callback, AddressFamily family)
 {
     Lock lock(mutex_);
 
@@ -339,14 +338,14 @@ NameserverEntry::askIP(shared_ptr<ResolverInterface> resolver,
         callbacks_.push_back(CallbackPair(family, callback));
 
         // Ask for both types of addresses
-        askIP(resolver, RRType::A(), V4_ONLY, self);
-        askIP(resolver, RRType::AAAA(), V6_ONLY, self);
+        askIP(resolver, RRType::A(), V4_ONLY);
+        askIP(resolver, RRType::AAAA(), V6_ONLY);
     } else {
         // We already asked. Do we expect this address type still to come?
         if (!expect_address_[family]) {
             // We do not expect it to come, dispatch right away
             lock.unlock();
-            (*callback)(self);
+            (*callback)(shared_from_this());
             return;
         } else {
             // It will come in future, store the callback until then

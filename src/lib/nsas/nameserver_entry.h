@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include <boost/thread.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 #include <exceptions/exceptions.h>
 #include <dns/rrset.h>
@@ -83,8 +84,12 @@ class ResolverInterface;
 ///
 /// As this object will be stored in the nameserver address store LRU list,
 /// it is derived from the LRU list entry class.
+///
+/// It uses shared_from_this in its methods. It must live inside a shared_ptr.
 
-class NameserverEntry : public NsasEntry<NameserverEntry>, public Fetchable {
+class NameserverEntry : public NsasEntry<NameserverEntry>, public Fetchable,
+    public boost::enable_shared_from_this<NameserverEntry>
+{
 public:
     /// List of addresses associated with this nameserver
     typedef std::vector<AddressEntry>   AddressVector;
@@ -205,16 +210,12 @@ public:
      *     not change which adresses are requested, but the callback might
      *     be executed when at last one requested type is available (eg. not
      *     waiting for the other one).
-     * \param self Since we need to pass a shared pointer to the resolver, we
-     *     need to get one. However, we can not create one from this, because
-     *     it would have different reference count. So the caller must pass it.
      * \return The state the entry is currently in. It can return UNREACHABLE
      *     even when there are addresses, if there are no addresses for this
      *     family.
      */
     void askIP(boost::shared_ptr<ResolverInterface> resolver,
-        boost::shared_ptr<Callback> callback, AddressFamily family,
-        boost::shared_ptr<NameserverEntry> self);
+        boost::shared_ptr<Callback> callback, AddressFamily family);
     //@}
 
 private:
@@ -236,8 +237,7 @@ private:
     std::vector<CallbackPair> callbacks_;
     /// \short Private version that does the actual asking of one address type
     void askIP(boost::shared_ptr<ResolverInterface> resolver,
-        const isc::dns::RRType&, AddressFamily,
-        boost::shared_ptr<NameserverEntry>);
+        const isc::dns::RRType&, AddressFamily);
 };
 
 }   // namespace dns

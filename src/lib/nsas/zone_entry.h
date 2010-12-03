@@ -21,6 +21,7 @@
 #include <vector>
 #include <boost/thread.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 #include <dns/rrset.h>
 
@@ -45,8 +46,12 @@ class AddressRequestCallback;
 /// Although the interface is simple, the internal processing is fairly
 /// complicated, in that the class takes account of triggering fetches for
 /// addresses of nameservers when the address records expire.
+///
+/// It uses shared_from_this in its methods. It must live inside a shared_ptr.
 
-class ZoneEntry : public NsasEntry<ZoneEntry>, public Fetchable {
+class ZoneEntry : public NsasEntry<ZoneEntry>, public Fetchable,
+    public boost::enable_shared_from_this<ZoneEntry>
+{
 public:
 
     /**
@@ -89,14 +94,9 @@ public:
      *
      * \param callback The callback itself.
      * \param family Which address family is acceptable as an answer?
-     * \param self A shared pointer to this zone entry. It is not possible to
-     *     create one from C++ this pointer, since another shared pointer
-     *     will already exist at that point, however it is needed to callback.
-     *     When calling function on the zone entry, you should already have
-     *     one.
      */
     void addCallback(boost::shared_ptr<AddressRequestCallback>
-        callback, AddressFamily family, boost::shared_ptr<ZoneEntry> self);
+        callback, AddressFamily family);
 
     /// \short Protected members, so they can be accessed by tests.
     //@{
@@ -128,7 +128,6 @@ private:
     // will use its own. It might unlock the lock.
     void process(boost::shared_ptr<AddressRequestCallback> callback,
          AddressFamily family, boost::shared_ptr<NameserverEntry> nameserver,
-         boost::shared_ptr<ZoneEntry> self,
          boost::shared_ptr<boost::mutex::scoped_lock> lock =
          boost::shared_ptr<boost::mutex::scoped_lock>());
     // Resolver we use
