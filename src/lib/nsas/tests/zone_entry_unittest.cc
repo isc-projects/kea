@@ -160,9 +160,9 @@ TEST_F(ZoneEntryTest, CallbacksAnswered) {
     EXPECT_NO_THROW(resolver_->answer(2, ns_name_, RRType::AAAA(),
         rdata::in::AAAA("2001:db8::1")));
     // This should answer the third callback
+    EXPECT_EQ(0, callback_->unreachable_count_);
     ASSERT_EQ(3, callback_->successes_.size());
     EXPECT_TRUE(IOAddress("2001:db8::1").equal(callback_->successes_[2]));
-    EXPECT_EQ(0, callback_->unreachable_count_);
     // It should think it is ready
     EXPECT_EQ(Fetchable::READY, zone->getState());
     // When we ask something more, it should be answered right away
