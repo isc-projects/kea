@@ -17,7 +17,6 @@
 #include <boost/thread.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/foreach.hpp>
-#include <boost/random.hpp>
 
 #include <config.h>
 #include <dns/rdataclass.h>
@@ -134,30 +133,6 @@ NameserverAddressStore::lookup(const std::string& zone, uint16_t class_code,
 }
 
 namespace {
-
-mutex randMutex;
-
-size_t
-randIndex(size_t count) {
-    // We need to lock the global generator
-    // TODO If there's contention locking, we might want a generator
-    // for each thread?
-    mutex::scoped_lock lock(randMutex);
-    // This seems to be enough to use pseudo-random generator and according
-    // to boost docs, this one is fast.
-    static rand48 generator;
-    return variate_generator<rand48&, uniform_int<size_t> >(generator,
-        uniform_int<size_t>(0, count - 1))();
-}
-
-asiolink::IOAddress
-chooseAddress(const NameserverEntry::AddressVector& addresses) {
-    // TODO Something little bit more inteligent than just picking the first
-    // one
-    assert(!addresses.empty()); // Should not be called with empty list
-    return addresses.front().getAddress();
-}
-
 }
 
 // TODO Pass a nameserver that is responsible for this, as it is not
