@@ -197,9 +197,9 @@ TEST_F(ZoneEntryTest, CallbacksAOnly) {
     EXPECT_EQ(0, callback_->successes_.size());
     EXPECT_EQ(1, callback_->unreachable_count_);
     // Answer the A one and see it answers what can be answered
-    ASSERT_EQ(2, callback_->successes_.size());
     EXPECT_NO_THROW(resolver_->answer(1, ns_name_, RRType::A(),
         rdata::in::A("192.0.2.1")));
+    ASSERT_EQ(2, callback_->successes_.size());
     EXPECT_TRUE(IOAddress("192.0.2.1").equal(callback_->successes_[0]));
     EXPECT_TRUE(IOAddress("192.0.2.1").equal(callback_->successes_[1]));
     EXPECT_EQ(1, callback_->unreachable_count_);

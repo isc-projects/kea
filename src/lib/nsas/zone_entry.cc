@@ -251,6 +251,24 @@ class ZoneEntry::NameserverCallback : public NameserverEntry::Callback {
 };
 
 void
+ZoneEntry::dispatchFailures(AddressFamily family, shared_ptr<Lock> lock) {
+    // We extract all the callbacks
+    vector<CallbackPtr> callbacks;
+    if (family == ADDR_REQ_MAX) {
+        move(callbacks_[ANY_OK], callbacks_[V4_ONLY]);
+        move(callbacks_[ANY_OK], callbacks_[V6_ONLY]);
+        family = ANY_OK;
+    }
+    callbacks.swap(callbacks_[family]);
+    // We want to call them not locked, so we both do not block the
+    // lock and allow them to call our functions
+    lock->unlock();
+    BOOST_FOREACH(const CallbackPtr& callback, callbacks) {
+        callback->unreachable();
+    }
+}
+
+void
 ZoneEntry::process(CallbackPtr callback, AddressFamily family,
     shared_ptr<NameserverEntry> nameserver, shared_ptr<ZoneEntry> self,
     shared_ptr<Lock> lock)
@@ -272,20 +290,7 @@ ZoneEntry::process(CallbackPtr callback, AddressFamily family,
         case EXPIRED:
             return;
         case UNREACHABLE: {
-            // We extract all the callbacks
-            vector<CallbackPtr> callbacks;
-            if (family == ADDR_REQ_MAX) {
-                move(callbacks_[ANY_OK], callbacks_[V4_ONLY]);
-                move(callbacks_[ANY_OK], callbacks_[V6_ONLY]);
-                family = ANY_OK;
-            }
-            callbacks.swap(callbacks_[family]);
-            // We want to call them not locked, so we both do not block the
-            // lock and allow them to call our functions
-            lock->unlock();
-            BOOST_FOREACH(const CallbackPtr& callback, callbacks) {
-                callback->unreachable();
-            }
+            dispatchFailures(family, lock);
             // And we do nothing more now
             return;
         }
@@ -381,12 +386,21 @@ ZoneEntry::process(CallbackPtr callback, AddressFamily family,
                 } else if (!addresses.empty()) {
                     // Extract the callbacks
                     vector<CallbackPtr> to_execute;
+                    // FIXME: Think of a solution where we do not lose
+                    // any callbacks upon exception
                     to_execute.swap(callbacks_[family]);
 
                     // Unlock, the callbacks might want to call us
+                    lock->unlock();
+
+                    // Run the callbacks
                     BOOST_FOREACH(const CallbackPtr& callback, to_execute) {
                         callback->success(chooseAddress(addresses));
                     }
+                    return;
+                } else if (!pending) {
+                    dispatchFailures(family, lock);
+                    return;
                 }
             }
             return;
