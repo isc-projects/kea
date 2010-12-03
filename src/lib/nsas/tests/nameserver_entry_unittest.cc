@@ -323,4 +323,10 @@ TEST_F(NameserverEntryTest, IPCallbacksUnreachable) {
     EXPECT_EQ(0, addresses.size());
 }
 
+/*
+ * TODO: There should be some more tests. What happens if it times out, then
+ * the data are the same or different. What if the resolver answers directly
+ * from within the call (recurses)? Does it still work?
+ */
+
 }   // namespace
