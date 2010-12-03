@@ -51,9 +51,9 @@ class ZoneEntry : public NsasEntry<ZoneEntry>, public Fetchable {
 public:
 
     /**
-     * \brief Constructor where no NS records are supplied
+     * \brief Constructor.
      *
-     * It is here mostly for testing purposes.
+     * It asks the resolver any needed questions to get the nameservers.
      *
      * \param resolver The resolver used to ask for IP addresses
      * \param name Name of the zone
@@ -63,31 +63,12 @@ public:
      *     everything)
      */
     ZoneEntry(boost::shared_ptr<ResolverInterface> resolver,
-        const std::string& name, uint16_t class_code,
+        const std::string& name, const isc::dns::RRClass& class_code,
         boost::shared_ptr<HashTable<NameserverEntry> > nameserver_table,
         boost::shared_ptr<LruList<NameserverEntry> > nameserver_lru) :
-        name_(name), classCode_(class_code), resolver_(resolver),
+        name_(name), class_code_(class_code), resolver_(resolver),
         nameserver_table_(nameserver_table), nameserver_lru_(nameserver_lru)
     {}
-
-    /**
-     * \brief Constructor
-     *
-     * Creates a zone entry object with an RRset representing the nameservers.
-     *
-     * \param resolver The resolver used to ask for IP addresses
-     * \param authority Specifies the name, code and nameservers of this zone.
-     * \param nameserver_table Hash table of existing nameserves and a place
-     *     where new ones will be put.
-     * \param nameserver_lru The lru where the nameservers will be added or
-     *     touched.
-     * \todo This might be completely unneeded if NSAS uses resolver for
-     *     everything.
-     */
-    ZoneEntry(boost::shared_ptr<ResolverInterface> resolver,
-        const isc::dns::AbstractRRset& authority,
-        boost::shared_ptr<HashTable<NameserverEntry> > nameserver_table,
-        boost::shared_ptr<LruList<NameserverEntry> > nameserver_lru);
 
     /// \return Name of the zone
     std::string getName() const {
@@ -96,12 +77,12 @@ public:
 
     /// \return Class of zone
     const isc::dns::RRClass& getClass() const {
-        return classCode_;
+        return class_code_;
     }
 
     /// \return Return Hash Key
     virtual HashKey hashKey() const {
-        return HashKey(name_, classCode_);
+        return HashKey(name_, class_code_);
     }
 
     /**
@@ -137,7 +118,7 @@ protected:
 private:
     mutable boost::mutex    mutex_;     ///< Mutex protecting this zone entry
     std::string     name_;      ///< Canonical zone name
-    isc::dns::RRClass        classCode_; ///< Class code
+    isc::dns::RRClass        class_code_; ///< Class code
     // Internal function that adds a callback (if there's one) and processes
     // the nameservers (if there's chance there's some info) and calls
     // callbacks. If nameserver is given, it is considered new and valid
