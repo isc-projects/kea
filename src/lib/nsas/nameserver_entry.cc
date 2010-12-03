@@ -95,7 +95,6 @@ NameserverEntry::getAddresses(AddressVector& addresses,
             break; // OK, we give some answers
         case NOT_ASKED:
         case UNREACHABLE:
-            // TODO: Check TTL of UNREACHABLE
             // Reject giving any data
             return (getState());
     }
@@ -326,7 +325,8 @@ NameserverEntry::askIP(shared_ptr<ResolverInterface> resolver,
 
         // Set internal state first
         // TODO: We might want to save the addresses somewhere so we do not
-        // lose RTT
+        // lose RTT. This might get tricky. Would the trick with map as in
+        // ZoneEntry work as well?
         address_.clear();
         setState(IN_PROGRESS);
         has_address_[V4_ONLY] = has_address_[V6_ONLY] = has_address_[ANY_OK] =

@@ -270,4 +270,15 @@ TEST_F(ZoneEntryTest, CallbackTwoNS) {
     EXPECT_TRUE(IOAddress("2001:db8::1").equal(callback_->successes_[1]));
 }
 
+/*
+ * TODO: There should be more tests for sure. Some ideas:
+ * - What happens when some things start timing out.
+ * - What happens if they are different after the timeout.
+ * - What happens if they return to previous state (changes and changes back).
+ * - Find a way to call some of the callbacks from within the resolver directly
+ *   (provide it with some kind of cache-like thing, preconfigure answer, so
+ *   the things start recursing).
+ * - Combine this with some timeouting.
+ */
+
 }   // namespace

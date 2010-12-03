@@ -1,23 +1,8 @@
-Nameserver entries:
-* There's a big FIXME in askIP.
-* It has places where TTL should be handled, but isn't yet.
-
-Zone entries:
-* They will be nameserver callbacks themself. This ensures that they are not
-  destroyed, since the callback is owned by the nameserver and will easy up
-  the accessing of internal data structures. Maybe a private inheritance?
-* Add ability to time out
-* Implement the new interface
-* They will create new nameserver entries in constructor.
-* Move the logic here from NSAS
-* If there are callbacks for this kind of address, do not look into the
-  nameserver entries, just add it.
-* Even if the TTL is 0, we should accept the first callback.
+NameserverEntry:
+* Reuse data on timeout/requery
 
 The NSAS itself:
-* If the zone rejects the callback, remove it and call recursively the same
-  one. As it will accept at last one, it should not become a loop.
-* Do not pass referral info by lookup, it should be fetched on-demand from recursor/cache
+* Implement/recreate
 
 Long term:
 * Make a mechanism the cache (which does not exist at the time of writing this
@@ -26,3 +11,20 @@ Long term:
   knows when it changes (it updates its structures), it is the best place. It
   will be caching even data like authority and additional sections. It will
   notify us somehow (we will need to tell it when).
+* Optimisation to pass max two outstanding queries on the network (but fetch
+  everything from cache right away).
+* Add the cache cookies/contexts.
+* Logging.
+* Remove LRU from the nameserver entries, drop them when they are not
+  referenced by any zone entry. This will remove duplicates, keep the RTTs
+  longer and will provide access to everything that exists. This is
+  tricky, though, because we need to be thread safe. There seems to be
+  solution to:
+  - Reimplement shared_ptr (or subclass it, if it is possible)
+  - Have weak pointers on the hash table
+  - We need to lock the hash table entry when we are about to reach 0
+    so noone gets a reference when we are removing/destroing it. Then
+    we need to check the count once again, someone might have acquired
+    the reference before we got the lock (the chance is small, so the
+    overhead should not matter, but it would crash the application)
+* Selection algorithm
