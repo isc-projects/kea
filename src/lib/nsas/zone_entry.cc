@@ -296,6 +296,10 @@ ZoneEntry::process(CallbackPtr callback, AddressFamily family,
                 process(CallbackPtr(), V4_ONLY, nameserver, self, lock);
                 process(CallbackPtr(), V6_ONLY, nameserver, self, lock);
             } else {
+                // Nothing to do anyway for this family, be dormant
+                if (callbacks_[family].empty()) {
+                    return;
+                }
                 /*
                  * Check that we are only in one process call on stack.
                  * It eliminates the problem when there are multiple nameserver
@@ -341,8 +345,13 @@ ZoneEntry::process(CallbackPtr callback, AddressFamily family,
                     // We should not be locked, because this function can
                     // be called directly from the askIP again
                     lock->unlock();
-                    shared_ptr<NameserverCallback> ns_callback(new
-                        NameserverCallback(self, family));
+                    shared_ptr<NameserverCallback> ns_callbacks[ADDR_REQ_MAX];;
+                    ns_callbacks[ANY_OK].reset(new NameserverCallback(self,
+                        ANY_OK));
+                    ns_callbacks[V4_ONLY].reset(new NameserverCallback(self,
+                        V4_ONLY));
+                    ns_callbacks[V6_ONLY].reset(new NameserverCallback(self,
+                        V6_ONLY));
                     /*
                      * TODO: Possible place for an optimisation. We now ask
                      * everything we can. We should limit this to something like
@@ -351,7 +360,17 @@ ZoneEntry::process(CallbackPtr callback, AddressFamily family,
                      * away is simpler.
                      */
                     BOOST_FOREACH(const NameserverPtr& ns, to_ask) {
-                        ns->askIP(resolver_, ns_callback, family, ns);
+                        // Put all 3 callbacks there. If we put just the
+                        // current family, it might not work due to missing
+                        // callback for different one.
+                        // If they recurse back to us (call directly), we kill
+                        // it by the in_process_
+                        ns->askIP(resolver_, ns_callbacks[V4_ONLY], V4_ONLY,
+                            ns);
+                        ns->askIP(resolver_, ns_callbacks[V6_ONLY], V6_ONLY,
+                            ns);
+                        ns->askIP(resolver_, ns_callbacks[ANY_OK], ANY_OK,
+                            ns);
                     }
                     // Retry with all the data that might have arrived
                     in_process_[family] = false;
