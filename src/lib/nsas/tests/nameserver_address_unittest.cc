@@ -48,7 +48,7 @@ public:
 
         ns_.reset(new NameserverEntry(name_.toText(), RRClass::IN()));
         shared_ptr<TestResolver> resolver(new TestResolver);
-        ns_->askIP(resolver, shared_ptr<Callback>(new Callback), ANY_OK, ns_);
+        ns_->askIP(resolver, shared_ptr<Callback>(new Callback), ANY_OK);
         resolver->asksIPs(name_, 0, 1);
         resolver->requests[0].second->success(rrv4_);
     }

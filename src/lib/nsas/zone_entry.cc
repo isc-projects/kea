@@ -126,7 +126,7 @@ class ZoneEntry::ResolverCallback : public ResolverInterface::Callback {
                     entry_->setState(READY);
                     entry_->expiry_ = answer->getTTL().getValue() + time(NULL);
                     entry_->process(CallbackPtr(), ADDR_REQ_MAX,
-                        NameserverPtr(), entry_, lock);
+                        NameserverPtr(), lock);
                     return;
                 }
             }
@@ -145,15 +145,13 @@ class ZoneEntry::ResolverCallback : public ResolverInterface::Callback {
             entry_->expiry_ = ttl + time(NULL);
             // Process all three callback lists and tell them KO
             entry_->process(CallbackPtr(), ADDR_REQ_MAX, NameserverPtr(),
-                entry_, lock);
+                lock);
         }
         shared_ptr<ZoneEntry> entry_;
 };
 
 void
-ZoneEntry::addCallback(CallbackPtr callback, AddressFamily family,
-    shared_ptr<ZoneEntry> self)
-{
+ZoneEntry::addCallback(CallbackPtr callback, AddressFamily family) {
     Lock lock(mutex_);
 
     bool ask(false);
@@ -174,7 +172,7 @@ ZoneEntry::addCallback(CallbackPtr callback, AddressFamily family,
     } else {
         // Try to process it right away, store if not possible to handle
         lock.unlock();
-        process(callback, family, NameserverPtr(), self);
+        process(callback, family, NameserverPtr());
         return;
     }
 
@@ -183,7 +181,7 @@ ZoneEntry::addCallback(CallbackPtr callback, AddressFamily family,
         QuestionPtr question(new Question(Name(name_), class_code_,
             RRType::NS()));
         shared_ptr<ResolverCallback> resolver_callback(
-            new ResolverCallback(self));
+            new ResolverCallback(shared_from_this()));
         resolver_->resolve(question, resolver_callback);
     }
 }
@@ -243,7 +241,7 @@ class ZoneEntry::NameserverCallback : public NameserverEntry::Callback {
             family_(family)
         { }
         virtual void operator()(NameserverPtr ns) {
-            entry_->process(CallbackPtr(), family_, ns, entry_);
+            entry_->process(CallbackPtr(), family_, ns);
         }
     private:
         shared_ptr<ZoneEntry> entry_;
@@ -270,8 +268,7 @@ ZoneEntry::dispatchFailures(AddressFamily family, shared_ptr<Lock> lock) {
 
 void
 ZoneEntry::process(CallbackPtr callback, AddressFamily family,
-    shared_ptr<NameserverEntry> nameserver, shared_ptr<ZoneEntry> self,
-    shared_ptr<Lock> lock)
+    shared_ptr<NameserverEntry> nameserver, shared_ptr<Lock> lock)
 {
     // If we were not provided with a lock, get one
     if (!lock) {
@@ -297,9 +294,9 @@ ZoneEntry::process(CallbackPtr callback, AddressFamily family,
         case READY:
             if (family == ADDR_REQ_MAX) {
                 // Just process each one separately
-                process(CallbackPtr(), ANY_OK, nameserver, self, lock);
-                process(CallbackPtr(), V4_ONLY, nameserver, self, lock);
-                process(CallbackPtr(), V6_ONLY, nameserver, self, lock);
+                process(CallbackPtr(), ANY_OK, nameserver, lock);
+                process(CallbackPtr(), V4_ONLY, nameserver, lock);
+                process(CallbackPtr(), V6_ONLY, nameserver, lock);
             } else {
                 // Nothing to do anyway for this family, be dormant
                 if (callbacks_[family].empty()) {
@@ -351,12 +348,12 @@ ZoneEntry::process(CallbackPtr callback, AddressFamily family,
                     // be called directly from the askIP again
                     lock->unlock();
                     shared_ptr<NameserverCallback> ns_callbacks[ADDR_REQ_MAX];;
-                    ns_callbacks[ANY_OK].reset(new NameserverCallback(self,
-                        ANY_OK));
-                    ns_callbacks[V4_ONLY].reset(new NameserverCallback(self,
-                        V4_ONLY));
-                    ns_callbacks[V6_ONLY].reset(new NameserverCallback(self,
-                        V6_ONLY));
+                    ns_callbacks[ANY_OK].reset(new NameserverCallback(
+                        shared_from_this(), ANY_OK));
+                    ns_callbacks[V4_ONLY].reset(new NameserverCallback(
+                        shared_from_this(), V4_ONLY));
+                    ns_callbacks[V6_ONLY].reset(new NameserverCallback(
+                        shared_from_this(), V6_ONLY));
                     /*
                      * TODO: Possible place for an optimisation. We now ask
                      * everything we can. We should limit this to something like
@@ -370,16 +367,13 @@ ZoneEntry::process(CallbackPtr callback, AddressFamily family,
                         // callback for different one.
                         // If they recurse back to us (call directly), we kill
                         // it by the in_process_
-                        ns->askIP(resolver_, ns_callbacks[V4_ONLY], V4_ONLY,
-                            ns);
-                        ns->askIP(resolver_, ns_callbacks[V6_ONLY], V6_ONLY,
-                            ns);
-                        ns->askIP(resolver_, ns_callbacks[ANY_OK], ANY_OK,
-                            ns);
+                        ns->askIP(resolver_, ns_callbacks[V4_ONLY], V4_ONLY);
+                        ns->askIP(resolver_, ns_callbacks[V6_ONLY], V6_ONLY);
+                        ns->askIP(resolver_, ns_callbacks[ANY_OK], ANY_OK);
                     }
                     // Retry with all the data that might have arrived
                     in_process_[family] = false;
-                    process(callback, family, nameserver, self);
+                    process(callback, family, nameserver);
                     // And be done
                     return;
                 // We have some addresses to answer

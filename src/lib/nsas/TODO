@@ -22,4 +22,3 @@ Long term:
   solution to use weak_ptr inside the hash_table instead of shared_ptr and
   catch the exception inside get() (and getOrAdd) and delete the dead pointer.
 * Selection algorithm
-* Use enable_shared_from_this.hpp instead of passing self everywhere
