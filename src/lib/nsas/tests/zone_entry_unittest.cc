@@ -113,7 +113,7 @@ TEST_F(ZoneEntryTest, CallbackZeroTTL) {
         EXAMPLE_CO_UK, RRClass::IN(), nameserver_table_, nameserver_lru_));
     // It should accept the callback
     zone->addCallback(callback_, ANY_OK, zone);
-    EXPECT_NO_THROW(resolver_->provideNS(0, rr_empty_));
+    EXPECT_NO_THROW(resolver_->provideNS(0, rr_single_));
     // It should not be answered yet, it should ask for the IP addresses
     EXPECT_TRUE(callback_->successes_.empty());
     EXPECT_EQ(0, callback_->unreachable_count_);
@@ -131,7 +131,7 @@ TEST_F(ZoneEntryTest, CallbacksAnswered) {
     EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
     // It should accept the callback
     zone->addCallback(callback_, ANY_OK, zone);
-    EXPECT_NO_THROW(resolver_->provideNS(0, rr_empty_));
+    EXPECT_NO_THROW(resolver_->provideNS(0, rr_single_));
     // It should not be answered yet, it should ask for the IP addresses
     EXPECT_TRUE(callback_->successes_.empty());
     EXPECT_EQ(0, callback_->unreachable_count_);
@@ -177,7 +177,7 @@ TEST_F(ZoneEntryTest, CallbacksAOnly) {
     EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
     // It should accept the callback
     zone->addCallback(callback_, ANY_OK, zone);
-    EXPECT_NO_THROW(resolver_->provideNS(0, rr_empty_));
+    EXPECT_NO_THROW(resolver_->provideNS(0, rr_single_));
     // It should not be answered yet, it should ask for the IP addresses
     EXPECT_TRUE(callback_->successes_.empty());
     EXPECT_EQ(0, callback_->unreachable_count_);
@@ -223,7 +223,7 @@ TEST_F(ZoneEntryTest, CallbackTwoNS) {
     EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
     // It should accept the callback
     zone->addCallback(callback_, V4_ONLY, zone);
-    EXPECT_NO_THROW(resolver_->provideNS(0, rr_empty_));
+    EXPECT_NO_THROW(resolver_->provideNS(0, rrns_));
     EXPECT_EQ(Fetchable::IN_PROGRESS, zone->getState());
     // It asks a question (we do not know which nameserver)
     shared_ptr<Name> name;
