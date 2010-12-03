@@ -97,7 +97,7 @@ TEST_F(ZoneEntryTest, CallbackNoNS) {
     shared_ptr<InheritedZoneEntry> zone(new InheritedZoneEntry(resolver_,
         EXAMPLE_CO_UK, RRClass::IN(), nameserver_table_, nameserver_lru_));
     // It should accept the callback
-    EXPECT_TRUE(zone->addCallback(callback_, ANY_OK, zone));
+    zone->addCallback(callback_, ANY_OK, zone);
     // Ask for the nameservers
     EXPECT_NO_THROW(resolver_->provideNS(0, rr_empty_));
     // And tell imediatelly that it is unreachable (when it has no nameservers)
@@ -112,14 +112,15 @@ TEST_F(ZoneEntryTest, CallbackZeroTTL) {
     shared_ptr<InheritedZoneEntry> zone(new InheritedZoneEntry(resolver_,
         EXAMPLE_CO_UK, RRClass::IN(), nameserver_table_, nameserver_lru_));
     // It should accept the callback
-    EXPECT_TRUE(zone->addCallback(callback_, ANY_OK, zone));
+    zone->addCallback(callback_, ANY_OK, zone);
     EXPECT_NO_THROW(resolver_->provideNS(0, rr_empty_));
     // It should not be answered yet, it should ask for the IP addresses
     EXPECT_TRUE(callback_->successes_.empty());
     EXPECT_EQ(0, callback_->unreachable_count_);
     resolver_->asksIPs(ns_name_, 1, 2);
-    // It should reject another one, as it has zero TTL
-    EXPECT_FALSE(zone->addCallback(callback_, ANY_OK, zone));
+    // It should request the NSs again, as TTL is 0
+    zone->addCallback(callback_, ANY_OK, zone);
+    EXPECT_EQ(4, resolver_->requests.size());
 }
 
 // Check it answers callbacks when we give it addresses
@@ -129,7 +130,7 @@ TEST_F(ZoneEntryTest, CallbacksAnswered) {
     // It should be in NOT_ASKED state
     EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
     // It should accept the callback
-    EXPECT_TRUE(zone->addCallback(callback_, ANY_OK, zone));
+    zone->addCallback(callback_, ANY_OK, zone);
     EXPECT_NO_THROW(resolver_->provideNS(0, rr_empty_));
     // It should not be answered yet, it should ask for the IP addresses
     EXPECT_TRUE(callback_->successes_.empty());
@@ -138,8 +139,8 @@ TEST_F(ZoneEntryTest, CallbacksAnswered) {
     // We should be IN_PROGRESS
     EXPECT_EQ(Fetchable::IN_PROGRESS, zone->getState());
     // Give two more callbacks, with different address families
-    EXPECT_TRUE(zone->addCallback(callback_, V4_ONLY, zone));
-    EXPECT_TRUE(zone->addCallback(callback_, V6_ONLY, zone));
+    zone->addCallback(callback_, V4_ONLY, zone);
+    zone->addCallback(callback_, V6_ONLY, zone);
     // Nothing more is asked
     EXPECT_EQ(3, resolver_->requests.size());
     EXPECT_NO_THROW(resolver_->answer(1, ns_name_, RRType::A(),
@@ -161,7 +162,7 @@ TEST_F(ZoneEntryTest, CallbacksAnswered) {
     // It should think it is ready
     EXPECT_EQ(Fetchable::READY, zone->getState());
     // When we ask something more, it should be answered right away
-    EXPECT_TRUE(zone->addCallback(callback_, V4_ONLY, zone));
+    zone->addCallback(callback_, V4_ONLY, zone);
     EXPECT_EQ(3, resolver_->requests.size());
     ASSERT_EQ(4, callback_->successes_.size());
     EXPECT_TRUE(IOAddress("192.0.2.1").equal(callback_->successes_[3]));
@@ -175,7 +176,7 @@ TEST_F(ZoneEntryTest, CallbacksAOnly) {
     // It should be in NOT_ASKED state
     EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
     // It should accept the callback
-    EXPECT_TRUE(zone->addCallback(callback_, ANY_OK, zone));
+    zone->addCallback(callback_, ANY_OK, zone);
     EXPECT_NO_THROW(resolver_->provideNS(0, rr_empty_));
     // It should not be answered yet, it should ask for the IP addresses
     EXPECT_TRUE(callback_->successes_.empty());
@@ -184,8 +185,8 @@ TEST_F(ZoneEntryTest, CallbacksAOnly) {
     // We should be IN_PROGRESS
     EXPECT_EQ(Fetchable::IN_PROGRESS, zone->getState());
     // Give two more callbacks, with different address families
-    EXPECT_TRUE(zone->addCallback(callback_, V4_ONLY, zone));
-    EXPECT_TRUE(zone->addCallback(callback_, V6_ONLY, zone));
+    zone->addCallback(callback_, V4_ONLY, zone);
+    zone->addCallback(callback_, V6_ONLY, zone);
     ASSERT_GE(resolver_->requests.size(), 3);
     resolver_->requests[2].second->failure();
     // One should be rejected, but two still stay, they have chance
@@ -202,13 +203,13 @@ TEST_F(ZoneEntryTest, CallbacksAOnly) {
     // Everything arriwed, so we are ready
     EXPECT_EQ(Fetchable::READY, zone->getState());
     // Try asking something more
-    EXPECT_TRUE(zone->addCallback(callback_, V4_ONLY, zone));
+    zone->addCallback(callback_, V4_ONLY, zone);
     EXPECT_EQ(3, resolver_->requests.size());
     ASSERT_EQ(3, callback_->successes_.size());
     EXPECT_TRUE(IOAddress("192.0.2.1").equal(callback_->successes_[2]));
     EXPECT_EQ(1, callback_->unreachable_count_);
 
-    EXPECT_TRUE(zone->addCallback(callback_, V6_ONLY, zone));
+    zone->addCallback(callback_, V6_ONLY, zone);
     EXPECT_EQ(3, resolver_->requests.size());
     EXPECT_EQ(3, callback_->successes_.size());
     EXPECT_EQ(2, callback_->unreachable_count_);
@@ -221,7 +222,7 @@ TEST_F(ZoneEntryTest, CallbackTwoNS) {
     // It should be in NOT_ASKED state
     EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
     // It should accept the callback
-    EXPECT_TRUE(zone->addCallback(callback_, V4_ONLY, zone));
+    zone->addCallback(callback_, V4_ONLY, zone);
     EXPECT_NO_THROW(resolver_->provideNS(0, rr_empty_));
     EXPECT_EQ(Fetchable::IN_PROGRESS, zone->getState());
     // It asks a question (we do not know which nameserver)
@@ -246,15 +247,15 @@ TEST_F(ZoneEntryTest, CallbackTwoNS) {
     EXPECT_EQ(Fetchable::IN_PROGRESS, zone->getState());
     // And question for v6 or any should still wait while v4 should be failed
     // right away
-    EXPECT_TRUE(zone->addCallback(callback_, V6_ONLY, zone));
+    zone->addCallback(callback_, V6_ONLY, zone);
     EXPECT_EQ(1, callback_->unreachable_count_);
     EXPECT_EQ(0, callback_->successes_.size());
 
-    EXPECT_TRUE(zone->addCallback(callback_, ANY_OK, zone));
+    zone->addCallback(callback_, ANY_OK, zone);
     EXPECT_EQ(1, callback_->unreachable_count_);
     EXPECT_EQ(0, callback_->successes_.size());
 
-    EXPECT_TRUE(zone->addCallback(callback_, V4_ONLY, zone));
+    zone->addCallback(callback_, V4_ONLY, zone);
     EXPECT_EQ(2, callback_->unreachable_count_);
     EXPECT_EQ(0, callback_->successes_.size());
     // Answer the IPv6 one

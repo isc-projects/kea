@@ -19,7 +19,6 @@
 
 #include <string>
 #include <vector>
-#include <list>
 #include <boost/thread.hpp>
 #include <boost/shared_ptr.hpp>
 
@@ -66,6 +65,7 @@ public:
         const std::string& name, const isc::dns::RRClass& class_code,
         boost::shared_ptr<HashTable<NameserverEntry> > nameserver_table,
         boost::shared_ptr<LruList<NameserverEntry> > nameserver_lru) :
+        expiry_(0),
         name_(name), class_code_(class_code), resolver_(resolver),
         nameserver_table_(nameserver_table), nameserver_lru_(nameserver_lru)
     {}
@@ -98,11 +98,8 @@ public:
      *     will already exist at that point, however it is needed to callback.
      *     When calling function on the zone entry, you should already have
      *     one.
-     * \return True if the zone is still valid and accepted the callback.
-     *     If it returns false, it should be discarded (it has timed out)
-     *     and new instance should be created.
      */
-    bool addCallback(boost::shared_ptr<AddressRequestCallback>
+    void addCallback(boost::shared_ptr<AddressRequestCallback>
         callback, AddressFamily family, boost::shared_ptr<ZoneEntry> self);
 
     /// \short Protected members, so they can be accessed by tests.
@@ -112,8 +109,13 @@ protected:
     typedef boost::shared_ptr<NameserverEntry> NameserverPtr;
     typedef std::vector<NameserverPtr> NameserverVector;
     NameserverVector nameservers_; ///< Nameservers
-    std::list<boost::shared_ptr<AddressRequestCallback> > callbacks_;
-    time_t          expiry_;    ///< Expiry time of this entry
+    /*
+     * Callbacks. For each fimily type one vector, so we can process
+     * them separately.
+     */
+    std::vector<boost::shared_ptr<AddressRequestCallback> >
+        callbacks_[ADDR_REQ_MAX];
+    time_t          expiry_;    ///< Expiry time of this entry, 0 means not set
     //}@
 private:
     mutable boost::mutex    mutex_;     ///< Mutex protecting this zone entry
@@ -123,6 +125,7 @@ private:
     // the nameservers (if there's chance there's some info) and calls
     // callbacks. If nameserver is given, it is considered new and valid
     // even if its TTL is 0.
+    // The family says which one changed or has any update.
     void process(boost::shared_ptr<AddressRequestCallback> callback,
          AddressFamily family, NameserverEntry* nameserver);
     // Resolver we use
@@ -131,6 +134,10 @@ private:
     // update
     boost::shared_ptr<HashTable<NameserverEntry> > nameserver_table_;
     boost::shared_ptr<LruList<NameserverEntry> > nameserver_lru_;
+    // Resolver callback class
+    class ResolverCallback;
+    // It has direct access to us
+    friend class ResolverCallback;
 };
 
 } // namespace nsas
