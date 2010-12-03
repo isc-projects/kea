@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <boost/foreach.hpp>
+#include <dns/rrttl.h>
 
 using namespace std;
 using namespace boost;
@@ -36,16 +37,121 @@ typedef mutex::scoped_lock Lock; // Local lock, nameservers not locked
 typedef shared_ptr<AddressRequestCallback> CallbackPtr;
 }
 
-bool
-ZoneEntry::addCallback(CallbackPtr callback,  AddressFamily family,
+// A struct, the class is unaccessible anyway and is ours
+struct ZoneEntry::ResolverCallback : public ResolverInterface::Callback {
+    ResolverCallback(shared_ptr<ZoneEntry> entry) :
+        entry_(entry)
+    { }
+    virtual void success(shared_ptr<AbstractRRset> answer) {
+        Lock lock(entry_->mutex_);
+        RdataIteratorPtr iterator(answer->getRdataIterator());
+        iterator->first();
+        // If there are no data
+        if (iterator->isLast()) {
+            failureInternal(lock, answer->getTTL().getValue());
+            return;
+        }
+    }
+    virtual void failure() {
+        Lock lock(entry_->mutex_);
+        /*
+         * FIXME: That 5 minutes is just made up and wrong.
+         * Where is the correct place to get the correct number?
+         */
+        failureInternal(lock, 300);
+    }
+    void failureInternal(Lock& lock, time_t ttl) {
+        entry_->setState(UNREACHABLE);
+        entry_->expiry_ = ttl + time(NULL);
+        // Process all three callback lists and tell them KO
+        // We put them into one set and call that one, so they are
+        // taken out atomicaly
+        entry_->callbacks_[ANY_OK].insert(entry_->callbacks_[ANY_OK].end(),
+            entry_->callbacks_[V4_ONLY].begin(),
+            entry_->callbacks_[V4_ONLY].end());
+        entry_->callbacks_[V4_ONLY].clear();
+        entry_->callbacks_[ANY_OK].insert(entry_->callbacks_[ANY_OK].end(),
+            entry_->callbacks_[V6_ONLY].begin(),
+            entry_->callbacks_[V6_ONLY].end());
+        entry_->callbacks_[V6_ONLY].clear();
+        // The process function will lock by its own
+        lock.unlock();
+        entry_->process(CallbackPtr(), ANY_OK, NULL);
+    }
+    shared_ptr<ZoneEntry> entry_;
+};
+
+void
+ZoneEntry::addCallback(CallbackPtr callback, AddressFamily family,
     shared_ptr<ZoneEntry> self)
 {
-    // TODO: this is just stub now, to compile
-    (void) callback;
-    (void) family;
-    (void) self;
-    return (false);
+    Lock lock(mutex_);
 
+    bool ask(false);
+
+    // Look at expiration time
+    if (expiry_ && time(NULL) >= expiry_) {
+        setState(EXPIRED);
+    }
+
+    // We need to ask (again)
+    if (getState() == EXPIRED || getState() == NOT_ASKED) {
+        ask = true;
+    }
+
+    // We do not have the answer right away, just queue the callback
+    if (ask || getState() == IN_PROGRESS || !callbacks_[family].empty()) {
+        callbacks_[family].push_back(callback);
+    } else {
+        // Try to process it right away, store if not possible to handle
+        lock.unlock();
+        process(callback, family, NULL);
+        return;
+    }
+
+    if (ask) {
+        setState(IN_PROGRESS);
+        QuestionPtr question(new Question(Name(name_), class_code_,
+            RRType::NS()));
+        shared_ptr<ResolverCallback> resolver_callback(
+            new ResolverCallback(self));
+        resolver_->resolve(question, resolver_callback);
+    }
+}
+
+void
+ZoneEntry::process(CallbackPtr callback, AddressFamily family,
+    NameserverEntry*)
+{
+    Lock lock(mutex_);
+
+    if (callback) {
+        callbacks_[family].push_back(callback);
+    }
+
+    switch (getState()) {
+        // These are not interesting, nothing to return now
+        case NOT_ASKED:
+        case IN_PROGRESS:
+        case EXPIRED:
+            return;
+        case UNREACHABLE: {
+            // We extract all the callbacks
+            vector<CallbackPtr> callbacks;
+            callbacks.swap(callbacks_[family]);
+            // We want to call them not locked, so we both do not block the
+            // lock and allow them to call our functions
+            lock.unlock();
+            BOOST_FOREACH(const CallbackPtr& callback, callbacks) {
+                callback->unreachable();
+            }
+            // And we do nothing more now
+            return;
+        }
+        case READY:
+            // TODO Write
+            ;
+    }
 }
 
 }; // namespace nsas
