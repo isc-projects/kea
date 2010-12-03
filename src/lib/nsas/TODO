@@ -19,12 +19,6 @@ Long term:
   referenced by any zone entry. This will remove duplicates, keep the RTTs
   longer and will provide access to everything that exists. This is
   tricky, though, because we need to be thread safe. There seems to be
-  solution to:
-  - Reimplement shared_ptr (or subclass it, if it is possible)
-  - Have weak pointers on the hash table
-  - We need to lock the hash table entry when we are about to reach 0
-    so noone gets a reference when we are removing/destroing it. Then
-    we need to check the count once again, someone might have acquired
-    the reference before we got the lock (the chance is small, so the
-    overhead should not matter, but it would crash the application)
+  solution to use weak_ptr inside the hash_table instead of shared_ptr and
+  catch the exception inside get() (and getOrAdd) and delete the dead pointer.
 * Selection algorithm
