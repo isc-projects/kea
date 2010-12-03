@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <boost/foreach.hpp>
 #include <dns/rrttl.h>
+#include <dns/rdataclass.h>
 
 using namespace std;
 using namespace boost;
@@ -35,6 +36,17 @@ namespace {
 // Shorter aliases for frequently used types
 typedef mutex::scoped_lock Lock; // Local lock, nameservers not locked
 typedef shared_ptr<AddressRequestCallback> CallbackPtr;
+
+/*
+ * Create a nameserver.
+ * Called inside a mutex so it is filled in atomically.
+ */
+shared_ptr<NameserverEntry>
+newNs(const std::string* name, const RRClass* class_code) {
+    return (shared_ptr<NameserverEntry>(new NameserverEntry(*name,
+        *class_code)));
+}
+
 }
 
 // A struct, the class is unaccessible anyway and is ours
@@ -50,6 +62,51 @@ struct ZoneEntry::ResolverCallback : public ResolverInterface::Callback {
         if (iterator->isLast()) {
             failureInternal(lock, answer->getTTL().getValue());
             return;
+        } else {
+            // Store the current ones so we can keep them
+            map<string, NameserverPtr> old;
+            BOOST_FOREACH(const NameserverPtr& ptr, entry_->nameservers_) {
+                old[ptr->getName()] = ptr;
+            }
+
+            // Now drop the old ones and insert the new ones
+            entry_->nameservers_.clear();
+            for (; !iterator->isLast(); iterator->next()) {
+                try {
+                    // Get the name from there
+                    Name ns_name(dynamic_cast<const rdata::generic::NS&>(
+                        iterator->getCurrent()).getNSName());
+                    // Try to find it in the old ones
+                    map<string, NameserverPtr>::iterator old_ns(old.find(
+                        ns_name.toText()));
+                    // It is not there, look it up in the table or create
+                    // new one
+                    if (old_ns == old.end()) {
+                        // Look it up or create it
+                        string ns_name_str(ns_name.toText());
+                        pair<bool, NameserverPtr> from_hash(
+                            entry_->nameserver_table_->getOrAdd(HashKey(
+                            ns_name_str, entry_->class_code_), bind(
+                            newNs, &ns_name_str, &entry_->class_code_)));
+                        // Touch it if it is not newly created
+                        if (!from_hash.first) {
+                            entry_->nameserver_lru_->touch(from_hash.second);
+                        }
+                        // And add it at last
+                        entry_->nameservers_.push_back(from_hash.second);
+                    } else {
+                        // We have it, so just use it
+                        entry_->nameservers_.push_back(old_ns->second);
+                    }
+                }
+                // OK, we skip this one it is not NS (log?)
+                catch (bad_cast&) { }
+            }
+
+            // It is unbelievable, but we found no nameservers there
+            if (entry_->nameservers_.empty()) {
+                failureInternal(lock, answer->getTTL().getValue());
+            }
         }
     }
     virtual void failure() {

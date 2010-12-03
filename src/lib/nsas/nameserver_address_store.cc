@@ -60,17 +60,6 @@ typedef shared_ptr<NameserverEntry> NameserverPtr;
 typedef shared_ptr<AddressRequestCallback> CallbackPtr;
 
 /*
- * Create a nameserver.
- * Called inside a mutex so it is filled in attomically.
- */
-NameserverPtr
-newNs(const std::string* name, uint16_t class_code,
-    const vector<AbstractRRset>*)
-{
-    return (NameserverPtr(new NameserverEntry(*name, class_code)));
-}
-
-/*
  * Create a zone entry.
  * It is called inside the mutex so it is called and filled in attomically.
  * Pointers are used instead of references, because with references,

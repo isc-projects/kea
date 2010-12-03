@@ -32,6 +32,7 @@
 #include <dns/rrtype.h>
 #include <dns/rrttl.h>
 #include <dns/messagerenderer.h>
+#include <dns/rdataclass.h>
 #include "../nsas_entry.h"
 #include "../resolver_interface.h"
 
@@ -56,12 +57,6 @@ class AAAA {
 public:
     uint16_t getType() const
     {return RRType::AAAA().getCode();}
-};
-
-class NS {
-public:
-    uint16_t getType() const
-    {return RRType::NS().getCode();}
 };
 
 class MX {
@@ -359,12 +354,11 @@ protected:
         rrch_->addRdata(ConstRdataPtr(new RdataTest<A>("1324")));
 
         // NS records take a single name
-        rrns_->addRdata(ConstRdataPtr(new RdataTest<NS>("example.fr")));
-        rrns_->addRdata(ConstRdataPtr(new RdataTest<NS>("example.de")));
+        rrns_->addRdata(rdata::generic::NS("example.fr"));
+        rrns_->addRdata(rdata::generic::NS("example.de"));
 
         // Single NS record with 0 TTL
-        rr_single_->addRdata(ConstRdataPtr(new RdataTest<NS>(
-            "ns.example.net.")));
+        rr_single_->addRdata(rdata::generic::NS( "ns.example.net."));
 
         // AAAA records
         rrv6_->addRdata(ConstRdataPtr(new RdataTest<AAAA>("2001::1002")));
