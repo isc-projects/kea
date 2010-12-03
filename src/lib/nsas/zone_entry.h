@@ -126,8 +126,14 @@ private:
     // callbacks. If nameserver is given, it is considered new and valid
     // even if its TTL is 0.
     // The family says which one changed or has any update.
+    // If the familly is ADDR_REQ_MAX, then it means process all callbacks.
+    // However, you must not provide callback.
+    // If lock is provided, it is locked mutex_ and will be used. If not,
+    // will use its own.
     void process(boost::shared_ptr<AddressRequestCallback> callback,
-         AddressFamily family, NameserverEntry* nameserver);
+         AddressFamily family, NameserverEntry* nameserver,
+         boost::shared_ptr<boost::mutex::scoped_lock> lock =
+         boost::shared_ptr<boost::mutex::scoped_lock>());
     // Resolver we use
     boost::shared_ptr<ResolverInterface> resolver_;
     // We store the nameserver table and lru, so we can look up when there's
