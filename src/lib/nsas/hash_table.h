@@ -89,6 +89,11 @@ HashTableSlot<T>::HashTableSlot(const HashTableSlot<T>& unused UNUSED_PARAM) :
 template <typename T>
 class HashTableCompare {
 public:
+    /// \brief Constructor
+    HashTableCompare(){}
+
+    /// \brief virtual Destructor
+    virtual ~HashTableCompare() {}
 
     /// \brief Comparison Function
     ///
@@ -143,6 +148,10 @@ public:
     /// prime although that is not checked.  The default value is the size used
     /// in BIND-9 for its address database.
     HashTable(HashTableCompare<T>* cmp, uint32_t size = 1009);
+
+    /// \brief Destructor
+    ///
+    virtual ~HashTable(){}
 
     /// \brief Get Entry
     ///

@@ -59,6 +59,11 @@ public:
     /// will handle any additional operations needed.
     class Dropped {
     public:
+        /// \brief Constructor
+        Dropped(){}
+
+        /// \brief Virtual Destructor
+        virtual ~Dropped(){}
 
         /// \brief Dropped Object Handler
         ///
