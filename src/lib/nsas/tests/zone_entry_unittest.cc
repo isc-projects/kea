@@ -279,6 +279,8 @@ TEST_F(ZoneEntryTest, CallbackTwoNS) {
  *   (provide it with some kind of cache-like thing, preconfigure answer, so
  *   the things start recursing).
  * - Combine this with some timeouting.
+ * - Look what happens when the nameservers are already in some different
+ *   states and not just newly created.
  */
 
 }   // namespace

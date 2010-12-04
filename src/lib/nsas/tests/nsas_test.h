@@ -289,7 +289,9 @@ class TestResolver : public isc::nsas::ResolverInterface {
             requests[index].second->success(set);
         }
 
-        void provideNS(size_t index, RRsetPtr nameservers) {
+        void provideNS(size_t index,
+            boost::shared_ptr<AbstractRRset> nameservers)
+        {
             if (index >= requests.size()) {
                 throw NoSuchRequest();
             }

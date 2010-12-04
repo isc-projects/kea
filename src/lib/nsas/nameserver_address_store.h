@@ -20,44 +20,25 @@
 #include <string>
 #include <vector>
 
-#include <dns/rrset.h>
+#include <boost/shared_ptr.hpp>
 
-#include "address_request_callback.h"
-#include "hash_table.h"
-#include "nameserver_entry.h"
-#include "lru_list.h"
-#include "zone_entry.h"
-#include "resolver_interface.h"
 #include "nsas_types.h"
 
 namespace isc {
+// Some forward declarations, so we do not need to include so many headers
+
+namespace dns {
+class RRClass;
+}
+
 namespace nsas {
 
-/**
- * \short Invalid referral information passed.
- *
- * This is thrown if the referral passed to NameserverAddressStore::lookup is
- * wrong. Has subexceptions for specific conditions.
- */
-struct InvalidReferral : public isc::BadValue {
-    InvalidReferral(const char *file, size_t line, const char *what) :
-        BadValue(file, line, what)
-    { }
-};
-
-/// \short The referral is not for this zone.
-struct InconsistentZone : public InvalidReferral {
-    InconsistentZone(const char *file, size_t line, const char *what) :
-        InvalidReferral(file, line, what)
-    { }
-};
-
-/// \short The authority zone contains something else than NS
-struct NotNS : public InvalidReferral {
-    NotNS(const char *file, size_t line, const char *what) :
-        InvalidReferral(file, line, what)
-    { }
-};
+class ResolverInterface;
+template<class T> class HashTable;
+template<class T> class LruList;
+class ZoneEntry;
+class NameserverEntry;
+class AddressRequestCallback;
 
 /// \brief Nameserver Address Store
 ///
@@ -80,7 +61,7 @@ public:
     /// \param zonehashsize Size of the zone hash table.  The default value of
     /// 1009 is the first prime number above 1000.
     /// \param nshash size Size of the nameserver hash table.  The default
-    /// value of 2003 is the first prime number over 2000, and by implication,
+    /// value of 3001 is the first prime number over 3000, and by implication,
     /// there is an assumption that there will be more nameservers than zones
     /// in the store.
     NameserverAddressStore(boost::shared_ptr<ResolverInterface> resolver,
@@ -92,22 +73,18 @@ public:
     virtual ~NameserverAddressStore()
     {}
 
-    // TODO Drop zone and class code, they can be found out from the authority
     /// \brief Lookup Address for a Zone
     ///
     /// Looks up the address of a nameserver in the zone.
     ///
     /// \param zone Name of zone for which an address is required.
     /// \param class_code Class of the zone.
-    /// \param authority Authority RRset from the referral containing the
-    /// nameservers that serve the zone.
     /// \param callback Callback object used to pass the result back to the
     /// caller.
-    /// \param request Which address is requested.
-    void lookup(const std::string& zone, uint16_t class_code,
-        const isc::dns::AbstractRRset& authority,
-        boost::shared_ptr<AddressRequestCallback> callback, AddressRequest
-        request = ANY_OK);
+    /// \param family Which address is requested.
+    void lookup(const std::string& zone, const dns::RRClass& class_code,
+        boost::shared_ptr<AddressRequestCallback> callback, AddressFamily
+        family = ANY_OK);
 
     /// \brief Protected Members
     ///
@@ -122,15 +99,16 @@ public:
     //@{
 protected:
     // Zone and nameserver hash tables
-    HashTable<ZoneEntry>        zone_hash_;
-    HashTable<NameserverEntry>  nameserver_hash_;
+    boost::shared_ptr<HashTable<ZoneEntry> > zone_hash_;
+    boost::shared_ptr<HashTable<NameserverEntry> > nameserver_hash_;
 
     // ... and the LRU lists
-    LruList<ZoneEntry>          zone_lru_;
-    LruList<NameserverEntry>    nameserver_lru_;
-    //}@
+    boost::shared_ptr<LruList<ZoneEntry> > zone_lru_;
+    boost::shared_ptr<LruList<NameserverEntry> > nameserver_lru_;
+    // The resolver we use
 private:
     boost::shared_ptr<ResolverInterface> resolver_;
+    //}@
 };
 
 } // namespace nsas
