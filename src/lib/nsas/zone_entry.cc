@@ -79,6 +79,8 @@ class ZoneEntry::ResolverCallback : public ResolverInterface::Callback {
             } else {
                 // Store the current ones so we can keep them
                 map<string, NameserverPtr> old;
+                set<NameserverPtr> old_not_asked;
+                old_not_asked.swap(entry_->nameservers_not_asked_);
                 BOOST_FOREACH(const NameserverPtr& ptr, entry_->nameservers_) {
                     old[ptr->getName()] = ptr;
                 }
@@ -102,16 +104,29 @@ class ZoneEntry::ResolverCallback : public ResolverInterface::Callback {
                                 entry_->nameserver_table_->getOrAdd(HashKey(
                                 ns_name_str, entry_->class_code_), bind(
                                 newNs, &ns_name_str, &entry_->class_code_)));
-                            // Touch it if it is not newly created
-                            if (!from_hash.first) {
+                            // Make it at the front of the list
+                            if (from_hash.first) {
+                                entry_->nameserver_lru_->add(from_hash.second);
+                            } else {
                                 entry_->nameserver_lru_->touch(
                                     from_hash.second);
                             }
                             // And add it at last
                             entry_->nameservers_.push_back(from_hash.second);
+                            entry_->nameservers_not_asked_.insert(
+                                from_hash.second);
                         } else {
                             // We have it, so just use it
                             entry_->nameservers_.push_back(old_ns->second);
+                            // Did we ask it already? If not, it is still not
+                            // asked (the one designing std interface must
+                            // have been mad)
+                            if (old_not_asked.find(old_ns->second) !=
+                                old_not_asked.end())
+                            {
+                                entry_->nameservers_not_asked_.insert(
+                                    old_ns->second);
+                            }
                         }
                     }
                     // OK, we skip this one it is not NS (log?)
@@ -330,6 +345,13 @@ ZoneEntry::process(CallbackPtr callback, AddressFamily family,
                     switch (ns_state) {
                         case IN_PROGRESS:
                             pending = true;
+                            // Someone asked it, but not us, we don't have
+                            // callback
+                            if (nameservers_not_asked_.find(ns) !=
+                                nameservers_not_asked_.end())
+                            {
+                                to_ask.push_back(ns);
+                            }
                             break;
                         case NOT_ASKED:
                         case EXPIRED:
@@ -344,16 +366,11 @@ ZoneEntry::process(CallbackPtr callback, AddressFamily family,
 
                 // We have someone to ask, so do it
                 if (!to_ask.empty()) {
+                    // We ask everything that makes sense now
+                    nameservers_not_asked_.clear();
                     // We should not be locked, because this function can
                     // be called directly from the askIP again
                     lock->unlock();
-                    shared_ptr<NameserverCallback> ns_callbacks[ADDR_REQ_MAX];;
-                    ns_callbacks[ANY_OK].reset(new NameserverCallback(
-                        shared_from_this(), ANY_OK));
-                    ns_callbacks[V4_ONLY].reset(new NameserverCallback(
-                        shared_from_this(), V4_ONLY));
-                    ns_callbacks[V6_ONLY].reset(new NameserverCallback(
-                        shared_from_this(), V6_ONLY));
                     /*
                      * TODO: Possible place for an optimisation. We now ask
                      * everything we can. We should limit this to something like
@@ -367,9 +384,7 @@ ZoneEntry::process(CallbackPtr callback, AddressFamily family,
                         // callback for different one.
                         // If they recurse back to us (call directly), we kill
                         // it by the in_process_
-                        ns->askIP(resolver_, ns_callbacks[V4_ONLY], V4_ONLY);
-                        ns->askIP(resolver_, ns_callbacks[V6_ONLY], V6_ONLY);
-                        ns->askIP(resolver_, ns_callbacks[ANY_OK], ANY_OK);
+                        insertCallback(ns, ADDR_REQ_MAX);
                     }
                     // Retry with all the data that might have arrived
                     in_process_[family] = false;
@@ -398,6 +413,19 @@ ZoneEntry::process(CallbackPtr callback, AddressFamily family,
                 }
             }
             return;
+    }
+}
+
+void
+ZoneEntry::insertCallback(NameserverPtr ns, AddressFamily family) {
+    if (family == ADDR_REQ_MAX) {
+        insertCallback(ns, ANY_OK);
+        insertCallback(ns, V4_ONLY);
+        insertCallback(ns, V6_ONLY);
+    } else {
+        shared_ptr<NameserverCallback> callback(new NameserverCallback(
+            shared_from_this(), family));
+        ns->askIP(resolver_, callback, family);
     }
 }
 

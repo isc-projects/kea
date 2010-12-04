@@ -19,6 +19,7 @@
 
 #include <string>
 #include <vector>
+#include <set>
 #include <boost/thread.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
@@ -105,6 +106,8 @@ protected:
     typedef boost::shared_ptr<NameserverEntry> NameserverPtr;
     typedef std::vector<NameserverPtr> NameserverVector;
     NameserverVector nameservers_; ///< Nameservers
+    // Which nameservers didn't have any of our callbacks yet
+    std::set<NameserverPtr> nameservers_not_asked_;
     /*
      * Callbacks. For each fimily type one vector, so we can process
      * them separately.
@@ -153,6 +156,9 @@ private:
     // The lock is mandatory
     void dispatchFailures(AddressFamily family,
         boost::shared_ptr<boost::mutex::scoped_lock> lock);
+    // Put a callback into the nameserver entry. Same ADDR_REQ_MAX means for
+    // all families
+    void insertCallback(NameserverPtr nameserver, AddressFamily family);
 };
 
 } // namespace nsas
