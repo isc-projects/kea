@@ -395,9 +395,6 @@ class UIModuleCCSession(MultiConfigData):
            a DataTypeError if the value at the identifier is not a list,
            or if the given value_str does not match the list_item_spec
            """
-        if identifier == "":
-            identifier = value_str
-            value_str = None
         module_spec = self.find_spec_part(identifier)
         if (type(module_spec) != dict or "list_item_spec" not in module_spec):
             raise isc.cc.data.DataNotFoundError(str(identifier) + " is not a list")
