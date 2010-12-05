@@ -137,6 +137,7 @@ class TestData(unittest.TestCase):
         self.assertRaises(data.DataNotFoundError, data.find, d1, 'f')
         self.assertRaises(data.DataTypeError, data.find, d1, 1)
         self.assertRaises(data.DataTypeError, data.find, None, 1)
+        self.assertRaises(data.DataTypeError, data.find, None, "foo")
         self.assertRaises(data.DataTypeError, data.find, "123", "123")
         self.assertEqual(data.find("123", ""), "123")
 
