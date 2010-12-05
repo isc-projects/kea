@@ -150,8 +150,17 @@ def _find_child_el(element, id):
     return result
 
 def find(element, identifier):
-    """Returns the subelement in the given data element, raises DataNotFoundError if not found"""
-    if (type(element) != dict and identifier != ""):
+    """Returns the subelement in the given data element, raises
+       DataNotFoundError if not found.
+       Returns the given element if the identifier is an empty string.
+       Raises a DataTypeError if identifier is not a string, or if
+       identifier is not empty, and element is not a dict.
+    """
+    if type(identifier) != str:
+        raise DataTypeError("identifier in find() is not a str")
+    if identifier == "":
+        return element
+    if type(element) != dict:
         raise DataTypeError("element in find() is not a dict")
     id_parts = split_identifier(identifier)
     cur_el = element
