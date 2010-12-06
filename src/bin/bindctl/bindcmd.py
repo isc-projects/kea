@@ -558,7 +558,7 @@ class BindCmdInterpreter(Cmd):
                     if value_map['type'] in [ 'module', 'map', 'list' ]:
                         line += "/"
                     else:
-                        line += ":\t" + str(value_map['value'])
+                        line += ":\t" + json.dumps(value_map['value'])
                     line += "\t" + value_map['type']
                     line += "\t"
                     if value_map['default']:
