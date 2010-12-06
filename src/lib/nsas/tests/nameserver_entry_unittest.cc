@@ -324,9 +324,63 @@ TEST_F(NameserverEntryTest, IPCallbacksUnreachable) {
 }
 
 /*
+ * The resolver for DirectAnswer test.
+ * It answers right away, from inside resolve. I tried to put it
+ * inside the function, but shared_ptr complains for some reason there.
+ */
+class DirectResolver : public ResolverInterface {
+    public:
+        DirectResolver(RRsetPtr rrv4, RRsetPtr rrv6) :
+            rrv4_(rrv4), rrv6_(rrv6)
+        { }
+        virtual void resolve(QuestionPtr question, CallbackPtr callback) {
+            if (question->getClass() == RRClass::IN()) {
+                EXPECT_EQ(Name(EXAMPLE_CO_UK), question->getName());
+                if (question->getType() == RRType::A()) {
+                    callback->success(rrv4_);
+                } else if (question->getType() == RRType::AAAA()) {
+                    callback->success(rrv6_);
+                } else {
+                    ADD_FAILURE() << "Unknow rrtype asked";
+                }
+            } else {
+                callback->failure();
+            }
+        }
+    private:
+        RRsetPtr rrv4_, rrv6_;
+};
+
+/*
+ * Tests that it works even when we provide the answer right away, directly
+ * from resolve.
+ */
+TEST_F(NameserverEntryTest, DirectAnswer) {
+    shared_ptr<NameserverEntry> entry(new NameserverEntry(EXAMPLE_CO_UK,
+        RRClass::IN()));
+    shared_ptr<Callback> callback(new Callback);
+    shared_ptr<ResolverInterface> resolver(new DirectResolver(rrv4_, rrv6_));
+
+    // A successfull test first
+    entry->askIP(resolver, callback, ANY_OK);
+    EXPECT_EQ(1, callback->count);
+    NameserverEntry::AddressVector addresses;
+    EXPECT_EQ(Fetchable::READY, entry->getAddresses(addresses));
+    EXPECT_EQ(5, addresses.size());
+
+    // An unsuccessfull test
+    callback->count = 0;
+    entry.reset(new NameserverEntry(EXAMPLE_CO_UK, RRClass::CH()));
+    entry->askIP(resolver, callback, ANY_OK);
+    EXPECT_EQ(1, callback->count);
+    addresses.clear();
+    EXPECT_EQ(Fetchable::UNREACHABLE, entry->getAddresses(addresses));
+    EXPECT_EQ(0, addresses.size());
+}
+
+/*
  * TODO: There should be some more tests. What happens if it times out, then
- * the data are the same or different. What if the resolver answers directly
- * from within the call (recurses)? Does it still work?
+ * the data are the same or different.
  */
 
 }   // namespace

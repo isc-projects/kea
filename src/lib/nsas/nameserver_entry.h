@@ -236,6 +236,8 @@ private:
         CallbackPair;
     std::vector<CallbackPair> callbacks_;
     /// \short Private version that does the actual asking of one address type
+    ///
+    /// Call unlocked.
     void askIP(boost::shared_ptr<ResolverInterface> resolver,
         const isc::dns::RRType&, AddressFamily);
 };
