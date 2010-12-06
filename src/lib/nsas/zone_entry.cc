@@ -68,7 +68,7 @@ class ZoneEntry::ResolverCallback : public ResolverInterface::Callback {
         ResolverCallback(shared_ptr<ZoneEntry> entry) :
             entry_(entry)
         { }
-        virtual void success(shared_ptr<AbstractRRset> answer) {
+        virtual void success(const shared_ptr<AbstractRRset>& answer) {
             shared_ptr<Lock> lock(new Lock(entry_->mutex_));
             RdataIteratorPtr iterator(answer->getRdataIterator());
             iterator->first();

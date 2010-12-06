@@ -231,7 +231,7 @@ class TestResolver : public isc::nsas::ResolverInterface {
     public:
         typedef pair<QuestionPtr, CallbackPtr> Request;
         vector<Request> requests;
-        virtual void resolve(QuestionPtr q, CallbackPtr c) {
+        virtual void resolve(const QuestionPtr& q, const CallbackPtr& c) {
             PresetAnswers::iterator it(answers_.find(*q));
             if (it == answers_.end()) {
                 requests.push_back(Request(q, c));

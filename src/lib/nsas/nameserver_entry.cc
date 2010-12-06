@@ -177,7 +177,7 @@ class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
             family_(family),
             type_(type)
         { }
-        virtual void success(shared_ptr<AbstractRRset> response) {
+        virtual void success(const shared_ptr<AbstractRRset>& response) {
             time_t now = time(NULL);
 
             Lock lock(entry_->mutex_);
