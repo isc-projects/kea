@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10-devel, 20101013, bind10-dev@isc.org)
+AC_INIT(bind10-devel, 20101201, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
@@ -467,6 +467,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/auth/tests/Makefile
                  src/bin/auth/tests/testdata/Makefile
                  src/bin/auth/benchmarks/Makefile
+                 src/bin/recurse/Makefile
                  src/bin/xfrin/Makefile
                  src/bin/xfrin/tests/Makefile
                  src/bin/xfrout/Makefile
@@ -531,6 +532,9 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/xfrout/xfrout.spec.pre
            src/bin/xfrout/tests/xfrout_test
            src/bin/xfrout/run_b10-xfrout.sh
+           src/bin/recurse/recurse.py
+           src/bin/recurse/recurse.spec.pre
+           src/bin/recurse/run_b10-recurse.sh
            src/bin/zonemgr/zonemgr.py
            src/bin/zonemgr/zonemgr.spec.pre
            src/bin/zonemgr/tests/zonemgr_test
@@ -573,6 +577,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
            chmod +x src/bin/xfrout/run_b10-xfrout.sh
+           chmod +x src/bin/recurse/run_b10-recurse.sh
            chmod +x src/bin/zonemgr/run_b10-zonemgr.sh
            chmod +x src/bin/stats/tests/stats_test
            chmod +x src/bin/stats/run_b10-stats.sh

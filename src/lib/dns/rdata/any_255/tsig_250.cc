@@ -52,6 +52,8 @@ struct TSIG::TSIGImpl {
         other_data_(static_cast<const uint8_t*>(other_data),
                     static_cast<const uint8_t*>(other_data) + other_len)
     {}
+    template <typename Output>
+    void toWireCommon(Output& output) const;
 
     const Name algorithm_;
     const uint64_t time_signed_;
@@ -331,21 +333,21 @@ TSIG::toText() const {
 // toWire().
 template <typename Output>
 void
-toWireCommon(const TSIG::TSIGImpl& impl, Output& output) {
-    output.writeUint16(impl.time_signed_ >> 32);
-    output.writeUint32(impl.time_signed_ & 0xffffffff);
-    output.writeUint16(impl.fudge_);
-    const uint16_t mac_size = impl.mac_.size();
+TSIG::TSIGImpl::toWireCommon(Output& output) const {
+    output.writeUint16(time_signed_ >> 32);
+    output.writeUint32(time_signed_ & 0xffffffff);
+    output.writeUint16(fudge_);
+    const uint16_t mac_size = mac_.size();
     output.writeUint16(mac_size);
     if (mac_size > 0) {
-        output.writeData(&impl.mac_[0], mac_size);
+        output.writeData(&mac_[0], mac_size);
     }
-    output.writeUint16(impl.original_id_);
-    output.writeUint16(impl.error_);
-    const uint16_t other_len = impl.other_data_.size();
+    output.writeUint16(original_id_);
+    output.writeUint16(error_);
+    const uint16_t other_len = other_data_.size();
     output.writeUint16(other_len);
     if (other_len > 0) {
-        output.writeData(&impl.other_data_[0], other_len);
+        output.writeData(&other_data_[0], other_len);
     }
 }
 
@@ -359,7 +361,7 @@ toWireCommon(const TSIG::TSIGImpl& impl, Output& output) {
 void
 TSIG::toWire(OutputBuffer& buffer) const {
     impl_->algorithm_.toWire(buffer);
-    toWireCommon<OutputBuffer>(*impl_, buffer);
+    impl_->toWireCommon<OutputBuffer>(buffer);
 }
 
 /// \brief Render the \c TSIG in the wire format with taking into account
@@ -379,7 +381,7 @@ TSIG::toWire(OutputBuffer& buffer) const {
 void
 TSIG::toWire(MessageRenderer& renderer) const {
     renderer.writeName(impl_->algorithm_, false);
-    toWireCommon<MessageRenderer>(*impl_, renderer);
+    impl_->toWireCommon<MessageRenderer>(renderer);
 }
 
 // A helper function commonly used for TSIG::compare().
