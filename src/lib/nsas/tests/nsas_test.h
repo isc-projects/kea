@@ -224,11 +224,35 @@ class TestResolver : public isc::nsas::ResolverInterface {
         bool checkIndex(size_t index) {
             return (requests.size() > index);
         }
+
+        typedef std::map<isc::dns::Question, boost::shared_ptr<AbstractRRset> >
+            PresetAnswers;
+        PresetAnswers answers_;
     public:
         typedef pair<QuestionPtr, CallbackPtr> Request;
         vector<Request> requests;
         virtual void resolve(QuestionPtr q, CallbackPtr c) {
-            requests.push_back(Request(q, c));
+            PresetAnswers::iterator it(answers_.find(*q));
+            if (it == answers_.end()) {
+                requests.push_back(Request(q, c));
+            } else {
+                if (it->second) {
+                    c->success(it->second);
+                } else {
+                    c->failure();
+                }
+            }
+        }
+
+        /*
+         * Add a preset answer. If shared_ptr() is passed (eg. NULL),
+         * it will generate failure. If the question is not preset,
+         * it goes to requests and you can answer later.
+         */
+        void addPresetAnswer(const isc::dns::Question& question,
+            boost::shared_ptr<AbstractRRset> answer)
+        {
+            answers_[question] = answer;
         }
 
         // Thrown if the query at the given index does not exist.

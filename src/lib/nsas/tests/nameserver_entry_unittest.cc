@@ -324,34 +324,6 @@ TEST_F(NameserverEntryTest, IPCallbacksUnreachable) {
 }
 
 /*
- * The resolver for DirectAnswer test.
- * It answers right away, from inside resolve. I tried to put it
- * inside the function, but shared_ptr complains for some reason there.
- */
-class DirectResolver : public ResolverInterface {
-    public:
-        DirectResolver(RRsetPtr rrv4, RRsetPtr rrv6) :
-            rrv4_(rrv4), rrv6_(rrv6)
-        { }
-        virtual void resolve(QuestionPtr question, CallbackPtr callback) {
-            if (question->getClass() == RRClass::IN()) {
-                EXPECT_EQ(Name(EXAMPLE_CO_UK), question->getName());
-                if (question->getType() == RRType::A()) {
-                    callback->success(rrv4_);
-                } else if (question->getType() == RRType::AAAA()) {
-                    callback->success(rrv6_);
-                } else {
-                    ADD_FAILURE() << "Unknow rrtype asked";
-                }
-            } else {
-                callback->failure();
-            }
-        }
-    private:
-        RRsetPtr rrv4_, rrv6_;
-};
-
-/*
  * Tests that it works even when we provide the answer right away, directly
  * from resolve.
  */
@@ -359,10 +331,19 @@ TEST_F(NameserverEntryTest, DirectAnswer) {
     shared_ptr<NameserverEntry> entry(new NameserverEntry(EXAMPLE_CO_UK,
         RRClass::IN()));
     shared_ptr<Callback> callback(new Callback);
-    shared_ptr<ResolverInterface> resolver(new DirectResolver(rrv4_, rrv6_));
+    shared_ptr<TestResolver> resolver(new TestResolver);
+    resolver->addPresetAnswer(Question(Name(EXAMPLE_CO_UK), RRClass::IN(),
+        RRType::A()), rrv4_);
+    resolver->addPresetAnswer(Question(Name(EXAMPLE_CO_UK), RRClass::IN(),
+        RRType::AAAA()), rrv6_);
+    resolver->addPresetAnswer(Question(Name(EXAMPLE_NET), RRClass::IN(),
+        RRType::A()), shared_ptr<AbstractRRset>());
+    resolver->addPresetAnswer(Question(Name(EXAMPLE_NET), RRClass::IN(),
+        RRType::AAAA()), shared_ptr<AbstractRRset>());
 
     // A successfull test first
     entry->askIP(resolver, callback, ANY_OK);
+    EXPECT_EQ(0, resolver->requests.size());
     EXPECT_EQ(1, callback->count);
     NameserverEntry::AddressVector addresses;
     EXPECT_EQ(Fetchable::READY, entry->getAddresses(addresses));
@@ -370,8 +351,9 @@ TEST_F(NameserverEntryTest, DirectAnswer) {
 
     // An unsuccessfull test
     callback->count = 0;
-    entry.reset(new NameserverEntry(EXAMPLE_CO_UK, RRClass::CH()));
+    entry.reset(new NameserverEntry(EXAMPLE_NET, RRClass::IN()));
     entry->askIP(resolver, callback, ANY_OK);
+    EXPECT_EQ(0, resolver->requests.size());
     EXPECT_EQ(1, callback->count);
     addresses.clear();
     EXPECT_EQ(Fetchable::UNREACHABLE, entry->getAddresses(addresses));
