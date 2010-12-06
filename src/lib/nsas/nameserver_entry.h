@@ -225,7 +225,7 @@ private:
     ///
     /// \param addresses The address list
     /// \param selector Weighted random generator
-    void updateAddressSelector(const std::vector<AddressEntry>& addresses, 
+    void updateAddressSelector(std::vector<AddressEntry>& addresses, 
             WeightedRandomIntegerGenerator& selector);
 
     boost::mutex    mutex_;                              ///< Mutex protecting this object

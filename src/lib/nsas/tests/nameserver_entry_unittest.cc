@@ -464,6 +464,24 @@ TEST_F(NameserverEntryTest, AddressSelection) {
     ASSERT_EQ(4, (int)(c1*1.0/c2 + 0.5));
     // c1 should be (3*3) times of c3
     ASSERT_EQ(9, (int)(c1*1.0/c3 + 0.5));
+
+    // Test unreachable address
+    ns->setAddressRTT(v4Addresses[0].getAddress(), 1);
+    ns->setAddressRTT(v4Addresses[1].getAddress(), 100);
+    ns->setAddressUnreachable(v4Addresses[2].getAddress());
+    c1 = c2 = c3 = 0;
+    for(int i = 0; i < 100000; ++i){
+        ns.get()->getAddress(ns, ns_address, AF_INET);
+        asiolink::IOAddress io_address = ns_address.getAddress();
+        if(io_address.toText() == v4Addresses[0].getAddress().toText()) ++c1;
+        else if(io_address.toText() == v4Addresses[1].getAddress().toText()) ++c2;
+        else if(io_address.toText() == v4Addresses[2].getAddress().toText()) ++c3;
+    }
+
+    // The 3rd address should not be selected again
+    ASSERT_EQ(0, c3);
+
+    // TODO: The unreachable server should be changed to reachable after 5minutes, but how to test?
 }
 
 // Test the RTT is updated smoothly
