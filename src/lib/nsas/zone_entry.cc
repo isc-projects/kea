@@ -193,11 +193,14 @@ ZoneEntry::addCallback(CallbackPtr callback, AddressFamily family) {
 
     if (ask) {
         setState(IN_PROGRESS);
+        // Our callback might be directly called from resolve, unlock now
+        lock.unlock();
         QuestionPtr question(new Question(Name(name_), class_code_,
             RRType::NS()));
         shared_ptr<ResolverCallback> resolver_callback(
             new ResolverCallback(shared_from_this()));
         resolver_->resolve(question, resolver_callback);
+        return;
     }
 }
 
@@ -300,21 +303,25 @@ ZoneEntry::process(CallbackPtr callback, AddressFamily family,
         case NOT_ASKED:
         case IN_PROGRESS:
         case EXPIRED:
-            return;
+            break;
         case UNREACHABLE: {
             dispatchFailures(family, lock);
             // And we do nothing more now
-            return;
+            break;
         }
         case READY:
             if (family == ADDR_REQ_MAX) {
                 // Just process each one separately
+                // TODO Think this over, is it safe, to unlock in the middle?
                 process(CallbackPtr(), ANY_OK, nameserver, lock);
+                lock->lock(); // process unlocks, lock again
                 process(CallbackPtr(), V4_ONLY, nameserver, lock);
+                lock->lock();
                 process(CallbackPtr(), V6_ONLY, nameserver, lock);
             } else {
                 // Nothing to do anyway for this family, be dormant
                 if (callbacks_[family].empty()) {
+                    lock->unlock();
                     return;
                 }
                 /*
@@ -328,9 +335,10 @@ ZoneEntry::process(CallbackPtr callback, AddressFamily family,
                  */
                 // Check that we are only in one process call on stack
                 if (in_process_[family]) {
+                    lock->unlock();
                     return;
                 }
-                // Mark we are on the stack 
+                // Mark we are on the stack
                 ProcessGuard guard(in_process_[family]);
                 in_process_[family] = true;
                 // Variables to store the data to
