@@ -46,7 +46,8 @@ class ResolverInterface {
         class Callback {
             public:
                 /// \short Some data arrived.
-                virtual void success(boost::shared_ptr<isc::dns::AbstractRRset>
+                virtual void success(
+                    const boost::shared_ptr<isc::dns::AbstractRRset>&
                     response) = 0;
                 /**
                  * \short No data available.
@@ -67,8 +68,8 @@ class ResolverInterface {
          * \param question What to ask. The resolver will decide who.
          * \param callback What should happen when the answer is ready.
          */
-        virtual void resolve(isc::dns::QuestionPtr question,
-            CallbackPtr callback) = 0;
+        virtual void resolve(const isc::dns::QuestionPtr& question,
+            const CallbackPtr& callback) = 0;
         /// \short Virtual destructor, so descendants are properly cleaned up
         virtual ~ ResolverInterface() {}
 };

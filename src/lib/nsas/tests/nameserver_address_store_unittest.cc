@@ -282,7 +282,7 @@ TEST_F(NameserverAddressStoreTest, zoneWithoutNameservers) {
         getCallback());
     // There should be no questions, because there's nothing to ask
     EXPECT_EQ(0, resolver_->requests.size());
-    // And there should be one „unreachable“ answer for the query
+    // And there should be one "unreachable" answer for the query
     ASSERT_EQ(1, NSASCallback::results.size());
     EXPECT_FALSE(NSASCallback::results[0].first);
 }
