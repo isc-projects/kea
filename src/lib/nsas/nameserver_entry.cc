@@ -342,6 +342,8 @@ NameserverEntry::askIP(shared_ptr<ResolverInterface> resolver,
         lock.unlock();
         askIP(resolver, RRType::A(), V4_ONLY);
         askIP(resolver, RRType::AAAA(), V6_ONLY);
+        // Make sure we end the routine when we are not locked
+        return;
     } else {
         // We already asked. Do we expect this address type still to come?
         if (!expect_address_[family]) {
