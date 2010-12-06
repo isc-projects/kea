@@ -338,6 +338,8 @@ NameserverEntry::askIP(shared_ptr<ResolverInterface> resolver,
         callbacks_.push_back(CallbackPair(family, callback));
 
         // Ask for both types of addresses
+        // We are unlocked here, as the callback from that might want to lock
+        lock.unlock();
         askIP(resolver, RRType::A(), V4_ONLY);
         askIP(resolver, RRType::AAAA(), V6_ONLY);
     } else {
