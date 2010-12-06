@@ -244,16 +244,20 @@ void NameserverEntry::setAddressUnreachable(const IOAddress& address) {
 // Each address has a probability to be selected if multiple addresses are available
 // The weight factor is equal to 1/(rtt*rtt), then all the weight factors are normalized
 // to make the sum equal to 1.0
-void NameserverEntry::updateAddressSelector(const std::vector<AddressEntry>& addresses, 
+void NameserverEntry::updateAddressSelector(std::vector<AddressEntry>& addresses, 
         WeightedRandomIntegerGenerator& selector)
 {
     vector<double> probabilities;
-    for(vector<AddressEntry>::const_iterator it = addresses.begin(); 
+    for(vector<AddressEntry>::iterator it = addresses.begin(); 
             it != addresses.end(); ++it){
         uint32_t rtt = (*it).getRTT();
         if(rtt == 0) isc_throw(RTTIsZero, "The RTT is 0");
 
-        probabilities.push_back(1.0/(rtt*rtt));
+        if(rtt == AddressEntry::UNREACHABLE) {
+            probabilities.push_back(0);
+        } else {
+            probabilities.push_back(1.0/(rtt*rtt));
+        }
     }
     // Calculate the sum
     double sum = accumulate(probabilities.begin(), probabilities.end(), 0.0);
