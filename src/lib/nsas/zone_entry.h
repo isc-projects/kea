@@ -128,7 +128,8 @@ private:
     // If the familly is ADDR_REQ_MAX, then it means process all callbacks.
     // However, you must not provide callback.
     // If lock is provided, it is locked mutex_ and will be used. If not,
-    // will use its own. It might unlock the lock.
+    // will use its own. It will unlock the lock if it terminates without
+    // an exception.
     void process(boost::shared_ptr<AddressRequestCallback> callback,
          AddressFamily family, boost::shared_ptr<NameserverEntry> nameserver,
          boost::shared_ptr<boost::mutex::scoped_lock> lock =

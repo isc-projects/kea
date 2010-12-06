@@ -37,6 +37,19 @@ using namespace isc::dns;
 
 namespace {
 
+/// \brief Inherited version with access into its internals for tests
+class InheritedZoneEntry : public ZoneEntry {
+    public:
+        InheritedZoneEntry(shared_ptr<ResolverInterface> resolver,
+            const std::string& name, const RRClass& class_code,
+            shared_ptr<HashTable<NameserverEntry> > nameserver_table,
+            shared_ptr<LruList<NameserverEntry> > nameserver_lru) :
+            ZoneEntry(resolver, name, class_code, nameserver_table,
+                nameserver_lru)
+        { }
+        NameserverVector& nameservers() { return nameservers_; }
+};
+
 /// \brief Test Fixture Class
 class ZoneEntryTest : public TestWithRdata {
 protected:
@@ -66,19 +79,17 @@ protected:
         }
     };
     shared_ptr<Callback> callback_;
-};
 
-/// \brief Inherited version with access into its internals for tests
-class InheritedZoneEntry : public ZoneEntry {
-    public:
-        InheritedZoneEntry(shared_ptr<ResolverInterface> resolver,
-            const std::string& name, const RRClass& class_code,
-            shared_ptr<HashTable<NameserverEntry> > nameserver_table,
-            shared_ptr<LruList<NameserverEntry> > nameserver_lru) :
-            ZoneEntry(resolver, name, class_code, nameserver_table,
-                nameserver_lru)
-        { }
-        NameserverVector& nameservers() { return nameservers_; }
+    /**
+     * \short Function returning a new zone.
+     *
+     * Convenience funcion, just creating a new zone, to shorten the code.
+     */
+    shared_ptr<InheritedZoneEntry> getZone() {
+        return (shared_ptr<InheritedZoneEntry>(new InheritedZoneEntry(
+            resolver_, EXAMPLE_CO_UK, RRClass::IN(), nameserver_table_,
+            nameserver_lru_)));
+    }
 };
 
 /// Tests of the default constructor
@@ -94,8 +105,7 @@ TEST_F(ZoneEntryTest, DefaultConstructor) {
 
 // It should answer negatively right away if there are no nameservers
 TEST_F(ZoneEntryTest, CallbackNoNS) {
-    shared_ptr<InheritedZoneEntry> zone(new InheritedZoneEntry(resolver_,
-        EXAMPLE_CO_UK, RRClass::IN(), nameserver_table_, nameserver_lru_));
+    shared_ptr<InheritedZoneEntry> zone(getZone());
     EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
     // It should accept the callback
     zone->addCallback(callback_, ANY_OK);
@@ -111,8 +121,7 @@ TEST_F(ZoneEntryTest, CallbackNoNS) {
 TEST_F(ZoneEntryTest, CallbackZeroTTL) {
     // Make it zero TTL, so it expires right away
     rr_single_->setTTL(RRTTL(0));
-    shared_ptr<InheritedZoneEntry> zone(new InheritedZoneEntry(resolver_,
-        EXAMPLE_CO_UK, RRClass::IN(), nameserver_table_, nameserver_lru_));
+    shared_ptr<InheritedZoneEntry> zone(getZone());
     EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
     // It should accept the callback
     zone->addCallback(callback_, ANY_OK);
@@ -129,8 +138,7 @@ TEST_F(ZoneEntryTest, CallbackZeroTTL) {
 
 // Check it answers callbacks when we give it addresses
 TEST_F(ZoneEntryTest, CallbacksAnswered) {
-    shared_ptr<InheritedZoneEntry> zone(new InheritedZoneEntry(resolver_,
-        EXAMPLE_CO_UK, RRClass::IN(), nameserver_table_, nameserver_lru_));
+    shared_ptr<InheritedZoneEntry> zone(getZone());
     // It should be in NOT_ASKED state
     EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
     // It should accept the callback
@@ -175,8 +183,7 @@ TEST_F(ZoneEntryTest, CallbacksAnswered) {
 
 // Pretend the server can be reached only by IPv4
 TEST_F(ZoneEntryTest, CallbacksAOnly) {
-    shared_ptr<InheritedZoneEntry> zone(new InheritedZoneEntry(resolver_,
-        EXAMPLE_CO_UK, RRClass::IN(), nameserver_table_, nameserver_lru_));
+    shared_ptr<InheritedZoneEntry> zone(getZone());
     // It should be in NOT_ASKED state
     EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
     // It should accept the callback
@@ -220,8 +227,7 @@ TEST_F(ZoneEntryTest, CallbacksAOnly) {
 
 // See it tries hard enough to get address and tries both nameservers
 TEST_F(ZoneEntryTest, CallbackTwoNS) {
-    shared_ptr<InheritedZoneEntry> zone(new InheritedZoneEntry(resolver_,
-        EXAMPLE_CO_UK, RRClass::IN(), nameserver_table_, nameserver_lru_));
+    shared_ptr<InheritedZoneEntry> zone(getZone());
     // It should be in NOT_ASKED state
     EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
     // It should accept the callback
@@ -270,15 +276,69 @@ TEST_F(ZoneEntryTest, CallbackTwoNS) {
     EXPECT_TRUE(IOAddress("2001:db8::1").equal(callback_->successes_[1]));
 }
 
+// Test if it works when the response comes right away from the resolve call
+TEST_F(ZoneEntryTest, DirectAnswer) {
+    shared_ptr<InheritedZoneEntry> zone(getZone());
+    EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
+
+    // One unsuccessfull attempt, nameservers fail
+    resolver_->addPresetAnswer(Question(Name(EXAMPLE_CO_UK), RRClass::IN(),
+        RRType::NS()), shared_ptr<AbstractRRset>());
+    zone->addCallback(callback_, ANY_OK);
+    EXPECT_EQ(0, callback_->successes_.size());
+    EXPECT_EQ(1, callback_->unreachable_count_);
+    EXPECT_EQ(0, resolver_->requests.size());
+    EXPECT_EQ(Fetchable::UNREACHABLE, zone->getState());
+
+    // Successfull attempt now
+    zone = getZone();
+    // First, fill the answers to all the questions it should ask
+    EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
+    resolver_->addPresetAnswer(Question(Name(EXAMPLE_CO_UK), RRClass::IN(),
+        RRType::NS()), rr_single_);
+    Name ns_name("ns.example.net");
+    rrv4_->setName(ns_name);
+    resolver_->addPresetAnswer(Question(ns_name, RRClass::IN(), RRType::A()),
+        rrv4_);
+    rrv6_->setName(ns_name);
+    resolver_->addPresetAnswer(Question(ns_name, RRClass::IN(),
+        RRType::AAAA()), rrv6_);
+    // Reset the results
+    callback_->unreachable_count_ = 0;
+    // Ask for the IP address
+    zone->addCallback(callback_, ANY_OK);
+    // It should be answered right away, positively
+    EXPECT_EQ(1, callback_->successes_.size());
+    EXPECT_EQ(0, callback_->unreachable_count_);
+    EXPECT_EQ(0, resolver_->requests.size());
+    EXPECT_EQ(Fetchable::READY, zone->getState());
+
+    // Reset the results
+    callback_->successes_.clear();
+    // Now, pretend we do not have IP addresses
+    resolver_->addPresetAnswer(Question(ns_name, RRClass::IN(), RRType::A()),
+        shared_ptr<AbstractRRset>());
+    resolver_->addPresetAnswer(Question(ns_name, RRClass::IN(),
+        RRType::AAAA()), shared_ptr<AbstractRRset>());
+    // Get another zone and ask it again. It should fail.
+    // Clean the table first, though, so it does not find the old nameserver
+    nameserver_table_->remove(HashKey(ns_name.toText(), RRClass::IN()));
+    zone = getZone();
+    EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
+    zone->addCallback(callback_, ANY_OK);
+    EXPECT_EQ(0, callback_->successes_.size());
+    EXPECT_EQ(1, callback_->unreachable_count_);
+    EXPECT_EQ(0, resolver_->requests.size());
+    // It should be ready, but have no IP addresses on the nameservers
+    EXPECT_EQ(Fetchable::READY, zone->getState());
+}
+
 /*
  * TODO: There should be more tests for sure. Some ideas:
  * - What happens when some things start timing out.
  * - What happens if they are different after the timeout.
  * - What happens if they return to previous state (changes and changes back).
- * - Find a way to call some of the callbacks from within the resolver directly
- *   (provide it with some kind of cache-like thing, preconfigure answer, so
- *   the things start recursing).
- * - Combine this with some timeouting.
+ * - Combine this direct answering.
  * - Look what happens when the nameservers are already in some different
  *   states and not just newly created.
  */
