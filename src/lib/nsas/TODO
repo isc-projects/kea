@@ -13,7 +13,9 @@ Long term:
   will be caching even data like authority and additional sections. It will
   notify us somehow (we will need to tell it when).
 * Optimisation to pass max two outstanding queries on the network (but fetch
-  everything from cache right away).
+  everything from cache right away). The first can be done by having number of
+  packets on the network, with max of 4 (each query are 2 of them, A and AAAA),
+  if it drops to 2, another one can be send.
 * Add the cache cookies/contexts.
 * Logging.
 * Remove LRU from the nameserver entries, drop them when they are not
@@ -23,3 +25,15 @@ Long term:
   solution to use weak_ptr inside the hash_table instead of shared_ptr and
   catch the exception inside get() (and getOrAdd) and delete the dead pointer.
 * Selection algorithm
+* Better way to dispatch all calbacks in a list is needed. Currently, we need
+  to dispatch them outside of a lock. For that reason, we take all of them out
+  into a vector on a stack, leave the lock and start dispatching. This is wrong
+  because when an exception happens inside the callback, we lose the ones
+  not dispatched yet.
+
+  What should be done in this situation anyway? Putting them back? Will anybody
+  still call them?
+
+  Or recommend that if the result is really needed, that destruction of it
+  should be considered failure if it wasn't called yet? Make it the default
+  (eg. signal failure by destruction or call that function from destructor)?
