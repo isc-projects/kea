@@ -40,8 +40,8 @@ namespace auth {
 ///   generic data sources.  On the other hand, it will help keep
 ///   implementation simpler, and we might rather want to modify the design
 ///   of the data source on this point.
-/// - return value of process().  rather than setting the Rcode, we might use
-///   it as a return value of \c process().
+/// - return value of process().  rather than or in addition to setting the
+///   Rcode, we might use it as a return value of \c process().
 /// - we'll have to be able to specify whether DNSSEC is requested.
 ///   It's an open question whether it should be in the constructor or via a
 ///   separate attribute setter.
@@ -49,6 +49,16 @@ namespace auth {
 ///   we need querier's information such as its IP address.
 /// - zone_table (or DataSrc eventually) and response may better be parameters
 ///   to process() instead of the constructor.
+///
+/// <b>Note:</b> The class name is intentionally the same as the one used in
+/// the datasrc library.  This is because the plan is to eventually merge
+/// the two classes.  We could give it a different name such as "AuthQuery"
+/// to avoid possible ambiguity, but it may sound redundant in that it's
+/// obvious that this class is for authoritative queries.
+/// Since the interfaces are very different for now and it's less
+/// likely to misuse one of the classes instead of the other
+/// accidentally, and since it's considered a temporary development state,
+/// we keep this name at the moment.
 class Query {
 public:
     /// Constructor from query parameters.
@@ -79,6 +89,16 @@ public:
     ///
     /// If no matching zone is found in the zone table, the RCODE of
     /// SERVFAIL will be set in the response.
+    /// <b>Note:</b> this is different from the error code that BIND 9 returns
+    /// by default when it's configured as an authoritative-only server (and
+    /// from the behavior of the BIND 10 datasrc library, which was implemented
+    /// to be compatible with BIND 9).
+    /// The difference comes from the fact that BIND 9 returns REFUSED as a
+    /// result of access control check on the use of its cache.
+    /// Since BIND 10's authoritative server doesn't have the notion of cache
+    /// by design, it doesn't make sense to return REFUSED.  On the other hand,
+    /// providing compatible behavior may have its own benefit, so this point
+    /// should be revisited later.
     ///
     /// Right now this method never throws an exception, but it may in a
     /// future version.
