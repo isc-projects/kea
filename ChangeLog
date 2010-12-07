@@ -1,5 +1,12 @@
 bind10-devel-20101201 released on December 01, 2010
 
+  125.  [func]		jelte
+	Added support for addressing individual list items in bindctl
+	configuration commands; If you have an element that is a list, you
+	can use foo[X] to address a specific item, where X is an integer
+	(starting at 0)
+	(Trac #405, svn r3739)
+
   124.  [bug]		jreed
 	Fix some wrong version reporting. Now also show the version
 	for the component and BIND 10 suite. (Trac #302, svn r3696)
