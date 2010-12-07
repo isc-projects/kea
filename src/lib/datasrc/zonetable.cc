@@ -28,34 +28,35 @@ using namespace isc::dns;
 namespace isc {
 namespace datasrc {
 
-struct Zone::ZoneImpl {
-    ZoneImpl(const RRClass& zone_class, const Name& origin) :
+struct MemoryZone::MemoryZoneImpl {
+    MemoryZoneImpl(const RRClass& zone_class, const Name& origin) :
         zone_class_(zone_class), origin_(origin)
     {}
     RRClass zone_class_;
     Name origin_;
 };
 
-Zone::Zone(const RRClass& zone_class, const Name& origin) : impl_(NULL) {
-    impl_ = new ZoneImpl(zone_class, origin);
+MemoryZone::MemoryZone(const RRClass& zone_class, const Name& origin) :
+    impl_(new MemoryZoneImpl(zone_class, origin))
+{
 }
 
-Zone::~Zone() {
+MemoryZone::~MemoryZone() {
     delete impl_;
 }
 
 const Name&
-Zone::getOrigin() const {
+MemoryZone::getOrigin() const {
     return (impl_->origin_);
 }
 
 const RRClass&
-Zone::getClass() const {
+MemoryZone::getClass() const {
     return (impl_->zone_class_);
 }
 
-AbstractZone::FindResult
-Zone::find(const Name&, const RRType&) const {
+Zone::FindResult
+MemoryZone::find(const Name&, const RRType&) const {
     // This is a tentative implementation that always returns NXDOMAIN.
     return (FindResult(NXDOMAIN, RRsetPtr()));
 }
