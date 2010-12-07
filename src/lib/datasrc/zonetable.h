@@ -29,7 +29,7 @@ namespace datasrc {
 
 /// \brief The base class for a single authoritative zone
 ///
-/// The \c AbstractZone class is an abstract base class for representing
+/// The \c Zone class is an abstract base class for representing
 /// a DNS zone as part of data source.
 ///
 /// At the moment this is provided mainly for making the \c ZoneTable class
@@ -44,7 +44,12 @@ namespace datasrc {
 /// will have more specific features.  For example, they will maintain
 /// information about the location of a zone file, whether it's loaded in
 /// memory, etc.
-class AbstractZone {
+///
+/// <b>Note:</b> Unlike some other abstract base classes we don't name the
+/// class beginning with "Abstract".  This is because we want to have
+/// commonly used definitions such as \c Result and \c ZonePtr, and we want
+/// to make them look more intuitive.
+class Zone {
 public:
     /// Result codes of the \c find() method.
     ///
@@ -98,10 +103,10 @@ protected:
     ///
     /// This is intentionally defined as \c protected as this base class should
     /// never be instantiated (except as part of a derived class).
-    AbstractZone() {}
+    Zone() {}
 public:
     /// The destructor.
-    virtual ~AbstractZone() {}
+    virtual ~Zone() {}
     //@}
 
     ///
@@ -157,18 +162,18 @@ public:
     //@}
 };
 
-/// \brief A pointer-like type pointing to a \c AbstractZone object.
-typedef boost::shared_ptr<AbstractZone> ZonePtr;
+/// \brief A pointer-like type pointing to a \c Zone object.
+typedef boost::shared_ptr<Zone> ZonePtr;
 
-/// \brief A pointer-like type pointing to a \c AbstractZone object.
-typedef boost::shared_ptr<const AbstractZone> ConstZonePtr;
+/// \brief A pointer-like type pointing to a \c Zone object.
+typedef boost::shared_ptr<const Zone> ConstZonePtr;
 
 /// A derived zone class intended to be used with the memory data source.
 ///
 /// Currently this is almost empty and is only used for testing the
 /// \c ZoneTable class.  It will be substantially expanded, and will probably
 /// moved to a separate header file.
-class Zone : public AbstractZone {
+class MemoryZone : public Zone {
     ///
     /// \name Constructors and Destructor.
     ///
@@ -177,8 +182,8 @@ class Zone : public AbstractZone {
     /// defined as private, making this class non copyable.
     //@{
 private:
-    Zone(const Zone& source);
-    Zone& operator=(const Zone& source);
+    MemoryZone(const MemoryZone& source);
+    MemoryZone& operator=(const MemoryZone& source);
 public:
     /// \brief Constructor from zone parameters.
     ///
@@ -188,10 +193,10 @@ public:
     ///
     /// \param rrclass The RR class of the zone.
     /// \param origin The origin name of the zone.
-    Zone(const isc::dns::RRClass& rrclass, const isc::dns::Name& origin);
+    MemoryZone(const isc::dns::RRClass& rrclass, const isc::dns::Name& origin);
 
     /// The destructor.
-    virtual ~Zone();
+    virtual ~MemoryZone();
     //@}
 
     virtual const isc::dns::Name& getOrigin() const;
@@ -200,8 +205,8 @@ public:
                             const isc::dns::RRType& type) const;
 
 private:
-    struct ZoneImpl;
-    ZoneImpl* impl_;
+    struct MemoryZoneImpl;
+    MemoryZoneImpl* impl_;
 };
 
 /// \brief A set of authoritative zones.
@@ -274,11 +279,11 @@ public:
     /// See the description of \c find() for the semantics of the member
     /// variables.
     struct FindResult {
-        FindResult(Result param_code, const AbstractZone* param_zone) :
+        FindResult(Result param_code, const Zone* param_zone) :
             code(param_code), zone(param_zone)
         {}
         const Result code;
-        const AbstractZone* const zone;
+        const Zone* const zone;
     };
 
     ///
