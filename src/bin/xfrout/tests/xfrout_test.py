@@ -87,8 +87,8 @@ class TestXfroutSession(unittest.TestCase):
     def setUp(self):
         request = MySocket(socket.AF_INET,socket.SOCK_STREAM)
         self.log = isc.log.NSLogger('xfrout', '',  severity = 'critical', log_to_console = False )
-        (self.write_sock, self.read_sock) = socket.socketpair()
-        self.xfrsess = MyXfroutSession(request, None, None, self.log, self.read_sock)
+        self.xfrsess = MyXfroutSession(request, None, None, self.log)
+        self.write_sock, self.read_sock = socket.socketpair()
         self.xfrsess.server = Dbserver()
         self.mdata = bytes(b'\xd6=\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\x03com\x00\x00\xfc\x00\x01')
         self.sock = MySocket(socket.AF_INET,socket.SOCK_STREAM)
