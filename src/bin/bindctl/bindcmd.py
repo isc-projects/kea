@@ -558,7 +558,7 @@ class BindCmdInterpreter(Cmd):
                     if value_map['type'] in [ 'module', 'map', 'list' ]:
                         line += "/"
                     else:
-                        line += ":\t" + str(value_map['value'])
+                        line += ":\t" + json.dumps(value_map['value'])
                     line += "\t" + value_map['type']
                     line += "\t"
                     if value_map['default']:
@@ -569,7 +569,10 @@ class BindCmdInterpreter(Cmd):
             elif cmd.command == "add":
                 self.config_data.add_value(identifier, cmd.params['value'])
             elif cmd.command == "remove":
-                self.config_data.remove_value(identifier, cmd.params['value'])
+                if 'value' in cmd.params:
+                    self.config_data.remove_value(identifier, cmd.params['value'])
+                else:
+                    self.config_data.remove_value(identifier, None)
             elif cmd.command == "set":
                 if 'identifier' not in cmd.params:
                     print("Error: missing identifier or value")

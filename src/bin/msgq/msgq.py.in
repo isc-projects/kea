@@ -38,7 +38,9 @@ import isc.cc
 isc.util.process.rename()
 
 # This is the version that gets displayed to the user.
-__version__ = "v20091030 (Paving the DNS Parking Lot)"
+# The VERSION string consists of the module name, the module version
+# number, and the overall BIND 10 version number (set in configure.ac).
+VERSION = "b10-msgq 20100818 (BIND 10 @PACKAGE_VERSION@)"
 
 class MsgQReceiveError(Exception): pass
 
@@ -421,7 +423,7 @@ if __name__ == "__main__":
         parser.values.msgq_port = intval
 
     # Parse any command-line options.
-    parser = OptionParser(version=__version__)
+    parser = OptionParser(version=VERSION)
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
                       help="display more about what is going on")
     parser.add_option("-s", "--socket-file", dest="msgq_socket_file",
@@ -433,7 +435,7 @@ if __name__ == "__main__":
 
     # Announce startup.
     if options.verbose:
-        sys.stdout.write("[b10-msgq] MsgQ %s\n" % __version__)
+        sys.stdout.write("[b10-msgq] %s\n" % VERSION)
 
     msgq = MsgQ(options.msgq_socket_file, options.verbose)
 
