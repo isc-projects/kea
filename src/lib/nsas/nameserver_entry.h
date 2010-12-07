@@ -223,7 +223,8 @@ private:
     mutable boost::mutex    mutex_;     ///< Mutex protecting this object
     std::string     name_;              ///< Canonical name of the nameserver
     isc::dns::RRClass classCode_;       ///< Class of the nameserver
-    std::vector<AddressEntry> address_; ///< Set of V4/V6 addresses
+    /// The current addresses and addresses from previous request to keep RTT
+    std::vector<AddressEntry> address_, previous_addresses_;
     time_t          expiration_;        ///< Summary expiration time. 0 = unset
     // Do we have some addresses already? Do we expect some to come?
     // These are set after asking for IP, if NOT_ASKED, they are uninitialized
