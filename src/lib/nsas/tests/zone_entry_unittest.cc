@@ -117,8 +117,13 @@ TEST_F(ZoneEntryTest, CallbackNoNS) {
     EXPECT_EQ(1, callback_->unreachable_count_);
 }
 
-// Check it accepts the first callback with 0 TTL
-TEST_F(ZoneEntryTest, CallbackZeroTTL) {
+/*
+ * This checks that:
+ * * The question is answered even with 0 TTL
+ * * It is answered only once, other query triggers another upstream query.
+ * * When we answer with different one, it should ask for a different zone.
+ */
+TEST_F(ZoneEntryTest, ChangedNS) {
     // Make it zero TTL, so it expires right away
     rr_single_->setTTL(RRTTL(0));
     shared_ptr<InheritedZoneEntry> zone(getZone());
@@ -131,9 +136,43 @@ TEST_F(ZoneEntryTest, CallbackZeroTTL) {
     EXPECT_TRUE(callback_->successes_.empty());
     EXPECT_EQ(0, callback_->unreachable_count_);
     resolver_->asksIPs(ns_name_, 1, 2);
+    resolver_->answer(1, ns_name_, RRType::A(), rdata::in::A("192.0.2.1"));
+    ASSERT_EQ(1, callback_->successes_.size());
+    EXPECT_TRUE(IOAddress("192.0.2.1").equal(callback_->successes_[0]));
+    resolver_->answer(2, ns_name_, RRType::AAAA(),
+        rdata::in::AAAA("2001:db8::1"));
+    EXPECT_EQ(1, callback_->successes_.size());
     // It should request the NSs again, as TTL is 0
     zone->addCallback(callback_, ANY_OK);
     EXPECT_EQ(4, resolver_->requests.size());
+    EXPECT_EQ(Fetchable::IN_PROGRESS, zone->getState());
+
+    Name different_name("ns.example.com");
+    // Create a different answer
+    RRsetPtr different_ns(new RRset(Name(EXAMPLE_CO_UK), RRClass::IN(),
+        RRType::NS(), RRTTL(0)));
+    different_ns->addRdata(rdata::generic::NS(different_name));
+    EXPECT_NO_THROW(resolver_->provideNS(3, different_ns));
+    // It should become ready and ask for the new name
+    EXPECT_EQ(Fetchable::READY, zone->getState());
+    // Answer one of the IP addresses, we should get an address now
+    resolver_->asksIPs(different_name, 4, 5);
+    resolver_->answer(4, different_name, RRType::A(),
+        rdata::in::A("192.0.2.2"));
+    ASSERT_EQ(2, callback_->successes_.size());
+    EXPECT_TRUE(IOAddress("192.0.2.2").equal(callback_->successes_[1]));
+
+    // And now, switch back, as it timed out again
+    zone->addCallback(callback_, ANY_OK);
+    EXPECT_EQ(7, resolver_->requests.size());
+    EXPECT_EQ(Fetchable::IN_PROGRESS, zone->getState());
+    // When we answer with the original, it should still be cached and
+    // we should get the answer
+    EXPECT_NO_THROW(resolver_->provideNS(0, rr_single_));
+    EXPECT_EQ(7, resolver_->requests.size());
+    EXPECT_EQ(Fetchable::READY, zone->getState());
+    ASSERT_EQ(3, callback_->successes_.size());
+    EXPECT_TRUE(IOAddress("192.0.2.1").equal(callback_->successes_[0]));
 }
 
 // Check it answers callbacks when we give it addresses
@@ -335,9 +374,6 @@ TEST_F(ZoneEntryTest, DirectAnswer) {
 
 /*
  * TODO: There should be more tests for sure. Some ideas:
- * - What happens when some things start timing out.
- * - What happens if they are different after the timeout.
- * - What happens if they return to previous state (changes and changes back).
  * - Combine this direct answering.
  * - Look what happens when the nameservers are already in some different
  *   states and not just newly created.
