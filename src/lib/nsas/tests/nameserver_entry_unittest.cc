@@ -78,7 +78,7 @@ protected:
         // Let it ask for data
         entry->askIP(resolver, callback, ANY_OK);
         // Check it really asked and sort the queries
-        resolver->asksIPs(Name(entry->getName()), 0, 1);
+        EXPECT_TRUE(resolver->asksIPs(Name(entry->getName()), 0, 1));
         // Respond with answers
         fillSet(resolver, 0, rrv4);
         fillSet(resolver, 1, rrv6);
