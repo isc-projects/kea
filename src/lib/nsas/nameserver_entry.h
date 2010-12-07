@@ -91,7 +91,7 @@ public:
 /// As this object will be stored in the nameserver address store LRU list,
 /// it is derived from the LRU list entry class.
 
-class NameserverEntry : public NsasEntry<NameserverEntry> {
+class NameserverEntry : public NsasEntry<NameserverEntry>{
 public:
     /// List of addresses associated with this nameserver
     typedef std::vector<AddressEntry>   AddressVector;
@@ -142,13 +142,10 @@ public:
     /// \brief Return one address
     ///
     /// Return one address corresponding to this nameserver
-    /// \param nameserver The NamerserverEntry shared_ptr object. The NameserverAddress
-    ///        need to hold it to avoid NameserverEntry being released
     /// \param address NameserverAddress object used to receive the address
     /// \param family The family of user request, AF_INET or AF_INET6
     /// \return true if one address is found, false otherwise
-    virtual bool getAddress(boost::shared_ptr<NameserverEntry>& nameserver, 
-            NameserverAddress& address, short family);
+    virtual bool getAddress(NameserverAddress& address, short family);
 
     /// \brief Return Address that corresponding to the index
     ///

@@ -437,7 +437,7 @@ TEST_F(NameserverEntryTest, AddressSelection) {
     int c3 = 0;
     NameserverAddress ns_address;
     for(int i = 0; i < 10000; ++i){
-        ns.get()->getAddress(ns, ns_address, AF_INET);
+        ns.get()->getAddress(ns_address, AF_INET);
         asiolink::IOAddress io_address = ns_address.getAddress();
         if(io_address.toText() == v4Addresses[0].getAddress().toText()) ++c1;
         else if(io_address.toText() == v4Addresses[1].getAddress().toText()) ++c2;
@@ -453,7 +453,7 @@ TEST_F(NameserverEntryTest, AddressSelection) {
     ns->setAddressRTT(v4Addresses[2].getAddress(), 3);
     c1 = c2 = c3 = 0; 
     for(int i = 0; i < 100000; ++i){
-        ns.get()->getAddress(ns, ns_address, AF_INET);
+        ns.get()->getAddress(ns_address, AF_INET);
         asiolink::IOAddress io_address = ns_address.getAddress();
         if(io_address.toText() == v4Addresses[0].getAddress().toText()) ++c1;
         else if(io_address.toText() == v4Addresses[1].getAddress().toText()) ++c2;
@@ -471,7 +471,7 @@ TEST_F(NameserverEntryTest, AddressSelection) {
     ns->setAddressUnreachable(v4Addresses[2].getAddress());
     c1 = c2 = c3 = 0;
     for(int i = 0; i < 100000; ++i){
-        ns.get()->getAddress(ns, ns_address, AF_INET);
+        ns.get()->getAddress(ns_address, AF_INET);
         asiolink::IOAddress io_address = ns_address.getAddress();
         if(io_address.toText() == v4Addresses[0].getAddress().toText()) ++c1;
         else if(io_address.toText() == v4Addresses[1].getAddress().toText()) ++c2;

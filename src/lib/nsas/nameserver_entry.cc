@@ -37,6 +37,7 @@ using namespace asiolink;
 using namespace isc::nsas;
 using namespace isc::dns;
 using namespace std;
+using namespace boost;
 
 namespace isc {
 namespace nsas {
@@ -151,22 +152,20 @@ void NameserverEntry::getAddresses(AddressVector& addresses, short family) const
 }
 
 // Return one address matching the given family
-bool NameserverEntry::getAddress(boost::shared_ptr<NameserverEntry>& nameserver, 
-        NameserverAddress& address, short family)
+bool NameserverEntry::getAddress(NameserverAddress& address, short family)
 {
-
-    // The shared_ptr must contain this pointer
-    assert(nameserver.get() == this);
+    // Get the shared_ptr object that point to "this" object
+    shared_ptr<NameserverEntry> shared_ptr_to_this = shared_from_this();
 
     if(family == AF_INET){
         if(v4_addresses_.size() == 0) return false;
 
-        address = NameserverAddress(nameserver, v4_address_selector_(), AF_INET);
+        address = NameserverAddress(shared_ptr_to_this, v4_address_selector_(), AF_INET);
         return true;
     } else if(family == AF_INET6){
         if(v6_addresses_.size() == 0) return false;
 
-        address = NameserverAddress(nameserver, v6_address_selector_(), AF_INET6);
+        //address = NameserverAddress(shared_from_this(), v6_address_selector_(), AF_INET6);
         return true;
     }
     return false;
@@ -230,8 +229,11 @@ void NameserverEntry::updateAddressRTTAtIndex(uint32_t rtt, uint32_t index, shor
     (*addresses)[index].setRTT(new_rtt);
 
     // Update the selector
-    if(family == AF_INET) updateAddressSelector(v4_addresses_, v4_address_selector_);
-    else if(family == AF_INET6) updateAddressSelector(v6_addresses_, v6_address_selector_);
+    if(family == AF_INET) { 
+        updateAddressSelector(v4_addresses_, v4_address_selector_);
+    } else if(family == AF_INET6) {
+        updateAddressSelector(v6_addresses_, v6_address_selector_);
+    }
 }
 
 // Sets the address to be unreachable

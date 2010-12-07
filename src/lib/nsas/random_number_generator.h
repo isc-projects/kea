@@ -17,6 +17,7 @@
 #ifndef __NSAS_RANDOM_NUMBER_GENERATOR_H
 #define __NSAS_RANDOM_NUMBER_GENERATOR_H
 
+#include <cmath>
 #include <numeric>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int.hpp>
@@ -133,19 +134,19 @@ private:
     bool isProbabilitiesValid(const std::vector<double>& probabilities) const
     {
         typedef std::vector<double>::const_iterator Iterator;
-        double sum = probabilities.empty() ? 1 : 0;
+        double sum = probabilities.empty() ? 1.0 : 0.0;
         for(Iterator it = probabilities.begin(); it != probabilities.end(); ++it){
             //The probability must be in [0, 1.0]
-            if(*it < 0) return false;
-
-            if(*it > 1) return false;
+            if(*it < 0.0 || *it > 1.0) {
+                return false;
+            }
 
             sum += *it;
         }
 
         double epsilon = 0.0001;
         // The sum must be equal to 1
-        return fabs(sum - 1) < epsilon;
+        return fabs(sum - 1.0) < epsilon;
     }
 
     // Shortcut typedefs
