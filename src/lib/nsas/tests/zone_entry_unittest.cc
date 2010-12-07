@@ -80,6 +80,15 @@ protected:
     };
     shared_ptr<Callback> callback_;
 
+    // Empty callback to pass to nameserver entry, to do injection of them
+    struct NseCallback : public NameserverEntry::Callback {
+        virtual void operator()(shared_ptr<NameserverEntry>) { }
+    };
+
+    shared_ptr<NseCallback> nseCallback() {
+        return (shared_ptr<NseCallback>(new NseCallback));
+    }
+
     /**
      * \short Function returning a new zone.
      *
@@ -89,6 +98,42 @@ protected:
         return (shared_ptr<InheritedZoneEntry>(new InheritedZoneEntry(
             resolver_, EXAMPLE_CO_UK, RRClass::IN(), nameserver_table_,
             nameserver_lru_)));
+    }
+
+    /// \short Creates and injects a nameserver entry
+    shared_ptr<NameserverEntry> injectEntry() {
+        shared_ptr<NameserverEntry> nse(new NameserverEntry(ns_name_.toText(),
+            RRClass::IN()));
+        nameserver_table_->add(nse, HashKey(ns_name_.toText(), RRClass::IN()));
+        EXPECT_EQ(Fetchable::NOT_ASKED, nse->getState());
+        return (nse);
+    }
+
+    void checkInjected(bool answer, size_t success_count = 1,
+        size_t failure_count = 0)
+    {
+        // Create the zone and check it acts correctly
+        shared_ptr<InheritedZoneEntry> zone(getZone());
+        resolver_->addPresetAnswer(Question(Name(EXAMPLE_CO_UK), RRClass::IN(),
+            RRType::NS()), rr_single_);
+        zone->addCallback(callback_, ANY_OK);
+        EXPECT_EQ(2, resolver_->requests.size());
+        EXPECT_TRUE(resolver_->asksIPs(ns_name_, 0, 1));
+        if (answer) {
+            EXPECT_NO_THROW(resolver_->answer(0, ns_name_, RRType::A(),
+                rdata::in::A("192.0.2.1")));
+            EXPECT_NO_THROW(resolver_->answer(1, ns_name_, RRType::AAAA(),
+                rdata::in::AAAA("2001:db8::1")));
+        }
+        // Check the answers
+        EXPECT_EQ(Fetchable::READY, zone->getState());
+        EXPECT_EQ(failure_count, callback_->unreachable_count_);
+        EXPECT_EQ(success_count, callback_->successes_.size());
+        for (size_t i = 0; i < callback_->successes_.size(); ++ i) {
+            EXPECT_TRUE(IOAddress("192.0.2.1").equal(
+                callback_->successes_[i]) || IOAddress("2001:db8::1").equal(
+                    callback_->successes_[i]));
+        }
     }
 };
 
@@ -411,11 +456,72 @@ TEST_F(ZoneEntryTest, AddressTimeout) {
     EXPECT_TRUE(IOAddress("192.0.2.1").equal(callback_->successes_[1]));
 }
 
-/*
- * TODO: There should be more tests for sure. Some ideas:
- * - Combine this direct answering.
- * - Look what happens when the nameservers are already in some different
- *   states and not just newly created.
- */
+// Test how the zone reacts to a nameserver entry in ready state
+TEST_F(ZoneEntryTest, NameserverEntryReady) {
+    // Inject the entry
+    shared_ptr<NameserverEntry> nse(injectEntry());
+    // Fill it with data
+    nse->askIP(resolver_, nseCallback(), ANY_OK);
+    EXPECT_EQ(Fetchable::IN_PROGRESS, nse->getState());
+    EXPECT_TRUE(resolver_->asksIPs(ns_name_, 0, 1));
+    EXPECT_NO_THROW(resolver_->answer(0, ns_name_, RRType::A(),
+        rdata::in::A("192.0.2.1")));
+    EXPECT_NO_THROW(resolver_->answer(1, ns_name_, RRType::AAAA(),
+        rdata::in::AAAA("2001:db8::1")));
+    EXPECT_EQ(Fetchable::READY, nse->getState());
+
+    checkInjected(false);
+}
+
+// Test how the zone reacts to a nameserver in not asked state
+TEST_F(ZoneEntryTest, NameserverNotAsked) {
+    // Inject the entry
+    injectEntry();
+    // We do not need it, nothing to modify on it
+
+    checkInjected(true);
+}
+
+// What if the zone finds a nameserver in progress?
+TEST_F(ZoneEntryTest, NameserverInProgress) {
+    // Prepare the nameserver entry
+    shared_ptr<NameserverEntry> nse(injectEntry());
+    nse->askIP(resolver_, nseCallback(), ANY_OK);
+    EXPECT_EQ(Fetchable::IN_PROGRESS, nse->getState());
+    EXPECT_TRUE(resolver_->asksIPs(ns_name_, 0, 1));
+
+    checkInjected(true);
+}
+
+// Check Zone's reaction to found expired nameserver
+TEST_F(ZoneEntryTest, NameserverExpired) {
+    shared_ptr<NameserverEntry> nse(injectEntry());
+    nse->askIP(resolver_, nseCallback(), ANY_OK);
+    EXPECT_EQ(Fetchable::IN_PROGRESS, nse->getState());
+    EXPECT_TRUE(resolver_->asksIPs(ns_name_, 0, 1));
+    EXPECT_NO_THROW(resolver_->answer(0, ns_name_, RRType::A(),
+        rdata::in::A("192.0.2.1"), 0));
+    EXPECT_NO_THROW(resolver_->answer(1, ns_name_, RRType::AAAA(),
+        rdata::in::AAAA("2001:db8::1"), 0));
+    EXPECT_EQ(Fetchable::READY, nse->getState());
+    NameserverEntry::AddressVector addresses;
+    EXPECT_EQ(Fetchable::EXPIRED, nse->getAddresses(addresses));
+    EXPECT_EQ(Fetchable::EXPIRED, nse->getState());
+    resolver_->requests.clear();
+
+    checkInjected(true);
+}
+
+// Check how it reacts to an unreachable zone already in the table
+TEST_F(ZoneEntryTest, NameserverUnreachable) {
+    shared_ptr<NameserverEntry> nse(injectEntry());
+    nse->askIP(resolver_, nseCallback(), ANY_OK);
+    ASSERT_EQ(2, resolver_->requests.size());
+    resolver_->requests[0].second->failure();
+    resolver_->requests[1].second->failure();
+    EXPECT_EQ(Fetchable::UNREACHABLE, nse->getState());
+
+    checkInjected(false, 0, 1);
+}
 
 }   // namespace
