@@ -411,4 +411,62 @@ TEST_F(NameserverEntryTest, ChangedExpired) {
     EXPECT_EQ("2001:db8::2", addresses[3].getAddress().toText());
 }
 
+/*
+ * When the data expire and is asked again, the original RTT is kept.
+ */
+TEST_F(NameserverEntryTest, KeepRTT) {
+    shared_ptr<NameserverEntry> entry(new NameserverEntry(EXAMPLE_CO_UK,
+        RRClass::IN()));
+    shared_ptr<Callback> callback(new Callback);
+    shared_ptr<TestResolver> resolver(new TestResolver);
+
+    // Ask the first time
+    entry->askIP(resolver, callback, V4_ONLY);
+    entry->askIP(resolver, callback, V6_ONLY);
+    EXPECT_TRUE(resolver->asksIPs(Name(EXAMPLE_CO_UK), 0, 1));
+    EXPECT_EQ(Fetchable::IN_PROGRESS, entry->getState());
+    resolver->answer(0, Name(EXAMPLE_CO_UK), RRType::A(),
+        rdata::in::A("192.0.2.1"), 0);
+    resolver->answer(1, Name(EXAMPLE_CO_UK), RRType::AAAA(),
+        rdata::in::AAAA("2001:db8::1"), 0);
+    EXPECT_EQ(2, callback->count);
+    NameserverEntry::AddressVector addresses;
+    // We must accept expired as well, as the TTL is 0 (and it is OK,
+    // because we just got the callback)
+    EXPECT_EQ(Fetchable::READY, entry->getAddresses(addresses, V4_ONLY, true));
+    ASSERT_EQ(1, addresses.size());
+    EXPECT_EQ("192.0.2.1", addresses[0].getAddress().toText());
+    EXPECT_EQ(Fetchable::READY, entry->getAddresses(addresses, V6_ONLY, true));
+    ASSERT_EQ(2, addresses.size());
+    EXPECT_EQ("2001:db8::1", addresses[1].getAddress().toText());
+    BOOST_FOREACH(const AddressEntry& address, addresses) {
+        entry->setAddressRTT(address.getAddress(), 123);
+    }
+
+    // Ask the second time. The callbacks should not fire right away and it
+    // should request the addresses again
+    entry->askIP(resolver, callback, V4_ONLY);
+    entry->askIP(resolver, callback, V6_ONLY);
+    EXPECT_EQ(2, callback->count);
+    EXPECT_TRUE(resolver->asksIPs(Name(EXAMPLE_CO_UK), 2, 3));
+    EXPECT_EQ(Fetchable::IN_PROGRESS, entry->getState());
+    resolver->answer(0, Name(EXAMPLE_CO_UK), RRType::A(),
+        rdata::in::A("192.0.2.1"));
+    resolver->answer(1, Name(EXAMPLE_CO_UK), RRType::AAAA(),
+        rdata::in::AAAA("2001:db8::1"));
+    // We should get the new addresses and they should not expire,
+    // so we should get them without accepting expired
+    addresses.clear();
+    EXPECT_EQ(Fetchable::READY, entry->getAddresses(addresses, V4_ONLY));
+    ASSERT_EQ(1, addresses.size());
+    EXPECT_EQ("192.0.2.1", addresses[0].getAddress().toText());
+    EXPECT_EQ(Fetchable::READY, entry->getAddresses(addresses, V6_ONLY));
+    ASSERT_EQ(2, addresses.size());
+    EXPECT_EQ("2001:db8::1", addresses[1].getAddress().toText());
+    // They should have the RTT we set to them
+    BOOST_FOREACH(const AddressEntry& address, addresses) {
+        EXPECT_EQ(123, address.getRTT());
+    }
+}
+
 }   // namespace

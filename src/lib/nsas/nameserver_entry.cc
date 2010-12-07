@@ -196,8 +196,20 @@ class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
             // TODO Remove at merge with trunk
             i->first();
             while (! i->isLast()) {
+                // Try to find the original value and reuse its rtt
+                string address(i->getCurrent().toText());
+                int curr_rtt(-1);
+                BOOST_FOREACH(const AddressEntry& entry,
+                    entry_->previous_addresses_)
+                {
+                    if (entry.getAddress().toText() == address) {
+                        curr_rtt = entry.getRTT();
+                        break;
+                    }
+                }
                 entries.push_back(AddressEntry(IOAddress(
-                    i->getCurrent().toText()), ++ rtt_));
+                    i->getCurrent().toText()),
+                    curr_rtt == -1 ? ++ rtt_ : curr_rtt));
                 i->next();
             }
 
@@ -212,6 +224,8 @@ class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
                 // Everything is here
                 if (!entry_->expect_address_[ANY_OK]) {
                     entry_->setState(READY);
+                    // We can drop the original addresses, we took everything
+                    entry_->previous_addresses_.clear();
                 }
                 // We have some address
                 entry_->has_address_[ANY_OK] =
@@ -323,10 +337,10 @@ NameserverEntry::askIP(shared_ptr<ResolverInterface> resolver,
         // We will request the addresses
 
         // Set internal state first
-        // TODO: We might want to save the addresses somewhere so we do not
-        // lose RTT. This might get tricky. Would the trick with map as in
-        // ZoneEntry work as well?
-        address_.clear();
+        // We store the old addresses so we can pick their RTT when
+        // we get the same addresses again (most probably)
+        previous_addresses_.clear();
+        address_.swap(previous_addresses_);
         setState(IN_PROGRESS);
         has_address_[V4_ONLY] = has_address_[V6_ONLY] = has_address_[ANY_OK] =
             false;

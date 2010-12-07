@@ -1,6 +1,3 @@
-NameserverEntry:
-* Reuse data on timeout/requery
-
 Global:
 * There are TODO notes in tests, some more tests should be added to stress
   and test it more.
