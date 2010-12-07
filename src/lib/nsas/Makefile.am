@@ -19,6 +19,7 @@ libnsas_la_SOURCES += nameserver_address.h
 libnsas_la_SOURCES += nameserver_entry.cc nameserver_entry.h
 libnsas_la_SOURCES += nsas_entry_compare.h
 libnsas_la_SOURCES += nsas_entry.h
+libnsas_la_SOURCES += random_number_generator.h
 libnsas_la_SOURCES += zone_entry.h
 
 CLEANFILES = *.gcno *.gcda

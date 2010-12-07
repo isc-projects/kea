@@ -60,7 +60,9 @@ public:
     NameserverAddress(boost::shared_ptr<NameserverEntry>& nameserver, uint32_t index, short family):
         ns_(nameserver), index_(index), family_(family)
     {
-        if(!ns_.get()) isc_throw(NullNameserverEntryPointer, "NULL NameserverEntry pointer.");
+        if(!ns_.get()) {
+            isc_throw(NullNameserverEntryPointer, "NULL NameserverEntry pointer.");
+        }
     }
 
     /// \brief Default Constructor

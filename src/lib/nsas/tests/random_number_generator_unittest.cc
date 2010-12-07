@@ -52,11 +52,13 @@ private:
     const static int max_ = 10;
 };
 
+#ifndef NDEBUG
 // Test of the constructor
 TEST_F(UniformRandomIntegerGeneratorTest, Constructor) {
     // The range must be min<=max
     ASSERT_DEATH(UniformRandomIntegerGenerator(3, 2), "");
 }
+#endif
 
 // Test of the generated integers are in the range [min, max]
 TEST_F(UniformRandomIntegerGeneratorTest, IntegerRange) {
@@ -97,6 +99,7 @@ TEST_F(WeightedRandomIntegerGeneratorTest, Constructor)
         ASSERT_EQ(gen(), 123);
     }
 
+#ifndef NDEBUG
     //The probability must be >= 0
     probabilities.push_back(-0.1);
     probabilities.push_back(1.1);
@@ -120,6 +123,7 @@ TEST_F(WeightedRandomIntegerGeneratorTest, Constructor)
     probabilities.push_back(0.2);
     probabilities.push_back(0.1);
     ASSERT_DEATH(WeightedRandomIntegerGenerator gen5(probabilities), "");
+#endif
 }
 
 // Test the randomization of the generator
