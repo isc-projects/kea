@@ -69,8 +69,8 @@ public:
     /// the result code ("success" or "not found") and the found object,
     /// i.e., avoid using \c NULL to mean "not found", etc.
     ///
-    /// This is a simple value class with no internal state, so for
-    /// convenience we allow the applications to refer to the members
+    /// This is a simple value class whose internal state never changes,
+    /// so for convenience we allow the applications to refer to the members
     /// directly.
     ///
     /// Note: we should eventually include a notion of "zone node", which
