@@ -51,7 +51,7 @@ def prepare_config_commands(tool):
     cmd = CommandInfo(name = "remove", desc = "Remove entry from configuration list")
     param = ParamInfo(name = "identifier", type = "string", optional=True)
     cmd.add_param(param)
-    param = ParamInfo(name = "value", type = "string", optional=False)
+    param = ParamInfo(name = "value", type = "string", optional=True)
     cmd.add_param(param)
     module.add_command(cmd)
 
