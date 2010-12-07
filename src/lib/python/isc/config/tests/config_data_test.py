@@ -461,15 +461,19 @@ class TestMultiConfigData(unittest.TestCase):
         module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec22.spec")
         self.mcd.set_specification(module_spec)
         expected = [{'default': True,
+                     'modified': False,
+                     'name': 'value9/v91',
+                     'type': 'string',
+                     'value': 'def'},
+                    {'default': True,
+                     'modified': False,
+                     'name': 'value9/v92',
                      'type': 'map',
-                     'name': 'value9',
-                     'value': {'v92': {}, 'v91': 'def'},
-                     'modified': False}]
-
+                     'value': {}
+                    }
+                   ]
         maps = self.mcd.get_value_maps("/Spec22/value9")
         self.assertEqual(expected, maps)
-
-
 
     def test_set_value(self):
         module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec2.spec")
