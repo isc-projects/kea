@@ -78,6 +78,8 @@ class Session:
                 raise SessionError("Session has been closed.")
             if type(env) == dict:
                 env = isc.cc.message.to_wire(env)
+            if len(env) > 65535:
+                raise ProtocolError("Envelope too large")
             if type(msg) == dict:
                 msg = isc.cc.message.to_wire(msg)
             self._socket.setblocking(1)
@@ -113,9 +115,6 @@ class Session:
                     if (seq == None and "reply" not in env) or (seq != None and "reply" in env and seq == env["reply"]):
                         return env, msg
                     else:
-                        tmp = None
-                        if "reply" in env:
-                            tmp = env["reply"]
                         self._queue.append((env,msg))
                         return self.recvmsg(nonblock, seq)
                 else:
