@@ -384,7 +384,7 @@ protected:
         rrns_->addRdata(rdata::generic::NS("example.de"));
 
         // Single NS record with 0 TTL
-        rr_single_->addRdata(rdata::generic::NS( "ns.example.net."));
+        rr_single_->addRdata(rdata::generic::NS(ns_name_));
 
         // AAAA records
         rrv6_->addRdata(ConstRdataPtr(new RdataTest<AAAA>("2001::1002")));
