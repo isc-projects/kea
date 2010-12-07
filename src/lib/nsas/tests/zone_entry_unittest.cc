@@ -135,12 +135,13 @@ TEST_F(ZoneEntryTest, ChangedNS) {
     // It should not be answered yet, it should ask for the IP addresses
     EXPECT_TRUE(callback_->successes_.empty());
     EXPECT_EQ(0, callback_->unreachable_count_);
-    resolver_->asksIPs(ns_name_, 1, 2);
-    resolver_->answer(1, ns_name_, RRType::A(), rdata::in::A("192.0.2.1"));
+    EXPECT_TRUE(resolver_->asksIPs(ns_name_, 1, 2));
+    EXPECT_NO_THROW(resolver_->answer(1, ns_name_, RRType::A(),
+        rdata::in::A("192.0.2.1")));
     ASSERT_EQ(1, callback_->successes_.size());
     EXPECT_TRUE(IOAddress("192.0.2.1").equal(callback_->successes_[0]));
-    resolver_->answer(2, ns_name_, RRType::AAAA(),
-        rdata::in::AAAA("2001:db8::1"));
+    EXPECT_NO_THROW(resolver_->answer(2, ns_name_, RRType::AAAA(),
+        rdata::in::AAAA("2001:db8::1")));
     EXPECT_EQ(1, callback_->successes_.size());
     // It should request the NSs again, as TTL is 0
     zone->addCallback(callback_, ANY_OK);
@@ -156,9 +157,9 @@ TEST_F(ZoneEntryTest, ChangedNS) {
     // It should become ready and ask for the new name
     EXPECT_EQ(Fetchable::READY, zone->getState());
     // Answer one of the IP addresses, we should get an address now
-    resolver_->asksIPs(different_name, 4, 5);
-    resolver_->answer(4, different_name, RRType::A(),
-        rdata::in::A("192.0.2.2"));
+    EXPECT_TRUE(resolver_->asksIPs(different_name, 4, 5));
+    EXPECT_NO_THROW(resolver_->answer(4, different_name, RRType::A(),
+        rdata::in::A("192.0.2.2")));
     ASSERT_EQ(2, callback_->successes_.size());
     EXPECT_TRUE(IOAddress("192.0.2.2").equal(callback_->successes_[1]));
 
@@ -187,7 +188,7 @@ TEST_F(ZoneEntryTest, CallbacksAnswered) {
     // It should not be answered yet, it should ask for the IP addresses
     EXPECT_TRUE(callback_->successes_.empty());
     EXPECT_EQ(0, callback_->unreachable_count_);
-    resolver_->asksIPs(ns_name_, 1, 2);
+    EXPECT_TRUE(resolver_->asksIPs(ns_name_, 1, 2));
     // We should be READY, as it marks we have nameservers
     // (not that they are ready)
     EXPECT_EQ(Fetchable::READY, zone->getState());
@@ -232,7 +233,7 @@ TEST_F(ZoneEntryTest, CallbacksAOnly) {
     // It should not be answered yet, it should ask for the IP addresses
     EXPECT_TRUE(callback_->successes_.empty());
     EXPECT_EQ(0, callback_->unreachable_count_);
-    resolver_->asksIPs(ns_name_, 1, 2);
+    EXPECT_TRUE(resolver_->asksIPs(ns_name_, 1, 2));
     EXPECT_EQ(Fetchable::READY, zone->getState());
     // Give two more callbacks, with different address families
     zone->addCallback(callback_, V4_ONLY);
@@ -370,6 +371,44 @@ TEST_F(ZoneEntryTest, DirectAnswer) {
     EXPECT_EQ(0, resolver_->requests.size());
     // It should be ready, but have no IP addresses on the nameservers
     EXPECT_EQ(Fetchable::READY, zone->getState());
+}
+
+// Checks it asks only for addresses when the addresses time out, not NSs
+TEST_F(ZoneEntryTest, AddressTimeout) {
+    shared_ptr<InheritedZoneEntry> zone(getZone());
+    // It should be in NOT_ASKED state
+    EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
+    // It should accept the callback
+    zone->addCallback(callback_, ANY_OK);
+    EXPECT_EQ(Fetchable::IN_PROGRESS, zone->getState());
+    EXPECT_NO_THROW(resolver_->provideNS(0, rr_single_));
+    // It should not be answered yet, it should ask for the IP addresses
+    EXPECT_TRUE(callback_->successes_.empty());
+    EXPECT_EQ(0, callback_->unreachable_count_);
+    EXPECT_TRUE(resolver_->asksIPs(ns_name_, 1, 2));
+    // We should be READY, as it marks we have nameservers
+    // (not that they are ready)
+    EXPECT_EQ(Fetchable::READY, zone->getState());
+    EXPECT_NO_THROW(resolver_->answer(1, ns_name_, RRType::A(),
+         rdata::in::A("192.0.2.1"), 0));
+    ASSERT_EQ(1, callback_->successes_.size());
+    EXPECT_TRUE(IOAddress("192.0.2.1").equal(callback_->successes_[0]));
+    // None are rejected
+    EXPECT_EQ(0, callback_->unreachable_count_);
+    EXPECT_NO_THROW(resolver_->answer(2, ns_name_, RRType::AAAA(),
+        rdata::in::AAAA("2001:db8::1"), 0));
+    EXPECT_EQ(1, callback_->successes_.size());
+    EXPECT_EQ(Fetchable::READY, zone->getState());
+    // When we ask for another one, it should ask for the addresses again
+    zone->addCallback(callback_, ANY_OK);
+    EXPECT_TRUE(resolver_->asksIPs(ns_name_, 3, 4));
+    EXPECT_EQ(0, callback_->unreachable_count_);
+    EXPECT_EQ(1, callback_->successes_.size());
+    EXPECT_NO_THROW(resolver_->answer(3, ns_name_, RRType::A(),
+         rdata::in::A("192.0.2.1"), 0));
+    EXPECT_EQ(0, callback_->unreachable_count_);
+    ASSERT_EQ(2, callback_->successes_.size());
+    EXPECT_TRUE(IOAddress("192.0.2.1").equal(callback_->successes_[1]));
 }
 
 /*

@@ -167,7 +167,7 @@ class ZoneEntry::ResolverCallback : public ResolverInterface::Callback {
 
 void
 ZoneEntry::addCallback(CallbackPtr callback, AddressFamily family) {
-    Lock lock(mutex_);
+    shared_ptr<Lock> lock(new Lock(mutex_));
 
     bool ask(false);
 
@@ -186,15 +186,14 @@ ZoneEntry::addCallback(CallbackPtr callback, AddressFamily family) {
         callbacks_[family].push_back(callback);
     } else {
         // Try to process it right away, store if not possible to handle
-        lock.unlock();
-        process(callback, family, NameserverPtr());
+        process(callback, family, NameserverPtr(), lock);
         return;
     }
 
     if (ask) {
         setState(IN_PROGRESS);
         // Our callback might be directly called from resolve, unlock now
-        lock.unlock();
+        lock->unlock();
         QuestionPtr question(new Question(Name(name_), class_code_,
             RRType::NS()));
         shared_ptr<ResolverCallback> resolver_callback(
@@ -396,7 +395,8 @@ ZoneEntry::process(CallbackPtr callback, AddressFamily family,
                     }
                     // Retry with all the data that might have arrived
                     in_process_[family] = false;
-                    process(callback, family, nameserver);
+                    // We do not provide the callback again
+                    process(CallbackPtr(), family, nameserver);
                     // And be done
                     return;
                 // We have some addresses to answer
