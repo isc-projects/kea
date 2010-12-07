@@ -17,17 +17,14 @@
 
 #include <dns/name.h>
 #include <boost/utility.hpp>
-#include <boost/shared_ptr.hpp>
 #include <boost/pool/object_pool.hpp>
 #include <exception>
-#include <iostream>
-#include <iterator>
-#include <stack>
+#include <ostream>
 
 namespace isc {
 namespace datasrc {
 
-namespace helper{
+namespace helper {
 /// helper function to remove the base domain from super domain
 /// the precondition of this function is the super_name contains the
 /// sub_name
@@ -72,7 +69,7 @@ class RBNode : public boost::noncopyable {
 public:
     /// only \c RBTree can create and destroy \c RBNode
     friend class RBTree<T>;
-    friend class RBTree<T>::Iterator;
+
     /// \name Test functions
     //@{
     /// \brief return the name of current node, it's relative to its parents
@@ -82,10 +79,6 @@ public:
 
     /// \brief return the data store in this node
     T& getData() { return (data_); }
-
-    /// \brief return the next node which is bigger than current node
-    /// in the same tree
-    RBNode<T>* successor()const;
     //@}
 
     /// \name Modify functions
@@ -174,32 +167,6 @@ RBNode<T>::RBNode(const isc::dns::Name& name) :
 {
 }
 
-
-template <typename T>
-RBNode<T>*
-RBNode<T>::successor()const {
-    RBNode<T>* current = const_cast<RBNode<T>*>(this);
-    // If it has right node, the successor is the left-most node of the right
-    // subtree.
-    if (right_ != NULL_NODE()) {
-        current = right_;
-        while (current->left_ != NULL_NODE()) {
-            current = current->left_;
-        }
-        return (current);
-    }
-
-    // Otherwise go up until we find the first left branch on our path to
-    // root.  If found, the parent of the branch is the successor.
-    // Otherwise, we return the null node.
-    RBNode<T>* parent = current->parent_;
-    while (parent != NULL_NODE() && current == parent->right_) {
-        current = parent;
-        parent = parent->parent_;
-    }
-    return (parent);
-}
-
 template <typename T>
 void
 RBNode<T>::copyContent(RBNode<T>& node) {
@@ -223,8 +190,6 @@ template <typename T>
 class RBTree : public boost::noncopyable {
     friend class RBNode<T>;
 public:
-    /// the max count of labels in a name
-    enum {MAX_PATH_LEN_TO_ROOT = 254};
     /// \brief The return value for the \c find() insert() and erase() method
     enum Result {
         SUCCEED, //insert or erase succeed
@@ -288,74 +253,11 @@ public:
     /// already exists, it is better to call \c insert and then call the
     /// RBNode interface instead of calling \c find().
     Result insert(const isc::dns::Name& name, RBNode<T>** inserted_node);
-
-    /// \brief Erase the node with the domain name
-    /// \return NOTEXSIT means no node with given name
-    /// otherwise return SUCCEED
-    Result erase(const isc::dns::Name& name);
-    //@}
-
-
-
-    /// \brief iterator of domain tree, mainly used to walk throught the whole tree
-    /// in ascending order according to domain name
-    /// \todo make find and insert in domain tree return iterator not rbnode pointer,
-    /// \note the iterator should know the node it points to and the tree the node 
-    /// belongs to, since the tree can only search from up to down, the up nodes 
-    /// has travelled has to be stored, the iterator has similar functionality as 
-    /// dns_rbtnodechain in bind9. Keep the constuction and deconstruction private is
-    /// becuase there is no default iterator.
-    class Iterator : public std::iterator<std::input_iterator_tag, RBNode<T> >
-    {
-        friend class RBTree<T>;
-        public:
-            /// copy and assign constructor 
-            /// \name
-            //@{
-            Iterator(const Iterator& itr);
-            Iterator& operator=(const Iterator& itr);
-            //@}
-
-            const RBNode<T>& operator*() const { return (*node_);}
-            RBNode<T>& operator*()             { return (*node_);}
-
-            const RBNode<T>* operator->() const { return (node_);}
-            RBNode<T>* operator->() { return (node_);}
-
-            Iterator& operator++() { node_ = nextVisibleSuccessor(node_); return (*this);}
-            Iterator  operator++(int) { Iterator old = *this; node_ = nextVisibleSuccessor(node_); return (old);}
-
-            bool operator==(const Iterator &itr) const { return (itr.node_ == node_);}
-            bool operator!=(const Iterator &itr) const { return !(*this == itr); }
-
-        private:
-            /// constructor
-            Iterator(RBNode<T> *node, RBTree<T> *tree, RBNode<T> **nodes_to_root_path = NULL, int path_len = 0);
-            /// the difference between \c successor and \c nextVisibleSuccessor is that, \c nextVisibleSuccessor will
-            /// travel in the whole tree including the down trees, and also it will return non-shadow node
-            RBNode<T> *nextVisibleSuccessor(RBNode<T> *node);
-
-            RBNode<T>* node_;
-            RBTree<T>* tree_;
-            RBNode<T>* up_node_path_[RBTree<T>::MAX_PATH_LEN_TO_ROOT];
-            int path_len_;
-    };
-
-    friend class Iterator;
-    /// \name iterator related functions
-    //@{
-    /// \brief begin point to the smallest visible node in the tree
-    Iterator begin() const;
-    const Iterator begin();
-
-    Iterator end()  const{ return (Iterator(NULLNODE, const_cast<RBTree<T>*>(this)));}
-    const Iterator end() { return (Iterator(NULLNODE, this));}
     //@}
 
 private:
     /// \name RBTree balance functions
     //@{
-    void deleteRebalance(RBNode<T>** root, RBNode<T>* node);
     void insertRebalance(RBNode<T>** root, RBNode<T>* node);
     RBNode<T>* rightRotate(RBNode<T>** root, RBNode<T>* node);
     RBNode<T>* leftRotate(RBNode<T>** root, RBNode<T>* node);
@@ -364,7 +266,6 @@ private:
     /// \name Helper functions
     //@{
     /// Each public function has related recursive helper function
-    void eraseNode(RBNode<T>** root, RBNode<T>* node);
     Result findHelper(const isc::dns::Name& name, RBNode<T>** up,
                       RBNode<T>** node) const;
     void dumpTreeHelper(std::ostream& os, const RBNode<T>* node,
@@ -374,9 +275,6 @@ private:
     /// without throw exception
     RBNode<T>* createNode();
     RBNode<T>* createNode(const isc::dns::Name& name);
-    /// return the node to node pool
-    void  freeNode(RBNode<T>* node);
-
 
     /// Split one node into two nodes, keep the old node and create one new
     /// node, old node will hold the base name, new node will be the down node
@@ -385,16 +283,6 @@ private:
     /// \return NOMEM: means no memory to create new node
     /// otherwise return SUCCEED
     Result nodeFission(RBNode<T>& node, const isc::dns::Name& sub_name);
-
-    /// Merge node with its down node, down node will be deleted and the data of
-    /// down node will move to up node.
-    /// \note the precondition of this function is that, the down tree of node
-    /// has only one node and current node is shadow
-    void nodeFussion(RBNode<T>& node);
-
-    /// return the node with smallest name, according to DNS domain name order
-    /// normally it's the most left node
-    RBNode<T>* smallestNodeInTree(const RBNode<T>* root) const;
     //@}
 
     RBNode<T>*  root_;
@@ -461,15 +349,6 @@ RBTree<T>::createNode(const isc::dns::Name& name) {
         return (NULL);
     }
 }
-
-template <typename T>
-void
-RBTree<T>::freeNode(RBNode<T>* node) {
-    // NULLNODE isn't alloc in heap
-    assert(node != NULLNODE);
-    node_pool_.destroy(node);
-}
-
 
 template <typename T>
 typename RBTree<T>::Result
@@ -542,36 +421,6 @@ RBTree<T>::findHelper(const isc::dns::Name& target_name, RBNode<T>** up_node,
     }
 
     return (ret);
-}
-
-template <typename T>
-typename RBTree<T>::Iterator
-RBTree<T>::begin() const {
-    Iterator beg(smallestNodeInTree(root_), const_cast<RBTree<T>*>(this));
-    if (beg->is_shadow_) {
-        ++beg;
-    }
-    return (beg);
-}
-
-template <typename T>
-const typename RBTree<T>::Iterator
-RBTree<T>::begin() {
-    Iterator beg(smallestNodeInTree(root_), this);
-    if (beg->is_shadow_) {
-        ++beg;
-    }
-    return (beg);
-}
-
-template <typename T>
-RBNode<T> *
-RBTree<T>::smallestNodeInTree(const RBNode<T>* root) const {
-    const RBNode<T>* left_most = root;
-    while (left_most->left_ != NULLNODE) {
-        left_most = left_most->left_;
-    }
-    return (const_cast<RBNode<T>*>(left_most));
 }
 
 template <typename T>
@@ -789,173 +638,6 @@ RBTree<T>::rightRotate(RBNode<T>** root, RBNode<T>* node) {
     return (node);
 }
 
-
-template <typename T>
-typename RBTree<T>::Result
-RBTree<T>::erase(const isc::dns::Name& name) {
-    RBNode<T>* node = NULLNODE;
-    RBNode<T>* up_node = NULL;
-    if (findHelper(name, &up_node, &node) != RBTree<T>::EXACTMATCH) {
-        return (NOTFOUND);
-    }
-    --name_count_;
-
-    // For node with downpointer, set it to shadow.
-    // Since there is at least one node below this one, the deletion is
-    // complete.  The down node from this node might be all by itself on a
-    // single level, so we could collapse the subtree to reduce the levels
-    if (node->down_ != NULL) {
-        assert(node->is_shadow_ == false);
-        node->is_shadow_ = true;
-        RBNode<T>* down_node = node->down_;
-        if (down_node->left_ == NULLNODE &&
-            down_node->right_ == NULLNODE) {
-            nodeFussion(*node);
-        }
-        return (SUCCEED);
-    }
-
-    RBNode<T>** root = up_node ? &up_node->down_ : &root_;
-    eraseNode(root, node);
-
-    if (up_node != NULL) {
-        assert(up_node->down_ != NULL);
-        RBNode<T>* down_node = up_node->down_;
-        if (down_node == NULLNODE) {
-            up_node->down_ = NULL;
-        // if there is only one node in the sub tree, and the up node
-        // is shadow, merge the root of subtree to the up node
-        } else if (up_node->is_shadow_ &&
-                down_node->left_ == NULLNODE &&
-                down_node->right_ == NULLNODE) {
-            nodeFussion(*up_node);
-        }
-    }
-    return (SUCCEED);
-}
-
-template <typename T>
-void
-RBTree<T>::eraseNode(RBNode<T>** root, RBNode<T>* target) {
-    RBNode<T>* to_delete = target;
-
-    if (to_delete->left_ != NULLNODE && to_delete->right_ != NULLNODE)
-        to_delete = to_delete->successor();
-
-    // fix the parent relationship of the child of to_delete
-    RBNode<T>* child = (to_delete->left_ != NULLNODE) ? to_delete->left_ :
-        to_delete->right_;
-    child->parent_ = to_delete->parent_;
-
-    // fix the child relation of the parent of to delete
-    RBNode<T>* parent = to_delete->parent_;
-    if (parent == NULLNODE) {
-        *root = child;
-    } else if (to_delete == parent->left_) {
-        parent->left_ = child;
-    } else {
-        parent->right_ = child;
-    }
-
-    if (to_delete != target) {
-        to_delete->copyContent(*target);
-        to_delete->down_ = NULL;
-    }
-
-    if (to_delete->color_ == BLACK) {
-        deleteRebalance(root, child);
-    }
-
-    to_delete->left_ = NULL;
-    to_delete->right_ = NULL;
-    to_delete->down_ = NULL;
-    freeNode(to_delete);
-    --node_count_;
-}
-
-template <typename T>
-void
-RBTree<T>::nodeFussion(RBNode<T>& up_node) {
-    RBNode<T>* down_node = up_node.down_;
-    assert(down_node);
-
-    const isc::dns::Name merged_name =
-    down_node->name_.concatenate(up_node.name_);
-    down_node->copyContent(up_node);
-    up_node.down_ = NULL;
-    up_node.name_ = merged_name;
-    up_node.is_shadow_ = false;
-    freeNode(down_node);
-
-    --node_count_;
-}
-
-
-template <typename T>
-void
-RBTree<T>::deleteRebalance(RBNode<T>** root, RBNode<T>* node) {
-    RBNode<T>* sibling  = NULLNODE;
-
-    while (node != *root && node->color_ == BLACK) {
-        if (node == node->parent_->left_) {
-            sibling = node->parent_->right_;
-
-            if (sibling->color_ == RED) {
-                sibling->color_ = BLACK;
-                node->parent_->color_ = RED;
-                leftRotate(root, node->parent_);
-                sibling = node->parent_->right_;
-            }
-
-            if (sibling->left_->color_ == BLACK && sibling->right_->color_ == BLACK) {
-                sibling->color_ = RED;
-                node = node->parent_;
-            } else {
-                if (sibling->right_->color_ == BLACK) {
-                    sibling->left_->color_ = BLACK;
-                    sibling->color_ = RED;
-                    rightRotate(root, sibling);
-                    sibling = node->parent_->right_;
-                }
-
-                sibling->color_ = node->parent_->color_;
-                node->parent_->color_ = BLACK;
-                sibling->right_->color_ = BLACK;
-                leftRotate(root, node->parent_);
-                node = *root;
-            }
-        } else {
-            sibling = node->parent_->left_;
-            if (sibling->color_ == RED) {
-                sibling->color_ = BLACK;
-                node->parent_->color_ = RED;
-                rightRotate(root, node->parent_);
-                sibling = node->parent_->left_;
-            }
-
-            if (sibling->right_->color_ == BLACK && sibling->left_->color_ == BLACK) {
-                sibling->color_ = RED;
-                node = node->parent_;
-            } else {
-                if (sibling->left_->color_ == BLACK) {
-                    sibling->right_->color_ = BLACK;
-                    sibling->color_ = RED;
-                    leftRotate(root, sibling);
-                    sibling = node->parent_->left_;
-                }
-                sibling->color_ = node->parent_->color_;
-                node->parent_->color_ = BLACK;
-                sibling->left_->color_ = BLACK;
-                rightRotate(root, node->parent_);
-                node = *root;
-            }
-        }
-    }
-
-    node->color_ = BLACK;
-}
-
-
 template <typename T>
 void
 RBTree<T>::dumpTree(std::ostream& os, unsigned int depth) const {
@@ -996,76 +678,6 @@ RBTree<T>::dumpTreeHelper(std::ostream& os, const RBNode<T>* node,
     }
 }
 
-template <typename T>
-RBTree<T>::Iterator::Iterator(const RBTree<T>::Iterator& itr) {
-    node_ = itr.node_;
-    tree_ = itr.tree_;
-    path_len_ = itr.path_len_;
-    if (path_len_ > 0) {
-        memcpy(up_node_path_, itr.up_node_path_, path_len_ * sizeof(RBNode<T> *));
-    }
-}
-
-template <typename T>
-typename RBTree<T>::Iterator&
-RBTree<T>::Iterator::operator=(const RBTree<T>::Iterator& itr) {
-    node_ = itr.node_;
-    tree_ = itr.tree_;
-    path_len_ = itr.path_len_;
-    if (path_len_ > 0) {
-        memcpy(up_node_path_, itr.up_node_path_, path_len_ * sizeof(RBNode<T> *));
-    }
-    return (*this);
-}
-
-template <typename T>
-RBTree<T>::Iterator::Iterator(RBNode<T>* node, RBTree<T>* tree,
-                              RBNode<T>** nodes_to_root_path, int path_len) :
-                         node_(node),
-                         tree_(tree),
-                         path_len_(path_len)
-{
-    if (path_len > 0) {
-        memcpy(up_node_path_, nodes_to_root_path, path_len * sizeof(RBNode<T>*));
-    }
-}
-
-template <typename T>
-RBNode<T>*
-RBTree<T>::Iterator::nextVisibleSuccessor(RBNode<T>* node) {
-    // If node has down tree, next bigger node should resides in it
-    if (node->down_) {
-        up_node_path_[path_len_ ++] = node;
-        RBNode<T>* smallest_node = tree_->smallestNodeInTree(node->down_);
-        if (!smallest_node->is_shadow_) {
-            return (smallest_node);
-        } else {
-            return (nextVisibleSuccessor(smallest_node));
-        }
-    }
-    // otherwise found the visible successor in current level
-    // if no successor found move to up level, the next visible successor
-    // is the successor of up node in the up level tree
-    RBNode<T>* next_visible = node->successor();
-    if (next_visible == tree_->NULLNODE) {
-        while (path_len_ > 0) {
-            RBNode<T>* up_node = up_node_path_[--path_len_];
-            RBNode<T>* up_next = up_node->successor();
-            if (up_next != tree_->NULLNODE) {
-                if (up_next->is_shadow_) {
-                    return (nextVisibleSuccessor(up_next));
-                } else {
-                    return (up_next);
-                }
-            }
-        }
-        return (tree_->NULLNODE);
-    } else if (next_visible->is_shadow_) {
-        return nextVisibleSuccessor(next_visible);
-    } else {
-        return (next_visible);
-    }
-}
 }
 }
 

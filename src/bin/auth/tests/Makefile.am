@@ -25,7 +25,6 @@ run_unittests_SOURCES += ../rbt_datasrc.h
 run_unittests_SOURCES += auth_srv_unittest.cc
 run_unittests_SOURCES += change_user_unittest.cc
 run_unittests_SOURCES += asio_link_unittest.cc
-run_unittests_SOURCES += rbt_datasrc_unittest.cc
 run_unittests_SOURCES += run_unittests.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
