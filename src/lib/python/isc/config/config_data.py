@@ -461,6 +461,16 @@ class MultiConfigData:
                                         li_spec['item_type'],
                                         value, status)
                             result.append(entry)
+                    elif item['item_type'] == 'map':
+                        map_name = item['item_name'] + '/'
+                        for map_item in item['map_item_spec']:
+                            value, status =  self.get_value('/' + identifier + '/' + map_item['item_name'])
+                            entry = _create_value_map_entry(
+                                        map_name + map_item['item_name'],
+                                        map_item['item_type'],
+                                        value,
+                                        status)
+                            result.append(entry)
                     else:
                         value, status = self.get_value("/" + identifier)
                         if value is not None:
