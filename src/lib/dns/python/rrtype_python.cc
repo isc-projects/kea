@@ -344,97 +344,97 @@ static PyObject* RRType_createStatic(RRType stc) {
 }
 
 static PyObject*
-RRType_NSEC3PARAM(s_RRType *self UNUSED_PARAM) {
+RRType_NSEC3PARAM(s_RRType*) {
     return (RRType_createStatic(RRType::NSEC3PARAM()));
 }
 
 static PyObject*
-RRType_DNAME(s_RRType *self UNUSED_PARAM) {
+RRType_DNAME(s_RRType*) {
     return (RRType_createStatic(RRType::DNAME()));
 }
 
 static PyObject*
-RRType_PTR(s_RRType *self UNUSED_PARAM) {
+RRType_PTR(s_RRType*) {
     return (RRType_createStatic(RRType::PTR()));
 }
 
 static PyObject*
-RRType_MX(s_RRType *self UNUSED_PARAM) {
+RRType_MX(s_RRType*) {
     return (RRType_createStatic(RRType::MX()));
 }
 
 static PyObject*
-RRType_DNSKEY(s_RRType *self UNUSED_PARAM) {
+RRType_DNSKEY(s_RRType*) {
     return (RRType_createStatic(RRType::DNSKEY()));
 }
 
 static PyObject*
-RRType_TXT(s_RRType *self UNUSED_PARAM) {
+RRType_TXT(s_RRType*) {
     return (RRType_createStatic(RRType::TXT()));
 }
 
 static PyObject*
-RRType_RRSIG(s_RRType *self UNUSED_PARAM) {
+RRType_RRSIG(s_RRType*) {
     return (RRType_createStatic(RRType::RRSIG()));
 }
 
 static PyObject*
-RRType_NSEC(s_RRType *self UNUSED_PARAM) {
+RRType_NSEC(s_RRType*) {
     return (RRType_createStatic(RRType::NSEC()));
 }
 
 static PyObject*
-RRType_AAAA(s_RRType *self UNUSED_PARAM) {
+RRType_AAAA(s_RRType*) {
     return (RRType_createStatic(RRType::AAAA()));
 }
 
 static PyObject*
-RRType_DS(s_RRType *self UNUSED_PARAM) {
+RRType_DS(s_RRType*) {
     return (RRType_createStatic(RRType::DS()));
 }
 
 static PyObject*
-RRType_OPT(s_RRType *self UNUSED_PARAM) {
+RRType_OPT(s_RRType*) {
     return (RRType_createStatic(RRType::OPT()));
 }
 
 static PyObject*
-RRType_A(s_RRType *self UNUSED_PARAM) {
+RRType_A(s_RRType*) {
     return (RRType_createStatic(RRType::A()));
 }
 
 static PyObject*
-RRType_NS(s_RRType *self UNUSED_PARAM) {
+RRType_NS(s_RRType*) {
     return (RRType_createStatic(RRType::NS()));
 }
 
 static PyObject*
-RRType_CNAME(s_RRType *self UNUSED_PARAM) {
+RRType_CNAME(s_RRType*) {
     return (RRType_createStatic(RRType::CNAME()));
 }
 
 static PyObject*
-RRType_SOA(s_RRType *self UNUSED_PARAM) {
+RRType_SOA(s_RRType*) {
     return (RRType_createStatic(RRType::SOA()));
 }
 
 static PyObject*
-RRType_NSEC3(s_RRType *self UNUSED_PARAM) {
+RRType_NSEC3(s_RRType*) {
     return (RRType_createStatic(RRType::NSEC3()));
 }
 
 static PyObject*
-RRType_IXFR(s_RRType *self UNUSED_PARAM) {
+RRType_IXFR(s_RRType*) {
     return (RRType_createStatic(RRType::IXFR()));
 }
 
 static PyObject*
-RRType_AXFR(s_RRType *self UNUSED_PARAM) {
+RRType_AXFR(s_RRType*) {
     return (RRType_createStatic(RRType::AXFR()));
 }
 
 static PyObject*
-RRType_ANY(s_RRType *self UNUSED_PARAM) {
+RRType_ANY(s_RRType*) {
     return (RRType_createStatic(RRType::ANY()));
 }
 

@@ -132,10 +132,7 @@ UnitTestUtil::readWireData(const string& datastr,
 }
 
 ::testing::AssertionResult
-UnitTestUtil::matchWireData(const char* dataexp1 UNUSED_PARAM,
-                            const char* lenexp1 UNUSED_PARAM,
-                            const char* dataexp2 UNUSED_PARAM,
-                            const char* lenexp2 UNUSED_PARAM,
+UnitTestUtil::matchWireData(const char*, const char*, const char*, const char*,
                             const void* data1, size_t len1,
                             const void* data2, size_t len2)
 {
@@ -162,8 +159,7 @@ UnitTestUtil::matchWireData(const char* dataexp1 UNUSED_PARAM,
 }
 
 ::testing::AssertionResult
-UnitTestUtil::matchName(const char* nameexp1 UNUSED_PARAM,
-                        const char* nameexp2 UNUSED_PARAM,
+UnitTestUtil::matchName(const char*, const char*,
                         const isc::dns::Name& name1,
                         const isc::dns::Name& name2)
 {

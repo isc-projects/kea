@@ -84,7 +84,7 @@ public:
             isc::xfr::AbstractXfroutClient& xfrout_client);
     ~AuthSrv();
     //@}
-    /// \return \c true if the \message contains a response to be returned;
+    /// \return \c true if the \a message contains a response to be returned;
     /// otherwise \c false.
     bool processMessage(const asio_link::IOMessage& io_message,
                         isc::dns::Message& message,
@@ -138,7 +138,7 @@ public:
     /// containing the result of the update operation.
     isc::data::ConstElementPtr updateConfig(isc::data::ConstElementPtr config);
 
-    /// \param Returns the command and configuration session for the
+    /// \brief Returns the command and configuration session for the
     /// \c AuthSrv.
     ///
     /// This method never throws an exception.
@@ -199,6 +199,7 @@ public:
     /// is shutdown.
     ///
     void setXfrinSession(isc::cc::AbstractSession* xfrin_session);
+
 private:
     AuthSrvImpl* impl_;
 };

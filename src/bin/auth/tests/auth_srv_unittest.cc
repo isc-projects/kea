@@ -97,7 +97,7 @@ private:
         virtual void startRead(boost::function<void()> read_callback);
         virtual int reply(ConstElementPtr envelope, ConstElementPtr newmsg);
         virtual bool hasQueuedMsgs() const;
-        virtual void setTimeout(size_t timeout UNUSED_PARAM) {};
+        virtual void setTimeout(size_t) {}
         virtual size_t getTimeout() const { return 0; };
 
         void setMessage(ConstElementPtr msg) { msg_ = msg; }
@@ -156,30 +156,25 @@ protected:
 };
 
 void
-AuthSrvTest::MockSession::establish(const char* socket_file UNUSED_PARAM) {}
+AuthSrvTest::MockSession::establish(const char*) {}
 
 void
 AuthSrvTest::MockSession::disconnect() {}
 
 void
-AuthSrvTest::MockSession::subscribe(string group UNUSED_PARAM,
-                                    string instance UNUSED_PARAM)
+AuthSrvTest::MockSession::subscribe(string, string)
 {}
 
 void
-AuthSrvTest::MockSession::unsubscribe(string group UNUSED_PARAM,
-                                      string instance UNUSED_PARAM)
+AuthSrvTest::MockSession::unsubscribe(string, string)
 {}
 
 void
-AuthSrvTest::MockSession::startRead(
-    boost::function<void()> read_callback UNUSED_PARAM)
+AuthSrvTest::MockSession::startRead(boost::function<void()>)
 {}
 
 int
-AuthSrvTest::MockSession::reply(ConstElementPtr envelope UNUSED_PARAM,
-                                ConstElementPtr newmsg UNUSED_PARAM)
-{
+AuthSrvTest::MockSession::reply(ConstElementPtr, ConstElementPtr) {
     return (-1);
 }
 
@@ -190,8 +185,7 @@ AuthSrvTest::MockSession::hasQueuedMsgs() const {
 
 int
 AuthSrvTest::MockSession::group_sendmsg(ConstElementPtr msg, string group,
-                                        string instance UNUSED_PARAM,
-                                        string to UNUSED_PARAM)
+                                        string, string)
 {
     if (!send_ok_) {
         isc_throw(XfroutError, "mock session send is disabled for test");
@@ -203,10 +197,8 @@ AuthSrvTest::MockSession::group_sendmsg(ConstElementPtr msg, string group,
 }
 
 bool
-AuthSrvTest::MockSession::group_recvmsg(ConstElementPtr& envelope UNUSED_PARAM,
-                                        ConstElementPtr& msg,
-                                        bool nonblock UNUSED_PARAM,
-                                        int seq UNUSED_PARAM)
+AuthSrvTest::MockSession::group_recvmsg(ConstElementPtr&,
+                                        ConstElementPtr& msg, bool, int)
 {
     if (!receive_ok_) {
         isc_throw(XfroutError, "mock session receive is disabled for test");
@@ -234,10 +226,9 @@ AuthSrvTest::MockXfroutClient::disconnect() {
 }
 
 int
-AuthSrvTest::MockXfroutClient::sendXfroutRequestInfo(
-    const int tcp_sock UNUSED_PARAM,
-    const void* msg_data UNUSED_PARAM,
-    const uint16_t msg_len UNUSED_PARAM)
+AuthSrvTest::MockXfroutClient::sendXfroutRequestInfo(const int,
+                                                     const void*,
+                                                     const uint16_t)
 {
     if (!send_ok_) {
         isc_throw(XfroutError, "xfrout connection send is disabled for test");
@@ -321,18 +312,25 @@ headerCheck(const Message& message, const qid_t qid, const Rcode& rcode,
     EXPECT_EQ(qid, message.getQid());
     EXPECT_EQ(rcode, message.getRcode());
     EXPECT_EQ(opcodeval, message.getOpcode().getCode());
-    EXPECT_EQ((flags & QR_FLAG) != 0, message.getHeaderFlag(MessageFlag::QR()));
-    EXPECT_EQ((flags & AA_FLAG) != 0, message.getHeaderFlag(MessageFlag::AA()));
-    EXPECT_EQ((flags & TC_FLAG) != 0, message.getHeaderFlag(MessageFlag::TC()));
-    EXPECT_EQ((flags & RA_FLAG) != 0, message.getHeaderFlag(MessageFlag::RA()));
-    EXPECT_EQ((flags & RD_FLAG) != 0, message.getHeaderFlag(MessageFlag::RD()));
-    EXPECT_EQ((flags & AD_FLAG) != 0, message.getHeaderFlag(MessageFlag::AD()));
-    EXPECT_EQ((flags & CD_FLAG) != 0, message.getHeaderFlag(MessageFlag::CD()));
+    EXPECT_EQ((flags & QR_FLAG) != 0,
+              message.getHeaderFlag(Message::HEADERFLAG_QR));
+    EXPECT_EQ((flags & AA_FLAG) != 0,
+              message.getHeaderFlag(Message::HEADERFLAG_AA));
+    EXPECT_EQ((flags & TC_FLAG) != 0,
+              message.getHeaderFlag(Message::HEADERFLAG_TC));
+    EXPECT_EQ((flags & RA_FLAG) != 0,
+              message.getHeaderFlag(Message::HEADERFLAG_RA));
+    EXPECT_EQ((flags & RD_FLAG) != 0,
+              message.getHeaderFlag(Message::HEADERFLAG_RD));
+    EXPECT_EQ((flags & AD_FLAG) != 0,
+              message.getHeaderFlag(Message::HEADERFLAG_AD));
+    EXPECT_EQ((flags & CD_FLAG) != 0,
+              message.getHeaderFlag(Message::HEADERFLAG_CD));
 
-    EXPECT_EQ(qdcount, message.getRRCount(Section::QUESTION()));
-    EXPECT_EQ(ancount, message.getRRCount(Section::ANSWER()));
-    EXPECT_EQ(nscount, message.getRRCount(Section::AUTHORITY()));
-    EXPECT_EQ(arcount, message.getRRCount(Section::ADDITIONAL()));
+    EXPECT_EQ(qdcount, message.getRRCount(Message::SECTION_QUESTION));
+    EXPECT_EQ(ancount, message.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(nscount, message.getRRCount(Message::SECTION_AUTHORITY));
+    EXPECT_EQ(arcount, message.getRRCount(Message::SECTION_ADDITIONAL));
 }
 
 // Unsupported requests.  Should result in NOTIMP.
@@ -482,7 +480,7 @@ TEST_F(AuthSrvTest, AXFRSuccess) {
     // so we shouldn't have to respond.
     EXPECT_FALSE(server.processMessage(*io_message, parse_message,
                                        response_renderer));
-    EXPECT_FALSE(xfrout.isConnected());
+    EXPECT_TRUE(xfrout.isConnected());
 }
 
 TEST_F(AuthSrvTest, AXFRConnectFail) {
@@ -494,8 +492,6 @@ TEST_F(AuthSrvTest, AXFRConnectFail) {
                                       response_renderer));
     headerCheck(parse_message, default_qid, Rcode::SERVFAIL(),
                 opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
-    // For a shot term workaround with xfrout we currently close the connection
-    // for each AXFR attempt
     EXPECT_FALSE(xfrout.isConnected());
 }
 
@@ -505,7 +501,7 @@ TEST_F(AuthSrvTest, AXFRSendFail) {
     createRequestPacket(opcode, Name("example.com"), RRClass::IN(),
                         RRType::AXFR(), IPPROTO_TCP);
     server.processMessage(*io_message, parse_message, response_renderer);
-    EXPECT_FALSE(xfrout.isConnected()); // see above
+    EXPECT_TRUE(xfrout.isConnected());
 
     xfrout.disableSend();
     parse_message.clear(Message::PARSE);
@@ -540,7 +536,7 @@ TEST_F(AuthSrvTest, AXFRDisconnectFail) {
 TEST_F(AuthSrvTest, notify) {
     createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
                         RRType::SOA());
-    request_message.setHeaderFlag(MessageFlag::AA());
+    request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(IPPROTO_UDP);
     EXPECT_TRUE(server.processMessage(*io_message, parse_message,
                                       response_renderer));
@@ -572,7 +568,7 @@ TEST_F(AuthSrvTest, notifyForCHClass) {
     // Same as the previous test, but for the CH RRClass.
     createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::CH(),
                         RRType::SOA());
-    request_message.setHeaderFlag(MessageFlag::AA());
+    request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(IPPROTO_UDP);
     EXPECT_TRUE(server.processMessage(*io_message, parse_message,
                                       response_renderer));
@@ -588,7 +584,7 @@ TEST_F(AuthSrvTest, notifyEmptyQuestion) {
     request_message.clear(Message::RENDER);
     request_message.setOpcode(Opcode::NOTIFY());
     request_message.setRcode(Rcode::NOERROR());
-    request_message.setHeaderFlag(MessageFlag::AA());
+    request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     request_message.setQid(default_qid);
     request_message.toWire(request_renderer);
     createRequestPacket(IPPROTO_UDP);
@@ -604,7 +600,7 @@ TEST_F(AuthSrvTest, notifyMultiQuestions) {
     // add one more SOA question
     request_message.addQuestion(Question(Name("example.com"), RRClass::IN(),
                                          RRType::SOA()));
-    request_message.setHeaderFlag(MessageFlag::AA());
+    request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(IPPROTO_UDP);
     EXPECT_TRUE(server.processMessage(*io_message, parse_message,
                                       response_renderer));
@@ -615,7 +611,7 @@ TEST_F(AuthSrvTest, notifyMultiQuestions) {
 TEST_F(AuthSrvTest, notifyNonSOAQuestion) {
     createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
                         RRType::NS());
-    request_message.setHeaderFlag(MessageFlag::AA());
+    request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(IPPROTO_UDP);
     EXPECT_TRUE(server.processMessage(*io_message, parse_message,
                                       response_renderer));
@@ -636,7 +632,7 @@ TEST_F(AuthSrvTest, notifyWithoutAA) {
 TEST_F(AuthSrvTest, notifyWithErrorRcode) {
     createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
                         RRType::SOA());
-    request_message.setHeaderFlag(MessageFlag::AA());
+    request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     request_message.setRcode(Rcode::SERVFAIL());
     createRequestPacket(IPPROTO_UDP);
     EXPECT_TRUE(server.processMessage(*io_message, parse_message,
@@ -650,7 +646,7 @@ TEST_F(AuthSrvTest, notifyWithoutSession) {
 
     createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
                         RRType::SOA());
-    request_message.setHeaderFlag(MessageFlag::AA());
+    request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(IPPROTO_UDP);
 
     // we simply ignore the notify and let it be resent if an internal error
@@ -664,7 +660,7 @@ TEST_F(AuthSrvTest, notifySendFail) {
 
     createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
                         RRType::SOA());
-    request_message.setHeaderFlag(MessageFlag::AA());
+    request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(IPPROTO_UDP);
 
     EXPECT_FALSE(server.processMessage(*io_message, parse_message,
@@ -676,7 +672,7 @@ TEST_F(AuthSrvTest, notifyReceiveFail) {
 
     createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
                         RRType::SOA());
-    request_message.setHeaderFlag(MessageFlag::AA());
+    request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(IPPROTO_UDP);
     EXPECT_FALSE(server.processMessage(*io_message, parse_message,
                                        response_renderer));
@@ -687,7 +683,7 @@ TEST_F(AuthSrvTest, notifyWithBogusSessionMessage) {
 
     createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
                         RRType::SOA());
-    request_message.setHeaderFlag(MessageFlag::AA());
+    request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(IPPROTO_UDP);
     EXPECT_FALSE(server.processMessage(*io_message, parse_message,
                                        response_renderer));
@@ -699,7 +695,7 @@ TEST_F(AuthSrvTest, notifyWithSessionMessageError) {
 
     createRequestMessage(Opcode::NOTIFY(), Name("example.com"), RRClass::IN(),
                         RRType::SOA());
-    request_message.setHeaderFlag(MessageFlag::AA());
+    request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(IPPROTO_UDP);
     EXPECT_FALSE(server.processMessage(*io_message, parse_message,
                                        response_renderer));
