@@ -45,6 +45,18 @@ namespace datasrc {
 /// information about the location of a zone file, whether it's loaded in
 /// memory, etc.
 ///
+/// It's not yet clear how the derived zone classes work with various other
+/// data sources when we integrate these components, but one possibility is
+/// something like this:
+/// - If the underlying database such as some variant of SQL doesn't have an
+///   explicit representation of zones (as part of public interface), we can
+///   probably use a "default" zone class that simply encapsulates the
+///   corresponding data source and calls a common "find" like method.
+/// - Some data source may want to specialize it by inheritance as an
+///   optimization.  For example, in the current schema design of the sqlite3
+///   data source, its (derived) zone class would contain the information of
+///   the "zone ID".
+///
 /// <b>Note:</b> Unlike some other abstract base classes we don't name the
 /// class beginning with "Abstract".  This is because we want to have
 /// commonly used definitions such as \c Result and \c ZonePtr, and we want
