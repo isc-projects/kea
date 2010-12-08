@@ -111,7 +111,7 @@ TEST_F(NameserverEntryTest, InitialRTT) {
 
     // Check they are not 0 and they are all small, they should be some kind
     // of randomish numbers, so we can't expect much more here
-    BOOST_FOREACH(const AddressEntry& entry, vec) {
+    BOOST_FOREACH(AddressEntry& entry, vec) {
         EXPECT_GT(entry.getRTT(), 0);
         // 20 is some arbitrary small value
         EXPECT_LT(entry.getRTT(), 20);
@@ -464,9 +464,123 @@ TEST_F(NameserverEntryTest, KeepRTT) {
     ASSERT_EQ(2, addresses.size());
     EXPECT_EQ("2001:db8::1", addresses[1].getAddress().toText());
     // They should have the RTT we set to them
-    BOOST_FOREACH(const AddressEntry& address, addresses) {
+    BOOST_FOREACH(AddressEntry& address, addresses) {
         EXPECT_EQ(123, address.getRTT());
     }
 }
+
+// TODO This test must be updated, the rrsets are not passed trough constructor
+#if 0
+// Select one address from the address list
+TEST_F(NameserverEntryTest, AddressSelection) {
+    boost::shared_ptr<NameserverEntry> ns(new NameserverEntry(&rrv4_, &rrv6_));
+    NameserverEntry::AddressVector v4Addresses;
+    NameserverEntry::AddressVector v6Addresses;
+    ns->getAddresses(v4Addresses, AF_INET);
+    ns->getAddresses(v6Addresses, AF_INET6);
+
+    int c1 = 0;
+    int c2 = 0;
+    int c3 = 0;
+    NameserverAddress ns_address;
+    for(int i = 0; i < 10000; ++i){
+        ns.get()->getAddress(ns_address, AF_INET);
+        asiolink::IOAddress io_address = ns_address.getAddress();
+        if(io_address.toText() == v4Addresses[0].getAddress().toText()) ++c1;
+        else if(io_address.toText() == v4Addresses[1].getAddress().toText()) ++c2;
+        else if(io_address.toText() == v4Addresses[2].getAddress().toText()) ++c3;
+    }
+    // c1, c2 and c3 should almost be equal
+    ASSERT_EQ(1, (int)(c1*1.0/c2 + 0.5));
+    ASSERT_EQ(1, (int)(c2*1.0/c3 + 0.5));
+
+    // update the rtt to 1, 2, 3
+    ns->setAddressRTT(v4Addresses[0].getAddress(), 1);
+    ns->setAddressRTT(v4Addresses[1].getAddress(), 2);
+    ns->setAddressRTT(v4Addresses[2].getAddress(), 3);
+    c1 = c2 = c3 = 0; 
+    for(int i = 0; i < 100000; ++i){
+        ns.get()->getAddress(ns_address, AF_INET);
+        asiolink::IOAddress io_address = ns_address.getAddress();
+        if(io_address.toText() == v4Addresses[0].getAddress().toText()) ++c1;
+        else if(io_address.toText() == v4Addresses[1].getAddress().toText()) ++c2;
+        else if(io_address.toText() == v4Addresses[2].getAddress().toText()) ++c3;
+    }
+
+    // c1 should be (2*2) times of c2
+    ASSERT_EQ(4, (int)(c1*1.0/c2 + 0.5));
+    // c1 should be (3*3) times of c3
+    ASSERT_EQ(9, (int)(c1*1.0/c3 + 0.5));
+
+    // Test unreachable address
+    ns->setAddressRTT(v4Addresses[0].getAddress(), 1);
+    ns->setAddressRTT(v4Addresses[1].getAddress(), 100);
+    ns->setAddressUnreachable(v4Addresses[2].getAddress());
+    c1 = c2 = c3 = 0;
+    for(int i = 0; i < 100000; ++i){
+        ns.get()->getAddress(ns_address, AF_INET);
+        asiolink::IOAddress io_address = ns_address.getAddress();
+        if(io_address.toText() == v4Addresses[0].getAddress().toText()) ++c1;
+        else if(io_address.toText() == v4Addresses[1].getAddress().toText()) ++c2;
+        else if(io_address.toText() == v4Addresses[2].getAddress().toText()) ++c3;
+    }
+
+    // The 3rd address should not be selected again
+    ASSERT_EQ(0, c3);
+
+    // Test if all the servers are unrachable
+    ns->setAddressUnreachable(v4Addresses[0].getAddress());
+    ns->setAddressUnreachable(v4Addresses[1].getAddress());
+    ns->setAddressUnreachable(v4Addresses[2].getAddress());
+    c1 = c2 = c3 = 0;
+    for(int i = 0; i < 100000; ++i){
+        ns.get()->getAddress(ns_address, AF_INET);
+        asiolink::IOAddress io_address = ns_address.getAddress();
+        if(io_address.toText() == v4Addresses[0].getAddress().toText()) ++c1;
+        else if(io_address.toText() == v4Addresses[1].getAddress().toText()) ++c2;
+        else if(io_address.toText() == v4Addresses[2].getAddress().toText()) ++c3;
+    }
+
+    // All the unreachable servers should be selected with equal opportunity
+    ASSERT_EQ(1, (int)(c1*1.0/c2 + 0.5));
+    ASSERT_EQ(1, (int)(c1*1.0/c3 + 0.5));
+
+    // TODO: The unreachable server should be changed to reachable after 5minutes, but how to test?
+}
+
+// Test the RTT is updated smoothly
+TEST_F(NameserverEntryTest, UpdateRTT) {
+    NameserverEntry ns(&rrv4_, &rrv6_);
+    NameserverEntry::AddressVector vec;
+    ns.getAddresses(vec);
+
+    // Initialize the rtt with a small value
+    uint32_t init_rtt = 1;
+    ns.setAddressRTT(vec[0].getAddress(), init_rtt);
+    // The rtt will be stablized to a large value
+    uint32_t stable_rtt = 100;
+
+    // Update the rtt
+    ns.updateAddressRTTAtIndex(stable_rtt, 0, AF_INET);
+
+    vec.clear();
+    ns.getAddresses(vec);
+    uint32_t new_rtt = vec[0].getRTT();
+
+    // The rtt should not close to new rtt immediately
+    ASSERT_TRUE((stable_rtt - new_rtt) > (new_rtt - init_rtt));
+
+    // Update the rtt for enough times
+    for(int i = 0; i < 10000; ++i){
+        ns.updateAddressRTTAtIndex(stable_rtt, 0, AF_INET);
+    }
+    vec.clear();
+    ns.getAddresses(vec);
+    new_rtt = vec[0].getRTT();
+
+    // The rtt should be close to stable rtt value
+    ASSERT_TRUE((stable_rtt - new_rtt) < (new_rtt - init_rtt));
+}
+#endif
 
 }   // namespace
