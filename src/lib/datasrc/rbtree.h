@@ -26,9 +26,13 @@ namespace isc {
 namespace datasrc {
 
 namespace helper {
+
+/// \note function in this namespace isnot intended to be used outside
+
 /// helper function to remove the base domain from super domain
 /// the precondition of this function is the super_name contains the
-/// sub_name
+/// sub_name so \code Name a("a.b.c"); Name b("b.c"); 
+/// Name c = a - b; \\c will be "a" \endcode
 isc::dns::Name
 operator-(const isc::dns::Name& super_name, const isc::dns::Name& sub_name) {
     return (super_name.split(0, super_name.getLabelCount() -
@@ -36,7 +40,7 @@ operator-(const isc::dns::Name& super_name, const isc::dns::Name& sub_name) {
 }
 
 /// for indent purpose, add certian mount empty charachter to output stream
-/// according to the depth,
+/// according to the depth.
 void
 indent(std::ostream& os, unsigned int depth) {
     static const unsigned int INDENT_FOR_EACH_DEPTH = 5;
@@ -49,22 +53,26 @@ indent(std::ostream& os, unsigned int depth) {
 enum RBTreeColor {BLACK, RED};
 template <typename T>
 class RBTree;
-/// \brief \c RBNode class represents one domain name in the domain space
+/// \brief \c RBNode use by RBTree to store any data related to one domain name
 
 /// It has two roles, the first one is as one node in the \c RBTree,
-/// the second one is to store the data related to DNS. As for the first role,
-/// it has left, right, parent and color members
-/// which is used to keep the balance of the \c RBTree. As for the second role,
-//  it stores the RRsets that belong to the domain name and a rbtree which
-/// includes all the subdomains of this node.
-/// The name stored in the node is relative related to its parent node.
+/// the second one is to store the data related to one domain name and maintain
+/// the domain name hierarchy struct in one domain name space. 
+/// As for the first role, it has left, right, parent and color members
+/// which is used to keep the balance of the \c RBTree. 
+/// As for the second role, \c RBNode use down pointer to refer to all its sub
+/// domains, so the name of current node always relative to the up node. since
+/// we only has down pointer without up pointer, so we can only walk down from
+/// top domain to sub domain. 
 /// One special kind of node is non-terminal node
-/// which has subdomains with RRset but itself doesn't have any RRsets. and typically
-/// this kind of node is shadow to end user
+/// which has subdomains with RRset but itself doesn't have any RRsets. 
 ///
-/// \note: \c RBNode should be created or destroyed only by \c RBTree so
-/// constructor and destructor function aren't exposed. The memory management of each
-/// node will be handled by a pool, so the node deconstruction will do nothing
+/// \note \c RBNode basically used internally by RBTree, it is meaningless to 
+/// inherited from it or create it without \c RBTree. 
+/// For data stored in \c RBNode, RBNode will hold the ownership, therefore RBNode
+/// will release it(call the deconstructor)finally, so it will be has problem if two
+/// RBNode store the same data, or the data RBNode managed is delete outside RBNode
+/// both will cause double delete.
 template <typename T>
 class RBNode : public boost::noncopyable {
 public:
@@ -91,17 +99,23 @@ public:
 
     /// \name Test functions
     //@{
-    /// \brief return the name of current node, it's relative to its parents
-    //
-    /// \todo Is it meaningful to return the absolute of the node?
+    /// \brief return the name of current node, it's relative to its top node
+    /// 
+    /// To get the absolute name of one node, the node path from the top node
+    /// to current node has to be recorded
     const isc::dns::Name& getName() const { return (name_); }
 
     /// \brief return the data store in this node
+    /// \note, since the data is managed by RBNode, developer should not
+    /// free the pointer
     T* getData() { return (data_); }
     /// \brief return the data stored in this node, read-only version
     const T *getData() const { return (data_);}
 
     /// \brief return whether the node has related data 
+    /// \note it's meaningless has empty \c RBNode in one RBTree, the only 
+    /// exception is for non-terminal node which has sub domain nodes who
+    /// has data(rrset)
     bool isEmpty() const { return (data_ == NULL);}
     //@}
 
@@ -120,9 +134,8 @@ private:
         return (&null_node);
     }
 
-    /// \brief copy the the data saved in the node into another node
-    /// the data copied exclude the rbtree related data like left,right,parent 
-    /// and color
+    /// \brief swap the content of two node, the content here refers to
+    /// name, data, down
     void swap(RBNode<T>& node);
 
     /// data to maintain the rbtree balance
@@ -200,11 +213,47 @@ RBNode<T>::swap(RBNode<T>& node) {
 /// so it can be used to store the domains in one zone.
 ///
 /// \c RBTree is a generic red black tree, and contains all the nodes with
-/// the same suffix, since each
-/// name may have sub domain names so \c RBTree is a recursive data structure
-/// or tree in tree.
+/// the same suffix, since each name may have sub domain names 
+/// so \c RBTree is a recursive data structure namely tree in tree.
 /// So for one zone, several RBTrees may be involved. But from outside, the sub
-/// tree is opaque for end users.
+/// tree is opaque for end users. 
+///
+/// \c RBTree split the domain space into hierarchy red black trees, nodes in one
+/// tree has the same base name. The benefit of this struct is that:
+/// - enhance the query performace compared with one big flat red black tree
+/// - decrase the memory footprint to save common labels only once. 
+
+/*
+/// \verbatim
+/// with the following names:
+///     a       x.d.e.f     o.w.y.d.e.f
+///     b       z.d.e.f     p.w.y.d.e.f
+///     c       g.h         q.w.y.d.e.f
+///     the tree will looks like:
+///                               b
+///                             /   \
+///                            a    d.e.f
+///                                   /|\
+///                                  c | g.h
+///                                    |
+///                                   w.y
+///                                   /|\
+///                                  x | z
+///                                    |
+///                                    p
+///                                   / \
+///                                  o   q
+/// \endverbatim
+/// \note open problems:
+/// - current find funciton only return non-empty nodes, so there is no difference 
+///   between find one not exist name with empty non-terminal nodes, but in DNS query
+///   logic, they are different
+/// \todo 
+/// - add remove interface
+/// - add iterator to iterate the whole rbtree while may needed by axfr
+/// - since \c RBNode only has down pointer without up pointer, the node path during finding 
+///   should be recorded for later use
+*/
 template <typename T>
 class RBTree : public boost::noncopyable {
     friend class RBNode<T>;
@@ -252,7 +301,6 @@ public:
     /// \name Debug function
     //@{
     /// \brief print the nodes in the trees
-    /// \todo is it better to return one string instead of print to the stdout?
     void dumpTree(std::ostream& os, unsigned int depth = 0) const;
     //@}
 
@@ -264,13 +312,14 @@ public:
     /// new \c RBNode will be created, otherwise nothing will be done.
     /// Anyway the pointer point to the node with the name will be assigned to
     /// inserted_node
-    /// \return return SUCCEED means no node exists in the tree with the name before
-    /// insert; return ALREADYEXIST means already has the node with the given name
-    /// return NOMEM means no memory left to allocate new node
+    /// \return 
+    //  - SUCCEED means no node exists in the tree with the name before insert
+    /// - ALREADYEXIST means already has the node with the given name
+    /// - NOMEM means no memory left to allocate new node
     //
-    /// To add an RRset into one node when it's not known whether the node
-    /// already exists, it is better to call \c insert and then call the
-    /// RBNode interface instead of calling \c find().
+    /// \node To modify the data related with one name but not sure the name has 
+    /// inserted or not, it is better to call \code insert \endcode,instead of 
+    /// \code find() \endcode, in case the name isn't exist and needs to insert again
     Result insert(const isc::dns::Name& name, RBNode<T>** inserted_node);
     //@}
 
@@ -290,15 +339,20 @@ private:
     void dumpTreeHelper(std::ostream& os, const RBNode<T>* node,
                         unsigned int depth) const;
 
-    /// get one node from the node pool, if no memory left return NULL
+    /// \brief get one node from the node pool, if no memory left return NULL
     /// without throw exception
+    /// 
+    /// \note For node memory management, it maybe useful let the node
+    /// allocation as a template parameter, just like std::map, by default it
+    /// use std::allocator. And in this way, developer can handle the memory 
+    /// management in his own way. 
     RBNode<T>* createNode();
     RBNode<T>* createNode(const isc::dns::Name& name);
 
     /// Split one node into two nodes, keep the old node and create one new
     /// node, old node will hold the base name, new node will be the down node
     /// of old node, new node will hold the sub_name, the data
-    /// of old node will be move into new node, and old node became none-terminal
+    /// of old node will be move into new node, and old node became non-terminal
     /// \return NOMEM: means no memory to create new node
     /// otherwise return SUCCEED
     Result nodeFission(RBNode<T>& node, const isc::dns::Name& sub_name);
@@ -314,25 +368,6 @@ private:
     boost::object_pool<RBNode<T> > node_pool_;
 };
 
-/// \par
-/// with the following names:
-///     a       x.d.e.f     o.w.y.d.e.f
-///     b       z.d.e.f     p.w.y.d.e.f
-///     c       g.h         q.w.y.d.e.f
-///     the tree will looks like:
-///                               b
-///                             /   \
-///                            a    d.e.f
-///                                   /|\
-///                                  c | g.h
-///                                    |
-///                                   w.y
-///                                   /|\
-///                                  x | z
-///                                    |
-///                                    p
-///                                   / \
-///                                  o   q
 template <typename T>
 RBTree<T>::RBTree() {
     NULLNODE = RBNode<T>::NULL_NODE();
