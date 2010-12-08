@@ -1,7 +1,3 @@
-Global:
-* There are TODO notes in tests, some more tests should be added to stress
-  and test it more.
-
 Long term:
 * Make a mechanism the cache (which does not exist at the time of writing this
   note) will be able to notify the NSAS that something has changed (address,
