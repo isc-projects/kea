@@ -253,7 +253,9 @@ void NameserverEntry::updateAddressSelector(std::vector<AddressEntry>& addresses
     for(vector<AddressEntry>::iterator it = addresses.begin(); 
             it != addresses.end(); ++it){
         uint32_t rtt = (*it).getRTT();
-        if(rtt == 0) isc_throw(RTTIsZero, "The RTT is 0");
+        if(rtt == 0) {
+            isc_throw(RTTIsZero, "The RTT is 0");
+        }
 
         if(rtt == AddressEntry::UNREACHABLE) {
             probabilities.push_back(0);
@@ -264,10 +266,19 @@ void NameserverEntry::updateAddressSelector(std::vector<AddressEntry>& addresses
     // Calculate the sum
     double sum = accumulate(probabilities.begin(), probabilities.end(), 0.0);
 
-    // Normalize the probabilities to make the sum equal to 1.0
-    for(vector<double>::iterator it = probabilities.begin(); 
-            it != probabilities.end(); ++it){
-        (*it) /= sum;
+    if(sum != 0) {
+        // Normalize the probabilities to make the sum equal to 1.0
+        for(vector<double>::iterator it = probabilities.begin(); 
+                it != probabilities.end(); ++it){
+            (*it) /= sum;
+        }
+    } else if(probabilities.size() > 0){
+        // If all the nameservers are unreachable, the sum will be 0
+        // So give each server equal opportunity to be selected.
+        for(vector<double>::iterator it = probabilities.begin(); 
+                it != probabilities.end(); ++it){
+            (*it) = 1.0/probabilities.size();
+        }
     }
 
     selector.reset(probabilities);
