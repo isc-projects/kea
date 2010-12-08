@@ -52,16 +52,27 @@ class RBTreeTest : public::testing::Test {
 protected:
     RBTreeTest() : rbtree() {
         rbtree.insert(Name("a"), &rbtnode);
+        rbtnode->setData(new int(1));
         rbtree.insert(Name("b"), &rbtnode);
+        rbtnode->setData(new int(2));
         rbtree.insert(Name("c"), &rbtnode);
+        rbtnode->setData(new int(3));
         rbtree.insert(Name("x.d.e.f"), &rbtnode);
+        rbtnode->setData(new int(4));
         rbtree.insert(Name("z.d.e.f"), &rbtnode);
+        rbtnode->setData(new int(5));
         rbtree.insert(Name("g.h"), &rbtnode);
+        rbtnode->setData(new int(6));
         rbtree.insert(Name("i.g.h"), &rbtnode);
+        rbtnode->setData(new int(7));
         rbtree.insert(Name("o.w.y.d.e.f"), &rbtnode);
+        rbtnode->setData(new int(8));
         rbtree.insert(Name("j.z.d.e.f"), &rbtnode);
+        rbtnode->setData(new int(8));
         rbtree.insert(Name("p.w.y.d.e.f"), &rbtnode);
+        rbtnode->setData(new int(9));
         rbtree.insert(Name("q.w.y.d.e.f"), &rbtnode);
+        rbtnode->setData(new int(10));
     }
     RBTree<int> rbtree;
     RBNode<int>* rbtnode;
@@ -74,9 +85,8 @@ TEST_F(RBTreeTest, getNodeCount) {
 }
 
 TEST_F(RBTreeTest, set_get_Data) {
-    int data = 10;
-    rbtnode->setData(data);
-    EXPECT_EQ(10, rbtnode->getData());
+    rbtnode->setData(new int(11));
+    EXPECT_EQ(11, *(rbtnode->getData()));
 }
 
 TEST_F(RBTreeTest, getNameCount) {
@@ -98,6 +108,7 @@ TEST_F(RBTreeTest, insertNames) {
 
     EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("example.com"), &rbtnode));
     EXPECT_EQ(15, rbtree.getNodeCount());
+    rbtnode->setData(new int(12));
 
     // return ALREADYEXIST, since node "example.com" already has been explicitly inserted
     EXPECT_EQ(RBTree<int>::ALREADYEXIST, rbtree.insert(Name("example.com"), &rbtnode));
