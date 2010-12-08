@@ -50,9 +50,7 @@ class AddressRequestCallback;
 ///
 /// It uses shared_from_this in its methods. It must live inside a shared_ptr.
 
-class ZoneEntry : public NsasEntry<ZoneEntry>, public Fetchable,
-    public boost::enable_shared_from_this<ZoneEntry>
-{
+class ZoneEntry : public NsasEntry<ZoneEntry>, public Fetchable {
 public:
 
     /**

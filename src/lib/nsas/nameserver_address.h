@@ -25,6 +25,17 @@
 namespace isc {
 namespace nsas {
 
+/// \brief Empty \c NameserverEntry pointer exception
+///
+/// Thrown if the the \c NameservrEntry pointer in the \c boost::shared_ptr that passed
+/// into \c NameserverAddress' constructor is NULL
+class NullNameserverEntryPointer : public isc::Exception {
+public:
+    NullNameserverEntryPointer(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what)
+    {}
+};
+
 /// \brief Nameserver Address
 ///
 /// This class implements the object that returned from NSAS when the resolver
@@ -45,8 +56,18 @@ public:
     /// the shared_ptr can avoid the NameserverEntry object being dropped while the
     /// request is processing.
     /// \param index The address's index in NameserverEntry's addresses vector
-    NameserverAddress(boost::shared_ptr<NameserverEntry>& nameserver, uint32_t index):
-        ns_(nameserver), index_(index)
+    /// \param family Address family, AF_INET or AF_INET6
+    NameserverAddress(boost::shared_ptr<NameserverEntry>& nameserver, uint32_t index, short family):
+        ns_(nameserver), index_(index), family_(family)
+    {
+        if(!ns_.get()) {
+            isc_throw(NullNameserverEntryPointer, "NULL NameserverEntry pointer.");
+        }
+    }
+
+    /// \brief Default Constructor
+    ///
+    NameserverAddress(): index_(0), family_(AF_INET)
     {
     }
 
@@ -54,14 +75,13 @@ public:
     ///
     /// Empty destructor.
     ~NameserverAddress()
-    {}
+    {
+    }
 
     /// \brief Return address
     ///
     asiolink::IOAddress getAddress() const { 
-        NameserverEntry *ne = ns_.get();
-        assert(ne != NULL);
-        return ne->getAddressAtIndex(index_); 
+        return ns_.get()->getAddressAtIndex(index_, family_); 
     }
 
     /// \brief Update Round-trip Time
@@ -70,17 +90,13 @@ public:
     /// update the address's RTT.
     /// \param rtt The new Round-Trip Time
     void updateRTT(uint32_t rtt) { 
-        NameserverEntry* ne = ns_.get();
-        if(ne) ne->updateAddressRTTAtIndex(rtt, index_); 
+        ns_.get()->updateAddressRTTAtIndex(rtt, index_, family_); 
     }
 private:
-    /// \brief Default Constructor
-    ///
-    /// A private default constructor to avoid creating an empty object.
-    NameserverAddress();
 
     boost::shared_ptr<NameserverEntry> ns_;  ///< Shared-pointer to NameserverEntry object
     uint32_t index_;                         ///< The address index in NameserverEntry
+    short family_;                           ///< Address family AF_INET or AF_INET6
 };
 
 } // namespace nsas

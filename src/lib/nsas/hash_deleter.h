@@ -46,6 +46,10 @@ public:
     HashDeleter(HashTable<T>& hashtable) : hashtable_(hashtable)
     {}
 
+    /// \brief Destructor
+    ///
+    virtual ~HashDeleter(){}
+
     // The default copy constructor and assignment operator are correct for
     // this object.
 
