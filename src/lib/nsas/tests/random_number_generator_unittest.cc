@@ -52,6 +52,11 @@ private:
     const static int max_ = 10;
 };
 
+/// Some validation tests will incur performance penalty, so the tests are
+/// made only in "debug" version with assert(). But if NDEBUG is defined
+/// the tests will be failed since assert() is non-op in non-debug version.
+/// The "#ifndef NDEBUG" is added to make the tests be performed only in
+/// non-debug environment.
 #ifndef NDEBUG
 // Test of the constructor
 TEST_F(UniformRandomIntegerGeneratorTest, Constructor) {
@@ -99,6 +104,11 @@ TEST_F(WeightedRandomIntegerGeneratorTest, Constructor)
         ASSERT_EQ(gen(), 123);
     }
 
+/// Some validation tests will incur performance penalty, so the tests are
+/// made only in "debug" version with assert(). But if NDEBUG is defined
+/// the tests will be failed since assert() is non-op in non-debug version.
+/// The "#ifndef NDEBUG" is added to make the tests be performed only in
+/// non-debug environment.
 #ifndef NDEBUG
     //The probability must be >= 0
     probabilities.push_back(-0.1);
