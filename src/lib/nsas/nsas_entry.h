@@ -17,6 +17,7 @@
 #ifndef __NSAS_ENTRY_H
 #define __NSAS_ENTRY_H
 
+#include <boost/enable_shared_from_this.hpp>
 #include <iostream>
 
 #include <exceptions/exceptions.h>
@@ -38,7 +39,6 @@ public:
         Exception(file, line, what)
     {}
 };
-
 
 /// \brief Element of NSAS Internal Lists
 ///
@@ -64,9 +64,11 @@ public:
 /// pointers, but a shared pointer to a base class is not a subclass of a
 /// shared pointer to a derived class.  For this reason, the type of element
 /// being stored is a template parameter.
-
+///
+/// This class is inherited from boost::enable_shared_from_this class
+/// So within a member function a shared_ptr to current object can be obtained
 template <typename T>
-class NsasEntry {
+class NsasEntry : public boost::enable_shared_from_this <T>  {
 public:
 
     /// \brief Default Constructor

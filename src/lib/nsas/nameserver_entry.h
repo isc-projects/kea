@@ -28,15 +28,18 @@
 
 #include "address_entry.h"
 #include "asiolink.h"
-#include "nsas_entry.h"
 #include "nsas_types.h"
 #include "hash_key.h"
 #include "lru_list.h"
 #include "fetchable.h"
 #include "resolver_interface.h"
+#include "nsas_entry.h"
+#include "random_number_generator.h"
 
 namespace isc {
 namespace nsas {
+
+class NameserverAddress;
 
 /// \brief Inconsistent Owner Names
 ///
@@ -45,6 +48,16 @@ namespace nsas {
 class InconsistentOwnerNames : public Exception {
 public:
     InconsistentOwnerNames(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what)
+    {}
+};
+
+/// \brief RTT is zero
+///
+/// Thrown if a RTT related with an address is 0.
+class RTTIsZero : public Exception {
+public:
+    RTTIsZero(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what)
     {}
 };
@@ -87,9 +100,7 @@ class ResolverInterface;
 ///
 /// It uses shared_from_this in its methods. It must live inside a shared_ptr.
 
-class NameserverEntry : public NsasEntry<NameserverEntry>, public Fetchable,
-    public boost::enable_shared_from_this<NameserverEntry>
-{
+class NameserverEntry : public NsasEntry<NameserverEntry>, public Fetchable {
 public:
     /// List of addresses associated with this nameserver
     typedef std::vector<AddressEntry>   AddressVector;
@@ -130,11 +141,19 @@ public:
         NameserverEntry::AddressVector& addresses,
         AddressFamily family = ANY_OK, bool expired_ok = false);
 
-    // TODO Is this one of any use at all?
+    /// \brief Return one address
+    ///
+    /// Return one address corresponding to this nameserver
+    /// \param address NameserverAddress object used to receive the address
+    /// \param family The family of user request, AF_INET or AF_INET6
+    /// \return true if one address is found, false otherwise
+    virtual bool getAddress(NameserverAddress& address, short family);
+
     /// \brief Return Address that corresponding to the index
     ///
     /// \param index The address index in the address vector
-    asiolink::IOAddress getAddressAtIndex(uint32_t index) const;
+    /// \param family The address family, AF_INET or AF_INET6
+    asiolink::IOAddress getAddressAtIndex(uint32_t index, short family) const;
 
     /// \brief Update RTT
     ///
@@ -148,7 +167,8 @@ public:
     ///
     /// \param rtt Round-Trip Time
     /// \param index The address's index in address vector
-    void updateAddressRTTAtIndex(uint32_t rtt, uint32_t index);
+    /// \param family The address family, AF_INET or AF_INET6
+    void updateAddressRTTAtIndex(uint32_t rtt, uint32_t index, short family);
 
     /// \brief Set Address Unreachable
     ///
@@ -241,6 +261,18 @@ private:
     /// Call unlocked.
     void askIP(boost::shared_ptr<ResolverInterface> resolver,
         const isc::dns::RRType&, AddressFamily);
+    /// \brief Update the address selector according to the RTTs of addresses
+    ///
+    /// \param addresses The address list
+    /// \param selector Weighted random generator
+    void updateAddressSelector(std::vector<AddressEntry>& addresses, 
+            WeightedRandomIntegerGenerator& selector);
+
+    // TODO Unite address_ and v?_addresses_
+    std::vector<AddressEntry> v4_addresses_;             ///< Set of V4 addresses
+    std::vector<AddressEntry> v6_addresses_;             ///< Set of V6 addresses
+    WeightedRandomIntegerGenerator v4_address_selector_; ///< Generate one integer according to different probability
+    WeightedRandomIntegerGenerator v6_address_selector_; ///< Generate one integer according to different probability
 };
 
 }   // namespace dns

@@ -58,6 +58,11 @@ public:
     /// will handle any additional operations needed.
     class Dropped {
     public:
+        /// \brief Constructor
+        Dropped(){}
+
+        /// \brief Virtual Destructor
+        virtual ~Dropped(){}
 
         /// \brief Dropped Object Handler
         ///
@@ -66,8 +71,6 @@ public:
         ///
         /// \param drop Object being dropped.
         virtual void operator()(T* drop) const = 0;
-        /// \brief Virtual destructor
-        virtual ~ Dropped() { }
     };
 
     /// \brief Constructor
