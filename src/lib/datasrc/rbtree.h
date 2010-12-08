@@ -20,6 +20,7 @@
 #include <boost/pool/object_pool.hpp>
 #include <exception>
 #include <ostream>
+#include <algorithm>
 
 namespace isc {
 namespace datasrc {
@@ -70,22 +71,6 @@ public:
     /// only \c RBTree can create and destroy \c RBNode
     friend class RBTree<T>;
 
-    /// \name Test functions
-    //@{
-    /// \brief return the name of current node, it's relative to its parents
-    //
-    /// \todo Is it meaningful to return the absolute of the node?
-    const isc::dns::Name& getName() const { return (name_); }
-
-    /// \brief return the data store in this node
-    T& getData() { return (data_); }
-    //@}
-
-    /// \name Modify functions
-    /// \brief set the data stored in the node
-    void setData(const T& data) { data_ = data; }
-
-private:
     /// \name Constructors and destructor
     //@{
     /// \brief Default constructor.
@@ -99,8 +84,36 @@ private:
     /// \param name The domain name corresponding to the node.
     RBNode(const isc::dns::Name& name);
 
+    /// \brief Deconstructor.
+    ~RBNode();
+
     //@}
 
+    /// \name Test functions
+    //@{
+    /// \brief return the name of current node, it's relative to its parents
+    //
+    /// \todo Is it meaningful to return the absolute of the node?
+    const isc::dns::Name& getName() const { return (name_); }
+
+    /// \brief return the data store in this node
+    T* getData() { return (data_); }
+    /// \brief return the data stored in this node, read-only version
+    const T *getData() const { return (data_);}
+
+    /// \brief return whether the node has related data 
+    bool isEmpty() const { return (data_ == NULL);}
+    //@}
+
+    /// \name Modify functions
+    /// \brief set the data stored in the node
+    /// this function also means ownership transfer, then data is owned by
+    /// \c RBNode, and RBNode will in charge of the memory management
+    /// \note when set new data, old data will be deleted first
+    void setData(T* data);
+
+
+private:
     /// This is a factory class method of a special singleton null node.
     static RBNode<T>* NULL_NODE() {
         static RBNode<T> null_node;
@@ -110,7 +123,7 @@ private:
     /// \brief copy the the data saved in the node into another node
     /// the data copied exclude the rbtree related data like left,right,parent 
     /// and color
-    void copyContent(RBNode<T>& node);
+    void swap(RBNode<T>& node);
 
     /// data to maintain the rbtree balance
     RBNode<T>*  parent_;
@@ -120,9 +133,7 @@ private:
 
 
     isc::dns::Name     name_;
-    /// this will make type T should have default constructor
-    /// without any parameters
-    T           data_;
+    T*          data_;
     /// the down pointer points to the root node of sub domains of current 
     /// domain 
     /// \par Adding down pointer to \c RBNode is for two purpose:
@@ -130,13 +141,6 @@ private:
     /// big flat tree into several hierarchy trees
     /// \li It save memory useage, so same label won't be saved several times 
     RBNode<T>*  down_;
-
-    ///the node won't be returned to end user, if the node is shadow.
-    ///shadow node is created by rbtree for inner use, it's opaque to
-    ///end user. 
-    /// \par shadow node is the node with sub domain tree, but itself don't
-    /// contain any data, so the \c down_ pointer of a shadow node cannot be NULL
-    bool        is_shadow_;
 };
 
 
@@ -150,8 +154,8 @@ RBNode<T>::RBNode() :
     color_(BLACK),
     // dummy name, the value doesn't matter:
     name_(isc::dns::Name::ROOT_NAME()),
-    down_(NULL),
-    is_shadow_(false)
+    data_(NULL),
+    down_(NULL)
 {
 }
 
@@ -162,18 +166,33 @@ RBNode<T>::RBNode(const isc::dns::Name& name) :
     right_(NULL_NODE()),
     color_(RED),
     name_(name),
-    down_(NULL),
-    is_shadow_(false)
+    data_(NULL),
+    down_(NULL)
 {
+}
+
+
+template <typename T>
+RBNode<T>::~RBNode() {
+    delete data_;
+}
+
+
+template <typename T>
+void 
+RBNode<T>::setData(T* data) {
+    if (data_ != data) {
+        delete data_;
+        data_ = data;
+    }
 }
 
 template <typename T>
 void
-RBNode<T>::copyContent(RBNode<T>& node) {
-    node.name_ = name_;
-    node.data_ = data_;
-    node.down_ = down_;
-    node.is_shadow_ = is_shadow_;
+RBNode<T>::swap(RBNode<T>& node) {
+    std::swap(node.name_, name_);
+    std::swap(node.data_, data_);
+    std::swap(node.down_, down_);
 }
 
 
@@ -279,7 +298,7 @@ private:
     /// Split one node into two nodes, keep the old node and create one new
     /// node, old node will hold the base name, new node will be the down node
     /// of old node, new node will hold the sub_name, the data
-    /// of old node will be move into new node, and old node became shadow
+    /// of old node will be move into new node, and old node became none-terminal
     /// \return NOMEM: means no memory to create new node
     /// otherwise return SUCCEED
     Result nodeFission(RBNode<T>& node, const isc::dns::Name& sub_name);
@@ -295,26 +314,25 @@ private:
     boost::object_pool<RBNode<T> > node_pool_;
 };
 
-/*
- with the following names:
-     a       x.d.e.f     o.w.y.d.e.f
-     b       z.d.e.f     p.w.y.d.e.f
-     c       g.h         q.w.y.d.e.f
-     the tree will looks like:
-                                  b
-                                /   \
-                               a    d.e.f
-                                      /|\
-                                     c | g.h
-                                       |
-                                      w.y
-                                      /|\
-                                     x | z
-                                       |
-                                       p
-                                      / \
-                                     o   q
-*/
+/// \par
+/// with the following names:
+///     a       x.d.e.f     o.w.y.d.e.f
+///     b       z.d.e.f     p.w.y.d.e.f
+///     c       g.h         q.w.y.d.e.f
+///     the tree will looks like:
+///                               b
+///                             /   \
+///                            a    d.e.f
+///                                   /|\
+///                                  c | g.h
+///                                    |
+///                                   w.y
+///                                   /|\
+///                                  x | z
+///                                    |
+///                                    p
+///                                   / \
+///                                  o   q
 template <typename T>
 RBTree<T>::RBTree() {
     NULLNODE = RBNode<T>::NULL_NODE();
@@ -331,23 +349,13 @@ RBTree<T>::~RBTree() {
 template <typename T>
 RBNode<T>*
 RBTree<T>::createNode() {
-    RBNode<T>* raw_mem = node_pool_.malloc();
-    if (raw_mem) {
-        return (new(raw_mem)RBNode<T>());
-    } else {
-        return (NULL);
-    }
+    return node_pool_.construct();
 }
 
 template <typename T>
 RBNode<T>*
 RBTree<T>::createNode(const isc::dns::Name& name) {
-    RBNode<T>* raw_mem = node_pool_.malloc();
-    if (raw_mem) {
-        return (new(raw_mem)RBNode<T>(name));
-    } else {
-        return (NULL);
-    }
+    return node_pool_.construct(name);
 }
 
 template <typename T>
@@ -388,7 +396,7 @@ RBTree<T>::findHelper(const isc::dns::Name& target_name, RBNode<T>** up_node,
         const isc::dns::NameComparisonResult::NameRelation relation =
             compare_result.getRelation();
         if (relation == isc::dns::NameComparisonResult::EQUAL) {
-            if (!node->is_shadow_) {
+            if (!node->isEmpty()) {
                 *target = node;
                 ret = EXACTMATCH;
             }
@@ -403,7 +411,7 @@ RBTree<T>::findHelper(const isc::dns::Name& target_name, RBNode<T>** up_node,
             } else if (relation == isc::dns::NameComparisonResult::SUBDOMAIN) {
                 *up_node = node;
                 name = name - node->name_;
-                if (node->is_shadow_) {
+                if (node->isEmpty()) {
                     assert(node->down_ != NULL);
                     node = node->down_;
                 } else {
@@ -444,8 +452,7 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
             }
             // if the node is a common suffix not user inserted, return succeed
             // otherwise return already exist
-            if (current->is_shadow_) {
-                current->is_shadow_ = false;
+            if (current->isEmpty()) {
                 ++name_count_;
                 return (SUCCEED);
             } else {
@@ -462,11 +469,11 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
                 if (relation == isc::dns::NameComparisonResult::SUBDOMAIN) {
                     if (current->down_ == NULL) {
                         RBNode<T>* node = createNode(name - current->name_);
-                        //root node of sub tree, the initial color is BLACK
-                        node->color_ = BLACK;
                         if (node == NULL) {
                             return (NOMEM);
                         }
+                        //root node of sub tree, the initial color is BLACK
+                        node->color_ = BLACK;
                         current->down_ = node;
                         if (new_node != NULL) {
                             *new_node = node;
@@ -531,10 +538,9 @@ RBTree<T>::nodeFission(RBNode<T>& node, const isc::dns::Name& base_name) {
         return (NOMEM);
     }
 
-    node.copyContent(*down_node);
+    node.swap(*down_node);
     node.name_ = base_name;
     node.down_ = down_node;
-    node.is_shadow_ = true;
     down_node->name_ = sub_name;
     //root node of sub tree, the initial color is BLACK
     down_node->color_ = BLACK;
@@ -654,7 +660,7 @@ RBTree<T>::dumpTreeHelper(std::ostream& os, const RBNode<T>* node,
     helper::indent(os, depth);
     os << node->name_.toText() << " ("
               << ((node->color_ == BLACK) ? "black" : "red") << ")";
-    os << ((node->is_shadow_) ? "[invisible] \n" : "\n");
+    os << ((node->isEmpty()) ? "[invisible] \n" : "\n");
     if (node->down_ != NULL) {
         helper::indent(os, depth + 1);
         os << "begin down from "<< node->name_.toText() << "\n";
