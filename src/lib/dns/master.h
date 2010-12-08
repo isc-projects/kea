@@ -60,16 +60,16 @@ private:
     
     template <typename FUNC>
     static void invoke(void* func, RRsetPtr rrset) {
-        FUNC* funcobj = reinterpret_cast<FUNC*>(func);
+        FUNC* funcobj = static_cast<FUNC*>(func);
         return ((*funcobj)(rrset));
     }
     template <typename FUNC>
     static void cleanup(void* func) {
-        delete reinterpret_cast<FUNC*>(func);
+        delete static_cast<FUNC*>(func);
     }
     template <typename FUNC>
     static void* copyFunctor(void* func) {
-        return (new FUNC(*reinterpret_cast<FUNC*>(func)));
+        return (new FUNC(*static_cast<FUNC*>(func)));
     }
     void* func_;
     void (*invoker_)(void*, RRsetPtr);
