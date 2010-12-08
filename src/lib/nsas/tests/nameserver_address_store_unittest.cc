@@ -108,7 +108,7 @@ private:
 
 
 /// \brief Text Fixture Class
-class NameserverAddressStoreTest : public ::testing::Test {
+class NameserverAddressStoreTest : public TestWithRdata {
 protected:
 
     NameserverAddressStoreTest() :
@@ -245,7 +245,7 @@ TEST_F(NameserverAddressStoreTest, emptyLookup) {
     nsas.lookupAndAnswer("example.net.", RRClass::IN(), authority_,
         getCallback());
     // It should ask for IP addresses for ns.example.com.
-    resolver_->asksIPs(Name("ns.example.com."), 0, 1);
+    EXPECT_NO_THROW(resolver_->asksIPs(Name("ns.example.com."), 0, 1));
 
     // Ask another question for the same zone
     nsas.lookup("example.net.", RRClass::IN(), getCallback());
@@ -261,8 +261,8 @@ TEST_F(NameserverAddressStoreTest, emptyLookup) {
 
     // We provide IP address of one nameserver, it should generate all the
     // results
-    resolver_->answer(0, Name("ns.example.com."), RRType::A(),
-        rdata::in::A("192.0.2.1"));
+    EXPECT_NO_THROW(resolver_->answer(0, Name("ns.example.com."), RRType::A(),
+        rdata::in::A("192.0.2.1")));
     EXPECT_EQ(3, NSASCallback::results.size());
     BOOST_FOREACH(const NSASCallback::Result& result, NSASCallback::results) {
         EXPECT_TRUE(result.first);
@@ -300,8 +300,7 @@ TEST_F(NameserverAddressStoreTest, unreachableNS) {
     nsas.lookupAndAnswer("example.net.", RRClass::IN(), authority_,
         getCallback());
     // It should ask for IP addresses for example.com.
-    ASSERT_EQ(2, resolver_->requests.size());
-    resolver_->asksIPs(Name("ns.example.com."), 0, 1);
+    EXPECT_NO_THROW(resolver_->asksIPs(Name("ns.example.com."), 0, 1));
 
     // Ask another question with different zone but the same nameserver
     authority_->setName(Name("example.com."));
@@ -329,11 +328,80 @@ TEST_F(NameserverAddressStoreTest, unreachableNS) {
     }
 }
 
-/*
- * TODO: More tests. Some eviction combined with lookups would make sense.
- * Stressing the entries that some nameservers for zone are there and some
- * are not, etc.
+/**
+ * \short Try to stress it little bit by having multiple zones and nameservers.
+ *
+ * Does some asking, on a set of zones that share some nameservers, with
+ * slower answering, evicting data, etc.
  */
+TEST_F(NameserverAddressStoreTest, CombinedTest) {
+    // Create small caches, so we get some evictions
+    DerivedNsas nsas(resolver_, 1, 1);
+    // Ask for example.net. It has single nameserver out of the zone
+    nsas.lookupAndAnswer("example.net.", RRClass::IN(), authority_,
+        getCallback());
+    // It should ask for the nameserver IP addresses
+    EXPECT_NO_THROW(resolver_->asksIPs(Name("ns.example.com."), 0, 1));
+    EXPECT_EQ(0, NSASCallback::results.size());
+    // But we do not answer it right away. We create a new zone and
+    // let this nameserver entry get out.
+    rrns_->addRdata(rdata::generic::NS("example.cz"));
+    nsas.lookupAndAnswer(EXAMPLE_CO_UK, RRClass::IN(), rrns_, getCallback());
+    // It really should ask something, one of the nameservers
+    // (or both)
+    ASSERT_GT(resolver_->requests.size(), 2);
+    Name name(resolver_->requests[2].first->getName());
+    EXPECT_TRUE(name == Name("example.fr") || name == Name("example.de") ||
+        name == Name("example.cz"));
+    EXPECT_NO_THROW(resolver_->asksIPs(name, 2, 3));
+    EXPECT_EQ(0, NSASCallback::results.size());
+
+    size_t request_count(resolver_->requests.size());
+    // This should still be in the hash table, so try it asks no more questions
+    nsas.lookup("example.net.", RRClass::IN(), getCallback());
+    EXPECT_EQ(request_count, resolver_->requests.size());
+    EXPECT_EQ(0, NSASCallback::results.size());
+
+    // We respond to one of the 3 nameservers
+    EXPECT_NO_THROW(resolver_->answer(2, name, RRType::A(),
+        rdata::in::A("192.0.2.1")));
+    // That should trigger one answer
+    EXPECT_EQ(1, NSASCallback::results.size());
+    EXPECT_TRUE(NSASCallback::results[0].first);
+    EXPECT_EQ("192.0.2.1", NSASCallback::results[0].second.toText());
+    EXPECT_NO_THROW(resolver_->answer(3, name, RRType::AAAA(),
+        rdata::in::AAAA("2001:bd8::1")));
+    // And there should be yet another query
+    ASSERT_GT(resolver_->requests.size(), 4);
+    EXPECT_NE(name, resolver_->requests[4].first->getName());
+    Name another_name = resolver_->requests[4].first->getName();
+    EXPECT_TRUE(another_name == Name("example.fr") ||
+        another_name == Name("example.de") ||
+        another_name == Name("example.cz"));
+    request_count = resolver_->requests.size();
+
+    // But when ask for a different zone with the first nameserver, it should
+    // ask again, as it is evicted already
+    authority_->setName(Name("example.com."));
+    nsas.lookupAndAnswer("example.com.", RRClass::IN(), authority_,
+        getCallback());
+    EXPECT_EQ(request_count + 2, resolver_->requests.size());
+    EXPECT_NO_THROW(resolver_->asksIPs(Name("ns.example.com."), request_count,
+        request_count + 1));
+    // Now, we answer both queries for the same address
+    // and three (one for the original, one for this one) more answers should
+    // arrive
+    NSASCallback::results.clear();
+    EXPECT_NO_THROW(resolver_->answer(0, Name("ns.example.com."), RRType::A(),
+        rdata::in::A("192.0.2.2")));
+    EXPECT_NO_THROW(resolver_->answer(request_count, Name("ns.example.com."),
+        RRType::A(), rdata::in::A("192.0.2.2")));
+    EXPECT_EQ(3, NSASCallback::results.size());
+    BOOST_FOREACH(const NSASCallback::Result& result, NSASCallback::results) {
+        EXPECT_TRUE(result.first);
+        EXPECT_EQ("192.0.2.2", result.second.toText());
+    }
+}
 
 } // namespace nsas
 } // namespace isc
