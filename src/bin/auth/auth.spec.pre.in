@@ -17,7 +17,7 @@
       },
       {
         "command_name": "sendstats",
-        "command_description": "Send statistics data to b10-stats at once",
+        "command_description": "Send data to a statistics module at once",
         "command_args": []
       }
     ]

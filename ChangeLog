@@ -1,8 +1,11 @@
   TBD.  [func]		y-aharen
 	src/bin/auth: Added a feature to count query and send counter
-	values to b10-stats periodically. To support it, added wrapping
+	values to statistics periodically. To support it, added wrapping
 	class of asio::deadline_timer to use as interval timer.
 	Added a command 'sendstats' to send counter values at once.
+	The counter value can be seen with sending 'sendstats' command to
+	statistics module via bindctl like:
+	  ... "auth.queries.tcp": 1, "auth.queries.udp": 1 ...
 	(Trac #347, svn rxxxx)
 
   122.  [func]		stephen

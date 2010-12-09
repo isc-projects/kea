@@ -22,12 +22,6 @@
 #include <cc/data.h>
 #include <config/ccsession.h>
 
-/// for the typedef of asio_link::IntervalTimer::Callback
-#include <auth/asio_link.h>
-
-// for class statistics::Counter
-#include <auth/stats.h>
-
 namespace isc {
 namespace dns {
 class InputBuffer;
@@ -208,25 +202,50 @@ public:
 
     /// \brief Set the communication session with Statistics.
     ///
+    /// This function never throws an exception as far as
+    /// QueryCounters::setStatsSession() doesn't throw.
+    ///
+    /// Note: this interface is tentative.  We'll revisit the ASIO and
+    /// session frameworks, at which point the session will probably
+    /// be passed on construction of the server.
+    ///
+    /// \param stats_session A Session object over which statistics
+    /// information is exchanged with statistics module.
+    /// The session must be established before setting in the server
+    /// object.
+    /// Ownership isn't transferred: the caller is responsible for keeping
+    /// this object to be valid while the server object is working and for
+    /// disconnecting the session and destroying the object when the server
+    /// is shutdown.
+    ///
     void setStatsSession(isc::cc::AbstractSession* stats_session);
 
-    /// \brief Return the function that sends statistics information
-    /// to Statistics module.
-    /// 
-    /// This function returns the return value of
-    /// statistics::Counter::getCallback().
+    /// \brief Submit statistics counters to statistics module.
     ///
-    /// \return \c boost::function which contains the procedure
-    /// to send statistics.
-    asio_link::IntervalTimer::Callback getStatsCallback();
+    /// This function can throw an exception from
+    /// QueryCounters::submitStatistics().
+    ///
+    /// \return true on success, false on failure (e.g. session timeout,
+    /// session error).
+    ///
+    bool submitStatistics();
+
+    /// \brief Get counters in the QueryCounters.
+    /// 
+    /// This function calls QueryCounters::getCounters() and
+    /// returns its return velue, a reference to the counters.
+    ///
+    /// This function never throws an exception as far as
+    /// QueryCounters::getCounters() doesn't throw.
+    /// 
+    /// Note: Currently this function is for testing purpose only.
+    /// This function should not be called except from tests.
+    ///
+    /// \return a reference to the counters.
+    ///
+    const std::vector<uint64_t>& getCounters() const;
 private:
     AuthSrvImpl* impl_;
-
-    // TODO: consider where to put the counter.
-    // Currently, count-up is in AuthSrv::processMessage.
-    // In the future, count-up will be in AuthSrvImpl::process*Query
-    // and this declaration will be moved into AuthSrvImpl.
-    statistics::Counter *counter;
 };
 
 #endif // __AUTH_SRV_H
