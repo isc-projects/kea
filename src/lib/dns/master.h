@@ -24,6 +24,7 @@
 
 namespace isc {
 namespace dns {
+class Name;
 class RRClass;
 
 /// TBD documentation
@@ -85,11 +86,11 @@ private:
 // we need that level of abstraction.
 // may want to have load options; may want to support incremental load.
 // may want to support "generous" mode.
-void masterLoad(const char* const filename, const RRClass& zone_class,
-                MasterLoadCallback callback);
+void masterLoad(const char* const filename, const Name& origin,
+                const RRClass& zone_class, MasterLoadCallback callback);
 
-void masterLoad(std::istream& input, const RRClass& zone_class,
-                MasterLoadCallback callback);
+void masterLoad(std::istream& input, const Name& origin,
+                const RRClass& zone_class, MasterLoadCallback callback);
 }
 }
 
