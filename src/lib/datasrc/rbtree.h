@@ -265,7 +265,6 @@ public:
         NOTFOUND,  // for find function means no related name found
                    // for erase function means erase not exist name
         ALREADYEXIST, //for insert operation, the name to insert already exist
-        NOMEM //no memory to create new node
     };
 
     /// \name Constructor and Destructor
@@ -314,7 +313,6 @@ public:
     /// \return 
     //  - SUCCEED means no node exists in the tree with the name before insert
     /// - ALREADYEXIST means already has the node with the given name
-    /// - NOMEM means no memory left to allocate new node
     //
     /// \node To modify the data related with one name but not sure the name has 
     /// inserted or not, it is better to call \code insert \endcode,instead of 
@@ -351,9 +349,7 @@ private:
     /// node, old node will hold the base name, new node will be the down node
     /// of old node, new node will hold the sub_name, the data
     /// of old node will be move into new node, and old node became non-terminal
-    /// \return NOMEM: means no memory to create new node
-    /// otherwise return SUCCEED
-    Result nodeFission(RBNode<T>& node, const isc::dns::Name& sub_name);
+    void nodeFission(RBNode<T>& node, const isc::dns::Name& sub_name);
     //@}
 
     RBNode<T>*  root_;
@@ -539,9 +535,7 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
                     const isc::dns::Name common_ancestor = name.split(
                         name.getLabelCount() - common_label_count,
                         common_label_count);
-                    if (nodeFission(*current, common_ancestor) == NOMEM) {
-                        return (NOMEM);
-                    }
+                    nodeFission(*current, common_ancestor);
                 }
             }
         }
@@ -570,12 +564,11 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
 
 
 template <typename T>
-typename RBTree<T>::Result
+void
 RBTree<T>::nodeFission(RBNode<T>& node, const isc::dns::Name& base_name) {
     using namespace helper;
     const isc::dns::Name sub_name = node.name_ - base_name;
     std::auto_ptr<RBNode<T> > down_node(new RBNode<T>(node.name_ - base_name));
-
     node.swap(*down_node);
     node.name_ = base_name;
     node.down_ = down_node.get();
@@ -584,7 +577,6 @@ RBTree<T>::nodeFission(RBNode<T>& node, const isc::dns::Name& base_name) {
     down_node->color_ = BLACK;
     ++node_count_;
     down_node.release();
-    return (SUCCEED);
 }
 
 template <typename T>
