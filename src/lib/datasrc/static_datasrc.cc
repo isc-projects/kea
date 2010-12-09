@@ -79,6 +79,7 @@ StaticDataSrcImpl::StaticDataSrcImpl() :
     authors->addRdata(generic::TXT("JINMEI Tatuya"));
     authors->addRdata(generic::TXT("Kazunori Fujiwara"));
     authors->addRdata(generic::TXT("Michael Graff"));
+    authors->addRdata(generic::TXT("Michal Vaner"));
     authors->addRdata(generic::TXT("Naoki Kambe"));
     authors->addRdata(generic::TXT("Shane Kerr"));
     authors->addRdata(generic::TXT("Shen Tingting"));

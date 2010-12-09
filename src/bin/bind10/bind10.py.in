@@ -15,7 +15,7 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-"""\
+"""
 This file implements the Boss of Bind (BoB, or bob) program.
 
 Its purpose is to start up the BIND 10 system, and then manage the
@@ -72,7 +72,7 @@ isc.util.process.rename(sys.argv[0])
 # This is the version that gets displayed to the user.
 # The VERSION string consists of the module name, the module version
 # number, and the overall BIND 10 version number (set in configure.ac).
-VERSION = "bind10 20100916 (BIND 10 @PACKAGE_VERSION@)"
+VERSION = "bind10 20101129 (BIND 10 @PACKAGE_VERSION@)"
 
 # This is for bind10.boottime of stats module
 _BASETIME = time.gmtime()
@@ -189,26 +189,23 @@ class ProcessInfo:
     def respawn(self):
         self._spawn()
 
+class CChannelConnectError(Exception): pass
+
 class BoB:
     """Boss of BIND class."""
     
     def __init__(self, msgq_socket_file=None, dns_port=5300, address=None,
                  forward=None, nocache=False, verbose=False, setuid=None,
                  username=None):
-        """Initialize the Boss of BIND. This is a singleton (only one
-        can run).
-        
-        The msgq_socket_file specifies the UNIX domain socket file
-        that the msgq process listens on.
-        If verbose is True, then the boss reports what it is doing.
         """
-        self.verbose = verbose
-        self.msgq_socket_file = msgq_socket_file
+            Initialize the Boss of BIND. This is a singleton (only one can run).
+        
+            The msgq_socket_file specifies the UNIX domain socket file that the
+            msgq process listens on.  If verbose is True, then the boss reports
+            what it is doing.
+        """
+        self.address = address
         self.dns_port = dns_port
-        self.address = None
-        self.nocache = nocache
-        if address:
-            self.address = address
         self.forward = None
         self.recursive = False
         if forward:
@@ -217,137 +214,215 @@ class BoB:
             self.nocache = False
         self.cc_session = None
         self.ccs = None
-        self.processes = {}
+        self.cfg_start_auth = True
+        self.cfg_start_recurse = False
+        self.curproc = None
         self.dead_processes = {}
+        self.msgq_socket_file = msgq_socket_file
+        self.nocache = nocache
+        self.processes = {}
         self.runnable = False
         self.uid = setuid
         self.username = username
+        self.verbose = verbose
 
     def config_handler(self, new_config):
         if self.verbose:
-            sys.stdout.write("[bind10] handling new config:\n")
-            sys.stdout.write(new_config + "\n")
+            sys.stdout.write("[bind10] Handling new configuration: " +
+                str(new_config) + "\n")
         answer = isc.config.ccsession.create_answer(0)
         return answer
         # TODO
 
     def command_handler(self, command, args):
         if self.verbose:
-            sys.stdout.write("[bind10] Boss got command:\n")
-            sys.stdout.write(command + "\n")
+            sys.stdout.write("[bind10] Boss got command: " + command + "\n")
         answer = isc.config.ccsession.create_answer(1, "command not implemented")
         if type(command) != str:
             answer = isc.config.ccsession.create_answer(1, "bad command")
         else:
-            cmd = command
-            if cmd == "shutdown":
-                sys.stdout.write("[bind10] got shutdown command\n")
+            if command == "shutdown":
                 self.runnable = False
                 answer = isc.config.ccsession.create_answer(0)
             else:
                 answer = isc.config.ccsession.create_answer(1, 
                                                             "Unknown command")
         return answer
-    
-    def startup(self):
-        """Start the BoB instance.
- 
-        Returns None if successful, otherwise an string describing the
-        problem.
+
+    def kill_started_processes(self):
         """
-        # try to connect to the c-channel daemon, 
-        # to see if it is already running
-        c_channel_env = {}
-        if self.msgq_socket_file is not None:
-             c_channel_env["BIND10_MSGQ_SOCKET_FILE"] = self.msgq_socket_file 
+            Called as part of the exception handling when a process fails to
+            start, this runs through the list of started processes, killing
+            each one.  It then clears that list.
+        """
         if self.verbose:
-            sys.stdout.write("[bind10] Checking for already running b10-msgq\n")
-        # try to connect, and if we can't wait a short while
-        try:
-            self.cc_session = isc.cc.Session(self.msgq_socket_file)
-            return "b10-msgq already running, or socket file not cleaned , cannot start"
-        except isc.cc.session.SessionError:
-            # this is the case we want, where the msgq is not running
-            pass
+            sys.stdout.write("[bind10] killing started processes:\n")
 
-        # start the c-channel daemon
+        for pid in self.processes:
+            if self.verbose:
+                sys.stdout.write("[bind10] - %s\n" % self.processes[pid].name)
+            self.processes[pid].process.kill()
+        self.processes = {}
+
+    def read_bind10_config(self):
+        """
+            Reads the parameters associated with the BoB module itself.
+
+            At present these are the components to start although arguably this
+            information should be in the configuration for the appropriate
+            module itself. (However, this would cause difficulty in the case of
+            xfrin/xfrout and zone manager as we don't need to start those if we
+            are not running the authoritative server.)
+        """
         if self.verbose:
-            if self.msgq_socket_file:
-                sys.stdout.write("[bind10] Starting b10-msgq\n")
-        try:
-            c_channel = ProcessInfo("b10-msgq", ["b10-msgq"], c_channel_env,
-                                    True, not self.verbose, uid=self.uid,
-                                    username=self.username)
-        except Exception as e:
-            return "Unable to start b10-msgq; " + str(e)
+            sys.stdout.write("[bind10] Reading Boss configuration:\n")
+
+        config_data = self.ccs.get_full_config()
+        self.cfg_start_auth = config_data.get("start_auth")
+        self.cfg_start_recurse = config_data.get("start_recurse")
+
+        if self.verbose:
+            sys.stdout.write("[bind10] - start_auth: %s\n" %
+                str(self.cfg_start_auth))
+            sys.stdout.write("[bind10] - start_recurse: %s\n" %
+                str(self.cfg_start_recurse))
+
+    def log_starting(self, process, port = None, address = None):
+        """
+            A convenience function to output a "Starting xxx" message if the
+            verbose option is set.  Putting this into a separate method ensures
+            that the output form is consistent across all processes.
+
+            The process name (passed as the first argument) is put into
+            self.curproc, and is used to indicate which process failed to
+            start if there is an error (and is used in the "Started" message
+            on success).  The optional port and address information are
+            appended to the message (if present).
+        """
+        self.curproc = process
+        if self.verbose:
+            sys.stdout.write("[bind10] Starting %s" % self.curproc)
+            if port is not None:
+                sys.stdout.write(" on port %d" % port)
+                if address is not None:
+                    sys.stdout.write(" (address %s)" % str(address))
+            sys.stdout.write("\n")
+
+    def log_started(self, pid = None):
+        """
+            A convenience function to output a 'Started xxxx (PID yyyy)'
+            message.  As with starting_message(), this ensures a consistent
+            format.
+        """
+        if self.verbose:
+            sys.stdout.write("[bind10] Started %s" % self.curproc)
+            if pid is not None:
+                sys.stdout.write(" (PID %d)" % pid)
+            sys.stdout.write("\n")
+
+    # The next few methods start the individual processes of BIND-10.  They
+    # are called via start_all_process().  If any fail, an exception is raised
+    # which is caught by the caller of start_all_processes(); this kills
+    # processes started up to that point before terminating the program.
+
+    def start_msgq(self, c_channel_env):
+        """
+            Start the message queue and connect to the command channel.
+        """
+        self.log_starting("b10-msgq")
+        c_channel = ProcessInfo("b10-msgq", ["b10-msgq"], c_channel_env,
+                                True, not self.verbose, uid=self.uid,
+                                username=self.username)
         self.processes[c_channel.pid] = c_channel
-        if self.verbose:
-            sys.stdout.write("[bind10] Started b10-msgq (PID %d)\n" % 
-                             c_channel.pid)
+        self.log_started(c_channel.pid)
 
-        # now connect to the c-channel
+        # Now connect to the c-channel
         cc_connect_start = time.time()
         while self.cc_session is None:
             # if we have been trying for "a while" give up
             if (time.time() - cc_connect_start) > 5:
-                c_channel.process.kill()
-                return "Unable to connect to c-channel after 5 seconds"
+                raise CChannelConnectError("Unable to connect to c-channel after 5 seconds")
+
             # try to connect, and if we can't wait a short while
             try:
                 self.cc_session = isc.cc.Session(self.msgq_socket_file)
             except isc.cc.session.SessionError:
                 time.sleep(0.1)
 
-        # start the configuration manager
-        if self.verbose:
-            sys.stdout.write("[bind10] Starting b10-cfgmgr\n")
-        try:
-            bind_cfgd = ProcessInfo("b10-cfgmgr", ["b10-cfgmgr"],
-                                    c_channel_env, uid=self.uid,
-                                    username=self.username)
-        except Exception as e:
-            c_channel.process.kill()
-            return "Unable to start b10-cfgmgr; " + str(e)
+    def start_cfgmgr(self, c_channel_env):
+        """
+            Starts the configuration manager process
+        """
+        self.log_starting("b10-cfgmgr")
+        bind_cfgd = ProcessInfo("b10-cfgmgr", ["b10-cfgmgr"],
+                                c_channel_env, uid=self.uid,
+                                username=self.username)
         self.processes[bind_cfgd.pid] = bind_cfgd
-        if self.verbose:
-            sys.stdout.write("[bind10] Started b10-cfgmgr (PID %d)\n" % 
-                             bind_cfgd.pid)
+        self.log_started(bind_cfgd.pid)
 
         # sleep until b10-cfgmgr is fully up and running, this is a good place
         # to have a (short) timeout on synchronized groupsend/receive
         # TODO: replace the sleep by a listen for ConfigManager started
         # message
         time.sleep(1)
-        if self.verbose:
-            sys.stdout.write("[bind10] starting ccsession\n")
+
+    def start_ccsession(self, c_channel_env):
+        """
+            Start the CC Session
+
+            The argument c_channel_env is unused but is supplied to keep the
+            argument list the same for all start_xxx methods.
+        """
+        self.log_starting("ccsession")
         self.ccs = isc.config.ModuleCCSession(SPECFILE_LOCATION, 
                                       self.config_handler, self.command_handler)
         self.ccs.start()
+        self.log_started()
+
+    # A couple of utility methods for starting processes...
+
+    def start_process(self, name, args, c_channel_env, port=None, address=None):
+        """
+            Given a set of command arguments, start the process and output
+            appropriate log messages.  If the start is successful, the process
+            is added to the list of started processes.
+
+            The port and address arguments are for log messages only.
+        """
+        self.log_starting(name, port, address)
+        newproc = ProcessInfo(name, args, c_channel_env)
+        self.processes[newproc.pid] = newproc
+        self.log_started(newproc.pid)
+
+    def start_simple(self, name, c_channel_env, port=None, address=None):
+        """
+            Most of the BIND-10 processes are started with the command:
+
+                <process-name> [-v]
+
+            ... where -v is appended if verbose is enabled.  This method
+            generates the arguments from the name and starts the process.
+
+            The port and address arguments are for log messages only.
+        """
+        # Set up the command arguments.
+        args = [name]
         if self.verbose:
-            sys.stdout.write("[bind10] ccsession started\n")
+            args += ['-v']
 
-        # if we're running a recursive-only server, we skip the xfrout
-        # modules. otherwise, start xfrout before the DNS server, to make
-        # sure every xfr-query can be processed properly.
-        xfrout=None
-        if not self.recursive:
-            xfrout_args = ['b10-xfrout']
-            if self.verbose:
-                sys.stdout.write("[bind10] Starting b10-xfrout\n")
-                xfrout_args += ['-v']
-            try:
-                xfrout = ProcessInfo("b10-xfrout", xfrout_args, 
-                                     c_channel_env )
-            except Exception as e:
-                c_channel.process.kill()
-                bind_cfgd.process.kill()
-                return "Unable to start b10-xfrout; " + str(e)
-            self.processes[xfrout.pid] = xfrout
-            if self.verbose:
-                sys.stdout.write("[bind10] Started b10-xfrout (PID %d)\n" % 
-                                 xfrout.pid)
+        # ... and start the process
+        self.start_process(name, args, c_channel_env, port, address)
 
-        # start DNS server
+    # The next few methods start up the rest of the BIND-10 processes.
+    # Although many of these methods are little more than a call to
+    # start_simple, they are retained (a) for testing reasons and (b) as a place
+    # where modifications can be made if the process start-up sequence changes
+    # for a given process.
+
+    def start_auth(self, c_channel_env):
+        """
+            Start the Authoritative server
+        """
         # XXX: this must be read from the configuration manager in the future
         if self.recursive:
             dns_prog = 'b10-recurse'
@@ -365,123 +440,115 @@ class BoB:
             dnsargs += ['-u', str(self.uid)]
         if self.verbose:
             dnsargs += ['-v']
-            sys.stdout.write("Starting %s using port %d" %
-                             (dns_prog, self.dns_port))
-            if self.address:
-                sys.stdout.write(" on %s" % str(self.address))
-            sys.stdout.write("\n")
-        try:
-            dns = ProcessInfo(dns_prog, dnsargs, c_channel_env)
-        except Exception as e:
-            c_channel.process.kill()
-            bind_cfgd.process.kill()
-            if xfrout:
-                xfrout.process.kill()
-            return "Unable to start " + dns_prog + ": " + str(e)
-        self.processes[dns.pid] = dns
-        if self.verbose:
-            sys.stdout.write("[bind10] Started %s (PID %d)\n" %
-                             (dns_prog, dns.pid))
 
-        # everything after the DNS server can run as non-root
+        # ... and start
+        self.start_process("b10-auth", dnsargs, c_channel_env,
+            self.dns_port, self.address)
+
+    def start_recurse(self, c_channel_env):
+        """
+            Start the Resolver.  At present, all these arguments and switches
+            are pure speculation.  As with the auth daemon, they should be
+            read from the configuration database.
+        """
+        self.curproc = "b10-recurse"
+        # XXX: this must be read from the configuration manager in the future
+        resargs = ['b10-recurse']
+        if self.uid:
+            resargs += ['-u', str(self.uid)]
+        if self.verbose:
+            resargs += ['-v']
+
+        # ... and start
+        self.start_process("b10-recurse", resargs, c_channel_env)
+
+    def start_xfrout(self, c_channel_env):
+        self.start_simple("b10-xfrout", c_channel_env)
+
+    def start_xfrin(self, c_channel_env):
+        self.start_simple("b10-xfrin", c_channel_env)
+
+    def start_zonemgr(self, c_channel_env):
+        self.start_simple("b10-zonemgr", c_channel_env)
+
+    def start_stats(self, c_channel_env):
+        self.start_simple("b10-stats", c_channel_env)
+
+    def start_cmdctl(self, c_channel_env):
+        # XXX: we hardcode port 8080
+        self.start_simple("b10-cmdctl", c_channel_env, 8080)
+
+    def start_all_processes(self, c_channel_env):
+        """
+            Starts up all the processes.  Any exception generated during the
+            starting of the processes is handled by the caller.
+        """
+        self.start_msgq(c_channel_env)
+        self.start_cfgmgr(c_channel_env)
+        self.start_ccsession(c_channel_env)
+
+        # Extract the parameters associated with Bob.  This can only be
+        # done after the CC Session is started.
+        self.read_bind10_config()
+
+        # Continue starting the processes.  The authoritative server (if
+        # selected):
+        if self.cfg_start_auth:
+            self.start_auth(c_channel_env)
+
+        # ... and resolver (if selected):
+        if self.cfg_start_recurse:
+            self.start_recurse(c_channel_env)
+
+        # Everything after the main components can run as non-root.
+        # TODO: this is only temporary - once the privileged socket creator is
+        # fully working, nothing else will run as root.
         if self.uid is not None:
             posix.setuid(self.uid)
 
-        xfrind=None
-        if not self.recursive:
-            # If we're running an authoritative server, start b10-xfrin
-            xfrin_args = ['b10-xfrin']
-            if self.verbose:
-                sys.stdout.write("[bind10] Starting b10-xfrin\n")
-                xfrin_args += ['-v']
-            try:
-                xfrind = ProcessInfo("b10-xfrin", xfrin_args,
-                                     c_channel_env)
-            except Exception as e:
-                c_channel.process.kill()
-                bind_cfgd.process.kill()
-                if xfrout:
-                    xfrout.process.kill()
-                dns.process.kill()
-                return "Unable to start b10-xfrin; " + str(e)
-            self.processes[xfrind.pid] = xfrind
-            if self.verbose:
-                sys.stdout.write("[bind10] Started b10-xfrin (PID %d)\n" % 
-                                 xfrind.pid)
+        # xfrin/xfrout and the zone manager are only meaningful if the
+        # authoritative server has been started.
+        if self.cfg_start_auth:
+            self.start_xfrout(c_channel_env)
+            self.start_xfrin(c_channel_env)
+            self.start_zonemgr(c_channel_env)
 
-        zonemgr=None
-        if not self.recursive:
-            # If we're running an authoritative server, start b10-zonemgr
-            zonemgr_args = ['b10-zonemgr']
-            if self.verbose:
-                sys.stdout.write("[bind10] Starting b10-zonemgr\n")
-                zonemgr_args += ['-v']
-            try:
-                zonemgr = ProcessInfo("b10-zonemgr", zonemgr_args,
-                                     c_channel_env)
-            except Exception as e:
-                c_channel.process.kill()
-                bind_cfgd.process.kill()
-                dns.process.kill()
-                if xfrout:
-                    xfrout.process.kill()
-                if xfrind:
-                    xfrind.process.kill()
-                return "Unable to start b10-zonemgr; " + str(e)
-            self.processes[zonemgr.pid] = zonemgr 
-            if self.verbose:
-                sys.stdout.write("[bind10] Started b10-zonemgr(PID %d)\n" % 
-                                 zonemgr.pid)
-
-        # start b10-stats
-        stats_args = ['b10-stats']
+        # ... and finally start the remaining processes
+        self.start_stats(c_channel_env)
+        self.start_cmdctl(c_channel_env)
+    
+    def startup(self):
+        """
+            Start the BoB instance.
+ 
+            Returns None if successful, otherwise an string describing the
+            problem.
+        """
+        # Try to connect to the c-channel daemon, to see if it is already
+        # running
+        c_channel_env = {}
+        if self.msgq_socket_file is not None:
+             c_channel_env["BIND10_MSGQ_SOCKET_FILE"] = self.msgq_socket_file 
         if self.verbose:
-            sys.stdout.write("[bind10] Starting b10-stats\n")
-            stats_args += ['-v']
+           sys.stdout.write("[bind10] Checking for already running b10-msgq\n")
+        # try to connect, and if we can't wait a short while
         try:
-            statsd = ProcessInfo("b10-stats", stats_args,
-                                 c_channel_env)
-        except Exception as e:
-            c_channel.process.kill()
-            bind_cfgd.process.kill()
-            xfrout.process.kill()
-            auth.process.kill()
-            xfrind.process.kill()
-            zonemgr.process.kill()
-            return "Unable to start b10-stats; " + str(e)
+            self.cc_session = isc.cc.Session(self.msgq_socket_file)
+            return "b10-msgq already running, or socket file not cleaned , cannot start"
+        except isc.cc.session.SessionError:
+            # this is the case we want, where the msgq is not running
+            pass
 
-        self.processes[statsd.pid] = statsd
-        if self.verbose:
-            sys.stdout.write("[bind10] Started b10-stats (PID %d)\n" % statsd.pid)
-
-        # start the b10-cmdctl
-        # XXX: we hardcode port 8080
-        cmdctl_args = ['b10-cmdctl']
-        if self.verbose:
-            sys.stdout.write("[bind10] Starting b10-cmdctl on port 8080\n")
-            cmdctl_args += ['-v']
+        # Start all processes.  If any one fails to start, kill all started
+        # processes and exit with an error indication.
         try:
-            cmd_ctrld = ProcessInfo("b10-cmdctl", cmdctl_args,
-                                    c_channel_env)
+            self.start_all_processes(c_channel_env)
         except Exception as e:
-            c_channel.process.kill()
-            bind_cfgd.process.kill()
-            dns.process.kill()
-            if xfrout:
-                xfrout.process.kill()
-            if xfrind:
-                xfrind.process.kill()
-            if zonemgr:
-                zonemgr.process.kill()
-            statsd.process.kill()
-            return "Unable to start b10-cmdctl; " + str(e)
-        self.processes[cmd_ctrld.pid] = cmd_ctrld
-        if self.verbose:
-            sys.stdout.write("[bind10] Started b10-cmdctl (PID %d)\n" % 
-                             cmd_ctrld.pid)
+            self.kill_started_processes()
+            return "Unable to start " + self.curproc + ": " + str(e)
 
+        # Started successfully
         self.runnable = True
-
         return None
 
     def stop_all_processes(self):
@@ -645,7 +712,7 @@ def check_port(option, opt_str, value, parser):
     a valid port number. Used by OptionParser() on startup."""
     try:
         if opt_str in ['-p', '--port']:
-            parser.values.auth_port = isc.net.parse.port_parse(value)
+            parser.values.dns_port = isc.net.parse.port_parse(value)
         else:
             raise OptionValueError("Unknown option " + opt_str)
     except ValueError as e:
@@ -677,7 +744,7 @@ def main():
     # Parse any command-line options.
     parser = OptionParser(version=VERSION)
     parser.add_option("-a", "--address", dest="address", type="string",
-                      action="callback", callback=check_addr, default='',
+                      action="callback", callback=check_addr, default=None,
                       help="address the DNS server will use (default: listen on all addresses)")
     parser.add_option("-f", "--forward", dest="forward", type="string",
                       action="callback", callback=check_addr, default='',
@@ -810,6 +877,7 @@ def main():
     # shutdown
     signal.signal(signal.SIGCHLD, signal.SIG_DFL)
     boss_of_bind.shutdown()
+    sys.stdout.write("[bind10] BIND 10 exiting\n");
     sys.exit(0)
 
 if __name__ == "__main__":

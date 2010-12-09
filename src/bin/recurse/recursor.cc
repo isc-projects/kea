@@ -152,8 +152,8 @@ public:
         message_(message), section_(sect)
     {}
     void operator()(const RRsetPtr rrset) {
-        dlog("Adding RRSet to message section " +
-            boost::lexical_cast<string>(section_));
+        //dlog("Adding RRSet to message section " +
+        //    boost::lexical_cast<string>(section_));
         message_->addRRset(section_, rrset, true);
     }
     MessagePtr message_;
@@ -263,17 +263,16 @@ public:
                 for_each(incoming.beginSection(Message::SECTION_ANSWER),
                          incoming.endSection(Message::SECTION_ANSWER),
                          SectionInserter(message, Message::SECTION_ANSWER));
+                for_each(incoming.beginSection(Message::SECTION_AUTHORITY),
+                         incoming.endSection(Message::SECTION_AUTHORITY),
+                         SectionInserter(message, Message::SECTION_AUTHORITY));
                 for_each(incoming.beginSection(Message::SECTION_ADDITIONAL),
                          incoming.endSection(Message::SECTION_ADDITIONAL),
                          SectionInserter(message, Message::SECTION_ADDITIONAL));
-                for_each(incoming.beginSection(Message::SECTION_AUTHORITY),
-                         incoming.endSection(Message::SECTION_ADDITIONAL),
-                         SectionInserter(message, Message::SECTION_AUTHORITY));
             } catch (const Exception& ex) {
                 // Incoming message couldn't be read, we just SERVFAIL
                 message->setRcode(Rcode::SERVFAIL());
             }
-
         }
 
         // Now we can clear the buffer and render the new message into it

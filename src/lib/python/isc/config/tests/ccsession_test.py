@@ -637,6 +637,8 @@ class TestUIModuleCCSession(unittest.TestCase):
         self.assertEqual({'Spec2': {'item5': ['foo']}}, uccs._local_changes)
         uccs.add_value("Spec2/item5", "foo")
         self.assertEqual({'Spec2': {'item5': ['foo']}}, uccs._local_changes)
+        uccs.remove_value("Spec2/item5[0]", None)
+        self.assertEqual({'Spec2': {'item5': []}}, uccs._local_changes)
 
     def test_commit(self):
         fake_conn = fakeUIConn()

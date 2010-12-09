@@ -12,30 +12,31 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id: rrtype_unittest.cc 476 2010-01-19 00:29:28Z jinmei $
+#include <dns/message.h>
+#include <dns/rcode.h>
 
-#include <gtest/gtest.h>
+#include <datasrc/zonetable.h>
 
-#include <dns/tsig.h>
+#include <auth/query.h>
 
-#include <dns/tests/unittest_util.h>
-
-using isc::UnitTestUtil;
-using namespace std;
 using namespace isc::dns;
+using namespace isc::datasrc;
 
-namespace {
-class TsigTest : public ::testing::Test {
-protected:
-    TsigTest() {}
-};
+namespace isc {
+namespace auth {
+void
+Query::process() const {
+    const ZoneTable::FindResult result = zone_table_.find(qname_);
 
-// simple creation test to get the testing ball rolling
-TEST_F(TsigTest, creates) {
-    Tsig tsig(Name("example.com"), Tsig::HMACMD5, "someRandomData");
-    EXPECT_TRUE(1);
+    if (result.code != ZoneTable::SUCCESS &&
+        result.code != ZoneTable::PARTIALMATCH) {
+        response_.setRcode(Rcode::SERVFAIL());
+        return;
+    }
+
+    // Right now we have no code to search the zone, so we simply return
+    // NXDOMAIN for tests.
+    response_.setRcode(Rcode::NXDOMAIN());
 }
-
-} // end namespace
-
-
+}
+}

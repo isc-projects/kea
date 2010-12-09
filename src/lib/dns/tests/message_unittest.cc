@@ -293,7 +293,6 @@ TEST_F(MessageTest, fromWire) {
     // TTL should be 3600, even though that of the 2nd RR is 7200
     EXPECT_EQ(RRTTL(3600), rrset->getTTL());
     RdataIteratorPtr it = rrset->getRdataIterator();
-    it->first();
     EXPECT_EQ("192.0.2.1", it->getCurrent().toText());
     it->next();
     EXPECT_EQ("192.0.2.2", it->getCurrent().toText());
