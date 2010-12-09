@@ -277,6 +277,8 @@ private:
 ///   returning an error code instead of throwing an exception when we
 ///   encounter validation failure.
 /// - We may want to support incremental loading.
+/// - If we add these optional features we may want to introduce a class
+///   that encapsulates loading status and options.
 /// - RRSIGs are currently identified as their owner name and RR type (RRSIG).
 ///   In practice it should be sufficient, but technically we should also
 ///   consider the Type Covered field.
