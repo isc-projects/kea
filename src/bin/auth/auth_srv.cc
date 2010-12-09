@@ -50,6 +50,7 @@
 #include <auth/common.h>
 #include <auth/auth_srv.h>
 #include <auth/asio_link.h>
+#include <auth/statistics.h>
 
 using namespace std;
 
@@ -99,6 +100,9 @@ public:
 
     /// Hot spot cache
     isc::datasrc::HotCache cache_;
+
+    /// Query counters for statistics
+    QueryCounters counters_;
 };
 
 AuthSrvImpl::AuthSrvImpl(const bool use_cache,
@@ -106,7 +110,8 @@ AuthSrvImpl::AuthSrvImpl(const bool use_cache,
     config_session_(NULL), verbose_mode_(false),
     xfrin_session_(NULL),
     xfrout_connected_(false),
-    xfrout_client_(xfrout_client)
+    xfrout_client_(xfrout_client),
+    counters_(verbose_mode_)
 {
     // cur_datasrc_ is automatically initialized by the default constructor,
     // effectively being an empty (sqlite) data source.  once ccsession is up
@@ -128,13 +133,10 @@ AuthSrvImpl::~AuthSrvImpl() {
 
 AuthSrv::AuthSrv(const bool use_cache, AbstractXfroutClient& xfrout_client) :
     impl_(new AuthSrvImpl(use_cache, xfrout_client))
-{
-    counter = new statistics::Counter(impl_->verbose_mode_);
-}
+{}
 
 AuthSrv::~AuthSrv() {
     delete impl_;
-    delete counter;
 }
 
 namespace {
@@ -219,7 +221,7 @@ AuthSrv::setConfigSession(ModuleCCSession* config_session) {
 
 void
 AuthSrv::setStatsSession(AbstractSession* stats_session) {
-    counter->setStatsSession(stats_session);
+    impl_->counters_.setStatsSession(stats_session);
 }
 
 ModuleCCSession*
@@ -276,15 +278,13 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
 
     // increment Query Counter
     if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
-        counter->inc(statistics::Counter::COUNTER_UDP);
+        impl_->counters_.inc(QueryCounters::COUNTER_UDP);
     } else if (io_message.getSocket().getProtocol() == IPPROTO_TCP) {
-        counter->inc(statistics::Counter::COUNTER_TCP);
+        impl_->counters_.inc(QueryCounters::COUNTER_TCP);
     } else {
         // unknown protocol
-        if (impl_->verbose_mode_) {
-            cerr << "[b10-auth] Unknown protocol: " <<
-                     io_message.getSocket().getProtocol() << endl;
-        }
+        isc_throw(Unexpected, "Unknown protocol: " <<
+                  io_message.getSocket().getProtocol());
     }
 
     // Perform further protocol-level validation.
@@ -565,9 +565,11 @@ AuthSrv::updateConfig(ConstElementPtr new_config) {
     }
 }
 
-asio_link::IntervalTimer::Callback
-AuthSrv::getStatsCallback() {
-    // just invoke statistics::Counter::getStatsCallback()
-    // and return its return value
-    return (counter->getCallback());
+bool AuthSrv::submitStatistics() {
+    return (impl_->counters_.submitStatistics());
+}
+
+const std::vector<uint64_t>&
+AuthSrv::getCounters() const {
+    return (impl_->counters_.getCounters());
 }

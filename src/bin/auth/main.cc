@@ -26,6 +26,7 @@
 #include <iostream>
 
 #include <boost/foreach.hpp>
+#include <boost/bind.hpp>
 
 #include <exceptions/exceptions.h>
 
@@ -89,9 +90,8 @@ my_command_handler(const string& command, ConstElementPtr args) {
         if (verbose_mode) {
             cerr << "[b10-auth] command 'sendstats' received" << endl;
         }
-        if (auth_server != NULL) {
-            auth_server->getStatsCallback()();
-        }
+        assert(auth_server != NULL);
+        auth_server->submitStatistics();
     }
     
     return (answer);
@@ -103,6 +103,12 @@ usage() {
     exit(1);
 }
 } // end of anonymous namespace
+
+void
+statisticsTimerCallback(AuthSrv* auth_server) {
+    assert(auth_server != NULL);
+    auth_server->submitStatistics();
+}
 
 int
 main(int argc, char* argv[]) {
@@ -240,10 +246,11 @@ main(int argc, char* argv[]) {
         auth_server->updateConfig(ElementPtr());
 
         // create interval timer instance
-        itimer = new asio_link::IntervalTimer(io_service->get_io_service());
+        itimer = new asio_link::IntervalTimer(*io_service);
         // set up interval timer
         // register function to send statistics with interval
-        itimer->setupTimer(auth_server->getStatsCallback(),
+        itimer->setupTimer(boost::bind(statisticsTimerCallback,
+                                       auth_server),
                            STATS_SEND_INTERVAL_SEC);
         cout << "[b10-auth] Interval timer set to send stats." << endl;
 

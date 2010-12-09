@@ -34,6 +34,7 @@
 
 #include <auth/auth_srv.h>
 #include <auth/asio_link.h>
+#include <auth/statistics.h>
 
 #include <dns/tests/unittest_util.h>
 
@@ -44,7 +45,6 @@ using namespace isc::dns;
 using namespace isc::data;
 using namespace isc::xfr;
 using namespace asio_link;
-using namespace statistics;
 
 namespace {
 const char* const CONFIG_TESTDB =
@@ -121,8 +121,7 @@ protected:
                     qclass(RRClass::IN()), qtype(RRType::A()),
                     io_message(NULL), endpoint(NULL), request_obuffer(0),
                     request_renderer(request_obuffer),
-                    response_obuffer(0), response_renderer(response_obuffer),
-                    counter(counter_verbose)
+                    response_obuffer(0), response_renderer(response_obuffer)
     {
         server.setXfrinSession(&notify_session);
         server.setStatsSession(&stats_session);
@@ -149,12 +148,6 @@ protected:
     OutputBuffer response_obuffer;
     MessageRenderer response_renderer;
     vector<uint8_t> data;
-    // for Counter unittest
-    // TODO: consider where to put Counter
-    // AuthSrvTest is now includes a test for Counter
-    // In future make a test class CounterTest
-    bool counter_verbose;
-    Counter counter;
 
     void createDataFromFile(const char* const datafile, int protocol);
     void createRequestMessage(const Opcode& opcode, const Name& request_name,
@@ -778,51 +771,21 @@ TEST_F(AuthSrvTest, cacheSlots) {
     EXPECT_EQ(00, server.getCacheSlots());
 }
 
-TEST_F(AuthSrvTest, statsCallback) {
-    // getStatsCallback() test
-    // expect returning a valid function
-    asio_link::IntervalTimer::Callback cbFunc;
-    cbFunc = server.getStatsCallback();
-    EXPECT_FALSE(cbFunc.empty());
+TEST_F(AuthSrvTest, queryCounterUDP) {
+    // submit UDP query and check query counter
+    createRequestPacket(opcode, Name("example.com"), RRClass::IN(),
+                        RRType::NS(), IPPROTO_UDP);
+    EXPECT_TRUE(server.processMessage(*io_message, parse_message,
+                                      response_renderer));
+    EXPECT_EQ(1, server.getCounters().at(QueryCounters::COUNTER_UDP));
 }
 
-TEST_F(AuthSrvTest, sendStatsWithoutSession) {
-    // to cover the code path in case the stats session is not set
-    // expect to put an error message
-    server.setStatsSession(NULL);
-    bool verbose = server.getVerbose();
-    server.setVerbose(true);
-    server.getStatsCallback()();
-    server.setVerbose(verbose);
-}
-
-//
-// statistics::Counter unittest
-
-TEST_F(AuthSrvTest, counter_incUDP) {
-    counter.inc(Counter::COUNTER_UDP);
-}
-
-TEST_F(AuthSrvTest, counter_incTCP) {
-    counter.inc(Counter::COUNTER_TCP);
-}
-
-TEST_F(AuthSrvTest, counter_incUnknown) {
-    EXPECT_THROW(counter.inc(Counter::COUNTER_TYPES), std::out_of_range);
-}
-
-TEST_F(AuthSrvTest, counter_getCallback) {
-    // getCallback() test
-    // expect returning a valid function
-    asio_link::IntervalTimer::Callback cbFunc;
-    cbFunc = counter.getCallback();
-    EXPECT_FALSE(cbFunc.empty());
-}
-
-TEST_F(AuthSrvTest, counter_sendStatsWithSession) {
-    // Test the function to send statistics information to b10-stats
-    // expect to run without throwing any exception
-    counter.setStatsSession(&stats_session);
-    counter.getCallback()();
+TEST_F(AuthSrvTest, queryCounterTCP) {
+    // submit TCP query and check query counter
+    createRequestPacket(opcode, Name("example.com"), RRClass::IN(),
+                        RRType::NS(), IPPROTO_TCP);
+    EXPECT_TRUE(server.processMessage(*io_message, parse_message,
+                                      response_renderer));
+    EXPECT_EQ(1, server.getCounters().at(QueryCounters::COUNTER_TCP));
 }
 }

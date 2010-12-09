@@ -669,64 +669,74 @@ IOService::setCallBack(const IOCallBack callback) {
 
 class IntervalTimerImpl {
 private:
-    // prohibit copy to avoid the function be called twice
+    // prohibit copy
     IntervalTimerImpl(const IntervalTimerImpl& source);
     IntervalTimerImpl& operator=(const IntervalTimerImpl& source);
 public:
-    IntervalTimerImpl(asio::io_service& io_service);
+    IntervalTimerImpl(IOService& io_service);
     ~IntervalTimerImpl();
-    bool setupTimer(const IntervalTimer::Callback& cbfunc,
+    void setupTimer(const IntervalTimer::Callback& cbfunc,
                     const uint32_t interval);
     void callback(const asio::error_code& error);
 private:
+    // a function to update timer_ when it expires
     void updateTimer();
+    // a function to call back when timer_ expires
     IntervalTimer::Callback cbfunc_;
     // interval in seconds
     uint32_t interval_;
+    // asio timer
     asio::deadline_timer timer_;
 };
 
-IntervalTimerImpl::IntervalTimerImpl(asio::io_service& io_service) :
-    timer_(io_service)
+IntervalTimerImpl::IntervalTimerImpl(IOService& io_service) :
+    timer_(io_service.get_io_service())
 {}
 
-IntervalTimerImpl::~IntervalTimerImpl() {
-    timer_.cancel();
-}
+IntervalTimerImpl::~IntervalTimerImpl()
+{}
 
-bool
+void
 IntervalTimerImpl::setupTimer(const IntervalTimer::Callback& cbfunc,
-                              const uint32_t interval)
+                                    const uint32_t interval)
 {
-    // interval value must be positive
-    assert(interval > 0);
+    // Interval should not be 0.
+    if (interval == 0) {
+        isc_throw(isc::BadValue, "Interval should not be 0");
+    }
+    // Call back function should not be empty.
+    if (cbfunc.empty()) {
+        isc_throw(isc::InvalidParameter, "Callback function is empty");
+    }
     cbfunc_ = cbfunc;
     interval_ = interval;
-    // start timer
+    // Set initial expire time.
+    // At this point the timer is not running yet and will not expire.
+    // After calling IOService::run(), the timer will expire.
     updateTimer();
-    return (true);
+    return;
 }
 
 void
 IntervalTimerImpl::updateTimer() {
-    // update expire time (current time + interval_)
+    // Update expire time to (current time + interval_).
     timer_.expires_from_now(boost::posix_time::seconds(interval_));
-    // restart timer
+    // Reset timer.
     timer_.async_wait(boost::bind(&IntervalTimerImpl::callback, this, _1));
 }
 
 void
 IntervalTimerImpl::callback(const asio::error_code& cancelled) {
-    assert(!cbfunc_.empty());
-    // skip function call in case the timer was cancelled
+    // Do not call cbfunc_ in case the timer was cancelled.
+    // The timer will be canelled in the destructor of asio::deadline_timer.
     if (!cancelled) {
         cbfunc_();
-        // restart timer
+        // Set next expire time.
         updateTimer();
     }
 }
 
-IntervalTimer::IntervalTimer(asio::io_service& io_service) {
+IntervalTimer::IntervalTimer(IOService& io_service) {
     impl_ = new IntervalTimerImpl(io_service);
 }
 
@@ -734,7 +744,7 @@ IntervalTimer::~IntervalTimer() {
     delete impl_;
 }
 
-bool
+void
 IntervalTimer::setupTimer(const Callback& cbfunc, const uint32_t interval) {
     return (impl_->setupTimer(cbfunc, interval));
 }
