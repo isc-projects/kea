@@ -144,7 +144,6 @@ public:
                 address, port, checkin_, lookup_, answer_));
             (*tcpServer)();
             servers_.push_back(tcpServer);
-
             UDPServerPtr udpServer(new UDPServer(io_service_.get_io_service(),
                 address, port, checkin_, lookup_, answer_));
             (*udpServer)();
@@ -313,14 +312,19 @@ class RunningQuery : public UDPQuery::Callback {
             unsigned retries_;
             // (re)send the query to the server.
             void send() {
-                int serverIndex(random() % upstream_->size());
-                dlog("Sending upstream query (" + question_.toText() +
-                    ") to " + upstream_->at(serverIndex).first);
-                UDPQuery query(io_, question_,
-                    upstream_->at(serverIndex).first,
-                    upstream_->at(serverIndex).second, buffer_, this,
-                    timeout_);
-                io_.post(query);
+                const int uc = upstream_->size();
+                if (uc > 0) {
+                    int serverIndex(random() % uc);
+                    dlog("Sending upstream query (" + question_.toText() +
+                        ") to " + upstream_->at(serverIndex).first);
+                    UDPQuery query(io_, question_,
+                        upstream_->at(serverIndex).first,
+                        upstream_->at(serverIndex).second, buffer_, this,
+                        timeout_);
+                    io_.post(query);
+                } else {
+                    dlog("Error, no upstream servers to send to.");
+                }
             }
         public:
             RunningQuery(asio::io_service& io, const Question &question,
