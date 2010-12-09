@@ -37,8 +37,8 @@ using namespace isc::dns::rdata;
 namespace isc {
 namespace dns {
 void
-masterLoad(const char* const filename, const RRClass& zone_class,
-           MasterLoadCallback callback)
+masterLoad(const char* const filename, const Name& origin,
+           const RRClass& zone_class, MasterLoadCallback callback)
 {
     ifstream ifs;
 
@@ -46,12 +46,12 @@ masterLoad(const char* const filename, const RRClass& zone_class,
     if (ifs.fail()) {
         isc_throw(MasterError, "Failed to open master file: " << filename);
     }
-    masterLoad(ifs, zone_class, callback);
+    masterLoad(ifs, origin, zone_class, callback);
     ifs.close();
 }
 
 void
-masterLoad(istream& input, const RRClass& zone_class,
+masterLoad(istream& input, const Name& origin, const RRClass& zone_class,
            MasterLoadCallback callback)
 {
     RRsetPtr rrset;
@@ -107,6 +107,17 @@ masterLoad(istream& input, const RRClass& zone_class,
         } catch (const Exception& ex) {
             isc_throw(MasterError, "Invalid RR text at line " << line_count
                       << ": " << ex.what());
+        }
+
+        const NameComparisonResult cmp_result = owner->compare(origin);
+        if (cmp_result.getRelation() != NameComparisonResult::EQUAL &&
+            cmp_result.getRelation() != NameComparisonResult::SUBDOMAIN) {
+            isc_throw(MasterError, "Out-of-zone data at line " << line_count);
+        }
+        if (*rrtype == RRType::SOA() &&
+            cmp_result.getRelation() != NameComparisonResult::EQUAL) {
+            isc_throw(MasterError, "SOA not at top of zone at line "
+                      << line_count);
         }
 
         if (*rrclass != zone_class) {
