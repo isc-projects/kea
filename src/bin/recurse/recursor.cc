@@ -563,7 +563,8 @@ Recursor::setListenAddresses(const vector<addr_t>& addresses) {
     try {
         dlog("Setting listen addresses:");
         BOOST_FOREACH(const addr_t& addr, addresses) {
-            dlog(" " + addr.first + boost::lexical_cast<string>(addr.second));
+            dlog(" " + addr.first + ":" +
+                        boost::lexical_cast<string>(addr.second));
         }
         setAddresses(dnss_, addresses);
         impl_->listen_ = addresses;
