@@ -17,7 +17,6 @@
 
 #include <dns/name.h>
 #include <boost/utility.hpp>
-#include <boost/pool/object_pool.hpp>
 #include <exception>
 #include <ostream>
 #include <algorithm>
@@ -334,20 +333,19 @@ private:
     /// \name Helper functions
     //@{
     /// Each public function has related recursive helper function
+    /// \brief tree with node as its root
+    void deleteHelper(RBNode<T> *node);
+    /// \brief find the node with name
+    /// \param name is the target, up will points to the base domain of 
+    /// the tree which name resides, node will point to the target node
+    /// if we has exact same name or partical name in current tree.
+    /// so for example, in zone a, we has 
+    /// b.a, c.b.a and d.b.a search c.b.a, up will points to b.a. 
+    /// and node will points to c.b.a
     Result findHelper(const isc::dns::Name& name, RBNode<T>** up,
                       RBNode<T>** node) const;
     void dumpTreeHelper(std::ostream& os, const RBNode<T>* node,
                         unsigned int depth) const;
-
-    /// \brief get one node from the node pool, if no memory left return NULL
-    /// without throw exception
-    /// 
-    /// \note For node memory management, it maybe useful let the node
-    /// allocation as a template parameter, just like std::map, by default it
-    /// use std::allocator. And in this way, developer can handle the memory 
-    /// management in his own way. 
-    RBNode<T>* createNode();
-    RBNode<T>* createNode(const isc::dns::Name& name);
 
     /// Split one node into two nodes, keep the old node and create one new
     /// node, old node will hold the base name, new node will be the down node
@@ -364,8 +362,6 @@ private:
     unsigned int node_count_;
     /// the count of real name user inserted into the domain tree
     unsigned int name_count_;
-    /// use mem pool to manage rbnode to accelerate node creation and destruction
-    boost::object_pool<RBNode<T> > node_pool_;
 };
 
 template <typename T>
@@ -378,19 +374,34 @@ RBTree<T>::RBTree() {
 
 template <typename T>
 RBTree<T>::~RBTree() {
-    assert(root_ != NULL);
+    deleteHelper(root_);
 }
 
 template <typename T>
-RBNode<T>*
-RBTree<T>::createNode() {
-    return node_pool_.construct();
-}
+void RBTree<T> ::deleteHelper(RBNode<T> *root) {
+    if (root == NULLNODE) {
+        return;
+    }
+    
+    RBNode<T> *node = root;
+    while (root->left_ != NULLNODE || root->right_ != NULLNODE) {
+        while (node->left_ != NULLNODE || node->right_ != NULLNODE) {
+            node = (node->left_ != NULLNODE) ? node->left_ : node->right_;
+        }
 
-template <typename T>
-RBNode<T>*
-RBTree<T>::createNode(const isc::dns::Name& name) {
-    return node_pool_.construct(name);
+        RBNode<T> *parent = node->parent_;
+        if (parent->left_ == node) {
+            parent->left_ = NULLNODE;
+        } else {
+            parent->right_ = NULLNODE;
+        }
+
+        if (node->down_) {
+            deleteHelper(node->down_);
+        }
+        delete node;
+        node = parent;
+    }
 }
 
 template <typename T>
@@ -503,18 +514,16 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
                 // insert sub domain to sub tree
                 if (relation == isc::dns::NameComparisonResult::SUBDOMAIN) {
                     if (current->down_ == NULL) {
-                        RBNode<T>* node = createNode(name - current->name_);
-                        if (node == NULL) {
-                            return (NOMEM);
-                        }
+                        std::auto_ptr<RBNode<T> > node(new RBNode<T>(name - current->name_));
                         //root node of sub tree, the initial color is BLACK
                         node->color_ = BLACK;
-                        current->down_ = node;
+                        current->down_ = node.get();
                         if (new_node != NULL) {
-                            *new_node = node;
+                            *new_node = node.get();
                         }
                         ++node_count_;
                         ++name_count_;
+                        node.release();
                         return (SUCCEED);
                     } else {
                         up_node = current;
@@ -539,26 +548,23 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
     }
 
     RBNode<T>** current_root = up_node ? &(up_node->down_) : &root_;
-    RBNode<T>* node = createNode(name);
-    if (node == NULL) {
-        return (NOMEM);
-    }
-
+    std::auto_ptr<RBNode<T> > node(new RBNode<T>(name));
     node->parent_ = parent;
     if (parent == NULLNODE) {
-        *current_root = node;
+        *current_root = node.get();
     } else if (order < 0) {
-        parent->left_ = node;
+        parent->left_ = node.get();
     } else {
-        parent->right_ = node;
+        parent->right_ = node.get();
     }
-    insertRebalance(current_root, node);
+    insertRebalance(current_root, node.get());
     if (new_node != NULL) {
-        *new_node = node;
+        *new_node = node.get();
     }
 
     ++node_count_;
     ++name_count_;
+    node.release();
     return (SUCCEED);
 }
 
@@ -568,18 +574,16 @@ typename RBTree<T>::Result
 RBTree<T>::nodeFission(RBNode<T>& node, const isc::dns::Name& base_name) {
     using namespace helper;
     const isc::dns::Name sub_name = node.name_ - base_name;
-    RBNode<T>* down_node = createNode(node.name_ - base_name);
-    if (down_node == NULL) {
-        return (NOMEM);
-    }
+    std::auto_ptr<RBNode<T> > down_node(new RBNode<T>(node.name_ - base_name));
 
     node.swap(*down_node);
     node.name_ = base_name;
-    node.down_ = down_node;
+    node.down_ = down_node.get();
     down_node->name_ = sub_name;
     //root node of sub tree, the initial color is BLACK
     down_node->color_ = BLACK;
     ++node_count_;
+    down_node.release();
     return (SUCCEED);
 }
 
