@@ -164,7 +164,6 @@ main(int argc, char* argv[]) {
         }
 
         recursor->setConfigSession(config_session);
-        recursor->updateConfig(config_session->getFullConfig());
         dlog("Config loaded");
 
         dlog("Server started.");

@@ -577,12 +577,13 @@ Recursor::setListenAddresses(const vector<addr_t>& addresses) {
          * If that fails, bad luck, but we are useless anyway, so just die
          * and let boss start us again.
          */
+        dlog(string("Unable to set new address: ") + e.what());
         try {
             setAddresses(dnss_, impl_->listen_);
         }
         catch (const exception& e2) {
-            dlog(string("Unable to recover from error: ") + e.what() +
-                " Rollback failed with: " + e2.what());
+            dlog(string("Unable to recover from error;"));
+            dlog(string("Rollback failed with: ") + e2.what());
             abort();
         }
         throw e; // Let it fly a little bit further
