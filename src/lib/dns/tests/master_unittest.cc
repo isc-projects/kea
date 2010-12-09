@@ -223,9 +223,11 @@ TEST_F(MasterTest, loadFromFile) {
     ASSERT_EQ(2, results.size());
     EXPECT_EQ(txt_rr, results[0]->toText());
     EXPECT_EQ(string(a_rr1) + string(a_rr2), results[1]->toText());
-}
 
-TEST_F(MasterTest, loadFromFileFailure) {
+    // NULL file name.  Should result in exception.
+    EXPECT_THROW(masterLoad(NULL, origin, zclass, callback), MasterError);
+
+    // Non existent file name.  Ditto.
     EXPECT_THROW(masterLoad(TEST_DATA_BUILDDIR "/notexistent.txt", origin,
                             zclass, callback), MasterError);
 }
