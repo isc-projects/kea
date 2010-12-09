@@ -140,10 +140,12 @@ public:
 
     void addServer(uint16_t port, const ip::address& address) {
         try {
+            dlog(std::string("Initialize TCP server at ") + address.to_string() + ":" + boost::lexical_cast<string>(port));
             TCPServerPtr tcpServer(new TCPServer(io_service_.get_io_service(),
                 address, port, checkin_, lookup_, answer_));
             (*tcpServer)();
             servers_.push_back(tcpServer);
+            dlog(std::string("Initialize UDP server at ") + address.to_string() + ":" + boost::lexical_cast<string>(port));
             UDPServerPtr udpServer(new UDPServer(io_service_.get_io_service(),
                 address, port, checkin_, lookup_, answer_));
             (*udpServer)();
