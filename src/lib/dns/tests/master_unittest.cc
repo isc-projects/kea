@@ -19,6 +19,8 @@
 #include <string>
 #include <vector>
 
+#include <boost/bind.hpp>
+
 #include <gtest/gtest.h>
 
 #include <dns/master.h>
@@ -49,10 +51,15 @@ class MasterTest : public ::testing::Test {
 protected:
     MasterTest() : origin("example.com"), zclass(RRClass::IN()),
                    callback(results) {}
+public:
+    void rrsetCallback(ConstRRsetPtr rrset) {
+        results.push_back(rrset);
+    }
+protected:
     Name origin;
     RRClass zclass;
-    vector<ConstRRsetPtr> results;
     stringstream rr_stream;
+    vector<ConstRRsetPtr> results;
     TestCallback callback;
 };
 
@@ -79,6 +86,18 @@ TEST_F(MasterTest, loadWithFunctionCallback) {
     rr_stream << txt_rr << a_rr1 << soa_rr;
     masterLoad(rr_stream, origin, zclass,
                bind2nd(ptr_fun(testCallback), &results));
+    ASSERT_EQ(3, results.size());
+    EXPECT_EQ(txt_rr, results[0]->toText());
+    EXPECT_EQ(a_rr1, results[1]->toText());
+    EXPECT_EQ(soa_rr, results[2]->toText());
+}
+
+TEST_F(MasterTest, loadWithMemFunctionCallback) {
+    // The same test as loadRRs but using a class member function (with a
+    // help of Boost.bind)
+    rr_stream << txt_rr << a_rr1 << soa_rr;
+    masterLoad(rr_stream, origin, zclass,
+               boost::bind(&MasterTest::rrsetCallback, this, _1));
     ASSERT_EQ(3, results.size());
     EXPECT_EQ(txt_rr, results[0]->toText());
     EXPECT_EQ(a_rr1, results[1]->toText());
