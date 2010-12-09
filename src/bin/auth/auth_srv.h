@@ -147,7 +147,7 @@ public:
     /// containing the result of the update operation.
     isc::data::ConstElementPtr updateConfig(isc::data::ConstElementPtr config);
 
-    /// \param Returns the command and configuration session for the
+    /// \brief Returns the command and configuration session for the
     /// \c AuthSrv.
     ///
     /// This method never throws an exception.
@@ -223,6 +223,7 @@ public:
     /// is shutdown.
     ///
     void setXfrinSession(isc::cc::AbstractSession* xfrin_session);
+
 private:
     AuthSrvImpl* impl_;
     asiolink::IOService* io_service_;

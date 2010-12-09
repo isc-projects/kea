@@ -46,6 +46,7 @@ b10_recurse_LDADD += $(top_builddir)/src/lib/cc/libcc.la
 b10_recurse_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 b10_recurse_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 b10_recurse_LDADD += $(top_builddir)/src/lib/xfr/libxfr.la
+b10_recurse_LDADD += $(top_builddir)/src/lib/log/liblog.la
 b10_recurse_LDADD += $(top_builddir)/src/bin/auth/change_user.o
 b10_recurse_LDFLAGS = -pthread
 

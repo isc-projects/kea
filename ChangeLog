@@ -12,6 +12,62 @@
 	It has "listen_on" and "forward_addresses" options.
 	(Trac #389, r3448)
 
+bind10-devel-20101201 released on December 01, 2010
+
+  125.  [func]		jelte
+	Added support for addressing individual list items in bindctl
+	configuration commands; If you have an element that is a list, you
+	can use foo[X] to address a specific item, where X is an integer
+	(starting at 0)
+	(Trac #405, svn r3739)
+
+  124.  [bug]		jreed
+	Fix some wrong version reporting. Now also show the version
+	for the component and BIND 10 suite. (Trac #302, svn r3696)
+
+  123.  [bug]		jelte
+	src/bin/bindctl printed values had the form of python literals
+	(e.g. 'True'), while the input requires valid JSON (e.g. 'true').
+	Output changed to JSON format for consistency. (svn r3694)
+
+  122.  [func]		stephen
+	src/bin/bind10: Added configuration options to Boss to determine
+	whether to start the authoritative server, recursive server (or
+	both). A dummy recursor has been provided for test purposes.
+	(Trac #412, svn r3676)
+
+  121.  [func]		jinmei
+	src/lib/dns: Added support for TSIG RDATA.  At this moment this is
+	not much of real use, however, because no protocol support was
+	added yet.  It will soon be added. (Trac #372, svn r3649)
+
+  120.  [func]		jinmei
+	src/lib/dns: introduced two new classes, TSIGKey and TSIGKeyRing,
+	to manage TSIG keys. (Trac #381, svn r3622)
+
+  119.	[bug]		jinmei
+	The master file parser of the python datasrc module incorrectly
+	regarded a domain name beginning with a decimal number as a TTL
+	specification.  This confused b10-loadzone and had it reject to
+	load a zone file that contains such a name.
+	Note: this fix is incomplete and the loadzone would still be
+	confused if the owner name is a syntactically indistinguishable
+	from a TTL specification.  This is part of a more general issue
+	and will be addressed in Trac #413. (Trac #411, svn r3599)
+
+  118.	[func]		jinmei
+	src/lib/dns: changed the interface of
+	AbstractRRset::getRdataIterator() so that the internal
+	cursor would point to the first RDATA automatically.  This
+	will be a more intuitive and less error prone behavior.
+	This is a backward compatible change. (Trac #410, r3595)
+
+  117.  [func]		jinmei
+	src/lib/datasrc: added new zone and zone table classes for the
+	support of in memory data source.  This is an intermediate step to
+	the bigger feature, and is not yet actually usable in practice.
+	(Trac #399, svn r3590)
+
   116.	[bug]		jerry
 	src/bin/xfrout: Xfrout and Auth will communicate by long tcp
 	connection, Auth needs to make a new connection only on the first
@@ -40,15 +96,13 @@
 	Add one mixin class to override the naive serve_forever() provided
 	in python library socketserver. Instead of polling for shutdwon
 	every poll_interval seconds, one socketpair is used to wake up
-	the waiting server.(Trac #352, svn r3366)
+	the waiting server. (Trac #352, svn r3366)
 
   111.	[bug]*   zhanglikun, Michal Vaner
-	Make sure process xfrin/xfrout/zonemgr/cmdctl can be stoped
+	Make sure process xfrin/xfrout/zonemgr/cmdctl can be stopped
 	properly when user enter "ctrl+c" or 'Boss shutdown' command
-	through	bindctl.
-
-	The ZonemgrRefresh.run_timer and NotifyOut.dispatcher spawn
-	a thread themselves.
+	through bindctl.  The ZonemgrRefresh.run_timer and
+	NotifyOut.dispatcher spawn a thread themselves.
 	(Trac #335, svn r3273)
 
   110.  [func]      Michal Vaner
@@ -60,7 +114,7 @@
   109.  [func]		naokikambe
 	Added the initial version of the stats module for the statistics
 	feature of BIND 10, which supports the restricted features and
-	items and reports via bindctl command (Trac #191, r3218)
+	items and reports via bindctl command. (Trac #191, r3218)
 	Added the document of the stats module, which is about how stats
 	module collects the data (Trac #170, [wiki:StatsModule])
 
@@ -87,11 +141,11 @@
   104.	[bug]		jerry
 	bin/zonemgr: zonemgr should be attempting to refresh expired zones.
 	(Trac #336, r3139)
-				   
+ 
   103.	[bug]		jerry
 	lib/python/isc/log: Fixed an issue with python logging,
-	python log shouldn't die with OSError.(Trac #267, r3137)
-				   
+	python log shouldn't die with OSError. (Trac #267, r3137)
+ 
   102.	[build]		jinmei
 	Disable threads in ASIO to minimize build time dependency.
 	(Trac #345, r3100)
@@ -144,7 +198,7 @@ bind10-devel-20100917 released on September 17, 2010
   93.	[bug]		jinmei
 	lib/datasrc: A DS query could crash the library (and therefore,
 	e.g. the authoritative server) if some RR of the same apex name
-	is stored in the hot spot cache.  (Trac #307, svn r2923)
+	is stored in the hot spot cache. (Trac #307, svn r2923)
 
   92.	[func]*		jelte
 	libdns_python (the python wrappers for libdns++) has been renamed
@@ -324,7 +378,7 @@ bind10-devel-20100701 released on July 1, 2010
   66.  [bug]		each
 	Check for duplicate RRsets before inserting data into a message
 	section; this, among other things, will prevent multiple copies
-	of the same CNAME from showing up when there's a loop.  (Trac #69,
+	of the same CNAME from showing up when there's a loop. (Trac #69,
 	svn r2350)
     
   65.  [func]		shentingting
@@ -446,7 +500,7 @@ bind10-devel-20100602 released on June 2, 2010
 	#205, svn r1957)
 
   44.   [build]         jreed
-	Install headers for libdns and libexception.  (Trac #68,
+	Install headers for libdns and libexception. (Trac #68,
 	svn r1941)
 
   43.   [func]          jelte
@@ -454,7 +508,7 @@ bind10-devel-20100602 released on June 2, 2010
 
   42.   [func]          jelte
 	lib/python/isc/config:      Make temporary file with python
-	tempfile module instead of manual with fixed name.  (Trac
+	tempfile module instead of manual with fixed name. (Trac
 	#184, svn r1859)
 
   41.   [func]          jelte
@@ -462,7 +516,7 @@ bind10-devel-20100602 released on June 2, 2010
 
   40.   [build]         jreed
 	Report detected features and configure settings at end of
-	configure output.  (svn r1836)
+	configure output. (svn r1836)
 
   39.   [func]*         each
 	Renamed libauth to libdatasrc.
@@ -475,7 +529,7 @@ bind10-devel-20100602 released on June 2, 2010
 	(Trac #135, #151, #134, svn r1797)
 
   37.   [build]         jinmei
-	Check for the availability of python-config.  (Trac #159,
+	Check for the availability of python-config. (Trac #159,
 	svn r1794)
 
   36.	[func]		shane
@@ -520,7 +574,7 @@ bind10-devel-20100421 released on April 21, 2010
 
   27.	[build]
 	Add missing copyright license statements to various source
-	files.  (svn r1750)
+	files. (svn r1750)
 
   26.	[func]
 	Use PACKAGE_STRING (name + version) from config.h instead

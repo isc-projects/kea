@@ -398,16 +398,25 @@ class UIModuleCCSession(MultiConfigData):
         module_spec = self.find_spec_part(identifier)
         if (type(module_spec) != dict or "list_item_spec" not in module_spec):
             raise isc.cc.data.DataNotFoundError(str(identifier) + " is not a list")
-        value = isc.cc.data.parse_value_str(value_str)
-        isc.config.config_data.check_type(module_spec, [value])
-        cur_list, status = self.get_value(identifier)
-        #if not cur_list:
-        #    cur_list = isc.cc.data.find_no_exc(self.config.data, identifier)
-        if not cur_list:
-            cur_list = []
-        if value in cur_list:
-            cur_list.remove(value)
-        self.set_value(identifier, cur_list)
+
+        if value_str is None:
+            # we are directly removing an list index
+            id, list_indices = isc.cc.data.split_identifier_list_indices(identifier)
+            if list_indices is None:
+                raise DataTypeError("identifier in remove_value() does not contain a list index, and no value to remove")
+            else:
+                self.set_value(identifier, None)
+        else:
+            value = isc.cc.data.parse_value_str(value_str)
+            isc.config.config_data.check_type(module_spec, [value])
+            cur_list, status = self.get_value(identifier)
+            #if not cur_list:
+            #    cur_list = isc.cc.data.find_no_exc(self.config.data, identifier)
+            if not cur_list:
+                cur_list = []
+            if value in cur_list:
+                cur_list.remove(value)
+            self.set_value(identifier, cur_list)
 
     def commit(self):
         """Commit all local changes, send them through b10-cmdctl to
