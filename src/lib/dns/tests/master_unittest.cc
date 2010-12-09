@@ -32,6 +32,7 @@ using namespace std;
 using namespace isc::dns;
 
 namespace {
+// A callback functor for masterLoad() commonly used for the following tests.
 class TestCallback : public unary_function<ConstRRsetPtr, void> {
 public:
     TestCallback(vector<ConstRRsetPtr>& rrsets) : rrsets_(rrsets) {}
@@ -42,6 +43,7 @@ private:
     vector<ConstRRsetPtr>& rrsets_;
 };
 
+// A function version of TestCallback.
 void
 testCallback(ConstRRsetPtr rrset, vector<ConstRRsetPtr>* rrsets) {
     rrsets->push_back(rrset);
@@ -63,6 +65,7 @@ protected:
     TestCallback callback;
 };
 
+// Commonly used test RRs
 const char* const txt_rr = "example.com. 3600 IN TXT \"test data\"\n";
 const char* const a_rr1 = "www.example.com. 60 IN A 192.0.2.1\n";
 const char* const a_rr2 = "www.example.com. 60 IN A 192.0.2.2\n";

@@ -34,18 +34,38 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// A wrapper class for callback functors and functions of \c masterLoad().
+///
+/// This class is intended to be only used as the type of the callback
+/// parameter of \c masterLoad(), and not expected to be instantiated
+/// explicitly or used in other places.
+///
+/// Any functor or function that matches the expected signature of the
+/// \c masterLoad() callback is implicitly converted to an object of this
+/// class.  The original functor or function is kept inside this class
+/// in a type independent manner.
+/// When \c masterLoad() calls the \c operator() method of this object, which
+/// internally retrieves the original functor or function and calls it.
+///
+/// <b>Note:</b> this class is a simplified and specialized form of
+/// Boost.function so that we can benefit from its usability without exposing
+/// boost definitions in a public header file.
+/// Of course, the advantage comes with the cost of reinventing a relatively
+/// complicated trick by ourselves.
 class MasterLoadCallback {
 public:
     ///
     /// \name Constructors, Assignment Operator and Destructor.
     ///
-    /// For our purpose, we don't the assignment operator for this class.
-    /// For simply we hide it as a private method for now.
+    /// For our purpose, we don't need the assignment operator for this class;
+    /// for simply we hide it as a private method for now.
     //@{
     /// Constructor.
     ///
-    /// note: this constructor is intentionally not defined as "explicit"
-    /// for the convenience of the caller of \c masterLoad().
+    /// Note: this constructor is intentionally not defined as "explicit"
+    /// for the convenience of the caller of \c masterLoad().  That is,
+    /// the caller doesn't have to construct a MasterLoadCallback object
+    /// when it calls \c masterLoad().
     template <typename FUNC>
     MasterLoadCallback(FUNC func) :
         func_(new FUNC(func)),
@@ -64,13 +84,19 @@ public:
 
     /// The destructor.
     ~MasterLoadCallback() { (*deleter_)(func_); }
+private:
+    MasterLoadCallback& operator=(const MasterLoadCallback& source);
     //@}
 
+public:
+    /// The callback invoker.
+    ///
+    /// It internally retrieves the original functor or function given
+    /// on construction and calls it.
     void operator()(RRsetPtr rrset) {
         (*invoker_)(func_, rrset);
     }
 private:
-    MasterLoadCallback& operator=(const MasterLoadCallback& source);
     
     template <typename FUNC>
     static void invoke(void* func, RRsetPtr rrset) {
@@ -97,13 +123,51 @@ private:
 //@{
 /// Master zone file loader from a file.
 ///
-/// Ownership is transferred once the callback is called.  The callback
-/// can freely modify the passed \c RRset.
+/// This function parses a given file as a master DNS zone file for
+/// the given origin name and RR class, constructs a sequence of \c RRset
+/// from the RRs containing in the file, and calls the given \c callback
+/// functor object or function with each \c RRset.
+///
+/// The \c callback parameter is a functor object or a function that
+/// takes one parameter of type \c RRsetPtr and returns nothing,
+/// i.e. \c void (see below for specific examples).
+/// In the case of a functor, it must be copy constructible.
+/// 
+/// The ownership of constructed RRsets is transferred to the callback
+/// and this function never uses it once it is called.
+/// The callback can freely modify the passed \c RRset.
+///
+/// This function performs minimum level of validation on the input:
+/// - Each RR is a valid textual representation per the DNS protocol.
+/// - The class of each RR must be identical to the specified RR class.
+/// - The owner name of each RR must be a subdomain of the origin name
+///   (that can be equal to the origin).
+/// - If an SOA RR is included, its owner name must be the origin name.
+/// If any of these validation checks fails, this function throws an
+/// exception of class \c MasterError.
+///
+/// It does not perform other semantical checks, however.  For example,
+/// it doesn't check if an NS RR of the origin name is included or if
+/// there is more than one SOA RR.  Such further checks are the caller's
+/// (or the callback's) responsibility.
 ///
 /// <b>Acceptable Format</b>
 ///
 /// The current implementation only supports a restricted form of master files
-/// for simplicity.  Specifically, each RR must consist of exactly one line
+/// for simplicity.  One easy way to ensure that a handwritten zone file is
+/// acceptable to this implementation is to preprocess it with BIND 9's
+/// named-compilezone tool with both the input and output formats being
+/// "text".
+/// Here is an example:
+/// \code % named-compilezone -f text -F text -o example.com.norm
+///      example.com example.com.zone
+/// \endcode
+/// where example.com.zone is the original zone file for the "example.com"
+/// zone.  The output file is example.com.norm, which should be acceptable
+/// by this implementation.
+///
+/// Below are specific restrictions that this implementation assumes.
+/// Basically, each RR must consist of exactly one line
 /// (so there shouldn't be a multi-line RR) in the following format:
 /// \code  <owner name> <TTL> <RRCLASS> <RRTYPE> <RDATA (single line)>
 /// \endcode
@@ -125,6 +189,8 @@ private:
 ///   such as "1H" instead of 3600 cannot be used).  Not all standard RR
 ///   classes and RR types are supported yet, so the mnemonics of them will
 ///   be rejected, too.
+/// - RR TTLs of the same RRset must be the same; even if they are different,
+///   this implementation simply uses the TTL of the first RR.
 ///
 /// Blank lines and lines beginning with a semi-colon are allowed, and will
 /// be simply ignored.  Comments cannot coexist with an RR line, however.
@@ -144,48 +210,100 @@ private:
 /// It is up to the callback to merge multiple RRsets into one if possible
 /// and necessary.
 ///
-/// The acceptable form may seem too restrictive, but an arbitrary zone file
-/// can be converted into this form by using BIND 9's named-compilezone tool
-/// with both the input and output formats being "text".  Here is an example:
-/// \code % named-compilezone -f text -F text -o example.com.norm
-///      example.com example.com.zone
-/// \endcode
-/// where example.com.zone is the original zone file for the "example.com"
-/// zone.  The output file is example.com.norm, which should be acceptable
-/// by this implementation.
-///
 /// <b>Exceptions</b>
 ///
-/// If the RR class of a given RR is different from \c zone_class,
-/// an exception of class \c MasterError will be thrown.
+/// This function throws an exception of class \c MasterError in the following
+/// cases:
+/// - Any of the validation checks fails (see the class description).
+/// - The input data is not in the acceptable format (see the details of
+///   the format above).
+/// - The specified file cannot be opened for loading.
+/// - An I/O error occurs during the loading.
+///
+/// In addition, this function requires resource allocation for parsing and
+/// constructing RRsets.  If it fails, the corresponding standard exception
+/// will be thrown.
+///
+/// The callback may throw its own function.  This function doesn't catch it
+/// and will simply propagate it towards the caller.
 ///
 /// <b>Usage Examples</b>
 ///
+/// A simplest example usage of this function would be to parse a zone
+/// file and (after validation) dump the content to the standard output.
+/// This is an example functor object and a call to \c masterLoad
+/// that implements this scenario:
+/// \code struct ZoneDumper {
+///     void operator()(ConstRRsetPtr rrset) const {
+///        std::cout << *rrset;
+///     }
+/// };
+/// ...
+///    masterLoad(zone_file, Name("example.com"), RRClass::IN(), ZoneDumper());
+/// \endcode
+/// Alternatively, you can use a normal function instead of a functor:
+/// \code void zoneDumper(ConstRRsetPtr rrset) {
+///    std::cout << *rrset;
+/// }
+/// ...
+///    masterLoad(zone_file, Name("example.com"), RRClass::IN(), zoneDumper);
+/// \endcode
+/// Or, if you want to use it with a member function of some other class,
+/// wrapping things with \c boost::bind would be handy:
+/// \code class ZoneDumper {
+/// public:
+///    void dump(ConstRRsetPtr rrset) const {
+///        std::cout << *rrset;
+///    }
+/// };
+/// ...
+///    ZoneDumper dumper;
+///    masterLoad(rr_stream, Name("example.com"), RRClass::IN(),
+///               boost::bind(&ZoneDumper::dump, &dumper, _1));
+/// \endcode
+/// You can find a bit more complicated examples in the unit tests code for
+/// this function.
+///
 /// <b>Implementation Notes</b>
 ///
-/// RRSIG consideration (later)?
-/// may eventually want to make it a class; for now, it's not clear whether
-/// we need that level of abstraction.
-/// may want to have load options; may want to support incremental load.
-/// may want to support "generous" mode.
+/// The current implementation is in a preliminary level and needs further
+/// extensions.  Some design decisions may also have to be reconsidered as
+/// we gain experiences.  Those include:
+/// - We should be more flexible about the input format.
+/// - We may want to allow optional conditions.  For example, we may want to
+///   be generous about some validation failures and be able to continue
+///   parsing.
+/// - Especially if we allow to be generous, we may also want to support
+///   returning an error code instead of throwing an exception when we
+///   encounter validation failure.
+/// - We may want to support incremental loading.
+/// - RRSIGs are currently identified as their owner name and RR type (RRSIG).
+///   In practice it should be sufficient, but technically we should also
+///   consider the Type Covered field.
 ///
 /// \param filename A path to a master zone file to be loaded.
 /// \param origin The origin name of the zone.
 /// \param zone_class The RR class of the zone.
-/// \param callbck A callback functor that is to be called for each RRset.
+/// \param callbck A callback functor or function that is to be called
+/// for each RRset.
 void masterLoad(const char* const filename, const Name& origin,
                 const RRClass& zone_class, MasterLoadCallback callback);
 
 /// Master zone file loader from input stream.
 ///
-/// All descriptions of the other version
+/// This function is same as the other version
 /// (\c masterLoad(const char* const, const Name&, const RRClass&, MasterLoadCallback))
-/// apply to this version except those specific to file I/O.
+/// except that it takes a \c std::istream instead of a file.
+/// It extracts lines from the stream and handles each line just as a line
+/// of a file for the other version of function.
+/// All descriptions of the other version apply to this version except those
+/// specific to file I/O.
 ///
 /// \param input An input stream object that is to emit zone's RRs.
 /// \param origin The origin name of the zone.
 /// \param zone_class The RR class of the zone.
-/// \param callbck A callback functor that is to be called for each RRset.
+/// \param callbck A callback functor or function that is to be called for
+/// each RRset.
 void masterLoad(std::istream& input, const Name& origin,
                 const RRClass& zone_class, MasterLoadCallback callback);
 }
