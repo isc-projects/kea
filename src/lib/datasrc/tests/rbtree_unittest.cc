@@ -84,21 +84,13 @@ TEST_F(RBTreeTest, getNodeCount) {
     EXPECT_EQ(13, rbtree.getNodeCount());
 }
 
-TEST_F(RBTreeTest, set_get_Data) {
+TEST_F(RBTreeTest, setGetData) {
     rbtnode->setData(new int(11));
     EXPECT_EQ(11, *(rbtnode->getData()));
 }
 
-TEST_F(RBTreeTest, getNameCount) {
-    EXPECT_EQ(11, rbtree.getNameCount());
-    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("d.e.f"), &rbtnode));
-    EXPECT_EQ(12, rbtree.getNameCount());
-}
-
 TEST_F(RBTreeTest, insertNames) {
-    // a node is considered to "formally" exist only if it's explicitly inserted
-    // return SUCCEED, since name "d.e.f" hasn't been explicitly inserted
-    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("d.e.f"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::ALREADYEXIST, rbtree.insert(Name("d.e.f"), &rbtnode));
     EXPECT_EQ(Name("d.e.f"), rbtnode->getName());
     EXPECT_EQ(13, rbtree.getNodeCount());
 
@@ -120,7 +112,7 @@ TEST_F(RBTreeTest, insertNames) {
     EXPECT_EQ(17, rbtree.getNodeCount());
 
     // split the node "g.h"
-    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("h"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::ALREADYEXIST, rbtree.insert(Name("h"), &rbtnode));
     EXPECT_EQ(Name("h"), rbtnode->getName());
     EXPECT_EQ(18, rbtree.getNodeCount());
 
@@ -165,7 +157,7 @@ TEST_F(RBTreeTest, dumpTree) {
     std::ostringstream str;
     std::ostringstream str2;
     rbtree.dumpTree(str);
-    str2 << "tree has node(s) 13\nb. (black)\n     a. (black)\n          NULL\n          NULL\n     d.e.f. (black)[invisible] \n          begin down from d.e.f.\n          w.y. (black)[invisible] \n               begin down from w.y.\n               p. (black)\n                    o. (red)\n                         NULL\n                         NULL\n                    q. (red)\n                         NULL\n                         NULL\n               end down from w.y.\n               x. (red)\n                    NULL\n                    NULL\n               z. (red)\n                    begin down from z.\n                    j. (black)\n                         NULL\n                         NULL\n                    end down from z.\n                    NULL\n                    NULL\n          end down from d.e.f.\n          c. (red)\n               NULL\n               NULL\n          g.h. (red)\n               begin down from g.h.\n               i. (black)\n                    NULL\n                    NULL\n               end down from g.h.\n               NULL\n               NULL\n";
+    str2 << "tree has 13 node(s)\nb. (black)\n     a. (black)\n          NULL\n          NULL\n     d.e.f. (black)[invisible] \n          begin down from d.e.f.\n          w.y. (black)[invisible] \n               begin down from w.y.\n               p. (black)\n                    o. (red)\n                         NULL\n                         NULL\n                    q. (red)\n                         NULL\n                         NULL\n               end down from w.y.\n               x. (red)\n                    NULL\n                    NULL\n               z. (red)\n                    begin down from z.\n                    j. (black)\n                         NULL\n                         NULL\n                    end down from z.\n                    NULL\n                    NULL\n          end down from d.e.f.\n          c. (red)\n               NULL\n               NULL\n          g.h. (red)\n               begin down from g.h.\n               i. (black)\n                    NULL\n                    NULL\n               end down from g.h.\n               NULL\n               NULL\n";
     EXPECT_EQ(str.str(), str2.str());
 }
 }
