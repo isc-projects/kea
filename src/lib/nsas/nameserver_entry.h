@@ -145,15 +145,17 @@ public:
     ///
     /// Return one address corresponding to this nameserver
     /// \param address NameserverAddress object used to receive the address
-    /// \param family The family of user request, AF_INET or AF_INET6
+    /// \param family The family of user request, V4_ONLY or V6_ONLY
     /// \return true if one address is found, false otherwise
-    virtual bool getAddress(NameserverAddress& address, short family);
+    /// \todo What use is this function?
+    virtual bool getAddress(NameserverAddress& address, AddressFamily family);
 
     /// \brief Return Address that corresponding to the index
     ///
     /// \param index The address index in the address vector
-    /// \param family The address family, AF_INET or AF_INET6
-    asiolink::IOAddress getAddressAtIndex(uint32_t index, short family) const;
+    /// \param family The address family, V4_ONLY or V6_ONLY
+    asiolink::IOAddress getAddressAtIndex(size_t index,
+        AddressFamily family) const;
 
     /// \brief Update RTT
     ///
@@ -167,8 +169,9 @@ public:
     ///
     /// \param rtt Round-Trip Time
     /// \param index The address's index in address vector
-    /// \param family The address family, AF_INET or AF_INET6
-    void updateAddressRTTAtIndex(uint32_t rtt, uint32_t index, short family);
+    /// \param family The address family, V4_ONLY or V6_ONLY
+    void updateAddressRTTAtIndex(uint32_t rtt, size_t index,
+        AddressFamily family);
 
     /// \brief Set Address Unreachable
     ///
@@ -243,8 +246,16 @@ private:
     mutable boost::mutex    mutex_;     ///< Mutex protecting this object
     std::string     name_;              ///< Canonical name of the nameserver
     isc::dns::RRClass classCode_;       ///< Class of the nameserver
-    /// The current addresses and addresses from previous request to keep RTT
-    std::vector<AddressEntry> address_, previous_addresses_;
+    /**
+     * \short Address lists.
+     *
+     * Only V4_ONLY and V6_ONLY is used, therefore we use the nearest larger
+     * value as the size of the array.
+     *
+     * previous_addresses is kept until the data arrive again on re-fetch and
+     * is used to pick up the RTTs from there.
+     */
+    std::vector<AddressEntry> addresses_[ANY_OK], previous_addresses_[ANY_OK];
     time_t          expiration_;        ///< Summary expiration time. 0 = unset
     // Do we have some addresses already? Do we expect some to come?
     // These are set after asking for IP, if NOT_ASKED, they are uninitialized
@@ -265,14 +276,17 @@ private:
     ///
     /// \param addresses The address list
     /// \param selector Weighted random generator
-    void updateAddressSelector(std::vector<AddressEntry>& addresses, 
+    void updateAddressSelector(std::vector<AddressEntry>& addresses,
             WeightedRandomIntegerGenerator& selector);
 
-    // TODO Unite address_ and v?_addresses_
-    std::vector<AddressEntry> v4_addresses_;             ///< Set of V4 addresses
-    std::vector<AddressEntry> v6_addresses_;             ///< Set of V6 addresses
-    WeightedRandomIntegerGenerator v4_address_selector_; ///< Generate one integer according to different probability
-    WeightedRandomIntegerGenerator v6_address_selector_; ///< Generate one integer according to different probability
+    /**
+     * \short Generate one integer according to different probability.
+     *
+     * \todo Should this be more global? And it definitely should be
+     *     inside ZoneEntry, the selection should be done from all
+     *     that addresses.
+     */
+    WeightedRandomIntegerGenerator address_selectors_[ANY_OK];
 };
 
 }   // namespace dns
