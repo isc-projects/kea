@@ -32,19 +32,13 @@ namespace helper {
 /// the precondition of this function is the super_name contains the
 /// sub_name so \code Name a("a.b.c"); Name b("b.c"); 
 /// Name c = a - b; \\c will be "a" \endcode
-isc::dns::Name
+inline isc::dns::Name
 operator-(const isc::dns::Name& super_name, const isc::dns::Name& sub_name) {
     return (super_name.split(0, super_name.getLabelCount() -
                              sub_name.getLabelCount()));
 }
 
-/// for indent purpose, add certian mount empty charachter to output stream
-/// according to the depth.
-void
-indent(std::ostream& os, unsigned int depth) {
-    static const unsigned int INDENT_FOR_EACH_DEPTH = 5;
-    os << std::string(depth * INDENT_FOR_EACH_DEPTH, ' ');
-}
+
 
 }
 
@@ -72,28 +66,23 @@ class RBTree;
 /// will release it(call the deconstructor)finally, so it will be has problem if two
 /// RBNode store the same data, or the data RBNode managed is delete outside RBNode
 /// both will cause double delete.
+/// 
+/// \todo It's really bad practce split the memory allocate and delete into seperate
+/// classes, it's planed to add deleter functor as one template paremeter and
+/// use it to release the data. but now let's just use this simple design
 template <typename T>
 class RBNode : public boost::noncopyable {
 public:
     /// only \c RBTree can create and destroy \c RBNode
     friend class RBTree<T>;
 
-    /// \name Constructors and destructor
+    /// \name Deonstructor
+    /// \note it's seems a little strange that constructor is private
+    /// but deconstructor left public, the reason is for some smart pointer
+    /// like std::auto_ptr, they needs to delete RBNode in sometimes, but
+    /// \code delete *pointer_to_node \codeend shouldn't be called directly
     //@{
-    /// \brief Default constructor.
-    ///
-    /// This constructor is provided specifically for generating a special
-    /// "null" node, and is intended be used only internally.
-    RBNode();
-
-    /// \brief Constructor from the node name.
-    ///
-    /// \param name The domain name corresponding to the node.
-    RBNode(const isc::dns::Name& name);
-
-    /// \brief Deconstructor.
     ~RBNode();
-
     //@}
 
     /// \name Test functions
@@ -127,6 +116,24 @@ public:
 
 
 private:
+    /// \name Constructors
+    /// \note \c Single RBNode is meaningless without living inside one \c RBTree
+    /// the creation and destroy of one \c RBNode is handle by host \c RBTree, so
+    /// the constructors and destructor of \c RBNode is left private
+    //@{
+    /// \brief Default constructor.
+    ///
+    /// This constructor is provided specifically for generating a special
+    /// "null" node, and is intended be used only internally.
+    RBNode();
+
+    /// \brief Constructor from the node name.
+    ///
+    /// \param name The domain name corresponding to the node.
+    RBNode(const isc::dns::Name& name);
+    //@}
+
+
     /// This is a factory class method of a special singleton null node.
     static RBNode<T>* NULL_NODE() {
         static RBNode<T> null_node;
@@ -167,7 +174,7 @@ RBNode<T>::RBNode() :
     // dummy name, the value doesn't matter:
     name_(isc::dns::Name::ROOT_NAME()),
     data_(NULL),
-    down_(NULL)
+    down_(this)
 {
 }
 
@@ -179,7 +186,7 @@ RBNode<T>::RBNode(const isc::dns::Name& name) :
     color_(RED),
     name_(name),
     data_(NULL),
-    down_(NULL)
+    down_(NULL_NODE())
 {
 }
 
@@ -290,10 +297,6 @@ public:
     /// the node count including the node created common suffix node,
     /// this function will only be used for debuging
     int getNodeCount() const { return (node_count_);}
-
-
-    /// \brief Get the total names has been inserted into the tree
-    int getNameCount() const { return (name_count_);}
     //@}
 
     /// \name Debug function
@@ -330,8 +333,7 @@ private:
 
     /// \name Helper functions
     //@{
-    /// Each public function has related recursive helper function
-    /// \brief tree with node as its root
+    /// \brief delete tree whose root is equal to node
     void deleteHelper(RBNode<T> *node);
     /// \brief find the node with name
     /// \param name is the target, up will points to the base domain of 
@@ -340,10 +342,13 @@ private:
     /// so for example, in zone a, we has 
     /// b.a, c.b.a and d.b.a search c.b.a, up will points to b.a. 
     /// and node will points to c.b.a
-    Result findHelper(const isc::dns::Name& name, RBNode<T>** up,
+    Result findHelper(const isc::dns::Name& name, const RBNode<T>** up,
                       RBNode<T>** node) const;
     void dumpTreeHelper(std::ostream& os, const RBNode<T>* node,
                         unsigned int depth) const;
+    /// for indent purpose, add certian mount empty charachter to output stream
+    /// according to the depth.
+    static void indent(std::ostream& os, unsigned int depth);
 
     /// Split one node into two nodes, keep the old node and create one new
     /// node, old node will hold the base name, new node will be the down node
@@ -356,8 +361,6 @@ private:
     RBNode<T>*  NULLNODE;
     /// the node count of current tree 
     unsigned int node_count_;
-    /// the count of real name user inserted into the domain tree
-    unsigned int name_count_;
 };
 
 template <typename T>
@@ -365,12 +368,12 @@ RBTree<T>::RBTree() {
     NULLNODE = RBNode<T>::NULL_NODE();
     root_ = NULLNODE;
     node_count_ = 0;
-    name_count_ = 0;
 }
 
 template <typename T>
 RBTree<T>::~RBTree() {
     deleteHelper(root_);
+    assert(node_count_ == 0);
 }
 
 template <typename T>
@@ -392,25 +395,28 @@ void RBTree<T> ::deleteHelper(RBNode<T> *root) {
             parent->right_ = NULLNODE;
         }
 
-        if (node->down_) {
-            deleteHelper(node->down_);
-        }
+        deleteHelper(node->down_);
         delete node;
+        --node_count_;
         node = parent;
     }
+
+    deleteHelper(root->down_);
+    delete root;
+    --node_count_;
 }
 
 template <typename T>
 typename RBTree<T>::Result
 RBTree<T>::find(const isc::dns::Name& name, RBNode<T>** node) const {
-    RBNode<T>* up_node = NULL;
+    const RBNode<T>* up_node = NULLNODE;
     return (findHelper(name, &up_node, node));
 }
 
 template <typename T>
 typename RBTree<T>::Result
 RBTree<T>::find(const isc::dns::Name& name, const RBNode<T>** node) const {
-    RBNode<T>* up_node;
+    const RBNode<T>* up_node;
     RBNode<T>* target_node;
     const typename RBTree<T>::Result ret =
         findHelper(name, &up_node, &target_node);
@@ -422,14 +428,14 @@ RBTree<T>::find(const isc::dns::Name& name, const RBNode<T>** node) const {
 
 template <typename T>
 typename RBTree<T>::Result
-RBTree<T>::findHelper(const isc::dns::Name& target_name, RBNode<T>** up_node,
+RBTree<T>::findHelper(const isc::dns::Name& target_name, const RBNode<T>** up_node,
                       RBNode<T>** target) const
 {
     using namespace helper;
 
     RBNode<T>* node = root_;
     typename RBTree<T>::Result ret = NOTFOUND;
-    *up_node = NULL;
+    *up_node = NULLNODE;
     isc::dns::Name name = target_name;
 
     while (node != NULLNODE) {
@@ -454,16 +460,11 @@ RBTree<T>::findHelper(const isc::dns::Name& target_name, RBNode<T>** up_node,
                 *up_node = node;
                 name = name - node->name_;
                 if (node->isEmpty()) {
-                    assert(node->down_ != NULL);
                     node = node->down_;
                 } else {
                     ret = RBTree<T>::PARTIALMATCH;
                     *target = node;
-                    if (node->down_ != NULL) {
-                        node = node->down_;
-                    } else {
-                        break;
-                    }
+                    node = node->down_;
                 }
             } else {
                 break;
@@ -480,7 +481,7 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
     using namespace helper;
     RBNode<T>* parent = NULLNODE;
     RBNode<T>* current = root_;
-    RBNode<T>* up_node = NULL;
+    RBNode<T>* up_node = NULLNODE;
     isc::dns::Name name = target_name;
 
     int order = -1;
@@ -493,14 +494,7 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
             if (new_node != NULL) {
                 *new_node = current;
             }
-            // if the node is a common suffix not user inserted, return succeed
-            // otherwise return already exist
-            if (current->isEmpty()) {
-                ++name_count_;
-                return (SUCCEED);
-            } else {
-                return (ALREADYEXIST);
-            }
+            return (ALREADYEXIST);
         } else {
             const int common_label_count = compare_result.getCommonLabels();
             if (common_label_count == 1) {
@@ -510,24 +504,10 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
             } else {
                 // insert sub domain to sub tree
                 if (relation == isc::dns::NameComparisonResult::SUBDOMAIN) {
-                    if (current->down_ == NULL) {
-                        std::auto_ptr<RBNode<T> > node(
-                            new RBNode<T>(name - current->name_));
-                        //root node of sub tree, the initial color is BLACK
-                        node->color_ = BLACK;
-                        current->down_ = node.get();
-                        if (new_node != NULL) {
-                            *new_node = node.get();
-                        }
-                        ++node_count_;
-                        ++name_count_;
-                        node.release();
-                        return (SUCCEED);
-                    } else {
-                        up_node = current;
-                        name = name - current->name_;
-                        current = current->down_;
-                    }
+                    parent = NULLNODE;
+                    up_node = current;
+                    name = name - current->name_;
+                    current = current->down_;
                 } else {
                     // The number of labels in common is fewer
                     // than the number of labels at the current
@@ -543,11 +523,16 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
         }
     }
 
-    RBNode<T>** current_root = up_node ? &(up_node->down_) : &root_;
+    RBNode<T>** current_root = (up_node != NULLNODE) ? &(up_node->down_) : &root_;
+    // using auto_ptr here is avoid memory leak in case of exceptoin raised 
+    // after the RBNode creation
     std::auto_ptr<RBNode<T> > node(new RBNode<T>(name));
     node->parent_ = parent;
     if (parent == NULLNODE) {
         *current_root = node.get();
+        //node is the new root of sub tree, so its init color
+        // is BLACK
+        node->color_ = BLACK;
     } else if (order < 0) {
         parent->left_ = node.get();
     } else {
@@ -559,7 +544,6 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
     }
 
     ++node_count_;
-    ++name_count_;
     node.release();
     return (SUCCEED);
 }
@@ -569,11 +553,14 @@ void
 RBTree<T>::nodeFission(RBNode<T>& node, const isc::dns::Name& base_name) {
     using namespace helper;
     const isc::dns::Name sub_name = node.name_ - base_name;
+    // using auto_ptr here is avoid memory leak in case of exceptoin raised 
+    // after the RBNode creation
     std::auto_ptr<RBNode<T> > down_node(new RBNode<T>(node.name_ - base_name));
-    node.swap(*down_node);
+    std::swap(node.data_, down_node->data_);
+    down_node->down_ = node.down_;
+    down_node->name_ = sub_name;
     node.name_ = base_name;
     node.down_ = down_node.get();
-    down_node->name_ = sub_name;
     //root node of sub tree, the initial color is BLACK
     down_node->color_ = BLACK;
     ++node_count_;
@@ -679,8 +666,8 @@ RBTree<T>::rightRotate(RBNode<T>** root, RBNode<T>* node) {
 template <typename T>
 void
 RBTree<T>::dumpTree(std::ostream& os, unsigned int depth) const {
-    helper::indent(os, depth);
-    os << "tree has node(s) " << node_count_ << "\n";
+    indent(os, depth);
+    os << "tree has " << node_count_ << " node(s)\n";
     dumpTreeHelper(os, root_, depth);
 }
 
@@ -689,31 +676,33 @@ void
 RBTree<T>::dumpTreeHelper(std::ostream& os, const RBNode<T>* node,
                           unsigned int depth) const
 {
-    helper::indent(os, depth);
+    if (node == NULLNODE) {
+        indent(os, depth);
+        os << "NULL\n";
+        return;
+    }
+
+    indent(os, depth);
     os << node->name_.toText() << " ("
               << ((node->color_ == BLACK) ? "black" : "red") << ")";
     os << ((node->isEmpty()) ? "[invisible] \n" : "\n");
-    if (node->down_ != NULL) {
-        helper::indent(os, depth + 1);
+
+    if (node->down_ != NULLNODE) {
+        indent(os, depth + 1);
         os << "begin down from " << node->name_.toText() << "\n";
         dumpTreeHelper(os, node->down_, depth + 1);
-        helper::indent(os, depth + 1);
+        indent(os, depth + 1);
         os << "end down from " << node->name_.toText() << "\n";
     }
+    dumpTreeHelper(os, node->left_, depth + 1);
+    dumpTreeHelper(os, node->right_, depth + 1);
+}
 
-    if (node->left_ != NULLNODE) {
-        dumpTreeHelper(os, node->left_, depth + 1);
-    } else {
-        helper::indent(os, depth + 1);
-        os << "NULL\n";
-    }
-
-    if (node->right_ != NULLNODE) {
-        dumpTreeHelper(os, node->right_, depth + 1);
-    } else {
-        helper::indent(os, depth + 1);
-        os << "NULL\n";
-    }
+template <typename T>
+void 
+RBTree<T>::indent(std::ostream& os, unsigned int depth) {
+    static const unsigned int INDENT_FOR_EACH_DEPTH = 5;
+    os << std::string(depth * INDENT_FOR_EACH_DEPTH, ' ');
 }
 
 }
