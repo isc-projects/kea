@@ -109,13 +109,13 @@ public:
     /// free the pointer
     T* getData() { return (data_); }
     /// \brief return the data stored in this node, read-only version
-    const T *getData() const { return (data_);}
+    const T* getData() const { return (data_); }
 
     /// \brief return whether the node has related data 
     /// \note it's meaningless has empty \c RBNode in one RBTree, the only 
     /// exception is for non-terminal node which has sub domain nodes who
     /// has data(rrset)
-    bool isEmpty() const { return (data_ == NULL);}
+    bool isEmpty() const { return (data_ == NULL); }
     //@}
 
     /// \name Modify functions
@@ -459,10 +459,11 @@ RBTree<T>::findHelper(const isc::dns::Name& target_name, RBNode<T>** up_node,
                 } else {
                     ret = RBTree<T>::PARTIALMATCH;
                     *target = node;
-                    if (node->down_ != NULL)
+                    if (node->down_ != NULL) {
                         node = node->down_;
-                    else
+                    } else {
                         break;
+                    }
                 }
             } else {
                 break;
@@ -510,7 +511,8 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
                 // insert sub domain to sub tree
                 if (relation == isc::dns::NameComparisonResult::SUBDOMAIN) {
                     if (current->down_ == NULL) {
-                        std::auto_ptr<RBNode<T> > node(new RBNode<T>(name - current->name_));
+                        std::auto_ptr<RBNode<T> > node(
+                            new RBNode<T>(name - current->name_));
                         //root node of sub tree, the initial color is BLACK
                         node->color_ = BLACK;
                         current->down_ = node.get();
@@ -561,7 +563,6 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
     node.release();
     return (SUCCEED);
 }
-
 
 template <typename T>
 void
@@ -694,7 +695,7 @@ RBTree<T>::dumpTreeHelper(std::ostream& os, const RBNode<T>* node,
     os << ((node->isEmpty()) ? "[invisible] \n" : "\n");
     if (node->down_ != NULL) {
         helper::indent(os, depth + 1);
-        os << "begin down from "<< node->name_.toText() << "\n";
+        os << "begin down from " << node->name_.toText() << "\n";
         dumpTreeHelper(os, node->down_, depth + 1);
         helper::indent(os, depth + 1);
         os << "end down from " << node->name_.toText() << "\n";
