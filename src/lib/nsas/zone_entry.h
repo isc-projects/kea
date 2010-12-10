@@ -138,7 +138,7 @@ private:
     // update
     boost::shared_ptr<HashTable<NameserverEntry> > nameserver_table_;
     boost::shared_ptr<LruList<NameserverEntry> > nameserver_lru_;
-    // Resolver callback class
+    // Resolver callback class, documentation with the class declaration
     class ResolverCallback;
     // It has direct access to us
     friend class ResolverCallback;
@@ -147,7 +147,7 @@ private:
     friend class ProcessGuard;
     // Are we in the process method?
     bool in_process_[ADDR_REQ_MAX];
-    // Callback from nameserver entry
+    // Callback from nameserver entry (documented with the class)
     class NameserverCallback;
     // And it can get into our internals as well (call process)
     friend class NameserverCallback;

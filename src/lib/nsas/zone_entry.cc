@@ -63,11 +63,34 @@ newNs(const std::string* name, const RRClass* class_code) {
 
 }
 
+/**
+ * \short Callback class that ZoneEntry passes to a resolver.
+ *
+ * We need to ask for the list of nameservers. So we pass ResolverCallback
+ * object to it, when it knows the answer, method of this thing will be
+ * called.
+ *
+ * It is a nested friend class and should be considered as a part of ZoneEntry
+ * code. It manipulates directly ZoneEntry's data members, locks it and like
+ * that. Mostly eliminates C++ bad design of missing lambda functions.
+ */
 class ZoneEntry::ResolverCallback : public ResolverInterface::Callback {
     public:
+        /// \short Constructor. Pass "this" zone entry
         ResolverCallback(shared_ptr<ZoneEntry> entry) :
             entry_(entry)
         { }
+        /**
+         * \short It successfully received nameserver list.
+         *
+         * It fills the nameservers into the ZoneEntry whose callback this is.
+         * If there are in the hash table, it is used. If not, they are
+         * created. This might still fail, if the list is empty.
+         *
+         * It then calls process, to go trough the list of nameservers,
+         * examining them and seeing if some addresses are already there
+         * and to ask for the rest of them.
+         */
         virtual void success(const shared_ptr<AbstractRRset>& answer) {
             shared_ptr<Lock> lock(new Lock(entry_->mutex_));
             RdataIteratorPtr iterator(answer->getRdataIterator());
@@ -77,16 +100,27 @@ class ZoneEntry::ResolverCallback : public ResolverInterface::Callback {
                 failureInternal(lock, answer->getTTL().getValue());
                 return;
             } else {
-                // Store the current ones so we can keep them
+                /*
+                 * We store the nameservers we have currently (we might have
+                 * none, at startup, but when we time out and ask again, we
+                 * do), so we can just reuse them instead of looking them up in
+                 * the table or creating them.
+                 */
                 map<string, NameserverPtr> old;
-                set<NameserverPtr> old_not_asked;
-                old_not_asked.swap(entry_->nameservers_not_asked_);
                 BOOST_FOREACH(const NameserverPtr& ptr, entry_->nameservers_) {
                     old[ptr->getName()] = ptr;
                 }
+                /*
+                 * List of original nameservers we did not ask for IP address
+                 * yet.
+                 */
+                set<NameserverPtr> old_not_asked;
+                old_not_asked.swap(entry_->nameservers_not_asked_);
 
-                // Now drop the old ones and insert the new ones
+                // Once we have them put aside, remove the original set
+                // of nameservers from the entry
                 entry_->nameservers_.clear();
+                // And put the ones from the answer them, reusing if possible
                 for (; !iterator->isLast(); iterator->next()) {
                     try {
                         // Get the name from there
@@ -95,8 +129,10 @@ class ZoneEntry::ResolverCallback : public ResolverInterface::Callback {
                         // Try to find it in the old ones
                         map<string, NameserverPtr>::iterator old_ns(old.find(
                             ns_name.toText()));
-                        // It is not there, look it up in the table or create
-                        // new one
+                        /*
+                         * We didn't have this nameserver before. So we just
+                         * look it up in the hash table or create it.
+                         */
                         if (old_ns == old.end()) {
                             // Look it up or create it
                             string ns_name_str(ns_name.toText());
@@ -111,12 +147,12 @@ class ZoneEntry::ResolverCallback : public ResolverInterface::Callback {
                                 entry_->nameserver_lru_->touch(
                                     from_hash.second);
                             }
-                            // And add it at last
+                            // And add it at last to the entry
                             entry_->nameservers_.push_back(from_hash.second);
                             entry_->nameservers_not_asked_.insert(
                                 from_hash.second);
                         } else {
-                            // We have it, so just use it
+                            // We had it before, reuse it
                             entry_->nameservers_.push_back(old_ns->second);
                             // Did we ask it already? If not, it is still not
                             // asked (the one designing std interface must
@@ -129,15 +165,19 @@ class ZoneEntry::ResolverCallback : public ResolverInterface::Callback {
                             }
                         }
                     }
-                    // OK, we skip this one it is not NS (log?)
+                    // OK, we skip this one as it is not NS (log?)
                     catch (bad_cast&) { }
                 }
 
                 // It is unbelievable, but we found no nameservers there
                 if (entry_->nameservers_.empty()) {
+                    // So we fail the same way as if we got empty list
                     failureInternal(lock, answer->getTTL().getValue());
                     return;
                 } else {
+                    // Ok, we have them. So set us as ready, set our
+                    // expiration time and try to answer what we can, ask
+                    // if there's still someone to ask.
                     entry_->setState(READY);
                     entry_->expiry_ = answer->getTTL().getValue() + time(NULL);
                     entry_->process(CallbackPtr(), ADDR_REQ_MAX,
@@ -146,6 +186,7 @@ class ZoneEntry::ResolverCallback : public ResolverInterface::Callback {
                 }
             }
         }
+        /// \short Failed to receive answer.
         virtual void failure() {
             shared_ptr<Lock> lock(new Lock(entry_->mutex_));
             /*
@@ -155,6 +196,12 @@ class ZoneEntry::ResolverCallback : public ResolverInterface::Callback {
             failureInternal(lock, 300);
         }
     private:
+        /**
+         * \short Common function called when "it did not work"
+         *
+         * It marks the ZoneEntry as unreachable and processes callbacks (by
+         * calling process).
+         */
         void failureInternal(shared_ptr<Lock> lock, time_t ttl) {
             entry_->setState(UNREACHABLE);
             entry_->expiry_ = ttl + time(NULL);
@@ -162,6 +209,7 @@ class ZoneEntry::ResolverCallback : public ResolverInterface::Callback {
             entry_->process(CallbackPtr(), ADDR_REQ_MAX, NameserverPtr(),
                 lock);
         }
+        /// \short The entry we are callback of
         shared_ptr<ZoneEntry> entry_;
 };
 
@@ -213,6 +261,8 @@ move(Container& into, Container& from) {
     from.clear();
 }
 
+// TODO: This 3 functions should not be needed. We should do
+// propper choosing. There's code for it already.
 mutex randMutex;
 
 size_t
@@ -238,7 +288,13 @@ chooseAddress(const NameserverEntry::AddressVector& addresses) {
 
 }
 
-// Sets to false on exit of current scope
+/**
+ * \short Sets given boolean to false when destroyed.
+ *
+ * This is hack eliminating C++ missing finally. We need to make sure
+ * the value gets set to false when we leave the function, so we use
+ * a Guard object, that sets it when it gets out of scope.
+ */
 class ZoneEntry::ProcessGuard {
     public:
         ProcessGuard(bool& guarded) :
@@ -251,12 +307,36 @@ class ZoneEntry::ProcessGuard {
         bool& guarded_;
 };
 
+/**
+ * \short Callback from NameserverEntry to us.
+ *
+ * We registre object of this class whenever some ZoneEntry has a need to be
+ * notified of a change (received data) inside its NameserverEntry.
+ *
+ * This is part of the ZoneEntry code (not visible from outside, accessing
+ * private functions). It is here just because C++ does not know propper lambda
+ * functions.
+ */
 class ZoneEntry::NameserverCallback : public NameserverEntry::Callback {
     public:
+        /**
+         * \short Constructor.
+         *
+         * \param entry The ZoneEntry to be notified.
+         * \param family For which address family this change is, so we
+         *     do not process all the nameserves and callbacks there.
+         */
         NameserverCallback(shared_ptr<ZoneEntry> entry, AddressFamily family) :
             entry_(entry),
             family_(family)
         { }
+        /**
+         * \short Callback method.
+         *
+         * This is called by NameserverEntry when the change happens.
+         * We just call process to go trough relevant nameservers and call
+         * any callbacks we can.
+         */
         virtual void operator()(NameserverPtr ns) {
             entry_->process(CallbackPtr(), family_, ns);
         }
