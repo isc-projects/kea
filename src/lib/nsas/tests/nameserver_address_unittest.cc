@@ -58,7 +58,7 @@ public:
 
     // Return the IOAddress corresponding to the index in rrv4_
     asiolink::IOAddress getAddressAtIndex(uint32_t index) {
-        return ns_.get()->getAddressAtIndex(index, AF_INET);
+        return ns_.get()->getAddressAtIndex(index, V4_ONLY);
     }
 
     // Return the addresses count stored in RRset
@@ -87,8 +87,10 @@ class NameserverAddressTest : public ::testing::Test {
 protected:
     // Constructor
     NameserverAddressTest(): 
-        ns_address_(ns_sample_.getNameserverEntry(), TEST_ADDRESS_INDEX, AF_INET),
-        invalid_ns_address_(ns_sample_.getNameserverEntry(), ns_sample_.getAddressesCount(), AF_INET)
+        ns_address_(ns_sample_.getNameserverEntry(), TEST_ADDRESS_INDEX,
+            V4_ONLY),
+        invalid_ns_address_(ns_sample_.getNameserverEntry(),
+            ns_sample_.getAddressesCount(), V4_ONLY)
     {
     }
 
@@ -109,7 +111,7 @@ TEST_F(NameserverAddressTest, Address) {
 
     boost::shared_ptr<NameserverEntry> empty_ne((NameserverEntry*)NULL);
     // It will throw an NullNameserverEntryPointer exception with the empty NameserverEntry shared pointer
-    ASSERT_THROW({NameserverAddress empty_ns_address(empty_ne, 0, AF_INET);}, NullNameserverEntryPointer);
+    ASSERT_THROW({NameserverAddress empty_ns_address(empty_ne, 0, V4_ONLY);}, NullNameserverEntryPointer);
 }
 
 // Test that the RTT is updated

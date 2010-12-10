@@ -25,7 +25,12 @@
 namespace isc {
 namespace nsas {
 
-/// \brief Address requested
+/**
+ * \brief Address requested
+ *
+ * The order is significant, it is used as array indices and sometime only
+ * the first two are used.
+ */
 enum AddressFamily {
     /// \short Interested only in IPv4 address
     V4_ONLY,

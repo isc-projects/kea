@@ -79,9 +79,6 @@ NameserverEntry::getAddresses(AddressVector& addresses,
 
     if (getState() == EXPIRED && !expired_ok) {
         return EXPIRED;
-
-        // Update the address selector
-        updateAddressSelector(v4_addresses_, v4_address_selector_);
     }
 
     switch (getState()) {
@@ -105,24 +102,13 @@ NameserverEntry::getAddresses(AddressVector& addresses,
 
     // If any address is OK, just pass everything we have
     if (family == ANY_OK) {
-        addresses.insert(addresses.end(), address_.begin(), address_.end());
+        addresses.insert(addresses.end(), addresses_[V4_ONLY].begin(),
+            addresses_[V4_ONLY].end());
+        addresses.insert(addresses.end(), addresses_[V6_ONLY].begin(),
+            addresses_[V6_ONLY].end());
     } else {
-        // Filter the addresses
-        short s_family(0);
-        switch (family) {
-            case V4_ONLY: s_family = AF_INET; break;
-            case V6_ONLY: s_family = AF_INET6; break;
-            default: assert(0); // This should never happen
-        }
-        // Now copy all entries that meet the criteria.  Since remove_copy_if
-        // does the inverse (copies all entries that do not meet the criteria),
-        // the predicate for address selection is negated.
-        remove_copy_if(address_.begin(), address_.end(),
-            back_inserter(addresses), boost::bind(addressSelection, s_family,
-            _1));
-
-        // Update the address selector
-        updateAddressSelector(v6_addresses_, v6_address_selector_);
+        addresses.insert(addresses.end(), addresses_[family].begin(),
+            addresses_[family].end());
     }
     if (getState() == EXPIRED && expired_ok) {
         return READY;
@@ -131,40 +117,27 @@ NameserverEntry::getAddresses(AddressVector& addresses,
 }
 
 // Return one address matching the given family
-bool NameserverEntry::getAddress(NameserverAddress& address, short family)
-{
+bool
+NameserverEntry::getAddress(NameserverAddress& address, AddressFamily family) {
     Lock lock(mutex_);
 
-// TODO Change to AddressFamily
-    // Get the shared_ptr object that point to "this" object
-    shared_ptr<NameserverEntry> shared_ptr_to_this = shared_from_this();
-
-    if(family == AF_INET){
-        if(v4_addresses_.size() == 0) return false;
-
-        address = NameserverAddress(shared_ptr_to_this, v4_address_selector_(), AF_INET);
-        return true;
-    } else if(family == AF_INET6){
-        if(v6_addresses_.size() == 0) return false;
-
-        //address = NameserverAddress(shared_from_this(), v6_address_selector_(), AF_INET6);
-        return true;
+    if (addresses_[family].empty()) {
+        return (false);
+    } else {
+        address = NameserverAddress(shared_from_this(),
+            address_selectors_[family](), family);
+        return (true);
     }
-    return false;
 }
 
 // Return the address corresponding to the family
-asiolink::IOAddress NameserverEntry::getAddressAtIndex(uint32_t index, short family) const
-{
+asiolink::IOAddress
+NameserverEntry::getAddressAtIndex(size_t index, AddressFamily family) const {
     Lock lock(mutex_);
 
-    const vector<AddressEntry> *addresses = &v4_addresses_;
-    if(family == AF_INET6){
-        addresses = &v6_addresses_;
-    }
-    assert(index < addresses->size());
+    assert(index < addresses_[family].size());
 
-    return (*addresses)[index].getAddress();
+    return (addresses_[family][index].getAddress());
 }
 
 // Set the address RTT to a specific value
@@ -173,55 +146,46 @@ NameserverEntry::setAddressRTT(const IOAddress& address, uint32_t rtt) {
     Lock lock(mutex_);
 
     // Search through the list of addresses for a match
-    for (AddressVectorIterator i = v4_addresses_.begin(); i != v4_addresses_.end(); ++i) {
-        if (i->getAddress().equal(address)) {
-            i->setRTT(rtt);
-
-            // Update the selector
-            updateAddressSelector(v4_addresses_, v4_address_selector_);
-            return;
+    AddressFamily family(V4_ONLY);
+    for (;;) {
+        BOOST_FOREACH(AddressEntry& entry, addresses_[family]) {
+            if (entry.getAddress().equal(address)) {
+                entry.setRTT(rtt);
+                updateAddressSelector(addresses_[family],
+                    address_selectors_[family]);
+                return;
+            }
         }
-    }
 
-    // Search the v6 list
-    for (AddressVectorIterator i = v6_addresses_.begin(); i != v6_addresses_.end(); ++i) {
-        if (i->getAddress().equal(address)) {
-            i->setRTT(rtt);
-
-            // Update the selector
-            updateAddressSelector(v6_addresses_, v6_address_selector_);
-            return;
+        // Hack. C++ does not allow ++ on enums, enumerating trough them is pain
+        switch (family) {
+            case V4_ONLY: family = V6_ONLY; break;
+            default: return;
         }
     }
 }
 
-// Update the address's rtt 
+// Update the address's rtt
 #define UPDATE_RTT_ALPHA 0.7
-void NameserverEntry::updateAddressRTTAtIndex(uint32_t rtt, uint32_t index, short family) {
+void
+NameserverEntry::updateAddressRTTAtIndex(uint32_t rtt, size_t index,
+    AddressFamily family)
+{
     Lock lock(mutex_);
 
-    vector<AddressEntry>* addresses = &v4_addresses_;
-    if(family == AF_INET6){
-        addresses = &v6_addresses_;
-    }
-
     //make sure it is a valid index
-    if(index >= addresses->size()) return;
+    if(index >= addresses_[family].size()) return;
 
     // Smoothly update the rtt
     // The algorithm is as the same as bind8/bind9:
     //    new_rtt = old_rtt * alpha + new_rtt * (1 - alpha), where alpha is a float number in [0, 1.0]
     // The default value for alpha is 0.7
-    uint32_t old_rtt = (*addresses)[index].getRTT();
-    uint32_t new_rtt = (int)(old_rtt * UPDATE_RTT_ALPHA + rtt * (1 - UPDATE_RTT_ALPHA));
-    (*addresses)[index].setRTT(new_rtt);
+    uint32_t old_rtt = addresses_[family][index].getRTT();
+    uint32_t new_rtt = (uint32_t)(old_rtt * UPDATE_RTT_ALPHA + rtt *
+        (1 - UPDATE_RTT_ALPHA));
+    addresses_[family][index].setRTT(new_rtt);
 
-    // Update the selector
-    if(family == AF_INET) { 
-        updateAddressSelector(v4_addresses_, v4_address_selector_);
-    } else if(family == AF_INET6) {
-        updateAddressSelector(v6_addresses_, v6_address_selector_);
-    }
+    updateAddressSelector(addresses_[family], address_selectors_[family]);
 }
 
 // Sets the address to be unreachable
@@ -236,7 +200,6 @@ NameserverEntry::setAddressUnreachable(const IOAddress& address) {
  * pointer to the entry so it is not destroyed too soon.
  */
 class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
-    // TODO This needs to bring in some changes from the constructor
     public:
         ResolverCallback(shared_ptr<NameserverEntry> entry,
             AddressFamily family, const RRType& type) :
@@ -266,19 +229,22 @@ class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
             while (! i->isLast()) {
                 // Try to find the original value and reuse its rtt
                 string address(i->getCurrent().toText());
-                int curr_rtt(-1);
-                BOOST_FOREACH(AddressEntry& entry, entry_->previous_addresses_)
+                AddressEntry *found(NULL);
+                BOOST_FOREACH(AddressEntry& entry,
+                    entry_->previous_addresses_[family_])
                 {
                     if (entry.getAddress().toText() == address) {
-                        curr_rtt = entry.getRTT();
+                        found = &entry;
                         break;
                     }
                 }
-                entries.push_back(AddressEntry(IOAddress(
-                    i->getCurrent().toText()),
-                    curr_rtt == -1 ? ++ rtt_ : curr_rtt));
+                entries.push_back(found ? *found : AddressEntry(IOAddress(
+                    i->getCurrent().toText()), ++ rtt_));
                 i->next();
             }
+
+            // We no longer expect this one here. We can drop it.
+            entry_->previous_addresses_[family_].clear();
 
             if (entries.empty()) {
                 // No data there, count it as a failure
@@ -291,15 +257,12 @@ class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
                 // Everything is here
                 if (!entry_->expect_address_[ANY_OK]) {
                     entry_->setState(READY);
-                    // We can drop the original addresses, we took everything
-                    entry_->previous_addresses_.clear();
                 }
                 // We have some address
                 entry_->has_address_[ANY_OK] =
                     entry_->has_address_[family_] = true;
                 // Put the addresses there
-                entry_->address_.insert(entry_->address_.end(),
-                    entries.begin(), entries.end());
+                entry_->addresses_[family_].swap(entries);
                 // Update the expiration time. If it is 0, it means we
                 // did not set it yet, so reset
                 time_t expiration(now + response->getTTL().getValue());
@@ -325,6 +288,10 @@ class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
         // Dispatches all relevant callbacks. Keeps lock unlocked afterwards.
         void dispatchCallbacks(Lock& lock)
         {
+            // There was a change (we wouldn't want to notify about it
+            // otherwise), so we update it
+            entry_->updateAddressSelector(entry_->addresses_[family_],
+                entry_->address_selectors_[family_]);
             // We dispatch ANY addresses if there is at last one address or
             // there's no chance we'll get some in future
             bool dispatch_any = entry_->has_address_[ANY_OK] ||
@@ -378,6 +345,8 @@ class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
                     entry_->setState(UNREACHABLE);
                 }
             }
+            // Drop the previous addresses, no use of them now
+            entry_->previous_addresses_[family_].clear();
             // Dispatch any relevant callbacks
             dispatchCallbacks(lock);
         }
@@ -406,8 +375,10 @@ NameserverEntry::askIP(shared_ptr<ResolverInterface> resolver,
         // Set internal state first
         // We store the old addresses so we can pick their RTT when
         // we get the same addresses again (most probably)
-        previous_addresses_.clear();
-        address_.swap(previous_addresses_);
+        previous_addresses_[V4_ONLY].clear();
+        previous_addresses_[V6_ONLY].clear();
+        addresses_[V4_ONLY].swap(previous_addresses_[V4_ONLY]);
+        addresses_[V6_ONLY].swap(previous_addresses_[V6_ONLY]);
         setState(IN_PROGRESS);
         has_address_[V4_ONLY] = has_address_[V6_ONLY] = has_address_[ANY_OK] =
             false;
@@ -444,13 +415,12 @@ NameserverEntry::askIP(shared_ptr<ResolverInterface> resolver,
 // Each address has a probability to be selected if multiple addresses are available
 // The weight factor is equal to 1/(rtt*rtt), then all the weight factors are normalized
 // to make the sum equal to 1.0
-void NameserverEntry::updateAddressSelector(std::vector<AddressEntry>& addresses, 
-        WeightedRandomIntegerGenerator& selector)
+void NameserverEntry::updateAddressSelector(
+    std::vector<AddressEntry>& addresses,
+    WeightedRandomIntegerGenerator& selector)
 {
-    Lock lock(mutex_);
-
     vector<double> probabilities;
-    for(vector<AddressEntry>::iterator it = addresses.begin(); 
+    for(vector<AddressEntry>::iterator it = addresses.begin();
             it != addresses.end(); ++it){
         uint32_t rtt = (*it).getRTT();
         if(rtt == 0) {
@@ -468,14 +438,14 @@ void NameserverEntry::updateAddressSelector(std::vector<AddressEntry>& addresses
 
     if(sum != 0) {
         // Normalize the probabilities to make the sum equal to 1.0
-        for(vector<double>::iterator it = probabilities.begin(); 
+        for(vector<double>::iterator it = probabilities.begin();
                 it != probabilities.end(); ++it){
             (*it) /= sum;
         }
     } else if(probabilities.size() > 0){
         // If all the nameservers are unreachable, the sum will be 0
         // So give each server equal opportunity to be selected.
-        for(vector<double>::iterator it = probabilities.begin(); 
+        for(vector<double>::iterator it = probabilities.begin();
                 it != probabilities.end(); ++it){
             (*it) = 1.0/probabilities.size();
         }

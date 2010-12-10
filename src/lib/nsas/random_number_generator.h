@@ -60,7 +60,7 @@ private:
 /// \brief Weighted random integer generator
 ///
 /// Generate random integers according different probabilities
-class WeightedRandomIntegerGenerator{
+class WeightedRandomIntegerGenerator {
 public:
     /// \brief Constructor
     ///
@@ -71,7 +71,8 @@ public:
     /// other integers and the probability is proportional to its value.
     /// \param min The minimum integer that generated, other integers will be 
     /// min, min + 1, ..., min + probabilities.size() - 1
-    WeightedRandomIntegerGenerator(const std::vector<double>& probabilities, int min = 0):
+    WeightedRandomIntegerGenerator(const std::vector<double>& probabilities,
+        size_t min = 0):
         dist_(0, 1.0), uniform_real_gen_(rng_, dist_), min_(min)
     {
         // The probabilities must be valid
@@ -95,7 +96,7 @@ public:
     /// Change the weights of each integers
     /// \param probabilities The probabies for all the integers
     /// \param min The minimum integer that generated
-    void reset(const std::vector<double>& probabilities, int min = 0)
+    void reset(const std::vector<double>& probabilities, size_t min = 0)
     {
         // The probabilities must be valid
         assert(isProbabilitiesValid(probabilities));
@@ -115,7 +116,7 @@ public:
     }
 
     /// \brief Generate weighted random integer
-    int operator()()
+    size_t operator()()
     {
         return std::lower_bound(cumulative_.begin(), cumulative_.end(), uniform_real_gen_()) 
             - cumulative_.begin() + min_;
@@ -156,7 +157,7 @@ private:
     boost::mt19937 rng_;                        ///< Mersenne Twister: A 623-dimensionally equidistributed uniform pseudo-random number generator 
     boost::uniform_real<> dist_;                ///< Uniformly distributed real numbers
     UniformRealGenerator uniform_real_gen_;     ///< Uniformly distributed random real numbers generator
-    int min_;                                   ///< The minimum integer that will be generated
+    size_t min_;                                   ///< The minimum integer that will be generated
 };
 
 }   // namespace dns
