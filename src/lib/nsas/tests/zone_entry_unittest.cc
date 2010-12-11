@@ -69,6 +69,11 @@ protected:
     /// \brief The resolver
     shared_ptr<TestResolver> resolver_;
 
+    /**
+     * \short A callback we use into the zone.
+     *
+     * It counts failures and stores successufll results.
+     */
     struct Callback : public AddressRequestCallback {
         Callback() : unreachable_count_(0) {}
         size_t unreachable_count_;
@@ -100,7 +105,13 @@ protected:
             nameserver_lru_)));
     }
 
-    /// \short Creates and injects a nameserver entry
+    /**
+     * \short Creates and injects a NameserverEntry
+     *
+     * This is used by few tests checking it works when the nameserver
+     * hash table already contains the NameserverEntry. This function
+     * creates one and puts it into the hash table.
+     */
     shared_ptr<NameserverEntry> injectEntry() {
         shared_ptr<NameserverEntry> nse(new NameserverEntry(ns_name_.toText(),
             RRClass::IN()));
@@ -109,6 +120,27 @@ protected:
         return (nse);
     }
 
+    /**
+     * \short Common part of few tests.
+     *
+     * All the tests NameserverEntryReady, NameserverEntryNotAsked,
+     * NameserverEntryInProgress, NameserverEntryExpired,
+     * NameserverEntryUnreachable check that it does not break
+     * when the nameserver hash table already contains the nameserver
+     * in one of the Fetchable::State.
+     *
+     * All the tests prepare the NameserverEntry and then call this
+     * to see if the zone really works. This asks and checks if it
+     * asks for the IP addresses or not and if it succeeds or fails.
+     *
+     * \param answer Should it ask for IP addresses of the nameserver?
+     *     If not, it expects it already asked during the preparation
+     *     (therefore the request count in resolver is 2).
+     * \param success_count How many callbacks to the zone should
+     *     succeed.
+     * \param failure_count How many callbacks to the zone should
+     *     fail.
+     */
     void checkInjected(bool answer, size_t success_count = 1,
         size_t failure_count = 0)
     {
@@ -148,36 +180,50 @@ TEST_F(ZoneEntryTest, DefaultConstructor) {
     EXPECT_TRUE(alpha.nameservers().empty());
 }
 
-// It should answer negatively right away if there are no nameservers
+/**
+ * \short Test with no nameservers.
+ *
+ * When we create a zone that does not have any nameservers,
+ * it should return failures right away (eg. no queries to nameservers
+ * should be generated anywhere and the failure should be provided).
+ */
 TEST_F(ZoneEntryTest, CallbackNoNS) {
     shared_ptr<InheritedZoneEntry> zone(getZone());
     EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
-    // It should accept the callback
+    // feed it with a callback
     zone->addCallback(callback_, ANY_OK);
     EXPECT_EQ(Fetchable::IN_PROGRESS, zone->getState());
-    // Ask for the nameservers
+    // Give it the (empty) nameserver list
     EXPECT_NO_THROW(resolver_->provideNS(0, rr_empty_));
-    // And tell imediatelly that it is unreachable (when it has no nameservers)
+    // It should tell us it is unreachable.
     EXPECT_TRUE(callback_->successes_.empty());
     EXPECT_EQ(1, callback_->unreachable_count_);
 }
 
-/*
- * This checks that:
- * * The question is answered even with 0 TTL
- * * It is answered only once, other query triggers another upstream query.
- * * When we answer with different one, it should ask for a different zone.
+/**
+ * \short Test how the zone behaves when the list of nameserves change.
+ *
+ * We use TTL of 0, so it asks every time for new list of nameservers.
+ * This allows us to pass a different list each time.
+ *
+ * So, this implicitly tests that it behaves correctly with 0 TTL as well,
+ * it means that it answers even with 0 TTL and that it answers only
+ * one query (or, all queries queued at that time).
+ *
+ * We change the list twice, to see it can ask for another nameserver and
+ * then to see if it can return to the previous (already cached) nameserver.
  */
 TEST_F(ZoneEntryTest, ChangedNS) {
     // Make it zero TTL, so it expires right away
     rr_single_->setTTL(RRTTL(0));
     shared_ptr<InheritedZoneEntry> zone(getZone());
     EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
-    // It should accept the callback
+    // Feed it with callback
     zone->addCallback(callback_, ANY_OK);
     EXPECT_EQ(Fetchable::IN_PROGRESS, zone->getState());
     EXPECT_NO_THROW(resolver_->provideNS(0, rr_single_));
     // It should not be answered yet, it should ask for the IP addresses
+    // (trough the NameserverEntry there)
     EXPECT_TRUE(callback_->successes_.empty());
     EXPECT_EQ(0, callback_->unreachable_count_);
     EXPECT_TRUE(resolver_->asksIPs(ns_name_, 1, 2));
@@ -199,7 +245,7 @@ TEST_F(ZoneEntryTest, ChangedNS) {
         RRType::NS(), RRTTL(0)));
     different_ns->addRdata(rdata::generic::NS(different_name));
     EXPECT_NO_THROW(resolver_->provideNS(3, different_ns));
-    // It should become ready and ask for the new name
+    // It should become ready and ask for the new nameserver addresses
     EXPECT_EQ(Fetchable::READY, zone->getState());
     // Answer one of the IP addresses, we should get an address now
     EXPECT_TRUE(resolver_->asksIPs(different_name, 4, 5));
@@ -221,16 +267,23 @@ TEST_F(ZoneEntryTest, ChangedNS) {
     EXPECT_TRUE(IOAddress("192.0.2.1").equal(callback_->successes_[0]));
 }
 
-// Check it answers callbacks when we give it addresses
+/**
+ * \short Check it works when everything is answered.
+ *
+ * This test emulates a situation when all queries for NS rrsets and
+ * IP addresses (of the NameserverEntry objects inside) are answered
+ * positively. All the callbacks should be called and answer to them
+ * provided.
+ */
 TEST_F(ZoneEntryTest, CallbacksAnswered) {
     shared_ptr<InheritedZoneEntry> zone(getZone());
-    // It should be in NOT_ASKED state
     EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
-    // It should accept the callback
+    // Feed it with a callback
     zone->addCallback(callback_, ANY_OK);
     EXPECT_EQ(Fetchable::IN_PROGRESS, zone->getState());
     EXPECT_NO_THROW(resolver_->provideNS(0, rr_single_));
-    // It should not be answered yet, it should ask for the IP addresses
+    // It should not be answered yet, its NameserverEntry should ask for the
+    // IP addresses
     EXPECT_TRUE(callback_->successes_.empty());
     EXPECT_EQ(0, callback_->unreachable_count_);
     EXPECT_TRUE(resolver_->asksIPs(ns_name_, 1, 2));
@@ -250,6 +303,7 @@ TEST_F(ZoneEntryTest, CallbacksAnswered) {
     EXPECT_TRUE(IOAddress("192.0.2.1").equal(callback_->successes_[1]));
     // None are rejected
     EXPECT_EQ(0, callback_->unreachable_count_);
+    // Answer the IPv6 one as well
     EXPECT_NO_THROW(resolver_->answer(2, ns_name_, RRType::AAAA(),
         rdata::in::AAAA("2001:db8::1")));
     // This should answer the third callback
@@ -266,12 +320,20 @@ TEST_F(ZoneEntryTest, CallbacksAnswered) {
     EXPECT_EQ(0, callback_->unreachable_count_);
 }
 
-// Pretend the server can be reached only by IPv4
+/**
+ * \short Test zone reachable only on IPv4.
+ *
+ * This test simulates a zone with its nameservers reachable only
+ * over IPv4. It means we answer the NS query, the A query, but
+ * we generate a failure for AAAA.
+ *
+ * The callbacks asking for any address and IPv4 address should be
+ * called successfully, while the ones asking for IPv6 addresses should
+ * fail.
+ */
 TEST_F(ZoneEntryTest, CallbacksAOnly) {
     shared_ptr<InheritedZoneEntry> zone(getZone());
-    // It should be in NOT_ASKED state
     EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
-    // It should accept the callback
     zone->addCallback(callback_, ANY_OK);
     EXPECT_EQ(Fetchable::IN_PROGRESS, zone->getState());
     EXPECT_NO_THROW(resolver_->provideNS(0, rr_single_));
@@ -284,8 +346,9 @@ TEST_F(ZoneEntryTest, CallbacksAOnly) {
     zone->addCallback(callback_, V4_ONLY);
     zone->addCallback(callback_, V6_ONLY);
     ASSERT_GE(resolver_->requests.size(), 3);
+    // We tell its NameserverEntry we can't get IPv6 address
     resolver_->requests[2].second->failure();
-    // One should be rejected, but two still stay, they have chance
+    // One should be rejected (V6_ONLY one), but two still stay
     EXPECT_EQ(0, callback_->successes_.size());
     EXPECT_EQ(1, callback_->unreachable_count_);
     // Answer the A one and see it answers what can be answered
@@ -297,7 +360,7 @@ TEST_F(ZoneEntryTest, CallbacksAOnly) {
     EXPECT_EQ(1, callback_->unreachable_count_);
     // Everything arriwed, so we are ready
     EXPECT_EQ(Fetchable::READY, zone->getState());
-    // Try asking something more
+    // Try asking something more and see it asks no more
     zone->addCallback(callback_, V4_ONLY);
     EXPECT_EQ(3, resolver_->requests.size());
     ASSERT_EQ(3, callback_->successes_.size());
@@ -310,12 +373,17 @@ TEST_F(ZoneEntryTest, CallbacksAOnly) {
     EXPECT_EQ(2, callback_->unreachable_count_);
 }
 
-// See it tries hard enough to get address and tries both nameservers
+/**
+ * \short Test with unreachable and v6-reachable nameserver.
+ *
+ * In this test we have a zone with two nameservers. The first one of them
+ * is unreachable, it will not have any addresses. We check that the ZoneEntry
+ * is patient and asks and waits for the second one and then returns the
+ * (successful) answers to us.
+ */
 TEST_F(ZoneEntryTest, CallbackTwoNS) {
     shared_ptr<InheritedZoneEntry> zone(getZone());
-    // It should be in NOT_ASKED state
     EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
-    // It should accept the callback
     zone->addCallback(callback_, V4_ONLY);
     EXPECT_EQ(Fetchable::IN_PROGRESS, zone->getState());
     EXPECT_NO_THROW(resolver_->provideNS(0, rrns_));
@@ -325,7 +393,7 @@ TEST_F(ZoneEntryTest, CallbackTwoNS) {
     ASSERT_NO_THROW(name.reset(new Name((*resolver_)[1]->getName())));
     ASSERT_TRUE(resolver_->asksIPs(*name, 1, 2));
     resolver_->requests[1].second->failure();
-    // Nothing should be answered or failed yet
+    // Nothing should be answered or failed yet, there's second one
     EXPECT_EQ(0, callback_->unreachable_count_);
     EXPECT_EQ(0, callback_->successes_.size());
     ASSERT_TRUE(resolver_->asksIPs((*resolver_)[3]->getName(), 3, 4));
@@ -361,7 +429,15 @@ TEST_F(ZoneEntryTest, CallbackTwoNS) {
     EXPECT_TRUE(IOAddress("2001:db8::1").equal(callback_->successes_[1]));
 }
 
-// Test if it works when the response comes right away from the resolve call
+/**
+ * \short This test checks it works with answers from cache.
+ *
+ * The resolver might provide the answer by calling the callback both sometime
+ * later or directly from its resolve method, causing recursion back inside
+ * the ZoneEntry. This test checks it works even in the second case (eg. that
+ * the ZoneEntry is able to handle callback called directly from the
+ * resolve). Tries checking both positive and negative answers.
+ */
 TEST_F(ZoneEntryTest, DirectAnswer) {
     shared_ptr<InheritedZoneEntry> zone(getZone());
     EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
@@ -418,12 +494,16 @@ TEST_F(ZoneEntryTest, DirectAnswer) {
     EXPECT_EQ(Fetchable::READY, zone->getState());
 }
 
-// Checks it asks only for addresses when the addresses time out, not NSs
+/**
+ * \short Test it works with timeouting NameserverEntries.
+ *
+ * In this test we have a zone with nameserver addresses at TTL 0.
+ * So, the NameserverEntry expires each time the ZoneEntry tries to get
+ * its addresses and must ask it again.
+ */
 TEST_F(ZoneEntryTest, AddressTimeout) {
     shared_ptr<InheritedZoneEntry> zone(getZone());
-    // It should be in NOT_ASKED state
     EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
-    // It should accept the callback
     zone->addCallback(callback_, ANY_OK);
     EXPECT_EQ(Fetchable::IN_PROGRESS, zone->getState());
     EXPECT_NO_THROW(resolver_->provideNS(0, rr_single_));
@@ -436,10 +516,11 @@ TEST_F(ZoneEntryTest, AddressTimeout) {
     EXPECT_EQ(Fetchable::READY, zone->getState());
     EXPECT_NO_THROW(resolver_->answer(1, ns_name_, RRType::A(),
          rdata::in::A("192.0.2.1"), 0));
+    // It answers, not rejects
     ASSERT_EQ(1, callback_->successes_.size());
     EXPECT_TRUE(IOAddress("192.0.2.1").equal(callback_->successes_[0]));
-    // None are rejected
     EXPECT_EQ(0, callback_->unreachable_count_);
+    // As well with IPv6
     EXPECT_NO_THROW(resolver_->answer(2, ns_name_, RRType::AAAA(),
         rdata::in::AAAA("2001:db8::1"), 0));
     EXPECT_EQ(1, callback_->successes_.size());
@@ -456,7 +537,16 @@ TEST_F(ZoneEntryTest, AddressTimeout) {
     EXPECT_TRUE(IOAddress("192.0.2.1").equal(callback_->successes_[1]));
 }
 
-// Test how the zone reacts to a nameserver entry in ready state
+/**
+ * \short Injection tests.
+ *
+ * These tests check the ZoneEntry does not break when the nameserver hash
+ * table already contains a NameserverEntry in some given state. Each test
+ * for a different state.
+ */
+//@{
+
+/// \short Test how the zone reacts to a nameserver entry in ready state
 TEST_F(ZoneEntryTest, NameserverEntryReady) {
     // Inject the entry
     shared_ptr<NameserverEntry> nse(injectEntry());
@@ -473,8 +563,8 @@ TEST_F(ZoneEntryTest, NameserverEntryReady) {
     checkInjected(false);
 }
 
-// Test how the zone reacts to a nameserver in not asked state
-TEST_F(ZoneEntryTest, NameserverNotAsked) {
+/// \short Test how the zone reacts to a nameserver in not asked state
+TEST_F(ZoneEntryTest, NameserverEntryNotAsked) {
     // Inject the entry
     injectEntry();
     // We do not need it, nothing to modify on it
@@ -482,8 +572,8 @@ TEST_F(ZoneEntryTest, NameserverNotAsked) {
     checkInjected(true);
 }
 
-// What if the zone finds a nameserver in progress?
-TEST_F(ZoneEntryTest, NameserverInProgress) {
+/// \short What if the zone finds a nameserver in progress?
+TEST_F(ZoneEntryTest, NameserverEntryInProgress) {
     // Prepare the nameserver entry
     shared_ptr<NameserverEntry> nse(injectEntry());
     nse->askIP(resolver_, nseCallback(), ANY_OK);
@@ -493,8 +583,8 @@ TEST_F(ZoneEntryTest, NameserverInProgress) {
     checkInjected(true);
 }
 
-// Check Zone's reaction to found expired nameserver
-TEST_F(ZoneEntryTest, NameserverExpired) {
+/// \short Check Zone's reaction to found expired nameserver
+TEST_F(ZoneEntryTest, NameserverEntryExpired) {
     shared_ptr<NameserverEntry> nse(injectEntry());
     nse->askIP(resolver_, nseCallback(), ANY_OK);
     EXPECT_EQ(Fetchable::IN_PROGRESS, nse->getState());
@@ -512,8 +602,8 @@ TEST_F(ZoneEntryTest, NameserverExpired) {
     checkInjected(true);
 }
 
-// Check how it reacts to an unreachable zone already in the table
-TEST_F(ZoneEntryTest, NameserverUnreachable) {
+/// \short Check how it reacts to an unreachable zone already in the table
+TEST_F(ZoneEntryTest, NameserverEntryUnreachable) {
     shared_ptr<NameserverEntry> nse(injectEntry());
     nse->askIP(resolver_, nseCallback(), ANY_OK);
     ASSERT_EQ(2, resolver_->requests.size());
@@ -523,5 +613,7 @@ TEST_F(ZoneEntryTest, NameserverUnreachable) {
 
     checkInjected(false, 0, 1);
 }
+
+//@}
 
 }   // namespace
