@@ -83,7 +83,7 @@ public:
         // Init with the current time
         rng_.seed(time(NULL));
     }
-    
+
     /// \brief Default constructor
     ///
     WeightedRandomIntegerGenerator():
@@ -120,11 +120,6 @@ public:
     {
         return std::lower_bound(cumulative_.begin(), cumulative_.end(), uniform_real_gen_()) 
             - cumulative_.begin() + min_;
-    }
-
-    /// \brief Destroctor
-    ~WeightedRandomIntegerGenerator()
-    {
     }
 
 private:
