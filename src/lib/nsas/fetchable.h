@@ -48,12 +48,8 @@ class Fetchable {
         };
         /// \short Constructors
         //@{
-        /// This creates the Fetchable object in NOT_ASKED state.
-        Fetchable() :
-            state_(NOT_ASKED)
-        { }
         /// This creates the Fetchable object in the given state.
-        Fetchable(State state) :
+        Fetchable(State state = NOT_ASKED) :
             state_(state)
         { }
         //@}
