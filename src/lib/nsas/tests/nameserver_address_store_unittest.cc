@@ -155,14 +155,13 @@ protected:
 
     class NSASCallback : public AddressRequestCallback {
         public:
-            typedef pair<bool, asiolink::IOAddress> Result;
+            typedef pair<bool, NameserverAddress> Result;
             static vector<Result> results;
-            virtual void success(const asiolink::IOAddress& address) {
+            virtual void success(const NameserverAddress& address) {
                 results.push_back(Result(true, address));
             }
             virtual void unreachable() {
-                results.push_back(Result(false,
-                    asiolink::IOAddress("0.0.0.0")));
+                results.push_back(Result(false, NameserverAddress()));
             }
     };
 
@@ -266,7 +265,7 @@ TEST_F(NameserverAddressStoreTest, emptyLookup) {
     EXPECT_EQ(3, NSASCallback::results.size());
     BOOST_FOREACH(const NSASCallback::Result& result, NSASCallback::results) {
         EXPECT_TRUE(result.first);
-        EXPECT_EQ("192.0.2.1", result.second.toText());
+        EXPECT_EQ("192.0.2.1", result.second.getAddress().toText());
     }
 }
 
@@ -368,7 +367,8 @@ TEST_F(NameserverAddressStoreTest, CombinedTest) {
     // That should trigger one answer
     EXPECT_EQ(1, NSASCallback::results.size());
     EXPECT_TRUE(NSASCallback::results[0].first);
-    EXPECT_EQ("192.0.2.1", NSASCallback::results[0].second.toText());
+    EXPECT_EQ("192.0.2.1",
+        NSASCallback::results[0].second.getAddress().toText());
     EXPECT_NO_THROW(resolver_->answer(3, name, RRType::AAAA(),
         rdata::in::AAAA("2001:bd8::1")));
     // And there should be yet another query
@@ -399,7 +399,7 @@ TEST_F(NameserverAddressStoreTest, CombinedTest) {
     EXPECT_EQ(3, NSASCallback::results.size());
     BOOST_FOREACH(const NSASCallback::Result& result, NSASCallback::results) {
         EXPECT_TRUE(result.first);
-        EXPECT_EQ("192.0.2.2", result.second.toText());
+        EXPECT_EQ("192.0.2.2", result.second.getAddress().toText());
     }
 }
 
