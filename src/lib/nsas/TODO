@@ -5,6 +5,10 @@ Long term:
   knows when it changes (it updates its structures), it is the best place. It
   will be caching even data like authority and additional sections. It will
   notify us somehow (we will need to tell it when).
+
+  The changes we need to know about is when set of nameservers or set of
+  addresses for a nameserver change and when a NS record or nameserver's A or
+  AAAA record is explicitly removed from the cache.
 * Optimisation to pass max two outstanding queries on the network (but fetch
   everything from cache right away). The first can be done by having number of
   packets on the network, with max of 4 (each query are 2 of them, A and AAAA),
