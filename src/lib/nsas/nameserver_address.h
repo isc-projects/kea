@@ -19,11 +19,17 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <exceptions/exceptions.h>
+
 #include "asiolink.h"
-#include "nameserver_entry.h"
+#include "address_entry.h"
+#include "nsas_types.h"
 
 namespace isc {
 namespace nsas {
+
+class ZoneEntry;
+class NameserverEntry;
 
 /// \brief Empty \c NameserverEntry pointer exception
 ///
@@ -40,17 +46,20 @@ public:
 /// \brief Nameserver Address
 ///
 /// This class implements the object that returned from NSAS when the resolver
-/// request an address for the name server. It contains one IOAddress object
+/// request an address for the name server. It contains one address
 /// that can be used by resolver. When the resolver get query back from the name
-/// server, it should update the name server's RTT(Round Trip Time) with this 
+/// server, it should update the name server's RTT(Round Trip Time) with this
 /// object.
+///
+/// It is not thread safe, only reentrant. It is expected to be kept inside
+/// the resolver and used only once for the address and once for the update.
 
 class NameserverAddress {
 public:
     /// \brief Constructor
     ///
     /// The NameserverAddress object will contain one shared_ptr object that
-    /// pointed to NameserverEntry which contains the address as well as it's 
+    /// pointed to NameserverEntry which contains the address as well as it's
     /// corresponding index. The user can update it's RTT with the index later.
     ///
     /// \param namerserver A shared_ptr that points to a NameserverEntry object
@@ -59,32 +68,21 @@ public:
     /// \param index The address's index in NameserverEntry's addresses vector
     /// \param family Address family, V4_ONLY or V6_ONLY
     NameserverAddress(const boost::shared_ptr<NameserverEntry>& nameserver,
-        size_t index, AddressFamily family):
-        ns_(nameserver), index_(index), family_(family)
+        const AddressEntry& address, AddressFamily family):
+        ns_(nameserver), address_(address), family_(family)
     {
-        if(!ns_.get()) {
+        if(!ns_) {
             isc_throw(NullNameserverEntryPointer, "NULL NameserverEntry pointer.");
         }
     }
 
     /// \brief Default Constructor
-    ///
-    /// \todo Is it needed? This one seems to make no sense.
-    NameserverAddress(): index_(0), family_(V4_ONLY)
-    {
-    }
-
-    /// \brief Destructor
-    ///
-    /// Empty destructor.
-    ~NameserverAddress()
-    {
-    }
+    NameserverAddress() : address_(asiolink::IOAddress("::1")) { }
 
     /// \brief Return address
     ///
     asiolink::IOAddress getAddress() const {
-        return ns_.get()->getAddressAtIndex(index_, family_);
+        return (address_.getAddress());
     }
 
     /// \brief Update Round-trip Time
@@ -92,13 +90,26 @@ public:
     /// When the user get one request back from the name server, it should
     /// update the address's RTT.
     /// \param rtt The new Round-Trip Time
-    void updateRTT(uint32_t rtt) {
-        ns_.get()->updateAddressRTTAtIndex(rtt, index_, family_);
+    void updateRTT(uint32_t rtt) const;
+
+    /// Short access to the AddressEntry inside.
+    //@{
+    const AddressEntry& getAddressEntry() const {
+        return (address_);
     }
+    AddressEntry& getAddressEntry() {
+        return (address_);
+    }
+    //@}
 private:
 
+    /*
+     * Note: Previous implementation used index into the entry. That is wrong,
+     * as the list of addresses may change. Thil would cause setting a
+     * different address or a crash.
+     */
     boost::shared_ptr<NameserverEntry> ns_;  ///< Shared-pointer to NameserverEntry object
-    size_t index_;                           ///< The address index in NameserverEntry
+    AddressEntry address_;            ///< The address
     AddressFamily family_;                   ///< The address family (V4_ONLY or V6_ONLY)
 };
 

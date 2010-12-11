@@ -122,10 +122,10 @@ TEST_F(NameserverEntryTest, InitialRTT) {
 
     // Check they are not 0 and they are all small, they should be some kind
     // of randomish numbers, so we can't expect much more here
-    BOOST_FOREACH(AddressEntry& entry, vec) {
-        EXPECT_GT(entry.getRTT(), 0);
+    BOOST_FOREACH(NameserverAddress& entry, vec) {
+        EXPECT_GT(entry.getAddressEntry().getRTT(), 0);
         // 20 is some arbitrary small value
-        EXPECT_LT(entry.getRTT(), 20);
+        EXPECT_LT(entry.getAddressEntry().getRTT(), 20);
     }
 }
 
@@ -143,7 +143,7 @@ TEST_F(NameserverEntryTest, SetRTT) {
 
     // Take the first address and change the RTT.
     IOAddress first_address = vec[0].getAddress();
-    uint32_t first_rtt = vec[0].getRTT();
+    uint32_t first_rtt = vec[0].getAddressEntry().getRTT();
     uint32_t new_rtt = first_rtt + 42;
     alpha->setAddressRTT(first_address, new_rtt);
 
@@ -156,7 +156,7 @@ TEST_F(NameserverEntryTest, SetRTT) {
         i != newvec.end(); ++i) {
         if (i->getAddress().equal(first_address)) {
             ++matchcount;
-            EXPECT_EQ(i->getRTT(), new_rtt);
+            EXPECT_EQ(i->getAddressEntry().getRTT(), new_rtt);
         }
     }
 
@@ -178,7 +178,7 @@ TEST_F(NameserverEntryTest, Unreachable) {
 
     // Take the first address and mark as unreachable.
     IOAddress first_address = vec[0].getAddress();
-    EXPECT_FALSE(vec[0].isUnreachable());
+    EXPECT_FALSE(vec[0].getAddressEntry().isUnreachable());
 
     alpha->setAddressUnreachable(first_address);
 
@@ -191,7 +191,7 @@ TEST_F(NameserverEntryTest, Unreachable) {
         i != newvec.end(); ++i) {
         if (i->getAddress().equal(first_address)) {
             ++matchcount;
-            EXPECT_TRUE(i->isUnreachable());
+            EXPECT_TRUE(i->getAddressEntry().isUnreachable());
         }
     }
 
@@ -450,7 +450,7 @@ TEST_F(NameserverEntryTest, KeepRTT) {
     EXPECT_EQ(Fetchable::READY, entry->getAddresses(addresses, V6_ONLY, true));
     ASSERT_EQ(2, addresses.size());
     EXPECT_EQ("2001:db8::1", addresses[1].getAddress().toText());
-    BOOST_FOREACH(const AddressEntry& address, addresses) {
+    BOOST_FOREACH(const NameserverAddress& address, addresses) {
         entry->setAddressRTT(address.getAddress(), 123);
     }
 
@@ -475,8 +475,8 @@ TEST_F(NameserverEntryTest, KeepRTT) {
     ASSERT_EQ(2, addresses.size());
     EXPECT_EQ("2001:db8::1", addresses[1].getAddress().toText());
     // They should have the RTT we set to them
-    BOOST_FOREACH(AddressEntry& address, addresses) {
-        EXPECT_EQ(123, address.getRTT());
+    BOOST_FOREACH(NameserverAddress& address, addresses) {
+        EXPECT_EQ(123, address.getAddressEntry().getRTT());
     }
 }
 
@@ -574,22 +574,22 @@ TEST_F(NameserverEntryTest, UpdateRTT) {
     uint32_t stable_rtt = 100;
 
     // Update the rtt
-    ns->updateAddressRTTAtIndex(stable_rtt, 0, V4_ONLY);
+    vec[0].updateRTT(stable_rtt);
 
     vec.clear();
     ns->getAddresses(vec);
-    uint32_t new_rtt = vec[0].getRTT();
+    uint32_t new_rtt = vec[0].getAddressEntry().getRTT();
 
     // The rtt should not close to new rtt immediately
     EXPECT_TRUE((stable_rtt - new_rtt) > (new_rtt - init_rtt));
 
     // Update the rtt for enough times
     for(int i = 0; i < 10000; ++i){
-        ns->updateAddressRTTAtIndex(stable_rtt, 0, V4_ONLY);
+        vec[0].updateRTT(stable_rtt);
     }
     vec.clear();
     ns->getAddresses(vec);
-    new_rtt = vec[0].getRTT();
+    new_rtt = vec[0].getAddressEntry().getRTT();
 
     // The rtt should be close to stable rtt value
     EXPECT_TRUE((stable_rtt - new_rtt) < (new_rtt - init_rtt));

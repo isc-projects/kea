@@ -49,7 +49,7 @@ namespace nsas {
 namespace {
 
 // Just shorter type alias
-typedef mutex::scoped_lock Lock;
+typedef recursive_mutex::scoped_lock Lock;
 
 }
 
@@ -100,15 +100,19 @@ NameserverEntry::getAddresses(AddressVector& addresses,
             return (getState());
     }
 
+    shared_ptr<NameserverEntry> self(shared_from_this());
     // If any address is OK, just pass everything we have
     if (family == ANY_OK) {
-        addresses.insert(addresses.end(), addresses_[V4_ONLY].begin(),
-            addresses_[V4_ONLY].end());
-        addresses.insert(addresses.end(), addresses_[V6_ONLY].begin(),
-            addresses_[V6_ONLY].end());
+        BOOST_FOREACH(const AddressEntry& entry, addresses_[V6_ONLY]) {
+            addresses.push_back(NameserverAddress(self, entry, V6_ONLY));
+        }
+        BOOST_FOREACH(const AddressEntry& entry, addresses_[V4_ONLY]) {
+            addresses.push_back(NameserverAddress(self, entry, V4_ONLY));
+        }
     } else {
-        addresses.insert(addresses.end(), addresses_[family].begin(),
-            addresses_[family].end());
+        BOOST_FOREACH(const AddressEntry& entry, addresses_[family]) {
+            addresses.push_back(NameserverAddress(self, entry, family));
+        }
     }
     if (getState() == EXPIRED && expired_ok) {
         return READY;
@@ -125,7 +129,7 @@ NameserverEntry::getAddress(NameserverAddress& address, AddressFamily family) {
         return (false);
     } else {
         address = NameserverAddress(shared_from_this(),
-            address_selectors_[family](), family);
+            addresses_[family][address_selectors_[family]()], family);
         return (true);
     }
 }
@@ -186,6 +190,19 @@ NameserverEntry::updateAddressRTTAtIndex(uint32_t rtt, size_t index,
     addresses_[family][index].setRTT(new_rtt);
 
     updateAddressSelector(addresses_[family], address_selectors_[family]);
+}
+
+void
+NameserverEntry::updateAddressRTT(uint32_t rtt,
+    const asiolink::IOAddress& address, AddressFamily family)
+{
+    Lock lock(mutex_);
+    for (size_t i(0); i < addresses_[family].size(); ++ i) {
+        if (addresses_[family][i].getAddress().equal(address)) {
+            updateAddressRTTAtIndex(rtt, i, family);
+            return;
+        }
+    }
 }
 
 // Sets the address to be unreachable

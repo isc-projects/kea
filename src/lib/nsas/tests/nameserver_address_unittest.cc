@@ -23,6 +23,7 @@
 #include <dns/rrttl.h>
 
 #include "../nameserver_address.h"
+#include "../nameserver_entry.h"
 #include "nsas_test.h"
 
 namespace isc {
@@ -68,7 +69,7 @@ public:
     uint32_t getAddressRTTAtIndex(uint32_t index) { 
         NameserverEntry::AddressVector addresses;
         ns_.get()->getAddresses(addresses);
-        return addresses[index].getRTT();
+        return (addresses[index].getAddressEntry().getRTT());
     }
 
 private:
@@ -87,31 +88,26 @@ class NameserverAddressTest : public ::testing::Test {
 protected:
     // Constructor
     NameserverAddressTest(): 
-        ns_address_(ns_sample_.getNameserverEntry(), TEST_ADDRESS_INDEX,
-            V4_ONLY),
-        invalid_ns_address_(ns_sample_.getNameserverEntry(),
-            ns_sample_.getAddressesCount(), V4_ONLY)
+        ns_address_(ns_sample_.getNameserverEntry(),
+            ns_sample_.getNameserverEntry()->getAddressAtIndex(
+            TEST_ADDRESS_INDEX, V4_ONLY), V4_ONLY)
     {
     }
 
     NameserverEntrySample ns_sample_;
     // Valid NameserverAddress object
     NameserverAddress ns_address_;
-
-    // NameserverAddress object that constructed with invalid index
-    NameserverAddress invalid_ns_address_;
 };
 
 // Test that the address is equal to the address in NameserverEntry
 TEST_F(NameserverAddressTest, Address) {
     EXPECT_TRUE(ns_address_.getAddress().equal( ns_sample_.getAddressAtIndex(TEST_ADDRESS_INDEX)));
 
-    // It will trigger an assert with the invalid index
-    ASSERT_DEATH(invalid_ns_address_.getAddress(), "");
-
     boost::shared_ptr<NameserverEntry> empty_ne((NameserverEntry*)NULL);
     // It will throw an NullNameserverEntryPointer exception with the empty NameserverEntry shared pointer
-    ASSERT_THROW({NameserverAddress empty_ns_address(empty_ne, 0, V4_ONLY);}, NullNameserverEntryPointer);
+    ASSERT_THROW({NameserverAddress empty_ns_address(empty_ne,
+        asiolink::IOAddress("127.0.0.1"), V4_ONLY);},
+        NullNameserverEntryPointer);
 }
 
 // Test that the RTT is updated

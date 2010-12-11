@@ -35,6 +35,7 @@
 #include "resolver_interface.h"
 #include "nsas_entry.h"
 #include "random_number_generator.h"
+#include "nameserver_address.h"
 
 namespace isc {
 namespace nsas {
@@ -82,13 +83,6 @@ class ResolverInterface;
 /// for several zones (hence is pointed to by more than one zone entry), and
 /// may have several addresses associated with it.
 ///
-/// When created, zero or more addresses may be given.  At any time, the list
-/// of addresses may be updated.  This may occur (a) after creation, either to
-/// to get the list of addresses when none have been supplied or to replace
-/// glue records, or (b) when the object has been accessed but found to be
-/// expired (the address records have reached their TTL).
-/// TODO: Add code for update of addresses
-///
 /// The addresses expire after their TTL has been reached.  For simplicity,
 /// (and because it is unlikely that A and AAAA records from the same zone have
 /// different TTLs) there is one expiration time for all address records.
@@ -103,7 +97,7 @@ class ResolverInterface;
 class NameserverEntry : public NsasEntry<NameserverEntry>, public Fetchable {
 public:
     /// List of addresses associated with this nameserver
-    typedef std::vector<AddressEntry>   AddressVector;
+    typedef std::vector<NameserverAddress>   AddressVector;
     typedef AddressVector::iterator     AddressVectorIterator;
 
     /// \brief Constructor where no A records are supplied.
@@ -139,8 +133,7 @@ public:
      *     arrived and is is returned, but the other is still on the way).
      * \todo Should we sort out unreachable addresses as well?
      */
-    Fetchable::State getAddresses(
-        NameserverEntry::AddressVector& addresses,
+    Fetchable::State getAddresses(AddressVector& addresses,
         AddressFamily family = ANY_OK, bool expired_ok = false);
 
     /// \brief Return one address
@@ -169,10 +162,25 @@ public:
 
     /// \brief Update RTT of the address that corresponding to the index
     ///
+    /// Shouldn't probably be used directly. Use corresponding
+    /// NameserverAddress.
     /// \param rtt Round-Trip Time
     /// \param index The address's index in address vector
     /// \param family The address family, V4_ONLY or V6_ONLY
     void updateAddressRTTAtIndex(uint32_t rtt, size_t index,
+        AddressFamily family);
+    /**
+     * \short Update RTT of an address.
+     *
+     * This is similar to updateAddressRTTAtIndex, but you pass the address,
+     * not it's index. Passing the index might be unsafe, because the position
+     * of the address or the cound of addresses may change in time.
+     *
+     * \param rtt Round-Trip Time
+     * \param address The address whose RTT should be updated.
+     * \param family The address family, V4_ONLY or V6_ONLY
+     */
+    void updateAddressRTT(uint32_t rtt, const asiolink::IOAddress& address,
         AddressFamily family);
 
     /// \brief Set Address Unreachable
@@ -244,8 +252,7 @@ public:
     //@}
 
 private:
-    // TODO Read-write lock?
-    mutable boost::mutex    mutex_;     ///< Mutex protecting this object
+    mutable boost::recursive_mutex    mutex_;     ///< Mutex protecting this object
     std::string     name_;              ///< Canonical name of the nameserver
     isc::dns::RRClass classCode_;       ///< Class of the nameserver
     /**
