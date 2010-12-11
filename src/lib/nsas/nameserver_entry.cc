@@ -48,15 +48,7 @@ namespace nsas {
 
 namespace {
 
-/// Returns false if the address family of a given entry matches the address
-/// familyi given. This curious logic is needed for use in the remove_copy_if
-/// algorithm, which copies all values apart from those for which the
-/// criteria is met.
-bool
-addressSelection(short family, const AddressEntry& entry) {
-    return (entry.getAddress().getFamily() != family);
-};
-
+// Just shorter type alias
 typedef mutex::scoped_lock Lock;
 
 }
@@ -73,7 +65,7 @@ NameserverEntry::getAddresses(AddressVector& addresses,
     // We take = as well, so we catch TTL 0 correctly
     // expiration_ == 0 means not set, the reason is we are UNREACHABLE or
     // NOT_ASKED or IN_PROGRESS
-    if (getState() != NOT_ASKED && expiration_ <= now && expiration_) {
+    if (getState() != NOT_ASKED && expiration_ && expiration_ <= now) {
         setState(EXPIRED);
     }
 
@@ -83,7 +75,15 @@ NameserverEntry::getAddresses(AddressVector& addresses,
 
     switch (getState()) {
         case IN_PROGRESS:
-            // Did we receive the address already?
+            /*
+             * Did we receive the address already?
+             *
+             * We might have already received the addresses for this family
+             * and still wait for the other (in which case has_address_[family]
+             * will be true). We might already received a negative answer,
+             * in which case expect_address_[family] is false and
+             * has_address_[family] is false as well.
+             */
             if (!has_address_[family] && expect_address_[family]) {
                 return IN_PROGRESS;
             }
@@ -194,10 +194,12 @@ NameserverEntry::setAddressUnreachable(const IOAddress& address) {
     setAddressRTT(address, AddressEntry::UNREACHABLE);
 }
 
-/*
- * A callback class into the resolver. Whenever we ask the resolver something,
- * this is created and the answer is fed back trough this. It holds a shared
- * pointer to the entry so it is not destroyed too soon.
+/**
+ * \short A callback into the resolver.
+ *
+ * Whenever we ask the resolver something, this is created and the answer is
+ * fed back trough this. It holds a shared pointer to the entry so it is not
+ * destroyed too soon.
  */
 class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
     public:
@@ -208,6 +210,12 @@ class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
             family_(family),
             type_(type)
         { }
+        /**
+         * \short We received the address successfully.
+         *
+         * This extracts the addresses out from the response and puts them
+         * inside the entry. It tries to reuse the address entries from before (if there were any), to keep their RTTs.
+         */
         virtual void success(const shared_ptr<AbstractRRset>& response) {
             time_t now = time(NULL);
 
@@ -227,54 +235,65 @@ class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
             // TODO Remove at merge with trunk
             i->first();
             while (! i->isLast()) {
-                // Try to find the original value and reuse its rtt
+                // Try to find the original value and reuse it
                 string address(i->getCurrent().toText());
                 AddressEntry *found(NULL);
                 BOOST_FOREACH(AddressEntry& entry,
                     entry_->previous_addresses_[family_])
                 {
                     if (entry.getAddress().toText() == address) {
+                        // Good, found it.
                         found = &entry;
                         break;
                     }
                 }
+                // If we found it, use it. If not, create a new one.
                 entries.push_back(found ? *found : AddressEntry(IOAddress(
                     i->getCurrent().toText()), ++ rtt_));
                 i->next();
             }
 
-            // We no longer expect this one here. We can drop it.
+            // We no longer need the previous set of addresses, we have
+            // the current ones now.
             entry_->previous_addresses_[family_].clear();
 
             if (entries.empty()) {
                 // No data there, count it as a failure
                 failureInternal(lock);
             } else {
+                // We received the data, so mark it
                 entry_->expect_address_[family_] = false;
                 entry_->expect_address_[ANY_OK] =
                     entry_->expect_address_[V4_ONLY] ||
                     entry_->expect_address_[V6_ONLY];
-                // Everything is here
+                // Everything is here (all address families)
                 if (!entry_->expect_address_[ANY_OK]) {
                     entry_->setState(READY);
                 }
                 // We have some address
                 entry_->has_address_[ANY_OK] =
                     entry_->has_address_[family_] = true;
-                // Put the addresses there
+                // Insert the entries inside
                 entry_->addresses_[family_].swap(entries);
                 // Update the expiration time. If it is 0, it means we
                 // did not set it yet, so reset
                 time_t expiration(now + response->getTTL().getValue());
                 if (entry_->expiration_) {
+                    // We expire at the time first address expires
                     entry_->expiration_ = min(entry_->expiration_, expiration);
                 } else {
+                    // We have no expiration time set, use this one
                     entry_->expiration_ = expiration;
                 }
                 // Run the right callbacks
                 dispatchCallbacks(lock);
             }
         }
+        /**
+         * \short The resolver failed to retrieve the data.
+         *
+         * So mark the current address family as unreachable.
+         */
         virtual void failure() {
             Lock lock(entry_->mutex_);
             failureInternal(lock);
@@ -286,6 +305,7 @@ class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
         RRType type_;
 
         // Dispatches all relevant callbacks. Keeps lock unlocked afterwards.
+        // TODO: We might want to use recursive lock and get rid of this
         void dispatchCallbacks(Lock& lock)
         {
             // There was a change (we wouldn't want to notify about it

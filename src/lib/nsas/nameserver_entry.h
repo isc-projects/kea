@@ -117,26 +117,28 @@ public:
         expiration_(0)
     {}
 
-    /// \brief Return Address
-    ///
-    /// Returns a vector of addresses corresponding to this nameserver.
-    ///
-    /// \param addresses Vector of address entries into which will be appended
-    /// addresses that match the specified criteria. (The reason for choosing
-    /// this signature is that addresses from more than one nameserver may be
-    /// retrieved, in which case appending to an existing list of addresses is
-    /// convenient.)
-    /// \param family The family of address that is requested.
-    /// else for all addresses.
-    /// \param expired_ok Return addresses even when expired. In that case,
-    ///     it will pretend to be READY. This is here to allow getting address
-    ///     with TTL 0 from a nameserver that just arrived and triggered
-    ///     a callback.
-    /// \return The state this is currently in. If the TTL expires, it enters
-    ///     the EXPIRED state by itself. It may be IN_PROGRESS and still
-    ///     return some addresses (when one address family arrived and is
-    ///     is returned, but the other is still on the way).
-    /// \todo Should we sort out unreachable addresses as well?
+    /*
+     * \brief Return Address
+     *
+     * Returns a vector of addresses corresponding to this nameserver.
+     *
+     * \param addresses Vector of address entries into which will be appended
+     *     addresses that match the specified criteria. (The reason for
+     *     choosing this signature is that addresses from more than one
+     *     nameserver may be retrieved, in which case appending to an existing
+     *     list of addresses is convenient.)
+     * \param family The family of address that is requested.
+     * \param expired_ok Return addresses even when expired. This is here
+     *     because an address with TTL 0 is expired at the exact time it
+     *     arrives. But when we call the callback, the owner of callback
+     *     is allowed to use them anyway so it should set expired_ok
+     *     to true.
+     * \return The state this is currently in. If the TTL expires, it enters
+     *     the EXPIRED state by itself and passes no addresses. It may be
+     *     IN_PROGRESS and still return some addresses (when one address family
+     *     arrived and is is returned, but the other is still on the way).
+     * \todo Should we sort out unreachable addresses as well?
+     */
     Fetchable::State getAddresses(
         NameserverEntry::AddressVector& addresses,
         AddressFamily family = ANY_OK, bool expired_ok = false);
