@@ -23,5 +23,6 @@ libnsas_la_SOURCES += zone_entry.cc zone_entry.h
 libnsas_la_SOURCES += fetchable.h
 libnsas_la_SOURCES += address_request_callback.h
 libnsas_la_SOURCES += resolver_interface.h
+libnsas_la_SOURCES += random_number_generator.h
 
 CLEANFILES = *.gcno *.gcda
