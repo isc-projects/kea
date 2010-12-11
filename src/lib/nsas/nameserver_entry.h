@@ -34,7 +34,6 @@
 #include "fetchable.h"
 #include "resolver_interface.h"
 #include "nsas_entry.h"
-#include "random_number_generator.h"
 #include "nameserver_address.h"
 
 namespace isc {
@@ -135,15 +134,6 @@ public:
      */
     Fetchable::State getAddresses(AddressVector& addresses,
         AddressFamily family = ANY_OK, bool expired_ok = false);
-
-    /// \brief Return one address
-    ///
-    /// Return one address corresponding to this nameserver
-    /// \param address NameserverAddress object used to receive the address
-    /// \param family The family of user request, V4_ONLY or V6_ONLY
-    /// \return true if one address is found, false otherwise
-    /// \todo What use is this function?
-    virtual bool getAddress(NameserverAddress& address, AddressFamily family);
 
     /// \brief Return Address that corresponding to the index
     ///
@@ -281,21 +271,6 @@ private:
     /// Call unlocked.
     void askIP(boost::shared_ptr<ResolverInterface> resolver,
         const isc::dns::RRType&, AddressFamily);
-    /// \brief Update the address selector according to the RTTs of addresses
-    ///
-    /// \param addresses The address list
-    /// \param selector Weighted random generator
-    void updateAddressSelector(std::vector<AddressEntry>& addresses,
-            WeightedRandomIntegerGenerator& selector);
-
-    /**
-     * \short Generate one integer according to different probability.
-     *
-     * \todo Should this be more global? And it definitely should be
-     *     inside ZoneEntry, the selection should be done from all
-     *     that addresses.
-     */
-    WeightedRandomIntegerGenerator address_selectors_[ANY_OK];
 };
 
 }   // namespace dns
