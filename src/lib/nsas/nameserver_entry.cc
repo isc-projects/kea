@@ -206,7 +206,6 @@ class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
         ResolverCallback(shared_ptr<NameserverEntry> entry,
             AddressFamily family, const RRType& type) :
             entry_(entry),
-            rtt_(0),
             family_(family),
             type_(type)
         { }
@@ -249,7 +248,7 @@ class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
                 }
                 // If we found it, use it. If not, create a new one.
                 entries.push_back(found ? *found : AddressEntry(IOAddress(
-                    i->getCurrent().toText()), ++ rtt_));
+                    i->getCurrent().toText()), 1));
                 i->next();
             }
 
@@ -300,7 +299,6 @@ class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
         }
     private:
         shared_ptr<NameserverEntry> entry_;
-        int rtt_;
         AddressFamily family_;
         RRType type_;
 
