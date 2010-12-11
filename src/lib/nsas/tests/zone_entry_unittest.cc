@@ -16,6 +16,8 @@
 
 #include <gtest/gtest.h>
 #include <boost/shared_ptr.hpp>
+#include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <dns/rrclass.h>
 #include <dns/rdataclass.h>
@@ -630,5 +632,103 @@ TEST_F(ZoneEntryTest, NameserverEntryUnreachable) {
 }
 
 //@}
+
+// Count hits of each address
+void
+countHits(size_t *counts, const vector<NameserverAddress>& successes) {
+    BOOST_FOREACH(const NameserverAddress& address, successes) {
+        // We use the last digit as an index
+        string address_string(address.getAddress().toText());
+        size_t index(address_string[address_string.size() - 1] - '0' - 1);
+        ASSERT_LT(index, 3);
+        counts[index] ++;
+    }
+}
+
+// Select one address from the address list
+TEST_F(ZoneEntryTest, AddressSelection) {
+    // Create the zone, give it 2 nameservers and total of 3 addresses
+    // (one of them is ipv6)
+    shared_ptr<ZoneEntry> zone(getZone());
+    zone->addCallback(callback_, ANY_OK);
+    EXPECT_NO_THROW(resolver_->provideNS(0, rrns_));
+    ASSERT_GT(resolver_->requests.size(), 1);
+    Name name1(resolver_->requests[1].first->getName());
+    EXPECT_TRUE(resolver_->asksIPs(name1, 1, 2));
+    resolver_->answer(1, name1, RRType::A(), rdata::in::A("192.0.2.1"));
+    resolver_->answer(2, name1, RRType::AAAA(),
+        rdata::in::AAAA("2001:db8::2"));
+    ASSERT_GT(resolver_->requests.size(), 3);
+    Name name2(resolver_->requests[3].first->getName());
+    EXPECT_TRUE(resolver_->asksIPs(name2, 3, 4));
+    resolver_->answer(3, name2, RRType::A(), rdata::in::A("192.0.2.3"));
+    resolver_->requests[4].second->failure();
+
+    shared_ptr<NameserverEntry> ns1(nameserver_table_->get(HashKey(
+        name1.toText(), RRClass::IN()))),
+        ns2(nameserver_table_->get(HashKey(name2.toText(), RRClass::IN())));
+
+    size_t counts[3] = {0, 0, 0};
+    callback_->successes_.clear();
+
+    // Test they have the same probabilities when they have the same RTT
+    for (size_t i(0); i < 10000; ++ i) {
+        zone->addCallback(callback_, ANY_OK);
+    }
+    countHits(counts, callback_->successes_);
+    // They should have about the same probability
+    EXPECT_EQ(1, (int)(counts[0]*1.0/counts[1] + 0.5));
+    EXPECT_EQ(1, (int)(counts[1]*1.0/counts[2] + 0.5));
+
+    // reset the environment
+    callback_->successes_.clear();
+    counts[0] = counts[1] = counts[2] = 0;
+
+    // Test when the RTT is not the same
+    ns1->setAddressRTT(IOAddress("192.0.2.1"), 1);
+    ns1->setAddressRTT(IOAddress("2001:db8::2"), 2);
+    ns2->setAddressRTT(IOAddress("192.0.2.3"), 3);
+    for (size_t i(0); i < 10000; ++ i) {
+        zone->addCallback(callback_, ANY_OK);
+    }
+    countHits(counts, callback_->successes_);
+    // First should be 2^2 more often then second
+    EXPECT_EQ(4, (int)(counts[0]*1.0/counts[1] + 0.5));
+    // And it should be 3^2 times more often than third
+    EXPECT_EQ(9, (int)(counts[0]*1.0/counts[2] + 0.5));
+
+    // reset the environment
+    callback_->successes_.clear();
+    counts[0] = counts[1] = counts[2] = 0;
+
+    // Test with unreachable address
+    ns1->setAddressRTT(IOAddress("192.0.2.1"), 1);
+    ns1->setAddressRTT(IOAddress("2001:db8::2"), 100);
+    ns2->setAddressUnreachable(IOAddress("192.0.2.3"));
+    for (size_t i(0); i < 10000; ++ i) {
+        zone->addCallback(callback_, ANY_OK);
+    }
+    countHits(counts, callback_->successes_);
+    // The unreachable one shouldn't be called
+    EXPECT_EQ(0, counts[2]);
+
+    // reset the environment
+    callback_->successes_.clear();
+    counts[0] = counts[1] = counts[2] = 0;
+
+    // Test with all unreachable
+    ns1->setAddressUnreachable(IOAddress("192.0.2.1"));
+    ns1->setAddressUnreachable(IOAddress("2001:db8::2"));
+    ns2->setAddressUnreachable(IOAddress("192.0.2.3"));
+    for (size_t i(0); i < 10000; ++ i) {
+        zone->addCallback(callback_, ANY_OK);
+    }
+    countHits(counts, callback_->successes_);
+    // They should have about the same probability
+    EXPECT_EQ(1, (int)(counts[0]*1.0/counts[1] + 0.5));
+    EXPECT_EQ(1, (int)(counts[1]*1.0/counts[2] + 0.5));
+
+    // TODO: The unreachable server should be changed to reachable after 5minutes, but how to test?
+}
 
 }   // namespace

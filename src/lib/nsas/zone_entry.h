@@ -32,6 +32,7 @@
 #include "fetchable.h"
 #include "resolver_interface.h"
 #include "nsas_types.h"
+#include "random_number_generator.h"
 
 namespace isc {
 namespace nsas {
@@ -163,6 +164,9 @@ private:
     // Put a callback into the nameserver entry. Same ADDR_REQ_MAX means for
     // all families
     void insertCallback(NameserverPtr nameserver, AddressFamily family);
+    // A random generator for this zone entry
+    // TODO: A more global one? Per thread one?
+    WeightedRandomIntegerGenerator address_selector;
 };
 
 } // namespace nsas

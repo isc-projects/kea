@@ -110,9 +110,6 @@ public:
 
         // Reset the minimum integer
         min_ = min;
-
-        // Reset the random number generator
-        rng_.seed(time(NULL));
     }
 
     /// \brief Generate weighted random integer

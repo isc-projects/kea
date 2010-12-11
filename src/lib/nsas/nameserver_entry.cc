@@ -120,20 +120,6 @@ NameserverEntry::getAddresses(AddressVector& addresses,
     return getState();
 }
 
-// Return one address matching the given family
-bool
-NameserverEntry::getAddress(NameserverAddress& address, AddressFamily family) {
-    Lock lock(mutex_);
-
-    if (addresses_[family].empty()) {
-        return (false);
-    } else {
-        address = NameserverAddress(shared_from_this(),
-            addresses_[family][address_selectors_[family]()], family);
-        return (true);
-    }
-}
-
 // Return the address corresponding to the family
 asiolink::IOAddress
 NameserverEntry::getAddressAtIndex(size_t index, AddressFamily family) const {
@@ -155,8 +141,6 @@ NameserverEntry::setAddressRTT(const IOAddress& address, uint32_t rtt) {
         BOOST_FOREACH(AddressEntry& entry, addresses_[family]) {
             if (entry.getAddress().equal(address)) {
                 entry.setRTT(rtt);
-                updateAddressSelector(addresses_[family],
-                    address_selectors_[family]);
                 return;
             }
         }
@@ -188,8 +172,6 @@ NameserverEntry::updateAddressRTTAtIndex(uint32_t rtt, size_t index,
     uint32_t new_rtt = (uint32_t)(old_rtt * UPDATE_RTT_ALPHA + rtt *
         (1 - UPDATE_RTT_ALPHA));
     addresses_[family][index].setRTT(new_rtt);
-
-    updateAddressSelector(addresses_[family], address_selectors_[family]);
 }
 
 void
@@ -323,10 +305,6 @@ class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
         // TODO: We might want to use recursive lock and get rid of this
         void dispatchCallbacks(Lock& lock)
         {
-            // There was a change (we wouldn't want to notify about it
-            // otherwise), so we update it
-            entry_->updateAddressSelector(entry_->addresses_[family_],
-                entry_->address_selectors_[family_]);
             // We dispatch ANY addresses if there is at last one address or
             // there's no chance we'll get some in future
             bool dispatch_any = entry_->has_address_[ANY_OK] ||
@@ -443,50 +421,6 @@ NameserverEntry::askIP(shared_ptr<ResolverInterface> resolver,
             callbacks_.push_back(CallbackPair(family, callback));
         }
     }
-}
-
-// Update the address selector according to the RTTs
-//
-// Each address has a probability to be selected if multiple addresses are available
-// The weight factor is equal to 1/(rtt*rtt), then all the weight factors are normalized
-// to make the sum equal to 1.0
-void NameserverEntry::updateAddressSelector(
-    std::vector<AddressEntry>& addresses,
-    WeightedRandomIntegerGenerator& selector)
-{
-    vector<double> probabilities;
-    for(vector<AddressEntry>::iterator it = addresses.begin();
-            it != addresses.end(); ++it){
-        uint32_t rtt = (*it).getRTT();
-        if(rtt == 0) {
-            isc_throw(RTTIsZero, "The RTT is 0");
-        }
-
-        if(rtt == AddressEntry::UNREACHABLE) {
-            probabilities.push_back(0);
-        } else {
-            probabilities.push_back(1.0/(rtt*rtt));
-        }
-    }
-    // Calculate the sum
-    double sum = accumulate(probabilities.begin(), probabilities.end(), 0.0);
-
-    if(sum != 0) {
-        // Normalize the probabilities to make the sum equal to 1.0
-        for(vector<double>::iterator it = probabilities.begin();
-                it != probabilities.end(); ++it){
-            (*it) /= sum;
-        }
-    } else if(probabilities.size() > 0){
-        // If all the nameservers are unreachable, the sum will be 0
-        // So give each server equal opportunity to be selected.
-        for(vector<double>::iterator it = probabilities.begin();
-                it != probabilities.end(); ++it){
-            (*it) = 1.0/probabilities.size();
-        }
-    }
-
-    selector.reset(probabilities);
 }
 
 } // namespace dns

@@ -255,29 +255,47 @@ move(Container& into, Container& from) {
     from.clear();
 }
 
-// TODO: This 3 functions should not be needed. We should do
-// propper choosing. There's code for it already.
-mutex randMutex;
+// Update the address selector according to the RTTs
+//
+// Each address has a probability to be selected if multiple addresses are available
+// The weight factor is equal to 1/(rtt*rtt), then all the weight factors are normalized
+// to make the sum equal to 1.0
+void
+updateAddressSelector(std::vector<NameserverAddress>& addresses,
+    WeightedRandomIntegerGenerator& selector)
+{
+    vector<double> probabilities;
+    BOOST_FOREACH(NameserverAddress& address, addresses) {
+        uint32_t rtt = address.getAddressEntry().getRTT();
+        if(rtt == 0) {
+            isc_throw(RTTIsZero, "The RTT is 0");
+        }
 
-size_t
-randIndex(size_t count) {
-    // We need to lock the global generator
-    // TODO If there's contention locking, we might want a generator
-    // for each thread?
-    mutex::scoped_lock lock(randMutex);
-    // This seems to be enough to use pseudo-random generator and according
-    // to boost docs, this one is fast.
-    static rand48 generator;
-    return variate_generator<rand48&, uniform_int<size_t> >(generator,
-        uniform_int<size_t>(0, count - 1))();
-}
+        if(rtt == AddressEntry::UNREACHABLE) {
+            probabilities.push_back(0);
+        } else {
+            probabilities.push_back(1.0/(rtt*rtt));
+        }
+    }
+    // Calculate the sum
+    double sum = accumulate(probabilities.begin(), probabilities.end(), 0.0);
 
-const NameserverAddress&
-chooseAddress(const NameserverEntry::AddressVector& addresses) {
-    // TODO Something little bit more inteligent than just picking random
-    // one
-    assert(!addresses.empty()); // Should not be called with empty list
-    return (addresses[randIndex(addresses.size())]);
+    if(sum != 0) {
+        // Normalize the probabilities to make the sum equal to 1.0
+        for(vector<double>::iterator it = probabilities.begin();
+                it != probabilities.end(); ++it){
+            (*it) /= sum;
+        }
+    } else if(probabilities.size() > 0){
+        // If all the nameservers are unreachable, the sum will be 0
+        // So give each server equal opportunity to be selected.
+        for(vector<double>::iterator it = probabilities.begin();
+                it != probabilities.end(); ++it){
+            (*it) = 1.0/probabilities.size();
+        }
+    }
+
+    selector.reset(probabilities);
 }
 
 }
@@ -467,6 +485,11 @@ ZoneEntry::process(AddressFamily family,
                     return;
                 // We have some addresses to answer
                 } else if (!addresses.empty()) {
+                    // Prepare the selector of addresses
+                    // TODO: Think of a way how to keep it for a while
+                    //   (not update every time)
+                    updateAddressSelector(addresses, address_selector);
+
                     // Extract the callbacks
                     vector<CallbackPtr> to_execute;
                     // FIXME: Think of a solution where we do not lose
@@ -475,7 +498,7 @@ ZoneEntry::process(AddressFamily family,
 
                     // Run the callbacks
                     BOOST_FOREACH(const CallbackPtr& callback, to_execute) {
-                        callback->success(chooseAddress(addresses));
+                        callback->success(addresses[address_selector()]);
                     }
                     return;
                 } else if (!pending) {
