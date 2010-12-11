@@ -48,7 +48,7 @@ ZoneEntry::ZoneEntry(boost::shared_ptr<ResolverInterface> resolver,
 
 namespace {
 // Shorter aliases for frequently used types
-typedef mutex::scoped_lock Lock; // Local lock, nameservers not locked
+typedef recursive_mutex::scoped_lock Lock; // Local lock, nameservers not locked
 typedef shared_ptr<AddressRequestCallback> CallbackPtr;
 
 /*
@@ -92,12 +92,12 @@ class ZoneEntry::ResolverCallback : public ResolverInterface::Callback {
          * and to ask for the rest of them.
          */
         virtual void success(const shared_ptr<AbstractRRset>& answer) {
-            shared_ptr<Lock> lock(new Lock(entry_->mutex_));
+            Lock lock(entry_->mutex_);
             RdataIteratorPtr iterator(answer->getRdataIterator());
             iterator->first();
             // If there are no data
             if (iterator->isLast()) {
-                failureInternal(lock, answer->getTTL().getValue());
+                failureInternal(answer->getTTL().getValue());
                 return;
             } else {
                 /*
@@ -172,7 +172,7 @@ class ZoneEntry::ResolverCallback : public ResolverInterface::Callback {
                 // It is unbelievable, but we found no nameservers there
                 if (entry_->nameservers_.empty()) {
                     // So we fail the same way as if we got empty list
-                    failureInternal(lock, answer->getTTL().getValue());
+                    failureInternal(answer->getTTL().getValue());
                     return;
                 } else {
                     // Ok, we have them. So set us as ready, set our
@@ -180,20 +180,14 @@ class ZoneEntry::ResolverCallback : public ResolverInterface::Callback {
                     // if there's still someone to ask.
                     entry_->setState(READY);
                     entry_->expiry_ = answer->getTTL().getValue() + time(NULL);
-                    entry_->process(CallbackPtr(), ADDR_REQ_MAX,
-                        NameserverPtr(), lock);
+                    entry_->process(ADDR_REQ_MAX, NameserverPtr());
                     return;
                 }
             }
         }
         /// \short Failed to receive answer.
         virtual void failure() {
-            shared_ptr<Lock> lock(new Lock(entry_->mutex_));
-            /*
-             * FIXME: That 5 minutes is just made up and wrong.
-             * Where is the correct place to get the correct number?
-             */
-            failureInternal(lock, 300);
+            failureInternal(300);
         }
     private:
         /**
@@ -202,12 +196,12 @@ class ZoneEntry::ResolverCallback : public ResolverInterface::Callback {
          * It marks the ZoneEntry as unreachable and processes callbacks (by
          * calling process).
          */
-        void failureInternal(shared_ptr<Lock> lock, time_t ttl) {
+        void failureInternal(time_t ttl) {
+            Lock lock(entry_->mutex_);
             entry_->setState(UNREACHABLE);
             entry_->expiry_ = ttl + time(NULL);
             // Process all three callback lists and tell them KO
-            entry_->process(CallbackPtr(), ADDR_REQ_MAX, NameserverPtr(),
-                lock);
+            entry_->process(ADDR_REQ_MAX, NameserverPtr());
         }
         /// \short The entry we are callback of
         shared_ptr<ZoneEntry> entry_;
@@ -215,7 +209,7 @@ class ZoneEntry::ResolverCallback : public ResolverInterface::Callback {
 
 void
 ZoneEntry::addCallback(CallbackPtr callback, AddressFamily family) {
-    shared_ptr<Lock> lock(new Lock(mutex_));
+    Lock lock(mutex_);
 
     bool ask(false);
 
@@ -230,18 +224,18 @@ ZoneEntry::addCallback(CallbackPtr callback, AddressFamily family) {
     }
 
     // We do not have the answer right away, just queue the callback
-    if (ask || getState() == IN_PROGRESS || !callbacks_[family].empty()) {
-        callbacks_[family].push_back(callback);
-    } else {
+    bool execute(!ask && getState() != IN_PROGRESS &&
+        callbacks_[family].empty());
+    callbacks_[family].push_back(callback);
+    if (execute) {
         // Try to process it right away, store if not possible to handle
-        process(callback, family, NameserverPtr(), lock);
+        process(family, NameserverPtr());
         return;
     }
 
     if (ask) {
         setState(IN_PROGRESS);
         // Our callback might be directly called from resolve, unlock now
-        lock->unlock();
         QuestionPtr question(new Question(Name(name_), class_code_,
             RRType::NS()));
         shared_ptr<ResolverCallback> resolver_callback(
@@ -338,7 +332,7 @@ class ZoneEntry::NameserverCallback : public NameserverEntry::Callback {
          * any callbacks we can.
          */
         virtual void operator()(NameserverPtr ns) {
-            entry_->process(CallbackPtr(), family_, ns);
+            entry_->process(family_, ns);
         }
     private:
         shared_ptr<ZoneEntry> entry_;
@@ -346,7 +340,7 @@ class ZoneEntry::NameserverCallback : public NameserverEntry::Callback {
 };
 
 void
-ZoneEntry::dispatchFailures(AddressFamily family, shared_ptr<Lock> lock) {
+ZoneEntry::dispatchFailures(AddressFamily family) {
     // We extract all the callbacks
     vector<CallbackPtr> callbacks;
     if (family == ADDR_REQ_MAX) {
@@ -355,28 +349,16 @@ ZoneEntry::dispatchFailures(AddressFamily family, shared_ptr<Lock> lock) {
         family = ANY_OK;
     }
     callbacks.swap(callbacks_[family]);
-    // We want to call them not locked, so we both do not block the
-    // lock and allow them to call our functions
-    lock->unlock();
     BOOST_FOREACH(const CallbackPtr& callback, callbacks) {
         callback->unreachable();
     }
 }
 
 void
-ZoneEntry::process(CallbackPtr callback, AddressFamily family,
-    shared_ptr<NameserverEntry> nameserver, shared_ptr<Lock> lock)
+ZoneEntry::process(AddressFamily family,
+    const shared_ptr<NameserverEntry>& nameserver)
 {
-    // If we were not provided with a lock, get one
-    if (!lock) {
-        lock.reset(new Lock(mutex_));
-    }
-
-    if (callback) {
-        assert(family != ADDR_REQ_MAX);
-        callbacks_[family].push_back(callback);
-    }
-
+    Lock lock(mutex_);
     switch (getState()) {
         // These are not interesting, nothing to return now
         case NOT_ASKED:
@@ -384,7 +366,7 @@ ZoneEntry::process(CallbackPtr callback, AddressFamily family,
         case EXPIRED:
             break;
         case UNREACHABLE: {
-            dispatchFailures(family, lock);
+            dispatchFailures(family);
             // And we do nothing more now
             break;
         }
@@ -392,29 +374,36 @@ ZoneEntry::process(CallbackPtr callback, AddressFamily family,
             if (family == ADDR_REQ_MAX) {
                 // Just process each one separately
                 // TODO Think this over, is it safe, to unlock in the middle?
-                process(CallbackPtr(), ANY_OK, nameserver, lock);
-                lock->lock(); // process unlocks, lock again
-                process(CallbackPtr(), V4_ONLY, nameserver, lock);
-                lock->lock();
-                process(CallbackPtr(), V6_ONLY, nameserver, lock);
+                process(ANY_OK, nameserver);
+                process(V4_ONLY, nameserver);
+                process(V6_ONLY, nameserver);
             } else {
                 // Nothing to do anyway for this family, be dormant
                 if (callbacks_[family].empty()) {
-                    lock->unlock();
                     return;
                 }
                 /*
-                 * Check that we are only in one process call on stack.
-                 * It eliminates the problem when there are multiple nameserver
-                 * IP addresses in the cache, but the first one would trigger
-                 * calling all callbacks. We do not want that, we want to wait
-                 * for all cached ones to arriwe. Therefore we bail out if
-                 * theres a call here in the stack already and let that sort
-                 * everything out when it returns.
+                 * If we have multiple nameservers and more than 1 of them
+                 * is in the cache, we want to choose from all their addresses.
+                 * So we ensure this instance of process is the only one on
+                 * the stack. If not, we terminate and let the outernmost
+                 * one handle it when we return to it.
+                 *
+                 * If we didn't do it, one instance would call "resolve". If it
+                 * was from cache, it would imediatelly recurse back to another
+                 * process (trough the nameserver callback, etc), which would
+                 * take that only one nameserver and trigger all callbacks.
+                 * Only then would resolve terminate and we could ask for the
+                 * second nameserver. This way, we first receive all the
+                 * nameservers that are already in cache and trigger the
+                 * callbacks only then.
+                 *
+                 * However, this does not wait for external fetches of
+                 * nameserver addresses, as the callback is called after
+                 * process terminates. Therefore this waits only for filling
+                 * of the nameservers which we already have in cache.
                  */
-                // Check that we are only in one process call on stack
                 if (in_process_[family]) {
-                    lock->unlock();
                     return;
                 }
                 // Mark we are on the stack
@@ -455,9 +444,6 @@ ZoneEntry::process(CallbackPtr callback, AddressFamily family,
                 if (!to_ask.empty()) {
                     // We ask everything that makes sense now
                     nameservers_not_asked_.clear();
-                    // We should not be locked, because this function can
-                    // be called directly from the askIP again
-                    lock->unlock();
                     /*
                      * TODO: Possible place for an optimisation. We now ask
                      * everything we can. We should limit this to something like
@@ -476,7 +462,7 @@ ZoneEntry::process(CallbackPtr callback, AddressFamily family,
                     // Retry with all the data that might have arrived
                     in_process_[family] = false;
                     // We do not provide the callback again
-                    process(CallbackPtr(), family, nameserver);
+                    process(family, nameserver);
                     // And be done
                     return;
                 // We have some addresses to answer
@@ -487,16 +473,13 @@ ZoneEntry::process(CallbackPtr callback, AddressFamily family,
                     // any callbacks upon exception
                     to_execute.swap(callbacks_[family]);
 
-                    // Unlock, the callbacks might want to call us
-                    lock->unlock();
-
                     // Run the callbacks
                     BOOST_FOREACH(const CallbackPtr& callback, to_execute) {
                         callback->success(chooseAddress(addresses));
                     }
                     return;
                 } else if (!pending) {
-                    dispatchFailures(family, lock);
+                    dispatchFailures(family);
                     return;
                 }
             }
