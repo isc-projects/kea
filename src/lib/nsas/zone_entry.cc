@@ -272,12 +272,12 @@ randIndex(size_t count) {
         uniform_int<size_t>(0, count - 1))();
 }
 
-asiolink::IOAddress
+const NameserverAddress&
 chooseAddress(const NameserverEntry::AddressVector& addresses) {
     // TODO Something little bit more inteligent than just picking random
     // one
     assert(!addresses.empty()); // Should not be called with empty list
-    return (addresses[randIndex(addresses.size())].getAddress());
+    return (addresses[randIndex(addresses.size())]);
 }
 
 }
