@@ -58,6 +58,16 @@ protected:
         Callback() : count(0) { }
     };
 private:
+    /**
+     * \short Fills an rrset into the NameserverEntry trough resolver.
+     *
+     * This function is used when we want to pass data to a NameserverEntry
+     * trough the resolver.
+     * \param resolver The resolver used by the NameserverEntry
+     * \param index Index of the query in the resolver.
+     * \param set The answer. If the pointer is empty, it is taken
+     *     as a failure.
+     */
     void fillSet(shared_ptr<TestResolver> resolver, size_t index,
         shared_ptr<BasicRRset> set)
     {
