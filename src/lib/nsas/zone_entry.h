@@ -115,23 +115,30 @@ protected:
     time_t          expiry_;    ///< Expiry time of this entry, 0 means not set
     //}@
 private:
-    mutable boost::mutex    mutex_;     ///< Mutex protecting this zone entry
+    mutable boost::recursive_mutex    mutex_;     ///< Mutex protecting this zone entry
     std::string     name_;      ///< Canonical zone name
     isc::dns::RRClass        class_code_; ///< Class code
-    // Internal function that adds a callback (if there's one) and processes
-    // the nameservers (if there's chance there's some info) and calls
-    // callbacks. If nameserver is given, it is considered new and valid
-    // even if its TTL is 0.
-    // The family says which one changed or has any update.
-    // If the familly is ADDR_REQ_MAX, then it means process all callbacks.
-    // However, you must not provide callback.
-    // If lock is provided, it is locked mutex_ and will be used. If not,
-    // will use its own. It will unlock the lock if it terminates without
-    // an exception.
-    void process(boost::shared_ptr<AddressRequestCallback> callback,
-         AddressFamily family, boost::shared_ptr<NameserverEntry> nameserver,
-         boost::shared_ptr<boost::mutex::scoped_lock> lock =
-         boost::shared_ptr<boost::mutex::scoped_lock>());
+    /**
+     * \short Process all the callbacks that can be processed
+     *
+     * The purpose of this funtion is to ask all nameservers for their IP
+     * addresses and execute all callbacks that can be executed. It is
+     * called whenever new callback appears and there's a chance it could
+     * be answered or when new information is available (list of nameservers,
+     * nameserver is unreachable or has an address).
+     * \param family Which is the interesting address family where the change
+     *     happened. ADDR_REQ_MAX means it could be any of them and it will
+     *     trigger processing of all callbacks no matter what their family
+     *     was.
+     * \param nameserver Pass a nameserver if the change was triggered by
+     *     the nameserver (if it wasn't triggered by a nameserver, pass empty
+     *     pointer). This one will be accepted even with 0 TTL, the information
+     *     just arrived and we are allowed to use it just now.
+     * \todo With the recursive locks now, we might want to simplify executing
+     *     callbacks (here and other functions as well);
+     */
+    void process(AddressFamily family,
+        const boost::shared_ptr<NameserverEntry>& nameserver);
     // Resolver we use
     boost::shared_ptr<ResolverInterface> resolver_;
     // We store the nameserver table and lru, so we can look up when there's
@@ -151,10 +158,8 @@ private:
     class NameserverCallback;
     // And it can get into our internals as well (call process)
     friend class NameserverCallback;
-    // This dispatches callbacks of given family with failures (and unlocks)
-    // The lock is mandatory
-    void dispatchFailures(AddressFamily family,
-        boost::shared_ptr<boost::mutex::scoped_lock> lock);
+    // This dispatches callbacks of given family with failures
+    void dispatchFailures(AddressFamily family);
     // Put a callback into the nameserver entry. Same ADDR_REQ_MAX means for
     // all families
     void insertCallback(NameserverPtr nameserver, AddressFamily family);
