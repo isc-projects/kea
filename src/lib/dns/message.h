@@ -525,8 +525,6 @@ private:
 /// that originated the asynchronous call falls out of scope.
 typedef boost::shared_ptr<Message> MessagePtr;
 
-std::ostream& operator<<(std::ostream& os, const Opcode& opcode);
-std::ostream& operator<<(std::ostream& os, const Rcode& rcode);
 std::ostream& operator<<(std::ostream& os, const Message& message);
 }
 }
