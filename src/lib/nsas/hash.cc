@@ -60,7 +60,7 @@ if advised of the possibility of such damage.
 #include <cassert>
 #include <string>
 
-#include "config.h"
+#include <config.h>
 
 #include "hash.h"
 
@@ -72,7 +72,8 @@ namespace nsas {
 // Constructor.
 
 Hash::Hash(uint32_t tablesize, uint32_t maxkeylen, bool randomise) :
-    tablesize_(tablesize), maxkeylen_(min(maxkeylen, (255 - sizeof(uint16_t))))
+    tablesize_(tablesize), maxkeylen_(min<uint32_t>(maxkeylen,
+        (255 - sizeof(uint16_t))))
 {
     // (Code taken from BIND-9)
     //
@@ -150,7 +151,7 @@ uint32_t Hash::operator()(const HashKey& key, bool ignorecase) const
         char        bytes[sizeof(uint16_t)];    // Byte equivalent
     } convert;
 
-    convert.class_code = key.class_code;
+    convert.class_code = key.class_code.getCode();
     for (int j = 0; j < sizeof(uint16_t); ++j, ++i) {
         partial_sum += convert.bytes[j] * randvec_[i];
     }

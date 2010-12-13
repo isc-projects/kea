@@ -20,18 +20,28 @@
 /// address store.  These act to delete zones from the zone hash table when
 /// the element reaches the top of the LRU list.
 
+#include <dns/rrttl.h>
+#include <dns/rdataclass.h>
+#include <dns/rrclass.h>
+
 #include <gtest/gtest.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/foreach.hpp>
 
 #include <string.h>
-#include <vector>
+#include <cassert>
 
-#include "nameserver_address_store.h"
-#include "nsas_entry_compare.h"
-#include "nameserver_entry.h"
-#include "zone_entry.h"
+#include "../nameserver_address_store.h"
+#include "../nsas_entry_compare.h"
+#include "../nameserver_entry.h"
+#include "../zone_entry.h"
+#include "../address_request_callback.h"
 #include "nsas_test.h"
+
+using namespace isc::dns;
+using namespace std;
+using namespace boost;
 
 namespace isc {
 namespace nsas {
@@ -47,8 +57,10 @@ public:
     ///
     /// \param hashsize Size of the zone hash table
     /// \param lrusize Size of the zone hash table
-    DerivedNsas(uint32_t hashsize, uint32_t lrusize) :
-        NameserverAddressStore(hashsize, lrusize)
+    DerivedNsas(shared_ptr<TestResolver> resolver, uint32_t hashsize,
+        uint32_t lrusize) :
+        NameserverAddressStore(resolver, hashsize, lrusize),
+        resolver_(resolver)
     {}
 
     /// \brief Virtual Destructor
@@ -58,43 +70,108 @@ public:
     /// \brief Add Nameserver Entry to Hash and LRU Tables
     void AddNameserverEntry(boost::shared_ptr<NameserverEntry>& entry) {
         HashKey h = entry->hashKey();
-        nameserver_hash_.add(entry, h);
-        nameserver_lru_.add(entry);
+        nameserver_hash_->add(entry, h);
+        nameserver_lru_->add(entry);
     }
 
     /// \brief Add Zone Entry to Hash and LRU Tables
     void AddZoneEntry(boost::shared_ptr<ZoneEntry>& entry) {
         HashKey h = entry->hashKey();
-        zone_hash_.add(entry, h);
-        zone_lru_.add(entry);
+        zone_hash_->add(entry, h);
+        zone_lru_->add(entry);
     }
+    /**
+     * \short Just wraps the common lookup
+     *
+     * It calls the lookup and provides the authority section
+     * if it is asked for by the resolver.
+     */
+    void lookupAndAnswer(const string& name, const RRClass& class_code,
+        shared_ptr<AbstractRRset> authority,
+        shared_ptr<AddressRequestCallback> callback)
+    {
+        size_t size(resolver_->requests.size());
+        NameserverAddressStore::lookup(name, class_code, callback, ANY_OK);
+        // It asked something, the only thing it can ask is the NS list
+        if (size < resolver_->requests.size()) {
+            resolver_->provideNS(size, authority);
+            // Once answered, drop the request so noone else sees it
+            resolver_->requests.erase(resolver_->requests.begin() + size);
+        } else {
+            ADD_FAILURE() << "Not asked for NS";
+        }
+    }
+private:
+    shared_ptr<TestResolver> resolver_;
 };
 
 
 
 /// \brief Text Fixture Class
-class NameserverAddressStoreTest : public ::testing::Test {
+class NameserverAddressStoreTest : public TestWithRdata {
 protected:
 
-    // Constructor - initialize a set of nameserver and zone objects.  For convenience,
-    // these are stored in vectors.
-    NameserverAddressStoreTest()
+    NameserverAddressStoreTest() :
+        authority_(new RRset(Name("example.net."), RRClass::IN(), RRType::NS(),
+            RRTTL(128))),
+        empty_authority_(new RRset(Name("example.net."), RRClass::IN(),
+            RRType::NS(), RRTTL(128))),
+        resolver_(new TestResolver)
     {
+        // Constructor - initialize a set of nameserver and zone objects.  For
+        // convenience, these are stored in vectors.
         for (int i = 1; i <= 9; ++i) {
-            std::string name = "nameserver" + boost::lexical_cast<std::string>(i);
-            nameservers_.push_back(boost::shared_ptr<NameserverEntry>(new NameserverEntry(name, (40 + i))));
+            std::string name = "nameserver" + boost::lexical_cast<std::string>(
+                i);
+            nameservers_.push_back(boost::shared_ptr<NameserverEntry>(
+                new NameserverEntry(name, RRClass(40 + i))));
         }
 
+        // Some zones. They will not use the tables in this test, so it can be
+        // empty
         for (int i = 1; i <= 9; ++i) {
             std::string name = "zone" + boost::lexical_cast<std::string>(i);
-            zones_.push_back(boost::shared_ptr<ZoneEntry>(new ZoneEntry(name, (40 + i))));
+            zones_.push_back(boost::shared_ptr<ZoneEntry>(new ZoneEntry(
+                resolver_, name, RRClass(40 + i),
+                shared_ptr<HashTable<NameserverEntry> >(),
+                shared_ptr<LruList<NameserverEntry> >())));
         }
+
+        // A nameserver serving data
+        authority_->addRdata(ConstRdataPtr(new rdata::generic::NS(Name(
+            "ns.example.com."))));
+
+        // This is reused because of convenience, clear it just in case
+        NSASCallback::results.clear();
     }
 
     // Vector of pointers to nameserver and zone entries.
     std::vector<boost::shared_ptr<NameserverEntry> > nameservers_;
     std::vector<boost::shared_ptr<ZoneEntry> >       zones_;
+
+    RRsetPtr authority_, empty_authority_;
+
+    shared_ptr<TestResolver> resolver_;
+
+    class NSASCallback : public AddressRequestCallback {
+        public:
+            typedef pair<bool, NameserverAddress> Result;
+            static vector<Result> results;
+            virtual void success(const NameserverAddress& address) {
+                results.push_back(Result(true, address));
+            }
+            virtual void unreachable() {
+                results.push_back(Result(false, NameserverAddress()));
+            }
+    };
+
+    boost::shared_ptr<AddressRequestCallback> getCallback() {
+        return (boost::shared_ptr<AddressRequestCallback>(new NSASCallback));
+    }
 };
+
+vector<NameserverAddressStoreTest::NSASCallback::Result>
+    NameserverAddressStoreTest::NSASCallback::results;
 
 
 /// \brief Remove Zone Entry from Hash Table
@@ -105,7 +182,7 @@ TEST_F(NameserverAddressStoreTest, ZoneDeletionCheck) {
 
     // Create a NSAS with a hash size of three and a LRU size of 9 (both zone and
     // nameserver tables).
-    DerivedNsas nsas(2, 2);
+    DerivedNsas nsas(resolver_, 2, 2);
 
     // Add six entries to the tables.  After addition the reference count of each element
     // should be 3 - one for the entry in the zones_ vector, and one each for the entries
@@ -135,7 +212,7 @@ TEST_F(NameserverAddressStoreTest, NameserverDeletionCheck) {
 
     // Create a NSAS with a hash size of three and a LRU size of 9 (both zone and
     // nameserver tables).
-    DerivedNsas nsas(2, 2);
+    DerivedNsas nsas(resolver_, 2, 2);
 
     // Add six entries to the tables.  After addition the reference count of each element
     // should be 3 - one for the entry in the nameservers_ vector, and one each for the entries
@@ -154,6 +231,176 @@ TEST_F(NameserverAddressStoreTest, NameserverDeletionCheck) {
     EXPECT_EQ(3, nameservers_[7].use_count());
 
     EXPECT_EQ(1, nameservers_[1].use_count());
+}
+
+/**
+ * \short Try lookup on empty store.
+ *
+ * Check if it asks correct questions and it keeps correct internal state.
+ */
+TEST_F(NameserverAddressStoreTest, emptyLookup) {
+    DerivedNsas nsas(resolver_, 10, 10);
+    // Ask it a question
+    nsas.lookupAndAnswer("example.net.", RRClass::IN(), authority_,
+        getCallback());
+    // It should ask for IP addresses for ns.example.com.
+    EXPECT_NO_THROW(resolver_->asksIPs(Name("ns.example.com."), 0, 1));
+
+    // Ask another question for the same zone
+    nsas.lookup("example.net.", RRClass::IN(), getCallback());
+    // It should ask no more questions now
+    EXPECT_EQ(2, resolver_->requests.size());
+
+    // Ask another question with different zone but the same nameserver
+    authority_->setName(Name("example.com."));
+    nsas.lookupAndAnswer("example.com.", RRClass::IN(), authority_,
+        getCallback());
+    // It still should ask nothing
+    EXPECT_EQ(2, resolver_->requests.size());
+
+    // We provide IP address of one nameserver, it should generate all the
+    // results
+    EXPECT_NO_THROW(resolver_->answer(0, Name("ns.example.com."), RRType::A(),
+        rdata::in::A("192.0.2.1")));
+    EXPECT_EQ(3, NSASCallback::results.size());
+    BOOST_FOREACH(const NSASCallback::Result& result, NSASCallback::results) {
+        EXPECT_TRUE(result.first);
+        EXPECT_EQ("192.0.2.1", result.second.getAddress().toText());
+    }
+}
+
+/**
+ * \short Try looking up a zone that does not have any nameservers.
+ *
+ * It should not ask anything and say it is unreachable right away.
+ */
+TEST_F(NameserverAddressStoreTest, zoneWithoutNameservers) {
+    DerivedNsas nsas(resolver_, 10, 10);
+    // Ask it a question
+    nsas.lookupAndAnswer("example.net.", RRClass::IN(), empty_authority_,
+        getCallback());
+    // There should be no questions, because there's nothing to ask
+    EXPECT_EQ(0, resolver_->requests.size());
+    // And there should be one "unreachable" answer for the query
+    ASSERT_EQ(1, NSASCallback::results.size());
+    EXPECT_FALSE(NSASCallback::results[0].first);
+}
+
+/**
+ * \short Try looking up a zone that has only an unreachable nameserver.
+ *
+ * It should be unreachable. Furthermore, subsequent questions for that zone
+ * or other zone with the same nameserver should be unreachable right away,
+ * without further asking.
+ */
+TEST_F(NameserverAddressStoreTest, unreachableNS) {
+    DerivedNsas nsas(resolver_, 10, 10);
+    // Ask it a question
+    nsas.lookupAndAnswer("example.net.", RRClass::IN(), authority_,
+        getCallback());
+    // It should ask for IP addresses for example.com.
+    EXPECT_NO_THROW(resolver_->asksIPs(Name("ns.example.com."), 0, 1));
+
+    // Ask another question with different zone but the same nameserver
+    authority_->setName(Name("example.com."));
+    nsas.lookupAndAnswer("example.com.", RRClass::IN(), authority_,
+        getCallback());
+    // It should ask nothing more now
+    EXPECT_EQ(2, resolver_->requests.size());
+
+    // We say there are no addresses
+    resolver_->requests[0].second->failure();
+    resolver_->requests[1].second->failure();
+
+    // We should have 2 answers now
+    EXPECT_EQ(2, NSASCallback::results.size());
+    // When we ask one same and one other zone with the same nameserver,
+    // it should generate no questions and answer right away
+    nsas.lookup("example.net.", RRClass::IN(), getCallback());
+    authority_->setName(Name("example.org."));
+    nsas.lookupAndAnswer("example.org.", RRClass::IN(), authority_,
+        getCallback());
+    // There should be 4 negative answers now
+    EXPECT_EQ(4, NSASCallback::results.size());
+    BOOST_FOREACH(const NSASCallback::Result& result, NSASCallback::results) {
+        EXPECT_FALSE(result.first);
+    }
+}
+
+/**
+ * \short Try to stress it little bit by having multiple zones and nameservers.
+ *
+ * Does some asking, on a set of zones that share some nameservers, with
+ * slower answering, evicting data, etc.
+ */
+TEST_F(NameserverAddressStoreTest, CombinedTest) {
+    // Create small caches, so we get some evictions
+    DerivedNsas nsas(resolver_, 1, 1);
+    // Ask for example.net. It has single nameserver out of the zone
+    nsas.lookupAndAnswer("example.net.", RRClass::IN(), authority_,
+        getCallback());
+    // It should ask for the nameserver IP addresses
+    EXPECT_NO_THROW(resolver_->asksIPs(Name("ns.example.com."), 0, 1));
+    EXPECT_EQ(0, NSASCallback::results.size());
+    // But we do not answer it right away. We create a new zone and
+    // let this nameserver entry get out.
+    rrns_->addRdata(rdata::generic::NS("example.cz"));
+    nsas.lookupAndAnswer(EXAMPLE_CO_UK, RRClass::IN(), rrns_, getCallback());
+    // It really should ask something, one of the nameservers
+    // (or both)
+    ASSERT_GT(resolver_->requests.size(), 2);
+    Name name(resolver_->requests[2].first->getName());
+    EXPECT_TRUE(name == Name("example.fr") || name == Name("example.de") ||
+        name == Name("example.cz"));
+    EXPECT_NO_THROW(resolver_->asksIPs(name, 2, 3));
+    EXPECT_EQ(0, NSASCallback::results.size());
+
+    size_t request_count(resolver_->requests.size());
+    // This should still be in the hash table, so try it asks no more questions
+    nsas.lookup("example.net.", RRClass::IN(), getCallback());
+    EXPECT_EQ(request_count, resolver_->requests.size());
+    EXPECT_EQ(0, NSASCallback::results.size());
+
+    // We respond to one of the 3 nameservers
+    EXPECT_NO_THROW(resolver_->answer(2, name, RRType::A(),
+        rdata::in::A("192.0.2.1")));
+    // That should trigger one answer
+    EXPECT_EQ(1, NSASCallback::results.size());
+    EXPECT_TRUE(NSASCallback::results[0].first);
+    EXPECT_EQ("192.0.2.1",
+        NSASCallback::results[0].second.getAddress().toText());
+    EXPECT_NO_THROW(resolver_->answer(3, name, RRType::AAAA(),
+        rdata::in::AAAA("2001:bd8::1")));
+    // And there should be yet another query
+    ASSERT_GT(resolver_->requests.size(), 4);
+    EXPECT_NE(name, resolver_->requests[4].first->getName());
+    Name another_name = resolver_->requests[4].first->getName();
+    EXPECT_TRUE(another_name == Name("example.fr") ||
+        another_name == Name("example.de") ||
+        another_name == Name("example.cz"));
+    request_count = resolver_->requests.size();
+
+    // But when ask for a different zone with the first nameserver, it should
+    // ask again, as it is evicted already
+    authority_->setName(Name("example.com."));
+    nsas.lookupAndAnswer("example.com.", RRClass::IN(), authority_,
+        getCallback());
+    EXPECT_EQ(request_count + 2, resolver_->requests.size());
+    EXPECT_NO_THROW(resolver_->asksIPs(Name("ns.example.com."), request_count,
+        request_count + 1));
+    // Now, we answer both queries for the same address
+    // and three (one for the original, one for this one) more answers should
+    // arrive
+    NSASCallback::results.clear();
+    EXPECT_NO_THROW(resolver_->answer(0, Name("ns.example.com."), RRType::A(),
+        rdata::in::A("192.0.2.2")));
+    EXPECT_NO_THROW(resolver_->answer(request_count, Name("ns.example.com."),
+        RRType::A(), rdata::in::A("192.0.2.2")));
+    EXPECT_EQ(3, NSASCallback::results.size());
+    BOOST_FOREACH(const NSASCallback::Result& result, NSASCallback::results) {
+        EXPECT_TRUE(result.first);
+        EXPECT_EQ("192.0.2.2", result.second.getAddress().toText());
+    }
 }
 
 } // namespace nsas

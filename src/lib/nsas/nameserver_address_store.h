@@ -20,16 +20,25 @@
 #include <string>
 #include <vector>
 
-#include "rrset.h"
+#include <boost/shared_ptr.hpp>
 
-#include "address_request_callback.h"
-#include "hash_table.h"
-#include "nameserver_entry.h"
-#include "lru_list.h"
-#include "zone_entry.h"
+#include "nsas_types.h"
 
 namespace isc {
+// Some forward declarations, so we do not need to include so many headers
+
+namespace dns {
+class RRClass;
+}
+
 namespace nsas {
+
+class ResolverInterface;
+template<class T> class HashTable;
+template<class T> class LruList;
+class ZoneEntry;
+class NameserverEntry;
+class AddressRequestCallback;
 
 /// \brief Nameserver Address Store
 ///
@@ -46,15 +55,17 @@ public:
     /// The constructor sizes all the tables.  As there are various
     /// relationships between the table sizes, and as some values are best as
     /// prime numbers, the table sizes are determined by compile-time values.
-    /// 
+    ///
+    /// \param resolver Which resolver object (or resolver-like, in case of
+    /// tests) should it use to ask questions.
     /// \param zonehashsize Size of the zone hash table.  The default value of
     /// 1009 is the first prime number above 1000.
     /// \param nshash size Size of the nameserver hash table.  The default
-    /// value of 2003 is the first prime number over 2000, and by implication,
+    /// value of 3001 is the first prime number over 3000, and by implication,
     /// there is an assumption that there will be more nameservers than zones
     /// in the store.
-    NameserverAddressStore(uint32_t zonehashsize = 1009,
-        uint32_t nshashsize = 3001);
+    NameserverAddressStore(boost::shared_ptr<ResolverInterface> resolver,
+        uint32_t zonehashsize = 1009, uint32_t nshashsize = 3001);
 
     /// \brief Destructor
     ///
@@ -67,15 +78,13 @@ public:
     /// Looks up the address of a nameserver in the zone.
     ///
     /// \param zone Name of zone for which an address is required.
-    /// \param authority Authority RRset from the referral containing the
-    /// nameservers that serve the zone.
-    /// \param additional Additional RRset(s) for authority information.  These
-    /// are taken from the referral.
+    /// \param class_code Class of the zone.
     /// \param callback Callback object used to pass the result back to the
     /// caller.
-    /* void lookup(const std::string& zone, isc::dns::AbstractRRset& authority,
-        const std::vector<isc::dns::AbstractRRset>& additional
-        boost::shared_ptr<isc::dns::AddressRequestCallback> callback ); */
+    /// \param family Which address is requested.
+    void lookup(const std::string& zone, const dns::RRClass& class_code,
+        boost::shared_ptr<AddressRequestCallback> callback, AddressFamily
+        family = ANY_OK);
 
     /// \brief Protected Members
     ///
@@ -90,12 +99,15 @@ public:
     //@{
 protected:
     // Zone and nameserver hash tables
-    HashTable<ZoneEntry>        zone_hash_;
-    HashTable<NameserverEntry>  nameserver_hash_;
+    boost::shared_ptr<HashTable<ZoneEntry> > zone_hash_;
+    boost::shared_ptr<HashTable<NameserverEntry> > nameserver_hash_;
 
     // ... and the LRU lists
-    LruList<ZoneEntry>          zone_lru_;
-    LruList<NameserverEntry>    nameserver_lru_;
+    boost::shared_ptr<LruList<ZoneEntry> > zone_lru_;
+    boost::shared_ptr<LruList<NameserverEntry> > nameserver_lru_;
+    // The resolver we use
+private:
+    boost::shared_ptr<ResolverInterface> resolver_;
     //}@
 };
 

@@ -21,9 +21,11 @@
 #include <gtest/gtest.h>
 #include <boost/lexical_cast.hpp>
 
-#include "hash_key.h"
+#include "../hash_key.h"
+#include <dns/rrclass.h>
 
 using namespace std;
+using namespace isc::dns;
 
 namespace isc {
 namespace nsas {
@@ -38,17 +40,17 @@ TEST_F(HashKeyTest, Constructor) {
     
     // Basic constructor
     string  test1("ABCDEF");
-    HashKey key1(test1.c_str(), test1.size(), 1);
+    HashKey key1(test1.c_str(), test1.size(), RRClass::IN());
     EXPECT_EQ(key1.key, test1.c_str());
     EXPECT_EQ(key1.keylen, test1.size());
-    EXPECT_EQ(key1.class_code, 1);
+    EXPECT_EQ(key1.class_code, RRClass::IN());
 
     // String constructor
     string  test2("uvwxyz");
-    HashKey key2(test2, 2);
+    HashKey key2(test2, RRClass::CH());
     EXPECT_EQ(key2.key, test2.c_str());
     EXPECT_EQ(key2.keylen, test2.size());
-    EXPECT_EQ(key2.class_code, 2);
+    EXPECT_EQ(key2.class_code, RRClass::CH());
 }
 
 // Equality check
@@ -59,17 +61,25 @@ TEST_F(HashKeyTest, Equality) {
     string  test4("ABCDE123");     // Different key (almost same)
     string  test5("uvwxyz987");    // Different key
 
-    EXPECT_TRUE(HashKey(test1, 1) == HashKey(test1, 1));   // Same key and class
-    EXPECT_FALSE(HashKey(test1, 1) == HashKey(test1, 2));  // Different class
+    EXPECT_TRUE(HashKey(test1, RRClass::IN()) == HashKey(test1,
+        RRClass::IN()));   // Same key and class
+    EXPECT_FALSE(HashKey(test1, RRClass::IN()) == HashKey(test1,
+        RRClass::CH()));  // Different class
 
-    EXPECT_TRUE(HashKey(test1, 2) == HashKey(test2, 2));   // Same value key/class
-    EXPECT_FALSE(HashKey(test1, 2) == HashKey(test2, 3));
+    EXPECT_TRUE(HashKey(test1, RRClass::CH()) == HashKey(test2,
+        RRClass::CH()));   // Same value key/class
+    EXPECT_FALSE(HashKey(test1, RRClass::CH()) == HashKey(test2,
+        RRClass::IN()));
 
-    EXPECT_TRUE(HashKey(test1, 3) == HashKey(test3, 3));   // Same key
-    EXPECT_FALSE(HashKey(test1, 3) == HashKey(test3, 4));
+    EXPECT_TRUE(HashKey(test1, RRClass::HS()) == HashKey(test3,
+        RRClass::HS()));   // Same key
+    EXPECT_FALSE(HashKey(test1, RRClass::HS()) == HashKey(test3,
+        RRClass::IN()));
 
-    EXPECT_FALSE(HashKey(test1, 1) == HashKey(test4, 1));
-    EXPECT_FALSE(HashKey(test1, 1) == HashKey(test5, 1));
+    EXPECT_FALSE(HashKey(test1, RRClass::IN()) == HashKey(test4,
+        RRClass::IN()));
+    EXPECT_FALSE(HashKey(test1, RRClass::IN()) == HashKey(test5,
+        RRClass::IN()));
 }
 
 } // namespace nsas

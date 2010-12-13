@@ -16,17 +16,22 @@
 
 #include <gtest/gtest.h>
 #include <boost/shared_ptr.hpp>
+#include <boost/bind.hpp>
 
 #include <string.h>
 #include <iostream>
 
-#include "hash_table.h"
-#include "hash_key.h"
+#include <dns/rrclass.h>
 
-#include "nsas_entry_compare.h"
+#include "../hash_table.h"
+#include "../hash_key.h"
+
+#include "../nsas_entry_compare.h"
 #include "nsas_test.h"
 
 using namespace std;
+using boost::shared_ptr;
+using namespace isc::dns;
 
 namespace isc {
 namespace nsas {
@@ -44,10 +49,10 @@ protected:
     // Constructor - initialize the objects
     HashTableTest() :
         table_(new NsasEntryCompare<TestEntry>()),
-        dummy1_(new TestEntry("test", 1)),
-        dummy2_(new TestEntry("test", 1)),
-        dummy3_(new TestEntry("Something_Else", 1)),
-        dummy4_(new TestEntry("test", 3))
+        dummy1_(new TestEntry("test", RRClass::IN())),
+        dummy2_(new TestEntry("test", RRClass::IN())),
+        dummy3_(new TestEntry("Something_Else", RRClass::IN())),
+        dummy4_(new TestEntry("test", RRClass::CH()))
     {}
 
     // Members.
@@ -173,6 +178,30 @@ TEST_F(HashTableTest, GetTest) {
     // ... and a lookup should return empty
     value = table_.get(dummy1_->hashKey());
     EXPECT_TRUE(value.get() == NULL);
+}
+
+shared_ptr<TestEntry>
+pass(shared_ptr<TestEntry> value) {
+    return (value);
+}
+
+TEST_F(HashTableTest, GetOrAddTest) {
+    // Add one entry
+    EXPECT_TRUE(table_.add(dummy1_, dummy1_->hashKey()));
+
+    // Check it looks it up
+    std::pair<bool, shared_ptr<TestEntry> > result = table_.getOrAdd(
+        dummy1_->hashKey(), boost::bind(pass, dummy3_));
+    EXPECT_FALSE(result.first);
+    EXPECT_EQ(dummy1_.get(), result.second.get());
+
+    // Check it says it adds the value
+    result = table_.getOrAdd(dummy3_->hashKey(), boost::bind(pass, dummy3_));
+    EXPECT_TRUE(result.first);
+    EXPECT_EQ(dummy3_.get(), result.second.get());
+
+    // Check it really did add it
+    EXPECT_EQ(dummy3_.get(), table_.get(dummy3_->hashKey()).get());
 }
 
 // Test that objects with the same name and different classes are distinct.

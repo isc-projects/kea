@@ -15,11 +15,14 @@ libnsas_la_SOURCES += hash_key.cc hash_key.h
 libnsas_la_SOURCES += hash_table.h
 libnsas_la_SOURCES += lru_list.h
 libnsas_la_SOURCES += nameserver_address_store.cc nameserver_address_store.h
-libnsas_la_SOURCES += nameserver_address.h
+libnsas_la_SOURCES += nameserver_address.h nameserver_address.cc
 libnsas_la_SOURCES += nameserver_entry.cc nameserver_entry.h
 libnsas_la_SOURCES += nsas_entry_compare.h
-libnsas_la_SOURCES += nsas_entry.h
+libnsas_la_SOURCES += nsas_entry.h nsas_types.h
+libnsas_la_SOURCES += zone_entry.cc zone_entry.h
+libnsas_la_SOURCES += fetchable.h
+libnsas_la_SOURCES += address_request_callback.h
+libnsas_la_SOURCES += resolver_interface.h
 libnsas_la_SOURCES += random_number_generator.h
-libnsas_la_SOURCES += zone_entry.h
 
 CLEANFILES = *.gcno *.gcda

@@ -18,6 +18,7 @@
 #define __ADDRESS_REQUEST_CALLBACK_H
 
 #include "asiolink.h"
+#include "nameserver_address.h"
 
 namespace isc {
 namespace nsas {
@@ -55,7 +56,7 @@ public:
     /// This method is used when an address has been retrieved for the request.
     ///
     /// \param address Address to be used to access the nameserver.
-    virtual void success(const asiolink::IOAddress& address) = 0;
+    virtual void success(const NameserverAddress& address) = 0;
 
     /// \brief Unreachable
     ///

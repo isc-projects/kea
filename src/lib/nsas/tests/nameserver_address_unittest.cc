@@ -16,13 +16,14 @@
 
 #include <gtest/gtest.h>
 
-#include "name.h"
-#include "nameserver_address.h"
-#include "rdata.h"
-#include "rrclass.h"
-#include "rrset.h"
-#include "rrttl.h"
+#include <dns/name.h>
+#include <dns/rdata.h>
+#include <dns/rrclass.h>
+#include <dns/rrset.h>
+#include <dns/rrttl.h>
 
+#include "../nameserver_address.h"
+#include "../nameserver_entry.h"
 #include "nsas_test.h"
 
 namespace isc {
@@ -30,6 +31,7 @@ namespace nsas {
 
 using namespace dns;
 using namespace rdata;
+using namespace boost;
 
 #define TEST_ADDRESS_INDEX 1
 
@@ -37,35 +39,48 @@ using namespace rdata;
 class NameserverEntrySample {
 public:
     NameserverEntrySample():
-        rrv4_(Name("example.org"), RRClass::IN(), RRType::A(), RRTTL(1200))
+        name_("example.org"),
+        rrv4_(new BasicRRset(name_, RRClass::IN(), RRType::A(), RRTTL(1200)))
     {
         // Add some sample A records
-        rrv4_.addRdata(ConstRdataPtr(new RdataTest<A>("1.2.3.4")));
-        rrv4_.addRdata(ConstRdataPtr(new RdataTest<A>("5.6.7.8")));
-        rrv4_.addRdata(ConstRdataPtr(new RdataTest<A>("9.10.11.12")));
+        rrv4_->addRdata(ConstRdataPtr(new RdataTest<A>("1.2.3.4")));
+        rrv4_->addRdata(ConstRdataPtr(new RdataTest<A>("5.6.7.8")));
+        rrv4_->addRdata(ConstRdataPtr(new RdataTest<A>("9.10.11.12")));
 
-        ns_.reset(new NameserverEntry(&rrv4_, NULL));
+        ns_.reset(new NameserverEntry(name_.toText(), RRClass::IN()));
+        shared_ptr<TestResolver> resolver(new TestResolver);
+        ns_->askIP(resolver, shared_ptr<Callback>(new Callback), ANY_OK);
+        resolver->asksIPs(name_, 0, 1);
+        resolver->requests[0].second->success(rrv4_);
     }
 
     // Return the sample NameserverEntry
     boost::shared_ptr<NameserverEntry>& getNameserverEntry() { return ns_; }
 
     // Return the IOAddress corresponding to the index in rrv4_
-    asiolink::IOAddress getAddressAtIndex(uint32_t index) { return ns_.get()->getAddressAtIndex(index, AF_INET); }
+    asiolink::IOAddress getAddressAtIndex(uint32_t index) {
+        return ns_.get()->getAddressAtIndex(index, V4_ONLY);
+    }
 
     // Return the addresses count stored in RRset
-    unsigned int getAddressesCount() const { return rrv4_.getRdataCount(); }
+    unsigned int getAddressesCount() const { return rrv4_->getRdataCount(); }
 
     // Return the RTT of the address
     uint32_t getAddressRTTAtIndex(uint32_t index) { 
         NameserverEntry::AddressVector addresses;
         ns_.get()->getAddresses(addresses);
-        return addresses[index].getRTT();
+        return (addresses[index].getAddressEntry().getRTT());
     }
 
 private:
-    BasicRRset rrv4_;                       ///< Standard RRSet - IN, A, lowercase name
+    Name name_;                             ///< Name of the sample
+    shared_ptr<BasicRRset> rrv4_;           ///< Standard RRSet - IN, A, lowercase name
     boost::shared_ptr<NameserverEntry> ns_; ///< Shared_ptr that points to a NameserverEntry object
+
+    class Callback : public NameserverEntry::Callback {
+        public:
+            virtual void operator()(shared_ptr<NameserverEntry>) { }
+    };
 };
 
 /// \brief Test Fixture Class
@@ -73,29 +88,26 @@ class NameserverAddressTest : public ::testing::Test {
 protected:
     // Constructor
     NameserverAddressTest(): 
-        ns_address_(ns_sample_.getNameserverEntry(), TEST_ADDRESS_INDEX, AF_INET),
-        invalid_ns_address_(ns_sample_.getNameserverEntry(), ns_sample_.getAddressesCount(), AF_INET)
+        ns_address_(ns_sample_.getNameserverEntry(),
+            ns_sample_.getNameserverEntry()->getAddressAtIndex(
+            TEST_ADDRESS_INDEX, V4_ONLY), V4_ONLY)
     {
     }
 
     NameserverEntrySample ns_sample_;
     // Valid NameserverAddress object
     NameserverAddress ns_address_;
-
-    // NameserverAddress object that constructed with invalid index
-    NameserverAddress invalid_ns_address_;
 };
 
 // Test that the address is equal to the address in NameserverEntry
 TEST_F(NameserverAddressTest, Address) {
     EXPECT_TRUE(ns_address_.getAddress().equal( ns_sample_.getAddressAtIndex(TEST_ADDRESS_INDEX)));
 
-    // It will trigger an assert with the invalid index
-    ASSERT_DEATH(invalid_ns_address_.getAddress(), "");
-
     boost::shared_ptr<NameserverEntry> empty_ne((NameserverEntry*)NULL);
     // It will throw an NullNameserverEntryPointer exception with the empty NameserverEntry shared pointer
-    ASSERT_THROW({NameserverAddress empty_ns_address(empty_ne, 0, AF_INET);}, NullNameserverEntryPointer);
+    ASSERT_THROW({NameserverAddress empty_ns_address(empty_ne,
+        asiolink::IOAddress("127.0.0.1"), V4_ONLY);},
+        NullNameserverEntryPointer);
 }
 
 // Test that the RTT is updated
