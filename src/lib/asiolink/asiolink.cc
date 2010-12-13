@@ -291,69 +291,71 @@ namespace {
  * Used by RecursiveQuery::sendQuery.
  */
 class RunningQuery : public UDPQuery::Callback {
-        private:
-            // The io service to handle async calls
-            asio::io_service& io_;
-            // Info for (re)sending the query (the question and destination)
-            Question question_;
-            shared_ptr<AddressVector> upstream_;
-            // Buffer to store the result.
-            OutputBufferPtr buffer_;
-            /*
-             * FIXME This is said it does problems when it is shared pointer, as
-             *     it is destroyed too soon. But who deletes it now?
-             */
-            // Server to notify when we succeed or fail
-            shared_ptr<DNSServer> server_;
-            /*
-             * TODO Do something more clever with timeouts. In the long term, some
-             *     computation of average RTT, increase with each retry, etc.
-             */
-            // Timeout information
-            int timeout_;
-            unsigned retries_;
-            // (re)send the query to the server.
-            void send() {
-                const int uc = upstream_->size();
-                if (uc > 0) {
-                    int serverIndex(random() % uc);
-                    dlog("Sending upstream query (" + question_.toText() +
-                        ") to " + upstream_->at(serverIndex).first);
-                    UDPQuery query(io_, question_,
-                        upstream_->at(serverIndex).first,
-                        upstream_->at(serverIndex).second, buffer_, this,
-                        timeout_);
-                    io_.post(query);
-                } else {
-                    dlog("Error, no upstream servers to send to.");
-                }
-            }
-        public:
-            RunningQuery(asio::io_service& io, const Question &question,
-                shared_ptr<AddressVector> upstream,
-                OutputBufferPtr buffer, DNSServer* server, int timeout,
-                unsigned retries) :
-                io_(io),
-                question_(question),
-                upstream_(upstream),
-                buffer_(buffer),
-                server_(server->clone()),
-                timeout_(timeout),
-                retries_(retries)
-            {
-                send();
-            }
-            // This function is used as callback from DNSQuery.
-            virtual void operator()(UDPQuery::Result result) {
-                if (result == UDPQuery::TIME_OUT && retries_ --) {
-                    dlog("Resending query");
-                    // We timed out, but we have some retries, so send again
-                    send();
-                } else {
-                    server_->resume(result == UDPQuery::SUCCESS);
-                    delete this;
-                }
-            }
+private:
+    // The io service to handle async calls
+    asio::io_service& io_;
+
+    // Info for (re)sending the query (the question and destination)
+    Question question_;
+    shared_ptr<AddressVector> upstream_;
+
+    // Buffer to store the result.
+    OutputBufferPtr buffer_;
+
+    // Server to notify when we succeed or fail
+    shared_ptr<DNSServer> server_;
+
+    /*
+     * TODO Do something more clever with timeouts. In the long term, some
+     *     computation of average RTT, increase with each retry, etc.
+     */
+    // Timeout information
+    int timeout_;
+    unsigned retries_;
+
+    // (re)send the query to the server.
+    void send() {
+        const int uc = upstream_->size();
+        if (uc > 0) {
+            int serverIndex(random() % uc);
+            dlog("Sending upstream query (" + question_.toText() +
+                ") to " + upstream_->at(serverIndex).first);
+            UDPQuery query(io_, question_,
+                upstream_->at(serverIndex).first,
+                upstream_->at(serverIndex).second, buffer_, this,
+                timeout_);
+            io_.post(query);
+        } else {
+            dlog("Error, no upstream servers to send to.");
+        }
+    }
+public:
+    RunningQuery(asio::io_service& io, const Question &question,
+        shared_ptr<AddressVector> upstream,
+        OutputBufferPtr buffer, DNSServer* server, int timeout,
+        unsigned retries) :
+        io_(io),
+        question_(question),
+        upstream_(upstream),
+        buffer_(buffer),
+        server_(server->clone()),
+        timeout_(timeout),
+        retries_(retries)
+    {
+        send();
+    }
+
+    // This function is used as callback from DNSQuery.
+    virtual void operator()(UDPQuery::Result result) {
+        if (result == UDPQuery::TIME_OUT && retries_ --) {
+            dlog("Resending query");
+            // We timed out, but we have some retries, so send again
+            send();
+        } else {
+            server_->resume(result == UDPQuery::SUCCESS);
+            delete this;
+        }
+    }
 };
 
 }

@@ -165,7 +165,10 @@ private:
 
 ///
 /// DNSService is the service that handles DNS queries and answers with
-/// a given IOService.
+/// a given IOService. This class is mainly intended to hold all the
+/// logic that is shared between the authoritative and the recursive
+/// server implementations. As such, it handles asio, including config
+/// updates (through the 'Checkinprovider'), and listening sockets.
 /// 
 class DNSService {
     ///
@@ -247,7 +250,9 @@ private:
 ///
 /// Notes to developers:
 /// When constructed, this class (and its derived classes) will have its
-/// "self_" member set to point to "this".  Calls to methods in the base
+/// "self_" member set to point to "this".  Objects of this class (as
+/// instantiated through a base class) are sometimes passed by
+/// reference (as this superclass); calls to methods in the base
 /// class are then rerouted via this pointer to methods in the derived
 /// class.  This allows code from outside asiolink, with no specific
 /// knowledge of \c TCPServer or \c UDPServer, to access their methods.
@@ -343,7 +348,7 @@ protected:
     template <typename T>
     class AsyncLookup {
     public:
-        AsyncLookup(T caller) : caller_(caller) {}
+        AsyncLookup(T& caller) : caller_(caller) {}
         inline void operator()() { caller_.asyncLookup(); }
     private:
         T caller_;
@@ -465,6 +470,8 @@ public:
 
 /// \brief The \c SimpleCallback class is an abstract base class for a
 /// simple callback function with the signature:
+///
+/// void simpleCallback(const IOMessage& io_message) const;
 ///
 /// Specific derived class implementations are hidden within the
 /// implementation.  Instances of the derived classes can be called
