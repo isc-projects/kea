@@ -16,6 +16,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <cmath>
 
 #include <limits.h>
 #include <boost/foreach.hpp>
@@ -425,6 +426,7 @@ TEST_F(NameserverEntryTest, CheckClass) {
 
 // Select one address from the address list
 TEST_F(NameserverEntryTest, AddressSelection) {
+    const int repeats = 100000;
     boost::shared_ptr<NameserverEntry> ns(new NameserverEntry(&rrv4_, &rrv6_));
 
     NameserverEntry::AddressVector v4Addresses;
@@ -436,23 +438,32 @@ TEST_F(NameserverEntryTest, AddressSelection) {
     int c2 = 0;
     int c3 = 0;
     NameserverAddress ns_address;
-    for(int i = 0; i < 10000; ++i){
+    for(int i = 0; i < repeats; ++i){
         ns.get()->getAddress(ns_address, AF_INET);
         asiolink::IOAddress io_address = ns_address.getAddress();
         if(io_address.toText() == v4Addresses[0].getAddress().toText()) ++c1;
         else if(io_address.toText() == v4Addresses[1].getAddress().toText()) ++c2;
         else if(io_address.toText() == v4Addresses[2].getAddress().toText()) ++c3;
     }
-    // c1, c2 and c3 should almost be equal
-    ASSERT_EQ(1, (int)(c1*1.0/c2 + 0.5));
-    ASSERT_EQ(1, (int)(c2*1.0/c3 + 0.5));
+    // We repeat the simulation for N=repeats times
+    // for each address, the probability is p = 1/3, the average mu = N*p
+    // variance sigma^2 = N * p * (1-p) = N * 1/3 * 2/3 = N*2/9
+    // sigma = sqrt(N*2/9)
+    // we should make sure that mu - 4sigma < c < mu + 4sigma
+    // which means for 99.99366% of the time this should be true
+    double p = 1.0 / 3.0;
+    double mu = repeats * p;
+    double sigma = sqrt(repeats * p * (1 - p));
+    ASSERT_TRUE(fabs(c1 - mu) < 4*sigma);
+    ASSERT_TRUE(fabs(c2 - mu) < 4*sigma);
+    ASSERT_TRUE(fabs(c3 - mu) < 4*sigma);
 
     // update the rtt to 1, 2, 3
     ns->setAddressRTT(v4Addresses[0].getAddress(), 1);
     ns->setAddressRTT(v4Addresses[1].getAddress(), 2);
     ns->setAddressRTT(v4Addresses[2].getAddress(), 3);
     c1 = c2 = c3 = 0; 
-    for(int i = 0; i < 100000; ++i){
+    for(int i = 0; i < repeats; ++i){
         ns.get()->getAddress(ns_address, AF_INET);
         asiolink::IOAddress io_address = ns_address.getAddress();
         if(io_address.toText() == v4Addresses[0].getAddress().toText()) ++c1;
@@ -460,17 +471,27 @@ TEST_F(NameserverEntryTest, AddressSelection) {
         else if(io_address.toText() == v4Addresses[2].getAddress().toText()) ++c3;
     }
 
-    // c1 should be (2*2) times of c2
-    ASSERT_EQ(4, (int)(c1*1.0/c2 + 0.5));
-    // c1 should be (3*3) times of c3
-    ASSERT_EQ(9, (int)(c1*1.0/c3 + 0.5));
+    // We expect that the selection probability for each address that
+    // it will be in the range of [mu-4Sigma, mu+4Sigma]
+    double p1 = 1.0/(1.0 + 1.0/4.0 + 1.0/9.0);
+    double p2 = (1.0/4.0)/(1.0 + 1.0/4.0 + 1.0/9.0);
+    double p3 = (1.0/9.0)/(1.0 + 1.0/4.0 + 1.0/9.0);
+    double mu1 = repeats * 0.7347;
+    double mu2 = repeats * 0.18367;
+    double mu3 = repeats * 0.08163;
+    double sigma1 = sqrt(repeats * p1 * (1 - p1));
+    double sigma2 = sqrt(repeats * p2 * (1 - p2));
+    double sigma3 = sqrt(repeats * p3 * (1 - p3));
+    ASSERT_TRUE(fabs(c1 - mu1) < 4*sigma1);
+    ASSERT_TRUE(fabs(c2 - mu2) < 4*sigma2);
+    ASSERT_TRUE(fabs(c3 - mu3) < 4*sigma3);
 
     // Test unreachable address
     ns->setAddressRTT(v4Addresses[0].getAddress(), 1);
     ns->setAddressRTT(v4Addresses[1].getAddress(), 100);
     ns->setAddressUnreachable(v4Addresses[2].getAddress());
     c1 = c2 = c3 = 0;
-    for(int i = 0; i < 100000; ++i){
+    for(int i = 0; i < repeats; ++i){
         ns.get()->getAddress(ns_address, AF_INET);
         asiolink::IOAddress io_address = ns_address.getAddress();
         if(io_address.toText() == v4Addresses[0].getAddress().toText()) ++c1;
@@ -486,7 +507,7 @@ TEST_F(NameserverEntryTest, AddressSelection) {
     ns->setAddressUnreachable(v4Addresses[1].getAddress());
     ns->setAddressUnreachable(v4Addresses[2].getAddress());
     c1 = c2 = c3 = 0;
-    for(int i = 0; i < 100000; ++i){
+    for(int i = 0; i < repeats; ++i){
         ns.get()->getAddress(ns_address, AF_INET);
         asiolink::IOAddress io_address = ns_address.getAddress();
         if(io_address.toText() == v4Addresses[0].getAddress().toText()) ++c1;
@@ -497,6 +518,12 @@ TEST_F(NameserverEntryTest, AddressSelection) {
     // All the unreachable servers should be selected with equal opportunity
     ASSERT_EQ(1, (int)(c1*1.0/c2 + 0.5));
     ASSERT_EQ(1, (int)(c1*1.0/c3 + 0.5));
+    p = 1.0 / 3.0;
+    mu = repeats * p;
+    sigma = sqrt(repeats * p * (1 - p));
+    ASSERT_TRUE(fabs(c1 - mu) < 4*sigma);
+    ASSERT_TRUE(fabs(c2 - mu) < 4*sigma);
+    ASSERT_TRUE(fabs(c3 - mu) < 4*sigma);
 
     // TODO: The unreachable server should be changed to reachable after 5minutes, but how to test?
 }

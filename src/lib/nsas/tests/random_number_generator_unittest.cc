@@ -139,54 +139,76 @@ TEST_F(WeightedRandomIntegerGeneratorTest, Constructor)
 // Test the randomization of the generator
 TEST_F(WeightedRandomIntegerGeneratorTest, WeightedRandomization) 
 {
+    const int repeats = 100000;
+    // We repeat the simulation for N=repeats times
+    // for each probability p, its average is mu = N*p
+    // variance sigma^2 = N * p * (1-p)
+    // sigma = sqrt(N*2/9)
+    // we should make sure that mu - 4sigma < count < mu + 4sigma
+    // which means for 99.99366% of the time this should be true
     {
+        double p = 0.5;
         vector<double> probabilities;
-        probabilities.push_back(0.5);
-        probabilities.push_back(0.5);
+        probabilities.push_back(p);
+        probabilities.push_back(p);
 
         // Uniformly generated integers
         WeightedRandomIntegerGenerator gen(probabilities);
         int c1 = 0;
         int c2 = 0;
-        for(int i = 0; i < 100000; ++i){
+        for(int i = 0; i < repeats; ++i){
             int n = gen();
             if(n == 0) ++c1;
             else if(n == 1) ++c2;
         }
-        // The probabilities should almost equal
-        ASSERT_EQ(1, (int)(c1*1.0/c2 + 0.5));
+        double mu = repeats * p;
+        double sigma = sqrt(repeats * p * (1 - p));
+        ASSERT_TRUE(fabs(c1 - mu) < 4*sigma);
+        ASSERT_TRUE(fabs(c2 - mu) < 4*sigma);
     }
 
     {
         vector<double> probabilities;
         int c1 = 0;
         int c2 = 0;
-        probabilities.push_back(0.2);
-        probabilities.push_back(0.8);
+        double p1 = 0.2;
+        double p2 = 0.8;
+        probabilities.push_back(p1);
+        probabilities.push_back(p2);
         WeightedRandomIntegerGenerator gen(probabilities);
-        for(int i = 0; i < 100000; ++i){
+        for(int i = 0; i < repeats; ++i){
             int n = gen();
             if(n == 0) ++c1;
             else if(n == 1) ++c2;
         }
-        // The 2nd integer count should be 4 times of 1st one
-        ASSERT_EQ(4, (int)(c2*1.0/c1 + 0.5));
+        double mu1 = repeats * p1;
+        double mu2 = repeats * p2;
+        double sigma1 = sqrt(repeats * p1 * (1 - p1));
+        double sigma2 = sqrt(repeats * p2 * (1 - p2));
+        ASSERT_TRUE(fabs(c1 - mu1) < 4*sigma1);
+        ASSERT_TRUE(fabs(c2 - mu2) < 4*sigma2);
     }
 
     {
         vector<double> probabilities;
         int c1 = 0;
         int c2 = 0;
-        probabilities.push_back(0.8);
-        probabilities.push_back(0.2);
+        double p1 = 0.8;
+        double p2 = 0.2;
+        probabilities.push_back(p1);
+        probabilities.push_back(p2);
         WeightedRandomIntegerGenerator gen(probabilities);
-        for(int i = 0; i < 100000; ++i){
+        for(int i = 0; i < repeats; ++i){
             int n = gen();
             if(n == 0) ++c1;
             else if(n == 1) ++c2;
         }
-        // The 1st integer count should be 4 times of 2nd one
-        ASSERT_EQ(4, (int)(c1*1.0/c2 + 0.5));
+        double mu1 = repeats * p1;
+        double mu2 = repeats * p2;
+        double sigma1 = sqrt(repeats * p1 * (1 - p1));
+        double sigma2 = sqrt(repeats * p2 * (1 - p2));
+        ASSERT_TRUE(fabs(c1 - mu1) < 4*sigma1);
+        ASSERT_TRUE(fabs(c2 - mu2) < 4*sigma2);
     }
 
     {
@@ -194,53 +216,74 @@ TEST_F(WeightedRandomIntegerGeneratorTest, WeightedRandomization)
         int c1 = 0;
         int c2 = 0;
         int c3 = 0;
-        probabilities.push_back(0.5);
-        probabilities.push_back(0.25);
-        probabilities.push_back(0.25);
+        double p1 = 0.5;
+        double p2 = 0.25;
+        double p3 = 0.25;
+        probabilities.push_back(p1);
+        probabilities.push_back(p2);
+        probabilities.push_back(p3);
         WeightedRandomIntegerGenerator gen(probabilities);
-        for(int i = 0; i < 100000; ++i){
+        for(int i = 0; i < repeats; ++i){
             int n = gen();
             if(n == 0) ++c1;
             else if(n == 1) ++c2;
             else if(n == 2) ++c3;
         }
-        // The 1st integer count should be double of 2nd one
-        ASSERT_EQ(2, (int)(c1*1.0/c2 + 0.5));
-        // The 1st integer count should be double of 3rd one
-        ASSERT_EQ(2, (int)(c1*1.0/c3 + 0.5));
+        double mu1 = repeats * p1;
+        double mu2 = repeats * p2;
+        double mu3 = repeats * p3;
+        double sigma1 = sqrt(repeats * p1 * (1 - p1));
+        double sigma2 = sqrt(repeats * p2 * (1 - p2));
+        double sigma3 = sqrt(repeats * p3 * (1 - p3));
+        ASSERT_TRUE(fabs(c1 - mu1) < 4*sigma1);
+        ASSERT_TRUE(fabs(c2 - mu2) < 4*sigma2);
+        ASSERT_TRUE(fabs(c3 - mu3) < 4*sigma3);
     }
 }
 
 // Test the reset function of generator
 TEST_F(WeightedRandomIntegerGeneratorTest, ResetProbabilities) 
 {
-        vector<double> probabilities;
-        int c1 = 0;
-        int c2 = 0;
-        probabilities.push_back(0.8);
-        probabilities.push_back(0.2);
-        WeightedRandomIntegerGenerator gen(probabilities);
-        for(int i = 0; i < 100000; ++i){
-            int n = gen();
-            if(n == 0) ++c1;
-            else if(n == 1) ++c2;
-        }
-        // The 1st integer count should be 4 times of 2nd one
-        ASSERT_EQ(4, (int)(c1*1.0/c2 + 0.5));
+    const int repeats = 100000;
+    vector<double> probabilities;
+    int c1 = 0;
+    int c2 = 0;
+    double p1 = 0.8;
+    double p2 = 0.2;
+    probabilities.push_back(p1);
+    probabilities.push_back(p2);
+    WeightedRandomIntegerGenerator gen(probabilities);
+    for(int i = 0; i < repeats; ++i){
+        int n = gen();
+        if(n == 0) ++c1;
+        else if(n == 1) ++c2;
+    }
+    double mu1 = repeats * p1;
+    double mu2 = repeats * p2;
+    double sigma1 = sqrt(repeats * p1 * (1 - p1));
+    double sigma2 = sqrt(repeats * p2 * (1 - p2));
+    ASSERT_TRUE(fabs(c1 - mu1) < 4*sigma1);
+    ASSERT_TRUE(fabs(c2 - mu2) < 4*sigma2);
 
-        // Reset the probabilities
-        probabilities.clear();
-        c1 = c2 = 0;
-        probabilities.push_back(0.2);
-        probabilities.push_back(0.8);
-        gen.reset(probabilities);
-        for(int i = 0; i < 100000; ++i){
-            int n = gen();
-            if(n == 0) ++c1;
-            else if(n == 1) ++c2;
-        }
-        // The 2nd integer count should be 4 times of 1st one
-        ASSERT_EQ(4, (int)(c2*1.0/c1 + 0.5));
+    // Reset the probabilities
+    probabilities.clear();
+    c1 = c2 = 0;
+    p1 = 0.2;
+    p2 = 0.8;
+    probabilities.push_back(p1);
+    probabilities.push_back(p2);
+    gen.reset(probabilities);
+    for(int i = 0; i < repeats; ++i){
+        int n = gen();
+        if(n == 0) ++c1;
+        else if(n == 1) ++c2;
+    }
+    mu1 = repeats * p1;
+    mu2 = repeats * p2;
+    sigma1 = sqrt(repeats * p1 * (1 - p1));
+    sigma2 = sqrt(repeats * p2 * (1 - p2));
+    ASSERT_TRUE(fabs(c1 - mu1) < 4*sigma1);
+    ASSERT_TRUE(fabs(c2 - mu2) < 4*sigma2);
 }
 
 } // namespace nsas
