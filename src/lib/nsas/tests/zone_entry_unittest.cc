@@ -18,6 +18,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <cmath>
 
 #include <dns/rrclass.h>
 #include <dns/rdataclass.h>
@@ -647,6 +648,7 @@ countHits(size_t *counts, const vector<NameserverAddress>& successes) {
 
 // Select one address from the address list
 TEST_F(ZoneEntryTest, AddressSelection) {
+    const size_t repeats = 100000;
     // Create the zone, give it 2 nameservers and total of 3 addresses
     // (one of them is ipv6)
     shared_ptr<ZoneEntry> zone(getZone());
@@ -672,13 +674,22 @@ TEST_F(ZoneEntryTest, AddressSelection) {
     callback_->successes_.clear();
 
     // Test they have the same probabilities when they have the same RTT
-    for (size_t i(0); i < 10000; ++ i) {
+    for (size_t i(0); i < repeats; ++ i) {
         zone->addCallback(callback_, ANY_OK);
     }
     countHits(counts, callback_->successes_);
-    // They should have about the same probability
-    EXPECT_EQ(1, (int)(counts[0]*1.0/counts[1] + 0.5));
-    EXPECT_EQ(1, (int)(counts[1]*1.0/counts[2] + 0.5));
+    // We repeat the simulation for N=repeats times
+    // for each address, the probability is p = 1/3, the average mu = N*p
+    // variance sigma^2 = N * p * (1-p) = N * 1/3 * 2/3 = N*2/9
+    // sigma = sqrt(N*2/9)
+    // we should make sure that mu - 4sigma < c < mu + 4sigma
+    // which means for 99.99366% of the time this should be true
+    double p = 1.0 / 3.0;
+    double mu = repeats * p;
+    double sigma = sqrt(repeats * p * (1 - p));
+    for (size_t i(0); i < 3; ++ i) {
+        ASSERT_TRUE(fabs(counts[i] - mu) < 4*sigma);
+    }
 
     // reset the environment
     callback_->successes_.clear();
@@ -688,14 +699,21 @@ TEST_F(ZoneEntryTest, AddressSelection) {
     ns1->setAddressRTT(IOAddress("192.0.2.1"), 1);
     ns1->setAddressRTT(IOAddress("2001:db8::2"), 2);
     ns2->setAddressRTT(IOAddress("192.0.2.3"), 3);
-    for (size_t i(0); i < 10000; ++ i) {
+    for (size_t i(0); i < repeats; ++ i) {
         zone->addCallback(callback_, ANY_OK);
     }
     countHits(counts, callback_->successes_);
-    // First should be 2^2 more often then second
-    EXPECT_EQ(4, (int)(counts[0]*1.0/counts[1] + 0.5));
-    // And it should be 3^2 times more often than third
-    EXPECT_EQ(9, (int)(counts[0]*1.0/counts[2] + 0.5));
+    // We expect that the selection probability for each address that
+    // it will be in the range of [mu-4Sigma, mu+4Sigma]
+    double ps[3];
+    ps[0] = 1.0/(1.0 + 1.0/4.0 + 1.0/9.0);
+    ps[1] = (1.0/4.0)/(1.0 + 1.0/4.0 + 1.0/9.0);
+    ps[2] = (1.0/9.0)/(1.0 + 1.0/4.0 + 1.0/9.0);
+    for (size_t i(0); i < 3; ++ i) {
+        double mu = repeats * ps[i];
+        double sigma = sqrt(repeats * ps[i] * (1 - ps[i]));
+        ASSERT_TRUE(fabs(counts[i] - mu < 4 * sigma));
+    }
 
     // reset the environment
     callback_->successes_.clear();
@@ -705,7 +723,7 @@ TEST_F(ZoneEntryTest, AddressSelection) {
     ns1->setAddressRTT(IOAddress("192.0.2.1"), 1);
     ns1->setAddressRTT(IOAddress("2001:db8::2"), 100);
     ns2->setAddressUnreachable(IOAddress("192.0.2.3"));
-    for (size_t i(0); i < 10000; ++ i) {
+    for (size_t i(0); i < repeats; ++ i) {
         zone->addCallback(callback_, ANY_OK);
     }
     countHits(counts, callback_->successes_);
@@ -720,13 +738,14 @@ TEST_F(ZoneEntryTest, AddressSelection) {
     ns1->setAddressUnreachable(IOAddress("192.0.2.1"));
     ns1->setAddressUnreachable(IOAddress("2001:db8::2"));
     ns2->setAddressUnreachable(IOAddress("192.0.2.3"));
-    for (size_t i(0); i < 10000; ++ i) {
+    for (size_t i(0); i < repeats; ++ i) {
         zone->addCallback(callback_, ANY_OK);
     }
     countHits(counts, callback_->successes_);
     // They should have about the same probability
-    EXPECT_EQ(1, (int)(counts[0]*1.0/counts[1] + 0.5));
-    EXPECT_EQ(1, (int)(counts[1]*1.0/counts[2] + 0.5));
+    for (size_t i(0); i < 3; ++ i) {
+        ASSERT_TRUE(fabs(counts[i] - mu) < 4*sigma);
+    }
 
     // TODO: The unreachable server should be changed to reachable after 5minutes, but how to test?
 }
