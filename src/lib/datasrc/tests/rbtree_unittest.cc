@@ -72,7 +72,7 @@ protected:
         rbtree.insert(Name("p.w.y.d.e.f"), &rbtnode);
         rbtnode->setData(new int(9));
         rbtree.insert(Name("q.w.y.d.e.f"), &rbtnode);
-        rbtnode->setData(new int(10));
+        rbtnode->setData(RBNode<int>::NodeDataType(new int(10)));
     }
     RBTree<int> rbtree;
     RBNode<int>* rbtnode;

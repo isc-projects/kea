@@ -17,6 +17,7 @@
 
 #include <dns/name.h>
 #include <boost/utility.hpp>
+#include <boost/shared_ptr.hpp>
 #include <exception>
 #include <ostream>
 #include <algorithm>
@@ -43,7 +44,10 @@ operator-(const isc::dns::Name& super_name, const isc::dns::Name& sub_name) {
 }
 
 /// \brief Define rbtree color
+/// the enum isnot put into RBTree template, because no matter the RBTree
+/// will be instantiated to whatever class, the color is same.
 enum RBTreeColor {BLACK, RED};
+
 template <typename T>
 class RBTree;
 /// \brief \c RBNode use by RBTree to store any data related to one domain name
@@ -75,6 +79,7 @@ class RBNode : public boost::noncopyable {
 public:
     /// only \c RBTree can create and destroy \c RBNode
     friend class RBTree<T>;
+    typedef boost::shared_ptr<T> NodeDataType;
 
     /// \name Deonstructor
     /// \note it's seems a little strange that constructor is private
@@ -96,23 +101,28 @@ public:
     /// \brief return the data store in this node
     /// \note, since the data is managed by RBNode, developer should not
     /// free the pointer
-    T* getData() { return (data_); }
+    NodeDataType& getData() { return (data_); }
     /// \brief return the data stored in this node, read-only version
-    const T* getData() const { return (data_); }
+    const NodeDataType& getData() const { return (data_); }
 
     /// \brief return whether the node has related data 
     /// \note it's meaningless has empty \c RBNode in one RBTree, the only 
     /// exception is for non-terminal node which has sub domain nodes who
     /// has data(rrset)
-    bool isEmpty() const { return (data_ == NULL); }
+    bool isEmpty() const { return (data_.get() == NULL); }
     //@}
 
     /// \name Modify functions
+    //@{
     /// \brief set the data stored in the node
     /// this function also means ownership transfer, then data is owned by
     /// \c RBNode, and RBNode will in charge of the memory management
     /// \note when set new data, old data will be deleted first
     void setData(T* data);
+    
+    /// \breif set the data stored in the node
+    void setData(const NodeDataType& data);
+    //@}
 
 
 private:
@@ -140,9 +150,6 @@ private:
         return (&null_node);
     }
 
-    /// \brief swap the content of two node, the content here refers to
-    /// name, data, down
-    void swap(RBNode<T>& node);
 
     /// data to maintain the rbtree balance
     RBNode<T>*  parent_;
@@ -152,7 +159,7 @@ private:
 
 
     isc::dns::Name     name_;
-    T*          data_;
+    NodeDataType       data_;
     /// the down pointer points to the root node of sub domains of current 
     /// domain 
     /// \par Adding down pointer to \c RBNode is for two purpose:
@@ -173,7 +180,6 @@ RBNode<T>::RBNode() :
     color_(BLACK),
     // dummy name, the value doesn't matter:
     name_(isc::dns::Name::ROOT_NAME()),
-    data_(NULL),
     down_(this)
 {
 }
@@ -185,7 +191,6 @@ RBNode<T>::RBNode(const isc::dns::Name& name) :
     right_(NULL_NODE()),
     color_(RED),
     name_(name),
-    data_(NULL),
     down_(NULL_NODE())
 {
 }
@@ -193,28 +198,22 @@ RBNode<T>::RBNode(const isc::dns::Name& name) :
 
 template <typename T>
 RBNode<T>::~RBNode() {
-    delete data_;
 }
 
 
 template <typename T>
 void 
 RBNode<T>::setData(T* data) {
-    if (data_ != data) {
-        delete data_;
-        data_ = data;
+    if (data_.get() != data) {
+        data_.reset(data);
     }
 }
 
 template <typename T>
-void
-RBNode<T>::swap(RBNode<T>& node) {
-    std::swap(node.name_, name_);
-    std::swap(node.data_, data_);
-    std::swap(node.down_, down_);
+void 
+RBNode<T>::setData(const RBNode<T>::NodeDataType& data) {
+    data_ = data;
 }
-
-
 /// \brief \c RBTree class represents all the domains with the same suffix,
 /// so it can be used to store the domains in one zone.
 ///
@@ -342,12 +341,15 @@ private:
     /// so for example, in zone a, we has 
     /// b.a, c.b.a and d.b.a search c.b.a, up will points to b.a. 
     /// and node will points to c.b.a
+    /// \note parameter up now is not used by any funciton, but we gonna 
+    /// need it soon to implement function like remove
     Result findHelper(const isc::dns::Name& name, const RBNode<T>** up,
                       RBNode<T>** node) const;
     void dumpTreeHelper(std::ostream& os, const RBNode<T>* node,
                         unsigned int depth) const;
     /// for indent purpose, add certian mount empty charachter to output stream
-    /// according to the depth.
+    /// according to the depth. This is a helper function which is only used when
+    /// dump tree
     static void indent(std::ostream& os, unsigned int depth);
 
     /// Split one node into two nodes, keep the old node and create one new
@@ -459,13 +461,11 @@ RBTree<T>::findHelper(const isc::dns::Name& target_name, const RBNode<T>** up_no
             } else if (relation == isc::dns::NameComparisonResult::SUBDOMAIN) {
                 *up_node = node;
                 name = name - node->name_;
-                if (node->isEmpty()) {
-                    node = node->down_;
-                } else {
+                if (!node->isEmpty()) {
                     ret = RBTree<T>::PARTIALMATCH;
                     *target = node;
-                    node = node->down_;
                 }
+                node = node->down_;
             } else {
                 break;
             }
@@ -555,10 +555,9 @@ RBTree<T>::nodeFission(RBNode<T>& node, const isc::dns::Name& base_name) {
     const isc::dns::Name sub_name = node.name_ - base_name;
     // using auto_ptr here is avoid memory leak in case of exceptoin raised 
     // after the RBNode creation
-    std::auto_ptr<RBNode<T> > down_node(new RBNode<T>(node.name_ - base_name));
+    std::auto_ptr<RBNode<T> > down_node(new RBNode<T>(sub_name));
     std::swap(node.data_, down_node->data_);
     down_node->down_ = node.down_;
-    down_node->name_ = sub_name;
     node.name_ = base_name;
     node.down_ = down_node.get();
     //root node of sub tree, the initial color is BLACK
