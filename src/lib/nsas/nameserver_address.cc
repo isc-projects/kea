@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010  CZ NIC
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,38 +12,19 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
+// $id$
 
-#ifndef __NSAS_TYPES_H
-#define __NSAS_TYPES_H
-
-/// \file nsas_types.h
-/// \brief Nameserver Address Store Types
-///
-/// Defines a set of types used within the Network Address Store.
+#include "nameserver_address.h"
+#include "nameserver_entry.h"
 
 namespace isc {
 namespace nsas {
 
-/**
- * \brief Address requested
- *
- * The order is significant, it is used as array indices and sometime only
- * the first two are used.
- */
-enum AddressFamily {
-    /// \short Interested only in IPv4 address
-    V4_ONLY,
-    /// \short Interested only in IPv6 address
-    V6_ONLY,
-    /// \short Any address is good
-    ANY_OK,
-    /// \short Bumper value, does not mean anything, it just represents the
-    /// max value
-    ADDR_REQ_MAX
-};
-
-}
+void
+NameserverAddress::updateRTT(uint32_t rtt) const {
+    // We delegate it to the address entry inside the nameserver entry
+    ns_->updateAddressRTT(rtt, address_.getAddress(), family_);
 }
 
-#endif // __NSAS_TYPES_H
+} // namespace nsas
+} // namespace isc

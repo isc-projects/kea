@@ -20,15 +20,21 @@
 #include <string>
 #include <vector>
 #include <boost/thread.hpp>
+#include <boost/enable_shared_from_this.hpp>
+
+#include <exceptions/exceptions.h>
+#include <dns/rrset.h>
+#include <dns/rrtype.h>
 
 #include "address_entry.h"
 #include "asiolink.h"
-#include "exceptions/exceptions.h"
+#include "nsas_types.h"
 #include "hash_key.h"
 #include "lru_list.h"
+#include "fetchable.h"
+#include "resolver_interface.h"
 #include "nsas_entry.h"
-#include "random_number_generator.h"
-#include "rrset.h"
+#include "nameserver_address.h"
 
 namespace isc {
 namespace nsas {
@@ -67,20 +73,14 @@ public:
     {}
 };
 
-
+class ZoneEntry;
+class ResolverInterface;
 
 /// \brief Nameserver Entry
 ///
 /// Describes a nameserver and its addresses.  A nameserver be authoritative
 /// for several zones (hence is pointed to by more than one zone entry), and
 /// may have several addresses associated with it.
-///
-/// When created, zero or more addresses may be given.  At any time, the list
-/// of addresses may be updated.  This may occur (a) after creation, either to
-/// to get the list of addresses when none have been supplied or to replace
-/// glue records, or (b) when the object has been accessed but found to be
-/// expired (the address records have reached their TTL).
-/// TODO: Add code for update of addresses
 ///
 /// The addresses expire after their TTL has been reached.  For simplicity,
 /// (and because it is unlikely that A and AAAA records from the same zone have
@@ -90,68 +90,57 @@ public:
 ///
 /// As this object will be stored in the nameserver address store LRU list,
 /// it is derived from the LRU list entry class.
+///
+/// It uses shared_from_this in its methods. It must live inside a shared_ptr.
 
-class NameserverEntry : public NsasEntry<NameserverEntry>{
+class NameserverEntry : public NsasEntry<NameserverEntry>, public Fetchable {
 public:
     /// List of addresses associated with this nameserver
-    typedef std::vector<AddressEntry>   AddressVector;
+    typedef std::vector<NameserverAddress>   AddressVector;
     typedef AddressVector::iterator     AddressVectorIterator;
 
     /// \brief Constructor where no A records are supplied.
     ///
     /// \param name Name of the nameserver,
     /// \param class_code class of the nameserver
-    NameserverEntry(const std::string& name, uint16_t class_code) :
-        name_(name), classCode_(class_code)
+    NameserverEntry(const std::string& name,
+        const isc::dns::RRClass& class_code) :
+        name_(name),
+        classCode_(class_code),
+        expiration_(0)
     {}
 
-    /// Constructor where one or more RRsets of A/AAAA records are supplied.
-    /// The class is taken from class of address records and the name from
-    /// the owner of the records.  If both sets of information are supplied
-    /// and the owner names are different, the V4 set wins out; the V6 set of
-    /// information is ignored and an error message is logged.
-    ///
-    /// \param v4Set RRset of A records
-    /// \param v6Set RRset of AAAA records
-    /// \param curtime Current time.  Present for testing, but also as a
-    /// possible optimisation if the caller has the current time (it saves
-    /// the overhead of a call to time()).  The default value of 0 requests
-    /// the constructor to get its own copy of the current time.
-    NameserverEntry(const isc::dns::AbstractRRset* v4Set,
-        const isc::dns::AbstractRRset* v6Set, time_t curtime = 0);
-
-    /// \brief Virtual Destructor
-    virtual ~NameserverEntry()
-    {}
-
-    /// \brief Return Address
-    ///
-    /// Returns a vector of addresses corresponding to this nameserver.
-    /// It is up to the caller to 
-    ///
-    /// \param addresses Vector of address entries into which will be appended
-    /// addresses that match the specified criteria. (The reason for choosing
-    /// this signature is that addresses from more than one nameserver may be
-    /// retrieved, in which case appending to an existing list of addresses is
-    /// convenient.)
-    /// \param family Set to AF_INET/AF_INET6 for V6/V6 addresses, anything
-    /// else for all addresses.
-    virtual void getAddresses(NameserverEntry::AddressVector& addresses,
-        short family = 0) const;
-
-    /// \brief Return one address
-    ///
-    /// Return one address corresponding to this nameserver
-    /// \param address NameserverAddress object used to receive the address
-    /// \param family The family of user request, AF_INET or AF_INET6
-    /// \return true if one address is found, false otherwise
-    virtual bool getAddress(NameserverAddress& address, short family);
+    /*
+     * \brief Return Address
+     *
+     * Returns a vector of addresses corresponding to this nameserver.
+     *
+     * \param addresses Vector of address entries into which will be appended
+     *     addresses that match the specified criteria. (The reason for
+     *     choosing this signature is that addresses from more than one
+     *     nameserver may be retrieved, in which case appending to an existing
+     *     list of addresses is convenient.)
+     * \param family The family of address that is requested.
+     * \param expired_ok Return addresses even when expired. This is here
+     *     because an address with TTL 0 is expired at the exact time it
+     *     arrives. But when we call the callback, the owner of callback
+     *     is allowed to use them anyway so it should set expired_ok
+     *     to true.
+     * \return The state this is currently in. If the TTL expires, it enters
+     *     the EXPIRED state by itself and passes no addresses. It may be
+     *     IN_PROGRESS and still return some addresses (when one address family
+     *     arrived and is is returned, but the other is still on the way).
+     * \todo Should we sort out unreachable addresses as well?
+     */
+    Fetchable::State getAddresses(AddressVector& addresses,
+        AddressFamily family = ANY_OK, bool expired_ok = false);
 
     /// \brief Return Address that corresponding to the index
     ///
     /// \param index The address index in the address vector
-    /// \param family The address family, AF_INET or AF_INET6
-    virtual asiolink::IOAddress getAddressAtIndex(uint32_t index, short family) const;
+    /// \param family The address family, V4_ONLY or V6_ONLY
+    asiolink::IOAddress getAddressAtIndex(size_t index,
+        AddressFamily family) const;
 
     /// \brief Update RTT
     ///
@@ -159,29 +148,45 @@ public:
     ///
     /// \param address Address to update
     /// \param RTT New RTT for the address
-    virtual void setAddressRTT(const asiolink::IOAddress& address, uint32_t rtt);
+    void setAddressRTT(const asiolink::IOAddress& address, uint32_t rtt);
 
     /// \brief Update RTT of the address that corresponding to the index
     ///
+    /// Shouldn't probably be used directly. Use corresponding
+    /// NameserverAddress.
     /// \param rtt Round-Trip Time
     /// \param index The address's index in address vector
-    /// \param family The address family, AF_INET or AF_INET6
-    virtual void updateAddressRTTAtIndex(uint32_t rtt, uint32_t index, short family);
+    /// \param family The address family, V4_ONLY or V6_ONLY
+    void updateAddressRTTAtIndex(uint32_t rtt, size_t index,
+        AddressFamily family);
+    /**
+     * \short Update RTT of an address.
+     *
+     * This is similar to updateAddressRTTAtIndex, but you pass the address,
+     * not it's index. Passing the index might be unsafe, because the position
+     * of the address or the cound of addresses may change in time.
+     *
+     * \param rtt Round-Trip Time
+     * \param address The address whose RTT should be updated.
+     * \param family The address family, V4_ONLY or V6_ONLY
+     */
+    void updateAddressRTT(uint32_t rtt, const asiolink::IOAddress& address,
+        AddressFamily family);
 
     /// \brief Set Address Unreachable
     ///
     /// Sets the specified address to be unreachable
     ///
     /// \param address Address to update
-    virtual void setAddressUnreachable(const asiolink::IOAddress& address);
+    void setAddressUnreachable(const asiolink::IOAddress& address);
 
     /// \return Owner Name of RRset
-    virtual std::string getName() const {
+    std::string getName() const {
         return name_;
     }
 
     /// \return Class of RRset
-    virtual short getClass() const {
+    const isc::dns::RRClass& getClass() const {
         return classCode_;
     }
 
@@ -197,43 +202,75 @@ public:
     /// Returns the expiration time of addresses for this nameserver.  For
     /// simplicity, this quantity is calculated as the minimum expiration time
     /// of the A and AAAA address records.
-    virtual time_t getExpiration() const {
+    time_t getExpiration() const {
         return expiration_;
     }
 
-    /// \brief Predicate for Address Selection
-    ///
-    /// Returns false if the address family of a given entry matches the address
-    /// family given or if the address family is 0 (which means return all
-    /// addresses).  This curious logic is needed for use in the remove_copy_if
-    /// algorithm, which copies all values apart from those for which the
-    /// criteria is met.
-    class AddressSelection : public std::binary_function<short, AddressEntry, bool> {
-    public:
-        bool operator()(short family, const AddressEntry& entry) const {
-            bool match = (entry.getAddress().getFamily() == family) ||
-                (family == 0);
-            return (! match);
-        }
+    /// \name Obtaining the IP addresses from resolver
+    //@{
+    /// \short A callback that some information here arrived (or are unavailable).
+    struct Callback {
+        virtual void operator()(boost::shared_ptr<NameserverEntry> self) = 0;
+        /// \short Virtual destructor, so descendants are properly cleaned up
+        virtual ~ Callback() {}
     };
 
-private:
-    /// \brief Update the address selector according to the RTTs of addresses
-    ///
-    /// \param addresses The address list
-    /// \param selector Weighted random generator
-    void updateAddressSelector(std::vector<AddressEntry>& addresses, 
-            WeightedRandomIntegerGenerator& selector);
+    /**
+     * \short Asks the resolver for IP address (or addresses).
+     *
+     * Adds a callback for given zone when they are ready or the information
+     * is found unreachable.
+     *
+     * If it is not in NOT_ASKED or EXPIRED state, it does not ask the for the
+     * IP address again, it just inserts the callback. It is up to the caller
+     * not to insert one callback multiple times.
+     *
+     * The callback might be called directly from this function.
+     *
+     * \param resolver Who to ask.
+     * \param callback The callback.
+     * \param family Which addresses are interesting to the caller. This does
+     *     not change which adresses are requested, but the callback might
+     *     be executed when at last one requested type is available (eg. not
+     *     waiting for the other one).
+     * \return The state the entry is currently in. It can return UNREACHABLE
+     *     even when there are addresses, if there are no addresses for this
+     *     family.
+     */
+    void askIP(boost::shared_ptr<ResolverInterface> resolver,
+        boost::shared_ptr<Callback> callback, AddressFamily family);
+    //@}
 
-    boost::mutex    mutex_;                              ///< Mutex protecting this object
-    std::string     name_;                               ///< Canonical name of the nameserver
-    uint16_t        classCode_;                          ///< Class of the nameserver
-    std::vector<AddressEntry> v4_addresses_;             ///< Set of V4 addresses
-    std::vector<AddressEntry> v6_addresses_;             ///< Set of V6 addresses
-    time_t          expiration_;                         ///< Summary expiration time
-    time_t          last_access_;                        ///< Last access time to the structure
-    WeightedRandomIntegerGenerator v4_address_selector_; ///< Generate one integer according to different probability
-    WeightedRandomIntegerGenerator v6_address_selector_; ///< Generate one integer according to different probability
+private:
+    mutable boost::recursive_mutex    mutex_;     ///< Mutex protecting this object
+    std::string     name_;              ///< Canonical name of the nameserver
+    isc::dns::RRClass classCode_;       ///< Class of the nameserver
+    /**
+     * \short Address lists.
+     *
+     * Only V4_ONLY and V6_ONLY is used, therefore we use the nearest larger
+     * value as the size of the array.
+     *
+     * previous_addresses is kept until the data arrive again on re-fetch and
+     * is used to pick up the RTTs from there.
+     */
+    std::vector<AddressEntry> addresses_[ANY_OK], previous_addresses_[ANY_OK];
+    time_t          expiration_;        ///< Summary expiration time. 0 = unset
+    // Do we have some addresses already? Do we expect some to come?
+    // These are set after asking for IP, if NOT_ASKED, they are uninitialized
+    bool has_address_[ADDR_REQ_MAX], expect_address_[ADDR_REQ_MAX];
+    // Callbacks from resolver
+    class ResolverCallback;
+    friend class ResolverCallback;
+    // Callbacks inserted into this object
+    typedef std::pair<AddressFamily, boost::shared_ptr<Callback> >
+        CallbackPair;
+    std::vector<CallbackPair> callbacks_;
+    /// \short Private version that does the actual asking of one address type
+    ///
+    /// Call unlocked.
+    void askIP(boost::shared_ptr<ResolverInterface> resolver,
+        const isc::dns::RRType&, AddressFamily);
 };
 
 }   // namespace dns

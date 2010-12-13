@@ -20,7 +20,7 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <iostream>
 
-#include "exceptions/exceptions.h"
+#include <exceptions/exceptions.h>
 
 #include "hash_key.h"
 #include "hash_table.h"

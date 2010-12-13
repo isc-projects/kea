@@ -25,8 +25,7 @@
 #include <boost/thread.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 
-#include "config.h"
-
+#include <config.h>
 
 namespace isc {
 namespace nsas {

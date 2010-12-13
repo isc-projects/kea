@@ -21,16 +21,19 @@
 #include <gtest/gtest.h>
 #include <boost/lexical_cast.hpp>
 
-#include "nsas_entry.h"
-#include "hash_table.h"
-#include "hash_key.h"
-#include "lru_list.h"
-#include "hash_deleter.h"
+#include <dns/rrclass.h>
+
+#include "../nsas_entry.h"
+#include "../hash_table.h"
+#include "../hash_key.h"
+#include "../lru_list.h"
+#include "../hash_deleter.h"
 
 #include "nsas_test.h"
-#include "nsas_entry_compare.h"
+#include "../nsas_entry_compare.h"
 
 using namespace std;
+using namespace isc::dns;
 
 namespace isc {
 namespace nsas {
@@ -40,13 +43,13 @@ namespace nsas {
 class HashDeleterTest : public ::testing::Test {
 protected:
     HashDeleterTest() :
-        entry1_(new TestEntry("alpha", 1)),
-        entry2_(new TestEntry("beta", 2)),
-        entry3_(new TestEntry("gamma", 3)),
-        entry4_(new TestEntry("delta", 4)),
-        entry5_(new TestEntry("epsilon", 5)),
-        entry6_(new TestEntry("zeta", 6)),
-        entry7_(new TestEntry("eta", 7)),
+        entry1_(new TestEntry("alpha", RRClass::IN())),
+        entry2_(new TestEntry("beta", RRClass::CH())),
+        entry3_(new TestEntry("gamma", RRClass::HS())),
+        entry4_(new TestEntry("delta", RRClass::IN())),
+        entry5_(new TestEntry("epsilon", RRClass::CH())),
+        entry6_(new TestEntry("zeta", RRClass::HS())),
+        entry7_(new TestEntry("eta", RRClass::IN())),
         hash_table_(new NsasEntryCompare<TestEntry>()),
         lru_list_(3, new HashDeleter<TestEntry>(hash_table_))
     {}
