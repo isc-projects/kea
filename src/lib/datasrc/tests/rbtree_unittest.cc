@@ -51,11 +51,11 @@ namespace {
 class RBTreeTest : public::testing::Test {
 protected:
     RBTreeTest() : rbtree() {
-        rbtree.insert(Name("a"), &rbtnode);
+        rbtree.insert(Name("c"), &rbtnode);
         rbtnode->setData(new int(1));
         rbtree.insert(Name("b"), &rbtnode);
         rbtnode->setData(new int(2));
-        rbtree.insert(Name("c"), &rbtnode);
+        rbtree.insert(Name("a"), &rbtnode);
         rbtnode->setData(new int(3));
         rbtree.insert(Name("x.d.e.f"), &rbtnode);
         rbtnode->setData(new int(4));
@@ -131,6 +131,21 @@ TEST_F(RBTreeTest, insertNames) {
     EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("r.d.e.f"), &rbtnode));
     EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("s.d.e.f"), &rbtnode));
     EXPECT_EQ(23, rbtree.getNodeCount());
+
+    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("h.w.y.d.e.f"), &rbtnode));
+
+    // add more nodes one by one to cover leftRotate and rightRotate
+    EXPECT_EQ(RBTree<int>::ALREADYEXIST, rbtree.insert(Name("f"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("m"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("nm"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("om"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("k"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("l"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("fe"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("ge"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("i"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("ae"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("n"), &rbtnode));
 }
 
 TEST_F(RBTreeTest, findName) {
@@ -141,6 +156,7 @@ TEST_F(RBTreeTest, findName) {
 
     // not found
     EXPECT_EQ(RBTree<int>::NOTFOUND, rbtree.find(Name("d.e.f"), &crbtnode));
+    EXPECT_EQ(RBTree<int>::NOTFOUND, rbtree.find(Name("y.d.e.f"), &crbtnode));
     EXPECT_EQ(RBTree<int>::NOTFOUND, rbtree.find(Name("x"), &crbtnode));
     EXPECT_EQ(RBTree<int>::NOTFOUND, rbtree.find(Name("m.n"), &crbtnode));
 
