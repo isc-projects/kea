@@ -121,22 +121,52 @@ private:
 //
 // Asynchronous UDP server coroutine
 //
+///
+/// \brief This class implements the coroutine to handle UDP
+///        DNS query event. As such, it is both a \c DNSServer and
+///        a \c coroutine
+///
 class UDPServer : public virtual DNSServer, public virtual coroutine {
 public:
+    /// \brief Constructor
+    /// \param io_service the asio::io_service to work with
+    /// \param addr the IP address to listen for queries on
+    /// \param port the port to listen for queries on
+    /// \param checkin the callbackprovider for non-DNS events
+    /// \param lookup the callbackprovider for DNS lookup events
+    /// \param answer the callbackprovider for DNS answer events
     explicit UDPServer(asio::io_service& io_service,
                        const asio::ip::address& addr, const uint16_t port,
                        SimpleCallback* checkin = NULL,
                        DNSLookup* lookup = NULL,
                        DNSAnswer* answer = NULL);
 
+    /// \brief The function operator
     void operator()(asio::error_code ec = asio::error_code(),
                     size_t length = 0);
 
+    /// \brief Calls the lookup callback
     void asyncLookup();
+
+    /// \brief Resume operation
+    ///
+    /// \param done Set this to true if the lookup action is done and
+    ///        we have an answer
     void resume(const bool done);
+
+    /// \brief Check if we have an answer
+    ///
+    /// \return true if we have an answer
     bool hasAnswer() { return (done_); }
+
+    /// \brief Returns the coroutine state value
+    ///
+    /// \return the coroutine state value
     int value() { return (get_value()); }
 
+    /// \brief Clones the object
+    ///
+    /// \return a newly allocated copy of this object
     DNSServer* clone() {
         UDPServer* s = new UDPServer(*this);
         return (s);
@@ -208,12 +238,12 @@ private:
 class UDPQuery : public coroutine {
 public:
     // TODO Maybe this should be more generic than just for UDPQuery?
-    /**
-     * \short Result of the query
-     *
-     * This is related only to contacting the remote server. If the answer
-     * indicates error, it is still counted as SUCCESS here, if it comes back.
-     */
+    ///
+    /// \brief Result of the query
+    ///
+    /// This is related only to contacting the remote server. If the answer
+    ///indicates error, it is still counted as SUCCESS here, if it comes back.
+    ///
     enum Result {
         SUCCESS,
         TIME_OUT,
@@ -225,14 +255,14 @@ public:
             /// This will be called when the UDPQuery is completed
             virtual void operator()(Result result) = 0;
     };
-    /**
-     * \short Constructor.
-     *
-     * It creates the query.
-     * @param callback will be called when we terminate. It is your task to
-     *     delete it if allocated on heap.
-     * @param timeout in ms.
-     */
+    ///
+    /// \brief Constructor.
+    ///
+    /// It creates the query.
+    /// @param callback will be called when we terminate. It is your task to
+    ///        delete it if allocated on heap.
+    ///@param timeout in ms.
+    ///
     explicit UDPQuery(asio::io_service& io_service,
                       const isc::dns::Question& q,
                       const IOAddress& addr, uint16_t port,
@@ -245,15 +275,15 @@ public:
 private:
     enum { MAX_LENGTH = 4096 };
 
-    /**
-     * \short Private data
-     *
-     * They are not private because of stability of the
-     * interface (this is private class anyway), but because this class
-     * will be copyed often (it is used as a coroutine and passed as callback
-     * to many async_*() functions) and we want keep the same data. Some of
-     * the data is not copyable too.
-     */
+    ///
+    /// \short Private data
+    ///
+    /// They are not private because of stability of the
+    /// interface (this is private class anyway), but because this class
+    /// will be copyed often (it is used as a coroutine and passed as callback
+    /// to many async_*() functions) and we want keep the same data. Some of
+    /// the data is not copyable too.
+    ///
     struct PrivateData;
     boost::shared_ptr<PrivateData> data_;
 };
