@@ -119,7 +119,7 @@ public:
     /// \c RBNode, and RBNode will in charge of the memory management
     /// \note when set new data, old data will be deleted first
     void setData(T* data);
-    
+
     /// \breif set the data stored in the node
     void setData(const NodeDataType& data);
     //@}
@@ -383,7 +383,7 @@ void RBTree<T> ::deleteHelper(RBNode<T> *root) {
     if (root == NULLNODE) {
         return;
     }
-    
+
     RBNode<T> *node = root;
     while (root->left_ != NULLNODE || root->right_ != NULLNODE) {
         while (node->left_ != NULLNODE || node->right_ != NULLNODE) {
@@ -698,7 +698,7 @@ RBTree<T>::dumpTreeHelper(std::ostream& os, const RBNode<T>* node,
 }
 
 template <typename T>
-void 
+void
 RBTree<T>::indent(std::ostream& os, unsigned int depth) {
     static const unsigned int INDENT_FOR_EACH_DEPTH = 5;
     os << std::string(depth * INDENT_FOR_EACH_DEPTH, ' ');
