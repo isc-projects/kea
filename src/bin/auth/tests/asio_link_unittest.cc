@@ -516,7 +516,7 @@ TEST_F(ASIOLinkTest, destructIntervalTimer) {
 
     // itimer_counter will be deleted in
     // TimerCallBackCancelDeleter
-    IntervalTimer* itimer_counter;
+    IntervalTimer* itimer_counter = NULL;
     ASSERT_NO_THROW(itimer_counter = new IntervalTimer(*io_service_));
     IntervalTimer itimer_canceller(*io_service_);
     timer_cancel_success_ = false;
