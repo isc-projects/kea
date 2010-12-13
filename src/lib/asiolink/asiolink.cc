@@ -370,7 +370,7 @@ RecursiveQuery::sendQuery(const Question& question, OutputBufferPtr buffer,
     // we're only going to handle UDP.
     asio::io_service& io = dns_service_.get_io_service();
     // It will delete itself when it is done
-    new RunningQuery(io, question, upstream_, buffer, server->clone(),
+    new RunningQuery(io, question, upstream_, buffer, server,
          timeout_, retries_);
 }
 
