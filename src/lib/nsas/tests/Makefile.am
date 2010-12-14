@@ -19,6 +19,11 @@ if USE_GXX
 AM_CXXFLAGS += -Wno-missing-field-initializers
 endif
 
+if USE_CLANGPP
+# see ../Makefile.am
+AM_CXXFLAGS += -Wno-unused-parameter
+endif
+
 CLEANFILES = *.gcno *.gcda
 
 TESTS =
