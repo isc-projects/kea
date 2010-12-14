@@ -14,6 +14,12 @@ if USE_GXX
 AM_CXXFLAGS += -Wno-missing-field-initializers
 endif
 
+if USE_CLANGPP
+# clang++ complains about unused function parameters in some boost header
+# files.
+AM_CXXFLAGS += -Wno-unused-parameter
+endif
+
 lib_LTLIBRARIES = libnsas.la
 libnsas_la_SOURCES  = address_entry.h address_entry.cc
 libnsas_la_SOURCES += asiolink.h
