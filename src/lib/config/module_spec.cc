@@ -24,6 +24,7 @@
 
 // todo: add more context to thrown ModuleSpecErrors?
 
+using namespace isc::data;
 using namespace isc::config;
 
 namespace {

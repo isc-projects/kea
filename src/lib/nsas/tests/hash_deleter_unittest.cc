@@ -109,7 +109,7 @@ TEST_F(HashDeleterTest, Constructor) {
 
     // ... and check that is does not exist in the table.
     boost::shared_ptr<TestEntry> x = hash_table_.get(entry1_->hashKey());
-    EXPECT_EQ(NULL, x.get());
+    EXPECT_FALSE(x);
 }
 
 } // namespace nsas

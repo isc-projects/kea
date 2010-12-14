@@ -122,15 +122,15 @@ private:
 };
 
 template <typename T>
-void RdataTest<T>::toWire(OutputBuffer& buffer UNUSED_PARAM) const {
+void RdataTest<T>::toWire(OutputBuffer&) const {
 }
 
 template <typename T>
-void RdataTest<T>::toWire(MessageRenderer& buffer UNUSED_PARAM) const {
+void RdataTest<T>::toWire(MessageRenderer&) const {
 }
 
 template <typename T>
-int RdataTest<T>::compare(const Rdata& other UNUSED_PARAM) const {
+int RdataTest<T>::compare(const Rdata&) const {
     return 0;
 }
 

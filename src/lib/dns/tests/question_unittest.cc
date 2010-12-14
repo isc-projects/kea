@@ -56,8 +56,7 @@ protected:
 };
 
 Question
-questionFromWire(const char* datafile, size_t position = 0)
-{
+questionFromWire(const char* datafile, size_t position = 0) {
     vector<unsigned char> data;
     UnitTestUtil::readWireData(datafile, data);
 
@@ -67,8 +66,7 @@ questionFromWire(const char* datafile, size_t position = 0)
     return (Question(buffer));
 }
 
-TEST_F(QuestionTest, fromWire)
-{
+TEST_F(QuestionTest, fromWire) {
     Question q = questionFromWire("question_fromWire");
 
     EXPECT_EQ(example_name1, q.getName());
@@ -88,14 +86,12 @@ TEST_F(QuestionTest, fromWire)
     EXPECT_THROW(questionFromWire("question_fromWire", 36), IncompleteRRClass);
 }
 
-TEST_F(QuestionTest, toText)
-{
+TEST_F(QuestionTest, toText) {
     EXPECT_EQ("foo.example.com. IN NS\n", test_question1.toText());
     EXPECT_EQ("bar.example.com. CH A\n", test_question2.toText());
 }
 
-TEST_F(QuestionTest, toWireBuffer)
-{
+TEST_F(QuestionTest, toWireBuffer) {
     test_question1.toWire(obuffer);
     test_question2.toWire(obuffer);
     UnitTestUtil::readWireData("question_toWire1", wiredata);
@@ -103,8 +99,7 @@ TEST_F(QuestionTest, toWireBuffer)
                         obuffer.getLength(), &wiredata[0], wiredata.size());
 }
 
-TEST_F(QuestionTest, toWireRenderer)
-{
+TEST_F(QuestionTest, toWireRenderer) {
     test_question1.toWire(renderer);
     test_question2.toWire(renderer);
     UnitTestUtil::readWireData("question_toWire2", wiredata);
@@ -113,15 +108,13 @@ TEST_F(QuestionTest, toWireRenderer)
 }
 
 // test operator<<.  We simply confirm it appends the result of toText().
-TEST_F(QuestionTest, LeftShiftOperator)
-{
+TEST_F(QuestionTest, LeftShiftOperator) {
     ostringstream oss;
     oss << test_question1;
     EXPECT_EQ(test_question1.toText(), oss.str());
 }
 
-TEST_F(QuestionTest, comparison)
-{
+TEST_F(QuestionTest, comparison) {
     const Name a("a"), b("b");
     const RRClass in(RRClass::IN()), ch(RRClass::CH());
     const RRType ns(RRType::NS()), aaaa(RRType::AAAA());

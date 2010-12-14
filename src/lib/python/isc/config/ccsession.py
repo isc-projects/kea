@@ -1,4 +1,5 @@
 # Copyright (C) 2009  Internet Systems Consortium.
+# Copyright (C) 2010  CZ NIC
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -169,20 +170,35 @@ class ModuleCCSession(ConfigData):
            time-critical, it is strongly recommended to only use
            check_command(), and not look at the socket at all."""
         return self._session._socket
-    
+
     def close(self):
         """Close the session to the command channel"""
         self._session.close()
 
-    def check_command(self):
-        """Check whether there is a command or configuration update
-           on the channel. Call the corresponding callback function if
-           there is. This function does a non-blocking read on the
-           cc session, and returns nothing. It will respond to any
-           command by either an error or the answer message returned
-           by the callback, unless the latter is None."""
-        msg, env = self._session.group_recvmsg(True)
-        
+    def check_command(self, nonblock=True):
+        """Check whether there is a command or configuration update on
+           the channel. This function does a read on the cc session, and
+           returns nothing.
+           It calls check_command_without_recvmsg()
+           to parse the received message.
+           
+           If nonblock is True, it just checks if there's a command
+           and does nothing if there isn't. If nonblock is False, it
+           waits until it arrives. It temporarily sets timeout to infinity,
+           because commands may not come in arbitrary long time."""
+        timeout_orig = self._session.get_timeout()
+        self._session.set_timeout(0)
+        try:
+            msg, env = self._session.group_recvmsg(nonblock)
+        finally:
+            self._session.set_timeout(timeout_orig)
+        self.check_command_without_recvmsg(msg, env)
+
+    def check_command_without_recvmsg(self, msg, env):
+        """Parse the given message to see if there is a command or a
+           configuration update. Calls the corresponding handler
+           functions if present. Responds on the channel if the
+           handler returns a message.""" 
         # should we default to an answer? success-by-default? unhandled error?
         if msg is not None and not 'result' in msg:
             answer = None
@@ -200,7 +216,8 @@ class ModuleCCSession(ConfigData):
                             newc = self._remote_module_configs[module_name].get_local_config()
                             isc.cc.data.merge(newc, new_config)
                             self._remote_module_configs[module_name].set_local_config(newc)
-                            return
+                        # For other modules, we're not supposed to answer
+                        return
 
                     # ok, so apparently this update is for us.
                     errors = []
@@ -381,16 +398,25 @@ class UIModuleCCSession(MultiConfigData):
         module_spec = self.find_spec_part(identifier)
         if (type(module_spec) != dict or "list_item_spec" not in module_spec):
             raise isc.cc.data.DataNotFoundError(str(identifier) + " is not a list")
-        value = isc.cc.data.parse_value_str(value_str)
-        isc.config.config_data.check_type(module_spec, [value])
-        cur_list, status = self.get_value(identifier)
-        #if not cur_list:
-        #    cur_list = isc.cc.data.find_no_exc(self.config.data, identifier)
-        if not cur_list:
-            cur_list = []
-        if value in cur_list:
-            cur_list.remove(value)
-        self.set_value(identifier, cur_list)
+
+        if value_str is None:
+            # we are directly removing an list index
+            id, list_indices = isc.cc.data.split_identifier_list_indices(identifier)
+            if list_indices is None:
+                raise DataTypeError("identifier in remove_value() does not contain a list index, and no value to remove")
+            else:
+                self.set_value(identifier, None)
+        else:
+            value = isc.cc.data.parse_value_str(value_str)
+            isc.config.config_data.check_type(module_spec, [value])
+            cur_list, status = self.get_value(identifier)
+            #if not cur_list:
+            #    cur_list = isc.cc.data.find_no_exc(self.config.data, identifier)
+            if not cur_list:
+                cur_list = []
+            if value in cur_list:
+                cur_list.remove(value)
+            self.set_value(identifier, cur_list)
 
     def commit(self):
         """Commit all local changes, send them through b10-cmdctl to

@@ -19,8 +19,8 @@ import configparser, re, time, sys
 from datetime import datetime
 from optparse import OptionParser
 
-re_hex = re.compile(r'0x[0-9a-fA-F]+')
-re_decimal = re.compile(r'\d+$')
+re_hex = re.compile(r'^0x[0-9a-fA-F]+')
+re_decimal = re.compile(r'^\d+$')
 re_string = re.compile(r"\'(.*)\'$")
 
 dnssec_timefmt = '%Y%m%d%H%M%S'
@@ -48,9 +48,12 @@ dict_rrtype = { 'none' : 0, 'a' : 1, 'ns' : 2, 'md' : 3, 'mf' : 4, 'cname' : 5,
                 'maila' : 254, 'any' : 255 }
 rdict_rrtype = dict([(dict_rrtype[k], k.upper()) for k in dict_rrtype.keys()])
 dict_rrclass = { 'in' : 1, 'ch' : 3, 'hs' : 4, 'any' : 255 }
-rdict_rrclass = dict([(dict_rrclass[k], k.upper()) for k in dict_rrclass.keys()])
-dict_algorithm = { 'rsamd5' : 1, 'dh' : 2, 'dsa' : 3, 'ecc' : 4, 'rsasha1' : 5 }
-rdict_algorithm = dict([(dict_algorithm[k], k.upper()) for k in dict_algorithm.keys()])
+rdict_rrclass = dict([(dict_rrclass[k], k.upper()) for k in \
+                          dict_rrclass.keys()])
+dict_algorithm = { 'rsamd5' : 1, 'dh' : 2, 'dsa' : 3, 'ecc' : 4,
+                   'rsasha1' : 5 }
+rdict_algorithm = dict([(dict_algorithm[k], k.upper()) for k in \
+                            dict_algorithm.keys()])
 
 header_xtables = { 'qr' : dict_qr, 'opcode' : dict_opcode,
                    'rcode' : dict_rcode }
@@ -75,13 +78,17 @@ def code_totext(code, dict):
         return dict[code] + '(' + str(code) + ')'
     return str(code)
 
-def encode_name(name, absolute = True):
+def encode_name(name, absolute=True):
     # make sure the name is dot-terminated.  duplicate dots will be ignored
     # below.
     name += '.'
     labels = name.split('.')
     wire = ''
     for l in labels:
+        if len(l) > 4 and l[0:4] == 'ptr=':
+            # special meta-syntax for compression pointer
+            wire += ' %04x' % (0xc000 | int(l[4:]))
+            break
         if absolute or len(l) > 0:
             wire += '%02x' % len(l)
             wire += ''.join(['%02x' % ord(ch) for ch in l])
@@ -89,7 +96,9 @@ def encode_name(name, absolute = True):
             break
     return wire
 
-def encode_string(name):
+def encode_string(name, len=None):
+    if type(name) is int and len is not None:
+        return '%0.*x' % (len * 2, name)
     return ''.join(['%02x' % ord(ch) for ch in name])
 
 def count_namelabels(name):
@@ -121,17 +130,19 @@ def print_header(f, input_file):
 
 class Name:
     name = 'example.com'
-    pointer = -1                # no compression by default
+    pointer = None                # no compression by default
     def dump(self, f):
-        name_wire = encode_name(self.name,
-                                True if self.pointer == -1 else False)
+        name = self.name
+        if self.pointer is not None:
+            if len(name) > 0 and name[-1] != '.':
+                name += '.'
+            name += 'ptr=%d' % self.pointer
+        name_wire = encode_name(name)
         f.write('\n# DNS Name: %s' % self.name)
-        if self.pointer >= 0:
+        if self.pointer is not None:
             f.write(' + compression pointer: %d' % self.pointer)
         f.write('\n')
         f.write('%s' % name_wire)
-        if self.pointer >= 0:
-            f.write(' %04x' % (0xc000 | self.pointer))
         f.write('\n')
 
 class DNSHeader:
@@ -338,20 +349,73 @@ class RRSIG:
                 (code_totext(self.covered, rdict_rrtype),
                  code_totext(self.algorithm, rdict_algorithm), labels,
                  self.originalttl))
-        f.write('%04x %02x %02x %08x\n' % (self.covered, self.algorithm, labels,
-                                           self.originalttl))
+        f.write('%04x %02x %02x %08x\n' % (self.covered, self.algorithm,
+                                           labels, self.originalttl))
         f.write('# Expiration=%s, Inception=%s\n' %
                 (str(self.expiration), str(self.inception)))
         f.write('%08x %08x\n' % (self.expiration, self.inception))
         f.write('# Tag=%d Signer=%s and Signature\n' % (self.tag, self.signer))
         f.write('%04x %s %s\n' % (self.tag, name_wire, sig_wire))
 
+class TSIG:
+    rdlen = None                # auto-calculate
+    algorithm = 'hmac-sha256'
+    time_signed = 1286978795    # arbitrarily chosen default
+    fudge = 300
+    mac_size = None             # use a common value for the algorithm
+    mac = None                  # use 'x' * mac_size
+    original_id = 2845          # arbitrarily chosen default
+    error = 0
+    other_len = None         # 6 if error is BADTIME; otherwise 0
+    other_data = None        # use time_signed + fudge + 1 for BADTIME
+    dict_macsize = { 'hmac-md5' : 16, 'hmac-sha1' : 20, 'hmac-sha256' : 32 }
+    def dump(self, f):
+        if str(self.algorithm) == 'hmac-md5':
+            name_wire = encode_name('hmac-md5.sig-alg.reg.int')
+        else:
+            name_wire = encode_name(self.algorithm)
+        rdlen = self.rdlen
+        mac_size = self.mac_size
+        if mac_size is None:
+            if self.algorithm in self.dict_macsize.keys():
+                mac_size = self.dict_macsize[self.algorithm]
+            else:
+                raise RuntimeError('TSIG Mac Size cannot be determined')
+        mac = encode_string('x' * mac_size) if self.mac is None else \
+            encode_string(self.mac, mac_size)
+        other_len = self.other_len
+        if other_len is None:
+            # 18 = BADTIME
+            other_len = 6 if self.error == 18 else 0
+        other_data = self.other_data
+        if other_data is None:
+            other_data = '%012x' % (self.time_signed + self.fudge + 1) \
+                if self.error == 18 else ''
+        else:
+            other_data = encode_string(self.other_data, other_len)
+        if rdlen is None:
+            rdlen = int(len(name_wire) / 2 + 16 + len(mac) / 2 + \
+                            len(other_data) / 2)
+        f.write('\n# TSIG RDATA (RDLEN=%d)\n' % rdlen)
+        f.write('%04x\n' % rdlen);
+        f.write('# Algorithm=%s Time-Signed=%d Fudge=%d\n' %
+                (self.algorithm, self.time_signed, self.fudge))
+        f.write('%s %012x %04x\n' % (name_wire, self.time_signed, self.fudge))
+        f.write('# MAC Size=%d MAC=(see hex)\n' % mac_size)
+        f.write('%04x%s\n' % (mac_size, ' ' + mac if len(mac) > 0 else ''))
+        f.write('# Original-ID=%d Error=%d\n' % (self.original_id, self.error))
+        f.write('%04x %04x\n' %  (self.original_id, self.error))
+        f.write('# Other-Len=%d Other-Data=(see hex)\n' % other_len)
+        f.write('%04x%s\n' % (other_len,
+                              ' ' + other_data if len(other_data) > 0 else ''))
+
 def get_config_param(section):
     config_param = {'name' : (Name, {}),
                     'header' : (DNSHeader, header_xtables),
                     'question' : (DNSQuestion, question_xtables),
                     'edns' : (EDNS, {}), 'soa' : (SOA, {}), 'txt' : (TXT, {}),
-                    'rrsig' : (RRSIG, {}), 'nsec' : (NSEC, {})}
+                    'rrsig' : (RRSIG, {}), 'nsec' : (NSEC, {}),
+                    'tsig' : (TSIG, {}) }
     s = section
     m = re.match('^([^:]+)/\d+$', section)
     if m:

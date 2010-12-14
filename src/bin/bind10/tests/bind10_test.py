@@ -1,4 +1,4 @@
-from bind10 import ProcessInfo, BoB, IPAddr
+from bind10 import ProcessInfo, BoB
 
 # XXX: environment tests are currently disabled, due to the preprocessor
 #      setup that we have now complicating the environment
@@ -8,6 +8,7 @@ import sys
 import os
 import signal
 import socket
+from isc.net.addr import IPAddr
 
 class TestProcessInfo(unittest.TestCase):
     def setUp(self):
@@ -72,71 +73,243 @@ class TestProcessInfo(unittest.TestCase):
         self.assertTrue(type(pi.pid) is int)
         self.assertNotEqual(pi.pid, old_pid)
 
-class TestIPAddr(unittest.TestCase):
-    def test_v6ok(self):
-        addr = IPAddr('2001:4f8::1')
-        self.assertEqual(addr.family, socket.AF_INET6)
-        self.assertEqual(addr.addr, socket.inet_pton(socket.AF_INET6, '2001:4f8::1'))
-
-    def test_v4ok(self):
-        addr = IPAddr('127.127.127.127')
-        self.assertEqual(addr.family, socket.AF_INET)
-        self.assertEqual(addr.addr, socket.inet_aton('127.127.127.127'))
-
-    def test_badaddr(self):
-        self.assertRaises(socket.error, IPAddr, 'foobar')
-        self.assertRaises(socket.error, IPAddr, 'foo::bar')
-        self.assertRaises(socket.error, IPAddr, '123')
-        self.assertRaises(socket.error, IPAddr, '123.456.789.0')
-        self.assertRaises(socket.error, IPAddr, '127/8')
-        self.assertRaises(socket.error, IPAddr, '0/0')
-        self.assertRaises(socket.error, IPAddr, '1.2.3.4/32')
-        self.assertRaises(socket.error, IPAddr, '0')
-        self.assertRaises(socket.error, IPAddr, '')
-
 class TestBoB(unittest.TestCase):
     def test_init(self):
         bob = BoB()
         self.assertEqual(bob.verbose, False)
         self.assertEqual(bob.msgq_socket_file, None)
         self.assertEqual(bob.auth_port, 5300)
-        self.assertEqual(bob.cc_session, None)
         self.assertEqual(bob.address, None)
+        self.assertEqual(bob.cc_session, None)
+        self.assertEqual(bob.ccs, None)
         self.assertEqual(bob.processes, {})
         self.assertEqual(bob.dead_processes, {})
         self.assertEqual(bob.runnable, False)
+        self.assertEqual(bob.uid, None)
+        self.assertEqual(bob.username, None)
+        self.assertEqual(bob.nocache, False)
+        self.assertEqual(bob.cfg_start_auth, True)
+        self.assertEqual(bob.cfg_start_recurse, False)
 
     def test_init_alternate_socket(self):
         bob = BoB("alt_socket_file")
         self.assertEqual(bob.verbose, False)
         self.assertEqual(bob.msgq_socket_file, "alt_socket_file")
+        self.assertEqual(bob.auth_port, 5300)
+        self.assertEqual(bob.address, None)
         self.assertEqual(bob.cc_session, None)
+        self.assertEqual(bob.ccs, None)
         self.assertEqual(bob.processes, {})
         self.assertEqual(bob.dead_processes, {})
         self.assertEqual(bob.runnable, False)
+        self.assertEqual(bob.uid, None)
+        self.assertEqual(bob.username, None)
+        self.assertEqual(bob.nocache, False)
+        self.assertEqual(bob.cfg_start_auth, True)
+        self.assertEqual(bob.cfg_start_recurse, False)
 
     def test_init_alternate_auth_port(self):
         bob = BoB(None, 9999)
         self.assertEqual(bob.verbose, False)
         self.assertEqual(bob.msgq_socket_file, None)
         self.assertEqual(bob.auth_port, 9999)
-        self.assertEqual(bob.cc_session, None)
         self.assertEqual(bob.address, None)
+        self.assertEqual(bob.cc_session, None)
+        self.assertEqual(bob.ccs, None)
         self.assertEqual(bob.processes, {})
         self.assertEqual(bob.dead_processes, {})
         self.assertEqual(bob.runnable, False)
+        self.assertEqual(bob.uid, None)
+        self.assertEqual(bob.username, None)
+        self.assertEqual(bob.nocache, False)
+        self.assertEqual(bob.cfg_start_auth, True)
+        self.assertEqual(bob.cfg_start_recurse, False)
 
     def test_init_alternate_address(self):
-        bob = BoB(None, 5300, '127.127.127.127')
+        bob = BoB(None, 1234, IPAddr('127.127.127.127'))
         self.assertEqual(bob.verbose, False)
-        self.assertEqual(bob.auth_port, 5300)
         self.assertEqual(bob.msgq_socket_file, None)
-        self.assertEqual(bob.cc_session, None)
+        self.assertEqual(bob.auth_port, 1234)
         self.assertEqual(bob.address.addr, socket.inet_aton('127.127.127.127'))
+        self.assertEqual(bob.cc_session, None)
+        self.assertEqual(bob.ccs, None)
         self.assertEqual(bob.processes, {})
         self.assertEqual(bob.dead_processes, {})
         self.assertEqual(bob.runnable, False)
-    # verbose testing...
+        self.assertEqual(bob.uid, None)
+        self.assertEqual(bob.username, None)
+        self.assertEqual(bob.nocache, False)
+        self.assertEqual(bob.cfg_start_auth, True)
+        self.assertEqual(bob.cfg_start_recurse, False)
+
+# Class for testing the Bob.start_all_processes() method call.
+#
+# Although testing that external processes start is outside the scope
+# of the unit test, by overriding the process start methods we can check
+# that the right processes are started depending on the configuration
+# options.
+class StartAllProcessesBob(BoB):
+    def __init__(self):
+        BoB.__init__(self)
+
+# Set flags as to which of the overridden methods has been run.
+        self.msgq = False
+        self.cfgmgr = False
+        self.ccsession = False
+        self.auth = False
+        self.recurse = False
+        self.xfrout = False
+        self.xfrin = False
+        self.zonemgr = False
+        self.stats = False
+        self.cmdctl = False
+
+    def read_bind10_config(self):
+        # Configuration options are set directly
+        pass
+
+    def start_msgq(self, c_channel_env):
+        self.msgq = True
+
+    def start_cfgmgr(self, c_channel_env):
+        self.cfgmgr = True
+
+    def start_ccsession(self, c_channel_env):
+        self.ccsession = True
+
+    def start_auth(self, c_channel_env):
+        self.auth = True
+
+    def start_recurse(self, c_channel_env):
+        self.recurse = True
+
+    def start_xfrout(self, c_channel_env):
+        self.xfrout = True
+
+    def start_xfrin(self, c_channel_env):
+        self.xfrin = True
+
+    def start_zonemgr(self, c_channel_env):
+        self.zonemgr = True
+
+    def start_stats(self, c_channel_env):
+        self.stats = True
+
+    def start_cmdctl(self, c_channel_env):
+        self.cmdctl = True
+
+# Check that the start_all_processes method starts the right combination
+# of processes.
+class TestStartAllProcessesBob(unittest.TestCase):
+    def check_preconditions(self, bob):
+        self.assertEqual(bob.msgq, False)
+        self.assertEqual(bob.cfgmgr, False)
+        self.assertEqual(bob.ccsession, False)
+        self.assertEqual(bob.auth, False)
+        self.assertEqual(bob.recurse, False)
+        self.assertEqual(bob.xfrout, False)
+        self.assertEqual(bob.xfrin, False)
+        self.assertEqual(bob.zonemgr, False)
+        self.assertEqual(bob.stats, False)
+        self.assertEqual(bob.cmdctl, False)
+
+    # Checks the processes started when starting neither auth nor recurse
+    # is specified.
+    def test_start_none(self):
+        # Created Bob and ensure initialization correct
+        bob = StartAllProcessesBob()
+        self.check_preconditions(bob)
+
+        # Start processes and check what was started
+        c_channel_env = {}
+        bob.cfg_start_auth = False
+        bob.cfg_start_recurse = False
+
+        bob.start_all_processes(c_channel_env)
+
+        self.assertEqual(bob.msgq, True)
+        self.assertEqual(bob.cfgmgr, True)
+        self.assertEqual(bob.ccsession, True)
+        self.assertEqual(bob.auth, False)
+        self.assertEqual(bob.recurse, False)
+        self.assertEqual(bob.xfrout, False)
+        self.assertEqual(bob.xfrin, False)
+        self.assertEqual(bob.zonemgr, False)
+        self.assertEqual(bob.stats, True)
+        self.assertEqual(bob.cmdctl, True)
+
+    # Checks the processes started when starting only the auth process
+    def test_start_auth(self):
+        # Created Bob and ensure initialization correct
+        bob = StartAllProcessesBob()
+        self.check_preconditions(bob)
+
+        # Start processes and check what was started
+        c_channel_env = {}
+        bob.cfg_start_auth = True
+        bob.cfg_start_recurse = False
+
+        bob.start_all_processes(c_channel_env)
+
+        self.assertEqual(bob.msgq, True)
+        self.assertEqual(bob.cfgmgr, True)
+        self.assertEqual(bob.ccsession, True)
+        self.assertEqual(bob.auth, True)
+        self.assertEqual(bob.recurse, False)
+        self.assertEqual(bob.xfrout, True)
+        self.assertEqual(bob.xfrin, True)
+        self.assertEqual(bob.zonemgr, True)
+        self.assertEqual(bob.stats, True)
+        self.assertEqual(bob.cmdctl, True)
+
+    # Checks the processes started when starting only the recurse process
+    def test_start_recurse(self):
+        # Created Bob and ensure initialization correct
+        bob = StartAllProcessesBob()
+        self.check_preconditions(bob)
+
+        # Start processes and check what was started
+        c_channel_env = {}
+        bob.cfg_start_auth = False
+        bob.cfg_start_recurse = True
+
+        bob.start_all_processes(c_channel_env)
+
+        self.assertEqual(bob.msgq, True)
+        self.assertEqual(bob.cfgmgr, True)
+        self.assertEqual(bob.ccsession, True)
+        self.assertEqual(bob.auth, False)
+        self.assertEqual(bob.recurse, True)
+        self.assertEqual(bob.xfrout, False)
+        self.assertEqual(bob.xfrin, False)
+        self.assertEqual(bob.zonemgr, False)
+        self.assertEqual(bob.stats, True)
+        self.assertEqual(bob.cmdctl, True)
+
+    # Checks the processes started when starting both auth and recurse process
+    def test_start_both(self):
+        # Created Bob and ensure initialization correct
+        bob = StartAllProcessesBob()
+        self.check_preconditions(bob)
+
+        # Start processes and check what was started
+        c_channel_env = {}
+        bob.cfg_start_auth = True
+        bob.cfg_start_recurse = True
+
+        bob.start_all_processes(c_channel_env)
+
+        self.assertEqual(bob.msgq, True)
+        self.assertEqual(bob.cfgmgr, True)
+        self.assertEqual(bob.ccsession, True)
+        self.assertEqual(bob.auth, True)
+        self.assertEqual(bob.recurse, True)
+        self.assertEqual(bob.xfrout, True)
+        self.assertEqual(bob.xfrin, True)
+        self.assertEqual(bob.zonemgr, True)
+        self.assertEqual(bob.stats, True)
+        self.assertEqual(bob.cmdctl, True)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -94,7 +94,6 @@ class ZoneEntry::ResolverCallback : public ResolverInterface::Callback {
         virtual void success(const shared_ptr<AbstractRRset>& answer) {
             Lock lock(entry_->mutex_);
             RdataIteratorPtr iterator(answer->getRdataIterator());
-            iterator->first();
             // If there are no data
             if (iterator->isLast()) {
                 failureInternal(answer->getTTL().getValue());
