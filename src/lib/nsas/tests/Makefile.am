@@ -10,7 +10,6 @@ AM_LDFLAGS =
 if USE_STATIC_LINK
 AM_LDFLAGS += -static
 endif
-AM_LDFLAGS += -lboost_thread
 
 if USE_GXX
 # Some versions of GCC warn about some versions of Boost regarding
