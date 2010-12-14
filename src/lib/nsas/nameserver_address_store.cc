@@ -17,6 +17,7 @@
 #include <boost/thread.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/foreach.hpp>
+#include <boost/bind.hpp>
 
 #include <config.h>
 #include <dns/rdataclass.h>

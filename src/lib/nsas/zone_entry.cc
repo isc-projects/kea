@@ -20,7 +20,7 @@
 
 #include <algorithm>
 #include <boost/foreach.hpp>
-#include <boost/random.hpp>
+#include <boost/bind.hpp>
 #include <dns/rrttl.h>
 #include <dns/rdataclass.h>
 
@@ -137,7 +137,7 @@ class ZoneEntry::ResolverCallback : public ResolverInterface::Callback {
                             string ns_name_str(ns_name.toText());
                             pair<bool, NameserverPtr> from_hash(
                                 entry_->nameserver_table_->getOrAdd(HashKey(
-                                ns_name_str, entry_->class_code_), bind(
+                                ns_name_str, entry_->class_code_), boost::bind(
                                 newNs, &ns_name_str, &entry_->class_code_)));
                             // Make it at the front of the list
                             if (from_hash.first) {
