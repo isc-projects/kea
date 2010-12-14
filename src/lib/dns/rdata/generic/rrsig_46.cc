@@ -106,8 +106,7 @@ RRSIG::RRSIG(const string& rrsig_str) :
                           Name(signer_txt), signature);
 }
 
-RRSIG::RRSIG(InputBuffer& buffer, size_t rdata_len)
-{
+RRSIG::RRSIG(InputBuffer& buffer, size_t rdata_len) {
     size_t pos = buffer.getPosition();
 
     if (rdata_len < RRSIG_MINIMUM_LEN) {
@@ -142,8 +141,7 @@ RRSIG::RRSIG(const RRSIG& source) :
 {}
 
 RRSIG&
-RRSIG::operator=(const RRSIG& source)
-{
+RRSIG::operator=(const RRSIG& source) {
     if (impl_ == source.impl_) {
         return (*this);
     }
@@ -155,14 +153,12 @@ RRSIG::operator=(const RRSIG& source)
     return (*this);
 }
 
-RRSIG::~RRSIG()
-{
+RRSIG::~RRSIG() {
     delete impl_;
 }
 
 string
-RRSIG::toText() const
-{
+RRSIG::toText() const {
     string expire = timeToText(impl_->timeexpire_);
     string inception = timeToText(impl_->timeinception_);
 
@@ -178,8 +174,7 @@ RRSIG::toText() const
 }
 
 void
-RRSIG::toWire(OutputBuffer& buffer) const
-{
+RRSIG::toWire(OutputBuffer& buffer) const {
     impl_->covered_.toWire(buffer);
     buffer.writeUint8(impl_->algorithm_);
     buffer.writeUint8(impl_->labels_);
@@ -192,8 +187,7 @@ RRSIG::toWire(OutputBuffer& buffer) const
 }
 
 void
-RRSIG::toWire(MessageRenderer& renderer) const
-{
+RRSIG::toWire(MessageRenderer& renderer) const {
     impl_->covered_.toWire(renderer);
     renderer.writeUint8(impl_->algorithm_);
     renderer.writeUint8(impl_->labels_);
@@ -206,8 +200,7 @@ RRSIG::toWire(MessageRenderer& renderer) const
 }
 
 int
-RRSIG::compare(const Rdata& other) const
-{
+RRSIG::compare(const Rdata& other) const {
     const RRSIG& other_rrsig = dynamic_cast<const RRSIG&>(other);
 
     if (impl_->covered_.getCode() != other_rrsig.impl_->covered_.getCode()) {

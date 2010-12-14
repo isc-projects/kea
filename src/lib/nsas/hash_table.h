@@ -63,22 +63,14 @@ struct HashTableSlot {
 
     /// \brief Copy Constructor
     ///
-    /// ... which as noted in the class description does not copy.  It is
-    /// defined outside the class to allow for use of the UNUSED_PARAM macro.
-    HashTableSlot(const HashTableSlot<T>& unused);
+    /// ... which as noted in the class description does not copy.
+    HashTableSlot(const HashTableSlot<T>&)
+    { }
 
 public:
     mutex_type                          mutex_;     ///< Protection mutex
     std::list<boost::shared_ptr<T> >    list_;      ///< List head
 };
-
-// (Non)Copy Constructor
-
-template <typename T>
-HashTableSlot<T>::HashTableSlot(const HashTableSlot<T>& unused UNUSED_PARAM) :
-    mutex_(), list_()
-{}
-
 
 /// \brief Comparison Object Class
 ///

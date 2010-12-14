@@ -229,10 +229,9 @@ class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
                 return;
             }
 
-            RdataIteratorPtr i(response->getRdataIterator());
-            // TODO Remove at merge with trunk
-            i->first();
-            while (! i->isLast()) {
+            for (RdataIteratorPtr i(response->getRdataIterator());
+                !i->isLast(); i->next())
+            {
                 // Try to find the original value and reuse it
                 string address(i->getCurrent().toText());
                 AddressEntry *found(NULL);
@@ -248,7 +247,6 @@ class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
                 // If we found it, use it. If not, create a new one.
                 entries.push_back(found ? *found : AddressEntry(IOAddress(
                     i->getCurrent().toText()), 1));
-                i->next();
             }
 
             // We no longer need the previous set of addresses, we have

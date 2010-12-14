@@ -31,13 +31,11 @@ using namespace isc::dns;
 namespace isc {
 namespace dns {
 
-RRClass::RRClass(const string& classstr)
-{
+RRClass::RRClass(const string& classstr) {
     classcode_ = RRParamRegistry::getRegistry().textToClassCode(classstr);
 }
 
-RRClass::RRClass(InputBuffer& buffer)
-{
+RRClass::RRClass(InputBuffer& buffer) {
     if (buffer.getLength() - buffer.getPosition() < sizeof(uint16_t)) {
         isc_throw(IncompleteRRClass, "incomplete wire-format RR class");
     }
@@ -45,26 +43,22 @@ RRClass::RRClass(InputBuffer& buffer)
 }
 
 const string
-RRClass::toText() const
-{
+RRClass::toText() const {
     return (RRParamRegistry::getRegistry().codeToClassText(classcode_));
 }
 
 void
-RRClass::toWire(OutputBuffer& buffer) const
-{
+RRClass::toWire(OutputBuffer& buffer) const {
     buffer.writeUint16(classcode_);
 }
 
 void
-RRClass::toWire(MessageRenderer& renderer) const
-{
+RRClass::toWire(MessageRenderer& renderer) const {
     renderer.writeUint16(classcode_);
 }
 
 ostream&
-operator<<(ostream& os, const RRClass& rrclass)
-{
+operator<<(ostream& os, const RRClass& rrclass) {
     os << rrclass.toText();
     return (os);
 }
