@@ -1,6 +1,3 @@
-Sometime soon, before merge, when this stabilizes:
-* Update the wiki page so it matches reality.
-
 Long term:
 * Make a mechanism the cache (which does not exist at the time of writing this
   note) will be able to notify the NSAS that something has changed (address,
@@ -24,15 +21,12 @@ Long term:
   tricky, though, because we need to be thread safe. There seems to be
   solution to use weak_ptr inside the hash_table instead of shared_ptr and
   catch the exception inside get() (and getOrAdd) and delete the dead pointer.
-* Selection algorithm
-* Better way to dispatch all calbacks in a list is needed. Currently, we need
-  to dispatch them outside of a lock. For that reason, we take all of them out
-  into a vector on a stack, leave the lock and start dispatching. This is wrong
-  because when an exception happens inside the callback, we lose the ones
-  not dispatched yet.
+* Better way to dispatch all calbacks in a list is needed. We take them out of
+  the list and dispatch them one by one.  This is wrong because when an
+  exception happens inside the callback, we lose the ones not dispatched yet.
 
   What should be done in this situation anyway? Putting them back? Will anybody
-  still call them?
+  still call them? Taking them one by one?
 
   Or recommend that if the result is really needed, that destruction of it
   should be considered failure if it wasn't called yet? Make it the default
