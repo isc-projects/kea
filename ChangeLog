@@ -1,3 +1,8 @@
+  128.  [build]     vorner
+	Test for query name = '.', type = DS to authoritative nameserver for root
+	zone was added.
+	(Trac #85, svn r3836)
+
   127.  [bug]       stephen
 	During normal operation process termination and resurrection messages
 	are now output regardless of the state of the verbose flag.
