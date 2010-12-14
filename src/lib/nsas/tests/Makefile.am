@@ -11,6 +11,13 @@ AM_LDFLAGS += -static
 endif
 AM_LDFLAGS += -lboost_thread
 
+if USE_GXX
+# Some versions of GCC warn about some versions of Boost regarding
+# missing initializer for members in its posix_time.
+# https://svn.boost.org/trac/boost/ticket/3477
+AM_CXXFLAGS += -Wno-missing-field-initializers
+endif
+
 CLEANFILES = *.gcno *.gcda
 
 TESTS =
