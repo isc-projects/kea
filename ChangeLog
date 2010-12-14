@@ -1,3 +1,9 @@
+  126.  [func]      stephen, vorner, ocean
+	The Nameserver Address Store (NSAS) component has been added. It takes
+	care of choosing an IP address of a nameserver when a zone needs to be
+	contacted.
+	(Trac #356, Trac #408, svn r3823)
+
 bind10-devel-20101201 released on December 01, 2010
 
   125.  [func]		jelte
