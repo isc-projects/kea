@@ -70,7 +70,7 @@ TEST_F(UniformRandomIntegerGeneratorTest, IntegerRange) {
     vector<int> numbers;
 
     // Generate a lot of random integers
-    for(int i = 0; i < max()*10; ++i){
+    for (int i = 0; i < max()*10; ++i) {
         numbers.push_back(gen());
     }
 
@@ -81,7 +81,6 @@ TEST_F(UniformRandomIntegerGeneratorTest, IntegerRange) {
     // make sure the numbers are in range [min, max]
     ASSERT_EQ(it - numbers.begin(), max() - min() + 1); 
 }
-
 
 /// \brief Test Fixture Class for weighted random number generator
 class WeightedRandomIntegerGeneratorTest : public ::testing::Test {
@@ -94,13 +93,12 @@ public:
 };
 
 // Test of the weighted random number generator constructor
-TEST_F(WeightedRandomIntegerGeneratorTest, Constructor) 
-{
+TEST_F(WeightedRandomIntegerGeneratorTest, Constructor) {
     vector<double> probabilities;
 
     // If no probabilities is provided, the smallest integer will always be generated
     WeightedRandomIntegerGenerator gen(probabilities, 123);
-    for(int i = 0; i < 100; ++i){
+    for (int i = 0; i < 100; ++i) {
         ASSERT_EQ(gen(), 123);
     }
 
@@ -137,8 +135,7 @@ TEST_F(WeightedRandomIntegerGeneratorTest, Constructor)
 }
 
 // Test the randomization of the generator
-TEST_F(WeightedRandomIntegerGeneratorTest, WeightedRandomization) 
-{
+TEST_F(WeightedRandomIntegerGeneratorTest, WeightedRandomization) {
     const int repeats = 100000;
     // We repeat the simulation for N=repeats times
     // for each probability p, its average is mu = N*p
@@ -156,10 +153,13 @@ TEST_F(WeightedRandomIntegerGeneratorTest, WeightedRandomization)
         WeightedRandomIntegerGenerator gen(probabilities);
         int c1 = 0;
         int c2 = 0;
-        for(int i = 0; i < repeats; ++i){
+        for (int i = 0; i < repeats; ++i){
             int n = gen();
-            if(n == 0) ++c1;
-            else if(n == 1) ++c2;
+            if (n == 0) {
+                ++c1;
+            } else if (n == 1) {
+                ++c2;
+            }
         }
         double mu = repeats * p;
         double sigma = sqrt(repeats * p * (1 - p));
@@ -176,10 +176,13 @@ TEST_F(WeightedRandomIntegerGeneratorTest, WeightedRandomization)
         probabilities.push_back(p1);
         probabilities.push_back(p2);
         WeightedRandomIntegerGenerator gen(probabilities);
-        for(int i = 0; i < repeats; ++i){
+        for (int i = 0; i < repeats; ++i) {
             int n = gen();
-            if(n == 0) ++c1;
-            else if(n == 1) ++c2;
+            if (n == 0) {
+                ++c1;
+            } else if (n == 1) {
+                ++c2;
+            }
         }
         double mu1 = repeats * p1;
         double mu2 = repeats * p2;
@@ -198,10 +201,13 @@ TEST_F(WeightedRandomIntegerGeneratorTest, WeightedRandomization)
         probabilities.push_back(p1);
         probabilities.push_back(p2);
         WeightedRandomIntegerGenerator gen(probabilities);
-        for(int i = 0; i < repeats; ++i){
+        for (int i = 0; i < repeats; ++i) {
             int n = gen();
-            if(n == 0) ++c1;
-            else if(n == 1) ++c2;
+            if (n == 0) {
+                ++c1;
+            } else if (n == 1) {
+                ++c2;
+            }
         }
         double mu1 = repeats * p1;
         double mu2 = repeats * p2;
@@ -223,11 +229,15 @@ TEST_F(WeightedRandomIntegerGeneratorTest, WeightedRandomization)
         probabilities.push_back(p2);
         probabilities.push_back(p3);
         WeightedRandomIntegerGenerator gen(probabilities);
-        for(int i = 0; i < repeats; ++i){
+        for (int i = 0; i < repeats; ++i){
             int n = gen();
-            if(n == 0) ++c1;
-            else if(n == 1) ++c2;
-            else if(n == 2) ++c3;
+            if (n == 0) {
+                ++c1;
+            } else if (n == 1) {
+                ++c2;
+            } else if (n == 2) {
+                ++c3;
+            }
         }
         double mu1 = repeats * p1;
         double mu2 = repeats * p2;
@@ -242,8 +252,7 @@ TEST_F(WeightedRandomIntegerGeneratorTest, WeightedRandomization)
 }
 
 // Test the reset function of generator
-TEST_F(WeightedRandomIntegerGeneratorTest, ResetProbabilities) 
-{
+TEST_F(WeightedRandomIntegerGeneratorTest, ResetProbabilities) {
     const int repeats = 100000;
     vector<double> probabilities;
     int c1 = 0;
@@ -253,10 +262,13 @@ TEST_F(WeightedRandomIntegerGeneratorTest, ResetProbabilities)
     probabilities.push_back(p1);
     probabilities.push_back(p2);
     WeightedRandomIntegerGenerator gen(probabilities);
-    for(int i = 0; i < repeats; ++i){
+    for (int i = 0; i < repeats; ++i) {
         int n = gen();
-        if(n == 0) ++c1;
-        else if(n == 1) ++c2;
+        if (n == 0) {
+            ++c1;
+        } else if (n == 1) {
+            ++c2;
+        }
     }
     double mu1 = repeats * p1;
     double mu2 = repeats * p2;
@@ -273,10 +285,13 @@ TEST_F(WeightedRandomIntegerGeneratorTest, ResetProbabilities)
     probabilities.push_back(p1);
     probabilities.push_back(p2);
     gen.reset(probabilities);
-    for(int i = 0; i < repeats; ++i){
+    for (int i = 0; i < repeats; ++i) {
         int n = gen();
-        if(n == 0) ++c1;
-        else if(n == 1) ++c2;
+        if (n == 0) {
+            ++c1;
+        } else if (n == 1) {
+            ++c2;
+        }
     }
     mu1 = repeats * p1;
     mu2 = repeats * p2;
