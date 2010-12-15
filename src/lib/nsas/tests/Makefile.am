@@ -47,6 +47,9 @@ run_unittests_SOURCES += random_number_generator_unittest.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 run_unittests_LDADD = $(GTEST_LDADD)
+if NEED_LIBBOOST_THREAD
+run_unittests_LDADD += -lboost_thread
+endif
 
 run_unittests_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la
 run_unittests_LDADD += $(top_builddir)/src/lib/dns/libdns++.la
