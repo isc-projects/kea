@@ -17,6 +17,8 @@
 
 #include <iosfwd>
 
+#include <boost/function.hpp>
+
 #include <exceptions/exceptions.h>
 
 #include <dns/rrset.h>
@@ -34,88 +36,11 @@ public:
         isc::Exception(file, line, what) {}
 };
 
-/// A wrapper class for callback functors and functions of \c masterLoad().
+/// The type of the \c callback parameter of \c masterLoad().
 ///
-/// This class is intended to be only used as the type of the callback
-/// parameter of \c masterLoad(), and not expected to be instantiated
-/// explicitly or used in other places.
-///
-/// Any functor or function that matches the expected signature of the
-/// \c masterLoad() callback is implicitly converted to an object of this
-/// class.  The original functor or function is kept inside this class
-/// in a type independent manner.
-/// When \c masterLoad() calls the \c operator() method of this object, which
-/// internally retrieves the original functor or function and calls it.
-///
-/// <b>Note:</b> this class is a simplified and specialized form of
-/// Boost.function so that we can benefit from its usability without exposing
-/// boost definitions in a public header file.
-/// Of course, the advantage comes with the cost of reinventing a relatively
-/// complicated trick by ourselves.
-class MasterLoadCallback {
-public:
-    ///
-    /// \name Constructors, Assignment Operator and Destructor.
-    ///
-    /// For our purpose, we don't need the assignment operator for this class;
-    /// for simply we hide it as a private method for now.
-    //@{
-    /// Constructor.
-    ///
-    /// Note: this constructor is intentionally not defined as "explicit"
-    /// for the convenience of the caller of \c masterLoad().  That is,
-    /// the caller doesn't have to construct a MasterLoadCallback object
-    /// when it calls \c masterLoad().
-    template <typename FUNC>
-    MasterLoadCallback(FUNC func) :
-        func_(new FUNC(func)),
-        invoker_(invoke<FUNC>),
-        deleter_(cleanup<FUNC>),
-        copier_(copyFunctor<FUNC>)
-    {}
-
-    /// Copy constructor.
-    MasterLoadCallback(const MasterLoadCallback& source) :
-        func_((*source.copier_)(source.func_)),
-        invoker_(source.invoker_),
-        deleter_(source.deleter_),
-        copier_(source.copier_)
-    {}
-
-    /// The destructor.
-    ~MasterLoadCallback() { (*deleter_)(func_); }
-private:
-    MasterLoadCallback& operator=(const MasterLoadCallback& source);
-    //@}
-
-public:
-    /// The callback invoker.
-    ///
-    /// It internally retrieves the original functor or function given
-    /// on construction and calls it.
-    void operator()(RRsetPtr rrset) {
-        (*invoker_)(func_, rrset);
-    }
-private:
-    
-    template <typename FUNC>
-    static void invoke(void* func, RRsetPtr rrset) {
-        FUNC* funcobj = static_cast<FUNC*>(func);
-        return ((*funcobj)(rrset));
-    }
-    template <typename FUNC>
-    static void cleanup(void* func) {
-        delete static_cast<FUNC*>(func);
-    }
-    template <typename FUNC>
-    static void* copyFunctor(void* func) {
-        return (new FUNC(*static_cast<FUNC*>(func)));
-    }
-    void* func_;
-    void (*invoker_)(void*, RRsetPtr);
-    void (*deleter_)(void*);
-    void* (*copier_)(void*);
-};
+/// This represents a functor object or a function that takes one parameter
+/// of type \c RRsetPtr and returns nothing.
+typedef boost::function<void(RRsetPtr rrset)> MasterLoadCallback;
 
 ///
 /// \name Master zone file loader functions.
@@ -131,8 +56,10 @@ private:
 /// The \c callback parameter is a functor object or a function that
 /// takes one parameter of type \c RRsetPtr and returns nothing,
 /// i.e. \c void (see below for specific examples).
-/// In the case of a functor, it must be copy constructible.
-/// 
+/// More precisely, it can be anything that this form of boost::function
+/// can represent, but the caller normally doesn't have to care about
+/// that level of details.
+///
 /// The ownership of constructed RRsets is transferred to the callback
 /// and this function never uses it once it is called.
 /// The callback can freely modify the passed \c RRset.

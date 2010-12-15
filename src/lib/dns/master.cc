@@ -55,7 +55,6 @@ masterLoad(istream& input, const Name& origin, const RRClass& zone_class,
            MasterLoadCallback callback)
 {
     RRsetPtr rrset;
-    ConstRRsetPtr prev_rrset;
     string line;
     unsigned int line_count = 1;
 
@@ -142,8 +141,8 @@ masterLoad(istream& input, const Name& origin, const RRClass& zone_class,
         // Everything is okay.  Now create/update RRset with the new RR.
         // If this is the first RR or the RR type/name is new, we are seeing
         // a new RRset.
-        if (!prev_rrset || prev_rrset->getType() != *rrtype ||
-            prev_rrset->getName() != *owner) {
+        if (!rrset || rrset->getType() != *rrtype ||
+            rrset->getName() != *owner) {
             // Commit the previous RRset, if any.
             if (rrset) {
                 callback(rrset);
@@ -151,7 +150,6 @@ masterLoad(istream& input, const Name& origin, const RRClass& zone_class,
             rrset = RRsetPtr(new RRset(*owner, *rrclass, *rrtype, *ttl));
         }
         rrset->addRdata(rdata);
-        prev_rrset = rrset;
     } while (++line_count, !input.eof());
 
     // Commit the last RRset, if any.
