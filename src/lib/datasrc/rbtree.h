@@ -27,20 +27,18 @@ namespace datasrc {
 
 namespace helper {
 
-/// \note function in this namespace isnot intended to be used outside
-
-/// helper function to remove the base domain from super domain
+/// Helper function to remove the base domain from super domain
+///
 /// the precondition of this function is the super_name contains the
 /// sub_name so \code Name a("a.b.c"); Name b("b.c"); 
 /// Name c = a - b; \\c will be "a" \endcode
+///
+/// \note function in this namespace is not intended to be used outside.
 inline isc::dns::Name
 operator-(const isc::dns::Name& super_name, const isc::dns::Name& sub_name) {
     return (super_name.split(0, super_name.getLabelCount() -
                              sub_name.getLabelCount()));
 }
-
-
-
 }
 
 /// \brief Define rbtree color
@@ -341,7 +339,7 @@ private:
     /// so for example, in zone a, we has 
     /// b.a, c.b.a and d.b.a search c.b.a, up will points to b.a. 
     /// and node will points to c.b.a
-    /// \note parameter up now is not used by any funciton, but we gonna 
+    /// \note parameter up now is not used by any funciton, but we are gonna 
     /// need it soon to implement function like remove
     Result findHelper(const isc::dns::Name& name, const RBNode<T>** up,
                       RBNode<T>** node) const;
@@ -523,7 +521,8 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
         }
     }
 
-    RBNode<T>** current_root = (up_node != NULLNODE) ? &(up_node->down_) : &root_;
+    RBNode<T>** current_root = (up_node != NULLNODE) ?
+        &(up_node->down_) : &root_;
     // using auto_ptr here is avoid memory leak in case of exceptoin raised 
     // after the RBNode creation
     std::auto_ptr<RBNode<T> > node(new RBNode<T>(name));
@@ -553,7 +552,7 @@ void
 RBTree<T>::nodeFission(RBNode<T>& node, const isc::dns::Name& base_name) {
     using namespace helper;
     const isc::dns::Name sub_name = node.name_ - base_name;
-    // using auto_ptr here is avoid memory leak in case of exceptoin raised 
+    // using auto_ptr here is to avoid memory leak in case of exceptoin raised 
     // after the RBNode creation
     std::auto_ptr<RBNode<T> > down_node(new RBNode<T>(sub_name));
     std::swap(node.data_, down_node->data_);
