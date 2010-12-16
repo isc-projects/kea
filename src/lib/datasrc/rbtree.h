@@ -503,7 +503,7 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
         &(up_node->down_) : &root_;
     // using auto_ptr here is avoid memory leak in case of exceptoin raised 
     // after the RBNode creation, if we can make sure no exception will be 
-    // raised until the end of the function, we use remove it for optimization
+    // raised until the end of the function, we can remove it for optimization
     std::auto_ptr<RBNode<T> > node(new RBNode<T>(name));
     node->parent_ = parent;
     if (parent == NULLNODE) {
