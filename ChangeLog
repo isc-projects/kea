@@ -1,3 +1,19 @@
+  128.  [build]     vorner
+	Test for query name = '.', type = DS to authoritative nameserver for root
+	zone was added.
+	(Trac #85, svn r3836)
+
+  127.  [bug]       stephen
+	During normal operation process termination and resurrection messages
+	are now output regardless of the state of the verbose flag.
+	(Trac #229, svn r3828)
+
+  126.  [func]      stephen, vorner, ocean
+	The Nameserver Address Store (NSAS) component has been added. It takes
+	care of choosing an IP address of a nameserver when a zone needs to be
+	contacted.
+	(Trac #356, Trac #408, svn r3823)
+
 bind10-devel-20101201 released on December 01, 2010
 
   125.  [func]		jelte

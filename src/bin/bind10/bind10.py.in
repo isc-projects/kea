@@ -612,27 +612,44 @@ class BoB:
                 raise
             if pid == 0: break
             if pid in self.processes:
+
+                # One of the processes we know about.  Get information on it.
                 proc_info = self.processes.pop(pid)
                 proc_info.restart_schedule.set_run_stop_time()
                 self.dead_processes[proc_info.pid] = proc_info
-                if self.verbose:
-                    sys.stdout.write("[bind10] Process %s (PID %d) died.\n" % 
-                                     (proc_info.name, proc_info.pid))
-                if proc_info.name == "b10-msgq":
-                    if self.verbose and self.runnable:
+
+                # Write out message, but only if in the running state:
+                # During startup and shutdown, these messages are handled
+                # elsewhere.
+                if self.runnable:
+                    if exit_status is None:
+                        sys.stdout.write(
+                            "[bind10] Process %s (PID %d) died: exit status not available" % 
+                            (proc_info.name, proc_info.pid))
+                    else:
+                        sys.stdout.write(
+                            "[bind10] Process %s (PID %d) terminated, exit status = %d\n" % 
+                            (proc_info.name, proc_info.pid, exit_status))
+
+                    # Was it a special process?
+                    if proc_info.name == "b10-msgq":
                         sys.stdout.write(
                                  "[bind10] The b10-msgq process died, shutting down.\n")
-                    self.runnable = False
+                        self.runnable = False
             else:
                 sys.stdout.write("[bind10] Unknown child pid %d exited.\n" % pid)
 
     def restart_processes(self):
-        """Restart any dead processes.
-        Returns the time when the next process is ready to be restarted. 
-          If the server is shutting down, returns 0.
-          If there are no processes, returns None.
-        The values returned can be safely passed into select() as the 
-        timeout value."""
+        """
+            Restart any dead processes:
+
+            * Returns the time when the next process is ready to be restarted. 
+            * If the server is shutting down, returns 0.
+            * If there are no processes, returns None.
+
+            The values returned can be safely passed into select() as the 
+            timeout value.
+        """
         next_restart = None
         # if we're shutting down, then don't restart
         if not self.runnable:
@@ -649,13 +666,12 @@ class BoB:
             else:
                 if self.verbose:
                     sys.stdout.write("[bind10] Resurrecting dead %s process...\n" % 
-                                     proc_info.name)
+                        proc_info.name)
                 try:
                     proc_info.respawn()
                     self.processes[proc_info.pid] = proc_info
-                    if self.verbose:
-                        sys.stdout.write("[bind10] Resurrected %s (PID %d)\n" %
-                                         (proc_info.name, proc_info.pid))
+                    sys.stdout.write("[bind10] Resurrected %s (PID %d)\n" %
+                                     (proc_info.name, proc_info.pid))
                 except:
                     still_dead[proc_info.pid] = proc_info
         # remember any processes that refuse to be resurrected
