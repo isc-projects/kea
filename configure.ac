@@ -338,17 +338,17 @@ boost::mutex m;
 ],
 	[ AC_MSG_RESULT(yes (without libboost_thread)) ],
 	[ LIBS=" $LIBS -lboost_thread"
-AC_TRY_LINK([
+	  AC_TRY_LINK([
 #include <boost/thread.hpp>
 ],[
 boost::mutex m;
 ],
-	[ AC_MSG_RESULT(yes (with libboost_thread))
- 	  need_libboost_thread=1 ],
-	[ AC_MSG_RESULT(no)
-	  AC_MSG_ERROR([boost::mutex cannot be linked in this build environment.
+		  [ AC_MSG_RESULT(yes (with libboost_thread))
+		    need_libboost_thread=1 ],
+		  [ AC_MSG_RESULT(no)
+		    AC_MSG_ERROR([boost::mutex cannot be linked in this build environment.
 Perhaps you are using an older version of Boost that requires libboost_thread for the mutex support.  You may want to check the availability of the library or to upgrade Boost.])
-   	])])
+   		  ])])
 CPPFLAGS="$CPPFLAGS_SAVES"
 LIBS="$LIBS_SAVES"
 AM_CONDITIONAL(NEED_LIBBOOST_THREAD, test $need_libboost_thread = 1)
