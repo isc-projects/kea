@@ -326,6 +326,10 @@ AC_SUBST(BOOST_INCLUDES)
 # Using boost::mutex can result in requiring libboost_thread with older
 # versions of Boost.  We'd like to avoid relying on a compiled Boost library
 # whenever possible, so we need to check for it step by step.
+#
+# NOTE: another fix of this problem is to simply require newer versions of
+# boost.  If we choose that solution we should simplify the following tricky
+# checks accordingly and all Makefile.am's that refer to NEED_LIBBOOST_THREAD.
 AC_MSG_CHECKING(for boost::mutex)
 CPPFLAGS_SAVES="$CPPFLAGS"
 LIBS_SAVES="$LIBS"
