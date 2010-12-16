@@ -323,6 +323,40 @@ AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp boost/interprocess/sync
 CPPFLAGS="$CPPFLAGS_SAVES"
 AC_SUBST(BOOST_INCLUDES)
 
+# Using boost::mutex can result in requiring libboost_thread with older
+# versions of Boost.  We'd like to avoid relying on a compiled Boost library
+# whenever possible, so we need to check for it step by step.
+#
+# NOTE: another fix of this problem is to simply require newer versions of
+# boost.  If we choose that solution we should simplify the following tricky
+# checks accordingly and all Makefile.am's that refer to NEED_LIBBOOST_THREAD.
+AC_MSG_CHECKING(for boost::mutex)
+CPPFLAGS_SAVES="$CPPFLAGS"
+LIBS_SAVES="$LIBS"
+CPPFLAGS="$BOOST_INCLUDES $CPPFLAGS"
+need_libboost_thread=0
+AC_TRY_LINK([
+#include <boost/thread.hpp>
+],[
+boost::mutex m;
+],
+	[ AC_MSG_RESULT(yes (without libboost_thread)) ],
+	[ LIBS=" $LIBS -lboost_thread"
+	  AC_TRY_LINK([
+#include <boost/thread.hpp>
+],[
+boost::mutex m;
+],
+		  [ AC_MSG_RESULT(yes (with libboost_thread))
+		    need_libboost_thread=1 ],
+		  [ AC_MSG_RESULT(no)
+		    AC_MSG_ERROR([boost::mutex cannot be linked in this build environment.
+Perhaps you are using an older version of Boost that requires libboost_thread for the mutex support.  You may want to check the availability of the library or to upgrade Boost.])
+   		  ])])
+CPPFLAGS="$CPPFLAGS_SAVES"
+LIBS="$LIBS_SAVES"
+AM_CONDITIONAL(NEED_LIBBOOST_THREAD, test $need_libboost_thread = 1)
+
 #
 # Check availability of gtest, which will be used for unit tests.
 #
