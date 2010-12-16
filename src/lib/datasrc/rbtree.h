@@ -41,11 +41,6 @@ operator-(const isc::dns::Name& super_name, const isc::dns::Name& sub_name) {
 }
 }
 
-/// \brief Define rbtree color
-/// the enum isnot put into RBTree template, because no matter the RBTree
-/// will be instantiated to whatever class, the color is same.
-enum RBTreeColor {BLACK, RED};
-
 template <typename T>
 class RBTree;
 /// \brief \c RBNode use by RBTree to store any data related to one domain name
@@ -112,18 +107,16 @@ public:
 
     /// \name Modify functions
     //@{
-    /// \brief set the data stored in the node
-    /// this function also means ownership transfer, then data is owned by
-    /// \c RBNode, and RBNode will in charge of the memory management
-    /// \note when set new data, old data will be deleted first
-    void setData(T* data);
-
     /// \breif set the data stored in the node
-    void setData(const NodeDataType& data);
+    void setData(const NodeDataType& data) { data_ = data;}
     //@}
 
 
 private:
+    /// \brief Define rbnode color
+    enum RBNodeColor {BLACK, RED};
+
+
     /// \name Constructors
     /// \note \c Single RBNode is meaningless without living inside one \c RBTree
     /// the creation and destroy of one \c RBNode is handle by host \c RBTree, so
@@ -153,7 +146,7 @@ private:
     RBNode<T>*  parent_;
     RBNode<T>*  left_;
     RBNode<T>*  right_;
-    RBTreeColor color_;
+    RBNodeColor color_;
 
 
     isc::dns::Name     name_;
@@ -196,21 +189,6 @@ RBNode<T>::RBNode(const isc::dns::Name& name) :
 
 template <typename T>
 RBNode<T>::~RBNode() {
-}
-
-
-template <typename T>
-void 
-RBNode<T>::setData(T* data) {
-    if (data_.get() != data) {
-        data_.reset(data);
-    }
-}
-
-template <typename T>
-void 
-RBNode<T>::setData(const RBNode<T>::NodeDataType& data) {
-    data_ = data;
 }
 /// \brief \c RBTree class represents all the domains with the same suffix,
 /// so it can be used to store the domains in one zone.
@@ -524,14 +502,15 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
     RBNode<T>** current_root = (up_node != NULLNODE) ?
         &(up_node->down_) : &root_;
     // using auto_ptr here is avoid memory leak in case of exceptoin raised 
-    // after the RBNode creation
+    // after the RBNode creation, if we can make sure no exception will be 
+    // raised until the end of the function, we use remove it for optimization
     std::auto_ptr<RBNode<T> > node(new RBNode<T>(name));
     node->parent_ = parent;
     if (parent == NULLNODE) {
         *current_root = node.get();
         //node is the new root of sub tree, so its init color
         // is BLACK
-        node->color_ = BLACK;
+        node->color_ = RBNode<T>::BLACK;
     } else if (order < 0) {
         parent->left_ = node.get();
     } else {
@@ -560,7 +539,7 @@ RBTree<T>::nodeFission(RBNode<T>& node, const isc::dns::Name& base_name) {
     node.name_ = base_name;
     node.down_ = down_node.get();
     //root node of sub tree, the initial color is BLACK
-    down_node->color_ = BLACK;
+    down_node->color_ = RBNode<T>::BLACK;
     ++node_count_;
     down_node.release();
 }
@@ -570,44 +549,44 @@ void
 RBTree<T>::insertRebalance(RBNode<T>** root, RBNode<T>* node) {
 
     RBNode<T>* uncle;
-    while (node != *root && node->parent_->color_ == RED) {
+    while (node != *root && node->parent_->color_ == RBNode<T>::RED) {
         if (node->parent_ == node->parent_->parent_->left_) {
             uncle = node->parent_->parent_->right_;
 
-            if (uncle->color_ == RED) {
-                node->parent_->color_ = BLACK;
-                uncle->color_ = BLACK;
-                node->parent_->parent_->color_ = RED;
+            if (uncle->color_ == RBNode<T>::RED) {
+                node->parent_->color_ = RBNode<T>::BLACK;
+                uncle->color_ = RBNode<T>::BLACK;
+                node->parent_->parent_->color_ = RBNode<T>::RED;
                 node = node->parent_->parent_;
             } else {
                 if (node == node->parent_->right_) {
                     node = node->parent_;
                     leftRotate(root, node);
                 }
-                node->parent_->color_ = BLACK;
-                node->parent_->parent_->color_ = RED;
+                node->parent_->color_ = RBNode<T>::BLACK;
+                node->parent_->parent_->color_ = RBNode<T>::RED;
                 rightRotate(root, node->parent_->parent_);
             }
         } else {
             uncle = node->parent_->parent_->left_;
-            if (uncle->color_ == RED) {
-                node->parent_->color_ = BLACK;
-                uncle->color_ = BLACK;
-                node->parent_->parent_->color_ = RED;
+            if (uncle->color_ == RBNode<T>::RED) {
+                node->parent_->color_ = RBNode<T>::BLACK;
+                uncle->color_ = RBNode<T>::BLACK;
+                node->parent_->parent_->color_ = RBNode<T>::RED;
                 node = node->parent_->parent_;
             } else {
                 if (node == node->parent_->left_) {
                     node = node->parent_;
                     rightRotate(root, node);
                 }
-                node->parent_->color_ = BLACK;
-                node->parent_->parent_->color_ = RED;
+                node->parent_->color_ = RBNode<T>::BLACK;
+                node->parent_->parent_->color_ = RBNode<T>::RED;
                 leftRotate(root, node->parent_->parent_);
             }
         }
     }
 
-    (*root)->color_ = BLACK;
+    (*root)->color_ = RBNode<T>::BLACK;
 }
 
 
@@ -682,7 +661,7 @@ RBTree<T>::dumpTreeHelper(std::ostream& os, const RBNode<T>* node,
 
     indent(os, depth);
     os << node->name_.toText() << " ("
-              << ((node->color_ == BLACK) ? "black" : "red") << ")";
+              << ((node->color_ == RBNode<T>::BLACK) ? "black" : "red") << ")";
     os << ((node->isEmpty()) ? "[invisible] \n" : "\n");
 
     if (node->down_ != NULLNODE) {
