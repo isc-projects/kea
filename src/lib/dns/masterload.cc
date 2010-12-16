@@ -22,7 +22,7 @@
 
 #include <exceptions/exceptions.h>
 
-#include <dns/master.h>
+#include <dns/masterload.h>
 #include <dns/name.h>
 #include <dns/rdata.h>
 #include <dns/rrclass.h>
@@ -44,7 +44,7 @@ masterLoad(const char* const filename, const Name& origin,
 
     ifs.open(filename, ios_base::in);
     if (ifs.fail()) {
-        isc_throw(MasterError, "Failed to open master file: " << filename);
+        isc_throw(MasterLoadError, "Failed to open master file: " << filename);
     }
     masterLoad(ifs, origin, zone_class, callback);
     ifs.close();
@@ -61,7 +61,7 @@ masterLoad(istream& input, const Name& origin, const RRClass& zone_class,
     do {
         getline(input, line);
         if (input.bad() || (input.fail() && !input.eof())) {
-            isc_throw(MasterError, "Unexpectedly failed to read a line");
+            isc_throw(MasterLoadError, "Unexpectedly failed to read a line");
         }
 
         // blank/comment lines should be simply skipped.
@@ -72,7 +72,7 @@ masterLoad(istream& input, const Name& origin, const RRClass& zone_class,
         // The line shouldn't have leading space (which means omitting the
         // owner name).
         if (isspace(line[0])) {
-            isc_throw(MasterError, "Leading space at line " << line_count);
+            isc_throw(MasterLoadError, "Leading space at line " << line_count);
         }
 
         // Parse a single RR
@@ -81,21 +81,21 @@ masterLoad(istream& input, const Name& origin, const RRClass& zone_class,
         stringbuf rdatabuf;
         iss >> owner_txt >> ttl_txt >> rrclass_txt >> rrtype_txt >> &rdatabuf;
         if (iss.bad() || iss.fail()) {
-            isc_throw(MasterError, "Parse failure for a valid RR at line "
+            isc_throw(MasterLoadError, "Parse failure for a valid RR at line "
                       << line_count);
         }
 
         // This simple version doesn't support relative owner names with a
         // separate origin.
         if (owner_txt.empty() || *(owner_txt.end() - 1) != '.') {
-            isc_throw(MasterError, "Owner name is not absolute at line "
+            isc_throw(MasterLoadError, "Owner name is not absolute at line "
                       << line_count);
         }
 
         // XXX: this part is a bit tricky (and less efficient).  We are going
         // to validate the text for the RR parameters, and throw an exception
         // if any of them is invalid by converting an underlying exception
-        // to MasterError.  To do that, we need to define the corresponding
+        // to MasterLoadError.  To do that, we need to define the corresponding
         // variables used for RRset construction outside the try-catch block,
         // but we don't like to use a temporary variable with a meaningless
         // initial value.  So we define pointers outside the try block
@@ -113,7 +113,7 @@ masterLoad(istream& input, const Name& origin, const RRClass& zone_class,
             rrtype.reset(new RRType(rrtype_txt));
             rdata = createRdata(*rrtype, *rrclass, rdatabuf.str());
         } catch (const Exception& ex) {
-            isc_throw(MasterError, "Invalid RR text at line " << line_count
+            isc_throw(MasterLoadError, "Invalid RR text at line " << line_count
                       << ": " << ex.what());
         }
 
@@ -123,17 +123,18 @@ masterLoad(istream& input, const Name& origin, const RRClass& zone_class,
         const NameComparisonResult cmp_result = owner->compare(origin);
         if (cmp_result.getRelation() != NameComparisonResult::EQUAL &&
             cmp_result.getRelation() != NameComparisonResult::SUBDOMAIN) {
-            isc_throw(MasterError, "Out-of-zone data at line " << line_count);
+            isc_throw(MasterLoadError, "Out-of-zone data at line "
+                      << line_count);
         }
         if (*rrtype == RRType::SOA() &&
             cmp_result.getRelation() != NameComparisonResult::EQUAL) {
-            isc_throw(MasterError, "SOA not at top of zone at line "
+            isc_throw(MasterLoadError, "SOA not at top of zone at line "
                       << line_count);
         }
 
         // Reject RR class mismatching
         if (*rrclass != zone_class) {
-            isc_throw(MasterError, "RR class (" << rrclass_txt
+            isc_throw(MasterLoadError, "RR class (" << rrclass_txt
                       << ") does not match the zone class (" << zone_class
                       << ") at line " << line_count);
         }

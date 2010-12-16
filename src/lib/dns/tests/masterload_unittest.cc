@@ -23,7 +23,7 @@
 
 #include <gtest/gtest.h>
 
-#include <dns/master.h>
+#include <dns/masterload.h>
 #include <dns/name.h>
 #include <dns/rrclass.h>
 #include <dns/rrset.h>
@@ -166,57 +166,69 @@ TEST_F(MasterTest, loadEmpty) {
 
 TEST_F(MasterTest, loadWithBeginningSpace) {
     rr_stream << " " << a_rr1;
-    EXPECT_THROW(masterLoad(rr_stream, origin, zclass, callback), MasterError);
+    EXPECT_THROW(masterLoad(rr_stream, origin, zclass, callback),
+                 MasterLoadError);
 }
 
 TEST_F(MasterTest, loadWithBeginningTab) {
     rr_stream << "\t" << a_rr1;
-    EXPECT_THROW(masterLoad(rr_stream, origin, zclass, callback), MasterError);
+    EXPECT_THROW(masterLoad(rr_stream, origin, zclass, callback),
+                 MasterLoadError);
 }
 
 TEST_F(MasterTest, loadInvalidRRClass) {
     rr_stream << "example.com. 3600 CH TXT \"test text\"";
-    EXPECT_THROW(masterLoad(rr_stream, origin, zclass, callback), MasterError);
+    EXPECT_THROW(masterLoad(rr_stream, origin, zclass, callback),
+                 MasterLoadError);
 }
 
 TEST_F(MasterTest, loadOutOfZoneData) {
     rr_stream << "example.org. 3600 IN A 192.0.2.255";
-    EXPECT_THROW(masterLoad(rr_stream, origin, zclass, callback), MasterError);
+    EXPECT_THROW(masterLoad(rr_stream, origin, zclass, callback),
+                 MasterLoadError);
 }
 
 TEST_F(MasterTest, loadNonAtopSOA) {
     // SOA's owner name must be zone's origin.
     rr_stream << "soa.example.com. 3600 IN SOA . . 0 0 0 0 0";
-    EXPECT_THROW(masterLoad(rr_stream, origin, zclass, callback), MasterError);
+    EXPECT_THROW(masterLoad(rr_stream, origin, zclass, callback),
+                 MasterLoadError);
 }
 
 TEST_F(MasterTest, loadBadRRText) {
     rr_stream << "example..com. 3600 IN A 192.0.2.1"; // bad owner name
-    EXPECT_THROW(masterLoad(rr_stream, origin, zclass, callback), MasterError);
+    EXPECT_THROW(masterLoad(rr_stream, origin, zclass, callback),
+                 MasterLoadError);
 
     // currently we only support numeric TTLs
     stringstream rr_stream2("example.com. 1D IN A 192.0.2.1");
-    EXPECT_THROW(masterLoad(rr_stream2, origin, zclass, callback), MasterError);
+    EXPECT_THROW(masterLoad(rr_stream2, origin, zclass, callback),
+                 MasterLoadError);
 
     // bad RR class text
     stringstream rr_stream3("example.com. 3600 BAD A 192.0.2.1");
-    EXPECT_THROW(masterLoad(rr_stream3, origin, zclass, callback), MasterError);
+    EXPECT_THROW(masterLoad(rr_stream3, origin, zclass, callback),
+                 MasterLoadError);
 
     // bad RR type text
     stringstream rr_stream4("example.com. 3600 IN BAD 192.0.2.1");
-    EXPECT_THROW(masterLoad(rr_stream4, origin, zclass, callback), MasterError);
+    EXPECT_THROW(masterLoad(rr_stream4, origin, zclass, callback),
+                 MasterLoadError);
 
     // bad RDATA text
     stringstream rr_stream5("example.com. 3600 IN A 2001:db8::1");
-    EXPECT_THROW(masterLoad(rr_stream5, origin, zclass, callback), MasterError);
+    EXPECT_THROW(masterLoad(rr_stream5, origin, zclass, callback),
+                 MasterLoadError);
 
     // incomplete RR text
     stringstream rr_stream6("example.com. 3600 IN A");
-    EXPECT_THROW(masterLoad(rr_stream6, origin, zclass, callback), MasterError);
+    EXPECT_THROW(masterLoad(rr_stream6, origin, zclass, callback),
+                 MasterLoadError);
 
     // owner name is not absolute
     stringstream rr_stream7("example.com 3600 IN A 192.0.2.1");
-    EXPECT_THROW(masterLoad(rr_stream7, origin, zclass, callback), MasterError);
+    EXPECT_THROW(masterLoad(rr_stream7, origin, zclass, callback),
+                 MasterLoadError);
 }
 
 // This is a helper callback to test the case the input stream becomes bad
@@ -235,7 +247,7 @@ TEST_F(MasterTest, loadBadStream) {
     rr_stream << txt_rr << a_rr1;
     StreamInvalidator invalidator(rr_stream);
     EXPECT_THROW(masterLoad(rr_stream, origin, zclass, invalidator),
-                 MasterError);
+                 MasterLoadError);
 }
 
 TEST_F(MasterTest, loadFromFile) {
@@ -247,10 +259,10 @@ TEST_F(MasterTest, loadFromFile) {
     EXPECT_EQ(string(a_rr1) + string(a_rr2), results[1]->toText());
 
     // NULL file name.  Should result in exception.
-    EXPECT_THROW(masterLoad(NULL, origin, zclass, callback), MasterError);
+    EXPECT_THROW(masterLoad(NULL, origin, zclass, callback), MasterLoadError);
 
     // Non existent file name.  Ditto.
     EXPECT_THROW(masterLoad(TEST_DATA_BUILDDIR "/notexistent.txt", origin,
-                            zclass, callback), MasterError);
+                            zclass, callback), MasterLoadError);
 }
 } // end namespace

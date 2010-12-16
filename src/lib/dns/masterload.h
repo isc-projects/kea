@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __MASTER_H
-#define __MASTER_H 1
+#ifndef __MASTERLOAD_H
+#define __MASTERLOAD_H 1
 
 #include <iosfwd>
 
@@ -30,9 +30,9 @@ class RRClass;
 
 /// \brief An exception that is thrown if an error occurs while loading a
 /// master zone data.
-class MasterError : public Exception {
+class MasterLoadError : public Exception {
 public:
-    MasterError(const char* file, size_t line, const char* what) :
+    MasterLoadError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
 
@@ -71,7 +71,7 @@ typedef boost::function<void(RRsetPtr rrset)> MasterLoadCallback;
 ///   (that can be equal to the origin).
 /// - If an SOA RR is included, its owner name must be the origin name.
 /// If any of these validation checks fails, this function throws an
-/// exception of class \c MasterError.
+/// exception of class \c MasterLoadError.
 ///
 /// It does not perform other semantical checks, however.  For example,
 /// it doesn't check if an NS RR of the origin name is included or if
@@ -139,8 +139,8 @@ typedef boost::function<void(RRsetPtr rrset)> MasterLoadCallback;
 ///
 /// <b>Exceptions</b>
 ///
-/// This function throws an exception of class \c MasterError in the following
-/// cases:
+/// This function throws an exception of class \c MasterLoadError in the
+/// following cases:
 /// - Any of the validation checks fails (see the class description).
 /// - The input data is not in the acceptable format (see the details of
 ///   the format above).
@@ -239,7 +239,7 @@ void masterLoad(std::istream& input, const Name& origin,
 //@}
 }
 
-#endif  // __MASTER_H
+#endif  // __MASTERLOAD_H
 
 // Local Variables:
 // mode: c++
