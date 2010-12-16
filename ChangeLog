@@ -4,7 +4,7 @@
 	implementation, we don't make it a derived class of AbstractDataSrc
 	because the interface is so different(we'll eventually consider this
 	as part of the generalization work).
-	(Trac #422, svn r3566)
+	(Trac #422, svn r3866)
 
   129.	[func]		jinmei
 	src/lib/dns: Added new functions masterLoad() for loading master
