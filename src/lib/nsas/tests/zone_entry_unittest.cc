@@ -35,7 +35,6 @@
 using namespace isc::nsas;
 using namespace asiolink;
 using namespace std;
-using namespace boost;
 using namespace isc::dns;
 
 namespace {
@@ -43,10 +42,10 @@ namespace {
 /// \brief Inherited version with access into its internals for tests
 class InheritedZoneEntry : public ZoneEntry {
     public:
-        InheritedZoneEntry(shared_ptr<ResolverInterface> resolver,
+        InheritedZoneEntry(boost::shared_ptr<ResolverInterface> resolver,
             const std::string& name, const RRClass& class_code,
-            shared_ptr<HashTable<NameserverEntry> > nameserver_table,
-            shared_ptr<LruList<NameserverEntry> > nameserver_lru) :
+            boost::shared_ptr<HashTable<NameserverEntry> > nameserver_table,
+            boost::shared_ptr<LruList<NameserverEntry> > nameserver_lru) :
             ZoneEntry(resolver, name, class_code, nameserver_table,
                 nameserver_lru)
         { }
@@ -67,10 +66,10 @@ protected:
         callback_(new Callback)
     { }
     /// \brief Tables of nameservers to pass into zone entry constructor
-    shared_ptr<HashTable<NameserverEntry> > nameserver_table_;
-    shared_ptr<LruList<NameserverEntry> > nameserver_lru_;
+    boost::shared_ptr<HashTable<NameserverEntry> > nameserver_table_;
+    boost::shared_ptr<LruList<NameserverEntry> > nameserver_lru_;
     /// \brief The resolver
-    shared_ptr<TestResolver> resolver_;
+    boost::shared_ptr<TestResolver> resolver_;
 
     /**
      * \short A callback we use into the zone.
@@ -86,15 +85,15 @@ protected:
             successes_.push_back(address);
         }
     };
-    shared_ptr<Callback> callback_;
+    boost::shared_ptr<Callback> callback_;
 
     // Empty callback to pass to nameserver entry, to do injection of them
     struct NseCallback : public NameserverEntry::Callback {
-        virtual void operator()(shared_ptr<NameserverEntry>) { }
+        virtual void operator()(boost::shared_ptr<NameserverEntry>) { }
     };
 
-    shared_ptr<NseCallback> nseCallback() {
-        return (shared_ptr<NseCallback>(new NseCallback));
+    boost::shared_ptr<NseCallback> nseCallback() {
+        return (boost::shared_ptr<NseCallback>(new NseCallback));
     }
 
     /**
@@ -102,8 +101,8 @@ protected:
      *
      * Convenience funcion, just creating a new zone, to shorten the code.
      */
-    shared_ptr<InheritedZoneEntry> getZone() {
-        return (shared_ptr<InheritedZoneEntry>(new InheritedZoneEntry(
+    boost::shared_ptr<InheritedZoneEntry> getZone() {
+        return (boost::shared_ptr<InheritedZoneEntry>(new InheritedZoneEntry(
             resolver_, EXAMPLE_CO_UK, RRClass::IN(), nameserver_table_,
             nameserver_lru_)));
     }
@@ -115,8 +114,8 @@ protected:
      * hash table already contains the NameserverEntry. This function
      * creates one and puts it into the hash table.
      */
-    shared_ptr<NameserverEntry> injectEntry() {
-        shared_ptr<NameserverEntry> nse(new NameserverEntry(ns_name_.toText(),
+    boost::shared_ptr<NameserverEntry> injectEntry() {
+        boost::shared_ptr<NameserverEntry> nse(new NameserverEntry(ns_name_.toText(),
             RRClass::IN()));
         nameserver_table_->add(nse, HashKey(ns_name_.toText(), RRClass::IN()));
         EXPECT_EQ(Fetchable::NOT_ASKED, nse->getState());
@@ -148,7 +147,7 @@ protected:
         size_t failure_count = 0)
     {
         // Create the zone and check it acts correctly
-        shared_ptr<InheritedZoneEntry> zone(getZone());
+        boost::shared_ptr<InheritedZoneEntry> zone(getZone());
         resolver_->addPresetAnswer(Question(Name(EXAMPLE_CO_UK), RRClass::IN(),
             RRType::NS()), rr_single_);
         zone->addCallback(callback_, ANY_OK);
@@ -192,7 +191,7 @@ TEST_F(ZoneEntryTest, DefaultConstructor) {
  * should be generated anywhere and the failure should be provided).
  */
 TEST_F(ZoneEntryTest, CallbackNoNS) {
-    shared_ptr<InheritedZoneEntry> zone(getZone());
+    boost::shared_ptr<InheritedZoneEntry> zone(getZone());
     EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
     // feed it with a callback
     zone->addCallback(callback_, ANY_OK);
@@ -220,7 +219,7 @@ TEST_F(ZoneEntryTest, CallbackNoNS) {
 TEST_F(ZoneEntryTest, ChangedNS) {
     // Make it zero TTL, so it expires right away
     rr_single_->setTTL(RRTTL(0));
-    shared_ptr<InheritedZoneEntry> zone(getZone());
+    boost::shared_ptr<InheritedZoneEntry> zone(getZone());
     EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
     // Feed it with callback
     zone->addCallback(callback_, ANY_OK);
@@ -283,7 +282,7 @@ TEST_F(ZoneEntryTest, ChangedNS) {
  * provided.
  */
 TEST_F(ZoneEntryTest, CallbacksAnswered) {
-    shared_ptr<InheritedZoneEntry> zone(getZone());
+    boost::shared_ptr<InheritedZoneEntry> zone(getZone());
     EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
     // Feed it with a callback
     zone->addCallback(callback_, ANY_OK);
@@ -343,7 +342,7 @@ TEST_F(ZoneEntryTest, CallbacksAnswered) {
  * fail.
  */
 TEST_F(ZoneEntryTest, CallbacksAOnly) {
-    shared_ptr<InheritedZoneEntry> zone(getZone());
+    boost::shared_ptr<InheritedZoneEntry> zone(getZone());
     EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
     zone->addCallback(callback_, ANY_OK);
     EXPECT_EQ(Fetchable::IN_PROGRESS, zone->getState());
@@ -396,14 +395,14 @@ TEST_F(ZoneEntryTest, CallbacksAOnly) {
  * (successful) answers to us.
  */
 TEST_F(ZoneEntryTest, CallbackTwoNS) {
-    shared_ptr<InheritedZoneEntry> zone(getZone());
+    boost::shared_ptr<InheritedZoneEntry> zone(getZone());
     EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
     zone->addCallback(callback_, V4_ONLY);
     EXPECT_EQ(Fetchable::IN_PROGRESS, zone->getState());
     EXPECT_NO_THROW(resolver_->provideNS(0, rrns_));
     EXPECT_EQ(Fetchable::READY, zone->getState());
     // It asks a question (we do not know which nameserver)
-    shared_ptr<Name> name;
+    boost::shared_ptr<Name> name;
     ASSERT_NO_THROW(name.reset(new Name((*resolver_)[1]->getName())));
     ASSERT_TRUE(resolver_->asksIPs(*name, 1, 2));
     resolver_->requests[1].second->failure();
@@ -455,12 +454,12 @@ TEST_F(ZoneEntryTest, CallbackTwoNS) {
  * resolve). Tries checking both positive and negative answers.
  */
 TEST_F(ZoneEntryTest, DirectAnswer) {
-    shared_ptr<InheritedZoneEntry> zone(getZone());
+    boost::shared_ptr<InheritedZoneEntry> zone(getZone());
     EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
 
     // One unsuccessfull attempt, nameservers fail
     resolver_->addPresetAnswer(Question(Name(EXAMPLE_CO_UK), RRClass::IN(),
-        RRType::NS()), shared_ptr<AbstractRRset>());
+        RRType::NS()), boost::shared_ptr<AbstractRRset>());
     zone->addCallback(callback_, ANY_OK);
     EXPECT_EQ(0, callback_->successes_.size());
     EXPECT_EQ(1, callback_->unreachable_count_);
@@ -494,9 +493,9 @@ TEST_F(ZoneEntryTest, DirectAnswer) {
     callback_->successes_.clear();
     // Now, pretend we do not have IP addresses
     resolver_->addPresetAnswer(Question(ns_name, RRClass::IN(), RRType::A()),
-        shared_ptr<AbstractRRset>());
+        boost::shared_ptr<AbstractRRset>());
     resolver_->addPresetAnswer(Question(ns_name, RRClass::IN(),
-        RRType::AAAA()), shared_ptr<AbstractRRset>());
+        RRType::AAAA()), boost::shared_ptr<AbstractRRset>());
     // Get another zone and ask it again. It should fail.
     // Clean the table first, though, so it does not find the old nameserver
     nameserver_table_->remove(HashKey(ns_name.toText(), RRClass::IN()));
@@ -518,7 +517,7 @@ TEST_F(ZoneEntryTest, DirectAnswer) {
  * its addresses and must ask it again.
  */
 TEST_F(ZoneEntryTest, AddressTimeout) {
-    shared_ptr<InheritedZoneEntry> zone(getZone());
+    boost::shared_ptr<InheritedZoneEntry> zone(getZone());
     EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
     zone->addCallback(callback_, ANY_OK);
     EXPECT_EQ(Fetchable::IN_PROGRESS, zone->getState());
@@ -567,7 +566,7 @@ TEST_F(ZoneEntryTest, AddressTimeout) {
 /// \short Test how the zone reacts to a nameserver entry in ready state
 TEST_F(ZoneEntryTest, NameserverEntryReady) {
     // Inject the entry
-    shared_ptr<NameserverEntry> nse(injectEntry());
+    boost::shared_ptr<NameserverEntry> nse(injectEntry());
     // Fill it with data
     nse->askIP(resolver_, nseCallback(), ANY_OK);
     EXPECT_EQ(Fetchable::IN_PROGRESS, nse->getState());
@@ -593,7 +592,7 @@ TEST_F(ZoneEntryTest, NameserverEntryNotAsked) {
 /// \short What if the zone finds a nameserver in progress?
 TEST_F(ZoneEntryTest, NameserverEntryInProgress) {
     // Prepare the nameserver entry
-    shared_ptr<NameserverEntry> nse(injectEntry());
+    boost::shared_ptr<NameserverEntry> nse(injectEntry());
     nse->askIP(resolver_, nseCallback(), ANY_OK);
     EXPECT_EQ(Fetchable::IN_PROGRESS, nse->getState());
     EXPECT_TRUE(resolver_->asksIPs(ns_name_, 0, 1));
@@ -603,7 +602,7 @@ TEST_F(ZoneEntryTest, NameserverEntryInProgress) {
 
 /// \short Check Zone's reaction to found expired nameserver
 TEST_F(ZoneEntryTest, NameserverEntryExpired) {
-    shared_ptr<NameserverEntry> nse(injectEntry());
+    boost::shared_ptr<NameserverEntry> nse(injectEntry());
     nse->askIP(resolver_, nseCallback(), ANY_OK);
     EXPECT_EQ(Fetchable::IN_PROGRESS, nse->getState());
     EXPECT_TRUE(resolver_->asksIPs(ns_name_, 0, 1));
@@ -622,7 +621,7 @@ TEST_F(ZoneEntryTest, NameserverEntryExpired) {
 
 /// \short Check how it reacts to an unreachable zone already in the table
 TEST_F(ZoneEntryTest, NameserverEntryUnreachable) {
-    shared_ptr<NameserverEntry> nse(injectEntry());
+    boost::shared_ptr<NameserverEntry> nse(injectEntry());
     nse->askIP(resolver_, nseCallback(), ANY_OK);
     ASSERT_EQ(2, resolver_->requests.size());
     resolver_->requests[0].second->failure();
@@ -651,7 +650,7 @@ TEST_F(ZoneEntryTest, AddressSelection) {
     const size_t repeats = 100000;
     // Create the zone, give it 2 nameservers and total of 3 addresses
     // (one of them is ipv6)
-    shared_ptr<ZoneEntry> zone(getZone());
+    boost::shared_ptr<ZoneEntry> zone(getZone());
     zone->addCallback(callback_, ANY_OK);
     EXPECT_NO_THROW(resolver_->provideNS(0, rrns_));
     ASSERT_GT(resolver_->requests.size(), 1);
@@ -666,7 +665,7 @@ TEST_F(ZoneEntryTest, AddressSelection) {
     resolver_->answer(3, name2, RRType::A(), rdata::in::A("192.0.2.3"));
     resolver_->requests[4].second->failure();
 
-    shared_ptr<NameserverEntry> ns1(nameserver_table_->get(HashKey(
+    boost::shared_ptr<NameserverEntry> ns1(nameserver_table_->get(HashKey(
         name1.toText(), RRClass::IN()))),
         ns2(nameserver_table_->get(HashKey(name2.toText(), RRClass::IN())));
 

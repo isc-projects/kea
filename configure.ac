@@ -201,11 +201,20 @@ werror_ok=0
 # (http://blogs.sun.com/sga/entry/boost_mini_howto)
 if test "$SUNCXX" = "yes"; then
 CXXFLAGS="$CXXFLAGS -library=stlport4 -features=tmplife -features=tmplrefstatic"
+MULTITHREADING_FLAG="-mt"
 fi
 
 # gcc specific settings:
 if test "X$GXX" = "Xyes"; then
 B10_CXXFLAGS="-Wall -Wextra -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
+case "$host" in
+*-solaris*)
+	MULTITHREADING_FLAG=-pthreads
+	;;
+*)
+	MULTITHREADING_FLAG=-pthread
+	;;
+esac
 
 # Certain versions of gcc (g++) have a bug that incorrectly warns about
 # the use of anonymous name spaces even if they're closed in a single
@@ -333,7 +342,7 @@ AC_SUBST(BOOST_INCLUDES)
 AC_MSG_CHECKING(for boost::mutex)
 CPPFLAGS_SAVES="$CPPFLAGS"
 LIBS_SAVES="$LIBS"
-CPPFLAGS="$BOOST_INCLUDES $CPPFLAGS"
+CPPFLAGS="$BOOST_INCLUDES $CPPFLAGS $MULTITHREADING_FLAG"
 need_libboost_thread=0
 AC_TRY_LINK([
 #include <boost/thread.hpp>
@@ -422,6 +431,8 @@ PKG_CHECK_MODULES(SQLITE, sqlite3 >= 3.3.9, enable_features="$enable_features SQ
 PTHREAD_LDFLAGS=
 AC_CHECK_LIB(pthread, pthread_create,[ PTHREAD_LDFLAGS=-lpthread ], [])
 AC_SUBST(PTHREAD_LDFLAGS)
+
+AC_SUBST(MULTITHREADING_FLAG)
 
 #
 # ASIO: we extensively use it as the C++ event management module.

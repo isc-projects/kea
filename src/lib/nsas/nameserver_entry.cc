@@ -41,7 +41,6 @@ using namespace asiolink;
 using namespace isc::nsas;
 using namespace isc::dns;
 using namespace std;
-using namespace boost;
 
 namespace isc {
 namespace nsas {
@@ -49,7 +48,7 @@ namespace nsas {
 namespace {
 
 // Just shorter type alias
-typedef recursive_mutex::scoped_lock Lock;
+typedef boost::recursive_mutex::scoped_lock Lock;
 
 }
 
@@ -100,7 +99,7 @@ NameserverEntry::getAddresses(AddressVector& addresses,
             return (getState());
     }
 
-    shared_ptr<NameserverEntry> self(shared_from_this());
+    boost::shared_ptr<NameserverEntry> self(shared_from_this());
     // If any address is OK, just pass everything we have
     if (family == ANY_OK) {
         BOOST_FOREACH(const AddressEntry& entry, addresses_[V6_ONLY]) {
@@ -202,7 +201,7 @@ NameserverEntry::setAddressUnreachable(const IOAddress& address) {
  */
 class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
     public:
-        ResolverCallback(shared_ptr<NameserverEntry> entry,
+        ResolverCallback(boost::shared_ptr<NameserverEntry> entry,
             AddressFamily family, const RRType& type) :
             entry_(entry),
             family_(family),
@@ -214,7 +213,7 @@ class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
          * This extracts the addresses out from the response and puts them
          * inside the entry. It tries to reuse the address entries from before (if there were any), to keep their RTTs.
          */
-        virtual void success(const shared_ptr<AbstractRRset>& response) {
+        virtual void success(const boost::shared_ptr<AbstractRRset>& response) {
             time_t now = time(NULL);
 
             Lock lock(entry_->mutex_);
@@ -295,7 +294,7 @@ class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
             failureInternal(lock);
         }
     private:
-        shared_ptr<NameserverEntry> entry_;
+        boost::shared_ptr<NameserverEntry> entry_;
         AddressFamily family_;
         RRType type_;
 
@@ -309,7 +308,7 @@ class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
                 !entry_->expect_address_[ANY_OK];
             // Sort out the callbacks we want
             vector<CallbackPair> keep;
-            vector<shared_ptr<NameserverEntry::Callback> > dispatch;
+            vector<boost::shared_ptr<NameserverEntry::Callback> > dispatch;
             BOOST_FOREACH(const CallbackPair &callback, entry_->callbacks_)
             {
                 if (callback.first == family_ || (dispatch_any &&
@@ -331,7 +330,7 @@ class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
              * FIXME: This is not completely exception safe. If there's an
              * exception in a callback, we lose the rest of them.
              */
-            BOOST_FOREACH(const shared_ptr<NameserverEntry::Callback>&
+            BOOST_FOREACH(const boost::shared_ptr<NameserverEntry::Callback>&
                 callback, dispatch)
             {
                 (*callback)(entry_);
@@ -364,19 +363,19 @@ class NameserverEntry::ResolverCallback : public ResolverInterface::Callback {
 };
 
 void
-NameserverEntry::askIP(shared_ptr<ResolverInterface> resolver,
+NameserverEntry::askIP(boost::shared_ptr<ResolverInterface> resolver,
     const RRType& type, AddressFamily family)
 {
     QuestionPtr question(new Question(Name(getName()), RRClass(getClass()),
         type));
-    shared_ptr<ResolverCallback> callback(new ResolverCallback(
+    boost::shared_ptr<ResolverCallback> callback(new ResolverCallback(
         shared_from_this(), family, type));
     resolver->resolve(question, callback);
 }
 
 void
-NameserverEntry::askIP(shared_ptr<ResolverInterface> resolver,
-    shared_ptr<Callback> callback, AddressFamily family)
+NameserverEntry::askIP(boost::shared_ptr<ResolverInterface> resolver,
+    boost::shared_ptr<Callback> callback, AddressFamily family)
 {
     Lock lock(mutex_);
 

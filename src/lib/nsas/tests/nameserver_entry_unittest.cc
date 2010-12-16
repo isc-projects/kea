@@ -43,7 +43,6 @@ using namespace asiolink;
 using namespace std;
 using namespace isc::dns;
 using namespace rdata;
-using namespace boost;
 
 namespace {
 
@@ -53,7 +52,7 @@ protected:
     /// \short Just a really stupid callback counting times called
     struct Callback : public NameserverEntry::Callback {
         size_t count;
-        virtual void operator()(shared_ptr<NameserverEntry>) {
+        virtual void operator()(boost::shared_ptr<NameserverEntry>) {
             count ++;
         }
         Callback() : count(0) { }
@@ -69,8 +68,8 @@ private:
      * \param set The answer. If the pointer is empty, it is taken
      *     as a failure.
      */
-    void fillSet(shared_ptr<TestResolver> resolver, size_t index,
-        shared_ptr<BasicRRset> set)
+    void fillSet(boost::shared_ptr<TestResolver> resolver, size_t index,
+        boost::shared_ptr<BasicRRset> set)
     {
         if (set) {
             resolver->requests[index].second->success(set);
@@ -80,12 +79,12 @@ private:
     }
 protected:
     /// Fills the nameserver entry with data trough ask IP
-    void fillNSEntry(shared_ptr<NameserverEntry> entry,
-        shared_ptr<BasicRRset> rrv4, shared_ptr<BasicRRset> rrv6)
+    void fillNSEntry(boost::shared_ptr<NameserverEntry> entry,
+        boost::shared_ptr<BasicRRset> rrv4, boost::shared_ptr<BasicRRset> rrv6)
     {
         // Prepare data to run askIP
-        shared_ptr<TestResolver> resolver(new TestResolver);
-        shared_ptr<Callback> callback(new Callback);
+        boost::shared_ptr<TestResolver> resolver(new TestResolver);
+        boost::shared_ptr<Callback> callback(new Callback);
         // Let it ask for data
         entry->askIP(resolver, callback, ANY_OK);
         // Check it really asked and sort the queries
@@ -114,7 +113,7 @@ TEST_F(NameserverEntryTest, DefaultConstructor) {
 TEST_F(NameserverEntryTest, InitialRTT) {
 
     // Get the RTT for the different addresses
-    shared_ptr<NameserverEntry> alpha(new NameserverEntry(EXAMPLE_CO_UK,
+    boost::shared_ptr<NameserverEntry> alpha(new NameserverEntry(EXAMPLE_CO_UK,
         RRClass::IN()));
     fillNSEntry(alpha, rrv4_, rrv6_);
     NameserverEntry::AddressVector vec;
@@ -133,7 +132,7 @@ TEST_F(NameserverEntryTest, InitialRTT) {
 TEST_F(NameserverEntryTest, SetRTT) {
 
     // Get the RTT for the different addresses
-    shared_ptr<NameserverEntry> alpha(new NameserverEntry(EXAMPLE_CO_UK,
+    boost::shared_ptr<NameserverEntry> alpha(new NameserverEntry(EXAMPLE_CO_UK,
         RRClass::IN()));
     fillNSEntry(alpha, rrv4_, rrv6_);
     NameserverEntry::AddressVector vec;
@@ -168,7 +167,7 @@ TEST_F(NameserverEntryTest, SetRTT) {
 TEST_F(NameserverEntryTest, Unreachable) {
 
     // Get the RTT for the different addresses
-    shared_ptr<NameserverEntry> alpha(new NameserverEntry(EXAMPLE_CO_UK,
+    boost::shared_ptr<NameserverEntry> alpha(new NameserverEntry(EXAMPLE_CO_UK,
         RRClass::IN()));
     fillNSEntry(alpha, rrv4_, rrv6_);
     NameserverEntry::AddressVector vec;
@@ -211,21 +210,21 @@ TEST_F(NameserverEntryTest, ExpirationTime) {
     time_t expiration = 0;
 
     // Test where there is a single TTL
-    shared_ptr<NameserverEntry> alpha(new NameserverEntry(EXAMPLE_CO_UK,
+    boost::shared_ptr<NameserverEntry> alpha(new NameserverEntry(EXAMPLE_CO_UK,
         RRClass::IN()));
-    fillNSEntry(alpha, rrv4_, shared_ptr<BasicRRset>());
+    fillNSEntry(alpha, rrv4_, boost::shared_ptr<BasicRRset>());
     expiration = alpha->getExpiration();
     EXPECT_EQ(expiration, curtime + rrv4_->getTTL().getValue());
 
-    shared_ptr<NameserverEntry> beta(new NameserverEntry(EXAMPLE_CO_UK,
+    boost::shared_ptr<NameserverEntry> beta(new NameserverEntry(EXAMPLE_CO_UK,
         RRClass::IN()));
-    fillNSEntry(beta, shared_ptr<BasicRRset>(), rrv6_);
+    fillNSEntry(beta, boost::shared_ptr<BasicRRset>(), rrv6_);
     expiration = beta->getExpiration();
     EXPECT_EQ(expiration, curtime + rrv6_->getTTL().getValue());
 
     // Test where there are two different TTLs
     EXPECT_NE(rrv4_->getTTL().getValue(), rrv6_->getTTL().getValue());
-    shared_ptr<NameserverEntry> gamma(new NameserverEntry(EXAMPLE_CO_UK,
+    boost::shared_ptr<NameserverEntry> gamma(new NameserverEntry(EXAMPLE_CO_UK,
         RRClass::IN()));
     fillNSEntry(gamma, rrv4_, rrv6_);
     uint32_t minttl = min(rrv4_->getTTL().getValue(), rrv6_->getTTL().getValue());
@@ -236,9 +235,9 @@ TEST_F(NameserverEntryTest, ExpirationTime) {
     // that the expiration time should be greater than the TTL (as the current
     // time is greater than zero).
 
-    shared_ptr<NameserverEntry> delta(new NameserverEntry(EXAMPLE_CO_UK,
+    boost::shared_ptr<NameserverEntry> delta(new NameserverEntry(EXAMPLE_CO_UK,
         RRClass::IN()));
-    fillNSEntry(delta, rrv4_, shared_ptr<BasicRRset>());
+    fillNSEntry(delta, rrv4_, boost::shared_ptr<BasicRRset>());
     EXPECT_GT(delta->getExpiration(), rrv4_->getTTL().getValue());
 }
 
@@ -262,10 +261,10 @@ TEST_F(NameserverEntryTest, CheckClass) {
 // Tests if it asks the IP addresses and calls callbacks when it comes
 // including the right addresses are returned and that they expire
 TEST_F(NameserverEntryTest, IPCallbacks) {
-    shared_ptr<NameserverEntry> entry(new NameserverEntry(EXAMPLE_CO_UK,
+    boost::shared_ptr<NameserverEntry> entry(new NameserverEntry(EXAMPLE_CO_UK,
         RRClass::IN()));
-    shared_ptr<Callback> callback(new Callback);
-    shared_ptr<TestResolver> resolver(new TestResolver);
+    boost::shared_ptr<Callback> callback(new Callback);
+    boost::shared_ptr<TestResolver> resolver(new TestResolver);
 
     entry->askIP(resolver, callback, ANY_OK);
     // Ensure it becomes IN_PROGRESS
@@ -311,10 +310,10 @@ TEST_F(NameserverEntryTest, IPCallbacks) {
 
 // Test the callback is called even when the address is unreachable
 TEST_F(NameserverEntryTest, IPCallbacksUnreachable) {
-    shared_ptr<NameserverEntry> entry(new NameserverEntry(EXAMPLE_CO_UK,
+    boost::shared_ptr<NameserverEntry> entry(new NameserverEntry(EXAMPLE_CO_UK,
         RRClass::IN()));
-    shared_ptr<Callback> callback(new Callback);
-    shared_ptr<TestResolver> resolver(new TestResolver);
+    boost::shared_ptr<Callback> callback(new Callback);
+    boost::shared_ptr<TestResolver> resolver(new TestResolver);
 
     // Ask for its IP
     entry->askIP(resolver, callback, ANY_OK);
@@ -339,18 +338,18 @@ TEST_F(NameserverEntryTest, IPCallbacksUnreachable) {
  * from resolve.
  */
 TEST_F(NameserverEntryTest, DirectAnswer) {
-    shared_ptr<NameserverEntry> entry(new NameserverEntry(EXAMPLE_CO_UK,
+    boost::shared_ptr<NameserverEntry> entry(new NameserverEntry(EXAMPLE_CO_UK,
         RRClass::IN()));
-    shared_ptr<Callback> callback(new Callback);
-    shared_ptr<TestResolver> resolver(new TestResolver);
+    boost::shared_ptr<Callback> callback(new Callback);
+    boost::shared_ptr<TestResolver> resolver(new TestResolver);
     resolver->addPresetAnswer(Question(Name(EXAMPLE_CO_UK), RRClass::IN(),
         RRType::A()), rrv4_);
     resolver->addPresetAnswer(Question(Name(EXAMPLE_CO_UK), RRClass::IN(),
         RRType::AAAA()), rrv6_);
     resolver->addPresetAnswer(Question(Name(EXAMPLE_NET), RRClass::IN(),
-        RRType::A()), shared_ptr<AbstractRRset>());
+        RRType::A()), boost::shared_ptr<AbstractRRset>());
     resolver->addPresetAnswer(Question(Name(EXAMPLE_NET), RRClass::IN(),
-        RRType::AAAA()), shared_ptr<AbstractRRset>());
+        RRType::AAAA()), boost::shared_ptr<AbstractRRset>());
 
     // A successfull test first
     entry->askIP(resolver, callback, ANY_OK);
@@ -376,10 +375,10 @@ TEST_F(NameserverEntryTest, DirectAnswer) {
  * data is received the next time.
  */
 TEST_F(NameserverEntryTest, ChangedExpired) {
-    shared_ptr<NameserverEntry> entry(new NameserverEntry(EXAMPLE_CO_UK,
+    boost::shared_ptr<NameserverEntry> entry(new NameserverEntry(EXAMPLE_CO_UK,
         RRClass::IN()));
-    shared_ptr<Callback> callback(new Callback);
-    shared_ptr<TestResolver> resolver(new TestResolver);
+    boost::shared_ptr<Callback> callback(new Callback);
+    boost::shared_ptr<TestResolver> resolver(new TestResolver);
 
     // Ask the first time
     entry->askIP(resolver, callback, V4_ONLY);
@@ -426,10 +425,10 @@ TEST_F(NameserverEntryTest, ChangedExpired) {
  * When the data expire and is asked again, the original RTT is kept.
  */
 TEST_F(NameserverEntryTest, KeepRTT) {
-    shared_ptr<NameserverEntry> entry(new NameserverEntry(EXAMPLE_CO_UK,
+    boost::shared_ptr<NameserverEntry> entry(new NameserverEntry(EXAMPLE_CO_UK,
         RRClass::IN()));
-    shared_ptr<Callback> callback(new Callback);
-    shared_ptr<TestResolver> resolver(new TestResolver);
+    boost::shared_ptr<Callback> callback(new Callback);
+    boost::shared_ptr<TestResolver> resolver(new TestResolver);
 
     // Ask the first time
     entry->askIP(resolver, callback, V4_ONLY);
@@ -482,7 +481,7 @@ TEST_F(NameserverEntryTest, KeepRTT) {
 
 // Test the RTT is updated smoothly
 TEST_F(NameserverEntryTest, UpdateRTT) {
-    shared_ptr<NameserverEntry> ns(new NameserverEntry(EXAMPLE_CO_UK,
+    boost::shared_ptr<NameserverEntry> ns(new NameserverEntry(EXAMPLE_CO_UK,
         RRClass::IN()));
     fillNSEntry(ns, rrv4_, rrv6_);
     NameserverEntry::AddressVector vec;
