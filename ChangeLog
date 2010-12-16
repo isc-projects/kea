@@ -1,3 +1,11 @@
+  130.	[func]		jerry
+    src/lib/datasrc: Introduced a new class MemoryDataSrc to provide
+	the general interface for memory data source.  For the initial
+	implementation, we don't make it a derived class of AbstractDataSrc
+	because the interface is so different(we'll eventually consider this
+	as part of the generalization work).
+	(Trac #422, svn r3566)
+
   129.	[func]		jinmei
 	src/lib/dns: Added new functions masterLoad() for loading master
 	zone files.  The initial implementation can only parse a limited
