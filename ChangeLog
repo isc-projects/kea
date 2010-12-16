@@ -1,6 +1,13 @@
+  129.	[func]		jinmei
+	src/lib/dns: Added new functions masterLoad() for loading master
+	zone files.  The initial implementation can only parse a limited
+	form of master files, but BIND 9's named-compilezone can convert
+	any valid zone file into the acceptable form.
+	(Trac #423, svn r3857)
+
   128.  [build]     vorner
-	Test for query name = '.', type = DS to authoritative nameserver for root
-	zone was added.
+	Test for query name = '.', type = DS to authoritative nameserver
+	for root zone was added.
 	(Trac #85, svn r3836)
 
   127.  [bug]       stephen
