@@ -16,3 +16,4 @@ libdatasrc_la_SOURCES += sqlite3_datasrc.h sqlite3_datasrc.cc
 libdatasrc_la_SOURCES += query.h query.cc
 libdatasrc_la_SOURCES += cache.h cache.cc
 libdatasrc_la_SOURCES += zonetable.h zonetable.cc
+libdatasrc_la_SOURCES += memory_datasrc.h memory_datasrc.cc

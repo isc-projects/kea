@@ -26,6 +26,21 @@ class RRClass;
 };
 
 namespace datasrc {
+namespace result {
+/// Result codes of various public methods of in memory data source
+///
+/// The detailed semantics may differ in different methods.
+/// See the description of specific methods for more details.
+///
+/// Note: this is intended to be used from other data sources eventually,
+/// but for now it's specific to in memory data source and its backend.
+enum Result {
+    SUCCESS,  ///< The operation is successful.
+    EXIST,    ///< The search key is already stored.
+    NOTFOUND, ///< The specified object is not found.
+    PARTIALMATCH ///< \c Only a partial match is found.
+};
+}
 
 /// \brief The base class for a single authoritative zone
 ///
@@ -223,81 +238,22 @@ private:
 
 /// \brief A set of authoritative zones.
 ///
-/// The \c ZoneTable class represents a set of zones of the same RR class
-/// and provides a basic interface to help DNS lookup processing.
-/// For a given domain name, its \c find() method searches the set for a zone
-/// that gives a longest match against that name.
+/// \c ZoneTable class is primarily intended to be used as a backend for the
+/// \c MemoryDataSrc class, but is exposed as a separate class in case some
+/// application wants to use it directly (e.g. for a customized data source
+/// implementation).
 ///
-/// The set of zones are assumed to be of the same RR class, but the
-/// \c ZoneTable class does not enforce the assumption through its interface.
-/// For example, the \c add() method does not check if the new zone
-/// is of the same RR class as that of the others already in the table.
-/// It is caller's responsibility to ensure this assumption.
-///
-/// <b>Notes to developer:</b>
-///
-/// The add() method takes a (Boost) shared pointer because it would be
-/// inconvenient to require the caller to maintain the ownership of zones,
-/// while it wouldn't be safe to delete unnecessary zones inside the zone
-/// table.
-///
-/// On the other hand, the find() method returns a bare pointer, rather than
-/// the shared pointer, in order to minimize the dependency on Boost
-/// definitions in our public interfaces.  This means the caller can only
-/// refer to the returned object (via the pointer) for a short period.
-///  It should be okay for simple lookup purposes, but if we see the need
-/// for keeping a \c Zone object for a longer period of context, we may
-/// have to revisit this decision.
-///
-/// Currently, \c FindResult::zone is immutable for safety.
-/// In future versions we may want to make it changeable.  For example,
-/// we may want to allow configuration update on an existing zone.
-///
-/// In BIND 9's "zt" module, the equivalent of \c find() has an "option"
-/// parameter.  The only defined option is the one to specify the "no exact"
-/// mode, and the only purpose of that mode is to prefer a second longest match
-/// even if there is an exact match in order to deal with type DS query.
-/// This trick may help enhance performance, but it also seems to make the
-/// implementation complicated for a very limited, minor case.  So, for now,
-/// we don't introduce the special mode, and, since it was the only reason to
-/// have search options in BIND 9, our initial implementation doesn't provide
-/// a switch for options.
+/// For more descriptions about its struct and interfaces, please refer to the
+/// corresponding struct and interfaces of \c MemoryDataSrc.
 class ZoneTable {
 public:
-    /// Result codes of various public methods of \c ZoneTable.
-    ///
-    /// The detailed semantics may differ in different methods.
-    /// See the description of specific methods for more details.
-    enum Result {
-        SUCCESS,  ///< The operation is successful.
-        EXIST,    ///< A zone is already stored in \c ZoneTable.
-        NOTFOUND, ///< The specified zone is not found in \c ZoneTable.
-        PARTIALMATCH ///< \c Only a partial match is found in \c find(). 
-    };
-
-    /// \brief A helper structure to represent the search result of
-    /// <code>ZoneTable::find()</code>.
-    ///
-    /// This is a straightforward pair of the result code and a pointer
-    /// to the found zone to represent the result of \c find().
-    /// We use this in order to avoid overloading the return value for both
-    /// the result code ("success" or "not found") and the found object,
-    /// i.e., avoid using \c NULL to mean "not found", etc.
-    ///
-    /// This is a simple value class with no internal state, so for
-    /// convenience we allow the applications to refer to the members
-    /// directly.
-    ///
-    /// See the description of \c find() for the semantics of the member
-    /// variables.
     struct FindResult {
-        FindResult(Result param_code, const Zone* param_zone) :
+        FindResult(result::Result param_code, const ConstZonePtr param_zone) :
             code(param_code), zone(param_zone)
         {}
-        const Result code;
-        const Zone* const zone;
+        const result::Result code;
+        const ConstZonePtr zone;
     };
-
     ///
     /// \name Constructors and Destructor.
     ///
@@ -322,53 +278,25 @@ public:
     //@}
 
     /// Add a \c Zone to the \c ZoneTable.
-    ///
-    /// \c zone must not be associated with a NULL pointer; otherwise
-    /// an exception of class \c InvalidParameter will be thrown.
-    /// If internal resource allocation fails, a corresponding standard
-    /// exception will be thrown.
-    /// This method never throws an exception otherwise.
-    ///
-    /// \param zone A \c Zone object to be added.
-    /// \return \c SUCCESS If the zone is successfully added to the zone table.
-    /// \return \c EXIST The zone table already stores a zone that has the
-    /// same origin.
-    Result add(ZonePtr zone);
+    /// See the description of <code>MemoryDataSrc::addZone()</code> for more
+    /// details.
+    result::Result addZone(ZonePtr zone);
 
     /// Remove a \c Zone of the given origin name from the \c ZoneTable.
     ///
     /// This method never throws an exception.
     ///
     /// \param origin The origin name of the zone to be removed.
-    /// \return \c SUCCESS If the zone is successfully removed from the
-    /// zone table.
-    /// \return \c NOTFOUND The zone table does not store the zone that matches
-    /// \c origin.
-    Result remove(const isc::dns::Name& origin);
+    /// \return \c result::SUCCESS If the zone is successfully
+    /// removed from the zone table.
+    /// \return \c result::NOTFOUND The zone table does not
+    /// store the zone that matches \c origin.
+    result::Result removeZone(const isc::dns::Name& origin);
 
     /// Find a \c Zone that best matches the given name in the \c ZoneTable.
-    ///
-    /// It searches the internal storage for a \c Zone that gives the
-    /// longest match against \c name, and returns the result in the
-    /// form of a \c FindResult object as follows:
-    /// - \c code: The result code of the operation.
-    ///   - \c SUCCESS: A zone that gives an exact match is found
-    ///   - \c PARTIALMATCH: A zone whose origin is a super domain of
-    ///     \c name is found (but there is no exact match)
-    ///   - \c NOTFOUND: For all other cases.
-    /// - \c zone: A pointer to the found \c Zone object if one is found;
-    /// otherwise \c NULL.
-    ///
-    /// The pointer returned in the \c FindResult object is only valid until
-    /// the corresponding zone is removed from the zone table.
-    /// The caller must ensure that the zone is held in the zone table while
-    /// it needs to refer to it.
-    ///
-    /// This method never throws an exception.
-    ///
-    /// \param name A domain name for which the search is performed.
-    /// \return A \c FindResult object enclosing the search result (see above).
-    FindResult find(const isc::dns::Name& name) const;
+    /// See the description of <code>MemoryDataSrc::findZone()</code> for more
+    /// details.
+    FindResult findZone(const isc::dns::Name& name) const;
 
 private:
     struct ZoneTableImpl;
