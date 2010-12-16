@@ -33,7 +33,6 @@
 
 using namespace isc::dns;
 using namespace std;
-using namespace boost;
 
 namespace isc {
 namespace nsas {
@@ -44,7 +43,7 @@ namespace nsas {
 // hash table, on the assumption that three elements is the longest linear
 // search we want to do when looking up names in the hash table.
 NameserverAddressStore::NameserverAddressStore(
-    shared_ptr<ResolverInterface> resolver, uint32_t zonehashsize,
+    boost::shared_ptr<ResolverInterface> resolver, uint32_t zonehashsize,
     uint32_t nshashsize) :
     zone_hash_(new HashTable<ZoneEntry>(new NsasEntryCompare<ZoneEntry>,
         zonehashsize)),
@@ -65,13 +64,13 @@ namespace {
  * no need to copy anything. In that case, the bind should not be
  * called at all to create the object, just call the function.
  */
-shared_ptr<ZoneEntry>
-newZone(const shared_ptr<ResolverInterface>* resolver, const string* zone,
+boost::shared_ptr<ZoneEntry>
+newZone(const boost::shared_ptr<ResolverInterface>* resolver, const string* zone,
     const RRClass* class_code,
-    const shared_ptr<HashTable<NameserverEntry> >* ns_hash,
-    const shared_ptr<LruList<NameserverEntry> >* ns_lru)
+    const boost::shared_ptr<HashTable<NameserverEntry> >* ns_hash,
+    const boost::shared_ptr<LruList<NameserverEntry> >* ns_lru)
 {
-    shared_ptr<ZoneEntry> result(new ZoneEntry(*resolver, *zone, *class_code,
+    boost::shared_ptr<ZoneEntry> result(new ZoneEntry(*resolver, *zone, *class_code,
         *ns_hash, *ns_lru));
     return (result);
 }
@@ -80,9 +79,9 @@ newZone(const shared_ptr<ResolverInterface>* resolver, const string* zone,
 
 void
 NameserverAddressStore::lookup(const string& zone, const RRClass& class_code,
-    shared_ptr<AddressRequestCallback> callback, AddressFamily family)
+    boost::shared_ptr<AddressRequestCallback> callback, AddressFamily family)
 {
-    pair<bool, shared_ptr<ZoneEntry> > zone_obj(zone_hash_->getOrAdd(HashKey(
+    pair<bool, boost::shared_ptr<ZoneEntry> > zone_obj(zone_hash_->getOrAdd(HashKey(
         zone, class_code), boost::bind(newZone, &resolver_, &zone, &class_code,
         &nameserver_hash_, &nameserver_lru_)));
     if (zone_obj.first) {

@@ -31,7 +31,6 @@ namespace nsas {
 
 using namespace dns;
 using namespace rdata;
-using namespace boost;
 
 #define TEST_ADDRESS_INDEX 1
 
@@ -48,8 +47,8 @@ public:
         rrv4_->addRdata(ConstRdataPtr(new RdataTest<A>("9.10.11.12")));
 
         ns_.reset(new NameserverEntry(name_.toText(), RRClass::IN()));
-        shared_ptr<TestResolver> resolver(new TestResolver);
-        ns_->askIP(resolver, shared_ptr<Callback>(new Callback), ANY_OK);
+        boost::shared_ptr<TestResolver> resolver(new TestResolver);
+        ns_->askIP(resolver, boost::shared_ptr<Callback>(new Callback), ANY_OK);
         resolver->asksIPs(name_, 0, 1);
         resolver->requests[0].second->success(rrv4_);
     }
@@ -74,12 +73,12 @@ public:
 
 private:
     Name name_;                             ///< Name of the sample
-    shared_ptr<BasicRRset> rrv4_;           ///< Standard RRSet - IN, A, lowercase name
+    boost::shared_ptr<BasicRRset> rrv4_;           ///< Standard RRSet - IN, A, lowercase name
     boost::shared_ptr<NameserverEntry> ns_; ///< Shared_ptr that points to a NameserverEntry object
 
     class Callback : public NameserverEntry::Callback {
         public:
-            virtual void operator()(shared_ptr<NameserverEntry>) { }
+            virtual void operator()(boost::shared_ptr<NameserverEntry>) { }
     };
 };
 
