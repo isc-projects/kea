@@ -21,7 +21,6 @@ run_unittests_SOURCES = $(top_srcdir)/src/lib/dns/tests/unittest_util.h
 run_unittests_SOURCES += $(top_srcdir)/src/lib/dns/tests/unittest_util.cc
 run_unittests_SOURCES += ../auth_srv.h ../auth_srv.cc
 run_unittests_SOURCES += ../change_user.h ../change_user.cc
-run_unittests_SOURCES += ../rbt_datasrc.h
 run_unittests_SOURCES += auth_srv_unittest.cc
 run_unittests_SOURCES += change_user_unittest.cc
 run_unittests_SOURCES += asio_link_unittest.cc
