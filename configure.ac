@@ -205,6 +205,12 @@ AC_DEFUN([BIND10_CXX_TRY_FLAG], [
   AC_COMPILE_IFELSE([ ], [bind10_cxx_flag=yes], [bind10_cxx_flag=no])
   CXXFLAGS="$bind10_save_CXXFLAGS"
 
+  if test "x$bind10_cxx_flag" = "xyes"; then
+    ifelse([$2], , :, [$2])
+  else
+    ifelse([$3], , :, [$3])
+  fi
+
   AC_MSG_RESULT([$bind10_cxx_flag])
 ])
 
