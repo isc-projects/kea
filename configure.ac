@@ -195,6 +195,19 @@ fi
 # specify the default warning flags in CXXFLAGS and let specific modules
 # "override" the default.
 
+# This may be used to try compiler flags.
+AC_DEFUN([BIND10_CXX_TRY_FLAG], [
+  AC_MSG_CHECKING([whether $CXX supports $1])
+
+  bind10_save_CXXFLAGS="$CXXFLAGS"
+  CXXFLAGS="$CXXFLAGS $1"
+
+  AC_COMPILE_IFELSE([ ], [bind10_cxx_flag=yes], [bind10_cxx_flag=no])
+  CXXFLAGS="$bind10_save_CXXFLAGS"
+
+  AC_MSG_RESULT([$bind10_cxx_flag])
+])
+
 werror_ok=0
 
 # SunStudio compiler requires special compiler options for boost
@@ -203,6 +216,10 @@ if test "$SUNCXX" = "yes"; then
 CXXFLAGS="$CXXFLAGS -library=stlport4 -features=tmplife -features=tmplrefstatic"
 MULTITHREADING_FLAG="-mt"
 fi
+
+BIND10_CXX_TRY_FLAG(-Wno-missing-field-initializers,
+	[WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG="-Wno-missing-field-initializers"])
+AC_SUBST(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
 # gcc specific settings:
 if test "X$GXX" = "Xyes"; then
