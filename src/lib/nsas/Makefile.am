@@ -7,12 +7,11 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/lib/nsas -I$(top_builddir)/src/lib/nsas
 AM_CPPFLAGS += $(SQLITE_CFLAGS)
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
-if USE_GXX
 # Some versions of GCC warn about some versions of Boost regarding
 # missing initializer for members in its posix_time.
 # https://svn.boost.org/trac/boost/ticket/3477
-AM_CXXFLAGS += -Wno-missing-field-initializers
-endif
+# But older GCC compilers don't have the flag.
+AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
 if USE_CLANGPP
 # clang++ complains about unused function parameters in some boost header
