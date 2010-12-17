@@ -40,7 +40,7 @@ public:
 ///
 /// This represents a functor object or a function that takes one parameter
 /// of type \c RRsetPtr and returns nothing.
-typedef boost::function<void(RRsetPtr rrset)> MasterLoadCallback;
+typedef boost::function<void(RRsetPtr)> MasterLoadCallback;
 
 ///
 /// \name Master zone file loader functions.

@@ -139,17 +139,20 @@ private:
 
         double epsilon = 0.0001;
         // The sum must be equal to 1
-        return fabs(sum - 1.0) < epsilon;
+        return std::fabs(sum - 1.0) < epsilon;
     }
-
-    // Shortcut typedefs
-    typedef boost::variate_generator<boost::mt19937&, boost::uniform_real<> > UniformRealGenerator;
 
     std::vector<double> cumulative_;            ///< The partial sum of the probabilities
     boost::mt19937 rng_;                        ///< Mersenne Twister: A 623-dimensionally equidistributed uniform pseudo-random number generator 
     boost::uniform_real<> dist_;                ///< Uniformly distributed real numbers
+
+    // Shortcut typedef
+    // This typedef is placed directly before its use, as the sunstudio
+    // compiler could not handle it being anywhere else (don't know why)
+    typedef boost::variate_generator<boost::mt19937&, boost::uniform_real<> > UniformRealGenerator;
     UniformRealGenerator uniform_real_gen_;     ///< Uniformly distributed random real numbers generator
-    size_t min_;                                   ///< The minimum integer that will be generated
+
+    size_t min_;                                ///< The minimum integer that will be generated
 };
 
 }   // namespace dns
