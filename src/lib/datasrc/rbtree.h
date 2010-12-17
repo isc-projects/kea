@@ -12,12 +12,16 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-/// \note Although the purpose of the RBTree is to provide a generic map with 
-/// domain name as key. Because of some unresolved design issue, the design and 
-/// interface is not fixed, RBTree isn't ready to be used as a base data sturct 
-/// by other modules.
 #ifndef _RBTREE_H
 #define _RBTREE_H 1
+
+//! \file datasrc/rbtree.h
+///
+/// \note The purpose of the RBTree is to provide a generic map with 
+/// domain names as the key that can be used by various BIND 10 modules or
+/// even by other applications.  However, because of some unresolved design
+/// issue, the design and interface are not fixed, and RBTree isn't ready to
+/// be used as a base data structure by other modules.
 
 #include <dns/name.h>
 #include <boost/utility.hpp>
@@ -81,7 +85,8 @@ public:
 
     /// \name Test functions
     //@{
-    /// \brief return the name of current node, it's relative to its top node ///
+    /// \brief return the name of current node, it's relative to its top node
+    ///
     /// To get the absolute name of one node, the node path from the top node
     /// to current node has to be recorded
     const isc::dns::Name& getName() const { return (name_); }
@@ -103,7 +108,7 @@ public:
     /// \name Modify functions
     //@{
     /// \breif set the data stored in the node
-    void setData(const NodeDataPtr& data) { data_ = data;}
+    void setData(const NodeDataPtr& data) { data_ = data; }
     //@}
 
 
