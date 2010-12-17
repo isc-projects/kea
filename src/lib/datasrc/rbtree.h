@@ -12,6 +12,10 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+/// \note Although the purpose of the RBTree is to provide a generic map with 
+/// domain name as key. Because of some unresolved design issue, the design and 
+/// interface is not fixed, RBTree isn't ready to be used as a base data sturct 
+/// by other modules.
 #ifndef _RBTREE_H
 #define _RBTREE_H 1
 
@@ -59,20 +63,12 @@ class RBTree;
 ///
 /// \note \c RBNode basically used internally by RBTree, it is meaningless to
 /// inherited from it or create it without \c RBTree.
-/// For data stored in \c RBNode, RBNode will hold the ownership, therefore RBNode
-/// will release it(call the deconstructor)finally, so it will be has problem if two
-/// RBNode store the same data, or the data RBNode managed is delete outside RBNode
-/// both will cause double delete.
-///
-/// \todo It's really bad practce split the memory allocate and delete into seperate
-/// classes, it's planed to add deleter functor as one template paremeter and
-/// use it to release the data. but now let's just use this simple design
 template <typename T>
 class RBNode : public boost::noncopyable {
 public:
     /// only \c RBTree can create and destroy \c RBNode
     friend class RBTree<T>;
-    typedef boost::shared_ptr<T> NodeDataType;
+    typedef boost::shared_ptr<T> NodeDataPtr;
 
     /// \name Deonstructor
     /// \note it's seems a little strange that constructor is private
@@ -85,8 +81,7 @@ public:
 
     /// \name Test functions
     //@{
-    /// \brief return the name of current node, it's relative to its top node
-    ///
+    /// \brief return the name of current node, it's relative to its top node ///
     /// To get the absolute name of one node, the node path from the top node
     /// to current node has to be recorded
     const isc::dns::Name& getName() const { return (name_); }
@@ -94,9 +89,9 @@ public:
     /// \brief return the data store in this node
     /// \note, since the data is managed by RBNode, developer should not
     /// free the pointer
-    NodeDataType& getData() { return (data_); }
+    NodeDataPtr& getData() { return (data_); }
     /// \brief return the data stored in this node, read-only version
-    const NodeDataType& getData() const { return (data_); }
+    const NodeDataPtr& getData() const { return (data_); }
 
     /// \brief return whether the node has related data
     /// \note it's meaningless has empty \c RBNode in one RBTree, the only
@@ -108,14 +103,13 @@ public:
     /// \name Modify functions
     //@{
     /// \breif set the data stored in the node
-    void setData(const NodeDataType& data) { data_ = data;}
+    void setData(const NodeDataPtr& data) { data_ = data;}
     //@}
 
 
 private:
     /// \brief Define rbnode color
     enum RBNodeColor {BLACK, RED};
-
 
     /// \name Constructors
     /// \note \c Single RBNode is meaningless without living inside one \c RBTree
@@ -134,13 +128,11 @@ private:
     RBNode(const isc::dns::Name& name);
     //@}
 
-
     /// This is a factory class method of a special singleton null node.
     static RBNode<T>* NULL_NODE() {
         static RBNode<T> null_node;
         return (&null_node);
     }
-
 
     /// data to maintain the rbtree balance
     RBNode<T>*  parent_;
@@ -148,9 +140,8 @@ private:
     RBNode<T>*  right_;
     RBNodeColor color_;
 
-
     isc::dns::Name     name_;
-    NodeDataType       data_;
+    NodeDataPtr       data_;
     /// the down pointer points to the root node of sub domains of current
     /// domain
     /// \par Adding down pointer to \c RBNode is for two purpose:
@@ -614,7 +605,6 @@ RBTree<T>::leftRotate(RBNode<T>** root, RBNode<T>* node) {
     node->parent_ = right;
     return (node);
 }
-
 
 template <typename T>
 RBNode<T>*
