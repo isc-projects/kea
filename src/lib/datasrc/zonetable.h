@@ -278,8 +278,20 @@ public:
     //@}
 
     /// Add a \c Zone to the \c ZoneTable.
-    /// See the description of <code>MemoryDataSrc::addZone()</code> for more
-    /// details.
+    ///
+    /// \c Zone must not be associated with a NULL pointer; otherwise
+    /// an exception of class \c InvalidParameter will be thrown.
+    /// If internal resource allocation fails, a corresponding standard
+    /// exception will be thrown.
+    /// An AssertError throw is in the code, but it should never be
+    /// thrown (and therefore never tried to catch).
+    /// This method never throws an exception otherwise.
+    ///
+    /// \param zone A \c Zone object to be added.
+    /// \return \c result::SUCCESS If the zone is successfully
+    /// added to the zone table.
+    /// \return \c result::EXIST The zone table already contains
+    /// zone of the same origin.
     result::Result addZone(ZonePtr zone);
 
     /// Remove a \c Zone of the given origin name from the \c ZoneTable.
@@ -294,8 +306,25 @@ public:
     result::Result removeZone(const isc::dns::Name& origin);
 
     /// Find a \c Zone that best matches the given name in the \c ZoneTable.
-    /// See the description of <code>MemoryDataSrc::findZone()</code> for more
-    /// details.
+    ///
+    /// It searches the internal storage for a \c Zone that gives the
+    /// longest match against \c name, and returns the result in the
+    /// form of a \c FindResult object as follows:
+    /// - \c code: The result code of the operation.
+    ///   - \c result::SUCCESS: A zone that gives an exact match
+    ///    is found
+    ///   - \c result::PARTIALMATCH: A zone whose origin is a
+    ///    super domain of \c name is found (but there is no exact match)
+    ///   - \c result::NOTFOUND: For all other cases.
+    /// - \c zone: A <Boost> shared pointer to the found \c Zone object if one
+    ///  is found; otherwise \c NULL.
+    ///
+    /// This method never throws an exception (actually, there's code to throw
+    /// AssertError, but that one means programmer error, so it should not be
+    /// expected).
+    ///
+    /// \param name A domain name for which the search is performed.
+    /// \return A \c FindResult object enclosing the search result (see above).
     FindResult findZone(const isc::dns::Name& name) const;
 
     /// \brief An internal (programmer) error inside ZoneTable.
