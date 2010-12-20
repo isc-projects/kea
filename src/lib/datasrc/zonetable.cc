@@ -63,7 +63,7 @@ struct ZoneTable::ZoneTableImpl {
     typedef RBTree<Zone> ZoneTree;
     typedef RBNode<Zone> ZoneNode;
     // The actual storage
-    ZoneTree zones;
+    ZoneTree zones_;
 
     /*
      * The implementation methods are here and just wrap-called in the
@@ -81,7 +81,7 @@ struct ZoneTable::ZoneTableImpl {
 
         // Get the node where we put the zone
         ZoneNode* node(NULL);
-        switch (zones.insert(zone->getOrigin(), &node)) {
+        switch (zones_.insert(zone->getOrigin(), &node)) {
             // This is OK
             case ZoneTree::SUCCEED:
             case ZoneTree::ALREADYEXIST:
@@ -118,7 +118,7 @@ struct ZoneTable::ZoneTableImpl {
         result::Result my_result;
 
         // Translate the return codes
-        switch (zones.find(name, &node)) {
+        switch (zones_.find(name, &node)) {
             case ZoneTree::EXACTMATCH:
                 my_result = result::SUCCESS;
                 break;
