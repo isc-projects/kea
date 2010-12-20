@@ -202,7 +202,7 @@ AC_DEFUN([BIND10_CXX_TRY_FLAG], [
   bind10_save_CXXFLAGS="$CXXFLAGS"
   CXXFLAGS="$CXXFLAGS $1"
 
-  AC_COMPILE_IFELSE([ ], [bind10_cxx_flag=yes], [bind10_cxx_flag=no])
+  AC_LINK_IFELSE([ ], [bind10_cxx_flag=yes], [bind10_cxx_flag=no])
   CXXFLAGS="$bind10_save_CXXFLAGS"
 
   if test "x$bind10_cxx_flag" = "xyes"; then
@@ -367,13 +367,31 @@ CPPFLAGS_SAVES="$CPPFLAGS"
 LIBS_SAVES="$LIBS"
 CPPFLAGS="$BOOST_INCLUDES $CPPFLAGS $MULTITHREADING_FLAG"
 need_libboost_thread=0
+need_sunpro_workaround=0
 AC_TRY_LINK([
 #include <boost/thread.hpp>
 ],[
 boost::mutex m;
 ],
 	[ AC_MSG_RESULT(yes (without libboost_thread)) ],
-	[ LIBS=" $LIBS -lboost_thread"
+
+    # there is one specific problem with SunStudio 5.10
+    # where including boost/thread causes a compilation failure
+    # There is a workaround in boost but it checks the version not being 5.10
+    # This will probably be fixed in the future, in which case this
+    # is only a temporary workaround
+    [ AC_TRY_LINK([
+#if defined(__SUNPRO_CC) && __SUNPRO_CC == 0x5100
+#undef __SUNPRO_CC
+#define __SUNPRO_CC 0x5090
+#endif
+#include <boost/thread.hpp>
+],[
+boost::mutex m;
+],
+    [ AC_MSG_RESULT(yes (with SUNOS workaround))
+      need_sunpro_workaround=1 ],
+    	[ LIBS=" $LIBS -lboost_thread"
 	  AC_TRY_LINK([
 #include <boost/thread.hpp>
 ],[
@@ -385,10 +403,13 @@ boost::mutex m;
 		    AC_MSG_ERROR([boost::mutex cannot be linked in this build environment.
 Perhaps you are using an older version of Boost that requires libboost_thread for the mutex support, which does not appear to be available.
 You may want to check the availability of the library or to upgrade Boost.])
-   		  ])])
+   		  ])])])
 CPPFLAGS="$CPPFLAGS_SAVES"
 LIBS="$LIBS_SAVES"
 AM_CONDITIONAL(NEED_LIBBOOST_THREAD, test $need_libboost_thread = 1)
+if test $need_sunpro_workaround = 1; then
+    AC_DEFINE([NEED_SUNPRO_WORKAROUND], [], [Need boost sunstudio workaround])
+fi
 
 #
 # Check availability of gtest, which will be used for unit tests.
