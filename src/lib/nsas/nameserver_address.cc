@@ -14,6 +14,8 @@
 
 // $id$
 
+#include <config.h>
+
 #include "nameserver_address.h"
 #include "nameserver_entry.h"
 

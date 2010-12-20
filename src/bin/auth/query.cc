@@ -26,10 +26,10 @@ namespace isc {
 namespace auth {
 void
 Query::process() const {
-    const ZoneTable::FindResult result = zone_table_.find(qname_);
+    const ZoneTable::FindResult result = zone_table_.findZone(qname_);
 
-    if (result.code != ZoneTable::SUCCESS &&
-        result.code != ZoneTable::PARTIALMATCH) {
+    if (result.code != isc::datasrc::result::SUCCESS &&
+        result.code != isc::datasrc::result::PARTIALMATCH) {
         response_.setRcode(Rcode::SERVFAIL());
         return;
     }

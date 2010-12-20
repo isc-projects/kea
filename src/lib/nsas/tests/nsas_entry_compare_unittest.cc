@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 // $Id$
+#include <config.h>
 
 #include <algorithm>
 #include <string>
@@ -37,16 +38,18 @@ class NsasEntryCompareTest : public ::testing::Test {
 
 // Test of the comparison
 TEST_F(NsasEntryCompareTest, Compare) {
+    std::string name1("test1");
+    std::string name2("test2");
 
     // Construct a couple of different objects
-    TestEntry entry1("test1", RRClass(42));
-    TestEntry entry2("test1", RRClass(24));
-    TestEntry entry3("test2", RRClass(42));
+    TestEntry entry1(name1, RRClass(42));
+    TestEntry entry2(name1, RRClass(24));
+    TestEntry entry3(name2, RRClass(42));
 
     // Create corresponding hash key objects
-    HashKey key1(entry1.getName(), entry1.getClass());
-    HashKey key2(entry2.getName(), entry2.getClass());
-    HashKey key3(entry3.getName(), entry3.getClass());
+    HashKey key1(name1, entry1.getClass());
+    HashKey key2(name1, entry2.getClass());
+    HashKey key3(name2, entry3.getClass());
     
     // Perform the comparison
     NsasEntryCompare<TestEntry> compare;
