@@ -1,3 +1,17 @@
+  134.  [func]      vorner
+	b10-recurse supports timeouts and retries in forwarder mode.
+	(Trac #401, svn r3660)
+
+  133.  [func]      vorner
+	New temporary logging function available in isc::log. It is used by
+	b10-recurse.
+	(Trac #393, r3602)
+
+  132.  [func]      vorner
+	The b10-recursive is configured through config manager.
+	It has "listen_on" and "forward_addresses" options.
+	(Trac #389, r3448)
+
   131.  [func]    feng, jerry
 	src/lib/datasrc: Introduced two template classes RBTree and RBNode
 	to provide the generic map with domain name as key and anything as
@@ -25,6 +39,7 @@
 	for root zone was added.
 	(Trac #85, svn r3836)
 
+>>>>>>> .merge-right.r3894
   127.  [bug]       stephen
 	During normal operation process termination and resurrection messages
 	are now output regardless of the state of the verbose flag.

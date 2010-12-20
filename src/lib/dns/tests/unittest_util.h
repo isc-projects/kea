@@ -21,6 +21,7 @@
 #include <string>
 
 #include <dns/name.h>
+#include <dns/message.h>
 
 #include <gtest/gtest.h>
 
@@ -80,6 +81,20 @@ public:
     static ::testing::AssertionResult
     matchName(const char* nameexp1, const char* nameexp2,
               const isc::dns::Name& name1, const isc::dns::Name& name2);
+
+    ///
+    /// Populate a request message
+    ///
+    /// Create a request message in 'request_message' using the 
+    /// opcode 'opcode' and the name/class/type query tuple specified in
+    /// 'name', 'rrclass' and 'rrtype.
+    static void
+    createRequestMessage(isc::dns::Message& request_message,
+                         const isc::dns::Opcode& opcode,
+                         const uint16_t qid,
+                         const isc::dns::Name& name,
+                         const isc::dns::RRClass& rrclass,
+                         const isc::dns::RRType& rrtype);
 };
 }
 #endif // __UNITTEST_UTIL_H
