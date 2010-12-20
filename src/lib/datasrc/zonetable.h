@@ -298,6 +298,17 @@ public:
     /// details.
     FindResult findZone(const isc::dns::Name& name) const;
 
+    /// \brief An internal (programmer) error inside ZoneTable.
+    ///
+    /// This is thrown when the ZoneTable finds itself in an inconsistent
+    /// state. It means there's a bug in the code somewhere.
+    struct AssertError : public isc::Exception {
+        /// \brief Constructor.
+        AssertError(const char* file, size_t line, const char* what) :
+            Exception(file, line, what)
+        { }
+    };
+
 private:
     struct ZoneTableImpl;
     ZoneTableImpl* impl_;
