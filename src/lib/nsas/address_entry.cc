@@ -35,6 +35,8 @@
 #define __STDC_LIMIT_MACROS
 #include <stdint.h>
 
+#include <config.h>
+
 #include "address_entry.h"
 
 namespace isc {
