@@ -16,7 +16,7 @@
 
 #include <config.h>
 
-#include <cstdlib> // For random(), temporary until better forwarding is done
+#include <cstdlib> // For rand(), temporary until better forwarding is done
 
 #include <unistd.h>             // for some IPC/network system calls
 #include <sys/socket.h>
@@ -317,7 +317,7 @@ private:
     void send() {
         const int uc = upstream_->size();
         if (uc > 0) {
-            int serverIndex(random() % uc);
+            int serverIndex = rand() % uc;
             dlog("Sending upstream query (" + question_.toText() +
                 ") to " + upstream_->at(serverIndex).first);
             UDPQuery query(io_, question_,
