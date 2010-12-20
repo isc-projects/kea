@@ -17,7 +17,7 @@
 import unittest
 import os
 import os.path
-import isc.utils.process
+import isc.util.process
 import re
 
 class TestRename(unittest.TestCase):
@@ -28,7 +28,7 @@ class TestRename(unittest.TestCase):
         data = ''.join(open(filename).readlines())
         prettyname = 'src' + filename[filename.rfind('../') + 2:]
         self.assertTrue(fun.search(data),
-            "Didn't find a call to isc.utils.process.rename in " + prettyname)
+            "Didn't find a call to isc.util.process.rename in " + prettyname)
 
     def test_calls(self):
         """
@@ -45,7 +45,7 @@ class TestRename(unittest.TestCase):
         # Script name regular expression
         scripts = re.compile(r'((\w|[-.0-9])+)')
         # Line with the call
-        fun = re.compile(r'^\s*isc\.utils\.process\.rename\s*\(.*\)\s*(|#.*)$',
+        fun = re.compile(r'^\s*isc\.util\.process\.rename\s*\(.*\)\s*(|#.*)$',
             re.MULTILINE)
 
         # Find all Makefile and extract names of scripts

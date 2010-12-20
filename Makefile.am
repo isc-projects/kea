@@ -37,7 +37,7 @@ report-coverage:
 			\*_unittest.cc \
 			\*_unittests.h \
 		--output report.info
-	$(GENHTML) -o coverage report.info 
+	$(GENHTML) --legend -o coverage report.info 
 
 coverage: clean-coverage perform-coverage report-coverage
 

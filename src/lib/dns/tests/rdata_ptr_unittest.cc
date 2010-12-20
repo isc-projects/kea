@@ -116,7 +116,7 @@ TEST_F(Rdata_PTR_Test, toText) {
 TEST_F(Rdata_PTR_Test, compare) {
     generic::PTR small("a.example");
     generic::PTR large("example");
-    EXPECT_EQ(true, Name("a.example") > Name("example"));
+    EXPECT_TRUE(Name("a.example") > Name("example"));
     EXPECT_GT(0, small.compare(large));
 }
 

@@ -63,6 +63,7 @@ protected:
         authors_data.push_back("JINMEI Tatuya");
         authors_data.push_back("Kazunori Fujiwara");
         authors_data.push_back("Michael Graff");
+        authors_data.push_back("Michal Vaner");
         authors_data.push_back("Naoki Kambe");
         authors_data.push_back("Shane Kerr");
         authors_data.push_back("Shen Tingting");
@@ -109,7 +110,6 @@ checkRRset(ConstRRsetPtr rrset, const Name& expected_name,
     EXPECT_EQ(rrttl, rrset->getTTL());
 
     RdataIteratorPtr rdata_iterator = rrset->getRdataIterator();
-    rdata_iterator->first();
     vector<string>::const_iterator data_it = expected_data.begin();
     for (; data_it != expected_data.end(); ++data_it) {
         EXPECT_FALSE(rdata_iterator->isLast());

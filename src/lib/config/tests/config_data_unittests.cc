@@ -120,8 +120,8 @@ TEST(ConfigData, getItemList) {
     ModuleSpec spec2 = moduleSpecFromFile(std::string(TEST_DATA_PATH) + "/spec2.spec");
     ConfigData cd = ConfigData(spec2);
 
-    EXPECT_EQ("[ \"item1\", \"item2\", \"item3\", \"item4\", \"item5/\", \"item6/\" ]", cd.getItemList()->str());
-    EXPECT_EQ("[ \"item1\", \"item2\", \"item3\", \"item4\", \"item5/\", \"item6/value1\", \"item6/value2\" ]", cd.getItemList("", true)->str());
+    EXPECT_EQ("[ \"item1\", \"item2\", \"item3\", \"item4\", \"item5\", \"item6\" ]", cd.getItemList()->str());
+    EXPECT_EQ("[ \"item1\", \"item2\", \"item3\", \"item4\", \"item5\", \"item6/value1\", \"item6/value2\" ]", cd.getItemList("", true)->str());
     EXPECT_EQ("[ \"item6/value1\", \"item6/value2\" ]", cd.getItemList("item6")->str());
 }
 
@@ -129,12 +129,12 @@ TEST(ConfigData, getFullConfig) {
     ModuleSpec spec2 = moduleSpecFromFile(std::string(TEST_DATA_PATH) + "/spec2.spec");
     ConfigData cd = ConfigData(spec2);
 
-    EXPECT_EQ("{ \"item1\": 1, \"item2\": 1.1, \"item3\": true, \"item4\": \"test\", \"item5/\": [ \"a\", \"b\" ], \"item6/value1\": \"default\", \"item6/value2\": None }", cd.getFullConfig()->str());
+    EXPECT_EQ("{ \"item1\": 1, \"item2\": 1.1, \"item3\": true, \"item4\": \"test\", \"item5\": [ \"a\", \"b\" ], \"item6/value1\": \"default\", \"item6/value2\": None }", cd.getFullConfig()->str());
     ElementPtr my_config = Element::fromJSON("{ \"item1\": 2 }");
     cd.setLocalConfig(my_config);
-    EXPECT_EQ("{ \"item1\": 2, \"item2\": 1.1, \"item3\": true, \"item4\": \"test\", \"item5/\": [ \"a\", \"b\" ], \"item6/value1\": \"default\", \"item6/value2\": None }", cd.getFullConfig()->str());
+    EXPECT_EQ("{ \"item1\": 2, \"item2\": 1.1, \"item3\": true, \"item4\": \"test\", \"item5\": [ \"a\", \"b\" ], \"item6/value1\": \"default\", \"item6/value2\": None }", cd.getFullConfig()->str());
     ElementPtr my_config2 = Element::fromJSON("{ \"item6\": { \"value1\": \"a\" } }");
     cd.setLocalConfig(my_config2);
-    EXPECT_EQ("{ \"item1\": 1, \"item2\": 1.1, \"item3\": true, \"item4\": \"test\", \"item5/\": [ \"a\", \"b\" ], \"item6/value1\": \"a\", \"item6/value2\": None }", cd.getFullConfig()->str());
+    EXPECT_EQ("{ \"item1\": 1, \"item2\": 1.1, \"item3\": true, \"item4\": \"test\", \"item5\": [ \"a\", \"b\" ], \"item6/value1\": \"a\", \"item6/value2\": None }", cd.getFullConfig()->str());
 }
 

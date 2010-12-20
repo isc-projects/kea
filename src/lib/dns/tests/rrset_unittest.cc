@@ -117,8 +117,7 @@ void
 addRdataTestCommon(const RRset& rrset) {
     EXPECT_EQ(2, rrset.getRdataCount());
 
-    RdataIteratorPtr it = rrset.getRdataIterator();
-    it->first();
+    RdataIteratorPtr it = rrset.getRdataIterator(); // cursor is set to the 1st
     EXPECT_FALSE(it->isLast());
     EXPECT_EQ(0, it->getCurrent().compare(in::A("192.0.2.1")));
     it->next();
@@ -156,7 +155,6 @@ TEST_F(RRsetTest, addRdataPtr) {
 TEST_F(RRsetTest, iterator) {
     // Iterator for an empty RRset.
     RdataIteratorPtr it = rrset_a_empty.getRdataIterator();
-    it->first();
     EXPECT_TRUE(it->isLast());
 
     // Normal case (already tested, but do it again just in case)

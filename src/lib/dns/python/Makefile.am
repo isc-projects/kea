@@ -1,6 +1,7 @@
 SUBDIRS = . tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
+AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 pyexec_LTLIBRARIES = pydnspp.la
@@ -23,6 +24,7 @@ EXTRA_DIST += question_python.cc
 EXTRA_DIST += rrttl_python.cc
 EXTRA_DIST += rdata_python.cc
 EXTRA_DIST += rrtype_python.cc
+EXTRA_DIST += tsigkey_python.cc
 
 # Python prefers .so, while some OSes (specifically MacOS) use a different
 # suffix for dynamic objects.  -module is necessary to work this around.

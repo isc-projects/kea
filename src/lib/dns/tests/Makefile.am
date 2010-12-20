@@ -1,6 +1,7 @@
 SUBDIRS = testdata .
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
+AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
 AM_CPPFLAGS += -DTEST_DATA_SRCDIR=\"$(srcdir)/testdata\"
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/lib/dns/tests/testdata\"
@@ -37,15 +38,17 @@ run_unittests_SOURCES += rdata_nsec_unittest.cc
 run_unittests_SOURCES += rdata_nsec3_unittest.cc
 run_unittests_SOURCES += rdata_nsec3param_unittest.cc
 run_unittests_SOURCES += rdata_rrsig_unittest.cc
+run_unittests_SOURCES += rdata_tsig_unittest.cc
 run_unittests_SOURCES += rrset_unittest.cc rrsetlist_unittest.cc
 run_unittests_SOURCES += question_unittest.cc
 run_unittests_SOURCES += rrparamregistry_unittest.cc
+run_unittests_SOURCES += masterload_unittest.cc
 run_unittests_SOURCES += message_unittest.cc
 run_unittests_SOURCES += base32hex_unittest.cc
 run_unittests_SOURCES += base64_unittest.cc
 run_unittests_SOURCES += hex_unittest.cc
 run_unittests_SOURCES += sha1_unittest.cc
-run_unittests_SOURCES += tsig_unittest.cc
+run_unittests_SOURCES += tsigkey_unittest.cc
 run_unittests_SOURCES += run_unittests.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
