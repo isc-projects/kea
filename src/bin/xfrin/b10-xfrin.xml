@@ -149,7 +149,6 @@
       the authoritative server to transfer from,
       and <varname>port</varname> to define the port number on the
       authoritative server (defaults to 53).
-<!-- TODO: note: not documenting db_file since that will be removed. -->
      </para>
 <!-- TODO: later hostname for master? -->
 

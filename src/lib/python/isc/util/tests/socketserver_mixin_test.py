@@ -14,7 +14,7 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 import unittest
-from isc.utils.socketserver_mixin import NoPollMixIn
+from isc.util.socketserver_mixin import NoPollMixIn
 import socketserver
 import threading
 import socket

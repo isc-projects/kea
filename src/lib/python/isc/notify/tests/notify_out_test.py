@@ -156,7 +156,7 @@ class TestNotifyOut(unittest.TestCase):
         com_info = self._notify._notify_infos[('com.', 'IN')]
         self._notify._notify_next_target(com_info)
         self.assertEqual(2, self._notify.notify_num)
-        self.assertEqual(0, len(self._notify._notifying_zones))
+        self.assertEqual(2, len(self._notify._notifying_zones))
     
     def test_handle_notify_reply(self):
         self.assertEqual(notify_out._BAD_REPLY_PACKET, self._notify._handle_notify_reply(None, b'badmsg'))

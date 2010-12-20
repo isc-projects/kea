@@ -5,6 +5,7 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
 AM_CPPFLAGS += -I$(top_builddir)/src/lib/cc
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
+AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
@@ -46,11 +47,16 @@ libasio_link_a_CXXFLAGS = $(AM_CXXFLAGS)
 if USE_GXX
 libasio_link_a_CXXFLAGS += -Wno-unused-parameter
 endif
+if USE_CLANGPP
+# Same for clang++, but we need to turn off -Werror completely.
+libasio_link_a_CXXFLAGS += -Wno-error
+endif
 libasio_link_a_CPPFLAGS = $(AM_CPPFLAGS)
 
 BUILT_SOURCES = spec_config.h 
 pkglibexec_PROGRAMS = b10-auth
 b10_auth_SOURCES = auth_srv.cc auth_srv.h
+b10_auth_SOURCES += query.cc query.h
 b10_auth_SOURCES += change_user.cc change_user.h
 b10_auth_SOURCES += common.h
 b10_auth_SOURCES += main.cc
