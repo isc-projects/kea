@@ -25,7 +25,6 @@
 #include <cassert>
 #include <iostream>
 
-#include <boost/foreach.hpp>
 #include <boost/bind.hpp>
 
 #include <exceptions/exceptions.h>
@@ -102,13 +101,13 @@ usage() {
     cerr << "Usage: b10-auth [-a address] [-p port] [-4|-6] [-nv]" << endl;
     exit(1);
 }
-} // end of anonymous namespace
 
 void
 statisticsTimerCallback(AuthSrv* auth_server) {
     assert(auth_server != NULL);
     auth_server->submitStatistics();
 }
+} // end of anonymous namespace
 
 int
 main(int argc, char* argv[]) {
@@ -249,8 +248,7 @@ main(int argc, char* argv[]) {
         itimer = new asio_link::IntervalTimer(*io_service);
         // set up interval timer
         // register function to send statistics with interval
-        itimer->setupTimer(boost::bind(statisticsTimerCallback,
-                                       auth_server),
+        itimer->setupTimer(boost::bind(statisticsTimerCallback, auth_server),
                            STATS_SEND_INTERVAL_SEC);
         cout << "[b10-auth] Interval timer set to send stats." << endl;
 

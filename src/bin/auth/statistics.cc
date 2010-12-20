@@ -59,8 +59,7 @@ QueryCountersImpl::~QueryCountersImpl()
 {}
 
 void
-QueryCountersImpl::inc(const QueryCounters::QueryCounterType type)
-{
+QueryCountersImpl::inc(const QueryCounters::QueryCounterType type) {
     try {
         ++counters_.at(type);
     } catch (std::out_of_range) {

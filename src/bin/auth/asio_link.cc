@@ -698,7 +698,7 @@ IntervalTimerImpl::~IntervalTimerImpl()
 
 void
 IntervalTimerImpl::setupTimer(const IntervalTimer::Callback& cbfunc,
-                                    const uint32_t interval)
+                              const uint32_t interval)
 {
     // Interval should not be 0.
     if (interval == 0) {
