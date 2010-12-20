@@ -1,5 +1,12 @@
+  131.  [func]    feng, jerry
+	src/lib/datasrc: Introduced two template classes RBTree and RBNode
+	to provide the generic map with domain name as key and anything as
+	the value. Because of some unresolved design issue, the new classes
+	are only intended to be used by memory zone and zone table.
+	(Trac #397, svn r3890)
+
   130.	[func]		jerry
-    src/lib/datasrc: Introduced a new class MemoryDataSrc to provide
+	src/lib/datasrc: Introduced a new class MemoryDataSrc to provide
 	the general interface for memory data source.  For the initial
 	implementation, we don't make it a derived class of AbstractDataSrc
 	because the interface is so different(we'll eventually consider this
