@@ -12,15 +12,11 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// Note: map and utility (for 'pair') are for temporary workaround.
-// we'll soon replace them with built-in intelligent backend structure. 
-#include <map>
-#include <utility>
-
 #include <dns/name.h>
 #include <dns/rrclass.h>
 
 #include <datasrc/zonetable.h>
+#include <datasrc/rbtree.h>
 
 using namespace std;
 using namespace isc::dns;
@@ -61,13 +57,50 @@ MemoryZone::find(const Name&, const RRType&) const {
     return (FindResult(NXDOMAIN, RRsetPtr()));
 }
 
-// This is a temporary, inefficient implementation using std::map and handmade
-// iteration to realize longest match.
-
 struct ZoneTable::ZoneTableImpl {
-    typedef map<Name, ZonePtr> ZoneMap;
-    typedef pair<Name, ZonePtr> NameAndZone;
-    ZoneMap zones;
+    typedef RBTree<Zone> ZoneTree;
+    typedef RBNode<Zone> ZoneNode;
+    ZoneTree zones;
+
+    result::Result addZone(ZonePtr zone) {
+        // Sanity check
+        if (!zone) {
+            isc_throw(InvalidParameter,
+                      "Null pointer is passed to ZoneTable::addZone()");
+        }
+
+        // Get the node where we put the zone
+        ZoneNode* node(NULL);
+        switch (zones.insert(zone->getOrigin(), &node)) {
+            // This is OK
+            case ZoneTree::SUCCEED:
+            case ZoneTree::ALREADYEXIST:
+                break;
+            // Can Not Happen
+            /*
+             * This should generate no code if the implementation is correct
+             * (since the compiler has complete code of RBTree right now, it
+             * should see it can return only these two values). It is here
+             * to catch programmer errors.
+             */
+            default:
+                isc_throw(AssertError,
+                    "RBTree<Zone>::insert returned unexpected result");
+        }
+        // Can Not Happen
+        if (!node) {
+            isc_throw(AssertError,
+                "RBTree<Zone>::insert gave NULL pointer");
+        }
+
+        // Is it empty? We either just created it or it might be nonterminal
+        if (node->isEmpty()) {
+            node->setData(zone);
+            return (result::SUCCESS);
+        } else { // There's something there already
+            return (result::EXIST);
+        }
+    }
 };
 
 ZoneTable::ZoneTable() : impl_(new ZoneTableImpl)
@@ -79,24 +112,13 @@ ZoneTable::~ZoneTable() {
 
 result::Result
 ZoneTable::addZone(ZonePtr zone) {
-    if (!zone) {
-        isc_throw(InvalidParameter,
-                  "Null pointer is passed to ZoneTable::addZone()");
-    }
-
-    if (impl_->zones.insert(
-            ZoneTableImpl::NameAndZone(zone->getOrigin(), zone)).second
-        == true) {
-        return (result::SUCCESS);
-    } else {
-        return (result::EXIST);
-    }
+    return (impl_->addZone(zone));
 }
 
 result::Result
-ZoneTable::removeZone(const Name& origin) {
-    return (impl_->zones.erase(origin) == 1 ? result::SUCCESS :
-                                              result::NOTFOUND);
+ZoneTable::removeZone(const Name&) {
+    // TODO Implement
+    isc_throw(AssertError, "Not implemented");
 }
 
 ZoneTable::FindResult
