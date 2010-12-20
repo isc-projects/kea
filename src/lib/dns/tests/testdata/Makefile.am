@@ -12,12 +12,21 @@ BUILT_SOURCES += rdata_rrsig_fromWire2.wire
 BUILT_SOURCES += rdata_soa_toWireUncompressed.wire
 BUILT_SOURCES +=  rdata_txt_fromWire2.wire rdata_txt_fromWire3.wire
 BUILT_SOURCES += rdata_txt_fromWire4.wire rdata_txt_fromWire5.wire
+BUILT_SOURCES += rdata_tsig_fromWire1.wire rdata_tsig_fromWire2.wire
+BUILT_SOURCES += rdata_tsig_fromWire3.wire rdata_tsig_fromWire4.wire
+BUILT_SOURCES += rdata_tsig_fromWire5.wire rdata_tsig_fromWire6.wire
+BUILT_SOURCES += rdata_tsig_fromWire7.wire rdata_tsig_fromWire8.wire
+BUILT_SOURCES += rdata_tsig_fromWire9.wire
+BUILT_SOURCES += rdata_tsig_toWire1.wire rdata_tsig_toWire2.wire
+BUILT_SOURCES += rdata_tsig_toWire3.wire rdata_tsig_toWire4.wire
+BUILT_SOURCES += rdata_tsig_toWire5.wire
 
 # NOTE: keep this in sync with real file listing
 # so is included in tarball
 EXTRA_DIST = gen-wiredata.py.in
 EXTRA_DIST += edns_toWire1.spec edns_toWire2.spec
 EXTRA_DIST += edns_toWire3.spec edns_toWire4.spec
+EXTRA_DIST += masterload.txt
 EXTRA_DIST += message_fromWire1 message_fromWire2
 EXTRA_DIST += message_fromWire3 message_fromWire4
 EXTRA_DIST += message_fromWire5 message_fromWire6
@@ -51,6 +60,14 @@ EXTRA_DIST += rdata_txt_fromWire5.spec rdata_unknown_fromWire
 EXTRA_DIST += rrcode16_fromWire1 rrcode16_fromWire2
 EXTRA_DIST += rrcode32_fromWire1 rrcode32_fromWire2
 EXTRA_DIST += rrset_toWire1 rrset_toWire2
+EXTRA_DIST += rdata_tsig_fromWire1.spec rdata_tsig_fromWire2.spec
+EXTRA_DIST += rdata_tsig_fromWire3.spec rdata_tsig_fromWire4.spec
+EXTRA_DIST += rdata_tsig_fromWire5.spec rdata_tsig_fromWire6.spec
+EXTRA_DIST += rdata_tsig_fromWire7.spec rdata_tsig_fromWire8.spec
+EXTRA_DIST += rdata_tsig_fromWire9.spec
+EXTRA_DIST += rdata_tsig_toWire1.spec rdata_tsig_toWire2.spec
+EXTRA_DIST += rdata_tsig_toWire3.spec rdata_tsig_toWire4.spec
+EXTRA_DIST += rdata_tsig_toWire5.spec
 
 .spec.wire:
 	./gen-wiredata.py -o $@ $<

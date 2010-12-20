@@ -77,7 +77,7 @@ public:
                             MessageRenderer& response_renderer);
     bool processAxfrQuery(const IOMessage& io_message, Message& message,
                             MessageRenderer& response_renderer);
-    bool processNotify(const IOMessage& io_message, Message& message, 
+    bool processNotify(const IOMessage& io_message, Message& message,
                             MessageRenderer& response_renderer);
     std::string db_file_;
     ModuleCCSession* config_session_;
@@ -152,8 +152,8 @@ makeErrorMessage(Message& message, MessageRenderer& renderer,
     // XXX: with the current implementation, it's not easy to set EDNS0
     // depending on whether the query had it.  So we'll simply omit it.
     const qid_t qid = message.getQid();
-    const bool rd = message.getHeaderFlag(MessageFlag::RD());
-    const bool cd = message.getHeaderFlag(MessageFlag::CD());
+    const bool rd = message.getHeaderFlag(Message::HEADERFLAG_RD);
+    const bool cd = message.getHeaderFlag(Message::HEADERFLAG_CD);
     const Opcode& opcode = message.getOpcode();
     vector<QuestionPtr> questions;
 
@@ -166,12 +166,12 @@ makeErrorMessage(Message& message, MessageRenderer& renderer,
     message.clear(Message::RENDER);
     message.setQid(qid);
     message.setOpcode(opcode);
-    message.setHeaderFlag(MessageFlag::QR());
+    message.setHeaderFlag(Message::HEADERFLAG_QR);
     if (rd) {
-        message.setHeaderFlag(MessageFlag::RD());
+        message.setHeaderFlag(Message::HEADERFLAG_RD);
     }
     if (cd) {
-        message.setHeaderFlag(MessageFlag::CD());
+        message.setHeaderFlag(Message::HEADERFLAG_CD);
     }
     for_each(questions.begin(), questions.end(), QuestionInserter(&message));
     message.setRcode(rcode);
@@ -231,7 +231,7 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
         message.parseHeader(request_buffer);
 
         // Ignore all responses.
-        if (message.getHeaderFlag(MessageFlag::QR())) {
+        if (message.getHeaderFlag(Message::HEADERFLAG_QR)) {
             if (impl_->verbose_mode_) {
                 cerr << "[b10-auth] received unexpected response, ignoring"
                      << endl;
@@ -279,7 +279,7 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
         return (true);
     }
 
-    if (message.getRRCount(Section::QUESTION()) != 1) {
+    if (message.getRRCount(Message::SECTION_QUESTION) != 1) {
         makeErrorMessage(message, response_renderer, Rcode::FORMERR(),
                          impl_->verbose_mode_);
         return (true);
@@ -307,10 +307,10 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
     ConstEDNSPtr remote_edns = message.getEDNS();
     const bool dnssec_ok = remote_edns && remote_edns->getDNSSECAwareness();
     const uint16_t remote_bufsize = remote_edns ? remote_edns->getUDPSize() :
-        Message::DEFAULT_MAX_UDPSIZE; 
+        Message::DEFAULT_MAX_UDPSIZE;
 
     message.makeResponse();
-    message.setHeaderFlag(MessageFlag::AA());
+    message.setHeaderFlag(Message::HEADERFLAG_AA);
     message.setRcode(Rcode::NOERROR());
 
     if (remote_edns) {
@@ -360,8 +360,10 @@ AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, Message& message,
     }
 
     try {
-        xfrout_client_.connect();
-        xfrout_connected_ = true;
+        if (!xfrout_connected_) {
+            xfrout_client_.connect();
+            xfrout_connected_ = true;
+        }
         xfrout_client_.sendXfroutRequestInfo(
             io_message.getSocket().getNative(),
             io_message.getData(),
@@ -375,7 +377,7 @@ AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, Message& message,
             xfrout_client_.disconnect();
             xfrout_connected_ = false;
         }
-        
+
         if (verbose_mode_) {
             cerr << "[b10-auth] Error in handling XFR request: " << err.what()
                  << endl;
@@ -385,22 +387,19 @@ AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, Message& message,
         return (true);
     }
 
-    xfrout_client_.disconnect();
-    xfrout_connected_ = false;
-
     return (false);
 }
 
 bool
-AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message, 
-                           MessageRenderer& response_renderer) 
+AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
+                           MessageRenderer& response_renderer)
 {
     // The incoming notify must contain exactly one question for SOA of the
     // zone name.
-    if (message.getRRCount(Section::QUESTION()) != 1) {
+    if (message.getRRCount(Message::SECTION_QUESTION) != 1) {
         if (verbose_mode_) {
                 cerr << "[b10-auth] invalid number of questions in notify: "
-                     << message.getRRCount(Section::QUESTION()) << endl;
+                     << message.getRRCount(Message::SECTION_QUESTION) << endl;
         }
         makeErrorMessage(message, response_renderer, Rcode::FORMERR(),
                          verbose_mode_);
@@ -446,7 +445,7 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
 
     try {
         ConstElementPtr notify_command = Element::fromJSON(
-                command_template_start + question->getName().toText() + 
+                command_template_start + question->getName().toText() +
                 command_template_master + remote_ip_address +
                 command_template_rrclass + question->getClass().toText() +
                 command_template_end);
@@ -460,7 +459,7 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
         if (rcode != 0) {
             if (verbose_mode_) {
                 cerr << "[b10-auth] failed to notify Zonemgr: "
-                     << parsed_answer->str() << endl; 
+                     << parsed_answer->str() << endl;
             }
             return (false);
         }
@@ -472,7 +471,7 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
     }
 
     message.makeResponse();
-    message.setHeaderFlag(MessageFlag::AA());
+    message.setHeaderFlag(Message::HEADERFLAG_AA);
     message.setRcode(Rcode::NOERROR());
     message.toWire(response_renderer);
     return (true);

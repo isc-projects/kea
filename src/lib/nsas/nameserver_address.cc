@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010  CZ NIC
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,30 +12,19 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id: rrtype_unittest.cc 476 2010-01-19 00:29:28Z jinmei $
+// $id$
 
-#include <gtest/gtest.h>
+#include "nameserver_address.h"
+#include "nameserver_entry.h"
 
-#include <dns/tsig.h>
+namespace isc {
+namespace nsas {
 
-#include <dns/tests/unittest_util.h>
-
-using isc::UnitTestUtil;
-using namespace std;
-using namespace isc::dns;
-
-namespace {
-class TsigTest : public ::testing::Test {
-protected:
-    TsigTest() {}
-};
-
-// simple creation test to get the testing ball rolling
-TEST_F(TsigTest, creates) {
-    Tsig tsig(Name("example.com"), Tsig::HMACMD5, "someRandomData");
-    EXPECT_TRUE(1);
+void
+NameserverAddress::updateRTT(uint32_t rtt) const {
+    // We delegate it to the address entry inside the nameserver entry
+    ns_->updateAddressRTT(rtt, address_.getAddress(), family_);
 }
 
-} // end namespace
-
-
+} // namespace nsas
+} // namespace isc

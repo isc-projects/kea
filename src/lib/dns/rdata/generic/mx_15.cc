@@ -34,7 +34,7 @@ using namespace boost;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
-MX::MX(InputBuffer& buffer, size_t rdata_len UNUSED_PARAM) :
+MX::MX(InputBuffer& buffer, size_t) :
     preference_(buffer.readUint16()), mxname_(buffer)
 {
     // we don't need rdata_len for parsing.  if necessary, the caller will

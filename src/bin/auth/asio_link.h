@@ -88,7 +88,7 @@ class AuthSrv;
 /// http://think-async.com/Asio/asio-1.3.1/doc/asio/reference/asio_handler_allocate.html
 
 namespace asio_link {
-struct IOServiceImpl;
+class IOServiceImpl;
 
 /// \brief An exception that is thrown if an error occurs within the IO
 /// module.  This is mainly intended to be a wrapper exception class for
@@ -132,7 +132,7 @@ public:
     /// This constructor never throws an exception.
     ///
     /// \param asio_address The ASIO \c ip::address to be converted.
-    IOAddress(const asio::ip::address& asio_adress);
+    IOAddress(const asio::ip::address& asio_address);
     //@}
 
     /// \brief Convert the address to a string.

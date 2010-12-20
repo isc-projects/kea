@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010  CZ NIC
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,22 +12,23 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
+// $id$
 
-#include <cctype>
-#include <cassert>
-#include <iterator>
-#include <functional>
+#include "../fetchable.h"
 
-#include <algorithm>
+#include <gtest/gtest.h>
 
-#include <dns/tsig.h>
+using namespace isc::nsas;
 
-using namespace std;
-using isc::dns::MessageRenderer;
+namespace {
 
-namespace isc {
-namespace dns {
+TEST(Fetchable, accessMethods) {
+    Fetchable f;
+    EXPECT_EQ(Fetchable::NOT_ASKED, f.getState());
+    f.setState(Fetchable::IN_PROGRESS);
+    EXPECT_EQ(Fetchable::IN_PROGRESS, f.getState());
+    Fetchable funr(Fetchable::UNREACHABLE);
+    EXPECT_EQ(Fetchable::UNREACHABLE, funr.getState());
+}
 
-} // namespace dns
-} // namespace isc
+}

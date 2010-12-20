@@ -1,5 +1,7 @@
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/lib/dns -I$(top_srcdir)/src/lib/dns
+AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += $(SQLITE_CFLAGS)
 AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(srcdir)/testdata\"
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
@@ -23,11 +25,13 @@ run_unittests_SOURCES += query_unittest.cc
 run_unittests_SOURCES += cache_unittest.cc
 run_unittests_SOURCES += test_datasrc.h test_datasrc.cc
 run_unittests_SOURCES += rbtree_unittest.cc
+run_unittests_SOURCES += zonetable_unittest.cc
+run_unittests_SOURCES += memory_datasrc_unittest.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 run_unittests_LDADD = $(GTEST_LDADD)
 run_unittests_LDADD += $(SQLITE_LIBS)
-run_unittests_LDADD += $(top_builddir)/src/lib/datasrc/libdatasrc.la 
+run_unittests_LDADD += $(top_builddir)/src/lib/datasrc/libdatasrc.la
 run_unittests_LDADD += $(top_builddir)/src/lib/dns/libdns++.la
 run_unittests_LDADD += $(top_builddir)/src/lib/cc/libcc.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
