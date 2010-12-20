@@ -57,11 +57,21 @@ MemoryZone::find(const Name&, const RRType&) const {
     return (FindResult(NXDOMAIN, RRsetPtr()));
 }
 
+/// \short Private data and implementation of ZoneTable
 struct ZoneTable::ZoneTableImpl {
+    // Type aliases to make it shorter
     typedef RBTree<Zone> ZoneTree;
     typedef RBNode<Zone> ZoneNode;
+    // The actual storage
     ZoneTree zones;
 
+    /*
+     * The implementation methods are here and just wrap-called in the
+     * ZoneTable. We have variables locally (without impl_->), have
+     * type aliases, etc. And they will get inlined anyway.
+     */
+
+    // Implementation of ZoneTable::addZone
     result::Result addZone(ZonePtr zone) {
         // Sanity check
         if (!zone) {
@@ -102,6 +112,7 @@ struct ZoneTable::ZoneTableImpl {
         }
     }
 
+    // Implementation of ZoneTable::findZone
     ZoneTable::FindResult findZone(const Name& name) const {
         ZoneNode *node(NULL);
         result::Result my_result;
