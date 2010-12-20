@@ -14,6 +14,8 @@
 
 // $id$
 
+#include <config.h>
+
 #include "zone_entry.h"
 #include "address_request_callback.h"
 #include "nameserver_entry.h"

@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 // $Id$
+#include <config.h>
 
 #include <gtest/gtest.h>
 #include <boost/shared_ptr.hpp>
@@ -711,7 +712,7 @@ TEST_F(ZoneEntryTest, AddressSelection) {
     for (size_t i(0); i < 3; ++ i) {
         double mu = repeats * ps[i];
         double sigma = sqrt(repeats * ps[i] * (1 - ps[i]));
-        ASSERT_TRUE(fabs(counts[i] - mu < 4 * sigma));
+        ASSERT_TRUE(fabs(counts[i] - mu) < 4 * sigma);
     }
 
     // reset the environment
