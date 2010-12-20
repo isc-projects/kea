@@ -22,20 +22,12 @@
 #include <cc/data.h>
 #include <config/ccsession.h>
 
-namespace isc {
-namespace dns {
-class InputBuffer;
-class Message;
-class MessageRenderer;
-}
+#include <asiolink/asiolink.h>
 
+namespace isc {
 namespace xfr {
 class AbstractXfroutClient;
-};
 }
-
-namespace asio_link {
-class IOMessage;
 }
 
 /// \brief The implementation class for the \c AuthSrv class using the pimpl
@@ -84,11 +76,26 @@ public:
             isc::xfr::AbstractXfroutClient& xfrout_client);
     ~AuthSrv();
     //@}
-    /// \return \c true if the \a message contains a response to be returned;
-    /// otherwise \c false.
-    bool processMessage(const asio_link::IOMessage& io_message,
-                        isc::dns::Message& message,
-                        isc::dns::MessageRenderer& response_renderer);
+
+    /// \brief Process an incoming DNS message, then signal 'server' to resume 
+    ///
+    /// A DNS query (or other message) has been received by a \c DNSServer
+    /// object.  Find an answer, then post the \c DNSServer object on the
+    /// I/O service queue and return.  When the server resumes, it can
+    /// send the reply.
+    ///
+    /// \param io_message The raw message received
+    /// \param message Pointer to the \c Message object
+    /// \param buffer Pointer to an \c OutputBuffer for the resposne
+    /// \param server Pointer to the \c DNSServer
+    void processMessage(const asiolink::IOMessage& io_message,
+                        isc::dns::MessagePtr message,
+                        isc::dns::OutputBufferPtr buffer,
+                        asiolink::DNSServer* server);
+
+    /// \brief Set verbose flag
+    ///
+    /// \param on The new value of the verbose flag
 
     /// \brief Enable or disable verbose logging.
     ///
@@ -103,6 +110,8 @@ public:
     /// This method never throws an exception.
     ///
     /// \return \c true if verbose logging is enabled; otherwise \c false.
+
+    /// \brief Get the current value of the verbose flag
     bool getVerbose() const;
 
     /// \brief Updates the data source for the \c AuthSrv object.
@@ -162,6 +171,21 @@ public:
     /// control commands and configuration updates.
     void setConfigSession(isc::config::ModuleCCSession* config_session);
 
+    /// \brief Assign an ASIO IO Service queue to this Recursor object
+    void setIOService(asiolink::IOService& ios) { io_service_ = &ios; }
+
+    /// \brief Return this object's ASIO IO Service queue
+    asiolink::IOService& getIOService() const { return (*io_service_); }
+
+    /// \brief Return pointer to the DNS Lookup callback function
+    asiolink::DNSLookup* getDNSLookupProvider() const { return (dns_lookup_); }
+
+    /// \brief Return pointer to the DNS Answer callback function
+    asiolink::DNSAnswer* getDNSAnswerProvider() const { return (dns_answer_); }
+
+    /// \brief Return pointer to the Checkin callback function
+    asiolink::SimpleCallback* getCheckinProvider() const { return (checkin_); }
+
     /// \brief Set or update the size (number of slots) of hot spot cache.
     ///
     /// If the specified size is 0, it means the size will be unlimited.
@@ -202,6 +226,10 @@ public:
 
 private:
     AuthSrvImpl* impl_;
+    asiolink::IOService* io_service_;
+    asiolink::SimpleCallback* checkin_;
+    asiolink::DNSLookup* dns_lookup_;
+    asiolink::DNSAnswer* dns_answer_;
 };
 
 #endif // __AUTH_SRV_H

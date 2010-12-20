@@ -26,7 +26,6 @@
 
 #include <dns/buffer.h>
 #include <dns/message.h>
-#include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/question.h>
 #include <dns/rrclass.h>
@@ -34,7 +33,7 @@
 #include <xfr/xfrout_client.h>
 
 #include <auth/auth_srv.h>
-#include <auth/asio_link.h>
+#include <asiolink/asiolink.h>
 
 using namespace std;
 using namespace isc;
@@ -42,11 +41,21 @@ using namespace isc::data;
 using namespace isc::dns;
 using namespace isc::xfr;
 using namespace isc::bench;
-using namespace asio_link;
+using namespace asiolink;
 
 namespace {
 // Commonly used constant:
 XfroutClient xfrout_client("dummy_path"); // path doesn't matter
+
+// Just something to pass as the server to resume
+class DummyServer : public DNSServer {
+    public:
+        virtual void operator()(asio::error_code, size_t) { }
+        virtual void resume(const bool) { }
+        virtual DNSServer* clone() {
+            return new DummyServer(*this);
+        }
+};
 
 class QueryBenchMark {
 private:
@@ -56,12 +65,12 @@ private:
     typedef boost::shared_ptr<const IOEndpoint> IOEndpointPtr;
 public:
     QueryBenchMark(const int cache_slots, const char* const datasrc_file,
-                   const BenchQueries& queries, Message& query_message,
-                   MessageRenderer& renderer) :
+                   const BenchQueries& queries, MessagePtr query_message,
+                   OutputBufferPtr buffer) :
         server_(new AuthSrv(cache_slots >= 0 ? true : false, xfrout_client)),
         queries_(queries),
         query_message_(query_message),
-        renderer_(renderer),
+        buffer_(buffer),
         dummy_socket(IOSocket::getDummyUDPSocket()),
         dummy_endpoint(IOEndpointPtr(IOEndpoint::create(IPPROTO_UDP,
                                                         IOAddress("192.0.2.1"),
@@ -76,12 +85,13 @@ public:
     unsigned int run() {
         BenchQueries::const_iterator query;
         const BenchQueries::const_iterator query_end = queries_.end();
+        DummyServer server;
         for (query = queries_.begin(); query != query_end; ++query) {
             IOMessage io_message(&(*query)[0], (*query).size(), dummy_socket,
                                  *dummy_endpoint);
-            query_message_.clear(Message::PARSE);
-            renderer_.clear();
-            server_->processMessage(io_message, query_message_, renderer_);
+            query_message_->clear(Message::PARSE);
+            server_->processMessage(io_message, query_message_, buffer_,
+                &server);
         }
 
         return (queries_.size());
@@ -89,11 +99,12 @@ public:
 private:
     AuthSrvPtr server_;
     const BenchQueries& queries_;
-    Message& query_message_;
-    MessageRenderer& renderer_;
+    MessagePtr query_message_;
+    OutputBufferPtr buffer_;
     IOSocket& dummy_socket;
     IOEndpointPtr dummy_endpoint;
 };
+
 }
 
 namespace isc {
@@ -143,9 +154,8 @@ main(int argc, char* argv[]) {
 
     BenchQueries queries;
     loadQueryData(query_data_file, queries, RRClass::IN());
-    OutputBuffer buffer(4096);
-    MessageRenderer renderer(buffer);
-    Message message(Message::PARSE);
+    OutputBufferPtr buffer(new OutputBuffer(4096));
+    MessagePtr message(new Message(Message::PARSE));
 
     cout << "Parameters:" << endl;
     cout << "  Iterations: " << iteration << endl;
@@ -157,24 +167,24 @@ main(int argc, char* argv[]) {
          << endl;
     BenchMark<QueryBenchMark>(iteration,
                               QueryBenchMark(0, datasrc_file, queries, message,
-                                             renderer));
+                                             buffer));
 
     cout << "Benchmark enabling Hot Spot Cache with 10*#queries slots "
          << endl;
     BenchMark<QueryBenchMark>(iteration,
                               QueryBenchMark(10 * queries.size(), datasrc_file,
-                                             queries, message, renderer));
+                                             queries, message, buffer));
 
     cout << "Benchmark enabling Hot Spot Cache with #queries/2 slots "
          << endl;
     BenchMark<QueryBenchMark>(iteration,
                               QueryBenchMark(queries.size() / 2, datasrc_file,
-                                             queries, message, renderer));
+                                             queries, message, buffer));
 
     cout << "Benchmark disabling Hot Spot Cache" << endl;
     BenchMark<QueryBenchMark>(iteration,
                               QueryBenchMark(-1, datasrc_file, queries,
-                                             message, renderer));    
+                                             message, buffer));    
 
     return (0);
 }

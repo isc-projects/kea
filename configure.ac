@@ -556,9 +556,9 @@ AC_CONFIG_FILES([Makefile
                  src/bin/msgq/tests/Makefile
                  src/bin/auth/Makefile
                  src/bin/auth/tests/Makefile
-                 src/bin/auth/tests/testdata/Makefile
                  src/bin/auth/benchmarks/Makefile
                  src/bin/recurse/Makefile
+                 src/bin/recurse/tests/Makefile
                  src/bin/xfrin/Makefile
                  src/bin/xfrin/tests/Makefile
                  src/bin/xfrout/Makefile
@@ -575,6 +575,8 @@ AC_CONFIG_FILES([Makefile
                  src/bin/usermgr/Makefile
                  src/bin/tests/Makefile
                  src/lib/Makefile
+                 src/lib/asiolink/Makefile
+                 src/lib/asiolink/tests/Makefile
                  src/lib/bench/Makefile
                  src/lib/bench/example/Makefile
                  src/lib/bench/tests/Makefile
@@ -609,6 +611,9 @@ AC_CONFIG_FILES([Makefile
                  src/lib/datasrc/Makefile
                  src/lib/datasrc/tests/Makefile
                  src/lib/xfr/Makefile
+                 src/lib/log/Makefile
+                 src/lib/testutils/Makefile
+                 src/lib/testutils/testdata/Makefile
                  src/lib/nsas/Makefile
                  src/lib/nsas/tests/Makefile
                ])
@@ -625,9 +630,8 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/xfrout/xfrout.spec.pre
            src/bin/xfrout/tests/xfrout_test
            src/bin/xfrout/run_b10-xfrout.sh
-           src/bin/recurse/recurse.py
            src/bin/recurse/recurse.spec.pre
-           src/bin/recurse/run_b10-recurse.sh
+           src/bin/recurse/spec_config.h.pre
            src/bin/zonemgr/zonemgr.py
            src/bin/zonemgr/zonemgr.spec.pre
            src/bin/zonemgr/tests/zonemgr_test
