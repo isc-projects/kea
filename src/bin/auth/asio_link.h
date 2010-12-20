@@ -459,19 +459,19 @@ private:
 /// it expires.
 ///
 /// The function calls the call back function set by \c setupTimer()
-/// and update the timer to expire on (now + interval).
+/// and updates the timer to expire in (now + interval) seconds.
 /// The type of call back function is \c void(void).
 ///
 /// This class is mainly designed to use for calling
 /// \c QueryCounters::submitStatistics() periodically.
 ///
-/// Note: Destruction of the instance of this class while call back
-/// is pending causes throwing an exception from IOService.
+/// Note: Destruction of an instance of this class while call back
+/// is pending causes throwing an exception from \c IOService.
 ///
 /// Sample code:
 /// \code
 ///  void function_to_call_back() {
-///      // this function will called periodically
+///      // this function will be called periodically
 ///  }
 ///  int interval_in_seconds = 1;
 ///  IOService io_service;
@@ -505,11 +505,12 @@ public:
     /// \param io_service A reference to an instance of IOService
     ///
     IntervalTimer(IOService& io_service);
+
     /// \brief The destructor.
     ///
     /// This destructor never throws an exception.
     ///
-    /// On the destruction of this class the timer will be cancelled
+    /// On the destruction of this class the timer will be canceled
     /// inside \c asio::deadline_timer.
     ///
     ~IntervalTimer();

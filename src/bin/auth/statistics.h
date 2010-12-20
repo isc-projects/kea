@@ -14,10 +14,8 @@
 
 // $Id$
 
-#ifndef __STATS_H
-#define __STATS_H 1
-
-#include <boost/function.hpp>
+#ifndef __STATISTICS_H
+#define __STATISTICS_H 1
 
 #include <cc/session.h>
 
@@ -135,7 +133,7 @@ public:
     const std::vector<uint64_t>& getCounters() const;
 };
 
-#endif // __STATS_H
+#endif // __STATISTICS_H
 
 // Local Variables:
 // mode: c++

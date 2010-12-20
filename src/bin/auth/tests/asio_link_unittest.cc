@@ -329,7 +329,7 @@ protected:
                 // to TimerCallBack.
                 test_obj_->timer_called_ = false;
                 timer_.setupTimer(IntervalTimer::Callback(
-                                       TimerCallBack(test_obj_)), 1);
+                                      TimerCallBack(test_obj_)), 1);
             } else if (count_ == 2) {
                 // Second time of call back.
                 // If it reaches here, re-setupTimer() is failed (unexpected).
@@ -491,7 +491,7 @@ TEST_F(ASIOLinkTest, startIntervalTimer) {
 
 TEST_F(ASIOLinkTest, destructIntervalTimer) {
     // The call back function will not be called
-    // after the timer destucted.
+    // after the timer is destructed.
     setIOService(false, false);
     // There are two timers:
     //  itimer_counter (A)
@@ -546,7 +546,7 @@ TEST_F(ASIOLinkTest, overwriteIntervalTimer) {
     //  itimer_overwriter (B)
     //   (Calls TimerCallBackOverwriter)
     //     - first time of callback, it calls setupTimer() to change
-    //       call back function and interval  of itimer to
+    //       call back function and interval of itimer to
     //       TimerCallBack / 1 second
     //       after 3 + 1 seconds from the beginning of this test,
     //       TimerCallBack() will be called and io_service_ stops.
