@@ -77,29 +77,30 @@ ZoneTable::~ZoneTable() {
     delete impl_;
 }
 
-ZoneTable::Result
-ZoneTable::add(ZonePtr zone) {
+result::Result
+ZoneTable::addZone(ZonePtr zone) {
     if (!zone) {
         isc_throw(InvalidParameter,
-                  "Null pointer is passed to ZoneTable::add()");
+                  "Null pointer is passed to ZoneTable::addZone()");
     }
 
     if (impl_->zones.insert(
             ZoneTableImpl::NameAndZone(zone->getOrigin(), zone)).second
         == true) {
-        return (SUCCESS);
+        return (result::SUCCESS);
     } else {
-        return (EXIST);
+        return (result::EXIST);
     }
 }
 
-ZoneTable::Result
-ZoneTable::remove(const Name& origin) {
-    return (impl_->zones.erase(origin) == 1 ? SUCCESS : NOTFOUND);
+result::Result
+ZoneTable::removeZone(const Name& origin) {
+    return (impl_->zones.erase(origin) == 1 ? result::SUCCESS :
+                                              result::NOTFOUND);
 }
 
 ZoneTable::FindResult
-ZoneTable::find(const Name& name) const {
+ZoneTable::findZone(const Name& name) const {
     // Inefficient internal loop to find a longest match.
     // This will be replaced with a single call to more intelligent backend.
     for (int i = 0; i < name.getLabelCount(); ++i) {
@@ -107,11 +108,11 @@ ZoneTable::find(const Name& name) const {
         ZoneTableImpl::ZoneMap::const_iterator found =
             impl_->zones.find(matchname);
         if (found != impl_->zones.end()) {
-            return (FindResult(i == 0 ? SUCCESS : PARTIALMATCH,
-                               (*found).second.get()));
+            return (FindResult(i == 0 ? result::SUCCESS :
+                               result::PARTIALMATCH, (*found).second));
         }
     }
-    return (FindResult(NOTFOUND, NULL));
+    return (FindResult(result::NOTFOUND, ConstZonePtr()));
 }
 } // end of namespace datasrc
 } // end of namespace isc

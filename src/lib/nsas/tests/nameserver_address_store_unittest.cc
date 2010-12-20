@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 // $Id$
+#include <config.h>
 
 /// \brief Test Deleter Objects
 ///
@@ -41,7 +42,6 @@
 
 using namespace isc::dns;
 using namespace std;
-using namespace boost;
 
 namespace isc {
 namespace nsas {
@@ -57,7 +57,7 @@ public:
     ///
     /// \param hashsize Size of the zone hash table
     /// \param lrusize Size of the zone hash table
-    DerivedNsas(shared_ptr<TestResolver> resolver, uint32_t hashsize,
+    DerivedNsas(boost::shared_ptr<TestResolver> resolver, uint32_t hashsize,
         uint32_t lrusize) :
         NameserverAddressStore(resolver, hashsize, lrusize),
         resolver_(resolver)
@@ -87,8 +87,8 @@ public:
      * if it is asked for by the resolver.
      */
     void lookupAndAnswer(const string& name, const RRClass& class_code,
-        shared_ptr<AbstractRRset> authority,
-        shared_ptr<AddressRequestCallback> callback)
+        boost::shared_ptr<AbstractRRset> authority,
+        boost::shared_ptr<AddressRequestCallback> callback)
     {
         size_t size(resolver_->requests.size());
         NameserverAddressStore::lookup(name, class_code, callback, ANY_OK);
@@ -102,7 +102,7 @@ public:
         }
     }
 private:
-    shared_ptr<TestResolver> resolver_;
+    boost::shared_ptr<TestResolver> resolver_;
 };
 
 
@@ -133,8 +133,8 @@ protected:
             std::string name = "zone" + boost::lexical_cast<std::string>(i);
             zones_.push_back(boost::shared_ptr<ZoneEntry>(new ZoneEntry(
                 resolver_, name, RRClass(40 + i),
-                shared_ptr<HashTable<NameserverEntry> >(),
-                shared_ptr<LruList<NameserverEntry> >())));
+                boost::shared_ptr<HashTable<NameserverEntry> >(),
+                boost::shared_ptr<LruList<NameserverEntry> >())));
         }
 
         // A nameserver serving data
@@ -151,7 +151,7 @@ protected:
 
     RRsetPtr authority_, empty_authority_;
 
-    shared_ptr<TestResolver> resolver_;
+    boost::shared_ptr<TestResolver> resolver_;
 
     class NSASCallback : public AddressRequestCallback {
         public:

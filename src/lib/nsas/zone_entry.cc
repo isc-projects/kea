@@ -14,18 +14,19 @@
 
 // $id$
 
+#include <config.h>
+
 #include "zone_entry.h"
 #include "address_request_callback.h"
 #include "nameserver_entry.h"
 
 #include <algorithm>
 #include <boost/foreach.hpp>
-#include <boost/random.hpp>
+#include <boost/bind.hpp>
 #include <dns/rrttl.h>
 #include <dns/rdataclass.h>
 
 using namespace std;
-using namespace boost;
 
 namespace isc {
 
@@ -48,16 +49,16 @@ ZoneEntry::ZoneEntry(boost::shared_ptr<ResolverInterface> resolver,
 
 namespace {
 // Shorter aliases for frequently used types
-typedef recursive_mutex::scoped_lock Lock; // Local lock, nameservers not locked
-typedef shared_ptr<AddressRequestCallback> CallbackPtr;
+typedef boost::recursive_mutex::scoped_lock Lock; // Local lock, nameservers not locked
+typedef boost::shared_ptr<AddressRequestCallback> CallbackPtr;
 
 /*
  * Create a nameserver.
  * Called inside a mutex so it is filled in atomically.
  */
-shared_ptr<NameserverEntry>
+boost::shared_ptr<NameserverEntry>
 newNs(const std::string* name, const RRClass* class_code) {
-    return (shared_ptr<NameserverEntry>(new NameserverEntry(*name,
+    return (boost::shared_ptr<NameserverEntry>(new NameserverEntry(*name,
         *class_code)));
 }
 
@@ -77,7 +78,7 @@ newNs(const std::string* name, const RRClass* class_code) {
 class ZoneEntry::ResolverCallback : public ResolverInterface::Callback {
     public:
         /// \short Constructor. Pass "this" zone entry
-        ResolverCallback(shared_ptr<ZoneEntry> entry) :
+        ResolverCallback(boost::shared_ptr<ZoneEntry> entry) :
             entry_(entry)
         { }
         /**
@@ -91,7 +92,7 @@ class ZoneEntry::ResolverCallback : public ResolverInterface::Callback {
          * examining them and seeing if some addresses are already there
          * and to ask for the rest of them.
          */
-        virtual void success(const shared_ptr<AbstractRRset>& answer) {
+        virtual void success(const boost::shared_ptr<AbstractRRset>& answer) {
             Lock lock(entry_->mutex_);
             RdataIteratorPtr iterator(answer->getRdataIterator());
             // If there are no data
@@ -137,7 +138,7 @@ class ZoneEntry::ResolverCallback : public ResolverInterface::Callback {
                             string ns_name_str(ns_name.toText());
                             pair<bool, NameserverPtr> from_hash(
                                 entry_->nameserver_table_->getOrAdd(HashKey(
-                                ns_name_str, entry_->class_code_), bind(
+                                ns_name_str, entry_->class_code_), boost::bind(
                                 newNs, &ns_name_str, &entry_->class_code_)));
                             // Make it at the front of the list
                             if (from_hash.first) {
@@ -203,7 +204,7 @@ class ZoneEntry::ResolverCallback : public ResolverInterface::Callback {
             entry_->process(ADDR_REQ_MAX, NameserverPtr());
         }
         /// \short The entry we are callback of
-        shared_ptr<ZoneEntry> entry_;
+        boost::shared_ptr<ZoneEntry> entry_;
 };
 
 void
@@ -237,7 +238,7 @@ ZoneEntry::addCallback(CallbackPtr callback, AddressFamily family) {
         // Our callback might be directly called from resolve, unlock now
         QuestionPtr question(new Question(Name(name_), class_code_,
             RRType::NS()));
-        shared_ptr<ResolverCallback> resolver_callback(
+        boost::shared_ptr<ResolverCallback> resolver_callback(
             new ResolverCallback(shared_from_this()));
         resolver_->resolve(question, resolver_callback);
         return;
@@ -337,7 +338,7 @@ class ZoneEntry::NameserverCallback : public NameserverEntry::Callback {
          * \param family For which address family this change is, so we
          *     do not process all the nameserves and callbacks there.
          */
-        NameserverCallback(shared_ptr<ZoneEntry> entry, AddressFamily family) :
+        NameserverCallback(boost::shared_ptr<ZoneEntry> entry, AddressFamily family) :
             entry_(entry),
             family_(family)
         { }
@@ -352,7 +353,7 @@ class ZoneEntry::NameserverCallback : public NameserverEntry::Callback {
             entry_->process(family_, ns);
         }
     private:
-        shared_ptr<ZoneEntry> entry_;
+        boost::shared_ptr<ZoneEntry> entry_;
         AddressFamily family_;
 };
 
@@ -373,7 +374,7 @@ ZoneEntry::dispatchFailures(AddressFamily family) {
 
 void
 ZoneEntry::process(AddressFamily family,
-    const shared_ptr<NameserverEntry>& nameserver)
+    const boost::shared_ptr<NameserverEntry>& nameserver)
 {
     Lock lock(mutex_);
     switch (getState()) {
@@ -516,7 +517,7 @@ ZoneEntry::insertCallback(NameserverPtr ns, AddressFamily family) {
         insertCallback(ns, V4_ONLY);
         insertCallback(ns, V6_ONLY);
     } else {
-        shared_ptr<NameserverCallback> callback(new NameserverCallback(
+        boost::shared_ptr<NameserverCallback> callback(new NameserverCallback(
             shared_from_this(), family));
         ns->askIP(resolver_, callback, family);
     }
