@@ -195,14 +195,15 @@ fi
 # specify the default warning flags in CXXFLAGS and let specific modules
 # "override" the default.
 
-# This may be used to try compiler flags.
+# This may be used to try linker flags.
 AC_DEFUN([BIND10_CXX_TRY_FLAG], [
   AC_MSG_CHECKING([whether $CXX supports $1])
 
   bind10_save_CXXFLAGS="$CXXFLAGS"
   CXXFLAGS="$CXXFLAGS $1"
 
-  AC_LINK_IFELSE([ ], [bind10_cxx_flag=yes], [bind10_cxx_flag=no])
+  AC_LINK_IFELSE([int main(void){ return 0;} ],
+                 [bind10_cxx_flag=yes], [bind10_cxx_flag=no])
   CXXFLAGS="$bind10_save_CXXFLAGS"
 
   if test "x$bind10_cxx_flag" = "xyes"; then
