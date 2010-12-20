@@ -101,6 +101,36 @@ struct ZoneTable::ZoneTableImpl {
             return (result::EXIST);
         }
     }
+
+    ZoneTable::FindResult findZone(const Name& name) const {
+        ZoneNode *node(NULL);
+        result::Result my_result;
+
+        // Translate the return codes
+        switch (zones.find(name, &node)) {
+            case ZoneTree::EXACTMATCH:
+                my_result = result::SUCCESS;
+                break;
+            case ZoneTree::PARTIALMATCH:
+                my_result = result::PARTIALMATCH;
+                break;
+            // We have no data there, so translate the pointer to NULL as well
+            case ZoneTree::NOTFOUND:
+                return (FindResult(result::NOTFOUND, ConstZonePtr()));
+            // Can Not Happen
+            default:
+                isc_throw(AssertError,
+                    "RBTree<Zone>::find returned unexpected result");
+        }
+
+        // Can Not Happen (remember, NOTFOUND is handled)
+        if (!node) {
+            isc_throw(AssertError,
+                "RBTree<Zone>::find gave NULL pointer");
+        }
+
+        return (FindResult(my_result, node->getData()));
+    }
 };
 
 ZoneTable::ZoneTable() : impl_(new ZoneTableImpl)
@@ -123,18 +153,8 @@ ZoneTable::removeZone(const Name&) {
 
 ZoneTable::FindResult
 ZoneTable::findZone(const Name& name) const {
-    // Inefficient internal loop to find a longest match.
-    // This will be replaced with a single call to more intelligent backend.
-    for (int i = 0; i < name.getLabelCount(); ++i) {
-        Name matchname(name.split(i));
-        ZoneTableImpl::ZoneMap::const_iterator found =
-            impl_->zones.find(matchname);
-        if (found != impl_->zones.end()) {
-            return (FindResult(i == 0 ? result::SUCCESS :
-                               result::PARTIALMATCH, (*found).second));
-        }
-    }
-    return (FindResult(result::NOTFOUND, ConstZonePtr()));
+    return (impl_->findZone(name));
 }
+
 } // end of namespace datasrc
 } // end of namespace isc
