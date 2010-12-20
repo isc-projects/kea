@@ -12,22 +12,31 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
+#include <dns/message.h>
+#include <dns/rcode.h>
 
-#include <cctype>
-#include <cassert>
-#include <iterator>
-#include <functional>
+#include <datasrc/zonetable.h>
 
-#include <algorithm>
+#include <auth/query.h>
 
-#include <dns/tsig.h>
-
-using namespace std;
-using isc::dns::MessageRenderer;
+using namespace isc::dns;
+using namespace isc::datasrc;
 
 namespace isc {
-namespace dns {
+namespace auth {
+void
+Query::process() const {
+    const ZoneTable::FindResult result = zone_table_.findZone(qname_);
 
-} // namespace dns
-} // namespace isc
+    if (result.code != isc::datasrc::result::SUCCESS &&
+        result.code != isc::datasrc::result::PARTIALMATCH) {
+        response_.setRcode(Rcode::SERVFAIL());
+        return;
+    }
+
+    // Right now we have no code to search the zone, so we simply return
+    // NXDOMAIN for tests.
+    response_.setRcode(Rcode::NXDOMAIN());
+}
+}
+}

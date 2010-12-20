@@ -128,11 +128,6 @@ spec_name_list(ElementPtr result, ConstElementPtr spec_part,
                 if (recurse && list_el->get("item_type")->stringValue() == "map") {
                     spec_name_list(result, list_el->get("map_item_spec"), new_prefix, recurse);
                 } else {
-                    if (list_el->get("item_type")->stringValue() == "map" ||
-                        list_el->get("item_type")->stringValue() == "list"
-                    ) {
-                        new_prefix += "/";
-                    }
                     result->add(Element::create(new_prefix));
                 }
             }

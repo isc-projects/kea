@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10-devel, 20101013, bind10-dev@isc.org)
+AC_INIT(bind10-devel, 20101201, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
@@ -17,6 +17,8 @@ AC_LANG([C++])
 # Identify the compiler: this check must be after AC_PROG_CXX and AC_LANG.
 AM_CONDITIONAL(USE_GXX, test "X${GXX}" = "Xyes")
 AC_CHECK_DECL([__SUNPRO_CC], [SUNCXX="yes"], [SUNCXX="no"])
+AC_CHECK_DECL([__clang__], [CLANGPP="yes"], [CLANGPP="no"])
+AM_CONDITIONAL(USE_CLANGPP, test "X${CLANGPP}" = "Xyes")
 
 # Linker options
 
@@ -193,18 +195,50 @@ fi
 # specify the default warning flags in CXXFLAGS and let specific modules
 # "override" the default.
 
+# This may be used to try linker flags.
+AC_DEFUN([BIND10_CXX_TRY_FLAG], [
+  AC_MSG_CHECKING([whether $CXX supports $1])
+
+  bind10_save_CXXFLAGS="$CXXFLAGS"
+  CXXFLAGS="$CXXFLAGS $1"
+
+  AC_LINK_IFELSE([int main(void){ return 0;} ],
+                 [bind10_cxx_flag=yes], [bind10_cxx_flag=no])
+  CXXFLAGS="$bind10_save_CXXFLAGS"
+
+  if test "x$bind10_cxx_flag" = "xyes"; then
+    ifelse([$2], , :, [$2])
+  else
+    ifelse([$3], , :, [$3])
+  fi
+
+  AC_MSG_RESULT([$bind10_cxx_flag])
+])
+
 werror_ok=0
 
 # SunStudio compiler requires special compiler options for boost
 # (http://blogs.sun.com/sga/entry/boost_mini_howto)
 if test "$SUNCXX" = "yes"; then
 CXXFLAGS="$CXXFLAGS -library=stlport4 -features=tmplife -features=tmplrefstatic"
+MULTITHREADING_FLAG="-mt"
 fi
+
+BIND10_CXX_TRY_FLAG(-Wno-missing-field-initializers,
+	[WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG="-Wno-missing-field-initializers"])
+AC_SUBST(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
 # gcc specific settings:
 if test "X$GXX" = "Xyes"; then
 B10_CXXFLAGS="-Wall -Wextra -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
-UNUSED_PARAM_ATTRIBUTE='__attribute__((unused))'
+case "$host" in
+*-solaris*)
+	MULTITHREADING_FLAG=-pthreads
+	;;
+*)
+	MULTITHREADING_FLAG=-pthread
+	;;
+esac
 
 # Certain versions of gcc (g++) have a bug that incorrectly warns about
 # the use of anonymous name spaces even if they're closed in a single
@@ -223,7 +257,6 @@ CXXFLAGS="$CXXFLAGS_SAVED"
 fi				dnl GXX = yes
 
 AM_CONDITIONAL(GCC_WERROR_OK, test $werror_ok = 1)
-AC_DEFINE_UNQUOTED(UNUSED_PARAM, $UNUSED_PARAM_ATTRIBUTE, Define to compiler keyword indicating a function argument is intentionally unused)
 
 # produce PIC unless we disable shared libraries. need this for python bindings.
 if test $enable_shared != "no" -a "X$GXX" = "Xyes"; then
@@ -313,13 +346,71 @@ if test -z "$with_boost_include"; then
 		fi
 	done
 fi
+CPPFLAGS_SAVES="$CPPFLAGS"
 if test "${boost_include_path}" ; then
 	BOOST_INCLUDES="-I${boost_include_path}"
 	CPPFLAGS="$CPPFLAGS $BOOST_INCLUDES"
 fi
-AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp],,
+AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp boost/interprocess/sync/interprocess_upgradable_mutex.hpp],,
   AC_MSG_ERROR([Missing required header files.]))
+CPPFLAGS="$CPPFLAGS_SAVES"
 AC_SUBST(BOOST_INCLUDES)
+
+# Using boost::mutex can result in requiring libboost_thread with older
+# versions of Boost.  We'd like to avoid relying on a compiled Boost library
+# whenever possible, so we need to check for it step by step.
+#
+# NOTE: another fix of this problem is to simply require newer versions of
+# boost.  If we choose that solution we should simplify the following tricky
+# checks accordingly and all Makefile.am's that refer to NEED_LIBBOOST_THREAD.
+AC_MSG_CHECKING(for boost::mutex)
+CPPFLAGS_SAVES="$CPPFLAGS"
+LIBS_SAVES="$LIBS"
+CPPFLAGS="$BOOST_INCLUDES $CPPFLAGS $MULTITHREADING_FLAG"
+need_libboost_thread=0
+need_sunpro_workaround=0
+AC_TRY_LINK([
+#include <boost/thread.hpp>
+],[
+boost::mutex m;
+],
+	[ AC_MSG_RESULT(yes (without libboost_thread)) ],
+
+    # there is one specific problem with SunStudio 5.10
+    # where including boost/thread causes a compilation failure
+    # There is a workaround in boost but it checks the version not being 5.10
+    # This will probably be fixed in the future, in which case this
+    # is only a temporary workaround
+    [ AC_TRY_LINK([
+#if defined(__SUNPRO_CC) && __SUNPRO_CC == 0x5100
+#undef __SUNPRO_CC
+#define __SUNPRO_CC 0x5090
+#endif
+#include <boost/thread.hpp>
+],[
+boost::mutex m;
+],
+    [ AC_MSG_RESULT(yes (with SUNOS workaround))
+      need_sunpro_workaround=1 ],
+    	[ LIBS=" $LIBS -lboost_thread"
+	  AC_TRY_LINK([
+#include <boost/thread.hpp>
+],[
+boost::mutex m;
+],
+		  [ AC_MSG_RESULT(yes (with libboost_thread))
+		    need_libboost_thread=1 ],
+		  [ AC_MSG_RESULT(no)
+		    AC_MSG_ERROR([boost::mutex cannot be linked in this build environment.
+Perhaps you are using an older version of Boost that requires libboost_thread for the mutex support, which does not appear to be available.
+You may want to check the availability of the library or to upgrade Boost.])
+   		  ])])])
+CPPFLAGS="$CPPFLAGS_SAVES"
+LIBS="$LIBS_SAVES"
+AM_CONDITIONAL(NEED_LIBBOOST_THREAD, test $need_libboost_thread = 1)
+if test $need_sunpro_workaround = 1; then
+    AC_DEFINE([NEED_SUNPRO_WORKAROUND], [], [Need boost sunstudio workaround])
+fi
 
 #
 # Check availability of gtest, which will be used for unit tests.
@@ -385,6 +476,8 @@ PKG_CHECK_MODULES(SQLITE, sqlite3 >= 3.3.9, enable_features="$enable_features SQ
 PTHREAD_LDFLAGS=
 AC_CHECK_LIB(pthread, pthread_create,[ PTHREAD_LDFLAGS=-lpthread ], [])
 AC_SUBST(PTHREAD_LDFLAGS)
+
+AC_SUBST(MULTITHREADING_FLAG)
 
 #
 # ASIO: we extensively use it as the C++ event management module.
@@ -465,6 +558,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/auth/tests/Makefile
                  src/bin/auth/tests/testdata/Makefile
                  src/bin/auth/benchmarks/Makefile
+                 src/bin/recurse/Makefile
                  src/bin/xfrin/Makefile
                  src/bin/xfrin/tests/Makefile
                  src/bin/xfrout/Makefile
@@ -476,7 +570,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/stats/tests/isc/Makefile
                  src/bin/stats/tests/isc/cc/Makefile
                  src/bin/stats/tests/isc/config/Makefile
-                 src/bin/stats/tests/isc/utils/Makefile
+                 src/bin/stats/tests/isc/util/Makefile
                  src/bin/stats/tests/testdata/Makefile
                  src/bin/usermgr/Makefile
                  src/bin/tests/Makefile
@@ -488,9 +582,10 @@ AC_CONFIG_FILES([Makefile
                  src/lib/cc/tests/Makefile
                  src/lib/python/Makefile
                  src/lib/python/isc/Makefile
-                 src/lib/python/isc/utils/Makefile
-                 src/lib/python/isc/utils/tests/Makefile
+                 src/lib/python/isc/util/Makefile
+                 src/lib/python/isc/util/tests/Makefile
                  src/lib/python/isc/datasrc/Makefile
+                 src/lib/python/isc/datasrc/tests/Makefile
                  src/lib/python/isc/cc/Makefile
                  src/lib/python/isc/cc/tests/Makefile
                  src/lib/python/isc/config/Makefile
@@ -514,6 +609,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/datasrc/Makefile
                  src/lib/datasrc/tests/Makefile
                  src/lib/xfr/Makefile
+                 src/lib/nsas/Makefile
+                 src/lib/nsas/tests/Makefile
                ])
 AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/cfgmgr/tests/b10-cfgmgr_test.py
@@ -528,6 +625,9 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/xfrout/xfrout.spec.pre
            src/bin/xfrout/tests/xfrout_test
            src/bin/xfrout/run_b10-xfrout.sh
+           src/bin/recurse/recurse.py
+           src/bin/recurse/recurse.spec.pre
+           src/bin/recurse/run_b10-recurse.sh
            src/bin/zonemgr/zonemgr.py
            src/bin/zonemgr/zonemgr.spec.pre
            src/bin/zonemgr/tests/zonemgr_test
@@ -570,6 +670,7 @@ AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
            chmod +x src/bin/xfrout/run_b10-xfrout.sh
+           chmod +x src/bin/recurse/run_b10-recurse.sh
            chmod +x src/bin/zonemgr/run_b10-zonemgr.sh
            chmod +x src/bin/stats/tests/stats_test
            chmod +x src/bin/stats/run_b10-stats.sh
@@ -604,6 +705,8 @@ Package:
   Name:          $PACKAGE_NAME
   Version:       $PACKAGE_VERSION
 
+C++ Compiler:    $CXX
+
 Flags:
   DEFS:          $DEFS
   CPPFLAGS:      $CPPFLAGS
@@ -613,6 +716,7 @@ dnl includes too
   Python:        ${PYTHON_INCLUDES}
                  ${PYTHON_LDFLAGS}
                  ${PYTHON_LIB}
+  Boost:         ${BOOST_INCLUDES}
   SQLite:        $SQLITE_CFLAGS
                  $SQLITE_LIBS
 
@@ -632,4 +736,3 @@ cat <<EOF
   Now you can type "make" to build BIND 10
 
 EOF
-

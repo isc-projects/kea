@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,30 +12,16 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id: rrtype_unittest.cc 476 2010-01-19 00:29:28Z jinmei $
+// $Id: run_unittests.cc 3020 2010-09-26 03:47:26Z jinmei $
+#include <config.h>
 
 #include <gtest/gtest.h>
 
-#include <dns/tsig.h>
-
 #include <dns/tests/unittest_util.h>
 
-using isc::UnitTestUtil;
-using namespace std;
-using namespace isc::dns;
+int
+main(int argc, char* argv[]) {
+    ::testing::InitGoogleTest(&argc, argv);
 
-namespace {
-class TsigTest : public ::testing::Test {
-protected:
-    TsigTest() {}
-};
-
-// simple creation test to get the testing ball rolling
-TEST_F(TsigTest, creates) {
-    Tsig tsig(Name("example.com"), Tsig::HMACMD5, "someRandomData");
-    EXPECT_TRUE(1);
+    return (RUN_ALL_TESTS());
 }
-
-} // end namespace
-
-

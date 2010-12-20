@@ -3,6 +3,7 @@ SUBDIRS = testdata .
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/lib/dns -I$(top_srcdir)/src/bin
 AM_CPPFLAGS += -I$(top_builddir)/src/lib/cc
+AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(srcdir)/testdata\"
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/bin/auth/tests/testdata\"
 
@@ -20,9 +21,10 @@ TESTS += run_unittests
 run_unittests_SOURCES = $(top_srcdir)/src/lib/dns/tests/unittest_util.h
 run_unittests_SOURCES += $(top_srcdir)/src/lib/dns/tests/unittest_util.cc
 run_unittests_SOURCES += ../auth_srv.h ../auth_srv.cc
+run_unittests_SOURCES += ../query.h ../query.cc
 run_unittests_SOURCES += ../change_user.h ../change_user.cc
-run_unittests_SOURCES += ../rbt_datasrc.h
 run_unittests_SOURCES += auth_srv_unittest.cc
+run_unittests_SOURCES += query_unittest.cc
 run_unittests_SOURCES += change_user_unittest.cc
 run_unittests_SOURCES += asio_link_unittest.cc
 run_unittests_SOURCES += run_unittests.cc

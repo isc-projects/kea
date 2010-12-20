@@ -15,6 +15,14 @@
 #ifndef _RBTREE_H
 #define _RBTREE_H 1
 
+//! \file datasrc/rbtree.h
+///
+/// \note The purpose of the RBTree is to provide a generic map with 
+/// domain names as the key that can be used by various BIND 10 modules or
+/// even by other applications.  However, because of some unresolved design
+/// issue, the design and interface are not fixed, and RBTree isn't ready to
+/// be used as a base data structure by other modules.
+
 #include <dns/name.h>
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
@@ -30,7 +38,7 @@ namespace helper {
 /// Helper function to remove the base domain from super domain
 ///
 /// the precondition of this function is the super_name contains the
-/// sub_name so \code Name a("a.b.c"); Name b("b.c"); 
+/// sub_name so \code Name a("a.b.c"); Name b("b.c");
 /// Name c = a - b; \\c will be "a" \endcode
 ///
 /// \note function in this namespace is not intended to be used outside.
@@ -47,32 +55,24 @@ class RBTree;
 
 /// It has two roles, the first one is as one node in the \c RBTree,
 /// the second one is to store the data related to one domain name and maintain
-/// the domain name hierarchy struct in one domain name space. 
+/// the domain name hierarchy struct in one domain name space.
 /// As for the first role, it has left, right, parent and color members
-/// which is used to keep the balance of the \c RBTree. 
+/// which is used to keep the balance of the \c RBTree.
 /// As for the second role, \c RBNode use down pointer to refer to all its sub
 /// domains, so the name of current node always relative to the up node. since
 /// we only has down pointer without up pointer, so we can only walk down from
-/// top domain to sub domain. 
+/// top domain to sub domain.
 /// One special kind of node is non-terminal node
-/// which has subdomains with RRset but itself doesn't have any RRsets. 
+/// which has subdomains with RRset but itself doesn't have any RRsets.
 ///
-/// \note \c RBNode basically used internally by RBTree, it is meaningless to 
-/// inherited from it or create it without \c RBTree. 
-/// For data stored in \c RBNode, RBNode will hold the ownership, therefore RBNode
-/// will release it(call the deconstructor)finally, so it will be has problem if two
-/// RBNode store the same data, or the data RBNode managed is delete outside RBNode
-/// both will cause double delete.
-/// 
-/// \todo It's really bad practce split the memory allocate and delete into seperate
-/// classes, it's planed to add deleter functor as one template paremeter and
-/// use it to release the data. but now let's just use this simple design
+/// \note \c RBNode basically used internally by RBTree, it is meaningless to
+/// inherited from it or create it without \c RBTree.
 template <typename T>
 class RBNode : public boost::noncopyable {
 public:
     /// only \c RBTree can create and destroy \c RBNode
     friend class RBTree<T>;
-    typedef boost::shared_ptr<T> NodeDataType;
+    typedef boost::shared_ptr<T> NodeDataPtr;
 
     /// \name Deonstructor
     /// \note it's seems a little strange that constructor is private
@@ -86,7 +86,7 @@ public:
     /// \name Test functions
     //@{
     /// \brief return the name of current node, it's relative to its top node
-    /// 
+    ///
     /// To get the absolute name of one node, the node path from the top node
     /// to current node has to be recorded
     const isc::dns::Name& getName() const { return (name_); }
@@ -94,12 +94,12 @@ public:
     /// \brief return the data store in this node
     /// \note, since the data is managed by RBNode, developer should not
     /// free the pointer
-    NodeDataType& getData() { return (data_); }
+    NodeDataPtr& getData() { return (data_); }
     /// \brief return the data stored in this node, read-only version
-    const NodeDataType& getData() const { return (data_); }
+    const NodeDataPtr& getData() const { return (data_); }
 
-    /// \brief return whether the node has related data 
-    /// \note it's meaningless has empty \c RBNode in one RBTree, the only 
+    /// \brief return whether the node has related data
+    /// \note it's meaningless has empty \c RBNode in one RBTree, the only
     /// exception is for non-terminal node which has sub domain nodes who
     /// has data(rrset)
     bool isEmpty() const { return (data_.get() == NULL); }
@@ -108,14 +108,13 @@ public:
     /// \name Modify functions
     //@{
     /// \breif set the data stored in the node
-    void setData(const NodeDataType& data) { data_ = data;}
+    void setData(const NodeDataPtr& data) { data_ = data; }
     //@}
 
 
 private:
     /// \brief Define rbnode color
     enum RBNodeColor {BLACK, RED};
-
 
     /// \name Constructors
     /// \note \c Single RBNode is meaningless without living inside one \c RBTree
@@ -134,13 +133,11 @@ private:
     RBNode(const isc::dns::Name& name);
     //@}
 
-
     /// This is a factory class method of a special singleton null node.
     static RBNode<T>* NULL_NODE() {
         static RBNode<T> null_node;
         return (&null_node);
     }
-
 
     /// data to maintain the rbtree balance
     RBNode<T>*  parent_;
@@ -148,15 +145,14 @@ private:
     RBNode<T>*  right_;
     RBNodeColor color_;
 
-
     isc::dns::Name     name_;
-    NodeDataType       data_;
-    /// the down pointer points to the root node of sub domains of current 
-    /// domain 
+    NodeDataPtr       data_;
+    /// the down pointer points to the root node of sub domains of current
+    /// domain
     /// \par Adding down pointer to \c RBNode is for two purpose:
     /// \li Accelerate the search process, with sub domain tree, it split the
     /// big flat tree into several hierarchy trees
-    /// \li It save memory useage, so same label won't be saved several times 
+    /// \li It save memory useage, so same label won't be saved several times
     RBNode<T>*  down_;
 };
 
@@ -194,15 +190,15 @@ RBNode<T>::~RBNode() {
 /// so it can be used to store the domains in one zone.
 ///
 /// \c RBTree is a generic red black tree, and contains all the nodes with
-/// the same suffix, since each name may have sub domain names 
+/// the same suffix, since each name may have sub domain names
 /// so \c RBTree is a recursive data structure namely tree in tree.
 /// So for one zone, several RBTrees may be involved. But from outside, the sub
-/// tree is opaque for end users. 
+/// tree is opaque for end users.
 ///
 /// \c RBTree split the domain space into hierarchy red black trees, nodes in one
 /// tree has the same base name. The benefit of this struct is that:
 /// - enhance the query performace compared with one big flat red black tree
-/// - decrase the memory footprint to save common labels only once. 
+/// - decrase the memory footprint to save common labels only once.
 
 /*
 /// \verbatim
@@ -226,13 +222,13 @@ RBNode<T>::~RBNode() {
 ///                                  o   q
 /// \endverbatim
 /// \note open problems:
-/// - current find funciton only return non-empty nodes, so there is no difference 
+/// - current find funciton only return non-empty nodes, so there is no difference
 ///   between find one not exist name with empty non-terminal nodes, but in DNS query
 ///   logic, they are different
-/// \todo 
+/// \todo
 /// - add remove interface
 /// - add iterator to iterate the whole rbtree while may needed by axfr
-/// - since \c RBNode only has down pointer without up pointer, the node path during finding 
+/// - since \c RBNode only has down pointer without up pointer, the node path during finding
 ///   should be recorded for later use
 */
 template <typename T>
@@ -288,12 +284,12 @@ public:
     /// new \c RBNode will be created, otherwise nothing will be done.
     /// Anyway the pointer point to the node with the name will be assigned to
     /// inserted_node
-    /// \return 
+    /// \return
     //  - SUCCEED means no node exists in the tree with the name before insert
     /// - ALREADYEXIST means already has the node with the given name
     //
-    /// \node To modify the data related with one name but not sure the name has 
-    /// inserted or not, it is better to call \code insert \endcode,instead of 
+    /// \node To modify the data related with one name but not sure the name has
+    /// inserted or not, it is better to call \code insert \endcode,instead of
     /// \code find() \endcode, in case the name isn't exist and needs to insert again
     Result insert(const isc::dns::Name& name, RBNode<T>** inserted_node);
     //@}
@@ -311,13 +307,13 @@ private:
     /// \brief delete tree whose root is equal to node
     void deleteHelper(RBNode<T> *node);
     /// \brief find the node with name
-    /// \param name is the target, up will points to the base domain of 
+    /// \param name is the target, up will points to the base domain of
     /// the tree which name resides, node will point to the target node
     /// if we has exact same name or partical name in current tree.
-    /// so for example, in zone a, we has 
-    /// b.a, c.b.a and d.b.a search c.b.a, up will points to b.a. 
+    /// so for example, in zone a, we has
+    /// b.a, c.b.a and d.b.a search c.b.a, up will points to b.a.
     /// and node will points to c.b.a
-    /// \note parameter up now is not used by any funciton, but we are gonna 
+    /// \note parameter up now is not used by any funciton, but we are gonna
     /// need it soon to implement function like remove
     Result findHelper(const isc::dns::Name& name, const RBNode<T>** up,
                       RBNode<T>** node) const;
@@ -337,7 +333,7 @@ private:
 
     RBNode<T>*  root_;
     RBNode<T>*  NULLNODE;
-    /// the node count of current tree 
+    /// the node count of current tree
     unsigned int node_count_;
 };
 
@@ -501,9 +497,9 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
 
     RBNode<T>** current_root = (up_node != NULLNODE) ?
         &(up_node->down_) : &root_;
-    // using auto_ptr here is avoid memory leak in case of exceptoin raised 
-    // after the RBNode creation, if we can make sure no exception will be 
-    // raised until the end of the function, we use remove it for optimization
+    // using auto_ptr here is avoid memory leak in case of exceptoin raised
+    // after the RBNode creation, if we can make sure no exception will be
+    // raised until the end of the function, we can remove it for optimization
     std::auto_ptr<RBNode<T> > node(new RBNode<T>(name));
     node->parent_ = parent;
     if (parent == NULLNODE) {
@@ -531,7 +527,7 @@ void
 RBTree<T>::nodeFission(RBNode<T>& node, const isc::dns::Name& base_name) {
     using namespace helper;
     const isc::dns::Name sub_name = node.name_ - base_name;
-    // using auto_ptr here is to avoid memory leak in case of exceptoin raised 
+    // using auto_ptr here is to avoid memory leak in case of exceptoin raised
     // after the RBNode creation
     std::auto_ptr<RBNode<T> > down_node(new RBNode<T>(sub_name));
     std::swap(node.data_, down_node->data_);
@@ -614,7 +610,6 @@ RBTree<T>::leftRotate(RBNode<T>** root, RBNode<T>* node) {
     node->parent_ = right;
     return (node);
 }
-
 
 template <typename T>
 RBNode<T>*
