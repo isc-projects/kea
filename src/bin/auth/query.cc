@@ -68,22 +68,22 @@ Query::process() const {
                 impl_->response_.setRcode(Rcode::NOERROR());
                 impl_->response_.addRRset(Message::SECTION_ANSWER,
                             boost::const_pointer_cast<RRset>(db_result.rrset));
-                // fill in authority and addtional sections.
+                // TODO : fill in authority and addtional sections.
                 break;
             case Zone::DELEGATION:
-                // add NS to authority section, fill in additional section.
+                // TODO : add NS to authority section, fill in additional section.
                 break;
             case Zone::NXDOMAIN:
                 impl_->response_.setRcode(Rcode::NXDOMAIN());
-                // add SOA to authority section
+                // TODO : add SOA to authority section
                 break;
             case Zone::NXRRSET:
                 impl_->response_.setRcode(Rcode::NXRRSET());
-                // add SOA to authority section
+                // TODO : add SOA to authority section
                 break;
             case Zone::CNAME:
             case Zone::DNAME:
-                // replace qname, continue lookup
+                // TODO : replace qname, continue lookup
                 keep_doing = true;
                 break;
             // should not happen, catch programming error here.
