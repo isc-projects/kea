@@ -30,7 +30,7 @@ class RRClass;
 
 /// \brief An exception that is thrown if an error occurs while loading a
 /// master zone data.
-class MasterLoadError : public Exception {
+class MasterLoadError : public isc::Exception {
 public:
     MasterLoadError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
