@@ -17,7 +17,6 @@
 #include <dns/name.h>
 #include <dns/rrclass.h>
 
-#include <datasrc/zonetable.h>
 #include <datasrc/memory_datasrc.h>
 
 #include <gtest/gtest.h>
