@@ -14,12 +14,20 @@
 
 // $Id$
 
+#include <config.h>
+
 #include <netinet/in.h>
 
 #include <algorithm>
 #include <cassert>
 #include <iostream>
 #include <vector>
+
+#include <asiolink/asiolink.h>
+
+#include <config/ccsession.h>
+
+#include <cc/data.h>
 
 #include <exceptions/exceptions.h>
 
@@ -34,22 +42,16 @@
 #include <dns/rrset.h>
 #include <dns/rrttl.h>
 #include <dns/message.h>
-#include <config/ccsession.h>
-#include <cc/data.h>
-#include <exceptions/exceptions.h>
 
 #include <datasrc/query.h>
 #include <datasrc/data_source.h>
 #include <datasrc/static_datasrc.h>
 #include <datasrc/sqlite3_datasrc.h>
 
-#include <cc/data.h>
-
 #include <xfr/xfrout_client.h>
 
 #include <auth/common.h>
 #include <auth/auth_srv.h>
-#include <auth/asio_link.h>
 
 using namespace std;
 
@@ -61,7 +63,7 @@ using namespace isc::dns::rdata;
 using namespace isc::data;
 using namespace isc::config;
 using namespace isc::xfr;
-using namespace asio_link;
+using namespace asiolink;
 
 class AuthSrvImpl {
 private:
@@ -73,32 +75,34 @@ public:
     ~AuthSrvImpl();
     isc::data::ConstElementPtr setDbFile(isc::data::ConstElementPtr config);
 
-    bool processNormalQuery(const IOMessage& io_message, Message& message,
-                            MessageRenderer& response_renderer);
-    bool processAxfrQuery(const IOMessage& io_message, Message& message,
-                            MessageRenderer& response_renderer);
-    bool processNotify(const IOMessage& io_message, Message& message,
-                            MessageRenderer& response_renderer);
-    std::string db_file_;
+    bool processNormalQuery(const IOMessage& io_message, MessagePtr message,
+                            OutputBufferPtr buffer);
+    bool processAxfrQuery(const IOMessage& io_message, MessagePtr message,
+                          OutputBufferPtr buffer);
+    bool processNotify(const IOMessage& io_message, MessagePtr message,
+                       OutputBufferPtr buffer);
+
+    /// Currently non-configurable, but will be.
+    static const uint16_t DEFAULT_LOCAL_UDPSIZE = 4096;
+
+    /// These members are public because AuthSrv accesses them directly.
     ModuleCCSession* config_session_;
+    bool verbose_mode_;
+    AbstractSession* xfrin_session_;
+
+    /// Hot spot cache
+    isc::datasrc::HotCache cache_;
+private:
+    std::string db_file_;
+
     MetaDataSrc data_sources_;
     /// We keep a pointer to the currently running sqlite datasource
     /// so that we can specifically remove that one should the database
     /// file change
     ConstDataSrcPtr cur_datasrc_;
 
-    bool verbose_mode_;
-
-    AbstractSession* xfrin_session_;
-
     bool xfrout_connected_;
     AbstractXfroutClient& xfrout_client_;
-
-    /// Currently non-configurable, but will be.
-    static const uint16_t DEFAULT_LOCAL_UDPSIZE = 4096;
-
-    /// Hot spot cache
-    isc::datasrc::HotCache cache_;
 };
 
 AuthSrvImpl::AuthSrvImpl(const bool use_cache,
@@ -126,60 +130,127 @@ AuthSrvImpl::~AuthSrvImpl() {
     }
 }
 
+// This is a derived class of \c DNSLookup, to serve as a
+// callback in the asiolink module.  It calls
+// AuthSrv::processMessage() on a single DNS message.
+class MessageLookup : public DNSLookup {
+public:
+    MessageLookup(AuthSrv* srv) : server_(srv) {}
+    virtual void operator()(const IOMessage& io_message, MessagePtr message,
+                            OutputBufferPtr buffer, DNSServer* server) const
+    {
+        server_->processMessage(io_message, message, buffer, server);
+    }
+private:
+    AuthSrv* server_;
+};
+
+// This is a derived class of \c DNSAnswer, to serve as a
+// callback in the asiolink module.  It takes a completed
+// set of answer data from the DNS lookup and assembles it
+// into a wire-format response.
+class MessageAnswer : public DNSAnswer {
+public:
+    MessageAnswer(AuthSrv* srv) : server_(srv) {}
+    virtual void operator()(const IOMessage& io_message, MessagePtr message,
+                            OutputBufferPtr buffer) const
+    {
+        MessageRenderer renderer(*buffer);
+        if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
+            ConstEDNSPtr edns(message->getEDNS());
+            renderer.setLengthLimit(edns ? edns->getUDPSize() :
+                Message::DEFAULT_MAX_UDPSIZE);
+        } else {
+            renderer.setLengthLimit(65535);
+        }
+        message->toWire(renderer);
+        if (server_->getVerbose()) {
+            cerr << "[b10-auth] sending a response (" << renderer.getLength()
+                 << " bytes):\n" << message->toText() << endl;
+        }
+    }
+
+private:
+    AuthSrv* server_;
+};
+
+// This is a derived class of \c SimpleCallback, to serve
+// as a callback in the asiolink module.  It checks for queued
+// configuration messages, and executes them if found.
+class ConfigChecker : public SimpleCallback {
+public:
+    ConfigChecker(AuthSrv* srv) : server_(srv) {}
+    virtual void operator()(const IOMessage&) const {
+        if (server_->getConfigSession()->hasQueuedMsgs()) {
+            server_->getConfigSession()->checkCommand();
+        }
+    }
+private:
+    AuthSrv* server_;
+};
+
 AuthSrv::AuthSrv(const bool use_cache, AbstractXfroutClient& xfrout_client) :
-    impl_(new AuthSrvImpl(use_cache, xfrout_client))
+    impl_(new AuthSrvImpl(use_cache, xfrout_client)),
+    checkin_(new ConfigChecker(this)),
+    dns_lookup_(new MessageLookup(this)),
+    dns_answer_(new MessageAnswer(this))
 {}
 
 AuthSrv::~AuthSrv() {
     delete impl_;
+    delete checkin_;
+    delete dns_lookup_;
+    delete dns_answer_;
 }
 
 namespace {
 class QuestionInserter {
 public:
-    QuestionInserter(Message* message) : message_(message) {}
+    QuestionInserter(MessagePtr message) : message_(message) {}
     void operator()(const QuestionPtr question) {
         message_->addQuestion(question);
     }
-    Message* message_;
+    MessagePtr message_;
 };
 
 void
-makeErrorMessage(Message& message, MessageRenderer& renderer,
+makeErrorMessage(MessagePtr message, OutputBufferPtr buffer,
                  const Rcode& rcode, const bool verbose_mode)
 {
     // extract the parameters that should be kept.
     // XXX: with the current implementation, it's not easy to set EDNS0
     // depending on whether the query had it.  So we'll simply omit it.
-    const qid_t qid = message.getQid();
-    const bool rd = message.getHeaderFlag(Message::HEADERFLAG_RD);
-    const bool cd = message.getHeaderFlag(Message::HEADERFLAG_CD);
-    const Opcode& opcode = message.getOpcode();
+    const qid_t qid = message->getQid();
+    const bool rd = message->getHeaderFlag(Message::HEADERFLAG_RD);
+    const bool cd = message->getHeaderFlag(Message::HEADERFLAG_CD);
+    const Opcode& opcode = message->getOpcode();
     vector<QuestionPtr> questions;
 
     // If this is an error to a query or notify, we should also copy the
     // question section.
     if (opcode == Opcode::QUERY() || opcode == Opcode::NOTIFY()) {
-        questions.assign(message.beginQuestion(), message.endQuestion());
+        questions.assign(message->beginQuestion(), message->endQuestion());
     }
 
-    message.clear(Message::RENDER);
-    message.setQid(qid);
-    message.setOpcode(opcode);
-    message.setHeaderFlag(Message::HEADERFLAG_QR);
+    message->clear(Message::RENDER);
+    message->setQid(qid);
+    message->setOpcode(opcode);
+    message->setHeaderFlag(Message::HEADERFLAG_QR);
     if (rd) {
-        message.setHeaderFlag(Message::HEADERFLAG_RD);
+        message->setHeaderFlag(Message::HEADERFLAG_RD);
     }
     if (cd) {
-        message.setHeaderFlag(Message::HEADERFLAG_CD);
+        message->setHeaderFlag(Message::HEADERFLAG_CD);
     }
-    for_each(questions.begin(), questions.end(), QuestionInserter(&message));
-    message.setRcode(rcode);
-    message.toWire(renderer);
+    for_each(questions.begin(), questions.end(), QuestionInserter(message));
+    message->setRcode(rcode);
+
+    MessageRenderer renderer(*buffer);
+    message->toWire(renderer);
 
     if (verbose_mode) {
         cerr << "[b10-auth] sending an error response (" <<
-            renderer.getLength() << " bytes):\n" << message.toText() << endl;
+            renderer.getLength() << " bytes):\n" << message->toText() << endl;
     }
 }
 }
@@ -219,143 +290,147 @@ AuthSrv::getConfigSession() const {
     return (impl_->config_session_);
 }
 
-bool
-AuthSrv::processMessage(const IOMessage& io_message, Message& message,
-                        MessageRenderer& response_renderer)
+void
+AuthSrv::processMessage(const IOMessage& io_message, MessagePtr message,
+                        OutputBufferPtr buffer, DNSServer* server)
 {
     InputBuffer request_buffer(io_message.getData(), io_message.getDataSize());
 
     // First, check the header part.  If we fail even for the base header,
     // just drop the message.
     try {
-        message.parseHeader(request_buffer);
+        message->parseHeader(request_buffer);
 
         // Ignore all responses.
-        if (message.getHeaderFlag(Message::HEADERFLAG_QR)) {
+        if (message->getHeaderFlag(Message::HEADERFLAG_QR)) {
             if (impl_->verbose_mode_) {
                 cerr << "[b10-auth] received unexpected response, ignoring"
                      << endl;
             }
-            return (false);
+            server->resume(false);
+            return;
         }
     } catch (const Exception& ex) {
-        return (false);
+        if (impl_->verbose_mode_) {
+            cerr << "[b10-auth] DNS packet exception: " << ex.what() << endl;
+        }
+        server->resume(false);
+        return;
     }
 
-    // Parse the message.  On failure, return an appropriate error.
     try {
-        message.fromWire(request_buffer);
+        // Parse the message.
+        message->fromWire(request_buffer);
     } catch (const DNSProtocolError& error) {
         if (impl_->verbose_mode_) {
             cerr << "[b10-auth] returning " <<  error.getRcode().toText()
                  << ": " << error.what() << endl;
         }
-        makeErrorMessage(message, response_renderer, error.getRcode(),
+        makeErrorMessage(message, buffer, error.getRcode(),
                          impl_->verbose_mode_);
-        return (true);
+        server->resume(true);
+        return;
     } catch (const Exception& ex) {
         if (impl_->verbose_mode_) {
             cerr << "[b10-auth] returning SERVFAIL: " << ex.what() << endl;
         }
-        makeErrorMessage(message, response_renderer, Rcode::SERVFAIL(),
+        makeErrorMessage(message, buffer, Rcode::SERVFAIL(),
                          impl_->verbose_mode_);
-        return (true);
+        server->resume(true);
+        return;
     } // other exceptions will be handled at a higher layer.
 
     if (impl_->verbose_mode_) {
-        cerr << "[b10-auth] received a message:\n" << message.toText() << endl;
+        cerr << "[b10-auth] received a message:\n" << message->toText() << endl;
     }
 
     // Perform further protocol-level validation.
 
-    if (message.getOpcode() == Opcode::NOTIFY()) {
-        return (impl_->processNotify(io_message, message, response_renderer));
-    } else if (message.getOpcode() != Opcode::QUERY()) {
+    bool sendAnswer = true;
+    if (message->getOpcode() == Opcode::NOTIFY()) {
+        sendAnswer = impl_->processNotify(io_message, message, buffer);
+    } else if (message->getOpcode() != Opcode::QUERY()) {
         if (impl_->verbose_mode_) {
             cerr << "[b10-auth] unsupported opcode" << endl;
         }
-        makeErrorMessage(message, response_renderer, Rcode::NOTIMP(),
+        makeErrorMessage(message, buffer, Rcode::NOTIMP(),
                          impl_->verbose_mode_);
-        return (true);
-    }
-
-    if (message.getRRCount(Message::SECTION_QUESTION) != 1) {
-        makeErrorMessage(message, response_renderer, Rcode::FORMERR(),
+    } else if (message->getRRCount(Message::SECTION_QUESTION) != 1) {
+        makeErrorMessage(message, buffer, Rcode::FORMERR(),
                          impl_->verbose_mode_);
-        return (true);
-    }
-
-    ConstQuestionPtr question = *message.beginQuestion();
-    const RRType &qtype = question->getType();
-    if (qtype == RRType::AXFR()) {
-        return (impl_->processAxfrQuery(io_message, message,
-                                        response_renderer));
-    } else if (qtype == RRType::IXFR()) {
-        makeErrorMessage(message, response_renderer, Rcode::NOTIMP(),
-                         impl_->verbose_mode_);
-        return (true);
     } else {
-        return (impl_->processNormalQuery(io_message, message,
-                                          response_renderer));
+        ConstQuestionPtr question = *message->beginQuestion();
+        const RRType &qtype = question->getType();
+        if (qtype == RRType::AXFR()) {
+            sendAnswer = impl_->processAxfrQuery(io_message, message, buffer);
+        } else if (qtype == RRType::IXFR()) {
+            makeErrorMessage(message, buffer, Rcode::NOTIMP(),
+                             impl_->verbose_mode_);
+        } else {
+            sendAnswer = impl_->processNormalQuery(io_message, message, buffer);
+        }
     }
+
+    server->resume(sendAnswer);
 }
 
 bool
-AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
-                                MessageRenderer& response_renderer)
+AuthSrvImpl::processNormalQuery(const IOMessage& io_message, MessagePtr message,
+                                OutputBufferPtr buffer)
 {
-    ConstEDNSPtr remote_edns = message.getEDNS();
+    ConstEDNSPtr remote_edns = message->getEDNS();
     const bool dnssec_ok = remote_edns && remote_edns->getDNSSECAwareness();
     const uint16_t remote_bufsize = remote_edns ? remote_edns->getUDPSize() :
         Message::DEFAULT_MAX_UDPSIZE;
 
-    message.makeResponse();
-    message.setHeaderFlag(Message::HEADERFLAG_AA);
-    message.setRcode(Rcode::NOERROR());
+    message->makeResponse();
+    message->setHeaderFlag(Message::HEADERFLAG_AA);
+    message->setRcode(Rcode::NOERROR());
 
     if (remote_edns) {
         EDNSPtr local_edns = EDNSPtr(new EDNS());
         local_edns->setDNSSECAwareness(dnssec_ok);
         local_edns->setUDPSize(AuthSrvImpl::DEFAULT_LOCAL_UDPSIZE);
-        message.setEDNS(local_edns);
+        message->setEDNS(local_edns);
     }
 
     try {
-        Query query(message, cache_, dnssec_ok);
+        Query query(*message, cache_, dnssec_ok);
         data_sources_.doQuery(query);
     } catch (const Exception& ex) {
         if (verbose_mode_) {
             cerr << "[b10-auth] Internal error, returning SERVFAIL: " <<
                 ex.what() << endl;
         }
-        makeErrorMessage(message, response_renderer, Rcode::SERVFAIL(),
-                         verbose_mode_);
+        makeErrorMessage(message, buffer, Rcode::SERVFAIL(), verbose_mode_);
         return (true);
     }
 
+
+    MessageRenderer renderer(*buffer);
     const bool udp_buffer =
         (io_message.getSocket().getProtocol() == IPPROTO_UDP);
-    response_renderer.setLengthLimit(udp_buffer ? remote_bufsize : 65535);
-    message.toWire(response_renderer);
+    renderer.setLengthLimit(udp_buffer ? remote_bufsize : 65535);
+    message->toWire(renderer);
+
     if (verbose_mode_) {
         cerr << "[b10-auth] sending a response ("
-             << response_renderer.getLength()
-             << " bytes):\n" << message.toText() << endl;
+             << renderer.getLength()
+             << " bytes):\n" << message->toText() << endl;
     }
 
     return (true);
 }
 
 bool
-AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, Message& message,
-                            MessageRenderer& response_renderer)
+AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, MessagePtr message,
+                              OutputBufferPtr buffer)
 {
     if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
         if (verbose_mode_) {
             cerr << "[b10-auth] AXFR query over UDP isn't allowed" << endl;
         }
-        makeErrorMessage(message, response_renderer, Rcode::FORMERR(),
-                         verbose_mode_);
+        makeErrorMessage(message, buffer, Rcode::FORMERR(), verbose_mode_);
         return (true);
     }
 
@@ -382,8 +457,7 @@ AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, Message& message,
             cerr << "[b10-auth] Error in handling XFR request: " << err.what()
                  << endl;
         }
-        makeErrorMessage(message, response_renderer, Rcode::SERVFAIL(),
-                         verbose_mode_);
+        makeErrorMessage(message, buffer, Rcode::SERVFAIL(), verbose_mode_);
         return (true);
     }
 
@@ -391,28 +465,26 @@ AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, Message& message,
 }
 
 bool
-AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
-                           MessageRenderer& response_renderer)
+AuthSrvImpl::processNotify(const IOMessage& io_message, MessagePtr message, 
+                           OutputBufferPtr buffer)
 {
     // The incoming notify must contain exactly one question for SOA of the
     // zone name.
-    if (message.getRRCount(Message::SECTION_QUESTION) != 1) {
+    if (message->getRRCount(Message::SECTION_QUESTION) != 1) {
         if (verbose_mode_) {
                 cerr << "[b10-auth] invalid number of questions in notify: "
-                     << message.getRRCount(Message::SECTION_QUESTION) << endl;
+                     << message->getRRCount(Message::SECTION_QUESTION) << endl;
         }
-        makeErrorMessage(message, response_renderer, Rcode::FORMERR(),
-                         verbose_mode_);
+        makeErrorMessage(message, buffer, Rcode::FORMERR(), verbose_mode_);
         return (true);
     }
-    ConstQuestionPtr question = *message.beginQuestion();
+    ConstQuestionPtr question = *message->beginQuestion();
     if (question->getType() != RRType::SOA()) {
         if (verbose_mode_) {
                 cerr << "[b10-auth] invalid question RR type in notify: "
                      << question->getType() << endl;
         }
-        makeErrorMessage(message, response_renderer, Rcode::FORMERR(),
-                         verbose_mode_);
+        makeErrorMessage(message, buffer, Rcode::FORMERR(), verbose_mode_);
         return (true);
     }
 
@@ -470,10 +542,12 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
         return (false);
     }
 
-    message.makeResponse();
-    message.setHeaderFlag(Message::HEADERFLAG_AA);
-    message.setRcode(Rcode::NOERROR());
-    message.toWire(response_renderer);
+    message->makeResponse();
+    message->setHeaderFlag(Message::HEADERFLAG_AA);
+    message->setRcode(Rcode::NOERROR());
+
+    MessageRenderer renderer(*buffer);
+    message->toWire(renderer);
     return (true);
 }
 

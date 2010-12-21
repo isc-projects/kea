@@ -1,3 +1,56 @@
+  134.  [func]      vorner
+	b10-recurse supports timeouts and retries in forwarder mode.
+	(Trac #401, svn r3660)
+
+  133.  [func]      vorner
+	New temporary logging function available in isc::log. It is used by
+	b10-recurse.
+	(Trac #393, r3602)
+
+  132.  [func]      vorner
+	The b10-recursive is configured through config manager.
+	It has "listen_on" and "forward_addresses" options.
+	(Trac #389, r3448)
+
+  131.  [func]    feng, jerry
+	src/lib/datasrc: Introduced two template classes RBTree and RBNode
+	to provide the generic map with domain name as key and anything as
+	the value. Because of some unresolved design issue, the new classes
+	are only intended to be used by memory zone and zone table.
+	(Trac #397, svn r3890)
+
+  130.	[func]		jerry
+	src/lib/datasrc: Introduced a new class MemoryDataSrc to provide
+	the general interface for memory data source.  For the initial
+	implementation, we don't make it a derived class of AbstractDataSrc
+	because the interface is so different(we'll eventually consider this
+	as part of the generalization work).
+	(Trac #422, svn r3866)
+
+  129.	[func]		jinmei
+	src/lib/dns: Added new functions masterLoad() for loading master
+	zone files.  The initial implementation can only parse a limited
+	form of master files, but BIND 9's named-compilezone can convert
+	any valid zone file into the acceptable form.
+	(Trac #423, svn r3857)
+
+  128.  [build]     vorner
+	Test for query name = '.', type = DS to authoritative nameserver
+	for root zone was added.
+	(Trac #85, svn r3836)
+
+>>>>>>> .merge-right.r3894
+  127.  [bug]       stephen
+	During normal operation process termination and resurrection messages
+	are now output regardless of the state of the verbose flag.
+	(Trac #229, svn r3828)
+
+  126.  [func]      stephen, vorner, ocean
+	The Nameserver Address Store (NSAS) component has been added. It takes
+	care of choosing an IP address of a nameserver when a zone needs to be
+	contacted.
+	(Trac #356, Trac #408, svn r3823)
+
 bind10-devel-20101201 released on December 01, 2010
 
   125.  [func]		jelte
