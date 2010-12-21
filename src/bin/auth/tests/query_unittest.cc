@@ -17,7 +17,7 @@
 #include <dns/rcode.h>
 #include <dns/rrtype.h>
 
-#include <datasrc/zonetable.h>
+#include <datasrc/memory_datasrc.h>
 
 #include <auth/query.h>
 
@@ -33,11 +33,11 @@ protected:
     QueryTest() :
         qname(Name("www.example.com")), qclass(RRClass::IN()),
         qtype(RRType::A()), response(Message::RENDER),
-        query(zone_table, qname, qtype, response)
+        query(memory_datasrc, qname, qtype, response)
     {
         response.setRcode(Rcode::NOERROR());
     }
-    ZoneTable zone_table;
+    MemoryDataSrc memory_datasrc;
     const Name qname;
     const RRClass qclass;
     const RRType qtype;
@@ -46,7 +46,7 @@ protected:
 };
 
 TEST_F(QueryTest, noZone) {
-    // There's no zone in the zone table.  So the response should have
+    // There's no zone in the memory datasource.  So the response should have
     // SERVFAIL.
     query.process();
     EXPECT_EQ(Rcode::SERVFAIL(), response.getRcode());
@@ -55,15 +55,15 @@ TEST_F(QueryTest, noZone) {
 TEST_F(QueryTest, matchZone) {
     // add a matching zone.  since the zone is empty right now, the response
     // should have NXDOMAIN.
-    zone_table.addZone(ZonePtr(new MemoryZone(qclass, Name("example.com"))));
+    memory_datasrc.addZone(ZonePtr(new MemoryZone(qclass, Name("example.com"))));
     query.process();
     EXPECT_EQ(Rcode::NXDOMAIN(), response.getRcode());
 }
 
 TEST_F(QueryTest, noMatchZone) {
-    // there's a zone in the table but it doesn't match the qname.  should
-    // result in SERVFAIL.
-    zone_table.addZone(ZonePtr(new MemoryZone(qclass, Name("example.org"))));
+    // there's a zone in the memory datasource but it doesn't match the qname.
+    // should result in SERVFAIL.
+    memory_datasrc.addZone(ZonePtr(new MemoryZone(qclass, Name("example.org"))));
     query.process();
     EXPECT_EQ(Rcode::SERVFAIL(), response.getRcode());
 }
