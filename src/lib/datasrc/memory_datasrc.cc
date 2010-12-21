@@ -27,16 +27,28 @@ using namespace isc::dns;
 namespace isc {
 namespace datasrc {
 
+// Private data and hidden methods of MemoryZone
 struct MemoryZone::MemoryZoneImpl {
+    // Constructor
     MemoryZoneImpl(const RRClass& zone_class, const Name& origin) :
         zone_class_(zone_class), origin_(origin)
     {}
+
+    // Information about the zone
     RRClass zone_class_;
     Name origin_;
+
+    // Some type aliases
+    /*
+     * Each domain consists of some RRsets. They will be looked up by the
+     * RRType.
+     */
     typedef map<RRType, ConstRRsetPtr> Domain;
     typedef boost::shared_ptr<Domain> DomainPtr;
+    // The tree stores domains
     typedef RBTree<Domain> DomainTree;
     typedef RBNode<Domain> DomainNode;
+    // The actual zone data
     DomainTree domains_;
 };
 
