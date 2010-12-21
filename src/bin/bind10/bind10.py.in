@@ -206,12 +206,11 @@ class BoB:
         """
         self.address = address
         self.dns_port = dns_port
-        self.forward = None
-        self.recursive = False
+        self.forward = forward
         if forward:
-            self.forward = forward
             self.recursive = True
-            self.nocache = False
+        else:
+            self.recursive = False
         self.cc_session = None
         self.ccs = None
         self.cfg_start_auth = True
@@ -740,7 +739,7 @@ def check_addr(option, opt_str, value, parser):
     try:
         if opt_str in ['-a', '--address']:
             parser.values.address = isc.net.parse.addr_parse(value)
-        if opt_str in ['-f', '--forward']:
+        elif opt_str in ['-f', '--forward']:
             parser.values.forward = isc.net.parse.addr_parse(value)
         else:
             raise OptionValueError("Unknown option " + opt_str)
@@ -763,7 +762,7 @@ def main():
                       action="callback", callback=check_addr, default=None,
                       help="address the DNS server will use (default: listen on all addresses)")
     parser.add_option("-f", "--forward", dest="forward", type="string",
-                      action="callback", callback=check_addr, default='',
+                      action="callback", callback=check_addr, default=None,
                       help="nameserver to which DNS queries should be forwarded")
     parser.add_option("-m", "--msgq-socket-file", dest="msgq_socket_file",
                       type="string", default=None,
