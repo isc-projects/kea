@@ -251,9 +251,11 @@ public:
     };
     /// Abstract callback for the UDPQuery.
     class Callback {
-        public:
-            /// This will be called when the UDPQuery is completed
-            virtual void operator()(Result result) = 0;
+    public:
+        virtual ~Callback() {}
+
+        /// This will be called when the UDPQuery is completed
+        virtual void operator()(Result result) = 0;
     };
     ///
     /// \brief Constructor.
