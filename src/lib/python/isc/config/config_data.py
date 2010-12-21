@@ -121,6 +121,7 @@ def find_spec_part(element, identifier):
         # strip list selector part
         # don't need it for the spec part, so just drop it
         id, list_indices = isc.cc.data.split_identifier_list_indices(id_part)
+        # is this part still needed? (see below)
         if type(cur_el) == dict and 'map_item_spec' in cur_el.keys():
             found = False
             for cur_el_item in cur_el['map_item_spec']:
@@ -129,11 +130,20 @@ def find_spec_part(element, identifier):
                     found = True
             if not found:
                 raise isc.cc.data.DataNotFoundError(id + " in " + str(cur_el))
+        elif type(cur_el) == dict and 'list_item_spec' in cur_el.keys():
+            cur_el = cur_el['list_item_spec']
         elif type(cur_el) == list:
             found = False
             for cur_el_item in cur_el:
                 if cur_el_item['item_name'] == id:
                     cur_el = cur_el_item
+                    # if we need to go further, we may need to 'skip' a step here
+                    # but not if we're done
+                    if id_parts[-1] != id_part and type(cur_el) == dict:
+                        if "map_item_spec" in cur_el:
+                            cur_el = cur_el["map_item_spec"]
+                        elif "list_item_spec" in cur_el:
+                            cur_el = cur_el["list_item_spec"]
                     found = True
             if not found:
                 raise isc.cc.data.DataNotFoundError(id + " in " + str(cur_el))
@@ -406,6 +416,56 @@ class MultiConfigData:
                 return value, self.DEFAULT
         return None, self.NONE
 
+    def _append_value_item(self, result, spec_part, identifier):
+        if type(spec_part) == list:
+            # list of items to show
+            for item in spec_part:
+                value, status = self.get_value("/" + identifier\
+                                      + "/" + item['item_name'])
+                entry = _create_value_map_entry(identifier + "/" + item['item_name'],
+                                                item['item_type'],
+                                                value, status)
+                result.append(entry)
+        elif type(spec_part) == dict:
+            # Two 'special cases' for easier viewing;
+            # If the item is a map, show the first-level contents
+            #
+            # If the item is a list, show all elements (with index in the name).
+            #
+            item = spec_part
+            if item['item_type'] == 'list':
+                li_spec = item['list_item_spec']
+                value, status =  self.get_value("/" + identifier)
+                if type(value) == list:
+                    i = 0;
+                    for list_value in value:
+                        result_part2 = _create_value_map_entry(
+                                           "%s[%d]" % (identifier, i),
+                                           li_spec['item_type'],
+                                           list_value)
+                        result.append(result_part2)
+                        i = i + 1
+                elif value is not None:
+                    self._append_value_item(result, li_spec, identifier)
+            elif item['item_type'] == 'map':
+                map_name = item['item_name'] + '/'
+                for map_item in item['map_item_spec']:
+                    value, status =  self.get_value('/' + identifier + '/' + map_item['item_name'])
+                    entry = _create_value_map_entry(
+                                identifier + "/" + map_item['item_name'],
+                                map_item['item_type'],
+                                value,
+                                status)
+                    result.append(entry)
+            else:
+                value, status = self.get_value("/" + identifier)
+                if value is not None:
+                    entry = _create_value_map_entry(
+                                identifier,
+                                item['item_type'],
+                                value, status)
+                    result.append(entry)
+
     def get_value_maps(self, identifier = None):
         """Returns a list of dicts, containing the following values:
            name: name of the entry (string)
@@ -429,56 +489,7 @@ class MultiConfigData:
             spec = self.get_module_spec(module)
             if spec:
                 spec_part = find_spec_part(spec.get_config_spec(), id)
-                if type(spec_part) == list:
-                    # list of items to show
-                    for item in spec_part:
-                        value, status = self.get_value("/" + identifier\
-                                              + "/" + item['item_name'])
-                        entry = _create_value_map_entry(item['item_name'],
-                                                        item['item_type'],
-                                                        value, status)
-                        result.append(entry)
-                elif type(spec_part) == dict:
-                    # Two 'special cases' for easier viewing;
-                    # If the item is a map, show the first-level contents
-                    #
-                    # If the item is a list, show all elements (with index in the name).
-                    #
-                    item = spec_part
-                    if item['item_type'] == 'list':
-                        li_spec = item['list_item_spec']
-                        value, status =  self.get_value("/" + identifier)
-                        if type(value) == list:
-                            for list_value in value:
-                                result_part2 = _create_value_map_entry(
-                                                   li_spec['item_name'],
-                                                   li_spec['item_type'],
-                                                   list_value)
-                                result.append(result_part2)
-                        elif value is not None:
-                            entry = _create_value_map_entry(
-                                        li_spec['item_name'],
-                                        li_spec['item_type'],
-                                        value, status)
-                            result.append(entry)
-                    elif item['item_type'] == 'map':
-                        map_name = item['item_name'] + '/'
-                        for map_item in item['map_item_spec']:
-                            value, status =  self.get_value('/' + identifier + '/' + map_item['item_name'])
-                            entry = _create_value_map_entry(
-                                        map_name + map_item['item_name'],
-                                        map_item['item_type'],
-                                        value,
-                                        status)
-                            result.append(entry)
-                    else:
-                        value, status = self.get_value("/" + identifier)
-                        if value is not None:
-                            entry = _create_value_map_entry(
-                                        item['item_name'],
-                                        item['item_type'],
-                                        value, status)
-                            result.append(entry)
+                self._append_value_item(result, spec_part, identifier)
         return result
 
     def set_value(self, identifier, value):
