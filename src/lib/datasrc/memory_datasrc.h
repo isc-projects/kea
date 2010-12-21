@@ -58,14 +58,22 @@ public:
     virtual ~MemoryZone();
     //@}
 
+    /// \brief Returns the origin of the zone.
     virtual const isc::dns::Name& getOrigin() const;
+    /// \brief Returns the class of the zone.
     virtual const isc::dns::RRClass& getClass() const;
+    /// \brief Looks up an RRset in the zone.
+    ///
+    /// See documentation in \c Zone.
     virtual FindResult find(const isc::dns::Name& name,
                             const isc::dns::RRType& type) const;
 
 private:
+    /// \name Hidden private data
+    //@{
     struct MemoryZoneImpl;
     MemoryZoneImpl* impl_;
+    //@}
 };
 
 /// \brief A data source that uses in memory dedicated backend.
