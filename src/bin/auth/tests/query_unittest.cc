@@ -55,7 +55,7 @@ TEST_F(QueryTest, noZone) {
 TEST_F(QueryTest, matchZone) {
     // add a matching zone.  since the zone is empty right now, the response
     // should have NXDOMAIN.
-    zone_table.add(ZonePtr(new Zone(qclass, Name("example.com"))));
+    zone_table.addZone(ZonePtr(new MemoryZone(qclass, Name("example.com"))));
     query.process();
     EXPECT_EQ(Rcode::NXDOMAIN(), response.getRcode());
 }
@@ -63,7 +63,7 @@ TEST_F(QueryTest, matchZone) {
 TEST_F(QueryTest, noMatchZone) {
     // there's a zone in the table but it doesn't match the qname.  should
     // result in SERVFAIL.
-    zone_table.add(ZonePtr(new Zone(qclass, Name("example.org"))));
+    zone_table.addZone(ZonePtr(new MemoryZone(qclass, Name("example.org"))));
     query.process();
     EXPECT_EQ(Rcode::SERVFAIL(), response.getRcode());
 }

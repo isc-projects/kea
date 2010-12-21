@@ -26,6 +26,7 @@ BUILT_SOURCES += rdata_tsig_toWire5.wire
 EXTRA_DIST = gen-wiredata.py.in
 EXTRA_DIST += edns_toWire1.spec edns_toWire2.spec
 EXTRA_DIST += edns_toWire3.spec edns_toWire4.spec
+EXTRA_DIST += masterload.txt
 EXTRA_DIST += message_fromWire1 message_fromWire2
 EXTRA_DIST += message_fromWire3 message_fromWire4
 EXTRA_DIST += message_fromWire5 message_fromWire6

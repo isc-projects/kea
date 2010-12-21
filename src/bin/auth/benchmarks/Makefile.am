@@ -17,5 +17,5 @@ query_bench_LDADD += $(top_builddir)/src/lib/datasrc/libdatasrc.la
 query_bench_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
 query_bench_LDADD += $(top_builddir)/src/lib/cc/libcc.la
 query_bench_LDADD += $(top_builddir)/src/lib/xfr/libxfr.la
-query_bench_LDADD += $(top_builddir)/src/bin/auth/libasio_link.a
+query_bench_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 query_bench_LDADD += $(SQLITE_LIBS)

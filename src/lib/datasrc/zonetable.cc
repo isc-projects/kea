@@ -28,30 +28,37 @@ using namespace isc::dns;
 namespace isc {
 namespace datasrc {
 
-struct Zone::ZoneImpl {
-    ZoneImpl(const RRClass& zone_class, const Name& origin) :
+struct MemoryZone::MemoryZoneImpl {
+    MemoryZoneImpl(const RRClass& zone_class, const Name& origin) :
         zone_class_(zone_class), origin_(origin)
     {}
     RRClass zone_class_;
     Name origin_;
 };
 
-Zone::Zone(const RRClass& zone_class, const Name& origin) : impl_(NULL) {
-    impl_ = new ZoneImpl(zone_class, origin);
+MemoryZone::MemoryZone(const RRClass& zone_class, const Name& origin) :
+    impl_(new MemoryZoneImpl(zone_class, origin))
+{
 }
 
-Zone::~Zone() {
+MemoryZone::~MemoryZone() {
     delete impl_;
 }
 
 const Name&
-Zone::getOrigin() const {
+MemoryZone::getOrigin() const {
     return (impl_->origin_);
 }
 
 const RRClass&
-Zone::getClass() const {
+MemoryZone::getClass() const {
     return (impl_->zone_class_);
+}
+
+Zone::FindResult
+MemoryZone::find(const Name&, const RRType&) const {
+    // This is a tentative implementation that always returns NXDOMAIN.
+    return (FindResult(NXDOMAIN, RRsetPtr()));
 }
 
 // This is a temporary, inefficient implementation using std::map and handmade
@@ -70,29 +77,30 @@ ZoneTable::~ZoneTable() {
     delete impl_;
 }
 
-ZoneTable::Result
-ZoneTable::add(ZonePtr zone) {
+result::Result
+ZoneTable::addZone(ZonePtr zone) {
     if (!zone) {
         isc_throw(InvalidParameter,
-                  "Null pointer is passed to ZoneTable::add()");
+                  "Null pointer is passed to ZoneTable::addZone()");
     }
 
     if (impl_->zones.insert(
             ZoneTableImpl::NameAndZone(zone->getOrigin(), zone)).second
         == true) {
-        return (SUCCESS);
+        return (result::SUCCESS);
     } else {
-        return (EXIST);
+        return (result::EXIST);
     }
 }
 
-ZoneTable::Result
-ZoneTable::remove(const Name& origin) {
-    return (impl_->zones.erase(origin) == 1 ? SUCCESS : NOTFOUND);
+result::Result
+ZoneTable::removeZone(const Name& origin) {
+    return (impl_->zones.erase(origin) == 1 ? result::SUCCESS :
+                                              result::NOTFOUND);
 }
 
 ZoneTable::FindResult
-ZoneTable::find(const Name& name) const {
+ZoneTable::findZone(const Name& name) const {
     // Inefficient internal loop to find a longest match.
     // This will be replaced with a single call to more intelligent backend.
     for (int i = 0; i < name.getLabelCount(); ++i) {
@@ -100,11 +108,11 @@ ZoneTable::find(const Name& name) const {
         ZoneTableImpl::ZoneMap::const_iterator found =
             impl_->zones.find(matchname);
         if (found != impl_->zones.end()) {
-            return (FindResult(i == 0 ? SUCCESS : PARTIALMATCH,
-                               (*found).second.get()));
+            return (FindResult(i == 0 ? result::SUCCESS :
+                               result::PARTIALMATCH, (*found).second));
         }
     }
-    return (FindResult(NOTFOUND, NULL));
+    return (FindResult(result::NOTFOUND, ConstZonePtr()));
 }
 } // end of namespace datasrc
 } // end of namespace isc
