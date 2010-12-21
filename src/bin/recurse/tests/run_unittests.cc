@@ -12,17 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// $Id$
-
 #include <gtest/gtest.h>
 
 #include <dns/tests/unittest_util.h>
 
 int
-main(int argc, char* argv[])
-{
+main(int argc, char* argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
     isc::UnitTestUtil::addDataPath(TEST_DATA_DIR);
+    isc::UnitTestUtil::addDataPath(TEST_DATA_BUILDDIR);
 
     return (RUN_ALL_TESTS());
 }
