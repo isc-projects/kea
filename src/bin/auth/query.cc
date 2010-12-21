@@ -14,29 +14,87 @@
 
 #include <dns/message.h>
 #include <dns/rcode.h>
+#include <iostream>
 
-#include <datasrc/zonetable.h>
+#include <datasrc/memory_datasrc.h>
 
 #include <auth/query.h>
 
 using namespace isc::dns;
 using namespace isc::datasrc;
+using namespace std;
 
 namespace isc {
 namespace auth {
+
+struct Query::QueryImpl {
+    QueryImpl(const MemoryDataSrc& memory_datasrc, const Name& qname,
+              const RRType& qtype, Message& response) :
+        memory_datasrc_(memory_datasrc), qname_(qname), qtype_(qtype),
+        response_(response)
+    {}
+
+    const MemoryDataSrc& memory_datasrc_;
+    const Name& qname_;
+    const RRType& qtype_;
+    Message& response_;
+};
+
+Query::Query(const MemoryDataSrc& memory_datasrc, const Name& qname,
+             const RRType& qtype, Message& response) :
+    impl_(new QueryImpl(memory_datasrc, qname, qtype, response))
+{}
+
+Query::~Query() {
+    delete impl_;
+}
+
 void
 Query::process() const {
-    const ZoneTable::FindResult result = zone_table_.findZone(qname_);
+    const MemoryDataSrc::FindResult result =
+        impl_->memory_datasrc_.findZone(impl_->qname_);
+    bool keep_doing = true;
 
-    if (result.code != isc::datasrc::result::SUCCESS &&
-        result.code != isc::datasrc::result::PARTIALMATCH) {
-        response_.setRcode(Rcode::SERVFAIL());
+    if (result.code != result::SUCCESS &&
+        result.code != result::PARTIALMATCH) {
+        impl_->response_.setRcode(Rcode::SERVFAIL());
         return;
     }
 
-    // Right now we have no code to search the zone, so we simply return
-    // NXDOMAIN for tests.
-    response_.setRcode(Rcode::NXDOMAIN());
+    while (keep_doing) {
+        keep_doing = false;
+        Zone::FindResult db_result = result.zone->find(impl_->qname_,
+                                                       impl_->qtype_);
+        switch (db_result.code) {
+            case Zone::SUCCESS:
+                impl_->response_.setRcode(Rcode::NOERROR());
+                impl_->response_.addRRset(Message::SECTION_ANSWER,
+                           boost::const_pointer_cast<RRset>(db_result.rrset));
+                // fill in authority and addtional sections.
+                break;
+            case Zone::DELEGATION:
+                // add NS to authority section, fill in additional section.
+                break;
+            case Zone::NXDOMAIN:
+                impl_->response_.setRcode(Rcode::NXDOMAIN());
+                // add SOA to authority section
+                break;
+            case Zone::NXRRSET:
+                impl_->response_.setRcode(Rcode::NXRRSET());
+                // add SOA to authority section
+                break;
+            case Zone::CNAME:
+            case Zone::DNAME:
+                // replace qname, continue lookup
+                keep_doing = true;
+                break;
+            // should not happen, catch programming error here.
+            default:
+                break;
+                isc_throw(Unexpected,
+                          "Zone::find return unexpected result.");
+        }
+    }
 }
 }
 }
