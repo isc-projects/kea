@@ -42,6 +42,7 @@
 #include <datasrc/data_source.h>
 #include <datasrc/static_datasrc.h>
 #include <datasrc/sqlite3_datasrc.h>
+#include <datasrc/memory_datasrc.h>
 
 #include <cc/data.h>
 
@@ -50,6 +51,7 @@
 #include <auth/common.h>
 #include <auth/auth_srv.h>
 #include <auth/asio_link.h>
+#include <auth/query.h>
 
 using namespace std;
 
@@ -57,6 +59,7 @@ using namespace isc;
 using namespace isc::cc;
 using namespace isc::datasrc;
 using namespace isc::dns;
+using namespace isc::auth;
 using namespace isc::dns::rdata;
 using namespace isc::data;
 using namespace isc::config;
@@ -71,7 +74,7 @@ private:
 public:
     AuthSrvImpl(const bool use_cache, AbstractXfroutClient& xfrout_client);
     ~AuthSrvImpl();
-    isc::data::ConstElementPtr setDbFile(isc::data::ConstElementPtr config);
+    isc::data::ConstElementPtr setConfig(isc::data::ConstElementPtr config);
 
     bool processNormalQuery(const IOMessage& io_message, Message& message,
                             MessageRenderer& response_renderer);
@@ -99,6 +102,12 @@ public:
 
     /// Hot spot cache
     isc::datasrc::HotCache cache_;
+
+    /// Currently, MemoryDataSrc isn't a derived class of AbstractDataSrc
+    /// because the interface is so different, so we use a separate variable
+    /// here.
+    bool use_memory_datasrc_;
+    isc::datasrc::MemoryDataSrc memory_datasrc_;
 };
 
 AuthSrvImpl::AuthSrvImpl(const bool use_cache,
@@ -321,8 +330,16 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
     }
 
     try {
-        Query query(message, cache_, dnssec_ok);
-        data_sources_.doQuery(query);
+        if (use_memory_datasrc_) {
+            ConstQuestionPtr question = *message.beginQuestion();
+            const RRType& qtype = question->getType();
+            const Name& qname = question->getName();
+            isc::auth::Query query(memory_datasrc_, qname, qtype, message);
+            query.process();
+        } else {
+            isc::datasrc::Query query(message, cache_, dnssec_ok);
+            data_sources_.doQuery(query);
+        }
     } catch (const Exception& ex) {
         if (verbose_mode_) {
             cerr << "[b10-auth] Internal error, returning SERVFAIL: " <<
@@ -478,15 +495,24 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
 }
 
 ConstElementPtr
-AuthSrvImpl::setDbFile(ConstElementPtr config) {
+AuthSrvImpl::setConfig(ConstElementPtr config) {
     ConstElementPtr answer = isc::config::createAnswer();
 
-    if (config && config->contains("database_file")) {
-        db_file_ = config->get("database_file")->stringValue();
+    if (config) {
+        if (config->contains("database_file")) {
+                db_file_ = config->get("database_file")->stringValue();
+        }
+        if (config->contains("use_memory_datasrc")) {
+                use_memory_datasrc_ = config->get("use_memory_datasrc")->boolValue();
+        }
     } else if (config_session_ != NULL) {
         bool is_default;
-        string item("database_file");
-        ConstElementPtr value = config_session_->getValue(is_default, item);
+        string use_item("use_memory_datasrc");
+        ConstElementPtr use_value = config_session_->getValue(is_default, use_item);
+        use_memory_datasrc_ = use_value->boolValue();
+
+        string db_item("database_file");
+        ConstElementPtr db_value = config_session_->getValue(is_default, db_item);
         ElementPtr final = Element::createMap();
 
         // If the value is the default, and we are running from
@@ -497,13 +523,13 @@ AuthSrvImpl::setDbFile(ConstElementPtr config) {
         //  but for that we need offline access to config, so for
         //  now this is a decent solution)
         if (is_default && getenv("B10_FROM_BUILD")) {
-            value = Element::create(string(getenv("B10_FROM_BUILD")) +
+            db_value = Element::create(string(getenv("B10_FROM_BUILD")) +
                                     "/bind10_zones.sqlite3");
         }
-        final->set(item, value);
+        final->set(db_item, db_value);
         config = final;
 
-        db_file_ = value->stringValue();
+        db_file_ = db_value->stringValue();
     } else {
         return (answer);
     }
@@ -535,7 +561,7 @@ AuthSrv::updateConfig(ConstElementPtr new_config) {
     try {
         // the ModuleCCSession has already checked if we have
         // the correct ElementPtr type as specified in our .spec file
-        return (impl_->setDbFile(new_config));
+        return (impl_->setConfig(new_config));
     } catch (const isc::Exception& error) {
         if (impl_->verbose_mode_) {
             cerr << "[b10-auth] error: " << error.what() << endl;

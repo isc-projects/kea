@@ -34,11 +34,13 @@
 #include <xfr/xfrout_client.h>
 
 #include <auth/auth_srv.h>
+#include <auth/query.h>
 #include <auth/asio_link.h>
 
 using namespace std;
 using namespace isc;
 using namespace isc::data;
+using namespace isc::auth;
 using namespace isc::dns;
 using namespace isc::xfr;
 using namespace isc::bench;

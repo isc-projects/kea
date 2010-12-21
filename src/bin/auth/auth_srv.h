@@ -38,6 +38,7 @@ namespace asio_link {
 class IOMessage;
 }
 
+
 /// \brief The implementation class for the \c AuthSrv class using the pimpl
 /// idiom.
 class AuthSrvImpl;

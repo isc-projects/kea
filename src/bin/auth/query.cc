@@ -14,7 +14,6 @@
 
 #include <dns/message.h>
 #include <dns/rcode.h>
-#include <iostream>
 
 #include <datasrc/memory_datasrc.h>
 
@@ -22,7 +21,6 @@
 
 using namespace isc::dns;
 using namespace isc::datasrc;
-using namespace std;
 
 namespace isc {
 namespace auth {
@@ -69,7 +67,7 @@ Query::process() const {
             case Zone::SUCCESS:
                 impl_->response_.setRcode(Rcode::NOERROR());
                 impl_->response_.addRRset(Message::SECTION_ANSWER,
-                           boost::const_pointer_cast<RRset>(db_result.rrset));
+                            boost::const_pointer_cast<RRset>(db_result.rrset));
                 // fill in authority and addtional sections.
                 break;
             case Zone::DELEGATION:

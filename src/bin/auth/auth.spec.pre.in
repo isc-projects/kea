@@ -3,6 +3,11 @@
     "module_name": "Auth",
     "module_description": "Authoritative service",
     "config_data": [
+      { "item_name": "use_memory_datasrc",
+        "item_type": "boolean",
+        "item_optional": true,
+        "item_default": true
+      },
       { "item_name": "database_file",
         "item_type": "string",
         "item_optional": true,
