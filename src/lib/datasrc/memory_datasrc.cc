@@ -13,6 +13,8 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <dns/name.h>
+#include <dns/rrclass.h>
+
 #include <datasrc/memory_datasrc.h>
 
 using namespace std;
@@ -20,6 +22,39 @@ using namespace isc::dns;
 
 namespace isc {
 namespace datasrc {
+
+struct MemoryZone::MemoryZoneImpl {
+    MemoryZoneImpl(const RRClass& zone_class, const Name& origin) :
+        zone_class_(zone_class), origin_(origin)
+    {}
+    RRClass zone_class_;
+    Name origin_;
+};
+
+MemoryZone::MemoryZone(const RRClass& zone_class, const Name& origin) :
+    impl_(new MemoryZoneImpl(zone_class, origin))
+{
+}
+
+MemoryZone::~MemoryZone() {
+    delete impl_;
+}
+
+const Name&
+MemoryZone::getOrigin() const {
+    return (impl_->origin_);
+}
+
+const RRClass&
+MemoryZone::getClass() const {
+    return (impl_->zone_class_);
+}
+
+Zone::FindResult
+MemoryZone::find(const Name&, const RRType&) const {
+    // This is a tentative implementation that always returns NXDOMAIN.
+    return (FindResult(NXDOMAIN, RRsetPtr()));
+}
 
 /// Implementation details for \c MemoryDataSrc hidden from the public
 /// interface.
