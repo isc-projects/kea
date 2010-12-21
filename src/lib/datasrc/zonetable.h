@@ -29,47 +29,6 @@ class RRClass;
 
 namespace datasrc {
 
-/// A derived zone class intended to be used with the memory data source.
-///
-/// Currently this is almost empty and is only used for testing the
-/// \c ZoneTable class.  It will be substantially expanded, and will probably
-/// moved to a separate header file.
-class MemoryZone : public Zone {
-    ///
-    /// \name Constructors and Destructor.
-    ///
-    /// \b Note:
-    /// The copy constructor and the assignment operator are intentionally
-    /// defined as private, making this class non copyable.
-    //@{
-private:
-    MemoryZone(const MemoryZone& source);
-    MemoryZone& operator=(const MemoryZone& source);
-public:
-    /// \brief Constructor from zone parameters.
-    ///
-    /// This constructor internally involves resource allocation, and if
-    /// it fails, a corresponding standard exception will be thrown.
-    /// It never throws an exception otherwise.
-    ///
-    /// \param rrclass The RR class of the zone.
-    /// \param origin The origin name of the zone.
-    MemoryZone(const isc::dns::RRClass& rrclass, const isc::dns::Name& origin);
-
-    /// The destructor.
-    virtual ~MemoryZone();
-    //@}
-
-    virtual const isc::dns::Name& getOrigin() const;
-    virtual const isc::dns::RRClass& getClass() const;
-    virtual FindResult find(const isc::dns::Name& name,
-                            const isc::dns::RRType& type) const;
-
-private:
-    struct MemoryZoneImpl;
-    MemoryZoneImpl* impl_;
-};
-
 /// \brief A set of authoritative zones.
 ///
 /// \c ZoneTable class is primarily intended to be used as a backend for the
