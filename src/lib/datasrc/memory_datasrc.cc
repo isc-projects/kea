@@ -12,10 +12,14 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <map>
+#include <boost/shared_ptr.hpp>
+
 #include <dns/name.h>
 #include <dns/rrclass.h>
 
 #include <datasrc/memory_datasrc.h>
+#include <datasrc/rbtree.h>
 
 using namespace std;
 using namespace isc::dns;
@@ -29,6 +33,11 @@ struct MemoryZone::MemoryZoneImpl {
     {}
     RRClass zone_class_;
     Name origin_;
+    typedef map<RRType, ConstRRsetPtr> Domain;
+    typedef boost::shared_ptr<Domain> DomainPtr;
+    typedef RBTree<Domain> DomainTree;
+    typedef RBNode<Domain> DomainNode;
+    DomainTree domains_;
 };
 
 MemoryZone::MemoryZone(const RRClass& zone_class, const Name& origin) :
