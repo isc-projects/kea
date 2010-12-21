@@ -6,7 +6,7 @@
       { "item_name": "use_memory_datasrc",
         "item_type": "boolean",
         "item_optional": true,
-        "item_default": true
+        "item_default": false
       },
       { "item_name": "database_file",
         "item_type": "string",

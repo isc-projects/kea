@@ -103,10 +103,11 @@ public:
     /// Hot spot cache
     isc::datasrc::HotCache cache_;
 
+    // enable memory data source
+    bool use_memory_datasrc_;
     /// Currently, MemoryDataSrc isn't a derived class of AbstractDataSrc
     /// because the interface is so different, so we use a separate variable
     /// here.
-    bool use_memory_datasrc_;
     isc::datasrc::MemoryDataSrc memory_datasrc_;
 };
 
@@ -330,6 +331,8 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
     }
 
     try {
+        // If a memory data source is configured call the separate
+        // Query::process()
         if (use_memory_datasrc_) {
             ConstQuestionPtr question = *message.beginQuestion();
             const RRType& qtype = question->getType();
