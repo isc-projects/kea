@@ -42,6 +42,13 @@ struct MemoryZone::MemoryZoneImpl {
     /*
      * Each domain consists of some RRsets. They will be looked up by the
      * RRType.
+     *
+     * The use of map is questionable with regard to performance - there'll
+     * be usually only few RRsets in the domain, so the log n benefit isn't
+     * much and a vector/array might be faster due to its simplicity and
+     * continuous memory location. But this is unlikely to be a performance
+     * critical place and map has better interface for the lookups, so we use
+     * that.
      */
     typedef map<RRType, ConstRRsetPtr> Domain;
     typedef boost::shared_ptr<Domain> DomainPtr;

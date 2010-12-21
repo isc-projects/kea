@@ -26,10 +26,6 @@ namespace datasrc {
 
 /// A derived zone class intended to be used with the memory data source.
 ///
-/// Currently this is almost empty and is only used for testing the
-/// \c ZoneTable class.  It will be substantially expanded, and will probably
-/// moved to a separate header file.
-///
 /// \todo Is this really needed in header file? If it is used only inside
 /// MemoryDataSrc, we could move it to .cc file and not care about the impl_.
 class MemoryZone : public Zone {
