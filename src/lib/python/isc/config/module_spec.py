@@ -328,7 +328,24 @@ def _validate_spec(spec, full, data, errors):
         return True
 
 def _validate_spec_list(module_spec, full, data, errors):
+    # we do not return immediately, there may be more errors
+    # so we keep a boolean to keep track if we found errors
+    validated = True
+
+    # check if the known items are correct
     for spec_item in module_spec:
         if not _validate_spec(spec_item, full, data, errors):
-            return False
-    return True
+            validated = False
+
+    # check if there are items in our data that are not in the
+    # specification
+    for item_name in data:
+        found = False
+        for spec_item in module_spec:
+            if spec_item["item_name"] == item_name:
+                found = True
+        if not found:
+            if errors != None:
+                errors.append("unknown item " + item_name)
+            validated = False
+    return validated
