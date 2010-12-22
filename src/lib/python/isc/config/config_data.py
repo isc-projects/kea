@@ -449,7 +449,17 @@ class MultiConfigData:
                             self._append_value_item(result, spec_part_list, "%s[%d]" % (identifier, i), all)
             elif item_type == "map":
                 spec_part_map = spec_part['map_item_spec']
-                self._append_value_item(result, spec_part_map, identifier, all)
+                value, status = self.get_value(identifier)
+                # if there are no contents, simply add the value
+                # as one empty element, otherwise append them
+                # individually
+                if value != {}:
+                    self._append_value_item(result, spec_part_map, identifier, all)
+                else:
+                    entry = _create_value_map_entry(identifier,
+                                                    item_type,
+                                                    {}, status)
+                    result.append(entry)
             else:
                 value, status = self.get_value(identifier)
                 entry = _create_value_map_entry(identifier,

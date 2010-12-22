@@ -423,6 +423,8 @@ class TestMultiConfigData(unittest.TestCase):
         self.mcd._set_current_config({ "Spec2": { "item1": 2 } })
         self.mcd.set_value("Spec2/item3", False)
         maps = self.mcd.get_value_maps("/Spec2")
+        print("[XX] MAPS:")
+        print(maps)
         self.assertEqual([{'default': False, 'type': 'integer', 'name': 'Spec2/item1', 'value': 2, 'modified': False},
                           {'default': True, 'type': 'real', 'name': 'Spec2/item2', 'value': 1.1, 'modified': False},
                           {'default': False, 'type': 'boolean', 'name': 'Spec2/item3', 'value': False, 'modified': True},
@@ -437,8 +439,8 @@ class TestMultiConfigData(unittest.TestCase):
                           {'default': True, 'type': 'list', 'name': 'Spec2/item5', 'value': ['a', 'b'], 'modified': False},
                           {'default': True, 'type': 'map', 'name': 'Spec2/item6', 'value': {}, 'modified': False}], maps)
         maps = self.mcd.get_value_maps("/Spec2/item5")
-        self.assertEqual([{'default': False, 'type': 'string', 'name': 'Spec2/item5[0]', 'value': 'a', 'modified': False},
-                          {'default': False, 'type': 'string', 'name': 'Spec2/item5[1]', 'value': 'b', 'modified': False}], maps)
+        self.assertEqual([{'default': True, 'type': 'string', 'name': 'Spec2/item5[0]', 'value': 'a', 'modified': False},
+                          {'default': True, 'type': 'string', 'name': 'Spec2/item5[1]', 'value': 'b', 'modified': False}], maps)
         maps = self.mcd.get_value_maps("/Spec2/item5[0]")
         self.assertEqual([{'default': True, 'modified': False, 'name': 'Spec2/item5[0]', 'type': 'string', 'value': 'a'}], maps)
         maps = self.mcd.get_value_maps("/Spec2/item1")
@@ -456,7 +458,7 @@ class TestMultiConfigData(unittest.TestCase):
         self.assertEqual([], maps)
         self.mcd._set_current_config({ "Spec24": { "item": [] } })
         maps = self.mcd.get_value_maps("/Spec24/item")
-        self.assertEqual([], maps)
+        self.assertEqual([{'default': False, 'modified': False, 'name': 'Spec24/item', 'type': 'list', 'value': []}], maps)
 
         module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec22.spec")
         self.mcd.set_specification(module_spec)
