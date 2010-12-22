@@ -47,11 +47,14 @@ using namespace asio_link;
 
 namespace {
 const char* const CONFIG_TESTDB =
-    "{\"database_file\": \"" TEST_DATA_DIR "/example.sqlite3\"}";
+    "{\"database_file\": \"" TEST_DATA_DIR "/example.sqlite3\", \"use_memory_datasrc\": false}";
+
+const char* const MEMORY_CONFIG_TESTDB =
+    "{\"database_file\": \"" TEST_DATA_DIR "/example.sqlite3\", \"use_memory_datasrc\": true}";
 // The following file must be non existent and must be non"creatable" (see
 // the sqlite3 test).
 const char* const BADCONFIG_TESTDB =
-    "{ \"database_file\": \"" TEST_DATA_DIR "/nodir/notexist\"}";
+    "{ \"database_file\": \"" TEST_DATA_DIR "/nodir/notexist\", \"use_memory_datasrc\": false}";
 const char* const DEFAULT_REMOTE_ADDRESS = "192.0.2.1";
 
 class AuthSrvTest : public ::testing::Test {
@@ -756,6 +759,18 @@ TEST_F(AuthSrvTest, updateConfigFail) {
                                       response_renderer));
     headerCheck(parse_message, default_qid, Rcode::NOERROR(), opcode.getCode(),
                 QR_FLAG | AA_FLAG, 1, 1, 1, 0);
+}
+
+TEST_F(AuthSrvTest, useMemoryDataSrc) {
+    // First, load a memory data source.
+    updateConfig(&server, MEMORY_CONFIG_TESTDB, true);
+
+    // The memory data source is empty, should return SERVFAIL rcode.
+    createDataFromFile("examplequery_fromWire.wire");
+    EXPECT_TRUE(server.processMessage(*io_message, parse_message,
+                                      response_renderer));
+    headerCheck(parse_message, default_qid, Rcode::SERVFAIL(), opcode.getCode(),
+                QR_FLAG | AA_FLAG, 1, 0, 0, 0);
 }
 
 TEST_F(AuthSrvTest, cacheSlots) {
