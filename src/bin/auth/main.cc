@@ -61,7 +61,7 @@ const char* DNSPORT = "5300";
 
 // Note: this value must be greater than 0.
 // TODO: make it configurable via command channel.
-const uint32_t STATS_SEND_INTERVAL_SEC = 60;
+const uint32_t STATISTICS_SEND_INTERVAL_SEC = 60;
 
 /* need global var for config/command handlers.
  * todo: turn this around, and put handlers in the authserver
@@ -170,10 +170,10 @@ main(int argc, char* argv[]) {
     // XXX: we should eventually pass io_service here.
     Session* cc_session = NULL;
     Session* xfrin_session = NULL;
-    Session* stats_session = NULL;
+    Session* statistics_session = NULL;
     asio_link::IntervalTimer* itimer = NULL;
     bool xfrin_session_established = false; // XXX (see Trac #287)
-    bool stats_session_established = false; // XXX (see Trac #287)
+    bool statistics_session_established = false; // XXX (see Trac #287)
     ModuleCCSession* config_session = NULL;
     string xfrout_socket_path;
     if (getenv("B10_FROM_BUILD") != NULL) {
@@ -228,11 +228,11 @@ main(int argc, char* argv[]) {
         xfrin_session_established = true;
         cout << "[b10-auth] Xfrin session channel established." << endl;
 
-        stats_session = new Session(io_service->get_io_service());
-        cout << "[b10-auth] Stats session channel created." << endl;
-        stats_session->establish(NULL);
-        stats_session_established = true;
-        cout << "[b10-auth] Stats session channel established." << endl;
+        statistics_session = new Session(io_service->get_io_service());
+        cout << "[b10-auth] Statistics session channel created." << endl;
+        statistics_session->establish(NULL);
+        statistics_session_established = true;
+        cout << "[b10-auth] Statistics session channel established." << endl;
 
         // XXX: with the current interface to asio_link we have to create
         // auth_server before io_service while Session needs io_service.
@@ -240,7 +240,7 @@ main(int argc, char* argv[]) {
         // from auth_server, and create io_service, auth_server, and
         // sessions in that order.
         auth_server->setXfrinSession(xfrin_session);
-        auth_server->setStatsSession(stats_session);
+        auth_server->setStatisticsSession(statistics_session);
         auth_server->setConfigSession(config_session);
         auth_server->updateConfig(ElementPtr());
 
@@ -249,8 +249,8 @@ main(int argc, char* argv[]) {
         // set up interval timer
         // register function to send statistics with interval
         itimer->setupTimer(boost::bind(statisticsTimerCallback, auth_server),
-                           STATS_SEND_INTERVAL_SEC);
-        cout << "[b10-auth] Interval timer set to send stats." << endl;
+                           STATISTICS_SEND_INTERVAL_SEC);
+        cout << "[b10-auth] Interval timer to send statistics set." << endl;
 
         cout << "[b10-auth] Server started." << endl;
         io_service->run();
@@ -259,8 +259,8 @@ main(int argc, char* argv[]) {
         ret = 1;
     }
 
-    if (stats_session_established) {
-        stats_session->disconnect();
+    if (statistics_session_established) {
+        statistics_session->disconnect();
     }
 
     if (xfrin_session_established) {
@@ -268,7 +268,7 @@ main(int argc, char* argv[]) {
     }
 
     delete itimer;
-    delete stats_session;
+    delete statistics_session;
     delete xfrin_session;
     delete config_session;
     delete cc_session;

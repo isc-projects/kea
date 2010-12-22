@@ -102,7 +102,10 @@ public:
     isc::datasrc::HotCache cache_;
 
     /// Query counters for statistics
-    QueryCounters counters_;
+    AuthCounters counters_;
+private:
+    /// Increment query counter
+    void incCounter(int protocol);
 };
 
 AuthSrvImpl::AuthSrvImpl(const bool use_cache,
@@ -220,8 +223,8 @@ AuthSrv::setConfigSession(ModuleCCSession* config_session) {
 }
 
 void
-AuthSrv::setStatsSession(AbstractSession* stats_session) {
-    impl_->counters_.setStatsSession(stats_session);
+AuthSrv::setStatisticsSession(AbstractSession* statistics_session) {
+    impl_->counters_.setStatisticsSession(statistics_session);
 }
 
 ModuleCCSession*
@@ -276,17 +279,6 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
         cerr << "[b10-auth] received a message:\n" << message.toText() << endl;
     }
 
-    // increment Query Counter
-    if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
-        impl_->counters_.inc(QueryCounters::COUNTER_UDP);
-    } else if (io_message.getSocket().getProtocol() == IPPROTO_TCP) {
-        impl_->counters_.inc(QueryCounters::COUNTER_TCP);
-    } else {
-        // unknown protocol
-        isc_throw(Unexpected, "Unknown protocol: " <<
-                  io_message.getSocket().getProtocol());
-    }
-
     // Perform further protocol-level validation.
 
     if (message.getOpcode() == Opcode::NOTIFY()) {
@@ -334,6 +326,9 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
     message.setHeaderFlag(Message::HEADERFLAG_AA);
     message.setRcode(Rcode::NOERROR());
 
+    // Increment query counter.
+    incCounter(io_message.getSocket().getProtocol());
+
     if (remote_edns) {
         EDNSPtr local_edns = EDNSPtr(new EDNS());
         local_edns->setDNSSECAwareness(dnssec_ok);
@@ -371,6 +366,9 @@ bool
 AuthSrvImpl::processAxfrQuery(const IOMessage& io_message, Message& message,
                             MessageRenderer& response_renderer)
 {
+    // Increment query counter.
+    incCounter(io_message.getSocket().getProtocol());
+
     if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
         if (verbose_mode_) {
             cerr << "[b10-auth] AXFR query over UDP isn't allowed" << endl;
@@ -498,6 +496,19 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
     return (true);
 }
 
+void
+AuthSrvImpl::incCounter(int protocol) {
+    // Increment query counter.
+    if (protocol == IPPROTO_UDP) {
+        counters_.inc(AuthCounters::COUNTER_UDP);
+    } else if (protocol == IPPROTO_TCP) {
+        counters_.inc(AuthCounters::COUNTER_TCP);
+    } else {
+        // unknown protocol
+        isc_throw(Unexpected, "Unknown protocol: " << protocol);
+    }
+}
+
 ConstElementPtr
 AuthSrvImpl::setDbFile(ConstElementPtr config) {
     ConstElementPtr answer = isc::config::createAnswer();
@@ -565,11 +576,11 @@ AuthSrv::updateConfig(ConstElementPtr new_config) {
     }
 }
 
-bool AuthSrv::submitStatistics() {
+bool AuthSrv::submitStatistics() const {
     return (impl_->counters_.submitStatistics());
 }
 
-const std::vector<uint64_t>&
-AuthSrv::getCounters() const {
-    return (impl_->counters_.getCounters());
+uint64_t
+AuthSrv::getCounter(const AuthCounters::QueryType type) const {
+    return (impl_->counters_.getCounter(type));
 }

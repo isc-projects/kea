@@ -23,53 +23,49 @@
 #include <iostream>
 
 // TODO: We need a namespace ("auth_server"?) to hold
-// AuthSrv and QueryCounters.
+// AuthSrv and AuthCounters.
 
-class QueryCountersImpl {
+class AuthCountersImpl {
 private:
     // prohibit copy
-    QueryCountersImpl(const QueryCountersImpl& source);
-    QueryCountersImpl& operator=(const QueryCountersImpl& source);
+    AuthCountersImpl(const AuthCountersImpl& source);
+    AuthCountersImpl& operator=(const AuthCountersImpl& source);
 public:
     // References verbose_mode flag in AuthSrvImpl
     // TODO: Fix this short term workaround for logging
     // after we have logging framework
-    QueryCountersImpl(const bool& verbose_mode);
-    ~QueryCountersImpl();
-    void inc(const QueryCounters::QueryCounterType type);
+    AuthCountersImpl(const bool& verbose_mode);
+    ~AuthCountersImpl();
+    void inc(const AuthCounters::QueryType type);
     bool submitStatistics() const;
-    void setStatsSession(isc::cc::AbstractSession* stats_session);
+    void setStatisticsSession(isc::cc::AbstractSession* statistics_session);
     // Currently for testing purpose only
-    const std::vector<uint64_t>& getCounters() const;
+    uint64_t getCounter(const AuthCounters::QueryType type) const;
 private:
     std::vector<uint64_t> counters_;
-    isc::cc::AbstractSession* stats_session_;
+    isc::cc::AbstractSession* statistics_session_;
     const bool& verbose_mode_;
 };
 
-QueryCountersImpl::QueryCountersImpl(const bool& verbose_mode) :
+AuthCountersImpl::AuthCountersImpl(const bool& verbose_mode) :
     // initialize counter
-    // size: QueryCounters::COUNTER_TYPES, initial value: 0
-    counters_(QueryCounters::COUNTER_TYPES, 0),
-    stats_session_(NULL),
+    // size: AuthCounters::COUNTER_TYPES, initial value: 0
+    counters_(AuthCounters::COUNTER_TYPES, 0),
+    statistics_session_(NULL),
     verbose_mode_(verbose_mode)
 {}
 
-QueryCountersImpl::~QueryCountersImpl()
+AuthCountersImpl::~AuthCountersImpl()
 {}
 
 void
-QueryCountersImpl::inc(const QueryCounters::QueryCounterType type) {
-    try {
-        ++counters_.at(type);
-    } catch (std::out_of_range) {
-        isc_throw(isc::InvalidParameter, "Unknown counter type: " << type);
-    }
+AuthCountersImpl::inc(const AuthCounters::QueryType type) {
+    ++counters_.at(type);
 }
 
 bool
-QueryCountersImpl::submitStatistics() const {
-    if (stats_session_ == NULL) {
+AuthCountersImpl::submitStatistics() const {
+    if (statistics_session_ == NULL) {
         if (verbose_mode_) {
             std::cerr << "[b10-auth] "
                       << "session interface for statistics"
@@ -77,24 +73,25 @@ QueryCountersImpl::submitStatistics() const {
         }
         return (false);
     }
-    std::stringstream strstats;
-    strstats << "{\"command\": [\"set\","
-             <<   "{ \"stats_data\": "
-             <<     "{ \"auth.queries.udp\": "
-             <<     counters_.at(QueryCounters::COUNTER_UDP)
-             <<     ", \"auth.queries.tcp\": "
-             <<     counters_.at(QueryCounters::COUNTER_TCP)
-             <<   " }"
-             <<   "}"
-             << "]}";
-    isc::data::ConstElementPtr set_stats =
-        isc::data::Element::fromJSON(strstats);
+    std::stringstream statistics_string;
+    statistics_string << "{\"command\": [\"set\","
+                      <<   "{ \"stats_data\": "
+                      <<     "{ \"auth.queries.udp\": "
+                      <<     counters_.at(AuthCounters::COUNTER_UDP)
+                      <<     ", \"auth.queries.tcp\": "
+                      <<     counters_.at(AuthCounters::COUNTER_TCP)
+                      <<   " }"
+                      <<   "}"
+                      << "]}";
+    isc::data::ConstElementPtr statistics_element =
+        isc::data::Element::fromJSON(statistics_string);
     try {
         // group_{send,recv}msg() can throw an exception when encountering
         // an error, and group_recvmsg() will throw an exception on timeout.
         // We don't want to kill the main server just due to this, so we
         // handle them here.
-        const int seq = stats_session_->group_sendmsg(set_stats, "Stats");
+        const int seq =
+            statistics_session_->group_sendmsg(statistics_element, "Stats");
         isc::data::ConstElementPtr env, answer;
         if (verbose_mode_) {
             std::cerr << "[b10-auth] "
@@ -102,7 +99,7 @@ QueryCountersImpl::submitStatistics() const {
         }
         // TODO: parse and check response from statistics module
         // currently it just returns empty message
-        stats_session_->group_recvmsg(env, answer, false, seq);
+        statistics_session_->group_recvmsg(env, answer, false, seq);
     } catch (const isc::cc::SessionError& ex) {
         if (verbose_mode_) {
             std::cerr << "[b10-auth] "
@@ -122,40 +119,46 @@ QueryCountersImpl::submitStatistics() const {
 }
 
 void
-QueryCountersImpl::setStatsSession(isc::cc::AbstractSession* stats_session) {
-    stats_session_ = stats_session;
+AuthCountersImpl::setStatisticsSession
+    (isc::cc::AbstractSession* statistics_session)
+{
+    statistics_session_ = statistics_session;
 }
 
 // Currently for testing purpose only
-const std::vector<uint64_t>&
-QueryCountersImpl::getCounters() const {
-    return (counters_);
+uint64_t
+AuthCountersImpl::getCounter
+    (const AuthCounters::QueryType type) const
+{
+    return (counters_.at(type));
 }
 
-QueryCounters::QueryCounters(const bool& verbose_mode) :
-    impl_(new QueryCountersImpl(verbose_mode))
+AuthCounters::AuthCounters(const bool& verbose_mode) :
+    impl_(new AuthCountersImpl(verbose_mode))
 {}
 
-QueryCounters::~QueryCounters() {
+AuthCounters::~AuthCounters() {
     delete impl_;
 }
 
 void
-QueryCounters::inc(const QueryCounters::QueryCounterType type) {
+AuthCounters::inc(const AuthCounters::QueryType type) {
     impl_->inc(type);
 }
 
 bool
-QueryCounters::submitStatistics() const {
+AuthCounters::submitStatistics() const {
     return (impl_->submitStatistics());
 }
 
 void
-QueryCounters::setStatsSession(isc::cc::AbstractSession* stats_session) {
-    impl_->setStatsSession(stats_session);
+AuthCounters::setStatisticsSession
+    (isc::cc::AbstractSession* statistics_session)
+{
+    impl_->setStatisticsSession(statistics_session);
 }
 
-const std::vector<uint64_t>&
-QueryCounters::getCounters() const {
-    return (impl_->getCounters());
+uint64_t
+AuthCounters::getCounter(const AuthCounters::QueryType type) const {
+    return (impl_->getCounter(type));
 }

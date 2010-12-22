@@ -33,7 +33,7 @@ using namespace isc::data;
 
 namespace {
 
-class QueryCountersTest : public ::testing::Test {
+class AuthCountersTest : public ::testing::Test {
 private:
     class MockSession : public AbstractSession {
     public:
@@ -71,46 +71,46 @@ private:
     };
 
 protected:
-    QueryCountersTest() : counters(verbose_mode_) {
-        counters.setStatsSession(&stats_session_);
+    AuthCountersTest() : verbose_mode_(false), counters(verbose_mode_) {
+        counters.setStatisticsSession(&statistics_session_);
     }
-    ~QueryCountersTest() {
+    ~AuthCountersTest() {
     }
-    MockSession stats_session_;
-    QueryCounters counters;
+    MockSession statistics_session_;
     bool verbose_mode_;
+    AuthCounters counters;
 };
 
 void
-QueryCountersTest::MockSession::establish(const char*) {}
+AuthCountersTest::MockSession::establish(const char*) {}
 
 void
-QueryCountersTest::MockSession::disconnect() {}
+AuthCountersTest::MockSession::disconnect() {}
 
 void
-QueryCountersTest::MockSession::subscribe(string, string)
+AuthCountersTest::MockSession::subscribe(string, string)
 {}
 
 void
-QueryCountersTest::MockSession::unsubscribe(string, string)
+AuthCountersTest::MockSession::unsubscribe(string, string)
 {}
 
 void
-QueryCountersTest::MockSession::startRead(boost::function<void()>)
+AuthCountersTest::MockSession::startRead(boost::function<void()>)
 {}
 
 int
-QueryCountersTest::MockSession::reply(ConstElementPtr, ConstElementPtr) {
+AuthCountersTest::MockSession::reply(ConstElementPtr, ConstElementPtr) {
     return (-1);
 }
 
 bool
-QueryCountersTest::MockSession::hasQueuedMsgs() const {
+AuthCountersTest::MockSession::hasQueuedMsgs() const {
     return (false);
 }
 
 int
-QueryCountersTest::MockSession::group_sendmsg(ConstElementPtr msg,
+AuthCountersTest::MockSession::group_sendmsg(ConstElementPtr msg,
                                               string group, string, string)
 {
     if (throw_session_error_) {
@@ -122,7 +122,7 @@ QueryCountersTest::MockSession::group_sendmsg(ConstElementPtr msg,
 }
 
 bool
-QueryCountersTest::MockSession::group_recvmsg(ConstElementPtr&,
+AuthCountersTest::MockSession::group_recvmsg(ConstElementPtr&,
                                               ConstElementPtr& msg, bool, int)
 {
     if (throw_session_timeout_) {
@@ -133,68 +133,83 @@ QueryCountersTest::MockSession::group_recvmsg(ConstElementPtr&,
 }
 
 void
-QueryCountersTest::MockSession::setThrowSessionError(bool flag) {
+AuthCountersTest::MockSession::setThrowSessionError(bool flag) {
     throw_session_error_ = flag;
 }
 
 void
-QueryCountersTest::MockSession::setThrowSessionTimeout(bool flag) {
+AuthCountersTest::MockSession::setThrowSessionTimeout(bool flag) {
     throw_session_timeout_ = flag;
 }
 
-TEST_F(QueryCountersTest, incrementUDPCounter) {
-    EXPECT_NO_THROW(counters.inc(QueryCounters::COUNTER_UDP));
+TEST_F(AuthCountersTest, incrementUDPCounter) {
+    // The counter should be initialized to 0.
+    EXPECT_EQ(0, counters.getCounter(AuthCounters::COUNTER_UDP));
+    EXPECT_NO_THROW(counters.inc(AuthCounters::COUNTER_UDP));
+    // After increment, the counter should be 1.
+    EXPECT_EQ(1, counters.getCounter(AuthCounters::COUNTER_UDP));
 }
 
-TEST_F(QueryCountersTest, incrementTCPCounter) {
-    EXPECT_NO_THROW(counters.inc(QueryCounters::COUNTER_TCP));
+TEST_F(AuthCountersTest, incrementTCPCounter) {
+    // The counter should be initialized to 0.
+    EXPECT_EQ(0, counters.getCounter(AuthCounters::COUNTER_TCP));
+    EXPECT_NO_THROW(counters.inc(AuthCounters::COUNTER_TCP));
+    // After increment, the counter should be 1.
+    EXPECT_EQ(1, counters.getCounter(AuthCounters::COUNTER_TCP));
 }
 
-TEST_F(QueryCountersTest, incrementInvalidCounter) {
-    EXPECT_THROW(counters.inc(QueryCounters::COUNTER_TYPES),
-                 isc::InvalidParameter);
+TEST_F(AuthCountersTest, incrementInvalidCounter) {
+    // Expect to throw isc::InvalidParameter if the type of the counter is
+    // invalid.
+    EXPECT_THROW(counters.inc(AuthCounters::COUNTER_TYPES),
+                 std::out_of_range);
 }
 
-TEST_F(QueryCountersTest, submitStatisticsWithoutSession) {
-    // Set stats_session to NULL and call submitStatistics().
+TEST_F(AuthCountersTest, submitStatisticsWithoutSession) {
+    // Set statistics_session to NULL and call submitStatistics().
     // Expect to return false.
-    counters.setStatsSession(NULL);
+    counters.setStatisticsSession(NULL);
     EXPECT_FALSE(counters.submitStatistics());
 }
 
-TEST_F(QueryCountersTest, submitStatisticsWithException) {
+TEST_F(AuthCountersTest, submitStatisticsWithException) {
     // Exception SessionError and SessionTimeout will be thrown
     // while sending statistics data.
     // Both expect to return false.
-    stats_session_.setThrowSessionError(true);
+    statistics_session_.setThrowSessionError(true);
     EXPECT_FALSE(counters.submitStatistics());
-    stats_session_.setThrowSessionError(false);
-    stats_session_.setThrowSessionTimeout(true);
+    statistics_session_.setThrowSessionError(false);
+    statistics_session_.setThrowSessionTimeout(true);
     EXPECT_FALSE(counters.submitStatistics());
-    stats_session_.setThrowSessionTimeout(false);
+    statistics_session_.setThrowSessionTimeout(false);
 }
 
-TEST_F(QueryCountersTest, submitStatistics) {
+TEST_F(AuthCountersTest, submitStatistics) {
     // Submit statistics data.
     // Validate if it submits correct data.
 
+    // Counters should be initialized to 0.
+    EXPECT_EQ(0, counters.getCounter(AuthCounters::COUNTER_UDP));
+    EXPECT_EQ(0, counters.getCounter(AuthCounters::COUNTER_TCP));
+
     // UDP query counter is set to 2.
-    counters.inc(QueryCounters::COUNTER_UDP);
-    counters.inc(QueryCounters::COUNTER_UDP);
+    counters.inc(AuthCounters::COUNTER_UDP);
+    counters.inc(AuthCounters::COUNTER_UDP);
     // TCP query counter is set to 1.
-    counters.inc(QueryCounters::COUNTER_TCP);
+    counters.inc(AuthCounters::COUNTER_TCP);
     counters.submitStatistics();
 
     // Destination is "Stats".
-    EXPECT_EQ("Stats", stats_session_.msg_destination);
+    EXPECT_EQ("Stats", statistics_session_.msg_destination);
     // Command is "set".
-    EXPECT_EQ("set", stats_session_.sent_msg->get("command")
+    EXPECT_EQ("set", statistics_session_.sent_msg->get("command")
                          ->get(0)->stringValue());
-    ConstElementPtr stats_data = stats_session_.sent_msg ->get("command")
-                                     ->get(1)->get("stats_data");
+    ConstElementPtr statistics_data = statistics_session_.sent_msg
+                                          ->get("command")->get(1)
+                                          ->get("stats_data");
     // UDP query counter is 2 and TCP query counter is 1.
-    EXPECT_EQ(2, stats_data->get("auth.queries.udp")->intValue());
-    EXPECT_EQ(1, stats_data->get("auth.queries.tcp")->intValue());
+    EXPECT_EQ(2, statistics_data->get("auth.queries.udp")->intValue());
+    EXPECT_EQ(1, statistics_data->get("auth.queries.tcp")->intValue());
 }
 
 }

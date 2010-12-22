@@ -719,8 +719,12 @@ IntervalTimerImpl::setupTimer(const IntervalTimer::Callback& cbfunc,
 
 void
 IntervalTimerImpl::updateTimer() {
-    // Update expire time to (current time + interval_).
-    timer_.expires_from_now(boost::posix_time::seconds(interval_));
+    try {
+        // Update expire time to (current time + interval_).
+        timer_.expires_from_now(boost::posix_time::seconds(interval_));
+    } catch (asio::system_error& e) {
+        isc_throw(isc::Unexpected, "Failed to update timer");
+    }
     // Reset timer.
     timer_.async_wait(boost::bind(&IntervalTimerImpl::callback, this, _1));
 }

@@ -124,14 +124,14 @@ protected:
                     response_obuffer(0), response_renderer(response_obuffer)
     {
         server.setXfrinSession(&notify_session);
-        server.setStatsSession(&stats_session);
+        server.setStatisticsSession(&statistics_session);
     }
     ~AuthSrvTest() {
         delete io_message;
         delete endpoint;
     }
     MockSession notify_session;
-    MockSession stats_session;
+    MockSession statistics_session;
     MockXfroutClient xfrout;
     AuthSrv server;
     Message request_message;
@@ -771,21 +771,76 @@ TEST_F(AuthSrvTest, cacheSlots) {
     EXPECT_EQ(00, server.getCacheSlots());
 }
 
-TEST_F(AuthSrvTest, queryCounterUDP) {
-    // submit UDP query and check query counter
+// Submit UDP normal query and check query counter
+TEST_F(AuthSrvTest, queryCounterUDPNormal) {
+    // The counter should be initialized to 0.
+    EXPECT_EQ(0, server.getCounter(AuthCounters::COUNTER_UDP));
     createRequestPacket(opcode, Name("example.com"), RRClass::IN(),
                         RRType::NS(), IPPROTO_UDP);
     EXPECT_TRUE(server.processMessage(*io_message, parse_message,
                                       response_renderer));
-    EXPECT_EQ(1, server.getCounters().at(QueryCounters::COUNTER_UDP));
+    // After processing UDP query, the counter should be 1.
+    EXPECT_EQ(1, server.getCounter(AuthCounters::COUNTER_UDP));
 }
 
-TEST_F(AuthSrvTest, queryCounterTCP) {
-    // submit TCP query and check query counter
+// Submit TCP normal query and check query counter
+TEST_F(AuthSrvTest, queryCounterTCPNormal) {
+    // The counter should be initialized to 0.
+    EXPECT_EQ(0, server.getCounter(AuthCounters::COUNTER_TCP));
     createRequestPacket(opcode, Name("example.com"), RRClass::IN(),
                         RRType::NS(), IPPROTO_TCP);
     EXPECT_TRUE(server.processMessage(*io_message, parse_message,
                                       response_renderer));
-    EXPECT_EQ(1, server.getCounters().at(QueryCounters::COUNTER_TCP));
+    // After processing TCP query, the counter should be 1.
+    EXPECT_EQ(1, server.getCounter(AuthCounters::COUNTER_TCP));
+}
+
+// Submit TCP AXFR query and check query counter
+TEST_F(AuthSrvTest, queryCounterTCPAXFR) {
+    // The counter should be initialized to 0.
+    EXPECT_EQ(0, server.getCounter(AuthCounters::COUNTER_TCP));
+    createRequestPacket(opcode, Name("example.com"), RRClass::IN(),
+                        RRType::AXFR(), IPPROTO_TCP);
+    // It returns false. see AXFRSuccess test.
+    EXPECT_FALSE(server.processMessage(*io_message, parse_message,
+                                      response_renderer));
+    // After processing TCP AXFR query, the counter should be 1.
+    EXPECT_EQ(1, server.getCounter(AuthCounters::COUNTER_TCP));
+}
+
+// class for queryCounterUnexpected test
+// getProtocol() returns IPPROTO_IP
+class DummyUnknownSocket : public IOSocket {
+public:
+    DummyUnknownSocket() {}
+    virtual int getNative() const { return (0); }
+    virtual int getProtocol() const { return (IPPROTO_IP); }
+};
+
+// function for queryCounterUnexpected test
+// returns a reference to a static object of DummyUnknownSocket
+IOSocket&
+getDummyUnknownSocket() {
+    static DummyUnknownSocket socket;
+    return (socket);
+}
+
+// Submit unexpected type of query and check it throws IPPROTO_IP
+TEST_F(AuthSrvTest, queryCounterUnexpected) {
+    // Create UDP query packet.
+    createRequestPacket(opcode, Name("example.com"), RRClass::IN(),
+                        RRType::NS(), IPPROTO_UDP);
+
+    // Modify the message
+    delete io_message;
+    endpoint = IOEndpoint::create(IPPROTO_UDP,
+                                  IOAddress(DEFAULT_REMOTE_ADDRESS), 5300);
+    io_message = new IOMessage(request_renderer.getData(),
+                               request_renderer.getLength(),
+                               getDummyUnknownSocket(), *endpoint);
+
+    EXPECT_THROW(server.processMessage(*io_message, parse_message,
+                                       response_renderer),
+                 isc::Unexpected);
 }
 }
