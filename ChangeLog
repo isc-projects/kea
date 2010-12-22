@@ -1,3 +1,10 @@
+  135.  [bug]       jelte
+  	bindctl (and the configuration manager in general) now no longer
+	accepts 'unknown' data; i.e. data for modules that it does not know
+	about, or configuration items that are not specified in the .spec
+	files.
+	(Trac #202, svn r3967)
+
   134.  [func]      vorner
 	b10-recurse supports timeouts and retries in forwarder mode.
 	(Trac #401, svn r3660)
