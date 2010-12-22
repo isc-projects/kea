@@ -18,6 +18,8 @@
 #include <dns/rrclass.h>
 
 #include <datasrc/zonetable.h>
+// We use MemoryZone to put something into the table
+#include <datasrc/memory_datasrc.h>
 
 #include <gtest/gtest.h>
 

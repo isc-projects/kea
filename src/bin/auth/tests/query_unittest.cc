@@ -18,6 +18,7 @@
 #include <dns/rrtype.h>
 
 #include <datasrc/zonetable.h>
+#include <datasrc/memory_datasrc.h>
 
 #include <auth/query.h>
 
