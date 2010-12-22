@@ -61,6 +61,20 @@ public:
     virtual FindResult find(const isc::dns::Name& name,
                             const isc::dns::RRType& type) const;
 
+    result::Result add(const isc::dns::ConstRRsetPtr& rrset);
+
+    struct OutOfZone : public InvalidParameter {
+        OutOfZone(const char* file, size_t line, const char* what) :
+            InvalidParameter(file, line, what)
+        { }
+    };
+
+    struct NullRRset : public InvalidParameter {
+        NullRRset(const char* file, size_t line, const char* what) :
+            InvalidParameter(file, line, what)
+        { }
+    };
+
 private:
     /// \name Hidden private data
     //@{
