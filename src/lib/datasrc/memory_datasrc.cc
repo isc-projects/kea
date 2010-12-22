@@ -27,7 +27,10 @@ namespace datasrc {
 /// For now, \c MemoryDataSrc only contains a \c ZoneTable object, which
 /// consists of (pointers to) \c MemoryZone objects, we may add more
 /// member variables later for new features.
-struct MemoryDataSrc::MemoryDataSrcImpl {
+class MemoryDataSrc::MemoryDataSrcImpl {
+public:
+    MemoryDataSrcImpl() : zone_count(0) {}
+    unsigned int zone_count;
     ZoneTable zone_table;
 };
 
@@ -38,13 +41,23 @@ MemoryDataSrc::~MemoryDataSrc() {
     delete impl_;
 }
 
+unsigned int
+MemoryDataSrc::getZoneCount() const {
+    return (impl_->zone_count);
+}
+
 result::Result
 MemoryDataSrc::addZone(ZonePtr zone) {
     if (!zone) {
         isc_throw(InvalidParameter,
                   "Null pointer is passed to MemoryDataSrc::addZone()");
     }
-    return (impl_->zone_table.addZone(zone));
+
+    const result::Result result = impl_->zone_table.addZone(zone);
+    if (result == result::SUCCESS) {
+        ++impl_->zone_count;
+    }
+    return (result);
 }
 
 MemoryDataSrc::FindResult
