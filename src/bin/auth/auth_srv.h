@@ -22,6 +22,8 @@
 #include <cc/data.h>
 #include <config/ccsession.h>
 
+#include <auth/statistics.h>
+
 namespace isc {
 namespace dns {
 class InputBuffer;
@@ -62,6 +64,7 @@ class AuthSrvImpl;
 ///
 /// The design of this class is still in flux.  It's quite likely to change
 /// in future versions.
+///
 class AuthSrv {
     ///
     /// \name Constructors, Assignment Operator and Destructor.
@@ -86,6 +89,8 @@ public:
     //@}
     /// \return \c true if the \a message contains a response to be returned;
     /// otherwise \c false.
+    ///
+    /// \throw isc::Unexpected Protocol type of \a message is unexpected
     bool processMessage(const asio_link::IOMessage& io_message,
                         isc::dns::Message& message,
                         isc::dns::MessageRenderer& response_renderer);
@@ -203,13 +208,13 @@ public:
     /// \brief Set the communication session with Statistics.
     ///
     /// This function never throws an exception as far as
-    /// QueryCounters::setStatsSession() doesn't throw.
+    /// AuthCounters::setStatisticsSession() doesn't throw.
     ///
     /// Note: this interface is tentative.  We'll revisit the ASIO and
     /// session frameworks, at which point the session will probably
     /// be passed on construction of the server.
     ///
-    /// \param stats_session A Session object over which statistics
+    /// \param statistics_session A Session object over which statistics
     /// information is exchanged with statistics module.
     /// The session must be established before setting in the server
     /// object.
@@ -218,32 +223,33 @@ public:
     /// disconnecting the session and destroying the object when the server
     /// is shutdown.
     ///
-    void setStatsSession(isc::cc::AbstractSession* stats_session);
+    void setStatisticsSession(isc::cc::AbstractSession* statistics_session);
 
     /// \brief Submit statistics counters to statistics module.
     ///
     /// This function can throw an exception from
-    /// QueryCounters::submitStatistics().
+    /// AuthCounters::submitStatistics().
     ///
     /// \return true on success, false on failure (e.g. session timeout,
     /// session error).
     ///
-    bool submitStatistics();
+    bool submitStatistics() const;
 
-    /// \brief Get counters in the QueryCounters.
+    /// \brief Get the value of counter in the AuthCounters.
     /// 
-    /// This function calls QueryCounters::getCounters() and
-    /// returns its return velue, a reference to the counters.
+    /// This function calls AuthCounters::getCounter() and
+    /// returns its return value.
     ///
     /// This function never throws an exception as far as
-    /// QueryCounters::getCounters() doesn't throw.
+    /// AuthCounters::getCounter() doesn't throw.
     /// 
     /// Note: Currently this function is for testing purpose only.
-    /// This function should not be called except from tests.
     ///
-    /// \return a reference to the counters.
+    /// \param type Type of a counter to get the value of
     ///
-    const std::vector<uint64_t>& getCounters() const;
+    /// \return the value of the counter.
+    ///
+    uint64_t getCounter(const AuthCounters::QueryType type) const;
 private:
     AuthSrvImpl* impl_;
 };

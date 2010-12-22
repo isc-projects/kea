@@ -19,39 +19,43 @@
 
 #include <cc/session.h>
 
-class QueryCountersImpl;
+class AuthCountersImpl;
 
 /// \brief Set of query counters.
 ///
-/// \c QueryCounters is set of query counters class. It holds query counters
-/// and provides an interface to increment the counter of specified
-/// type (e.g. UDP query, TCP query).
+/// \c AuthCounters is set of query counters class. It holds query counters
+/// and provides an interface to increment the counter of specified type
+/// (e.g. UDP query, TCP query).
 ///
 /// This class also provides a function to send statistics information to
 /// statistics module.
 ///
 /// This class is designed to be a part of \c AuthSrv.
-/// Call \c setStatsSession() to set a session to communicate with statistics
-/// module like Xfrin session.
+/// Call \c setStatisticsSession() to set a session to communicate with
+/// statistics module like Xfrin session.
 /// Call \c inc() to increment a counter for specific type of query in
-/// the query processing function. use \c enum \c QueryCounterType to specify
+/// the query processing function. use \c enum \c QueryType to specify
 /// the type of query.
 /// Call \c submitStatistics() to submit statistics information to statistics
-/// module with stats_session, periodically or at a time the command
+/// module with statistics_session, periodically or at a time the command
 /// \c sendstats is received.
+///
+/// We may eventually want to change the structure to hold values that is
+/// not counters (such as concurrent TCP connections), or seperate generic
+/// part to src/lib to share with the other modules.
 ///
 /// This class uses pimpl idiom and hides detailed implementation.
 /// This class is constructed on startup of the server, so
 /// construction overhead of this approach should be acceptable.
 ///
 /// \todo Hold counters for each query types (Notify, Axfr, Ixfr, Normal)
-/// \todo Consider overhead of \c QueryCounters::inc()
-class QueryCounters {
+/// \todo Consider overhead of \c AuthCounters::inc()
+class AuthCounters {
 private:
-    QueryCountersImpl* impl_;
+    AuthCountersImpl* impl_;
 public:
     // Enum for the type of counter
-    enum QueryCounterType {
+    enum QueryType {
         COUNTER_UDP = 0,  ///< COUNTER_UDP: counter for UDP queries
         COUNTER_TCP = 1,  ///< COUNTER_TCP: counter for TCP queries
         COUNTER_TYPES = 2 ///< The number of defined counters
@@ -66,22 +70,22 @@ public:
     /// \todo Fix this short term workaround for logging
     /// after we have logging framework.
     ///
-    QueryCounters(const bool& verbose_mode);
+    AuthCounters(const bool& verbose_mode);
     /// The destructor.
     ///
     /// This method never throws an exception.
     ///
-    ~QueryCounters();
+    ~AuthCounters();
 
     /// \brief Increment the counter specified by the parameter.
     ///
     /// \param type Type of a counter to increment.
     ///
-    /// \throw isc::InvalidParameter the type is unknown.
+    /// \throw std::out_of_range \a type is unknown.
     ///
-    /// usage: counter.inc(QueryCounterType::COUNTER_UDP);
+    /// usage: counter.inc(QueryType::COUNTER_UDP);
     /// 
-    void inc(const QueryCounterType type);
+    void inc(const QueryType type);
 
     /// \brief Submit statistics counters to statistics module.
     ///
@@ -90,7 +94,7 @@ public:
     /// by the command 'sendstats'.
     ///
     /// Note: Set the session to communicate with statistics module
-    /// by \c setStatsSession() before calling \c submitStatistics().
+    /// by \c setStatisticsSession() before calling \c submitStatistics().
     ///
     /// This method is mostly exception free (error conditions are
     /// represented via the return value). But it may still throw
@@ -98,7 +102,8 @@ public:
     ///
     /// \return true on success, false on error.
     ///
-    /// \todo Do not block query handling while submitting statistics data.
+    /// \todo Do not block message handling in auth_srv while submitting
+    /// statistics data.
     ///
     bool submitStatistics() const;
 
@@ -116,21 +121,22 @@ public:
     /// disconnecting the session and destroying the object when the server
     /// is shutdown.
     ///
-    /// \param stats_session A pointer to the session
+    /// \param statistics_session A pointer to the session
     ///
-    void setStatsSession(isc::cc::AbstractSession* stats_session);
+    void setStatisticsSession(isc::cc::AbstractSession* statistics_session);
 
-    /// \brief Get a reference to the counters in the QueryCounters.
+    /// \brief Get a value of a counter in the AuthCounters.
     ///
-    /// This function returns a refetence to the counters.
+    /// This function returns a value of the counter specified by \a type.
     /// This method never throws an exception.
     ///
     /// Note: Currently this function is for testing purpose only.
-    /// This function should not be called except from tests.
     ///
-    /// \return a reference to the counters.
+    /// \param type Type of a counter to get the value of
     ///
-    const std::vector<uint64_t>& getCounters() const;
+    /// \return the value of the counter specified by \a type.
+    ///
+    uint64_t getCounter(const AuthCounters::QueryType type) const;
 };
 
 #endif // __STATISTICS_H

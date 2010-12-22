@@ -257,92 +257,6 @@ protected:
                             callback_data_.size(),
                             expected_data, expected_datasize);
     }
-    class TimerCallBack : public std::unary_function<void, void> {
-    public:
-        TimerCallBack(ASIOLinkTest* test_obj) : test_obj_(test_obj) {}
-        void operator()() const {
-            test_obj_->timer_called_ = true;
-            test_obj_->io_service_->stop();
-            return;
-        }
-    private:
-        ASIOLinkTest* test_obj_;
-    };
-    class TimerCallBackCounter : public std::unary_function<void, void> {
-    public:
-        TimerCallBackCounter(ASIOLinkTest* test_obj) : test_obj_(test_obj) {
-            counter_ = 0;
-        }
-        void operator()() {
-            ++counter_;
-            return;
-        }
-        int counter_;
-    private:
-        ASIOLinkTest* test_obj_;
-    };
-    class TimerCallBackCancelDeleter : public std::unary_function<void, void> {
-    public:
-        TimerCallBackCancelDeleter(ASIOLinkTest* test_obj,
-                                   IntervalTimer* timer,
-                                   TimerCallBackCounter& counter)
-            : test_obj_(test_obj), timer_(timer), counter_(counter), count_(0)
-        {}
-        void operator()() {
-            ++count_;
-            if (count_ == 1) {
-                // First time of call back.
-                // Store the value of counter_.counter_.
-                prev_counter_ = counter_.counter_;
-                delete timer_;
-            } else if (count_ == 2) {
-                // Second time of call back.
-                // Stop io_service to stop all timers.
-                test_obj_->io_service_->stop();
-                // Compare the value of counter_.counter_ with stored one.
-                // If TimerCallBackCounter was not called (expected behavior),
-                // they are same.
-                if (counter_.counter_ == prev_counter_) {
-                    test_obj_->timer_cancel_success_ = true;
-                }
-            }
-            return;
-        }
-    private:
-        ASIOLinkTest* test_obj_;
-        IntervalTimer* timer_;
-        TimerCallBackCounter& counter_;
-        int count_;
-        int prev_counter_;
-    };
-    class TimerCallBackOverwriter : public std::unary_function<void, void> {
-    public:
-        TimerCallBackOverwriter(ASIOLinkTest* test_obj,
-                                IntervalTimer& timer)
-            : test_obj_(test_obj), timer_(timer), count_(0)
-        {}
-        void operator()() {
-            ++count_;
-            if (count_ == 1) {
-                // First time of call back.
-                // Call setupTimer() to update callback function
-                // to TimerCallBack.
-                test_obj_->timer_called_ = false;
-                timer_.setupTimer(IntervalTimer::Callback(
-                                      TimerCallBack(test_obj_)), 1);
-            } else if (count_ == 2) {
-                // Second time of call back.
-                // If it reaches here, re-setupTimer() is failed (unexpected).
-                // We should stop here.
-                test_obj_->io_service_->stop();
-            }
-            return;
-        }
-    private:
-        ASIOLinkTest* test_obj_;
-        IntervalTimer& timer_;
-        int count_;
-    };
 private:
     class ASIOCallBack : public std::unary_function<IOMessage, void> {
     public:
@@ -370,8 +284,6 @@ protected:
     int callback_native_;
     string callback_address_;
     vector<uint8_t> callback_data_;
-    bool timer_called_;
-    bool timer_cancel_success_;
     int sock_;
 private:
     struct addrinfo* res_;
@@ -447,34 +359,125 @@ TEST_F(ASIOLinkTest, v4TCPOnly) {
     EXPECT_THROW(sendTCP(AF_INET6), IOError);
 }
 
-TEST_F(ASIOLinkTest, invalidArgumentToIntervalTimer) {
+// This fixture is for testing IntervalTimer. Some callback functors are 
+// registered as callback function of the timer to test if they are called
+// or not.
+class IntervalTimerTest : public ::testing::Test {
+protected:
+    IntervalTimerTest() : io_service_(NULL, *TEST_PORT, false, false) {};
+    ~IntervalTimerTest() {}
+    class TimerCallBack : public std::unary_function<void, void> {
+    public:
+        TimerCallBack(IntervalTimerTest* test_obj) : test_obj_(test_obj) {}
+        void operator()() const {
+            test_obj_->timer_called_ = true;
+            test_obj_->io_service_.stop();
+            return;
+        }
+    private:
+        IntervalTimerTest* test_obj_;
+    };
+    class TimerCallBackCounter : public std::unary_function<void, void> {
+    public:
+        TimerCallBackCounter(IntervalTimerTest* test_obj) : test_obj_(test_obj) {
+            counter_ = 0;
+        }
+        void operator()() {
+            ++counter_;
+            return;
+        }
+        int counter_;
+    private:
+        IntervalTimerTest* test_obj_;
+    };
+    class TimerCallBackCancelDeleter : public std::unary_function<void, void> {
+    public:
+        TimerCallBackCancelDeleter(IntervalTimerTest* test_obj,
+                                   IntervalTimer* timer,
+                                   TimerCallBackCounter& counter)
+            : test_obj_(test_obj), timer_(timer), counter_(counter), count_(0)
+        {}
+        void operator()() {
+            ++count_;
+            if (count_ == 1) {
+                // First time of call back.
+                // Store the value of counter_.counter_.
+                prev_counter_ = counter_.counter_;
+                delete timer_;
+            } else if (count_ == 2) {
+                // Second time of call back.
+                // Stop io_service to stop all timers.
+                test_obj_->io_service_.stop();
+                // Compare the value of counter_.counter_ with stored one.
+                // If TimerCallBackCounter was not called (expected behavior),
+                // they are same.
+                if (counter_.counter_ == prev_counter_) {
+                    test_obj_->timer_cancel_success_ = true;
+                }
+            }
+            return;
+        }
+    private:
+        IntervalTimerTest* test_obj_;
+        IntervalTimer* timer_;
+        TimerCallBackCounter& counter_;
+        int count_;
+        int prev_counter_;
+    };
+    class TimerCallBackOverwriter : public std::unary_function<void, void> {
+    public:
+        TimerCallBackOverwriter(IntervalTimerTest* test_obj,
+                                IntervalTimer& timer)
+            : test_obj_(test_obj), timer_(timer), count_(0)
+        {}
+        void operator()() {
+            ++count_;
+            if (count_ == 1) {
+                // First time of call back.
+                // Call setupTimer() to update callback function
+                // to TimerCallBack.
+                test_obj_->timer_called_ = false;
+                timer_.setupTimer(TimerCallBack(test_obj_), 1);
+            } else if (count_ == 2) {
+                // Second time of call back.
+                // If it reaches here, re-setupTimer() is failed (unexpected).
+                // We should stop here.
+                test_obj_->io_service_.stop();
+            }
+            return;
+        }
+    private:
+        IntervalTimerTest* test_obj_;
+        IntervalTimer& timer_;
+        int count_;
+    };
+protected:
+    IOService io_service_;
+    bool timer_called_;
+    bool timer_cancel_success_;
+};
+
+TEST_F(IntervalTimerTest, invalidArgumentToIntervalTimer) {
     // Create asio_link::IntervalTimer and setup.
-    setIOService(false, false);
-    IntervalTimer itimer(*io_service_);
+    IntervalTimer itimer(io_service_);
     // expect throw if call back function is empty
-    EXPECT_THROW(itimer.setupTimer(
-                     IntervalTimer::Callback(), 1),
+    EXPECT_THROW(itimer.setupTimer(IntervalTimer::Callback(), 1),
                      isc::InvalidParameter);
     // expect throw if interval is 0
-    EXPECT_THROW(itimer.setupTimer(
-                     IntervalTimer::Callback(TimerCallBack(this)), 0),
-                     isc::BadValue);
+    EXPECT_THROW(itimer.setupTimer(TimerCallBack(this), 0), isc::BadValue);
 }
 
-TEST_F(ASIOLinkTest, startIntervalTimer) {
+TEST_F(IntervalTimerTest, startIntervalTimer) {
     // Create asio_link::IntervalTimer and setup.
     // Then run IOService and test if the callback function is called.
-    setIOService(false, false);
-    IntervalTimer itimer(*io_service_);
+    IntervalTimer itimer(io_service_);
     timer_called_ = false;
     // store start time
     boost::posix_time::ptime start;
     start = boost::posix_time::microsec_clock::universal_time();
     // setup timer
-    EXPECT_NO_THROW(itimer.setupTimer(
-                        IntervalTimer::Callback(TimerCallBack(this)),
-                        1));
-    io_service_->run();
+    itimer.setupTimer(TimerCallBack(this), 1);
+    io_service_.run();
     // reaches here after timer expired
     // delta: difference between elapsed time and 1 second
     boost::posix_time::time_duration delta =
@@ -483,16 +486,40 @@ TEST_F(ASIOLinkTest, startIntervalTimer) {
     if (delta.is_negative()) {
         delta.invert_sign();
     }
-    // expect call back is updated: TimerCallBack is called
+    // expect TimerCallBack is called; timer_called_ is true
     EXPECT_TRUE(timer_called_);
     // expect interval is 1 second +/- TIMER_MERGIN_MSEC.
     EXPECT_TRUE(delta < TIMER_MERGIN_MSEC);
 }
 
-TEST_F(ASIOLinkTest, destructIntervalTimer) {
-    // The call back function will not be called
-    // after the timer is destructed.
-    setIOService(false, false);
+TEST_F(IntervalTimerTest, deleteIntervalTimerBeforeStart) {
+    // Note: This code isn't exception safe, but we'd rather keep the code
+    // simpler and more readable as this is only for tests and if it throws
+    // the program would immediately terminate anyway.
+
+    // Create asio_link::IntervalTimer and delete before starting timer.
+    // Test if the callback function is not called.
+    IntervalTimer* itimer = new IntervalTimer(io_service_);
+    timer_called_ = false;
+    // setup timer...
+    itimer->setupTimer(TimerCallBack(this), 1);
+    // and delete
+    delete itimer;
+    // expect the callback function is not called
+    EXPECT_FALSE(timer_called_);
+}
+
+TEST_F(IntervalTimerTest, destructIntervalTimer) {
+    // Note: This test currently takes 6 seconds. The timer should have
+    // finer granularity and timer periods in this test should be shorter
+    // in the future.
+    // This code isn't exception safe, but we'd rather keep the code
+    // simpler and more readable as this is only for tests and if it throws
+    // the program would immediately terminate anyway.
+
+    // The call back function will not be called after the timer is
+    // destructed.
+    //
     // There are two timers:
     //  itimer_counter (A)
     //   (Calls TimerCallBackCounter)
@@ -513,35 +540,37 @@ TEST_F(ASIOLinkTest, destructIntervalTimer) {
     // (B) i--------+--------s
     //                       ^stop io_service
     //                        and test itimer_counter have been stopped
+    //
 
-    // itimer_counter will be deleted in
-    // TimerCallBackCancelDeleter
-    IntervalTimer* itimer_counter = NULL;
-    ASSERT_NO_THROW(itimer_counter = new IntervalTimer(*io_service_));
-    IntervalTimer itimer_canceller(*io_service_);
+    // itimer_counter will be deleted in TimerCallBackCancelDeleter
+    IntervalTimer* itimer_counter = new IntervalTimer(io_service_);
+    IntervalTimer itimer_canceller(io_service_);
     timer_cancel_success_ = false;
     TimerCallBackCounter callback_canceller(this);
-    itimer_counter->setupTimer(IntervalTimer::Callback(callback_canceller), 2);
+    itimer_counter->setupTimer(callback_canceller, 2);
     itimer_canceller.setupTimer(
-        IntervalTimer::Callback(
-            TimerCallBackCancelDeleter(this, itimer_counter,
-                                       callback_canceller)),
+        TimerCallBackCancelDeleter(this, itimer_counter,
+                                   callback_canceller),
         3);
-    io_service_->run();
+    io_service_.run();
     EXPECT_TRUE(timer_cancel_success_);
 }
 
-TEST_F(ASIOLinkTest, overwriteIntervalTimer) {
-    // Calling setupTimer() multiple times updates call back
-    // function and interval.
-    setIOService(false, false);
+TEST_F(IntervalTimerTest, overwriteIntervalTimer) {
+    // Note: This test currently takes 4 seconds. The timer should have
+    // finer granularity and timer periods in this test should be shorter
+    // in the future.
+
+    // Calling setupTimer() multiple times updates call back function
+    // and interval.
+    //
     // There are two timers:
     //  itimer (A)
     //   (Calls TimerCallBackCounter / TimerCallBack)
     //     - increments internal counter in callback function
     //       (TimerCallBackCounter)
     //       interval: 2 seconds
-    //     - io_service_->stop() (TimerCallBack)
+    //     - io_service_.stop() (TimerCallBack)
     //       interval: 1 second
     //  itimer_overwriter (B)
     //   (Calls TimerCallBackOverwriter)
@@ -558,16 +587,16 @@ TEST_F(ASIOLinkTest, overwriteIntervalTimer) {
     //              |change call back function
     // (B) i--------+--------S
     //                       ^(stop io_service on fail)
+    //
 
-    IntervalTimer itimer(*io_service_);
-    IntervalTimer itimer_overwriter(*io_service_);
+    IntervalTimer itimer(io_service_);
+    IntervalTimer itimer_overwriter(io_service_);
     // store start time
     boost::posix_time::ptime start;
     start = boost::posix_time::microsec_clock::universal_time();
-    itimer.setupTimer(IntervalTimer::Callback(TimerCallBackCounter(this)), 2);
-    itimer_overwriter.setupTimer(
-        IntervalTimer::Callback(TimerCallBackOverwriter(this, itimer)), 3);
-    io_service_->run();
+    itimer.setupTimer(TimerCallBackCounter(this), 2);
+    itimer_overwriter.setupTimer(TimerCallBackOverwriter(this, itimer), 3);
+    io_service_.run();
     // reaches here after timer expired
     // if interval is updated, it takes
     //   3 seconds for TimerCallBackOverwriter
@@ -584,7 +613,7 @@ TEST_F(ASIOLinkTest, overwriteIntervalTimer) {
     if (delta.is_negative()) {
         delta.invert_sign();
     }
-    // expect call back is updated: TimerCallBack is called
+    // expect callback function is updated: TimerCallBack is called
     EXPECT_TRUE(timer_called_);
     // expect interval is updated
     EXPECT_TRUE(delta < TIMER_MERGIN_MSEC);
