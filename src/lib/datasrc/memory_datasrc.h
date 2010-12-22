@@ -25,9 +25,6 @@ class Name;
 namespace datasrc {
 
 /// A derived zone class intended to be used with the memory data source.
-///
-/// \todo Is this really needed in header file? If it is used only inside
-/// MemoryDataSrc, we could move it to .cc file and not care about the impl_.
 class MemoryZone : public Zone {
     ///
     /// \name Constructors and Destructor.
