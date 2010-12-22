@@ -75,6 +75,12 @@ public:
         { }
     };
 
+    struct AssertError : public Unexpected {
+        AssertError(const char* file, size_t line, const char* what) :
+            Unexpected(file, line, what)
+        { }
+    };
+
 private:
     /// \name Hidden private data
     //@{

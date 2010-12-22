@@ -51,12 +51,84 @@ struct MemoryZone::MemoryZoneImpl {
      * that.
      */
     typedef map<RRType, ConstRRsetPtr> Domain;
+    typedef Domain::value_type DomainPair;
     typedef boost::shared_ptr<Domain> DomainPtr;
     // The tree stores domains
     typedef RBTree<Domain> DomainTree;
     typedef RBNode<Domain> DomainNode;
     // The actual zone data
     DomainTree domains_;
+
+    /*
+     * Get relative part of the Name. (the result looks like
+     * absolute, but only the part below zone cut is used).
+     *
+     * Therefore, if we pass www.example.org to zone example.org,
+     * it returns "www.". If we give it example.org, it returns
+     * "." (root).
+     */
+    Name getRelativeName(const Name& name) const {
+        // Sanitize output
+        switch (name.compare(origin_).getRelation()) {
+            case NameComparisonResult::SUBDOMAIN:
+                return (name.split(0, name.getLabelCount() -
+                    origin_.getLabelCount()));
+            case NameComparisonResult::EQUAL:
+                return (Name::ROOT_NAME());
+            default:
+                isc_throw(OutOfZone, "The provided name " <<
+                    name.toText() << " is out of the zone " <<
+                    origin_.toText());
+        }
+    }
+
+    /*
+     * Implementation of longer methods. We put them here, because the
+     * access is without the impl_-> and it will get inlined anyway.
+     */
+    // Implementation of MemyroyZone::add
+    result::Result add(const ConstRRsetPtr& rrset) {
+        // Sanitize input
+        if (!rrset) {
+            isc_throw(NullRRset, "The rrset provided is NULL");
+        }
+        Name relative_name(getRelativeName(rrset->getName()));
+        // TODO We do not need to store the part above the zone cut
+        // Get the node
+        DomainNode* node;
+        switch (domains_.insert(rrset->getName(), &node)) {
+            // Just check it returns reasonable results
+            case DomainTree::SUCCEED:
+            case DomainTree::ALREADYEXIST:
+                break;
+            // Something odd got out
+            default:
+                isc_throw(AssertError,
+                    "RBTree<Domain>::insert returned unexpected result");
+        }
+        if (!node) {
+            isc_throw(AssertError, "RBTree<Domain>::insert gave NULL node");
+        }
+
+        // Now get the domain
+        DomainPtr domain;
+        // It didn't exist yet, create it
+        if (node->isEmpty()) {
+            domain.reset(new Domain);
+            node->setData(domain);
+        } else { // Get existing one
+            domain = node->getData();
+        }
+
+        // Try inserting the rrset there
+        if (domain->insert(DomainPair(rrset->getType(), rrset)).second) {
+            // Ok, we just put it in
+            return (result::SUCCESS);
+        } else {
+            // The RRSet of given type was already there
+            return (result::EXIST);
+        }
+    }
 };
 
 MemoryZone::MemoryZone(const RRClass& zone_class, const Name& origin) :
@@ -82,6 +154,11 @@ Zone::FindResult
 MemoryZone::find(const Name&, const RRType&) const {
     // This is a tentative implementation that always returns NXDOMAIN.
     return (FindResult(NXDOMAIN, RRsetPtr()));
+}
+
+result::Result
+MemoryZone::add(const ConstRRsetPtr& rrset) {
+    return (impl_->add(rrset));
 }
 
 /// Implementation details for \c MemoryDataSrc hidden from the public
