@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <map>
+#include <iostream>
 #include <boost/shared_ptr.hpp>
 
 #include <dns/name.h>
@@ -57,6 +58,7 @@ struct MemoryZone::MemoryZoneImpl {
     typedef RBTree<Domain> DomainTree;
     typedef RBNode<Domain> DomainNode;
     // The actual zone data
+    // (address by relative names to the origin_)
     DomainTree domains_;
 
     /*
@@ -86,17 +88,16 @@ struct MemoryZone::MemoryZoneImpl {
      * Implementation of longer methods. We put them here, because the
      * access is without the impl_-> and it will get inlined anyway.
      */
-    // Implementation of MemyroyZone::add
+    // Implementation of MemoryZone::add
     result::Result add(const ConstRRsetPtr& rrset) {
         // Sanitize input
         if (!rrset) {
             isc_throw(NullRRset, "The rrset provided is NULL");
         }
         Name relative_name(getRelativeName(rrset->getName()));
-        // TODO We do not need to store the part above the zone cut
         // Get the node
         DomainNode* node;
-        switch (domains_.insert(rrset->getName(), &node)) {
+        switch (domains_.insert(relative_name, &node)) {
             // Just check it returns reasonable results
             case DomainTree::SUCCEED:
             case DomainTree::ALREADYEXIST:
@@ -129,6 +130,66 @@ struct MemoryZone::MemoryZoneImpl {
             return (result::EXIST);
         }
     }
+
+    // Implementation of MemoryZone::find
+    FindResult find(const Name& full_name, RRType type) const {
+        try {
+            // Get the relative name
+            Name relative_name(getRelativeName(full_name));
+            // What we return when we succeed.
+            bool delegation(false);
+            // Get the node
+            DomainNode* node;
+            switch (domains_.find(relative_name, &node)) {
+                case DomainTree::PARTIALMATCH:
+                    // We change to looking for a NS record in the node
+                    delegation = true;
+                    type = RRType::NS();
+                    break; // And handle it the usual way
+                case DomainTree::NOTFOUND:
+                    return (FindResult(NXDOMAIN, ConstRRsetPtr()));
+                case DomainTree::EXACTMATCH: // This one is OK, handle it
+                    break;
+                default:
+                    isc_throw(AssertError,
+                        "RBTree<Domain>::find returned unexpected result");
+            }
+            if (!node) {
+                isc_throw(AssertError,
+                    "RBTree<Domain>::find gave NULL node when not returning"
+                    "NOTFOUND");
+            }
+            if (node->isEmpty()) {
+                isc_throw(AssertError,
+                    "RBTree<Domain>::find gave empty node");
+            }
+
+            Domain::const_iterator found(node->getData()->find(type));
+            if (found != node->getData()->end()) {
+                // Good, it is here
+                // Return either SUCCESS or DELEGATION
+                return (FindResult(delegation ? DELEGATION : SUCCESS,
+                    found->second));
+            } else {
+                /*
+                 * TODO Look for CNAME and DNAME (it should be OK to do so when
+                 * the value is not found, as CNAME/DNAME domain should be
+                 * empty otherwise.)
+                 */
+                if (delegation) {
+                    // If we were trying a delegation, then we have NXDOMAIN
+                    return (FindResult(NXDOMAIN, ConstRRsetPtr()));
+                } else {
+                    return (FindResult(NXRRSET, ConstRRsetPtr()));
+                }
+            }
+        }
+        catch (const OutOfZone&) {
+            // We were asked for something that is not below our origin
+            // So it is not here for sure
+            return (FindResult(NXDOMAIN, ConstRRsetPtr()));
+        }
+    }
 };
 
 MemoryZone::MemoryZone(const RRClass& zone_class, const Name& origin) :
@@ -151,9 +212,8 @@ MemoryZone::getClass() const {
 }
 
 Zone::FindResult
-MemoryZone::find(const Name&, const RRType&) const {
-    // This is a tentative implementation that always returns NXDOMAIN.
-    return (FindResult(NXDOMAIN, RRsetPtr()));
+MemoryZone::find(const Name& name, const RRType& type) const {
+    return (impl_->find(name, type));
 }
 
 result::Result
