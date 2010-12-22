@@ -58,7 +58,8 @@ class TestConfigManagerStartup(unittest.TestCase):
         self.assertTrue(b.cm.read_config_called)
         self.assertTrue(b.cm.notify_boss_called)
         self.assertTrue(b.cm.run_called)
-        self.assertTrue(b.cm.write_config_called)
+        # if there are no changes, config is not written
+        self.assertFalse(b.cm.write_config_called)
 
         self.assertTrue(b.cm.running)
         b.signal_handler(None, None)
