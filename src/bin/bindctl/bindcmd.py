@@ -552,13 +552,30 @@ class BindCmdInterpreter(Cmd):
                     return
 
             if cmd.command == "show":
-                values = self.config_data.get_value_maps(identifier)
+                # check if we have the 'all' argument
+                show_all = False
+                if 'argument' in cmd.params:
+                    if cmd.params['argument'] == 'all':
+                        show_all = True
+                    elif 'identifier' not in cmd.params:
+                        # no 'all', no identifier, assume this is the
+                        #identifier
+                        identifier += cmd.params['argument']
+                    else:
+                        print("Error: unknown argument " + cmd.params['argument'] + ", or multiple identifiers given")
+                        return
+                values = self.config_data.get_value_maps(identifier, show_all)
                 for value_map in values:
                     line = value_map['name']
-                    if value_map['type'] in [ 'module', 'map', 'list' ]:
+                    if value_map['type'] in [ 'module', 'map' ]:
+                        line += "/"
+                    elif len(value_map) > 1 and value_map['type'] == 'list' \
+                         and (value_map['value'] != []):
+                        # do not print content of non-empty lists if
+                        # we have more data to show
                         line += "/"
                     else:
-                        line += ":\t" + json.dumps(value_map['value'])
+                        line += "\t" + json.dumps(value_map['value'])
                     line += "\t" + value_map['type']
                     line += "\t"
                     if value_map['default']:
