@@ -37,7 +37,7 @@ namespace {
 class AuthConfigTest : public ::testing::Test {
 protected:
     AuthConfigTest() : rrclass(RRClass::IN()), server(true, xfrout) {}
-    RRClass rrclass;
+    const RRClass rrclass;
     MockXfroutClient xfrout;
     AuthSrv server;
 };
@@ -47,7 +47,7 @@ TEST_F(AuthConfigTest, datasourceConfig) {
     EXPECT_EQ(AuthSrv::MemoryDataSrcPtr(), server.getMemoryDataSrc(rrclass));
     configureAuthServer(server, Element::fromJSON(
                             "{\"datasources\": [{\"type\": \"memory\"}]}"));
-    // after successful configuration, we should have one (with empty zone).
+    // after successful configuration, we should have one (with empty zoneset).
     ASSERT_NE(AuthSrv::MemoryDataSrcPtr(), server.getMemoryDataSrc(rrclass));
     EXPECT_EQ(0, server.getMemoryDataSrc(rrclass)->getZoneCount());
 }
@@ -155,6 +155,49 @@ TEST_F(MemoryDatasrcConfigTest, addMultiZones) {
                       "               \"file\": \"example.net.zone\"}]}]"));
     parser->commit();
     EXPECT_EQ(3, server.getMemoryDataSrc(rrclass)->getZoneCount());
+}
+
+TEST_F(MemoryDatasrcConfigTest, replace) {
+    parser->build(Element::fromJSON(
+                      "[{\"type\": \"memory\","
+                      "  \"zones\": [{\"origin\": \"example.com\","
+                      "               \"file\": \"example.zone\"}]}]"));
+    parser->commit();
+    EXPECT_EQ(1, server.getMemoryDataSrc(rrclass)->getZoneCount());
+    EXPECT_EQ(isc::datasrc::result::SUCCESS,
+              server.getMemoryDataSrc(rrclass)->findZone(
+                  Name("example.com")).code);
+
+    // create a new parser, and install a new set of configuration.  It
+    // should replace the old one.
+    destroyAuthConfigParser(parser);
+    parser = createAuthConfigParser(server, "datasources"); 
+    parser->build(Element::fromJSON(
+                      "[{\"type\": \"memory\","
+                      "  \"zones\": [{\"origin\": \"example.org\","
+                      "               \"file\": \"example.org.zone\"},"
+                      "              {\"origin\": \"example.net\","
+                      "               \"file\": \"example.net.zone\"}]}]"));
+    parser->commit();
+    EXPECT_EQ(2, server.getMemoryDataSrc(rrclass)->getZoneCount());
+    EXPECT_EQ(isc::datasrc::result::NOTFOUND,
+              server.getMemoryDataSrc(rrclass)->findZone(
+                  Name("example.com")).code);
+}
+
+TEST_F(MemoryDatasrcConfigTest, remove) {
+    parser->build(Element::fromJSON(
+                      "[{\"type\": \"memory\","
+                      "  \"zones\": [{\"origin\": \"example.com\","
+                      "               \"file\": \"example.zone\"}]}]"));
+    parser->commit();
+    EXPECT_EQ(1, server.getMemoryDataSrc(rrclass)->getZoneCount());
+
+    destroyAuthConfigParser(parser);
+    parser = createAuthConfigParser(server, "datasources"); 
+    parser->build(Element::fromJSON("[]"));
+    parser->commit();
+    EXPECT_EQ(AuthSrv::MemoryDataSrcPtr(), server.getMemoryDataSrc(rrclass));
 }
 
 TEST_F(MemoryDatasrcConfigTest, adDuplicateZones) {

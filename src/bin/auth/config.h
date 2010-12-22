@@ -109,6 +109,10 @@ public:
     /// allocation.  If it fails, it may throw a corresponding standard
     /// exception.
     ///
+    /// This method is not expected to be called more than once.  Although
+    /// multiple calls are not prohibited by the interface, the behavior
+    /// is undefined.
+    ///
     /// \param config_value The configuration value for the identifier
     /// corresponding to the derived class.
     virtual void build(isc::data::ConstElementPtr config_value) = 0;
@@ -120,8 +124,8 @@ public:
     /// Typically it would simply perform exception free assignment or swap
     /// operation on the value prepared in \c build().
     ///
-    /// This method is expected to be called after \c build().  The result
-    /// is undefined otherwise.
+    /// This method is expected to be called after \c build(), and only once.
+    /// The result is undefined otherwise.
     virtual void commit() = 0;
 };
 
