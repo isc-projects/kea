@@ -87,6 +87,15 @@ DatasourcesConfig::build(ConstElementPtr config_value) {
 
 void
 DatasourcesConfig::commit() {
+    // XXX a short term workaround: clear all data sources and then reset
+    // to new ones so that we can remove data sources that don't exist in
+    // the new configuration and have been used in the server.
+    // This could be inefficient and requires knowledge about
+    // server implementation details, and isn't scalable wrt the number of
+    // data source types, and should eventually be improved.
+    // Currently memory data source for class IN is the only possibility.
+    server_.setMemoryDataSrc(RRClass::IN(), AuthSrv::MemoryDataSrcPtr());
+
     BOOST_FOREACH(shared_ptr<AuthConfigParser> datasrc_config, datasources_) {
         datasrc_config->commit();
     }
@@ -102,7 +111,9 @@ public:
         rrclass_(0)              // XXX: dummy initial value
     {}
     virtual void build(ConstElementPtr config_value);
-    virtual void commit();
+    virtual void commit() {
+        server_.setMemoryDataSrc(rrclass_, memory_datasrc_);
+    }
 private:
     AuthSrv& server_;
     RRClass rrclass_;
@@ -152,11 +163,6 @@ MemoryDatasourceConfig::build(ConstElementPtr config_value) {
     }
 }
 
-void
-MemoryDatasourceConfig::commit() {
-    server_.setMemoryDataSrc(rrclass_, memory_datasrc_);
-}
-
 // This is a generalized version of create function that can create
 // a AuthConfigParser object for "internal" use.
 AuthConfigParser*
@@ -172,7 +178,7 @@ createAuthConfigParser(AuthSrv& server, const std::string& config_id,
     } else if (internal && config_id == "datasources/memory") {
         return (new MemoryDatasourceConfig(server));
     } else {
-        isc_throw(AuthConfigError, "Unknown configuration variable: " <<
+        isc_throw(AuthConfigError, "Unknown configuration identifier: " <<
                   config_id);
     }
 }
