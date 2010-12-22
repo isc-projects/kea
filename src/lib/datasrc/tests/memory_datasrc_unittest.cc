@@ -16,6 +16,7 @@
 
 #include <dns/name.h>
 #include <dns/rrclass.h>
+#include <dns/rrttl.h>
 
 #include <datasrc/memory_datasrc.h>
 
@@ -118,13 +119,39 @@ public:
     MemoryZoneTest() :
         class_(RRClass::IN()),
         origin_("example.org"),
-        zone_(class_, origin_)
-    { }
+        ns_name_("ns.example.org"),
+        zone_(class_, origin_),
+        rr_out_(new RRset(Name("example.com"), class_, RRType::A(),
+            RRTTL(300))),
+        rr_ns_(new RRset(origin_, class_, RRType::NS(), RRTTL(300))),
+        rr_ns_a_(new RRset(ns_name_, class_, RRType::A(), RRTTL(300))),
+        rr_ns_aaaa_(new RRset(ns_name_, class_, RRType::AAAA(), RRTTL(300))),
+        rr_a_(new RRset(origin_, class_, RRType::A(), RRTTL(300)))
+    {
+    }
     // Some data to test with
     RRClass class_;
-    Name origin_;
+    Name origin_, ns_name_;
     // The zone to torture by tests
     MemoryZone zone_;
+
+    /*
+     * Some RRsets to put inside the zone.
+     * They are empty, but the MemoryZone does not have a reason to look
+     * inside anyway. We will check it finds them and does not change
+     * the pointer.
+     */
+    RRsetPtr
+        // Out of zone RRset
+        rr_out_,
+        // NS of example.org
+        rr_ns_,
+        // A of ns.example.org
+        rr_ns_a_,
+        // AAAA of ns.example.org
+        rr_ns_aaaa_,
+        // A of example.org
+        rr_a_;
 };
 
 /**
@@ -133,9 +160,33 @@ public:
  * Takes the created zone and checks its properties they are the same
  * as passed parameters.
  */
-TEST_F(MemoryZoneTest, Constructor) {
+TEST_F(MemoryZoneTest, constructor) {
     ASSERT_EQ(class_, zone_.getClass());
     ASSERT_EQ(origin_, zone_.getOrigin());
+}
+
+/**
+ * \brief Test adding.
+ *
+ * We test that it throws at the correct moments and the correct exceptions.
+ * And we test the return value.
+ */
+TEST_F(MemoryZoneTest, add) {
+    // This one does not belong to this zone
+    EXPECT_THROW(zone_.add(rr_out_), MemoryZone::OutOfZone);
+    // Test null pointer
+    EXPECT_THROW(zone_.add(ConstRRsetPtr()), MemoryZone::NullRRset);
+
+    using namespace result; // Who should write the prefix all the time
+    // Now put all the data we have there. It should throw nothing
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_ns_)));
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_ns_a_)));
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_ns_aaaa_)));
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_a_)));
+
+    // Try putting there something twice, it should be rejected
+    EXPECT_NO_THROW(EXPECT_EQ(EXIST, zone_.add(rr_ns_)));
+    EXPECT_NO_THROW(EXPECT_EQ(EXIST, zone_.add(rr_ns_a_)));
 }
 
 }
