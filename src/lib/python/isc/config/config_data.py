@@ -416,57 +416,50 @@ class MultiConfigData:
                 return value, self.DEFAULT
         return None, self.NONE
 
-    def _append_value_item(self, result, spec_part, identifier):
+    def _append_value_item(self, result, spec_part, identifier, all, first = False):
+        # Look at the spec; it is a list of items, or a map containing 'item_name' etc
         if type(spec_part) == list:
-            # list of items to show
-            for item in spec_part:
-                value, status = self.get_value("/" + identifier\
-                                      + "/" + item['item_name'])
-                entry = _create_value_map_entry(identifier + "/" + item['item_name'],
-                                                item['item_type'],
+            for spec_part_element in spec_part:
+                spec_part_element_name = spec_part_element['item_name']
+                self._append_value_item(result, spec_part_element, identifier + "/" + spec_part_element_name, all)
+        elif type(spec_part) == dict:
+            # depending on item type, and the value of argument 'all'
+            # we need to either add an item, or recursively go on
+            # In the case of a list that is empty, we do need to show that
+            item_name = spec_part['item_name']
+            item_type = spec_part['item_type']
+            if item_type == "list" and (all or first):
+                spec_part_list = spec_part['list_item_spec']
+                list_value, status = self.get_value(identifier)
+                if list_value is None:
+                    print("Error: %s not found" % identifier)
+                    return
+                if type(list_value) != list:
+                    # the identifier specified a single element
+                    self._append_value_item(result, spec_part_list, identifier, all)
+                else:
+                    list_len = len(list_value)
+                    if len(list_value) == 0 and (all or first):
+                        entry = _create_value_map_entry(identifier,
+                                                        item_type,
+                                                        [], status)
+                        result.append(entry)
+                    else:
+                        for i in range(len(list_value)):
+                            self._append_value_item(result, spec_part_list, "%s[%d]" % (identifier, i), all)
+            elif item_type == "map":
+                spec_part_map = spec_part['map_item_spec']
+                self._append_value_item(result, spec_part_map, identifier, all)
+            else:
+                value, status = self.get_value(identifier)
+                entry = _create_value_map_entry(identifier,
+                                                item_type,
                                                 value, status)
                 result.append(entry)
-        elif type(spec_part) == dict:
-            # Two 'special cases' for easier viewing;
-            # If the item is a map, show the first-level contents
-            #
-            # If the item is a list, show all elements (with index in the name).
-            #
-            item = spec_part
-            if item['item_type'] == 'list':
-                li_spec = item['list_item_spec']
-                value, status =  self.get_value("/" + identifier)
-                if type(value) == list:
-                    i = 0;
-                    for list_value in value:
-                        result_part2 = _create_value_map_entry(
-                                           "%s[%d]" % (identifier, i),
-                                           li_spec['item_type'],
-                                           list_value)
-                        result.append(result_part2)
-                        i = i + 1
-                elif value is not None:
-                    self._append_value_item(result, li_spec, identifier)
-            elif item['item_type'] == 'map':
-                map_name = item['item_name'] + '/'
-                for map_item in item['map_item_spec']:
-                    value, status =  self.get_value('/' + identifier + '/' + map_item['item_name'])
-                    entry = _create_value_map_entry(
-                                identifier + "/" + map_item['item_name'],
-                                map_item['item_type'],
-                                value,
-                                status)
-                    result.append(entry)
-            else:
-                value, status = self.get_value("/" + identifier)
-                if value is not None:
-                    entry = _create_value_map_entry(
-                                identifier,
-                                item['item_type'],
-                                value, status)
-                    result.append(entry)
+        return
 
-    def get_value_maps(self, identifier = None):
+
+    def get_value_maps(self, identifier = None, all = False):
         """Returns a list of dicts, containing the following values:
            name: name of the entry (string)
            type: string containing the type of the value (or 'module')
@@ -480,8 +473,14 @@ class MultiConfigData:
         if not identifier:
             # No identifier, so we need the list of current modules
             for module in self._specifications.keys():
-                entry = _create_value_map_entry(module, 'module', None)
-                result.append(entry)
+                if all:
+                    spec = self.get_module_spec(module)
+                    if spec:
+                        spec_part = spec.get_config_spec()
+                        self._append_value_item(result, spec_part, module, all, True)
+                else:
+                    entry = _create_value_map_entry(module, 'module', None)
+                    result.append(entry)
         else:
             if identifier[0] == '/':
                 identifier = identifier[1:]
@@ -489,7 +488,7 @@ class MultiConfigData:
             spec = self.get_module_spec(module)
             if spec:
                 spec_part = find_spec_part(spec.get_config_spec(), id)
-                self._append_value_item(result, spec_part, identifier)
+                self._append_value_item(result, spec_part, identifier, all, True)
         return result
 
     def set_value(self, identifier, value):
