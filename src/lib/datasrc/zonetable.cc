@@ -114,6 +114,8 @@ result::Result
 ZoneTable::removeZone(const Name&) {
     // TODO Implement
     assert(0);
+    // This should not ever be returned, the assert should kill us by now
+    return (result::SUCCESS);
 }
 
 ZoneTable::FindResult
