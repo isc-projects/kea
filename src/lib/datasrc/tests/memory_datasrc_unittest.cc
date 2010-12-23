@@ -126,9 +126,7 @@ public:
         rr_ns_(new RRset(origin_, class_, RRType::NS(), RRTTL(300))),
         rr_ns_a_(new RRset(ns_name_, class_, RRType::A(), RRTTL(300))),
         rr_ns_aaaa_(new RRset(ns_name_, class_, RRType::AAAA(), RRTTL(300))),
-        rr_a_(new RRset(origin_, class_, RRType::A(), RRTTL(300))),
-        rr_delegation_(new RRset(Name("subdomain.example.org"), class_,
-            RRType::NS(), RRTTL(300)))
+        rr_a_(new RRset(origin_, class_, RRType::A(), RRTTL(300)))
     {
     }
     // Some data to test with
@@ -153,9 +151,7 @@ public:
         // AAAA of ns.example.org
         rr_ns_aaaa_,
         // A of example.org
-        rr_a_,
-        // A subdomain.example.org NS, for delegation
-        rr_delegation_;
+        rr_a_;
 
     /**
      * \brief Test one find query to the zone.
@@ -233,7 +229,6 @@ TEST_F(MemoryZoneTest, find) {
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_ns_a_)));
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_ns_aaaa_)));
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_a_)));
-    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_delegation_)));
 
     // These two should be successful
     findTest(origin_, RRType::NS(), Zone::SUCCESS, rr_ns_);
@@ -246,10 +241,6 @@ TEST_F(MemoryZoneTest, find) {
     // These domains don't exist (and one is out of the zone)
     findTest(Name("nothere.example.org"), RRType::A(), Zone::NXDOMAIN);
     findTest(Name("example.net"), RRType::A(), Zone::NXDOMAIN);
-
-    // This should delegate
-    findTest(Name("a.subdomain.example.org"), RRType::MX(), Zone::DELEGATION,
-        rr_delegation_);
 }
 
 }
