@@ -21,6 +21,9 @@ export PYTHON_EXEC
 PYTHONPATH=@abs_top_builddir@/src/lib/python
 export PYTHONPATH
 
+BIND10_MSGQ_SOCKET_FILE=@abs_top_builddir@/msgq_socket
+export BIND10_MSGQ_SOCKET_FILE
+
 B10_FROM_BUILD=@abs_top_builddir@
 export B10_FROM_BUILD
 

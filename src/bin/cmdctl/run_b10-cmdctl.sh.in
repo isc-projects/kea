@@ -22,6 +22,9 @@ CMD_CTRLD_PATH=@abs_top_builddir@/src/bin/cmdctl
 PYTHONPATH=@abs_top_srcdir@/src/lib/python
 export PYTHONPATH
 
+BIND10_MSGQ_SOCKET_FILE=@abs_top_builddir@/msgq_socket
+export BIND10_MSGQ_SOCKET_FILE
+
 cd ${CMD_CTRLD_PATH}
 ${PYTHON_EXEC} b10-cmdctl
 
