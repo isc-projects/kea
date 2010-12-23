@@ -45,12 +45,14 @@
 
 #include <datasrc/query.h>
 #include <datasrc/data_source.h>
+#include <datasrc/memory_datasrc.h>
 #include <datasrc/static_datasrc.h>
 #include <datasrc/sqlite3_datasrc.h>
 
 #include <xfr/xfrout_client.h>
 
 #include <auth/common.h>
+#include <auth/config.h>
 #include <auth/auth_srv.h>
 
 using namespace std;
@@ -89,6 +91,9 @@ public:
     ModuleCCSession* config_session_;
     bool verbose_mode_;
     AbstractSession* xfrin_session_;
+
+    /// In-memory data source.  Currently class IN only for simplicity.
+    AuthSrv::MemoryDataSrcPtr memory_datasrc_;
 
     /// Hot spot cache
     isc::datasrc::HotCache cache_;
@@ -288,6 +293,39 @@ AuthSrv::setConfigSession(ModuleCCSession* config_session) {
 ModuleCCSession*
 AuthSrv::getConfigSession() const {
     return (impl_->config_session_);
+}
+
+AuthSrv::ConstMemoryDataSrcPtr
+AuthSrv::getMemoryDataSrc(const RRClass& rrclass) const {
+    // XXX: for simplicity, we only support the IN class right now.
+    if (rrclass != RRClass::IN()) {
+        isc_throw(InvalidParameter,
+                  "Memory data source is not supported for RR class "
+                  << rrclass);
+    }
+    return (impl_->memory_datasrc_);
+}
+
+void
+AuthSrv::setMemoryDataSrc(const isc::dns::RRClass& rrclass,
+                          MemoryDataSrcPtr memory_datasrc)
+{
+    // XXX: see above
+    if (rrclass != RRClass::IN()) {
+        isc_throw(InvalidParameter,
+                  "Memory data source is not supported for RR class "
+                  << rrclass);
+    }
+    if (impl_->verbose_mode_) {
+        if (!impl_->memory_datasrc_ && memory_datasrc) {
+            cerr << "[b10-auth] Memory data source is enabled for class "
+                 << rrclass << endl;
+        } else if (impl_->memory_datasrc_ && !memory_datasrc) {
+            cerr << "[b10-auth] Memory data source is disabled for class "
+                 << rrclass << endl;
+        }
+    }
+    impl_->memory_datasrc_ = memory_datasrc;
 }
 
 void
@@ -609,6 +647,9 @@ AuthSrv::updateConfig(ConstElementPtr new_config) {
     try {
         // the ModuleCCSession has already checked if we have
         // the correct ElementPtr type as specified in our .spec file
+        if (new_config) {
+            configureAuthServer(*this, new_config);
+        }
         return (impl_->setDbFile(new_config));
     } catch (const isc::Exception& error) {
         if (impl_->verbose_mode_) {

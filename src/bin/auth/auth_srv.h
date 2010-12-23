@@ -19,12 +19,19 @@
 
 #include <string>
 
+// For MemoryDataSrcPtr below.  This should be a temporary definition until
+// we reorganize the data source framework.
+#include <boost/shared_ptr.hpp>
+
 #include <cc/data.h>
 #include <config/ccsession.h>
 
 #include <asiolink/asiolink.h>
 
 namespace isc {
+namespace datasrc {
+class MemoryDataSrc;
+}
 namespace xfr {
 class AbstractXfroutClient;
 }
@@ -223,6 +230,53 @@ public:
     /// is shutdown.
     ///
     void setXfrinSession(isc::cc::AbstractSession* xfrin_session);
+
+    /// A shared pointer type for \c MemoryDataSrc.
+    ///
+    /// This is defined inside the \c AuthSrv class as it's supposed to be
+    /// a short term interface until we integrate the in-memory and other
+    /// data source frameworks.
+    typedef boost::shared_ptr<isc::datasrc::MemoryDataSrc> MemoryDataSrcPtr;
+
+    /// An immutable shared pointer type for \c MemoryDataSrc.
+    typedef boost::shared_ptr<const isc::datasrc::MemoryDataSrc>
+    ConstMemoryDataSrcPtr;
+
+    /// Returns the in-memory data source configured for the \c AuthSrv,
+    /// if any.
+    ///
+    /// The in-memory data source is configured per RR class.  However,
+    /// the data source may not be available for all RR classes.
+    /// If it is not available for the specified RR class, an exception of
+    /// class \c InvalidParameter will be thrown.
+    /// This method never throws an exception otherwise.
+    ///
+    /// Even for supported RR classes, the in-memory data source is not
+    /// configured by default.  In that case a NULL (shared) pointer will
+    /// be returned.
+    ///
+    /// \param rrclass The RR class of the requested in-memory data source.
+    /// \return A pointer to the in-memory data source, if configured;
+    /// otherwise NULL.
+    ConstMemoryDataSrcPtr
+    getMemoryDataSrc(const isc::dns::RRClass& rrclass) const;
+
+    /// Sets or replaces the in-memory data source of the specified RR class.
+    ///
+    /// As noted in \c getMemoryDataSrc(), some RR classes may not be
+    /// supported, in which case an exception of class \c InvalidParameter
+    /// will be thrown.
+    /// This method never throws an exception otherwise.
+    ///
+    /// If there is already an in memory data source configured, it will be
+    /// replaced with the newly specified one.
+    /// \c memory_datasrc can be NULL, in which case it will (re)disable the
+    /// in-memory data source.
+    ///
+    /// \param rrclass The RR class of the in-memory data source to be set.
+    /// \param memory_datasrc A (shared) pointer to \c MemoryDataSrc to be set.
+    void setMemoryDataSrc(const isc::dns::RRClass& rrclass,
+                          MemoryDataSrcPtr memory_datasrc);
 
 private:
     AuthSrvImpl* impl_;

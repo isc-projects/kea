@@ -15,6 +15,7 @@
 // $Id$
 
 #include <config.h>
+#include <datasrc/memory_datasrc.h>
 #include <auth/auth_srv.h>
 #include <testutils/srv_unittest.h>
 
@@ -36,11 +37,12 @@ const char* const BADCONFIG_TESTDB =
 
 class AuthSrvTest : public SrvTestBase {
 protected:
-    AuthSrvTest() : server(true, xfrout) {
+    AuthSrvTest() : server(true, xfrout), rrclass(RRClass::IN()) {
         server.setXfrinSession(&notify_session);
     }
     MockXfroutClient xfrout;
     AuthSrv server;
+    const RRClass rrclass;
 };
 
 // Unsupported requests.  Should result in NOTIMP.
@@ -325,11 +327,11 @@ TEST_F(AuthSrvTest, notifyWithSessionMessageError) {
 }
 
 void
-updateConfig(AuthSrv* server, const char* const dbfile,
+updateConfig(AuthSrv* server, const char* const config_data,
              const bool expect_success)
 {
     ConstElementPtr config_answer =
-        server->updateConfig(Element::fromJSON(dbfile));
+        server->updateConfig(Element::fromJSON(config_data));
     EXPECT_EQ(Element::map, config_answer->getType());
     EXPECT_TRUE(config_answer->contains("result"));
 
@@ -379,6 +381,19 @@ TEST_F(AuthSrvTest, updateConfigFail) {
     EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::NOERROR(), opcode.getCode(),
                 QR_FLAG | AA_FLAG, 1, 1, 1, 0);
+}
+
+TEST_F(AuthSrvTest, updateWithMemoryDataSrc) {
+    // Test configuring memory data source.  Detailed test cases are covered
+    // in the configuration tests.  We only check the AuthSrv interface here.
+
+    // By default memory data source isn't enabled
+    EXPECT_EQ(AuthSrv::MemoryDataSrcPtr(), server.getMemoryDataSrc(rrclass));
+    updateConfig(&server,
+                 "{\"datasources\": [{\"type\": \"memory\"}]}", true);
+    // after successful configuration, we should have one (with empty zoneset).
+    ASSERT_NE(AuthSrv::MemoryDataSrcPtr(), server.getMemoryDataSrc(rrclass));
+    EXPECT_EQ(0, server.getMemoryDataSrc(rrclass)->getZoneCount());
 }
 
 TEST_F(AuthSrvTest, cacheSlots) {

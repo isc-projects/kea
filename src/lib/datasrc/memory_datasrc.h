@@ -149,6 +149,13 @@ public:
     ~MemoryDataSrc();
     //@}
 
+    /// Return the number of zones stored in the data source.
+    ///
+    /// This method never throws an exception.
+    ///
+    /// \return The number of zones stored in the data source.
+    unsigned int getZoneCount() const;
+
     /// Add a \c Zone to the \c MemoryDataSrc.
     ///
     /// \c Zone must not be associated with a NULL pointer; otherwise
@@ -185,7 +192,7 @@ public:
     FindResult findZone(const isc::dns::Name& name) const;
 
 private:
-    struct MemoryDataSrcImpl;
+    class MemoryDataSrcImpl;
     MemoryDataSrcImpl* impl_;
 };
 }
