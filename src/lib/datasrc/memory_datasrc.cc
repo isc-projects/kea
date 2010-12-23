@@ -114,6 +114,13 @@ struct MemoryZone::MemoryZoneImpl {
         if (node->isEmpty()) {
             domain.reset(new Domain);
             node->setData(domain);
+            /*
+             * If something throws exception past this point, we did change
+             * the internal structure. But as an empty domain is taken as
+             * nonexistant one, it is strongly exception safe at the interface
+             * level even when the internal representation of the state
+             * changes.
+             */
         } else { // Get existing one
             domain = node->getData();
         }
@@ -133,16 +140,12 @@ struct MemoryZone::MemoryZoneImpl {
         try {
             // Get the relative name
             Name relative_name(getRelativeName(full_name));
-            // What we return when we succeed.
-            bool delegation(false);
             // Get the node
             DomainNode* node;
             switch (domains_.find(relative_name, &node)) {
                 case DomainTree::PARTIALMATCH:
-                    // We change to looking for a NS record in the node
-                    delegation = true;
-                    type = RRType::NS();
-                    break; // And handle it the usual way
+                    // Pretend it was not found for now
+                    // TODO: Implement real delegation
                 case DomainTree::NOTFOUND:
                     return (FindResult(NXDOMAIN, ConstRRsetPtr()));
                 case DomainTree::EXACTMATCH: // This one is OK, handle it
@@ -156,17 +159,20 @@ struct MemoryZone::MemoryZoneImpl {
             Domain::const_iterator found(node->getData()->find(type));
             if (found != node->getData()->end()) {
                 // Good, it is here
-                // Return either SUCCESS or DELEGATION
-                return (FindResult(delegation ? DELEGATION : SUCCESS,
-                    found->second));
+                return (FindResult(SUCCESS, found->second));
             } else {
                 /*
                  * TODO Look for CNAME and DNAME (it should be OK to do so when
                  * the value is not found, as CNAME/DNAME domain should be
                  * empty otherwise.)
                  */
-                if (delegation) {
-                    // If we were trying a delegation, then we have NXDOMAIN
+                if(node->getData()->empty()) {
+                    /*
+                     * In case the domain is empty, it is the same as if it
+                     * does not exist. It probably got here by unsuccessful
+                     * add, so just remove it, it is useless.
+                     */
+                    node->setData(DomainPtr());
                     return (FindResult(NXDOMAIN, ConstRRsetPtr()));
                 } else {
                     return (FindResult(NXRRSET, ConstRRsetPtr()));
