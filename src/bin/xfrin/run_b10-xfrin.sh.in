@@ -26,5 +26,4 @@ BIND10_MSGQ_SOCKET_FILE=@abs_top_builddir@/msgq_socket
 export BIND10_MSGQ_SOCKET_FILE
 
 cd ${MYPATH_PATH}
-${PYTHON_EXEC} b10-xfrin
-
+exec ${PYTHON_EXEC} b10-xfrin "$@"
