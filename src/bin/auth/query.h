@@ -72,10 +72,10 @@ public:
     /// \param response The response message to store the answer to the query.
     Query(const isc::datasrc::MemoryDataSrc& memory_datasrc,
           const isc::dns::Name& qname, const isc::dns::RRType& qtype,
-          isc::dns::Message& response);
-
-    /// The destructor.
-    virtual ~Query();
+          isc::dns::Message& response) :
+        memory_datasrc_(memory_datasrc), qname_(qname), qtype_(qtype),
+        response_(response)
+    {}
 
     /// Process the query.
     ///
@@ -105,8 +105,10 @@ public:
     void process() const;
 
 private:
-    struct QueryImpl;
-    QueryImpl* impl_;
+    const isc::datasrc::MemoryDataSrc& memory_datasrc_;
+    const isc::dns::Name& qname_;
+    const isc::dns::RRType& qtype_;
+    isc::dns::Message& response_;
 };
 
 }
