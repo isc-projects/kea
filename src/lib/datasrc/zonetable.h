@@ -283,8 +283,6 @@ public:
     /// an exception of class \c InvalidParameter will be thrown.
     /// If internal resource allocation fails, a corresponding standard
     /// exception will be thrown.
-    /// An AssertError throw is in the code, but it should never be
-    /// thrown (and therefore never tried to catch).
     /// This method never throws an exception otherwise.
     ///
     /// \param zone A \c Zone object to be added.
@@ -319,24 +317,11 @@ public:
     /// - \c zone: A <Boost> shared pointer to the found \c Zone object if one
     ///  is found; otherwise \c NULL.
     ///
-    /// This method never throws an exception (actually, there's code to throw
-    /// AssertError, but that one means programmer error, so it should not be
-    /// expected).
+    /// This method never throws an exception.
     ///
     /// \param name A domain name for which the search is performed.
     /// \return A \c FindResult object enclosing the search result (see above).
     FindResult findZone(const isc::dns::Name& name) const;
-
-    /// \brief An internal (programmer) error inside ZoneTable.
-    ///
-    /// This is thrown when the ZoneTable finds itself in an inconsistent
-    /// state. It means there's a bug in the code somewhere.
-    struct AssertError : public isc::Exception {
-        /// \brief Constructor.
-        AssertError(const char* file, size_t line, const char* what) :
-            Exception(file, line, what)
-        { }
-    };
 
 private:
     struct ZoneTableImpl;
