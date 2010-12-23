@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 // $Id$
+#include <config.h>
 
 /// \brief Test Deleter Objects
 ///

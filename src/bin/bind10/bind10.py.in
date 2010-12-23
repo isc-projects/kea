@@ -194,8 +194,9 @@ class CChannelConnectError(Exception): pass
 class BoB:
     """Boss of BIND class."""
     
-    def __init__(self, msgq_socket_file=None, auth_port=5300, address=None,
-                 nocache=False, verbose=False, setuid=None, username=None):
+    def __init__(self, msgq_socket_file=None, dns_port=5300, address=None,
+                 forward=None, nocache=False, verbose=False, setuid=None,
+                 username=None):
         """
             Initialize the Boss of BIND. This is a singleton (only one can run).
         
@@ -204,7 +205,12 @@ class BoB:
             what it is doing.
         """
         self.address = address
-        self.auth_port = auth_port
+        self.dns_port = dns_port
+        self.forward = forward
+        if forward:
+            self.recursive = True
+        else:
+            self.recursive = False
         self.cc_session = None
         self.ccs = None
         self.cfg_start_auth = True
@@ -417,19 +423,26 @@ class BoB:
             Start the Authoritative server
         """
         # XXX: this must be read from the configuration manager in the future
-        authargs = ['b10-auth', '-p', str(self.auth_port)]
-        if self.address:
-            authargs += ['-a', str(self.address)]
-        if self.nocache:
-            authargs += ['-n']
+        if self.recursive:
+            dns_prog = 'b10-recurse'
+        else:
+            dns_prog = 'b10-auth'
+        dnsargs = [dns_prog]
+        if not self.recursive:
+            # The recursive uses configuration manager for these
+            dnsargs += ['-p', str(self.dns_port)]
+            if self.address:
+                dnsargs += ['-a', str(self.address)]
+            if self.nocache:
+                dnsargs += ['-n']
         if self.uid:
-            authargs += ['-u', str(self.uid)]
+            dnsargs += ['-u', str(self.uid)]
         if self.verbose:
-            authargs += ['-v']
+            dnsargs += ['-v']
 
         # ... and start
-        self.start_process("b10-auth", authargs, c_channel_env,
-            self.auth_port, self.address)
+        self.start_process("b10-auth", dnsargs, c_channel_env,
+            self.dns_port, self.address)
 
     def start_recurse(self, c_channel_env):
         """
@@ -540,6 +553,7 @@ class BoB:
     def stop_all_processes(self):
         """Stop all processes."""
         cmd = { "command": ['shutdown']}
+
         self.cc_session.group_sendmsg(cmd, 'Cmdctl', 'Cmdctl')
         self.cc_session.group_sendmsg(cmd, "ConfigManager", "ConfigManager")
         self.cc_session.group_sendmsg(cmd, "Auth", "Auth")
@@ -547,7 +561,7 @@ class BoB:
         self.cc_session.group_sendmsg(cmd, "Xfrout", "Xfrout")
         self.cc_session.group_sendmsg(cmd, "Xfrin", "Xfrin")
         self.cc_session.group_sendmsg(cmd, "Zonemgr", "Zonemgr")
-        self.cc_session.group_sendmsg(cmd, "Boss", "Stats")
+        self.cc_session.group_sendmsg(cmd, "Stats", "Stats")
 
     def stop_process(self, process):
         """Stop the given process, friendly-like."""
@@ -713,7 +727,7 @@ def check_port(option, opt_str, value, parser):
     a valid port number. Used by OptionParser() on startup."""
     try:
         if opt_str in ['-p', '--port']:
-            parser.values.auth_port = isc.net.parse.port_parse(value)
+            parser.values.dns_port = isc.net.parse.port_parse(value)
         else:
             raise OptionValueError("Unknown option " + opt_str)
     except ValueError as e:
@@ -725,6 +739,8 @@ def check_addr(option, opt_str, value, parser):
     try:
         if opt_str in ['-a', '--address']:
             parser.values.address = isc.net.parse.addr_parse(value)
+        elif opt_str in ['-f', '--forward']:
+            parser.values.forward = isc.net.parse.addr_parse(value)
         else:
             raise OptionValueError("Unknown option " + opt_str)
     except ValueError:
@@ -744,17 +760,19 @@ def main():
     parser = OptionParser(version=VERSION)
     parser.add_option("-a", "--address", dest="address", type="string",
                       action="callback", callback=check_addr, default=None,
-                      help="address the b10-auth daemon will use (default: listen on all addresses)")
+                      help="address the DNS server will use (default: listen on all addresses)")
+    parser.add_option("-f", "--forward", dest="forward", type="string",
+                      action="callback", callback=check_addr, default=None,
+                      help="nameserver to which DNS queries should be forwarded")
     parser.add_option("-m", "--msgq-socket-file", dest="msgq_socket_file",
                       type="string", default=None,
                       help="UNIX domain socket file the b10-msgq daemon will use")
     parser.add_option("-n", "--no-cache", action="store_true", dest="nocache",
-                      default=False, help="disable hot-spot cache in b10-auth")
-    parser.add_option("-p", "--port", dest="auth_port", type="int",
+                      default=False, help="disable hot-spot cache in authoritative DNS server")
+    parser.add_option("-p", "--port", dest="dns_port", type="int",
                       action="callback", callback=check_port, default=5300,
-                      help="port the b10-auth daemon will use (default 5300)")
-    parser.add_option("-u", "--user", dest="user",
-                      type="string", default=None,
+                      help="port the DNS server will use (default 5300)")
+    parser.add_option("-u", "--user", dest="user", type="string", default=None,
                       help="Change user after startup (must run as root)")
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
                       help="display more about what is going on")
@@ -799,10 +817,6 @@ def main():
     if options.verbose:
         sys.stdout.write("%s\n" % VERSION)
 
-    # TODO: set process name, perhaps by:
-    #       http://code.google.com/p/procname/
-    #       http://github.com/lericson/procname/
-
     # Create wakeup pipe for signal handlers
     wakeup_pipe = os.pipe()
     signal.set_wakeup_fd(wakeup_pipe[1])
@@ -818,9 +832,9 @@ def main():
     signal.signal(signal.SIGPIPE, signal.SIG_IGN)
 
     # Go bob!
-    boss_of_bind = BoB(options.msgq_socket_file, options.auth_port,
-                       options.address, options.nocache, options.verbose,
-                       setuid, username)
+    boss_of_bind = BoB(options.msgq_socket_file, options.dns_port,
+                       options.address, options.forward, options.nocache,
+                       options.verbose, setuid, username)
     startup_result = boss_of_bind.startup()
     if startup_result:
         sys.stderr.write("[bind10] Error on startup: %s\n" % startup_result)

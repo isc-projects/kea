@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 // $id$
+#include <config.h>
 
 #include "../fetchable.h"
 

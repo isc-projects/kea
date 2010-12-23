@@ -19,6 +19,7 @@
 #include <dns/rrtype.h>
 
 #include <datasrc/memory_datasrc.h>
+#include <datasrc/memory_datasrc.h>
 
 #include <auth/query.h>
 

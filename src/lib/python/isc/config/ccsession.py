@@ -224,7 +224,7 @@ class ModuleCCSession(ConfigData):
                     if not self._config_handler:
                         answer = create_answer(2, self._module_name + " has no config handler")
                     elif not self.get_module_spec().validate_config(False, new_config, errors):
-                        answer = create_answer(1, " ".join(errors))
+                        answer = create_answer(1, ", ".join(errors))
                     else:
                         isc.cc.data.remove_identical(new_config, self.get_local_config())
                         answer = self._config_handler(new_config)
@@ -422,7 +422,16 @@ class UIModuleCCSession(MultiConfigData):
         """Commit all local changes, send them through b10-cmdctl to
            the configuration manager"""
         if self.get_local_changes():
-            self._conn.send_POST('/ConfigManager/set_config', [ self.get_local_changes() ])
-            # todo: check result
-            self.request_current_config()
-            self.clear_local_changes()
+            response = self._conn.send_POST('/ConfigManager/set_config',
+                                            [ self.get_local_changes() ])
+            answer = isc.cc.data.parse_value_str(response.read().decode())
+            # answer is either an empty dict (on success), or one
+            # containing errors
+            if answer == {}:
+                self.request_current_config()
+                self.clear_local_changes()
+            elif "error" in answer:
+                print("Error: " + answer["error"])
+                print("Configuration not committed")
+            else:
+                raise ModuleCCSessionError("Unknown format of answer in commit(): " + str(answer))

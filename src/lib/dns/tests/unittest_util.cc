@@ -25,13 +25,15 @@
 
 #include <gtest/gtest.h>
 
+#include <dns/rcode.h>
 #include <dns/name.h>
+#include <dns/message.h>
 #include <dns/tests/unittest_util.h>
 
 using namespace std;
+using namespace isc::dns;
 
 using isc::UnitTestUtil;
-using isc::dns::NameComparisonResult;
 
 namespace {
 class UnitTestUtilConfig {
@@ -175,3 +177,19 @@ UnitTestUtil::matchName(const char*, const char*,
     }
     return (::testing::AssertionSuccess());
 }
+
+void
+UnitTestUtil::createRequestMessage(Message& message,
+                                   const Opcode& opcode,
+                                   const uint16_t qid,
+                                   const Name& name,
+                                   const RRClass& rrclass,
+                                   const RRType& rrtype)
+{
+    message.clear(Message::RENDER);
+    message.setOpcode(opcode);
+    message.setRcode(Rcode::NOERROR());
+    message.setQid(qid);
+    message.addQuestion(Question(name, rrclass, rrtype));
+}
+

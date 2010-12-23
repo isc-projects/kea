@@ -43,7 +43,7 @@
 #include <auth/common.h>
 #include <auth/change_user.h>
 #include <auth/auth_srv.h>
-#include <auth/asio_link.h>
+#include <asiolink/asiolink.h>
 
 using namespace std;
 using namespace isc::data;
@@ -51,20 +51,22 @@ using namespace isc::cc;
 using namespace isc::config;
 using namespace isc::dns;
 using namespace isc::xfr;
+using namespace asiolink;
 
 namespace {
 
-bool verbose_mode = false;
+static bool verbose_mode = false;
 
-const string PROGRAM = "Auth";
-const char* DNSPORT = "5300";
+// Default port current 5300 for testing purposes
+static const string PROGRAM = "Auth";
+static const char* DNSPORT = "5300";
 
 /* need global var for config/command handlers.
  * todo: turn this around, and put handlers in the authserver
  * class itself? */
-AuthSrv *auth_server;
+static AuthSrv *auth_server;
 
-asio_link::IOService* io_service;
+static IOService io_service;
 
 ConstElementPtr
 my_config_handler(ConstElementPtr new_config) {
@@ -80,7 +82,7 @@ my_command_handler(const string& command, ConstElementPtr args) {
         /* let's add that message to our answer as well */
         answer = createAnswer(0, args);
     } else if (command == "shutdown") {
-        io_service->stop();
+        io_service.stop();
     }
 
     return (answer);
@@ -88,7 +90,16 @@ my_command_handler(const string& command, ConstElementPtr args) {
 
 void
 usage() {
-    cerr << "Usage: b10-auth [-a address] [-p port] [-4|-6] [-nv]" << endl;
+    cerr << "Usage:  b10-auth [-a address] [-p port] [-u user] [-4|-6] [-nv]"
+         << endl;
+    cerr << "\t-a: specify the address to listen on (default: all) " << endl;
+    cerr << "\t-p: specify the port to listen on (default: " << DNSPORT << ")"
+         << endl;
+    cerr << "\t-4: listen on all IPv4 addresses (incompatible with -a)" << endl;
+    cerr << "\t-6: listen on all IPv6 addresses (incompatible with -a)" << endl;
+    cerr << "\t-n: do not cache answers in memory" << endl;
+    cerr << "\t-u: change process UID to the specified user" << endl;
+    cerr << "\t-v: verbose output" << endl;
     exit(1);
 }
 } // end of anonymous namespace
@@ -140,12 +151,14 @@ main(int argc, char* argv[]) {
     }
 
     if (!use_ipv4 && !use_ipv6) {
-        cerr << "[b10-auth] Error: -4 and -6 can't coexist" << endl;
+        cerr << "[b10-auth] Error: Cannot specify both -4 and -6 "
+             << "at the same time" << endl;
         usage();
     }
 
     if ((!use_ipv4 || !use_ipv6) && address != NULL) {
-        cerr << "[b10-auth] Error: -4|-6 and -a can't coexist" << endl;
+        cerr << "[b10-auth] Error: Cannot specify -4 or -6 "
+             << "at the same time as -a" << endl;
         usage();
     }
 
@@ -176,6 +189,11 @@ main(int argc, char* argv[]) {
         auth_server->setVerbose(verbose_mode);
         cout << "[b10-auth] Server created." << endl;
 
+        SimpleCallback* checkin = auth_server->getCheckinProvider();
+        DNSLookup* lookup = auth_server->getDNSLookupProvider();
+        DNSAnswer* answer = auth_server->getDNSAnswerProvider();
+
+        DNSService* dns_service;
         if (address != NULL) {
             // XXX: we can only specify at most one explicit address.
             // This also means the server cannot run in the dual address
@@ -183,15 +201,17 @@ main(int argc, char* argv[]) {
             // We don't bother to fix this problem, however.  The -a option
             // is a short term workaround until we support dynamic listening
             // port allocation.
-            io_service = new asio_link::IOService(auth_server, *port,
-                                                  *address);
+            dns_service = new DNSService(io_service,  *port, *address,
+                                         checkin, lookup, answer);
         } else {
-            io_service = new asio_link::IOService(auth_server, *port,
-                                                  use_ipv4, use_ipv6);
+            dns_service = new DNSService(io_service, *port, use_ipv4,
+                                         use_ipv6, checkin, lookup,
+                                         answer);
         }
+        auth_server->setIOService(io_service);
         cout << "[b10-auth] IOService created." << endl;
 
-        cc_session = new Session(io_service->get_io_service());
+        cc_session = new Session(io_service.get_io_service());
         cout << "[b10-auth] Configuration session channel created." << endl;
 
         config_session = new ModuleCCSession(specfile, *cc_session,
@@ -203,15 +223,15 @@ main(int argc, char* argv[]) {
             changeUser(uid);
         }
 
-        xfrin_session = new Session(io_service->get_io_service());
+        xfrin_session = new Session(io_service.get_io_service());
         cout << "[b10-auth] Xfrin session channel created." << endl;
         xfrin_session->establish(NULL);
         xfrin_session_established = true;
         cout << "[b10-auth] Xfrin session channel established." << endl;
 
-        // XXX: with the current interface to asio_link we have to create
+        // XXX: with the current interface to asiolink we have to create
         // auth_server before io_service while Session needs io_service.
-        // In a next step of refactoring we should make asio_link independent
+        // In a next step of refactoring we should make asiolink independent
         // from auth_server, and create io_service, auth_server, and
         // sessions in that order.
         auth_server->setXfrinSession(xfrin_session);
@@ -219,9 +239,11 @@ main(int argc, char* argv[]) {
         auth_server->updateConfig(ElementPtr());
 
         cout << "[b10-auth] Server started." << endl;
-        io_service->run();
+        io_service.run();
+
+        delete dns_service;
     } catch (const std::exception& ex) {
-        cerr << "[b10-auth] Initialization failed: " << ex.what() << endl;
+        cerr << "[b10-auth] Server failed: " << ex.what() << endl;
         ret = 1;
     }
 
@@ -232,7 +254,6 @@ main(int argc, char* argv[]) {
     delete xfrin_session;
     delete config_session;
     delete cc_session;
-    delete io_service;
     delete auth_server;
 
     return (ret);
