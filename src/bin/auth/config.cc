@@ -164,7 +164,7 @@ MemoryDatasourceConfig::build(ConstElementPtr config_value) {
 }
 
 // This is a generalized version of create function that can create
-// a AuthConfigParser object for "internal" use.
+// an AuthConfigParser object for "internal" use.
 AuthConfigParser*
 createAuthConfigParser(AuthSrv& server, const std::string& config_id,
                        bool internal)
@@ -187,11 +187,6 @@ createAuthConfigParser(AuthSrv& server, const std::string& config_id,
 AuthConfigParser*
 createAuthConfigParser(AuthSrv& server, const std::string& config_id) {
     return (createAuthConfigParser(server, config_id, false));
-}
-
-void
-destroyAuthConfigParser(AuthConfigParser* parser) {
-    delete parser;
 }
 
 void

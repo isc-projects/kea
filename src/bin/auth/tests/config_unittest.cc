@@ -109,7 +109,7 @@ protected:
         parser(createAuthConfigParser(server, "datasources"))
     {}
     ~MemoryDatasrcConfigTest() {
-        destroyAuthConfigParser(parser);
+        delete parser;
     }
     AuthConfigParser* parser;
 };
@@ -170,7 +170,7 @@ TEST_F(MemoryDatasrcConfigTest, replace) {
 
     // create a new parser, and install a new set of configuration.  It
     // should replace the old one.
-    destroyAuthConfigParser(parser);
+    delete parser;
     parser = createAuthConfigParser(server, "datasources"); 
     parser->build(Element::fromJSON(
                       "[{\"type\": \"memory\","
@@ -193,7 +193,7 @@ TEST_F(MemoryDatasrcConfigTest, remove) {
     parser->commit();
     EXPECT_EQ(1, server.getMemoryDataSrc(rrclass)->getZoneCount());
 
-    destroyAuthConfigParser(parser);
+    delete parser;
     parser = createAuthConfigParser(server, "datasources"); 
     parser->build(Element::fromJSON("[]"));
     parser->commit();

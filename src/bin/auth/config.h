@@ -163,8 +163,13 @@ void configureAuthServer(AuthSrv& server,
 /// In practice, this function is only expected to be used as a backend of
 /// \c configureAuthServer() and is not supposed to be called directly
 /// by applications.  It is publicly available mainly for testing purposes.
-/// When called directly, the created object must be destroyed using the
-/// \c destroyAuthConfigParser() function.
+/// When called directly, the created object must be deleted by the caller.
+/// Note: this means if this module and the caller use incompatible sets of
+/// new/delete, it may cause unexpected strange failure.  We could avoid that
+/// by providing a separate deallocation function or by using a smart pointer,
+/// but since the expected usage of this function is very limited (i.e. for
+/// our own testing purposes) it would be an overkilling.  We therefore prefer
+/// simplicity and keeping the interface intuitive.
 ///
 /// If the resource allocation for the new object fails, a corresponding
 /// standard exception will be thrown.  Otherwise this function is not
@@ -177,21 +182,6 @@ void configureAuthServer(AuthSrv& server,
 /// \return A pointer to an \c AuthConfigParser object.
 AuthConfigParser* createAuthConfigParser(AuthSrv& server,
                                          const std::string& config_id);
-
-/// Destroy an \c AuthConfigParser object.
-///
-/// This function destructs the \c parser and frees resources allocated for
-/// it.  \c parser must have been created by \c createAuthConfigParser().
-/// Like the create function, this function is mainly intended to be used
-/// for testing purposes; normal applications are not expected to call it
-/// directly.
-///
-/// This function is not expected to throw an exception unless the underlying
-/// implementation of \c parser (an object of a specific derived class of
-/// \c AuthConfigParser) throws.
-///
-/// \param parser A pointer to an \c AuthConfigParser object to be destroyed.
-void destroyAuthConfigParser(AuthConfigParser* parser);
 
 #endif // __CONFIG_H
 
