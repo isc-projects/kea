@@ -27,9 +27,10 @@ namespace auth {
 
 void
 Query::process() const {
+    bool keep_doing = true;
+    response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
     const MemoryDataSrc::FindResult result =
         memory_datasrc_.findZone(qname_);
-    bool keep_doing = true;
 
     if (result.code != result::SUCCESS &&
         result.code != result::PARTIALMATCH) {
@@ -37,6 +38,8 @@ Query::process() const {
         return;
     }
 
+    // Found a zone which is the nearest ancestor to QNAME, set the AA bit
+    response_.setHeaderFlag(Message::HEADERFLAG_AA);
     while (keep_doing) {
         keep_doing = false;
         Zone::FindResult db_result = result.zone->find(qname_, qtype_);
