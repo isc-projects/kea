@@ -87,21 +87,11 @@ struct ZoneTable::ZoneTableImpl {
             case ZoneTree::ALREADYEXIST:
                 break;
             // Can Not Happen
-            /*
-             * This should generate no code if the implementation is correct
-             * (since the compiler has complete code of RBTree right now, it
-             * should see it can return only these two values). It is here
-             * to catch programmer errors.
-             */
             default:
-                isc_throw(AssertError,
-                    "RBTree<Zone>::insert returned unexpected result");
+                assert(0);
         }
         // Can Not Happen
-        if (!node) {
-            isc_throw(AssertError,
-                "RBTree<Zone>::insert gave NULL pointer");
-        }
+        assert(node);
 
         // Is it empty? We either just created it or it might be nonterminal
         if (node->isEmpty()) {
@@ -130,15 +120,11 @@ struct ZoneTable::ZoneTableImpl {
                 return (FindResult(result::NOTFOUND, ConstZonePtr()));
             // Can Not Happen
             default:
-                isc_throw(AssertError,
-                    "RBTree<Zone>::find returned unexpected result");
+                assert(0);
         }
 
         // Can Not Happen (remember, NOTFOUND is handled)
-        if (!node) {
-            isc_throw(AssertError,
-                "RBTree<Zone>::find gave NULL pointer");
-        }
+        assert(node);
 
         return (FindResult(my_result, node->getData()));
     }
@@ -159,7 +145,7 @@ ZoneTable::addZone(ZonePtr zone) {
 result::Result
 ZoneTable::removeZone(const Name&) {
     // TODO Implement
-    isc_throw(AssertError, "Not implemented");
+    assert(0);
 }
 
 ZoneTable::FindResult
