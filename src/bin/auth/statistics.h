@@ -40,7 +40,7 @@ class AuthCountersImpl;
 /// module with statistics_session, periodically or at a time the command
 /// \c sendstats is received.
 ///
-/// We may eventually want to change the structure to hold values that is
+/// We may eventually want to change the structure to hold values that are
 /// not counters (such as concurrent TCP connections), or seperate generic
 /// part to src/lib to share with the other modules.
 ///
