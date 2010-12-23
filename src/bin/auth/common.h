@@ -17,12 +17,18 @@
 #ifndef __COMMON_H
 #define __COMMON_H 1
 
-#include <exceptions/exceptions.h>
+#include <stdexcept>
+#include <string>
 
-class FatalError : public isc::Exception {
+/// An exception class that is thrown in an unrecoverable error condition.
+///
+/// This exception should not be caught except at the highest level of
+/// the application only for terminating the program gracefully, and so
+/// it cannot be a derived class of \c isc::Exception.
+class FatalError : public std::runtime_error {
 public:
-    FatalError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+    FatalError(const std::string& what) : std::runtime_error(what)
+    {}
 };
 
 #endif // __COMMON_H

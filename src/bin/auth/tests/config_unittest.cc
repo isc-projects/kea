@@ -26,6 +26,7 @@
 
 #include <auth/auth_srv.h>
 #include <auth/config.h>
+#include <auth/common.h>
 
 #include <testutils/mockups.h>
 
@@ -101,6 +102,12 @@ TEST_F(AuthConfigTest, badConfig) {
 TEST_F(AuthConfigTest, unknownConfigVar) {
     EXPECT_THROW(createAuthConfigParser(server, "no_such_config_var"),
                  AuthConfigError);
+}
+
+TEST_F(AuthConfigTest, exceptionFromCommit) {
+    EXPECT_THROW(configureAuthServer(server, Element::fromJSON(
+                                         "{\"_commit_throw\": 10}")),
+                 FatalError);
 }
 
 class MemoryDatasrcConfigTest : public AuthConfigTest {

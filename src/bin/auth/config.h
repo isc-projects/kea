@@ -54,7 +54,9 @@ public:
 /// value(s) to be applied to the server.  This method may throw an exception
 /// when it encounters an error.
 /// The \c commit() method actually applies the new configuration value
-/// to the server.  It must not throw an exception.
+/// to the server.  It's basically not expected to throw an exception;
+/// any configuration operations that can fail (such as ones involving
+/// resource allocation) should be done in \c build().
 ///
 /// When the destructor is called before \c commit(), the destructor is
 /// supposed to make sure the state of the \c AuthSrv object is the same
@@ -119,10 +121,15 @@ public:
 
     /// Apply the prepared configuration value to the server.
     ///
-    /// This method must be exception free, and, as a consequence, it should
-    /// normally not involve resource allocation.
+    /// This method is expected to be exception free, and, as a consequence,
+    /// it should normally not involve resource allocation.
     /// Typically it would simply perform exception free assignment or swap
     /// operation on the value prepared in \c build().
+    /// In some cases, however, it may be very difficult to meet this
+    /// condition in a realistic way, while the failure case should really
+    /// be very rare.  In such a case it may throw, and, if the parser is
+    /// called via \c configureAuthServer(), the caller will convert the
+    /// exception as a fatal error.
     ///
     /// This method is expected to be called after \c build(), and only once.
     /// The result is undefined otherwise.
@@ -145,7 +152,12 @@ public:
 /// a corresponding standard exception will be thrown.
 /// Other exceptions may also be thrown, depending on the implementation of
 /// the underlying derived class of \c AuthConfigError.
-/// In any case the strong guarantee is provided as described above.
+/// In any case the strong guarantee is provided as described above except
+/// in the very rare cases where the \c commit() method of a parser throws
+/// an exception.  If that happens this function converts the exception
+/// into a \c FatalError exception and rethrows it.  This exception is
+/// expected to be caught at the highest level of the application to terminate
+/// the program gracefully.
 ///
 /// \param server The \c AuthSrv object to be configured.
 /// \param config_set A JSON style configuration to apply to \c server.

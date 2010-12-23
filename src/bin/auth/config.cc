@@ -30,6 +30,7 @@
 
 #include <auth/auth_srv.h>
 #include <auth/config.h>
+#include <auth/common.h>
 
 using namespace std;
 using boost::shared_ptr;
@@ -163,6 +164,16 @@ MemoryDatasourceConfig::build(ConstElementPtr config_value) {
     }
 }
 
+/// A special parser for testing: it throws from commit() despite the
+/// suggested convention of the class interface.
+class ThrowerCommitConfig : public AuthConfigParser {
+public:
+    virtual void build(ConstElementPtr) {} // ignore param, do nothing
+    virtual void commit() {
+        throw 10;
+    }
+};
+
 // This is a generalized version of create function that can create
 // an AuthConfigParser object for "internal" use.
 AuthConfigParser*
@@ -177,6 +188,14 @@ createAuthConfigParser(AuthSrv& server, const std::string& config_id,
         return (new DatasourcesConfig(server));
     } else if (internal && config_id == "datasources/memory") {
         return (new MemoryDatasourceConfig(server));
+    } else if (config_id == "_commit_throw") {
+        // This is for testing purpose only and should not appear in the
+        // actual configuration syntax.  While this could crash the caller
+        // as a result, the server implementation is expected to perform
+        // syntax level validation and should be safe in practice.  In future,
+        // we may introduce dynamic registration of configuration parsers,
+        // and then this test can be done in a cleaner and safer way.
+        return (new ThrowerCommitConfig());
     } else {
         isc_throw(AuthConfigError, "Unknown configuration identifier: " <<
                   config_id);
@@ -220,7 +239,12 @@ configureAuthServer(AuthSrv& server, ConstElementPtr config_set) {
                   ex.what());
     }
 
-    BOOST_FOREACH(ParserPtr parser, parsers) {
-        parser->commit();
+    try {
+        BOOST_FOREACH(ParserPtr parser, parsers) {
+            parser->commit();
+        }
+    } catch (...) {
+        throw FatalError("Unrecoverable error: "
+                         "a configuration parser threw in commit");
     }
 }
