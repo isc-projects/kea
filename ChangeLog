@@ -1,14 +1,19 @@
-  136.	[bug]		jreed
+  137.	[bug]		jreed
 	Fix run_*.sh scripts that are used for development testing
 	so they use a msgq socket file in the build tree.
 	(Trac #226, svn r3989)
 
-  135.  [bug]       jelte
+  136.  [bug]       jelte
   	bindctl (and the configuration manager in general) now no longer
 	accepts 'unknown' data; i.e. data for modules that it does not know
 	about, or configuration items that are not specified in the .spec
 	files.
 	(Trac #202, svn r3967)
+
+  135.  [func]      each
+	Add b10-recurse. This is an example recursive server that
+	currently does forwarding only and no caching.
+	(Trac #327, svn r3903)
 
   134.  [func]      vorner
 	b10-recurse supports timeouts and retries in forwarder mode.
