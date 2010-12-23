@@ -31,8 +31,7 @@ using namespace isc::auth;
 RRsetPtr a_rrset = RRsetPtr(new RRset(Name("www.example.com"),
                                       RRClass::IN(), RRType::A(),
                                       RRTTL(3600)));
-namespace isc {
-namespace datasrc {
+namespace {
 // This is a mock Zone class for testing.
 // It is a derived class of Zone, and simply hardcode the results of find()
 // return SUCCESS for "www.example.com",
@@ -40,7 +39,7 @@ namespace datasrc {
 // return NXRRSET for "nxrrset.example.com",
 // return CNAME for "cname.example.com",
 // else return DNAME
-class MockZone : public Zone{
+class MockZone : public Zone {
 public:
     MockZone() : origin_(Name("example.com"))
     {}
@@ -82,10 +81,6 @@ MockZone::find(const Name& name, const RRType&) const {
     }
 }
 
-}
-}
-
-namespace {
 class QueryTest : public ::testing::Test {
 protected:
     QueryTest() :
