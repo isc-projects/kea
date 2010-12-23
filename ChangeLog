@@ -1,3 +1,20 @@
+  138.	[func]*		jinmei
+	b10-auth: added a configuration interface to support in memory
+	data sources.  For example, the following command to bindctl
+	will configure a memory data source containing the "example.com"
+	zone with the zone file named "example.com.zone":
+	> config set Auth/datasources/ [{"type": "memory", "zones": \
+	 [{"origin": "example.com", "file": "example.com.zone"}]}]
+	By default, the memory data source is disabled; it must be
+	configured explicitly.  To disable it again, specify a null list
+	for Auth/datasources:
+	> config set Auth/datasources/ []
+	Notes: it's currently for class IN only.  The zone files are not
+	actually loaded into memory yet (which will soon be implemented).
+	This is an experimental feature and the syntax may change in
+	future versions.
+	(Trac #446, svn r3998)
+
   137.	[bug]		jreed
 	Fix run_*.sh scripts that are used for development testing
 	so they use a msgq socket file in the build tree.
