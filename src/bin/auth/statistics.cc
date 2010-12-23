@@ -127,9 +127,7 @@ AuthCountersImpl::setStatisticsSession
 
 // Currently for testing purpose only
 uint64_t
-AuthCountersImpl::getCounter
-    (const AuthCounters::QueryType type) const
-{
+AuthCountersImpl::getCounter(const AuthCounters::QueryType type) const {
     return (counters_.at(type));
 }
 
