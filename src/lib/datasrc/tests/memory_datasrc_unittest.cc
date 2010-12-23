@@ -17,7 +17,6 @@
 #include <dns/name.h>
 #include <dns/rrclass.h>
 
-#include <datasrc/zonetable.h>
 #include <datasrc/memory_datasrc.h>
 
 #include <gtest/gtest.h>
@@ -112,4 +111,31 @@ TEST_F(MemoryDataSrcTest, add_find_Zone) {
     EXPECT_EQ(Name("i.g.h"),
               memory_datasrc.findZone(Name("z.i.g.h")).zone->getOrigin());
 }
+
+/// \brief Test fixture for the MemoryZone class
+class MemoryZoneTest : public ::testing::Test {
+public:
+    MemoryZoneTest() :
+        class_(RRClass::IN()),
+        origin_("example.org"),
+        zone_(class_, origin_)
+    { }
+    // Some data to test with
+    RRClass class_;
+    Name origin_;
+    // The zone to torture by tests
+    MemoryZone zone_;
+};
+
+/**
+ * \brief Test MemoryZone::MemoryZone constructor.
+ *
+ * Takes the created zone and checks its properties they are the same
+ * as passed parameters.
+ */
+TEST_F(MemoryZoneTest, Constructor) {
+    ASSERT_EQ(class_, zone_.getClass());
+    ASSERT_EQ(origin_, zone_.getOrigin());
+}
+
 }

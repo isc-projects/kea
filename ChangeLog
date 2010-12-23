@@ -1,5 +1,33 @@
+  135.  [bug]       jelte
+  	bindctl (and the configuration manager in general) now no longer
+	accepts 'unknown' data; i.e. data for modules that it does not know
+	about, or configuration items that are not specified in the .spec
+	files.
+	(Trac #202, svn r3967)
+
+  134.  [func]      vorner
+	b10-recurse supports timeouts and retries in forwarder mode.
+	(Trac #401, svn r3660)
+
+  133.  [func]      vorner
+	New temporary logging function available in isc::log. It is used by
+	b10-recurse.
+	(Trac #393, r3602)
+
+  132.  [func]      vorner
+	The b10-recursive is configured through config manager.
+	It has "listen_on" and "forward_addresses" options.
+	(Trac #389, r3448)
+
+  131.  [func]    feng, jerry
+	src/lib/datasrc: Introduced two template classes RBTree and RBNode
+	to provide the generic map with domain name as key and anything as
+	the value. Because of some unresolved design issue, the new classes
+	are only intended to be used by memory zone and zone table.
+	(Trac #397, svn r3890)
+
   130.	[func]		jerry
-    src/lib/datasrc: Introduced a new class MemoryDataSrc to provide
+	src/lib/datasrc: Introduced a new class MemoryDataSrc to provide
 	the general interface for memory data source.  For the initial
 	implementation, we don't make it a derived class of AbstractDataSrc
 	because the interface is so different(we'll eventually consider this

@@ -464,12 +464,15 @@ class MultiConfigData:
            there is a specification for the given identifier, the type
            is checked."""
         spec_part = self.find_spec_part(identifier)
-        if spec_part is not None and value is not None:
-            id, list_indices = isc.cc.data.split_identifier_list_indices(identifier)
-            if list_indices is not None \
-               and spec_part['item_type'] == 'list':
-                spec_part = spec_part['list_item_spec']
-            check_type(spec_part, value)
+        if spec_part is not None:
+            if value is not None:
+                id, list_indices = isc.cc.data.split_identifier_list_indices(identifier)
+                if list_indices is not None \
+                   and spec_part['item_type'] == 'list':
+                    spec_part = spec_part['list_item_spec']
+                check_type(spec_part, value)
+        else:
+            raise isc.cc.data.DataNotFoundError(identifier)
 
         # Since we do not support list diffs (yet?), we need to
         # copy the currently set list of items to _local_changes

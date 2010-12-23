@@ -166,8 +166,13 @@ TEST(ModuleSpec, DataValidation) {
     EXPECT_TRUE(data_test(dd, "data22_6.data"));
     EXPECT_TRUE(data_test(dd, "data22_7.data"));
     EXPECT_FALSE(data_test(dd, "data22_8.data"));
+    EXPECT_FALSE(data_test(dd, "data22_9.data"));
 
     ElementPtr errors = Element::createList();
     EXPECT_FALSE(data_test_with_errors(dd, "data22_8.data", errors));
     EXPECT_EQ("[ \"Type mismatch\" ]", errors->str());
+
+    errors = Element::createList();
+    EXPECT_FALSE(data_test_with_errors(dd, "data22_9.data", errors));
+    EXPECT_EQ("[ \"Unknown item value_does_not_exist\" ]", errors->str());
 }
