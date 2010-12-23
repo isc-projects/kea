@@ -770,7 +770,7 @@ TEST_F(AuthSrvTest, useMemoryDataSrc) {
     EXPECT_TRUE(server.processMessage(*io_message, parse_message,
                                       response_renderer));
     headerCheck(parse_message, default_qid, Rcode::SERVFAIL(), opcode.getCode(),
-                QR_FLAG | AA_FLAG, 1, 0, 0, 0);
+                QR_FLAG, 1, 0, 0, 0);
 }
 
 TEST_F(AuthSrvTest, cacheSlots) {
