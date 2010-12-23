@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <map>
-#include <iostream>
+#include <cassert>
 #include <boost/shared_ptr.hpp>
 
 #include <dns/name.h>
@@ -104,12 +104,9 @@ struct MemoryZone::MemoryZoneImpl {
                 break;
             // Something odd got out
             default:
-                isc_throw(AssertError,
-                    "RBTree<Domain>::insert returned unexpected result");
+                assert(0);
         }
-        if (!node) {
-            isc_throw(AssertError, "RBTree<Domain>::insert gave NULL node");
-        }
+        assert(node);
 
         // Now get the domain
         DomainPtr domain;
@@ -151,18 +148,10 @@ struct MemoryZone::MemoryZoneImpl {
                 case DomainTree::EXACTMATCH: // This one is OK, handle it
                     break;
                 default:
-                    isc_throw(AssertError,
-                        "RBTree<Domain>::find returned unexpected result");
+                    assert(0);
             }
-            if (!node) {
-                isc_throw(AssertError,
-                    "RBTree<Domain>::find gave NULL node when not returning"
-                    "NOTFOUND");
-            }
-            if (node->isEmpty()) {
-                isc_throw(AssertError,
-                    "RBTree<Domain>::find gave empty node");
-            }
+            assert(node);
+            assert(!node->isEmpty());
 
             Domain::const_iterator found(node->getData()->find(type));
             if (found != node->getData()->end()) {

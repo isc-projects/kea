@@ -62,9 +62,6 @@ public:
     ///
     /// It returns NULL pointer in case of NXDOMAIN and NXRRSET
     /// (the base class documentation does not seem to require that).
-    ///
-    /// It might throw AssertError as well, but it should not be
-    /// expected (and caught), as it marks programmer error.
     virtual FindResult find(const isc::dns::Name& name,
                             const isc::dns::RRType& type) const;
 
@@ -73,7 +70,6 @@ public:
     /// It puts another RRset into the zone.
     ///
     /// It throws NullRRset or OutOfZone if the provided rrset is invalid.
-    /// It might throw AssertError, but that one marks programmer errors.
     ///
     /// \param rrset The set to add.
     /// \return SUCCESS or EXIST (if an rrset for given name and type already
@@ -96,16 +92,6 @@ public:
     struct NullRRset : public InvalidParameter {
         NullRRset(const char* file, size_t line, const char* what) :
             InvalidParameter(file, line, what)
-        { }
-    };
-
-    /// \brief Internal programmer error.
-    ///
-    /// This should not be expected. It means internal inconsistency is
-    /// detected, eg. it marks the "Can Not Happen" conditions.
-    struct AssertError : public Unexpected {
-        AssertError(const char* file, size_t line, const char* what) :
-            Unexpected(file, line, what)
         { }
     };
 
