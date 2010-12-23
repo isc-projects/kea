@@ -42,45 +42,26 @@ namespace datasrc {
 // else return DNAME
 class MockZone : public Zone{
 public:
-    MockZone(const isc::dns::RRClass& rrclass, const isc::dns::Name& origin);
-
-    // The destructor.
-    virtual ~MockZone();
+    MockZone() : origin_(Name("example.com"))
+    {}
     virtual const isc::dns::Name& getOrigin() const;
     virtual const isc::dns::RRClass& getClass() const;
 
     FindResult find(const isc::dns::Name& name,
             const isc::dns::RRType& type) const;
-private:
-    struct MockZoneImpl;
-    MockZoneImpl* impl_;
-};
 
-struct MockZone::MockZoneImpl {
-    MockZoneImpl(const RRClass& zone_class, const Name& origin) :
-        zone_class_(zone_class), origin_(origin)
-    {}
-    RRClass zone_class_;
+private:
     Name origin_;
 };
 
-MockZone::MockZone(const RRClass& zone_class, const Name& origin) :
-    impl_(new MockZoneImpl(zone_class, origin))
-{
-}
-
-MockZone::~MockZone() {
-    delete impl_;
-}
-
 const Name&
 MockZone::getOrigin() const {
-    return (impl_->origin_);
+    return (origin_);
 }
 
 const RRClass&
 MockZone::getClass() const {
-    return (impl_->zone_class_);
+    return (RRClass::IN());
 }
 
 Zone::FindResult
@@ -131,7 +112,7 @@ TEST_F(QueryTest, noZone) {
 
 TEST_F(QueryTest, matchZone) {
     // match qname, normal query
-    memory_datasrc.addZone(ZonePtr(new MockZone(qclass, Name("example.com"))));
+    memory_datasrc.addZone(ZonePtr(new MockZone()));
     query.process();
     EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
     EXPECT_TRUE(response.hasRRset(Message::SECTION_ANSWER,
@@ -154,8 +135,10 @@ TEST_F(QueryTest, matchZone) {
 TEST_F(QueryTest, noMatchZone) {
     // there's a zone in the memory datasource but it doesn't match the qname.
     // should result in SERVFAIL.
-    memory_datasrc.addZone(ZonePtr(new MockZone(qclass, Name("example.org"))));
-    query.process();
+    memory_datasrc.addZone(ZonePtr(new MockZone()));
+    const Name nomatch_name(Name("example.org"));
+    Query nomatch_query(memory_datasrc, nomatch_name, qtype, response);
+    nomatch_query.process();
     EXPECT_EQ(Rcode::SERVFAIL(), response.getRcode());
 }
 }
