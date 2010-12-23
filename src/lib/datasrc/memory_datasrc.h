@@ -24,6 +24,51 @@ class Name;
 
 namespace datasrc {
 
+/// A derived zone class intended to be used with the memory data source.
+class MemoryZone : public Zone {
+    ///
+    /// \name Constructors and Destructor.
+    ///
+    /// \b Note:
+    /// The copy constructor and the assignment operator are intentionally
+    /// defined as private, making this class non copyable.
+    //@{
+private:
+    MemoryZone(const MemoryZone& source);
+    MemoryZone& operator=(const MemoryZone& source);
+public:
+    /// \brief Constructor from zone parameters.
+    ///
+    /// This constructor internally involves resource allocation, and if
+    /// it fails, a corresponding standard exception will be thrown.
+    /// It never throws an exception otherwise.
+    ///
+    /// \param rrclass The RR class of the zone.
+    /// \param origin The origin name of the zone.
+    MemoryZone(const isc::dns::RRClass& rrclass, const isc::dns::Name& origin);
+
+    /// The destructor.
+    virtual ~MemoryZone();
+    //@}
+
+    /// \brief Returns the origin of the zone.
+    virtual const isc::dns::Name& getOrigin() const;
+    /// \brief Returns the class of the zone.
+    virtual const isc::dns::RRClass& getClass() const;
+    /// \brief Looks up an RRset in the zone.
+    ///
+    /// See documentation in \c Zone.
+    virtual FindResult find(const isc::dns::Name& name,
+                            const isc::dns::RRType& type) const;
+
+private:
+    /// \name Hidden private data
+    //@{
+    struct MemoryZoneImpl;
+    MemoryZoneImpl* impl_;
+    //@}
+};
+
 /// \brief A data source that uses in memory dedicated backend.
 ///
 /// The \c MemoryDataSrc class represents a data source and provides a
