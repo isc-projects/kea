@@ -30,4 +30,4 @@ export B10_FROM_BUILD
 STATS_PATH=@abs_top_builddir@/src/bin/stats
 
 cd ${STATS_PATH}
-exec ${PYTHON_EXEC} -O b10-stats $*
+exec ${PYTHON_EXEC} -O b10-stats "$@"

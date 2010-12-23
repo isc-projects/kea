@@ -25,4 +25,4 @@ BIND10_MSGQ_SOCKET_FILE=@abs_top_builddir@/msgq_socket
 export BIND10_MSGQ_SOCKET_FILE
 
 LOADZONE_PATH=@abs_top_builddir@/src/bin/loadzone
-exec ${LOADZONE_PATH}/b10-loadzone $*
+exec ${LOADZONE_PATH}/b10-loadzone "$@"

@@ -30,4 +30,4 @@ export BIND10_MSGQ_SOCKET_FILE
 STATS_PATH=@abs_top_builddir@/src/bin/stats
 
 cd ${STATS_PATH}
-exec ${PYTHON_EXEC} -O b10-stats_stub $*
+exec ${PYTHON_EXEC} -O b10-stats_stub "$@"
