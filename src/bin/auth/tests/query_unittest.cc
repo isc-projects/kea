@@ -15,6 +15,7 @@
 #include <dns/message.h>
 #include <dns/name.h>
 #include <dns/rcode.h>
+#include <dns/rrttl.h>
 #include <dns/rrtype.h>
 
 #include <datasrc/memory_datasrc.h>
@@ -26,6 +27,82 @@
 using namespace isc::dns;
 using namespace isc::datasrc;
 using namespace isc::auth;
+
+RRsetPtr a_rrset = RRsetPtr(new RRset(Name("www.example.com"),
+                                      RRClass::IN(), RRType::A(),
+                                      RRTTL(3600)));
+namespace isc {
+namespace datasrc {
+// This is a mock Zone class for testing.
+// It is a derived class of Zone, and simply hardcode the results of find()
+// return SUCCESS for "www.example.com",
+// return NXDOMAIN for "nxdomain.example.com",
+// return NXRRSET for "nxrrset.example.com",
+// return CNAME for "cname.example.com",
+// else return DNAME
+class MockZone : public Zone{
+public:
+    MockZone(const isc::dns::RRClass& rrclass, const isc::dns::Name& origin);
+
+    // The destructor.
+    virtual ~MockZone();
+    virtual const isc::dns::Name& getOrigin() const;
+    virtual const isc::dns::RRClass& getClass() const;
+
+    FindResult find(const isc::dns::Name& name,
+            const isc::dns::RRType& type) const;
+private:
+    struct MockZoneImpl;
+    MockZoneImpl* impl_;
+};
+
+struct MockZone::MockZoneImpl {
+    MockZoneImpl(const RRClass& zone_class, const Name& origin) :
+        zone_class_(zone_class), origin_(origin)
+    {}
+    RRClass zone_class_;
+    Name origin_;
+};
+
+MockZone::MockZone(const RRClass& zone_class, const Name& origin) :
+    impl_(new MockZoneImpl(zone_class, origin))
+{
+}
+
+MockZone::~MockZone() {
+    delete impl_;
+}
+
+const Name&
+MockZone::getOrigin() const {
+    return (impl_->origin_);
+}
+
+const RRClass&
+MockZone::getClass() const {
+    return (impl_->zone_class_);
+}
+
+Zone::FindResult
+MockZone::find(const Name& name, const RRType&) const {
+    // hardcode the find results
+    if (name == Name("www.example.com")) {
+        return FindResult(SUCCESS, a_rrset);
+    } else if (name == Name("delegation.example.com")) {
+        return FindResult(DELEGATION, RRsetPtr());
+    } else if (name == Name("nxdomain.example.com")) {
+        return FindResult(NXDOMAIN, RRsetPtr());
+    } else if (name == Name("nxrrset.example.com")) {
+        return FindResult(NXRRSET, RRsetPtr());
+    } else if (name == Name("cname.example.com")) {
+        return FindResult(CNAME, RRsetPtr());
+    } else {
+        return FindResult(DNAME, RRsetPtr());
+    }
+}
+
+}
+}
 
 namespace {
 class QueryTest : public ::testing::Test {
@@ -53,17 +130,31 @@ TEST_F(QueryTest, noZone) {
 }
 
 TEST_F(QueryTest, matchZone) {
-    // add a matching zone.  since the zone is empty right now, the response
-    // should have NXDOMAIN.
-    memory_datasrc.addZone(ZonePtr(new MemoryZone(qclass, Name("example.com"))));
+    // match qname, normal query
+    memory_datasrc.addZone(ZonePtr(new MockZone(qclass, Name("example.com"))));
     query.process();
+    EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_ANSWER,
+                                  Name("www.example.com"), RRClass::IN(),
+                                  RRType::A()));
+
+    // NXDOMAIN
+    const Name nxdomain_name(Name("nxdomain.example.com"));
+    Query nxdomain_query(memory_datasrc, nxdomain_name, qtype, response);
+    nxdomain_query.process();
     EXPECT_EQ(Rcode::NXDOMAIN(), response.getRcode());
+
+    // NXRRSET
+    const Name nxrrset_name(Name("nxrrset.example.com"));
+    Query nxrrset_query(memory_datasrc, nxrrset_name, qtype, response);
+    nxrrset_query.process();
+    EXPECT_EQ(Rcode::NXRRSET(), response.getRcode());
 }
 
 TEST_F(QueryTest, noMatchZone) {
     // there's a zone in the memory datasource but it doesn't match the qname.
     // should result in SERVFAIL.
-    memory_datasrc.addZone(ZonePtr(new MemoryZone(qclass, Name("example.org"))));
+    memory_datasrc.addZone(ZonePtr(new MockZone(qclass, Name("example.org"))));
     query.process();
     EXPECT_EQ(Rcode::SERVFAIL(), response.getRcode());
 }
