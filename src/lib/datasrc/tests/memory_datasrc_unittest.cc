@@ -28,8 +28,9 @@ namespace {
 
 class MemoryDataSrcTest : public ::testing::Test {
 protected:
-    MemoryDataSrcTest()
+    MemoryDataSrcTest() : rrclass(RRClass::IN())
     {}
+    RRClass rrclass;
     MemoryDataSrc memory_datasrc;
 };
 
@@ -112,6 +113,23 @@ TEST_F(MemoryDataSrcTest, add_find_Zone) {
               memory_datasrc.findZone(Name("z.i.g.h")).zone->getOrigin());
 }
 
+TEST_F(MemoryDataSrcTest, getZoneCount) {
+    EXPECT_EQ(0, memory_datasrc.getZoneCount());
+    memory_datasrc.addZone(
+                  ZonePtr(new MemoryZone(rrclass, Name("example.com"))));
+    EXPECT_EQ(1, memory_datasrc.getZoneCount());
+
+    // duplicate add.  counter shouldn't change
+    memory_datasrc.addZone(
+                  ZonePtr(new MemoryZone(rrclass, Name("example.com"))));
+    EXPECT_EQ(1, memory_datasrc.getZoneCount());
+
+    // add one more
+    memory_datasrc.addZone(
+                  ZonePtr(new MemoryZone(rrclass, Name("example.org"))));
+    EXPECT_EQ(2, memory_datasrc.getZoneCount());
+}
+
 /// \brief Test fixture for the MemoryZone class
 class MemoryZoneTest : public ::testing::Test {
 public:
@@ -137,5 +155,4 @@ TEST_F(MemoryZoneTest, Constructor) {
     ASSERT_EQ(class_, zone_.getClass());
     ASSERT_EQ(origin_, zone_.getOrigin());
 }
-
 }

@@ -41,6 +41,7 @@
 
 #include <auth/spec_config.h>
 #include <auth/common.h>
+#include <auth/config.h>
 #include <auth/change_user.h>
 #include <auth/auth_srv.h>
 #include <asiolink/asiolink.h>
@@ -235,7 +236,13 @@ main(int argc, char* argv[]) {
         // from auth_server, and create io_service, auth_server, and
         // sessions in that order.
         auth_server->setXfrinSession(xfrin_session);
+
+        // Configure the server.  configureAuthServer() is expected to install
+        // all initial configurations, but as a short term workaround we
+        // handle the traditional "database_file" setup by directly calling
+        // updateConfig().
         auth_server->setConfigSession(config_session);
+        configureAuthServer(*auth_server, config_session->getFullConfig());
         auth_server->updateConfig(ElementPtr());
 
         cout << "[b10-auth] Server started." << endl;
