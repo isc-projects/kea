@@ -1,3 +1,8 @@
+  136.	[bug]		jreed
+	Fix run_*.sh scripts that are used for development testing
+	so they use a msgq socket file in the build tree.
+	(Trac #226, svn NNNN)
+
   135.  [bug]       jelte
   	bindctl (and the configuration manager in general) now no longer
 	accepts 'unknown' data; i.e. data for modules that it does not know
