@@ -100,9 +100,9 @@ protected:
 
 TEST_F(QueryTest, noZone) {
     // There's no zone in the memory datasource.  So the response should have
-    // SERVFAIL.
+    // REFUSED.
     query.process();
-    EXPECT_EQ(Rcode::SERVFAIL(), response.getRcode());
+    EXPECT_EQ(Rcode::REFUSED(), response.getRcode());
 }
 
 TEST_F(QueryTest, matchZone) {
@@ -124,16 +124,16 @@ TEST_F(QueryTest, matchZone) {
     const Name nxrrset_name(Name("nxrrset.example.com"));
     Query nxrrset_query(memory_datasrc, nxrrset_name, qtype, response);
     nxrrset_query.process();
-    EXPECT_EQ(Rcode::NXRRSET(), response.getRcode());
+    EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
 }
 
 TEST_F(QueryTest, noMatchZone) {
     // there's a zone in the memory datasource but it doesn't match the qname.
-    // should result in SERVFAIL.
+    // should result in REFUSED.
     memory_datasrc.addZone(ZonePtr(new MockZone()));
     const Name nomatch_name(Name("example.org"));
     Query nomatch_query(memory_datasrc, nomatch_name, qtype, response);
     nomatch_query.process();
-    EXPECT_EQ(Rcode::SERVFAIL(), response.getRcode());
+    EXPECT_EQ(Rcode::REFUSED(), response.getRcode());
 }
 }
