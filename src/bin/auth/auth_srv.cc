@@ -95,6 +95,7 @@ public:
     AbstractSession* xfrin_session_;
 
     /// In-memory data source.  Currently class IN only for simplicity.
+    const RRClass memory_datasrc_class_;
     AuthSrv::MemoryDataSrcPtr memory_datasrc_;
 
     /// Hot spot cache
@@ -116,6 +117,7 @@ AuthSrvImpl::AuthSrvImpl(const bool use_cache,
                          AbstractXfroutClient& xfrout_client) :
     config_session_(NULL), verbose_mode_(false),
     xfrin_session_(NULL),
+    memory_datasrc_class_(RRClass::IN()),
     xfrout_connected_(false),
     xfrout_client_(xfrout_client)
 {
@@ -300,7 +302,7 @@ AuthSrv::getConfigSession() const {
 AuthSrv::ConstMemoryDataSrcPtr
 AuthSrv::getMemoryDataSrc(const RRClass& rrclass) const {
     // XXX: for simplicity, we only support the IN class right now.
-    if (rrclass != RRClass::IN()) {
+    if (rrclass != impl_->memory_datasrc_class_) {
         isc_throw(InvalidParameter,
                   "Memory data source is not supported for RR class "
                   << rrclass);
@@ -313,7 +315,7 @@ AuthSrv::setMemoryDataSrc(const isc::dns::RRClass& rrclass,
                           MemoryDataSrcPtr memory_datasrc)
 {
     // XXX: see above
-    if (rrclass != RRClass::IN()) {
+    if (rrclass != impl_->memory_datasrc_class_) {
         isc_throw(InvalidParameter,
                   "Memory data source is not supported for RR class "
                   << rrclass);
@@ -437,14 +439,13 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, MessagePtr message,
     try {
         // If a memory data source is configured call the separate
         // Query::process()
-        if (memory_datasrc_) {
-            ConstQuestionPtr question = *message->beginQuestion();
+        const ConstQuestionPtr question = *message->beginQuestion();
+        if (memory_datasrc_ && memory_datasrc_class_ == question->getClass()) {
             const RRType& qtype = question->getType();
             const Name& qname = question->getName();
-            isc::auth::Query query(*memory_datasrc_, qname, qtype, *message);
-            query.process();
+            auth::Query(*memory_datasrc_, qname, qtype, *message).process();
         } else {
-            isc::datasrc::Query query(*message, cache_, dnssec_ok);
+            datasrc::Query query(*message, cache_, dnssec_ok);
             data_sources_.doQuery(query);
         }
     } catch (const Exception& ex) {
@@ -455,7 +456,6 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, MessagePtr message,
         makeErrorMessage(message, buffer, Rcode::SERVFAIL(), verbose_mode_);
         return (true);
     }
-
 
     MessageRenderer renderer(*buffer);
     const bool udp_buffer =
