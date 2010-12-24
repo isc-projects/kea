@@ -54,6 +54,7 @@
 #include <auth/common.h>
 #include <auth/config.h>
 #include <auth/auth_srv.h>
+#include <auth/query.h>
 
 using namespace std;
 
@@ -61,6 +62,7 @@ using namespace isc;
 using namespace isc::cc;
 using namespace isc::datasrc;
 using namespace isc::dns;
+using namespace isc::auth;
 using namespace isc::dns::rdata;
 using namespace isc::data;
 using namespace isc::config;
@@ -433,8 +435,18 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, MessagePtr message,
     }
 
     try {
-        Query query(*message, cache_, dnssec_ok);
-        data_sources_.doQuery(query);
+        // If a memory data source is configured call the separate
+        // Query::process()
+        if (memory_datasrc_) {
+            ConstQuestionPtr question = *message->beginQuestion();
+            const RRType& qtype = question->getType();
+            const Name& qname = question->getName();
+            isc::auth::Query query(*memory_datasrc_, qname, qtype, *message);
+            query.process();
+        } else {
+            isc::datasrc::Query query(*message, cache_, dnssec_ok);
+            data_sources_.doQuery(query);
+        }
     } catch (const Exception& ex) {
         if (verbose_mode_) {
             cerr << "[b10-auth] Internal error, returning SERVFAIL: " <<

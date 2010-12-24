@@ -85,7 +85,7 @@ my_command_handler(const string& command, ConstElementPtr args) {
     } else if (command == "shutdown") {
         io_service.stop();
     }
-    
+
     return (answer);
 }
 

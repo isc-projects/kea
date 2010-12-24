@@ -37,6 +37,7 @@ class AbstractXfroutClient;
 }
 }
 
+
 /// \brief The implementation class for the \c AuthSrv class using the pimpl
 /// idiom.
 class AuthSrvImpl;
@@ -130,9 +131,11 @@ public:
     /// If there is a data source installed, it will be replaced with the
     /// new one.
     ///
-    /// In the current implementation, the SQLite data source is assumed.
-    /// The \c config parameter will simply be passed to the initialization
-    /// routine of the \c Sqlite3DataSrc class.
+    /// In the current implementation, the SQLite data source and MemoryDataSrc
+    /// are assumed.
+    /// We can enable memory data source and get the path of SQLite database by
+    /// the \c config parameter.  If we disabled memory data source, the SQLite
+    /// data source will be used.
     ///
     /// On success this method returns a data \c Element (in the form of a
     /// pointer like object) indicating the successful result,

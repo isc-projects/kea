@@ -19,7 +19,6 @@
 #include <auth/auth_srv.h>
 #include <testutils/srv_unittest.h>
 
-using namespace std;
 using namespace isc::cc;
 using namespace isc::dns;
 using namespace isc::data;
@@ -394,6 +393,13 @@ TEST_F(AuthSrvTest, updateWithMemoryDataSrc) {
     // after successful configuration, we should have one (with empty zoneset).
     ASSERT_NE(AuthSrv::MemoryDataSrcPtr(), server.getMemoryDataSrc(rrclass));
     EXPECT_EQ(0, server.getMemoryDataSrc(rrclass)->getZoneCount());
+
+    // The memory data source is empty, should return SERVFAIL rcode.
+    createDataFromFile("examplequery_fromWire.wire");
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
+    headerCheck(*parse_message, default_qid, Rcode::SERVFAIL(), opcode.getCode(),
+                QR_FLAG, 1, 0, 0, 0);
 }
 
 TEST_F(AuthSrvTest, cacheSlots) {
