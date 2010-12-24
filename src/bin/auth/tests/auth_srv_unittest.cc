@@ -394,12 +394,30 @@ TEST_F(AuthSrvTest, updateWithMemoryDataSrc) {
     ASSERT_NE(AuthSrv::MemoryDataSrcPtr(), server.getMemoryDataSrc(rrclass));
     EXPECT_EQ(0, server.getMemoryDataSrc(rrclass)->getZoneCount());
 
-    // The memory data source is empty, should return SERVFAIL rcode.
+    // The memory data source is empty, should return REFUSED rcode.
     createDataFromFile("examplequery_fromWire.wire");
-    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    server.processMessage(*io_message, parse_message, response_obuffer,
+                          &dnsserv);
     EXPECT_TRUE(dnsserv.hasAnswer());
-    headerCheck(*parse_message, default_qid, Rcode::SERVFAIL(), opcode.getCode(),
-                QR_FLAG, 1, 0, 0, 0);
+    headerCheck(*parse_message, default_qid, Rcode::REFUSED(),
+                opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
+}
+
+TEST_F(AuthSrvTest, chQueryWithMemoryDataSrc) {
+    // Configure memory data source for class IN
+    updateConfig(&server, "{\"datasources\": "
+                 "[{\"class\": \"IN\", \"type\": \"memory\"}]}", true);
+
+    // This shouldn't affect the result of class CH query
+    UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
+                                       default_qid, Name("version.bind"),
+                                       RRClass::CH(), RRType::TXT());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, parse_message, response_obuffer,
+                          &dnsserv);
+    EXPECT_TRUE(dnsserv.hasAnswer());
+    headerCheck(*parse_message, default_qid, Rcode::NOERROR(),
+                opcode.getCode(), QR_FLAG | AA_FLAG, 1, 1, 1, 0);
 }
 
 TEST_F(AuthSrvTest, cacheSlots) {
