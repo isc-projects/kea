@@ -58,31 +58,7 @@ struct MemoryZone::MemoryZoneImpl {
     typedef RBTree<Domain> DomainTree;
     typedef RBNode<Domain> DomainNode;
     // The actual zone data
-    // (address by relative names to the origin_)
     DomainTree domains_;
-
-    /*
-     * Get relative part of the Name. (the result looks like
-     * absolute, but only the part below zone cut is used).
-     *
-     * Therefore, if we pass www.example.org to zone example.org,
-     * it returns "www.". If we give it example.org, it returns
-     * "." (root).
-     */
-    Name getRelativeName(const Name& name) const {
-        // Sanitize output
-        switch (name.compare(origin_).getRelation()) {
-            case NameComparisonResult::SUBDOMAIN:
-                return (name.split(0, name.getLabelCount() -
-                    origin_.getLabelCount()));
-            case NameComparisonResult::EQUAL:
-                return (Name::ROOT_NAME());
-            default:
-                isc_throw(OutOfZone, "The provided name " <<
-                    name.toText() << " is out of the zone " <<
-                    origin_.toText());
-        }
-    }
 
     /*
      * Implementation of longer methods. We put them here, because the
@@ -94,10 +70,17 @@ struct MemoryZone::MemoryZoneImpl {
         if (!rrset) {
             isc_throw(NullRRset, "The rrset provided is NULL");
         }
-        Name relative_name(getRelativeName(rrset->getName()));
+        Name name(rrset->getName());
+        NameComparisonResult compare(origin_.compare(name));
+        if (compare.getRelation() != NameComparisonResult::SUPERDOMAIN &&
+            compare.getRelation() != NameComparisonResult::EQUAL)
+        {
+            isc_throw(OutOfZone, "The name " << name <<
+                " is not contained in zone " << origin_);
+        }
         // Get the node
         DomainNode* node;
-        switch (domains_.insert(relative_name, &node)) {
+        switch (domains_.insert(name, &node)) {
             // Just check it returns reasonable results
             case DomainTree::SUCCEED:
             case DomainTree::ALREADYEXIST:
@@ -114,13 +97,6 @@ struct MemoryZone::MemoryZoneImpl {
         if (node->isEmpty()) {
             domain.reset(new Domain);
             node->setData(domain);
-            /*
-             * If something throws exception past this point, we did change
-             * the internal structure. But as an empty domain is taken as
-             * nonexistant one, it is strongly exception safe at the interface
-             * level even when the internal representation of the state
-             * changes.
-             */
         } else { // Get existing one
             domain = node->getData();
         }
@@ -136,53 +112,34 @@ struct MemoryZone::MemoryZoneImpl {
     }
 
     // Implementation of MemoryZone::find
-    FindResult find(const Name& full_name, RRType type) const {
-        try {
-            // Get the relative name
-            Name relative_name(getRelativeName(full_name));
-            // Get the node
-            DomainNode* node;
-            switch (domains_.find(relative_name, &node)) {
-                case DomainTree::PARTIALMATCH:
-                    // Pretend it was not found for now
-                    // TODO: Implement real delegation
-                case DomainTree::NOTFOUND:
-                    return (FindResult(NXDOMAIN, ConstRRsetPtr()));
-                case DomainTree::EXACTMATCH: // This one is OK, handle it
-                    break;
-                default:
-                    assert(0);
-            }
-            assert(node);
-            assert(!node->isEmpty());
-
-            Domain::const_iterator found(node->getData()->find(type));
-            if (found != node->getData()->end()) {
-                // Good, it is here
-                return (FindResult(SUCCESS, found->second));
-            } else {
-                /*
-                 * TODO Look for CNAME and DNAME (it should be OK to do so when
-                 * the value is not found, as CNAME/DNAME domain should be
-                 * empty otherwise.)
-                 */
-                if(node->getData()->empty()) {
-                    /*
-                     * In case the domain is empty, it is the same as if it
-                     * does not exist. It probably got here by unsuccessful
-                     * add, so just remove it, it is useless.
-                     */
-                    node->setData(DomainPtr());
-                    return (FindResult(NXDOMAIN, ConstRRsetPtr()));
-                } else {
-                    return (FindResult(NXRRSET, ConstRRsetPtr()));
-                }
-            }
+    FindResult find(const Name& name, RRType type) const {
+        // Get the node
+        DomainNode* node;
+        switch (domains_.find(name, &node)) {
+            case DomainTree::PARTIALMATCH:
+                // Pretend it was not found for now
+                // TODO: Implement real delegation
+            case DomainTree::NOTFOUND:
+                return (FindResult(NXDOMAIN, ConstRRsetPtr()));
+            case DomainTree::EXACTMATCH: // This one is OK, handle it
+                break;
+            default:
+                assert(0);
         }
-        catch (const OutOfZone&) {
-            // We were asked for something that is not below our origin
-            // So it is not here for sure
-            return (FindResult(NXDOMAIN, ConstRRsetPtr()));
+        assert(node);
+        assert(!node->isEmpty());
+
+        Domain::const_iterator found(node->getData()->find(type));
+        if (found != node->getData()->end()) {
+            // Good, it is here
+            return (FindResult(SUCCESS, found->second));
+        } else {
+            /*
+             * TODO Look for CNAME and DNAME (it should be OK to do so when
+             * the value is not found, as CNAME/DNAME domain should be
+             * empty otherwise.)
+             */
+            return (FindResult(NXRRSET, ConstRRsetPtr()));
         }
     }
 };
