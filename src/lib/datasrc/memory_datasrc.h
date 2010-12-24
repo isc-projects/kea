@@ -57,7 +57,6 @@ public:
     virtual const isc::dns::RRClass& getClass() const;
     /// \brief Looks up an RRset in the zone.
     ///
-    ///
     /// See documentation in \c Zone.
     ///
     /// It returns NULL pointer in case of NXDOMAIN and NXRRSET
@@ -69,7 +68,10 @@ public:
     ///
     /// It puts another RRset into the zone.
     ///
-    /// It throws NullRRset or OutOfZone if the provided rrset is invalid.
+    /// It throws NullRRset or OutOfZone if the provided rrset is invalid. It
+    /// might throw standard allocation exceptions, in which case this function
+    /// does not guarantee strong exception safety (it is currently not needed,
+    /// if it is needed in future, it should be implemented).
     ///
     /// \param rrset The set to add.
     /// \return SUCCESS or EXIST (if an rrset for given name and type already
