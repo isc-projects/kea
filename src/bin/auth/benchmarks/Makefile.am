@@ -8,6 +8,7 @@ CLEANFILES = *.gcno *.gcda
 
 noinst_PROGRAMS = query_bench
 query_bench_SOURCES = query_bench.cc
+query_bench_SOURCES += ../query.h  ../query.cc
 query_bench_SOURCES += ../auth_srv.h ../auth_srv.cc
 query_bench_SOURCES += ../config.h ../config.cc
 

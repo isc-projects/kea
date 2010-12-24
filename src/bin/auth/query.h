@@ -22,7 +22,7 @@ class RRType;
 }
 
 namespace datasrc {
-class ZoneTable;
+class MemoryDataSrc;
 }
 
 namespace auth {
@@ -32,11 +32,11 @@ namespace auth {
 ///
 /// Many of the design details for this class are still in flux.
 /// We'll revisit and update them as we add more functionality, for example:
-/// - zone_table parameter of the constructor.  This will eventually be
-///   replaced with a generic DataSrc object, or perhaps a notion of "view".
+/// - memory_datasrc parameter of the constructor.  It is a data source that
+///   uses in memory dedicated backend.
 /// - as a related point, we may have to pass the RR class of the query.
-///   in the initial implementation the RR class is an attribute of zone
-///   table and omitted.  It's not clear if this assumption holds with
+///   in the initial implementation the RR class is an attribute of memory
+///   datasource and omitted.  It's not clear if this assumption holds with
 ///   generic data sources.  On the other hand, it will help keep
 ///   implementation simpler, and we might rather want to modify the design
 ///   of the data source on this point.
@@ -47,8 +47,8 @@ namespace auth {
 ///   separate attribute setter.
 /// - likewise, we'll eventually need to do per zone access control, for which
 ///   we need querier's information such as its IP address.
-/// - zone_table (or DataSrc eventually) and response may better be parameters
-///   to process() instead of the constructor.
+/// - memory_datasrc and response may better be parameters to process() instead
+///   of the constructor.
 ///
 /// <b>Note:</b> The class name is intentionally the same as the one used in
 /// the datasrc library.  This is because the plan is to eventually merge
@@ -65,15 +65,15 @@ public:
     ///
     /// This constructor never throws an exception.
     ///
-    /// \param zone_table The zone table wherein the answer to the query is
+    /// \param memory_datasrc The memory datasource wherein the answer to the query is
     /// to be found.
     /// \param qname The query name
     /// \param qtype The RR type of the query
     /// \param response The response message to store the answer to the query.
-    Query(const isc::datasrc::ZoneTable& zone_table,
+    Query(const isc::datasrc::MemoryDataSrc& memory_datasrc,
           const isc::dns::Name& qname, const isc::dns::RRType& qtype,
           isc::dns::Message& response) :
-        zone_table_(zone_table), qname_(qname), qtype_(qtype),
+        memory_datasrc_(memory_datasrc), qname_(qname), qtype_(qtype),
         response_(response)
     {}
 
@@ -87,7 +87,7 @@ public:
     /// successful search would result in adding a corresponding RRset to
     /// the answer section of the response.
     ///
-    /// If no matching zone is found in the zone table, the RCODE of
+    /// If no matching zone is found in the memory datasource, the RCODE of
     /// SERVFAIL will be set in the response.
     /// <b>Note:</b> this is different from the error code that BIND 9 returns
     /// by default when it's configured as an authoritative-only server (and
@@ -105,7 +105,7 @@ public:
     void process() const;
 
 private:
-    const isc::datasrc::ZoneTable& zone_table_;
+    const isc::datasrc::MemoryDataSrc& memory_datasrc_;
     const isc::dns::Name& qname_;
     const isc::dns::RRType& qtype_;
     isc::dns::Message& response_;

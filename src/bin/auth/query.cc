@@ -15,7 +15,7 @@
 #include <dns/message.h>
 #include <dns/rcode.h>
 
-#include <datasrc/zonetable.h>
+#include <datasrc/memory_datasrc.h>
 
 #include <auth/query.h>
 
@@ -24,19 +24,49 @@ using namespace isc::datasrc;
 
 namespace isc {
 namespace auth {
+
 void
 Query::process() const {
-    const ZoneTable::FindResult result = zone_table_.findZone(qname_);
+    bool keep_doing = true;
+    response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
+    const MemoryDataSrc::FindResult result =
+        memory_datasrc_.findZone(qname_);
 
-    if (result.code != isc::datasrc::result::SUCCESS &&
-        result.code != isc::datasrc::result::PARTIALMATCH) {
+    if (result.code != result::SUCCESS &&
+        result.code != result::PARTIALMATCH) {
         response_.setRcode(Rcode::SERVFAIL());
         return;
     }
 
-    // Right now we have no code to search the zone, so we simply return
-    // NXDOMAIN for tests.
-    response_.setRcode(Rcode::NXDOMAIN());
+    // Found a zone which is the nearest ancestor to QNAME, set the AA bit
+    response_.setHeaderFlag(Message::HEADERFLAG_AA);
+    while (keep_doing) {
+        keep_doing = false;
+        Zone::FindResult db_result = result.zone->find(qname_, qtype_);
+        switch (db_result.code) {
+            case Zone::SUCCESS:
+                response_.setRcode(Rcode::NOERROR());
+                response_.addRRset(Message::SECTION_ANSWER,
+                            boost::const_pointer_cast<RRset>(db_result.rrset));
+                // TODO : fill in authority and addtional sections.
+                break;
+            case Zone::DELEGATION:
+                // TODO : add NS to authority section, fill in additional section.
+                break;
+            case Zone::NXDOMAIN:
+                response_.setRcode(Rcode::NXDOMAIN());
+                // TODO : add SOA to authority section
+                break;
+            case Zone::NXRRSET:
+                response_.setRcode(Rcode::NXRRSET());
+                // TODO : add SOA to authority section
+                break;
+            case Zone::CNAME:
+            case Zone::DNAME:
+                // TODO : replace qname, continue lookup
+                break;
+        }
+    }
 }
 }
 }
