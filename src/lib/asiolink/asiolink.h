@@ -300,13 +300,13 @@ public:
     ///
     /// \param done If true, this signals the system there is an answer
     ///             to return.
-    virtual inline void resume(const bool done) { self_->resume(done); }
+    virtual void resume(const bool done) { self_->resume(done); }
 
     /// \brief Indicate whether the server is able to send an answer
     /// to a query.
     /// 
     /// This is presently used only for testing purposes.
-    virtual inline bool hasAnswer() { return (self_->hasAnswer()); }
+    virtual bool hasAnswer() { return (self_->hasAnswer()); }
 
     /// \brief Returns the current value of the 'coroutine' object
     ///
@@ -316,7 +316,7 @@ public:
     /// about its current state.
     ///
     /// \return The value of the 'coroutine' object
-    virtual inline int value() { return (self_->value()); }
+    virtual int value() { return (self_->value()); }
 
     /// \brief Returns a pointer to a clone of this DNSServer object.
     ///
@@ -326,7 +326,7 @@ public:
     /// that the underlying object is also correctly copied.
     ///
     /// \return A deep copy of this DNSServer object
-    virtual inline DNSServer* clone() { return (self_->clone()); }
+    virtual DNSServer* clone() { return (self_->clone()); }
     //@}
 
 protected:
@@ -349,7 +349,7 @@ protected:
     class AsyncLookup {
     public:
         AsyncLookup(T& caller) : caller_(caller) {}
-        inline void operator()() { caller_.asyncLookup(); }
+        void operator()() { caller_.asyncLookup(); }
     private:
         T caller_;
     };
@@ -361,7 +361,7 @@ protected:
     /// the details of the query and a pointer back to the current
     /// server object.  It is called asynchronously via the AsyncLookup
     /// handler class.
-    virtual inline void asyncLookup() { self_->asyncLookup(); }
+    virtual void asyncLookup() { self_->asyncLookup(); }
 
 private:
     DNSServer* self_;
