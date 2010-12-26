@@ -577,6 +577,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/Makefile
                  src/lib/asiolink/Makefile
                  src/lib/asiolink/tests/Makefile
+                 src/lib/asiolink/internal/Makefile
+                 src/lib/asiolink/internal/tests/Makefile
                  src/lib/bench/Makefile
                  src/lib/bench/example/Makefile
                  src/lib/bench/tests/Makefile
