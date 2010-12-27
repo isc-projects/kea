@@ -287,6 +287,26 @@ AC_TRY_COMPILE([
         AC_DEFINE(HAVE_SA_LEN, 1, [Define to 1 if sockaddr has a sa_len member, and corresponding sin_len and sun_len])],
         AC_MSG_RESULT(no))
 
+AC_ARG_WITH(pycoverage,
+[  --with-pycoverage[=PROGRAM]         enable python code coverage using the specified coverage], pycoverage="$withval", pycoverage="no")
+if test "$pycoverage" = "no" ; then
+	# just run the tests normally with python
+	PYCOVERAGE_RUN="${PYTHON}"
+	USE_PYCOVERAGE="no"
+elif test "$pycoverage" = "yes" ; then
+	PYCOVERAGE="coverage"
+	PYCOVERAGE_RUN="${PYCOVERAGE} run --branch --append"
+	USE_PYCOVERAGE="yes"
+else
+	PYCOVERAGE="$pycoverage"
+	PYCOVERAGE_RUN="${PYCOVERAGE} run --branch --append"
+	USE_PYCOVERAGE="yes"
+fi
+AM_CONDITIONAL(ENABLE_PYTHON_COVERAGE, test x$USE_PYCOVERAGE != xno)
+AC_SUBST(PYCOVERAGE)
+AC_SUBST(PYCOVERAGE_RUN)
+AC_SUBST(USE_PYCOVERAGE)
+
 AC_ARG_WITH(lcov,
 [  --with-lcov[=PROGRAM]         enable gtest and coverage target using the specified lcov], lcov="$withval", lcov="no")
 
@@ -729,7 +749,8 @@ Features:
 
 Developer:
   Google Tests:  $gtest_path
-  Code Coverage: $USE_LCOV
+  C++ Code Coverage: $USE_LCOV
+  Python Code Coverage: $USE_PYCOVERAGE
   Generate Manuals:  $enable_man
 
 END

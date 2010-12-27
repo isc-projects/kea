@@ -1,5 +1,5 @@
-PYCOVERAGE_RUN = @PYCOVERAGE_RUN@          
-PYTESTS = msgq_test.py
+PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
+PYTESTS = process_test.py
 EXTRA_DIST = $(PYTESTS)
 
 # test using command-line arguments, so use check-local target instead of TESTS
@@ -11,8 +11,6 @@ if ENABLE_PYTHON_COVERAGE
 endif
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
-	env PYTHONPATH=$(abs_top_builddir)/src/bin/msgq:$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python \
-	BIND10_TEST_SOCKET_FILE=$(builddir)/test_msgq_socket.sock \
+	env PYTHONPATH=$(abs_top_srcdir)/src/lib/python:$(abs_top_builddir)/src/lib/python:$(abs_top_builddir)/src/lib/dns/python/.libs \
 	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done
-

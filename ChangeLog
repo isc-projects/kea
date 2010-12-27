@@ -1,3 +1,10 @@
+  139.  [build]		jreed
+	Introduced configure option and make targets for generating
+	Python code coverage report. This adds new make targets:
+	report-python-coverage and clean-python-coverage. The C++
+	code coverage targets were renamed to clean-cpp-coverage
+	and report-cpp-coverage. (Trac #362, svn r4023)
+
   138.	[func]*		jinmei
 	b10-auth: added a configuration interface to support in memory
 	data sources.  For example, the following command to bindctl
