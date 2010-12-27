@@ -330,13 +330,32 @@ bool
 ModuleSpec::validate_spec_list(ConstElementPtr spec, ConstElementPtr data,
                                const bool full, ElementPtr errors) const
 {
+    bool validated = true;
     std::string cur_item_name;
     BOOST_FOREACH(ConstElementPtr cur_spec_el, spec->listValue()) {
         if (!validate_spec(cur_spec_el, data, full, errors)) {
-            return (false);
+            validated = false;
         }
     }
-    return (true);
+
+    typedef std::pair<std::string, ConstElementPtr> maptype;
+    
+    BOOST_FOREACH(maptype m, data->mapValue()) {
+        bool found = false;
+        BOOST_FOREACH(ConstElementPtr cur_spec_el, spec->listValue()) {
+            if (cur_spec_el->get("item_name")->stringValue().compare(m.first) == 0) {
+                found = true;
+            }
+        }
+        if (!found) {
+            validated = false;
+            if (errors) {
+                errors->add(Element::create("Unknown item " + m.first));
+            }
+        }
+    }
+
+    return (validated);
 }
 
 }

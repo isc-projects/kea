@@ -47,7 +47,7 @@ report-cpp-coverage:
 			\*_unittest.cc \
 			\*_unittests.h \
 			--output report.info ; \
-		$(GENHTML) -o $(abs_top_builddir)/coverage-cpp-html report.info ; \
+		$(GENHTML) --legend -o $(abs_top_builddir)/coverage-cpp-html report.info ; \
 		echo "Generated C++ Code Coverage report in HTML at $(abs_top_builddir)/coverage-cpp-html" ; \
 	else \
 		echo "C++ code coverage not enabled at configuration time." ; \
