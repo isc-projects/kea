@@ -118,7 +118,9 @@ struct MemoryZone::MemoryZoneImpl {
         switch (domains_.find(name, &node)) {
             case DomainTree::PARTIALMATCH:
                 // Pretend it was not found for now
-                // TODO: Implement real delegation
+                // TODO: Implement real delegation. Currently, not having
+                // the the domain can cause a partialmatch as well, so
+                // better check.
             case DomainTree::NOTFOUND:
                 return (FindResult(NXDOMAIN, ConstRRsetPtr()));
             case DomainTree::EXACTMATCH: // This one is OK, handle it
