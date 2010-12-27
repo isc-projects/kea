@@ -2,6 +2,121 @@
 	Introduced configure option and make targets for generating
 	Python code coverage report. (Trac #362)
 
+  138.	[func]*		jinmei
+	b10-auth: added a configuration interface to support in memory
+	data sources.  For example, the following command to bindctl
+	will configure a memory data source containing the "example.com"
+	zone with the zone file named "example.com.zone":
+	> config set Auth/datasources/ [{"type": "memory", "zones": \
+	 [{"origin": "example.com", "file": "example.com.zone"}]}]
+	By default, the memory data source is disabled; it must be
+	configured explicitly.  To disable it again, specify a null list
+	for Auth/datasources:
+	> config set Auth/datasources/ []
+	Notes: it's currently for class IN only.  The zone files are not
+	actually loaded into memory yet (which will soon be implemented).
+	This is an experimental feature and the syntax may change in
+	future versions.
+	(Trac #446, svn r3998)
+
+  137.	[bug]		jreed
+	Fix run_*.sh scripts that are used for development testing
+	so they use a msgq socket file in the build tree.
+	(Trac #226, svn r3989)
+
+  136.  [bug]       jelte
+  	bindctl (and the configuration manager in general) now no longer
+	accepts 'unknown' data; i.e. data for modules that it does not know
+	about, or configuration items that are not specified in the .spec
+	files.
+	(Trac #202, svn r3967)
+
+  135.  [func]      each
+	Add b10-recurse. This is an example recursive server that
+	currently does forwarding only and no caching.
+	(Trac #327, svn r3903)
+
+  134.  [func]      vorner
+	b10-recurse supports timeouts and retries in forwarder mode.
+	(Trac #401, svn r3660)
+
+  133.  [func]      vorner
+	New temporary logging function available in isc::log. It is used by
+	b10-recurse.
+	(Trac #393, r3602)
+
+  132.  [func]      vorner
+	The b10-recurse is configured through config manager.
+	It has "listen_on" and "forward_addresses" options.
+	(Trac #389, r3448)
+
+  131.  [func]    feng, jerry
+	src/lib/datasrc: Introduced two template classes RBTree and RBNode
+	to provide the generic map with domain name as key and anything as
+	the value. Because of some unresolved design issue, the new classes
+	are only intended to be used by memory zone and zone table.
+	(Trac #397, svn r3890)
+
+  130.	[func]		jerry
+	src/lib/datasrc: Introduced a new class MemoryDataSrc to provide
+	the general interface for memory data source.  For the initial
+	implementation, we don't make it a derived class of AbstractDataSrc
+	because the interface is so different(we'll eventually consider this
+	as part of the generalization work).
+	(Trac #422, svn r3866)
+
+  129.	[func]		jinmei
+	src/lib/dns: Added new functions masterLoad() for loading master
+	zone files.  The initial implementation can only parse a limited
+	form of master files, but BIND 9's named-compilezone can convert
+	any valid zone file into the acceptable form.
+	(Trac #423, svn r3857)
+
+  128.  [build]     vorner
+	Test for query name = '.', type = DS to authoritative nameserver
+	for root zone was added.
+	(Trac #85, svn r3836)
+
+  127.  [bug]       stephen
+	During normal operation process termination and resurrection messages
+	are now output regardless of the state of the verbose flag.
+	(Trac #229, svn r3828)
+
+  126.  [func]      stephen, vorner, ocean
+	The Nameserver Address Store (NSAS) component has been added. It takes
+	care of choosing an IP address of a nameserver when a zone needs to be
+	contacted.
+	(Trac #356, Trac #408, svn r3823)
+
+bind10-devel-20101201 released on December 01, 2010
+
+  125.  [func]		jelte
+	Added support for addressing individual list items in bindctl
+	configuration commands; If you have an element that is a list, you
+	can use foo[X] to address a specific item, where X is an integer
+	(starting at 0)
+	(Trac #405, svn r3739)
+
+  124.  [bug]		jreed
+	Fix some wrong version reporting. Now also show the version
+	for the component and BIND 10 suite. (Trac #302, svn r3696)
+
+  123.  [bug]		jelte
+	src/bin/bindctl printed values had the form of python literals
+	(e.g. 'True'), while the input requires valid JSON (e.g. 'true').
+	Output changed to JSON format for consistency. (svn r3694)
+
+  122.  [func]		stephen
+	src/bin/bind10: Added configuration options to Boss to determine
+	whether to start the authoritative server, recursive server (or
+	both). A dummy recursor has been provided for test purposes.
+	(Trac #412, svn r3676)
+
+  121.  [func]		jinmei
+	src/lib/dns: Added support for TSIG RDATA.  At this moment this is
+	not much of real use, however, because no protocol support was
+	added yet.  It will soon be added. (Trac #372, svn r3649)
+
   120.  [func]		jinmei
 	src/lib/dns: introduced two new classes, TSIGKey and TSIGKeyRing,
 	to manage TSIG keys. (Trac #381, svn r3622)
@@ -14,13 +129,14 @@
 	Note: this fix is incomplete and the loadzone would still be
 	confused if the owner name is a syntactically indistinguishable
 	from a TTL specification.  This is part of a more general issue
-	and will be addressed in Trac #413.  (Trac #411, svn r3599)
+	and will be addressed in Trac #413. (Trac #411, svn r3599)
 
   118.	[func]		jinmei
-	src/lib/dns: changed the interface of AbstractRRset::getRdataIterator()
-	so that the internal cursor would point to the first RDATA
-	automatically.  This will be a more intuitive and less error prone
-	behavior.  This is a backward compatible change. (Trac #410, r3595)
+	src/lib/dns: changed the interface of
+	AbstractRRset::getRdataIterator() so that the internal
+	cursor would point to the first RDATA automatically.  This
+	will be a more intuitive and less error prone behavior.
+	This is a backward compatible change. (Trac #410, r3595)
 
   117.  [func]		jinmei
 	src/lib/datasrc: added new zone and zone table classes for the
@@ -56,15 +172,13 @@
 	Add one mixin class to override the naive serve_forever() provided
 	in python library socketserver. Instead of polling for shutdwon
 	every poll_interval seconds, one socketpair is used to wake up
-	the waiting server.(Trac #352, svn r3366)
+	the waiting server. (Trac #352, svn r3366)
 
   111.	[bug]*   zhanglikun, Michal Vaner
-	Make sure process xfrin/xfrout/zonemgr/cmdctl can be stoped
+	Make sure process xfrin/xfrout/zonemgr/cmdctl can be stopped
 	properly when user enter "ctrl+c" or 'Boss shutdown' command
-	through	bindctl.
-
-	The ZonemgrRefresh.run_timer and NotifyOut.dispatcher spawn
-	a thread themselves.
+	through bindctl.  The ZonemgrRefresh.run_timer and
+	NotifyOut.dispatcher spawn a thread themselves.
 	(Trac #335, svn r3273)
 
   110.  [func]      Michal Vaner
@@ -76,7 +190,7 @@
   109.  [func]		naokikambe
 	Added the initial version of the stats module for the statistics
 	feature of BIND 10, which supports the restricted features and
-	items and reports via bindctl command (Trac #191, r3218)
+	items and reports via bindctl command. (Trac #191, r3218)
 	Added the document of the stats module, which is about how stats
 	module collects the data (Trac #170, [wiki:StatsModule])
 
@@ -103,11 +217,11 @@
   104.	[bug]		jerry
 	bin/zonemgr: zonemgr should be attempting to refresh expired zones.
 	(Trac #336, r3139)
-				   
+ 
   103.	[bug]		jerry
 	lib/python/isc/log: Fixed an issue with python logging,
-	python log shouldn't die with OSError.(Trac #267, r3137)
-				   
+	python log shouldn't die with OSError. (Trac #267, r3137)
+ 
   102.	[build]		jinmei
 	Disable threads in ASIO to minimize build time dependency.
 	(Trac #345, r3100)
@@ -160,7 +274,7 @@ bind10-devel-20100917 released on September 17, 2010
   93.	[bug]		jinmei
 	lib/datasrc: A DS query could crash the library (and therefore,
 	e.g. the authoritative server) if some RR of the same apex name
-	is stored in the hot spot cache.  (Trac #307, svn r2923)
+	is stored in the hot spot cache. (Trac #307, svn r2923)
 
   92.	[func]*		jelte
 	libdns_python (the python wrappers for libdns++) has been renamed
@@ -340,7 +454,7 @@ bind10-devel-20100701 released on July 1, 2010
   66.  [bug]		each
 	Check for duplicate RRsets before inserting data into a message
 	section; this, among other things, will prevent multiple copies
-	of the same CNAME from showing up when there's a loop.  (Trac #69,
+	of the same CNAME from showing up when there's a loop. (Trac #69,
 	svn r2350)
     
   65.  [func]		shentingting
@@ -462,7 +576,7 @@ bind10-devel-20100602 released on June 2, 2010
 	#205, svn r1957)
 
   44.   [build]         jreed
-	Install headers for libdns and libexception.  (Trac #68,
+	Install headers for libdns and libexception. (Trac #68,
 	svn r1941)
 
   43.   [func]          jelte
@@ -470,7 +584,7 @@ bind10-devel-20100602 released on June 2, 2010
 
   42.   [func]          jelte
 	lib/python/isc/config:      Make temporary file with python
-	tempfile module instead of manual with fixed name.  (Trac
+	tempfile module instead of manual with fixed name. (Trac
 	#184, svn r1859)
 
   41.   [func]          jelte
@@ -478,7 +592,7 @@ bind10-devel-20100602 released on June 2, 2010
 
   40.   [build]         jreed
 	Report detected features and configure settings at end of
-	configure output.  (svn r1836)
+	configure output. (svn r1836)
 
   39.   [func]*         each
 	Renamed libauth to libdatasrc.
@@ -491,7 +605,7 @@ bind10-devel-20100602 released on June 2, 2010
 	(Trac #135, #151, #134, svn r1797)
 
   37.   [build]         jinmei
-	Check for the availability of python-config.  (Trac #159,
+	Check for the availability of python-config. (Trac #159,
 	svn r1794)
 
   36.	[func]		shane
@@ -536,7 +650,7 @@ bind10-devel-20100421 released on April 21, 2010
 
   27.	[build]
 	Add missing copyright license statements to various source
-	files.  (svn r1750)
+	files. (svn r1750)
 
   26.	[func]
 	Use PACKAGE_STRING (name + version) from config.h instead

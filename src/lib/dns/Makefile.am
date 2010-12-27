@@ -13,6 +13,8 @@ EXTRA_DIST += rrtype-placeholder.h
 
 # TODO: double-check that this is the only way
 # NOTE: when an rdata file is added, please also add to this list:
+EXTRA_DIST += rdata/any_255/tsig_250.cc
+EXTRA_DIST += rdata/any_255/tsig_250.h
 EXTRA_DIST += rdata/in_1/aaaa_28.cc
 EXTRA_DIST += rdata/in_1/aaaa_28.h
 EXTRA_DIST += rdata/in_1/a_1.cc
@@ -67,6 +69,7 @@ libdns___la_SOURCES += dnssectime.h dnssectime.cc
 libdns___la_SOURCES += edns.h edns.cc
 libdns___la_SOURCES += exceptions.h exceptions.cc
 libdns___la_SOURCES += util/hex.h
+libdns___la_SOURCES += masterload.h masterload.cc
 libdns___la_SOURCES += message.h message.cc
 libdns___la_SOURCES += messagerenderer.h messagerenderer.cc
 libdns___la_SOURCES += name.h name.cc
@@ -96,11 +99,13 @@ libdns___includedir = $(includedir)/dns
 libdns___include_HEADERS = \
 	buffer.h \
 	dnssectime.h \
+	edns.h \
 	exceptions.h \
 	message.h \
 	messagerenderer.h \
 	name.h \
 	question.h \
+	rcode.h \
 	rdata.h \
 	rdataclass.h \
 	rrclass.h \

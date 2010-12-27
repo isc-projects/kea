@@ -290,7 +290,7 @@ class TestModuleCCSession(unittest.TestCase):
         mccs = self.create_session("spec2.spec", None, None, fake_session)
         mccs.set_config_handler(self.my_config_handler_ok)
         self.assertEqual(len(fake_session.message_queue), 0)
-        cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, { 'Spec2': { 'item1': 2 }})
+        cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, { 'item1': 2 })
         fake_session.group_sendmsg(cmd, 'Spec2')
         self.assertEqual(len(fake_session.message_queue), 1)
         mccs.check_command()
@@ -303,12 +303,12 @@ class TestModuleCCSession(unittest.TestCase):
         mccs = self.create_session("spec2.spec", None, None, fake_session)
         mccs.set_config_handler(self.my_config_handler_err)
         self.assertEqual(len(fake_session.message_queue), 0)
-        cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, { 'Spec2': { 'item1': 'aaa' }})
+        cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, { 'item1': 'aaa' })
         fake_session.group_sendmsg(cmd, 'Spec2')
         self.assertEqual(len(fake_session.message_queue), 1)
         mccs.check_command()
         self.assertEqual(len(fake_session.message_queue), 1)
-        self.assertEqual({'result': [1, 'just an error']},
+        self.assertEqual({'result': [1, 'aaa should be an integer']},
                          fake_session.get_message('Spec2', None))
         
     def test_check_command5(self):
@@ -316,12 +316,12 @@ class TestModuleCCSession(unittest.TestCase):
         mccs = self.create_session("spec2.spec", None, None, fake_session)
         mccs.set_config_handler(self.my_config_handler_exc)
         self.assertEqual(len(fake_session.message_queue), 0)
-        cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, { 'Spec2': { 'item1': 'aaa' }})
+        cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, { 'item1': 'aaa' })
         fake_session.group_sendmsg(cmd, 'Spec2')
         self.assertEqual(len(fake_session.message_queue), 1)
         mccs.check_command()
         self.assertEqual(len(fake_session.message_queue), 1)
-        self.assertEqual({'result': [1, 'just an exception']},
+        self.assertEqual({'result': [1, 'aaa should be an integer']},
                          fake_session.get_message('Spec2', None))
         
     def test_check_command6(self):
@@ -416,7 +416,7 @@ class TestModuleCCSession(unittest.TestCase):
         mccs = self.create_session("spec2.spec", None, None, fake_session)
         mccs.set_config_handler(self.my_config_handler_ok)
         self.assertEqual(len(fake_session.message_queue), 0)
-        cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, { 'Spec2': { 'item1': 2 }})
+        cmd = isc.config.ccsession.create_command(isc.config.ccsession.COMMAND_CONFIG_UPDATE, { 'item1': 2 })
         self.assertEqual(len(fake_session.message_queue), 0)
         env = { 'group':'Spec2', 'from':None }
         mccs.check_command_without_recvmsg(cmd, env)
@@ -560,6 +560,14 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertEqual(len(fake_session.message_queue), 0)
         
 
+class fakeData:
+    def decode(self):
+        return "{}";
+
+class fakeAnswer:
+    def read(self):
+        return fakeData();
+
 class fakeUIConn():
     def __init__(self):
         self.get_answers = {}
@@ -581,7 +589,7 @@ class fakeUIConn():
         if name in self.post_answers:
             return self.post_answers[name]
         else:
-            return None
+            return fakeAnswer()
     
 
 class TestUIModuleCCSession(unittest.TestCase):
@@ -637,6 +645,8 @@ class TestUIModuleCCSession(unittest.TestCase):
         self.assertEqual({'Spec2': {'item5': ['foo']}}, uccs._local_changes)
         uccs.add_value("Spec2/item5", "foo")
         self.assertEqual({'Spec2': {'item5': ['foo']}}, uccs._local_changes)
+        uccs.remove_value("Spec2/item5[0]", None)
+        self.assertEqual({'Spec2': {'item5': []}}, uccs._local_changes)
 
     def test_commit(self):
         fake_conn = fakeUIConn()
