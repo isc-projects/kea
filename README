@@ -92,6 +92,11 @@ Then run "make check" to run these tests.
 
 TEST COVERAGE
 
+Code coverage reports may be generated using make. These are
+based on running on the unit tests. The resulting reports are placed
+in coverage-cpp-html and coverage-python-html directories for C++
+and Python, respectively.
+
 The code coverage report for the C++ tests uses LCOV. It is available
 from http://ltp.sourceforge.net/. To generate the HTML report,
 first configure BIND 10 with:
@@ -131,11 +136,11 @@ Doing code coverage tests:
   make report-cpp-coverage
 	Generates the coverage report in HTML for C++, excluding
 	some unrelated headers.  The HTML reports are placed in a
-	directory called coverage/.
+	directory called coverage-cpp-html/.
 
   make report-python-coverage
 	Generates the coverage report in HTML for Python. The HTML
-	reports are placed in a directory called py-coverage-html/.
+	reports are placed in a directory called coverage-python-html/.
 
 DEVELOPERS
 
