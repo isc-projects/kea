@@ -774,38 +774,38 @@ TEST_F(AuthSrvTest, cacheSlots) {
 // Submit UDP normal query and check query counter
 TEST_F(AuthSrvTest, queryCounterUDPNormal) {
     // The counter should be initialized to 0.
-    EXPECT_EQ(0, server.getCounter(AuthCounters::COUNTER_UDP));
+    EXPECT_EQ(0, server.getCounter(AuthCounters::COUNTER_UDP_QUERY));
     createRequestPacket(opcode, Name("example.com"), RRClass::IN(),
                         RRType::NS(), IPPROTO_UDP);
     EXPECT_TRUE(server.processMessage(*io_message, parse_message,
                                       response_renderer));
     // After processing UDP query, the counter should be 1.
-    EXPECT_EQ(1, server.getCounter(AuthCounters::COUNTER_UDP));
+    EXPECT_EQ(1, server.getCounter(AuthCounters::COUNTER_UDP_QUERY));
 }
 
 // Submit TCP normal query and check query counter
 TEST_F(AuthSrvTest, queryCounterTCPNormal) {
     // The counter should be initialized to 0.
-    EXPECT_EQ(0, server.getCounter(AuthCounters::COUNTER_TCP));
+    EXPECT_EQ(0, server.getCounter(AuthCounters::COUNTER_TCP_QUERY));
     createRequestPacket(opcode, Name("example.com"), RRClass::IN(),
                         RRType::NS(), IPPROTO_TCP);
     EXPECT_TRUE(server.processMessage(*io_message, parse_message,
                                       response_renderer));
     // After processing TCP query, the counter should be 1.
-    EXPECT_EQ(1, server.getCounter(AuthCounters::COUNTER_TCP));
+    EXPECT_EQ(1, server.getCounter(AuthCounters::COUNTER_TCP_QUERY));
 }
 
 // Submit TCP AXFR query and check query counter
 TEST_F(AuthSrvTest, queryCounterTCPAXFR) {
     // The counter should be initialized to 0.
-    EXPECT_EQ(0, server.getCounter(AuthCounters::COUNTER_TCP));
+    EXPECT_EQ(0, server.getCounter(AuthCounters::COUNTER_TCP_QUERY));
     createRequestPacket(opcode, Name("example.com"), RRClass::IN(),
                         RRType::AXFR(), IPPROTO_TCP);
     // It returns false. see AXFRSuccess test.
     EXPECT_FALSE(server.processMessage(*io_message, parse_message,
                                       response_renderer));
     // After processing TCP AXFR query, the counter should be 1.
-    EXPECT_EQ(1, server.getCounter(AuthCounters::COUNTER_TCP));
+    EXPECT_EQ(1, server.getCounter(AuthCounters::COUNTER_TCP_QUERY));
 }
 
 // class for queryCounterUnexpected test
@@ -825,8 +825,12 @@ getDummyUnknownSocket() {
     return (socket);
 }
 
-// Submit unexpected type of query and check it throws IPPROTO_IP
+// Submit unexpected type of query and check it throws isc::Unexpected
 TEST_F(AuthSrvTest, queryCounterUnexpected) {
+    // This code isn't exception safe, but we'd rather keep the code
+    // simpler and more readable as this is only for tests and if it throws
+    // the program would immediately terminate anyway.
+
     // Create UDP query packet.
     createRequestPacket(opcode, Name("example.com"), RRClass::IN(),
                         RRType::NS(), IPPROTO_UDP);

@@ -34,7 +34,7 @@ class AuthCountersImpl;
 /// Call \c setStatisticsSession() to set a session to communicate with
 /// statistics module like Xfrin session.
 /// Call \c inc() to increment a counter for specific type of query in
-/// the query processing function. use \c enum \c QueryType to specify
+/// the query processing function. use \c enum \c CounterType to specify
 /// the type of query.
 /// Call \c submitStatistics() to submit statistics information to statistics
 /// module with statistics_session, periodically or at a time the command
@@ -55,9 +55,9 @@ private:
     AuthCountersImpl* impl_;
 public:
     // Enum for the type of counter
-    enum QueryType {
-        COUNTER_UDP = 0,  ///< COUNTER_UDP: counter for UDP queries
-        COUNTER_TCP = 1,  ///< COUNTER_TCP: counter for TCP queries
+    enum CounterType {
+        COUNTER_UDP_QUERY = 0,  ///< COUNTER_UDP_QUERY: counter for UDP queries
+        COUNTER_TCP_QUERY = 1,  ///< COUNTER_TCP_QUERY: counter for TCP queries
         COUNTER_TYPES = 2 ///< The number of defined counters
     };
     /// The constructor.
@@ -83,9 +83,9 @@ public:
     ///
     /// \throw std::out_of_range \a type is unknown.
     ///
-    /// usage: counter.inc(QueryType::COUNTER_UDP);
+    /// usage: counter.inc(CounterType::COUNTER_UDP_QUERY);
     /// 
-    void inc(const QueryType type);
+    void inc(const CounterType type);
 
     /// \brief Submit statistics counters to statistics module.
     ///
@@ -136,7 +136,7 @@ public:
     ///
     /// \return the value of the counter specified by \a type.
     ///
-    uint64_t getCounter(const AuthCounters::QueryType type) const;
+    uint64_t getCounter(const AuthCounters::CounterType type) const;
 };
 
 #endif // __STATISTICS_H

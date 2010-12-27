@@ -249,7 +249,7 @@ public:
     ///
     /// \return the value of the counter.
     ///
-    uint64_t getCounter(const AuthCounters::QueryType type) const;
+    uint64_t getCounter(const AuthCounters::CounterType type) const;
 private:
     AuthSrvImpl* impl_;
 };
