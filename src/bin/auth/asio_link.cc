@@ -722,7 +722,7 @@ IntervalTimerImpl::updateTimer() {
     try {
         // Update expire time to (current time + interval_).
         timer_.expires_from_now(boost::posix_time::seconds(interval_));
-    } catch (asio::system_error& e) {
+    } catch (const asio::system_error& e) {
         isc_throw(isc::Unexpected, "Failed to update timer");
     }
     // Reset timer.

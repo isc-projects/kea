@@ -500,9 +500,9 @@ void
 AuthSrvImpl::incCounter(int protocol) {
     // Increment query counter.
     if (protocol == IPPROTO_UDP) {
-        counters_.inc(AuthCounters::COUNTER_UDP);
+        counters_.inc(AuthCounters::COUNTER_UDP_QUERY);
     } else if (protocol == IPPROTO_TCP) {
-        counters_.inc(AuthCounters::COUNTER_TCP);
+        counters_.inc(AuthCounters::COUNTER_TCP_QUERY);
     } else {
         // unknown protocol
         isc_throw(Unexpected, "Unknown protocol: " << protocol);
@@ -581,6 +581,6 @@ bool AuthSrv::submitStatistics() const {
 }
 
 uint64_t
-AuthSrv::getCounter(const AuthCounters::QueryType type) const {
+AuthSrv::getCounter(const AuthCounters::CounterType type) const {
     return (impl_->counters_.getCounter(type));
 }

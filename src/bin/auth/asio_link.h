@@ -461,6 +461,9 @@ private:
 /// The function calls the call back function set by \c setupTimer()
 /// and updates the timer to expire in (now + interval) seconds.
 /// The type of call back function is \c void(void).
+/// 
+/// The call back function will not be called if the instance of this
+/// class is destructed before the timer is expired.
 ///
 /// Note: Destruction of an instance of this class while call back
 /// is pending causes throwing an exception from \c IOService.
@@ -515,7 +518,7 @@ public:
 
     /// \brief Register timer callback function and interval.
     ///
-    /// This function sets call back function and interval in seconds.
+    /// This function sets callback function and interval in seconds.
     /// Timer will actually start after calling \c IOService::run().
     ///
     /// \param cbfunc A reference to a function \c void(void) to call back

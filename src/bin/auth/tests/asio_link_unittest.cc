@@ -492,23 +492,6 @@ TEST_F(IntervalTimerTest, startIntervalTimer) {
     EXPECT_TRUE(delta < TIMER_MERGIN_MSEC);
 }
 
-TEST_F(IntervalTimerTest, deleteIntervalTimerBeforeStart) {
-    // Note: This code isn't exception safe, but we'd rather keep the code
-    // simpler and more readable as this is only for tests and if it throws
-    // the program would immediately terminate anyway.
-
-    // Create asio_link::IntervalTimer and delete before starting timer.
-    // Test if the callback function is not called.
-    IntervalTimer* itimer = new IntervalTimer(io_service_);
-    timer_called_ = false;
-    // setup timer...
-    itimer->setupTimer(TimerCallBack(this), 1);
-    // and delete
-    delete itimer;
-    // expect the callback function is not called
-    EXPECT_FALSE(timer_called_);
-}
-
 TEST_F(IntervalTimerTest, destructIntervalTimer) {
     // Note: This test currently takes 6 seconds. The timer should have
     // finer granularity and timer periods in this test should be shorter

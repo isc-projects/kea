@@ -144,18 +144,18 @@ AuthCountersTest::MockSession::setThrowSessionTimeout(bool flag) {
 
 TEST_F(AuthCountersTest, incrementUDPCounter) {
     // The counter should be initialized to 0.
-    EXPECT_EQ(0, counters.getCounter(AuthCounters::COUNTER_UDP));
-    EXPECT_NO_THROW(counters.inc(AuthCounters::COUNTER_UDP));
+    EXPECT_EQ(0, counters.getCounter(AuthCounters::COUNTER_UDP_QUERY));
+    EXPECT_NO_THROW(counters.inc(AuthCounters::COUNTER_UDP_QUERY));
     // After increment, the counter should be 1.
-    EXPECT_EQ(1, counters.getCounter(AuthCounters::COUNTER_UDP));
+    EXPECT_EQ(1, counters.getCounter(AuthCounters::COUNTER_UDP_QUERY));
 }
 
 TEST_F(AuthCountersTest, incrementTCPCounter) {
     // The counter should be initialized to 0.
-    EXPECT_EQ(0, counters.getCounter(AuthCounters::COUNTER_TCP));
-    EXPECT_NO_THROW(counters.inc(AuthCounters::COUNTER_TCP));
+    EXPECT_EQ(0, counters.getCounter(AuthCounters::COUNTER_TCP_QUERY));
+    EXPECT_NO_THROW(counters.inc(AuthCounters::COUNTER_TCP_QUERY));
     // After increment, the counter should be 1.
-    EXPECT_EQ(1, counters.getCounter(AuthCounters::COUNTER_TCP));
+    EXPECT_EQ(1, counters.getCounter(AuthCounters::COUNTER_TCP_QUERY));
 }
 
 TEST_F(AuthCountersTest, incrementInvalidCounter) {
@@ -189,14 +189,14 @@ TEST_F(AuthCountersTest, submitStatistics) {
     // Validate if it submits correct data.
 
     // Counters should be initialized to 0.
-    EXPECT_EQ(0, counters.getCounter(AuthCounters::COUNTER_UDP));
-    EXPECT_EQ(0, counters.getCounter(AuthCounters::COUNTER_TCP));
+    EXPECT_EQ(0, counters.getCounter(AuthCounters::COUNTER_UDP_QUERY));
+    EXPECT_EQ(0, counters.getCounter(AuthCounters::COUNTER_TCP_QUERY));
 
     // UDP query counter is set to 2.
-    counters.inc(AuthCounters::COUNTER_UDP);
-    counters.inc(AuthCounters::COUNTER_UDP);
+    counters.inc(AuthCounters::COUNTER_UDP_QUERY);
+    counters.inc(AuthCounters::COUNTER_UDP_QUERY);
     // TCP query counter is set to 1.
-    counters.inc(AuthCounters::COUNTER_TCP);
+    counters.inc(AuthCounters::COUNTER_TCP_QUERY);
     counters.submitStatistics();
 
     // Destination is "Stats".

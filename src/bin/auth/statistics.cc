@@ -36,11 +36,11 @@ public:
     // after we have logging framework
     AuthCountersImpl(const bool& verbose_mode);
     ~AuthCountersImpl();
-    void inc(const AuthCounters::QueryType type);
+    void inc(const AuthCounters::CounterType type);
     bool submitStatistics() const;
     void setStatisticsSession(isc::cc::AbstractSession* statistics_session);
     // Currently for testing purpose only
-    uint64_t getCounter(const AuthCounters::QueryType type) const;
+    uint64_t getCounter(const AuthCounters::CounterType type) const;
 private:
     std::vector<uint64_t> counters_;
     isc::cc::AbstractSession* statistics_session_;
@@ -59,7 +59,7 @@ AuthCountersImpl::~AuthCountersImpl()
 {}
 
 void
-AuthCountersImpl::inc(const AuthCounters::QueryType type) {
+AuthCountersImpl::inc(const AuthCounters::CounterType type) {
     ++counters_.at(type);
 }
 
@@ -77,9 +77,9 @@ AuthCountersImpl::submitStatistics() const {
     statistics_string << "{\"command\": [\"set\","
                       <<   "{ \"stats_data\": "
                       <<     "{ \"auth.queries.udp\": "
-                      <<     counters_.at(AuthCounters::COUNTER_UDP)
+                      <<     counters_.at(AuthCounters::COUNTER_UDP_QUERY)
                       <<     ", \"auth.queries.tcp\": "
-                      <<     counters_.at(AuthCounters::COUNTER_TCP)
+                      <<     counters_.at(AuthCounters::COUNTER_TCP_QUERY)
                       <<   " }"
                       <<   "}"
                       << "]}";
@@ -127,7 +127,7 @@ AuthCountersImpl::setStatisticsSession
 
 // Currently for testing purpose only
 uint64_t
-AuthCountersImpl::getCounter(const AuthCounters::QueryType type) const {
+AuthCountersImpl::getCounter(const AuthCounters::CounterType type) const {
     return (counters_.at(type));
 }
 
@@ -140,7 +140,7 @@ AuthCounters::~AuthCounters() {
 }
 
 void
-AuthCounters::inc(const AuthCounters::QueryType type) {
+AuthCounters::inc(const AuthCounters::CounterType type) {
     impl_->inc(type);
 }
 
@@ -157,6 +157,6 @@ AuthCounters::setStatisticsSession
 }
 
 uint64_t
-AuthCounters::getCounter(const AuthCounters::QueryType type) const {
+AuthCounters::getCounter(const AuthCounters::CounterType type) const {
     return (impl_->getCounter(type));
 }
