@@ -616,6 +616,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/testutils/testdata/Makefile
                  src/lib/nsas/Makefile
                  src/lib/nsas/tests/Makefile
+                 src/lib/cache/Makefile
+                 src/lib/cache/tests/Makefile
                ])
 AC_OUTPUT([src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/cfgmgr/tests/b10-cfgmgr_test.py
