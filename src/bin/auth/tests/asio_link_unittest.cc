@@ -46,8 +46,8 @@ const char* const TEST_IPV4_ADDR = "127.0.0.1";
 // two octets encode the length of the rest of the data.  This is crucial
 // for the tests below.
 const uint8_t test_data[] = {0, 4, 1, 2, 3, 4};
-// TODO: Consider this mergin
-const boost::posix_time::time_duration TIMER_MERGIN_MSEC =
+// TODO: Consider this margin
+const boost::posix_time::time_duration TIMER_MARGIN_MSEC =
     boost::posix_time::milliseconds(50);
 
 TEST(IOAddressTest, fromText) {
@@ -488,8 +488,8 @@ TEST_F(IntervalTimerTest, startIntervalTimer) {
     }
     // expect TimerCallBack is called; timer_called_ is true
     EXPECT_TRUE(timer_called_);
-    // expect interval is 1 second +/- TIMER_MERGIN_MSEC.
-    EXPECT_TRUE(delta < TIMER_MERGIN_MSEC);
+    // expect interval is 1 second +/- TIMER_MARGIN_MSEC.
+    EXPECT_TRUE(delta < TIMER_MARGIN_MSEC);
 }
 
 TEST_F(IntervalTimerTest, destructIntervalTimer) {
@@ -599,6 +599,6 @@ TEST_F(IntervalTimerTest, overwriteIntervalTimer) {
     // expect callback function is updated: TimerCallBack is called
     EXPECT_TRUE(timer_called_);
     // expect interval is updated
-    EXPECT_TRUE(delta < TIMER_MERGIN_MSEC);
+    EXPECT_TRUE(delta < TIMER_MARGIN_MSEC);
 }
 }
