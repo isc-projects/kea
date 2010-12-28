@@ -17,6 +17,7 @@
 #include <dns/rcode.h>
 #include <dns/rrttl.h>
 #include <dns/rrtype.h>
+#include <dns/rdataclass.h>
 
 #include <datasrc/memory_datasrc.h>
 
@@ -28,10 +29,14 @@ using namespace isc::dns;
 using namespace isc::datasrc;
 using namespace isc::auth;
 
+namespace {
+
 RRsetPtr a_rrset = RRsetPtr(new RRset(Name("www.example.com"),
                                       RRClass::IN(), RRType::A(),
                                       RRTTL(3600)));
-namespace {
+RRsetPtr soa_rrset = RRsetPtr(new RRset(Name("example.com"),
+                                        RRClass::IN(), RRType::SOA(),
+                                        RRTTL(3600)));
 // This is a mock Zone class for testing.
 // It is a derived class of Zone, and simply hardcode the results of find()
 // return SUCCESS for "www.example.com",
@@ -64,20 +69,22 @@ MockZone::getClass() const {
 }
 
 Zone::FindResult
-MockZone::find(const Name& name, const RRType&) const {
+MockZone::find(const Name& name, const RRType& type) const {
     // hardcode the find results
     if (name == Name("www.example.com")) {
-        return FindResult(SUCCESS, a_rrset);
+        return (FindResult(SUCCESS, a_rrset));
+    } else if (name == Name("example.com") && type == RRType::SOA()) {
+        return (FindResult(SUCCESS, soa_rrset));
     } else if (name == Name("delegation.example.com")) {
-        return FindResult(DELEGATION, RRsetPtr());
+        return (FindResult(DELEGATION, RRsetPtr()));
     } else if (name == Name("nxdomain.example.com")) {
-        return FindResult(NXDOMAIN, RRsetPtr());
+        return (FindResult(NXDOMAIN, RRsetPtr()));
     } else if (name == Name("nxrrset.example.com")) {
-        return FindResult(NXRRSET, RRsetPtr());
+        return (FindResult(NXRRSET, RRsetPtr()));
     } else if (name == Name("cname.example.com")) {
-        return FindResult(CNAME, RRsetPtr());
+        return (FindResult(CNAME, RRsetPtr()));
     } else {
-        return FindResult(DNAME, RRsetPtr());
+        return (FindResult(DNAME, RRsetPtr()));
     }
 }
 
@@ -106,7 +113,7 @@ TEST_F(QueryTest, noZone) {
 }
 
 TEST_F(QueryTest, matchZone) {
-    // match qname, normal query
+    // add a matching zone.
     memory_datasrc.addZone(ZonePtr(new MockZone()));
     query.process();
     EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
@@ -119,12 +126,20 @@ TEST_F(QueryTest, matchZone) {
     Query nxdomain_query(memory_datasrc, nxdomain_name, qtype, response);
     nxdomain_query.process();
     EXPECT_EQ(Rcode::NXDOMAIN(), response.getRcode());
+    EXPECT_EQ(0, response.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(0, response.getRRCount(Message::SECTION_ADDITIONAL));
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_AUTHORITY,
+        Name("example.com"), RRClass::IN(), RRType::SOA()));
 
     // NXRRSET
     const Name nxrrset_name(Name("nxrrset.example.com"));
     Query nxrrset_query(memory_datasrc, nxrrset_name, qtype, response);
     nxrrset_query.process();
     EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
+    EXPECT_EQ(0, response.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(0, response.getRRCount(Message::SECTION_ADDITIONAL));
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_AUTHORITY,
+        Name("example.com"), RRClass::IN(), RRType::SOA()));
 }
 
 TEST_F(QueryTest, noMatchZone) {
@@ -136,4 +151,5 @@ TEST_F(QueryTest, noMatchZone) {
     nomatch_query.process();
     EXPECT_EQ(Rcode::REFUSED(), response.getRcode());
 }
+
 }
