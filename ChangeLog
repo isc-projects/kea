@@ -1,3 +1,14 @@
+  140.  [func]		y-aharen
+	src/bin/auth: Added a feature to count queries and send counter
+	values to statistics periodically. To support it, added wrapping
+	class of asio::deadline_timer to use as interval timer.
+	The counters can be seen using the "Stats show" command from
+	bindctl.  The result would look like:
+	  ... "auth.queries.tcp": 1, "auth.queries.udp": 1 ...
+	Using the "Auth sendstats" command you can make b10-auth send the
+	counters to b10-stats immediately.
+	(Trac #347, svn r4026)
+
   139.  [build]		jreed
 	Introduced configure option and make targets for generating
 	Python code coverage report. This adds new make targets:

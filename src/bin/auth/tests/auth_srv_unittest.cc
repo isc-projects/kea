@@ -18,6 +18,7 @@
 #include <datasrc/memory_datasrc.h>
 #include <auth/auth_srv.h>
 #include <testutils/srv_unittest.h>
+#include <auth/statistics.h>
 
 using namespace isc::cc;
 using namespace isc::dns;
@@ -38,7 +39,9 @@ class AuthSrvTest : public SrvTestBase {
 protected:
     AuthSrvTest() : server(true, xfrout), rrclass(RRClass::IN()) {
         server.setXfrinSession(&notify_session);
+        server.setStatisticsSession(&statistics_session);
     }
+    MockSession statistics_session;
     MockXfroutClient xfrout;
     AuthSrv server;
     const RRClass rrclass;
@@ -428,5 +431,91 @@ TEST_F(AuthSrvTest, cacheSlots) {
     // 0 is a valid size
     server.setCacheSlots(0);
     EXPECT_EQ(00, server.getCacheSlots());
+}
+
+// Submit UDP normal query and check query counter
+TEST_F(AuthSrvTest, queryCounterUDPNormal) {
+    // The counter should be initialized to 0.
+    EXPECT_EQ(0, server.getCounter(AuthCounters::COUNTER_UDP_QUERY));
+    // Create UDP message and process.
+    UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
+                                       default_qid, Name("example.com"),
+                                       RRClass::IN(), RRType::NS());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, parse_message, response_obuffer,
+                          &dnsserv);
+    // After processing UDP query, the counter should be 1.
+    EXPECT_EQ(1, server.getCounter(AuthCounters::COUNTER_UDP_QUERY));
+}
+
+// Submit TCP normal query and check query counter
+TEST_F(AuthSrvTest, queryCounterTCPNormal) {
+    // The counter should be initialized to 0.
+    EXPECT_EQ(0, server.getCounter(AuthCounters::COUNTER_TCP_QUERY));
+    // Create TCP message and process.
+    UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
+                                       default_qid, Name("example.com"),
+                                       RRClass::IN(), RRType::NS());
+    createRequestPacket(request_message, IPPROTO_TCP);
+    server.processMessage(*io_message, parse_message, response_obuffer,
+                          &dnsserv);
+    // After processing TCP query, the counter should be 1.
+    EXPECT_EQ(1, server.getCounter(AuthCounters::COUNTER_TCP_QUERY));
+}
+
+// Submit TCP AXFR query and check query counter
+TEST_F(AuthSrvTest, queryCounterTCPAXFR) {
+    // The counter should be initialized to 0.
+    EXPECT_EQ(0, server.getCounter(AuthCounters::COUNTER_TCP_QUERY));
+    UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
+                         Name("example.com"), RRClass::IN(), RRType::AXFR());
+    createRequestPacket(request_message, IPPROTO_TCP);
+    // On success, the AXFR query has been passed to a separate process,
+    // so we shouldn't have to respond.
+    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    // After processing TCP AXFR query, the counter should be 1.
+    EXPECT_EQ(1, server.getCounter(AuthCounters::COUNTER_TCP_QUERY));
+}
+
+// class for queryCounterUnexpected test
+// getProtocol() returns IPPROTO_IP
+class DummyUnknownSocket : public IOSocket {
+public:
+    DummyUnknownSocket() {}
+    virtual int getNative() const { return (0); }
+    virtual int getProtocol() const { return (IPPROTO_IP); }
+};
+
+// function for queryCounterUnexpected test
+// returns a reference to a static object of DummyUnknownSocket
+IOSocket&
+getDummyUnknownSocket() {
+    static DummyUnknownSocket socket;
+    return (socket);
+}
+
+// Submit unexpected type of query and check it throws isc::Unexpected
+TEST_F(AuthSrvTest, queryCounterUnexpected) {
+    // This code isn't exception safe, but we'd rather keep the code
+    // simpler and more readable as this is only for tests and if it throws
+    // the program would immediately terminate anyway.
+
+    // Create UDP query packet.
+    UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
+                                       default_qid, Name("example.com"),
+                                       RRClass::IN(), RRType::NS());
+    createRequestPacket(request_message, IPPROTO_UDP);
+
+    // Modify the message.
+    delete io_message;
+    endpoint = IOEndpoint::create(IPPROTO_UDP,
+                                  IOAddress(DEFAULT_REMOTE_ADDRESS), 5300);
+    io_message = new IOMessage(request_renderer.getData(),
+                               request_renderer.getLength(),
+                               getDummyUnknownSocket(), *endpoint);
+
+    EXPECT_THROW(server.processMessage(*io_message, parse_message,
+                                       response_obuffer, &dnsserv),
+                 isc::Unexpected);
 }
 }
