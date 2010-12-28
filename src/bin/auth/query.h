@@ -103,16 +103,25 @@ public:
     /// providing compatible behavior may have its own benefit, so this point
     /// should be revisited later.
     ///
-    /// Right now this method never throws an exception, but it may in a
-    /// future version.
+    /// This might throw BadZone or any of its specific subclasses.
     void process() const;
 
+    /// \short Bad zone data encountered.
+    ///
+    /// This is thrown when process encounteres misconfigured zone in a way
+    /// it can't continue. This throws, not sets the Rcode, because such
+    /// misconfigured zone should not be present in the data source and
+    /// should have been rejected sooner.
     struct BadZone : public isc::Exception {
         BadZone(const char* file, size_t line, const char* what) :
             Exception(file, line, what)
         { }
     };
 
+    /// \short Zone is missing its SOA record.
+    ///
+    /// We tried to add a SOA into the authoritative section, but the zone
+    /// does not contain one.
     struct NoSOA : public BadZone {
         NoSOA(const char* file, size_t line, const char* what) :
             BadZone(file, line, what)
@@ -124,6 +133,12 @@ private:
     const isc::dns::Name& qname_;
     const isc::dns::RRType& qtype_;
     isc::dns::Message& response_;
+    /**
+     * \short Adds a SOA.
+     *
+     * Adds a SOA of the zone into the authority zone of response_.
+     * Can throw NoSOA.
+     */
     void putSOA(const isc::datasrc::Zone& zone) const;
 };
 
