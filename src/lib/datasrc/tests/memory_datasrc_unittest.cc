@@ -17,6 +17,7 @@
 #include <dns/name.h>
 #include <dns/rrclass.h>
 #include <dns/rrttl.h>
+#include <dns/masterload.h>
 
 #include <datasrc/memory_datasrc.h>
 
@@ -181,9 +182,12 @@ public:
      * \param name The name to ask for.
      * \param rrtype The RRType to ask of.
      * \param result The expected code of the result.
+     * \param check_answer Should a check against equality of the answer be
+     *     done?
      * \param answer The expected rrset, if any should be returned.
      */
     void findTest(const Name& name, const RRType& rrtype, Zone::Result result,
+        bool check_answer = true,
         const ConstRRsetPtr& answer = ConstRRsetPtr())
     {
         // The whole block is inside, because we need to check the result and
@@ -192,7 +196,9 @@ public:
             Zone::FindResult find_result(zone_.find(name, rrtype));
             // Check it returns correct answers
             EXPECT_EQ(result, find_result.code);
-            EXPECT_EQ(answer, find_result.rrset);
+            if (check_answer) {
+                EXPECT_EQ(answer, find_result.rrset);
+            }
         });
     }
 };
@@ -248,8 +254,8 @@ TEST_F(MemoryZoneTest, find) {
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_a_)));
 
     // These two should be successful
-    findTest(origin_, RRType::NS(), Zone::SUCCESS, rr_ns_);
-    findTest(ns_name_, RRType::A(), Zone::SUCCESS, rr_ns_a_);
+    findTest(origin_, RRType::NS(), Zone::SUCCESS, true, rr_ns_);
+    findTest(ns_name_, RRType::A(), Zone::SUCCESS, true, rr_ns_a_);
 
     // These domain exist but don't have the provided RRType
     findTest(origin_, RRType::AAAA(), Zone::NXRRSET);
@@ -258,6 +264,24 @@ TEST_F(MemoryZoneTest, find) {
     // These domains don't exist (and one is out of the zone)
     findTest(Name("nothere.example.org"), RRType::A(), Zone::NXDOMAIN);
     findTest(Name("example.net"), RRType::A(), Zone::NXDOMAIN);
+}
+
+TEST_F(MemoryZoneTest, load) {
+    // Loading with different origin should fail
+    EXPECT_THROW(zone_.load(TEST_DATA_DIR "/root.zone"), MasterLoadError);
+    // Create correct zone
+    MemoryZone rootzone(class_, Name("."));
+    // Try putting something inside
+    EXPECT_NO_THROW(EXPECT_EQ(result::SUCCESS, zone_.add(rr_ns_aaaa_)));
+    // Load the zone. It should overwrite/remove the above RRset
+    EXPECT_NO_THROW(rootzone.load(TEST_DATA_DIR "/root.zone"));
+
+    // Now see there are some rrsets (we don't look inside, though)
+    findTest(Name("."), RRType::SOA(), Zone::SUCCESS, false);
+    findTest(Name("."), RRType::NS(), Zone::SUCCESS, false);
+    findTest(Name("a.root-servers.net."), RRType::A(), Zone::SUCCESS, false);
+    // But this should no longer be here
+    findTest(ns_name_, RRType::AAAA(), Zone::NXDOMAIN, false);
 }
 
 }
