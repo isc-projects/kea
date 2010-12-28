@@ -10,4 +10,5 @@ lib_LTLIBRARIES = libtestutils.la
 libtestutils_la_SOURCES = srv_test.h srv_test.cc
 libtestutils_la_SOURCES += srv_unittest.h
 libtestutils_la_SOURCES += mockups.h
+libtestutils_la_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 endif
