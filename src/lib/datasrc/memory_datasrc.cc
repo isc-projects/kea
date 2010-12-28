@@ -147,7 +147,19 @@ struct MemoryZone::MemoryZoneImpl {
         }
     }
 
+    /*
+     * Help class used to load data from masterfile. The real work
+     * is done in the load method. We need this to be exception safe -
+     * we store the old content and in case of exception we need to
+     * put it back. But C++ does not have any way of catching everything
+     * and being able to throw it again and does not have a finally
+     * keywoard, so we emulate one by a destructor.
+     *
+     * When we finish the loading sucessfully, we mark that the destructor
+     * should not put back the original data.
+     */
     struct Load {
+        // Takes the original data out and preserves it for a while
         Load(MemoryZone* zone) :
             zone_(zone),
             swap_(true)
@@ -155,15 +167,23 @@ struct MemoryZone::MemoryZoneImpl {
             tmp_tree_.swap(zone_->impl_->domains_);
         }
         ~ Load() {
+            /*
+             * Emulate the finally - if we should put original back (loading
+             * didn't finish sucessfully), we swap the not-completely-loaded
+             * one with the stored.
+             */
             if (swap_) {
                 tmp_tree_.swap(zone_->impl_->domains_);
             }
         }
+        // The actual loading function
         void load(const string &filename) {
             masterLoad(filename.c_str(), zone_->getOrigin(), zone_->getClass(),
                 boost::bind(&Load::add, this, _1));
+            // Everything OK, so don't put the original back
             swap_ = false;
         }
+        // Add one rrset there
         void add(RRsetPtr set) {
             switch (zone_->add(set)) {
                 case result::EXIST:
@@ -177,8 +197,12 @@ struct MemoryZone::MemoryZoneImpl {
             }
         }
 
+        // State while loading in progress
+        // Just the zone where we put the data
         MemoryZone *zone_;
+        // Preserved original of the zone
         DomainTree tmp_tree_;
+        // Should we restore the original if we end now?
         bool swap_;
     };
 };
@@ -212,13 +236,10 @@ MemoryZone::add(const ConstRRsetPtr& rrset) {
     return (impl_->add(rrset));
 }
 
-void
-xxx(Zone*, RRsetPtr) {
-
-}
 
 void
 MemoryZone::load(const string& filename) {
+    // This uses a class to emulate finally. See comment near it.
     MemoryZoneImpl::Load load(this);
     load.load(filename);
 }
