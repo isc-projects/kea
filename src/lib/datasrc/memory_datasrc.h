@@ -116,6 +116,10 @@ public:
     /// is kept).
     ///
     /// \param filename The master file to load.
+    ///
+    /// \todo We may need to split it to some kind of build and commit/abort.
+    ///     This will probably be needed when a better implementation of
+    ///     configuration reloading is written.
     void load(const std::string& filename);
 private:
     /// \name Hidden private data

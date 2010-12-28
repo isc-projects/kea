@@ -159,6 +159,12 @@ MemoryDatasourceConfig::build(ConstElementPtr config_value) {
                       << " already exists");
         }
 
+        /*
+         * TODO: Once we have better reloading of configuration (something
+         * else than throwing everything away and loading it again), we will
+         * need the load method to be split into some kind of build and
+         * commit/abort parts.
+         */
         new_zone->load(file->stringValue());
     }
 }
