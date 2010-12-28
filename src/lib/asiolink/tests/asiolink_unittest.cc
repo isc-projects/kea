@@ -341,9 +341,9 @@ protected:
         int recv_options = 0;
         if (setsockopt(sock_, SOL_SOCKET, SO_RCVTIMEO, &timeo,
                        sizeof(timeo))) {
-            if (errno == EOPNOTSUPP) {
+            if (errno == ENOPROTOOPT) {
                 // Workaround for Solaris: it doesn't accept SO_RCVTIMEO
-                // with the error of EOPNOTSUPP.  Since this is a workaround
+                // with the error of ENOPROTOOPT.  Since this is a workaround
                 // for rare error cases anyway, we simply switch to the
                 // "don't wait" mode.  If we still find an error in recv()
                 // can happen often we'll consider a more complete solution.
@@ -722,7 +722,7 @@ TEST_F(ASIOLinkTest, recursiveTimeout) {
     const struct timeval timeo = { 10, 0 };
     int recv_options = 0;
     if (setsockopt(sock_, SOL_SOCKET, SO_RCVTIMEO, &timeo, sizeof(timeo))) {
-        if (errno == EOPNOTSUPP) { // see ASIOLinkTest::recvUDP()
+        if (errno == ENOPROTOOPT) { // see ASIOLinkTest::recvUDP()
             recv_options = MSG_DONTWAIT;
         } else {
             isc_throw(IOError, "set RCVTIMEO failed: " << strerror(errno));
