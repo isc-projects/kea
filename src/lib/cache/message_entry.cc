@@ -23,10 +23,26 @@
 namespace isc {
 namespace cache {
 
-MessageEntry::MessageEntry()
+MessageEntry::MessageEntry(const isc::dns::Message&,
+                           boost::shared_ptr<RRsetCache> rrset_cache):
+    rrset_cache_(rrset_cache)
 {
+
 }
     
+void
+MessageEntry::generateMessage(const time_t&,
+                              const uint16_t,
+                              isc::dns::Message&)
+{
+
+}
+
+void
+MessageEntry::initMessageEntry(const isc::dns::Message&) {
+}
+
+
 } // namespace cache
 } // namespace isc
 
