@@ -31,6 +31,9 @@ namespace cache {
 class RRsetEntry;
 class RRsetCache;
 
+/// \brief Message Entry
+/// The object of MessageEntry represents one response message
+/// answered to the recursor client. 
 class MessageEntry : public NsasEntry<MessageEntry>, 
                      public Fetchable 
 {
@@ -52,9 +55,11 @@ public:
     ///        as "expire_time - time_now" (expire_time is the 
     ///        expiration time of the rrset).
     /// \param query_header the query message header.
-    void generateMessage(const time_t& time_now,
-                         const uint16_t query_header,
-                         isc::dns::Message& response);
+    /// \return return true if the response message can be generated 
+    /// from the cached information, or else, return false.
+    bool genMessage(const time_t& time_now,
+                    const uint16_t query_header,
+                    isc::dns::Message& response);
 protected:
     // Initialize the message entry with dns message.
     void initMessageEntry(const isc::dns::Message& message);

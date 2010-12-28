@@ -36,20 +36,23 @@ class RRsetCache;
 ///
 class MessageCache {
 public:
-
     /// \param cache_size The size of message cache.
     MessageCache(boost::shared_ptr<RRsetCache> rrset_cache_,
-                 uint32_t cache_size);
+                 uint32_t cache_size, uint16_t message_class);
     
     /// \brief Look up message in cache.
     /// \param message generated response message if the message entry 
     ///        can be found.
+    /// \param query_header the uint16_t length header of the query message.
+    /// The message in the cache maybe need to be refactored when answering the
+    /// lookup according the query header(flags).
+    ///
     /// \return return true if the message can be found in cache, or else,
     /// return false.
     //TODO Maybe some user just want to get the message_entry.
-    bool lookUp(const isc::dns::Name& qname,
+    bool lookup(const isc::dns::Name& qname,
                 const isc::dns::RRType& qtype,
-                const isc::dns::RRClass& qclass,
+                const uint16_t query_header,
                 isc::dns::Message& message);
 
     /// \brief Update the message in the cache with the new one.
@@ -69,7 +72,7 @@ public:
     bool resize(uint32_t size);
 
 private:
-    uint16_t class_; // The class of the message cache.
+    uint16_t message_class_; // The class of the message cache.
     boost::shared_ptr<RRsetCache> rrset_cache_;
     isc::nsas::HashTable<MessageEntry> message_table_;
     isc::nsas::LruList<MessageEntry> message_lru_;

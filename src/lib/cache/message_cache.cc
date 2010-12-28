@@ -14,18 +14,21 @@
 
 // $Id$
 
-#include "message_cache.h"
 #include <nsas/nsas_entry_compare.h>
 #include <nsas/hash_table.h>
 #include <nsas/hash_deleter.h>
+#include "message_cache.h"
+#include "cache_entry_key.h"
 
 using namespace isc::nsas;
+using namespace isc::dns;
 
 namespace isc {
 namespace cache {
 
 MessageCache::MessageCache(boost::shared_ptr<RRsetCache> rrset_cache,
-    uint32_t cache_size):
+    uint32_t cache_size, uint16_t message_class):
+    message_class_(message_class),
     rrset_cache_(rrset_cache),
     message_table_(new NsasEntryCompare<MessageEntry>, cache_size),
     message_lru_((3 * cache_size),
@@ -35,16 +38,26 @@ MessageCache::MessageCache(boost::shared_ptr<RRsetCache> rrset_cache,
 }
     
 bool
-MessageCache::lookUp(const isc::dns::Name&,
-       const isc::dns::RRType&,
-       const isc::dns::RRClass&,
-       isc::dns::Message& )
+MessageCache::lookup(const isc::dns::Name& qname,
+                     const isc::dns::RRType& qtype,
+                     const uint16_t query_header,
+                     isc::dns::Message& response)
 {
-    return true;
+    std::pair<const char*, const uint32_t> keydata = genCacheEntryKey(qname, qtype);
+
+    //TODO, HashKey need to be refactored, since we don't need query class
+    // as the parameters.
+    boost::shared_ptr<MessageEntry> msg_entry = message_table_.get(HashKey(
+                keydata.first, keydata.second, RRClass(message_class_)));
+    if(msg_entry) {
+       return msg_entry->genMessage(time(NULL), query_header, response);
+    }
+
+    return false;
 }
 
 bool
-MessageCache::update(const isc::dns::Message&) {
+MessageCache::update(const Message&) {
     return true;
 }
 

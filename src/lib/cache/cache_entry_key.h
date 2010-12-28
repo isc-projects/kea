@@ -14,36 +14,30 @@
 
 // $Id$
 
-#include <dns/message.h>
-#include <nsas/nsas_entry.h>
-#include <nsas/fetchable.h>
-#include "message_entry.h"
+#ifndef __CACHE_ENTRY_H
+#define __CACHE_ENTRY_H
+
+#include <string>
 
 
 namespace isc {
 namespace cache {
 
-MessageEntry::MessageEntry(const isc::dns::Message&,
-                           boost::shared_ptr<RRsetCache> rrset_cache):
-    rrset_cache_(rrset_cache)
-{
+class Name;
+class RRtype;
 
+std::pair<const char*, const uint32_t>
+genCacheEntryKey(const isc::dns::Name& qname,
+                 const isc::dns::RRType& qtype) 
+{
+    std::string keystr = qname.toText();
+    //TODO, use uint16_t rcode in case the text is too long?
+    keystr += qtype.toText(); 
+    return std::pair<const char*, const uint32_t>(keystr.c_str(), keystr.length());
 }
     
-bool
-MessageEntry::genMessage(const time_t&,
-                         const uint16_t,
-                         isc::dns::Message&)
-{
-    return true;
-}
-
-void
-MessageEntry::initMessageEntry(const isc::dns::Message&) {
-}
-
-
 } // namespace cache
 } // namespace isc
 
+#endif // __CACHE_ENTRY_H
 
