@@ -38,8 +38,11 @@ namespace helper {
 /// Helper function to remove the base domain from super domain
 ///
 /// the precondition of this function is the super_name contains the
-/// sub_name so \code Name a("a.b.c"); Name b("b.c");
-/// Name c = a - b; \\c will be "a" \endcode
+/// sub_name so
+/// \code Name a("a.b.c");
+/// Name b("b.c");
+/// Name c = a - b;
+/// \endcode
 ///
 /// \note function in this namespace is not intended to be used outside.
 inline isc::dns::Name
@@ -51,8 +54,9 @@ operator-(const isc::dns::Name& super_name, const isc::dns::Name& sub_name) {
 
 template <typename T>
 class RBTree;
-/// \brief \c RBNode use by RBTree to store any data related to one domain name
 
+/// \brief \c RBNode use by RBTree to store any data related to one domain name
+///
 /// It has two roles, the first one is as one node in the \c RBTree,
 /// the second one is to store the data related to one domain name and maintain
 /// the domain name hierarchy struct in one domain name space.
@@ -74,11 +78,11 @@ public:
     friend class RBTree<T>;
     typedef boost::shared_ptr<T> NodeDataPtr;
 
-    /// \name Deonstructor
+    /// \name Destructor
     /// \note it's seems a little strange that constructor is private
     /// but deconstructor left public, the reason is for some smart pointer
     /// like std::auto_ptr, they needs to delete RBNode in sometimes, but
-    /// \code delete *pointer_to_node \codeend shouldn't be called directly
+    /// \code delete *pointer_to_node \endcode shouldn't be called directly
     //@{
     ~RBNode();
     //@}
@@ -109,6 +113,24 @@ public:
     //@{
     /// \breif set the data stored in the node
     void setData(const NodeDataPtr& data) { data_ = data; }
+    //@}
+
+    /// \name Callback related methods
+    ///
+    /// See the description of \c RBTree<T>::find() about callbacks.
+    ///
+    /// These methods never throw an exception.
+    //@{
+    /// Return if callback is enabled at the node.
+    ///
+    /// This method never throws an exception.
+    bool isCallbackEnabled() const { return (callback_required_); }
+
+    /// Enable callback at the node.
+    void enableCallback() { callback_required_ = true; }
+
+    /// Disable callback at the node.
+    void disableCallback() { callback_required_ = false; }
     //@}
 
 
@@ -147,6 +169,7 @@ private:
 
     isc::dns::Name     name_;
     NodeDataPtr       data_;
+
     /// the down pointer points to the root node of sub domains of current
     /// domain
     /// \par Adding down pointer to \c RBNode is for two purpose:
@@ -154,6 +177,10 @@ private:
     /// big flat tree into several hierarchy trees
     /// \li It save memory useage, so same label won't be saved several times
     RBNode<T>*  down_;
+
+    // If true, callback should be called at this node in search.
+    // (This may have to become part of more general "attribute flags")
+    bool callback_required_;
 };
 
 
@@ -167,7 +194,8 @@ RBNode<T>::RBNode() :
     color_(BLACK),
     // dummy name, the value doesn't matter:
     name_(isc::dns::Name::ROOT_NAME()),
-    down_(this)
+    down_(this),
+    callback_required_(false)
 {
 }
 
@@ -178,7 +206,8 @@ RBNode<T>::RBNode(const isc::dns::Name& name) :
     right_(NULL_NODE()),
     color_(RED),
     name_(name),
-    down_(NULL_NODE())
+    down_(NULL_NODE()),
+    callback_required_(false)
 {
 }
 
@@ -186,51 +215,55 @@ RBNode<T>::RBNode(const isc::dns::Name& name) :
 template <typename T>
 RBNode<T>::~RBNode() {
 }
-/// \brief \c RBTree class represents all the domains with the same suffix,
-/// so it can be used to store the domains in one zone.
-///
-/// \c RBTree is a generic red black tree, and contains all the nodes with
-/// the same suffix, since each name may have sub domain names
-/// so \c RBTree is a recursive data structure namely tree in tree.
-/// So for one zone, several RBTrees may be involved. But from outside, the sub
-/// tree is opaque for end users.
-///
-/// \c RBTree split the domain space into hierarchy red black trees, nodes in one
-/// tree has the same base name. The benefit of this struct is that:
-/// - enhance the query performace compared with one big flat red black tree
-/// - decrase the memory footprint to save common labels only once.
 
-/*
-/// \verbatim
-/// with the following names:
-///     a       x.d.e.f     o.w.y.d.e.f
-///     b       z.d.e.f     p.w.y.d.e.f
-///     c       g.h         q.w.y.d.e.f
-///     the tree will looks like:
-///                               b
-///                             /   \
-///                            a    d.e.f
-///                                   /|\
-///                                  c | g.h
-///                                    |
-///                                   w.y
-///                                   /|\
-///                                  x | z
-///                                    |
-///                                    p
-///                                   / \
-///                                  o   q
-/// \endverbatim
-/// \note open problems:
-/// - current find funciton only return non-empty nodes, so there is no difference
-///   between find one not exist name with empty non-terminal nodes, but in DNS query
-///   logic, they are different
-/// \todo
-/// - add remove interface
-/// - add iterator to iterate the whole rbtree while may needed by axfr
-/// - since \c RBNode only has down pointer without up pointer, the node path during finding
-///   should be recorded for later use
-*/
+// note: the following class description is documented using C-style comments
+// because the verbatim diagram contain a backslash, which could be interpreted
+// as part of a multi-line comment with C++ style comments.
+/**
+ *  \brief \c RBTree class represents all the domains with the same suffix,
+ *  so it can be used to store the domains in one zone.
+ * 
+ *  \c RBTree is a generic red black tree, and contains all the nodes with
+ *  the same suffix, since each name may have sub domain names
+ *  so \c RBTree is a recursive data structure namely tree in tree.
+ *  So for one zone, several RBTrees may be involved. But from outside, the sub
+ *  tree is opaque for end users.
+ * 
+ *  \c RBTree split the domain space into hierarchy red black trees, nodes in one
+ *  tree has the same base name. The benefit of this struct is that:
+ *  - enhance the query performace compared with one big flat red black tree
+ *  - decrase the memory footprint to save common labels only once.
+ * 
+ *  \verbatim
+  with the following names:
+      a       x.d.e.f     o.w.y.d.e.f
+      b       z.d.e.f     p.w.y.d.e.f
+      c       g.h         q.w.y.d.e.f
+      the tree will looks like:
+                                b
+                              /   \
+                             a    d.e.f
+                                    /|\
+                                   c | g.h
+                                     |
+                                    w.y
+                                    /|\
+                                   x | z
+                                     |
+                                     p
+                                    / \
+                                   o   q
+ *  \endverbatim
+ *  \note open problems:
+ *  - current find funciton only return non-empty nodes, so there is no difference
+ *    between find one not exist name with empty non-terminal nodes, but in DNS query
+ *    logic, they are different
+ *  \todo
+ *  - add remove interface
+ *  - add iterator to iterate the whole rbtree while may needed by axfr
+ *  - since \c RBNode only has down pointer without up pointer, the node path during finding
+ *    should be recorded for later use
+ */
 template <typename T>
 class RBTree : public boost::noncopyable {
     friend class RBNode<T>;
@@ -247,7 +280,7 @@ public:
 
     /// \name Constructor and Destructor
     //@{
-    RBTree();
+    explicit RBTree();
 
     /// \b Note: RBTree is not intended to be inherited so the destructor
     /// is not virtual
@@ -256,13 +289,98 @@ public:
 
     /// \name Inquery methods
     //@{
-    /// \brief Find the node with the name
+    /// \brief Find the node that gives a longest match against the given name
+    ///
+    /// This method searches the \c RBTree for a node whose name is a longest
+    /// match against \c name.  The found node, if any, is returned via the
+    /// \c node pointer.
+    /// By default, nodes that don't have data will be ignored, and the result
+    /// can be \c NOTFOUND even if there is a node whose name matches the
+    /// given \c name.
+    /// We'll soon introduce a "no data OK" mode in this method.  It would
+    /// match any node of the tree regardless of whether the node has data
+    /// or not.
+    /// Since the tree is "compressed", i.e., a node can contain multiple
+    /// name labels, there are counter intuitive cases in the "no data OK"
+    /// mode.  For example, see the diagram of the class description.
+    /// Name "y.d.e.f" is logically contained in the tree as part of the
+    /// "compressed" node of "w.y".  But the search logic of this method
+    /// cannot find the logical match, and would return a \c PARTIALMATCH
+    /// result pointing to node "d.e.f".  To correctly identify the real
+    /// longest match, "y.d.e.f" with empty data, the caller needs to
+    /// perform additional steps.
+    ///
+    /// This version of \c find() method is templated to allow the caller
+    /// to specify a "hook" at nodes that give a partial match.
+    /// When the search encounters a node with data that partially matches
+    /// \c name (i.e. node's name is a superdomain of \c name) and has
+    /// enabled callback (via the \c RBNode::enableCallback() method), if
+    /// \c callback is non \c NULL then the callback function is called
+    /// with the argument of a reference to the node and the given
+    /// callback argument (\c callback_arg).  The template parameter specifies
+    /// the type of the callback argument.
+    /// The callback function returns either \c true or \c false, meaning
+    /// the search should stop or continue, respectively.
+    /// If the return value is \c true the search stops immediately at the
+    /// node even if there could be a longer matching name below it.
+    /// In reality, this convoluted callback rule is specifically intended
+    /// to be used to handle a zone cut (delegation) at a name search inside
+    /// a zone, and won't be used in any other cases.
+    /// Other applications of the tree won't need callbacks, and they should
+    /// use the non templated version of the \c find() method.
+    ///
+    /// Since the expected usage of callback is very limited, we do not
+    /// generalize the interface so that it can be an arbitrary functions or
+    /// functor objects in favor of simplicity and efficiency.
+    ///
+    /// This method involves operations on names that can throw an exception.
+    /// If that happens the exception will be propagated to the caller.
+    /// The callback function should generally not throw an exception, but
+    /// if it throws, the exception will be propagated to the caller.
+    ///
     /// \param name Target to be found
-    /// \param node Point to the node when the return vaule is \c not
-    /// NOTFOUND, if the return value is NOTFOUND, the value of node is
-    /// \c unknown
-    Result find(const isc::dns::Name& name, RBNode<T>** node) const;
-    Result find(const isc::dns::Name& name, const RBNode<T>** node) const;
+    /// \param node On success (either \c EXAMPLE or \c PARTIALMATCH) it will
+    /// store a pointer to the matching node
+    /// \param callback If non \c NULL, a call back function to be called
+    /// at "delegation" nodes (see above).
+    /// \param callback_arg A caller supplied argument to be passed to
+    /// \c callback.
+    ///
+    /// \return \c EXACTMATCH A node that whose name is equal to \c name is
+    /// found.  \c *node will be set to point to that node.
+    /// \return \c PARTIALMATCH There is a no exact match, but a superdomain
+    /// of \c name exists.  \c node will be set to point to the node whose
+    /// name is the longest among such superdomains.
+    /// \return \c NOTFOUND There is no exact or partial match against \c name
+    /// \c *node will be intact in this case.
+    template <typename CBARG>
+    Result find(const isc::dns::Name& name, RBNode<T>** node,
+                bool (*callback)(const RBNode<T>&, CBARG),
+                CBARG callback_arg) const;
+
+    /// Same as the other version, but the returned \c node will be immutable.
+    template <typename CBARG>
+    Result find(const isc::dns::Name& name, const RBNode<T>** node,
+                bool (*callback)(const RBNode<T>&, CBARG),
+                CBARG callback_arg) const;
+
+    /// Same as the templated version, but does not use callback.
+    ///
+    /// Applications except the zone implementation should generally use the
+    /// non templated version.
+    Result find(const isc::dns::Name& name, RBNode<T>** node) const {
+        return (find<void*>(name, node, NULL, NULL));
+    }
+
+    /// Same as the templated version, but does not use callback, and the
+    /// returned \c node will be immutable.
+    ///
+    /// In general, this version should be preferred over the other non
+    /// templated version, unless the caller knows it should modify the
+    /// returned node.
+    Result find(const isc::dns::Name& name, const RBNode<T>** node) const {
+        return (find<void*>(name, node, NULL, NULL));
+    }
 
     /// \brief Get the total node count in the tree
     /// the node count including the node created common suffix node,
@@ -289,8 +407,8 @@ public:
     /// - ALREADYEXIST means already has the node with the given name
     //
     /// \node To modify the data related with one name but not sure the name has
-    /// inserted or not, it is better to call \code insert \endcode,instead of
-    /// \code find() \endcode, in case the name isn't exist and needs to insert again
+    /// inserted or not, it is better to call \c insert,instead of
+    /// \c find(), in case the name isn't exist and needs to insert again
     Result insert(const isc::dns::Name& name, RBNode<T>** inserted_node);
     //@}
 
@@ -315,8 +433,11 @@ private:
     /// and node will points to c.b.a
     /// \note parameter up now is not used by any funciton, but we are gonna
     /// need it soon to implement function like remove
+    template <typename CBARG>
     Result findHelper(const isc::dns::Name& name, const RBNode<T>** up,
-                      RBNode<T>** node) const;
+                      RBNode<T>** node,
+                      bool (*callback)(const RBNode<T>&, CBARG),
+                      CBARG callback_arg) const;
     void dumpTreeHelper(std::ostream& os, const RBNode<T>* node,
                         unsigned int depth) const;
     /// for indent purpose, add certian mount empty charachter to output stream
@@ -380,30 +501,39 @@ void RBTree<T> ::deleteHelper(RBNode<T> *root) {
     --node_count_;
 }
 
-template <typename T>
+template <typename T> template <typename CBARG>
 typename RBTree<T>::Result
-RBTree<T>::find(const isc::dns::Name& name, RBNode<T>** node) const {
+RBTree<T>::find(const isc::dns::Name& name, RBNode<T>** node,
+                bool (*callback)(const RBNode<T>&, CBARG),
+                CBARG callback_arg) const
+{
     const RBNode<T>* up_node = NULLNODE;
-    return (findHelper(name, &up_node, node));
+    return (findHelper(name, &up_node, node, callback, callback_arg));
 }
 
-template <typename T>
+template <typename T> template <typename CBARG>
 typename RBTree<T>::Result
-RBTree<T>::find(const isc::dns::Name& name, const RBNode<T>** node) const {
+RBTree<T>::find(const isc::dns::Name& name, const RBNode<T>** node,
+                bool (*callback)(const RBNode<T>&, CBARG),
+                CBARG callback_arg) const
+{
     const RBNode<T>* up_node;
     RBNode<T>* target_node;
     const typename RBTree<T>::Result ret =
-        findHelper(name, &up_node, &target_node);
+        findHelper(name, &up_node, &target_node, callback, callback_arg);
     if (ret != NOTFOUND) {
         *node = target_node;
     }
     return (ret);
 }
 
-template <typename T>
+template <typename T> template <typename CBARG>
 typename RBTree<T>::Result
-RBTree<T>::findHelper(const isc::dns::Name& target_name, const RBNode<T>** up_node,
-                      RBNode<T>** target) const
+RBTree<T>::findHelper(const isc::dns::Name& target_name,
+                      const RBNode<T>** up_node,
+                      RBNode<T>** target,
+                      bool (*callback)(const RBNode<T>&, CBARG),
+                      CBARG callback_arg) const
 {
     using namespace helper;
 
@@ -431,12 +561,17 @@ RBTree<T>::findHelper(const isc::dns::Name& target_name, const RBNode<T>** up_no
                 node = (compare_result.getOrder() < 0) ?
                     node->left_ : node->right_;
             } else if (relation == isc::dns::NameComparisonResult::SUBDOMAIN) {
-                *up_node = node;
-                name = name - node->name_;
                 if (!node->isEmpty()) {
                     ret = RBTree<T>::PARTIALMATCH;
                     *target = node;
+                    if (callback != NULL && node->callback_required_) {
+                        if ((callback)(*node, callback_arg)) {
+                            break;
+                        }
+                    }
                 }
+                *up_node = node;
+                name = name - node->name_;
                 node = node->down_;
             } else {
                 break;
@@ -531,6 +666,7 @@ RBTree<T>::nodeFission(RBNode<T>& node, const isc::dns::Name& base_name) {
     // after the RBNode creation
     std::auto_ptr<RBNode<T> > down_node(new RBNode<T>(sub_name));
     std::swap(node.data_, down_node->data_);
+    std::swap(node.callback_required_, down_node->callback_required_);
     down_node->down_ = node.down_;
     node.name_ = base_name;
     node.down_ = down_node.get();
