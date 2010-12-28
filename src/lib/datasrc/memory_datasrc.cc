@@ -67,7 +67,8 @@ struct MemoryZone::MemoryZoneImpl {
      * access is without the impl_-> and it will get inlined anyway.
      */
     // Implementation of MemoryZone::add
-    result::Result add(const ConstRRsetPtr& rrset) {
+    result::Result add(const ConstRRsetPtr& rrset, DomainTree* domains)
+    {
         // Sanitize input
         if (!rrset) {
             isc_throw(NullRRset, "The rrset provided is NULL");
@@ -82,7 +83,7 @@ struct MemoryZone::MemoryZoneImpl {
         }
         // Get the node
         DomainNode* node;
-        switch (domains_.insert(name, &node)) {
+        switch (domains->insert(name, &node)) {
             // Just check it returns reasonable results
             case DomainTree::SUCCEED:
             case DomainTree::ALREADYEXIST:
@@ -111,6 +112,22 @@ struct MemoryZone::MemoryZoneImpl {
             // The RRSet of given type was already there
             return (result::EXIST);
         }
+    }
+
+    /*
+     * Same as above, but it checks the return value and if it already exists,
+     * it throws.
+     */
+    void addFromLoad(const ConstRRsetPtr& set, DomainTree* domains) {
+            switch (add(set, domains)) {
+                case result::EXIST:
+                    isc_throw(dns::MasterLoadError, "Duplicate rrset: " <<
+                        set->toText());
+                case result::SUCCESS:
+                    return;
+                default:
+                    assert(0);
+            }
     }
 
     // Implementation of MemoryZone::find
@@ -146,65 +163,6 @@ struct MemoryZone::MemoryZoneImpl {
             return (FindResult(NXRRSET, ConstRRsetPtr()));
         }
     }
-
-    /*
-     * Help class used to load data from masterfile. The real work
-     * is done in the load method. We need this to be exception safe -
-     * we store the old content and in case of exception we need to
-     * put it back. But C++ does not have any way of catching everything
-     * and being able to throw it again and does not have a finally
-     * keywoard, so we emulate one by a destructor.
-     *
-     * When we finish the loading sucessfully, we mark that the destructor
-     * should not put back the original data.
-     */
-    struct Load {
-        // Takes the original data out and preserves it for a while
-        Load(MemoryZone* zone) :
-            zone_(zone),
-            swap_(true)
-        {
-            tmp_tree_.swap(zone_->impl_->domains_);
-        }
-        ~ Load() {
-            /*
-             * Emulate the finally - if we should put original back (loading
-             * didn't finish sucessfully), we swap the not-completely-loaded
-             * one with the stored.
-             */
-            if (swap_) {
-                tmp_tree_.swap(zone_->impl_->domains_);
-            }
-        }
-        // The actual loading function
-        void load(const string &filename) {
-            masterLoad(filename.c_str(), zone_->getOrigin(), zone_->getClass(),
-                boost::bind(&Load::add, this, _1));
-            // Everything OK, so don't put the original back
-            swap_ = false;
-        }
-        // Add one rrset there
-        void add(RRsetPtr set) {
-            switch (zone_->add(set)) {
-                case result::EXIST:
-                    isc_throw(dns::MasterLoadError, "Duplicate rrset: " <<
-                        set->toText());
-                case result::SUCCESS:
-                    return;
-                default:
-                    isc_throw(AssertError,
-                        "Unexpected result of MemoryZone::add");
-            }
-        }
-
-        // State while loading in progress
-        // Just the zone where we put the data
-        MemoryZone *zone_;
-        // Preserved original of the zone
-        DomainTree tmp_tree_;
-        // Should we restore the original if we end now?
-        bool swap_;
-    };
 };
 
 MemoryZone::MemoryZone(const RRClass& zone_class, const Name& origin) :
@@ -233,15 +191,19 @@ MemoryZone::find(const Name& name, const RRType& type) const {
 
 result::Result
 MemoryZone::add(const ConstRRsetPtr& rrset) {
-    return (impl_->add(rrset));
+    return (impl_->add(rrset, &impl_->domains_));
 }
 
 
 void
 MemoryZone::load(const string& filename) {
-    // This uses a class to emulate finally. See comment near it.
-    MemoryZoneImpl::Load load(this);
-    load.load(filename);
+    // Load it into a temporary tree
+    MemoryZoneImpl::DomainTree tmp;
+    masterLoad(filename.c_str(), getOrigin(), getClass(),
+        boost::bind(&MemoryZoneImpl::addFromLoad, impl_, _1, &tmp));
+    // If it went well, put it inside
+    tmp.swap(impl_->domains_);
+    // And let the old data die with tmp
 }
 
 /// Implementation details for \c MemoryDataSrc hidden from the public
