@@ -295,6 +295,10 @@ TEST_F(MemoryZoneTest, load) {
     // But this should no longer be here
     findTest(ns_name_, RRType::AAAA(), Zone::NXDOMAIN, true, ConstRRsetPtr(),
         &rootzone);
+
+    // Try loading zone that is wrong in a different way
+    EXPECT_THROW(zone_.load(TEST_DATA_DIR "/duplicate_rrset.zone"),
+        MasterLoadError);
 }
 
 }
