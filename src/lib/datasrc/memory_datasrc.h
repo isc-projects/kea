@@ -97,6 +97,7 @@ public:
         { }
     };
 
+    void load(const std::string& filename);
 private:
     /// \name Hidden private data
     //@{
