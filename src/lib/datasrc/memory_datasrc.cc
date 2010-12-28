@@ -67,8 +67,7 @@ struct MemoryZone::MemoryZoneImpl {
      * access is without the impl_-> and it will get inlined anyway.
      */
     // Implementation of MemoryZone::add
-    result::Result add(const ConstRRsetPtr& rrset, DomainTree* domains)
-    {
+    result::Result add(const ConstRRsetPtr& rrset, DomainTree* domains) {
         // Sanitize input
         if (!rrset) {
             isc_throw(NullRRset, "The rrset provided is NULL");
