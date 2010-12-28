@@ -185,15 +185,20 @@ public:
      * \param check_answer Should a check against equality of the answer be
      *     done?
      * \param answer The expected rrset, if any should be returned.
+     * \param zone Check different MemoryZone object than zone_ (if NULL,
+     *     uses zone_)
      */
     void findTest(const Name& name, const RRType& rrtype, Zone::Result result,
         bool check_answer = true,
-        const ConstRRsetPtr& answer = ConstRRsetPtr())
+        const ConstRRsetPtr& answer = ConstRRsetPtr(), MemoryZone *zone = NULL)
     {
+        if (!zone) {
+            zone = &zone_;
+        }
         // The whole block is inside, because we need to check the result and
         // we can't assign to FindResult
         EXPECT_NO_THROW({
-            Zone::FindResult find_result(zone_.find(name, rrtype));
+            Zone::FindResult find_result(zone->find(name, rrtype));
             // Check it returns correct answers
             EXPECT_EQ(result, find_result.code);
             if (check_answer) {
@@ -272,16 +277,20 @@ TEST_F(MemoryZoneTest, load) {
     // Create correct zone
     MemoryZone rootzone(class_, Name("."));
     // Try putting something inside
-    EXPECT_NO_THROW(EXPECT_EQ(result::SUCCESS, zone_.add(rr_ns_aaaa_)));
+    EXPECT_NO_THROW(EXPECT_EQ(result::SUCCESS, rootzone.add(rr_ns_aaaa_)));
     // Load the zone. It should overwrite/remove the above RRset
     EXPECT_NO_THROW(rootzone.load(TEST_DATA_DIR "/root.zone"));
 
     // Now see there are some rrsets (we don't look inside, though)
-    findTest(Name("."), RRType::SOA(), Zone::SUCCESS, false);
-    findTest(Name("."), RRType::NS(), Zone::SUCCESS, false);
-    findTest(Name("a.root-servers.net."), RRType::A(), Zone::SUCCESS, false);
+    findTest(Name("."), RRType::SOA(), Zone::SUCCESS, false, ConstRRsetPtr(),
+        &rootzone);
+    findTest(Name("."), RRType::NS(), Zone::SUCCESS, false, ConstRRsetPtr(),
+        &rootzone);
+    findTest(Name("a.root-servers.net."), RRType::A(), Zone::SUCCESS, false,
+        ConstRRsetPtr(), &rootzone);
     // But this should no longer be here
-    findTest(ns_name_, RRType::AAAA(), Zone::NXDOMAIN, false);
+    findTest(ns_name_, RRType::AAAA(), Zone::NXDOMAIN, true, ConstRRsetPtr(),
+        &rootzone);
 }
 
 }
