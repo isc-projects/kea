@@ -77,10 +77,12 @@ Query::process() const {
                 // TODO : add NS to authority section, fill in additional section.
                 break;
             case Zone::NXDOMAIN:
+                // Just empty answer with SOA in authority section
                 response_.setRcode(Rcode::NXDOMAIN());
                 putSOA(*result.zone);
                 break;
             case Zone::NXRRSET:
+                // Just empty answer with SOA in authority section
                 response_.setRcode(Rcode::NOERROR());
                 putSOA(*result.zone);
                 break;
