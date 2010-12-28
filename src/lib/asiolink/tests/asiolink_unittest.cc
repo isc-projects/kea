@@ -338,11 +338,21 @@ protected:
         // In order to prevent the test from hanging in such a worst case
         // we add an ad hoc timeout.
         const struct timeval timeo = { 10, 0 };
+        int recv_options = 0;
         if (setsockopt(sock_, SOL_SOCKET, SO_RCVTIMEO, &timeo,
                        sizeof(timeo))) {
-            isc_throw(IOError, "set RCVTIMEO failed: " << strerror(errno));
+            if (errno == EOPNOTSUPP) {
+                // Workaround for Solaris: it doesn't accept SO_RCVTIMEO
+                // with the error of EOPNOTSUPP.  Since this is a workaround
+                // for rare error cases anyway, we simply switch to the
+                // "don't wait" mode.  If we still find an error in recv()
+                // can happen often we'll consider a more complete solution.
+                recv_options = MSG_DONTWAIT;
+            } else {
+                isc_throw(IOError, "set RCVTIMEO failed: " << strerror(errno));
+            }
         }
-        const int ret = recv(sock_, buffer, size, 0);
+        const int ret = recv(sock_, buffer, size, recv_options);
         if (ret < 0) {
             isc_throw(IOError, "recvfrom failed: " << strerror(errno));
         }
@@ -710,13 +720,18 @@ TEST_F(ASIOLinkTest, recursiveTimeout) {
     // Read up to 3 packets.  Use some ad hoc timeout to prevent an infinite
     // block (see also recvUDP()).
     const struct timeval timeo = { 10, 0 };
+    int recv_options = 0;
     if (setsockopt(sock_, SOL_SOCKET, SO_RCVTIMEO, &timeo, sizeof(timeo))) {
-        isc_throw(IOError, "set RCVTIMEO failed: " << strerror(errno));
+        if (errno == EOPNOTSUPP) { // see ASIOLinkTest::recvUDP()
+            recv_options = MSG_DONTWAIT;
+        } else {
+            isc_throw(IOError, "set RCVTIMEO failed: " << strerror(errno));
+        }
     }
     int num = 0;
     do {
         char inbuff[512];
-        if (recv(sock_, inbuff, sizeof(inbuff), 0) < 0) {
+        if (recv(sock_, inbuff, sizeof(inbuff), recv_options) < 0) {
             num = -1;
             break;
         }
