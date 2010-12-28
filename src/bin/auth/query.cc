@@ -26,6 +26,24 @@ namespace isc {
 namespace auth {
 
 void
+Query::putSOA(const Zone& zone) const {
+    Zone::FindResult soa_result(zone.find(zone.getOrigin(),
+        RRType::SOA()));
+    if (soa_result.code != Zone::SUCCESS) {
+        isc_throw(NoSOA, "There's no SOA record in zone " <<
+            zone.getOrigin().toText());
+    } else {
+        /*
+         * FIXME:
+         * The const-cast is wrong, but the Message interface seems
+         * to insist.
+         */
+        response_.addRRset(Message::SECTION_AUTHORITY,
+            boost::const_pointer_cast<RRset>(soa_result.rrset));
+    }
+}
+
+void
 Query::process() const {
     bool keep_doing = true;
     response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
@@ -60,11 +78,11 @@ Query::process() const {
                 break;
             case Zone::NXDOMAIN:
                 response_.setRcode(Rcode::NXDOMAIN());
-                // TODO : add SOA to authority section
+                putSOA(*result.zone);
                 break;
             case Zone::NXRRSET:
                 response_.setRcode(Rcode::NOERROR());
-                // TODO : add SOA to authority section
+                putSOA(*result.zone);
                 break;
             case Zone::CNAME:
             case Zone::DNAME:
