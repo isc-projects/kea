@@ -272,8 +272,12 @@ TEST_F(MemoryZoneTest, find) {
 }
 
 TEST_F(MemoryZoneTest, load) {
+    // Put some data inside the zone
+    EXPECT_NO_THROW(EXPECT_EQ(result::SUCCESS, zone_.add(rr_ns_)));
     // Loading with different origin should fail
     EXPECT_THROW(zone_.load(TEST_DATA_DIR "/root.zone"), MasterLoadError);
+    // See the original data is still there, survived the exception
+    findTest(origin_, RRType::NS(), Zone::SUCCESS, true, rr_ns_);
     // Create correct zone
     MemoryZone rootzone(class_, Name("."));
     // Try putting something inside
