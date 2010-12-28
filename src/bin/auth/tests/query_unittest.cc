@@ -17,6 +17,7 @@
 #include <dns/rcode.h>
 #include <dns/rrttl.h>
 #include <dns/rrtype.h>
+#include <dns/rdataclass.h>
 
 #include <datasrc/memory_datasrc.h>
 
@@ -41,8 +42,14 @@ namespace {
 // else return DNAME
 class MockZone : public Zone {
 public:
-    MockZone() : origin_(Name("example.com"))
-    {}
+    MockZone() :
+        origin_(Name("example.com")),
+        mx_rrset_(new RRset(Name("mx.example.com"), RRClass::IN(),
+            RRType::MX(), RRTTL(3600)))
+    {
+        mx_rrset_->addRdata(isc::dns::rdata::generic::MX(10,
+            Name("www.example.com")));
+    }
     virtual const isc::dns::Name& getOrigin() const;
     virtual const isc::dns::RRClass& getClass() const;
 
@@ -51,6 +58,7 @@ public:
 
 private:
     Name origin_;
+    RRsetPtr mx_rrset_;
 };
 
 const Name&
@@ -76,6 +84,8 @@ MockZone::find(const Name& name, const RRType&) const {
         return FindResult(NXRRSET, RRsetPtr());
     } else if (name == Name("cname.example.com")) {
         return FindResult(CNAME, RRsetPtr());
+    } else if (name == Name("mx.example.com")) {
+        return (FindResult(SUCCESS, mx_rrset_));
     } else {
         return FindResult(DNAME, RRsetPtr());
     }
@@ -136,4 +146,17 @@ TEST_F(QueryTest, noMatchZone) {
     nomatch_query.process();
     EXPECT_EQ(Rcode::REFUSED(), response.getRcode());
 }
+
+TEST_F(QueryTest, MX) {
+    memory_datasrc.addZone(ZonePtr(new MockZone()));
+    Name qname("mx.example.com");
+    Query mx_query(memory_datasrc, qname, RRType::MX(), response);
+    EXPECT_NO_THROW(mx_query.process());
+    EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_ANSWER,
+        Name("mx.example.com"), RRClass::IN(), RRType::MX()));
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
+        Name("www.example.com"), RRClass::IN(), RRType::A()));
+}
+
 }
