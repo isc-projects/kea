@@ -17,6 +17,7 @@
 #include <exceptions/exceptions.h>
 
 #include <dns/rrclass.h>
+#include <dns/masterload.h>
 
 #include <cc/data.h>
 
@@ -199,6 +200,41 @@ TEST_F(MemoryDatasrcConfigTest, replace) {
     EXPECT_NO_THROW(parser->commit());
     EXPECT_EQ(2, server.getMemoryDataSrc(rrclass)->getZoneCount());
     EXPECT_EQ(isc::datasrc::result::NOTFOUND,
+              server.getMemoryDataSrc(rrclass)->findZone(
+                  Name("example.com")).code);
+}
+
+TEST_F(MemoryDatasrcConfigTest, exception) {
+    // Load a zone
+    EXPECT_NO_THROW(parser->build(Element::fromJSON(
+                      "[{\"type\": \"memory\","
+                      "  \"zones\": [{\"origin\": \"example.com\","
+                      "               \"file\": \"" TEST_DATA_DIR
+                      "/example.zone\"}]}]")));
+    EXPECT_NO_THROW(parser->commit());
+    EXPECT_EQ(1, server.getMemoryDataSrc(rrclass)->getZoneCount());
+    EXPECT_EQ(isc::datasrc::result::SUCCESS,
+              server.getMemoryDataSrc(rrclass)->findZone(
+                  Name("example.com")).code);
+
+    // create a new parser, and try to load something. It will throw,
+    // the given master file should not exist
+    delete parser;
+    parser = createAuthConfigParser(server, "datasources");
+    EXPECT_THROW(parser->build(Element::fromJSON(
+                      "[{\"type\": \"memory\","
+                      "  \"zones\": [{\"origin\": \"example.org\","
+                      "               \"file\": \"" TEST_DATA_DIR
+                      "/example.org.zone\"},"
+                      "              {\"origin\": \"example.net\","
+                      "               \"file\": \"" TEST_DATA_DIR
+                      "/nonexistent.zone\"}]}]")), isc::dns::MasterLoadError);
+    // As that one throwed exception, it is not expected from us to
+    // commit it
+
+    // The original should be untouched
+    EXPECT_EQ(1, server.getMemoryDataSrc(rrclass)->getZoneCount());
+    EXPECT_EQ(isc::datasrc::result::SUCCESS,
               server.getMemoryDataSrc(rrclass)->findZone(
                   Name("example.com")).code);
 }
