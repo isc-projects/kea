@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <map>
+#include <cassert>
 #include <boost/shared_ptr.hpp>
 
 #include <dns/name.h>
@@ -51,12 +52,98 @@ struct MemoryZone::MemoryZoneImpl {
      * that.
      */
     typedef map<RRType, ConstRRsetPtr> Domain;
+    typedef Domain::value_type DomainPair;
     typedef boost::shared_ptr<Domain> DomainPtr;
     // The tree stores domains
     typedef RBTree<Domain> DomainTree;
     typedef RBNode<Domain> DomainNode;
     // The actual zone data
     DomainTree domains_;
+
+    /*
+     * Implementation of longer methods. We put them here, because the
+     * access is without the impl_-> and it will get inlined anyway.
+     */
+    // Implementation of MemoryZone::add
+    result::Result add(const ConstRRsetPtr& rrset) {
+        // Sanitize input
+        if (!rrset) {
+            isc_throw(NullRRset, "The rrset provided is NULL");
+        }
+        Name name(rrset->getName());
+        NameComparisonResult compare(origin_.compare(name));
+        if (compare.getRelation() != NameComparisonResult::SUPERDOMAIN &&
+            compare.getRelation() != NameComparisonResult::EQUAL)
+        {
+            isc_throw(OutOfZone, "The name " << name <<
+                " is not contained in zone " << origin_);
+        }
+        // Get the node
+        DomainNode* node;
+        switch (domains_.insert(name, &node)) {
+            // Just check it returns reasonable results
+            case DomainTree::SUCCEED:
+            case DomainTree::ALREADYEXIST:
+                break;
+            // Something odd got out
+            default:
+                assert(0);
+        }
+        assert(node);
+
+        // Now get the domain
+        DomainPtr domain;
+        // It didn't exist yet, create it
+        if (node->isEmpty()) {
+            domain.reset(new Domain);
+            node->setData(domain);
+        } else { // Get existing one
+            domain = node->getData();
+        }
+
+        // Try inserting the rrset there
+        if (domain->insert(DomainPair(rrset->getType(), rrset)).second) {
+            // Ok, we just put it in
+            return (result::SUCCESS);
+        } else {
+            // The RRSet of given type was already there
+            return (result::EXIST);
+        }
+    }
+
+    // Implementation of MemoryZone::find
+    FindResult find(const Name& name, RRType type) const {
+        // Get the node
+        DomainNode* node;
+        switch (domains_.find(name, &node)) {
+            case DomainTree::PARTIALMATCH:
+                // Pretend it was not found for now
+                // TODO: Implement real delegation. Currently, not having
+                // the the domain can cause a partialmatch as well, so
+                // better check.
+            case DomainTree::NOTFOUND:
+                return (FindResult(NXDOMAIN, ConstRRsetPtr()));
+            case DomainTree::EXACTMATCH: // This one is OK, handle it
+                break;
+            default:
+                assert(0);
+        }
+        assert(node);
+        assert(!node->isEmpty());
+
+        Domain::const_iterator found(node->getData()->find(type));
+        if (found != node->getData()->end()) {
+            // Good, it is here
+            return (FindResult(SUCCESS, found->second));
+        } else {
+            /*
+             * TODO Look for CNAME and DNAME (it should be OK to do so when
+             * the value is not found, as CNAME/DNAME domain should be
+             * empty otherwise.)
+             */
+            return (FindResult(NXRRSET, ConstRRsetPtr()));
+        }
+    }
 };
 
 MemoryZone::MemoryZone(const RRClass& zone_class, const Name& origin) :
@@ -79,9 +166,13 @@ MemoryZone::getClass() const {
 }
 
 Zone::FindResult
-MemoryZone::find(const Name&, const RRType&) const {
-    // This is a tentative implementation that always returns NXDOMAIN.
-    return (FindResult(NXDOMAIN, RRsetPtr()));
+MemoryZone::find(const Name& name, const RRType& type) const {
+    return (impl_->find(name, type));
+}
+
+result::Result
+MemoryZone::add(const ConstRRsetPtr& rrset) {
+    return (impl_->add(rrset));
 }
 
 /// Implementation details for \c MemoryDataSrc hidden from the public
