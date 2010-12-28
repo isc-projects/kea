@@ -27,13 +27,23 @@ using namespace isc::nsas;
 
 namespace isc {
 namespace cache {
+
 class RRsetEntry;
+class RRsetCache;
 
 class MessageEntry : public NsasEntry<MessageEntry>, 
                      public Fetchable 
 {
 public:
-    MessageEntry();
+
+    /// \brief Initialize the message entry object with one dns 
+    /// message.
+    /// \param message The message used to initialize MessageEntry.
+    /// \param rrset_cache the pointer of RRsetCache. When one message
+    /// entry is created, some new rrset entries may be created/updated
+    /// if they doesn't exist in the rrset cache.
+    MessageEntry(const isc::dns::Message& message,
+                 boost::shared_ptr<RRsetCache> rrset_cache);
 
     /// \brief generate one dns message according 
     /// the rrsets information of the message.
@@ -42,21 +52,28 @@ public:
     ///        as "expire_time - time_now" (expire_time is the 
     ///        expiration time of the rrset).
     /// \param query_header the query message header.
-    void generateMessage(isc::dns::Message& response, 
-                         time_t* time_now,
-                         uint16_t query_header);
+    void generateMessage(const time_t& time_now,
+                         const uint16_t query_header,
+                         isc::dns::Message& response);
+protected:
+    // Initialize the message entry with dns message.
+    void initMessageEntry(const isc::dns::Message& message);
 
 private:
     time_t expire_time_;  // Expiration time of the message.
+
     std::string query_name_; // query name of the message.
     uint16_t query_class_; // query class of the message.
     uint16_t query_type_; // query type of message.
 
+    uint16_t query_header; // query header of the message.
     uint16_t query_count_; // query count in query section.
     uint16_t answer_count_; // rrset count in answer section.
     uint16_t authority_count_; // rrset count in authority section.
     uint16_t addition_count_; // rrset count in addition section.
+
     std::vector<boost::shared_ptr<RRsetEntry*> > rrsets_;
+    boost::shared_ptr<RRsetCache> rrset_cache_;
 };
     
 } // namespace cache
