@@ -14,6 +14,8 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <exceptions/exceptions.h>
+
 namespace isc {
 namespace dns {
 class Message;
@@ -23,6 +25,7 @@ class RRType;
 
 namespace datasrc {
 class MemoryDataSrc;
+class Zone;
 }
 
 namespace auth {
@@ -104,11 +107,24 @@ public:
     /// future version.
     void process() const;
 
+    struct BadZone : public isc::Exception {
+        BadZone(const char* file, size_t line, const char* what) :
+            Exception(file, line, what)
+        { }
+    };
+
+    struct NoSOA : public BadZone {
+        NoSOA(const char* file, size_t line, const char* what) :
+            BadZone(file, line, what)
+        { }
+    };
+
 private:
     const isc::datasrc::MemoryDataSrc& memory_datasrc_;
     const isc::dns::Name& qname_;
     const isc::dns::RRType& qtype_;
     isc::dns::Message& response_;
+    void putSOA(const isc::datasrc::Zone& zone) const;
 };
 
 }
