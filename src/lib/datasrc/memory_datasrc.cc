@@ -15,9 +15,11 @@
 #include <map>
 #include <cassert>
 #include <boost/shared_ptr.hpp>
+#include <boost/bind.hpp>
 
 #include <dns/name.h>
 #include <dns/rrclass.h>
+#include <dns/masterload.h>
 
 #include <datasrc/memory_datasrc.h>
 #include <datasrc/rbtree.h>
@@ -144,6 +146,41 @@ struct MemoryZone::MemoryZoneImpl {
             return (FindResult(NXRRSET, ConstRRsetPtr()));
         }
     }
+
+    struct Load {
+        Load(MemoryZone* zone) :
+            zone_(zone),
+            swap_(true)
+        {
+            tmp_tree_.swap(zone_->impl_->domains_);
+        }
+        ~ Load() {
+            if (swap_) {
+                tmp_tree_.swap(zone_->impl_->domains_);
+            }
+        }
+        void load(const string &filename) {
+            masterLoad(filename.c_str(), zone_->getOrigin(), zone_->getClass(),
+                boost::bind(&Load::add, this, _1));
+            swap_ = false;
+        }
+        void add(RRsetPtr set) {
+            switch (zone_->add(set)) {
+                case result::EXIST:
+                    isc_throw(dns::MasterLoadError, "Duplicate rrset: " <<
+                        set->toText());
+                case result::SUCCESS:
+                    return;
+                default:
+                    isc_throw(AssertError,
+                        "Unexpected result of MemoryZone::add");
+            }
+        }
+
+        MemoryZone *zone_;
+        DomainTree tmp_tree_;
+        bool swap_;
+    };
 };
 
 MemoryZone::MemoryZone(const RRClass& zone_class, const Name& origin) :
@@ -173,6 +210,17 @@ MemoryZone::find(const Name& name, const RRType& type) const {
 result::Result
 MemoryZone::add(const ConstRRsetPtr& rrset) {
     return (impl_->add(rrset));
+}
+
+void
+xxx(Zone*, RRsetPtr) {
+
+}
+
+void
+MemoryZone::load(const string& filename) {
+    MemoryZoneImpl::Load load(this);
+    load.load(filename);
 }
 
 /// Implementation details for \c MemoryDataSrc hidden from the public
