@@ -103,7 +103,9 @@ public:
     /// providing compatible behavior may have its own benefit, so this point
     /// should be revisited later.
     ///
-    /// This might throw BadZone or any of its specific subclasses.
+    /// This might throw BadZone or any of its specific subclasses, but that
+    /// shouldn't happen in real-life (as BadZone means wrong data, it should
+    /// have been rejected upon loading).
     void process() const;
 
     /// \short Bad zone data encountered.
@@ -115,7 +117,7 @@ public:
     struct BadZone : public isc::Exception {
         BadZone(const char* file, size_t line, const char* what) :
             Exception(file, line, what)
-        { }
+        {}
     };
 
     /// \short Zone is missing its SOA record.
@@ -125,7 +127,7 @@ public:
     struct NoSOA : public BadZone {
         NoSOA(const char* file, size_t line, const char* what) :
             BadZone(file, line, what)
-        { }
+        {}
     };
 
 private:
@@ -133,6 +135,7 @@ private:
     const isc::dns::Name& qname_;
     const isc::dns::RRType& qtype_;
     isc::dns::Message& response_;
+
     /**
      * \short Adds a SOA.
      *

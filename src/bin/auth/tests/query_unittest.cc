@@ -17,7 +17,6 @@
 #include <dns/rcode.h>
 #include <dns/rrttl.h>
 #include <dns/rrtype.h>
-#include <dns/rdataclass.h>
 
 #include <datasrc/memory_datasrc.h>
 
