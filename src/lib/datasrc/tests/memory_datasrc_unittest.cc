@@ -259,8 +259,8 @@ TEST_F(MemoryZoneTest, delegationNS) {
     findTest(Name("child.example.org"), RRType::NS(), Zone::DELEGATION,
              rr_child_ns_);
 
-    // shouldn't confuse the apex node (having NS) with delegation
-    // test to be added
+    // finding NS for the apex (origin) node.  This must not be confused
+    // with delegation due to the existence of an NS RR.
     findTest(origin_, RRType::NS(), Zone::SUCCESS, rr_ns_);
 
     // unusual case of "nested delegation": the highest cut should be used.
