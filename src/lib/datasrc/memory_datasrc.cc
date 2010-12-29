@@ -160,7 +160,7 @@ struct MemoryZone::MemoryZoneImpl {
     // Implementation of MemoryZone::find
     FindResult find(const Name& name, RRType type) const {
         // Get the node
-        DomainNode* node;
+        DomainNode* node(NULL);
         FindState state;
         switch (domains_.find(name, &node, zonecutCallback, &state)) {
             case DomainTree::PARTIALMATCH:
