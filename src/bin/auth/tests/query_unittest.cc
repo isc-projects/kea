@@ -45,7 +45,9 @@ RRsetPtr soa_rrset = RRsetPtr(new RRset(Name("example.com"),
 // else return DNAME
 class MockZone : public Zone {
 public:
-    MockZone() : origin_(Name("example.com"))
+    MockZone(bool has_SOA = true) :
+        origin_(Name("example.com")),
+        has_SOA_(has_SOA)
     {}
     virtual const isc::dns::Name& getOrigin() const;
     virtual const isc::dns::RRClass& getClass() const;
@@ -55,6 +57,7 @@ public:
 
 private:
     Name origin_;
+    bool has_SOA_;
 };
 
 const Name&
@@ -72,7 +75,9 @@ MockZone::find(const Name& name, const RRType& type) const {
     // hardcode the find results
     if (name == Name("www.example.com")) {
         return (FindResult(SUCCESS, a_rrset));
-    } else if (name == Name("example.com") && type == RRType::SOA()) {
+    } else if (name == Name("example.com") && type == RRType::SOA() &&
+        has_SOA_)
+    {
         return (FindResult(SUCCESS, soa_rrset));
     } else if (name == Name("delegation.example.com")) {
         return (FindResult(DELEGATION, RRsetPtr()));
@@ -139,6 +144,25 @@ TEST_F(QueryTest, matchZone) {
     EXPECT_EQ(0, response.getRRCount(Message::SECTION_ADDITIONAL));
     EXPECT_TRUE(response.hasRRset(Message::SECTION_AUTHORITY,
         Name("example.com"), RRClass::IN(), RRType::SOA()));
+}
+
+/*
+ * This tests that when there's no SOA and we need a negative answer. It should
+ * throw in that case.
+ */
+TEST_F(QueryTest, noSOA) {
+    memory_datasrc.addZone(ZonePtr(new MockZone(false)));
+
+    // The NX Domain
+    const Name nxdomain_name(Name("nxdomain.example.com"));
+    Query nxdomain_query(memory_datasrc, nxdomain_name, qtype, response);
+    EXPECT_THROW(nxdomain_query.process(), Query::NoSOA);
+    // Of course, we don't look into the response, as it throwed
+
+    // NXRRSET
+    const Name nxrrset_name(Name("nxrrset.example.com"));
+    Query nxrrset_query(memory_datasrc, nxrrset_name, qtype, response);
+    EXPECT_THROW(nxrrset_query.process(), Query::NoSOA);
 }
 
 TEST_F(QueryTest, noMatchZone) {
