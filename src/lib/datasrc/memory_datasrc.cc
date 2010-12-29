@@ -154,7 +154,9 @@ struct MemoryZone::MemoryZoneImpl {
             return (true);
         }
 
-        return (false);         // note: right now this case is impossible.
+        // This case should not happen because we enable callback only
+        // when we add an RR searched for above.
+        assert(0);
     }
 
     // Implementation of MemoryZone::find
