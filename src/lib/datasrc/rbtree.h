@@ -339,8 +339,8 @@ public:
     /// if it throws, the exception will be propagated to the caller.
     ///
     /// \param name Target to be found
-    /// \param node On success (either \c EXAMPLE or \c PARTIALMATCH) it will
-    /// store a pointer to the matching node
+    /// \param node On success (either \c EXACTMATCH or \c PARTIALMATCH)
+    /// it will store a pointer to the matching node
     /// \param callback If non \c NULL, a call back function to be called
     /// at "delegation" nodes (see above).
     /// \param callback_arg A caller supplied argument to be passed to
