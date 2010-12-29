@@ -17,6 +17,7 @@
 #include <dns/rcode.h>
 #include <dns/rrttl.h>
 #include <dns/rrtype.h>
+#include <dns/rdataclass.h>
 
 #include <datasrc/memory_datasrc.h>
 
@@ -33,10 +34,10 @@ RRsetPtr a_rrset = RRsetPtr(new RRset(Name("www.example.com"),
                                       RRTTL(3600)));
 RRsetPtr glue_a_rrset(RRsetPtr(new RRset(Name("glue.a.example.com"),
                                          RRClass::IN(), RRType::A(),
-                                         RRTTL(3600)))),
+                                         RRTTL(3600))));
 RRsetPtr glue_aaaa_rrset(RRsetPtr(new RRset(Name("glue.aaaa.example.com"),
                                             RRClass::IN(), RRType::AAAA(),
-                                            RRTTL(3600)))),
+                                            RRTTL(3600))));
 namespace {
 // This is a mock Zone class for testing.
 // It is a derived class of Zone, and simply hardcode the results of find()
@@ -44,7 +45,7 @@ namespace {
 // return NXDOMAIN for "nxdomain.example.com",
 // return NXRRSET for "nxrrset.example.com",
 // return CNAME for "cname.example.com",
-// else return DNAME
+// otherwise return DNAME
 class MockZone : public Zone {
 public:
     MockZone() : origin_(Name("example.com")),
@@ -52,9 +53,9 @@ public:
                                              RRClass::IN(), RRType::NS(),
                                              RRTTL(3600))))
     {
-        ns_rrset.addRdata(rdata::generic::NS(
+        ns_rrset->addRdata(rdata::generic::NS(
                           Name("glue.a.example.com")));
-        ns_rrset.addRdata(rdata::generic::NS(
+        ns_rrset->addRdata(rdata::generic::NS(
                           Name("glue.aaaa.example.com")));
     }
     virtual const isc::dns::Name& getOrigin() const;
