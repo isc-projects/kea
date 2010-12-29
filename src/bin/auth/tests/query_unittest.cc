@@ -49,6 +49,8 @@ public:
     {
         mx_rrset_->addRdata(isc::dns::rdata::generic::MX(10,
             Name("www.example.com")));
+        mx_rrset_->addRdata(isc::dns::rdata::generic::MX(20,
+            Name("mailer.example.org")));
     }
     virtual const isc::dns::Name& getOrigin() const;
     virtual const isc::dns::RRClass& getClass() const;
@@ -147,6 +149,12 @@ TEST_F(QueryTest, noMatchZone) {
     EXPECT_EQ(Rcode::REFUSED(), response.getRcode());
 }
 
+/*
+ * Test MX additional processing.
+ *
+ * The MX RRset has two RRs, one pointing to a known domain with
+ * A record, other to unknown out of zone one.
+ */
 TEST_F(QueryTest, MX) {
     memory_datasrc.addZone(ZonePtr(new MockZone()));
     Name qname("mx.example.com");
@@ -157,6 +165,16 @@ TEST_F(QueryTest, MX) {
         Name("mx.example.com"), RRClass::IN(), RRType::MX()));
     EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
         Name("www.example.com"), RRClass::IN(), RRType::A()));
+    // In fact, the MX RRset mentions two names, but we don't know anything
+    // about the other, so we have just 1 additional rrset
+    size_t additional_count(0);
+    for (SectionIterator<RRsetPtr> ai(response.beginSection(
+        Message::SECTION_ANSWER)); ai != response.endSection(
+        Message::SECTION_ANSWER); ++ ai)
+    {
+        additional_count ++;
+    }
+    EXPECT_EQ(1, additional_count);
 }
 
 }
