@@ -31,6 +31,12 @@ using namespace isc::auth;
 RRsetPtr a_rrset = RRsetPtr(new RRset(Name("www.example.com"),
                                       RRClass::IN(), RRType::A(),
                                       RRTTL(3600)));
+RRsetPtr glue_a_rrset(RRsetPtr(new RRset(Name("glue.a.example.com"),
+                                         RRClass::IN(), RRType::A(),
+                                         RRTTL(3600)))),
+RRsetPtr glue_aaaa_rrset(RRsetPtr(new RRset(Name("glue.aaaa.example.com"),
+                                            RRClass::IN(), RRType::AAAA(),
+                                            RRTTL(3600)))),
 namespace {
 // This is a mock Zone class for testing.
 // It is a derived class of Zone, and simply hardcode the results of find()
@@ -41,8 +47,16 @@ namespace {
 // else return DNAME
 class MockZone : public Zone {
 public:
-    MockZone() : origin_(Name("example.com"))
-    {}
+    MockZone() : origin_(Name("example.com")),
+                 ns_rrset(RRsetPtr(new RRset(Name("delegation.example.com"),
+                                             RRClass::IN(), RRType::NS(),
+                                             RRTTL(3600))))
+    {
+        ns_rrset.addRdata(rdata::generic::NS(
+                          Name("glue.a.example.com")));
+        ns_rrset.addRdata(rdata::generic::NS(
+                          Name("glue.aaaa.example.com")));
+    }
     virtual const isc::dns::Name& getOrigin() const;
     virtual const isc::dns::RRClass& getClass() const;
 
@@ -51,6 +65,7 @@ public:
 
 private:
     Name origin_;
+    RRsetPtr ns_rrset;
 };
 
 const Name&
@@ -67,17 +82,21 @@ Zone::FindResult
 MockZone::find(const Name& name, const RRType&) const {
     // hardcode the find results
     if (name == Name("www.example.com")) {
-        return FindResult(SUCCESS, a_rrset);
+        return (FindResult(SUCCESS, a_rrset));
+    } else if (name == Name("glue.a.example.com")) {
+        return (FindResult(SUCCESS, glue_a_rrset));
+    } else if (name == Name("glue.aaaa.example.com")) {
+        return (FindResult(SUCCESS, glue_aaaa_rrset));
     } else if (name == Name("delegation.example.com")) {
-        return FindResult(DELEGATION, RRsetPtr());
+        return (FindResult(DELEGATION, ns_rrset));
     } else if (name == Name("nxdomain.example.com")) {
-        return FindResult(NXDOMAIN, RRsetPtr());
+        return (FindResult(NXDOMAIN, RRsetPtr()));
     } else if (name == Name("nxrrset.example.com")) {
         return FindResult(NXRRSET, RRsetPtr());
-    } else if (name == Name("cname.example.com")) {
-        return FindResult(CNAME, RRsetPtr());
+    } else if ((name == Name("cname.example.com"))) {
+        return (FindResult(CNAME, RRsetPtr()));
     } else {
-        return FindResult(DNAME, RRsetPtr());
+        return (FindResult(DNAME, RRsetPtr()));
     }
 }
 
@@ -113,6 +132,21 @@ TEST_F(QueryTest, matchZone) {
     EXPECT_TRUE(response.hasRRset(Message::SECTION_ANSWER,
                                   Name("www.example.com"), RRClass::IN(),
                                   RRType::A()));
+
+    // Delegation
+    const Name delegation_name(Name("delegation.example.com"));
+    Query delegation_query(memory_datasrc, delegation_name, qtype, response);
+    delegation_query.process();
+    EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_AUTHORITY,
+                                  Name("delegation.example.com"),
+                                  RRClass::IN(), RRType::NS()));
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
+                                  Name("glue.a.example.com"),
+                                  RRClass::IN(), RRType::A()));
+    EXPECT_TRUE(response.hasRRset(Message::SECTION_ADDITIONAL,
+                                  Name("glue.aaaa.example.com"),
+                                  RRClass::IN(), RRType::AAAA()));
 
     // NXDOMAIN
     const Name nxdomain_name(Name("nxdomain.example.com"));
