@@ -169,6 +169,61 @@ TEST_F(RBTreeTest, findName) {
     EXPECT_EQ(Name("q"), rbtnode->getName());
 }
 
+bool
+testCallback(const RBNode<int>&, bool* callack_checker) {
+    *callack_checker = true;
+    return (false);
+}
+
+TEST_F(RBTreeTest, callback) {
+    // by default callback isn't enabled
+    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("callback.example"),
+                                                  &rbtnode));
+    rbtnode->setData(RBNode<int>::NodeDataPtr(new int(1)));
+    EXPECT_FALSE(rbtnode->isCallbackEnabled());
+
+    // enable/re-disable callback
+    rbtnode->enableCallback();
+    EXPECT_TRUE(rbtnode->isCallbackEnabled());
+    rbtnode->disableCallback();
+    EXPECT_FALSE(rbtnode->isCallbackEnabled());
+
+    // enable again for subsequent tests
+    rbtnode->enableCallback();
+    // add more levels below and above the callback node for partial match.
+    RBNode<int>* subrbtnode;
+    EXPECT_EQ(RBTree<int>::SUCCEED, rbtree.insert(Name("sub.callback.example"),
+                                                  &subrbtnode));
+    subrbtnode->setData(RBNode<int>::NodeDataPtr(new int(2)));
+    RBNode<int>* parentrbtnode;
+    EXPECT_EQ(RBTree<int>::ALREADYEXIST, rbtree.insert(Name("example"),
+                                                       &parentrbtnode));
+    //  the chilld/parent nodes shouldn't "inherit" the callback flag.
+    // "rbtnode" may be invalid due to the insertion, so we need to re-find
+    // it.
+    EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name("callback.example"),
+                                                   &rbtnode));
+    EXPECT_TRUE(rbtnode->isCallbackEnabled());
+    EXPECT_FALSE(subrbtnode->isCallbackEnabled());
+    EXPECT_FALSE(parentrbtnode->isCallbackEnabled());
+
+    // check if the callback is called from find()
+    bool callback_called = false;
+    EXPECT_EQ(RBTree<int>::EXACTMATCH,
+              rbtree.find(Name("sub.callback.example"), &crbtnode,
+                          testCallback, &callback_called));
+    EXPECT_TRUE(callback_called);
+
+    // enable callback at the parent node, but it doesn't have data so
+    // the callback shouldn't be called.
+    parentrbtnode->enableCallback();
+    callback_called = false;
+    EXPECT_EQ(RBTree<int>::EXACTMATCH,
+              rbtree.find(Name("callback.example"), &crbtnode,
+                          testCallback, &callback_called));
+    EXPECT_FALSE(callback_called);
+}
+
 TEST_F(RBTreeTest, dumpTree) {
     std::ostringstream str;
     std::ostringstream str2;
