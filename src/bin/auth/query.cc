@@ -92,6 +92,7 @@ Query::process() const {
                 // TODO : fill in authority and addtional sections.
                 break;
             case Zone::DELEGATION:
+                response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
                 response_.setRcode(Rcode::NOERROR());
                 response_.addRRset(Message::SECTION_AUTHORITY,
                             boost::const_pointer_cast<RRset>(db_result.rrset));
