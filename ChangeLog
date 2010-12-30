@@ -1,3 +1,10 @@
+  142.	[func]		jinmei
+	b10-auth: updated query benchmark so that it can test in memory
+	data source.  Also fixed a bug that the output buffer isn't
+	cleared after query processing, resulting in misleading results
+	or program crash.  This is a regression due to change #135.
+	(Trac #465, svn r4103)
+
   141.	[bug]		jinmei
 	b10-auth: Fixed a bug that the authoritative server includes
 	trailing garbage data in responses.  This is a regression due to
