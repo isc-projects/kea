@@ -47,6 +47,12 @@ void
 Query::findAddrs(const isc::datasrc::Zone& zone,
                  const isc::dns::Name& qname) const
 {
+    // Out of zone name
+    NameComparisonResult result = zone.getOrigin().compare(qname);
+    if ((result.getRelation() != NameComparisonResult::SUPERDOMAIN) &&
+        (result.getRelation() != NameComparisonResult::EQUAL))
+        return;
+
     // Find A rrset
     Zone::FindResult a_result = zone.find(qname, RRType::A());
     if (a_result.code == Zone::SUCCESS) {
