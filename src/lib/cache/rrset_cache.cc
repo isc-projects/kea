@@ -21,6 +21,7 @@
 #include <nsas/hash_deleter.h>
 
 using namespace isc::nsas;
+using namespace isc::dns;
 
 namespace isc {
 namespace cache {
@@ -33,18 +34,45 @@ RRsetCache::RRsetCache(uint32_t cache_size):
 {
 }
     
-bool
-RRsetCache::lookUp(const isc::dns::Name&,
-       const isc::dns::RRType&,
-       const isc::dns::RRClass&,
-       RRsetEntry& )
+RRsetEntryPtr
+RRsetCache::lookup(const isc::dns::Name& qname,
+                   const isc::dns::RRType& qtype)
 {
-    return true;
+    CacheEntryKey keydata = genCacheEntryKey(qname, qtype);
+    //TODO, HashKey need to be refactored, since we don't need query class
+    // as the parameters.
+    return rrset_table_.get(HashKey(
+           keydata.first, keydata.second, RRClass(class_)));
 }
 
-bool
-RRsetCache::update(const isc::dns::RRset&) {
-    return true;
+RRsetEntryPtr
+RRsetCache::update(const isc::dns::RRset& rrset, const RRsetTrustLevel& level) {
+    // lookup first
+    RRsetEntryPtr entry_ptr = lookup(rrset.getName(), rrset.getType());
+    if(!entry_ptr) {
+        // rrset entry doesn't exist, create one rrset entry for the rrset
+        // and add it directly.
+        entry_ptr.reset(new RRsetEntry(rrset, level));
+        rrset_table_.add(entry_ptr, entry_ptr->hashKey());
+        //TODO , lru list touch.
+        return entry_ptr;
+    } else {
+        // there is one rrset entry in the cache, need to check whether
+        // the new rrset is more authoritative.
+        if (entry_ptr->getTrustLevel() > level) {
+            // existed rrset entry is more authoritative, do nothing,
+            // just return it.
+            //TODO, lru list touch
+            return entry_ptr;
+        } else {
+            HashKey key = entry_ptr->hashKey();
+            rrset_table_.remove(key);
+            entry_ptr.reset(new RRsetEntry(rrset, level));
+            //TODO, lru list touch.
+            rrset_table_.add(entry_ptr, key);
+            return entry_ptr;
+        }
+    }
 }
 
 void

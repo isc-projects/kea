@@ -43,7 +43,7 @@ MessageCache::lookup(const isc::dns::Name& qname,
                      const uint16_t query_header,
                      isc::dns::Message& response)
 {
-    std::pair<const char*, const uint32_t> keydata = genCacheEntryKey(qname, qtype);
+    CacheEntryKey keydata = genCacheEntryKey(qname, qtype);
 
     //TODO, HashKey need to be refactored, since we don't need query class
     // as the parameters.

@@ -14,30 +14,35 @@
 
 // $Id$
 
-#ifndef __CACHE_ENTRY_H
-#define __CACHE_ENTRY_H
+#ifndef __CACHE_ENTRY_KEY_H
+#define __CACHE_ENTRY_KEY_H
 
 #include <string>
-
+#include <dns/name.h>
+#include <dns/rrtype.h>
 
 namespace isc {
 namespace cache {
 
-class Name;
-class RRtype;
+typedef std::pair<const char*, const uint32_t> CacheEntryKey;
 
-std::pair<const char*, const uint32_t>
-genCacheEntryKey(const isc::dns::Name& qname,
-                 const isc::dns::RRType& qtype) 
-{
-    std::string keystr = qname.toText();
-    //TODO, use uint16_t rcode in case the text is too long?
-    keystr += qtype.toText(); 
-    return std::pair<const char*, const uint32_t>(keystr.c_str(), keystr.length());
-}
-    
+/// \brief Key Generation Functions
+/// Generate the hash key for message/rrset entries.
+/// The key is name(name of rrset) + type(16bits). 
+/// Note. the name is text string, not wire format.
+/// \return a pair(key_name, key_lenght) is returned
+CacheEntryKey
+genCacheEntryKey(const isc::dns::Name& name, 
+                 const isc::dns::RRType& type);
+   
+/// 
+/// \overload
+/// 
+CacheEntryKey
+genCacheEntryKey(const std::string& namestr, const uint16_t type);
+
 } // namespace cache
 } // namespace isc
 
-#endif // __CACHE_ENTRY_H
+#endif // __CACHE_ENTRY_KEY_H
 
