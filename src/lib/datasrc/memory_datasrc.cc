@@ -144,9 +144,12 @@ struct MemoryZone::MemoryZoneImpl {
     /// It will be passed to \c zonecutCallback() and record a possible
     /// zone cut node and related RRset (normally NS or DNAME).
     struct FindState {
-        FindState() : zonecut_node(NULL) {}
-        const DomainNode* zonecut_node;
-        ConstRRsetPtr rrset;
+        FindState(FindOptions options) : zonecut_node_(NULL),
+                                         options_(options)
+        {}
+        const DomainNode* zonecut_node_;
+        ConstRRsetPtr rrset_;
+        const FindOptions options_;
     };
 
     // A callback called from possible zone cut nodes.  This will be passed
@@ -154,10 +157,7 @@ struct MemoryZone::MemoryZoneImpl {
     static bool zonecutCallback(const DomainNode& node, FindState* state) {
         // We perform callback check only for the highest zone cut in the
         // rare case of nested zone cuts.
-        // [This check is necessary when we support the "glue OK" mode later.
-        // This code should better be added then with a test, but is added
-        // now not to forget it.]
-        if (state->zonecut_node != NULL) {
+        if (state->zonecut_node_ != NULL) {
             return (false);
         }
 
@@ -167,9 +167,9 @@ struct MemoryZone::MemoryZoneImpl {
             // be the origin because we don't enable the callback at the
             // origin node (see MemoryZoneImpl::add()).  Or should we do a
             // double check for it?
-            state->zonecut_node = &node;
-            state->rrset = found->second;
-            return (true);
+            state->zonecut_node_ = &node;
+            state->rrset_ = found->second;
+            return ((state->options_ & FIND_GLUE_OK) != 0 ? false : true);
         }
 
         // This case should not happen because we enable callback only
@@ -178,14 +178,16 @@ struct MemoryZone::MemoryZoneImpl {
     }
 
     // Implementation of MemoryZone::find
-    FindResult find(const Name& name, RRType type) const {
+    FindResult find(const Name& name, RRType type,
+                    const FindOptions options) const
+    {
         // Get the node
         DomainNode* node(NULL);
-        FindState state;
+        FindState state(options);
         switch (domains_.find(name, &node, zonecutCallback, &state)) {
             case DomainTree::PARTIALMATCH:
-                if (state.zonecut_node != NULL) {
-                    return (FindResult(DELEGATION, state.rrset));
+                if (state.zonecut_node_ != NULL) {
+                    return (FindResult(DELEGATION, state.rrset_));
                 }
                 // TODO: we should also cover empty non-terminal cases, which
                 // will require non trivial code and is deferred for later
@@ -247,8 +249,10 @@ MemoryZone::getClass() const {
 }
 
 Zone::FindResult
-MemoryZone::find(const Name& name, const RRType& type) const {
-    return (impl_->find(name, type));
+MemoryZone::find(const Name& name, const RRType& type,
+                 const FindOptions options) const
+{
+    return (impl_->find(name, type, options));
 }
 
 result::Result

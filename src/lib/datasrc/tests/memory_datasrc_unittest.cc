@@ -143,7 +143,9 @@ public:
         origin_("example.org"),
         ns_name_("ns.example.org"),
         child_ns_name_("child.example.org"),
+        child_glue_name_("ns.child.example.org"),
         grandchild_ns_name_("grand.child.example.org"),
+        grandchild_glue_name_("ns.grand.child.example.org"),
         zone_(class_, origin_),
         rr_out_(new RRset(Name("example.com"), class_, RRType::A(),
             RRTTL(300))),
@@ -153,13 +155,18 @@ public:
         rr_a_(new RRset(origin_, class_, RRType::A(), RRTTL(300))),
         rr_child_ns_(new RRset(child_ns_name_, class_, RRType::NS(),
                                RRTTL(300))),
+        rr_child_glue_(new RRset(child_glue_name_, class_, RRType::A(),
+                              RRTTL(300))),
         rr_grandchild_ns_(new RRset(grandchild_ns_name_, class_, RRType::NS(),
-                               RRTTL(300)))
+                                    RRTTL(300))),
+        rr_grandchild_glue_(new RRset(grandchild_glue_name_, class_,
+                                      RRType::AAAA(), RRTTL(300)))
     {
     }
     // Some data to test with
     const RRClass class_;
-    const Name origin_, ns_name_, child_ns_name_, grandchild_ns_name_;
+    const Name origin_, ns_name_, child_ns_name_, child_glue_name_,
+        grandchild_ns_name_, grandchild_glue_name_;
     // The zone to torture by tests
     MemoryZone zone_;
 
@@ -181,7 +188,9 @@ public:
         // A of example.org
         rr_a_;
     ConstRRsetPtr rr_child_ns_; // NS of a child domain (for delegation)
+    ConstRRsetPtr rr_child_glue_; // glue RR of the child domain
     ConstRRsetPtr rr_grandchild_ns_; // NS below a zone cut (unusual)
+    ConstRRsetPtr rr_grandchild_glue_; // glue RR below a deeper zone cut
 
     /**
      * \brief Test one find query to the zone.
@@ -200,8 +209,10 @@ public:
      *     uses zone_)
      */
     void findTest(const Name& name, const RRType& rrtype, Zone::Result result,
-        bool check_answer = true,
-        const ConstRRsetPtr& answer = ConstRRsetPtr(), MemoryZone *zone = NULL)
+                  bool check_answer = true,
+                  const ConstRRsetPtr& answer = ConstRRsetPtr(),
+                  MemoryZone *zone = NULL,
+                  Zone::FindOptions options = Zone::FIND_DEFAULT)
     {
         if (!zone) {
             zone = &zone_;
@@ -209,13 +220,14 @@ public:
         // The whole block is inside, because we need to check the result and
         // we can't assign to FindResult
         EXPECT_NO_THROW({
-            Zone::FindResult find_result(zone->find(name, rrtype));
-            // Check it returns correct answers
-            EXPECT_EQ(result, find_result.code);
-            if (check_answer) {
-                EXPECT_EQ(answer, find_result.rrset);
-            }
-        });
+                Zone::FindResult find_result(zone->find(name, rrtype,
+                                                        options));
+                // Check it returns correct answers
+                EXPECT_EQ(result, find_result.code);
+                if (check_answer) {
+                    EXPECT_EQ(answer, find_result.rrset);
+                }
+            });
     }
 };
 
@@ -278,6 +290,49 @@ TEST_F(MemoryZoneTest, delegationNS) {
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_grandchild_ns_)));
     findTest(Name("www.grand.child.example.org"), RRType::A(),
              Zone::DELEGATION, true, rr_child_ns_); // note: !rr_grandchild_ns_
+}
+
+TEST_F(MemoryZoneTest, glue) {
+    // install zone data:
+    // a zone cut
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_child_ns_)));
+    // glue for this cut
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_child_glue_)));
+    // a nested zone cut (unusual)
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_grandchild_ns_)));
+    // glue under the deeper zone cut
+    EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_.add(rr_grandchild_glue_)));
+
+    // by default glue is hidden due to the zone cut
+    findTest(child_glue_name_, RRType::A(), Zone::DELEGATION, true,
+             rr_child_ns_);
+
+
+    // If we do it in the "glue OK" mode, we should find the exact match.
+    findTest(child_glue_name_, RRType::A(), Zone::SUCCESS, true,
+             rr_child_glue_, NULL, Zone::FIND_GLUE_OK);
+
+    // glue OK + NXRRSET case
+    findTest(child_glue_name_, RRType::AAAA(), Zone::NXRRSET, true,
+             ConstRRsetPtr(), NULL, Zone::FIND_GLUE_OK);
+
+    // glue OK + NXDOMAIN case
+    findTest(Name("www.child.example.org"), RRType::A(), Zone::DELEGATION,
+             true, rr_child_ns_, NULL, Zone::FIND_GLUE_OK);
+
+    // TODO:
+    // glue name would match a wildcard under a zone cut: wildcard match
+    // shouldn't happen under a cut and result must be PARTIALMATCH
+    // (This case cannot be tested yet)
+
+    // nested cut case.  The glue should be found.
+    findTest(grandchild_glue_name_, RRType::AAAA(), Zone::SUCCESS,
+             true, rr_grandchild_glue_, NULL, Zone::FIND_GLUE_OK);    
+
+    // A non-existent name in nested cut.  This should result in delegation
+    // at the highest zone cut.
+    findTest(Name("www.grand.child.example.org"), RRType::TXT(),
+             Zone::DELEGATION, true, rr_child_ns_, NULL, Zone::FIND_GLUE_OK);
 }
 
 // Test adding DNAMEs and resulting delegation handling

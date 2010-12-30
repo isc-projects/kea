@@ -53,7 +53,8 @@ public:
     virtual const isc::dns::RRClass& getClass() const;
 
     FindResult find(const isc::dns::Name& name,
-            const isc::dns::RRType& type) const;
+                    const isc::dns::RRType& type,
+                    const FindOptions options = FIND_DEFAULT) const;
 
 private:
     Name origin_;
@@ -71,7 +72,7 @@ MockZone::getClass() const {
 }
 
 Zone::FindResult
-MockZone::find(const Name& name, const RRType& type) const {
+MockZone::find(const Name& name, const RRType& type, const FindOptions) const {
     // hardcode the find results
     if (name == Name("www.example.com")) {
         return (FindResult(SUCCESS, a_rrset));

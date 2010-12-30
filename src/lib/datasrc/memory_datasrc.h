@@ -62,7 +62,8 @@ public:
     /// It returns NULL pointer in case of NXDOMAIN and NXRRSET
     /// (the base class documentation does not seem to require that).
     virtual FindResult find(const isc::dns::Name& name,
-                            const isc::dns::RRType& type) const;
+                            const isc::dns::RRType& type,
+                            const FindOptions options = FIND_DEFAULT) const;
 
     /// \brief Inserts an rrset into the zone.
     ///
