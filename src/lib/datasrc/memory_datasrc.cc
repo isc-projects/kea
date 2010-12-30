@@ -175,6 +175,9 @@ struct MemoryZone::MemoryZoneImpl {
         // This case should not happen because we enable callback only
         // when we add an RR searched for above.
         assert(0);
+        // This is here to avoid warning (therefore compilation error)
+        // in case assert is turned off. Otherwise we could get "Control
+        // reached end of non-void function".
         return (false);
     }
 
