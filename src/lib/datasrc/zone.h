@@ -100,6 +100,16 @@ public:
         const isc::dns::ConstRRsetPtr rrset;
     };
 
+    /// Find options.
+    ///
+    /// The option values are used as a parameter for \c find().
+    /// These are values of a bitmask type.  Bitwise operations can be
+    /// performed on these values to express compound options.
+    enum FindOptions {
+        FIND_DEFAULT = 0,       ///< The default options
+        FIND_GLUE_OK = 1        ///< Allow search under a zone cut
+    };
+
     ///
     /// \name Constructors and Destructor.
     ///
@@ -150,6 +160,17 @@ public:
     /// - If the search name matches a delegation point of DNAME, it returns
     ///   the code of \c DNAME and that DNAME RR.
     ///
+    /// The \c options parameter specifies customized behavior of the search.
+    /// Their semantics is as follows:
+    /// - \c GLUE_OK Allow search under a zone cut.  By default the search
+    ///   will stop once it encounters a zone cut.  If this option is specified
+    ///   it remembers information about the highest zone cut and continues
+    ///   the search until it finds an exact match for the given name or it
+    ///   detects there is no exact match.  If an exact match is found,
+    ///   RRsets for that name are searched just like the normal case;
+    ///   otherwise, if the search has encountered a zone cut, \c DELEGATION
+    ///   with the information of the highest zone cut will be returned.
+    ///
     /// A derived version of this method may involve internal resource
     /// allocation, especially for constructing the resulting RRset, and may
     /// throw an exception if it fails.
@@ -162,9 +183,12 @@ public:
     ///
     /// \param name The domain name to be searched for.
     /// \param type The RR type to be searched for.
+    /// \param options The search options.
     /// \return A \c FindResult object enclosing the search result (see above).
     virtual FindResult find(const isc::dns::Name& name,
-                            const isc::dns::RRType& type) const = 0;
+                            const isc::dns::RRType& type,
+                            const FindOptions options
+                            = FIND_DEFAULT) const = 0;
     //@}
 };
 
@@ -177,4 +201,8 @@ typedef boost::shared_ptr<const Zone> ConstZonePtr;
 }
 }
 
-#endif
+#endif  // __ZONE_H
+
+// Local Variables:
+// mode: c++
+// End:
