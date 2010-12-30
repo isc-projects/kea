@@ -175,6 +175,7 @@ struct MemoryZone::MemoryZoneImpl {
         // This case should not happen because we enable callback only
         // when we add an RR searched for above.
         assert(0);
+        return (false);
     }
 
     // Implementation of MemoryZone::find
