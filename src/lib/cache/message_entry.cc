@@ -18,7 +18,10 @@
 #include <nsas/nsas_entry.h>
 #include <nsas/fetchable.h>
 #include "message_entry.h"
+#include "rrset_entry.h"
 
+
+using namespace isc::dns;
 
 namespace isc {
 namespace cache {
@@ -39,9 +42,26 @@ MessageEntry::genMessage(const time_t&,
 }
 
 void
-MessageEntry::initMessageEntry(const isc::dns::Message&) {
-}
+MessageEntry::initMessageEntry(const isc::dns::Message& msg) {
+    query_count_ = msg.getRRCount(Message::SECTION_QUESTION);
+    answer_count_ = msg.getRRCount(Message::SECTION_ANSWER);
+    authority_count_ = msg.getRRCount(Message::SECTION_AUTHORITY);
+    additional_count_ = msg.getRRCount(Message::SECTION_ADDITIONAL);
 
+    // query_header \\TODO how to cache the header?
+    RRsetIterator iter;
+    for (iter = msg.beginSection(Message::SECTION_ANSWER);
+         iter != msg.endSection(Message::SECTION_ANSWER);
+         ++iter) {
+        //*rit is one pointer to RRset.
+        //boost::shared_ptr<RRsetEntry> entry_ptr = new RRsetEntry(*(*iter);
+        //rrsets_.append(entry_ptr);
+
+        // Add the rrset entry to rrset_cache or update the existed 
+        // rrset entry if the new one is more authoritative.
+    }
+
+}
 
 } // namespace cache
 } // namespace isc

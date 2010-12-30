@@ -36,19 +36,23 @@ public:
     RRsetCache(uint32_t cache_size);
     
     /// \brief Look up rrset in cache.
-    /// \param msg_entry
-    /// \return return true if the message can be found in cache, or else,
-    /// return false.
-    bool lookUp(const isc::dns::Name& qname,
-                const isc::dns::RRType& qtype,
-                const isc::dns::RRClass& qclass,
-                RRsetEntry& rrset_entry);
+    /// \return return the shared_ptr of rrset entry if it can 
+    /// found in the cache, or else, return NULL.
+    RRsetEntryPtr lookup(const isc::dns::Name& qname,
+                         const isc::dns::RRType& qtype);
 
-    /// \brief Update the rrset in the cache with the new one.
-    /// If the rrset doesn't exist in the cache, it will be added
-    /// directly. It may be ingored if the new rrset is not more
-    /// authoritative than the old rrset in cache.
-    bool update(const isc::dns::RRset& rrset);
+    /// \brief Update RRset Cache
+    /// Update the rrset entry in the cache with the new one.
+    /// If the rrset has expired or doesn't exist in the cache, 
+    /// it will be added directly. It may be ingored if the new 
+    /// rrset is not more authoritative than the old rrset in cache.
+    /// 
+    /// \param rrset The new rrset used to update cache.
+    /// \param level trustworthiness of the rrset.
+    /// \return return the rrset entry in the cache, it may be the 
+    /// new added rrset entry or existed one if it is not replaced.
+    RRsetEntryPtr update(const isc::dns::RRset& rrset,
+                         const RRsetTrustLevel& level);
 
     /// \brief Dump the rrset cache to specified file.
     /// \todo It should can be dumped to one configured database.

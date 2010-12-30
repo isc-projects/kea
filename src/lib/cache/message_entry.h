@@ -75,12 +75,14 @@ private:
     uint16_t query_count_; // query count in query section.
     uint16_t answer_count_; // rrset count in answer section.
     uint16_t authority_count_; // rrset count in authority section.
-    uint16_t addition_count_; // rrset count in addition section.
+    uint16_t additional_count_; // rrset count in addition section.
 
     std::vector<boost::shared_ptr<RRsetEntry*> > rrsets_;
     boost::shared_ptr<RRsetCache> rrset_cache_;
 };
     
+typedef boost::shared_ptr<MessageEntry> MessageEntryPtr;
+
 } // namespace cache
 } // namespace isc
 
