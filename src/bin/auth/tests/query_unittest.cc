@@ -129,6 +129,7 @@ TEST_F(QueryTest, matchZone) {
     // match qname, normal query
     memory_datasrc.addZone(ZonePtr(new MockZone()));
     query.process();
+    EXPECT_TRUE(response.getHeaderFlag(Message::HEADERFLAG_AA));
     EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
     EXPECT_TRUE(response.hasRRset(Message::SECTION_ANSWER,
                                   Name("www.example.com"), RRClass::IN(),
@@ -138,6 +139,7 @@ TEST_F(QueryTest, matchZone) {
     const Name delegation_name(Name("delegation.example.com"));
     Query delegation_query(memory_datasrc, delegation_name, qtype, response);
     delegation_query.process();
+    EXPECT_FALSE(response.getHeaderFlag(Message::HEADERFLAG_AA));
     EXPECT_EQ(Rcode::NOERROR(), response.getRcode());
     EXPECT_TRUE(response.hasRRset(Message::SECTION_AUTHORITY,
                                   Name("delegation.example.com"),
